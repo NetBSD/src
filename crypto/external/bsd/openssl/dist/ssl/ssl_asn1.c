@@ -120,13 +120,14 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	{
 #define LSIZE2 (sizeof(long)*2)
 	int v1=0,v2=0,v3=0,v4=0,v5=0,v7=0,v8=0;
-	unsigned char buf[4],ibuf1[LSIZE2],ibuf2[LSIZE2], cbuf;
+	unsigned char buf[4],ibuf1[LSIZE2],ibuf2[LSIZE2];
 	unsigned char ibuf3[LSIZE2],ibuf4[LSIZE2],ibuf5[LSIZE2];
 #ifndef OPENSSL_NO_TLSEXT
 	int v6=0,v9=0,v10=0;
 	unsigned char ibuf6[LSIZE2];
 #endif
 #ifndef OPENSSL_NO_COMP
+	unsigned char cbuf;
 	int v11=0;
 #endif
 	long l;
@@ -243,12 +244,6 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
                 a.tlsext_tick.length= in->tlsext_ticklen;
                 a.tlsext_tick.type=V_ASN1_OCTET_STRING;
                 a.tlsext_tick.data=(unsigned char *)in->tlsext_tick;
-		/* If we have a ticket set session ID to empty because
-		 * it will be bogus. If liftime hint is -1 treat as a special
-		 * case because the session is being used as a container
-		 */
-		if (in->tlsext_ticklen && (in->tlsext_tick_lifetime_hint != -1))
-			a.session_id.length=0;
                 }
 	if (in->tlsext_tick_lifetime_hint > 0)
 		{
@@ -412,8 +407,8 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 		}
 	else
 		{
-		SSLerr(SSL_F_D2I_SSL_SESSION,SSL_R_UNKNOWN_SSL_VERSION);
-		return(NULL);
+		c.error=SSL_R_UNKNOWN_SSL_VERSION;
+		goto err;
 		}
 	
 	ret->cipher=NULL;
@@ -504,8 +499,8 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 	    {
 	    if (os.length > SSL_MAX_SID_CTX_LENGTH)
 		{
-		ret->sid_ctx_length=os.length;
-		SSLerr(SSL_F_D2I_SSL_SESSION,SSL_R_BAD_LENGTH);
+		c.error=SSL_R_BAD_LENGTH;
+		goto err;
 		}
 	    else
 		{
@@ -578,19 +573,6 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 		ret->tlsext_ticklen = os.length;
 		os.data = NULL;
 		os.length = 0;
-#if 0
-		/* There are two ways to detect a resumed ticket sesion.
-		 * One is to set a random session ID and then the server
-		 * must return a match in ServerHello. This allows the normal
-		 * client session ID matching to work.
-		 */ 
-		if (ret->session_id_length == 0)
-			{
-			ret->session_id_length=SSL3_MAX_SSL_SESSION_ID_LENGTH;
-			RAND_pseudo_bytes(ret->session_id,
-						ret->session_id_length);
-			}
-#endif
 		}
 	else
 		ret->tlsext_tick=NULL;

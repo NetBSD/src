@@ -159,6 +159,10 @@ extern "C" {
 
 #define TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES	0
 
+#define TLS1_1_VERSION			0x0302
+#define TLS1_1_VERSION_MAJOR		0x03
+#define TLS1_1_VERSION_MINOR		0x02
+
 #define TLS1_VERSION			0x0301
 #define TLS1_VERSION_MAJOR		0x03
 #define TLS1_VERSION_MINOR		0x01
@@ -200,6 +204,9 @@ extern "C" {
        * using whatever extension number you'd like to try */
 # define TLSEXT_TYPE_opaque_prf_input		?? */
 #endif
+
+/* Temporary extension type */
+#define TLSEXT_TYPE_renegotiate                 0xff01
 
 /* NameType value from RFC 3546 */
 #define TLSEXT_NAMETYPE_host_name 0

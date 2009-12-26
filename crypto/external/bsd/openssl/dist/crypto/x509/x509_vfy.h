@@ -419,6 +419,9 @@ int X509_STORE_set_purpose(X509_STORE *ctx, int purpose);
 int X509_STORE_set_trust(X509_STORE *ctx, int trust);
 int X509_STORE_set1_param(X509_STORE *ctx, X509_VERIFY_PARAM *pm);
 
+void X509_STORE_set_verify_cb(X509_STORE *ctx,
+				  int (*verify_cb)(int, X509_STORE_CTX *));
+
 X509_STORE_CTX *X509_STORE_CTX_new(void);
 
 int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
@@ -477,6 +480,9 @@ int	X509_STORE_CTX_get_error(X509_STORE_CTX *ctx);
 void	X509_STORE_CTX_set_error(X509_STORE_CTX *ctx,int s);
 int	X509_STORE_CTX_get_error_depth(X509_STORE_CTX *ctx);
 X509 *	X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx);
+X509 *X509_STORE_CTX_get0_current_issuer(X509_STORE_CTX *ctx);
+X509_CRL *X509_STORE_CTX_get0_current_crl(X509_STORE_CTX *ctx);
+X509_STORE_CTX *X509_STORE_CTX_get0_parent_ctx(X509_STORE_CTX *ctx);
 STACK_OF(X509) *X509_STORE_CTX_get_chain(X509_STORE_CTX *ctx);
 STACK_OF(X509) *X509_STORE_CTX_get1_chain(X509_STORE_CTX *ctx);
 void	X509_STORE_CTX_set_cert(X509_STORE_CTX *c,X509 *x);

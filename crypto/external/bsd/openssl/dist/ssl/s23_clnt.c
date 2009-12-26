@@ -269,11 +269,14 @@ static int ssl23_client_hello(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p,*d;
-	int i,j,ch_len;
+	int i,ch_len;
 	unsigned long Time,l;
 	int ssl2_compat;
 	int version = 0, version_major, version_minor;
+#ifndef OPENSSL_NO_COMP
+	int j;
 	SSL_COMP *comp;
+#endif
 	int ret;
 
 	ssl2_compat = (s->options & SSL_OP_NO_SSLv2) ? 0 : 1;
@@ -281,7 +284,11 @@ static int ssl23_client_hello(SSL *s)
 	if (ssl2_compat && ssl23_no_ssl2_ciphers(s))
 		ssl2_compat = 0;
 
-	if (!(s->options & SSL_OP_NO_TLSv1))
+	if (!(s->options & SSL_OP_NO_TLSv1_1))
+		{
+		version = TLS1_1_VERSION;
+		}
+	else if (!(s->options & SSL_OP_NO_TLSv1))
 		{
 		version = TLS1_VERSION;
 		}
@@ -301,6 +308,8 @@ static int ssl23_client_hello(SSL *s)
 		if (s->tlsext_hostname != NULL)
 			ssl2_compat = 0;
 		if (s->tlsext_status_type != -1)
+			ssl2_compat = 0;
+		if (!(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
 			ssl2_compat = 0;
 		
 #ifdef TLSEXT_TYPE_opaque_prf_input
@@ -327,7 +336,12 @@ static int ssl23_client_hello(SSL *s)
 		if (RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-4) <= 0)
 			return -1;
 
-		if (version == TLS1_VERSION)
+		if (version == TLS1_1_VERSION)
+			{
+			version_major = TLS1_1_VERSION_MAJOR;
+			version_minor = TLS1_1_VERSION_MINOR;
+			}
+		else if (version == TLS1_VERSION)
 			{
 			version_major = TLS1_VERSION_MAJOR;
 			version_minor = TLS1_VERSION_MINOR;
@@ -606,7 +620,7 @@ static int ssl23_get_server_hello(SSL *s)
 #endif
 		}
 	else if (p[1] == SSL3_VERSION_MAJOR &&
-	         (p[2] == SSL3_VERSION_MINOR || p[2] == TLS1_VERSION_MINOR) &&
+	         (p[2] >= SSL3_VERSION_MINOR && p[2] <= TLS1_1_VERSION_MINOR) &&
 	         ((p[0] == SSL3_RT_HANDSHAKE && p[5] == SSL3_MT_SERVER_HELLO) ||
 	          (p[0] == SSL3_RT_ALERT && p[3] == 0 && p[4] == 2)))
 		{
@@ -623,6 +637,12 @@ static int ssl23_get_server_hello(SSL *s)
 			{
 			s->version=TLS1_VERSION;
 			s->method=TLSv1_client_method();
+			}
+		else if ((p[2] == TLS1_1_VERSION_MINOR) &&
+			!(s->options & SSL_OP_NO_TLSv1_1))
+			{
+			s->version=TLS1_1_VERSION;
+			s->method=TLSv1_1_client_method();
 			}
 		else
 			{

@@ -458,6 +458,7 @@ static void sv_usage(void)
 #endif
 	BIO_printf(bio_err," -ssl2         - Just talk SSLv2\n");
 	BIO_printf(bio_err," -ssl3         - Just talk SSLv3\n");
+	BIO_printf(bio_err," -tls1_1       - Just talk TLSv1_1\n");
 	BIO_printf(bio_err," -tls1         - Just talk TLSv1\n");
 	BIO_printf(bio_err," -dtls1        - Just talk DTLSv1\n");
 	BIO_printf(bio_err," -timeout      - Enable timeouts\n");
@@ -466,6 +467,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -no_ssl2      - Just disable SSLv2\n");
 	BIO_printf(bio_err," -no_ssl3      - Just disable SSLv3\n");
 	BIO_printf(bio_err," -no_tls1      - Just disable TLSv1\n");
+	BIO_printf(bio_err," -no_tls1_1    - Just disable TLSv1.1\n");
 #ifndef OPENSSL_NO_DH
 	BIO_printf(bio_err," -no_dhe       - Disable ephemeral DH\n");
 #endif
@@ -491,6 +493,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err,"                 not specified (default is %s)\n",TEST_CERT2);
 	BIO_printf(bio_err," -tlsextdebug  - hex dump of all TLS extensions received\n");
 	BIO_printf(bio_err," -no_ticket    - disable use of RFC4507bis session tickets\n");
+	BIO_printf(bio_err," -legacy_renegotiation - enable use of legacy renegotiation (dangerous)\n");
 #endif
 	}
 
@@ -787,7 +790,7 @@ BIO_printf(err, "cert_status: received %d ids\n", sk_OCSP_RESPID_num(ids));
 		if (!OCSP_REQUEST_add_ext(req, ext, -1))
 			goto err;
 		}
-	resp = process_responder(err, req, host, path, port, use_ssl,
+	resp = process_responder(err, req, host, path, port, use_ssl, NULL,
 					srctx->timeout);
 	if (!resp)
 		{
@@ -859,6 +862,7 @@ int MAIN(int argc, char *argv[])
 	int s_dcert_format = FORMAT_PEM, s_dkey_format = FORMAT_PEM;
 	X509 *s_cert = NULL, *s_dcert = NULL;
 	EVP_PKEY *s_key = NULL, *s_dkey = NULL;
+	int no_cache = 0;
 #ifndef OPENSSL_NO_TLSEXT
 	EVP_PKEY *s_key2 = NULL;
 	X509 *s_cert2 = NULL;
@@ -1001,6 +1005,8 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			CApath= *(++argv);
 			}
+		else if (strcmp(*argv,"-no_cache") == 0)
+			no_cache = 1;
 		else if (args_verify(&argv, &argc, &badarg, bio_err, &vpm))
 			{
 			if (badarg)
@@ -1011,6 +1017,8 @@ int MAIN(int argc, char *argv[])
 			verify_return_error = 1;
 		else if	(strcmp(*argv,"-serverpref") == 0)
 			{ off|=SSL_OP_CIPHER_SERVER_PREFERENCE; }
+		else if (strcmp(*argv,"-legacy_renegotiation") == 0)
+			off|=SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION;
 		else if	(strcmp(*argv,"-cipher") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -1114,6 +1122,8 @@ int MAIN(int argc, char *argv[])
 			{ off|=SSL_OP_NO_SSLv2; }
 		else if	(strcmp(*argv,"-no_ssl3") == 0)
 			{ off|=SSL_OP_NO_SSLv3; }
+		else if	(strcmp(*argv,"-no_tls1_1") == 0)
+			{ off|=SSL_OP_NO_TLSv1_1; }
 		else if	(strcmp(*argv,"-no_tls1") == 0)
 			{ off|=SSL_OP_NO_TLSv1; }
 		else if	(strcmp(*argv,"-no_comp") == 0)
@@ -1131,6 +1141,8 @@ int MAIN(int argc, char *argv[])
 			{ meth=SSLv3_server_method(); }
 #endif
 #ifndef OPENSSL_NO_TLS1
+		else if	(strcmp(*argv,"-tls1_1") == 0)
+			{ meth=TLSv1_1_server_method(); }
 		else if	(strcmp(*argv,"-tls1") == 0)
 			{ meth=TLSv1_server_method(); }
 #endif
@@ -1388,8 +1400,10 @@ bad:
 	if (socket_type == SOCK_DGRAM) SSL_CTX_set_read_ahead(ctx, 1);
 
 	if (state) SSL_CTX_set_info_callback(ctx,apps_ssl_info_callback);
-
-	SSL_CTX_sess_set_cache_size(ctx,128);
+	if (no_cache)
+		SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_OFF);
+	else
+		SSL_CTX_sess_set_cache_size(ctx,128);
 
 #if 0
 	if (cipher == NULL) cipher=getenv("SSL_CIPHER");
@@ -1455,7 +1469,10 @@ bad:
 
 		if (state) SSL_CTX_set_info_callback(ctx2,apps_ssl_info_callback);
 
-		SSL_CTX_sess_set_cache_size(ctx2,128);
+		if (no_cache)
+			SSL_CTX_set_session_cache_mode(ctx2,SSL_SESS_CACHE_OFF);
+		else
+			SSL_CTX_sess_set_cache_size(ctx2,128);
 
 		if ((!SSL_CTX_load_verify_locations(ctx2,CAfile,CApath)) ||
 			(!SSL_CTX_set_default_verify_paths(ctx2)))
@@ -1654,6 +1671,10 @@ bad:
 	SSL_CTX_set_session_id_context(ctx,(void*)&s_server_session_id_context,
 		sizeof s_server_session_id_context);
 
+	/* Set DTLS cookie generation and verification callbacks */
+	SSL_CTX_set_cookie_generate_cb(ctx, generate_cookie_callback);
+	SSL_CTX_set_cookie_verify_cb(ctx, verify_cookie_callback);
+
 #ifndef OPENSSL_NO_TLSEXT
 	if (ctx2)
 		{
@@ -1750,8 +1771,11 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 	unsigned long l;
 	SSL *con=NULL;
 	BIO *sbio;
+	struct timeval timeout;
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_BEOS_R5)
 	struct timeval tv;
+#else
+	struct timeval *timeoutp;
 #endif
 
 	if ((buf=OPENSSL_malloc(bufsize)) == NULL)
@@ -1808,7 +1832,6 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 
 	if (SSL_version(con) == DTLS1_VERSION)
 		{
-		struct timeval timeout;
 
 		sbio=BIO_new_dgram(s,BIO_NOCLOSE);
 
@@ -1919,7 +1942,19 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 				read_from_terminal = 1;
 			(void)fcntl(fileno(stdin), F_SETFL, 0);
 #else
-			i=select(width,(void *)&readfds,NULL,NULL,NULL);
+			if ((SSL_version(con) == DTLS1_VERSION) &&
+				DTLSv1_get_timeout(con, &timeout))
+				timeoutp = &timeout;
+			else
+				timeoutp = NULL;
+
+			i=select(width,(void *)&readfds,NULL,NULL,timeoutp);
+
+			if ((SSL_version(con) == DTLS1_VERSION) && DTLSv1_handle_timeout(con) > 0)
+				{
+				BIO_printf(bio_err,"TIMEOUT occured\n");
+				}
+
 			if (i <= 0) continue;
 			if (FD_ISSET(fileno(stdin),&readfds))
 				read_from_terminal = 1;
@@ -2180,6 +2215,8 @@ static int init_ssl_connection(SSL *con)
 			con->kssl_ctx->client_princ);
 		}
 #endif /* OPENSSL_NO_KRB5 */
+	BIO_printf(bio_s_out, "Secure Renegotiation IS%s supported\n",
+		      SSL_get_secure_renegotiation_support(con) ? "" : " NOT");
 	return(1);
 	}
 

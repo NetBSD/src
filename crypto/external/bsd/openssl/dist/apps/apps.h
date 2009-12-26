@@ -168,6 +168,12 @@ extern BIO *bio_err;
 #define do_pipe_sig()
 #endif
 
+#ifdef OPENSSL_NO_COMP
+#define zlib_cleanup() 
+#else
+#define zlib_cleanup() COMP_zlib_cleanup()
+#endif
+
 #if defined(MONOLITH) && !defined(OPENSSL_C)
 #  define apps_startup() \
 		do_pipe_sig()
@@ -182,7 +188,7 @@ extern BIO *bio_err;
 			do { CONF_modules_unload(1); destroy_ui_method(); \
 			OBJ_cleanup(); EVP_cleanup(); ENGINE_cleanup(); \
 			CRYPTO_cleanup_all_ex_data(); ERR_remove_thread_state(NULL); \
-			ERR_free_strings(); COMP_zlib_cleanup();} while(0)
+			ERR_free_strings(); zlib_cleanup();} while(0)
 #  else
 #    define apps_startup() \
 			do { do_pipe_sig(); CRYPTO_malloc_init(); \
@@ -192,7 +198,7 @@ extern BIO *bio_err;
 			do { CONF_modules_unload(1); destroy_ui_method(); \
 			OBJ_cleanup(); EVP_cleanup(); \
 			CRYPTO_cleanup_all_ex_data(); ERR_remove_thread_state(NULL); \
-			ERR_free_strings(); } while(0)
+			ERR_free_strings(); zlib_cleanup(); } while(0)
 #  endif
 #endif
 
@@ -245,6 +251,8 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 	const char *pass, ENGINE *e, const char *key_descrip);
 STACK_OF(X509) *load_certs(BIO *err, const char *file, int format,
 	const char *pass, ENGINE *e, const char *cert_descrip);
+STACK_OF(X509_CRL) *load_crls(BIO *err, const char *file, int format,
+	const char *pass, ENGINE *e, const char *cert_descrip);
 X509_STORE *setup_verify(BIO *bp, char *CAfile, char *CApath);
 #ifndef OPENSSL_NO_ENGINE
 ENGINE *setup_engine(BIO *err, const char *engine, int debug);
@@ -253,6 +261,7 @@ ENGINE *setup_engine(BIO *err, const char *engine, int debug);
 #ifndef OPENSSL_NO_OCSP
 OCSP_RESPONSE *process_responder(BIO *err, OCSP_REQUEST *req,
 			char *host, char *path, char *port, int use_ssl,
+			STACK_OF(CONF_VALUE) *headers,
 			int req_timeout);
 #endif
 

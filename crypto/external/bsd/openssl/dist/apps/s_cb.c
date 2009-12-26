@@ -117,17 +117,21 @@
 #undef NON_MAIN
 #undef USE_SOCKETS
 #include <openssl/err.h>
+#include <openssl/rand.h>
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include "s_apps.h"
 
+#define	COOKIE_SECRET_LENGTH	16
+
 int verify_depth=0;
 int verify_error=X509_V_OK;
 int verify_return_error=0;
+unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
+int cookie_initialized=0;
 
 int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 	{
-	char buf[256];
 	X509 *err_cert;
 	int err,depth;
 
@@ -135,8 +139,15 @@ int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 	err=	X509_STORE_CTX_get_error(ctx);
 	depth=	X509_STORE_CTX_get_error_depth(ctx);
 
-	X509_NAME_oneline(X509_get_subject_name(err_cert),buf,sizeof buf);
-	BIO_printf(bio_err,"depth=%d %s\n",depth,buf);
+	BIO_printf(bio_err,"depth=%d ",depth);
+	if (err_cert)
+		{
+		X509_NAME_print_ex(bio_err, X509_get_subject_name(err_cert),
+					0, XN_FLAG_ONELINE);
+		BIO_puts(bio_err, "\n");
+		}
+	else
+		BIO_puts(bio_err, "<no cert>\n");
 	if (!ok)
 		{
 		BIO_printf(bio_err,"verify error:num=%d:%s\n",err,
@@ -153,25 +164,33 @@ int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 			verify_error=X509_V_ERR_CERT_CHAIN_TOO_LONG;
 			}
 		}
-	switch (ctx->error)
+	switch (err)
 		{
 	case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
-		X509_NAME_oneline(X509_get_issuer_name(ctx->current_cert),buf,sizeof buf);
-		BIO_printf(bio_err,"issuer= %s\n",buf);
+		BIO_puts(bio_err,"issuer= ");
+		X509_NAME_print_ex(bio_err, X509_get_issuer_name(err_cert),
+					0, XN_FLAG_ONELINE);
+		BIO_puts(bio_err, "\n");
 		break;
 	case X509_V_ERR_CERT_NOT_YET_VALID:
 	case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
 		BIO_printf(bio_err,"notBefore=");
-		ASN1_TIME_print(bio_err,X509_get_notBefore(ctx->current_cert));
+		ASN1_TIME_print(bio_err,X509_get_notBefore(err_cert));
 		BIO_printf(bio_err,"\n");
 		break;
 	case X509_V_ERR_CERT_HAS_EXPIRED:
 	case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
 		BIO_printf(bio_err,"notAfter=");
-		ASN1_TIME_print(bio_err,X509_get_notAfter(ctx->current_cert));
+		ASN1_TIME_print(bio_err,X509_get_notAfter(err_cert));
 		BIO_printf(bio_err,"\n");
 		break;
+	case X509_V_ERR_NO_EXPLICIT_POLICY:
+		policies_print(bio_err, ctx);
+		break;
 		}
+	if (err == X509_V_OK && ok == 2)
+		policies_print(bio_err, ctx);
+
 	BIO_printf(bio_err,"verify return:%d\n",ok);
 	return(ok);
 	}
@@ -650,6 +669,10 @@ void MS_CALLBACK tlsext_cb(SSL *s, int client_server, int type,
 		extname = "server ticket";
 		break;
 
+		case TLSEXT_TYPE_renegotiate:
+		extname = "renegotiate";
+		break;
+
 #ifdef TLSEXT_TYPE_opaque_prf_input
 		case TLSEXT_TYPE_opaque_prf_input:
 		extname = "opaque PRF input";
@@ -667,4 +690,189 @@ void MS_CALLBACK tlsext_cb(SSL *s, int client_server, int type,
 			extname, type, len);
 	BIO_dump(bio, (char *)data, len);
 	(void)BIO_flush(bio);
+	}
+
+int MS_CALLBACK generate_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
+	{
+	unsigned char *buffer, result[EVP_MAX_MD_SIZE];
+	unsigned int length, resultlength;
+#if OPENSSL_USE_IPV6
+	union {
+		struct sockaddr_storage ss;
+		struct sockaddr_in6 s6;
+		struct sockaddr_in s4;
+	} peer;
+#else
+	struct sockaddr_in peer;
+#endif
+
+	/* Initialize a random secret */
+	if (!cookie_initialized)
+		{
+		if (!RAND_bytes(cookie_secret, COOKIE_SECRET_LENGTH))
+			{
+			BIO_printf(bio_err,"error setting random cookie secret\n");
+			return 0;
+			}
+		cookie_initialized = 1;
+		}
+
+	/* Read peer information */
+	(void)BIO_dgram_get_peer(SSL_get_rbio(ssl), &peer);
+
+	/* Create buffer with peer's address and port */
+#if OPENSSL_USE_IPV6
+	length = 0;
+	switch (peer.ss.ss_family)
+		{
+	case AF_INET:
+		length += sizeof(struct in_addr);
+		length += sizeof(peer.s4.sin_port);
+		break;
+	case AF_INET6:
+		length += sizeof(struct in6_addr);
+		length += sizeof(peer.s6.sin6_port);
+		break;
+	default:
+		OPENSSL_assert(0);
+		break;
+		}
+#else
+	length = sizeof(peer.sin_addr);
+	length += sizeof(peer.sin_port);
+#endif
+	buffer = OPENSSL_malloc(length);
+
+	if (buffer == NULL)
+		{
+		BIO_printf(bio_err,"out of memory\n");
+		return 0;
+		}
+
+#if OPENSSL_USE_IPV6
+	switch (peer.ss.ss_family)
+		{
+	case AF_INET:
+		memcpy(buffer,
+		       &peer.s4.sin_port,
+		       sizeof(peer.s4.sin_port));
+		memcpy(buffer + sizeof(peer.s4.sin_port),
+		       &peer.s4.sin_addr,
+		       sizeof(struct in_addr));
+		break;
+	case AF_INET6:
+		memcpy(buffer,
+		       &peer.s6.sin6_port,
+		       sizeof(peer.s6.sin6_port));
+		memcpy(buffer + sizeof(peer.s6.sin6_port),
+		       &peer.s6.sin6_addr,
+		       sizeof(struct in6_addr));
+		break;
+	default:
+		OPENSSL_assert(0);
+		break;
+		}
+#else
+	memcpy(buffer, &peer.sin_port, sizeof(peer.sin_port));
+	memcpy(buffer + sizeof(peer.sin_port), &peer.sin_addr, sizeof(peer.sin_addr));
+#endif
+
+	/* Calculate HMAC of buffer using the secret */
+	HMAC(EVP_sha1(), cookie_secret, COOKIE_SECRET_LENGTH,
+	     buffer, length, result, &resultlength);
+	OPENSSL_free(buffer);
+
+	memcpy(cookie, result, resultlength);
+	*cookie_len = resultlength;
+
+	return 1;
+	}
+
+int MS_CALLBACK verify_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int cookie_len)
+	{
+	unsigned char *buffer, result[EVP_MAX_MD_SIZE];
+	unsigned int length, resultlength;
+#if OPENSSL_USE_IPV6
+	union {
+		struct sockaddr_storage ss;
+		struct sockaddr_in6 s6;
+		struct sockaddr_in s4;
+	} peer;
+#else
+	struct sockaddr_in peer;
+#endif
+
+	/* If secret isn't initialized yet, the cookie can't be valid */
+	if (!cookie_initialized)
+		return 0;
+
+	/* Read peer information */
+	(void)BIO_dgram_get_peer(SSL_get_rbio(ssl), &peer);
+
+	/* Create buffer with peer's address and port */
+#if OPENSSL_USE_IPV6
+	length = 0;
+	switch (peer.ss.ss_family)
+		{
+	case AF_INET:
+		length += sizeof(struct in_addr);
+		length += sizeof(peer.s4.sin_port);
+		break;
+	case AF_INET6:
+		length += sizeof(struct in6_addr);
+		length += sizeof(peer.s6.sin6_port);
+		break;
+	default:
+		OPENSSL_assert(0);
+		break;
+		}
+#else
+	length = sizeof(peer.sin_addr);
+	length += sizeof(peer.sin_port);
+#endif
+	buffer = OPENSSL_malloc(length);
+	
+	if (buffer == NULL)
+		{
+		BIO_printf(bio_err,"out of memory\n");
+		return 0;
+		}
+
+#if OPENSSL_USE_IPV6
+	switch (peer.ss.ss_family)
+		{
+	case AF_INET:
+		memcpy(buffer,
+		       &peer.s4.sin_port,
+		       sizeof(peer.s4.sin_port));
+		memcpy(buffer + sizeof(peer.s4.sin_port),
+		       &peer.s4.sin_addr,
+		       sizeof(struct in_addr));
+		break;
+	case AF_INET6:
+		memcpy(buffer,
+		       &peer.s6.sin6_port,
+		       sizeof(peer.s6.sin6_port));
+		memcpy(buffer + sizeof(peer.s6.sin6_port),
+		       &peer.s6.sin6_addr,
+		       sizeof(struct in6_addr));
+		break;
+	default:
+		OPENSSL_assert(0);
+		break;
+		}
+#else
+	memcpy(buffer, &peer.sin_port, sizeof(peer.sin_port));
+	memcpy(buffer + sizeof(peer.sin_port), &peer.sin_addr, sizeof(peer.sin_addr));
+#endif
+
+	/* Calculate HMAC of buffer using the secret */
+	HMAC(EVP_sha1(), cookie_secret, COOKIE_SECRET_LENGTH,
+	     buffer, length, result, &resultlength);
+	OPENSSL_free(buffer);
+
+	if (cookie_len == resultlength && memcmp(result, cookie, resultlength) == 0)
+		return 1;
+
+	return 0;
 	}

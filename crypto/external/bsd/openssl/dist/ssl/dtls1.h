@@ -57,8 +57,14 @@
  *
  */
 
-#ifndef HEADER_DTLS1_H 
-#define HEADER_DTLS1_H 
+#ifndef HEADER_DTLS1_H
+#define HEADER_DTLS1_H
+
+/* Unless _XOPEN_SOURCE_EXTENDED is defined, struct timeval will not be
+   properly defined with DEC C, at least on VMS */
+#if defined(__DECC) || defined(__DECCXX)
+#define _XOPEN_SOURCE_EXTENDED
+#endif
 
 #include <openssl/buffer.h>
 #include <openssl/pqueue.h>
@@ -84,7 +90,7 @@ extern "C" {
 #endif
 
 /* lengths of messages */
-#define DTLS1_COOKIE_LENGTH                     32
+#define DTLS1_COOKIE_LENGTH                     256
 
 #define DTLS1_RT_HEADER_LENGTH                  13
 
@@ -211,6 +217,9 @@ typedef struct dtls1_state_st
 	 * unnecessary message loss.
 	 */
 	record_pqueue buffered_app_data;
+
+	/* Is set when listening for new connections with dtls1_listen() */
+	unsigned int listen;
 
 	unsigned int mtu; /* max DTLS packet size */
 

@@ -200,7 +200,13 @@ X509_STORE *X509_STORE_new(void)
 	ret->lookup_crls = 0;
 	ret->cleanup = 0;
 
-	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE, ret, &ret->ex_data);
+	if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE, ret, &ret->ex_data))
+		{
+		sk_X509_OBJECT_free(ret->objs);
+		OPENSSL_free(ret);
+		return NULL;
+		}
+
 	ret->references=1;
 	return ret;
 	}
@@ -693,6 +699,12 @@ int X509_STORE_set_trust(X509_STORE *ctx, int trust)
 int X509_STORE_set1_param(X509_STORE *ctx, X509_VERIFY_PARAM *param)
 	{
 	return X509_VERIFY_PARAM_set1(ctx->param, param);
+	}
+
+void X509_STORE_set_verify_cb(X509_STORE *ctx,
+				  int (*verify_cb)(int, X509_STORE_CTX *))
+	{
+	ctx->verify_cb = verify_cb;
 	}
 
 IMPLEMENT_STACK_OF(X509_LOOKUP)
