@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-revoke.c,v 1.1.1.1 2009/10/25 00:01:32 christos Exp $	*/
+/*	$NetBSD: dnssec-revoke.c,v 1.1.1.2 2009/12/26 22:19:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-revoke.c,v 1.16 2009/10/12 20:48:10 each Exp */
+/* Id: dnssec-revoke.c,v 1.18 2009/10/27 18:56:48 each Exp */
 
 /*! \file */
 
@@ -158,8 +158,12 @@ main(int argc, char **argv) {
 	if (dir != NULL) {
 		filename = argv[isc_commandline_index];
 	} else {
-		isc_file_splitpath(mctx, argv[isc_commandline_index],
-				   &dir, &filename);
+		result = isc_file_splitpath(mctx, argv[isc_commandline_index],
+					    &dir, &filename);
+		if (result != ISC_R_SUCCESS)
+			fatal("cannot process filename %s: %s",
+			      argv[isc_commandline_index],
+			      isc_result_totext(result));
 	}
 
 	if (ectx == NULL)
@@ -181,17 +185,20 @@ main(int argc, char **argv) {
 		fatal("Invalid keyfile name %s: %s",
 		      filename, isc_result_totext(result));
 
-	if (verbose > 2) {
-		char keystr[DST_KEY_FORMATSIZE];
+	dst_key_format(key, keystr, sizeof(keystr));
 
-		dst_key_format(key, keystr, sizeof(keystr));
+	if (verbose > 2)
 		fprintf(stderr, "%s: %s\n", program, keystr);
-	}
+
+	if (force)
+		set_keyversion(key);
+	else
+		check_keyversion(key, keystr);
+
 
 	flags = dst_key_flags(key);
 	if ((flags & DNS_KEYFLAG_REVOKE) == 0) {
 		isc_stdtime_t now;
-
 
 		if ((flags & DNS_KEYFLAG_KSK) == 0)
 			fprintf(stderr, "%s: warning: Key is not flagged "

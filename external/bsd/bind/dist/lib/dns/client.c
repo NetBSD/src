@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.1.1.1 2009/10/25 00:02:28 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.1.1.2 2009/12/26 22:24:28 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: client.c,v 1.5 2009/09/03 21:45:46 jinmei Exp */
+/* Id: client.c,v 1.6 2009/10/27 22:46:13 each Exp */
 
 #include <config.h>
 
@@ -311,16 +311,11 @@ dns_client_createview(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	/*
-	 * Workaround for a recent change in dns_view_create(): proactively
-	 * create view->secroots if it's not created with view creation.
-	 */
-	if (view->secroots == NULL) {
-		result = dns_keytable_create(mctx, &view->secroots);
-		if (result != ISC_R_SUCCESS) {
-			dns_view_detach(&view);
-			return (result);
-		}
+	/* Initialize view security roots */
+	result = dns_view_initsecroots(view, mctx);
+	if (result != ISC_R_SUCCESS) {
+		dns_view_detach(&view);
+		return (result);
 	}
 
 	result = dns_view_createresolver(view, taskmgr, ntasks, socketmgr,
@@ -1400,6 +1395,7 @@ dns_client_addtrustedkey(dns_client_t *client, dns_rdataclass_t rdclass,
 	isc_result_t result;
 	dns_view_t *view = NULL;
 	dst_key_t *dstkey = NULL;
+	dns_keytable_t *secroots = NULL;
 
 	REQUIRE(DNS_CLIENT_VALID(client));
 
@@ -1408,17 +1404,24 @@ dns_client_addtrustedkey(dns_client_t *client, dns_rdataclass_t rdclass,
 				   rdclass, &view);
 	UNLOCK(&client->lock);
 	if (result != ISC_R_SUCCESS)
-		return (result);
+		goto cleanup;
+
+	result = dns_view_getsecroots(view, &secroots);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup;
 
 	result = dst_key_fromdns(keyname, rdclass, keydatabuf, client->mctx,
 				 &dstkey);
 	if (result != ISC_R_SUCCESS)
-		return (result);
+		goto cleanup;
 
-	result = dns_keytable_add(view->secroots, ISC_FALSE, &dstkey);
+	result = dns_keytable_add(secroots, ISC_FALSE, &dstkey);
 
-	dns_view_detach(&view);
-
+ cleanup:
+	if (view != NULL)
+		dns_view_detach(&view);
+	if (secroots != NULL)
+		dns_keytable_detach(&secroots);
 	return (result);
 }
 

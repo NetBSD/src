@@ -1,4 +1,4 @@
-; Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2004, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
 ; Copyright (C) 2000-2002  Internet Software Consortium.
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
@@ -13,7 +13,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: example.db.in,v 1.19 2008/09/25 04:02:38 tbox Exp
+; Id: example.db.in,v 1.21 2009/10/27 23:47:44 tbox Exp
 
 $TTL 300	; 5 minutes
 @			IN SOA	mname1. . (
@@ -95,3 +95,9 @@ multiple		NS	ns.multiple
 ns.multiple		A	10.53.0.3
 
 *.wild			A	10.0.0.27
+
+rsasha256		NS	ns.rsasha256
+ns.rsasha256		A	10.53.0.3
+
+rsasha512		NS	ns.rsasha512
+ns.rsasha512		A	10.53.0.3

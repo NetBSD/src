@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.c,v 1.1.1.3 2009/10/25 00:02:35 christos Exp $	*/
+/*	$NetBSD: validator.c,v 1.1.1.4 2009/12/26 22:25:03 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: validator.c,v 1.178 2009/06/30 02:52:32 each Exp */
+/* Id: validator.c,v 1.182 2009/11/17 23:55:18 marka Exp */
 
 #include <config.h>
 
@@ -555,7 +555,8 @@ dsfetched2(isc_task_t *task, isc_event_t *event) {
 		if (isdelegation(tname, &val->frdataset, eresult)) {
 			if (val->mustbesecure) {
 				validator_log(val, ISC_LOG_WARNING,
-					      "must be secure failure");
+					      "must be secure failure, no DS"
+					      " and this is a delegation");
 				validator_done(val, DNS_R_MUSTBESECURE);
 			} else if (val->view->dlv == NULL || DLVTRIED(val)) {
 				markanswer(val);
@@ -1439,8 +1440,11 @@ create_fetch(dns_validator_t *val, dns_name_t *name, dns_rdatatype_t type,
 	if (dns_rdataset_isassociated(&val->fsigrdataset))
 		dns_rdataset_disassociate(&val->fsigrdataset);
 
-	if (check_deadlock(val, name, type, NULL, NULL))
+	if (check_deadlock(val, name, type, NULL, NULL)) {
+		validator_log(val, ISC_LOG_DEBUG(3),
+			      "deadlock found (create_fetch)");
 		return (DNS_R_NOVALIDSIG);
+	}
 
 	validator_logcreate(val, name, type, caller, "fetch");
 	return (dns_resolver_createfetch(val->view->resolver, name, type,
@@ -1462,8 +1466,11 @@ create_validator(dns_validator_t *val, dns_name_t *name, dns_rdatatype_t type,
 {
 	isc_result_t result;
 
-	if (check_deadlock(val, name, type, rdataset, sigrdataset))
+	if (check_deadlock(val, name, type, rdataset, sigrdataset)) {
+		validator_log(val, ISC_LOG_DEBUG(3),
+			      "deadlock found (create_validator)");
 		return (DNS_R_NOVALIDSIG);
+	}
 
 	validator_logcreate(val, name, type, caller, "validator");
 	result = dns_validator_create(val->view, name, type,
@@ -1609,7 +1616,7 @@ get_key(dns_validator_t *val, dns_rdata_rrsig_t *siginfo) {
 		 * We have an rrset for the given keyname.
 		 */
 		val->keyset = &val->frdataset;
-		if (val->frdataset.trust == dns_trust_pending &&
+		if (DNS_TRUST_PENDING(val->frdataset.trust) &&
 		    dns_rdataset_isassociated(&val->fsigrdataset))
 		{
 			/*
@@ -1624,7 +1631,7 @@ get_key(dns_validator_t *val, dns_rdata_rrsig_t *siginfo) {
 			if (result != ISC_R_SUCCESS)
 				return (result);
 			return (DNS_R_WAIT);
-		} else if (val->frdataset.trust == dns_trust_pending) {
+		} else if (DNS_TRUST_PENDING(val->frdataset.trust)) {
 			/*
 			 * Having a pending key with no signature means that
 			 * something is broken.
@@ -1851,7 +1858,9 @@ validate(dns_validator_t *val, isc_boolean_t resume) {
 		if (val->key == NULL) {
 			if (val->mustbesecure) {
 				validator_log(val, ISC_LOG_WARNING,
-					      "must be secure failure");
+					      "must be secure failure,"
+					      " key is insecure, so mark the"
+					      " data as insecure also.");
 				return (DNS_R_MUSTBESECURE);
 			}
 			markanswer(val);
@@ -1926,7 +1935,8 @@ validate(dns_validator_t *val, isc_boolean_t resume) {
 			event->rdataset->trust = dns_trust_secure;
 			event->sigrdataset->trust = dns_trust_secure;
 			validator_log(val, ISC_LOG_DEBUG(3),
-				      "marking as secure");
+				      "marking as secure, "
+				      "noqname proof not needed");
 			return (result);
 		} else {
 			validator_log(val, ISC_LOG_DEBUG(3),
@@ -2102,12 +2112,13 @@ dlv_validatezonekey(dns_validator_t *val) {
 	if (result == ISC_R_SUCCESS) {
 		val->event->rdataset->trust = dns_trust_secure;
 		val->event->sigrdataset->trust = dns_trust_secure;
-		validator_log(val, ISC_LOG_DEBUG(3), "marking as secure");
+		validator_log(val, ISC_LOG_DEBUG(3), "marking as secure (dlv)");
 		return (result);
 	} else if (result == ISC_R_NOMORE && !supported_algorithm) {
 		if (val->mustbesecure) {
 			validator_log(val, ISC_LOG_WARNING,
-				      "must be secure failure");
+				      "must be secure failure,"
+				      "no supported algorithm/digest (dlv)");
 			return (DNS_R_MUSTBESECURE);
 		}
 		validator_log(val, ISC_LOG_DEBUG(3),
@@ -2224,10 +2235,15 @@ validatezonekey(dns_validator_t *val) {
 		 * give up, since there's no DS at the root.
 		 */
 		if (dns_name_equal(event->name, dns_rootname)) {
-			if ((val->attributes & VALATTR_TRIEDVERIFY) != 0)
+			if ((val->attributes & VALATTR_TRIEDVERIFY) != 0) {
+				validator_log(val, ISC_LOG_DEBUG(3),
+					      "root key failed to validate");
 				return (DNS_R_NOVALIDSIG);
-			else
+			} else {
+				validator_log(val, ISC_LOG_DEBUG(3),
+					      "no trusted root key");
 				return (DNS_R_NOVALIDDS);
+			}
 		}
 
 		if (atsep) {
@@ -2255,7 +2271,7 @@ validatezonekey(dns_validator_t *val) {
 			 * We have DS records.
 			 */
 			val->dsset = &val->frdataset;
-			if (val->frdataset.trust == dns_trust_pending &&
+			if (DNS_TRUST_PENDING(val->frdataset.trust) &&
 			    dns_rdataset_isassociated(&val->fsigrdataset))
 			{
 				result = create_validator(val,
@@ -2268,7 +2284,7 @@ validatezonekey(dns_validator_t *val) {
 				if (result != ISC_R_SUCCESS)
 					return (result);
 				return (DNS_R_WAIT);
-			} else if (val->frdataset.trust == dns_trust_pending) {
+			} else if (DNS_TRUST_PENDING(val->frdataset.trust)) {
 				/*
 				 * There should never be an unsigned DS.
 				 */
@@ -2314,7 +2330,8 @@ validatezonekey(dns_validator_t *val) {
 	if (val->dsset->trust < dns_trust_secure) {
 		if (val->mustbesecure) {
 			validator_log(val, ISC_LOG_WARNING,
-				      "must be secure failure");
+				      "must be secure failure,"
+				      " insecure DS");
 			return (DNS_R_MUSTBESECURE);
 		}
 		markanswer(val);
@@ -2454,20 +2471,24 @@ validatezonekey(dns_validator_t *val) {
 	if (result == ISC_R_SUCCESS) {
 		event->rdataset->trust = dns_trust_secure;
 		event->sigrdataset->trust = dns_trust_secure;
-		validator_log(val, ISC_LOG_DEBUG(3), "marking as secure");
+		validator_log(val, ISC_LOG_DEBUG(3), "marking as secure (DS)");
 		return (result);
 	} else if (result == ISC_R_NOMORE && !supported_algorithm) {
 		if (val->mustbesecure) {
 			validator_log(val, ISC_LOG_WARNING,
-				      "must be secure failure");
+				      "must be secure failure, "
+				      "no supported algorithm/digest (DS)");
 			return (DNS_R_MUSTBESECURE);
 		}
 		validator_log(val, ISC_LOG_DEBUG(3),
 			      "no supported algorithm/digest (DS)");
 		markanswer(val);
 		return (ISC_R_SUCCESS);
-	} else
+	} else {
+		validator_log(val, ISC_LOG_INFO,
+			      "no valid signature found (DS)");
 		return (DNS_R_NOVALIDSIG);
+	}
 }
 
 /*%
@@ -2877,9 +2898,7 @@ nsecvalidate(dns_validator_t *val, isc_boolean_t resume) {
 		if ((val->attributes & VALATTR_FOUNDNOQNAME) != 0 &&
 		    (val->attributes & VALATTR_FOUNDCLOSEST) != 0) {
 			validator_log(val, ISC_LOG_DEBUG(3),
-				      "noqname proof found");
-			validator_log(val, ISC_LOG_DEBUG(3),
-				      "marking as secure");
+				      "marking as secure, noqname proof found");
 			val->event->rdataset->trust = dns_trust_secure;
 			val->event->sigrdataset->trust = dns_trust_secure;
 			return (ISC_R_SUCCESS);
@@ -3079,7 +3098,8 @@ startfinddlvsep(dns_validator_t *val, dns_name_t *unsecure) {
 		      namebuf);
 
 	if (dns_name_issubdomain(val->event->name, val->view->dlv)) {
-		validator_log(val, ISC_LOG_WARNING, "must be secure failure");
+		validator_log(val, ISC_LOG_WARNING, "must be secure failure, "
+			      " %s is under DLV (startfinddlvsep)", namebuf);
 		return (DNS_R_MUSTBESECURE);
 	}
 
@@ -3131,10 +3151,12 @@ finddlvsep(dns_validator_t *val, isc_boolean_t resume) {
 	INSIST(val->view->dlv != NULL);
 
 	if (!resume) {
-
 		if (dns_name_issubdomain(val->event->name, val->view->dlv)) {
+			dns_name_format(val->event->name, namebuf,
+					sizeof(namebuf));
 			validator_log(val, ISC_LOG_WARNING,
-				      "must be secure failure");
+				      "must be secure failure, "
+				      "%s is under DLV (finddlvsep)", namebuf);
 			return (DNS_R_MUSTBESECURE);
 		}
 
@@ -3184,8 +3206,11 @@ finddlvsep(dns_validator_t *val, isc_boolean_t resume) {
 			      namebuf);
 		result = view_find(val, dlvname, dns_rdatatype_dlv);
 		if (result == ISC_R_SUCCESS) {
-			if (val->frdataset.trust < dns_trust_secure)
+			if (val->frdataset.trust < dns_trust_secure) {
+				validator_log(val, ISC_LOG_DEBUG(3),
+					      "DLV not validated");
 				return (DNS_R_NOVALIDSIG);
+			}
 			val->havedlvsep = ISC_TRUE;
 			dns_rdataset_clone(&val->frdataset, &val->dlv);
 			return (ISC_R_SUCCESS);
@@ -3269,10 +3294,13 @@ proveunsecure(dns_validator_t *val, isc_boolean_t have_ds, isc_boolean_t resume)
 				      "not beneath secure root");
 			if (val->mustbesecure) {
 				validator_log(val, ISC_LOG_WARNING,
-					      "must be secure failure");
+					      "must be secure failure, "
+					      "not beneath secure root");
 				result = DNS_R_MUSTBESECURE;
 				goto out;
-			}
+			} else
+				validator_log(val, ISC_LOG_DEBUG(3),
+					      "not beneath secure root");
 			if (val->view->dlv == NULL || DLVTRIED(val)) {
 				markanswer(val);
 				return (ISC_R_SUCCESS);
@@ -3303,7 +3331,8 @@ proveunsecure(dns_validator_t *val, isc_boolean_t have_ds, isc_boolean_t resume)
 			if ((val->view->dlv == NULL || DLVTRIED(val)) &&
 			    val->mustbesecure) {
 				validator_log(val, ISC_LOG_WARNING,
-					      "must be secure failure at '%s'",
+					      "must be secure failure at '%s', "
+					      "can't fall back to DLV",
 					      namebuf);
 				result = DNS_R_MUSTBESECURE;
 				goto out;
@@ -3348,7 +3377,7 @@ proveunsecure(dns_validator_t *val, isc_boolean_t have_ds, isc_boolean_t resume)
 			 * There is no DS.  If this is a delegation,
 			 * we may be done.
 			 */
-			if (val->frdataset.trust == dns_trust_pending) {
+			if (DNS_TRUST_PENDING(val->frdataset.trust)) {
 				result = create_fetch(val, tname,
 						      dns_rdatatype_ds,
 						      dsfetched2,
@@ -3365,12 +3394,13 @@ proveunsecure(dns_validator_t *val, isc_boolean_t have_ds, isc_boolean_t resume)
 			if (result == DNS_R_NXRRSET &&
 			    !dns_rdataset_isassociated(&val->frdataset) &&
 			    dns_view_findzonecut2(val->view, tname, found,
-						  0, 0, ISC_FALSE, ISC_FALSE,
-						  NULL, NULL) == ISC_R_SUCCESS &&
+						 0, 0, ISC_FALSE, ISC_FALSE,
+						 NULL, NULL) == ISC_R_SUCCESS &&
 			    dns_name_equal(tname, found)) {
 				if (val->mustbesecure) {
 					validator_log(val, ISC_LOG_WARNING,
-						      "must be secure failure");
+						      "must be secure failure, "
+						      "no DS at zone cut");
 					return (DNS_R_MUSTBESECURE);
 				}
 				if (val->view->dlv == NULL || DLVTRIED(val)) {
@@ -3386,13 +3416,18 @@ proveunsecure(dns_validator_t *val, isc_boolean_t have_ds, isc_boolean_t resume)
 				 * there's no way of validating existing
 				 * negative response blobs, give up.
 				 */
+				validator_log(val, ISC_LOG_WARNING,
+					      "can't validate existing "
+					      "negative responses (no DS)");
 				result = DNS_R_NOVALIDSIG;
 				goto out;
 			}
 			if (isdelegation(tname, &val->frdataset, result)) {
 				if (val->mustbesecure) {
 					validator_log(val, ISC_LOG_WARNING,
-						      "must be secure failure");
+						      "must be secure failure, "
+						      "%s is a delegation",
+						      namebuf);
 					return (DNS_R_MUSTBESECURE);
 				}
 				if (val->view->dlv == NULL || DLVTRIED(val)) {
@@ -3415,7 +3450,10 @@ proveunsecure(dns_validator_t *val, isc_boolean_t have_ds, isc_boolean_t resume)
 					if (val->mustbesecure) {
 						validator_log(val,
 							      ISC_LOG_WARNING,
-						      "must be secure failure");
+						      "must be secure failure, "
+						      "no supported algorithm/"
+						      "digest (%s/DS)",
+						      namebuf);
 						result = DNS_R_MUSTBESECURE;
 						goto out;
 					}
@@ -3432,6 +3470,8 @@ proveunsecure(dns_validator_t *val, isc_boolean_t have_ds, isc_boolean_t resume)
 			}
 			else if (!dns_rdataset_isassociated(&val->fsigrdataset))
 			{
+				validator_log(val, ISC_LOG_DEBUG(3),
+					      "DS is unsigned");
 				result = DNS_R_NOVALIDSIG;
 				goto out;
 			}
@@ -3463,6 +3503,10 @@ proveunsecure(dns_validator_t *val, isc_boolean_t have_ds, isc_boolean_t resume)
 				 * there's no way of validating existing
 				 * negative response blobs, give up.
 				 */
+				validator_log(val, ISC_LOG_WARNING,
+					      "can't validate existing "
+					      "negative responses "
+					      "(not a zone cut)");
 				result = DNS_R_NOVALIDSIG;
 				goto out;
 			}
@@ -3653,6 +3697,7 @@ dns_validator_create(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
 		return (ISC_R_NOMEMORY);
 	val->view = NULL;
 	dns_view_weakattach(view, &val->view);
+
 	event = (dns_validatorevent_t *)
 		isc_event_allocate(view->mctx, task,
 				   DNS_EVENT_VALIDATORSTART,
@@ -3681,8 +3726,12 @@ dns_validator_create(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
 	val->fetch = NULL;
 	val->subvalidator = NULL;
 	val->parent = NULL;
+
 	val->keytable = NULL;
-	dns_keytable_attach(val->view->secroots, &val->keytable);
+	result = dns_view_getsecroots(val->view, &val->keytable);
+	if (result != ISC_R_SUCCESS)
+		return (result);
+
 	val->keynode = NULL;
 	val->key = NULL;
 	val->siginfo = NULL;

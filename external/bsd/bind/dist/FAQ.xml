@@ -17,7 +17,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: FAQ.xml,v 1.51 2009/10/05 01:49:59 each Exp -->
+<!-- Id: FAQ.xml,v 1.52 2009/11/03 14:02:20 marka Exp -->
 
 <article class="faq">
   <title>Frequently Asked Questions about BIND 9</title>
@@ -448,7 +448,7 @@ Master 10.0.1.1:
 			type master;
 			file "internal/example.db";
 			allow-update { key mykey; };
-			notify-also { 10.0.1.1; };
+			also-notify { 10.0.1.1; };
 		};
 	};
 
@@ -458,7 +458,7 @@ Master 10.0.1.1:
 			type slave;
 			file "external/example.db";
 			masters { 10.0.1.1; };
-			transfer-source { 10.0.1.1; };
+			transfer-source 10.0.1.1;
 			// allow-update-forwarding { any; };
 			// allow-notify { ... };
 		};
