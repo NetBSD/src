@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ssp.c,v 1.2 2009/02/26 05:50:54 kenh Exp $	*/
+/*	$NetBSD: kern_ssp.c,v 1.3 2009/12/26 21:41:14 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ssp.c,v 1.2 2009/02/26 05:50:54 kenh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ssp.c,v 1.3 2009/12/26 21:41:14 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ ssp_init(void)
 	int s;
 
 #ifdef DIAGNOSTIC
-	printf("Initializing SSP:");
+	printf("Initializing SSP: ");
 #endif
 	/*
 	 * We initialize ssp here carefully:
