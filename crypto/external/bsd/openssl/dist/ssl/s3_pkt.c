@@ -115,6 +115,7 @@
 #include "ssl_locl.h"
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
+#include <openssl/rand.h>
 
 static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 			 unsigned int len, int create_empty_fragment);
@@ -629,6 +630,7 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	unsigned char *p,*plen;
 	int i,mac_size,clear=0;
 	int prefix_len=0;
+	int eivlen;
 	long align=0;
 	SSL3_RECORD *wr;
 	SSL3_BUFFER *wb=&(s->s3->wbuf);
@@ -738,9 +740,18 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	/* field where we are to write out packet length */
 	plen=p; 
 	p+=2;
+	/* Explicit IV length, block ciphers and TLS version 1.1 or later */
+	if (s->enc_write_ctx && s->version >= TLS1_1_VERSION)
+		{
+		eivlen = EVP_CIPHER_CTX_iv_length(s->enc_write_ctx);
+		if (eivlen <= 1)
+			eivlen = 0;
+		}
+	else 
+		eivlen = 0;
 
 	/* lets setup the record stuff. */
-	wr->data=p;
+	wr->data=p + eivlen;
 	wr->length=(int)len;
 	wr->input=(unsigned char *)buf;
 
@@ -768,11 +779,19 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
 	if (mac_size != 0)
 		{
-		if (s->method->ssl3_enc->mac(s,&(p[wr->length]),1) < 0)
+		if (s->method->ssl3_enc->mac(s,&(p[wr->length + eivlen]),1) < 0)
 			goto err;
 		wr->length+=mac_size;
-		wr->input=p;
-		wr->data=p;
+		}
+
+	wr->input=p;
+	wr->data=p;
+
+	if (eivlen)
+		{
+	/*	if (RAND_pseudo_bytes(p, eivlen) <= 0)
+			goto err; */
+		wr->length += eivlen;
 		}
 
 	/* ssl3_enc can only have an error on read */
@@ -1120,7 +1139,25 @@ start:
 		 * now try again to obtain the (application) data we were asked for */
 		goto start;
 		}
-
+	/* If we are a server and get a client hello when renegotiation isn't
+	 * allowed send back a no renegotiation alert and carry on.
+	 * WARNING: experimental code, needs reviewing (steve)
+	 */
+	if (s->server &&
+		SSL_is_init_finished(s) &&
+    		!s->s3->send_connection_binding &&
+		(s->version > SSL3_VERSION) &&
+		(s->s3->handshake_fragment_len >= 4) &&
+		(s->s3->handshake_fragment[0] == SSL3_MT_CLIENT_HELLO) &&
+		(s->session != NULL) && (s->session->cipher != NULL) &&
+		!(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
+		
+		{
+		/*s->s3->handshake_fragment_len = 0;*/
+		rr->length = 0;
+		ssl3_send_alert(s,SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
+		goto start;
+		}
 	if (s->s3->alert_fragment_len >= 2)
 		{
 		int alert_level = s->s3->alert_fragment[0];
@@ -1149,6 +1186,21 @@ start:
 				{
 				s->shutdown |= SSL_RECEIVED_SHUTDOWN;
 				return(0);
+				}
+			/* This is a warning but we receive it if we requested
+			 * renegotiation and the peer denied it. Terminate with
+			 * a fatal alert because if application tried to
+			 * renegotiatie it presumably had a good reason and
+			 * expects it to succeed.
+			 *
+			 * In future we might have a renegotiation where we
+			 * don't care if the peer refused it where we carry on.
+			 */
+			else if (alert_descr == SSL_AD_NO_RENEGOTIATION)
+				{
+				al = SSL_AD_HANDSHAKE_FAILURE;
+				SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_NO_RENEGOTIATION);
+				goto f_err;
 				}
 			}
 		else if (alert_level == 2) /* fatal */
@@ -1262,7 +1314,7 @@ start:
 	default:
 #ifndef OPENSSL_NO_TLS
 		/* TLS just ignores unknown message types */
-		if (s->version == TLS1_VERSION)
+		if (s->version >= TLS1_VERSION && s->version <= TLS1_1_VERSION)
 			{
 			rr->length = 0;
 			goto start;

@@ -641,7 +641,8 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
 			cms->d.signedData->encapContentInfo->eContentType; 
 		unsigned char md[EVP_MAX_MD_SIZE];
 		unsigned int mdlen;
-		EVP_DigestFinal_ex(&mctx, md, &mdlen);
+		if (!EVP_DigestFinal_ex(&mctx, md, &mdlen))
+			goto err;
 		if (!CMS_signed_add1_attr_by_NID(si, NID_pkcs9_messageDigest,
 						V_ASN1_OCTET_STRING,
 						md, mdlen))
@@ -799,7 +800,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
 		}
 	r = EVP_DigestVerifyFinal(&mctx,
 			si->signature->data, si->signature->length);
-	if (!r)
+	if (r <= 0)
 		CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY, CMS_R_VERIFICATION_FAILURE);
 	err:
 	EVP_MD_CTX_cleanup(&mctx);

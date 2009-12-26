@@ -166,9 +166,6 @@
 
 static const SSL_METHOD *ssl3_get_client_method(int ver);
 static int ca_dn_cmp(const X509_NAME * const *a,const X509_NAME * const *b);
-#ifndef OPENSSL_NO_TLSEXT
-static int ssl3_check_finished(SSL *s);
-#endif
 
 static const SSL_METHOD *ssl3_get_client_method(int ver)
 	{
@@ -618,9 +615,15 @@ int ssl3_client_hello(SSL *s)
 	buf=(unsigned char *)s->init_buf->data;
 	if (s->state == SSL3_ST_CW_CLNT_HELLO_A)
 		{
-		if ((s->session == NULL) ||
-			(s->session->ssl_version != s->version) ||
-			(s->session->not_resumable))
+		SSL_SESSION *sess = s->session;
+		if ((sess == NULL) ||
+			(sess->ssl_version != s->version) ||
+#ifdef OPENSSL_NO_TLSEXT
+			!sess->session_id_length ||
+#else
+			(!sess->session_id_length && !sess->tlsext_tick) ||
+#endif
+			(sess->not_resumable))
 			{
 			if (!ssl_get_new_session(s,0))
 				goto err;
@@ -909,7 +912,7 @@ int ssl3_get_server_hello(SSL *s)
 
 #ifndef OPENSSL_NO_TLSEXT
 	/* TLS extensions*/
-	if (s->version > SSL3_VERSION)
+	if (s->version >= SSL3_VERSION)
 		{
 		if (!ssl_parse_serverhello_tlsext(s,&p,d,n, &al))
 			{
@@ -1815,6 +1818,7 @@ int ssl3_get_new_session_ticket(SSL *s)
 		SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET,SSL_R_LENGTH_MISMATCH);
 		goto f_err;
 		}
+
 	p=d=(unsigned char *)s->init_msg;
 	n2l(p, s->session->tlsext_tick_lifetime_hint);
 	n2s(p, ticklen);
@@ -1838,7 +1842,28 @@ int ssl3_get_new_session_ticket(SSL *s)
 		}
 	memcpy(s->session->tlsext_tick, p, ticklen);
 	s->session->tlsext_ticklen = ticklen;
-	
+	/* There are two ways to detect a resumed ticket sesion.
+	 * One is to set an appropriate session ID and then the server
+	 * must return a match in ServerHello. This allows the normal
+	 * client session ID matching to work and we know much 
+	 * earlier that the ticket has been accepted.
+	 * 
+	 * The other way is to set zero length session ID when the
+	 * ticket is presented and rely on the handshake to determine
+	 * session resumption.
+	 *
+	 * We choose the former approach because this fits in with
+	 * assumptions elsewhere in OpenSSL. The session ID is set
+	 * to the SHA256 (or SHA1 is SHA256 is disabled) hash of the
+	 * ticket.
+	 */ 
+	EVP_Digest(p, ticklen,
+			s->session->session_id, &s->session->session_id_length,
+#ifndef OPENSSL_NO_SHA256
+							EVP_sha256(), NULL);
+#else
+							EVP_sha1(), NULL);
+#endif
 	ret=1;
 	return(ret);
 f_err:
@@ -2707,7 +2732,7 @@ int ssl3_send_client_verify(SSL *s)
 		s->method->ssl3_enc->cert_verify_mac(s,
 			NID_id_GostR3411_94,
 			data);
-		if (!EVP_PKEY_sign(pctx,signbuf,&sigsize,data,32)) {
+		if (EVP_PKEY_sign(pctx, signbuf, &sigsize, data, 32) <= 0) {
 			SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,
 			ERR_R_INTERNAL_ERROR);
 			goto err;
@@ -2958,7 +2983,7 @@ err:
  */
 
 #ifndef OPENSSL_NO_TLSEXT
-static int ssl3_check_finished(SSL *s)
+int ssl3_check_finished(SSL *s)
 	{
 	int ok;
 	long n;

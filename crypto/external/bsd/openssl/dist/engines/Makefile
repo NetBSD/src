@@ -107,6 +107,7 @@ install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
+		$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines; \
 		for l in $(LIBNAMES); do \
 			( echo installing $$l; \
 			  pfx=lib; \
@@ -118,13 +119,13 @@ install:
 				*DSO_WIN32*)	sfx="eay32.dll"; pfx=;;	\
 				*)		sfx=".bad";;	\
 				esac; \
-				cp $$pfx$$l$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$$pfx$$l$$sfx.new; \
+				cp $$pfx$$l$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new; \
 			  else \
 				sfx=".so"; \
-				cp cyg$$l.dll $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$$pfx$$l$$sfx.new; \
+				cp cyg$$l.dll $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new; \
 			  fi; \
-			  chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$$pfx$$l$$sfx.new; \
-			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$$pfx$$l$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$$pfx$$l$$sfx ); \
+			  chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new; \
+			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx ); \
 		done; \
 	fi
 	@target=install; $(RECURSIVE_MAKE)
