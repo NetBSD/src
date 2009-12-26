@@ -1,7 +1,7 @@
-/*	$NetBSD: rrsig_46.c,v 1.1.1.1 2009/03/22 15:01:55 christos Exp $	*/
+/*	$NetBSD: rrsig_46.c,v 1.1.1.2 2009/12/26 22:25:28 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rrsig_46.c,v 1.10 2007/06/19 23:47:17 tbox Exp */
+/* Id: rrsig_46.c,v 1.12 2009/12/04 22:06:37 tbox Exp */
 
 /* Reviewed: Fri Mar 17 09:05:02 PST 2000 by gson */
 
@@ -548,6 +548,49 @@ checknames_rrsig(ARGS_CHECKNAMES) {
 	UNUSED(bad);
 
 	return (ISC_TRUE);
+}
+
+static inline int
+casecompare_rrsig(ARGS_COMPARE) {
+	isc_region_t r1;
+	isc_region_t r2;
+	dns_name_t name1;
+	dns_name_t name2;
+	int order;
+
+	REQUIRE(rdata1->type == rdata2->type);
+	REQUIRE(rdata1->rdclass == rdata2->rdclass);
+	REQUIRE(rdata1->type == 46);
+	REQUIRE(rdata1->length != 0);
+	REQUIRE(rdata2->length != 0);
+
+	dns_rdata_toregion(rdata1, &r1);
+	dns_rdata_toregion(rdata2, &r2);
+
+	INSIST(r1.length > 18);
+	INSIST(r2.length > 18);
+	r1.length = 18;
+	r2.length = 18;
+	order = isc_region_compare(&r1, &r2);
+	if (order != 0)
+		return (order);
+
+	dns_name_init(&name1, NULL);
+	dns_name_init(&name2, NULL);
+	dns_rdata_toregion(rdata1, &r1);
+	dns_rdata_toregion(rdata2, &r2);
+	isc_region_consume(&r1, 18);
+	isc_region_consume(&r2, 18);
+	dns_name_fromregion(&name1, &r1);
+	dns_name_fromregion(&name2, &r2);
+	order = dns_name_rdatacompare(&name1, &name2);
+	if (order != 0)
+		return (order);
+
+	isc_region_consume(&r1, name_length(&name1));
+	isc_region_consume(&r2, name_length(&name2));
+
+	return (isc_region_compare(&r1, &r2));
 }
 
 #endif	/* RDATA_GENERIC_RRSIG_46_C */

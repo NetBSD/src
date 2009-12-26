@@ -244,7 +244,7 @@ A: You choose one view to be master and the second a slave and transfer
                            type master;
                            file "internal/example.db";
                            allow-update { key mykey; };
-                           notify-also { 10.0.1.1; };
+                           also-notify { 10.0.1.1; };
                    };
            };
 
@@ -254,7 +254,7 @@ A: You choose one view to be master and the second a slave and transfer
                            type slave;
                            file "external/example.db";
                            masters { 10.0.1.1; };
-                           transfer-source { 10.0.1.1; };
+                           transfer-source 10.0.1.1;
                            // allow-update-forwarding { any; };
                            // allow-notify { ... };
                    };

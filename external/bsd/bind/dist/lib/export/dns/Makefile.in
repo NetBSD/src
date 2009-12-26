@@ -12,10 +12,11 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.3 2009/09/02 23:48:02 tbox Exp
+# Id: Makefile.in,v 1.4 2009/12/05 23:31:40 each Exp
 
 top_srcdir =	@top_srcdir@
 srcdir =	@top_srcdir@/lib/dns
+export_srcdir =	@top_srcdir@/lib/export
 
 # Attempt to disable parallel processing.
 .NOTPARALLEL:
@@ -27,7 +28,7 @@ srcdir =	@top_srcdir@/lib/dns
 
 @BIND9_MAKE_INCLUDES@
 
-CINCLUDES =	-I. -Iinclude ${DNS_INCLUDES} \
+CINCLUDES =	-I. -Iinclude ${DNS_INCLUDES} -I${export_srcdir}/isc/include \
 		${ISC_INCLUDES} @DST_OPENSSL_INC@ @DST_GSSAPI_INC@
 
 CDEFINES =	-DUSE_MD5 @USE_OPENSSL@ @USE_GSSAPI@

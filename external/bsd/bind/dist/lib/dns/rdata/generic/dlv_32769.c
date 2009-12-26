@@ -1,7 +1,7 @@
-/*	$NetBSD: dlv_32769.c,v 1.1.1.1 2009/03/22 15:01:51 christos Exp $	*/
+/*	$NetBSD: dlv_32769.c,v 1.1.1.2 2009/12/26 22:25:24 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dlv_32769.c,v 1.6 2007/06/18 23:47:43 tbox Exp */
+/* Id: dlv_32769.c,v 1.8 2009/12/04 22:06:37 tbox Exp */
 
 /* draft-ietf-dnsext-delegation-signer-05.txt */
 
@@ -146,7 +146,7 @@ fromwire_dlv(ARGS_FROMWIRE) {
 	UNUSED(options);
 
 	isc_buffer_activeregion(source, &sr);
- 
+
 	/*
 	 * Check digest lengths if we know them.
 	 */
@@ -166,7 +166,7 @@ fromwire_dlv(ARGS_FROMWIRE) {
 		sr.length = 4 + ISC_SHA1_DIGESTLENGTH;
 	else if (sr.base[3] == DNS_DSDIGEST_SHA256)
 		sr.length = 4 + ISC_SHA256_DIGESTLENGTH;
- 
+
 	isc_buffer_forward(source, sr.length);
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
@@ -318,6 +318,11 @@ checknames_dlv(ARGS_CHECKNAMES) {
 	UNUSED(bad);
 
 	return (ISC_TRUE);
+}
+
+static inline int
+casecompare_dlv(ARGS_COMPARE) {
+	return (compare_dlv(rdata1, rdata2));
 }
 
 #endif	/* RDATA_GENERIC_DLV_32769_C */

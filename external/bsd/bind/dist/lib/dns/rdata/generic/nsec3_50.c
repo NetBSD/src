@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3_50.c,v 1.1.1.2 2009/10/25 00:02:40 christos Exp $	*/
+/*	$NetBSD: nsec3_50.c,v 1.1.1.3 2009/12/26 22:25:27 christos Exp $	*/
 
 /*
  * Copyright (C) 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec3_50.c,v 1.6 2009/01/17 23:47:43 tbox Exp */
+/* Id: nsec3_50.c,v 1.7 2009/12/04 21:09:34 marka Exp */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -478,6 +478,11 @@ checknames_nsec3(ARGS_CHECKNAMES) {
 	UNUSED(bad);
 
 	return (ISC_TRUE);
+}
+
+static inline int
+casecompare_nsec3(ARGS_COMPARE) {
+	return (compare_nsec3(rdata1, rdata2));
 }
 
 #endif	/* RDATA_GENERIC_NSEC3_50_C */

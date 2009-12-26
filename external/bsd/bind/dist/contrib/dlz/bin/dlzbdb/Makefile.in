@@ -13,7 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.4 2009/09/01 00:22:26 jinmei Exp
+# Id: Makefile.in,v 1.5 2009/12/05 23:31:40 each Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -28,7 +28,7 @@ DLZINCLUDES =	@DLZ_DRIVER_INCLUDES@
 CINCLUDES =	-I${srcdir}/include -I${srcdir}/unix/include \
                 ${ISC_INCLUDES} ${DLZINCLUDES}
 
-CDEFINES =      -DBIND9 @USE_DLZ@
+CDEFINES =      @USE_DLZ@
 CWARNINGS =
 
 DLZLIBS = 	@DLZ_DRIVER_LIBS@

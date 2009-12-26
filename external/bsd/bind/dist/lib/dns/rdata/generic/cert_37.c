@@ -1,7 +1,7 @@
-/*	$NetBSD: cert_37.c,v 1.1.1.1 2009/03/22 15:01:51 christos Exp $	*/
+/*	$NetBSD: cert_37.c,v 1.1.1.2 2009/12/26 22:25:23 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cert_37.c,v 1.50 2007/06/19 23:47:17 tbox Exp */
+/* Id: cert_37.c,v 1.52 2009/12/04 22:06:37 tbox Exp */
 
 /* Reviewed: Wed Mar 15 21:14:32 EST 2000 by tale */
 
@@ -278,5 +278,9 @@ checknames_cert(ARGS_CHECKNAMES) {
 	return (ISC_TRUE);
 }
 
-#endif	/* RDATA_GENERIC_CERT_37_C */
 
+static inline int
+casecompare_cert(ARGS_COMPARE) {
+	return (compare_cert(rdata1, rdata2));
+}
+#endif	/* RDATA_GENERIC_CERT_37_C */

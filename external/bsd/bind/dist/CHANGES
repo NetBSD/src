@@ -1,3 +1,296 @@
+	--- 9.7.0rc1 released ---
+
+2806.	[bug]		"rdnc sign" could delay re-signing the DNSKEY
+			when it had changed. [RT #20703]
+
+2805.	[bug]		Fixed namespace problems encountered when building
+			external programs using non-exported BIND9 libraries
+			(i.e., built without --enable-exportlib). [RT #20679]
+
+2804.	[bug]		Send notifies when a zone is signed with "rndc sign"
+			or as a result of a scheduled key change. [RT #20700]
+
+2803.	[port]		win32: Install named-journalprint, nsec3hash, arpaname
+			and genrandom under windows. [RT #20670]
+
+2802.	[cleanup]	Rename journalprint to named-journalprint. [RT #20670]
+
+2801.	[func]		Detect and report records that are different according
+			to DNSSEC but are sematically equal according to plain
+			DNS.  Apply plain DNS comparisons rather than DNSSEC
+			comparisons when processing UPDATE requests.
+			dnssec-signzone now removes such semantically duplicate
+			records prior to signing the RRset.
+
+			named-checkzone -r {ignore|warn|fail} (default warn)
+			named-compilezone -r {ignore|warn|fail} (default warn)
+			
+			named.conf: check-dup-records {ignore|warn|fail};
+
+2800.	[func]		Reject zones which have NS records which refer to
+			CNAMEs, DNAMEs or don't have address record (class IN
+			only).  Reject UPDATEs which would cause the zone
+			to fail the above checks if committed. [RT #20678]
+
+2799.	[cleanup]	Changed the "secure-to-insecure" option to
+			"dnssec-secure-to-insecure", and "dnskey-ksk-only"
+			to "dnssec-dnskey-kskonly", for clarity. [RT #20586]
+
+2798.	[bug]		Addressed bugs in managed-keys initialization 
+			and rollover. [RT #20683]
+
+2797.	[bug]		Don't decrement the dispatch manager's maxbuffers.
+			[RT #20613]
+
+2796.	[bug]		Missing dns_rdataset_disassociate() call in
+			dns_nsec3_delnsec3sx(). [RT #20681]
+
+2795.	[cleanup]	Add text to differentiate "update with no effect"
+			log messages. [RT #18889]
+
+2794.	[bug]		Install <isc/namespace.h>.  [RT #20677]
+
+2793.	[func]		Add "autosign" and "metadata" tests to the
+			automatic tests. [RT #19946]
+
+2792.	[func]		"filter-aaaa-on-v4" can now be set in view
+			options (if compiled in).  [RT #20635]
+
+2791.	[bug]		The installation of isc-config.sh was broken.
+			[RT #20667]
+
+2790.	[bug]		Handle DS queries to stub zones. [RT #20440]
+
+2789.   [bug]           Fixed an INSIST in dispatch.c [RT #20576]
+
+2788.	[bug]		dnssec-signzone could sign with keys that were
+			not requested [RT #20625]
+
+2787.	[bug]		Spurious log message when zone keys were
+			dynamically reconfigured. [RT #20659]
+
+2786.	[bug]		Additional could be promoted to answer. [RT #20663]
+
+	--- 9.7.0b3 released ---
+
+2785.	[bug]		Revoked keys could fail to self-sign [RT #20652]
+
+2784.	[bug]		TC was not always being set when required glue was
+			dropped. [RT #20655]
+
+2783.	[func]		Return minimal responses to EDNS/UDP queries with a UDP
+			buffer size of 512 or less.  [RT #20654]
+
+2782.	[port]		win32: use getaddrinfo() for hostname lookups.
+			[RT #20650]
+
+2781.	[bug]		Inactive keys could be used for signing. [RT #20649]
+
+2780.	[bug]		dnssec-keygen -A none didn't properly unset the
+			activation date in all cases. [RT #20648]
+
+2779.	[bug]		Dynamic key revokation could fail. [RT #20644]
+
+2778.	[bug]		dnssec-signzone could fail when a key was revoked
+			without deleting the unrevoked version. [RT #20638]
+
+2777.	[contrib]	DLZ MYSQL auto reconnect support discovery was wrong.
+
+2776.	[bug]		Change #2762 was not correct. [RT #20647]
+
+2775.	[bug]		Accept RSASHA256 and RSASHA512 as NSEC3 compatible
+			in dnssec-keyfromlabel. [RT #20643]
+
+2774.	[bug]		Existing cache DB wasn't being reused after
+			reconfiguration. [RT #20629]
+
+2773.	[bug]		In autosigned zones, the SOA could be signed
+			with the KSK. [RT #20628]
+
+2772.	[security]	When validating, track whether pending data was from
+			the additional section or not and only return it if
+			validates as secure. [RT #20438]
+
+2771.	[bug]		dnssec-signzone: DNSKEY records could be
+			corrupted when importing from key files [RT #20624]
+
+2770.	[cleanup]	Add log messages to resolver.c to indicate events
+			causing FORMERR responses. [RT #20526]
+
+2769.	[cleanup]	Change #2742 was incomplete. [RT #19589]
+
+2768.	[bug]		dnssec-signzone: -S no longer implies -g [RT #20568]
+
+2767.	[bug]		named could crash on startup if a zone was
+			configured with auto-dnssec and there was no
+			key-directory. [RT #20615]
+
+2766.	[bug]		isc_socket_fdwatchpoke() should only update the
+			socketmgr state if the socket is not pending on a
+			read or write.  [RT #20603]
+
+2765.	[bug]		Skip masters for which the TSIG key cannot be found.
+			[RT #20595]
+
+2764.	[bug]		"rndc-confgen -a" could trigger a REQUIRE. [RT #20610]
+
+2763.	[bug]		"rndc sign" didn't create an NSEC chain. [RT #20591]
+
+2762.	[bug]		DLV validation failed with a local slave DLV zone.
+			[RT #20577]
+
+2761.	[cleanup]	Enable internal symbol table for backtrace only for
+			systems that are known to work.  Currently, BSD
+			variants, Linux and Solaris are supported. [RT# 20202]
+
+2760.	[cleanup]	Corrected named-compilezone usage summary. [RT #20533]
+
+2759.	[doc]		Add information about .jbk/.jnw files to
+			the ARM. [RT #20303]
+
+2758.	[bug]		win32: Added a workaround for a windows 2008 bug
+			that could cause the UDP client handler to shut
+			down. [RT #19176]
+
+2757.	[bug]		dig: assertion failure could occur in connect
+			timeout. [RT #20599]
+
+2756.	[bug]		Fixed corrupt logfile message in update.c. [RT# 20597]
+
+2755.	[placeholder]
+
+2754.	[bug]		Secure-to-insecure transitions failed when zone
+			was signed with NSEC3. [RT #20587]
+
+2753.	[bug]		Removed an unnecessary warning that could appear when
+			building an NSEC chain. [RT #20589]
+
+2752.	[bug]		Locking violation. [RT #20587]
+
+2751.	[bug]		Fixed a memory leak in dnssec-keyfromlabel. [RT #20588]
+
+2750.	[bug]		dig: assertion failure could occur when a server
+			didn't have an address. [RT #20579]
+
+2749.	[bug]		ixfr-from-differences generated a non-minimal ixfr
+			for NSEC3 signed zones. [RT #20452]
+
+2748.	[func]		Identify bad answers from GTLD servers and treat them
+			as referrals. [RT #18884]
+
+2747.	[bug]		Journal roll forwards failed to set the re-signing
+			time of RRSIGs correctly. [RT #20541]
+
+2746.	[port]		hpux: address signed/unsigned expansion mismatch of
+			dns_rbtnode_t.nsec. [RT #20542]
+
+2745.	[bug]		configure script didn't probe the return type of
+			gai_strerror(3) correctly. [RT #20573]
+
+2744.	[func]		Log if a query was over TCP. [RT #19961]
+
+2743.	[bug]		RRSIG could be incorrectly set in the NSEC3 record
+			for a insecure delegation.
+
+	--- 9.7.0b2 released ---
+
+2742.	[cleanup]	Clarify some DNSSEC-related log messages in
+			validator.c. [RT #19589]
+
+2741.	[func]		Allow the dnssec-keygen progress messages to be
+			suppressed (dnssec-keygen -q).  Automatically
+			suppress the progress messages when stdin is not
+			a tty. [RT #20474]
+
+2740.	[placeholder]
+
+2739.	[cleanup]	Clean up API for initializing and clearing trust
+			anchors for a view. [RT #20211]
+
+2738.	[func]		Add RSASHA256 and RSASHA512 tests to the dnssec system
+			test. [RT #20453]
+
+2737.	[func]		UPDATE requests can leak existance information.
+			[RT #17261]
+
+2736.	[func]		Improve the performance of NSEC signed zones with
+			more than a normal amount of glue below a delegation.
+			[RT #20191]
+
+2735.	[bug]		dnssec-signzone could fail to read keys
+			that were specified on the command line with
+			full paths, but weren't in the current
+			directory. [RT #20421]
+
+2734.	[port]		cygwin: arpaname did not compile. [RT #20473]
+
+2733.	[cleanup]	Clean up coding style in pkcs11-* tools. [RT #20355]
+
+2732.	[func]		Add optional filter-aaaa-on-v4 option, available
+			if built with './configure --enable-filter-aaaa'.
+			Filters out AAAA answers to clients connecting
+			via IPv4.  (This is NOT recommended for general
+			use.) [RT #20339]
+
+2731.	[func]		Additional work on change 2709.  The key parser
+			will now ignore unrecognized fields when the
+			minor version number of the private key format
+			has been increased.  It will reject any key with
+			the major version number increased. [RT #20310]
+
+2730.	[func]		Have dnssec-keygen display a progress indication
+			a la 'openssl genrsa' on standard error. Note
+			when the first '.' is followed by a long stop
+			one has the choice between slow generation vs.
+			poor random quality, i.e., '-r /dev/urandom'.
+			[RT #20284]
+
+2729.	[func]		When constructing a CNAME from a DNAME use the DNAME
+			TTL. [RT #20451]
+
+2728.	[bug]		dnssec-keygen, dnssec-keyfromlabel and
+			dnssec-signzone now warn immediately if asked to
+			write into a nonexistent directory. [RT #20278]
+
+2727.	[func]		The 'key-directory' option can now specify a relative
+			path. [RT #20154]
+
+2726.	[func]		Added support for SHA-2 DNSSEC algorithms,
+			RSASHA256 and RSASHA512. [RT #20023]
+
+2725.	[doc]		Added information about the file "managed-keys.bind"
+			to the ARM. [RT #20235]
+
+2724.	[bug]		Updates to a existing node in secure zone using NSEC
+			were failing. [RT #20448]
+
+2723.	[bug]		isc_base32_totext(), isc_base32hex_totext(), and
+			isc_base64_totext(), didn't always mark regions of
+			memory as fully consumed after conversion.  [RT #20445]
+
+2722.	[bug]		Ensure that the memory associated with the name of
+			a node in a rbt tree is not altered during the life
+			of the node. [RT #20431]
+
+2721.	[port]		Have dst__entropy_status() prime the random number
+			generator. [RT #20369]
+
+2720.	[bug]		RFC 5011 trust anchor updates could trigger an
+			assert if the DNSKEY record was unsigned. [RT #20406]
+
+2719.	[func]		Skip trusted/managed keys for unsupported algorithms.
+			[RT #20392]
+
+2718.	[bug]		The space calculations in opensslrsa_todns() were
+			incorrect. [RT #20394]
+
+2717.	[bug]		named failed to update the NSEC/NSEC3 record when
+			the last private type record was removed as a result
+			of completing the signing the zone with a key.
+			[RT #20399]
+
+2716.	[bug]		nslookup debug mode didn't return the ttl. [RT #20414]
+
 	--- 9.7.0b1 released ---
 
 2715.	[bug]		Require OpenSSL support to be explicitly disabled.
@@ -17,7 +310,7 @@
 			'auto-dnssec maintain;' allows that too, plus it
 			also keeps the zone's DNSSEC keys up to date
 			according to their timing metadata. [RT #19943]
-			
+
 2711.	[port]		win32: Add the bin/pkcs11 tools into the full
 			build. [RT #20372]
 
@@ -487,7 +780,7 @@
 			date to the version string, -DNO_VERSION_DATE.
 
 2582.	[bug]		Don't emit warning log message when we attempt to
-			remove non-existant journal. [RT #19516]
+			remove non-existent journal. [RT #19516]
 
 2581.	[contrib]	dlz/mysql set MYSQL_OPT_RECONNECT option on connection.
 			Requires MySQL 5.0.19 or later. [RT #19084]

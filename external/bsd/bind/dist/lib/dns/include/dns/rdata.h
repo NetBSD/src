@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.h,v 1.1.1.2 2009/10/25 00:02:38 christos Exp $	*/
+/*	$NetBSD: rdata.h,v 1.1.1.3 2009/12/26 22:25:18 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdata.h,v 1.76 2009/10/08 23:48:10 tbox Exp */
+/* Id: rdata.h,v 1.77 2009/12/04 21:09:33 marka Exp */
 
 #ifndef DNS_RDATA_H
 #define DNS_RDATA_H 1
@@ -209,6 +209,25 @@ dns_rdata_compare(const dns_rdata_t *rdata1, const dns_rdata_t *rdata2);
 /*%<
  * Determine the relative ordering under the DNSSEC order relation of
  * 'rdata1' and 'rdata2'.
+ *
+ * Requires:
+ *
+ *\li	'rdata1' is a valid, non-empty rdata
+ *
+ *\li	'rdata2' is a valid, non-empty rdata
+ *
+ * Returns:
+ *\li	< 0		'rdata1' is less than 'rdata2'
+ *\li	0		'rdata1' is equal to 'rdata2'
+ *\li	> 0		'rdata1' is greater than 'rdata2'
+ */
+
+int
+dns_rdata_casecompare(const dns_rdata_t *rdata1, const dns_rdata_t *rdata2);
+/*%<
+ * dns_rdata_casecompare() is similar to dns_rdata_compare() but also
+ * compares domain names case insensitively in known rdata types that
+ * are treated as opaque data by dns_rdata_compare().
  *
  * Requires:
  *

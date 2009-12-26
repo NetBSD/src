@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_parse.c,v 1.1.1.2 2009/10/25 00:02:29 christos Exp $	*/
+/*	$NetBSD: dst_parse.c,v 1.1.1.3 2009/12/26 22:24:33 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -33,7 +33,7 @@
 
 /*%
  * Principal Author: Brian Wellington
- * Id: dst_parse.c,v 1.21 2009/10/09 06:09:21 each Exp
+ * Id: dst_parse.c,v 1.23 2009/10/26 21:18:24 each Exp
  */
 
 #include <config.h>
@@ -387,9 +387,7 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 		goto fail;
 	}
 
-	if (major > MAJOR_VERSION ||
-	    (major == MAJOR_VERSION && minor > MINOR_VERSION))
-	{
+	if (major > DST_MAJOR_VERSION) {
 		ret = DST_R_INVALIDPRIVATEKEY;
 		goto fail;
 	}
@@ -478,10 +476,13 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 
 		/* Key data */
 		tag = find_value(DST_AS_STR(token), alg);
-		if (tag < 0) {
+		if (tag < 0 && minor > DST_MINOR_VERSION)
+			goto next;
+		else if (tag < 0) {
 			ret = DST_R_INVALIDPRIVATEKEY;
 			goto fail;
 		}
+
 		priv->elements[n].tag = tag;
 
 		data = (unsigned char *) isc_mem_get(mctx, MAXFIELDSIZE);
@@ -492,6 +493,7 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 		ret = isc_base64_tobuffer(lex, &b, -1);
 		if (ret != ISC_R_SUCCESS)
 			goto fail;
+
 		isc_buffer_usedregion(&b, &r);
 		priv->elements[n].length = r.length;
 		priv->elements[n].data = r.base;
@@ -552,8 +554,8 @@ dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 
 	dst_key_getprivateformat(key, &major, &minor);
 	if (major == 0 && minor == 0) {
-		major = MAJOR_VERSION;
-		minor = MINOR_VERSION;
+		major = DST_MAJOR_VERSION;
+		minor = DST_MINOR_VERSION;
 	}
 
 	/* XXXDCL return value should be checked for full filesystem */
@@ -580,6 +582,12 @@ dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 		break;
 	case DST_ALG_NSEC3DSA:
 		fprintf(fp, "(NSEC3DSA)\n");
+		break;
+	case DST_ALG_RSASHA256:
+		fprintf(fp, "(RSASHA256)\n");
+		break;
+	case DST_ALG_RSASHA512:
+		fprintf(fp, "(RSASHA512)\n");
 		break;
 	case DST_ALG_HMACMD5:
 		fprintf(fp, "(HMAC_MD5)\n");

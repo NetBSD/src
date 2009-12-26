@@ -2,7 +2,7 @@ Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
 Copyright (C) 2001, 2002  Internet Software Consortium.
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
-Id: win32-build.txt,v 1.18 2009/10/12 16:41:13 each Exp
+Id: win32-build.txt,v 1.19 2009/11/06 03:14:10 each Exp
 
        BIND 9.7 for Win32 Source Build Instructions.  02-Jul-2009
 
@@ -54,21 +54,21 @@ Step 1: Download and build OpenSSL
 Download and untar the OpenSSL sources from http://www.openssl.org/.
 Extract them at in the same directory in which you extracted the BIND9
 source:  If BIND9 is in \build\bind-9.7.0, for instance, OpenSSL should be
-in \build\openssl-0.9.8k (subject to version number changes).
+in \build\openssl-0.9.8l (subject to version number changes).
 
 Note: Building OpenSSL requires that you install Perl as it uses
 it during its build process. The following commands work as of
-openssl-0.9.8k, but you should check the OpenSSL distribution 
+openssl-0.9.8l, but you should check the OpenSSL distribution 
 to see if the build instructions have changed:
 
-  cd openssl-0.9.8k
+  cd openssl-0.9.8l
   perl Configure VC-WIN32 --prefix=c:/openssl
   ms\do_masm
   nmake /f ms\ntdll.mak
 
 If you wish to use PKCS #11 to control a cryptographic hardware service
 module, please see bind9\README.pkcs11.  You will need to apply the patch
-in bind9\bin\pkcs11\openssl-0.9.8k-patch (this can be done using the Cygwin
+in bind9\bin\pkcs11\openssl-0.9.8l-patch (this can be done using the Cygwin
 'patch' utility) and add --pk11-libname and --pk11-flavor to the Configure
 command above.
 
