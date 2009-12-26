@@ -1,7 +1,7 @@
-/*	$NetBSD: px_26.c,v 1.1.1.1 2009/03/22 15:01:58 christos Exp $	*/
+/*	$NetBSD: px_26.c,v 1.1.1.2 2009/12/26 22:25:31 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: px_26.c,v 1.43 2007/06/19 23:47:17 tbox Exp */
+/* Id: px_26.c,v 1.45 2009/12/04 22:06:37 tbox Exp */
 
 /* Reviewed: Mon Mar 20 10:44:27 PST 2000 */
 
@@ -117,7 +117,7 @@ totext_in_px(ARGS_TOTEXT) {
 
 static inline isc_result_t
 fromwire_in_px(ARGS_FROMWIRE) {
-        dns_name_t name;
+	dns_name_t name;
 	isc_region_t sregion;
 
 	REQUIRE(type == 26);
@@ -128,7 +128,7 @@ fromwire_in_px(ARGS_FROMWIRE) {
 
 	dns_decompress_setmethods(dctx, DNS_COMPRESS_NONE);
 
-        dns_name_init(&name, NULL);
+	dns_name_init(&name, NULL);
 
 	/*
 	 * Preference.
@@ -371,6 +371,11 @@ checknames_in_px(ARGS_CHECKNAMES) {
 	UNUSED(bad);
 
 	return (ISC_TRUE);
+}
+
+static inline int
+casecompare_in_px(ARGS_COMPARE) {
+	return (compare_in_px(rdata1, rdata2));
 }
 
 #endif	/* RDATA_IN_1_PX_26_C */

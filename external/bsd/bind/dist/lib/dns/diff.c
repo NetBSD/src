@@ -1,4 +1,4 @@
-/*	$NetBSD: diff.c,v 1.1.1.2 2009/10/25 00:02:28 christos Exp $	*/
+/*	$NetBSD: diff.c,v 1.1.1.3 2009/12/26 22:24:29 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: diff.c,v 1.21 2009/04/30 06:53:10 marka Exp */
+/* Id: diff.c,v 1.23 2009/12/01 00:47:09 each Exp */
 
 /*! \file */
 
@@ -401,9 +401,9 @@ diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver,
 							      sizeof(classbuf));
 					isc_log_write(DIFF_COMMON_LOGARGS,
 						      ISC_LOG_WARNING,
-						      "%s/%s: update with no "
-						      " effect", namebuf,
-						      classbuf);
+						      "%s/%s: dns_diff_apply: "
+						      "update with no effect",
+						      namebuf, classbuf);
 				}
 			} else if (result == DNS_R_NXRRSET) {
 				/*
@@ -492,6 +492,7 @@ dns_diff_load(dns_diff_t *diff, dns_addrdatasetfunc_t addfunc,
 			if (result == DNS_R_UNCHANGED) {
 				isc_log_write(DIFF_COMMON_LOGARGS,
 					      ISC_LOG_WARNING,
+					      "dns_diff_load: "
 					      "update with no effect");
 			} else if (result == ISC_R_SUCCESS ||
 				   result == DNS_R_NXRRSET) {

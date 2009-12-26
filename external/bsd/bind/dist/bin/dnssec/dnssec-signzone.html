@@ -14,7 +14,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- Id: dnssec-signzone.html,v 1.43 2009/10/12 23:15:22 tbox Exp -->
+<!-- Id: dnssec-signzone.html,v 1.45 2009/12/04 01:13:44 tbox Exp -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -72,7 +72,7 @@
             Uses a crypto hardware (OpenSSL engine) for the crypto operations
             it supports, for instance signing with private keys from
             a secure key store. When compiled with PKCS#11 support
-            it defaults to pcks11, the empty name resets it to no engine.
+            it defaults to pkcs11; the empty name resets it to no engine.
           </p></dd>
 <dt><span class="term">-g</span></dt>
 <dd><p>
@@ -328,7 +328,7 @@
 <dd><p>
             Only sign the DNSKEY RRset with key-signing keys, and omit
             signatures from zone-signing keys.  (This is similar to the
-            <span><strong class="command">dnskey-ksk-only yes;</strong></span> zone option in
+            <span><strong class="command">dnssec-dnskey-kskonly yes;</strong></span> zone option in
             <span><strong class="command">named</strong></span>.)
           </p></dd>
 <dt><span class="term">-z</span></dt>

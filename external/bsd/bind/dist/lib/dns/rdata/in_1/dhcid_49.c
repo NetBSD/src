@@ -1,7 +1,7 @@
-/*	$NetBSD: dhcid_49.c,v 1.1.1.1 2009/03/22 15:01:57 christos Exp $	*/
+/*	$NetBSD: dhcid_49.c,v 1.1.1.2 2009/12/26 22:25:30 christos Exp $	*/
 
 /*
- * Copyright (C) 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dhcid_49.c,v 1.5 2007/06/19 23:47:17 tbox Exp */
+/* Id: dhcid_49.c,v 1.7 2009/12/04 22:06:37 tbox Exp */
 
 /* RFC 4701 */
 
@@ -53,7 +53,7 @@ totext_in_dhcid(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &sr);
 
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext("( " /*)*/, target)); 
+		RETERR(str_totext("( " /*)*/, target));
 	RETERR(isc_base64_totext(&sr, tctx->width - 2, tctx->linebreak,
 				 target));
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
@@ -226,6 +226,11 @@ checknames_in_dhcid(ARGS_CHECKNAMES) {
 	UNUSED(bad);
 
 	return (ISC_TRUE);
+}
+
+static inline int
+casecompare_in_dhcid(ARGS_COMPARE) {
+	return (compare_in_dhcid(rdata1, rdata2));
 }
 
 #endif	/* RDATA_IN_1_DHCID_49_C */

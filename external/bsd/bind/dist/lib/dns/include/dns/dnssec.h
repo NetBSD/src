@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.h,v 1.1.1.3 2009/10/25 00:02:37 christos Exp $	*/
+/*	$NetBSD: dnssec.h,v 1.1.1.4 2009/12/26 22:25:14 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec.h,v 1.38 2009/10/12 23:48:02 tbox Exp */
+/* Id: dnssec.h,v 1.40 2009/11/23 02:55:41 each Exp */
 
 #ifndef DNS_DNSSEC_H
 #define DNS_DNSSEC_H 1
@@ -273,8 +273,9 @@ dns_dnssec_findmatchingkeys(dns_name_t *origin, const char *directory,
 isc_result_t
 dns_dnssec_keylistfromrdataset(dns_name_t *origin,
 			       const char *directory, isc_mem_t *mctx,
-			       dns_rdataset_t *keyset, dns_rdataset_t *sigset,
-			       isc_boolean_t savekeys, isc_boolean_t public,
+			       dns_rdataset_t *keyset, dns_rdataset_t *keysigs,
+			       dns_rdataset_t *soasigs, isc_boolean_t savekeys,
+			       isc_boolean_t public,
 			       dns_dnsseckeylist_t *keylist);
 /*%<
  * Append the contents of a DNSKEY rdataset 'keyset' to 'keylist'.
@@ -282,24 +283,27 @@ dns_dnssec_keylistfromrdataset(dns_name_t *origin,
  * matching key files, and load the private keys that go with
  * the public ones.  If 'savekeys' is ISC_TRUE, mark the keys so
  * they will not be deleted or inactivated regardless of metadata.
+ *
+ * 'keysigs' and 'soasigs', if not NULL and associated, contain the
+ * RRSIGS for the DNSKEY and SOA records respectively and are used to mark
+ * whether a key is already active int eh zone.
  */
 
 isc_result_t
 dns_dnssec_updatekeys(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *newkeys,
 		      dns_dnsseckeylist_t *removed, dns_name_t *origin,
-		      dns_ttl_t ttl, dns_diff_t *add, dns_diff_t *del,
-		      isc_boolean_t allzsk, isc_mem_t *mctx,
-		      void (*report)(const char *, ...));
+		      dns_ttl_t ttl, dns_diff_t *diff, isc_boolean_t allzsk,
+		      isc_mem_t *mctx, void (*report)(const char *, ...));
 /*%<
  * Update the list of keys in 'keys' with new key information in 'newkeys'.
  *
  * For each key in 'newkeys', see if it has a match in 'keys'.
  * - If not, and if the metadata says the key should be published:
- *   add it to 'keys', and place a dns_difftuple into 'add' so
+ *   add it to 'keys', and place a dns_difftuple into 'diff' so
  *   the key can be added to the DNSKEY set.  If the metadata says it
  *   should be active, set the first_sign flag.
  * - If so, and if the metadata says it should be removed:
- *   remove it from 'keys', and place a dns_difftuple into 'del' so
+ *   remove it from 'keys', and place a dns_difftuple into 'diff' so
  *   the key can be removed from the DNSKEY set.  if 'removed' is non-NULL,
  *   copy the key into that list; otherwise destroy it.
  * - Otherwise, make sure keys has current metadata.

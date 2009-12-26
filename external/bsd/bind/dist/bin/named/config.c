@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.1.1.3 2009/10/25 00:01:32 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.4 2009/12/26 22:19:10 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.c,v 1.103 2009/10/10 01:47:59 each Exp */
+/* Id: config.c,v 1.106 2009/12/04 21:09:32 marka Exp */
 
 /*! \file */
 
@@ -148,6 +148,7 @@ options {\n\
 	check-names master fail;\n\
 	check-names slave warn;\n\
 	check-names response ignore;\n\
+	check-dup-records warn;\n\
 	check-mx warn;\n\
 	acache-enable no;\n\
 	acache-cleaning-interval 60;\n\
@@ -160,6 +161,10 @@ options {\n\
 	zero-no-soa-ttl-cache no;\n\
 	nsec3-test-zone no;\n\
 "
+#ifdef ALLOW_FILTER_AAAA_ON_V4
+"	filter-aaaa-on-v4 no;\n\
+"
+#endif
 
 "	/* zone */\n\
 	allow-query {any;};\n\
@@ -187,7 +192,7 @@ options {\n\
 	max-refresh-time 2419200; /* 4 weeks */\n\
 	min-refresh-time 300;\n\
 	multi-master no;\n\
-	secure-to-insecure no;\n\
+	dnssec-secure-to-insecure no;\n\
 	sig-validity-interval 30; /* days */\n\
 	sig-signing-nodes 100;\n\
 	sig-signing-signatures 10;\n\
@@ -202,7 +207,7 @@ options {\n\
 	check-srv-cname warn;\n\
 	zero-no-soa-ttl yes;\n\
 	update-check-ksk yes;\n\
-	dnskey-ksk-only no;\n\
+	dnssec-dnskey-kskonly no;\n\
 	try-tcp-refresh yes; /* BIND 8 compat */\n\
 };\n\
 "

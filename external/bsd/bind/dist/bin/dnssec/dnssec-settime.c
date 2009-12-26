@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-settime.c,v 1.1.1.1 2009/10/25 00:01:32 christos Exp $	*/
+/*	$NetBSD: dnssec-settime.c,v 1.1.1.2 2009/12/26 22:19:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-settime.c,v 1.17 2009/10/12 20:48:10 each Exp */
+/* Id: dnssec-settime.c,v 1.19 2009/10/27 18:56:49 each Exp */
 
 /*! \file */
 
@@ -133,7 +133,6 @@ main(int argc, char **argv) {
 	isc_entropy_t *ectx = NULL;
 	dst_key_t *key = NULL;
 	isc_buffer_t buf;
-	int major, minor;
 	isc_stdtime_t	now;
 	isc_stdtime_t	pub = 0, act = 0, rev = 0, inact = 0, del = 0;
 	isc_boolean_t	setpub = ISC_FALSE, setact = ISC_FALSE;
@@ -145,7 +144,7 @@ main(int argc, char **argv) {
 	isc_boolean_t	printcreate = ISC_FALSE, printpub = ISC_FALSE;
 	isc_boolean_t	printact = ISC_FALSE,  printrev = ISC_FALSE;
 	isc_boolean_t	printinact = ISC_FALSE, printdel = ISC_FALSE;
-	isc_boolean_t	forceupdate = ISC_FALSE;
+	isc_boolean_t	force = ISC_FALSE;
 	isc_boolean_t   epoch = ISC_FALSE;
 	isc_boolean_t   changed = ISC_FALSE;
 
@@ -169,7 +168,7 @@ main(int argc, char **argv) {
 			engine = isc_commandline_argument;
 			break;
 		case 'f':
-			forceupdate = ISC_TRUE;
+			force = ISC_TRUE;
 			break;
 		case 'p':
 			p = isc_commandline_argument;
@@ -320,8 +319,12 @@ main(int argc, char **argv) {
 	if (directory != NULL) {
 		filename = argv[isc_commandline_index];
 	} else {
-		isc_file_splitpath(mctx, argv[isc_commandline_index],
-				   &directory, &filename);
+		result = isc_file_splitpath(mctx, argv[isc_commandline_index],
+					    &directory, &filename);
+		if (result != ISC_R_SUCCESS)
+			fatal("cannot process filename %s: %s",
+			      argv[isc_commandline_index],
+			      isc_result_totext(result));
 	}
 
 	if (ectx == NULL)
@@ -348,20 +351,10 @@ main(int argc, char **argv) {
 
 	dst_key_format(key, keystr, sizeof(keystr));
 
-	/* Is this an old-style key? */
-	dst_key_getprivateformat(key, &major, &minor);
-	if (major <= 1 && minor <= 2) {
-		if (forceupdate) {
-			/*
-			 * Updating to new-style key: set
-			 * Private-key-format to 1.3
-			 */
-			dst_key_setprivateformat(key, 1, 3);
-			dst_key_settime(key, DST_TIME_CREATED, now);
-		} else
-			fatal("Incompatible key %s, "
-			      "use -f to force update.", keystr);
-	}
+	if (force)
+		set_keyversion(key);
+	else
+		check_keyversion(key, keystr);
 
 	if (verbose > 2)
 		fprintf(stderr, "%s: %s\n", program, keystr);

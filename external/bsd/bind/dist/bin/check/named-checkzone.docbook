@@ -18,7 +18,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: named-checkzone.docbook,v 1.36 2009/01/20 23:47:56 tbox Exp -->
+<!-- Id: named-checkzone.docbook,v 1.38 2009/12/04 21:09:32 marka Exp -->
 <refentry id="man.named-checkzone">
   <refentryinfo>
     <date>June 13, 2000</date>
@@ -69,7 +69,7 @@
       <arg><option>-m <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-M <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-n <replaceable class="parameter">mode</replaceable></option></arg>
-      <arg><option>-o <replaceable class="parameter">filename</replaceable></option></arg>
+      <arg><option>-r <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-s <replaceable class="parameter">style</replaceable></option></arg>
       <arg><option>-S <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-t <replaceable class="parameter">directory</replaceable></option></arg>
@@ -94,11 +94,13 @@
       <arg><option>-m <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-n <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-o <replaceable class="parameter">filename</replaceable></option></arg>
+      <arg><option>-r <replaceable class="parameter">mode</replaceable></option></arg>
       <arg><option>-s <replaceable class="parameter">style</replaceable></option></arg>
       <arg><option>-t <replaceable class="parameter">directory</replaceable></option></arg>
       <arg><option>-w <replaceable class="parameter">directory</replaceable></option></arg>
       <arg><option>-D</option></arg>
       <arg><option>-W <replaceable class="parameter">mode</replaceable></option></arg>
+      <arg choice="req"><option>-o <replaceable class="parameter">filename</replaceable></option></arg>
       <arg choice="req">zonename</arg>
       <arg choice="req">filename</arg>
     </cmdsynopsis>
@@ -316,6 +318,19 @@
 	    write to standard out.
 	    This is mandatory for <command>named-compilezone</command>.
           </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-r <replaceable class="parameter">mode</replaceable></term>
+        <listitem>
+	  <para>
+            Check for records that are treated as different by DNSSEC but
+	    are semantically equal in plain DNS.  
+            Possible modes are <command>"fail"</command>,
+            <command>"warn"</command> (default) and
+            <command>"ignore"</command>.
+	  </para>
         </listitem>
       </varlistentry>
 

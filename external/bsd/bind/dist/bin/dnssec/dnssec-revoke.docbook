@@ -17,7 +17,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec-revoke.docbook,v 1.6 2009/10/05 17:30:49 fdupont Exp -->
+<!-- Id: dnssec-revoke.docbook,v 1.7 2009/11/03 21:44:46 each Exp -->
 <refentry id="man.dnssec-revoke">
   <refentryinfo>
     <date>June 1, 2009</date>
@@ -108,7 +108,7 @@
         <listitem>
           <para>
             Use the given OpenSSL engine. When compiled with PKCS#11 support
-            it defaults to pcks11, the empty name resets it to no engine.
+            it defaults to pkcs11; the empty name resets it to no engine.
           </para>
         </listitem>
       </varlistentry>

@@ -1,7 +1,7 @@
-/*	$NetBSD: gen.c,v 1.1.1.1 2009/03/22 15:01:04 christos Exp $	*/
+/*	$NetBSD: gen.c,v 1.1.1.2 2009/12/26 22:24:34 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: gen.c,v 1.83 2008/09/25 04:02:38 tbox Exp */
+/* Id: gen.c,v 1.85 2009/12/04 22:06:37 tbox Exp */
 
 /*! \file */
 
@@ -632,6 +632,8 @@ main(int argc, char **argv) {
 		doswitch("TOWIRESWITCH", "towire", TOWIREARGS,
 			 TOWIRETYPE, TOWIRECLASS, TOWIREDEF);
 		doswitch("COMPARESWITCH", "compare", COMPAREARGS,
+			  COMPARETYPE, COMPARECLASS, COMPAREDEF);
+		doswitch("CASECOMPARESWITCH", "casecompare", COMPAREARGS,
 			  COMPARETYPE, COMPARECLASS, COMPAREDEF);
 		doswitch("FROMSTRUCTSWITCH", "fromstruct", FROMSTRUCTARGS,
 			  FROMSTRUCTTYPE, FROMSTRUCTCLASS, FROMSTRUCTDEF);

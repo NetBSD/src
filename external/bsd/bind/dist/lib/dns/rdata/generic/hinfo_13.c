@@ -1,7 +1,7 @@
-/*	$NetBSD: hinfo_13.c,v 1.1.1.1 2009/03/22 15:01:52 christos Exp $	*/
+/*	$NetBSD: hinfo_13.c,v 1.1.1.2 2009/12/26 22:25:24 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hinfo_13.c,v 1.44 2007/06/19 23:47:17 tbox Exp */
+/* Id: hinfo_13.c,v 1.46 2009/12/04 22:06:37 tbox Exp */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -223,4 +223,8 @@ checknames_hinfo(ARGS_CHECKNAMES) {
 	return (ISC_TRUE);
 }
 
+static inline int
+casecompare_hinfo(ARGS_COMPARE) {
+	return (compare_hinfo(rdata1, rdata2));
+}
 #endif	/* RDATA_GENERIC_HINFO_13_C */

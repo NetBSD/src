@@ -78,6 +78,7 @@ options {
         bindkeys-file <quoted_string>;
         blackhole { <address_match_element>; ... };
         cache-file <quoted_string>;
+        check-dup-records ( fail | warn | ignore );
         check-integrity <boolean>;
         check-mx ( fail | warn | ignore );
         check-mx-cname ( fail | warn | ignore );
@@ -98,11 +99,12 @@ options {
         directory <quoted_string>;
         disable-algorithms <string> { <string>; ... };
         disable-empty-zone <string>;
-        dnskey-ksk-only <boolean>;
         dnssec-accept-expired <boolean>;
+        dnssec-dnskey-kskonly <boolean>;
         dnssec-enable <boolean>;
         dnssec-lookaside <string> trust-anchor <string>;
         dnssec-must-be-secure <string> <boolean>;
+        dnssec-secure-to-insecure <boolean>;
         dnssec-validation <boolean>;
         dual-stack-servers [ port <integer> ] { ( <quoted_string> [ port
             <integer> ] | <ipv4_address> [ port <integer> ] |
@@ -182,7 +184,6 @@ options {
         root-delegation-only [ exclude { <quoted_string>; ... } ];
         rrset-order { [ class <string> ] [ type <string> ] [ name
             <quoted_string> ] <string> <string>; ... };
-        secure-to-insecure <boolean>;
         serial-queries <integer>; // obsolete
         serial-query-rate <integer>;
         server-id ( <quoted_string> | none |;
@@ -275,6 +276,7 @@ view <string> <optional_class> {
         attach-cache <string>;
         auth-nxdomain <boolean>; // default changed
         cache-file <quoted_string>;
+        check-dup-records ( fail | warn | ignore );
         check-integrity <boolean>;
         check-mx ( fail | warn | ignore );
         check-mx-cname ( fail | warn | ignore );
@@ -295,11 +297,12 @@ view <string> <optional_class> {
         dlz <string> {
                 database <string>;
         };
-        dnskey-ksk-only <boolean>;
         dnssec-accept-expired <boolean>;
+        dnssec-dnskey-kskonly <boolean>;
         dnssec-enable <boolean>;
         dnssec-lookaside <string> trust-anchor <string>;
         dnssec-must-be-secure <string> <boolean>;
+        dnssec-secure-to-insecure <boolean>;
         dnssec-validation <boolean>;
         dual-stack-servers [ port <integer> ] { ( <quoted_string> [ port
             <integer> ] | <ipv4_address> [ port <integer> ] |
@@ -364,7 +367,6 @@ view <string> <optional_class> {
         root-delegation-only [ exclude { <quoted_string>; ... } ];
         rrset-order { [ class <string> ] [ type <string> ] [ name
             <quoted_string> ] <string> <string>; ... };
-        secure-to-insecure <boolean>;
         server <netprefix> {
                 bogus <boolean>;
                 edns <boolean>;
@@ -419,6 +421,7 @@ view <string> <optional_class> {
                 alt-transfer-source-v6 ( <ipv6_address> | * ) [ port (
                     <integer> | * ) ];
                 auto-dnssec ( allow | maintain | create | off );
+                check-dup-records ( fail | warn | ignore );
                 check-integrity <boolean>;
                 check-mx ( fail | warn | ignore );
                 check-mx-cname ( fail | warn | ignore );
@@ -429,7 +432,8 @@ view <string> <optional_class> {
                 database <string>;
                 delegation-only <boolean>;
                 dialup <dialuptype>;
-                dnskey-ksk-only <boolean>;
+                dnssec-dnskey-kskonly <boolean>;
+                dnssec-secure-to-insecure <boolean>;
                 file <quoted_string>;
                 forward ( first | only );
                 forwarders [ port <integer> ] { ( <ipv4_address> |
@@ -465,7 +469,6 @@ view <string> <optional_class> {
                 nsec3-test-zone <boolean>; // test only
                 pubkey <integer> <integer> <integer>
                     <quoted_string>; // obsolete
-                secure-to-insecure <boolean>;
                 sig-signing-nodes <integer>;
                 sig-signing-signatures <integer>;
                 sig-signing-type <integer>;
@@ -503,6 +506,7 @@ zone <string> <optional_class> {
         alt-transfer-source-v6 ( <ipv6_address> | * ) [ port ( <integer> |
             * ) ];
         auto-dnssec ( allow | maintain | create | off );
+        check-dup-records ( fail | warn | ignore );
         check-integrity <boolean>;
         check-mx ( fail | warn | ignore );
         check-mx-cname ( fail | warn | ignore );
@@ -513,7 +517,8 @@ zone <string> <optional_class> {
         database <string>;
         delegation-only <boolean>;
         dialup <dialuptype>;
-        dnskey-ksk-only <boolean>;
+        dnssec-dnskey-kskonly <boolean>;
+        dnssec-secure-to-insecure <boolean>;
         file <quoted_string>;
         forward ( first | only );
         forwarders [ port <integer> ] { ( <ipv4_address> | <ipv6_address> )
@@ -546,7 +551,6 @@ zone <string> <optional_class> {
         notify-to-soa <boolean>;
         nsec3-test-zone <boolean>; // test only
         pubkey <integer> <integer> <integer> <quoted_string>; // obsolete
-        secure-to-insecure <boolean>;
         sig-signing-nodes <integer>;
         sig-signing-signatures <integer>;
         sig-signing-type <integer>;

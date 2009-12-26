@@ -1,7 +1,7 @@
-/*	$NetBSD: afsdb_18.c,v 1.1.1.1 2009/03/22 15:01:51 christos Exp $	*/
+/*	$NetBSD: afsdb_18.c,v 1.1.1.2 2009/12/26 22:25:23 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: afsdb_18.c,v 1.47 2007/06/19 23:47:17 tbox Exp */
+/* Id: afsdb_18.c,v 1.49 2009/12/04 22:06:37 tbox Exp */
 
 /* Reviewed: Wed Mar 15 14:59:00 PST 2000 by explorer */
 
@@ -308,4 +308,8 @@ checknames_afsdb(ARGS_CHECKNAMES) {
 	return (ISC_TRUE);
 }
 
+static inline int
+casecompare_afsdb(ARGS_COMPARE) {
+	return (compare_afsdb(rdata1, rdata2));
+}
 #endif	/* RDATA_GENERIC_AFSDB_18_C */

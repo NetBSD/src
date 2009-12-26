@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.h.in,v 1.120 2009/09/01 18:40:25 jinmei Exp */
+/* Id: config.h.in,v 1.122 2009/10/27 22:26:05 marka Exp */
 
 /*! \file */
 
@@ -144,6 +144,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define if threads need PTHREAD_SCOPE_SYSTEM */
 #undef NEED_PTHREAD_SCOPE_SYSTEM
 
+/* Define to enable the "filter-aaaa-on-v4" option. */
+#undef ALLOW_FILTER_AAAA_ON_V4
+
 /* Define if recvmsg() does not meet all of the BSD socket API specifications.
    */
 #undef BROKEN_RECVMSG
@@ -163,6 +166,12 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
+/* Define to 1 if you have the `EVP_sha256' function. */
+#undef HAVE_EVP_SHA256
+
+/* Define to 1 if you have the `EVP_sha512' function. */
+#undef HAVE_EVP_SHA512
+
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
@@ -180,6 +189,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the `cap' library (-lcap). */
 #undef HAVE_LIBCAP
+
+/* if system have backtrace function */
+#undef HAVE_LIBCTRACE
 
 /* Define to 1 if you have the `c_r' library (-lc_r). */
 #undef HAVE_LIBC_R
@@ -289,8 +301,8 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Defined if extern char *optarg is not declared. */
-#undef NEED_OPTARG
+/* return type of gai_srerror */
+#undef IRS_GAISTRERROR_RETURN_T
 
 /* Define to the buffer length type used by getnameinfo(3). */
 #undef IRS_GETNAMEINFO_BUFLEN_T
@@ -298,8 +310,8 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to the flags type used by getnameinfo(3). */
 #undef IRS_GETNAMEINFO_FLAGS_T
 
-/* Define to the return type of gai_strerror(3). */
-#undef IRS_GAISTRERROR_RETURN_T
+/* Defined if extern char *optarg is not declared. */
+#undef NEED_OPTARG
 
 /* Define if connect does not honour the permission on the UNIX domain socket.
    */
@@ -333,9 +345,6 @@ int sigwait(const unsigned int *set, int *sig);
 /* Defined if you need to use ioctl(FIONBIO) instead a fcntl call to make
    non-blocking. */
 #undef USE_FIONBIO_IOCTL
-
-/** define if the system have backtrace function. */
-#undef HAVE_LIBCTRACE
 
 /* define if idnkit support is to be included. */
 #undef WITH_IDN

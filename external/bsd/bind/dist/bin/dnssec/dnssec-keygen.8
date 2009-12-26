@@ -1,4 +1,4 @@
-.\"	$NetBSD: dnssec-keygen.8,v 1.1.1.2 2009/10/25 00:01:32 christos Exp $
+.\"	$NetBSD: dnssec-keygen.8,v 1.1.1.3 2009/12/26 22:18:58 christos Exp $
 .\"
 .\" Copyright (C) 2004, 2005, 2007-2009 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2003 Internet Software Consortium.
@@ -15,7 +15,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: dnssec-keygen.8,v 1.49 2009/10/06 01:14:41 tbox Exp
+.\" Id: dnssec-keygen.8,v 1.53 2009/11/03 21:58:30 tbox Exp
 .\"
 .hy 0
 .ad l
@@ -35,7 +35,7 @@
 dnssec\-keygen \- DNSSEC key generation tool
 .SH "SYNOPSIS"
 .HP 14
-\fBdnssec\-keygen\fR [\fB\-a\ \fR\fB\fIalgorithm\fR\fR] [\fB\-b\ \fR\fB\fIkeysize\fR\fR] [\fB\-n\ \fR\fB\fInametype\fR\fR] [\fB\-3\fR] [\fB\-A\ \fR\fB\fIdate/offset\fR\fR] [\fB\-C\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-D\ \fR\fB\fIdate/offset\fR\fR] [\fB\-E\ \fR\fB\fIengine\fR\fR] [\fB\-e\fR] [\fB\-f\ \fR\fB\fIflag\fR\fR] [\fB\-G\fR] [\fB\-g\ \fR\fB\fIgenerator\fR\fR] [\fB\-h\fR] [\fB\-I\ \fR\fB\fIdate/offset\fR\fR] [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-k\fR] [\fB\-P\ \fR\fB\fIdate/offset\fR\fR] [\fB\-p\ \fR\fB\fIprotocol\fR\fR] [\fB\-R\ \fR\fB\fIdate/offset\fR\fR] [\fB\-r\ \fR\fB\fIrandomdev\fR\fR] [\fB\-s\ \fR\fB\fIstrength\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-v\ \fR\fB\fIlevel\fR\fR] [\fB\-z\fR] {name}
+\fBdnssec\-keygen\fR [\fB\-a\ \fR\fB\fIalgorithm\fR\fR] [\fB\-b\ \fR\fB\fIkeysize\fR\fR] [\fB\-n\ \fR\fB\fInametype\fR\fR] [\fB\-3\fR] [\fB\-A\ \fR\fB\fIdate/offset\fR\fR] [\fB\-C\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-D\ \fR\fB\fIdate/offset\fR\fR] [\fB\-E\ \fR\fB\fIengine\fR\fR] [\fB\-e\fR] [\fB\-f\ \fR\fB\fIflag\fR\fR] [\fB\-G\fR] [\fB\-g\ \fR\fB\fIgenerator\fR\fR] [\fB\-h\fR] [\fB\-I\ \fR\fB\fIdate/offset\fR\fR] [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-k\fR] [\fB\-P\ \fR\fB\fIdate/offset\fR\fR] [\fB\-p\ \fR\fB\fIprotocol\fR\fR] [\fB\-q\fR] [\fB\-R\ \fR\fB\fIdate/offset\fR\fR] [\fB\-r\ \fR\fB\fIrandomdev\fR\fR] [\fB\-s\ \fR\fB\fIstrength\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-v\ \fR\fB\fIlevel\fR\fR] [\fB\-z\fR] {name}
 .SH "DESCRIPTION"
 .PP
 \fBdnssec\-keygen\fR
@@ -50,11 +50,13 @@ of the key is specified on the command line. For DNSSEC keys, this must match th
 .RS 4
 Selects the cryptographic algorithm. For DNSSEC keys, the value of
 \fBalgorithm\fR
-must be one of RSAMD5, RSASHA1, DSA, NSEC3RSASHA1, or NSEC3DSA. For TSIG/TKEY, the value must be DH (Diffie Hellman), HMAC\-MD5, HMAC\-SHA1, HMAC\-SHA224, HMAC\-SHA256, HMAC\-SHA384, or HMAC\-SHA512. These values are case insensitive.
+must be one of RSAMD5, RSASHA1, DSA, NSEC3RSASHA1, NSEC3DSA, RSASHA256 or RSASHA512. For TSIG/TKEY, the value must be DH (Diffie Hellman), HMAC\-MD5, HMAC\-SHA1, HMAC\-SHA224, HMAC\-SHA256, HMAC\-SHA384, or HMAC\-SHA512. These values are case insensitive.
 .sp
 If no algorithm is specified, then RSASHA1 will be used by default, unless the
 \fB\-3\fR
-option is specified, in which case NSEC3RSASHA1 will be used instead.
+option is specified, in which case NSEC3RSASHA1 will be used instead. (If
+\fB\-3\fR
+is used and an algorithm is specified, that algorithm will be checked for compatibility with NSEC3.)
 .sp
 Note 1: that for DNSSEC, RSASHA1 is a mandatory to implement algorithm, and DSA is recommended. For TSIG, HMAC\-MD5 is mandatory.
 .sp
@@ -63,7 +65,7 @@ Note 2: DH, HMAC\-MD5, and HMAC\-SHA1 through HMAC\-SHA512 automatically set the
 .PP
 \-b \fIkeysize\fR
 .RS 4
-Specifies the number of bits in the key. The choice of key size depends on the algorithm used. RSAMD5 / RSASHA1 keys must be between 512 and 2048 bits. Diffie Hellman keys must be between 128 and 4096 bits. DSA keys must be between 512 and 1024 bits and an exact multiple of 64. HMAC\-MD5 keys must be between 1 and 512 bits.
+Specifies the number of bits in the key. The choice of key size depends on the algorithm used. RSA keys must be between 512 and 2048 bits. Diffie Hellman keys must be between 128 and 4096 bits. DSA keys must be between 512 and 1024 bits and an exact multiple of 64. HMAC keys must be between 1 and 512 bits.
 .sp
 The key size does not need to be specified if using a default algorithm. The default key size is 1024 bits for zone signing keys (ZSK's) and 2048 bits for key signing keys (KSK's, generated with
 \fB\-f KSK\fR). However, if an algorithm is explicitly specified with the
@@ -81,7 +83,7 @@ must either be ZONE (for a DNSSEC zone key (KEY/DNSKEY)), HOST or ENTITY (for a 
 .PP
 \-3
 .RS 4
-Use an NSEC3\-capable algorithm to generate a DNSSEC key. If this option is used and no algorithm is explicitly set on the command line, NSEC3RSASHA1 will be used by default.
+Use an NSEC3\-capable algorithm to generate a DNSSEC key. If this option is used and no algorithm is explicitly set on the command line, NSEC3RSASHA1 will be used by default. Note that RSASHA256 and RSASHA512 algorithms are NSEC3\-capable.
 .RE
 .PP
 \-C
@@ -100,7 +102,7 @@ Indicates that the DNS record containing the key should have the specified class
 .PP
 \-E \fIengine\fR
 .RS 4
-Uses a crypto hardware (OpenSSL engine) for random number and, when supported, key generation. When compiled with PKCS#11 support it defaults to pcks11, the empty name resets it to no engine.
+Uses a crypto hardware (OpenSSL engine) for random number and, when supported, key generation. When compiled with PKCS#11 support it defaults to pkcs11; the empty name resets it to no engine.
 .RE
 .PP
 \-e
@@ -142,6 +144,15 @@ Deprecated in favor of \-T KEY.
 \-p \fIprotocol\fR
 .RS 4
 Sets the protocol value for the generated key. The protocol is a number between 0 and 255. The default is 3 (DNSSEC). Other possible values for this argument are listed in RFC 2535 and its successors.
+.RE
+.PP
+\-q
+.RS 4
+Quiet mode: Suppresses unnecessary output, including progress indication. Without this option, when
+\fBdnssec\-keygen\fR
+is run interactively to generate an RSA or DSA key pair, it will print a string of symbols to
+\fIstderr\fR
+indicating the progress of the key generation. A '.' indicates that a random number has been found which passed an initial sieve test; '+' means a number has passed a single round of the Miller\-Rabin primality test; a space means that the number has passed all the tests and is a satisfactory key.
 .RE
 .PP
 \-r \fIrandomdev\fR
@@ -190,7 +201,7 @@ Sets the date on which a key is to be published to the zone. After that date, th
 .PP
 \-A \fIdate/offset\fR
 .RS 4
-Sets the date on which the key is to be activated. After that date, the key will be included and the zone and used to sign it. If not set, and if the \-G option has not been used, the default is "now".
+Sets the date on which the key is to be activated. After that date, the key will be included in the zone and used to sign it. If not set, and if the \-G option has not been used, the default is "now".
 .RE
 .PP
 \-R \fIdate/offset\fR
@@ -270,7 +281,7 @@ and
 BIND 9 Administrator Reference Manual,
 RFC 2539,
 RFC 2845,
-RFC 4033.
+RFC 4034.
 .SH "AUTHOR"
 .PP
 Internet Systems Consortium

@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: updateopenssl.pl,v 1.10 2009/07/17 23:47:41 tbox Exp
+# Id: updateopenssl.pl,v 1.11 2009/12/04 21:59:24 marka Exp
 
 # updateopenssl.pl
 # This script locates the latest version of OpenSSL in the grandparent
@@ -25,7 +25,8 @@ $path = "..\\..\\";
 
 # List of files that need to be updated with the actual version of the
 # openssl directory
-@filelist = ("../lib/dns/win32/libdns.mak",
+@filelist = ("SetupLibs.bat",
+	     "../lib/dns/win32/libdns.mak",
              "../lib/dns/win32/libdns.dsp");
 
 # Locate the openssl directory

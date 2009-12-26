@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.h.win32,v 1.23 2009/10/12 16:41:12 each Exp */
+/* Id: config.h.win32,v 1.24 2009/11/24 02:09:28 marka Exp */
 
 /*
  * win32 configuration file
@@ -253,4 +253,13 @@ typedef long off_t;
  * Define if PKCS11 is to be used.
  */
 /* #undef USE_PKCS11 */
+
+/** define if struct addrinfo exists */
+#define HAVE_ADDRINFO
+
+/** define if getaddrinfo() exists */
+#define HAVE_GETADDRINFO
+
+/** define if gai_strerror() exists */
+#define HAVE_GAISTRERROR
 

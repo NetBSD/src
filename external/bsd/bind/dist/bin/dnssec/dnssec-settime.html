@@ -14,7 +14,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec-settime.html,v 1.7 2009/10/06 01:14:41 tbox Exp -->
+<!-- Id: dnssec-settime.html,v 1.9 2009/11/03 21:58:30 tbox Exp -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -83,7 +83,7 @@
 <dt><span class="term">-E <em class="replaceable"><code>engine</code></em></span></dt>
 <dd><p>
             Use the given OpenSSL engine. When compiled with PKCS#11 support
-            it defaults to pcks11, the empty name resets it to no engine.
+            it defaults to pkcs11; the empty name resets it to no engine.
           </p></dd>
 </dl></div>
 </div>
@@ -109,7 +109,7 @@
 <dt><span class="term">-A <em class="replaceable"><code>date/offset</code></em></span></dt>
 <dd><p>
             Sets the date on which the key is to be activated.  After that
-            date, the key will be included and the zone and used to sign
+            date, the key will be included in the zone and used to sign
             it.
           </p></dd>
 <dt><span class="term">-R <em class="replaceable"><code>date/offset</code></em></span></dt>

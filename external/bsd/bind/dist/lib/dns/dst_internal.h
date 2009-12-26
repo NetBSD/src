@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_internal.h,v 1.1.1.2 2009/10/25 00:02:27 christos Exp $	*/
+/*	$NetBSD: dst_internal.h,v 1.1.1.3 2009/12/26 22:24:24 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst_internal.h,v 1.20 2009/10/09 06:09:21 each Exp */
+/* Id: dst_internal.h,v 1.23 2009/10/27 22:25:37 marka Exp */
 
 #ifndef DST_DST_INTERNAL_H
 #define DST_DST_INTERNAL_H 1
@@ -44,6 +44,7 @@
 #include <isc/types.h>
 #include <isc/md5.h>
 #include <isc/sha1.h>
+#include <isc/sha2.h>
 #include <isc/stdtime.h>
 #include <isc/hmacmd5.h>
 #include <isc/hmacsha.h>
@@ -138,6 +139,8 @@ struct dst_context {
 		dst_gssapi_signverifyctx_t *gssctx;
 		isc_md5_t *md5ctx;
 		isc_sha1_t *sha1ctx;
+		isc_sha256_t *sha256ctx;
+		isc_sha512_t *sha512ctx;
 		isc_hmacmd5_t *hmacmd5ctx;
 		isc_hmacsha1_t *hmacsha1ctx;
 		isc_hmacsha224_t *hmacsha224ctx;
@@ -169,7 +172,8 @@ struct dst_func {
 	isc_boolean_t (*compare)(const dst_key_t *key1, const dst_key_t *key2);
 	isc_boolean_t (*paramcompare)(const dst_key_t *key1,
 				      const dst_key_t *key2);
-	isc_result_t (*generate)(dst_key_t *key, int parms);
+	isc_result_t (*generate)(dst_key_t *key, int parms,
+				 void (*callback)(int));
 	isc_boolean_t (*isprivate)(const dst_key_t *key);
 	void (*destroy)(dst_key_t *key);
 
@@ -199,7 +203,8 @@ isc_result_t dst__hmacsha224_init(struct dst_func **funcp);
 isc_result_t dst__hmacsha256_init(struct dst_func **funcp);
 isc_result_t dst__hmacsha384_init(struct dst_func **funcp);
 isc_result_t dst__hmacsha512_init(struct dst_func **funcp);
-isc_result_t dst__opensslrsa_init(struct dst_func **funcp);
+isc_result_t dst__opensslrsa_init(struct dst_func **funcp,
+				  unsigned char algorithm);
 isc_result_t dst__openssldsa_init(struct dst_func **funcp);
 isc_result_t dst__openssldh_init(struct dst_func **funcp);
 isc_result_t dst__gssapi_init(struct dst_func **funcp);

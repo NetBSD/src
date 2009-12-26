@@ -1,4 +1,4 @@
-/*	$NetBSD: arpaname.c,v 1.1.1.1 2009/10/25 00:01:38 christos Exp $	*/
+/*	$NetBSD: arpaname.c,v 1.1.1.2 2009/12/26 22:20:28 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,14 +16,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: arpaname.c,v 1.3 2009/06/18 16:02:25 each Exp */
+/* Id: arpaname.c,v 1.4 2009/10/27 03:05:33 marka Exp */
 
 #include "config.h"
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include <isc/net.h>
+
 #include <stdio.h>
 
 #define UNUSED(x) (void)(x)

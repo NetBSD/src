@@ -12,10 +12,11 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.4 2009/09/03 20:28:46 each Exp
+# Id: Makefile.in,v 1.5 2009/12/05 23:31:41 each Exp
 
 top_srcdir =	@top_srcdir@
 srcdir =	@top_srcdir@/lib/isc
+export_srcdir =	@top_srcdir@/lib/export
 
 @BIND9_VERSION@
 
@@ -24,7 +25,8 @@ srcdir =	@top_srcdir@/lib/isc
 CINCLUDES =	-I${srcdir}/unix/include \
 		-I${srcdir}/@ISC_THREAD_DIR@/include \
 		-I${srcdir}/@ISC_ARCH_DIR@/include \
-		-I${srcdir}/include @ISC_OPENSSL_INC@
+		-I${export_srcdir}/isc/include -I${srcdir}/include \
+		@ISC_OPENSSL_INC@
 CDEFINES =	@USE_OPENSSL@ -DUSE_APPIMPREGISTER -DUSE_MEMIMPREGISTER \
 		-DUSE_SOCKETIMPREGISTER -DUSE_TASKIMPREGISTER \
 		-DUSE_TIMERIMPREGISTER

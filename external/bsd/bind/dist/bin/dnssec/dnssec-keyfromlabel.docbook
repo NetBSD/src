@@ -17,7 +17,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec-keyfromlabel.docbook,v 1.12 2009/10/06 22:58:45 each Exp -->
+<!-- Id: dnssec-keyfromlabel.docbook,v 1.15 2009/11/03 21:44:46 each Exp -->
 <refentry id="man.dnssec-keyfromlabel">
   <refentryinfo>
     <date>February 8, 2008</date>
@@ -90,14 +90,16 @@
         <listitem>
 	  <para>
 	    Selects the cryptographic algorithm.  The value of
-	    <option>algorithm</option> must be one of RSAMD5 (RSA),
-	    RSASHA1, DSA, NSEC3RSASHA1, NSEC3DSA or DH (Diffie Hellman).
+            <option>algorithm</option> must be one of RSAMD5, RSASHA1,
+	    DSA, NSEC3RSASHA1, NSEC3DSA, RSASHA256 or RSASHA512.
 	    These values are case insensitive.
 	  </para>
           <para>
             If no algorithm is specified, then RSASHA1 will be used by
             default, unless the <option>-3</option> option is specified,
-            in which case NSEC3RSASHA1 will be used instead.
+            in which case NSEC3RSASHA1 will be used instead.  (If
+            <option>-3</option> is used and an algorithm is specified,
+            that algorithm will be checked for compatibility with NSEC3.)
           </para>
           <para>
             Note 1: that for DNSSEC, RSASHA1 is a mandatory to implement
@@ -126,7 +128,7 @@
         <listitem>
           <para>
             Specifies the name of the crypto hardware (OpenSSL engine).
-            When compiled with PKCS#11 support it defaults to "pcks11".
+            When compiled with PKCS#11 support it defaults to "pkcs11".
           </para>
         </listitem>
       </varlistentry>
@@ -297,7 +299,7 @@
         <listitem>
           <para>
             Sets the date on which the key is to be activated.  After that
-            date, the key will be included and the zone and used to sign
+            date, the key will be included in the zone and used to sign
             it.  If not set, and if the -G option has not been used, the
             default is "now".
           </para>
@@ -394,9 +396,7 @@
         <refentrytitle>dnssec-signzone</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citetitle>BIND 9 Administrator Reference Manual</citetitle>,
-      <citetitle>RFC 2539</citetitle>,
-      <citetitle>RFC 2845</citetitle>,
-      <citetitle>RFC 4033</citetitle>.
+      <citetitle>RFC 4034</citetitle>.
     </para>
   </refsect1>
 

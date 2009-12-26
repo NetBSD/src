@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.1.1.2 2009/10/25 00:01:33 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.1.1.3 2009/12/26 22:19:18 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: query.c,v 1.327 2009/09/14 23:13:37 marka Exp */
+/* Id: query.c,v 1.335 2009/11/28 15:57:36 vjs Exp */
 
 /*! \file */
 
@@ -117,6 +117,8 @@
 #define DNS_GETDB_NOEXACT 0x01U
 #define DNS_GETDB_NOLOG 0x02U
 #define DNS_GETDB_PARTIAL 0x04U
+
+#define PENDINGOK(x)	(((x) & DNS_DBFIND_PENDINGOK) != 0)
 
 typedef struct client_additionalctx {
 	ns_client_t *client;
@@ -1160,7 +1162,8 @@ query_addadditional(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 			goto cleanup;
 	}
 	result = dns_db_find(db, name, version, type,
-			     client->query.dboptions | DNS_DBFIND_GLUEOK,
+			     client->query.dboptions |
+			     DNS_DBFIND_GLUEOK | DNS_DBFIND_ADDITIONALOK,
 			     client->now, &node, fname, rdataset,
 			     sigrdataset);
 	if (result == DNS_R_GLUE &&
@@ -1645,7 +1648,8 @@ query_addadditional2(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 		goto try_glue;
 
 	result = dns_db_find(db, name, version, type,
-			     client->query.dboptions | DNS_DBFIND_GLUEOK,
+			     client->query.dboptions |
+			     DNS_DBFIND_GLUEOK | DNS_DBFIND_ADDITIONALOK,
 			     client->now, &node, fname, NULL, NULL);
 	if (result == ISC_R_SUCCESS)
 		goto found;
@@ -1763,8 +1767,8 @@ query_addadditional2(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 	 */
 	if (result == ISC_R_SUCCESS &&
 	    additionaltype == dns_rdatasetadditional_fromcache &&
-	    (rdataset->trust == dns_trust_pending ||
-	     rdataset->trust == dns_trust_glue) &&
+	    (DNS_TRUST_PENDING(rdataset->trust) ||
+	     DNS_TRUST_GLUE(rdataset->trust)) &&
 	    !validate(client, db, fname, rdataset, sigrdataset)) {
 		dns_rdataset_disassociate(rdataset);
 		if (dns_rdataset_isassociated(sigrdataset))
@@ -1803,8 +1807,8 @@ query_addadditional2(void *arg, dns_name_t *name, dns_rdatatype_t qtype) {
 	 */
 	if (result == ISC_R_SUCCESS &&
 	    additionaltype == dns_rdatasetadditional_fromcache &&
-	    (rdataset->trust == dns_trust_pending ||
-	     rdataset->trust == dns_trust_glue) &&
+	    (DNS_TRUST_PENDING(rdataset->trust) ||
+	     DNS_TRUST_GLUE(rdataset->trust)) &&
 	    !validate(client, db, fname, rdataset, sigrdataset)) {
 		dns_rdataset_disassociate(rdataset);
 		if (dns_rdataset_isassociated(sigrdataset))
@@ -2242,7 +2246,8 @@ query_addns(ns_client_t *client, dns_db_t *db, dns_dbversion_t *version) {
 
 static inline isc_result_t
 query_addcnamelike(ns_client_t *client, dns_name_t *qname, dns_name_t *tname,
-		   dns_trust_t trust, dns_name_t **anamep, dns_rdatatype_t type)
+		   dns_rdataset_t *dname, dns_name_t **anamep,
+		   dns_rdatatype_t type)
 {
 	dns_rdataset_t *rdataset;
 	dns_rdatalist_t *rdatalist;
@@ -2278,7 +2283,7 @@ query_addcnamelike(ns_client_t *client, dns_name_t *qname, dns_name_t *tname,
 	rdatalist->type = type;
 	rdatalist->covers = 0;
 	rdatalist->rdclass = client->message->rdclass;
-	rdatalist->ttl = 0;
+	rdatalist->ttl = dname->ttl;
 
 	dns_name_toregion(tname, &r);
 	rdata->data = r.base;
@@ -2290,7 +2295,7 @@ query_addcnamelike(ns_client_t *client, dns_name_t *qname, dns_name_t *tname,
 	ISC_LIST_APPEND(rdatalist->rdata, rdata, link);
 	RUNTIME_CHECK(dns_rdatalist_tordataset(rdatalist, rdataset)
 		      == ISC_R_SUCCESS);
-	rdataset->trust = trust;
+	rdataset->trust = dname->trust;
 
 	query_addrrset(client, anamep, &rdataset, NULL, NULL,
 		       DNS_SECTION_ANSWER);
@@ -2603,14 +2608,14 @@ query_addbestns(ns_client_t *client) {
 	/*
 	 * Attempt to validate RRsets that are pending or that are glue.
 	 */
-	if ((rdataset->trust == dns_trust_pending ||
-	     (sigrdataset != NULL && sigrdataset->trust == dns_trust_pending))
+	if ((DNS_TRUST_PENDING(rdataset->trust) ||
+	     (sigrdataset != NULL && DNS_TRUST_PENDING(sigrdataset->trust)))
 	    && !validate(client, db, fname, rdataset, sigrdataset) &&
-	    (client->query.dboptions & DNS_DBFIND_PENDINGOK) == 0)
+	    !PENDINGOK(client->query.dboptions))
 		goto cleanup;
 
-	if ((rdataset->trust == dns_trust_glue ||
-	     (sigrdataset != NULL && sigrdataset->trust == dns_trust_glue)) &&
+	if ((DNS_TRUST_GLUE(rdataset->trust) ||
+	     (sigrdataset != NULL && DNS_TRUST_GLUE(sigrdataset->trust))) &&
 	    !validate(client, db, fname, rdataset, sigrdataset) &&
 	    SECURE(client) && WANTDNSSEC(client))
 		goto cleanup;
@@ -3734,6 +3739,8 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 	dns_rdataset_t *noqname;
 	isc_boolean_t resuming;
 	int line = -1;
+	dns_rdataset_t tmprdataset;
+	unsigned int dboptions;
 
 	CTRACE("query_find");
 
@@ -3951,9 +3958,49 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 	/*
 	 * Now look for an answer in the database.
 	 */
+	dboptions = client->query.dboptions;
+	if (sigrdataset == NULL && client->view->enablednssec) {
+		/*
+		 * If the client doesn't want DNSSEC we still want to
+		 * look for any data pending validation to save a remote
+		 * lookup if possible.
+		 */
+		dns_rdataset_init(&tmprdataset);
+		sigrdataset = &tmprdataset;
+		dboptions |= DNS_DBFIND_PENDINGOK;
+	}
+ refind:
 	result = dns_db_find(db, client->query.qname, version, type,
-			     client->query.dboptions, client->now,
-			     &node, fname, rdataset, sigrdataset);
+			     dboptions, client->now, &node, fname,
+			     rdataset, sigrdataset);
+	/*
+	 * If we have found pending data try to validate it.
+	 * If the data does not validate as secure and we can't
+	 * use the unvalidated data requery the database with
+	 * pending disabled to prevent infinite looping.
+	 */
+	if (result != ISC_R_SUCCESS || !DNS_TRUST_PENDING(rdataset->trust))
+		goto validation_done;
+	if (validate(client, db, fname, rdataset, sigrdataset))
+		goto validation_done;
+	if (rdataset->trust != dns_trust_pending_answer ||
+	    !PENDINGOK(client->query.dboptions)) {
+		dns_rdataset_disassociate(rdataset);
+		if (sigrdataset != NULL &&
+		    dns_rdataset_isassociated(sigrdataset))
+			dns_rdataset_disassociate(sigrdataset);
+		if (sigrdataset == &tmprdataset)
+			sigrdataset = NULL;
+		dns_db_detachnode(db, &node);
+		dboptions &= ~DNS_DBFIND_PENDINGOK;
+		goto refind;
+	}
+ validation_done:
+	if (sigrdataset == &tmprdataset) {
+		if (dns_rdataset_isassociated(sigrdataset))
+			dns_rdataset_disassociate(sigrdataset);
+		sigrdataset = NULL;
+	}
 
  resume:
 	CTRACE("query_find: resume");
@@ -4608,7 +4655,7 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 		 */
 		dns_name_init(tname, NULL);
 		(void)query_addcnamelike(client, client->query.qname, fname,
-					 trdataset->trust, &tname,
+					 trdataset, &tname,
 					 dns_rdatatype_cname);
 		if (tname != NULL)
 			dns_message_puttempname(client->message, &tname);
@@ -4638,6 +4685,20 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 	}
 
 	if (type == dns_rdatatype_any) {
+#ifdef ALLOW_FILTER_AAAA_ON_V4
+		isc_boolean_t have_aaaa, have_a, have_sig;
+
+		/*
+		 * The filter-aaaa-on-v4 option should
+		 * suppress AAAAs for IPv4 clients if there is an A.
+		 * If we are not authoritative, assume there is a A
+		 * even in if it is not in our cache.  This assumption could
+		 * be wrong but it is a good bet.
+		 */
+		have_aaaa = ISC_FALSE;
+		have_a = !authoritative;
+		have_sig = ISC_FALSE;
+#endif
 		/*
 		 * XXXRTH  Need to handle zonecuts with special case
 		 * code.
@@ -4665,6 +4726,20 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 		result = dns_rdatasetiter_first(rdsiter);
 		while (result == ISC_R_SUCCESS) {
 			dns_rdatasetiter_current(rdsiter, rdataset);
+#ifdef ALLOW_FILTER_AAAA_ON_V4
+			/*
+			 * Notice the presence of A and AAAAs so
+			 * that AAAAs can be hidden from IPv4 clients.
+			 */
+			if (client->view->v4_aaaa != dns_v4_aaaa_ok &&
+			    client->peeraddr_valid &&
+			    client->peeraddr.type.sa.sa_family == AF_INET) {
+				if (rdataset->type == dns_rdatatype_aaaa)
+					have_aaaa = ISC_TRUE;
+				else if (rdataset->type == dns_rdatatype_a)
+					have_a = ISC_TRUE;
+			}
+#endif
 			if (is_zone && qtype == dns_rdatatype_any &&
 			    !dns_db_issecure(db) &&
 			    dns_rdatatype_isdnssec(rdataset->type)) {
@@ -4676,6 +4751,10 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 				dns_rdataset_disassociate(rdataset);
 			} else if ((qtype == dns_rdatatype_any ||
 			     rdataset->type == qtype) && rdataset->type != 0) {
+#ifdef ALLOW_FILTER_AAAA_ON_V4
+				if (dns_rdatatype_isdnssec(rdataset->type))
+					have_sig = ISC_TRUE;
+#endif
 				if (NOQNAME(rdataset) && WANTDNSSEC(client))
 					noqname = rdataset;
 				else
@@ -4706,6 +4785,16 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 			result = dns_rdatasetiter_next(rdsiter);
 		}
 
+#ifdef ALLOW_FILTER_AAAA_ON_V4
+		/*
+		 * Filter AAAAs if there is an A and there is no signature
+		 * or we are supposed to break DNSSEC.
+		 */
+		if (have_aaaa && have_a &&
+		    (!have_sig || !WANTDNSSEC(client) ||
+		     client->view->v4_aaaa == dns_v4_aaaa_break_dnssec))
+			client->attributes |= NS_CLIENTATTR_FILTER_AAAA;
+#endif
 		if (fname != NULL)
 			dns_message_puttempname(client->message, &fname);
 
@@ -4767,6 +4856,90 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 		 * This is the "normal" case -- an ordinary question to which
 		 * we know the answer.
 		 */
+#ifdef ALLOW_FILTER_AAAA_ON_V4
+		/*
+		 * Optionally hide AAAAs from IPv4 clients if there is an A.
+		 * We add the AAAAs now, but might refuse to render them later
+		 * after DNSSEC is figured out.
+		 * This could be more efficient, but the whole idea is
+		 * so fundamentally wrong, unavoidably inaccurate, and
+		 * unneeded that it is best to keep it as short as possible.
+		 */
+		if (client->view->v4_aaaa != dns_v4_aaaa_ok &&
+		    client->peeraddr_valid &&
+		    client->peeraddr.type.sa.sa_family == AF_INET &&
+		    (!WANTDNSSEC(client) ||
+		     sigrdataset == NULL ||
+		     !dns_rdataset_isassociated(sigrdataset) ||
+		     client->view->v4_aaaa == dns_v4_aaaa_break_dnssec)) {
+			if (qtype == dns_rdatatype_aaaa) {
+				trdataset = query_newrdataset(client);
+				result = dns_db_findrdataset(db, node, version,
+							dns_rdatatype_a, 0,
+							client->now,
+							trdataset, NULL);
+				if (dns_rdataset_isassociated(trdataset))
+					dns_rdataset_disassociate(trdataset);
+				query_putrdataset(client, &trdataset);
+
+				/*
+				 * We have an AAAA but the A is not in our cache.
+				 * Assume any result other than DNS_R_DELEGATION
+				 * or ISC_R_NOTFOUND means there is no A and
+				 * so AAAAs are ok.
+				 * Assume there is no A if we can't recurse
+				 * for this client, although that could be
+				 * the wrong answer. What else can we do?
+				 * Besides, that we have the AAAA and are using
+				 * this mechanism suggests that we care more
+				 * about As than AAAAs and would have cached
+				 * the A if it existed.
+				 */
+				if (result == ISC_R_SUCCESS) {
+					client->attributes |=
+						    NS_CLIENTATTR_FILTER_AAAA;
+
+				} else if (authoritative ||
+					   !RECURSIONOK(client) ||
+					   (result != DNS_R_DELEGATION &&
+					    result != ISC_R_NOTFOUND)) {
+					client->attributes &=
+						    ~NS_CLIENTATTR_FILTER_AAAA;
+				} else {
+					/*
+					 * This is an ugly kludge to recurse
+					 * for the A and discard the result.
+					 *
+					 * Continue to add the AAAA now.
+					 * We'll make a note to not render it
+					 * if the recursion for the A succeeds.
+					 */
+					result = query_recurse(client,
+							dns_rdatatype_a,
+							NULL, NULL, resuming);
+					if (result == ISC_R_SUCCESS) {
+					    client->attributes |=
+						    NS_CLIENTATTR_FILTER_AAAA_RC;
+					    client->query.attributes |=
+							NS_QUERYATTR_RECURSING;
+					}
+				}
+
+			} else if (qtype == dns_rdatatype_a &&
+				   (client->attributes &
+					    NS_CLIENTATTR_FILTER_AAAA_RC) != 0) {
+				client->attributes &=
+					    ~NS_CLIENTATTR_FILTER_AAAA_RC;
+				client->attributes |=
+					    NS_CLIENTATTR_FILTER_AAAA;
+				dns_rdataset_disassociate(rdataset);
+				if (sigrdataset != NULL &&
+				    dns_rdataset_isassociated(sigrdataset))
+					dns_rdataset_disassociate(sigrdataset);
+				goto cleanup;
+			}
+		}
+#endif
 		if (sigrdataset != NULL)
 			sigrdatasetp = &sigrdataset;
 		else
@@ -4948,10 +5121,12 @@ log_query(ns_client_t *client, unsigned int flags, unsigned int extflags) {
 	isc_netaddr_format(&client->destaddr, onbuf, sizeof(onbuf));
 
 	ns_client_log(client, NS_LOGCATEGORY_QUERIES, NS_LOGMODULE_QUERY,
-		      level, "query: %s %s %s %s%s%s%s%s (%s)", namebuf,
+		      level, "query: %s %s %s %s%s%s%s%s%s (%s)", namebuf,
 		      classname, typename, WANTRECURSION(client) ? "+" : "-",
 		      (client->signer != NULL) ? "S": "",
 		      (client->opt != NULL) ? "E" : "",
+		      ((client->attributes & NS_CLIENTATTR_TCP) != 0) ?
+				 "T" : "",
 		      ((extflags & DNS_MESSAGEEXTFLAG_DO) != 0) ? "D" : "",
 		      ((flags & DNS_MESSAGEFLAG_CD) != 0) ? "C" : "",
 		      onbuf);
@@ -5135,6 +5310,14 @@ ns_query_start(ns_client_t *client) {
 	 * Turn on minimal response for DNSKEY and DS queries.
 	 */
 	if (qtype == dns_rdatatype_dnskey || qtype == dns_rdatatype_ds)
+		client->query.attributes |= (NS_QUERYATTR_NOAUTHORITY |
+					     NS_QUERYATTR_NOADDITIONAL);
+
+	/*
+	 * Turn on minimal responses for EDNS/UDP bufsize 512 queries.
+	 */
+	if (client->opt != NULL && client->udpsize <= 512U &&
+	    (client->attributes & NS_CLIENTATTR_TCP) == 0)
 		client->query.attributes |= (NS_QUERYATTR_NOAUTHORITY |
 					     NS_QUERYATTR_NOADDITIONAL);
 

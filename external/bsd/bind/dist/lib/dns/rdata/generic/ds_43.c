@@ -1,7 +1,7 @@
-/*	$NetBSD: ds_43.c,v 1.1.1.1 2009/03/22 15:01:52 christos Exp $	*/
+/*	$NetBSD: ds_43.c,v 1.1.1.2 2009/12/26 22:25:24 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ds_43.c,v 1.12 2007/06/18 23:47:43 tbox Exp */
+/* Id: ds_43.c,v 1.14 2009/12/04 22:06:37 tbox Exp */
 
 /* draft-ietf-dnsext-delegation-signer-05.txt */
 
@@ -318,6 +318,11 @@ checknames_ds(ARGS_CHECKNAMES) {
 	UNUSED(bad);
 
 	return (ISC_TRUE);
+}
+
+static inline int
+casecompare_ds(ARGS_COMPARE) {
+	return (compare_ds(rdata1, rdata2));
 }
 
 #endif	/* RDATA_GENERIC_DS_43_C */

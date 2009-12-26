@@ -12,16 +12,18 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.3 2009/09/02 23:48:02 tbox Exp
+# Id: Makefile.in,v 1.4 2009/12/05 23:31:41 each Exp
 
 srcdir =	@srcdir@
 top_srcdir =	@top_srcdir@
+export_srcdir =	@top_srcdir@/lib/export
 
 @BIND9_VERSION@
 
 @BIND9_MAKE_INCLUDES@
 
 CINCLUDES =	-I${srcdir}/include -I../dns/include \
+		-I${export_srcdir}/isc/include \
 		${DNS_INCLUDES} ${ISC_INCLUDES} \
 		-I${top_srcdir}/lib/irs/include
 

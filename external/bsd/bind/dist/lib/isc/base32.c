@@ -1,4 +1,4 @@
-/*	$NetBSD: base32.c,v 1.1.1.2 2009/10/25 00:02:42 christos Exp $	*/
+/*	$NetBSD: base32.c,v 1.1.1.3 2009/12/26 22:25:38 christos Exp $	*/
 
 /*
  * Copyright (C) 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: base32.c,v 1.5 2009/01/18 23:48:14 tbox Exp */
+/* Id: base32.c,v 1.6 2009/10/21 01:22:29 each Exp */
 
 /*! \file */
 
@@ -114,6 +114,8 @@ base32_totext(isc_region_t *source, int wordlength, const char *wordbreak,
 			RETERR(str_totext(wordbreak, target));
 		}
 	}
+	if (source->length > 0)
+		isc_region_consume(source, source->length);
 	return (ISC_R_SUCCESS);
 }
 

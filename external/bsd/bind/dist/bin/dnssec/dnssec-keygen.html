@@ -14,7 +14,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- Id: dnssec-keygen.html,v 1.41 2009/10/06 01:14:41 tbox Exp -->
+<!-- Id: dnssec-keygen.html,v 1.45 2009/11/03 21:58:30 tbox Exp -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -29,10 +29,10 @@
 </div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
-<div class="cmdsynopsis"><p><code class="command">dnssec-keygen</code>  [<code class="option">-a <em class="replaceable"><code>algorithm</code></em></code>] [<code class="option">-b <em class="replaceable"><code>keysize</code></em></code>] [<code class="option">-n <em class="replaceable"><code>nametype</code></em></code>] [<code class="option">-3</code>] [<code class="option">-A <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-C</code>] [<code class="option">-c <em class="replaceable"><code>class</code></em></code>] [<code class="option">-D <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-E <em class="replaceable"><code>engine</code></em></code>] [<code class="option">-e</code>] [<code class="option">-f <em class="replaceable"><code>flag</code></em></code>] [<code class="option">-G</code>] [<code class="option">-g <em class="replaceable"><code>generator</code></em></code>] [<code class="option">-h</code>] [<code class="option">-I <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-K <em class="replaceable"><code>directory</code></em></code>] [<code class="option">-k</code>] [<code class="option">-P <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-p <em class="replaceable"><code>protocol</code></em></code>] [<code class="option">-R <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-r <em class="replaceable"><code>randomdev</code></em></code>] [<code class="option">-s <em class="replaceable"><code>strength</code></em></code>] [<code class="option">-t <em class="replaceable"><code>type</code></em></code>] [<code class="option">-v <em class="replaceable"><code>level</code></em></code>] [<code class="option">-z</code>] {name}</p></div>
+<div class="cmdsynopsis"><p><code class="command">dnssec-keygen</code>  [<code class="option">-a <em class="replaceable"><code>algorithm</code></em></code>] [<code class="option">-b <em class="replaceable"><code>keysize</code></em></code>] [<code class="option">-n <em class="replaceable"><code>nametype</code></em></code>] [<code class="option">-3</code>] [<code class="option">-A <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-C</code>] [<code class="option">-c <em class="replaceable"><code>class</code></em></code>] [<code class="option">-D <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-E <em class="replaceable"><code>engine</code></em></code>] [<code class="option">-e</code>] [<code class="option">-f <em class="replaceable"><code>flag</code></em></code>] [<code class="option">-G</code>] [<code class="option">-g <em class="replaceable"><code>generator</code></em></code>] [<code class="option">-h</code>] [<code class="option">-I <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-K <em class="replaceable"><code>directory</code></em></code>] [<code class="option">-k</code>] [<code class="option">-P <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-p <em class="replaceable"><code>protocol</code></em></code>] [<code class="option">-q</code>] [<code class="option">-R <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-r <em class="replaceable"><code>randomdev</code></em></code>] [<code class="option">-s <em class="replaceable"><code>strength</code></em></code>] [<code class="option">-t <em class="replaceable"><code>type</code></em></code>] [<code class="option">-v <em class="replaceable"><code>level</code></em></code>] [<code class="option">-z</code>] {name}</p></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2543554"></a><h2>DESCRIPTION</h2>
+<a name="id2543558"></a><h2>DESCRIPTION</h2>
 <p><span><strong class="command">dnssec-keygen</strong></span>
       generates keys for DNSSEC (Secure DNS), as defined in RFC 2535
       and RFC 4034.  It can also generate keys for use with
@@ -46,14 +46,15 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2543572"></a><h2>OPTIONS</h2>
+<a name="id2543576"></a><h2>OPTIONS</h2>
 <div class="variablelist"><dl>
 <dt><span class="term">-a <em class="replaceable"><code>algorithm</code></em></span></dt>
 <dd>
 <p>
             Selects the cryptographic algorithm.  For DNSSEC keys, the value
             of <code class="option">algorithm</code> must be one of RSAMD5, RSASHA1,
-	    DSA, NSEC3RSASHA1, or NSEC3DSA.  For TSIG/TKEY, the value must
+	    DSA, NSEC3RSASHA1, NSEC3DSA, RSASHA256 or RSASHA512.
+	    For TSIG/TKEY, the value must
             be DH (Diffie Hellman), HMAC-MD5, HMAC-SHA1, HMAC-SHA224,
             HMAC-SHA256, HMAC-SHA384, or HMAC-SHA512.  These values are
             case insensitive.
@@ -61,7 +62,9 @@
 <p>
             If no algorithm is specified, then RSASHA1 will be used by
             default, unless the <code class="option">-3</code> option is specified,
-            in which case NSEC3RSASHA1 will be used instead.
+            in which case NSEC3RSASHA1 will be used instead.  (If
+            <code class="option">-3</code> is used and an algorithm is specified,
+            that algorithm will be checked for compatibility with NSEC3.)
           </p>
 <p>
             Note 1: that for DNSSEC, RSASHA1 is a mandatory to implement
@@ -77,10 +80,10 @@
 <dd>
 <p>
             Specifies the number of bits in the key.  The choice of key
-            size depends on the algorithm used.  RSAMD5 / RSASHA1 keys must be
+            size depends on the algorithm used.  RSA keys must be
             between 512 and 2048 bits.  Diffie Hellman keys must be between
             128 and 4096 bits.  DSA keys must be between 512 and 1024
-            bits and an exact multiple of 64.  HMAC-MD5 keys must be
+            bits and an exact multiple of 64.  HMAC keys must be
             between 1 and 512 bits.
           </p>
 <p>
@@ -108,7 +111,8 @@
 	    Use an NSEC3-capable algorithm to generate a DNSSEC key.
             If this option is used and no algorithm is explicitly
             set on the command line, NSEC3RSASHA1 will be used by
-            default.
+            default. Note that RSASHA256 and RSASHA512 algorithms
+	    are NSEC3-capable.
           </p></dd>
 <dt><span class="term">-C</span></dt>
 <dd><p>
@@ -129,7 +133,7 @@
 <dd><p>
             Uses a crypto hardware (OpenSSL engine) for random number
             and, when supported, key generation. When compiled with PKCS#11
-            support it defaults to pcks11, the empty name resets it to
+            support it defaults to pkcs11; the empty name resets it to
             no engine.
           </p></dd>
 <dt><span class="term">-e</span></dt>
@@ -172,6 +176,20 @@
             is a number between 0 and 255.  The default is 3 (DNSSEC).
             Other possible values for this argument are listed in
             RFC 2535 and its successors.
+          </p></dd>
+<dt><span class="term">-q</span></dt>
+<dd><p>
+            Quiet mode: Suppresses unnecessary output, including
+            progress indication.  Without this option, when
+            <span><strong class="command">dnssec-keygen</strong></span> is run interactively
+            to generate an RSA or DSA key pair, it will print a string
+            of symbols to <code class="filename">stderr</code> indicating the
+            progress of the key generation.  A '.' indicates that a
+            random number has been found which passed an initial
+            sieve test; '+' means a number has passed a single
+            round of the Miller-Rabin primality test; a space
+            means that the number has passed all the tests and is
+            a satisfactory key.
           </p></dd>
 <dt><span class="term">-r <em class="replaceable"><code>randomdev</code></em></span></dt>
 <dd><p>
@@ -220,7 +238,7 @@
 </dl></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2544101"></a><h2>TIMING OPTIONS</h2>
+<a name="id2544128"></a><h2>TIMING OPTIONS</h2>
 <p>
       Dates can be expressed in the format YYYYMMDD or YYYYMMDDHHMMSS.
       If the argument begins with a '+' or '-', it is interpreted as
@@ -242,7 +260,7 @@
 <dt><span class="term">-A <em class="replaceable"><code>date/offset</code></em></span></dt>
 <dd><p>
             Sets the date on which the key is to be activated.  After that
-            date, the key will be included and the zone and used to sign
+            date, the key will be included in the zone and used to sign
             it.  If not set, and if the -G option has not been used, the
             default is "now".
           </p></dd>
@@ -267,7 +285,7 @@
 </dl></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2544199"></a><h2>GENERATED KEYS</h2>
+<a name="id2544226"></a><h2>GENERATED KEYS</h2>
 <p>
       When <span><strong class="command">dnssec-keygen</strong></span> completes
       successfully,
@@ -313,7 +331,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2544281"></a><h2>EXAMPLE</h2>
+<a name="id2544308"></a><h2>EXAMPLE</h2>
 <p>
       To generate a 768-bit DSA key for the domain
       <strong class="userinput"><code>example.com</code></strong>, the following command would be
@@ -334,16 +352,16 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2544325"></a><h2>SEE ALSO</h2>
+<a name="id2544352"></a><h2>SEE ALSO</h2>
 <p><span class="citerefentry"><span class="refentrytitle">dnssec-signzone</span>(8)</span>,
       <em class="citetitle">BIND 9 Administrator Reference Manual</em>,
       <em class="citetitle">RFC 2539</em>,
       <em class="citetitle">RFC 2845</em>,
-      <em class="citetitle">RFC 4033</em>.
+      <em class="citetitle">RFC 4034</em>.
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2544356"></a><h2>AUTHOR</h2>
+<a name="id2544451"></a><h2>AUTHOR</h2>
 <p><span class="corpauthor">Internet Systems Consortium</span>
     </p>
 </div>

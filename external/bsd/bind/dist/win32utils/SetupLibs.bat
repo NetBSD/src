@@ -20,8 +20,8 @@ rem This script may be modified by updateopenssl.pl and/or updatelibxml2.pl.
 
 echo Copying the OpenSSL DLL.
 
-copy ..\..\openssl-0.9.8k\out32dll\libeay32.dll ..\Build\Release\
-copy ..\..\openssl-0.9.8k\out32dll\libeay32.dll ..\Build\Debug\
+copy ..\..\openssl-0.9.8l\out32dll\libeay32.dll ..\Build\Release\
+copy ..\..\openssl-0.9.8l\out32dll\libeay32.dll ..\Build\Debug\
 
 echo Copying the libxml DLL.
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: minfo_14.c,v 1.1.1.1 2009/03/22 15:01:52 christos Exp $	*/
+/*	$NetBSD: minfo_14.c,v 1.1.1.2 2009/12/26 22:25:26 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: minfo_14.c,v 1.45 2007/06/19 23:47:17 tbox Exp */
+/* Id: minfo_14.c,v 1.47 2009/12/04 22:06:37 tbox Exp */
 
 /* reviewed: Wed Mar 15 17:45:32 PST 2000 by brister */
 
@@ -95,8 +95,8 @@ totext_minfo(ARGS_TOTEXT) {
 
 static inline isc_result_t
 fromwire_minfo(ARGS_FROMWIRE) {
-        dns_name_t rmail;
-        dns_name_t email;
+	dns_name_t rmail;
+	dns_name_t email;
 
 	REQUIRE(type == 14);
 
@@ -105,11 +105,11 @@ fromwire_minfo(ARGS_FROMWIRE) {
 
 	dns_decompress_setmethods(dctx, DNS_COMPRESS_GLOBAL14);
 
-        dns_name_init(&rmail, NULL);
-        dns_name_init(&email, NULL);
+	dns_name_init(&rmail, NULL);
+	dns_name_init(&email, NULL);
 
-        RETERR(dns_name_fromwire(&rmail, source, dctx, options, target));
-        return (dns_name_fromwire(&email, source, dctx, options, target));
+	RETERR(dns_name_fromwire(&rmail, source, dctx, options, target));
+	return (dns_name_fromwire(&email, source, dctx, options, target));
 }
 
 static inline isc_result_t
@@ -321,6 +321,11 @@ checknames_minfo(ARGS_CHECKNAMES) {
 		return (ISC_FALSE);
 	}
 	return (ISC_TRUE);
+}
+
+static inline int
+casecompare_minfo(ARGS_COMPARE) {
+	return (compare_minfo(rdata1, rdata2));
 }
 
 #endif	/* RDATA_GENERIC_MINFO_14_C */

@@ -14,7 +14,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- Id: man.nsupdate.html,v 1.69 2009/10/16 04:20:33 tbox Exp -->
+<!-- Id: man.nsupdate.html,v 1.80 2009/12/04 22:22:25 tbox Exp -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -22,7 +22,7 @@
 <meta name="generator" content="DocBook XSL Stylesheets V1.71.1">
 <link rel="start" href="Bv9ARM.html" title="BIND 9 Administrator Reference Manual">
 <link rel="up" href="Bv9ARM.ch10.html" title="Manual pages">
-<link rel="prev" href="man.named.html" title="named">
+<link rel="prev" href="man.named-journalprint.html" title="named-journalprint">
 <link rel="next" href="man.rndc.html" title="rndc">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -31,7 +31,7 @@
 <tr><th colspan="3" align="center"><span class="application">nsupdate</span></th></tr>
 <tr>
 <td width="20%" align="left">
-<a accesskey="p" href="man.named.html">Prev</a> </td>
+<a accesskey="p" href="man.named-journalprint.html">Prev</a> </td>
 <th width="60%" align="center">Manual pages</th>
 <td width="20%" align="right"> <a accesskey="n" href="man.rndc.html">Next</a>
 </td>
@@ -50,7 +50,7 @@
 <div class="cmdsynopsis"><p><code class="command">nsupdate</code>  [<code class="option">-d</code>] [<code class="option">-D</code>] [[<code class="option">-g</code>] |  [<code class="option">-o</code>] |  [<code class="option">-l</code>] |  [<code class="option">-y <em class="replaceable"><code>[<span class="optional">hmac:</span>]keyname:secret</code></em></code>] |  [<code class="option">-k <em class="replaceable"><code>keyfile</code></em></code>]] [<code class="option">-t <em class="replaceable"><code>timeout</code></em></code>] [<code class="option">-u <em class="replaceable"><code>udptimeout</code></em></code>] [<code class="option">-r <em class="replaceable"><code>udpretries</code></em></code>] [<code class="option">-R <em class="replaceable"><code>randomdev</code></em></code>] [<code class="option">-v</code>] [filename]</p></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2615081"></a><h2>DESCRIPTION</h2>
+<a name="id2616486"></a><h2>DESCRIPTION</h2>
 <p><span><strong class="command">nsupdate</strong></span>
       is used to submit Dynamic DNS Update requests as defined in RFC 2136
       to a name server.
@@ -210,7 +210,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2616644"></a><h2>INPUT FORMAT</h2>
+<a name="id2629654"></a><h2>INPUT FORMAT</h2>
 <p><span><strong class="command">nsupdate</strong></span>
       reads input from
       <em class="parameter"><code>filename</code></em>
@@ -474,7 +474,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2665463"></a><h2>EXAMPLES</h2>
+<a name="id2672807"></a><h2>EXAMPLES</h2>
 <p>
       The examples below show how
       <span><strong class="command">nsupdate</strong></span>
@@ -528,7 +528,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2665513"></a><h2>FILES</h2>
+<a name="id2672857"></a><h2>FILES</h2>
 <div class="variablelist"><dl>
 <dt><span class="term"><code class="constant">/etc/resolv.conf</code></span></dt>
 <dd><p>
@@ -551,7 +551,7 @@
 </dl></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2665665"></a><h2>SEE ALSO</h2>
+<a name="id2673009"></a><h2>SEE ALSO</h2>
 <p>
       <em class="citetitle">RFC 2136</em>,
       <em class="citetitle">RFC 3007</em>,
@@ -566,7 +566,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2665722"></a><h2>BUGS</h2>
+<a name="id2673066"></a><h2>BUGS</h2>
 <p>
       The TSIG key is redundantly stored in two separate files.
       This is a consequence of nsupdate using the DST library
@@ -580,14 +580,14 @@
 <table width="100%" summary="Navigation footer">
 <tr>
 <td width="40%" align="left">
-<a accesskey="p" href="man.named.html">Prev</a> </td>
+<a accesskey="p" href="man.named-journalprint.html">Prev</a> </td>
 <td width="20%" align="center"><a accesskey="u" href="Bv9ARM.ch10.html">Up</a></td>
 <td width="40%" align="right"> <a accesskey="n" href="man.rndc.html">Next</a>
 </td>
 </tr>
 <tr>
 <td width="40%" align="left" valign="top">
-<span class="application">named</span> </td>
+<span class="application">named-journalprint</span> </td>
 <td width="20%" align="center"><a accesskey="h" href="Bv9ARM.html">Home</a></td>
 <td width="40%" align="right" valign="top"> <span class="application">rndc</span>
 </td>

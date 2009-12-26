@@ -230,15 +230,21 @@ dns_journal_next_rr
 dns_journal_open
 dns_journal_print
 dns_journal_rollforward
+dns_journal_rollforward2
 dns_journal_write_transaction
 dns_journal_writediff
 dns_keydata_fromdnskey
 dns_keydata_todnskey
 dns_keyflags_fromtext
+dns_keynode_attach
+dns_keynode_detach
+dns_keynode_detachall
+dns_keynode_create
 dns_keynode_key
 dns_keynode_managed
 dns_keytable_add
 dns_keytable_attach
+dns_keytable_attachkeynode
 dns_keytable_create
 dns_keytable_delete
 dns_keytable_deletekeynode
@@ -463,6 +469,7 @@ dns_rbtnodechain_reset
 dns_rcode_fromtext
 dns_rcode_totext
 dns_rdata_additionaldata
+dns_rdata_casecompare
 dns_rdata_checkowner
 dns_rdata_clone
 dns_rdata_compare
@@ -676,8 +683,11 @@ dns_view_freezezones
 dns_view_getpeertsig
 dns_view_getresquerystats
 dns_view_getresstats
+dns_view_getsecroots
 dns_view_gettsig
+dns_view_initsecroots
 dns_view_iscacheshared
+dns_view_issecuredomain
 dns_view_load
 dns_view_loadnew
 dns_view_setcache
@@ -768,6 +778,7 @@ dns_zone_name
 dns_zone_next
 dns_zone_notify
 dns_zone_notifyreceive
+dns_zone_nscheck
 dns_zone_refresh
 dns_zone_replacedb
 dns_zone_rekey
@@ -881,6 +892,7 @@ dst_key_fromgssapi
 dst_key_fromlabel
 dst_key_fromnamedfile
 dst_key_generate
+dst_key_generate2
 dst_key_getprivateformat
 dst_key_gettime
 dst_key_id

@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.1.1.2 2009/10/25 00:02:36 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.1.1.3 2009/12/26 22:25:04 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: view.c,v 1.156 2009/09/01 00:22:26 jinmei Exp */
+/* Id: view.c,v 1.159 2009/11/28 15:57:37 vjs Exp */
 
 /*! \file */
 
@@ -99,7 +99,7 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 		goto cleanup_mutex;
 	}
 #endif
-	view->secroots = NULL;
+	view->secroots_priv = NULL;
 	view->fwdtable = NULL;
 	result = dns_fwdtable_create(mctx, &view->fwdtable);
 	if (result != ISC_R_SUCCESS) {
@@ -179,6 +179,9 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	view->flush = ISC_FALSE;
 	view->dlv = NULL;
 	view->maxudp = 0;
+#ifdef ALLOW_FILTER_AAAA_ON_V4
+	view->v4_aaaa = dns_v4_aaaa_ok;
+#endif
 	dns_fixedname_init(&view->dlv_fixed);
 
 #ifdef BIND9
@@ -356,8 +359,8 @@ destroy(dns_view_t *view) {
 		isc_stats_detach(&view->resstats);
 	if (view->resquerystats != NULL)
 		dns_stats_detach(&view->resquerystats);
-	if (view->secroots != NULL)
-		dns_keytable_detach(&view->secroots);
+	if (view->secroots_priv != NULL)
+		dns_keytable_detach(&view->secroots_priv);
 	dns_fwdtable_destroy(&view->fwdtable);
 	dns_aclenv_destroy(&view->aclenv);
 	DESTROYLOCK(&view->lock);
@@ -1302,7 +1305,8 @@ dns_view_getpeertsig(dns_view_t *view, isc_netaddr_t *peeraddr,
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	return (dns_view_gettsig(view, keyname, keyp));
+	result = dns_view_gettsig(view, keyname, keyp);
+	return ((result == ISC_R_NOTFOUND) ? ISC_R_FAILURE : result);
 }
 
 isc_result_t
@@ -1532,4 +1536,30 @@ dns_view_getresquerystats(dns_view_t *view, dns_stats_t **statsp) {
 
 	if (view->resquerystats != NULL)
 		dns_stats_attach(view->resquerystats, statsp);
+}
+
+isc_result_t
+dns_view_initsecroots(dns_view_t *view, isc_mem_t *mctx) {
+	REQUIRE(DNS_VIEW_VALID(view));
+	if (view->secroots_priv != NULL)
+		dns_keytable_detach(&view->secroots_priv);
+	return (dns_keytable_create(mctx, &view->secroots_priv));
+}
+
+isc_result_t
+dns_view_getsecroots(dns_view_t *view, dns_keytable_t **ktp) {
+	REQUIRE(DNS_VIEW_VALID(view));
+	REQUIRE(ktp != NULL && *ktp == NULL);
+	if (view->secroots_priv == NULL)
+		return (ISC_R_NOTFOUND);
+	dns_keytable_attach(view->secroots_priv, ktp);
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_view_issecuredomain(dns_view_t *view, dns_name_t *name,
+			 isc_boolean_t *secure_domain) {
+	REQUIRE(DNS_VIEW_VALID(view));
+	return (dns_keytable_issecuredomain(view->secroots_priv, name,
+					    secure_domain));
 }

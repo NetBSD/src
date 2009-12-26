@@ -1,4 +1,4 @@
-.\"	$NetBSD: dnssec-keyfromlabel.8,v 1.1.1.2 2009/10/25 00:01:30 christos Exp $
+.\"	$NetBSD: dnssec-keyfromlabel.8,v 1.1.1.3 2009/12/26 22:18:57 christos Exp $
 .\"
 .\" Copyright (C) 2008, 2009 Internet Systems Consortium, Inc. ("ISC")
 .\" 
@@ -14,7 +14,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: dnssec-keyfromlabel.8,v 1.13 2009/10/07 01:14:42 tbox Exp
+.\" Id: dnssec-keyfromlabel.8,v 1.16 2009/11/03 21:58:30 tbox Exp
 .\"
 .hy 0
 .ad l
@@ -49,11 +49,13 @@ of the key is specified on the command line. This must match the name of the zon
 .RS 4
 Selects the cryptographic algorithm. The value of
 \fBalgorithm\fR
-must be one of RSAMD5 (RSA), RSASHA1, DSA, NSEC3RSASHA1, NSEC3DSA or DH (Diffie Hellman). These values are case insensitive.
+must be one of RSAMD5, RSASHA1, DSA, NSEC3RSASHA1, NSEC3DSA, RSASHA256 or RSASHA512. These values are case insensitive.
 .sp
 If no algorithm is specified, then RSASHA1 will be used by default, unless the
 \fB\-3\fR
-option is specified, in which case NSEC3RSASHA1 will be used instead.
+option is specified, in which case NSEC3RSASHA1 will be used instead. (If
+\fB\-3\fR
+is used and an algorithm is specified, that algorithm will be checked for compatibility with NSEC3.)
 .sp
 Note 1: that for DNSSEC, RSASHA1 is a mandatory to implement algorithm, and DSA is recommended.
 .sp
@@ -67,7 +69,7 @@ Use an NSEC3\-capable algorithm to generate a DNSSEC key. If this option is used
 .PP
 \-E \fIengine\fR
 .RS 4
-Specifies the name of the crypto hardware (OpenSSL engine). When compiled with PKCS#11 support it defaults to "pcks11".
+Specifies the name of the crypto hardware (OpenSSL engine). When compiled with PKCS#11 support it defaults to "pkcs11".
 .RE
 .PP
 \-l \fIlabel\fR
@@ -149,7 +151,7 @@ Sets the date on which a key is to be published to the zone. After that date, th
 .PP
 \-A \fIdate/offset\fR
 .RS 4
-Sets the date on which the key is to be activated. After that date, the key will be included and the zone and used to sign it. If not set, and if the \-G option has not been used, the default is "now".
+Sets the date on which the key is to be activated. After that date, the key will be included in the zone and used to sign it. If not set, and if the \-G option has not been used, the default is "now".
 .RE
 .PP
 \-R \fIdate/offset\fR
@@ -205,9 +207,7 @@ file contains algorithm\-specific fields. For obvious security reasons, this fil
 \fBdnssec\-keygen\fR(8),
 \fBdnssec\-signzone\fR(8),
 BIND 9 Administrator Reference Manual,
-RFC 2539,
-RFC 2845,
-RFC 4033.
+RFC 4034.
 .SH "AUTHOR"
 .PP
 Internet Systems Consortium

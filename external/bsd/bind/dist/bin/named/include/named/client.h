@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.1.1.2 2009/10/25 00:01:33 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.1.1.3 2009/12/26 22:19:25 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: client.h,v 1.90 2009/05/07 09:41:22 fdupont Exp */
+/* Id: client.h,v 1.91 2009/10/26 23:14:53 each Exp */
 
 #ifndef NAMED_CLIENT_H
 #define NAMED_CLIENT_H 1
@@ -170,6 +170,10 @@ struct ns_client {
 #define NS_CLIENTATTR_MULTICAST		0x08 /*%< recv'd from multicast */
 #define NS_CLIENTATTR_WANTDNSSEC	0x10 /*%< include dnssec records */
 #define NS_CLIENTATTR_WANTNSID          0x20 /*%< include nameserver ID */
+#ifdef ALLOW_FILTER_AAAA_ON_V4
+#define NS_CLIENTATTR_FILTER_AAAA	0x40 /*%< suppress AAAAs */
+#define NS_CLIENTATTR_FILTER_AAAA_RC	0x80 /*%< recursing for A against AAAA */
+#endif
 
 extern unsigned int ns_client_requests;
 

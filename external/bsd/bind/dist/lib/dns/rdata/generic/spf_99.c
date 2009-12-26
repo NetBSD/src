@@ -1,7 +1,7 @@
-/*	$NetBSD: spf_99.c,v 1.1.1.1 2009/03/22 15:01:55 christos Exp $	*/
+/*	$NetBSD: spf_99.c,v 1.1.1.2 2009/12/26 22:25:28 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: spf_99.c,v 1.4 2007/06/19 23:47:17 tbox Exp */
+/* Id: spf_99.c,v 1.6 2009/12/04 22:06:37 tbox Exp */
 
 /* Reviewed: Thu Mar 16 15:40:00 PST 2000 by bwelling */
 
@@ -237,4 +237,8 @@ checknames_spf(ARGS_CHECKNAMES) {
 	return (ISC_TRUE);
 }
 
+static inline int
+casecompare_spf(ARGS_COMPARE) {
+	return (compare_spf(rdata1, rdata2));
+}
 #endif	/* RDATA_GENERIC_SPF_99_C */

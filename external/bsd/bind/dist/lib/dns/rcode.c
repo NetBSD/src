@@ -1,4 +1,4 @@
-/*	$NetBSD: rcode.c,v 1.1.1.2 2009/10/25 00:02:32 christos Exp $	*/
+/*	$NetBSD: rcode.c,v 1.1.1.3 2009/12/26 22:24:50 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rcode.c,v 1.11 2009/10/12 23:48:01 tbox Exp */
+/* Id: rcode.c,v 1.12 2009/10/22 02:21:30 each Exp */
 
 #include <config.h>
 #include <ctype.h>
@@ -107,6 +107,8 @@
 	{ DNS_KEYALG_ECC, "ECC", 0 }, \
 	{ DNS_KEYALG_RSASHA1, "RSASHA1", 0 }, \
 	{ DNS_KEYALG_NSEC3RSASHA1, "NSEC3RSASHA1", 0 }, \
+	{ DNS_KEYALG_RSASHA256, "RSASHA256", 0 }, \
+	{ DNS_KEYALG_RSASHA512, "RSASHA512", 0 }, \
 	{ DNS_KEYALG_INDIRECT, "INDIRECT", 0 }, \
 	{ DNS_KEYALG_PRIVATEDNS, "PRIVATEDNS", 0 }, \
 	{ DNS_KEYALG_PRIVATEOID, "PRIVATEOID", 0 }, \

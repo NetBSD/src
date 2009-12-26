@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: conf.sh.in,v 1.41 2009/07/29 23:47:42 tbox Exp
+# Id: conf.sh.in,v 1.43 2009/11/30 21:00:47 each Exp
 
 #
 # Common configuration data for system tests, to be sourced into
@@ -38,15 +38,19 @@ NSUPDATE=$TOP/bin/nsupdate/nsupdate
 DDNSCONFGEN=$TOP/bin/confgen/ddns-confgen
 KEYGEN=$TOP/bin/dnssec/dnssec-keygen
 SIGNER=$TOP/bin/dnssec/dnssec-signzone
+REVOKE=$TOP/bin/dnssec/dnssec-revoke
+SETTIME=$TOP/bin/dnssec/dnssec-settime
+DSFROMKEY=$TOP/bin/dnssec/dnssec-dsfromkey
 CHECKZONE=$TOP/bin/check/named-checkzone
 CHECKCONF=$TOP/bin/check/named-checkconf
 
 # The "stress" test is not run by default since it creates enough
 # load on the machine to make it unusable to other users.
 # v6synth
-SUBDIRS="acl cacheclean checkconf checknames dnssec forward glue ixfr limits
-    lwresd masterfile masterformat notify nsupdate resolver rrsetorder
-    sortlist stub tkey unknown upforwd views xfer xferquota zonechecks"
+SUBDIRS="acl autosign cacheclean checkconf checknames dnssec forward glue ixfr
+    limits lwresd masterfile masterformat metadata notify nsupdate pending 
+    resolver rrsetorder sortlist stub tkey unknown upforwd views xfer xferquota
+    zonechecks"
 
 # PERL will be an empty string if no perl interpreter was found.
 PERL=@PERL@

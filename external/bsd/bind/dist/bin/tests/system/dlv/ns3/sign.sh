@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.4 2007/06/19 23:47:02 tbox Exp
+# Id: sign.sh,v 1.6 2009/10/27 23:47:44 tbox Exp
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -82,7 +82,7 @@ keyname2=`$KEYGEN -f KSK -r $RANDFILE -a DSA -b 768 -n zone $zone`
 
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
-$SIGNER -g -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null
+$SIGNER -g -r $RANDFILE -l $dlvzone -o $zone -f $outfile $zonefile > /dev/null
 echo "I: signed $zone"
 
 
@@ -162,7 +162,7 @@ $SIGNER -g -r $RANDFILE -o $zone -f $outfile $zonefile > /dev/null
 echo "I: signed $zone"
 
 
-cat $keyname2.key | $PERL -n -e '
+grep -v '^;' $keyname2.key | $PERL -n -e '
 local ($dn, $class, $type, $flags, $proto, $alg, @rest) = split;
 local $key = join("", @rest);
 print <<EOF

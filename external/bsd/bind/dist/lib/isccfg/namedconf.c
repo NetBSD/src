@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.1.1.2 2009/10/25 00:02:50 christos Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.1.1.3 2009/12/26 22:26:11 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: namedconf.c,v 1.109 2009/10/12 23:48:02 tbox Exp */
+/* Id: namedconf.c,v 1.113 2009/12/04 21:09:34 marka Exp */
 
 /*! \file */
 
@@ -122,6 +122,9 @@ static cfg_type_t cfg_type_zone;
 static cfg_type_t cfg_type_zoneopts;
 static cfg_type_t cfg_type_dynamically_loadable_zones;
 static cfg_type_t cfg_type_dynamically_loadable_zones_opts;
+#ifdef ALLOW_FILTER_AAAA_ON_V4
+static cfg_type_t cfg_type_v4_aaaa;
+#endif
 
 /*
  * Clauses that can be found in a 'dynamically loadable zones' statement
@@ -522,6 +525,7 @@ static cfg_tuplefielddef_t checknames_fields[] = {
 	{ "mode", &cfg_type_checkmode, 0 },
 	{ NULL, NULL, 0 }
 };
+
 static cfg_type_t cfg_type_checknames = {
 	"checknames", cfg_parse_tuple, cfg_print_tuple, cfg_doc_tuple, &cfg_rep_tuple,
 	checknames_fields
@@ -1045,6 +1049,9 @@ view_clauses[] = {
 	{ "transfer-format", &cfg_type_transferformat, 0 },
 	{ "use-queryport-pool", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "zero-no-soa-ttl-cache", &cfg_type_boolean, 0 },
+#ifdef ALLOW_FILTER_AAAA_ON_V4
+	{ "filter-aaaa-on-v4", &cfg_type_v4_aaaa, 0 },
+#endif
 	{ NULL, NULL, 0 }
 };
 
@@ -1115,6 +1122,7 @@ zone_clauses[] = {
 	{ "also-notify", &cfg_type_portiplist, 0 },
 	{ "alt-transfer-source", &cfg_type_sockaddr4wild, 0 },
 	{ "alt-transfer-source-v6", &cfg_type_sockaddr6wild, 0 },
+	{ "check-dup-records", &cfg_type_checkmode, 0 },
 	{ "check-integrity", &cfg_type_boolean, 0 },
 	{ "check-mx", &cfg_type_checkmode, 0 },
 	{ "check-mx-cname", &cfg_type_checkmode, 0 },
@@ -1122,7 +1130,8 @@ zone_clauses[] = {
 	{ "check-srv-cname", &cfg_type_checkmode, 0 },
 	{ "check-wildcard", &cfg_type_boolean, 0 },
 	{ "dialup", &cfg_type_dialuptype, 0 },
-	{ "dnskey-ksk-only", &cfg_type_boolean, 0 },
+	{ "dnssec-dnskey-kskonly", &cfg_type_boolean, 0 },
+	{ "dnssec-secure-to-insecure", &cfg_type_boolean, 0 },
 	{ "forward", &cfg_type_forwardtype, 0 },
 	{ "forwarders", &cfg_type_portiplist, 0 },
 	{ "key-directory", &cfg_type_qstring, 0 },
@@ -1145,7 +1154,6 @@ zone_clauses[] = {
 	{ "notify-source-v6", &cfg_type_sockaddr6wild, 0 },
 	{ "notify-to-soa", &cfg_type_boolean, 0 },
 	{ "nsec3-test-zone", &cfg_type_boolean, CFG_CLAUSEFLAG_TESTONLY },
-	{ "secure-to-insecure", &cfg_type_boolean, 0 },
 	{ "sig-signing-nodes", &cfg_type_uint32, 0 },
 	{ "sig-signing-signatures", &cfg_type_uint32, 0 },
 	{ "sig-signing-type", &cfg_type_uint32, 0 },
@@ -1593,6 +1601,19 @@ static cfg_type_t cfg_type_ixfrdifftype = {
 	&cfg_rep_string, ixfrdiff_enums,
 };
 
+#ifdef ALLOW_FILTER_AAAA_ON_V4
+static const char *v4_aaaa_enums[] = { "break-dnssec", NULL };
+static isc_result_t
+parse_v4_aaaa(cfg_parser_t *pctx, const cfg_type_t *type,
+		     cfg_obj_t **ret) {
+	return (parse_enum_or_other(pctx, type, &cfg_type_boolean, ret));
+}
+static cfg_type_t cfg_type_v4_aaaa = {
+	"v4_aaaa", parse_v4_aaaa, cfg_print_ustring,
+	doc_enum_or_other, &cfg_rep_string, v4_aaaa_enums,
+};
+
+#endif
 static keyword_type_t key_kw = { "key", &cfg_type_astring };
 
 LIBISCCFG_EXTERNAL_DATA cfg_type_t cfg_type_keyref = {

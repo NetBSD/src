@@ -1,7 +1,7 @@
-/*	$NetBSD: txt_16.c,v 1.1.1.1 2009/03/22 15:01:56 christos Exp $	*/
+/*	$NetBSD: txt_16.c,v 1.1.1.2 2009/12/26 22:25:29 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: txt_16.c,v 1.45 2008/02/15 23:46:51 tbox Exp */
+/* Id: txt_16.c,v 1.47 2009/12/04 22:06:37 tbox Exp */
 
 /* Reviewed: Thu Mar 16 15:40:00 PST 2000 by bwelling */
 
@@ -235,6 +235,11 @@ checknames_txt(ARGS_CHECKNAMES) {
 	UNUSED(bad);
 
 	return (ISC_TRUE);
+}
+
+static inline isc_result_t
+casecompare_txt(ARGS_COMPARE) {
+	return (compare_txt(rdata1, rdata2));
 }
 
 #endif	/* RDATA_GENERIC_TXT_16_C */

@@ -1,4 +1,4 @@
-/*	$NetBSD: keyvalues.h,v 1.1.1.3 2009/10/25 00:02:38 christos Exp $	*/
+/*	$NetBSD: keyvalues.h,v 1.1.1.4 2009/12/26 22:25:15 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keyvalues.h,v 1.26 2009/06/30 02:52:32 each Exp */
+/* Id: keyvalues.h,v 1.27 2009/10/22 02:21:31 each Exp */
 
 #ifndef DNS_KEYVALUES_H
 #define DNS_KEYVALUES_H 1
@@ -70,6 +70,8 @@
 #define DNS_KEYALG_ECC		4
 #define DNS_KEYALG_RSASHA1	5
 #define DNS_KEYALG_NSEC3RSASHA1	7
+#define DNS_KEYALG_RSASHA256	8
+#define DNS_KEYALG_RSASHA512	10
 #define DNS_KEYALG_INDIRECT	252
 #define DNS_KEYALG_PRIVATEDNS	253
 #define DNS_KEYALG_PRIVATEOID	254     /*%< Key begins with OID giving alg */

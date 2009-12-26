@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.1.1.3 2009/10/25 00:01:33 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.1.1.4 2009/12/26 22:19:24 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: update.c,v 1.163 2009/10/10 23:47:58 tbox Exp */
+/* Id: update.c,v 1.176 2009/12/04 21:09:32 marka Exp */
 
 #include <config.h>
 
@@ -281,6 +281,47 @@ inc_stats(dns_zone_t *zone, isc_statscounter_t counter) {
 		if (zonestats != NULL)
 			isc_stats_increment(zonestats, counter);
 	}
+}
+
+/*%
+ * Check if we could have queried for the contents of this zone or
+ * if the zone is potentially updateable.
+ * If the zone can potentially be updated and the check failed then
+ * log a error otherwise we log a informational message.
+ */
+static isc_result_t
+checkqueryacl(ns_client_t *client, dns_acl_t *queryacl, dns_name_t *zonename,
+	      dns_acl_t *updateacl, dns_ssutable_t *ssutable)
+{
+	char namebuf[DNS_NAME_FORMATSIZE];
+	char classbuf[DNS_RDATACLASS_FORMATSIZE];
+	int level;
+	isc_result_t result;
+
+	result = ns_client_checkaclsilent(client, NULL, queryacl, ISC_TRUE);
+	if (result != ISC_R_SUCCESS) {
+		dns_name_format(zonename, namebuf, sizeof(namebuf));
+		dns_rdataclass_format(client->view->rdclass, classbuf,
+				      sizeof(classbuf));
+
+		level = (updateacl == NULL && ssutable == NULL) ?
+				ISC_LOG_INFO : ISC_LOG_ERROR;
+
+		ns_client_log(client, NS_LOGCATEGORY_UPDATE_SECURITY,
+			      NS_LOGMODULE_UPDATE, level,
+			      "update '%s/%s' denied due to allow-query",
+			      namebuf, classbuf);
+	} else if (updateacl == NULL && ssutable == NULL) {
+		dns_name_format(zonename, namebuf, sizeof(namebuf));
+		dns_rdataclass_format(client->view->rdclass, classbuf,
+				      sizeof(classbuf));
+
+		result = DNS_R_REFUSED;
+		ns_client_log(client, NS_LOGCATEGORY_UPDATE_SECURITY,
+			      NS_LOGMODULE_UPDATE, ISC_LOG_INFO,
+			      "update '%s/%s' denied", namebuf, classbuf);
+	}
+	return (result);
 }
 
 /*%
@@ -892,7 +933,7 @@ temp_check_rrset(dns_difftuple_t *a, dns_difftuple_t *b) {
 		       b->op == DNS_DIFFOP_EXISTS);
 		INSIST(a->rdata.type == b->rdata.type);
 		INSIST(dns_name_equal(&a->name, &b->name));
-		if (dns_rdata_compare(&a->rdata, &b->rdata) != 0)
+		if (dns_rdata_casecompare(&a->rdata, &b->rdata) != 0)
 			return (DNS_R_NXRRSET);
 		a = ISC_LIST_NEXT(a, link);
 		b = ISC_LIST_NEXT(b, link);
@@ -920,7 +961,7 @@ temp_order(const void *av, const void *bv) {
 	r = (b->rdata.type - a->rdata.type);
 	if (r != 0)
 		return (r);
-	r = dns_rdata_compare(&a->rdata, &b->rdata);
+	r = dns_rdata_casecompare(&a->rdata, &b->rdata);
 	return (r);
 }
 
@@ -1149,7 +1190,7 @@ rr_equal_p(dns_rdata_t *update_rr, dns_rdata_t *db_rr) {
 	 *         dns_rdata_equal() (that used dns_name_equal()), since it
 	 *         would be faster.  Not a priority.
 	 */
-	return (dns_rdata_compare(update_rr, db_rr) == 0 ?
+	return (dns_rdata_casecompare(update_rr, db_rr) == 0 ?
 		ISC_TRUE : ISC_FALSE);
 }
 
@@ -1296,7 +1337,7 @@ add_rr_prepare_action(void *data, rr_t *rr) {
 	 * If the update RR is a "duplicate" of the update RR,
 	 * the update should be silently ignored.
 	 */
-	equal = ISC_TF(dns_rdata_compare(&rr->rdata, ctx->update_rr) == 0);
+	equal = ISC_TF(dns_rdata_casecompare(&rr->rdata, ctx->update_rr) == 0);
 	if (equal && rr->ttl == ctx->update_rr_ttl) {
 		ctx->ignore_add = ISC_TRUE;
 		return (ISC_R_SUCCESS);
@@ -1844,8 +1885,8 @@ add_sigs(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 				  (isc_stdtime_t) 0, &rdataset, NULL));
 	dns_db_detachnode(db, &node);
 
-#define REVOKE(x) ((dst_key_flags(x) & DNS_KEYFLAG_REVOKE) == 1)
-#define KSK(x) ((dst_key_flags(x) & DNS_KEYFLAG_KSK) == 1)
+#define REVOKE(x) ((dst_key_flags(x) & DNS_KEYFLAG_REVOKE) != 0)
+#define KSK(x) ((dst_key_flags(x) & DNS_KEYFLAG_KSK) != 0)
 #define ALG(x) dst_key_alg(x)
 
 	/*
@@ -1887,7 +1928,7 @@ add_sigs(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 			if (type == dns_rdatatype_dnskey) {
 				if (!KSK(keys[i]) && keyset_kskonly)
 					continue;
-			} else if (!KSK(keys[i]))
+			} else if (KSK(keys[i]))
 				continue;
 		} else if (REVOKE(keys[i]) && type != dns_rdatatype_dnskey)
 			continue;
@@ -1906,7 +1947,7 @@ add_sigs(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 	}
 	if (!added_sig) {
 		update_log(client, zone, ISC_LOG_ERROR,
-			   "found no private keys, "
+			   "found no active private keys, "
 			   "unable to generate any signatures");
 		result = ISC_R_NOTFOUND;
 	}
@@ -2335,15 +2376,18 @@ update_signatures(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 					dns_rdatatype_any, 0, NULL, diff));
 		} else {
 			/*
-			 * This name is not obscured.  It should have a NSEC
-			 * unless it is the at the origin, in which case it
-			 * should already exist.
+			 * This name is not obscured.  It needs to have a
+			 * NSEC unless it is the at the origin, in which
+			 * case it should already exist if there is a complete
+			 * NSEC chain and if there isn't a complete NSEC chain
+			 * we don't want to add one as that would signal that
+			 * there is a complete NSEC chain.
 			 */
 			if (!dns_name_equal(name, dns_db_origin(db))) {
-				CHECK(dns_private_chains(db, newver,
-							 privatetype, &flag,
-							 NULL));
-				if (flag)
+				CHECK(rrset_exists(db, newver, name,
+						   dns_rdatatype_nsec, 0,
+						   &flag));
+				if (!flag)
 					CHECK(add_placeholder_nsec(db, newver,
 								   name, diff));
 			}
@@ -2886,7 +2930,7 @@ rr_exists(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 	     result = dns_rdataset_next(&rdataset)) {
 		dns_rdata_t myrdata = DNS_RDATA_INIT;
 		dns_rdataset_current(&rdataset, &myrdata);
-		if (!dns_rdata_compare(&myrdata, rdata))
+		if (!dns_rdata_casecompare(&myrdata, rdata))
 			break;
 	}
 	dns_rdataset_disassociate(&rdataset);
@@ -3005,14 +3049,15 @@ check_dnssec(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 	CHECK(dns_nsec_nseconly(db, ver, &flag));
 
 	if (flag)
-		CHECK(dns_nsec3_activex(db, ver, ISC_FALSE, privatetype, &flag));
+		CHECK(dns_nsec3_activex(db, ver, ISC_FALSE,
+					privatetype, &flag));
 	if (flag) {
 		update_log(client, zone, ISC_LOG_WARNING,
 			   "NSEC only DNSKEYs and NSEC3 chains not allowed");
 	} else {
 		CHECK(get_iterations(db, ver, privatetype, &iterations));
 		CHECK(dns_nsec3_maxiterations(db, ver, client->mctx, &max));
-		if (iterations > max) {
+		if (max != 0 && iterations > max) {
 			flag = ISC_TRUE;
 			update_log(client, zone, ISC_LOG_WARNING,
 				   "too many NSEC3 iterations (%u) for "
@@ -3505,6 +3550,18 @@ update_action(isc_task_t *task, isc_event_t *event) {
 	zonename = dns_db_origin(db);
 	zoneclass = dns_db_class(db);
 	dns_zone_getssutable(zone, &ssutable);
+
+	/*
+	 * Update message processing can leak record existance information
+	 * so check that we are allowed to query this zone.  Additionally
+	 * if we would refuse all updates for this zone we bail out here.
+	 */
+	CHECK(checkqueryacl(client, dns_zone_getqueryacl(zone), zonename,
+			    dns_zone_getupdateacl(zone), ssutable));
+
+	/*
+	 * Get old and new versions now that queryacl has been checked.
+	 */
 	dns_db_currentversion(db, &oldver);
 	CHECK(dns_db_newversion(db, &ver));
 
@@ -3596,7 +3653,6 @@ update_action(isc_task_t *task, isc_event_t *event) {
 	}
 	if (result != ISC_R_NOMORE)
 		FAIL(result);
-
 
 	/*
 	 * Perform the final check of the "rrset exists (value dependent)"
@@ -3874,6 +3930,7 @@ update_action(isc_task_t *task, isc_event_t *event) {
 				memcpy(buf, rdata.data, rdata.length);
 				buf[1] |= DNS_NSEC3FLAG_UPDATE;
 				rdata.data = buf;
+
 				/*
 				 * Force the TTL to zero for NSEC3PARAM records.
 				 */
@@ -4033,6 +4090,18 @@ update_action(isc_task_t *task, isc_event_t *event) {
 	if (! ISC_LIST_EMPTY(diff.tuples))
 		CHECK(check_dnssec(client, zone, db, ver, &diff));
 
+	if (! ISC_LIST_EMPTY(diff.tuples)) {
+		unsigned int errors = 0;
+		CHECK(dns_zone_nscheck(zone, db, ver, &errors));
+		if (errors != 0) {
+			update_log(client, zone, LOGLEVEL_PROTOCOL,
+				   "update rejected: post update name server "
+				   "sanity check failed");
+			result = DNS_R_REFUSED;
+			goto failure;
+		}
+	}
+
 	/*
 	 * If any changes were made, increment the SOA serial number,
 	 * update RRSIGs and NSECs (if zone is secure), and write the update
@@ -4067,8 +4136,9 @@ update_action(isc_task_t *task, isc_event_t *event) {
 					   &had_dnskey));
 			if (had_dnskey && !has_dnskey) {
 				update_log(client, zone, LOGLEVEL_PROTOCOL,
-					   "update rejected: all DNSKEY records "
-					   "removed and 'secure-to-insecure' "
+					   "update rejected: all DNSKEY "
+					   "records removed and "
+					   "'dnssec-secure-to-insecure' "
 					   "not set");
 				result = DNS_R_REFUSED;
 				goto failure;
