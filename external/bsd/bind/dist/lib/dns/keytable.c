@@ -1,4 +1,4 @@
-/*	$NetBSD: keytable.c,v 1.2 2009/10/25 00:14:33 christos Exp $	*/
+/*	$NetBSD: keytable.c,v 1.3 2009/12/26 23:08:22 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keytable.c,v 1.38 2009/07/13 23:47:42 tbox Exp */
+/* Id: keytable.c,v 1.39 2009/12/03 15:40:02 each Exp */
 
 /*! \file */
 
@@ -38,7 +38,7 @@ free_keynode(void *node, void *arg) {
 	dns_keynode_t *keynode = node;
 	isc_mem_t *mctx = arg;
 
-	dns_keynode_detach(mctx, &keynode);
+	dns_keynode_detachall(mctx, &keynode);
 }
 
 isc_result_t
@@ -285,7 +285,7 @@ dns_keytable_deletekeynode(dns_keytable_t *keytable, dst_key_t *dstkey) {
 	while (knode != NULL) {
 		if (dst_key_compare(knode->key, dstkey) == ISC_TRUE)
 			break;
-		kprev = &knode;
+		kprev = &knode->next;
 		knode = knode->next;
 	}
 
@@ -485,6 +485,25 @@ dns_keytable_finddeepestmatch(dns_keytable_t *keytable, dns_name_t *name,
 }
 
 void
+dns_keytable_attachkeynode(dns_keytable_t *keytable, dns_keynode_t *source,
+			   dns_keynode_t **target)
+{
+	/*
+	 * Give back a keynode found via dns_keytable_findkeynode().
+	 */
+
+	REQUIRE(VALID_KEYTABLE(keytable));
+	REQUIRE(VALID_KEYNODE(source));
+	REQUIRE(target != NULL && *target == NULL);
+
+	LOCK(&keytable->lock);
+	keytable->active_nodes++;
+	UNLOCK(&keytable->lock);
+
+	dns_keynode_attach(source, target);
+}
+
+void
 dns_keytable_detachkeynode(dns_keytable_t *keytable, dns_keynode_t **keynodep)
 {
 	/*
@@ -598,10 +617,20 @@ dns_keynode_detach(isc_mem_t *mctx, dns_keynode_t **keynode) {
 	if (refs == 0) {
 		if (node->key != NULL)
 			dst_key_free(&node->key);
-		if (node->next != NULL)
-			dns_keynode_detach(mctx, &node->next);
 		isc_refcount_destroy(&node->refcount);
 		isc_mem_put(mctx, node, sizeof(dns_keynode_t));
+	}
+	*keynode = NULL;
+}
+
+void
+dns_keynode_detachall(isc_mem_t *mctx, dns_keynode_t **keynode) {
+	dns_keynode_t *next = NULL, *node = *keynode;
+	REQUIRE(VALID_KEYNODE(node));
+	while (node != NULL) {
+		next = node->next;
+		dns_keynode_detach(mctx, &node);
+		node = next;
 	}
 	*keynode = NULL;
 }

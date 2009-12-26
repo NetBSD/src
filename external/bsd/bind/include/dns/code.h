@@ -656,6 +656,119 @@
 	default: use_default = ISC_TRUE; break; \
 	}
 
+#define CASECOMPARESWITCH \
+	switch (rdata1->type) { \
+	case 1: switch (rdata1->rdclass) { \
+		case 1: result = casecompare_in_a(rdata1, rdata2); break; \
+		case 3: result = casecompare_ch_a(rdata1, rdata2); break; \
+		case 4: result = casecompare_hs_a(rdata1, rdata2); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 2: result = casecompare_ns(rdata1, rdata2); break; \
+	case 3: result = casecompare_md(rdata1, rdata2); break; \
+	case 4: result = casecompare_mf(rdata1, rdata2); break; \
+	case 5: result = casecompare_cname(rdata1, rdata2); break; \
+	case 6: result = casecompare_soa(rdata1, rdata2); break; \
+	case 7: result = casecompare_mb(rdata1, rdata2); break; \
+	case 8: result = casecompare_mg(rdata1, rdata2); break; \
+	case 9: result = casecompare_mr(rdata1, rdata2); break; \
+	case 10: result = casecompare_null(rdata1, rdata2); break; \
+	case 11: switch (rdata1->rdclass) { \
+		case 1: result = casecompare_in_wks(rdata1, rdata2); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 12: result = casecompare_ptr(rdata1, rdata2); break; \
+	case 13: result = casecompare_hinfo(rdata1, rdata2); break; \
+	case 14: result = casecompare_minfo(rdata1, rdata2); break; \
+	case 15: result = casecompare_mx(rdata1, rdata2); break; \
+	case 16: result = casecompare_txt(rdata1, rdata2); break; \
+	case 17: result = casecompare_rp(rdata1, rdata2); break; \
+	case 18: result = casecompare_afsdb(rdata1, rdata2); break; \
+	case 19: result = casecompare_x25(rdata1, rdata2); break; \
+	case 20: result = casecompare_isdn(rdata1, rdata2); break; \
+	case 21: result = casecompare_rt(rdata1, rdata2); break; \
+	case 22: switch (rdata1->rdclass) { \
+		case 1: result = casecompare_in_nsap(rdata1, rdata2); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 23: switch (rdata1->rdclass) { \
+		case 1: result = casecompare_in_nsap_ptr(rdata1, rdata2); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 24: result = casecompare_sig(rdata1, rdata2); break; \
+	case 25: result = casecompare_key(rdata1, rdata2); break; \
+	case 26: switch (rdata1->rdclass) { \
+		case 1: result = casecompare_in_px(rdata1, rdata2); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 27: result = casecompare_gpos(rdata1, rdata2); break; \
+	case 28: switch (rdata1->rdclass) { \
+		case 1: result = casecompare_in_aaaa(rdata1, rdata2); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 29: result = casecompare_loc(rdata1, rdata2); break; \
+	case 30: result = casecompare_nxt(rdata1, rdata2); break; \
+	case 33: switch (rdata1->rdclass) { \
+		case 1: result = casecompare_in_srv(rdata1, rdata2); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 35: switch (rdata1->rdclass) { \
+		case 1: result = casecompare_in_naptr(rdata1, rdata2); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 36: switch (rdata1->rdclass) { \
+		case 1: result = casecompare_in_kx(rdata1, rdata2); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 37: result = casecompare_cert(rdata1, rdata2); break; \
+	case 38: switch (rdata1->rdclass) { \
+		case 1: result = casecompare_in_a6(rdata1, rdata2); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 39: result = casecompare_dname(rdata1, rdata2); break; \
+	case 41: result = casecompare_opt(rdata1, rdata2); break; \
+	case 42: switch (rdata1->rdclass) { \
+		case 1: result = casecompare_in_apl(rdata1, rdata2); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 43: result = casecompare_ds(rdata1, rdata2); break; \
+	case 44: result = casecompare_sshfp(rdata1, rdata2); break; \
+	case 45: result = casecompare_ipseckey(rdata1, rdata2); break; \
+	case 46: result = casecompare_rrsig(rdata1, rdata2); break; \
+	case 47: result = casecompare_nsec(rdata1, rdata2); break; \
+	case 48: result = casecompare_dnskey(rdata1, rdata2); break; \
+	case 49: switch (rdata1->rdclass) { \
+		case 1: result = casecompare_in_dhcid(rdata1, rdata2); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 50: result = casecompare_nsec3(rdata1, rdata2); break; \
+	case 51: result = casecompare_nsec3param(rdata1, rdata2); break; \
+	case 55: result = casecompare_hip(rdata1, rdata2); break; \
+	case 99: result = casecompare_spf(rdata1, rdata2); break; \
+	case 103: result = casecompare_unspec(rdata1, rdata2); break; \
+	case 249: result = casecompare_tkey(rdata1, rdata2); break; \
+	case 250: switch (rdata1->rdclass) { \
+		case 255: result = casecompare_any_tsig(rdata1, rdata2); break; \
+		default: use_default = ISC_TRUE; break; \
+		} \
+		break; \
+	case 32769: result = casecompare_dlv(rdata1, rdata2); break; \
+	case 65533: result = casecompare_keydata(rdata1, rdata2); break; \
+	default: use_default = ISC_TRUE; break; \
+	}
+
 #define FROMSTRUCTSWITCH \
 	switch (type) { \
 	case 1: switch (rdclass) { \

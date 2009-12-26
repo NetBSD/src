@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-signzone.c,v 1.1.1.4 2009/12/26 22:19:04 christos Exp $	*/
+/*	$NetBSD: dnssec-signzone.c,v 1.2 2009/12/26 23:08:21 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -2851,7 +2851,7 @@ report(const char *format, ...) {
 }
 
 static void
-build_final_keylist() {
+build_final_keylist(void) {
 	isc_result_t result;
 	dns_dbversion_t *ver = NULL;
 	dns_diff_t diff;
