@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.22 2009/12/26 15:47:14 uebayasi Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.23 2009/12/26 16:01:24 uebayasi Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -791,7 +791,7 @@ initarm(void *arg)
 	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
 #endif
 
-	setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
