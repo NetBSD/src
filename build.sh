@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.225 2009/12/17 15:30:37 matt Exp $
+#	$NetBSD: build.sh,v 1.226 2009/12/26 14:13:08 mbalmer Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -586,7 +586,7 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras]
                         except \`etc'.  Useful after "distribution" or "release"
     kernel=conf         Build kernel with config file \`conf'
     releasekernel=conf  Install kernel built by kernel=conf to RELEASEDIR.
-    modules             Build and install kernel modules.
+    modules             Build kernel modules.
     rumptest            Do a linktest for rump (for developers).
     sets                Create binary sets in
                         RELEASEDIR/RELEASEMACHINEDIR/binary/sets.
@@ -1352,7 +1352,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.225 2009/12/17 15:30:37 matt Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.226 2009/12/26 14:13:08 mbalmer Exp $
 # with these arguments: ${_args}
 #
 
@@ -1512,7 +1512,7 @@ buildmodules()
 	${runcmd} "${makewrapper}" ${parallel} do-sys-modules ||
 	    bomb "Failed to make do-sys-modules"
 
-	statusmsg "Successful build kernel modules for NetBSD/${MACHINE} ${DISTRIBVER}"
+	statusmsg "Successful built kernel modules for NetBSD/${MACHINE} ${DISTRIBVER}"
 }
 
 installworld()
