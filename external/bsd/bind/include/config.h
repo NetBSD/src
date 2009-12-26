@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.h.in,v 1.106.40.6 2009/03/13 05:35:43 marka Exp */
+/* Id: config.h.in,v 1.122 2009/10/27 22:26:05 marka Exp */
 
 /*! \file */
 
@@ -119,7 +119,7 @@ int sigwait(const unsigned int *set, int *sig);
  * The silly continuation line is to keep configure from
  * commenting out the #undef.
  */
- 
+
 #undef \
 	va_start
 #define	va_start(ap, last) \
@@ -154,6 +154,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define if threads need PTHREAD_SCOPE_SYSTEM */
 /* #undef NEED_PTHREAD_SCOPE_SYSTEM */
 
+/* Define to enable the "filter-aaaa-on-v4" option. */
+/* #undef ALLOW_FILTER_AAAA_ON_V4 */
+
 /* Define if recvmsg() does not meet all of the BSD socket API specifications.
    */
 /* #undef BROKEN_RECVMSG */
@@ -173,6 +176,12 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
+/* Define to 1 if you have the `EVP_sha256' function. */
+#define HAVE_EVP_SHA256 1
+
+/* Define to 1 if you have the `EVP_sha512' function. */
+#define HAVE_EVP_SHA512 1
+
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
 
@@ -190,6 +199,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the `cap' library (-lcap). */
 /* #undef HAVE_LIBCAP */
+
+/* if system have backtrace function */
+/* #undef HAVE_LIBCTRACE */
 
 /* Define to 1 if you have the `c_r' library (-lc_r). */
 /* #undef HAVE_LIBC_R */
@@ -220,12 +232,6 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
-
-/* Define to 1 if you have the <dlfcn.h> header file. */
-#define HAVE_DLFCN_H 1
-
-/* Define to 1 if you have the <fcntl.h> header file. */
-#define HAVE_FCNTL_H 1
 
 /* Define to 1 if you have the `nanosleep' function. */
 #define HAVE_NANOSLEEP 1
@@ -305,8 +311,8 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
-/* Defined if extern char *optarg is not declared. */
-/* #undef NEED_OPTARG */
+/* return type of gai_srerror */
+#define IRS_GAISTRERROR_RETURN_T const char *
 
 /* Define to the buffer length type used by getnameinfo(3). */
 #define IRS_GETNAMEINFO_BUFLEN_T socklen_t
@@ -314,8 +320,8 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to the flags type used by getnameinfo(3). */
 #define IRS_GETNAMEINFO_FLAGS_T int
 
-/* Define to the return type of gai_strerror(3). */
-#define IRS_GAISTRERROR_RETURN_T const char *
+/* Defined if extern char *optarg is not declared. */
+/* #undef NEED_OPTARG */
 
 /* Define if connect does not honour the permission on the UNIX domain socket.
    */

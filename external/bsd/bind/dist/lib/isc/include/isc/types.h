@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.3 2009/10/25 00:14:33 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.4 2009/12/26 23:08:23 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,11 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: types.h,v 1.51 2009/10/01 01:30:01 sar Exp */
+/* Id: types.h,v 1.52 2009/12/05 23:31:41 each Exp */
 
 #ifndef ISC_TYPES_H
 #define ISC_TYPES_H 1
 
+#include <isc/bind9.h>
 #include <isc/namespace.h>
 
 /*! \file isc/types.h
