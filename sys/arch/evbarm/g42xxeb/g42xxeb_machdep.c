@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.19 2009/12/26 15:47:14 uebayasi Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.20 2009/12/26 16:01:24 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -792,7 +792,7 @@ initarm(void *arg)
 #endif
 	LEDSTEP();
 
-	setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 	LEDSTEP();

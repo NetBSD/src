@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.45 2009/12/26 15:47:15 uebayasi Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.46 2009/12/26 16:01:24 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.45 2009/12/26 15:47:15 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.46 2009/12/26 16:01:24 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -612,7 +612,7 @@ initarm(void *arg)
 
 	/* Switch tables */
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
