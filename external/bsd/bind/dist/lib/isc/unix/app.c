@@ -1,4 +1,4 @@
-/*	$NetBSD: app.c,v 1.2 2009/10/25 00:14:33 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.3 2009/12/26 23:08:23 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: app.c,v 1.63 2009/09/02 23:48:03 tbox Exp */
+/* Id: app.c,v 1.64 2009/11/04 05:58:46 marka Exp */
 
 /*! \file */
 
@@ -69,15 +69,6 @@
 #include "../task_p.h"
 #include "socket_p.h"
 #endif /* USE_THREADS_SINGLECTX */
-
-/*!
- * We assume that 'want_shutdown' can be read and written atomically.
- */
-static volatile isc_boolean_t	want_shutdown = ISC_FALSE;
-/*
- * We assume that 'want_reload' can be read and written atomically.
- */
-static volatile isc_boolean_t	want_reload = ISC_FALSE;
 
 #ifdef ISC_PLATFORM_USETHREADS
 static pthread_t		blockedthread;
@@ -508,11 +499,6 @@ evloop(isc__appctx_t *ctx) {
 		if (n > 0)
 			(void)isc__socketmgr_dispatch(ctx->socketmgr, swait);
 		(void)isc__taskmgr_dispatch(ctx->taskmgr);
-
-		if (want_reload) {
-			want_reload = ISC_FALSE;
-			return (ISC_R_RELOAD);
-		}
 	}
 	return (ISC_R_SUCCESS);
 }

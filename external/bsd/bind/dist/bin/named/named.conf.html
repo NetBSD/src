@@ -13,7 +13,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- Id: named.conf.html,v 1.49 2009/10/16 04:20:32 tbox Exp -->
+<!-- Id: named.conf.html,v 1.50 2009/12/04 01:13:44 tbox Exp -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -270,7 +270,7 @@ options {<br>
 	allow-update { <em class="replaceable"><code>address_match_element</code></em>; ... };<br>
 	allow-update-forwarding { <em class="replaceable"><code>address_match_element</code></em>; ... };<br>
 	update-check-ksk <em class="replaceable"><code>boolean</code></em>;<br>
-	dnskey-ksk-only <em class="replaceable"><code>boolean</code></em>;<br>
+	dnssec-dnskey-kskonly <em class="replaceable"><code>boolean</code></em>;<br>
 <br>
 	masterfile-format ( text | raw );<br>
 	notify <em class="replaceable"><code>notifytype</code></em>;<br>
@@ -321,7 +321,7 @@ options {<br>
 	try-tcp-refresh <em class="replaceable"><code>boolean</code></em>;<br>
 	zero-no-soa-ttl <em class="replaceable"><code>boolean</code></em>;<br>
 	zero-no-soa-ttl-cache <em class="replaceable"><code>boolean</code></em>;<br>
-	secure-to-insecure <em class="replaceable"><code>boolean</code></em>;<br>
+	dnssec-secure-to-insecure <em class="replaceable"><code>boolean</code></em>;<br>
 	deny-answer-addresses {<br>
 		<em class="replaceable"><code>address_match_list</code></em><br>
 	} [<span class="optional"> except-from { <em class="replaceable"><code>namelist</code></em> } </span>];<br>
@@ -443,7 +443,7 @@ view <em class="replaceable"><code>string</code></em> <em class="replaceable"><c
 	allow-update { <em class="replaceable"><code>address_match_element</code></em>; ... };<br>
 	allow-update-forwarding { <em class="replaceable"><code>address_match_element</code></em>; ... };<br>
 	update-check-ksk <em class="replaceable"><code>boolean</code></em>;<br>
-	dnskey-ksk-only <em class="replaceable"><code>boolean</code></em>;<br>
+	dnssec-dnskey-kskonly <em class="replaceable"><code>boolean</code></em>;<br>
 <br>
 	masterfile-format ( text | raw );<br>
 	notify <em class="replaceable"><code>notifytype</code></em>;<br>
@@ -488,7 +488,7 @@ view <em class="replaceable"><code>string</code></em> <em class="replaceable"><c
 	key-directory <em class="replaceable"><code>quoted_string</code></em>;<br>
 	zero-no-soa-ttl <em class="replaceable"><code>boolean</code></em>;<br>
 	zero-no-soa-ttl-cache <em class="replaceable"><code>boolean</code></em>;<br>
-	secure-to-insecure <em class="replaceable"><code>boolean</code></em>;<br>
+	dnssec-secure-to-insecure <em class="replaceable"><code>boolean</code></em>;<br>
 <br>
 	allow-v6-synthesis { <em class="replaceable"><code>address_match_element</code></em>; ... }; // obsolete<br>
 	fetch-glue <em class="replaceable"><code>boolean</code></em>; // obsolete<br>
@@ -522,7 +522,7 @@ zone <em class="replaceable"><code>string</code></em> <em class="replaceable"><c
 	ixfr-from-differences <em class="replaceable"><code>boolean</code></em>;<br>
 	journal <em class="replaceable"><code>quoted_string</code></em>;<br>
 	zero-no-soa-ttl <em class="replaceable"><code>boolean</code></em>;<br>
-	secure-to-insecure <em class="replaceable"><code>boolean</code></em>;<br>
+	dnssec-secure-to-insecure <em class="replaceable"><code>boolean</code></em>;<br>
 <br>
 	allow-query { <em class="replaceable"><code>address_match_element</code></em>; ... };<br>
 	allow-query-on { <em class="replaceable"><code>address_match_element</code></em>; ... };<br>
@@ -538,7 +538,7 @@ zone <em class="replaceable"><code>string</code></em> <em class="replaceable"><c
 		[<span class="optional">...</span>]<br>
 	}</code></em>;<br>
 	update-check-ksk <em class="replaceable"><code>boolean</code></em>;<br>
-	dnskey-ksk-only <em class="replaceable"><code>boolean</code></em>;<br>
+	dnssec-dnskey-kskonly <em class="replaceable"><code>boolean</code></em>;<br>
 <br>
 	masterfile-format ( text | raw );<br>
 	notify <em class="replaceable"><code>notifytype</code></em>;<br>

@@ -17,7 +17,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: named.conf.docbook,v 1.43 2009/10/16 02:59:41 each Exp -->
+<!-- Id: named.conf.docbook,v 1.44 2009/12/03 23:18:16 each Exp -->
 <refentry>
   <refentryinfo>
     <date>Aug 13, 2004</date>
@@ -302,7 +302,7 @@ options {
 	allow-update { <replaceable>address_match_element</replaceable>; ... };
 	allow-update-forwarding { <replaceable>address_match_element</replaceable>; ... };
 	update-check-ksk <replaceable>boolean</replaceable>;
-	dnskey-ksk-only <replaceable>boolean</replaceable>;
+	dnssec-dnskey-kskonly <replaceable>boolean</replaceable>;
 
 	masterfile-format ( text | raw );
 	notify <replaceable>notifytype</replaceable>;
@@ -353,7 +353,7 @@ options {
 	try-tcp-refresh <replaceable>boolean</replaceable>;
 	zero-no-soa-ttl <replaceable>boolean</replaceable>;
 	zero-no-soa-ttl-cache <replaceable>boolean</replaceable>;
-	secure-to-insecure <replaceable>boolean</replaceable>;
+	dnssec-secure-to-insecure <replaceable>boolean</replaceable>;
 	deny-answer-addresses {
 		<replaceable>address_match_list</replaceable>
 	} <optional> except-from { <replaceable>namelist</replaceable> } </optional>;
@@ -476,7 +476,7 @@ view <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 	allow-update { <replaceable>address_match_element</replaceable>; ... };
 	allow-update-forwarding { <replaceable>address_match_element</replaceable>; ... };
 	update-check-ksk <replaceable>boolean</replaceable>;
-	dnskey-ksk-only <replaceable>boolean</replaceable>;
+	dnssec-dnskey-kskonly <replaceable>boolean</replaceable>;
 
 	masterfile-format ( text | raw );
 	notify <replaceable>notifytype</replaceable>;
@@ -521,7 +521,7 @@ view <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 	key-directory <replaceable>quoted_string</replaceable>;
 	zero-no-soa-ttl <replaceable>boolean</replaceable>;
 	zero-no-soa-ttl-cache <replaceable>boolean</replaceable>;
-	secure-to-insecure <replaceable>boolean</replaceable>;
+	dnssec-secure-to-insecure <replaceable>boolean</replaceable>;
 
 	allow-v6-synthesis { <replaceable>address_match_element</replaceable>; ... }; // obsolete
 	fetch-glue <replaceable>boolean</replaceable>; // obsolete
@@ -556,7 +556,7 @@ zone <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 	ixfr-from-differences <replaceable>boolean</replaceable>;
 	journal <replaceable>quoted_string</replaceable>;
 	zero-no-soa-ttl <replaceable>boolean</replaceable>;
-	secure-to-insecure <replaceable>boolean</replaceable>;
+	dnssec-secure-to-insecure <replaceable>boolean</replaceable>;
 
 	allow-query { <replaceable>address_match_element</replaceable>; ... };
 	allow-query-on { <replaceable>address_match_element</replaceable>; ... };
@@ -572,7 +572,7 @@ zone <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 		<optional>...</optional>
 	}</replaceable>;
 	update-check-ksk <replaceable>boolean</replaceable>;
-	dnskey-ksk-only <replaceable>boolean</replaceable>;
+	dnssec-dnskey-kskonly <replaceable>boolean</replaceable>;
 
 	masterfile-format ( text | raw );
 	notify <replaceable>notifytype</replaceable>;

@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: platform.h,v 1.1 2009/04/12 03:46:09 christos Exp $ */
+/* Id: platform.h.in,v 1.21 2007/06/19 23:47:23 tbox Exp */
 
 /*! \file */
 
