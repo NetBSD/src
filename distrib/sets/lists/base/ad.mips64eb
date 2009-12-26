@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.4 2009/12/15 05:59:50 mrg Exp $
+# $NetBSD: ad.mips64eb,v 1.5 2009/12/26 23:13:15 christos Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib		compat
@@ -54,7 +54,7 @@
 ./usr/lib/64/libbfd.so.11			base-compat-shlib	compat,pic
 ./usr/lib/64/libbfd.so.11.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libbind9.so.5			base-compat-shlib	compat,pic
-./usr/lib/64/libbind9.so.5.0			base-compat-shlib	compat,pic
+./usr/lib/64/libbind9.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libbluetooth.so.4			base-compat-shlib	compat,pic
 ./usr/lib/64/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/64/libbsdmalloc.so.0			base-compat-shlib	compat,pic
@@ -74,7 +74,7 @@
 ./usr/lib/64/libdes.so.8			base-compat-shlib	compat,pic
 ./usr/lib/64/libdes.so.8.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libdns.so.5			base-compat-shlib	compat,pic
-./usr/lib/64/libdns.so.5.0			base-compat-shlib	compat,pic
+./usr/lib/64/libdns.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libedit.so.3			base-compat-shlib	compat,pic
 ./usr/lib/64/libedit.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libevent.so.3			base-compat-shlib	compat,pic
@@ -98,11 +98,11 @@
 ./usr/lib/64/libipsec.so.3			base-compat-shlib	compat,pic
 ./usr/lib/64/libipsec.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libisc.so.5			base-compat-shlib	compat,pic
-./usr/lib/64/libisc.so.5.0			base-compat-shlib	compat,pic
+./usr/lib/64/libisc.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libisccc.so.5			base-compat-shlib	compat,pic
-./usr/lib/64/libisccc.so.5.0			base-compat-shlib	compat,pic
+./usr/lib/64/libisccc.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libisccfg.so.5			base-compat-shlib	compat,pic
-./usr/lib/64/libisccfg.so.5.0			base-compat-shlib	compat,pic
+./usr/lib/64/libisccfg.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libiscsi.so.2			base-compat-shlib	compat,pic
 ./usr/lib/64/libiscsi.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libkadm5clnt.so.12			base-compat-shlib	compat,pic
@@ -122,7 +122,7 @@
 ./usr/lib/64/libldap_r.so.4			base-compat-shlib	compat,pic
 ./usr/lib/64/libldap_r.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/64/liblwres.so.5			base-compat-shlib	compat,pic
-./usr/lib/64/liblwres.so.5.0			base-compat-shlib	compat,pic
+./usr/lib/64/liblwres.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libm.so.0				base-compat-shlib	compat,pic
 ./usr/lib/64/libm.so.0.7			base-compat-shlib	compat,pic
 ./usr/lib/64/libmagic.so.3			base-compat-shlib	compat,pic
@@ -354,7 +354,7 @@
 ./usr/lib/o32/libldap_r.so.4			base-compat-shlib	compat,pic
 ./usr/lib/o32/libldap_r.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblwres.so.5			base-compat-shlib	compat,pic
-./usr/lib/o32/liblwres.so.5.0			base-compat-shlib	compat,pic
+./usr/lib/o32/liblwres.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libm.so.0				base-compat-shlib	compat,pic
 ./usr/lib/o32/libm.so.0.7			base-compat-shlib	compat,pic
 ./usr/lib/o32/libmagic.so.3			base-compat-shlib	compat,pic
