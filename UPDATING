@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.206 2009/11/16 07:45:50 dholland Exp $
+$NetBSD: UPDATING,v 1.207 2009/12/26 11:00:46 mbalmer Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -61,9 +61,9 @@ Recent changes:
 	cleaning your src/tools directory and $TOOLDIR and rebuilding them.
 
 20090126:
-	The __posix_fadvise50 system call changed assembly stub type. You need to
-	'rm -f __posix_fadvise50.*' in the libc build directory to avoid using
-	the old assembly stub.
+	The __posix_fadvise50 system call changed assembly stub type. You
+	need to 'rm -f __posix_fadvise50.*' in the libc build directory
+	to avoid using the old assembly stub.
 
 20090202:
 	pkg_install now depends on the pkgdb cache for automatic conflict
@@ -456,7 +456,8 @@ Fix:	Try the following sequence of commands in the directory in question.
 	(If you built the tree without "make obj" in the past, obsolete files
 	may remain.  The command tries to clean everything up)
 
-Symptom:.../sysinst/run.c:xx: warning: initialization from incompatible pointer type
+Symptom:.../sysinst/run.c:xx: warning: initialization from incompatible
+	pointer type
 Fix:	Rebuild and install usr.bin/menuc
 
 Symptom:mklocale not found during build in share/locale/ctype
