@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.94 2009/11/27 03:23:09 rmind Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.95 2009/12/26 16:01:25 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.94 2009/11/27 03:23:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.95 2009/12/26 16:01:25 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -651,7 +651,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 
 	/* Set the page table address. */
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 

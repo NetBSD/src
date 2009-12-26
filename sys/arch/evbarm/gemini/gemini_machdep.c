@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.14 2009/11/27 03:23:06 rmind Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.15 2009/12/26 16:01:24 uebayasi Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.14 2009/11/27 03:23:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.15 2009/12/26 16:01:24 uebayasi Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -1241,7 +1241,7 @@ printf("%s:%d: pmap_link_l2pt ipmq_pt\n", __FUNCTION__, __LINE__);
 #endif
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	setttb(l1_pa);
+	cpu_setttb(l1_pa);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: osk5912_machdep.c,v 1.7 2009/11/27 03:23:07 rmind Exp $ */
+/*	$NetBSD: osk5912_machdep.c,v 1.8 2009/12/26 16:01:25 uebayasi Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osk5912_machdep.c,v 1.7 2009/11/27 03:23:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osk5912_machdep.c,v 1.8 2009/12/26 16:01:25 uebayasi Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -878,7 +878,7 @@ setup_real_page_tables(void)
 #endif
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	setttb(l1_pa);
+	cpu_setttb(l1_pa);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
