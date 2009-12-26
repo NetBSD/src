@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.70 2009/12/15 05:59:51 mrg Exp $
+# $NetBSD: md.sparc64,v 1.71 2009/12/26 23:13:15 christos Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
@@ -55,7 +55,7 @@
 ./usr/lib/sparc/libbfd.so.11			base-compat-shlib	compat,pic,binutils
 ./usr/lib/sparc/libbfd.so.11.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/sparc/libbind9.so.5			base-compat-shlib	compat,pic
-./usr/lib/sparc/libbind9.so.5.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libbind9.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbluetooth.so.4		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbsdmalloc.so.0		base-compat-shlib	compat,pic
@@ -75,7 +75,7 @@
 ./usr/lib/sparc/libdes.so.8			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdes.so.8.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdns.so.5			base-compat-shlib	compat,pic
-./usr/lib/sparc/libdns.so.5.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libdns.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libedit.so.3			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libedit.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libevent.so.3			base-compat-shlib	compat,pic
@@ -99,11 +99,11 @@
 ./usr/lib/sparc/libipsec.so.3			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libipsec.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libisc.so.5			base-compat-shlib	compat,pic
-./usr/lib/sparc/libisc.so.5.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libisc.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libisccc.so.5			base-compat-shlib	compat,pic
-./usr/lib/sparc/libisccc.so.5.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libisccc.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libisccfg.so.5			base-compat-shlib	compat,pic
-./usr/lib/sparc/libisccfg.so.5.0		base-compat-shlib	compat,pic
+./usr/lib/sparc/libisccfg.so.5.1		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libiscsi.so.2			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libiscsi.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libkadm5clnt.so.12		base-compat-shlib	compat,pic
@@ -123,7 +123,7 @@
 ./usr/lib/sparc/libldap_r.so.4			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libldap_r.so.4.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/liblwres.so.5			base-compat-shlib	compat,pic
-./usr/lib/sparc/liblwres.so.5.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/liblwres.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libm.so.0.7			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libmagic.so.3			base-compat-shlib	compat,pic
