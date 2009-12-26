@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.18 2009/11/27 03:23:06 rmind Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.19 2009/12/26 15:47:14 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -186,7 +186,6 @@ vm_offset_t physical_freestart;
 vm_offset_t physical_freeend;
 vm_offset_t physical_end;
 u_int free_pages;
-vm_offset_t pagetables_start;
 
 /*int debug_flags;*/
 #ifndef PMAP_STATIC_L1S
