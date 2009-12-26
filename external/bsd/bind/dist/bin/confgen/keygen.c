@@ -1,4 +1,4 @@
-/*	$NetBSD: keygen.c,v 1.1.1.1 2009/10/25 00:01:29 christos Exp $	*/
+/*	$NetBSD: keygen.c,v 1.1.1.2 2009/12/26 22:18:47 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keygen.c,v 1.3 2009/06/11 23:47:55 tbox Exp */
+/* Id: keygen.c,v 1.4 2009/11/12 14:02:38 marka Exp */
 
 /*! \file */
 
@@ -196,7 +196,7 @@ write_key_file(const char *keyfile, const char *user,
 	       dns_secalg_t alg) {
 	isc_result_t result;
 	const char *algname = alg_totext(alg);
-	FILE *fd;
+	FILE *fd = NULL;
 
 	DO("create keyfile", isc_file_safecreate(keyfile, &fd));
 

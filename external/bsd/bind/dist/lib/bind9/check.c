@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.1.1.3 2009/10/25 00:02:27 christos Exp $	*/
+/*	$NetBSD: check.c,v 1.1.1.4 2009/12/26 22:24:23 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: check.c,v 1.112 2009/10/12 23:48:01 tbox Exp */
+/* Id: check.c,v 1.114 2009/12/04 21:09:33 marka Exp */
 
 /*! \file */
 
@@ -1103,7 +1103,7 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	{ "min-retry-time", SLAVEZONE | STUBZONE },
 	{ "max-refresh-time", SLAVEZONE | STUBZONE },
 	{ "min-refresh-time", SLAVEZONE | STUBZONE },
-	{ "secure-to-insecure", MASTERZONE },
+	{ "dnssec-secure-to-insecure", MASTERZONE },
 	{ "sig-validity-interval", MASTERZONE },
 	{ "sig-re-signing-interval", MASTERZONE },
 	{ "sig-signing-nodes", MASTERZONE },
@@ -1123,12 +1123,13 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	{ "key-directory", MASTERZONE },
 	{ "check-wildcard", MASTERZONE },
 	{ "check-mx", MASTERZONE },
+	{ "check-dup-records", MASTERZONE },
 	{ "integrity-check", MASTERZONE },
 	{ "check-mx-cname", MASTERZONE },
 	{ "check-srv-cname", MASTERZONE },
 	{ "masterfile-format", MASTERZONE | SLAVEZONE | STUBZONE | HINTZONE },
 	{ "update-check-ksk", MASTERZONE },
-	{ "dnskey-ksk-only", MASTERZONE },
+	{ "dnssec-dnskey-kskonly", MASTERZONE },
 	{ "auto-dnssec", MASTERZONE },
 	{ "try-tcp-refresh", SLAVEZONE },
 	};

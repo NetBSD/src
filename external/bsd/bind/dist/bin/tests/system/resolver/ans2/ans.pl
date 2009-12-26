@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: ans.pl,v 1.12 2009/05/29 23:47:49 tbox Exp
+# Id: ans.pl,v 1.13 2009/11/04 02:15:30 marka Exp
 
 #
 # Ad hoc name server
@@ -68,6 +68,7 @@ for (;;) {
 		 $qname eq "foo.baddname.example.org" ||
 		 $qname eq "foo.gooddname.example.org") {
 		# Data for address/alias filtering.
+		$packet->header->aa(1);
 		if ($qtype eq "A") {
 			$packet->push("answer",
 				      new Net::DNS::RR($qname .

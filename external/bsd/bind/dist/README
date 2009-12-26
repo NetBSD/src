@@ -49,7 +49,7 @@ BIND 9.7.0
 
 	New features include:
 
-	- Fully automatic signing of zones by "named"
+	- Fully automatic signing of zones by "named".
 	- Simplified configuration of DNSSEC Lookaside Validation (DLV).
 	- Simplified configuration of Dynamic DNS, using the "ddns-confgen"
 	  command line tool or the "local" update-policy option.  (As a side
@@ -602,6 +602,9 @@ Documentation
 
 	Frequently asked questions and their answers can be found in
 	FAQ.
+
+        Additional information on various subjects can be found
+        in the other README files.
 
 
 Bug Reports and Mailing Lists

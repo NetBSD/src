@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.13 2009/07/30 15:11:41 each Exp
+# Id: setup.sh,v 1.14 2009/12/04 03:33:15 marka Exp
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -43,6 +43,7 @@ update.nil              IN SOA  ns1.example.nil. hostmaster.example.nil. (
                                 )
 update.nil.             NS      ns1.update.nil.
 ns1.update.nil.         A       10.53.0.2
+ns2.update.nil.		AAAA	::1
 EOF
 
 ../../../tools/genrandom 400 random.data

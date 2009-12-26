@@ -1,4 +1,4 @@
-/*	$NetBSD: keydata_65533.c,v 1.1.1.1 2009/10/25 00:02:40 christos Exp $	*/
+/*	$NetBSD: keydata_65533.c,v 1.1.1.2 2009/12/26 22:25:24 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keydata_65533.c,v 1.2 2009/06/30 02:52:32 each Exp */
+/* Id: keydata_65533.c,v 1.3 2009/12/04 21:09:33 marka Exp */
 
 #ifndef GENERIC_KEYDATA_65533_C
 #define GENERIC_KEYDATA_65533_C 1
@@ -369,6 +369,11 @@ checknames_keydata(ARGS_CHECKNAMES) {
 	UNUSED(bad);
 
 	return (ISC_TRUE);
+}
+
+static inline int
+casecompare_keydata(ARGS_COMPARE) {
+	return (compare_keydata(rdata1, rdata2));
 }
 
 #endif /* GENERIC_KEYDATA_65533_C */

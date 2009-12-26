@@ -1,4 +1,4 @@
-.\"	$NetBSD: dnssec-revoke.8,v 1.1.1.1 2009/10/25 00:01:32 christos Exp $
+.\"	$NetBSD: dnssec-revoke.8,v 1.1.1.2 2009/12/26 22:18:59 christos Exp $
 .\"
 .\" Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -14,7 +14,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: dnssec-revoke.8,v 1.7 2009/10/06 01:14:41 tbox Exp
+.\" Id: dnssec-revoke.8,v 1.8 2009/11/03 21:58:30 tbox Exp
 .\"
 .hy 0
 .ad l
@@ -63,7 +63,7 @@ Sets the debugging level.
 .PP
 \-E \fIengine\fR
 .RS 4
-Use the given OpenSSL engine. When compiled with PKCS#11 support it defaults to pcks11, the empty name resets it to no engine.
+Use the given OpenSSL engine. When compiled with PKCS#11 support it defaults to pkcs11; the empty name resets it to no engine.
 .RE
 .PP
 \-f

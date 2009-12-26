@@ -1,4 +1,4 @@
-/*	$NetBSD: sha2.c,v 1.1.1.2 2009/10/25 00:02:44 christos Exp $	*/
+/*	$NetBSD: sha2.c,v 1.1.1.3 2009/12/26 22:25:45 christos Exp $	*/
 
 /*
  * Copyright (C) 2005-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sha2.c,v 1.17 2009/02/06 23:47:42 tbox Exp */
+/* Id: sha2.c,v 1.18 2009/10/22 02:21:31 each Exp */
 
 /*	$FreeBSD: src/sys/crypto/sha2/sha2.c,v 1.2.2.2 2002/03/05 08:36:47 ume Exp $	*/
 /*	$KAME: sha2.c,v 1.8 2001/11/08 01:07:52 itojun Exp $	*/
@@ -76,6 +76,11 @@ isc_sha224_init(isc_sha224_t *context) {
 }
 
 void
+isc_sha224_invalidate(isc_sha224_t *context) {
+	EVP_MD_CTX_cleanup(context);
+}
+
+void
 isc_sha224_update(isc_sha224_t *context, const isc_uint8_t* data, size_t len) {
 	if (len == 0U) {
 		/* Calling with no data is valid - we do nothing */
@@ -107,6 +112,11 @@ isc_sha256_init(isc_sha256_t *context) {
 		return;
 	}
 	EVP_DigestInit(context, EVP_sha256());
+}
+
+void
+isc_sha256_invalidate(isc_sha256_t *context) {
+	EVP_MD_CTX_cleanup(context);
 }
 
 void
@@ -143,6 +153,11 @@ isc_sha512_init(isc_sha512_t *context) {
 	EVP_DigestInit(context, EVP_sha512());
 }
 
+void
+isc_sha512_invalidate(isc_sha512_t *context) {
+	EVP_MD_CTX_cleanup(context);
+}
+
 void isc_sha512_update(isc_sha512_t *context, const isc_uint8_t *data, size_t len) {
 	if (len == 0U) {
 		/* Calling with no data is valid - we do nothing */
@@ -173,6 +188,11 @@ isc_sha384_init(isc_sha384_t *context) {
 		return;
 	}
 	EVP_DigestInit(context, EVP_sha384());
+}
+
+void
+isc_sha384_invalidate(isc_sha384_t *context) {
+	EVP_MD_CTX_cleanup(context);
 }
 
 void
@@ -549,6 +569,11 @@ isc_sha224_init(isc_sha224_t *context) {
 }
 
 void
+isc_sha224_invalidate(isc_sha224_t *context) {
+	memset(context, 0, sizeof(isc_sha224_t));
+}
+
+void
 isc_sha224_update(isc_sha224_t *context, const isc_uint8_t* data, size_t len) {
 	isc_sha256_update((isc_sha256_t *)context, data, len);
 }
@@ -571,6 +596,11 @@ isc_sha256_init(isc_sha256_t *context) {
 	       ISC_SHA256_DIGESTLENGTH);
 	memset(context->buffer, 0, ISC_SHA256_BLOCK_LENGTH);
 	context->bitcount = 0;
+}
+
+void
+isc_sha256_invalidate(isc_sha256_t *context) {
+	memset(context, 0, sizeof(isc_sha256_t));
 }
 
 #ifdef ISC_SHA2_UNROLL_TRANSFORM
@@ -883,6 +913,11 @@ isc_sha512_init(isc_sha512_t *context) {
 	context->bitcount[0] = context->bitcount[1] =  0;
 }
 
+void
+isc_sha512_invalidate(isc_sha512_t *context) {
+	memset(context, 0, sizeof(isc_sha512_t));
+}
+
 #ifdef ISC_SHA2_UNROLL_TRANSFORM
 
 /* Unrolled SHA-512 round macros: */
@@ -1189,6 +1224,11 @@ isc_sha384_init(isc_sha384_t *context) {
 	       ISC_SHA512_DIGESTLENGTH);
 	memset(context->buffer, 0, ISC_SHA384_BLOCK_LENGTH);
 	context->bitcount[0] = context->bitcount[1] = 0;
+}
+
+void
+isc_sha384_invalidate(isc_sha384_t *context) {
+	memset(context, 0, sizeof(isc_sha384_t));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.c,v 1.1.1.2 2009/10/25 00:02:32 christos Exp $	*/
+/*	$NetBSD: rbt.c,v 1.1.1.3 2009/12/26 22:24:46 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rbt.c,v 1.144 2009/01/17 23:47:42 tbox Exp */
+/* Id: rbt.c,v 1.146 2009/10/27 04:46:58 marka Exp */
 
 /*! \file */
 
@@ -87,9 +87,9 @@ struct dns_rbt {
 #define HASHVAL(node)           ((node)->hashval)
 #define COLOR(node)             ((node)->color)
 #define NAMELEN(node)           ((node)->namelen)
+#define OLDNAMELEN(node)        ((node)->oldnamelen)
 #define OFFSETLEN(node)         ((node)->offsetlen)
 #define ATTRS(node)             ((node)->attributes)
-#define PADBYTES(node)          ((node)->padbytes)
 #define IS_ROOT(node)           ISC_TF((node)->is_root == 1)
 #define FINDCALLBACK(node)      ISC_TF((node)->find_callback == 1)
 
@@ -102,13 +102,23 @@ struct dns_rbt {
 #define LOCKNUM(node)   ((node)->locknum)
 
 /*%
- * The variable length stuff stored after the node.
+ * The variable length stuff stored after the node has the following
+ * structure.
+ *
+ *	<name_data>{1..255}<oldoffsetlen>{1}<offsets>{1..128}
+ *
+ * <name_data> contains the name of the node when it was created.
+ * <oldoffsetlen> contains the length of <offsets> when the node was created.
+ * <offsets> contains the offets into name for each label when the node was
+ * created.
  */
+
 #define NAME(node)      ((unsigned char *)((node) + 1))
-#define OFFSETS(node)   (NAME(node) + NAMELEN(node))
+#define OFFSETS(node)   (NAME(node) + OLDNAMELEN(node) + 1)
+#define OLDOFFSETLEN(node) (OFFSETS(node)[-1])
 
 #define NODE_SIZE(node) (sizeof(*node) + \
-			 NAMELEN(node) + OFFSETLEN(node) + PADBYTES(node))
+			 OLDNAMELEN(node) + OLDOFFSETLEN(node) + 1)
 
 /*%
  * Color management.
@@ -529,7 +539,10 @@ dns_rbt_addnode(dns_rbt_t *rbt, dns_name_t *name, dns_rbtnode_t **nodep) {
 				 * current node.
 				 */
 				new_current->is_root = current->is_root;
-				new_current->nsec3 = current->nsec3;
+				if (current->nsec == DNS_RBT_NSEC_HAS_NSEC)
+					new_current->nsec = DNS_RBT_NSEC_NORMAL;
+				else
+					new_current->nsec = current->nsec;
 				PARENT(new_current)  = PARENT(current);
 				LEFT(new_current)    = LEFT(current);
 				RIGHT(new_current)   = RIGHT(current);
@@ -555,11 +568,6 @@ dns_rbt_addnode(dns_rbt_t *rbt, dns_name_t *name, dns_rbtnode_t **nodep) {
 
 				NAMELEN(current) = prefix->length;
 				OFFSETLEN(current) = prefix->labels;
-				memcpy(OFFSETS(current), prefix->offsets,
-				       prefix->labels);
-				PADBYTES(current) +=
-				       (current_name.length - prefix->length) +
-				       (current_name.labels - prefix->labels);
 
 				/*
 				 * Set up the new root of the next level.
@@ -1425,7 +1433,7 @@ create_node(isc_mem_t *mctx, dns_name_t *name, dns_rbtnode_t **nodep) {
 	 * Allocate space for the node structure, the name, and the offsets.
 	 */
 	node = (dns_rbtnode_t *)isc_mem_get(mctx, sizeof(*node) +
-					    region.length + labels);
+					    region.length + labels + 1);
 
 	if (node == NULL)
 		return (ISC_R_NOMEMORY);
@@ -1448,7 +1456,7 @@ create_node(isc_mem_t *mctx, dns_name_t *name, dns_rbtnode_t **nodep) {
 	DIRTY(node) = 0;
 	dns_rbtnode_refinit(node, 0);
 	node->find_callback = 0;
-	node->nsec3 = 0;
+	node->nsec = DNS_RBT_NSEC_NORMAL;
 
 	MAKE_BLACK(node);
 
@@ -1462,10 +1470,12 @@ create_node(isc_mem_t *mctx, dns_name_t *name, dns_rbtnode_t **nodep) {
 	 *      The offsets table could be made smaller by eliminating the
 	 *      first offset, which is always 0.  This requires changes to
 	 *      lib/dns/name.c.
+	 *
+	 * Note: OLDOFFSETLEN *must* be assigned *after* OLDNAMELEN is assigned
+	 * 	 as it uses OLDNAMELEN.
 	 */
-	NAMELEN(node) = region.length;
-	PADBYTES(node) = 0;
-	OFFSETLEN(node) = labels;
+	OLDNAMELEN(node) = NAMELEN(node) = region.length;
+	OLDOFFSETLEN(node) = OFFSETLEN(node) = labels;
 	ATTRS(node) = name->attributes;
 
 	memcpy(NAME(node), region.base, region.length);

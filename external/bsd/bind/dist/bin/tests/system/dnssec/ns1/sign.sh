@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 #
 # Copyright (C) 2004, 2006-2009  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.28 2009/07/19 04:18:04 each Exp
+# Id: sign.sh,v 1.30 2009/10/28 00:27:10 marka Exp
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -31,7 +31,7 @@ zonefile=root.db
 cp ../ns2/dsset-example. .
 cp ../ns2/dsset-dlv. .
 
-keyname=`$KEYGEN -r $RANDFILE -a RSAMD5 -b 768 -n zone $zone`
+keyname=`$KEYGEN -q -r $RANDFILE -a RSAMD5 -b 768 -n zone $zone`
 
 cat $infile $keyname.key > $zonefile
 

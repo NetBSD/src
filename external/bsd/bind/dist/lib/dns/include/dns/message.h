@@ -1,4 +1,4 @@
-/*	$NetBSD: message.h,v 1.1.1.2 2009/10/25 00:02:38 christos Exp $	*/
+/*	$NetBSD: message.h,v 1.1.1.3 2009/12/26 22:25:16 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: message.h,v 1.128 2009/09/01 00:22:26 jinmei Exp */
+/* Id: message.h,v 1.130 2009/10/26 23:47:35 tbox Exp */
 
 #ifndef DNS_MESSAGE_H
 #define DNS_MESSAGE_H 1
@@ -175,6 +175,9 @@ typedef int dns_messagetextflag_t;
 						      additional section. */
 #define DNS_MESSAGERENDER_PREFER_AAAA	0x0010	/*%< prefer AAAA records in
 						  additional section. */
+#ifdef ALLOW_FILTER_AAAA_ON_V4
+#define DNS_MESSAGERENDER_FILTER_AAAA	0x0020	/*%< filter AAAA records */
+#endif
 
 typedef struct dns_msgblock dns_msgblock_t;
 
