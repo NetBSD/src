@@ -298,6 +298,7 @@ extern "C" {
 #define SSL_TXT_SSLV2		"SSLv2"
 #define SSL_TXT_SSLV3		"SSLv3"
 #define SSL_TXT_TLSV1		"TLSv1"
+#define SSL_TXT_TLSV1_1		"TLSv1.1"
 
 #define SSL_TXT_EXP		"EXP"
 #define SSL_TXT_EXPORT		"EXPORT"
@@ -517,6 +518,8 @@ typedef struct ssl_session_st
 
 #define SSL_OP_MICROSOFT_SESS_ID_BUG			0x00000001L
 #define SSL_OP_NETSCAPE_CHALLENGE_BUG			0x00000002L
+/* Allow initial connection to servers that don't support RI */
+#define SSL_OP_LEGACY_SERVER_CONNECT			0x00000004L
 #define SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG		0x00000008L
 #define SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG		0x00000010L
 #define SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER		0x00000020L
@@ -524,6 +527,7 @@ typedef struct ssl_session_st
 #define SSL_OP_SSLEAY_080_CLIENT_DH_BUG			0x00000080L
 #define SSL_OP_TLS_D5_BUG				0x00000100L
 #define SSL_OP_TLS_BLOCK_PADDING_BUG			0x00000200L
+#define SSL_OP_NO_TLSv1_1				0x00000400L
 
 /* Disable SSL 3.0/TLS 1.0 CBC vulnerability workaround that was added
  * in OpenSSL 0.9.6d.  Usually (depending on the application protocol)
@@ -534,7 +538,7 @@ typedef struct ssl_session_st
 
 /* SSL_OP_ALL: various bug workarounds that should be rather harmless.
  *             This used to be 0x000FFFFFL before 0.9.7. */
-#define SSL_OP_ALL					0x80000FFFL
+#define SSL_OP_ALL					0x80000BFFL
 
 /* DTLS options */
 #define SSL_OP_NO_QUERY_MTU                 0x00001000L
@@ -549,6 +553,8 @@ typedef struct ssl_session_st
 #define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION	0x00010000L
 /* Don't use compression even if supported */
 #define SSL_OP_NO_COMPRESSION				0x00020000L
+/* Permit unsafe legacy renegotiation */
+#define SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION	0x00040000L
 /* If set, always create a new key when using tmp_ecdh parameters */
 #define SSL_OP_SINGLE_ECDH_USE				0x00080000L
 /* If set, always create a new key when using tmp_dh parameters */
@@ -604,17 +610,25 @@ typedef struct ssl_session_st
 
 #define SSL_CTX_set_options(ctx,op) \
 	SSL_CTX_ctrl((ctx),SSL_CTRL_OPTIONS,(op),NULL)
+#define SSL_CTX_clear_options(ctx,op) \
+	SSL_CTX_ctrl((ctx),SSL_CTRL_CLEAR_OPTIONS,(op),NULL)
 #define SSL_CTX_get_options(ctx) \
 	SSL_CTX_ctrl((ctx),SSL_CTRL_OPTIONS,0,NULL)
 #define SSL_set_options(ssl,op) \
 	SSL_ctrl((ssl),SSL_CTRL_OPTIONS,(op),NULL)
+#define SSL_clear_options(ssl,op) \
+	SSL_ctrl((ssl),SSL_CTRL_CLEAR_OPTIONS,(op),NULL)
 #define SSL_get_options(ssl) \
         SSL_ctrl((ssl),SSL_CTRL_OPTIONS,0,NULL)
 
 #define SSL_CTX_set_mode(ctx,op) \
 	SSL_CTX_ctrl((ctx),SSL_CTRL_MODE,(op),NULL)
+#define SSL_CTX_clear_mode(ctx,op) \
+	SSL_CTX_ctrl((ctx),SSL_CTRL_CLEAR_MODE,(op),NULL)
 #define SSL_CTX_get_mode(ctx) \
 	SSL_CTX_ctrl((ctx),SSL_CTRL_MODE,0,NULL)
+#define SSL_clear_mode(ssl,op) \
+	SSL_ctrl((ssl),SSL_CTRL_CLEAR_MODE,(op),NULL)
 #define SSL_set_mode(ssl,op) \
 	SSL_ctrl((ssl),SSL_CTRL_MODE,(op),NULL)
 #define SSL_get_mode(ssl) \
@@ -622,6 +636,8 @@ typedef struct ssl_session_st
 #define SSL_set_mtu(ssl, mtu) \
         SSL_ctrl((ssl),SSL_CTRL_SET_MTU,(mtu),NULL)
 
+#define SSL_get_secure_renegotiation_support(ssl) \
+	SSL_ctrl((ssl), SSL_CTRL_GET_RI_SUPPORT, 0, NULL)
 
 void SSL_CTX_set_msg_callback(SSL_CTX *ctx, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg));
 void SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg));
@@ -1396,6 +1412,21 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB	72
 #endif
 
+#define DTLS_CTRL_GET_TIMEOUT		73
+#define DTLS_CTRL_HANDLE_TIMEOUT	74
+#define DTLS_CTRL_LISTEN			75
+
+#define SSL_CTRL_GET_RI_SUPPORT			76
+#define SSL_CTRL_CLEAR_OPTIONS			77
+#define SSL_CTRL_CLEAR_MODE			78
+
+#define DTLSv1_get_timeout(ssl, arg) \
+	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
+#define DTLSv1_handle_timeout(ssl) \
+	SSL_ctrl(ssl,DTLS_CTRL_HANDLE_TIMEOUT,0, NULL)
+#define DTLSv1_listen(ssl, peer) \
+	SSL_ctrl(ssl,DTLS_CTRL_LISTEN,0, (void *)peer)
+
 #define SSL_session_reused(ssl) \
 	SSL_ctrl((ssl),SSL_CTRL_GET_SESSION_REUSED,0,NULL)
 #define SSL_num_renegotiations(ssl) \
@@ -1618,6 +1649,10 @@ const SSL_METHOD *TLSv1_method(void);		/* TLSv1.0 */
 const SSL_METHOD *TLSv1_server_method(void);	/* TLSv1.0 */
 const SSL_METHOD *TLSv1_client_method(void);	/* TLSv1.0 */
 
+const SSL_METHOD *TLSv1_1_method(void);		/* TLSv1.1 */
+const SSL_METHOD *TLSv1_1_server_method(void);	/* TLSv1.1 */
+const SSL_METHOD *TLSv1_1_client_method(void);	/* TLSv1.1 */
+
 const SSL_METHOD *DTLSv1_method(void);		/* DTLSv1.0 */
 const SSL_METHOD *DTLSv1_server_method(void);	/* DTLSv1.0 */
 const SSL_METHOD *DTLSv1_client_method(void);	/* DTLSv1.0 */
@@ -1650,7 +1685,7 @@ long SSL_get_default_timeout(const SSL *s);
 
 int SSL_library_init(void );
 
-char *SSL_CIPHER_description(SSL_CIPHER *,char *buf,int size);
+char *SSL_CIPHER_description(const SSL_CIPHER *,char *buf,int size);
 STACK_OF(X509_NAME) *SSL_dup_CA_list(STACK_OF(X509_NAME) *sk);
 
 SSL *SSL_dup(SSL *ssl);
@@ -1803,6 +1838,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_DTLS1_GET_MESSAGE				 252
 #define SSL_F_DTLS1_GET_MESSAGE_FRAGMENT		 253
 #define SSL_F_DTLS1_GET_RECORD				 254
+#define SSL_F_DTLS1_HANDLE_TIMEOUT			 297
 #define SSL_F_DTLS1_OUTPUT_CERT_CHAIN			 255
 #define SSL_F_DTLS1_PREPROCESS_FRAGMENT			 288
 #define SSL_F_DTLS1_PROCESS_OUT_OF_SEQ_MESSAGE		 256
@@ -1892,9 +1928,11 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL3_SETUP_WRITE_BUFFER			 291
 #define SSL_F_SSL3_WRITE_BYTES				 158
 #define SSL_F_SSL3_WRITE_PENDING			 159
+#define SSL_F_SSL_ADD_CLIENTHELLO_RENEGOTIATE_EXT	 298
 #define SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT		 277
 #define SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK	 215
 #define SSL_F_SSL_ADD_FILE_CERT_SUBJECTS_TO_STACK	 216
+#define SSL_F_SSL_ADD_SERVERHELLO_RENEGOTIATE_EXT	 299
 #define SSL_F_SSL_ADD_SERVERHELLO_TLSEXT		 278
 #define SSL_F_SSL_BAD_METHOD				 160
 #define SSL_F_SSL_BYTES_TO_CIPHER_LIST			 161
@@ -1938,6 +1976,10 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_INIT_WBIO_BUFFER			 184
 #define SSL_F_SSL_LOAD_CLIENT_CA_FILE			 185
 #define SSL_F_SSL_NEW					 186
+#define SSL_F_SSL_PARSE_CLIENTHELLO_RENEGOTIATE_EXT	 300
+#define SSL_F_SSL_PARSE_CLIENTHELLO_TLSEXT		 302
+#define SSL_F_SSL_PARSE_SERVERHELLO_RENEGOTIATE_EXT	 301
+#define SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT		 303
 #define SSL_F_SSL_PEEK					 270
 #define SSL_F_SSL_PREPARE_CLIENTHELLO_TLSEXT		 281
 #define SSL_F_SSL_PREPARE_SERVERHELLO_TLSEXT		 282
@@ -2047,6 +2089,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC	 281
 #define SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG		 148
 #define SSL_R_DIGEST_CHECK_FAILED			 149
+#define SSL_R_DTLS_MESSAGE_TOO_BIG			 334
 #define SSL_R_DUPLICATE_COMPRESSION_ID			 309
 #define SSL_R_ECC_CERT_NOT_FOR_KEY_AGREEMENT		 317
 #define SSL_R_ECC_CERT_NOT_FOR_SIGNING			 318
@@ -2119,6 +2162,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_NO_PRIVATE_KEY_ASSIGNED			 190
 #define SSL_R_NO_PROTOCOLS_AVAILABLE			 191
 #define SSL_R_NO_PUBLICKEY				 192
+#define SSL_R_NO_RENEGOTIATION				 339
 #define SSL_R_NO_REQUIRED_DIGEST			 324
 #define SSL_R_NO_SHARED_CIPHER				 193
 #define SSL_R_NO_VERIFY_CALLBACK			 194
@@ -2151,6 +2195,9 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_RECORD_LENGTH_MISMATCH			 213
 #define SSL_R_RECORD_TOO_LARGE				 214
 #define SSL_R_RECORD_TOO_SMALL				 298
+#define SSL_R_RENEGOTIATE_EXT_TOO_LONG			 335
+#define SSL_R_RENEGOTIATION_ENCODING_ERR		 336
+#define SSL_R_RENEGOTIATION_MISMATCH			 337
 #define SSL_R_REQUIRED_CIPHER_MISSING			 215
 #define SSL_R_REUSE_CERT_LENGTH_NOT_ZERO		 216
 #define SSL_R_REUSE_CERT_TYPE_NOT_ZERO			 217
@@ -2230,6 +2277,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_UNKNOWN_REMOTE_ERROR_TYPE			 253
 #define SSL_R_UNKNOWN_SSL_VERSION			 254
 #define SSL_R_UNKNOWN_STATE				 255
+#define SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED	 338
 #define SSL_R_UNSUPPORTED_CIPHER			 256
 #define SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM		 257
 #define SSL_R_UNSUPPORTED_DIGEST_TYPE			 326
