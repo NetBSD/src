@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_machdep.c,v 1.15 2009/12/26 15:47:15 uebayasi Exp $ */
+/*	$NetBSD: viper_machdep.c,v 1.16 2009/12/26 16:01:25 uebayasi Exp $ */
 
 /*
  * Startup routines for the Arcom Viper.  Below you can trace the
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.15 2009/12/26 15:47:15 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.16 2009/12/26 16:01:25 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -719,7 +719,7 @@ initarm(void *arg)
 #endif
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
