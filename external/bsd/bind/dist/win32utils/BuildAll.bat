@@ -119,6 +119,12 @@ nmake /nologo -f pk11list.mak CFG="pk11list - Win32 Release"  NO_EXTERNAL_DEPS="
 nmake /nologo -f pk11destroy.mak CFG="pk11destroy - Win32 Release"  NO_EXTERNAL_DEPS="1"
 cd ..\..
 
+cd tools\win32
+nmake /nologo -f arpaname.mak CFG="arpaname - Win32 Release"  NO_EXTERNAL_DEPS="1"
+nmake /nologo -f genrandom.mak CFG="genrandom - Win32 Release"  NO_EXTERNAL_DEPS="1"
+nmake /nologo -f nsec3hash.mak CFG="nsec3hash - Win32 Release"  NO_EXTERNAL_DEPS="1"
+nmake /nologo -f journalprint.mak CFG="journalprint - Win32 Release"  NO_EXTERNAL_DEPS="1"
+cd ..\..
 rem This is the BIND 9 Installer
 
 cd win32\BINDInstall

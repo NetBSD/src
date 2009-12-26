@@ -18,7 +18,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- File: Id: Bv9ARM-book.xml,v 1.437 2009/10/16 02:59:41 each Exp -->
+<!-- File: Id: Bv9ARM-book.xml,v 1.450 2009/12/04 21:59:23 marka Exp -->
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
   <title>BIND 9 Administrator Reference Manual</title>
 
@@ -1727,6 +1727,11 @@ controls {
           each dynamic update, because that would be too slow when a large
           zone is updated frequently.  Instead, the dump is delayed by
           up to 15 minutes, allowing additional updates to take place.
+          During the dump process, transient files will be created
+          with the extensions <filename>.jnw</filename> and
+          <filename>.jbk</filename>; under ordinary circumstances, these
+          will be removed when the dump is complete, and can be safely
+          ignored.
         </para>
 
         <para>
@@ -4411,10 +4416,11 @@ category notify { null; };
 		      class and type.  Next it reports whether the
 		      Recursion Desired flag was set (+ if set, -
 		      if not set), if the query was signed (S),
-		      EDNS was in use (E), if DO (DNSSEC Ok) was
-		      set (D), or if CD (Checking Disabled) was set
-		      (C).  After this the destination address the
-		      query was sent to is reported.
+		      EDNS was in use (E), if TCP was used (T), if
+		      DO (DNSSEC Ok) was set (D), or if CD (Checking
+		      Disabled) was set (C).  After this the
+		      destination address the query was sent to is
+		      reported.
 		    </para>
 
                     <para>
@@ -4900,6 +4906,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
         ... }; </optional>
     <optional> check-names ( <replaceable>master</replaceable> | <replaceable>slave</replaceable> | <replaceable>response</replaceable> )
         ( <replaceable>warn</replaceable> | <replaceable>fail</replaceable> | <replaceable>ignore</replaceable> ); </optional>
+    <optional> check-dup-records ( <replaceable>warn</replaceable> | <replaceable>fail</replaceable> | <replaceable>ignore</replaceable> ); </optional>
     <optional> check-mx ( <replaceable>warn</replaceable> | <replaceable>fail</replaceable> | <replaceable>ignore</replaceable> ); </optional>
     <optional> check-wildcard <replaceable>yes_or_no</replaceable>; </optional>
     <optional> check-integrity <replaceable>yes_or_no</replaceable>; </optional>
@@ -4917,8 +4924,8 @@ badresp:1,adberr:0,findfail:0,valfail:0]
     <optional> allow-update { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> allow-update-forwarding { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> update-check-ksk <replaceable>yes_or_no</replaceable>; </optional>
-    <optional> dnskey-ksk-only <replaceable>yes_or_no</replaceable>; </optional>
-    <optional> secure-to-insecure <replaceable>yes_or_no</replaceable> ;</optional>
+    <optional> dnssec-dnskey-kskonly <replaceable>yes_or_no</replaceable>; </optional>
+    <optional> dnssec-secure-to-insecure <replaceable>yes_or_no</replaceable> ;</optional>
     <optional> try-tcp-refresh <replaceable>yes_or_no</replaceable>; </optional>
     <optional> allow-v6-synthesis { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> blackhole { <replaceable>address_match_list</replaceable> }; </optional>
@@ -4938,7 +4945,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
         <optional> port ( <replaceable>ip_port</replaceable> | <replaceable>*</replaceable> ) </optional> ) ; </optional>
     <optional> use-queryport-pool <replaceable>yes_or_no</replaceable>; </optional>
     <optional> queryport-pool-ports <replaceable>number</replaceable>; </optional>
-    <optional> queryport-pool-interval <replaceable>number</replaceable>; </optional>
+    <optional> queryport-pool-updateinterval <replaceable>number</replaceable>; </optional>
     <optional> max-transfer-time-in <replaceable>number</replaceable>; </optional>
     <optional> max-transfer-time-out <replaceable>number</replaceable>; </optional>
     <optional> max-transfer-idle-in <replaceable>number</replaceable>; </optional>
@@ -5000,6 +5007,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
     <optional> random-device <replaceable>path_name</replaceable> ; </optional>
     <optional> max-cache-size <replaceable>size_spec</replaceable> ; </optional>
     <optional> match-mapped-addresses <replaceable>yes_or_no</replaceable>; </optional>
+    <optional> filter-aaaa-on-v4 ( <replaceable>yes_or_no</replaceable> | <replaceable>break-dnssec</replaceable> ); </optional>
     <optional> preferred-glue ( <replaceable>A</replaceable> | <replaceable>AAAA</replaceable> | <replaceable>NONE</replaceable> ); </optional>
     <optional> edns-udp-size <replaceable>number</replaceable>; </optional>
     <optional> max-udp-size <replaceable>number</replaceable>; </optional>
@@ -5165,9 +5173,8 @@ badresp:1,adberr:0,findfail:0,valfail:0]
                 When performing dynamic update of secure zones, the
                 directory where the public and private DNSSEC key files
                 should be found, if different than the current working
-                directory.  The directory specified must be an absolute
-                path.  (Note that this option has no effect on the paths
-                for files containing non-DNSSEC keys such as
+                directory.  (Note that this option has no effect on the
+                paths for files containing non-DNSSEC keys such as
                 <filename>bind.keys</filename>,
                 <filename>rndc.key</filename> or
                 <filename>session.key</filename>.)
@@ -6234,6 +6241,60 @@ options {
             </varlistentry>
 
             <varlistentry>
+              <term><command>filter-aaaa-on-v4</command></term>
+              <listitem>
+                <para>
+                  This option is only available when
+                  <acronym>BIND</acronym> 9 is compiled with the
+                  <userinput>--enable-filter-aaaa</userinput> option on the
+                  "configure" command line.  It is intended to help the
+                  transition from IPv4 to IPv6 by not giving IPv6 addresses
+                  to DNS clients unless they have connections to the IPv6
+                  Internet.  This is not recommended unless absolutely
+                  necessary.  The default is <userinput>no</userinput>.
+                  The <command>filter-aaaa-on-v4</command> option
+                  may also be specified in <command>view</command> statements
+                  to override the global <command>filter-aaaa-on-v4</command>
+                  option.
+                </para>
+                <para>
+                  If <userinput>yes</userinput>,
+                  the DNS client is at an IPv4 address,
+                  and if the response does not include DNSSEC signatures, 
+                  then all AAAA records are deleted from the response.
+                  This filtering applies to all responses and not only
+                  authoritative responses.
+                </para>
+                <para>
+                  If <userinput>break-dnssec</userinput>,
+                  then AAAA records are deleted even when dnssec is enabled.
+                  As suggested by the name, this makes the response not verify,
+                  because the DNSSEC protocol is designed detect deletions.
+                </para>
+                <para>
+                  This mechanism can erroneously cause other servers to 
+		  not give AAAA records to their clients.  
+		  A recursing server with both IPv6 and IPv4 network connections
+		  that queries an authoritative server using this mechanism
+		  via IPv4 will be denied AAAA records even if its client is
+		  using IPv6.
+                </para>
+                <para>
+                  This mechanism is applied to authoritative as well as
+		  non-authoritative records.
+		  A client using IPv4 that is not allowed recursion can
+		  erroneously be given AAAA records because the server is not
+		  allowed to check for A records.
+                </para>
+                <para>
+		  Some AAAA records are given to IPv4 clients in glue records.
+		  IPv4 clients that are servers can then erroneously
+		  answer requests for AAAA records received via IPv4.
+                </para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
               <term><command>ixfr-from-differences</command></term>
               <listitem>
                 <para>
@@ -6364,6 +6425,30 @@ options {
               </listitem>
             </varlistentry>
 
+	    <varlistentry>
+	      <term><command>check-dup-records</command></term>
+	      <listitem>
+		<para>
+		  Check master zones for records that are treated as different
+		  by DNSSEC but are semantically equal in plain DNS.  The
+		  default is to <command>warn</command>.  Other possible
+		  values are <command>fail</command> and
+		  <command>ignore</command>.
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	      <term><command>check-mx</command></term>
+	      <listitem>
+		<para>
+		  Check whether the MX record appears to refer to a IP address.
+		  The default is to <command>warn</command>.  Other possible
+		  values are <command>fail</command> and
+		  <command>ignore</command>.
+		</para>
+	      </listitem>
+	    </varlistentry>
 	    <varlistentry>
 	      <term><command>check-mx</command></term>
 	      <listitem>
@@ -6496,7 +6581,7 @@ options {
 	    </varlistentry>
 
 	    <varlistentry>
-	      <term><command>dnskey-ksk-only</command></term>
+	      <term><command>dnssec-dnskey-kskonly</command></term>
 	      <listitem>
 	        <para>
                   When this option and <command>update-check-ksk</command>
@@ -6528,7 +6613,7 @@ options {
 	    </varlistentry>
 
 	    <varlistentry>
-	      <term><command>secure-to-insecure</command></term>
+	      <term><command>dnssec-secure-to-insecure</command></term>
 	      <listitem>
 	        <para>
 		  Allow a zone to transition from secure to insecure by
@@ -8824,7 +8909,7 @@ deny-answer-aliases { "example.net"; };
                      <optional> port ( <replaceable>ip_port</replaceable> | <replaceable>*</replaceable> ) </optional>; </optional>
     <optional> use-queryport-pool <replaceable>yes_or_no</replaceable>; </optional>
     <optional> queryport-pool-ports <replaceable>number</replaceable>; </optional>
-    <optional> queryport-pool-interval <replaceable>number</replaceable>; </optional>
+    <optional> queryport-pool-updateinterval <replaceable>number</replaceable>; </optional>
 };
 </programlisting>
 
@@ -9232,6 +9317,21 @@ deny-answer-aliases { "example.net"; };
             <command>managed-keys</command> may only be set at the top
             level of <filename>named.conf</filename>, not within a view.
 	  </para>
+          <para>
+            In the current implementation, the managed keys database is
+            stored as a master-format zone file called
+            <filename>managed-keys.bind</filename>.  When the key database
+            is changed, the zone is updated.  As with any other dynamic
+            zone, changes will be written into a journal file,
+            <filename>managed-keys.bind.jnl</filename>.  They are committed
+            to the master file as soon as possible afterward; in the case
+            of the managed key database, this will usually occur within 30
+            seconds.  So, whenever <command>named</command> is using
+            automatic key maintenace, those two files can be expected to
+            exist in the working directory.  (For this reason among others,
+            the working directory should be always be writable by
+            <command>named</command>.)
+	  </para>
 	  <para>
 	    If the <command>dnssec-lookaside</command> option is
 	    set to <userinput>auto</userinput>, <command>named</command>
@@ -9445,8 +9545,8 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
     <optional> allow-transfer { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> allow-update-forwarding { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> update-check-ksk <replaceable>yes_or_no</replaceable>; </optional>
-    <optional> dnskey-ksk-only <replaceable>yes_or_no</replaceable>; </optional>
-    <optional> secure-to-insecure <replaceable>yes_or_no</replaceable> ; </optional>
+    <optional> dnssec-dnskey-kskonly <replaceable>yes_or_no</replaceable>; </optional>
+    <optional> dnssec-secure-to-insecure <replaceable>yes_or_no</replaceable> ; </optional>
     <optional> try-tcp-refresh <replaceable>yes_or_no</replaceable>; </optional>
     <optional> also-notify { <replaceable>ip_addr</replaceable> <optional>port <replaceable>ip_port</replaceable></optional> ;
                   <optional> <replaceable>ip_addr</replaceable> <optional>port <replaceable>ip_port</replaceable></optional> ; ... </optional> }; </optional>
@@ -9959,11 +10059,11 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
               </varlistentry>
 
 	      <varlistentry>
-	        <term><command>dnskey-ksk-only</command></term>
+	        <term><command>dnssec-dnskey-kskonly</command></term>
                 <listitem>
                   <para>
                     See the description of
-                    <command>dnskey-ksk-only</command> in <xref linkend="boolean_options"/>.
+                    <command>dnssec-dnskey-kskonly</command> in <xref linkend="boolean_options"/>.
                   </para>
                 </listitem>
               </varlistentry>
@@ -10360,7 +10460,8 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
                   <para>
                     <command>auto-dnssec allow;</command> permits
                     keys to be updated and the zone re-signed whenever the
-                    user issues the command <command>rndc sign</command>.
+                    user issues the command <command>rndc sign
+                    <replaceable>zonename</replaceable></command>.
                   </para>
                   <para>
                     <command>auto-dnssec maintain;</command> includes the
@@ -10403,11 +10504,11 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
 	      </varlistentry>
 
               <varlistentry>
-                <term><command>secure-to-insecure</command></term>
+                <term><command>dnssec-secure-to-insecure</command></term>
                 <listitem>
                   <para>
                     See the description of
-                    <command>secure-to-insecure</command> in <xref linkend="boolean_options"/>.
+                    <command>dnssec-secure-to-insecure</command> in <xref linkend="boolean_options"/>.
                   </para>
                 </listitem>
               </varlistentry>
@@ -15546,12 +15647,16 @@ zone "example.com" {
       <xi:include href="../../bin/check/named-checkconf.docbook"/>
       <xi:include href="../../bin/check/named-checkzone.docbook"/>
       <xi:include href="../../bin/named/named.docbook"/>
+      <xi:include href="../../bin/tools/named-journalprint.docbook"/>
       <!-- named.conf.docbook and others? -->
       <xi:include href="../../bin/nsupdate/nsupdate.docbook"/>
       <xi:include href="../../bin/rndc/rndc.docbook"/>
       <xi:include href="../../bin/rndc/rndc.conf.docbook"/>
       <xi:include href="../../bin/confgen/rndc-confgen.docbook"/>
       <xi:include href="../../bin/confgen/ddns-confgen.docbook"/>
+      <xi:include href="../../bin/tools/arpaname.docbook"/>
+      <xi:include href="../../bin/tools/genrandom.docbook"/>
+      <xi:include href="../../bin/tools/nsec3hash.docbook"/>
     </reference>
 
   </book>

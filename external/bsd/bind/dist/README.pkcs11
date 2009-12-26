@@ -8,8 +8,8 @@ independent API for the control of hardware security modules (HSMs)
 and other cryptographic support devices. 
 
 BIND 9 is known to work with two HSMs:  The Sun SCA 6000 cryptographic
-acceration board, tested under Solaris x86, and the AEP Keyper
-network-attached key storage device, tested with a Debian Linux system,
+acceleration board, tested under Solaris x86, and the AEP Keyper
+network-attached key storage device, tested with Debian Linux,
 Solaris x86 and Windows Server 2003.
 
 PREREQUISITES
@@ -47,23 +47,23 @@ choice depends on the HSM hardware:
    intensive operations.  The AEP Keyper is an example of such a device.
 
 The modified OpenSSL code is included in the BIND 9.7.0b1 release, in the
-form of a context diff against OpenSSL 0.9.8k.  Before building BIND 9
+form of a context diff against OpenSSL 0.9.8l.  Before building BIND 9
 with PKCS #11 support, it will be necessary to build OpenSSL with this
 patch in place and inform it of the path to the HSM-specific PKCS #11
 provider library.
 
-Obtain OpenSSL 0.9.8k:
+Obtain OpenSSL 0.9.8l:
 
-    wget http://www.openssl.org/source/openssl-0.9.8k.tar.gz
+    wget http://www.openssl.org/source/openssl-0.9.8l.tar.gz
 
 Extract the tarball:
 
-    tar zxf openssl-0.9.8k.tar.gz
+    tar zxf openssl-0.9.8l.tar.gz
 
 Apply the patch from the BIND 9 release:
 
-    patch -p1 -d openssl-0.9.8k \
-            < bind-9.7.0b1/bin/pkcs11/openssl-0.9.8k-patch 
+    patch -p1 -d openssl-0.9.8l \
+            < bind-9.7.0b1/bin/pkcs11/openssl-0.9.8l-patch 
 
 (Note that the patch file may not be compatible with the "patch"
 utility on all operating systems.  You may need to install GNU patch.)
@@ -92,7 +92,7 @@ We will use this location when we configure BIND 9.
 
     Finally, the Keyper library requires threads, so we must specify -pthread.
     
-        cd openssl-0.9.8k
+        cd openssl-0.9.8l
         ./Configure linux-generic32 -m32 -pthread \
             --pk11-libname=/opt/pkcs11/usr/lib/libpkcs11.so \
             --pk11-flavor=sign-only \
@@ -110,7 +110,7 @@ We will use this location when we configure BIND 9.
 
     In this example, we are building on Solaris x86 on an AMD64 system.
 
-        cd openssl-0.9.8k
+        cd openssl-0.9.8l
         ./Configure solaris64-x86_64-cc \
             --pk11-libname=/usr/lib/64/libpkcs11.so \
             --pk11-flavor=crypto-accelerator \
@@ -203,8 +203,9 @@ for use by PKCS #11 provider library.  If the machine file is in
     export KEYPER_LIBRARY_PATH=/opt/Keyper/PKCS11Provider
 
 These environment variables must be set whenever running any tool
-which uses the HSM, including pkcs11-keygen, pkcs11-list, pkcs11-destroy,
-dnssec-keyfromlabel, dnssec-signzone, and named.
+that uses the HSM, including pkcs11-keygen, pkcs11-list, pkcs11-destroy,
+dnssec-keyfromlabel, dnssec-signzone, dnssec-keygen (which will use
+the HSM for random number generation), and named.
 
 We can now create and use keys in the HSM.  In this case, we will
 create a 2048 bit key and give it the label "sample-ksk":
@@ -298,6 +299,10 @@ Sample openssl.cnf:
         pkcs11 = pkcs11_section
         [ pkcs11_section ]
         PIN = <PLACE PIN HERE>
+
+This will also allow the dnssec-* tools to access the HSM without
+PIN entry.  (The pkcs11-* tools access the HSM directly, not via
+OpenSSL, so a PIN will still be required to use them.)
 
 PLEASE NOTE:  Placing the HSM's PIN in a text file in this manner
 may reduce the security advantage of using an HSM.  Be sure this

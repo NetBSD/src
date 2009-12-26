@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.107 2009/10/05 17:30:49 fdupont Exp
+# Id: Makefile.in,v 1.109 2009/12/05 23:31:40 each Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -45,7 +45,7 @@ CINCLUDES =	-I${srcdir}/include -I${srcdir}/unix/include -I. \
 		${ISCCFG_INCLUDES} ${ISCCC_INCLUDES} ${ISC_INCLUDES} \
 		${DLZDRIVER_INCLUDES} ${DBDRIVER_INCLUDES}
 
-CDEFINES =      -DBIND9 @USE_DLZ@ @USE_PKCS11@
+CDEFINES =      @USE_DLZ@ @USE_PKCS11@
 
 CWARNINGS =
 
@@ -145,7 +145,7 @@ docclean manclean maintainer-clean::
 clean distclean maintainer-clean::
 	rm -f ${TARGETS} ${OBJS} bind.keys.h
 
-bind9.xsl.h: bind9.xsl convertxsl.pl
+bind9.xsl.h: bind9.xsl ${srcdir}/convertxsl.pl
 	${PERL} ${srcdir}/convertxsl.pl < ${srcdir}/bind9.xsl > bind9.xsl.h
 
 depend: bind9.xsl.h

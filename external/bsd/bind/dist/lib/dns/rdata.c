@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.c,v 1.1.1.2 2009/10/25 00:02:33 christos Exp $	*/
+/*	$NetBSD: rdata.c,v 1.1.1.3 2009/12/26 22:24:51 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdata.c,v 1.203 2009/10/08 23:13:07 marka Exp */
+/* Id: rdata.c,v 1.204 2009/12/04 21:09:33 marka Exp */
 
 /*! \file */
 
@@ -339,6 +339,37 @@ dns_rdata_compare(const dns_rdata_t *rdata1, const dns_rdata_t *rdata2) {
 		return (rdata1->type < rdata2->type ? -1 : 1);
 
 	COMPARESWITCH
+
+	if (use_default) {
+		isc_region_t r1;
+		isc_region_t r2;
+
+		dns_rdata_toregion(rdata1, &r1);
+		dns_rdata_toregion(rdata2, &r2);
+		result = isc_region_compare(&r1, &r2);
+	}
+	return (result);
+}
+
+int
+dns_rdata_casecompare(const dns_rdata_t *rdata1, const dns_rdata_t *rdata2) {
+	int result = 0;
+	isc_boolean_t use_default = ISC_FALSE;
+
+	REQUIRE(rdata1 != NULL);
+	REQUIRE(rdata2 != NULL);
+	REQUIRE(rdata1->data != NULL);
+	REQUIRE(rdata2->data != NULL);
+	REQUIRE(DNS_RDATA_VALIDFLAGS(rdata1));
+	REQUIRE(DNS_RDATA_VALIDFLAGS(rdata2));
+
+	if (rdata1->rdclass != rdata2->rdclass)
+		return (rdata1->rdclass < rdata2->rdclass ? -1 : 1);
+
+	if (rdata1->type != rdata2->type)
+		return (rdata1->type < rdata2->type ? -1 : 1);
+
+	CASECOMPARESWITCH
 
 	if (use_default) {
 		isc_region_t r1;

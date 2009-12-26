@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: ans.pl,v 1.11 2009/05/29 23:47:49 tbox Exp
+# Id: ans.pl,v 1.12 2009/11/04 02:15:30 marka Exp
 
 #
 # Ad hoc name server
@@ -49,6 +49,7 @@ for (;;) {
 	$packet->print;
 
 	$packet->header->qr(1);
+	$packet->header->aa(1);
 
 	my @questions = $packet->question;
 	my $qname = $questions[0]->qname;

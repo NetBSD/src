@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.1.1.2 2009/10/25 00:02:48 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.3 2009/12/26 22:26:06 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket.c,v 1.80 2009/09/25 23:48:11 tbox Exp */
+/* Id: socket.c,v 1.81 2009/11/10 18:31:47 each Exp */
 
 /* This code uses functions which are only available on Server 2003 and
  * higher, and Windows XP and higher.
@@ -274,6 +274,7 @@ struct isc_socket {
 	unsigned int		pending_accept; /* Number of outstanding accept() calls. */
 	unsigned int		state; /* Socket state. Debugging and consistency checking. */
 	int			state_lineno;  /* line which last touched state */
+	int			in_recovery_cnt; /* avoid recovery loop. */
 };
 
 #define _set_state(sock, _state) do { (sock)->state = (_state); (sock)->state_lineno = __LINE__; } while (0)
@@ -366,6 +367,8 @@ static void send_connectdone_event(isc_socket_t *sock, isc_socket_connev_t **cde
 static void send_recvdone_abort(isc_socket_t *sock, isc_result_t result);
 static void queue_receive_event(isc_socket_t *sock, isc_task_t *task, isc_socketevent_t *dev);
 static void queue_receive_request(isc_socket_t *sock);
+static void hard_recover_receive_request(isc_socket_t *sock);
+static void recover_receive_request(isc_socket_t *sock, void **lplpo);
 
 /*
  * This is used to dump the contents of the sock structure
@@ -718,6 +721,7 @@ queue_receive_request(isc_socket_t *sock) {
 	int total_bytes = 0;
 	int Result;
 	int Error;
+	isc_boolean_t need_recovering = ISC_FALSE;
 	WSABUF iov[1];
 	IoCompletionInfo *lpo;
 	isc_result_t isc_result;
@@ -765,9 +769,39 @@ queue_receive_request(isc_socket_t *sock) {
 			sock->pending_recv++;
 			break;
 
+		case ERROR_HOST_UNREACHABLE:
+			if (sock->type == isc_sockettype_udp) {
+				UNEXPECTED_ERROR(__FILE__, __LINE__,
+					 "WSARecvFrom ERROR_HOST_UNREACHABLE: trying to recover");
+				need_recovering = ISC_TRUE;
+				break;
+			} else
+				goto fail;
+
+		case WSAENETRESET:
+			if (sock->type == isc_sockettype_udp) {
+				UNEXPECTED_ERROR(__FILE__, __LINE__,
+					 "WSARecvFrom WSAENETRESET: trying to recover");
+				need_recovering = ISC_TRUE;
+				break;
+			} else
+				goto fail;
+
+		case WSAECONNRESET:
+			if (sock->type == isc_sockettype_udp) {
+				UNEXPECTED_ERROR(__FILE__, __LINE__,
+					 "WSARecvFrom WSAECONNRESET: trying to recover");
+				need_recovering = ISC_TRUE;
+				break;
+			} else
+				goto fail;
+
 		default:
+		fail:
 			isc_result = isc__errno2result(Error);
-			if (isc_result == ISC_R_UNEXPECTED)
+			if ((isc_result == ISC_R_UNEXPECTED) ||
+			    (isc_result == ISC_R_CONNECTIONRESET) ||
+			    (isc_result == ISC_R_HOSTUNREACH))
 				UNEXPECTED_ERROR(__FILE__, __LINE__,
 					"WSARecvFrom: Windows error code: %d, isc result %d",
 					Error, isc_result);
@@ -782,6 +816,7 @@ queue_receive_request(isc_socket_t *sock) {
 		 */
 		sock->pending_iocp++;
 		sock->pending_recv++;
+		sock->in_recovery_cnt = 0;
 	}
 
 	socket_log(__LINE__, sock, NULL, IOEVENT,
@@ -791,6 +826,41 @@ queue_receive_request(isc_socket_t *sock) {
 		   sock->fd, Result, Error);
 
 	CONSISTENT(sock);
+
+	if (need_recovering)
+		recover_receive_request(sock, &lpo);
+}
+
+/*
+ * (placeholder) Hard recovery, doing nothing useful today
+ * (other than to avoid unlimited recursion).
+ */
+static void
+hard_recover_receive_request(isc_socket_t *sock)
+{
+	UNEXPECTED_ERROR(__FILE__, __LINE__,
+			 "can't recover fd %d sock %p",
+			 sock->fd, sock);
+	send_recvdone_abort(sock, ISC_R_UNEXPECTED);
+}
+
+/*
+ * Recovery from a Windows 2008 Server bug
+ * (WSARecvFrom() getting an ERROR_HOST_UNREACHABLE).
+ * Free the overlapped pointer and requeue a receive request.
+ */
+static void
+recover_receive_request(isc_socket_t *sock, void **lplpo)
+{
+	if (*lplpo != NULL)
+		HeapFree(hHeapHandle, 0, *lplpo);
+	*lplpo = NULL;
+
+	/* limit recursion to 20 */
+	if (sock->in_recovery_cnt++ < 20)
+		queue_receive_request(sock);
+	else
+		hard_recover_receive_request(sock);
 }
 
 static void
@@ -868,7 +938,7 @@ make_nonblock(SOCKET fd) {
 }
 
 /*
- * Windows 2000 systems incorrectly cause UDP sockets using WASRecvFrom
+ * Windows 2000 systems incorrectly cause UDP sockets using WSARecvFrom
  * to not work correctly, returning a WSACONNRESET error when a WSASendTo
  * fails with an "ICMP port unreachable" response and preventing the
  * socket from using the WSARecvFrom in subsequent operations.
@@ -1320,7 +1390,7 @@ completeio_send(isc_socket_t *sock, isc_socketevent_t *dev,
 		UNEXPECTED_ERROR(__FILE__, __LINE__, "completeio_send: %s: %s",
 				 addrbuf, strbuf);
 		dev->result = isc__errno2result(send_errno);
-	return (DOIO_HARD);
+		return (DOIO_HARD);
 	}
 
 	/*
@@ -1389,6 +1459,7 @@ startio_send(isc_socket_t *sock, isc_socketevent_t *dev, int *nbytes,
 				   "bytes, err %d/%s",
 				   sock->fd, *nbytes, *send_errno, strbuf);
 		}
+		status = DOIO_HARD;
 		goto done;
 	}
 	dev->result = ISC_R_SUCCESS;
@@ -1433,6 +1504,7 @@ allocate_socket(isc_socketmgr_t *manager, isc_sockettype_t type,
 	sock->connected = 0;
 	sock->pending_connect = 0;
 	sock->bound = 0;
+	sock->in_recovery_cnt = 0;
 	memset(sock->name, 0, sizeof(sock->name));	// zero the name field
 	_set_state(sock, SOCK_INITIALIZED);
 
@@ -2334,7 +2406,7 @@ SocketIoThread(LPVOID ThreadContext) {
 			/*
 			 * Did the I/O operation complete?
 			 */
-			errstatus = WSAGetLastError();
+			errstatus = GetLastError();
 			isc_result = isc__errno2resultx(errstatus, __FILE__, __LINE__);
 
 			LOCK(&sock->lock);
@@ -2345,8 +2417,32 @@ SocketIoThread(LPVOID ThreadContext) {
 				sock->pending_iocp--;
 				INSIST(sock->pending_recv > 0);
 				sock->pending_recv--;
+				if ((sock->type == isc_sockettype_udp) &&
+				    (errstatus == ERROR_HOST_UNREACHABLE)) {
+					UNEXPECTED_ERROR(__FILE__, __LINE__,
+							 "SOCKET_RECV ERROR_HOST_UNREACHABLE: trying to recover");
+					recover_receive_request(sock, &lpo);
+					break;
+				}
+				if ((sock->type == isc_sockettype_udp) &&
+				    (errstatus == WSAENETRESET)) {
+					UNEXPECTED_ERROR(__FILE__, __LINE__,
+							 "SOCKET_RECV WSAENETRESET: trying to recover");
+					recover_receive_request(sock, &lpo);
+					break;
+				}
+				if ((sock->type == isc_sockettype_udp) &&
+				    (errstatus == WSAECONNRESET)) {
+					UNEXPECTED_ERROR(__FILE__, __LINE__,
+							 "SOCKET_RECV WSAECONNRESET: trying to recover");
+					recover_receive_request(sock, &lpo);
+					break;
+				}
 				send_recvdone_abort(sock, isc_result);
-				if (isc_result == ISC_R_UNEXPECTED) {
+				if ((isc_result == ISC_R_UNEXPECTED) ||
+				    ((isc_result == ISC_R_CONNECTIONRESET) &&
+				     (errstatus != ERROR_OPERATION_ABORTED)) ||
+				    (isc_result == ISC_R_HOSTUNREACH)) {
 					UNEXPECTED_ERROR(__FILE__, __LINE__,
 						"SOCKET_RECV: Windows error code: %d, returning ISC error %d",
 						errstatus, isc_result);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keyfromlabel.c,v 1.1.1.2 2009/10/25 00:01:32 christos Exp $	*/
+/*	$NetBSD: dnssec-keyfromlabel.c,v 1.1.1.3 2009/12/26 22:18:58 christos Exp $	*/
 
 /*
  * Copyright (C) 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-keyfromlabel.c,v 1.22 2009/10/14 22:07:13 marka Exp */
+/* Id: dnssec-keyfromlabel.c,v 1.29 2009/11/25 23:00:32 marka Exp */
 
 /*! \file */
 
@@ -55,7 +55,8 @@ int verbose;
 #define DEFAULT_NSEC3_ALGORITHM "NSEC3RSASHA1"
 
 static const char *algs = "RSA | RSAMD5 | DH | DSA | RSASHA1 |"
-			  " NSEC3DSA | NSEC3RSASHA1";
+			  " NSEC3DSA | NSEC3RSASHA1 |"
+			  " RSASHA256 | RSASHA512";
 
 ISC_PLATFORM_NORETURN_PRE static void
 usage(void) ISC_PLATFORM_NORETURN_POST;
@@ -147,6 +148,7 @@ main(int argc, char **argv) {
 	isc_boolean_t	unsetdel = ISC_FALSE;
 	isc_boolean_t	genonly = ISC_FALSE;
 	isc_boolean_t	use_nsec3 = ISC_FALSE;
+	unsigned char	c;
 
 	if (argc == 1)
 		usage();
@@ -179,9 +181,10 @@ main(int argc, char **argv) {
 			engine = isc_commandline_argument;
 			break;
 		case 'f':
-			if (toupper(isc_commandline_argument[0]) == 'K')
+			c = (unsigned char)(isc_commandline_argument[0]);
+			if (toupper(c) == 'K')
 				kskflag = DNS_KEYFLAG_KSK;
-			else if (toupper(isc_commandline_argument[0]) == 'R')
+			else if (toupper(c) == 'R')
 				revflag = DNS_KEYFLAG_REVOKE;
 			else
 				fatal("unknown flag '%s'",
@@ -189,12 +192,16 @@ main(int argc, char **argv) {
 			break;
 		case 'K':
 			directory = isc_commandline_argument;
+			ret = try_dir(directory);
+			if (ret != ISC_R_SUCCESS)
+				fatal("cannot open directory %s: %s",
+				      directory, isc_result_totext(ret));
 			break;
 		case 'k':
 			options |= DST_TYPE_KEY;
 			break;
 		case 'l':
-			label = isc_commandline_argument;
+			label = isc_mem_strdup(mctx, isc_commandline_argument);
 			break;
 		case 'n':
 			nametype = isc_commandline_argument;
@@ -317,8 +324,11 @@ main(int argc, char **argv) {
 		int len;
 
 		len = strlen(label) + strlen(engine) + 2;
-		l = isc_mem_get(mctx, len);
+		l = isc_mem_allocate(mctx, len);
+		if (l == NULL)
+			fatal("cannot allocate memory");
 		snprintf(l, len, "%s:%s", engine, label);
+		isc_mem_free(mctx, label);
 		label = l;
 	}
 
@@ -348,7 +358,8 @@ main(int argc, char **argv) {
 	}
 
 	if (use_nsec3 &&
-	    alg != DST_ALG_NSEC3DSA && alg != DST_ALG_NSEC3RSASHA1) {
+	    alg != DST_ALG_NSEC3DSA && alg != DST_ALG_NSEC3RSASHA1 &&
+	    alg != DST_ALG_RSASHA256 && alg != DST_ALG_RSASHA512) {
 		fatal("%s is incompatible with NSEC3; "
 		      "do not use the -3 option", algname);
 	}
@@ -454,12 +465,14 @@ main(int argc, char **argv) {
 
 		if (setpub)
 			dst_key_settime(key, DST_TIME_PUBLISH, publish);
-		else if (!genonly)
+		else if (setact)
+			dst_key_settime(key, DST_TIME_PUBLISH, activate);
+		else if (!genonly && !unsetpub)
 			dst_key_settime(key, DST_TIME_PUBLISH, now);
 
 		if (setact)
 			dst_key_settime(key, DST_TIME_ACTIVATE, activate);
-		else if (!genonly)
+		else if (!genonly && !unsetact)
 			dst_key_settime(key, DST_TIME_ACTIVATE, now);
 
 		if (setrev) {
@@ -522,6 +535,7 @@ main(int argc, char **argv) {
 	dns_name_destroy();
 	if (verbose > 10)
 		isc_mem_stats(mctx, stdout);
+	isc_mem_free(mctx, label);
 	isc_mem_destroy(&mctx);
 
 	return (0);

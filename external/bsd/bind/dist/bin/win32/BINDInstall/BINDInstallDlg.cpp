@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: BINDInstallDlg.cpp,v 1.45 2009/09/29 04:37:08 marka Exp */
+/* Id: BINDInstallDlg.cpp,v 1.46 2009/12/04 21:59:23 marka Exp */
 
 /*
  * Copyright (c) 1999-2000 by Nortel Networks Corporation
@@ -144,6 +144,9 @@ const FileData installFiles[] =
 	{"dig.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
 	{"host.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
 	{"nslookup.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
+	{"arpaname.exe", FileData::BinDir, FileData::Normal, FALSE, TRUE},
+	{"nsec3hash.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"genrandom.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"rndc-confgen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"ddns-confgen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"dnssec-keygen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
@@ -154,6 +157,10 @@ const FileData installFiles[] =
 	{"named-checkconf.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"named-checkzone.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"named-compilezone.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"named-journalprint.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"pkcs11-destroy.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"pkcs11-keygen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"pkcs11-list.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"readme1st.txt", FileData::BinDir, FileData::Trivial, FALSE, TRUE},
 	{NULL, -1, -1}
 };

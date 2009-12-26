@@ -1,4 +1,4 @@
-/*	$NetBSD: named-checkconf.c,v 1.1.1.2 2009/10/25 00:01:29 christos Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.1.1.3 2009/12/26 22:18:45 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: named-checkconf.c,v 1.50 2009/09/29 15:06:05 fdupont Exp */
+/* Id: named-checkconf.c,v 1.51 2009/12/04 21:09:32 marka Exp */
 
 /*! \file */
 
@@ -206,6 +206,24 @@ configure_zone(const char *vclass, const char *view,
 	if (fileobj == NULL)
 		return (ISC_R_FAILURE);
 	zfile = cfg_obj_asstring(fileobj);
+
+	obj = NULL;
+	if (get_maps(maps, "check-dup-records", &obj)) {
+		if (strcasecmp(cfg_obj_asstring(obj), "warn") == 0) {
+			zone_options |= DNS_ZONEOPT_CHECKDUPRR;
+			zone_options &= ~DNS_ZONEOPT_CHECKDUPRRFAIL;
+		} else if (strcasecmp(cfg_obj_asstring(obj), "fail") == 0) {
+			zone_options |= DNS_ZONEOPT_CHECKDUPRR;
+			zone_options |= DNS_ZONEOPT_CHECKDUPRRFAIL;
+		} else if (strcasecmp(cfg_obj_asstring(obj), "ignore") == 0) {
+			zone_options &= ~DNS_ZONEOPT_CHECKDUPRR;
+			zone_options &= ~DNS_ZONEOPT_CHECKDUPRRFAIL;
+		} else
+			INSIST(0);
+	} else {
+		zone_options |= DNS_ZONEOPT_CHECKDUPRR;
+		zone_options &= ~DNS_ZONEOPT_CHECKDUPRRFAIL;
+	}
 
 	obj = NULL;
 	if (get_maps(maps, "check-mx", &obj)) {

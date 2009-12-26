@@ -1,4 +1,4 @@
-/*	$NetBSD: dst.h,v 1.1.1.2 2009/10/25 00:02:39 christos Exp $	*/
+/*	$NetBSD: dst.h,v 1.1.1.3 2009/12/26 22:25:22 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst.h,v 1.22 2009/10/12 20:48:12 each Exp */
+/* Id: dst.h,v 1.25 2009/10/26 21:18:24 each Exp */
 
 #ifndef DST_DST_H
 #define DST_DST_H 1
@@ -58,6 +58,8 @@ typedef struct dst_context 	dst_context_t;
 #define DST_ALG_RSASHA1		5
 #define DST_ALG_NSEC3DSA	6
 #define DST_ALG_NSEC3RSASHA1	7
+#define DST_ALG_RSASHA256	8
+#define DST_ALG_RSASHA512	10
 #define DST_ALG_HMACMD5		157
 #define DST_ALG_GSSAPI		160
 #define DST_ALG_HMACSHA1	161	/* XXXMPA */
@@ -99,6 +101,28 @@ typedef struct dst_context 	dst_context_t;
 #define DST_NUM_MAXTTL		2
 #define DST_NUM_ROLLPERIOD	3
 #define DST_MAX_NUMERIC		3
+
+/*
+ * Current format version number of the private key parser.
+ *
+ * When parsing a key file with the same major number but a higher minor
+ * number, the key parser will ignore any fields it does not recognize.
+ * Thus, DST_MINOR_VERSION should be incremented whenever new
+ * fields are added to the private key file (such as new metadata).
+ *
+ * When rewriting these keys, those fields will be dropped, and the
+ * format version set back to the current one..
+ *
+ * When a key is seen with a higher major number, the key parser will
+ * reject it as invalid.  Thus, DST_MAJOR_VERSION should be incremented
+ * and DST_MINOR_VERSION set to zero whenever there is a format change
+ * which is not backward compatible to previous versions of the dst_key
+ * parser, such as change in the syntax of an existing field, the removal
+ * of a currently mandatory field, or a new field added which would
+ * alter the functioning of the key if it were absent.
+ */
+#define DST_MAJOR_VERSION	1
+#define DST_MINOR_VERSION	3
 
 /***
  *** Functions
@@ -479,6 +503,14 @@ dst_key_generate(dns_name_t *name, unsigned int alg,
 		 unsigned int flags, unsigned int protocol,
 		 dns_rdataclass_t rdclass,
 		 isc_mem_t *mctx, dst_key_t **keyp);
+
+isc_result_t
+dst_key_generate2(dns_name_t *name, unsigned int alg,
+		  unsigned int bits, unsigned int param,
+		  unsigned int flags, unsigned int protocol,
+		  dns_rdataclass_t rdclass,
+		  isc_mem_t *mctx, dst_key_t **keyp,
+		  void (*callback)(int));
 /*%<
  * Generate a DST key (or keypair) with the supplied parameters.  The
  * interpretation of the "param" field depends on the algorithm:
