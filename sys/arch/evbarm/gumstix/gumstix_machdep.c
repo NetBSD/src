@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.21 2009/12/02 13:10:09 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.22 2009/12/26 15:47:14 uebayasi Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -219,7 +219,6 @@ vm_offset_t physical_freestart;
 vm_offset_t physical_freeend;
 vm_offset_t physical_end;
 u_int free_pages;
-vm_offset_t pagetables_start;
 
 /*int debug_flags;*/
 #ifndef PMAP_STATIC_L1S

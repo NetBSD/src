@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.44 2009/11/27 03:23:07 rmind Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.45 2009/12/26 15:47:15 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.44 2009/11/27 03:23:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.45 2009/12/26 15:47:15 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -162,7 +162,6 @@ vm_offset_t physical_freestart;
 vm_offset_t physical_freeend;
 vm_offset_t physical_end;
 u_int free_pages;
-vm_offset_t pagetables_start;
 
 /*int debug_flags;*/
 #ifndef PMAP_STATIC_L1S

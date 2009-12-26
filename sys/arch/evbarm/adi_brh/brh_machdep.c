@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.34 2009/11/27 03:23:06 rmind Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.35 2009/12/26 15:47:14 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.34 2009/11/27 03:23:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.35 2009/12/26 15:47:14 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -151,7 +151,6 @@ vm_offset_t physical_freestart;
 vm_offset_t physical_freeend;
 vm_offset_t physical_end;
 u_int free_pages;
-vm_offset_t pagetables_start;
 
 /*int debug_flags;*/
 #ifndef PMAP_STATIC_L1S
