@@ -1,5 +1,5 @@
-/*	$NetBSD: gss-genr.c,v 1.1.1.1 2009/06/07 22:19:08 christos Exp $	*/
-/* $OpenBSD: gss-genr.c,v 1.19 2007/06/12 11:56:15 dtucker Exp $ */
+/*	$NetBSD: gss-genr.c,v 1.1.1.2 2009/12/27 01:06:55 christos Exp $	*/
+/* $OpenBSD: gss-genr.c,v 1.20 2009/06/22 05:39:28 dtucker Exp $ */
 
 /*
  * Copyright (c) 2001-2007 Simon Wilkinson. All rights reserved.
@@ -29,8 +29,8 @@
 
 #include <sys/param.h>
 
-#include <string.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "xmalloc.h"
 #include "buffer.h"

@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.c,v 1.1.1.1 2009/06/07 22:19:15 christos Exp $	*/
-/* $OpenBSD: readconf.c,v 1.176 2009/02/12 03:00:56 djm Exp $ */
+/*	$NetBSD: readconf.c,v 1.1.1.2 2009/12/27 01:07:02 christos Exp $	*/
+/* $OpenBSD: readconf.c,v 1.177 2009/06/27 09:35:06 andreas Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -128,7 +128,7 @@ typedef enum {
 	oServerAliveInterval, oServerAliveCountMax, oIdentitiesOnly,
 	oSendEnv, oControlPath, oControlMaster, oHashKnownHosts,
 	oTunnel, oTunnelDevice, oLocalCommand, oPermitLocalCommand,
-	oVisualHostKey, oZeroKnowledgePasswordAuthentication,
+	oVisualHostKey, oUseRoaming, oZeroKnowledgePasswordAuthentication,
 	oDeprecated, oUnsupported
 } OpCodes;
 
@@ -226,6 +226,7 @@ static struct {
 	{ "localcommand", oLocalCommand },
 	{ "permitlocalcommand", oPermitLocalCommand },
 	{ "visualhostkey", oVisualHostKey },
+	{ "useroaming", oUseRoaming },
 #ifdef JPAKE
 	{ "zeroknowledgepasswordauthentication",
 	    oZeroKnowledgePasswordAuthentication },
@@ -910,6 +911,10 @@ parse_int:
 		intptr = &options->visual_host_key;
 		goto parse_flag;
 
+	case oUseRoaming:
+		intptr = &options->use_roaming;
+		goto parse_flag;
+
 	case oDeprecated:
 		debug("%s line %d: Deprecated option \"%s\"",
 		    filename, linenum, keyword);
@@ -1059,6 +1064,7 @@ initialize_options(Options * options)
 	options->tun_remote = -1;
 	options->local_command = NULL;
 	options->permit_local_command = -1;
+	options->use_roaming = -1;
 	options->visual_host_key = -1;
 	options->zero_knowledge_password_authentication = -1;
 }
@@ -1195,6 +1201,8 @@ fill_default_options(Options * options)
 		options->tun_remote = SSH_TUNID_ANY;
 	if (options->permit_local_command == -1)
 		options->permit_local_command = 0;
+	if (options->use_roaming == -1)
+		options->use_roaming = 1;
 	if (options->visual_host_key == -1)
 		options->visual_host_key = 0;
 	if (options->zero_knowledge_password_authentication == -1)

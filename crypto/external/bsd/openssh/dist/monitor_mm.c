@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_mm.c,v 1.1.1.1 2009/06/07 22:19:12 christos Exp $	*/
-/* $OpenBSD: monitor_mm.c,v 1.15 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: monitor_mm.c,v 1.1.1.2 2009/12/27 01:06:58 christos Exp $	*/
+/* $OpenBSD: monitor_mm.c,v 1.16 2009/06/22 05:39:28 dtucker Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -31,8 +31,8 @@
 #include <sys/param.h>
 
 #include <errno.h>
-#include <string.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "xmalloc.h"
 #include "ssh.h"

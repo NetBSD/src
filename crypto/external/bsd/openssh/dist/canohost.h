@@ -1,5 +1,5 @@
-/*	$NetBSD: canohost.h,v 1.1.1.1 2009/06/07 22:19:04 christos Exp $	*/
-/* $OpenBSD: canohost.h,v 1.10 2009/02/12 03:00:56 djm Exp $ */
+/*	$NetBSD: canohost.h,v 1.1.1.2 2009/12/27 01:06:50 christos Exp $	*/
+/* $OpenBSD: canohost.h,v 1.11 2009/05/27 06:31:25 andreas Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -25,4 +25,4 @@ char		*get_local_name(int);
 int		 get_remote_port(void);
 int		 get_local_port(void);
 int		 get_sock_port(int, int);
-
+void		 clear_cached_addr(void);

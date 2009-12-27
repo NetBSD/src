@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-client.c,v 1.1.1.1 2009/06/07 22:19:20 christos Exp $	*/
-/* $OpenBSD: sftp-client.c,v 1.86 2008/06/26 06:10:09 djm Exp $ */
+/*	$NetBSD: sftp-client.c,v 1.1.1.2 2009/12/27 01:07:03 christos Exp $	*/
+/* $OpenBSD: sftp-client.c,v 1.87 2009/06/22 05:39:28 dtucker Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -32,10 +32,10 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdarg.h>
 
 #include "xmalloc.h"
 #include "buffer.h"

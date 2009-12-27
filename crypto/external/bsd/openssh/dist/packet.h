@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.h,v 1.1.1.1 2009/06/07 22:19:14 christos Exp $	*/
-/* $OpenBSD: packet.h,v 1.49 2008/07/10 18:08:11 markus Exp $ */
+/*	$NetBSD: packet.h,v 1.1.1.2 2009/12/27 01:07:01 christos Exp $	*/
+/* $OpenBSD: packet.h,v 1.52 2009/06/27 09:29:06 andreas Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -40,6 +40,7 @@ void     packet_set_authenticated(void);
 void     packet_start(u_char);
 void     packet_put_char(int ch);
 void     packet_put_int(u_int value);
+void     packet_put_int64(u_int64_t value);
 void     packet_put_bignum(BIGNUM * value);
 void     packet_put_bignum2(BIGNUM * value);
 void     packet_put_string(const void *buf, u_int len);
@@ -56,6 +57,7 @@ int      packet_read_poll_seqnr(u_int32_t *seqnr_p);
 
 u_int	 packet_get_char(void);
 u_int	 packet_get_int(void);
+u_int64_t packet_get_int64(void);
 void     packet_get_bignum(BIGNUM * value);
 void     packet_get_bignum2(BIGNUM * value);
 void	*packet_get_raw(u_int *length_ptr);
@@ -73,6 +75,7 @@ void	 packet_get_state(int, u_int32_t *, u_int64_t *, u_int32_t *, u_int64_t *);
 void	 packet_set_state(int, u_int32_t, u_int64_t, u_int32_t, u_int64_t);
 int	 packet_get_ssh1_cipher(void);
 void	 packet_set_iv(int, u_char *);
+void	*packet_get_newkeys(int);
 
 void     packet_write_poll(void);
 void     packet_write_wait(void);
@@ -88,10 +91,10 @@ void	 packet_add_padding(u_char);
 void	 tty_make_modes(int, struct termios *);
 void	 tty_parse_modes(int, int *);
 
-extern u_int max_packet_size;
-extern int keep_alive_timeouts;
+void	 packet_set_alive_timeouts(int);
+int	 packet_inc_alive_timeouts(void);
 int	 packet_set_maxsize(u_int);
-#define  packet_get_maxsize() max_packet_size
+u_int	 packet_get_maxsize(void);
 
 /* don't allow remaining bytes after the end of the message */
 #define packet_check_eom() \
@@ -106,5 +109,11 @@ do { \
 
 int	 packet_need_rekeying(void);
 void	 packet_set_rekey_limit(u_int32_t);
+
+void	 packet_backup_state(void);
+void	 packet_restore_state(void);
+
+void	*packet_get_input(void);
+void	*packet_get_output(void);
 
 #endif				/* PACKET_H */

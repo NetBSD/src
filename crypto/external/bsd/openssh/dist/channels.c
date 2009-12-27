@@ -1,5 +1,5 @@
-/*	$NetBSD: channels.c,v 1.1.1.1 2009/06/07 22:19:06 christos Exp $	*/
-/* $OpenBSD: channels.c,v 1.295 2009/02/12 03:00:56 djm Exp $ */
+/*	$NetBSD: channels.c,v 1.1.1.2 2009/12/27 01:06:52 christos Exp $	*/
+/* $OpenBSD: channels.c,v 1.296 2009/05/25 06:48:00 andreas Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -2410,7 +2410,7 @@ channel_input_status_confirm(int type, u_int32_t seq, void *ctxt)
 	int id;
 
 	/* Reset keepalive timeout */
-	keep_alive_timeouts = 0;
+	packet_set_alive_timeouts(0);
 
 	id = packet_get_int();
 	packet_check_eom();

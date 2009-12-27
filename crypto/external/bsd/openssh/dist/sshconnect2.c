@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect2.c,v 1.1.1.1 2009/06/07 22:19:28 christos Exp $	*/
-/* $OpenBSD: sshconnect2.c,v 1.170 2008/11/04 08:22:13 djm Exp $ */
+/*	$NetBSD: sshconnect2.c,v 1.1.1.2 2009/12/27 01:07:15 christos Exp $	*/
+/* $OpenBSD: sshconnect2.c,v 1.171 2009/03/05 07:18:19 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
@@ -63,6 +63,7 @@
 #include "msg.h"
 #include "pathnames.h"
 #include "uidswap.h"
+#include "schnorr.h"
 #include "jpake.h"
 
 #ifdef GSSAPI

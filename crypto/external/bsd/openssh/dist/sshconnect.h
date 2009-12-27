@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect.h,v 1.1.1.1 2009/06/07 22:19:27 christos Exp $	*/
-/* $OpenBSD: sshconnect.h,v 1.24 2007/09/04 11:15:56 djm Exp $ */
+/*	$NetBSD: sshconnect.h,v 1.1.1.2 2009/12/27 01:07:13 christos Exp $	*/
+/* $OpenBSD: sshconnect.h,v 1.25 2009/05/27 06:38:16 andreas Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -38,6 +38,8 @@ ssh_connect(const char *, struct sockaddr_storage *, u_short, int, int,
 
 void
 ssh_login(Sensitive *, const char *, struct sockaddr *, struct passwd *, int);
+
+void	 ssh_exchange_identification(int);
 
 int	 verify_host_key(char *, struct sockaddr *, Key *);
 

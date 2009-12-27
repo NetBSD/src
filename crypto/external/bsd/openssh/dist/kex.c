@@ -1,5 +1,5 @@
-/*	$NetBSD: kex.c,v 1.1.1.1 2009/06/07 22:19:09 christos Exp $	*/
-/* $OpenBSD: kex.c,v 1.80 2008/09/06 12:24:13 djm Exp $ */
+/*	$NetBSD: kex.c,v 1.1.1.2 2009/12/27 01:06:55 christos Exp $	*/
+/* $OpenBSD: kex.c,v 1.81 2009/05/27 06:34:36 andreas Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
@@ -46,8 +46,6 @@
 #include "match.h"
 #include "dispatch.h"
 #include "monitor.h"
-
-#define KEX_COOKIE_LEN	16
 
 /* prototype */
 static void kex_kexinit_finish(Kex *);

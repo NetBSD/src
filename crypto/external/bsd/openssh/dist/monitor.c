@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor.c,v 1.1.1.1 2009/06/07 22:19:12 christos Exp $	*/
-/* $OpenBSD: monitor.c,v 1.101 2009/02/12 03:26:22 djm Exp $ */
+/*	$NetBSD: monitor.c,v 1.1.1.2 2009/12/27 01:06:58 christos Exp $	*/
+/* $OpenBSD: monitor.c,v 1.104 2009/06/12 20:43:22 andreas Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -74,6 +74,7 @@
 #include "compat.h"
 #include "ssh2.h"
 #include "jpake.h"
+#include "roaming.h"
 
 #ifdef GSSAPI
 static Gssctxt *gsscontext = NULL;
@@ -86,7 +87,6 @@ extern Newkeys *current_keys[];
 extern z_stream incoming_stream;
 extern z_stream outgoing_stream;
 extern u_char session_id[];
-extern Buffer input, output;
 extern Buffer auth_debug;
 extern int auth_debug_init;
 extern Buffer loginmsg;
@@ -112,6 +112,8 @@ struct {
 	u_int ilen;
 	u_char *output;
 	u_int olen;
+	u_int64_t sent_bytes;
+	u_int64_t recv_bytes;
 } child_state;
 
 /* Functions on the monitor that answer unprivileged requests */
@@ -1351,15 +1353,20 @@ monitor_apply_keystate(struct monitor *pmonitor)
 
 	/* Network I/O buffers */
 	/* XXX inefficient for large buffers, need: buffer_init_from_string */
-	buffer_clear(&input);
-	buffer_append(&input, child_state.input, child_state.ilen);
+	buffer_clear(packet_get_input());
+	buffer_append(packet_get_input(), child_state.input, child_state.ilen);
 	memset(child_state.input, 0, child_state.ilen);
 	xfree(child_state.input);
 
-	buffer_clear(&output);
-	buffer_append(&output, child_state.output, child_state.olen);
+	buffer_clear(packet_get_output());
+	buffer_append(packet_get_output(), child_state.output,
+		      child_state.olen);
 	memset(child_state.output, 0, child_state.olen);
 	xfree(child_state.output);
+
+	/* Roaming */
+	if (compat20)
+		roam_set_bytes(child_state.sent_bytes, child_state.recv_bytes);
 }
 
 static Kex *
@@ -1474,6 +1481,12 @@ mm_get_keystate(struct monitor *pmonitor)
 	debug3("%s: Getting Network I/O buffers", __func__);
 	child_state.input = buffer_get_string(&m, &child_state.ilen);
 	child_state.output = buffer_get_string(&m, &child_state.olen);
+
+	/* Roaming */
+	if (compat20) {
+		child_state.sent_bytes = buffer_get_int64(&m);
+		child_state.recv_bytes = buffer_get_int64(&m);
+	}
 
 	buffer_free(&m);
 }
