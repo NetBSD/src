@@ -1,4 +1,4 @@
-/*	$NetBSD: roaming_common.c,v 1.1.1.1 2009/12/27 01:07:02 christos Exp $	*/
+/*	$NetBSD: roaming_common.c,v 1.2 2009/12/27 01:40:47 christos Exp $	*/
 /* $OpenBSD: roaming_common.c,v 1.5 2009/06/27 09:32:43 andreas Exp $ */
 /*
  * Copyright (c) 2004-2009 AppGate Network Security AB
@@ -15,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include "includes.h"
+__RCSID("$NetBSD: roaming_common.c,v 1.2 2009/12/27 01:40:47 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -49,7 +51,8 @@ int
 get_snd_buf_size()
 {
 	int fd = packet_get_connection_out();
-	int optval, optvallen;
+	int optval;
+	socklen_t optvallen;
 
 	optvallen = sizeof(optval);
 	if (getsockopt(fd, SOL_SOCKET, SO_SNDBUF, &optval, &optvallen) != 0)
@@ -61,7 +64,8 @@ int
 get_recv_buf_size()
 {
 	int fd = packet_get_connection_in();
-	int optval, optvallen;
+	int optval;
+	socklen_t optvallen;
 
 	optvallen = sizeof(optval);
 	if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &optval, &optvallen) != 0)

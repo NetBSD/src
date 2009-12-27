@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-agent.c,v 1.3 2009/12/17 15:55:16 agc Exp $	*/
-/* $OpenBSD: ssh-agent.c,v 1.159 2008/06/28 14:05:15 djm Exp $ */
+/*	$NetBSD: ssh-agent.c,v 1.4 2009/12/27 01:40:47 christos Exp $	*/
+/* $OpenBSD: ssh-agent.c,v 1.161 2009/03/23 19:38:04 tobias Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.3 2009/12/17 15:55:16 agc Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.4 2009/12/27 01:40:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/queue.h>
@@ -1045,6 +1045,7 @@ main(int ac, char **av)
 	pid_t pid;
 	char pidstrbuf[1 + 3 * sizeof pid];
 	struct timeval *tvp = NULL;
+	size_t len;
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
@@ -1096,8 +1097,8 @@ main(int ac, char **av)
 
 	if (ac == 0 && !c_flag && !s_flag) {
 		shell = getenv("SHELL");
-		if (shell != NULL &&
-		    strncmp(shell + strlen(shell) - 3, "csh", 3) == 0)
+		if (shell != NULL && (len = strlen(shell)) > 2 &&
+		    strncmp(shell + len - 3, "csh", 3) == 0)
 			c_flag = 1;
 	}
 	if (k_flag) {

@@ -1,5 +1,5 @@
-/*	$NetBSD: kexgexs.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
-/* $OpenBSD: kexgexs.c,v 1.11 2009/01/01 21:17:36 djm Exp $ */
+/*	$NetBSD: kexgexs.c,v 1.3 2009/12/27 01:40:47 christos Exp $	*/
+/* $OpenBSD: kexgexs.c,v 1.12 2009/06/21 07:37:15 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexs.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: kexgexs.c,v 1.3 2009/12/27 01:40:47 christos Exp $");
 #include <sys/param.h>
 
 #include <stdio.h>
@@ -179,7 +179,9 @@ kexgex_server(Kex *kex)
 	}
 
 	/* sign H */
-	PRIVSEP(key_sign(server_host_key, &signature, &slen, hash, hashlen));
+	if (PRIVSEP(key_sign(server_host_key, &signature, &slen, hash,
+	    hashlen)) < 0)
+		fatal("kexgex_server: key_sign failed");
 
 	/* destroy_sensitive_data(); */
 
