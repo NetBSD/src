@@ -558,7 +558,7 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 		i= -1;
 		break;
 		}
-	if ((i < 0) || (i > SSL_MD_NUM_IDX))
+	if ((i < 0) || (i >= SSL_MD_NUM_IDX))
 	{
 		*md=NULL; 
 		if (mac_pkey_type!=NULL) *mac_pkey_type = NID_undef;
@@ -1451,7 +1451,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	return(cipherstack);
 	}
 
-char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
+char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	{
 	int is_export,pkl,kl;
 	const char *ver,*exp_str;
