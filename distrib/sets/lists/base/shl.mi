@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.511 2009/12/27 00:53:35 christos Exp $
+# $NetBSD: shl.mi,v 1.512 2009/12/27 01:42:40 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -160,7 +160,7 @@
 ./usr/lib/libskey.so.2.0			base-sys-shlib		skey
 ./usr/lib/libsl.so.4.0				base-krb5-shlib		kerberos
 ./usr/lib/libss.so.6.0				base-krb5-shlib		kerberos
-./usr/lib/libssh.so.14.0			base-secsh-shlib	crypto
+./usr/lib/libssh.so.15.0			base-secsh-shlib	crypto
 ./usr/lib/libssl.so.8.1				base-crypto-shlib	crypto
 ./usr/lib/libstdc++.so.5.0			base-sys-shlib		gcc=3,cxx
 ./usr/lib/libstdc++.so.7.0			base-sys-shlib		gcc=4,cxx
