@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.hp700,v 1.15 2009/05/08 09:33:57 skrll Exp $
+# $NetBSD: Makefile.hp700,v 1.16 2009/12/27 14:54:24 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -43,18 +43,12 @@ LIBSPMATH=	${SPMATH_PROF}
 .endif
 
 CFLAGS+=	-mno-space-regs -mfast-indirect-calls -mportable-runtime
-APPFLAGS=	-x assembler-with-cpp -P -traditional ${CPPFLAGS} -D_LOCORE
+AFLAGS+=	-x assembler-with-cpp -P -traditional
 
 OPT_DDB=	%DDB%
 .if !empty(OPT_DDB)
 CFLAGS+=	-fno-omit-frame-pointer
 .endif
-
-# Do NOT assume the compiler does "-x funny_format" (gcc-specific)
-# This needs an intermediate file.  The original file is always
-# safe in some far away directory, so just use the base name.
-NORMAL_S=	${CPP} ${APPFLAGS} $< > $*.s ;\
-		${AS} -o $@ $*.s ; rm $*.s
 
 ##
 ## (3) libkern and compat
@@ -83,19 +77,6 @@ EXTRA_LINKFLAGS= -Map $@.map
 ## (6) port specific target dependencies
 ##
 
-# For cross-compilation, the "gcc -M" mkdep script is convenient,
-# but that does not correctly make rules from *.s files.  The
-# easiest work-around is to just list those dependencies here.
-# XXX fredette - probably very incomplete:
-locore.o:   assym.h hppa/asm.h hppa/trap.h hppa/frame.h hppa/reg.h
-locore.o:   ${HPPA}/hppa/trap.S
-locore.o:   ${HPPA}/hppa/copy.S
-locore.o:   ${HPPA}/hppa/support.S
-locore.o:   ${HPPA}/hppa/sigcode.S
-copy.o:     assym.h hppa/asm.h $S/sys/errno.h
-bcopy.o spcopy.o:    assym.h hppa/asm.h
-copypage.o: assym.h hppa/asm.h
-
 # depend on CPU configuration
 db_machdep.o machdep.o pmap.o vm_machdep.o: Makefile
 
@@ -105,7 +86,6 @@ com_gsc.o clock.o pdc.o autoconf.o machdep.o: Makefile
 ##
 ## (7) misc settings
 ##
-MKDEP_AFLAGS=	${APPFLAGS}
 
 ##
 ## (8) config(8) generated machinery
