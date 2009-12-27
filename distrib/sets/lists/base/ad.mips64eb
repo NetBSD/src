@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.6 2009/12/27 00:53:35 christos Exp $
+# $NetBSD: ad.mips64eb,v 1.7 2009/12/27 01:42:40 christos Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib		compat
@@ -187,8 +187,8 @@
 ./usr/lib/64/libsl.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libss.so.6				base-compat-shlib	compat,pic
 ./usr/lib/64/libss.so.6.0			base-compat-shlib	compat,pic
-./usr/lib/64/libssh.so.14			base-compat-shlib	compat,pic
-./usr/lib/64/libssh.so.14.0			base-compat-shlib	compat,pic
+./usr/lib/64/libssh.so.15			base-compat-shlib	compat,pic
+./usr/lib/64/libssh.so.15.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libssl.so.8			base-compat-shlib	compat,pic
 ./usr/lib/64/libssl.so.8.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libstdc++.so.6			base-compat-shlib	compat,pic,cxx
@@ -419,8 +419,8 @@
 ./usr/lib/o32/libsl.so.4.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libss.so.6			base-compat-shlib	compat,pic
 ./usr/lib/o32/libss.so.6.0			base-compat-shlib	compat,pic
-./usr/lib/o32/libssh.so.14			base-compat-shlib	compat,pic
-./usr/lib/o32/libssh.so.14.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libssh.so.15			base-compat-shlib	compat,pic
+./usr/lib/o32/libssh.so.15.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libssl.so.8			base-compat-shlib	compat,pic
 ./usr/lib/o32/libssl.so.8.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libstdc++.so.6			base-compat-shlib	compat,pic,cxx
