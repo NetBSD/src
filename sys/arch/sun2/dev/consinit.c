@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.6 2005/12/11 12:19:16 christos Exp $	*/
+/*	$NetBSD: consinit.c,v 1.7 2009/12/27 08:41:50 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matthew Fredette
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.6 2005/12/11 12:19:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.7 2009/12/27 08:41:50 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -271,7 +271,7 @@ consinit(void)
 		DBPRINT(("stdout package = %x\r\n", prom_stdout_node));
 		DBPRINT(("buffer @ %p\r\n", buffer));
 	
-		if (prom_stdin_node && prom_node_has_property(prom_stdin_node, "keyboard") {
+		if (prom_stdin_node && prom_node_has_property(prom_stdin_node, "keyboard")) {
 #if NKBD == 0		
 			printf("cninit: kdb/display not configured\n");
 #endif
