@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.51 2009/09/08 21:14:33 pooka Exp $	*/
+/*	$NetBSD: dk.c,v 1.52 2009/12/27 01:37:17 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.51 2009/09/08 21:14:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.52 2009/12/27 01:37:17 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -95,6 +95,7 @@ struct dkwedge_softc {
 static void	dkstart(struct dkwedge_softc *);
 static void	dkiodone(struct buf *);
 static void	dkrestart(void *);
+static void	dkminphys(struct buf *);
 
 static int	dklastclose(struct dkwedge_softc *);
 static int	dkwedge_detach(device_t, int);
@@ -1242,6 +1243,23 @@ dkrestart(void *v)
 }
 
 /*
+ * dkminphys:
+ *
+ *	Call parent's minphys function.
+ */
+static void
+dkminphys(struct buf *bp)
+{
+	struct dkwedge_softc *sc = dkwedge_lookup(bp->b_dev);
+	dev_t dev;
+
+	dev = bp->b_dev;
+	bp->b_dev = sc->sc_pdev;
+	(*sc->sc_parent->dk_driver->d_minphys)(bp);
+	bp->b_dev = dev;
+}
+
+/*
  * dkread:		[devsw entry point]
  *
  *	Read from a wedge.
@@ -1254,8 +1272,7 @@ dkread(dev_t dev, struct uio *uio, int flags)
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
 
-	return (physio(dkstrategy, NULL, dev, B_READ,
-		       sc->sc_parent->dk_driver->d_minphys, uio));
+	return (physio(dkstrategy, NULL, dev, B_READ, dkminphys, uio));
 }
 
 /*
@@ -1271,8 +1288,7 @@ dkwrite(dev_t dev, struct uio *uio, int flags)
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
 
-	return (physio(dkstrategy, NULL, dev, B_WRITE,
-		       sc->sc_parent->dk_driver->d_minphys, uio));
+	return (physio(dkstrategy, NULL, dev, B_WRITE, dkminphys, uio));
 }
 
 /*
