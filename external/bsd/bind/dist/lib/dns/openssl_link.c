@@ -1,4 +1,4 @@
-/*	$NetBSD: openssl_link.c,v 1.1.1.2 2009/10/25 00:02:31 christos Exp $	*/
+/*	$NetBSD: openssl_link.c,v 1.2 2009/12/27 17:27:29 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -98,7 +98,7 @@ entropy_getpseudo(unsigned char *buf, int num) {
 	return (result == ISC_R_SUCCESS ? num : -1);
 }
 
-static void
+static int
 entropy_add(const void *buf, int num, double entropy) {
 	/*
 	 * Do nothing.  The only call to this provides no useful data anyway.
@@ -106,6 +106,7 @@ entropy_add(const void *buf, int num, double entropy) {
 	UNUSED(buf);
 	UNUSED(num);
 	UNUSED(entropy);
+	return 0;
 }
 
 static void
