@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.510 2009/12/26 23:13:15 christos Exp $
+# $NetBSD: shl.mi,v 1.511 2009/12/27 00:53:35 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -15,7 +15,7 @@
 #
 ./lib/libc.so.12.171				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
-./lib/libcrypto.so.6.0				base-crypto-shlib	crypto,dynamicroot
+./lib/libcrypto.so.6.1				base-crypto-shlib	crypto,dynamicroot
 ./lib/libdevmapper.so.1.0			base-lvm-shlib		lvm,dynamicroot
 ./lib/libedit.so.3.0				base-sys-shlib		dynamicroot
 ./lib/libevent.so.3.2				base-sys-shlib		dynamicroot
@@ -64,9 +64,9 @@
 ./usr/lib/libc.so.12.171			base-sys-shlib
 ./usr/lib/libcom_err.so.6.0			base-krb5-shlib		kerberos
 ./usr/lib/libcrypt.so.1.0			base-sys-shlib
-./usr/lib/libcrypto.so.6.0			base-crypto-shlib	crypto
+./usr/lib/libcrypto.so.6.1			base-crypto-shlib	crypto
 ./usr/lib/libcurses.so.7.0			base-sys-shlib
-./usr/lib/libdes.so.8.1				base-crypto-shlib	crypto
+./usr/lib/libdes.so.8.2				base-crypto-shlib	crypto
 ./usr/lib/libdevmapper.so.1.0			base-lvm-shlib		lvm
 ./usr/lib/libdns.so.5.1				base-bind-shlib
 ./usr/lib/libdns_sd.so.0.0			base-mdns-shlib		mdns
@@ -161,7 +161,7 @@
 ./usr/lib/libsl.so.4.0				base-krb5-shlib		kerberos
 ./usr/lib/libss.so.6.0				base-krb5-shlib		kerberos
 ./usr/lib/libssh.so.14.0			base-secsh-shlib	crypto
-./usr/lib/libssl.so.8.0				base-crypto-shlib	crypto
+./usr/lib/libssl.so.8.1				base-crypto-shlib	crypto
 ./usr/lib/libstdc++.so.5.0			base-sys-shlib		gcc=3,cxx
 ./usr/lib/libstdc++.so.7.0			base-sys-shlib		gcc=4,cxx
 ./usr/lib/libtermcap.so.0.6			base-sys-shlib
