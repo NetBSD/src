@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.183 2009/12/16 14:37:26 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.184 2009/12/27 20:36:38 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.183 2009/12/16 14:37:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.184 2009/12/27 20:36:38 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -965,7 +965,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 			sc->sc_type = WM_T_82542_2_0;
 	}
 
-	/* Set device properties (mactype)*/
+	/* Set device properties (mactype) */
 	dict = device_properties(sc->sc_dev);
 	prop_dictionary_set_uint32(dict, "mactype", sc->sc_type);
 
@@ -1353,7 +1353,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 				sc->sc_flags |= WM_F_EEPROM_INVALID;
 		}
 	}
-	/* Set device properties (macflags)*/
+	/* Set device properties (macflags) */
 	prop_dictionary_set_uint32(dict, "macflags", sc->sc_flags);
 
 	if (sc->sc_flags & WM_F_EEPROM_INVALID)
@@ -4540,10 +4540,7 @@ wm_gmii_mediainit(struct wm_softc *sc)
 	/* Initialize our media structures and probe the GMII. */
 	sc->sc_mii.mii_ifp = ifp;
 
-	if (sc->sc_type == WM_T_ICH10) {
-		sc->sc_mii.mii_readreg = wm_gmii_bm_readreg;
-		sc->sc_mii.mii_writereg = wm_gmii_bm_writereg;
-	} else if (sc->sc_type >= WM_T_80003) {
+	if (sc->sc_type >= WM_T_80003) {
 		sc->sc_mii.mii_readreg = wm_gmii_i80003_readreg;
 		sc->sc_mii.mii_writereg = wm_gmii_i80003_writereg;
 	} else if (sc->sc_type >= WM_T_82544) {
@@ -4563,11 +4560,35 @@ wm_gmii_mediainit(struct wm_softc *sc)
 
 	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, MIIF_DOPAUSE);
+
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+		/* if failed, retry with *_bm_* */
+		sc->sc_mii.mii_readreg = wm_gmii_bm_readreg;
+		sc->sc_mii.mii_writereg = wm_gmii_bm_writereg;
+
+		mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+		    MII_OFFSET_ANY, MIIF_DOPAUSE);
+	}
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
-	} else
+	} else {
+		if (sc->sc_type >= WM_T_82574) {
+			struct mii_softc *child;
+
+			child = LIST_FIRST(&sc->sc_mii.mii_phys);
+			/* fix read/write functions as e1000 driver */
+			if (device_is_a(child->mii_dev, "igphy")) {
+				sc->sc_mii.mii_readreg = wm_gmii_i80003_readreg;
+				sc->sc_mii.mii_writereg = wm_gmii_i80003_writereg;
+			} else {
+				sc->sc_mii.mii_readreg = wm_gmii_bm_readreg;
+				sc->sc_mii.mii_writereg = wm_gmii_bm_writereg;
+			}
+		}
+
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+	}
 }
 
 /*
