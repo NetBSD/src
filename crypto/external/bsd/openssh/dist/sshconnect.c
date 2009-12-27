@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
-/* $OpenBSD: sshconnect.c,v 1.212 2008/10/14 18:11:33 stevesk Exp $ */
+/*	$NetBSD: sshconnect.c,v 1.3 2009/12/27 01:40:47 christos Exp $	*/
+/* $OpenBSD: sshconnect.c,v 1.214 2009/05/28 16:50:16 andreas Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.3 2009/12/27 01:40:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/wait.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: sshconnect.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
 #include "atomicio.h"
 #include "misc.h"
 #include "dns.h"
+#include "roaming.h"
 #include "version.h"
 
 char *client_version_string = NULL;
@@ -449,7 +450,7 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
  * Waits for the server identification string, and sends our own
  * identification string.
  */
-static void
+void
 ssh_exchange_identification(int timeout_ms)
 {
 	char buf[256], remote_version[256];	/* must be same size! */
@@ -488,7 +489,7 @@ ssh_exchange_identification(int timeout_ms)
 				}
 			}
 
-			len = atomicio(read, connection_in, &buf[i], 1);
+			len = roaming_atomicio(read, connection_in, &buf[i], 1);
 
 			if (len != 1 && errno == EPIPE)
 				fatal("ssh_exchange_identification: "
@@ -573,7 +574,8 @@ ssh_exchange_identification(int timeout_ms)
 	    compat20 ? PROTOCOL_MAJOR_2 : PROTOCOL_MAJOR_1,
 	    compat20 ? PROTOCOL_MINOR_2 : minor1,
 	    SSH_RELEASE, compat20 ? "\r\n" : "\n");
-	if (atomicio(vwrite, connection_out, buf, strlen(buf)) != strlen(buf))
+	if (roaming_atomicio(vwrite, connection_out, buf, strlen(buf))
+	    != strlen(buf))
 		fatal("write: %.100s", strerror(errno));
 	client_version_string = xstrdup(buf);
 	chop(client_version_string);
