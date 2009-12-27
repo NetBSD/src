@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-jpake.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
-/* $OpenBSD: auth2-jpake.c,v 1.2 2008/11/07 23:34:48 dtucker Exp $ */
+/*	$NetBSD: auth2-jpake.c,v 1.3 2009/12/27 01:40:46 christos Exp $	*/
+/* $OpenBSD: auth2-jpake.c,v 1.3 2009/03/05 07:18:19 djm Exp $ */
 /*
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
  *
@@ -56,6 +56,7 @@
 #endif
 #include "monitor_wrap.h"
 
+#include "schnorr.h"
 #include "jpake.h"
 
 /*
@@ -360,7 +361,7 @@ auth2_jpake_get_pwdata(Authctxt *authctxt, BIGNUM **s,
 }
 
 /*
- * Being authentication attempt.
+ * Begin authentication attempt.
  * Note, sets authctxt->postponed while in subprotocol
  */
 static int

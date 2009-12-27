@@ -1,5 +1,5 @@
-/*	$NetBSD: gss-genr.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
-/* $OpenBSD: gss-genr.c,v 1.19 2007/06/12 11:56:15 dtucker Exp $ */
+/*	$NetBSD: gss-genr.c,v 1.3 2009/12/27 01:40:47 christos Exp $	*/
+/* $OpenBSD: gss-genr.c,v 1.20 2009/06/22 05:39:28 dtucker Exp $ */
 
 /*
  * Copyright (c) 2001-2007 Simon Wilkinson. All rights reserved.
@@ -31,6 +31,7 @@ __RCSID("$NetBSD");
 
 #include <sys/param.h>
 
+#include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdarg.h>
