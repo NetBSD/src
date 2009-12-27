@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.30 2009/12/11 22:23:09 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.31 2009/12/27 15:24:55 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.30 2009/12/11 22:23:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.31 2009/12/27 15:24:55 tsutsui Exp $");
 
 #include <sys/param.h>
 
@@ -168,7 +168,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * table" pages depending on how large MAXKL2SIZE is.
 	 *
 	 * Portions of the last segment of KVA space (0xFFC00000 -
-	 * 0xFFFFFFFF) are mapped for a the kernel page tables.
+	 * 0xFFFFFFFF) are mapped for the kernel page tables.
 	 *
 	 * XXX cramming two levels of mapping into the single "segment"
 	 * table on the 68040 is intended as a temporary hack to get things
