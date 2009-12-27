@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs.c,v 1.8 2009/03/18 10:22:28 cegger Exp $	*/
+/*	$NetBSD: readufs.c,v 1.9 2009/12/27 13:55:13 skrll Exp $	*/
 /*	from Id: readufs.c,v 1.9 2003/12/16 13:54:11 itohy Exp	*/
 
 /*
@@ -21,7 +21,7 @@ static int ufs_read_indirect(daddr_t blk, int level, void **buf,
 
 #ifdef DEBUG_WITH_STDIO
 void ufs_list_dir(ino32_t dirino);
-int main((int argc, char *argv[]);
+int main(int argc, char *argv[]);
 #endif
 
 #ifdef DEBUG_WITH_STDIO
