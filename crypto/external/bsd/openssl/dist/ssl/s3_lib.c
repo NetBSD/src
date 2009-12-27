@@ -2211,6 +2211,7 @@ void ssl3_clear(SSL *s)
  	wlen = s->s3->wbuf.len;
 	if (s->s3->handshake_buffer) {
 		BIO_free(s->s3->handshake_buffer);
+		s->s3->handshake_buffer = NULL;
 	}
 	if (s->s3->handshake_dgst) {
 		ssl3_free_digest_list(s);
@@ -3297,8 +3298,6 @@ int ssl3_renegotiate(SSL *s)
 	if (s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)
 		return(0);
 
-	if (1)
-		return(0);
 	s->s3->renegotiate=1;
 	return(1);
 	}
