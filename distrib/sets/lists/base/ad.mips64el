@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.5 2009/12/26 23:13:15 christos Exp $
+# $NetBSD: ad.mips64el,v 1.6 2009/12/27 00:53:35 christos Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib		compat
@@ -68,11 +68,11 @@
 ./usr/lib/64/libcrypt.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libcrypt.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libcrypto.so.6			base-compat-shlib	compat,pic
-./usr/lib/64/libcrypto.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/64/libcrypto.so.6.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libcurses.so.7			base-compat-shlib	compat,pic
 ./usr/lib/64/libcurses.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libdes.so.8			base-compat-shlib	compat,pic
-./usr/lib/64/libdes.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/64/libdes.so.8.2			base-compat-shlib	compat,pic
 ./usr/lib/64/libdns.so.5			base-compat-shlib	compat,pic
 ./usr/lib/64/libdns.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libedit.so.3			base-compat-shlib	compat,pic
@@ -190,7 +190,7 @@
 ./usr/lib/64/libssh.so.14			base-compat-shlib	compat,pic
 ./usr/lib/64/libssh.so.14.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libssl.so.8			base-compat-shlib	compat,pic
-./usr/lib/64/libssl.so.8.0			base-compat-shlib	compat,pic
+./usr/lib/64/libssl.so.8.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libstdc++.so.6			base-compat-shlib	compat,pic,cxx
 ./usr/lib/64/libstdc++.so.6.0			base-compat-shlib	compat,pic,cxx
 ./usr/lib/64/libsupc++.so.0			base-compat-shlib	compat,pic,cxx
@@ -300,11 +300,11 @@
 ./usr/lib/o32/libcrypt.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libcrypt.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libcrypto.so.6			base-compat-shlib	compat,pic
-./usr/lib/o32/libcrypto.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libcrypto.so.6.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libcurses.so.7			base-compat-shlib	compat,pic
 ./usr/lib/o32/libcurses.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libdes.so.8			base-compat-shlib	compat,pic
-./usr/lib/o32/libdes.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/o32/libdes.so.8.2			base-compat-shlib	compat,pic
 ./usr/lib/o32/libdns.so.5			base-compat-shlib	compat,pic
 ./usr/lib/o32/libdns.so.5.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libedit.so.3			base-compat-shlib	compat,pic
@@ -422,7 +422,7 @@
 ./usr/lib/o32/libssh.so.14			base-compat-shlib	compat,pic
 ./usr/lib/o32/libssh.so.14.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libssl.so.8			base-compat-shlib	compat,pic
-./usr/lib/o32/libssl.so.8.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libssl.so.8.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libstdc++.so.6			base-compat-shlib	compat,pic,cxx
 ./usr/lib/o32/libstdc++.so.6.0			base-compat-shlib	compat,pic,cxx
 ./usr/lib/o32/libsupc++.so.0			base-compat-shlib	compat,pic,cxx

@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.78 2009/12/26 23:13:15 christos Exp $
+# $NetBSD: md.amd64,v 1.79 2009/12/27 00:53:35 christos Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -71,11 +71,11 @@
 ./usr/lib/i386/libcrypt.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcrypt.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcrypto.so.6			base-compat-shlib	compat,pic
-./usr/lib/i386/libcrypto.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libcrypto.so.6.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcurses.so.7			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcurses.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdes.so.8			base-compat-shlib	compat,pic
-./usr/lib/i386/libdes.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/i386/libdes.so.8.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdns.so.5			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdns.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libedit.so.3			base-compat-shlib	compat,pic
@@ -193,7 +193,7 @@
 ./usr/lib/i386/libssh.so.14			base-compat-shlib	compat,pic
 ./usr/lib/i386/libssh.so.14.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libssl.so.8			base-compat-shlib	compat,pic
-./usr/lib/i386/libssl.so.8.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libssl.so.8.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libstdc++.so.7			base-compat-shlib	compat,pic
 ./usr/lib/i386/libstdc++.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libsupc++.so.1			base-compat-shlib	obsolete
