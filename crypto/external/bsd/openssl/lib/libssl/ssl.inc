@@ -1,4 +1,4 @@
-#	$NetBSD: ssl.inc,v 1.1 2009/07/19 23:30:58 christos Exp $
+#	$NetBSD: ssl.inc,v 1.2 2009/12/27 00:48:56 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -17,7 +17,7 @@ CPPFLAGS+=	-DNO_SSL2
 
 SRCS+=	s3_meth.c   s3_srvr.c s3_clnt.c  s3_lib.c  s3_enc.c s3_pkt.c s3_both.c \
 	s23_meth.c s23_srvr.c s23_clnt.c s23_lib.c          s23_pkt.c \
-	t1_meth.c   t1_srvr.c t1_clnt.c  t1_lib.c  t1_enc.c \
+	t1_meth.c   t1_srvr.c t1_clnt.c  t1_lib.c  t1_enc.c t1_reneg.c \
 	ssl_lib.c ssl_err2.c ssl_cert.c ssl_sess.c \
 	ssl_ciph.c ssl_stat.c ssl_rsa.c \
 	ssl_asn1.c ssl_txt.c ssl_algs.c \
