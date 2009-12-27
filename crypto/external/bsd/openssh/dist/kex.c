@@ -1,5 +1,5 @@
-/*	$NetBSD: kex.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
-/* $OpenBSD: kex.c,v 1.80 2008/09/06 12:24:13 djm Exp $ */
+/*	$NetBSD: kex.c,v 1.3 2009/12/27 01:40:47 christos Exp $	*/
+/* $OpenBSD: kex.c,v 1.81 2009/05/27 06:34:36 andreas Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kex.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: kex.c,v 1.3 2009/12/27 01:40:47 christos Exp $");
 #include <sys/param.h>
 
 #include <signal.h>
@@ -49,8 +49,6 @@ __RCSID("$NetBSD: kex.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include "dispatch.h"
 #include "monitor.h"
 #include "canohost.h"
-
-#define KEX_COOKIE_LEN	16
 
 /* prototype */
 static void kex_kexinit_finish(Kex *);

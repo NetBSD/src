@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_mm.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
-/* $OpenBSD: monitor_mm.c,v 1.15 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: monitor_mm.c,v 1.3 2009/12/27 01:40:47 christos Exp $	*/
+/* $OpenBSD: monitor_mm.c,v 1.16 2009/06/22 05:39:28 dtucker Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -26,15 +26,15 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_mm.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: monitor_mm.c,v 1.3 2009/12/27 01:40:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/tree.h>
 #include <sys/param.h>
 
 #include <errno.h>
-#include <string.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "xmalloc.h"
 #include "ssh.h"

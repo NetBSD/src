@@ -1,5 +1,5 @@
-/*	$NetBSD: servconf.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
-/* $OpenBSD: servconf.c,v 1.194 2009/01/22 10:02:34 djm Exp $ */
+/*	$NetBSD: servconf.c,v 1.3 2009/12/27 01:40:47 christos Exp $	*/
+/* $OpenBSD: servconf.c,v 1.195 2009/04/14 21:10:54 jj Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: servconf.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.3 2009/12/27 01:40:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -1476,7 +1476,7 @@ parse_server_match_config(ServerOptions *options, const char *user,
 /*
  * Copy any supported values that are set.
  *
- * If the preauth flag is set, we do not bother copying the the string or
+ * If the preauth flag is set, we do not bother copying the string or
  * array values that are not used pre-authentication, because any that we
  * do use must be explictly sent in mm_getpwnamallow().
  */

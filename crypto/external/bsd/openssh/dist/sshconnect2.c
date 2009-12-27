@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect2.c,v 1.3 2009/06/09 13:32:46 stacktic Exp $	*/
-/* $OpenBSD: sshconnect2.c,v 1.170 2008/11/04 08:22:13 djm Exp $ */
+/*	$NetBSD: sshconnect2.c,v 1.4 2009/12/27 01:40:47 christos Exp $	*/
+/* $OpenBSD: sshconnect2.c,v 1.171 2009/03/05 07:18:19 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.3 2009/06/09 13:32:46 stacktic Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.4 2009/12/27 01:40:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -69,6 +69,7 @@ __RCSID("$NetBSD: sshconnect2.c,v 1.3 2009/06/09 13:32:46 stacktic Exp $");
 #include "msg.h"
 #include "pathnames.h"
 #include "uidswap.h"
+#include "schnorr.h"
 #include "jpake.h"
 
 #ifdef GSSAPI
