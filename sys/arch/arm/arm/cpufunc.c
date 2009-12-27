@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.93 2009/03/15 22:23:16 cegger Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.94 2009/12/27 05:14:56 uebayasi Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.93 2009/03/15 22:23:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.94 2009/12/27 05:14:56 uebayasi Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1426,7 +1426,11 @@ set_cpufuncs(void)
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		cpu_do_powersave = 1;			/* Enable powersave */
 		get_cachetype_cp15();
+#ifdef ARM11_CACHE_WRITE_THROUGH
+		pmap_pte_init_arm11();
+#else
 		pmap_pte_init_generic();
+#endif
 		if (arm_cache_prefer_mask)
 			uvmexp.ncolors = (arm_cache_prefer_mask >> PGSHIFT) + 1;
 

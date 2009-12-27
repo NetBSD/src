@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.93 2009/10/22 19:50:55 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.94 2009/12/27 05:14:56 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -462,6 +462,9 @@ void	pmap_pte_init_arm9(void);
 #if defined(CPU_ARM10)
 void	pmap_pte_init_arm10(void);
 #endif /* CPU_ARM10 */
+#if defined(CPU_ARM11)
+void	pmap_pte_init_arm11(void);
+#endif /* CPU_ARM11 */
 #endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0 */
 
 #if ARM_MMU_SA1 == 1

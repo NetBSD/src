@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.203 2009/11/28 11:44:45 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.204 2009/12/27 05:14:56 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.203 2009/11/28 11:44:45 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.204 2009/12/27 05:14:56 uebayasi Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -5971,7 +5971,7 @@ pmap_pte_init_arm9(void)
 	pte_l2_l_cache_mode_pt = L2_C;
 	pte_l2_s_cache_mode_pt = L2_C;
 }
-#endif /* CPU_ARM9 */
+#endif /* CPU_ARM9 && ARM9_CACHE_WRITE_THROUGH */
 #endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1 + ARM_MMU_V6) != 0 */
 
 #if defined(CPU_ARM10)
@@ -5995,6 +5995,27 @@ pmap_pte_init_arm10(void)
 
 }
 #endif /* CPU_ARM10 */
+
+#if defined(CPU_ARM11) && defined(ARM11_CACHE_WRITE_THROUGH)
+void
+pmap_pte_init_arm11(void)
+{
+
+	/*
+	 * ARM11 is compatible with generic, but we want to use
+	 * write-through caching for now.
+	 */
+	pmap_pte_init_generic();
+
+	pte_l1_s_cache_mode = L1_S_C;
+	pte_l2_l_cache_mode = L2_C;
+	pte_l2_s_cache_mode = L2_C;
+
+	pte_l1_s_cache_mode_pt = L1_S_C;
+	pte_l2_l_cache_mode_pt = L2_C;
+	pte_l2_s_cache_mode_pt = L2_C;
+}
+#endif /* CPU_ARM11 && ARM11_CACHE_WRITE_THROUGH */
 
 #if ARM_MMU_SA1 == 1
 void
