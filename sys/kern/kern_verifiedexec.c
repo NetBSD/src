@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.120 2009/12/28 02:35:20 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.121 2009/12/28 07:16:41 elad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.120 2009/12/28 02:35:20 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.121 2009/12/28 07:16:41 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -629,7 +629,8 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 			    name, NULL, REPORT_ALWAYS);
 			kmem_free(digest, vfe->ops->hash_len);
 			rw_exit(&vfe->lock);
-			rw_exit(&veriexec_op_lock);
+			if (lockstate == VERIEXEC_UNLOCKED)
+				rw_exit(&veriexec_op_lock);
 			return (error);
 		}
 
@@ -650,7 +651,8 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 		/* IPS mode: Enforce access type. */
 		if (veriexec_strict >= VERIEXEC_IPS) {
 			rw_exit(&vfe->lock);
-			rw_exit(&veriexec_op_lock);
+			if (lockstate == VERIEXEC_UNLOCKED)
+				rw_exit(&veriexec_op_lock);
 			return (EPERM);
 		}
 	}
@@ -679,7 +681,8 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 	case FINGERPRINT_NOTEVAL:
 		/* Should not happen. */
 		rw_exit(&vfe->lock);
-		rw_exit(&veriexec_op_lock);
+		if (lockstate == VERIEXEC_UNLOCKED)
+			rw_exit(&veriexec_op_lock);
 		veriexec_file_report(vfe, "Not-evaluated status "
 		    "post evaluation; inconsistency detected.", name,
 		    NULL, REPORT_ALWAYS|REPORT_PANIC);
@@ -709,7 +712,8 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 	default:
 		/* Should never happen. */
 		rw_exit(&vfe->lock);
-		rw_exit(&veriexec_op_lock);
+		if (lockstate == VERIEXEC_UNLOCKED)
+			rw_exit(&veriexec_op_lock);
 		veriexec_file_report(vfe, "Invalid status "
 		    "post evaluation.", name, NULL, REPORT_ALWAYS|REPORT_PANIC);
         }
