@@ -1,4 +1,4 @@
-/*	$NetBSD: eb7500atx_machdep.c,v 1.18 2009/11/27 03:23:03 rmind Exp $	*/
+/*	$NetBSD: eb7500atx_machdep.c,v 1.19 2009/12/28 03:22:19 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.18 2009/11/27 03:23:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.19 2009/12/28 03:22:19 uebayasi Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -761,12 +761,12 @@ initarm(void *cookie)
 #ifdef VERBOSE_INIT_ARM
 	printf("switching to new L1 page table\n");
 #endif
-	setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa);
 
 	/*
 	 * We must now clean the cache again....
 	 * Cleaning may be done by reading new data to displace any
-	 * dirty data in the cache. This will have happened in setttb()
+	 * dirty data in the cache. This will have happened in cpu_setttb()
 	 * but since we are boot strapping the addresses used for the read
 	 * may have just been remapped and thus the cache could be out
 	 * of sync. A re-clean after the switch will cure this.
