@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.33 2009/12/28 21:52:43 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.34 2009/12/28 22:15:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.33 2009/12/28 21:52:43 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.34 2009/12/28 22:15:36 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1139,7 +1139,6 @@ re_clear_lines(EditLine *el)
 			term_move_to_char(el, 0);
 			term_clear_EOL(el, el->el_term.t_size.h);
 		}
-		term_move_to_line(el, 0);
 	} else {
 		term_move_to_line(el, el->el_refresh.r_oldcv);
 					/* go to last line */
