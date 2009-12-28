@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.204 2009/12/27 05:14:56 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.205 2009/12/28 15:02:59 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.204 2009/12/27 05:14:56 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.205 2009/12/28 15:02:59 uebayasi Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -859,7 +859,7 @@ do {					\
  * => caller should not adjust pmap's wire_count
  */
 static void
-pmap_enter_pv(struct vm_page *pg, struct pv_entry *pve, pmap_t pm,
+pmap_enter_pv(struct vm_page *pg, struct pv_entry *pv, pmap_t pm,
     vaddr_t va, u_int flags)
 {
 	struct pv_entry **pvp;
@@ -867,9 +867,9 @@ pmap_enter_pv(struct vm_page *pg, struct pv_entry *pve, pmap_t pm,
 	NPDEBUG(PDB_PVDUMP,
 	    printf("pmap_enter_pv: pm %p, pg %p, flags 0x%x\n", pm, pg, flags));
 
-	pve->pv_pmap = pm;
-	pve->pv_va = va;
-	pve->pv_flags = flags;
+	pv->pv_pmap = pm;
+	pv->pv_va = va;
+	pv->pv_flags = flags;
 
 	simple_lock(&pg->mdpage.pvh_slock);	/* lock vm_page */
 	pvp = &SLIST_FIRST(&pg->mdpage.pvh_list);
@@ -886,11 +886,11 @@ pmap_enter_pv(struct vm_page *pg, struct pv_entry *pve, pmap_t pm,
 			pvp = &SLIST_NEXT(*pvp, pv_link);
 	}
 #endif
-	SLIST_NEXT(pve, pv_link) = *pvp;		/* add to ... */
-	*pvp = pve;				/* ... locked list */
+	SLIST_NEXT(pv, pv_link) = *pvp;		/* add to ... */
+	*pvp = pv;				/* ... locked list */
 	pg->mdpage.pvh_attrs |= flags & (PVF_REF | PVF_MOD);
 #ifdef PMAP_CACHE_VIPT
-	if ((pve->pv_flags & PVF_KWRITE) == PVF_KWRITE)
+	if ((pv->pv_flags & PVF_KWRITE) == PVF_KWRITE)
 		pg->mdpage.pvh_attrs |= PVF_KMOD;
 	if ((pg->mdpage.pvh_attrs & (PVF_DMOD|PVF_NC)) != PVF_NC)
 		pg->mdpage.pvh_attrs |= PVF_DIRTY;
@@ -925,7 +925,7 @@ pmap_enter_pv(struct vm_page *pg, struct pv_entry *pve, pmap_t pm,
 	PMAPCOUNT(mappings);
 	simple_unlock(&pg->mdpage.pvh_slock);	/* unlock, done! */
 
-	if (pve->pv_flags & PVF_WIRED)
+	if (pv->pv_flags & PVF_WIRED)
 		++pm->pm_stats.wired_count;
 }
 
@@ -956,42 +956,42 @@ pmap_find_pv(struct vm_page *pg, pmap_t pm, vaddr_t va)
  * => caller should hold lock on vm_page [so that attrs can be adjusted]
  * => caller should adjust ptp's wire_count and free PTP if needed
  * => caller should NOT adjust pmap's wire_count
- * => we return the removed pve
+ * => we return the removed pv
  */
 static struct pv_entry *
 pmap_remove_pv(struct vm_page *pg, pmap_t pm, vaddr_t va)
 {
-	struct pv_entry *pve, **prevptr;
+	struct pv_entry *pv, **prevptr;
 
 	NPDEBUG(PDB_PVDUMP,
 	    printf("pmap_remove_pv: pm %p, pg %p, va 0x%08lx\n", pm, pg, va));
 
 	prevptr = &SLIST_FIRST(&pg->mdpage.pvh_list); /* prev pv_entry ptr */
-	pve = *prevptr;
+	pv = *prevptr;
 
-	while (pve) {
-		if (pve->pv_pmap == pm && pve->pv_va == va) {	/* match? */
+	while (pv) {
+		if (pv->pv_pmap == pm && pv->pv_va == va) {	/* match? */
 			NPDEBUG(PDB_PVDUMP, printf("pmap_remove_pv: pm %p, pg "
-			    "%p, flags 0x%x\n", pm, pg, pve->pv_flags));
-			if (pve->pv_flags & PVF_WIRED) {
+			    "%p, flags 0x%x\n", pm, pg, pv->pv_flags));
+			if (pv->pv_flags & PVF_WIRED) {
 				--pm->pm_stats.wired_count;
 			}
-			*prevptr = SLIST_NEXT(pve, pv_link);	/* remove it! */
+			*prevptr = SLIST_NEXT(pv, pv_link);	/* remove it! */
 			if (pm == pmap_kernel()) {
 				PMAPCOUNT(kernel_unmappings);
-				if (pve->pv_flags & PVF_WRITE)
+				if (pv->pv_flags & PVF_WRITE)
 					pg->mdpage.krw_mappings--;
 				else
 					pg->mdpage.kro_mappings--;
 			} else
-			if (pve->pv_flags & PVF_WRITE)
+			if (pv->pv_flags & PVF_WRITE)
 				pg->mdpage.urw_mappings--;
 			else
 				pg->mdpage.uro_mappings--;
 
 			PMAPCOUNT(unmappings);
 #ifdef PMAP_CACHE_VIPT
-			if (!(pve->pv_flags & PVF_WRITE))
+			if (!(pv->pv_flags & PVF_WRITE))
 				break;
 			/*
 			 * If this page has had an exec mapping, then if
@@ -1010,8 +1010,8 @@ pmap_remove_pv(struct vm_page *pg, pmap_t pm, vaddr_t va)
 #endif /* PMAP_CACHE_VIPT */
 			break;
 		}
-		prevptr = &SLIST_NEXT(pve, pv_link);	/* previous pointer */
-		pve = *prevptr;				/* advance */
+		prevptr = &SLIST_NEXT(pv, pv_link);	/* previous pointer */
+		pv = *prevptr;				/* advance */
 	}
 
 #ifdef PMAP_CACHE_VIPT
@@ -1033,7 +1033,7 @@ pmap_remove_pv(struct vm_page *pg, pmap_t pm, vaddr_t va)
 	KASSERT((pg->mdpage.pvh_attrs & PVF_DMOD) == 0 || (pg->mdpage.pvh_attrs & (PVF_DIRTY|PVF_NC)));
 #endif /* PMAP_CACHE_VIPT */
 
-	return(pve);				/* return removed pve */
+	return(pv);				/* return removed pv */
 }
 
 /*
@@ -2756,7 +2756,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	struct l2_bucket *l2b;
 	struct vm_page *pg, *opg;
-	struct pv_entry *pve;
+	struct pv_entry *pv;
 	pt_entry_t *ptep, npte, opte;
 	u_int nflags;
 	u_int oflags;
@@ -2888,10 +2888,10 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				 * must remove it from the PV list
 				 */
 				simple_lock(&opg->mdpage.pvh_slock);
-				pve = pmap_remove_pv(opg, pm, va);
+				pv = pmap_remove_pv(opg, pm, va);
 				pmap_vac_me_harder(opg, pm, 0);
 				simple_unlock(&opg->mdpage.pvh_slock);
-				oflags = pve->pv_flags;
+				oflags = pv->pv_flags;
 
 #ifdef PMAP_CACHE_VIVT
 				/*
@@ -2914,7 +2914,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				}
 #endif
 			} else
-			if ((pve = pool_get(&pmap_pv_pool, PR_NOWAIT)) == NULL){
+			if ((pv = pool_get(&pmap_pv_pool, PR_NOWAIT)) == NULL){
 				if ((flags & PMAP_CANFAIL) == 0)
 					panic("pmap_enter: no pv entries");
 
@@ -2927,7 +2927,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				return (ENOMEM);
 			}
 
-			pmap_enter_pv(pg, pve, pm, va, nflags);
+			pmap_enter_pv(pg, pv, pm, va, nflags);
 		}
 	} else {
 		/*
@@ -2951,10 +2951,10 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			 * at this address.
 			 */
 			simple_lock(&opg->mdpage.pvh_slock);
-			pve = pmap_remove_pv(opg, pm, va);
+			pv = pmap_remove_pv(opg, pm, va);
 			pmap_vac_me_harder(opg, pm, 0);
 			simple_unlock(&opg->mdpage.pvh_slock);
-			oflags = pve->pv_flags;
+			oflags = pv->pv_flags;
 
 #ifdef PMAP_CACHE_VIVT
 			if ((oflags & PVF_NC) == 0 && l2pte_valid(opte)) {
@@ -2967,7 +2967,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 					    true, (oflags & PVF_WRITE) == 0);
 			}
 #endif
-			pool_put(&pmap_pv_pool, pve);
+			pool_put(&pmap_pv_pool, pv);
 		}
 	}
 
@@ -3143,19 +3143,19 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 			 * number of sequential pages in one go.
 			 */
 			if ((pg = PHYS_TO_VM_PAGE(pa)) != NULL) {
-				struct pv_entry *pve;
+				struct pv_entry *pv;
 				simple_lock(&pg->mdpage.pvh_slock);
-				pve = pmap_remove_pv(pg, pm, sva);
+				pv = pmap_remove_pv(pg, pm, sva);
 				pmap_vac_me_harder(pg, pm, 0);
 				simple_unlock(&pg->mdpage.pvh_slock);
-				if (pve != NULL) {
+				if (pv != NULL) {
 					if (pm->pm_remove_all == false) {
 						is_exec =
-						   PV_BEEN_EXECD(pve->pv_flags);
+						   PV_BEEN_EXECD(pv->pv_flags);
 						is_refd =
-						   PV_BEEN_REFD(pve->pv_flags);
+						   PV_BEEN_REFD(pv->pv_flags);
 					}
-					pool_put(&pmap_pv_pool, pve);
+					pool_put(&pmap_pv_pool, pv);
 				}
 			}
 			mappings++;
