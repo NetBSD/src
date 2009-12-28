@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.205 2009/12/28 15:02:59 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.206 2009/12/28 15:13:57 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.205 2009/12/28 15:02:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.206 2009/12/28 15:13:57 uebayasi Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -902,11 +902,12 @@ pmap_enter_pv(struct vm_page *pg, struct pv_entry *pv, pmap_t pm,
 			pg->mdpage.krw_mappings++;
 		else
 			pg->mdpage.kro_mappings++;
-	} else
-	if (flags & PVF_WRITE)
-		pg->mdpage.urw_mappings++;
-	else
-		pg->mdpage.uro_mappings++;
+	} else {
+		if (flags & PVF_WRITE)
+			pg->mdpage.urw_mappings++;
+		else
+			pg->mdpage.uro_mappings++;
+	}
 
 #ifdef PMAP_CACHE_VIPT
 	/*
@@ -983,11 +984,12 @@ pmap_remove_pv(struct vm_page *pg, pmap_t pm, vaddr_t va)
 					pg->mdpage.krw_mappings--;
 				else
 					pg->mdpage.kro_mappings--;
-			} else
-			if (pv->pv_flags & PVF_WRITE)
-				pg->mdpage.urw_mappings--;
-			else
-				pg->mdpage.uro_mappings--;
+			} else {
+				if (pv->pv_flags & PVF_WRITE)
+					pg->mdpage.urw_mappings--;
+				else
+					pg->mdpage.uro_mappings--;
+			}
 
 			PMAPCOUNT(unmappings);
 #ifdef PMAP_CACHE_VIPT
@@ -1096,13 +1098,14 @@ pmap_modify_pv(struct vm_page *pg, pmap_t pm, vaddr_t va,
 				pg->mdpage.kro_mappings++;
 				pg->mdpage.krw_mappings--;
 			}
-		} else
-		if (flags & PVF_WRITE) {
-			pg->mdpage.urw_mappings++;
-			pg->mdpage.uro_mappings--;
 		} else {
-			pg->mdpage.uro_mappings++;
-			pg->mdpage.urw_mappings--;
+			if (flags & PVF_WRITE) {
+				pg->mdpage.urw_mappings++;
+				pg->mdpage.uro_mappings--;
+			} else {
+				pg->mdpage.uro_mappings++;
+				pg->mdpage.urw_mappings--;
+			}
 		}
 	}
 #ifdef PMAP_CACHE_VIPT
