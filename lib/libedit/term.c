@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.55 2009/08/31 00:05:43 christos Exp $	*/
+/*	$NetBSD: term.c,v 1.56 2009/12/28 21:54:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.55 2009/08/31 00:05:43 christos Exp $");
+__RCSID("$NetBSD: term.c,v 1.56 2009/12/28 21:54:21 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -627,15 +627,15 @@ mc_again:
 					/* if I can do tabs, use them */
 				if (EL_CAN_TAB) {
 					if ((el->el_cursor.h & 0370) !=
-					    (where & 0370)) {
+					    (where & ~0x7)) {
 						/* if not within tab stop */
 						for (i =
 						    (el->el_cursor.h & 0370);
-						    i < (where & 0370);
+						    i < (where & ~0x7);
 						    i += 8)
 							term__putc(el, '\t');	
 							/* then tab over */
-						el->el_cursor.h = where & 0370;
+						el->el_cursor.h = where & ~0x7;
 					}
 				}
 				/*
@@ -646,8 +646,8 @@ mc_again:
 				 * NOTE THAT term_overwrite() WILL CHANGE
 				 * el->el_cursor.h!!!
 				 */
-				term_overwrite(el,
-				    &el->el_display[el->el_cursor.v][el->el_cursor.h],
+				term_overwrite(el, &el->el_display[
+				    el->el_cursor.v][el->el_cursor.h],
 				    (size_t)(where - el->el_cursor.h));
 
 			}
@@ -711,9 +711,10 @@ term_overwrite(EditLine *el, const char *cp, size_t n)
 				if ((c = el->el_display[el->el_cursor.v][el->el_cursor.h])
 				    != '\0')
 					term_overwrite(el, &c, 1);
-				else
+				else {
 					term__putc(el, ' ');
-				el->el_cursor.h = 1;
+					el->el_cursor.h = 1;
+				}
 			}
 		} else		/* no wrap, but cursor stays on screen */
 			el->el_cursor.h = el->el_term.t_size.h - 1;
