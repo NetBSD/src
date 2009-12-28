@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.119 2009/12/25 22:57:54 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.120 2009/12/28 02:35:20 elad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.119 2009/12/25 22:57:54 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.120 2009/12/28 02:35:20 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1168,6 +1168,8 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 
 	vfe = kmem_zalloc(sizeof(*vfe), KM_SLEEP);
 
+	rw_init(&vfe->lock);
+
 	/* Lookup fingerprint hashing algorithm. */
 	fp_type = prop_string_cstring_nocopy(prop_dictionary_get(dict,
 	    "fp-type"));
@@ -1256,7 +1258,6 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	vfe->page_fp_status = PAGE_FP_NONE;
 	vfe->npages = 0;
 	vfe->last_page_size = 0;
-	rw_init(&vfe->lock);
 
 	vte = veriexec_table_lookup(vp->v_mount);
 	if (vte == NULL)
