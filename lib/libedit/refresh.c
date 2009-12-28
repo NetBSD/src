@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.32 2009/07/17 12:28:27 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.33 2009/12/28 21:52:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.32 2009/07/17 12:28:27 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.33 2009/12/28 21:52:43 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1133,10 +1133,10 @@ re_clear_lines(EditLine *el)
 
 	if (EL_CAN_CEOL) {
 		int i;
-		term_move_to_char(el, 0);
-		for (i = 0; i <= el->el_refresh.r_oldcv; i++) {
+		for (i = el->el_refresh.r_oldcv; i >= 0; i--) {
 			/* for each line on the screen */
 			term_move_to_line(el, i);
+			term_move_to_char(el, 0);
 			term_clear_EOL(el, el->el_term.t_size.h);
 		}
 		term_move_to_line(el, 0);
