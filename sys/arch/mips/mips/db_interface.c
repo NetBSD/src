@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64.16.10 2009/11/17 07:34:37 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.64.16.11 2009/12/28 22:56:46 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.10 2009/11/17 07:34:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.11 2009/12/28 22:56:46 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -68,7 +68,7 @@ label_t		kdbaux; /* XXX struct switchframe: better inside curpcb? XXX */
 void db_tlbdump_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_kvtophys_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_cp0dump_cmd(db_expr_t, bool, db_expr_t, const char *);
-#ifdef MIPS64
+#ifdef MIPS64_XLS
 void db_mfcr_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_mtcr_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
@@ -617,7 +617,7 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	}
 }
 
-#ifdef MIPS64
+#ifdef MIPS64_XLS
 void
 db_mfcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		const char *modif)
@@ -675,7 +675,7 @@ db_mtcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 	db_printf("control reg 0x%lx = 0x%lx\n", addr, value);
 }
-#endif /* MIPS64 */
+#endif /* MIPS64_XLS */
 
 const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("cp0",	db_cp0dump_cmd,		0,
@@ -688,7 +688,7 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("tlb",	db_tlbdump_cmd,		0,
 		"Print out TLB entries. (only works with options DEBUG)",
 		NULL, NULL) },
-#ifdef MIPS64
+#ifdef MIPS64_XLS
 	{ DDB_ADD_CMD("mfcr", 	db_mfcr_cmd,		CS_NOREPEAT,
 		"Dump processor control register",
 		NULL, NULL) },
