@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.20 2009/12/26 16:01:24 uebayasi Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.21 2009/12/28 03:22:20 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -494,7 +494,7 @@ initarm(void *arg)
 	 * RedBoot's first level page table is at 0xa0004000.  There
 	 * are also 2 second-level tables at 0xa0008000 and
 	 * 0xa0008400.  We will continue to use them until we switch to
-	 * our pagetable by setttb().
+	 * our pagetable by cpu_setttb().
 	 */
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);

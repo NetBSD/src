@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.73 2009/11/27 03:23:11 rmind Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.74 2009/12/28 03:22:20 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.73 2009/11/27 03:23:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.74 2009/12/28 03:22:20 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -695,7 +695,7 @@ initarm(void *arg)
 #endif
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa);
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
 	/*
