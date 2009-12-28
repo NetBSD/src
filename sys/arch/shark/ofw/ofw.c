@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.52 2009/11/27 03:23:13 rmind Exp $	*/
+/*	$NetBSD: ofw.c,v 1.53 2009/12/28 03:22:20 uebayasi Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.52 2009/11/27 03:23:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.53 2009/12/28 03:22:20 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -746,7 +746,7 @@ ofw_configisadma(paddr_t *pdma)
  *  and poking them into the new page tables.  We then notify OFW
  *  that we are assuming control of memory-management by installing
  *  our callback-handler, and switch to the NetBSD-managed page
- *  tables with the setttb() call.
+ *  tables with the cpu_setttb() call.
  *  
  *  This scheme may cause some amount of memory to be wasted within
  *  OFW as dead page tables, but it shouldn't be more than about 
@@ -780,7 +780,7 @@ ofw_configmem(void)
 
 	/* Switch to the proc0 pagetables. */
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
