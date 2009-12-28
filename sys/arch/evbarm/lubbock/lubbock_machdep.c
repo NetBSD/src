@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.24 2009/12/26 16:01:24 uebayasi Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.25 2009/12/28 03:22:20 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.24 2009/12/26 16:01:24 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.25 2009/12/28 03:22:20 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -516,7 +516,7 @@ initarm(void *arg)
 	 * RedBoot's first level page table is at 0xa0004000.  There
 	 * are also 2 second-level tables at 0xa0008000 and
 	 * 0xa0008400.  We will continue to use them until we switch to
-	 * our pagetable by setttb().
+	 * our pagetable by cpu_setttb().
 	 *
 	 */
 

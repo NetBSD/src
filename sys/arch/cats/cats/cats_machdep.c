@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.68 2009/11/27 03:23:05 rmind Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.69 2009/12/28 03:22:19 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.68 2009/11/27 03:23:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.69 2009/12/28 03:22:19 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -695,7 +695,7 @@ initarm(void *arm_bootargs)
 	 */
 #ifdef VERBOSE_INIT_ARM
 	/* checking sttb address */
-	printf("setttb address = %p\n", cpufuncs.cf_setttb);
+	printf("cpu_setttb address = %p\n", cpu_setttb);
 
 	printf("kernel_l1pt=0x%08x old = 0x%08x, phys = 0x%08x\n",
 			((uint*)kernel_l1pt.pv_va)[0xf00],
@@ -732,7 +732,7 @@ initarm(void *arm_bootargs)
 	fcomcndetach();
 #endif
 	
-	setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 	/*
