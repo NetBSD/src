@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_align.c,v 1.3 2009/12/19 07:54:32 thorpej Exp $	*/
+/*	$NetBSD: libelf_align.c,v 1.4 2009/12/29 17:05:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -28,7 +28,6 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf_align.c,v 1.3.2.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: libelf_align.c,v 1.3 2009/12/19 07:54:32 thorpej Exp $");
 
 #include <sys/types.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_convert.m4,v 1.7 2009/12/19 08:47:46 thorpej Exp $	*/
+/*	$NetBSD: libelf_convert.m4,v 1.8 2009/12/29 17:05:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006,2007 Joseph Koshy
@@ -28,7 +28,6 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf_convert.m4,v 1.4.2.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: libelf_convert.m4,v 1.7 2009/12/19 08:47:46 thorpej Exp $");
 
 #include <sys/types.h>
 
