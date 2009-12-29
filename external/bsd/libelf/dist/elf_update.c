@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_update.c,v 1.2 2009/12/19 05:55:37 thorpej Exp $	*/
+/*	$NetBSD: elf_update.c,v 1.3 2009/12/29 17:05:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008 Joseph Koshy
@@ -28,7 +28,6 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/elf_update.c,v 1.5.2.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: elf_update.c,v 1.2 2009/12/19 05:55:37 thorpej Exp $");
 
 #include <sys/mman.h>
 #include <sys/param.h>

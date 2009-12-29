@@ -1,4 +1,4 @@
-/*	$NetBSD: gelf_dyn.c,v 1.2 2009/12/19 06:39:29 thorpej Exp $	*/
+/*	$NetBSD: gelf_dyn.c,v 1.3 2009/12/29 17:05:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -28,7 +28,6 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/gelf_dyn.c,v 1.1.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: gelf_dyn.c,v 1.2 2009/12/19 06:39:29 thorpej Exp $");
 
 #include <assert.h>
 #include <limits.h>
