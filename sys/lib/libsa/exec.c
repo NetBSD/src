@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.27 2009/08/16 13:26:16 matt Exp $	*/
+/*	$NetBSD: exec.c,v 1.28 2009/12/29 20:21:46 elad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -29,13 +29,9 @@
  * SUCH DAMAGE.
  */
 
-#ifdef _KERNEL_OPT
-#include "opt_insecure.h"
-#endif
-
 #include <sys/param.h>
 #include <sys/reboot.h>
-#ifndef INSECURE
+#ifndef SA_EXEC_ANYOWNER
 #include <sys/stat.h>
 #endif
 #include <sys/exec_aout.h>
@@ -50,7 +46,7 @@
 void
 exec(char *path, char *loadaddr, int howto)
 {
-#ifndef INSECURE
+#ifndef SA_EXEC_ANYOWNER
 	struct stat sb;
 #endif
 	struct exec x;
@@ -61,7 +57,7 @@ exec(char *path, char *loadaddr, int howto)
 	if (io < 0)
 		return;
 
-#ifndef INSECURE
+#ifndef SA_EXEC_ANYOWNER
 	(void) fstat(io, &sb);
 	if (sb.st_uid || (sb.st_mode & 2)) {
 		printf("non-secure file, will not load\n");
