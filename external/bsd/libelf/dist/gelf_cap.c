@@ -1,4 +1,4 @@
-/*	$NetBSD: gelf_cap.c,v 1.1.1.1 2009/12/19 05:43:40 thorpej Exp $	*/
+/*	$NetBSD: gelf_cap.c,v 1.1.1.2 2009/12/29 16:58:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -28,7 +28,6 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/gelf_cap.c,v 1.2.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
-__RCSID("$NetBSD: gelf_cap.c,v 1.1.1.1 2009/12/19 05:43:40 thorpej Exp $");
 
 #include <sys/limits.h>
 
