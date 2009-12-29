@@ -1,5 +1,5 @@
 
-/*        $NetBSD: dm_ioctl.c,v 1.17 2009/12/06 14:33:46 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.18 2009/12/29 23:37:48 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -237,6 +237,7 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	dmv->dev_type = 0;
 	
 	mutex_init(&dmv->dev_mtx, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&dmv->diskp_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&dmv->dev_cv, "dm_dev");
 
 	dm_table_head_init(&dmv->table_head);
