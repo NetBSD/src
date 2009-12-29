@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.184 2009/12/27 20:36:38 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.185 2009/12/29 16:01:21 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.184 2009/12/27 20:36:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.185 2009/12/29 16:01:21 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -530,6 +530,7 @@ static void	wm_gmii_mediastatus(struct ifnet *, struct ifmediareq *);
 static int	wm_kmrn_readreg(struct wm_softc *, int);
 static void	wm_kmrn_writereg(struct wm_softc *, int, int);
 
+static void	wm_set_spiaddrsize(struct wm_softc *);
 static int	wm_match(device_t, cfdata_t, void *);
 static void	wm_attach(device_t, device_t, void *);
 static int	wm_is_onboard_nvm_eeprom(struct wm_softc *);
@@ -547,21 +548,18 @@ static int32_t	wm_ich8_cycle_init(struct wm_softc *);
 static int32_t	wm_ich8_flash_cycle(struct wm_softc *, uint32_t);
 static int32_t	wm_read_ich8_data(struct wm_softc *, uint32_t,
 		     uint32_t, uint16_t *);
-static int32_t	wm_read_ich8_byte(struct wm_softc *sc, uint32_t, uint8_t *);
-static int32_t	wm_read_ich8_word(struct wm_softc *sc, uint32_t, uint16_t *);
+static int32_t	wm_read_ich8_byte(struct wm_softc *, uint32_t, uint8_t *);
+static int32_t	wm_read_ich8_word(struct wm_softc *, uint32_t, uint16_t *);
 static void	wm_82547_txfifo_stall(void *);
 static int	wm_check_mng_mode(struct wm_softc *);
 static int	wm_check_mng_mode_ich8lan(struct wm_softc *);
-#if 0
 static int	wm_check_mng_mode_82574(struct wm_softc *);
-#endif
 static int	wm_check_mng_mode_generic(struct wm_softc *);
 static void	wm_get_hw_control(struct wm_softc *);
 static int	wm_check_for_link(struct wm_softc *);
 
 CFATTACH_DECL_NEW(wm, sizeof(struct wm_softc),
     wm_match, wm_attach, NULL, NULL);
-
 
 /*
  * Devices supported by this driver.
@@ -772,6 +770,10 @@ static const struct wm_product {
 	  "Intel i82574L",
 	  WM_T_82574,		WMP_F_1000T },
 
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82583V,
+	  "Intel i82583V",
+	  WM_T_82583,		WMP_F_1000T },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80K3LAN_CPR_DPT,
 	  "i80003 dual 1000baseT Ethernet",
 	  WM_T_80003,		WMP_F_1000T },
@@ -882,6 +884,16 @@ wm_set_dma_addr(volatile wiseman_addr_t *wa, bus_addr_t v)
 		wa->wa_high = htole32((uint64_t) v >> 32);
 	else
 		wa->wa_high = 0;
+}
+
+static void
+wm_set_spiaddrsize(struct wm_softc *sc)
+{
+	uint32_t reg;
+
+	sc->sc_flags |= WM_F_EEPROM_SPI;
+	reg = CSR_READ(sc, WMREG_EECD);
+	sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 16 : 8;
 }
 
 static const struct wm_product *
@@ -1214,7 +1226,6 @@ wm_attach(device_t parent, device_t self, void *aux)
 		goto fail_3;
 	}
 
-
 	/*
 	 * Create the transmit buffer DMA maps.
 	 */
@@ -1261,6 +1272,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82572:
 	case WM_T_82573:
 	case WM_T_82574:
+	case WM_T_82583:
 	case WM_T_80003:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
@@ -1275,10 +1287,75 @@ wm_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Get some information about the EEPROM.
 	 */
-	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
-	    || (sc->sc_type == WM_T_ICH10)) {
-		uint32_t flash_size;
-		sc->sc_flags |= WM_F_SWFWHW_SYNC | WM_F_EEPROM_FLASH;
+	switch (sc->sc_type) {
+	case WM_T_82542_2_0:
+	case WM_T_82542_2_1:
+	case WM_T_82543:
+	case WM_T_82544:
+		/* Microwire */
+		sc->sc_ee_addrbits = 6;
+		break;
+	case WM_T_82540:
+	case WM_T_82545:
+	case WM_T_82545_3:
+	case WM_T_82546:
+	case WM_T_82546_3:
+		/* Microwire */
+		reg = CSR_READ(sc, WMREG_EECD);
+		if (reg & EECD_EE_SIZE)
+			sc->sc_ee_addrbits = 8;
+		else
+			sc->sc_ee_addrbits = 6;
+		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
+		break;
+	case WM_T_82541:
+	case WM_T_82541_2:
+	case WM_T_82547:
+	case WM_T_82547_2:
+		reg = CSR_READ(sc, WMREG_EECD);
+		if (reg & EECD_EE_TYPE) {
+			/* SPI */
+			wm_set_spiaddrsize(sc);
+		} else
+			/* Microwire */
+			sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 8 : 6;
+		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
+		break;
+	case WM_T_82571:
+	case WM_T_82572:
+		/* SPI */
+		wm_set_spiaddrsize(sc);
+		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
+		break;
+	case WM_T_82573:
+	case WM_T_82574:
+	case WM_T_82583:
+		if (wm_is_onboard_nvm_eeprom(sc) == 0)
+			sc->sc_flags |= WM_F_EEPROM_FLASH;
+		else {
+			/* SPI */
+			wm_set_spiaddrsize(sc);
+		}
+		sc->sc_flags |= WM_F_EEPROM_EERDEEWR;
+		break;
+	case WM_T_80003:
+		/* SPI */
+		wm_set_spiaddrsize(sc);
+		sc->sc_flags |= WM_F_EEPROM_EERDEEWR | WM_F_SWFW_SYNC;
+		break;
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+		/* Check whether EEPROM is present or not */
+		if ((CSR_READ(sc, WMREG_EECD) & EECD_EE_PRES) == 0) {
+			/* Not found */
+			aprint_error_dev(sc->sc_dev,
+			    "EEPROM PRESENT bit isn't set\n");
+			sc->sc_flags |= WM_F_EEPROM_INVALID;
+		}
+		/* FALLTHROUGH */
+	case WM_T_ICH10:
+		/* FLASH */
+		sc->sc_flags |= WM_F_EEPROM_FLASH | WM_F_SWFWHW_SYNC;
 		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, WM_ICH8_FLASH);
 		if (pci_mapreg_map(pa, WM_ICH8_FLASH, memtype, 0,
 		    &sc->sc_flasht, &sc->sc_flashh, NULL, NULL)) {
@@ -1286,47 +1363,18 @@ wm_attach(device_t parent, device_t self, void *aux)
 			    "can't map FLASH registers\n");
 			return;
 		}
-		flash_size = ICH8_FLASH_READ32(sc, ICH_FLASH_GFPREG);
-		sc->sc_ich8_flash_base = (flash_size & ICH_GFPREG_BASE_MASK) *
+		reg = ICH8_FLASH_READ32(sc, ICH_FLASH_GFPREG);
+		sc->sc_ich8_flash_base = (reg & ICH_GFPREG_BASE_MASK) *
 						ICH_FLASH_SECTOR_SIZE;
 		sc->sc_ich8_flash_bank_size = 
-			((flash_size >> 16) & ICH_GFPREG_BASE_MASK) + 1;
+			((reg >> 16) & ICH_GFPREG_BASE_MASK) + 1;
 		sc->sc_ich8_flash_bank_size -=
-			(flash_size & ICH_GFPREG_BASE_MASK);
+			(reg & ICH_GFPREG_BASE_MASK);
 		sc->sc_ich8_flash_bank_size *= ICH_FLASH_SECTOR_SIZE;
 		sc->sc_ich8_flash_bank_size /= 2 * sizeof(uint16_t);
-	} else if (sc->sc_type == WM_T_80003)
-		sc->sc_flags |= WM_F_EEPROM_EERDEEWR |  WM_F_SWFW_SYNC;
-	else if (sc->sc_type == WM_T_82573)
-		sc->sc_flags |= WM_F_EEPROM_EERDEEWR;
-	else if (sc->sc_type == WM_T_82574)
-		sc->sc_flags |= WM_F_EEPROM_EERDEEWR;
-	else if (sc->sc_type > WM_T_82544)
-		sc->sc_flags |= WM_F_EEPROM_HANDSHAKE;
-
-	if (sc->sc_type <= WM_T_82544)
-		sc->sc_ee_addrbits = 6;
-	else if (sc->sc_type <= WM_T_82546_3) {
-		reg = CSR_READ(sc, WMREG_EECD);
-		if (reg & EECD_EE_SIZE)
-			sc->sc_ee_addrbits = 8;
-		else
-			sc->sc_ee_addrbits = 6;
-	} else if (sc->sc_type <= WM_T_82547_2) {
-		reg = CSR_READ(sc, WMREG_EECD);
-		if (reg & EECD_EE_TYPE) {
-			sc->sc_flags |= WM_F_EEPROM_SPI;
-			sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 16 : 8;
-		} else
-			sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 8 : 6;
-	} else if ((sc->sc_type == WM_T_82573 || sc->sc_type == WM_T_82574) &&
-	    (wm_is_onboard_nvm_eeprom(sc) == 0)) {
-		sc->sc_flags |= WM_F_EEPROM_FLASH;
-	} else {
-		/* Assume everything else is SPI. */
-		reg = CSR_READ(sc, WMREG_EECD);
-		sc->sc_flags |= WM_F_EEPROM_SPI;
-		sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 16 : 8;
+		break;
+	default:
+		break;
 	}
 
 	/*
@@ -1334,25 +1382,19 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 * This allows the EEPROM type to be printed correctly in the case
 	 * that no EEPROM is attached.
 	 */
-
-	/* Check whether EEPROM is present or not */
-	if ((CSR_READ(sc, WMREG_EECD) & EECD_EE_PRES) == 0) {
-		/* Not found */
-		sc->sc_flags |= WM_F_EEPROM_INVALID;
-	} else {
+	/*
+	 * Validate the EEPROM checksum. If the checksum fails, flag
+	 * this for later, so we can fail future reads from the EEPROM.
+	 */
+	if (wm_validate_eeprom_checksum(sc)) {
 		/*
-		 * Validate the EEPROM checksum. If the checksum fails, flag
-		 * this for later, so we can fail future reads from the EEPROM.
+		 * Read twice again because some PCI-e parts fail the
+		 * first check due to the link being in sleep state.
 		 */
-		if (wm_validate_eeprom_checksum(sc)) {
-			/*
-			 * Read twice again because some PCI-e parts fail the
-			 * first check due to the link being in sleep state.
-			 */
-			if (wm_validate_eeprom_checksum(sc))
-				sc->sc_flags |= WM_F_EEPROM_INVALID;
-		}
+		if (wm_validate_eeprom_checksum(sc))
+			sc->sc_flags |= WM_F_EEPROM_INVALID;
 	}
+
 	/* Set device properties (macflags) */
 	prop_dictionary_set_uint32(dict, "macflags", sc->sc_flags);
 
@@ -1505,7 +1547,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (sc->sc_type == WM_T_ICH8 || sc->sc_type == WM_T_ICH9
 	    || sc->sc_type == WM_T_ICH10 || sc->sc_type == WM_T_82573
-	    || sc->sc_type == WM_T_82574) {
+	    || sc->sc_type == WM_T_82574 || sc->sc_type == WM_T_82583) {
 		/* STATUS_TBIMODE reserved/reused, can't rely on it */
 		wm_gmii_mediainit(sc);
 	} else if (sc->sc_type < WM_T_82543 ||
@@ -1535,7 +1577,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if (sc->sc_type != WM_T_82573 && sc->sc_type != WM_T_82574 &&
-	    sc->sc_type != WM_T_ICH8)
+	    sc->sc_type != WM_T_82583 && sc->sc_type != WM_T_ICH8)
 		sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 
 	/*
@@ -2928,7 +2970,6 @@ wm_tick(void *arg)
 	ifp->if_collisions += CSR_READ(sc, WMREG_COLC);
 	ifp->if_ierrors += CSR_READ(sc, WMREG_RXERRC);
 
-
 	if (sc->sc_flags & WM_F_HAS_MII)
 		mii_tick(&sc->sc_mii);
 	else
@@ -2971,8 +3012,11 @@ wm_reset(struct wm_softc *sc)
 		sc->sc_pba = PBA_32K;
 		break;
 	case WM_T_82573:
-	case WM_T_82574:
 		sc->sc_pba = PBA_12K;
+		break;
+	case WM_T_82574:
+	case WM_T_82583:
+		sc->sc_pba = PBA_20K;
 		break;
 	case WM_T_ICH8:
 		sc->sc_pba = PBA_8K;
@@ -2995,7 +3039,7 @@ wm_reset(struct wm_softc *sc)
 		sc->sc_ctrl |= CTRL_GIO_M_DIS;
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 
-		while (timeout) {
+		while (timeout--) {
 			if ((CSR_READ(sc, WMREG_STATUS) & STATUS_GIO_M_ENA) == 0)
 				break;
 			delay(100);
@@ -3079,6 +3123,7 @@ wm_reset(struct wm_softc *sc)
 		break;
 	case WM_T_82573:
 	case WM_T_82574:
+	case WM_T_82583:
 		if (sc->sc_flags & WM_F_EEPROM_FLASH) {
 			delay(10);
 			reg = CSR_READ(sc, WMREG_CTRL_EXT) | CTRL_EXT_EE_RST;
@@ -3155,6 +3200,7 @@ wm_init(struct ifnet *ifp)
 	case WM_T_82572:
 	case WM_T_82573:
 	case WM_T_82574:
+	case WM_T_82583:
 	case WM_T_80003:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
@@ -3439,7 +3485,7 @@ wm_init(struct ifnet *ifp)
 
 	/* 82573 doesn't support jumbo frame */
 	if (sc->sc_type != WM_T_82573 && sc->sc_type != WM_T_82574 &&
-	    sc->sc_type != WM_T_ICH8)
+	    sc->sc_type != WM_T_82583 && sc->sc_type != WM_T_ICH8)
 		sc->sc_rctl |= RCTL_LPE;
 
 	if (MCLBYTES == 2048) {
@@ -3573,6 +3619,7 @@ wm_get_auto_rd_done(struct wm_softc *sc)
 	case WM_T_82572:
 	case WM_T_82573:
 	case WM_T_82574:
+	case WM_T_82583:
 	case WM_T_80003:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
@@ -3593,7 +3640,8 @@ wm_get_auto_rd_done(struct wm_softc *sc)
 	}
 
 	/* Phy configuration starts after EECD_AUTO_RD is set */
-	if (sc->sc_type == WM_T_82573 || sc->sc_type == WM_T_82574)
+	if (sc->sc_type == WM_T_82573 || sc->sc_type == WM_T_82574
+	    || sc->sc_type == WM_T_82574)
 		delay(25000);
 }
 
@@ -5115,16 +5163,16 @@ wm_is_onboard_nvm_eeprom(struct wm_softc *sc)
 {
 	uint32_t eecd = 0;
 
-	if (sc->sc_type == WM_T_82573 || sc->sc_type == WM_T_82574) {
+	if (sc->sc_type == WM_T_82573 || sc->sc_type == WM_T_82574
+	    || sc->sc_type == WM_T_82583) {
 		eecd = CSR_READ(sc, WMREG_EECD);
 
 		/* Isolate bits 15 & 16 */
 		eecd = ((eecd >> 15) & 0x03);
 
 		/* If both bits are set, device is Flash type */
-		if (eecd == 0x03) {
+		if (eecd == 0x03)
 			return 0;
-		}
 	}
 	return 1;
 }
@@ -5554,15 +5602,10 @@ wm_check_mng_mode(struct wm_softc *sc)
 	case WM_T_ICH10:
 		rv = wm_check_mng_mode_ich8lan(sc);
 		break;
-#if 0
 	case WM_T_82574:
-		/*
-		 * The function is provided in em driver, but it's not
-		 * used. Why?
-		 */
+	case WM_T_82583:
 		rv = wm_check_mng_mode_82574(sc);
 		break;
-#endif
 	case WM_T_82571:
 	case WM_T_82572:
 	case WM_T_82573:
@@ -5591,7 +5634,6 @@ wm_check_mng_mode_ich8lan(struct wm_softc *sc)
 	return 0;
 }
 
-#if 0
 static int
 wm_check_mng_mode_82574(struct wm_softc *sc)
 {
@@ -5604,7 +5646,6 @@ wm_check_mng_mode_82574(struct wm_softc *sc)
 
 	return 0;
 }
-#endif
 
 static int
 wm_check_mng_mode_generic(struct wm_softc *sc)
@@ -5628,6 +5669,7 @@ wm_get_hw_control(struct wm_softc *sc)
 	case WM_T_82573:
 #if 0
 	case WM_T_82574:
+	case WM_T_82583:
 		/*
 		 * FreeBSD's em driver has the function for 82574 to checks
 		 * the management mode, but it's not used. Why?
