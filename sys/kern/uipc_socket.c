@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.196 2009/12/20 09:36:06 dsl Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.197 2009/12/29 03:48:18 elad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.196 2009/12/20 09:36:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.197 2009/12/29 03:48:18 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -561,7 +561,6 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
 	so->so_snd.sb_mowner = &prp->pr_domain->dom_mowner;
 	so->so_mowner = &prp->pr_domain->dom_mowner;
 #endif
-	/* so->so_cred = kauth_cred_dup(l->l_cred); */
 	uid = kauth_cred_geteuid(l->l_cred);
 	so->so_uidinfo = uid_find(uid);
 	so->so_egid = kauth_cred_getegid(l->l_cred);
@@ -704,7 +703,6 @@ sofree(struct socket *so)
 	/* Remove acccept filter if one is present. */
 	if (so->so_accf != NULL)
 		(void)accept_filt_clear(so);
-	/* kauth_cred_free(so->so_cred); */
 	sounlock(so);
 	if (refs == 0)		/* XXX */
 		soput(so);
