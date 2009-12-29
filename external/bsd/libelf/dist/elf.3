@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf.3,v 1.2 2009/12/21 18:27:48 thorpej Exp $
+.\"	$NetBSD: elf.3,v 1.3 2009/12/29 18:07:28 joerg Exp $
 .\"
 .\" Copyright (c) 2006,2007 Joseph Koshy.  All rights reserved.
 .\"
@@ -353,20 +353,13 @@ defined in
 and the types supported by the library.
 .Bl -column ".Dv SHT_PREINIT_ARRAY" ".Dv ELF_T_SYMINFO"
 .It Em Section Type Ta Em "Library Type" Ta Em Description
-.It Dv SHT_DYNAMIC Ta Dv ELF_T_DYN Ta Xo
-.Sq .dynamic
-section entries.
-.Xc
+.It Dv SHT_DYNAMIC Ta Dv ELF_T_DYN Ta So .dynamic Sc section entries.
 .It Dv SHT_DYNSYM Ta Dv ELF_T_SYM Ta Symbols for dynamic linking.
 .It Dv SHT_FINI_ARRAY Ta Dv ELF_T_ADDR Ta Termination function pointers.
 .It Dv SHT_GROUP Ta Dv ELF_T_WORD Ta Section group marker.
 .It Dv SHT_HASH Ta Dv ELF_T_HASH Ta Symbol hashes.
 .It Dv SHT_INIT_ARRAY Ta Dv ELF_T_ADDR Ta Initialization function pointers.
-.It Dv SHT_NOBITS Ta Dv ELF_T_BYTE Ta Xo
-Empty sections.
-See
-.Xr elf 5 .
-.Xc
+.It Dv SHT_NOBITS Ta Dv ELF_T_BYTE Ta Empty sections.  See Xr elf 5 .
 .It Dv SHT_NOTE Ta Dv ELF_T_NOTE Ta ELF note records.
 .It Dv SHT_PREINIT_ARRAY Ta Dv ELF_T_ADDR Ta Pre-initialization function pointers.
 .It Dv SHT_PROGBITS Ta Dv ELF_T_BYTE Ta Machine code.
@@ -381,7 +374,6 @@ See
 .It Dv SHT_SUNW_move Ta Dv ELF_T_MOVE Ta ELF move records.
 .It Dv SHT_SUNW_syminfo Ta Dv ELF_T_SYMINFO Ta Additional symbol flags.
 .El
-.TE
 .Ss Functional Grouping
 This section contains a brief overview of the available functionality
 in the ELF library.
