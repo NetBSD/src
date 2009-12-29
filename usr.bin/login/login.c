@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.96 2008/07/21 14:19:23 lukem Exp $	*/
+/*	$NetBSD: login.c,v 1.97 2009/12/29 19:26:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.96 2008/07/21 14:19:23 lukem Exp $");
+__RCSID("$NetBSD: login.c,v 1.97 2009/12/29 19:26:13 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -91,31 +91,15 @@ __RCSID("$NetBSD: login.c,v 1.96 2008/07/21 14:19:23 lukem Exp $");
 #include <vis.h>
 
 #include "pathnames.h"
+#include "common.h"
 
 #ifdef KERBEROS5
-int login_krb5_get_tickets = 1;
 int login_krb5_forwardable_tgt = 0;
-int login_krb5_retain_ccache = 0;
+static int login_krb5_get_tickets = 1;
+static int login_krb5_retain_ccache = 0;
 #endif
 
-void	 badlogin(char *);
-void	 checknologin(char *);
-#ifdef SUPPORT_UTMP
-static void	 doutmp(void);
-static void	 dolastlog(int);
-#endif
-#ifdef SUPPORT_UTMPX
-static void	 doutmpx(void);
-static void	 dolastlogx(int);
-#endif
-static void	 update_db(int);
-void	 getloginname(void);
-void	 motd(char *);
-int	 rootterm(char *);
-void	 sigint(int);
-void	 sleepexit(int);
-const	 char *stypeof(const char *);
-void	 timedout(int);
+static void	 checknologin(char *);
 #ifdef KERBEROS5
 int	 k5login(struct passwd *, char *, char *, char *);
 void	 k5destroy(void);
@@ -123,26 +107,19 @@ int	 k5_read_creds(char*);
 int	 k5_write_creds(void);
 #endif
 #if defined(KERBEROS5)
-void	 dofork(void);
+static void	 dofork(void);
 #endif
-void	 decode_ss(const char *);
-void	 usage(void);
+static void	 usage(void);
 
 #define	TTYGRPNAME	"tty"		/* name of group to own ttys */
 
 #define DEFAULT_BACKOFF 3
 #define DEFAULT_RETRIES 10
 
-/*
- * This bounds the time given to login.  Not a define so it can
- * be patched on machines where it's too small.
- */
-u_int	timeout = 300;
-
 #if defined(KERBEROS5)
-int	notickets = 1;
-char	*instance;
 int	has_ccache = 0;
+static int	notickets = 1;
+static char	*instance;
 extern krb5_context kcontext;
 extern int	have_forward;
 extern char	*krb5tkfile_env;
@@ -153,18 +130,11 @@ extern int	krb5_configured;
 #define	KERBEROS_CONFIGURED	krb5_configured
 #endif
 
-struct	passwd *pwd;
-int	failures, have_ss;
-char	term[64], *envinit[1], *hostname, *username, *tty, *nested;
-struct timeval now;
-struct sockaddr_storage ss;
-
-extern const char copyrightstr[];
+extern char **environ;
 
 int
 main(int argc, char *argv[])
 {
-	extern char **environ;
 	struct group *gr;
 	struct stat st;
 	int ask, ch, cnt, fflag, hflag, pflag, sflag, quietlog, rootlogin, rval;
@@ -577,7 +547,7 @@ main(int argc, char *argv[])
 
 	}
 	/* Nothing else left to fail -- really log in. */
-	update_db(quietlog);
+	update_db(quietlog, rootlogin, fflag);
 
 	(void)chown(ttyn, pwd->pw_uid,
 	    (gr = getgrnam(TTYGRPNAME)) ? gr->gr_gid : pwd->pw_gid);
@@ -748,17 +718,11 @@ main(int argc, char *argv[])
 }
 
 #if defined(KERBEROS5)
-#define	NBUFSIZ		(MAXLOGNAME + 1 + 5)	/* .root suffix */
-#else
-#define	NBUFSIZ		(MAXLOGNAME + 1)
-#endif
-
-#if defined(KERBEROS5)
 /*
  * This routine handles cleanup stuff, and the like.
  * It exists only in the child process.
  */
-void
+static void
 dofork(void)
 {
 	pid_t child, wchild;
@@ -795,81 +759,7 @@ dofork(void)
 }
 #endif
 
-void
-getloginname(void)
-{
-	int ch;
-	char *p;
-	static char nbuf[NBUFSIZ];
-
-	for (;;) {
-		(void)printf("login: ");
-		for (p = nbuf; (ch = getchar()) != '\n'; ) {
-			if (ch == EOF) {
-				badlogin(username);
-				exit(EXIT_FAILURE);
-			}
-			if (p < nbuf + (NBUFSIZ - 1))
-				*p++ = ch;
-		}
-		if (p > nbuf) {
-			if (nbuf[0] == '-')
-				(void)fprintf(stderr,
-				    "login names may not start with '-'.\n");
-			else {
-				*p = '\0';
-				username = nbuf;
-				break;
-			}
-		}
-	}
-}
-
-int
-rootterm(char *ttyn)
-{
-	struct ttyent *t;
-
-	return ((t = getttynam(ttyn)) && t->ty_status & TTY_SECURE);
-}
-
-jmp_buf motdinterrupt;
-
-void
-motd(char *fname)
-{
-	int fd, nchars;
-	sig_t oldint;
-	char tbuf[8192];
-
-	if ((fd = open(fname ? fname : _PATH_MOTDFILE, O_RDONLY, 0)) < 0)
-		return;
-	oldint = signal(SIGINT, sigint);
-	if (setjmp(motdinterrupt) == 0)
-		while ((nchars = read(fd, tbuf, sizeof(tbuf))) > 0)
-			(void)write(fileno(stdout), tbuf, nchars);
-	(void)signal(SIGINT, oldint);
-	(void)close(fd);
-}
-
-/* ARGSUSED */
-void
-sigint(int signo)
-{
-
-	longjmp(motdinterrupt, 1);
-}
-
-/* ARGSUSED */
-void
-timedout(int signo)
-{
-
-	(void)fprintf(stderr, "Login timed out after %d seconds\n", timeout);
-	exit(EXIT_FAILURE);
-}
-
-void
+static void
 checknologin(char *fname)
 {
 	int fd, nchars;
@@ -883,202 +773,6 @@ checknologin(char *fname)
 }
 
 static void
-update_db(int quietlog)
-{
-	if (nested != NULL) {
-		if (hostname != NULL)
-			syslog(LOG_NOTICE, "%s to %s on tty %s from %s",
-			    nested, pwd->pw_name, tty, hostname);
-		else
-			syslog(LOG_NOTICE, "%s to %s on tty %s", nested,
-			    pwd->pw_name, tty);
-
-		return;
-	}
-	if (hostname != NULL && have_ss == 0) {
-		socklen_t len = sizeof(ss);
-		have_ss = getpeername(STDIN_FILENO, (struct sockaddr *)&ss,
-		    &len) != -1;
-	}
-	(void)gettimeofday(&now, NULL);
-#ifdef SUPPORT_UTMPX
-	doutmpx();
-	dolastlogx(quietlog);
-	quietlog = 1;
-#endif	
-#ifdef SUPPORT_UTMP
-	doutmp();
-	dolastlog(quietlog);
-#endif
-}
-
-#ifdef SUPPORT_UTMPX
-static void
-doutmpx(void)
-{
-	struct utmpx utmpx;
-	char *t;
-
-	memset((void *)&utmpx, 0, sizeof(utmpx));
-	utmpx.ut_tv = now;
-	(void)strncpy(utmpx.ut_name, username, sizeof(utmpx.ut_name));
-	if (hostname) {
-		(void)strncpy(utmpx.ut_host, hostname, sizeof(utmpx.ut_host));
-		utmpx.ut_ss = ss;
-	}
-	(void)strncpy(utmpx.ut_line, tty, sizeof(utmpx.ut_line));
-	utmpx.ut_type = USER_PROCESS;
-	utmpx.ut_pid = getpid();
-	t = tty + strlen(tty);
-	if (t - tty >= sizeof(utmpx.ut_id)) {
-	    (void)strncpy(utmpx.ut_id, t - sizeof(utmpx.ut_id),
-		sizeof(utmpx.ut_id));
-	} else {
-	    (void)strncpy(utmpx.ut_id, tty, sizeof(utmpx.ut_id));
-	}
-	if (pututxline(&utmpx) == NULL)
-		syslog(LOG_NOTICE, "Cannot update utmpx: %m");
-	endutxent();
-	if (updwtmpx(_PATH_WTMPX, &utmpx) != 0)
-		syslog(LOG_NOTICE, "Cannot update wtmpx: %m");
-}
-
-static void
-dolastlogx(int quiet)
-{
-	struct lastlogx ll;
-	if (!quiet && getlastlogx(_PATH_LASTLOGX, pwd->pw_uid, &ll) != NULL) {
-		time_t t = (time_t)ll.ll_tv.tv_sec;
-		(void)printf("Last login: %.24s ", ctime(&t));
-		if (*ll.ll_host != '\0')
-			(void)printf("from %.*s ",
-			    (int)sizeof(ll.ll_host),
-			    ll.ll_host);
-		(void)printf("on %.*s\n",
-		    (int)sizeof(ll.ll_line),
-		    ll.ll_line);
-	}
-	ll.ll_tv = now;
-	(void)strncpy(ll.ll_line, tty, sizeof(ll.ll_line));
-	if (hostname)
-		(void)strncpy(ll.ll_host, hostname, sizeof(ll.ll_host));
-	else
-		(void)memset(ll.ll_host, '\0', sizeof(ll.ll_host));
-	if (have_ss)
-		ll.ll_ss = ss;
-	else
-		(void)memset(&ll.ll_ss, 0, sizeof(ll.ll_ss));
-	if (updlastlogx(_PATH_LASTLOGX, pwd->pw_uid, &ll) != 0)
-		syslog(LOG_NOTICE, "Cannot update lastlogx: %m");
-}
-#endif
-
-#ifdef SUPPORT_UTMP
-static void
-doutmp(void)
-{
-	struct utmp utmp;
-
-	(void)memset((void *)&utmp, 0, sizeof(utmp));
-	utmp.ut_time = now.tv_sec;
-	(void)strncpy(utmp.ut_name, username, sizeof(utmp.ut_name));
-	if (hostname)
-		(void)strncpy(utmp.ut_host, hostname, sizeof(utmp.ut_host));
-	(void)strncpy(utmp.ut_line, tty, sizeof(utmp.ut_line));
-	login(&utmp);
-}
-
-static void
-dolastlog(int quiet)
-{
-	struct lastlog ll;
-	int fd;
-
-	if ((fd = open(_PATH_LASTLOG, O_RDWR, 0)) >= 0) {
-		(void)lseek(fd, (off_t)(pwd->pw_uid * sizeof(ll)), SEEK_SET);
-		if (!quiet) {
-			if (read(fd, (char *)&ll, sizeof(ll)) == sizeof(ll) &&
-			    ll.ll_time != 0) {
-				(void)printf("Last login: %.24s ",
-				    ctime(&ll.ll_time));
-				if (*ll.ll_host != '\0')
-					(void)printf("from %.*s ",
-					    (int)sizeof(ll.ll_host),
-					    ll.ll_host);
-				(void)printf("on %.*s\n",
-				    (int)sizeof(ll.ll_line), ll.ll_line);
-			}
-			(void)lseek(fd, (off_t)(pwd->pw_uid * sizeof(ll)),
-			    SEEK_SET);
-		}
-		memset((void *)&ll, 0, sizeof(ll));
-		ll.ll_time = now.tv_sec;
-		(void)strncpy(ll.ll_line, tty, sizeof(ll.ll_line));
-		if (hostname)
-			(void)strncpy(ll.ll_host, hostname, sizeof(ll.ll_host));
-		(void)write(fd, (char *)&ll, sizeof(ll));
-		(void)close(fd);
-	}
-}
-#endif
-
-void
-badlogin(char *name)
-{
-
-	if (failures == 0)
-		return;
-	if (hostname) {
-		syslog(LOG_NOTICE, "%d LOGIN FAILURE%s FROM %s",
-		    failures, failures > 1 ? "S" : "", hostname);
-		syslog(LOG_AUTHPRIV|LOG_NOTICE,
-		    "%d LOGIN FAILURE%s FROM %s, %s",
-		    failures, failures > 1 ? "S" : "", hostname, name);
-	} else {
-		syslog(LOG_NOTICE, "%d LOGIN FAILURE%s ON %s",
-		    failures, failures > 1 ? "S" : "", tty);
-		syslog(LOG_AUTHPRIV|LOG_NOTICE,
-		    "%d LOGIN FAILURE%s ON %s, %s",
-		    failures, failures > 1 ? "S" : "", tty, name);
-	}
-}
-
-const char *
-stypeof(const char *ttyid)
-{
-	struct ttyent *t;
-
-	return (ttyid && (t = getttynam(ttyid)) ? t->ty_type : NULL);
-}
-
-void
-sleepexit(int eval)
-{
-
-	(void)sleep(5);
-	exit(eval);
-}
-
-void
-decode_ss(const char *arg)
-{
-	struct sockaddr_storage *ssp;
-	size_t len = strlen(arg);
-	
-	if (len > sizeof(*ssp) * 4 + 1 || len < sizeof(*ssp))
-		errx(EXIT_FAILURE, "Bad argument");
-
-	if ((ssp = malloc(len)) == NULL)
-		err(EXIT_FAILURE, NULL);
-
-	if (strunvis((char *)ssp, arg) != sizeof(*ssp))
-		errx(EXIT_FAILURE, "Decoding error");
-
-	(void)memcpy(&ss, ssp, sizeof(ss));
-	have_ss = 1;
-}
-
-void
 usage(void)
 {
 	(void)fprintf(stderr,

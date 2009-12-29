@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.19 2008/07/21 14:19:23 lukem Exp $       */
+/*     $NetBSD: login_pam.c,v 1.20 2009/12/29 19:26:13 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.19 2008/07/21 14:19:23 lukem Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.20 2009/12/29 19:26:13 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -78,19 +78,12 @@ __RCSID("$NetBSD: login_pam.c,v 1.19 2008/07/21 14:19:23 lukem Exp $");
 #include <security/openpam.h>
 
 #include "pathnames.h"
+#include "common.h"
 
-void	 badlogin (char *);
-static void	 update_db (int);
-void	 getloginname (void);
-int	 main (int, char *[]);
-void	 motd (char *);
-int	 rootterm (char *);
-void	 sigint (int);
-void	 sleepexit (int);
-const	 char *stypeof (const char *);
-void	 timedout (int);
-void	 decode_ss (const char *);
-void	 usage (void);
+#if 0
+static int	 rootterm(char *);
+#endif
+static void	 usage(void) __attribute__((__noreturn__));
 
 static struct pam_conv pamc = { openpam_ttyconv, NULL };
 
@@ -99,27 +92,15 @@ static struct pam_conv pamc = { openpam_ttyconv, NULL };
 #define DEFAULT_BACKOFF 3
 #define DEFAULT_RETRIES 10
 
-/*
- * This bounds the time given to login.  Not a define so it can
- * be patched on machines where it's too small.
- */
-u_int	timeout = 300;
-
-struct	passwd *pwd, pwres;
-char	pwbuf[1024];
-struct	group grs, *grp;
-char	grbuf[1024];
-int	failures, have_ss;
-char	term[64], *envinit[1], *hostname, *username, *tty, *nested;
-struct timeval now;
-struct sockaddr_storage ss;
-
-extern const char copyrightstr[];
+static struct	passwd pwres;
+static char	pwbuf[1024];
+static struct	group grs, *grp;
+static char	grbuf[1024];
+extern char **environ;
 
 int
 main(int argc, char *argv[])
 {
-	extern char **environ;
 	struct stat st;
 	int ask, ch, cnt, fflag, pflag, quietlog, rootlogin;
 	int auth_passed;
@@ -185,10 +166,6 @@ main(int argc, char *argv[])
 				err(EXIT_FAILURE, "-a option");
 			}
 			decode_ss(optarg);
-#ifdef notdef
-			(void)sockaddr_snprintf(optarg,
-			    sizeof(struct sockaddr_storage), "%a", (void *)&ss);
-#endif
 			break;
 		case 'f':
 			fflag = 1;
@@ -486,7 +463,7 @@ skip_auth:
 		(void)printf("Warning: ttyaction failed.\n");
 
 	/* Nothing else left to fail -- really log in. */
-        update_db(quietlog);
+        update_db(quietlog, rootlogin, fflag);
 
 	if (nested == NULL && setusercontext(lc, pwd, pwd->pw_uid,
 	    LOGIN_SETLOGIN) != 0) {
@@ -498,15 +475,6 @@ skip_auth:
 	if (tty[sizeof("tty")-1] == 'd')
 		syslog(LOG_INFO, "DIALUP %s, %s", tty, pwd->pw_name);
 
-	/* If fflag is on, assume caller/authenticator has logged root login. */
-	if (rootlogin && fflag == 0) {
-		if (hostname)
-			syslog(LOG_NOTICE, "ROOT LOGIN (%s) ON %s FROM %s",
-			    username, tty, hostname);
-		else
-			syslog(LOG_NOTICE, "ROOT LOGIN (%s) ON %s",
-			    username, tty);
-	}
 
 	/*
 	 * Establish groups
@@ -687,161 +655,7 @@ skip_auth:
 	err(EXIT_FAILURE, "%s", pwd->pw_shell);
 }
 
-#define	NBUFSIZ		(MAXLOGNAME + 1)
-
-
-void
-getloginname(void)
-{
-	int ch;
-	char *p;
-	static char nbuf[NBUFSIZ];
-
-	for (;;) {
-		(void)printf("login: ");
-		for (p = nbuf; (ch = getchar()) != '\n'; ) {
-			if (ch == EOF) {
-				badlogin(username);
-				exit(EXIT_FAILURE);
-			}
-			if (p < nbuf + (NBUFSIZ - 1))
-				*p++ = ch;
-		}
-		if (p > nbuf) {
-			if (nbuf[0] == '-')
-				(void)fprintf(stderr,
-				    "login names may not start with '-'.\n");
-			else {
-				*p = '\0';
-				username = nbuf;
-				break;
-			}
-		}
-	}
-}
-
-int
-rootterm(char *ttyn)
-{
-	struct ttyent *t;
-
-	return ((t = getttynam(ttyn)) && t->ty_status & TTY_SECURE);
-}
-
-jmp_buf motdinterrupt;
-
-void
-motd(char *fname)
-{
-	int fd, nchars;
-	sig_t oldint;
-	char tbuf[8192];
-
-	if ((fd = open(fname ? fname : _PATH_MOTDFILE, O_RDONLY, 0)) < 0)
-		return;
-	oldint = signal(SIGINT, sigint);
-	if (setjmp(motdinterrupt) == 0)
-		while ((nchars = read(fd, tbuf, sizeof(tbuf))) > 0)
-			(void)write(fileno(stdout), tbuf, nchars);
-	(void)signal(SIGINT, oldint);
-	(void)close(fd);
-}
-
-/* ARGSUSED */
-void
-sigint(int signo)
-{
-
-	longjmp(motdinterrupt, 1);
-}
-
-/* ARGSUSED */
-void
-timedout(int signo)
-{
-
-	(void)fprintf(stderr, "Login timed out after %d seconds\n", timeout);
-	exit(EXIT_FAILURE);
-}
-
 static void
-update_db(int quietlog)
-{
-	if (nested != NULL) {
-		if (hostname != NULL)
-			syslog(LOG_NOTICE, "%s to %s on tty %s from %s",
-			    nested, pwd->pw_name, tty, hostname);
-		else
-			syslog(LOG_NOTICE, "%s to %s on tty %s", nested,
-			    pwd->pw_name, tty);
-
-	}
-	if (hostname != NULL && have_ss == 0) {
-		socklen_t len = sizeof(ss);
-		have_ss = getpeername(STDIN_FILENO, (struct sockaddr *)&ss,
-		    &len) != -1;
-	}
-	(void)gettimeofday(&now, NULL);
-}
-
-void
-badlogin(char *name)
-{
-
-	if (failures == 0)
-		return;
-	if (hostname) {
-		syslog(LOG_NOTICE, "%d LOGIN FAILURE%s FROM %s",
-		    failures, failures > 1 ? "S" : "", hostname);
-		syslog(LOG_AUTHPRIV|LOG_NOTICE,
-		    "%d LOGIN FAILURE%s FROM %s, %s",
-		    failures, failures > 1 ? "S" : "", hostname, name);
-	} else {
-		syslog(LOG_NOTICE, "%d LOGIN FAILURE%s ON %s",
-		    failures, failures > 1 ? "S" : "", tty);
-		syslog(LOG_AUTHPRIV|LOG_NOTICE,
-		    "%d LOGIN FAILURE%s ON %s, %s",
-		    failures, failures > 1 ? "S" : "", tty, name);
-	}
-}
-
-const char *
-stypeof(const char *ttyid)
-{
-	struct ttyent *t;
-
-	return (ttyid && (t = getttynam(ttyid)) ? t->ty_type : NULL);
-}
-
-void
-sleepexit(int eval)
-{
-
-	(void)sleep(5);
-	exit(eval);
-}
-
-void
-decode_ss(const char *arg)
-{
-	struct sockaddr_storage *ssp;
-	size_t len = strlen(arg);
-	
-	if (len > sizeof(*ssp) * 4 + 1 || len < sizeof(*ssp))
-		errx(EXIT_FAILURE, "Bad argument");
-
-	if ((ssp = malloc(len)) == NULL)
-		err(EXIT_FAILURE, NULL);
-
-	if (strunvis((char *)ssp, arg) != sizeof(*ssp))
-		errx(EXIT_FAILURE, "Decoding error");
-
-	(void)memcpy(&ss, ssp, sizeof(ss));
-	have_ss = 1;
-	free(ssp);
-}
-
-void
 usage(void)
 {
 	(void)fprintf(stderr,
@@ -849,3 +663,13 @@ usage(void)
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
+
+#if 0
+static int
+rootterm(char *ttyn)
+{
+	struct ttyent *t;
+
+	return ((t = getttynam(ttyn)) && t->ty_status & TTY_SECURE);
+}
+#endif
