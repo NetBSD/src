@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.16 2009/12/06 14:31:16 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.17 2009/12/29 23:37:48 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <sys/rwlock.h>
 #include <sys/queue.h>
 
+#include <sys/device.h>
 #include <sys/disklabel.h>
 
 #include <prop/proplib.h>
@@ -120,6 +121,7 @@ typedef struct dm_dev {
 	char name[DM_NAME_LEN];
 	char uuid[DM_UUID_LEN];
 
+	device_t devt; /* pointer to autoconf device_t structure */
 	uint64_t minor;
 	uint32_t flags; /* store communication protocol flags */
 
@@ -136,6 +138,7 @@ typedef struct dm_dev {
 	struct dm_dev_head upcalls;
 	
 	struct disk *diskp;
+	kmutex_t diskp_mtx;
 	
 	TAILQ_ENTRY(dm_dev) next_upcall; /* LIST of mirrored, snapshoted devices. */
 
@@ -357,6 +360,7 @@ void dm_table_head_destroy(dm_table_head_t *);
 dm_dev_t* dm_dev_alloc(void);
 void dm_dev_busy(dm_dev_t *);
 int dm_dev_destroy(void);
+dm_dev_t* dm_dev_detach(device_t);
 int dm_dev_free(dm_dev_t *);
 int dm_dev_init(void);
 int dm_dev_insert(dm_dev_t *);

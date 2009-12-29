@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.10 2009/12/06 14:33:46 haad Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.11 2009/12/29 23:37:47 haad Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -402,8 +402,13 @@ dmstrategy(struct buf *bp)
 		return;
 	}
 
-	/* FIXME: have to be called with IPL_BIO*/
+	/*
+	 * disk(9) is part of device structure and it can't be used without
+	 * mutual exclusion, use diskp_mtx until it will be fixed.
+	 */
+	mutex_enter(&dmv->diskp_mtx);
 	disk_busy(dmv->diskp);
+	mutex_exit(&dmv->diskp_mtx);
 	
 	/* Select active table */
 	tbl = dm_table_get_entry(&dmv->table_head, DM_TABLE_ACTIVE);
@@ -459,9 +464,10 @@ dmstrategy(struct buf *bp)
 	if (issued_len < buf_len)
 		nestiobuf_done(bp, buf_len - issued_len, EINVAL);
 
-	/* FIXME have to be called with SPL_BIO*/
+	mutex_enter(&dmv->diskp_mtx);
 	disk_unbusy(dmv->diskp, buf_len, bp != NULL ? bp->b_flags & B_READ : 0);
-	
+	mutex_exit(&dmv->diskp_mtx);
+		
 	dm_table_release(&dmv->table_head, DM_TABLE_ACTIVE);
 	dm_dev_unbusy(dmv);
 

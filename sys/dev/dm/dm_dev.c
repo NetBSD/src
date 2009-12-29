@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.6 2009/09/09 22:38:49 haad Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.7 2009/12/29 23:37:48 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ TAILQ_HEAD_INITIALIZER(dm_dev_list);
 
 kmutex_t dm_dev_mutex;
 
+/* dm_dev_mutex must be holdby caller before using disable_dev. */
 __inline static void
 disable_dev(dm_dev_t *dmv)
 {
@@ -220,6 +221,29 @@ dm_dev_test_minor(int dm_dev_minor)
 }
 #endif
 
+/*
+ * dm_dev_lookup_devt look for selected device_t. We keep this routine
+ * outside of dm_dev_lookup because it is a temporally solution.
+ *
+ * TODO: This is a hack autoconf should be more flexible.
+ */
+dm_dev_t *
+dm_dev_detach(device_t devt)
+{
+	dm_dev_t *dmv;
+	
+	mutex_enter(&dm_dev_mutex);
+	TAILQ_FOREACH(dmv, &dm_dev_list, next_devlist){
+		if (devt == dmv->devt){
+			disable_dev(dmv);
+			return dmv;
+		}
+	}
+	mutex_exit(&dm_dev_mutex);
+	
+	return NULL;
+}
+
 /* 
  * Remove device selected with dm_dev from global list of devices. 
  */
@@ -321,6 +345,7 @@ dm_dev_free(dm_dev_t *dmv)
 	KASSERT(dmv != NULL);
 
 	mutex_destroy(&dmv->dev_mtx);
+	mutex_destroy(&dmv->diskp_mtx);
 	cv_destroy(&dmv->dev_cv);
 
 	if(dmv->diskp != NULL)
