@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.114 2009/12/05 20:11:17 pooka Exp $
+# $NetBSD: GENERIC,v 1.115 2009/12/29 07:00:42 macallan Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.114 $"
+#ident 		"GENERIC-$Revision: 1.115 $"
 
 maxusers	64
 
@@ -853,6 +853,9 @@ cgsix*		at sbus? slot ? offset ?
 
 ## Sun FFB
 ffb*		at mainbus0
+
+## Sun XVR-1000
+gfb*		at mainbus0
 
 # On board vga on U5/U10 etc.
 machfb*		at pci?
