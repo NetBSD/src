@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.99 2009/11/22 18:40:26 mbalmer Exp $	*/
+/*	$NetBSD: init.c,v 1.100 2009/12/29 17:07:17 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.99 2009/11/22 18:40:26 mbalmer Exp $");
+__RCSID("$NetBSD: init.c,v 1.100 2009/12/29 17:07:17 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,8 +170,10 @@ void collect_child(pid_t, int);
 pid_t start_getty(session_t *);
 void transition_handler(int);
 void alrm_handler(int);
+int has_securelevel(void);
 void setsecuritylevel(int);
 int getsecuritylevel(void);
+int securelevel_present;
 int setupargv(session_t *, struct ttyent *);
 int clang;
 
@@ -323,6 +325,13 @@ main(int argc, char **argv)
 	/* Create "init.root" sysctl node. */
 	(void)createsysctlnode();
 #endif /* !LETS_GET_SMALL && CHROOT*/
+
+	/*
+	 * Securelevel might not be supported by the kernel. Query for it, and
+	 * set a variable indicating whether we should attempt anything with it
+	 * or not.
+	 */
+	securelevel_present = has_securelevel();
 
 	/*
 	 * Start the state machine.
@@ -481,6 +490,30 @@ disaster(int sig)
 }
 
 /*
+ * Check if securelevel is present.
+ */
+int
+has_securelevel(void)
+{
+#ifdef KERN_SECURELVL
+	int name[2], curlevel;
+	size_t len;
+
+	name[0] = CTL_KERN;
+	name[1] = KERN_SECURELVL;
+	len = sizeof curlevel;
+	if (sysctl(name, 2, &curlevel, &len, NULL, 0) == -1) {
+		/* If it doesn't exist, it's okay. */
+		if (errno == ENOENT) 
+			return 0;
+	}
+	return 1;
+#else
+	return 0;
+#endif
+}
+
+/*
  * Get the security level of the kernel.
  */
 int
@@ -489,6 +522,9 @@ getsecuritylevel(void)
 #ifdef KERN_SECURELVL
 	int name[2], curlevel;
 	size_t len;
+
+	if (!securelevel_present)
+		return -1;
 
 	name[0] = CTL_KERN;
 	name[1] = KERN_SECURELVL;
@@ -511,6 +547,9 @@ setsecuritylevel(int newlevel)
 {
 #ifdef KERN_SECURELVL
 	int name[2], curlevel;
+
+	if (!securelevel_present)
+		return;
 
 	curlevel = getsecuritylevel();
 	if (newlevel == curlevel)
