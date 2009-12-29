@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.123 2009/12/20 09:36:06 dsl Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.124 2009/12/29 04:23:43 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -177,6 +177,7 @@ struct socket {
 		void	*so_accept_filter_arg;	/* saved filter args */
 		char	*so_accept_filter_str;	/* saved user args */
 	} *so_accf;
+	kauth_cred_t	so_cred;	/* socket credentials */
 };
 
 #define	SB_EMPTY_FIXUP(sb)						\
