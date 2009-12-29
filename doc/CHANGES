@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1336 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1337 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -509,3 +509,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	bind: Update to 9.7.0-rc1. [christos 20091226]
 	openssl(1): Import SNAP-20091226 [christos 20091226]
 	openssh: Import 5.3. [christos 20091226]
+	gfb: Add a driver for Sun XVR-1000 graphics boards
+		[macallan 20091229]
