@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.54 2009/11/18 17:40:45 pooka Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.55 2009/12/29 17:49:21 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.54 2009/11/18 17:40:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.55 2009/12/29 17:49:21 elad Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -137,6 +137,23 @@ module_print(const char *fmt, ...)
 	}
 }
 
+static int
+module_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+
+	if (action != KAUTH_SYSTEM_MODULE)
+		return result;
+
+	if ((uintptr_t)arg2 != 0)	/* autoload */
+		result = KAUTH_RESULT_ALLOW;
+
+	return result;
+}
+
 /*
  * module_init:
  *
@@ -165,23 +182,9 @@ module_init(void)
 	    machine, __NetBSD_Version__ / 100000000,
 	    __NetBSD_Version__ / 1000000 % 100);
 #endif
-}
 
-static int
-module_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
-    void *arg0, void *arg1, void *arg2, void *arg3)
-{
-	int result;
-
-	result = KAUTH_RESULT_DEFER;
-
-	if (action != KAUTH_SYSTEM_MODULE)
-		return result;
-
-	if ((uintptr_t)arg2 != 0)	/* autoload */
-		result = KAUTH_RESULT_ALLOW;
-
-	return result;
+	module_listener = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
+	    module_listener_cb, NULL);
 }
 
 /*
@@ -198,9 +201,6 @@ module_init2(void)
 	    NULL, NULL, "modunload");
 	if (error != 0)
 		panic("module_init: %d", error);
-
-	module_listener = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
-	    module_listener_cb, NULL);
 }
 
 SYSCTL_SETUP(sysctl_module_setup, "sysctl module setup")
