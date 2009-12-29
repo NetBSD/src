@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.121 2009/10/02 15:09:16 nakayama Exp $
+#	$NetBSD: files.sparc64,v 1.122 2009/12/29 06:56:41 macallan Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -150,11 +150,15 @@ device cgfourteen
 attach cgfourteen at sbus
 file	arch/sparc64/dev/cgfourteen.c	cgfourteen needs-flag
 
-device ffb: wsemuldisplaydev, rasops8, rasops16, rasops24, rasops32, fb, vcons
+device ffb: wsemuldisplaydev, rasops8, rasops32, fb, vcons
 file	arch/sparc64/dev/ffb.c			ffb
 
 attach ffb at mainbus with ffb_mainbus
 file	arch/sparc64/dev/ffb_mainbus.c		ffb_mainbus
+
+device gfb: wsemuldisplaydev, rasops32, fb, vcons
+file	arch/sparc64/dev/gfb.c			gfb
+attach gfb at mainbus
 
 # CP1500/1400 watchdog timer
 device	pldwdog: sysmon_wdog
