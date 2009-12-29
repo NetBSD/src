@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.197 2009/12/29 03:48:18 elad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.198 2009/12/29 04:23:43 elad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.197 2009/12/29 03:48:18 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.198 2009/12/29 04:23:43 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -582,6 +582,7 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
 		sofree(so);
 		return error;
 	}
+	so->so_cred = kauth_cred_dup(l->l_cred);
 	sounlock(so);
 	*aso = so;
 	return 0;
@@ -771,6 +772,7 @@ soclose(struct socket *so)
  discard:
 	if (so->so_state & SS_NOFDREF)
 		panic("soclose: NOFDREF");
+	kauth_cred_free(so->so_cred);
 	so->so_state |= SS_NOFDREF;
 	sofree(so);
 	return (error);

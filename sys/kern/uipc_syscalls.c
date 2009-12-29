@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.138 2009/12/20 09:36:06 dsl Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.139 2009/12/29 04:23:43 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.138 2009/12/20 09:36:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.139 2009/12/29 04:23:43 elad Exp $");
 
 #include "opt_pipe.h"
 
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.138 2009/12/20 09:36:06 dsl Exp 
 #include <sys/un.h>
 #include <sys/ktrace.h>
 #include <sys/event.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -228,9 +229,11 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 	fp2->f_ops = &socketops;
 	fp2->f_data = so2;
 	error = soaccept(so2, nam);
+	so2->so_cred = kauth_cred_dup(so->so_cred);
 	sounlock(so);
 	if (error) {
 		/* an error occurred, free the file descriptor and mbuf */
+		kauth_cred_free(so2->so_cred);
 		m_freem(nam);
 		mutex_enter(&fp2->f_lock);
 		fp2->f_count++;
