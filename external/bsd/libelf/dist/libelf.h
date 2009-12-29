@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf.h,v 1.5 2009/12/21 18:21:17 thorpej Exp $	*/
+/*	$NetBSD: libelf.h,v 1.6 2009/12/29 17:32:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -36,6 +36,7 @@
 #include <inttypes.h>
 
 #if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
 # include <nbinclude/sys/exec_elf.h>
 # define __LIBELF_HAVE_ELF_CAP          1
 # define __LIBELF_HAVE_ELF_MOVE         1

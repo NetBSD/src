@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2009/12/23 20:28:29 cegger Exp $
+#	$NetBSD: Makefile,v 1.3 2009/12/29 17:32:18 thorpej Exp $
+
+.include <bsd.own.mk>
 
 HOSTLIB=	elf
 
@@ -64,6 +66,10 @@ CPPFLAGS+=	-no-cpp-precomp
 # other file ops, on many systems, without changing function names.
 
 CPPFLAGS+=	-DHAVE_NBTOOL_CONFIG_H=1 -D_FILE_OFFSET_BITS=64
+.ifndef NOCOMPATLIB
+COMPATOBJ!=     cd ${.CURDIR}/../compat && ${PRINTOBJDIR}
+CPPFLAGS+=	-I${COMPATOBJ}
+.endif
 
 .PATH:		${LIBELF_DIR}
 
