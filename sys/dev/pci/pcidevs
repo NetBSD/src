@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1005 2009/12/13 19:19:47 matt Exp $
+$NetBSD: pcidevs,v 1.1006 2009/12/29 15:52:18 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2332,6 +2332,7 @@ product INTEL 82439HX		0x1250	82439HX (TXC) System Controller
 product INTEL 82870P2_PPB	0x1460	82870P2 P64H2 PCI-PCI Bridge
 product INTEL 82870P2_IOxAPIC	0x1461	82870P2 P64H2 IOxAPIC
 product INTEL 82870P2_HPLUG	0x1462	82870P2 P64H2 Hot Plug Controller
+product INTEL 82583V		0x150c	i82583V 1000baseT Ethernet
 product INTEL 80960_RP		0x1960	ROB-in i960RP Microprocessor
 product INTEL 80960RM_2		0x1962	i960 RM PCI-PCI
 product INTEL 82840_HB		0x1a21	82840 Host
