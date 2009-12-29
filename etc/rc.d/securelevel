@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: securelevel,v 1.7 2008/11/12 12:35:52 ad Exp $
+# $NetBSD: securelevel,v 1.8 2009/12/29 17:06:10 elad Exp $
 #
 
 # PROVIDE: securelevel
@@ -19,7 +19,12 @@ securelevel_start()
 	#	it is 0, change it to 1 here, before we start daemons
 	#	or login services.
 	#
-	osecurelevel=$(sysctl -n kern.securelevel)
+	osecurelevel=$(sysctl -n kern.securelevel 2>&-)
+	if [ $? != 0 ]; then
+		echo "Can't set securelevel. (kern.securelevel sysctl not present.)"
+		exit 1
+	fi
+
 	if [ -n "$securelevel" -a "$securelevel" != "$osecurelevel" ]; then
 		if [ "$securelevel" -lt "$osecurelevel" ]; then
 			echo "Can't lower securelevel."
