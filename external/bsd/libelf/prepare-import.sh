@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: prepare-import.sh,v 1.1 2009/12/19 05:45:28 thorpej Exp $
+# $NetBSD: prepare-import.sh,v 1.2 2009/12/29 16:56:25 thorpej Exp $
 
 # Copy the FreeBSD src/lib/libelf directory contents to dist.  Run
 # this script and you're done.
@@ -22,8 +22,7 @@ for f in $(grep -RL '\$NetBSD.*\$' dist | grep -v CVS); do
 		/*	\$NetBSD\$	*/
 
 	EOF
-	sed -e 's,^__FBSDID.*,\/\* & \*\/\
-__RCSID\(\"\$NetBSD\$\"\)\;,g' ${f} >> ${f}_tmp
+	sed -e 's,^__FBSDID.*,\/\* & \*\/,g' ${f} >> ${f}_tmp
 	mv ${f}_tmp ${f}
 	;;
     *.[0-9])
