@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.4 2009/12/16 14:37:26 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.5 2009/12/29 16:01:21 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -106,6 +106,7 @@ typedef enum {
 	WM_T_82572,			/* i82572 */
 	WM_T_82573,			/* i82573 */
 	WM_T_82574,			/* i82574 */
+	WM_T_82583,			/* i82583 */
 	WM_T_80003,			/* i80003 */
 	WM_T_ICH8,			/* ICH8 LAN */
 	WM_T_ICH9,			/* ICH9 LAN */
