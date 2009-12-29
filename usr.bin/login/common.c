@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.1 2009/12/29 19:26:13 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.2 2009/12/29 19:27:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: common.c,v 1.1 2009/12/29 19:26:13 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.2 2009/12/29 19:27:43 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -171,7 +171,7 @@ update_db(int quietlog, int rootlogin, int fflag)
 		if (have_ss) {
 			char ssbuf[1024];
 			(void)sockaddr_snprintf(ssbuf,
-			    sizeof(ssbuf), "%A (%a)", (void *)&ss);
+			    sizeof(ssbuf), "%A(%a)", (void *)&ss);
 			 if (memcmp(&ass, &ss, alen) != 0)
 				syslog(LOG_NOTICE,
 				    "login %s on tty %s address mismatch "
@@ -182,7 +182,7 @@ update_db(int quietlog, int rootlogin, int fflag)
 		remote = 1;
 	} else if (have_ss) {
 		(void)sockaddr_snprintf(assbuf,
-		    sizeof(assbuf), "%A (%a)", (void *)&ss);
+		    sizeof(assbuf), "%A(%a)", (void *)&ss);
 		remote = 1;
 	} else if (hostname) {
 		(void)snprintf(assbuf, sizeof(assbuf), "? ?");
