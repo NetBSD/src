@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/04/08 16:27:51 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2009/12/29 06:00:35 snj Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 
@@ -12,7 +12,10 @@ CLEANFILES+=.fname cvsbug
 cvsbug: cvsbug.in
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e 's,@PACKAGE_BUGREPORT@,bug-cvs@gnu.org,g' \
-	    -e "s,@VERSION@,`cat .fname`,g" ${.ALLSRC} > ${.TARGET}
+	    -e "s,@VERSION@,`cat .fname`,g" \
+	    -e "s,@MKTEMP_SH_FUNCTION@,," \
+	    -e "s,@MKTEMP@,/usr/bin/mktemp," \
+	    -e "s,@SENDMAIL@,/usr/sbin/sendmail," ${.ALLSRC} > ${.TARGET}
 	chmod a+x ${.TARGET}
 
 cvsbug: .fname
