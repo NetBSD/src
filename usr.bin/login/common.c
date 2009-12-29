@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.2 2009/12/29 19:27:43 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.3 2009/12/29 20:15:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: common.c,v 1.2 2009/12/29 19:27:43 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.3 2009/12/29 20:15:15 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -200,17 +200,17 @@ update_db(int quietlog, int rootlogin, int fflag)
 			    username, tty);
 	} else if (nested != NULL) {
 		if (remote)
-			syslog(LOG_NOTICE, "login %s to %s on tty %s from %s / "
+			syslog(LOG_NOTICE, "%s to %s on tty %s from %s / "
 			    "%s", nested, pwd->pw_name, tty, hname, assbuf);
 		else
-			syslog(LOG_NOTICE, "login %s to %s on tty %s", nested,
+			syslog(LOG_NOTICE, "%s to %s on tty %s", nested,
 			    pwd->pw_name, tty);
 	} else {
 		if (remote)
-			syslog(LOG_NOTICE, "login %s on tty %s from %s / %s",
+			syslog(LOG_NOTICE, "%s on tty %s from %s / %s",
 			    pwd->pw_name, tty, hname, assbuf);
 		else
-			syslog(LOG_NOTICE, "login %s on tty %s", 
+			syslog(LOG_NOTICE, "%s on tty %s", 
 			    pwd->pw_name, tty);
 	}
 	(void)gettimeofday(&now, NULL);
