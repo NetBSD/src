@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.h,v 1.11 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: hist.h,v 1.12 2009/12/30 23:54:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -54,9 +54,17 @@ typedef struct el_history_t {
 	TYPE(HistEvent)	 ev;		/* Event cookie			*/
 } el_history_t;
 
-#define	HIST_FUN(el, fn, arg)	\
+#define	HIST_FUN_INTERNAL(el, fn, arg)	\
     ((((*(el)->el_history.fun) ((el)->el_history.ref, &(el)->el_history.ev, \
 	fn, arg)) == -1) ? NULL : (el)->el_history.ev.str)
+#ifdef WIDECHAR
+#define HIST_FUN(el, fn, arg) \
+    (((el)->el_flags & NARROW_HISTORY) ? hist_convert(el, fn, arg) : \
+	HIST_FUN_INTERNAL(el, fn, arg))
+#else
+#define HIST_FUN(el, fn, arg) HIST_FUN_INTERNAL(el, fn, arg)
+#endif
+
 
 #define	HIST_NEXT(el)		HIST_FUN(el, H_NEXT, NULL)
 #define	HIST_FIRST(el)		HIST_FUN(el, H_FIRST, NULL)
@@ -72,5 +80,8 @@ protected el_action_t	hist_get(EditLine *);
 protected int		hist_set(EditLine *, hist_fun_t, ptr_t);
 protected int		hist_command(EditLine *, int, const Char **);
 protected int		hist_enlargebuf(EditLine *, size_t, size_t);
+#ifdef WIDECHAR
+protected wchar_t 	*hist_convert(EditLine *, int, ptr_t);
+#endif
 
 #endif /* _h_el_hist */
