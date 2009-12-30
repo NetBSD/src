@@ -1,4 +1,4 @@
-/*	$NetBSD: tokenizer.c,v 1.16 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: tokenizer.c,v 1.17 2009/12/30 23:54:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tokenizer.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tokenizer.c,v 1.16 2009/12/30 22:37:40 christos Exp $");
+__RCSID("$NetBSD: tokenizer.c,v 1.17 2009/12/30 23:54:52 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -68,7 +68,7 @@ typedef enum {
 #define	tok_strdup(a)		Strdup(a)
 
 
-struct TYPE(tokenizer) {
+struct FUNW(tokenizer) {
 	Char	*ifs;		/* In field separator			 */
 	int	 argc, amax;	/* Current and maximum number of args	 */
 	Char   **argv;		/* Argument list			 */
@@ -189,7 +189,7 @@ FUN(tok,end)(TYPE(Tokenizer) *tok)
  *		cursorv	if !NULL, offset in argv[cursorc] of cursor
  */
 public int
-FUN(tok,line)(TYPE(Tokenizer) *tok, const LineInfo *line,
+FUN(tok,line)(TYPE(Tokenizer) *tok, const TYPE(LineInfo) *line,
     int *argc, const Char ***argv, int *cursorc, int *cursoro)
 {
 	const Char *ptr;
@@ -441,7 +441,7 @@ public int
 FUN(tok,str)(TYPE(Tokenizer) *tok, const Char *line, int *argc,
     const Char ***argv)
 {
-	LineInfo li;
+	TYPE(LineInfo) li;
 
 	memset(&li, 0, sizeof(li));
 	li.buffer = line;

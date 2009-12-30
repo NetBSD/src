@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: makelist,v 1.13 2009/12/30 22:37:40 christos Exp $
+#	$NetBSD: makelist,v 1.14 2009/12/30 23:54:52 christos Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 # makelist.sh: Automatically generate header files...
 
 AWK=awk
-USAGE="Usage: $0 -t <def>|-h|-e|-fc|-fh|-bc|-bh|-m <filenames>"
+USAGE="Usage: $0 -n|-h|-e|-fc|-fh|-bc|-bh|-m <filenames>"
 
 if [ "x$1" = "x" ]
 then
@@ -53,10 +53,11 @@ case $FLAG in
 
 #	generate foo.h file from foo.c
 #
--t)
+-n)
     cat << _EOF
-#define ${FILES}
-#include "tokenizer.c"
+#undef WIDECHAR
+#define NARROWCHAR
+#include "${FILES}"
 _EOF
     ;;
     

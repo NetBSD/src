@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.h,v 1.1 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: chartype.h,v 1.2 2009/12/30 23:54:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -185,14 +185,18 @@ protected Char **ct_decode_argv(int, const char *[],  ct_buffer_t *);
 protected void ct_conv_buff_resize(ct_buffer_t *, size_t, size_t);
 protected ssize_t ct_encode_char(char *, size_t, Char);
 
+#define ct_free_argv(s)	el_free(s)
+
 #else
 #define	ct_encode_string(s, b)	(s)
 #define ct_decode_string(s, b)	(s)
 #define ct_decode_argv(l, s, b)	(s)
 #define ct_conv_buff_resize(b, os, ns)
 #define ct_encode_char(d, l, s)	(*d = s, 1)
+#define ct_free_argv(s)
 #endif
 
+#ifndef NARROWCHAR
 /* Encode a characted into the destination buffer, provided there is sufficent
  * buffer space available. Returns the number of bytes used up (zero if the
  * character cannot be encoded, -1 if there was not enough space available). */
@@ -232,6 +236,7 @@ protected const Char *ct_visual_string(const Char *);
 #define CHTYPE_NONPRINT     (-4)
 /* classification of character c, as one of the above defines */
 protected int ct_chr_class(Char c);
+#endif
 
 
 #endif /* _chartype_f */

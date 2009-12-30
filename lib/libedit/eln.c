@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.1 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.2 2009/12/30 23:54:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.1 2009/12/30 22:37:40 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.2 2009/12/30 23:54:52 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include "histedit.h"
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: eln.c,v 1.1 2009/12/30 22:37:40 christos Exp $");
 #include "read.h"
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 public int
 el_getc(EditLine *el, char *cp)
@@ -89,7 +90,7 @@ el_parse(EditLine *el, int argc, const char *argv[])
 	if (!wargv)
 		return -1;
 	ret = el_wparse(el, argc, wargv);
-	free(wargv);
+	ct_free_argv(wargv);
 
 	return ret;
 }
@@ -171,7 +172,7 @@ el_set(EditLine *el, int op, ...)
 		default:
 			ret = -1;
 		}
-		free(wargv);
+		ct_free_argv(wargv);
 		break;
 	}
 
@@ -191,14 +192,14 @@ el_set(EditLine *el, int op, ...)
 		    goto out;
 		}
 		ret = el_wset(el, op, wargv[0], wargv[1], func);
-		free(wargv);
+		ct_free_argv(wargv);
 		break;
 	}
 	case EL_HIST: {           /* hist_fun_t, const char * */
 		hist_fun_t fun = va_arg(ap, hist_fun_t);
 		ptr_t ptr = va_arg(ap, ptr_t);
-		ret = hist_set(el, fun,
-		    ct_decode_string(ptr, &el->el_lgcyconv));
+		ret = hist_set(el, fun, ptr);
+		el->el_flags |= NARROW_HISTORY;
 		break;
 	}
 	/* XXX: do we need to change el_rfunc_t? */
@@ -247,7 +248,7 @@ el_get(EditLine *el, int op, ...)
 	case EL_PROMPT:         /* el_pfunc_t * */
 	case EL_RPROMPT: {
 		el_pfunc_t *p = va_arg(ap, el_pfunc_t *);
-		ret = prompt_get(el, p, 0, 0, op);
+		ret = prompt_get(el, p, 0, op);
 		break;
 	}
 
@@ -256,7 +257,7 @@ el_get(EditLine *el, int op, ...)
 		el_pfunc_t *p = va_arg(ap, el_pfunc_t *);
 		char *c = va_arg(ap, char *);
 		wchar_t wc;
-		ret = prompt_get(el, p, 0, &wc, op);
+		ret = prompt_get(el, p, &wc, op);
 		*c = (unsigned char)wc;
 		break;
 	}

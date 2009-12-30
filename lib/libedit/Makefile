@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2009/12/30 22:37:40 christos Exp $
+#	$NetBSD: Makefile,v 1.39 2009/12/30 23:54:52 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -26,17 +26,14 @@ MLINKS=	editline.3 el_init.3 editline.3 el_end.3 editline.3 el_reset.3 \
 	editline.3 tok_line.3 editline.3 tok_str.3
 
 # For speed and debugging
-SRCS=   ${OSRCS} readline.c
+SRCS=   ${OSRCS} readline.c tokenizer.c history.c
 # For protection
-#SRCS=	editline.c readline.c
+#SRCS=	editline.c readline.c tokenizer.c history.c
 
 .if ${WIDECHAR} == "yes"
-SRCS += tokenizern.c tokenizerw.c historyn.c historyw.c eln.c
-CLEANFILES+=tokenizern.c.tmp tokenizern.c tokenizerw.c.tmp tokenizerw.c
-CLEANFILES+=historyn.c.tmp historyn.c historyw.c.tmp historyw.c
+SRCS += tokenizern.c historyn.c eln.c
+CLEANFILES+=tokenizern.c.tmp tokenizern.c historyn.c.tmp historyn.c
 CPPFLAGS+=-DWIDECHAR
-.else
-SRCS += tokenizer.c history.c
 .endif
 
 LIBEDITDIR?=${.CURDIR}
@@ -106,22 +103,12 @@ editline.c: ${OSRCS} makelist Makefile
 
 tokenizern.c: makelist Makefile
 	${_MKTARGET_CREATE}
-	${HOST_SH} ${LIBEDITDIR}/makelist -t NARROW tokenizer > ${.TARGET}.tmp && \
-	    mv ${.TARGET}.tmp ${.TARGET}
-
-tokenizerw.c: makelist Makefile
-	${_MKTARGET_CREATE}
-	${HOST_SH} ${LIBEDITDIR}/makelist -t WIDE tokenizer > ${.TARGET}.tmp && \
+	${HOST_SH} ${LIBEDITDIR}/makelist -n tokenizer.c > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 historyn.c: makelist Makefile
 	${_MKTARGET_CREATE}
-	${HOST_SH} ${LIBEDITDIR}/makelist -t NARROW history > ${.TARGET}.tmp && \
-	    mv ${.TARGET}.tmp ${.TARGET}
-
-historyw.c: makelist Makefile
-	${_MKTARGET_CREATE}
-	${HOST_SH} ${LIBEDITDIR}/makelist -t WIDE history > ${.TARGET}.tmp && \
+	${HOST_SH} ${LIBEDITDIR}/makelist -n history.c > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 tc1.o:	${LIBEDITDIR}/TEST/tc1.c
