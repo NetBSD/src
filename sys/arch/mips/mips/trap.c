@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.11 2009/11/14 21:52:08 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.12 2009/12/30 04:51:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.11 2009/11/14 21:52:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.12 2009/12/30 04:51:26 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -308,9 +308,8 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		pmap_t pmap;
 
 		pmap  = p->p_vmspace->vm_map.pmap;
-		if (!(pte = pmap_segmap(pmap, vaddr)))
+		if (!(pte = pmap_pte_lookup(pmap, vaddr)))
 			panic("utlbmod: invalid segmap");
-		pte += (vaddr >> PGSHIFT) & (NPTEPG - 1);
 		entry = pte->pt_entry;
 		if (!mips_pg_v(entry) || (entry & mips_pg_m_bit()))
 			panic("utlbmod: invalid pte");
@@ -381,7 +380,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 #ifdef VMFAULT_TRACE
 		printf(
 		    "uvm_fault(%p (pmap %p), %#"PRIxVADDR
-		    " (0x%x), %d) -> %d at pc %#"PRIxVADDR"\n",
+		    " (%"PRIxVADDR"), %d) -> %d at pc %#"PRIxVADDR"\n",
 		    map, vm->vm_map.pmap, va, vaddr, ftype, rv, opc);
 #endif
 		/*
