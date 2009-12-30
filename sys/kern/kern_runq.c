@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.27 2009/10/21 21:12:06 rmind Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.28 2009/12/30 23:49:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.27 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.28 2009/12/30 23:49:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -486,6 +486,17 @@ sched_catchlwp(struct cpu_info *ci)
 
 		/* Grab the thread, and move to the local run queue */
 		sched_dequeue(l);
+
+		/*
+		 * If LWP is still context switching, we may need to
+		 * spin-wait before changing its CPU.
+		 */
+		if (__predict_false(l->l_ctxswtch != 0)) {
+			u_int count;
+			count = SPINLOCK_BACKOFF_MIN;
+			while (l->l_ctxswtch)
+				SPINLOCK_BACKOFF(count);
+		}
 		l->l_cpu = curci;
 		ci_rq->r_ev_pull.ev_count++;
 		lwp_unlock_to(l, curspc->spc_mutex);
