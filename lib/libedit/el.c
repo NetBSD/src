@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.56 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.57 2009/12/30 23:54:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.56 2009/12/30 22:37:40 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.57 2009/12/30 23:54:52 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -266,6 +266,7 @@ FUN(el,set)(EditLine *el, int op, ...)
 		ptr_t ptr = va_arg(ap, ptr_t);
 
 		rv = hist_set(el, func, ptr);
+		el->el_flags &= ~NARROW_HISTORY;
 		break;
 	}
 

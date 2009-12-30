@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.35 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.36 2009/12/30 23:54:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.35 2009/12/30 22:37:40 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.36 2009/12/30 23:54:52 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -64,7 +64,7 @@ typedef int (*history_efun_t)(ptr_t, TYPE(HistEvent) *, const Char *);
 typedef void (*history_vfun_t)(ptr_t, TYPE(HistEvent) *);
 typedef int (*history_sfun_t)(ptr_t, TYPE(HistEvent) *, const int);
 
-struct TYPE(history) {
+struct FUNW(history) {
 	ptr_t h_ref;		/* Argument for history fcns	 */
 	int h_ent;		/* Last entry point for history	 */
 	history_gfun_t h_first;	/* Get the first element	 */
@@ -563,7 +563,7 @@ history_def_clear(ptr_t p, TYPE(HistEvent) *ev)
 /* history_init():
  *	Initialization function.
  */
-public TYPE(TYPE(History)) *
+public TYPE(History) *
 FUN(history,init)(void)
 {
 	TYPE(HistEvent) ev;
@@ -736,7 +736,7 @@ history_load(TYPE(History) *h, const char *fname)
 	int i = -1;
 	TYPE(HistEvent) ev;
 #ifdef WIDECHAR
-	static el_conv_buff_t conv;
+	static ct_buffer_t conv;
 #endif
 
 	if ((fp = fopen(fname, "r")) == NULL)
@@ -796,7 +796,7 @@ history_save(TYPE(History) *h, const char *fname)
 	size_t len, max_size;
 	char *ptr;
 #ifdef WIDECHAR
-	static el_conv_buff_t conv;
+	static ct_buffer_t conv;
 #endif
 
 	if ((fp = fopen(fname, "w")) == NULL)
@@ -1053,7 +1053,7 @@ FUNW(history)(TYPE(History) *h, TYPE(HistEvent) *ev, int fun, ...)
 	}
 
 	case H_END:
-		history_end(h);
+		FUN(history,end)(h);
 		retval = 0;
 		break;
 

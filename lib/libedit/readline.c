@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.86 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.87 2009/12/30 23:54:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.86 2009/12/30 22:37:40 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.87 2009/12/30 23:54:52 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -279,7 +279,7 @@ rl_initialize(void)
 	if (e != NULL)
 		el_end(e);
 	if (h != NULL)
-		history_end(h);
+		FUN(history,end)(h);
 
 	if (!rl_instream)
 		rl_instream = stdin;
@@ -295,9 +295,9 @@ rl_initialize(void)
 	e = el_init(rl_readline_name, rl_instream, rl_outstream, stderr);
 
 	if (!editmode)
-		el_set(e, EL_EDITMODE, 0);
+		FUN(el,set)(e, EL_EDITMODE, 0);
 
-	h = history_init();
+	h = FUN(history,init)();
 	if (!e || !h)
 		return (-1);
 
@@ -312,7 +312,7 @@ rl_initialize(void)
 
 	/* for proper prompt printing in readline() */
 	if (rl_set_prompt("") == -1) {
-		history_end(h);
+		FUN(history,end)(h);
 		el_end(e);
 		return -1;
 	}
