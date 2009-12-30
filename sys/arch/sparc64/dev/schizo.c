@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.10 2009/11/30 05:00:58 mrg Exp $	*/
+/*	$NetBSD: schizo.c,v 1.11 2009/12/30 20:20:56 nakayama Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -448,11 +448,12 @@ pcireg_t
 schizo_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	struct schizo_pbm *sp = pc->cookie;
-	pcireg_t val;
+	pcireg_t val = (pcireg_t)~0;
 
 	DPRINTF(SDB_CONF, ("%s: tag %lx reg %x ", __func__, (long)tag, reg));
-	val = bus_space_read_4(sp->sp_cfgt, sp->sp_cfgh,
-	    PCITAG_OFFSET(tag) + reg);
+	if (PCITAG_NODE(tag) != -1)
+		val = bus_space_read_4(sp->sp_cfgt, sp->sp_cfgh,
+		    PCITAG_OFFSET(tag) + reg);
 	DPRINTF(SDB_CONF, (" returning %08x\n", (u_int)val));
 	return (val);
 }
@@ -464,6 +465,13 @@ schizo_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 
 	DPRINTF(SDB_CONF, ("%s: tag %lx; reg %x; data %x", __func__,
 		(long)tag, reg, (int)data));
+
+	/* If we don't know it, just punt it.  */
+	if (PCITAG_NODE(tag) == -1) {
+		DPRINTF(SDB_CONF, (" .. bad addr\n"));
+		return;
+	}
+
         bus_space_write_4(sp->sp_cfgt, sp->sp_cfgh,
 	    PCITAG_OFFSET(tag) + reg, data);
 	DPRINTF(SDB_CONF, (" .. done\n"));
