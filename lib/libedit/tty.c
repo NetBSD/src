@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.31 2009/07/22 15:58:09 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.32 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.31 2009/07/22 15:58:09 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.32 2009/12/30 22:37:40 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -46,8 +46,8 @@ __RCSID("$NetBSD: tty.c,v 1.31 2009/07/22 15:58:09 christos Exp $");
  */
 #include <assert.h>
 #include <errno.h>
-#include "tty.h"
 #include "el.h"
+#include "tty.h"
 
 typedef struct ttymodes_t {
 	const char *m_name;
@@ -56,7 +56,7 @@ typedef struct ttymodes_t {
 }          ttymodes_t;
 
 typedef struct ttymap_t {
-	int nch, och;		/* Internal and termio rep of chars */
+	Int nch, och;		/* Internal and termio rep of chars */
 	el_action_t bind[3];	/* emacs, vi, and vi-cmd */
 } ttymap_t;
 
@@ -893,7 +893,7 @@ tty_bind_char(EditLine *el, int force)
 
 	unsigned char *t_n = el->el_tty.t_c[ED_IO];
 	unsigned char *t_o = el->el_tty.t_ed.c_cc;
-	unsigned char new[2], old[2];
+	Char new[2], old[2];
 	const ttymap_t *tp;
 	el_action_t *map, *alt;
 	const el_action_t *dmap, *dalt;
@@ -915,16 +915,16 @@ tty_bind_char(EditLine *el, int force)
 		if (new[0] == old[0] && !force)
 			continue;
 		/* Put the old default binding back, and set the new binding */
-		key_clear(el, map, (char *)old);
-		map[old[0]] = dmap[old[0]];
-		key_clear(el, map, (char *)new);
+		key_clear(el, map, old);
+		map[UC(old[0])] = dmap[UC(old[0])];
+		key_clear(el, map, new);
 		/* MAP_VI == 1, MAP_EMACS == 0... */
-		map[new[0]] = tp->bind[el->el_map.type];
+		map[UC(new[0])] = tp->bind[el->el_map.type];
 		if (dalt) {
-			key_clear(el, alt, (char *)old);
-			alt[old[0]] = dalt[old[0]];
-			key_clear(el, alt, (char *)new);
-			alt[new[0]] = tp->bind[el->el_map.type + 1];
+			key_clear(el, alt, old);
+			alt[UC(old[0])] = dalt[UC(old[0])];
+			key_clear(el, alt, new);
+			alt[UC(new[0])] = tp->bind[el->el_map.type + 1];
 		}
 	}
 }
@@ -952,7 +952,7 @@ tty_rawmode(EditLine *el)
 	}
 	/*
          * We always keep up with the eight bit setting and the speed of the
-         * tty. But only we only believe changes that are made to cooked mode!
+         * tty. But we only believe changes that are made to cooked mode!
          */
 	el->el_tty.t_eight = tty__geteightbit(&el->el_tty.t_ts);
 	el->el_tty.t_speed = tty__getspeed(&el->el_tty.t_ts);
@@ -1172,19 +1172,20 @@ tty_noquotemode(EditLine *el)
  */
 protected int
 /*ARGSUSED*/
-tty_stty(EditLine *el, int argc __attribute__((__unused__)), const char **argv)
+tty_stty(EditLine *el, int argc __attribute__((__unused__)), const Char **argv)
 {
 	const ttymodes_t *m;
 	char x;
 	int aflag = 0;
-	const char *s, *d;
-	const char *name;
+	const Char *s, *d;
+        char name[EL_BUFSIZ];
 	struct termios *tios = &el->el_tty.t_ex;
 	int z = EX_IO;
 
 	if (argv == NULL)
 		return (-1);
-	name = *argv++;
+	strncpy(name, ct_encode_string(*argv++, &el->el_scratch), sizeof(name));
+        name[sizeof(name) - 1] = '\0';
 
 	while (argv && *argv && argv[0][0] == '-' && argv[0][2] == '\0')
 		switch (argv[0][1]) {
@@ -1258,7 +1259,7 @@ tty_stty(EditLine *el, int argc __attribute__((__unused__)), const char **argv)
 		return (0);
 	}
 	while (argv && (s = *argv++)) {
-		const char *p;
+		const Char *p;
 		switch (*s) {
 		case '+':
 		case '-':
@@ -1269,21 +1270,21 @@ tty_stty(EditLine *el, int argc __attribute__((__unused__)), const char **argv)
 			break;
 		}
 		d = s;
-		p = strchr(s, '=');
+		p = Strchr(s, '=');
 		for (m = ttymodes; m->m_name; m++)
-			if ((p ? strncmp(m->m_name, d, (size_t)(p - d)) :
-			    strcmp(m->m_name, d)) == 0 &&
+			if ((p ? strncmp(m->m_name, ct_encode_string(d, &el->el_scratch), (size_t)(p - d)) :
+			    strcmp(m->m_name, ct_encode_string(d, &el->el_scratch))) == 0 &&
 			    (p == NULL || m->m_type == MD_CHAR))
 				break;
 
 		if (!m->m_name) {
 			(void) fprintf(el->el_errfile,
-			    "%s: Invalid argument `%s'.\n", name, d);
+			    "%s: Invalid argument `" FSTR "'.\n", name, d);
 			return (-1);
 		}
 		if (p) {
 			int c = ffs((int)m->m_value);
-			int v = *++p ? parse__escape((const char **) &p) :
+			int v = *++p ? parse__escape(&p) :
 			    el->el_tty.t_vdisable;
 			assert(c != 0);
 			c--;

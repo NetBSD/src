@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.22 2009/02/15 21:55:23 christos Exp $	*/
+/*	$NetBSD: emacs.c,v 1.23 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)emacs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: emacs.c,v 1.22 2009/02/15 21:55:23 christos Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.23 2009/12/30 22:37:40 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: emacs.c,v 1.22 2009/02/15 21:55:23 christos Exp $");
  */
 protected el_action_t
 /*ARGSUSED*/
-em_delete_or_list(EditLine *el, int c)
+em_delete_or_list(EditLine *el, Int c)
 {
 
 	if (el->el_line.cursor == el->el_line.lastchar) {
@@ -88,9 +88,9 @@ em_delete_or_list(EditLine *el, int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-em_delete_next_word(EditLine *el, int c __attribute__((__unused__)))
+em_delete_next_word(EditLine *el, Int c __attribute__((__unused__)))
 {
-	char *cp, *p, *kp;
+	Char *cp, *p, *kp;
 
 	if (el->el_line.cursor == el->el_line.lastchar)
 		return (CC_ERROR);
@@ -117,9 +117,9 @@ em_delete_next_word(EditLine *el, int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-em_yank(EditLine *el, int c __attribute__((__unused__)))
+em_yank(EditLine *el, Int c __attribute__((__unused__)))
 {
-	char *kp, *cp;
+	Char *kp, *cp;
 
 	if (el->el_chared.c_kill.last == el->el_chared.c_kill.buf)
 		return (CC_NORM);
@@ -153,9 +153,9 @@ em_yank(EditLine *el, int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-em_kill_line(EditLine *el, int c __attribute__((__unused__)))
+em_kill_line(EditLine *el, Int c __attribute__((__unused__)))
 {
-	char *kp, *cp;
+	Char *kp, *cp;
 
 	cp = el->el_line.buffer;
 	kp = el->el_chared.c_kill.buf;
@@ -175,9 +175,9 @@ em_kill_line(EditLine *el, int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-em_kill_region(EditLine *el, int c __attribute__((__unused__)))
+em_kill_region(EditLine *el, Int c __attribute__((__unused__)))
 {
-	char *kp, *cp;
+	Char *kp, *cp;
 
 	if (!el->el_chared.c_kill.mark)
 		return (CC_ERROR);
@@ -208,9 +208,9 @@ em_kill_region(EditLine *el, int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-em_copy_region(EditLine *el, int c __attribute__((__unused__)))
+em_copy_region(EditLine *el, Int c __attribute__((__unused__)))
 {
-	char *kp, *cp;
+	Char *kp, *cp;
 
 	if (!el->el_chared.c_kill.mark)
 		return (CC_ERROR);
@@ -237,7 +237,7 @@ em_copy_region(EditLine *el, int c __attribute__((__unused__)))
  *	Gosling emacs transpose chars [^T]
  */
 protected el_action_t
-em_gosmacs_transpose(EditLine *el, int c)
+em_gosmacs_transpose(EditLine *el, Int c)
 {
 
 	if (el->el_line.cursor > &el->el_line.buffer[1]) {
@@ -257,7 +257,7 @@ em_gosmacs_transpose(EditLine *el, int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-em_next_word(EditLine *el, int c __attribute__((__unused__)))
+em_next_word(EditLine *el, Int c __attribute__((__unused__)))
 {
 	if (el->el_line.cursor == el->el_line.lastchar)
 		return (CC_ERROR);
@@ -282,16 +282,16 @@ em_next_word(EditLine *el, int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-em_upper_case(EditLine *el, int c __attribute__((__unused__)))
+em_upper_case(EditLine *el, Int c __attribute__((__unused__)))
 {
-	char *cp, *ep;
+	Char *cp, *ep;
 
 	ep = c__next_word(el->el_line.cursor, el->el_line.lastchar,
 	    el->el_state.argument, ce__isword);
 
 	for (cp = el->el_line.cursor; cp < ep; cp++)
-		if (islower((unsigned char)*cp))
-			*cp = toupper((unsigned char)*cp);
+		if (Islower(*cp))
+			*cp = Toupper(*cp);
 
 	el->el_line.cursor = ep;
 	if (el->el_line.cursor > el->el_line.lastchar)
@@ -306,24 +306,24 @@ em_upper_case(EditLine *el, int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-em_capitol_case(EditLine *el, int c __attribute__((__unused__)))
+em_capitol_case(EditLine *el, Int c __attribute__((__unused__)))
 {
-	char *cp, *ep;
+	Char *cp, *ep;
 
 	ep = c__next_word(el->el_line.cursor, el->el_line.lastchar,
 	    el->el_state.argument, ce__isword);
 
 	for (cp = el->el_line.cursor; cp < ep; cp++) {
-		if (isalpha((unsigned char)*cp)) {
-			if (islower((unsigned char)*cp))
-				*cp = toupper((unsigned char)*cp);
+		if (Isalpha(*cp)) {
+			if (Islower(*cp))
+				*cp = Toupper(*cp);
 			cp++;
 			break;
 		}
 	}
 	for (; cp < ep; cp++)
-		if (isupper((unsigned char)*cp))
-			*cp = tolower((unsigned char)*cp);
+		if (Isupper(*cp))
+			*cp = Tolower(*cp);
 
 	el->el_line.cursor = ep;
 	if (el->el_line.cursor > el->el_line.lastchar)
@@ -338,16 +338,16 @@ em_capitol_case(EditLine *el, int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-em_lower_case(EditLine *el, int c __attribute__((__unused__)))
+em_lower_case(EditLine *el, Int c __attribute__((__unused__)))
 {
-	char *cp, *ep;
+	Char *cp, *ep;
 
 	ep = c__next_word(el->el_line.cursor, el->el_line.lastchar,
 	    el->el_state.argument, ce__isword);
 
 	for (cp = el->el_line.cursor; cp < ep; cp++)
-		if (isupper((unsigned char)*cp))
-			*cp = tolower((unsigned char)*cp);
+		if (Isupper(*cp))
+			*cp = Tolower(*cp);
 
 	el->el_line.cursor = ep;
 	if (el->el_line.cursor > el->el_line.lastchar)
@@ -362,7 +362,7 @@ em_lower_case(EditLine *el, int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-em_set_mark(EditLine *el, int c __attribute__((__unused__)))
+em_set_mark(EditLine *el, Int c __attribute__((__unused__)))
 {
 
 	el->el_chared.c_kill.mark = el->el_line.cursor;
@@ -376,9 +376,9 @@ em_set_mark(EditLine *el, int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-em_exchange_mark(EditLine *el, int c __attribute__((__unused__)))
+em_exchange_mark(EditLine *el, Int c __attribute__((__unused__)))
 {
-	char *cp;
+	Char *cp;
 
 	cp = el->el_line.cursor;
 	el->el_line.cursor = el->el_chared.c_kill.mark;
@@ -393,7 +393,7 @@ em_exchange_mark(EditLine *el, int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-em_universal_argument(EditLine *el, int c __attribute__((__unused__)))
+em_universal_argument(EditLine *el, Int c __attribute__((__unused__)))
 {				/* multiply current argument by 4 */
 
 	if (el->el_state.argument > 1000000)
@@ -410,7 +410,7 @@ em_universal_argument(EditLine *el, int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-em_meta_next(EditLine *el, int c __attribute__((__unused__)))
+em_meta_next(EditLine *el, Int c __attribute__((__unused__)))
 {
 
 	el->el_state.metanext = 1;
@@ -423,7 +423,7 @@ em_meta_next(EditLine *el, int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-em_toggle_overwrite(EditLine *el, int c __attribute__((__unused__)))
+em_toggle_overwrite(EditLine *el, Int c __attribute__((__unused__)))
 {
 
 	el->el_state.inputmode = (el->el_state.inputmode == MODE_INSERT) ?
@@ -437,9 +437,9 @@ em_toggle_overwrite(EditLine *el, int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-em_copy_prev_word(EditLine *el, int c __attribute__((__unused__)))
+em_copy_prev_word(EditLine *el, Int c __attribute__((__unused__)))
 {
-	char *cp, *oldc, *dp;
+	Char *cp, *oldc, *dp;
 
 	if (el->el_line.cursor == el->el_line.buffer)
 		return (CC_ERROR);
@@ -464,7 +464,7 @@ em_copy_prev_word(EditLine *el, int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-em_inc_search_next(EditLine *el, int c __attribute__((__unused__)))
+em_inc_search_next(EditLine *el, Int c __attribute__((__unused__)))
 {
 
 	el->el_search.patlen = 0;
@@ -477,7 +477,7 @@ em_inc_search_next(EditLine *el, int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-em_inc_search_prev(EditLine *el, int c __attribute__((__unused__)))
+em_inc_search_prev(EditLine *el, Int c __attribute__((__unused__)))
 {
 
 	el->el_search.patlen = 0;
@@ -491,7 +491,7 @@ em_inc_search_prev(EditLine *el, int c __attribute__((__unused__)))
  */
 protected el_action_t
 /*ARGSUSED*/
-em_delete_prev_char(EditLine *el, int c __attribute__((__unused__)))
+em_delete_prev_char(EditLine *el, Int c __attribute__((__unused__)))
 {
 
 	if (el->el_line.cursor <= el->el_line.buffer)

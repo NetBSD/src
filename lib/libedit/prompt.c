@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.16 2009/07/17 12:26:26 christos Exp $	*/
+/*	$NetBSD: prompt.c,v 1.17 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)prompt.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: prompt.c,v 1.16 2009/07/17 12:26:26 christos Exp $");
+__RCSID("$NetBSD: prompt.c,v 1.17 2009/12/30 22:37:40 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -47,17 +47,17 @@ __RCSID("$NetBSD: prompt.c,v 1.16 2009/07/17 12:26:26 christos Exp $");
 #include <stdio.h>
 #include "el.h"
 
-private char	*prompt_default(EditLine *);
-private char	*prompt_default_r(EditLine *);
+private Char	*prompt_default(EditLine *);
+private Char	*prompt_default_r(EditLine *);
 
 /* prompt_default():
  *	Just a default prompt, in case the user did not provide one
  */
-private char *
+private Char *
 /*ARGSUSED*/
 prompt_default(EditLine *el __attribute__((__unused__)))
 {
-	static char a[3] = {'?', ' ', '\0'};
+	static Char a[3] = {'?', ' ', '\0'};
 
 	return (a);
 }
@@ -66,11 +66,11 @@ prompt_default(EditLine *el __attribute__((__unused__)))
 /* prompt_default_r():
  *	Just a default rprompt, in case the user did not provide one
  */
-private char *
+private Char *
 /*ARGSUSED*/
 prompt_default_r(EditLine *el __attribute__((__unused__)))
 {
-	static char a[1] = {'\0'};
+	static Char a[1] = {'\0'};
 
 	return (a);
 }
@@ -78,15 +78,12 @@ prompt_default_r(EditLine *el __attribute__((__unused__)))
 
 /* prompt_print():
  *	Print the prompt and update the prompt position.
- *	We use an array of integers in case we want to pass
- * 	literal escape sequences in the prompt and we want a
- *	bit to flag them
  */
 protected void
 prompt_print(EditLine *el, int op)
 {
 	el_prompt_t *elp;
-	char *p;
+	Char *p;
 	int ignore = 0;
 
 	if (op == EL_PROMPT)
@@ -94,7 +91,13 @@ prompt_print(EditLine *el, int op)
 	else
 		elp = &el->el_rprompt;
 
-	for (p = (*elp->p_func)(el); *p; p++) {
+	if (elp->p_wide)
+		p = (*elp->p_func)(el);
+	else
+		p = ct_decode_string((char *)(*elp->p_func)(el),
+		    &el->el_scratch);
+
+	for (; *p; p++) {
 		if (elp->p_ignore == *p) {
 			ignore = !ignore;
 			continue;
@@ -143,7 +146,7 @@ prompt_end(EditLine *el __attribute__((__unused__)))
  *	Install a prompt printing function
  */
 protected int
-prompt_set(EditLine *el, el_pfunc_t prf, char c, int op)
+prompt_set(EditLine *el, el_pfunc_t prf, Char c, int op, int wide)
 {
 	el_prompt_t *p;
 
@@ -157,13 +160,15 @@ prompt_set(EditLine *el, el_pfunc_t prf, char c, int op)
 			p->p_func = prompt_default;
 		else
 			p->p_func = prompt_default_r;
-	} else
+	} else {
 		p->p_func = prf;
+	}
 
 	p->p_ignore = c;
 
 	p->p_pos.v = 0;
 	p->p_pos.h = 0;
+	p->p_wide = wide;
 
 	return 0;
 }
@@ -173,7 +178,7 @@ prompt_set(EditLine *el, el_pfunc_t prf, char c, int op)
  *	Retrieve the prompt printing function
  */
 protected int
-prompt_get(EditLine *el, el_pfunc_t *prf, char *c, int op)
+prompt_get(EditLine *el, el_pfunc_t *prf, Char *c, int op)
 {
 	el_prompt_t *p;
 
@@ -185,8 +190,8 @@ prompt_get(EditLine *el, el_pfunc_t *prf, char *c, int op)
 	else
 		p = &el->el_rprompt;
 
-	*prf = el->el_rprompt.p_func;
-
+	if (prf)
+		*prf = p->p_func;
 	if (c)
 		*c = p->p_ignore;
 
