@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.198 2009/12/29 04:23:43 elad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.199 2009/12/30 06:58:50 elad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.198 2009/12/29 04:23:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.199 2009/12/30 06:58:50 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -452,10 +452,8 @@ socket_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	case KAUTH_REQ_NETWORK_SOCKET_DROP: {
 		/* Normal users can only drop their own connections. */
 		struct socket *so = (struct socket *)arg1;
-		uid_t sockuid = so->so_uidinfo->ui_uid;
 
-		if (sockuid == kauth_cred_getuid(cred) ||
-		    sockuid == kauth_cred_geteuid(cred))
+		if (proc_uidmatch(cred, so->so_cred))
 			result = KAUTH_RESULT_ALLOW;
 
 		break;
