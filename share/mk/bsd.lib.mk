@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.301 2009/12/12 21:33:50 mrg Exp $
+#	$NetBSD: bsd.lib.mk,v 1.302 2009/12/30 12:34:13 abs Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -141,6 +141,8 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 # Data-driven table using make variables to control how shared libraries
 # are built for different platforms and object formats.
 # OBJECT_FMT:		currently either "ELF" or "a.out", from <bsd.own.mk>
+# SHLIB_MAJOR, SHLIB_MINOR, SHLIB_TEENY: Major, minor, and teeny version
+#			numbers of shared library
 # SHLIB_SOVERSION:	version number to be compiled into a shared library
 #			via -soname. Usualy ${SHLIB_MAJOR} on ELF.
 #			NetBSD/pmax used to use ${SHLIB_MAJOR}[.${SHLIB_MINOR}
