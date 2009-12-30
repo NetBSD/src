@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.77 2009/11/27 08:35:05 mbalmer Exp $	*/
+/*	$NetBSD: ums.c,v 1.78 2009/12/30 20:38:47 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.77 2009/11/27 08:35:05 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.78 2009/12/30 20:38:47 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,9 @@ ums_match(device_t parent, cfdata_t match, void *aux)
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	if (!hid_is_collection(desc, size, uha->reportid,
-			       HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_MOUSE)))
+			       HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_MOUSE)) &&
+	    !hid_is_collection(desc, size, uha->reportid,
+			       HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_POINTER)))
 		return (UMATCH_NONE);
 
 	return (UMATCH_IFACECLASS);
