@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.8 2009/11/23 23:48:58 cliff Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.9 2009/12/30 04:51:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -393,7 +393,8 @@ do {									\
 struct lwp;
 struct user;
 
-extern struct segtab *segbase;	/* current segtab base */
+extern struct segtab *segbase;		/* current segtab base */
+extern int mips_poolpage_vmfreelist;	/* freelist to allocate poolpages */
 
 /* copy.S */
 int8_t	ufetch_int8(void *);
@@ -477,9 +478,15 @@ void	netintr(void);
 int	kdbpeek(vaddr_t);
 
 /* mips_machdep.c */
+struct mips_vmfreelist;
+struct phys_ram_seg;
 void	dumpsys(void);
 int	savectx(struct user *);
 void	mips_init_msgbuf(void);
+void	mips_init_lwp0_uarea(void);
+void	mips_page_physload(vaddr_t, vaddr_t,
+	    const struct phys_ram_seg *, size_t,
+	    const struct mips_vmfreelist *, size_t);
 void	savefpregs(struct lwp *);
 void	loadfpregs(struct lwp *);
 

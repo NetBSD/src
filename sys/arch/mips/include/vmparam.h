@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41.28.7 2009/12/11 20:22:15 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.28.8 2009/12/30 04:51:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -222,10 +222,7 @@ do {									\
 #ifndef VM_NFREELIST
 #define	VM_NFREELIST		16	/* 16 distinct memory segments */
 #define VM_FREELIST_DEFAULT	0
-#define VM_FREELIST_FIRST16M	1	/* ISA DMA range */
-#define VM_FREELIST_FIRST512M	2	/* KSEG0/1 */
-#define VM_FREELIST_FIRST4G	3	/* 32bit addrs */
-#define VM_FREELIST_MAX		4
+#define VM_FREELIST_MAX		1
 #endif
 
 #endif /* ! _MIPS_VMPARAM_H_ */

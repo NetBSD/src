@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167.38.3 2009/09/11 23:51:25 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.167.38.4 2009/12/30 04:51:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -138,10 +138,7 @@ _C_LABEL(kernel_text):
 #endif
 	INT_S	t0, _C_LABEL(cpu_id)		# save PRID register
 	INT_S	t1, _C_LABEL(fpu_id)		# save FPU ID register
-	PTR_LA	MIPS_CURLWP, _C_LABEL(lwp0)	# set curlwp, curcpu
-	PTR_LA	t0, _C_LABEL(cpu_info_store)
-	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(t0)
-	PTR_S	t0, L_CPU(MIPS_CURLWP) 
+	PTR_LA	MIPS_CURLWP, _C_LABEL(lwp0)	# set curlwp
 	jal	_C_LABEL(mach_init)		# mach_init(a0, a1, a2, a3)
 	nop
 

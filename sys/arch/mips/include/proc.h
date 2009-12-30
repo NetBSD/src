@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.21.36.3 2009/09/05 03:16:23 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.21.36.4 2009/12/30 04:51:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,6 +76,8 @@ struct frame {
 #ifdef _KERNEL
 /* kernel single-step emulation */
 int mips_singlestep(struct lwp *l);
+
+#define	LWP0_CPU_INFO	&cpu_info_store	/* staticly set in lwp0 */
 #endif /* _KERNEL */
 
 #endif /* _MIPS_PROC_H_ */

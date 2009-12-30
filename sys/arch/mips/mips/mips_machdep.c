@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.17 2009/11/13 05:25:49 cliff Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.18 2009/12/30 04:51:26 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.17 2009/11/13 05:25:49 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.18 2009/12/30 04:51:26 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -225,6 +225,11 @@ uint64_t mips3_tlb_vpn_mask;
 uint64_t mips3_tlb_pfn_mask;
 uint32_t mips3_tlb_pg_mask;
 #endif
+
+struct	cpu_info cpu_info_store = {
+	.ci_curlwp = &lwp0,
+	.ci_fpcurlwp = &lwp0,
+};
 
 struct	user *proc0paddr;
 struct	segtab *segbase = (void *)(MIPS_KSEG2_START + 0x1eadbeef);
@@ -832,6 +837,7 @@ mips_vector_init(void)
 {
 	const struct pridtab *ct;
 
+#if 0
 	/*
 	 * XXX Set-up curlwp/curcpu again.  They may have been clobbered
 	 * beween verylocore and here.
@@ -839,7 +845,10 @@ mips_vector_init(void)
 	lwp0.l_cpu = &cpu_info_store;
 	cpu_info_store.ci_curlwp = &lwp0;
 	cpu_info_store.ci_fpcurlwp = &lwp0;
-	curlwp = &lwp0;
+#endif
+#if 0
+	curlwp = &lwp0;		/* handled in locore.S */
+#endif
 
 	mycpu = NULL;
 	for (ct = cputab; ct->cpu_name != NULL; ct++) {
@@ -1620,6 +1629,173 @@ mips_init_msgbuf(void)
 	if (sz != reqsz)
 		printf("WARNING: %"PRIdVSIZE" bytes not available for msgbuf "
 		    "in last cluster (%"PRIdVSIZE" used)\n", reqsz, sz);
+}
+
+void
+mips_init_lwp0_uarea(void)
+{
+	vaddr_t v = uvm_pageboot_alloc(USPACE);
+	lwp0.l_addr = proc0paddr = (struct user *)v;
+	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+#ifdef _LP64
+	lwp0.l_md.md_regs->f_regs[_R_SR] = MIPS_SR_KX;
+#endif
+	lwp0.l_addr->u_pcb.pcb_context.val[_L_SR] =
+#ifdef _LP64
+	    MIPS_SR_KX |
+#endif
+	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+}
+
+int mips_poolpage_vmfreelist = VM_FREELIST_DEFAULT;
+
+#define	HALFGIG		((paddr_t)512 * 1024 * 1024)
+#define	FOURGIG		((paddr_t)4 * 1024 * 1024 * 1024)
+
+void
+mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
+	const phys_ram_seg_t *segs, size_t nseg,
+	const struct mips_vmfreelist *flp, size_t nfl)
+{
+	const paddr_t kernstart = MIPS_KSEG0_TO_PHYS(vkernstart);
+	const paddr_t kernend = MIPS_KSEG0_TO_PHYS(vkernend);
+#if defined(VM_FREELIST_FIRST4G) || defined(VM_FREELIST_FIRST512M)
+#ifdef VM_FREELIST_FIRST512M
+	bool need512m = false;
+#endif
+#ifdef VM_FREELIST_FIRST4G
+	bool need4g = false;
+#endif
+
+	/*
+	 * Do a first pass and see what ranges memory we have to deal with.
+	 */
+	for (size_t i = 0; i < nseg; i++) {
+#ifdef VM_FREELIST_FIRST4G
+		if (segs[i].last > FOURGIG)
+			need4g = true;
+#endif
+#ifdef VM_FREELIST_FIRST512M
+		if (segs[i].last > HALFGIG) {
+			need512m = true;
+			mips_poolpage_vmfreelist = VM_FREELIST_FIRST512M;
+		}
+#endif
+	}
+#endif /* VM_FREELIST_FIRST512M || VM_FREELIST_FIRST4G */
+
+	while (nseg-- > 0) {
+		/*
+		 * Copy this segment since we may have to deal with it
+		 * piecemeal.
+		 */
+		phys_ram_seg_t tmp = *segs++;
+		printf("phys segment: %#"PRIxPADDR"@%#"PRIxPADDR"\n", tmp.size, tmp.start);
+		while (tmp.size > 0) {
+			int freelist = -1;	/* unknown freelist */
+			psize_t segsize = tmp.size;
+			for (size_t i = 0; i < nfl; i++) {
+				/*
+				 * If this segment doesn't overlap the freelist
+				 * at all, skip it.
+				 */ 
+				if (tmp.start >= flp[i].fl_end
+				    || tmp.start + tmp.size <= flp[i].fl_start)
+					continue;
+				/*
+				 * If the start of this segment starts before
+				 * the start of the freelist, then limit the
+				 * segment to loaded to the part that doesn't
+				 * match this freelist and fall back to normal
+				 * freelist matching.
+				 */
+				if (tmp.start < flp[i].fl_start) {
+					segsize = flp[i].fl_start - tmp.start;
+					break;
+				}
+
+				/*
+				 * We've matched this freelist so remember it.
+				 */
+				freelist = flp->fl_freelist;
+
+				/*
+				 * If this segment extends past the end of this
+				 * freelist, bound to segment to the freelist.
+				 */
+				if (tmp.start + tmp.size > flp[i].fl_end)
+					segsize = flp[i].fl_end - tmp.start;
+				break;
+			}
+			/*
+			 * If we didn't match one of the port dependent
+			 * freelists, let's try the common ones.
+			 */
+			if (freelist == -1) {
+#ifdef VM_FREELIST_FIRST512M
+				if (need512m && tmp.start < HALFGIG) {
+					freelist = VM_FREELIST_FIRST512M;
+					if (tmp.start + tmp.size > HALFGIG)
+						segsize = HALFGIG - tmp.start;
+				} else
+#endif
+#ifdef VM_FREELIST_FIRST4G
+				if (need4g && tmp.start < FOURGIG) {
+					freelist = VM_FREELIST_FIRST4G;
+					if (tmp.start + tmp.size > FOURGIG)
+						segsize = FOURGIG - tmp.start;
+				} else
+#endif
+					freelist = VM_FREELIST_DEFAULT;
+			}
+
+			/*
+			 * Make sure the memory we provide to uvm doesn't
+			 * include the kernel.
+			 */
+			if (tmp.start < kernend
+			    && tmp.start + segsize > kernstart) {
+				if (tmp.start < kernstart) {
+					/*
+					 * Only add the memory before the
+					 * kernel.
+					 */
+					segsize -= kernstart - tmp.start;
+				} else if (tmp.start + segsize > kernend) {
+					/*
+					 * Only add the memory after the
+					 * kernel.
+					 */
+					segsize -= (kernend - tmp.start);
+					tmp.size -= (kernend - tmp.start);
+					tmp.start = kernend;
+				} else {
+					/*
+					 * Just skip the segment entirely since
+					 * it's inside the kernel.
+					 */
+					tmp.start += segsize;
+					tmp.size -= segsize;
+					continue;
+				}
+			}
+			
+			/*
+			 * Now we give this segment to uvm.
+			 */
+			paddr_t first = atop(tmp.start);
+			paddr_t last = first + atop(segsize);
+			printf("adding %#"PRIxPADDR"@%#"PRIxPADDR" to freelist %d\n",
+				tmp.start, tmp.start + segsize, freelist);
+			uvm_page_physload(first, last, first, last, freelist);
+
+			/*
+			 * Remove from tmp the segment we just loaded.
+			 */
+			tmp.start += segsize;
+			tmp.size -= segsize;
+		}
+	}
 }
 
 void
