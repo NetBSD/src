@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.104 2009/09/02 14:56:57 tls Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.105 2009/12/30 18:33:53 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.104 2009/09/02 14:56:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.105 2009/12/30 18:33:53 elad Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -597,10 +597,7 @@ sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 	if (cc == 0 || cc > sb_max_adj)
 		return (0);
 
-	if (kauth_cred_geteuid(l->l_cred) == so->so_uidinfo->ui_uid)
-		maxcc = l->l_proc->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
-	else
-		maxcc = RLIM_INFINITY;
+	maxcc = l->l_proc->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
 
 	uidinfo = so->so_uidinfo;
 	if (!chgsbsize(uidinfo, &sb->sb_hiwat, cc, maxcc))
