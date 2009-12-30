@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.45 2009/11/12 19:58:27 dyoung Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.46 2009/12/30 23:42:22 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.45 2009/11/12 19:58:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.46 2009/12/30 23:42:22 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -467,9 +467,15 @@ uhidev_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		    rep, scd, scd ? scd->sc_state : 0));
 	if (!(scd->sc_state & UHIDEV_OPEN))
 		return;
-	if (scd->sc_in_rep_size > cc) {
-		printf("%s: bad input length %d != %d\n",
-		       USBDEVNAME(sc->sc_dev), scd->sc_in_rep_size, cc);
+#ifdef UHIDEV_DEBUG
+	if (scd->sc_in_rep_size != cc) {
+		DPRINTF(("%s: expected %d bytes, got %d\n",
+		       USBDEVNAME(sc->sc_dev), scd->sc_in_rep_size, cc));
+	}
+#endif
+	if (cc == 0) {
+		DPRINTF(("%s: 0-length input ignored\n",
+			USBDEVNAME(sc->sc_dev)));
 		return;
 	}
 #if NRND > 0
