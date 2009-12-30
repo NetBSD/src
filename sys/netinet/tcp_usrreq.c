@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.157 2009/09/16 15:23:05 pooka Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.158 2009/12/30 06:59:32 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.157 2009/09/16 15:23:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.158 2009/12/30 06:59:32 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1161,7 +1161,7 @@ copyout_uid(struct socket *sockp, void *oldp, size_t *oldlenp)
 	int error;
 	uid_t uid;
 
-	uid = sockp->so_uidinfo->ui_uid;
+	uid = kauth_cred_geteuid(sockp->so_cred);
 	if (oldp) {
 		sz = MIN(sizeof(uid), *oldlenp);
 		error = copyout(&uid, oldp, sz);
