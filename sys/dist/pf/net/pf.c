@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.58 2009/12/30 07:00:01 elad Exp $	*/
+/*	$NetBSD: pf.c,v 1.59 2009/12/30 16:49:02 elad Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.58 2009/12/30 07:00:01 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.59 2009/12/30 16:49:02 elad Exp $");
 
 #include "bpfilter.h"
 #include "pflog.h"
@@ -2829,7 +2829,7 @@ pf_socket_lookup(int direction, struct pf_pdesc *pd)
 #else
 	so = inp->inp_socket;
 	pd->lookup.uid = so->so_euid;
-	pd->lookup.uid = so->so_egid;
+	pd->lookup.gid = so->so_egid;
 #endif /* !__NetBSD__ */
 	pd->lookup.pid = so->so_cpid;
 	return (1);
