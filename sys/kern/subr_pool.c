@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.177 2009/10/20 17:24:22 jym Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.178 2009/12/30 18:57:17 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.177 2009/10/20 17:24:22 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.178 2009/12/30 18:57:17 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -103,6 +103,9 @@ static struct pool	*drainpp;
 /* This lock protects both pool_head and drainpp. */
 static kmutex_t pool_head_lock;
 static kcondvar_t pool_busy;
+
+/* This lock protects initialization of a potentially shared pool allocator */
+static kmutex_t pool_allocator_lock;
 
 typedef uint32_t pool_item_bitmap_t;
 #define	BITMAP_SIZE	(CHAR_BIT * sizeof(pool_item_bitmap_t))
@@ -604,6 +607,8 @@ pool_subsystem_init(void)
 
 	pool_init(&cache_cpu_pool, sizeof(pool_cache_cpu_t), coherency_unit,
 	    0, 0, "pcachecpu", &pool_allocator_nointr, IPL_NONE);
+
+	mutex_init(&pool_allocator_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
@@ -650,7 +655,8 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 			palloc = &pool_allocator_nointr_fullpage;
 	}		
 #endif /* POOL_SUBPAGE */
-	if ((palloc->pa_flags & PA_INITIALIZED) == 0) {
+	mutex_enter(&pool_allocator_lock);
+	if (palloc->pa_refcnt++ == 0) {
 		if (palloc->pa_pagesz == 0)
 			palloc->pa_pagesz = PAGE_SIZE;
 
@@ -663,8 +669,8 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		if (palloc->pa_backingmapptr != NULL) {
 			pa_reclaim_register(palloc);
 		}
-		palloc->pa_flags |= PA_INITIALIZED;
 	}
+	mutex_exit(&pool_allocator_lock);
 
 	if (align == 0)
 		align = ALIGN(1);
@@ -891,6 +897,11 @@ pool_destroy(struct pool *pp)
 	mutex_enter(&pp->pr_alloc->pa_lock);
 	TAILQ_REMOVE(&pp->pr_alloc->pa_list, pp, pr_alloc_list);
 	mutex_exit(&pp->pr_alloc->pa_lock);
+
+	mutex_enter(&pool_allocator_lock);
+	if (--pp->pr_alloc->pa_refcnt == 0)
+		mutex_destroy(&pp->pr_alloc->pa_lock);
+	mutex_exit(&pool_allocator_lock);
 
 	mutex_enter(&pp->pr_lock);
 
