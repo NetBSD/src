@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.132 2009/11/26 15:17:08 njoly Exp $	*/
+/*	$NetBSD: auich.c,v 1.133 2009/12/30 00:24:38 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.132 2009/11/26 15:17:08 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.133 2009/12/30 00:24:38 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,8 +215,11 @@ struct auich_softc {
 	int  sc_sts_reg;
 	/* 440MX workaround */
 	int  sc_dmamap_flags;
-	/* Native mode? */
-	int  sc_native_mode;
+	/* flags */
+	int  sc_iose	:1,
+	     sc_csr_io	:1,
+	     sc_csr_mem	:1,
+		     	:29;
 
 	/* sysctl */
 	struct sysctllog *sc_log;
@@ -482,46 +485,55 @@ auich_attach(device_t parent, device_t self, void *aux)
 	if (d->id == PCIID_ICH4 || d->id == PCIID_ICH5 || d->id == PCIID_ICH6
 	    || d->id == PCIID_ICH7 || d->id == PCIID_I6300ESB
 	    || d->id == PCIID_ICH4MODEM) {
-		sc->sc_native_mode = 1;
 		/*
 		 * Use native mode for Intel 6300ESB and ICH4/ICH5/ICH6/ICH7
 		 */
+
+		sc->sc_csr_mem = 1;
+		v = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    PCI_COMMAND_STATUS_REG);
+		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+			       v | PCI_COMMAND_MEM_ENABLE);
+		pa->pa_flags |= PCI_FLAGS_MEM_ENABLED;
+
 		if (pci_mapreg_map(pa, ICH_MMBAR, PCI_MAPREG_TYPE_MEM, 0,
-				   &sc->iot, &sc->mix_ioh, NULL, &sc->mix_size)) {
-			v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_CFG);
-			pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_CFG,
-				       v | ICH_CFG_IOSE);
-			if (pci_mapreg_map(pa, ICH_NAMBAR, PCI_MAPREG_TYPE_IO,
-					   0, &sc->iot, &sc->mix_ioh, NULL,
-					   &sc->mix_size)) {
-				aprint_error_dev(self, "can't map codec i/o space\n");
-				return;
-			}
+		    &sc->iot, &sc->mix_ioh, NULL, &sc->mix_size)) {
+			goto retry_map;
 		}
 		if (pci_mapreg_map(pa, ICH_MBBAR, PCI_MAPREG_TYPE_MEM, 0,
-				   &sc->iot, &sc->aud_ioh, NULL, &sc->aud_size)) {
-			v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_CFG);
-			pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_CFG,
-				       v | ICH_CFG_IOSE);
-			if (pci_mapreg_map(pa, ICH_NABMBAR, PCI_MAPREG_TYPE_IO,
-					   0, &sc->iot, &sc->aud_ioh, NULL,
-					   &sc->aud_size)) {
-				aprint_error_dev(self, "can't map device i/o space\n");
-				return;
-			}
+		    &sc->iot, &sc->aud_ioh, NULL, &sc->aud_size)) {
+			goto retry_map;
 		}
-	} else {
-		if (pci_mapreg_map(pa, ICH_NAMBAR, PCI_MAPREG_TYPE_IO, 0,
-				   &sc->iot, &sc->mix_ioh, NULL, &sc->mix_size)) {
-			aprint_error_dev(self, "can't map codec i/o space\n");
-			return;
-		}
-		if (pci_mapreg_map(pa, ICH_NABMBAR, PCI_MAPREG_TYPE_IO, 0,
-				   &sc->iot, &sc->aud_ioh, NULL, &sc->aud_size)) {
-			aprint_error_dev(self, "can't map device i/o space\n");
-			return;
-		}
+		goto map_done;
+	} else
+		goto non_native_map;
+
+retry_map:
+	sc->sc_iose = 1;
+	v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_CFG);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_CFG,
+		       v | ICH_CFG_IOSE);
+
+non_native_map:
+	sc->sc_csr_io = 1;
+	v = pci_conf_read(pa->pa_pc, pa->pa_tag,
+	    PCI_COMMAND_STATUS_REG);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+		       v | PCI_COMMAND_IO_ENABLE);
+	pa->pa_flags |= PCI_FLAGS_IO_ENABLED;
+
+	if (pci_mapreg_map(pa, ICH_NAMBAR, PCI_MAPREG_TYPE_IO, 0,
+			   &sc->iot, &sc->mix_ioh, NULL, &sc->mix_size)) {
+		aprint_error_dev(self, "can't map codec i/o space\n");
+		return;
 	}
+	if (pci_mapreg_map(pa, ICH_NABMBAR, PCI_MAPREG_TYPE_IO, 0,
+			   &sc->iot, &sc->aud_ioh, NULL, &sc->aud_size)) {
+		aprint_error_dev(self, "can't map device i/o space\n");
+		return;
+	}
+
+map_done:
 	sc->dmat = pa->pa_dmat;
 
 	/* enable bus mastering */
@@ -1578,11 +1590,18 @@ auich_resume(device_t dv PMF_FN_ARGS)
 	struct auich_softc *sc = device_private(dv);
 	pcireg_t v;
 
-	if (sc->sc_native_mode) {
+	if (sc->sc_iose) {
 		v = pci_conf_read(sc->sc_pc, sc->sc_pt, ICH_CFG);
 		pci_conf_write(sc->sc_pc, sc->sc_pt, ICH_CFG,
 			       v | ICH_CFG_IOSE);
 	}
+
+	v = pci_conf_read(sc->sc_pc, sc->sc_pt, PCI_COMMAND_STATUS_REG);
+	if (sc->sc_csr_io)
+		v |= PCI_COMMAND_IO_ENABLE;
+	if (sc->sc_csr_mem)
+		v |= PCI_COMMAND_MEM_ENABLE;
+	pci_conf_write(sc->sc_pc, sc->sc_pt, PCI_COMMAND_STATUS_REG, v);
 
 	auich_reset_codec(sc);
 	DELAY(1000);
