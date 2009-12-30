@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.105 2009/12/30 18:33:53 elad Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.106 2009/12/30 22:12:12 elad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.105 2009/12/30 18:33:53 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.106 2009/12/30 22:12:12 elad Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -273,7 +273,6 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_send = head->so_send;
 	so->so_receive = head->so_receive;
 	so->so_uidinfo = head->so_uidinfo;
-	so->so_egid = head->so_egid;
 	so->so_cpid = head->so_cpid;
 #ifdef MBUFTRACE
 	so->so_mowner = head->so_mowner;
