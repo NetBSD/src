@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.42 2008/06/11 18:52:32 cegger Exp $	*/
+/*	$NetBSD: sab.c,v 1.43 2009/12/30 21:03:48 jdc Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.42 2008/06/11 18:52:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.43 2009/12/30 21:03:48 jdc Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -375,6 +375,7 @@ sabtty_attach(struct device *parent, struct device *self, void *aux)
 	struct sabtty_attach_args *sa = aux;
 	int r;
 	int maj;
+	int node;
 	int is_kgdb = 0;
 
 #ifdef KGDB
@@ -442,7 +443,13 @@ sabtty_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 		t.c_ispeed= 0;
-		t.c_ospeed = 9600;
+		node = sc->sc_parent->sc_node;
+		/* Are we connected to an E250 RSC? */
+		if (sc->sc_portno == prom_getpropint(node, "ssp-console", -1) ||
+		    sc->sc_portno == prom_getpropint(node, "ssp-control", -1))
+			t.c_ospeed = 115200;
+		else
+			t.c_ospeed = 9600;
 		t.c_cflag = CREAD | CS8 | HUPCL;
 		sc->sc_tty->t_ospeed = 0;
 		sabttyparam(sc, sc->sc_tty, &t);
