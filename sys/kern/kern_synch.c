@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.273 2009/12/05 22:38:19 pooka Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.274 2009/12/30 23:54:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.273 2009/12/05 22:38:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.274 2009/12/30 23:54:30 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -546,8 +546,8 @@ nextlwp(struct cpu_info *ci, struct schedstate_percpu *spc)
 	if (newl != NULL) {
 		sched_dequeue(newl);
 		KASSERT(lwp_locked(newl, spc->spc_mutex));
+		KASSERT(newl->l_cpu == ci);
 		newl->l_stat = LSONPROC;
-		newl->l_cpu = ci;
 		newl->l_pflag |= LP_RUNNING;
 		lwp_setlock(newl, spc->spc_lwplock);
 	} else {
@@ -1079,7 +1079,7 @@ sched_unsleep(struct lwp *l, bool cleanup)
 static void
 resched_cpu(struct lwp *l)
 {
-	struct cpu_info *ci = ci = l->l_cpu;
+	struct cpu_info *ci = l->l_cpu;
 
 	KASSERT(lwp_locked(l, NULL));
 	if (lwp_eprio(l) > ci->ci_schedstate.spc_curpriority)
