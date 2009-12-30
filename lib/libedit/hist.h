@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.h,v 1.10 2003/08/07 16:44:31 agc Exp $	*/
+/*	$NetBSD: hist.h,v 1.11 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,16 +42,16 @@
 
 #include "histedit.h"
 
-typedef int (*hist_fun_t)(ptr_t, HistEvent *, int, ...);
+typedef int (*hist_fun_t)(ptr_t, TYPE(HistEvent) *, int, ...);
 
 typedef struct el_history_t {
-	char		*buf;		/* The history buffer		*/
+	Char		*buf;		/* The history buffer		*/
 	size_t		sz;		/* Size of history buffer	*/
-	char		*last;		/* The last character		*/
+	Char		*last;		/* The last character		*/
 	int		 eventno;	/* Event we are looking for	*/
 	ptr_t		 ref;		/* Argument for history fcns	*/
 	hist_fun_t	 fun;		/* Event access			*/
-	HistEvent	 ev;		/* Event cookie			*/
+	TYPE(HistEvent)	 ev;		/* Event cookie			*/
 } el_history_t;
 
 #define	HIST_FUN(el, fn, arg)	\
@@ -70,7 +70,7 @@ protected int		hist_init(EditLine *);
 protected void		hist_end(EditLine *);
 protected el_action_t	hist_get(EditLine *);
 protected int		hist_set(EditLine *, hist_fun_t, ptr_t);
-protected int		hist_command(EditLine *, int, const char **);
+protected int		hist_command(EditLine *, int, const Char **);
 protected int		hist_enlargebuf(EditLine *, size_t, size_t);
 
 #endif /* _h_el_hist */

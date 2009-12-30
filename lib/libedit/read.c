@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.52 2009/07/22 15:57:00 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.53 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.52 2009/07/22 15:57:00 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.53 2009/12/30 22:37:40 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -49,14 +49,15 @@ __RCSID("$NetBSD: read.c,v 1.52 2009/07/22 15:57:00 christos Exp $");
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <limits.h>
 #include "el.h"
 
 #define	OKCMD	-1	/* must be -1! */
 
 private int	read__fixio(int, int);
 private int	read_preread(EditLine *);
-private int	read_char(EditLine *, char *);
-private int	read_getcmd(EditLine *, el_action_t *, char *);
+private int	read_char(EditLine *, Char *);
+private int	read_getcmd(EditLine *, el_action_t *, Char *);
 private void	read_pop(c_macro_t *);
 
 /* read_init():
@@ -191,6 +192,9 @@ read_preread(EditLine *el)
 	if (el->el_tty.t_mode == ED_IO)
 		return (0);
 
+#ifndef WIDECHAR
+/* FIONREAD attempts to buffer up multiple bytes, and to make that work
+ * properly with partial wide/UTF-8 characters would need some careful work. */
 #ifdef FIONREAD
 	(void) ioctl(el->el_infd, FIONREAD, (ioctl_t) & chrs);
 	if (chrs > 0) {
@@ -204,7 +208,7 @@ read_preread(EditLine *el)
 		}
 	}
 #endif /* FIONREAD */
-
+#endif
 	return (chrs > 0);
 }
 
@@ -213,13 +217,13 @@ read_preread(EditLine *el)
  *	Push a macro
  */
 public void
-el_push(EditLine *el, const char *str)
+FUN(el,push)(EditLine *el, const Char *str)
 {
 	c_macro_t *ma = &el->el_chared.c_macro;
 
 	if (str != NULL && ma->level + 1 < EL_MAXMACRO) {
 		ma->level++;
-		if ((ma->macro[ma->level] = el_strdup(str)) != NULL)
+		if ((ma->macro[ma->level] = Strdup(str)) != NULL)
 			return;
 		ma->level--;
 	}
@@ -230,16 +234,17 @@ el_push(EditLine *el, const char *str)
 
 /* read_getcmd():
  *	Return next command from the input stream.
+ *	Character values > 255 are not looked up in the map, but inserted.
  */
 private int
-read_getcmd(EditLine *el, el_action_t *cmdnum, char *ch)
+read_getcmd(EditLine *el, el_action_t *cmdnum, Char *ch)
 {
 	el_action_t cmd;
 	int num;
 
 	el->el_errno = 0;
 	do {
-		if ((num = el_getc(el, ch)) != 1) {	/* if EOF or error */
+		if ((num = FUN(el,getc)(el, ch)) != 1) {/* if EOF or error */
 			el->el_errno = num == 0 ? 0 : errno;
 			return (num);
 		}
@@ -256,7 +261,12 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, char *ch)
 			el->el_state.metanext = 0;
 			*ch |= 0200;
 		}
-		cmd = el->el_map.current[(unsigned char) *ch];
+#ifdef WIDECHAR
+                if (*ch >= N_KEYS)
+                        cmd = ED_INSERT;
+		else
+#endif
+                        cmd = el->el_map.current[(unsigned char) *ch];
 		if (cmd == ED_SEQUENCE_LEAD_IN) {
 			key_value_t val;
 			switch (key_get(el, ch, &val)) {
@@ -264,7 +274,7 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, char *ch)
 				cmd = val.cmd;
 				break;
 			case XK_STR:
-				el_push(el, val.str);
+				FUN(el,push)(el, val.str);
 				break;
 #ifdef notyet
 			case XK_EXE:
@@ -284,19 +294,33 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, char *ch)
 	return (OKCMD);
 }
 
+#ifdef WIDECHAR
+/* utf8_islead():
+ *      Test whether a byte is a leading byte of a UTF-8 sequence.
+ */
+private int
+utf8_islead(unsigned char c)
+{
+        return (c < 0x80) ||             /* single byte char */
+               (c >= 0xc2 && c <= 0xf4); /* start of multibyte sequence */
+}
+#endif
 
 /* read_char():
  *	Read a character from the tty.
  */
 private int
-read_char(EditLine *el, char *cp)
+read_char(EditLine *el, Char *cp)
 {
 	ssize_t num_read;
 	int tried = 0;
+        char cbuf[MB_LEN_MAX];
+        int cbp = 0;
+        int bytes = 0;
 
  again:
 	el->el_signal->sig_no = 0;
-	while ((num_read = read(el->el_infd, cp, 1)) == -1) {
+	while ((num_read = read(el->el_infd, cbuf + cbp, 1)) == -1) {
 		if (el->el_signal->sig_no == SIGCONT) {
 			sig_set(el);
 			el_set(el, EL_REFRESH);
@@ -309,6 +333,29 @@ read_char(EditLine *el, char *cp)
 			return (-1);
 		}
 	}
+
+#ifdef WIDECHAR
+	if (el->el_flags & CHARSET_IS_UTF8) {
+		if (!utf8_islead((unsigned char)cbuf[0]))
+			goto again; /* discard the byte we read and try again */
+		++cbp;
+		if ((bytes = ct_mbtowc(cp, cbuf, cbp)) == -1) {
+			ct_mbtowc_reset;
+			if (cbp >= MB_LEN_MAX) { /* "shouldn't happen" */
+				*cp = '\0';
+				return (-1);
+			}
+			goto again;
+		}
+	} else  /* we don't support other multibyte charsets */
+#endif
+		*cp = (unsigned char)cbuf[0];
+
+	if ((el->el_flags & IGNORE_EXTCHARS) && bytes > 1) {
+		cbp = 0; /* skip this character */
+		goto again;
+	}
+
 	return (int)num_read;
 }
 
@@ -331,7 +378,7 @@ read_pop(c_macro_t *ma)
  *	Read a character
  */
 public int
-el_getc(EditLine *el, char *cp)
+FUN(el,getc)(EditLine *el, Char *cp)
 {
 	int num_read;
 	c_macro_t *ma = &el->el_chared.c_macro;
@@ -351,7 +398,7 @@ el_getc(EditLine *el, char *cp)
 			continue;
 		}
 
-		*cp = ma->macro[0][ma->offset++] & 0377;
+		*cp = ma->macro[0][ma->offset++];
 
 		if (ma->macro[0][ma->offset] == '\0') {
 			/* Needed for QuoteMode On */
@@ -407,13 +454,13 @@ read_finish(EditLine *el)
 		sig_clr(el);
 }
 
-public const char *
-el_gets(EditLine *el, int *nread)
+public const Char *
+FUN(el,gets)(EditLine *el, int *nread)
 {
 	int retval;
 	el_action_t cmdnum = 0;
 	int num;		/* how many chars we have read at NL */
-	char ch;
+	Char ch;
 	int crlf = 0;
 	int nrb;
 #ifdef FIONREAD
@@ -425,7 +472,7 @@ el_gets(EditLine *el, int *nread)
 	*nread = 0;
 
 	if (el->el_flags & NO_TTY) {
-		char *cp = el->el_line.buffer;
+		Char *cp = el->el_line.buffer;
 		size_t idx;
 
 		while ((num = (*el->el_read.read_char)(el, cp)) == 1) {
@@ -474,7 +521,7 @@ el_gets(EditLine *el, int *nread)
 		read_prepare(el);
 
 	if (el->el_flags & EDIT_DISABLED) {
-		char *cp;
+		Char *cp;
 		size_t idx;
 
 		if ((el->el_flags & UNBUFFERED) == 0)
@@ -560,7 +607,7 @@ el_gets(EditLine *el, int *nread)
 		    el->el_chared.c_redo.pos < el->el_chared.c_redo.lim) {
 			if (cmdnum == VI_DELETE_PREV_CHAR &&
 			    el->el_chared.c_redo.pos != el->el_chared.c_redo.buf
-			    && isprint((unsigned char)el->el_chared.c_redo.pos[-1]))
+			    && Isprint(el->el_chared.c_redo.pos[-1]))
 				el->el_chared.c_redo.pos--;
 			else
 				*el->el_chared.c_redo.pos++ = ch;

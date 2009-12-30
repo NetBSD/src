@@ -1,15 +1,16 @@
-#	$NetBSD: Makefile,v 1.37 2009/01/18 12:17:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.38 2009/12/30 22:37:40 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
 
+WIDECHAR ?= no
 WARNS=	4
 LIB=	edit
 
 LIBDPLIBS+=     termcap ${.CURDIR}/../libterm
 
-OSRCS=	chared.c common.c el.c emacs.c fcns.c filecomplete.c help.c hist.c \
-	key.c map.c \
+OSRCS=	chared.c common.c el.c emacs.c fcns.c filecomplete.c help.c \
+	hist.c key.c map.c chartype.c \
 	parse.c prompt.c read.c refresh.c search.c sig.c term.c tty.c vi.c
 
 MAN=	editline.3 editrc.5
@@ -25,9 +26,18 @@ MLINKS=	editline.3 el_init.3 editline.3 el_end.3 editline.3 el_reset.3 \
 	editline.3 tok_line.3 editline.3 tok_str.3
 
 # For speed and debugging
-#SRCS=   ${OSRCS} tokenizer.c history.c readline.c
+SRCS=   ${OSRCS} readline.c
 # For protection
-SRCS=	editline.c tokenizer.c history.c readline.c
+#SRCS=	editline.c readline.c
+
+.if ${WIDECHAR} == "yes"
+SRCS += tokenizern.c tokenizerw.c historyn.c historyw.c eln.c
+CLEANFILES+=tokenizern.c.tmp tokenizern.c tokenizerw.c.tmp tokenizerw.c
+CLEANFILES+=historyn.c.tmp historyn.c historyw.c.tmp historyw.c
+CPPFLAGS+=-DWIDECHAR
+.else
+SRCS += tokenizer.c history.c
+.endif
 
 LIBEDITDIR?=${.CURDIR}
 
@@ -36,8 +46,8 @@ INCSDIR=/usr/include
 
 CLEANFILES+=editline.c
 CLEANFILES+=common.h.tmp editline.c.tmp emacs.h.tmp fcns.c.tmp fcns.h.tmp
-CLEANFILES+=help.c.tmp help.h.tmp vi.h.tmp
-CLEANFILES+=tc1.o tc1
+CLEANFILES+=help.c.tmp help.h.tmp vi.h.tmp tc1.o tc1
+CLEANFILES+=tokenizern.c.tmp tokenizern.c tokenizerw.c.tmp tokenizerw.c
 CPPFLAGS+=-I. -I${LIBEDITDIR} 
 CPPFLAGS+=-I. -I${.CURDIR}
 CPPFLAGS+=#-DDEBUG_TTY -DDEBUG_KEY -DDEBUG_READ -DDEBUG -DDEBUG_REFRESH
@@ -92,6 +102,26 @@ help.h: ${ASRC} makelist Makefile
 editline.c: ${OSRCS} makelist Makefile
 	${_MKTARGET_CREATE}
 	${HOST_SH} ${LIBEDITDIR}/makelist -e ${OSRCS:T} > ${.TARGET}.tmp && \
+	    mv ${.TARGET}.tmp ${.TARGET}
+
+tokenizern.c: makelist Makefile
+	${_MKTARGET_CREATE}
+	${HOST_SH} ${LIBEDITDIR}/makelist -t NARROW tokenizer > ${.TARGET}.tmp && \
+	    mv ${.TARGET}.tmp ${.TARGET}
+
+tokenizerw.c: makelist Makefile
+	${_MKTARGET_CREATE}
+	${HOST_SH} ${LIBEDITDIR}/makelist -t WIDE tokenizer > ${.TARGET}.tmp && \
+	    mv ${.TARGET}.tmp ${.TARGET}
+
+historyn.c: makelist Makefile
+	${_MKTARGET_CREATE}
+	${HOST_SH} ${LIBEDITDIR}/makelist -t NARROW history > ${.TARGET}.tmp && \
+	    mv ${.TARGET}.tmp ${.TARGET}
+
+historyw.c: makelist Makefile
+	${_MKTARGET_CREATE}
+	${HOST_SH} ${LIBEDITDIR}/makelist -t WIDE history > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
 
 tc1.o:	${LIBEDITDIR}/TEST/tc1.c
