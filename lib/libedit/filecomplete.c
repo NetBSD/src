@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.16 2009/12/28 21:55:38 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.17 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.16 2009/12/28 21:55:38 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.17 2009/12/30 22:37:40 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -59,8 +59,8 @@ __RCSID("$NetBSD: filecomplete.c,v 1.16 2009/12/28 21:55:38 christos Exp $");
 #include "histedit.h"
 #include "filecomplete.h"
 
-static char break_chars[] = { ' ', '\t', '\n', '"', '\\', '\'', '`', '@', '$',
-    '>', '<', '=', ';', '|', '&', '{', '(', '\0' };
+static Char break_chars[] = { ' ', '\t', '\n', '"', '\\', '\'', '`', '@',
+    '$', '>', '<', '=', ';', '|', '&', '{', '(', '\0' };
 
 
 /********************************/
@@ -385,13 +385,14 @@ int
 fn_complete(EditLine *el,
 	char *(*complet_func)(const char *, int),
 	char **(*attempted_completion_function)(const char *, int, int),
-	const char *word_break, const char *special_prefixes,
+	const Char *word_break, const Char *special_prefixes,
 	const char *(*app_func)(const char *), size_t query_items,
 	int *completion_type, int *over, int *point, int *end)
 {
-	const LineInfo *li;
-	char *temp, **matches;
-	const char *ctemp;
+	const TYPE(LineInfo) *li;
+	Char *temp;
+        char **matches;
+	const Char *ctemp;
 	size_t len;
 	int what_to_do = '\t';
 	int retval = CC_NORM;
@@ -409,11 +410,11 @@ fn_complete(EditLine *el,
 		app_func = append_char_function;
 
 	/* We now look backwards for the start of a filename/variable word */
-	li = el_line(el);
-	ctemp = (const char *) li->cursor;
+	li = FUN(el,line)(el);
+	ctemp = li->cursor;
 	while (ctemp > li->buffer
-	    && !strchr(word_break, ctemp[-1])
-	    && (!special_prefixes || !strchr(special_prefixes, ctemp[-1]) ) )
+	    && !Strchr(word_break, ctemp[-1])
+	    && (!special_prefixes || !Strchr(special_prefixes, ctemp[-1]) ) )
 		ctemp--;
 
 	len = li->cursor - ctemp;
@@ -422,7 +423,7 @@ fn_complete(EditLine *el,
 #else
 	temp = alloca(len + 1);
 #endif
-	(void)strncpy(temp, ctemp, len);
+	(void)Strncpy(temp, ctemp, len);
 	temp[len] = '\0';
 
 	/* these can be used by function called in completion_matches() */
@@ -434,13 +435,13 @@ fn_complete(EditLine *el,
 
 	if (attempted_completion_function) {
 		int cur_off = (int)(li->cursor - li->buffer);
-		matches = (*attempted_completion_function) (temp,
+		matches = (*attempted_completion_function) (ct_encode_string(temp, &el->el_scratch),
 		    (int)(cur_off - len), cur_off);
 	} else
 		matches = 0;
 	if (!attempted_completion_function || 
 	    (over != NULL && !*over && !matches))
-		matches = completion_matches(temp, complet_func);
+		matches = completion_matches(ct_encode_string(temp, &el->el_scratch), complet_func);
 
 	if (over != NULL)
 		*over = 0;
@@ -456,7 +457,8 @@ fn_complete(EditLine *el,
 		 */
 		if (matches[0][0] != '\0') {
 			el_deletestr(el, (int) len);
-			el_insertstr(el, matches[0]);
+			FUN(el,insertstr)(el,
+			    ct_decode_string(matches[0], &el->el_scratch));
 		}
 
 		if (what_to_do == '?')
@@ -468,7 +470,9 @@ fn_complete(EditLine *el,
 			 * it, unless we do filename completion and the
 			 * object is a directory.
 			 */
-			el_insertstr(el, (*app_func)(matches[0])); 
+			FUN(el,insertstr)(el,
+			    ct_decode_string((*app_func)(matches[0]),
+			    &el->el_scratch));
 		} else if (what_to_do == '!') {
     display_matches:
 			/*
@@ -476,7 +480,7 @@ fn_complete(EditLine *el,
 			 * matches.
 			 */
 
-			for(i=1, maxlen=0; matches[i]; i++) {
+			for(i = 1, maxlen = 0; matches[i]; i++) {
 				match_len = strlen(matches[i]);
 				if (match_len > maxlen)
 					maxlen = match_len;

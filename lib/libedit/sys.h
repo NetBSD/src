@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.h,v 1.12 2009/08/31 00:05:43 christos Exp $	*/
+/*	$NetBSD: sys.h,v 1.13 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -69,6 +69,10 @@
 #ifndef protected
 # define protected	/* Redefined from elsewhere to "static" */
 			/* When we want to hide everything	*/
+#endif
+
+#ifndef __arraycount
+# define __arraycount(a) (sizeof(a) / sizeof(*(a)))
 #endif
 
 #ifndef _PTR_T
