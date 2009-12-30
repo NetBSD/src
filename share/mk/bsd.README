@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.262 2009/12/23 18:02:25 tron Exp $
+#	$NetBSD: bsd.README,v 1.263 2009/12/30 20:45:46 abs Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -977,6 +977,10 @@ MKARZERO	Normally, ar(1) sets the timestamps, uid, gid and
 
 SHLIBINSTALLDIR	Target directory for shared libraries if ${USE_SHLIBDIR}
 		is not "no".
+
+SHLIB_MAJOR
+SHLIB_MINOR
+SHLIB_TEENY	Major, minor, and teeny version numbers of shared library
 
 USE_SHLIBDIR	If not "no", use ${SHLIBINSTALLDIR} instead of ${LIBDIR}
 		as the path to install shared libraries to.
