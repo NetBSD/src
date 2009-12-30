@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.33 2009/12/30 00:08:01 haad Exp $
+\"	$NetBSD: disk.9,v 1.34 2009/12/30 01:37:17 jnemeth Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -129,11 +129,10 @@ may grow or shrink over time as disks are dynamically added and removed
 from the system.
 Drivers which currently make use of the detachment
 capability of the framework are the
-.Nm ccd
-,
-.Nm vnd
+.Nm ccd ,
+.Nm dm ,
 and
-.Nm dm
+.Nm vnd
 pseudo-device drivers.
 .Pp
 The following is a brief description of each function in the framework:
@@ -187,8 +186,8 @@ specifies the direction of I/O;
 if non-zero it means reading from the disk,
 otherwise it means writing to the disk.
 .It Fn disk_isbusy
-Returns 
-.Ar true 
+Returns
+.Ar true
 if disk is marked as busy and false if it is not.
 .It Fn disk_find
 Return a pointer to the disk structure corresponding to the name provided,
@@ -227,7 +226,7 @@ Get disklabel.
 .It Dv DIOCSDINFO "struct disklabel"
 Set in-memory disklabel.
 .It Dv DIOCWDINFO "struct disklabel"
-Set in-memory disklabel, and write on-disk disklabel.
+Set in-memory disklabel and write on-disk disklabel.
 .It Dv DIOCGPART "struct partinfo"
 Get partition information.
 This is used internally.
@@ -383,10 +382,10 @@ This functionality is provided by the
 and
 .Fn disk_unbusy
 routines.
-Because 
-.Nm struct disk 
-is part of device driver private data it needs to be guarded. Mutual exclusion
-must be done by driver 
+Because
+.Nm struct disk
+is part of device driver private data it needs to be guarded.
+Mutual exclusion must be done by driver
 .Fn disk_busy
 and
 .Fn disk_unbusy
@@ -432,7 +431,7 @@ and
 .Fn disk_unbusy
 are balanced.
 This routine also performs the actual metrics calculation.
-A timestamp is taken, and the difference from the timestamp taken in
+A timestamp is taken and the difference from the timestamp taken in
 .Fn disk_busy
 is added to the disk's total running time.
 The disk's timestamp is then updated in case there is more than one
@@ -476,9 +475,10 @@ foodone(xfer)
 }
 .Ed
 .Pp
-.Fn disk_isbusy 
-is used to get status of disk device it returns true if device is currently busy
-and false if it is not. Like 
+.Fn disk_isbusy
+is used to get status of disk device it returns true if device is
+currently busy and false if it is not.
+Like
 .Fn disk_busy
 and
 .Fn disk_unbusy
@@ -507,22 +507,20 @@ and
 .Pp
 The
 .Nx
-.Nm ccd
-,
-.Nm vnd
+.Nm ccd ,
+.Nm dm ,
 and
-.Nm dm
+.Nm vnd
 drivers use the detachment capability of the framework.
 They are located in
-.Pa sys/dev/ccd.c
-,
-.Pa sys/dev/vnd.c
+.Pa sys/dev/ccd.c ,
+.Pa sys/dev/vnd.c ,
 and
 .Pa sys/dev/dm/device-mapper.c .
 .Sh SEE ALSO
 .Xr ccd 4 ,
-.Xr vnd 4 ,
-.Xr dm 4
+.Xr dm 4 ,
+.Xr vnd 4
 .Sh HISTORY
 The
 .Nx
