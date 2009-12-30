@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.6 2009/12/13 00:25:30 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.7 2009/12/30 04:51:26 matt Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -305,6 +305,12 @@ struct locoresw {
 	uintptr_t lsw_lwp_trampoline;
 	void (*lsw_cpu_idle)(void);
 	uintptr_t lsw_setfunc_trampoline;
+};
+
+struct mips_vmfreelist {
+	paddr_t fl_start;
+	paddr_t fl_end;
+	int fl_freelist;
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.1 2009/09/07 21:42:17 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.2 2009/12/30 04:51:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,6 +75,7 @@
 #define	_MIPS_PMAP_H_
 
 #include <mips/cpuregs.h>	/* for KSEG0 below */
+#include <mips/pte.h>
 
 /*
  * The user address space is 2Gb (0x0 - 0x80000000).
@@ -100,7 +101,6 @@
 
 #define mips_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
 #define mips_round_seg(x)	(((vaddr_t)(x) + SEGOFSET) & ~SEGOFSET)
-#define pmap_segmap(m, v)	((m)->pm_segtab->seg_tab[((v) >> SEGSHIFT)])
 
 #define PMAP_SEGTABSIZE		(1 << (31 - SEGSHIFT))
 
@@ -109,6 +109,17 @@ union pt_entry;
 struct segtab {
 	union pt_entry	*seg_tab[PMAP_SEGTABSIZE];
 };
+
+struct pmap;
+typedef bool (*pte_callback_t)(struct pmap *, vaddr_t, vaddr_t, pt_entry_t *,
+	uintptr_t);
+pt_entry_t *pmap_pte_lookup(struct pmap *, vaddr_t);
+pt_entry_t *pmap_pte_reserve(struct pmap *, vaddr_t, int);
+void pmap_pte_process(struct pmap *, vaddr_t, vaddr_t, pte_callback_t,
+	uintptr_t);
+void pmap_segtab_activate(struct lwp *);
+void pmap_segtab_alloc(struct pmap *);
+void pmap_segtab_free(struct pmap *);
 
 /*
  * Machine dependent pmap structure.
@@ -183,8 +194,10 @@ void	pmap_prefer(vaddr_t, vaddr_t *, int);
  */
 vaddr_t mips_pmap_map_poolpage(paddr_t);
 paddr_t mips_pmap_unmap_poolpage(vaddr_t);
-#define	PMAP_MAP_POOLPAGE(pa)	mips_pmap_map_poolpage(pa)
-#define	PMAP_UNMAP_POOLPAGE(va)	mips_pmap_unmap_poolpage(va)
+struct vm_page *mips_pmap_alloc_poolpage(int);
+#define	PMAP_ALLOC_POOLPAGE(flags)	mips_pmap_alloc_poolpage(flags)
+#define	PMAP_MAP_POOLPAGE(pa)		mips_pmap_map_poolpage(pa)
+#define	PMAP_UNMAP_POOLPAGE(va)		mips_pmap_unmap_poolpage(va)
 
 /*
  * Other hooks for the pool allocator.
