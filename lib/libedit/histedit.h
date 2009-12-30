@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.42 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.43 2009/12/30 23:54:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -287,8 +287,8 @@ typedef struct histeventw {
 
 typedef struct historyw HistoryW;
 
-HistoryW *	historyw_init(void);
-void		historyw_end(HistoryW *);
+HistoryW *	history_winit(void);
+void		history_wend(HistoryW *);
 
 int		historyw(HistoryW *, HistEventW *, int, ...);
 
