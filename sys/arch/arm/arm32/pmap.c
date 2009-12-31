@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.206 2009/12/28 15:13:57 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.207 2009/12/31 02:36:14 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.206 2009/12/28 15:13:57 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.207 2009/12/31 02:36:14 uebayasi Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -1919,7 +1919,7 @@ pmap_vac_me_harder(struct vm_page *pg, pmap_t pm, vaddr_t va)
 		KASSERT((pg->mdpage.pvh_attrs & PVF_DMOD) == 0 || (pg->mdpage.pvh_attrs & (PVF_DIRTY|PVF_NC)));
 		KASSERT((rw_mappings == 0) == !(pg->mdpage.pvh_attrs & PVF_WRITE));
 	} else if (!va) {
-		KASSERT(pmap_is_page_colored_p(pg));
+		KASSERT(arm_cache_prefer_mask == 0 || pmap_is_page_colored_p(pg));
 		KASSERT(!(pg->mdpage.pvh_attrs & PVF_WRITE)
 		    || (pg->mdpage.pvh_attrs & PVF_DIRTY));
 		if (rw_mappings == 0) {
@@ -2434,7 +2434,7 @@ pmap_syncicache_page(struct vm_page *pg)
 	 */
 	if (pg->mdpage.pvh_attrs & PVF_NC)
 		return;
-	KASSERT(pg->mdpage.pvh_attrs & PVF_COLORED);
+	KASSERT(arm_cache_prefer_mask == 0 || pg->mdpage.pvh_attrs & PVF_COLORED);
 
 	pmap_tlb_flushID_SE(pmap_kernel(), cdstp + va_offset);
 	/*
@@ -2593,7 +2593,7 @@ pmap_page_remove(struct vm_page *pg)
 		return;
 	}
 #ifdef PMAP_CACHE_VIPT
-	KASSERT(pmap_is_page_colored_p(pg));
+	KASSERT(arm_cache_prefer_mask == 0 || pmap_is_page_colored_p(pg));
 #endif
 
 	/*
@@ -3273,7 +3273,7 @@ pmap_kremove_pg(struct vm_page *pg, vaddr_t va)
 	struct pv_entry *pv;
 
 	simple_lock(&pg->mdpage.pvh_slock);
-	KASSERT(pg->mdpage.pvh_attrs & (PVF_COLORED|PVF_NC));
+	KASSERT(arm_cache_prefer_mask == 0 || pg->mdpage.pvh_attrs & (PVF_COLORED|PVF_NC));
 	KASSERT((pg->mdpage.pvh_attrs & PVF_KMPAGE) == 0);
 
 	pv = pmap_remove_pv(pg, pmap_kernel(), va);
@@ -3371,7 +3371,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			KASSERT(pg->mdpage.kro_mappings == 0);
 #ifdef PMAP_CACHE_VIPT
 			KASSERT(pv == NULL);
-			KASSERT((va & PVF_COLORED) == 0);
+			KASSERT(arm_cache_prefer_mask == 0 || (va & PVF_COLORED) == 0);
 			KASSERT((pg->mdpage.pvh_attrs & PVF_NC) == 0);
 			/* if there is a color conflict, evict from cache. */
 			if (pmap_is_page_colored_p(pg)
@@ -4595,7 +4595,7 @@ pmap_copy_page_generic(paddr_t src, paddr_t dst)
 #endif
 
 #ifdef PMAP_CACHE_VIPT
-	KASSERT(src_pg->mdpage.pvh_attrs & (PVF_COLORED|PVF_NC));
+	KASSERT(arm_cache_prefer_mask == 0 || src_pg->mdpage.pvh_attrs & (PVF_COLORED|PVF_NC));
 #endif
 	KDASSERT((src & PGOFSET) == 0);
 	KDASSERT((dst & PGOFSET) == 0);
