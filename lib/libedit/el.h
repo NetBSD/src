@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.20 2009/12/30 23:54:52 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.21 2009/12/31 15:58:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -60,6 +60,7 @@
 #define	CHARSET_IS_UTF8 0x10
 #define	IGNORE_EXTCHARS 0x20            /* Ignore characters read > 0xff */
 #define	NARROW_HISTORY	0x40
+#define	NARROW_READ	0x80
 
 typedef int bool_t;			/* True or not			*/
 
