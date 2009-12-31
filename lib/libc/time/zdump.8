@@ -1,4 +1,4 @@
-.\"	$NetBSD: zdump.8,v 1.6 2009/03/09 19:24:27 joerg Exp $
+.\"	$NetBSD: zdump.8,v 1.7 2009/12/31 22:49:16 mlelstv Exp $
 .\" @(#)zdump.8	7.4
 .Dd October 29, 2003
 .Dt ZDUMP 8
@@ -10,7 +10,7 @@
 .Nm zdump
 .Op Fl \-version
 .Op Fl v
-.Op Fl c Ar cutoffyear
+.Op Fl c Ar [loyear,]highyear
 .Op Ar zonename ...
 .Sh DESCRIPTION
 .Nm
@@ -37,10 +37,25 @@ Each line ends with
 if the given time is Daylight Saving Time or
 .Dl isdst=0
 otherwise.
-.It Fl c Ar cutoffyear
-Cut off the verbose output near the start of the given year.
+.It Fl c Ar [loyear,]highyear
+Cut off the verbose output near the start of the given year(s).
+By default,
+the program cuts off verbose output near the starts of the years -500 and 2500.
 .El
+.SH LIMITATIONS
+The
+.B \-v
+option may not be used on systems with floating-point time_t values
+that are neither float nor double.
+.PP
+Time discontinuities are found by sampling the results returned by localtime
+at twelve-hour intervals.
+This works in all real-world cases;
+one can construct artificial time zones for which this fails.
 .Sh SEE ALSO
 .Xr ctime 3 ,
 .Xr tzfile 5 ,
 .Xr zic 8
+.\" @(#)zdump.8	8.2
+.\" This file is in the public domain, so clarified as of
+.\" 2009-05-17 by Arthur David Olson.
