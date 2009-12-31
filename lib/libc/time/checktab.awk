@@ -1,10 +1,10 @@
-#	$NetBSD: checktab.awk,v 1.3 1999/11/10 20:32:31 kleink Exp $
+#	$NetBSD: checktab.awk,v 1.4 2009/12/31 22:49:16 mlelstv Exp $
 
 # Check tz tables for consistency.
 
-# @(#)checktab.awk	1.6
+# @(#)checktab.awk	8.1
 
-# Contributed by Paul Eggert <eggert@twinsun.com>.
+# Contributed by Paul Eggert.
 
 BEGIN {
 	FS = "\t"
