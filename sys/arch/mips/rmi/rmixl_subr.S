@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_subr.S,v 1.1.2.1 2009/11/13 05:22:19 cliff Exp $	*/
+/*	$NetBSD: rmixl_subr.S,v 1.1.2.2 2009/12/31 00:53:00 matt Exp $	*/
 
 #include "opt_cputype.h"
 
@@ -18,6 +18,9 @@
  * uint64_t rmixl_mfcr(u_int cr);
  */
 LEAF(rmixl_mfcr)
+#if defined(__mips_o32)
+#error O32 not supported
+#endif
 	j	ra
 	mfcr	v0, a0
 END(rmixl_mfcr)
@@ -28,6 +31,9 @@ END(rmixl_mfcr)
  * void rmixl_mtcr(u_int cr, uint64_t val);
  */
 LEAF(rmixl_mtcr)
+#if defined(__mips_o32)
+#error O32 not supported
+#endif
 	j	ra
 	mtcr	a1, a0
 END(rmixl_mtcr)

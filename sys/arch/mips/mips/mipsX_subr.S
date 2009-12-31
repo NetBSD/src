@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.15 2009/12/04 04:42:09 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.16 2009/12/31 00:53:00 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1079,6 +1079,9 @@ NESTED_NOPROFILE(MIPSX(cacheException), KERNFRAME_SIZ, ra)
 	mfcr	a2, k1
 	li	k1, 0x30b	/* L1D_CACHE_INTERRUPT */
 	mfcr	a3, k1
+#if defined(__mips_o32)
+#error O32 not supported.
+#endif
 	mfc0	a4, MIPS_COP_0_STATUS
 	mfc0	a5, MIPS_COP_0_CAUSE
 #else
