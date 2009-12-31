@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.140 2009/12/10 14:13:48 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.141 2009/12/31 01:11:28 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.140 2009/12/10 14:13:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141 2009/12/31 01:11:28 jym Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -301,7 +301,6 @@ cpu_startup(void)
 	int x, y;
 	vaddr_t minaddr, maxaddr;
 	psize_t sz;
-	char pbuf[9];
 
 	/*
 	 * For console drivers that require uvm and pmap to be initialized,
@@ -334,11 +333,6 @@ cpu_startup(void)
 
 	initmsgbuf((void *)msgbuf_vaddr, round_page(sz));
 
-	printf("%s%s", copyright, version);
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
-	printf("total memory = %s\n", pbuf);
-
 	minaddr = 0;
 
 	/*
@@ -357,8 +351,8 @@ cpu_startup(void)
 	module_map_store.vmk_map.pmap = pmap_kernel();
 	module_map = &module_map_store.vmk_map;
 
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
+	/* Say hello. */
+	banner();
 
 #if NISA > 0 || NPCI > 0
 	/* Safe for i/o port / memory space allocation to use malloc now. */
