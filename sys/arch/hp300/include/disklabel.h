@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.2 2005/12/06 17:06:00 tsutsui Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.3 2009/12/31 15:42:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -33,7 +33,7 @@
 #ifndef _HP300_DISKLABEL_H_
 #define _HP300_DISKLABEL_H_
 
-#define	LABELSECTOR	(1024 / DEV_BSIZE)	/* sector containing label */
+#define	LABELSECTOR	2			/* sector containing label */
 #define	LABELOFFSET	0			/* offset of label in sector */
 #define	MAXPARTITIONS	8			/* number of partitions */
 #define	RAW_PART	2			/* raw partition: xx?c */
