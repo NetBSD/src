@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.217 2009/05/14 15:42:22 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.218 2009/12/31 20:01:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.217 2009/05/14 15:42:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.218 2009/12/31 20:01:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "fs_nfs.h"
@@ -118,6 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.217 2009/05/14 15:42:22 yamt Exp $");
 
 static u_int32_t nfs_xid;
 
+int nuidhash_max = NFS_MAXUIDHASH;
 /*
  * Data items converted to xdr at startup, since they are constant
  * This is kinda hokey, but may save a little time doing byte swaps
