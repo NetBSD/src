@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.183 2009/12/06 18:00:15 dyoung Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.184 2009/12/31 19:31:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.183 2009/12/06 18:00:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.184 2009/12/31 19:31:31 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "fs_nfs.h"
@@ -120,8 +120,8 @@ extern int nfs_ticks;
  * the nfs timer and reply error debugs every 10 seconds.
  */
 static const struct timeval nfs_err_interval = { 10, 0 };
-static struct timeval nfs_reply_last_err_time;
-static struct timeval nfs_timer_last_err_time;
+static struct timeval nfs_reply_last_err_time __attribute__((__used__));
+static struct timeval nfs_timer_last_err_time __attribute__((__used__));
 #endif
 
 /*
