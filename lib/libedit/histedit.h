@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.43 2009/12/30 23:54:52 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.44 2009/12/31 15:58:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -141,7 +141,7 @@ unsigned char	_el_fn_complete(EditLine *, int);
 				/* , el_func_t);		*/
 #define	EL_HIST		10	/* , hist_fun_t, const ptr_t);	      set     */
 #define	EL_EDITMODE	11	/* , int);			      set/get */
-#define	EL_RPROMPT	12	/* , promt_func);		      set/get */
+#define	EL_RPROMPT	12	/* , prompt_func);		      set/get */
 #define	EL_GETCFN	13	/* , el_rfunc_t);		      set/get */
 #define	EL_CLIENTDATA	14	/* , void *);			      set/get */
 #define	EL_UNBUFFERED	15	/* , int);			      set/get */
@@ -150,8 +150,8 @@ unsigned char	_el_fn_complete(EditLine *, int);
 #define	EL_GETFP	18	/* , int, FILE **);		          get */
 #define	EL_SETFP	19	/* , int, FILE *);		      set     */
 #define	EL_REFRESH	20	/* , void);			      set     */
-#define	EL_PROMPT_ESC	21	/* , promt_func, wchar_t);	      set/get */
-#define	EL_RPROMPT_ESC	22	/* , promt_func, wchar_t);	      set/get */
+#define	EL_PROMPT_ESC	21	/* , prompt_func, wchar_t);	      set/get */
+#define	EL_RPROMPT_ESC	22	/* , prompt_func, wchar_t);	      set/get */
 
 #define	EL_BUILTIN_GETCFN	(NULL)
 
