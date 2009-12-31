@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctime.3,v 1.27 2003/04/16 13:34:58 wiz Exp $
+.\"	$NetBSD: ctime.3,v 1.28 2009/12/31 22:49:16 mlelstv Exp $
 .Dd March 31, 2001
 .Dt CTIME 3
 .Os
@@ -42,21 +42,31 @@
 .Sh DESCRIPTION
 .Fn ctime
 converts a long integer, pointed to by
-.Fa clock ,
-representing the time in seconds since 00:00:00 UTC, 1970-01-01,
-and returns a pointer to a 26-character string of the form
-.Dl Thu Nov 24 18:22:48 1986\en\e0
-All the fields have constant width.
-.Pp
-The
-.Fn ctime_r
-function provides the same functionality as
-.Fn ctime
-differing in that the caller must supply a buffer area
-.Fa buf
-with a size of at least 26 bytes, in which the result is stored.
-.Pp
-.Fn localtime
+.IR clock ,
+representing the time in seconds since
+00:00:00 UTC, 1970-01-01,
+and returns a pointer to a
+string of the form
+.br
+.ce
+.eo
+Thu Nov 24 18:22:48 1986\n\0
+.br
+.ec
+Years requiring fewer than four characters are padded with leading zeroes.
+For years longer than four characters, the string is of the form
+.br
+.ce
+.eo
+Thu Nov 24 18:22:48     81986\n\0
+.ec
+.br
+with five spaces before the year.
+These unusual formats are designed to make it less likely that older
+software that expects exactly 26 bytes of output will mistakenly output
+misleading values for out-of-range years.
+.PP
+.I Localtime\^
 and
 .Fn gmtime
 return pointers to
@@ -69,6 +79,11 @@ After filling in the
 .Va tm
 structure,
 .Fn localtime
+(such as Daylight Saving Time in the United States).
+After filling in the 
+.Va tm
+structure,
+.I localtime
 sets the
 .Fa tm_isdst Ns 'th
 element of
@@ -99,20 +114,13 @@ the application may need to do so by calling
 .Pp
 .Fn asctime
 converts a time value contained in a
-.Va tm
-structure to a 26-character string, as shown in the above example,
+``tm'' structure to a string,
+as shown in the above example,
 and returns a pointer to the string.
-.Pp
-The
-.Fn asctime_r
-function provides the same functionality as
-.Fn asctime
-differing in that the caller must supply a buffer area
-.Fa buf
-with a size of at least 26 bytes, in which the result is stored.
-.Pp
-.Fn mktime
-converts the broken-down time, expressed as local time,
+.PP
+.I Mktime\^
+converts the broken-down time,
+expressed as local time,
 in the structure pointed to by
 .Fa tm
 into a calendar time value with the same encoding as that of the values
@@ -138,7 +146,9 @@ A negative value for
 causes the
 .Fn mktime
 function to attempt to divine whether summer time is in effect
-for the specified time.)
+for the specified time; in this case it does not use a consistent
+rule and may give a different answer when later
+presented with the same argument.)
 On successful completion, the values of the
 .Fa tm_wday
 and
@@ -243,11 +253,28 @@ The
 .Fa tm_zone
 field of a returned
 .Va "struct tm"
-points to a static array of characters, which will also be overwritten
-at the next call (and by calls to
-.Xr tzset 3 ) .
-.Pp
+points to a static array of characters, which
+will also be overwritten at the next call
+(and by calls to
+.Xr tzset 3 ).
+.PP
+.I Asctime\^
+and
+.I ctime\^
+behave strangely for years before 1000 or after 9999.
+The 1989 and 1999 editions of the C Standard say
+that years from \-99 through 999 are converted without
+extra spaces, but this conflicts with longstanding
+tradition and with this implementation.
+Traditional implementations of these two functions are
+restricted to years in the range 1900 through 2099.
+To avoid this portability mess, new programs should use
+.I strftime\^
+instead.
+.PP
 Avoid using out-of-range values with
 .Fn mktime
 when setting up lunch with promptness sticklers in Riyadh.
-.\" @(#)newctime.3     7.14
+.\" @(#)newctime.3	8.3
+.\" This file is in the public domain, so clarified as of
+.\" 2009-05-17 by Arthur David Olson.
