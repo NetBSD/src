@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.13 2008/04/28 20:23:10 martin Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.13.18.1 2009/12/31 00:54:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.13 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.13.18.1 2009/12/31 00:54:08 matt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -109,7 +109,7 @@ intr_init(void)
 }
 
 void
-cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+cpu_intr(u_int32_t status, u_int32_t cause, vaddr_t pc, u_int32_t ipending)
 {
 	struct clockframe cf;
 	struct cpu_info *ci;

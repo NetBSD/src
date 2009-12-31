@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.2 2009/12/30 04:51:26 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.3 2009/12/31 00:54:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,7 +75,7 @@
 #define	_MIPS_PMAP_H_
 
 #include <mips/cpuregs.h>	/* for KSEG0 below */
-#include <mips/pte.h>
+//#include <mips/pte.h>
 
 /*
  * The user address space is 2Gb (0x0 - 0x80000000).
@@ -111,10 +111,10 @@ struct segtab {
 };
 
 struct pmap;
-typedef bool (*pte_callback_t)(struct pmap *, vaddr_t, vaddr_t, pt_entry_t *,
-	uintptr_t);
-pt_entry_t *pmap_pte_lookup(struct pmap *, vaddr_t);
-pt_entry_t *pmap_pte_reserve(struct pmap *, vaddr_t, int);
+typedef bool (*pte_callback_t)(struct pmap *, vaddr_t, vaddr_t,
+	union pt_entry *, uintptr_t);
+union pt_entry *pmap_pte_lookup(struct pmap *, vaddr_t);
+union pt_entry *pmap_pte_reserve(struct pmap *, vaddr_t, int);
 void pmap_pte_process(struct pmap *, vaddr_t, vaddr_t, pte_callback_t,
 	uintptr_t);
 void pmap_segtab_activate(struct lwp *);
