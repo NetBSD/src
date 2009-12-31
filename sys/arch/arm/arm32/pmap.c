@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.207 2009/12/31 02:36:14 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.208 2009/12/31 16:00:53 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.207 2009/12/31 02:36:14 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.208 2009/12/31 16:00:53 uebayasi Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -2565,7 +2565,7 @@ pmap_page_remove(struct vm_page *pg)
 	struct l2_bucket *l2b;
 	struct pv_entry *pv, *npv, **pvp;
 	pmap_t pm, curpm;
-	pt_entry_t *ptep, pte;
+	pt_entry_t *ptep;
 	bool flush;
 	u_int flags;
 
@@ -2647,7 +2647,6 @@ pmap_page_remove(struct vm_page *pg)
 		KDASSERT(l2b != NULL);
 
 		ptep = &l2b->l2b_kva[l2pte_index(pv->pv_va)];
-		pte = *ptep;
 
 		/*
 		 * Update statistics
