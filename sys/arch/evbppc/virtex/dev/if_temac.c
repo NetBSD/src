@@ -1,4 +1,4 @@
-/* 	$NetBSD: if_temac.c,v 1.4 2008/02/12 18:03:43 dyoung Exp $ */
+/* 	$NetBSD: if_temac.c,v 1.5 2009/12/31 13:10:46 freza Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.4 2008/02/12 18:03:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.5 2009/12/31 13:10:46 freza Exp $");
 
 #include "bpfilter.h"
 
@@ -649,7 +649,6 @@ static int
 temac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct temac_softc 	*sc = (struct temac_softc *)ifp->if_softc;
-	struct ifreq 		*ifr = (struct ifreq *)data;
 	int 			s, ret;
 
 	s = splnet();
