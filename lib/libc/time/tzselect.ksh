@@ -1,13 +1,13 @@
 #! /bin/ksh
 #
-#	$NetBSD: tzselect.ksh,v 1.5 1999/11/10 20:32:31 kleink Exp $
+#	$NetBSD: tzselect.ksh,v 1.6 2009/12/31 22:49:16 mlelstv Exp $
 #
-# '@(#)tzselect.ksh	1.7'
+VERSION='@(#)tzselect.ksh	8.2'
 
 # Ask the user about the time zone, and output the resulting TZ value to stdout.
 # Interact with the user via stderr and stdin.
 
-# Contributed by Paul Eggert <eggert@twinsun.com>.
+# Contributed by Paul Eggert.
 
 # Porting notes:
 #
@@ -46,6 +46,21 @@
 	echo >&2 "$0: Sorry, your \`$AWK' program is not Posix compatible."
 	exit 1
 }
+
+if [ "$1" = "--help" ]; then
+    cat <<EOF
+Usage: tzselect
+Select a time zone interactively.
+
+Report bugs to tz@elsie.nci.nih.gov.
+EOF
+    exit 0
+elif [ "$1" = "--version" ]; then
+    cat <<EOF
+tzselect $VERSION
+EOF
+    exit 0
+fi
 
 # Make sure the tables are readable.
 TZ_COUNTRY_TABLE=$TZDIR/iso3166.tab
