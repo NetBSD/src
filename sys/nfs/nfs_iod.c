@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_iod.c,v 1.3 2009/03/14 21:04:25 dsl Exp $	*/
+/*	$NetBSD: nfs_iod.c,v 1.4 2009/12/31 19:38:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.3 2009/03/14 21:04:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.4 2009/12/31 19:38:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.3 2009/03/14 21:04:25 dsl Exp $");
 #include <nfs/nfsrtt.h>
 #include <nfs/nfs_var.h>
 
-int nuidhash_max = NFS_MAXUIDHASH;
+extern int nuidhash_max;
 
 /*
  * locking order:
