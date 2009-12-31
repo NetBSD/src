@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.c,v 1.1 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: chartype.c,v 1.2 2009/12/31 18:32:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: chartype.c,v 1.1 2009/12/30 22:37:40 christos Exp $");
+__RCSID("$NetBSD: chartype.c,v 1.2 2009/12/31 18:32:37 christos Exp $");
 #endif /* not lint && not SCCSID */
 #include "el.h"
 #include <stdlib.h>
@@ -75,7 +75,7 @@ ct_conv_buff_resize(ct_buffer_t *conv, size_t mincsize, size_t minwsize)
 }
 
 
-protected char *
+public char *
 ct_encode_string(const Char *s, ct_buffer_t *conv)
 {
 	char *dst;
@@ -115,7 +115,7 @@ ct_encode_string(const Char *s, ct_buffer_t *conv)
 	return conv->cbuff;
 }
 
-protected Char *
+public Char *
 ct_decode_string(const char *s, ct_buffer_t *conv)
 {
 	size_t len = 0;
