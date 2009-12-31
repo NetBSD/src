@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.152 2009/12/31 19:38:16 christos Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.153 2009/12/31 20:01:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.152 2009/12/31 19:38:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.153 2009/12/31 20:01:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ extern int32_t (*nfsrv3_procs[NFS_NPROCS])(struct nfsrv_descript *,
 						struct nfssvc_sock *,
 						struct lwp *, struct mbuf **);
 extern int nfsrvw_procrastinate;
-int nuidhash_max = NFS_MAXUIDHASH;
+extern int nuidhash_max;
 
 static int nfs_numnfsd = 0;
 static struct nfsdrt nfsdrt;
