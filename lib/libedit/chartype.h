@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.h,v 1.2 2009/12/30 23:54:52 christos Exp $	*/
+/*	$NetBSD: chartype.h,v 1.3 2009/12/31 18:32:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -171,11 +171,13 @@ typedef struct ct_buffer_t {
         size_t  wsize;
 } ct_buffer_t;
 
+#define ct_encode_string __ct_encode_string
 /* Encode a wide character string and return the UTF-8 encoded result. */
-protected char *ct_encode_string(const Char *, ct_buffer_t *);
+public char *ct_encode_string(const Char *, ct_buffer_t *);
 
+#define ct_decode_string __ct_decode_string
 /* Decode a (multi)?byte string and return the wide character string result. */
-protected Char *ct_decode_string(const char *, ct_buffer_t *);
+public Char *ct_decode_string(const char *, ct_buffer_t *);
 
 /* Decode a (multi)?byte argv string array.
  * The pointer returned must be free()d when done. */
