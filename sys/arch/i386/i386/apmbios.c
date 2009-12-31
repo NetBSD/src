@@ -1,4 +1,4 @@
-/*	$NetBSD: apmbios.c,v 1.15 2009/11/21 03:11:00 rmind Exp $ */
+/*	$NetBSD: apmbios.c,v 1.16 2009/12/31 16:04:32 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.15 2009/11/21 03:11:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.16 2009/12/31 16:04:32 christos Exp $");
 
 #include "opt_apm.h"
 #include "opt_compat_mach.h"	/* Needed to get the right segment def */
@@ -221,6 +221,7 @@ apmcall_debug(int func, struct bioscallregs *regs, int line)
 	const char *name;
 	int inf;
 	int outf = 0; /* XXX: gcc */
+	long long milli;
 		
 	if (print) {
 		if (func >= sizeof(aci) / sizeof(aci[0])) {
@@ -232,12 +233,13 @@ apmcall_debug(int func, struct bioscallregs *regs, int line)
 			outf = aci[func].outflag;
 		}
 		inittodr(time_second);	/* update timestamp */
+		milli = time_second % 1000;
 		if (name)
-			printf("apmcall@%03ld: %s/%#x (line=%d) ", 
-				time_second % 1000, name, func, line);
+			printf("apmcall@%03lld: %s/%#x (line=%d) ", 
+			    milli, name, func, line);
 		else
-			printf("apmcall@%03ld: %#x (line=%d) ", 
-				time_second % 1000, func, line);
+			printf("apmcall@%03lld: %#x (line=%d) ", 
+			    milli, func, line);
 		acallpr(inf, "in:", regs);
 	}
     	rv = apmcall(func, regs);
