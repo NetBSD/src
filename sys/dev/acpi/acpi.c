@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.138 2009/12/31 10:02:51 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.139 2009/12/31 10:07:13 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.138 2009/12/31 10:02:51 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.139 2009/12/31 10:07:13 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -158,8 +158,6 @@ struct acpi_softc *acpi_softc;
 /*
  * Locking stuff.
  */
-static kmutex_t acpi_slock;
-static int acpi_locked;
 extern kmutex_t acpi_interrupt_list_mtx;
 
 /*
@@ -225,9 +223,7 @@ acpi_probe(void)
 		panic("acpi_probe: ACPI has already been probed");
 	beenhere = 1;
 
-	mutex_init(&acpi_slock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&acpi_interrupt_list_mtx, MUTEX_DEFAULT, IPL_NONE);
-	acpi_locked = 0;
 
 	/*
 	 * Start up ACPICA.
