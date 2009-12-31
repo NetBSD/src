@@ -1,4 +1,4 @@
-/*	$NetBSD: gfb.c,v 1.1 2009/12/29 06:55:55 macallan Exp $	*/
+/*	$NetBSD: gfb.c,v 1.2 2009/12/31 05:08:05 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gfb.c,v 1.1 2009/12/29 06:55:55 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gfb.c,v 1.2 2009/12/31 05:08:05 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,7 @@ gfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	switch (cmd) {
 
 		case WSDISPLAYIO_GTYPE:
-			*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
+			*(u_int *)data = WSDISPLAY_TYPE_XVR1000;
 			return 0;
 
 		case WSDISPLAYIO_GINFO:
