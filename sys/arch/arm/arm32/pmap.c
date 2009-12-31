@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.208 2009/12/31 16:00:53 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.209 2009/12/31 18:34:56 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.208 2009/12/31 16:00:53 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.209 2009/12/31 18:34:56 uebayasi Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -2369,10 +2369,9 @@ pmap_clean_page(struct pv_entry *pv, bool is_src)
 	 * user vmspace, we only need to flush the page if it is in the
 	 * current pmap.
 	 */
-	pm = curproc->p_vmspace->vm_map.pmap;
 
 	for (npv = pv; npv; npv = SLIST_NEXT(npv, pv_link)) {
-		if (npv->pv_pmap == pmap_kernel() || npv->pv_pmap == pm) {
+		if (pmap_is_current(npv->pv_pmap)) {
 			flags |= npv->pv_flags;
 			/*
 			 * The page is mapped non-cacheable in 
@@ -2406,6 +2405,8 @@ pmap_clean_page(struct pv_entry *pv, bool is_src)
 			pmap_dcache_wb_range(pm_to_clean, page_to_clean,
 			    PAGE_SIZE, !is_src, (flags & PVF_WRITE) == 0);
 	} else if (cache_needs_cleaning) {
+		pmap_t const pm = curproc->p_vmspace->vm_map.pmap;
+
 		if (PV_BEEN_EXECD(flags))
 			pmap_idcache_wbinv_all(pm);
 		else
@@ -2564,7 +2565,7 @@ pmap_page_remove(struct vm_page *pg)
 {
 	struct l2_bucket *l2b;
 	struct pv_entry *pv, *npv, **pvp;
-	pmap_t pm, curpm;
+	pmap_t pm;
 	pt_entry_t *ptep;
 	bool flush;
 	u_int flags;
@@ -2606,7 +2607,6 @@ pmap_page_remove(struct vm_page *pg)
 
 	flush = false;
 	flags = 0;
-	curpm = curproc->p_vmspace->vm_map.pmap;
 
 #ifdef PMAP_CACHE_VIVT
 	pmap_clean_page(pv, false);
@@ -2616,7 +2616,7 @@ pmap_page_remove(struct vm_page *pg)
 	while (pv) {
 		pm = pv->pv_pmap;
 		npv = SLIST_NEXT(pv, pv_link);
-		if (flush == false && (pm == curpm || pm == pmap_kernel()))
+		if (flush == false && pmap_is_current(pm))
 			flush = true;
 
 		if (pm == pmap_kernel()) {
