@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.18 2009/12/30 04:51:26 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.19 2009/12/31 00:54:09 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.18 2009/12/30 04:51:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.19 2009/12/31 00:54:09 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -1657,8 +1657,8 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 	const phys_ram_seg_t *segs, size_t nseg,
 	const struct mips_vmfreelist *flp, size_t nfl)
 {
-	const paddr_t kernstart = MIPS_KSEG0_TO_PHYS(vkernstart);
-	const paddr_t kernend = MIPS_KSEG0_TO_PHYS(vkernend);
+	const paddr_t kernstart = MIPS_KSEG0_TO_PHYS(trunc_page(vkernstart));
+	const paddr_t kernend = MIPS_KSEG0_TO_PHYS(round_page(vkernend));
 #if defined(VM_FREELIST_FIRST4G) || defined(VM_FREELIST_FIRST512M)
 #ifdef VM_FREELIST_FIRST512M
 	bool need512m = false;
@@ -1690,7 +1690,25 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 		 * piecemeal.
 		 */
 		phys_ram_seg_t tmp = *segs++;
-		printf("phys segment: %#"PRIxPADDR"@%#"PRIxPADDR"\n", tmp.size, tmp.start);
+		printf("phys segment: %#"PRIxPADDR"@%#"PRIxPADDR"\n",
+		    (paddr_t)tmp.size,
+		    (paddr_t)tmp.start);
+
+		/*
+		 * Make sure everything is in page units.
+		 */
+		tmp.size = round_page(tmp.start + tmp.size) - trunc_page(tmp.start) ;
+		tmp.start = trunc_page(tmp.start);
+
+		/*
+		 * Page 0 is reserved for exception vectors.
+		 */
+		if (tmp.start == 0) {
+			tmp.start = PAGE_SIZE;
+			tmp.size -= PAGE_SIZE;
+			if (tmp.size == 0)
+				continue;
+		}
 		while (tmp.size > 0) {
 			int freelist = -1;	/* unknown freelist */
 			psize_t segsize = tmp.size;
@@ -1786,7 +1804,9 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 			paddr_t first = atop(tmp.start);
 			paddr_t last = first + atop(segsize);
 			printf("adding %#"PRIxPADDR"@%#"PRIxPADDR" to freelist %d\n",
-				tmp.start, tmp.start + segsize, freelist);
+			
+			    (paddr_t)tmp.start, (paddr_t)tmp.start + segsize,
+			    freelist);
 			uvm_page_physload(first, last, first, last, freelist);
 
 			/*

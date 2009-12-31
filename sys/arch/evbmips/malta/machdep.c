@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28.10.2 2009/09/07 23:20:29 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28.10.3 2009/12/31 00:54:09 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.10.2 2009/09/07 23:20:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.10.3 2009/12/31 00:54:09 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -164,9 +164,6 @@ struct malta_config malta_configuration;
 /* For sysctl_hw. */
 extern char cpu_model[];
 
-/* Our exported CPU info; we can have only one. */  
-struct cpu_info cpu_info_store;
-
 /* Maps for VM objects. */
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
@@ -189,8 +186,6 @@ void	mach_init(int, char **, yamon_env_var *, u_long);
  */
 int	safepri = MIPS1_PSL_LOWIPL;
 
-extern struct user *proc0paddr;
-
 /*
  * Do all the stuff that locore normally does before calling main().
  */
@@ -198,11 +193,10 @@ void
 mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 {
 	struct malta_config *mcp = &malta_configuration;
+	uint8_t * const brkres = (uint8_t *)MIPS_PHYS_TO_KSEG1(MALTA_BRKRES);
 	bus_space_handle_t sh;
-	void *kernend, *v;
-        u_long first, last;
+	void *kernend;
 	int freqok;
-	uint8_t *brkres = (uint8_t *)MIPS_PHYS_TO_KSEG1(MALTA_BRKRES);
 
 	extern char edata[], end[];
 
@@ -308,10 +302,8 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	/*
 	 * Load the rest of the available pages into the VM system.
 	 */
-	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
-	last = mem_clusters[0].start + mem_clusters[0].size;
-	uvm_page_physload(atop(first), atop(last), atop(first), atop(last),
-		VM_FREELIST_DEFAULT);
+	mips_page_physload(MIPS_KSEG0_START, (vaddr_t)kernend,
+	    mem_clusters, mem_cluster_cnt, NULL, 0);
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -323,17 +315,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (void *)uvm_pageboot_alloc(USPACE); 
-	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
-#ifdef _LP64
-	lwp0.l_md.md_regs->f_regs[_R_SR] = MIPS_SR_KX;
-#endif
-	proc0paddr->u_pcb.pcb_context.val[_L_SR] =
-#ifdef _LP64
-	    MIPS_SR_KX |
-#endif
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	mips_init_lwp0_uarea();
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.

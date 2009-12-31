@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.10 2009/12/14 07:23:31 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.11 2009/12/31 00:54:09 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.10 2009/12/14 07:23:31 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.11 2009/12/31 00:54:09 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -258,8 +258,6 @@ void rmixlfw_mmap_print(rmixlfw_mmap_t *);
  */
 int	safepri = MIPS1_PSL_LOWIPL;
 
-extern struct user *proc0paddr;
-
 /*
  * Do all the stuff that locore normally does before calling main().
  */
@@ -267,7 +265,7 @@ void
 mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 {
 	struct rmixl_config *rcp = &rmixl_configuration;
-	void *kernend, *v;
+	void *kernend;
 	u_long memsize;
 	u_int vm_cluster_cnt;
 	uint32_t r;
@@ -381,17 +379,8 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	/*
 	 * Load vm_clusters[] into the VM system.
 	 */
-	for (u_int i=0; i < vm_cluster_cnt; i++) {
-		u_quad_t first, last;
-
-		first = trunc_page(vm_clusters[i].start);
-		last = round_page(vm_clusters[i].start + vm_clusters[i].size);
-		DPRINTF(("%s: %d: %#"PRIx64", %#"PRIx64"\n",
-			__func__, i, first, last));
-
-		uvm_page_physload(atop(first), atop(last), atop(first),
-			atop(last), VM_FREELIST_DEFAULT);
-	}
+	mips_page_physload(MIPS_KSEG0_START, (vaddr_t) kernend,
+	    vm_clusters, vm_cluster_cnt, NULL, 0);
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -403,18 +392,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (void *)uvm_pageboot_alloc(USPACE); 
-	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
-#ifdef _LP64
-        lwp0.l_md.md_regs->f_regs[_R_SR] = MIPS_SR_KX;
-#endif
-        proc0paddr->u_pcb.pcb_context.val[_L_SR] =
-#ifdef _LP64
-            MIPS_SR_KX |
-#endif  
-            MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
-
+	mips_init_lwp0_uarea();
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.

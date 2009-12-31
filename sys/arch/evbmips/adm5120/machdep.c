@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.6.10.1 2009/09/07 23:20:28 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.6.10.2 2009/12/31 00:54:08 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6.10.1 2009/09/07 23:20:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6.10.2 2009/12/31 00:54:08 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -162,13 +162,15 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6.10.1 2009/09/07 23:20:28 matt Exp $"
 struct	user *proc0paddr;
 
 /* Our exported CPU info; we can have only one. */  
-struct cpu_info cpu_info_store;
+struct cpu_info cpu_info_store = {
+	.ci_curlwp = &lwp0,
+};
 
 /* Maps for VM objects. */
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
-int physmem;		/* # pages of physical memory */
+int physmem;			/* # pages of physical memory */
 int maxmem;			/* max memory per process */
 
 int mem_cluster_cnt;
@@ -313,8 +315,6 @@ mach_init(int argc, char **argv, void *a2, void *a3)
 	struct adm5120_config *admc = &adm5120_configuration;
 	uint32_t memsize;
 	vaddr_t kernend;
-	u_long first, last;
-	vaddr_t v;
 
 	extern char edata[], end[];	/* XXX */
 
@@ -419,10 +419,8 @@ mach_init(int argc, char **argv, void *a2, void *a3)
 	/*
 	 * Load the rest of the available pages into the VM system.
 	 */
-	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
-	last = mem_clusters[0].start + mem_clusters[0].size;
-	uvm_page_physload(atop(first), atop(last), atop(first), atop(last),
-	    VM_FREELIST_DEFAULT);
+	uvm_page_physload(MIPS_KSEG0_START, kernend,
+	   mem_clusters, mem_cluster_cnt, NULL, 0);
 
 	/*
 	 * Initialize message buffer (at end of core).
@@ -437,17 +435,7 @@ mach_init(int argc, char **argv, void *a2, void *a3)
 	/*
 	 * Init mapping for u page(s) for proc0.
 	 */
-	v = uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-#ifdef _LP64
-	lwp0.l_md.md_regs->f_regs[_R_SR] = MIPS_SR_KX;
-#endif
-	lwp0.l_addr->u_pcb.pcb_context.val[_L_SR] =
-#ifdef _LP64
-	    MIPS_SR_KX |
-#endif
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	mips_init_lwp0_uarea();
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.

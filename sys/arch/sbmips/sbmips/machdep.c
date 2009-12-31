@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.38.10.4 2009/12/08 07:44:44 cyber Exp $ */
+/* $NetBSD: machdep.c,v 1.38.10.5 2009/12/31 00:54:09 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.4 2009/12/08 07:44:44 cyber Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.5 2009/12/31 00:54:09 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"       /* for SYMTAB_SPACE */
@@ -158,12 +158,11 @@ extern struct user *proc0paddr;
 void
 mach_init(long fwhandle, long magic, long bootdata, long reserved)
 {
-	void *kernend, *p0;
-	u_long first, last;
+	void *kernend;
 	extern char edata[], end[];
-	int i;
 	uint32_t config;
 	struct bootinfo_v1 *tmp_bi;
+	int i;
 
 	/* XXX this code must run on the target CPU */
 	config = mips3_cp0_config_read();
@@ -172,11 +171,7 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	mips3_cp0_config_write(config);
 
 	/* Zero BSS.  XXXCGD: uh, is this really necessary still?  */
-#ifdef _LP64
-	memset((char *)((vaddr_t)edata | 0xffffffff00000000), 0, end - edata);
-#else
 	memset(edata, 0, end - edata);
-#endif
 
 	/*
 	 * Copy the bootinfo structure from the boot loader.
@@ -316,39 +311,21 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 
 	/*
 	 * Load the rest of the available pages into the VM system.
-	 * The first chunk is tricky because we have to avoid the
-	 * kernel, but the rest are easy.
 	 */
-	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
-	last = mem_clusters[0].start + mem_clusters[0].size;
-	uvm_page_physload(atop(first), atop(last), atop(first), atop(last),
-		VM_FREELIST_DEFAULT);
-
-	for (i = 1; i < mem_cluster_cnt; i++) {
-		first = round_page(mem_clusters[i].start);
-		last = mem_clusters[i].start + mem_clusters[i].size;
-		uvm_page_physload(atop(first), atop(last), atop(first),
-		    atop(last), VM_FREELIST_DEFAULT);
-	}
+	mips_page_physload(MIPS_KSEG0_START, (vaddr_t) kernend,
+	    mem_clusters, mem_cluster_cnt, NULL, 0);
 
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
 	mips_init_msgbuf();
 
+	pmap_bootstrap();
+
 	/*
 	 * Allocate space for proc0's USPACE
 	 */
-	p0 = (void *)pmap_steal_memory(USPACE, NULL, NULL);
-	lwp0.l_addr = proc0paddr = (struct user *)p0;
-	lwp0.l_md.md_regs = (struct frame *)((char *)p0 + USPACE) - 1;
-	lwp0.l_addr->u_pcb.pcb_context.val[_L_SR] =
-#ifdef _LP64
-	    MIPS_SR_KX |
-#endif
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
-
-	pmap_bootstrap();
+	mips_init_lwp0_uarea();
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.

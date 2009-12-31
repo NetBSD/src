@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.13.10.1 2009/09/07 23:20:29 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.13.10.2 2009/12/31 00:54:09 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,7 +147,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.10.1 2009/09/07 23:20:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.10.2 2009/12/31 00:54:09 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -182,16 +182,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.10.1 2009/09/07 23:20:29 matt Exp $
 #include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>
 
-struct	user *proc0paddr;
-
-/* Our exported CPU info; we can have only one. */  
-struct cpu_info cpu_info_store;
-
 /* Maps for VM objects. */
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
-int physmem;		/* # pages of physical memory */
+int physmem;			/* # pages of physical memory */
 int maxmem;			/* max memory per process */
 
 int mem_cluster_cnt;
@@ -289,12 +284,10 @@ mach_init(void)
 	mem_cluster_cnt++;
 
 	/*
-	 * Load the rest of the available pages into the VM system.
+	 * Load the available pages into the VM system.
 	 */
-	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
-	last = mem_clusters[0].start + mem_clusters[0].size;
-	uvm_page_physload(atop(first), atop(last), atop(first), atop(last),
-	    VM_FREELIST_DEFAULT);
+	mips_add_physload(MIPS_KSEG0_START, kernend,
+	    mem_clusters, mem_cluster_cnt, NULL, 0);
 
 	/*
 	 * Initialize message buffer (at end of core).
@@ -309,17 +302,7 @@ mach_init(void)
 	/*
 	 * Init mapping for u page(s) for proc0.
 	 */
-	v = (void *) uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
-#ifdef _LP64
-	lwp0.l_md.md_regs->f_regs[_R_SR] = MIPS_SR_KX;
-#endif
-	lwp0.l_addr->u_pcb.pcb_context.val[_L_SR] =
-#ifdef _LP64
-	    MIPS_SR_KX |
-#endif
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	mips_init_lwp0_uarea();
 
 	/*
 	 * Initialize busses.
@@ -337,9 +320,9 @@ mach_init(void)
 	 * PROM.  VxWorks bootloader seems to leave one set.
 	 */ 
 	__asm volatile (
-		"mtc0	$0, $" ___STRING(MIPS_COP_0_WATCH_LO) " \n\t"
+		"mtc0	$0, $%0\n\t"
 		"nop\n\t"
-		"nop\n\t");
+		"nop\n\t" :: "n"(MIPS_COP_0_WATCH_LO));
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
