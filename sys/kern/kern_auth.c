@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.64 2009/09/03 04:45:27 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.65 2009/12/31 02:20:36 elad Exp $ */
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.64 2009/09/03 04:45:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.65 2009/12/31 02:20:36 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.64 2009/09/03 04:45:27 elad Exp $");
 #include <sys/kauth.h>
 #include <sys/kmem.h>
 #include <sys/rwlock.h>
-#include <sys/sysctl.h>		/* for pi_[p]cread */
+#include <sys/sysctl.h>
 #include <sys/atomic.h>
 #include <sys/specificdata.h>
 #include <sys/vnode.h>
@@ -149,6 +149,7 @@ static unsigned int nsecmodels = 0;
 
 static specificdata_domain_t kauth_domain;
 static pool_cache_t kauth_cred_cache;
+
 krwlock_t	kauth_lock;
 
 /* Allocate new, empty kauth credentials. */
