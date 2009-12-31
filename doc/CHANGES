@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1338 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1339 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -512,3 +512,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	gfb: Add a driver for Sun XVR-1000 graphics boards
 		[macallan 20091229]
 	wm(4): Add support for i82583V	[msaitoh 20091230]
+	libc: Import tzcode2009k [mlelstv 20091231]
