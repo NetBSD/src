@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.137 2009/12/03 21:04:29 cegger Exp $	*/
+/*	$NetBSD: acpi.c,v 1.138 2009/12/31 10:02:51 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.137 2009/12/03 21:04:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.138 2009/12/31 10:02:51 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -174,6 +174,7 @@ static const char * const acpi_ignored_ids[] = {
 	"PNP0C01",	/* No "System Board" driver */
 	"PNP0C02",	/* No "PnP motherboard register resources" driver */
 	"PNP0C0F",	/* ACPI PCI link devices are handled internally */
+	"INT0800",	/* Intel HW RNG is handled internally */
 #endif
 #if defined(x86_64)
 	"PNP0C04",	/* FPU is handled internally */
