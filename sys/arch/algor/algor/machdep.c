@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38.10.3 2009/09/16 03:44:59 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38.10.4 2009/12/31 00:54:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.3 2009/09/16 03:44:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.4 2009/12/31 00:54:08 matt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -209,11 +209,9 @@ mach_init(int argc, char *argv[], char *envp[])
 {
 	extern char kernel_text[], edata[], end[];
 	vaddr_t kernstart, kernend;
-	paddr_t kernstartpfn, kernendpfn, pfn0, pfn1;
 	vsize_t size;
 	const char *cp;
 	char *cp0;
-	void *v;
 	size_t i;
 
 	/* Disable interrupts. */
@@ -234,9 +232,6 @@ mach_init(int argc, char *argv[], char *envp[])
 	 */
 	led_display('p', 'g', 's', 'z');
 	uvm_setpagesize();
-
-	kernstartpfn = atop(MIPS_KSEG0_TO_PHYS(kernstart));
-	kernendpfn   = atop(MIPS_KSEG0_TO_PHYS(kernend));
 
 	/*
 	 * Initialize bus space tags and bring up the console.
@@ -505,56 +500,18 @@ mach_init(int argc, char *argv[], char *envp[])
 	led_display('v', 'm', 'p', 'g');
 	for (i = 0; i < mem_cluster_cnt; i++) {
 		physmem += atop(mem_clusters[i].size);
-		pfn0 = atop(mem_clusters[i].start);
-		pfn1 = pfn0 + atop(mem_clusters[i].size);
-		if (pfn0 <= kernstartpfn && kernendpfn <= pfn1) {
-			/*
-			 * Must compute the location of the kernel
-			 * within the segment.
-			 */
-#if 1
-			printf("Cluster %zu contains kernel\n", i);
-#endif
-			if (pfn0 < kernstartpfn) {
-				/*
-				 * There is a chunk before the kernel.
-				 */
-#if 1
-				printf("Loading chunk before kernel: "
-				    "%#"PRIxPADDR" / %#"PRIxPADDR"\n",
-				    pfn0, kernstartpfn);
-#endif
-				uvm_page_physload(pfn0, kernstartpfn,
-				    pfn0, kernstartpfn, VM_FREELIST_DEFAULT);
-			}
-			if (kernendpfn < pfn1) {
-				/*
-				 * There is a chunk after the kernel.
-				 */
-#if 1
-				printf("Loading chunk after kernel: "
-				    "%#"PRIxPADDR" / %#"PRIxPADDR"\n",
-				    kernendpfn, pfn1);
-#endif
-				uvm_page_physload(kernendpfn, pfn1,
-				    kernendpfn, pfn1, VM_FREELIST_DEFAULT);
-			}
-		} else {
-			/*
-			 * Just load this cluster as one chunk.
-			 */
-#if 1
-			printf("Loading cluster %zu: %#"PRIxPADDR
-			    " / %#"PRIxPADDR"\n", i, pfn0, pfn1);
-#endif
-			uvm_page_physload(pfn0, pfn1, pfn0, pfn1,
-			    VM_FREELIST_DEFAULT);
-		}
 	}
-
 	if (physmem == 0)
 		panic("can't happen: system seems to have no memory!");
 	maxmem = physmem;
+
+	static const struct mips_vmfreelist isadma = {
+		.fl_start = 8*1024*1024,
+		.fl_end = 16*1024*1024,
+		.fl_freelist = VM_FREELIST_ISADMA,
+	};
+	mips_page_physload(kernstart, kernend,
+	    mem_clusters, mem_cluster_cnt, &isadma, 1);
 
 	/*
 	 * Initialize message buffer (at end of core).
@@ -571,17 +528,7 @@ mach_init(int argc, char *argv[], char *envp[])
 	 * Init mapping for u page(s) for lwp0.
 	 */
 	led_display('u', 's', 'p', 'c');
-	v = (void *) uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = proc0paddr = (struct user *) v;
-	lwp0.l_md.md_regs = (struct frame *)((char*)v + USPACE) - 1;
-#ifdef _LP64
-	lwp0.l_md.md_regs->f_regs[_R_SR] = MIPS_SR_KX;
-#endif
-	proc0paddr->u_pcb.pcb_context.val[_L_SR] =
-#ifdef _LP64
-	    MIPS_SR_KX |
-#endif
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	mips_init_lwp0_uarea();
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
