@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.29 2009/11/29 21:32:50 cegger Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.30 2009/12/31 10:12:51 jruoho Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.29 2009/11/29 21:32:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.30 2009/12/31 10:12:51 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,15 +153,41 @@ static void
 acpilid_wake_event(device_t dv, bool enable)
 {
 	struct acpilid_softc *sc = device_private(dv);
-
+	ACPI_OBJECT_LIST arg;
+	ACPI_OBJECT obj[3];
 	ACPI_STATUS rv;
+
+	/*
+	 * First try to call the Device Sleep Wake control method, _DSW.
+	 * Only if this is not available, resort to to the Power State
+	 * Wake control method, _PSW, which was deprecated in ACPI 3.0.
+	 */
+	obj[0].Integer.Value = enable ? 1 : 0;
+	obj[1].Integer.Value = obj[2].Integer.Value = 0;
+	obj[0].Type = obj[1].Type = obj[2].Type = ACPI_TYPE_INTEGER;
+
+	arg.Count = 3;
+	arg.Pointer = obj;
+
+	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "_DSW", &arg, NULL);
+
+	if (ACPI_SUCCESS(rv))
+		return;
+
+	if (rv != AE_NOT_FOUND)
+		goto fail;
 
 	rv = acpi_eval_set_integer(sc->sc_node->ad_handle, "_PSW",
 	    enable ? 1 : 0);
+
 	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND)
-		aprint_error_dev(dv,
-		    "unable to evaluate _PSW handler: %s\n",
-		    AcpiFormatException(rv));
+		goto fail;
+
+	return;
+
+fail:
+	aprint_error_dev(dv, "unable to evaluate wake control method: %s\n",
+	    AcpiFormatException(rv));
 }
 
 /*
