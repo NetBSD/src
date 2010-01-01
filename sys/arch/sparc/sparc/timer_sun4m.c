@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.18 2009/12/20 03:40:03 mrg Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.19 2010/01/01 08:00:02 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.18 2009/12/20 03:40:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.19 2010/01/01 08:00:02 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -130,12 +130,6 @@ statintr_4m(void *cap)
 	u_long newint;
 
 	cpuinfo.ci_lev14.ev_count++;
-
-#if defined(MULTIPROCESSOR) && 0
-	if (!(curcpu()->master)) {
-		raise_ipi(&cpuinfo, 10);
-	}
-#endif
 
 	/* read the limit register to clear the interrupt */
 	*((volatile int *)&counterreg4m->t_limit);
