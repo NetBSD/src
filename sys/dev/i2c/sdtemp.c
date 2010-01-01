@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.7 2009/07/10 15:30:45 pgoyette Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.8 2010/01/01 15:43:49 pgoyette Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.7 2009/07/10 15:30:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.8 2010/01/01 15:43:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,6 +325,8 @@ sdtemp_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 		limits->sel_flags |= PROP_CRITMAX;
 	}
 	iic_release_bus(sc->sc_tag, 0);
+	if (limits->sel_flags != 0)
+		limits->sel_flags |= PROP_DRIVER_LIMITS;
 }
 
 /* Send current limit values to the device */
