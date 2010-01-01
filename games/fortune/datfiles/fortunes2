@@ -519,9 +519,10 @@ Liza Minnelli.
 %
 	... with liberty and justice for all who can afford it.
 %
-	12 + 144 + 20 + 3(4)                  2
+	                   ___
+	12 + 144 + 20 + 3\/ 4                 2
 	----------------------  +  5(11)  =  9  +  0
-		  7
+	          7
 
 A dozen, a gross and a score,
 Plus three times the square root of four,
