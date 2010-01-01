@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.209 2009/12/31 18:34:56 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.210 2010/01/01 02:32:28 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.209 2009/12/31 18:34:56 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.210 2010/01/01 02:32:28 uebayasi Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -1531,6 +1531,7 @@ pmap_pinit(pmap_t pm)
 
 		pm->pm_pl1vec = &pm->pm_l1->l1_kva[L1_IDX(vector_page)];
 		l2b = pmap_get_l2_bucket(pm, vector_page);
+		KDASSERT(l2b != NULL);
 		pm->pm_l1vec = l2b->l2b_phys | L1_C_PROTO |
 		    L1_C_DOM(pm->pm_domain);
 	} else
@@ -1752,6 +1753,7 @@ pmap_vac_me_user(struct vm_page *pg, pmap_t pm, vaddr_t va)
 			pv->pv_flags |= PVF_NC;
 
 			l2b = pmap_get_l2_bucket(pv->pv_pmap, pv->pv_va);
+			KDASSERT(l2b != NULL);
 			ptep = &l2b->l2b_kva[l2pte_index(pv->pv_va)];
 			pte = *ptep & ~L2_S_CACHE_MASK;
 
@@ -1794,6 +1796,7 @@ pmap_vac_me_user(struct vm_page *pg, pmap_t pm, vaddr_t va)
 			pv->pv_flags &= ~PVF_NC;
 
 			l2b = pmap_get_l2_bucket(pv->pv_pmap, pv->pv_va);
+			KDASSERT(l2b != NULL);
 			ptep = &l2b->l2b_kva[l2pte_index(pv->pv_va)];
 			pte = (*ptep & ~L2_S_CACHE_MASK) | pte_l2_s_cache_mode;
 
@@ -2082,6 +2085,7 @@ pmap_vac_me_harder(struct vm_page *pg, pmap_t pm, vaddr_t va)
 	 */
 	SLIST_FOREACH(pv, &pg->mdpage.pvh_list, pv_link) {
 		l2b = pmap_get_l2_bucket(pv->pv_pmap, pv->pv_va);
+		KDASSERT(l2b != NULL);
 		ptep = &l2b->l2b_kva[l2pte_index(pv->pv_va)];
 		opte = *ptep;
 		pte = opte & ~L2_S_CACHE_MASK;
@@ -5231,6 +5235,7 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	if (vector_page < KERNEL_BASE) {
 		pm->pm_pl1vec = &pm->pm_l1->l1_kva[L1_IDX(vector_page)];
 		l2b = pmap_get_l2_bucket(pm, vector_page);
+		KDASSERT(l2b != NULL);
 		pm->pm_l1vec = l2b->l2b_phys | L1_C_PROTO |
 		    L1_C_DOM(pm->pm_domain);
 	} else
@@ -5459,6 +5464,7 @@ pmap_postinit(void)
 			 * with the cache-mode set to write-through.
 			 */
 			l2b = pmap_get_l2_bucket(pmap_kernel(), va);
+			KDASSERT(l2b != NULL);
 			ptep = &l2b->l2b_kva[l2pte_index(va)];
 			pte = *ptep;
 			pte = (pte & ~L2_S_CACHE_MASK) | pte_l2_s_cache_mode_pt;
