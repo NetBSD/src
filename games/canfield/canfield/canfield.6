@@ -1,4 +1,4 @@
-.\"	$NetBSD: canfield.6,v 1.10 2005/09/15 02:09:41 wiz Exp $
+.\"	$NetBSD: canfield.6,v 1.11 2010/01/01 07:35:09 dholland Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)canfield.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd May 31, 1993
+.Dd January 1, 2010
 .Dt CANFIELD 6
 .Os
 .Sh NAME
@@ -39,8 +39,9 @@
 .Sh SYNOPSIS
 .Nm
 .Nm cfscores
-.Op Fl a
 .Op Ar user
+.Nm cfscores
+.Fl a
 .Sh DESCRIPTION
 If you have never played solitaire before, it is recommended
 that you consult a solitaire instruction book. In
@@ -120,3 +121,5 @@ Further random hacking by: Steve Feldman, Kirk McKusick,
 Mikey Olson, and Eric Allman.
 .Sh BUGS
 It is impossible to cheat.
+.Pp
+The score file database is not portable.
