@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.55 2009/12/29 17:49:21 elad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.56 2010/01/01 03:22:13 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.55 2009/12/29 17:49:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.56 2010/01/01 03:22:13 dholland Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -344,7 +344,7 @@ module_autoload(const char *filename, modclass_t class)
 		return EPERM;
 	}
 
-        /* Disallow path seperators and magic symlinks. */
+        /* Disallow path separators and magic symlinks. */
         if (strchr(filename, '/') != NULL || strchr(filename, '@') != NULL ||
             strchr(filename, '.') != NULL) {
         	return EPERM;
