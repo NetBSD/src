@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.72 2009/12/23 18:31:00 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.73 2010/01/01 15:41:25 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.72 2009/12/23 18:31:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.73 2010/01/01 15:41:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -481,16 +481,9 @@ do {									\
 } while (/* CONSTCOND */ 0)
 
 	/*
-	 * If driver provides method to retrieve its internal limit
-	 * values, call it.  If it returns any values, set the flag
-	 * PROP_DRIVER_LIMITS to indicate that the driver can process
-	 * all the limits we have.  (If userland limits are specified
-	 * later and the driver cannot handle them, this flag will be
-	 * cleared.)
-	 *
-	 * If the driver cannot or does not provide us with limit values
-	 * we cannot monitor limits now;  we get another chance to create
-	 * the FMONLIMITS entry later if userland specifies some limits.
+	 * If driver provides a method to retrieve its internal limit
+	 * values, call it and use thoe returned values as initial
+	 * limits for event monitoring.
 	 */
 	lims.sel_flags = 0;
 	if (sed_t->sed_edata->flags & ENVSYS_FMONLIMITS)
@@ -498,10 +491,20 @@ do {									\
 			(*sed_t->sed_sme->sme_get_limits)(sed_t->sed_sme,
 							  sed_t->sed_edata,
 							  &lims);
-	if (lims.sel_flags)
-		lims.sel_flags |= PROP_DRIVER_LIMITS;
-	else
+	/*
+	 * If no values returned, don't create the event monitor at
+	 * this time.  We'll get another chance later when the user
+	 * provides us with limits.
+	 */
+	if (lims.sel_flags == 0)
 		sed_t->sed_edata->flags &= ~ENVSYS_FMONLIMITS;
+
+	/*
+	 * If driver doesn't provide a way to "absorb" user-specified
+	 * limit values, we must monitor all limits ourselves
+	 */
+	else if (sed_t->sed_sme->sme_get_limits == NULL)
+		lims.sel_flags |= PROP_DRIVER_LIMITS;
 
 	/* Register the events that were specified */
 
