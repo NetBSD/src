@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.52 2009/12/24 00:26:28 pgoyette Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.53 2010/01/01 15:55:30 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.52 2009/12/24 00:26:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.53 2010/01/01 15:55:30 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,8 +303,6 @@ acpitz_get_status(void *opaque)
 			if (sc->sc_zone.ac[i] <= tmp)
 				active = i;
 		}
-		if (active != ATZ_ACTIVE_NONE)
-			sc->sc_temp_sensor.state = ENVSYS_SWARNOVER;
 
 		flags = sc->sc_flags &
 		    ~(ATZ_F_CRITICAL|ATZ_F_HOT|ATZ_F_PASSIVE);
