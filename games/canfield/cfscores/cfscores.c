@@ -1,4 +1,4 @@
-/*	$NetBSD: cfscores.c,v 1.19 2010/01/01 06:31:18 dholland Exp $	*/
+/*	$NetBSD: cfscores.c,v 1.20 2010/01/01 06:37:16 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)cfscores.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cfscores.c,v 1.19 2010/01/01 06:31:18 dholland Exp $");
+__RCSID("$NetBSD: cfscores.c,v 1.20 2010/01/01 06:37:16 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,18 +51,8 @@ __RCSID("$NetBSD: cfscores.c,v 1.19 2010/01/01 06:31:18 dholland Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "betinfo.h"
 #include "pathnames.h"
-
-struct betinfo {
-	long	hand;		/* cost of dealing hand */
-	long	inspection;	/* cost of inspecting hand */
-	long	game;		/* cost of buying game */
-	long	runs;		/* cost of running through hands */
-	long	information;	/* cost of information */
-	long	thinktime;	/* cost of thinking time */
-	long	wins;		/* total winnings */
-	long	worth;		/* net worth after costs */
-};
 
 static int dbfd;
 
