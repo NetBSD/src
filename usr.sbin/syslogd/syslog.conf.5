@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.conf.5,v 1.17 2010/01/01 21:26:18 mbalmer Exp $
+.\"	$NetBSD: syslog.conf.5,v 1.18 2010/01/01 21:44:07 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
 .\"
-.Dd January 1st, 2010
+.Dd January 1, 2010
 .Dt SYSLOG.CONF 5
 .Os
 .Sh NAME
@@ -404,8 +404,8 @@ Enables TLS server mode.
 Service name or port number to bind to.
 Default is
 .Sq syslog .
-.Em As long as no official port is assigned this option is required for TLS
-servers.
+.Em As long as no official port is assigned this option is required
+.Em for TLS servers.
 .It Em tls_bindhost
 Hostname or IP to bind to.
 .It Em tls_gen_cert
