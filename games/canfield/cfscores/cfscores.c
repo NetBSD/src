@@ -1,4 +1,4 @@
-/*	$NetBSD: cfscores.c,v 1.17 2010/01/01 06:16:36 dholland Exp $	*/
+/*	$NetBSD: cfscores.c,v 1.18 2010/01/01 06:20:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)cfscores.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cfscores.c,v 1.17 2010/01/01 06:16:36 dholland Exp $");
+__RCSID("$NetBSD: cfscores.c,v 1.18 2010/01/01 06:20:45 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,8 +78,7 @@ main(int argc, char *argv[])
 	setgid(getgid());
 
 	if (argc > 2) {
-		printf("Usage: cfscores -a | cfscores [user]\n");
-		exit(1);
+		errx(1, "Usage: cfscores -a | cfscores [user]");
 	}
 	dbfd = open(_PATH_SCORE, O_RDONLY);
 	if (dbfd < 0)
@@ -89,8 +88,7 @@ main(int argc, char *argv[])
 		uid = getuid();
 		pw = getpwuid(uid);
 		if (pw == 0) {
-			printf("You are not listed in the password file?!?\n");
-			exit(2);
+			errx(2, "You are not listed in the password file?!?");
 		}
 		printuser(pw, 1);
 		exit(0);
@@ -102,8 +100,7 @@ main(int argc, char *argv[])
 	}
 	pw = getpwnam(argv[1]);
 	if (pw == 0) {
-		printf("User %s unknown\n", argv[1]);
-		exit(3);
+		errx(3, "User %s unknown", argv[1]);
 	}
 	printuser(pw, 1);
 	exit(0);
@@ -122,7 +119,7 @@ printuser(const struct passwd *pw, int printfail)
 	pos = pw->pw_uid * (off_t)sizeof(struct betinfo);
 	/* test pos, not pw_uid; uid_t can be unsigned, which makes gcc warn */
 	if (pos < 0) {
-		printf("Bad uid %d\n", (int)pw->pw_uid);
+		warnx("Bad uid %d", (int)pw->pw_uid);
 		return;
 	}
 	i = lseek(dbfd, pos, SEEK_SET);
