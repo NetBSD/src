@@ -1,4 +1,4 @@
-/*	$NetBSD: cfscores.c,v 1.18 2010/01/01 06:20:45 dholland Exp $	*/
+/*	$NetBSD: cfscores.c,v 1.19 2010/01/01 06:31:18 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)cfscores.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cfscores.c,v 1.18 2010/01/01 06:20:45 dholland Exp $");
+__RCSID("$NetBSD: cfscores.c,v 1.19 2010/01/01 06:31:18 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,19 +87,19 @@ main(int argc, char *argv[])
 	if (argc == 1) {
 		uid = getuid();
 		pw = getpwuid(uid);
-		if (pw == 0) {
+		if (pw == NULL) {
 			errx(2, "You are not listed in the password file?!?");
 		}
 		printuser(pw, 1);
 		exit(0);
 	}
 	if (strcmp(argv[1], "-a") == 0) {
-		while ((pw = getpwent()) != 0)
+		while ((pw = getpwent()) != NULL)
 			printuser(pw, 0);
 		exit(0);
 	}
 	pw = getpwnam(argv[1]);
-	if (pw == 0) {
+	if (pw == NULL) {
 		errx(3, "User %s unknown", argv[1]);
 	}
 	printuser(pw, 1);
@@ -125,7 +125,7 @@ printuser(const struct passwd *pw, int printfail)
 	i = lseek(dbfd, pos, SEEK_SET);
 	if (i < 0)
 		warn("lseek %s", _PATH_SCORE);
-	i = read(dbfd, (char *)&total, sizeof(total));
+	i = read(dbfd, &total, sizeof(total));
 	if (i < 0)
 		warn("read %s", _PATH_SCORE);
 	if (i == 0 || total.hand == 0) {
