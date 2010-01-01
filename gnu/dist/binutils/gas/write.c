@@ -851,7 +851,8 @@ adjust_reloc_syms (bfd *abfd ATTRIBUTE_UNUSED,
 	   a non-zero addend if the addend would place the relocation outside
 	   the section's limits.  */
 	if ((symsec->flags & SEC_MERGE) != 0
-	    && (S_GET_VALUE(sym) + fixp->fx_offset >= bfd_get_section_size(symsec)
+	    && (fixp->fx_offset < 0
+		|| S_GET_VALUE(sym) + fixp->fx_offset >= bfd_get_section_size(symsec)
 		|| S_GET_VALUE(sym) + fixp->fx_offset < 0
 	        || fixp->fx_subsy != NULL))
 	  continue;
