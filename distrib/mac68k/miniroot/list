@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.9 2009/09/20 23:19:54 abs Exp $
+#	$NetBSD: list,v 1.10 2010/01/02 06:46:09 tsutsui Exp $
 
 # mac68k extra's
 PROG	sbin/dmesg
@@ -20,9 +20,6 @@ SPECIAL	less srcdir usr.bin/less/less
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp
-
-# the zoneinfo
-#COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 
 # and the termcap file
 COPY	${DISTRIBDIR}/common/termcap		usr/share/misc/termcap

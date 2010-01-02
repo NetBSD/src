@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.16 2009/09/20 23:19:52 abs Exp $
+#	$NetBSD: list,v 1.17 2010/01/02 06:46:09 tsutsui Exp $
 
 # hp300 extra's
 PROG	sbin/disklabel
@@ -27,9 +27,6 @@ SYMLINK	/tmp	var/tmp
 COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
 # ensure installboot is executable
 MTREE	./usr/mdec/installboot	mode=0555
-
-# the zoneinfo
-COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 
 # and the termcap file
 COPY	${DISTRIBDIR}/common/termcap	usr/share/misc/termcap
