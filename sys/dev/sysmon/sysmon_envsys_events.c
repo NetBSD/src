@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.73 2010/01/01 15:41:25 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.74 2010/01/02 19:02:39 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.73 2010/01/01 15:41:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.74 2010/01/02 19:02:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -209,6 +209,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		if (error && error != EEXIST)
 			goto out;
 		see->see_edata->upropset |= PROP_CRITMAX;
+		see->see_lims.sel_flags |= PROP_CRITMAX;
 	}
 
 	if (lims->sel_flags & PROP_WARNMAX) {
@@ -229,6 +230,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		if (error && error != EEXIST)
 			goto out;
 		see->see_edata->upropset |= PROP_WARNMAX;
+		see->see_lims.sel_flags |= PROP_WARNMAX;
 	}
 
 	if (lims->sel_flags & PROP_WARNMIN) {
@@ -249,6 +251,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		if (error && error != EEXIST)
 			goto out;
 		see->see_edata->upropset |= PROP_WARNMIN;
+		see->see_lims.sel_flags |= PROP_WARNMIN;
 	}
 
 	if (lims->sel_flags & PROP_CRITMIN) {
@@ -269,6 +272,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		if (error && error != EEXIST)
 			goto out;
 		see->see_edata->upropset |= PROP_CRITMIN;
+		see->see_lims.sel_flags |= PROP_CRITMIN;
 	}
 
 	if (lims->sel_flags & PROP_BATTWARN) {
@@ -289,6 +293,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		if (error && error != EEXIST)
 			goto out;
 		see->see_edata->upropset |= PROP_BATTWARN;
+		see->see_lims.sel_flags |= PROP_BATTWARN;
 	}
 
 	if (lims->sel_flags & PROP_BATTCAP) {
@@ -309,7 +314,11 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		if (error && error != EEXIST)
 			goto out;
 		see->see_edata->upropset |= PROP_BATTCAP;
+		see->see_lims.sel_flags |= PROP_BATTCAP;
 	}
+
+	if (lims->sel_flags & PROP_DRIVER_LIMITS)
+		see->see_lims.sel_flags |= PROP_DRIVER_LIMITS;
 
 	DPRINTF(("%s: (%s) event registered (sensor=%s snum=%d type=%d "
 	    "critmin=%" PRIu32 " warnmin=%" PRIu32 " warnmax=%" PRIu32
@@ -482,7 +491,7 @@ do {									\
 
 	/*
 	 * If driver provides a method to retrieve its internal limit
-	 * values, call it and use thoe returned values as initial
+	 * values, call it and use those returned values as initial
 	 * limits for event monitoring.
 	 */
 	lims.sel_flags = 0;
@@ -503,8 +512,8 @@ do {									\
 	 * If driver doesn't provide a way to "absorb" user-specified
 	 * limit values, we must monitor all limits ourselves
 	 */
-	else if (sed_t->sed_sme->sme_get_limits == NULL)
-		lims.sel_flags |= PROP_DRIVER_LIMITS;
+	else if (sed_t->sed_sme->sme_set_limits == NULL)
+		lims.sel_flags &= ~PROP_DRIVER_LIMITS;
 
 	/* Register the events that were specified */
 
