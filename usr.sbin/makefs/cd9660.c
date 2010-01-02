@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.22.2.1 2009/02/02 03:32:34 snj Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.22.2.1.2.1 2010/01/02 06:34:15 snj Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.22.2.1 2009/02/02 03:32:34 snj Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.22.2.1.2.1 2010/01/02 06:34:15 snj Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -187,6 +187,7 @@ cd9660_allocate_cd9660node(void)
 	temp->isoDirRecord = NULL;
 	temp->isoExtAttributes = NULL;
 	temp->rr_real_parent = temp->rr_relocated = NULL;
+	temp->su_tail_data = NULL;
 	return temp;
 }
 
@@ -1759,6 +1760,9 @@ cd9660_compute_record_size(cd9660node *node)
 
 	if (diskStructure.rock_ridge_enabled)
 		size += node->susp_entry_size;
+	size += node->su_tail_size;
+	size += size & 1; /* Ensure length of record is even. */
+	assert(size <= 254);
 	return size;
 }
 
