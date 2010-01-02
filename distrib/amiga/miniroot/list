@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.21 2009/09/20 23:19:51 abs Exp $
+#	$NetBSD: list,v 1.22 2010/01/02 06:39:00 tsutsui Exp $
 
 # Amiga extra's
 PROG	sbin/disklabel
@@ -8,9 +8,6 @@ PROG	usr/bin/netstat
 PROG	usr/bin/printf
 PROG	usr/bin/vi
 PROG	usr/sbin/loadkmap
-
-# usr/bin/file needs libz
-LIBS	-lz
 
 # crunchgen source directory specials
 SPECIAL	loadkmap	srcdir sys/arch/amiga/stand/loadkmap
