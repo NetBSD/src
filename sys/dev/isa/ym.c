@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.36 2010/01/02 01:42:49 christos Exp $	*/
+/*	$NetBSD: ym.c,v 1.37 2010/01/02 02:37:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.36 2010/01/02 01:42:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.37 2010/01/02 02:37:08 christos Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -1110,10 +1110,8 @@ static bool
 ym_suspend(device_t self PMF_FN_ARGS)
 {
 	struct ym_softc *sc = device_private(self);
-	int i, xmax;
 	int s;
 
-	sc = v;
 	DPRINTF(("%s: ym_power_hook: suspend\n", DVNAME(sc)));
 
 	s = splaudio();
@@ -1143,6 +1141,7 @@ ym_suspend(device_t self PMF_FN_ARGS)
 		ym_chip_powerdown(sc);
 	splx(s);
 	return true;
+}
 
 static bool
 ym_resume(device_t self PMF_FN_ARGS)
@@ -1151,7 +1150,6 @@ ym_resume(device_t self PMF_FN_ARGS)
 	int i, xmax;
 	int s;
 
-	sc = v;
 	DPRINTF(("%s: ym_power_hook: resume\n", DVNAME(sc)));
 
 	s = splaudio();
