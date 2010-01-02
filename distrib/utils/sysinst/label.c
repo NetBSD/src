@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.53 2009/02/22 11:21:56 ad Exp $	*/
+/*	$NetBSD: label.c,v 1.54 2010/01/02 21:16:46 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.53 2009/02/22 11:21:56 ad Exp $");
+__RCSID("$NetBSD: label.c,v 1.54 2010/01/02 21:16:46 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -63,9 +63,11 @@ struct ptn_menu_info {
  * local prototypes
  */
 static int boringpart(partinfo *, int, int, int);
+static uint32_t getpartoff(uint32_t);
+static uint32_t getpartsize(uint32_t, uint32_t);
 
 static int	checklabel(partinfo *, int, int, int, int *, int *);
-static void	atofsb(const char *, int *, int *);
+static int	atofsb(const char *, uint32_t *, uint32_t *);
 
 
 /*
@@ -102,7 +104,7 @@ checklabel(partinfo *lp, int nparts, int rawpart, int bsdpart,
 
 	for (i = 0; i < nparts - 1; i ++ ) {
 		partinfo *ip = &lp[i];
-		int istart, istop;
+		uint32_t istart, istop;
 
 		/* skip unused or reserved partitions */
 		if (boringpart(lp, i, rawpart, bsdpart))
@@ -117,7 +119,7 @@ checklabel(partinfo *lp, int nparts, int rawpart, int bsdpart,
 
 		for (j = i+1; j < nparts; j++) {
 			partinfo *jp = &lp[j];
-			int jstart, jstop;
+			uint32_t jstart, jstop;
 
 			/* skip unused or reserved partitions */
 			if (boringpart(lp, j, rawpart, bsdpart))
@@ -168,16 +170,16 @@ static int
 edit_fs_start(menudesc *m, void *arg)
 {
 	partinfo *p = arg;
-	int start, size;
+	uint32_t start, end;
 
 	start = getpartoff(p->pi_offset);
-	size = p->pi_size;
-	if (size != 0) {
+	if (p->pi_size != 0) {
 		/* Try to keep end in the same place */
-		size += p->pi_offset - start;
-		if (size < 0)
-			size = 0;
-		p->pi_size = size;
+		end = p->pi_offset + p->pi_size;
+		if (end < start)
+			p->pi_size = 0;
+		else
+			p->pi_size = end - start;
 	}
 	p->pi_offset = start;
 	return 0;
@@ -187,10 +189,10 @@ static int
 edit_fs_size(menudesc *m, void *arg)
 {
 	partinfo *p = arg;
-	int size;
+	uint32_t size;
 
 	size = getpartsize(p->pi_offset, p->pi_size);
-	if (size == -1)
+	if (size == ~0u)
 		size = dlsize - p->pi_offset;
 	p->pi_size = size;
 	return 0;
@@ -369,7 +371,7 @@ edit_ptn(menudesc *menu, void *arg)
 	static int fspart_menu = -1;
 	static menu_ent all_fstypes[FSMAXTYPES];
 	partinfo *p, p_save;
-	int i;
+	unsigned int i;
 
 	if (fspart_menu == -1) {
 		fspart_menu = new_menu(NULL, fs_fields, nelem(fs_fields),
@@ -779,11 +781,13 @@ get_last_mounted(int fd, int partstart, partinfo *lp)
 }
 
 /* Ask for a partition offset, check bounds and do the needed roundups */
-int
-getpartoff(int defpartstart)
+static uint32_t
+getpartoff(uint32_t defpartstart)
 {
 	char defsize[20], isize[20], maxpartc;
-	int i, localsizemult, partn;
+	uint32_t i;
+	uint32_t localsizemult;
+	int partn;
 	const char *errmsg = "\n";
 
 	maxpartc = 'a' + getmaxpartitions() - 1;
@@ -803,11 +807,11 @@ getpartoff(int defpartstart)
 		} else if (atoi(isize) == -1) {
 			i = ptstart;
 			localsizemult = 1;
-		} else
-			atofsb(isize, &i, &localsizemult);
-		if (i < 0) {
-			errmsg = msg_string(MSG_invalid_sector_number);
-			continue;
+		} else {
+			if (atofsb(isize, &i, &localsizemult)) {
+				errmsg = msg_string(MSG_invalid_sector_number);
+				continue;
+			}
 		}
 		/* round to cylinder size if localsizemult != 1 */
 		i = NUMSEC(i/localsizemult, localsizemult, dlcylsize);
@@ -825,13 +829,13 @@ getpartoff(int defpartstart)
 
 
 /* Ask for a partition size, check bounds and do the needed roundups */
-int
-getpartsize(int partstart, int defpartsize)
+static uint32_t
+getpartsize(uint32_t partstart, uint32_t defpartsize)
 {
 	char dsize[20], isize[20], maxpartc;
 	const char *errmsg = "\n";
-	int i, partend, localsizemult;
-	int fsptend = ptstart + ptsize;
+	uint32_t i, partend, localsizemult;
+	uint32_t fsptend = ptstart + ptsize;
 	int partn;
 
 	maxpartc = 'a' + getmaxpartitions() - 1;
@@ -850,11 +854,11 @@ getpartsize(int partstart, int defpartsize)
 		} else if (atoi(isize) == -1) {
 			i = fsptend - partstart;
 			localsizemult = 1;
-		} else
-			atofsb(isize, &i, &localsizemult);
-		if (i < 0) {
-			errmsg = msg_string(MSG_invalid_sector_number);
-			continue;
+		} else {
+			if (atofsb(isize, &i, &localsizemult)) {
+				errmsg = msg_string(MSG_invalid_sector_number);
+				continue;
+			}
 		}
 		/*
 		 * partend is aligned to a cylinder if localsizemult
@@ -863,11 +867,11 @@ getpartsize(int partstart, int defpartsize)
 		partend = NUMSEC((partstart + i) / localsizemult,
 		    localsizemult, dlcylsize);
 		/* Align to end-of-disk or end-of-slice if close enough */
-		i = dlsize - partend;
-		if (i > -localsizemult && i < localsizemult)
+		if (partend > (dlsize - localsizemult)
+		    && partend < (dlsize + localsizemult))
 			partend = dlsize;
-		i = fsptend - partend;
-		if (i > -localsizemult && i < localsizemult)
+		if (partend > (fsptend - localsizemult)
+		    && partend < (fsptend + localsizemult))
 			partend = fsptend;
 		/* sanity checks */
 		if (partend > dlsize) {
@@ -876,7 +880,6 @@ getpartsize(int partstart, int defpartsize)
 			    NULL, isize, 1,
 			    (partend - partstart) / sizemult, multname);
 		}
-		/* return value */
 		return (partend - partstart);
 	}
 	/* NOTREACHED */
@@ -891,16 +894,15 @@ getpartsize(int partstart, int defpartsize)
  * returns the number of sectors, and the unit used (for roundups).
  */
 
-static void
-atofsb(const char *str, int *p_val, int *localsizemult)
+static int
+atofsb(const char *str, uint32_t *p_val, uint32_t *localsizemult)
 {
 	int i;
-	int val;
+	uint32_t val;
 
 	*localsizemult = sizemult;
 	if (str[0] == '\0') {
-		*p_val = -1;
-		return;
+		return 1;
 	}
 	val = 0;
 	for (i = 0; str[i] != '\0'; i++) {
@@ -910,8 +912,7 @@ atofsb(const char *str, int *p_val, int *localsizemult)
 		}
 		if (str[i + 1] != '\0') {
 			/* A non-digit caracter, not at the end */
-			*p_val = -1;
-			return;
+			return 1;
 		}
 		if (str[i] == 'G' || str[i] == 'g') {
 			val *= 1024;
@@ -931,9 +932,8 @@ atofsb(const char *str, int *p_val, int *localsizemult)
 			break;
 		}
 		/* not a known unit */
-		*p_val = -1;
-		return;
+		return 1;
 	}
 	*p_val = val * (*localsizemult);
-	return;
+	return 0;
 }
