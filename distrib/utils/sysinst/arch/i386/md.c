@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.123 2009/09/19 14:57:28 abs Exp $ */
+/*	$NetBSD: md.c,v 1.124 2010/01/02 18:06:58 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -335,7 +335,7 @@ md_post_newfs(void)
 
 	process_menu(MENU_getboottype, &boottype);
 	msg_display(MSG_dobootblks, diskdev);
-	if (bp.bp_consdev == ~0)
+	if (bp.bp_consdev == ~0u)
 		return 0;
 
 	ret = cp_to_target("/usr/mdec/boot", "/boot");
@@ -368,7 +368,7 @@ md_post_newfs(void)
 	if (pwrite(td, bootxx, 512, 0) != 512)
 		goto bad_bootxx;
 	len -= 512 * 2;
-	if (pwrite(td, bootxx + 512 * 2, len, 2 * (off_t)512) != len)
+	if (pwrite(td, bootxx + 512 * 2, len, 2 * (off_t)512) - len != 0)
 		goto bad_bootxx;
 	ret = 0;
 
