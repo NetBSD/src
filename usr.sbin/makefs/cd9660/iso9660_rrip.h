@@ -1,4 +1,4 @@
-/*	$NetBSD: iso9660_rrip.h,v 1.4 2006/02/01 22:19:35 dyoung Exp $	*/
+/*	$NetBSD: iso9660_rrip.h,v 1.4.28.1 2010/01/02 06:34:15 snj Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -203,6 +203,7 @@ struct ISO_SUSP_ATTRIBUTES {
 	SUSP_ENTRIES attr;
 	int type;
 	char type_of[2];
+	char last_in_suf;	/* last entry in the System Use Field? */
 	/* Dan's addons - will merge later. This allows use of a switch */
 	char susp_type; 	/* SUSP or RRIP */
 	char entry_type;	/* Record type */
