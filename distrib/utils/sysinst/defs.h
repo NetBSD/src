@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.146 2009/10/18 12:09:48 ahoka Exp $	*/
+/*	$NetBSD: defs.h,v 1.147 2010/01/02 21:16:46 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -153,7 +153,7 @@ enum {
 
 /* Round up to the next full cylinder size */
 #define NUMSEC(size, sizemult, cylsize) \
-	((size) == -1 ? -1 : (sizemult) == 1 ? (size) : \
+	((size) == ~0u ? ~0u : (sizemult) == 1 ? (size) : \
 	 roundup((size) * (sizemult), (cylsize)))
 
 /* What FS type? */
@@ -354,8 +354,6 @@ const char *get_last_mounted(int, int, partinfo *);
 int	savenewlabel(partinfo *, int);
 int	incorelabel(const char *, partinfo *);
 int	edit_and_check_label(partinfo *, int, int, int);
-int	getpartoff(int);
-int	getpartsize(int, int);
 void	set_bsize(partinfo *, int);
 void	set_fsize(partinfo *, int);
 void	set_ptype(partinfo *, int, int);
