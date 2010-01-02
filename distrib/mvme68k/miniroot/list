@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.17 2009/09/20 23:19:54 abs Exp $
+#	$NetBSD: list,v 1.18 2010/01/02 06:46:09 tsutsui Exp $
 
 # mvme68k's extras
 PROG	sbin/disklabel
@@ -26,9 +26,6 @@ SYMLINK	/tmp	var/tmp
 COPYDIR	${DESTDIR}/usr/mdec		usr/mdec
 # ensure installboot is executable
 MTREE	./usr/mdec/installboot	mode=0555
-
-# the zoneinfo
-COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 
 # and the termcap file
 COPY	${DISTRIBDIR}/common/termcap	usr/share/misc/termcap
