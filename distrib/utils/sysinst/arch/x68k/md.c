@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.37 2009/09/19 14:57:30 abs Exp $ */
+/*	$NetBSD: md.c,v 1.38 2010/01/02 20:54:46 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -163,7 +163,8 @@ int
 md_check_partitions(void)
 {
 	/* X68k partitions must be in order of the range. */
-	int part, start = 0, last = PART_A-1;
+	int part, last = PART_A-1;
+	uint32_t start = 0;
 
 	for (part = PART_A; part < 8; part++) {
 		if (part == PART_C)
