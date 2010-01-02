@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.10 2009/09/20 23:19:56 abs Exp $
+#	$NetBSD: list,v 1.11 2010/01/02 06:46:09 tsutsui Exp $
 
 # Vax extras
 PROG	sbin/disklabel
@@ -25,9 +25,6 @@ SYMLINK	/tmp	var/tmp
 
 # we need the contents of /usr/mdec
 COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
-
-# the zoneinfo
-COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 
 # and the termcap file
 COPY	${DISTRIBDIR}/common/termcap	usr/share/misc/termcap
