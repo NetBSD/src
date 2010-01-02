@@ -1,4 +1,4 @@
-/*	$NetBSD: iso9660_rrip.c,v 1.4.18.1 2010/01/02 06:41:03 snj Exp $	*/
+/*	$NetBSD: iso9660_rrip.c,v 1.4.18.2 2010/01/02 06:41:47 snj Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: iso9660_rrip.c,v 1.4.18.1 2010/01/02 06:41:03 snj Exp $");
+__RCSID("$NetBSD: iso9660_rrip.c,v 1.4.18.2 2010/01/02 06:41:47 snj Exp $");
 #endif  /* !__lint */
 
 static void cd9660_rrip_initialize_inode(cd9660node *);
@@ -200,7 +200,7 @@ cd9660_rrip_finalize_node(cd9660node *node)
 static int
 cd9660_susp_handle_continuation_common(cd9660node *node, int space)
 {
-	int ca_used, susp_used, working;
+	int ca_used, susp_used, susp_used_last, working;
 	struct ISO_SUSP_ATTRIBUTES *temp, *last = NULL, *CE;
 
 	working = 254 - space;
@@ -216,9 +216,15 @@ cd9660_susp_handle_continuation_common(cd9660node *node, int space)
 		 * CD9660_SUSP_ENTRY_SIZE(temp));
 		 */
 		working -= CD9660_SUSP_ENTRY_SIZE(temp);
-		if (working >= 28) {
-			last = temp;
+		if (working >= 0)
 			susp_used += CD9660_SUSP_ENTRY_SIZE(temp);
+		if (working >= 28) {
+			/*
+			 * Remember the last entry after which we
+			 * could insert a "CE" entry.
+			 */
+			last = temp;
+			susp_used_last = susp_used;
 		}
 	}
 
@@ -229,7 +235,7 @@ cd9660_susp_handle_continuation_common(cd9660node *node, int space)
 		cd9660_susp_ce(CE, node);
 		/* This will automatically insert at the appropriate location */
 		TAILQ_INSERT_AFTER(&node->head, last, CE, rr_ll);
-		susp_used += 28;
+		susp_used = susp_used_last + 28;
 
 		/* Count how much CA data is necessary */
 		for (temp = TAILQ_NEXT(CE, rr_ll); temp != NULL;
