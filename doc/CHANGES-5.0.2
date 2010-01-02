@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.34 2009/12/21 09:42:08 sborrill Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.35 2010/01/02 06:40:03 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -896,4 +896,15 @@ sys/kern/vfs_syscalls.c				1.400
 	original userspace pointer. Avoids crashes on archs with
 	completely separate userspace VA.
 	[martin, ticket #1200]
+
+usr.sbin/makefs/cd9660.c			1.25 via patch
+usr.sbin/makefs/cd9660.h			1.13 via patch
+usr.sbin/makefs/cd9660/cd9660_write.c		1.10
+usr.sbin/makefs/cd9660/iso9660_rrip.c		1.5-1.8
+usr.sbin/makefs/cd9660/iso9660_rrip.h		1.5
+
+	Keep makefs(8) from creating invalid ISO format on rockridge support
+	which causes fatal errors in ARC BIOS firmware on MIPS Magnum R4000
+	while booting from arccd-5.0.1.iso as described in PR bin/42410.
+	[tsutsui, ticket #1198]
 
