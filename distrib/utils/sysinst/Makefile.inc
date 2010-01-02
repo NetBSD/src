@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.48 2009/08/23 20:58:05 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.49 2010/01/02 21:16:46 dsl Exp $
 #
 # Makefile for sysinst
 
@@ -7,7 +7,7 @@ COPTS += -Os
 PROG=		sysinst
 NOMAN=		# defined
 
-WARNS=		3
+WARNS=		4
 
 SRCS+=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	txtwalk.c run.c factor.c net.c disks.c disks_lfs.c util.c geom.c \
