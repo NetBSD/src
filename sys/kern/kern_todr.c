@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.32 2009/12/12 15:17:23 tsutsui Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.33 2010/01/02 10:57:35 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.32 2009/12/12 15:17:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.33 2010/01/02 10:57:35 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -129,7 +129,7 @@ inittodr(time_t base)
 		if (base != 0)
 			printf("WARNING: preposterous time in file system\n");
 		/* not going to use it anyway, if the chip is readable */
-		basedate.dt_year = 2006;
+		basedate.dt_year = 2010;
 		basedate.dt_mon = 1;
 		basedate.dt_day = 1;
 		basedate.dt_hour = 12;
