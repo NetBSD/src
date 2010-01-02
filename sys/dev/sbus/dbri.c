@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.26 2010/01/02 01:43:42 christos Exp $	*/
+/*	$NetBSD: dbri.c,v 1.27 2010/01/02 04:12:07 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.26 2010/01/02 01:43:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.27 2010/01/02 04:12:07 tsutsui Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -162,7 +162,6 @@ static void	dbri_free(void *, void *, struct malloc_type *);
 static paddr_t	dbri_mappage(void *, void *, off_t, int);
 static void	dbri_set_power(struct dbri_softc *, int);
 static void	dbri_bring_up(struct dbri_softc *);
-static void	dbri_sus(int, void *);
 static bool	dbri_suspend(device_t PMF_FN_PROTO);
 static bool	dbri_resume(device_t PMF_FN_PROTO);
 
@@ -2185,8 +2184,10 @@ dbri_suspend(device_t self PMF_FN_ARGS)
 static bool
 dbri_resume(device_t self PMF_FN_ARGS)
 {
+	struct dbri_softc *sc = device_private(self);
+
 	if (sc->sc_powerstate != 0)
-		break;
+		return true;
 	aprint_verbose("resume: %d\n", sc->sc_refcount);
 	if (sc->sc_playing) {
 		volatile uint32_t *cmd;
