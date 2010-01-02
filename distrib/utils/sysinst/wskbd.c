@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbd.c,v 1.7 2008/09/03 08:52:36 ghen Exp $	*/
+/*	$NetBSD: wskbd.c,v 1.8 2010/01/02 18:06:57 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wskbd.c,v 1.7 2008/09/03 08:52:36 ghen Exp $");
+__RCSID("$NetBSD: wskbd.c,v 1.8 2010/01/02 18:06:57 dsl Exp $");
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -89,7 +89,7 @@ void
 get_kb_encoding(void)
 {
 	int fd;
-	int i;
+	unsigned int i;
 	int kb_menu;
 	kbd_t kbdencoding;
 	menu_ent opt[nelem(kb_types)];

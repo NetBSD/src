@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.22 2010/01/02 17:15:07 dsl Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.23 2010/01/02 18:06:58 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -89,7 +89,7 @@ menu editparttable, title  "Choose your partition", exit, y=14;
 		msg_display(MSG_split_part, map.blk[j].pmPartBlkCnt);
 		msg_prompt_add (MSG_scratch_size, NULL, buf, sizeof(buf));
 		size = atoi(buf);
-		if (size > 0 && size < map.blk[j].pmPartBlkCnt) {
+		if (size > 0 && size < (int)map.blk[j].pmPartBlkCnt) {
 		    k = map.in_use_cnt+1;
 		    if (k <= map.size) {
 			memcpy (&map.blk[k], &map.blk[j],

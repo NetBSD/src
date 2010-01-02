@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2elf.c,v 1.14 2009/08/16 17:12:48 pgoyette Exp $
+/*	$NetBSD: aout2elf.c,v 1.15 2010/01/02 18:06:57 dsl Exp $
  *
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
@@ -100,7 +100,7 @@ is_aout_shared_lib(const char *name)
 	if (fd < 0) {
 		return 0;
 	}
-	if (read(fd, &ex, sizeof ex) < sizeof ex) {
+	if (read(fd, &ex, sizeof ex) - sizeof ex != 0) {
 		close(fd);
 		return 0;
 	}
@@ -116,7 +116,7 @@ static void
 handle_aout_x_libs(const char *srcdir, const char *tgtdir)
 {
 	char src[MAXPATHLEN];
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < (sizeof x_libs / sizeof (const char *)); i++) {
 		snprintf(src, MAXPATHLEN, "%s/%s", srcdir, x_libs[i]);

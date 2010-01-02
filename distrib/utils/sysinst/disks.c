@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.109 2009/10/18 12:09:48 ahoka Exp $ */
+/*	$NetBSD: disks.c,v 1.110 2010/01/02 18:06:57 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -518,11 +518,11 @@ ptn_sort(const void *a, const void *b)
 int
 make_filesystems(void)
 {
-	int i;
+	unsigned int i;
 	int ptn;
 	int ptn_order[nelem(bsdlabel)];
 	int error = 0;
-	int maxpart = getmaxpartitions();
+	unsigned int maxpart = getmaxpartitions();
 	char *newfs;
 	const char *mnt_opts;
 	const char *fsname;

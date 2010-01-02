@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 2009/09/19 14:57:28 abs Exp $ */
+/*	$NetBSD: md.c,v 1.6 2010/01/02 18:06:58 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -274,7 +274,7 @@ md_post_newfs(void)
 	};
 	static const char *bootfile = "boot.gz";
 	char bootdir[64];
-	int i;
+	unsigned int i;
 
 	if (!nobootfs) {
 		msg_display(msg_string(MSG_copybootloader), diskdev);

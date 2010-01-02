@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.24 2009/09/19 14:57:27 abs Exp $ */
+/*	$NetBSD: md.c,v 1.25 2010/01/02 18:06:58 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -98,7 +98,7 @@ md_get_info(void)
 	}
 
 	if (lseek(fd, (off_t)FILECORE_BOOT_SECTOR * DEV_BSIZE, SEEK_SET) < 0
-	    || read(fd, bb, sizeof(bb)) < sizeof(bb)) {
+	    || read(fd, bb, sizeof(bb)) - sizeof(bb) != 0) {
 		endwin();
 		fprintf(stderr, msg_string(MSG_badreadbb));
 		close(fd);
@@ -131,7 +131,7 @@ md_get_info(void)
 			int loop;
 
 			if (lseek(fd, (off_t)offset * DEV_BSIZE, SEEK_SET) < 0
-			    || read(fd, bb, sizeof(bb)) < sizeof(bb)) {
+			    || read(fd, bb, sizeof(bb)) - sizeof(bb) != 0) {
 				endwin();
 				fprintf(stderr, msg_string(MSG_badreadriscix));
 				close(fd);

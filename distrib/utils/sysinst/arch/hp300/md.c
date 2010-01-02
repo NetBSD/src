@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.27 2009/09/19 14:57:28 abs Exp $ */
+/*	$NetBSD: md.c,v 1.28 2010/01/02 18:06:58 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -135,7 +135,8 @@ int
 md_check_partitions(void)
 {
 	/* hp300 partitions must be in order of the range. */
-	int part, start, last;
+	int part, last;
+	uint32_t start;
 
 	start = 0;
 	last = PART_A - 1;
