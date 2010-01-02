@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.62 2009/05/05 12:37:24 nonaka Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.63 2010/01/02 19:27:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.62 2009/05/05 12:37:24 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.63 2010/01/02 19:27:41 christos Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -915,35 +915,6 @@ ne2000_ipkdb_attach(struct ipkdb_if *kip)
 	return 0;
 }
 #endif
-
-void
-ne2000_power(int why, void *arg)
-{
-	struct ne2000_softc *sc = arg;
-	struct dp8390_softc *dsc = &sc->sc_dp8390;
-	struct ifnet *ifp = &dsc->sc_ec.ec_if;
-	int s;
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		dp8390_stop(dsc);
-		dp8390_disable(dsc);
-		break;
-	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP) {
-			if (dp8390_enable(dsc) == 0)
-				dp8390_init(dsc);
-		}
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
-}
 
 bool
 ne2000_suspend(device_t self PMF_FN_ARGS)
