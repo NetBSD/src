@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.25 2009/09/20 08:24:04 tsutsui Exp $	*/
+/*	$NetBSD: dbri.c,v 1.26 2010/01/02 01:43:42 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.25 2009/09/20 08:24:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.26 2010/01/02 01:43:42 christos Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -162,7 +162,9 @@ static void	dbri_free(void *, void *, struct malloc_type *);
 static paddr_t	dbri_mappage(void *, void *, off_t, int);
 static void	dbri_set_power(struct dbri_softc *, int);
 static void	dbri_bring_up(struct dbri_softc *);
-static void	dbri_powerhook(int, void *);
+static void	dbri_sus(int, void *);
+static bool	dbri_suspend(device_t PMF_FN_PROTO);
+static bool	dbri_resume(device_t PMF_FN_PROTO);
 
 /* stupid support routines */
 static uint32_t	reverse_bytes(uint32_t, int);
@@ -294,7 +296,10 @@ dbri_attach_sbus(device_t parent, device_t self, void *aux)
 		sc->sc_have_powerctl = 1;
 		sc->sc_powerstate = 0;
 		dbri_set_power(sc, 1);
-		powerhook_establish(device_xname(self), dbri_powerhook, sc);
+		if (!pmf_device_register(self, dbri_suspend, dbri_resume)) {
+			aprint_error_dev(self,
+			    "cannot set power mgmt handler\n");
+		}
 	} else {
 		/* we can't control power so we're always up */
 		sc->sc_have_powerctl = 0;
@@ -374,7 +379,6 @@ dbri_attach_sbus(device_t parent, device_t self, void *aux)
 	sc->sc_refcount = 0;
 	sc->sc_playing = 0;
 	sc->sc_recording = 0;
-	sc->sc_pmgrstate = PWR_RESUME;
 	config_interrupts(self, &dbri_config_interrupts);
 
 	return;
@@ -2169,45 +2173,38 @@ dbri_close(void *cookie)
 	sc->sc_recording = 0;
 }
 
-static void
-dbri_powerhook(int why, void *cookie)
+static bool
+dbri_suspend(device_t self PMF_FN_ARGS)
 {
-	struct dbri_softc *sc = cookie;
+	struct dbri_softc *sc = device_private(self);
 
-	if (why == sc->sc_pmgrstate)
-		return;
+	dbri_set_power(sc, 0);
+	return true;
+}
 
-	switch(why)
-	{
-		case PWR_SUSPEND:
-			dbri_set_power(sc, 0);
-			break;
-		case PWR_RESUME:
-			if (sc->sc_powerstate != 0)
-				break;
-			aprint_verbose("resume: %d\n", sc->sc_refcount);
-			sc->sc_pmgrstate = PWR_RESUME;
-			if (sc->sc_playing) {
-				volatile uint32_t *cmd;
-				int s;
+static bool
+dbri_resume(device_t self PMF_FN_ARGS)
+{
+	if (sc->sc_powerstate != 0)
+		break;
+	aprint_verbose("resume: %d\n", sc->sc_refcount);
+	if (sc->sc_playing) {
+		volatile uint32_t *cmd;
+		int s;
 
-				dbri_bring_up(sc);
-				s = splsched();
-				cmd = dbri_command_lock(sc);
-				*(cmd++) = DBRI_CMD(DBRI_COMMAND_SDP,
-				    0, sc->sc_pipe[4].sdp |
-				    DBRI_SDP_VALID_POINTER |
-				    DBRI_SDP_EVERY | DBRI_SDP_CLEAR);
-				*(cmd++) = sc->sc_dmabase +
-				    dbri_dma_off(xmit, 0);
-				dbri_command_send(sc, cmd);
-				splx(s);
-			}
-			break;
-		default:
-			return;
+		dbri_bring_up(sc);
+		s = splsched();
+		cmd = dbri_command_lock(sc);
+		*(cmd++) = DBRI_CMD(DBRI_COMMAND_SDP,
+		    0, sc->sc_pipe[4].sdp |
+		    DBRI_SDP_VALID_POINTER |
+		    DBRI_SDP_EVERY | DBRI_SDP_CLEAR);
+		*(cmd++) = sc->sc_dmabase +
+		    dbri_dma_off(xmit, 0);
+		dbri_command_send(sc, cmd);
+		splx(s);
 	}
-	sc->sc_pmgrstate = why;
+	return true;
 }
 
 #endif /* NAUDIO > 0 */
