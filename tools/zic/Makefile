@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2002/12/08 20:20:06 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 2010/01/02 10:42:49 tsutsui Exp $
 
 HOSTPROGNAME=	${_TOOL_PREFIX}zic
 HOST_SRCDIR=	usr.sbin/zic
-HOST_CPPFLAGS+=	-DNOID
 
 .include "${.CURDIR}/../Makefile.host"
