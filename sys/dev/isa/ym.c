@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.35 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: ym.c,v 1.36 2010/01/02 01:42:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.35 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.36 2010/01/02 01:42:49 christos Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -148,7 +148,6 @@ int	ym_intr(void *);
 #ifndef AUDIO_NO_POWER_CTL
 static void ym_save_codec_regs(struct ym_softc *);
 static void ym_restore_codec_regs(struct ym_softc *);
-void	ym_power_hook(int, void *);
 int	ym_codec_power_ctl(void *, int);
 static void ym_chip_powerdown(struct ym_softc *);
 static void ym_chip_powerup(struct ym_softc *, int);
@@ -163,6 +162,8 @@ static void ym_hvol_to_master_gain(struct ym_softc *);
 static void ym_set_mic_gain(struct ym_softc *, int);
 static void ym_set_3d(struct ym_softc *, mixer_ctrl_t *,
 	struct ad1848_volume *, int);
+static bool ym_suspend(device_t PMF_FN_PROTO);
+static bool ym_resume(device_t PMF_FN_PROTO);
 
 
 const struct audio_hw_if ym_hw_if = {
@@ -296,7 +297,10 @@ ym_attach(struct ym_softc *sc)
 #endif
 	ym_powerdown_blocks(sc);
 
-	powerhook_establish(DVNAME(sc), ym_power_hook, sc);
+	if (!pmf_device_register(&ac->sc_dev, ym_suspend, ym_resume)) {
+		aprint_error_dev(&ac->sc_dev,
+		    "cannot set power mgmt handler\n");
+	}
 #endif
 
 	/* Set tone control to the default position. */
@@ -1102,76 +1106,79 @@ ym_restore_codec_regs(struct ym_softc *sc)
  * Currently only the parameters, such as output gain, are restored.
  * DMA state should also be restored.  FIXME.
  */
-void
-ym_power_hook(int why, void *v)
+static bool
+ym_suspend(device_t self PMF_FN_ARGS)
 {
-	struct ym_softc *sc;
+	struct ym_softc *sc = device_private(self);
 	int i, xmax;
 	int s;
 
 	sc = v;
-	DPRINTF(("%s: ym_power_hook: why = %d\n", DVNAME(sc), why));
+	DPRINTF(("%s: ym_power_hook: suspend\n", DVNAME(sc)));
 
 	s = splaudio();
 
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		/*
-		 * suspending...
-		 */
-		callout_stop(&sc->sc_powerdown_ch);
-		if (sc->sc_turning_off)
-			ym_powerdown_blocks(sc);
+	/*
+	 * suspending...
+	 */
+	callout_stop(&sc->sc_powerdown_ch);
+	if (sc->sc_turning_off)
+		ym_powerdown_blocks(sc);
 
-		/*
-		 * Save CODEC registers.
-		 * Note that the registers read incorrect
-		 * if the CODEC part is in power-down mode.
-		 */
-		if (sc->sc_on_blocks & YM_POWER_CODEC_DIGITAL)
-			ym_save_codec_regs(sc);
+	/*
+	 * Save CODEC registers.
+	 * Note that the registers read incorrect
+	 * if the CODEC part is in power-down mode.
+	 */
+	if (sc->sc_on_blocks & YM_POWER_CODEC_DIGITAL)
+		ym_save_codec_regs(sc);
 
-		/*
-		 * Save OPL3-SA3 control registers and power-down the chip.
-		 * Note that the registers read incorrect
-		 * if the chip is in global power-down mode.
-		 */
-		sc->sc_sa3_scan[SA3_PWR_MNG] = ym_read(sc, SA3_PWR_MNG);
-		if (sc->sc_on_blocks)
-			ym_chip_powerdown(sc);
-		break;
-
-	case PWR_RESUME:
-		/*
-		 * resuming...
-		 */
-		ym_chip_powerup(sc, 1);
-		ym_init(sc);		/* power-on CODEC */
-
-		/* Restore control registers. */
-		xmax = YM_IS_SA3(sc)? YM_SAVE_REG_MAX_SA3 : YM_SAVE_REG_MAX_SA2;
-		for (i = SA3_PWR_MNG + 1; i <= xmax; i++) {
-			if (i == SA3_SB_SCAN || i == SA3_SB_SCAN_DATA ||
-			    i == SA3_DPWRDWN)
-				continue;
-			ym_write(sc, i, sc->sc_sa3_scan[i]);
-		}
-
-		/* Restore CODEC registers (including mixer). */
-		ym_restore_codec_regs(sc);
-
-		/* Restore global/digital power-down state. */
-		ym_write(sc, SA3_PWR_MNG, sc->sc_sa3_scan[SA3_PWR_MNG]);
-		if (YM_IS_SA3(sc))
-			ym_write(sc, SA3_DPWRDWN, sc->sc_sa3_scan[SA3_DPWRDWN]);
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
+	/*
+	 * Save OPL3-SA3 control registers and power-down the chip.
+	 * Note that the registers read incorrect
+	 * if the chip is in global power-down mode.
+	 */
+	sc->sc_sa3_scan[SA3_PWR_MNG] = ym_read(sc, SA3_PWR_MNG);
+	if (sc->sc_on_blocks)
+		ym_chip_powerdown(sc);
 	splx(s);
+	return true;
+
+static bool
+ym_resume(device_t self PMF_FN_ARGS)
+{
+	struct ym_softc *sc = device_private(self);
+	int i, xmax;
+	int s;
+
+	sc = v;
+	DPRINTF(("%s: ym_power_hook: resume\n", DVNAME(sc)));
+
+	s = splaudio();
+	/*
+	 * resuming...
+	 */
+	ym_chip_powerup(sc, 1);
+	ym_init(sc);		/* power-on CODEC */
+
+	/* Restore control registers. */
+	xmax = YM_IS_SA3(sc)? YM_SAVE_REG_MAX_SA3 : YM_SAVE_REG_MAX_SA2;
+	for (i = SA3_PWR_MNG + 1; i <= xmax; i++) {
+		if (i == SA3_SB_SCAN || i == SA3_SB_SCAN_DATA ||
+		    i == SA3_DPWRDWN)
+			continue;
+		ym_write(sc, i, sc->sc_sa3_scan[i]);
+	}
+
+	/* Restore CODEC registers (including mixer). */
+	ym_restore_codec_regs(sc);
+
+	/* Restore global/digital power-down state. */
+	ym_write(sc, SA3_PWR_MNG, sc->sc_sa3_scan[SA3_PWR_MNG]);
+	if (YM_IS_SA3(sc))
+		ym_write(sc, SA3_DPWRDWN, sc->sc_sa3_scan[SA3_DPWRDWN]);
+	splx(s);
+	return true;
 }
 
 int

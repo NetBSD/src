@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.157 2009/09/05 14:44:59 tsutsui Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.158 2010/01/02 01:43:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.157 2009/09/05 14:44:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.158 2010/01/02 01:43:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,6 @@ struct ne_pcmcia_softc {
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	int sc_state;
 #define	NE_PCMCIA_ATTACHED	3
-	void *sc_powerhook;			/* power management hook */
 };
 
 u_int8_t *ne_pcmcia_get_enaddr(struct ne_pcmcia_softc *, int,
@@ -733,13 +732,9 @@ found:
 	if (ne2000_attach(nsc, enaddr))
 		goto fail2;
 
-	/* dopowerhooks(9) - deprecated, only called by hpcs* apmdev(4) */
-	psc->sc_powerhook = powerhook_establish(device_xname(self),
-	    ne2000_power, nsc);
-	if (psc->sc_powerhook == NULL)
-		aprint_error_dev(self,
-		   "WARNING: unable to establish power hook\n");
-
+	if (!pmf_device_register(self, ne2000_suspend, ne2000_resume)) {
+		aprint_error_dev(self, "cannot set power mgmt handler\n");
+	}
 	/* pmf(9) power hooks */
 	if (pmf_device_register(self, ne2000_suspend, ne2000_resume)) {
 #if 0 /* XXX: notyet: if_stop is NULL! */
@@ -768,9 +763,7 @@ ne_pcmcia_detach(device_t self, int flags)
 	if (psc->sc_state != NE_PCMCIA_ATTACHED)
 		return (0);
 
-	if (psc->sc_powerhook != NULL)
-		powerhook_disestablish(psc->sc_powerhook);
-
+	pmf_device_deregister(self);
 	error = ne2000_detach(&psc->sc_ne2000, flags);
 	if (error)
 		return (error);
