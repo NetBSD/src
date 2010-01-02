@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.81 2009/09/19 14:57:27 abs Exp $ */
+/*	$NetBSD: mbr.c,v 1.82 2010/01/02 21:16:46 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -114,7 +114,7 @@ struct part_id {
 };
 
 static int get_mapping(struct mbr_partition *, int, int *, int *, int *,
-			    unsigned long *);
+			    daddr_t *);
 static void convert_mbr_chs(int, int, int, uint8_t *, uint8_t *,
 				 uint8_t *, uint32_t);
 
@@ -252,16 +252,16 @@ disp_cur_geom(void)
  * in the netbsd disklabel to the part we changed.
  */
 static void
-remove_old_partitions(uint start, int size)
+remove_old_partitions(uint start, int64_t size)
 {
 	partinfo *p;
 	uint end;
 
-	/* Allow for size being -ve, get it right for very large partitions */
-	end = start + size;
-	if (end < start) {
+	if (size > 0) {
+		end = start + size;
+	} else {
 		end = start;
-		start = end + size;
+		start = end - size;
 	}
 
 	if (end == 0)
@@ -275,9 +275,9 @@ remove_old_partitions(uint start, int size)
 }
 
 static int
-find_mbr_space(struct mbr_sector *mbrs, uint *start, uint *size, int from, int ignore)
+find_mbr_space(struct mbr_sector *mbrs, uint *start, uint *size, uint from, int ignore)
 {
-	int sz;
+	uint sz;
 	int i;
 	uint s, e;
 
@@ -498,7 +498,7 @@ edit_mbr_type(menudesc *m, void *arg)
 {
 	static menu_ent type_opts[1 + nelem(part_ids)];
 	static int type_menu = -1;
-	int i;
+	unsigned int i;
 
 	if (type_menu == -1) {
 		for (i = 0; i < nelem(type_opts); i++) {
@@ -527,7 +527,7 @@ edit_mbr_start(menudesc *m, void *arg)
 	int opt = mbri->opt;
 	uint start, sz;
 	uint new_r, new, limit, dflt_r;
-	int delta;
+	int64_t delta;
 	const char *errmsg;
 	char *cp;
 	struct {
@@ -535,10 +535,10 @@ edit_mbr_start(menudesc *m, void *arg)
 		uint	start_r;
 		uint	limit;
 	} freespace[MBR_PART_COUNT];
-	int spaces;
-	int i;
+	unsigned int spaces;
+	unsigned int i;
 	char prompt[MBR_PART_COUNT * 60];
-	int len;
+	unsigned int len;
 	char numbuf[12];
 
 	if (opt >= MBR_PART_COUNT)
@@ -815,7 +815,7 @@ edit_mbr_size(menudesc *m, void *arg)
 		break;
 	}
 
-	if (opt >= MBR_PART_COUNT && max - new <= bsec)
+	if (opt >= MBR_PART_COUNT && max - new <= (uint32_t)bsec)
 		/* Round up if not enough space for a header for free area */
 		new = max;
 
@@ -823,7 +823,7 @@ edit_mbr_size(menudesc *m, void *arg)
 		/* Kill information about old partition from label */
 		mbri->last_mounted[opt < MBR_PART_COUNT ? opt : 0] = NULL;
 		remove_old_partitions(mbri->sector + mbrp->mbrp_start +
-					mbrp->mbrp_size, new - mbrp->mbrp_size);
+			    mbrp->mbrp_size, (int64_t)new - mbrp->mbrp_size);
 	}
 
 	mbrp->mbrp_size = new;
@@ -1340,7 +1340,7 @@ edit_mbr(mbr_info_t *mbri)
 		}
 
 		/* Install in only netbsd partition if none tagged */
-		if (ptstart == 0 && bsdstart != ~0) {
+		if (ptstart == 0 && bsdstart != ~0u) {
 			ptstart = bsdstart;
 			ptsize = bsdsize;
 		}
@@ -1425,7 +1425,7 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 
 	for (;;) {
 		if (pread(fd, mbrs, sizeof *mbrs,
-		    (ext_base + next_ext) * (off_t)MBR_SECSIZE) < sizeof *mbrs)
+		    (ext_base + next_ext) * (off_t)MBR_SECSIZE) - sizeof *mbrs != 0)
 			break;
 
 		if (!valid_mbr(mbrs))
@@ -1706,7 +1706,7 @@ guess_biosgeom_from_mbr(mbr_info_t *mbri, int *cyl, int *head, daddr_t *sec)
 	int xcylinders, xheads, i, j;
 	daddr_t xsectors;
 	int c1, h1, s1, c2, h2, s2;
-	unsigned long a1, a2;
+	daddr_t a1, a2;
 	uint64_t num, denom;
 
 	/*
@@ -1791,7 +1791,7 @@ guess_biosgeom_from_mbr(mbr_info_t *mbri, int *cyl, int *head, daddr_t *sec)
 
 static int
 get_mapping(struct mbr_partition *parts, int i,
-	    int *cylinder, int *head, int *sector, unsigned long *absolute)
+	    int *cylinder, int *head, int *sector, daddr_t *absolute)
 {
 	struct mbr_partition *apart = &parts[i / 2];
 
@@ -1810,7 +1810,7 @@ get_mapping(struct mbr_partition *parts, int i,
 			+ le32toh(apart->mbrp_size) - 1;
 	}
 	/* Sanity check the data against max values */
-	if ((((*cylinder * MAXHEAD) + *head) * MAXSECTOR + *sector) < *absolute)
+	if ((((*cylinder * MAXHEAD) + *head) * (uint32_t)MAXSECTOR + *sector) < *absolute)
 		/* cannot be a CHS mapping */
 		return -1;
 
