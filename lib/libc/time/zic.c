@@ -1,14 +1,16 @@
-/*	$NetBSD: zic.c,v 1.25 2009/12/31 22:49:16 mlelstv Exp $	*/
+/*	$NetBSD: zic.c,v 1.26 2010/01/02 10:42:49 tsutsui Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
 */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
-#ifndef NOID
-__RCSID("$NetBSD: zic.c,v 1.25 2009/12/31 22:49:16 mlelstv Exp $");
-#endif /* !defined NOID */
+__RCSID("$NetBSD: zic.c,v 1.26 2010/01/02 10:42:49 tsutsui Exp $");
 #endif /* !defined lint */
 
 static char	elsieid[] = "@(#)zic.c	8.20";
