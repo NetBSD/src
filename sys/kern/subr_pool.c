@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.178 2009/12/30 18:57:17 elad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.179 2010/01/02 15:20:39 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.178 2009/12/30 18:57:17 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.179 2010/01/02 15:20:39 mlelstv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -234,16 +234,28 @@ int pool_logsize = POOL_LOGSIZE;
 static inline void
 pr_log(struct pool *pp, void *v, int action, const char *file, long line)
 {
-	int n = pp->pr_curlogentry;
+	int n;
 	struct pool_log *pl;
 
 	if ((pp->pr_roflags & PR_LOGGING) == 0)
 		return;
 
+	if (pp->pr_log == NULL) {
+		if (kmem_map != NULL)
+			pp->pr_log = malloc(
+				pool_logsize * sizeof(struct pool_log),
+				M_TEMP, M_NOWAIT | M_ZERO);
+		if (pp->pr_log == NULL)
+			return;
+		pp->pr_curlogentry = 0;
+		pp->pr_logsize = pool_logsize;
+	}
+
 	/*
 	 * Fill in the current entry. Wrap around and overwrite
 	 * the oldest entry if necessary.
 	 */
+	n = pp->pr_curlogentry;
 	pl = &pp->pr_log[n];
 	pl->pl_file = file;
 	pl->pl_line = line;
@@ -261,7 +273,7 @@ pr_printlog(struct pool *pp, struct pool_item *pi,
 	int i = pp->pr_logsize;
 	int n = pp->pr_curlogentry;
 
-	if ((pp->pr_roflags & PR_LOGGING) == 0)
+	if (pp->pr_log == NULL)
 		return;
 
 	/*
@@ -593,6 +605,7 @@ pool_subsystem_init(void)
 	struct pool_allocator *pa;
 
 	mutex_init(&pool_head_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&pool_allocator_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&pool_busy, "poolbusy");
 
 	while ((pa = SLIST_FIRST(&pa_deferinitq)) != NULL) {
@@ -607,8 +620,6 @@ pool_subsystem_init(void)
 
 	pool_init(&cache_cpu_pool, sizeof(pool_cache_cpu_t), coherency_unit,
 	    0, 0, "pcachecpu", &pool_allocator_nointr, IPL_NONE);
-
-	mutex_init(&pool_allocator_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
@@ -793,16 +804,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_nidle = 0;
 	pp->pr_refcnt = 0;
 
-#ifdef POOL_DIAGNOSTIC
-	if (flags & PR_LOGGING) {
-		if (kmem_map == NULL ||
-		    (pp->pr_log = malloc(pool_logsize * sizeof(struct pool_log),
-		     M_TEMP, M_NOWAIT)) == NULL)
-			pp->pr_roflags &= ~PR_LOGGING;
-		pp->pr_curlogentry = 0;
-		pp->pr_logsize = pool_logsize;
-	}
-#endif
+	pp->pr_log = NULL;
 
 	pp->pr_entered_file = NULL;
 	pp->pr_entered_line = 0;
@@ -928,8 +930,10 @@ pool_destroy(struct pool *pp)
 	pr_pagelist_free(pp, &pq);
 
 #ifdef POOL_DIAGNOSTIC
-	if ((pp->pr_roflags & PR_LOGGING) != 0)
+	if (pp->pr_log != NULL) {
 		free(pp->pr_log, M_TEMP);
+		pp->pr_log = NULL;
+	}
 #endif
 
 	cv_destroy(&pp->pr_cv);
