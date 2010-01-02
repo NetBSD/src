@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.55 2009/09/19 14:57:29 abs Exp $ */
+/*	$NetBSD: md.c,v 1.56 2010/01/02 18:06:58 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -200,7 +200,7 @@ md_get_info(void)
 	 *  to see if the disk have a Boot Block
 	 */
 	if (lseek(fd, (off_t)0 * blk_size, SEEK_SET) < 0 ||
-	    read(fd,  &block, sizeof(block)) < sizeof(block) ||
+	    read(fd,  &block, sizeof(block)) - sizeof(block) != 0 ||
 	    block.pmSig != 0x4552) {
              process_menu(MENU_nodiskmap, NULL);
         }
@@ -626,7 +626,7 @@ whichType(part)
 	if (part->pmSig != APPLE_PART_MAP_ENTRY_MAGIC)
 	    return 0;
 	maxsiz = sizeof(part->pmPartType);
-	if (maxsiz > sizeof(partyp))
+	if (maxsiz > (int)sizeof(partyp))
 	    maxsiz = sizeof(partyp);
 	strncpy(partyp, (char *)part->pmPartType, maxsiz);
 	partyp[maxsiz-1] = '\0';
