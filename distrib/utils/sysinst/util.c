@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.161 2009/10/09 21:11:31 snj Exp $	*/
+/*	$NetBSD: util.c,v 1.162 2010/01/02 18:06:57 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -157,7 +157,7 @@ init_set_status(int minimal)
 	static const uint8_t sets_selected_full[] = {MD_SETS_SELECTED};
 	static const uint8_t sets_selected_minimal[] = {MD_SETS_SELECTED_MINIMAL};
 	static const uint8_t *sets_selected;
-	int nelem_selected;
+	unsigned int nelem_selected;
 	unsigned int i, len;
 	const char *longest;
 
