@@ -1,4 +1,4 @@
-/*	$NetBSD: iso9660_rrip.c,v 1.4 2006/12/18 21:03:29 christos Exp $	*/
+/*	$NetBSD: iso9660_rrip.c,v 1.4.18.1 2010/01/02 06:41:03 snj Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: iso9660_rrip.c,v 1.4 2006/12/18 21:03:29 christos Exp $");
+__RCSID("$NetBSD: iso9660_rrip.c,v 1.4.18.1 2010/01/02 06:41:03 snj Exp $");
 #endif  /* !__lint */
 
 static void cd9660_rrip_initialize_inode(cd9660node *);
@@ -228,7 +228,7 @@ cd9660_susp_handle_continuation_common(cd9660node *node, int space)
 			SUSP_ENTRY_SUSP_CE, "CE", SUSP_LOC_ENTRY);
 		cd9660_susp_ce(CE, node);
 		/* This will automatically insert at the appropriate location */
-		TAILQ_INSERT_TAIL(&node->head, CE, rr_ll);
+		TAILQ_INSERT_AFTER(&node->head, last, CE, rr_ll);
 		susp_used += 28;
 
 		/* Count how much CA data is necessary */
