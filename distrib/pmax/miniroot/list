@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.19 2009/09/20 23:19:55 abs Exp $
+#	$NetBSD: list,v 1.20 2010/01/02 06:46:09 tsutsui Exp $
 
 # extras in bin
 PROG	bin/csh
@@ -31,9 +31,6 @@ SYMLINK	/tmp	var/tmp
 COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
 # and /boot.pmax
 COPY	${DESTDIR}/boot.pmax	boot.pmax
-
-# the zoneinfo (dont use)
-#COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 
 # a subset termcap file
 COPY	${DISTRIBDIR}/common/termcap		usr/share/misc/termcap
