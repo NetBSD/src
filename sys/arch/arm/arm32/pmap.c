@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.210 2010/01/01 02:32:28 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211 2010/01/02 07:53:29 he Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.210 2010/01/01 02:32:28 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211 2010/01/02 07:53:29 he Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -2357,7 +2357,7 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 static int
 pmap_clean_page(struct pv_entry *pv, bool is_src)
 {
-	pmap_t pm, pm_to_clean = NULL;
+	pmap_t pm_to_clean = NULL;
 	struct pv_entry *npv;
 	u_int cache_needs_cleaning = 0;
 	u_int flags = 0;
