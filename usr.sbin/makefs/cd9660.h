@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.h,v 1.12 2008/07/27 10:29:32 reinoud Exp $	*/
+/*	$NetBSD: cd9660.h,v 1.12.6.1 2010/01/02 06:34:15 snj Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -207,6 +207,10 @@ typedef struct _cd9660node {
 	int susp_entry_ce_length;
 	int susp_dot_ce_length;
 	int susp_dot_dot_ce_length;
+
+	/* Data to put at the end of the System Use field */
+	int su_tail_size;
+	char *su_tail_data;
 
 	/*** PATH TABLE STUFF ***/
 	int level;			/*depth*/
