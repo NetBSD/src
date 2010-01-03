@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_sa1.S,v 1.10 2007/10/17 19:53:29 garbled Exp $	*/
+/*	$NetBSD: cpufunc_asm_sa1.S,v 1.11 2010/01/03 04:25:16 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -285,7 +285,7 @@ ENTRY(sa1_cache_syncI_rng)
 /*
  * Context switch.
  *
- * These is the CPU-specific parts of the context switcher cpu_switch()
+ * These are the CPU-specific parts of the context switcher cpu_switch()
  * These functions actually perform the TTB reload.
  */
 #if defined(CPU_SA110)
