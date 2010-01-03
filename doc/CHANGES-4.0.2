@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.62 2009/12/09 04:52:40 snj Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.63 2010/01/03 17:13:32 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -952,4 +952,12 @@ dist/ntp/ntpd/ntp_request.c			patch
 
 	Fix CVE-2009-3563.
 	[kardel, ticket #1369]
+
+sys/netbt/rfcomm_session.c			1.16
+	when receiving a MCC PN response, the max frame size that the remote
+	party requests must be less than the one we asked for which will not
+	be greater than the max acceptable value so no need to test for that
+	but make sure that it is not smaller than minimum acceptable value.
+
+	[plunky, ticket #1372]
 
