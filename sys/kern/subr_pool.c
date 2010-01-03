@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.180 2010/01/03 01:07:19 mlelstv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.181 2010/01/03 09:42:22 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.180 2010/01/03 01:07:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.181 2010/01/03 09:42:22 mlelstv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -855,7 +855,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	}
 
 	/* Insert into the list of all pools. */
-	if (__predict_true(!cold))
+	if (!cold)
 		mutex_enter(&pool_head_lock);
 	TAILQ_FOREACH(pp1, &pool_head, pr_poollist) {
 		if (strcmp(pp1->pr_wchan, pp->pr_wchan) > 0)
@@ -865,14 +865,14 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		TAILQ_INSERT_TAIL(&pool_head, pp, pr_poollist);
 	else
 		TAILQ_INSERT_BEFORE(pp1, pp, pr_poollist);
-	if (__predict_true(!cold))
+	if (!cold)
 		mutex_exit(&pool_head_lock);
 
 	/* Insert this into the list of pools using this allocator. */
-	if (__predict_true(!cold))
+	if (!cold)
 		mutex_enter(&palloc->pa_lock);
 	TAILQ_INSERT_TAIL(&palloc->pa_list, pp, pr_alloc_list);
-	if (__predict_true(!cold))
+	if (!cold)
 		mutex_exit(&palloc->pa_lock);
 
 	pool_reclaim_register(pp);
