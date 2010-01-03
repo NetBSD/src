@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.59 2009/12/10 05:10:03 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.60 2010/01/03 11:44:58 mrg Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -129,6 +129,12 @@ define	V_SOFT		offsetof(struct uvmexp, softs)
 define	V_FAULTS	offsetof(struct uvmexp, faults)
 define	EV_COUNT	offsetof(struct evcnt, ev_count)
 define	EV_STRUCTSIZE	sizeof(struct evcnt)
+
+# interrupt handler fields
+define	IH_FUN		offsetof(struct intrhand, ih_fun)
+define	IH_ARG		offsetof(struct intrhand, ih_arg)
+define	IH_NEXT		offsetof(struct intrhand, ih_next)
+define	IH_CLASSIPL	offsetof(struct intrhand, ih_classipl)
 
 # CPU info structure
 define	CPUINFO_STRUCTSIZE	sizeof(struct cpu_info)
