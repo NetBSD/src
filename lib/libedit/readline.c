@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.87 2009/12/30 23:54:52 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.88 2010/01/03 18:27:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.87 2009/12/30 23:54:52 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.88 2010/01/03 18:27:10 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1298,7 +1298,8 @@ read_history(const char *filename)
 		rl_initialize();
 	if (filename == NULL && (filename = _default_history_file()) == NULL)
 		return errno;
-	return (FUNW(history)(h, &ev, H_LOAD, filename) == -1 ? (errno ? errno : EINVAL) : 0);
+	return (FUNW(history)(h, &ev, H_LOAD, filename) == -1 ?
+	    (errno ? errno : EINVAL) : 0);
 }
 
 
@@ -1314,7 +1315,8 @@ write_history(const char *filename)
 		rl_initialize();
 	if (filename == NULL && (filename = _default_history_file()) == NULL)
 		return errno;
-	return (FUNW(history)(h, &ev, H_SAVE, filename) == -1 ? (errno ? errno : EINVAL) : 0);
+	return (FUNW(history)(h, &ev, H_SAVE, filename) == -1 ?
+	    (errno ? errno : EINVAL) : 0);
 }
 
 
@@ -1456,7 +1458,7 @@ clear_history(void)
 {
 	TYPE(HistEvent) ev;
 
-	FUNW(history)(h, &ev, H_CLEAR);
+	(void)FUNW(history)(h, &ev, H_CLEAR);
 	history_length = 0;
 }
 
@@ -1474,7 +1476,7 @@ where_history(void)
 		return (0);
 	curr_num = ev.num;
 
-	FUNW(history)(h, &ev, H_FIRST);
+	(void)FUNW(history)(h, &ev, H_FIRST);
 	off = 1;
 	while (ev.num != curr_num && FUNW(history)(h, &ev, H_NEXT) == 0)
 		off++;
@@ -1508,7 +1510,7 @@ history_total_bytes(void)
 		return (-1);
 	curr_num = ev.num;
 
-	FUNW(history)(h, &ev, H_FIRST);
+	(void)FUNW(history)(h, &ev, H_FIRST);
 	size = 0;
 	do
 		size += Strlen(ev.str) * sizeof(*ev.str);
@@ -1533,7 +1535,7 @@ history_set_pos(int pos)
 	if (pos >= history_length || pos < 0)
 		return (-1);
 
-	FUNW(history)(h, &ev, H_CURR);
+	(void)FUNW(history)(h, &ev, H_CURR);
 	curr_num = ev.num;
 
 	/*
@@ -1541,7 +1543,7 @@ history_set_pos(int pos)
 	 * (void **)-1
 	 */
 	if (FUNW(history)(h, &ev, H_DELDATA, pos, (void **)-1)) {
-		FUNW(history)(h, &ev, H_SET, curr_num);
+		(void)FUNW(history)(h, &ev, H_SET, curr_num);
 		return(-1);
 	}
 	return (0);
@@ -1592,7 +1594,7 @@ history_search(const char *str, int direction)
 		if (FUNW(history)(h, &ev, direction < 0 ? H_NEXT:H_PREV) != 0)
 			break;
 	}
-	FUNW(history)(h, &ev, H_SET, curr_num);
+	(void)FUNW(history)(h, &ev, H_SET, curr_num);
 	return (-1);
 }
 
@@ -1605,7 +1607,8 @@ history_search_prefix(const char *str, int direction)
 {
 	TYPE(HistEvent) ev;
 
-	return (FUNW(history)(h, &ev, direction < 0? H_PREV_STR:H_NEXT_STR, str));
+	return (FUNW(history)(h, &ev, direction < 0 ?
+	    H_PREV_STR : H_NEXT_STR, str));
 }
 
 
@@ -1641,7 +1644,8 @@ history_search_pos(const char *str,
 	}
 
 	/* set "current" pointer back to previous state */
-	FUNW(history)(h, &ev, (pos < 0) ? H_NEXT_EVENT : H_PREV_EVENT, curr_num);
+	(void)FUNW(history)(h, &ev,
+	    pos < 0 ? H_NEXT_EVENT : H_PREV_EVENT, curr_num);
 
 	return (-1);
 }
