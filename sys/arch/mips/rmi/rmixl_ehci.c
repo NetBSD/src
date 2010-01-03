@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_ehci.c,v 1.1.2.1 2009/12/14 07:22:37 cliff Exp $	*/
+/*	$NetBSD: rmixl_ehci.c,v 1.1.2.2 2010/01/03 08:37:07 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_ehci.c,v 1.1.2.1 2009/12/14 07:22:37 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_ehci.c,v 1.1.2.2 2010/01/03 08:37:07 cliff Exp $");
 
 #include "locators.h"
 
@@ -82,7 +82,7 @@ rmixl_ehci_attach(device_t parent, device_t self, void *aux)
 
 	/* check state of IO_AD9 signal latched in GPIO Reset Config reg */
 	r = RMIXL_IOREG_READ(RMIXL_IO_DEV_GPIO + RMIXL_GPIO_RESET_CFG);
-	if ((r & RMIXL_GPIO_RESET_USB_DEV) == 0) {
+	if ((r & RMIXL_GPIO_RESET_CFG_USB_DEV) == 0) {
 		aprint_error_dev(self,
 			"IO_AD9 selects Device mode, abort Host attach\n");
 		return;
