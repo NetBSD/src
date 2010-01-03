@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.12 2010/01/03 22:22:23 haad Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.13 2010/01/03 22:44:10 haad Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,6 @@ struct cmd_function cmd_fn[] = {
 		{ .cmd = "table",   .fn = dm_table_status_ioctl},
 		{NULL, NULL}	
 };
-
 
 MODULE(MODULE_CLASS_DRIVER, dm, NULL);
 
@@ -301,7 +300,7 @@ static int
 dmopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 
-	aprint_debug("open routine called %" PRIu32 "\n", minor(dev));
+	aprint_debug("dm open routine called %" PRIu32 "\n", minor(dev));
 	return 0;
 }
 
@@ -309,7 +308,7 @@ static int
 dmclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 
-	aprint_debug("CLOSE routine called\n");
+	aprint_debug("dm close routine called %" PRIu32 "\n", minor(dev));
 	return 0;
 }
 
@@ -326,8 +325,13 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 	
 	KASSERT(data != NULL);
 	
-	if (disk_ioctl_switch(dev, cmd, data) != 0) {
+	if (( r = disk_ioctl_switch(dev, cmd, data)) == ENOTTY) {
 		struct plistref *pref = (struct plistref *) data;
+
+		/* Check if we were called with NETBSD_DM_IOCTL ioctl
+		   otherwise quit. */
+		if ((r = dm_ioctl_switch(cmd)) != 0)
+			return r;
 
 		if((r = prop_dictionary_copyin_ioctl(pref, cmd, &dm_dict_in)) != 0)
 			return r;
@@ -337,18 +341,12 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 			    return r;
 		}
 
-		/* call cmd selected function */
-		if ((r = dm_ioctl_switch(cmd)) != 0) {
-			prop_object_release(dm_dict_in);
-			return r;
-		}
-		    
 		/* run ioctl routine */
 		if ((r = dm_cmd_to_fun(dm_dict_in)) != 0) {
 			prop_object_release(dm_dict_in);
 			return r;
 		}
-		
+
 		r = prop_dictionary_copyout_ioctl(pref, cmd, dm_dict_in);
 
 		prop_object_release(dm_dict_in);
@@ -366,10 +364,10 @@ dm_cmd_to_fun(prop_dictionary_t dm_dict){
 	prop_string_t command;
 	
 	r = 0;
-		
+
 	if ((command = prop_dictionary_get(dm_dict, DM_IOCTL_COMMAND)) == NULL)
 		return EINVAL;
-	
+
 	for(i = 0; cmd_fn[i].cmd != NULL; i++)
 		if (prop_string_equals_cstring(command, cmd_fn[i].cmd))
 			break;
@@ -379,7 +377,7 @@ dm_cmd_to_fun(prop_dictionary_t dm_dict){
 
 	aprint_debug("ioctl %s called\n", cmd_fn[i].cmd);
 	r = cmd_fn[i].fn(dm_dict);
-	
+
 	return r;
 }
 
@@ -387,23 +385,19 @@ dm_cmd_to_fun(prop_dictionary_t dm_dict){
 static int
 dm_ioctl_switch(u_long cmd)
 {
-	int r;
-	
-	r = 0;
 
 	switch(cmd) {
-		
+
 	case NETBSD_DM_IOCTL:
-		aprint_debug("NetBSD_DM_IOCTL called\n");
+		aprint_debug("dm NetBSD_DM_IOCTL called\n");
 		break;
-		
 	default:
-		 aprint_debug("unknown ioctl called\n");
+		 aprint_debug("dm unknown ioctl called\n");
 		 return ENOTTY;
 		 break; /* NOT REACHED */
 	}
 
-	 return r;
+	 return 0;
 }
 
  /*
@@ -414,21 +408,21 @@ static int
 disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 {
 	dm_dev_t *dmv;
-	
+
 	switch(cmd) {
 	case DIOCGWEDGEINFO:
 	{
 		struct dkwedge_info *dkw = (void *) data;
 
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
-			return ENOENT;
-			
+			return ENODEV;
+
 		aprint_debug("DIOCGWEDGEINFO ioctl called\n");
-		
+
 		strlcpy(dkw->dkw_devname, dmv->name, 16);
 		strlcpy(dkw->dkw_wname, dmv->name, DM_NAME_LEN);
 		strlcpy(dkw->dkw_parent, dmv->name, 16);
-		
+
 		dkw->dkw_offset = 0;
 		dkw->dkw_size = dm_table_size(&dmv->table_head);
 		strcpy(dkw->dkw_ptype, DKW_PTYPE_FFS);
@@ -442,8 +436,8 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 		struct plistref *pref = (struct plistref *) data;
 
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
-			return ENOENT;
-		
+			return ENODEV;
+
 		if (dmv->diskp->dk_info == NULL) {
 			dm_dev_unbusy(dmv);
 			return ENOTSUP;
@@ -452,16 +446,15 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 			    dmv->diskp->dk_info);
 
 		dm_dev_unbusy(dmv);
-		
 		break;
 	}
 	
 	default:
 		aprint_debug("unknown disk_ioctl called\n");
-		return 1;
+		return ENOTTY;
 		break; /* NOT REACHED */
 	}
-	
+
 	return 0;
 }
 
@@ -481,7 +474,7 @@ dmstrategy(struct buf *bp)
 	uint64_t buf_start, buf_len, issued_len;
 	uint64_t table_start, table_end;
 	uint64_t start, end;
-	
+
 	buf_start = bp->b_blkno * DEV_BSIZE;
 	buf_len = bp->b_bcount;
 
@@ -513,14 +506,14 @@ dmstrategy(struct buf *bp)
 	mutex_enter(&dmv->diskp_mtx);
 	disk_busy(dmv->diskp);
 	mutex_exit(&dmv->diskp_mtx);
-	
+
 	/* Select active table */
 	tbl = dm_table_get_entry(&dmv->table_head, DM_TABLE_ACTIVE);
 
 	 /* Nested buffers count down to zero therefore I have
 	    to set bp->b_resid to maximal value. */
 	bp->b_resid = bp->b_bcount;
-	
+
 	/*
 	 * Find out what tables I want to select.
 	 */
@@ -557,7 +550,7 @@ dmstrategy(struct buf *bp)
 			    (end - start));
 
 			issued_len += end - start;
-			
+
 			/* I need number of blocks. */
 			nestbuf->b_blkno = (start - table_start) / DEV_BSIZE;
 
@@ -571,7 +564,7 @@ dmstrategy(struct buf *bp)
 	mutex_enter(&dmv->diskp_mtx);
 	disk_unbusy(dmv->diskp, buf_len, bp != NULL ? bp->b_flags & B_READ : 0);
 	mutex_exit(&dmv->diskp_mtx);
-		
+
 	dm_table_release(&dmv->table_head, DM_TABLE_ACTIVE);
 	dm_dev_unbusy(dmv);
 
@@ -582,12 +575,14 @@ dmstrategy(struct buf *bp)
 static int
 dmread(dev_t dev, struct uio *uio, int flag)
 {
+
 	return (physio(dmstrategy, NULL, dev, B_READ, dmminphys, uio));
 }
 
 static int
 dmwrite(dev_t dev, struct uio *uio, int flag)
 {
+
 	return (physio(dmstrategy, NULL, dev, B_WRITE, dmminphys, uio));
 }
 
@@ -596,12 +591,12 @@ dmsize(dev_t dev)
 {
 	dm_dev_t *dmv;
 	uint64_t size;
-	
+
 	size = 0;
-	
+
 	if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return -ENOENT;
-	
+
 	size = dm_table_size(&dmv->table_head);
 	dm_dev_unbusy(dmv);
 	
@@ -611,6 +606,7 @@ dmsize(dev_t dev)
 static void
 dmminphys(struct buf *bp)
 {
+
 	bp->b_bcount = MIN(bp->b_bcount, MAXPHYS);
 }
 
@@ -619,31 +615,22 @@ dmgetproperties(struct disk *disk, dm_table_head_t *head)
 {
 	prop_dictionary_t disk_info, odisk_info, geom;
 	int dmp_size;
-	
+
 	dmp_size = dm_table_size(head);
-	
 	disk_info = prop_dictionary_create();
-
-	prop_dictionary_set_cstring_nocopy(disk_info, "type", "ESDI");
-
 	geom = prop_dictionary_create();
 
+	prop_dictionary_set_cstring_nocopy(disk_info, "type", "ESDI");
 	prop_dictionary_set_uint64(geom, "sectors-per-unit", dmp_size);
-
 	prop_dictionary_set_uint32(geom, "sector-size",
 	    DEV_BSIZE /* XXX 512? */);
-
 	prop_dictionary_set_uint32(geom, "sectors-per-track", 32);
-
 	prop_dictionary_set_uint32(geom, "tracks-per-cylinder", 64);
-
 	prop_dictionary_set_uint32(geom, "cylinders-per-unit", dmp_size / 2048);
-
 	prop_dictionary_set(disk_info, "geometry", geom);
 	prop_object_release(geom);
 
 	odisk_info = disk->dk_info;
-	
 	disk->dk_info = disk_info;
 
 	if (odisk_info != NULL)
