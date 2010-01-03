@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.11 2009/12/29 23:37:47 haad Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.12 2010/01/03 22:22:23 haad Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include <sys/buf.h>
 #include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/dkio.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -58,13 +59,18 @@ static dev_type_strategy(dmstrategy);
 static dev_type_size(dmsize);
 
 /* attach and detach routines */
-int dmattach(void);
-int dmdestroy(void);
+static int dmattach(void);
+static int dmdestroy(void);
 
 static int dm_cmd_to_fun(prop_dictionary_t);
 static int disk_ioctl_switch(dev_t, u_long, void *);
 static int dm_ioctl_switch(u_long);
 static void dmminphys(struct buf *);
+
+/* CF attach/detach functions used for power management */
+static int dm_detach(device_t, int);
+static void dm_attach(device_t, device_t, void *);
+static int dm_match(device_t, cfdata_t, void *);
 
 /* ***Variable-definitions*** */
 const struct bdevsw dm_bdevsw = {
@@ -94,6 +100,14 @@ const struct cdevsw dm_cdevsw = {
 const struct dkdriver dmdkdriver = {
 	.d_strategy = dmstrategy
 };
+
+/* Autoconf defines */
+CFDRIVER_DECL(dm, DV_DISK, NULL);
+CFATTACH_DECL3_NEW(dm, 0,
+     dm_match, dm_attach, dm_detach, NULL, NULL, NULL,
+     DVF_DETACH_SHUTDOWN);
+
+extern struct cfdriver dm_cd;
 
 extern uint64_t dev_counter;
 
@@ -134,11 +148,27 @@ dm_modcmd(modcmd_t cmd, void *arg)
 {
 #ifdef _MODULE
 	int bmajor = -1, cmajor = -1;
+	int error;
+
+	error = 0;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		dmattach();
-		return devsw_attach("dm", &dm_bdevsw, &bmajor,
+
+		error = config_cfdriver_attach(&dm_cd);
+		if (error)
+			break;
+
+		error = config_cfattach_attach(dm_cd.cd_name, &dm_ca);
+		if (error) {
+			config_cfdriver_detach(&dm_cd);
+			aprint_error("Unable to register cfattach for dm driver\n");
+
+			break;
+		}
+
+		error =  devsw_attach("dm", &dm_bdevsw, &bmajor,
 		    &dm_cdevsw, &cmajor);
 		break;
 
@@ -152,7 +182,14 @@ dm_modcmd(modcmd_t cmd, void *arg)
 		if (dev_counter > 0)
 			return EBUSY;
 		dmdestroy();
-		return devsw_detach(&dm_bdevsw, &dm_cdevsw);
+
+		error = config_cfattach_detach(dm_cd.cd_name, &dm_ca);
+		if (error)
+			break;
+
+		config_cfdriver_detach(&dm_cd);
+
+		devsw_detach(&dm_bdevsw, &dm_cdevsw);
 		break;
 	case MODULE_CMD_STAT:
 		return ENOTTY;
@@ -161,7 +198,7 @@ dm_modcmd(modcmd_t cmd, void *arg)
 		return ENOTTY;
 	}
 
-	return 0;
+	return error;
 #else
 
 	if (cmd == MODULE_CMD_INIT)
@@ -172,10 +209,75 @@ dm_modcmd(modcmd_t cmd, void *arg)
 }
 
 
+/*
+ * dm_match:
+ *
+ *	Autoconfiguration match function for pseudo-device glue.
+ */
+static int
+dm_match(device_t parent, cfdata_t match,
+    void *aux)
+{
+
+	/* Pseudo-device; always present. */
+	return (1);
+}
+
+/*
+ * dm_attach:
+ *
+ *	Autoconfiguration attach function for pseudo-device glue.
+ */
+static void
+dm_attach(device_t parent, device_t self,
+    void *aux)
+{
+	return;
+}
+
+
+/*
+ * dm_detach:
+ *
+ *	Autoconfiguration detach function for pseudo-device glue.
+ * This routine is called by dm_ioctl::dm_dev_remove_ioctl and by autoconf to
+ * remove devices created in device-mapper. 
+ */
+static int
+dm_detach(device_t self, int flags)
+{
+	dm_dev_t *dmv;
+
+	/* Detach device from global device list */
+	if ((dmv = dm_dev_detach(self)) == NULL)
+		return ENOENT;
+
+	/* Destroy active table first.  */
+	dm_table_destroy(&dmv->table_head, DM_TABLE_ACTIVE);
+
+	/* Destroy inactive table if exits, too. */
+	dm_table_destroy(&dmv->table_head, DM_TABLE_INACTIVE);
+	
+	dm_table_head_destroy(&dmv->table_head);
+
+	/* Destroy disk device structure */
+	disk_detach(dmv->diskp);
+	disk_destroy(dmv->diskp);
+
+	/* Destroy device */
+	(void)dm_dev_free(dmv);
+
+	/* Decrement device counter After removing device */
+	atomic_dec_64(&dev_counter);
+
+	return 0;
+}
+
 /* attach routine */
-int
+static int
 dmattach(void)
 {
+
 	dm_target_init();
 	dm_dev_init();
 	dm_pdev_init();
@@ -184,9 +286,10 @@ dmattach(void)
 }
 
 /* Destroy routine */
-int
+static int
 dmdestroy(void)
 {
+
 	dm_dev_destroy();
 	dm_pdev_destroy();
 	dm_target_destroy();
@@ -197,6 +300,7 @@ dmdestroy(void)
 static int
 dmopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
+
 	aprint_debug("open routine called %" PRIu32 "\n", minor(dev));
 	return 0;
 }
@@ -204,8 +308,8 @@ dmopen(dev_t dev, int flags, int mode, struct lwp *l)
 static int
 dmclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	aprint_debug("CLOSE routine called\n");
 
+	aprint_debug("CLOSE routine called\n");
 	return 0;
 }
 
