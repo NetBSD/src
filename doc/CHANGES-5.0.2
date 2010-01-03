@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.35 2010/01/02 06:40:03 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.36 2010/01/03 17:53:30 jdc Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -907,4 +907,12 @@ usr.sbin/makefs/cd9660/iso9660_rrip.h		1.5
 	which causes fatal errors in ARC BIOS firmware on MIPS Magnum R4000
 	while booting from arccd-5.0.1.iso as described in PR bin/42410.
 	[tsutsui, ticket #1198]
+
+sys/netbt/rfcomm_session.c			1.16
+	when receiving a MCC PN response, the max frame size that the remote
+	party requests must be less than the one we asked for which will not
+	be greater than the max acceptable value so no need to test for that
+	but make sure that it is not smaller than minimum acceptable value.
+
+	[plunky, ticket #1221]
 
