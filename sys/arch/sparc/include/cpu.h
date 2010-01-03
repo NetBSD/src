@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.87 2009/10/21 21:12:02 rmind Exp $ */
+/*	$NetBSD: cpu.h,v 1.88 2010/01/03 12:39:22 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -156,12 +156,17 @@ extern int sparc_ncpus;
  * ``not me'' or 1 (``I took care of it'').  intr_establish() inserts a
  * handler into the list.  The handler is called with its (single)
  * argument, or with a pointer to a clockframe if ih_arg is NULL.
+ *
+ * realfun/realarg are used to chain callers, usually with the
+ * biglock wrapper.
  */
 extern struct intrhand {
 	int	(*ih_fun)(void *);
 	void	*ih_arg;
 	struct	intrhand *ih_next;
 	int	ih_classipl;
+	int	(*ih_realfun)(void *);
+	void	*ih_realarg;
 } *intrhand[15];
 
 void	intr_establish(int, int, struct intrhand *, void (*)(void));
