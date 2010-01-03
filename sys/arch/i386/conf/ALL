@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.224 2010/01/03 03:50:38 dholland Exp $
+# $NetBSD: ALL,v 1.225 2010/01/03 03:53:34 dholland Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.224 $"
+#ident 		"ALL-$Revision: 1.225 $"
 
 maxusers	64		# estimated number of users
 
@@ -45,7 +45,7 @@ options 	VIA_PADLOCK
 options 	INTEL_ONDEMAND_CLOCKMOD
 
 # XBOX support
-options		XBOX
+options 	XBOX
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
@@ -563,7 +563,7 @@ unichromefb*	at pci? dev ? function ?
 wsdisplay*	at unichromefb?
 
 # XBOX framebuffer console
-xboxfb0		at pci? dev ? function ?
+xboxfb0 	at pci? dev ? function ?
 wsdisplay*	at xboxfb? console ?
 
 # DRI driver
@@ -661,11 +661,11 @@ options 	INTEL_CORETEMP
 options 	VIA_C7TEMP
 
 # Intel ICH SMBus controller
-ichsmb*	at pci? dev ? function ?
+ichsmb* at pci? dev ? function ?
 iic*	at ichsmb?
 
 # NVIDIA nForce2/3/4 SMBus controller
-nfsmbc*	at pci? dev ? function ?
+nfsmbc* at pci? dev ? function ?
 nfsmb*	at nfsmbc?
 iic*	at nfsmb?
 
@@ -710,11 +710,11 @@ ug0    at isa? port 0xe0
 viaenv* 	at pci? dev ? function ?
 
 # Serial Presence Detect capable memory modules and optional temp sensors
-spdmem*	at iic? addr 0x50
-spdmem*	at iic? addr 0x51
-spdmem*	at iic? addr 0x52
-spdmem*	at iic? addr 0x53
-sdtemp*	at iic? addr 0x18
+spdmem* at iic? addr 0x50
+spdmem* at iic? addr 0x51
+spdmem* at iic? addr 0x52
+spdmem* at iic? addr 0x53
+sdtemp* at iic? addr 0x18
 
 # I2O devices
 iop*	at pci? dev ? function ?	# I/O processor
@@ -858,9 +858,9 @@ geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
 ixpide* 	at pci? dev ? function ?	# ATI IXP IDE controllers
-jmide* 		at pci? dev ? function ?	# JMicron PCI-e PATA/SATA controllers
+jmide*		at pci? dev ? function ?	# JMicron PCI-e PATA/SATA controllers
 ahcisata* 	at jmide?
-mvsata*		at pci? dev ? function ?	# Marvell Hercules-I/II
+mvsata* 	at pci? dev ? function ?	# Marvell Hercules-I/II
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
@@ -883,7 +883,7 @@ wdc*	at pcmcia? function ?
 
 # CardBus IDE controllers
 njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
-siisata* at cardbus? function ?			# SiI SteelVine controllers
+siisata* at cardbus? function ? 		# SiI SteelVine controllers
 
 # ISA ST506, ESDI, and IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
@@ -1152,7 +1152,7 @@ uhub*	at usb?
 uhub*	at uhub? port ?
 
 # USB HID device
-uhidev*	at uhub? port ? configuration ? interface ?
+uhidev* at uhub? port ? configuration ? interface ?
 
 # USB Mice
 ums*	at uhidev? reportid ?
@@ -1167,7 +1167,7 @@ ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
 # USB serial adapter
-ucycom*	at uhidev? reportid ?
+ucycom* at uhidev? reportid ?
 
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?
@@ -1180,7 +1180,7 @@ wsdisplay* at udl?
 ulpt*	at uhub? port ? configuration ? interface ?
 
 # USB Modem
-umodem*	at uhub? port ? configuration ?
+umodem* at uhub? port ? configuration ?
 ucom*	at umodem?
 
 # Huawei E220 3G/HSDPA modem
@@ -1192,7 +1192,7 @@ umass*	at uhub? port ? configuration ? interface ?
 wd*	at umass?
 
 # USB audio
-uaudio*	at uhub? port ? configuration ?
+uaudio* at uhub? port ? configuration ?
 
 # USB MIDI
 umidi* at uhub? port ? configuration ?
@@ -1231,7 +1231,7 @@ upl*	at uhub? port ?
 ubsa*	at uhub? port ?		# Belkin serial adapter
 ucom*	at ubsa? portno ?
 
-uchcom*	at uhub? port ?		# WinChipHead CH341/CH340 serial adapter
+uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
 ucom*	at uchcom? portno ?
 
 uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
@@ -1253,13 +1253,13 @@ uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
 
 # RIM BlackBerry
-uberry*	at uhub? port ?
+uberry* at uhub? port ?
 
 # Diamond Multimedia Rio 500
 urio*	at uhub? port ?
 
 # USB Handspring Visor
-uvisor*	at uhub? port ?
+uvisor* at uhub? port ?
 ucom*	at uvisor?
 
 # Kyocera AIR-EDGE PHONE
@@ -1273,7 +1273,7 @@ uscanner* at uhub? port ?
 usscanner* at uhub? port ?
 
 # Topfield TF5000PVR range of DVB recorders
-utoppy*	at uhub? port ?
+utoppy* at uhub? port ?
 
 # Y@P firmware loader
 uyap* at uhub? port ?
@@ -1283,7 +1283,7 @@ udsbr*	at uhub? port ?
 radio*	at udsbr?
 
 # XBOX controller
-xboxcontroller*	at uhub? port ?
+xboxcontroller* at uhub? port ?
 wsmouse*	at xboxcontroller? mux 0
 
 # USB Generic driver
@@ -1294,7 +1294,7 @@ u3g*	at uhub? port ?
 ucom*	at u3g?
 
 # USB generic serial port (e.g., data over cellular)
-ugensa*	at uhub? port ?
+ugensa* at uhub? port ?
 ucom*	at ugensa?
 
 # IrDA and Consumer Ir devices
@@ -1305,10 +1305,10 @@ irframe* at oboe?
 
 
 # PCI IEEE1394 controllers
-fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
+fwohci* at pci? dev ? function ?	# IEEE1394 Open Host Controller
 
 # CardBus IEEE1394 controllers
-fwohci*	at cardbus? function ?	# IEEE1394 Open Host Controller
+fwohci* at cardbus? function ?		# IEEE1394 Open Host Controller
 
 ieee1394if* at fwohci?
 fwip*	at ieee1394if?			# IP over IEEE1394
@@ -1319,7 +1319,7 @@ sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
 
 # SD/MMC controller
 sdhc*  at pci?				# SD Host Controller
-sdmmc* at sdhc?				# SD/MMC bus
+sdmmc* at sdhc? 			# SD/MMC bus
 
 ld*	at sdmmc?
 
@@ -1332,7 +1332,7 @@ auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
 auixp*	at pci? dev ? function ?	# ATI IXP AC'97 Audio
 autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
 auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
-azalia*	at pci? dev ? function ?	# High Definition Audio
+azalia* at pci? dev ? function ?	# High Definition Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
@@ -1426,7 +1426,7 @@ radio*	at sf2r?
 
 # Video capture devices
 
-pseye* at uhub?			# Sony PLAYSTATION(R) Eye webcam
+pseye* at uhub? 		# Sony PLAYSTATION(R) Eye webcam
 uvideo* at uhub?		# USB Video Class capture devices
 video* at videobus?
 
@@ -1434,10 +1434,10 @@ video* at videobus?
 # TV cards
 
 # Brooktree 848/849/878/879 based TV cards
-bktr* at pci? dev ? function ?
-radio* at bktr?
+bktr*	at pci? dev ? function ?
+radio*	at bktr?
 
-isv* at isa? port 0x3e0			# IDEC Supervision/16 image capture
+isv*	at isa? port 0x3e0		# IDEC Supervision/16 image capture
 
 # Bluetooth Controller and Device support
 
@@ -1522,7 +1522,7 @@ satlink0 at isa? port 0x300 drq 1
 weasel* at pci?
 
 # Pull in optional local configuration
-#include	"arch/i386/conf/ALL.local"
+#include 	"arch/i386/conf/ALL.local"
 
 
 # Pseudo-Devices

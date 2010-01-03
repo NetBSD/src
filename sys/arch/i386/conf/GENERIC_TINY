@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.121 2010/01/03 03:50:38 dholland Exp $
+#	$NetBSD: GENERIC_TINY,v 1.122 2010/01/03 03:53:34 dholland Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -86,21 +86,21 @@ options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
-file-system 	FFS		# UFS
-#file-system 	EXT2FS		# second extended file system (linux)
-#file-system 	LFS		# log-structured file system
-#file-system 	MFS		# memory file system
-file-system 	NFS		# Network File System client
-file-system 	CD9660		# ISO 9660 + Rock Ridge file system
-file-system 	MSDOSFS		# MS-DOS file system
-#file-system 	FDESC		# /dev/fd
-file-system 	KERNFS		# /kern
-#file-system 	NULLFS		# loopback file system
-#file-system 	PROCFS		# /proc
-#file-system 	UMAPFS		# NULLFS + uid and gid remapping
-#file-system 	UNION		# union file system
-#file-system 	PTYFS		# /dev/pts/N support
-#file-system 	TMPFS		# Efficient memory file-system
+file-system	FFS		# UFS
+#file-system	EXT2FS		# second extended file system (linux)
+#file-system	LFS		# log-structured file system
+#file-system	MFS		# memory file system
+file-system	NFS		# Network File System client
+file-system	CD9660		# ISO 9660 + Rock Ridge file system
+file-system	MSDOSFS		# MS-DOS file system
+#file-system	FDESC		# /dev/fd
+file-system	KERNFS		# /kern
+#file-system	NULLFS		# loopback file system
+#file-system	PROCFS		# /proc
+#file-system	UMAPFS		# NULLFS + uid and gid remapping
+#file-system	UNION		# union file system
+#file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# Efficient memory file-system
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -223,14 +223,14 @@ isa0	at mainbus?
 #isa0	at ichlpcib?
 
 # PCMCIA bus support
-pcmcia*	at pcic? controller ? socket ?
+pcmcia* at pcic? controller ? socket ?
 
 # ISA PCMCIA controllers
 pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
 pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
 
 # ISA Plug-and-Play bus support
-#isapnp0	at isa?
+#isapnp0 at isa?
 
 # ISA Plug-and-Play PCMCIA controllers
 #pcic*	at isapnp?
@@ -243,15 +243,15 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # Console Devices
 
 # wscons
-pckbc0 		at isa?			# PC keyboard controller
-pckbd* 		at pckbc?		# PC keyboard
+pckbc0		at isa?			# PC keyboard controller
+pckbd*		at pckbc?		# PC keyboard
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
 vga0		at isa?
 #vga*		at pci? dev ? function ?
-pcdisplay0 	at isa?			# CGA, MDA, EGA, HGA
+pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 wsdisplay*	at vga? console ?
-wsdisplay* 	at pcdisplay? console ?
-wskbd* 		at pckbd? console ?
+wsdisplay*	at pcdisplay? console ?
+wskbd*		at pckbd? console ?
 #wsmouse*	at pms? mux 0
 
 
@@ -502,7 +502,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 
 # ISA Plug-and-Play audio devices
-#guspnp*	at isapnp?			# Gravis Ultra Sound PnP audio
+#guspnp* at isapnp?			# Gravis Ultra Sound PnP audio
 #sb*	at isapnp?			# SoundBlaster-compatible audio
 #ym*	at isapnp?			# Yamaha OPL3-SA[23] audio
 

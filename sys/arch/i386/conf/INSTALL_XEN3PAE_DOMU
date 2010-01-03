@@ -1,13 +1,13 @@
-# $NetBSD: INSTALL_XEN3PAE_DOMU,v 1.4 2009/02/06 18:50:27 jym Exp $
+# $NetBSD: INSTALL_XEN3PAE_DOMU,v 1.5 2010/01/03 03:53:34 dholland Exp $
 #
 #	INSTALL_XEN3PAE_DOMU - Installation kernel for Xen 3/DomU with PAE.
 #
 #	This kernel is derived from XEN3PAE_DOMU with additional memory disk
 #	options.
 
-include	"arch/i386/conf/XEN3PAE_DOMU"
+include "arch/i386/conf/XEN3PAE_DOMU"
 
-#ident 		"INSTALL-$Revision: 1.4 $"
+#ident 		"INSTALL-$Revision: 1.5 $"
 
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT     # force root on memory disk

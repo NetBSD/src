@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.21 2010/01/03 03:50:38 dholland Exp $
+# $NetBSD: XEN3_DOMU,v 1.22 2010/01/03 03:53:34 dholland Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -70,7 +70,7 @@ options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
-options		COMPAT_50	# NetBSD 5.0
+options 	COMPAT_50	# NetBSD 5.0
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -111,7 +111,7 @@ file-system	NILFS		# experimental - NTT's NiLFS(2)
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options		WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -179,8 +179,8 @@ npx0		at hypervisor?		# x86 math coprocessor
 
 xencons*	at hypervisor?		# Xen virtual console
 
-xenbus*		at hypervisor?		# Xen virtual bus
-xennet*		at xenbus?		# Xen virtual network interface
+xenbus* 	at hypervisor?		# Xen virtual bus
+xennet* 	at xenbus?		# Xen virtual network interface
 xbd*		at xenbus?		# Xen virtual block device
 
 cinclude "arch/i386/conf/GENERIC.local"
