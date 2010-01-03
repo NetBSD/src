@@ -1,4 +1,4 @@
-# $NetBSD: XBOX,v 1.18 2010/01/03 03:50:38 dholland Exp $
+# $NetBSD: XBOX,v 1.19 2010/01/03 03:53:34 dholland Exp $
 #
 # XBOX -- A basic Microsoft XBox kernel config file.
 #
@@ -108,8 +108,8 @@ xboxfb0 	at pci? dev ? function ?
 wsdisplay*	at xboxfb? console ?
 
 # XBOX X3LCD console
-#x3lcd0 		at isa0
-#x3lcd0 		at mainbus?
+#x3lcd0		at isa0
+#x3lcd0		at mainbus?
 #wsdisplay* 	at x3lcd0 console ?
 
 # I2C/SMBus support
@@ -180,7 +180,7 @@ uhub*	at usb?
 uhub*	at uhub? port ?
 
 # USB HID device
-uhidev*	at uhub? port ? configuration ? interface ?
+uhidev* at uhub? port ? configuration ? interface ?
 
 # USB Mice
 ums*	at uhidev? reportid ?
@@ -191,7 +191,7 @@ ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
 # USB serial adapter
-ucycom*	at uhidev? reportid ?
+ucycom* at uhidev? reportid ?
 
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?
@@ -200,7 +200,7 @@ uhid*	at uhidev? reportid ?
 ulpt*	at uhub? port ? configuration ? interface ?
 
 # USB Modem
-umodem*	at uhub? port ? configuration ?
+umodem* at uhub? port ? configuration ?
 ucom*	at umodem?
 
 # Huawei E220 3G/HSDPA modem
@@ -212,7 +212,7 @@ umass*	at uhub? port ? configuration ? interface ?
 wd*	at umass?
 
 # USB audio
-uaudio*	at uhub? port ? configuration ?
+uaudio* at uhub? port ? configuration ?
 
 # USB MIDI
 umidi* at uhub? port ? configuration ?
@@ -239,7 +239,7 @@ uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
 
 # Xbox Controller
-xboxcontroller*	at uhub? port ? configuration ?
+xboxcontroller* at uhub? port ? configuration ?
 wsmouse* at xboxcontroller? mux 0
 
 # USB Generic driver

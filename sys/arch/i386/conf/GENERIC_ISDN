@@ -1,8 +1,8 @@
-# $NetBSD: GENERIC_ISDN,v 1.15 2005/12/11 12:17:40 christos Exp $
+# $NetBSD: GENERIC_ISDN,v 1.16 2010/01/03 03:53:34 dholland Exp $
 #
 # GENERIC kernel with all supported ISDN devices and drivers
 
-include	"arch/i386/conf/GENERIC"
+include "arch/i386/conf/GENERIC"
 
 #---------------------------------------------------------------------
 # Various ISDN board drivers:
@@ -11,26 +11,26 @@ include	"arch/i386/conf/GENERIC"
 #
 # Teles S0/8 or Niccy 1008
 options 	ISICISA_TEL_S0_8
-# isic0 at isa? iomem 0xd0000 irq 2
+#isic0		at isa? iomem 0xd0000 irq 2
 # Teles S0/16 or Creatix ISDN-S0 or Niccy 1016
 options 	ISICISA_TEL_S0_16
-# isic0 at isa? port 0xd80 iomem 0xd0000 irq 9
+#isic0		at isa? port 0xd80 iomem 0xd0000 irq 9
 # Teles S0/16.3
 options 	ISICISA_TEL_S0_16_3
-# isic0 at isa? port 0xd80 irq 12
+#isic0		at isa? port 0xd80 irq 12
 # AVM A1 or AVM Fritz!Card
 options 	ISICISA_AVM_A1
-isic0 at isa? port 0x340 irq 10
+isic0		at isa? port 0x340 irq 10
 # USRobotics Sportster ISDN TA intern
 options 	ISICISA_USR_STI
-# isic0 at isa? port 0x268 irq 10
+#isic0		at isa? port 0x268 irq 10
 # ITK ix1 micro
 options 	ISICISA_ITKIX1
-# isic0 at isa? port 0x398 irq 10
+#isic0		at isa? port 0x398 irq 10
 #
 # XXX not ready yet:
 # Active EICON/Diehl Cards: S, SX, SXn, SCOM or QUADRO
-# daic0 at isa? iomem 0xd8000 irq 10
+#daic0		at isa? iomem 0xd8000 irq 10
 #
 #---------------------------------------------------------------------
 # Supported ISA Plug & Play cards:
@@ -44,24 +44,24 @@ options 	ISICPNP_SEDLBAUER	# Sedlbauer WinSpeed
 options 	ISICPNP_DYNALINK	# Dynalink IS64PH
 options 	ISICPNP_SIEMENS_ISURF2	# Siemens I-Surf
 options 	ISICPNP_ITKIX		# ITK IX PnP cards
-isic* at isapnp?
+isic*		at isapnp?
 #
 #---------------------------------------------------------------------
 # Supported PCI cards:
 #
-isic* at pci?
+isic*		at pci?
 
 # Winbond W6692
-iwic* 	at pci?
+iwic*		at pci?
 
 # AVM Fritz!PCI card
-ifpci* at pci?
+ifpci*		at pci?
 
 # AVM Fritz!PCI V2 card
-ifritz* at pci?
+ifritz* 	at pci?
 
 # AVM B1/T1 PCI card
-iavc*	at pci?
+iavc*		at pci?
 
 #
 #---------------------------------------------------------------------
@@ -71,7 +71,7 @@ options 	ISICPCMCIA_AVM_A1	# Fritz!Card PCMCIA Version
 options 	ISICPCMCIA_ELSA_ISDNMC	# ELSA MicroLink ISDN/MC
 options 	ISICPCMCIA_ELSA_MCALL	# ELSA MicroLink MC/all
 options 	ISICPCMCIA_SBSPEEDSTAR2	# Sedlbauer speed star II
-isic* at pcmcia? function ?
+isic*		at pcmcia? function ?
 #
 
 #---------------------------------------------------------------------

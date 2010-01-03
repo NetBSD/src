@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.7 2010/01/03 03:50:38 dholland Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.8 2010/01/03 03:53:34 dholland Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -224,8 +224,8 @@ isa0	at pceb?
 isa0	at pcib?
 
 # PCMCIA bus support
-pcmcia*	at pcic? controller ? socket ?
-pcmcia*	at tcic? controller ? socket ?
+pcmcia* at pcic? controller ? socket ?
+pcmcia* at tcic? controller ? socket ?
 
 # ISA PCMCIA controllers
 pcic0 	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
@@ -237,7 +237,7 @@ tcic0 	at isa? port 0x240 iomem 0xd0000 iosiz 0x10000
 pcic0	at pci? dev? function ?
 
 # ISA Plug-and-Play bus support
-isapnp0	at isa?
+isapnp0 at isa?
 
 # ISA Plug-and-Play PCMCIA controllers
 pcic*	at isapnp?
@@ -278,7 +278,7 @@ com*	at isapnp?			# Modems and serial boards
 # PCMCIA serial interfaces
 com*	at pcmcia? function ?		# Modems and serial cards
 
-pcmcom*	at pcmcia? function ?		# PCMCIA multi-port serial cards
+pcmcom* at pcmcia? function ?		# PCMCIA multi-port serial cards
 com*	at pcmcom? slave ?		# ...and the slave devices
 
 # ISA serial interfaces
@@ -412,7 +412,7 @@ cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
-#ixpide*		at pci? dev ? function ?	# ATI IXP IDE controllers
+#ixpide* 	at pci? dev ? function ?	# ATI IXP IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
@@ -420,7 +420,7 @@ pdcsata*	at pci? dev ? function ?	# Promise SATA150 controllers
 rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
-slide* 		at pci? dev ? function ?	# Symphony Labs IDE controllers
+slide*		at pci? dev ? function ?	# Symphony Labs IDE controllers
 #svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 stpcide*	at pci? dev ? function ?	# STMicro STPC IDE controllers
@@ -605,23 +605,23 @@ dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
+icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
 igphy*	at mii? phy ?			# Intel IGP01E1000
 ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
-lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
-makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
+makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
-nsphyter* at mii? phy ?			# NS83843 PHYs
+nsphyter* at mii? phy ? 		# NS83843 PHYs
 pnaphy* at mii? phy ?			# generic HomePNA PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
-rgephy*	at mii? phy ?			# Realtek 8169S/8110S internal PHYs
+rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
 rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
-urlphy*	at mii? phy ?			# Realtek RTL8150L internal PHYs
+urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Controller and Devices
@@ -641,7 +641,7 @@ uhub*	at usb?
 uhub*	at uhub? port ?
 
 # USB HID device
-uhidev*	at uhub? port ? configuration ? interface ?
+uhidev* at uhub? port ? configuration ? interface ?
 
 # USB Mice
 #ums*	at uhidev? reportid ?
@@ -652,7 +652,7 @@ ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
 
 # USB serial adapter
-#ucycom*	at uhidev? reportid ?
+#ucycom* at uhidev? reportid ?
 
 # USB Generic HID devices
 #uhid*	at uhidev? reportid ?
@@ -685,7 +685,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 #sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # ISA Plug-and-Play audio devices
-#guspnp*	at isapnp?			# Gravis Ultra Sound PnP audio
+#guspnp* at isapnp?			# Gravis Ultra Sound PnP audio
 #sb*	at isapnp?			# SoundBlaster-compatible audio
 
 # ISA audio devices
