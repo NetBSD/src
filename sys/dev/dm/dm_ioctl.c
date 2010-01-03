@@ -1,5 +1,5 @@
 
-/*        $NetBSD: dm_ioctl.c,v 1.18 2009/12/29 23:37:48 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.19 2010/01/03 22:22:23 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
+#include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/kmem.h>
@@ -96,6 +97,14 @@
 static uint64_t      sc_minor_num; 
 extern const struct dkdriver dmdkdriver;
 uint64_t dev_counter;
+
+/* Generic cf_data for device-mapper driver */
+static struct cfdata dm_cfdata = {
+	.cf_name = "dm",
+	.cf_atname = "dm",
+	.cf_fstate = FSTATE_STAR,
+	.cf_unit = 0
+};
 
 #define DM_REMOVE_FLAG(flag, name) do {					\
 		prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flag); \
@@ -198,6 +207,7 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	dm_dev_t *dmv;
 	const char *name, *uuid;
 	int r, flags;
+	device_t devt;
 	
 	r = 0;
 	flags = 0;
@@ -218,9 +228,14 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 		return EEXIST;
 	}
 
+	if ((devt = config_attach_pseudo(&dm_cfdata)) == NULL) {
+		aprint_error("Unable to attach pseudo device dm/%s\n", name);
+		return (ENOMEM);
+	}
+	
 	if ((dmv = dm_dev_alloc()) == NULL)
 		return ENOMEM;
-		
+
 	if (uuid)
 		strncpy(dmv->uuid, uuid, DM_UUID_LEN);
 	else 
@@ -230,18 +245,18 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 		strlcpy(dmv->name, name, DM_NAME_LEN);
 
 	dmv->minor = atomic_inc_64_nv(&sc_minor_num);
-
 	dmv->flags = 0; /* device flags are set when needed */
 	dmv->ref_cnt = 0;
 	dmv->event_nr = 0;
 	dmv->dev_type = 0;
+	dmv->devt = devt;
 	
+	dm_table_head_init(&dmv->table_head);
+
 	mutex_init(&dmv->dev_mtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&dmv->diskp_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&dmv->dev_cv, "dm_dev");
 
-	dm_table_head_init(&dmv->table_head);
-	
 	if (flags & DM_READONLY_FLAG)
 		dmv->flags |= DM_READONLY_FLAG;
 
@@ -371,6 +386,7 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 	dm_dev_t *dmv;
 	const char *name, *uuid;
 	uint32_t flags, minor;
+	device_t devt;
 	
 	flags = 0;
 	name = NULL;
@@ -383,32 +399,20 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor);
 	
 	dm_dbg_print_flags(flags);
-	
-	/* Remove device from global device list */
-	if ((dmv = dm_dev_rem(name, uuid, minor)) == NULL){
+
+	/* This seems as hack to me, probably use routine dm_dev_get_devt to
+	   atomicaly get devt from device. */
+	if ((dmv = dm_dev_lookup(name, uuid, minor)) == NULL) {
 		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
 		return ENOENT;
 	}
 
-	/* Destroy active table first.  */
-	dm_table_destroy(&dmv->table_head, DM_TABLE_ACTIVE);
-	
-	/* Destroy inactive table if exits, too. */
-	dm_table_destroy(&dmv->table_head, DM_TABLE_INACTIVE);
-	
-	dm_table_head_destroy(&dmv->table_head);
+	devt = dmv->devt;
 
-	/* Destroy disk device structure */
-	disk_detach(dmv->diskp);
-	disk_destroy(dmv->diskp);
+	dm_dev_unbusy(dmv);
 	
-	/* Destroy device */
-	(void)dm_dev_free(dmv);
-
-	/* Decrement device counter After removing device */
-	atomic_dec_64(&dev_counter);
-	
-	return 0;
+	/* This will call dm_detach routine which will actually removes device. */
+	return config_detach(devt, DETACH_QUIET);
 }
 
 /*
