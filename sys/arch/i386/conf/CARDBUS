@@ -1,4 +1,4 @@
-# $NetBSD: CARDBUS,v 1.79 2008/09/30 16:45:33 jmcneill Exp $
+# $NetBSD: CARDBUS,v 1.80 2010/01/03 03:50:38 dholland Exp $
 #
 #	CARDBUS: GENERIC + CardBus support
 
@@ -46,7 +46,7 @@ njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
 # CardBus network cards
 ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
-ex*	at cardbus? function ?	# 3Com 3C575TX
+ex*	at cardbus? function ?	# 3Com 3c575TX
 fxp*	at cardbus? function ?	# Intel i8255x
 rtk*	at cardbus? function ?	# Realtek 8129/8139
 tlp*	at cardbus? function ?	# DECchip 21143

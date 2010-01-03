@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.955 2009/12/23 01:04:46 pooka Exp $
+# $NetBSD: GENERIC,v 1.956 2010/01/03 03:50:38 dholland Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.955 $"
+#ident 		"GENERIC-$Revision: 1.956 $"
 
 maxusers	64		# estimated number of users
 
@@ -208,7 +208,7 @@ options 	WAPBL		# File system journaling support - Experimental
 # Networking options
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
-options 	INET6		# IPV6
+options 	INET6		# IPv6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
@@ -530,7 +530,7 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # Console Devices
 
 # wscons
-pckbc0		at isa?			# pc keyboard controller
+pckbc0		at isa?			# PC keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
@@ -915,7 +915,7 @@ en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 esh*	at pci? dev ? function ?	# Essential HIPPI card
-ex*	at pci? dev ? function ?	# 3Com 90x[BC]
+ex*	at pci? dev ? function ?	# 3Com 3c90x[BC]
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
@@ -967,7 +967,7 @@ ep*	at isapnp?			# 3Com 3c509 Ethernet
 fmv*	at isapnp?			# Fujitsu FMV-183
 le*	at isapnp?			# AMD PCnet-ISA Ethernet
 ne*	at isapnp?			# NE2000-compatible Ethernet
-tr*	at isapnp?			# IBM/3COM TROPIC Token-Ring
+tr*	at isapnp?			# IBM/3Com TROPIC Token-Ring
 
 # PCMCIA network interfaces
 an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
@@ -981,7 +981,7 @@ ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 # tr at pcmcia has problems with Cardbus bridges
 #tr*	at pcmcia? function ?		# TROPIC based Token-Ring
-wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
+wi*	at pcmcia? function ?		# Lucent/Intersil WaveLAN/IEEE (802.11)
 xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 com*	at xirc?
 xi*	at xirc?
@@ -993,10 +993,10 @@ sm*	at mhzc?
 ate0	at isa? port 0x2a0 irq ?		# AT1700
 cs0	at isa? port 0x300 iomem ? irq ? drq ?	# CS8900 Ethernet
 ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
-eg0	at isa? port 0x280 irq 9		# 3C505 Ethernet cards
-el0	at isa? port 0x300 irq 9		# 3C501 Ethernet cards
-ep*	at isa? port ? irq ?			# 3C509 Ethernet cards
-ef0	at isa? port 0x360 iomem 0xd0000 irq 7	# 3C507
+eg0	at isa? port 0x280 irq 9		# 3c505 Ethernet cards
+el0	at isa? port 0x300 irq 9		# 3c501 Ethernet cards
+ep*	at isa? port ? irq ?			# 3c509 Ethernet cards
+ef0	at isa? port 0x360 iomem 0xd0000 irq 7	# 3c507
 ai0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN
 fmv0	at isa? port 0x2a0 irq ?		# FMV-181/182
 ix0	at isa? port 0x300 irq 10		# EtherExpress/16
@@ -1014,14 +1014,14 @@ ne1	at isa? port 0x300 irq 10
 sm0	at isa? port 0x300 irq 10		# SMC91C9x Ethernet
 tr0	at isa? port 0xa20 iomem 0xd8000 irq ?	# IBM TROPIC based Token-Ring
 tr1	at isa? port 0xa24 iomem 0xd0000 irq ?	# IBM TROPIC based Token-Ring
-tr*	at isa? port ? irq ?			# 3COM TROPIC based Token-Ring
+tr*	at isa? port ? irq ?			# 3Com TROPIC based Token-Ring
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # CardBus network cards
 ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
-ex*	at cardbus? function ?	# 3Com 3C575TX
+ex*	at cardbus? function ?	# 3Com 3c575TX
 fxp*	at cardbus? function ?	# Intel i8255x
 ral*	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at cardbus? function ?	# Realtek 8139C+/8169/8169S/8110S
@@ -1511,8 +1511,8 @@ pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tap			# virtual Ethernet
 pseudo-device	tun			# network tunneling over tty
 pseudo-device	gre			# generic L3 over IP tunnel
-pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC 1933)
+#pseudo-device	faith			# IPv[46] TCP relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging

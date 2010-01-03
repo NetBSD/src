@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.57 2009/12/05 20:11:15 pooka Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.58 2010/01/03 03:50:38 dholland Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -98,7 +98,7 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 # Networking options
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
-options 	INET6		# IPV6
+options 	INET6		# IPv6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
@@ -163,7 +163,7 @@ isa0	at mainbus0
 #npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 # wscons
-pckbc0		at isa?			# pc keyboard controller
+pckbc0		at isa?			# PC keyboard controller
 options 	PCKBCDEBUG
 #pcconskbd*	at pckbc?
 #pms*		at pckbc?		# PS/2 mouse for wsmouse

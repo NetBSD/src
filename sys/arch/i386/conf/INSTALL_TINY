@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.126 2009/12/05 20:11:15 pooka Exp $
+#	$NetBSD: INSTALL_TINY,v 1.127 2010/01/03 03:50:38 dholland Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -233,7 +233,7 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # Console Devices
 
 # wscons
-pckbc0 		at isa?			# pc keyboard controller
+pckbc0 		at isa?			# PC keyboard controller
 pckbd* 		at pckbc?		# PC keyboard
 pcdisplay0 	at isa?			# CGA, MDA, EGA, HGA
 wsdisplay* 	at pcdisplay? console ?
@@ -428,10 +428,10 @@ sm*	at pcmcia? function ?		# Megahertz Ethernet
 # ISA network interfaces
 ate0	at isa? port 0x2a0 irq ?		# AT1700
 ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
-#eg0	at isa? port 0x280 irq 9		# 3C505 ethernet cards
-#el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
-ep0	at isa? port ? irq ?			# 3C509 ethernet cards
-#ef0	at isa? port 0x360 iomem 0xd0000 irq 7	# 3C507
+#eg0	at isa? port 0x280 irq 9		# 3c505 Ethernet cards
+#el0	at isa? port 0x300 irq 9		# 3c501 Ethernet cards
+ep0	at isa? port ? irq ?			# 3c509 Ethernet cards
+#ef0	at isa? port 0x360 iomem 0xd0000 irq 7	# 3c507
 ai0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN
 fmv0	at isa? port 0x2a0 irq ?		# FMV-180 series
 ix0	at isa? port 0x300 irq 10		# EtherExpress/16
@@ -443,7 +443,7 @@ lc0	at isa? port 0x320 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 #le*	at nele?
 #bicc0	at isa? port 0x320 irq 10 drq 7		# BICC IsoLan
 #le*	at bicc?
-ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
+ne0	at isa? port 0x280 irq 9		# NE[12]000 Ethernet cards
 ne1	at isa? port 0x300 irq 10
 sm0	at isa? port 0x300 irq 10		# SMC91C9x Ethernet
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
