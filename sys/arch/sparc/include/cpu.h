@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.88 2010/01/03 12:39:22 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.89 2010/01/03 23:03:21 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -169,7 +169,7 @@ extern struct intrhand {
 	void	*ih_realarg;
 } *intrhand[15];
 
-void	intr_establish(int, int, struct intrhand *, void (*)(void));
+void	intr_establish(int, int, struct intrhand *, void (*)(void), bool);
 void	intr_disestablish(int, struct intrhand *);
 
 void	intr_lock_kernel(void);
