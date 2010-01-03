@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.4 2009/09/09 22:38:49 haad Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.5 2010/01/03 12:53:00 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ dm_pdev_insert(const char *dev_name)
 
 	if (dmp != NULL) {
 		dmp->ref_cnt++;
-		aprint_verbose("dmp_pdev_insert pdev %s already in tree\n",dev_name);
+		aprint_debug("dmp_pdev_insert pdev %s already in tree\n",dev_name);
 		mutex_exit(&dm_pdev_mutex);
 		return dmp;
 	}
@@ -105,7 +105,7 @@ dm_pdev_insert(const char *dev_name)
 
 	error = dk_lookup(dev_name, curlwp, &dmp->pdev_vnode, UIO_SYSSPACE);
 	if (error) {
-		aprint_verbose("dk_lookup on device: %s failed with error %d!\n",
+		aprint_debug("dk_lookup on device: %s failed with error %d!\n",
 		    dev_name, error);
 		kmem_free(dmp, sizeof(dm_pdev_t));
 		return NULL;
