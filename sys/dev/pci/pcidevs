@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1006 2009/12/29 15:52:18 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1007 2010/01/03 04:26:26 jnemeth Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2789,6 +2789,7 @@ product INVERTEX AEON		0x0005	AEON
 product IODATA CBIDE2		0x0003	CBIDE2/CI-iCN NinjaATA-32Bi IDE
 product IODATA CBSCII		0x0005	CBSCII NinjaSCSI-32Bi SCSI
 product IODATA RSAPCI		0x0007	RSA-PCI 2-port Serial
+product IODATA GVBCTV5DL	0xd012	GV-BCTV5DL/PCI TV tuner
 
 /* ITE products */
 product ITE IT8152		0x8152	IT8152 Host Bridge
