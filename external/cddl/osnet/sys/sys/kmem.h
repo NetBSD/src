@@ -1,5 +1,5 @@
 
-/*	$NetBSD: kmem.h,v 1.1 2009/08/07 20:57:57 haad Exp $	*/
+/*	$NetBSD: kmem.h,v 1.2 2010/01/03 10:50:06 ober Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ kmem_cache_create(char *name, size_t bufsize, size_t align,
 #define	kmem_cache_free(cache, buf)		pool_cache_put(cache, buf)
 #define	kmem_cache_reap_now(cache)		pool_cache_invalidate(cache)
 
-#define	KM_PUSHPAGE	0x00	/* XXXNETBSD */
+#define	KM_PUSHPAGE	KM_SLEEP	/* XXXNETBSD XXX to prevent the crashes currently seen.*/
 #define	KMC_NODEBUG	0x00
 
 #endif	/* _OPENSOLARIS_SYS_KMEM_H_ */
