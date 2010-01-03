@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.63 2009/12/03 21:04:29 cegger Exp $
+#	$NetBSD: files.acpi,v 1.64 2010/01/03 17:53:15 jruoho Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -9,6 +9,7 @@ defparam opt_acpi.h	ACPI_DSDT_FILE := "\"/dev/null\""
 define	acpiapmbus { }
 define	acpinodebus { }
 define	acpiecdtbus { }
+define	acpiwmibus { }
 
 device	acpi: acpica, acpiapmbus, acpinodebus, acpiecdtbus, sysmon_power, sysmon_taskq
 attach	acpi at acpibus
@@ -150,6 +151,6 @@ attach	wb at acpinodebus with wb_acpi
 file	dev/acpi/wb_acpi.c		wb_acpi
 
 # ACPI-WMI Mapper
-device	acpiwmi
+device	acpiwmi: acpiwmibus
 attach	acpiwmi at acpinodebus
 file	dev/acpi/wmi_acpi.c		acpiwmi

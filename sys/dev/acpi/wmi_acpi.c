@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.3 2009/11/29 21:32:50 cegger Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.4 2010/01/03 17:53:15 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.3 2009/11/29 21:32:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.4 2010/01/03 17:53:15 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.3 2009/11/29 21:32:50 cegger Exp $");
 
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/wmi_acpivar.h>
+
 /*
  * This implements something called "Microsoft Windows Management
  * Instrumentation" (WMI). This subset of ACPI is desribed in:
@@ -45,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.3 2009/11/29 21:32:50 cegger Exp $");
  * (Obtained on Thu Feb 12 18:21:44 EET 2009.)
  */
 struct guid_t {
+
 	/*
 	 * The GUID itself. The used format is the usual 32-16-16-64-bit
 	 * representation. All except the fourth field are in native byte
@@ -73,21 +75,20 @@ struct guid_t {
 } __packed;
 
 struct wmi_t {
-	struct guid_t       guid;
-	ACPI_HANDLE         handle;
-	bool                eevent;
+	struct guid_t         guid;
+	bool                  eevent;
 
-	SIMPLEQ_ENTRY(wmi_t) wmi_link;
+	SIMPLEQ_ENTRY(wmi_t)  wmi_link;
 };
 
 struct acpi_wmi_softc {
 	device_t	      sc_dev;
+	device_t              sc_child;
+        ACPI_NOTIFY_HANDLER   sc_handler;
 	struct acpi_devnode  *sc_node;
-	struct wmi_t         *sc_wmi;
-};
 
-static SIMPLEQ_HEAD(, wmi_t) wmi_head =
-	SIMPLEQ_HEAD_INITIALIZER(wmi_head);
+	SIMPLEQ_HEAD(, wmi_t) wmi_head;
+};
 
 #define ACPI_WMI_FLAG_EXPENSIVE 0x01
 #define ACPI_WMI_FLAG_METHOD    0x02
@@ -111,15 +112,17 @@ static SIMPLEQ_HEAD(, wmi_t) wmi_head =
 
 static int         acpi_wmi_match(device_t, cfdata_t, void *);
 static void        acpi_wmi_attach(device_t, device_t, void *);
-static bool        acpi_wmi_init(ACPI_HANDLE, const char * const);
-static bool        acpi_wmi_add(ACPI_OBJECT *, ACPI_HANDLE);
-static void        acpi_wmi_del(void);
+static int         acpi_wmi_print(void *, const char *);
+static bool        acpi_wmi_init(struct acpi_wmi_softc *);
+static bool        acpi_wmi_add(struct acpi_wmi_softc *, ACPI_OBJECT *);
+static void        acpi_wmi_del(struct acpi_wmi_softc *);
 
 #ifdef ACPIVERBOSE
-static void        acpi_wmi_dump(const char * const);
+static void        acpi_wmi_dump(struct acpi_wmi_softc *);
 #endif
 
-static ACPI_STATUS acpi_wmi_guid_get(const u_char * const, struct wmi_t **);
+static ACPI_STATUS acpi_wmi_guid_get(struct acpi_wmi_softc *,
+                       const u_char * const, struct wmi_t **);
 static void        acpi_wmi_event_add(struct acpi_wmi_softc *);
 static void        acpi_wmi_event_del(struct acpi_wmi_softc *);
 static void        acpi_wmi_event_handler(ACPI_HANDLE, uint32_t, void *);
@@ -127,8 +130,6 @@ static bool        acpi_wmi_suspend(device_t PMF_FN_PROTO);
 static bool        acpi_wmi_resume(device_t PMF_FN_PROTO);
 static ACPI_STATUS acpi_wmi_enable(const ACPI_HANDLE, const char * const,
                                    const bool, const bool);
-
-static ACPI_NOTIFY_HANDLER wmi_handler;
 
 const char * const acpi_wmi_ids[] = {
 	"PNP0C14",
@@ -154,44 +155,51 @@ acpi_wmi_attach(device_t parent, device_t self, void *aux)
 {
 	struct acpi_wmi_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
-	const char *xname;
 
 	sc->sc_dev = self;
 	sc->sc_node = aa->aa_node;
+	sc->sc_handler = NULL;
 
 	aprint_naive("\n");
 	aprint_normal(": ACPI WMI Interface\n");
 
-	wmi_handler = NULL;
-	xname = device_xname(sc->sc_dev);
-
-	if (acpi_wmi_init(sc->sc_node->ad_handle, xname) != true)
+	if (acpi_wmi_init(sc) != true)
 		return;
 
 #ifdef ACPIVERBOSE
-	acpi_wmi_dump(xname);
+	acpi_wmi_dump(sc);
 #endif
-	/*
-	 * Add internal event handler. If the user-driver
-	 * registers an external event handler with us, we
-	 * will forward events through this.
-	 */
+
 	acpi_wmi_event_add(sc);
 
 	if (pmf_device_register(sc->sc_dev,
 		acpi_wmi_suspend, acpi_wmi_resume) != true)
 		aprint_error_dev(self, "failed to register power handler\n");
+
+	/* Attach a child device to the pseudo-bus. */
+	sc->sc_child = config_found_ia(self, "acpiwmibus",
+	    NULL, acpi_wmi_print);
+}
+
+static int
+acpi_wmi_print(void *aux, const char *pnp)
+{
+
+	if (pnp != NULL)
+		aprint_normal("acpiwmibus at %s", pnp);
+
+	return UNCONF;
 }
 
 static bool
-acpi_wmi_init(ACPI_HANDLE hdl, const char * const xname)
+acpi_wmi_init(struct acpi_wmi_softc *sc)
 {
 	ACPI_OBJECT *obj;
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
 	uint32_t len;
 
-	rv = acpi_eval_struct(hdl, "_WDG", &buf);
+	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_WDG", &buf);
 
 	if (ACPI_FAILURE(rv))
 		goto fail;
@@ -214,11 +222,11 @@ acpi_wmi_init(ACPI_HANDLE hdl, const char * const xname)
 		goto fail;
 	}
 
-	return acpi_wmi_add(obj, hdl);
+	return acpi_wmi_add(sc, obj);
 
 fail:
-	aprint_error("%s: failed to evaluate _WDG: %s\n",
-	    xname, AcpiFormatException(rv));
+	aprint_error_dev(sc->sc_dev, "failed to evaluate _WDG: %s\n",
+	    AcpiFormatException(rv));
 
 	if (buf.Pointer != NULL)
 		AcpiOsFree(buf.Pointer);
@@ -227,13 +235,15 @@ fail:
 }
 
 static bool
-acpi_wmi_add(ACPI_OBJECT *obj, ACPI_HANDLE hdl)
+acpi_wmi_add(struct acpi_wmi_softc *sc, ACPI_OBJECT *obj)
 {
 	struct wmi_t *wmi;
 	size_t i, n, offset, siz;
 
 	siz = sizeof(struct guid_t);
 	n = obj->Buffer.Length / siz;
+
+	SIMPLEQ_INIT(&sc->wmi_head);
 
 	for (i = offset = 0; i < n; ++i) {
 
@@ -242,12 +252,10 @@ acpi_wmi_add(ACPI_OBJECT *obj, ACPI_HANDLE hdl)
 
 		ACPI_MEMCPY(&wmi->guid, obj->Buffer.Pointer + offset, siz);
 
-		wmi->handle = hdl;
 		wmi->eevent = false;
-
 		offset = offset + siz;
 
-		SIMPLEQ_INSERT_TAIL(&wmi_head, wmi, wmi_link);
+		SIMPLEQ_INSERT_TAIL(&sc->wmi_head, wmi, wmi_link);
 	}
 
 	AcpiOsFree(obj);
@@ -256,23 +264,23 @@ acpi_wmi_add(ACPI_OBJECT *obj, ACPI_HANDLE hdl)
 
 fail:
 	AcpiOsFree(obj);
-	acpi_wmi_del();
+	acpi_wmi_del(sc);
 
 	return false;
 }
 
 static void
-acpi_wmi_del(void)
+acpi_wmi_del(struct acpi_wmi_softc *sc)
 {
 	struct wmi_t *wmi;
 
-	if (SIMPLEQ_EMPTY(&wmi_head))
+	if (SIMPLEQ_EMPTY(&sc->wmi_head))
 		return;
 
-	while (SIMPLEQ_FIRST(&wmi_head) != NULL) {
+	while (SIMPLEQ_FIRST(&sc->wmi_head) != NULL) {
 
-		wmi = SIMPLEQ_FIRST(&wmi_head);
-		SIMPLEQ_REMOVE_HEAD(&wmi_head, wmi_link);
+		wmi = SIMPLEQ_FIRST(&sc->wmi_head);
+		SIMPLEQ_REMOVE_HEAD(&sc->wmi_head, wmi_link);
 
 		KASSERT(wmi != NULL);
 
@@ -282,15 +290,15 @@ acpi_wmi_del(void)
 
 #ifdef ACPIVERBOSE
 static void
-acpi_wmi_dump(const char * const xname)
+acpi_wmi_dump(struct acpi_wmi_softc *sc)
 {
 	struct wmi_t *wmi;
 
-	KASSERT(!(SIMPLEQ_EMPTY(&wmi_head)));
+	KASSERT(!(SIMPLEQ_EMPTY(&sc->wmi_head)));
 
-	SIMPLEQ_FOREACH(wmi, &wmi_head, wmi_link) {
+	SIMPLEQ_FOREACH(wmi, &sc->wmi_head, wmi_link) {
 
-		aprint_normal("%s: {%08X-%04X-%04X-", xname,
+		aprint_normal_dev(sc->sc_dev, "{%08X-%04X-%04X-",
 		    wmi->guid.data1, wmi->guid.data2, wmi->guid.data3);
 
 		aprint_normal("%02X%02X-%02X%02X%02X%02X%02X%02X} ",
@@ -306,7 +314,8 @@ acpi_wmi_dump(const char * const xname)
 #endif
 
 static ACPI_STATUS
-acpi_wmi_guid_get(const u_char * const src, struct wmi_t **out)
+acpi_wmi_guid_get(struct acpi_wmi_softc *sc,
+    const u_char * const src, struct wmi_t **out)
 {
 	struct wmi_t *wmi;
 	struct guid_t *guid;
@@ -315,7 +324,7 @@ acpi_wmi_guid_get(const u_char * const src, struct wmi_t **out)
 	const char *ptr;
 	uint8_t i;
 
-	if (ACPI_STRLEN(src) != 36)
+	if (sc == NULL || src == NULL || ACPI_STRLEN(src) != 36)
 		return AE_BAD_PARAMETER;
 
 	for (ptr = src, i = 0; i < 16; i++) {
@@ -339,7 +348,7 @@ acpi_wmi_guid_get(const u_char * const src, struct wmi_t **out)
 	guid->data2 = be16toh(guid->data2);
 	guid->data3 = be16toh(guid->data3);
 
-	SIMPLEQ_FOREACH(wmi, &wmi_head, wmi_link) {
+	SIMPLEQ_FOREACH(wmi, &sc->wmi_head, wmi_link) {
 
 		if (GUIDCMP(guid, &wmi->guid)) {
 
@@ -352,25 +361,22 @@ acpi_wmi_guid_get(const u_char * const src, struct wmi_t **out)
 
 	return AE_NOT_FOUND;
 }
+
 /*
- * Checks if a GUID is present. Drivers can
- * use this in their autoconf(9) routines.
+ * Checks if a GUID is present. Child devices
+ * can use this in their autoconf(9) routines.
  */
 int
-acpi_wmi_guid_match(const u_char const * guid)
+acpi_wmi_guid_match(device_t self, const u_char const * guid)
 {
-	ACPI_STATUS rv;
+	struct acpi_wmi_softc *sc = device_private(self);
 
-	if (guid == NULL)
-		return 0;
-
-	rv = acpi_wmi_guid_get(guid, NULL);
-
-	if (ACPI_SUCCESS(rv))
+	if (ACPI_SUCCESS(acpi_wmi_guid_get(sc, guid, NULL)))
 		return 1;
 
 	return 0;
 }
+
 /*
  * Adds internal event handler.
  */
@@ -390,12 +396,12 @@ acpi_wmi_event_add(struct acpi_wmi_softc *sc)
 	}
 
 	/* Enable possible expensive events. */
-	SIMPLEQ_FOREACH(wmi, &wmi_head, wmi_link) {
+	SIMPLEQ_FOREACH(wmi, &sc->wmi_head, wmi_link) {
 
 		if ((wmi->guid.flags & ACPI_WMI_FLAG_EVENT) &&
 		    (wmi->guid.flags & ACPI_WMI_FLAG_EXPENSIVE)) {
 
-			rv = acpi_wmi_enable(wmi->handle,
+			rv = acpi_wmi_enable(sc->sc_node->ad_handle,
 			    wmi->guid.oid, false, true);
 
 			if (ACPI_SUCCESS(rv)) {
@@ -408,6 +414,7 @@ acpi_wmi_event_add(struct acpi_wmi_softc *sc)
 		}
 	}
 }
+
 /*
  * Removes the internal event handler.
  */
@@ -426,7 +433,7 @@ acpi_wmi_event_del(struct acpi_wmi_softc *sc)
 		return;
 	}
 
-	SIMPLEQ_FOREACH(wmi, &wmi_head, wmi_link) {
+	SIMPLEQ_FOREACH(wmi, &sc->wmi_head, wmi_link) {
 
 		if (wmi->eevent != true)
 			continue;
@@ -434,7 +441,8 @@ acpi_wmi_event_del(struct acpi_wmi_softc *sc)
 		KASSERT(wmi->guid.flags & ACPI_WMI_FLAG_EVENT);
 		KASSERT(wmi->guid.flags & ACPI_WMI_FLAG_EXPENSIVE);
 
-		rv = acpi_wmi_enable(wmi->handle, wmi->guid.oid, false, false);
+		rv = acpi_wmi_enable(sc->sc_node->ad_handle,
+		    wmi->guid.oid, false, false);
 
 		if (ACPI_SUCCESS(rv)) {
 			wmi->eevent = false;
@@ -445,19 +453,22 @@ acpi_wmi_event_del(struct acpi_wmi_softc *sc)
 		    "expensive WExx: %s\n", AcpiFormatException(rv));
 	}
 }
+
 /*
  * Returns extra information possibly associated with an event.
  */
 ACPI_STATUS
-acpi_wmi_event_get(const uint32_t event, ACPI_BUFFER *obuf)
+acpi_wmi_event_get(device_t self, const uint32_t event, ACPI_BUFFER *obuf)
 {
+	struct acpi_wmi_softc *sc = device_private(self);
 	struct wmi_t *wmi;
 	ACPI_OBJECT_LIST arg;
 	ACPI_OBJECT obj;
 
-	if (obuf == NULL)
+	if (sc == NULL || obuf == NULL)
 		return AE_BAD_PARAMETER;
-	if (wmi_handler == NULL)
+
+	if (sc->sc_handler == NULL)
 		return AE_ABORT_METHOD;
 
 	obj.Type = ACPI_TYPE_INTEGER;
@@ -466,7 +477,7 @@ acpi_wmi_event_get(const uint32_t event, ACPI_BUFFER *obuf)
 	arg.Count = 0x01;
 	arg.Pointer = &obj;
 
-	SIMPLEQ_FOREACH(wmi, &wmi_head, wmi_link) {
+	SIMPLEQ_FOREACH(wmi, &sc->wmi_head, wmi_link) {
 
 		if (!(wmi->guid.flags & ACPI_WMI_FLAG_EVENT))
 			continue;
@@ -474,42 +485,47 @@ acpi_wmi_event_get(const uint32_t event, ACPI_BUFFER *obuf)
 		if (wmi->guid.nid != event)
 			continue;
 
-		return AcpiEvaluateObject(wmi->handle, "_WED", &arg, obuf);
+		return AcpiEvaluateObject(sc->sc_node->ad_handle, "_WED",
+		    &arg, obuf);
 	}
 
 	return AE_NOT_FOUND;
 }
 
+/*
+ * Forwards events to the external handler through the internal one.
+ */
 static void
 acpi_wmi_event_handler(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 {
 	device_t self = aux;
 	struct acpi_wmi_softc *sc = device_private(self);
-	/*
-	 * No external handler, nothing to do.
-	 */
-	if (wmi_handler == NULL)
+
+	if (sc->sc_handler == NULL)
 		return;
-	/*
-	 * The third parameter is "reserved"; it could be
-	 * used e.g. to pass the _WED-buffer on each event.
-	 */
-	(*wmi_handler)(sc->sc_node->ad_handle, evt, NULL);
+
+	(*sc->sc_handler)(NULL, evt, sc->sc_child);
 }
+
 /*
  * Adds or removes (NULL) the external event handler.
  */
 ACPI_STATUS
-acpi_wmi_event_register(ACPI_NOTIFY_HANDLER handler)
+acpi_wmi_event_register(device_t self, ACPI_NOTIFY_HANDLER handler)
 {
+	struct acpi_wmi_softc *sc = device_private(self);
 
-	if (handler != NULL && wmi_handler != NULL)
+	if (sc == NULL)
+		return AE_BAD_PARAMETER;
+
+	if (handler != NULL && sc->sc_handler != NULL)
 		return AE_ALREADY_EXISTS;
 
-	wmi_handler = handler;
+	sc->sc_handler = handler;
 
 	return AE_OK;
 }
+
 /*
  * As there is no prior knowledge about the expensive
  * events that cause "significant overhead", try to
@@ -534,6 +550,7 @@ acpi_wmi_resume(device_t self PMF_FN_ARGS)
 
 	return true;
 }
+
 /*
  * Enables or disables data collection (WCxx) or an event (WExx).
  */
@@ -551,21 +568,24 @@ acpi_wmi_enable(const ACPI_HANDLE hdl, const char * const oid,
 
 	return acpi_eval_set_integer(hdl, path, (flag != false) ? 0x01 : 0x00);
 }
+
 /*
  * Makes a WMI data block query (WQxx). The corresponding control
  * method for data collection will be invoked if it is available.
  */
 ACPI_STATUS
-acpi_wmi_data_query(const u_char * const guid, ACPI_BUFFER *obuf)
+acpi_wmi_data_query(device_t self, const u_char * const guid,
+    ACPI_BUFFER *obuf)
 {
+	struct acpi_wmi_softc *sc = device_private(self);
 	struct wmi_t *wmi;
 	char path[5] = "WQ";
 	ACPI_STATUS rva, rvb;
 
-	if (guid == NULL || obuf == NULL)
+	if (obuf == NULL)
 		return AE_BAD_PARAMETER;
 
-	rva = acpi_wmi_guid_get(guid, &wmi);
+	rva = acpi_wmi_guid_get(sc, guid, &wmi);
 
 	if (ACPI_FAILURE(rva))
 		return rva;
@@ -579,18 +599,25 @@ acpi_wmi_data_query(const u_char * const guid, ACPI_BUFFER *obuf)
 		return AE_BAD_VALUE;
 
 	(void)strlcat(path, wmi->guid.oid, sizeof(path));
+
 	/*
 	 * If the expensive flag is set, we should enable
 	 * data collection before evaluating the WQxx buffer.
 	 */
-	if (wmi->guid.flags & ACPI_WMI_FLAG_EXPENSIVE)
-		rvb = acpi_wmi_enable(wmi->handle, wmi->guid.oid, true, true);
+	if (wmi->guid.flags & ACPI_WMI_FLAG_EXPENSIVE) {
 
-	rva = acpi_eval_struct(wmi->handle, path, obuf);
+		rvb = acpi_wmi_enable(sc->sc_node->ad_handle,
+		    wmi->guid.oid, true, true);
+	}
+
+	rva = acpi_eval_struct(sc->sc_node->ad_handle, path, obuf);
 
 	/* No longer needed. */
-	if (ACPI_SUCCESS(rvb))
-		(void)acpi_wmi_enable(wmi->handle, wmi->guid.oid, true, false);
+	if (ACPI_SUCCESS(rvb)) {
+
+		(void)acpi_wmi_enable(sc->sc_node->ad_handle,
+		    wmi->guid.oid, true, false);
+	}
 
 #ifdef DIAGNOSTIC
 	/*
@@ -601,28 +628,30 @@ acpi_wmi_data_query(const u_char * const guid, ACPI_BUFFER *obuf)
 	 * -- Acer Aspire One is one example <jruohonen@iki.fi>.
 	 */
 	if (ACPI_FAILURE(rvb) && rvb != AE_SUPPORT)
-		aprint_error("acpiwmi0: failed to evaluate WCxx "
+		aprint_error_dev(sc->sc_dev, "failed to evaluate WCxx "
 		    "for %s: %s\n", path, AcpiFormatException(rvb));
 #endif
 	return rva;
 }
+
 /*
  * Writes to a data block (WSxx).
  */
 ACPI_STATUS
-acpi_wmi_data_write(const u_char * const guid,
+acpi_wmi_data_write(device_t self, const u_char * const guid,
     const uint8_t idx, ACPI_BUFFER *ibuf)
 {
+	struct acpi_wmi_softc *sc = device_private(self);
 	struct wmi_t *wmi;
 	ACPI_OBJECT_LIST arg;
 	ACPI_OBJECT obj[2];
 	char path[5] = "WS";
 	ACPI_STATUS rv;
 
-	if (guid == NULL || ibuf == NULL)
+	if (ibuf == NULL)
 		return AE_BAD_PARAMETER;
 
-	rv = acpi_wmi_guid_get(guid, &wmi);
+	rv = acpi_wmi_guid_get(sc, guid, &wmi);
 
 	if (ACPI_FAILURE(rv))
 		return rv;
@@ -650,25 +679,27 @@ acpi_wmi_data_write(const u_char * const guid,
 	arg.Count = 0x02;
 	arg.Pointer = obj;
 
-	return AcpiEvaluateObject(wmi->handle, path, &arg, NULL);
+	return AcpiEvaluateObject(sc->sc_node->ad_handle, path, &arg, NULL);
 }
+
 /*
  * Executes a method (WMxx).
  */
 ACPI_STATUS
-acpi_wmi_method(const u_char * const guid, const uint8_t idx,
+acpi_wmi_method(device_t self, const u_char * const guid, const uint8_t idx,
     const uint32_t mid, ACPI_BUFFER *ibuf, ACPI_BUFFER *obuf)
 {
+	struct acpi_wmi_softc *sc = device_private(self);
 	struct wmi_t *wmi;
 	ACPI_OBJECT_LIST arg;
 	ACPI_OBJECT obj[3];
 	char path[5] = "WM";
 	ACPI_STATUS rv;
 
-	if (guid == NULL || ibuf == NULL || obuf == NULL)
+	if (ibuf == NULL || obuf == NULL)
 		return AE_BAD_PARAMETER;
 
-	rv = acpi_wmi_guid_get(guid, &wmi);
+	rv = acpi_wmi_guid_get(sc, guid, &wmi);
 
 	if (ACPI_FAILURE(rv))
 		return rv;
@@ -700,5 +731,5 @@ acpi_wmi_method(const u_char * const guid, const uint8_t idx,
 	obuf->Pointer = NULL;
 	obuf->Length = ACPI_ALLOCATE_BUFFER;
 
-	return AcpiEvaluateObject(wmi->handle, path, &arg, obuf);
+	return AcpiEvaluateObject(sc->sc_node->ad_handle, path, &arg, obuf);
 }

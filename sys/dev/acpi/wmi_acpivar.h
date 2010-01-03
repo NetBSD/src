@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpivar.h,v 1.2 2009/10/03 15:49:21 jmcneill Exp $	*/
+/*	$NetBSD: wmi_acpivar.h,v 1.3 2010/01/03 17:53:15 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009 Jukka Ruohonen <jruohonen@iki.fi>
@@ -30,15 +30,15 @@
 #define WMI_ACPIVAR_H
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpivar.h,v 1.2 2009/10/03 15:49:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpivar.h,v 1.3 2010/01/03 17:53:15 jruoho Exp $");
 
-ACPI_STATUS acpi_wmi_event_register(ACPI_NOTIFY_HANDLER);
-ACPI_STATUS acpi_wmi_event_get(const uint32_t, ACPI_BUFFER *);
-int         acpi_wmi_guid_match(const u_char const *);
-ACPI_STATUS acpi_wmi_data_query(const u_char * const, ACPI_BUFFER *);
-ACPI_STATUS acpi_wmi_data_write(const u_char * const, const uint8_t,
+ACPI_STATUS acpi_wmi_event_register(device_t, ACPI_NOTIFY_HANDLER);
+ACPI_STATUS acpi_wmi_event_get(device_t, const uint32_t, ACPI_BUFFER *);
+int         acpi_wmi_guid_match(device_t, const u_char const *);
+ACPI_STATUS acpi_wmi_data_query(device_t, const u_char * const, ACPI_BUFFER *);
+ACPI_STATUS acpi_wmi_data_write(device_t, const u_char * const, const uint8_t,
                                 ACPI_BUFFER *);
-ACPI_STATUS acpi_wmi_method(const u_char * const, const uint8_t,
+ACPI_STATUS acpi_wmi_method(device_t, const u_char * const, const uint8_t,
                             const uint32_t, ACPI_BUFFER *, ACPI_BUFFER *);
 
 #endif	/* WMI_ACPIVAR_H */
