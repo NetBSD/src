@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.h,v 1.3 2009/12/31 18:32:37 christos Exp $	*/
+/*	$NetBSD: chartype.h,v 1.4 2010/01/03 18:27:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #define Char			wchar_t
 #define Int			wint_t
 #define FUN(prefix,rest)	prefix ## _w ## rest
-#define FUNW(type)		type ## w
+#define FUNW(type)		type ## _w
 #define TYPE(type)		type ## W
 #define FSTR			"%ls"
 #define STR(x) 			L ## x
