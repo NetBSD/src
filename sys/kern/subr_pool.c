@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.179 2010/01/02 15:20:39 mlelstv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.180 2010/01/03 01:07:19 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.179 2010/01/02 15:20:39 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.180 2010/01/03 01:07:19 mlelstv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -666,7 +666,8 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 			palloc = &pool_allocator_nointr_fullpage;
 	}		
 #endif /* POOL_SUBPAGE */
-	mutex_enter(&pool_allocator_lock);
+	if (!cold)
+		mutex_enter(&pool_allocator_lock);
 	if (palloc->pa_refcnt++ == 0) {
 		if (palloc->pa_pagesz == 0)
 			palloc->pa_pagesz = PAGE_SIZE;
@@ -681,7 +682,8 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 			pa_reclaim_register(palloc);
 		}
 	}
-	mutex_exit(&pool_allocator_lock);
+	if (!cold)
+		mutex_exit(&pool_allocator_lock);
 
 	if (align == 0)
 		align = ALIGN(1);
