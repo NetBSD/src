@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm67.S,v 1.3 2007/10/17 19:53:29 garbled Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm67.S,v 1.4 2010/01/03 04:25:16 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -83,7 +83,7 @@ ENTRY(arm67_cache_flush)
 /*
  * Context switch.
  *
- * These is the CPU-specific parts of the context switcher cpu_switch()
+ * These are the CPU-specific parts of the context switcher cpu_switch()
  * These functions actually perform the TTB reload.
  */
 ENTRY(arm67_context_switch)
