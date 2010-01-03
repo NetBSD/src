@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1004 2009/12/29 15:52:48 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1005 2010/01/03 04:27:20 jnemeth Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1006 2009/12/29 15:52:18 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1007 2010/01/03 04:26:26 jnemeth Exp
  */
 
 /*
@@ -2796,6 +2796,7 @@
 #define	PCI_PRODUCT_IODATA_CBIDE2	0x0003		/* CBIDE2/CI-iCN NinjaATA-32Bi IDE */
 #define	PCI_PRODUCT_IODATA_CBSCII	0x0005		/* CBSCII NinjaSCSI-32Bi SCSI */
 #define	PCI_PRODUCT_IODATA_RSAPCI	0x0007		/* RSA-PCI 2-port Serial */
+#define	PCI_PRODUCT_IODATA_GVBCTV5DL	0xd012		/* GV-BCTV5DL/PCI TV tuner */
 
 /* ITE products */
 #define	PCI_PRODUCT_ITE_IT8152	0x8152		/* IT8152 Host Bridge */
