@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.29 2009/11/14 03:43:52 nakayama Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.30 2010/01/03 17:02:03 jdc Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.29 2009/11/14 03:43:52 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.30 2010/01/03 17:02:03 jdc Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,6 +63,7 @@ CFATTACH_DECL_NEW(com_ebus, sizeof(struct com_softc),
 static const char *com_names[] = {
 	"su",
 	"su_pnp",
+	"rsc-console",
 	NULL
 };
 
@@ -151,7 +152,10 @@ com_ebus_attach(device_t parent, device_t self, void *aux)
 		struct consdev *cn_orig;
 
 		/* Record some info to attach console. */
-		kma.kmta_baud = 9600;
+		if (strcmp(ea->ea_name, "rsc-console") == 0)
+			kma.kmta_baud = 115200;
+		else
+			kma.kmta_baud = 9600;
 		kma.kmta_cflag = (CREAD | CS8 | HUPCL);
 
 		/* Attach com as the console. */
