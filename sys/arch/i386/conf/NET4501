@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.69 2009/12/05 20:11:15 pooka Exp $
+# $NetBSD: NET4501,v 1.70 2010/01/03 03:50:38 dholland Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.69 $"
+#ident 		"NET4501-$Revision: 1.70 $"
 
 maxusers	32		# estimated number of users
 
@@ -133,7 +133,7 @@ file-system 	PTYFS		# /dev/pts/N support
 # Networking options
 options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
-options 	INET6		# IPV6
+options 	INET6		# IPv6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
@@ -258,7 +258,7 @@ hifn*	at pci? dev ? function ?	# Hifn 7755/7811/795x
 
 # PCMCIA network interfaces
 awi*	at pcmcia? function ?
-wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
+wi*	at pcmcia? function ?		# Lucent/Intersil WaveLAN/IEEE (802.11)
 
 # MII/PHY support
 nsphyter* at mii? phy ?			# NS83843 PHYs
@@ -278,8 +278,8 @@ pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
 pseudo-device	gre			# generic L3 over IP tunnel
-pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
-pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC 1933)
+pseudo-device	faith			# IPv[46] TCP relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
