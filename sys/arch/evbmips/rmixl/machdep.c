@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.11 2009/12/31 00:54:09 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.12 2010/01/03 08:37:14 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.11 2009/12/31 00:54:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.12 2010/01/03 08:37:14 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -246,7 +246,7 @@ void configure(void);
 void mach_init(int, int32_t *, void *, int64_t);
 static u_long rmixlfw_init(int64_t);
 static u_long mem_clusters_init(rmixlfw_mmap_t *, rmixlfw_mmap_t *);
-static void __attribute__((__noreturn__)) rmixl_exit(int);
+static void __attribute__((__noreturn__)) rmixl_reset(void);
 static void rmixl_physaddr_init(void);
 static u_int ram_seg_resv(phys_ram_seg_t *, u_int, u_quad_t, u_quad_t);
 void rmixlfw_mmap_print(rmixlfw_mmap_t *);
@@ -374,7 +374,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	/* reserve reset exception vector page */
 	/* should never be in our clusters anyway... */
 	vm_cluster_cnt = ram_seg_resv(vm_clusters, vm_cluster_cnt,
-		MIPS_RESET_EXC_VEC, MIPS_RESET_EXC_VEC+NBPG);
+		0x1FC00000, 0x1FC00000+NBPG);
 
 	/*
 	 * Load vm_clusters[] into the VM system.
@@ -870,23 +870,21 @@ haltsys:
 
 	printf("rebooting...\n\n");
 
-	rmixl_exit(0);
+	rmixl_reset();
 }
 
 /*
  * goodbye world
  */
-#define GPIO_CPU_RST 0xa0			/* XXX TMP */
 void __attribute__((__noreturn__))
-rmixl_exit(int howto)
+rmixl_reset(void)
 {
-	/* use firmware callbak to reboot */
-	void (*reset)(void) = (void *)(intptr_t)rmixlfw_info.warm_reset;
-	if (reset != 0) {
-		(*reset)();
-		printf("warm reset callback failed, spinning...\n");
-	} else {
-		printf("warm reset callback absent, spinning...\n");
-	}
+	uint32_t r;
+
+	r = RMIXL_IOREG_READ(RMIXL_IO_DEV_GPIO + RMIXL_GPIO_RESET);
+	r |= RMIXL_GPIO_RESET_RESET;
+	RMIXL_IOREG_WRITE(RMIXL_IO_DEV_GPIO + RMIXL_GPIO_RESET, r);
+
+	printf("soft reset failed, spinning...\n");
 	for (;;);
 }
