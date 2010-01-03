@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.25 2010/01/03 03:50:38 dholland Exp $
+#	$NetBSD: XEN3_DOM0,v 1.26 2010/01/03 03:53:34 dholland Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -30,14 +30,14 @@ makeoptions 	CPUFLAGS="-march=i686"
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
 # Enhanced SpeedStep Technology in the Pentium M
-options		ENHANCED_SPEEDSTEP
-#options	EST_FREQ_USERWRITE	# any user can set frequency
+options 	ENHANCED_SPEEDSTEP
+#options 	EST_FREQ_USERWRITE	# any user can set frequency
 
 # AMD PowerNow! K7
-options		POWERNOW_K7
+options 	POWERNOW_K7
 
 # AMD PowerNow! and Cool`n'Quiet technology
-options		POWERNOW_K8
+options 	POWERNOW_K8
 
 #options 	MTRR		# memory-type range register syscall support
 
@@ -90,7 +90,7 @@ options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
-options		COMPAT_50	# NetBSD 5.0
+options 	COMPAT_50	# NetBSD 5.0
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -130,7 +130,7 @@ file-system 	TMPFS		# Efficient memory file-system
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options		WAPBL		# File system journaling support - Experimental
+options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -212,7 +212,7 @@ ipmi0		at mainbus?
 hypervisor*	at mainbus?		# Xen hypervisor
 
 vcpu*		at hypervisor?		# Xen virtual CPUs
-xenbus*		at hypervisor?		# Xen virtual bus
+xenbus* 	at hypervisor?		# Xen virtual bus
 npx0		at hypervisor?		# x86 math coprocessor
 
 xencons*	at hypervisor?		# Xen virtual console
@@ -285,7 +285,7 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #lm0	at isa?	port 0x290		# other common: 0x280, 0x310, 0xc00
 
 # VIA VT82C686A/VT8231 Hardware Monitor and Power Management TImer
-#viaenv*	at pci? dev ? function ?
+#viaenv* 	at pci? dev ? function ?
 
 
 # PCI network interfaces
@@ -392,8 +392,8 @@ cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
-ixpide*		at pci? dev ? function ?	# ATI IXP IDE controllers
-jmide* 		at pci? dev ? function ? 	# JMicron PCI-e PATA/SATA controllers
+ixpide* 	at pci? dev ? function ?	# ATI IXP IDE controllers
+jmide*		at pci? dev ? function ? 	# JMicron PCI-e PATA/SATA controllers
 ahcisata* 	at jmide?
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
@@ -472,7 +472,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 # RAID controllers and devices
 aac*	at pci? dev ? function ?	# Adaptec AAC family
 amr*	at pci? dev ? function ?	# AMI/LSI Logic MegaRAID
-arcmsr*	at pci? dev ? function ?	# Areca SATA RAID controllers
+arcmsr* at pci? dev ? function ?	# Areca SATA RAID controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
 ciss*	at pci? dev ? function ?	# HP Smart Array controllers
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
@@ -537,7 +537,7 @@ ukbd*   at uhidev? reportid ?
 wskbd*  at ukbd? console ? mux 1
 
 # USB serial adapter
-ucycom*	at uhidev? reportid ?
+ucycom* at uhidev? reportid ?
 
 # USB Generic HID devices
 uhid*   at uhidev? reportid ?
@@ -633,10 +633,10 @@ radio*  at udsbr?
 ugen*   at uhub? port ?
 
 # PCI IEEE1394 controllers
-fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
+fwohci* at pci? dev ? function ?	# IEEE1394 Open Host Controller
 
 # CardBus IEEE1394 controllers
-#fwohci*	at cardbus? function ?	# IEEE1394 Open Host Controller
+#fwohci* at cardbus? function ?	# IEEE1394 Open Host Controller
 
 ieee1394if* at fwohci?
 fwip*	at ieee1394if?			# IP over IEEE1394
@@ -822,7 +822,7 @@ options 	ACPIVERBOSE
 #options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
 #options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 
-ioapic*		at mainbus? apid ?
+ioapic* 	at mainbus? apid ?
 
 # ACPI devices
 acpiacad* 	at acpi?		# ACPI AC Adapter
