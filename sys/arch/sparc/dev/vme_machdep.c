@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.61 2009/11/21 04:16:51 rmind Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.62 2010/01/03 23:03:20 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.61 2009/11/21 04:16:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.62 2010/01/03 23:03:20 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -770,7 +770,7 @@ sparc_vme_intr_establish(void *cookie, vme_intr_handle_t vih, int level,
 			panic("vme_addirq");
 		ih->ih_fun = sc->sc_vmeintr;
 		ih->ih_arg = vih;
-		intr_establish(pil, 0, ih, NULL);
+		intr_establish(pil, 0, ih, NULL, false);
 	} else {
 		svih->next = (vme_intr_handle_t)ih->ih_arg;
 		ih->ih_arg = vih;

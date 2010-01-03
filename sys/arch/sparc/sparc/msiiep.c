@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.38 2009/11/11 14:20:01 he Exp $ */
+/*	$NetBSD: msiiep.c,v 1.39 2010/01/03 23:03:21 mrg Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.38 2009/11/11 14:20:01 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.39 2010/01/03 23:03:21 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -563,7 +563,7 @@ mspcic_intr_establish(bus_space_tag_t t, int line, int ipl,
 
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
-	intr_establish(pil, ipl, ih, fastvec);
+	intr_establish(pil, ipl, ih, fastvec, false);
 
 	return(ih);
 }
