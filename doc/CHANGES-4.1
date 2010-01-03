@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.188 2009/12/16 11:19:42 sborrill Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.189 2010/01/03 17:13:24 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3928,4 +3928,12 @@ sys/sys/stat.h					1.59
 	Parenthesize S_IS*() macro arguments to prevent breakage with
 	certain arguments. Addresses PR/41919.
 	[dholland, ticket #1371]
+
+sys/netbt/rfcomm_session.c			1.16
+	when receiving a MCC PN response, the max frame size that the remote
+	party requests must be less than the one we asked for which will not
+	be greater than the max acceptable value so no need to test for that
+	but make sure that it is not smaller than minimum acceptable value.
+
+	[plunky, ticket #1372]
 
