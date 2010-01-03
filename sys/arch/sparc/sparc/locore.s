@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.250 2009/12/20 03:53:46 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.251 2010/01/03 11:44:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2557,18 +2557,18 @@ softintr_common:
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 
-1:	ld	[%l4 + 12], %o2		! ih->ih_classipl
+1:	ld	[%l4 + IH_CLASSIPL], %o2 ! ih->ih_classipl
 	rd	%psr, %o3		!  (bits already shifted to PIL field)
 	andn	%o3, PSR_PIL, %o3	! %o3 = psr & ~PSR_PIL
 	wr	%o3, %o2, %psr		! splraise(ih->ih_classipl)
-	ld	[%l4], %o1
-	ld	[%l4 + 4], %o0
+	ld	[%l4 + IH_FUN], %o1
+	ld	[%l4 + IH_ARG], %o0
 	nop				! one more isns before touching ICC
 	tst	%o0
 	bz,a	2f
 	 add	%sp, CCFSZ, %o0
 2:	jmpl	%o1, %o7		!	(void)(*ih->ih_fun)(...)
-	 ld	[%l4 + 8], %l4		!	and ih = ih->ih_next
+	 ld	[%l4 + IH_NEXT], %l4	!	and ih = ih->ih_next
 3:	tst	%l4			! while ih != NULL
 	bnz	1b
 	 nop
@@ -2754,18 +2754,18 @@ sparc_interrupt_common:
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 
-1:	ld	[%l4 + 12], %o2		! ih->ih_classipl
+1:	ld	[%l4 + IH_CLASSIPL], %o2 ! ih->ih_classipl
 	rd	%psr, %o3		!  (bits already shifted to PIL field)
 	andn	%o3, PSR_PIL, %o3	! %o3 = psr & ~PSR_PIL
 	wr	%o3, %o2, %psr		! splraise(ih->ih_classipl)
-	ld	[%l4], %o1
-	ld	[%l4 + 4], %o0
+	ld	[%l4 + IH_FUN], %o1
+	ld	[%l4 + IH_ARG], %o0
 	nop				! one more isns before touching ICC
 	tst	%o0
 	bz,a	2f
 	 add	%sp, CCFSZ, %o0
 2:	jmpl	%o1, %o7		!	handled = (*ih->ih_fun)(...)
-	 ld	[%l4 + 8], %l4		!	and ih = ih->ih_next
+	 ld	[%l4 + IH_NEXT], %l4	!	and ih = ih->ih_next
 	tst	%o0
 	bnz	4f			! if (handled) break
 	 nop
