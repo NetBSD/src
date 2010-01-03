@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.251 2010/01/03 11:44:58 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.252 2010/01/03 12:39:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2542,18 +2542,6 @@ softintr_common:
 	inc	%o3
 	st	%o3, [ %o2 + CPUINFO_IDEPTH ]
 
-#if defined(MULTIPROCESSOR)
-	/*
-	 * Grab the kernel lock for interrupt levels <= IPL_VM
-	 * XXX Must not happen for fast soft interrupts!
-	 */
-	cmp	%l3, IPL_VM
-	bne	3f
-	 st	%fp, [%sp + CCFSZ + 16]
-	call	_C_LABEL(intr_lock_kernel)
-	 nop
-#endif
-
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 
@@ -2572,15 +2560,6 @@ softintr_common:
 3:	tst	%l4			! while ih != NULL
 	bnz	1b
 	 nop
-
-#if defined(MULTIPROCESSOR)
-	cmp	%l3, IPL_VM
-	bne	0f
-	 nop
-	call	_C_LABEL(intr_unlock_kernel)
-	 nop
-0:
-#endif
 
 	sethi	%hi(CPUINFO_VA), %o2
 	ld	[ %o2 + CPUINFO_IDEPTH ], %o3
@@ -2743,17 +2722,6 @@ sparc_interrupt_common:
 	inc	%o3
 	st	%o3, [ %o2 + CPUINFO_IDEPTH ]
 
-#if defined(MULTIPROCESSOR)
-	/* Grab the kernel lock for interrupt levels =< IPL_VM */
-	cmp	%l3, IPL_VM
-	bne	3f
-	 st	%fp, [%sp + CCFSZ + 16]
-	call	_C_LABEL(intr_lock_kernel)
-	 nop
-#endif
-	b	3f
-	 st	%fp, [%sp + CCFSZ + 16]
-
 1:	ld	[%l4 + IH_CLASSIPL], %o2 ! ih->ih_classipl
 	rd	%psr, %o3		!  (bits already shifted to PIL field)
 	andn	%o3, PSR_PIL, %o3	! %o3 = psr & ~PSR_PIL
@@ -2784,14 +2752,6 @@ sparc_interrupt_common:
 	 add	%sp, CCFSZ, %o0
 	/* all done: restore registers and go return */
 4:
-#if defined(MULTIPROCESSOR)
-	cmp	%l3, IPL_VM
-	bne	0f
-	 nop
-	call	_C_LABEL(intr_unlock_kernel)
-	 nop
-0:
-#endif
 	sethi	%hi(CPUINFO_VA), %o2
 	ld	[ %o2 + CPUINFO_IDEPTH ], %o3
 	dec	%o3
