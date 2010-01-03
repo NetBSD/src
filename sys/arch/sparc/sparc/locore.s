@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.252 2010/01/03 12:39:22 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.253 2010/01/03 12:44:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2721,6 +2721,9 @@ sparc_interrupt_common:
 	ld	[ %o2 + CPUINFO_IDEPTH ], %o3
 	inc	%o3
 	st	%o3, [ %o2 + CPUINFO_IDEPTH ]
+
+	b	3f
+	 st	%fp, [%sp + CCFSZ + 16]
 
 1:	ld	[%l4 + IH_CLASSIPL], %o2 ! ih->ih_classipl
 	rd	%psr, %o3		!  (bits already shifted to PIL field)
