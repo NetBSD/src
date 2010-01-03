@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.117 2009/06/25 23:44:01 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.118 2010/01/03 02:47:09 mjacob Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -43,7 +43,7 @@
  */
 #ifdef	__NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.117 2009/06/25 23:44:01 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.118 2010/01/03 02:47:09 mjacob Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -784,15 +784,25 @@ isp_reset(ispsoftc_t *isp, int do_load_defaults)
 				}
 				MEMORYBARRIER(isp, SYNC_REQUEST, 0, ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp)));
 				ISP_MEMZERO(&mbs, sizeof (mbs));
-				mbs.param[0] = MBOX_LOAD_RISC_RAM;
-				mbs.param[1] = la;
-				mbs.param[2] = DMA_WD1(isp->isp_rquest_dma);
-				mbs.param[3] = DMA_WD0(isp->isp_rquest_dma);
-				mbs.param[4] = nw >> 16;
-				mbs.param[5] = nw;
-				mbs.param[6] = DMA_WD3(isp->isp_rquest_dma);
-				mbs.param[7] = DMA_WD2(isp->isp_rquest_dma);
-				mbs.param[8] = la >> 16;
+				if (la < 0x10000 && nw < 0x10000) {
+					mbs.param[0] = MBOX_LOAD_RISC_RAM_2100;
+					mbs.param[1] = la;
+					mbs.param[2] = DMA_WD1(isp->isp_rquest_dma);
+					mbs.param[3] = DMA_WD0(isp->isp_rquest_dma);
+					mbs.param[4] = nw;
+					mbs.param[6] = DMA_WD3(isp->isp_rquest_dma);
+					mbs.param[7] = DMA_WD2(isp->isp_rquest_dma);
+				} else {
+					mbs.param[0] = MBOX_LOAD_RISC_RAM;
+					mbs.param[1] = la;
+					mbs.param[2] = DMA_WD1(isp->isp_rquest_dma);
+					mbs.param[3] = DMA_WD0(isp->isp_rquest_dma);
+					mbs.param[4] = nw >> 16;
+					mbs.param[5] = nw;
+					mbs.param[6] = DMA_WD3(isp->isp_rquest_dma);
+					mbs.param[7] = DMA_WD2(isp->isp_rquest_dma);
+					mbs.param[8] = la >> 16;
+				}
 				mbs.logval = MBLOGALL;
 				isp_mboxcmd(isp, &mbs);
 				if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
@@ -827,7 +837,7 @@ isp_reset(ispsoftc_t *isp, int do_load_defaults)
 
 			while (wi < ptr[3]) {
 				uint16_t *cp;
-				uint32_t nw;
+				uint16_t nw;
 
 				nw = ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp)) >> 1;
 				if (nw > wl) {
@@ -843,14 +853,24 @@ isp_reset(ispsoftc_t *isp, int do_load_defaults)
 				}
 				MEMORYBARRIER(isp, SYNC_REQUEST, 0, ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp)));
 				ISP_MEMZERO(&mbs, sizeof (mbs));
-				mbs.param[0] = MBOX_LOAD_RISC_RAM;
-				mbs.param[1] = la;
-				mbs.param[2] = DMA_WD1(isp->isp_rquest_dma);
-				mbs.param[3] = DMA_WD0(isp->isp_rquest_dma);
-				mbs.param[4] = nw;
-				mbs.param[6] = DMA_WD3(isp->isp_rquest_dma);
-				mbs.param[7] = DMA_WD2(isp->isp_rquest_dma);
-				mbs.param[8] = la >> 16;
+				if (la < 0x10000) {
+					mbs.param[0] = MBOX_LOAD_RISC_RAM_2100;
+					mbs.param[1] = la;
+					mbs.param[2] = DMA_WD1(isp->isp_rquest_dma);
+					mbs.param[3] = DMA_WD0(isp->isp_rquest_dma);
+					mbs.param[4] = nw;
+					mbs.param[6] = DMA_WD3(isp->isp_rquest_dma);
+					mbs.param[7] = DMA_WD2(isp->isp_rquest_dma);
+				} else {
+					mbs.param[0] = MBOX_LOAD_RISC_RAM;
+					mbs.param[1] = la;
+					mbs.param[2] = DMA_WD1(isp->isp_rquest_dma);
+					mbs.param[3] = DMA_WD0(isp->isp_rquest_dma);
+					mbs.param[4] = nw;
+					mbs.param[6] = DMA_WD3(isp->isp_rquest_dma);
+					mbs.param[7] = DMA_WD2(isp->isp_rquest_dma);
+					mbs.param[8] = la >> 16;
+				}
 				mbs.logval = MBLOGALL;
 				isp_mboxcmd(isp, &mbs);
 				if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
@@ -1528,24 +1548,18 @@ isp_fibre_init(ispsoftc_t *isp)
 	}
 
 	icbp->icb_maxfrmlen = DEFAULT_FRAMESIZE(isp);
-	if (icbp->icb_maxfrmlen < ICB_MIN_FRMLEN ||
-	    icbp->icb_maxfrmlen > ICB_MAX_FRMLEN) {
-		isp_prt(isp, ISP_LOGERR,
-		    "bad frame length (%d) from NVRAM- using %d",
-		    DEFAULT_FRAMESIZE(isp), ICB_DFLT_FRMLEN);
+	if (icbp->icb_maxfrmlen < ICB_MIN_FRMLEN || icbp->icb_maxfrmlen > ICB_MAX_FRMLEN) {
+		isp_prt(isp, ISP_LOGERR, "bad frame length (%d) from NVRAM- using %d", DEFAULT_FRAMESIZE(isp), ICB_DFLT_FRMLEN);
 		icbp->icb_maxfrmlen = ICB_DFLT_FRMLEN;
 	}
 	icbp->icb_maxalloc = fcp->isp_maxalloc;
 	if (icbp->icb_maxalloc < 1) {
-		isp_prt(isp, ISP_LOGERR,
-		    "bad maximum allocation (%d)- using 16", fcp->isp_maxalloc);
+		isp_prt(isp, ISP_LOGERR, "bad maximum allocation (%d)- using 16", fcp->isp_maxalloc);
 		icbp->icb_maxalloc = 16;
 	}
 	icbp->icb_execthrottle = DEFAULT_EXEC_THROTTLE(isp);
 	if (icbp->icb_execthrottle < 1) {
-		isp_prt(isp, ISP_LOGERR,
-		    "bad execution throttle of %d- using %d",
-		    DEFAULT_EXEC_THROTTLE(isp), ICB_DFLT_THROTTLE);
+		isp_prt(isp, ISP_LOGERR, "bad execution throttle of %d- using %d", DEFAULT_EXEC_THROTTLE(isp), ICB_DFLT_THROTTLE);
 		icbp->icb_execthrottle = ICB_DFLT_THROTTLE;
 	}
 	icbp->icb_retry_delay = fcp->isp_retry_delay;
@@ -1639,18 +1653,18 @@ isp_fibre_init(ispsoftc_t *isp)
 
 	/*
 	 * For 22XX > 2.1.26 && 23XX, set some options.
-	 * XXX: Probably okay for newer 2100 f/w too.
 	 */
 	if (ISP_FW_NEWER_THAN(isp, 2, 26, 0)) {
-		/*
-		 * Turn on LIP F8 async event (1)
-		 * Turn on generate AE 8013 on all LIP Resets (2)
-		 * Disable LIP F7 switching (8)
-		 */
 		MBSINIT(&mbs, MBOX_SET_FIRMWARE_OPTIONS, MBLOGALL, 0);
-		mbs.param[1] = 0xb;
+		mbs.param[1] = IFCOPT1_DISF7SWTCH|IFCOPT1_LIPASYNC|IFCOPT1_LIPF8;
 		mbs.param[2] = 0;
 		mbs.param[3] = 0;
+		if (ISP_FW_NEWER_THAN(isp, 3, 16, 0)) {
+			mbs.param[1] |= IFCOPT1_EQFQASYNC|IFCOPT1_CTIO_RETRY;
+			if (fcp->role & ISP_ROLE_TARGET) {
+				mbs.param[3] = IFCOPT3_NOPRLI;
+			}
+		}
 		isp_mboxcmd(isp, &mbs);
 		if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 			return;
@@ -2074,8 +2088,7 @@ isp_mark_portdb(ispsoftc_t *isp, int chan, int disposition)
  * or via FABRIC LOGIN/FABRIC LOGOUT for other cards.
  */
 static int
-isp_plogx(ispsoftc_t *isp, int chan, uint16_t handle, uint32_t portid,
-    int flags, int gs)
+isp_plogx(ispsoftc_t *isp, int chan, uint16_t handle, uint32_t portid, int flags, int gs)
 {
 	mbreg_t mbs;
 	uint8_t q[QENTRY_LEN];
@@ -8274,6 +8287,8 @@ isp_parse_nvram_2100(ispsoftc_t *isp, uint8_t *nvram_data)
 			if ((wwn >> 60) == 0) {
 				wwn |= (((uint64_t) 2)<< 60);
 			}
+		} else {
+			wwn = fcp->isp_wwpn_nvram & ~((uint64_t) 0xfff << 48);
 		}
 	} else {
 		wwn &= ~((uint64_t) 0xfff << 48);
@@ -8339,11 +8354,6 @@ isp_parse_nvram_2400(ispsoftc_t *isp, uint8_t *nvram_data)
 	    ISP2400_NVRAM_FIRMWARE_OPTIONS3(nvram_data));
 
 	wwn = ISP2400_NVRAM_PORT_NAME(nvram_data);
-	if (wwn) {
-		if ((wwn >> 60) != 2 && (wwn >> 60) != 5) {
-			wwn = 0;
-		}
-	}
 	fcp->isp_wwpn_nvram = wwn;
 
 	wwn = ISP2400_NVRAM_NODE_NAME(nvram_data);
@@ -8351,6 +8361,10 @@ isp_parse_nvram_2400(ispsoftc_t *isp, uint8_t *nvram_data)
 		if ((wwn >> 60) != 2 && (wwn >> 60) != 5) {
 			wwn = 0;
 		}
+	}
+	if (wwn == 0 && (fcp->isp_wwpn_nvram >> 60) == 2) {
+		wwn = fcp->isp_wwpn_nvram;
+		wwn &= ~((uint64_t) 0xfff << 48);
 	}
 	fcp->isp_wwnn_nvram = wwn;
 

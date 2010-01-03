@@ -1,4 +1,4 @@
-/* $NetBSD: isp_tpublic.h,v 1.18 2009/06/25 23:44:02 mjacob Exp $ */
+/* $NetBSD: isp_tpublic.h,v 1.19 2010/01/03 02:47:09 mjacob Exp $ */
 /*-
  *  Copyright (c) 1997-2008 by Matthew Jacob
  *  All rights reserved.
@@ -58,7 +58,7 @@ typedef enum {
     QOUT_DISABLE,       /* the argument is a pointer to a enadis_t */
     QOUT_TMD_START,     /* the argument is a pointer to a tmd_cmd_t */
     QOUT_TMD_DONE,      /* the argument is a pointer to a tmd_xact_t */
-    QOUT_NOTIFY,        /* the argument is a pointer to a isp_notify_t */
+    QOUT_NOTIFY,        /* the argument is a pointer to a notify_t */
     QOUT_HBA_UNREG      /* the argument is a pointer to a hba_register_t */
 } tact_e;
 
@@ -75,7 +75,7 @@ typedef enum {
     QIN_DISABLE,        /* the argument is a pointer to a enadis_t */
     QIN_TMD_CONT,       /* the argument is a pointer to a tmd_xact_t */
     QIN_TMD_FIN,        /* the argument is a pointer to a tmd_cmd_t */
-    QIN_NOTIFY_ACK,     /* the argument is a pointer to a isp_notify_t */
+    QIN_NOTIFY_ACK,     /* the argument is a pointer to a notify_t */
     QIN_HBA_UNREG,      /* the argument is a pointer to a hba_register_t */
 } qact_e;
 
