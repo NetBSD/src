@@ -1,7 +1,7 @@
-/* $NetBSD: wake.c,v 1.9 2009/12/21 08:42:39 mbalmer Exp $ */
+/* $NetBSD: wake.c,v 1.10 2010/01/03 17:58:14 mbalmer Exp $ */
 
 /*
- * Copyright (C) 2006, 2007, 2008, 2009 Marc Balmer <marc@msys.ch>
+ * Copyright (C) 2006, 2007, 2008, 2009, 2010 Marc Balmer <marc@msys.ch>
  * Copyright (C) 2000 Eugene M. Kim.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Send Wake-on-LAN packets to machines on the local Ethernet */
+/* Send Wake on LAN packets to hosts on a local Ethernet network */
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -34,8 +34,11 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+
 #include <net/bpf.h>
 #include <net/if.h>
+#include <net/if_dl.h>
+#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -43,6 +46,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <ifaddrs.h>
 #include <limits.h>
 #include <paths.h>
 #include <stdarg.h>
@@ -60,16 +64,17 @@
 #define DESTADDR_COUNT 16
 #endif
 
-static __dead void usage(void);
+static void usage(void);
 static int wake(int, const char *);
 static int bind_if_to_bpf(char const *, int);
+static int find_ether(char *, size_t);
 static int get_ether(char const *, struct ether_addr *);
 static int send_wakeup(int, struct ether_addr const *);
 
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s interface lladdr [lladdr ...]\n",
+	(void)fprintf(stderr, "usage: %s [interface] lladdr [lladdr ...]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
@@ -108,6 +113,33 @@ bind_if_to_bpf(char const *ifname, int bpf)
 }
 
 static int
+find_ether(char *dst, size_t len)
+{
+	struct ifaddrs *ifap, *ifa;
+	struct sockaddr_dl *sdl = NULL;
+
+	if (dst == NULL || len == 0)
+		return 0;
+
+	if (getifaddrs(&ifap) != 0)
+		return -1;
+
+	/* XXX also check the link state */
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next)
+		if (ifa->ifa_addr->sa_family == AF_LINK &&
+		    ifa->ifa_flags & IFF_UP && ifa->ifa_flags & IFF_RUNNING) {
+			sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+			if (sdl->sdl_type == IFT_ETHER) {
+				strlcpy(dst, ifa->ifa_name, len);
+				break;
+			}
+		}
+
+	freeifaddrs(ifap);
+	return 0;
+}
+
+static int
 get_ether(char const *text, struct ether_addr *addr)
 {
 	struct ether_addr *paddr;
@@ -131,8 +163,7 @@ send_wakeup(int bpf, struct ether_addr const *addr)
 	} pkt;
 	u_char *p;
 	int i;
-	ssize_t bw;
-	ssize_t len;
+	ssize_t bw, len;
 
 	(void)memset(pkt.hdr.ether_dhost, 0xff, sizeof(pkt.hdr.ether_dhost));
 	pkt.hdr.ether_type = htons(0);
@@ -156,19 +187,31 @@ int
 main(int argc, char *argv[])
 {
 	int bpf, n;
+	char ifname[IF_NAMESIZE];
 
-	if (argc < 3)
+	if (argc < 2)
 		usage();
 
 	if ((bpf = open(_PATH_BPF, O_RDWR)) == -1)
 		err(EXIT_FAILURE, "Cannot open bpf interface");
 
-	if (bind_if_to_bpf(argv[1], bpf) == -1)
-		err(EXIT_FAILURE, "Cannot bind to interface `%s'", argv[1]);
+	n = 2;
+	if (bind_if_to_bpf(argv[1], bpf) == -1) {
+		if (find_ether(ifname, sizeof(ifname)))
+			err(EXIT_FAILURE, "Failed to determine ethernet "
+			    "interface");
+		if (bind_if_to_bpf(ifname, bpf) == -1)
+			err(EXIT_FAILURE, "Cannot bind to interface `%s'",
+			    ifname);
+		--n;
+	} else
+		strlcpy(ifname, argv[1], sizeof(ifname));
 
-	for (n = 2; n < argc; n++)
+	if (n >= argc)
+		usage();
+	for (; n < argc; n++)
 		if (wake(bpf, argv[n]))
 			warn("Cannot send Wake on LAN frame over `%s' to `%s'",
-			    argv[1], argv[n]);
+			    ifname, argv[n]);
 	return EXIT_SUCCESS;
 }
