@@ -1,4 +1,4 @@
-/*	$NetBSD: cfscores.c,v 1.20 2010/01/01 06:37:16 dholland Exp $	*/
+/*	$NetBSD: cfscores.c,v 1.21 2010/01/03 17:08:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)cfscores.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cfscores.c,v 1.20 2010/01/01 06:37:16 dholland Exp $");
+__RCSID("$NetBSD: cfscores.c,v 1.21 2010/01/03 17:08:45 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,9 @@ main(int argc, char *argv[])
 	setgid(getgid());
 
 	if (argc > 2) {
-		errx(1, "Usage: cfscores -a | cfscores [user]");
+		fprintf(stderr, "Usage: %s -a | %s [user]\n",
+			getprogname(), getprogname());
+		exit(1);
 	}
 	dbfd = open(_PATH_SCORE, O_RDONLY);
 	if (dbfd < 0)
