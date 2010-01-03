@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.23 2007/12/03 15:34:22 ad Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.24 2010/01/03 23:03:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.23 2007/12/03 15:34:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.24 2010/01/03 23:03:21 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -175,8 +175,8 @@ timerattach_msiiep(struct device *parent, struct device *self, void *aux)
 	mspcic_write_1(pcic_cipar, 0xae);
 
 	/* link interrupt handlers */
-	intr_establish(10, 0, &level10, NULL);
-	intr_establish(14, 0, &level14, NULL);
+	intr_establish(10, 0, &level10, NULL, false);
+	intr_establish(14, 0, &level14, NULL, false);
 
 	/* Establish a soft interrupt at a lower level for schedclock */
 	sched_cookie = sparc_softintr_establish(IPL_SCHED, schedintr, NULL);
