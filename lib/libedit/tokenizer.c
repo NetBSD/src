@@ -1,4 +1,4 @@
-/*	$NetBSD: tokenizer.c,v 1.17 2009/12/30 23:54:52 christos Exp $	*/
+/*	$NetBSD: tokenizer.c,v 1.18 2010/01/03 18:27:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tokenizer.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tokenizer.c,v 1.17 2009/12/30 23:54:52 christos Exp $");
+__RCSID("$NetBSD: tokenizer.c,v 1.18 2010/01/03 18:27:10 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -68,7 +68,7 @@ typedef enum {
 #define	tok_strdup(a)		Strdup(a)
 
 
-struct FUNW(tokenizer) {
+struct TYPE(tokenizer) {
 	Char	*ifs;		/* In field separator			 */
 	int	 argc, amax;	/* Current and maximum number of args	 */
 	Char   **argv;		/* Argument list			 */
