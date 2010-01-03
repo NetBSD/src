@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.106 2010/01/03 12:39:22 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.107 2010/01/03 23:03:21 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.106 2010/01/03 12:39:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.107 2010/01/03 23:03:21 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -635,11 +635,12 @@ uninst_fasttrap(int level)
  */
 void
 intr_establish(int level, int classipl,
-	       struct intrhand *ih, void (*vec)(void))
+	       struct intrhand *ih, void (*vec)(void),
+	       bool maybe_mpsafe)
 {
 	int s = splhigh();
 #ifdef MULTIPROCESSOR
-	bool mpsafe = (level != IPL_VM);
+	bool mpsafe = (level != IPL_VM) || maybe_mpsafe;
 #endif /* MULTIPROCESSOR */
 
 #ifdef DIAGNOSTIC

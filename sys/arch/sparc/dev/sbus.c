@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.73 2009/09/17 16:28:12 tsutsui Exp $ */
+/*	$NetBSD: sbus.c,v 1.74 2010/01/03 23:03:20 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.73 2009/09/17 16:28:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.74 2010/01/03 23:03:20 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -590,7 +590,7 @@ sbus_intr_establish(bus_space_tag_t t, int pri, int level,
 
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
-	intr_establish(pil, level, ih, fastvec);
+	intr_establish(pil, level, ih, fastvec, false);
 	return (ih);
 }
 
