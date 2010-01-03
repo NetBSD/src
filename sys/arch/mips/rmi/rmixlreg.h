@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlreg.h,v 1.1.2.5 2009/12/14 07:19:16 cliff Exp $	*/
+/*	$NetBSD: rmixlreg.h,v 1.1.2.6 2010/01/03 08:37:07 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -417,46 +417,10 @@
 #define RMIXL_GPIO_RESET		_RMIXL_OFFSET(0x8)	/* XLS Soft Reset register */
 
 /*
- * RMIXL_GPIO_RESET bits
+ * RMIXL_GPIO_RESET_CFG bits
  */
-#define RMIXL_GPIO_RESET_RESa		__BITS(31,28)
-#define RMIXL_GPIO_RESET_PCIE_SRIO_SEL	__BITS(27,26)		/* PCIe or SRIO Select:
-								 * 00 = PCIe selected, SRIO not available
-								 * 01 = SRIO selected, 1.25 Gbaud (1.0 Gbps)
-								 * 10 = SRIO selected, 2.25 Gbaud (2.0 Gbps)
-								 * 11 = SRIO selected, 3.125 Gbaud (2.5 Gbps)
-								 */
-#define RMIXL_GPIO_RESET_XAUI_PORT1_SEL	__BIT(25)		/* XAUI Port 1 Select:
-								 *  0 = Disabled - Port is SGMII ports 4-7
-								 *  1 = Enabled -  Port is 4-lane XAUI Port 1
-								 */
-#define RMIXL_GPIO_RESET_XAUI_PORT0_SEL	__BIT(24)		/* XAUI Port 0 Select:
-								 *  0 = Disabled - Port is SGMII ports 0-3
-								 *  1 = Enabled -  Port is 4-lane XAUI Port 0
-								 */
-#define RMIXL_GPIO_RESET_RESb		__BIT(23)
-#define RMIXL_GPIO_RESET_USB_DEV	__BIT(22)		/* USB Device:
-								 *  0 = Device Mode
-								 *  1 = Host Mode
-								 */
-#define RMIXL_GPIO_RESET_PCIE_CFG	__BITS(21,20)		/* PCIe or SRIO configuration */
-#define RMIXL_GPIO_RESET_FLASH33_EN	__BIT(19)		/* Flash 33 MHZ Enable:
-								 *  0 = 66.67 MHz
-								 *  1 = 33.33 MHz
-								 */
-#define RMIXL_GPIO_RESET_BIST_DIAG_EN	__BIT(18)		/* BIST Diagnostics enable */
-#define RMIXL_GPIO_RESET_BIST_RUN_EN	__BIT(18)		/* BIST Run enable */
-#define RMIXL_GPIO_RESET_NOOT_NAND	__BIT(16)		/* Enable boot from NAND Flash */
-#define RMIXL_GPIO_RESET_BOOT_PCMCIA	__BIT(15)		/* Enable boot from PCMCIA */
-#define RMIXL_GPIO_RESET_FLASH_CFG	__BIT(14)		/* Flash 32-bit Data Configuration:
-								 *  0 = 32-bit address / 16-bit data
-								 *  1 = 32-bit address / 32-bit data
-								 */
-#define RMIXL_GPIO_RESET_PCMCIA_EN	__BIT(13)		/* PCMCIA Enable Status */
-#define RMIXL_GPIO_RESET_PARITY_EN	__BIT(12)		/* Parity Enable Status */
-#define RMIXL_GPIO_RESET_BIGEND		__BIT(11)		/* Big Endian Mode Enable Status */
-#define RMIXL_GPIO_RESET_PLL1_OUT_DIV	__BITS(10,8)		/* PLL1 (Core PLL) Output Divider */
-#define RMIXL_GPIO_RESET_PLL1_FB_DIV	__BITS(7,0)		/* PLL1 Feedback Divider */
+#define RMIXL_GPIO_RESET_RESV		__BITS(31,1)
+#define RMIXL_GPIO_RESET_RESET		__BIT(0)
 
 
 /* GPIO System Control Registers */
@@ -477,6 +441,49 @@
 #define RMIXL_GPIO_LOW_PWR_DIS		_RMIXL_OFFSET(0x29)	/* Low Power Dissipation register */
 #define RMIXL_GPIO_RANDOM		_RMIXL_OFFSET(0x2b)	/* Low Power Dissipation register */
 #define RMIXL_GPIO_CPU_CLK_DIS		_RMIXL_OFFSET(0x2d)	/* CPU Clock Disable register */
+
+/*
+ * RMIXL_GPIO_RESET_CFG bits
+ */
+#define RMIXL_GPIO_RESET_CFG_RESa		__BITS(31,28)
+#define RMIXL_GPIO_RESET_CFG_PCIE_SRIO_SEL	__BITS(27,26)	/* PCIe or SRIO Select:
+								 * 00 = PCIe selected, SRIO not available
+								 * 01 = SRIO selected, 1.25 Gbaud (1.0 Gbps)
+								 * 10 = SRIO selected, 2.25 Gbaud (2.0 Gbps)
+								 * 11 = SRIO selected, 3.125 Gbaud (2.5 Gbps)
+								 */
+#define RMIXL_GPIO_RESET_CFG_XAUI_PORT1_SEL	__BIT(25)	/* XAUI Port 1 Select:
+								 *  0 = Disabled - Port is SGMII ports 4-7
+								 *  1 = Enabled -  Port is 4-lane XAUI Port 1
+								 */
+#define RMIXL_GPIO_RESET_CFG_XAUI_PORT0_SEL	__BIT(24)	/* XAUI Port 0 Select:
+								 *  0 = Disabled - Port is SGMII ports 0-3
+								 *  1 = Enabled -  Port is 4-lane XAUI Port 0
+								 */
+#define RMIXL_GPIO_RESET_CFG_RESb		__BIT(23)
+#define RMIXL_GPIO_RESET_CFG_USB_DEV		__BIT(22)	/* USB Device:
+								 *  0 = Device Mode
+								 *  1 = Host Mode
+								 */
+#define RMIXL_GPIO_RESET_CFG_PCIE_CFG		__BITS(21,20)	/* PCIe or SRIO configuration */
+#define RMIXL_GPIO_RESET_CFG_FLASH33_EN		__BIT(19)	/* Flash 33 MHZ Enable:
+								 *  0 = 66.67 MHz
+								 *  1 = 33.33 MHz
+								 */
+#define RMIXL_GPIO_RESET_CFG_BIST_DIAG_EN	__BIT(18)	/* BIST Diagnostics enable */
+#define RMIXL_GPIO_RESET_CFG_BIST_RUN_EN	__BIT(18)	/* BIST Run enable */
+#define RMIXL_GPIO_RESET_CFG_NOOT_NAND		__BIT(16)	/* Enable boot from NAND Flash */
+#define RMIXL_GPIO_RESET_CFG_BOOT_PCMCIA	__BIT(15)	/* Enable boot from PCMCIA */
+#define RMIXL_GPIO_RESET_CFG_FLASH_CFG		__BIT(14)	/* Flash 32-bit Data Configuration:
+								 *  0 = 32-bit address / 16-bit data
+								 *  1 = 32-bit address / 32-bit data
+								 */
+#define RMIXL_GPIO_RESET_CFG_PCMCIA_EN		__BIT(13)	/* PCMCIA Enable Status */
+#define RMIXL_GPIO_RESET_CFG_PARITY_EN		__BIT(12)	/* Parity Enable Status */
+#define RMIXL_GPIO_RESET_CFG_BIGEND		__BIT(11)	/* Big Endian Mode Enable Status */
+#define RMIXL_GPIO_RESET_CFG_PLL1_OUT_DIV	__BITS(10,8)	/* PLL1 (Core PLL) Output Divider */
+#define RMIXL_GPIO_RESET_CFG_PLL1_FB_DIV	__BITS(7,0)	/* PLL1 Feedback Divider */
+
 
 /*
  * PCIE Interface Controller registers
