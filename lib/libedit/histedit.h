@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.44 2009/12/31 15:58:26 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.45 2010/01/03 18:27:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -114,13 +114,16 @@ int		 el_set(EditLine *, int, ...);
 int		 el_get(EditLine *, int, ...);
 unsigned char	_el_fn_complete(EditLine *, int);
 
-
 /*
  * el_set/el_get parameters
  *
- * When using el_wset/el_wget:
- *   wchar_t is wchar_t, otherwise it is char.
- *   prompt_func is el_wpfunc_t, otherise it is el_pfunc_t .
+ * When using el_wset/el_wget (as opposed to el_set/el_get):
+ *   Char is wchar_t, otherwise it is char.
+ *   prompt_func is el_wpfunc_t, otherwise it is el_pfunc_t .
+
+ * Prompt function prototypes are:
+ *   typedef char    *(*el_pfunct_t)  (EditLine *);
+ *   typedef wchar_t *(*el_wpfunct_t) (EditLine *);
  *
  * For operations that support set or set/get, the argument types listed are for
  * the "set" operation. For "get", each listed type must be a pointer.
@@ -128,17 +131,17 @@ unsigned char	_el_fn_complete(EditLine *, int);
  * 
  * Operations that only support "get" have the correct argument types listed.
  */
-#define	EL_PROMPT	0	/* , promt_func);		      set/get */
+#define	EL_PROMPT	0	/* , prompt_func);		      set/get */
 #define	EL_TERMINAL	1	/* , const char *);		      set/get */
-#define	EL_EDITOR	2	/* , const wchar_t *);		      set/get */
+#define	EL_EDITOR	2	/* , const Char *);		      set/get */
 #define	EL_SIGNAL	3	/* , int);			      set/get */
-#define	EL_BIND		4	/* , const wchar_t *, ..., NULL);     set     */
-#define	EL_TELLTC	5	/* , const wchar_t *, ..., NULL);     set     */
-#define	EL_SETTC	6	/* , const wchar_t *, ..., NULL);     set     */
-#define	EL_ECHOTC	7	/* , const wchar_t *, ..., NULL);     set     */
-#define	EL_SETTY	8	/* , const wchar_t *, ..., NULL);     set     */
-#define	EL_ADDFN	9	/* , const wchar_t *, const wchar_t * set     */
-				/* , el_func_t);		*/
+#define	EL_BIND		4	/* , const Char *, ..., NULL);	      set     */
+#define	EL_TELLTC	5	/* , const Char *, ..., NULL);	      set     */
+#define	EL_SETTC	6	/* , const Char *, ..., NULL);	      set     */
+#define	EL_ECHOTC	7	/* , const Char *, ..., NULL);        set     */
+#define	EL_SETTY	8	/* , const Char *, ..., NULL);        set     */
+#define	EL_ADDFN	9	/* , const Char *, const Char,        set     */
+				/*   el_func_t);		 	      */
 #define	EL_HIST		10	/* , hist_fun_t, const ptr_t);	      set     */
 #define	EL_EDITMODE	11	/* , int);			      set/get */
 #define	EL_RPROMPT	12	/* , prompt_func);		      set/get */
@@ -146,12 +149,12 @@ unsigned char	_el_fn_complete(EditLine *, int);
 #define	EL_CLIENTDATA	14	/* , void *);			      set/get */
 #define	EL_UNBUFFERED	15	/* , int);			      set/get */
 #define	EL_PREP_TERM	16	/* , int);			      set     */
-#define	EL_GETTC	17	/* , const wchar_t *, ..., NULL);         get */
+#define	EL_GETTC	17	/* , const Char *, ..., NULL);		  get */
 #define	EL_GETFP	18	/* , int, FILE **);		          get */
 #define	EL_SETFP	19	/* , int, FILE *);		      set     */
 #define	EL_REFRESH	20	/* , void);			      set     */
-#define	EL_PROMPT_ESC	21	/* , prompt_func, wchar_t);	      set/get */
-#define	EL_RPROMPT_ESC	22	/* , prompt_func, wchar_t);	      set/get */
+#define	EL_PROMPT_ESC	21	/* , prompt_func, Char);	      set/get */
+#define	EL_RPROMPT_ESC	22	/* , prompt_func, Char);	      set/get */
 
 #define	EL_BUILTIN_GETCFN	(NULL)
 
@@ -280,22 +283,22 @@ int		 el_winsertstr(EditLine *, const wchar_t *);
 /*
  * ==== History ====
  */
-typedef struct histeventw {
+typedef struct histeventW {
 	int		 num;
 	const wchar_t	*str;
 } HistEventW;
 
-typedef struct historyw HistoryW;
+typedef struct historyW HistoryW;
 
 HistoryW *	history_winit(void);
 void		history_wend(HistoryW *);
 
-int		historyw(HistoryW *, HistEventW *, int, ...);
+int		history_w(HistoryW *, HistEventW *, int, ...);
 
 /*
  * ==== Tokenization ====
  */
-typedef struct tokenizerw TokenizerW;
+typedef struct tokenizerW TokenizerW;
 
 /* Wide character tokenizer support */
 TokenizerW	*tok_winit(const wchar_t *);

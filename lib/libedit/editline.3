@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.71 2009/12/31 15:58:26 christos Exp $
+.\"	$NetBSD: editline.3,v 1.72 2010/01/03 18:27:10 christos Exp $
 .\"
 .\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,7 +59,7 @@
 .Nm history_end ,
 .Nm history_wend ,
 .Nm history ,
-.Nm historyw ,
+.Nm history_w ,
 .Nm tok_init ,
 .Nm tok_winit ,
 .Nm tok_end ,
@@ -130,7 +130,7 @@
 .Ft int
 .Fn history "History *h" "HistEvent *ev" "int op" "..."
 .Ft int
-.Fn historyw "HistoryW *h" "HistEventW *ev" "int op" "..."
+.Fn history_w "HistoryW *h" "HistEventW *ev" "int op" "..."
 .Ft Tokenizer *
 .Fn tok_init "const char *IFS"
 .Ft TokenizerW *

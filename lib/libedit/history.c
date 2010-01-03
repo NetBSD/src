@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.36 2009/12/30 23:54:52 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.37 2010/01/03 18:27:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.36 2009/12/30 23:54:52 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.37 2010/01/03 18:27:10 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -64,7 +64,7 @@ typedef int (*history_efun_t)(ptr_t, TYPE(HistEvent) *, const Char *);
 typedef void (*history_vfun_t)(ptr_t, TYPE(HistEvent) *);
 typedef int (*history_sfun_t)(ptr_t, TYPE(HistEvent) *, const int);
 
-struct FUNW(history) {
+struct TYPE(history) {
 	ptr_t h_ref;		/* Argument for history fcns	 */
 	int h_ent;		/* Last entry point for history	 */
 	history_gfun_t h_first;	/* Get the first element	 */
