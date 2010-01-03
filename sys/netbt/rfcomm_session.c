@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.14 2008/08/06 15:01:24 plunky Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.14.4.1 2010/01/03 17:52:13 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.14 2008/08/06 15:01:24 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.14.4.1 2010/01/03 17:52:13 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1365,7 +1365,8 @@ rfcomm_session_recv_mcc_pn(struct rfcomm_session *rs, int cr, struct mbuf *m)
 
 		callout_stop(&dlc->rd_timeout);
 
-		if (pn.mtu > RFCOMM_MTU_MAX || pn.mtu > dlc->rd_mtu) {
+		/* reject invalid or unacceptable MTU */
+		if (pn.mtu < RFCOMM_MTU_MIN || pn.mtu > dlc->rd_mtu) {
 			dlc->rd_state = RFCOMM_DLC_WAIT_DISCONNECT;
 			err = rfcomm_session_send_frame(rs, RFCOMM_FRAME_DISC,
 							pn.dlci);
