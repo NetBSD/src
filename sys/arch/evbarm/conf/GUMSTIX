@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.42 2009/12/07 08:58:48 kiyohara Exp $
+#	$NetBSD: GUMSTIX,v 1.43 2010/01/03 09:52:16 kiyohara Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -291,6 +291,10 @@ wsmouse* at ums? mux 0
 # USB Keyboards
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
+
+# USB LCDs and USB-VGA adaptors
+udl*	at uhub? port ?			# DisplayLink DL-1x0/1x5
+wsdisplay* at udl?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
