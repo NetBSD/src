@@ -1,4 +1,4 @@
-# $NetBSD: XBOX,v 1.17 2009/12/23 01:04:46 pooka Exp $
+# $NetBSD: XBOX,v 1.18 2010/01/03 03:50:38 dholland Exp $
 #
 # XBOX -- A basic Microsoft XBox kernel config file.
 #
@@ -12,7 +12,7 @@ options 	REALEXTMEM=60416	# size of extended memory (in KB)
 
 options 	MSGBUFSIZE=65536	# for PCI_CONFIG_DUMP space
 
-#options 	NFS_BOOT_RWSIZE=1024	# kue0 USB ethernet has issues here
+#options 	NFS_BOOT_RWSIZE=1024	# kue0 USB Ethernet has issues here
 
 options 	TIMER_FREQ=1125000
 options 	XBOX		# kernel support for xbox
@@ -52,7 +52,7 @@ file-system 	UDF		# OSTA UDF CD/DVD file-system
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
-#options 	INET6		# IPV6
+#options 	INET6		# IPv6
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
