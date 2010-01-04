@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4.c,v 1.16 2007/12/03 15:34:22 ad Exp $	*/
+/*	$NetBSD: timer_sun4.c,v 1.17 2010/01/04 03:54:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4.c,v 1.16 2007/12/03 15:34:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4.c,v 1.17 2010/01/04 03:54:42 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -134,7 +134,7 @@ statintr_4(void *cap)
 	 * The factor 8 is only valid for stathz==100.
 	 * See also clock.c
 	 */
-	if (curlwp && (++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0) {
+	if ((++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0) {
 		if (CLKF_LOPRI(frame, IPL_SCHED)) {
 			/* No need to schedule a soft interrupt */
 			spllowerschedclock();

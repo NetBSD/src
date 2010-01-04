@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.24 2010/01/03 23:03:21 mrg Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.25 2010/01/04 03:54:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.24 2010/01/03 23:03:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.25 2010/01/04 03:54:42 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -289,7 +289,7 @@ statintr_msiiep(void *cap)
 	 * The factor 8 is only valid for stathz==100.
 	 * See also clock.c
 	 */
-	if (curlwp && (++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0) {
+	if ((++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0) {
 		if (CLKF_LOPRI(frame, IPL_SCHED)) {
 			/* No need to schedule a soft interrupt */
 			spllowerschedclock();
