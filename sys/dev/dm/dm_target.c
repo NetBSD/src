@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.11 2009/09/09 22:38:49 haad Exp $      */
+/*        $NetBSD: dm_target.c,v 1.12 2010/01/04 00:14:41 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "netbsd-dm.h"
 #include "dm.h"
 
-static dm_target_t* dm_target_lookup_name(const char *);
+static dm_target_t *dm_target_lookup_name(const char *);
 
 TAILQ_HEAD(dm_target_head, dm_target);
 
@@ -52,21 +52,19 @@ kmutex_t dm_target_mutex;
  * Called indirectly from dm_table_load_ioctl to mark target as used.
  */
 void
-dm_target_busy(dm_target_t *target)
+dm_target_busy(dm_target_t * target)
 {
 	atomic_inc_32(&target->ref_cnt);
 }
-
 /*
  * Release reference counter on target.
  */
 void
-dm_target_unbusy(dm_target_t *target)
+dm_target_unbusy(dm_target_t * target)
 {
 	KASSERT(target->ref_cnt > 0);
 	atomic_dec_32(&target->ref_cnt);
 }
-
 /*
  * Try to autoload target module if it was not found in current
  * target list.
@@ -79,26 +77,25 @@ dm_target_autoload(const char *dm_target_name)
 	dm_target_t *dmt;
 
 	snprintf(name, sizeof(name), "dm_target_%s", dm_target_name);
-	name[29]='\0';
-	
+	name[29] = '\0';
+
 	do {
 		gen = module_gen;
-		
+
 		/* Try to autoload target module */
 		mutex_enter(&module_lock);
 		(void) module_autoload(name, MODULE_CLASS_MISC);
 		mutex_exit(&module_lock);
-	} while (gen != module_gen);	
+	} while (gen != module_gen);
 
 	mutex_enter(&dm_target_mutex);
 	dmt = dm_target_lookup_name(dm_target_name);
 	if (dmt != NULL)
 		dm_target_busy(dmt);
 	mutex_exit(&dm_target_mutex);
-	
+
 	return dmt;
 }
-
 /*
  * Lookup for target in global target list.
  */
@@ -117,20 +114,20 @@ dm_target_lookup(const char *dm_target_name)
 	dmt = dm_target_lookup_name(dm_target_name);
 	if (dmt != NULL)
 		dm_target_busy(dmt);
-	
+
 	mutex_exit(&dm_target_mutex);
-	
-	return dmt;	
+
+	return dmt;
 }
-	
 /*
  * Search for name in TAIL and return apropriate pointer.
  */
-static dm_target_t*
+static dm_target_t *
 dm_target_lookup_name(const char *dm_target_name)
 {
 	dm_target_t *dm_target;
-        int dlen; int slen;
+	int dlen;
+	int slen;
 
 	slen = strlen(dm_target_name) + 1;
 
@@ -138,24 +135,23 @@ dm_target_lookup_name(const char *dm_target_name)
 		dlen = strlen(dm_target->name) + 1;
 		if (dlen != slen)
 			continue;
-		
+
 		if (strncmp(dm_target_name, dm_target->name, slen) == 0)
 			return dm_target;
 	}
 
 	return NULL;
 }
-
 /*
  * Insert new target struct into the TAIL.
  * dm_target
  *   contains name, version, function pointer to specifif target functions.
  */
 int
-dm_target_insert(dm_target_t *dm_target)
+dm_target_insert(dm_target_t * dm_target)
 {
 	dm_target_t *dmt;
-	
+
 	mutex_enter(&dm_target_mutex);
 
 	dmt = dm_target_lookup_name(dm_target->name);
@@ -163,11 +159,10 @@ dm_target_insert(dm_target_t *dm_target)
 		mutex_exit(&dm_target_mutex);
 		return EEXIST;
 	}
-		
 	TAILQ_INSERT_TAIL(&dm_target_list, dm_target, dm_target_next);
 
 	mutex_exit(&dm_target_mutex);
-	
+
 	return 0;
 }
 
@@ -179,32 +174,29 @@ int
 dm_target_rem(char *dm_target_name)
 {
 	dm_target_t *dmt;
-	
+
 	KASSERT(dm_target_name != NULL);
 
 	mutex_enter(&dm_target_mutex);
-	
+
 	dmt = dm_target_lookup_name(dm_target_name);
 	if (dmt == NULL) {
 		mutex_exit(&dm_target_mutex);
 		return ENOENT;
 	}
-		
 	if (dmt->ref_cnt > 0) {
 		mutex_exit(&dm_target_mutex);
 		return EBUSY;
 	}
-	
 	TAILQ_REMOVE(&dm_target_list,
 	    dmt, dm_target_next);
 
 	mutex_exit(&dm_target_mutex);
-	
-	(void)kmem_free(dmt, sizeof(dm_target_t));
+
+	(void) kmem_free(dmt, sizeof(dm_target_t));
 
 	return 0;
 }
-
 /*
  * Destroy all targets and remove them from queue.
  * This routine is called from dm_detach, before module
@@ -216,38 +208,36 @@ dm_target_destroy(void)
 	dm_target_t *dm_target;
 
 	mutex_enter(&dm_target_mutex);
-	while (TAILQ_FIRST(&dm_target_list) != NULL){
+	while (TAILQ_FIRST(&dm_target_list) != NULL) {
 
 		dm_target = TAILQ_FIRST(&dm_target_list);
-		
+
 		TAILQ_REMOVE(&dm_target_list, TAILQ_FIRST(&dm_target_list),
-		dm_target_next);
-		
-		(void)kmem_free(dm_target, sizeof(dm_target_t));
+		    dm_target_next);
+
+		(void) kmem_free(dm_target, sizeof(dm_target_t));
 	}
 	mutex_exit(&dm_target_mutex);
-	
+
 	mutex_destroy(&dm_target_mutex);
-	
+
 	return 0;
 }
-
 /*
  * Allocate new target entry.
  */
-dm_target_t*
+dm_target_t *
 dm_target_alloc(const char *name)
 {
 	return kmem_zalloc(sizeof(dm_target_t), KM_SLEEP);
 }
-
 /*
  * Return prop_array of dm_target dictionaries.
  */
 prop_array_t
 dm_target_prop_list(void)
 {
-	prop_array_t target_array,ver;
+	prop_array_t target_array, ver;
 	prop_dictionary_t target_dict;
 	dm_target_t *dm_target;
 
@@ -256,10 +246,10 @@ dm_target_prop_list(void)
 	target_array = prop_array_create();
 
 	mutex_enter(&dm_target_mutex);
-	
-	TAILQ_FOREACH (dm_target, &dm_target_list, dm_target_next){
 
-		target_dict  = prop_dictionary_create();
+	TAILQ_FOREACH(dm_target, &dm_target_list, dm_target_next) {
+
+		target_dict = prop_dictionary_create();
 		ver = prop_array_create();
 		prop_dictionary_set_cstring(target_dict, DM_TARGETS_NAME,
 		    dm_target->name);
@@ -275,24 +265,23 @@ dm_target_prop_list(void)
 	}
 
 	mutex_exit(&dm_target_mutex);
-	
+
 	return target_array;
 }
-
 /* Initialize dm_target subsystem. */
 int
 dm_target_init(void)
 {
-	dm_target_t *dmt,*dmt3;
+	dm_target_t *dmt, *dmt3;
 	int r;
 
 	r = 0;
 
 	mutex_init(&dm_target_mutex, MUTEX_DEFAULT, IPL_NONE);
-	
+
 	dmt = dm_target_alloc("linear");
 	dmt3 = dm_target_alloc("striped");
-	
+
 	dmt->version[0] = 1;
 	dmt->version[1] = 0;
 	dmt->version[2] = 2;
@@ -303,9 +292,9 @@ dm_target_init(void)
 	dmt->deps = &dm_target_linear_deps;
 	dmt->destroy = &dm_target_linear_destroy;
 	dmt->upcall = &dm_target_linear_upcall;
-	
+
 	r = dm_target_insert(dmt);
-		
+
 	dmt3->version[0] = 1;
 	dmt3->version[1] = 0;
 	dmt3->version[2] = 3;
@@ -316,10 +305,10 @@ dm_target_init(void)
 	dmt3->deps = &dm_target_stripe_deps;
 	dmt3->destroy = &dm_target_stripe_destroy;
 	dmt3->upcall = &dm_target_stripe_upcall;
-	
+
 	r = dm_target_insert(dmt3);
 
-#ifdef notyet	
+#ifdef notyet
 	dmt5->version[0] = 1;
 	dmt5->version[1] = 0;
 	dmt5->version[2] = 5;
@@ -330,9 +319,9 @@ dm_target_init(void)
 	dmt5->deps = &dm_target_snapshot_deps;
 	dmt5->destroy = &dm_target_snapshot_destroy;
 	dmt5->upcall = &dm_target_snapshot_upcall;
-	
+
 	r = dm_target_insert(dmt5);
-	
+
 	dmt6->version[0] = 1;
 	dmt6->version[1] = 0;
 	dmt6->version[2] = 5;
@@ -346,6 +335,6 @@ dm_target_init(void)
 
 	r = dm_target_insert(dmt6);
 #endif
-	
+
 	return r;
 }

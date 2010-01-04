@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.5 2010/01/03 12:53:00 haad Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.6 2010/01/04 00:19:08 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -44,20 +44,21 @@
 
 SLIST_HEAD(dm_pdevs, dm_pdev) dm_pdev_list;
 
-kmutex_t dm_pdev_mutex;
+	kmutex_t dm_pdev_mutex;
 
-static dm_pdev_t *dm_pdev_alloc(const char *);
-static int dm_pdev_rem(dm_pdev_t *);
-static dm_pdev_t* dm_pdev_lookup_name(const char *);
+	static dm_pdev_t *dm_pdev_alloc(const char *);
+	static int dm_pdev_rem(dm_pdev_t *);
+	static dm_pdev_t *dm_pdev_lookup_name(const char *);
 
 /*
  * Find used pdev with name == dm_pdev_name.
  */
-dm_pdev_t*
-dm_pdev_lookup_name(const char *dm_pdev_name)
+	dm_pdev_t *
+	          dm_pdev_lookup_name(const char *dm_pdev_name)
 {
 	dm_pdev_t *dm_pdev;
-	int dlen; int slen;
+	int dlen;
+	int slen;
 
 	KASSERT(dm_pdev_name != NULL);
 
@@ -68,38 +69,37 @@ dm_pdev_lookup_name(const char *dm_pdev_name)
 
 		if (slen != dlen)
 			continue;
-		
+
 		if (strncmp(dm_pdev_name, dm_pdev->name, slen) == 0)
 			return dm_pdev;
 	}
 
 	return NULL;
 }
-
 /*
  * Create entry for device with name dev_name and open vnode for it.
  * If entry already exists in global SLIST I will only increment
  * reference counter.
  */
-dm_pdev_t*
+dm_pdev_t *
 dm_pdev_insert(const char *dev_name)
 {
 	dm_pdev_t *dmp;
 	int error;
-	
+
 	KASSERT(dev_name != NULL);
-	
+
 	mutex_enter(&dm_pdev_mutex);
 	dmp = dm_pdev_lookup_name(dev_name);
 
 	if (dmp != NULL) {
 		dmp->ref_cnt++;
-		aprint_debug("dmp_pdev_insert pdev %s already in tree\n",dev_name);
+		aprint_debug("dmp_pdev_insert pdev %s already in tree\n", dev_name);
 		mutex_exit(&dm_pdev_mutex);
 		return dmp;
 	}
 	mutex_exit(&dm_pdev_mutex);
-	
+
 	if ((dmp = dm_pdev_alloc(dev_name)) == NULL)
 		return NULL;
 
@@ -110,33 +110,30 @@ dm_pdev_insert(const char *dev_name)
 		kmem_free(dmp, sizeof(dm_pdev_t));
 		return NULL;
 	}
-
 	dmp->ref_cnt = 1;
-	
+
 	mutex_enter(&dm_pdev_mutex);
 	SLIST_INSERT_HEAD(&dm_pdev_list, dmp, next_pdev);
 	mutex_exit(&dm_pdev_mutex);
 
 	return dmp;
 }
-
 /*
  * Initialize pdev subsystem.
  */
 int
 dm_pdev_init(void)
 {
-	SLIST_INIT(&dm_pdev_list); /* initialize global pdev list */
+	SLIST_INIT(&dm_pdev_list);	/* initialize global pdev list */
 	mutex_init(&dm_pdev_mutex, MUTEX_DEFAULT, IPL_NONE);
-	
+
 	return 0;
 }
-
 /*
  * Allocat new pdev structure if is not already present and
  * set name.
  */
-static dm_pdev_t*
+static dm_pdev_t *
 dm_pdev_alloc(const char *name)
 {
 	dm_pdev_t *dmp;
@@ -145,35 +142,32 @@ dm_pdev_alloc(const char *name)
 		return NULL;
 
 	strlcpy(dmp->name, name, MAX_DEV_NAME);
-	
+
 	dmp->ref_cnt = 0;
 	dmp->pdev_vnode = NULL;
-	
+
 	return dmp;
 }
-
 /*
  * Destroy allocated dm_pdev.
  */
 static int
-dm_pdev_rem(dm_pdev_t *dmp)
+dm_pdev_rem(dm_pdev_t * dmp)
 {
 	int err;
 
 	KASSERT(dmp != NULL);
-		
+
 	if (dmp->pdev_vnode != NULL) {
 		err = vn_close(dmp->pdev_vnode, FREAD | FWRITE, FSCRED);
 		if (err != 0)
 			return err;
 	}
-	
 	kmem_free(dmp, sizeof(*dmp));
 	dmp = NULL;
-	
+
 	return 0;
 }
-
 /*
  * Destroy all existing pdev's in device-mapper.
  */
@@ -183,10 +177,10 @@ dm_pdev_destroy(void)
 	dm_pdev_t *dm_pdev;
 
 	mutex_enter(&dm_pdev_mutex);
-	while (!SLIST_EMPTY(&dm_pdev_list)) {           /* List Deletion. */
-		
+	while (!SLIST_EMPTY(&dm_pdev_list)) {	/* List Deletion. */
+
 		dm_pdev = SLIST_FIRST(&dm_pdev_list);
-		
+
 		SLIST_REMOVE_HEAD(&dm_pdev_list, next_pdev);
 
 		dm_pdev_rem(dm_pdev);
@@ -196,7 +190,6 @@ dm_pdev_destroy(void)
 	mutex_destroy(&dm_pdev_mutex);
 	return 0;
 }
-
 /*
  * This funcion is called from dm_dev_remove_ioctl.
  * When I'm removing device from list, I have to decrement
@@ -209,7 +202,7 @@ dm_pdev_destroy(void)
  * Decrement pdev reference counter if 0 remove it.
  */
 int
-dm_pdev_decr(dm_pdev_t *dmp)
+dm_pdev_decr(dm_pdev_t * dmp)
 {
 	KASSERT(dmp != NULL);
 	/*
@@ -217,18 +210,16 @@ dm_pdev_decr(dm_pdev_t *dmp)
 	 * global list also.
 	 */
 	mutex_enter(&dm_pdev_mutex);
-	
+
 	if (--dmp->ref_cnt == 0) {
-		SLIST_REMOVE(&dm_pdev_list, dmp, dm_pdev, next_pdev); 
+		SLIST_REMOVE(&dm_pdev_list, dmp, dm_pdev, next_pdev);
 		mutex_exit(&dm_pdev_mutex);
 		dm_pdev_rem(dmp);
 		return 0;
 	}
-	
 	mutex_exit(&dm_pdev_mutex);
 	return 0;
 }
-
 /*static int
   dm_pdev_dump_list(void)
   {
@@ -241,6 +232,6 @@ dm_pdev_decr(dm_pdev_t *dmp)
   dmp->name, dmp->ref_cnt, dmp->list_ref_cnt);
   }
 	
-  return 0;	
+  return 0;
 	
   }*/

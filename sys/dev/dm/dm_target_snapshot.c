@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.11 2009/12/01 23:12:10 haad Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.12 2010/01/04 00:12:22 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  *
  * After snapshot creation
  *                               |my_data_org;0 1024 linear /dev/sd1a 384|
- *                              /             
+ *                              /
  * |my_data; 0 1024 snapshot-origin /dev/vg00/my_data_org|
  *                           /
  * |my_data_snap; 0 1024 snapshot /dev/vg00/my_data /dev/mapper/my_data_cow P 8
@@ -106,19 +106,17 @@ dm_target_snapshot_modcmd(modcmd_t cmd, void *arg)
 
 	dmt = NULL;
 	dmt1 = NULL;
-	
+
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		if (((dmt = dm_target_lookup("snapshot")) != NULL)) {
 			dm_target_unbusy(dmt);
 			return EEXIST;
 		}
-				
-		if (((dmt = dm_target_lookup("snapshot-origin")) != NULL)){
+		if (((dmt = dm_target_lookup("snapshot-origin")) != NULL)) {
 			dm_target_unbusy(dmt);
 			return EEXIST;
 		}
-	
 		dmt = dm_target_alloc("snapshot");
 		dmt1 = dm_target_alloc("snapshot-origin");
 
@@ -169,16 +167,15 @@ dm_target_snapshot_modcmd(modcmd_t cmd, void *arg)
 
 	return r;
 }
-
 #endif
 
 /*
  * Init function called from dm_table_load_ioctl.
- * argv:  /dev/mapper/my_data_org /dev/mapper/tsc_cow_dev p 64 
+ * argv:  /dev/mapper/my_data_org /dev/mapper/tsc_cow_dev p 64
  *        snapshot_origin device, cow device, persistent flag, chunk size
  */
 int
-dm_target_snapshot_init(dm_dev_t *dmv, void **target_config, char *params)
+dm_target_snapshot_init(dm_dev_t * dmv, void **target_config, char *params)
 {
 	dm_target_snapshot_config_t *tsc;
 	dm_pdev_t *dmp_snap, *dmp_cow;
@@ -193,46 +190,44 @@ dm_target_snapshot_init(dm_dev_t *dmv, void **target_config, char *params)
 	 * into an argument vector
 	 */
 	for (ap = argv; ap < &argv[4] &&
-		 (*ap = strsep(&params, " \t")) != NULL;) {
+	    (*ap = strsep(&params, " \t")) != NULL;) {
 		if (**ap != '\0')
 			ap++;
 	}
-	
+
 	printf("Snapshot target init function called!!\n");
 	printf("Snapshotted device: %s, cow device %s,\n\t persistent flag: %s, "
 	    "chunk size: %s\n", argv[0], argv[1], argv[2], argv[3]);
-	
+
 	/* Insert snap device to global pdev list */
 	if ((dmp_snap = dm_pdev_insert(argv[0])) == NULL)
 		return ENOENT;
-	
+
 	if ((tsc = kmem_alloc(sizeof(dm_target_snapshot_config_t), KM_NOSLEEP))
 	    == NULL)
 		return 1;
-		
+
 	tsc->tsc_persistent_dev = 0;
-	
+
 	/* There is now cow device for nonpersistent snapshot devices */
 	if (strcmp(argv[2], "p") == 0) {
 		tsc->tsc_persistent_dev = 1;
-		
+
 		/* Insert cow device to global pdev list */
 		if ((dmp_cow = dm_pdev_insert(argv[1])) == NULL)
-			return ENOENT;	
+			return ENOENT;
 	}
-	
 	tsc->tsc_chunk_size = atoi(argv[3]);
-	
+
 	tsc->tsc_snap_dev = dmp_snap;
 	tsc->tsc_cow_dev = dmp_cow;
-	
+
 	*target_config = tsc;
-	
+
 	dmv->dev_type = DM_SNAPSHOT_DEV;
-	
+
 	return 0;
 }
-
 /*
  * Status routine is called to get params string, which is target
  * specific. When dm_table_status_ioctl is called with flag
@@ -242,14 +237,14 @@ char *
 dm_target_snapshot_status(void *target_config)
 {
 	dm_target_snapshot_config_t *tsc;
-	
+
 	uint32_t i;
 	uint32_t count;
 	size_t prm_len, cow_len;
 	char *params, *cow_name;
-	
+
 	tsc = target_config;
-	
+
 	prm_len = 0;
 	cow_len = 0;
 	count = 0;
@@ -258,33 +253,32 @@ dm_target_snapshot_status(void *target_config)
 	printf("Snapshot target status function called\n");
 
 	/* count number of chars in offset */
-	for(i = tsc->tsc_chunk_size; i != 0; i /= 10)
+	for (i = tsc->tsc_chunk_size; i != 0; i /= 10)
 		count++;
-	
-	if(tsc->tsc_persistent_dev)
+
+	if (tsc->tsc_persistent_dev)
 		cow_len = strlen(tsc->tsc_cow_dev->name);
-	
+
 	/* length of names + count of chars + spaces and null char */
 	prm_len = strlen(tsc->tsc_snap_dev->name) + cow_len + count + 5;
-	
+
 	if ((params = kmem_alloc(prm_len, KM_NOSLEEP)) == NULL)
 		return NULL;
 
-	printf("%s %s %s %"PRIu64"\n", tsc->tsc_snap_dev->name, 
-		tsc->tsc_cow_dev->name, tsc->tsc_persistent_dev ? "p":"n", 
-		tsc->tsc_chunk_size);
-	
-	snprintf(params, prm_len, "%s %s %s %"PRIu64, tsc->tsc_snap_dev->name, 
-		tsc->tsc_persistent_dev ? tsc->tsc_cow_dev->name : "", 
-		tsc->tsc_persistent_dev ? "p":"n", 
-		tsc->tsc_chunk_size);
-	
+	printf("%s %s %s %" PRIu64 "\n", tsc->tsc_snap_dev->name,
+	    tsc->tsc_cow_dev->name, tsc->tsc_persistent_dev ? "p" : "n",
+	    tsc->tsc_chunk_size);
+
+	snprintf(params, prm_len, "%s %s %s %" PRIu64, tsc->tsc_snap_dev->name,
+	    tsc->tsc_persistent_dev ? tsc->tsc_cow_dev->name : "",
+	    tsc->tsc_persistent_dev ? "p" : "n",
+	    tsc->tsc_chunk_size);
+
 	return params;
 }
-
 /* Strategy routine called from dm_strategy. */
 int
-dm_target_snapshot_strategy(dm_table_entry_t *table_en, struct buf *bp)
+dm_target_snapshot_strategy(dm_table_entry_t * table_en, struct buf * bp)
 {
 
 	printf("Snapshot target read function called!!\n");
@@ -293,90 +287,85 @@ dm_target_snapshot_strategy(dm_table_entry_t *table_en, struct buf *bp)
 	bp->b_resid = 0;
 
 	biodone(bp);
-	
+
 	return 0;
 }
-
 /* Doesn't do anything here. */
 int
-dm_target_snapshot_destroy(dm_table_entry_t *table_en)
+dm_target_snapshot_destroy(dm_table_entry_t * table_en)
 {
 	dm_target_snapshot_config_t *tsc;
-	
+
 	/*
 	 * Destroy function is called for every target even if it
 	 * doesn't have target_config.
 	 */
-	
+
 	if (table_en->target_config == NULL)
 		return 0;
-	
+
 	printf("Snapshot target destroy function called\n");
-	
+
 	tsc = table_en->target_config;
-	
+
 	/* Decrement pdev ref counter if 0 remove it */
 	dm_pdev_decr(tsc->tsc_snap_dev);
-		
+
 	if (tsc->tsc_persistent_dev)
 		dm_pdev_decr(tsc->tsc_cow_dev);
 
-        /* Unbusy target so we can unload it */
+	/* Unbusy target so we can unload it */
 	dm_target_unbusy(table_en->target);
-	
+
 	kmem_free(table_en->target_config, sizeof(dm_target_snapshot_config_t));
 
 	table_en->target_config = NULL;
 
 	return 0;
 }
-
 /* Add this target dependiences to prop_array_t */
 int
-dm_target_snapshot_deps(dm_table_entry_t *table_en, 
-	prop_array_t prop_array)
+dm_target_snapshot_deps(dm_table_entry_t * table_en,
+    prop_array_t prop_array)
 {
 	dm_target_snapshot_config_t *tsc;
 	struct vattr va;
-	
+
 	int error;
-	
+
 	if (table_en->target_config == NULL)
 		return 0;
 
 	tsc = table_en->target_config;
-	
+
 	if ((error = VOP_GETATTR(tsc->tsc_snap_dev->pdev_vnode, &va, curlwp->l_cred)) != 0)
 		return error;
-	
-	prop_array_add_uint64(prop_array, (uint64_t)va.va_rdev);
-	
+
+	prop_array_add_uint64(prop_array, (uint64_t) va.va_rdev);
+
 	if (tsc->tsc_persistent_dev) {
-	
-		if ((error = VOP_GETATTR(tsc->tsc_cow_dev->pdev_vnode, &va, 
-				curlwp->l_cred)) != 0)
+
+		if ((error = VOP_GETATTR(tsc->tsc_cow_dev->pdev_vnode, &va,
+			    curlwp->l_cred)) != 0)
 			return error;
 
-		prop_array_add_uint64(prop_array, (uint64_t)va.va_rdev);
-	
+		prop_array_add_uint64(prop_array, (uint64_t) va.va_rdev);
+
 	}
-	
 	return 0;
 }
-
 /* Upcall is used to inform other depended devices about IO. */
 int
-dm_target_snapshot_upcall(dm_table_entry_t *table_en, struct buf *bp)
+dm_target_snapshot_upcall(dm_table_entry_t * table_en, struct buf * bp)
 {
 	printf("dm_target_snapshot_upcall called\n");
-	
-	printf("upcall buf flags %s %s\n", 
-		(bp->b_flags & B_WRITE) ? "B_WRITE":"",
-		(bp->b_flags & B_READ) ? "B_READ":"");
-	
+
+	printf("upcall buf flags %s %s\n",
+	    (bp->b_flags & B_WRITE) ? "B_WRITE" : "",
+	    (bp->b_flags & B_READ) ? "B_READ" : "");
+
 	return 0;
 }
-
 /*
  * dm target snapshot origin routines.
  *
@@ -386,41 +375,40 @@ dm_target_snapshot_upcall(dm_table_entry_t *table_en, struct buf *bp)
  * snapshot device when write is done on master device.
  */
 
-/* 
- * Init function called from dm_table_load_ioctl. 
- * 
+/*
+ * Init function called from dm_table_load_ioctl.
+ *
  * argv: /dev/mapper/my_data_real
  */
 int
-dm_target_snapshot_orig_init(dm_dev_t *dmv, void **target_config, 
-	prop_dictionary_t dict)
+dm_target_snapshot_orig_init(dm_dev_t * dmv, void **target_config,
+    prop_dictionary_t dict)
 {
 	dm_target_snapshot_origin_config_t *tsoc;
 	dm_pdev_t *dmp_real;
 
 	if (params == NULL)
 		return EINVAL;
-	
+
 	printf("Snapshot origin target init function called!!\n");
 	printf("Parent device: %s\n", params);
 
 	/* Insert snap device to global pdev list */
 	if ((dmp_real = dm_pdev_insert(params)) == NULL)
 		return ENOENT;
-	
+
 	if ((tsoc = kmem_alloc(sizeof(dm_target_snapshot_origin_config_t), KM_NOSLEEP))
 	    == NULL)
 		return 1;
 
 	tsoc->tsoc_real_dev = dmp_real;
-	
+
 	dmv->dev_type = DM_SNAPSHOT_ORIG_DEV;
-	
+
 	*target_config = tsoc;
-	
+
 	return 0;
 }
-
 /*
  * Status routine is called to get params string, which is target
  * specific. When dm_table_status_ioctl is called with flag
@@ -433,31 +421,30 @@ dm_target_snapshot_orig_status(void *target_config)
 
 	size_t prm_len;
 	char *params;
-	
+
 	tsoc = target_config;
-	
+
 	prm_len = 0;
-	
+
 	printf("Snapshot origin target status function called\n");
-	
+
 	/* length of names + count of chars + spaces and null char */
 	prm_len = strlen(tsoc->tsoc_real_dev->name) + 1;
-		
-	printf("real_dev name %s\n",tsoc->tsoc_real_dev->name);
-	
+
+	printf("real_dev name %s\n", tsoc->tsoc_real_dev->name);
+
 	if ((params = kmem_alloc(prm_len, KM_NOSLEEP)) == NULL)
 		return NULL;
 
 	printf("%s\n", tsoc->tsoc_real_dev->name);
-	
+
 	snprintf(params, prm_len, "%s", tsoc->tsoc_real_dev->name);
-	
+
 	return params;
 }
-
 /* Strategy routine called from dm_strategy. */
 int
-dm_target_snapshot_orig_strategy(dm_table_entry_t *table_en, struct buf *bp)
+dm_target_snapshot_orig_strategy(dm_table_entry_t * table_en, struct buf * bp)
 {
 
 	printf("Snapshot_Orig target read function called!!\n");
@@ -466,68 +453,65 @@ dm_target_snapshot_orig_strategy(dm_table_entry_t *table_en, struct buf *bp)
 	bp->b_resid = 0;
 
 	biodone(bp);
-	
+
 	return 0;
 }
-
 /* Decrement pdev and free allocated space. */
 int
-dm_target_snapshot_orig_destroy(dm_table_entry_t *table_en)
+dm_target_snapshot_orig_destroy(dm_table_entry_t * table_en)
 {
 	dm_target_snapshot_origin_config_t *tsoc;
-	
+
 	/*
 	 * Destroy function is called for every target even if it
 	 * doesn't have target_config.
 	 */
-	
+
 	if (table_en->target_config == NULL)
 		return 0;
-	
+
 	tsoc = table_en->target_config;
-	
+
 	/* Decrement pdev ref counter if 0 remove it */
 	dm_pdev_decr(tsoc->tsoc_real_dev);
 
 	/* Unbusy target so we can unload it */
 	dm_target_unbusy(table_en->target);
-	
+
 	kmem_free(table_en->target_config, sizeof(dm_target_snapshot_origin_config_t));
 
 	table_en->target_config = NULL;
 
 	return 0;
 }
-
 /*
  * Get target deps and add them to prop_array_t.
  */
 int
-dm_target_snapshot_orig_deps(dm_table_entry_t *table_en,
- 	prop_array_t prop_array)
+dm_target_snapshot_orig_deps(dm_table_entry_t * table_en,
+    prop_array_t prop_array)
 {
 	dm_target_snapshot_origin_config_t *tsoc;
 	struct vattr va;
-	
+
 	int error;
-	
+
 	if (table_en->target_config == NULL)
 		return 0;
 
 	tsoc = table_en->target_config;
-	
-	if ((error = VOP_GETATTR(tsoc->tsoc_real_dev->pdev_vnode, &va, 
-			curlwp->l_cred)) != 0)
+
+	if ((error = VOP_GETATTR(tsoc->tsoc_real_dev->pdev_vnode, &va,
+		    curlwp->l_cred)) != 0)
 		return error;
-	
-	prop_array_add_uint64(prop_array, (uint64_t)va.va_rdev);
-	
+
+	prop_array_add_uint64(prop_array, (uint64_t) va.va_rdev);
+
 	return 0;
 }
-
 /* Unsupported for this target. */
 int
-dm_target_snapshot_orig_upcall(dm_table_entry_t *table_en, struct buf *bp)
+dm_target_snapshot_orig_upcall(dm_table_entry_t * table_en, struct buf * bp)
 {
 	return 0;
 }
