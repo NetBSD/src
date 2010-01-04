@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.4 2009/10/23 20:41:11 joerg Exp $      */
+/*        $NetBSD: dm_table.c,v 1.5 2010/01/04 00:19:08 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 /*
  * There are two types of users of this interface:
- * 
+ *
  * a) Readers such as
  *    dmstrategy, dmgetdisklabel, dmsize, dm_dev_status_ioctl,
  *    dm_table_deps_ioctl, dm_table_status_ioctl, dm_table_reload_ioctl
@@ -51,7 +51,7 @@
  *
  */
 
-static int dm_table_busy(dm_table_head_t *, uint8_t );
+static int dm_table_busy(dm_table_head_t *, uint8_t);
 static void dm_table_unbusy(dm_table_head_t *);
 
 /*
@@ -61,7 +61,7 @@ static void dm_table_unbusy(dm_table_head_t *);
  * DM_TABLE_INACTIVE will return inactive table id.
  */
 static int
-dm_table_busy(dm_table_head_t *head, uint8_t table_id)
+dm_table_busy(dm_table_head_t * head, uint8_t table_id)
 {
 	uint8_t id;
 
@@ -79,50 +79,46 @@ dm_table_busy(dm_table_head_t *head, uint8_t table_id)
 	mutex_exit(&head->table_mtx);
 	return id;
 }
-
 /*
  * Function release table lock and eventually wakeup all waiters.
  */
 static void
-dm_table_unbusy(dm_table_head_t *head)
+dm_table_unbusy(dm_table_head_t * head)
 {
 	KASSERT(head->io_cnt != 0);
 
 	mutex_enter(&head->table_mtx);
-	
+
 	if (--head->io_cnt == 0)
 		cv_broadcast(&head->table_cv);
-	
+
 	mutex_exit(&head->table_mtx);
 }
-
 /*
  * Return current active table to caller, increment io_cnt reference counter.
  */
 dm_table_t *
-dm_table_get_entry(dm_table_head_t *head, uint8_t table_id)
+dm_table_get_entry(dm_table_head_t * head, uint8_t table_id)
 {
 	uint8_t id;
 
 	id = dm_table_busy(head, table_id);
-	
+
 	return &head->tables[id];
 }
-
 /*
  * Decrement io reference counter and wake up all callers, with table_head cv.
  */
 void
-dm_table_release(dm_table_head_t *head, uint8_t table_id)
+dm_table_release(dm_table_head_t * head, uint8_t table_id)
 {
 	dm_table_unbusy(head);
 }
-
 /*
  * Switch table from inactive to active mode. Have to wait until io_cnt is 0.
  */
 void
-dm_table_switch_tables(dm_table_head_t *head)
+dm_table_switch_tables(dm_table_head_t * head)
 {
 	mutex_enter(&head->table_mtx);
 
@@ -133,7 +129,6 @@ dm_table_switch_tables(dm_table_head_t *head)
 
 	mutex_exit(&head->table_mtx);
 }
-
 /*
  * Destroy all table data. This function can run when there are no
  * readers on table lists.
@@ -141,9 +136,9 @@ dm_table_switch_tables(dm_table_head_t *head)
  * XXX Is it ok to call kmem_free and potentialy VOP_CLOSE with held mutex ?xs
  */
 int
-dm_table_destroy(dm_table_head_t *head, uint8_t table_id)
+dm_table_destroy(dm_table_head_t * head, uint8_t table_id)
 {
-	dm_table_t       *tbl;
+	dm_table_t *tbl;
 	dm_table_entry_t *table_en;
 	uint8_t id;
 
@@ -158,45 +153,44 @@ dm_table_destroy(dm_table_head_t *head, uint8_t table_id)
 		id = head->cur_active_table;
 	else
 		id = 1 - head->cur_active_table;
-	
+
 	tbl = &head->tables[id];
-	
-	while (!SLIST_EMPTY(tbl)) {           /* List Deletion. */
+
+	while (!SLIST_EMPTY(tbl)) {	/* List Deletion. */
 		table_en = SLIST_FIRST(tbl);
 		/*
 		 * Remove target specific config data. After successfull
 		 * call table_en->target_config must be set to NULL.
 		 */
-		table_en->target->destroy(table_en); 
-	
+		table_en->target->destroy(table_en);
+
 		SLIST_REMOVE_HEAD(tbl, next);
 
 		kmem_free(table_en, sizeof(*table_en));
 	}
 
 	mutex_exit(&head->table_mtx);
-	
+
 	return 0;
 }
-
 /*
  * Return length of active table in device.
  */
 uint64_t
-dm_table_size(dm_table_head_t *head)
+dm_table_size(dm_table_head_t * head)
 {
-	dm_table_t  *tbl;
+	dm_table_t *tbl;
 	dm_table_entry_t *table_en;
 	uint64_t length;
 	uint8_t id;
-	
+
 	length = 0;
 
 	id = dm_table_busy(head, DM_TABLE_ACTIVE);
-		
+
 	/* Select active table */
 	tbl = &head->tables[id];
-	
+
 	/*
 	 * Find out what tables I want to select.
 	 * if length => rawblkno then we should used that table.
@@ -205,10 +199,9 @@ dm_table_size(dm_table_head_t *head)
 	    length += table_en->length;
 
 	dm_table_unbusy(head);
-	
+
 	return length;
 }
-
 /*
  * Return > 0 if table is at least one table entry (returns number of entries)
  * and return 0 if there is not. Target count returned from this function
@@ -216,8 +209,8 @@ dm_table_size(dm_table_head_t *head)
  * there can be dm_dev_resume_ioctl), therfore this isonly informative.
  */
 int
-dm_table_get_target_count(dm_table_head_t *head, uint8_t table_id)
-{	
+dm_table_get_target_count(dm_table_head_t * head, uint8_t table_id)
+{
 	dm_table_entry_t *table_en;
 	dm_table_t *tbl;
 	uint32_t target_count;
@@ -233,7 +226,7 @@ dm_table_get_target_count(dm_table_head_t *head, uint8_t table_id)
 	    target_count++;
 
 	dm_table_unbusy(head);
-	
+
 	return target_count;
 }
 
@@ -243,11 +236,11 @@ dm_table_get_target_count(dm_table_head_t *head, uint8_t table_id)
  * opaque as possible.
  */
 void
-dm_table_head_init(dm_table_head_t *head)
+dm_table_head_init(dm_table_head_t * head)
 {
 	head->cur_active_table = 0;
 	head->io_cnt = 0;
-	
+
 	/* Initialize tables. */
 	SLIST_INIT(&head->tables[0]);
 	SLIST_INIT(&head->tables[1]);
@@ -255,19 +248,18 @@ dm_table_head_init(dm_table_head_t *head)
 	mutex_init(&head->table_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&head->table_cv, "dm_io");
 }
-
 /*
  * Destroy all variables in table_head
  */
 void
-dm_table_head_destroy(dm_table_head_t *head)
+dm_table_head_destroy(dm_table_head_t * head)
 {
 	KASSERT(!mutex_owned(&head->table_mtx));
 	KASSERT(!cv_has_waiters(&head->table_cv));
-	/* tables doens't exists when I call this routine, therefore
-	   it doesn't make sense to have io_cnt != 0 */
-	KASSERT(head->io_cnt == 0); 
-	
+	/* tables doens't exists when I call this routine, therefore it
+	 * doesn't make sense to have io_cnt != 0 */
+	KASSERT(head->io_cnt == 0);
+
 	cv_destroy(&head->table_cv);
 	mutex_destroy(&head->table_mtx);
 }
