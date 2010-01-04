@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.5 2010/01/04 09:34:47 jruoho Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.6 2010/01/04 09:43:30 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.5 2010/01/04 09:34:47 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.6 2010/01/04 09:43:30 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -391,7 +391,7 @@ acpi_wmi_event_add(struct acpi_wmi_softc *sc)
 	ACPI_STATUS rv;
 
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_DEVICE_NOTIFY, acpi_wmi_event_handler, sc);
+	    ACPI_ALL_NOTIFY, acpi_wmi_event_handler, sc);
 
 	if (ACPI_FAILURE(rv)) {
 		aprint_error_dev(sc->sc_dev, "failed to install notify "
@@ -429,7 +429,7 @@ acpi_wmi_event_del(struct acpi_wmi_softc *sc)
 	ACPI_STATUS rv;
 
 	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_DEVICE_NOTIFY, acpi_wmi_event_handler);
+	    ACPI_ALL_NOTIFY, acpi_wmi_event_handler);
 
 	if (ACPI_FAILURE(rv)) {
 		aprint_debug_dev(sc->sc_dev, "failed to remove notify "
@@ -596,12 +596,15 @@ acpi_wmi_input(struct wmi_t *wmi, uint8_t flag, uint8_t idx)
  * method for data collection will be invoked if it is available.
  */
 ACPI_STATUS
-acpi_wmi_data_query(device_t self, const char *guid, ACPI_BUFFER *obuf)
+acpi_wmi_data_query(device_t self, const char *guid,
+    uint8_t idx, ACPI_BUFFER *obuf)
 {
 	struct acpi_wmi_softc *sc = device_private(self);
 	struct wmi_t *wmi;
 	char path[5] = "WQ";
+	ACPI_OBJECT_LIST arg;
 	ACPI_STATUS rv, rvxx;
+	ACPI_OBJECT obj;
 
 	rvxx = AE_SUPPORT;
 
@@ -613,13 +616,16 @@ acpi_wmi_data_query(device_t self, const char *guid, ACPI_BUFFER *obuf)
 	if (ACPI_FAILURE(rv))
 		return rv;
 
-	if (!(wmi->guid.flags & ACPI_WMI_FLAG_DATA))
-		return AE_BAD_PARAMETER;
-
-	if (wmi->guid.count == 0x00 || wmi->guid.flags == 0x00)
-		return AE_BAD_VALUE;
+	if (acpi_wmi_input(wmi, ACPI_WMI_FLAG_DATA, idx) != true)
+		return AE_BAD_DATA;
 
 	(void)strlcat(path, wmi->guid.oid, sizeof(path));
+
+	obj.Type = ACPI_TYPE_INTEGER;
+	obj.Integer.Value = idx;
+
+	arg.Count = 0x01;
+	arg.Pointer = &obj;
 
 	obuf->Pointer = NULL;
 	obuf->Length = ACPI_ALLOCATE_LOCAL_BUFFER;
@@ -634,7 +640,7 @@ acpi_wmi_data_query(device_t self, const char *guid, ACPI_BUFFER *obuf)
 		    wmi->guid.oid, true, true);
 	}
 
-	rv = acpi_eval_struct(sc->sc_node->ad_handle, path, obuf);
+	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, path, &arg, obuf);
 
 	/* No longer needed. */
 	if (ACPI_SUCCESS(rvxx)) {
