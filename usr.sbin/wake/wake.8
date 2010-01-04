@@ -1,4 +1,4 @@
-.\" $NetBSD: wake.8,v 1.7 2010/01/03 19:04:26 wiz Exp $
+.\" $NetBSD: wake.8,v 1.8 2010/01/04 11:34:39 mbalmer Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Marc Balmer <marc@msys.ch>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd January 3, 2010
+.Dd January 4, 2010
 .Dt WAKE 8
 .Os
 .Sh NAME
@@ -35,13 +35,12 @@ WoL functionality is generally enabled in a machine's BIOS
 and can be used to power on machines from a remote system without
 having physical access to them.
 .Pp
-If
 .Ar interface
-is an Ethernet interface of the local machine, it is used to send the
+is an Ethernet interface of the local machine and is used to send the
 Wake on LAN frames over it.
-Else
-.Nm
-uses the first Ethernet device found in the system.
+If there is only one Ethernet device available that is up and running, then the
+.Ar interface
+argument can be omitted.
 .Ar lladdr
 is the link layer address of the remote machine.
 This can be specified as the actual hardware address

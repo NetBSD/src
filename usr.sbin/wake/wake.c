@@ -1,4 +1,4 @@
-/* $NetBSD: wake.c,v 1.10 2010/01/03 17:58:14 mbalmer Exp $ */
+/* $NetBSD: wake.c,v 1.11 2010/01/04 11:34:39 mbalmer Exp $ */
 
 /*
  * Copyright (C) 2006, 2007, 2008, 2009, 2010 Marc Balmer <marc@msys.ch>
@@ -117,6 +117,7 @@ find_ether(char *dst, size_t len)
 {
 	struct ifaddrs *ifap, *ifa;
 	struct sockaddr_dl *sdl = NULL;
+	int nifs;
 
 	if (dst == NULL || len == 0)
 		return 0;
@@ -125,18 +126,18 @@ find_ether(char *dst, size_t len)
 		return -1;
 
 	/* XXX also check the link state */
-	for (ifa = ifap; ifa; ifa = ifa->ifa_next)
+	for (nifs = 0, ifa = ifap; ifa; ifa = ifa->ifa_next)
 		if (ifa->ifa_addr->sa_family == AF_LINK &&
 		    ifa->ifa_flags & IFF_UP && ifa->ifa_flags & IFF_RUNNING) {
 			sdl = (struct sockaddr_dl *)ifa->ifa_addr;
 			if (sdl->sdl_type == IFT_ETHER) {
 				strlcpy(dst, ifa->ifa_name, len);
-				break;
+				nifs++;
 			}
 		}
 
 	freeifaddrs(ifap);
-	return 0;
+	return nifs == 1 ? 0 : -1;
 }
 
 static int
