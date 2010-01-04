@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1179 2010/01/04 16:57:48 haad Exp $
+# $NetBSD: mi,v 1.1180 2010/01/04 20:18:02 haad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4656,7 +4656,7 @@
 ./usr/share/man/html8/iteconfig.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/iwictl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/kadmin.html		man-krb5-htmlman	kerberos,html
-./usr/share/man/html8/kamind.html		man-krb5-htmlman	kerberos,html
+./usr/share/man/html8/kadmind.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/kcm.html			man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/kdc.html			man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/kerberos.html		man-krb5-htmlman	kerberos,html
@@ -5900,7 +5900,7 @@
 ./usr/share/man/man4/depca.4			man-sys-man		.man
 ./usr/share/man/man4/dge.4			man-sys-man		.man
 ./usr/share/man/man4/dk.4			man-sys-man		.man
-./usr/share/man/man4/dm.4 			man-sys-man             .man
+./usr/share/man/man4/dm.4			man-sys-man             .man
 ./usr/share/man/man4/dmoverio.4			man-sys-man		.man
 ./usr/share/man/man4/dmphy.4			man-sys-man		.man
 ./usr/share/man/man4/dpt.4			man-sys-man		.man
