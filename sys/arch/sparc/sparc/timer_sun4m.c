@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.19 2010/01/01 08:00:02 mrg Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.20 2010/01/04 04:21:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.19 2010/01/01 08:00:02 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.20 2010/01/04 04:21:35 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -95,6 +95,28 @@ timer_init_4m(void)
 	icr_si_bic(SINTR_T);
 }
 
+void
+schedintr_4m(void *v)
+{
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * We call hardclock() here so that we make sure it is called on
+	 * all CPUs.  This function ends up being called on sun4m systems
+	 * every tick, so we have avoid 
+	 */
+	hardclock(v);
+
+	/*
+	 * The factor 8 is only valid for stathz==100.
+	 * See also clock.c
+	 */
+	if ((++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0 && schedhz != 0)
+#endif
+		schedclock(curlwp);
+}
+
+
 /*
  * Level 10 (clock) interrupts from system counter.
  */
@@ -109,6 +131,9 @@ clockintr_4m(void *cap)
 	 * a timer interrupt - if we call hardclock() at that point we'll
 	 * panic
 	 * so for now just bail when cold
+	 *
+	 * For MP, we defer calling hardclock() to the schedintr so
+	 * that we call it on all cpus.
 	 */
 	cpuinfo.ci_lev10.ev_count++;
 	if (cold)
@@ -116,7 +141,9 @@ clockintr_4m(void *cap)
 	/* read the limit register to clear the interrupt */
 	*((volatile int *)&timerreg4m->t_limit);
 	tickle_tc();
+#if !defined(MULTIPROCESSOR)
 	hardclock((struct clockframe *)cap);
+#endif
 	return (1);
 }
 
@@ -152,19 +179,23 @@ statintr_4m(void *cap)
 	 * The factor 8 is only valid for stathz==100.
 	 * See also clock.c
 	 */
-	if (curlwp && (++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0) {
+#if !defined(MULTIPROCESSOR)
+	if ((++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0 && schedhz != 0) {
+#endif
 		if (CLKF_LOPRI(frame, IPL_SCHED)) {
 			/* No need to schedule a soft interrupt */
 			spllowerschedclock();
-			schedintr(cap);
+			schedintr_4m(cap);
 		} else {
 			/*
 			 * We're interrupting a thread that may have the
-			 * scheduler lock; run schedintr() on this CPU later.
+			 * scheduler lock; run schedintr_4m() on this CPU later.
 			 */
 			raise_ipi(&cpuinfo, IPL_SCHED); /* sched_cookie->pil */
 		}
+#if !defined(MULTIPROCESSOR)
 	}
+#endif
 
 	return (1);
 }
