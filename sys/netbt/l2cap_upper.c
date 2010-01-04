@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_upper.c,v 1.10 2009/09/25 19:44:57 plunky Exp $	*/
+/*	$NetBSD: l2cap_upper.c,v 1.11 2010/01/04 19:20:05 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.10 2009/09/25 19:44:57 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.11 2010/01/04 19:20:05 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -109,6 +109,9 @@ l2cap_attach(struct l2cap_channel **handle,
 int
 l2cap_bind(struct l2cap_channel *chan, struct sockaddr_bt *addr)
 {
+
+	if (chan->lc_lcid != L2CAP_NULL_CID)
+		return EINVAL;
 
 	memcpy(&chan->lc_laddr, addr, sizeof(struct sockaddr_bt));
 	return 0;
