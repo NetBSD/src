@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.4 2010/01/03 17:53:15 jruoho Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.5 2010/01/04 09:34:47 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,15 +27,19 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.4 2010/01/03 17:53:15 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.5 2010/01/04 09:34:47 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/endian.h>
 #include <sys/kmem.h>
 
+#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/wmi_acpivar.h>
+
+#define _COMPONENT          ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME            ("wmi_acpi")
 
 /*
  * This implements something called "Microsoft Windows Management
@@ -97,8 +101,8 @@ struct acpi_wmi_softc {
 #define ACPI_WMI_FLAG_DATA      (ACPI_WMI_FLAG_EXPENSIVE |		\
 	                         ACPI_WMI_FLAG_STRING)
 
-#define UGET16(x)   (*(u_int16_t *)(x))
-#define UGET64(x)   (*(u_int64_t *)(x))
+#define UGET16(x)   (*(uint16_t *)(x))
+#define UGET64(x)   (*(uint64_t *)(x))
 
 #define HEXCHAR(x)  (((x) >= '0' && (x) <= '9') ||			\
 	             ((x) >= 'a' && (x) <= 'f') ||			\
@@ -122,14 +126,14 @@ static void        acpi_wmi_dump(struct acpi_wmi_softc *);
 #endif
 
 static ACPI_STATUS acpi_wmi_guid_get(struct acpi_wmi_softc *,
-                       const u_char * const, struct wmi_t **);
+                                     const char *, struct wmi_t **);
 static void        acpi_wmi_event_add(struct acpi_wmi_softc *);
 static void        acpi_wmi_event_del(struct acpi_wmi_softc *);
 static void        acpi_wmi_event_handler(ACPI_HANDLE, uint32_t, void *);
 static bool        acpi_wmi_suspend(device_t PMF_FN_PROTO);
 static bool        acpi_wmi_resume(device_t PMF_FN_PROTO);
-static ACPI_STATUS acpi_wmi_enable(const ACPI_HANDLE, const char * const,
-                                   const bool, const bool);
+static ACPI_STATUS acpi_wmi_enable(ACPI_HANDLE, const char *, bool, bool);
+static bool        acpi_wmi_input(struct wmi_t *, uint8_t, uint8_t);
 
 const char * const acpi_wmi_ids[] = {
 	"PNP0C14",
@@ -229,7 +233,7 @@ fail:
 	    AcpiFormatException(rv));
 
 	if (buf.Pointer != NULL)
-		AcpiOsFree(buf.Pointer);
+		ACPI_FREE(buf.Pointer);
 
 	return false;
 }
@@ -258,12 +262,12 @@ acpi_wmi_add(struct acpi_wmi_softc *sc, ACPI_OBJECT *obj)
 		SIMPLEQ_INSERT_TAIL(&sc->wmi_head, wmi, wmi_link);
 	}
 
-	AcpiOsFree(obj);
+	ACPI_FREE(obj);
 
 	return true;
 
 fail:
-	AcpiOsFree(obj);
+	ACPI_FREE(obj);
 	acpi_wmi_del(sc);
 
 	return false;
@@ -315,12 +319,12 @@ acpi_wmi_dump(struct acpi_wmi_softc *sc)
 
 static ACPI_STATUS
 acpi_wmi_guid_get(struct acpi_wmi_softc *sc,
-    const u_char * const src, struct wmi_t **out)
+    const char *src, struct wmi_t **out)
 {
 	struct wmi_t *wmi;
 	struct guid_t *guid;
-	u_char bin[16];
-	u_char hex[2];
+	char bin[16];
+	char hex[2];
 	const char *ptr;
 	uint8_t i;
 
@@ -367,7 +371,7 @@ acpi_wmi_guid_get(struct acpi_wmi_softc *sc,
  * can use this in their autoconf(9) routines.
  */
 int
-acpi_wmi_guid_match(device_t self, const u_char const * guid)
+acpi_wmi_guid_match(device_t self, const char *guid)
 {
 	struct acpi_wmi_softc *sc = device_private(self);
 
@@ -458,7 +462,7 @@ acpi_wmi_event_del(struct acpi_wmi_softc *sc)
  * Returns extra information possibly associated with an event.
  */
 ACPI_STATUS
-acpi_wmi_event_get(device_t self, const uint32_t event, ACPI_BUFFER *obuf)
+acpi_wmi_event_get(device_t self, uint32_t event, ACPI_BUFFER *obuf)
 {
 	struct acpi_wmi_softc *sc = device_private(self);
 	struct wmi_t *wmi;
@@ -476,6 +480,9 @@ acpi_wmi_event_get(device_t self, const uint32_t event, ACPI_BUFFER *obuf)
 
 	arg.Count = 0x01;
 	arg.Pointer = &obj;
+
+	obuf->Pointer = NULL;
+	obuf->Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 
 	SIMPLEQ_FOREACH(wmi, &sc->wmi_head, wmi_link) {
 
@@ -555,8 +562,7 @@ acpi_wmi_resume(device_t self PMF_FN_ARGS)
  * Enables or disables data collection (WCxx) or an event (WExx).
  */
 static ACPI_STATUS
-acpi_wmi_enable(const ACPI_HANDLE hdl, const char * const oid,
-    const bool data, const bool flag)
+acpi_wmi_enable(ACPI_HANDLE hdl, const char *oid, bool data, bool flag)
 {
 	char path[5];
 	const char *str;
@@ -569,28 +575,43 @@ acpi_wmi_enable(const ACPI_HANDLE hdl, const char * const oid,
 	return acpi_eval_set_integer(hdl, path, (flag != false) ? 0x01 : 0x00);
 }
 
+static bool
+acpi_wmi_input(struct wmi_t *wmi, uint8_t flag, uint8_t idx)
+{
+
+	if (!(wmi->guid.flags & flag))
+		return false;
+
+	if (wmi->guid.count == 0x00 || wmi->guid.flags == 0x00)
+		return false;
+
+	if (wmi->guid.count < idx)
+		return false;
+
+	return true;
+}
+
 /*
  * Makes a WMI data block query (WQxx). The corresponding control
  * method for data collection will be invoked if it is available.
  */
 ACPI_STATUS
-acpi_wmi_data_query(device_t self, const u_char * const guid,
-    ACPI_BUFFER *obuf)
+acpi_wmi_data_query(device_t self, const char *guid, ACPI_BUFFER *obuf)
 {
 	struct acpi_wmi_softc *sc = device_private(self);
 	struct wmi_t *wmi;
 	char path[5] = "WQ";
-	ACPI_STATUS rva, rvb;
+	ACPI_STATUS rv, rvxx;
+
+	rvxx = AE_SUPPORT;
 
 	if (obuf == NULL)
 		return AE_BAD_PARAMETER;
 
-	rva = acpi_wmi_guid_get(sc, guid, &wmi);
+	rv = acpi_wmi_guid_get(sc, guid, &wmi);
 
-	if (ACPI_FAILURE(rva))
-		return rva;
-
-	rvb = AE_SUPPORT;
+	if (ACPI_FAILURE(rv))
+		return rv;
 
 	if (!(wmi->guid.flags & ACPI_WMI_FLAG_DATA))
 		return AE_BAD_PARAMETER;
@@ -600,20 +621,23 @@ acpi_wmi_data_query(device_t self, const u_char * const guid,
 
 	(void)strlcat(path, wmi->guid.oid, sizeof(path));
 
+	obuf->Pointer = NULL;
+	obuf->Length = ACPI_ALLOCATE_LOCAL_BUFFER;
+
 	/*
 	 * If the expensive flag is set, we should enable
 	 * data collection before evaluating the WQxx buffer.
 	 */
 	if (wmi->guid.flags & ACPI_WMI_FLAG_EXPENSIVE) {
 
-		rvb = acpi_wmi_enable(sc->sc_node->ad_handle,
+		rvxx = acpi_wmi_enable(sc->sc_node->ad_handle,
 		    wmi->guid.oid, true, true);
 	}
 
-	rva = acpi_eval_struct(sc->sc_node->ad_handle, path, obuf);
+	rv = acpi_eval_struct(sc->sc_node->ad_handle, path, obuf);
 
 	/* No longer needed. */
-	if (ACPI_SUCCESS(rvb)) {
+	if (ACPI_SUCCESS(rvxx)) {
 
 		(void)acpi_wmi_enable(sc->sc_node->ad_handle,
 		    wmi->guid.oid, true, false);
@@ -627,19 +651,19 @@ acpi_wmi_data_query(device_t self, const u_char * const guid,
 	 *
 	 * -- Acer Aspire One is one example <jruohonen@iki.fi>.
 	 */
-	if (ACPI_FAILURE(rvb) && rvb != AE_SUPPORT)
+	if (ACPI_FAILURE(rvxx) && rvxx != AE_SUPPORT)
 		aprint_error_dev(sc->sc_dev, "failed to evaluate WCxx "
-		    "for %s: %s\n", path, AcpiFormatException(rvb));
+		    "for %s: %s\n", path, AcpiFormatException(rvxx));
 #endif
-	return rva;
+	return rv;
 }
 
 /*
  * Writes to a data block (WSxx).
  */
 ACPI_STATUS
-acpi_wmi_data_write(device_t self, const u_char * const guid,
-    const uint8_t idx, ACPI_BUFFER *ibuf)
+acpi_wmi_data_write(device_t self, const char *guid,
+    uint8_t idx, ACPI_BUFFER *ibuf)
 {
 	struct acpi_wmi_softc *sc = device_private(self);
 	struct wmi_t *wmi;
@@ -656,14 +680,8 @@ acpi_wmi_data_write(device_t self, const u_char * const guid,
 	if (ACPI_FAILURE(rv))
 		return rv;
 
-	if (!(wmi->guid.flags & ACPI_WMI_FLAG_DATA))
-		return AE_BAD_PARAMETER;
-
-	if (wmi->guid.count == 0x00 || wmi->guid.flags == 0x00)
-		return AE_BAD_VALUE;
-
-	if (wmi->guid.count < idx)
-		return AE_BAD_PARAMETER;
+	if (acpi_wmi_input(wmi, ACPI_WMI_FLAG_DATA, idx) != true)
+		return AE_BAD_DATA;
 
 	(void)strlcat(path, wmi->guid.oid, sizeof(path));
 
@@ -686,8 +704,8 @@ acpi_wmi_data_write(device_t self, const u_char * const guid,
  * Executes a method (WMxx).
  */
 ACPI_STATUS
-acpi_wmi_method(device_t self, const u_char * const guid, const uint8_t idx,
-    const uint32_t mid, ACPI_BUFFER *ibuf, ACPI_BUFFER *obuf)
+acpi_wmi_method(device_t self, const char *guid, uint8_t idx,
+    uint32_t mid, ACPI_BUFFER *ibuf, ACPI_BUFFER *obuf)
 {
 	struct acpi_wmi_softc *sc = device_private(self);
 	struct wmi_t *wmi;
@@ -704,14 +722,8 @@ acpi_wmi_method(device_t self, const u_char * const guid, const uint8_t idx,
 	if (ACPI_FAILURE(rv))
 		return rv;
 
-	if (!(wmi->guid.flags & ACPI_WMI_FLAG_METHOD))
-		return AE_BAD_PARAMETER;
-
-	if (wmi->guid.count == 0x00 || wmi->guid.flags == 0x00)
-		return AE_BAD_VALUE;
-
-	if (wmi->guid.count < idx)
-		return AE_BAD_PARAMETER;
+	if (acpi_wmi_input(wmi, ACPI_WMI_FLAG_METHOD, idx) != true)
+		return AE_BAD_DATA;
 
 	(void)strlcat(path, wmi->guid.oid, sizeof(path));
 
@@ -729,7 +741,7 @@ acpi_wmi_method(device_t self, const u_char * const guid, const uint8_t idx,
 	arg.Pointer = obj;
 
 	obuf->Pointer = NULL;
-	obuf->Length = ACPI_ALLOCATE_BUFFER;
+	obuf->Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 
 	return AcpiEvaluateObject(sc->sc_node->ad_handle, path, &arg, obuf);
 }
