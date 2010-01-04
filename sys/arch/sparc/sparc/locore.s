@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.253 2010/01/03 12:44:34 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.254 2010/01/04 04:06:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4568,15 +4568,6 @@ _C_LABEL(cpu_hatch):
 	wr	%g6, 0, %tbr
 	nop; nop; nop			! paranoia
 
-#if 1
-	set	USRSTACK - CCFSZ, %fp	! as if called from user code
-
-	/* Set up a stack. We use the bottom half of the interrupt stack */
-	sethi	%hi(_EINTSTACKP), %o0
-	ld	[%o0 + %lo(_EINTSTACKP)], %o0
-	set	(INT_STACK_SIZE/2) + CCFSZ + 80, %sp
-	sub	%o0, %sp, %sp
-#else
 	/*
 	 * Use this CPUs idlelwp's stack
 	 */
@@ -4586,7 +4577,6 @@ _C_LABEL(cpu_hatch):
 	add	%o0, %sp, %sp
 
 	add	80, %sp, %fp
-#endif
 
 	/* Enable traps */
 	rd	%psr, %l0
