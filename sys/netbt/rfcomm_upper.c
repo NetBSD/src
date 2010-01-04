@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.12 2009/11/22 19:09:16 mbalmer Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.13 2010/01/04 19:20:05 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.12 2009/11/22 19:09:16 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.13 2010/01/04 19:20:05 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -105,6 +105,9 @@ rfcomm_attach(struct rfcomm_dlc **handle,
 int
 rfcomm_bind(struct rfcomm_dlc *dlc, struct sockaddr_bt *addr)
 {
+
+	if (dlc->rd_state != RFCOMM_DLC_CLOSED)
+		return EINVAL;
 
 	memcpy(&dlc->rd_laddr, addr, sizeof(struct sockaddr_bt));
 	return 0;

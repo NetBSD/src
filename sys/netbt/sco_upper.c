@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_upper.c,v 1.8 2008/08/06 15:01:24 plunky Exp $	*/
+/*	$NetBSD: sco_upper.c,v 1.9 2010/01/04 19:20:05 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.8 2008/08/06 15:01:24 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.9 2010/01/04 19:20:05 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -89,6 +89,9 @@ sco_attach(struct sco_pcb **handle,
 int
 sco_bind(struct sco_pcb *pcb, struct sockaddr_bt *addr)
 {
+
+	if (pcb->sp_link != NULL || pcb->sp_flags & SP_LISTENING)
+		return EINVAL;
 
 	bdaddr_copy(&pcb->sp_laddr, &addr->bt_bdaddr);
 	return 0;
