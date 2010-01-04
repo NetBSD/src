@@ -1,7 +1,7 @@
-/*	$NetBSD: wmi_acpi.c,v 1.6 2010/01/04 09:43:30 jruoho Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.7 2010/01/04 10:06:53 jruoho Exp $	*/
 
 /*-
- * Copyright (c) 2009 Jukka Ruohonen <jruohonen@iki.fi>
+ * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.6 2010/01/04 09:43:30 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.7 2010/01/04 10:06:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
