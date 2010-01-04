@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.30 2009/10/12 23:36:02 yamt Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.31 2010/01/04 16:01:42 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.30 2009/10/12 23:36:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.31 2010/01/04 16:01:42 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -161,8 +161,8 @@ static void *
 kmem_poolpage_alloc(struct pool *pool, int prflags)
 {
 
-	KASSERT(KM_SLEEP == PR_WAITOK);
-	KASSERT(KM_NOSLEEP == PR_NOWAIT);
+	CTASSERT(KM_SLEEP == PR_WAITOK);
+	CTASSERT(KM_NOSLEEP == PR_NOWAIT);
 
 	return (void *)vmem_alloc(kmem_arena, pool->pr_alloc->pa_pagesz,
 	    kmf_to_vmf(prflags) | VM_INSTANTFIT);
@@ -205,8 +205,8 @@ kmem_alloc(size_t size, km_flag_t kmflags)
 	if (size >= kmem_cache_min && size <= kmem_cache_max) {
 		kc = &kmem_cache[(size + kmem_cache_mask) >> kmem_cache_shift];
 		KASSERT(size <= kc->kc_pa.pa_pagesz);
-		KASSERT(KM_SLEEP == PR_WAITOK);
-		KASSERT(KM_NOSLEEP == PR_NOWAIT);
+		CTASSERT(KM_SLEEP == PR_WAITOK);
+		CTASSERT(KM_NOSLEEP == PR_NOWAIT);
 		kmflags &= (KM_SLEEP | KM_NOSLEEP);
 		p = pool_cache_get(kc->kc_cache, kmflags);
 	} else {
