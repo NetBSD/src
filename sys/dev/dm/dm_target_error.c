@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_error.c,v 1.9 2009/12/01 23:12:10 haad Exp $      */
+/*        $NetBSD: dm_target_error.c,v 1.10 2010/01/04 00:12:22 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,15 +58,15 @@ dm_target_error_modcmd(modcmd_t cmd, void *arg)
 	dm_target_t *dmt;
 	int r;
 	dmt = NULL;
-	
+
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		if ((dmt = dm_target_lookup("error")) != NULL){
+		if ((dmt = dm_target_lookup("error")) != NULL) {
 			dm_target_unbusy(dmt);
 			return EEXIST;
 		}
 		dmt = dm_target_alloc("error");
-		
+
 		dmt->version[0] = 1;
 		dmt->version[1] = 0;
 		dmt->version[2] = 0;
@@ -79,7 +79,7 @@ dm_target_error_modcmd(modcmd_t cmd, void *arg)
 		dmt->upcall = &dm_target_error_upcall;
 
 		r = dm_target_insert(dmt);
-		
+
 		break;
 
 	case MODULE_CMD_FINI:
@@ -95,12 +95,11 @@ dm_target_error_modcmd(modcmd_t cmd, void *arg)
 
 	return r;
 }
-
 #endif
 
 /* Init function called from dm_table_load_ioctl. */
 int
-dm_target_error_init(dm_dev_t *dmv, void **target_config, char *argv)
+dm_target_error_init(dm_dev_t * dmv, void **target_config, char *argv)
 {
 
 	printf("Error target init function called!!\n");
@@ -108,20 +107,18 @@ dm_target_error_init(dm_dev_t *dmv, void **target_config, char *argv)
 	*target_config = NULL;
 
 	dmv->dev_type = DM_ERROR_DEV;
-	
+
 	return 0;
 }
-
 /* Status routine called to get params string. */
 char *
 dm_target_error_status(void *target_config)
 {
 	return NULL;
-}	
-
+}
 /* Strategy routine called from dm_strategy. */
 int
-dm_target_error_strategy(dm_table_entry_t *table_en, struct buf *bp)
+dm_target_error_strategy(dm_table_entry_t * table_en, struct buf * bp)
 {
 
 	printf("Error target read function called!!\n");
@@ -130,32 +127,29 @@ dm_target_error_strategy(dm_table_entry_t *table_en, struct buf *bp)
 	bp->b_resid = 0;
 
 	biodone(bp);
-	
+
 	return 0;
 }
-
 /* Doesn't do anything here. */
 int
-dm_target_error_destroy(dm_table_entry_t *table_en)
+dm_target_error_destroy(dm_table_entry_t * table_en)
 {
 	table_en->target_config = NULL;
 
 	/* Unbusy target so we can unload it */
 	dm_target_unbusy(table_en->target);
-	
+
 	return 0;
 }
-
 /* Doesn't not need to do anything here. */
 int
-dm_target_error_deps(dm_table_entry_t *table_en, prop_array_t prop_array)
-{	
+dm_target_error_deps(dm_table_entry_t * table_en, prop_array_t prop_array)
+{
 	return 0;
 }
-
 /* Unsupported for this target. */
 int
-dm_target_error_upcall(dm_table_entry_t *table_en, struct buf *bp)
+dm_target_error_upcall(dm_table_entry_t * table_en, struct buf * bp)
 {
 	return 0;
 }
