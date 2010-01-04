@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.174 2009/09/09 17:09:49 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.175 2010/01/04 17:05:25 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.174 2009/09/09 17:09:49 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.175 2010/01/04 17:05:25 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.174 2009/09/09 17:09:49 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.175 2010/01/04 17:05:25 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -393,6 +393,10 @@ rearg:
 					      strerror(errno));
 				exit(1);
 			}
+			if (getcwd(curdir, MAXPATHLEN) == NULL) {
+				(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
+				exit(2);
+			}
 			ignorePWD = TRUE;
 			break;
 		case 'D':
@@ -509,7 +513,6 @@ rearg:
 				    found_path, sizeof(found_path)))
 					break;		/* nothing doing */
 				(void)Dir_AddDir(sysIncPath, found_path);
-				
 			} else {
 				(void)Dir_AddDir(sysIncPath, argvalue);
 			}
@@ -881,18 +884,20 @@ main(int argc, char **argv)
 	Main_ParseArgLine(getenv("MAKE"));
 #endif
 
-	MainParseArgs(argc, argv);
-
 	/*
-	 * Find where we are (now) and take care of PWD for the automounter...
-	 * All this code is so that we know where we are when we start up
-	 * on a different machine with pmake.
+	 * Find where we are (now).
+	 * We take care of PWD for the automounter below...
 	 */
 	if (getcwd(curdir, MAXPATHLEN) == NULL) {
 		(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
 		exit(2);
 	}
 
+	MainParseArgs(argc, argv);
+
+	/*
+	 * Verify that cwd is sane.
+	 */
 	if (stat(curdir, &sa) == -1) {
 	    (void)fprintf(stderr, "%s: %s: %s.\n",
 		 progname, curdir, strerror(errno));
@@ -900,6 +905,8 @@ main(int argc, char **argv)
 	}
 
 	/*
+	 * All this code is so that we know where we are when we start up
+	 * on a different machine with pmake.
 	 * Overriding getcwd() with $PWD totally breaks MAKEOBJDIRPREFIX
 	 * since the value of curdir can vary depending on how we got
 	 * here.  Ie sitting at a shell prompt (shell that provides $PWD)
