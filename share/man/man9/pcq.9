@@ -1,5 +1,4 @@
-.\"	$NetBSD: pcq.9,v 1.1 2010/01/04 18:00:26 dyoung Exp $
-.\"     $NetBSD: pcq.9,v 1.1 2010/01/04 18:00:26 dyoung Exp $
+.\"     $NetBSD: pcq.9,v 1.2 2010/01/04 23:06:34 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,13 +32,13 @@
 .Os
 .Sh NAME
 .Nm PCQ ,
-.Nm pcq_put ,
-.Nm pcq_peek ,
+.Nm pcq_create ,
+.Nm pcq_destroy ,
 .Nm pcq_get ,
 .Nm pcq_maxitems ,
-.Nm pcq_create ,
-.Nm pcq_destroy
-.Nd Producer/consumer queue.
+.Nm pcq_peek ,
+.Nm pcq_put
+.Nd Producer/consumer queue
 .Sh SYNOPSIS
 .In sys/pcq.h
 .Ft pcq_t *
