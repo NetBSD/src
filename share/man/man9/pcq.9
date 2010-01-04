@@ -1,0 +1,146 @@
+.\"	$NetBSD: pcq.9,v 1.1 2010/01/04 18:00:26 dyoung Exp $
+.\"     $NetBSD: pcq.9,v 1.1 2010/01/04 18:00:26 dyoung Exp $
+.\"
+.\" Copyright (c) 2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Matt Thomas.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 2, 2010
+.Dt PCQ 9
+.Os
+.Sh NAME
+.Nm PCQ ,
+.Nm pcq_put ,
+.Nm pcq_peek ,
+.Nm pcq_get ,
+.Nm pcq_maxitems ,
+.Nm pcq_create ,
+.Nm pcq_destroy
+.Nd Producer/consumer queue.
+.Sh SYNOPSIS
+.In sys/pcq.h
+.Ft pcq_t *
+.Fn pcq_create "size_t maxlen" "km_flags_t kmflags"
+.Ft void
+.Fn pcq_destroy "pcq_t *pcq"
+.Ft void *
+.Fn pcq_get "pcq_t *pcq"
+.Ft size_t
+.Fn pcq_maxitems "pcq_t *pcq"
+.Ft void *
+.Fn pcq_peek "pcq_t *pcq"
+.Ft bool
+.Fn pcq_put "pcq_t *pcq" "void *item"
+.Sh DESCRIPTION
+The machine-independent
+.Nm
+framework provides producer/consumer queues.
+A queue
+.Po
+.Vt pcq_t
+.Pc
+allows multiple writers
+.Pq producers
+but only a single reader
+.Pq consumer .
+Compare-and-store operations are used to allow lockless updates.
+The consumer is expected to be protected by a mutex that covers
+the structure that the
+.Vt pcq_t
+is embedded into
+.Po
+e.g., socket lock, ifnet hwlock
+.Pc .
+These queues operate in a first-in, first-out
+.Pq FIFO
+manner.
+The act of inserting or removing an item from a
+.Vt pcq_t
+does not modify the item in any way.
+.Nm
+does not prevent an item being inserted multiple times into a single
+.Vt pcq_t .
+.Sh FUNCTIONS
+.Bl -tag -width compact
+.It Fn pcq_create "maxlen" "kmflags"
+Create a queue that can store at most
+.Fa maxlen
+items at one time.
+.Fa kmflags
+should be either
+.Dv KM_SLEEP ,
+if
+.Fn pcq_create
+should sleep until resources are available, or
+.Dv KM_NOSLEEP
+if it should return
+.Dv NULL
+if resources are unavailable.
+See
+.Xr kmem 9 .
+.It Fn pcq_destroy "pcq"
+Free the resources held by
+.Fa pcq .
+.It Fn pcq_get "pcq"
+Remove the next item to be consumed from the queue and return
+it.
+If the queue is empty,
+return
+.Dv NULL .
+.It Fn pcq_maxitems "pcq"
+Return the maximum number of items that the queue can store at
+any one time.
+.It Fn pcq_peek "pcq"
+Return the next item to be consumed from the queue but do not remove
+it from the queue.
+If the queue is empty,
+return
+.Dv NULL .
+.It Fn pcq_put "pcq" "item"
+Place an item at the end of the queue.
+If there is no room in the queue for the item, return
+.Dv false ;
+otherwise, return
+.Dv true .
+The item must not have the value of
+.Dv NULL .
+.El
+.Sh FILES
+.Bl -tag -width sys/kern/subr_pcq.c
+.It Pa sys/kern/subr_pcq.c
+.Nm
+implementation.
+.El
+.\" .Sh EXAMPLES
+.\" .Sh SEE ALSO
+.\" Cross-references should be ordered by section (low to high), then in
+.\"     alphabetical order.
+.\" .Sh HISTORY
+.Sh AUTHORS
+.An Matt Thomas Aq matt@NetBSD.org
+.\" .Sh CAVEATS
+.\" .Sh BUGS
+.\" .Sh SECURITY CONSIDERATIONS
