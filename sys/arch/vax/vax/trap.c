@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.121 2009/12/10 14:13:53 matt Exp $     */
+/*	$NetBSD: trap.c,v 1.122 2010/01/05 13:20:30 mbalmer Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121 2009/12/10 14:13:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.122 2010/01/05 13:20:30 mbalmer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -114,7 +114,7 @@ trap(struct trapframe *frame)
 	u_int	sig = 0, type = frame->trap, code = 0;
 	u_int	rv, addr;
 	bool trapsig = true;
-	const bool usermode = USERMODE_P(frame);;
+	const bool usermode = USERMODE_P(frame);
 	struct	lwp *l;
 	struct	proc *p;
 	struct	pcb *pcb;
