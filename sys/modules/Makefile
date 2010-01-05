@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.36 2009/12/05 20:11:18 pooka Exp $
+#	$NetBSD: Makefile,v 1.37 2010/01/05 20:49:04 dyoung Exp $
+
+.include <bsd.own.mk>
 
 # For all platforms
 
-SUBDIR=		xldscripts
-SUBDIR+=	accf_dataready
+SUBDIR=		accf_dataready
 SUBDIR+=	accf_httpready
 SUBDIR+=	adosfs
 SUBDIR+=	aio
@@ -55,6 +56,9 @@ SUBDIR+=	vnd
 SUBDIR+=	tprof
 .if (defined(NOTYET))
 SUBDIR+=	unionfs
+.endif
+.if ${MKBINUTILS} != "no"
+SUBDIR+=	xldscripts
 .endif
 
 # Machine dependent section
