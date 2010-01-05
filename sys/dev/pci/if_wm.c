@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.185 2009/12/29 16:01:21 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.186 2010/01/05 09:31:21 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.185 2009/12/29 16:01:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.186 2010/01/05 09:31:21 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -4517,13 +4517,13 @@ wm_gmii_reset(struct wm_softc *sc)
 			return;
 		}
 	}
-	if (sc->sc_type >= WM_T_82544) {
-		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_PHY_RESET);
-		delay(20000);
 
-		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-		delay(20000);
-	} else {
+	switch (sc->sc_type) {
+	case WM_T_82542_2_0:
+	case WM_T_82542_2_1:
+		/* null ? */
+		break;
+	case WM_T_82543:
 		/*
 		 * With 82543, we need to force speed and duplex on the MAC
 		 * equal to what the PHY speed and duplex configuration is.
@@ -4543,14 +4543,64 @@ wm_gmii_reset(struct wm_softc *sc)
 		delay(10);
 
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
-		delay(10000);
+		delay(10*1000);
 
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg | CTRL_EXT_SWDPIN(4));
-		delay(10);
+		delay(150);
 #if 0
 		sc->sc_ctrl_ext = reg | CTRL_EXT_SWDPIN(4);
 #endif
+		delay(20*1000);	/* extra delay to get PHY ID? */
+		break;
+	case WM_T_82544:	/* reset 10000us */
+	case WM_T_82540:
+	case WM_T_82545:
+	case WM_T_82545_3:
+	case WM_T_82546:
+	case WM_T_82546_3:
+	case WM_T_82541:
+	case WM_T_82541_2:
+	case WM_T_82547:
+	case WM_T_82547_2:
+	case WM_T_82571:	/* reset 100us */
+	case WM_T_82572:
+	case WM_T_82573:
+	case WM_T_82574:
+	case WM_T_82583:
+	case WM_T_80003:
+		/* generic reset */
+		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_PHY_RESET);
+		delay((sc->sc_type >= WM_T_82571) ? 100 : 10*1000);
+		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+		delay(150*1000);
+
+		if ((sc->sc_type == WM_T_82541)
+		    || (sc->sc_type == WM_T_82541_2)
+		    || (sc->sc_type == WM_T_82547)
+		    || (sc->sc_type == WM_T_82547_2)) {
+			/* workaround for igp are done in igp_reset() */
+			/* XXX add code to set LED after phy reset */
+		}
+		break;
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+		/* generic reset */
+		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_PHY_RESET);
+		delay(100);
+		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+		delay(150*1000);
+
+		/* Allow time for h/w to get to a quiescent state afer reset */
+		delay(10*1000);
+
+		/* XXX add code to set LED after phy reset */
+		break;
+	default:
+		panic("unknown sc_type\n");
+		break;
 	}
+
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
 	    || (sc->sc_type == WM_T_ICH10))
 		wm_put_swfwhw_semaphore(sc);
