@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.33 2009/09/19 11:55:09 tsutsui Exp $	*/
+/*	$NetBSD: zx.c,v 1.34 2010/01/05 04:17:49 macallan Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.33 2009/09/19 11:55:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.34 2010/01/05 04:17:49 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,7 +325,8 @@ zx_attach(device_t parent, device_t self, void *args)
 		zx_defaultscreen.ncols = ri->ri_cols;
 		zx_fillrect(sc, 0, 0, width, height,
 		     ri->ri_devcmap[defattr >> 16], ZX_STD_ROP);
-		wsdisplay_cnattach(&zx_defaultscreen, ri, 0, 0, defattr);	
+		wsdisplay_cnattach(&zx_defaultscreen, ri, 0, 0, defattr);
+		vcons_replay_msgbuf(&zx_console_screen);
 	} else {
 		/* 
 		 * we're not the console so we just clear the screen and don't 
@@ -849,7 +850,8 @@ zx_fillrect(struct zx_softc *sc, int x, int y, int w, int h, uint32_t bg,
 
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_rop, rop);
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_fg, bg);
-	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_extent, w | (h << 11));
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_extent,
+	    (w - 1) | ((h - 1) << 11));
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_fill,
 	    x | (y << 11) | 0x80000000);
 }
@@ -1084,6 +1086,7 @@ zx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 					sc->sc_mode = new_mode;
 					if(new_mode == WSDISPLAYIO_MODE_EMUL)
 					{
+						zx_reset(sc);
 						vcons_redraw_screen(ms);
 					}
 				}
