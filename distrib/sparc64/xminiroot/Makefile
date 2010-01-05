@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2009/04/03 22:36:35 perry Exp $
+#	$NetBSD: Makefile,v 1.28 2010/01/05 18:36:16 he Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -7,7 +7,7 @@
 
 .include "${.CURDIR}/../instfs/Makefile.instfs"
 IMAGE=			miniroot.fs
-IMAGESIZE=		8m
+IMAGESIZE=		9m
 IMAGEPOSTBUILD=		${TOOL_INSTALLBOOT} -v -m ${MACHINE} ${IMAGE} \
 			    ${DESTDIR}/usr/mdec/bootblk
 IMAGE_RELEASEDIR=	installation/miniroot
