@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.53 2010/01/01 15:55:30 pgoyette Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.54 2010/01/05 13:47:52 jruoho Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.53 2010/01/01 15:55:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.54 2010/01/05 13:47:52 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -513,13 +513,16 @@ acpitz_get_zone(void *opaque, int verbose)
 	acpitz_get_integer(dv, "_TMP", &sc->sc_zone.tmp);
 	acpitz_get_integer(dv, "_CRT", &sc->sc_zone.crt);
 	acpitz_get_integer(dv, "_HOT", &sc->sc_zone.hot);
+	acpitz_get_integer(dv, "_PSV", &sc->sc_zone.psv);
+	acpitz_get_integer(dv, "_TC1", &sc->sc_zone.tc1);
+	acpitz_get_integer(dv, "_TC2", &sc->sc_zone.tc2);
+
+#if 0
 	sc->sc_zone.psl.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 	sc->sc_zone.psl.Pointer = NULL;
 	AcpiEvaluateObject(sc->sc_devnode->ad_handle,
 	    "_PSL", NULL, &sc->sc_zone.psl);
-	acpitz_get_integer(dv, "_PSV", &sc->sc_zone.psv);
-	acpitz_get_integer(dv, "_TC1", &sc->sc_zone.tc1);
-	acpitz_get_integer(dv, "_TC2", &sc->sc_zone.tc2);
+#endif
 
 	/* ACPI spec: If _RTV is not present or present and zero,
 	 * values are absolute. */
