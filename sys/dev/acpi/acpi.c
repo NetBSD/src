@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.139 2009/12/31 10:07:13 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.140 2010/01/05 13:39:49 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.139 2009/12/31 10:07:13 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.140 2010/01/05 13:39:49 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -966,10 +966,8 @@ acpi_print(void *aux, const char *pnp)
 			aprint_normal("%s (%s) ", aa->aa_node->ad_name,
 			    pnpstr);
 
-			buf.Pointer = NULL;
-			buf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
-			rv = AcpiEvaluateObject(aa->aa_node->ad_handle,
-			    "_STR", NULL, &buf);
+			rv = acpi_eval_struct(aa->aa_node->ad_handle,
+			    "_STR", &buf);
 			if (ACPI_SUCCESS(rv)) {
 				ACPI_OBJECT *obj = buf.Pointer;
 				switch (obj->Type) {
