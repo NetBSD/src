@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.81 2010/01/05 13:32:49 jruoho Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.82 2010/01/05 13:57:18 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.81 2010/01/05 13:32:49 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.82 2010/01/05 13:57:18 jruoho Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -1050,8 +1050,6 @@ int
 mpacpi_find_interrupts(void *self)
 {
 #if NIOAPIC > 0
-	ACPI_OBJECT_LIST arglist;
-	ACPI_OBJECT arg;
 	ACPI_STATUS rv;
 #endif
 	struct acpi_softc *acpi = self;
@@ -1073,12 +1071,11 @@ mpacpi_find_interrupts(void *self)
 		 * Switch us into APIC mode by evaluating _PIC(1).
 		 * Needs to be done now, since it has an effect on
 		 * the interrupt information we're about to retrieve.
+		 *
+		 * ACPI 3.0 (section 5.8.1):
+		 *   0 = PIC mode, 1 = APIC mode, 2 = SAPIC mode.
 		 */
-		arglist.Count = 1;
-		arglist.Pointer = &arg;
-		arg.Type = ACPI_TYPE_INTEGER;
-		arg.Integer.Value = 1;	/* I/O APIC (0 = PIC, 2 = IOSAPIC) */
-		rv = AcpiEvaluateObject(NULL, "\\_PIC", &arglist, NULL);
+		rv = acpi_eval_set_integer(NULL, "\\_PIC", 1);
 		if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND) {
 			if (mp_verbose)
 				printf("mpacpi: switch to APIC mode failed\n");
