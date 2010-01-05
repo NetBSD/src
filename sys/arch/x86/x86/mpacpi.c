@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.80 2010/01/05 13:20:30 mbalmer Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.81 2010/01/05 13:32:49 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.80 2010/01/05 13:20:30 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.81 2010/01/05 13:32:49 jruoho Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -545,22 +545,23 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 	pcitag_t tag;
 	int bus;
 
-	bus = -1;
 	TAILQ_INIT(&dev_list);
 
 	/* first, search parent root bus */
 	for (current = handle;; current = parent) {
 		rv = AcpiGetObjectInfo(current, &devinfo);
 		if (ACPI_FAILURE(rv))
-			return -1;
+			goto out;
 
 		/* add this device to the list only if it's active */
 		if ((devinfo->Valid & ACPI_VALID_STA) == 0 ||
 		    (devinfo->CurrentStatus & ACPI_STA_OK) == ACPI_STA_OK) {
 			ACPI_FREE(devinfo);
 			dev = kmem_zalloc(sizeof(struct ac_dev), KM_SLEEP);
-			if (dev == NULL)
-				return -1;
+			if (dev == NULL) {
+				rv = AE_NO_MEMORY;
+				goto out;
+			}
 			dev->handle = current;
 			TAILQ_INSERT_HEAD(&dev_list, dev, list);
 		} else
@@ -568,16 +569,15 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 
 		rv = AcpiGetParent(current, &parent);
 		if (ACPI_FAILURE(rv))
-			return -1;
+			goto out;
 
 		rv = AcpiGetObjectInfo(parent, &devinfo);
 		if (ACPI_FAILURE(rv))
-			return -1;
+			goto out;
 
 		if (acpi_match_hid(devinfo, pciroot_hid)) {
-			rv = mpacpi_get_bbn(acpi, parent, &bus);
-			if (ACPI_FAILURE(rv))
-				bus = 0;
+			(void)mpacpi_get_bbn(acpi, parent, &bus);
+			ACPI_FREE(devinfo);
 			break;
 		}
 
@@ -590,8 +590,10 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 	 */
 	TAILQ_FOREACH(dev, &dev_list, list) {
 		rv = acpi_eval_integer(dev->handle, METHOD_NAME__ADR, &val);
-		if (ACPI_FAILURE(rv) || val == 0xffffffff)
-			return -1;
+		if (ACPI_FAILURE(rv) || val == 0xffffffff) {
+			rv = AE_ERROR;
+			goto out;
+		}
 
 		tag = pci_make_tag(acpi->sc_pc, bus,
 		    ACPI_HIWORD(val), ACPI_LOWORD(val));
@@ -599,26 +601,34 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 		/* check if this device exists */
 		dvid = pci_conf_read(acpi->sc_pc, tag, PCI_ID_REG);
 		if (PCI_VENDOR(dvid) == PCI_VENDOR_INVALID ||
-		    PCI_VENDOR(dvid) == 0)
-			return -1;
+		    PCI_VENDOR(dvid) == 0) {
+			rv = AE_NOT_EXIST;
+			goto out;
+		}
 
 		/* check if this is a bridge device */
 		class = pci_conf_read(acpi->sc_pc, tag, PCI_CLASS_REG);
 		if (PCI_CLASS(class) != PCI_CLASS_BRIDGE ||
-		    PCI_SUBCLASS(class) != PCI_SUBCLASS_BRIDGE_PCI)
-			return -1;
+		    PCI_SUBCLASS(class) != PCI_SUBCLASS_BRIDGE_PCI) {
+			rv = AE_TYPE;
+			goto out;
+		}
 
 		/* if this is a bridge, get secondary bus */
 		binf = pci_conf_read(acpi->sc_pc, tag, PPB_REG_BUSINFO);
 		bus = PPB_BUSINFO_SECONDARY(binf);
 	}
 
+out:
 	/* cleanup */
 	while (!TAILQ_EMPTY(&dev_list)) {
 		dev = TAILQ_FIRST(&dev_list);
 		TAILQ_REMOVE(&dev_list, dev, list);
 		kmem_free(dev, sizeof(struct ac_dev));
 	}
+
+	if (ACPI_FAILURE(rv))
+		bus = -1;
 
 	return bus;
 }
