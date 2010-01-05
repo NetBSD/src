@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.186 2010/01/05 09:31:21 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.187 2010/01/05 10:02:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.186 2010/01/05 09:31:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.187 2010/01/05 10:02:01 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -941,7 +941,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	prop_data_t ea;
 	prop_number_t pn;
 	uint8_t enaddr[ETHER_ADDR_LEN];
-	uint16_t myea[ETHER_ADDR_LEN / 2], cfg1, cfg2, swdpin;
+	uint16_t myea[ETHER_ADDR_LEN / 2], cfg1, cfg2, swdpin, io3;
 	pcireg_t preg, memtype;
 	uint32_t reg;
 
@@ -1576,9 +1576,34 @@ wm_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, max(WM_IFQUEUELEN, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 
-	if (sc->sc_type != WM_T_82573 && sc->sc_type != WM_T_82574 &&
-	    sc->sc_type != WM_T_82583 && sc->sc_type != WM_T_ICH8)
+	/* Check for jumbo frame */
+	switch (sc->sc_type) {
+	case WM_T_82573:
+		/* XXX limited to 9234 if ASPM is disabled */
+		wm_read_eeprom(sc, EEPROM_INIT_3GIO_3, 1, &io3);
+		if ((io3 & EEPROM_3GIO_3_ASPM_MASK) != 0)
+			sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
+		break;
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82574:
+	case WM_T_80003:
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+		/* XXX limited to 9234 */
 		sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
+		break;
+	case WM_T_82542_2_0:
+	case WM_T_82542_2_1:
+	case WM_T_82583:
+	case WM_T_ICH8:
+		/* No support for jumbo frame */
+		break;
+	default:
+		/* ETHER_MAX_LEN_JUMBO */
+		sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
+		break;
+	}
 
 	/*
 	 * If we're a i82543 or greater, we can support VLANs.
@@ -3483,10 +3508,9 @@ wm_init(struct ifnet *ifp)
 	sc->sc_rctl = RCTL_EN | RCTL_LBM_NONE | RCTL_RDMTS_1_2 | RCTL_DPF
 	    | RCTL_MO(sc->sc_mchash_type);
 
-	/* 82573 doesn't support jumbo frame */
-	if (sc->sc_type != WM_T_82573 && sc->sc_type != WM_T_82574 &&
-	    sc->sc_type != WM_T_82583 && sc->sc_type != WM_T_ICH8)
-		sc->sc_rctl |= RCTL_LPE;
+	if (((sc->sc_ethercom.ec_capabilities & ETHERCAP_JUMBO_MTU) != 0)
+	    && (ifp->if_mtu > ETHERMTU))
+			sc->sc_rctl |= RCTL_LPE;
 
 	if (MCLBYTES == 2048) {
 		sc->sc_rctl |= RCTL_2k;
@@ -5689,9 +5713,9 @@ wm_check_mng_mode_82574(struct wm_softc *sc)
 {
 	uint16_t data;
 
-	wm_read_eeprom(sc, NVM_INIT_CONTROL2_REG, 1, &data);
+	wm_read_eeprom(sc, EEPROM_OFF_CFG2, 1, &data);
 
-	if ((data & NVM_INIT_CTRL2_MNGM) != 0)
+	if ((data & EEPROM_CFG2_MNGM_MASK) != 0)
 		return 1;
 
 	return 0;
