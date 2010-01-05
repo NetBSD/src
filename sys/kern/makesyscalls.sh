@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.92 2009/12/13 04:47:45 matt Exp $
+#	$NetBSD: makesyscalls.sh,v 1.93 2010/01/05 15:23:32 skrll Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -508,7 +508,8 @@ function parseline() {
 		} else {
 			argalign++;
 		}
-		if (argtype[argc] == "quad_t" || argtype[argc] == "off_t") {
+		if (argtype[argc] == "quad_t" || argtype[argc] == "off_t" \
+		  || argtype[argc] == "dev_t" || argtype[argc] == "time_t") {
 			if (sycall_flags == "0")
 				sycall_flags = "SYCALL_ARG"argc-1"_64";
 			else
