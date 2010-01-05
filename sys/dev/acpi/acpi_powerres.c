@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_powerres.c,v 1.7 2009/09/16 10:47:54 mlelstv Exp $ */
+/* $NetBSD: acpi_powerres.c,v 1.8 2010/01/05 13:39:49 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2001 Michael Smith
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_powerres.c,v 1.7 2009/09/16 10:47:54 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_powerres.c,v 1.8 2010/01/05 13:39:49 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -147,8 +147,7 @@ acpi_pwr_register_resource(ACPI_HANDLE res)
 	rp->ap_resource = res;
 
 	/* get the Power Resource object */
-	buf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
-	status = AcpiEvaluateObject(res, NULL, NULL, &buf);
+	status = acpi_eval_struct(res, NULL, &buf);
 	if (ACPI_FAILURE(status)) {
 		ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS,
 				     "no power resource object\n"));
@@ -370,8 +369,7 @@ acpi_pwr_switch_consumer(ACPI_HANDLE consumer, int state)
 		if (ACPI_FAILURE(AcpiGetHandle(consumer, "_PR0", &pr0_handle))) {
 			goto bad;
 		}
-		reslist_buffer.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
-		status = AcpiEvaluateObject(pr0_handle, NULL, NULL, &reslist_buffer);
+		status = acpi_eval_struct(pr0_handle, NULL, &reslist_buffer);
 		if (ACPI_FAILURE(status))
 			goto bad;
 		reslist_object = (ACPI_OBJECT *)reslist_buffer.Pointer;
@@ -388,9 +386,8 @@ acpi_pwr_switch_consumer(ACPI_HANDLE consumer, int state)
 	 * Check that we can actually fetch the list of power resources
 	 */
 	if (reslist_handle != NULL) {
-		reslist_buffer.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
-		status = AcpiEvaluateObject(reslist_handle, NULL, NULL,
-		    &reslist_buffer);
+		status = acpi_eval_struct(reslist_handle,
+		    NULL, &reslist_buffer);
 		if (ACPI_FAILURE(status)) {
 			ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS, "can't evaluate resource list %s\n",
 					     acpi_name(reslist_handle)));
