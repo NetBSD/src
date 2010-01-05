@@ -1,4 +1,4 @@
-/*	$NetBSD: dalb_acpi.c,v 1.3 2009/09/16 10:47:55 mlelstv Exp $	*/
+/*	$NetBSD: dalb_acpi.c,v 1.4 2010/01/05 13:39:49 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.3 2009/09/16 10:47:55 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.4 2010/01/05 13:39:49 jruoho Exp $");
 
 /*
  * Direct Application Launch Button:
@@ -124,10 +124,7 @@ acpi_dalb_init(device_t dev)
 	ACPI_STATUS rv;
 	ACPI_BUFFER ret;
 
-	ret.Pointer = NULL;
-	ret.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
-
-	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "GHID", NULL, &ret);
+	rv = acpi_eval_struct(sc->sc_node->ad_handle, "GHID", &ret);
 	if (ACPI_FAILURE(rv) || ret.Pointer == NULL) {
 		aprint_error_dev(dev,
 			"couldn't enable notify handler: (%s)\n",
@@ -255,10 +252,7 @@ acpi_dalb_resume(device_t dev PMF_FN_ARGS)
 	ACPI_STATUS rv;
 	ACPI_BUFFER ret;
 
-	ret.Pointer = NULL;
-	ret.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
-
-	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "GHID", NULL, &ret);
+	rv = acpi_eval_struct(sc->sc_node->ad_handle, "GHID", &ret);
 	if (ACPI_FAILURE(rv)) {
 		aprint_error_dev(dev, "couldn't evaluate GHID: %s\n",
 		    AcpiFormatException(rv));
