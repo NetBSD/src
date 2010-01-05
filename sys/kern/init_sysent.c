@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.243 2009/12/14 00:53:32 matt Exp $ */
+/* $NetBSD: init_sysent.c,v 1.244 2010/01/05 15:25:33 skrll Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.243 2009/12/14 00:53:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.244 2010/01/05 15:25:33 skrll Exp $");
 
 #include "opt_modular.h"
 #include "opt_ntp.h"
@@ -1108,7 +1108,7 @@ struct sysent sysent[] = {
 #endif
 	{ ns(struct sys___wait450_args), 0,
 	    (sy_call_t *)sys___wait450 },	/* 449 = __wait450 */
-	{ ns(struct sys___mknod50_args), 0,
+	{ ns(struct sys___mknod50_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG2_64,
 	    (sy_call_t *)sys___mknod50 },	/* 450 = __mknod50 */
 	{ ns(struct sys___fhstat50_args), 0,
 	    (sy_call_t *)sys___fhstat50 },	/* 451 = __fhstat50 */
