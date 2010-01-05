@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.107 2010/01/03 23:03:21 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.108 2010/01/05 21:38:50 macallan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.107 2010/01/03 23:03:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.108 2010/01/05 21:38:50 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -640,8 +640,14 @@ intr_establish(int level, int classipl,
 {
 	int s = splhigh();
 #ifdef MULTIPROCESSOR
-	bool mpsafe = (level != IPL_VM) || maybe_mpsafe;
+	bool mpsafe;
 #endif /* MULTIPROCESSOR */
+	if (classipl == 0)
+		classipl = level;
+
+#ifdef MULTIPROCESSOR
+	mpsafe = (classipl != IPL_VM) || maybe_mpsafe;
+#endif
 
 #ifdef DIAGNOSTIC
 	if (CPU_ISSUN4C) {
@@ -667,9 +673,6 @@ intr_establish(int level, int classipl,
 		   intrhand[level] == NULL && sintrhand[level] == NULL) {
 		inst_fasttrap(level, vec);
 	}
-
-	if (classipl == 0)
-		classipl = level;
 
 	/* A requested IPL cannot exceed its device class level */
 	if (classipl < level)
