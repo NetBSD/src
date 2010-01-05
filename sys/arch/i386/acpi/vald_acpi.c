@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.30 2009/09/16 10:47:54 mlelstv Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.31 2010/01/05 13:57:18 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.30 2009/09/16 10:47:54 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.31 2010/01/05 13:57:18 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -671,20 +671,7 @@ vald_acpi_bcm_set(ACPI_HANDLE handle, UINT32 bright)
 static ACPI_STATUS
 vald_acpi_dssx_set(UINT32 value)
 {
-	ACPI_STATUS rv;
-	ACPI_OBJECT Arg;
-	ACPI_OBJECT_LIST ArgList;
-
-	ArgList.Count = 1;
-	ArgList.Pointer = &Arg;
-
-	Arg.Type = ACPI_TYPE_INTEGER;
-	Arg.Integer.Value = value;
-
-	rv = AcpiEvaluateObject(ACPI_ROOT_OBJECT, "\\_SB_.VALX.DSSX",
-	    &ArgList, NULL);
-
-	return (rv);
+	return acpi_eval_set_integer(NULL, "\\_SB_.VALX.DSSX", value);
 }
 
 /*
