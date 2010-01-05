@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_ipccall.c,v 1.9 2009/11/18 15:19:24 njoly Exp $ */
+/* $NetBSD: linux32_ipccall.c,v 1.10 2010/01/05 13:22:41 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2008 Nicolas Joly
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.9 2009/11/18 15:19:24 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.10 2010/01/05 13:22:41 mbalmer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -128,7 +128,7 @@ linux32_sys_ipc(struct lwp *l, const struct linux32_sys_ipc_args *uap,
 	switch (SCARG(uap, what)) {
 #ifdef SYSVSEM
 	case LINUX32_IPC_semop:
-		return linux32_semop(l, uap, retval);;
+		return linux32_semop(l, uap, retval);
 	case LINUX32_IPC_semget:
 		return linux32_semget(l, uap, retval);
 	case LINUX32_IPC_semctl:

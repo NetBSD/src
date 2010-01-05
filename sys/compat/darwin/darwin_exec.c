@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.59 2009/08/16 15:35:52 manu Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.60 2010/01/05 13:22:40 mbalmer Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.59 2009/08/16 15:35:52 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.60 2010/01/05 13:22:40 mbalmer Exp $");
 
 #include "opt_syscall_debug.h"
 #include "wsdisplay.h"
@@ -267,8 +267,8 @@ darwin_e_proc_fork(struct proc *p, struct proc *parent, int forkflags)
 	ded1 = p->p_emuldata;
 	ded2 = parent->p_emuldata;
 
-	ed1 = (char *)ded1 + sizeof(struct mach_emuldata);;
-	ed2 = (char *)ded2 + sizeof(struct mach_emuldata);;
+	ed1 = (char *)ded1 + sizeof(struct mach_emuldata);
+	ed2 = (char *)ded2 + sizeof(struct mach_emuldata);
 	len = sizeof(struct darwin_emuldata) - sizeof(struct mach_emuldata);
 
 	(void)memcpy(ed1, ed2, len);
