@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.100 2009/12/23 09:17:41 mbalmer Exp $ */
+/* $NetBSD: udf_subr.c,v 1.101 2010/01/05 13:30:11 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.100 2009/12/23 09:17:41 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.101 2010/01/05 13:30:11 mbalmer Exp $");
 #endif /* not lint */
 
 
@@ -4266,7 +4266,7 @@ udf_timespec_to_timestamp(struct timespec *timespec, struct timestamp *timestamp
 uint32_t
 udf_getaccessmode(struct udf_node *udf_node)
 {
-	struct file_entry     *fe = udf_node->fe;;
+	struct file_entry     *fe = udf_node->fe;
 	struct extfile_entry *efe = udf_node->efe;
 	uint32_t udf_perm, icbftype;
 	uint32_t mode, ftype;
@@ -5721,7 +5721,7 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 	int (**vnodeops)(void *), struct vattr *vap, struct componentname *cnp)
 {
 	union dscrptr *dscr;
-	struct udf_node *dir_node = VTOI(dvp);;
+	struct udf_node *dir_node = VTOI(dvp);
 	struct udf_node *udf_node;
 	struct udf_mount *ump = dir_node->ump;
 	struct vnode *nvp;

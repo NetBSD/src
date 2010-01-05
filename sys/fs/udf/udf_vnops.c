@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.55 2009/09/14 21:10:44 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.56 2010/01/05 13:30:11 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.55 2009/09/14 21:10:44 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.56 2010/01/05 13:30:11 mbalmer Exp $");
 #endif /* not lint */
 
 
@@ -2118,7 +2118,7 @@ udf_remove(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp  = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
-	struct udf_node *dir_node = VTOI(dvp);;
+	struct udf_node *dir_node = VTOI(dvp);
 	struct udf_node *udf_node = VTOI(vp);
 	struct udf_mount *ump = dir_node->ump;
 	int error;
@@ -2159,7 +2159,7 @@ udf_rmdir(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct vnode *dvp = ap->a_dvp;
 	struct componentname *cnp = ap->a_cnp;
-	struct udf_node *dir_node = VTOI(dvp);;
+	struct udf_node *dir_node = VTOI(dvp);
 	struct udf_node *udf_node = VTOI(vp);
 	struct udf_mount *ump = dir_node->ump;
 	int refcnt, error;
