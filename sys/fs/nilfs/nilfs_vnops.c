@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.2 2009/08/26 03:40:48 elad Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.3 2010/01/05 13:30:11 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.2 2009/08/26 03:40:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.3 2010/01/05 13:30:11 mbalmer Exp $");
 #endif /* not lint */
 
 
@@ -1406,7 +1406,7 @@ nilfs_remove(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp  = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
-	struct nilfs_node *dir_node = VTOI(dvp);;
+	struct nilfs_node *dir_node = VTOI(dvp);
 	struct nilfs_node *nilfs_node = VTOI(vp);
 	struct nilfs_mount *ump = dir_node->ump;
 	int error;
@@ -1447,7 +1447,7 @@ nilfs_rmdir(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct vnode *dvp = ap->a_dvp;
 	struct componentname *cnp = ap->a_cnp;
-	struct nilfs_node *dir_node = VTOI(dvp);;
+	struct nilfs_node *dir_node = VTOI(dvp);
 	struct nilfs_node *nilfs_node = VTOI(vp);
 	struct nilfs_mount *ump = dir_node->ump;
 	int refcnt, error;
