@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.34 2010/01/05 04:17:49 macallan Exp $	*/
+/*	$NetBSD: zx.c,v 1.35 2010/01/05 05:04:38 macallan Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.34 2010/01/05 04:17:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.35 2010/01/05 05:04:38 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -861,6 +861,9 @@ zx_copyrect(struct zx_softc *sc, int sx, int sy, int dx, int dy, int w,
 	    int h)
 {
 	uint32_t dir;
+
+	w -= 1;
+	h -= 1;
 
 	if (sy < dy || sx < dx) {
 		dir = 0x80000000;
