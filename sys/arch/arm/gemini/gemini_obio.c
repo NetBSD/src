@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_obio.c,v 1.7 2008/11/20 20:23:05 cliff Exp $	*/
+/*	$NetBSD: gemini_obio.c,v 1.8 2010/01/05 13:14:56 mbalmer Exp $	*/
 
 /* adapted from:
  *      NetBSD: omap2_obio.c,v 1.5 2008/10/21 18:50:25 matt Exp
@@ -104,7 +104,7 @@
 
 #include "opt_gemini.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.7 2008/11/20 20:23:05 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.8 2010/01/05 13:14:56 mbalmer Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -211,7 +211,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	 * attach the PCI bus
 	 */
 	pba.pba_memt = sc->sc_iot;
-	pba.pba_iot =  sc->sc_iot;;
+	pba.pba_iot =  sc->sc_iot;
 	pba.pba_dmat = sc->sc_dmat;
 	pba.pba_dmat64 = NULL;
 	pba.pba_pc = &sc->sc_pci_chipset;

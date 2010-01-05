@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.73 2009/11/21 20:32:18 rmind Exp $	*/
+/*	$NetBSD: fault.c,v 1.74 2010/01/05 13:14:55 mbalmer Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
 #include "opt_sa.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.73 2009/11/21 20:32:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.74 2010/01/05 13:14:55 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,7 @@ data_abort_handler(trapframe_t *tf)
 		LWP_CACHE_CREDS(l, l->l_proc);
 
 	/* Grab the current pcb */
-	pcb = lwp_getpcb(l);;
+	pcb = lwp_getpcb(l);
 
 	/* Invoke the appropriate handler, if necessary */
 	if (__predict_false(data_aborts[fsr & FAULT_TYPE_MASK].func != NULL)) {

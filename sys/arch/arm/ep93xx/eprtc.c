@@ -1,4 +1,4 @@
-/*	$NetBSD: eprtc.c,v 1.3 2009/12/12 14:44:08 tsutsui Exp $	*/
+/*	$NetBSD: eprtc.c,v 1.4 2010/01/05 13:14:56 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eprtc.c,v 1.3 2009/12/12 14:44:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eprtc.c,v 1.4 2010/01/05 13:14:56 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ eprtc_attach(struct device *parent, struct device *self, void *aux)
 static int
 eprtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 {
-	struct eprtc_softc *sc = ch->cookie;;
+	struct eprtc_softc *sc = ch->cookie;
 
 	tv->tv_sec = bus_space_read_4(sc->sc_iot, sc->sc_ioh, EP93XX_RTC_Data);
 	tv->tv_usec = 0;
@@ -95,7 +95,7 @@ eprtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 static int
 eprtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 {
-	struct eprtc_softc *sc = ch->cookie;;
+	struct eprtc_softc *sc = ch->cookie;
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EP93XX_RTC_Load, tv->tv_sec);
 	return 0;

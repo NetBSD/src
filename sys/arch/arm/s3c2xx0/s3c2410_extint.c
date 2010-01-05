@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_extint.c,v 1.9 2008/01/06 01:37:55 matt Exp $ */
+/* $NetBSD: s3c2410_extint.c,v 1.10 2010/01/05 13:14:56 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_extint.c,v 1.9 2008/01/06 01:37:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_extint.c,v 1.10 2010/01/05 13:14:56 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,7 @@ ssextio_cascaded_intr(void *cookie)
 	}
 
 
-	save = disable_interrupts(I32_bit);;
+	save = disable_interrupts(I32_bit);
 	pending = pending_mask & bus_space_read_4(iot, ioh, GPIO_EINTPEND);
 	pending &= ~ssextio_softc->sc_mask;
 	ssextio_softc->sc_pending |= pending;
