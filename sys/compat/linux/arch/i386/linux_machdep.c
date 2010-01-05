@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.146 2009/11/23 00:46:06 rmind Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.147 2010/01/05 13:22:41 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.146 2009/11/23 00:46:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.147 2010/01/05 13:22:41 mbalmer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -645,7 +645,7 @@ linux_write_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap,
 			d.sd.sd_xx = 0;
 	}
 	sl.start = ldt_info.entry_number;
-	sl.desc = NULL;;
+	sl.desc = NULL;
 	sl.num = 1;
 
 	DPRINTF(("linux_write_ldt: idx=%d, base=0x%lx, limit=0x%x\n",
