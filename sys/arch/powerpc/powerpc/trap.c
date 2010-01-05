@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.131 2009/11/21 17:40:29 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.132 2010/01/05 13:20:29 mbalmer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.131 2009/11/21 17:40:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.132 2010/01/05 13:20:29 mbalmer Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -236,7 +236,7 @@ trap(struct trapframe *frame)
 		}
 
 		if (l->l_flag & LW_SA) {
-			l->l_savp->savp_faultaddr = (vaddr_t)frame->dar;;
+			l->l_savp->savp_faultaddr = (vaddr_t)frame->dar;
 			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
 		rv = uvm_fault(map, trunc_page(frame->dar), ftype);

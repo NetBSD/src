@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.79 2009/11/04 14:39:17 toshii Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.80 2010/01/05 13:20:30 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.79 2009/11/04 14:39:17 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.80 2010/01/05 13:20:30 mbalmer Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -336,7 +336,7 @@ mpacpi_count(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 		break;
 	case ACPI_MADT_TYPE_LOCAL_APIC_OVERRIDE:
 		lop = (ACPI_MADT_LOCAL_APIC_OVERRIDE *)hdrp;
-		mpacpi_lapic_base = lop->Address;;
+		mpacpi_lapic_base = lop->Address;
 	default:
 		break;
 	}
