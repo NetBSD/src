@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.82 2010/01/05 13:57:18 jruoho Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.83 2010/01/05 17:23:18 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.82 2010/01/05 13:57:18 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.83 2010/01/05 17:23:18 jruoho Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -576,7 +576,9 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 			goto out;
 
 		if (acpi_match_hid(devinfo, pciroot_hid)) {
-			(void)mpacpi_get_bbn(acpi, parent, &bus);
+			rv = mpacpi_get_bbn(acpi, parent, &bus);
+			if (ACPI_FAILURE(rv))
+				bus = 0;
 			ACPI_FREE(devinfo);
 			break;
 		}
