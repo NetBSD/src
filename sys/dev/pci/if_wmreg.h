@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.29 2009/12/29 16:01:21 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.30 2010/01/05 10:02:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -273,6 +273,7 @@ struct livengood_tcpip_ctxdesc {
 #define	EEPROM_OFF_MACADDR	0x00	/* MAC address offset */
 #define	EEPROM_OFF_CFG1		0x0a	/* config word 1 */
 #define	EEPROM_OFF_CFG2		0x0f	/* config word 2 */
+#define	EEPROM_INIT_3GIO_3	0x1a	/* PCIe Initial Configuration Word 3 */ 
 #define	EEPROM_OFF_SWDPIN	0x20	/* SWD Pins (Cordova) */
 
 #define	EEPROM_CFG1_LVDID	(1U << 0)
@@ -304,10 +305,13 @@ struct livengood_tcpip_ctxdesc {
 #define	EEPROM_CFG2_APM_PME	(1U << 15)
 #define	EEPROM_CFG2_SWDPIO_SHIFT 4
 #define	EEPROM_CFG2_SWDPIO_MASK	(0xf << EEPROM_CFG2_SWDPIO_SHIFT)
+#define	EEPROM_CFG2_MNGM_MASK	(3U << 13) /* Manageability Operation mode */
 
 #define	EEPROM_SWDPIN_MASK	0xdf
 #define	EEPROM_SWDPIN_SWDPIN_SHIFT 0
 #define	EEPROM_SWDPIN_SWDPIO_SHIFT 8
+
+#define EEPROM_3GIO_3_ASPM_MASK	(0x3 << 2)	/* Active State PM Support */
 
 #define	WMREG_EERD	0x0014	/* EEPROM read */
 #define	EERD_DONE	0x02    /* done bit */
@@ -750,6 +754,3 @@ struct livengood_tcpip_ctxdesc {
 
 #define ICH_NVM_SIG_WORD	0x13
 #define ICH_NVM_SIG_MASK	0xc000
-
-#define	NVM_INIT_CONTROL2_REG	0x000f
-#define	NVM_INIT_CTRL2_MNGM	0x6000
