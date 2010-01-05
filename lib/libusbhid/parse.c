@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.5 2004/01/05 17:55:48 augustss Exp $	*/
+/*	$NetBSD: parse.c,v 1.6 2010/01/05 17:57:06 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 Lennart Augustsson <augustss@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.5 2004/01/05 17:55:48 augustss Exp $");
+__RCSID("$NetBSD: parse.c,v 1.6 2010/01/05 17:57:06 jakllsch Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -333,7 +333,7 @@ hid_get_item_raw(hid_data_t s, hid_item_t *h)
 				c->logical_maximum = dval;
 				break;
 			case 3:
-				c->physical_maximum = dval;
+				c->physical_minimum = dval;
 				break;
 			case 4:
 				c->physical_maximum = dval;
