@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.190 2009/12/15 03:02:24 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.191 2010/01/05 22:42:16 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.190 2009/12/15 03:02:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.191 2010/01/05 22:42:16 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1375,6 +1375,8 @@ config_collect_garbage(struct devicelist *garbage)
 {
 	device_t dv;
 
+	KASSERT(!cpu_intr_p());
+	KASSERT(!cpu_softintr_p());
 	KASSERT(mutex_owned(&alldevs_mtx));
 
 	while (alldevs_nwrite == 0 && alldevs_nread == 0 && alldevs_garbage) {
@@ -1525,11 +1527,7 @@ out:
 	s = config_alldevs_lock();
 	KASSERT(alldevs_nwrite != 0);
 	--alldevs_nwrite;
-	if (rv != 0)
-		;
-	else if (dev->dv_del_gen != 0)
-		;
-	else {
+	if (rv == 0 && dev->dv_del_gen == 0) {
 		dev->dv_del_gen = alldevs_gen;
 		alldevs_garbage = true;
 	}
@@ -1903,12 +1901,11 @@ device_lookup(cfdriver_t cd, int unit)
 	int s;
 
 	s = config_alldevs_lock();
-	config_collect_garbage(&garbage);
 	KASSERT(mutex_owned(&alldevs_mtx));
 	if (unit < 0 || unit >= cd->cd_ndevs)
 		dv = NULL;
-	else
-		dv = cd->cd_devs[unit];
+	else if ((dv = cd->cd_devs[unit]) != NULL && dv->dv_del_gen != 0)
+		dv = NULL;
 	config_alldevs_unlock(s);
 	config_dump_garbage(&garbage);
 
@@ -1916,31 +1913,19 @@ device_lookup(cfdriver_t cd, int unit)
 }
 
 /*
- * device_lookup:
+ * device_lookup_private:
  *
- *	Look up a device instance for a given driver.
+ *	Look up a softc instance for a given driver.
  */
 void *
 device_lookup_private(cfdriver_t cd, int unit)
 {
-	struct devicelist garbage = TAILQ_HEAD_INITIALIZER(garbage);
 	device_t dv;
-	int s;
-	void *priv;
 
-	s = config_alldevs_lock();
-	config_collect_garbage(&garbage);
-	KASSERT(mutex_owned(&alldevs_mtx));
-	if (unit < 0 || unit >= cd->cd_ndevs)
-		priv = NULL;
-	else if ((dv = cd->cd_devs[unit]) == NULL)
-		priv = NULL;
-	else
-		priv = dv->dv_private;
-	config_alldevs_unlock(s);
-	config_dump_garbage(&garbage);
+	if ((dv = device_lookup(cd, unit)) == NULL)
+		return NULL;
 
-	return priv;
+	return dv->dv_private;
 }
 
 /*
@@ -2669,8 +2654,9 @@ deviter_next2(deviter_t *di)
 	dv = di->di_prev;
 
 	if (dv == NULL)
-		;
-	else if ((di->di_flags & DEVITER_F_RW) != 0)
+		return NULL;
+
+	if ((di->di_flags & DEVITER_F_RW) != 0)
 		di->di_prev = TAILQ_PREV(dv, devicelist, dv_list);
 	else
 		di->di_prev = TAILQ_NEXT(dv, dv_list);
