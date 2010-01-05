@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 2009/11/28 12:14:53 tsutsui Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2010/01/05 15:45:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.21 2009/11/28 12:14:53 tsutsui Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 2010/01/05 15:45:26 tsutsui Exp $");
 #endif
 #endif	/* not lint */
 
@@ -117,6 +117,7 @@ __RCSID("$NetBSD: main.c,v 1.21 2009/11/28 12:14:53 tsutsui Exp $");
 #include "pathnames.h"
 #include "extern.h"
 #include "dkcksum.h"
+#include "bswap.h"
 
 /*
  * Disklabel: read and write disklabels.
@@ -688,12 +689,12 @@ process_mbr(int f, int (*action)(int, u_int))
 static int
 readlabel_mbr(int f, u_int sector)
 {
-	struct disklabel *lp;
+	struct disklabel *disk_lp;
 
-	lp = find_label(f, sector);
-	if (lp == NULL)
+	disk_lp = find_label(f, sector);
+	if (disk_lp == NULL)
 		return 1;
-	lab = *lp;
+	targettohlabel(&lab, disk_lp);
 	return 0;
 }
 
@@ -900,7 +901,7 @@ readlabel(int f)
 static struct disklabel *
 find_label(int f, u_int sector)
 {
-	struct disklabel *lp;
+	struct disklabel *disk_lp, hlp;
 	int i, offset;
 	const char *is_deleted;
 
@@ -919,29 +920,30 @@ find_label(int f, u_int sector)
 	/* Check expected offset first */
 	for (offset = LABEL_OFFSET, i = -4;; offset = i += 4) {
 		is_deleted = "";
-		lp = (void *)(bootarea + offset);
+		disk_lp = (void *)(bootarea + offset);
 		if (i == LABEL_OFFSET)
 			continue;
-		if ((char *)(lp + 1) > bootarea + bootarea_len)
+		if ((char *)(disk_lp + 1) > bootarea + bootarea_len)
 			break;
-		if (lp->d_magic2 != lp->d_magic)
+		if (disk_lp->d_magic2 != disk_lp->d_magic)
 			continue;
-		if (read_all && (lp->d_magic == DISKMAGIC_DELETED ||
-		    lp->d_magic == DISKMAGIC_DELETED_REV)) {
-			lp->d_magic ^= ~0u;
-			lp->d_magic2 ^= ~0u;
+		if (read_all && (disk_lp->d_magic == DISKMAGIC_DELETED ||
+		    disk_lp->d_magic == DISKMAGIC_DELETED_REV)) {
+			disk_lp->d_magic ^= ~0u;
+			disk_lp->d_magic2 ^= ~0u;
 			is_deleted = "deleted ";
 		}
-		if (lp->d_magic != DISKMAGIC) {
+		if (target32toh(disk_lp->d_magic) != DISKMAGIC) {
 			/* XXX: Do something about byte-swapped labels ? */
-			if (lp->d_magic == DISKMAGIC_REV &&
-			    lp->d_magic2 == DISKMAGIC_REV)
+			if (target32toh(disk_lp->d_magic) == DISKMAGIC_REV &&
+			    target32toh(disk_lp->d_magic2) == DISKMAGIC_REV)
 				warnx("ignoring %sbyteswapped label"
 				    " at offset %u from sector %u",
 				    is_deleted, offset, sector);
 			continue;
 		}
-		if (lp->d_npartitions > MAXPARTITIONS || dkcksum(lp) != 0) {
+		if (target16toh(disk_lp->d_npartitions) > MAXPARTITIONS ||
+		    dkcksum_target(disk_lp) != 0) {
 			if (verbose > 0)
 				warnx("corrupt label found at offset %u in "
 				    "sector %u", offset, sector);
@@ -951,19 +953,21 @@ find_label(int f, u_int sector)
 			warnx("%slabel found at offset %u from sector %u",
 			    is_deleted, offset, sector);
 		if (!read_all)
-			return lp;
+			return disk_lp;
 
 		/* To print all the labels we have to do it here */
 		/* XXX: maybe we should compare them? */
+		targettohlabel(&hlp, disk_lp);
 		printf("# %ssector %u offset %u bytes\n",
 		    is_deleted, sector, offset);
 		if (tflag)
-			makedisktab(stdout, lp);
+			makedisktab(stdout, &hlp);
 		else {
-			showinfo(stdout, lp, specname);
-			showpartitions(stdout, lp, Cflag);
+			showinfo(stdout, &hlp, specname);
+			showpartitions(stdout, &hlp, Cflag);
 		}
-		checklabel(lp);
+		checklabel(&hlp);
+		htotargetlabel(disk_lp, &hlp);
 		/* Remember we've found a label */
 		read_all = 2;
 	}
@@ -1033,7 +1037,7 @@ update_label(int f, u_int label_sector, u_int label_offset)
 			    "to create label", label_sector);
 	}
 
-	*disk_lp = lab;
+	htotargetlabel(disk_lp, &lab);
 	write_bootarea(f, label_sector);
 	return 1;
 }
@@ -1069,7 +1073,7 @@ readlabel_direct(int f)
 	if (filecore_partition_offset != 0) {
 		disk_lp = find_label(f, filecore_partition_offset);
 		if (disk_lp != NULL) {
-			lab = *disk_lp;
+			targettohlabel(&lab, disk_lp);
 			return 0;
 		}
 	}
@@ -1079,7 +1083,7 @@ readlabel_direct(int f)
 
 	disk_lp = find_label(f, 0);
 	if (disk_lp != NULL) {
-		lab = *disk_lp;
+		targettohlabel(&lab, disk_lp);
 		return 0;
 	}
 
