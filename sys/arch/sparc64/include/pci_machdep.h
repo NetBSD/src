@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.23 2009/11/30 05:00:58 mrg Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.24 2010/01/06 05:55:01 mrg Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -90,6 +90,7 @@ void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *,
 		    int *);
 const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
+int		pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 
 int		sparc64_pci_enumerate_bus(struct pci_softc *, const int *,
@@ -101,8 +102,6 @@ int		sparc64_pci_enumerate_bus(struct pci_softc *, const int *,
 		((pc)->spc_conf_read(pc, tag, reg))
 #define	pci_conf_write(pc, tag, reg, val) \
 		((pc)->spc_conf_write(pc, tag, reg, val))
-#define	pci_intr_map(pa, handle) \
-		((pa)->pa_pc->spc_intr_map(pa, handle))
 #define	pci_intr_establish(pc, handle, level, func, arg) \
 		((pc)->spc_intr_establish(pc, handle, level, func, arg))
 
