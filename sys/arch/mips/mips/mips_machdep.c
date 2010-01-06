@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.19 2009/12/31 00:54:09 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.20 2010/01/06 04:25:46 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.19 2009/12/31 00:54:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.20 2010/01/06 04:25:46 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -1672,11 +1672,11 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 	 */
 	for (size_t i = 0; i < nseg; i++) {
 #ifdef VM_FREELIST_FIRST4G
-		if (segs[i].last > FOURGIG)
+		if (round_page(segs[i].start + segs[i].size) > FOURGIG)
 			need4g = true;
 #endif
 #ifdef VM_FREELIST_FIRST512M
-		if (segs[i].last > HALFGIG) {
+		if (round_page(segs[i].start + segs[i].size) > HALFGIG) {
 			need512m = true;
 			mips_poolpage_vmfreelist = VM_FREELIST_FIRST512M;
 		}
