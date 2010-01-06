@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.296 2009/12/06 22:48:17 dyoung Exp $	*/
+/*	$NetBSD: cd.c,v 1.297 2010/01/06 20:16:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.296 2009/12/06 22:48:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.297 2010/01/06 20:16:57 martin Exp $");
 
 #include "rnd.h"
 
@@ -3005,6 +3005,8 @@ mmc_getdiscinfo(struct scsipi_periph *periph,
 		}
 
 		features_len = _4btol(gc->data_len);
+		if (features_len < 4)
+			break;
 
 		pos  = 0;
 		fpos = &gc->feature_desc[0];
