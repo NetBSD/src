@@ -1,4 +1,4 @@
-/* $NetBSD: k_tan.S,v 1.5 2000/05/16 19:07:36 is Exp $ */
+/* $NetBSD: k_tan.S,v 1.6 2010/01/06 14:11:53 phx Exp $ */
 
 /*
  * Dummy file. Real code is elsewhere.
