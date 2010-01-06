@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.11 2009/12/30 20:20:56 nakayama Exp $	*/
+/*	$NetBSD: schizo.c,v 1.12 2010/01/06 05:55:01 mrg Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -489,7 +489,7 @@ schizo_set_intr(struct schizo_softc *sc, struct schizo_pbm *pbm, int ipl,
 
 	mapoff = offsetof(struct schizo_pbm_regs, imap[ino]);
 	clroff = offsetof(struct schizo_pbm_regs, iclr[ino]);
-	ino |= (sc->sc_ign << INTMAP_IGN_SHIFT);
+	ino |= sc->sc_ign;
 
 	DPRINTF(SDB_INTR, (" mapoff %lx clroff %lx\n", mapoff, clroff));
 
@@ -690,46 +690,15 @@ schizo_bus_mmap(bus_space_tag_t t, bus_addr_t paddr, off_t off, int prot,
 }
 
 /*
- * interrupt mapping foo.
- * XXX: how does this deal with multiple interrupts for a device?
+ * Set the IGN for this schizo into the handle.
  */
 int
 schizo_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
-	pcitag_t tag = pa->pa_tag;
 	struct schizo_pbm *pbm = pa->pa_pc->cookie;
 	struct schizo_softc *sc = pbm->sp_sc;
-	int interrupts, *intp;
-	int len, node = PCITAG_NODE(tag);
-	char devtype[30];
 
-	intp = &interrupts;
-	len = 1;
-	if (prom_getprop(node, "interrupts", sizeof(interrupts),
-			&len, &intp) != 0 || len != 1) {
-		DPRINTF(SDB_INTMAP,
-			("pci_intr_map: could not read interrupts\n"));
-		return (ENODEV);
-	}
-
-	if (OF_mapintr(node, &interrupts, sizeof(interrupts), 
-		sizeof(interrupts)) < 0) {
-		printf("OF_mapintr failed\n");
-		KASSERT(pa->pa_pc->spc_find_ino);
-		pa->pa_pc->spc_find_ino(pa, &interrupts);
-	}
-	DPRINTF(SDB_INTMAP, ("OF_mapintr() gave %x\n", interrupts));
-
-	/* Try to find an IPL for this type of device. */
-	prom_getpropstringA(node, "device_type", devtype, sizeof(devtype));
-	for (len = 0; intrmap[len].in_class != NULL; len++)
-		if (strcmp(intrmap[len].in_class, devtype) == 0) {
-			interrupts |= INTLEVENCODE(intrmap[len].in_lev);
-			DPRINTF(SDB_INTMAP, ("reset to %x\n", interrupts));
-			break;
-		}
-
-	*ihp = interrupts | sc->sc_ign;
+	*ihp |= sc->sc_ign;
 	DPRINTF(SDB_INTMAP, ("returning IGN adjusted to %x\n", *ihp));
 	return (0);
 }

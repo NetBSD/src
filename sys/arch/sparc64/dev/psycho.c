@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.99 2009/12/30 17:16:49 nakayama Exp $	*/
+/*	$NetBSD: psycho.c,v 1.100 2010/01/06 05:55:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.99 2009/12/30 17:16:49 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.100 2010/01/06 05:55:01 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -116,8 +116,6 @@ static void psycho_set_intr(struct psycho_softc *, int, void *, uint64_t *,
 static pcireg_t	psycho_pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 static void	psycho_pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
 				      pcireg_t);
-static int	psycho_pci_intr_map(struct pci_attach_args *,
-				     pci_intr_handle_t *);
 static void	*psycho_pci_intr_establish(pci_chipset_tag_t,
 					   pci_intr_handle_t,
 					   int, int (*)(void *), void *);
@@ -753,7 +751,7 @@ psycho_alloc_chipset(struct psycho_pbm *pp, int node, pci_chipset_tag_t pc)
 	npc->rootnode = node;
 	npc->spc_conf_read = psycho_pci_conf_read;
 	npc->spc_conf_write = psycho_pci_conf_write;
-	npc->spc_intr_map = psycho_pci_intr_map;
+	npc->spc_intr_map = NULL;
 	npc->spc_intr_establish = psycho_pci_intr_establish;
 	npc->spc_find_ino = psycho_pci_find_ino;
 
@@ -1387,49 +1385,6 @@ psycho_pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data
 		
 	bus_space_write_4(sc->sc_configtag, sc->sc_configaddr,
 		PCITAG_OFFSET(tag) + reg, data);
-}
-
-/*
- * interrupt mapping foo.
- * XXX: how does this deal with multiple interrupts for a device?
- */
-int
-psycho_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
-{
-	pcitag_t tag = pa->pa_tag;
-	int interrupts, *intp;
-	int len, node = PCITAG_NODE(tag);
-	char devtype[30];
-
-	intp = &interrupts;
-	len = 1;
-	if (prom_getprop(node, "interrupts", sizeof(interrupts),
-			&len, &intp) != 0 || len != 1) {
-		DPRINTF(PDB_INTMAP,
-			("%s: could not read interrupts\n", __func__));
-		return (ENODEV);
-	}
-
-	if (OF_mapintr(node, &interrupts, sizeof(interrupts),
-		sizeof(interrupts)) < 0) {
-		printf("OF_mapintr failed\n");
-		KASSERT(pa->pa_pc->spc_find_ino);
-		pa->pa_pc->spc_find_ino(pa, &interrupts);
-	}
-	DPRINTF(PDB_INTMAP, ("OF_mapintr() gave %x\n", interrupts));
-
-	/* Try to find an IPL for this type of device. */
-	prom_getpropstringA(node, "device_type", devtype, sizeof(devtype));
-	for (len = 0; intrmap[len].in_class != NULL; len++)
-		if (strcmp(intrmap[len].in_class, devtype) == 0) {
-			interrupts |= INTLEVENCODE(intrmap[len].in_lev);
-			DPRINTF(PDB_INTMAP, ("reset to %x\n", interrupts));
-			break;
-		}
-
-	/* XXXX -- we use the ino.  What if there is a valid IGN? */
-	*ihp = interrupts;
-	return (0);
 }
 
 static void *
