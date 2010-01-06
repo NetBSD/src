@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34 2009/10/19 18:41:08 bouyer Exp $	*/
+/*	$NetBSD: main.c,v 1.35 2010/01/06 18:12:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.34 2009/10/19 18:41:08 bouyer Exp $");
+__RCSID("$NetBSD: main.c,v 1.35 2010/01/06 18:12:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ __RCSID("$NetBSD: main.c,v 1.34 2009/10/19 18:41:08 bouyer Exp $");
 #include "fsutil.h"
 #include "exitvalues.h"
 
-int	returntosingle = 0;
+volatilel sigatomic_t	returntosingle = 0;
 
 
 static int	argtoi(int, const char *, const char *, int);

@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.27 2008/02/23 21:41:48 christos Exp $	 */
+/* $NetBSD: utilities.c,v 1.28 2010/01/06 18:12:37 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -60,7 +60,7 @@
 
 long diskreads, totalreads;	/* Disk cache statistics */
 
-extern int returntosingle;
+extern volatile sigatomic_t returntosingle;
 extern off_t locked_queue_bytes;
 
 int
@@ -246,7 +246,7 @@ void
 catch(int n)
 {
 	ckfini(0);
-	exit(FSCK_EXIT_SIGNALLED);
+	_exit(FSCK_EXIT_SIGNALLED);
 }
 /*
  * When preening, allow a single quit to signal
@@ -256,9 +256,14 @@ catch(int n)
 void
 catchquit(int n)
 {
-	printf("returning to single-user after filesystem check\n");
+	static const char msg[] =
+	    "returning to single-user after filesystem check\n";
+	int serrno = errno;
+
+	(void)write(STDOUT_FILENO, msg, sizeof(msg) - 1);
 	returntosingle = 1;
 	(void) signal(SIGQUIT, SIG_DFL);
+	serrno = errno;
 }
 /*
  * Ignore a single quit signal; wait and flush just in case.
@@ -267,10 +272,12 @@ catchquit(int n)
 void
 voidquit(int n)
 {
+	int serrno = errno;
 
 	sleep(1);
 	(void) signal(SIGQUIT, SIG_IGN);
 	(void) signal(SIGQUIT, SIG_DFL);
+	errno = serrno;
 }
 /*
  * determine whether an inode should be fixed.
