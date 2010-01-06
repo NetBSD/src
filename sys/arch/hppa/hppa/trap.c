@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.64 2010/01/06 07:38:49 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.65 2010/01/06 07:42:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.64 2010/01/06 07:38:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.65 2010/01/06 07:42:58 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -1081,6 +1081,7 @@ syscall(struct trapframe *frame, int *args)
 	struct lwp *l;
 	struct proc *p;
 	const struct sysent *callp;
+	size_t nargs64;
 	int nsys, code, error;
 	int tmp;
 	int rval[2];
@@ -1110,18 +1111,16 @@ syscall(struct trapframe *frame, int *args)
 #endif
 
 	/*
-	 * Restarting a system call is touchy on the HPPA, 
-	 * because syscall arguments are passed in registers 
-	 * and the program counter of the syscall "point" 
-	 * isn't easily divined.  
+	 * Restarting a system call is touchy on the HPPA, because syscall
+	 * arguments are passed in registers and the program counter of the
+	 * syscall "point" isn't easily divined.
 	 *
-	 * We handle the first problem by assuming that we
-	 * will have to restart this system call, so we
-	 * stuff the first four words of the original arguments 
-	 * back into the frame as arg0...arg3, which is where
-	 * we found them in the first place.  Any further
-	 * arguments are (still) on the user's stack and the 
-	 * syscall code will fetch them from there (again).
+	 * We handle the first problem by assuming that we will have to restart
+	 * this system call, so we stuff the first four words of the original
+	 * arguments back into the frame as arg0...arg3, which is where we
+	 * found them in the first place.  Any further arguments are (still) on
+	 * the user's stack and the  syscall code will fetch them from there
+	 * (again).
 	 *
 	 * The program counter problem is addressed below.
 	 */
@@ -1143,10 +1142,9 @@ syscall(struct trapframe *frame, int *args)
 		if (callp != sysent)
 			break;
 		/*
-		 * NB: even though __syscall(2) takes a quad_t
-		 * containing the system call number, because
-		 * our argument copying word-swaps 64-bit arguments,
-		 * the least significant word of that quad_t
+		 * NB: even though __syscall(2) takes a quad_t containing the
+		 * system call number, because our argument copying word-swaps
+		 * 64-bit arguments, the least significant word of that quad_t
 		 * is the first word in the argument array.
 		 */
 		code = *args;
@@ -1154,143 +1152,39 @@ syscall(struct trapframe *frame, int *args)
 	}
 
 	/*
-	 * Stacks growing from lower addresses to higher
-	 * addresses are not really such a good idea, because
-	 * it makes it impossible to overlay a struct on top
-	 * of C stack arguments (the arguments appear in 
+	 * Stacks growing from lower addresses to higher addresses are not
+	 * really such a good idea, because it makes it impossible to overlay a
+	 * struct on top of C stack arguments (the arguments appear in
 	 * reversed order).
 	 *
-	 * You can do the obvious thing (as locore.S does) and 
-	 * copy argument words one by one, laying them out in 
-	 * the "right" order in the destination buffer, but this 
-	 * ends up word-swapping multi-word arguments (like off_t).
-	 * 
-	 * To compensate, we have some automatically-generated
-	 * code that word-swaps these multi-word arguments.
-	 * Right now the script that generates this code is
-	 * in Perl, because I don't know awk.
+	 * You can do the obvious thing (as locore.S does) and copy argument
+	 * words one by one, laying them out in the "right" order in the dest-
+	 * ination buffer, but this ends up word-swapping multi-word arguments
+	 * (like off_t).
 	 *
 	 * FIXME - this works only on native binaries and
 	 * will probably screw up any and all emulation.
+	 *
 	 */
-	switch (code) {
-	case SYS_pread:
-		/*
-		 * 	syscallarg(int) fd;
-		 * 	syscallarg(void *) buf;
-		 * 	syscallarg(size_t) nbyte;
-		 * 	syscallarg(int) pad;
-		 * 	syscallarg(off_t) offset;
-		 */
-		tmp = args[4];
-		args[4] = args[4 + 1];
-		args[4 + 1] = tmp;
-		break;
-	case SYS_pwrite:
-		/*
-		 * 	syscallarg(int) fd;
-		 * 	syscallarg(const void *) buf;
-		 * 	syscallarg(size_t) nbyte;
-		 * 	syscallarg(int) pad;
-		 * 	syscallarg(off_t) offset;
-		 */
-		tmp = args[4];
-		args[4] = args[4 + 1];
-		args[4 + 1] = tmp;
-		break;
-	case SYS_mmap:
-		/*
-		 * 	syscallarg(void *) addr;
-		 * 	syscallarg(size_t) len;
-		 * 	syscallarg(int) prot;
-		 * 	syscallarg(int) flags;
-		 * 	syscallarg(int) fd;
-		 * 	syscallarg(long) pad;
-		 * 	syscallarg(off_t) pos;
-		 */
-		tmp = args[6];
-		args[6] = args[6 + 1];
-		args[6 + 1] = tmp;
-		break;
-	case SYS_lseek:
-		/*
-		 * 	syscallarg(int) fd;
-		 * 	syscallarg(int) pad;
-		 * 	syscallarg(off_t) offset;
-		 */
-		tmp = args[2];
-		args[2] = args[2 + 1];
-		args[2 + 1] = tmp;
-		break;
-	case SYS_truncate:
-		/*
-		 * 	syscallarg(const char *) path;
-		 * 	syscallarg(int) pad;
-		 * 	syscallarg(off_t) length;
-		 */
-		tmp = args[2];
-		args[2] = args[2 + 1];
-		args[2 + 1] = tmp;
-		break;
-	case SYS_ftruncate:
-		/*
-		 * 	syscallarg(int) fd;
-		 * 	syscallarg(int) pad;
-		 * 	syscallarg(off_t) length;
-		 */
-		tmp = args[2];
-		args[2] = args[2 + 1];
-		args[2 + 1] = tmp;
-		break;
-	case SYS_preadv:
-		/*
-		 * 	syscallarg(int) fd;
-		 * 	syscallarg(const struct iovec *) iovp;
-		 * 	syscallarg(int) iovcnt;
-		 * 	syscallarg(int) pad;
-		 * 	syscallarg(off_t) offset;
-		 */
-		tmp = args[4];
-		args[4] = args[4 + 1];
-		args[4 + 1] = tmp;
-		break;
-	case SYS_pwritev:
-		/*
-		 * 	syscallarg(int) fd;
-		 * 	syscallarg(const struct iovec *) iovp;
-		 * 	syscallarg(int) iovcnt;
-		 * 	syscallarg(int) pad;
-		 * 	syscallarg(off_t) offset;
-		 */
-		tmp = args[4];
-		args[4] = args[4 + 1];
-		args[4 + 1] = tmp;
-		break;
-	case SYS___posix_fadvise50:
-		/*
-		 *	syscallarg(int) fd;
-		 *	syscallarg(int) pad;
-		 *	syscallarg(off_t) offset;
-		 *	syscallarg(off_t) len;
-		 *	syscallarg(int) advice;
-		 */
-		tmp = args[2];
-		args[2] = args[2 + 1];
-		args[2 + 1] = tmp;
-		tmp = args[4];
-		args[4] = args[4 + 1];
-		args[4 + 1] = tmp;
-	case SYS___mknod50:
-		/*
-		 *	syscallarg(const char *) path;
-		 *	syscallarg(mode_t) mode;
-		 *	syscallarg(dev_t) dev;
-		 */
-		tmp = args[2];
-		args[2] = args[2 + 1];
-		args[2 + 1] = tmp;
-	default:
-		break;
+
+	if (code < 0 || code >= nsys)
+		callp += p->p_emul->e_nosys;	/* bad syscall # */
+	else
+		callp += code;
+
+	nargs64 = SYCALL_NARGS64(callp);
+	if (nargs64 != 0) {
+		size_t nargs = callp->sy_narg;
+
+		for (size_t i = 0; i < nargs + nargs64;) {
+			if (SYCALL_ARG_64_P(callp, i)) {
+				tmp = args[i];
+				args[i] = args[i + 1];
+				args[i + 1] = tmp;
+				i += 2;
+			} else
+				i++;
+		}
 	}
 
 #ifdef USERTRACE
@@ -1303,13 +1197,12 @@ syscall(struct trapframe *frame, int *args)
 	}
 #endif
 
-	if (code < 0 || code >= nsys)
-		callp += p->p_emul->e_nosys;	/* bad syscall # */
-	else
-		callp += code;
-
-	if ((error = trace_enter(code, args, callp->sy_narg)) != 0)
-		goto out;
+	error = 0;
+	if (__predict_false(p->p_trace_enabled)) {
+		error = trace_enter(code, args, callp->sy_narg);
+		if (error)
+			goto out;
+	}
 
 	rval[0] = 0;
 	rval[1] = 0;
@@ -1355,7 +1248,8 @@ out:
 		break;
 	}
 
-	trace_exit(code, rval, error);
+	if (__predict_false(p->p_trace_enabled))
+		trace_exit(code, rval, error);
 
 	userret(l, frame->tf_iioq_head, 0);
 #ifdef DEBUG
