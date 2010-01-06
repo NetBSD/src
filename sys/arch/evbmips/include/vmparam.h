@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1.142.3 2009/12/31 00:54:09 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.1.142.4 2010/01/06 04:24:38 matt Exp $	*/
 
 #ifndef _EVBMIPS_VMPARAM_H_
 #define _EVBMIPS_VMPARAM_H_
@@ -7,13 +7,13 @@
 
 #define	VM_PHYSSEG_MAX		32
 
-#undef VMFREELIST_MAX
-#define	VMFREELIST_MAX		3
+#undef VM_FREELIST_MAX
+#define	VM_FREELIST_MAX		3
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
-#define	VMFREELIST_FIRST4G	2
+#define	VM_FREELIST_FIRST4G	2
 #endif
 #if !defined(_LP64)
-#define	VMFREELIST_FIRST512M	1
+#define	VM_FREELIST_FIRST512M	1
 #endif
  
 #endif	/* !_EVBMIPS_VMPARAM_H_ */
