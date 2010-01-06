@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.63 2009/11/27 20:32:10 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.64 2010/01/06 07:38:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.63 2009/11/27 20:32:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.64 2010/01/06 07:38:49 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -512,8 +512,9 @@ trap(int type, struct trapframe *frame)
 		vftype = inst_store(opcode) ? VM_PROT_WRITE : VM_PROT_READ;
 	}
 
+	KASSERT(curlwp != NULL);
 	l = curlwp;
-	p = l ? l->l_proc : NULL;
+	p = l->l_proc;
 	if ((type & T_USER) != 0)
 		LWP_CACHE_CREDS(l, p);
 
@@ -1093,6 +1094,7 @@ syscall(struct trapframe *frame, int *args)
 	if (!USERMODE(frame->tf_iioq_head))
 		panic("syscall");
 
+	KASSERT(curlwp != NULL);
 	l = curlwp;
 	p = l->l_proc;
 	l->l_md.md_regs = frame;
