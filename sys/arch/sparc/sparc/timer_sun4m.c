@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.20 2010/01/04 04:21:35 mrg Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.21 2010/01/06 06:15:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.20 2010/01/04 04:21:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.21 2010/01/06 06:15:09 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -103,7 +103,7 @@ schedintr_4m(void *v)
 	/*
 	 * We call hardclock() here so that we make sure it is called on
 	 * all CPUs.  This function ends up being called on sun4m systems
-	 * every tick, so we have avoid 
+	 * every tick.
 	 */
 	hardclock(v);
 
