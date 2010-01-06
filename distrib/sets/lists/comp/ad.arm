@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.32 2009/12/14 15:27:13 skrll Exp $
+# $NetBSD: ad.arm,v 1.33 2010/01/06 19:46:43 skrll Exp $
 ./usr/include/arm				comp-c-include
 ./usr/include/arm/ansi.h			comp-c-include
 ./usr/include/arm/aout_machdep.h		comp-c-include
@@ -87,6 +87,7 @@
 ./usr/lib/libarm_p.a				comp-c-lib		profile
 ./usr/lib/libarm_pic.a				comp-c-piclib
 ./usr/lib/libpmc.a				comp-c-lib
+./usr/lib/libpmc_g.a				-unknown-		debuglib
 ./usr/lib/libpmc_p.a				comp-c-proflib		profile
 ./usr/lib/libpmc_pic.a				comp-c-piclib
 ./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic

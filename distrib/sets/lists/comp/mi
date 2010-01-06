@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1354 2009/12/24 01:13:20 jakllsch Exp $
+#	$NetBSD: mi,v 1.1355 2010/01/06 19:46:43 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2516,7 +2516,6 @@
 ./usr/lib/libpci.a				comp-c-lib
 ./usr/lib/libpci_g.a				-unknown-		debuglib
 ./usr/lib/libpci_p.a				comp-c-proflib		profile
-./usr/lib/libpmc_g.a				-unknown-		debuglib
 ./usr/lib/libposix.a				comp-c-lib
 ./usr/lib/libposix_g.a				-unknown-		debuglib
 ./usr/lib/libposix_p.a				comp-c-proflib		profile
