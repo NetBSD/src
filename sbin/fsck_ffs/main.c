@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.73 2008/10/12 20:49:43 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.74 2010/01/06 18:12:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.73 2008/10/12 20:49:43 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.74 2010/01/06 18:12:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: main.c,v 1.73 2008/10/12 20:49:43 wiz Exp $");
 #include "snapshot.h"
 
 int	progress = 0;
-int	returntosingle = 0;
+volatile sigatomic_t	returntosingle = 0;
 
 static int	argtoi(int, const char *, const char *, int);
 static int	checkfilesys(const char *, const char *, int);

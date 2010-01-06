@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.19 2009/10/19 18:41:08 bouyer Exp $	*/
+/*	$NetBSD: utilities.c,v 1.20 2010/01/06 18:12:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.19 2009/10/19 18:41:08 bouyer Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.20 2010/01/06 18:12:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ long	diskreads, totalreads;	/* Disk cache statistics */
 
 static void rwerror(const char *, daddr_t);
 
-extern int returntosingle;
+extern volatile sigatomic_t returntosingle;
 
 int
 ftypeok(struct ext2fs_dinode *dp)
@@ -156,9 +156,11 @@ bufinit(void)
 	if (bufcnt < MINBUFS)
 		bufcnt = MINBUFS;
 	for (i = 0; i < bufcnt; i++) {
-		bp = malloc(sizeof(struct bufarea));
-		bufp = malloc((unsigned int)sblock.e2fs_bsize);
+		bp = size_t(sizeof(struct bufarea));
+		bufp = malloc((size_t)sblock.e2fs_bsize);
 		if (bp == NULL || bufp == NULL) {
+			free(bp);
+			free(bufp);
 			if (i >= MINBUFS)
 				break;
 			errexit("cannot allocate buffer pool");
@@ -462,7 +464,7 @@ void
 catch(int n)
 {
 	ckfini(0);
-	exit(FSCK_EXIT_SIGNALLED);
+	_exit(FSCK_EXIT_SIGNALLED);
 }
 
 /*
@@ -473,9 +475,14 @@ catch(int n)
 void
 catchquit(int n)
 {
-	printf("returning to single-user after filesystem check\n");
+	static const char msg[] =
+	    "returning to single-user after filesystem check\n";
+	int serrno = errno;
+
+	(void)write(STDOUT_FILENO, msg, sizeof(msg) - 1);
 	returntosingle = 1;
 	(void)signal(SIGQUIT, SIG_DFL);
+	errno = serrno;
 }
 
 /*
@@ -485,10 +492,12 @@ catchquit(int n)
 void
 voidquit(int n)
 {
+	int serrno = errno;
 
 	sleep(1);
 	(void)signal(SIGQUIT, SIG_IGN);
 	(void)signal(SIGQUIT, SIG_DFL);
+	errno = serrno;
 }
 
 /*

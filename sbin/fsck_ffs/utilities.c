@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.56 2008/07/31 05:38:04 simonb Exp $	*/
+/*	$NetBSD: utilities.c,v 1.57 2010/01/06 18:12:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.56 2008/07/31 05:38:04 simonb Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.57 2010/01/06 18:12:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ long	diskreads, totalreads;	/* Disk cache statistics */
 
 static void rwerror(const char *, daddr_t);
 
-extern int returntosingle;
+extern volatile sigatomic_t returntosingle;
 
 int
 ftypeok(union dinode *dp)
@@ -508,7 +508,7 @@ catch(int sig)
 		markclean = 0;
 		ckfini();
 	}
-	exit(FSCK_EXIT_SIGNALLED);
+	_exit(FSCK_EXIT_SIGNALLED);
 }
 
 /*
@@ -519,12 +519,14 @@ catch(int sig)
 void
 catchquit(int sig)
 {
-	int errsave = errno;
+	static const char msg[] = 
+	    "returning to single-user after file system check\n";
+	int serrno = errno;
 
-	printf("returning to single-user after file system check\n");
+	(void)write(STDOUT_FILENO, msg, sizeof(msg) - 1);
 	returntosingle = 1;
 	(void)signal(SIGQUIT, SIG_DFL);
-	errno = errsave;
+	errno = serrno;
 }
 
 /*
@@ -534,12 +536,12 @@ catchquit(int sig)
 void
 voidquit(int sig)
 {
-	int errsave = errno;
+	int serrno = errno;
 
 	sleep(1);
 	(void)signal(SIGQUIT, SIG_IGN);
 	(void)signal(SIGQUIT, SIG_DFL);
-	errno = errsave;
+	errno = serrno;
 }
 
 /*
