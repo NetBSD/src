@@ -1,4 +1,4 @@
-/*	$NetBSD: qop_cbq.c,v 1.8 2009/04/15 00:13:51 lukem Exp $	*/
+/*	$NetBSD: qop_cbq.c,v 1.9 2010/01/06 06:30:37 mbalmer Exp $	*/
 /*	$KAME: qop_cbq.c,v 1.7 2002/05/31 06:03:35 kjc Exp $	*/
 /*
  * Copyright (c) Sun Microsystems, Inc. 1993-1998 All rights reserved.
@@ -557,7 +557,7 @@ qop_cbq_add_class(struct classinfo **rp, const char *class_name,
 	cbq_clinfo->bandwidth = bandwidth;
 	cbq_clinfo->allocated = 0;
 
-	/* if average paket size isn't specified, set if mtu. */
+	/* if average packet size isn't specified, set if mtu. */
 	if (av_pkt_size == 0) {	/* use default */
 		av_pkt_size = ifinfo->ifmtu;
 		if (av_pkt_size > MCLBYTES)	/* do what TCP does */
@@ -682,7 +682,7 @@ qop_cbq_modify_class(struct classinfo *clinfo, u_int pri, u_int bandwidth,
 		}
 	}
 
-	/* if average paket size isn't specified, set if mtu. */
+	/* if average packet size isn't specified, set if mtu. */
 	if (av_pkt_size == 0) {	/* use default */
 		av_pkt_size = ifinfo->ifmtu;
 		if (av_pkt_size > MCLBYTES)	/* do what TCP does */
