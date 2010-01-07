@@ -1,4 +1,4 @@
-/*	$NetBSD: puffsdump.h,v 1.12 2009/04/06 20:47:17 pooka Exp $	*/
+/*	$NetBSD: puffsdump.h,v 1.13 2010/01/07 18:09:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,14 +30,17 @@
 #ifndef _PUFFSDUMP_H_
 #define _PUFFSDUMP_H_
 
+/*
+ * Note for callers outside of libpuffs: these are to be used only
+ * for debug builds.  Interfaces are not guaranteed to remain stable.
+ */
+
 #include <fs/puffs/puffs_msgif.h>
 
 void puffsdump_req(struct puffs_req *);
 void puffsdump_rv(struct puffs_req *);
 void puffsdump_cookie(puffs_cookie_t, const char *);
 void puffsdump_cn(struct puffs_kcn *);
-void puffsdump_creds(struct puffs_cred *);
-void puffsdump_int(int, const char *);
 
 void puffsdump_readwrite(struct puffs_req *);
 void puffsdump_readwrite_rv(struct puffs_req *);
