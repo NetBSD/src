@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.28 2010/01/06 18:12:37 christos Exp $	 */
+/* $NetBSD: utilities.c,v 1.29 2010/01/07 01:39:56 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -60,7 +60,7 @@
 
 long diskreads, totalreads;	/* Disk cache statistics */
 
-extern volatile sigatomic_t returntosingle;
+extern volatile sig_atomic_t returntosingle;
 extern off_t locked_queue_bytes;
 
 int

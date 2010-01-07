@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.20 2010/01/06 18:12:37 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.21 2010/01/07 01:39:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.20 2010/01/06 18:12:37 christos Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.21 2010/01/07 01:39:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ __RCSID("$NetBSD: utilities.c,v 1.20 2010/01/06 18:12:37 christos Exp $");
 #include <ufs/ufs/dinode.h> /* for IFMT & friends */
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
@@ -84,7 +85,7 @@ long	diskreads, totalreads;	/* Disk cache statistics */
 
 static void rwerror(const char *, daddr_t);
 
-extern volatile sigatomic_t returntosingle;
+extern volatile sig_atomic_t returntosingle;
 
 int
 ftypeok(struct ext2fs_dinode *dp)
@@ -156,7 +157,7 @@ bufinit(void)
 	if (bufcnt < MINBUFS)
 		bufcnt = MINBUFS;
 	for (i = 0; i < bufcnt; i++) {
-		bp = size_t(sizeof(struct bufarea));
+		bp = malloc(sizeof(struct bufarea));
 		bufp = malloc((size_t)sblock.e2fs_bsize);
 		if (bp == NULL || bufp == NULL) {
 			free(bp);

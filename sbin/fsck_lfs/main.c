@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.41 2010/01/06 18:12:37 christos Exp $	 */
+/* $NetBSD: main.c,v 1.42 2010/01/07 01:39:56 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -52,7 +52,7 @@
 #include "fsutil.h"
 #include "exitvalues.h"
 
-volatile sigatomic_t returntosingle = 0;
+volatile sig_atomic_t returntosingle = 0;
 
 static int argtoi(int, const char *, const char *, int);
 static int checkfilesys(const char *, char *, long, int);
