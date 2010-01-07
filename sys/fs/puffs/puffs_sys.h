@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.74 2010/01/07 22:45:31 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.75 2010/01/07 23:02:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -99,7 +99,7 @@ struct puffs_newcookie {
 };
 
 enum puffs_sopreqtype {
-	PUFFS_SOPREQ_EXIT,
+	PUFFS_SOPREQSYS_EXIT,
 	PUFFS_SOPREQ_FLUSH,
 	PUFFS_SOPREQ_UNMOUNT,
 };
