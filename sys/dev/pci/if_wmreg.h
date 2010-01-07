@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.30 2010/01/05 10:02:01 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.31 2010/01/07 17:34:38 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -610,7 +610,7 @@ struct livengood_tcpip_ctxdesc {
 #define	PBA_40K		0x0028
 #define	PBA_48K		0x0030		/* 48K, default Rx allocation */
 
-#define	WMREG_PBS	0x1000	/* Packet Buffer Size (ICH8 only ?) */
+#define	WMREG_PBS	0x1008	/* Packet Buffer Size (ICH) */
 
 #define	WMREG_TXDMAC	0x3000	/* Transfer DMA Control */
 #define	TXDMAC_DPP	(1U << 0)	/* disable packet prefetch */
