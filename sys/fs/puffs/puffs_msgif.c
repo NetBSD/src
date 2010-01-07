@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.77 2010/01/07 22:45:31 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.78 2010/01/07 22:59:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.77 2010/01/07 22:45:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.78 2010/01/07 22:59:27 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -935,7 +935,7 @@ puffs_sop_thread(void *arg)
 			puffsop_flush(pmp, &psopr->psopr_pf);
 			break;
 		case PUFFS_SOPREQ_UNMOUNT:
-			puffs_msg_sendresp(pmp, &sopreq->psopr_preq, 0);
+			puffs_msg_sendresp(pmp, &psopr->psopr_preq, 0);
 
 			unmountme = true;
 			keeprunning = false;
