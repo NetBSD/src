@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1180 2010/01/04 20:18:02 haad Exp $
+# $NetBSD: mi,v 1.1181 2010/01/07 09:23:54 jdc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -816,6 +816,7 @@
 ./usr/share/man/cat4/cardbus.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cardslot.0			man-sys-catman		.cat
 ./usr/share/man/cat4/carp.0			man-sys-catman		.cat
+./usr/share/man/cat4/cas.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cbb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ccd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cd.0			man-sys-catman		.cat
@@ -3448,6 +3449,7 @@
 ./usr/share/man/html4/cardbus.html		man-sys-htmlman		html
 ./usr/share/man/html4/cardslot.html		man-sys-htmlman		html
 ./usr/share/man/html4/carp.html			man-sys-htmlman		html
+./usr/share/man/html4/cas.html			man-sys-htmlman		html
 ./usr/share/man/html4/cbb.html			man-sys-htmlman		html
 ./usr/share/man/html4/ccd.html			man-sys-htmlman		html
 ./usr/share/man/html4/cd.html			man-sys-htmlman		html
@@ -5858,6 +5860,7 @@
 ./usr/share/man/man4/cardbus.4			man-sys-man		.man
 ./usr/share/man/man4/cardslot.4			man-sys-man		.man
 ./usr/share/man/man4/carp.4			man-sys-man		.man
+./usr/share/man/man4/cas.4			man-sys-man		.man
 ./usr/share/man/man4/cbb.4			man-sys-man		.man
 ./usr/share/man/man4/ccd.4			man-sys-man		.man
 ./usr/share/man/man4/cd.4			man-sys-man		.man
