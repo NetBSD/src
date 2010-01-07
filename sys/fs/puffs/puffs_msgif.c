@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.76 2009/12/07 20:57:55 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.77 2010/01/07 22:45:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.76 2009/12/07 20:57:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.77 2010/01/07 22:45:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -855,6 +855,7 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 		DPRINTF(("dispatch: vn/vfs message 0x%x\n", preq->preq_optype));
 		puffsop_msg(pmp, preq);
 		break;
+
 	case PUFFSOP_FLUSH: /* process in sop thread */
 	{
 		struct puffs_flush *pf;
@@ -877,6 +878,23 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 		mutex_exit(&pmp->pmp_sopmtx);
 		break;
 	}
+
+	case PUFFSOP_UNMOUNT: /* process in sop thread */
+	{
+
+		DPRINTF(("dispatch: unmount 0x%x\n", preq->preq_optype));
+
+		psopr = kmem_alloc(sizeof(*psopr), KM_SLEEP);
+		psopr->psopr_preq = *preq;
+		psopr->psopr_sopreq = PUFFS_SOPREQ_UNMOUNT;
+
+		mutex_enter(&pmp->pmp_sopmtx);
+		TAILQ_INSERT_TAIL(&pmp->pmp_sopreqs, psopr, psopr_entries);
+		cv_signal(&pmp->pmp_sopcv);
+		mutex_exit(&pmp->pmp_sopmtx);
+		break;
+	}
+
 	default:
 		DPRINTF(("dispatch: invalid class 0x%x\n", preq->preq_opclass));
 		puffs_msg_sendresp(pmp, preq, EOPNOTSUPP);
@@ -897,8 +915,10 @@ void
 puffs_sop_thread(void *arg)
 {
 	struct puffs_mount *pmp = arg;
+	struct mount *mp = PMPTOMP(pmp);
 	struct puffs_sopreq *psopr;
 	bool keeprunning;
+	bool unmountme = false;
 
 	mutex_enter(&pmp->pmp_sopmtx);
 	for (keeprunning = true; keeprunning; ) {
@@ -914,6 +934,18 @@ puffs_sop_thread(void *arg)
 		case PUFFS_SOPREQ_FLUSH:
 			puffsop_flush(pmp, &psopr->psopr_pf);
 			break;
+		case PUFFS_SOPREQ_UNMOUNT:
+			puffs_msg_sendresp(pmp, &sopreq->psopr_preq, 0);
+
+			unmountme = true;
+			keeprunning = false;
+
+			/*
+			 * We know the mountpoint is still alive because
+			 * the thread that is us (poetic?) is still alive.
+			 */
+			atomic_inc_uint((unsigned int*)&mp->mnt_refcnt);
+			break;
 		}
 
 		kmem_free(psopr, sizeof(*psopr));
@@ -921,8 +953,7 @@ puffs_sop_thread(void *arg)
 	}
 
 	/*
-	 * Purge remaining ops.  could send error, but that is highly
-	 * unlikely to reach the caller.
+	 * Purge remaining ops.  could send error, but ...
 	 */
 	while ((psopr = TAILQ_FIRST(&pmp->pmp_sopreqs)) != NULL) {
 		TAILQ_REMOVE(&pmp->pmp_sopreqs, psopr, psopr_entries);
@@ -932,8 +963,20 @@ puffs_sop_thread(void *arg)
 	}
 
 	pmp->pmp_sopthrcount--;
-	cv_signal(&pmp->pmp_sopcv);
+	cv_broadcast(&pmp->pmp_sopcv);
 	mutex_exit(&pmp->pmp_sopmtx); /* not allowed to access fs after this */
+
+	/*
+	 * If unmount was requested, we can now safely do it here, since
+	 * our context is dead from the point-of-view of puffs_unmount()
+	 * and we are just another thread.  dounmount() makes internally
+	 * sure that VFS_UNMOUNT() isn't called reentrantly and that it
+	 * is eventually completed.
+	 */
+	if (unmountme) {
+		(void)dounmount(mp, MNT_FORCE, curlwp);
+		vfs_destroy(mp);
+	}
 
 	kthread_exit(0);
 }
