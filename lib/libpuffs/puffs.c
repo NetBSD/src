@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.102 2010/01/07 22:40:11 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.103 2010/01/07 22:49:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.102 2010/01/07 22:40:11 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.103 2010/01/07 22:49:19 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -697,33 +697,38 @@ puffs_cancel(struct puffs_usermount *pu, int error)
 	free(pu);
 }
 
-/*
- * XXX: there's currently no clean way to request unmount from
- * within the user server, so be very brutal about it.
- */
 /*ARGSUSED1*/
 int
-puffs_exit(struct puffs_usermount *pu, int force)
+puffs_exit(struct puffs_usermount *pu, int unused /* strict compat */)
 {
-	struct puffs_node *pn;
+	struct puffs_framebuf *pb;
+	struct puffs_req *preq;
+	void *winp;
+	size_t winlen;
+	int sverrno;
 
-	force = 1; /* currently */
-	assert((pu->pu_state & PU_PUFFSDAEMON) == 0);
+	pb = puffs_framebuf_make();
+	if (pb == NULL) {
+		errno = ENOMEM;
+		return -1;
+	}
 
-	if (pu->pu_fd)
-		close(pu->pu_fd);
+	winlen = sizeof(struct puffs_req);
+	if (puffs_framebuf_getwindow(pb, 0, &winp, &winlen) == -1) {
+		sverrno = errno;
+		puffs_framebuf_destroy(pb);
+		errno = sverrno;
+		return -1;
+	}
+	preq = winp;
 
-	while ((pn = LIST_FIRST(&pu->pu_pnodelst)) != NULL)
-		puffs_pn_put(pn);
+	preq->preq_buflen = sizeof(struct puffs_req);
+	preq->preq_opclass = PUFFSOP_UNMOUNT;
+	preq->preq_id = puffs__nextreq(pu);
 
-	finalpush(pu);
-	puffs__framev_exit(pu);
-	puffs__cc_exit(pu);
-	if (pu->pu_state & PU_HASKQ)
-		close(pu->pu_kq);
-	free(pu);
+	puffs_framev_enqueue_justsend(pu, puffs_getselectable(pu), pb, 1, 0);
 
-	return 0; /* always succesful for now, WILL CHANGE */
+	return 0;
 }
 
 /*
