@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.37 2010/01/03 19:34:29 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.38 2010/01/07 07:49:31 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -915,4 +915,15 @@ sys/netbt/rfcomm_session.c			1.16
 	be greater than the max acceptable value so no need to test for that
 	but make sure that it is not smaller than minimum acceptable value.
 	[plunky, ticket #1221]
+
+sys/kern/sys_sig.c				1.24
+
+	sigtimedwait: fix a memory leak.  Likely the cause of PR/40750 and
+	indirect cause of PR/39283.
+	[rmind, ticket #1199]
+
+tools/compat/compat_defs.h			patch
+
+	Don't include grp.h  Fixes cross-build under Mac OS X 10.6.
+	[tron, ticket #1202]
 
