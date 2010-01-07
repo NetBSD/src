@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.93 2009/12/23 01:04:45 pooka Exp $
+#	$NetBSD: files.usb,v 1.94 2010/01/07 00:15:20 martin Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -169,10 +169,12 @@ device	ugensa: ucombus
 attach	ugensa at usbdevif
 file	dev/usb/ugensa.c		ugensa
 
-# Generic Serial Adapter
+# 3G Modem
 device	u3g: ucombus
-attach	u3g at usbdevif
-file	dev/usb/u3g.c			u3g
+attach	u3g at usbifif
+device	u3ginit
+attach	u3ginit at usbdevif
+file	dev/usb/u3g.c			u3g | u3ginit
 
 # YAP phone firmware loader
 device	uyap: ezload
