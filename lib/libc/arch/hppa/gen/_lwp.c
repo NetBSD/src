@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.3 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.4 2010/01/07 12:31:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _lwp.c,v 1.3 2008/04/28 20:22:56 martin Exp $");
+__RCSID("$NetBSD: _lwp.c,v 1.4 2010/01/07 12:31:10 skrll Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -47,6 +47,8 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 {
 	caddr_t sp;
 	__greg_t *gr;
+	__greg_t *gp;
+	__greg_t fp;
 
 	getcontext(u);
 	gr = u->uc_mcontext.__gregs;
@@ -56,8 +58,14 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 	u->uc_stack.ss_size = stack_size;
 	sp = stack_base + HPPA_FRAME_SIZE;
 
-	gr[_REG_PCOQH] = (__greg_t) start;
-	gr[_REG_PCOQT] = (__greg_t) start + 4;
+	fp = (__greg_t)start;
+	if (fp & 2) {
+		gp = (__greg_t *)(fp & ~3);
+		fp = gp[0];
+		gr[_REG_R19] = gp[1];
+	}
+	gr[_REG_PCOQH] = fp | HPPA_PC_PRIV_USER;
+	gr[_REG_PCOQT] = (fp + 4) | HPPA_PC_PRIV_USER;
 	gr[_REG_RP] = (__greg_t) _lwp_exit;
 	gr[_REG_ARG0] = (__greg_t) arg;
 	gr[_REG_SP] = (__greg_t) sp;
