@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1007 2010/01/03 04:26:26 jnemeth Exp $
+$NetBSD: pcidevs,v 1.1008 2010/01/07 09:27:16 jdc Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3014,6 +3014,7 @@ product NS CS5535_IDE	0x002d	CS5535 IDE Controller
 product NS CS5535_AUDIO	0x002e	CS5535 Audio Controller
 product NS CS5535_USB	0x002f	CS5535 USB Host Controller
 product NS CS5535_VIDEO	0x0030	CS5535 Video Controller
+product NS SATURN	0x0035	Saturn
 product NS SC1100_IDE	0x0502	SC1100 PCI IDE
 product NS SC1100_AUDIO	0x0503	SC1100 XpressAUDIO
 product NS SC1100_ISA	0x0510	SC1100 PCI-ISA Bridge
@@ -3885,6 +3886,7 @@ product SUN PSYCHO	0x8000	psycho PCI Controller
 product SUN MS_IIep	0x9000	microSPARC IIep PCI
 product SUN US_IIi	0xa000	UltraSPARC IIi PCI
 product SUN US_IIe	0xa001	UltraSPARC IIe PCI
+product SUN CASSINI	0xabba	Cassini Gigabit Ethernet
 
 /* Sundance Technology products */
 product SUNDANCETI IP100A	0x0200	IP100A 10/100 Ethernet
