@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.57 2010/01/07 21:23:10 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.58 2010/01/07 21:26:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.57 2010/01/07 21:23:10 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.58 2010/01/07 21:26:49 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -158,8 +158,7 @@ main(int argc, char *argv[])
 			pctx.domanglegid = 1;
 			pctx.manglegid = atoi(optarg);
 			if (pctx.manglegid == (gid_t)-1)
-				errx(1, "%s: -1 not allowed for -g",
-				    getprogname());
+				errx(1, "-1 not allowed for -g");
 			pctx.mygid = getegid();
 			break;
 		case 'O':
@@ -190,8 +189,7 @@ main(int argc, char *argv[])
 			pctx.domangleuid = 1;
 			pctx.mangleuid = atoi(optarg);
 			if (pctx.mangleuid == (uid_t)-1)
-				errx(1, "%s: -1 not allowed for -u",
-				    getprogname());
+				errx(1, "-1 not allowed for -u");
 			pctx.myuid = geteuid();
 			break;
 		default:
