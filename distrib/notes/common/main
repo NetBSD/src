@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.454 2009/12/20 16:59:39 jruoho Exp $
+.\"	$NetBSD: main,v 1.455 2010/01/07 22:43:00 gls Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1250,6 +1250,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Kevin Lahey Ta Mt kml@NetBSD.org
 .It Ta David Laight Ta Mt dsl@NetBSD.org
 .It Ta Johnny C. Lam Ta Mt jlam@NetBSD.org
+.It Ta Guillaume Lasmayous Ta Mt gls@NetBSD.org
 .It Ta Martin J. Laubach Ta Mt mjl@NetBSD.org
 .It Ta Greg Lehey Ta Mt grog@NetBSD.org
 .It Ta Ted Lemon Ta Mt mellon@NetBSD.org
