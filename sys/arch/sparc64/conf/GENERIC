@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.115 2009/12/29 07:00:42 macallan Exp $
+# $NetBSD: GENERIC,v 1.116 2010/01/07 09:34:49 jdc Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.115 $"
+#ident 		"GENERIC-$Revision: 1.116 $"
 
 maxusers	64
 
@@ -484,6 +484,7 @@ qe*		at qec?
 # 	UT marks untested.
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11) UT
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11 UT
+cas*	at pci? dev ? function ?	# Sun Cassini/Cassini+ Ethernet
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM UT
 # XXX causes ICE
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
@@ -524,6 +525,8 @@ brgphy* at mii? phy ?			# Broadcom BCM5400-family PHYs
 ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
+gentbi* at mii? phy ?			# Generic Ten-Bit 1000BASE-[CLS]X PHYs
+gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
