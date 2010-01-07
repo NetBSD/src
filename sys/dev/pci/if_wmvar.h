@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.5 2009/12/29 16:01:21 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.6 2010/01/07 17:45:58 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -112,5 +112,9 @@ typedef enum {
 	WM_T_ICH9,			/* ICH9 LAN */
 	WM_T_ICH10,			/* ICH10 LAN */
 } wm_chip_type;
+
+#define WM_PHY_CFG_TIMEOUT	100
+#define	WM_ICH8_LAN_INIT_TIMEOUT 1500
+#define	WM_MDIO_OWNERSHIP_TIMEOUT 10
 
 #endif /* _DEV_PCI_IF_WMVAR_H_ */
