@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn.h,v 1.20 2009/09/24 21:21:33 pooka Exp $	*/
+/*	$NetBSD: dlfcn.h,v 1.21 2010/01/07 07:35:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ __END_DECLS
 /*
  * dlinfo() commands
  *
- * From Solarisa: http://docs.sun.com/app/docs/doc/816-5168/dlinfo-3c?a=view
+ * From Solaris: http://docs.sun.com/app/docs/doc/816-5168/dlinfo-3c?a=view
  */
 #if defined(_NETBSD_SOURCE)
 #define RTLD_DI_LINKMAP		3
