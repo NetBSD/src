@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.67.2.1 2009/01/15 04:32:35 snj Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.67.2.1.2.1 2010/01/07 07:45:01 snj Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -38,7 +38,6 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <grp.h>
 #include <limits.h>
 #include <paths.h>
 #include <stdarg.h>
@@ -75,6 +74,9 @@
 
 /* We don't include <pwd.h> here, so that "compat_pwd.h" works. */
 struct passwd;
+
+/* We don't include <grp.h> here, so that "compat_pwd.h" works. */
+struct group;
 
 /* Assume an ANSI compiler for the host. */
 
