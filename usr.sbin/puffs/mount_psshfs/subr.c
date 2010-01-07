@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.47 2009/11/05 13:28:20 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.48 2010/01/07 21:05:50 pooka Exp $        */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.47 2009/11/05 13:28:20 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.48 2010/01/07 21:05:50 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -69,7 +69,9 @@ static void
 setpnva(struct puffs_usermount *pu, struct puffs_node *pn,
 	const struct vattr *vap)
 {
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 	struct psshfs_node *psn = pn->pn_data;
+	struct vattr modva;
 
 	/*
 	 * Check if the file was modified from below us.
@@ -81,7 +83,13 @@ setpnva(struct puffs_usermount *pu, struct puffs_node *pn,
 		    && pn->pn_va.va_type == VREG)
 			puffs_inval_pagecache_node(pu, pn);
 
-	puffs_setvattr(&pn->pn_va, vap);
+	modva = *vap;
+	if (pctx->domangleuid && modva.va_uid == pctx->mangleuid)
+		modva.va_uid = pctx->myuid;
+	if (pctx->domanglegid && modva.va_gid == pctx->manglegid)
+		modva.va_gid = pctx->mygid;
+
+	puffs_setvattr(&pn->pn_va, &modva);
 	psn->attrread = time(NULL);
 }
 

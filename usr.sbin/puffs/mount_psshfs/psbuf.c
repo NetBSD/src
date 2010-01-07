@@ -1,4 +1,4 @@
-/*      $NetBSD: psbuf.c,v 1.15 2009/11/05 13:28:20 pooka Exp $        */
+/*      $NetBSD: psbuf.c,v 1.16 2010/01/07 21:05:50 pooka Exp $        */
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psbuf.c,v 1.15 2009/11/05 13:28:20 pooka Exp $");
+__RCSID("$NetBSD: psbuf.c,v 1.16 2010/01/07 21:05:50 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -256,7 +256,8 @@ psbuf_put_str(struct puffs_framebuf *pb, const char *str)
 }
 
 void
-psbuf_put_vattr(struct puffs_framebuf *pb, const struct vattr *va)
+psbuf_put_vattr(struct puffs_framebuf *pb, const struct vattr *va,
+	const struct psshfs_ctx *pctx)
 {
 	uint32_t flags;
 	flags = 0;
@@ -275,8 +276,18 @@ psbuf_put_vattr(struct puffs_framebuf *pb, const struct vattr *va)
 	if (flags & SSH_FILEXFER_ATTR_SIZE)
 		psbuf_put_8(pb, va->va_size);
 	if (flags & SSH_FILEXFER_ATTR_UIDGID) {
-		psbuf_put_4(pb, va->va_uid);
-		psbuf_put_4(pb, va->va_gid);
+		uid_t theuid;
+		gid_t thegid;
+
+		theuid = va->va_uid;
+		if (pctx->domangleuid && theuid == pctx->myuid)
+			theuid = pctx->mangleuid;
+		thegid = va->va_gid;
+		if (pctx->domanglegid && thegid == pctx->mygid)
+			thegid = pctx->manglegid;
+
+		psbuf_put_4(pb, theuid);
+		psbuf_put_4(pb, thegid);
 	}
 	if (flags & SSH_FILEXFER_ATTR_PERMISSIONS)
 		psbuf_put_4(pb, va->va_mode);
