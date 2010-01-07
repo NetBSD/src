@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.55 2009/11/05 11:40:24 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.56 2010/01/07 21:05:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.55 2009/11/05 11:40:24 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.56 2010/01/07 21:05:50 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -125,6 +125,7 @@ main(int argc, char *argv[])
 	if (argc < 3)
 		usage();
 
+	memset(&pctx, 0, sizeof(pctx));
 	mntflags = pflags = exportfs = nargs = 0;
 	numconnections = 1;
 	detach = 1;
@@ -135,7 +136,7 @@ main(int argc, char *argv[])
 	add_ssharg(&sshargs, &nargs, "-axs");
 	add_ssharg(&sshargs, &nargs, "-oClearAllForwardings=yes");
 
-	while ((ch = getopt(argc, argv, "c:eF:o:O:pr:st:")) != -1) {
+	while ((ch = getopt(argc, argv, "c:eF:g:o:O:pr:st:u:")) != -1) {
 		switch (ch) {
 		case 'c':
 			numconnections = atoi(optarg);
@@ -152,6 +153,11 @@ main(int argc, char *argv[])
 		case 'F':
 			add_ssharg(&sshargs, &nargs, "-F");
 			add_ssharg(&sshargs, &nargs, optarg);
+			break;
+		case 'g':
+			pctx.domanglegid = 1;
+			pctx.manglegid = atoi(optarg);
+			pctx.mygid = getegid();
 			break;
 		case 'O':
 			add_ssharg(&sshargs, &nargs, "-o");
@@ -176,6 +182,11 @@ main(int argc, char *argv[])
 			refreshival = atoi(optarg);
 			if (refreshival < 0 && refreshival != -1)
 				errx(1, "invalid timeout %d", refreshival);
+			break;
+		case 'u':
+			pctx.domangleuid = 1;
+			pctx.mangleuid = atoi(optarg);
+			pctx.myuid = geteuid();
 			break;
 		default:
 			usage();
@@ -222,7 +233,6 @@ main(int argc, char *argv[])
 	if (pu == NULL)
 		err(1, "puffs_init");
 
-	memset(&pctx, 0, sizeof(pctx));
 	pctx.mounttime = time(NULL);
 	pctx.refreshival = refreshival;
 	pctx.numconnections = numconnections;
