@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.27 2009/04/05 12:03:48 lukem Exp $	*/
+/*	$NetBSD: ffs.c,v 1.28 2010/01/07 13:26:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.27 2009/04/05 12:03:48 lukem Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.28 2010/01/07 13:26:00 tsutsui Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -97,7 +97,7 @@ ffs_read_disk_block(ib_params *params, uint64_t blkno, int size, char blk[])
 	assert(size > 0);
 	assert(blk != NULL);
 
-	rv = pread(params->fsfd, blk, size, blkno * DEV_BSIZE);
+	rv = pread(params->fsfd, blk, size, blkno * params->sectorsize);
 	if (rv == -1) {
 		warn("Reading block %llu in `%s'", 
 		    (unsigned long long)blkno, params->filesystem);
@@ -475,10 +475,10 @@ int
 raid_match(ib_params *params)
 {
 	/* XXX Assumes 512 bytes / sector */
-	if (DEV_BSIZE != 512) {
+	if (params->sectorsize != 512) {
 		warnx("Media is %d bytes/sector."
 			"  RAID is only supported on 512 bytes/sector media.",
-			DEV_BSIZE);
+			params->sectorsize);
 		return 0;
 	}
 	return ffs_match_common(params, (off_t) RF_PROTECTED_SECTORS);
@@ -497,7 +497,7 @@ ffs_match_common(ib_params *params, off_t offset)
 
 	fs = (struct fs *)sbbuf;
 	for (i = 0; sblock_try[i] != -1; i++) {
-		loc = sblock_try[i] / DEV_BSIZE + offset;
+		loc = sblock_try[i] / params->sectorsize + offset;
 		if (!ffs_read_disk_block(params, loc, SBLOCKSIZE, sbbuf))
 			continue;
 		switch (fs->fs_magic) {

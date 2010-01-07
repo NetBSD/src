@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.4 2009/10/19 18:41:17 bouyer Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.5 2010/01/07 13:26:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ext2fs.c,v 1.4 2009/10/19 18:41:17 bouyer Exp $");
+__RCSID("$NetBSD: ext2fs.c,v 1.5 2010/01/07 13:26:00 tsutsui Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -108,7 +108,7 @@ ext2fs_read_disk_block(ib_params *params, uint64_t blkno, int size,
 	assert(size > 0);
 	assert(blk != NULL);
 
-	rv = pread(params->fsfd, blk, size, blkno * DEV_BSIZE);
+	rv = pread(params->fsfd, blk, size, blkno * params->sectorsize);
 	if (rv == -1) {
 		warn("Reading block %llu in `%s'", 
 		    (unsigned long long)blkno, params->filesystem);
@@ -127,7 +127,7 @@ ext2fs_read_sblock(ib_params *params, struct m_ext2fs *fs)
 {
 	uint8_t sbbuf[SBSIZE];
 
-	if (ext2fs_read_disk_block(params, SBOFF / DEV_BSIZE, SBSIZE,
+	if (ext2fs_read_disk_block(params, SBOFF / params->sectorsize, SBSIZE,
 	    sbbuf) == 0)
 
 	e2fs_sbload((void *)sbbuf, &fs->e2fs);

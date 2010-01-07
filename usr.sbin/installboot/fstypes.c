@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.c,v 1.11 2008/04/28 20:24:16 martin Exp $	*/
+/*	$NetBSD: fstypes.c,v 1.12 2010/01/07 13:26:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: fstypes.c,v 1.11 2008/04/28 20:24:16 martin Exp $");
+__RCSID("$NetBSD: fstypes.c,v 1.12 2010/01/07 13:26:00 tsutsui Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>
@@ -95,7 +95,7 @@ hardcode_stage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
 
 	for (i = 0; i < nblk; i++) {
 		blocks[i].block = params->s2start +
-		    i * (params->fstype->blocksize / 512);
+		    i * (params->fstype->blocksize / params->sectorsize);
 		blocks[i].blocksize = params->fstype->blocksize;
 	}
 	*maxblk = nblk;

@@ -1,4 +1,4 @@
-/* $NetBSD: next68k.c,v 1.6 2009/04/05 11:55:39 lukem Exp $ */
+/* $NetBSD: next68k.c,v 1.7 2010/01/07 13:26:00 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: next68k.c,v 1.6 2009/04/05 11:55:39 lukem Exp $");
+__RCSID("$NetBSD: next68k.c,v 1.7 2010/01/07 13:26:00 tsutsui Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -50,8 +50,6 @@ __RCSID("$NetBSD: next68k.c,v 1.6 2009/04/05 11:55:39 lukem Exp $");
 #include <unistd.h>
 
 #include "installboot.h"
-
-#define	SECTOR_SIZE	DEV_BSIZE
 
 static uint16_t nextstep_checksum(const void *, const void *);
 static int next68k_setboot(ib_params *);
@@ -106,7 +104,7 @@ next68k_setboot(ib_params *params)
 	 * Read in the next68k disklabel
 	 */
 	rv = pread(params->fsfd, next68klabel, NEXT68K_LABEL_SIZE,
-	    NEXT68K_LABEL_SECTOR * SECTOR_SIZE + NEXT68K_LABEL_OFFSET);
+	    NEXT68K_LABEL_SECTOR * params->sectorsize + NEXT68K_LABEL_OFFSET);
 	if (rv == -1) {
 		warn("Reading `%s'", params->filesystem);
 		goto done;
@@ -128,7 +126,7 @@ next68k_setboot(ib_params *params)
 	}
 
 	cd_secsize = be32toh(next68klabel->cd_secsize);
-	sec_netonb_mult = (cd_secsize / SECTOR_SIZE);
+	sec_netonb_mult = (cd_secsize / params->sectorsize);
 
 	/*
 	 * Allocate a buffer, with space to round up the input file
@@ -177,7 +175,8 @@ next68k_setboot(ib_params *params)
 			b0 = b1 = NEXT68K_LABEL_SIZE / cd_secsize;
 		else {
 			if (2 * bootsize > (fp * cd_secsize - 
-				NEXT68K_LABEL_DEFAULTBOOT0_1 * SECTOR_SIZE))
+				NEXT68K_LABEL_DEFAULTBOOT0_1 *
+				params->sectorsize))
 				/* can fit two copies starting after label */
 				b0 = NEXT68K_LABEL_SIZE / cd_secsize;
 			else
@@ -220,7 +219,8 @@ next68k_setboot(ib_params *params)
 		*checksum = htobe16(nextstep_checksum (next68klabel,
 					checksum));
 		rv = pwrite(params->fsfd, next68klabel, NEXT68K_LABEL_SIZE,
-		    NEXT68K_LABEL_SECTOR * SECTOR_SIZE + NEXT68K_LABEL_OFFSET);
+		    NEXT68K_LABEL_SECTOR * params->sectorsize +
+		    NEXT68K_LABEL_OFFSET);
 		if (rv == -1) {
 			warn("Writing `%s'", params->filesystem);
 			goto done;
@@ -240,7 +240,8 @@ next68k_setboot(ib_params *params)
 	for (;;) {
 		if (params->flags & IB_VERBOSE)
 			printf ("Writing boot program at %d\n", b0);
-		rv = pwrite(params->fsfd, bootbuf, bootsize, b0 * SECTOR_SIZE);
+		rv = pwrite(params->fsfd, bootbuf, bootsize,
+		    b0 * params->sectorsize);
 		if (rv == -1) {
 			warn("Writing `%s' at %d", params->filesystem, b0);
 			goto done;
