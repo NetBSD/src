@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.188 2010/01/07 17:34:38 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.189 2010/01/07 17:45:58 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.188 2010/01/07 17:34:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.189 2010/01/07 17:45:58 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -535,6 +535,8 @@ static int	wm_match(device_t, cfdata_t, void *);
 static void	wm_attach(device_t, device_t, void *);
 static int	wm_is_onboard_nvm_eeprom(struct wm_softc *);
 static void	wm_get_auto_rd_done(struct wm_softc *);
+static void	wm_lan_init_done(struct wm_softc *);
+static void	wm_get_cfg_done(struct wm_softc *);
 static int	wm_get_swsm_semaphore(struct wm_softc *);
 static void	wm_put_swsm_semaphore(struct wm_softc *);
 static int	wm_poll_eerd_eewr_done(struct wm_softc *, int);
@@ -555,6 +557,7 @@ static int	wm_check_mng_mode(struct wm_softc *);
 static int	wm_check_mng_mode_ich8lan(struct wm_softc *);
 static int	wm_check_mng_mode_82574(struct wm_softc *);
 static int	wm_check_mng_mode_generic(struct wm_softc *);
+static int	wm_check_reset_block(struct wm_softc *);
 static void	wm_get_hw_control(struct wm_softc *);
 static int	wm_check_for_link(struct wm_softc *);
 
@@ -994,6 +997,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		break;
 	default:
 		memh_valid = 0;
+		break;
 	}
 
 	if (memh_valid) {
@@ -1171,6 +1175,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 				    "unknown PCIXSPD %d; assuming 66MHz\n",
 				    reg & STATUS_PCIXSPD_MASK);
 				sc->sc_bus_speed = 66;
+				break;
 			}
 		} else
 			sc->sc_bus_speed = (reg & STATUS_PCI66) ? 66 : 33;
@@ -3013,7 +3018,9 @@ wm_tick(void *arg)
 static void
 wm_reset(struct wm_softc *sc)
 {
-	uint32_t reg;
+	int phy_reset = 0;
+	uint32_t reg, func, mask;
+	int i;
 
 	/*
 	 * Allocate on-chip memory according to the MTU size.
@@ -3074,6 +3081,37 @@ wm_reset(struct wm_softc *sc)
 	/* clear interrupt */
 	CSR_WRITE(sc, WMREG_IMC, 0xffffffffU);
 
+	/* Stop the transmit and receive processes. */
+	CSR_WRITE(sc, WMREG_RCTL, 0);
+	CSR_WRITE(sc, WMREG_TCTL, TCTL_PSP);
+
+	/* set_tbi_sbp_82543() */
+
+	delay(10*1000);
+
+	/* Must acquire the MDIO ownership before MAC reset */
+	switch(sc->sc_type) {
+	case WM_T_82573:
+	case WM_T_82574:
+	case WM_T_82583:
+		i = 0;
+		reg = CSR_READ(sc, WMREG_EXTCNFCTR)
+		    | EXTCNFCTR_MDIO_SW_OWNERSHIP;
+		do {
+			CSR_WRITE(sc, WMREG_EXTCNFCTR,
+			    reg | EXTCNFCTR_MDIO_SW_OWNERSHIP);
+			reg = CSR_READ(sc, WMREG_EXTCNFCTR);
+			if ((reg & EXTCNFCTR_MDIO_SW_OWNERSHIP) != 0)
+				break;
+			reg |= EXTCNFCTR_MDIO_SW_OWNERSHIP;
+			delay(2*1000);
+			i++;
+		} while (i < WM_MDIO_OWNERSHIP_TIMEOUT);
+		break;
+	default:
+		break;
+	}
+
 	/*
 	 * 82541 Errata 29? & 82547 Errata 28?
 	 * See also the description about PHY_RST bit in CTRL register
@@ -3086,12 +3124,11 @@ wm_reset(struct wm_softc *sc)
 	}
 
 	switch (sc->sc_type) {
-	case WM_T_82544:
-	case WM_T_82540:
-	case WM_T_82545:
-	case WM_T_82546:
+	case WM_T_82544: /* XXX check whether WM_F_IOH_VALID is set */
 	case WM_T_82541:
 	case WM_T_82541_2:
+	case WM_T_82547:
+	case WM_T_82547_2:
 		/*
 		 * On some chipsets, a reset through a memory-mapped write
 		 * cycle can cause the chip to reset before completing the
@@ -3108,26 +3145,51 @@ wm_reset(struct wm_softc *sc)
 		else
 			CSR_WRITE(sc, WMREG_CTRL, CTRL_RST);
 		break;
-
 	case WM_T_82545_3:
 	case WM_T_82546_3:
 		/* Use the shadow control register on these chips. */
 		CSR_WRITE(sc, WMREG_CTRL_SHADOW, CTRL_RST);
 		break;
-
+	case WM_T_80003:
+		func = (CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1;
+		mask = func ? SWFW_PHY1_SM : SWFW_PHY0_SM;
+		reg = CSR_READ(sc, WMREG_CTRL) | CTRL_RST;
+		wm_get_swfw_semaphore(sc, mask);
+		CSR_WRITE(sc, WMREG_CTRL, reg);
+		wm_put_swfw_semaphore(sc, mask);
+		break;
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 	case WM_T_ICH10:
+		reg = CSR_READ(sc, WMREG_CTRL) | CTRL_RST;
+		if (wm_check_reset_block(sc) == 0) {
+			reg |= CTRL_PHY_RESET;
+			phy_reset = 1;
+		}
 		wm_get_swfwhw_semaphore(sc);
-		CSR_WRITE(sc, WMREG_CTRL, CTRL_RST | CTRL_PHY_RESET);
-		delay(10000);
+		CSR_WRITE(sc, WMREG_CTRL, reg);
+		delay(20*1000);
+		wm_put_swfwhw_semaphore(sc);
 		break;
+	case WM_T_82542_2_0:
+	case WM_T_82542_2_1:
+	case WM_T_82543:
+	case WM_T_82540:
+	case WM_T_82545:
+	case WM_T_82546:
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82573:
+	case WM_T_82574:
+	case WM_T_82583:
 	default:
 		/* Everything else can safely use the documented method. */
-		CSR_WRITE(sc, WMREG_CTRL, CTRL_RST);
+		CSR_WRITE(sc, WMREG_CTRL, CSR_READ(sc, WMREG_CTRL) | CTRL_RST);
 		break;
 	}
-	delay(10000);
+
+	if (phy_reset != 0)
+		wm_get_cfg_done(sc);
 
 	/* reload EEPROM */
 	switch(sc->sc_type) {
@@ -3140,12 +3202,23 @@ wm_reset(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
 		delay(2000);
 		break;
+	case WM_T_82540:
+	case WM_T_82545:
+	case WM_T_82545_3:
+	case WM_T_82546:
+	case WM_T_82546_3:
+		delay(5*1000);
+		/* XXX Disable HW ARPs on ASF enabled adapters */
+		break;
 	case WM_T_82541:
 	case WM_T_82541_2:
 	case WM_T_82547:
 	case WM_T_82547_2:
 		delay(20000);
+		/* XXX Disable HW ARPs on ASF enabled adapters */
 		break;
+	case WM_T_82571:
+	case WM_T_82572:
 	case WM_T_82573:
 	case WM_T_82574:
 	case WM_T_82583:
@@ -3154,10 +3227,27 @@ wm_reset(struct wm_softc *sc)
 			reg = CSR_READ(sc, WMREG_CTRL_EXT) | CTRL_EXT_EE_RST;
 			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
 		}
-		/* FALLTHROUGH */
-	default:
 		/* check EECD_EE_AUTORD */
 		wm_get_auto_rd_done(sc);
+		/*
+		 * Phy configuration from NVM just starts after EECD_AUTO_RD
+		 * is set.
+		 */
+		if ((sc->sc_type == WM_T_82573) || (sc->sc_type == WM_T_82574)
+		    || (sc->sc_type == WM_T_82583))
+			delay(25*1000);
+		break;
+	case WM_T_80003:
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+		/* check EECD_EE_AUTORD */
+		wm_get_auto_rd_done(sc);
+		break;
+	case WM_T_ICH10: /* & PCH */
+		wm_lan_init_done(sc);
+		break;
+	default:
+		panic("%s: unknown type\n", __func__);
 	}
 
 	/* reload sc_ctrl */
@@ -3648,12 +3738,12 @@ wm_get_auto_rd_done(struct wm_softc *sc)
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 	case WM_T_ICH10:
-		for (i = 10; i > 0; i--) {
+		for (i = 0; i < 10; i++) {
 			if (CSR_READ(sc, WMREG_EECD) & EECD_EE_AUTORD)
 				break;
 			delay(1000);
 		}
-		if (i == 0) {
+		if (i == 10) {
 			log(LOG_ERR, "%s: auto read from eeprom failed to "
 			    "complete\n", device_xname(sc->sc_dev));
 		}
@@ -3662,11 +3752,95 @@ wm_get_auto_rd_done(struct wm_softc *sc)
 		delay(5000);
 		break;
 	}
+}
 
-	/* Phy configuration starts after EECD_AUTO_RD is set */
-	if (sc->sc_type == WM_T_82573 || sc->sc_type == WM_T_82574
-	    || sc->sc_type == WM_T_82574)
-		delay(25000);
+void
+wm_lan_init_done(struct wm_softc *sc)
+{
+	uint32_t reg = 0;
+	int i;
+
+	/* wait for eeprom to reload */
+	switch (sc->sc_type) {
+	case WM_T_ICH10: /* & PCH */
+		for (i = 0; i < WM_ICH8_LAN_INIT_TIMEOUT; i++) {
+			reg = CSR_READ(sc, WMREG_STATUS);
+			if ((reg & STATUS_LAN_INIT_DONE) != 0)
+				break;
+			delay(100);
+		}
+		if (i >= WM_ICH8_LAN_INIT_TIMEOUT) {
+			log(LOG_ERR, "%s: %s: lan_init_done failed to "
+			    "complete\n", device_xname(sc->sc_dev), __func__);
+		}
+		break;
+	default:
+		panic("%s: %s: unknown type\n", device_xname(sc->sc_dev),
+		    __func__);
+		break;
+	}
+
+	reg &= ~STATUS_LAN_INIT_DONE;
+	CSR_WRITE(sc, WMREG_STATUS, reg);
+}
+
+void
+wm_get_cfg_done(struct wm_softc *sc)
+{
+	int func = 0;
+	int mask;
+	int i;
+
+	/* wait for eeprom to reload */
+	switch (sc->sc_type) {
+	case WM_T_82542_2_0:
+	case WM_T_82542_2_1:
+		/* null */
+		break;
+	case WM_T_82543:
+	case WM_T_82544:
+	case WM_T_82540:
+	case WM_T_82545:
+	case WM_T_82545_3:
+	case WM_T_82546:
+	case WM_T_82546_3:
+	case WM_T_82541:
+	case WM_T_82541_2:
+	case WM_T_82547:
+	case WM_T_82547_2:
+	case WM_T_82573:
+	case WM_T_82574:
+	case WM_T_82583:
+		/* generic */
+		delay(10*1000);
+		break;
+	case WM_T_80003:
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+		if (sc->sc_type == WM_T_80003)
+			func = (CSR_READ(sc, WMREG_STATUS)
+			    >> STATUS_FUNCID_SHIFT) & 1;
+		else
+			func = 0; /* XXX Is it true for 82571? */
+		mask = (func == 1) ? EEMNGCTL_CFGDONE_1 : EEMNGCTL_CFGDONE_0;
+		for (i = 0; i < WM_PHY_CFG_TIMEOUT; i++) {
+			if (CSR_READ(sc, WMREG_EEMNGCTL) & mask)
+				break;
+			delay(1000);
+		}
+		if (i >= WM_PHY_CFG_TIMEOUT) {
+			DPRINTF(WM_DEBUG_GMII, ("%s: %s failed\n",
+				device_xname(sc->sc_dev), __func__));
+		}
+		break;
+	default:
+		panic("%s: %s: unknown type\n", device_xname(sc->sc_dev),
+		    __func__);
+		break;
+	}
 }
 
 /*
@@ -4523,29 +4697,43 @@ wm_gmii_reset(struct wm_softc *sc)
 {
 	uint32_t reg;
 	int func = 0; /* XXX gcc */
+	int rv;
 
-	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
-	    || (sc->sc_type == WM_T_ICH10)) {
-		if (wm_get_swfwhw_semaphore(sc)) {
-			aprint_error_dev(sc->sc_dev,
-			    "%s: failed to get semaphore\n", __func__);
-			return;
-		}
-	}
-	if (sc->sc_type == WM_T_80003) {
+	/* get phy semaphore */
+	switch (sc->sc_type) {
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82573:
+	case WM_T_82574:
+	case WM_T_82583:
+		 /* XXX sould get sw semaphore, too */
+		rv = wm_get_swsm_semaphore(sc);
+		break;
+	case WM_T_80003:
 		func = (CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1;
-		if (wm_get_swfw_semaphore(sc,
-			func ? SWFW_PHY1_SM : SWFW_PHY0_SM)) {
-			aprint_error_dev(sc->sc_dev,
-			    "%s: failed to get semaphore\n", __func__);
-			return;
-		}
+		rv = wm_get_swfw_semaphore(sc,
+		    func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
+		break;
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+		rv = wm_get_swfwhw_semaphore(sc);
+		break;
+	default:
+		/* nothing to do*/
+		rv = 0;
+		break;
+	}
+	if (rv != 0) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
+		return;
 	}
 
 	switch (sc->sc_type) {
 	case WM_T_82542_2_0:
 	case WM_T_82542_2_1:
-		/* null ? */
+		/* null */
 		break;
 	case WM_T_82543:
 		/*
@@ -4563,9 +4751,6 @@ wm_gmii_reset(struct wm_softc *sc)
 		    CTRL_EXT_SWDPIN(4));
 		reg |= CTRL_EXT_SWDPIO(4);
 
-		CSR_WRITE(sc, WMREG_CTRL_EXT, reg | CTRL_EXT_SWDPIN(4));
-		delay(10);
-
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
 		delay(10*1000);
 
@@ -4574,7 +4759,7 @@ wm_gmii_reset(struct wm_softc *sc)
 #if 0
 		sc->sc_ctrl_ext = reg | CTRL_EXT_SWDPIN(4);
 #endif
-		delay(20*1000);	/* extra delay to get PHY ID? */
+		delay(20*1000);	/* XXX extra delay to get PHY ID? */
 		break;
 	case WM_T_82544:	/* reset 10000us */
 	case WM_T_82540:
@@ -4621,15 +4806,72 @@ wm_gmii_reset(struct wm_softc *sc)
 		/* XXX add code to set LED after phy reset */
 		break;
 	default:
-		panic("unknown sc_type\n");
+		panic("%s: %s: unknown type\n", device_xname(sc->sc_dev),
+		    __func__);
 		break;
 	}
 
-	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
-	    || (sc->sc_type == WM_T_ICH10))
-		wm_put_swfwhw_semaphore(sc);
-	if (sc->sc_type == WM_T_80003)
+	/* release PHY semaphore */
+	switch (sc->sc_type) {
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82573:
+	case WM_T_82574:
+	case WM_T_82583:
+		 /* XXX sould put sw semaphore, too */
+		wm_put_swsm_semaphore(sc);
+		break;
+	case WM_T_80003:
 		wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
+		break;
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+		wm_put_swfwhw_semaphore(sc);
+		break;
+	default:
+		/* nothing to do*/
+		rv = 0;
+		break;
+	}
+
+	/* get_cfg_done */
+	wm_get_cfg_done(sc);
+
+	/* extra setup */
+	switch (sc->sc_type) {
+	case WM_T_82542_2_0:
+	case WM_T_82542_2_1:
+	case WM_T_82543:
+	case WM_T_82544:
+	case WM_T_82540:
+	case WM_T_82545:
+	case WM_T_82545_3:
+	case WM_T_82546:
+	case WM_T_82546_3:
+	case WM_T_82541_2:
+	case WM_T_82547_2:
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82573:
+	case WM_T_82574:
+	case WM_T_82583:
+	case WM_T_80003:
+		/* null */
+		break;
+	case WM_T_82541:
+	case WM_T_82547:
+		/* XXX Configure actively LED after PHY reset */
+		break;
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+		delay(10*1000);
+		break;
+	default:
+		panic("%s: unknown type\n", __func__);
+		break;
+	}
 }
 
 /*
@@ -5730,6 +5972,41 @@ wm_check_mng_mode_generic(struct wm_softc *sc)
 
 	if ((fwsm & FWSM_MODE_MASK) == (MNG_IAMT_MODE << FWSM_MODE_SHIFT))
 		return 1;
+
+	return 0;
+}
+
+static int
+wm_check_reset_block(struct wm_softc *sc)
+{
+	uint32_t reg;
+
+	switch (sc->sc_type) {
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+		reg = CSR_READ(sc, WMREG_FWSM);
+		if ((reg & FWSM_RSPCIPHY) != 0)
+			return 0;
+		else
+			return -1;
+		break;
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82573:
+	case WM_T_82574:
+	case WM_T_82583:
+	case WM_T_80003:
+		reg = CSR_READ(sc, WMREG_MANC);
+		if ((reg & MANC_BLK_PHY_RST_ON_IDE) != 0)
+			return -1;
+		else
+			return 0;
+		break;
+	default:
+		/* no problem */
+		break;
+	}
 
 	return 0;
 }
