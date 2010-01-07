@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.57 2010/01/06 18:12:37 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.58 2010/01/07 01:39:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.57 2010/01/06 18:12:37 christos Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.58 2010/01/07 01:39:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ long	diskreads, totalreads;	/* Disk cache statistics */
 
 static void rwerror(const char *, daddr_t);
 
-extern volatile sigatomic_t returntosingle;
+extern volatile sig_atomic_t returntosingle;
 
 int
 ftypeok(union dinode *dp)
