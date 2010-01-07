@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.17.4.2 2009/04/01 21:43:53 snj Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.17.4.2.2.1 2010/01/07 07:08:34 snj Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.17.4.2 2009/04/01 21:43:53 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.17.4.2.2.1 2010/01/07 07:08:34 snj Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -622,7 +622,7 @@ __sigtimedwait1(struct lwp *l, const struct sys___sigtimedwait_args *uap, regist
 	int error, signum;
 	int timo = 0;
 	struct timespec ts, tsstart, tsnow;
-	ksiginfo_t *ksi;
+	ksiginfo_t ksi;
 
 	memset(&tsstart, 0, sizeof tsstart);	 /* XXX gcc */
 
@@ -660,13 +660,6 @@ __sigtimedwait1(struct lwp *l, const struct sys___sigtimedwait_args *uap, regist
 	 */
 	sigminusset(&sigcantmask, &l->l_sigwaitset);
 
-	/*
-	 * Allocate a ksi up front.  We can't sleep with the mutex held.
-	 */
-	ksi = ksiginfo_alloc(p, NULL, PR_WAITOK);
-	if (ksi == NULL)
-		return (ENOMEM);
-
 	mutex_enter(p->p_lock);
 
 	/*
@@ -678,8 +671,8 @@ __sigtimedwait1(struct lwp *l, const struct sys___sigtimedwait_args *uap, regist
 		goto out;
 	}
 
-	if ((signum = sigget(&p->p_sigpend, ksi, 0, &l->l_sigwaitset)) == 0)
-		signum = sigget(&l->l_sigpend, ksi, 0, &l->l_sigwaitset);
+	if ((signum = sigget(&p->p_sigpend, &ksi, 0, &l->l_sigwaitset)) == 0)
+		signum = sigget(&l->l_sigpend, &ksi, 0, &l->l_sigwaitset);
 
 	if (signum != 0) {
 		/*
@@ -692,7 +685,7 @@ __sigtimedwait1(struct lwp *l, const struct sys___sigtimedwait_args *uap, regist
 	/*
 	 * Set up the sigwait list.
 	 */
-	l->l_sigwaited = ksi;
+	l->l_sigwaited = &ksi;
 	LIST_INSERT_HEAD(&p->p_sigwaiters, l, l_sigwaiter);
 
 	/*
@@ -747,10 +740,8 @@ __sigtimedwait1(struct lwp *l, const struct sys___sigtimedwait_args *uap, regist
 	 */
  out:
 	if (error == 0)
-		error = (*put_info)(&ksi->ksi_info, SCARG(uap, info),
-		    sizeof(ksi->ksi_info));
-
-	ksiginfo_free(ksi);
+		error = (*put_info)(&ksi.ksi_info, SCARG(uap, info),
+		    sizeof(ksi.ksi_info));
 
 	return error;
 }
