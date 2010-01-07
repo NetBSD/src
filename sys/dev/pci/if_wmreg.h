@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.31 2010/01/07 17:34:38 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.32 2010/01/07 17:45:58 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -220,6 +220,7 @@ struct livengood_tcpip_ctxdesc {
 #define	STATUS_SPEED_100  STATUS_SPEED(1)
 #define	STATUS_SPEED_1000 STATUS_SPEED(2)
 #define	STATUS_ASDV(x)	((x) << 8)	/* auto speed det. val. (Livengood) */
+#define	STATUS_LAN_INIT_DONE (1U << 9)	/* Lan Init Completion by NVM */
 #define	STATUS_MTXCKOK	(1U << 10)	/* MTXD clock running */
 #define	STATUS_PCI66	(1U << 11)	/* 66MHz bus (Livengood) */
 #define	STATUS_BUS64	(1U << 12)	/* 64-bit bus (Livengood) */
@@ -612,6 +613,10 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_PBS	0x1008	/* Packet Buffer Size (ICH) */
 
+#define WMREG_EEMNGCTL	0x1010	/* MNG EEprom Control */
+#define EEMNGCTL_CFGDONE_0 0x040000	/* MNG config cycle done */
+#define EEMNGCTL_CFGDONE_1 0x080000	/*  2nd port */
+
 #define	WMREG_TXDMAC	0x3000	/* Transfer DMA Control */
 #define	TXDMAC_DPP	(1U << 0)	/* disable packet prefetch */
 
@@ -670,7 +675,10 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_MDPHYA	0x003C	/* PHY address - RW */
 
-#define	WMREG_MANC2H	0x5860	/* Managment Control To Host - RW */
+#define	WMREG_MANC	0x5820	/* Management Control */
+#define	MANC_BLK_PHY_RST_ON_IDE	0x00040000
+
+#define	WMREG_MANC2H	0x5860	/* Manaegment Control To Host - RW */
 
 #define	WMREG_SWSM	0x5b50	/* SW Semaphore */
 #define	SWSM_SMBI	0x00000001	/* Driver Semaphore bit */
@@ -683,6 +691,7 @@ struct livengood_tcpip_ctxdesc {
 #define	FWSM_MODE_SHIFT		0x1
 #define	MNG_ICH_IAMT_MODE	0x2
 #define	MNG_IAMT_MODE		0x3
+#define FWSM_RSPCIPHY	0x00000040	/* Reset PHY on PCI reset */
 
 #define	WMREG_SW_FW_SYNC 0x5b5c	/* software-firmware semaphore */
 #define	SWFW_EEP_SM		0x0001 /* eeprom access */
