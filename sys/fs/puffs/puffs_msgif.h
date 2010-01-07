@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.68 2009/10/17 23:22:04 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.69 2010/01/07 22:45:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -52,6 +52,7 @@
 #define PUFFSOP_ERROR		0x04	/* only kernel-> */
 #define PUFFSOP_FLUSH		0x05	/* ->kernel */
 #define PUFFSOP_SUSPEND		0x06	/* ->kernel */
+#define PUFFSOP_UNMOUNT		0x07	/* ->kernel */
 
 #define PUFFSOPFLAG_FAF		0x10	/* fire-and-forget */
 #define PUFFSOPFLAG_ISRESPONSE	0x20	/* req is actually a resp */
