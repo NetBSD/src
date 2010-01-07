@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.225 2010/01/03 03:53:34 dholland Exp $
+# $NetBSD: ALL,v 1.226 2010/01/07 00:18:47 martin Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.225 $"
+#ident 		"ALL-$Revision: 1.226 $"
 
 maxusers	64		# estimated number of users
 
@@ -1290,6 +1290,7 @@ wsmouse*	at xboxcontroller? mux 0
 ugen*	at uhub? port ?
 
 # USB 3G datacards
+u3ginit* at uhub? port ?
 u3g*	at uhub? port ?
 ucom*	at u3g?
 

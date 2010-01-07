@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.957 2010/01/03 03:53:34 dholland Exp $
+# $NetBSD: GENERIC,v 1.958 2010/01/07 00:18:47 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.957 $"
+#ident 		"GENERIC-$Revision: 1.958 $"
 
 maxusers	64		# estimated number of users
 
@@ -1236,6 +1236,7 @@ radio*	at udsbr?
 ugen*	at uhub? port ?
 
 # USB 3G datacards
+u3ginit* at uhub? port ?
 u3g*	at uhub? port ?
 ucom*	at u3g?
 
