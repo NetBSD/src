@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1008 2010/01/07 09:27:16 jdc Exp $
+$NetBSD: pcidevs,v 1.1009 2010/01/07 18:57:10 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2274,16 +2274,18 @@ product INTEL 82573E_IAMT	0x108c	i82573E Gigabit Ethernet
 product INTEL PRO_100_VE_6	0x1092	PRO/100 VE Network Controller
 product INTEL PRO_100_VE_8	0x1093	PRO/100 VE Network Controller
 product INTEL PRO_100_VE_7	0x1094	PRO/100 VE Network Controller w/ 82562G PHY
-product INTEL 80K3LAN_CPR_DPT 0x1096	i80003 Dual 1000baseT Ethernet
-product INTEL 80K3LAN_FIB_DPT 0x1097	i80003 Dual 1000baseX Ethernet
-product INTEL 80K3LAN_SDS_DPT 0x1098	i80003 Dual Gigabit Ethernet (SERDES)
+product INTEL 80K3LAN_CPR_DPT	0x1096	i80003 Dual 1000baseT Ethernet
+product INTEL 80K3LAN_FIB_DPT	0x1097	i80003 Dual 1000baseX Ethernet
+product INTEL 80K3LAN_SDS_DPT	0x1098	i80003 Dual Gigabit Ethernet (SERDES)
 product INTEL 82546GB_QUAD_COPPER 0x1099 i82546GB Quad Port Gigabit Ethernet
 product INTEL 82573L		0x109a	i82573L Gigabit Ethernet
 product INTEL 82571EB_QUAD_COPPER 0x10a4 i82571EB Quad Port Gigabit Ethernet
+product INTEL 82575EB_COPPER	0x10a7 i82575EB dual-1000baseT Ethernet
+product INTEL 82575EB_FIBER_SERDES 0x10a9 i82575EB dual-1000baseX Ethernet (SERDES)
 product INTEL 82546GB_QUAD_COPPER_KSP3 0x10b5 i82546GB Quad Port Gigabit Ethernet (KSP3)
 product INTEL 82572EI		0x10b9	i82572EI 1000baseT Ethernet
-product INTEL 80K3LAN_CPR_SPT 0x10ba	i80003 1000baseT Ethernet
-product INTEL 80K3LAN_SDS_SPT 0x10bb	i80003 Gigabit Ethernet (SERDES)
+product INTEL 80K3LAN_CPR_SPT	0x10ba	i80003 1000baseT Ethernet
+product INTEL 80K3LAN_SDS_SPT	0x10bb	i80003 Gigabit Ethernet (SERDES)
 product	INTEL 82571GB_QUAD_COPPER 0x10bc i82571GB Quad 1000baseT Ethernet
 product INTEL 82801I_IGP_AMT	0x10bd	82801I (AMT) LAN Controller
 product INTEL 82801I_IGP_M	0x10bf  82801I Mobile LAN Controller
@@ -2296,8 +2298,14 @@ product INTEL 82801H_IGP_M_V 	0x10cb	i82801H IGP (MV) LAN Controller
 product INTEL 82801J_D_BM_LF	0x10cd	i82801J (LF) LAN Controller
 product INTEL 82567V		0x10ce	i82567V LAN Controller
 product INTEL 82574L		0x10d3	i82574L 1000baseT Ethernet
+product INTEL 82575GB_QUAD_COPPER 0x10d6 i82575GB quad-1000baseT Ethernet
 product INTEL 82567LM_3		0x10de	i82567LM-3 LAN Controller
 product INTEL 82567LF_3		0x10df	i82567LF-3 LAN Controller
+product INTEL 82575GB_QUAD_COPPER_PM 0x10e2 i82575GB Quad-1000baseT Ethernet (PM)
+product INTEL PCH_M_LM		0x10ea	PCH LAN (82578LM) Controller
+product INTEL PCH_M_LC		0x10eb	PCH LAN (82578LC) Controller
+product INTEL PCH_D_DM		0x10ef	PCH LAN (82578DM) Controller
+product INTEL PCH_D_DC		0x10f0	PCH LAN (82578DC) Controller
 product INTEL 82801I_IGP_M_AMT	0x10f5  82801I Mobile (AMT) LAN Controller
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
