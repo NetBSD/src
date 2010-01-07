@@ -1,4 +1,4 @@
-.\"	$NetBSD: gphyter.4,v 1.2 2008/04/30 13:10:54 martin Exp $
+.\"	$NetBSD: gphyter.4,v 1.3 2010/01/07 09:30:29 jdc Exp $
 .\"
 .\" Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,15 +33,16 @@
 .Os
 .Sh NAME
 .Nm gphyter
-.Nd Driver for National Semiconductor DP83861 10/100/1000 Ethernet PHYs
+.Nd Driver for National Semiconductor DP83861, DP83865 and DP83891 10/100/1000
+Ethernet PHYs
 .Sh SYNOPSIS
 .Cd "gphyter* at mii? phy ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports the National Semiconductor DP83861 and DP83891 (Gig PHYTER)
-10/100/1000 Ethernet PHYs.  These PHYs are found on a variety of CAT5 Gigabit
-Ethernet interfaces.
+driver supports the National Semiconductor DP83861, DP83865 and DP83891
+(Gig PHYTER) 10/100/1000 Ethernet PHYs.  These PHYs are found on a variety of
+CAT5 Gigabit Ethernet interfaces.
 .Sh SEE ALSO
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
