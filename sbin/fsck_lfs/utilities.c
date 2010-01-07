@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.29 2010/01/07 01:39:56 christos Exp $	 */
+/* $NetBSD: utilities.c,v 1.30 2010/01/07 04:21:28 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -45,6 +45,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <signal.h>
 
