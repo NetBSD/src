@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.101 2009/12/05 20:54:10 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.102 2010/01/07 22:40:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.101 2009/12/05 20:54:10 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.102 2010/01/07 22:40:11 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -154,7 +154,7 @@ puffs__nextreq(struct puffs_usermount *pu)
 	uint64_t rv;
 
 	PU_LOCK();
-	rv = pu->pu_nextreq++;
+	rv = pu->pu_nextreq++ | 1ULL<<63;
 	PU_UNLOCK();
 
 	return rv;
