@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.128 2009/12/15 03:02:25 dyoung Exp $ */
+/* $NetBSD: device.h,v 1.129 2010/01/07 22:39:52 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -478,6 +478,8 @@ void	config_finalize(void);
 
 void	config_twiddle_init(void);
 void	config_twiddle_fn(void *);
+
+void	null_childdetached(device_t, device_t);
 
 device_t	device_lookup(cfdriver_t, int);
 void		*device_lookup_private(cfdriver_t, int);
