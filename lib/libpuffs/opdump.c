@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.29 2010/01/07 20:47:47 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.30 2010/01/07 22:46:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.29 2010/01/07 20:47:47 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.30 2010/01/07 22:46:11 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -147,7 +147,7 @@ puffsdump_req(struct puffs_req *preq)
 	const char **map;
 	int isvn = 0;
 
-	map = NULL; /* yes, we are all interested in your opinion, gcc */
+	printf("reqid: %" PRIu64 ", ", preq->preq_id);
 	switch (PUFFSOP_OPCLASS(preq->preq_opclass)) {
 	case PUFFSOP_VFS:
 		map = vfsop_revmap;
@@ -165,11 +165,14 @@ puffsdump_req(struct puffs_req *preq)
 	case PUFFSOP_FLUSH:
 		map = flush_revmap;
 		break;
+	default:
+		printf("unhandled opclass\n");
+		return;
 	}
 
-	printf("reqid: %" PRIu64 ", opclass %d%s, optype: %s, "
+	printf("opclass %d%s, optype: %s, "
 	    "cookie: %p,\n" DINT "aux: %p, auxlen: %zu, pid: %d, lwpid: %d\n",
-	    preq->preq_id, PUFFSOP_OPCLASS(preq->preq_opclass),
+	    PUFFSOP_OPCLASS(preq->preq_opclass),
 	    PUFFSOP_WANTREPLY(preq->preq_opclass) ? "" : " (FAF)",
 	    map[preq->preq_optype], preq->preq_cookie,
 	    preq->preq_buf, preq->preq_buflen,
