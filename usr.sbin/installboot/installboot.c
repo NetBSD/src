@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.31 2009/04/05 11:55:39 lukem Exp $	*/
+/*	$NetBSD: installboot.c,v 1.32 2010/01/07 13:26:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.31 2009/04/05 11:55:39 lukem Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.32 2010/01/07 13:26:00 tsutsui Exp $");
 #endif	/* !__lint */
 
 #include <sys/ioctl.h>
@@ -91,6 +91,8 @@ const struct option {
 };
 #undef OFFSET
 #define OPTION(params, type, opt) (*(type *)((char *)(params) + (opt)->offset))
+
+#define DFL_SECSIZE	512	/* Don't use DEV_BSIZE. It's host's value. */
 
 int
 main(int argc, char *argv[])
@@ -234,6 +236,8 @@ main(int argc, char *argv[])
 		op = "write";
 		mode = O_RDWR;
 	}
+	/* XXX should be specified via option */
+	params->sectorsize = DFL_SECSIZE;
 	if ((params->fsfd = open(params->filesystem, mode, 0600)) == -1)
 		err(1, "Opening file system `%s' read-%s",
 		    params->filesystem, op);

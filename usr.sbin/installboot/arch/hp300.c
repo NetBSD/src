@@ -1,4 +1,4 @@
-/* $NetBSD: hp300.c,v 1.11 2009/04/05 11:55:39 lukem Exp $ */
+/* $NetBSD: hp300.c,v 1.12 2010/01/07 13:26:00 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: hp300.c,v 1.11 2009/04/05 11:55:39 lukem Exp $");
+__RCSID("$NetBSD: hp300.c,v 1.12 2010/01/07 13:26:00 tsutsui Exp $");
 #endif /* !__lint */
 
 /* We need the target disklabel.h, not the hosts one..... */
@@ -78,8 +78,7 @@ hp300_setboot(ib_params *params)
 	int		i;
 	unsigned int	secsize = HP300_SECTSIZE;
 	uint64_t	boot_size, boot_offset;
-	char		label_buf[DEV_BSIZE];
-	struct disklabel *label = (void *)label_buf;
+	struct disklabel *label;
 
 	assert(params != NULL);
 	assert(params->fsfd != -1);
@@ -89,6 +88,12 @@ hp300_setboot(ib_params *params)
 
 	retval = 0;
 	bootstrap = MAP_FAILED;
+
+	label = malloc(params->sectorsize);
+	if (label == NULL) {
+		warn("Failed to allocate memory for disklabel");
+		goto done;
+	}
 
 	if (params->flags & IB_APPEND) {
 		if (!S_ISREG(params->fsstat.st_mode)) {
@@ -103,8 +108,8 @@ hp300_setboot(ib_params *params)
 		 * The bootstrap can be well over 8k, and must go into a BOOT
 		 * partition. Read NetBSD label to locate BOOT partition.
 		 */
-		if (pread(params->fsfd, label, DEV_BSIZE, 2 * DEV_BSIZE)
-								!= DEV_BSIZE) {
+		if (pread(params->fsfd, label, params->sectorsize, LABELSECTOR)
+		    != (ssize_t)params->sectorsize) {
 			warn("reading disklabel");
 			goto done;
 		}
@@ -200,6 +205,8 @@ hp300_setboot(ib_params *params)
 	retval = 1;
 
  done:
+	if (label != NULL)
+		free(label);
 	if (bootstrap != MAP_FAILED)
 		munmap(bootstrap, params->s1stat.st_size);
 	return retval;
