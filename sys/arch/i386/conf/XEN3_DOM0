@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.26 2010/01/03 03:53:34 dholland Exp $
+#	$NetBSD: XEN3_DOM0,v 1.27 2010/01/07 18:49:30 tnn Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -548,10 +548,6 @@ ulpt*   at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem* at uhub? port ? configuration ?
 ucom*   at umodem?
-
-# Huawei E220 3G/HSDPA modem
-uhmodem* at uhub? port ? configuration ? interface ?
-ucom*	at uhmodem? portno ?
 
 # USB Mass Storage
 umass*  at uhub? port ? configuration ? interface ?
