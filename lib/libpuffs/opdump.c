@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.27 2009/04/06 20:47:17 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.28 2010/01/07 18:09:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.27 2009/04/06 20:47:17 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.28 2010/01/07 18:09:07 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -46,6 +46,8 @@ __RCSID("$NetBSD: opdump.c,v 1.27 2009/04/06 20:47:17 pooka Exp $");
 #include <stdio.h>
 
 #include "puffs_priv.h"
+
+#define DINT "    "
 
 /* XXX! */
 const char *vfsop_revmap[] = {
@@ -165,8 +167,8 @@ puffsdump_req(struct puffs_req *preq)
 		break;
 	}
 
-	printf("\treqid: %" PRIu64 ", opclass %d%s, optype: %s, "
-	    "cookie: %p,\n\t\taux: %p, auxlen: %zu, pid: %d, lwpid: %d\n",
+	printf("reqid: %" PRIu64 ", opclass %d%s, optype: %s, "
+	    "cookie: %p,\n" DINT "aux: %p, auxlen: %zu, pid: %d, lwpid: %d\n",
 	    preq->preq_id, PUFFSOP_OPCLASS(preq->preq_opclass),
 	    PUFFSOP_WANTREPLY(preq->preq_opclass) ? "" : " (FAF)",
 	    map[preq->preq_optype], preq->preq_cookie,
@@ -201,7 +203,7 @@ puffsdump_req(struct puffs_req *preq)
 	PU_LOCK();
 	gettimeofday(&tv_now, NULL);
 	timersub(&tv_now, &tv_prev, &tv);
-	printf("\t\tsince previous call: %lld.%06ld\n",
+	printf(DINT "since previous call: %lld.%06ld\n",
 	    (long long)tv.tv_sec, (long)tv.tv_usec);
 	gettimeofday(&tv_prev, NULL);
 	PU_UNLOCK();
@@ -234,7 +236,7 @@ puffsdump_rv(struct puffs_req *preq)
 		}
 	}
 
-	printf("\tRV reqid: %" PRIu64 ", result: %d %s\n",
+	printf("RV reqid: %" PRIu64 ", result: %d %s\n",
 	    preq->preq_id, preq->preq_rv,
 	    preq->preq_rv ? strerror(preq->preq_rv) : "");
 }
@@ -243,7 +245,7 @@ void
 puffsdump_cookie(puffs_cookie_t c, const char *cookiename)
 {
 	
-	printf("\t%scookie: at %p\n", cookiename, c);
+	printf("%scookie: at %p\n", cookiename, c);
 }
 
 static const char *cn_opnames[] = {
@@ -257,7 +259,7 @@ void
 puffsdump_cn(struct puffs_kcn *pkcn)
 {
 
-	printf("\t\tpuffs_cn: \"%s\", len %zu op %s (flags 0x%x)\n",
+	printf(DINT "puffs_cn: \"%s\", len %zu op %s (flags 0x%x)\n",
 	    pkcn->pkcn_name, pkcn->pkcn_namelen,
 	    cn_opnames[pkcn->pkcn_nameiop & NAMEI_OPMASK],
 	    pkcn->pkcn_flags);
@@ -276,7 +278,7 @@ puffsdump_lookup_rv(struct puffs_req *preq)
 {
 	struct puffs_vnmsg_lookup *lookup_msg = (void *)preq;
 
-	printf("\t\tnew node %p, type 0x%x,\n\t\tsize 0x%"PRIu64", dev 0x%llx\n",
+	printf(DINT "new %p, type 0x%x, size 0x%"PRIu64", dev 0x%llx\n",
 	    lookup_msg->pvnr_newnode, lookup_msg->pvnr_vtype,
 	    lookup_msg->pvnr_size, (unsigned long long)lookup_msg->pvnr_rdev);
 }
@@ -287,7 +289,7 @@ puffsdump_create_rv(struct puffs_req *preq)
 	/* XXX: wrong type, but we know it fits the slot */
 	struct puffs_vnmsg_create *create_msg = (void *)preq;
 
-	printf("\t\tnew node %p\n", create_msg->pvnr_newnode);
+	printf(DINT "new %p\n", create_msg->pvnr_newnode);
 }
 
 void
@@ -295,7 +297,7 @@ puffsdump_readwrite(struct puffs_req *preq)
 {
 	struct puffs_vnmsg_rw *rw_msg = (void *)preq;
 
-	printf("\t\toffset: %" PRId64 ", resid %zu, ioflag 0x%x\n",
+	printf(DINT "offset: %" PRId64 ", resid %zu, ioflag 0x%x\n",
 	    rw_msg->pvnr_offset, rw_msg->pvnr_resid, rw_msg->pvnr_ioflag);
 }
 
@@ -304,7 +306,7 @@ puffsdump_readwrite_rv(struct puffs_req *preq)
 {
 	struct puffs_vnmsg_rw *rw_msg = (void *)preq;
 
-	printf("\t\tresid after op: %zu\n", rw_msg->pvnr_resid);
+	printf(DINT "resid after op: %zu\n", rw_msg->pvnr_resid);
 }
 
 void
@@ -312,7 +314,7 @@ puffsdump_readdir_rv(struct puffs_req *preq)
 {
 	struct puffs_vnmsg_readdir *readdir_msg = (void *)preq;
 
-	printf("\t\tresid after op: %zu, eofflag %d\n",
+	printf(DINT "resid after op: %zu, eofflag %d\n",
 	    readdir_msg->pvnr_resid, readdir_msg->pvnr_eofflag);
 }
 
@@ -321,7 +323,7 @@ puffsdump_open(struct puffs_req *preq)
 {
 	struct puffs_vnmsg_open *open_msg = (void *)preq;
 
-	printf("\t\tmode: 0x%x\n", open_msg->pvnr_mode);
+	printf(DINT "mode: 0x%x\n", open_msg->pvnr_mode);
 }
 
 void
@@ -329,7 +331,7 @@ puffsdump_targ(struct puffs_req *preq)
 {
 	struct puffs_vnmsg_remove *remove_msg = (void *)preq; /* XXX! */
 
-	printf("\t\ttarget cookie: %p\n", remove_msg->pvnr_cookie_targ);
+	printf(DINT "target cookie: %p\n", remove_msg->pvnr_cookie_targ);
 }
 
 void
@@ -337,19 +339,5 @@ puffsdump_readdir(struct puffs_req *preq)
 {
 	struct puffs_vnmsg_readdir *readdir_msg = (void *)preq;
 
-	printf("\t\tread offset: %" PRId64 "\n", readdir_msg->pvnr_offset);
-}
-
-void
-/*ARGSUSED*/
-puffsdump_creds(struct puffs_cred *pcr)
-{
-
-}
-
-void
-puffsdump_int(int value, const char *name)
-{
-
-	printf("\tint (%s): %d\n", name, value);
+	printf(DINT "read offset: %" PRId64 "\n", readdir_msg->pvnr_offset);
 }
