@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.38 2009/11/05 13:28:20 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.39 2010/01/07 21:05:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -176,6 +176,10 @@ struct psshfs_ctx {
 	time_t mounttime;
 
 	int refreshival;
+
+	int domangleuid, domanglegid;
+	uid_t mangleuid, myuid;
+	gid_t manglegid, mygid;
 };
 #define PSSHFD_META 0
 #define PSSHFD_DATA 1
@@ -196,7 +200,8 @@ void	psbuf_put_4(struct puffs_framebuf *, uint32_t);
 void	psbuf_put_8(struct puffs_framebuf *, uint64_t);
 void	psbuf_put_str(struct puffs_framebuf *, const char *);
 void	psbuf_put_data(struct puffs_framebuf *, const void *, uint32_t);
-void	psbuf_put_vattr(struct puffs_framebuf *, const struct vattr *);
+void	psbuf_put_vattr(struct puffs_framebuf *, const struct vattr *,
+			const struct psshfs_ctx *);
 
 uint8_t		psbuf_get_type(struct puffs_framebuf *);
 uint32_t	psbuf_get_len(struct puffs_framebuf *);

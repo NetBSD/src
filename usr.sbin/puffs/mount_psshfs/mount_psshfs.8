@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_psshfs.8,v 1.21 2009/05/20 14:08:21 pooka Exp $
+.\"	$NetBSD: mount_psshfs.8,v 1.22 2010/01/07 21:05:50 pooka Exp $
 .\"
 .\" Copyright (c) 2007-2009 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 20, 2009
+.Dd Jan 7, 2010
 .Dt MOUNT_PSSHFS 8
 .Os
 .Sh NAME
@@ -88,6 +88,12 @@ configuration file and use
 .Pa configfile
 instead of
 .Pa ~/.ssh/config .
+.It Fl g Ar manglegid
+Converts remote
+.Ar manglegid
+to the effective gid of the file server and vice versa.
+See
+.Fl u .
 .It Fl o Ar [no]option
 This flag can be used to give standard mount options and options
 to puffs.
@@ -135,6 +141,23 @@ Note: the file system will still free nodes when requested by the
 kernel and will lose all cached information in doing so.
 How frequently this happens depends on system activity and the total
 number of available vnodes in the system (kern.maxvnodes).
+.It Fl u Ar mangleuid
+Converts remote
+.Ar mangleuid
+to the effective uid of the file server and vice versa.
+This is a simple special case of the functionality of
+.Xr mount_umap 8 .
+For example: you mount remote me@darkmoon as the local user "me".
+If the uid of "me" on the local system is 101 and on
+darkmoon it is 202, you would use
+.Fl u
+.Ar 202
+to see files owned by 202 on darkmoon as owned by 101 when browsing the
+mount point.
+Apart from the cosmetic effect, this makes things like
+"chown me file" work.
+See
+.Fl g .
 .El
 .Sh EXAMPLES
 The following example illustrates how to mount the directory
