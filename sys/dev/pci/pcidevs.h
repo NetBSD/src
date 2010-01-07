@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1005 2010/01/03 04:27:20 jnemeth Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1006 2010/01/07 09:28:38 jdc Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1007 2010/01/03 04:26:26 jnemeth Exp
+ *	NetBSD: pcidevs,v 1.1008 2010/01/07 09:27:16 jdc Exp
  */
 
 /*
@@ -3021,6 +3021,7 @@
 #define	PCI_PRODUCT_NS_CS5535_AUDIO	0x002e		/* CS5535 Audio Controller */
 #define	PCI_PRODUCT_NS_CS5535_USB	0x002f		/* CS5535 USB Host Controller */
 #define	PCI_PRODUCT_NS_CS5535_VIDEO	0x0030		/* CS5535 Video Controller */
+#define	PCI_PRODUCT_NS_SATURN	0x0035		/* Saturn */
 #define	PCI_PRODUCT_NS_SC1100_IDE	0x0502		/* SC1100 PCI IDE */
 #define	PCI_PRODUCT_NS_SC1100_AUDIO	0x0503		/* SC1100 XpressAUDIO */
 #define	PCI_PRODUCT_NS_SC1100_ISA	0x0510		/* SC1100 PCI-ISA Bridge */
@@ -3892,6 +3893,7 @@
 #define	PCI_PRODUCT_SUN_MS_IIep	0x9000		/* microSPARC IIep PCI */
 #define	PCI_PRODUCT_SUN_US_IIi	0xa000		/* UltraSPARC IIi PCI */
 #define	PCI_PRODUCT_SUN_US_IIe	0xa001		/* UltraSPARC IIe PCI */
+#define	PCI_PRODUCT_SUN_CASSINI	0xabba		/* Cassini Gigabit Ethernet */
 
 /* Sundance Technology products */
 #define	PCI_PRODUCT_SUNDANCETI_IP100A	0x0200		/* IP100A 10/100 Ethernet */
