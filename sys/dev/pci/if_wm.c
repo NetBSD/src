@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.187 2010/01/05 10:02:01 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.188 2010/01/07 17:34:38 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.187 2010/01/05 10:02:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.188 2010/01/07 17:34:38 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -3121,7 +3121,7 @@ wm_reset(struct wm_softc *sc)
 		wm_get_swfwhw_semaphore(sc);
 		CSR_WRITE(sc, WMREG_CTRL, CTRL_RST | CTRL_PHY_RESET);
 		delay(10000);
-
+		break;
 	default:
 		/* Everything else can safely use the documented method. */
 		CSR_WRITE(sc, WMREG_CTRL, CTRL_RST);
@@ -4596,7 +4596,7 @@ wm_gmii_reset(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_PHY_RESET);
 		delay((sc->sc_type >= WM_T_82571) ? 100 : 10*1000);
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-		delay(150*1000);
+		delay(150);
 
 		if ((sc->sc_type == WM_T_82541)
 		    || (sc->sc_type == WM_T_82541_2)
@@ -4613,7 +4613,7 @@ wm_gmii_reset(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_PHY_RESET);
 		delay(100);
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-		delay(150*1000);
+		delay(150);
 
 		/* Allow time for h/w to get to a quiescent state afer reset */
 		delay(10*1000);
