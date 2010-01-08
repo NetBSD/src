@@ -1,4 +1,4 @@
-.\"     $NetBSD: vattr.9,v 1.11 2009/04/22 20:53:44 elad Exp $
+.\"     $NetBSD: vattr.9,v 1.12 2010/01/08 00:43:57 pooka Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 22, 2009
+.Dd January 8, 2010
 .Dt VATTR 9
 .Os
 .Sh NAME
@@ -55,8 +55,8 @@ struct vattr {
         nlink_t         va_nlink;       /* number of references to file */
         uid_t           va_uid;         /* owner user id */
         gid_t           va_gid;         /* owner group id */
-        long            va_fsid;        /* file system id (dev for now) */
-        long            va_fileid;      /* file id */
+        dev_t           va_fsid;        /* file system id (dev for now) */
+        ino_t           va_fileid;      /* file id */
         u_quad_t        va_size;        /* file size in bytes */
         long            va_blocksize;   /* blocksize preferred for i/o */
         struct timespec va_atime;       /* time of last access */
@@ -110,7 +110,7 @@ attributes can be found.
 All pathnames are relative to
 .Pa /usr/src .
 .Pp
-The vnode attributes ares implemented within the file
+.Fn vattr_null is implemented in
 .Pa sys/kern/vfs_subr.c .
 .Sh SEE ALSO
 .Xr intro 9 ,
