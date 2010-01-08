@@ -1,5 +1,5 @@
-.\"	$Id: cc.1,v 1.1.1.1 2008/08/24 05:33:01 gmcgarry Exp $
-.\"	$NetBSD: cc.1,v 1.1.1.1 2008/08/24 05:33:01 gmcgarry Exp $
+.\"	$Id: cc.1,v 1.2 2010/01/08 16:31:51 joerg Exp $
+.\"	$NetBSD: cc.1,v 1.2 2010/01/08 16:31:51 joerg Exp $
 .\"	$OpenBSD$
 .\"
 .\" Copyright (c) 2007 Jeremy C. Reed <reed@reedmedia.net>
@@ -57,29 +57,37 @@ Unrecognized options are all sent directly to
 Filenames that end with
 .Sy \&.c
 are passed via
-.Xr cpp 1 -\*(Gt
-.Xr ccom 1 -\*(Gt
-.Xr as 1 -\*(Gt
+.Xr cpp 1
+\(->
+.Xr ccom 1
+\(->
+.Xr as 1
+\(->
 .Xr ld 1 .
 .Pp
 Filenames that end with
 .Sy \&.i
 are passed via
-.Xr ccom 1 -\*(Gt
-.Xr as 1 -\*(Gt
+.Xr ccom 1
+\(->
+.Xr as 1
+\(->
 .Xr ld 1 .
 .Pp
 Filenames that end with
 .Sy \&.s
 are passed via
-.Xr as 1 -\*(Gt
+.Xr as 1
+\(->
 .Xr ld 1 .
 .Pp
 Filenames that end with
 .Sy \&.S
 are passed via
-.Xr cpp 1 -\*(Gt
-.Xr as 1 -\*(Gt
+.Xr cpp 1
+\(->
+.Xr as 1
+\(->
 .Xr ld 1 .
 .Pp
 Filenames that end with
