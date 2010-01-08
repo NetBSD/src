@@ -1,4 +1,4 @@
-/*	$NetBSD: aps.c,v 1.8 2008/04/04 09:41:40 xtraeme Exp $	*/
+/*	$NetBSD: aps.c,v 1.9 2010/01/08 20:00:03 dyoung Exp $	*/
 /*	$OpenBSD: aps.c,v 1.15 2007/05/19 19:14:11 tedu Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.8 2008/04/04 09:41:40 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.9 2010/01/08 20:00:03 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,8 +112,8 @@ static uint8_t  aps_mem_read_1(bus_space_tag_t, bus_space_handle_t,
 			       int, uint8_t);
 static void 	aps_refresh_sensor_data(struct aps_softc *sc);
 static void 	aps_refresh(void *);
-static bool 	aps_suspend(device_t PMF_FN_PROTO);
-static bool 	aps_resume(device_t PMF_FN_PROTO);
+static bool 	aps_suspend(device_t, pmf_qual_t);
+static bool 	aps_resume(device_t, pmf_qual_t);
 
 CFATTACH_DECL_NEW(aps, sizeof(struct aps_softc),
 	      aps_match, aps_attach, aps_detach, NULL);
@@ -401,7 +401,7 @@ aps_refresh(void *arg)
 }
 
 static bool
-aps_suspend(device_t dv PMF_FN_ARGS)
+aps_suspend(device_t dv, pmf_qual_t qual)
 {
 	struct aps_softc *sc = device_private(dv);
 
@@ -411,7 +411,7 @@ aps_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-aps_resume(device_t dv PMF_FN_ARGS)
+aps_resume(device_t dv, pmf_qual_t qual)
 {
 	struct aps_softc *sc = device_private(dv);
 

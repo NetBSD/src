@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.28 2009/11/26 15:17:09 njoly Exp $	 */
+/* $NetBSD: if_bce.c,v 1.29 2010/01/08 19:56:51 dyoung Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.28 2009/11/26 15:17:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.29 2010/01/08 19:56:51 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -182,7 +182,7 @@ static	int	bce_add_rxbuf(struct bce_softc *, int);
 static	void	bce_rxdrain(struct bce_softc *);
 static	void	bce_stop(struct ifnet *, int);
 static	void	bce_reset(struct bce_softc *);
-static	bool	bce_resume(device_t PMF_FN_PROTO);
+static	bool	bce_resume(device_t, pmf_qual_t);
 static	void	bce_set_filter(struct ifnet *);
 static	int	bce_mii_read(device_t, int, int);
 static	void	bce_mii_write(device_t, int, int, int);
@@ -1374,7 +1374,7 @@ bce_set_filter(struct ifnet *ifp)
 }
 
 static bool
-bce_resume(device_t self PMF_FN_ARGS)
+bce_resume(device_t self, pmf_qual_t qual)
 {
 	struct bce_softc *sc = device_private(self);
 

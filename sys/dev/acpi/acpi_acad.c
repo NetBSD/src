@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.35 2009/08/25 10:34:08 jmcneill Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.36 2010/01/08 20:40:41 dyoung Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.35 2009/08/25 10:34:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.36 2010/01/08 20:40:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ static void acpiacad_clear_status(struct acpiacad_softc *);
 static void acpiacad_notify_handler(ACPI_HANDLE, UINT32, void *);
 static void acpiacad_init_envsys(device_t);
 static void acpiacad_refresh(struct sysmon_envsys *, envsys_data_t *);
-static bool acpiacad_resume(device_t PMF_FN_PROTO);
+static bool acpiacad_resume(device_t, pmf_qual_t);
 
 /*
  * acpiacad_match:
@@ -164,7 +164,7 @@ acpiacad_attach(device_t parent, device_t self, void *aux)
  * 	Clear status after resuming to fetch new status.
  */
 static bool
-acpiacad_resume(device_t dv PMF_FN_ARGS)
+acpiacad_resume(device_t dv, pmf_qual_t qual)
 {
 	struct acpiacad_softc *sc = device_private(dv);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.35 2009/09/16 16:34:50 dyoung Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.36 2010/01/08 19:56:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.35 2009/09/16 16:34:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.36 2010/01/08 19:56:51 dyoung Exp $");
 #endif
 
 /*
@@ -118,7 +118,7 @@ ath_pci_match(device_t parent, cfdata_t match, void *aux)
 }
 
 static bool
-ath_pci_suspend(device_t self PMF_FN_ARGS)
+ath_pci_suspend(device_t self, pmf_qual_t qual)
 {
 	struct ath_pci_softc *sc = device_private(self);
 
@@ -130,7 +130,7 @@ ath_pci_suspend(device_t self PMF_FN_ARGS)
 }
 
 static bool
-ath_pci_resume(device_t self PMF_FN_ARGS)
+ath_pci_resume(device_t self, pmf_qual_t qual)
 {
 	struct ath_pci_softc *sc = device_private(self);
 

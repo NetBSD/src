@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.29 2009/09/26 14:44:10 tsutsui Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.30 2010/01/08 20:02:39 dyoung Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.29 2009/09/26 14:44:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.30 2010/01/08 20:02:39 dyoung Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -64,8 +64,8 @@ static void	ahd_setup_data(struct ahd_softc *ahd, struct scsipi_xfer *xs,
 static void	ahd_set_recoveryscb(struct ahd_softc *ahd, struct scb *scb);
 #endif
 
-static bool	ahd_pmf_suspend(device_t PMF_FN_PROTO);
-static bool	ahd_pmf_resume(device_t PMF_FN_PROTO);
+static bool	ahd_pmf_suspend(device_t, pmf_qual_t);
+static bool	ahd_pmf_resume(device_t, pmf_qual_t);
 static bool	ahd_pmf_shutdown(device_t, int);
 
 /*
@@ -118,7 +118,7 @@ ahd_attach(struct ahd_softc *ahd)
 }
 
 static bool
-ahd_pmf_suspend(device_t dev PMF_FN_ARGS)
+ahd_pmf_suspend(device_t dev, pmf_qual_t qual)
 {
 	struct ahd_softc *sc = device_private(dev);
 #if 0
@@ -130,7 +130,7 @@ ahd_pmf_suspend(device_t dev PMF_FN_ARGS)
 }
 
 static bool
-ahd_pmf_resume(device_t dev PMF_FN_ARGS)
+ahd_pmf_resume(device_t dev, pmf_qual_t qual)
 {
 #if 0
 	struct ahd_softc *sc = device_private(dev);

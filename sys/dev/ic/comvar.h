@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.68 2009/11/12 20:37:44 dyoung Exp $	*/
+/*	$NetBSD: comvar.h,v 1.69 2010/01/08 20:02:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -237,9 +237,9 @@ int comintr(void *);
 void com_attach_subr(struct com_softc *);
 int com_probe_subr(struct com_regs *);
 int com_detach(device_t, int);
-bool com_resume(device_t PMF_FN_PROTO);
+bool com_resume(device_t, pmf_qual_t);
 bool com_cleanup(device_t, int);
-bool com_suspend(device_t PMF_FN_PROTO);
+bool com_suspend(device_t, pmf_qual_t);
 
 #ifndef IPL_SERIAL
 #define	IPL_SERIAL	IPL_TTY

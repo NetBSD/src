@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.11 2009/09/16 10:47:55 mlelstv Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.12 2010/01/08 20:40:41 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008, 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.11 2009/09/16 10:47:55 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.12 2010/01/08 20:40:41 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -97,8 +97,8 @@ static int	asus_detach(device_t, int);
 static void	asus_notify_handler(ACPI_HANDLE, UINT32, void *);
 
 static void	asus_init(device_t);
-static bool	asus_suspend(device_t PMF_FN_PROTO);
-static bool	asus_resume(device_t PMF_FN_PROTO);
+static bool	asus_suspend(device_t, pmf_qual_t);
+static bool	asus_resume(device_t, pmf_qual_t);
 
 static void	asus_sysctl_setup(struct asus_softc *);
 
@@ -272,7 +272,7 @@ asus_init(device_t self)
 }
 
 static bool
-asus_suspend(device_t self PMF_FN_ARGS)
+asus_suspend(device_t self, pmf_qual_t qual)
 {
 	struct asus_softc *sc = device_private(self);
 	ACPI_STATUS rv;
@@ -288,7 +288,7 @@ asus_suspend(device_t self PMF_FN_ARGS)
 }
 
 static bool
-asus_resume(device_t self PMF_FN_ARGS)
+asus_resume(device_t self, pmf_qual_t qual)
 {
 	struct asus_softc *sc = device_private(self);
 	ACPI_STATUS rv;

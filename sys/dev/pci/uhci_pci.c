@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.48 2009/11/26 15:17:10 njoly Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.49 2010/01/08 19:56:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.48 2009/11/26 15:17:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.49 2010/01/08 19:56:52 dyoung Exp $");
 
 #include "ehci.h"
 
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.48 2009/11/26 15:17:10 njoly Exp $");
 #include <dev/usb/uhcireg.h>
 #include <dev/usb/uhcivar.h>
 
-static bool	uhci_pci_resume(device_t PMF_FN_PROTO);
+static bool	uhci_pci_resume(device_t, pmf_qual_t);
 
 struct uhci_pci_softc {
 	uhci_softc_t		sc;
@@ -229,7 +229,7 @@ uhci_pci_detach(device_t self, int flags)
 }
 
 static bool
-uhci_pci_resume(device_t dv PMF_FN_ARGS)
+uhci_pci_resume(device_t dv, pmf_qual_t qual)
 {
 	struct uhci_pci_softc *sc = device_private(dv);
 
@@ -237,7 +237,7 @@ uhci_pci_resume(device_t dv PMF_FN_ARGS)
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_LEGSUP,
 	    PCI_LEGSUP_USBPIRQDEN);
 
-	return uhci_resume(dv PMF_FN_CALL);
+	return uhci_resume(dv, qual);
 }
 
 CFATTACH_DECL3_NEW(uhci_pci, sizeof(struct uhci_pci_softc),

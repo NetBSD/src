@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.64 2009/05/04 11:05:45 markd Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.65 2010/01/08 19:56:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.64 2009/05/04 11:05:45 markd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.65 2010/01/08 19:56:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ static int agp_i810_free_memory(struct agp_softc *, struct agp_memory *);
 static int agp_i810_bind_memory(struct agp_softc *, struct agp_memory *, off_t);
 static int agp_i810_unbind_memory(struct agp_softc *, struct agp_memory *);
 
-static bool agp_i810_resume(device_t PMF_FN_PROTO);
+static bool agp_i810_resume(device_t, pmf_qual_t);
 static int agp_i810_init(struct agp_softc *);
 
 static int agp_i810_init(struct agp_softc *);
@@ -1016,7 +1016,7 @@ agp_i810_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 }
 
 static bool
-agp_i810_resume(device_t dv PMF_FN_ARGS)
+agp_i810_resume(device_t dv, pmf_qual_t qual)
 {
 	struct agp_softc *sc = device_private(dv);
 	struct agp_i810_softc *isc = sc->as_chipc;

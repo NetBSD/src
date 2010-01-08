@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.8 2010/01/01 15:43:49 pgoyette Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.9 2010/01/08 20:04:31 dyoung Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.8 2010/01/01 15:43:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.9 2010/01/08 20:04:31 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,8 +73,8 @@ static int	sdtemp_write_8(struct sdtemp_softc *, uint8_t, uint8_t);
 static int	sdtemp_read_16(struct sdtemp_softc *, uint8_t, uint16_t *);
 static int	sdtemp_write_16(struct sdtemp_softc *, uint8_t, uint16_t);
 static uint32_t	sdtemp_decode_temp(struct sdtemp_softc *, uint16_t);
-static bool	sdtemp_pmf_suspend(device_t PMF_FN_PROTO);
-static bool	sdtemp_pmf_resume(device_t PMF_FN_PROTO);
+static bool	sdtemp_pmf_suspend(device_t, pmf_qual_t);
+static bool	sdtemp_pmf_resume(device_t, pmf_qual_t);
 
 struct sdtemp_dev_entry {
 	const uint16_t sdtemp_mfg_id;
@@ -482,7 +482,7 @@ sdtemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
  */
 
 static bool
-sdtemp_pmf_suspend(device_t dev PMF_FN_ARGS)
+sdtemp_pmf_suspend(device_t dev, pmf_qual_t qual)
 {
 	struct sdtemp_softc *sc = device_private(dev);
 	int error;
@@ -499,7 +499,7 @@ sdtemp_pmf_suspend(device_t dev PMF_FN_ARGS)
 }
 
 static bool
-sdtemp_pmf_resume(device_t dev PMF_FN_ARGS)
+sdtemp_pmf_resume(device_t dev, pmf_qual_t qual)
 {
 	struct sdtemp_softc *sc = device_private(dev);
 	int error;

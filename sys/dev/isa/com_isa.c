@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.37 2009/11/23 02:13:46 rmind Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.38 2010/01/08 20:00:03 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.37 2009/11/23 02:13:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.38 2010/01/08 20:00:03 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,8 +95,8 @@ struct com_isa_softc {
 	int	sc_irq;
 };
 
-static bool com_isa_suspend(device_t PMF_FN_PROTO);
-static bool com_isa_resume(device_t PMF_FN_PROTO);
+static bool com_isa_suspend(device_t, pmf_qual_t);
+static bool com_isa_resume(device_t, pmf_qual_t);
 
 int com_isa_probe(device_t, cfdata_t , void *);
 void com_isa_attach(device_t, device_t, void *);
@@ -218,11 +218,11 @@ com_isa_attach(device_t parent, device_t self, void *aux)
 }
 
 static bool
-com_isa_suspend(device_t self PMF_FN_ARGS)
+com_isa_suspend(device_t self, pmf_qual_t qual)
 {
 	struct com_isa_softc *isc = device_private(self);
 
-	if (!com_suspend(self PMF_FN_CALL))
+	if (!com_suspend(self, qual))
 		return false;
 
 	isa_intr_disestablish(isc->sc_ic, isc->sc_ih);
@@ -232,7 +232,7 @@ com_isa_suspend(device_t self PMF_FN_ARGS)
 }
 
 static bool
-com_isa_resume(device_t self PMF_FN_ARGS)
+com_isa_resume(device_t self, pmf_qual_t qual)
 {
 	struct com_isa_softc *isc = device_private(self);
 	struct com_softc *sc = &isc->sc_com;
@@ -240,7 +240,7 @@ com_isa_resume(device_t self PMF_FN_ARGS)
 	isc->sc_ih = isa_intr_establish(isc->sc_ic, isc->sc_irq, IST_EDGE,
 	    IPL_SERIAL, comintr, sc);
 
-	return com_resume(self PMF_FN_CALL);
+	return com_resume(self, qual);
 }
 
 static int

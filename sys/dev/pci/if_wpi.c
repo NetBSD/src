@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.43 2009/09/05 14:09:55 tsutsui Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.44 2010/01/08 19:56:52 dyoung Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.43 2009/09/05 14:09:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.44 2010/01/08 19:56:52 dyoung Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -171,7 +171,7 @@ static int  wpi_reset(struct wpi_softc *);
 static void wpi_hw_config(struct wpi_softc *);
 static int  wpi_init(struct ifnet *);
 static void wpi_stop(struct ifnet *, int);
-static bool wpi_resume(device_t PMF_FN_PROTO);
+static bool wpi_resume(device_t, pmf_qual_t);
 static int	wpi_getrfkill(struct wpi_softc *);
 static void wpi_sysctlattach(struct wpi_softc *);
 
@@ -3203,7 +3203,7 @@ wpi_stop(struct ifnet *ifp, int disable)
 }
 
 static bool
-wpi_resume(device_t dv PMF_FN_ARGS)
+wpi_resume(device_t dv, pmf_qual_t qual)
 {
 	struct wpi_softc *sc = device_private(dv);
 

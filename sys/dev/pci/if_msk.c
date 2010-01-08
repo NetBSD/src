@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.30 2009/12/24 18:27:31 christos Exp $ */
+/* $NetBSD: if_msk.c,v 1.31 2010/01/08 19:56:51 dyoung Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.30 2009/12/24 18:27:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.31 2010/01/08 19:56:51 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -101,8 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.30 2009/12/24 18:27:31 christos Exp $")
 
 int mskc_probe(device_t, cfdata_t, void *);
 void mskc_attach(device_t, device_t, void *);
-static bool mskc_suspend(device_t PMF_FN_PROTO);
-static bool mskc_resume(device_t PMF_FN_PROTO);
+static bool mskc_suspend(device_t, pmf_qual_t);
+static bool mskc_resume(device_t, pmf_qual_t);
 int msk_probe(device_t, cfdata_t, void *);
 void msk_attach(device_t, device_t, void *);
 int mskcprint(void *, const char *);
@@ -963,7 +963,7 @@ msk_probe(device_t parent, cfdata_t match, void *aux)
 }
 
 static bool
-msk_resume(device_t dv PMF_FN_ARGS)
+msk_resume(device_t dv, pmf_qual_t qual)
 {
 	struct sk_if_softc *sc_if = device_private(dv);
 	
@@ -1654,7 +1654,7 @@ msk_watchdog(struct ifnet *ifp)
 }
 
 static bool
-mskc_suspend(device_t dv PMF_FN_ARGS)
+mskc_suspend(device_t dv, pmf_qual_t qual)
 {
 	struct sk_softc *sc = device_private(dv);
 
@@ -1667,7 +1667,7 @@ mskc_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-mskc_resume(device_t dv PMF_FN_ARGS)
+mskc_resume(device_t dv, pmf_qual_t qual)
 {
 	struct sk_softc *sc = device_private(dv);
 

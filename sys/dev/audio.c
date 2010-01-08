@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.249 2009/12/06 22:42:48 dyoung Exp $	*/
+/*	$NetBSD: audio.c,v 1.250 2010/01/08 20:05:15 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.249 2009/12/06 22:42:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.250 2010/01/08 20:05:15 dyoung Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -183,8 +183,8 @@ static void	audio_idle(void *);
 static void	audio_activity(device_t, devactive_t);
 #endif
 
-static bool	audio_suspend(device_t dv PMF_FN_PROTO);
-static bool	audio_resume(device_t dv PMF_FN_PROTO);
+static bool	audio_suspend(device_t dv, pmf_qual_t);
+static bool	audio_resume(device_t dv, pmf_qual_t);
 static void	audio_volume_down(device_t);
 static void	audio_volume_up(device_t);
 static void	audio_volume_toggle(device_t);
@@ -4070,7 +4070,7 @@ audio_activity(device_t dv, devactive_t type)
 #endif
 
 static bool
-audio_suspend(device_t dv PMF_FN_ARGS)
+audio_suspend(device_t dv, pmf_qual_t qual)
 {
 	struct audio_softc *sc = device_private(dv);
 	const struct audio_hw_if *hwp = sc->hw_if;
@@ -4091,7 +4091,7 @@ audio_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-audio_resume(device_t dv PMF_FN_ARGS)
+audio_resume(device_t dv, pmf_qual_t qual)
 {
 	struct audio_softc *sc = device_private(dv);
 	int s;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscaudio.c,v 1.3 2009/11/26 15:17:09 njoly Exp $	*/
+/*	$NetBSD: gcscaudio.c,v 1.4 2010/01/08 19:56:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.3 2009/11/26 15:17:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.4 2010/01/08 19:56:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ static int gcscaudio_trigger_output(void *, void *, void *, int,
 static int gcscaudio_trigger_input(void *, void *, void *, int,
                                    void (*)(void *), void *,
                                    const audio_params_t *);
-static bool gcscaudio_resume(device_t PMF_FN_PROTO);
+static bool gcscaudio_resume(device_t, pmf_qual_t);
 static int gcscaudio_intr(void *);
 
 /* for codec_if */
@@ -1279,7 +1279,7 @@ gcscaudio_intr(void *arg)
 }
 
 static bool
-gcscaudio_resume(device_t dv PMF_FN_ARGS)
+gcscaudio_resume(device_t dv, pmf_qual_t qual)
 {
 	struct gcscaudio_softc *sc = device_private(dv);
 

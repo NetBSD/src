@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_pci.c,v 1.5 2009/10/19 18:41:16 bouyer Exp $ */
+/* $NetBSD: siisata_pci.c,v 1.6 2010/01/08 19:56:52 dyoung Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -76,7 +76,7 @@ struct siisata_pci_softc {
 static int siisata_pci_match(device_t, cfdata_t, void *);
 static void siisata_pci_attach(device_t, device_t, void *);
 static int siisata_pci_detach(device_t, int);
-static bool siisata_pci_resume(device_t PMF_FN_PROTO);
+static bool siisata_pci_resume(device_t, pmf_qual_t);
 
 struct siisata_pci_board {
 	pci_vendor_id_t		spb_vend;
@@ -299,7 +299,7 @@ siisata_pci_detach(device_t dv, int flags)
 }
 
 static bool
-siisata_pci_resume(device_t dv PMF_FN_ARGS)
+siisata_pci_resume(device_t dv, pmf_qual_t qual)
 {
 	struct siisata_pci_softc *psc = device_private(dv);
 	struct siisata_softc *sc = &psc->si_sc;

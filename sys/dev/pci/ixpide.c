@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpide.c,v 1.14 2008/11/04 16:05:29 reinoud Exp $	*/
+/*	$NetBSD: ixpide.c,v 1.15 2010/01/08 19:56:52 dyoung Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.14 2008/11/04 16:05:29 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.15 2010/01/08 19:56:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,8 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.14 2008/11/04 16:05:29 reinoud Exp $");
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_ixp_reg.h>
 
-static bool	ixpide_resume(device_t PMF_FN_PROTO);
-static bool	ixpide_suspend(device_t PMF_FN_PROTO);
+static bool	ixpide_resume(device_t, pmf_qual_t);
+static bool	ixpide_suspend(device_t, pmf_qual_t);
 static int	ixpide_match(device_t, cfdata_t, void *);
 static void	ixpide_attach(device_t, device_t, void *);
 
@@ -146,7 +146,7 @@ static const uint8_t ixp_mdma_timings[] = {
 };
 
 static bool
-ixpide_resume(device_t dv PMF_FN_ARGS)
+ixpide_resume(device_t dv, pmf_qual_t qual)
 {
 	struct pciide_softc *sc = device_private(dv);
 
@@ -159,7 +159,7 @@ ixpide_resume(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-ixpide_suspend(device_t dv PMF_FN_ARGS)
+ixpide_suspend(device_t dv, pmf_qual_t qual)
 {
 	struct pciide_softc *sc = device_private(dv);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.133 2009/12/30 00:24:38 jakllsch Exp $	*/
+/*	$NetBSD: auich.c,v 1.134 2010/01/08 19:56:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.133 2009/12/30 00:24:38 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.134 2010/01/08 19:56:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,7 +289,7 @@ static int	auich_allocmem(struct auich_softc *, size_t, size_t,
 		    struct auich_dma *);
 static int	auich_freemem(struct auich_softc *, struct auich_dma *);
 
-static bool	auich_resume(device_t PMF_FN_PROTO);
+static bool	auich_resume(device_t, pmf_qual_t);
 static int	auich_set_rate(struct auich_softc *, int, u_long);
 static int	auich_sysctl_verify(SYSCTLFN_ARGS);
 static void	auich_finish_attach(device_t);
@@ -1585,7 +1585,7 @@ auich_alloc_cdata(struct auich_softc *sc)
 }
 
 static bool
-auich_resume(device_t dv PMF_FN_ARGS)
+auich_resume(device_t dv, pmf_qual_t qual)
 {
 	struct auich_softc *sc = device_private(dv);
 	pcireg_t v;

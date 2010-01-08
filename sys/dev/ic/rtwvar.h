@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.39 2009/10/19 23:19:39 rmind Exp $ */
+/* $NetBSD: rtwvar.h,v 1.40 2010/01/08 20:02:39 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -502,8 +502,8 @@ void rtw_attach(struct rtw_softc *);
 int rtw_detach(struct rtw_softc *);
 int rtw_intr(void *);
 
-bool rtw_suspend(device_t PMF_FN_PROTO);
-bool rtw_resume(device_t PMF_FN_PROTO);
+bool rtw_suspend(device_t, pmf_qual_t);
+bool rtw_resume(device_t, pmf_qual_t);
 
 int rtw_activate(device_t, enum devact);
 

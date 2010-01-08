@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.37 2010/01/02 02:37:08 christos Exp $	*/
+/*	$NetBSD: ym.c,v 1.38 2010/01/08 20:00:03 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.37 2010/01/02 02:37:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.38 2010/01/08 20:00:03 dyoung Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -162,8 +162,8 @@ static void ym_hvol_to_master_gain(struct ym_softc *);
 static void ym_set_mic_gain(struct ym_softc *, int);
 static void ym_set_3d(struct ym_softc *, mixer_ctrl_t *,
 	struct ad1848_volume *, int);
-static bool ym_suspend(device_t PMF_FN_PROTO);
-static bool ym_resume(device_t PMF_FN_PROTO);
+static bool ym_suspend(device_t, pmf_qual_t);
+static bool ym_resume(device_t, pmf_qual_t);
 
 
 const struct audio_hw_if ym_hw_if = {
@@ -1107,7 +1107,7 @@ ym_restore_codec_regs(struct ym_softc *sc)
  * DMA state should also be restored.  FIXME.
  */
 static bool
-ym_suspend(device_t self PMF_FN_ARGS)
+ym_suspend(device_t self, pmf_qual_t qual)
 {
 	struct ym_softc *sc = device_private(self);
 	int s;
@@ -1144,7 +1144,7 @@ ym_suspend(device_t self PMF_FN_ARGS)
 }
 
 static bool
-ym_resume(device_t self PMF_FN_ARGS)
+ym_resume(device_t self, pmf_qual_t qual)
 {
 	struct ym_softc *sc = device_private(self);
 	int i, xmax;

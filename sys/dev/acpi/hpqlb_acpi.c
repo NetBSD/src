@@ -1,4 +1,4 @@
-/* $NetBSD: hpqlb_acpi.c,v 1.3 2009/09/25 20:26:59 dyoung Exp $ */
+/* $NetBSD: hpqlb_acpi.c,v 1.4 2010/01/08 20:40:41 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2008  Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.3 2009/09/25 20:26:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.4 2010/01/08 20:40:41 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -93,7 +93,7 @@ static int hpqlb_finalize(device_t);
 static int hpqlb_hotkey_handler(struct wskbd_softc *, void *, u_int, int);
 
 static void hpqlb_init(device_t);
-static bool hpqlb_resume(device_t PMF_FN_PROTO);
+static bool hpqlb_resume(device_t, pmf_qual_t);
 
 CFATTACH_DECL_NEW(hpqlb, sizeof(struct hpqlb_softc),
     hpqlb_match, hpqlb_attach, NULL, NULL);
@@ -285,7 +285,7 @@ hpqlb_finalize(device_t self)
 }
 
 static bool
-hpqlb_resume(device_t self PMF_FN_ARGS)
+hpqlb_resume(device_t self, pmf_qual_t qual)
 {
 
 	hpqlb_init(self);

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.30 2009/12/31 10:12:51 jruoho Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.31 2010/01/08 20:40:41 dyoung Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.30 2009/12/31 10:12:51 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.31 2010/01/08 20:40:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ static void	acpilid_status_changed(void *);
 static void	acpilid_notify_handler(ACPI_HANDLE, UINT32, void *);
 
 static void	acpilid_wake_event(device_t, bool);
-static bool	acpilid_suspend(device_t PMF_FN_PROTO);
+static bool	acpilid_suspend(device_t, pmf_qual_t);
 
 /*
  * acpilid_match:
@@ -243,7 +243,7 @@ acpilid_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 }
 
 static bool
-acpilid_suspend(device_t dv PMF_FN_ARGS)
+acpilid_suspend(device_t dv, pmf_qual_t qual)
 {
 	struct acpilid_softc *sc = device_private(dv);
 	ACPI_INTEGER status;

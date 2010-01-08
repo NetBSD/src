@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.124 2009/08/19 21:36:47 dyoung Exp $	*/
+/*	$NetBSD: pci.c,v 1.125 2010/01/08 19:56:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.124 2009/08/19 21:36:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.125 2010/01/08 19:56:52 dyoung Exp $");
 
 #include "opt_pci.h"
 
@@ -871,7 +871,7 @@ struct pci_child_power {
 };
 
 static bool
-pci_child_suspend(device_t dv PMF_FN_ARGS)
+pci_child_suspend(device_t dv, pmf_qual_t qual)
 {
 	struct pci_child_power *priv = device_pmf_bus_private(dv);
 	pcireg_t ocsr, csr;
@@ -899,7 +899,7 @@ pci_child_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-pci_child_resume(device_t dv PMF_FN_ARGS)
+pci_child_resume(device_t dv, pmf_qual_t qual)
 {
 	struct pci_child_power *priv = device_pmf_bus_private(dv);
 

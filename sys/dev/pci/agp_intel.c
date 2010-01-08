@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.32 2008/06/09 06:49:54 freza Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.33 2010/01/08 19:56:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.32 2008/06/09 06:49:54 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.33 2010/01/08 19:56:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ static int agp_intel_bind_page(struct agp_softc *, off_t, bus_addr_t);
 static int agp_intel_unbind_page(struct agp_softc *, off_t);
 static void agp_intel_flush_tlb(struct agp_softc *);
 static int agp_intel_init(struct agp_softc *);
-static bool agp_intel_resume(device_t PMF_FN_PROTO);
+static bool agp_intel_resume(device_t, pmf_qual_t);
 
 static struct agp_methods agp_intel_methods = {
 	agp_intel_get_aperture,
@@ -397,7 +397,7 @@ agp_intel_flush_tlb(struct agp_softc *sc)
 }
 
 static bool
-agp_intel_resume(device_t dv PMF_FN_ARGS)
+agp_intel_resume(device_t dv, pmf_qual_t qual)
 {
 	struct agp_softc *sc = device_private(dv);
 

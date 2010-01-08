@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtw_pci.c,v 1.15 2009/09/16 16:34:50 dyoung Exp $	*/
+/*	$NetBSD: if_rtw_pci.c,v 1.16 2010/01/08 19:56:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.15 2009/09/16 16:34:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.16 2010/01/08 19:56:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ rtw_pci_match(device_t parent, cfdata_t match, void *aux)
 }
 
 static bool
-rtw_pci_resume(device_t self PMF_FN_ARGS)
+rtw_pci_resume(device_t self, pmf_qual_t qual)
 {
 	struct rtw_pci_softc *psc = device_private(self);
 	struct rtw_softc *sc = &psc->psc_rtw;
@@ -149,15 +149,15 @@ rtw_pci_resume(device_t self PMF_FN_ARGS)
 		return false;
 	}
 
-	return rtw_resume(self PMF_FN_CALL);
+	return rtw_resume(self, qual);
 }
 
 static bool
-rtw_pci_suspend(device_t self PMF_FN_ARGS)
+rtw_pci_suspend(device_t self, pmf_qual_t qual)
 {
 	struct rtw_pci_softc *psc = device_private(self);
 
-	if (!rtw_suspend(self PMF_FN_CALL))
+	if (!rtw_suspend(self, qual))
 		return false;
 
 	/* Unhook the interrupt handler. */
