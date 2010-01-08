@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.14 2010/01/03 22:55:25 haad Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.15 2010/01/08 00:27:48 pooka Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,8 +59,8 @@ static dev_type_strategy(dmstrategy);
 static dev_type_size(dmsize);
 
 /* attach and detach routines */
-static int dmattach(void);
-static int dmdestroy(void);
+int dmattach(void);
+int dmdestroy(void);
 
 static int dm_cmd_to_fun(prop_dictionary_t);
 static int disk_ioctl_switch(dev_t, u_long, void *);
@@ -101,8 +101,11 @@ const struct dkdriver dmdkdriver = {
 	.d_strategy = dmstrategy
 };
 
+#ifdef _MODULE
 /* Autoconf defines */
 CFDRIVER_DECL(dm, DV_DISK, NULL);
+#endif
+
 CFATTACH_DECL3_NEW(dm, 0,
      dm_match, dm_attach, dm_detach, NULL, NULL, NULL,
      DVF_DETACH_SHUTDOWN);
@@ -273,7 +276,7 @@ dm_detach(device_t self, int flags)
 }
 
 /* attach routine */
-static int
+int
 dmattach(void)
 {
 
@@ -285,7 +288,7 @@ dmattach(void)
 }
 
 /* Destroy routine */
-static int
+int
 dmdestroy(void)
 {
 
