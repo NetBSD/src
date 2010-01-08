@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.32 2009/10/19 23:19:39 rmind Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.33 2010/01/08 19:47:42 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.32 2009/10/19 23:19:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.33 2010/01/08 19:47:42 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -146,8 +146,8 @@ CFATTACH_DECL_NEW(rtw_cardbus, sizeof(struct rtw_cardbus_softc),
 
 void	rtw_cardbus_setup(struct rtw_cardbus_softc *);
 
-bool rtw_cardbus_resume(device_t PMF_FN_PROTO);
-bool rtw_cardbus_suspend(device_t PMF_FN_PROTO);
+bool rtw_cardbus_resume(device_t, pmf_qual_t);
+bool rtw_cardbus_suspend(device_t, pmf_qual_t);
 
 const struct rtw_cardbus_product *rtw_cardbus_lookup(
      const struct cardbus_attach_args *);
@@ -338,7 +338,7 @@ rtw_cardbus_detach(device_t self, int flags)
 }
 
 bool
-rtw_cardbus_resume(device_t self PMF_FN_ARGS)
+rtw_cardbus_resume(device_t self, pmf_qual_t qual)
 {
 	struct rtw_cardbus_softc *csc = device_private(self);
 	struct rtw_softc *sc = &csc->sc_rtw;
@@ -362,11 +362,11 @@ rtw_cardbus_resume(device_t self PMF_FN_ARGS)
 	RTW_WRITE(&sc->sc_regs, RTW_FEMR, RTW_FEMR_INTR);
 	RTW_WRITE(&sc->sc_regs, RTW_FER, RTW_FER_INTR);
 
-	return rtw_resume(self PMF_FN_CALL);
+	return rtw_resume(self, qual);
 }
 
 bool
-rtw_cardbus_suspend(device_t self PMF_FN_ARGS)
+rtw_cardbus_suspend(device_t self, pmf_qual_t qual)
 {
 	struct rtw_cardbus_softc *csc = device_private(self);
 	struct rtw_softc *sc = &csc->sc_rtw;
@@ -374,7 +374,7 @@ rtw_cardbus_suspend(device_t self PMF_FN_ARGS)
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
-	if (!rtw_suspend(self PMF_FN_CALL))
+	if (!rtw_suspend(self, qual))
 		return false;
 
 	RTW_WRITE(&sc->sc_regs, RTW_FEMR,

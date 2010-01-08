@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.36 2009/10/21 14:15:52 rmind Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.37 2010/01/08 19:47:42 dyoung Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.36 2009/10/21 14:15:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.37 2010/01/08 19:47:42 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -114,7 +114,7 @@ CFATTACH_DECL_NEW(ath_cardbus, sizeof(struct ath_cardbus_softc),
 void	ath_cardbus_setup(struct ath_cardbus_softc *);
 
 static bool
-ath_cardbus_suspend(device_t self PMF_FN_ARGS)
+ath_cardbus_suspend(device_t self, pmf_qual_t qual)
 {
 	struct ath_cardbus_softc *csc = device_private(self);
 
@@ -128,7 +128,7 @@ ath_cardbus_suspend(device_t self PMF_FN_ARGS)
 }
 
 static bool
-ath_cardbus_resume(device_t self PMF_FN_ARGS)
+ath_cardbus_resume(device_t self, pmf_qual_t qual)
 {
 	struct ath_cardbus_softc *csc = device_private(self);
 

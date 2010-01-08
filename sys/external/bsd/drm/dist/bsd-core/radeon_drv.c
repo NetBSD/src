@@ -135,7 +135,7 @@ MODULE_DEPEND(radeon, drm, 1, 1, 1);
 #elif   defined(__NetBSD__)
 
 static bool
-radeondrm_suspend(device_t self PMF_FN_ARGS)
+radeondrm_suspend(device_t self, pmf_qual_t qual)
 {
 	struct drm_device *rad_dev = device_private(self);
 	drm_radeon_cp_stop_t stop_args;
@@ -148,7 +148,7 @@ radeondrm_suspend(device_t self PMF_FN_ARGS)
 }
 
 static bool
-radeondrm_resume(device_t self PMF_FN_ARGS)
+radeondrm_resume(device_t self, pmf_qual_t qual)
 {
 	struct drm_device *rad_dev = device_private(self);
 	if (radeon_cp_resume(rad_dev, NULL, NULL) != 0)
