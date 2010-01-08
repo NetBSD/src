@@ -1,5 +1,5 @@
 
-/*	$NetBSD: kmem.h,v 1.3 2010/01/03 11:33:13 ober Exp $	*/
+/*	$NetBSD: kmem.h,v 1.4 2010/01/08 03:41:58 ober Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,9 @@ kmem_cache_create(char *name, size_t bufsize, size_t align,
 #define	kmem_cache_free(cache, buf)		pool_cache_put(cache, buf)
 #define	kmem_cache_reap_now(cache)		pool_cache_invalidate(cache)
 
-#define	KM_PUSHPAGE	KM_SLEEP	/* XXXNETBSD XXX HACK to prevent the crashes currently seen. Should be revisited once the uvm issues with zfs are fixed. */
+#define	KM_PUSHPAGE	KM_SLEEP	/* XXXNETBSD XXX HACK to prevent the crashes currently seen.
+					 *  Should be revisited once the uvm issues with zfs are fixed.
+                                         */
 #define	KMC_NODEBUG	0x00
 
 #endif	/* _OPENSOLARIS_SYS_KMEM_H_ */
