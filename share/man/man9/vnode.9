@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.41 2009/12/05 20:11:02 pooka Exp $
+.\"     $NetBSD: vnode.9,v 1.42 2010/01/08 12:41:33 pooka Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,21 +27,18 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 5, 2009
+.Dd January 8, 2010
 .Dt VNODE 9
 .Os
 .Sh NAME
 .Nm vnode ,
 .Nm vcount ,
 .Nm vref ,
-.Nm VREF ,
 .Nm vrele ,
 .Nm vget ,
 .Nm vput ,
 .Nm vhold ,
-.Nm VHOLD ,
 .Nm holdrele ,
-.Nm HOLDRELE ,
 .Nm getnewvnode ,
 .Nm ungetnewvnode ,
 .Nm vrecycle ,
@@ -68,8 +65,6 @@
 .Ft void
 .Fn vref "struct vnode *vp"
 .Ft void
-.Fn VREF "struct vnode *vp"
-.Ft void
 .Fn vrele "struct vnode *vp"
 .Ft int
 .Fn vget "struct vnode *vp" "int lockflag"
@@ -78,11 +73,7 @@
 .Ft void
 .Fn vhold "struct vnode *vp"
 .Ft void
-.Fn VHOLD "struct vnode *vp"
-.Ft void
 .Fn holdrele "struct vnode *vp"
-.Ft void
-.Fn HOLDRELE "struct vnode *vp"
 .Ft int
 .Fn getnewvnode "enum vtagtype tag" "struct mount *mp" "int (**vops)(void *)" "struct vnode **vpp"
 .Ft void
@@ -531,9 +522,6 @@ of the vnode
 Any kernel thread system which uses a vnode (e.g., during the operation
 of some algorithm or to store in a data structure) should call
 .Fn vref .
-.It Fn VREF "vp"
-This function is an alias for
-.Fn vref .
 .It Fn vrele "vp"
 Decrement
 .Em v_usecount
@@ -591,18 +579,12 @@ and moving the vnode from the freelist to the holdlist.
 Once on the holdlist, the vnode will not be recycled until it is
 released with
 .Fn holdrele .
-.It Fn VHOLD "vp"
-This function is an alias for
-.Fn vhold .
 .It Fn holdrele "vp"
 Mark the vnode
 .Fa vp
 as inactive by decrementing
 .Em vp-\*[Gt]v_holdcnt
 and moving the vnode from the holdlist to the freelist.
-.It Fn HOLDRELE "vp"
-This function is an alias for
-.Fn holdrele .
 .It Fn getnewvnode "tag" "mp" "vops" "vpp"
 Retrieve the next vnode from the freelist.
 .Fn getnewvnode
