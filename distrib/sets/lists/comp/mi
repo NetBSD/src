@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1357 2010/01/08 12:41:33 pooka Exp $
+#	$NetBSD: mi,v 1.1358 2010/01/08 13:10:48 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9454,7 +9454,7 @@
 ./usr/share/man/cat9/vattr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vattr_null.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vcons.0			comp-sys-catman		.cat
-./usr/share/man/cat9/vcount.0			comp-sys-catman		.cat
+./usr/share/man/cat9/vcount.0			comp-sys-catman		obsolete
 ./usr/share/man/cat9/vdevgone.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/veriexec.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vfinddev.0			comp-sys-catman		.cat
@@ -14933,7 +14933,7 @@
 ./usr/share/man/html9/vattr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vattr_null.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vcons.html		comp-sys-htmlman	html
-./usr/share/man/html9/vcount.html		comp-sys-htmlman	html
+./usr/share/man/html9/vcount.html		comp-sys-htmlman	obsolete
 ./usr/share/man/html9/vdevgone.html		comp-sys-htmlman	html
 ./usr/share/man/html9/veriexec.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vfinddev.html		comp-sys-htmlman	html
@@ -20653,7 +20653,7 @@
 ./usr/share/man/man9/vattr.9			comp-sys-man		.man
 ./usr/share/man/man9/vattr_null.9		comp-sys-man		.man
 ./usr/share/man/man9/vcons.9			comp-sys-man		.man
-./usr/share/man/man9/vcount.9			comp-sys-man		.man
+./usr/share/man/man9/vcount.9			comp-sys-man		obsolete
 ./usr/share/man/man9/vdevgone.9			comp-sys-man		.man
 ./usr/share/man/man9/veriexec.9			comp-sys-man		.man
 ./usr/share/man/man9/vfinddev.9			comp-sys-man		.man
