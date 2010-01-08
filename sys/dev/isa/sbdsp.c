@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.132 2009/09/01 21:47:30 jmcneill Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.133 2010/01/08 20:00:03 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.132 2009/09/01 21:47:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.133 2010/01/08 20:00:03 dyoung Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -224,7 +224,7 @@ static	int sbdsp_adjust(int, int);
 
 int	sbdsp_midi_intr(void *);
 
-static bool	sbdsp_resume(device_t PMF_FN_PROTO);
+static bool	sbdsp_resume(device_t, pmf_qual_t);
 
 #ifdef AUDIO_DEBUG
 void	sb_printsc(struct sbdsp_softc *);
@@ -440,7 +440,7 @@ sbdsp_attach(struct sbdsp_softc *sc)
 }
 
 static bool
-sbdsp_resume(device_t dv PMF_FN_ARGS)
+sbdsp_resume(device_t dv, pmf_qual_t qual)
 {
 	struct sbdsp_softc *sc = device_private(dv);
 

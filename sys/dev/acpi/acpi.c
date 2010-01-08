@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.141 2010/01/08 00:09:44 dyoung Exp $	*/
+/*	$NetBSD: acpi.c,v 1.142 2010/01/08 20:40:40 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.141 2010/01/08 00:09:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.142 2010/01/08 20:40:40 dyoung Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -200,8 +200,8 @@ static ACPI_TABLE_HEADER *acpi_map_rsdt(void);
 static void		acpi_unmap_rsdt(ACPI_TABLE_HEADER *);
 static int		is_available_state(struct acpi_softc *, int);
 
-static bool		acpi_suspend(device_t PMF_FN_PROTO);
-static bool		acpi_resume(device_t PMF_FN_PROTO);
+static bool		acpi_suspend(device_t, pmf_qual_t);
+static bool		acpi_resume(device_t, pmf_qual_t);
 
 /*
  * acpi_probe:
@@ -623,14 +623,14 @@ acpi_detach(device_t self, int flags)
 }
 
 static bool
-acpi_suspend(device_t dv PMF_FN_ARGS)
+acpi_suspend(device_t dv, pmf_qual_t qual)
 {
 	acpi_suspended = 1;
 	return true;
 }
 
 static bool
-acpi_resume(device_t dv PMF_FN_ARGS)
+acpi_resume(device_t dv, pmf_qual_t qual)
 {
 	acpi_suspended = 0;
 	return true;

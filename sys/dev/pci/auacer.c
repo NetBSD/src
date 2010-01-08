@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.25 2009/11/26 15:17:08 njoly Exp $	*/
+/*	$NetBSD: auacer.c,v 1.26 2010/01/08 19:56:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.25 2009/11/26 15:17:08 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.26 2010/01/08 19:56:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ static int	auacer_allocmem(struct auacer_softc *, size_t, size_t,
 				struct auacer_dma *);
 static int	auacer_freemem(struct auacer_softc *, struct auacer_dma *);
 
-static bool	auacer_resume(device_t PMF_FN_PROTO);
+static bool	auacer_resume(device_t, pmf_qual_t);
 static int	auacer_set_rate(struct auacer_softc *, int, u_int);
 
 static void auacer_reset(struct auacer_softc *sc);
@@ -1016,7 +1016,7 @@ auacer_alloc_cdata(struct auacer_softc *sc)
 }
 
 static bool
-auacer_resume(device_t dv PMF_FN_ARGS)
+auacer_resume(device_t dv, pmf_qual_t qual)
 {
 	struct auacer_softc *sc = device_private(dv);
 

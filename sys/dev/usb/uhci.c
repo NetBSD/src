@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.230 2009/11/12 19:53:56 dyoung Exp $	*/
+/*	$NetBSD: uhci.c,v 1.231 2010/01/08 20:39:04 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.230 2009/11/12 19:53:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.231 2010/01/08 20:39:04 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -691,7 +691,7 @@ uhci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
  * are almost suspended anyway.
  */
 bool
-uhci_resume(device_t dv PMF_FN_ARGS)
+uhci_resume(device_t dv, pmf_qual_t qual)
 {
 	uhci_softc_t *sc = device_private(dv);
 	int cmd;
@@ -736,7 +736,7 @@ uhci_resume(device_t dv PMF_FN_ARGS)
 }
 
 bool
-uhci_suspend(device_t dv PMF_FN_ARGS)
+uhci_suspend(device_t dv, pmf_qual_t qual)
 {
 	uhci_softc_t *sc = device_private(dv);
 	int cmd;

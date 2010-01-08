@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.30 2009/10/27 02:55:07 rmind Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.31 2010/01/08 20:07:14 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.30 2009/10/27 02:55:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.31 2010/01/08 20:07:14 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -116,8 +116,8 @@ static struct pool pew_pl;
 static pmf_event_workitem_t *pmf_event_workitem_get(void);
 static void pmf_event_workitem_put(pmf_event_workitem_t *);
 
-bool pmf_device_resume_locked(device_t PMF_FN_PROTO);
-bool pmf_device_suspend_locked(device_t PMF_FN_PROTO);
+bool pmf_device_resume_locked(device_t, pmf_qual_t);
+bool pmf_device_suspend_locked(device_t, pmf_qual_t);
 static bool device_pmf_any_suspensor(device_t, devact_level_t);
 
 static bool
@@ -229,7 +229,7 @@ pmf_check_system_drivers(void)
 }
 
 bool
-pmf_system_bus_resume(PMF_FN_ARGS1)
+pmf_system_bus_resume(pmf_qual_t qual)
 {
 	bool rv;
 	device_t curdev;
@@ -248,7 +248,7 @@ pmf_system_bus_resume(PMF_FN_ARGS1)
 
 		aprint_debug(" %s", device_xname(curdev));
 
-		if (!device_pmf_bus_resume(curdev PMF_FN_CALL)) {
+		if (!device_pmf_bus_resume(curdev, qual)) {
 			rv = false;
 			aprint_debug("(failed)");
 		}
@@ -260,7 +260,7 @@ pmf_system_bus_resume(PMF_FN_ARGS1)
 }
 
 bool
-pmf_system_resume(PMF_FN_ARGS1)
+pmf_system_resume(pmf_qual_t qual)
 {
 	bool rv;
 	device_t curdev, parent;
@@ -284,7 +284,7 @@ pmf_system_resume(PMF_FN_ARGS1)
 
 		aprint_debug(" %s", device_xname(curdev));
 
-		if (!pmf_device_resume(curdev PMF_FN_CALL)) {
+		if (!pmf_device_resume(curdev, qual)) {
 			rv = false;
 			aprint_debug("(failed)");
 		}
@@ -301,7 +301,7 @@ pmf_system_resume(PMF_FN_ARGS1)
 }
 
 bool
-pmf_system_suspend(PMF_FN_ARGS1)
+pmf_system_suspend(pmf_qual_t qual)
 {
 	device_t curdev;
 	deviter_t di;
@@ -338,7 +338,7 @@ pmf_system_suspend(PMF_FN_ARGS1)
 		aprint_debug(" %s", device_xname(curdev));
 
 		/* XXX joerg check return value and abort suspend */
-		if (!pmf_device_suspend(curdev PMF_FN_CALL))
+		if (!pmf_device_suspend(curdev, qual))
 			aprint_debug("(failed)");
 	}
 	deviter_release(&di);
@@ -410,8 +410,8 @@ pmf_get_platform(const char *key)
 
 bool
 pmf_device_register1(device_t dev,
-    bool (*suspend)(device_t PMF_FN_PROTO),
-    bool (*resume)(device_t PMF_FN_PROTO),
+    bool (*suspend)(device_t, pmf_qual_t),
+    bool (*resume)(device_t, pmf_qual_t),
     bool (*shutdown)(device_t, int))
 {
 	if (!device_pmf_driver_register(dev, suspend, resume, shutdown))
@@ -676,7 +676,7 @@ pmf_self_suspensor_init(device_t dev, struct device_suspensor *ds,
 }
 
 bool
-pmf_device_suspend(device_t dev PMF_FN_ARGS)
+pmf_device_suspend(device_t dev, pmf_qual_t qual)
 {
 	bool rc;
 
@@ -687,7 +687,7 @@ pmf_device_suspend(device_t dev PMF_FN_ARGS)
 	if (!device_pmf_lock(dev))
 		return false;
 
-	rc = pmf_device_suspend_locked(dev PMF_FN_CALL);
+	rc = pmf_device_suspend_locked(dev, qual);
 
 	device_pmf_unlock(dev);
 
@@ -696,28 +696,28 @@ pmf_device_suspend(device_t dev PMF_FN_ARGS)
 }
 
 bool
-pmf_device_suspend_locked(device_t dev PMF_FN_ARGS)
+pmf_device_suspend_locked(device_t dev, pmf_qual_t qual)
 {
-	if (!device_pmf_add_suspensor(dev PMF_FN_CALL))
+	if (!device_pmf_add_suspensor(dev, qual))
 		return false;
 
 	PMF_TRANSITION_PRINTF2(1, ("%s: class suspend\n", device_xname(dev)));
-	if (!device_pmf_class_suspend(dev PMF_FN_CALL))
+	if (!device_pmf_class_suspend(dev, qual))
 		return false;
 
 	PMF_TRANSITION_PRINTF2(1, ("%s: driver suspend\n", device_xname(dev)));
-	if (!device_pmf_driver_suspend(dev PMF_FN_CALL))
+	if (!device_pmf_driver_suspend(dev, qual))
 		return false;
 
 	PMF_TRANSITION_PRINTF2(1, ("%s: bus suspend\n", device_xname(dev)));
-	if (!device_pmf_bus_suspend(dev PMF_FN_CALL))
+	if (!device_pmf_bus_suspend(dev, qual))
 		return false;
 
 	return true;
 }
 
 bool
-pmf_device_resume(device_t dev PMF_FN_ARGS)
+pmf_device_resume(device_t dev, pmf_qual_t qual)
 {
 	bool rc;
 
@@ -728,7 +728,7 @@ pmf_device_resume(device_t dev PMF_FN_ARGS)
 	if (!device_pmf_lock(dev))
 		return false;
 
-	rc = pmf_device_resume_locked(dev PMF_FN_CALL);
+	rc = pmf_device_resume_locked(dev, qual);
 
 	device_pmf_unlock(dev);
 
@@ -737,30 +737,30 @@ pmf_device_resume(device_t dev PMF_FN_ARGS)
 }
 
 bool
-pmf_device_resume_locked(device_t dev PMF_FN_ARGS)
+pmf_device_resume_locked(device_t dev, pmf_qual_t qual)
 {
-	device_pmf_remove_suspensor(dev PMF_FN_CALL);
+	device_pmf_remove_suspensor(dev, qual);
 
 	if (device_pmf_any_suspensor(dev, DEVACT_LEVEL_FULL))
 		return true;
 
 	PMF_TRANSITION_PRINTF2(1, ("%s: bus resume\n", device_xname(dev)));
-	if (!device_pmf_bus_resume(dev PMF_FN_CALL))
+	if (!device_pmf_bus_resume(dev, qual))
 		return false;
 
 	PMF_TRANSITION_PRINTF2(1, ("%s: driver resume\n", device_xname(dev)));
-	if (!device_pmf_driver_resume(dev PMF_FN_CALL))
+	if (!device_pmf_driver_resume(dev, qual))
 		return false;
 
 	PMF_TRANSITION_PRINTF2(1, ("%s: class resume\n", device_xname(dev)));
-	if (!device_pmf_class_resume(dev PMF_FN_CALL))
+	if (!device_pmf_class_resume(dev, qual))
 		return false;
 
 	return true;
 }
 
 bool
-pmf_device_recursive_suspend(device_t dv PMF_FN_ARGS)
+pmf_device_recursive_suspend(device_t dv, pmf_qual_t qual)
 {
 	bool rv = true;
 	device_t curdev;
@@ -780,7 +780,7 @@ pmf_device_recursive_suspend(device_t dv PMF_FN_ARGS)
 	}
 	deviter_release(&di);
 
-	return rv && pmf_device_suspend(dv PMF_FN_CALL);
+	return rv && pmf_device_suspend(dv, qual);
 }
 
 void
@@ -791,7 +791,7 @@ pmf_qual_recursive_copy(struct pmf_qual *dst, pmf_qual_t src)
 }
 
 bool
-pmf_device_recursive_resume(device_t dv PMF_FN_ARGS)
+pmf_device_recursive_resume(device_t dv, pmf_qual_t qual)
 {
 	device_t parent;
 	struct pmf_qual pq;
@@ -807,11 +807,11 @@ pmf_device_recursive_resume(device_t dv PMF_FN_ARGS)
 			return false;
 	}
 
-	return pmf_device_resume(dv PMF_FN_CALL);
+	return pmf_device_resume(dv, qual);
 }
 
 bool
-pmf_device_descendants_release(device_t dv PMF_FN_ARGS)
+pmf_device_descendants_release(device_t dv, pmf_qual_t qual)
 {
 	bool rv = true;
 	device_t curdev;
@@ -821,8 +821,8 @@ pmf_device_descendants_release(device_t dv PMF_FN_ARGS)
 	     curdev = deviter_next(&di)) {
 		if (device_parent(curdev) != dv)
 			continue;
-		device_pmf_remove_suspensor(curdev PMF_FN_CALL);
-		if (!pmf_device_descendants_release(curdev PMF_FN_CALL)) {
+		device_pmf_remove_suspensor(curdev, qual);
+		if (!pmf_device_descendants_release(curdev, qual)) {
 			rv = false;
 			break;
 		}
@@ -832,20 +832,20 @@ pmf_device_descendants_release(device_t dv PMF_FN_ARGS)
 }
 
 bool
-pmf_device_descendants_resume(device_t dv PMF_FN_ARGS)
+pmf_device_descendants_resume(device_t dv, pmf_qual_t qual)
 {
 	bool rv = true;
 	device_t curdev;
 	deviter_t di;
 
-	KASSERT(pmf_qual_descend_ok(PMF_FN_CALL1));
+	KASSERT(pmf_qual_descend_ok(qual));
 
 	for (curdev = deviter_first(&di, 0); curdev != NULL;
 	     curdev = deviter_next(&di)) {
 		if (device_parent(curdev) != dv)
 			continue;
-		if (!pmf_device_resume(curdev PMF_FN_CALL) ||
-		    !pmf_device_descendants_resume(curdev PMF_FN_CALL)) {
+		if (!pmf_device_resume(curdev, qual) ||
+		    !pmf_device_descendants_resume(curdev, qual)) {
 			rv = false;
 			break;
 		}
@@ -855,24 +855,24 @@ pmf_device_descendants_resume(device_t dv PMF_FN_ARGS)
 }
 
 bool
-pmf_device_subtree_release(device_t dv PMF_FN_ARGS)
+pmf_device_subtree_release(device_t dv, pmf_qual_t qual)
 {
 	struct pmf_qual pq;
 
-	device_pmf_remove_suspensor(dv PMF_FN_CALL);
+	device_pmf_remove_suspensor(dv, qual);
 
 	return pmf_device_descendants_release(dv, &pq);
 }
 
 bool
-pmf_device_subtree_resume(device_t dv PMF_FN_ARGS)
+pmf_device_subtree_resume(device_t dv, pmf_qual_t qual)
 {
 	struct pmf_qual pq;
 
-	if (!pmf_device_subtree_release(dv PMF_FN_CALL))
+	if (!pmf_device_subtree_release(dv, qual))
 		return false;
 
-	if (!pmf_device_recursive_resume(dv PMF_FN_CALL))
+	if (!pmf_device_recursive_resume(dv, qual))
 		return false;
 
 	pmf_qual_recursive_copy(&pq, qual);
@@ -883,7 +883,7 @@ pmf_device_subtree_resume(device_t dv PMF_FN_ARGS)
 #include <net/if.h>
 
 static bool
-pmf_class_network_suspend(device_t dev PMF_FN_ARGS)
+pmf_class_network_suspend(device_t dev, pmf_qual_t qual)
 {
 	struct ifnet *ifp = device_pmf_class_private(dev);
 	int s;
@@ -896,7 +896,7 @@ pmf_class_network_suspend(device_t dev PMF_FN_ARGS)
 }
 
 static bool
-pmf_class_network_resume(device_t dev PMF_FN_ARGS)
+pmf_class_network_resume(device_t dev, pmf_qual_t qual)
 {
 	struct ifnet *ifp = device_pmf_class_private(dev);
 	int s;

@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.147 2009/11/12 19:30:49 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.148 2010/01/08 20:02:39 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.147 2009/11/12 19:30:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.148 2010/01/08 20:02:39 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -321,7 +321,7 @@ atw_activate(device_t self, enum devact act)
 }
 
 bool
-atw_suspend(device_t self PMF_FN_ARGS)
+atw_suspend(device_t self, pmf_qual_t qual)
 {
 	struct atw_softc *sc = device_private(self);
 

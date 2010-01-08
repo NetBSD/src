@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.19 2009/05/12 13:18:04 cegger Exp $ */
+/* $NetBSD: bt3c.c,v 1.20 2010/01/08 20:01:00 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.19 2009/05/12 13:18:04 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.20 2010/01/08 20:01:00 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -135,8 +135,8 @@ struct bt3c_softc {
 static int bt3c_match(device_t, cfdata_t, void *);
 static void bt3c_attach(device_t, device_t, void *);
 static int bt3c_detach(device_t, int);
-static bool bt3c_suspend(device_t PMF_FN_PROTO);
-static bool bt3c_resume(device_t PMF_FN_PROTO);
+static bool bt3c_suspend(device_t, pmf_qual_t);
+static bool bt3c_resume(device_t, pmf_qual_t);
 
 CFATTACH_DECL_NEW(bt3c, sizeof(struct bt3c_softc),
     bt3c_match, bt3c_attach, bt3c_detach, NULL);
@@ -1019,7 +1019,7 @@ bt3c_detach(device_t self, int flags)
 }
 
 static bool
-bt3c_suspend(device_t self PMF_FN_ARGS)
+bt3c_suspend(device_t self, pmf_qual_t qual)
 {
 	struct bt3c_softc *sc = device_private(self);
 
@@ -1032,7 +1032,7 @@ bt3c_suspend(device_t self PMF_FN_ARGS)
 }
 
 static bool
-bt3c_resume(device_t self PMF_FN_ARGS)
+bt3c_resume(device_t self, pmf_qual_t qual)
 {
 	struct bt3c_softc *sc = device_private(self);
 

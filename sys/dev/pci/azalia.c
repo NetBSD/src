@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.70 2009/11/12 19:40:19 dyoung Exp $	*/
+/*	$NetBSD: azalia.c,v 1.71 2010/01/08 19:56:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.70 2009/11/12 19:40:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.71 2010/01/08 19:56:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -156,7 +156,7 @@ typedef struct azalia_t {
 static int	azalia_pci_match(device_t, cfdata_t, void *);
 static void	azalia_pci_attach(device_t, device_t, void *);
 static int	azalia_pci_detach(device_t, int);
-static bool	azalia_pci_resume(device_t PMF_FN_PROTO);
+static bool	azalia_pci_resume(device_t, pmf_qual_t);
 static void	azalia_childdet(device_t, device_t);
 static int	azalia_intr(void *);
 static int	azalia_attach(azalia_t *);
@@ -416,7 +416,7 @@ azalia_pci_detach(device_t self, int flags)
 }
 
 static bool
-azalia_pci_resume(device_t dv PMF_FN_ARGS)
+azalia_pci_resume(device_t dv, pmf_qual_t qual)
 {
 	azalia_t *az = device_private(dv);
 	int s;

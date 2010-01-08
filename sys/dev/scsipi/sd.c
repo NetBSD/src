@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.290 2009/10/21 21:12:05 rmind Exp $	*/
+/*	$NetBSD: sd.c,v 1.291 2010/01/08 20:05:16 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.290 2009/10/21 21:12:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.291 2010/01/08 20:05:16 dyoung Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -100,7 +100,7 @@ static int	sdgetdisklabel(struct sd_softc *);
 static void	sdstart(struct scsipi_periph *);
 static void	sdrestart(void *);
 static void	sddone(struct scsipi_xfer *, int);
-static bool	sd_suspend(device_t PMF_FN_PROTO);
+static bool	sd_suspend(device_t, pmf_qual_t);
 static bool	sd_shutdown(device_t, int);
 static int	sd_interpret_sense(struct scsipi_xfer *);
 static int	sdlastclose(device_t);
@@ -1338,7 +1338,7 @@ sd_shutdown(device_t self, int how)
 }
 
 static bool
-sd_suspend(device_t dv PMF_FN_ARGS)
+sd_suspend(device_t dv, pmf_qual_t qual)
 {
 	return sd_shutdown(dv, boothowto); /* XXX no need to poll */
 }
