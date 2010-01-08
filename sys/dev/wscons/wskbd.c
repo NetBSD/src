@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.122 2009/01/15 04:22:11 yamt Exp $ */
+/* $NetBSD: wskbd.c,v 1.123 2010/01/08 19:51:11 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.122 2009/01/15 04:22:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.123 2010/01/08 19:51:11 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -347,7 +347,7 @@ struct wssrcops wskbd_srcops = {
 };
 #endif
 
-static bool wskbd_suspend(device_t dv PMF_FN_PROTO);
+static bool wskbd_suspend(device_t dv, pmf_qual_t);
 static void wskbd_repeat(void *v);
 
 static int wskbd_console_initted;
@@ -505,7 +505,7 @@ wskbd_attach(device_t parent, device_t self, void *aux)
 }
 
 static bool
-wskbd_suspend(device_t dv PMF_FN_ARGS)
+wskbd_suspend(device_t dv, pmf_qual_t qual)
 {
 	struct wskbd_softc *sc = device_private(dv);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.27 2009/09/16 16:34:50 dyoung Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.28 2010/01/08 19:47:42 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.27 2009/09/16 16:34:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.28 2010/01/08 19:47:42 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -122,8 +122,8 @@ CFATTACH_DECL3_NEW(atw_cardbus, sizeof(struct atw_cardbus_softc),
 
 static void	atw_cardbus_setup(struct atw_cardbus_softc *);
 
-static bool	atw_cardbus_suspend(device_t PMF_FN_PROTO);
-static bool	atw_cardbus_resume(device_t PMF_FN_PROTO);
+static bool	atw_cardbus_suspend(device_t, pmf_qual_t);
+static bool	atw_cardbus_resume(device_t, pmf_qual_t);
 
 static const struct atw_cardbus_product *atw_cardbus_lookup
    (const struct cardbus_attach_args *);
@@ -327,7 +327,7 @@ atw_cardbus_detach(device_t self, int flags)
 }
 
 static bool
-atw_cardbus_resume(device_t self PMF_FN_ARGS)
+atw_cardbus_resume(device_t self, pmf_qual_t qual)
 {
 	struct atw_cardbus_softc *csc = device_private(self);
 	struct atw_softc *sc = &csc->sc_atw;
@@ -349,7 +349,7 @@ atw_cardbus_resume(device_t self PMF_FN_ARGS)
 }
 
 static bool
-atw_cardbus_suspend(device_t self PMF_FN_ARGS)
+atw_cardbus_suspend(device_t self, pmf_qual_t qual)
 {
 	struct atw_cardbus_softc *csc = device_private(self);
 	cardbus_devfunc_t ct = csc->sc_ct;
@@ -360,7 +360,7 @@ atw_cardbus_suspend(device_t self PMF_FN_ARGS)
 	cardbus_intr_disestablish(cc, cf, csc->sc_ih);
 	csc->sc_ih = NULL;
 
-	return atw_suspend(self PMF_FN_CALL);
+	return atw_suspend(self, qual);
 }
 
 static void

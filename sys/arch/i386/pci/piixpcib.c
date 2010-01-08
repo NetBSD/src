@@ -1,4 +1,4 @@
-/* $NetBSD: piixpcib.c,v 1.16 2008/07/20 16:52:33 martin Exp $ */
+/* $NetBSD: piixpcib.c,v 1.17 2010/01/08 19:45:28 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.16 2008/07/20 16:52:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.17 2010/01/08 19:45:28 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,8 +79,8 @@ struct piixpcib_softc {
 static int piixpcibmatch(device_t, cfdata_t, void *);
 static void piixpcibattach(device_t, device_t, void *);
 
-static bool piixpcib_suspend(device_t PMF_FN_PROTO);
-static bool piixpcib_resume(device_t PMF_FN_PROTO);
+static bool piixpcib_suspend(device_t, pmf_qual_t);
+static bool piixpcib_resume(device_t, pmf_qual_t);
 
 static void speedstep_configure(struct piixpcib_softc *,
 				struct pci_attach_args *);
@@ -144,7 +144,7 @@ piixpcibattach(device_t parent, device_t self, void *aux)
 }
 
 static bool
-piixpcib_suspend(device_t dv PMF_FN_ARGS)
+piixpcib_suspend(device_t dv, pmf_qual_t qual)
 {
 	struct piixpcib_softc *sc = device_private(dv);
 
@@ -160,7 +160,7 @@ piixpcib_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-piixpcib_resume(device_t dv PMF_FN_ARGS)
+piixpcib_resume(device_t dv, pmf_qual_t qual)
 {
 	struct piixpcib_softc *sc = device_private(dv);
 

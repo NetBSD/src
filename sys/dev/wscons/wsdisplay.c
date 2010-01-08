@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.126 2009/01/22 20:40:20 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.127 2010/01/08 19:51:11 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.126 2009/01/22 20:40:20 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.127 2010/01/08 19:51:11 dyoung Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -166,7 +166,7 @@ static int wsdisplay_emul_match(device_t , cfdata_t, void *);
 static void wsdisplay_emul_attach(device_t, device_t, void *);
 static int wsdisplay_noemul_match(device_t, cfdata_t, void *);
 static void wsdisplay_noemul_attach(device_t, device_t, void *);
-static bool wsdisplay_suspend(device_t PMF_FN_PROTO);
+static bool wsdisplay_suspend(device_t, pmf_qual_t);
 
 CFATTACH_DECL_NEW(wsdisplay_emul, sizeof (struct wsdisplay_softc),
     wsdisplay_emul_match, wsdisplay_emul_attach, NULL, NULL);
@@ -677,7 +677,7 @@ wsdisplay_handlex(int resume)
 }
 
 static bool
-wsdisplay_suspend(device_t dv PMF_FN_ARGS)
+wsdisplay_suspend(device_t dv, pmf_qual_t qual)
 {
 	struct wsdisplay_softc *sc = device_private(dv);
 #ifdef DIAGNOSTIC

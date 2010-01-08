@@ -1,4 +1,4 @@
-/*	$NetBSD: ztp.c,v 1.8 2009/12/12 07:49:31 nonaka Exp $	*/
+/*	$NetBSD: ztp.c,v 1.9 2010/01/08 19:42:11 dyoung Exp $	*/
 /* $OpenBSD: zts.c,v 1.9 2005/04/24 18:55:49 uwe Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.8 2009/12/12 07:49:31 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.9 2010/01/08 19:42:11 dyoung Exp $");
 
 #include "lcd.h"
 
@@ -116,8 +116,8 @@ CFATTACH_DECL_NEW(ztp, sizeof(struct ztp_softc),
 
 static int	ztp_enable(void *);
 static void	ztp_disable(void *);
-static bool	ztp_suspend(device_t dv PMF_FN_ARGS);
-static bool	ztp_resume(device_t dv PMF_FN_ARGS);
+static bool	ztp_suspend(device_t dv, pmf_qual_t);
+static bool	ztp_resume(device_t dv, pmf_qual_t);
 static void	ztp_poll(void *);
 static int	ztp_irq(void *);
 static int	ztp_ioctl(void *, u_long, void *, int, struct lwp *);
@@ -237,7 +237,7 @@ ztp_disable(void *v)
 }
 
 static bool
-ztp_suspend(device_t dv PMF_FN_ARGS)
+ztp_suspend(device_t dv, pmf_qual_t qual)
 {
 	struct ztp_softc *sc = device_private(dv);
 
@@ -258,7 +258,7 @@ ztp_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-ztp_resume(device_t dv PMF_FN_ARGS)
+ztp_resume(device_t dv, pmf_qual_t qual)
 {
 	struct ztp_softc *sc = device_private(dv);
 

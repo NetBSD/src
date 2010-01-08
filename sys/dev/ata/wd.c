@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.380 2009/12/17 21:03:10 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.381 2010/01/08 19:48:12 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.380 2009/12/17 21:03:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.381 2010/01/08 19:48:12 dyoung Exp $");
 
 #include "opt_ata.h"
 
@@ -126,7 +126,7 @@ int	wdprint(void *, char *);
 void	wdperror(const struct wd_softc *);
 
 static int	wdlastclose(device_t);
-static bool	wd_suspend(device_t PMF_FN_PROTO);
+static bool	wd_suspend(device_t, pmf_qual_t);
 static int	wd_standby(struct wd_softc *, int);
 
 CFATTACH_DECL3_NEW(wd, sizeof(struct wd_softc),
@@ -394,7 +394,7 @@ wdattach(device_t parent, device_t self, void *aux)
 }
 
 static bool
-wd_suspend(device_t dv PMF_FN_ARGS)
+wd_suspend(device_t dv, pmf_qual_t qual)
 {
 	struct wd_softc *sc = device_private(dv);
 

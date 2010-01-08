@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.47 2009/11/25 19:46:19 tron Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.48 2010/01/08 19:43:26 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.47 2009/11/25 19:46:19 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.48 2010/01/08 19:43:26 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,13 +94,13 @@ x86_genfb_set_mapreg(void *opaque, int index, int r, int g, int b)
 }
 
 static bool
-x86_genfb_suspend(device_t dev PMF_FN_ARGS)
+x86_genfb_suspend(device_t dev, pmf_qual_t qual)
 {
 	return true;
 }
 
 static bool
-x86_genfb_resume(device_t dev PMF_FN_ARGS)
+x86_genfb_resume(device_t dev, pmf_qual_t qual)
 {
 #if NGENFB > 0
 	struct pci_genfb_softc *psc = device_private(dev);
