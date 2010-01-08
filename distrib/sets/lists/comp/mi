@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1358 2010/01/08 13:10:48 pooka Exp $
+#	$NetBSD: mi,v 1.1359 2010/01/08 13:15:45 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8566,7 +8566,7 @@
 ./usr/share/man/cat9/cardbus_mapreg_map.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/cardbus_mapreg_unmap.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/cdevvp.0			comp-sys-catman		.cat
-./usr/share/man/cat9/checkalias.0		comp-sys-catman		.cat
+./usr/share/man/cat9/checkalias.0		comp-sys-catman		obsolete
 ./usr/share/man/cat9/child_return.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/chooselwp.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/chooseproc.0		comp-obsolete		obsolete
@@ -14108,7 +14108,7 @@
 ./usr/share/man/html9/cardbus_mapreg_map.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cardbus_mapreg_unmap.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cdevvp.html		comp-sys-htmlman	html
-./usr/share/man/html9/checkalias.html		comp-sys-htmlman	html
+./usr/share/man/html9/checkalias.html		comp-sys-htmlman	obsolete
 ./usr/share/man/html9/child_return.html		comp-sys-htmlman	html
 ./usr/share/man/html9/clock_secs_to_ymdhms.html	comp-sys-htmlman	html
 ./usr/share/man/html9/clock_ymdhms_to_secs.html	comp-sys-htmlman	html
@@ -19765,7 +19765,7 @@
 ./usr/share/man/man9/cardbus_mapreg_map.9	comp-sys-man		.man
 ./usr/share/man/man9/cardbus_mapreg_unmap.9	comp-sys-man		.man
 ./usr/share/man/man9/cdevvp.9			comp-sys-man		.man
-./usr/share/man/man9/checkalias.9		comp-sys-man		.man
+./usr/share/man/man9/checkalias.9		comp-sys-man		obsolete
 ./usr/share/man/man9/child_return.9		comp-sys-man		.man
 ./usr/share/man/man9/chooselwp.9		comp-obsolete		obsolete
 ./usr/share/man/man9/chooseproc.9		comp-obsolete		obsolete

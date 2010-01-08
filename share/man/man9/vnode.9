@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.43 2010/01/08 13:10:48 pooka Exp $
+.\"     $NetBSD: vnode.9,v 1.44 2010/01/08 13:15:46 pooka Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,7 +45,6 @@
 .Nm vgonel ,
 .Nm vflush ,
 .Nm vaccess ,
-.Nm checkalias ,
 .Nm bdevvp ,
 .Nm cdevvp ,
 .Nm vfinddev ,
@@ -85,8 +84,6 @@
 .Fn vflush "struct mount *mp" "struct vnode *skipvp" "int flags"
 .Ft int
 .Fn vaccess "enum vtype type" "mode_t file_mode" "uid_t uid" "gid_t gid" "mode_t acc_mode" "kauth_cred_t cred"
-.Ft struct vnode *
-.Fn checkalias "struct vnode *vp" "dev_t nvp_rdev" "struct mount *mp"
 .Ft int
 .Fn bdevvp "dev_t dev" "struct vnode **vpp"
 .Ft int
@@ -657,14 +654,6 @@ desired access type
 .Fa acc_mode
 and credentials
 .Fa cred .
-.It Fn checkalias "vp" "nvp_rdev" "mp"
-Check to see if the new vnode
-.Fa vp
-represents a special device for which another vnode represents the
-same device.
-If such an alias exists, the existing contents and the aliased vnode
-are deallocated.
-The caller is responsible for filling the new vnode with its new contents.
 .It Fn bdevvp "dev" "vpp"
 Create a vnode for a block device.
 .Fn bdevvp
