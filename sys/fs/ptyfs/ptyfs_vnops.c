@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.32 2009/07/03 21:17:40 elad Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.33 2010/01/08 11:35:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.32 2009/07/03 21:17:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.33 2010/01/08 11:35:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,7 +305,7 @@ ptyfs_getattr(void *v)
 	PTYFS_ITIMES(ptyfs, NULL, NULL, NULL);
 
 	/* start by zeroing out the attributes */
-	VATTR_NULL(vap);
+	vattr_null(vap);
 
 	/* next do all the common fields */
 	vap->va_type = ap->a_vp->v_type;
@@ -583,7 +583,7 @@ ptyfs_lookup(void *v)
 
 	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = dvp;
-		VREF(dvp);
+		vref(dvp);
 		return 0;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.16 2008/05/16 09:21:59 hannken Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.17 2010/01/08 11:35:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.16 2008/05/16 09:21:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.17 2010/01/08 11:35:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -389,7 +389,7 @@ found:
 			return error;
 		*vpp = tdp;
 	} else if (dp->i_number == dp->i_ino) {
-		VREF(vdp);	/* we want ourself, ie "." */
+		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
 		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,

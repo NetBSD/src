@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.120 2009/09/27 17:23:54 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.121 2010/01/08 11:35:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.120 2009/09/27 17:23:54 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.121 2010/01/08 11:35:10 pooka Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -374,7 +374,7 @@ namei_start2(struct namei_state *state)
 		state->namei_startdir = cwdi->cwdi_cdir;
 		ndp->ni_erootdir = NULL;
 	}
-	VREF(state->namei_startdir);
+	vref(state->namei_startdir);
 	rw_exit(&cwdi->cwdi_lock);
 
 	/*
@@ -509,7 +509,7 @@ badlink:
 			ndp->ni_erootdir = NULL;
 			state->namei_startdir = ndp->ni_rootdir;
 		}
-		VREF(state->namei_startdir);
+		vref(state->namei_startdir);
 		vn_lock(state->namei_startdir, LK_EXCLUSIVE | LK_RETRY);
 	}
 
@@ -855,7 +855,7 @@ lookup_once(struct namei_state *state)
 			if (state->dp == ndp->ni_rootdir || state->dp == rootvnode) {
 				ndp->ni_dvp = state->dp;
 				ndp->ni_vp = state->dp;
-				VREF(state->dp);
+				vref(state->dp);
 				return 0;
 			}
 			if (ndp->ni_rootdir != rootvnode) {
@@ -876,8 +876,8 @@ lookup_once(struct namei_state *state)
 				    state->dp = ndp->ni_rootdir;
 				    ndp->ni_dvp = state->dp;
 				    ndp->ni_vp = state->dp;
-				    VREF(state->dp);
-				    VREF(state->dp);
+				    vref(state->dp);
+				    vref(state->dp);
 				    vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
 				    return 0;
 				}
@@ -888,7 +888,7 @@ lookup_once(struct namei_state *state)
 			tdp = state->dp;
 			state->dp = state->dp->v_mount->mnt_vnodecovered;
 			vput(tdp);
-			VREF(state->dp);
+			vref(state->dp);
 			vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
 		}
 	}
@@ -915,7 +915,7 @@ unionlookup:
 			tdp = state->dp;
 			state->dp = state->dp->v_mount->mnt_vnodecovered;
 			vput(tdp);
-			VREF(state->dp);
+			vref(state->dp);
 			vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
 			goto unionlookup;
 		}
@@ -947,7 +947,7 @@ unionlookup:
 		 */
 		if (cnp->cn_flags & SAVESTART) {
 			ndp->ni_startdir = ndp->ni_dvp;
-			VREF(ndp->ni_startdir);
+			vref(ndp->ni_startdir);
 		}
 		state->lookup_alldone = 1;
 		return (0);
@@ -1094,7 +1094,7 @@ terminal:
 		ndp->ni_dvp = NULL;
 		vput(state->dp);
 		state->dp = ndp->ni_rootdir;
-		VREF(state->dp);
+		vref(state->dp);
 		vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
 		ndp->ni_vp = state->dp;
 	}
@@ -1135,7 +1135,7 @@ terminal:
 	if (ndp->ni_dvp != NULL) {
 		if (cnp->cn_flags & SAVESTART) {
 			ndp->ni_startdir = ndp->ni_dvp;
-			VREF(ndp->ni_startdir);
+			vref(ndp->ni_startdir);
 		}
 	}
 	if ((cnp->cn_flags & LOCKLEAF) == 0) {
@@ -1175,7 +1175,7 @@ lookup_for_nfsd(struct nameidata *ndp, struct vnode *dp, int neverfollow)
 	 * BEGIN wodge of code from nfsd
 	 */
 
-	VREF(dp);
+	vref(dp);
 	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 
     for (;;) {
@@ -1281,7 +1281,7 @@ badlink:
 		if (state.cnp->cn_pnbuf[0] == '/') {
 			vput(dp);
 			dp = ndp->ni_rootdir;
-			VREF(dp);
+			vref(dp);
 			vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 		}
 	}
@@ -1400,7 +1400,7 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		goto bad;
 	}
 	if (cnp->cn_flags & SAVESTART)
-		VREF(dvp);
+		vref(dvp);
 	return (0);
 
 bad:

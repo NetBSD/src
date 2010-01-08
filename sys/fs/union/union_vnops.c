@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.33 2008/05/06 18:43:44 ad Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.34 2010/01/08 11:35:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.33 2008/05/06 18:43:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.34 2010/01/08 11:35:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,7 +293,7 @@ union_lookup(void *v)
 		dvp = *ap->a_vpp = LOWERVP(ap->a_dvp);
 		if (dvp == NULLVP)
 			return (ENOENT);
-		VREF(dvp);
+		vref(dvp);
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		return (0);
 	}
@@ -424,7 +424,7 @@ union_lookup(void *v)
 		if ((cnp->cn_flags & ISDOTDOT) && dun->un_pvp != NULLVP) {
 			lowervp = LOWERVP(dun->un_pvp);
 			if (lowervp != NULLVP) {
-				VREF(lowervp);
+				vref(lowervp);
 				vn_lock(lowervp, LK_EXCLUSIVE | LK_RETRY);
 				lerror = 0;
 			}
@@ -538,7 +538,7 @@ union_create(void *v)
 
 		FIXUP(un);
 
-		VREF(dvp);
+		vref(dvp);
 		un->un_flags |= UN_KLOCK;
 		mp = ap->a_dvp->v_mount;
 		vput(ap->a_dvp);
@@ -595,7 +595,7 @@ union_mknod(void *v)
 
 		FIXUP(un);
 
-		VREF(dvp);
+		vref(dvp);
 		un->un_flags |= UN_KLOCK;
 		mp = ap->a_dvp->v_mount;
 		vput(ap->a_dvp);
@@ -1151,11 +1151,11 @@ union_remove(void *v)
 		struct vnode *vp = un->un_uppervp;
 
 		FIXUP(dun);
-		VREF(dvp);
+		vref(dvp);
 		dun->un_flags |= UN_KLOCK;
 		vput(ap->a_dvp);
 		FIXUP(un);
-		VREF(vp);
+		vref(vp);
 		un->un_flags |= UN_KLOCK;
 		vput(ap->a_vp);
 
@@ -1260,7 +1260,7 @@ union_link(void *v)
 	}
 
 	FIXUP(dun);
-	VREF(dvp);
+	vref(dvp);
 	dun->un_flags |= UN_KLOCK;
 	vput(ap->a_dvp);
 
@@ -1299,7 +1299,7 @@ union_rename(void *v)
 		}
 
 		fdvp = un->un_uppervp;
-		VREF(fdvp);
+		vref(fdvp);
 	}
 
 	if (fvp->v_op == union_vnodeop_p) {	/* always true */
@@ -1314,7 +1314,7 @@ union_rename(void *v)
 			ap->a_fcnp->cn_flags |= DOWHITEOUT;
 
 		fvp = un->un_uppervp;
-		VREF(fvp);
+		vref(fvp);
 	}
 
 	if (tdvp->v_op == union_vnodeop_p) {
@@ -1331,7 +1331,7 @@ union_rename(void *v)
 		}
 
 		tdvp = un->un_uppervp;
-		VREF(tdvp);
+		vref(tdvp);
 		un->un_flags |= UN_KLOCK;
 		vput(ap->a_tdvp);
 	}
@@ -1341,7 +1341,7 @@ union_rename(void *v)
 
 		tvp = un->un_uppervp;
 		if (tvp != NULLVP) {
-			VREF(tvp);
+			vref(tvp);
 			un->un_flags |= UN_KLOCK;
 		}
 		vput(ap->a_tvp);
@@ -1385,7 +1385,7 @@ union_mkdir(void *v)
 		struct vnode *vp;
 
 		FIXUP(un);
-		VREF(dvp);
+		vref(dvp);
 		un->un_flags |= UN_KLOCK;
 		VOP_UNLOCK(ap->a_dvp, 0);
 		error = VOP_MKDIR(dvp, &vp, cnp, ap->a_vap);
@@ -1427,11 +1427,11 @@ union_rmdir(void *v)
 		struct vnode *vp = un->un_uppervp;
 
 		FIXUP(dun);
-		VREF(dvp);
+		vref(dvp);
 		dun->un_flags |= UN_KLOCK;
 		vput(ap->a_dvp);
 		FIXUP(un);
-		VREF(vp);
+		vref(vp);
 		un->un_flags |= UN_KLOCK;
 		vput(ap->a_vp);
 
@@ -1470,7 +1470,7 @@ union_symlink(void *v)
 		int error;
 
 		FIXUP(un);
-		VREF(dvp);
+		vref(dvp);
 		un->un_flags |= UN_KLOCK;
 		vput(ap->a_dvp);
 		error = VOP_SYMLINK(dvp, ap->a_vpp, cnp, ap->a_vap,

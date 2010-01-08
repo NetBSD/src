@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.174 2009/10/21 21:12:06 rmind Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.175 2010/01/08 11:35:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.174 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.175 2010/01/08 11:35:10 pooka Exp $");
 
 #include "opt_ktrace.h"
 
@@ -329,7 +329,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/* bump references to the text vnode (for procfs) */
 	p2->p_textvp = p1->p_textvp;
 	if (p2->p_textvp)
-		VREF(p2->p_textvp);
+		vref(p2->p_textvp);
 
 	if (flags & FORK_SHAREFILES)
 		fd_share(p2);

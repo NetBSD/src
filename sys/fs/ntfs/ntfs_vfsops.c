@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.79 2009/09/01 15:16:41 pooka Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.80 2010/01/08 11:35:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.79 2009/09/01 15:16:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.80 2010/01/08 11:35:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -380,7 +380,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp, str
 			if(error)
 				goto out1;
 			ntmp->ntm_sysvn[pi[i]]->v_vflag |= VV_SYSTEM;
-			VREF(ntmp->ntm_sysvn[pi[i]]);
+			vref(ntmp->ntm_sysvn[pi[i]]);
 			vput(ntmp->ntm_sysvn[pi[i]]);
 		}
 	}
@@ -816,7 +816,7 @@ ntfs_vgetex(
 	}
 
 	uvm_vnp_setsize(vp, fp->f_size); /* XXX: mess, cf. ntfs_lookupfile() */
-	VREF(ip->i_devvp);
+	vref(ip->i_devvp);
 	*vpp = vp;
 	return (0);
 }

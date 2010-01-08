@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.14 2009/01/11 02:45:52 christos Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.15 2010/01/08 11:35:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.14 2009/01/11 02:45:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.15 2010/01/08 11:35:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -186,7 +186,7 @@ coredump(struct lwp *l, const char *pattern)
 		error = EINVAL;
 		goto out;
 	}
-	VATTR_NULL(&vattr);
+	vattr_null(&vattr);
 	vattr.va_size = 0;
 
 	if ((p->p_flag & PK_SUGID) && security_setidcore_dump) {

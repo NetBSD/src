@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.401 2009/12/23 01:09:24 pooka Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.402 2010/01/08 11:35:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.401 2009/12/23 01:09:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.402 2010/01/08 11:35:10 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -571,12 +571,12 @@ checkdirs(struct vnode *olddp)
 			rw_enter(&cwdi->cwdi_lock, RW_WRITER);
 			if (cwdi->cwdi_cdir == olddp) {
 				rele1 = cwdi->cwdi_cdir;
-				VREF(newdp);
+				vref(newdp);
 				cwdi->cwdi_cdir = newdp;
 			}
 			if (cwdi->cwdi_rdir == olddp) {
 				rele2 = cwdi->cwdi_rdir;
-				VREF(newdp);
+				vref(newdp);
 				cwdi->cwdi_rdir = newdp;
 			}
 			rw_exit(&cwdi->cwdi_lock);
@@ -593,7 +593,7 @@ checkdirs(struct vnode *olddp)
 
 	if (rootvnode == olddp) {
 		vrele(rootvnode);
-		VREF(newdp);
+		vref(newdp);
 		rootvnode = newdp;
 	}
 	vput(newdp);
@@ -1074,7 +1074,7 @@ sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
 		return (error);
 	vp = fp->f_data;
 
-	VREF(vp);
+	vref(vp);
 	vn_lock(vp,  LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_type != VDIR)
 		error = ENOTDIR;
@@ -1144,7 +1144,7 @@ sys_fchroot(struct lwp *l, const struct sys_fchroot_args *uap, register_t *retva
 	VOP_UNLOCK(vp, 0);
 	if (error)
 		goto out;
-	VREF(vp);
+	vref(vp);
 
 	change_root(p->p_cwdi, vp, l);
 
@@ -1229,7 +1229,7 @@ change_root(struct cwdinfo *cwdi, struct vnode *vp, struct lwp *l)
 		 * deadfs node here instead
 		 */
 		vrele(cwdi->cwdi_cdir);
-		VREF(vp);
+		vref(vp);
 		cwdi->cwdi_cdir = vp;
 	}
 	rw_exit(&cwdi->cwdi_lock);
@@ -1625,7 +1625,7 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 	if (flags & O_TRUNC) {
 		VOP_UNLOCK(vp, 0);			/* XXX */
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);   /* XXX */
-		VATTR_NULL(&va);
+		vattr_null(&va);
 		va.va_size = 0;
 		error = VOP_SETATTR(vp, &va, cred);
 		if (error)
@@ -1836,7 +1836,7 @@ do_sys_mknod(struct lwp *l, const char *pathname, mode_t mode, dev_t dev,
 	if (vp != NULL)
 		error = EEXIST;
 	else {
-		VATTR_NULL(&vattr);
+		vattr_null(&vattr);
 		/* We will read cwdi->cwdi_cmask unlocked. */
 		vattr.va_mode = (mode & ALLPERMS) &~ p->p_cwdi->cwdi_cmask;
 		vattr.va_rdev = dev;
@@ -1934,7 +1934,7 @@ sys_mkfifo(struct lwp *l, const struct sys_mkfifo_args *uap, register_t *retval)
 		vrele(nd.ni_vp);
 		return (EEXIST);
 	}
-	VATTR_NULL(&vattr);
+	vattr_null(&vattr);
 	vattr.va_type = VFIFO;
 	/* We will read cwdi->cwdi_cmask unlocked. */
 	vattr.va_mode = (SCARG(uap, mode) & ALLPERMS) &~ p->p_cwdi->cwdi_cmask;
@@ -2018,7 +2018,7 @@ sys_symlink(struct lwp *l, const struct sys_symlink_args *uap, register_t *retva
 		error = EEXIST;
 		goto out;
 	}
-	VATTR_NULL(&vattr);
+	vattr_null(&vattr);
 	vattr.va_type = VLNK;
 	/* We will read cwdi->cwdi_cmask unlocked. */
 	vattr.va_mode = ACCESSPERMS &~ p->p_cwdi->cwdi_cmask;
@@ -2585,7 +2585,7 @@ change_flags(struct vnode *vp, u_long flags, struct lwp *l)
 			goto out;
 		}
 	}
-	VATTR_NULL(&vattr);
+	vattr_null(&vattr);
 	vattr.va_flags = flags;
 	error = VOP_SETATTR(vp, &vattr, l->l_cred);
 out:
@@ -2674,7 +2674,7 @@ change_mode(struct vnode *vp, int mode, struct lwp *l)
 	int error;
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	VATTR_NULL(&vattr);
+	vattr_null(&vattr);
 	vattr.va_mode = mode & ALLPERMS;
 	error = VOP_SETATTR(vp, &vattr, l->l_cred);
 	VOP_UNLOCK(vp, 0);
@@ -2877,7 +2877,7 @@ change_owner(struct vnode *vp, uid_t uid, gid_t gid, struct lwp *l,
 	if (vattr.va_mode == newmode)
 		newmode = VNOVAL;
 
-	VATTR_NULL(&vattr);
+	vattr_null(&vattr);
 	vattr.va_uid = CHANGED(uid) ? uid : (uid_t)VNOVAL;
 	vattr.va_gid = CHANGED(gid) ? gid : (gid_t)VNOVAL;
 	vattr.va_mode = newmode;
@@ -3002,7 +3002,7 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	setbirthtime = (VOP_GETATTR(vp, &vattr, l->l_cred) == 0 &&
 	    timespeccmp(&ts[1], &vattr.va_birthtime, <));
-	VATTR_NULL(&vattr);
+	vattr_null(&vattr);
 	vattr.va_atime = ts[0];
 	vattr.va_mtime = ts[1];
 	if (setbirthtime)
@@ -3043,7 +3043,7 @@ sys_truncate(struct lwp *l, const struct sys_truncate_args *uap, register_t *ret
 		error = EISDIR;
 	else if ((error = vn_writechk(vp)) == 0 &&
 	    (error = VOP_ACCESS(vp, VWRITE, l->l_cred)) == 0) {
-		VATTR_NULL(&vattr);
+		vattr_null(&vattr);
 		vattr.va_size = SCARG(uap, length);
 		error = VOP_SETATTR(vp, &vattr, l->l_cred);
 	}
@@ -3080,7 +3080,7 @@ sys_ftruncate(struct lwp *l, const struct sys_ftruncate_args *uap, register_t *r
 	if (vp->v_type == VDIR)
 		error = EISDIR;
 	else if ((error = vn_writechk(vp)) == 0) {
-		VATTR_NULL(&vattr);
+		vattr_null(&vattr);
 		vattr.va_size = SCARG(uap, length);
 		error = VOP_SETATTR(vp, &vattr, fp->f_cred);
 	}
@@ -3455,7 +3455,7 @@ do_sys_mkdir(const char *path, mode_t mode, enum uio_seg seg)
 		vrele(vp);
 		return (EEXIST);
 	}
-	VATTR_NULL(&vattr);
+	vattr_null(&vattr);
 	vattr.va_type = VDIR;
 	/* We will read cwdi->cwdi_cmask unlocked. */
 	vattr.va_mode = (mode & ACCESSPERMS) &~ p->p_cwdi->cwdi_cmask;

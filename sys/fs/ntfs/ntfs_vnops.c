@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.45 2009/07/03 21:17:41 elad Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.46 2010/01/08 11:35:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.45 2009/07/03 21:17:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.46 2010/01/08 11:35:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -690,7 +690,7 @@ ntfs_lookup(void *v)
 		dprintf(("ntfs_lookup: faking . directory in %llu\n",
 		    (unsigned long long)dip->i_number));
 
-		VREF(dvp);
+		vref(dvp);
 		*ap->a_vpp = dvp;
 		error = 0;
 	} else if (cnp->cn_flags & ISDOTDOT) {

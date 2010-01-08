@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.65 2009/11/22 17:09:58 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.66 2010/01/08 11:35:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.65 2009/11/22 17:09:58 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.66 2010/01/08 11:35:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -163,7 +163,7 @@ tmpfs_lookup(void *v)
 
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 	} else if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
-		VREF(dvp);
+		vref(dvp);
 		*vpp = dvp;
 		error = 0;
 	} else {
@@ -443,7 +443,7 @@ tmpfs_getattr(void *v)
 
 	node = VP_TO_TMPFS_NODE(vp);
 
-	VATTR_NULL(vap);
+	vattr_null(vap);
 
 	tmpfs_itimes(vp, NULL, NULL, NULL);
 

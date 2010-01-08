@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.41 2009/11/30 10:59:19 pooka Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.42 2010/01/08 11:35:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.41 2009/11/30 10:59:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.42 2010/01/08 11:35:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ ptyfs__getvattr(struct ptm_pty *pt, struct lwp *l, struct vattr *vattr)
 {
 	struct mount *mp = pt->arg;
 	struct ptyfsmount *pmnt = VFSTOPTY(mp);
-	VATTR_NULL(vattr);
+	vattr_null(vattr);
 	/* get real uid */
 	vattr->va_uid = kauth_cred_getuid(l->l_cred);
 	vattr->va_gid = pmnt->pmnt_gid;

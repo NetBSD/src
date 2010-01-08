@@ -239,7 +239,7 @@ unionfs_create_uppervattr_core(struct unionfs_mount *ump,
 			       struct vattr *lva,
 			       struct vattr *uva)
 {
-	VATTR_NULL(uva);
+	vattr_null(uva);
 	uva->va_type = lva->va_type;
 	uva->va_atime = lva->va_atime;
 	uva->va_mtime = lva->va_mtime;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.210 2009/10/06 04:28:10 elad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.211 2010/01/08 11:35:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -356,9 +356,6 @@ extern const int	vttoif_tab[];
 #define	UPDATE_DIROP	0x0002		/* update: hint to fs to wait or not */
 #define	UPDATE_CLOSE	0x0004		/* update: clean up on close */
 
-#define	HOLDRELE(vp)	holdrele(vp)
-#define	VHOLD(vp)	vhold(vp)
-#define	VREF(vp)	vref(vp)
 extern kmutex_t	vnode_free_list_lock;
 
 void holdrelel(struct vnode *);
@@ -367,8 +364,6 @@ void vref(struct vnode *);
 
 static __inline void holdrele(struct vnode *) __unused;
 static __inline void vhold(struct vnode *) __unused;
-
-#define	VATTR_NULL(vap)	vattr_null(vap)
 
 /*
  * decrease buf or page ref

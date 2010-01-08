@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.281 2009/10/21 21:12:06 rmind Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.282 2010/01/08 11:35:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.281 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.282 2010/01/08 11:35:11 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -798,7 +798,7 @@ nfs_lookup(void *v)
 			return error;
 		if (cnp->cn_nameiop == RENAME && (flags & ISLASTCN))
 			return EISDIR;
-		VREF(dvp);
+		vref(dvp);
 		*vpp = dvp;
 		if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
 			cnp->cn_flags |= SAVENAME;
@@ -954,7 +954,7 @@ dorpc:
 		 * as we handle "." lookup locally, this should be
 		 * a broken server.
 		 */
-		VREF(dvp);
+		vref(dvp);
 		newvp = dvp;
 #ifndef NFS_V2_ONLY
 		if (v3) {
@@ -2797,7 +2797,7 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, kauth_cred_t cred)
 			    if (doit) {
 				nfsm_getfh(fhp, fhsize, 1);
 				if (NFS_CMPFH(dnp, fhp, fhsize)) {
-				    VREF(vp);
+				    vref(vp);
 				    newvp = vp;
 				    np = dnp;
 				} else {
@@ -2914,7 +2914,7 @@ nfs_sillyrename(struct vnode *dvp, struct vnode *vp, struct componentname *cnp, 
 	sp = kmem_alloc(sizeof(*sp), KM_SLEEP);
 	sp->s_cred = kauth_cred_dup(cnp->cn_cred);
 	sp->s_dvp = dvp;
-	VREF(dvp);
+	vref(dvp);
 
 	/* Fudge together a funny name */
 	pid = curlwp->l_proc->p_pid;
@@ -3006,7 +3006,7 @@ nfs_lookitup(struct vnode *dvp, const char *name, int len, kauth_cred_t cred, st
 		    np->n_fhsize = fhlen;
 		    newvp = NFSTOV(np);
 		} else if (NFS_CMPFH(dnp, nfhp, fhlen)) {
-		    VREF(dvp);
+		    vref(dvp);
 		    newvp = dvp;
 		    np = dnp;
 		} else {
@@ -3472,7 +3472,7 @@ nfsspec_close(void *v)
 		np->n_flag |= NCHG;
 		if (vp->v_usecount == 1 &&
 		    (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-			VATTR_NULL(&vattr);
+			vattr_null(&vattr);
 			if (np->n_flag & NACC)
 				vattr.va_atime = np->n_atim;
 			if (np->n_flag & NUPD)
@@ -3556,7 +3556,7 @@ nfsfifo_close(void *v)
 		np->n_flag |= NCHG;
 		if (vp->v_usecount == 1 &&
 		    (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-			VATTR_NULL(&vattr);
+			vattr_null(&vattr);
 			if (np->n_flag & NACC)
 				vattr.va_atime = np->n_atim;
 			if (np->n_flag & NUPD)

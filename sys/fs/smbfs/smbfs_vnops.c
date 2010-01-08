@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.73 2009/07/04 07:36:46 cegger Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.74 2010/01/08 11:35:09 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.73 2009/07/04 07:36:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.74 2010/01/08 11:35:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1337,7 +1337,7 @@ smbfs_lookup(void *v)
 		/*
 		 * "." lookup
 		 */
-		VREF(dvp);
+		vref(dvp);
 		*vpp = dvp;
 	} else if (flags & ISDOTDOT) {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.127 2009/08/26 22:34:47 bouyer Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.128 2010/01/08 11:35:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.127 2009/08/26 22:34:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.128 2010/01/08 11:35:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -907,7 +907,7 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 		error = EADDRINUSE;
 		goto bad;
 	}
-	VATTR_NULL(&vattr);
+	vattr_null(&vattr);
 	vattr.va_type = VSOCK;
 	vattr.va_mode = ACCESSPERMS & ~(p->p_cwdi->cwdi_cmask);
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);

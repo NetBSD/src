@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mman.c,v 1.22 2008/04/28 20:23:41 martin Exp $ */
+/*	$NetBSD: irix_mman.c,v 1.23 2010/01/08 11:35:07 pooka Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.22 2008/04/28 20:23:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.23 2010/01/08 11:35:07 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -180,7 +180,7 @@ irix_mmap(struct lwp *l, void *addr, size_t len, int prot, int flags, int fd, of
 			goto out;
 
 		if (pos + len > vattr.va_size) {
-			VATTR_NULL(&vattr);
+			vattr_null(&vattr);
 			vattr.va_size = round_page(pos + len);
 
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);

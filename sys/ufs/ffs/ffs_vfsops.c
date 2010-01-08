@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.253 2009/11/04 09:45:05 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.254 2010/01/08 11:35:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.253 2009/11/04 09:45:05 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.254 2010/01/08 11:35:11 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1820,7 +1820,7 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 */
 
 	ip->i_devvp = ump->um_devvp;
-	VREF(ip->i_devvp);
+	vref(ip->i_devvp);
 
 	/*
 	 * Ensure that uid and gid are correct. This is a temporary

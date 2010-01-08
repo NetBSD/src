@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.36 2009/03/15 17:15:57 cegger Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.37 2010/01/08 11:35:08 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.36 2009/03/15 17:15:57 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.37 2010/01/08 11:35:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,7 +383,7 @@ deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset, struct denode
 		}
 	} else
 		nvp->v_type = VREG;
-	VREF(ldep->de_devvp);
+	vref(ldep->de_devvp);
 	*depp = ldep;
 	uvm_vnp_setsize(nvp, ldep->de_FileSize);
 	return (0);

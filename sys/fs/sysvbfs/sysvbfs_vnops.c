@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.25 2010/01/05 13:30:11 mbalmer Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.26 2010/01/08 11:35:09 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.25 2010/01/05 13:30:11 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.26 2010/01/08 11:35:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -90,7 +90,7 @@ sysvbfs_lookup(void *arg)
 
 
 	if (namelen == 1 && name[0] == '.') {	/* "." */
-		VREF(v);
+		vref(v);
 		*a->a_vpp = v;
 	} else {				/* Regular file */
 		if (!bfs_dirent_lookup_by_name(bfs, cnp->cn_nameptr,

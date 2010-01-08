@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.68 2009/10/19 17:53:36 tsutsui Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.69 2010/01/08 11:35:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.68 2009/10/19 17:53:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.69 2010/01/08 11:35:08 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -807,7 +807,7 @@ cd9660_vget_internal(struct mount *mp, ino_t ino, struct vnode **vpp,
 	} else
 		bp = 0;
 
-	VREF(ip->i_devvp);
+	vref(ip->i_devvp);
 
 	if (relocated) {
 		/*
