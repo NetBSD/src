@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.108 2009/07/31 18:50:58 pooka Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.109 2010/01/08 11:35:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.108 2009/07/31 18:50:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.109 2010/01/08 11:35:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,7 +284,7 @@ fdesc_lookup(void *v)
 
 	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = dvp;
-		VREF(dvp);
+		vref(dvp);
 		return (0);
 	}
 
@@ -516,7 +516,7 @@ fdesc_getattr(void *v)
 	case Fdevfd:
 	case Flink:
 	case Fctty:
-		VATTR_NULL(vap);
+		vattr_null(vap);
 		vap->va_fileid = VTOFDESC(vp)->fd_ix;
 
 #define R_ALL (S_IRUSR|S_IRGRP|S_IROTH)
