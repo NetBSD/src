@@ -1,4 +1,4 @@
-.\"	$NetBSD: ssh.1,v 1.4 2009/12/27 01:40:47 christos Exp $
+.\"	$NetBSD: ssh.1,v 1.5 2010/01/08 16:37:39 joerg Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,7 +36,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $OpenBSD: ssh.1,v 1.283 2009/03/19 15:15:09 jmc Exp $
-.Dd March 19 2009
+.Dd March 19, 2009
 .Dt SSH 1
 .Os
 .Sh NAME
@@ -195,12 +195,7 @@ listed in order of preference.
 See the
 .Cm Ciphers
 keyword for more information.
-.It Fl D Xo
-.Sm off
-.Oo Ar bind_address : Oc
-.Ar port
-.Sm on
-.Xc
+.It Fl D Oo Ar bind_address : Oc Ns Ar port
 Specifies a local
 .Dq dynamic
 application-level port forwarding.
