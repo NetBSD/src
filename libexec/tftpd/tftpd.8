@@ -1,4 +1,4 @@
-.\"	$NetBSD: tftpd.8,v 1.22 2010/01/08 21:05:14 christos Exp $
+.\"	$NetBSD: tftpd.8,v 1.23 2010/01/08 23:25:07 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,10 +39,8 @@
 Internet Trivial File Transfer Protocol server
 .Sh SYNOPSIS
 .Nm
-.Op Fl d
+.Op Fl dln
 .Op Fl g Ar group
-.Op Fl l
-.Op Fl n
 .Op Fl p Ar path separator
 .Op Fl s Ar directory
 .Op Fl u Ar user
@@ -67,8 +65,11 @@ does not require an account or password on the remote system.
 Due to the lack of authentication information,
 .Nm
 will allow only publicly readable files to be accessed.
-Filenames beginning in ``\|\fB.\|.\fP\|/'' or
-containing ``/\|\fB.\|.\fP\|/'' are not allowed.
+Filenames beginning in
+.Dq Pa ../
+or containing
+.Dq Pa /../
+are not allowed.
 Files may be written to only if they already exist and are publicly writable.
 .Pp
 Note that this extends the concept of
@@ -199,9 +200,10 @@ TFTP options were implemented by Wasabi Systems, Inc., in 2003,
 and first appeared in
 .Nx 2.0 .
 .Sh BUGS
-Files larger than 33,553,919 octets (65535 blocks, last one <512
+Files larger than 33,553,919 octets (65535 blocks, last one less than 512
 octets) cannot be correctly transferred without client and server
-supporting blocksize negotiation (RFCs 2347 and 2348). As a kludge,
+supporting blocksize negotiation (RFCs 2347 and 2348).
+As a kludge,
 .Nm
 accepts a sequence of block numbers which wrap to zero after 65535.
 .Pp
