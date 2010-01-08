@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.203 2009/11/12 19:49:03 dyoung Exp $	*/
+/*	$NetBSD: ohci.c,v 1.204 2010/01/08 16:40:30 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.203 2009/11/12 19:49:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.204 2010/01/08 16:40:30 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1979,12 +1979,11 @@ ohci_dump_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 {
 	char sbuf[128];
 
+	usb_syncmem(&std->dma, std->offs, sizeof(std->td),
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 	snprintb(sbuf, sizeof(sbuf),
 	    "\20\23R\24OUT\25IN\31TOG1\32SETTOGGLE",
 	    (u_int32_t)O32TOH(std->td.td_flags));
-
-	usb_syncmem(&std->dma, std->offs, sizeof(std->td),
-	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 	printf("TD(%p) at %08lx: %s delay=%d ec=%d cc=%d\ncbp=0x%08lx "
 	       "nexttd=0x%08lx be=0x%08lx\n",
 	       std, (u_long)std->physaddr, sbuf,
