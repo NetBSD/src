@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1355 2010/01/06 19:46:43 skrll Exp $
+#	$NetBSD: mi,v 1.1356 2010/01/08 06:25:14 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9088,6 +9088,13 @@
 ./usr/share/man/cat9/pcmcia_mem_map.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pcmcia_mem_unmap.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pcmcia_scan_cis.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pcq.0			comp-sys-catman		.cat
+./usr/share/man/cat9/pcq_create.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pcq_destroy.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pcq_get.0			comp-sys-catman		.cat
+./usr/share/man/cat9/pcq_maxitems.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pcq_peek.0			comp-sys-catman		.cat
+./usr/share/man/cat9/pcq_put.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pfil.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pfil_add_hook.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pfil_get_head.0		comp-obsolete		obsolete
@@ -14597,6 +14604,13 @@
 ./usr/share/man/html9/pcmcia_mem_map.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pcmcia_mem_unmap.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pcmcia_scan_cis.html	comp-sys-htmlman	html
+./usr/share/man/html9/pcq.html			comp-sys-htmlman	html
+./usr/share/man/html9/pcq_create.html		comp-sys-htmlman	html
+./usr/share/man/html9/pcq_destroy.html		comp-sys-htmlman	html
+./usr/share/man/html9/pcq_get.html		comp-sys-htmlman	html
+./usr/share/man/html9/pcq_maxitems.html		comp-sys-htmlman	html
+./usr/share/man/html9/pcq_peek.html		comp-sys-htmlman	html
+./usr/share/man/html9/pcq_put.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pfil.html			comp-sys-htmlman	html
 ./usr/share/man/html9/pfil_add_hook.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pfil_head_get.html	comp-sys-htmlman	html
@@ -20273,6 +20287,13 @@
 ./usr/share/man/man9/pcmcia_mem_map.9		comp-sys-man		.man
 ./usr/share/man/man9/pcmcia_mem_unmap.9		comp-sys-man		.man
 ./usr/share/man/man9/pcmcia_scan_cis.9		comp-sys-man		.man
+./usr/share/man/man9/pcq.9			comp-sys-man		.man
+./usr/share/man/man9/pcq_create.9		comp-sys-man		.man
+./usr/share/man/man9/pcq_destroy.9		comp-sys-man		.man
+./usr/share/man/man9/pcq_get.9			comp-sys-man		.man
+./usr/share/man/man9/pcq_maxitems.9		comp-sys-man		.man
+./usr/share/man/man9/pcq_peek.9			comp-sys-man		.man
+./usr/share/man/man9/pcq_put.9			comp-sys-man		.man
 ./usr/share/man/man9/pfil.9			comp-sys-man		.man
 ./usr/share/man/man9/pfil_add_hook.9		comp-sys-man		.man
 ./usr/share/man/man9/pfil_get_head.9		comp-obsolete		obsolete
