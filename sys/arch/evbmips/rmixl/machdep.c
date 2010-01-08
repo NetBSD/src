@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.12 2010/01/03 08:37:14 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.13 2010/01/08 08:01:22 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.12 2010/01/03 08:37:14 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.13 2010/01/08 08:01:22 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -604,11 +604,17 @@ rmixlfw_init(int64_t infop)
 	rmixl_puts("\r\n");
 #endif
 
+#ifdef MEMSIZE
 	/* XXX trust and use MEMSIZE */
 	mem_clusters[0].start = 0;
 	mem_clusters[0].size = MEMSIZE;
 	mem_cluster_cnt = 1;
 	return MEMSIZE;
+#else
+	rmixl_puts("\r\nERROR: configure MEMSIZE\r\n");
+	cpu_reboot(RB_HALT, NULL);
+	/* NOTREACHED */
+#endif
 
  found:
 	rcp->rc_io_pbase = MIPS_KSEG1_TO_PHYS(rmixlfw_info.io_base);
@@ -662,7 +668,6 @@ mem_clusters_init(
 {
 	rmixlfw_mmap_t *map = NULL;
 	const char *mapname;
-	uint64_t tmp;
 	uint64_t sz;
 	uint64_t sum;
 	u_int cnt;
@@ -756,10 +761,13 @@ mem_clusters_init(
 		if (sum == memsize)
 			break;
 		if (sum > memsize) {
+			uint64_t tmp;
+
 			tmp = sum - memsize;
 			sz -= tmp;
 			sum -= tmp;
 			mem_clusters[cnt].size = sz;
+			cnt++;
 			break;
 		}
 #endif
@@ -792,7 +800,7 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	format_bytes(pbuf, sizeof(pbuf), ctob((uint64_t)physmem));
 	printf("total memory = %s\n", pbuf);
 
 	/*
