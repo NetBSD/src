@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.33 2010/01/08 21:05:14 christos Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.34 2010/01/08 23:27:08 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.33 2010/01/08 21:05:14 christos Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.34 2010/01/08 23:27:08 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,7 @@ usage(void)
 {
 
 	syslog(LOG_ERR,
-    "Usage: %s [-dln] [-u user] [-g group] [-s directory] [-p pathsep] [directory ...]",
+    "Usage: %s [-dln] [-g group] [-p pathsep] [-s directory] [-u user] [directory ...]",
 		    getprogname());
 	exit(1);
 }

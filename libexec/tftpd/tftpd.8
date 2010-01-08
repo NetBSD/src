@@ -1,4 +1,4 @@
-.\"	$NetBSD: tftpd.8,v 1.23 2010/01/08 23:25:07 wiz Exp $
+.\"	$NetBSD: tftpd.8,v 1.24 2010/01/08 23:27:08 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ Internet Trivial File Transfer Protocol server
 .Nm
 .Op Fl dln
 .Op Fl g Ar group
-.Op Fl p Ar path separator
+.Op Fl p Ar pathsep
 .Op Fl s Ar directory
 .Op Fl u Ar user
 .Op Ar directory ...
@@ -91,7 +91,7 @@ The given directories are also treated as a search path for
 relative filename requests.
 .Pp
 The options are:
-.Bl -tag -width "directory"
+.Bl -tag -width "XsXdirectoryX"
 .It Fl d
 Enable verbose debugging messages to
 .Xr syslogd 8 .
@@ -109,10 +109,10 @@ Logs all requests using
 .It Fl n
 Suppresses negative acknowledgement of requests for nonexistent
 relative filenames.
-.It Fl p Ar path separator
+.It Fl p Ar pathsep
 All occurances of the single character
-.Ar path separator
-in the requested filename are replaced with
+.Ar pathsep
+(path separator) in the requested filename are replaced with
 .Sq / .
 .It Fl s Ar directory
 .Nm
