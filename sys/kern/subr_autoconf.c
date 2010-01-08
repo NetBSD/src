@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.192 2010/01/07 22:39:52 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.193 2010/01/08 00:09:45 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.192 2010/01/07 22:39:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.193 2010/01/08 00:09:45 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2720,6 +2720,12 @@ deviter_release(deviter_t *di)
 		--alldevs_nread;
 	/* XXX wake a garbage-collection thread */
 	config_alldevs_unlock(s);
+}
+
+bool
+ifattr_match(const char *snull, const char *t)
+{
+	return (snull == NULL) || strcmp(snull, t) == 0;
 }
 
 void

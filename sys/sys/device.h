@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.129 2010/01/07 22:39:52 dyoung Exp $ */
+/* $NetBSD: device.h,v 1.130 2010/01/08 00:09:45 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -459,6 +459,8 @@ device_t config_rootfound(const char *, void *);
 device_t config_attach_loc(device_t, cfdata_t, const int *, void *, cfprint_t);
 device_t config_attach(device_t, cfdata_t, void *, cfprint_t);
 int	config_match(device_t, cfdata_t, void *);
+
+bool ifattr_match(const char *, const char *);
 
 device_t config_attach_pseudo(cfdata_t);
 

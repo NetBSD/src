@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.10 2009/08/23 15:42:51 jmcneill Exp $	*/
+/*	$NetBSD: pcib.c,v 1.11 2010/01/08 00:09:45 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.10 2009/08/23 15:42:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.11 2010/01/08 00:09:45 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -229,13 +229,6 @@ pcibchilddet(device_t self, device_t child)
 
 	if (sc->sc_isabus == child)
 		sc->sc_isabus = NULL;
-}
-
-/* XXX share this with sys/arch/i386/pci/elan520.c */
-static bool
-ifattr_match(const char *snull, const char *t)
-{
-	return (snull == NULL) || strcmp(snull, t) == 0;
 }
 
 int
