@@ -1,4 +1,4 @@
-.\"	$NetBSD: tzfile.5,v 1.14 2009/12/31 22:49:16 mlelstv Exp $
+.\"	$NetBSD: tzfile.5,v 1.15 2010/01/08 23:14:13 joerg Exp $
 .\"
 .\" @(#)tzfile.5	7.11
 .\" This file is in the public domain, so clarified as of
@@ -67,9 +67,8 @@ types described in the file is associated with the same-indexed
 transition time.
 These values serve as indices into an array of
 .Fa ttinfo
-.I ttinfo
 structures (with
-.I tzh_typecnt
+.Va tzh_typecnt
 entries) that appears next in the file;
 these structures are defined as follows:
 .Bd -literal
@@ -141,7 +140,7 @@ if either
 .Va tzh_timecnt
 is zero or the time argument is less than the first transition time recorded
 in the file.
-.PP
+.Pp
 For version-2-format time zone files,
 the above header and data is followed by a second header and data,
 identical in format except that

@@ -1,4 +1,4 @@
-.\"	$NetBSD: zdump.8,v 1.7 2009/12/31 22:49:16 mlelstv Exp $
+.\"	$NetBSD: zdump.8,v 1.8 2010/01/08 23:14:13 joerg Exp $
 .\" @(#)zdump.8	7.4
 .Dd October 29, 2003
 .Dt ZDUMP 8
@@ -42,12 +42,12 @@ Cut off the verbose output near the start of the given year(s).
 By default,
 the program cuts off verbose output near the starts of the years -500 and 2500.
 .El
-.SH LIMITATIONS
+.Sh LIMITATIONS
 The
-.B \-v
+.Fl v
 option may not be used on systems with floating-point time_t values
 that are neither float nor double.
-.PP
+.Pp
 Time discontinuities are found by sampling the results returned by localtime
 at twelve-hour intervals.
 This works in all real-world cases;
