@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.12 2009/12/30 04:51:26 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.13 2010/01/08 22:15:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.12 2009/12/30 04:51:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.13 2010/01/08 22:15:13 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -956,7 +956,7 @@ mips3_eret:
 		}
 	}
 done:
-	(*printfn)("%s+%x (%x,%x,%x,%x) ra %x sz %d\n",
+	(*printfn)("%s+%"PRIxVADDR" (%"PRIxREGISTER",%"PRIxREGISTER",%"PRIxREGISTER",%"PRIxREGISTER") ra %"PRIxVADDR" sz %d\n",
 		fn_name(subr), pc - subr, a0, a1, a2, a3, ra, stksize);
 
 	if (ra) {
