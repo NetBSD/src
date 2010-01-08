@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.143 2009/11/26 15:17:10 njoly Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.144 2010/01/08 19:56:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.143 2009/11/26 15:17:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.144 2010/01/08 19:56:52 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -610,8 +610,8 @@ static int	sipcom_match(device_t, cfdata_t, void *);
 static void	sipcom_attach(device_t, device_t, void *);
 static void	sipcom_do_detach(device_t, enum sip_attach_stage);
 static int	sipcom_detach(device_t, int);
-static bool	sipcom_resume(device_t PMF_FN_PROTO);
-static bool	sipcom_suspend(device_t PMF_FN_PROTO);
+static bool	sipcom_resume(device_t, pmf_qual_t);
+static bool	sipcom_suspend(device_t, pmf_qual_t);
 
 int	gsip_copy_small = 0;
 int	sip_copy_small = 0;
@@ -965,7 +965,7 @@ sipcom_do_detach(device_t self, enum sip_attach_stage stage)
 }
 
 static bool
-sipcom_resume(device_t self PMF_FN_ARGS)
+sipcom_resume(device_t self, pmf_qual_t qual)
 {
 	struct sip_softc *sc = device_private(self);
 
@@ -973,7 +973,7 @@ sipcom_resume(device_t self PMF_FN_ARGS)
 }
 
 static bool
-sipcom_suspend(device_t self PMF_FN_ARGS)
+sipcom_suspend(device_t self, pmf_qual_t qual)
 {
 	struct sip_softc *sc = device_private(self);
 

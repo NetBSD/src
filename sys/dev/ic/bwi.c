@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.11 2009/07/25 23:43:06 cegger Exp $	*/
+/*	$NetBSD: bwi.c,v 1.12 2010/01/08 20:02:39 dyoung Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.11 2009/07/25 23:43:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.12 2010/01/08 20:02:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -9729,7 +9729,7 @@ bwi_calc_rssi(struct bwi_softc *sc, const struct bwi_rxbuf_hdr *hdr)
 }
 
 bool
-bwi_suspend(device_t dv PMF_FN_ARGS)
+bwi_suspend(device_t dv, pmf_qual_t qual)
 {
 	struct bwi_softc *sc = device_private(dv);
 
@@ -9739,7 +9739,7 @@ bwi_suspend(device_t dv PMF_FN_ARGS)
 }
 
 bool
-bwi_resume(device_t dv PMF_FN_ARGS)
+bwi_resume(device_t dv, pmf_qual_t qual)
 {
 	struct bwi_softc *sc = device_private(dv);
 

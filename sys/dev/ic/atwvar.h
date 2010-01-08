@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.33 2009/09/16 16:34:50 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.34 2010/01/08 20:02:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -448,6 +448,6 @@ int	atw_detach(struct atw_softc *);
 int	atw_activate(device_t, enum devact);
 int	atw_intr(void *arg);
 bool	atw_shutdown(device_t, int);
-bool	atw_suspend(device_t PMF_FN_PROTO);
+bool	atw_suspend(device_t, pmf_qual_t);
 
 #endif /* _DEV_IC_ATWVAR_H_ */

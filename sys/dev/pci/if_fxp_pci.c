@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.71 2009/11/26 15:17:09 njoly Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.72 2010/01/08 19:56:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.71 2009/11/26 15:17:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.72 2010/01/08 19:56:51 dyoung Exp $");
 
 #include "rnd.h"
 
@@ -92,7 +92,7 @@ static int	fxp_pci_enable(struct fxp_softc *);
 static void	fxp_pci_disable(struct fxp_softc *);
 
 static void fxp_pci_confreg_restore(struct fxp_pci_softc *psc);
-static bool fxp_pci_resume(device_t dv PMF_FN_PROTO);
+static bool fxp_pci_resume(device_t dv, pmf_qual_t);
 
 CFATTACH_DECL_NEW(fxp_pci, sizeof(struct fxp_pci_softc),
     fxp_pci_match, fxp_pci_attach, NULL, NULL);
@@ -235,7 +235,7 @@ fxp_pci_confreg_restore(struct fxp_pci_softc *psc)
 }
 
 static bool
-fxp_pci_resume(device_t dv PMF_FN_ARGS)
+fxp_pci_resume(device_t dv, pmf_qual_t qual)
 {
 	struct fxp_pci_softc *psc = device_private(dv);
 	fxp_pci_confreg_restore(psc);

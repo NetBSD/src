@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.34 2009/11/21 14:51:04 njoly Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.35 2010/01/08 19:56:51 dyoung Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.49 2009/03/29 21:53:52 sthen Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  * 802.11 network adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.34 2009/11/21 14:51:04 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.35 2010/01/08 19:56:51 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -273,7 +273,7 @@ static void	iwn_hw_stop(struct iwn_softc *);
 static int	iwn_init(struct ifnet *);
 static void	iwn_stop(struct ifnet *, int);
 static void	iwn_fix_channel(struct ieee80211com *, struct mbuf *);
-static bool	iwn_resume(device_t PMF_FN_PROTO);
+static bool	iwn_resume(device_t, pmf_qual_t);
 
 #define IWN_DEBUG
 #ifdef IWN_DEBUG
@@ -5822,7 +5822,7 @@ iwn_stop(struct ifnet *ifp, int disable)
 }
 
 static bool
-iwn_resume(device_t dv PMF_FN_ARGS)
+iwn_resume(device_t dv, pmf_qual_t qual)
 {
 #if 0
 	struct iwn_softc *sc = device_private(dv);

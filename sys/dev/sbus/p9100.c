@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.50 2009/09/19 11:58:06 tsutsui Exp $ */
+/*	$NetBSD: p9100.c,v 1.51 2010/01/08 20:01:21 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.50 2009/09/19 11:58:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.51 2010/01/08 20:01:21 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,8 +236,8 @@ static int	p9100_intr(void *);
 #endif
 
 /* power management stuff */
-static bool p9100_suspend(device_t PMF_FN_PROTO);
-static bool p9100_resume(device_t PMF_FN_PROTO);
+static bool p9100_suspend(device_t, pmf_qual_t);
+static bool p9100_resume(device_t, pmf_qual_t);
 
 #if NTCTRL > 0
 static void p9100_set_extvga(void *, int);
@@ -925,7 +925,7 @@ p9100_get_video(struct p9100_softc *sc)
 }
 
 static bool
-p9100_suspend(device_t dev PMF_FN_ARGS)
+p9100_suspend(device_t dev, pmf_qual_t qual)
 {
 	struct p9100_softc *sc = device_private(dev);
 
@@ -946,7 +946,7 @@ p9100_suspend(device_t dev PMF_FN_ARGS)
 }
 
 static bool
-p9100_resume(device_t dev PMF_FN_ARGS)
+p9100_resume(device_t dev, pmf_qual_t qual)
 {
 	struct p9100_softc *sc = device_private(dev);
 

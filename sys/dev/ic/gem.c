@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.89 2009/12/05 16:43:25 jdc Exp $ */
+/*	$NetBSD: gem.c,v 1.90 2010/01/08 20:02:39 dyoung Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.89 2009/12/05 16:43:25 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.90 2010/01/08 20:02:39 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -2603,7 +2603,7 @@ gem_inten(struct gem_softc *sc)
 }
 
 bool
-gem_resume(device_t self PMF_FN_ARGS)
+gem_resume(device_t self, pmf_qual_t qual)
 {
 	struct gem_softc *sc = device_private(self);
 
@@ -2613,7 +2613,7 @@ gem_resume(device_t self PMF_FN_ARGS)
 }
 
 bool
-gem_suspend(device_t self PMF_FN_ARGS)
+gem_suspend(device_t self, pmf_qual_t qual)
 {
 	struct gem_softc *sc = device_private(self);
 	bus_space_tag_t t = sc->sc_bustag;

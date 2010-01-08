@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.292 2009/12/06 23:15:59 dyoung Exp $ */
+/* $NetBSD: com.c,v 1.293 2010/01/08 20:02:39 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.292 2009/12/06 23:15:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.293 2010/01/08 20:02:39 dyoung Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -2404,7 +2404,7 @@ com_cleanup(device_t self, int how)
 }
 
 bool
-com_suspend(device_t self PMF_FN_ARGS)
+com_suspend(device_t self, pmf_qual_t qual)
 {
 	struct com_softc *sc = device_private(self);
 
@@ -2420,7 +2420,7 @@ com_suspend(device_t self PMF_FN_ARGS)
 }
 
 bool
-com_resume(device_t self PMF_FN_ARGS)
+com_resume(device_t self, pmf_qual_t qual)
 {
 	struct com_softc *sc = device_private(self);
 

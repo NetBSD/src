@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_var.h,v 1.6 2009/11/02 21:37:44 christos Exp $ */
+/*	$NetBSD: dbcool_var.h,v 1.7 2010/01/08 20:04:31 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.6 2009/11/02 21:37:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.7 2010/01/08 20:04:31 dyoung Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
@@ -147,7 +147,7 @@ uint8_t dbcool_readreg(struct dbcool_chipset *, uint8_t);
 void dbcool_writereg(struct dbcool_chipset *, uint8_t, uint8_t);
 void dbcool_setup(device_t); 
 int dbcool_chip_ident(struct dbcool_chipset *);
-bool dbcool_pmf_suspend(device_t PMF_FN_PROTO);
-bool dbcool_pmf_resume(device_t PMF_FN_PROTO);
+bool dbcool_pmf_suspend(device_t, pmf_qual_t);
+bool dbcool_pmf_resume(device_t, pmf_qual_t);
 
 #endif	/* def DBCOOLVAR_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.70 2009/11/26 15:17:08 njoly Exp $	*/
+/*	$NetBSD: auvia.c,v 1.71 2010/01/08 19:56:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.70 2009/11/26 15:17:08 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.71 2010/01/08 19:56:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ static int	auvia_trigger_output(void *, void *, void *, int,
 static int	auvia_trigger_input(void *, void *, void *, int,
 				    void (*)(void *), void *,
 				    const audio_params_t *);
-static bool	auvia_resume(device_t PMF_FN_PROTO);
+static bool	auvia_resume(device_t, pmf_qual_t);
 static int	auvia_intr(void *);
 
 static int	auvia_attach_codec(void *, struct ac97_codec_if *);
@@ -1141,7 +1141,7 @@ auvia_intr(void *arg)
 }
 
 static bool
-auvia_resume(device_t dv PMF_FN_ARGS)
+auvia_resume(device_t dv, pmf_qual_t qual)
 {
 	struct auvia_softc *sc = device_private(dv);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.45 2008/06/28 17:42:53 bouyer Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.46 2010/01/08 20:39:04 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
@@ -189,7 +189,7 @@ int		uhci_intr(void *);
 int		uhci_detach(uhci_softc_t *, int);
 void		uhci_childdet(device_t, device_t);
 int		uhci_activate(device_t, enum devact);
-bool		uhci_resume(device_t PMF_FN_PROTO);
-bool		uhci_suspend(device_t PMF_FN_PROTO);
+bool		uhci_resume(device_t, pmf_qual_t);
+bool		uhci_suspend(device_t, pmf_qual_t);
 #endif
 

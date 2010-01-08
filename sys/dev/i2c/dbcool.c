@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.13 2009/11/02 21:37:44 christos Exp $ */
+/*	$NetBSD: dbcool.c,v 1.14 2010/01/08 20:04:31 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.13 2009/11/02 21:37:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.14 2010/01/08 20:04:31 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -648,7 +648,7 @@ dbcool_detach(device_t self, int flags)
 }
 
 /* On suspend, we save the state of the SHDN bit, then set it */
-bool dbcool_pmf_suspend(device_t dev PMF_FN_ARGS)
+bool dbcool_pmf_suspend(device_t dev, pmf_qual_t qual)
 {
 	struct dbcool_softc *sc = device_private(dev);
 	uint8_t reg, bit, cfg;
@@ -672,7 +672,7 @@ bool dbcool_pmf_suspend(device_t dev PMF_FN_ARGS)
 }
 
 /* On resume, we restore the previous state of the SHDN bit */
-bool dbcool_pmf_resume(device_t dev PMF_FN_ARGS)
+bool dbcool_pmf_resume(device_t dev, pmf_qual_t qual)
 {
 	struct dbcool_softc *sc = device_private(dev);
 	uint8_t reg, bit, cfg;

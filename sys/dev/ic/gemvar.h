@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.19 2009/07/27 18:10:53 dyoung Exp $ */
+/*	$NetBSD: gemvar.h,v 1.20 2010/01/08 20:02:39 dyoung Exp $ */
 
 /*
  *
@@ -308,8 +308,8 @@ do {									\
 
 #ifdef _KERNEL
 bool	gem_shutdown(device_t, int);
-bool	gem_suspend(device_t PMF_FN_PROTO);
-bool	gem_resume(device_t PMF_FN_PROTO);
+bool	gem_suspend(device_t, pmf_qual_t);
+bool	gem_resume(device_t, pmf_qual_t);
 void	gem_attach(struct gem_softc *, const uint8_t *);
 int	gem_intr(void *);
 int	gem_detach(struct gem_softc *, int);
