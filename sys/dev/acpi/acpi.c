@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.140 2010/01/05 13:39:49 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.141 2010/01/08 00:09:44 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.140 2010/01/05 13:39:49 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.141 2010/01/08 00:09:44 dyoung Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -721,13 +721,6 @@ acpi_rescan(device_t self, const char *ifattr, const int *locators)
 
 	acpi_rescan1(sc, ifattr, locators);
 	return 0;
-}
-
-/* XXX share this with sys/arch/i386/pci/elan520.c */
-static bool
-ifattr_match(const char *snull, const char *t)
-{
-	return (snull == NULL) || strcmp(snull, t) == 0;
 }
 
 static void
