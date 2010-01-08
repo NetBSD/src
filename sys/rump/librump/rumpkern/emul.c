@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.114 2009/12/25 01:56:43 elad Exp $	*/
+/*	$NetBSD: emul.c,v 1.115 2010/01/08 20:04:06 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.114 2009/12/25 01:56:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.115 2010/01/08 20:04:06 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -453,8 +453,8 @@ cpu_reboot(int howto, char *bootstr)
 
 bool
 pmf_device_register1(struct device *dev,
-	bool (*suspend)(device_t PMF_FN_PROTO),
-	bool (*resume)(device_t PMF_FN_PROTO),
+	bool (*suspend)(device_t, pmf_qual_t),
+	bool (*resume)(device_t, pmf_qual_t),
 	bool (*shutdown)(device_t, int))
 {
 

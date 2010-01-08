@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.c,v 1.3 2009/12/04 11:13:05 njoly Exp $ */
+/* $NetBSD: hdaudio_pci.c,v 1.4 2010/01/08 19:56:52 dyoung Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.3 2009/12/04 11:13:05 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.4 2010/01/08 19:56:52 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,7 +65,7 @@ static void		hdaudio_pci_childdet(device_t, device_t);
 static int		hdaudio_pci_intr(void *);
 
 /* power management */
-static bool		hdaudio_pci_resume(device_t PMF_FN_PROTO);
+static bool		hdaudio_pci_resume(device_t, pmf_qual_t);
 
 CFATTACH_DECL2_NEW(
     hdaudio_pci,
@@ -205,7 +205,7 @@ hdaudio_pci_intr(void *opaque)
 }
 
 static bool
-hdaudio_pci_resume(device_t self PMF_FN_ARGS)
+hdaudio_pci_resume(device_t self, pmf_qual_t qual)
 {
 	struct hdaudio_pci_softc *sc = device_private(self);
 

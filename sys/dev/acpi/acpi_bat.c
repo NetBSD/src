@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.74 2009/09/29 21:41:38 jmcneill Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.75 2010/01/08 20:40:41 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.74 2009/09/29 21:41:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.75 2010/01/08 20:40:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ static const char * const bat_hid[] = {
 
 static int	acpibat_match(device_t, cfdata_t, void *);
 static void	acpibat_attach(device_t, device_t, void *);
-static bool	acpibat_resume(device_t PMF_FN_PROTO);
+static bool	acpibat_resume(device_t, pmf_qual_t);
 
 CFATTACH_DECL_NEW(acpibat, sizeof(struct acpibat_softc),
     acpibat_match, acpibat_attach, NULL, NULL);
@@ -208,7 +208,7 @@ acpibat_match(device_t parent, cfdata_t match, void *aux)
 }
 
 static bool
-acpibat_resume(device_t dv PMF_FN_ARGS)
+acpibat_resume(device_t dv, pmf_qual_t qual)
 {
 	ACPI_STATUS rv;
 

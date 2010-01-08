@@ -1,4 +1,4 @@
-/* $NetBSD: pckbcvar.h,v 1.15 2008/03/15 13:23:25 cube Exp $ */
+/* $NetBSD: pckbcvar.h,v 1.16 2010/01/08 20:02:39 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -112,6 +112,6 @@ void pckbcintr_soft(void *);
 int pckbc_machdep_cnattach(pckbc_tag_t, pckbc_slot_t);
 
 /* power management */
-bool pckbc_resume(device_t PMF_FN_PROTO);
+bool pckbc_resume(device_t, pmf_qual_t);
 
 #endif /* _DEV_IC_PCKBCVAR_H_ */

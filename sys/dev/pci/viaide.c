@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.66 2009/12/23 00:11:36 mrg Exp $	*/
+/*	$NetBSD: viaide.c,v 1.67 2010/01/08 19:56:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.66 2009/12/23 00:11:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.67 2010/01/08 19:56:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,8 @@ static int	viaide_match(device_t, cfdata_t, void *);
 static void	viaide_attach(device_t, device_t, void *);
 static const struct pciide_product_desc *
 		viaide_lookup(pcireg_t);
-static bool	viaide_suspend(device_t PMF_FN_PROTO);
-static bool	viaide_resume(device_t PMF_FN_PROTO);
+static bool	viaide_suspend(device_t, pmf_qual_t);
+static bool	viaide_resume(device_t, pmf_qual_t);
 
 CFATTACH_DECL_NEW(viaide, sizeof(struct pciide_softc),
     viaide_match, viaide_attach, NULL, NULL);
@@ -400,7 +400,7 @@ via_pcib_match(struct pci_attach_args *pa)
 }
 
 static bool
-viaide_suspend(device_t dv PMF_FN_ARGS)
+viaide_suspend(device_t dv, pmf_qual_t qual)
 {
 	struct pciide_softc *sc = device_private(dv);
 
@@ -415,7 +415,7 @@ viaide_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-viaide_resume(device_t dv PMF_FN_ARGS)
+viaide_resume(device_t dv, pmf_qual_t qual)
 {
 	struct pciide_softc *sc = device_private(dv);
 

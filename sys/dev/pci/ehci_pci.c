@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.45 2009/06/15 09:18:45 cegger Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.46 2010/01/08 19:56:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.45 2009/06/15 09:18:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.46 2010/01/08 19:56:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,8 +76,8 @@ static void ehci_release_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc,
 				   pcitag_t tag);
 static void ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc,
 			       pcitag_t tag);
-static bool ehci_pci_suspend(device_t PMF_FN_PROTO);
-static bool ehci_pci_resume(device_t PMF_FN_PROTO);
+static bool ehci_pci_suspend(device_t, pmf_qual_t);
+static bool ehci_pci_resume(device_t, pmf_qual_t);
 
 struct ehci_pci_softc {
 	ehci_softc_t		sc;
@@ -421,23 +421,23 @@ next:
 }
 
 static bool
-ehci_pci_suspend(device_t dv PMF_FN_ARGS)
+ehci_pci_suspend(device_t dv, pmf_qual_t qual)
 {
 	struct ehci_pci_softc *sc = device_private(dv);
 
-	ehci_suspend(dv PMF_FN_CALL);
+	ehci_suspend(dv, qual);
 	ehci_release_ownership(&sc->sc, sc->sc_pc, sc->sc_tag);
 
 	return true;
 }
 
 static bool
-ehci_pci_resume(device_t dv PMF_FN_ARGS)
+ehci_pci_resume(device_t dv, pmf_qual_t qual)
 {
 	struct ehci_pci_softc *sc = device_private(dv);
 
 	ehci_get_ownership(&sc->sc, sc->sc_pc, sc->sc_tag);
-	return ehci_resume(dv PMF_FN_CALL);
+	return ehci_resume(dv, qual);
 }
 
 static int

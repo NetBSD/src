@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.194 2010/01/08 12:07:08 rmind Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.195 2010/01/08 20:07:14 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.194 2010/01/08 12:07:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.195 2010/01/08 20:07:14 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2099,15 +2099,15 @@ device_pmf_is_registered(device_t dev)
 }
 
 bool
-device_pmf_driver_suspend(device_t dev PMF_FN_ARGS)
+device_pmf_driver_suspend(device_t dev, pmf_qual_t qual)
 {
 	if ((dev->dv_flags & DVF_DRIVER_SUSPENDED) != 0)
 		return true;
 	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) == 0)
 		return false;
-	if (pmf_qual_depth(PMF_FN_CALL1) <= DEVACT_LEVEL_DRIVER &&
+	if (pmf_qual_depth(qual) <= DEVACT_LEVEL_DRIVER &&
 	    dev->dv_driver_suspend != NULL &&
-	    !(*dev->dv_driver_suspend)(dev PMF_FN_CALL))
+	    !(*dev->dv_driver_suspend)(dev, qual))
 		return false;
 
 	dev->dv_flags |= DVF_DRIVER_SUSPENDED;
@@ -2115,15 +2115,15 @@ device_pmf_driver_suspend(device_t dev PMF_FN_ARGS)
 }
 
 bool
-device_pmf_driver_resume(device_t dev PMF_FN_ARGS)
+device_pmf_driver_resume(device_t dev, pmf_qual_t qual)
 {
 	if ((dev->dv_flags & DVF_DRIVER_SUSPENDED) == 0)
 		return true;
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) != 0)
 		return false;
-	if (pmf_qual_depth(PMF_FN_CALL1) <= DEVACT_LEVEL_DRIVER &&
+	if (pmf_qual_depth(qual) <= DEVACT_LEVEL_DRIVER &&
 	    dev->dv_driver_resume != NULL &&
-	    !(*dev->dv_driver_resume)(dev PMF_FN_CALL))
+	    !(*dev->dv_driver_resume)(dev, qual))
 		return false;
 
 	dev->dv_flags &= ~DVF_DRIVER_SUSPENDED;
@@ -2142,8 +2142,8 @@ device_pmf_driver_shutdown(device_t dev, int how)
 
 bool
 device_pmf_driver_register(device_t dev,
-    bool (*suspend)(device_t PMF_FN_PROTO),
-    bool (*resume)(device_t PMF_FN_PROTO),
+    bool (*suspend)(device_t, pmf_qual_t),
+    bool (*resume)(device_t, pmf_qual_t),
     bool (*shutdown)(device_t, int))
 {
 	dev->dv_driver_suspend = suspend;
@@ -2280,16 +2280,16 @@ device_pmf_bus_private(device_t dev)
 }
 
 bool
-device_pmf_bus_suspend(device_t dev PMF_FN_ARGS)
+device_pmf_bus_suspend(device_t dev, pmf_qual_t qual)
 {
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) != 0)
 		return true;
 	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) == 0 ||
 	    (dev->dv_flags & DVF_DRIVER_SUSPENDED) == 0)
 		return false;
-	if (pmf_qual_depth(PMF_FN_CALL1) <= DEVACT_LEVEL_BUS &&
+	if (pmf_qual_depth(qual) <= DEVACT_LEVEL_BUS &&
 	    dev->dv_bus_suspend != NULL &&
-	    !(*dev->dv_bus_suspend)(dev PMF_FN_CALL))
+	    !(*dev->dv_bus_suspend)(dev, qual))
 		return false;
 
 	dev->dv_flags |= DVF_BUS_SUSPENDED;
@@ -2297,13 +2297,13 @@ device_pmf_bus_suspend(device_t dev PMF_FN_ARGS)
 }
 
 bool
-device_pmf_bus_resume(device_t dev PMF_FN_ARGS)
+device_pmf_bus_resume(device_t dev, pmf_qual_t qual)
 {
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) == 0)
 		return true;
-	if (pmf_qual_depth(PMF_FN_CALL1) <= DEVACT_LEVEL_BUS &&
+	if (pmf_qual_depth(qual) <= DEVACT_LEVEL_BUS &&
 	    dev->dv_bus_resume != NULL &&
-	    !(*dev->dv_bus_resume)(dev PMF_FN_CALL))
+	    !(*dev->dv_bus_resume)(dev, qual))
 		return false;
 
 	dev->dv_flags &= ~DVF_BUS_SUSPENDED;
@@ -2322,8 +2322,8 @@ device_pmf_bus_shutdown(device_t dev, int how)
 
 void
 device_pmf_bus_register(device_t dev, void *priv,
-    bool (*suspend)(device_t PMF_FN_PROTO),
-    bool (*resume)(device_t PMF_FN_PROTO),
+    bool (*suspend)(device_t, pmf_qual_t),
+    bool (*resume)(device_t, pmf_qual_t),
     bool (*shutdown)(device_t, int), void (*deregister)(device_t))
 {
 	dev->dv_bus_private = priv;
@@ -2352,13 +2352,13 @@ device_pmf_class_private(device_t dev)
 }
 
 bool
-device_pmf_class_suspend(device_t dev PMF_FN_ARGS)
+device_pmf_class_suspend(device_t dev, pmf_qual_t qual)
 {
 	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) != 0)
 		return true;
-	if (pmf_qual_depth(PMF_FN_CALL1) <= DEVACT_LEVEL_CLASS &&
+	if (pmf_qual_depth(qual) <= DEVACT_LEVEL_CLASS &&
 	    dev->dv_class_suspend != NULL &&
-	    !(*dev->dv_class_suspend)(dev PMF_FN_CALL))
+	    !(*dev->dv_class_suspend)(dev, qual))
 		return false;
 
 	dev->dv_flags |= DVF_CLASS_SUSPENDED;
@@ -2366,16 +2366,16 @@ device_pmf_class_suspend(device_t dev PMF_FN_ARGS)
 }
 
 bool
-device_pmf_class_resume(device_t dev PMF_FN_ARGS)
+device_pmf_class_resume(device_t dev, pmf_qual_t qual)
 {
 	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) == 0)
 		return true;
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) != 0 ||
 	    (dev->dv_flags & DVF_DRIVER_SUSPENDED) != 0)
 		return false;
-	if (pmf_qual_depth(PMF_FN_CALL1) <= DEVACT_LEVEL_CLASS &&
+	if (pmf_qual_depth(qual) <= DEVACT_LEVEL_CLASS &&
 	    dev->dv_class_resume != NULL &&
-	    !(*dev->dv_class_resume)(dev PMF_FN_CALL))
+	    !(*dev->dv_class_resume)(dev, qual))
 		return false;
 
 	dev->dv_flags &= ~DVF_CLASS_SUSPENDED;
@@ -2384,8 +2384,8 @@ device_pmf_class_resume(device_t dev PMF_FN_ARGS)
 
 void
 device_pmf_class_register(device_t dev, void *priv,
-    bool (*suspend)(device_t PMF_FN_PROTO),
-    bool (*resume)(device_t PMF_FN_PROTO),
+    bool (*suspend)(device_t, pmf_qual_t),
+    bool (*resume)(device_t, pmf_qual_t),
     void (*deregister)(device_t))
 {
 	dev->dv_class_private = priv;

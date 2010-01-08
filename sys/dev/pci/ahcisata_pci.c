@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.17 2009/10/19 18:41:14 bouyer Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.18 2010/01/08 19:56:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.17 2009/10/19 18:41:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.18 2010/01/08 19:56:51 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -74,7 +74,7 @@ static int  ahci_pci_match(device_t, cfdata_t, void *);
 static void ahci_pci_attach(device_t, device_t, void *);
 const struct pci_quirkdata *ahci_pci_lookup_quirkdata(pci_vendor_id_t,
 						      pci_product_id_t);
-static bool ahci_pci_resume(device_t PMF_FN_PROTO);
+static bool ahci_pci_resume(device_t, pmf_qual_t);
 
 
 CFATTACH_DECL_NEW(ahcisata_pci, sizeof(struct ahci_pci_softc),
@@ -171,7 +171,7 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 }
 
 static bool
-ahci_pci_resume(device_t dv PMF_FN_ARGS)
+ahci_pci_resume(device_t dv, pmf_qual_t qual)
 {
 	struct ahci_pci_softc *psc = device_private(dv);
 	struct ahci_softc *sc = &psc->ah_sc;

@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.21 2009/11/29 21:32:50 cegger Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.22 2010/01/08 20:40:41 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.21 2009/11/29 21:32:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.22 2010/01/08 20:40:41 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -121,7 +121,7 @@ static void	thinkpad_fan_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 static void	thinkpad_wireless_toggle(thinkpad_softc_t *);
 
-static bool	thinkpad_resume(device_t PMF_FN_PROTO);
+static bool	thinkpad_resume(device_t, pmf_qual_t);
 static void	thinkpad_brightness_up(device_t);
 static void	thinkpad_brightness_down(device_t);
 static uint8_t	thinkpad_brightness_read(thinkpad_softc_t *sc);
@@ -610,7 +610,7 @@ thinkpad_cmos(thinkpad_softc_t *sc, uint8_t cmd)
 }
 
 static bool
-thinkpad_resume(device_t dv PMF_FN_ARGS)
+thinkpad_resume(device_t dv, pmf_qual_t qual)
 {
 	ACPI_STATUS rv;
 	ACPI_HANDLE pubs;

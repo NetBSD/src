@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.7 2010/01/04 10:06:53 jruoho Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.8 2010/01/08 20:40:41 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.7 2010/01/04 10:06:53 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.8 2010/01/08 20:40:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -130,8 +130,8 @@ static ACPI_STATUS acpi_wmi_guid_get(struct acpi_wmi_softc *,
 static void        acpi_wmi_event_add(struct acpi_wmi_softc *);
 static void        acpi_wmi_event_del(struct acpi_wmi_softc *);
 static void        acpi_wmi_event_handler(ACPI_HANDLE, uint32_t, void *);
-static bool        acpi_wmi_suspend(device_t PMF_FN_PROTO);
-static bool        acpi_wmi_resume(device_t PMF_FN_PROTO);
+static bool        acpi_wmi_suspend(device_t, pmf_qual_t);
+static bool        acpi_wmi_resume(device_t, pmf_qual_t);
 static ACPI_STATUS acpi_wmi_enable(ACPI_HANDLE, const char *, bool, bool);
 static bool        acpi_wmi_input(struct wmi_t *, uint8_t, uint8_t);
 
@@ -539,7 +539,7 @@ acpi_wmi_event_register(device_t self, ACPI_NOTIFY_HANDLER handler)
  * disable (enable) these before suspending (resuming).
  */
 static bool
-acpi_wmi_suspend(device_t self PMF_FN_ARGS)
+acpi_wmi_suspend(device_t self, pmf_qual_t qual)
 {
 	struct acpi_wmi_softc *sc = device_private(self);
 
@@ -549,7 +549,7 @@ acpi_wmi_suspend(device_t self PMF_FN_ARGS)
 }
 
 static bool
-acpi_wmi_resume(device_t self PMF_FN_ARGS)
+acpi_wmi_resume(device_t self, pmf_qual_t qual)
 {
 	struct acpi_wmi_softc *sc = device_private(self);
 

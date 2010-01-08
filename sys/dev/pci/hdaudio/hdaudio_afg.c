@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.17 2009/10/11 08:50:11 sborrill Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.18 2010/01/08 19:56:52 dyoung Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.17 2009/10/11 08:50:11 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.18 2010/01/08 19:56:52 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -309,8 +309,8 @@ static int	hdaudio_afg_match(device_t, cfdata_t, void *);
 static void	hdaudio_afg_attach(device_t, device_t, void *);
 static int	hdaudio_afg_detach(device_t, int);
 static void	hdaudio_afg_childdet(device_t, device_t);
-static bool	hdaudio_afg_suspend(device_t PMF_FN_PROTO);
-static bool	hdaudio_afg_resume(device_t PMF_FN_PROTO);
+static bool	hdaudio_afg_suspend(device_t, pmf_qual_t);
+static bool	hdaudio_afg_resume(device_t, pmf_qual_t);
 
 CFATTACH_DECL2_NEW(
     hdafg,
@@ -3247,7 +3247,7 @@ hdaudio_afg_childdet(device_t self, device_t child)
 }
 
 static bool
-hdaudio_afg_suspend(device_t self PMF_FN_ARGS)
+hdaudio_afg_suspend(device_t self, pmf_qual_t qual)
 {
 	struct hdaudio_afg_softc *sc = device_private(self);
 
@@ -3257,7 +3257,7 @@ hdaudio_afg_suspend(device_t self PMF_FN_ARGS)
 }
 
 static bool
-hdaudio_afg_resume(device_t self PMF_FN_ARGS)
+hdaudio_afg_resume(device_t self, pmf_qual_t qual)
 {
 	struct hdaudio_afg_softc *sc = device_private(self);
 	int nid;

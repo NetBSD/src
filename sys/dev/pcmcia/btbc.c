@@ -1,4 +1,4 @@
-/*	$NetBSD: btbc.c,v 1.13 2009/05/12 13:18:04 cegger Exp $	*/
+/*	$NetBSD: btbc.c,v 1.14 2010/01/08 20:01:00 dyoung Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.13 2009/05/12 13:18:04 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.14 2010/01/08 20:01:00 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -104,8 +104,8 @@ struct btbc_softc {
 static int btbc_match(device_t, cfdata_t, void *);
 static void btbc_attach(device_t, device_t, void *);
 static int btbc_detach(device_t, int);
-static bool btbc_suspend(device_t PMF_FN_PROTO);
-static bool btbc_resume(device_t PMF_FN_PROTO);
+static bool btbc_suspend(device_t, pmf_qual_t);
+static bool btbc_resume(device_t, pmf_qual_t);
 
 static void btbc_activity_led_timeout(void *);
 static void btbc_enable_activity_led(struct btbc_softc *);
@@ -224,7 +224,7 @@ btbc_detach(device_t self, int flags)
 }
 
 static bool
-btbc_suspend(device_t self PMF_FN_ARGS)
+btbc_suspend(device_t self, pmf_qual_t qual)
 {
 	struct btbc_softc *sc = device_private(self);
 
@@ -238,7 +238,7 @@ btbc_suspend(device_t self PMF_FN_ARGS)
 
 
 static bool
-btbc_resume(device_t self PMF_FN_ARGS)
+btbc_resume(device_t self, pmf_qual_t qual)
 {
 	struct btbc_softc *sc = device_private(self);
 

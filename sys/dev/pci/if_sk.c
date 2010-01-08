@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.62 2009/11/26 15:17:10 njoly Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.63 2010/01/08 19:56:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.62 2009/11/26 15:17:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.63 2010/01/08 19:56:52 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -210,9 +210,9 @@ void sk_setfilt(struct sk_if_softc *, void *, int);
 void sk_setmulti(struct sk_if_softc *);
 void sk_tick(void *);
 
-static bool skc_suspend(device_t dv PMF_FN_ARGS);
-static bool skc_resume(device_t dv PMF_FN_ARGS);
-static bool sk_resume(device_t dv PMF_FN_ARGS);
+static bool skc_suspend(device_t dv, pmf_qual_t qual);
+static bool skc_resume(device_t dv, pmf_qual_t qual);
+static bool sk_resume(device_t dv, pmf_qual_t qual);
 
 /* #define SK_DEBUG 2 */
 #ifdef SK_DEBUG
@@ -2955,7 +2955,7 @@ sk_stop(struct ifnet *ifp, int disable)
 /* Power Management Framework */
 
 static bool
-skc_suspend(device_t dv PMF_FN_ARGS)
+skc_suspend(device_t dv, pmf_qual_t qual)
 {
 	struct sk_softc *sc = device_private(dv);
 
@@ -2968,7 +2968,7 @@ skc_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-skc_resume(device_t dv PMF_FN_ARGS)
+skc_resume(device_t dv, pmf_qual_t qual)
 {
 	struct sk_softc *sc = device_private(dv);
 
@@ -2981,7 +2981,7 @@ skc_resume(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-sk_resume(device_t dv PMF_FN_ARGS)
+sk_resume(device_t dv, pmf_qual_t qual)
 {
 	struct sk_if_softc *sc_if = device_private(dv);
 
