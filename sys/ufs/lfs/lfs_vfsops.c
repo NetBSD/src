@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.281 2009/12/07 04:12:10 eeh Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.282 2010/01/08 11:35:12 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.281 2009/12/07 04:12:10 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.282 2010/01/08 11:35:12 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -960,7 +960,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		goto out;
 	}
 	fs->lfs_ivnode = vp;
-	VREF(vp);
+	vref(vp);
 
 	/* Set up inode bitmap and order free list */
 	lfs_order_freelist(fs);
@@ -1912,7 +1912,7 @@ inconsistent:
 	 */
 
 	ip->i_devvp = ump->um_devvp;
-	VREF(ip->i_devvp);
+	vref(ip->i_devvp);
 	genfs_node_init(vp, &lfs_genfsops);
 	uvm_vnp_setsize(vp, ip->i_size);
 

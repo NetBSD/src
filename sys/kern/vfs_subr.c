@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.393 2010/01/07 19:54:40 pooka Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.394 2010/01/08 11:35:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.393 2010/01/07 19:54:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.394 2010/01/08 11:35:10 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2597,7 +2597,7 @@ done:
 		if (error)
 			panic("cannot find root vnode, error=%d", error);
 		cwdi0.cwdi_cdir = rootvnode;
-		VREF(cwdi0.cwdi_cdir);
+		vref(cwdi0.cwdi_cdir);
 		VOP_UNLOCK(rootvnode, 0);
 		cwdi0.cwdi_rdir = NULL;
 
@@ -2607,7 +2607,7 @@ done:
 		 * share proc0's CWD info.
 		 */
 		initproc->p_cwdi->cwdi_cdir = rootvnode;
-		VREF(initproc->p_cwdi->cwdi_cdir);
+		vref(initproc->p_cwdi->cwdi_cdir);
 		initproc->p_cwdi->cwdi_rdir = NULL;
 	}
 	return (error);

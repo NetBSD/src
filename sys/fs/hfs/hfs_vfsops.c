@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.24 2009/12/03 14:29:04 pooka Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.25 2010/01/08 11:35:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.24 2009/12/03 14:29:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.25 2010/01/08 11:35:08 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -618,7 +618,7 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	hfs_vinit(mp, hfs_specop_p, hfs_fifoop_p, &vp);
 
 	hnode->h_devvp = hmp->hm_devvp;	
-	VREF(hnode->h_devvp);  /* Increment the ref count to the volume's device. */
+	vref(hnode->h_devvp);  /* Increment the ref count to the volume's device. */
 
 	/* Make sure UVM has allocated enough memory. (?) */
 	if (hnode->h_rec.u.rec_type == HFS_REC_FILE) {

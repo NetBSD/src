@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.102 2009/09/28 00:39:03 dholland Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.103 2010/01/08 11:35:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.102 2009/09/28 00:39:03 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.103 2010/01/08 11:35:12 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -531,7 +531,7 @@ found:
 		else
 			dp->i_count = dp->i_offset - prevoff;
 		if (dp->i_number == foundino) {
-			VREF(vdp);
+			vref(vdp);
 			*vpp = vdp;
 			error = 0;
 			goto out;
@@ -623,7 +623,7 @@ found:
 		}
 		*vpp = tdp;
 	} else if (dp->i_number == foundino) {
-		VREF(vdp);	/* we want ourself, ie "." */
+		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
 		error = VFS_VGET(vdp->v_mount, foundino, &tdp);

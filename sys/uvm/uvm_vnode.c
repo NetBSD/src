@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.92 2009/08/04 23:31:57 pooka Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.93 2010/01/08 11:35:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.92 2009/08/04 23:31:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.93 2010/01/08 11:35:12 pooka Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -114,7 +114,7 @@ const struct uvm_pagerops uvm_vnodeops = {
 static void
 uvn_reference(struct uvm_object *uobj)
 {
-	VREF((struct vnode *)uobj);
+	vref((struct vnode *)uobj);
 }
 
 

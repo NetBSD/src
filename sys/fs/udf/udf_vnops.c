@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.56 2010/01/05 13:30:11 mbalmer Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.57 2010/01/08 11:35:09 pooka Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.56 2010/01/05 13:30:11 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.57 2010/01/08 11:35:09 pooka Exp $");
 #endif /* not lint */
 
 
@@ -704,7 +704,7 @@ udf_lookup(void *v)
 	if ((cnp->cn_namelen == 1) && (cnp->cn_nameptr[0] == '.')) {
 		DPRINTF(LOOKUP, ("\tlookup '.'\n"));
 		/* special case 1 '.' */
-		VREF(dvp);
+		vref(dvp);
 		*vpp = dvp;
 		/* done */
 	} else if (cnp->cn_flags & ISDOTDOT) {
@@ -883,7 +883,7 @@ udf_getattr(void *v)
 		gid = ump->mount_args.anon_gid;
 
 	/* fill in struct vattr with values from the node */
-	VATTR_NULL(vap);
+	vattr_null(vap);
 	vap->va_type      = vp->v_type;
 	vap->va_mode      = udf_getaccessmode(udf_node);
 	vap->va_nlink     = nlink;

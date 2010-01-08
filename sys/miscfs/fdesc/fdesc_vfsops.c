@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.83 2009/11/30 10:59:20 pooka Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.84 2010/01/08 11:35:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.83 2009/11/30 10:59:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.84 2010/01/08 11:35:10 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -147,7 +147,7 @@ fdesc_root(struct mount *mp, struct vnode **vpp)
 	 * Return locked reference to root.
 	 */
 	vp = mp->mnt_data;
-	VREF(vp);
+	vref(vp);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	*vpp = vp;
 	return (0);

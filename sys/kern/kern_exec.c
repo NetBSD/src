@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.292 2009/12/10 14:13:54 matt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.293 2010/01/08 11:35:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.292 2009/12/10 14:13:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.293 2010/01/08 11:35:10 pooka Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -763,7 +763,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	/* record proc's vnode, for use by procfs and others */
         if (p->p_textvp)
                 vrele(p->p_textvp);
-	VREF(pack.ep_vp);
+	vref(pack.ep_vp);
 	p->p_textvp = pack.ep_vp;
 
 	/* Now map address space */
