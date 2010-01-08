@@ -1,4 +1,4 @@
-.\"     $NetBSD: pcq.9,v 1.2 2010/01/04 23:06:34 wiz Exp $
+.\"     $NetBSD: pcq.9,v 1.3 2010/01/08 12:12:49 rmind Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,14 +31,8 @@
 .Dt PCQ 9
 .Os
 .Sh NAME
-.Nm PCQ ,
-.Nm pcq_create ,
-.Nm pcq_destroy ,
-.Nm pcq_get ,
-.Nm pcq_maxitems ,
-.Nm pcq_peek ,
-.Nm pcq_put
-.Nd Producer/consumer queue
+.Nm pcq
+.Nd producer/consumer queue
 .Sh SYNOPSIS
 .In sys/pcq.h
 .Ft pcq_t *
@@ -56,17 +50,16 @@
 .Sh DESCRIPTION
 The machine-independent
 .Nm
-framework provides producer/consumer queues.
+interface provides lockless producer/consumer queues.
 A queue
 .Po
 .Vt pcq_t
 .Pc
 allows multiple writers
-.Pq producers
+.Pq producers ,
 but only a single reader
 .Pq consumer .
-Compare-and-store operations are used to allow lockless updates.
-The consumer is expected to be protected by a mutex that covers
+The consumer is expected to be protected by a lock that covers
 the structure that the
 .Vt pcq_t
 is embedded into
@@ -80,7 +73,7 @@ The act of inserting or removing an item from a
 .Vt pcq_t
 does not modify the item in any way.
 .Nm
-does not prevent an item being inserted multiple times into a single
+does not prevent an item from being inserted multiple times into a single
 .Vt pcq_t .
 .Sh FUNCTIONS
 .Bl -tag -width compact
@@ -93,13 +86,11 @@ should be either
 .Dv KM_SLEEP ,
 if
 .Fn pcq_create
-should sleep until resources are available, or
+is allowed to sleep until resources are available, or
 .Dv KM_NOSLEEP
 if it should return
 .Dv NULL
-if resources are unavailable.
-See
-.Xr kmem 9 .
+immediately, if resources are unavailable.
 .It Fn pcq_destroy "pcq"
 Free the resources held by
 .Fa pcq .
@@ -127,17 +118,30 @@ otherwise, return
 The item must not have the value of
 .Dv NULL .
 .El
-.Sh FILES
-.Bl -tag -width sys/kern/subr_pcq.c
-.It Pa sys/kern/subr_pcq.c
+
+.Sh CODE REFERENCES
+This section describes places within the
+.Nx
+source tree where actual code implementing the
 .Nm
-implementation.
-.El
+interface
+can be found.
+All pathnames are relative to
+.Pa /usr/src .
+.Pp
+The
+.Nm
+interface is implemented within the file
+.Pa sys/kern/subr_pcq.c .
 .\" .Sh EXAMPLES
-.\" .Sh SEE ALSO
-.\" Cross-references should be ordered by section (low to high), then in
-.\"     alphabetical order.
-.\" .Sh HISTORY
+.Sh SEE ALSO
+.Xr atomic_ops 3 ,
+.Xr queue 9
+.Sh HISTORY
+The
+.Nm
+interface first appeared in
+.Nx 6.0 .
 .Sh AUTHORS
 .An Matt Thomas Aq matt@NetBSD.org
 .\" .Sh CAVEATS
