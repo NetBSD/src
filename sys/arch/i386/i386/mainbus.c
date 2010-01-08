@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.87 2009/08/18 16:41:02 jmcneill Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.88 2010/01/08 00:09:44 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.87 2009/08/18 16:41:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.88 2010/01/08 00:09:44 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,13 +322,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-}
-
-/* XXX share this with sys/arch/i386/pci/elan520.c */
-static bool
-ifattr_match(const char *snull, const char *t)
-{
-	return (snull == NULL) || strcmp(snull, t) == 0;
 }
 
 /* scan for new children */

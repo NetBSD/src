@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.21 2009/09/27 18:27:01 jakllsch Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.22 2010/01/08 00:09:45 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.21 2009/09/27 18:27:01 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.22 2010/01/08 00:09:45 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -346,15 +346,6 @@ lpcibchilddet(device_t self, device_t child)
 		    val);
 	}
 }
-
-#if NHPET > 0 || NGPIO > 0
-/* XXX share this with sys/arch/i386/pci/elan520.c */
-static bool
-ifattr_match(const char *snull, const char *t)
-{
-	return (snull == NULL) || strcmp(snull, t) == 0;
-}
-#endif
 
 static int
 lpcibrescan(device_t self, const char *ifattr, const int *locators)

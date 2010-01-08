@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.44 2009/12/01 01:08:45 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.45 2010/01/08 00:09:44 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.44 2009/12/01 01:08:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.45 2010/01/08 00:09:44 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1422,12 +1422,6 @@ elanpar_match(device_t parent, cfdata_t match, void *aux)
 	struct elansc_softc *sc = device_private(parent);
 
 	return sc->sc_par == NULL;
-}
-
-static bool
-ifattr_match(const char *snull, const char *t)
-{
-	return (snull == NULL) || strcmp(snull, t) == 0;
 }
 
 /* scan for new children */
