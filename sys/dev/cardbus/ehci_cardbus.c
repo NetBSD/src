@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_cardbus.c,v 1.23 2009/05/12 12:11:17 cegger Exp $	*/
+/*	$NetBSD: ehci_cardbus.c,v 1.24 2010/01/08 19:47:42 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.23 2009/05/12 12:11:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.24 2010/01/08 19:47:42 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,9 +102,9 @@ ehci_cardbus_match(device_t parent, cfdata_t match, void *aux)
 }
 
 static bool
-ehci_cardbus_suspend(device_t dv PMF_FN_ARGS)
+ehci_cardbus_suspend(device_t dv, pmf_qual_t qual)
 {
-	ehci_suspend(dv PMF_FN_CALL);
+	ehci_suspend(dv, qual);
 #if 0
 	struct ehci_cardbus_softc *sc = device_private(dv);
 	ehci_release_ownership(&sc->sc, sc->sc_pc, sc->sc_tag);
@@ -114,13 +114,13 @@ ehci_cardbus_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-ehci_cardbus_resume(device_t dv PMF_FN_ARGS)
+ehci_cardbus_resume(device_t dv, pmf_qual_t qual)
 {
 #if 0
 	struct ehci_cardbus_softc *sc = device_private(dv);
 	ehci_get_ownership(&sc->sc, sc->sc_pc, sc->sc_tag);
 #endif
-	return ehci_resume(dv PMF_FN_CALL);
+	return ehci_resume(dv, qual);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_cardbus.c,v 1.2 2009/10/19 18:41:12 bouyer Exp $ */
+/* $NetBSD: siisata_cardbus.c,v 1.3 2010/01/08 19:47:42 dyoung Exp $ */
 /* Id: siisata_pci.c,v 1.11 2008/05/21 16:20:11 jakllsch Exp  */
 
 /*
@@ -83,7 +83,7 @@ struct siisata_cardbus_softc {
 static int siisata_cardbus_match(device_t, cfdata_t, void *);
 static void siisata_cardbus_attach(device_t, device_t, void *);
 static int siisata_cardbus_detach(device_t, int);
-static bool siisata_cardbus_resume(device_t PMF_FN_PROTO);
+static bool siisata_cardbus_resume(device_t, pmf_qual_t);
 
 static const struct siisata_cardbus_product {
 	cardbus_vendor_id_t scp_vendor;
@@ -297,7 +297,7 @@ siisata_cardbus_detach(device_t self, int flags)
 }
 
 static bool
-siisata_cardbus_resume(device_t dv PMF_FN_ARGS)
+siisata_cardbus_resume(device_t dv, pmf_qual_t qual)
 {
 	struct siisata_cardbus_softc *csc = device_private(dv);
 	struct siisata_softc *sc = &csc->si_sc;
