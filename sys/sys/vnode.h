@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.211 2010/01/08 11:35:11 pooka Exp $	*/
+/*	$NetBSD: vnode.h,v 1.212 2010/01/08 13:07:26 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -588,7 +588,6 @@ int 	getnewvnode(enum vtagtype, struct mount *, int (**)(void *),
 void	ungetnewvnode(struct vnode *);
 int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, kauth_cred_t);
 void 	vattr_null(struct vattr *);
-int 	vcount(struct vnode *);
 void	vdevgone(int, int, int, enum vtype);
 int	vfinddev(dev_t, enum vtype, struct vnode **);
 int	vflush(struct mount *, struct vnode *, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.394 2010/01/08 11:35:10 pooka Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.395 2010/01/08 13:07:26 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.394 2010/01/08 11:35:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.395 2010/01/08 13:07:26 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2028,28 +2028,6 @@ vdevgone(int maj, int minl, int minh, enum vtype type)
 		}
 	}
 	mutex_exit(&device_lock);
-}
-
-/*
- * Calculate the total number of references to a special device.
- */
-int
-vcount(vnode_t *vp)
-{
-	int count;
-
-	mutex_enter(&device_lock);
-	mutex_enter(&vp->v_interlock);
-	if (vp->v_specnode == NULL) {
-		count = vp->v_usecount - ((vp->v_iflag & VI_INACTPEND) != 0);
-		mutex_exit(&vp->v_interlock);
-		mutex_exit(&device_lock);
-		return (count);
-	}
-	mutex_exit(&vp->v_interlock);
-	count = vp->v_specnode->sn_dev->sd_opencnt;
-	mutex_exit(&device_lock);
-	return (count);
 }
 
 /*
