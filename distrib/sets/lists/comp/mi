@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1356 2010/01/08 06:25:14 dyoung Exp $
+#	$NetBSD: mi,v 1.1357 2010/01/08 12:41:33 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8297,7 +8297,7 @@
 ./usr/share/man/cat9/FILE_UNUSE.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/FILE_USE.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/FREE.0			comp-sys-catman		.cat
-./usr/share/man/cat9/HOLDRELE.0			comp-sys-catman		.cat
+./usr/share/man/cat9/HOLDRELE.0			comp-sys-catman		obsolete
 ./usr/share/man/cat9/KASSERT.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/KDASSERT.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/KNOTE.0			comp-sys-catman		.cat
@@ -8331,7 +8331,7 @@
 ./usr/share/man/cat9/SCHED_UNLOCK.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/TC_DENSE_TO_SPARSE.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/TC_PHYS_TO_UNCACHED.0	comp-sys-catman		.cat
-./usr/share/man/cat9/VATTR_NULL.0		comp-sys-catman		.cat
+./usr/share/man/cat9/VATTR_NULL.0		comp-sys-catman		obsolete
 ./usr/share/man/cat9/VFS_CHECKEXP.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_FHTOVP.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_MOUNT.0		comp-sys-catman		.cat
@@ -8346,7 +8346,7 @@
 ./usr/share/man/cat9/VFS_UNMOUNT.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_VGET.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_VPTOFH.0		comp-sys-catman		.cat
-./usr/share/man/cat9/VHOLD.0			comp-sys-catman		.cat
+./usr/share/man/cat9/VHOLD.0			comp-sys-catman		obsolete
 ./usr/share/man/cat9/VOP_ABORTOP.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_ACCESS.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_ADVLOCK.0		comp-sys-catman		.cat
@@ -8398,7 +8398,7 @@
 ./usr/share/man/cat9/VOP_VFREE.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/VOP_WHITEOUT.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_WRITE.0		comp-sys-catman		.cat
-./usr/share/man/cat9/VREF.0			comp-sys-catman		.cat
+./usr/share/man/cat9/VREF.0			comp-sys-catman		obsolete
 ./usr/share/man/cat9/accept_filt_add.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/accept_filt_del.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/accept_filt_generic_mod_event.0	comp-sys-catman		.cat
@@ -13853,7 +13853,7 @@
 ./usr/share/man/html9/FILE_UNUSE.html		comp-sys-htmlman	html
 ./usr/share/man/html9/FILE_USE.html		comp-sys-htmlman	html
 ./usr/share/man/html9/FREE.html			comp-sys-htmlman	html
-./usr/share/man/html9/HOLDRELE.html		comp-sys-htmlman	html
+./usr/share/man/html9/HOLDRELE.html		comp-sys-htmlman	obsolete
 ./usr/share/man/html9/KASSERT.html		comp-sys-htmlman	html
 ./usr/share/man/html9/KDASSERT.html		comp-sys-htmlman	html
 ./usr/share/man/html9/KNOTE.html		comp-sys-htmlman	html
@@ -13884,7 +13884,7 @@
 ./usr/share/man/html9/RUN_ONCE.html		comp-sys-htmlman	html
 ./usr/share/man/html9/TC_DENSE_TO_SPARSE.html	comp-sys-htmlman	html
 ./usr/share/man/html9/TC_PHYS_TO_UNCACHED.html	comp-sys-htmlman	html
-./usr/share/man/html9/VATTR_NULL.html		comp-sys-htmlman	html
+./usr/share/man/html9/VATTR_NULL.html		comp-sys-htmlman	obsolete
 ./usr/share/man/html9/VFS_CHECKEXP.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VFS_FHTOVP.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VFS_MOUNT.html		comp-sys-htmlman	html
@@ -13898,7 +13898,7 @@
 ./usr/share/man/html9/VFS_UNMOUNT.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VFS_VGET.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VFS_VPTOFH.html		comp-sys-htmlman	html
-./usr/share/man/html9/VHOLD.html		comp-sys-htmlman	html
+./usr/share/man/html9/VHOLD.html		comp-sys-htmlman	obsolete
 ./usr/share/man/html9/VOP_ABORTOP.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_ACCESS.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_ADVLOCK.html		comp-sys-htmlman	html
@@ -13943,7 +13943,7 @@
 ./usr/share/man/html9/VOP_UNLOCK.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_WHITEOUT.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_WRITE.html		comp-sys-htmlman	html
-./usr/share/man/html9/VREF.html			comp-sys-htmlman	html
+./usr/share/man/html9/VREF.html			comp-sys-htmlman	obsolete
 ./usr/share/man/html9/accept_filt_add.html	comp-sys-htmlman	html
 ./usr/share/man/html9/accept_filt_del.html	comp-sys-htmlman	html
 ./usr/share/man/html9/accept_filt_generic_mod_event.html	comp-sys-htmlman	html
@@ -19496,7 +19496,7 @@
 ./usr/share/man/man9/FILE_UNUSE.9		comp-sys-man		.man
 ./usr/share/man/man9/FILE_USE.9			comp-sys-man		.man
 ./usr/share/man/man9/FREE.9			comp-sys-man		.man
-./usr/share/man/man9/HOLDRELE.9			comp-sys-man		.man
+./usr/share/man/man9/HOLDRELE.9			comp-sys-man		obsolete
 ./usr/share/man/man9/KASSERT.9			comp-sys-man		.man
 ./usr/share/man/man9/KDASSERT.9			comp-sys-man		.man
 ./usr/share/man/man9/KNOTE.9			comp-sys-man		.man
@@ -19530,7 +19530,7 @@
 ./usr/share/man/man9/SCHED_UNLOCK.9		comp-obsolete		obsolete
 ./usr/share/man/man9/TC_DENSE_TO_SPARSE.9	comp-sys-man		.man
 ./usr/share/man/man9/TC_PHYS_TO_UNCACHED.9	comp-sys-man		.man
-./usr/share/man/man9/VATTR_NULL.9		comp-sys-man		.man
+./usr/share/man/man9/VATTR_NULL.9		comp-sys-man		obsolete
 ./usr/share/man/man9/VFS_CHECKEXP.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_FHTOVP.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_MOUNT.9		comp-sys-man		.man
@@ -19545,7 +19545,7 @@
 ./usr/share/man/man9/VFS_UNMOUNT.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_VGET.9			comp-sys-man		.man
 ./usr/share/man/man9/VFS_VPTOFH.9		comp-sys-man		.man
-./usr/share/man/man9/VHOLD.9			comp-sys-man		.man
+./usr/share/man/man9/VHOLD.9			comp-sys-man		obsolete
 ./usr/share/man/man9/VOP_ABORTOP.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_ACCESS.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_ADVLOCK.9		comp-sys-man		.man
@@ -19597,7 +19597,7 @@
 ./usr/share/man/man9/VOP_VFREE.9		comp-obsolete		obsolete
 ./usr/share/man/man9/VOP_WHITEOUT.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_WRITE.9		comp-sys-man		.man
-./usr/share/man/man9/VREF.9			comp-sys-man		.man
+./usr/share/man/man9/VREF.9			comp-sys-man		obsolete
 ./usr/share/man/man9/accept_filt_add.9		comp-sys-man		.man
 ./usr/share/man/man9/accept_filt_del.9		comp-sys-man		.man
 ./usr/share/man/man9/accept_filt_generic_mod_event.9	comp-sys-man		.man
