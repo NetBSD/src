@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.3 2010/01/05 13:30:11 mbalmer Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.4 2010/01/08 11:35:08 pooka Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.3 2010/01/05 13:30:11 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.4 2010/01/08 11:35:08 pooka Exp $");
 #endif /* not lint */
 
 
@@ -648,7 +648,7 @@ nilfs_lookup(void *v)
 	if ((cnp->cn_namelen == 1) && (cnp->cn_nameptr[0] == '.')) {
 		DPRINTF(LOOKUP, ("\tlookup '.'\n"));
 		/* special case 1 '.' */
-		VREF(dvp);
+		vref(dvp);
 		*vpp = dvp;
 		/* done */
 	} else if (cnp->cn_flags & ISDOTDOT) {
@@ -776,7 +776,7 @@ nilfs_getattr(void *v)
 	DPRINTF(VFSCALL, ("nilfs_getattr called\n"));
 
 	/* basic info */
-	VATTR_NULL(vap);
+	vattr_null(vap);
 	vap->va_type      = vp->v_type;
 	vap->va_mode      = nilfs_rw16(inode->i_mode);	/* XXX same? */
 	vap->va_nlink     = nilfs_rw16(inode->i_links_count);

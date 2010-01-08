@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.115 2009/12/07 04:12:10 eeh Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.116 2010/01/08 11:35:12 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.115 2009/12/07 04:12:10 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.116 2010/01/08 11:35:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,9 +318,9 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 	 * vref vnodes here so that cleaner doesn't try to reuse them.
 	 * (see XXX comment in lfs_reserveavail)
 	 */
-	VHOLD(vp);
+	vhold(vp);
 	if (vp2 != NULL) {
-		VHOLD(vp2);
+		vhold(vp2);
 	}
 
 	error = lfs_reserveavail(fs, vp, vp2, fsb);
@@ -336,9 +336,9 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 		lfs_reserveavail(fs, vp, vp2, -fsb);
 
 done:
-	HOLDRELE(vp);
+	holdrele(vp);
 	if (vp2 != NULL) {
-		HOLDRELE(vp2);
+		holdrele(vp2);
 	}
 
 	return error;

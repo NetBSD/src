@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.34 2008/12/17 20:51:35 cegger Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.35 2010/01/08 11:35:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.34 2008/12/17 20:51:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.35 2010/01/08 11:35:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,7 +354,7 @@ union_allocvp(
 		if (lowervp == NULLVP) {
 			lowervp = um->um_lowervp;
 			if (lowervp != NULLVP)
-				VREF(lowervp);
+				vref(lowervp);
 		}
 		iflag = 0;
 		vflag = VV_ROOT;
@@ -485,7 +485,7 @@ loop:
 				memcpy(un->un_path, cnp->cn_nameptr,
 						cnp->cn_namelen);
 				un->un_path[cnp->cn_namelen] = '\0';
-				VREF(dvp);
+				vref(dvp);
 				un->un_dirvp = dvp;
 			}
 		} else if (lowervp) {
@@ -543,7 +543,7 @@ loop:
 	un->un_lowervp = lowervp;
 	un->un_pvp = undvp;
 	if (undvp != NULLVP)
-		VREF(undvp);
+		vref(undvp);
 	un->un_dircache = 0;
 	un->un_openl = 0;
 	un->un_flags = UN_LOCKED;
@@ -565,7 +565,7 @@ loop:
 		un->un_path = malloc(cnp->cn_namelen+1, M_TEMP, M_WAITOK);
 		memcpy(un->un_path, cnp->cn_nameptr, cnp->cn_namelen);
 		un->un_path[cnp->cn_namelen] = '\0';
-		VREF(dvp);
+		vref(dvp);
 		un->un_dirvp = dvp;
 	} else {
 		un->un_hash = 0;
@@ -720,7 +720,7 @@ union_copyup(struct union_node *un, int docopy, kauth_cred_t cred,
 		}
 		if (error == 0) {
 			/* Copy permissions up too */
-			VATTR_NULL(&uvattr);
+			vattr_null(&uvattr);
 			uvattr.va_mode = lvattr.va_mode;
 			uvattr.va_flags = lvattr.va_flags;
         		error = VOP_SETATTR(uvp, &uvattr, cred);
@@ -855,7 +855,7 @@ union_mkshadow(struct union_mount *um, struct vnode *dvp,
 	 * mkdir syscall).  (jsp, kb)
 	 */
 
-	VATTR_NULL(&va);
+	vattr_null(&va);
 	va.va_type = VDIR;
 	va.va_mode = um->um_cmode;
 
@@ -970,7 +970,7 @@ union_vn_create(struct vnode **vpp, struct union_node *un, struct lwp *l)
 	 * require access to the top-level file.
 	 * TODO: confirm choice of access permissions.
 	 */
-	VATTR_NULL(vap);
+	vattr_null(vap);
 	vap->va_type = VREG;
 	vap->va_mode = cmode;
 	vref(un->un_dirvp);
@@ -1067,7 +1067,7 @@ union_dircache_r(struct vnode *vp, struct vnode ***vppp, int *cntp)
 
 	if (vp->v_op != union_vnodeop_p) {
 		if (vppp) {
-			VREF(vp);
+			vref(vp);
 			*(*vppp)++ = vp;
 			if (--(*cntp) == 0)
 				panic("union: dircache table too small");
@@ -1123,7 +1123,7 @@ union_dircache(struct vnode *vp, struct lwp *l)
 		goto out;
 
 	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
-	VREF(*vpp);
+	vref(*vpp);
 	error = union_allocvp(&nvp, vp->v_mount, NULLVP, NULLVP, 0, *vpp, NULLVP, 0);
 	if (!error) {
 		VTOUNION(vp)->un_dircache = 0;
