@@ -1,4 +1,4 @@
-/*      $NetBSD: psbuf.c,v 1.17 2010/01/07 21:19:45 pooka Exp $        */
+/*      $NetBSD: psbuf.c,v 1.18 2010/01/08 10:53:31 pooka Exp $        */
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psbuf.c,v 1.17 2010/01/07 21:19:45 pooka Exp $");
+__RCSID("$NetBSD: psbuf.c,v 1.18 2010/01/08 10:53:31 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -260,7 +260,7 @@ psbuf_put_vattr(struct puffs_framebuf *pb, const struct vattr *va,
 	const struct psshfs_ctx *pctx)
 {
 	uint32_t flags;
-	int32_t theuid = -1, thegid = -1;
+	uint32_t theuid = -1, thegid = -1;
 	flags = 0;
 
 	if (va->va_size != (uint64_t)PUFFS_VNOVAL)
