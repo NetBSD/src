@@ -1,4 +1,4 @@
-.\"     $NetBSD: vattr.9,v 1.13 2010/01/08 00:45:50 pooka Exp $
+.\"     $NetBSD: vattr.9,v 1.14 2010/01/08 12:41:33 pooka Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,16 +32,13 @@
 .Os
 .Sh NAME
 .Nm vattr ,
-.Nm vattr_null ,
-.Nm VATTR_NULL
+.Nm vattr_null
 .Nd vnode attributes
 .Sh SYNOPSIS
 .In sys/param.h
 .In sys/vnode.h
 .Ft void
 .Fn vattr_null "struct vattr *vap"
-.Ft void
-.Fn VATTR_NULL "struct vattr *vap"
 .Sh DESCRIPTION
 Vnode attributes describe attributes of a file or directory including
 file permissions, owner, group, size, access time and modification time.
@@ -98,9 +95,6 @@ For more information on vnode operations see
 Set vnode attributes in
 .Fa vap
 to VNOVAL.
-.It Fn VATTR_NULL "vap"
-This function is an alias for
-.Fn vattr_null .
 .El
 .Sh CODE REFERENCES
 This section describes places within the
