@@ -1,4 +1,4 @@
-.\"	$NetBSD: zic.8,v 1.16 2009/12/31 22:49:16 mlelstv Exp $
+.\"	$NetBSD: zic.8,v 1.17 2010/01/08 19:20:21 joerg Exp $
 .\" @(#)zic.8	7.22
 .Dd December 20, 2003
 .Dt ZIC 8
@@ -223,11 +223,7 @@ the variable part is null.
 .Pp
 A zone line has the form
 .sp
-.nf
-.ti +.5i
-.ta \w'Zone\0\0'u +\w'Australia/Adelaide\0\0'u +\w'GMTOFF\0\0'u +\w'RULES/SAVE\0\0'u +\w'FORMAT\0\0'u
-Zone	NAME	GMTOFF	RULES/SAVE	FORMAT	[UNTILYEAR [MONTH [DAY [TIME]]]]
-.sp
+.Dl Zone	NAME			GMTOFF	RULES/SAVE	FORMAT	[UNTILYEAR [MONTH [DAY [TIME]]]]
 For example:
 .Dl Zone	Australia/Adelaide	9:30	Aus	CST	1971 Oct 31 2:00
 The fields that make up a zone line are:
@@ -261,8 +257,7 @@ Alternatively,
 a slash
 .Pq \&/
 separates standard and daylight abbreviations.
-.TP
-.B UNTILYEAR [MONTH [DAY [TIME]]]
+.It UNTILYEAR [MONTH [DAY [TIME]]]
 The time at which the UTC offset or the rule(s) change for a location.
 It is specified as a year, a month, a day, and a time of day.
 If this is specified,
@@ -271,7 +266,7 @@ and rule change until the time specified.
 The month, day, and time of day have the same format as the IN, ON, and AT
 fields of a rule; trailing fields can be omitted, and default to the
 earliest possible value for the missing fields.
-.IP
+.El
 The next line must be a
 .Dq continuation
 line; this has the same form as a zone line except that the
@@ -279,10 +274,10 @@ string
 .Dq Zone
 and the name are omitted, as the continuation line will
 place information starting at the time specified as the
-.q until
+.Em until
 information in the previous line in the file used by the previous line.
 Continuation lines may contain
-.q until
+.Em until
 information, just as zone lines do, indicating that the next line is a further
 continuation.
 .Pp
@@ -344,40 +339,35 @@ or
 .Dq Rolling
 if the leap second time given by the other fields should be interpreted as
 local wall clock time.
-.SH "EXTENDED EXAMPLE"
+.El
+.Sh EXTENDED EXAMPLE
 Here is an extended example of
-.I zic
+.Ic zic
 input, intended to illustrate many of its features.
-.br
-.ne 22
-.nf
-.in +2m
-.ta \w'# Rule\0\0'u +\w'NAME\0\0'u +\w'FROM\0\0'u +\w'1973\0\0'u +\w'TYPE\0\0'u +\w'Apr\0\0'u +\w'lastSun\0\0'u +\w'2:00\0\0'u +\w'SAVE\0\0'u
-.sp
-# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
-Rule	Swiss	1940	only	-	Nov	2	0:00	1:00	S
-Rule	Swiss	1940	only	-	Dec	31	0:00	0	-
-Rule	Swiss	1941	1942	-	May	Sun>=1	2:00	1:00	S
-Rule	Swiss	1941	1942	-	Oct	Sun>=1	0:00	0
-.sp .5
-Rule	EU	1977	1980	-	Apr	Sun>=1	1:00u	1:00	S
-Rule	EU	1977	only	-	Sep	lastSun	1:00u	0	-
-Rule	EU	1978	only	-	Oct	 1	1:00u	0	-
-Rule	EU	1979	1995	-	Sep	lastSun	1:00u	0	-
-Rule	EU	1981	max	-	Mar	lastSun	1:00u	1:00	S
-Rule	EU	1996	max	-	Oct	lastSun	1:00u	0	-
-.sp
-.ta \w'# Zone\0\0'u +\w'Europe/Zurich\0\0'u +\w'0:34:08\0\0'u +\w'RULES/SAVE\0\0'u +\w'FORMAT\0\0'u
-# Zone	NAME	GMTOFF	RULES	FORMAT	UNTIL
-Zone	Europe/Zurich	0:34:08	-	LMT	1848 Sep 12
-		0:29:44	-	BMT	1894 Jun
-		1:00	Swiss	CE%sT	1981
-		1:00	EU	CE%sT
-.sp
-Link	Europe/Zurich	Switzerland
-.sp
-.in
-.fi
+.Bl -column -compact "# Rule" "Swiss" "FROM" "1995" "TYPE" "Oct" "lastSun" "1:00u" "SAVE" "LETTER/S"
+.It # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+.It Rule	Swiss	1940	only	-	Nov	2	0:00	1:00	S
+.It Rule	Swiss	1940	only	-	Dec	31	0:00	0	-
+.It Rule	Swiss	1941	1942	-	May	Sun>=1	2:00	1:00	S
+.It Rule	Swiss	1941	1942	-	Oct	Sun>=1	0:00	0
+.Pp
+.It Rule	EU	1977	1980	-	Apr	Sun>=1	1:00u	1:00	S
+.It Rule	EU	1977	only	-	Sep	lastSun	1:00u	0	-
+.It Rule	EU	1978	only	-	Oct	 1	1:00u	0	-
+.It Rule	EU	1979	1995	-	Sep	lastSun	1:00u	0	-
+.It Rule	EU	1981	max	-	Mar	lastSun	1:00u	1:00	S
+.It Rule	EU	1996	max	-	Oct	lastSun	1:00u	0	-
+.El
+.Pp
+.Bl -column -compact "# Zone" "Europe/Zurich" "0:29:44" "RULES" "FORMAT" "UNTIL"
+.It # Zone	NAME	GMTOFF	RULES	FORMAT	UNTIL
+.It Zone	Europe/Zurich	0:34:08	-	LMT	1848 Sep 12
+.It 		0:29:44	-	BMT	1894 Jun
+.It 		1:00	Swiss	CE%sT	1981
+.It 		1:00	EU	CE%sT
+.It Link	Europe/Zurich	Switzerland
+.El
+.Pp
 In this example, the zone is named Europe/Zurich but it has an alias
 as Switzerland.  Zurich was 34 minutes and 8 seconds west of GMT until
 1848-09-12 at 00:00, when the offset changed to 29 minutes and 44
@@ -385,7 +375,7 @@ seconds.  After 1894-06-01 at 00:00 Swiss daylight saving rules (defined
 with lines beginning with "Rule Swiss") apply, and the GMT offset
 became one hour.  From 1981 to the present, EU daylight saving rules have
 applied, and the UTC offset has remained at one hour.
-.PP
+.Pp
 In 1940, daylight saving time applied from November 2 at 00:00 to
 December 31 at 00:00.  In 1941 and 1942, daylight saving time applied
 from the first Sunday in May at 02:00 to the first Sunday in October
@@ -395,25 +385,25 @@ here, but are included for completeness.  Since 1981, daylight
 saving has begun on the last Sunday in March at 01:00 UTC.
 Until 1995 it ended the last Sunday in September at 01:00 UTC,
 but this changed to the last Sunday in October starting in 1996.
-.PP
+.Pp
 For purposes of
 display, "LMT" and "BMT" were initially used, respectively.  Since
 Swiss rules and later EU rules were applied, the display name for the
 timezone has been CET for standard time and CEST for daylight saving
 time.
-.SH NOTES
+.Sh NOTES
 For areas with more than two types of local time,
 you may need to use local standard time in the
 .Em AT
 field of the earliest transition time's rule to ensure that
 the earliest transition time recorded in the compiled file is correct.
-.PP
+.Pp
 If,
 for a particular zone,
 a clock advance caused by the start of daylight saving
 coincides with and is equal to
 a clock retreat caused by a change in UTC offset,
-.IR zic
+.Ic zic
 produces a single transition to daylight saving at the new UTC offset
 (without any change in wall clock time).
 To get separate transitions
