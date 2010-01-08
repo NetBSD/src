@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.42 2010/01/08 12:41:33 pooka Exp $
+.\"     $NetBSD: vnode.9,v 1.43 2010/01/08 13:10:48 pooka Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,7 +32,6 @@
 .Os
 .Sh NAME
 .Nm vnode ,
-.Nm vcount ,
 .Nm vref ,
 .Nm vrele ,
 .Nm vget ,
@@ -60,8 +59,6 @@
 .Sh SYNOPSIS
 .In sys/param.h
 .In sys/vnode.h
-.Ft int
-.Fn vcount "struct vnode *vp"
 .Ft void
 .Fn vref "struct vnode *vp"
 .Ft void
@@ -510,10 +507,6 @@ modify them.
 The vnode lock must not be acquired within interrupt context.
 .Sh FUNCTIONS
 .Bl -tag -width compact
-.It Fn vcount "vp"
-Calculate the total number of reference counts to a special device
-with vnode
-.Fa vp .
 .It Fn vref "vp"
 Increment
 .Em v_usecount
