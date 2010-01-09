@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.8 2010/01/08 20:40:41 dyoung Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.9 2010/01/09 15:34:59 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.8 2010/01/08 20:40:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.9 2010/01/09 15:34:59 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -505,8 +505,7 @@ acpi_wmi_event_get(device_t self, uint32_t event, ACPI_BUFFER *obuf)
 static void
 acpi_wmi_event_handler(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 {
-	device_t self = aux;
-	struct acpi_wmi_softc *sc = device_private(self);
+	struct acpi_wmi_softc *sc = aux;
 
 	if (sc->sc_handler == NULL)
 		return;
