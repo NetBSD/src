@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.18 2009/11/21 03:11:01 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19 2010/01/09 20:56:17 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -59,6 +59,7 @@
 
 #include <sys/cpu_data.h>
 #include <sys/evcnt.h>
+#include <sys/device_if.h> /* for device_t */
 
 struct intrsource;
 struct pmap;
@@ -76,7 +77,7 @@ struct device;
  */
 
 struct cpu_info {
-	struct device *ci_dev;		/* pointer to our device */
+	device_t ci_dev;		/* pointer to our device */
 	struct cpu_info *ci_self;	/* self-pointer */
 	volatile struct vcpu_info *ci_vcpu; /* for XEN */
 	void	*ci_tlog_base;		/* Trap log base */
@@ -93,7 +94,7 @@ struct cpu_info {
 	int	ci_fpused;		/* XEN: FPU was used by curlwp */
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	int	ci_cpumask;		/* (1 << CPU ID) */
-	uint8_t ci_initapicid;		/* our intitial APIC ID */
+	uint32_t ci_initapicid;		/* our intitial APIC ID */
 	uint8_t ci_packageid;
 	uint8_t ci_coreid;
 	uint8_t ci_smtid;
@@ -137,7 +138,7 @@ struct cpu_info {
 
 	uint32_t ci_flags;		/* flags; see below */
 	uint32_t ci_ipis;		/* interprocessor interrupts pending */
-	int sc_apic_version;		/* local APIC version */
+	uint32_t sc_apic_version;	/* local APIC version */
 
 	uint32_t	ci_signature;	 /* X86 cpuid type */
 	uint32_t	ci_feature_flags;/* X86 %edx CPUID feature bits */
