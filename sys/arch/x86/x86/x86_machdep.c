@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.37 2009/11/22 21:41:03 bouyer Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.38 2010/01/09 22:54:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.37 2009/11/22 21:41:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.38 2010/01/09 22:54:00 cegger Exp $");
 
 #include "opt_modular.h"
 
@@ -367,9 +367,13 @@ add_mem_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 	int i;
 
 #ifdef i386
-#define TOPLIMIT	0x100000000ULL
+#ifdef PAE
+#define TOPLIMIT	0x1000000000ULL	/* 64GB */
 #else
-#define TOPLIMIT	0x100000000000ULL
+#define TOPLIMIT	0x100000000ULL	/* 4GB */
+#endif
+#else
+#define TOPLIMIT	0x100000000000ULL /* 16TB */
 #endif
 
 	if (seg_end > TOPLIMIT) {
