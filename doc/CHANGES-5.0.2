@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.38 2010/01/07 07:49:31 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.39 2010/01/09 02:04:18 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -926,4 +926,10 @@ tools/compat/compat_defs.h			patch
 
 	Don't include grp.h  Fixes cross-build under Mac OS X 10.6.
 	[tron, ticket #1202]
+
+sys/kern/kern_event.c				1.69
+
+	Use sizeof correct type, not pointer to wrong type.
+	Fixes PR/42498.
+	[dsl, ticket #1208]
 
