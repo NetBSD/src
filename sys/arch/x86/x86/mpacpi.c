@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.83 2010/01/05 17:23:18 jruoho Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.84 2010/01/09 20:56:17 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.83 2010/01/05 17:23:18 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.84 2010/01/09 20:56:17 cegger Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -181,6 +181,7 @@ mpacpi_nonpci_intr(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 	ACPI_MADT_NMI_SOURCE *ioapic_nmi;
 	ACPI_MADT_LOCAL_APIC_NMI *lapic_nmi;
 	ACPI_MADT_INTERRUPT_OVERRIDE *isa_ovr;
+	ACPI_MADT_LOCAL_X2APIC_NMI *x2apic_nmi;
 	struct pic *pic;
 	extern struct acpi_softc *acpi_softc;	/* XXX */
 
@@ -308,6 +309,22 @@ mpacpi_nonpci_intr(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 			mpacpi_sci_override = mpi;
 
 		break;
+
+	case ACPI_MADT_TYPE_LOCAL_X2APIC_NMI:
+		x2apic_nmi = (ACPI_MADT_LOCAL_X2APIC_NMI *)hdrp;
+
+		mpi = &mp_intrs[*index];
+		(*index)++;
+		mpi->next = NULL;
+		mpi->bus = NULL;
+		mpi->ioapic = NULL;
+		mpi->type = MPS_INTTYPE_NMI;
+		mpi->ioapic_pin = x2apic_nmi->Lint;
+		mpi->cpu_id = x2apic_nmi->Uid;
+		mpi->redir = (IOAPIC_REDLO_DEL_NMI<<IOAPIC_REDLO_DEL_SHIFT);
+		mpi->global_int = -1;
+		break;
+
 	default:
 		break;
 	}
@@ -325,6 +342,7 @@ mpacpi_count(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 
 	switch (hdrp->Type) {
 	case ACPI_MADT_TYPE_LOCAL_APIC:
+	case ACPI_MADT_TYPE_LOCAL_X2APIC:
 		mpacpi_ncpu++;
 		break;
 	case ACPI_MADT_TYPE_IO_APIC:
@@ -332,6 +350,7 @@ mpacpi_count(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 		break;
 	case ACPI_MADT_TYPE_NMI_SOURCE:
 	case ACPI_MADT_TYPE_LOCAL_APIC_NMI:
+	case ACPI_MADT_TYPE_LOCAL_X2APIC_NMI:
 		mpacpi_nintsrc++;
 		break;
 	case ACPI_MADT_TYPE_LOCAL_APIC_OVERRIDE:
@@ -347,7 +366,8 @@ static ACPI_STATUS
 mpacpi_config_cpu(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 {
 	device_t parent = aux;
-	ACPI_MADT_LOCAL_APIC *p;
+	ACPI_MADT_LOCAL_APIC *lapic;
+	ACPI_MADT_LOCAL_X2APIC *x2apic;
 	struct cpu_attach_args caa;
 	int cpunum = 0;
 	int locs[CPUBUSCF_NLOCS];
@@ -357,19 +377,48 @@ mpacpi_config_cpu(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 		cpunum = lapic_cpu_number();
 #endif
 
-	if (hdrp->Type == ACPI_MADT_TYPE_LOCAL_APIC) {
-		p = (ACPI_MADT_LOCAL_APIC *)hdrp;
-		if (p->LapicFlags & ACPI_MADT_ENABLED) {
-			if (p->Id != cpunum)
+	switch (hdrp->Type) {
+	case ACPI_MADT_TYPE_LOCAL_APIC:
+		lapic = (ACPI_MADT_LOCAL_APIC *)hdrp;
+		if (lapic->LapicFlags & ACPI_MADT_ENABLED) {
+			if (lapic->Id != cpunum)
 				caa.cpu_role = CPU_ROLE_AP;
 			else
 				caa.cpu_role = CPU_ROLE_BP;
-			caa.cpu_number = p->Id;
+			caa.cpu_number = lapic->Id;
 			caa.cpu_func = &mp_cpu_funcs;
 			locs[CPUBUSCF_APID] = caa.cpu_number;
 			config_found_sm_loc(parent, "cpubus", locs,
 				&caa, mpacpi_cpuprint, config_stdsubmatch);
 		}
+		break;
+
+	case ACPI_MADT_TYPE_LOCAL_X2APIC:
+		x2apic = (ACPI_MADT_LOCAL_X2APIC *)hdrp;
+
+		/* ACPI spec: "Logical processors with APIC ID values
+		 * less than 255 must use the Processor Local APIC
+		 * structure to convey their APIC information to OSPM."
+		 */
+		if (x2apic->LocalApicId <= 0xff) {
+			printf("bogus MADT X2APIC entry (id = 0x%"PRIx32")\n",
+			    x2apic->LocalApicId);
+			break;
+		}
+
+		if (x2apic->LapicFlags & ACPI_MADT_ENABLED) {
+			if (x2apic->LocalApicId != cpunum)
+				caa.cpu_role = CPU_ROLE_AP;
+			else
+				caa.cpu_role = CPU_ROLE_BP;
+			caa.cpu_number = x2apic->LocalApicId;
+			caa.cpu_func = &mp_cpu_funcs;
+			locs[CPUBUSCF_APID] = caa.cpu_number;
+			config_found_sm_loc(parent, "cpubus", locs,
+				&caa, mpacpi_cpuprint, config_stdsubmatch);
+		}
+		break;
+
 	}
 	return AE_OK;
 }
