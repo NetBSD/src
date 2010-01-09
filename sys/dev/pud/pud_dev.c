@@ -1,4 +1,4 @@
-/*	$NetBSD: pud_dev.c,v 1.4 2007/11/22 11:26:27 pooka Exp $	*/
+/*	$NetBSD: pud_dev.c,v 1.4.34.1 2010/01/09 00:48:27 snj Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.4 2007/11/22 11:26:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.4.34.1 2010/01/09 00:48:27 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -223,7 +223,7 @@ static int
 pud_cdev_close(dev_t dev, int flags, int fmt, lwp_t *l)
 {
 
-	return doopenclose(dev, flags, fmt, PUD_REQ_CDEV, PUD_CDEV_OPEN);
+	return doopenclose(dev, flags, fmt, PUD_REQ_CDEV, PUD_CDEV_CLOSE);
 }
 
 static int
