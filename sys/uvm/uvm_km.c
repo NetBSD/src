@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.101.4.2 2009/04/19 15:43:14 snj Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.101.4.2.4.1 2010/01/09 05:54:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.101.4.2 2009/04/19 15:43:14 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.101.4.2.4.1 2010/01/09 05:54:40 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -725,8 +725,13 @@ uvm_km_alloc_poolpage(struct vm_map *map, bool waitok)
 	struct vm_page *pg;
 	vaddr_t va;
 
+
  again:
+#ifdef PMAP_ALLOC_POOLPAGE
+	pg = PMAP_ALLOC_POOLPAGE(waitok ? 0 : UVM_PGA_USERESERVE);
+#else
 	pg = uvm_pagealloc(NULL, 0, NULL, waitok ? 0 : UVM_PGA_USERESERVE);
+#endif
 	if (__predict_false(pg == NULL)) {
 		if (waitok) {
 			uvm_wait("plpg");
