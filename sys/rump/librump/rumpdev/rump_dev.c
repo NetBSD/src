@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev.c,v 1.9 2009/12/04 22:13:59 haad Exp $	*/
+/*	$NetBSD: rump_dev.c,v 1.10 2010/01/09 16:32:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.9 2009/12/04 22:13:59 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.10 2010/01/09 16:32:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,6 +50,8 @@ void
 rump_dev_init(void)
 {
 	extern int cold;
+
+	pmf_init();
 
 	KERNEL_LOCK(1, curlwp);
 
