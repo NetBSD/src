@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.6 2008/04/28 20:23:03 martin Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.7 2010/01/09 15:36:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,9 +30,7 @@
  */
 
 #include <machine/asm.h>
-#define _LOCORE /* XXX fredette we MUST get rid of this */
 #include <machine/frame.h>
-#undef _LOCORE
 
 	.import _GLOBAL_OFFSET_TABLE_
 
