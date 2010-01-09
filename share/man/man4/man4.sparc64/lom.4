@@ -1,4 +1,4 @@
-.\"     $NetBSD: lom.4,v 1.2.2.3 2009/11/28 15:55:14 bouyer Exp $
+.\"     $NetBSD: lom.4,v 1.2.2.4 2010/01/09 01:30:13 snj Exp $
 .\"     $OpenBSD: lom.4,v 1.4 2009/09/23 22:08:07 kettenis Exp $
 .\"
 .\" Copyright (c) 2009 Mark Kettenis <kettenis@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd November 28, 2009
+.Dd December 28, 2009
 .Dt LOM 4 sparc64
 .Os
 .Sh NAME
@@ -38,6 +38,15 @@ The integrated watchdog timer can be configured through the
 interface.
 The watchdog timer supports timeouts between 1 and 126 seconds.
 .Pp
+Fault LED and alarms status can be changed through the
+.Xr sysctl 8
+interface.
+An entry for the
+.Nm
+driver is created under the
+.Va hw.lom Ns Em N
+MIB.
+.Pp
 The
 .Nm
 driver will update the hostname stored in the LOM whenever the
@@ -46,6 +55,7 @@ system's hostname is changed.
 .Xr hostname 1 ,
 .Xr envsys 4 ,
 .Xr envstat 8 ,
+.Xr sysctl 8 ,
 .Xr wdogctl 8
 .Sh HISTORY
 The
