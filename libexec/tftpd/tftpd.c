@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.34 2010/01/08 23:27:08 wiz Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.35 2010/01/09 01:25:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.34 2010/01/08 23:27:08 wiz Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.35 2010/01/09 01:25:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1145,7 +1145,7 @@ nak(int error)
 		syslog(LOG_DEBUG, "Send NACK %s", tp->th_msg);
 	length = strlen(tp->th_msg);
 	msglen = &tp->th_msg[length + 1] - buf;
-	if (send(peer, buf, msglen, 0) != msglen)
+	if (send(peer, buf, msglen, 0) != (ssize_t)msglen)
 		syslog(LOG_ERR, "nak: %m");
 }
 
