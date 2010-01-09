@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.10 2009/12/14 00:46:06 matt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.11 2010/01/09 11:49:16 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -53,7 +53,23 @@
 
 #if MIPS_HAS_LLSC != 0
 
+/*
+ * Set ISA level for the assembler.
+ * XXX Clean up with a macro?  Same code fragment is in mipsX_subr.S too.
+ * XXX Key off build abi instead of processor type?
+ */
+#if defined(MIPS3)
 	.set	mips3
+#endif
+
+#if defined(MIPS32)
+	.set	mips32
+#endif
+
+#if defined(MIPS64)
+	.set	mips64
+#endif
+
 	.set	noreorder
 	.set	noat
 
