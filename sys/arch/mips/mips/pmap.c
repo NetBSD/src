@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.7 2009/12/30 04:51:26 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.8 2010/01/09 06:01:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.7 2009/12/30 04:51:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.8 2010/01/09 06:01:18 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -2128,16 +2128,16 @@ pmap_prefer(vaddr_t foff, vaddr_t *vap, int td)
 struct vm_page *
 mips_pmap_alloc_poolpage(int flags)
 {
-#ifndef _LP64
 	/*
 	 * On 32bit kernels, we must make sure that we only allocate pages that
-	 * can be mapped via KSEG0.  If all memory is in KSEG0, then we can just
+	 * can be mapped via KSEG0.  On 64bit kernels, try to allocated from
+	 * the first 4G.  If all memory is in KSEG0/4G, then we can just
 	 * use the default freelist otherwise we must use the pool page list.
 	 */
 	if (mips_poolpage_vmfreelist != VM_FREELIST_DEFAULT)
 		return uvm_pagealloc_strat(NULL, 0, NULL, flags,
 		    UVM_PGA_STRAT_ONLY, mips_poolpage_vmfreelist);
-#endif
+
 	return uvm_pagealloc(NULL, 0, NULL, flags);
 }
 
