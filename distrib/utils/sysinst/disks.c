@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.100.2.5 2009/10/03 23:22:23 snj Exp $ */
+/*	$NetBSD: disks.c,v 1.100.2.6 2010/01/09 01:31:57 snj Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -652,6 +652,7 @@ make_fstab(void)
 {
 	FILE *f;
 	int i, swap_dev = -1;
+	const char *dump_dev;
 
 	/* Create the fstab. */
 	make_target_dir("/etc");
@@ -707,10 +708,14 @@ make_fstab(void)
 			fstype = "msdos";
 			break;
 		case FS_SWAP:
-			if (swap_dev == -1)
+			if (swap_dev == -1) {
 				swap_dev = i;
-			scripting_fprintf(f, "/dev/%s%c\t\tnone\tswap\tsw\t\t 0 0\n",
-				diskdev, 'a' + i);
+				dump_dev = ",dp";
+			} else {
+				dump_dev ="";
+			}
+			scripting_fprintf(f, "/dev/%s%c\t\tnone\tswap\tsw%s\t\t 0 0\n",
+				diskdev, 'a' + i, dump_dev);
 			continue;
 #ifdef USE_SYSVBFS
 		case FS_SYSVBFS:
