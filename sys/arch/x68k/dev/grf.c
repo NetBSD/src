@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.38 2009/01/18 02:40:05 isaki Exp $	*/
+/*	$NetBSD: grf.c,v 1.39 2010/01/09 09:16:32 isaki Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.38 2009/01/18 02:40:05 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39 2010/01/09 09:16:32 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,8 +329,10 @@ grfunmap(dev_t dev, void *addr, struct proc *p)
 	vsize_t size;
 
 #ifdef DEBUG
-	if (grfdebug & GDB_MMAP)
-		printf("grfunmap(%d): dev %x addr %p\n", p->p_pid, dev, addr);
+	if (grfdebug & GDB_MMAP) {
+		printf("grfunmap(%d): dev %x addr %p\n",
+			p->p_pid, GRFUNIT(dev), addr);
+	}
 #endif
 	if (addr == 0)
 		return EINVAL;		/* XXX: how do we deal with this? */

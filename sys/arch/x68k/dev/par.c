@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.37 2008/06/25 08:14:59 isaki Exp $	*/
+/*	$NetBSD: par.c,v 1.38 2010/01/09 09:16:32 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.37 2008/06/25 08:14:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.38 2010/01/09 09:16:32 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -266,7 +266,7 @@ parwrite(dev_t dev, struct uio *uio, int flag)
 	
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("parwrite(%x, %p)\n", dev, uio);
+		printf("parwrite(%x, %p)\n", UNIT(dev), uio);
 #endif
 	return (parrw(dev, uio));
 }
