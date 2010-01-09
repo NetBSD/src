@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_subst.c,v 1.1.1.2.6.1 2009/01/20 02:41:12 snj Exp $ */
+/*	$NetBSD: ex_subst.c,v 1.1.1.2.6.2 2010/01/09 01:53:03 snj Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -912,7 +912,7 @@ re_compile(SCR *sp, CHAR_T *ptrn, size_t plen, CHAR_T **ptrnp, size_t *lenp, reg
 	}
 	if (LF_ISSET(SEARCH_ICL)) {
 iclower:	for (p = ptrn, len = plen; len > 0; ++p, --len)
-			if (isupper(*p))
+			if (ISUPPER(*p))
 				break;
 		if (len == 0)
 			reflags |= REG_ICASE;
@@ -1366,15 +1366,15 @@ re_sub(SCR *sp, CHAR_T *ip, CHAR_T **lbp, size_t *lbclenp, size_t *lblenp, regma
 			conv = C_NOT_SET;				\
 			/* FALLTHROUGH */				\
 		case C_LOWER:						\
-			if (isupper(__ch))				\
-				__ch = tolower(__ch);			\
+			if (ISUPPER(__ch))				\
+				__ch = TOLOWER(__ch);			\
 			break;						\
 		case C_ONE_UPPER:					\
 			conv = C_NOT_SET;				\
 			/* FALLTHROUGH */				\
 		case C_UPPER:						\
-			if (islower(__ch))				\
-				__ch = toupper(__ch);			\
+			if (ISLOWER(__ch))				\
+				__ch = TOUPPER(__ch);			\
 			break;						\
 		default:						\
 			abort();					\
