@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.57.4.1 2009/09/26 19:04:21 snj Exp $	*/
+/*	$NetBSD: viaide.c,v 1.57.4.2 2010/01/09 01:18:39 snj Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.57.4.1 2009/09/26 19:04:21 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.57.4.2 2010/01/09 01:18:39 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1082,6 +1082,8 @@ via_sata_chip_map_new(struct pciide_softc *sc, struct pci_attach_args *pa)
 			return;
 		}
 		wdc_init_shadow_regs(wdc_cp);
+		wdr->data32iot = wdr->cmd_iot;
+		wdr->data32ioh = wdr->cmd_iohs[wd_data];
 		wdcattach(wdc_cp);
 	}
 }
