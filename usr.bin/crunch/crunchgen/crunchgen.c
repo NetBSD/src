@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.75 2009/04/14 22:03:07 lukem Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.76 2010/01/09 06:37:57 kiyohara Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.75 2009/04/14 22:03:07 lukem Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.76 2010/01/09 06:37:57 kiyohara Exp $");
 #endif
 
 #include <stdlib.h>
@@ -993,7 +993,6 @@ prog_makefile_rules(FILE *outmk, prog_t *p)
 	    fprintf(outmk, "%s_OBJS=", p->ident);
 	    output_strlst(outmk, p->objs);
 	}
-	fprintf(outmk, "%s:\n\t mkdir %s\n", p->ident, p->ident);
 	fprintf(outmk, "%s_make: %s .PHONY\n", p->ident, p->ident);
 	fprintf(outmk, "\t( cd %s; printf '.PATH: ${%s_SRCDIR}\\n"
 	    ".CURDIR:= ${%s_SRCDIR}\\n"
@@ -1020,6 +1019,9 @@ prog_makefile_rules(FILE *outmk, prog_t *p)
         fprintf(outmk, "%s_make:\n\t@echo \"** Using existing objs for %s\"\n\n", 
 		p->ident, p->name);
 
+#ifdef NEW_TOOLCHAIN
+    fprintf(outmk, "%s:\n\t mkdir %s\n", p->ident, p->ident);
+#endif
     fprintf(outmk, "%s.cro: %s .WAIT ${%s_OBJPATHS}\n",
 	p->name, p->ident, p->ident);
 
