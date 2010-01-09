@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.30 2010/01/08 12:10:46 rmind Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.31 2010/01/09 19:02:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.30 2010/01/08 12:10:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.31 2010/01/09 19:02:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -721,17 +721,21 @@ softint_overlay(void)
 	int s;
 
 	l = curlwp;
+	KASSERT((l->l_pflag & LP_INTR) == 0);
+
+	/*
+	 * Arrange to elevate priority if the LWP blocks.  Also, bind LWP
+	 * to the CPU.  Note: disable kernel preemption before doing that.
+	 */
+	s = splhigh();
 	ci = l->l_cpu;
 	si = ((softcpu_t *)ci->ci_data.cpu_softcpu)->sc_int;
 
-	KASSERT((l->l_pflag & LP_INTR) == 0);
-
-	/* Arrange to elevate priority if the LWP blocks. */
-	s = splhigh();
 	obase = l->l_kpribase;
 	l->l_kpribase = PRI_KERNEL_RT;
 	oflag = l->l_pflag;
 	l->l_pflag = oflag | LP_INTR | LP_BOUND;
+
 	while ((softints = ci->ci_data.cpu_softints) != 0) {
 		if ((softints & (1 << SOFTINT_SERIAL)) != 0) {
 			ci->ci_data.cpu_softints &= ~(1 << SOFTINT_SERIAL);
