@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.293 2010/01/08 20:02:39 dyoung Exp $ */
+/* $NetBSD: com.c,v 1.294 2010/01/09 14:15:48 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.293 2010/01/08 20:02:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.294 2010/01/09 14:15:48 tsutsui Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -397,8 +397,8 @@ com_attach_subr(struct com_softc *sc)
 		comconsattached = 1;
 
 		if (cn_tab == NULL && comcnreattach() != 0) {
-			printf("can't re-init serial console @%zx\n",
-			    (size_t)comcons_info.regs.cr_iobase);
+			printf("can't re-init serial console @%lx\n",
+			    (u_long)comcons_info.regs.cr_iobase);
 		}
 
 		/* Make sure the console is always "hardwired". */
