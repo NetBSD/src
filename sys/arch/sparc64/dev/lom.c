@@ -1,4 +1,4 @@
-/*	$NetBSD: lom.c,v 1.1.2.4 2009/12/18 06:03:51 snj Exp $	*/
+/*	$NetBSD: lom.c,v 1.1.2.5 2010/01/09 01:30:13 snj Exp $	*/
 /*	$OpenBSD: lom.c,v 1.20 2009/12/12 13:01:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.1.2.4 2009/12/18 06:03:51 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.1.2.5 2010/01/09 01:30:13 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -26,6 +26,7 @@ __KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.1.2.4 2009/12/18 06:03:51 snj Exp $");
 #include <sys/envsys.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
+#include <sys/sysctl.h>
 
 #include <machine/autoconf.h>
 
@@ -168,6 +169,8 @@ struct lom_softc {
 	int			sc_num_psu;
 	int			sc_num_temp;
 
+	int32_t			sc_sysctl_num[LOM_MAX_ALARM];
+
 	uint8_t			sc_fan_cal[LOM_MAX_FAN];
 	uint8_t			sc_fan_low[LOM_MAX_FAN];
 
@@ -222,6 +225,17 @@ static int	lom_wdog_setmode(struct sysmon_wdog *);
 
 static bool	lom_shutdown(device_t, int);
 
+SYSCTL_SETUP_PROTO(sysctl_lom_setup);
+static int	lom_sysctl_alarm(SYSCTLFN_PROTO);
+
+static int hw_node = CTL_EOL;
+static const char *nodename[LOM_MAX_ALARM] =
+    { "fault_led", "alarm1", "alarm2", "alarm3" };
+#ifdef SYSCTL_INCLUDE_DESCR
+static const char *nodedesc[LOM_MAX_ALARM] =
+    { "Fault LED status", "Alarm1 status", "Alarm2 status ", "Alarm3 status" };
+#endif
+
 static int
 lom_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -242,6 +256,7 @@ lom_attach(device_t parent, device_t self, void *aux)
 	uint8_t reg, fw_rev, config, config2, config3;
 	uint8_t cal, low;
 	int i;
+	const struct sysctlnode *node = NULL, *newnode;
 
 	if (strcmp(ea->ea_name, "SUNW,lomh") == 0) {
 		if (ea->ea_nintr < 1) {
@@ -315,6 +330,12 @@ lom_attach(device_t parent, device_t self, void *aux)
 		sc->sc_fan_low[i] = low;
 	}
 
+	/* Setup our sysctl subtree, hw.lomN */
+	if (hw_node != CTL_EOL)
+		sysctl_createv(NULL, 0, NULL, &node,
+		    0, CTLTYPE_NODE, device_xname(self), NULL,
+		    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+
 	/* Initialize sensor data. */
 	sc->sc_sme = sysmon_envsys_create();
 	for (i = 0; i < sc->sc_num_alarm; i++) {
@@ -325,6 +346,17 @@ lom_attach(device_t parent, device_t self, void *aux)
 			sysmon_envsys_destroy(sc->sc_sme);
 			aprint_error_dev(self, "can't attach alarm sensor\n");
 			return;
+		}
+		if (node != NULL) {
+			sysctl_createv(NULL, 0, NULL, &newnode,
+			    CTLFLAG_READWRITE, CTLTYPE_INT, nodename[i],
+			    SYSCTL_DESCR(nodedesc[i]),
+			    lom_sysctl_alarm, 0, sc, 0,
+			    CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL);
+			if (newnode != NULL)
+				sc->sc_sysctl_num[i] = newnode->sysctl_num;
+			else
+				sc->sc_sysctl_num[i] = 0;
 		}
 	}
 	for (i = 0; i < sc->sc_num_fan; i++) {
@@ -1083,4 +1115,63 @@ lom_shutdown(device_t dev, int how)
 	sc->sc_wdog_ctl &= ~LOM_WDOG_ENABLE;
 	lom_write(sc, LOM_IDX_WDOG_CTL, sc->sc_wdog_ctl);
 	return true;
+}
+
+SYSCTL_SETUP(sysctl_lom_setup, "sysctl hw.lom subtree setup")
+{
+	const struct sysctlnode *node;
+
+	if (sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL) != 0)
+		return;
+
+	hw_node = node->sysctl_num;
+}
+
+static int
+lom_sysctl_alarm(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	struct lom_softc *sc;
+	int i, tmp, error;
+	uint8_t val;
+
+	node = *rnode;
+	sc = node.sysctl_data;
+
+	for (i = 0; i < sc->sc_num_alarm; i++) {
+		if (node.sysctl_num == sc->sc_sysctl_num[i]) {
+			tmp = sc->sc_alarm[i].value_cur;
+			node.sysctl_data = &tmp;
+			error = sysctl_lookup(SYSCTLFN_CALL(&node));
+			if (error || newp == NULL)
+				return error;
+			if (tmp < 0 || tmp > 1)
+				return EINVAL;
+
+			if (lom_read(sc, LOM_IDX_ALARM, &val))
+				return EINVAL;
+			if (i == 0) {
+				/* Fault LED */
+				if (tmp != 0)
+					val &= ~LOM_ALARM_FAULT;
+				else
+					val |= LOM_ALARM_FAULT;
+			} else {
+				/* Alarms */
+				if (tmp != 0)
+					val |= LOM_ALARM_1 << (i - 1);
+				else
+					val &= ~(LOM_ALARM_1 << (i - 1));
+			}
+			if (lom_write(sc, LOM_IDX_ALARM, val))
+				return EINVAL;
+
+			sc->sc_alarm[i].value_cur = tmp;
+			return 0;
+		}
+	}
+
+	return ENOENT;
 }
