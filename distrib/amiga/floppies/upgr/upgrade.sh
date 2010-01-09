@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: upgrade.sh,v 1.8 2003/07/26 17:06:31 salo Exp $
+# $NetBSD: upgrade.sh,v 1.8.40.1 2010/01/09 01:15:43 snj Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -148,7 +148,7 @@ echo	"on disks NOT listed above), this upgrade disk can upgrade your"
 echo	"system.  If it cannot, hit Control-C at the prompt."
 echo	""
 while [ "X${drivename}" = "X" ]; do
-	echo -n	"Which disk contains your root partion? "
+	echo -n	"Which disk contains your root partition? "
 	getresp
 	otherdrives=`echo "${driveunits}" | sed -e s,${resp},,`
 	if [ "X${driveunits}" = "X${otherdrives}" ]; then
