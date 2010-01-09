@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.35 2010/01/09 01:25:09 christos Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.36 2010/01/09 10:46:31 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.35 2010/01/09 01:25:09 christos Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.36 2010/01/09 10:46:31 mbalmer Exp $");
 #endif
 #endif /* not lint */
 
@@ -228,7 +228,7 @@ main(int argc, char *argv[])
 
 	nid = (strtol(tgtuser, &ep, 10));
 	if (*ep == '\0') {
-		if (nid > UID_MAX) {
+		if ((uid_t)nid > UID_MAX) {
 			syslog(LOG_ERR, "uid %ld is too large", nid);
 			exit(1);
 		}
@@ -245,7 +245,7 @@ main(int argc, char *argv[])
 	if (tgtgroup != NULL) {
 		nid = (strtol(tgtgroup, &ep, 10));
 		if (*ep == '\0') {
-			if (nid > GID_MAX) {
+			if ((uid_t)nid > GID_MAX) {
 				syslog(LOG_ERR, "gid %ld is too large", nid);
 				exit(1);
 			}
