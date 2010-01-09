@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.10 2009/10/25 20:14:50 wiz Exp $ */
+/* $NetBSD: unzip.c,v 1.11 2010/01/09 09:27:42 mbalmer Exp $ */
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.10 2009/10/25 20:14:50 wiz Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.11 2010/01/09 09:27:42 mbalmer Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -388,7 +388,7 @@ extract_dir(struct archive *a, struct archive_entry *e, const char *path)
 {
 	int mode;
 
-	mode = archive_entry_filetype(e) & 0777;
+	mode = archive_entry_mode(e) & 0777;
 	if (mode == 0)
 		mode = 0755;
 
@@ -472,7 +472,7 @@ extract_file(struct archive *a, struct archive_entry *e, char **path)
 	ssize_t len;
 	unsigned char *p, *q, *end;
 
-	mode = archive_entry_filetype(e) & 0777;
+	mode = archive_entry_mode(e) & 0777;
 	if (mode == 0)
 		mode = 0644;
 	mtime = archive_entry_mtime(e);
