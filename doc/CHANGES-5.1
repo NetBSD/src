@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.170 2010/01/07 07:50:11 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.171 2010/01/09 02:03:58 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -15742,4 +15742,137 @@ tools/compat/compat_defs.h			patch
 
 	Don't include grp.h  Fixes cross-build under Mac OS X 10.6.
 	[tron, ticket #1202]
+
+sys/dev/pud/pud_dev.c				1.5
+
+	Fix pasto: pud_cdev_close() should call doopenclose() with
+	PUD_CDEV_CLOSE, not PUD_CDEV_OPEN.
+	[pooka, ticket #1204]
+
+include/paths.h					1.35
+
+	+_PATH_PUD
+	[pooka, ticket #1205]
+
+sys/dev/pud/pud_dev.c				1.6 via patch
+
+	Handle DIOCGPART in-kernel because a userspace server doesn't have
+	a chance in phobos of handling it.  This makes it possible to do a
+	kernel mount of most file systems with the block device backed by
+	a pud userspace server.
+	[pooka, ticket #1206]
+
+sbin/fdisk/fdisk.c				1.128
+
+	Editing partitions larger than 1TB works better if 'decimal'
+	returns 64 bit integer values!
+	[dsl, ticket #1207]
+
+sys/kern/kern_event.c				1.69
+
+	Use sizeof correct type, not pointer to wrong type.
+	Fixes PR/42498.
+	[dsl, ticket #1208]
+
+dist/pdisk/pdisk.c				1.18
+distrib/amiga/floppies/upgr/upgrade.sh		1.9
+sbin/newfs_udf/newfs_udf.8			1.6
+sbin/newfs_udf/udf_create.c			1.17
+
+	Fix typo in command output.
+	[mbalmer, ticket #1209]
+
+sys/dev/pci/viaide.c				1.65
+
+	Initialize data32iot and data32ioh in via_sata_chip_map_new().
+	This makes 32bit UDMA xfer work properly on VIA VT6421.
+	[tsutsui, ticket #1210]
+
+sys/fs/puffs/puffs_msgif.c			1.76 via patch
+sys/fs/puffs/puffs_sys.h			1.73 via patch
+sys/fs/puffs/puffs_vfsops.c			1.84 via patch
+
+	Process flush requests from the file server in a separate thread
+	context.  This fixes a long-standing but seldomly seen deadlock,
+	where the kernel was holding pages busy (due to e.g. readahead
+	request) while waiting for the server to respond, and the server
+	made a callback into the kernel asking to invalidate those pages.
+	[pooka, ticket #1212]
+
+sys/dev/dkwedge/dk.c				1.52
+
+	Implement and use a dkminphys() that calls the parent device's
+	minphys function with b_dev temporarily adjusted to the parent
+	device's dev_t.  Fixes PR/37390.
+	[jakllsch, ticket #1213]
+
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_id.c 1.2
+
+	Fix incorrect LIST_END macro.  Fixes PR/41950.
+	[jakllsch, ticket #1214]
+
+share/man/man4/man4.sparc64/lom.4		1.4
+sys/arch/sparc64/dev/lom.c			1.5
+
+	Make fault LED and alarms status changeable via sysctl(8).
+	The sysctl entries are created under the hw.lomN MIB.
+	[nakayama, ticket #1216]
+
+distrib/utils/sysinst/disks.c			1.108
+
+	When creating /etc/fstab: for the first swap partition use type
+	"sw,dp" instead of "sw", so dump device gets configured correctly
+	if swap is not on the second partition.  Fixes PR install/42148.
+	[cegger, ticket #1217]
+
+sys/dev/pci/auich.c				1.133
+
+	Ensure that the memory or i/o space we need is accessible at attach
+	and resume.  Rework register mapping code path, using 'goto', so
+	duplicate code is reduced.  Addresses PR/39652.
+	[jakllsch, ticket #1218]
+
+sys/dev/usb/uhidev.c				1.46
+
+	The Dell DRAC5 gives us a zero-length report immediately following
+	a normal report.  Thus, ignore zero-length reports.  Move some
+	related report size insanity checking into the UHIDEV_DEBUG case.
+	Fixes PR/39911.
+	[jakllsch, ticket #1219]
+
+sys/arch/sparc/include/cpu.h			1.86
+sys/arch/sparc/sparc/locore.s			1.246
+sys/arch/sparc/sparc/vm_machdep.c		1.99, 1.100
+
+	Fix up cpu_setfunc():
+	- don't call lwp_startup for cpu_setfunc() users
+	- introduce lwp_setfunc_trampoline instead
+	- no need to set the "new" lwp for setfunc
+	[mrg, ticket #1223]
+
+dist/nvi/common/cut.c				1.3
+dist/nvi/common/cut.h				1.3
+dist/nvi/common/multibyte.h			1.5
+dist/nvi/ex/ex.c				1.6
+dist/nvi/ex/ex_subst.c				1.3
+dist/nvi/ex/ex_usage.c				1.4 via patch
+dist/nvi/vi/v_ulcase.c				1.2
+
+	Use wide char versions of tolower/toupper/islower/isupper where
+	appropriate. Fixes ~ command on big-endian architectures.
+	[mlelstv, ticket #1224]
+
+sys/dev/pci/viaide.c				1.66
+
+	Enable mem space if it isn't already enabled.  Several bioses leave
+	this not enabled, and viaide kind of depends upon it.  Idea from
+	PR 38011, but reworked a little.
+	[mrg, ticket #1227]
+
+external/mit/libpciaccess/dist/src/netbsd_pci.c	1.5
+
+	If a VGA device isn't enabled for io/mem/bus-master, do so here.
+	xorg-server 1.4.x and earlier would do this for us.  Partly fixes
+	dual-head support for various systems.
+	[mrg, ticket #1228]
 
