@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.70 2008/01/28 21:06:37 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.70.20.1 2010/01/09 01:22:57 snj Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -98,6 +98,23 @@ struct puffs_newcookie {
 	LIST_ENTRY(puffs_newcookie) pnc_entries;
 };
 
+enum puffs_sopreqtype {
+	PUFFS_SOPREQ_EXIT,
+	PUFFS_SOPREQ_FLUSH,
+};
+
+struct puffs_sopreq {
+	union {
+		struct puffs_req preq;      
+		struct puffs_flush pf;
+	} psopr_u;
+
+	enum puffs_sopreqtype psopr_sopreq;
+	TAILQ_ENTRY(puffs_sopreq) psopr_entries;
+};
+#define psopr_preq psopr_u.preq
+#define psopr_pf psopr_u.pf
+
 TAILQ_HEAD(puffs_wq, puffs_msgpark);
 LIST_HEAD(puffs_node_hashlist, puffs_node);
 struct puffs_mount {
@@ -143,6 +160,11 @@ struct puffs_mount {
 	void				*pmp_curopaq;
 
 	uint64_t			pmp_nextmsgid;
+
+	kmutex_t			pmp_sopmtx;
+	kcondvar_t			pmp_sopcv;
+	int				pmp_sopthrcount;
+	TAILQ_HEAD(, puffs_sopreq)	pmp_sopreqs;
 };
 
 #define PUFFSTAT_BEFOREINIT	0
@@ -192,6 +214,8 @@ void	puffs_msgif_init(void);
 void	puffs_msgif_destroy(void);
 int	puffs_msgmem_alloc(size_t, struct puffs_msgpark **, void **, int);
 void	puffs_msgmem_release(struct puffs_msgpark *);
+
+void	puffs_sop_thread(void *);
 
 void	puffs_msg_setfaf(struct puffs_msgpark *);
 void	puffs_msg_setdelta(struct puffs_msgpark *, size_t);
