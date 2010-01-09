@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.115 2010/01/08 20:04:06 dyoung Exp $	*/
+/*	$NetBSD: emul.c,v 1.116 2010/01/09 16:29:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.115 2010/01/08 20:04:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.116 2010/01/09 16:29:32 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -449,23 +449,6 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* this function is __dead, we must exit */
 	rumpuser_exit(0);
-}
-
-bool
-pmf_device_register1(struct device *dev,
-	bool (*suspend)(device_t, pmf_qual_t),
-	bool (*resume)(device_t, pmf_qual_t),
-	bool (*shutdown)(device_t, int))
-{
-
-	return true;
-}
-
-void
-pmf_device_deregister(struct device *dev)
-{
-
-	/* nada */
 }
 
 int
