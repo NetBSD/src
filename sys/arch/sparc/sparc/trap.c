@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.179 2009/11/21 04:16:52 rmind Exp $ */
+/*	$NetBSD: trap.c,v 1.180 2010/01/10 03:36:30 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.179 2009/11/21 04:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.180 2010/01/10 03:36:30 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -841,7 +841,8 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 		if (type == T_TEXTFAULT) {
 			(void) splhigh();
 		        snprintb(bits, sizeof(bits), SER_BITS, ser);
-			printf("text fault: pc=0x%x ser=%s\n", pc, bits);
+			printf("cpu%d: text fault: pc=0x%x ser=%s\n",
+			       cpu_number(), pc, bits);
 			panic("kernel fault");
 			/* NOTREACHED */
 		}
@@ -942,8 +943,9 @@ kfault:
 			if (!onfault) {
 				(void) splhigh();
 				snprintb(bits, sizeof(bits), SER_BITS, ser);
-				printf("data fault: pc=0x%x addr=0x%x ser=%s\n",
-				    pc, v, bits);
+				printf("cpu%d: data fault: pc=0x%x "
+				       "addr=0x%x ser=%s\n",
+				       cpu_number(), pc, v, bits);
 				panic("kernel fault");
 				/* NOTREACHED */
 			}
@@ -1160,8 +1162,8 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 		if (sfsr & SFSR_AT_TEXT || type == T_TEXTFAULT) {
 			(void) splhigh();
 			snprintb(bits, sizeof(bits), SFSR_BITS, sfsr);
-			printf("text fault: pc=0x%x sfsr=%s sfva=0x%x\n", pc,
-			    bits, sfva);
+			printf("cpu%d text fault: pc=0x%x sfsr=%s sfva=0x%x\n",
+			       cpu_number(), pc, bits, sfva);
 			panic("kernel fault");
 			/* NOTREACHED */
 		}
@@ -1229,8 +1231,9 @@ kfault:
 			if (!onfault) {
 				(void) splhigh();
 				snprintb(bits, sizeof(bits), SFSR_BITS, sfsr);
-				printf("data fault: pc=0x%x addr=0x%x sfsr=%s\n",
-				    pc, sfva, bits);
+				printf("cpu%d: data fault: pc=0x%x "
+				       "addr=0x%x sfsr=%s\n",
+				       cpu_number(), pc, sfva, bits);
 				panic("kernel fault");
 				/* NOTREACHED */
 			}
