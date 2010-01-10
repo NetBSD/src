@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.50 2010/01/10 16:40:00 joerg Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.51 2010/01/10 19:04:35 snj Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
  The NetBSD Foundation, Inc.  All rights reserved.\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.50 2010/01/10 16:40:00 joerg Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.51 2010/01/10 19:04:35 snj Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -657,7 +657,7 @@ cp(const char *from, const char *to, mode_t mode)
 		goto on_error;
 	close(from_fd);
 	if (close(to_fd))
-		goto on_error
+		goto on_error;
 	return;
 
 on_error:
