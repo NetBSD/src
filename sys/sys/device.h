@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.131 2010/01/08 20:07:14 dyoung Exp $ */
+/* $NetBSD: device.h,v 1.132 2010/01/10 20:11:50 martin Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -487,6 +487,9 @@ device_t	device_lookup(cfdriver_t, int);
 void		*device_lookup_private(cfdriver_t, int);
 #ifdef __HAVE_DEVICE_REGISTER
 void		device_register(device_t, void *);
+#endif
+#ifdef __HAVE_DEVICE_REGISTER_POSTCONFIG
+void		device_register_post_config(device_t, void *);
 #endif
 
 devclass_t	device_class(device_t);
