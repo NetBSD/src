@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.18 2009/12/16 19:01:24 matt Exp $	*/
+/*	$NetBSD: boot.c,v 1.19 2010/01/10 09:34:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -485,8 +485,8 @@ main(unsigned int memsize)
 
 		entry = (void *)marks[MARK_ENTRY];
 
-		DPRINTF(("Bootinfo @ 0x%x\n", bi_addr));
-		printf("Starting at 0x%x\n\n", (u_int)entry);
+		DPRINTF(("Bootinfo @ 0x%lx\n", (u_long)bi_addr));
+		printf("Starting at 0x%lx\n\n", (u_long)entry);
 		(*entry)(memsize, BOOTINFO_MAGIC, bi_addr);
 	}
 
