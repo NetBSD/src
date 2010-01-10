@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpusbhc.c,v 1.10 2009/12/20 15:32:46 pooka Exp $	*/
+/*	$NetBSD: rumpusbhc.c,v 1.11 2010/01/10 21:30:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.10 2009/12/20 15:32:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.11 2010/01/10 21:30:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.10 2009/12/20 15:32:46 pooka Exp $")
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
+#include <dev/usb/usbhid.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
 #include <dev/usb/usbroothub_subr.h>
@@ -134,6 +135,7 @@ struct cfdata rumpusbhc_cfdata[] = {
 	{ "rumpusbhc", "rumpusbhc", 1, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
 	{ "rumpusbhc", "rumpusbhc", 2, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
 	{ "rumpusbhc", "rumpusbhc", 3, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
+	{ NULL,		NULL,	    0, 0,		NULL, 0, NULL         },
 };
 
 #define UGENDEV_BASESTR "/dev/ugen"
@@ -498,11 +500,14 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 	case C(UR_GET_STATUS, UT_READ_CLASS_OTHER):
 	case C(UR_GET_STATUS, UT_READ_CLASS_DEVICE):
 	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
+	case C(UR_GET_DESCRIPTOR, UT_READ_INTERFACE):
 	case C(0xff, UT_WRITE_CLASS_INTERFACE):
 	case C(0x20, UT_WRITE_CLASS_INTERFACE):
 	case C(0x22, UT_WRITE_CLASS_INTERFACE):
+	case C(0x0a, UT_WRITE_CLASS_INTERFACE):
 	case C(UR_SET_FEATURE, UT_WRITE_CLASS_OTHER):
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_OTHER):
+	case C(UR_SET_REPORT, UT_WRITE_CLASS_INTERFACE):
 	case C(UR_CLEAR_FEATURE, UT_WRITE_ENDPOINT):
 		{
 		struct usb_ctl_request ucr;
