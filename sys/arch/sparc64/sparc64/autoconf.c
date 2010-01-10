@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.162 2009/12/05 01:11:18 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.163 2010/01/10 13:52:06 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.162 2009/12/05 01:11:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.163 2010/01/10 13:52:06 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -740,13 +740,15 @@ dev_path_exact_match(struct device *dev, int ofnode)
  * the bootpath remainder.
  */
 static void
-dev_path_drive_match(struct device *dev, int ctrlnode, int target, int lun)
+dev_path_drive_match(struct device *dev, int ctrlnode, int target,
+    uint64_t wwn, int lun)
 {
 	int child = 0;
 	char buf[OFPATHLEN];
 
 	DPRINTF(ACDB_BOOTDEV, ("dev_path_drive_match: %s, controller %x, "
-	    "target %d lun %d\n", device_xname(dev), ctrlnode, target, lun));
+	    "target %d wwn %016" PRIx64 " lun %d\n", device_xname(dev),
+	    ctrlnode, target, wwn, lun));
 
 	/*
 	 * The ofbootpackage points to a disk on this controller, so
@@ -758,15 +760,21 @@ dev_path_drive_match(struct device *dev, int ctrlnode, int target, int lun)
 			break;
 
 	if (child == ofbootpackage) {
+		const char * name = prom_getpropstring(child, "name");
+
 		/* boot device is on this controller */
 		DPRINTF(ACDB_BOOTDEV, ("found controller of bootdevice\n"));
+
 		/*
 		 * Note: "child" here is == ofbootpackage (s.a.), which
 		 * may be completely wrong for the device we are checking,
 		 * what we realy do here is to match "target" and "lun".
 		 */
-		sprintf(buf, "%s@%d,%d", prom_getpropstring(child, "name"),
-		    target, lun);
+		if (wwn)
+			sprintf(buf, "%s@w%016" PRIx64 ",%d", name, wwn,
+			    lun);
+		else
+			sprintf(buf, "%s@%d,%d", name, target, lun);
 		if (ofboottarget && strcmp(buf, ofboottarget) == 0) {
 			booted_device = dev;
 			if (ofbootpartition)
@@ -883,14 +891,14 @@ device_register(struct device *dev, void *aux)
 		}
 		ofnode = device_ofnode(device_parent(busdev));
 		dev_path_drive_match(dev, ofnode, periph->periph_target + off,
-		    periph->periph_lun);
+		    0, periph->periph_lun);
 		return;
 	} else if (device_is_a(dev, "wd")) {
 		struct ata_device *adev = aux;
 
 		ofnode = device_ofnode(device_parent(busdev));
 		dev_path_drive_match(dev, ofnode, adev->adev_channel*2+
-		    adev->adev_drv_data->drive, 0);
+		    adev->adev_drv_data->drive, 0, 0);
 		return;
 	}
 
@@ -898,8 +906,36 @@ device_register(struct device *dev, void *aux)
 		return;
 
 	if (ofnode != 0) {
+		char devtype[32];
+		uint64_t nwwn = 0, pwwn = 0;
+		prop_dictionary_t dict;
+		prop_number_t pwwnd = NULL, nwwnd = NULL;
+
 		device_setofnode(dev, ofnode);
 		dev_path_exact_match(dev, ofnode);
+
+		/* is this a FC node? */
+		if (OF_getprop(ofnode, "device_type", devtype,
+		    sizeof(devtype)) > 0 && strcmp(devtype, "scsi-fcp") == 0) {
+
+			dict = device_properties(dev);
+
+			if (OF_getprop(ofnode, "port-wwn", &pwwn, sizeof(pwwn))
+			    == sizeof(pwwn)) {
+				pwwnd = 
+				    prop_number_create_unsigned_integer(pwwn);
+				prop_dictionary_set(dict, "port-wwn", pwwnd);
+				prop_object_release(pwwnd);
+			}
+
+			if (OF_getprop(ofnode, "node-wwn", &nwwn, sizeof(nwwn))
+			    == sizeof(nwwn)) {
+				nwwnd = 
+				    prop_number_create_unsigned_integer(nwwn);
+				prop_dictionary_set(dict, "node-wwn", nwwnd);
+				prop_object_release(nwwnd);
+			}
+		}
 	}
 
 	/* set properties for PCI framebuffers */
@@ -946,6 +982,45 @@ device_register(struct device *dev, void *aux)
 			cmap_cb = (uint64_t)&gfb_cb;
 			prop_dictionary_set_uint64(dict,
 			    "cmap_callback", cmap_cb);
+		}
+	}
+}
+
+/*
+ * Called back after autoconfiguration of a device is done
+ */
+void
+device_register_post_config(struct device *dev, void *aux)
+{
+	if (booted_device == NULL && device_is_a(dev, "sd")) {
+		struct scsipibus_attach_args *sa = aux;
+		struct scsipi_periph *periph = sa->sa_periph;
+		uint64_t wwn = 0;
+		int ofnode;
+
+		/*
+		 * If this is a FC-AL drive it will have
+		 * aquired it's WWN device property by now,
+		 * so we can properly match it.
+		 */
+		if (prop_dictionary_get_uint64(device_properties(dev),
+		    "port-wwn", &wwn)) {
+			/*
+			 * Different to what we do in device_register,
+			 * we do not pass the "controller" ofnode,
+			 * because FC-AL devices attach below a "fp" node,
+			 * E.g.: /pci/SUNW,qlc@4/fp@0,0/disk
+			 * and we need the parent of "disk" here.
+			 */
+			ofnode = device_ofnode(
+			    device_parent(device_parent(dev)));
+			for (ofnode = OF_child(ofnode);
+			    ofnode != 0 && booted_device == NULL;
+			    ofnode = OF_peer(ofnode)) {
+				dev_path_drive_match(dev, ofnode,
+				    periph->periph_target,
+				    wwn, periph->periph_lun);
+			}
 		}
 	}
 }
