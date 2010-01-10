@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpusbhc.c,v 1.11 2010/01/10 21:30:16 pooka Exp $	*/
+/*	$NetBSD: rumpusbhc.c,v 1.12 2010/01/10 22:13:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.11 2010/01/10 21:30:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.12 2010/01/10 22:13:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -740,8 +740,17 @@ static void
 doxfer_kth(void *arg)
 {
 	usbd_xfer_handle xfer = arg;
+	usb_endpoint_descriptor_t *ed = xfer->pipe->endpoint->edesc;
+	bool repeat;
 
-	rumpusb_device_bulk_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
+	if ((ed->bmAttributes & UE_XFERTYPE) == UE_INTERRUPT)
+		repeat = true;
+	else
+		repeat = false;
+
+	do {
+		rumpusb_device_bulk_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
+	} while (repeat);
 	kthread_exit(0);
 }
 
@@ -857,8 +866,9 @@ rumpusbhc_open(struct usbd_pipe *pipe)
 		case UE_CONTROL:
 			pipe->methods = &rumpusb_device_ctrl_methods;
 			break;
-		case UE_BULK:
 		case UE_INTERRUPT:
+		case UE_BULK:
+			pipe->methods = &rumpusb_device_bulk_methods;
 			endpt = pipe->endpoint->edesc->bEndpointAddress;
 			if (UE_GET_DIR(endpt) == UE_DIR_IN) {
 				oflags = O_RDONLY;
@@ -866,7 +876,6 @@ rumpusbhc_open(struct usbd_pipe *pipe)
 				oflags = O_WRONLY;
 			}
 			endpt = UE_GET_ADDR(endpt);
-			pipe->methods = &rumpusb_device_bulk_methods;
 
 			if (sc->sc_fdmodes[endpt] == oflags
 			    || sc->sc_fdmodes[endpt] == O_RDWR)
