@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.85 2009/11/21 04:16:51 rmind Exp $ */
+/*	$NetBSD: db_interface.c,v 1.86 2010/01/10 08:24:32 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.85 2009/11/21 04:16:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.86 2010/01/10 08:24:32 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -485,14 +485,23 @@ db_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 #endif /* MULTIPROCESSOR */
 
 const struct db_command db_machine_command_table[] = {
-	{ DDB_ADD_CMD("prom",	db_prom_cmd,	0,	NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("proc",	db_proc_cmd,	0,	NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("pcb",	db_dump_pcb,	0,	NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("page",	db_page_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("prom",	db_prom_cmd,	0,
+	  "Enter the Sun PROM monitor.",NULL,NULL) },
+	{ DDB_ADD_CMD("proc",	db_proc_cmd,	0,
+	  "Display some information about an LWP",
+	  "[addr]","   addr:\tstruct lwp address (curlwp otherwise)") },
+	{ DDB_ADD_CMD("pcb",	db_dump_pcb,	0,
+	  "Display information about a struct pcb",
+	  "[address]",
+	  "   address:\tthe struct pcb to print (curpcb otherwise)") },
+	{ DDB_ADD_CMD("page",	db_page_cmd,	0,
+	  "Display the address of a struct vm_page given a physical address",
+	   "pa", "   pa:\tphysical address to look up") },
 #ifdef MULTIPROCESSOR
-	{ DDB_ADD_CMD("cpu",	db_cpu_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("cpu",	db_cpu_cmd,	0,
+	  "switch to another cpu's registers", "cpu-no", NULL) },
 #endif
-	{ DDB_ADD_CMD(NULL,     NULL,           0,NULL,NULL,NULL) }
+	{ DDB_ADD_CMD(NULL,     NULL,           0,	NULL,NULL,NULL) }
 };
 #endif /* DDB */
 
