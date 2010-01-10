@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.60 2009/05/31 14:11:17 he Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.61 2010/01/10 07:06:12 snj Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.60 2009/05/31 14:11:17 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.61 2010/01/10 07:06:12 snj Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -288,7 +288,7 @@ bah_reset(struct bah_softc *sc)
 
 #ifdef BAH_DEBUG
 	printf("%s: reset: bits cleared, status=0x%02x\n",
-	    device_xname(&sc->sc_dev), GETREG(BAHSTAT);
+	    device_xname(&sc->sc_dev), GETREG(BAHSTAT));
 #endif
 
 	sc->sc_reconcount_excessive = ARC_EXCESSIVE_RECONS;
@@ -304,7 +304,7 @@ bah_reset(struct bah_softc *sc)
 
 #ifdef BAH_DEBUG
 	printf("%s: reset: started receiver, status=0x%02x\n",
-	    device_xname(&sc->sc_dev), GETREG(BAHSTAT);
+	    device_xname(&sc->sc_dev), GETREG(BAHSTAT));
 #endif
 
 	/* and init transmitter status */
@@ -845,7 +845,7 @@ bahintr(void *arg)
 					printf("%s: strt rx for buf %ld, "
 					    "stat 0x%02x\n",
 					    device_xname(&sc->sc_dev), sc->sc_rx_act,
-					    GETREG(BAHSTAT);
+					    GETREG(BAHSTAT));
 #endif
 				}
 
