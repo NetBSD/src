@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.251 2010/01/10 15:21:36 dsl Exp $	*/
+/*	$NetBSD: trap.c,v 1.252 2010/01/10 15:37:36 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.251 2010/01/10 15:21:36 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.252 2010/01/10 15:37:36 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -423,6 +423,11 @@ copyfault:
 			 * the kernel address of the iret.
 			 * We must copy the registers next to the userspace
 			 * return address so we have a frame for md_regs.
+			 *
+			 * Also, we might have faulted trying to execute the
+			 * trampoline for a local (nested) signal handler.
+			 * If we change the %cs (eg to include the stack)
+			 * just return the return to user.
 			 */
 			vframe = (void *)((int *)frame + 3);
 			if (KERNELMODE(vframe->tf_cs, vframe->tf_eflags))
@@ -431,7 +436,9 @@ copyfault:
 			    offsetof(struct trapframe, tf_eip));
 			l->l_md.md_regs = vframe;
 			ksi.ksi_addr = (void *)vframe->tf_eip;
-			(*p->p_emul->e_trapsignal)(l, &ksi);
+			if (!pmap_exec_fixup(&p->p_vmspace->vm_map, vframe,
+			    lwp_getpcb(l)))
+				(*p->p_emul->e_trapsignal)(l, &ksi);
 			trap_return_iret(vframe);
 			/* NOTREACHED */
 		case 0x8e:
