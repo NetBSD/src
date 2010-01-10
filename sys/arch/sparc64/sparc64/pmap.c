@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.245 2009/12/05 22:02:53 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.246 2010/01/10 15:07:53 skrll Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.245 2009/12/05 22:02:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.246 2010/01/10 15:07:53 skrll Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1436,7 +1436,7 @@ pmap_activate(struct lwp *l)
 	}
 
 	/*
-	 * This is essentially the same thing that happens in cpu_switch()
+	 * This is essentially the same thing that happens in cpu_switchto()
 	 * when the newly selected process is about to run, except that we
 	 * have to make sure to clean the register windows before we set
 	 * the new context.
