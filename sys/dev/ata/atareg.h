@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.34 2009/10/19 18:41:12 bouyer Exp $	*/
+/*	$NetBSD: atareg.h,v 1.35 2010/01/10 16:04:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -138,7 +138,7 @@
 #define	WDCC_READDMA_EXT	0x25	/* read 48-bit addressing with DMA */
 #define	WDCC_WRITEDMA_EXT	0x35	/* write 48-bit addressing with DMA */
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 #include <dev/ata/ataconf.h>
 
 /* Convert a 32-bit command to a 48-bit command. */
@@ -165,7 +165,7 @@ atacmd_to48(int cmd32)
 		/* NOTREACHED */
 	}
 }
-#endif /* _KERNEL */
+#endif /* _KERNEL || _STANDALONE */
 
 /* Native SATA command queueing */
 #define	WDCC_READ_FPDMA_QUEUED	0x60	/* SATA native queued read (48bit) */
