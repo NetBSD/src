@@ -1,4 +1,4 @@
-/* $NetBSD: wake.c,v 1.11 2010/01/04 11:34:39 mbalmer Exp $ */
+/* $NetBSD: wake.c,v 1.12 2010/01/10 19:40:11 mbalmer Exp $ */
 
 /*
  * Copyright (C) 2006, 2007, 2008, 2009, 2010 Marc Balmer <marc@msys.ch>
@@ -74,7 +74,7 @@ static int send_wakeup(int, struct ether_addr const *);
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [interface] lladdr [lladdr ...]\n",
+	fprintf(stderr, "usage: %s [interface] lladdr [lladdr ...]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
@@ -166,12 +166,12 @@ send_wakeup(int bpf, struct ether_addr const *addr)
 	int i;
 	ssize_t bw, len;
 
-	(void)memset(pkt.hdr.ether_dhost, 0xff, sizeof(pkt.hdr.ether_dhost));
+	memset(pkt.hdr.ether_dhost, 0xff, sizeof(pkt.hdr.ether_dhost));
 	pkt.hdr.ether_type = htons(0);
-	(void)memset(pkt.data, 0xff, SYNC_LEN);
+	memset(pkt.data, 0xff, SYNC_LEN);
 	for (p = pkt.data + SYNC_LEN, i = 0; i < DESTADDR_COUNT;
 	    p += ETHER_ADDR_LEN, i++)
-		(void)memcpy(p, addr->ether_addr_octet, ETHER_ADDR_LEN);
+		memcpy(p, addr->ether_addr_octet, ETHER_ADDR_LEN);
 	p = (u_char *)(void *)&pkt;
 	len = sizeof(pkt);
 	bw = 0;
