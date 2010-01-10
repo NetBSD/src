@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.127 2009/06/05 09:29:15 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.128 2010/01/10 08:24:32 mrg Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -956,8 +956,20 @@ option.
 .El
 .Ss SPARC
 .Bl -tag -width "traptrace" -compact
+.It Ic cpu
+Switch to another cpu.
 .It Ic prom
-Exit to the Sun PROM monitor.
+Enter the Sun PROM monitor.
+.It Ic proc
+Display some information about the LWP pointed to, or curlwp.
+.It Ic pcb
+Display information about the
+.Dq struct pcb
+listed.
+.It Ic page
+Display the pointer to the
+.Dq struct vm_page
+for this physical address.
 .El
 .Ss SPARC64
 .Bl -tag -width "traptrace" -compact
