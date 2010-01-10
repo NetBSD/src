@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.8 2007/10/17 19:54:10 garbled Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.9 2010/01/10 16:20:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@ struct wd_softc {
 	u_int sc_unit;
 
 	uint64_t sc_capacity;
+	uint32_t sc_capacity28;
 
 	struct ataparams sc_params;
 	struct disklabel sc_label;
@@ -86,7 +87,7 @@ struct wdc_command {
 	uint16_t r_cyl;
 	uint8_t r_sector;
 	uint8_t r_count;
-	uint8_t r_precomp;
+	uint8_t r_features;
 
 	uint16_t bcount;
 	void *data;

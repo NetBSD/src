@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.11 2008/04/28 20:23:16 martin Exp $	*/
+/*	$NetBSD: wdc.c,v 1.12 2010/01/10 16:20:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -229,7 +229,7 @@ wdccommand(struct wd_softc *sc, struct wdc_command *wd_c)
 	    wd_c->r_precomp));
 #endif
 
-	WDC_WRITE_REG(chp, wd_precomp, wd_c->r_precomp);
+	WDC_WRITE_REG(chp, wd_features, wd_c->r_features);
 	WDC_WRITE_REG(chp, wd_seccnt, wd_c->r_count);
 	WDC_WRITE_REG(chp, wd_sector, wd_c->r_sector);
 	WDC_WRITE_REG(chp, wd_cyl_lo, wd_c->r_cyl);
@@ -257,6 +257,12 @@ int
 wdccommandext(struct wd_softc *wd, struct wdc_command *wd_c)
 {
 	struct wdc_channel *chp = &wd->sc_channel;
+
+#if 0
+	DPRINTF(("%s(%d, %x, %ld, %d)\n", __func__,
+	    wd_c->drive, wd_c->r_command,
+	    (u_long)wd_c->r_blkno, wd_c->r_count));
+#endif
 
 	/* Select drive, head, and addressing mode. */
 	WDC_WRITE_REG(chp, wd_sdh, (wd_c->drive << 4) | WDSD_LBA);
@@ -320,20 +326,37 @@ wdc_exec_read(struct wd_softc *wd, uint8_t cmd, daddr_t blkno, void *data)
 {
 	int error;
 	struct wdc_command wd_c;
+	bool lba, lba48;
 
 	memset(&wd_c, 0, sizeof(wd_c));
+	lba   = false;
+	lba48 = false;
 
-	if (wd->sc_flags & WDF_LBA48) {
+	wd_c.data = data;
+	wd_c.r_count = 1;
+	wd_c.r_features = 0;
+	wd_c.drive = wd->sc_unit;
+	wd_c.bcount = wd->sc_label.d_secsize;
+
+	if ((wd->sc_flags & WDF_LBA48) != 0 && blkno > wd->sc_capacity28)
+		lba48 = true;
+	else if ((wd->sc_flags & WDF_LBA) != 0)
+		lba = true;
+
+	if (lba48) {
 		/* LBA48 */
+		wd_c.r_command = atacmd_to48(cmd);
 		wd_c.r_blkno = blkno;
-	} else if (wd->sc_flags & WDF_LBA) {
+	} else if (lba) {
 		/* LBA */
+		wd_c.r_command = cmd;
 		wd_c.r_sector = (blkno >> 0) & 0xff;
 		wd_c.r_cyl = (blkno >> 8) & 0xffff;
 		wd_c.r_head = (blkno >> 24) & 0x0f;
 		wd_c.r_head |= WDSD_LBA;
 	} else {
-		/* LHS */
+		/* CHS */
+		wd_c.r_command = cmd;
 		wd_c.r_sector = blkno % wd->sc_label.d_nsectors;
 		wd_c.r_sector++;    /* Sectors begin with 1, not 0. */
 		blkno /= wd->sc_label.d_nsectors;
@@ -343,13 +366,7 @@ wdc_exec_read(struct wd_softc *wd, uint8_t cmd, daddr_t blkno, void *data)
 		wd_c.r_head |= WDSD_CHS;
 	}
 
-	wd_c.data = data;
-	wd_c.r_count = 1;
-	wd_c.drive = wd->sc_unit;
-	wd_c.r_command = cmd;
-	wd_c.bcount = wd->sc_label.d_secsize;
-
-	if (wd->sc_flags & WDF_LBA48)
+	if (lba48)
 		error = wdccommandext(wd, &wd_c);
 	else
 		error = wdccommand(wd, &wd_c);
