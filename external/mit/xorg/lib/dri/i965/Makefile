@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2009/11/09 02:38:24 mrg Exp $
+# $NetBSD: Makefile,v 1.6 2010/01/10 17:35:33 mrg Exp $
 
 MODULE=	i965
 
@@ -7,7 +7,7 @@ CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/i965 \
 		-I${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/intel/server
 
 DRI_EXTRA_PATHS=	${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/intel \
-			${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/intel/server \
+			${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/intel/server
 SRCS=	\
 	intel_batchbuffer.c \
 	intel_blit.c \
@@ -85,8 +85,7 @@ SRCS=	\
 	brw_wm_pass2.c \
 	brw_wm_sampler_state.c \
 	brw_wm_state.c \
-	brw_wm_surface_state.c  \
-	intel_dri.c
+	brw_wm_surface_state.c 
 
 COPTS.brw_draw_upload.c=	-Wno-error
 
