@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.98 2009/11/25 14:28:50 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.99 2010/01/10 12:10:23 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98 2009/11/25 14:28:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.99 2010/01/10 12:10:23 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4794,10 +4794,6 @@ pmap_init_tmp_pgtbl(paddr_t pg)
 	kernel_pml = pmap_kernel()->pm_pdir;
 	tmp_pml = (void *)x86_tmp_pml_vaddr[PTP_LEVELS - 1];
 	memcpy(tmp_pml, kernel_pml, PAGE_SIZE);
-
-	/* Hook our own level 3 in */
-	tmp_pml[pl_i(pg, PTP_LEVELS)] =
-	    (x86_tmp_pml_paddr[PTP_LEVELS - 2] & PG_FRAME) | PG_RW | PG_V;
 
 	for (level = PTP_LEVELS - 1; level > 0; --level) {
 		tmp_pml = (void *)x86_tmp_pml_vaddr[level];
