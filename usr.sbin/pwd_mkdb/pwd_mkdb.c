@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.49 2009/11/06 15:00:31 joerg Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.50 2010/01/10 16:40:00 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
  The NetBSD Foundation, Inc.  All rights reserved.\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.49 2009/11/06 15:00:31 joerg Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.50 2010/01/10 16:40:00 joerg Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -649,20 +649,22 @@ cp(const char *from, const char *to, mode_t mode)
 		error(to);
 	while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
 		wcount = write(to_fd, buf, (size_t)rcount);
-		if (rcount != wcount || wcount == -1) {
-			sverrno = errno;
-			(void)snprintf(buf, sizeof(buf), "%s to %s", from, to);
-			errno = sverrno;
-			error(buf);
-		}
+		if (rcount != wcount || wcount == -1)
+			goto on_error;
 	}
 
-	if (rcount < 0) {
-		sverrno = errno;
-		(void)snprintf(buf, sizeof(buf), "%s to %s", from, to);
-		errno = sverrno;
-		error(buf);
-	}
+	if (rcount < 0)
+		goto on_error;
+	close(from_fd);
+	if (close(to_fd))
+		goto on_error
+	return;
+
+on_error:
+	sverrno = errno;
+	(void)snprintf(buf, sizeof(buf), "%s to %s", from, to);
+	errno = sverrno;
+	error(buf);
 }
 
 void
