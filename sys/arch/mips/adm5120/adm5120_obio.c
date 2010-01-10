@@ -1,4 +1,4 @@
-/* $NetBSD: adm5120_obio.c,v 1.1 2007/03/20 08:52:03 dyoung Exp $ */
+/* $NetBSD: adm5120_obio.c,v 1.1.62.1 2010/01/10 02:48:46 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm5120_obio.c,v 1.1 2007/03/20 08:52:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm5120_obio.c,v 1.1.62.1 2010/01/10 02:48:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ obio_print(void *aux, const char *pnp)
 	if (pnp != NULL)
 		aprint_normal("%s at %s", oa->oba_name, pnp);
 	if (oa->oba_addr != OBIOCF_ADDR_DEFAULT)
-		aprint_normal(" addr 0x%lx", oa->oba_addr);
+		aprint_normal(" addr 0x%"PRIxBUSADDR, oa->oba_addr);
 	if (oa->oba_gpio_mask != OBIOCF_GPIO_MASK_DEFAULT)
 		aprint_normal(" gpio_mask 0x%02x", oa->oba_gpio_mask);
 

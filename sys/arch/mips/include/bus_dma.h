@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.h,v 1.9 2008/04/28 20:23:28 martin Exp $ */
+/* $NetBSD: bus_dma.h,v 1.9.18.1 2010/01/10 02:48:46 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 /*
  * Private flags stored in the DMA map.
  */
-#define	MIPS_DMAMAP_COHERENT	0x10000	/* no cache flush necessary on sync */
+#define	_BUS_DMAMAP_COHERENT	0x10000	/* no cache flush necessary on sync */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
@@ -117,6 +117,50 @@ struct mips_bus_dma_segment {
 typedef struct mips_bus_dma_segment	bus_dma_segment_t;
 
 /*
+ * DMA mapping methods.
+ */
+struct mips_bus_dmamap_ops {
+	int	(*dmamap_create)(bus_dma_tag_t, bus_size_t, int,
+		    bus_size_t, bus_size_t, int, bus_dmamap_t *);
+	void	(*dmamap_destroy)(bus_dma_tag_t, bus_dmamap_t);
+	int	(*dmamap_load)(bus_dma_tag_t, bus_dmamap_t, void *,
+		    bus_size_t, struct proc *, int);
+	int	(*dmamap_load_mbuf)(bus_dma_tag_t, bus_dmamap_t,
+		    struct mbuf *, int);
+	int	(*dmamap_load_uio)(bus_dma_tag_t, bus_dmamap_t,
+		    struct uio *, int);
+	int	(*dmamap_load_raw)(bus_dma_tag_t, bus_dmamap_t,
+		    bus_dma_segment_t *, int, bus_size_t, int);
+	void	(*dmamap_unload)(bus_dma_tag_t, bus_dmamap_t);
+	void	(*dmamap_sync)(bus_dma_tag_t, bus_dmamap_t,
+		    bus_addr_t, bus_size_t, int);
+};
+
+/*
+ * DMA memory utility functions.
+ */
+struct mips_bus_dmamem_ops {
+	int	(*dmamem_alloc)(bus_dma_tag_t, bus_size_t, bus_size_t,
+		    bus_size_t, bus_dma_segment_t *, int, int *, int);
+	void	(*dmamem_free)(bus_dma_tag_t,
+		    bus_dma_segment_t *, int);
+	int	(*dmamem_map)(bus_dma_tag_t, bus_dma_segment_t *,
+		    int, size_t, void **, int);
+	void	(*dmamem_unmap)(bus_dma_tag_t, void *, size_t);
+	paddr_t	(*dmamem_mmap)(bus_dma_tag_t, bus_dma_segment_t *,
+		    int, off_t, int, int);
+};
+
+/*
+ * DMA tag utility functions.
+ */
+struct mips_bus_dmatag_ops {
+	int	(*dmatag_subregion)(bus_dma_tag_t, bus_addr_t, bus_addr_t,
+		    bus_dma_tag_t *, int);
+	void	(*dmatag_destroy)(bus_dma_tag_t);
+};
+
+/*
  *	bus_dma_tag_t
  *
  *	A machine-dependent opaque type describing the implementation of
@@ -126,71 +170,49 @@ struct mips_bus_dma_tag {
 	void	*_cookie;		/* cookie used in the guts */
 
 	bus_addr_t _wbase;		/* DMA window base */
-	bus_addr_t _physbase;		/* physical base of the window */
-	bus_size_t _wsize;		/* size of the window */
+	int _tag_needs_free;		/* number of references (maybe 0) */
+	bus_addr_t _bounce_thresh;
+	bus_addr_t _bounce_alloc_lo;	/* physical base of the window */
+	bus_addr_t _bounce_alloc_hi;	/* physical limit of the windows */
+	int	(*_may_bounce)(bus_dma_tag_t, bus_dmamap_t, int, int *);
 
-	/*
-	 * DMA mapping methods.
-	 */
-	int	(*_dmamap_create)(bus_dma_tag_t, bus_size_t, int,
-		    bus_size_t, bus_size_t, int, bus_dmamap_t *);
-	void	(*_dmamap_destroy)(bus_dma_tag_t, bus_dmamap_t);
-	int	(*_dmamap_load)(bus_dma_tag_t, bus_dmamap_t, void *,
-		    bus_size_t, struct proc *, int);
-	int	(*_dmamap_load_mbuf)(bus_dma_tag_t, bus_dmamap_t,
-		    struct mbuf *, int);
-	int	(*_dmamap_load_uio)(bus_dma_tag_t, bus_dmamap_t,
-		    struct uio *, int);
-	int	(*_dmamap_load_raw)(bus_dma_tag_t, bus_dmamap_t,
-		    bus_dma_segment_t *, int, bus_size_t, int);
-	void	(*_dmamap_unload)(bus_dma_tag_t, bus_dmamap_t);
-	void	(*_dmamap_sync)(bus_dma_tag_t, bus_dmamap_t,
-		    bus_addr_t, bus_size_t, int);
-
-	/*
-	 * DMA memory utility functions.
-	 */
-	int	(*_dmamem_alloc)(bus_dma_tag_t, bus_size_t, bus_size_t,
-		    bus_size_t, bus_dma_segment_t *, int, int *, int);
-	void	(*_dmamem_free)(bus_dma_tag_t,
-		    bus_dma_segment_t *, int);
-	int	(*_dmamem_map)(bus_dma_tag_t, bus_dma_segment_t *,
-		    int, size_t, void **, int);
-	void	(*_dmamem_unmap)(bus_dma_tag_t, void *, size_t);
-	paddr_t	(*_dmamem_mmap)(bus_dma_tag_t, bus_dma_segment_t *,
-		    int, off_t, int, int);
+	struct mips_bus_dmamap_ops _dmamap_ops;
+	struct mips_bus_dmamem_ops _dmamem_ops;
+	struct mips_bus_dmatag_ops _dmatag_ops;
 };
 
 #define	bus_dmamap_create(t, s, n, m, b, f, p)			\
-	(*(t)->_dmamap_create)((t), (s), (n), (m), (b), (f), (p))
+	(*(t)->_dmamap_ops.dmamap_create)((t), (s), (n), (m), (b), (f), (p))
 #define	bus_dmamap_destroy(t, p)				\
-	(*(t)->_dmamap_destroy)((t), (p))
+	(*(t)->_dmamap_ops.dmamap_destroy)((t), (p))
 #define	bus_dmamap_load(t, m, b, s, p, f)			\
-	(*(t)->_dmamap_load)((t), (m), (b), (s), (p), (f))
+	(*(t)->_dmamap_ops.dmamap_load)((t), (m), (b), (s), (p), (f))
 #define	bus_dmamap_load_mbuf(t, m, b, f)			\
-	(*(t)->_dmamap_load_mbuf)((t), (m), (b), (f))
+	(*(t)->_dmamap_ops.dmamap_load_mbuf)((t), (m), (b), (f))
 #define	bus_dmamap_load_uio(t, m, u, f)				\
-	(*(t)->_dmamap_load_uio)((t), (m), (u), (f))
+	(*(t)->_dmamap_ops.dmamap_load_uio)((t), (m), (u), (f))
 #define	bus_dmamap_load_raw(t, m, sg, n, s, f)			\
-	(*(t)->_dmamap_load_raw)((t), (m), (sg), (n), (s), (f))
+	(*(t)->_dmamap_ops.dmamap_load_raw)((t), (m), (sg), (n), (s), (f))
 #define	bus_dmamap_unload(t, p)					\
-	(*(t)->_dmamap_unload)((t), (p))
+	(*(t)->_dmamap_ops.dmamap_unload)((t), (p))
 #define	bus_dmamap_sync(t, p, o, l, ops)			\
-	(*(t)->_dmamap_sync)((t), (p), (o), (l), (ops))
+	(*(t)->_dmamap_ops.dmamap_sync)((t), (p), (o), (l), (ops))
 
 #define	bus_dmamem_alloc(t, s, a, b, sg, n, r, f)		\
-	(*(t)->_dmamem_alloc)((t), (s), (a), (b), (sg), (n), (r), (f))
+	(*(t)->_dmamem_ops.dmamem_alloc)((t), (s), (a), (b), (sg), (n), (r), (f))
 #define	bus_dmamem_free(t, sg, n)				\
-	(*(t)->_dmamem_free)((t), (sg), (n))
+	(*(t)->_dmamem_ops.dmamem_free)((t), (sg), (n))
 #define	bus_dmamem_map(t, sg, n, s, k, f)			\
-	(*(t)->_dmamem_map)((t), (sg), (n), (s), (k), (f))
+	(*(t)->_dmamem_ops.dmamem_map)((t), (sg), (n), (s), (k), (f))
 #define	bus_dmamem_unmap(t, k, s)				\
-	(*(t)->_dmamem_unmap)((t), (k), (s))
+	(*(t)->_dmamem_ops.dmamem_unmap)((t), (k), (s))
 #define	bus_dmamem_mmap(t, sg, n, o, p, f)			\
-	(*(t)->_dmamem_mmap)((t), (sg), (n), (o), (p), (f))
+	(*(t)->_dmamem_ops.dmamem_mmap)((t), (sg), (n), (o), (p), (f))
 
-#define bus_dmatag_subregion(t, mna, mxa, nt, f) EOPNOTSUPP
-#define bus_dmatag_destroy(t)
+#define	bus_dmatag_subregion(t, mna, mxa, nt, f)			\
+	(*(t)->_dmatag_ops.dmatag_subregion)((t), (mna), (mxa), (nt), (f))
+#define	bus_dmatag_destroy(t)					\
+	(*(t)->_dmatag_ops.dmatag_destroy)((t))
 
 /*
  *	bus_dmamap_t
@@ -205,6 +227,7 @@ struct mips_bus_dmamap {
 	int		_dm_segcnt;	/* number of segs this map can map */
 	bus_size_t	_dm_maxmaxsegsz; /* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
+	bus_addr_t	_dm_bounce_thresh; /* bounce threshold; see tag */
 	int		_dm_flags;	/* misc. flags */
 	struct vmspace	*_dm_vmspace;	/* vmspace that owns the mapping */
 
@@ -223,6 +246,45 @@ struct mips_bus_dmamap {
 };
 
 #ifdef _MIPS_BUS_DMA_PRIVATE
+#define	_BUS_AVAIL_END	mips_avail_end
+/*
+ * Cookie used for bounce buffers. A pointer to one of these it stashed in
+ * the DMA map.
+ */
+struct mips_bus_dma_cookie {
+	int	id_flags;		/* flags; see below */
+
+	/*
+	 * Information about the original buffer used during
+	 * DMA map syncs.  Note that origibuflen is only used
+	 * for ID_BUFTYPE_LINEAR.
+	 */
+	void	*id_origbuf;		/* pointer to orig buffer if
+					   bouncing */
+	bus_size_t id_origbuflen;	/* ...and size */
+	int	id_buftype;		/* type of buffer */
+
+	void	*id_bouncebuf;		/* pointer to the bounce buffer */
+	bus_size_t id_bouncebuflen;	/* ...and size */
+	int	id_nbouncesegs;		/* number of valid bounce segs */
+	bus_dma_segment_t id_bouncesegs[0]; /* array of bounce buffer
+					       physical memory segments */
+};
+
+/* id_flags */
+#endif /* _MIPS_BUS_DMA_PRIVATE */
+#define	_BUS_DMA_MIGHT_NEED_BOUNCE	0x01	/* may need bounce buffers */
+#ifdef _MIPS_BUS_DMA_PRIVATE
+#define	_BUS_DMA_HAS_BOUNCE		0x02	/* has bounce buffers */
+#define	_BUS_DMA_IS_BOUNCING		0x04	/* is bouncing current xfer */
+
+/* id_buftype */
+#define	_BUS_DMA_BUFTYPE_INVALID	0
+#define	_BUS_DMA_BUFTYPE_LINEAR		1
+#define	_BUS_DMA_BUFTYPE_MBUF		2
+#define	_BUS_DMA_BUFTYPE_UIO		3
+#define	_BUS_DMA_BUFTYPE_RAW		4
+
 int	_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *);
 void	_bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
@@ -253,6 +315,38 @@ void	_bus_dmamem_unmap(bus_dma_tag_t tag, void *kva,
 	    size_t size);
 paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, off_t off, int prot, int flags);
+
+int	_bus_dmatag_subregion(bus_dma_tag_t, bus_addr_t, bus_addr_t,
+	    bus_dma_tag_t *, int);
+void	_bus_dmatag_destroy(bus_dma_tag_t);
+
+extern const struct mips_bus_dmamap_ops mips_bus_dmamap_ops;
+extern const struct mips_bus_dmamem_ops mips_bus_dmamem_ops;
+extern const struct mips_bus_dmatag_ops mips_bus_dmatag_ops;
+
+#define	_BUS_DMAMAP_OPS_INITIALIZER {					\
+		.dmamap_create		= _bus_dmamap_create,		\
+		.dmamap_destroy		= _bus_dmamap_destroy,		\
+		.dmamap_load		= _bus_dmamap_load,		\
+		.dmamap_load_mbuf	= _bus_dmamap_load_mbuf,	\
+		.dmamap_load_uio	= _bus_dmamap_load_uio,		\
+		.dmamap_load_raw	= _bus_dmamap_load_raw,		\
+		.dmamap_unload		= _bus_dmamap_unload,		\
+		.dmamap_sync		= _bus_dmamap_sync,		\
+	}
+
+#define _BUS_DMAMEM_OPS_INITIALIZER {					\
+		.dmamem_alloc = 	_bus_dmamem_alloc,		\
+		.dmamem_free =		_bus_dmamem_free,		\
+		.dmamem_map =		_bus_dmamem_map,		\
+		.dmamem_unmap =		_bus_dmamem_unmap,		\
+		.dmamem_mmap =		_bus_dmamem_mmap,		\
+	}
+
+#define _BUS_DMATAG_OPS_INITIALIZER {					\
+		.dmatag_subregion =	_bus_dmatag_subregion,		\
+		.dmatag_destroy =	_bus_dmatag_destroy,		\
+	}
 #endif /* _MIPS_BUS_DMA_PRIVATE */
 
 #endif /* _KERNEL */

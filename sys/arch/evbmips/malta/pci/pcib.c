@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.12 2006/05/12 10:58:12 tsutsui Exp $	*/
+/*	$NetBSD: pcib.c,v 1.12.84.1 2010/01/10 02:48:45 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,13 +36,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.12 2006/05/12 10:58:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.12.84.1 2010/01/10 02:48:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <evbmips/malta/maltareg.h>
@@ -62,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.12 2006/05/12 10:58:12 tsutsui Exp $");
 
 #define	ICU_LEN		16	/* number of ISA IRQs */
 
-const char *isa_intrnames[ICU_LEN] = {
+const char * const isa_intrnames[ICU_LEN] = {
 	"timer",
 	"keyboard",
 	"reserved",		/* by South Bridge (for cascading) */
@@ -88,12 +90,15 @@ struct pcib_intrhead {
 };
 
 struct pcib_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
+	bus_space_tag_t sc_memt;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh_icu1;
 	bus_space_handle_t sc_ioh_icu2;
 	bus_space_handle_t sc_ioh_elcr;
+
+	bus_dma_tag_t sc_dmat;
 
 	struct mips_isa_chipset sc_ic;
 
@@ -134,8 +139,18 @@ static int	pcib_isa_intr_alloc(void *, int, int, int *);
 static const char *
 		pcib_isa_intr_string(void *, int);
 
-CFATTACH_DECL(pcib, sizeof(struct pcib_softc),
+CFATTACH_DECL_NEW(pcib, sizeof(struct pcib_softc),
     pcib_match, pcib_attach, NULL, NULL);
+
+static int
+malta_isa_dma_may_bounce(bus_dma_tag_t t, bus_dmamap_t map, int flags,
+	int *cookieflagsp)
+{
+        if (((map->_dm_size / PAGE_SIZE) + 1) > map->_dm_segcnt)
+                *cookieflagsp |= _BUS_DMA_MIGHT_NEED_BOUNCE;
+
+	return 0;
+}
 
 static int
 pcib_match(struct device *parent, struct cfdata *match, void *aux)
@@ -152,105 +167,116 @@ pcib_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 pcib_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pci_attach_args *pa = aux;
+	struct pci_attach_args * const pa = aux;
+	struct pcib_softc * const sc = device_private(self);
+	const char * const xname = device_xname(self);
 	char devinfo[256];
-	int i;
+	int error;
 
 	printf("\n");
 
 	if (my_sc != NULL)
 		panic("pcib_attach: already attached!");
-	my_sc = (void *)self;
+	my_sc = sc;
+	sc->sc_dev = self;
 
 	/*
 	 * Just print out a description and defer configuration
 	 * until all PCI devices have been attached.
 	 */
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf("%s: %s, (rev . 0x%02x)\n", self->dv_xname, devinfo,
+	printf("%s: %s, (rev . 0x%02x)\n", xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 
-	my_sc->sc_iot = pa->pa_iot;
+	sc->sc_memt = pa->pa_memt;
+	sc->sc_iot = pa->pa_iot;
+
+	/*
+	 * Initialize the DMA tag used for ISA DMA.
+	 */
+	error = bus_dmatag_subregion(pa->pa_dmat, MALTA_DMA_ISA_PHYSBASE,
+	    MALTA_DMA_ISA_PHYSBASE + MALTA_DMA_ISA_SIZE, &sc->sc_dmat, 0);
+	if (error)
+		panic("malta_dma_init: failed to create ISA dma tag: %d",
+		    error);
+	sc->sc_dmat->_may_bounce = malta_isa_dma_may_bounce;
 
 	/*
 	 * Map the PIC/ELCR registers.
 	 */
-	if (bus_space_map(my_sc->sc_iot, 0x4d0, 2, 0, &my_sc->sc_ioh_elcr) != 0)
-		printf("%s: unable to map ELCR registers\n",
-		    my_sc->sc_dev.dv_xname);
-	if (bus_space_map(my_sc->sc_iot, IO_ICU1, 2, 0, &my_sc->sc_ioh_icu1) != 0)
-		printf("%s: unable to map ICU1 registers\n",
-		    my_sc->sc_dev.dv_xname);
-	if (bus_space_map(my_sc->sc_iot, IO_ICU2, 2, 0, &my_sc->sc_ioh_icu2) != 0)
-		printf("%s: unable to map ICU2 registers\n",
-		    my_sc->sc_dev.dv_xname);
+	if (bus_space_map(sc->sc_iot, 0x4d0, 2, 0, &sc->sc_ioh_elcr) != 0)
+		printf("%s: unable to map ELCR registers\n", xname);
+	if (bus_space_map(sc->sc_iot, IO_ICU1, 2, 0, &sc->sc_ioh_icu1) != 0)
+		printf("%s: unable to map ICU1 registers\n", xname);
+	if (bus_space_map(sc->sc_iot, IO_ICU2, 2, 0, &sc->sc_ioh_icu2) != 0)
+		printf("%s: unable to map ICU2 registers\n", xname);
 
 	/* All interrupts default to "masked off". */
-	my_sc->sc_imask = 0xffff;
+	sc->sc_imask = 0xffff;
 
 	/* All interrupts default to edge-triggered. */
-	my_sc->sc_elcr = 0;
+	sc->sc_elcr = 0;
 
 	/*
 	 * Initialize the 8259s.
 	 */
 	/* reset, program device, 4 bytes */
-	bus_space_write_1(my_sc->sc_iot, my_sc->sc_ioh_icu1, PIC_ICW1,
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_ICW1,
 	    ICW1_SELECT | ICW1_IC4);
-	bus_space_write_1(my_sc->sc_iot, my_sc->sc_ioh_icu1, PIC_ICW2,
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_ICW2,
 	    ICW2_VECTOR(0)/*XXX*/);
-	bus_space_write_1(my_sc->sc_iot, my_sc->sc_ioh_icu1, PIC_ICW3,
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_ICW3,
 	    ICW3_CASCADE(2));
-	bus_space_write_1(my_sc->sc_iot, my_sc->sc_ioh_icu1, PIC_ICW4,
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_ICW4,
 	    ICW4_8086);
 
 	/* mask all interrupts */
-	bus_space_write_1(my_sc->sc_iot, my_sc->sc_ioh_icu1, PIC_OCW1,
-	    my_sc->sc_imask & 0xff);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_OCW1,
+	    sc->sc_imask & 0xff);
 
 	/* enable special mask mode */
-	bus_space_write_1(my_sc->sc_iot, my_sc->sc_ioh_icu1, PIC_OCW3,
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_OCW3,
 	    OCW3_SELECT | OCW3_SSMM | OCW3_SMM);
 
 	/* read IRR by default */
-	bus_space_write_1(my_sc->sc_iot, my_sc->sc_ioh_icu1, PIC_OCW3,
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_OCW3,
 	    OCW3_SELECT | OCW3_RR);
 
 	/* reset, program device, 4 bytes */
-	bus_space_write_1(my_sc->sc_iot, my_sc->sc_ioh_icu2, PIC_ICW1,
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2, PIC_ICW1,
 	    ICW1_SELECT | ICW1_IC4);
-	bus_space_write_1(my_sc->sc_iot, my_sc->sc_ioh_icu2, PIC_ICW2,
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2, PIC_ICW2,
 	    ICW2_VECTOR(0)/*XXX*/);
-	bus_space_write_1(my_sc->sc_iot, my_sc->sc_ioh_icu2, PIC_ICW3,
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2, PIC_ICW3,
 	    ICW3_CASCADE(2));
-	bus_space_write_1(my_sc->sc_iot, my_sc->sc_ioh_icu2, PIC_ICW4,
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2, PIC_ICW4,
 	    ICW4_8086);
 
 	/* mask all interrupts */
-	bus_space_write_1(my_sc->sc_iot, my_sc->sc_ioh_icu2, PIC_OCW1,
-	    my_sc->sc_imask & 0xff);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2, PIC_OCW1,
+	    sc->sc_imask & 0xff);
 
 	/* enable special mask mode */
-	bus_space_write_1(my_sc->sc_iot, my_sc->sc_ioh_icu2, PIC_OCW3,
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2, PIC_OCW3,
 	    OCW3_SELECT | OCW3_SSMM | OCW3_SMM);
 
 	/* read IRR by default */
-	bus_space_write_1(my_sc->sc_iot, my_sc->sc_ioh_icu2, PIC_OCW3,
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2, PIC_OCW3,
 	    OCW3_SELECT | OCW3_RR);
 
 	/*
 	 * Default all interrupts to edge-triggered.
 	 */
-	bus_space_write_1(my_sc->sc_iot, my_sc->sc_ioh_elcr, 0,
-	    my_sc->sc_elcr & 0xff);
-	bus_space_write_1(my_sc->sc_iot, my_sc->sc_ioh_elcr, 1,
-	    (my_sc->sc_elcr >> 8) & 0xff);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh_elcr, 0,
+	    sc->sc_elcr & 0xff);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh_elcr, 1,
+	    (sc->sc_elcr >> 8) & 0xff);
 
 	/*
 	 * Some ISA interrupts are reserved for devices that
 	 * we know are hard-wired to certain IRQs.
 	 */
-	my_sc->sc_reserved =
+	sc->sc_reserved =
 		(1U << 0) |     /* timer */
 		(1U << 1) |     /* keyboard controller (keyboard) */
 		(1U << 2) |     /* PIC cascade */
@@ -265,52 +291,51 @@ pcib_attach(struct device *parent, struct device *self, void *aux)
 		(1U << 15);     /* IDE secondary */
 
 	/* Set up our ISA chipset. */
-	my_sc->sc_ic.ic_v = my_sc;
-	my_sc->sc_ic.ic_intr_evcnt = pcib_isa_intr_evcnt;
-	my_sc->sc_ic.ic_intr_establish = pcib_isa_intr_establish;
-	my_sc->sc_ic.ic_intr_disestablish = pcib_isa_intr_disestablish;
-	my_sc->sc_ic.ic_intr_alloc = pcib_isa_intr_alloc;
-	my_sc->sc_ic.ic_intr_string = pcib_isa_intr_string;
+	sc->sc_ic.ic_v = sc;
+	sc->sc_ic.ic_intr_evcnt = pcib_isa_intr_evcnt;
+	sc->sc_ic.ic_intr_establish = pcib_isa_intr_establish;
+	sc->sc_ic.ic_intr_disestablish = pcib_isa_intr_disestablish;
+	sc->sc_ic.ic_intr_alloc = pcib_isa_intr_alloc;
+	sc->sc_ic.ic_intr_string = pcib_isa_intr_string;
 
-	pcib_ic = &my_sc->sc_ic;	/* XXX for external use */
+	pcib_ic = &sc->sc_ic;	/* XXX for external use */
 
 	/* Initialize our interrupt table. */
-	for (i = 0; i < ICU_LEN; i++) {
+	for (size_t i = 0; i < ICU_LEN; i++) {
 #if 0
 		char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
 		sprintf(irqstr, "irq %d", i);
-		evcnt_attach_dynamic(&my_sc->sc_intrtab[i].intr_count,
+		evcnt_attach_dynamic(&sc->sc_intrtab[i].intr_count,
 		    EVCNT_TYPE_INTR, NULL, "pcib", irqstr);
 #else
-		evcnt_attach_dynamic(&my_sc->sc_intrtab[i].intr_count,
+		evcnt_attach_dynamic(&sc->sc_intrtab[i].intr_count,
 		    EVCNT_TYPE_INTR, NULL, "pcib", isa_intrnames[i]);
 #endif
-		LIST_INIT(&my_sc->sc_intrtab[i].intr_q);
-		my_sc->sc_intrtab[i].intr_type = IST_NONE;
+		LIST_INIT(&sc->sc_intrtab[i].intr_q);
+		sc->sc_intrtab[i].intr_type = IST_NONE;
 	}
 
 	/* Hook up our interrupt handler. */
-	my_sc->sc_ih = evbmips_intr_establish(MALTA_SOUTHBRIDGE_INTR, pcib_intr, my_sc);
-	if (my_sc->sc_ih == NULL)
+	sc->sc_ih = evbmips_intr_establish(MALTA_SOUTHBRIDGE_INTR, pcib_intr, sc);
+	if (sc->sc_ih == NULL)
 		printf("%s: WARNING: unable to register interrupt handler\n",
-		    my_sc->sc_dev.dv_xname);
+		    xname);
 
 
 	/*
 	 * Disable ISA interrupts before returning to YAMON.
 	 */
-	if (shutdownhook_establish(pcib_cleanup, my_sc) == NULL)
+	if (shutdownhook_establish(pcib_cleanup, sc) == NULL)
 		panic("pcib_attach: could not establish shutdown hook");
 
 	config_defer(self, pcib_bridge_callback);
 }
 
 static void
-pcib_bridge_callback(struct device *self)
+pcib_bridge_callback(device_t self)
 {
-	struct pcib_softc *sc = (void *)self;
-	struct malta_config *mcp = &malta_configuration;
+	struct pcib_softc *sc = device_private(self);
 	struct isabus_attach_args iba;
 
 	/*
@@ -318,14 +343,14 @@ pcib_bridge_callback(struct device *self)
 	 */
 	memset(&iba, 0, sizeof(iba));
 
-	iba.iba_iot = &mcp->mc_iot;
-	iba.iba_memt = &mcp->mc_memt;
-	iba.iba_dmat = &mcp->mc_isa_dmat;
+	iba.iba_iot = sc->sc_iot;
+	iba.iba_memt = sc->sc_memt;
+	iba.iba_dmat = sc->sc_dmat;
 
 	iba.iba_ic = &sc->sc_ic;
 	iba.iba_ic->ic_attach_hook = pcib_isa_attach_hook;
 
-	config_found_ia(&sc->sc_dev, "isabus", &iba, isabusprint);
+	config_found_ia(sc->sc_dev, "isabus", &iba, isabusprint);
 }
 
 static void

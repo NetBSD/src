@@ -1,4 +1,4 @@
-/* $NetBSD: adm5120_extio.c,v 1.2 2008/10/24 22:16:26 dyoung Exp $ */
+/* $NetBSD: adm5120_extio.c,v 1.2.12.1 2010/01/10 02:48:46 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm5120_extio.c,v 1.2 2008/10/24 22:16:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm5120_extio.c,v 1.2.12.1 2010/01/10 02:48:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,7 +408,7 @@ extio_print(void *aux, const char *pnp)
 	if (ea->ea_cfio != EXTIOCF_CFIO_DEFAULT)
 		aprint_normal(" cfio");
 	if (ea->ea_addr != EXTIOCF_ADDR_DEFAULT)
-		aprint_normal(" addr 0x%lx", ea->ea_addr);
+		aprint_normal(" addr 0x%"PRIxBUSADDR, ea->ea_addr);
 	if (ea->ea_gpio_mask != EXTIOCF_GPIO_MASK_DEFAULT)
 		aprint_normal(" gpio_mask 0x%02x", ea->ea_gpio_mask);
 

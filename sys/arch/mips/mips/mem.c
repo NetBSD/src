@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.35.38.2 2009/09/08 08:11:29 matt Exp $	*/
+/*	$NetBSD: mem.c,v 1.35.38.3 2010/01/10 02:48:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -80,7 +80,7 @@
 #include "opt_mips_cache.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.38.2 2009/09/08 08:11:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.38.3 2010/01/10 02:48:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -100,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.38.2 2009/09/08 08:11:29 matt Exp $");
 
 #include <uvm/uvm_extern.h>
 
-extern paddr_t avail_end;
 void *zeropage;
 
 dev_type_read(mmrw);
@@ -167,7 +166,7 @@ mmrw(dev, uio, flags)
 			if (v < MIPS_KSEG0_START)
 			if (v < MIPS_KSEG0_START)
 				return (EFAULT);
-			if (v > MIPS_PHYS_TO_KSEG0(avail_end +
+			if (v > MIPS_PHYS_TO_KSEG0(mips_avail_end +
 					mips_round_page(MSGBUFSIZE) - c) &&
 			    (v < MIPS_KSEG2_START ||
 			    !uvm_kernacc((void *)v, c,

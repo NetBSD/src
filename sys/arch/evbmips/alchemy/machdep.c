@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.37.10.2 2009/12/31 00:54:09 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.37.10.3 2010/01/10 02:48:45 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37.10.2 2009/12/31 00:54:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37.10.3 2010/01/10 02:48:45 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -338,7 +338,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	/*
 	 * Load the rest of the available pages into the VM system.
 	 */
-	mips_add_physload(MIPS_KSEG0_START, kernend, 
+	mips_page_physload(MIPS_KSEG0_START, (vaddr_t)kernend, 
 	    mem_clusters, mem_cluster_cnt, NULL, 0);
 
 	/*

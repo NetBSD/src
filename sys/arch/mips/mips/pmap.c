@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.8 2010/01/09 06:01:18 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.9 2010/01/10 02:48:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.8 2010/01/09 06:01:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.9 2010/01/10 02:48:47 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -195,9 +195,9 @@ int pmapdebug = 0;
 
 struct pmap	kernel_pmap_store;
 
-paddr_t avail_start;	/* PA of first available physical page */
-paddr_t avail_end;	/* PA of last available physical page */
-vaddr_t virtual_end;	/* VA of last avail page (end of kernel AS) */
+paddr_t mips_avail_start;	/* PA of first available physical page */
+paddr_t mips_avail_end;		/* PA of last available physical page */
+vaddr_t mips_virtual_end;	/* VA of last avail page (end of kernel AS) */
 
 struct pv_entry	*pv_table;
 int		 pv_table_npages;
@@ -337,9 +337,9 @@ pmap_bootstrap(void)
 	 * for us.  Must do this before uvm_pageboot_alloc()
 	 * can be called.
 	 */
-	avail_start = ptoa(vm_physmem[0].start);
-	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
-	virtual_end = VM_MIN_KERNEL_ADDRESS + Sysmapsize * NBPG;
+	mips_avail_start = ptoa(vm_physmem[0].start);
+	mips_avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
+	mips_virtual_end = VM_MIN_KERNEL_ADDRESS + Sysmapsize * NBPG;
 
 	/*
 	 * Now actually allocate the kernel PTE array (must be done
@@ -409,7 +409,7 @@ pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 {
 
 	*vstartp = VM_MIN_KERNEL_ADDRESS;	/* kernel is in K0SEG */
-	*vendp = trunc_page(virtual_end);	/* XXX need pmap_growkernel() */
+	*vendp = trunc_page(mips_virtual_end);	/* XXX need pmap_growkernel() */
 }
 
 /*
@@ -1070,7 +1070,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 #ifdef DEBUG
 		enter_stats.kernel++;
 #endif
-		if (va < VM_MIN_KERNEL_ADDRESS || va >= virtual_end)
+		if (va < VM_MIN_KERNEL_ADDRESS || va >= mips_virtual_end)
 			panic("pmap_enter: kva too big");
 	} else {
 #ifdef DEBUG

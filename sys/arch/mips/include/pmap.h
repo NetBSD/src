@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.3 2009/12/31 00:54:09 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.4 2010/01/10 02:48:46 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -154,6 +154,9 @@ typedef struct pv_entry {
 
 extern char *pmap_attributes;		/* reference and modify bits */
 extern struct pmap kernel_pmap_store;
+extern paddr_t mips_avail_start;
+extern paddr_t mips_avail_end;
+extern vaddr_t mips_virtual_end;
 
 #define pmap_kernel()		(&kernel_pmap_store)
 #define	pmap_wired_count(pmap) 	((pmap)->pm_stats.wired_count)
