@@ -453,6 +453,8 @@
 #define NAMED_CURVE_TYPE           3
 #endif  /* OPENSSL_NO_EC */
 
+#define SSL3_FLAGS_ALLOW_UNSAFE_LEGACY_RENEGOTIATION	0x0010
+
 typedef struct cert_pkey_st
 	{
 	X509 *x509;
