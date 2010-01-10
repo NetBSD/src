@@ -1,4 +1,4 @@
-#	$NetBSD: files.malta,v 1.15 2008/02/20 21:43:33 drochner Exp $
+#	$NetBSD: files.malta,v 1.15.28.1 2010/01/10 02:48:45 matt Exp $
 
 file	arch/evbmips/malta/malta_bus_io.c
 file	arch/evbmips/malta/malta_bus_mem.c
@@ -77,7 +77,7 @@ device	mcclock: mc146818
 attach	mcclock at isa with mcclock_isa
 file	arch/evbmips/isa/mcclock_isa.c		mcclock_isa
 
-file	arch/evbmips/isa/isadma_bounce.c	isa
+#file	arch/evbmips/isa/isadma_bounce.c	isa
 
 # Floppy disk controller
 device	fdc { drive = -1 }: isadma

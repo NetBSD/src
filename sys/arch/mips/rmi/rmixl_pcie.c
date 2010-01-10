@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.1.2.5 2009/12/14 03:55:52 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.1.2.6 2010/01/10 02:48:47 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.5 2009/12/14 03:55:52 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.6 2010/01/10 02:48:47 matt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -373,10 +373,8 @@ rmixl_pcie_attach(device_t parent, device_t self, void *aux)
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_memt = &rcp->rc_pci_memt;
 	pba.pba_iot =  &rcp->rc_pci_iot;
-	pba.pba_dmat = sc->sc_29bit_dmat;	/* XXX */
-#ifdef NOTYET
-	pba.pba_dmat64 = NULL;
-#endif
+	pba.pba_dmat = sc->sc_32bit_dmat;
+	pba.pba_dmat64 = sc->sc_64bit_dmat;
 	pba.pba_pc = &sc->sc_pci_chipset;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22.16.7 2009/11/15 23:00:00 cliff Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.22.16.8 2010/01/10 02:48:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.7 2009/11/15 23:00:00 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.8 2010/01/10 02:48:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,62 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.7 2009/11/15 23:00:00 cliff Exp 
 #include <machine/cpu.h>
 #include <machine/locore.h>
 
-/*
- * Common function for DMA map creation.  May be called by bus-specific
- * DMA map creation functions.
- */
-int
-_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
-    bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
-{
-	struct mips_bus_dmamap *map;
-	void *mapstore;
-	size_t mapsize;
-
-	/*
-	 * Allocate and initialize the DMA map.  The end of the map
-	 * is a variable-sized array of segments, so we allocate enough
-	 * room for them in one shot.
-	 *
-	 * Note we don't preserve the WAITOK or NOWAIT flags.  Preservation
-	 * of ALLOCNOW notifies others that we've reserved these resources,
-	 * and they are not to be freed.
-	 *
-	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
-	 * the (nsegments - 1).
-	 */
-	mapsize = sizeof(struct mips_bus_dmamap) +
-	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
-	if ((mapstore = malloc(mapsize, M_DMAMAP,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
-		return (ENOMEM);
-
-	memset(mapstore, 0, mapsize);
-	map = mapstore;
-	map->_dm_size = size;
-	map->_dm_segcnt = nsegments;
-	map->_dm_maxmaxsegsz = maxsegsz;
-	map->_dm_boundary = boundary;
-	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
-	map->_dm_vmspace = NULL;
-	map->dm_maxsegsz = maxsegsz;
-	map->dm_mapsize = 0;		/* no valid mappings */
-	map->dm_nsegs = 0;
-
-	*dmamp = map;
-	return (0);
-}
-
-/*
- * Common function for DMA map destruction.  May be called by bus-specific
- * DMA map destruction functions.
- */
-void
-_bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
-{
-
-	free(map, M_DMAMAP);
-}
+const struct mips_bus_dmamap_ops mips_bus_dmamap_ops = _BUS_DMAMAP_OPS_INITIALIZER;
+const struct mips_bus_dmamem_ops mips_bus_dmamem_ops = _BUS_DMAMEM_OPS_INITIALIZER;
+const struct mips_bus_dmatag_ops mips_bus_dmatag_ops = _BUS_DMATAG_OPS_INITIALIZER;
 
 paddr_t kvtophys(vaddr_t);	/* XXX */
 
@@ -147,14 +94,15 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 		 * If we're beyond the current DMA window, indicate
 		 * that and try to fall back onto something else.
 		 */
-		if (curaddr < t->_physbase ||
-		    curaddr >= (t->_physbase + t->_wsize))
+		if (curaddr < t->_bounce_alloc_lo ||
+		    (t->_bounce_alloc_hi != 0
+		     && curaddr >= t->_bounce_alloc_hi))
 			return (EINVAL);
 #if 0
 		printf("dma: addr 0x%08lx -> 0x%08lx\n", curaddr,
-		    (curaddr - t->_physbase) + t->_wbase);
+		    (curaddr - t->_bounce_alloc_lo) + t->_wbase);
 #endif
-		curaddr = (curaddr - t->_physbase) + t->_wbase;
+		curaddr = (curaddr - t->_bounce_alloc_lo) + t->_wbase;
 
 		/*
 		 * Compute the segment size, and adjust counts.
@@ -222,6 +170,173 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 	return (0);
 }
 
+#ifdef _MIPS_NEED_BUS_DMA_BOUNCE
+static int _bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
+	    bus_size_t size, int flags);
+static void _bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map);
+static int _bus_dma_uiomove(void *buf, struct uio *uio, size_t n,
+	    int direction);
+
+static int
+_bus_dma_load_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+	size_t buflen, int buftype, int flags)
+{
+	struct mips_bus_dma_cookie * const cookie = map->_dm_cookie;
+	struct vmspace * const vm = vmspace_kernel();
+	paddr_t lastaddr;
+	int seg, error;
+
+	KASSERT(cookie != NULL);
+	KASSERT(cookie->id_flags & _BUS_DMA_MIGHT_NEED_BOUNCE);
+
+	/*
+	 * Allocate bounce pages, if necessary.
+	 */
+	if ((cookie->id_flags & _BUS_DMA_HAS_BOUNCE) == 0) {
+		error = _bus_dma_alloc_bouncebuf(t, map, buflen, flags);
+		if (error)
+			return (error);
+	}
+
+	/*
+	 * Cache a pointer to the caller's buffer and load the DMA map
+	 * with the bounce buffer.
+	 */
+	cookie->id_origbuf = buf;
+	cookie->id_origbuflen = buflen;
+	cookie->id_buftype = buftype;
+	seg = 0;
+	error = _bus_dmamap_load_buffer(t, map, cookie->id_bouncebuf,
+	    buflen, vm, flags, &lastaddr, &seg, 1);
+	if (error)
+		return (error);
+
+	map->dm_mapsize = buflen;
+	map->dm_nsegs = seg + 1;
+	map->_dm_vmspace = vm;
+
+	/* ...so _bus_dmamap_sync() knows we're bouncing */
+	cookie->id_flags |= _BUS_DMA_IS_BOUNCING;
+	return (error);
+}
+#endif /* _MIPS_NEED_BUS_DMA_BOUNCE */
+
+/*
+ * Common function for DMA map creation.  May be called by bus-specific
+ * DMA map creation functions.
+ */
+int
+_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
+    bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
+{
+	struct mips_bus_dmamap *map;
+	void *mapstore;
+	size_t mapsize;
+	const int mallocflags = M_ZERO |
+	    ((flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
+
+	int error = 0;
+
+	/*
+	 * Allocate and initialize the DMA map.  The end of the map
+	 * is a variable-sized array of segments, so we allocate enough
+	 * room for them in one shot.
+	 *
+	 * Note we don't preserve the WAITOK or NOWAIT flags.  Preservation
+	 * of ALLOCNOW notifies others that we've reserved these resources,
+	 * and they are not to be freed.
+	 *
+	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
+	 * the (nsegments - 1).
+	 */
+	mapsize = sizeof(struct mips_bus_dmamap) +
+	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
+	if ((mapstore = malloc(mapsize, M_DMAMAP, mallocflags)) == NULL)
+		return (ENOMEM);
+
+	map = mapstore;
+	map->_dm_size = size;
+	map->_dm_segcnt = nsegments;
+	map->_dm_maxmaxsegsz = maxsegsz;
+	map->_dm_boundary = boundary;
+	map->_dm_bounce_thresh = t->_bounce_thresh;
+	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->_dm_vmspace = NULL;
+	map->dm_maxsegsz = maxsegsz;
+	map->dm_mapsize = 0;		/* no valid mappings */
+	map->dm_nsegs = 0;
+
+	*dmamp = map;
+
+#ifdef _MIPS_NEED_BUS_DMA_BOUNCE
+	struct mips_bus_dma_cookie *cookie;
+	int cookieflags;
+	void *cookiestore;
+	size_t cookiesize;
+
+	if (t->_bounce_thresh == 0 || _BUS_AVAIL_END <= t->_bounce_thresh)
+		map->_dm_bounce_thresh = 0;
+	cookieflags = 0;
+
+	if (t->_may_bounce != NULL) {
+		error = (*t->_may_bounce)(t, map, flags, &cookieflags);
+		if (error != 0)
+			goto out;
+	}
+
+	if (map->_dm_bounce_thresh != 0)
+		cookieflags |= _BUS_DMA_MIGHT_NEED_BOUNCE;
+
+	if ((cookieflags & _BUS_DMA_MIGHT_NEED_BOUNCE) == 0)
+		return 0;
+
+	cookiesize = sizeof(struct mips_bus_dma_cookie) +
+	    (sizeof(bus_dma_segment_t) * map->_dm_segcnt);
+
+	/*
+	 * Allocate our cookie.
+	 */
+	if ((cookiestore = malloc(cookiesize, M_DMAMAP, mallocflags)) == NULL) {
+		error = ENOMEM;
+		goto out;
+	}
+	cookie = (struct mips_bus_dma_cookie *)cookiestore;
+	cookie->id_flags = cookieflags;
+	map->_dm_cookie = cookie;
+
+	error = _bus_dma_alloc_bouncebuf(t, map, size, flags);
+ out:
+	if (error)
+		_bus_dmamap_destroy(t, map);
+#endif /* _MIPS_NEED_BUS_DMA_BOUNCE */
+
+	return (error);
+}
+
+/*
+ * Common function for DMA map destruction.  May be called by bus-specific
+ * DMA map destruction functions.
+ */
+void
+_bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
+{
+
+#ifdef _MIPS_NEED_BUS_DMA_BOUNCE
+	struct mips_bus_dma_cookie *cookie = map->_dm_cookie;
+
+	/*
+	 * Free any bounce pages this map might hold.
+	 */
+	if (cookie != NULL) {
+		if (cookie->id_flags & _BUS_DMA_HAS_BOUNCE)
+			_bus_dma_free_bouncebuf(t, map);
+		free(cookie, M_DMAMAP);
+	}
+#endif
+
+	free(map, M_DMAMAP);
+}
+
 /*
  * Common function for loading a direct-mapped DMA map with a linear
  * buffer.  Called by bus-specific DMA map load functions with the
@@ -267,13 +382,21 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		 * XXX Check TLB entries for cache-inhibit bits?
 		 */
 		if (MIPS_KSEG1_P(buf))
-			map->_dm_flags |= MIPS_DMAMAP_COHERENT;
+			map->_dm_flags |= _BUS_DMAMAP_COHERENT;
 #ifdef _LP64
 		else if (MIPS_XKPHYS_P((vaddr_t)buf)
 		    && MIPS_XKPHYS_TO_CCA((vaddr_t)buf) == MIPS3_PG_TO_CCA(MIPS3_PG_UNCACHED))
-			map->_dm_flags |= MIPS_DMAMAP_COHERENT;
+			map->_dm_flags |= _BUS_DMAMAP_COHERENT;
 #endif
+		return 0;
 	}
+#ifdef _MIPS_NEED_BUS_DMA_BOUNCE
+	struct mips_bus_dma_cookie *cookie = map->_dm_cookie;
+	if (cookie != NULL && (cookie->id_flags & _BUS_DMA_MIGHT_NEED_BOUNCE)) {
+		error = _bus_dma_load_bouncebuf(t, map, buf, buflen,
+		    _BUS_DMA_BUFTYPE_LINEAR, flags);
+	}
+#endif
 	return (error);
 }
 
@@ -287,6 +410,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 	paddr_t lastaddr;
 	int seg, error, first;
 	struct mbuf *m;
+	struct vmspace * vm = vmspace_kernel();
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings."
@@ -310,14 +434,22 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 		if (m->m_len == 0)
 			continue;
 		error = _bus_dmamap_load_buffer(t, map, m->m_data, m->m_len,
-		    vmspace_kernel(), flags, &lastaddr, &seg, first);
+		    vm, flags, &lastaddr, &seg, first);
 		first = 0;
 	}
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
-		map->_dm_vmspace = vmspace_kernel();	/* always kernel */
+		map->_dm_vmspace = vm;		/* always kernel */
+		return 0;
 	}
+#ifdef _MIPS_NEED_BUS_DMA_BOUNCE
+	struct mips_bus_dma_cookie * cookie = map->_dm_cookie;
+	if (cookie != NULL && (cookie->id_flags & _BUS_DMA_MIGHT_NEED_BOUNCE)) {
+		error = _bus_dma_load_bouncebuf(t, map, m0, m0->m_pkthdr.len,
+		    _BUS_DMA_BUFTYPE_MBUF, flags);
+	}
+#endif /* _MIPS_NEED_BUS_DMA_BOUNCE */
 	return (error);
 }
 
@@ -365,7 +497,15 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
 		map->_dm_vmspace = uio->uio_vmspace;
+		return 0;
 	}
+#ifdef _MIPS_NEED_BUS_DMA_BOUNCE
+	struct mips_bus_dma_cookie *cookie = map->_dm_cookie;
+	if (cookie != NULL && (cookie->id_flags & _BUS_DMA_MIGHT_NEED_BOUNCE)) {
+		error = _bus_dma_load_bouncebuf(t, map, uio, uio->uio_resid,
+		    _BUS_DMA_BUFTYPE_UIO, flags);
+	}
+#endif
 	return (error);
 }
 
@@ -387,6 +527,18 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 void
 _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
+#ifdef _MIPS_NEED_BUS_DMA_BOUNCE
+	struct mips_bus_dma_cookie *cookie = map->_dm_cookie;
+		    
+	/*      
+	 * If we have bounce pages, free them, unless they're
+	 * reserved for our exclusive use.
+	 */     
+	if (cookie != NULL) {
+		cookie->id_flags &= ~_BUS_DMA_IS_BOUNCING;
+		cookie->id_buftype = _BUS_DMA_BUFTYPE_INVALID;
+	}
+#endif
 
 	/*
 	 * No resources to free; just mark the mappings as
@@ -395,7 +547,7 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	map->dm_maxsegsz = map->_dm_maxmaxsegsz;
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
-	map->_dm_flags &= ~MIPS_DMAMAP_COHERENT;
+	map->_dm_flags &= ~_BUS_DMAMAP_COHERENT;
 }
 
 /*
@@ -447,6 +599,131 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 *	POSTWRITE -- Nothing.
 	 */
 
+#ifdef _MIPS_NEED_BUS_DMA_BOUNCE
+	struct mips_bus_dma_cookie * cookie = map->_dm_cookie;
+	if (cookie != NULL && (cookie->id_flags & _BUS_DMA_IS_BOUNCING)) {
+		switch (cookie->id_buftype) {
+		case _BUS_DMA_BUFTYPE_LINEAR:
+			/*
+			 * Nothing to do for pre-read or post-write.
+			 */
+			if (ops & BUS_DMASYNC_PREWRITE) {
+				/* 
+				 * Copy the caller's buffer to the bounce
+				 * buffer.
+				 */ 
+				memcpy((char *)cookie->id_bouncebuf + offset,
+				    (char *)cookie->id_origbuf + offset, len);
+			}
+			if (ops & BUS_DMASYNC_POSTREAD) {
+				/*
+				 * Copy the bounce buffer to the caller's
+				 * buffer.
+				 */
+				memcpy((char *)cookie->id_origbuf + offset,
+				    (char *)cookie->id_bouncebuf + offset, len);
+			}
+
+			break;
+
+		case _BUS_DMA_BUFTYPE_MBUF:
+		    {
+			struct mbuf *m, *m0 = cookie->id_origbuf;
+			bus_size_t moff;
+
+			/*
+			 * Nothing to do for pre-read.
+			 */
+
+			if (ops & BUS_DMASYNC_PREWRITE) {
+				/*
+				 * Copy the caller's buffer to the bounce
+				 * buffer.
+				 */
+				m_copydata(m0, offset, len,
+				    (char *)cookie->id_bouncebuf + offset);
+			}
+
+			if (ops & BUS_DMASYNC_POSTREAD) {
+				/*
+				 * Copy the bounce buffer to the caller's
+				 * buffer.
+				 */
+				for (moff = offset, m = m0;
+				     m != NULL && len != 0;
+				     m = m->m_next) {
+					/* Find the beginning mbuf. */
+					if (moff >= m->m_len) {
+						moff -= m->m_len;
+						continue;
+					}
+
+					/*
+					 * Now at the first mbuf to sync; nail
+					 * each one until we have exhausted the
+					 * length.
+					 */
+					minlen = len < m->m_len - moff ?
+					    len : m->m_len - moff;
+
+					memcpy(mtod(m, char *) + moff,
+					    (char *)cookie->id_bouncebuf+offset,
+					    minlen);
+
+					moff = 0;
+					len -= minlen;
+					offset += minlen;
+				}
+			}
+
+			/*
+			 * Nothing to do for post-write.
+			 */
+			break;
+		    }
+		case _BUS_DMA_BUFTYPE_UIO: {
+			struct uio *uio;
+
+			uio = (struct uio *)cookie->id_origbuf;
+
+			/*
+			 * Nothing to do for pre-read.
+			 */
+
+			if (ops & BUS_DMASYNC_PREWRITE) {
+				/*
+				 * Copy the caller's buffer to the bounce buffer.
+				 */
+				_bus_dma_uiomove((char *)cookie->id_bouncebuf + offset,
+				    uio, len, UIO_WRITE);
+			}
+
+			if (ops & BUS_DMASYNC_POSTREAD) {
+				_bus_dma_uiomove((char *)cookie->id_bouncebuf + offset,
+				    uio, len, UIO_READ);
+			}
+
+			/*
+			 * Nothing to do for post-write.
+			 */
+			break;
+		    }
+
+		case _BUS_DMA_BUFTYPE_RAW:
+			panic("_bus_dmamap_sync: _BUS_DMA_BUFTYPE_RAW");
+			break;
+
+		case _BUS_DMA_BUFTYPE_INVALID:
+			panic("_bus_dmamap_sync: _BUS_DMA_BUFTYPE_INVALID");
+			break;
+
+		default:
+			printf("unknown buffer type %d\n", cookie->id_buftype);
+			panic("_bus_dmamap_sync");
+		}
+	} 
+#endif /* _MIPS_NEED_BUS_DMA_BOUNCE */
+
 	/*
 	 * Flush the write buffer.
 	 * XXX Is this always necessary?
@@ -461,7 +738,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 * If the mapping is of COHERENT DMA-safe memory, no cache
 	 * flush is necessary.
 	 */
-	if (map->_dm_flags & MIPS_DMAMAP_COHERENT)
+	if (map->_dm_flags & _BUS_DMAMAP_COHERENT)
 		return;
 
 	/*
@@ -548,10 +825,15 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
     int flags)
 {
+	bus_addr_t high;
 
-	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, t->_physbase,
-	    t->_physbase + t->_wsize));
+	if (t->_bounce_alloc_hi != 0 && _BUS_AVAIL_END > t->_bounce_alloc_hi)
+		high = trunc_page(t->_bounce_alloc_hi);
+	else
+		high = trunc_page(_BUS_AVAIL_END);
+
+	return _bus_dmamem_alloc_range(t, size, alignment, boundary,
+	    segs, nsegs, rsegs, flags, t->_bounce_alloc_lo, high);
 }
 
 /*
@@ -766,4 +1048,156 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 
 	/* Page not found. */
 	return (-1);
+}
+
+#ifdef _MIPS_NEED_BUS_DMA_BOUNCE
+static int
+_bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
+    bus_size_t size, int flags)
+{
+	struct mips_bus_dma_cookie *cookie = map->_dm_cookie;
+	int error = 0;
+
+#ifdef DIAGNOSTIC
+	if (cookie == NULL)
+		panic("_bus_dma_alloc_bouncebuf: no cookie");
+#endif
+
+	cookie->id_bouncebuflen = round_page(size);
+	error = _bus_dmamem_alloc(t, cookie->id_bouncebuflen,
+	    PAGE_SIZE, map->_dm_boundary, cookie->id_bouncesegs,
+	    map->_dm_segcnt, &cookie->id_nbouncesegs, flags);
+	if (error)
+		goto out;
+	error = _bus_dmamem_map(t, cookie->id_bouncesegs,
+	    cookie->id_nbouncesegs, cookie->id_bouncebuflen,
+	    (void **)&cookie->id_bouncebuf, flags);
+
+ out:
+	if (error) {
+		_bus_dmamem_free(t, cookie->id_bouncesegs,
+		    cookie->id_nbouncesegs);
+		cookie->id_bouncebuflen = 0;
+		cookie->id_nbouncesegs = 0;
+	} else {
+		cookie->id_flags |= _BUS_DMA_HAS_BOUNCE;
+	}
+
+	return (error);
+}
+
+static void
+_bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map)
+{
+	struct mips_bus_dma_cookie *cookie = map->_dm_cookie;
+
+#ifdef DIAGNOSTIC
+	if (cookie == NULL)
+		panic("_bus_dma_alloc_bouncebuf: no cookie");
+#endif
+
+	_bus_dmamem_unmap(t, cookie->id_bouncebuf, cookie->id_bouncebuflen);
+	_bus_dmamem_free(t, cookie->id_bouncesegs,
+	    cookie->id_nbouncesegs);
+	cookie->id_bouncebuflen = 0;
+	cookie->id_nbouncesegs = 0;
+	cookie->id_flags &= ~_BUS_DMA_HAS_BOUNCE;
+}
+
+/*
+ * This function does the same as uiomove, but takes an explicit
+ * direction, and does not update the uio structure.
+ */
+static int
+_bus_dma_uiomove(void *buf, struct uio *uio, size_t n, int direction)
+{
+	struct iovec *iov;
+	int error;
+	struct vmspace *vm;
+	char *cp;
+	size_t resid, cnt;
+	int i;
+
+	iov = uio->uio_iov;
+	vm = uio->uio_vmspace;
+	cp = buf;
+	resid = n;
+
+	for (i = 0; i < uio->uio_iovcnt && resid > 0; i++) {
+		iov = &uio->uio_iov[i];
+		if (iov->iov_len == 0)
+			continue;
+		cnt = MIN(resid, iov->iov_len);
+
+		if (!VMSPACE_IS_KERNEL_P(vm) &&
+		    (curlwp->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+		    != 0) {
+			preempt();
+		}
+		if (direction == UIO_READ) {
+			error = copyout_vmspace(vm, cp, iov->iov_base, cnt);
+		} else {
+			error = copyin_vmspace(vm, iov->iov_base, cp, cnt);
+		}
+		if (error)
+			return (error);
+		cp += cnt;
+		resid -= cnt;
+	}
+	return (0);
+}
+#endif /* _MIPS_NEED_BUS_DMA_BOUNCE */
+
+int
+_bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
+		      bus_addr_t max_addr, bus_dma_tag_t *newtag, int flags)
+{
+
+#ifdef _MIPS_NEED_BUS_DMA_BOUNCE
+	if ((((tag->_bounce_thresh != 0   && max_addr >= tag->_bounce_thresh)
+	      && (tag->_bounce_alloc_hi != 0 && max_addr >= tag->_bounce_alloc_hi))
+	     || (tag->_bounce_alloc_hi == 0 && max_addr <= _BUS_AVAIL_END))
+	    && (min_addr <= tag->_bounce_alloc_lo)) {
+		*newtag = tag;
+		/* if the tag must be freed, add a reference */
+		if (tag->_tag_needs_free)
+			(tag->_tag_needs_free)++;
+		return 0;
+	}
+
+	if ((*newtag = malloc(sizeof(struct mips_bus_dma_tag), M_DMAMAP,
+	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
+		return ENOMEM;
+
+	**newtag = *tag;
+	(*newtag)->_tag_needs_free = 1;
+
+	if (tag->_bounce_thresh == 0 || max_addr < tag->_bounce_thresh)
+		(*newtag)->_bounce_thresh = max_addr;
+	if (tag->_bounce_alloc_hi == 0 || max_addr < tag->_bounce_alloc_hi)
+		(*newtag)->_bounce_alloc_hi = max_addr;
+	if (min_addr > tag->_bounce_alloc_lo)
+		(*newtag)->_bounce_alloc_lo = min_addr;
+	(*newtag)->_wbase += (*newtag)->_bounce_alloc_lo - tag->_bounce_alloc_lo;
+
+	return 0;
+#else
+	return EOPNOTSUPP;
+#endif /* _MIPS_NEED_BUS_DMA_BOUNCE */
+}
+
+void
+_bus_dmatag_destroy(bus_dma_tag_t tag)
+{
+#ifdef _MIPS_NEED_BUS_DMA_BOUNCE
+	switch (tag->_tag_needs_free) {
+	case 0:
+		break;				/* not allocated with malloc */
+	case 1:
+		free(tag, M_DMAMAP);		/* last reference to tag */
+		break;
+	default:
+		(tag->_tag_needs_free)--;	/* one less reference */
+	}
+#endif
 }

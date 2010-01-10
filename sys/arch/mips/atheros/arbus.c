@@ -1,4 +1,4 @@
-/* $Id: arbus.c,v 1.10 2006/09/04 05:17:26 gdamore Exp $ */
+/* $Id: arbus.c,v 1.10.80.1 2010/01/10 02:48:46 matt Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.10 2006/09/04 05:17:26 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.10.80.1 2010/01/10 02:48:46 matt Exp $");
 
 #include "locators.h"
 #include <sys/param.h>
@@ -56,11 +56,10 @@ __KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.10 2006/09/04 05:17:26 gdamore Exp $");
 #include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>
 
-static int arbus_match(struct device *, struct cfdata *, void *);
-static void arbus_attach(struct device *, struct device *, void *);
+static int arbus_match(device_t, struct cfdata *, void *);
+static void arbus_attach(device_t, device_t, void *);
 static int arbus_print(void *, const char *);
 static void arbus_bus_mem_init(bus_space_tag_t, void *);
-static void arbus_dma_init(struct device *, bus_dma_tag_t);
 
 struct arbus_intrhand {
 	int		ih_cirq;
@@ -68,22 +67,24 @@ struct arbus_intrhand {
 	void		*ih_cookie;
 };
 
-CFATTACH_DECL(arbus, sizeof(struct device), arbus_match, arbus_attach,
-    NULL, NULL);
+CFATTACH_DECL_NEW(arbus, 0, arbus_match, arbus_attach, NULL, NULL);
 
 struct mips_bus_space	arbus_mbst;
-struct mips_bus_dma_tag	arbus_mdt;
+struct mips_bus_dma_tag	arbus_mdt = {
+	._dmamap_ops = _BUS_DMAMAP_OPS_INITIALIZER,
+	._dmamem_ops = _BUS_DMAMEM_OPS_INITIALIZER,
+	._dmatag_ops = _BUS_DMATAG_OPS_INITIALIZER,
+};
 
 void
 arbus_init(void)
 {
-	static int done = 0;
+	static bool done = false;
 	if (done)
 		return;
-	done++;
+	done = true;
 
 	arbus_bus_mem_init(&arbus_mbst, NULL);
-	arbus_dma_init(NULL, &arbus_mdt);
 }
 
 /* this primarily exists so we can get to the console... */
@@ -102,14 +103,14 @@ arbus_get_bus_dma_tag(void)
 }
 
 int
-arbus_match(struct device *parent, struct cfdata *match, void *aux)
+arbus_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
 }
 
 void
-arbus_attach(struct device *parent, struct device *self, void *aux)
+arbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct arbus_attach_args aa;
 	const struct ar531x_device *devices;
@@ -150,7 +151,7 @@ arbus_print(void *aux, const char *pnp)
 		aprint_normal("%s at %s", aa->aa_name, pnp);
 
 	if (aa->aa_addr)
-		aprint_normal(" addr 0x%lx", aa->aa_addr);
+		aprint_normal(" addr 0x%" PRIxBUSADDR, aa->aa_addr);
 
 	if (aa->aa_cirq >= 0)
 		aprint_normal(" cpu irq %d", aa->aa_cirq);
@@ -198,32 +199,6 @@ arbus_intr_disestablish(void *arg)
 	else if (ih->ih_cirq >= 0)
 		ar531x_cpu_intr_disestablish(ih->ih_cookie);
 	free(ih, M_DEVBUF);
-}
-
-
-void
-arbus_dma_init(struct device *sc, bus_dma_tag_t pdt)
-{
-	bus_dma_tag_t	t;
-
-	t = pdt;
-	t->_cookie = sc;
-	t->_wbase = 0;
-	t->_physbase = 0;
-	t->_wsize = MIPS_KSEG1_START - MIPS_KSEG0_START;
-	t->_dmamap_create = _bus_dmamap_create;
-	t->_dmamap_destroy = _bus_dmamap_destroy;
-	t->_dmamap_load = _bus_dmamap_load;
-	t->_dmamap_load_mbuf = _bus_dmamap_load_mbuf;
-	t->_dmamap_load_uio = _bus_dmamap_load_uio;
-	t->_dmamap_load_raw = _bus_dmamap_load_raw;
-	t->_dmamap_unload = _bus_dmamap_unload;
-	t->_dmamap_sync = _bus_dmamap_sync;
-	t->_dmamem_alloc = _bus_dmamem_alloc;
-	t->_dmamem_free = _bus_dmamem_free;
-	t->_dmamem_map = _bus_dmamem_map;
-	t->_dmamem_unmap = _bus_dmamem_unmap;
-	t->_dmamem_mmap = _bus_dmamem_mmap;
 }
 
 /*

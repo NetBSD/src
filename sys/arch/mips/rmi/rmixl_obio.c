@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio.c,v 1.1.2.8 2009/12/14 07:18:26 cliff Exp $	*/
+/*	$NetBSD: rmixl_obio.c,v 1.1.2.9 2010/01/10 02:48:47 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.8 2009/12/14 07:18:26 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.9 2010/01/10 02:48:47 matt Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -74,7 +74,7 @@ static void obio_attach(device_t, device_t, void *);
 static int  obio_print(void *, const char *);
 static int  obio_search(device_t, cfdata_t, const int *, void *);
 static void obio_bus_init(struct obio_softc *);
-static void obio_dma_init_29(bus_dma_tag_t);
+static void obio_dma_init_64(bus_dma_tag_t);
 static int  rmixl_addr_error_intr(void *);
 
 
@@ -162,6 +162,7 @@ obio_bus_init(struct obio_softc *sc)
 {
 	struct rmixl_config *rcp = &rmixl_configuration;
 	static int done = 0;
+	int error;
 
 	if (done)
 		return;
@@ -175,65 +176,49 @@ obio_bus_init(struct obio_softc *sc)
 	if (rcp->rc_obio_el_memt.bs_cookie == 0)
 		rmixl_obio_el_bus_mem_init(&rcp->rc_obio_el_memt, rcp);
 
-	/* dma space for addr < 512MB */
-	if (rcp->rc_29bit_dmat._cookie == 0)
-		obio_dma_init_29(&rcp->rc_29bit_dmat);
-#ifdef NOTYET
-	/* dma space for addr < 4GB */
-	if (rcp->rc_32bit_dmat._cookie == 0)
-		obio_dma_init_32(&rcp->rc_32bit_dmat);
 	/* dma space for all memory, including >= 4GB */
 	if (rcp->rc_64bit_dmat._cookie == 0)
 		obio_dma_init_64(&rcp->rc_64bit_dmat);
-#endif
+
+	/* dma space for addr < 512MB */
+	if (rcp->rc_32bit_dmat == NULL) {
+		error = bus_dmatag_subregion(&rcp->rc_64bit_dmat,
+		    0, MIPS_KSEG1_START - MIPS_KSEG0_START,
+		    &rcp->rc_32bit_dmat, 0);
+		if (error)
+			panic("%s: failed to create 32bit dma tag: %d",
+			    __func__, error);
+	}
+
+	/* dma space for addr < 512MB */
+	if (rcp->rc_29bit_dmat == NULL) {
+		error = bus_dmatag_subregion(rcp->rc_32bit_dmat,
+		    0, MIPS_KSEG1_START - MIPS_KSEG0_START,
+		    &rcp->rc_29bit_dmat, 0);
+		if (error)
+			panic("%s: failed to create 29bit dma tag: %d",
+			    __func__, error);
+	}
 
 	sc->sc_base = (bus_addr_t)rcp->rc_io_pbase;
 	sc->sc_size = (bus_size_t)RMIXL_IO_DEV_SIZE;
 	sc->sc_eb_bst = (bus_space_tag_t)&rcp->rc_obio_eb_memt;
 	sc->sc_el_bst = (bus_space_tag_t)&rcp->rc_obio_el_memt;
-	sc->sc_29bit_dmat = &rcp->rc_29bit_dmat;
-#ifdef NOTYET
-	sc->sc_32bit_dmat = &rcp->rc_32bit_dmat;
+	sc->sc_29bit_dmat = rcp->rc_29bit_dmat;
+	sc->sc_32bit_dmat = rcp->rc_32bit_dmat;
 	sc->sc_64bit_dmat = &rcp->rc_64bit_dmat;
-#else
-	sc->sc_32bit_dmat = NULL;
-	sc->sc_64bit_dmat = NULL;
-#endif
 }
 
 static void
-obio_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
-    bus_size_t len, int ops)
-{
-	return;
-}
-
-static void
-obio_dma_init_29(bus_dma_tag_t t)
+obio_dma_init_64(bus_dma_tag_t t)
 {
 	t->_cookie = t;
 	t->_wbase = 0;
-	t->_physbase = 0;
-#if _LP64
-	t->_wsize = ~0;
-#else
-	t->_wsize = MIPS_KSEG1_START - MIPS_KSEG0_START;
-#endif
-	t->_dmamap_create = _bus_dmamap_create;
-	t->_dmamap_destroy = _bus_dmamap_destroy;
-	t->_dmamap_load = _bus_dmamap_load;
-	t->_dmamap_load_mbuf = _bus_dmamap_load_mbuf;
-	t->_dmamap_load_uio = _bus_dmamap_load_uio;
-	t->_dmamap_load_raw = _bus_dmamap_load_raw;
-	t->_dmamap_unload = _bus_dmamap_unload;
-
-	t->_dmamap_sync = obio_bus_dmamap_sync;
-
-	t->_dmamem_alloc = _bus_dmamem_alloc;
-	t->_dmamem_free = _bus_dmamem_free;
-	t->_dmamem_map = _bus_dmamem_map;
-	t->_dmamem_unmap = _bus_dmamem_unmap;
-	t->_dmamem_mmap = _bus_dmamem_mmap;
+	t->_bounce_alloc_lo = 0;
+	t->_bounce_alloc_hi = 0;
+	t->_dmamap_ops = mips_bus_dmamap_ops;
+	t->_dmamem_ops = mips_bus_dmamem_ops;
+	t->_dmatag_ops = mips_bus_dmatag_ops;
 }
 
 void

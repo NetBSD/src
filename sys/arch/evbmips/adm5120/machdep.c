@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.6.10.2 2009/12/31 00:54:08 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.6.10.3 2010/01/10 02:48:45 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6.10.2 2009/12/31 00:54:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6.10.3 2010/01/10 02:48:45 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -158,13 +158,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6.10.2 2009/12/31 00:54:08 matt Exp $"
 #ifndef	MEMSIZE
 #define	MEMSIZE 4 * 1024 * 1024
 #endif /* !MEMSIZE */
-
-struct	user *proc0paddr;
-
-/* Our exported CPU info; we can have only one. */  
-struct cpu_info cpu_info_store = {
-	.ci_curlwp = &lwp0,
-};
 
 /* Maps for VM objects. */
 struct vm_map *mb_map = NULL;
@@ -419,7 +412,7 @@ mach_init(int argc, char **argv, void *a2, void *a3)
 	/*
 	 * Load the rest of the available pages into the VM system.
 	 */
-	uvm_page_physload(MIPS_KSEG0_START, kernend,
+	mips_page_physload(MIPS_KSEG0_START, (vaddr_t) kernend,
 	   mem_clusters, mem_cluster_cnt, NULL, 0);
 
 	/*

@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.18 2006/02/06 23:23:53 gdamore Exp $ */
+/* $NetBSD: aubus.c,v 1.18.90.1 2010/01/10 02:48:46 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.18 2006/02/06 23:23:53 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.18.90.1 2010/01/10 02:48:46 matt Exp $");
 
 #include "locators.h"
 
@@ -114,22 +114,25 @@ __KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.18 2006/02/06 23:23:53 gdamore Exp $");
 #include <mips/alchemy/include/auvar.h>
 #include <mips/alchemy/include/aubusvar.h>
 
-static int	aubus_match(struct device *, struct cfdata *, void *);
-static void	aubus_attach(struct device *, struct device *, void *);
+static int	aubus_match(device_t, struct cfdata *, void *);
+static void	aubus_attach(device_t, device_t, void *);
 static int	aubus_print(void *, const char *);
-static void  aubus_alloc_dma_tag(struct device *, bus_dma_tag_t);
 
-CFATTACH_DECL(aubus, sizeof(struct device),
+CFATTACH_DECL_NEW(aubus, 0,
     aubus_match, aubus_attach, NULL, NULL);
 
 bus_space_tag_t	aubus_st;		/* XXX */
-struct mips_bus_dma_tag  aubus_mdt;
+struct mips_bus_dma_tag aubus_mdt = {
+	._dmamap_ops = _BUS_DMAMAP_OPS_INITIALIZER,
+	._dmamem_ops = _BUS_DMAMEM_OPS_INITIALIZER,
+	._dmatag_ops = _BUS_DMATAG_OPS_INITIALIZER,
+};
 
 /*
  * Probe for the aubus; always succeeds.
  */
 static int
-aubus_match(struct device *parent, struct cfdata *match, void *aux)
+aubus_match(device_t parent, struct cfdata *match, void *aux)
 {
 
 	return 1;
@@ -139,10 +142,10 @@ aubus_match(struct device *parent, struct cfdata *match, void *aux)
  * Attach the aubus.
  */
 static void
-aubus_attach(struct device *parent, struct device *self, void *aux)
+aubus_attach(device_t parent, device_t self, void *aux)
 {
 	struct aubus_attach_args aa;
-	struct device *sc = (struct device *)self;
+	struct device *sc = self;
 	struct au_chipdep *chip;
 	const struct au_dev *ad;
 	int locs[AUBUSCF_NLOCS];
@@ -152,11 +155,12 @@ aubus_attach(struct device *parent, struct device *self, void *aux)
 	chip = au_chipdep();
 	KASSERT(chip != NULL);
 
+	aubus_mdt._cookie = sc;
+
 	for (ad = chip->devices; ad->name != NULL; ad++) {
 		aa.aa_name = ad->name;
 		aa.aa_st = aubus_st;
 		aa.aa_dt = &aubus_mdt;
-		aubus_alloc_dma_tag(sc, aa.aa_dt);
 		aa.aa_addrs[0] = ad->addr[0];
 		aa.aa_addrs[1] = ad->addr[1];
 		aa.aa_addrs[2] = ad->addr[2];
@@ -179,37 +183,10 @@ aubus_print(void *aux, const char *pnp)
 		aprint_normal("%s at %s", aa->aa_name, pnp);
 
 	if (aa->aa_addr != AUBUSCF_ADDR_DEFAULT)
-		aprint_normal(" addr 0x%lx", aa->aa_addr);
+		aprint_normal(" addr 0x%"PRIxBUSADDR, aa->aa_addr);
 	if (aa->aa_irq[0] >= 0)
 		aprint_normal(" irq %d", aa->aa_irq[0]);
 	if (aa->aa_irq[1] >= 0)
 		aprint_normal(",%d", aa->aa_irq[1]);
 	return (UNCONF);
-}
-
-void
-aubus_alloc_dma_tag(sc, pdt)
-	struct device *sc;
-	bus_dma_tag_t pdt;
-{
-	bus_dma_tag_t	t;
-
-	t = pdt;
-	t->_cookie = sc;
-	t->_wbase = 0;	/* XXX */
-	t->_physbase = 0;	/* XXX */
-	t->_wsize = MIPS_KSEG1_START - MIPS_KSEG0_START;
-	t->_dmamap_create = _bus_dmamap_create;
-	t->_dmamap_destroy = _bus_dmamap_destroy;
-	t->_dmamap_load = _bus_dmamap_load;
-	t->_dmamap_load_mbuf = _bus_dmamap_load_mbuf;
-	t->_dmamap_load_uio = _bus_dmamap_load_uio;
-	t->_dmamap_load_raw = _bus_dmamap_load_raw;
-	t->_dmamap_unload = _bus_dmamap_unload;
-	t->_dmamap_sync = _bus_dmamap_sync;
-	t->_dmamem_alloc = _bus_dmamem_alloc;
-	t->_dmamem_free = _bus_dmamem_free;
-	t->_dmamem_map = _bus_dmamem_map;
-	t->_dmamem_unmap = _bus_dmamem_unmap;
-	t->_dmamem_mmap = _bus_dmamem_mmap;
 }
