@@ -1,4 +1,4 @@
-/*	$NetBSD: maltavar.h,v 1.4 2008/04/28 20:23:17 martin Exp $	*/
+/*	$NetBSD: maltavar.h,v 1.4.18.1 2010/01/10 02:48:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,6 @@ struct malta_config {
 	struct mips_bus_space mc_memt;
 
 	struct mips_bus_dma_tag mc_pci_dmat;
-	struct mips_bus_dma_tag mc_isa_dmat;
 
 	struct mips_pci_chipset mc_pc;
 	struct mips_isa_chipset mc_ic;

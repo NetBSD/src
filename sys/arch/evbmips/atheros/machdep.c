@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.13.10.2 2009/12/31 00:54:09 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.13.10.3 2010/01/10 02:48:45 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,7 +147,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.10.2 2009/12/31 00:54:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.10.3 2010/01/10 02:48:45 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -215,9 +215,7 @@ void
 mach_init(void)
 {
 	void *kernend;
-	u_long first, last;
-	void *				v;
-	uint32_t			memsize;
+	uint32_t	memsize;
 
 	extern char edata[], end[];	/* XXX */
 
@@ -286,7 +284,7 @@ mach_init(void)
 	/*
 	 * Load the available pages into the VM system.
 	 */
-	mips_add_physload(MIPS_KSEG0_START, kernend,
+	mips_page_physload(MIPS_KSEG0_START, (vaddr_t)kernend,
 	    mem_clusters, mem_cluster_cnt, NULL, 0);
 
 	/*

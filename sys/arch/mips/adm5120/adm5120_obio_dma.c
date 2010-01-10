@@ -1,4 +1,4 @@
-/*	$NetBSD: adm5120_obio_dma.c,v 1.2 2008/04/28 20:23:27 martin Exp $	*/
+/*	$NetBSD: adm5120_obio_dma.c,v 1.2.18.1 2010/01/10 02:48:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm5120_obio_dma.c,v 1.2 2008/04/28 20:23:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm5120_obio_dma.c,v 1.2.18.1 2010/01/10 02:48:46 matt Exp $");
 
 #include <sys/param.h>
 
@@ -78,20 +78,9 @@ obio_dma_init(bus_dma_tag_t t)
 {
 	t->_cookie = t;
 	t->_wbase = 0;
-	t->_physbase = 0;
-	t->_wsize = MIPS_KSEG1_START - MIPS_KSEG0_START;
-	t->_dmamap_create = _bus_dmamap_create;
-	t->_dmamap_destroy = _bus_dmamap_destroy;
-	t->_dmamap_load = _bus_dmamap_load;
-	t->_dmamap_load_mbuf = _bus_dmamap_load_mbuf;
-	t->_dmamap_load_uio = _bus_dmamap_load_uio;
-	t->_dmamap_load_raw = _bus_dmamap_load_raw;
-	t->_dmamap_unload = _bus_dmamap_unload;
-	t->_dmamap_sync = _bus_dmamap_sync;
-
-	t->_dmamem_alloc = _bus_dmamem_alloc;
-	t->_dmamem_free = _bus_dmamem_free;
-	t->_dmamem_map = _bus_dmamem_map;
-	t->_dmamem_unmap = _bus_dmamem_unmap;
-	t->_dmamem_mmap = _bus_dmamem_mmap;
+	t->_bounce_alloc_lo = 0;
+	t->_bounce_alloc_hi = MIPS_KSEG1_START - MIPS_KSEG0_START;
+	t->_dmamap_ops = mips_bus_dmamap_ops;
+	t->_dmamem_ops = mips_bus_dmamem_ops;
+	t->_dmatag_ops = mips_bus_dmatag_ops;
 }

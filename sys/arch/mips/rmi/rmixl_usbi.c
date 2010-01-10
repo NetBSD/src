@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_usbi.c,v 1.1.2.1 2009/12/14 07:21:41 cliff Exp $	*/
+/*	$NetBSD: rmixl_usbi.c,v 1.1.2.2 2010/01/10 02:48:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.1.2.1 2009/12/14 07:21:41 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.1.2.2 2010/01/10 02:48:47 matt Exp $");
 
 #include "locators.h"
 
@@ -127,7 +127,7 @@ rmixl_usbi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_el_bst = obio->obio_el_bst;
 	sc->sc_addr = obio->obio_addr;
 	sc->sc_size = obio->obio_size;
-	sc->sc_dmat = obio->obio_29bit_dmat;	/* XXX */
+	sc->sc_dmat = obio->obio_32bit_dmat;
 
 	for (int intr=0; intr <= RMIXL_UB_INTERRUPT_MAX; intr++) {
 		evcnt_attach_dynamic(&sc->sc_dispatch[intr].count,
