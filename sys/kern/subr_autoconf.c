@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.195 2010/01/08 20:07:14 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.196 2010/01/10 13:42:34 martin Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.195 2010/01/08 20:07:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.196 2010/01/10 13:42:34 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1308,6 +1308,10 @@ config_attach_loc(device_t parent, cfdata_t cf,
 		aprint_debug_dev(dev, "WARNING: power management not supported\n");
 
 	config_process_deferred(&deferred_config_queue, dev);
+
+#ifdef __HAVE_DEVICE_REGISTER_POSTCONFIG
+	device_register_post_config(dev, aux);
+#endif
 	return dev;
 }
 

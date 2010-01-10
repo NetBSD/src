@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev.c,v 1.10 2010/01/09 16:32:57 pooka Exp $	*/
+/*	$NetBSD: rump_dev.c,v 1.11 2010/01/10 13:42:34 martin Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.10 2010/01/09 16:32:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.11 2010/01/10 13:42:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -92,3 +92,13 @@ device_register(struct device *dev, void *v)
 	/* nada */
 }
 #endif
+
+#ifdef __HAVE_DEVICE_REGISTER_POSTCONFIG
+void
+device_register_post_config(struct device *dev, void *v)
+{
+
+	/* nada */
+}
+#endif
+
