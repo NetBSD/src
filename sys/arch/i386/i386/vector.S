@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.49 2009/11/25 14:28:50 rmind Exp $	*/
+/*	$NetBSD: vector.S,v 1.50 2010/01/10 15:21:36 dsl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.49 2009/11/25 14:28:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.50 2010/01/10 15:21:36 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1035,6 +1035,10 @@ IDTVEC(tss_trap08)
 	addl	$12,%esp
 	iret
 	jmp	1b
+
+_C_LABEL(trap_return_iret):	.globl	trap_return_iret
+	mov	4(%esp),%esp	/* frame for user return */
+	jmp	_C_LABEL(trapreturn)
 
 /* LINTSTUB: Ignore */
 NENTRY(alltraps)

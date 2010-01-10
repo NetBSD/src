@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.250 2009/11/21 03:11:00 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.251 2010/01/10 15:21:36 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.250 2009/11/21 03:11:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.251 2010/01/10 15:21:36 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.250 2009/11/21 03:11:00 rmind Exp $");
 static inline int xmm_si_code(struct lwp *);
 void trap(struct trapframe *);
 void trap_tss(struct i386tss *, int, int);
+void trap_return_iret(struct trapframe *) __dead;
 
 #ifdef KVM86
 #include <machine/kvm86.h>
@@ -406,11 +407,33 @@ copyfault:
 		 * the kernel stack; we presume here that we faulted while
 		 * loading our registers out of the outer one.
 		 */
+
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGSEGV;
+		/* There is no fault address! */
+		ksi.ksi_code = SEGV_ACCERR;
+		ksi.ksi_trap = type;
+
 		switch (*(u_char *)frame->tf_eip) {
 		case 0xcf:	/* iret */
-			vframe = (void *)((int)&frame->tf_esp -
+			/*
+			 * The outer trap frame only contains the user space
+			 * return address and stack pointer.
+			 * The user registers are in the inner frame following
+			 * the kernel address of the iret.
+			 * We must copy the registers next to the userspace
+			 * return address so we have a frame for md_regs.
+			 */
+			vframe = (void *)((int *)frame + 3);
+			if (KERNELMODE(vframe->tf_cs, vframe->tf_eflags))
+				goto we_re_toast;
+			memmove(vframe, frame,
 			    offsetof(struct trapframe, tf_eip));
-			break;
+			l->l_md.md_regs = vframe;
+			ksi.ksi_addr = (void *)vframe->tf_eip;
+			(*p->p_emul->e_trapsignal)(l, &ksi);
+			trap_return_iret(vframe);
+			/* NOTREACHED */
 		case 0x8e:
 			switch (*(uint32_t *)frame->tf_eip) {
 			case 0x0c245c8e:	/* movl 0xc(%esp,1),%ds */
@@ -421,11 +444,12 @@ copyfault:
 			default:
 				goto we_re_toast;
 			}
-			vframe = (void *)(int)&frame->tf_esp;
 			break;
 		default:
 			goto we_re_toast;
 		}
+
+		vframe = (void *)(int)&frame->tf_esp;
 		if (KERNELMODE(vframe->tf_cs, vframe->tf_eflags))
 			goto we_re_toast;
 
@@ -445,17 +469,16 @@ copyfault:
 		 * continue to generate traps infinitely with
 		 * interrupts disabled.
 		 */
+		/* We don't want to fault unwinding the inner frame */
 		frame->tf_ds = GSEL(GDATA_SEL, SEL_KPL);
 		frame->tf_es = GSEL(GDATA_SEL, SEL_KPL);
 		frame->tf_gs = GSEL(GDATA_SEL, SEL_KPL);
 		frame->tf_fs = GSEL(GCPU_SEL, SEL_KPL);
+		/* Reload the entire outer (user) frame */
 		frame->tf_eip = (uintptr_t)trapreturn;
 		frame->tf_eflags = (frame->tf_eflags & ~PSL_NT) | PSL_I;
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGSEGV;
-		ksi.ksi_addr = (void *)rcr2();
-		ksi.ksi_code = SEGV_ACCERR;
-		ksi.ksi_trap = type & ~T_USER;
+		/* Save outer frame for any signal return */
+		l->l_md.md_regs = vframe;
 		(*p->p_emul->e_trapsignal)(l, &ksi);
 		return;
 
