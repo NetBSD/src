@@ -1,4 +1,4 @@
-.\"	$NetBSD: com.4,v 1.14 2009/05/13 12:40:37 wiz Exp $
+.\"	$NetBSD: com.4,v 1.15 2010/01/10 15:05:26 skrll Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd June 1, 2007
+.Dd January 10, 2010
 .Dt COM 4
 .Os
 .Sh NAME
@@ -60,6 +60,9 @@
 .Ss HP 9000/300 and 400 Series
 .Cd "com* at dio? scode ?"
 .Cd "com* at frodo? offset ?"
+.Ss HP 9000/700 and 800 Series
+.Cd "com* at dino?"
+.Cd "com* at gsc?"
 .Ss IBM PowerPC 4xx
 .Cd "com* at opb?"
 .Ss SPARC
