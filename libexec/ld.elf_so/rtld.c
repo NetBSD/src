@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.127 2009/12/02 15:50:13 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.128 2010/01/10 06:37:32 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.127 2009/12/02 15:50:13 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.128 2010/01/10 06:37:32 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -231,10 +231,12 @@ _rtld_init(caddr_t mapbase, caddr_t relocbase, const char *execname)
 	_rtld_objself.strtab = "_rtld_sym_zero";
 
 	/*
-	 * Set value to -relocabase so that
-	 * _rtld_objself.relocbase + _rtld_smy_zero.st_value == 0
+	 * Set value to -relocbase so that
+	 *
+	 *     _rtld_objself.relocbase + _rtld_sym_zero.st_value == 0
+	 *
 	 * This allows unresolved references to weak symbols to be computed
-	 * to value a value of 0.
+	 * to a value of 0.
 	 */
 	_rtld_sym_zero.st_value = -(uintptr_t)relocbase;
 
