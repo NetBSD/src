@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.32 2007/12/25 18:33:36 perry Exp $	*/
+/*	$NetBSD: atareg.h,v 1.32.20.1 2010/01/10 23:56:46 snj Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -438,7 +438,11 @@ struct ataparams {
     u_int16_t	atap_seu_time;		/* 89: Sec. Erase Unit compl. time */
     u_int16_t	atap_eseu_time;		/* 90: Enhanced SEU compl. time */
     u_int16_t	atap_apm_val;		/* 91: current APM value */
-    u_int16_t	__reserved6[35];	/* 92-126: reserved */
+    u_int16_t	__reserved5[8];		/* 92-99: reserved */
+    u_int16_t	atap_max_lba[4];	/* 100-103: Max. user LBA addr */
+    u_int16_t	__reserved6[4];		/* 104-107: reserved */
+    u_int16_t 	atap_wwn[4];		/* 108-111: World Wide Name */
+    u_int16_t	__reserved7[15];	/* 112-126: reserved */
     u_int16_t	atap_rmsn_supp;		/* 127: remov. media status notif. */
 #define WDC_RMSN_SUPP_MASK 0x0003
 #define WDC_RMSN_SUPP 0x0001
