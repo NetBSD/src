@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1006 2010/01/07 18:57:38 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1007 2010/01/11 12:55:29 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1009 2010/01/07 18:57:10 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1010 2010/01/11 12:54:54 msaitoh Exp
  */
 
 /*
@@ -9194,8 +9194,8 @@ static const char pci_words[] = { "."
 	    "Quad-1000baseT\0" /* 1 refs @ 15523 */
 	    "(PM)\0" /* 1 refs @ 15538 */
 	    "PCH\0" /* 4 refs @ 15543 */
-	    "(82578LM)\0" /* 1 refs @ 15547 */
-	    "(82578LC)\0" /* 1 refs @ 15557 */
+	    "(82577LM)\0" /* 1 refs @ 15547 */
+	    "(82577LC)\0" /* 1 refs @ 15557 */
 	    "(82578DM)\0" /* 1 refs @ 15567 */
 	    "(82578DC)\0" /* 1 refs @ 15577 */
 	    "82815\0" /* 10 refs @ 15587 */

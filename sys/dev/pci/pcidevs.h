@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1007 2010/01/07 18:57:38 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1008 2010/01/11 12:55:29 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1009 2010/01/07 18:57:10 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1010 2010/01/11 12:54:54 msaitoh Exp
  */
 
 /*
@@ -2309,8 +2309,8 @@
 #define	PCI_PRODUCT_INTEL_82567LM_3	0x10de		/* i82567LM-3 LAN Controller */
 #define	PCI_PRODUCT_INTEL_82567LF_3	0x10df		/* i82567LF-3 LAN Controller */
 #define	PCI_PRODUCT_INTEL_82575GB_QUAD_COPPER_PM	0x10e2		/* i82575GB Quad-1000baseT Ethernet (PM) */
-#define	PCI_PRODUCT_INTEL_PCH_M_LM	0x10ea		/* PCH LAN (82578LM) Controller */
-#define	PCI_PRODUCT_INTEL_PCH_M_LC	0x10eb		/* PCH LAN (82578LC) Controller */
+#define	PCI_PRODUCT_INTEL_PCH_M_LM	0x10ea		/* PCH LAN (82577LM) Controller */
+#define	PCI_PRODUCT_INTEL_PCH_M_LC	0x10eb		/* PCH LAN (82577LC) Controller */
 #define	PCI_PRODUCT_INTEL_PCH_D_DM	0x10ef		/* PCH LAN (82578DM) Controller */
 #define	PCI_PRODUCT_INTEL_PCH_D_DC	0x10f0		/* PCH LAN (82578DC) Controller */
 #define	PCI_PRODUCT_INTEL_82801I_IGP_M_AMT	0x10f5		/* 82801I Mobile (AMT) LAN Controller */
