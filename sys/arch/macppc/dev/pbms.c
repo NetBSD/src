@@ -1,4 +1,4 @@
-/* $Id: pbms.c,v 1.7.30.1 2009/08/25 18:28:03 snj Exp $ */
+/* $Id: pbms.c,v 1.7.30.2 2010/01/11 00:52:47 snj Exp $ */
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -402,7 +402,7 @@ pbms_attach(struct device *parent, struct device *self, void *aux)
 int
 pbms_detach(struct device *self, int flags)
 {
-	struct pbms_softc *sc = (struct pbms_softc *)self;
+	struct pbms_softc *sc = device_private(self);
 	int ret;
 
 	/* The wsmouse driver does all the work. */
@@ -419,7 +419,7 @@ pbms_detach(struct device *self, int flags)
 int
 pbms_activate(device_ptr_t self, enum devact act)
 {
-	struct pbms_softc *sc = (struct pbms_softc *)self;
+	struct pbms_softc *sc = device_private(self);
 	int ret;
 
 	if (act == DVACT_DEACTIVATE) {
