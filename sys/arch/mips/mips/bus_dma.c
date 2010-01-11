@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22.16.8 2010/01/10 02:48:46 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.22.16.9 2010/01/11 19:52:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.8 2010/01/10 02:48:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.9 2010/01/11 19:52:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,6 +214,11 @@ _bus_dma_load_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	map->dm_mapsize = buflen;
 	map->dm_nsegs = seg + 1;
 	map->_dm_vmspace = vm;
+	/*
+	 * If our cache is coherent, then the map must be coherent too.
+	 */
+	if (mips_cpu_flags & CPU_MIPS_D_CACHE_COHERENT)
+		map->_dm_flags |= _BUS_DMAMAP_COHERENT;
 
 	/* ...so _bus_dmamap_sync() knows we're bouncing */
 	cookie->id_flags |= _BUS_DMA_IS_BOUNCING;
@@ -381,7 +386,9 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		 *
 		 * XXX Check TLB entries for cache-inhibit bits?
 		 */
-		if (MIPS_KSEG1_P(buf))
+		if (mips_cpu_flags & CPU_MIPS_D_CACHE_COHERENT)
+			map->_dm_flags |= _BUS_DMAMAP_COHERENT;
+		else if (MIPS_KSEG1_P(buf))
 			map->_dm_flags |= _BUS_DMAMAP_COHERENT;
 #ifdef _LP64
 		else if (MIPS_XKPHYS_P((vaddr_t)buf)
@@ -441,6 +448,11 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
 		map->_dm_vmspace = vm;		/* always kernel */
+		/*
+		 * If our cache is coherent, then the map must be coherent too.
+		 */
+		if (mips_cpu_flags & CPU_MIPS_D_CACHE_COHERENT)
+			map->_dm_flags |= _BUS_DMAMAP_COHERENT;
 		return 0;
 	}
 #ifdef _MIPS_NEED_BUS_DMA_BOUNCE
@@ -497,6 +509,11 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
 		map->_dm_vmspace = uio->uio_vmspace;
+		/*
+		 * If our cache is coherent, then the map must be coherent too.
+		 */
+		if (mips_cpu_flags & CPU_MIPS_D_CACHE_COHERENT)
+			map->_dm_flags |= _BUS_DMAMAP_COHERENT;
 		return 0;
 	}
 #ifdef _MIPS_NEED_BUS_DMA_BOUNCE
