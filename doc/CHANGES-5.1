@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.171 2010/01/09 02:03:58 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.172 2010/01/11 00:58:51 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -2221,12 +2221,12 @@ lib/libc/gen/fts.c				1.38
 	Received from OpenBSD via US-CERT as VU #590371.
 	[christos, ticket #915]
 
-sys/arch/macppc/dev/pbms.c			1.8
+sys/arch/macppc/dev/pbms.c			1.8, patch
 
 	- Use device_private() (led to immediate crash during attach)
 	- While there, fix the aspect ratio of the trackpad on the
 	geyser2 model
-	[aymeric, ticket #916]
+	[aymeric/tsutsui, ticket #916]
 
 sbin/tunefs/tunefs.c				1.40
 
@@ -15875,4 +15875,150 @@ external/mit/libpciaccess/dist/src/netbsd_pci.c	1.5
 	xorg-server 1.4.x and earlier would do this for us.  Partly fixes
 	dual-head support for various systems.
 	[mrg, ticket #1228]
+
+sys/dev/ata/atareg.h				1.33
+sys/dev/ata/wd.c				1.378
+
+	Add atap_max_lba member to ataparams for LBA48 Maximum Address.
+	While here, renumber some __reserved member names to be sequential.
+	Also, add a member for the World Wide Name.  Use atap_max_lba in
+	wd.c instead of offsets into a __reserved member.
+	[dsl, ticket #1231]
+
+sys/dev/ata/wd.c				1.380
+sys/dev/ata/wdvar.h				1.38
+
+	ATA sepcs changed the LBA48 boundary from 0xfffffff to 0xffffffe
+	between ATA6r1 and ATA6r3, which caused drives conform to ATA6r3
+	or later to reject LBA28 commands at sector 0xfffffff.
+	Get the right idea from the LBA48 boundary from IDENTIFY words 60-61.
+	Remove the WD_QUIRK_FORCE_LBA48 quirk, associated tables entries and
+	autodetect code, it's not needed any more.
+	[dsl, ticket #1220]
+
+sys/kern/vfs_subr.c				1.393
+
+	Make sure struct vattr contains no random bits of kernel memory
+	after vattr_null().  This is especially nice considering things
+	like puffs, where the contents are copied to userspace.
+	[pooka, ticket #1226]
+
+share/man/man4/faith.4				1.11
+
+	Various language fixes.
+	[mbalmer, ticket #1229]
+
+usr.sbin/postinstall/postinstall		1.107
+
+	Running "postinstall fix" should also say why fontconfig did not
+	work, like all other postinstall methods.
+	[christos, ticket #1232]
+
+external/mit/xorg/server/drivers/xf86-video-radeonhd/Makefile patch
+xsrc/external/mit/xf86-video-radeonhd/dist/ChangeLog patch
+xsrc/external/mit/xf86-video-radeonhd/dist/INSTALL patch
+xsrc/external/mit/xf86-video-radeonhd/dist/Makefile.in patch
+xsrc/external/mit/xf86-video-radeonhd/dist/README patch
+xsrc/external/mit/xf86-video-radeonhd/dist/acinclude.m4 patch
+xsrc/external/mit/xf86-video-radeonhd/dist/aclocal.m4 patch
+xsrc/external/mit/xf86-video-radeonhd/dist/config.guess patch
+xsrc/external/mit/xf86-video-radeonhd/dist/config.h.in patch
+xsrc/external/mit/xf86-video-radeonhd/dist/config.sub patch
+xsrc/external/mit/xf86-video-radeonhd/dist/configure patch
+xsrc/external/mit/xf86-video-radeonhd/dist/configure.ac patch
+xsrc/external/mit/xf86-video-radeonhd/dist/depcomp patch
+xsrc/external/mit/xf86-video-radeonhd/dist/install-sh patch
+xsrc/external/mit/xf86-video-radeonhd/dist/man/Makefile.in patch
+xsrc/external/mit/xf86-video-radeonhd/dist/man/radeonhd.man patch
+xsrc/external/mit/xf86-video-radeonhd/dist/shave-libtool.in patch
+xsrc/external/mit/xf86-video-radeonhd/dist/shave.in patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/Makefile.am patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/Makefile.in patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/atombios_rev.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/git_version.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/r5xx_accel.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/r600_exa.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/r600_reg.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/r600_reg_auto_r6xx.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/r600_reg_r6xx.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/r600_reg_r7xx.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/r600_shader.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/r600_state.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/r600_textured_videofuncs.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/r6xx_accel.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/r6xx_accel.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/radeon_3d.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/radeon_drm.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/radeon_exa_render.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/radeon_textured_videofuncs.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_atombios.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_atombios.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_atomout.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_acpi.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_acpi.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_audio.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_audio.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_biosscratch.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_connector.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_cs.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_cursor.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_cursor.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_dac.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_dig.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_dri.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_driver.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_hdmi.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_hdmi.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_i2c.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_id.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_lut.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_lut.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_lvtma.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_mc.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_mc.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_monitor.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_output.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_output.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_pll.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_pm.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_pm.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_randr.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_regs.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_tmds.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_video.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/src/rhd_video.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/utils/conntest/Makefile.am patch
+xsrc/external/mit/xf86-video-radeonhd/dist/utils/conntest/Makefile.in patch
+xsrc/external/mit/xf86-video-radeonhd/dist/utils/conntest/git_version.h patch
+xsrc/external/mit/xf86-video-radeonhd/dist/utils/conntest/rhd_conntest.c patch
+xsrc/external/mit/xf86-video-radeonhd/dist/utils/conntest/rhd_dump.c patch
+xsrc/external/mit/xf86-video-radeonhd/include/config.h patch
+
+	Update xf86-video-radeonhd to 1.3.0.
+	[veego, ticket #1233]
+
+xsrc/external/mit/libFS/include/config.h	patch
+xsrc/external/mit/pixman/include/config.h 	patch
+xsrc/external/mit/xf86-video-siliconmotion/include/config.h patch
+xsrc/external/mit/xmag/include/config.h		patch
+xsrc/external/mit/xwininfo/include/config.h 	patch
+
+	Regenerate a few config.h files.  Should have been done with the
+	big X.Org update.
+	[veego, ticket #1234]
+
+lib/libpthread/pthread.c			1.113
+
+	Don't just look only at the first element in the deadqueue to find
+	lwp's to reuse, because if we lose the race with the kernel we are
+	never going to reuse any elements. Look in the whole list instead.
+	[christos, ticket #1235]
+
+external/mit/xorg/lib/dri/i965/Makefile		1.6
+
+	Build the i965 drm module properly:
+	- fix a line continuation that stopped SRCS= from working
+	- don't include intel_dri.c here
+	[mrg, ticket #1236]
 
