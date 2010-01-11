@@ -1,4 +1,4 @@
-/*	$NetBSD: freopen.c,v 1.15 2008/03/13 15:40:00 christos Exp $	*/
+/*	$NetBSD: freopen.c,v 1.16 2010/01/11 20:39:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)freopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: freopen.c,v 1.15 2008/03/13 15:40:00 christos Exp $");
+__RCSID("$NetBSD: freopen.c,v 1.16 2010/01/11 20:39:29 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -135,9 +135,7 @@ freopen(file, mode, fp)
 		FREEUB(fp);
 	WCIO_FREE(fp);
 	_UB(fp)._size = 0;
-	if (HASLB(fp))
-		FREELB(fp);
-	fp->_lb._size = 0;
+	FREELB(fp);
 
 	if (f < 0) {			/* did not get it after all */
 		fp->_flags = 0;		/* set it free */

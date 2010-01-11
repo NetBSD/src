@@ -1,4 +1,4 @@
-/* $NetBSD: fileext.h,v 1.5 2003/07/18 21:46:41 nathanw Exp $ */
+/* $NetBSD: fileext.h,v 1.6 2010/01/11 20:39:29 joerg Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -34,6 +34,8 @@
 struct __sfileext {
 	struct	__sbuf _ub; /* ungetc buffer */
 	struct wchar_io_data _wcio;	/* wide char i/o status */
+	size_t _fgetstr_len;
+	char *_fgetstr_buf;
 #ifdef _REENTRANT
 	mutex_t	_lock;	/* Lock for FLOCKFILE/FUNLOCKFILE */
 	cond_t _lockcond; /* Condition variable for signalling lock releases */
@@ -55,12 +57,18 @@ struct __sfileext {
 #define _LOCKCANCELSTATE(fp) (_EXT(fp)->_lockcancelstate)
 #define _FILEEXT_SETUP(f, fext) do { \
 	/* LINTED */(f)->_ext._base = (unsigned char *)(fext); \
+	(fext)->_fgetstr_len = 0; \
+	(fext)->_fgetstr_buf = NULL; \
 	mutex_init(&_LOCK(f), NULL); \
 	cond_init(&_LOCKCOND(f), 0, NULL); \
 	_LOCKOWNER(f) = NULL; \
 	_LOCKCOUNT(f) = 0; \
 	_LOCKINTERNAL(f) = 0; \
-	} while (/* LINTED */ 0)
+	} while (/* CONSTCOND */ 0)
 #else
-#define _FILEEXT_SETUP(f, fext) /* LINTED */(f)->_ext._base = (unsigned char *)(fext)
+#define _FILEEXT_SETUP(f, fext) do { \
+	/* LINTED */(f)->_ext._base = (unsigned char *)(fext); \
+	(fext)->_fgetstr_len = 0; \
+	(fext)->_fgetstr_buf = NULL; \
+	} while (/* CONSTCOND */ 0)
 #endif
