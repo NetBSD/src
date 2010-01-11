@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.76.2.23 2009/11/08 22:41:46 snj Exp $
+# $NetBSD: postinstall,v 1.76.2.24 2010/01/11 00:09:45 snj Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -772,7 +772,7 @@ do_fontconfig()
 		failed=1
 	fi
 
-	if [ "$op" = "check" -a "$failed" = 1 ]; then
+	if [ "$failed" = 1 ]; then
 		msg \
     "Broken fontconfig configuration found; please delete these files"
 		msg \
