@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.357.4.8 2009/11/28 18:59:11 sborrill Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.357.4.9 2010/01/11 00:02:09 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.357.4.8 2009/11/28 18:59:11 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.357.4.9 2010/01/11 00:02:09 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2546,6 +2546,8 @@ void
 vattr_null(struct vattr *vap)
 {
 
+	memset(vap, 0, sizeof(*vap));
+
 	vap->va_type = VNON;
 
 	/*
@@ -2572,7 +2574,6 @@ vattr_null(struct vattr *vap)
 	vap->va_flags = VNOVAL;
 	vap->va_rdev = VNOVAL;
 	vap->va_bytes = VNOVAL;
-	vap->va_vaflags = 0;
 }
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
