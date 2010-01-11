@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtsold.8,v 1.27 2006/10/13 21:07:34 wiz Exp $
+.\"	$NetBSD: rtsold.8,v 1.28 2010/01/11 09:21:39 mbalmer Exp $
 .\"	$KAME: rtsold.8,v 1.17 2001/07/09 22:30:37 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 8, 2006
+.Dd January 11, 2010
 .Dt RTSOLD 8
 .Os
 .\"
@@ -81,7 +81,7 @@ sends at most 3 Router Solicitations on an interface
 after one of the following events:
 .Bl -bullet
 .It
-Just after invocation of
+Just after invocation of the
 .Nm
 daemon.
 .It
@@ -102,7 +102,7 @@ option is specified and the
 daemon cannot get the interface status.
 This feature does not conform to the IPv6 neighbor discovery
 specification, but is provided for mobile stations.
-The default interval for router advertisements, which is on the order of 10
+The default interval for router advertisements, which is in the order of 10
 minutes, is slightly long for mobile stations.
 This feature is provided
 for such stations so that they can find new routers as soon as possible
@@ -149,7 +149,7 @@ If
 .Nm
 finds multiple interfaces,
 .Nm
-will exit with error.
+will exit with an error.
 .It Fl D
 Enable more debugging (than that offered by the
 .Fl d
@@ -173,6 +173,7 @@ when the node (re)attaches to an interface.
 Moreover, if the option is specified,
 .Nm
 periodically sends Router Solicitation on an interface that does not support
+the
 .Dv SIOCGIFMEDIA
 ioctl.
 .El
@@ -198,7 +199,7 @@ The
 .Nm
 command is based on the
 .Nm rtsol
-command, which first appeared in WIDE/KAME IPv6 protocol stack kit.
+command, which first appeared in the WIDE/KAME IPv6 protocol stack kit.
 .Nm rtsol
 is now integrated into
 .Nm .
