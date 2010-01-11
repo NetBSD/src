@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.81 2009/09/07 13:39:19 tsutsui Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.82 2010/01/11 01:33:22 mjacob Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.81 2009/09/07 13:39:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.82 2010/01/11 01:33:22 mjacob Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -624,6 +624,18 @@ ispcmd(struct ispsoftc *isp, XS_T *xs)
 
 	switch (isp_start(xs)) {
 	case CMD_QUEUED:
+		if (IS_FC(isp) && isp->isp_osinfo.wwns[XS_TGT(xs)] == 0) {
+			fcparam *fcp = FCPARAM(isp, XS_CHANNEL(xs));
+			int dbidx = fcp->isp_dev_map[XS_TGT(xs)] - 1;
+			device_t dev = xs->xs_periph->periph_dev;
+			
+			if (dbidx >= 0 && dev &&
+			    prop_dictionary_set_uint64(device_properties(dev),
+			    "port-wwn", fcp->portdb[dbidx].port_wwn) == TRUE) {
+				isp->isp_osinfo.wwns[XS_TGT(xs)] =
+				    fcp->portdb[dbidx].port_wwn;
+			}
+                }
 		if (xs->xs_control & XS_CTL_POLL) {
 			isp_polled_cmd_wait(isp, xs);
 			isp->isp_osinfo.mbox_sleep_ok = ombi;
