@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.6 2010/01/07 17:45:58 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.7 2010/01/11 12:29:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -111,6 +111,7 @@ typedef enum {
 	WM_T_ICH8,			/* ICH8 LAN */
 	WM_T_ICH9,			/* ICH9 LAN */
 	WM_T_ICH10,			/* ICH10 LAN */
+	WM_T_PCH,			/* PCH LAN */
 } wm_chip_type;
 
 #define WM_PHY_CFG_TIMEOUT	100

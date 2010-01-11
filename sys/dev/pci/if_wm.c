@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.189 2010/01/07 17:45:58 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.190 2010/01/11 12:29:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.189 2010/01/07 17:45:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.190 2010/01/11 12:29:28 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -852,6 +852,18 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801J_D_BM_LF,
 	  "i82801J (LF) LAN Controller",
 	  WM_T_ICH10,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_M_LM,
+	  "PCH LAN (82578LM) Controller",
+	  WM_T_PCH,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_M_LC,
+	  "PCH LAN (82578LC) Controller",
+	  WM_T_PCH,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_D_DM,
+	  "PCH LAN (82578DM) Controller",
+	  WM_T_PCH,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_D_DC,
+	  "PCH LAN (82578DC) Controller",
+	  WM_T_PCH,		WMP_F_1000T },
 	{ 0,			0,
 	  NULL,
 	  0,			0 },
@@ -1104,7 +1116,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	} else if (sc->sc_type >= WM_T_82571) {
 		sc->sc_flags |= WM_F_PCIE;
 		if ((sc->sc_type != WM_T_ICH8) && (sc->sc_type != WM_T_ICH9)
-			&& (sc->sc_type != WM_T_ICH10))
+		    && (sc->sc_type != WM_T_ICH10)
+		    && (sc->sc_type != WM_T_PCH))
 			sc->sc_flags |= WM_F_EEPROM_SEMAPHORE;
 		aprint_verbose_dev(sc->sc_dev, "PCI-Express bus\n");
 	} else {
@@ -1282,6 +1295,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 	case WM_T_ICH10:
+	case WM_T_PCH:
 		if (wm_check_mng_mode(sc) != 0)
 			wm_get_hw_control(sc);
 		break;
@@ -1359,6 +1373,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		}
 		/* FALLTHROUGH */
 	case WM_T_ICH10:
+	case WM_T_PCH:
 		/* FLASH */
 		sc->sc_flags |= WM_F_EEPROM_FLASH | WM_F_SWFWHW_SYNC;
 		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, WM_ICH8_FLASH);
@@ -1551,7 +1566,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 * media structures accordingly.
 	 */
 	if (sc->sc_type == WM_T_ICH8 || sc->sc_type == WM_T_ICH9
-	    || sc->sc_type == WM_T_ICH10 || sc->sc_type == WM_T_82573
+	    || sc->sc_type == WM_T_ICH10 || sc->sc_type == WM_T_PCH
+	    || sc->sc_type == WM_T_82573
 	    || sc->sc_type == WM_T_82574 || sc->sc_type == WM_T_82583) {
 		/* STATUS_TBIMODE reserved/reused, can't rely on it */
 		wm_gmii_mediainit(sc);
@@ -1596,6 +1612,10 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_ICH9:
 	case WM_T_ICH10:
 		/* XXX limited to 9234 */
+		sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
+		break;
+	case WM_T_PCH:
+		/* XXX limited to 4096 */
 		sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 		break;
 	case WM_T_82542_2_0:
@@ -2929,6 +2949,7 @@ wm_linkintr(struct wm_softc *sc, uint32_t icr)
 		return;
 	}
 
+	/* TBI mode */
 	status = CSR_READ(sc, WMREG_STATUS);
 	if (icr & ICR_LSC) {
 		if (status & STATUS_LU) {
@@ -3056,6 +3077,7 @@ wm_reset(struct wm_softc *sc)
 		break;
 	case WM_T_ICH9:
 	case WM_T_ICH10:
+	case WM_T_PCH:
 		sc->sc_pba = PBA_10K;
 		break;
 	default:
@@ -3123,6 +3145,10 @@ wm_reset(struct wm_softc *sc)
 		delay(5000);
 	}
 
+	if (sc->sc_type == WM_T_PCH) {
+		/* Save K1 */
+	}
+
 	switch (sc->sc_type) {
 	case WM_T_82544: /* XXX check whether WM_F_IOH_VALID is set */
 	case WM_T_82541:
@@ -3161,8 +3187,17 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 	case WM_T_ICH10:
+	case WM_T_PCH:
 		reg = CSR_READ(sc, WMREG_CTRL) | CTRL_RST;
 		if (wm_check_reset_block(sc) == 0) {
+			if (sc->sc_type >= WM_T_PCH) {
+				uint32_t status;
+
+				status = CSR_READ(sc, WMREG_STATUS);
+				CSR_WRITE(sc, WMREG_STATUS,
+				    status & ~STATUS_PHYRA);
+			}
+
 			reg |= CTRL_PHY_RESET;
 			phy_reset = 1;
 		}
@@ -3243,7 +3278,8 @@ wm_reset(struct wm_softc *sc)
 		/* check EECD_EE_AUTORD */
 		wm_get_auto_rd_done(sc);
 		break;
-	case WM_T_ICH10: /* & PCH */
+	case WM_T_ICH10:
+	case WM_T_PCH:
 		wm_lan_init_done(sc);
 		break;
 	default:
@@ -3252,6 +3288,14 @@ wm_reset(struct wm_softc *sc)
 
 	/* reload sc_ctrl */
 	sc->sc_ctrl = CSR_READ(sc, WMREG_CTRL);
+
+	/*
+	 * For PCH, this write will make sure that any noise will be detected
+	 * as a CRC error and be dropped rather than show up as a bad packet
+	 * to the DMA engine
+	 */
+	if (sc->sc_type == WM_T_PCH)
+		CSR_WRITE(sc, WMREG_CRC_OFFSET, 0x65656565);
 
 #if 0
 	for (i = 0; i < 1000; i++) {
@@ -3320,6 +3364,7 @@ wm_init(struct ifnet *ifp)
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 	case WM_T_ICH10:
+	case WM_T_PCH:
 		if (wm_check_mng_mode(sc) != 0)
 			wm_get_hw_control(sc);
 		break;
@@ -3426,7 +3471,7 @@ wm_init(struct ifnet *ifp)
 	 * XXX Values could probably stand some tuning.
 	 */
 	if ((sc->sc_type != WM_T_ICH8) && (sc->sc_type != WM_T_ICH9)
-	    && (sc->sc_type != WM_T_ICH10)) {
+	    && (sc->sc_type != WM_T_ICH10) && (sc->sc_type != WM_T_PCH)) {
 		CSR_WRITE(sc, WMREG_FCAL, FCAL_CONST);
 		CSR_WRITE(sc, WMREG_FCAH, FCAH_CONST);
 		CSR_WRITE(sc, WMREG_FCT, ETHERTYPE_FLOWCONTROL);
@@ -3463,6 +3508,7 @@ wm_init(struct ifnet *ifp)
 		case WM_T_ICH8:
 		case WM_T_ICH9:
 		case WM_T_ICH10:
+		case WM_T_PCH:
 			/*
 			 * Set the mac to wait the maximum time between each
 			 * iteration and increase the max iterations when
@@ -3527,7 +3573,7 @@ wm_init(struct ifnet *ifp)
 	CSR_WRITE(sc, WMREG_IMS, sc->sc_icr);
 
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
-	    || (sc->sc_type == WM_T_ICH10)) {
+	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)) {
 		reg = CSR_READ(sc, WMREG_KABGTXD);
 		reg |= KABGTXD_BGSQLBIAS;
 		CSR_WRITE(sc, WMREG_KABGTXD, reg);
@@ -3737,7 +3783,6 @@ wm_get_auto_rd_done(struct wm_softc *sc)
 	case WM_T_80003:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
-	case WM_T_ICH10:
 		for (i = 0; i < 10; i++) {
 			if (CSR_READ(sc, WMREG_EECD) & EECD_EE_AUTORD)
 				break;
@@ -3749,7 +3794,6 @@ wm_get_auto_rd_done(struct wm_softc *sc)
 		}
 		break;
 	default:
-		delay(5000);
 		break;
 	}
 }
@@ -3762,7 +3806,8 @@ wm_lan_init_done(struct wm_softc *sc)
 
 	/* wait for eeprom to reload */
 	switch (sc->sc_type) {
-	case WM_T_ICH10: /* & PCH */
+	case WM_T_ICH10:
+	case WM_T_PCH:
 		for (i = 0; i < WM_ICH8_LAN_INIT_TIMEOUT; i++) {
 			reg = CSR_READ(sc, WMREG_STATUS);
 			if ((reg & STATUS_LAN_INIT_DONE) != 0)
@@ -3789,6 +3834,7 @@ wm_get_cfg_done(struct wm_softc *sc)
 {
 	int func = 0;
 	int mask;
+	uint32_t reg;
 	int i;
 
 	/* wait for eeprom to reload */
@@ -3817,9 +3863,6 @@ wm_get_cfg_done(struct wm_softc *sc)
 	case WM_T_80003:
 	case WM_T_82571:
 	case WM_T_82572:
-	case WM_T_ICH8:
-	case WM_T_ICH9:
-	case WM_T_ICH10:
 		if (sc->sc_type == WM_T_80003)
 			func = (CSR_READ(sc, WMREG_STATUS)
 			    >> STATUS_FUNCID_SHIFT) & 1;
@@ -3835,6 +3878,18 @@ wm_get_cfg_done(struct wm_softc *sc)
 			DPRINTF(WM_DEBUG_GMII, ("%s: %s failed\n",
 				device_xname(sc->sc_dev), __func__));
 		}
+		break;
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+	case WM_T_PCH:
+		if (sc->sc_type >= WM_T_PCH) {
+			reg = CSR_READ(sc, WMREG_STATUS);
+			if ((reg & STATUS_PHYRA) != 0)
+				CSR_WRITE(sc, WMREG_STATUS,
+				    reg & ~STATUS_PHYRA);
+		}
+		delay(10*1000);
 		break;
 	default:
 		panic("%s: %s: unknown type\n", device_xname(sc->sc_dev),
@@ -4142,7 +4197,7 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		return 1;
 
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
-	    || (sc->sc_type == WM_T_ICH10))
+	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH))
 		rv = wm_read_eeprom_ich8(sc, word, wordcnt, data);
 	else if (sc->sc_flags & WM_F_EEPROM_EERDEEWR)
 		rv = wm_read_eeprom_eerd(sc, word, wordcnt, data);
@@ -4289,7 +4344,7 @@ wm_mchash(struct wm_softc *sc, const uint8_t *enaddr)
 	uint32_t hash;
 
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
-	    || (sc->sc_type == WM_T_ICH10)) {
+	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)) {
 		hash = (enaddr[4] >> ich8_lo_shift[sc->sc_mchash_type]) |
 		    (((uint16_t) enaddr[5]) << ich8_hi_shift[sc->sc_mchash_type]);
 		return (hash & 0x3ff);
@@ -4335,7 +4390,7 @@ wm_set_filter(struct wm_softc *sc)
 	 * clear the remaining slots.
 	 */
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
-		 || (sc->sc_type == WM_T_ICH10))
+	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH))
 		size = WM_ICH8_RAL_TABSIZE;
 	else
 		size = WM_RAL_TABSIZE;
@@ -4344,7 +4399,7 @@ wm_set_filter(struct wm_softc *sc)
 		wm_set_ral(sc, NULL, i);
 
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
-	    || (sc->sc_type == WM_T_ICH10))
+	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH))
 		size = WM_ICH8_MC_TABSIZE;
 	else
 		size = WM_MC_TABSIZE;
@@ -4370,7 +4425,7 @@ wm_set_filter(struct wm_softc *sc)
 
 		reg = (hash >> 5);
 		if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
-		    || (sc->sc_type == WM_T_ICH10))
+		    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH))
 			reg &= 0x1f;
 		else
 			reg &= 0x7f;
@@ -4717,6 +4772,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 	case WM_T_ICH10:
+	case WM_T_PCH:
 		rv = wm_get_swfwhw_semaphore(sc);
 		break;
 	default:
@@ -4794,6 +4850,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 	case WM_T_ICH10:
+	case WM_T_PCH:
 		/* generic reset */
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_PHY_RESET);
 		delay(100);
@@ -4827,6 +4884,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 	case WM_T_ICH10:
+	case WM_T_PCH:
 		wm_put_swfwhw_semaphore(sc);
 		break;
 	default:
@@ -4866,7 +4924,19 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 	case WM_T_ICH10:
+	case WM_T_PCH:
 		delay(10*1000);
+
+		if (sc->sc_type == WM_T_PCH) {
+			/* XXX hv_phy_workaround */
+
+			/* dummy read from WUC */
+		}
+		/* XXX SW LCD configuration from NVM */
+
+		if (sc->sc_type == WM_T_PCH) {
+			/* XXX Configure the LCD with the OEM bits in NVM */
+		}
 		break;
 	default:
 		panic("%s: unknown type\n", __func__);
@@ -5620,7 +5690,7 @@ wm_valid_nvm_bank_detect_ich8lan(struct wm_softc *sc, unsigned int *bank)
 	uint8_t bank_high_byte;
 	uint32_t bank1_offset = sc->sc_ich8_flash_bank_size * sizeof(uint16_t);
 
-	if (sc->sc_type != WM_T_ICH10) {
+	if ((sc->sc_type != WM_T_ICH10) && (sc->sc_type != WM_T_PCH)) {
 		/* Value of bit 22 corresponds to the flash bank we're on. */
 		*bank = (CSR_READ(sc, WMREG_EECD) & EECD_SEC1VAL) ? 1 : 0;
 	} else {
@@ -5916,6 +5986,7 @@ wm_check_mng_mode(struct wm_softc *sc)
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 	case WM_T_ICH10:
+	case WM_T_PCH:
 		rv = wm_check_mng_mode_ich8lan(sc);
 		break;
 	case WM_T_82574:
@@ -5985,6 +6056,7 @@ wm_check_reset_block(struct wm_softc *sc)
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 	case WM_T_ICH10:
+	case WM_T_PCH:
 		reg = CSR_READ(sc, WMREG_FWSM);
 		if ((reg & FWSM_RSPCIPHY) != 0)
 			return 0;
@@ -6035,6 +6107,7 @@ wm_get_hw_control(struct wm_softc *sc)
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 	case WM_T_ICH10:
+	case WM_T_PCH:
 		reg = CSR_READ(sc, WMREG_CTRL_EXT);
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg | CTRL_EXT_DRV_LOAD);
 		break;
