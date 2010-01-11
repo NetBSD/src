@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.105 2009/11/12 19:58:27 dyoung Exp $        */
+/*      $NetBSD: ukbd.c,v 1.106 2010/01/11 00:18:26 pooka Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.105 2009/11/12 19:58:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.106 2010/01/11 00:18:26 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +65,11 @@ __KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.105 2009/11/12 19:58:27 dyoung Exp $");
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 
+#ifdef _KERNEL_OPT
 #include "opt_ukbd_layout.h"
 #include "opt_wsdisplay_compat.h"
 #include "opt_ddb.h"
+#endif /* _KERNEL_OPT */
 
 #ifdef UKBD_DEBUG
 #define DPRINTF(x)	if (ukbddebug) logprintf x
