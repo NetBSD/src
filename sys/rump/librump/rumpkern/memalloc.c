@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.3 2009/12/23 17:16:40 stacktic Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.4 2010/01/11 19:19:57 stacktic Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.4 2010/01/11 19:19:57 stacktic Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
