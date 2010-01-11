@@ -1,4 +1,4 @@
-/*	$NetBSD: findfp.c,v 1.23 2006/10/07 21:40:46 thorpej Exp $	*/
+/*	$NetBSD: findfp.c,v 1.24 2010/01/11 20:39:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)findfp.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: findfp.c,v 1.23 2006/10/07 21:40:46 thorpej Exp $");
+__RCSID("$NetBSD: findfp.c,v 1.24 2010/01/11 20:39:29 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -154,8 +154,6 @@ found:
 /*	fp->_cookie = <any>; */	/* caller sets cookie, _read/_write etc */
 	_UB(fp)._base = NULL;	/* no ungetc buffer */
 	_UB(fp)._size = 0;
-	fp->_lb._base = NULL;	/* no line buffer */
-	fp->_lb._size = 0;
 	memset(WCIO_GET(fp), 0, sizeof(struct wchar_io_data));
 	rwlock_unlock(&__sfp_lock);
 	return (fp);

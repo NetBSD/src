@@ -1,4 +1,4 @@
-/*	$NetBSD: vsscanf.c,v 1.14 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: vsscanf.c,v 1.15 2010/01/11 20:39:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vsscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsscanf.c,v 1.14 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: vsscanf.c,v 1.15 2010/01/11 20:39:29 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,6 +78,5 @@ vsscanf(str, fmt, ap)
 	f._bf._size = f._r = strlen(str);
 	f._read = eofread;
 	_UB(&f)._base = NULL;
-	f._lb._base = NULL;
 	return (__svfscanf_unlocked(&f, fmt, ap));
 }

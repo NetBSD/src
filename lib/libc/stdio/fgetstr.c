@@ -1,4 +1,4 @@
-/* $NetBSD: fgetstr.c,v 1.10 2009/12/02 09:03:13 roy Exp $	*/
+/* $NetBSD: fgetstr.c,v 1.11 2010/01/11 20:39:29 joerg Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fgetstr.c,v 1.10 2009/12/02 09:03:13 roy Exp $");
+__RCSID("$NetBSD: fgetstr.c,v 1.11 2010/01/11 20:39:29 joerg Exp $");
 
 #include "namespace.h"
 
@@ -49,24 +49,12 @@ __RCSID("$NetBSD: fgetstr.c,v 1.10 2009/12/02 09:03:13 roy Exp $");
 char *
 __fgetstr(FILE *__restrict fp, size_t *__restrict lenp, int sep)
 {
-	char *p;
-	size_t size;
 	ssize_t n;
 
 	_DIAGASSERT(fp != NULL);
 	_DIAGASSERT(lenp != NULL);
 
-	p = (char *)fp->_lb._base;
-	size = fp->_lb._size;
-	n = __getdelim(&p, &size, sep, fp);
-	fp->_lb._base = (unsigned char *)p;
-	/* The struct size variable is only an int .....
-	 * This still works when exceeded, but the buffer could be
-	 * realloced needlessly. */
-	if (size > INT_MAX)
-		fp->_lb._size = INT_MAX;
-	else
-		fp->_lb._size = (int)size;
+	n = __getdelim(&_EXT(fp)->_fgetstr_buf, &_EXT(fp)->_fgetstr_len, sep, fp);
 	if (n == -1) {
 		*lenp = 0;
 		if (__sferror(fp) && errno == EOVERFLOW) /* fixup errno */
@@ -74,5 +62,5 @@ __fgetstr(FILE *__restrict fp, size_t *__restrict lenp, int sep)
 		return NULL;
 	}
 	*lenp = n;
-	return p;
+	return _EXT(fp)->_fgetstr_buf;
 }

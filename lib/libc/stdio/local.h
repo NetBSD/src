@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.23 2009/12/02 09:03:13 roy Exp $	*/
+/*	$NetBSD: local.h,v 1.24 2010/01/11 20:39:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -104,10 +104,10 @@ extern int	 __vfwscanf_unlocked __P((FILE * __restrict,
 /*
  * test for an fgetln() buffer.
  */
-#define	HASLB(fp) ((fp)->_lb._base != NULL)
 #define	FREELB(fp) { \
-	free((char *)(fp)->_lb._base); \
-	(fp)->_lb._base = NULL; \
+	free(_EXT(fp)->_fgetstr_buf); \
+	_EXT(fp)->_fgetstr_buf = NULL; \
+	_EXT(fp)->_fgetstr_len = 0; \
 }
 
 extern void __flockfile_internal __P((FILE *, int));

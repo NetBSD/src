@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.74 2009/07/13 22:19:24 roy Exp $	*/
+/*	$NetBSD: stdio.h,v 1.75 2010/01/11 20:39:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -133,8 +133,8 @@ typedef	struct __sFILE {
 	unsigned char _ubuf[3];	/* guarantee an ungetc() buffer */
 	unsigned char _nbuf[1];	/* guarantee a getc() buffer */
 
-	/* separate buffer for fgetln() when line crosses buffer boundary */
-	struct	__sbuf _lb;	/* buffer for fgetln() */
+	/* Formerly used by fgetln/fgetwln; kept for binary compatibility */
+	struct	__sbuf _lb__unused;
 
 	/* Unix stdio files get aligned to block boundaries on fseek() */
 	int	_blksize;	/* stat.st_blksize (may be != _bf._size) */

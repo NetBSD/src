@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetwln.c,v 1.3 2009/09/24 20:38:53 roy Exp $	*/
+/*	$NetBSD: fgetwln.c,v 1.4 2010/01/11 20:39:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins.
@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdio/fgetwln.c,v 1.2 2004/08/06 17:00:09 tjr Exp $");
 #else
-__RCSID("$NetBSD: fgetwln.c,v 1.3 2009/09/24 20:38:53 roy Exp $");
+__RCSID("$NetBSD: fgetwln.c,v 1.4 2010/01/11 20:39:29 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,17 +66,12 @@ __slbexpand(FILE *fp, size_t newsize)
 #endif
 	_DIAGASSERT(fp != NULL);
 
-	/* fp->_lb._size is an int ..... */
-	if (newsize > INT_MAX) {
-		errno = EOVERFLOW;
-		return (-1);
-	}
-	if ((size_t)fp->_lb._size >= newsize)
+	if (_EXT(fp)->_fgetstr_len >= newsize)
 		return (0);
-	if ((p = realloc(fp->_lb._base, newsize)) == NULL)
+	if ((p = realloc(_EXT(fp)->_fgetstr_buf, newsize)) == NULL)
 		return (-1);
-	fp->_lb._base = p;
-	fp->_lb._size = newsize;
+	_EXT(fp)->_fgetstr_buf = p;
+	_EXT(fp)->_fgetstr_len = newsize;
 	return (0);
 }
 
@@ -92,10 +87,10 @@ fgetwln(FILE * __restrict fp, size_t *lenp)
 	len = 0;
 	while ((wc = __fgetwc_unlock(fp)) != WEOF) {
 #define	GROW	512
-		if (len * sizeof(wchar_t) >= (size_t)fp->_lb._size &&
+		if (len * sizeof(wchar_t) >= _EXT(fp)->_fgetstr_len &&
 		    __slbexpand(fp, (len + GROW) * sizeof(wchar_t)))
 			goto error;
-		*((wchar_t *)(void *)fp->_lb._base + len++) = wc;
+		*((wchar_t *)(void *)_EXT(fp)->_fgetstr_buf + len++) = wc;
 		if (wc == L'\n')
 			break;
 	}
@@ -104,7 +99,7 @@ fgetwln(FILE * __restrict fp, size_t *lenp)
 
 	FUNLOCKFILE(fp);
 	*lenp = len;
-	return ((wchar_t *)(void *)fp->_lb._base);
+	return ((wchar_t *)(void *)_EXT(fp)->_fgetstr_buf);
 
 error:
 	FUNLOCKFILE(fp);
