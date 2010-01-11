@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.8 2009/12/27 19:26:04 christos Exp $
+# $NetBSD: ad.mips64eb,v 1.9 2010/01/11 16:30:26 christos Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib		compat
@@ -124,7 +124,7 @@
 ./usr/lib/64/liblwres.so.5			base-compat-shlib	compat,pic
 ./usr/lib/64/liblwres.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libm.so.0				base-compat-shlib	compat,pic
-./usr/lib/64/libm.so.0.7			base-compat-shlib	compat,pic
+./usr/lib/64/libm.so.0.8			base-compat-shlib	compat,pic
 ./usr/lib/64/libmagic.so.3			base-compat-shlib	compat,pic
 ./usr/lib/64/libmagic.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libmenu.so.6			base-compat-shlib	compat,pic
@@ -356,7 +356,7 @@
 ./usr/lib/o32/liblwres.so.5			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblwres.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libm.so.0				base-compat-shlib	compat,pic
-./usr/lib/o32/libm.so.0.7			base-compat-shlib	compat,pic
+./usr/lib/o32/libm.so.0.8			base-compat-shlib	compat,pic
 ./usr/lib/o32/libmagic.so.3			base-compat-shlib	compat,pic
 ./usr/lib/o32/libmagic.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libmenu.so.6			base-compat-shlib	compat,pic
