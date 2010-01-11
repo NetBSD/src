@@ -26,14 +26,19 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)exp.3	6.12 (Berkeley) 7/31/91
-.\"	$NetBSD: exp.3,v 1.23 2005/07/21 12:58:22 wiz Exp $
+.\" $FreeBSD: src/lib/msun/man/exp.3,v 1.24 2008/01/18 21:43:00 das Exp $
+.\"	$NetBSD: exp.3,v 1.24 2010/01/11 16:28:39 christos Exp $
 .\"
-.Dd July 21, 2005
+.Dd January 11, 2010
 .Dt EXP 3
 .Os
 .Sh NAME
 .Nm exp ,
 .Nm expf ,
+.\" The sorting error is intentional.  exp and expf should be adjacent.
+.Nm exp2 ,
+.Nm exp2f ,
+.\" .Nm exp2l ,
 .Nm expm1 ,
 .Nm expm1f ,
 .Nm log ,
@@ -55,6 +60,12 @@
 .Fn exp "double x"
 .Ft float
 .Fn expf "float x"
+.Ft double
+.Fn exp2 "double x"
+.Ft float
+.Fn exp2f "float x"
+.\" .Ft long double
+.\" .Fn exp2l "long double x"
 .Ft double
 .Fn expm1 "double x"
 .Ft float
@@ -82,12 +93,28 @@
 .Sh DESCRIPTION
 The
 .Fn exp
-function computes the exponential value of the given argument
+and the
+.Fn expf
+functions compute the base
+.Ms e
+exponential value of the given argument
+.Fa x .
+.Pp
+The
+.Fn exp2 ,
+and
+.Fn exp2f
+.\" .Fn exp2f ,
+.\" and
+.\" .Fn exp2l
+functions compute the base 2 exponential of the given argument
 .Fa x .
 .Pp
 The
 .Fn expm1
-function computes the value exp(x)\-1 accurately even for tiny argument
+and the
+.Fn expm1f
+functions computes the value exp(x)\-1 accurately even for tiny argument
 .Fa x .
 .Pp
 The
@@ -117,11 +144,24 @@ to base 2.
 .Pp
 The
 .Fn pow
-computes the value
+and
+.Fn powf
+functions compute the value
 of
 .Ar x
 to the exponent
 .Ar y .
+.Sh ERROR (due to Roundoff etc.)
+The values of
+.Fn exp 0 ,
+.Fn expm1 0 ,
+.Fn exp2 integer ,
+and
+.Fn pow integer integer
+are exact provided that they are representable.
+.\" XXX Is this really true for pow()?
+Otherwise the error in these functions is generally below one
+.Em ulp .
 .Sh RETURN VALUES
 These functions will return the appropriate computation unless an error
 occurs or an argument is out of range.
