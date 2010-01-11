@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtsold.8,v 1.28 2010/01/11 09:21:39 mbalmer Exp $
+.\"	$NetBSD: rtsold.8,v 1.29 2010/01/11 09:49:19 wiz Exp $
 .\"	$KAME: rtsold.8,v 1.17 2001/07/09 22:30:37 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -210,7 +210,8 @@ and reinserted, the corresponding interface index is changed.
 However,
 .Nm
 assumes such changes will not occur, and always uses the index that
-it got at invocation. As a result,
+it got at invocation.
+As a result,
 .Nm
 may not work if you reinsert a network card.
 In such a case,
