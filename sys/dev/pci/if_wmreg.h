@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.32 2010/01/07 17:45:58 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.33 2010/01/11 12:29:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -222,6 +222,7 @@ struct livengood_tcpip_ctxdesc {
 #define	STATUS_ASDV(x)	((x) << 8)	/* auto speed det. val. (Livengood) */
 #define	STATUS_LAN_INIT_DONE (1U << 9)	/* Lan Init Completion by NVM */
 #define	STATUS_MTXCKOK	(1U << 10)	/* MTXD clock running */
+#define	STATUS_PHYRA	(1U << 10)	/* PHY Reset Asserted (PCH) */
 #define	STATUS_PCI66	(1U << 11)	/* 66MHz bus (Livengood) */
 #define	STATUS_BUS64	(1U << 12)	/* 64-bit bus (Livengood) */
 #define	STATUS_PCIX_MODE (1U << 13)	/* PCIX mode (Cordova) */
@@ -700,6 +701,8 @@ struct livengood_tcpip_ctxdesc {
 #define	SWFW_MAC_CSR_SM		0x0008
 #define	SWFW_SOFT_SHIFT		0	/* software semaphores */
 #define	SWFW_FIRM_SHIFT		16	/* firmware semaphores */
+
+#define WMREG_CRC_OFFSET	0x5f50
 
 #define WMREG_EXTCNFCTR		0x0f00  /* Extended Configuration Control */
 #define EXTCNFCTR_PCIE_WRITE_ENABLE	0x00000001
