@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.13 2008/04/26 23:49:50 christos Exp $
+ * $NetBSD: math_private.h,v 1.14 2010/01/11 16:28:39 christos Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -151,6 +151,24 @@ do {								\
   sf_u.word = (i);						\
   (d) = sf_u.value;						\
 } while (/*CONSTCOND*/0)
+
+/*
+ * Attempt to get strict C99 semantics for assignment with non-C99 compilers.
+ */
+#if FLT_EVAL_METHOD == 0 || __GNUC__ == 0
+#define	STRICT_ASSIGN(type, lval, rval)	((lval) = (rval))
+#else
+#define	STRICT_ASSIGN(type, lval, rval) do {	\
+	volatile type __lval;			\
+						\
+	if (sizeof(type) >= sizeof(double))	\
+		(lval) = (rval);		\
+	else {					\
+		__lval = (rval);		\
+		(lval) = __lval;		\
+	}					\
+} while (/*CONSTCOND*/0)
+#endif
 
 /* ieee style elementary functions */
 extern double __ieee754_sqrt __P((double));
