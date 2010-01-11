@@ -58,7 +58,7 @@ static void
 zfs_init_vattr(vattr_t *vap, uint64_t mask, uint64_t mode,
 	uint64_t uid, uint64_t gid, uint64_t rdev, uint64_t nodeid)
 {
-	VATTR_NULL(vap);
+	vattr_null(vap);
 	vap->va_mask = (uint_t)mask;
 	if (mask & AT_TYPE)
 		vap->va_type = IFTOVT(mode);
