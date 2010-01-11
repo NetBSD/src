@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.90 2010/01/08 20:02:39 dyoung Exp $ */
+/*	$NetBSD: gem.c,v 1.91 2010/01/11 09:30:41 jdc Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.90 2010/01/08 20:02:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.91 2010/01/11 09:30:41 jdc Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -152,6 +152,8 @@ gem_detach(struct gem_softc *sc, int flags)
 {
 	int i;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t h = sc->sc_h1;
 
 	/*
 	 * Free any resources we've allocated during the attach.
@@ -161,6 +163,7 @@ gem_detach(struct gem_softc *sc, int flags)
 	case GEM_ATT_BACKEND_2:
 	case GEM_ATT_BACKEND_1:
 	case GEM_ATT_FINISHED:
+		bus_space_write_4(t, h, GEM_INTMASK, ~(uint32_t)0);
 		gem_stop(&sc->sc_ethercom.ec_if, 1);
 
 #ifdef GEM_COUNTERS
