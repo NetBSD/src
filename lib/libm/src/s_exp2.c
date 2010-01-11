@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_exp2.c,v 1.1 2010/01/11 16:28:39 christos Exp $");
+__RCSID("$NetBSD: s_exp2.c,v 1.2 2010/01/11 23:38:24 christos Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: src/lib/msun/src/s_exp2.c,v 1.7 2008/02/22 02:27:34 das Exp $");
 #endif
@@ -394,6 +394,8 @@ exp2(double x)
 	}
 }
 
+#ifdef notyet
 #if (LDBL_MANT_DIG == 53)
 __weak_reference(exp2, exp2l);
+#endif
 #endif
