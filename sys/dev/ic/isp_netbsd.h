@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.70 2009/12/03 14:51:48 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.71 2010/01/11 01:33:22 mjacob Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -78,7 +78,8 @@ struct isposinfo {
 	bus_dma_tag_t		dmatag;
 	bus_dmamap_t		rqdmap;
 	bus_dmamap_t		rsdmap;
-	bus_dmamap_t		scdmap;	/* FC only */
+	bus_dmamap_t		scdmap;		/* FC only */
+	uint64_t 		wwns[256];	/* FC only */
 	int			splsaved;
 	int			mboxwaiting;
 	uint32_t		islocked;
