@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.39 2010/01/09 02:04:18 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.40 2010/01/12 09:09:59 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -932,4 +932,12 @@ sys/kern/kern_event.c				1.69
 	Use sizeof correct type, not pointer to wrong type.
 	Fixes PR/42498.
 	[dsl, ticket #1208]
+
+crypto/dist/openssl/ssl/s3_lib.c 		patch
+crypto/dist/openssl/ssl/s3_pkt.c 		patch
+crypto/dist/openssl/ssl/s3_srvr.c 		patch
+crypto/dist/openssl/ssl/ssl_locl.h 		patch
+
+	Disable OpenSSL renegotiation, thus avoiding CVE-2009-3555.
+	[tonnerre, ticket #1237]
 
