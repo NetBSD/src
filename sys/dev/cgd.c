@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.65 2010/01/12 21:08:08 dyoung Exp $ */
+/* $NetBSD: cgd.c,v 1.66 2010/01/12 23:49:34 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.65 2010/01/12 21:08:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.66 2010/01/12 23:49:34 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -928,6 +928,7 @@ hexprint(const char *start, void *buf, int len)
 #include <sys/module.h>
 
 MODULE(MODULE_CLASS_DRIVER, cgd, NULL);
+CFDRIVER_DECL(cgd, DV_DISK, NULL);
 
 static int
 cgd_modcmd(modcmd_t cmd, void *arg)
@@ -936,14 +937,34 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 	
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		cgdattach(4);
+		error = config_cfdriver_attach(&cgd_cd);
+		if (error)
+			break;
+
+		error = config_cfattach_attach(cgd_cd.cd_name, &cgd_ca);
+	        if (error) {
+			config_cfdriver_detach(&cgd_cd);
+			aprint_error("%s: unable to register cfattach\n",
+			    cgd_cd.cd_name);
+			break;
+		}
 		
-		return devsw_attach("cgd", &cgd_bdevsw, &bmajor,
+		error = devsw_attach("cgd", &cgd_bdevsw, &bmajor,
 		    &cgd_cdevsw, &cmajor);
+		if (error) {
+			config_cfattach_detach(cgd_cd.cd_name, &cgd_ca);
+			config_cfdriver_detach(&cgd_cd);
+			break;
+		}
+		
 		break;
 
 	case MODULE_CMD_FINI:
-		return devsw_detach(&cgd_bdevsw, &cgd_cdevsw);
+		error = config_cfattach_detach(cgd_cd.cd_name, &cgd_ca);
+		if (error)
+			break;
+		config_cfdriver_detach(&cgd_cd);
+		devsw_detach(&cgd_bdevsw, &cgd_cdevsw);
 		break;
 
 	case MODULE_CMD_STAT:
