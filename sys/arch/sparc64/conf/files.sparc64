@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.122 2009/12/29 06:56:41 macallan Exp $
+#	$NetBSD: files.sparc64,v 1.123 2010/01/12 14:45:50 martin Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -13,6 +13,11 @@ defflag	opt_sparc_arch.h	SUN4U
 define mainbus {}
 device mainbus: mainbus
 attach mainbus at root
+
+define upa {}
+device upa: upa
+attach upa at mainbus
+file	arch/sparc64/dev/upa.c
 
 device pcons
 attach pcons at mainbus
@@ -153,7 +158,7 @@ file	arch/sparc64/dev/cgfourteen.c	cgfourteen needs-flag
 device ffb: wsemuldisplaydev, rasops8, rasops32, fb, vcons
 file	arch/sparc64/dev/ffb.c			ffb
 
-attach ffb at mainbus with ffb_mainbus
+attach ffb at mainbus,upa with ffb_mainbus
 file	arch/sparc64/dev/ffb_mainbus.c		ffb_mainbus
 
 device gfb: wsemuldisplaydev, rasops32, fb, vcons
