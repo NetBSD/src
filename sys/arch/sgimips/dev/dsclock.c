@@ -1,4 +1,4 @@
-/*	$NetBSD: dsclock.c,v 1.3 2010/01/12 15:01:48 tsutsui Exp $	*/
+/*	$NetBSD: dsclock.c,v 1.4 2010/01/12 15:20:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsclock.c,v 1.3 2010/01/12 15:01:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsclock.c,v 1.4 2010/01/12 15:20:29 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: dsclock.c,v 1.3 2010/01/12 15:01:48 tsutsui Exp $");
 #include <sgimips/sgimips/clockvar.h>
 
 struct dsclock_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	struct todr_chip_handle sc_todrch;
 
@@ -61,45 +61,46 @@ struct dsclock_softc {
 	bus_space_handle_t sc_rtch;
 };
 
-static int	dsclock_match(struct device *, struct cfdata *, void *);
-static void	dsclock_attach(struct device *, struct device *, void *);
+static int	dsclock_match(device_t, cfdata_t, void *);
+static void	dsclock_attach(device_t, device_t, void *);
 static int	dsclock_gettime_ymdhms(struct todr_chip_handle *,
 		    struct clock_ymdhms *);
 static int	dsclock_settime_ymdhms(struct todr_chip_handle *,
 		    struct clock_ymdhms *);
 
-CFATTACH_DECL(dsclock, sizeof(struct dsclock_softc),
+CFATTACH_DECL_NEW(dsclock, sizeof(struct dsclock_softc),
     dsclock_match, dsclock_attach, NULL, NULL);
 
-#define	ds1286_write(dev, reg, datum)					\
-    bus_space_write_1(dev->sc_rtct, dev->sc_rtch, reg, datum)
-#define	ds1286_read(dev, reg)						\
-    (bus_space_read_1(dev->sc_rtct, dev->sc_rtch, reg))
+#define	ds1286_write(sc, reg, datum)					\
+    bus_space_write_1((sc)->sc_rtct, (sc)->sc_rtch, (reg), (datum))
+#define	ds1286_read(sc, reg)						\
+    bus_space_read_1((sc)->sc_rtct, (sc)->sc_rtch, (reg))
 
 static int
-dsclock_match(struct device *parent, struct cfdata *cf, void *aux)
+dsclock_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
 	if (mach_type == MACH_SGI_IP22 && ma->ma_addr == 0x1fbe0000)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
-dsclock_attach(struct device *parent, struct device *self, void *aux)
+dsclock_attach(device_t parent, device_t self, void *aux)
 {
-	struct dsclock_softc *sc = (void *)self;
+	struct dsclock_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 	int err;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	sc->sc_rtct = SGIMIPS_BUS_SPACE_HPC;
 	if ((err = bus_space_map(sc->sc_rtct, ma->ma_addr, 0x1ffff,
 	    BUS_SPACE_MAP_LINEAR, &sc->sc_rtch)) != 0) {
-		printf(": unable to map RTC registers, error = %d\n", err);
+		aprint_error_dev(self,
+		    "unable to map RTC registers, error = %d\n", err);
 		return;
 	}
 
@@ -150,7 +151,7 @@ dsclock_gettime_ymdhms(struct todr_chip_handle *todrch, struct clock_ymdhms *dt)
 	dt->dt_mon = FROMBCD(regs[DS1286_MONTH] & DS1286_MONTH_MASK);
 	dt->dt_year = FROM_IRIX_YEAR(FROMBCD(regs[DS1286_YEAR]));
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -184,5 +185,5 @@ dsclock_settime_ymdhms(struct todr_chip_handle *todrch, struct clock_ymdhms *dt)
 	DS1286_PUTTOD(sc, &regs);
 	splx(s);
 
-	return (0);
+	return 0;
 }
