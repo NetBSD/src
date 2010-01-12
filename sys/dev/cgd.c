@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.64 2009/11/10 20:39:36 christos Exp $ */
+/* $NetBSD: cgd.c,v 1.65 2010/01/12 21:08:08 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.64 2009/11/10 20:39:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.65 2010/01/12 21:08:08 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,13 +76,19 @@ const struct cdevsw cgd_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
+static int cgd_match(device_t, cfdata_t, void *);
+static void cgd_attach(device_t, device_t, void *);
+static int cgd_detach(device_t, int);
+static struct cgd_softc	*cgd_spawn(int);
+static int cgd_destroy(device_t);
+
 /* Internal Functions */
 
 static int	cgdstart(struct dk_softc *, struct buf *);
 static void	cgdiodone(struct buf *);
 
 static int	cgd_ioctl_set(struct cgd_softc *, void *, struct lwp *);
-static int	cgd_ioctl_clr(struct cgd_softc *, void *, struct lwp *);
+static int	cgd_ioctl_clr(struct cgd_softc *, struct lwp *);
 static int	cgdinit(struct cgd_softc *, const char *, struct vnode *,
 			struct lwp *);
 static void	cgd_cipher(struct cgd_softc *, void *, void *,
@@ -104,6 +110,10 @@ static struct dkdriver cgddkdriver = {
 	.d_strategy = cgdstrategy,
 	.d_minphys = minphys,
 };
+
+CFATTACH_DECL3_NEW(cgd, sizeof(struct cgd_softc),
+    cgd_match, cgd_attach, cgd_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
+extern struct cfdriver cgd_cd;
 
 /* DIAGNOSTIC and DEBUG definitions */
 
@@ -140,61 +150,105 @@ static void	hexprint(const char *, void *, int);
 
 /* Global variables */
 
-struct	cgd_softc *cgd_softc;
-int	numcgd = 0;
-
 /* Utility Functions */
 
 #define CGDUNIT(x)		DISKUNIT(x)
 #define GETCGD_SOFTC(_cs, x)	if (!((_cs) = getcgd_softc(x))) return ENXIO
 
+/* The code */
+
 static struct cgd_softc *
 getcgd_softc(dev_t dev)
 {
 	int	unit = CGDUNIT(dev);
+	struct cgd_softc *sc;
 
 	DPRINTF_FOLLOW(("getcgd_softc(0x%"PRIx64"): unit = %d\n", dev, unit));
-	if (unit >= numcgd)
-		return NULL;
-	return &cgd_softc[unit];
+
+	sc = device_lookup_private(&cgd_cd, unit);
+	if (sc == NULL)
+		sc = cgd_spawn(unit);
+	return sc;
 }
 
-/* The code */
+static int
+cgd_match(device_t self, cfdata_t cfdata, void *aux)
+{
+
+	return 1;
+}
 
 static void
-cgdsoftc_init(struct cgd_softc *cs, int num)
+cgd_attach(device_t parent, device_t self, void *aux)
 {
-	char	sbuf[DK_XNAME_SIZE];
+	struct cgd_softc *sc = device_private(self);
 
-	memset(cs, 0x0, sizeof(*cs));
-	snprintf(sbuf, DK_XNAME_SIZE, "cgd%d", num);
-	simple_lock_init(&cs->sc_slock);
-	dk_sc_init(&cs->sc_dksc, cs, sbuf);
-	disk_init(&cs->sc_dksc.sc_dkdev, cs->sc_dksc.sc_xname, &cgddkdriver);
+	sc->sc_dev = self;
+	simple_lock_init(&sc->sc_slock);
+	dk_sc_init(&sc->sc_dksc, sc, device_xname(sc->sc_dev));
+	disk_init(&sc->sc_dksc.sc_dkdev, sc->sc_dksc.sc_xname, &cgddkdriver);
+}
+
+
+static int
+cgd_detach(device_t self, int flags)
+{
+	int	ret = 0;
+	int	pmask = 1 << RAW_PART;
+	struct cgd_softc *sc = device_private(self);
+	struct dk_softc *dksc;
+
+	dksc = &sc->sc_dksc;
+	if ((dksc->sc_flags & DKF_INITED) != 0)
+	{
+		if (DK_BUSY(&sc->sc_dksc, pmask))
+			ret = EBUSY;
+		else
+			ret = cgd_ioctl_clr(sc, curlwp);
+	}
+
+	disk_destroy(&sc->sc_dksc.sc_dkdev);
+
+	return ret;
 }
 
 void
 cgdattach(int num)
 {
-	int	i;
+	int error;
 
-	DPRINTF_FOLLOW(("cgdattach(%d)\n", num));
-	if (num <= 0) {
-		DIAGPANIC(("cgdattach: count <= 0"));
-		return;
-	}
+	error = config_cfattach_attach(cgd_cd.cd_name, &cgd_ca);
+	if (error != 0)
+		aprint_error("%s: unable to register cfattach\n",
+		    cgd_cd.cd_name);
+}
 
-	cgd_softc = malloc(num * sizeof(*cgd_softc), M_DEVBUF, M_NOWAIT);
-	if (!cgd_softc) {
-		DPRINTF_FOLLOW(("WARNING: unable to malloc(9) memory for %d "
-		    "crypt disks\n", num));
-		DIAGPANIC(("cgdattach: cannot malloc(9) enough memory"));
-		return;
-	}
+static struct cgd_softc *
+cgd_spawn(int unit)
+{
+	cfdata_t cf;
 
-	numcgd = num;
-	for (i = 0; i < num; i++)
-		cgdsoftc_init(&cgd_softc[i], i);
+	cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
+	cf->cf_name = cgd_cd.cd_name;
+	cf->cf_atname = cgd_cd.cd_name;
+	cf->cf_unit = unit;
+	cf->cf_fstate = FSTATE_STAR;
+
+	return device_private(config_attach_pseudo(cf));
+}
+
+static int
+cgd_destroy(device_t dev)
+{
+	int error;
+	cfdata_t cf;
+
+	cf = device_cfdata(dev);
+	error = config_detach(dev, DETACH_QUIET);
+	if (error)
+		return error;
+	free(cf, M_DEVBUF);
+	return 0;
 }
 
 static int
@@ -210,11 +264,24 @@ cgdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 static int
 cgdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
+	int error;
 	struct	cgd_softc *cs;
+	struct	dk_softc *dksc;
 
 	DPRINTF_FOLLOW(("cgdclose(0x%"PRIx64", %d)\n", dev, flags));
 	GETCGD_SOFTC(cs, dev);
-	return dk_close(di, &cs->sc_dksc, dev, flags, fmt, l);
+	dksc = &cs->sc_dksc;
+	if ((error =  dk_close(di, dksc, dev, flags, fmt, l)) != 0)
+		return error;
+
+	if ((dksc->sc_flags & DKF_INITED) == 0) {
+		if ((error = cgd_destroy(cs->sc_dev)) != 0) {
+			aprint_error_dev(cs->sc_dev,
+			    "unable to detach instance\n");
+			return error;
+		}
+	}
+	return 0;
 }
 
 static void
@@ -455,15 +522,11 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			ret = cgd_ioctl_set(cs, data, l);
 		break;
 	case CGDIOCCLR:
-		if (!(dksc->sc_flags & DKF_INITED)) {
-			ret = ENXIO;
-			break;
-		}
-		if (DK_BUSY(&cs->sc_dksc, pmask)) {
+
+		if (DK_BUSY(&cs->sc_dksc, pmask))
 			ret = EBUSY;
-			break;
-		}
-		ret = cgd_ioctl_clr(cs, data, l);
+		else
+			ret = cgd_ioctl_clr(cs, l);
 		break;
 
 	case DIOCCACHESYNC:
@@ -605,7 +668,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	disk_attach(&cs->sc_dksc.sc_dkdev);
 
 	/* Try and read the disklabel. */
-	dk_getdisklabel(di, &cs->sc_dksc, 0 /* XXX ? */);
+	dk_getdisklabel(di, &cs->sc_dksc, 0 /* XXX ? (cause of PR 41704) */);
 
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&cs->sc_dksc.sc_dkdev);
@@ -620,9 +683,15 @@ bail:
 
 /* ARGSUSED */
 static int
-cgd_ioctl_clr(struct cgd_softc *cs, void *data, struct lwp *l)
+cgd_ioctl_clr(struct cgd_softc *cs, struct lwp *l)
 {
 	int	s;
+	struct	dk_softc *dksc;
+
+	dksc = &cs->sc_dksc;
+
+	if ((dksc->sc_flags & DKF_INITED) == 0)
+		return ENXIO;
 
 	/* Delete all of our wedges. */
 	dkwedge_delall(&cs->sc_dksc.sc_dkdev);
