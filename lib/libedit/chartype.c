@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.c,v 1.2 2009/12/31 18:32:37 christos Exp $	*/
+/*	$NetBSD: chartype.c,v 1.3 2010/01/12 19:37:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: chartype.c,v 1.2 2009/12/31 18:32:37 christos Exp $");
+__RCSID("$NetBSD: chartype.c,v 1.3 2010/01/12 19:37:18 christos Exp $");
 #endif /* not lint && not SCCSID */
 #include "el.h"
 #include <stdlib.h>
@@ -159,7 +159,7 @@ ct_decode_argv(int argc, const char *argv[], ct_buffer_t *conv)
 	for (i = 0, p = conv->wbuff; i < argc; ++i) {
 		if (!argv[i]) {   /* don't pass null pointers to mbstowcs */
 			wargv[i] = NULL;
-			bytes = -1;
+			continue;
 		} else {
 			wargv[i] = p;
 			bytes = mbstowcs(p, argv[i], bufspace);
@@ -295,6 +295,8 @@ ct_visual_char(Char *dst, size_t len, Char c)
 {
 	int t = ct_chr_class(c);
 	switch (t) {
+	case CHTYPE_TAB:
+	case CHTYPE_NL:
 	case CHTYPE_ASCIICTL:
 		if (len < 2)
 			return -1;   /* insufficient space */
@@ -335,8 +337,6 @@ ct_visual_char(Char *dst, size_t len, Char c)
 #endif
 		/*FALLTHROUGH*/
 	/* these two should be handled outside this function */
-	case CHTYPE_TAB:
-	case CHTYPE_NL:
 	default:            /* we should never hit the default */
 		return 0;
 	}
