@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1010 2010/01/11 12:54:54 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1011 2010/01/12 10:11:32 nonaka Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -608,6 +608,7 @@ vendor LINKSYS2		0x17fe	Linksys
 vendor RALINK		0x1814	Ralink Technologies
 vendor RMI		0x182e	Raza Microelectronics Inc. (NetLogic)
 vendor BBELEC		0x1896	B & B Electronics
+vendor RENESAS		0x1912	Renesas Technologies
 vendor ATTANSIC		0x1969	Attansic Technologies
 vendor EVE		0x1adb	EVE
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
@@ -3603,6 +3604,10 @@ product REALTEK RT8168		0x8168	8168/8111 10/100/1000 Ethernet
 product REALTEK RT8169		0x8169	8169/8110 10/100/1000 Ethernet
 product REALTEK RT8180		0x8180	8180 802.11b
 product REALTEK RT8185		0x8185	8185 802.11a/b/g
+
+/* RENESAS products */
+product RENESAS SH7780	0x0002	SH7780 PCI Controller
+product RENESAS SH7785	0x0007	SH7785 PCI Controller
 
 /* RICOH products */
 product RICOH Rx5C465	0x0465 5C465 PCI-CardBus Bridge
