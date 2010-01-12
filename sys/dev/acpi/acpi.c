@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.143 2010/01/09 15:43:12 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.144 2010/01/12 12:21:04 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.143 2010/01/09 15:43:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.144 2010/01/12 12:21:04 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1333,29 +1333,61 @@ acpi_match_hid(ACPI_DEVICE_INFO *ad, const char * const *ids)
 static void
 acpi_wake_gpe_helper(ACPI_HANDLE handle, bool enable)
 {
+	ACPI_OBJECT *elm, *obj;
+	ACPI_INTEGER val;
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
-	ACPI_OBJECT *p, *elt;
 
 	rv = acpi_eval_struct(handle, METHOD_NAME__PRW, &buf);
+
 	if (ACPI_FAILURE(rv))
-		return;			/* just ignore */
+		return;
 
-	p = buf.Pointer;
-	if (p->Type != ACPI_TYPE_PACKAGE || p->Package.Count < 2)
-		goto out;		/* just ignore */
+	obj = buf.Pointer;
 
-	elt = p->Package.Elements;
+	if (obj->Type != ACPI_TYPE_PACKAGE || obj->Package.Count < 2)
+		goto out;
 
-	/* TBD: package support */
+	/*
+	 * As noted in ACPI 3.0 (section 7.2.10), the _PRW object is
+	 * a package in which the first element is either an integer
+	 * or again a package. In the latter case the package inside
+	 * the package element has two elements, a reference handle
+	 * and the GPE number.
+	 */
+	elm = &obj->Package.Elements[0];
+
+	switch (elm->Type) {
+
+	case ACPI_TYPE_INTEGER:
+		val = elm->Integer.Value;
+		break;
+
+	case ACPI_TYPE_PACKAGE:
+
+		if (elm->Package.Count < 2)
+			goto out;
+
+		if (elm->Package.Elements[0].Type != ACPI_TYPE_LOCAL_REFERENCE)
+			goto out;
+
+		if (elm->Package.Elements[1].Type != ACPI_TYPE_INTEGER)
+			goto out;
+
+		val = elm->Package.Elements[1].Integer.Value;
+		break;
+
+	default:
+		goto out;
+	}
+
 	if (enable) {
-		AcpiSetGpeType(NULL, elt[0].Integer.Value,
-		    ACPI_GPE_TYPE_WAKE_RUN);
-		AcpiEnableGpe(NULL, elt[0].Integer.Value, ACPI_NOT_ISR);
+		(void)AcpiSetGpeType(NULL, val, ACPI_GPE_TYPE_WAKE_RUN);
+		(void)AcpiEnableGpe(NULL, val, ACPI_NOT_ISR);
 	} else
-		AcpiDisableGpe(NULL, elt[0].Integer.Value, ACPI_NOT_ISR);
+		(void)AcpiDisableGpe(NULL, val, ACPI_NOT_ISR);
 
- out:
+out:
 	ACPI_FREE(buf.Pointer);
 }
 
