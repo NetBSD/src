@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.130 2009/07/13 19:05:41 roy Exp $	*/
+/*	$NetBSD: cmds.c,v 1.131 2010/01/12 06:50:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.130 2009/07/13 19:05:41 roy Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.131 2010/01/12 06:50:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -779,10 +779,10 @@ fget(int argc, char *argv[])
 }
 
 const char *
-onoff(int bool)
+onoff(int val)
 {
 
-	return (bool ? "on" : "off");
+	return (val ? "on" : "off");
 }
 
 /*
