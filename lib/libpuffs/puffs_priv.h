@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.41 2008/08/11 16:23:37 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.42 2010/01/12 18:42:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -116,6 +116,7 @@ struct puffs_usermount {
 #define PU_HASKQ	0x0400
 #define PU_PUFFSDAEMON	0x0800
 #define PU_MAINRESTORE	0x1000
+#define PU_DONEXIT	0x2000
 #define PU_SETSTATE(pu, s) (pu->pu_state = (s) | (pu->pu_state & ~PU_STATEMASK))
 #define PU_SETSFLAG(pu, s) (pu->pu_state |= (s))
 #define PU_CLRSFLAG(pu, s) \
@@ -149,7 +150,7 @@ struct puffs_usermount {
 	LIST_HEAD(, puffs_fctrl_io) pu_ios;
 	LIST_HEAD(, puffs_fctrl_io) pu_ios_rmlist;
 	struct kevent		*pu_evs;
-	size_t			pu_nfds;
+	size_t			pu_nevs;
 
 	puffs_ml_loop_fn	pu_ml_lfn;
 	struct timespec		pu_ml_timeout;
