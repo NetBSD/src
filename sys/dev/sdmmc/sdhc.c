@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.4 2010/01/08 19:53:10 dyoung Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.5 2010/01/12 08:41:16 uebayasi Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.4 2010/01/08 19:53:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.5 2010/01/12 08:41:16 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -635,11 +635,11 @@ sdhc_bus_width(sdmmc_chipset_handle_t sch, int width)
 	}
 
 	mutex_enter(&hp->host_mtx);
-	reg = HREAD1(hp, SDHC_POWER_CTL);
+	reg = HREAD1(hp, SDHC_HOST_CTL);
 	reg &= ~SDHC_4BIT_MODE;
 	if (width == 4)
 		reg |= SDHC_4BIT_MODE;
-	HWRITE1(hp, SDHC_POWER_CTL, reg);
+	HWRITE1(hp, SDHC_HOST_CTL, reg);
 	mutex_exit(&hp->host_mtx);
 
 	return 0;
