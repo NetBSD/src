@@ -1,4 +1,4 @@
-/* $NetBSD: zbbus.c,v 1.11 2005/12/11 12:18:51 christos Exp $ */
+/* $NetBSD: zbbus.c,v 1.11.96.1 2010/01/12 18:21:17 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbbus.c,v 1.11 2005/12/11 12:18:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbbus.c,v 1.11.96.1 2010/01/12 18:21:17 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,15 +43,14 @@ __KERNEL_RCSID(0, "$NetBSD: zbbus.c,v 1.11 2005/12/11 12:18:51 christos Exp $");
 
 #include "locators.h"
 
-static int	zbbus_match(struct device *, struct cfdata *, void *);
-static void	zbbus_attach(struct device *, struct device *, void *);
+static int	zbbus_match(device_t, cfdata_t, void *);
+static void	zbbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(zbbus, sizeof(struct device),
+CFATTACH_DECL_NEW(zbbus, 0,
     zbbus_match, zbbus_attach, NULL, NULL);
 
 static int	zbbus_print(void *, const char *);
-static int	zbbus_submatch(struct device *, struct cfdata *,
-			       const int *, void *);
+static int	zbbus_submatch(device_t, cfdata_t, const int *, void *);
 static const char *zbbus_entity_type_name(enum zbbus_entity_type type);
 
 static int	zbbus_attached;
@@ -67,7 +66,7 @@ static const int sb1250_zbbus_dev_count =
     sizeof sb1250_zbbus_devs / sizeof sb1250_zbbus_devs[0];
 
 static int
-zbbus_match(struct device *parent, struct cfdata *match, void *aux)
+zbbus_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	if (zbbus_attached)
@@ -76,7 +75,7 @@ zbbus_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-zbbus_attach(struct device *parent, struct device *self, void *aux)
+zbbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct zbbus_attach_args za;
 	int i;
@@ -109,8 +108,7 @@ zbbus_print(void *aux, const char *pnp)
 }
 
 static int
-zbbus_submatch(struct device *parent, struct cfdata *cf,
-	       const int *ldesc, void *aux)
+zbbus_submatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct zbbus_attach_args *zap = aux;
 

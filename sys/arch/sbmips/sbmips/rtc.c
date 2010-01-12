@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.16.38.1 2009/11/23 18:28:47 matt Exp $ */
+/* $NetBSD: rtc.c,v 1.16.38.2 2010/01/12 18:21:17 matt Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.16.38.1 2009/11/23 18:28:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.16.38.2 2010/01/12 18:21:17 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.16.38.1 2009/11/23 18:28:47 matt Exp $");
 #include <dev/smbus/x1241reg.h>
 
 struct rtc_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	int			sc_smbus_chan;
 	int			sc_smbus_addr;
 	int			sc_type;
@@ -67,13 +67,13 @@ struct rtc_softc {
 #define	SMB_1BYTE_ADDR	1
 #define	SMB_2BYTE_ADDR	2
 
-static int xirtc_match(struct device *, struct cfdata *, void *);
-static void xirtc_attach(struct device *, struct device *, void *);
+static int xirtc_match(device_t, cfdata_t , void *);
+static void xirtc_attach(device_t, device_t, void *);
 static int xirtc_gettime(todr_chip_handle_t, struct clock_ymdhms *);
 static int xirtc_settime(todr_chip_handle_t, struct clock_ymdhms *);
 
-static int strtc_match(struct device *, struct cfdata *, void *);
-static void strtc_attach(struct device *, struct device *, void *);
+static int strtc_match(device_t, cfdata_t , void *);
+static void strtc_attach(device_t, device_t, void *);
 static int strtc_gettime(todr_chip_handle_t, struct clock_ymdhms *);
 static int strtc_settime(todr_chip_handle_t, struct clock_ymdhms *);
 
@@ -90,10 +90,10 @@ static int time_writertc(int, int, int, int, int);
 	time_readrtc((sc)->sc_smbus_chan, (sc)->sc_smbus_addr, (dev), (sc)->sc_type)
 
 
-CFATTACH_DECL(xirtc, sizeof(struct rtc_softc),
+CFATTACH_DECL_NEW(xirtc, sizeof(struct rtc_softc),
     xirtc_match, xirtc_attach, NULL, NULL);
 
-CFATTACH_DECL(m41t81rtc, sizeof(struct rtc_softc),
+CFATTACH_DECL_NEW(m41t81rtc, sizeof(struct rtc_softc),
     strtc_match, strtc_attach, NULL, NULL);
 
 static int rtcfound = 0;
@@ -103,7 +103,7 @@ struct rtc_softc *the_rtc;
  * Xicor X1241 RTC support.
  */
 static int
-xirtc_match(struct device *parent, struct cfdata *cf, void *aux)
+xirtc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct smbus_attach_args *sa = aux;
 	int ret;
@@ -122,14 +122,15 @@ xirtc_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-xirtc_attach(struct device *parent, struct device *self, void *aux)
+xirtc_attach(device_t parent, device_t self, void *aux)
 {
 	struct smbus_attach_args *sa = aux;
-	struct rtc_softc *sc = (void *)self;
+	struct rtc_softc *sc = device_private(self);
 
 	rtcfound = 1;
 	the_rtc = sc;
 
+	sc->sc_dev = self;
 	sc->sc_smbus_chan = sa->sa_interface;
 	sc->sc_smbus_addr = sa->sa_device;
 	sc->sc_type = SMB_2BYTE_ADDR;	/* Two-byte register addresses on the Xicor */
@@ -142,7 +143,7 @@ xirtc_attach(struct device *parent, struct device *self, void *aux)
 
 	todr_attach(&sc->sc_ct);
 
-	printf("\n");
+	aprint_normal("\n");
 	rtc_cal_timer();	/* XXX */
 }
 
@@ -202,7 +203,7 @@ xirtc_gettime(todr_chip_handle_t handle, struct clock_ymdhms *ymdhms)
 
 	if (status & X1241REG_SR_RTCF) {
 		printf("%s: battery has failed, clock setting is not accurate\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 		return (EIO);
 	}
 
@@ -213,7 +214,7 @@ xirtc_gettime(todr_chip_handle_t handle, struct clock_ymdhms *ymdhms)
  * ST M41T81 RTC support.
  */
 static int
-strtc_match(struct device *parent, struct cfdata *cf, void *aux)
+strtc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct smbus_attach_args *sa = aux;
 	int ret;
@@ -232,14 +233,15 @@ strtc_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-strtc_attach(struct device *parent, struct device *self, void *aux)
+strtc_attach(device_t parent, device_t self, void *aux)
 {
 	struct smbus_attach_args *sa = aux;
-	struct rtc_softc *sc = (void *)self;
+	struct rtc_softc *sc = device_private(self);
 
 	rtcfound = 1;
 	the_rtc = sc;
 
+	sc->sc_dev = self;
 	sc->sc_smbus_chan = sa->sa_interface;
 	sc->sc_smbus_addr = sa->sa_device;
 	sc->sc_type = SMB_1BYTE_ADDR;	/* One-byte register addresses on the ST */
@@ -251,7 +253,7 @@ strtc_attach(struct device *parent, struct device *self, void *aux)
 
 	todr_attach(&sc->sc_ct);
 
-	printf("\n");
+	aprint_normal("\n");
 	rtc_cal_timer();	/* XXX */
 }
 
@@ -324,7 +326,7 @@ rtc_cal_timer(void)
 	}
 return;	/* XXX XXX */
 
-	printf("%s: calibrating CPU clock", the_rtc->sc_dev.dv_xname);
+	printf("%s: calibrating CPU clock", device_xname(the_rtc->sc_dev));
 
 	/*
 	 * Run the loop an extra time to wait for the second to tick over
@@ -373,7 +375,7 @@ return;	/* XXX XXX */
 	curcpu()->ci_cycles_per_hz = curcpu()->ci_cpu_freq / hz;
 
 	printf("%s: timer calibration: %lu cycles/sec [(%u, %u)]\n",
-	    the_rtc->sc_dev.dv_xname, curcpu()->ci_cpu_freq,
+	    device_xname(the_rtc->sc_dev), curcpu()->ci_cpu_freq,
 	    ctrdiff[1], ctrdiff[2]);
 }
 #undef RTC_SECONDS
