@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.19 2009/04/10 13:08:24 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.20 2010/01/12 14:44:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005,2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.19 2009/04/10 13:08:24 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.20 2010/01/12 14:44:24 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -178,7 +178,7 @@ mail_sl_init(void)
 
 	p = sl_init();
 	if (p == NULL)
-		err(1, "Unable to allocate memory for stringlist");
+		err(EXIT_FAILURE, "Unable to allocate memory for stringlist");
 	return p;
 }
 
@@ -191,7 +191,7 @@ mail_sl_add(StringList *sl, char *i)
 {
 
 	if (sl_add(sl, i) == -1)
-		err(1, "Unable to add `%s' to stringlist", i);
+		err(EXIT_FAILURE, "Unable to add `%s' to stringlist", i);
 }
 
 
@@ -1143,12 +1143,13 @@ my_gets(el_mode_t *em, const char *prompt, char *string)
 		return NULL;
 	}
 
-	assert(cnt > 0);
-	if (buf[cnt - 1] == '\n')
-		cnt--;	/* trash the trailing LF */
+	if (cnt > 0) {
+		if (buf[cnt - 1] == '\n')
+			cnt--;	/* trash the trailing LF */
 
-	len = MIN(sizeof(line) - 1, (size_t)cnt);
-	(void)memcpy(line, buf, len);
+		len = MIN(sizeof(line) - 1, (size_t)cnt);
+		(void)memcpy(line, buf, len);
+	}
 	line[cnt] = '\0';
 
 	/* enter non-empty lines into history */
