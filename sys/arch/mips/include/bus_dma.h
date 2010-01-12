@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.h,v 1.9.18.1 2010/01/10 02:48:46 matt Exp $ */
+/* $NetBSD: bus_dma.h,v 1.9.18.2 2010/01/12 05:52:09 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -259,8 +259,17 @@ struct mips_bus_dma_cookie {
 	 * DMA map syncs.  Note that origibuflen is only used
 	 * for ID_BUFTYPE_LINEAR.
 	 */
-	void	*id_origbuf;		/* pointer to orig buffer if
-					   bouncing */
+	union {
+		void	*un_origbuf;		/* pointer to orig buffer if
+						   bouncing */
+		char	*un_linearbuf;
+		struct mbuf	*un_mbuf;
+		struct uio	*un_uio;
+	} id_origbuf_un;
+#define	id_origbuf		id_origbuf_un.un_origbuf
+#define	id_origlinearbuf	id_origbuf_un.un_linearbuf
+#define	id_origmbuf		id_origbuf_un.un_mbuf
+#define	id_origuio		id_origbuf_un.un_uio
 	bus_size_t id_origbuflen;	/* ...and size */
 	int	id_buftype;		/* type of buffer */
 
