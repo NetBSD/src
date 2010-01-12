@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.104 2010/01/07 23:03:26 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.105 2010/01/12 18:42:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.104 2010/01/07 23:03:26 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.105 2010/01/12 18:42:38 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -731,6 +731,29 @@ puffs_exit(struct puffs_usermount *pu, int unused /* strict compat */)
 	return 0;
 }
 
+/* no sigset_t static intializer */
+static int sigs[NSIG] = { 0, };
+static int sigcatch = 0;
+
+int
+puffs_unmountonsignal(int sig, bool sigignore)
+{
+
+	if (sig < 0 || sig >= (int)NSIG) {
+		errno = EINVAL;
+		return -1;
+	}
+	if (sigignore)
+		if (signal(sig, SIG_IGN) == SIG_ERR)
+			return -1;
+
+	if (!sigs[sig])
+		sigcatch++;
+	sigs[sig] = 1;
+
+	return 0;
+}
+
 /*
  * Actual mainloop.  This is called from a context which can block.
  * It is called either from puffs_mainloop (indirectly, via
@@ -747,6 +770,7 @@ puffs__theloop(struct puffs_cc *pcc)
 	int ndone;
 
 	while (puffs_getstate(pu) != PUFFS_STATE_UNMOUNTED) {
+
 		/*
 		 * Schedule existing requests.
 		 */
@@ -819,11 +843,10 @@ puffs__theloop(struct puffs_cc *pcc)
 				fio->stat &= ~FIO_WR;
 				nchanges++;
 			}
-			assert(nchanges <= pu->pu_nfds);
 		}
 
 		ndone = kevent(pu->pu_kq, pu->pu_evs, nchanges,
-		    pu->pu_evs, 2*pu->pu_nfds, pu->pu_ml_timep);
+		    pu->pu_evs, pu->pu_nevs, pu->pu_ml_timep);
 
 		if (ndone == -1) {
 			if (errno != EINTR)
@@ -850,7 +873,10 @@ puffs__theloop(struct puffs_cc *pcc)
 #endif
 
 			fio = (void *)curev->udata;
-			pfctrl = fio->fctrl;
+			if (__predict_true(fio))
+				pfctrl = fio->fctrl;
+			else
+				pfctrl = NULL;
 			if (curev->flags & EV_ERROR) {
 				assert(curev->filter == EVFILT_WRITE);
 				fio->stat &= ~FIO_WR;
@@ -872,6 +898,13 @@ puffs__theloop(struct puffs_cc *pcc)
 				puffs__framev_output(pu, pfctrl, fio);
 				what |= PUFFS_FBIO_WRITE;
 			}
+
+			else if (__predict_false(curev->filter==EVFILT_SIGNAL)){
+				if ((pu->pu_state & PU_DONEXIT) == 0) {
+					PU_SETSFLAG(pu, PU_DONEXIT);
+					puffs_exit(pu, 0);
+				}
+			}
 			if (what)
 				puffs__framev_notify(fio, what);
 		}
@@ -889,14 +922,14 @@ puffs__theloop(struct puffs_cc *pcc)
 	if (puffs__cc_restoremain(pu) == -1)
 		warn("cannot restore main context.  impending doom");
 }
-
 int
 puffs_mainloop(struct puffs_usermount *pu)
 {
 	struct puffs_fctrl_io *fio;
 	struct puffs_cc *pcc;
 	struct kevent *curev;
-	int sverrno;
+	size_t nevs;
+	int sverrno, i;
 
 	assert(puffs_getstate(pu) >= PUFFS_STATE_RUNNING);
 
@@ -911,10 +944,12 @@ puffs_mainloop(struct puffs_usermount *pu)
 	    &pu->pu_framectrl[PU_FRAMECTRL_FS]) == -1)
 		goto out;
 
-	curev = realloc(pu->pu_evs, (2*pu->pu_nfds)*sizeof(struct kevent));
+	nevs = pu->pu_nevs + sigcatch;
+	curev = realloc(pu->pu_evs, nevs * sizeof(struct kevent));
 	if (curev == NULL)
 		goto out;
 	pu->pu_evs = curev;
+	pu->pu_nevs = nevs;
 
 	LIST_FOREACH(fio, &pu->pu_ios, fio_entries) {
 		EV_SET(curev, fio->io_fd, EVFILT_READ, EV_ADD,
@@ -924,7 +959,15 @@ puffs_mainloop(struct puffs_usermount *pu)
 		    0, 0, (uintptr_t)fio);
 		curev++;
 	}
-	if (kevent(pu->pu_kq, pu->pu_evs, 2*pu->pu_nfds, NULL, 0, NULL) == -1)
+	for (i = 0; i < NSIG; i++) {
+		if (sigs[i]) {
+			EV_SET(curev, i, EVFILT_SIGNAL, EV_ADD | EV_ENABLE,
+			    0, 0, 0);
+			curev++;
+		}
+	}
+	assert(curev - pu->pu_evs == (ssize_t)pu->pu_nevs);
+	if (kevent(pu->pu_kq, pu->pu_evs, pu->pu_nevs, NULL, 0, NULL) == -1)
 		goto out;
 
 	pu->pu_state |= PU_INLOOP;
