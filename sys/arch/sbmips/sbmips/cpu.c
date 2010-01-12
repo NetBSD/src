@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.18.16.1 2009/11/23 18:28:47 matt Exp $ */
+/* $NetBSD: cpu.c,v 1.18.16.2 2010/01/12 18:21:17 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.1 2009/11/23 18:28:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.2 2010/01/12 18:21:17 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -55,16 +55,16 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.1 2009/11/23 18:28:47 matt Exp $");
 
 #define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
 
-static int	cpu_match(struct device *, struct cfdata *, void *);
-static void	cpu_attach(struct device *, struct device *, void *);
+static int	cpu_match(device_t, cfdata_t, void *);
+static void	cpu_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(cpu, sizeof(struct device),
+CFATTACH_DECL_NEW(cpu, 0,
     cpu_match, cpu_attach, NULL, NULL);
 
 static int found = 0;
 
 static int
-cpu_match(struct device *parent, struct cfdata *match, void *aux)
+cpu_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct zbbus_attach_args *zap = aux;
 	int part;
@@ -81,8 +81,10 @@ cpu_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-cpu_attach(struct device *parent, struct device *self, void *aux)
+cpu_attach(device_t parent, device_t self, void *aux)
 {
+	struct cpu_info * const ci = curcpu();
+	const char * const xname = device_xname(self);
 	int plldiv;
 	uint32_t config;
 
@@ -110,36 +112,36 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	plldiv = G_SYS_PLL_DIV(READ_REG(MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_CFG)));
 	if (plldiv == 0) {
-		printf("PLL_DIV of zero found, assuming 6 (300MHz)\n");
+		aprint_normal(": PLL_DIV of zero found, assuming 6 (300MHz)\n");
 		plldiv = 6;
 
-		printf("%s", self->dv_xname);
+		aprint_normal("%s", xname);
 	}
 
-	curcpu()->ci_cpu_freq = 50000000 * plldiv;
+	ci->ci_cpu_freq = 50000000 * plldiv;
 	/* Compute the delay divisor. */
-	curcpu()->ci_divisor_delay = (curcpu()->ci_cpu_freq + 500000) / 1000000;
+	ci->ci_divisor_delay = (ci->ci_cpu_freq + 500000) / 1000000;
 	/* Compute clock cycles per hz */
-	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2 ) / hz;
+	ci->ci_cycles_per_hz = (ci->ci_cpu_freq + hz / 2 ) / hz;
 
-	printf(": %lu.%02luMHz (hz cycles = %lu, delay divisor = %lu)\n",
-	    curcpu()->ci_cpu_freq / 1000000,
-	    (curcpu()->ci_cpu_freq % 1000000) / 10000,
-	    curcpu()->ci_cycles_per_hz, curcpu()->ci_divisor_delay);
+	aprint_normal(": %lu.%02luMHz (hz cycles = %lu, delay divisor = %lu)\n",
+	    ci->ci_cpu_freq / 1000000,
+	    (ci->ci_cpu_freq % 1000000) / 10000,
+	    ci->ci_cycles_per_hz, ci->ci_divisor_delay);
 
 	/*
 	 * If we're the primary CPU, no more work to do; we're already
 	 * running!
 	 */
 	if (found == 1) {
-		printf("%s: ", self->dv_xname);
+		aprint_normal("%s: ", xname);
 		cpu_identify();
 	} else {
 #if defined(MULTIPROCESSOR)
 # error!
 #else
 		printf("%s: processor off-line; multiprocessor support "
-		    "not present in kernel\n", /* sc->sc_dev. */self->dv_xname);
+		    "not present in kernel\n", xname);
 #endif
 	}
 }
