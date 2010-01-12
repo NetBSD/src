@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22.16.11 2010/01/12 06:38:20 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.22.16.12 2010/01/12 07:58:09 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.11 2010/01/12 06:38:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.12 2010/01/12 07:58:09 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,8 +133,8 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 		    (t->_bounce_alloc_hi != 0
 		     && curaddr >= t->_bounce_alloc_hi))
 			return (EINVAL);
-#if 0
-		printf("dma: addr 0x%08lx -> 0x%08lx\n", curaddr,
+#if BUS_DMA_DEBUG
+		printf("dma: addr %#"PRIxPADDR" -> %#"PRIxPADDR"\n", curaddr,
 		    (curaddr - t->_bounce_alloc_lo) + t->_wbase);
 #endif
 		curaddr = (curaddr - t->_bounce_alloc_lo) + t->_wbase;
@@ -1233,7 +1233,7 @@ _bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
 #ifdef _MIPS_NEED_BUS_DMA_BOUNCE
 	if ((((tag->_bounce_thresh != 0   && max_addr >= tag->_bounce_thresh)
 	      && (tag->_bounce_alloc_hi != 0 && max_addr >= tag->_bounce_alloc_hi))
-	     || (tag->_bounce_alloc_hi == 0 && max_addr <= _BUS_AVAIL_END))
+	     || (tag->_bounce_alloc_hi == 0 && max_addr > _BUS_AVAIL_END))
 	    && (min_addr <= tag->_bounce_alloc_lo)) {
 		*newtag = tag;
 		/* if the tag must be freed, add a reference */
