@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.27 2007/10/29 23:20:38 christos Exp $	*/
+/*	$NetBSD: names.c,v 1.28 2010/01/12 14:45:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.27 2007/10/29 23:20:38 christos Exp $");
+__RCSID("$NetBSD: names.c,v 1.28 2010/01/12 14:45:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -533,7 +533,7 @@ unpack(struct name *np)
 
 	n = np;
 	if ((t = count(n)) == 0)
-		errx(1, "No names to unpack");
+		errx(EXIT_FAILURE, "No names to unpack");
 	/*
 	 * Compute the number of extra arguments we will need.
 	 * We need at least two extra -- one for "mail" and one for
