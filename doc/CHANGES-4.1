@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.190 2010/01/03 19:33:53 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.191 2010/01/12 09:22:58 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3936,4 +3936,12 @@ sys/netbt/rfcomm_session.c			1.16
 	be greater than the max acceptable value so no need to test for that
 	but make sure that it is not smaller than minimum acceptable value.
 	[plunky, ticket #1372]
+
+crypto/dist/openssl/ssl/s3_lib.c		patch
+crypto/dist/openssl/ssl/s3_pkt.c		patch
+crypto/dist/openssl/ssl/s3_srvr.c		patch
+crypto/dist/openssl/ssl/ssl_locl.h		patch
+
+	Disable OpenSSL renegotiation, thus avoiding CVE-2009-3555.
+	[tonnerre, ticket #1373]
 
