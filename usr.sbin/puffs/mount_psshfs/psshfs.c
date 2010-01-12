@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.58 2010/01/07 21:26:49 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.59 2010/01/12 18:43:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.58 2010/01/07 21:26:49 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.59 2010/01/12 18:43:37 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -121,6 +121,8 @@ main(int argc, char *argv[])
 	int nargs;
 
 	setprogname(argv[0]);
+	puffs_unmountonsignal(SIGINT, true);
+	puffs_unmountonsignal(SIGTERM, true);
 
 	if (argc < 3)
 		usage();

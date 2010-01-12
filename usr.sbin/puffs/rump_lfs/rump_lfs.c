@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_lfs.c,v 1.14 2009/12/13 21:16:54 pooka Exp $	*/
+/*	$NetBSD: rump_lfs.c,v 1.15 2010/01/12 18:43:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -32,6 +32,7 @@
 
 #include <err.h>
 #include <pthread.h>
+#include <puffs.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -69,6 +70,8 @@ main(int argc, char *argv[])
 	int rv;
 
 	setprogname(argv[0]);
+	puffs_unmountonsignal(SIGINT, true);
+	puffs_unmountonsignal(SIGTERM, true);
 
 	UKFS_DEVICE_ARGVPROBE(&part);
 	if (part != ukfs_part_none) {
