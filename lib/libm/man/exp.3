@@ -27,9 +27,9 @@
 .\"
 .\"     from: @(#)exp.3	6.12 (Berkeley) 7/31/91
 .\" $FreeBSD: src/lib/msun/man/exp.3,v 1.24 2008/01/18 21:43:00 das Exp $
-.\"	$NetBSD: exp.3,v 1.24 2010/01/11 16:28:39 christos Exp $
+.\"	$NetBSD: exp.3,v 1.25 2010/01/12 15:51:01 christos Exp $
 .\"
-.Dd January 11, 2010
+.Dd January 12, 2010
 .Dt EXP 3
 .Os
 .Sh NAME
@@ -151,17 +151,6 @@ of
 .Ar x
 to the exponent
 .Ar y .
-.Sh ERROR (due to Roundoff etc.)
-The values of
-.Fn exp 0 ,
-.Fn expm1 0 ,
-.Fn exp2 integer ,
-and
-.Fn pow integer integer
-are exact provided that they are representable.
-.\" XXX Is this really true for pow()?
-Otherwise the error in these functions is generally below one
-.Em ulp .
 .Sh RETURN VALUES
 These functions will return the appropriate computation unless an error
 occurs or an argument is out of range.
@@ -205,10 +194,19 @@ unless
 .Fa x
 \*[Gt] \-1.
 .Sh ERRORS
-exp(x), log(x), expm1(x) and log1p(x) are accurate to within
-an
-.Em ulp ,
-and log10(x) to within about 2
+The values of
+.Fn exp x ,
+.Fn expm1 x ,
+.Fn exp2 x ,
+.Fn log x ,
+and
+.Fn log1p x ,
+are exact provided that they are representable.
+Otherwise the error in these functions is generally below one
+.Em ulp .
+The values of
+.Fn log10 x
+are within about 2
 .Em ulps ;
 an
 .Em ulp
@@ -241,7 +239,7 @@ for
 .Tn IEEE
 754 Double.
 Moderate values of
-.Fn pow
+.Fn pow x y
 are accurate enough that
 .Fn pow integer integer
 is exact until it is bigger than 2**56 on a
@@ -250,8 +248,15 @@ is exact until it is bigger than 2**56 on a
 .Tn IEEE
 754.
 .Sh NOTES
-The functions exp(x)\-1 and log(1+x) are called
-expm1 and logp1 in
+The functions 
+.Fn exp x\ \-\ 1
+and
+.Fn log 1\ \+\ x
+are called
+.Fn expm1 x
+and 
+.Fn logp1 x
+in
 .Tn BASIC
 on the Hewlett\-Packard
 .Tn HP Ns \-71B
@@ -261,12 +266,16 @@ Macintosh,
 .Tn EXP1
 and
 .Tn LN1
-in Pascal, exp1 and log1 in C
+in Pascal,
+.Fn exp1 x
+and
+.Fn log1 x
+in C
 on
 .Tn APPLE
 Macintoshes, where they have been provided to make
 sure financial calculations of ((1+x)**n\-1)/x, namely
-expm1(n\(**log1p(x))/x, will be accurate when x is tiny.
+expm1(n*log1p(x))/x, will be accurate when x is tiny.
 They also provide accurate inverse hyperbolic functions.
 .Pp
 The function
