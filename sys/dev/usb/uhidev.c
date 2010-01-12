@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.46 2009/12/30 23:42:22 jakllsch Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.47 2010/01/12 16:50:58 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.46 2009/12/30 23:42:22 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.47 2010/01/12 16:50:58 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,6 +244,20 @@ USB_ATTACH(uhidev)
 
 		usbd_set_report(uaa->iface, UHID_FEATURE_REPORT, 0,
 		    &reportbuf, sizeof reportbuf);
+	}
+
+	if (uaa->vendor == USB_VENDOR_LOGITECH &&
+	    uaa->product == USB_PRODUCT_LOGITECH_CBT44 && size == 0xb1) {
+		uint8_t *data = desc;
+		/*
+		 * This device has a odd USAGE_MINIMUM value that would
+		 * cause the multimedia keys to have their usage number
+		 * shifted up one usage.  Adjust so the usages are sane.
+		 */
+
+		if (data[0x56] == 0x19 && data[0x57] == 0x01 &&
+		    data[0x58] == 0x2a && data[0x59] == 0x8c)
+			data[0x57] = 0x00;
 	}
 
 	sc->sc_repdesc = desc;
