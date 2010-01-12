@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_sysvbfs.c,v 1.4 2009/12/13 21:16:55 pooka Exp $	*/
+/*	$NetBSD: rump_sysvbfs.c,v 1.5 2010/01/12 18:43:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -32,6 +32,7 @@
 #include <rump/ukfs.h> 
 
 #include <err.h>
+#include <puffs.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -47,6 +48,8 @@ main(int argc, char *argv[])
 	int rv;
 
 	setprogname(argv[0]);
+	puffs_unmountonsignal(SIGINT, true);
+	puffs_unmountonsignal(SIGTERM, true);
 
 	UKFS_DEVICE_ARGVPROBE(&part);
 	mount_sysvbfs_parseargs(argc, argv, &args, &mntflags,
