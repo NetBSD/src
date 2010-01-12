@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.78 2009/12/30 20:38:47 jakllsch Exp $	*/
+/*	$NetBSD: ums.c,v 1.79 2010/01/12 16:18:58 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.78 2009/12/30 20:38:47 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.79 2010/01/12 16:18:58 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,6 +134,14 @@ ums_match(device_t parent, cfdata_t match, void *aux)
 	struct uhidev_attach_arg *uha = aux;
 	int size;
 	void *desc;
+
+	/*
+	 * Some (older) Griffin PowerMate knobs may masquerade as a
+	 * mouse, avoid treating them as such, they have only one axis.
+	 */
+	if (uha->uaa->vendor == USB_VENDOR_GRIFFIN &&
+	    uha->uaa->product == USB_PRODUCT_GRIFFIN_POWERMATE)
+		return (UMATCH_NONE);
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	if (!hid_is_collection(desc, size, uha->reportid,
