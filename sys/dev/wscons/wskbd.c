@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.123 2010/01/08 19:51:11 dyoung Exp $ */
+/* $NetBSD: wskbd.c,v 1.124 2010/01/12 17:39:21 macallan Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.123 2010/01/08 19:51:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.124 2010/01/12 17:39:21 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1642,6 +1642,16 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 				    ksym == KS_Cmd_ContrastDown ? -1 : 1,
 				    ksym == KS_Cmd_ContrastRotate ? 1 : 0);
 		return (1);
+	case KS_Cmd_VolumeUp:
+		pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_UP);
+		return 1;
+	case KS_Cmd_VolumeDown:
+		pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_DOWN);
+		return 1;
+	case KS_Cmd_VolumeToggle:
+		pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_TOGGLE);
+		return 1;
+
 	}
 #endif
 
