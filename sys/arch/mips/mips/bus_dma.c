@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22.16.10 2010/01/12 05:52:09 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.22.16.11 2010/01/12 06:38:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.10 2010/01/12 05:52:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.11 2010/01/12 06:38:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.10 2010/01/12 05:52:09 matt Exp 
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
+#include <sys/evcnt.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -57,6 +58,40 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.10 2010/01/12 05:52:09 matt Exp 
 const struct mips_bus_dmamap_ops mips_bus_dmamap_ops = _BUS_DMAMAP_OPS_INITIALIZER;
 const struct mips_bus_dmamem_ops mips_bus_dmamem_ops = _BUS_DMAMEM_OPS_INITIALIZER;
 const struct mips_bus_dmatag_ops mips_bus_dmatag_ops = _BUS_DMATAG_OPS_INITIALIZER;
+
+static struct evcnt bus_dma_creates =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "creates");
+static struct evcnt bus_dma_bounced_creates =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "bounced creates");
+static struct evcnt bus_dma_loads =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "loads");
+static struct evcnt bus_dma_bounced_loads =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "bounced loads");
+static struct evcnt bus_dma_read_bounces =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "read bounces");
+static struct evcnt bus_dma_write_bounces =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "write bounces");
+static struct evcnt bus_dma_bounced_unloads =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "bounced unloads");
+static struct evcnt bus_dma_unloads =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "unloads");
+static struct evcnt bus_dma_bounced_destroys =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "bounced destroys");
+static struct evcnt bus_dma_destroys =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "destroys");
+
+EVCNT_ATTACH_STATIC(bus_dma_creates);
+EVCNT_ATTACH_STATIC(bus_dma_bounced_creates);
+EVCNT_ATTACH_STATIC(bus_dma_loads);
+EVCNT_ATTACH_STATIC(bus_dma_bounced_loads);
+EVCNT_ATTACH_STATIC(bus_dma_read_bounces);
+EVCNT_ATTACH_STATIC(bus_dma_write_bounces);
+EVCNT_ATTACH_STATIC(bus_dma_unloads);
+EVCNT_ATTACH_STATIC(bus_dma_bounced_unloads);
+EVCNT_ATTACH_STATIC(bus_dma_destroys);
+EVCNT_ATTACH_STATIC(bus_dma_bounced_destroys);
+
+#define	STAT_INCR(x)	(bus_dma_ ## x.ev_count++)
 
 paddr_t kvtophys(vaddr_t);	/* XXX */
 
@@ -211,6 +246,7 @@ _bus_dma_load_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (error)
 		return (error);
 
+	STAT_INCR(bounced_loads);
 	map->dm_mapsize = buflen;
 	map->dm_nsegs = seg + 1;
 	map->_dm_vmspace = vm;
@@ -222,7 +258,7 @@ _bus_dma_load_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 	/* ...so _bus_dmamap_sync() knows we're bouncing */
 	cookie->id_flags |= _BUS_DMA_IS_BOUNCING;
-	return (error);
+	return 0;
 }
 #endif /* _MIPS_NEED_BUS_DMA_BOUNCE */
 
@@ -292,8 +328,10 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	if (map->_dm_bounce_thresh != 0)
 		cookieflags |= _BUS_DMA_MIGHT_NEED_BOUNCE;
 
-	if ((cookieflags & _BUS_DMA_MIGHT_NEED_BOUNCE) == 0)
+	if ((cookieflags & _BUS_DMA_MIGHT_NEED_BOUNCE) == 0) {
+		STAT_INCR(creates);
 		return 0;
+	}
 
 	cookiesize = sizeof(struct mips_bus_dma_cookie) +
 	    (sizeof(bus_dma_segment_t) * map->_dm_segcnt);
@@ -308,11 +346,14 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	cookie = (struct mips_bus_dma_cookie *)cookiestore;
 	cookie->id_flags = cookieflags;
 	map->_dm_cookie = cookie;
+	STAT_INCR(bounced_creates);
 
 	error = _bus_dma_alloc_bouncebuf(t, map, size, flags);
  out:
 	if (error)
 		_bus_dmamap_destroy(t, map);
+#else
+	STAT_INCR(creates);
 #endif /* _MIPS_NEED_BUS_DMA_BOUNCE */
 
 	return (error);
@@ -333,12 +374,18 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 	 * Free any bounce pages this map might hold.
 	 */
 	if (cookie != NULL) {
+		if (cookie->id_flags & _BUS_DMA_IS_BOUNCING)
+			STAT_INCR(bounced_unloads);
+		map->dm_nsegs = 0;
 		if (cookie->id_flags & _BUS_DMA_HAS_BOUNCE)
 			_bus_dma_free_bouncebuf(t, map);
+		STAT_INCR(bounced_destroys);
 		free(cookie, M_DMAMAP);
-	}
+	} else
 #endif
-
+	STAT_INCR(destroys);
+	if (map->dm_nsegs > 0)
+		STAT_INCR(unloads);
 	free(map, M_DMAMAP);
 }
 
@@ -356,6 +403,19 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	int seg, error;
 	struct vmspace *vm;
 
+	if (map->dm_nsegs > 0) {
+#ifdef _MIPS_NEED_BUS_DMA_BOUNCE
+		struct mips_bus_dma_cookie *cookie = map->_dm_cookie;
+		if (cookie != NULL) {
+			if (cookie->id_flags & _BUS_DMA_IS_BOUNCING) {
+				STAT_INCR(bounced_unloads);
+				cookie->id_flags &= ~_BUS_DMA_IS_BOUNCING;
+			}
+			cookie->id_buftype = _BUS_DMA_BUFTYPE_INVALID;
+		} else
+#endif
+		STAT_INCR(unloads);
+	}
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
 	 */
@@ -379,6 +439,8 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
 		map->_dm_vmspace = vm;
+
+		STAT_INCR(loads);
 
 		/*
 		 * For linear buffers, we support marking the mapping
@@ -419,6 +481,19 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 	struct mbuf *m;
 	struct vmspace * vm = vmspace_kernel();
 
+	if (map->dm_nsegs > 0) {
+#ifdef _MIPS_NEED_BUS_DMA_BOUNCE
+		struct mips_bus_dma_cookie *cookie = map->_dm_cookie;
+		if (cookie != NULL) {
+			if (cookie->id_flags & _BUS_DMA_IS_BOUNCING) {
+				STAT_INCR(bounced_unloads);
+				cookie->id_flags &= ~_BUS_DMA_IS_BOUNCING;
+			}
+			cookie->id_buftype = _BUS_DMA_BUFTYPE_INVALID;
+		} else
+#endif
+		STAT_INCR(unloads);
+	}
 	/*
 	 * Make sure that on error condition we return "no valid mappings."
 	 */
@@ -478,6 +553,19 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
 	struct iovec *iov;
 	void *addr;
 
+	if (map->dm_nsegs > 0) {
+#ifdef _MIPS_NEED_BUS_DMA_BOUNCE
+		struct mips_bus_dma_cookie * const cookie = map->_dm_cookie;
+		if (cookie != NULL) {
+			if (cookie->id_flags & _BUS_DMA_IS_BOUNCING) {
+				STAT_INCR(bounced_unloads);
+				cookie->id_flags &= ~_BUS_DMA_IS_BOUNCING;
+			}
+			cookie->id_buftype = _BUS_DMA_BUFTYPE_INVALID;
+		} else
+#endif
+		STAT_INCR(unloads);
+	}
 	/*
 	 * Make sure that on error condition we return "no valid mappings."
 	 */
@@ -544,19 +632,20 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 void
 _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
+	if (map->dm_nsegs > 0) {
 #ifdef _MIPS_NEED_BUS_DMA_BOUNCE
-	struct mips_bus_dma_cookie *cookie = map->_dm_cookie;
-		    
-	/*      
-	 * If we have bounce pages, free them, unless they're
-	 * reserved for our exclusive use.
-	 */     
-	if (cookie != NULL) {
-		cookie->id_flags &= ~_BUS_DMA_IS_BOUNCING;
-		cookie->id_buftype = _BUS_DMA_BUFTYPE_INVALID;
-	}
+		struct mips_bus_dma_cookie *cookie = map->_dm_cookie;
+		if (cookie != NULL) {
+			if (cookie->id_flags & _BUS_DMA_IS_BOUNCING) {
+				cookie->id_flags &= ~_BUS_DMA_IS_BOUNCING;
+				STAT_INCR(bounced_unloads);
+			}
+			cookie->id_buftype = _BUS_DMA_BUFTYPE_INVALID;
+		} else
 #endif
 
+		STAT_INCR(unloads);
+	}
 	/*
 	 * No resources to free; just mark the mappings as
 	 * invalid.
@@ -617,6 +706,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	struct mips_bus_dma_cookie * const cookie = map->_dm_cookie;
 	if (cookie != NULL && (cookie->id_flags & _BUS_DMA_IS_BOUNCING)
 	    && (ops & BUS_DMASYNC_PREWRITE)) {
+		STAT_INCR(write_bounces);
 		/*
 		 * Copy the caller's buffer to the bounce buffer.
 		 */
@@ -743,6 +833,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	    || (cookie->id_flags & _BUS_DMA_IS_BOUNCING) == 0)
 		return;
 
+	STAT_INCR(read_bounces);
 	/*
 	 * Copy the bounce buffer to the caller's buffer.
 	 */
@@ -799,6 +890,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 #endif
 	}
 #endif /* _MIPS_NEED_BUS_DMA_BOUNCE */
+	;
 }
 
 /*
