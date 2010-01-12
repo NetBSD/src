@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.172 2010/01/11 00:58:51 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.173 2010/01/12 09:11:09 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16021,4 +16021,12 @@ external/mit/xorg/lib/dri/i965/Makefile		1.6
 	- fix a line continuation that stopped SRCS= from working
 	- don't include intel_dri.c here
 	[mrg, ticket #1236]
+
+crypto/dist/openssl/ssl/s3_lib.c 		patch
+crypto/dist/openssl/ssl/s3_pkt.c 		patch
+crypto/dist/openssl/ssl/s3_srvr.c 		patch
+crypto/dist/openssl/ssl/ssl_locl.h 		patch
+
+	Disable OpenSSL renegotiation, thus avoiding CVE-2009-3555.
+	[tonnerre, ticket #1237]
 
