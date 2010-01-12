@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.33 2010/01/11 12:29:28 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.34 2010/01/12 22:26:30 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -714,6 +714,8 @@ struct livengood_tcpip_ctxdesc {
 #define EXTCNFCTR_MDIO_HW_OWNERSHIP	0x00000040
 #define EXTCNFCTR_EXT_CNF_POINTER	0x0FFF0000
 #define E1000_EXTCNF_CTRL_SWFLAG	EXTCNFCTR_MDIO_SW_OWNERSHIP
+
+#define	WMREG_PHY_CTRL	0x0f10	/* PHY control */
 
 /* ich8 flash control */
 #define ICH_FLASH_COMMAND_TIMEOUT            5000    /* 5000 uSecs - adjusted */
