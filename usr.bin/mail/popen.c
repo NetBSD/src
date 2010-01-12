@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.25 2009/04/10 13:08:25 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.26 2010/01/12 14:43:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: popen.c,v 1.25 2009/04/10 13:08:25 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.26 2010/01/12 14:43:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,7 @@ struct child {
 	struct child *link;
 };
 static struct child *child, *child_freelist = NULL;
+static struct child *findchild(pid_t, int);
 
 
 #if 0	/* XXX - debugging stuff.  This should go away eventually! */
@@ -104,7 +105,7 @@ unregister_file(FILE *fp)
 			(void)free(p);
 			return;
 		}
-	errx(1, "Invalid file pointer");
+	errx(EXIT_FAILURE, "Invalid file pointer");
 }
 
 PUBLIC void
@@ -220,6 +221,7 @@ start_commandv(const char *cmd, sigset_t *nset, int infd, int outfd,
 		warn("%s", argv[0]);
 		_exit(1);
 	}
+	(void)findchild(pid, 0);
 	return pid;
 }
 
@@ -348,7 +350,7 @@ file_pid(FILE *fp)
 	for (p = fp_head; p; p = p->link)
 		if (p->fp == fp)
 			return p->pid;
-	errx(1, "Invalid file pointer");
+	errx(EXIT_FAILURE, "Invalid file pointer");
 	/*NOTREACHED*/
 }
 
