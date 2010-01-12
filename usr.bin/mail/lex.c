@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.38 2009/07/14 21:15:48 apb Exp $	*/
+/*	$NetBSD: lex.c,v 1.39 2010/01/12 14:45:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.38 2009/07/14 21:15:48 apb Exp $");
+__RCSID("$NetBSD: lex.c,v 1.39 2010/01/12 14:45:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,7 +176,7 @@ setfile(const char *name)
 	if ((ibuf = Fopen(name, "r")) == NULL) {
 		if (!isedit && errno == ENOENT)
 			goto nomail;
-		warn("%s", name);
+		warn("Can't open `%s'", name);
 		return -1;
 	}
 
@@ -239,10 +239,10 @@ setfile(const char *name)
 	    "%s/mail.RxXXXXXXXXXX", tmpdir);
 	if ((fd = mkstemp(tempname)) == -1 ||
 	    (otf = fdopen(fd, "w")) == NULL)
-		err(1, "%s", tempname);
+		err(EXIT_FAILURE, "Can't create tmp file `%s'", tempname);
 	(void)fcntl(fileno(otf), F_SETFD, FD_CLOEXEC);
 	if ((itf = fopen(tempname, "r")) == NULL)
-		err(1, "%s", tempname);
+		err(EXIT_FAILURE, "Can't create tmp file `%s'", tempname);
 	(void)fcntl(fileno(itf), F_SETFD, FD_CLOEXEC);
 	(void)rm(tempname);
 	setptr(ibuf, (off_t)0);
@@ -747,7 +747,7 @@ execute(char linebuf[], enum execute_contxt_e contxt)
 		break;
 
 	default:
-		errx(1, "Unknown argtype");
+		errx(EXIT_FAILURE, "Unknown argtype");
 	}
 
 out:

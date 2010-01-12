@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.c,v 1.17 2009/04/10 13:08:25 christos Exp $	*/
+/*	$NetBSD: strings.c,v 1.18 2010/01/12 14:45:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)strings.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: strings.c,v 1.17 2009/04/10 13:08:25 christos Exp $");
+__RCSID("$NetBSD: strings.c,v 1.18 2010/01/12 14:45:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,12 +91,12 @@ salloc(size_t size)
 		idx++;
 	}
 	if (sp >= &stringdope[NSPACE])
-		errx(1, "String too large");
+		errx(EXIT_FAILURE, "String too large");
 	if (sp->s_topFree == NULL) {
 		idx = (int)(sp - &stringdope[0]);
 		sp->s_topFree = malloc(STRINGSIZE << idx);
 		if (sp->s_topFree == NULL)
-			errx(1, "No room for space %d", idx);
+			errx(EXIT_FAILURE, "No room for space %d", idx);
 		sp->s_nextFree = sp->s_topFree;
 		sp->s_nleft = STRINGSIZE << idx;
 	}

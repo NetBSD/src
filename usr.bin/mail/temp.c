@@ -1,4 +1,4 @@
-/*	$NetBSD: temp.c,v 1.21 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: temp.c,v 1.22 2010/01/12 14:45:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: temp.c,v 1.21 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: temp.c,v 1.22 2010/01/12 14:45:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ tinit(void)
 
 	if (myname != NULL) {
 		if (getuserid(myname) < 0)
-			errx(1, "\"%s\" is not a user of this system", myname);
+			errx(EXIT_FAILURE, "`%s' is not a user of this system", myname);
 	}
 	else {
 		if ((cp = username()) == NULL) {

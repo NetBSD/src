@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2009/04/10 13:08:25 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.31 2010/01/12 14:45:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.30 2009/04/10 13:08:25 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.31 2010/01/12 14:45:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -387,9 +387,9 @@ main(int argc, char *argv[])
 	 * Check for inconsistent arguments.
 	 */
 	if (to == NULL && (subject != NULL || cc != NULL || bcc != NULL))
-		errx(1, "You must specify direct recipients with -s, -c, or -b.");
+		errx(EXIT_FAILURE, "You must specify direct recipients with -s, -c, or -b.");
 	if (ef != NULL && to != NULL) {
-		errx(1, "Cannot give -f and people to send to.");
+		errx(EXIT_FAILURE, "Cannot give -f and people to send to.");
 	}
 	if (Hflag != 0 && to != NULL)
 		errx(EXIT_FAILURE, "Cannot give -H and people to send to.");

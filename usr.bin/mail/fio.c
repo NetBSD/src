@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.33 2009/04/11 14:22:32 christos Exp $	*/
+/*	$NetBSD: fio.c,v 1.34 2010/01/12 14:45:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.33 2009/04/11 14:22:32 christos Exp $");
+__RCSID("$NetBSD: fio.c,v 1.34 2010/01/12 14:45:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,8 @@ makemessage(FILE *f, int omsgCount, int nmsgCount)
 	size = (nmsgCount + 1) * sizeof(*nmessage);
 	nmessage = realloc(omessage, size);
 	if (nmessage == NULL)
-		err(1, "Insufficient memory for %d messages", nmsgCount);
+		err(EXIT_FAILURE,
+		    "Insufficient memory for %d messages", nmsgCount);
 	if (omsgCount == 0 || omessage == NULL)
 		dot = nmessage;
 	else
@@ -350,7 +351,7 @@ setinput(const struct message *mp)
 
 	(void)fflush(otf);
 	if (fseek(itf, (long)positionof(mp->m_block, mp->m_offset), SEEK_SET) < 0)
-		err(1, "fseek");
+		err(EXIT_FAILURE, "fseek");
 	return itf;
 }
 
@@ -476,7 +477,7 @@ expand(const char *name)
 	l = read(pivec[0], xname, sizeof(xname));
 	(void)close(pivec[0]);
 	if (wait_child(pid) < 0 && WTERMSIG(wait_status) != SIGPIPE) {
-		(void)fprintf(stderr, "\"%s\": Expansion failed.\n", name);
+		warnx("Expansion `%s' failed [%x]", cmdbuf, wait_status);
 		return NULL;
 	}
 	if (l < 0) {
@@ -484,11 +485,11 @@ expand(const char *name)
 		return NULL;
 	}
 	if (l == 0) {
-		(void)fprintf(stderr, "\"%s\": No match.\n", name);
+		warnx("No match for `%s'", name);
 		return NULL;
 	}
 	if (l == sizeof(xname)) {
-		(void)fprintf(stderr, "\"%s\": Expansion buffer overflow.\n", name);
+		warnx("Expansion buffer overflow for `%s'", name);
 		return NULL;
 	}
 	xname[l] = '\0';
@@ -496,7 +497,7 @@ expand(const char *name)
 		continue;
 	cp[1] = '\0';
 	if (strchr(xname, ' ') && stat(xname, &sbuf) < 0) {
-		(void)fprintf(stderr, "\"%s\": Ambiguous.\n", name);
+		warnx("Ambiguous expansion for `%s'", name);
 		return NULL;
 	}
 	return savestr(xname);
