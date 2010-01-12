@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_udf.c,v 1.6 2009/12/13 21:16:55 pooka Exp $	*/
+/*	$NetBSD: rump_udf.c,v 1.7 2010/01/12 18:43:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -50,6 +50,8 @@ main(int argc, char *argv[])
 	int rv;
 
 	setprogname(argv[0]);
+	puffs_unmountonsignal(SIGINT, true);
+	puffs_unmountonsignal(SIGTERM, true);
 
 	UKFS_DEVICE_ARGVPROBE(&part);
 	mount_udf_parseargs(argc, argv, &args, &mntflags, canon_dev, canon_dir);

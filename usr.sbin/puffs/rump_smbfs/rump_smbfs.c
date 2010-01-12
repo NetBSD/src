@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_smbfs.c,v 1.5 2009/10/20 02:14:12 pooka Exp $	*/
+/*	$NetBSD: rump_smbfs.c,v 1.6 2010/01/12 18:43:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -59,6 +59,8 @@ main(int argc, char *argv[])
 	int mntflags;
 
 	setprogname(argv[0]);
+	puffs_unmountonsignal(SIGINT, true);
+	puffs_unmountonsignal(SIGTERM, true);
 
 	p2m = p2k_init(PUFFS_KFLAG_WTCACHE);
 	atexit(pcancel);
