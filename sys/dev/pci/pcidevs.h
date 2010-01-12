@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1008 2010/01/11 12:55:29 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1009 2010/01/12 10:13:32 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1010 2010/01/11 12:54:54 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1011 2010/01/12 10:11:32 nonaka Exp
  */
 
 /*
@@ -615,6 +615,7 @@
 #define	PCI_VENDOR_RALINK	0x1814		/* Ralink Technologies */
 #define	PCI_VENDOR_RMI	0x182e		/* Raza Microelectronics Inc. (NetLogic) */
 #define	PCI_VENDOR_BBELEC	0x1896		/* B & B Electronics */
+#define	PCI_VENDOR_RENESAS	0x1912		/* Renesas Technologies */
 #define	PCI_VENDOR_ATTANSIC	0x1969		/* Attansic Technologies */
 #define	PCI_VENDOR_EVE	0x1adb		/* EVE */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
@@ -3610,6 +3611,10 @@
 #define	PCI_PRODUCT_REALTEK_RT8169	0x8169		/* 8169/8110 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8180	0x8180		/* 8180 802.11b */
 #define	PCI_PRODUCT_REALTEK_RT8185	0x8185		/* 8185 802.11a/b/g */
+
+/* RENESAS products */
+#define	PCI_PRODUCT_RENESAS_SH7780	0x0002		/* SH7780 PCI Controller */
+#define	PCI_PRODUCT_RENESAS_SH7785	0x0007		/* SH7785 PCI Controller */
 
 /* RICOH products */
 #define	PCI_PRODUCT_RICOH_Rx5C465	0x0465		/* 5C465 PCI-CardBus Bridge */
