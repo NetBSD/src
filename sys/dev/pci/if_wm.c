@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.190 2010/01/11 12:29:28 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.191 2010/01/12 22:26:30 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.190 2010/01/11 12:29:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.191 2010/01/12 22:26:30 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.190 2010/01/11 12:29:28 msaitoh Exp $");
 #include <dev/mii/miivar.h>
 #include <dev/mii/mii_bitbang.h>
 #include <dev/mii/ikphyreg.h>
+#include <dev/mii/igphyreg.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -517,13 +518,14 @@ static void	wm_gmii_i82544_writereg(device_t, int, int, int);
 
 static int	wm_gmii_i80003_readreg(device_t, int, int);
 static void	wm_gmii_i80003_writereg(device_t, int, int, int);
-
 static int	wm_gmii_bm_readreg(device_t, int, int);
 static void	wm_gmii_bm_writereg(device_t, int, int, int);
+static int	wm_gmii_kv_readreg(device_t, int, int);
+static void	wm_gmii_kv_writereg(device_t, int, int, int);
 
 static void	wm_gmii_statchg(device_t);
 
-static void	wm_gmii_mediainit(struct wm_softc *);
+static void	wm_gmii_mediainit(struct wm_softc *, pci_product_id_t);
 static int	wm_gmii_mediachange(struct ifnet *);
 static void	wm_gmii_mediastatus(struct ifnet *, struct ifmediareq *);
 
@@ -843,14 +845,26 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IGP_M_AMT,
 	  "82801I mobile (AMT) LAN Controller",
 	  WM_T_ICH9,		WMP_F_1000T },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82567LM_3,
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_BM,
+	  "82567LM-4 LAN Controller",
+	  WM_T_ICH9,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_82567V_3,
+	  "82567V-3 LAN Controller",
+	  WM_T_ICH9,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801J_R_BM_LM,
+	  "82567LM-2 LAN Controller",
+	  WM_T_ICH10,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801J_R_BM_LF,
+	  "82567LF-2 LAN Controller",
+	  WM_T_ICH10,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801J_D_BM_LM,
 	  "82567LM-3 LAN Controller",
 	  WM_T_ICH10,		WMP_F_1000T },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82567LF_3,
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801J_D_BM_LF,
 	  "82567LF-3 LAN Controller",
 	  WM_T_ICH10,		WMP_F_1000T },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801J_D_BM_LF,
-	  "i82801J (LF) LAN Controller",
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801J_R_BM_V,
+	  "82567V-2 LAN Controller",
 	  WM_T_ICH10,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_M_LM,
 	  "PCH LAN (82578LM) Controller",
@@ -1570,7 +1584,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	    || sc->sc_type == WM_T_82573
 	    || sc->sc_type == WM_T_82574 || sc->sc_type == WM_T_82583) {
 		/* STATUS_TBIMODE reserved/reused, can't rely on it */
-		wm_gmii_mediainit(sc);
+		wm_gmii_mediainit(sc, wmp->wmp_product);
 	} else if (sc->sc_type < WM_T_82543 ||
 	    (CSR_READ(sc, WMREG_STATUS) & STATUS_TBIMODE) != 0) {
 		if (wmp->wmp_flags & WMP_F_1000T)
@@ -1581,7 +1595,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		if (wmp->wmp_flags & WMP_F_1000X)
 			aprint_error_dev(sc->sc_dev,
 			    "WARNING: TBIMODE clear on 1000BASE-X product!\n");
-		wm_gmii_mediainit(sc);
+		wm_gmii_mediainit(sc, wmp->wmp_product);
 	}
 
 	ifp = &sc->sc_ethercom.ec_if;
@@ -3372,6 +3386,10 @@ wm_init(struct ifnet *ifp)
 		break;
 	}
 
+	/* Reset the PHY. */
+	if (sc->sc_flags & WM_F_HAS_MII)
+		wm_gmii_reset(sc);
+
 	/* Initialize the transmit descriptor ring. */
 	memset(sc->sc_txdescs, 0, WM_TXDESCSIZE(sc));
 	WM_CDTXSYNC(sc, 0, WM_NTXDESC(sc),
@@ -4936,6 +4954,25 @@ wm_gmii_reset(struct wm_softc *sc)
 
 		if (sc->sc_type == WM_T_PCH) {
 			/* XXX Configure the LCD with the OEM bits in NVM */
+
+#if 1
+			/*
+			 * We shlould make the new driver for 8257[78] and
+			 * move these code into it.
+			 */
+#define HV_OEM_BITS	((0 << 5) | 25)
+#define HV_OEM_BITS_LPLU	(1 << 2)
+#define HV_OEM_BITS_A1KDIS	(1 << 6)
+#define HV_OEM_BITS_ANEGNOW	(1 << 10)
+#endif
+			/*
+			 * Disable LPLU.
+			 * XXX It seems that 82567 has LPLU, too.
+			 */
+			reg = wm_gmii_kv_readreg(sc->sc_dev, 1, HV_OEM_BITS);
+			reg &= ~(HV_OEM_BITS_A1KDIS| HV_OEM_BITS_LPLU);
+			reg |= HV_OEM_BITS_ANEGNOW;
+			wm_gmii_kv_writereg(sc->sc_dev, 1, HV_OEM_BITS, reg);
 		}
 		break;
 	default:
@@ -4950,7 +4987,7 @@ wm_gmii_reset(struct wm_softc *sc)
  *	Initialize media for use on 1000BASE-T devices.
  */
 static void
-wm_gmii_mediainit(struct wm_softc *sc)
+wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -4974,15 +5011,38 @@ wm_gmii_mediainit(struct wm_softc *sc)
 	/* Initialize our media structures and probe the GMII. */
 	sc->sc_mii.mii_ifp = ifp;
 
-	if (sc->sc_type >= WM_T_80003) {
-		sc->sc_mii.mii_readreg = wm_gmii_i80003_readreg;
-		sc->sc_mii.mii_writereg = wm_gmii_i80003_writereg;
-	} else if (sc->sc_type >= WM_T_82544) {
-		sc->sc_mii.mii_readreg = wm_gmii_i82544_readreg;
-		sc->sc_mii.mii_writereg = wm_gmii_i82544_writereg;
-	} else {
-		sc->sc_mii.mii_readreg = wm_gmii_i82543_readreg;
-		sc->sc_mii.mii_writereg = wm_gmii_i82543_writereg;
+	switch (prodid) {
+	case PCI_PRODUCT_INTEL_PCH_M_LM:
+	case PCI_PRODUCT_INTEL_PCH_M_LC:
+	case PCI_PRODUCT_INTEL_PCH_D_DM:
+	case PCI_PRODUCT_INTEL_PCH_D_DC:
+		/* 82577 or 82578 */
+		sc->sc_mii.mii_readreg = wm_gmii_kv_readreg;
+		sc->sc_mii.mii_writereg = wm_gmii_kv_writereg;
+		break;
+	case PCI_PRODUCT_INTEL_82801I_BM:
+	case PCI_PRODUCT_INTEL_82801J_R_BM_LM:
+	case PCI_PRODUCT_INTEL_82801J_R_BM_LF:
+	case PCI_PRODUCT_INTEL_82801J_D_BM_LM:
+	case PCI_PRODUCT_INTEL_82801J_D_BM_LF:
+	case PCI_PRODUCT_INTEL_82801J_R_BM_V:
+		/* 82567 */
+		sc->sc_mii.mii_readreg = wm_gmii_bm_readreg;
+		sc->sc_mii.mii_writereg = wm_gmii_bm_writereg;
+		break;
+	default:
+		if (sc->sc_type >= WM_T_80003) {
+			sc->sc_mii.mii_readreg = wm_gmii_i80003_readreg;
+			sc->sc_mii.mii_writereg = wm_gmii_i80003_writereg;
+		} else if (sc->sc_type >= WM_T_82544) {
+			sc->sc_mii.mii_readreg = wm_gmii_i82544_readreg;
+			sc->sc_mii.mii_writereg = wm_gmii_i82544_writereg;
+		} else {
+			sc->sc_mii.mii_readreg = wm_gmii_i82543_readreg;
+			sc->sc_mii.mii_writereg = wm_gmii_i82543_writereg;
+		}
+		break;
+		
 	}
 	sc->sc_mii.mii_statchg = wm_gmii_statchg;
 
@@ -5006,23 +5066,8 @@ wm_gmii_mediainit(struct wm_softc *sc)
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
-	} else {
-		if (sc->sc_type >= WM_T_82574) {
-			struct mii_softc *child;
-
-			child = LIST_FIRST(&sc->sc_mii.mii_phys);
-			/* fix read/write functions as e1000 driver */
-			if (device_is_a(child->mii_dev, "igphy")) {
-				sc->sc_mii.mii_readreg = wm_gmii_i80003_readreg;
-				sc->sc_mii.mii_writereg = wm_gmii_i80003_writereg;
-			} else {
-				sc->sc_mii.mii_readreg = wm_gmii_bm_readreg;
-				sc->sc_mii.mii_writereg = wm_gmii_bm_writereg;
-			}
-		}
-
+	} else
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
-	}
 }
 
 /*
@@ -5406,6 +5451,64 @@ wm_gmii_bm_writereg(device_t self, int phy, int reg, int val)
 
 	wm_gmii_i82544_writereg(self, phy, reg & GG82563_MAX_REG_ADDRESS, val);
 	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
+}
+
+/*
+ * wm_gmii_kv_readreg:	[mii interface function]
+ *
+ *	Read a PHY register on the kumeran
+ * This could be handled by the PHY layer if we didn't have to lock the
+ * ressource ...
+ */
+static int
+wm_gmii_kv_readreg(device_t self, int phy, int reg)
+{
+	struct wm_softc *sc = device_private(self);
+	int rv;
+
+	if (wm_get_swfw_semaphore(sc, SWFW_PHY0_SM)) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
+		return 0;
+	}
+
+	if (reg > GG82563_MAX_REG_ADDRESS) {
+		printf("XXX rd pagesel\n");
+		wm_gmii_i82544_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
+		    reg & IGPHY_PAGEMASK);
+	}
+
+	rv = wm_gmii_i82544_readreg(self, phy, reg & IGPHY_MAXREGADDR);
+	wm_put_swfw_semaphore(sc, SWFW_PHY0_SM);
+	return (rv);
+}
+
+/*
+ * wm_gmii_kv_writereg:	[mii interface function]
+ *
+ *	Write a PHY register on the kumeran.
+ * This could be handled by the PHY layer if we didn't have to lock the
+ * ressource ...
+ */
+static void
+wm_gmii_kv_writereg(device_t self, int phy, int reg, int val)
+{
+	struct wm_softc *sc = device_private(self);
+
+	if (wm_get_swfw_semaphore(sc, SWFW_PHY0_SM)) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
+		    __func__);
+		return;
+	}
+
+	if (reg > GG82563_MAX_REG_ADDRESS) {
+		printf("XXX wr pagesel\n");
+		wm_gmii_i82544_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
+		    reg & IGPHY_PAGEMASK);
+	}
+
+	wm_gmii_i82544_writereg(self, phy, reg & IGPHY_MAXREGADDR, val);
+	wm_put_swfw_semaphore(sc, SWFW_PHY0_SM);
 }
 
 /*
