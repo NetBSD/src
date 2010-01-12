@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22.16.9 2010/01/11 19:52:30 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.22.16.10 2010/01/12 05:52:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.9 2010/01/11 19:52:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.10 2010/01/12 05:52:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -579,9 +579,8 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
 	bus_size_t minlen;
-	bus_addr_t addr;  
-	int i, useindex;
 
+#ifdef DIAGNOSTIC
 	/*
 	 * Mixing PRE and POST operations is not allowed.
 	 */
@@ -589,7 +588,6 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
 		panic("_bus_dmamap_sync: mix PRE and POST");
 
-#ifdef DIAGNOSTIC
 	if (offset >= map->dm_mapsize)
 		panic("_bus_dmamap_sync: bad offset %"PRIxPADDR 
 			" (map size is %"PRIxPSIZE")",
@@ -615,117 +613,27 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 *
 	 *	POSTWRITE -- Nothing.
 	 */
-
 #ifdef _MIPS_NEED_BUS_DMA_BOUNCE
-	struct mips_bus_dma_cookie * cookie = map->_dm_cookie;
-	if (cookie != NULL && (cookie->id_flags & _BUS_DMA_IS_BOUNCING)) {
+	struct mips_bus_dma_cookie * const cookie = map->_dm_cookie;
+	if (cookie != NULL && (cookie->id_flags & _BUS_DMA_IS_BOUNCING)
+	    && (ops & BUS_DMASYNC_PREWRITE)) {
+		/*
+		 * Copy the caller's buffer to the bounce buffer.
+		 */
 		switch (cookie->id_buftype) {
 		case _BUS_DMA_BUFTYPE_LINEAR:
-			/*
-			 * Nothing to do for pre-read or post-write.
-			 */
-			if (ops & BUS_DMASYNC_PREWRITE) {
-				/* 
-				 * Copy the caller's buffer to the bounce
-				 * buffer.
-				 */ 
-				memcpy((char *)cookie->id_bouncebuf + offset,
-				    (char *)cookie->id_origbuf + offset, len);
-			}
-			if (ops & BUS_DMASYNC_POSTREAD) {
-				/*
-				 * Copy the bounce buffer to the caller's
-				 * buffer.
-				 */
-				memcpy((char *)cookie->id_origbuf + offset,
-				    (char *)cookie->id_bouncebuf + offset, len);
-			}
-
+			memcpy((char *)cookie->id_bouncebuf + offset,
+			    cookie->id_origlinearbuf + offset, len);
 			break;
-
 		case _BUS_DMA_BUFTYPE_MBUF:
-		    {
-			struct mbuf *m, *m0 = cookie->id_origbuf;
-			bus_size_t moff;
-
-			/*
-			 * Nothing to do for pre-read.
-			 */
-
-			if (ops & BUS_DMASYNC_PREWRITE) {
-				/*
-				 * Copy the caller's buffer to the bounce
-				 * buffer.
-				 */
-				m_copydata(m0, offset, len,
-				    (char *)cookie->id_bouncebuf + offset);
-			}
-
-			if (ops & BUS_DMASYNC_POSTREAD) {
-				/*
-				 * Copy the bounce buffer to the caller's
-				 * buffer.
-				 */
-				for (moff = offset, m = m0;
-				     m != NULL && len != 0;
-				     m = m->m_next) {
-					/* Find the beginning mbuf. */
-					if (moff >= m->m_len) {
-						moff -= m->m_len;
-						continue;
-					}
-
-					/*
-					 * Now at the first mbuf to sync; nail
-					 * each one until we have exhausted the
-					 * length.
-					 */
-					minlen = len < m->m_len - moff ?
-					    len : m->m_len - moff;
-
-					memcpy(mtod(m, char *) + moff,
-					    (char *)cookie->id_bouncebuf+offset,
-					    minlen);
-
-					moff = 0;
-					len -= minlen;
-					offset += minlen;
-				}
-			}
-
-			/*
-			 * Nothing to do for post-write.
-			 */
+			m_copydata(cookie->id_origmbuf, offset, len,
+			    (char *)cookie->id_bouncebuf + offset);
 			break;
-		    }
-		case _BUS_DMA_BUFTYPE_UIO: {
-			struct uio *uio;
-
-			uio = (struct uio *)cookie->id_origbuf;
-
-			/*
-			 * Nothing to do for pre-read.
-			 */
-
-			if (ops & BUS_DMASYNC_PREWRITE) {
-				/*
-				 * Copy the caller's buffer to the bounce buffer.
-				 */
-				_bus_dma_uiomove((char *)cookie->id_bouncebuf + offset,
-				    uio, len, UIO_WRITE);
-			}
-
-			if (ops & BUS_DMASYNC_POSTREAD) {
-				_bus_dma_uiomove((char *)cookie->id_bouncebuf + offset,
-				    uio, len, UIO_READ);
-			}
-
-			/*
-			 * Nothing to do for post-write.
-			 */
+		case _BUS_DMA_BUFTYPE_UIO:
+			_bus_dma_uiomove((char *)cookie->id_bouncebuf + offset,
+			    cookie->id_origuio, len, UIO_WRITE);
 			break;
-		    }
-
+#ifdef DIAGNOSTIC
 		case _BUS_DMA_BUFTYPE_RAW:
 			panic("_bus_dmamap_sync: _BUS_DMA_BUFTYPE_RAW");
 			break;
@@ -735,10 +643,12 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			break;
 
 		default:
-			printf("unknown buffer type %d\n", cookie->id_buftype);
-			panic("_bus_dmamap_sync");
+			panic("_bus_dmamap_sync: unknown buffer type %d\n",
+			    cookie->id_buftype);
+			break;
+#endif /* DIAGNOSTIC */
 		}
-	} 
+	}
 #endif /* _MIPS_NEED_BUS_DMA_BOUNCE */
 
 	/*
@@ -747,16 +657,14 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 */
 	wbflush();
 
-	ops &= (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-	if (ops == 0)
-		return;
-
 	/*
-	 * If the mapping is of COHERENT DMA-safe memory, no cache
-	 * flush is necessary.
+	 * If the mapping is of COHERENT DMA-safe memory or this isn't a
+	 * PREREAD or PREWRITE, no cache flush is necessary.  Check to see
+	 * if we need to bounce it.
 	 */
-	if (map->_dm_flags & _BUS_DMAMAP_COHERENT)
-		return;
+	if ((map->_dm_flags & _BUS_DMAMAP_COHERENT)
+	    || (ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) == 0)
+		goto bounce_it;
 
 	/*
 	 * If the mapping belongs to the kernel, or it belongs
@@ -765,33 +673,33 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 *
 	 * This should be true the vast majority of the time.
 	 */
-	if (__predict_true(VMSPACE_IS_KERNEL_P(map->_dm_vmspace) ||
-	    map->_dm_vmspace == curproc->p_vmspace))
-		useindex = 0;
-	else
-		useindex = 1;
+	const bool useindex = (!VMSPACE_IS_KERNEL_P(map->_dm_vmspace)
+	    && map->_dm_vmspace != curproc->p_vmspace);
 
-	for (i = 0; i < map->dm_nsegs && len != 0; i++) {
-		/* Find the beginning segment. */
-		if (offset >= map->dm_segs[i].ds_len) {
-			offset -= map->dm_segs[i].ds_len;
-			continue;
-		}
-
+	bus_dma_segment_t *seg = map->dm_segs;
+	bus_dma_segment_t * const lastseg = seg + map->dm_nsegs;
+	/*
+	 * Skip segments until offset are withing a segment.
+	 */
+	for (; offset >= seg->ds_len; seg++) {
+		offset -= seg->ds_len;
+	}
+		
+	for (; seg < lastseg && len != 0; seg++, offset = 0, len -= minlen) {
 		/*
-		 * Now at the first segment to sync; nail
-		 * each segment until we have exhausted the
-		 * length.
+		 * Now at the first segment to sync; nail each segment until we
+		 * have exhausted the length.
 		 */
-		minlen = len < map->dm_segs[i].ds_len - offset ?
-		    len : map->dm_segs[i].ds_len - offset;
-
-		addr = map->dm_segs[i]._ds_vaddr;
+		vaddr_t vaddr = seg->_ds_vaddr + offset;
+		minlen = ulmin(len, seg->ds_len - offset);
 
 #ifdef BUS_DMA_DEBUG
 		printf("bus_dmamap_sync: flushing segment %d "
-		    "(0x%lx+%lx, 0x%lx+0x%lx) (olen = %ld)...", i,
-		    addr, offset, addr, offset + minlen - 1, len);
+		    "(0x%"PRIxVADDR"+%"PRIxBUSADDR
+		    ", 0x%"PRIxVADDR"+0x%"PRIxBUSADDR
+		    ") (olen = %"PRIxBUSADDR")...", i,
+		    vaddr - offset, offset,
+		    vaddr - offset, offset + minlen - 1, len);
 #endif
 
 		/*
@@ -799,38 +707,98 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		 * Write-back,Invalidate, so just do one test.
 		 */
 		if (__predict_false(useindex)) {
-			mips_dcache_wbinv_range_index(addr + offset, minlen);
+			mips_dcache_wbinv_range_index(vaddr, minlen);
 #ifdef BUS_DMA_DEBUG
 			printf("\n");
 #endif
-			offset = 0;
-			len -= minlen;
 			continue;
 		}
 
 		switch (ops) {
 		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
-			mips_dcache_wbinv_range(addr + offset, minlen);
+			mips_dcache_wbinv_range(vaddr, minlen);
 			break;
 
 		case BUS_DMASYNC_PREREAD:
 #if 1
-			mips_dcache_wbinv_range(addr + offset, minlen);
+			mips_dcache_wbinv_range(vaddr, minlen);
 #else
-			mips_dcache_inv_range(addr + offset, minlen);
+			mips_dcache_inv_range(vaddr, minlen);
 #endif
 			break;
 
 		case BUS_DMASYNC_PREWRITE:
-			mips_dcache_wb_range(addr + offset, minlen);
+			mips_dcache_wb_range(vaddr, minlen);
 			break;
 		}
 #ifdef BUS_DMA_DEBUG
 		printf("\n");
 #endif
-		offset = 0;
-		len -= minlen;
 	}
+
+  bounce_it:
+#ifdef _MIPS_NEED_BUS_DMA_BOUNCE
+	if ((ops & BUS_DMASYNC_POSTREAD) == 0
+	    || cookie == NULL
+	    || (cookie->id_flags & _BUS_DMA_IS_BOUNCING) == 0)
+		return;
+
+	/*
+	 * Copy the bounce buffer to the caller's buffer.
+	 */
+	switch (cookie->id_buftype) {
+	case _BUS_DMA_BUFTYPE_LINEAR:
+		memcpy(cookie->id_origlinearbuf + offset,
+		    (char *)cookie->id_bouncebuf + offset, len);
+		break;
+
+	case _BUS_DMA_BUFTYPE_MBUF: {
+		struct mbuf *m = cookie->id_origmbuf;
+		char *dp = cookie->id_bouncebuf;
+		char * const ep = dp + offset + len;
+
+		for (; offset >= m->m_len; m = m->m_next) {
+			offset -= m->m_len;
+			dp += m->m_len;
+		}
+		/*
+		 * Copy the bounce buffer to the caller's buffer.
+		 */
+		for (; dp < ep; m = m->m_next) {
+			/*
+			 * Now at the first mbuf to sync; nail
+			 * each one until we have exhausted the
+			 * length.
+			 */
+			minlen = ulmin(len, m->m_len - offset);
+			memcpy(mtod(m, char *) + offset, dp + offset, minlen);
+
+			offset = 0;
+			len -= minlen;
+			dp += minlen;
+		}
+		break;
+	}
+	case _BUS_DMA_BUFTYPE_UIO:
+		_bus_dma_uiomove((char *)cookie->id_bouncebuf + offset,
+		    cookie->id_origuio, len, UIO_READ);
+		break;
+#ifdef DIAGNOSTIC
+	case _BUS_DMA_BUFTYPE_RAW:
+		panic("_bus_dmamap_sync: _BUS_DMA_BUFTYPE_RAW");
+		break;
+
+	case _BUS_DMA_BUFTYPE_INVALID:
+		panic("_bus_dmamap_sync: _BUS_DMA_BUFTYPE_INVALID");
+		break;
+
+	default:
+		panic("_bus_dmamap_sync: unknown buffer type %d\n",
+		    cookie->id_buftype);
+		break;
+#endif
+	}
+#endif /* _MIPS_NEED_BUS_DMA_BOUNCE */
 }
 
 /*
