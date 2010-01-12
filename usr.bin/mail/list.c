@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.25 2009/04/10 13:08:25 christos Exp $	*/
+/*	$NetBSD: list.c,v 1.26 2010/01/12 14:45:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: list.c,v 1.25 2009/04/10 13:08:25 christos Exp $");
+__RCSID("$NetBSD: list.c,v 1.26 2010/01/12 14:45:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -427,7 +427,7 @@ static void
 regret(int token)
 {
 	if (++regretp >= REGDEP)
-		errx(1, "Too many regrets");
+		errx(EXIT_FAILURE, "Too many regrets");
 	regretstack[regretp] = token;
 	lexstring[sizeof(lexstring) - 1] = '\0';
 	string_stack[regretp] = savestr(lexstring);
