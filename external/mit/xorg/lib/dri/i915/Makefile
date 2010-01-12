@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2009/11/09 02:38:24 mrg Exp $
+# $NetBSD: Makefile,v 1.5 2010/01/12 00:57:45 mrg Exp $
 
 MODULE=	i915
 
@@ -58,6 +58,6 @@ SRCS=	\
 
 CPPFLAGS+=	 -DI915 -DDRM_VBLANK_FLIP=DRM_VBLANK_FLIP
 
-LIBS+=	-ldrm_intel
+LIBDPLIBS+=	drm_intel	${.CURDIR}/../../libdrm_intel
 
 .include "${.CURDIR}/../dri.mk"
