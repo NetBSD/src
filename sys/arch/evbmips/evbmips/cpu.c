@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.3 2007/10/17 19:54:14 garbled Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2.4.2 2010/01/13 01:53:18 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,35 +36,39 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3 2007/10/17 19:54:14 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.4.2 2010/01/13 01:53:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
 
-static int	cpu_match(struct device *, struct cfdata *, void *);
-static void	cpu_attach(struct device *, struct device *, void *);
+static int	cpu_match(device_t, cfdata_t, void *);
+static void	cpu_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(cpu, sizeof(struct device),
+CFATTACH_DECL_NEW(cpu, 0,
     cpu_match, cpu_attach, NULL, NULL);
 
 static int
-cpu_match(struct device *parent, struct cfdata *match, void *aux)
+cpu_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
 }
 
 static void
-cpu_attach(struct device *parent, struct device *self, void *aux)
+cpu_attach(device_t parent, device_t self, void *aux)
 {
+	struct cpu_info * const ci = curcpu();
 
-	printf(": %lu.%02luMHz (hz cycles = %lu, delay divisor = %lu)\n",
-	    curcpu()->ci_cpu_freq / 1000000,
-	    (curcpu()->ci_cpu_freq % 1000000) / 10000,
-	    curcpu()->ci_cycles_per_hz, curcpu()->ci_divisor_delay);
+	ci->ci_dev = self;
+	self->dv_private = ci;
 
-	printf("%s: ", self->dv_xname);
-	cpu_identify();
+	aprint_normal(": %lu.%02luMHz (hz cycles = %lu, delay divisor = %lu)\n",
+	    ci->ci_cpu_freq / 1000000,
+	    (ci->ci_cpu_freq % 1000000) / 10000,
+	    ci->ci_cycles_per_hz, ci->ci_divisor_delay);
+
+	aprint_normal("%s: ", device_xname(self));
+	cpu_identify(self);
 }
