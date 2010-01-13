@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio.c,v 1.1.2.10 2010/01/10 03:08:35 matt Exp $	*/
+/*	$NetBSD: rmixl_obio.c,v 1.1.2.11 2010/01/13 09:43:31 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.10 2010/01/10 03:08:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.11 2010/01/13 09:43:31 cliff Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.10 2010/01/10 03:08:35 matt Exp
 #include <mips/rmi/rmixlvar.h>
 #include <mips/rmi/rmixl_obiovar.h>
 #include <mips/rmi/rmixl_pcievar.h>
+
+#include <evbmips/rmixl/autoconf.h>
 
 #ifdef OBIO_DEBUG
 int obio_debug = OBIO_DEBUG;
@@ -86,9 +88,13 @@ int obio_found;
 static int
 obio_match(device_t parent, cfdata_t cf, void *aux)
 {
-	if (obio_found)
-		return 0;
-	return 1;
+	struct mainbus_attach_args *aa = aux;
+
+	if (obio_found == 0)
+		if (strncmp(aa->ma_name, cf->cf_name, strlen(cf->cf_name)) == 0)
+			return 1;
+
+	return 0;
 }
 
 static void
