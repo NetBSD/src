@@ -1,4 +1,4 @@
-/*	$NetBSD: cpucore.c,v 1.1.2.1 2010/01/13 09:40:35 cliff Exp $	*/
+/*	$NetBSD: cpucore.c,v 1.1.2.2 2010/01/13 09:56:10 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpucore.c,v 1.1.2.1 2010/01/13 09:40:35 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpucore.c,v 1.1.2.2 2010/01/13 09:56:10 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -82,7 +82,9 @@ cpucore_attach(struct device *parent, struct device *self, void *aux)
 	struct cpucore_attach_args aa;
 	u_int nthreads;
 
-	aprint_normal(": %lu.%02luMHz (hz cycles = %lu, delay divisor = %lu)\n",
+	aprint_normal("\n%s: %lu.%02luMHz (hz cycles = %lu, "
+	    "delay divisor = %lu)\n",
+	    device_xname(self),
 	    curcpu()->ci_cpu_freq / 1000000,
 	    (curcpu()->ci_cpu_freq % 1000000) / 10000,
 	    curcpu()->ci_cycles_per_hz, curcpu()->ci_divisor_delay);
@@ -110,7 +112,7 @@ cpucore_print(void *aux, const char *pnp)
 	struct cpucore_attach_args *aa = aux;
 
 	if (pnp != NULL)
-		aprint_normal("%s: ", pnp);
+		aprint_normal("%s:", pnp);
 	aprint_normal(" thread %d", aa->ca_thread);
 
 	return (UNCONF);
