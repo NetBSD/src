@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.21 2010/01/09 06:01:18 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.22 2010/01/13 09:42:38 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.21 2010/01/09 06:01:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.22 2010/01/13 09:42:38 cliff Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -456,28 +456,40 @@ static const struct pridtab cputab[] = {
 	  CPU_MIPS_HAVE_MxCR,
 	  MIPS_CP0FL_USE |MIPS_CP0FL_EIRR | MIPS_CP0FL_EIMR | MIPS_CP0FL_EBASE |
 	  MIPS_CP0FL_CONFIGn(0) | MIPS_CP0FL_CONFIGn(1) | MIPS_CP0FL_CONFIGn(7),
-	  CIDFL_RMI_TYPE_XLS,			"XLS616"		},
+	  CIDFL_RMI_TYPE_XLS|MIPS_CIDFL_RMI_CPUS(4,4)|MIPS_CIDFL_RMI_L2(1MB),
+	  "XLS616"		},
 
 	{ MIPS_PRID_CID_RMI, MIPS_XLS416, -1,	-1, -1, 0,
 	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR |
 	  CPU_MIPS_HAVE_MxCR,
 	  MIPS_CP0FL_USE |MIPS_CP0FL_EIRR | MIPS_CP0FL_EIMR | MIPS_CP0FL_EBASE |
 	  MIPS_CP0FL_CONFIGn(0) | MIPS_CP0FL_CONFIGn(1) | MIPS_CP0FL_CONFIGn(7),
-	  CIDFL_RMI_TYPE_XLS,			"XLS416"		},
+	  CIDFL_RMI_TYPE_XLS|MIPS_CIDFL_RMI_CPUS(4,4)|MIPS_CIDFL_RMI_L2(1MB),
+	  "XLS416"		},
 
 	{ MIPS_PRID_CID_RMI, MIPS_XLS408, -1,	-1, -1, 0,
 	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR |
 	  CPU_MIPS_HAVE_MxCR,
 	  MIPS_CP0FL_USE |MIPS_CP0FL_EIRR | MIPS_CP0FL_EIMR | MIPS_CP0FL_EBASE |
 	  MIPS_CP0FL_CONFIGn(0) | MIPS_CP0FL_CONFIGn(1) | MIPS_CP0FL_CONFIGn(7),
-	  CIDFL_RMI_TYPE_XLS,			"XLS408"		},
+	  CIDFL_RMI_TYPE_XLS|MIPS_CIDFL_RMI_CPUS(2,4)|MIPS_CIDFL_RMI_L2(1MB),
+	  "XLS408"		},
 
 	{ MIPS_PRID_CID_RMI, MIPS_XLS408LITE, -1, -1, -1, 0,
 	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR |
 	  CPU_MIPS_HAVE_MxCR,
 	  MIPS_CP0FL_USE |MIPS_CP0FL_EIRR | MIPS_CP0FL_EIMR | MIPS_CP0FL_EBASE |
 	  MIPS_CP0FL_CONFIGn(0) | MIPS_CP0FL_CONFIGn(1) | MIPS_CP0FL_CONFIGn(7),
-	  CIDFL_RMI_TYPE_XLS,			"XLS408LITE"		},
+	  CIDFL_RMI_TYPE_XLS|MIPS_CIDFL_RMI_CPUS(2,4)|MIPS_CIDFL_RMI_L2(1MB),
+	  "XLS408LITE"		},
+
+	{ MIPS_PRID_CID_RMI, MIPS_XLS404LITE, -1, -1, -1, 0,
+	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR |
+	  CPU_MIPS_HAVE_MxCR,
+	  MIPS_CP0FL_USE |MIPS_CP0FL_EIRR | MIPS_CP0FL_EIMR | MIPS_CP0FL_EBASE |
+	  MIPS_CP0FL_CONFIGn(0) | MIPS_CP0FL_CONFIGn(1) | MIPS_CP0FL_CONFIGn(7),
+	  CIDFL_RMI_TYPE_XLS|MIPS_CIDFL_RMI_CPUS(1,4)|MIPS_CIDFL_RMI_L2(512KB),
+	  "XLS404LITE"		},
 
 	{ 0, 0, 0,				0, 0, 0,
 	  0, 0, 0,				NULL			}
@@ -1065,7 +1077,7 @@ mips3_tlb_probe(void)
  * Identify product revision IDs of CPU and FPU.
  */
 void
-cpu_identify(void)
+cpu_identify(device_t dev)
 {
 	static const char * const waynames[] = {
 		"fully set-associative",	/* 0 */
@@ -1083,7 +1095,7 @@ cpu_identify(void)
 		"write-back",
 		"write-through",
 	};
-	static const char * const label = "cpu0";	/* XXX */
+	const char *label = device_xname(dev);
 	const char *cpuname, *fpuname;
 	int i;
 
@@ -1139,8 +1151,8 @@ cpu_identify(void)
 	    MIPS_PRID_RSVD(cpu_id) != 0) {
 		printf("%s: NOTE: top 8 bits of prehistoric PRID not 0!\n",
 		    label);
-		printf("%s: Please mail port-mips@NetBSD.org with cpu0 "
-		    "dmesg lines.\n", label);
+		printf("%s: Please mail port-mips@NetBSD.org with %s "
+		    "dmesg lines.\n", label, label);
 	}
 
 	KASSERT(mips_picache_ways < nwaynames);
