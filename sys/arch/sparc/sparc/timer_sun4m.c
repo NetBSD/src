@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.21 2010/01/06 06:15:09 mrg Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.22 2010/01/13 02:17:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,12 +58,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.21 2010/01/06 06:15:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.22 2010/01/13 02:17:12 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -257,9 +258,8 @@ timerattach_obio_4m(struct device *parent, struct device *self, void *aux)
 
 	/* Install timer/statclock event counters, per cpu */
 	for (CPU_INFO_FOREACH(n, cpi)) {
-		snprintf(cpi->ci_cpuname, sizeof(cpi->ci_cpuname), "cpu/%d", n);
-		evcnt_attach_dynamic(&cpi->ci_lev10, EVCNT_TYPE_INTR, NULL, cpi->ci_cpuname, "lev10");
-		evcnt_attach_dynamic(&cpi->ci_lev14, EVCNT_TYPE_INTR, NULL, cpi->ci_cpuname, "lev14");
+		evcnt_attach_dynamic(&cpi->ci_lev10, EVCNT_TYPE_INTR, NULL, cpu_name(cpi), "lev10");
+		evcnt_attach_dynamic(&cpi->ci_lev14, EVCNT_TYPE_INTR, NULL, cpu_name(cpi), "lev14");
 	}
 
 	/* Put processor counter in "timer" mode */
