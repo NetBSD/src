@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.28 2009/12/30 23:49:59 rmind Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.29 2010/01/13 01:57:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.28 2009/12/30 23:49:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.29 2010/01/13 01:57:17 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -147,7 +147,6 @@ sched_cpuattach(struct cpu_info *ci)
 	runqueue_t *ci_rq;
 	void *rq_ptr;
 	u_int i, size;
-	char *cpuname;
 
 	if (ci->ci_schedstate.spc_lwplock == NULL) {
 		ci->ci_schedstate.spc_lwplock =
@@ -180,17 +179,14 @@ sched_cpuattach(struct cpu_info *ci)
 
 	ci->ci_schedstate.spc_sched_info = ci_rq;
 
-	cpuname = kmem_alloc(8, KM_SLEEP);
-	snprintf(cpuname, 8, "cpu%d", cpu_index(ci));
-
 	evcnt_attach_dynamic(&ci_rq->r_ev_pull, EVCNT_TYPE_MISC, NULL,
-	   cpuname, "runqueue pull");
+	   cpu_name(ci), "runqueue pull");
 	evcnt_attach_dynamic(&ci_rq->r_ev_push, EVCNT_TYPE_MISC, NULL,
-	   cpuname, "runqueue push");
+	   cpu_name(ci), "runqueue push");
 	evcnt_attach_dynamic(&ci_rq->r_ev_stay, EVCNT_TYPE_MISC, NULL,
-	   cpuname, "runqueue stay");
+	   cpu_name(ci), "runqueue stay");
 	evcnt_attach_dynamic(&ci_rq->r_ev_localize, EVCNT_TYPE_MISC, NULL,
-	   cpuname, "runqueue localize");
+	   cpu_name(ci), "runqueue localize");
 }
 
 /*
