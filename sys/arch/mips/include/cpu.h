@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.9 2009/12/30 04:51:26 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.10 2010/01/13 09:42:16 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,6 +46,7 @@
 #ifdef _KERNEL
 #ifndef _LOCORE
 #include <sys/cpu_data.h>
+#include <sys/device.h>
 
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
@@ -84,10 +85,40 @@ extern const struct pridtab *mycpu;
 /*
  * RMI company-specific cpu_cidflags
  */
-#define MIPS_CIDFL_RMI_TYPE     __BITS(0,2)
-#define  CIDFL_RMI_TYPE_XLR     0
-#define  CIDFL_RMI_TYPE_XLS     1
-#define  CIDFL_RMI_TYPE_XLP     2
+#define MIPS_CIDFL_RMI_TYPE     	__BITS(2,0)
+# define  CIDFL_RMI_TYPE_XLR     	0
+# define  CIDFL_RMI_TYPE_XLS     	1
+# define  CIDFL_RMI_TYPE_XLP     	2
+#define MIPS_CIDFL_RMI_THREADS_MASK	__BITS(6,3)
+# define MIPS_CIDFL_RMI_THREADS_SHIFT	3
+#define MIPS_CIDFL_RMI_CORES_MASK	__BITS(10,7)
+# define MIPS_CIDFL_RMI_CORES_SHIFT	7
+# define LOG2_1	0
+# define LOG2_2	1
+# define LOG2_4	2
+# define LOG2_8	3
+# define MIPS_CIDFL_RMI_CPUS(ncores, nthreads)				\
+		((LOG2_ ## ncores << MIPS_CIDFL_RMI_CORES_SHIFT)	\
+		|(LOG2_ ## nthreads << MIPS_CIDFL_RMI_THREADS_SHIFT))
+# define MIPS_CIDFL_RMI_NTHREADS(cidfl)					\
+		(1 << (((cidfl) & MIPS_CIDFL_RMI_THREADS_MASK)		\
+			>> MIPS_CIDFL_RMI_THREADS_SHIFT))
+# define MIPS_CIDFL_RMI_NCORES(cidfl)					\
+		(1 << (((cidfl) & MIPS_CIDFL_RMI_CORES_MASK)		\
+			>> MIPS_CIDFL_RMI_CORES_SHIFT))
+#define MIPS_CIDFL_RMI_L2SZ_MASK	__BITS(14,11)
+# define MIPS_CIDFL_RMI_L2SZ_SHIFT	11
+# define RMI_L2SZ_256KB	 0
+# define RMI_L2SZ_512KB  1
+# define RMI_L2SZ_1MB    2
+# define RMI_L2SZ_2MB    3
+# define RMI_L2SZ_4MB    4
+# define MIPS_CIDFL_RMI_L2(l2sz)					\
+		(RMI_L2SZ_ ## l2sz << MIPS_CIDFL_RMI_L2SZ_SHIFT)
+# define MIPS_CIDFL_RMI_L2SZ(cidfl)					\
+		((256*1024) << (((cidfl) & MIPS_CIDFL_RMI_L2SZ_MASK)	\
+			>> MIPS_CIDFL_RMI_L2SZ_SHIFT))
+
 
 
 struct cpu_info {
@@ -495,7 +526,7 @@ int	badaddr(void *, size_t);
 int	badaddr64(uint64_t, size_t);
 
 /* mips_machdep.c */
-void	cpu_identify(void);
+void	cpu_identify(device_t);
 void	mips_vector_init(void);
 
 #endif /* ! _LOCORE */
