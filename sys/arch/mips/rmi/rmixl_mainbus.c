@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_mainbus.c,v 1.1.2.4 2010/01/13 09:43:07 cliff Exp $	*/
+/*	$NetBSD: rmixl_mainbus.c,v 1.1.2.5 2010/01/13 09:56:10 cliff Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_mainbus.c,v 1.1.2.4 2010/01/13 09:43:07 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_mainbus.c,v 1.1.2.5 2010/01/13 09:56:10 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,8 +125,8 @@ mainbus_print_core(void *aux, const char *pnp)
 	struct mainbus_attach_args *aa = aux;
 
 	if (pnp != NULL)
-		aprint_normal("%s: ", pnp);
-	aprint_normal("core %d", aa->ma_core);
+		aprint_normal("%s:", pnp);
+	aprint_normal(" core %d", aa->ma_core);
 
 	return (UNCONF);
 }
