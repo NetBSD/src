@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.24 2005/12/11 12:18:39 christos Exp $ */
+/* $NetBSD: cpu.c,v 1.24.96.1 2010/01/13 21:16:13 matt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,28 +28,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24 2005/12/11 12:18:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24.96.1 2010/01/13 21:16:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <mips/locore.h>
 
 #include <machine/autoconf.h>
 
-static int	cpumatch __P((struct device *, struct cfdata *, void *));
-static void	cpuattach __P((struct device *, struct device *, void *));
+static int	cpumatch(device_t, cfdata_t, void *);
+static void	cpuattach(device_t, device_t, void *);
 
-CFATTACH_DECL(cpu, sizeof (struct device),
+CFATTACH_DECL_NEW(cpu, 0,
     cpumatch, cpuattach, NULL, NULL);
 extern struct cfdriver cpu_cd;
 
 static int
-cpumatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cpumatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -61,11 +59,14 @@ cpumatch(parent, cf, aux)
 }
 
 static void
-cpuattach(parent, dev, aux)
-	struct device *parent, *dev;
-	void *aux;
+cpuattach(device_t parent, device_t self, void *aux)
 {
 
-	printf(": ");
-	cpu_identify();
+	struct cpu_info * const ci = curcpu();
+
+	ci->ci_dev = self;
+	self->dv_private = ci;
+
+	aprint_normal(": ");
+	cpu_identify(self);
 }

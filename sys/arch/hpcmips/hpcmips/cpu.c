@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.15.28.1 2009/08/26 03:46:39 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.15.28.2 2010/01/13 21:16:13 matt Exp $	*/
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
  * Copyright (c) 1999-2001 SATO Kazumi, All rights reserved.
@@ -56,27 +56,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.28.1 2009/08/26 03:46:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.28.2 2010/01/13 21:16:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 #include <sys/bus.h>
 
 #include <machine/sysconf.h>
 #include <machine/autoconf.h>
 
 /* Definition of the driver for autoconfig. */
-static int	cpumatch(struct device *, struct cfdata *, void *);
-static void	cpuattach(struct device *, struct device *, void *);
+static int	cpumatch(device_t, cfdata_t, void *);
+static void	cpuattach(device_t, device_t, void *);
 
-CFATTACH_DECL(cpu, sizeof (struct device),
+CFATTACH_DECL_NEW(cpu, 0,
     cpumatch, cpuattach, NULL, NULL);
 
 extern struct cfdriver cpu_cd;
 
 static int
-cpumatch(struct device *parent, struct cfdata *cf, void *aux)
+cpumatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -85,12 +86,16 @@ cpumatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-cpuattach(struct device *parent, struct device *dev, void *aux)
+cpuattach(device_t parent, device_t self, void *aux)
 {
+	struct cpu_info * const ci = curcpu();
 
-	printf(": ");
+	ci->ci_dev = self;
+	self->dv_private = ci;
 
-	cpu_identify();
+	aprint_normal(": ");
+
+	cpu_identify(self);
 
 	/* install CPU specific idle routine if any. */
 	if (platform.cpu_idle != NULL)

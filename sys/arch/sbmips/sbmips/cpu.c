@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.18.16.2 2010/01/12 18:21:17 matt Exp $ */
+/* $NetBSD: cpu.c,v 1.18.16.3 2010/01/13 21:16:13 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.2 2010/01/12 18:21:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.3 2010/01/13 21:16:13 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -135,12 +135,12 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (found == 1) {
 		aprint_normal("%s: ", xname);
-		cpu_identify();
+		cpu_identify(self);
 	} else {
 #if defined(MULTIPROCESSOR)
 # error!
 #else
-		printf("%s: processor off-line; multiprocessor support "
+		aprint_normal("%s: processor off-line; multiprocessor support "
 		    "not present in kernel\n", xname);
 #endif
 	}

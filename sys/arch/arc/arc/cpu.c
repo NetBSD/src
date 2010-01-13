@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.16 2008/07/05 08:46:25 tsutsui Exp $	*/
+/*	$NetBSD: cpu.c,v 1.16.14.1 2010/01/13 21:16:13 matt Exp $	*/
 /*	$OpenBSD: cpu.c,v 1.8 1997/04/19 17:19:41 pefo Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2008/07/05 08:46:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16.14.1 2010/01/13 21:16:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,11 +72,12 @@ static void
 cpuattach(device_t parent, device_t self, void *aux)
 {
 
+	struct cpu_info * const ci = curcpu();
+
+	ci->ci_dev = self;
+	self->dv_private = ci;
+
 	aprint_normal(": ");
 
-#if 1
-	cpu_identify();
-#else /* XXX - before do this, fix pmax, newsmips */
-	cpu_identify(dev);
-#endif
+	cpu_identify(self);
 }
