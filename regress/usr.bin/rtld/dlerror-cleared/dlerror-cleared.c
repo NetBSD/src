@@ -12,7 +12,7 @@ int main(void)
 	 * dlopen() call.
 	 */
 	handle = dlopen("libnonexistent.so", RTLD_LAZY);
-	handle = dlopen("libm.so", RTLD_LAZY);
+	handle = dlopen("libm.so", RTLD_NOW);
 	error = dlerror();
 	if (error == NULL)
 		errx(1, "Failed: dlerror() was cleared by successful dlopen()\n");
