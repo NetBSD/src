@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $	*/
+/*	$NetBSD: cpu.c,v 1.1.2.2 2010/01/13 09:41:53 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -35,13 +35,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "locators.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.2.1 2009/09/13 03:27:38 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.2.2 2010/01/13 09:41:53 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+#include <evbmips/rmixl/cpucorevar.h>
 
 static int	cpu_match(struct device *, struct cfdata *, void *);
 static void	cpu_attach(struct device *, struct device *, void *);
@@ -50,21 +53,25 @@ CFATTACH_DECL(cpu, sizeof(struct device),
     cpu_match, cpu_attach, NULL, NULL);
 
 static int
-cpu_match(struct device *parent, struct cfdata *match, void *aux)
+cpu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
+	struct cpucore_attach_args *aa = aux;
+	int thread = cf->cf_loc[CPUCORECF_THREAD];
 
-	return 1;
+	if (strncmp(aa->ca_name, cf->cf_name, strlen(cf->cf_name)) == 0) {
+#ifndef MULTIPROCESSOR
+	    if (aa->ca_thread == 0)
+#endif
+		if ((thread == CPUCORECF_THREAD_DEFAULT)
+		||  (thread == aa->ca_thread))
+			return 1;
+	}
+
+	return 0;
 }
 
 static void
 cpu_attach(struct device *parent, struct device *self, void *aux)
 {
-
-	printf(": %lu.%02luMHz (hz cycles = %lu, delay divisor = %lu)\n",
-	    curcpu()->ci_cpu_freq / 1000000,
-	    (curcpu()->ci_cpu_freq % 1000000) / 10000,
-	    curcpu()->ci_cycles_per_hz, curcpu()->ci_divisor_delay);
-
-	printf("%s: ", self->dv_xname);
-	cpu_identify();
+	printf("\n");
 }
