@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.81 2009/12/20 03:50:56 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.82 2010/01/13 02:17:12 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -332,7 +332,6 @@ struct cpu_info {
 	 */
 	vaddr_t	ci_free_sva1, ci_free_eva1, ci_free_sva2, ci_free_eva2;
 
-	char ci_cpuname[8];	/* "cpu/0", etc. */
 	struct evcnt ci_lev10;
 	struct evcnt ci_lev14;
 };
