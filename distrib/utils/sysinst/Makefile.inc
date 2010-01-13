@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.49 2010/01/02 21:16:46 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.50 2010/01/13 07:52:38 martin Exp $
 #
 # Makefile for sysinst
 
+.if empty(DBG:M-g)
 COPTS += -Os
+.endif
 
 PROG=		sysinst
 NOMAN=		# defined
