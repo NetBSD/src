@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.227 2009/12/24 19:01:12 elad Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.228 2010/01/13 01:53:38 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.227 2009/12/24 19:01:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.228 2010/01/13 01:53:38 pooka Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -140,6 +140,8 @@ __link_set_decl(sysctl_funcs, sysctl_setup_func);
  * copying data out with the lock held is insane.
  */
 krwlock_t sysctl_treelock;
+
+kmutex_t sysctl_file_marker_lock;
 
 /*
  * Attributes stored in the kernel.
@@ -220,7 +222,6 @@ void
 sysctl_init(void)
 {
 	sysctl_setup_func * const *sysctl_setup, f;
-	extern kmutex_t sysctl_file_marker_lock; /* in init_sysctl.c */
 
 	rw_init(&sysctl_treelock);
 
