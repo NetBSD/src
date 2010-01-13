@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.171 2009/12/24 19:01:12 elad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.172 2010/01/13 01:53:38 pooka Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.171 2009/12/24 19:01:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.172 2010/01/13 01:53:38 pooka Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -97,7 +97,7 @@ gid_t security_setidcore_group = 0;
 mode_t security_setidcore_mode = (S_IRUSR|S_IWUSR);
 
 /* Initialized in sysctl_init() for now... */
-/* static */ kmutex_t sysctl_file_marker_lock;
+extern kmutex_t sysctl_file_marker_lock;
 static u_int sysctl_file_marker = 1;
 
 static const u_int sysctl_flagmap[] = {
