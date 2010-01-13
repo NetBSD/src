@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_mainbus.c,v 1.1.2.3 2009/11/09 10:03:28 cliff Exp $	*/
+/*	$NetBSD: rmixl_mainbus.c,v 1.1.2.4 2010/01/13 09:43:07 cliff Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_mainbus.c,v 1.1.2.3 2009/11/09 10:03:28 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_mainbus.c,v 1.1.2.4 2010/01/13 09:43:07 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,12 +51,13 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_mainbus.c,v 1.1.2.3 2009/11/09 10:03:28 cliff 
 #include <sys/malloc.h>
 #include <sys/device.h>
 
+#include <evbmips/rmixl/autoconf.h>
 #include <machine/bus.h>
 #include "locators.h"
 
 static int  mainbusmatch(device_t,  cfdata_t, void *);
 static void mainbusattach(device_t,  device_t,  void *);
-static int  mainbussearch(device_t,  cfdata_t, const int *, void *);
+static int  mainbus_print_core(void *, const char *);
 
 CFATTACH_DECL_NEW(mainbus, 0, mainbusmatch, mainbusattach, NULL, NULL);
 
@@ -70,21 +71,62 @@ mainbusmatch(device_t parent, cfdata_t cf, void *aux)
 	return 1;
 }
 
-static int
-mainbussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
-{
-	if (config_match(parent, cf, NULL) > 0)
-		config_attach(parent, cf, aux, NULL);
-
-	return 0;
-}
-
 static void
 mainbusattach(device_t parent, device_t self, void *aux)
 {
+	u_int sz;
+	u_int ncores;
+	struct mainbus_attach_args aa;
+
 	aprint_naive("\n");
 	aprint_normal("\n");
 
 	mainbus_found = 1;
-	config_search_ia(mainbussearch, self, "mainbus", NULL);
+
+	switch (mycpu->cpu_cidflags & MIPS_CIDFL_RMI_TYPE) {
+	case CIDFL_RMI_TYPE_XLR:
+	case CIDFL_RMI_TYPE_XLS:
+		/*
+		 * L2 is unified on XLR, XLS
+		 */
+		sz = (size_t)MIPS_CIDFL_RMI_L2SZ(mycpu->cpu_cidflags);
+		aprint_normal("%s: %dKB/32B %d-banked 8-way set associative"
+			" unified L2 cache\n", device_xname(self),
+			sz/1024, sz/(256 * 1024));
+		break;
+	case CIDFL_RMI_TYPE_XLP:
+		/* TBD */
+		break;
+	}
+
+	ncores = MIPS_CIDFL_RMI_NTHREADS(mycpu->cpu_cidflags);
+	aprint_normal("%s: %d %s on chip\n", device_xname(self), ncores,
+		ncores == 1 ? "core" : "cores");
+
+	/*
+	 * Attach cpu (RMI thread) devices
+	 */
+	for (int i=0; i < ncores; i++) {
+		aa.ma_name = "cpucore";
+		aa.ma_core = i;
+		config_found(self, &aa, mainbus_print_core);
+	}
+
+	/*
+	 * Attach obio
+	 */
+	aa.ma_name = "obio";
+	config_found(self, &aa, NULL);
+}
+
+static int
+mainbus_print_core(void *aux, const char *pnp)
+{
+	struct mainbus_attach_args *aa = aux;
+
+	if (pnp != NULL)
+		aprint_normal("%s: ", pnp);
+	aprint_normal("core %d", aa->ma_core);
+
+	return (UNCONF);
 }
