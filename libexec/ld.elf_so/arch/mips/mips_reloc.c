@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.56 2009/12/14 00:41:18 matt Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.57 2010/01/13 20:17:22 christos Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.56 2009/12/14 00:41:18 matt Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.57 2010/01/13 20:17:22 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -407,9 +407,11 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, Elf_Word sym, Elf_Addr *tp)
 	const Obj_Entry *defobj;
 	Elf_Addr new_value;
 
-	def = _rtld_find_symdef(sym, obj, &defobj, true);
-	if (def == NULL)
+	def = _rtld_find_plt_symdef(sym, obj, &defobj, tp != NULL);
+	if (__predict_false(def == NULL))
 		return -1;
+	if (__predict_false(def == &_rtld_sym_zero))
+		return 0;
 
 	new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
 	rdbg(("bind now/fixup in %s --> new=%p",
@@ -430,7 +432,7 @@ _rtld_bind(Elf_Word a0, Elf_Addr a1, Elf_Addr a2, Elf_Addr a3)
 	int err;
 
 	err = _rtld_relocate_plt_object(obj, a0, &new_value);
-	if (err || new_value == 0)
+	if (err)
 		_rtld_die();
 
 	return (caddr_t)new_value;
