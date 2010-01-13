@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.49 2010/01/10 07:29:47 skrll Exp $	 */
+/*	$NetBSD: symbol.c,v 1.50 2010/01/13 20:17:21 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.49 2010/01/10 07:29:47 skrll Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.50 2010/01/13 20:17:21 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -314,11 +314,6 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 	 * symbol as having the value zero.
 	 */
 	if (def == NULL && ELF_ST_BIND(ref->st_info) == STB_WEAK) {
-		if (in_plt) {
-			_rtld_error(
-			    "%s: Trying to call undefined weak symbol `%s'",
-			    refobj->path, name);
-		}
 		rdbg(("  returning _rtld_sym_zero@_rtld_objself"));
 		def = &_rtld_sym_zero;
 		defobj = &_rtld_objself;
@@ -342,6 +337,29 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 		rdbg(("lookup failed"));
 		_rtld_error("%s: Undefined %ssymbol \"%s\" (symnum = %ld)",
 		    refobj->path, in_plt ? "PLT " : "", name, symnum);
+	}
+	return def;
+}
+
+const Elf_Sym *
+_rtld_find_plt_symdef(unsigned long symnum, const Obj_Entry *obj,
+    const Obj_Entry **defobj, bool imm)
+{
+ 	const Elf_Sym  *def = _rtld_find_symdef(symnum, obj, defobj, true);
+	if (__predict_false(def == NULL))
+ 		return NULL;
+
+	if (__predict_false(def == &_rtld_sym_zero)) {
+		/* tp is set during lazy binding. */
+		if (imm) {
+			const Elf_Sym	*ref = obj->symtab + symnum;
+			const char	*name = obj->strtab + ref->st_name;
+
+			_rtld_error(
+			    "%s: Trying to call undefined weak symbol `%s'",
+			    obj->path, name);
+			return NULL;
+		}
 	}
 	return def;
 }

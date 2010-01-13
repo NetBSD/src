@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.97 2009/09/24 21:21:34 pooka Exp $	 */
+/*	$NetBSD: reloc.c,v 1.98 2010/01/13 20:17:21 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.97 2009/09/24 21:21:34 pooka Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.98 2010/01/13 20:17:21 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -84,7 +84,7 @@ _rtld_do_copy_relocation(const Obj_Entry *dstobj, const Elf_Rela *rela)
 	srcaddr = (const void *)(srcobj->relocbase + srcsym->st_value);
 	(void)memcpy(dstaddr, srcaddr, size);
 	rdbg(("COPY %s %s %s --> src=%p dst=%p size %ld",
-	    dstobj->path, srcobj->path, name, (void *)srcaddr,
+	    dstobj->path, srcobj->path, name, srcaddr,
 	    (void *)dstaddr, (long)size));
 	return (0);
 }
@@ -197,8 +197,6 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 		}
 		if (!ok)
 			return -1;
-
-		(void)dlerror(); /* clear any errors since all is good */
 
 		/* Set some sanity-checking numbers in the Obj_Entry. */
 		obj->magic = RTLD_MAGIC;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.42 2009/03/16 02:46:47 lukem Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.43 2010/01/13 20:17:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.42 2009/03/16 02:46:47 lukem Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.43 2010/01/13 20:17:22 christos Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -327,7 +327,7 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 	value = 0;	/* XXX gcc */
 
 	err = _rtld_relocate_plt_object(obj, rela, &value);
-	if (err || value == 0)
+	if (err)
 		_rtld_die();
 
 	return (caddr_t)value;
@@ -352,14 +352,15 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 	const Obj_Entry *defobj;
 	Elf_Word *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	Elf_Addr value;
+	unsigned long info = rela->r_info;
 
-	/* Fully resolve procedure addresses now */
+	assert(ELF_R_TYPE(info) == R_TYPE(JMP_SLOT));
 
-	assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
-
-	def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj, true);
-	if (def == NULL)
+	def = _rtld_find_plt_symdef(ELF_R_SYM(info), obj, &defobj, tp != NULL);
+	if (__predict_false(def == NULL))
 		return -1;
+	if (__predict_false(def == &_rtld_sym_zero))
+		return 0;
 
 	value = (Elf_Addr)(defobj->relocbase + def->st_value);
 	rdbg(("bind now/fixup in %s --> new=%p", 
