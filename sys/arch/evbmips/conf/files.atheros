@@ -1,4 +1,4 @@
-#	$NetBSD: files.atheros,v 1.6 2008/02/20 21:43:33 drochner Exp $
+#	$NetBSD: files.atheros,v 1.6.28.1 2010/01/13 01:53:18 matt Exp $
 
 file	arch/evbmips/atheros/mach_intr.c
 
@@ -20,7 +20,7 @@ file	arch/evbmips/atheros/mainbus.c		mainbus
 
 device	cpu
 attach	cpu at mainbus
-file	arch/evbmips/atheros/cpu.c		cpu
+file	arch/evbmips/evbmips/cpu.c		cpu
 
 device	wdog: sysmon_wdog
 attach	wdog at mainbus

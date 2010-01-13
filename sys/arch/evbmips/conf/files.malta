@@ -1,4 +1,4 @@
-#	$NetBSD: files.malta,v 1.15.28.1 2010/01/10 02:48:45 matt Exp $
+#	$NetBSD: files.malta,v 1.15.28.2 2010/01/13 01:53:18 matt Exp $
 
 file	arch/evbmips/malta/malta_bus_io.c
 file	arch/evbmips/malta/malta_bus_mem.c
@@ -25,7 +25,7 @@ file	arch/evbmips/malta/dev/mainbus.c	mainbus
 
 device	cpu
 attach	cpu at mainbus
-file	arch/evbmips/malta/cpu.c		cpu
+file	arch/evbmips/evbmips/cpu.c		cpu
 
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"

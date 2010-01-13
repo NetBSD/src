@@ -1,4 +1,4 @@
-#	$NetBSD: files.adm5120,v 1.5 2008/02/20 21:43:33 drochner Exp $
+#	$NetBSD: files.adm5120,v 1.5.28.1 2010/01/13 01:53:18 matt Exp $
 
 file	arch/evbmips/adm5120/autoconf.c
 file	arch/evbmips/adm5120/machdep.c
@@ -18,7 +18,7 @@ file	arch/evbmips/adm5120/mainbus.c		mainbus
 
 device	cpu
 attach	cpu at mainbus
-file	arch/evbmips/adm5120/cpu.c		cpu
+file	arch/evbmips/evbmips/cpu.c		cpu
 
 # Machine-independent SCSI drivers
 include "dev/scsipi/files.scsipi"
