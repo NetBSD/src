@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.77 2009/01/20 13:54:43 jmcneill Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.78 2010/01/13 12:18:55 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.77 2009/01/20 13:54:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.78 2010/01/13 12:18:55 drochner Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -431,7 +431,7 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 		else {
 			if (subclassp == NULL || subclassp->name == NULL)
 				cp += snprintf(cp, ep - cp,
-				    "%s subclass 0x%02x",
+				    "%s, subclass 0x%02x",
 				    classp->name, subclass);
 			else
 				cp += snprintf(cp, ep - cp, "%s %s",
@@ -859,8 +859,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			printf("      Command Completed Interrupt Enabled\n");
 		if ((regs[o2i(capoff + 0x18)] & 0x0020) != 0)
 			printf("      Hot-Plug Interrupt Enabled\n");
-		printf("      Attention Indictor Control: ");
-		switch ((regs[o2i(capoff + 0x18)] & 0x00a0) >> 6) {
+		printf("      Attention Indicator Control: ");
+		switch ((regs[o2i(capoff + 0x18)] & 0x00c0) >> 6) {
 		case 0x0:
 			printf("reserved\n");
 			break;
@@ -874,7 +874,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			printf("off\n");
 			break;
 		}
-		printf("      Power Indictor Control: ");
+		printf("      Power Indicator Control: ");
 		switch ((regs[o2i(capoff + 0x18)] & 0x0300) >> 8) {
 		case 0x0:
 			printf("reserved\n");
