@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_trap.c,v 1.8 2009/11/21 03:11:01 rmind Exp $	*/
+/*	$NetBSD: linux_trap.c,v 1.9 2010/01/13 15:31:47 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.8 2009/11/21 03:11:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.9 2010/01/13 15:31:47 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,8 +125,6 @@ static const int linux_x86_vec_to_sig[] = {
 	SIGSEGV				/* 18 LINUX_T_MACHINE_CHECK */
 };
 
-#define ASIZE(a) (sizeof(a) / sizeof(a[0]))
-
 void
 linux_trapsignal(struct lwp *l, ksiginfo_t *ksi)
 {
@@ -139,10 +137,10 @@ linux_trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	case SIGFPE:
 	case SIGSEGV:
 		KASSERT(KSI_TRAP_P(ksi));
-		if (ksi->ksi_trap < ASIZE(trapno_to_x86_vec)) {
+		if (ksi->ksi_trap < __arraycount(trapno_to_x86_vec)) {
 			ksiginfo_t nksi = *ksi;
 			nksi.ksi_trap = trapno_to_x86_vec[ksi->ksi_trap];
-			if (nksi.ksi_trap < ASIZE(linux_x86_vec_to_sig)) {
+			if (nksi.ksi_trap < __arraycount(linux_x86_vec_to_sig)) {
 				nksi.ksi_signo 
 				    = linux_x86_vec_to_sig[nksi.ksi_trap];
 			} else {
