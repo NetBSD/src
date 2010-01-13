@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.55 2009/12/05 20:11:03 pooka Exp $
+#	$NetBSD: INSTALL,v 1.56 2010/01/13 14:24:58 he Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.55 $"
+#ident		"INSTALL-$Revision: 1.56 $"
 
 # estimated number of users
 maxusers	32
@@ -122,7 +122,7 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 # Device options
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-options 	MEMORY_DISK_ROOT_SIZE=4100	# Size in blocks
+options 	MEMORY_DISK_ROOT_SIZE=4700	# Size in blocks
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
