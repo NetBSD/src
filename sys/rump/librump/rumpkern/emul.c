@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.116 2010/01/09 16:29:32 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.117 2010/01/13 01:18:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.116 2010/01/09 16:29:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.117 2010/01/13 01:18:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -117,6 +117,13 @@ kmutex_t sysctl_file_marker_lock;
 #ifdef __sparc__
 int nbpg = 4096;
 #endif
+
+struct loadavg averunnable = {
+	{ 0 * FSCALE,
+	  1 * FSCALE,
+	  11 * FSCALE, },
+	FSCALE,
+};
 
 devclass_t
 device_class(device_t dev)
@@ -216,6 +223,13 @@ psignal(struct proc *p, int signo)
 	default:
 		panic("unhandled signal %d\n", signo);
 	}
+}
+
+void
+pgsignal(struct pgrp *pgrp, int sig, int checktty)
+{
+
+	panic("%s: not implemented", __func__);
 }
 
 void
@@ -467,6 +481,21 @@ syscall_establish(const struct emul *em, const struct syscall_package *sp)
 
 int
 syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
+{
+
+	return 0;
+}
+
+void
+calcru(struct proc *p, struct timeval *up, struct timeval *sp,
+	struct timeval *ip, struct timeval *rp)
+{
+
+	panic("%s unimplemented", __func__);
+}
+
+int
+sigismasked(struct lwp *l, int sig)
 {
 
 	return 0;
