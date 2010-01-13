@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.27 2008/06/03 15:50:22 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.28 2010/01/13 01:57:17 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@ struct cpu_data {
 	__cpu_simple_lock_t cpu_ld_lock;	/* lockdebug */
 	uint64_t	cpu_cc_freq;		/* cycle counter frequency */
 	int64_t		cpu_cc_skew;		/* counter skew vs cpu0 */
+	char		cpu_name[8];		/* eg, "cpu4" */
 };
 
 /* compat definitions */
