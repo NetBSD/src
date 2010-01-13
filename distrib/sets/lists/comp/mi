@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1359 2010/01/08 13:15:45 pooka Exp $
+#	$NetBSD: mi,v 1.1360 2010/01/13 01:23:06 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3630,7 +3630,7 @@
 ./usr/libdata/debug/usr/sbin/zdb.debug		comp-zfs-debug		zfs,debug
 ./usr/libdata/debug/usr/sbin/zdump.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/zic.debug		comp-sysutil-debug	debug
-./usr/libdata/ldscripts/kmodule			comp-util-share		binutils
+./usr/libdata/ldscripts/kmodule			comp-util-share		binutils,kmod
 ./usr/libdata/lint/llib-larchive.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbind9.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-lbluetooth.ln		comp-c-lintlib		lint
