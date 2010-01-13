@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.148 2009/12/16 20:59:04 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.149 2010/01/13 00:07:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.148 2009/12/16 20:59:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.149 2010/01/13 00:07:40 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -183,6 +183,11 @@ rump__init(int rump_version)
 		panic("rump_init: host process restart required");
 	else
 		rump_inited = 1;
+
+	if (rumpuser_getenv("RUMP_VERBOSE", buf, sizeof(buf), &error) == 0) {
+		if (*buf != '0')
+			boothowto = AB_VERBOSE;
+	}
 
 	/* Print some silly banners for spammy bootstrap. */
 	if (boothowto & AB_VERBOSE) {
