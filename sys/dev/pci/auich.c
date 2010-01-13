@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.134 2010/01/08 19:56:51 dyoung Exp $	*/
+/*	$NetBSD: auich.c,v 1.135 2010/01/13 23:24:29 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.134 2010/01/08 19:56:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.135 2010/01/13 23:24:29 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,9 +217,7 @@ struct auich_softc {
 	int  sc_dmamap_flags;
 	/* flags */
 	int  sc_iose	:1,
-	     sc_csr_io	:1,
-	     sc_csr_mem	:1,
-		     	:29;
+		     	:31;
 
 	/* sysctl */
 	struct sysctllog *sc_log;
@@ -489,13 +487,6 @@ auich_attach(device_t parent, device_t self, void *aux)
 		 * Use native mode for Intel 6300ESB and ICH4/ICH5/ICH6/ICH7
 		 */
 
-		sc->sc_csr_mem = 1;
-		v = pci_conf_read(pa->pa_pc, pa->pa_tag,
-		    PCI_COMMAND_STATUS_REG);
-		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-			       v | PCI_COMMAND_MEM_ENABLE);
-		pa->pa_flags |= PCI_FLAGS_MEM_ENABLED;
-
 		if (pci_mapreg_map(pa, ICH_MMBAR, PCI_MAPREG_TYPE_MEM, 0,
 		    &sc->iot, &sc->mix_ioh, NULL, &sc->mix_size)) {
 			goto retry_map;
@@ -515,13 +506,6 @@ retry_map:
 		       v | ICH_CFG_IOSE);
 
 non_native_map:
-	sc->sc_csr_io = 1;
-	v = pci_conf_read(pa->pa_pc, pa->pa_tag,
-	    PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-		       v | PCI_COMMAND_IO_ENABLE);
-	pa->pa_flags |= PCI_FLAGS_IO_ENABLED;
-
 	if (pci_mapreg_map(pa, ICH_NAMBAR, PCI_MAPREG_TYPE_IO, 0,
 			   &sc->iot, &sc->mix_ioh, NULL, &sc->mix_size)) {
 		aprint_error_dev(self, "can't map codec i/o space\n");
@@ -1595,13 +1579,6 @@ auich_resume(device_t dv, pmf_qual_t qual)
 		pci_conf_write(sc->sc_pc, sc->sc_pt, ICH_CFG,
 			       v | ICH_CFG_IOSE);
 	}
-
-	v = pci_conf_read(sc->sc_pc, sc->sc_pt, PCI_COMMAND_STATUS_REG);
-	if (sc->sc_csr_io)
-		v |= PCI_COMMAND_IO_ENABLE;
-	if (sc->sc_csr_mem)
-		v |= PCI_COMMAND_MEM_ENABLE;
-	pci_conf_write(sc->sc_pc, sc->sc_pt, PCI_COMMAND_STATUS_REG, v);
 
 	auich_reset_codec(sc);
 	DELAY(1000);
