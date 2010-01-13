@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.37 2009/08/13 11:27:34 cegger Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.38 2010/01/13 12:54:49 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -189,7 +189,9 @@
 #define	CPUID_AMD_SVM_SVML		0x00000004
 #define	CPUID_AMD_SVM_NRIPS		0x00000008
 #define	CPUID_AMD_SVM_Ssse3Sse5Dis	0x00000200
-#define	CPUID_AMD_SVM_FLAGS	 "\20\1NP\2LbrVirt\3SVML\4NRIPS\12Ssse3Sse5Dis"
+#define	CPUID_AMD_SVM_PauseFilter	0x00000400
+#define	CPUID_AMD_SVM_FLAGS	 "\20\1NP\2LbrVirt\3SVML\4NRIPS" \
+				    "\12Ssse3Sse5Dis\13PauseFilter"
 
 /*
  * AMD Advanced Power Management
