@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.21 2007/12/03 15:34:17 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.21.36.1 2010/01/13 21:16:14 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21 2007/12/03 15:34:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21.36.1 2010/01/13 21:16:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21 2007/12/03 15:34:17 ad Exp $");
 
 static int	cpu_match(struct device *, struct cfdata *, void *);
 static void	cpu_attach(struct device *, struct device *, void *);
-void		cpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void		cpu_intr(u_int32_t, u_int32_t, vaddr_t, u_int32_t);
 void *cpu_intr_establish(int, int, int (*func)(void *), void *);
 void		mips1_fpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 
@@ -82,7 +82,7 @@ static struct evcnt mips_int5_evcnt =
 static struct evcnt mips_spurint_evcnt =
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "spurious interrupts");
 
-CFATTACH_DECL(cpu, sizeof(struct device),
+CFATTACH_DECL_NEW(cpu, 0,
     cpu_match, cpu_attach, NULL, NULL);
 
 static int
@@ -94,8 +94,13 @@ cpu_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 cpu_attach(struct device *parent, struct device *self, void *aux)
 {
-	printf(": ");
-	cpu_identify();
+	struct cpu_info * const ci = curcpu();
+
+	ci->ci_dev = self;
+	self->dv_private = ci;
+
+	aprint_normal(": ");
+	cpu_identify(self);
 }
 
 /*
@@ -103,7 +108,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
  * sorts of Bad Things(tm) to happen, including kernel stack overflows.
  */
 void
-cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+cpu_intr(u_int32_t status, u_int32_t cause, vaddr_t pc, u_int32_t ipending)
 {
 	struct cpu_info *ci;
 

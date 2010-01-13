@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1.2.2 2010/01/13 09:41:53 cliff Exp $	*/
+/*	$NetBSD: cpu.c,v 1.1.2.3 2010/01/13 21:16:13 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.2.2 2010/01/13 09:41:53 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.2.3 2010/01/13 21:16:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,32 +46,61 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.2.2 2010/01/13 09:41:53 cliff Exp $");
 #include <sys/cpu.h>
 #include <evbmips/rmixl/cpucorevar.h>
 
-static int	cpu_match(struct device *, struct cfdata *, void *);
-static void	cpu_attach(struct device *, struct device *, void *);
+static int	cpu_match(device_t, cfdata_t, void *);
+static void	cpu_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(cpu, sizeof(struct device),
+CFATTACH_DECL_NEW(cpu, 0,
     cpu_match, cpu_attach, NULL, NULL);
 
 static int
-cpu_match(struct device *parent, struct cfdata *cf, void *aux)
+cpu_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct cpucore_attach_args *aa = aux;
+	struct cpucore_attach_args *ca = aux;
 	int thread = cf->cf_loc[CPUCORECF_THREAD];
 
-	if (strncmp(aa->ca_name, cf->cf_name, strlen(cf->cf_name)) == 0) {
+	if (strncmp(ca->ca_name, cf->cf_name, strlen(cf->cf_name)) == 0
 #ifndef MULTIPROCESSOR
-	    if (aa->ca_thread == 0)
+	    && ca->ca_thread == 0
 #endif
-		if ((thread == CPUCORECF_THREAD_DEFAULT)
-		||  (thread == aa->ca_thread))
+	    && (thread == CPUCORECF_THREAD_DEFAULT || thread == ca->ca_thread))
 			return 1;
-	}
 
 	return 0;
 }
 
 static void
-cpu_attach(struct device *parent, struct device *self, void *aux)
+cpu_attach(device_t parent, device_t self, void *aux)
 {
-	printf("\n");
+	struct cpucore_attach_args *ca = aux;
+	if (ca->ca_thread == 0 && ca->ca_core == 0) {
+		struct cpu_info * const ci = curcpu();
+		ci->ci_dev = self;
+		self->dv_private = ci;
+#ifdef MULTIPROCESSOR
+	} else {
+		struct pglist pglist;
+
+		/*
+		 * Grab a page from the first 256MB to use to store
+		 * exception vectors and cpu_info for this cpu.
+		 */
+		error = uvm_pglistalloc(PAGE_SIZE,
+		    0, 0x10000000,
+		    PAGE_SIZE, PAGE_SIZE, &pglist, 1, false);
+		if (error) {
+			aprint_error(": failed to allocte exception vectors\n");
+			return;
+		}
+
+		const paddr_t pa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&pglist));
+		const vaddr_t va = MIPS_PHYS_TO_KSEG0(pa);
+		struct cpu_info * const ci = (void *) (va + 0x400);
+		memset(va, 0, PAGE_SIZE);
+		ci->ci_ebase = va;
+		ci->ci_ebase_pa = pa;
+		ci->ci_dev = self;
+		self->dv_private = ci;
+#endif
+	}
+	aprint_normal("\n");
 }
