@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.85 2010/01/07 23:02:34 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.86 2010/01/14 19:50:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.85 2010/01/07 23:02:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.86 2010/01/14 19:50:07 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -372,8 +372,16 @@ puffs_vfsop_unmount(struct mount *mp, int mntflags)
 		psopr = kmem_alloc(sizeof(*psopr), KM_SLEEP);
 		psopr->psopr_sopreq = PUFFS_SOPREQSYS_EXIT;
 		mutex_enter(&pmp->pmp_sopmtx);
-		TAILQ_INSERT_TAIL(&pmp->pmp_sopreqs, psopr, psopr_entries);
-		cv_signal(&pmp->pmp_sopcv);
+		if (pmp->pmp_sopthrcount == 0) {
+			mutex_exit(&pmp->pmp_sopmtx);
+			kmem_free(psopr, sizeof(*psopr));
+			mutex_enter(&pmp->pmp_sopmtx);
+			KASSERT(pmp->pmp_sopthrcount == 0);
+		} else {
+			TAILQ_INSERT_TAIL(&pmp->pmp_sopreqs,
+			    psopr, psopr_entries);
+			cv_signal(&pmp->pmp_sopcv);
+		}
 		while (pmp->pmp_sopthrcount > 0)
 			cv_wait(&pmp->pmp_sopcv, &pmp->pmp_sopmtx);
 		mutex_exit(&pmp->pmp_sopmtx);
