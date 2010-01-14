@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1009 2010/01/12 21:25:03 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1010 2010/01/14 11:27:52 sborrill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1013 2010/01/12 21:24:39 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1014 2010/01/14 11:27:23 sborrill Exp
  */
 
 /*
@@ -160,7 +160,7 @@ static const uint16_t pci_vendors[] = {
 	    PCI_VENDOR_IBUS, 1296, 0,
 	    PCI_VENDOR_NETWORTH, 1302, 0,
 	    PCI_VENDOR_GATEWAY, 1311, 1319, 0,
-	    PCI_VENDOR_GOLDSTART, 1324, 0,
+	    PCI_VENDOR_GOLDSTAR, 1324, 0,
 	    PCI_VENDOR_LEADTEK, 1333, 218, 0,
 	    PCI_VENDOR_INTERPHASE, 1341, 0,
 	    PCI_VENDOR_DATATECH, 490, 127, 0,

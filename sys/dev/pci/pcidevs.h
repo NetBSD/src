@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1010 2010/01/12 21:25:04 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1011 2010/01/14 11:27:52 sborrill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1013 2010/01/12 21:24:39 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1014 2010/01/14 11:27:23 sborrill Exp
  */
 
 /*
@@ -182,7 +182,7 @@
 #define	PCI_VENDOR_IBUS	0x1079		/* I-Bus */
 #define	PCI_VENDOR_NETWORTH	0x107a		/* NetWorth */
 #define	PCI_VENDOR_GATEWAY	0x107b		/* Gateway 2000 */
-#define	PCI_VENDOR_GOLDSTART	0x107c		/* Goldstar */
+#define	PCI_VENDOR_GOLDSTAR	0x107c		/* Goldstar */
 #define	PCI_VENDOR_LEADTEK	0x107d		/* LeadTek Research */
 #define	PCI_VENDOR_INTERPHASE	0x107e		/* Interphase */
 #define	PCI_VENDOR_DATATECH	0x107f		/* Data Technology */
