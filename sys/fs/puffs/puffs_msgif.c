@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.79 2010/01/07 23:02:34 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.80 2010/01/14 19:50:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.79 2010/01/07 23:02:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.80 2010/01/14 19:50:07 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -873,9 +873,16 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 		psopr->psopr_sopreq = PUFFS_SOPREQ_FLUSH;
 
 		mutex_enter(&pmp->pmp_sopmtx);
-		TAILQ_INSERT_TAIL(&pmp->pmp_sopreqs, psopr, psopr_entries);
-		cv_signal(&pmp->pmp_sopcv);
-		mutex_exit(&pmp->pmp_sopmtx);
+		if (pmp->pmp_sopthrcount == 0) {
+			mutex_exit(&pmp->pmp_sopmtx);
+			kmem_free(psopr, sizeof(*psopr));
+			puffs_msg_sendresp(pmp, preq, ENXIO);
+		} else {
+			TAILQ_INSERT_TAIL(&pmp->pmp_sopreqs,
+			    psopr, psopr_entries);
+			cv_signal(&pmp->pmp_sopcv);
+			mutex_exit(&pmp->pmp_sopmtx);
+		}
 		break;
 	}
 
@@ -889,9 +896,16 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 		psopr->psopr_sopreq = PUFFS_SOPREQ_UNMOUNT;
 
 		mutex_enter(&pmp->pmp_sopmtx);
-		TAILQ_INSERT_TAIL(&pmp->pmp_sopreqs, psopr, psopr_entries);
-		cv_signal(&pmp->pmp_sopcv);
-		mutex_exit(&pmp->pmp_sopmtx);
+		if (pmp->pmp_sopthrcount == 0) {
+			mutex_exit(&pmp->pmp_sopmtx);
+			kmem_free(psopr, sizeof(*psopr));
+			puffs_msg_sendresp(pmp, preq, ENXIO);
+		} else {
+			TAILQ_INSERT_TAIL(&pmp->pmp_sopreqs,
+			    psopr, psopr_entries);
+			cv_signal(&pmp->pmp_sopcv);
+			mutex_exit(&pmp->pmp_sopmtx);
+		}
 		break;
 	}
 
@@ -953,11 +967,12 @@ puffs_sop_thread(void *arg)
 	}
 
 	/*
-	 * Purge remaining ops.  could send error, but ...
+	 * Purge remaining ops.
 	 */
 	while ((psopr = TAILQ_FIRST(&pmp->pmp_sopreqs)) != NULL) {
 		TAILQ_REMOVE(&pmp->pmp_sopreqs, psopr, psopr_entries);
 		mutex_exit(&pmp->pmp_sopmtx);
+		puffs_msg_sendresp(pmp, &psopr->psopr_preq, ENXIO);
 		kmem_free(psopr, sizeof(*psopr));
 		mutex_enter(&pmp->pmp_sopmtx);
 	}
