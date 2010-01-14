@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.34 2010/01/13 20:17:21 christos Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.35 2010/01/14 11:57:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: alpha_reloc.c,v 1.34 2010/01/13 20:17:21 christos Exp $");
+__RCSID("$NetBSD: alpha_reloc.c,v 1.35 2010/01/14 11:57:06 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -480,7 +480,7 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 {
 	const Elf_Rela *rela = 
 	    (const Elf_Rela *)((const uint8_t *)obj->pltrela + reloff);
-	Elf_Addr result;
+	Elf_Addr result = 0; /* XXX gcc */
 	int err;
 
 	err = _rtld_relocate_plt_object(obj, rela, &result);
