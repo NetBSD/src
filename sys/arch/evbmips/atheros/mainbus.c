@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.4 2006/06/08 22:47:26 gdamore Exp $ */
+/* $NetBSD: mainbus.c,v 1.4.86.1 2010/01/14 00:27:23 matt Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2006/06/08 22:47:26 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4.86.1 2010/01/14 00:27:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,11 +47,11 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2006/06/08 22:47:26 gdamore Exp $");
 
 #include "locators.h"
 
-static int	mainbus_match(struct device *, struct cfdata *, void *);
-static void	mainbus_attach(struct device *, struct device *, void *);
+static int	mainbus_match(device_t, cfdata_t, void *);
+static void	mainbus_attach(device_t, device_t, void *);
 static int	mainbus_print(void *, const char *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
 
 /* There can be only one. */
@@ -69,7 +69,7 @@ struct mainbusdev mainbusdevs[] = {
 };
 
 static int
-mainbus_match(struct device *parent, struct cfdata *match, void *aux)
+mainbus_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	if (mainbus_found)
@@ -79,15 +79,16 @@ mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-mainbus_attach(struct device *parent, struct device *self, void *aux)
+mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct mainbusdev *md;
+	const struct mainbusdev *md;
 
 	mainbus_found = 1;
 	printf("\n");
 
 	for (md = mainbusdevs; md->md_name != NULL; md++) {
-		config_found_ia(self, "mainbus", md, mainbus_print);
+		struct mainbusdev ma = *md;
+		config_found_ia(self, "mainbus", &ma, mainbus_print);
 	}
 }
 

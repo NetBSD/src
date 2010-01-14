@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.30 2008/01/04 22:13:56 ad Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.30.28.1 2010/01/14 00:27:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.30 2008/01/04 22:13:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.30.28.1 2010/01/14 00:27:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,28 +54,27 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.30 2008/01/04 22:13:56 ad Exp $");
 #define STATIC	static
 #endif
 
-STATIC int mainbus_match(struct device *, struct cfdata *, void *);
-STATIC void mainbus_attach(struct device *, struct device *, void *);
-STATIC int mainbus_search(struct device *, struct cfdata *,
-			  const int *, void *);
+STATIC int mainbus_match(device_t, cfdata_t, void *);
+STATIC void mainbus_attach(device_t, device_t, void *);
+STATIC int mainbus_search(device_t, cfdata_t, const int *, void *);
 STATIC int mainbus_print(void *, const char *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
 
 STATIC int __mainbus_attached;
 
 int
-mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (__mainbus_attached ? 0 : 1);	/* don't attach twice */
 }
 
 void
-mainbus_attach(struct device *parent, struct device *self, void *aux)
+mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	static const char *devnames[] = {	/* ATTACH ORDER */
+	static const char * const devnames[] = {	/* ATTACH ORDER */
 		"cpu",				/* 1. CPU */
 		"vrip", "vr4102ip", "vr4122ip",
 		"vr4181ip",			/* 2. System BUS */
@@ -106,8 +105,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-mainbus_search(struct device *parent, struct cfdata *cf,
-	       const int *ldesc, void *aux)
+mainbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct mainbus_attach_args *ma = (void *)aux;
 	int locator = cf->cf_loc[MAINBUSCF_PLATFORM];

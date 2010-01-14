@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.1 2007/03/20 08:52:00 dyoung Exp $ */
+/* $NetBSD: mainbus.c,v 1.1.62.1 2010/01/14 00:27:23 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2007/03/20 08:52:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1.62.1 2010/01/14 00:27:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,11 +83,11 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2007/03/20 08:52:00 dyoung Exp $");
 
 #include "locators.h"
 
-static int	mainbus_match(struct device *, struct cfdata *, void *);
-static void	mainbus_attach(struct device *, struct device *, void *);
+static int	mainbus_match(device_t, cfdata_t, void *);
+static void	mainbus_attach(device_t, device_t, void *);
 static int	mainbus_print(void *, const char *);
 
-CFATTACH_DECL(mainbus, sizeof(struct mainbus_softc),
+CFATTACH_DECL_NEW(mainbus, sizeof(struct mainbus_softc),
     mainbus_match, mainbus_attach, NULL, NULL);
 
 /* There can be only one. */
@@ -97,7 +97,7 @@ struct mainbusdev {
 	const char *md_name;
 };
 
-struct mainbusdev mainbusdevs[] = {
+const struct mainbusdev mainbusdevs[] = {
 	{"cpu"		},
 	{"obio"		},
 	{"extio"	},
@@ -110,11 +110,11 @@ mainbus_gpio_attach(struct mainbus_softc *sc)
 {
 	if (bus_space_map(sc->sc_obiot, ADM5120_BASE_SWITCH, 512, 0,
 	                  &sc->sc_gpioh) != 0){
-		printf("%s: unable to map switch\n", device_xname(&sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "unable to map switch\n");
 		return;
 	}
 #if 0
-	printf("%s: memcont 0x%08" PRIx32 "\n", device_xname(&sc->sc_dev),
+	aprint_normal_dev(sc->sc_dev, "memcont 0x%08" PRIx32 "\n",
 	    bus_space_read_4(sc->sc_obiot, sc->sc_gpioh, 0x1c));
 #endif
 	sc->sc_gpio = admgpio_attach(sc);
@@ -122,22 +122,23 @@ mainbus_gpio_attach(struct mainbus_softc *sc)
 
 
 static int
-mainbus_match(struct device *parent, struct cfdata *match, void *aux)
+mainbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	return !mainbus_found;
 }
 
 static void
-mainbus_attach(struct device *parent, struct device *self, void *aux)
+mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct mainbus_softc *sc = (struct mainbus_softc *)self;
+	struct mainbus_softc *sc = device_private(self);
 	struct mainbus_attach_args ma;
-	struct mainbusdev *md;
+	const struct mainbusdev *md;
 	struct adm5120_config *admc = &adm5120_configuration;
 
 	mainbus_found = 1;
-	printf("\n");
+	aprint_normal("\n");
 
+	sc->sc_dev = self;
 	sc->sc_obiot = &admc->obio_space;
 
 	mainbus_gpio_attach(sc);
