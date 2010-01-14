@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.141 2009/12/04 20:26:35 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.142 2010/01/14 14:44:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.141 2009/12/04 20:26:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.142 2010/01/14 14:44:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -830,9 +830,10 @@ puffs_vnop_getattr(void *v)
 	struct mount *mp = vp->v_mount;
 	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
 	struct vattr *vap, *rvap;
-	struct puffs_node *pn;
+	struct puffs_node *pn = VPTOPP(vp);
 	int error = 0;
 
+	REFPN(pn);
 	vap = ap->a_vap;
 
 	PUFFS_MSG_ALLOC(vn, getattr);
@@ -863,7 +864,6 @@ puffs_vnop_getattr(void *v)
 	(void) memcpy(vap, rvap, sizeof(struct vattr));
 	vap->va_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 
-	pn = VPTOPP(vp);
 	if (pn->pn_stat & PNODE_METACACHE_ATIME)
 		vap->va_atime = pn->pn_mc_atime;
 	if (pn->pn_stat & PNODE_METACACHE_CTIME)
@@ -881,6 +881,7 @@ puffs_vnop_getattr(void *v)
 	}
 
  out:
+	puffs_releasenode(pn);
 	PUFFS_MSG_RELEASE(getattr);
 	return error;
 }
