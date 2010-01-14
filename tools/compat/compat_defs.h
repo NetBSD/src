@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.75 2009/11/11 21:53:46 tron Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.76 2010/01/14 21:26:56 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -118,6 +118,9 @@ struct group;
 #define __restrict
 #undef __unused
 #define __unused
+#ifndef __arraycount
+#define	__arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
+#endif
 
 /* Dirent support. */
 
