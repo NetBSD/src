@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.84 2010/01/13 20:17:21 christos Exp $	 */
+/*	$NetBSD: rtld.h,v 1.85 2010/01/14 21:52:07 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -161,14 +161,6 @@ typedef struct Struct_Obj_Entry {
 
 	void            (*init)(void); 	/* Initialization function to call */
 	void            (*fini)(void);	/* Termination function to call */
-
-	/* Entry points for dlopen() and friends. */
-	void           *(*dlopen)(const char *, int);
-	void           *(*dlsym)(void *, const char *);
-	char           *(*dlerror)(void);
-	int             (*dlclose)(void *);
-	int             (*dladdr)(const void *, Dl_info *);
-	int		(*dlinfo)(void *, int, void *);
 
 	u_int32_t	mainprog:1,	/* True if this is the main program */
 	        	rtld:1,		/* True if this is the dynamic linker */
