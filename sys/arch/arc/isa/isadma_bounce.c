@@ -1,4 +1,4 @@
-/* $NetBSD: isadma_bounce.c,v 1.11 2008/04/28 20:23:13 martin Exp $ */
+/* $NetBSD: isadma_bounce.c,v 1.11.18.1 2010/01/14 00:37:27 matt Exp $ */
 /* NetBSD: isadma_bounce.c,v 1.2 2000/06/01 05:49:36 thorpej Exp  */
 
 /*-
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.11 2008/04/28 20:23:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.11.18.1 2010/01/14 00:37:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.11 2008/04/28 20:23:13 martin Ex
 #include <dev/isa/isavar.h>
 
 #include <uvm/uvm_extern.h>
-
-extern paddr_t avail_end;	/* from pmap.c */
 
 /*
  * Cookie used by bouncing ISA DMA.  A pointer to one of these is stashed
@@ -174,7 +172,7 @@ isadma_bounce_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * ISA DMA controller), we may have to bounce it as well.
 	 */
 	cookieflags = 0;
-	if (avail_end > ISA_DMA_BOUNCE_THRESHOLD ||
+	if (mips_avail_end > ISA_DMA_BOUNCE_THRESHOLD ||
 	    ((map->_dm_size / PAGE_SIZE) + 1) > map->_dm_segcnt) {
 		cookieflags |= ID_MIGHT_NEED_BOUNCE;
 		cookiesize += (sizeof(bus_dma_segment_t) *
@@ -570,10 +568,10 @@ isadma_bounce_dmamem_alloc(bus_dma_tag_t t, bus_size_t size,
 {
 	paddr_t high;
 
-	if (avail_end > ISA_DMA_BOUNCE_THRESHOLD)
+	if (mips_avail_end > ISA_DMA_BOUNCE_THRESHOLD)
 		high = trunc_page(ISA_DMA_BOUNCE_THRESHOLD);
 	else
-		high = trunc_page(avail_end);
+		high = trunc_page(mips_avail_end);
 
 	return _bus_dmamem_alloc_range(t, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags, 0, high);
