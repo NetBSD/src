@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.33 2010/01/14 16:27:49 tsutsui Exp $	*/
+/*	$NetBSD: installboot.c,v 1.34 2010/01/14 17:49:32 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.33 2010/01/14 16:27:49 tsutsui Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.34 2010/01/14 17:49:32 drochner Exp $");
 #endif	/* !__lint */
 
 #include <sys/ioctl.h>
@@ -87,6 +87,8 @@ const struct option {
 	{ "speed",	IB_CONSPEED,	OPT_INT,	OFFSET(conspeed) },
 	{ "sunsum",	IB_SUNSUM,	OPT_BOOL,	0 },
 	{ "timeout",	IB_TIMEOUT,	OPT_INT,	OFFSET(timeout) },
+	{ "modules",	IB_MODULES,	OPT_BOOL,	0 },
+	{ "bootconf",	IB_BOOTCONF,	OPT_BOOL,	0 },
 	{ .name = NULL },
 };
 #undef OFFSET

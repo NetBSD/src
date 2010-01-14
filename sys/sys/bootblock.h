@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.48 2009/10/26 14:22:47 tsutsui Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.49 2010/01/14 17:49:31 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -1068,6 +1068,8 @@ struct x86_boot_params {
 		/* values for bp_flags */
 #define	X86_BP_FLAGS_RESET_VIDEO	1
 #define	X86_BP_FLAGS_PASSWORD		2
+#define	X86_BP_FLAGS_LOADMODULES	4
+#define	X86_BP_FLAGS_READBOOTCONF	8
 
 		/* values for bp_consdev */
 #define	X86_BP_CONSDEV_PC	0

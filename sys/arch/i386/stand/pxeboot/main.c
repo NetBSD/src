@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2009/12/13 23:01:42 jakllsch Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2010/01/14 17:49:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -130,9 +130,12 @@ main(void)
 	initio(CONSDEV_PC);
 #endif
 	gateA20();
+	boot_modules_enabled = !!(boot_params.bp_flags
+				  & X86_BP_FLAGS_LOADMODULES);
 
 #ifndef SMALL
-	parsebootconf(BOOTCONF);
+	if (boot_params.bp_flags & X86_BP_FLAGS_READBOOTCONF)
+		parsebootconf(BOOTCONF);
 
 	/*
 	 * If console set in boot.cfg, switch to it.

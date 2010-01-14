@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.34 2009/12/23 09:17:41 mbalmer Exp $ */
+/* $NetBSD: i386.c,v 1.35 2010/01/14 17:49:32 drochner Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.34 2009/12/23 09:17:41 mbalmer Exp $");
+__RCSID("$NetBSD: i386.c,v 1.35 2010/01/14 17:49:32 drochner Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -80,12 +80,14 @@ static int i386_editboot(ib_params *);
 struct ib_mach ib_mach_i386 =
 	{ "i386", i386_setboot, no_clearboot, i386_editboot,
 		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED | IB_CONSADDR |
-		IB_KEYMAP | IB_PASSWORD | IB_TIMEOUT };
+		IB_KEYMAP | IB_PASSWORD | IB_TIMEOUT |
+		IB_MODULES | IB_BOOTCONF };
 
 struct ib_mach ib_mach_amd64 =
 	{ "amd64", i386_setboot, no_clearboot, i386_editboot,
 		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED | IB_CONSADDR |
-		IB_KEYMAP | IB_PASSWORD | IB_TIMEOUT };
+		IB_KEYMAP | IB_PASSWORD | IB_TIMEOUT |
+		IB_MODULES | IB_BOOTCONF };
 
 /*
  * Attempting to write the 'labelsector' (or a sector near it - within 8k?)
@@ -272,6 +274,10 @@ update_i386_boot_params(ib_params *params, struct x86_boot_params  *bpp)
 	}
 	if (params->flags & IB_KEYMAP)
 		strlcpy(bp.bp_keymap, params->keymap, sizeof bp.bp_keymap);
+	if (params->flags & IB_MODULES)
+		bp.bp_flags ^= htole32(X86_BP_FLAGS_LOADMODULES);
+	if (params->flags & IB_BOOTCONF)
+		bp.bp_flags ^= htole32(X86_BP_FLAGS_READBOOTCONF);
 
 	if (params->flags & (IB_NOWRITE | IB_VERBOSE))
 		show_i386_boot_params(&bp);

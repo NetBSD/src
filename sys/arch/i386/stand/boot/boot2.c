@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.45 2009/09/13 22:45:27 jmcneill Exp $	*/
+/*	$NetBSD: boot2.c,v 1.46 2010/01/14 17:49:31 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -291,6 +291,8 @@ boot2(int biosdev, u_int biossector)
 #endif
 	gateA20();
 
+	boot_modules_enabled = !!(boot_params.bp_flags
+				  & X86_BP_FLAGS_LOADMODULES);
 	if (boot_params.bp_flags & X86_BP_FLAGS_RESET_VIDEO)
 		biosvideomode();
 
@@ -308,7 +310,8 @@ boot2(int biosdev, u_int biossector)
 	default_filename = DEFFILENAME;
 
 #ifndef SMALL
-	parsebootconf(BOOTCONF);
+	if (boot_params.bp_flags & X86_BP_FLAGS_READBOOTCONF)
+		parsebootconf(BOOTCONF);
 
 	/*
 	 * If console set in boot.cfg, switch to it.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.73 2009/05/07 07:09:49 lukem Exp $
+.\"	$NetBSD: installboot.8,v 1.74 2010/01/14 17:49:32 drochner Exp $
 .\"
 .\" Copyright (c) 2002-2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 12, 2008
+.Dd January 11, 2010
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -305,6 +305,18 @@ disklabel should use no more than 4 partitions.
 .Sy [ amd64 ,
 .Sy i386 ]
 Set the timeout before the automatic boot begins to the given number of seconds.
+.
+.It Sy modules
+.Sy [ amd64 ,
+.Sy i386 ]
+(Don't) load kernel modules.
+.
+.It Sy bootconf
+.Sy [ amd64 ,
+.Sy i386 ]
+(Don't) read a
+.Dq boot.cfg
+file.
 .El
 .
 .It Fl t Ar fstype

@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.36 2010/01/07 13:26:00 tsutsui Exp $	*/
+/*	$NetBSD: installboot.h,v 1.37 2010/01/14 17:49:32 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,6 +65,8 @@ typedef enum {
 	IB_PASSWORD =	1<<18,		/* i386 boot password */
 	IB_KEYMAP = 	1<<19,		/* i386 console keymap */
 	IB_CONSADDR = 	1<<20,		/* i386 console io address */
+	IB_MODULES =	1<<21,		/* i386: load modules */
+	IB_BOOTCONF = 	1<<22,		/* i386: read boot.conf */
 } ib_flags;
 
 typedef struct {
