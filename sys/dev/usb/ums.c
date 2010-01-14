@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.79 2010/01/12 16:18:58 jakllsch Exp $	*/
+/*	$NetBSD: ums.c,v 1.80 2010/01/14 09:30:39 matthias Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.79 2010/01/12 16:18:58 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.80 2010/01/14 09:30:39 matthias Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,7 +287,8 @@ ums_attach(device_t parent, device_t self, void *aux)
 	 * in bytes 3 & 4 of the report.  Fix this if necessary.
 	 */
 	if (uha->uaa->vendor == USB_VENDOR_MICROSOFT &&
-	    uha->uaa->product == USB_PRODUCT_MICROSOFT_24GHZ_XCVR) {
+	    (uha->uaa->product == USB_PRODUCT_MICROSOFT_24GHZ_XCVR10 ||
+	     uha->uaa->product == USB_PRODUCT_MICROSOFT_24GHZ_XCVR20)) {	
 		if ((sc->flags & UMS_Z) && sc->sc_loc_z.pos == 0)
 			sc->sc_loc_z.pos = 24;
 		if ((sc->flags & UMS_W) && sc->sc_loc_w.pos == 0)
