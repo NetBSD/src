@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.539 2010/01/12 14:50:38 jakllsch Exp $
+$NetBSD: usbdevs,v 1.540 2010/01/14 09:30:39 matthias Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1601,7 +1601,8 @@ product MICROSOFT XBOX_DVD_PLAYBACK	0x0284	Xbox DVD Movie Playback Kit
 product MICROSOFT XBOX_CONTROLLER_S10	0x0285	Xbox Controller S (1.0)
 product MICROSOFT XBOX_CONTROLLER_HUB	0x0288	Xbox Controller Hub
 product MICROSOFT XBOX_CONTROLLER_S12	0x0289	Xbox Controller S (1.2)
-product MICROSOFT 24GHZ_XCVR		0x071f  2.4GHz Transceiver V2.0
+product MICROSOFT 24GHZ_XCVR10		0x071d  2.4GHz Transceiver V1.0
+product MICROSOFT 24GHZ_XCVR20		0x071f  2.4GHz Transceiver V2.0
 
 /* Microtech products */
 product MICROTECH SCSIDB25	0x0004	USB-SCSI-DB25
