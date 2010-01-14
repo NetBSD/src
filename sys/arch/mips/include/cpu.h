@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.10 2010/01/13 09:42:16 cliff Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.11 2010/01/14 00:40:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -50,6 +50,7 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 #endif
 
 struct pridtab {
@@ -135,6 +136,9 @@ struct cpu_info {
 	int ci_mtx_count;		/* negative count of held mutexes */
 	int ci_mtx_oldspl;		/* saved SPL value */
 	int ci_idepth;			/* hardware interrupt depth */
+	device_t ci_dev;		/* owning device */
+	vaddr_t ci_ebase;		/* VA of exception base */
+	paddr_t ci_ebase_pa;		/* PA of exception base */
 };
 
 #define	CPU_INFO_ITERATOR		int

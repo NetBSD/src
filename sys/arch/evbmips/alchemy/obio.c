@@ -1,4 +1,4 @@
-/* $NetBSD: obio.c,v 1.1.98.1 2010/01/10 02:48:45 matt Exp $ */
+/* $NetBSD: obio.c,v 1.1.98.2 2010/01/14 00:40:34 matt Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.1.98.1 2010/01/10 02:48:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.1.98.2 2010/01/14 00:40:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,20 +52,19 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.1.98.1 2010/01/10 02:48:45 matt Exp $");
 
 #include "locators.h"
 
-static int	obio_match(struct device *, struct cfdata *, void *);
-static void	obio_attach(struct device *, struct device *, void *);
-static int	obio_submatch(struct device *, struct cfdata *,
-			      const int *, void *);
+static int	obio_match(device_t, cfdata_t, void *);
+static void	obio_attach(device_t, device_t, void *);
+static int	obio_submatch(device_t, cfdata_t, const int *, void *);
 static int	obio_print(void *, const char *);
 
-CFATTACH_DECL(obio, sizeof(struct device),
+CFATTACH_DECL_NEW(obio, 0,
     obio_match, obio_attach, NULL, NULL);
 
 /* There can be only one. */
 static int	obio_found = 0;
 
 static int
-obio_match(struct device *parent, struct cfdata *match, void *aux)
+obio_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	if (obio_found)
@@ -75,7 +74,7 @@ obio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-obio_attach(struct device *parent, struct device *self, void *aux)
+obio_attach(device_t parent, device_t self, void *aux)
 {
 	struct obio_attach_args oa;
 	const struct obiodev *od;
@@ -95,7 +94,7 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-obio_submatch(struct device *parent, struct cfdata *cf,
+obio_submatch(device_t parent, cfdata_t cf,
 	      const int *ldesc, void *aux)
 {
 	struct obio_attach_args *oa = aux;

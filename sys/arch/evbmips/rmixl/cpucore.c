@@ -1,4 +1,4 @@
-/*	$NetBSD: cpucore.c,v 1.1.2.2 2010/01/13 09:56:10 cliff Exp $	*/
+/*	$NetBSD: cpucore.c,v 1.1.2.3 2010/01/14 00:40:35 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpucore.c,v 1.1.2.2 2010/01/13 09:56:10 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpucore.c,v 1.1.2.3 2010/01/14 00:40:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -47,44 +47,43 @@ __KERNEL_RCSID(0, "$NetBSD: cpucore.c,v 1.1.2.2 2010/01/13 09:56:10 cliff Exp $"
 #include <evbmips/rmixl/autoconf.h>
 #include <evbmips/rmixl/cpucorevar.h>
 
-typedef struct cpucore_softc {
-	device_t	sc_dev;
-	bool		sc_attached;
-} cpucore_softc_t;
-
-static int	cpucore_match(struct device *, struct cfdata *, void *);
-static void	cpucore_attach(struct device *, struct device *, void *);
+static int	cpucore_match(device_t, cfdata_t, void *);
+static void	cpucore_attach(device_t, device_t, void *);
 static int	cpucore_print(void *, const char *);
 
-CFATTACH_DECL(cpucore, sizeof(struct device),
+CFATTACH_DECL_NEW(cpucore, sizeof(struct cpucore_softc),
     cpucore_match, cpucore_attach, NULL, NULL);
 
 static int
-cpucore_match(struct device *parent, struct cfdata *cf, void *aux)
+cpucore_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct mainbus_attach_args *aa = aux;
+	struct mainbus_attach_args *ma = aux;
 	int core = cf->cf_loc[MAINBUSCF_CORE];
 
-	if (strncmp(aa->ma_name, cf->cf_name, strlen(cf->cf_name)) == 0)
+	if (strncmp(ma->ma_name, cf->cf_name, strlen(cf->cf_name)) == 0
 #ifndef MULTIPROCESSOR
-	    if (aa->ma_core == 0)
+	    && ma->ma_core == 0
 #endif
-		if ((core == MAINBUSCF_CORE_DEFAULT)
-		||  (core == aa->ma_core))
-			return 1;
+	    && (core == MAINBUSCF_CORE_DEFAULT || core == ma->ma_core))
+		return 1;
 
 	return 0;
 }
 
 static void
-cpucore_attach(struct device *parent, struct device *self, void *aux)
+cpucore_attach(device_t parent, device_t self, void *aux)
 {
-	struct cpucore_attach_args aa;
+	struct cpucore_softc * const sc = device_private(self);
+	struct mainbus_attach_args *ma = aux;
+	struct cpucore_attach_args ca;
 	u_int nthreads;
 
-	aprint_normal("\n%s: %lu.%02luMHz (hz cycles = %lu, "
+	sc->sc_dev = self;
+	sc->sc_core = ma->ma_core;
+
+	aprint_normal("\n");
+	aprint_normal_dev(self, "%lu.%02luMHz (hz cycles = %lu, "
 	    "delay divisor = %lu)\n",
-	    device_xname(self),
 	    curcpu()->ci_cpu_freq / 1000000,
 	    (curcpu()->ci_cpu_freq % 1000000) / 10000,
 	    curcpu()->ci_cycles_per_hz, curcpu()->ci_divisor_delay);
@@ -93,28 +92,28 @@ cpucore_attach(struct device *parent, struct device *self, void *aux)
 	cpu_identify(self);
 
 	nthreads = MIPS_CIDFL_RMI_NTHREADS(mycpu->cpu_cidflags);
-	aprint_normal("%s: %d %s on core\n", device_xname(self), nthreads,
+	aprint_normal_dev(self, "%d %s on core\n", nthreads,
 		nthreads == 1 ? "thread" : "threads");
 
 	/*
-	 * Attach CPU (RMI thread) devices
+	 * Attach CPU (RMI thread contexts) devices
 	 */
 	for (int i=0; i < nthreads; i++) {
-		aa.ca_name = "cpu";
-		aa.ca_thread = i;
-		config_found(self, &aa, cpucore_print);
+		ca.ca_name = "cpu";
+		ca.ca_thread = i;
+		ca.ca_core = sc->sc_core;
+		config_found(self, &ca, cpucore_print);
 	}
 }
 
 static int
 cpucore_print(void *aux, const char *pnp)
 {
-	struct cpucore_attach_args *aa = aux;
+	struct cpucore_attach_args *ca = aux;
 
 	if (pnp != NULL)
 		aprint_normal("%s:", pnp);
-	aprint_normal(" thread %d", aa->ca_thread);
+	aprint_normal(" thread %d", ca->ca_thread);
 
 	return (UNCONF);
 }
-
