@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.191 2010/01/12 22:26:30 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.192 2010/01/14 18:56:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.191 2010/01/12 22:26:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.192 2010/01/14 18:56:02 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -124,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.191 2010/01/12 22:26:30 msaitoh Exp $");
 #include <dev/mii/mii_bitbang.h>
 #include <dev/mii/ikphyreg.h>
 #include <dev/mii/igphyreg.h>
+#include <dev/mii/inbmphyreg.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -249,7 +250,9 @@ struct wm_softc {
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pcitag;
 
-	wm_chip_type sc_type;		/* chip type */
+	wm_chip_type sc_type;		/* MAC type */
+	int sc_rev;			/* MAC revision */
+	wm_phy_type sc_phytype;		/* PHY type */
 	int sc_flags;			/* flags; see below */
 	int sc_if_flags;		/* last if_flags */
 	int sc_bus_speed;		/* PCI/PCIX bus speed */
@@ -366,6 +369,7 @@ struct wm_softc {
 #endif
 	int sc_ich8_flash_base;
 	int sc_ich8_flash_bank_size;
+	int sc_nvm_k1_enabled;
 };
 
 #define	WM_RXCHAIN_RESET(sc)						\
@@ -520,8 +524,8 @@ static int	wm_gmii_i80003_readreg(device_t, int, int);
 static void	wm_gmii_i80003_writereg(device_t, int, int, int);
 static int	wm_gmii_bm_readreg(device_t, int, int);
 static void	wm_gmii_bm_writereg(device_t, int, int, int);
-static int	wm_gmii_kv_readreg(device_t, int, int);
-static void	wm_gmii_kv_writereg(device_t, int, int, int);
+static int	wm_gmii_hv_readreg(device_t, int, int);
+static void	wm_gmii_hv_writereg(device_t, int, int, int);
 
 static void	wm_gmii_statchg(device_t);
 
@@ -562,6 +566,9 @@ static int	wm_check_mng_mode_generic(struct wm_softc *);
 static int	wm_check_reset_block(struct wm_softc *);
 static void	wm_get_hw_control(struct wm_softc *);
 static int	wm_check_for_link(struct wm_softc *);
+static void	wm_hv_phy_workaround_ich8lan(struct wm_softc *);
+static void	wm_k1_gig_workaround_hv(struct wm_softc *, int);
+static void	wm_configure_k1_ich8lan(struct wm_softc *, int);
 
 CFATTACH_DECL_NEW(wm, sizeof(struct wm_softc),
     wm_match, wm_attach, NULL, NULL);
@@ -991,18 +998,18 @@ wm_attach(device_t parent, device_t self, void *aux)
 	else
 		sc->sc_dmat = pa->pa_dmat;
 
-	preg = PCI_REVISION(pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG));
+	sc->sc_rev = PCI_REVISION(pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG));
 	aprint_naive(": Ethernet controller\n");
-	aprint_normal(": %s, rev. %d\n", wmp->wmp_name, preg);
+	aprint_normal(": %s, rev. %d\n", wmp->wmp_name, sc->sc_rev);
 
 	sc->sc_type = wmp->wmp_type;
 	if (sc->sc_type < WM_T_82543) {
-		if (preg < 2) {
+		if (sc->sc_rev < 2) {
 			aprint_error_dev(sc->sc_dev,
 			    "i82542 must be at least rev. 2\n");
 			return;
 		}
-		if (preg < 3)
+		if (sc->sc_rev < 3)
 			sc->sc_type = WM_T_82542_2_0;
 	}
 
@@ -1573,6 +1580,18 @@ wm_attach(device_t parent, device_t self, void *aux)
 	} else {
 		sc->sc_rdt_reg = WMREG_RDT;
 		sc->sc_tdt_reg = WMREG_TDT;
+	}
+
+	if (sc->sc_type == WM_T_PCH) {
+		uint16_t val;
+
+		/* Save the NVM K1 bit setting */
+		wm_read_eeprom(sc, EEPROM_OFF_K1_CONFIG, 1, &val);
+
+		if ((val & EEPROM_K1_CONFIG_ENABLE) != 0)
+			sc->sc_nvm_k1_enabled = 1;
+		else
+			sc->sc_nvm_k1_enabled = 0;
 	}
 
 	/*
@@ -2896,74 +2915,101 @@ wm_rxintr(struct wm_softc *sc)
 }
 
 /*
- * wm_linkintr:
+ * wm_linkintr_gmii:
  *
- *	Helper; handle link interrupts.
+ *	Helper; handle link interrupts for GMII.
  */
 static void
-wm_linkintr(struct wm_softc *sc, uint32_t icr)
+wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
+{
+
+	DPRINTF(WM_DEBUG_LINK, ("%s: %s:\n", device_xname(sc->sc_dev),
+		__func__));
+
+	if (icr & ICR_LSC) {
+		DPRINTF(WM_DEBUG_LINK,
+		    ("%s: LINK: LSC -> mii_tick\n",
+			device_xname(sc->sc_dev)));
+		mii_tick(&sc->sc_mii);
+		if (sc->sc_type == WM_T_82543) {
+			int miistatus, active;
+
+			/*
+			 * With 82543, we need to force speed and
+			 * duplex on the MAC equal to what the PHY
+			 * speed and duplex configuration is.
+			 */
+			miistatus = sc->sc_mii.mii_media_status;
+
+			if (miistatus & IFM_ACTIVE) {
+				active = sc->sc_mii.mii_media_active;
+				sc->sc_ctrl &= ~(CTRL_SPEED_MASK | CTRL_FD);
+				switch (IFM_SUBTYPE(active)) {
+				case IFM_10_T:
+					sc->sc_ctrl |= CTRL_SPEED_10;
+					break;
+				case IFM_100_TX:
+					sc->sc_ctrl |= CTRL_SPEED_100;
+					break;
+				case IFM_1000_T:
+					sc->sc_ctrl |= CTRL_SPEED_1000;
+					break;
+				default:
+					/*
+					 * fiber?
+					 * Shoud not enter here.
+					 */
+					printf("unknown media (%x)\n",
+					    active);
+					break;
+				}
+				if (active & IFM_FDX)
+					sc->sc_ctrl |= CTRL_FD;
+				CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+			}
+		} else if (sc->sc_type == WM_T_PCH) {
+			wm_k1_gig_workaround_hv(sc,
+			    ((sc->sc_mii.mii_media_status & IFM_ACTIVE) != 0));
+		}
+
+		if ((sc->sc_phytype == WMPHY_82578)
+		    && (IFM_SUBTYPE(sc->sc_mii.mii_media_active)
+			== IFM_1000_T)) {
+
+			if ((sc->sc_mii.mii_media_status & IFM_ACTIVE) != 0) {
+				printf("XXX link sall wa\n");
+				delay(200*1000); /* XXX too big */
+
+				/* Link stall fix for link up */
+				wm_gmii_hv_writereg(sc->sc_dev, 1,
+				    HV_MUX_DATA_CTRL,
+				    HV_MUX_DATA_CTRL_GEN_TO_MAC
+				    | HV_MUX_DATA_CTRL_FORCE_SPEED);
+				wm_gmii_hv_writereg(sc->sc_dev, 1,
+				    HV_MUX_DATA_CTRL,
+				    HV_MUX_DATA_CTRL_GEN_TO_MAC);
+			}
+		}
+	} else if (icr & ICR_RXSEQ) {
+		DPRINTF(WM_DEBUG_LINK,
+		    ("%s: LINK Receive sequence error\n",
+			device_xname(sc->sc_dev)));
+	}
+}
+
+/*
+ * wm_linkintr_tbi:
+ *
+ *	Helper; handle link interrupts for TBI mode.
+ */
+static void
+wm_linkintr_tbi(struct wm_softc *sc, uint32_t icr)
 {
 	uint32_t status;
 
 	DPRINTF(WM_DEBUG_LINK, ("%s: %s:\n", device_xname(sc->sc_dev),
 		__func__));
-	/*
-	 * If we get a link status interrupt on a 1000BASE-T
-	 * device, just fall into the normal MII tick path.
-	 */
-	if (sc->sc_flags & WM_F_HAS_MII) {
-		if (icr & ICR_LSC) {
-			DPRINTF(WM_DEBUG_LINK,
-			    ("%s: LINK: LSC -> mii_tick\n",
-			    device_xname(sc->sc_dev)));
-			mii_tick(&sc->sc_mii);
-			if (sc->sc_type == WM_T_82543) {
-				int miistatus, active;
 
-				/*
-				 * With 82543, we need to force speed and
-				 * duplex on the MAC equal to what the PHY
-				 * speed and duplex configuration is.
-				 */
-				miistatus = sc->sc_mii.mii_media_status;
-
-				if (miistatus & IFM_ACTIVE) {
-					active = sc->sc_mii.mii_media_active;
-					sc->sc_ctrl &= ~(CTRL_SPEED_MASK
-					    | CTRL_FD);
-					switch (IFM_SUBTYPE(active)) {
-					case IFM_10_T:
-						sc->sc_ctrl |= CTRL_SPEED_10;
-						break;
-					case IFM_100_TX:
-						sc->sc_ctrl |= CTRL_SPEED_100;
-						break;
-					case IFM_1000_T:
-						sc->sc_ctrl |= CTRL_SPEED_1000;
-						break;
-					default:
-						/*
-						 * fiber?
-						 * Shoud not enter here.
-						 */
-						printf("unknown media (%x)\n",
-						    active);
-						break;
-					}
-					if (active & IFM_FDX)
-						sc->sc_ctrl |= CTRL_FD;
-					CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-				}
-			}
-		} else if (icr & ICR_RXSEQ) {
-			DPRINTF(WM_DEBUG_LINK,
-			    ("%s: LINK Receive sequence error\n",
-			    device_xname(sc->sc_dev)));
-		}
-		return;
-	}
-
-	/* TBI mode */
 	status = CSR_READ(sc, WMREG_STATUS);
 	if (icr & ICR_LSC) {
 		if (status & STATUS_LU) {
@@ -3007,6 +3053,21 @@ wm_linkintr(struct wm_softc *sc, uint32_t icr)
 		    ("%s: LINK: Receive sequence error\n",
 		    device_xname(sc->sc_dev)));
 	}
+}
+
+/*
+ * wm_linkintr:
+ *
+ *	Helper; handle link interrupts.
+ */
+static void
+wm_linkintr(struct wm_softc *sc, uint32_t icr)
+{
+
+	if (sc->sc_flags & WM_F_HAS_MII)
+		wm_linkintr_gmii(sc, icr);
+	else
+		wm_linkintr_tbi(sc, icr);
 }
 
 /*
@@ -3159,10 +3220,6 @@ wm_reset(struct wm_softc *sc)
 		delay(5000);
 	}
 
-	if (sc->sc_type == WM_T_PCH) {
-		/* Save K1 */
-	}
-
 	switch (sc->sc_type) {
 	case WM_T_82544: /* XXX check whether WM_F_IOH_VALID is set */
 	case WM_T_82541:
@@ -3303,6 +3360,9 @@ wm_reset(struct wm_softc *sc)
 	/* reload sc_ctrl */
 	sc->sc_ctrl = CSR_READ(sc, WMREG_CTRL);
 
+	/* dummy read from WUC */
+	if (sc->sc_type == WM_T_PCH)
+		reg = wm_gmii_hv_readreg(sc->sc_dev, 1, BM_WUC);
 	/*
 	 * For PCH, this write will make sure that any noise will be detected
 	 * as a CRC error and be dropped rather than show up as a bad packet
@@ -3389,6 +3449,11 @@ wm_init(struct ifnet *ifp)
 	/* Reset the PHY. */
 	if (sc->sc_flags & WM_F_HAS_MII)
 		wm_gmii_reset(sc);
+
+	reg = CSR_READ(sc, WMREG_CTRL_EXT);
+	/* Enable PHY low-power state when MAC is at D3 w/o WoL */
+	if (sc->sc_type == WM_T_PCH)
+		CSR_WRITE(sc, WMREG_CTRL_EXT, reg | CTRL_EXT_PHYPDEN);
 
 	/* Initialize the transmit descriptor ring. */
 	memset(sc->sc_txdescs, 0, WM_TXDESCSIZE(sc));
@@ -4779,7 +4844,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82573:
 	case WM_T_82574:
 	case WM_T_82583:
-		 /* XXX sould get sw semaphore, too */
+		 /* XXX should get sw semaphore, too */
 		rv = wm_get_swsm_semaphore(sc);
 		break;
 	case WM_T_80003:
@@ -4874,11 +4939,6 @@ wm_gmii_reset(struct wm_softc *sc)
 		delay(100);
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 		delay(150);
-
-		/* Allow time for h/w to get to a quiescent state afer reset */
-		delay(10*1000);
-
-		/* XXX add code to set LED after phy reset */
 		break;
 	default:
 		panic("%s: %s: unknown type\n", device_xname(sc->sc_dev),
@@ -4943,36 +5003,34 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_ICH9:
 	case WM_T_ICH10:
 	case WM_T_PCH:
+		/* Allow time for h/w to get to a quiescent state afer reset */
 		delay(10*1000);
 
 		if (sc->sc_type == WM_T_PCH) {
-			/* XXX hv_phy_workaround */
+			wm_hv_phy_workaround_ich8lan(sc);
 
-			/* dummy read from WUC */
-		}
-		/* XXX SW LCD configuration from NVM */
-
-		if (sc->sc_type == WM_T_PCH) {
-			/* XXX Configure the LCD with the OEM bits in NVM */
-
-#if 1
 			/*
-			 * We shlould make the new driver for 8257[78] and
-			 * move these code into it.
+			 * dummy read to clear the phy wakeup bit after lcd
+			 * reset
 			 */
-#define HV_OEM_BITS	((0 << 5) | 25)
-#define HV_OEM_BITS_LPLU	(1 << 2)
-#define HV_OEM_BITS_A1KDIS	(1 << 6)
-#define HV_OEM_BITS_ANEGNOW	(1 << 10)
-#endif
+			reg = wm_gmii_hv_readreg(sc->sc_dev, 1, BM_WUC);
+		}
+
+		/*
+		 * XXX Configure the LCD with th extended configuration region
+		 * in NVM
+		 */
+
+		/* Configure the LCD with the OEM bits in NVM */
+		if (sc->sc_type == WM_T_PCH) {
 			/*
 			 * Disable LPLU.
 			 * XXX It seems that 82567 has LPLU, too.
 			 */
-			reg = wm_gmii_kv_readreg(sc->sc_dev, 1, HV_OEM_BITS);
+			reg = wm_gmii_hv_readreg(sc->sc_dev, 1, HV_OEM_BITS);
 			reg &= ~(HV_OEM_BITS_A1KDIS| HV_OEM_BITS_LPLU);
 			reg |= HV_OEM_BITS_ANEGNOW;
-			wm_gmii_kv_writereg(sc->sc_dev, 1, HV_OEM_BITS, reg);
+			wm_gmii_hv_writereg(sc->sc_dev, 1, HV_OEM_BITS, reg);
 		}
 		break;
 	default:
@@ -5014,11 +5072,17 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	switch (prodid) {
 	case PCI_PRODUCT_INTEL_PCH_M_LM:
 	case PCI_PRODUCT_INTEL_PCH_M_LC:
+		/* 82577 */
+		sc->sc_phytype = WMPHY_82577;
+		sc->sc_mii.mii_readreg = wm_gmii_hv_readreg;
+		sc->sc_mii.mii_writereg = wm_gmii_hv_writereg;
+		break;
 	case PCI_PRODUCT_INTEL_PCH_D_DM:
 	case PCI_PRODUCT_INTEL_PCH_D_DC:
-		/* 82577 or 82578 */
-		sc->sc_mii.mii_readreg = wm_gmii_kv_readreg;
-		sc->sc_mii.mii_writereg = wm_gmii_kv_writereg;
+		/* 82578 */
+		sc->sc_phytype = WMPHY_82578;
+		sc->sc_mii.mii_readreg = wm_gmii_hv_readreg;
+		sc->sc_mii.mii_writereg = wm_gmii_hv_writereg;
 		break;
 	case PCI_PRODUCT_INTEL_82801I_BM:
 	case PCI_PRODUCT_INTEL_82801J_R_BM_LM:
@@ -5027,6 +5091,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	case PCI_PRODUCT_INTEL_82801J_D_BM_LF:
 	case PCI_PRODUCT_INTEL_82801J_R_BM_V:
 		/* 82567 */
+		sc->sc_phytype = WMPHY_BM;
 		sc->sc_mii.mii_readreg = wm_gmii_bm_readreg;
 		sc->sc_mii.mii_writereg = wm_gmii_bm_writereg;
 		break;
@@ -5066,8 +5131,10 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
-	} else
+		sc->sc_phytype = WMPHY_NONE;
+	} else {
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+	}
 }
 
 /*
@@ -5405,7 +5472,7 @@ wm_gmii_bm_readreg(device_t self, int phy, int reg)
 		return 0;
 	}
 
-	if (reg > GG82563_MAX_REG_ADDRESS) {
+	if (reg > BME1000_MAX_MULTI_PAGE_REG) {
 		if (phy == 1)
 			wm_gmii_i82544_writereg(self, phy, 0x1f,
 			    reg);
@@ -5439,7 +5506,7 @@ wm_gmii_bm_writereg(device_t self, int phy, int reg, int val)
 		return;
 	}
 
-	if (reg > GG82563_MAX_REG_ADDRESS) {
+	if (reg > BME1000_MAX_MULTI_PAGE_REG) {
 		if (phy == 1)
 			wm_gmii_i82544_writereg(self, phy, 0x1f,
 			    reg);
@@ -5453,17 +5520,61 @@ wm_gmii_bm_writereg(device_t self, int phy, int reg, int val)
 	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
 }
 
+static void
+wm_access_phy_wakeup_reg_bm(device_t self, int offset, int16_t *val, int rd)
+{
+	struct wm_softc *sc = device_private(self);
+	uint16_t regnum = BM_PHY_REG_NUM(offset);
+	uint16_t wuce;
+
+	/* XXX Gig must be disabled for MDIO accesses to page 800 */
+	if (sc->sc_type == WM_T_PCH) {
+		/* XXX e1000 driver do nothing... why? */
+	}
+
+	/* Set page 769 */
+	wm_gmii_i82544_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
+	    BM_WUC_ENABLE_PAGE << BME1000_PAGE_SHIFT);
+
+	wuce = wm_gmii_i82544_readreg(self, 1, BM_WUC_ENABLE_REG);
+
+	wuce &= ~BM_WUC_HOST_WU_BIT;
+	wm_gmii_i82544_writereg(self, 1, BM_WUC_ENABLE_REG,
+	    wuce | BM_WUC_ENABLE_BIT);
+
+	/* Select page 800 */
+	wm_gmii_i82544_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
+	    BM_WUC_PAGE << BME1000_PAGE_SHIFT);
+
+	/* Write page 800 */
+	wm_gmii_i82544_writereg(self, 1, BM_WUC_ADDRESS_OPCODE, regnum);
+	    
+	if (rd)
+		*val = wm_gmii_i82544_readreg(self, 1, BM_WUC_DATA_OPCODE);
+	else
+		wm_gmii_i82544_writereg(self, 1, BM_WUC_DATA_OPCODE, *val);
+
+	/* Set page 769 */
+	wm_gmii_i82544_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
+	    BM_WUC_ENABLE_PAGE << BME1000_PAGE_SHIFT);
+
+	wm_gmii_i82544_writereg(self, 1, BM_WUC_ENABLE_REG, wuce);
+}
+
 /*
- * wm_gmii_kv_readreg:	[mii interface function]
+ * wm_gmii_hv_readreg:	[mii interface function]
  *
  *	Read a PHY register on the kumeran
  * This could be handled by the PHY layer if we didn't have to lock the
  * ressource ...
  */
 static int
-wm_gmii_kv_readreg(device_t self, int phy, int reg)
+wm_gmii_hv_readreg(device_t self, int phy, int reg)
 {
 	struct wm_softc *sc = device_private(self);
+	uint16_t page = BM_PHY_REG_PAGE(reg);
+	uint16_t regnum = BM_PHY_REG_NUM(reg);
+	uint16_t val;
 	int rv;
 
 	if (wm_get_swfw_semaphore(sc, SWFW_PHY0_SM)) {
@@ -5472,28 +5583,49 @@ wm_gmii_kv_readreg(device_t self, int phy, int reg)
 		return 0;
 	}
 
-	if (reg > GG82563_MAX_REG_ADDRESS) {
-		printf("XXX rd pagesel\n");
-		wm_gmii_i82544_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
-		    reg & IGPHY_PAGEMASK);
+	/* XXX Workaround failure in MDIO access while cable is disconnected */
+	if (sc->sc_phytype == WMPHY_82577) {
+		/* XXX must write */
 	}
 
-	rv = wm_gmii_i82544_readreg(self, phy, reg & IGPHY_MAXREGADDR);
+	/* Page 800 works differently than the rest so it has its own func */
+	if (page == BM_WUC_PAGE) {
+		wm_access_phy_wakeup_reg_bm(self, reg, &val, 1);
+		return val;
+	}
+
+	/*
+	 * Lower than page 768 works differently than the rest so it has its
+	 * own func
+	 */
+	if ((page > 0) && (page < HV_INTC_FC_PAGE_START)) {
+		printf("gmii_hv_readreg!!!\n");
+		return 0;
+	}
+
+	if (regnum > BME1000_MAX_MULTI_PAGE_REG) {
+		wm_gmii_i82544_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
+		    page << BME1000_PAGE_SHIFT);
+	}
+
+	rv = wm_gmii_i82544_readreg(self, phy, regnum & IGPHY_MAXREGADDR);
 	wm_put_swfw_semaphore(sc, SWFW_PHY0_SM);
 	return (rv);
 }
 
 /*
- * wm_gmii_kv_writereg:	[mii interface function]
+ * wm_gmii_hv_writereg:	[mii interface function]
  *
  *	Write a PHY register on the kumeran.
  * This could be handled by the PHY layer if we didn't have to lock the
  * ressource ...
  */
 static void
-wm_gmii_kv_writereg(device_t self, int phy, int reg, int val)
+wm_gmii_hv_writereg(device_t self, int phy, int reg, int val)
 {
 	struct wm_softc *sc = device_private(self);
+	uint16_t page = BM_PHY_REG_PAGE(reg);
+	uint16_t regnum = BM_PHY_REG_NUM(reg);
 
 	if (wm_get_swfw_semaphore(sc, SWFW_PHY0_SM)) {
 		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
@@ -5501,13 +5633,37 @@ wm_gmii_kv_writereg(device_t self, int phy, int reg, int val)
 		return;
 	}
 
-	if (reg > GG82563_MAX_REG_ADDRESS) {
-		printf("XXX wr pagesel\n");
-		wm_gmii_i82544_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
-		    reg & IGPHY_PAGEMASK);
+	/* XXX Workaround failure in MDIO access while cable is disconnected */
+
+	/* Page 800 works differently than the rest so it has its own func */
+	if (page == BM_WUC_PAGE) {
+		uint16_t tmp;
+
+		tmp = val;
+		wm_access_phy_wakeup_reg_bm(self, reg, &tmp, 0);
+		return;
 	}
 
-	wm_gmii_i82544_writereg(self, phy, reg & IGPHY_MAXREGADDR, val);
+	/*
+	 * Lower than page 768 works differently than the rest so it has its
+	 * own func
+	 */
+	if ((page > 0) && (page < HV_INTC_FC_PAGE_START)) {
+		printf("gmii_hv_writereg!!!\n");
+		return;
+	}
+
+	/*
+	 * XXX Workaround MDIO accesses being disabled after entering IEEE
+	 * Power Down (whenever bit 11 of the PHY control register is set)
+	 */
+
+	if (regnum > BME1000_MAX_MULTI_PAGE_REG) {
+		wm_gmii_i82544_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
+		    page << BME1000_PAGE_SHIFT);
+	}
+
+	wm_gmii_i82544_writereg(self, phy, regnum & IGPHY_MAXREGADDR, val);
 	wm_put_swfw_semaphore(sc, SWFW_PHY0_SM);
 }
 
@@ -6288,4 +6444,97 @@ wm_check_for_link(struct wm_softc *sc)
 	}
 
 	return 0;
+}
+
+/*
+ * Workaround for pch's PHYs
+ * XXX should be moved to new PHY driver?
+ */
+static void
+wm_hv_phy_workaround_ich8lan(struct wm_softc *sc)
+{
+
+	/* (PCH rev.2) && (82577 && (phy rev 2 or 3)) */
+
+	/* (82577 && (phy rev 1 or 2)) || (82578 & phy rev 1)*/
+
+	/* 82578 */
+	if (sc->sc_phytype == WMPHY_82578) {
+		/* PCH rev. < 3 */
+		if (sc->sc_rev < 3) {
+			/* XXX 6 bit shift? Why? Is it page2? */
+			wm_gmii_hv_writereg(sc->sc_dev, 1, ((1 << 6) | 0x29),
+			    0x66c0);
+			wm_gmii_hv_writereg(sc->sc_dev, 1, ((1 << 6) | 0x1e),
+			    0xffff);
+		}
+
+		/* XXX phy rev. < 2 */
+	}
+
+	/* Select page 0 */
+
+	/* XXX acquire semaphore */
+	wm_gmii_i82544_writereg(sc->sc_dev, 1, MII_IGPHY_PAGE_SELECT, 0);
+	/* XXX release semaphore */
+
+	/*
+	 * Configure the K1 Si workaround during phy reset assuming there is
+	 * link so that it disables K1 if link is in 1Gbps.
+	 */
+	wm_k1_gig_workaround_hv(sc, 1);
+}
+
+static void
+wm_k1_gig_workaround_hv(struct wm_softc *sc, int link)
+{
+	int k1_enable = sc->sc_nvm_k1_enabled;
+
+	/* XXX acquire semaphore */
+
+	if (link) {
+		k1_enable = 0;
+		    
+		/* Link stall fix for link up */
+		wm_gmii_hv_writereg(sc->sc_dev, 1, IGP3_KMRN_DIAG, 0x0100);
+	} else {
+		/* Link stall fix for link down */
+		wm_gmii_hv_writereg(sc->sc_dev, 1, IGP3_KMRN_DIAG, 0x4100);
+	}
+
+	wm_configure_k1_ich8lan(sc, k1_enable);
+
+	/* XXX release semaphore */
+}
+
+static void
+wm_configure_k1_ich8lan(struct wm_softc *sc, int k1_enable)
+{
+	uint32_t ctrl, ctrl_ext, tmp;
+	uint16_t kmrn_reg;
+
+	kmrn_reg = wm_kmrn_readreg(sc, KUMCTRLSTA_OFFSET_K1_CONFIG);
+
+	if (k1_enable)
+		kmrn_reg |= KUMCTRLSTA_K1_ENABLE;
+	else
+		kmrn_reg &= ~KUMCTRLSTA_K1_ENABLE;
+
+	wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_K1_CONFIG, kmrn_reg);
+
+	delay(20);
+
+	ctrl = CSR_READ(sc, WMREG_CTRL);
+	ctrl_ext = CSR_READ(sc, WMREG_CTRL_EXT);
+
+	tmp = ctrl & ~(CTRL_SPEED_1000 | CTRL_SPEED_100);
+	tmp |= CTRL_FRCSPD;
+
+	CSR_WRITE(sc, WMREG_CTRL, tmp);
+	CSR_WRITE(sc, WMREG_CTRL_EXT, ctrl_ext | CTRL_EXT_SPD_BYPS);
+	delay(20);
+
+	CSR_WRITE(sc, WMREG_CTRL, ctrl);
+	CSR_WRITE(sc, WMREG_CTRL_EXT, ctrl_ext);
+	delay(20);
 }
