@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.96 2009/12/23 00:33:26 darran Exp $
+# $NetBSD: shl.mi,v 1.97 2010/01/14 12:01:58 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -49,12 +49,12 @@
 ./usr/lib/libiscsi_pic.a			comp-c-piclib		iscsi
 ./usr/lib/libkadm5clnt_pic.a			comp-c-piclib		kerberos
 ./usr/lib/libkadm5srv_pic.a			comp-c-piclib		kerberos
-./usr/lib/libkadm_pic.a				comp-c-piclib		obsolete
+./usr/lib/libkadm_pic.a				comp-obsolete		obsolete
 ./usr/lib/libkafs_pic.a				comp-c-piclib		kerberos
-./usr/lib/libkdb_pic.a				comp-c-piclib		obsolete
+./usr/lib/libkdb_pic.a				comp-obsolete		obsolete
 ./usr/lib/libkrb5_pic.a				comp-c-piclib		kerberos
-./usr/lib/libkrb_pic.a				comp-c-piclib		obsolete
-./usr/lib/libkstream_pic.a			comp-c-piclib		obsolete
+./usr/lib/libkrb_pic.a				comp-obsolete		obsolete
+./usr/lib/libkstream_pic.a			comp-obsolete		obsolete
 ./usr/lib/libkvm_pic.a				comp-c-piclib
 ./usr/lib/liblber_pic.a				comp-ldap-piclib	ldap
 ./usr/lib/libldap_pic.a				comp-ldap-piclib	ldap
