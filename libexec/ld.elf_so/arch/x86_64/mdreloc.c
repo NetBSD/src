@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.36 2010/01/13 20:17:23 christos Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.37 2010/01/14 12:14:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.36 2010/01/13 20:17:23 christos Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.37 2010/01/14 12:14:49 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -261,7 +261,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 	const Obj_Entry *defobj;
 	unsigned long info = rela->r_info;
 
-	assert(ELF_R_TYPE(info) == R_TYPE(JMP_SLOT));
+	assert(ELF_R_TYPE(info) == R_TYPE(JUMP_SLOT));
 
 	def = _rtld_find_plt_symdef(ELF_R_SYM(info), obj, &defobj, tp != NULL);
 	if (__predict_false(def == NULL))
