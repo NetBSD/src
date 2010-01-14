@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1013 2010/01/12 21:24:39 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1014 2010/01/14 11:27:23 sborrill Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -175,7 +175,7 @@ vendor CYRIX		0x1078	Cyrix
 vendor IBUS		0x1079	I-Bus
 vendor NETWORTH		0x107a	NetWorth
 vendor GATEWAY		0x107b	Gateway 2000
-vendor GOLDSTART	0x107c	Goldstar
+vendor GOLDSTAR		0x107c	Goldstar
 vendor LEADTEK		0x107d	LeadTek Research
 vendor INTERPHASE	0x107e	Interphase
 vendor DATATECH		0x107f	Data Technology
