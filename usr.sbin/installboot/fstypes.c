@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.c,v 1.12 2010/01/07 13:26:00 tsutsui Exp $	*/
+/*	$NetBSD: fstypes.c,v 1.13 2010/01/14 16:27:49 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,8 +34,8 @@
 #endif
 
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: fstypes.c,v 1.12 2010/01/07 13:26:00 tsutsui Exp $");
+#if !defined(__lint)
+__RCSID("$NetBSD: fstypes.c,v 1.13 2010/01/14 16:27:49 tsutsui Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>
