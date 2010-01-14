@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.35 2010/01/14 11:57:06 skrll Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.36 2010/01/14 11:58:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: alpha_reloc.c,v 1.35 2010/01/14 11:57:06 skrll Exp $");
+__RCSID("$NetBSD: alpha_reloc.c,v 1.36 2010/01/14 11:58:31 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -300,7 +300,8 @@ _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 }
 
 static inline int
-_rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *tp)
+_rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
+    Elf_Addr *tp)
 {
 	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	Elf_Addr new_value;
