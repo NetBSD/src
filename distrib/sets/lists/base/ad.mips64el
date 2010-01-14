@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.9 2010/01/11 16:30:26 christos Exp $
+# $NetBSD: ad.mips64el,v 1.10 2010/01/14 10:04:18 wiz Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib		compat
@@ -179,8 +179,8 @@
 ./usr/lib/64/librumpdev.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librumpvfs.so.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librumpvfs.so.0.0			base-compat-shlib	compat,pic
-./usr/lib/64/libsdp.so.2			base-compat-shlib	obsolete
-./usr/lib/64/libsdp.so.2.0			base-compat-shlib	obsolete
+./usr/lib/64/libsdp.so.2			base-obsolete		obsolete
+./usr/lib/64/libsdp.so.2.0			base-obsolete		obsolete
 ./usr/lib/64/libskey.so.2			base-compat-shlib	compat,pic
 ./usr/lib/64/libskey.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libsl.so.4				base-compat-shlib	compat,pic
@@ -411,8 +411,8 @@
 ./usr/lib/o32/librumpdev.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/librumpvfs.so.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/librumpvfs.so.0.0			base-compat-shlib	compat,pic
-./usr/lib/o32/libsdp.so.2			base-compat-shlib	obsolete
-./usr/lib/o32/libsdp.so.2.0			base-compat-shlib	obsolete
+./usr/lib/o32/libsdp.so.2			base-obsolete		obsolete
+./usr/lib/o32/libsdp.so.2.0			base-obsolete		obsolete
 ./usr/lib/o32/libskey.so.2			base-compat-shlib	compat,pic
 ./usr/lib/o32/libskey.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libsl.so.4			base-compat-shlib	compat,pic
@@ -466,4 +466,4 @@
 ./usr/lib/o32/security/pam_unix.so.3		base-compat-shlib	compat,pic
 ./usr/libexec/ld.elf_so-64			base-compat-shlib	compat,pic
 ./usr/libexec/ld.elf_so-o32			base-sysutil-bin	compat,pic
-./usr/lkm/ldscript				base-sys-usr		obsolete
+./usr/lkm/ldscript				base-obsolete		obsolete

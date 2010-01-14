@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.850 2009/12/15 03:01:15 mrg Exp $
+# $NetBSD: mi,v 1.851 2010/01/14 10:04:19 wiz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -114,7 +114,7 @@
 ./etc/skel					base-sys-root
 ./etc/sliphome					base-slip-root
 ./etc/ssh					base-sys-root
-./etc/systrace					base-util-root		obsolete
+./etc/systrace					base-obsolete		obsolete
 ./etc/uucp					base-obsolete		obsolete
 ./etc/zfs					base-zfs-root
 ./lib						base-sys-root
@@ -140,9 +140,9 @@
 ./libdata/firmware/if_iwn/README.iwlwifi-5000-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-5000-1.ucode	base-firmware-root
 ./libdata/firmware/if_wpi			base-firmware-root
-./libdata/firmware/if_wpi/LICENSE.ipw3945-ucode	base-sys-root obsolete
-./libdata/firmware/if_wpi/README.ipw3945-ucode	base-sys-root obsolete
-./libdata/firmware/if_wpi/ipw3945.ucode		base-sys-root obsolete
+./libdata/firmware/if_wpi/LICENSE.ipw3945-ucode	base-obsolete	obsolete
+./libdata/firmware/if_wpi/README.ipw3945-ucode	base-obsolete	obsolete
+./libdata/firmware/if_wpi/ipw3945.ucode		base-obsolete	obsolete
 ./libdata/firmware/if_wpi/LICENSE.iwlwifi-3945-ucode	base-firmware-root
 ./libdata/firmware/if_wpi/README.iwlwifi-3945-ucode	base-firmware-root
 ./libdata/firmware/if_wpi/iwlwifi-3945.ucode		base-firmware-root
@@ -155,7 +155,7 @@
 ./libdata/firmware/rum/rum-license		base-firmware-root
 ./libdata/firmware/rum/rum-rt2573		base-firmware-root
 ./libdata/firmware/zyd				base-firmware-root
-./libdata/firmware/zyd/zd1211-licence		base-firmware-root obsolete
+./libdata/firmware/zyd/zd1211-licence		base-obsolete	obsolete
 ./libdata/firmware/zyd/zd1211-license		base-firmware-root
 ./libdata/firmware/zyd/zyd-zd1211		base-firmware-root
 ./libdata/firmware/zyd/zyd-zd1211b		base-firmware-root
@@ -865,7 +865,7 @@
 ./usr/libexec/atf-cleanup			base-atf-bin		atf
 ./usr/libexec/atf-exec				base-atf-bin		atf
 ./usr/libexec/atf-format			base-atf-bin		atf
-./usr/libexec/atf-killpg			base-atf-bin		obsolete
+./usr/libexec/atf-killpg			base-obsolete		obsolete
 ./usr/libexec/atrun				base-cron-bin
 ./usr/libexec/ching				base-games-usr
 ./usr/libexec/comsat				base-mail-bin
@@ -873,7 +873,7 @@
 ./usr/libexec/cpp0				base-obsolete		obsolete
 ./usr/libexec/dnskeygen				base-obsolete		obsolete
 ./usr/libexec/fingerd				base-netutil-bin
-./usr/libexec/ftp-proxy				base-pf-bin		obsolete
+./usr/libexec/ftp-proxy				base-obsolete		obsolete
 ./usr/libexec/ftpd				base-netutil-bin
 ./usr/libexec/getNAME				base-man-bin
 ./usr/libexec/getty				base-sysutil-bin
@@ -885,7 +885,7 @@
 ./usr/libexec/kdc				base-obsolete		obsolete
 ./usr/libexec/kfd				base-obsolete		obsolete
 ./usr/libexec/kpasswdd				base-krb5-bin		kerberos
-./usr/libexec/lfs_cleanerd			base-sysutil-bin	obsolete
+./usr/libexec/lfs_cleanerd			base-obsolete		obsolete
 ./usr/libexec/locate.bigram			base-sysutil-bin
 ./usr/libexec/locate.code			base-sysutil-bin
 ./usr/libexec/locate.updatedb			base-sysutil-bin
@@ -1347,7 +1347,7 @@
 ./usr/share					base-sys-share
 ./usr/share/atf					base-atf-share		
 ./usr/share/atf/atf-run.hooks			base-atf-bin		share,atf
-./usr/share/atf/atf.config.subr			base-atf-share		share,obsolete,atf
+./usr/share/atf/atf.config.subr			base-obsolete		obsolete
 ./usr/share/atf/atf.footer.subr			base-atf-share		share,atf
 ./usr/share/atf/atf.header.subr			base-atf-share		share,atf
 ./usr/share/atf/atf.init.subr			base-atf-share		share,atf
