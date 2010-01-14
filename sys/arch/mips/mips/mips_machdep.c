@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.22 2010/01/13 09:42:38 cliff Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.23 2010/01/14 00:40:36 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.22 2010/01/13 09:42:38 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.23 2010/01/14 00:40:36 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -229,6 +229,7 @@ uint32_t mips3_tlb_pg_mask;
 struct	cpu_info cpu_info_store = {
 	.ci_curlwp = &lwp0,
 	.ci_fpcurlwp = &lwp0,
+	.ci_ebase = MIPS_KSEG0_START,
 };
 
 struct	user *proc0paddr;
@@ -1095,7 +1096,6 @@ cpu_identify(device_t dev)
 		"write-back",
 		"write-through",
 	};
-	const char *label = device_xname(dev);
 	const char *cpuname, *fpuname;
 	int i;
 
@@ -1118,41 +1118,40 @@ cpu_identify(device_t dev)
 
 	if (mycpu->cpu_cid != 0) {
 		if (mycpu->cpu_cid <= ncidnames)
-			printf("%s ", cidnames[mycpu->cpu_cid]);
+			aprint_normal("%s ", cidnames[mycpu->cpu_cid]);
 		else {
-			printf("Unknown Company ID - 0x%x", mycpu->cpu_cid);
-			printf("%s: ", label);
+			aprint_normal("Unknown Company ID - 0x%x", mycpu->cpu_cid);
+			aprint_normal_dev(dev, "");
 		}
 	}
 	if (cpuname != NULL)
-		printf("%s (0x%x)", cpuname, cpu_id);
+		aprint_normal("%s (0x%x)", cpuname, cpu_id);
 	else
-		printf("unknown CPU type (0x%x)", cpu_id);
+		aprint_normal("unknown CPU type (0x%x)", cpu_id);
 	if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_PREHISTORIC)
-		printf(" Rev. %d.%d", MIPS_PRID_REV_MAJ(cpu_id),
+		aprint_normal(" Rev. %d.%d", MIPS_PRID_REV_MAJ(cpu_id),
 		    MIPS_PRID_REV_MIN(cpu_id));
 	else
-		printf(" Rev. %d", MIPS_PRID_REV(cpu_id));
+		aprint_normal(" Rev. %d", MIPS_PRID_REV(cpu_id));
 
 	if (fpuname != NULL)
-		printf(" with %s", fpuname);
+		aprint_normal(" with %s", fpuname);
 	else
-		printf(" with unknown FPC type (0x%x)", fpu_id);
+		aprint_normal(" with unknown FPC type (0x%x)", fpu_id);
 	if (fpu_id != 0) {
 		if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_PREHISTORIC)
-			printf(" Rev. %d.%d", MIPS_PRID_REV_MAJ(fpu_id),
+			aprint_normal(" Rev. %d.%d", MIPS_PRID_REV_MAJ(fpu_id),
 			    MIPS_PRID_REV_MIN(fpu_id));
 		else
-			printf(" Rev. %d", MIPS_PRID_REV(fpu_id));
+			aprint_normal(" Rev. %d", MIPS_PRID_REV(fpu_id));
 	}
-	printf("\n");
+	aprint_normal("\n");
 
 	if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_PREHISTORIC &&
 	    MIPS_PRID_RSVD(cpu_id) != 0) {
-		printf("%s: NOTE: top 8 bits of prehistoric PRID not 0!\n",
-		    label);
-		printf("%s: Please mail port-mips@NetBSD.org with %s "
-		    "dmesg lines.\n", label, label);
+		aprint_normal_dev(dev, "NOTE: top 8 bits of prehistoric PRID not 0!\n");
+		aprint_normal_dev(dev, "Please mail port-mips@NetBSD.org with %s "
+		    "dmesg lines.\n", device_xname(dev));
 	}
 
 	KASSERT(mips_picache_ways < nwaynames);
@@ -1164,15 +1163,15 @@ cpu_identify(device_t dev)
 #if defined(MIPS1)
 	case CPU_ARCH_MIPS1:
 		if (mips_picache_size)
-			printf("%s: %dKB/%dB %s Instruction cache, "
-			    "%d TLB entries\n", label, mips_picache_size / 1024,
+			aprint_normal_dev(dev, "%dKB/%dB %s Instruction cache, "
+			    "%d TLB entries\n", mips_picache_size / 1024,
 			    mips_picache_line_size, waynames[mips_picache_ways],
 			    mips_num_tlb_entries);
 		else
-			printf("%s: %d TLB entries\n", label,
+			aprint_normal_dev(dev, "%d TLB entries\n", 
 			    mips_num_tlb_entries);
 		if (mips_pdcache_size)
-			printf("%s: %dKB/%dB %s %s Data cache\n", label,
+			aprint_normal_dev(dev, "%dKB/%dB %s %s Data cache\n",
 			    mips_pdcache_size / 1024, mips_pdcache_line_size,
 			    waynames[mips_pdcache_ways],
 			    wtnames[mips_pdcache_write_through]);
@@ -1185,17 +1184,17 @@ cpu_identify(device_t dev)
 	case CPU_ARCH_MIPS64: {
 		const char *sufx = "KMGTPE";
 		uint32_t pg_mask;
-		printf("%s: %d TLB entries", label, mips_num_tlb_entries);
+		aprint_normal_dev(dev, "%d TLB entries", mips_num_tlb_entries);
 #if !defined(__mips_o32)
 		if (CPUIS64BITS) {
 			int64_t pfn_mask;
 			i = ffs(~(mips3_tlb_vpn_mask >> 31)) + 30;
-			printf(", %d%cB (%d-bit) VAs",
+			aprint_normal(", %d%cB (%d-bit) VAs",
 			    1 << (i % 10), sufx[(i / 10) - 1], i);
 			for (i = 64, pfn_mask = mips3_tlb_pfn_mask << 6;
 			     pfn_mask > 0; i--, pfn_mask <<= 1)
 				;
-			printf(", %d%cB (%d-bit) PAs",
+			aprint_normal(", %d%cB (%d-bit) PAs",
 			      1 << (i % 10), sufx[(i / 10) - 1], i);
 		}
 #endif
@@ -1210,18 +1209,21 @@ cpu_identify(device_t dev)
 				sufx++;
 			}
 		}
-		printf(", %d%cB max page size\n", i, sufx[0]);
+		aprint_normal(", %d%cB max page size\n", i, sufx[0]);
 		if (mips_picache_size)
-			printf("%s: %dKB/%dB %s L1 Instruction cache\n",
-			    label, mips_picache_size / 1024,
+			aprint_normal_dev(dev,
+			    "%dKB/%dB %s L1 Instruction cache\n",
+			    mips_picache_size / 1024,
 			    mips_picache_line_size, waynames[mips_picache_ways]);
 		if (mips_pdcache_size)
-			printf("%s: %dKB/%dB %s %s L1 Data cache\n", label,
+			aprint_normal_dev(dev,
+			    "%dKB/%dB %s %s L1 Data cache\n",
 			    mips_pdcache_size / 1024, mips_pdcache_line_size,
 			    waynames[mips_pdcache_ways],
 			    wtnames[mips_pdcache_write_through]);
 		if (mips_sdcache_line_size)
-			printf("%s: %dKB/%dB %s %s L2 %s cache\n", label,
+			aprint_normal_dev(dev,
+			    "%dKB/%dB %s %s L2 %s cache\n",
 			    mips_sdcache_size / 1024, mips_sdcache_line_size,
 			    waynames[mips_sdcache_ways],
 			    wtnames[mips_sdcache_write_through],
