@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1181 2010/01/07 09:23:54 jdc Exp $
+# $NetBSD: mi,v 1.1182 2010/01/14 12:05:15 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -55,7 +55,7 @@
 ./usr/share/man/cat1/atf-config.0		man-atf-catman		.cat,atf
 ./usr/share/man/cat1/atf-exec.0			man-atf-catman		.cat,atf
 ./usr/share/man/cat1/atf-format.0		man-atf-catman		.cat,atf
-./usr/share/man/cat1/atf-killpg.0		man-atf-catman		.cat,obsolete
+./usr/share/man/cat1/atf-killpg.0		man-obsolete		.cat,obsolete
 ./usr/share/man/cat1/atf-report.0		man-atf-catman		.cat,atf
 ./usr/share/man/cat1/atf-run.0			man-atf-catman		.cat,atf
 ./usr/share/man/cat1/atf-test-program.0		man-atf-catman		.cat,atf
@@ -1130,7 +1130,7 @@
 ./usr/share/man/cat4/iso.0			man-sys-catman		.cat
 ./usr/share/man/cat4/isp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/isv.0			man-sys-catman		.cat
-./usr/share/man/cat4/it.0			man-sys-catman		obsolete
+./usr/share/man/cat4/it.0			man-obsolete		obsolete
 ./usr/share/man/cat4/iteide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/itesio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iwi.0			man-sys-catman		.cat
@@ -1665,7 +1665,7 @@
 ./usr/share/man/cat4/viadrm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/viaenv.0			man-sys-catman		.cat
 ./usr/share/man/cat4/viaide.0			man-sys-catman		.cat
-./usr/share/man/cat4/viapm.0			man-sys-catman		obsolete
+./usr/share/man/cat4/viapm.0			man-obsolete		obsolete
 ./usr/share/man/cat4/video.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vinum.0			man-obsolete		obsolete
 ./usr/share/man/cat4/vlan.0			man-sys-catman		.cat
@@ -2769,7 +2769,7 @@
 ./usr/share/man/html1/atf-config.html		man-atf-htmlman		html,atf
 ./usr/share/man/html1/atf-exec.html		man-atf-htmlman		html,atf
 ./usr/share/man/html1/atf-format.html		man-atf-htmlman		html,atf
-./usr/share/man/html1/atf-killpg.html		man-atf-htmlman		html,obsolete
+./usr/share/man/html1/atf-killpg.html		man-obsolete		html,obsolete
 ./usr/share/man/html1/atf-report.html		man-atf-htmlman		html,atf
 ./usr/share/man/html1/atf-run.html		man-atf-htmlman		html,atf
 ./usr/share/man/html1/atf-test-program.html	man-atf-htmlman		html,atf
@@ -5099,7 +5099,7 @@
 ./usr/share/man/man1/atf-config.1		man-atf-man		.man,atf
 ./usr/share/man/man1/atf-exec.1			man-atf-man		.man,atf
 ./usr/share/man/man1/atf-format.1		man-atf-man		.man,atf
-./usr/share/man/man1/atf-killpg.1		man-atf-man		.man,obsolete
+./usr/share/man/man1/atf-killpg.1		man-obsolete		.man,obsolete
 ./usr/share/man/man1/atf-report.1		man-atf-man		.man,atf
 ./usr/share/man/man1/atf-run.1			man-atf-man		.man,atf
 ./usr/share/man/man1/atf-test-program.1		man-atf-man		.man,atf
@@ -6174,7 +6174,7 @@
 ./usr/share/man/man4/iso.4			man-sys-man		.man
 ./usr/share/man/man4/isp.4			man-sys-man		.man
 ./usr/share/man/man4/isv.4			man-sys-man		.man
-./usr/share/man/man4/it.4			man-sys-man		obsolete
+./usr/share/man/man4/it.4			man-obsolete		obsolete
 ./usr/share/man/man4/iteide.4			man-sys-man		.man
 ./usr/share/man/man4/itesio.4			man-sys-man		.man
 ./usr/share/man/man4/iwi.4			man-sys-man		.man
@@ -6709,7 +6709,7 @@
 ./usr/share/man/man4/viadrm.4			man-sys-man		.man
 ./usr/share/man/man4/viaenv.4			man-sys-man		.man
 ./usr/share/man/man4/viaide.4			man-sys-man		.man
-./usr/share/man/man4/viapm.4			man-sys-man		obsolete
+./usr/share/man/man4/viapm.4			man-obsolete		obsolete
 ./usr/share/man/man4/video.4			man-sys-man		.man
 ./usr/share/man/man4/vinum.4			man-obsolete		obsolete
 ./usr/share/man/man4/vlan.4			man-sys-man		.man

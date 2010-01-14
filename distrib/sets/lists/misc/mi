@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.164 2009/12/22 13:38:40 jmmv Exp $
+# $NetBSD: mi,v 1.165 2010/01/14 12:05:37 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -19,7 +19,7 @@
 ./usr/share/doc/atf/COPYING			misc-atf-doc		doc,atf
 ./usr/share/doc/atf/NEWS			misc-atf-doc		doc,atf
 ./usr/share/doc/atf/README			misc-atf-doc		doc,atf
-./usr/share/doc/atf/ROADMAP			misc-atf-doc		obsolete
+./usr/share/doc/atf/ROADMAP			misc-obsolete		obsolete
 ./usr/share/doc/html/bind9/arm/Bv9ARM.ch01.html	misc-bind-htmldoc	doc
 ./usr/share/doc/html/bind9/arm/Bv9ARM.ch02.html	misc-bind-htmldoc	doc
 ./usr/share/doc/html/bind9/arm/Bv9ARM.ch03.html	misc-bind-htmldoc	doc
