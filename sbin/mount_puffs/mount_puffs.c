@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_puffs.c,v 1.1 2010/01/14 21:25:48 pooka Exp $	*/
+/*	$NetBSD: mount_puffs.c,v 1.2 2010/01/14 22:06:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_puffs.c,v 1.1 2010/01/14 21:25:48 pooka Exp $");
+__RCSID("$NetBSD: mount_puffs.c,v 1.2 2010/01/14 22:06:54 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -108,4 +108,6 @@ main(int argc, char *argv[])
 	if (kargs.pa_root_vtype == VCHR || kargs.pa_root_vtype == VBLK)
 		printf(", root rdev=0x%" PRIx64, (uint64_t)kargs.pa_root_rdev);
 	printf("\n");
+
+	return 0;
 }
