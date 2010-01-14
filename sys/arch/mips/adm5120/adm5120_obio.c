@@ -1,4 +1,4 @@
-/* $NetBSD: adm5120_obio.c,v 1.1.62.1 2010/01/10 02:48:46 matt Exp $ */
+/* $NetBSD: adm5120_obio.c,v 1.1.62.2 2010/01/14 00:40:35 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm5120_obio.c,v 1.1.62.1 2010/01/10 02:48:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm5120_obio.c,v 1.1.62.2 2010/01/14 00:40:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,13 +95,12 @@ do {						\
 #define	OBIO_DPRINTF(__fmt, ...)	do { } while (/*CONSTCOND*/0)
 #endif /* OBIO_DEBUG */
 
-static int	obio_match(struct device *, struct cfdata *, void *);
-static void	obio_attach(struct device *, struct device *, void *);
-static int	obio_submatch(struct device *, struct cfdata *,
-			      const int *, void *);
+static int	obio_match(device_t, cfdata_t, void *);
+static void	obio_attach(device_t, device_t, void *);
+static int	obio_submatch(device_t, cfdata_t, const int *, void *);
 static int	obio_print(void *, const char *);
 
-CFATTACH_DECL(obio, sizeof(struct device), obio_match, obio_attach, NULL, NULL);
+CFATTACH_DECL_NEW(obio, 0, obio_match, obio_attach, NULL, NULL);
 
 /* There can be only one. */
 int	obio_found;
@@ -113,7 +112,7 @@ struct obiodev {
 	uint32_t	od_gpio_mask;
 };
 
-struct obiodev obiodevs[] = {
+const struct obiodev obiodevs[] = {
 	{"uart",	ADM5120_BASE_UART0,	1, 0x0},
 	{"uart",	ADM5120_BASE_UART1,	2, 0x0},
 	{"admsw",	ADM5120_BASE_SWITCH,	9, 0x0},
@@ -123,13 +122,13 @@ struct obiodev obiodevs[] = {
 };
 
 static int
-obio_match(struct device *parent, struct cfdata *match, void *aux)
+obio_match(device_t parent, cfdata_t match, void *aux)
 {
 	return !obio_found;
 }
 
 static void
-obio_attach_args_create(struct obio_attach_args *oa, struct obiodev *od,
+obio_attach_args_create(struct obio_attach_args *oa, const struct obiodev *od,
     void *gpio, bus_dma_tag_t dmat, bus_space_tag_t st)
 {
 	oa->oba_name = od->od_name;
@@ -142,11 +141,11 @@ obio_attach_args_create(struct obio_attach_args *oa, struct obiodev *od,
 }
 
 static void
-obio_attach(struct device *parent, struct device *self, void *aux)
+obio_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *ma = (struct mainbus_attach_args *)aux;
 	struct obio_attach_args oa;
-	struct obiodev *od;
+	const struct obiodev *od;
 
 	obio_found = 1;
 	printf("\n");
@@ -166,8 +165,7 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-obio_submatch(struct device *parent, struct cfdata *cf,
-	      const int *ldesc, void *aux)
+obio_submatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct obio_attach_args *oa = aux;
 
