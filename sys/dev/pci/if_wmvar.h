@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.7 2010/01/11 12:29:28 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.8 2010/01/14 18:56:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -113,6 +113,21 @@ typedef enum {
 	WM_T_ICH10,			/* ICH10 LAN */
 	WM_T_PCH,			/* PCH LAN */
 } wm_chip_type;
+
+typedef enum {
+	WMPHY_UNKNOWN = 0,
+	WMPHY_NONE,
+	WMPHY_M88,
+	WMPHY_IGP,
+	WMPHY_IGP_2,
+	WMPHY_GG82563,
+	WMPHY_IGP_3,
+	WMPHY_IFE,
+	WMPHY_BM,
+	WMPHY_82578,
+	WMPHY_82577
+} wm_phy_type;
+
 
 #define WM_PHY_CFG_TIMEOUT	100
 #define	WM_ICH8_LAN_INIT_TIMEOUT 1500
