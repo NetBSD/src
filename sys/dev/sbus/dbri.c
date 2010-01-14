@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.28 2010/01/08 20:01:21 dyoung Exp $	*/
+/*	$NetBSD: dbri.c,v 1.29 2010/01/14 02:20:07 macallan Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.28 2010/01/08 20:01:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.29 2010/01/14 02:20:07 macallan Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1864,6 +1864,7 @@ dbri_query_devinfo(void *hdl, mixer_devinfo_t *di)
 		strcpy(di->label.name, AudioNmaster);
 		di->type = AUDIO_MIXER_VALUE;
 		di->un.v.num_channels = 2;
+		di->un.v.delta = 16;
 		strcpy(di->un.v.units.name, AudioNvolume);
 		return (0);
 	case DBRI_INPUT_GAIN:	/* input gain */
