@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1361 2010/01/14 12:01:58 wiz Exp $
+#	$NetBSD: mi,v 1.1362 2010/01/14 13:47:41 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2291,7 +2291,7 @@
 ./usr/lib/i18n/libmapper_zone.a			comp-i18n-lib
 ./usr/lib/i18n/libmapper_zone_g.a		-unknown-		debuglib
 ./usr/lib/libamu.a				comp-obsolete		obsolete
-./usr/lib/libamu_g.a				-obsolete		debuglib,obsolete
+./usr/lib/libamu_g.a				comp-obsolete		obsolete
 ./usr/lib/libamu_p.a				comp-obsolete		obsolete
 ./usr/lib/libamu_pic.a				comp-obsolete		obsolete
 ./usr/lib/libarchive.a				comp-c-lib
@@ -3280,7 +3280,7 @@
 ./usr/libdata/debug/usr/libexec/atf-cleanup.debug	comp-atf-debug		debug
 ./usr/libdata/debug/usr/libexec/atf-exec.debug	comp-atf-debug		debug
 ./usr/libdata/debug/usr/libexec/atf-format.debug	comp-atf-debug		debug
-./usr/libdata/debug/usr/libexec/atf-killpg.debug	comp-obsolete		debug,obsolete
+./usr/libdata/debug/usr/libexec/atf-killpg.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec/atrun.debug	comp-cron-debug		debug
 ./usr/libdata/debug/usr/libexec/cc1.debug	comp-c-debug		gcccmds,debug
 ./usr/libdata/debug/usr/libexec/cc1obj.debug	comp-objc-debug		gcccmds,debug
@@ -3289,9 +3289,9 @@
 ./usr/libdata/debug/usr/libexec/ching/printching.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/libexec/comsat.debug	comp-mail-debug		debug
 ./usr/libdata/debug/usr/libexec/f771.debug	comp-fortran-debug	gcc=3,gcccmds,debug
-./usr/libdata/debug/usr/libexec/f771.debug	comp-obsolete		gcc=4,obsolete,debug
+./usr/libdata/debug/usr/libexec/f771.debug	comp-obsolete		gcc=4,obsolete
 ./usr/libdata/debug/usr/libexec/fingerd.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/libexec/ftp-proxy.debug	comp-obsolete		pf,obsolete
+./usr/libdata/debug/usr/libexec/ftp-proxy.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec/ftpd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/getNAME.debug	comp-man-debug		debug
 ./usr/libdata/debug/usr/libexec/getty.debug	comp-sysutil-debug	debug

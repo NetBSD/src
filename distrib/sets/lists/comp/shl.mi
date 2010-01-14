@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.97 2010/01/14 12:01:58 wiz Exp $
+# $NetBSD: shl.mi,v 1.98 2010/01/14 13:47:41 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -31,7 +31,7 @@
 ./usr/lib/libfetch_pic.a			comp-c-piclib
 ./usr/lib/libform_pic.a				comp-c-piclib
 ./usr/lib/libg2c_pic.a				comp-fortran-lib	gcc=3
-./usr/lib/libg2c_pic.a				comp-obsolete		obsolete,gcc=4
+./usr/lib/libg2c_pic.a				comp-obsolete		gcc=4,obsolete
 ./usr/lib/libgcc_eh.a				comp-c-lib
 ./usr/lib/libgcc_eh_p.a				comp-c-proflib		profile
 ./usr/lib/libgcc_eh_pic.a			comp-c-piclib

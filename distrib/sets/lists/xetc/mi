@@ -1,11 +1,11 @@
-# $NetBSD: mi,v 1.16 2009/09/07 21:07:03 mrg Exp $
+# $NetBSD: mi,v 1.17 2010/01/14 13:47:42 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
 ./etc/X11/fs/config					-unknown-	x11
 ./etc/X11/fs/config					-unknown-	xorg
 ./etc/X11/lbxproxy/AtomControl				-unknown-	x11
-./etc/X11/lbxproxy/AtomControl				-obsolete-	xorg,obsolete
+./etc/X11/lbxproxy/AtomControl				-obsolete-	obsolete,xorg
 ./etc/X11/proxymngr/pmconfig				-unknown-	x11
 ./etc/X11/proxymngr/pmconfig				-unknown-	xorg
 ./etc/X11/rstart/commands/@List				-unknown-	x11

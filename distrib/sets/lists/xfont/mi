@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.37 2009/06/18 21:05:36 mrg Exp $
+# $NetBSD: mi,v 1.38 2010/01/14 13:47:42 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8435,7 +8435,7 @@
 ./usr/X11R7/lib/X11/fonts/misc/18x18ko.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/4x6-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/4x6-ISO8859-10.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/4x6-ISO8859-11.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/4x6-ISO8859-11.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/4x6-ISO8859-13.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/4x6-ISO8859-14.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/4x6-ISO8859-15.pcf.gz	xfont	share,xorg,x11fonts
@@ -8451,7 +8451,7 @@
 ./usr/X11R7/lib/X11/fonts/misc/4x6.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/5x7-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/5x7-ISO8859-10.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/5x7-ISO8859-11.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/5x7-ISO8859-11.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/5x7-ISO8859-13.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/5x7-ISO8859-14.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/5x7-ISO8859-15.pcf.gz	xfont	share,xorg,x11fonts
@@ -8467,7 +8467,7 @@
 ./usr/X11R7/lib/X11/fonts/misc/5x7.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/5x8-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/5x8-ISO8859-10.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/5x8-ISO8859-11.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/5x8-ISO8859-11.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/5x8-ISO8859-13.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/5x8-ISO8859-14.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/5x8-ISO8859-15.pcf.gz	xfont	share,xorg,x11fonts
@@ -8483,7 +8483,7 @@
 ./usr/X11R7/lib/X11/fonts/misc/5x8.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x10-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x10-ISO8859-10.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/6x10-ISO8859-11.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/6x10-ISO8859-11.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/6x10-ISO8859-13.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x10-ISO8859-14.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x10-ISO8859-15.pcf.gz	xfont	share,xorg,x11fonts
@@ -8499,7 +8499,7 @@
 ./usr/X11R7/lib/X11/fonts/misc/6x10.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x12-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x12-ISO8859-10.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/6x12-ISO8859-11.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/6x12-ISO8859-11.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/6x12-ISO8859-13.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x12-ISO8859-14.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x12-ISO8859-15.pcf.gz	xfont	share,xorg,x11fonts
@@ -8531,7 +8531,7 @@
 ./usr/X11R7/lib/X11/fonts/misc/6x13.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x13B-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x13B-ISO8859-10.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/6x13B-ISO8859-11.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/6x13B-ISO8859-11.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/6x13B-ISO8859-13.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x13B-ISO8859-14.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x13B-ISO8859-15.pcf.gz	xfont	share,xorg,x11fonts
@@ -8543,11 +8543,11 @@
 ./usr/X11R7/lib/X11/fonts/misc/6x13B-ISO8859-7.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x13B-ISO8859-8.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x13B-ISO8859-9.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/6x13B-KOI8-R.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/6x13B-KOI8-R.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/6x13B.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x13O-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x13O-ISO8859-10.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/6x13O-ISO8859-11.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/6x13O-ISO8859-11.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/6x13O-ISO8859-13.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x13O-ISO8859-14.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x13O-ISO8859-15.pcf.gz	xfont	share,xorg,x11fonts
@@ -8557,13 +8557,13 @@
 ./usr/X11R7/lib/X11/fonts/misc/6x13O-ISO8859-4.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x13O-ISO8859-5.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x13O-ISO8859-7.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/6x13O-ISO8859-8.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/6x13O-ISO8859-8.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/6x13O-ISO8859-9.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/6x13O-KOI8-R.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/6x13O-KOI8-R.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/6x13O.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x9-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x9-ISO8859-10.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/6x9-ISO8859-11.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/6x9-ISO8859-11.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/6x9-ISO8859-13.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x9-ISO8859-14.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/6x9-ISO8859-15.pcf.gz	xfont	share,xorg,x11fonts
@@ -8607,7 +8607,7 @@
 ./usr/X11R7/lib/X11/fonts/misc/7x13B-ISO8859-7.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/7x13B-ISO8859-8.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/7x13B-ISO8859-9.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/7x13B-KOI8-R.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/7x13B-KOI8-R.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/7x13B.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/7x13O-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/7x13O-ISO8859-10.pcf.gz	xfont	share,xorg,x11fonts
@@ -8621,9 +8621,9 @@
 ./usr/X11R7/lib/X11/fonts/misc/7x13O-ISO8859-4.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/7x13O-ISO8859-5.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/7x13O-ISO8859-7.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/7x13O-ISO8859-8.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/7x13O-ISO8859-8.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/7x13O-ISO8859-9.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/7x13O-KOI8-R.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/7x13O-KOI8-R.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/7x13O.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/7x14-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/7x14-ISO8859-10.pcf.gz	xfont	share,xorg,x11fonts
@@ -8656,11 +8656,11 @@
 ./usr/X11R7/lib/X11/fonts/misc/7x14B-ISO8859-7.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/7x14B-ISO8859-8.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/7x14B-ISO8859-9.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/7x14B-KOI8-R.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/7x14B-KOI8-R.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/7x14B.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/8x13-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/8x13-ISO8859-10.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/8x13-ISO8859-11.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/8x13-ISO8859-11.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/8x13-ISO8859-13.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/8x13-ISO8859-14.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/8x13-ISO8859-15.pcf.gz	xfont	share,xorg,x11fonts
@@ -8676,7 +8676,7 @@
 ./usr/X11R7/lib/X11/fonts/misc/8x13.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/8x13B-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/8x13B-ISO8859-10.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/8x13B-ISO8859-11.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/8x13B-ISO8859-11.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/8x13B-ISO8859-13.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/8x13B-ISO8859-14.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/8x13B-ISO8859-15.pcf.gz	xfont	share,xorg,x11fonts
@@ -8688,11 +8688,11 @@
 ./usr/X11R7/lib/X11/fonts/misc/8x13B-ISO8859-7.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/8x13B-ISO8859-8.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/8x13B-ISO8859-9.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/8x13B-KOI8-R.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/8x13B-KOI8-R.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/8x13B.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/8x13O-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/8x13O-ISO8859-10.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/8x13O-ISO8859-11.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/8x13O-ISO8859-11.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/8x13O-ISO8859-13.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/8x13O-ISO8859-14.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/8x13O-ISO8859-15.pcf.gz	xfont	share,xorg,x11fonts
@@ -8702,9 +8702,9 @@
 ./usr/X11R7/lib/X11/fonts/misc/8x13O-ISO8859-4.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/8x13O-ISO8859-5.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/8x13O-ISO8859-7.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/8x13O-ISO8859-8.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/8x13O-ISO8859-8.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/8x13O-ISO8859-9.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/8x13O-KOI8-R.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/8x13O-KOI8-R.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/8x13O.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/8x16.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/8x16rk.pcf.gz		xfont	share,xorg,x11fonts
@@ -8738,7 +8738,7 @@
 ./usr/X11R7/lib/X11/fonts/misc/9x15B-ISO8859-7.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/9x15B-ISO8859-8.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/9x15B-ISO8859-9.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/9x15B-KOI8-R.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/9x15B-KOI8-R.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/9x15B.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/9x18-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/9x18-ISO8859-10.pcf.gz	xfont	share,xorg,x11fonts
@@ -8758,7 +8758,7 @@
 ./usr/X11R7/lib/X11/fonts/misc/9x18.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/9x18B-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/9x18B-ISO8859-10.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/9x18B-ISO8859-11.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/9x18B-ISO8859-11.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/9x18B-ISO8859-13.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/9x18B-ISO8859-14.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/9x18B-ISO8859-15.pcf.gz	xfont	share,xorg,x11fonts
@@ -8770,7 +8770,7 @@
 ./usr/X11R7/lib/X11/fonts/misc/9x18B-ISO8859-7.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/9x18B-ISO8859-8.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/9x18B-ISO8859-9.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/9x18B-KOI8-R.pcf.gz	xfont-obsolete	share,xorg,obsolete
+./usr/X11R7/lib/X11/fonts/misc/9x18B-KOI8-R.pcf.gz	xfont-obsolete	obsolete
 ./usr/X11R7/lib/X11/fonts/misc/9x18B.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/cu-alt12.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/cu-arabic12.pcf.gz	xfont	share,xorg,x11fonts
