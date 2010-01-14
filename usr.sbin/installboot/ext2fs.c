@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.5 2010/01/07 13:26:00 tsutsui Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.6 2010/01/14 16:27:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -58,8 +58,8 @@
 #endif
 
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ext2fs.c,v 1.5 2010/01/07 13:26:00 tsutsui Exp $");
+#if !defined(__lint)
+__RCSID("$NetBSD: ext2fs.c,v 1.6 2010/01/14 16:27:49 tsutsui Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>

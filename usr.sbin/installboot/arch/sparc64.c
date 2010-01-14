@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.c,v 1.17 2008/05/29 14:51:27 mrg Exp $	*/
+/*	$NetBSD: sparc64.c,v 1.18 2010/01/14 16:27:49 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -60,8 +60,8 @@
 #endif
 
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sparc64.c,v 1.17 2008/05/29 14:51:27 mrg Exp $");
+#if !defined(__lint)
+__RCSID("$NetBSD: sparc64.c,v 1.18 2010/01/14 16:27:49 tsutsui Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>

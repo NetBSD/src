@@ -1,4 +1,4 @@
-/*	$NetBSD: sum.c,v 1.4 2008/04/28 20:24:16 martin Exp $	*/
+/*	$NetBSD: sum.c,v 1.5 2010/01/14 16:27:49 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -64,8 +64,8 @@
 #endif
 
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sum.c,v 1.4 2008/04/28 20:24:16 martin Exp $");
+#if !defined(__lint)
+__RCSID("$NetBSD: sum.c,v 1.5 2010/01/14 16:27:49 tsutsui Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>

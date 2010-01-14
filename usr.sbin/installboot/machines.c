@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.35 2008/04/28 20:24:16 martin Exp $	*/
+/*	$NetBSD: machines.c,v 1.36 2010/01/14 16:27:49 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
@@ -34,8 +34,8 @@
 #endif
 
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: machines.c,v 1.35 2008/04/28 20:24:16 martin Exp $");
+#if !defined(__lint)
+__RCSID("$NetBSD: machines.c,v 1.36 2010/01/14 16:27:49 tsutsui Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>
