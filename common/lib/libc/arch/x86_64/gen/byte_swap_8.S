@@ -1,4 +1,4 @@
-/*	$NetBSD: bswap64.S,v 1.1 2001/06/19 00:25:02 fvdl Exp $	*/
+/*	$NetBSD: byte_swap_8.S,v 1.1 2010/01/14 02:09:46 joerg Exp $	*/
 
 /*
  * Written by Frank van der Linden (fvdl@wasabisystems.com)
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: bswap64.S,v 1.1 2001/06/19 00:25:02 fvdl Exp $")
+	RCSID("$NetBSD: byte_swap_8.S,v 1.1 2010/01/14 02:09:46 joerg Exp $")
 #endif
 
 ENTRY(bswap64)
