@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.11 2009/12/04 01:12:17 cliff Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.12 2010/01/14 05:02:38 cliff Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.11 2009/12/04 01:12:17 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.10.18.12 2010/01/14 05:02:38 cliff Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -764,8 +764,8 @@ __BS(map)(void *v, bus_addr_t addr, bus_size_t size, int flags,
 		if (va == 0)
 			return ENOMEM;
 
-		/* check use of handle_is_kseg2 in BS(unmap) */
-		KASSERT((va & ~MIPS_PHYS_MASK) == MIPS_KSEG2_START);
+		/* check use of handle_is_km in BS(unmap) */
+		KASSERT(!(MIPS_KSEG0_P(va) || MIPS_KSEG1_P(va)));
 
 		*hp = va + (addr & PAGE_MASK);
 		pa = trunc_page(addr);
@@ -797,14 +797,11 @@ __BS(unmap)(void *v, bus_space_handle_t h, bus_size_t size, int acct)
 	bus_addr_t addr = 0;	/* initialize to appease gcc */
 #endif
 #ifndef _LP64
-	bool handle_is_kseg2;
+	bool handle_is_km;
 
 	/* determine if h is addr obtained from uvm_km_alloc */
-	handle_is_kseg2 = ((h & ~MIPS_PHYS_MASK) == MIPS_KSEG2_START);
-#if 0
-	printf("%s:%d: is_kseg2 %d\n", __func__, __LINE__, handle_is_kseg2);
-#endif
-	if (handle_is_kseg2 == true) {
+	handle_is_km = !(MIPS_KSEG0_P(h) || MIPS_KSEG1_P(h));
+	if (handle_is_km == true) {
 		paddr_t pa;
 		vaddr_t va = (vaddr_t)trunc_page(h);
 		vsize_t sz = (vsize_t)round_page((h % PAGE_SIZE) + size);
@@ -844,7 +841,7 @@ __BS(unmap)(void *v, bus_space_handle_t h, bus_size_t size, int acct)
 	KASSERT(MIPS_XKPHYS_P(h));
 	addr = MIPS_XKPHYS_TO_PHYS(h);
 #else
-	if (handle_is_kseg2 == false) {
+	if (handle_is_km == false) {
 		if (MIPS_KSEG0_P(h))
 			addr = MIPS_KSEG0_TO_PHYS(h);
 		else
