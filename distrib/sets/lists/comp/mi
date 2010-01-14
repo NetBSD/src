@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1362 2010/01/14 13:47:41 wiz Exp $
+#	$NetBSD: mi,v 1.1363 2010/01/14 21:35:57 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2820,6 +2820,7 @@
 ./usr/libdata/debug/sbin/mount_portal.debug	comp-miscfs-debug	debug
 ./usr/libdata/debug/sbin/mount_procfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_ptyfs.debug	comp-miscfs-debug	debug
+./usr/libdata/debug/sbin/mount_puffs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_smbfs.debug	comp-smbfs-debug	debug
 ./usr/libdata/debug/sbin/mount_sysvbfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_tmpfs.debug	comp-miscfs-debug	debug
