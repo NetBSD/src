@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.14 2009/12/06 07:12:18 uebayasi Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2010/01/14 02:09:46 joerg Exp $
 
 # objects built from assembler sources (need lint stubs)
-SRCS+=	alloca.S bswap64.S byte_swap_2.S byte_swap_4.S fabs.S \
+SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S byte_swap_8.S fabs.S \
 	flt_rounds.S fpgetmask.S fpgetround.S fpgetsticky.S \
 	fpsetmask.S fpsetround.S fpsetsticky.S 
 
