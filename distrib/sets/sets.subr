@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.118 2009/12/21 15:37:25 uebayasi Exp $
+#	$NetBSD: sets.subr,v 1.119 2010/01/14 13:45:51 he Exp $
 #
 
 #
@@ -134,6 +134,7 @@ obsolete=0
 module=yes
 if [ "${MKKMOD}" = "no" ]; then
 	module=no			# MODULEs are off.
+	kmod=no
 fi
 # Determine lib type. Do this first so stlib also gets set.
 if [ "${OBJECT_FMT}" = "ELF" ]; then
@@ -167,7 +168,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.118 2009/12/21 15:37:25 uebayasi Exp $
+# 	# $NetBSD: sets.subr,v 1.119 2010/01/14 13:45:51 he Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
