@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1360 2010/01/13 01:23:06 dyoung Exp $
+#	$NetBSD: mi,v 1.1361 2010/01/14 12:01:58 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -479,8 +479,8 @@
 ./usr/include/dev/pci/if_fxpvar.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/if_levar.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/if_lmc.h			comp-c-include
-./usr/include/dev/pci/if_lmc_types.h		comp-c-include		obsolete
-./usr/include/dev/pci/if_lmcioctl.h		comp-c-include		obsolete
+./usr/include/dev/pci/if_lmc_types.h		comp-obsolete		obsolete
+./usr/include/dev/pci/if_lmcioctl.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/if_lmcvar.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/if_tlregs.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/mlyio.h			comp-c-include
@@ -1447,12 +1447,12 @@
 ./usr/include/net/if_pflog.h			comp-c-include
 ./usr/include/net/if_ppp.h			comp-c-include
 ./usr/include/net/if_pppoe.h			comp-c-include
-./usr/include/net/if_pppvar.h			comp-c-include		obsolete
-./usr/include/net/if_slvar.h			comp-c-include		obsolete
+./usr/include/net/if_pppvar.h			comp-obsolete		obsolete
+./usr/include/net/if_slvar.h			comp-obsolete		obsolete
 ./usr/include/net/if_sppp.h			comp-c-include
 ./usr/include/net/if_srt.h			comp-c-include
 ./usr/include/net/if_stf.h			comp-c-include
-./usr/include/net/if_stripvar.h			comp-c-include		obsolete
+./usr/include/net/if_stripvar.h			comp-obsolete		obsolete
 ./usr/include/net/if_tap.h			comp-c-include
 ./usr/include/net/if_token.h			comp-c-include
 ./usr/include/net/if_tun.h			comp-c-include
@@ -1687,36 +1687,36 @@
 ./usr/include/objc/sarray.h			comp-c-include
 ./usr/include/objc/thr.h			comp-c-include
 ./usr/include/objc/typedstream.h		comp-c-include
-./usr/include/openpgpsdk/accumulate.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/armour.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/callback.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/compress.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/configure.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/create.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/crypto.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/defs.h			comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/errors.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/final.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/hash.h			comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/keyring.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/lists.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/memory.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/openpgpsdk.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/packet-parse.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/packet-show-cast.h	comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/packet-show.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/packet.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/random.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/readerwriter.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/signature.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/std_print.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/streamwriter.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/types.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/util.h			comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/validate.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/version.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/writer.h		comp-c-obsolete		obsolete
-./usr/include/openpgpsdk/writer_armoured.h	comp-c-obsolete		obsolete
+./usr/include/openpgpsdk/accumulate.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/armour.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/callback.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/compress.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/configure.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/create.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/crypto.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/defs.h			comp-obsolete		obsolete
+./usr/include/openpgpsdk/errors.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/final.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/hash.h			comp-obsolete		obsolete
+./usr/include/openpgpsdk/keyring.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/lists.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/memory.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/openpgpsdk.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/packet-parse.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/packet-show-cast.h	comp-obsolete		obsolete
+./usr/include/openpgpsdk/packet-show.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/packet.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/random.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/readerwriter.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/signature.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/std_print.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/streamwriter.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/types.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/util.h			comp-obsolete		obsolete
+./usr/include/openpgpsdk/validate.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/version.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/writer.h		comp-obsolete		obsolete
+./usr/include/openpgpsdk/writer_armoured.h	comp-obsolete		obsolete
 ./usr/include/openssl/aes.h			comp-c-include		crypto
 ./usr/include/openssl/asn1.h			comp-c-include		crypto
 ./usr/include/openssl/asn1_mac.h		comp-c-include		crypto
@@ -2053,7 +2053,7 @@
 ./usr/include/sys/param.h			comp-c-include
 ./usr/include/sys/pipe.h			comp-c-include
 ./usr/include/sys/pmc.h				comp-c-include
-./usr/include/sys/pmf.h				comp-c-include		obsolete
+./usr/include/sys/pmf.h				comp-obsolete		obsolete
 ./usr/include/sys/poll.h			comp-c-include
 ./usr/include/sys/pool.h			comp-c-include
 ./usr/include/sys/power.h			comp-c-include
@@ -2291,7 +2291,7 @@
 ./usr/lib/i18n/libmapper_zone.a			comp-i18n-lib
 ./usr/lib/i18n/libmapper_zone_g.a		-unknown-		debuglib
 ./usr/lib/libamu.a				comp-obsolete		obsolete
-./usr/lib/libamu_g.a				-unknown-		debuglib,obsolete
+./usr/lib/libamu_g.a				-obsolete		debuglib,obsolete
 ./usr/lib/libamu_p.a				comp-obsolete		obsolete
 ./usr/lib/libamu_pic.a				comp-obsolete		obsolete
 ./usr/lib/libarchive.a				comp-c-lib
@@ -2657,7 +2657,7 @@
 ./usr/lib/librumpvfs_g.a			-unknown-		debuglib
 ./usr/lib/librumpvfs_p.a			comp-c-proflib		profile
 ./usr/lib/libsdp.a				comp-obsolete		obsolete
-./usr/lib/libsdp_g.a				-unknown-		obsolete
+./usr/lib/libsdp_g.a				-obsolete		obsolete
 ./usr/lib/libsdp_p.a				comp-obsolete		obsolete
 ./usr/lib/libskey.a				comp-c-lib		skey
 ./usr/lib/libskey_g.a				-unknown-		debuglib,skey
@@ -3049,7 +3049,7 @@
 ./usr/libdata/debug/usr/bin/mklocale.debug	comp-locale-debug	debug
 ./usr/libdata/debug/usr/bin/mkstr.debug		comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/mktemp.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/modstat.debug	comp-obolete		obsolete
+./usr/libdata/debug/usr/bin/modstat.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/mset.debug		comp-tn3270-debug	debug
 ./usr/libdata/debug/usr/bin/msgattrib.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/msgc.debug		comp-c-debug		debug
@@ -3280,7 +3280,7 @@
 ./usr/libdata/debug/usr/libexec/atf-cleanup.debug	comp-atf-debug		debug
 ./usr/libdata/debug/usr/libexec/atf-exec.debug	comp-atf-debug		debug
 ./usr/libdata/debug/usr/libexec/atf-format.debug	comp-atf-debug		debug
-./usr/libdata/debug/usr/libexec/atf-killpg.debug	comp-atf-debug		debug,obsolete
+./usr/libdata/debug/usr/libexec/atf-killpg.debug	comp-obsolete		debug,obsolete
 ./usr/libdata/debug/usr/libexec/atrun.debug	comp-cron-debug		debug
 ./usr/libdata/debug/usr/libexec/cc1.debug	comp-c-debug		gcccmds,debug
 ./usr/libdata/debug/usr/libexec/cc1obj.debug	comp-objc-debug		gcccmds,debug
@@ -3660,7 +3660,7 @@
 ./usr/libdata/lint/llib-lisccc.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-lisccfg.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-liscsi.ln		comp-c-lintlib		lint,iscsi
-./usr/libdata/lint/llib-lkstream.ln		comp-c-lintlib		obsolete
+./usr/libdata/lint/llib-lkstream.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lkvm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ll.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-llber.ln		comp-ldap-lintlib	lint,ldap
@@ -7061,7 +7061,7 @@
 ./usr/share/man/cat3/openpam_restore_cred.0	comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpam_set_option.0	comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpam_ttyconv.0		comp-c-catman		.cat,pam
-./usr/share/man/cat3/openpgpsdk.0		comp-c-obsolete		obsolete
+./usr/share/man/cat3/openpgpsdk.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/openpty.0			comp-c-catman		.cat
 ./usr/share/man/cat3/openssl_bio.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/openssl_blowfish.0		comp-c-catman		crypto,.cat
@@ -8297,7 +8297,7 @@
 ./usr/share/man/cat9/FILE_UNUSE.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/FILE_USE.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/FREE.0			comp-sys-catman		.cat
-./usr/share/man/cat9/HOLDRELE.0			comp-sys-catman		obsolete
+./usr/share/man/cat9/HOLDRELE.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/KASSERT.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/KDASSERT.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/KNOTE.0			comp-sys-catman		.cat
@@ -8331,7 +8331,7 @@
 ./usr/share/man/cat9/SCHED_UNLOCK.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/TC_DENSE_TO_SPARSE.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/TC_PHYS_TO_UNCACHED.0	comp-sys-catman		.cat
-./usr/share/man/cat9/VATTR_NULL.0		comp-sys-catman		obsolete
+./usr/share/man/cat9/VATTR_NULL.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/VFS_CHECKEXP.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_FHTOVP.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_MOUNT.0		comp-sys-catman		.cat
@@ -8346,7 +8346,7 @@
 ./usr/share/man/cat9/VFS_UNMOUNT.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_VGET.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_VPTOFH.0		comp-sys-catman		.cat
-./usr/share/man/cat9/VHOLD.0			comp-sys-catman		obsolete
+./usr/share/man/cat9/VHOLD.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/VOP_ABORTOP.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_ACCESS.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_ADVLOCK.0		comp-sys-catman		.cat
@@ -8398,7 +8398,7 @@
 ./usr/share/man/cat9/VOP_VFREE.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/VOP_WHITEOUT.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_WRITE.0		comp-sys-catman		.cat
-./usr/share/man/cat9/VREF.0			comp-sys-catman		obsolete
+./usr/share/man/cat9/VREF.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/accept_filt_add.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/accept_filt_del.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/accept_filt_generic_mod_event.0	comp-sys-catman		.cat
@@ -8566,7 +8566,7 @@
 ./usr/share/man/cat9/cardbus_mapreg_map.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/cardbus_mapreg_unmap.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/cdevvp.0			comp-sys-catman		.cat
-./usr/share/man/cat9/checkalias.0		comp-sys-catman		obsolete
+./usr/share/man/cat9/checkalias.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/child_return.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/chooselwp.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/chooseproc.0		comp-obsolete		obsolete
@@ -8589,7 +8589,7 @@
 ./usr/share/man/cat9/cnputc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/condvar.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/config.0			comp-sys-catman		.cat
-./usr/share/man/cat9/config_activate.0		comp-sys-catman		obsolete
+./usr/share/man/cat9/config_activate.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/config_attach.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/config_attach_loc.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/config_attach_pseudo.0	comp-sys-catman		.cat
@@ -9454,7 +9454,7 @@
 ./usr/share/man/cat9/vattr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vattr_null.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vcons.0			comp-sys-catman		.cat
-./usr/share/man/cat9/vcount.0			comp-sys-catman		obsolete
+./usr/share/man/cat9/vcount.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/vdevgone.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/veriexec.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vfinddev.0			comp-sys-catman		.cat
@@ -9484,8 +9484,8 @@
 ./usr/share/man/cat9/vfs_sysctl.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/vfs_unbusy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_unmountall.0		comp-sys-catman		.cat
-./usr/share/man/cat9/vfs_write_resume.0		comp-sys-catman		obsolete
-./usr/share/man/cat9/vfs_write_suspend.0	comp-sys-catman		obsolete
+./usr/share/man/cat9/vfs_write_resume.0		comp-obsolete		obsolete
+./usr/share/man/cat9/vfs_write_suspend.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/vfsops.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vfssubr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vget.0			comp-sys-catman		.cat
@@ -9519,11 +9519,11 @@
 ./usr/share/man/cat9/vn_bwrite.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_close.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_closefile.0		comp-sys-catman		.cat
-./usr/share/man/cat9/vn_cow_disestablish.0	comp-sys-catman		obsolete
-./usr/share/man/cat9/vn_cow_establish.0		comp-sys-catman		obsolete
+./usr/share/man/cat9/vn_cow_disestablish.0	comp-obsolete		obsolete
+./usr/share/man/cat9/vn_cow_establish.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/vn_default_error.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_fcntl.0			comp-sys-catman		.cat
-./usr/share/man/cat9/vn_finished_write.0	comp-sys-catman		obsolete
+./usr/share/man/cat9/vn_finished_write.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/vn_ioctl.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_isunder.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_lock.0			comp-sys-catman		.cat
@@ -9535,7 +9535,7 @@
 ./usr/share/man/cat9/vn_read.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_restorerecurse.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_setrecurse.0		comp-sys-catman		.cat
-./usr/share/man/cat9/vn_start_write.0		comp-sys-catman		obsolete
+./usr/share/man/cat9/vn_start_write.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/vn_stat.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_statfile.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_write.0			comp-sys-catman		.cat
@@ -13853,7 +13853,7 @@
 ./usr/share/man/html9/FILE_UNUSE.html		comp-sys-htmlman	html
 ./usr/share/man/html9/FILE_USE.html		comp-sys-htmlman	html
 ./usr/share/man/html9/FREE.html			comp-sys-htmlman	html
-./usr/share/man/html9/HOLDRELE.html		comp-sys-htmlman	obsolete
+./usr/share/man/html9/HOLDRELE.html		comp-obsolete	obsolete
 ./usr/share/man/html9/KASSERT.html		comp-sys-htmlman	html
 ./usr/share/man/html9/KDASSERT.html		comp-sys-htmlman	html
 ./usr/share/man/html9/KNOTE.html		comp-sys-htmlman	html
@@ -13884,7 +13884,7 @@
 ./usr/share/man/html9/RUN_ONCE.html		comp-sys-htmlman	html
 ./usr/share/man/html9/TC_DENSE_TO_SPARSE.html	comp-sys-htmlman	html
 ./usr/share/man/html9/TC_PHYS_TO_UNCACHED.html	comp-sys-htmlman	html
-./usr/share/man/html9/VATTR_NULL.html		comp-sys-htmlman	obsolete
+./usr/share/man/html9/VATTR_NULL.html		comp-obsolete	obsolete
 ./usr/share/man/html9/VFS_CHECKEXP.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VFS_FHTOVP.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VFS_MOUNT.html		comp-sys-htmlman	html
@@ -13898,7 +13898,7 @@
 ./usr/share/man/html9/VFS_UNMOUNT.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VFS_VGET.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VFS_VPTOFH.html		comp-sys-htmlman	html
-./usr/share/man/html9/VHOLD.html		comp-sys-htmlman	obsolete
+./usr/share/man/html9/VHOLD.html		comp-obsolete	obsolete
 ./usr/share/man/html9/VOP_ABORTOP.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_ACCESS.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_ADVLOCK.html		comp-sys-htmlman	html
@@ -13943,7 +13943,7 @@
 ./usr/share/man/html9/VOP_UNLOCK.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_WHITEOUT.html		comp-sys-htmlman	html
 ./usr/share/man/html9/VOP_WRITE.html		comp-sys-htmlman	html
-./usr/share/man/html9/VREF.html			comp-sys-htmlman	obsolete
+./usr/share/man/html9/VREF.html			comp-obsolete	obsolete
 ./usr/share/man/html9/accept_filt_add.html	comp-sys-htmlman	html
 ./usr/share/man/html9/accept_filt_del.html	comp-sys-htmlman	html
 ./usr/share/man/html9/accept_filt_generic_mod_event.html	comp-sys-htmlman	html
@@ -14108,7 +14108,7 @@
 ./usr/share/man/html9/cardbus_mapreg_map.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cardbus_mapreg_unmap.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cdevvp.html		comp-sys-htmlman	html
-./usr/share/man/html9/checkalias.html		comp-sys-htmlman	obsolete
+./usr/share/man/html9/checkalias.html		comp-obsolete	obsolete
 ./usr/share/man/html9/child_return.html		comp-sys-htmlman	html
 ./usr/share/man/html9/clock_secs_to_ymdhms.html	comp-sys-htmlman	html
 ./usr/share/man/html9/clock_ymdhms_to_secs.html	comp-sys-htmlman	html
@@ -14129,7 +14129,7 @@
 ./usr/share/man/html9/cnputc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/condvar.html		comp-sys-htmlman	html
 ./usr/share/man/html9/config.html		comp-sys-htmlman	html
-./usr/share/man/html9/config_activate.html	comp-sys-htmlman	obsolete
+./usr/share/man/html9/config_activate.html	comp-obsolete	obsolete
 ./usr/share/man/html9/config_attach.html	comp-sys-htmlman	html
 ./usr/share/man/html9/config_attach_loc.html	comp-sys-htmlman	html
 ./usr/share/man/html9/config_attach_pseudo.html	comp-sys-htmlman	html
@@ -14933,7 +14933,7 @@
 ./usr/share/man/html9/vattr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vattr_null.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vcons.html		comp-sys-htmlman	html
-./usr/share/man/html9/vcount.html		comp-sys-htmlman	obsolete
+./usr/share/man/html9/vcount.html		comp-obsolete	obsolete
 ./usr/share/man/html9/vdevgone.html		comp-sys-htmlman	html
 ./usr/share/man/html9/veriexec.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vfinddev.html		comp-sys-htmlman	html
@@ -19496,7 +19496,7 @@
 ./usr/share/man/man9/FILE_UNUSE.9		comp-sys-man		.man
 ./usr/share/man/man9/FILE_USE.9			comp-sys-man		.man
 ./usr/share/man/man9/FREE.9			comp-sys-man		.man
-./usr/share/man/man9/HOLDRELE.9			comp-sys-man		obsolete
+./usr/share/man/man9/HOLDRELE.9			comp-obsolete		obsolete
 ./usr/share/man/man9/KASSERT.9			comp-sys-man		.man
 ./usr/share/man/man9/KDASSERT.9			comp-sys-man		.man
 ./usr/share/man/man9/KNOTE.9			comp-sys-man		.man
@@ -19530,7 +19530,7 @@
 ./usr/share/man/man9/SCHED_UNLOCK.9		comp-obsolete		obsolete
 ./usr/share/man/man9/TC_DENSE_TO_SPARSE.9	comp-sys-man		.man
 ./usr/share/man/man9/TC_PHYS_TO_UNCACHED.9	comp-sys-man		.man
-./usr/share/man/man9/VATTR_NULL.9		comp-sys-man		obsolete
+./usr/share/man/man9/VATTR_NULL.9		comp-obsolete		obsolete
 ./usr/share/man/man9/VFS_CHECKEXP.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_FHTOVP.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_MOUNT.9		comp-sys-man		.man
@@ -19545,7 +19545,7 @@
 ./usr/share/man/man9/VFS_UNMOUNT.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_VGET.9			comp-sys-man		.man
 ./usr/share/man/man9/VFS_VPTOFH.9		comp-sys-man		.man
-./usr/share/man/man9/VHOLD.9			comp-sys-man		obsolete
+./usr/share/man/man9/VHOLD.9			comp-obsolete		obsolete
 ./usr/share/man/man9/VOP_ABORTOP.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_ACCESS.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_ADVLOCK.9		comp-sys-man		.man
@@ -19597,7 +19597,7 @@
 ./usr/share/man/man9/VOP_VFREE.9		comp-obsolete		obsolete
 ./usr/share/man/man9/VOP_WHITEOUT.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_WRITE.9		comp-sys-man		.man
-./usr/share/man/man9/VREF.9			comp-sys-man		obsolete
+./usr/share/man/man9/VREF.9			comp-obsolete		obsolete
 ./usr/share/man/man9/accept_filt_add.9		comp-sys-man		.man
 ./usr/share/man/man9/accept_filt_del.9		comp-sys-man		.man
 ./usr/share/man/man9/accept_filt_generic_mod_event.9	comp-sys-man		.man
@@ -19765,7 +19765,7 @@
 ./usr/share/man/man9/cardbus_mapreg_map.9	comp-sys-man		.man
 ./usr/share/man/man9/cardbus_mapreg_unmap.9	comp-sys-man		.man
 ./usr/share/man/man9/cdevvp.9			comp-sys-man		.man
-./usr/share/man/man9/checkalias.9		comp-sys-man		obsolete
+./usr/share/man/man9/checkalias.9		comp-obsolete		obsolete
 ./usr/share/man/man9/child_return.9		comp-sys-man		.man
 ./usr/share/man/man9/chooselwp.9		comp-obsolete		obsolete
 ./usr/share/man/man9/chooseproc.9		comp-obsolete		obsolete
@@ -19788,7 +19788,7 @@
 ./usr/share/man/man9/cnputc.9			comp-sys-man		.man
 ./usr/share/man/man9/condvar.9			comp-sys-man		.man
 ./usr/share/man/man9/config.9			comp-sys-man		.man
-./usr/share/man/man9/config_activate.9		comp-sys-man		obsolete
+./usr/share/man/man9/config_activate.9		comp-obsolete		obsolete
 ./usr/share/man/man9/config_attach.9		comp-sys-man		.man
 ./usr/share/man/man9/config_attach_loc.9	comp-sys-man		.man
 ./usr/share/man/man9/config_attach_pseudo.9	comp-sys-man		.man
@@ -20653,7 +20653,7 @@
 ./usr/share/man/man9/vattr.9			comp-sys-man		.man
 ./usr/share/man/man9/vattr_null.9		comp-sys-man		.man
 ./usr/share/man/man9/vcons.9			comp-sys-man		.man
-./usr/share/man/man9/vcount.9			comp-sys-man		obsolete
+./usr/share/man/man9/vcount.9			comp-obsolete		obsolete
 ./usr/share/man/man9/vdevgone.9			comp-sys-man		.man
 ./usr/share/man/man9/veriexec.9			comp-sys-man		.man
 ./usr/share/man/man9/vfinddev.9			comp-sys-man		.man
@@ -20683,8 +20683,8 @@
 ./usr/share/man/man9/vfs_sysctl.9		comp-obsolete		obsolete
 ./usr/share/man/man9/vfs_unbusy.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_unmountall.9		comp-sys-man		.man
-./usr/share/man/man9/vfs_write_resume.9		comp-sys-man		obsolete
-./usr/share/man/man9/vfs_write_suspend.9	comp-sys-man		obsolete
+./usr/share/man/man9/vfs_write_resume.9		comp-obsolete		obsolete
+./usr/share/man/man9/vfs_write_suspend.9	comp-obsolete		obsolete
 ./usr/share/man/man9/vfsops.9			comp-sys-man		.man
 ./usr/share/man/man9/vfssubr.9			comp-sys-man		.man
 ./usr/share/man/man9/vget.9			comp-sys-man		.man
@@ -20718,11 +20718,11 @@
 ./usr/share/man/man9/vn_bwrite.9		comp-sys-man		.man
 ./usr/share/man/man9/vn_close.9			comp-sys-man		.man
 ./usr/share/man/man9/vn_closefile.9		comp-sys-man		.man
-./usr/share/man/man9/vn_cow_disestablish.9	comp-sys-man		obsolete
-./usr/share/man/man9/vn_cow_establish.9		comp-sys-man		obsolete
+./usr/share/man/man9/vn_cow_disestablish.9	comp-obsolete		obsolete
+./usr/share/man/man9/vn_cow_establish.9		comp-obsolete		obsolete
 ./usr/share/man/man9/vn_default_error.9		comp-sys-man		.man
 ./usr/share/man/man9/vn_fcntl.9			comp-sys-man		.man
-./usr/share/man/man9/vn_finished_write.9	comp-sys-man		obsolete
+./usr/share/man/man9/vn_finished_write.9	comp-obsolete		obsolete
 ./usr/share/man/man9/vn_ioctl.9			comp-sys-man		.man
 ./usr/share/man/man9/vn_isunder.9		comp-sys-man		.man
 ./usr/share/man/man9/vn_lock.9			comp-sys-man		.man
@@ -20734,7 +20734,7 @@
 ./usr/share/man/man9/vn_read.9			comp-sys-man		.man
 ./usr/share/man/man9/vn_restorerecurse.9	comp-sys-man		.man
 ./usr/share/man/man9/vn_setrecurse.9		comp-sys-man		.man
-./usr/share/man/man9/vn_start_write.9		comp-sys-man		obsolete
+./usr/share/man/man9/vn_start_write.9		comp-obsolete		obsolete
 ./usr/share/man/man9/vn_stat.9			comp-sys-man		.man
 ./usr/share/man/man9/vn_statfile.9		comp-sys-man		.man
 ./usr/share/man/man9/vn_write.9			comp-sys-man		.man

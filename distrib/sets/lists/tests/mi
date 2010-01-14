@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.58 2009/12/22 13:38:41 jmmv Exp $
+# $NetBSD: mi,v 1.59 2010/01/14 12:06:13 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6,7 +6,7 @@
 ./usr/libdata/debug/usr/tests						tests-base-debug
 ./usr/libdata/debug/usr/tests/atf					tests-atf-debug
 ./usr/libdata/debug/usr/tests/atf/atf-c					tests-atf-debug
-./usr/libdata/debug/usr/tests/atf/atf-c/h_check.debug			tests-atf-debug		obsolete
+./usr/libdata/debug/usr/tests/atf/atf-c/h_check.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/atf/atf-c/h_processes.debug		tests-atf-debug		debug,atf
 ./usr/libdata/debug/usr/tests/atf/atf-c/t_atf_c.debug			tests-atf-debug		debug,atf
 ./usr/libdata/debug/usr/tests/atf/atf-c/t_build.debug			tests-atf-debug		debug,atf
@@ -206,7 +206,7 @@
 ./usr/tests/atf/atf-c/d_include_ui_h.c		tests-atf-tests		atf
 ./usr/tests/atf/atf-c/d_include_user_h.c	tests-atf-tests		atf
 ./usr/tests/atf/atf-c/d_use_macros_h.c		tests-atf-tests		atf
-./usr/tests/atf/atf-c/h_check			tests-atf-tests		obsolete
+./usr/tests/atf/atf-c/h_check			tests-obsolete		obsolete
 ./usr/tests/atf/atf-c/h_processes		tests-atf-tests		atf
 ./usr/tests/atf/atf-c/t_atf_c			tests-atf-tests		atf
 ./usr/tests/atf/atf-c/t_build			tests-atf-tests		atf
@@ -491,7 +491,7 @@
 ./usr/tests/atf/tools/t_atf_compile		tests-atf-tests		atf
 ./usr/tests/atf/tools/t_atf_config		tests-atf-tests		atf
 ./usr/tests/atf/tools/t_atf_exec		tests-atf-tests		atf
-./usr/tests/atf/tools/t_atf_killpg		tests-atf-tests		obsolete
+./usr/tests/atf/tools/t_atf_killpg		tests-obsolete		obsolete
 ./usr/tests/atf/tools/t_atf_report		tests-atf-tests		atf
 ./usr/tests/atf/tools/t_atf_run			tests-atf-tests		atf
 ./usr/tests/atf/units				tests-obsolete		obsolete
@@ -1153,7 +1153,7 @@
 ./usr/tests/util/sh/Atffile			tests-util-tests
 ./usr/tests/util/sh/t_compexit			tests-util-tests
 ./usr/tests/util/sh/t_exit			tests-util-tests
-./usr/tests/util/sh/t_exitstatus		tests-util-tests	obsolete
+./usr/tests/util/sh/t_exitstatus		tests-obsolete	obsolete
 ./usr/tests/util/sh/t_expand			tests-util-tests
 ./usr/tests/util/sh/t_fsplit			tests-util-tests
 ./usr/tests/util/sh/t_here			tests-util-tests
