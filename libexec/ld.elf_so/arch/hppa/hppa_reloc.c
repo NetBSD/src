@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.31 2010/01/13 20:17:22 christos Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.32 2010/01/14 11:57:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.31 2010/01/13 20:17:22 christos Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.32 2010/01/14 11:57:06 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -590,7 +590,7 @@ caddr_t
 _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 {
 	const Elf_Rela *rela;
-	Elf_Addr new_value;
+	Elf_Addr new_value = 0;	/* XXX gcc */
 	int err;
 
 	rela = (const Elf_Rela *)((const char *)obj->pltrela + reloff);
