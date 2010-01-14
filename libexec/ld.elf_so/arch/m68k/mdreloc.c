@@ -1,13 +1,13 @@
-/*	$NetBSD: mdreloc.c,v 1.25 2010/01/13 20:17:22 christos Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.26 2010/01/14 11:58:32 skrll Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.25 2010/01/13 20:17:22 christos Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.26 2010/01/14 11:58:32 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.25 2010/01/13 20:17:22 christos Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.26 2010/01/14 11:58:32 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -165,7 +165,8 @@ _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 }
 
 static inline int
-_rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *tp)
+_rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
+    Elf_Addr *tp)
 {
 	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	Elf_Addr new_value;
