@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.96.10.2 2009/09/07 23:46:46 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.96.10.3 2010/01/14 00:50:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96.10.2 2009/09/07 23:46:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96.10.3 2010/01/14 00:50:01 matt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -258,7 +258,6 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #ifdef KLOADER
 	struct kloader_bootinfo kbi;
 #endif
-	extern struct user *proc0paddr;
 	extern char edata[], end[];
 #if NKSYMS || defined(DDB) || defined(LKM)
 	extern void *esym;
@@ -454,14 +453,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	/*
 	 * Alloc u pages for lwp0 stealing KSEG0 memory.
 	 */
-	lwp0.l_addr = proc0paddr = (struct user *)kernend;
-	lwp0.l_md.md_regs =
-	    (struct frame *)((char *)kernend + UPAGES * PAGE_SIZE) - 1;
-	memset(kernend, 0, UPAGES * PAGE_SIZE);
-	lwp0.l_addr->u_pcb.pcb_context.val[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
-
-	kernend = (char *)kernend + UPAGES * PAGE_SIZE;
+	mips_init_lwp0_uarea();
 
 	/* Initialize console and KGDB serial port. */
 	(*platform.cons_init)();
@@ -508,22 +500,8 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 		physmem += atop(mem_clusters[i].size);
 	}
 
-	/* Cluster 0 is always the kernel, which doesn't get loaded. */
-	for (i = 1; i < mem_cluster_cnt; i++) {
-		paddr_t start;
-		psize_t size;
-
-		start = (paddr_t)mem_clusters[i].start;
-		size = (psize_t)mem_clusters[i].size;
-
-		printf("loading %#"PRIxPADDR",%#"PRIxPSIZE"\n", start, size);
-
-		memset((void *)MIPS_PHYS_TO_KSEG1(start), 0, size);
-
-		uvm_page_physload(atop(start), atop(start + size),
-		    atop(start), atop(start + size),
-		    VM_FREELIST_DEFAULT);
-	}
+	mips_page_physload(MIPS_KSEG0_START, (vaddr_t)kernend,
+	    mem_clusters, mem_cluster_cnt, NULL, 0);
 
 	/*
 	 * Initialize error message buffer (at end of core).
