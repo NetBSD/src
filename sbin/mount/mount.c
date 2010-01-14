@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.90 2010/01/14 21:30:17 pooka Exp $	*/
+/*	$NetBSD: mount.c,v 1.91 2010/01/14 21:46:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.90 2010/01/14 21:30:17 pooka Exp $");
+__RCSID("$NetBSD: mount.c,v 1.91 2010/01/14 21:46:24 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -400,13 +400,23 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 			return (1);
 		}
 		for(i = 0; i < numfs; i++) {
+			const char *mountedtype = sfp[i].f_fstypename;
+			size_t cmplen = sizeof(sfp[i].f_fstypename);
+
+			/* remove "puffs|" from comparisons, if present */
+#define TYPESIZE (sizeof(PUFFS_TYPEPREFIX)-1)
+			if (strncmp(mountedtype,
+			    PUFFS_TYPEPREFIX, TYPESIZE) == 0) {
+				mountedtype += TYPESIZE;
+				cmplen -= TYPESIZE;
+			}
+
 			/*
 			 * XXX can't check f_mntfromname,
 			 * thanks to mfs, union, etc.
 			 */
 			if (strncmp(name, sfp[i].f_mntonname, MNAMELEN) == 0 &&
-			    strncmp(vfstype, sfp[i].f_fstypename,
-				sizeof(sfp[i].f_fstypename)) == 0) {
+			    strncmp(vfstype, mountedtype, cmplen) == 0) {
 				if (verbose)
 					(void)printf("%s on %s type %.*s: "
 					    "%s\n",
