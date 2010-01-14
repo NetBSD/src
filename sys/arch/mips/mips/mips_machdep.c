@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.23 2010/01/14 00:40:36 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.24 2010/01/14 17:26:20 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.23 2010/01/14 00:40:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.24 2010/01/14 17:26:20 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -1700,41 +1700,32 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 	}
 #endif /* VM_FREELIST_FIRST512M || VM_FREELIST_FIRST4G */
 
-	while (nseg-- > 0) {
-		/*
-		 * Copy this segment since we may have to deal with it
-		 * piecemeal.
-		 */
-		phys_ram_seg_t tmp = *segs++;
-		printf("phys segment: %#"PRIxPADDR"@%#"PRIxPADDR"\n",
-		    (paddr_t)tmp.size,
-		    (paddr_t)tmp.start);
-
+	for (; nseg-- > 0; segs++) {
 		/*
 		 * Make sure everything is in page units.
 		 */
-		tmp.size = round_page(tmp.start + tmp.size) - trunc_page(tmp.start) ;
-		tmp.start = trunc_page(tmp.start);
+		paddr_t segstart = round_page(segs->start);
+		const paddr_t segfinish = trunc_page(segs->start + segs->size);
+
+		printf("phys segment: %#"PRIxPADDR"@%#"PRIxPADDR"\n",
+		    segfinish - segstart, segstart);
 
 		/*
 		 * Page 0 is reserved for exception vectors.
 		 */
-		if (tmp.start == 0) {
-			tmp.start = PAGE_SIZE;
-			tmp.size -= PAGE_SIZE;
-			if (tmp.size == 0)
-				continue;
+		if (segstart == 0) {
+			segstart = PAGE_SIZE;
 		}
-		while (tmp.size > 0) {
+		while (segstart < segfinish) {
 			int freelist = -1;	/* unknown freelist */
-			psize_t segsize = tmp.size;
+			paddr_t segend = segfinish;
 			for (size_t i = 0; i < nfl; i++) {
 				/*
 				 * If this segment doesn't overlap the freelist
 				 * at all, skip it.
 				 */ 
-				if (tmp.start >= flp[i].fl_end
-				    || tmp.start + tmp.size <= flp[i].fl_start)
+				if (segstart >= flp[i].fl_end
+				    || segend <= flp[i].fl_start)
 					continue;
 				/*
 				 * If the start of this segment starts before
@@ -1743,8 +1734,8 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 				 * match this freelist and fall back to normal
 				 * freelist matching.
 				 */
-				if (tmp.start < flp[i].fl_start) {
-					segsize = flp[i].fl_start - tmp.start;
+				if (segstart < flp[i].fl_start) {
+					segstart = flp[i].fl_start;
 					break;
 				}
 
@@ -1757,8 +1748,8 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 				 * If this segment extends past the end of this
 				 * freelist, bound to segment to the freelist.
 				 */
-				if (tmp.start + tmp.size > flp[i].fl_end)
-					segsize = flp[i].fl_end - tmp.start;
+				if (segend > flp[i].fl_end)
+					segend = flp[i].fl_end;
 				break;
 			}
 			/*
@@ -1767,17 +1758,17 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 			 */
 			if (freelist == -1) {
 #ifdef VM_FREELIST_FIRST512M
-				if (need512m && tmp.start < HALFGIG) {
+				if (need512m && segstart < HALFGIG) {
 					freelist = VM_FREELIST_FIRST512M;
-					if (tmp.start + tmp.size > HALFGIG)
-						segsize = HALFGIG - tmp.start;
+					if (segend > HALFGIG)
+						segend = HALFGIG;
 				} else
 #endif
 #ifdef VM_FREELIST_FIRST4G
-				if (need4g && tmp.start < FOURGIG) {
+				if (need4g && segstart < FOURGIG) {
 					freelist = VM_FREELIST_FIRST4G;
-					if (tmp.start + tmp.size > FOURGIG)
-						segsize = FOURGIG - tmp.start;
+					if (segend > FOURGIG)
+						segend = FOURGIG;
 				} else
 #endif
 					freelist = VM_FREELIST_DEFAULT;
@@ -1787,49 +1778,44 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 			 * Make sure the memory we provide to uvm doesn't
 			 * include the kernel.
 			 */
-			if (tmp.start < kernend
-			    && tmp.start + segsize > kernstart) {
-				if (tmp.start < kernstart) {
+			if (segstart < kernend && segend > kernstart) {
+				if (segstart < kernstart) {
 					/*
 					 * Only add the memory before the
 					 * kernel.
 					 */
-					segsize -= kernstart - tmp.start;
-				} else if (tmp.start + segsize > kernend) {
+					segend = kernstart;
+				} else if (segend > kernend) {
 					/*
 					 * Only add the memory after the
 					 * kernel.
 					 */
-					segsize -= (kernend - tmp.start);
-					tmp.size -= (kernend - tmp.start);
-					tmp.start = kernend;
+					segstart = kernend;
 				} else {
 					/*
 					 * Just skip the segment entirely since
-					 * it's inside the kernel.
+					 * it's completely inside the kernel.
 					 */
-					tmp.start += segsize;
-					tmp.size -= segsize;
-					continue;
+					printf("skipping %#"PRIxPADDR"@%#"PRIxPADDR" (kernel)\n",
+					    segend - segstart, segstart);
+					break;
 				}
 			}
 			
 			/*
 			 * Now we give this segment to uvm.
 			 */
-			paddr_t first = atop(tmp.start);
-			paddr_t last = first + atop(segsize);
 			printf("adding %#"PRIxPADDR"@%#"PRIxPADDR" to freelist %d\n",
 			
-			    (paddr_t)tmp.start, (paddr_t)tmp.start + segsize,
-			    freelist);
+			    segend - segstart, segstart, freelist);
+			paddr_t first = atop(segstart);
+			paddr_t last = atop(segend);
 			uvm_page_physload(first, last, first, last, freelist);
 
 			/*
-			 * Remove from tmp the segment we just loaded.
+			 * Start where we finished.
 			 */
-			tmp.start += segsize;
-			tmp.size -= segsize;
+			segstart = segend;
 		}
 	}
 }
