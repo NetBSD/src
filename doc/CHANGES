@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1342 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1343 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -518,3 +518,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	cobalt: Add LBA48 support to bootloader so that it can safely load
 		a kernel from NetBSD partition beyond >137GB boundary.
 		[tsutsui 20100110]
+	sparc: Add apc(4), a driver for the Aurora Personality Chip (APC)
+		found on SPARCstation-4/5 and qemu. Allows to idle the
+		CPU when in the idle loop.  [bouyer 20100115]
