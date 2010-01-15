@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.70 2009/12/16 21:25:55 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.71 2010/01/15 19:01:04 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -16,8 +16,8 @@ LIB=		rump
 # Source modules, first the ones specifically implemented for librump.
 # 
 SRCS=	rump.c rumpcopy.c emul.c intr.c locks.c ltsleep.c	\
-	memalloc.c percpu.c scheduler.c sleepq.c		\
-	sysproxy_socket.c threads.c vm.c
+	memalloc.c scheduler.c sleepq.c	sysproxy_socket.c	\
+	threads.c vm.c
 
 vers.c: ${RUMPTOP}/../conf/newvers.sh ${RUMPTOP}/../conf/osrelease.sh
 	${_MKMSG_CREATE} vers.c
@@ -69,7 +69,7 @@ SRCS+=	clock_subr.c
 # corner cases as well (not to mention if you want to debug the
 # allocators themselves).
 #CPPFLAGS+=	-DRUMP_USE_UNREAL_ALLOCATORS
-SRCS+=		subr_kmem.c subr_pool.c subr_vmem.c
+SRCS+=		subr_kmem.c subr_percpu.c subr_pool.c subr_vmem.c
 
 # no shlib_version because this is automatically in sync with lib/librump
 SHLIB_MAJOR=    0
