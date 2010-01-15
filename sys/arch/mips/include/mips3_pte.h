@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.23.38.3 2009/12/22 00:01:52 matt Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.23.38.4 2010/01/15 06:46:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,17 +100,6 @@ unsigned int 	pg_g:1,			/* HW: ignore asid bit */
 		pg_pfnum:24,		/* HW: core page frame number or 0 */
 		pg_prot:2;		/* SW: access control */
 #endif
-};
-
-/*
- * Structure defining an tlb entry data set.
- */
-
-struct tlb {
-	int	tlb_mask;
-	int	tlb_hi;		/* XXX should be 64 bits */
-	int	tlb_lo0;	/* XXX maybe 64 bits (only 32 really used) */
-	int	tlb_lo1;	/* XXX maybe 64 bits (only 32 really used) */
 };
 #endif /* _LOCORE */
 

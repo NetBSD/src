@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.26 2008/04/28 20:23:21 martin Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.26.18.1 2010/01/15 06:46:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.26 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.26.18.1 2010/01/15 06:46:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,7 @@ __hpcmips_cacheable(struct bus_space_tag_hpcmips *t, bus_addr_t bpa,
 			/*
 			 * Update the same virtual address entry.
 			 */
-			MachTLBUpdate(va, opte);
+			tlb_update(va, opte);
 		}
 		return (bpa);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.1.2.1 2009/12/30 04:51:26 matt Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.1.2.2 2010/01/15 06:46:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.1.2.1 2009/12/30 04:51:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.1.2.2 2010/01/15 06:46:59 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -310,7 +310,7 @@ pmap_segtab_activate(struct lwp *l)
 {
 	if (l == curlwp) {
 		pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
-		segbase = pmap->pm_segtab;	/* XXX needs to be in curcpu() */
+		l->l_cpu->ci_pmap_segbase = pmap->pm_segtab;
 	}
 }
 

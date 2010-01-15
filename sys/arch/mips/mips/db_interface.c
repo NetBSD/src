@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64.16.11 2009/12/28 22:56:46 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.64.16.12 2010/01/15 06:46:59 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.11 2009/12/28 22:56:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.12 2010/01/15 06:46:59 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -333,47 +333,32 @@ void
 db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	       const char *modif)
 {
+	struct tlbmask tlb;
 
 #ifdef MIPS1
 	if (!MIPS_HAS_R4K_MMU) {
-		struct mips1_tlb {
-			u_int32_t tlb_hi;
-			u_int32_t tlb_lo;
-		} tlb;
 		int i;
-		void mips1_TLBRead(int, struct mips1_tlb *);
 
 		for (i = 0; i < mips_num_tlb_entries; i++) {
-			mips1_TLBRead(i, &tlb);
+			mips1_tlb_read_indexed(i, &tlb);
 			db_printf("TLB%c%2d Hi 0x%08x Lo 0x%08x",
-				(tlb.tlb_lo & MIPS1_PG_V) ? ' ' : '*',
+				(tlb.tlb_lo1 & MIPS1_PG_V) ? ' ' : '*',
 				i, tlb.tlb_hi,
-				tlb.tlb_lo & MIPS1_PG_FRAME);
+				tlb.tlb_lo1 & MIPS1_PG_FRAME);
 			db_printf(" %c%c%c\n",
-				(tlb.tlb_lo & MIPS1_PG_D) ? 'D' : ' ',
-				(tlb.tlb_lo & MIPS1_PG_G) ? 'G' : ' ',
-				(tlb.tlb_lo & MIPS1_PG_N) ? 'N' : ' ');
+				(tlb.tlb_lo1 & MIPS1_PG_D) ? 'D' : ' ',
+				(tlb.tlb_lo1 & MIPS1_PG_G) ? 'G' : ' ',
+				(tlb.tlb_lo1 & MIPS1_PG_N) ? 'N' : ' ');
 		}
 	}
 #endif
 #ifdef MIPS3_PLUS
 	if (MIPS_HAS_R4K_MMU) {
-		struct tlb tlb;
 		int i;
 
 		for (i = 0; i < mips_num_tlb_entries; i++) {
-#if defined(MIPS3)
-#if defined(MIPS3_5900)
-			mips5900_TLBRead(i, &tlb);
-#else
-			mips3_TLBRead(i, &tlb);
-#endif
-#elif defined(MIPS32)
-			mips32_TLBRead(i, &tlb);
-#elif defined(MIPS64)
-			mips64_TLBRead(i, &tlb);
-#endif
-			db_printf("TLB%c%2d Hi 0x%08x ",
+			tlb_read_indexed(i, &tlb);
+			db_printf("TLB%c%2d Hi 0x%08"PRIxVADDR" ",
 			(tlb.tlb_lo0 | tlb.tlb_lo1) & MIPS3_PG_V ? ' ' : '*',
 				i, tlb.tlb_hi);
 			db_printf("Lo0=0x%09" PRIx64 " %c%c attr %x ",

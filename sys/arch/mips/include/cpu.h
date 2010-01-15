@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.11 2010/01/14 00:40:35 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.12 2010/01/15 06:46:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -139,6 +139,13 @@ struct cpu_info {
 	device_t ci_dev;		/* owning device */
 	vaddr_t ci_ebase;		/* VA of exception base */
 	paddr_t ci_ebase_pa;		/* PA of exception base */
+	/*
+	 * Per-cpu pmap information
+	 */
+	uint32_t ci_pmap_asid_max;
+	uint32_t ci_pmap_asid_next;
+	uint32_t ci_pmap_asid_generation;
+	struct segtab *ci_pmap_segbase;
 };
 
 #define	CPU_INFO_ITERATOR		int

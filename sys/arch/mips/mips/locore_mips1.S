@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.64.26.1.2.2 2009/09/07 22:29:19 matt Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.64.26.1.2.3 2010/01/15 06:46:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,17 +66,17 @@
 EXPORT(mips1_exceptionentry_start)
 
 /*
- * mips1_UTLBMiss
+ * mips1_utlb_miss
  *
  * A reference is made (in either kernel or user mode) to a page in
  * kuseg that has no matching TLB entry.  This routine is copied down
  * at 0x80000000 and total length must be less than 32 instructions.
  * No pc relative jump instruction is allowed.
  */
-VECTOR(mips1_UTLBMiss, unknown)
+VECTOR(mips1_utlb_miss, unknown)
 	.set	noat
 	mfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
-	lw	k1, _C_LABEL(segbase)		# get the current segment table
+	lw	k1, CPUVAR(PMAP_SEGBASE)	# get the current segment table
 	bltz	k0, 1f				# R3000 chip bug
 	srl	k0, k0, SEGSHIFT		# compute segment table index
 	sll	k0, k0, 2
@@ -99,10 +99,10 @@ VECTOR(mips1_UTLBMiss, unknown)
 	j	k1
 	rfe
 2:
-	j	mips1_SlowFault			# handle the rest
+	j	mips1_slowfault			# handle the rest
 	nop
 	.set	at
-VECTOR_END(mips1_UTLBMiss)
+VECTOR_END(mips1_utlb_miss)
 
 
 /*
@@ -144,20 +144,20 @@ VECTOR_END(mips1_exception)
  * UTLBMiss handler could not find out a TLB entry for the user process.
  * Dispatch a general case exception handler.
  */
-mips1_SlowFault:
+mips1_slowfault:
 	.set	noat
 	mfc0	k1, MIPS_COP_0_STATUS
-	la	k0, _C_LABEL(mips1_KernGenException)
+	la	k0, _C_LABEL(mips1_kern_gen_exception)
 	and	k1, k1, MIPS1_SR_KU_PREV
 	beq	k1, zero, 1f
 	nop
-	la	k0, _C_LABEL(mips1_UserGenException)
+	la	k0, _C_LABEL(mips1_user_gen_exception)
 1:	j	k0
 	nop
 	.set	at
 
 /*
- * mips1_KernGenException
+ * mips1_kern_gen_exception
  *
  * Handle an exception during kernel mode.
  * Build trapframe on stack to hold interrupted kernel context, then
@@ -175,7 +175,7 @@ mips1_SlowFault:
  * 	register_t tf_epc;		- may be changed by trap() call
  * };
  */
-NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
+NESTED_NOPROFILE(mips1_kern_gen_exception, KERNFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
 #if defined(DDB) || defined(KGDB)
@@ -293,17 +293,17 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	j	k1				# return to interrupted point
 	rfe
 	.set	at
-END(mips1_KernGenException)
+END(mips1_kern_gen_exception)
 
 /*
- * mips1_UserGenException
+ * mips1_user_gen_exception
  *
  * Handle an exception during user mode.
  * Save user context atop of kernel stack, then call trap() to process
  * the condition.  The context can be manipulated alternatively via
  * curlwp->l_md.md_regs.
  */
-NESTED_NOPROFILE(mips1_UserGenException, CALLFRAME_SIZ, ra)
+NESTED_NOPROFILE(mips1_user_gen_exception, CALLFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
 /*
@@ -387,7 +387,7 @@ NESTED_NOPROFILE(mips1_UserGenException, CALLFRAME_SIZ, ra)
 	j	ra				# pretend function return
 	nop
 	.set	at
-END(mips1_UserGenException)
+END(mips1_user_gen_exception)
 
 /*
  * mips1_SystemCall
@@ -396,7 +396,7 @@ END(mips1_UserGenException)
  * the condition.  The context can be manipulated alternatively via
  * curlwp->l_md.md_regs.
  */
-NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
+NESTED_NOPROFILE(mips1_systemcall, CALLFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
 /*
@@ -481,17 +481,17 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 	la	ra, _C_LABEL(mips1_xcpt_return)
 	j	ra				# pretend function return
 	nop
-END(mips1_SystemCall)
+END(mips1_systemcall)
 
 /*
- * mips1_KernIntr
+ * mips1_kernIntr
  *
  * Handle an interrupt from kernel mode.
  * Build kernframe on stack to hold interrupted kernel context, then
  * call cpu_intr() to process it.
  *
  */
-NESTED_NOPROFILE(mips1_KernIntr, KERNFRAME_SIZ, ra)
+NESTED_NOPROFILE(mips1_kern_intr, KERNFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, (CALLFRAME_RA - KERNFRAME_SIZ)
 	subu	sp, sp, KERNFRAME_SIZ
@@ -579,11 +579,11 @@ NESTED_NOPROFILE(mips1_KernIntr, KERNFRAME_SIZ, ra)
 	j	k1				# return to interrupted point
 	rfe
 	.set	at
-END(mips1_KernIntr)
+END(mips1_kern_intr)
 
 /*----------------------------------------------------------------------------
  * XXX this comment block should be updated XXX
- * mips1_UserIntr --
+ * mips1_user_intr --
  *
  *	Handle an interrupt from user mode.
  *	Note: we save minimal state in the u.u_pcb struct and use the standard
@@ -600,7 +600,7 @@ END(mips1_KernIntr)
  *
  *----------------------------------------------------------------------------
  */
-NESTED_NOPROFILE(mips1_UserIntr, CALLFRAME_SIZ, ra)
+NESTED_NOPROFILE(mips1_user_intr, CALLFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
 /*
@@ -731,7 +731,7 @@ NESTED_NOPROFILE(mips1_UserIntr, CALLFRAME_SIZ, ra)
 	j	k0				# return to interrupted point
 	rfe
 	.set	at
-END(mips1_UserIntr)
+END(mips1_user_intr)
 
 /*
  * Mark where code entreed from exception hander jumptable
@@ -745,7 +745,7 @@ _C_LABEL(mips1_exceptionentry_end):
 #if 0
 /*----------------------------------------------------------------------------
  *
- * mips1_TLBModException --
+ * mips1_tlb_modexception --
  *
  *	Handle a TLB modified exception.
  *	The BaddVAddr, Context, and EntryHi registers contain the failed
@@ -759,7 +759,7 @@ _C_LABEL(mips1_exceptionentry_end):
  *
  *----------------------------------------------------------------------------
  */
-LEAF_NOPROFILE(mips1_TLBModException)
+LEAF_NOPROFILE(mips1_tlb_mod_exception)
 	.set	noat
 	tlbp					# find the TLB entry
 	mfc0	k0, MIPS_COP_0_TLB_LOW		# get the physical address
@@ -788,7 +788,7 @@ END(mips1_TLBModException)
 
 /*----------------------------------------------------------------------------
  *
- * mips1_TLBMissException --
+ * mips1_tlb_miss_exception --
  *
  *	Handle a TLB miss exception from kernel mode.
  *	The BaddVAddr, Context, and EntryHi registers contain the failed
@@ -802,7 +802,7 @@ END(mips1_TLBModException)
  *
  *----------------------------------------------------------------------------
  */
-LEAF_NOPROFILE(mips1_TLBMissException)
+LEAF_NOPROFILE(mips1_tlb_miss_exception)
 	.set	noat
 	mfc0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
@@ -819,7 +819,7 @@ LEAF_NOPROFILE(mips1_TLBMissException)
 	mfc0	k1, MIPS_COP_0_EXC_PC		# get return address
 	mtc0	k0, MIPS_COP_0_TLB_LOW		# save PTE entry
 	and	k0, k0, MIPS1_PG_V		# check for valid entry
-	beq	k0, zero, _C_LABEL(mips1_KernGenException) # PTE invalid
+	beq	k0, zero, _C_LABEL(mips1_kern_gen_exception) # PTE invalid
 	nop
 	tlbwr					# update TLB
 	j	k1
@@ -831,17 +831,16 @@ outofworld:
 	la	sp, start			# set sp to a valid place
 	PANIC("TLB out of universe: ksp was %p")
 	.set	at
-END(mips1_TLBMissException)
+END(mips1_tlb_miss_exception)
 
 
 /*--------------------------------------------------------------------------
  *
- * mips1_SetPID --
+ * mips1_tlb_set_asid --
  *
  *	Write the given pid into the TLB pid reg.
  *
- *	mips1_SetPID(pid)
- *		int pid;
+ *	void mips1_tlb_set_asid(uint32_t pid)
  *
  * Results:
  *	None.
@@ -851,12 +850,12 @@ END(mips1_TLBMissException)
  *
  *--------------------------------------------------------------------------
  */
-LEAF(mips1_SetPID)
+LEAF(mips1_tlb_set_asid)
 	sll	a0, a0, MIPS1_TLB_PID_SHIFT	# put PID in right spot
 	mtc0	a0, MIPS_COP_0_TLB_HI		# Write the hi reg value
 	j	ra
 	nop
-END(mips1_SetPID)
+END(mips1_tlb_set_asid)
 
 
 /*--------------------------------------------------------------------------
@@ -865,8 +864,7 @@ END(mips1_SetPID)
  *
  *	Update the TLB if highreg is found; otherwise, enter the data.
  *
- *	mips1_TLBUpdate(highreg, lowreg)
- *		unsigned highreg, lowreg;
+ *	mips1_tlb_update(register_t highreg, register_t lowreg)
  *
  * Results:
  *	None.
@@ -876,7 +874,7 @@ END(mips1_SetPID)
  *
  *--------------------------------------------------------------------------
  */
-LEAF(mips1_TLBUpdate)
+LEAF(mips1_tlb_update)
 	mfc0	v1, MIPS_COP_0_STATUS		# save the status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 	nop
@@ -888,33 +886,31 @@ LEAF(mips1_TLBUpdate)
 	mfc0	v0, MIPS_COP_0_TLB_INDEX	# see what we got
 	mtc0	a1, MIPS_COP_0_TLB_LOW		# set new entrylo
 	bgez	v0, 2f				# index < 0 => !found
-	nop
+	 nop
 	b	3f
-	tlbwr					# add vicitimizing another
+	 tlbwr					# add vicitimizing another
 2:
 	tlbwi					# update the existing one
 3:
 	mtc0	t0, MIPS_COP_0_TLB_HI		# restore current PID
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS
-END(mips1_TLBUpdate)
+END(mips1_tlb_update)
 
 /*--------------------------------------------------------------------------
  *
- * mips1_TLBRead --
+ * mips1_tlb_read_indexed --
  *
  *	Read the TLB entry.
  *
- *	mips1_TLBRead(entry, tlb)
- *		unsigned entry;
- *		struct mips1_tlb *tlb;
+ *	mips1_tlb_read_indexed(register_t entry, struct mips1_tlb *tlb)
  *
  * Results:
  *	Returns MIPS1 TLB HI/LO in a pair.
  *
  *--------------------------------------------------------------------------
  */
-LEAF(mips1_TLBRead)
+LEAF(mips1_tlb_read_indexed)
 	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
 	mfc0	t0, MIPS_COP_0_TLB_HI		# Get current PID
@@ -925,13 +921,15 @@ LEAF(mips1_TLBRead)
 	tlbr					# Read from the TLB
 	mfc0	t2, MIPS_COP_0_TLB_HI		# fetch the hi entry
 	mfc0	t3, MIPS_COP_0_TLB_LOW		# fetch the low entry
-	sw	t2, 0(a1)
-	sw	t3, 4(a1)
+	sw	zero, 0(a1)
+	sw	t2, 4(a1)
+	sw	t3, 8(a1)
+	sw	zero, 12(a1)
 
 	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
-END(mips1_TLBRead)
+END(mips1_tlb_read_indexed)
 
 /*----------------------------------------------------------------------------
  *
@@ -1167,11 +1165,11 @@ resume:
 	END(mips1_cpu_switch_resume)
 
 /*
- * void mips1_TBIS(vaddr_t va)
+ * void mips1_tlb_invalidate_addr(vaddr_t va)
  *
  * Invalidate a TLB entry for given virtual address if found in TLB.
  */
-LEAF(mips1_TBIS)
+LEAF(mips1_tlb_invalidate_addr)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 	mfc0	t0, MIPS_COP_0_TLB_HI		# save current PID
@@ -1191,15 +1189,15 @@ LEAF(mips1_TBIS)
 	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS		# restore the status register
-	END(mips1_TBIS)
+END(mips1_tlb_invalidate_addr)
 
 /*
- * void mips1_TBIAP(int sizeofTLB)
+ * void mips1_tlb_invalidate_all_nonkernel(size_t sizeofTLB)
  *
  * Invalidate TLB entries belonging to per process user spaces while
  * leaving entries for kernel space marked global intact.
  */
-LEAF(mips1_TBIAP)
+LEAF(mips1_tlb_invalidate_all_nonkernel)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
@@ -1228,14 +1226,14 @@ LEAF(mips1_TBIAP)
 
 	j	ra				# new TLBpid will be set soon
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
-	END(mips1_TBIAP)
+END(mips1_tlb_invalidate_all_nonkernel)
 
 /*
- * void mips1_TBIA(int sizeofTLB)
+ * void mips1_tlb_invalidate_all(size_t sizeofTLB)
  *
  * Invalidate TLB entirely.
  */
-LEAF(mips1_TBIA)
+LEAF(mips1_tlb_invalidate_all)
 	mfc0	v1, MIPS_COP_0_STATUS		# save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
@@ -1255,7 +1253,7 @@ LEAF(mips1_TBIA)
 
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
-	END(mips1_TBIA)
+END(mips1_tlb_invalidate_all)
 
 	.rdata
 
@@ -1270,70 +1268,70 @@ mips1_excpt_sw:
 	####
 	#### The kernel exception handlers.
 	####
-	.word _C_LABEL(mips1_KernIntr)		# 0 external interrupt
-	.word _C_LABEL(mips1_KernGenException)	# 1 TLB modification
-	.word _C_LABEL(mips1_TLBMissException)	# 2 TLB miss (LW/I-fetch)
-	.word _C_LABEL(mips1_TLBMissException)	# 3 TLB miss (SW)
-	.word _C_LABEL(mips1_KernGenException)	# 4 address error (LW/I-fetch)
-	.word _C_LABEL(mips1_KernGenException)	# 5 address error (SW)
-	.word _C_LABEL(mips1_KernGenException)	# 6 bus error (I-fetch)
-	.word _C_LABEL(mips1_KernGenException)	# 7 bus error (load or store)
-	.word _C_LABEL(mips1_KernGenException)	# 8 system call
-	.word _C_LABEL(mips1_KernGenException)	# 9 breakpoint
-	.word _C_LABEL(mips1_KernGenException)	# 10 reserved instruction
-	.word _C_LABEL(mips1_KernGenException)	# 11 coprocessor unusable
-	.word _C_LABEL(mips1_KernGenException)	# 12 arithmetic overflow
-	.word _C_LABEL(mips1_KernGenException)	# 13 r3k reserved
-	.word _C_LABEL(mips1_KernGenException)	# 14 r3k reserved
-	.word _C_LABEL(mips1_KernGenException)	# 15 r3k reserved
-	.word _C_LABEL(mips1_KernGenException)	# 16 never happens w/ MIPS1
-	.word _C_LABEL(mips1_KernGenException)	# 17 never happens w/ MIPS1
-	.word _C_LABEL(mips1_KernGenException)	# 18 never happens w/ MIPS1
-	.word _C_LABEL(mips1_KernGenException)	# 19 never happens w/ MIPS1
-	.word _C_LABEL(mips1_KernGenException)	# 20 never happens w/ MIPS1
-	.word _C_LABEL(mips1_KernGenException)	# 21 never happens w/ MIPS1
-	.word _C_LABEL(mips1_KernGenException)	# 22 never happens w/ MIPS1
-	.word _C_LABEL(mips1_KernGenException)	# 23 never happens w/ MIPS1
-	.word _C_LABEL(mips1_KernGenException)	# 24 never happens w/ MIPS1
-	.word _C_LABEL(mips1_KernGenException)	# 25 never happens w/ MIPS1
-	.word _C_LABEL(mips1_KernGenException)	# 26 never happens w/ MIPS1
-	.word _C_LABEL(mips1_KernGenException)	# 27 never happens w/ MIPS1
-	.word _C_LABEL(mips1_KernGenException)	# 28 never happens w/ MIPS1
-	.word _C_LABEL(mips1_KernGenException)	# 29 never happens w/ MIPS1
-	.word _C_LABEL(mips1_KernGenException)	# 30 never happens w/ MIPS1
-	.word _C_LABEL(mips1_KernGenException)	# 31 never happens w/ MIPS1
+	.word _C_LABEL(mips1_kern_intr)		# 0 external interrupt
+	.word _C_LABEL(mips1_kern_gen_exception)# 1 TLB modification
+	.word _C_LABEL(mips1_tlb_miss_exception)# 2 TLB miss (LW/I-fetch)
+	.word _C_LABEL(mips1_tlb_miss_exception)# 3 TLB miss (SW)
+	.word _C_LABEL(mips1_kern_gen_exception)# 4 address error (LW/I-fetch)
+	.word _C_LABEL(mips1_kern_gen_exception)# 5 address error (SW)
+	.word _C_LABEL(mips1_kern_gen_exception)# 6 bus error (I-fetch)
+	.word _C_LABEL(mips1_kern_gen_exception)# 7 bus error (load or store)
+	.word _C_LABEL(mips1_kern_gen_exception)# 8 system call
+	.word _C_LABEL(mips1_kern_gen_exception)# 9 breakpoint
+	.word _C_LABEL(mips1_kern_gen_exception)# 10 reserved instruction
+	.word _C_LABEL(mips1_kern_gen_exception)# 11 coprocessor unusable
+	.word _C_LABEL(mips1_kern_gen_exception)# 12 arithmetic overflow
+	.word _C_LABEL(mips1_kern_gen_exception)# 13 r3k reserved
+	.word _C_LABEL(mips1_kern_gen_exception)# 14 r3k reserved
+	.word _C_LABEL(mips1_kern_gen_exception)# 15 r3k reserved
+	.word _C_LABEL(mips1_kern_gen_exception)# 16 never happens w/ MIPS1
+	.word _C_LABEL(mips1_kern_gen_exception)# 17 never happens w/ MIPS1
+	.word _C_LABEL(mips1_kern_gen_exception)# 18 never happens w/ MIPS1
+	.word _C_LABEL(mips1_kern_gen_exception)# 19 never happens w/ MIPS1
+	.word _C_LABEL(mips1_kern_gen_exception)# 20 never happens w/ MIPS1
+	.word _C_LABEL(mips1_kern_gen_exception)# 21 never happens w/ MIPS1
+	.word _C_LABEL(mips1_kern_gen_exception)# 22 never happens w/ MIPS1
+	.word _C_LABEL(mips1_kern_gen_exception)# 23 never happens w/ MIPS1
+	.word _C_LABEL(mips1_kern_gen_exception)# 24 never happens w/ MIPS1
+	.word _C_LABEL(mips1_kern_gen_exception)# 25 never happens w/ MIPS1
+	.word _C_LABEL(mips1_kern_gen_exception)# 26 never happens w/ MIPS1
+	.word _C_LABEL(mips1_kern_gen_exception)# 27 never happens w/ MIPS1
+	.word _C_LABEL(mips1_kern_gen_exception)# 28 never happens w/ MIPS1
+	.word _C_LABEL(mips1_kern_gen_exception)# 29 never happens w/ MIPS1
+	.word _C_LABEL(mips1_kern_gen_exception)# 30 never happens w/ MIPS1
+	.word _C_LABEL(mips1_kern_gen_exception)# 31 never happens w/ MIPS1
 	#####
 	##### The user exception handlers.
 	#####
-	.word _C_LABEL(mips1_UserIntr)		#  0
-	.word _C_LABEL(mips1_UserGenException)	#  1
-	.word _C_LABEL(mips1_UserGenException)	#  2
-	.word _C_LABEL(mips1_UserGenException)	#  3
-	.word _C_LABEL(mips1_UserGenException)	#  4
-	.word _C_LABEL(mips1_UserGenException)	#  5
-	.word _C_LABEL(mips1_UserGenException)	#  6
-	.word _C_LABEL(mips1_UserGenException)	#  7
-	.word _C_LABEL(mips1_SystemCall)	#  8
-	.word _C_LABEL(mips1_UserGenException)	#  9
-	.word _C_LABEL(mips1_UserGenException)	# 10
-	.word _C_LABEL(mips1_UserGenException)	# 11
-	.word _C_LABEL(mips1_UserGenException)	# 12
-	.word _C_LABEL(mips1_UserGenException)	# 13
-	.word _C_LABEL(mips1_UserGenException)	# 14
-	.word _C_LABEL(mips1_UserGenException)	# 15
-	.word _C_LABEL(mips1_UserGenException)	# 16
-	.word _C_LABEL(mips1_UserGenException)	# 17
-	.word _C_LABEL(mips1_UserGenException)	# 18
-	.word _C_LABEL(mips1_UserGenException)	# 19
-	.word _C_LABEL(mips1_UserGenException)	# 20
-	.word _C_LABEL(mips1_UserGenException)	# 21
-	.word _C_LABEL(mips1_UserGenException)	# 22
-	.word _C_LABEL(mips1_UserGenException)	# 23
-	.word _C_LABEL(mips1_UserGenException)	# 24
-	.word _C_LABEL(mips1_UserGenException)	# 25
-	.word _C_LABEL(mips1_UserGenException)	# 26
-	.word _C_LABEL(mips1_UserGenException)	# 27
-	.word _C_LABEL(mips1_UserGenException)	# 28
-	.word _C_LABEL(mips1_UserGenException)	# 29
-	.word _C_LABEL(mips1_UserGenException)	# 20
-	.word _C_LABEL(mips1_UserGenException)	# 31
+	.word _C_LABEL(mips1_user_intr)		#  0
+	.word _C_LABEL(mips1_user_gen_exception)#  1
+	.word _C_LABEL(mips1_user_gen_exception)#  2
+	.word _C_LABEL(mips1_user_gen_exception)#  3
+	.word _C_LABEL(mips1_user_gen_exception)#  4
+	.word _C_LABEL(mips1_user_gen_exception)#  5
+	.word _C_LABEL(mips1_user_gen_exception)#  6
+	.word _C_LABEL(mips1_user_gen_exception)#  7
+	.word _C_LABEL(mips1_systemcall)	#  8
+	.word _C_LABEL(mips1_user_gen_exception)#  9
+	.word _C_LABEL(mips1_user_gen_exception)# 10
+	.word _C_LABEL(mips1_user_gen_exception)# 11
+	.word _C_LABEL(mips1_user_gen_exception)# 12
+	.word _C_LABEL(mips1_user_gen_exception)# 13
+	.word _C_LABEL(mips1_user_gen_exception)# 14
+	.word _C_LABEL(mips1_user_gen_exception)# 15
+	.word _C_LABEL(mips1_user_gen_exception)# 16
+	.word _C_LABEL(mips1_user_gen_exception)# 17
+	.word _C_LABEL(mips1_user_gen_exception)# 18
+	.word _C_LABEL(mips1_user_gen_exception)# 19
+	.word _C_LABEL(mips1_user_gen_exception)# 20
+	.word _C_LABEL(mips1_user_gen_exception)# 21
+	.word _C_LABEL(mips1_user_gen_exception)# 22
+	.word _C_LABEL(mips1_user_gen_exception)# 23
+	.word _C_LABEL(mips1_user_gen_exception)# 24
+	.word _C_LABEL(mips1_user_gen_exception)# 25
+	.word _C_LABEL(mips1_user_gen_exception)# 26
+	.word _C_LABEL(mips1_user_gen_exception)# 27
+	.word _C_LABEL(mips1_user_gen_exception)# 28
+	.word _C_LABEL(mips1_user_gen_exception)# 29
+	.word _C_LABEL(mips1_user_gen_exception)# 20
+	.word _C_LABEL(mips1_user_gen_exception)# 31
