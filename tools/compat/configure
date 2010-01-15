@@ -2600,7 +2600,7 @@ EOF
 fi
 done
 
-for ac_header in sys/bswap.h machine/bswap.h sys/cdefs.h machine/endian.h \
+for ac_header in sys/bswap.h machine/bswap.h sys/cdefs.h machine/endian.h sys/endian.h \
 	sys/featuretest.h err.h inttypes.h libgen.h paths.h stdint.h util.h \
 	resolv.h arpa/nameser.h
 do
