@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.83 2009/10/26 19:16:54 cegger Exp $ */
+/*	$NetBSD: fd.c,v 1.84 2010/01/15 23:49:22 dyoung Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.83 2009/10/26 19:16:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.84 2010/01/15 23:49:22 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ struct fdtype fdtype[] = {
 	{ 0x55555555, 40, 11, 9, 7358, 6815, 414, { 80, 161 }, "5.25dd" },
 	{ 0xAAAAAAAA, 80, 22, 18, 14716, 13630, 828, { 80, 161 }, "3.5hd" }
 };
-int nfdtype = sizeof(fdtype) / sizeof(*fdtype);
+int nfdtype = __arraycount(fdtype);
 
 CFATTACH_DECL(fd, sizeof(struct fd_softc),
     fdmatch, fdattach, NULL, NULL);
