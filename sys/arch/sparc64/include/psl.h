@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.43 2009/12/04 17:31:06 nakayama Exp $ */
+/*	$NetBSD: psl.h,v 1.44 2010/01/15 15:05:02 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -287,22 +287,22 @@ static __inline void set##pr(uint64_t pr)				\
 #endif
 
 /* Tick Register (PR 4) */
-SPARC64_GETPR64_DEF(tick)
-SPARC64_SETPR64_DEF(tick)
+SPARC64_GETPR64_DEF(tick)			/* gettick() */
+SPARC64_SETPR64_DEF(tick)			/* settick() */
 
 /* Processor State Register (PR 6) */
-SPARC64_GETPR_DEF(pstate, int)
-SPARC64_SETPR_DEF(pstate, int)
+SPARC64_GETPR_DEF(pstate, int)			/* getpstate() */
+SPARC64_SETPR_DEF(pstate, int)			/* setpstate() */
 
 /* Trap Level Register (PR 7) */
-SPARC64_GETPR_DEF(tl, int)
+SPARC64_GETPR_DEF(tl, int)			/* gettl() */
 
 /* Current Window Pointer Register (PR 9) */
-SPARC64_GETPR_DEF(cwp, int)
-SPARC64_SETPR_DEF(cwp, int)
+SPARC64_GETPR_DEF(cwp, int)			/* getcwp() */
+SPARC64_SETPR_DEF(cwp, int)			/* setcwp() */
 
 /* Version Register (PR 31) */
-SPARC64_GETPR64_DEF(ver)
+SPARC64_GETPR64_DEF(ver)			/* getver() */
 
 static __inline int
 intr_disable(void)
