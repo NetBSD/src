@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.218 2009/12/05 20:11:17 pooka Exp $
+# $NetBSD: GENERIC,v 1.219 2010/01/15 20:57:12 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.218 $"
+#ident 		"GENERIC-$Revision: 1.219 $"
 
 maxusers	32
 
@@ -711,6 +711,10 @@ wsdisplay*	at wsemuldisplaydev?
 
 # Tadpole microcontroller
 tctrl0 at obio0
+
+# Aurora Personality Chip (APC) on SPARCstation-4/5
+# Not enabled by default as it may hang some systems
+#apc*		at sbus? slot ? offset ?
 
 ## Pseudo ttys, required for network logins and programs like screen.
 
