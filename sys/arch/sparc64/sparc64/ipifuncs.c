@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.25 2009/11/30 01:45:04 mrg Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.26 2010/01/15 23:57:07 nakayama Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.25 2009/11/30 01:45:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.26 2010/01/15 23:57:07 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -188,11 +188,19 @@ sparc64_broadcast_ipi(ipifunc_t func, uint64_t arg1, uint64_t arg2)
 void
 sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 {
-	int i, ik;
+	int i, ik, shift = 0;
 	uint64_t intr_func;
 
 	KASSERT(upaid != curcpu()->ci_cpuid);
-	if (ldxa(0, ASR_IDSR) & IDSR_BUSY)
+
+	/*
+	 * UltraSPARC-IIIi CPUs select the BUSY/NACK pair based on the
+	 * lower two bits of the ITID.
+	 */
+	if (((getver() & VER_IMPL) >> VER_IMPL_SHIFT) == IMPL_JALAPENO)
+		shift = (upaid & 0x3) * 2;
+
+	if (ldxa(0, ASR_IDSR) & (IDSR_BUSY << shift))
 		panic("recursive IPI?");
 
 	intr_func = (uint64_t)(u_long)func;
@@ -211,7 +219,7 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 		membar_sync();
 
 		for (ik = 0; ik < 1000000; ik++) {
-			if (ldxa(0, ASR_IDSR) & IDSR_BUSY)
+			if (ldxa(0, ASR_IDSR) & (IDSR_BUSY << shift))
 				continue;
 			else
 				break;
@@ -221,7 +229,7 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 		if (ik == 1000000)
 			break;
 
-		if ((ldxa(0, ASR_IDSR) & IDSR_NACK) == 0)
+		if ((ldxa(0, ASR_IDSR) & (IDSR_NACK << shift)) == 0)
 			return;
 		/*
 		 * Wait for a while with enabling interrupts to avoid
