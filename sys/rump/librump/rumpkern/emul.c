@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.118 2010/01/13 01:53:38 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.119 2010/01/15 19:01:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.118 2010/01/13 01:53:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.119 2010/01/15 19:01:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -384,11 +384,22 @@ rump_delay(unsigned int us)
 }
 void (*delay_func)(unsigned int) = rump_delay;
 
+bool
+kpreempt(uintptr_t where)
+{
+
+	return false;
+}
+
+/*
+ * There is no kernel thread preemption in rump currently.  But call
+ * the implementing macros anyway in case they grow some side-effects
+ * down the road.
+ */
 void
 kpreempt_disable(void)
 {
 
-	/* XXX: see below */
 	KPREEMPT_DISABLE(curlwp);
 }
 
@@ -396,8 +407,7 @@ void
 kpreempt_enable(void)
 {
 
-	/* try to make sure kpreempt_disable() is only used from panic() */
-	panic("kpreempt not supported");
+	KPREEMPT_ENABLE(curlwp);
 }
 
 void
