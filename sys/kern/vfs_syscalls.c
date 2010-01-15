@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.402 2010/01/08 11:35:10 pooka Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.403 2010/01/15 01:00:46 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.402 2010/01/08 11:35:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.403 2010/01/15 01:00:46 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -299,12 +299,16 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
 	    KAUTH_REQ_SYSTEM_MOUNT_NEW, vp, KAUTH_ARG(flags), data);
-	if (error)
+	if (error) {
+		vfs_delref(vfsops);
 		return error;
+	}
 
 	/* Can't make a non-dir a mount-point (from here anyway). */
-	if (vp->v_type != VDIR)
+	if (vp->v_type != VDIR) {
+		vfs_delref(vfsops);
 		return ENOTDIR;
+	}
 
 	/*
 	 * If the user is not root, ensure that they own the directory
@@ -314,23 +318,32 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	    (va.va_uid != kauth_cred_geteuid(l->l_cred) &&
 	    (error = kauth_authorize_generic(l->l_cred,
 	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)) {
+		vfs_delref(vfsops);
 		return error;
 	}
 
-	if (flags & MNT_EXPORTED)
+	if (flags & MNT_EXPORTED) {
+		vfs_delref(vfsops);
 		return EINVAL;
+	}
 
-	if ((error = vinvalbuf(vp, V_SAVE, l->l_cred, l, 0, 0)) != 0)
+	if ((error = vinvalbuf(vp, V_SAVE, l->l_cred, l, 0, 0)) != 0) {
+		vfs_delref(vfsops);
 		return error;
+	}
 
 	/*
 	 * Check if a file-system is not already mounted on this vnode.
 	 */
-	if (vp->v_mountedhere != NULL)
+	if (vp->v_mountedhere != NULL) {
+		vfs_delref(vfsops);
 		return EBUSY;
+	}
 
-	if ((mp = vfs_mountalloc(vfsops, vp)) == NULL)
+	if ((mp = vfs_mountalloc(vfsops, vp)) == NULL) {
+		vfs_delref(vfsops);
 		return ENOMEM;
+	}
 
 	mp->mnt_stat.f_owner = kauth_cred_geteuid(l->l_cred);
 
@@ -445,14 +458,23 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	struct vnode *vp;
 	void *data_buf = data;
 	u_int recurse;
+	bool vfsopsrele = false;
 	int error;
+
+	/* XXX: The calling convention of this routine is totally bizarre */
+	if (vfsops)
+		vfsopsrele = true;
 
 	/*
 	 * Get vnode to be covered
 	 */
 	error = namei_simple_user(path, NSM_FOLLOW_TRYEMULROOT, &vp);
-	if (error != 0)
-		return (error);
+	if (error != 0) {
+		/* XXXgcc */
+		vp = NULL;
+		recurse = 0;
+		goto done;
+	}
 
 	/*
 	 * A lookup in VFS_MOUNT might result in an attempt to
@@ -470,6 +492,7 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 			recurse = vn_setrecurse(vp);
 			if (error != 0)
 				goto done;
+			vfsopsrele = true;
 		}
 	} else {
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
@@ -515,11 +538,15 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 		error = mount_update(l, vp, path, flags, data_buf, &data_len);
 	} else {
 		/* Locking is handled internally in mount_domount(). */
+		KASSERT(vfsopsrele == true);
 		error = mount_domount(l, &vp, vfsops, path, flags, data_buf,
 		    &data_len, recurse);
+		vfsopsrele = false;
 	}
 
     done:
+	if (vfsopsrele)
+		vfs_delref(vfsops);
     	if (vp != NULL) {
 	    	vn_restorerecurse(vp, recurse);
 	    	vput(vp);
