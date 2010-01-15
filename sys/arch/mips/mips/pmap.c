@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.9 2010/01/10 02:48:47 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.10 2010/01/15 06:46:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.9 2010/01/10 02:48:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.10 2010/01/15 06:46:59 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -193,7 +193,21 @@ int pmapdebug = 0;
 
 #endif
 
-struct pmap	kernel_pmap_store;
+#define PMAP_ASID_RESERVED 0
+
+CTASSERT(PMAP_ASID_RESERVED == 0);
+/*
+ * Initialize the kernel pmap.
+ */
+struct pmap kernel_pmap_store = {
+	.pm_count = 1,
+	.pm_segtab = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
+};
+#ifdef MULTIPROCESSOR
+#define	PMAP_SIZE	offsetof(struct pmap, pm_pai[MAXCPUS])
+#else
+#define	PMAP_SIZE	sizeof(struct pmap)
+#endif
 
 paddr_t mips_avail_start;	/* PA of first available physical page */
 paddr_t mips_avail_end;		/* PA of last available physical page */
@@ -204,11 +218,6 @@ int		 pv_table_npages;
 
 pt_entry_t	*Sysmap;		/* kernel pte table */
 unsigned int	Sysmapsize;		/* number of pte's in Sysmap */
-
-unsigned int	pmap_asid_max;		/* max ASID supported by the system */
-unsigned int	pmap_asid_next;		/* next free ASID to use */
-unsigned int	pmap_asid_generation;	/* current ASID generation */
-#define PMAP_ASID_RESERVED 0
 
 /*
  * The pools from which pmap structures and sub-structures are allocated.
@@ -232,7 +241,7 @@ bool		pmap_initialized = false;
 
 /* Forward function declarations */
 void pmap_remove_pv(pmap_t, vaddr_t, struct vm_page *);
-void pmap_asid_alloc(pmap_t pmap);
+uint32_t pmap_asid_alloc(pmap_t pmap);
 void pmap_enter_pv(pmap_t, vaddr_t, struct vm_page *, u_int *);
 pt_entry_t *pmap_pte(pmap_t, vaddr_t);
 
@@ -364,24 +373,12 @@ pmap_bootstrap(void)
 	/*
 	 * Initialize the pools.
 	 */
-	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
+	pool_init(&pmap_pmap_pool, PMAP_SIZE, 0, 0, 0, "pmappl",
 	    &pool_allocator_nointr, IPL_NONE);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
 	    &pmap_pv_page_allocator, IPL_NONE);
 
-	/*
-	 * Initialize the kernel pmap.
-	 */
-	pmap_kernel()->pm_count = 1;
-	pmap_kernel()->pm_asid = PMAP_ASID_RESERVED;
-	pmap_kernel()->pm_asidgen = 0;
-	pmap_kernel()->pm_segtab = (void *)(MIPS_KSEG2_START + 0x1eadbeef);
-
-	pmap_asid_max = MIPS_TLB_NUM_PIDS;
-	pmap_asid_next = 1;
-	pmap_asid_generation = 0;
-
-	MachSetPID(0);
+	tlb_set_asid(0);
 
 #ifdef MIPS3_PLUS	/* XXX mmu XXX */
 	/*
@@ -589,11 +586,9 @@ pmap_create(void)
 #endif
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
-	memset(pmap, 0, sizeof(*pmap));
+	memset(pmap, 0, PMAP_SIZE);
 
 	pmap->pm_count = 1;
-	pmap->pm_asid = PMAP_ASID_RESERVED;
-	pmap->pm_asidgen = pmap_asid_generation;
 
 	pmap_segtab_alloc(pmap);
 
@@ -646,11 +641,12 @@ void
 pmap_activate(struct lwp *l)
 {
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
+	unsigned int asid;
 
-	pmap_asid_alloc(pmap);
+	asid = pmap_asid_alloc(pmap);
 	if (l == curlwp) {
 		pmap_segtab_activate(l);
-		MachSetPID(pmap->pm_asid);
+		tlb_set_asid(asid);
 	}
 }
 
@@ -675,8 +671,10 @@ static bool
 pmap_pte_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *pte,
 	uintptr_t flags)
 {
-	const uint32_t asid = pmap->pm_asid << MIPS_TLB_PID_SHIFT;
-	const bool needflush = (pmap->pm_asidgen == pmap_asid_generation);
+	struct cpu_info * const ci = curcpu();
+	struct pmap_asid_info * const pai = PMAP_PAI(pmap, ci);
+	const uint32_t asid = pai->pai_asid << MIPS_TLB_PID_SHIFT;
+	const bool needflush = PMAP_PAI_ASIDVALID_P(pai, ci);
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT)) {
@@ -701,7 +699,7 @@ pmap_pte_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *pte,
 		 * Flush the TLB for the given address.
 		 */
 		if (needflush) {
-			MIPS_TBIS(sva | asid);
+			tlb_invalidate_addr(sva | asid);
 #ifdef DEBUG
 			remove_stats.flushes++;
 #endif
@@ -746,7 +744,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			/*
 			 * Flush the TLB for the given address.
 			 */
-			MIPS_TBIS(sva);
+			tlb_invalidate_addr(sva);
 #ifdef DEBUG
 			remove_stats.flushes++;
 #endif
@@ -758,13 +756,14 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	if (eva > VM_MAXUSER_ADDRESS)
 		panic("pmap_remove: uva not in range");
 	if (PMAP_IS_ACTIVE(pmap)) {
-		unsigned asid;
+		struct pmap_asid_info * const pai = PMAP_PAI(pmap, curcpu());
+		uint32_t asid;
 
 		__asm volatile("mfc0 %0,$10; nop" : "=r"(asid));
 		asid = (MIPS_HAS_R4K_MMU) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
-		if (asid != pmap->pm_asid) {
+		if (asid != pai->pai_asid) {
 			panic("inconsistency for active TLB flush: %d <-> %d",
-			    asid, pmap->pm_asid);
+			    asid, pai->pai_asid);
 		}
 	}
 #endif
@@ -825,8 +824,10 @@ static bool
 pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *pte,
 	uintptr_t flags)
 {
-	const uint32_t asid = pmap->pm_asid << MIPS_TLB_PID_SHIFT;
-	const bool needupdate = (pmap->pm_asidgen == pmap_asid_generation);
+	struct cpu_info * const ci = curcpu();
+	struct pmap_asid_info * const pai = PMAP_PAI(pmap, ci);
+	const bool needupdate = PMAP_PAI_ASIDVALID_P(pai, ci);
+	const uint32_t asid = pai->pai_asid << MIPS_TLB_PID_SHIFT;
 	const uint32_t p = flags;
 
 	/*
@@ -844,7 +845,10 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *pte,
 		 * Update the TLB if the given address is in the cache.
 		 */
 		if (needupdate)
-			MachTLBUpdate(sva | asid, entry);
+			tlb_update(sva | asid, entry);
+#ifdef MULTIPROCESSOR
+#error TLB shootdown needed
+#endif
 	}
 	return false;
 }
@@ -894,7 +898,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			entry &= ~(mips_pg_m_bit() | mips_pg_ro_bit());
 			entry |= p;
 			pte->pt_entry = entry;
-			MachTLBUpdate(sva, entry);
+			tlb_update(sva, entry);
 		}
 		return;
 	}
@@ -903,13 +907,14 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	if (eva > VM_MAXUSER_ADDRESS)
 		panic("pmap_protect: uva not in range");
 	if (PMAP_IS_ACTIVE(pmap)) {
-		unsigned asid;
+		struct pmap_asid_info * const pai = PMAP_PAI(pmap, curcpu());
+		uint32_t asid;
 
 		__asm volatile("mfc0 %0,$10; nop" : "=r"(asid));
 		asid = (MIPS_HAS_R4K_MMU) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
-		if (asid != pmap->pm_asid) {
+		if (asid != pai->pai_asid) {
 			panic("inconsistency for active TLB update: %d <-> %d",
-			    asid, pmap->pm_asid);
+			    asid, pai->pai_asid);
 		}
 	}
 #endif
@@ -991,10 +996,7 @@ static void
 pmap_page_cache(struct vm_page *pg, int mode)
 {
 	pv_entry_t pv;
-	pt_entry_t *pte;
-	unsigned entry;
 	unsigned newmode;
-	unsigned asid, needupdate;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1002,34 +1004,36 @@ pmap_page_cache(struct vm_page *pg, int mode)
 #endif
 	newmode = mode & PV_UNCACHED ? MIPS3_PG_UNCACHED : MIPS3_PG_CACHED;
 	pv = pg->mdpage.pvh_list;
-	asid = pv->pv_pmap->pm_asid;
-	needupdate = (pv->pv_pmap->pm_asidgen == pmap_asid_generation);
 
+	struct cpu_info * const ci = curcpu();
 	while (pv) {
+		pmap_t pmap = pv->pv_pmap;
+		struct pmap_asid_info * const pai = PMAP_PAI(pmap, ci);
+		uint32_t asid = pai->pai_asid;
+		bool needupdate;
+		pt_entry_t *pte;
+		unsigned entry;
+
 		pv->pv_flags = (pv->pv_flags & ~PV_UNCACHED) | mode;
 		if (pv->pv_pmap == pmap_kernel()) {
-		/*
-		 * Change entries in kernel pmap.
-		 */
+			/*
+			 * Change entries in kernel pmap.
+			 */
 			pte = kvtopte(pv->pv_va);
 			entry = pte->pt_entry;
-			if (entry & MIPS3_PG_V) {
-				entry = (entry & ~MIPS3_PG_CACHEMODE) | newmode;
-				pte->pt_entry = entry;
-				MachTLBUpdate(pv->pv_va, entry);
-			}
+			needupdate = true;
 		} else {
-
 			pte = pmap_pte_lookup(pv->pv_pmap, pv->pv_va);
 			if (pte == NULL)
 				continue;
 			entry = pte->pt_entry;
-			if (entry & MIPS3_PG_V) {
-				entry = (entry & ~MIPS3_PG_CACHEMODE) | newmode;
-				pte->pt_entry = entry;
-				if (needupdate)
-					MachTLBUpdate(pv->pv_va | asid, entry);
-			}
+			needupdate = PMAP_PAI_ASIDVALID_P(pai, ci);
+		}
+		if (entry & MIPS3_PG_V) {
+			entry = (entry & ~MIPS3_PG_CACHEMODE) | newmode;
+			pte->pt_entry = entry;
+			if (needupdate)
+				tlb_update(pv->pv_va | asid, entry);
 		}
 		pv = pv->pv_next;
 	}
@@ -1205,7 +1209,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		 * Update the same virtual address entry.
 		 */
 
-		MachTLBUpdate(va, npte);
+		tlb_update(va, npte);
 		return 0;
 	}
 
@@ -1233,29 +1237,31 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pmap->pm_stats.wired_count++;
 		npte |= mips_pg_wired_bit();
 	}
+	struct pmap_asid_info * const pai = PMAP_PAI(pmap, curcpu());
+	bool needsupdate = PMAP_PAI_ASIDVALID_P(pai, curcpu());
 #if defined(DEBUG)
 	if (pmapdebug & PDB_ENTER) {
 		printf("pmap_enter: %p: %#"PRIxVADDR": new pte %#x (pa %#"PRIxPADDR")", pmap, va, npte, pa);
-		if (pmap->pm_asidgen == pmap_asid_generation)
-			printf(" asid %u (%#x)", pmap->pm_asid, pmap->pm_asid);
+		if (needsupdate)
+			printf(" asid %u (%#x)", pai->pai_asid, pai->pai_asid);
 		printf("\n");
 	}
 #endif
 
 #ifdef PARANOIADIAG
 	if (PMAP_IS_ACTIVE(pmap)) {
-		unsigned int asid;
+		uint32_t asid;
 
 		__asm volatile("mfc0 %0,$10; nop" : "=r"(asid));
 		asid = (MIPS_HAS_R4K_MMU) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
-		if (asid != pmap->pm_asid) {
+		if (asid != pai->pai_asid) {
 			panic("inconsistency for active TLB update: %u <-> %u",
-			    asid, pmap->pm_asid);
+			    asid, pai->pai_asid);
 		}
 	}
 #endif
 
-	asid = pmap->pm_asid << MIPS_TLB_PID_SHIFT;
+	asid = pai->pai_asid << MIPS_TLB_PID_SHIFT;
 	if (mips_pg_v(pte->pt_entry) &&
 	    mips_tlbpfn_to_paddr(pte->pt_entry) != pa) {
 		pmap_remove(pmap, va, va + NBPG);
@@ -1268,8 +1274,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pmap->pm_stats.resident_count++;
 	pte->pt_entry = npte;
 
-	if (pmap->pm_asidgen == pmap_asid_generation)
-		MachTLBUpdate(va | asid, npte);
+	if (needsupdate)
+		tlb_update(va | asid, npte);
 
 #ifdef MIPS3_PLUS	/* XXX mmu XXX */
 	if (MIPS_HAS_R4K_MMU && (prot == (VM_PROT_READ | VM_PROT_EXECUTE))) {
@@ -1328,7 +1334,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	pte = kvtopte(va);
 	KASSERT(!mips_pg_v(pte->pt_entry));
 	pte->pt_entry = npte;
-	MachTLBUpdate(va, npte);
+	tlb_update(va, npte);
 }
 
 void
@@ -1358,7 +1364,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		} else {
 			pte->pt_entry = MIPS1_PG_NV;
 		}
-		MIPS_TBIS(va);
+		tlb_invalidate_addr(va);
 	}
 }
 
@@ -1681,12 +1687,8 @@ pmap_is_referenced(struct vm_page *pg)
 bool
 pmap_clear_modify(struct vm_page *pg)
 {
-	struct pmap *pmap;
 	struct pv_entry *pv;
-	pt_entry_t *pte;
 	int *attrp;
-	vaddr_t va;
-	unsigned asid;
 	bool rv;
 
 #ifdef DEBUG
@@ -1709,31 +1711,39 @@ pmap_clear_modify(struct vm_page *pg)
 	 * so we can tell if they are written to again later.
 	 * flush the VAC first if there is one.
 	 */
-
+	struct cpu_info * const ci = curcpu();
 	for (; pv; pv = pv->pv_next) {
-		pmap = pv->pv_pmap;
-		va = pv->pv_va;
+		pmap_t pmap = pv->pv_pmap;
+		struct pmap_asid_info * const pai = PMAP_PAI(pmap, ci);
+		vaddr_t va = pv->pv_va;
+		pt_entry_t *pte;
+		uint32_t asid;
+		uint32_t pt_entry;
 		if (pmap == pmap_kernel()) {
 			pte = kvtopte(va);
 			asid = 0;
 		} else {
 			pte = pmap_pte_lookup(pmap, va);
 			KASSERT(pte);
-			asid = pmap->pm_asid << MIPS_TLB_PID_SHIFT;
+			asid = pai->pai_asid << MIPS_TLB_PID_SHIFT;
 		}
-		if ((pte->pt_entry & mips_pg_m_bit()) == 0) {
+		pt_entry = pte->pt_entry & ~mips_pg_m_bit();
+		if (pte->pt_entry == pt_entry) {
 			continue;
 		}
 		if (MIPS_HAS_R4K_MMU) {
+#ifdef MULTIPROCESSOR
+#error fix me
+#endif
 			if (PMAP_IS_ACTIVE(pmap)) {
 				mips_dcache_wbinv_range(va, PAGE_SIZE);
 			} else {
 				mips_dcache_wbinv_range_index(va, PAGE_SIZE);
 			}
 		}
-		pte->pt_entry &= ~mips_pg_m_bit();
-		if (pmap->pm_asidgen == pmap_asid_generation) {
-			MIPS_TBIS(va | asid);
+		pte->pt_entry = pt_entry;
+		if (PMAP_PAI_ASIDVALID_P(pai, ci)) {
+			tlb_invalidate_addr(va | asid);
 		}
 	}
 	return true;
@@ -1776,32 +1786,32 @@ pmap_set_modified(paddr_t pa)
  * we run out of numbers, we flush the TLB, increment the generation count
  * and start over. ASID zero is reserved for kernel use.
  */
-void
+uint32_t
 pmap_asid_alloc(pmap_t pmap)
 {
+	struct cpu_info * const ci = curcpu();
+	struct pmap_asid_info * const pai = PMAP_PAI(pmap, ci);
 
-	if (pmap->pm_asid == PMAP_ASID_RESERVED ||
-	    pmap->pm_asidgen != pmap_asid_generation) {
-		if (pmap_asid_next == pmap_asid_max) {
-			MIPS_TBIAP();
-			pmap_asid_generation++; /* ok to wrap to 0 */
-			pmap_asid_next = 1;	/* 0 means invalid */
+	if (pai->pai_asid == PMAP_ASID_RESERVED ||
+	    pai->pai_asid_generation != ci->ci_pmap_asid_generation) {
+		if (ci->ci_pmap_asid_next == ci->ci_pmap_asid_max) {
+			tlb_invalidate_all_nonkernel();
+			ci->ci_pmap_asid_generation++; /* ok to wrap to 0 */
+			ci->ci_pmap_asid_next = 1;	/* 0 means invalid */
 		}
-		pmap->pm_asid = pmap_asid_next++;
-		pmap->pm_asidgen = pmap_asid_generation;
+		pai->pai_asid = ci->ci_pmap_asid_next++;
+		pai->pai_asid_generation = ci->ci_pmap_asid_generation;
 	}
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_TLBPID)) {
-		if (curlwp)
-			printf("pmap_asid_alloc: curlwp %d.%d '%s' ",
-			    curlwp->l_proc->p_pid, curlwp->l_lid,
-			    curlwp->l_proc->p_comm);
-		else
-			printf("pmap_asid_alloc: curlwp <none> ");
-		printf("segtab %p asid %d\n", pmap->pm_segtab, pmap->pm_asid);
+		printf("pmap_asid_alloc: curlwp %d.%d '%s' ",
+		    curlwp->l_proc->p_pid, curlwp->l_lid,
+		    curlwp->l_proc->p_comm);
+		printf("segtab %p asid %d\n", pmap->pm_segtab, pai->pai_asid);
 	}
 #endif
+	return pai->pai_asid;
 }
 
 /******************** pv_entry management ********************/

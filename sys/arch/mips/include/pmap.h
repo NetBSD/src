@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.4 2010/01/10 02:48:46 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.5 2010/01/15 06:46:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,6 +110,22 @@ struct segtab {
 	union pt_entry	*seg_tab[PMAP_SEGTABSIZE];
 };
 
+/*
+ * Structure defining an tlb entry data set.
+ */
+struct tlb {
+	vaddr_t	tlb_hi;		/* should be 64 bits */
+	uint32_t tlb_lo0;	/* XXX maybe 64 bits (only 32 really used) */
+	uint32_t tlb_lo1;	/* XXX maybe 64 bits (only 32 really used) */
+};
+
+struct tlbmask {
+	vaddr_t	tlb_hi;		/* should be 64 bits */
+	uint32_t tlb_lo0;	/* XXX maybe 64 bits (only 32 really used) */
+	uint32_t tlb_lo1;	/* XXX maybe 64 bits (only 32 really used) */
+	uint32_t tlb_mask;
+};
+
 struct pmap;
 typedef bool (*pte_callback_t)(struct pmap *, vaddr_t, vaddr_t,
 	union pt_entry *, uintptr_t);
@@ -122,15 +138,33 @@ void pmap_segtab_alloc(struct pmap *);
 void pmap_segtab_free(struct pmap *);
 
 /*
+ * Per cpu asid info
+ */
+struct pmap_asid_info {
+	uint32_t		pai_asid;	/* TLB address space tag */
+	uint32_t		pai_asid_generation; /* its generation number */
+	struct tlb		*pai_tlb;
+};
+
+#ifdef MULTIPROCESSOR
+#define	PMAP_PAI(pmap, ci)	(&(pmap)->pm_pai[(ci)->ci_cpuid])
+#else
+#define	PMAP_PAI(pmap, ci)	(&(pmap)->pm_pai[0])
+#endif
+#define	PMAP_PAI_ASIDVALID_P(pai, ci)	\
+		((pai)->pai_asid_generation == (ci)->ci_pmap_asid_generation)
+/*
  * Machine dependent pmap structure.
  */
 typedef struct pmap {
 	kmutex_t		pm_lock;	/* lock on pmap */
 	struct segtab		*pm_segtab;	/* pointers to pages of PTEs */
+#ifdef MULTIPROCESSOR
+	uint32_t		pm_cpus;	/* pmap was active on ... */
+#endif
 	int			pm_count;	/* pmap reference count */
-	unsigned int		pm_asid;	/* TLB address space tag */
-	unsigned int		pm_asidgen;	/* its generation number */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
+	struct pmap_asid_info	pm_pai[1];
 } *pmap_t;
 
 /*
