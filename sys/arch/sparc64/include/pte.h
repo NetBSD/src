@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.21 2009/12/05 22:24:11 mrg Exp $ */
+/*	$NetBSD: pte.h,v 1.22 2010/01/15 15:02:48 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -49,7 +49,7 @@
  *			data_size:2,	(page size [8K*8**<SIZE>])
  *			data_nfo:1,	(no-fault only)
  *			data_ie:1,	(invert endianness [inefficient])
- *			data_soft9:9,	(reserved for S/W)
+ *			data_soft2:9,	(reserved for S/W)
  *			data_reserved:7,(reserved for future use)
  *			data_pa:30,	(physical address)
  *			data_soft:6,	(reserved for S/W)
