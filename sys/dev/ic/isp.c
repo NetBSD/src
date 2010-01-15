@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.119 2010/01/05 13:30:10 mbalmer Exp $ */
+/* $NetBSD: isp.c,v 1.120 2010/01/15 20:09:09 mjacob Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -43,7 +43,7 @@
  */
 #ifdef	__NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.119 2010/01/05 13:30:10 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.120 2010/01/15 20:09:09 mjacob Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -5187,7 +5187,6 @@ again:
 			ISP_WRITE(isp, isp->isp_respoutrp, optr);
 			continue;
 		}
-		isp_destroy_handle(isp, sp->req_handle);
 		if (req_status_flags & RQSTF_BUS_RESET) {
 			XS_SETERR(xs, HBA_BUSRESET);
 			ISP_SET_SENDMARKER(isp, XS_CHANNEL(xs), 1);
@@ -5323,6 +5322,7 @@ again:
 		if (XS_XFRLEN(xs)) {
 			ISP_DMAFREE(isp, xs, sp->req_handle);
 		}
+		isp_destroy_handle(isp, sp->req_handle);
 
 		if (((isp->isp_dblev & (ISP_LOGDEBUG1|ISP_LOGDEBUG2|ISP_LOGDEBUG3))) ||
 		    ((isp->isp_dblev & ISP_LOGDEBUG0) && ((!XS_NOERR(xs)) ||
