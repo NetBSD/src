@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.150 2009/12/20 09:36:06 dsl Exp $	*/
+/*	$NetBSD: bpf.c,v 1.151 2010/01/15 22:16:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.150 2009/12/20 09:36:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.151 2010/01/15 22:16:46 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -361,23 +361,16 @@ bpf_detachd(struct bpf_d *d)
 
 
 /*
- * Mark a descriptor free by making it point to itself.
- * This is probably cheaper than marking with a constant since
- * the address should be in a register anyway.
- */
-
-/*
  * bpfilterattach() is called at boot time.
  */
 /* ARGSUSED */
 void
 bpfilterattach(int n)
 {
+
 	mutex_init(&bpf_mtx, MUTEX_DEFAULT, IPL_NONE);
 
-	mutex_enter(&bpf_mtx);
 	LIST_INIT(&bpf_list);
-	mutex_exit(&bpf_mtx);
 
 	bpf_gstats.bs_recv = 0;
 	bpf_gstats.bs_drop = 0;
