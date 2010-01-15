@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.150 2010/01/15 19:01:04 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.151 2010/01/15 20:39:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.150 2010/01/15 19:01:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.151 2010/01/15 20:39:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -145,18 +145,10 @@ __weak_alias(usermount_common_policy,rump__unavailable_vfs_panic);
 rump_proc_vfs_init_fn rump_proc_vfs_init;
 rump_proc_vfs_release_fn rump_proc_vfs_release;
 
-/*
- * Stir up the stack a bit.  These are exported functions to help
- * convince the compiler that we don't want these routines completely
- * optimized out or inlined.  Is there an easier way to do this?
- */
-void nullfn(uint32_t *);
-void nullfn(uint32_t *arg){}
-void messthestack(void);
-void
+static void __noinline
 messthestack(void)
 {
-	uint32_t mess[64];
+	volatile uint32_t mess[64];
 	uint64_t d1, d2;
 	int i, error;
 
@@ -164,7 +156,6 @@ messthestack(void)
 		rumpuser_gettime(&d1, &d2, &error);
 		mess[i] = d2;
 	}
-	nullfn(mess);
 }
 
 int
