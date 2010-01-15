@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.396 2010/01/14 22:41:52 bouyer Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.397 2010/01/15 19:28:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.396 2010/01/14 22:41:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.397 2010/01/15 19:28:26 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -641,6 +641,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 		vp->v_socket = NULL;
 	}
 
+	KASSERT(vp->v_usecount == 1);
 	KASSERT(vp->v_freelisthd == NULL);
 	KASSERT(LIST_EMPTY(&vp->v_nclist));
 	KASSERT(LIST_EMPTY(&vp->v_dnclist));
@@ -681,6 +682,7 @@ void
 ungetnewvnode(vnode_t *vp)
 {
 
+	KASSERT(vp->v_usecount == 1);
 	KASSERT(vp->v_data == NULL);
 	KASSERT(vp->v_freelisthd == NULL);
 
