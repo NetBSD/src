@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.44 2010/01/15 15:05:02 nakayama Exp $ */
+/*	$NetBSD: psl.h,v 1.45 2010/01/15 23:55:55 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -223,6 +223,17 @@
 #define VER_MAXTL	0x000000000000ff00LL
 #define VER_MAXTL_SHIFT	8
 #define VER_MAXWIN	0x000000000000001fLL
+
+#define IMPL_SPITFIRE		0x10 /* UltraSPARC-I */
+#define IMPL_BLACKBIRD		0x11 /* UltraSPARC-II */
+#define IMPL_SABRE		0x12 /* UltraSPARC-IIi */
+#define IMPL_HUMMINGBIRD	0x13 /* UltraSPARC-IIe */
+#define IMPL_CHEETAH		0x14 /* UltraSPARC-III */
+#define IMPL_CHEETAH_PLUS	0x15 /* UltraSPARC-III+ */
+#define IMPL_JALAPENO		0x16 /* UltraSPARC-IIIi */
+#define IMPL_JAGUAR		0x18 /* UltraSPARC-IV */
+#define IMPL_PANTHER		0x19 /* UltraSPARC-IV+ */
+#define IMPL_SERRANO		0x22 /* UltraSPARC-IIIi+ */
 
 /*
  * Here are a few things to help us transition between user and kernel mode:
