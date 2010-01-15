@@ -1,4 +1,4 @@
-/*	$NetBSD: rumptest_net.c,v 1.12 2009/10/20 00:25:26 pooka Exp $	*/
+/*	$NetBSD: rumptest_net.c,v 1.13 2010/01/15 18:38:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -28,9 +28,11 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/mbuf.h>
 #include <sys/time.h>
 #include <sys/sockio.h>
+#include <sys/sysctl.h>
 
 #include <arpa/inet.h>
 #include <net/if.h>
@@ -44,6 +46,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define DEST_ADDR "204.152.190.12"	/* www.NetBSD.org */
 #define DEST_PORT 80			/* take a wild guess */
@@ -163,6 +166,30 @@ configure_interface(void)
 }
 #endif /* FULL_NETWORK_STACK */
 
+static void
+printstats(void)
+{
+	struct mbstat mbstat;
+	int ctl[] = { CTL_KERN, KERN_MBUF, MBUF_STATS };
+	int totalmbuf = 0;
+	size_t mbslen = sizeof(struct mbstat);
+	unsigned i;
+
+	if (rump_sys___sysctl(ctl, __arraycount(ctl), &mbstat, &mbslen,
+	    NULL, 0) == -1)
+		return;
+
+	printf("  mbuf count:\n");
+	for (i = 0; i < __arraycount(mbstat.m_mtypes); i++) {
+		if (mbstat.m_mtypes[i] == 0)
+			continue;
+		printf("%s (%d) mbuf count %d\n",
+		    i == MT_DATA ? "data" : "unknown", i, mbstat.m_mtypes[i]);
+		totalmbuf += mbstat.m_mtypes[i];
+	}
+	printf("total mbufs: %d\n", totalmbuf);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -199,6 +226,8 @@ main(int argc, char *argv[])
 		err(1, "connect failed");
 	}
 
+	printstats();
+
 	printf("connected\n");
 
 	strcpy(buf, "GET / HTTP/1.0\n\n");
@@ -206,6 +235,11 @@ main(int argc, char *argv[])
 	if (n != (ssize_t)strlen(buf))
 		err(1, "wrote only %zd vs. %zu\n",
 		    n, strlen(buf));
+
+	/* wait for mbufs to accumulate.  hacky, but serves purpose.  */
+	sleep(1);
+	printstats();
+	sleep(1);
 	
 	memset(buf, 0, sizeof(buf));
 	for (off = 0; off < sizeof(buf) && n > 0;) {
