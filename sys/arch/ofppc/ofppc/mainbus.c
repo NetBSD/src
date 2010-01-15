@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.23 2008/04/28 20:23:31 martin Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.24 2010/01/15 20:57:25 phx Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.23 2008/04/28 20:23:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.24 2010/01/15 20:57:25 phx Exp $");
 
 #include "opt_interrupt.h"
 #include "opt_multiprocessor.h"
@@ -233,7 +233,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Find rtas first */
 	rtnode = OF_finddevice("/rtas");
-	if (rtnode) {
+	if (rtnode != -1) {
 		memset(name, 0, sizeof(name));
 		if (OF_getprop(rtnode, "name", name, sizeof(name)) != -1) {
 			ca.ca_name = name;
