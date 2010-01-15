@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.149 2010/01/13 00:07:40 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.150 2010/01/15 19:01:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.149 2010/01/13 00:07:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.150 2010/01/15 19:01:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -270,6 +270,8 @@ rump__init(int rump_version)
 	rumpuser_set_curlwp(NULL);
 	rump_schedule();
 
+	percpu_init();
+
 	/* we are mostly go.  do per-cpu subsystem init */
 	for (i = 0; i < ncpu; i++) {
 		struct cpu_info *ci = cpu_lookup(i);
@@ -279,13 +281,13 @@ rump__init(int rump_version)
 		xc_init_cpu(ci);
 		pool_cache_cpu_init(ci);
 		selsysinit(ci);
+		percpu_init_cpu(ci);
 	}
 
 	sysctl_init();
 	kqueue_init();
 	iostat_init();
 	uid_init();
-	percpu_init();
 	fd_sys_init();
 	module_init();
 	devsw_init();
