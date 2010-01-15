@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.16 2009/12/31 00:53:00 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.17 2010/01/15 06:46:59 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -292,7 +292,7 @@
 	.set	noreorder
 
 /*
- * TLB handling data.   'segbase' points to the base of the segment
+ * TLB handling data.   'CPUVAR(PMAP_SEGBASE)' points to the base of the segment
  * table.   this is read and written by C code in mips_machdep.c.
  *
  * XXX: use linear mapped PTs at fixed VA in kseg2 in the future?
@@ -324,7 +324,7 @@
 /*
  *----------------------------------------------------------------------------
  *
- * mips3_TLBMiss --
+ * mips3_tlb_miss --
  *
  *	Vector code for the TLB-miss exception vector 0x80000000
  *	on an r4000.
@@ -337,13 +337,13 @@
  * let the processor trap to load the correct value after service.
  *----------------------------------------------------------------------------
  */
-VECTOR(MIPSX(TLBMiss), unknown)
+VECTOR(MIPSX(tlb_miss), unknown)
 	.set	noat
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#00: k0=bad address
-	lui	k1, %hi(segbase)		#01: k1=hi of segbase
+	lui	k1, %hi(CPUVAR(PMAP_SEGBASE))	#01: k1=hi of segbase
 	bltz	k0, 4f				#02: k0<0 -> 4f (kernel fault)
 	PTR_SRL	k0, (2*PGSHIFT-2-PTR_SCALESHIFT)#03: k0=seg offset (almost)
-	PTR_L	k1, %lo(segbase)(k1)		#04: k1=segment tab base
+	PTR_L	k1, %lo(CPUVAR(PMAP_SEGBASE))(k1)#04: k1=segment tab base
 	andi	k0, k0, (NBPG-(1<<PTR_SCALESHIFT))#05: k0=seg offset (mask 0x3)
 	PTR_ADDU k1, k0, k1			#06: k1=seg entry address
 	PTR_L	k1, 0(k1)			#07: k1=seg entry
@@ -376,16 +376,16 @@ VECTOR(MIPSX(TLBMiss), unknown)
 	nop					#19: needed by R4000/4400
 	nop					#1a: needed by R4000/4400
 	eret					#1b: return from exception
-4:	j _C_LABEL(MIPSX(TLBMissException))	#1c: kernel exception
+4:	j _C_LABEL(MIPSX(tlb_miss_exception))	#1c: kernel exception
 	nop					#1d: branch delay slot
 5:	j	MIPSX(slowfault)		#1e: no page table present
 	nop					#1f: branch delay slot
 	.set	at
-_VECTOR_END(MIPSX(TLBMiss))
+_VECTOR_END(MIPSX(tlb_miss))
 
 #if defined(USE_64BIT_CP0_FUNCTIONS)
 /*
- * mips3_XTLBMiss routine
+ * mips3_xtlb_miss routine
  *
  *	Vector code for the XTLB-miss exception vector 0x80000080 on an r4000.
  *
@@ -399,13 +399,13 @@ _VECTOR_END(MIPSX(TLBMiss))
  * Don't check for invalid pte's here. We load them as well and
  * let the processor trap to load the correct value after service.
  */
-VECTOR(MIPSX(XTLBMiss), unknown)
+VECTOR(MIPSX(xtlb_miss), unknown)
 	.set	noat
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#00: k0=bad address
-	lui	k1, %hi(segbase)		#01: k1=hi of segbase
+	lui	k1, %hi(CPUVAR(PMAP_SEGBASE))	#01: k1=hi of segbase
 	bltz	k0, 4f				#02: k0<0 -> 4f (kernel fault)
 	PTR_SRL	k0, 2*PGSHIFT-2-PTR_SCALESHIFT	#03: k0=seg offset (almost)
-	PTR_L	k1, %lo(segbase)(k1)		#04: k1=segment tab base
+	PTR_L	k1, %lo(CPUVAR(PMAP_SEGBASE))(k1)#04: k1=segment tab base
 	andi	k0, NBPG-(1<<PTR_SCALESHIFT)	#05: k0=seg offset (mask 0x3)
 	PTR_ADDU k1, k0, k1			#06: k1=seg entry address
 	PTR_L	k1, 0(k1)			#07: k1=seg entry
@@ -429,19 +429,19 @@ VECTOR(MIPSX(XTLBMiss), unknown)
 	nop					#19: needed by R4000/4400
 	nop					#1a: needed by R4000/4400
 	eret					#1b: return from exception
-4:	j _C_LABEL(MIPSX(TLBMissException))	#1c: kernel exception
+4:	j _C_LABEL(MIPSX(tlb_miss_exception))	#1c: kernel exception
 	nop					#1d: branch delay slot
 5:	j	MIPSX(slowfault)		#1e: no page table present
 	nop					#1f: branch delay slot
 	.set	at
-_VECTOR_END(MIPSX(XTLBMiss))
+_VECTOR_END(MIPSX(xtlb_miss))
 #endif /* USE_64BIT_CP0_FUNCTIONS */
 
 /*
  * Vector to real handler in KSEG1.
  */
 VECTOR(MIPSX(cache), unknown)
-	PTR_LA	k0, _C_LABEL(MIPSX(cacheException))
+	PTR_LA	k0, _C_LABEL(MIPSX(cache_exception))
 	li	k1, MIPS_PHYS_MASK
 	and	k0, k1
 	li	k1, MIPS_KSEG1_START
@@ -454,7 +454,7 @@ _VECTOR_END(MIPSX(cache))
  * Handle MIPS32/MIPS64 style interrupt exception vector.
  */
 VECTOR(MIPSX(intr), unknown)
-	PTR_LA	k0, MIPSX(KernIntr)
+	PTR_LA	k0, MIPSX(kern_intr)
 	j	k0
 	nop
 _VECTOR_END(MIPSX(intr))
@@ -507,8 +507,8 @@ _VECTOR_END(MIPSX(exception))
  *
  * MIPSX(slowfault) --
  *
- * Alternate entry point into the mips3_UserGenException or
- * mips3_KernGenException, when the ULTB miss handler couldn't
+ * Alternate entry point into the mips3_user_gen_exception or
+ * mips3_kern_gen_exception, when the ULTB miss handler couldn't
  * find a TLB entry.
  *
  * Find out what mode we came from and call the appropriate handler.
@@ -525,7 +525,7 @@ MIPSX(slowfault):
 	mfc0	k0, MIPS_COP_0_STATUS
 	nop
 	and	k0, k0, MIPS3_SR_KSU_USER
-	bne	k0, zero, _C_LABEL(MIPSX(UserGenException))
+	bne	k0, zero, _C_LABEL(MIPSX(user_gen_exception))
 	nop
 	.set	at
 /*
@@ -533,7 +533,7 @@ MIPSX(slowfault):
  */
 
 /*
- * mips3_KernGenException
+ * mips3_kern_gen_exception
  *
  * Handle an exception from kernel mode.
  * Build trapframe on stack to hold interrupted kernel context, then
@@ -553,7 +553,7 @@ MIPSX(slowfault):
  * 	mips_reg_t kf_epc;		- may be changed by trap() call
  * };
  */
-NESTED_NOPROFILE(MIPSX(KernGenException), KERNFRAME_SIZ, ra)
+NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
 #if defined(DDB) || defined(KGDB)
@@ -706,17 +706,17 @@ NESTED_NOPROFILE(MIPSX(KernGenException), KERNFRAME_SIZ, ra)
 #endif
 	eret					# return to interrupted point
 	.set	at
-END(MIPSX(KernGenException))
+END(MIPSX(kern_gen_exception))
 
 /*
- * mipsN_UserGenException
+ * mipsN_user_gen_exception
  *
  * Handle an exception from user mode.
  * Save user context atop the kernel stack, then call trap() to process
  * the condition.  The context can be manipulated alternatively via
  * curlwp->l_md.md_regs.
  */
-NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
+NESTED_NOPROFILE(MIPSX(user_gen_exception), CALLFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
 /*
@@ -871,15 +871,15 @@ NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
 	nop
 	eret					# return to interrupted point
 	.set	at
-END(MIPSX(UserGenException))
+END(MIPSX(user_gen_exception))
 
 /*
- * mipsN_SystemCall
+ * mipsN_systemcall
  *
  * Save user context in u_pcb, then call syscall() to process a system call.
  * The context can be manipulated alternatively via curlwp->p_md.md_regs;
  */
-NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
+NESTED_NOPROFILE(MIPSX(systemcall), CALLFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
 	PTR_L	k1, CPUVAR(CURLWP)
@@ -1058,13 +1058,13 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 
 	eret					# return to syscall point
 	.set	at
-END(MIPSX(SystemCall))
+END(MIPSX(systemcall))
 
 /*
  * Panic on cache errors.  A lot more could be done to recover
  * from some types of errors but it is tricky.
  */
-NESTED_NOPROFILE(MIPSX(cacheException), KERNFRAME_SIZ, ra)
+NESTED_NOPROFILE(MIPSX(cache_exception), KERNFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
 #ifdef sbmips	/* XXX!  SB-1 needs a real cache error handler */
@@ -1109,17 +1109,17 @@ NESTED_NOPROFILE(MIPSX(cacheException), KERNFRAME_SIZ, ra)
 	MSG("cache error @ EPC 0x%x ErrCtl 0x%x CacheErr 0x%x");
 #endif
 	.set	at
-END(MIPSX(cacheException))
+END(MIPSX(cache_exception))
 
 /*
- * mipsX_KernIntr
+ * mipsX_kern_intr
  *
  * Handle an interrupt from kernel mode.
  * Build intrframe on stack to hold interrupted kernel context, then
  * call cpu_intr() to process it.
  *
  */
-NESTED_NOPROFILE(MIPSX(KernIntr), KERNFRAME_SIZ, ra)
+NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
 	PTR_SUBU sp, sp, KERNFRAME_SIZ
@@ -1238,11 +1238,11 @@ NESTED_NOPROFILE(MIPSX(KernIntr), KERNFRAME_SIZ, ra)
 	PTR_ADDU sp, sp, KERNFRAME_SIZ		# restore kernel SP
 	eret					# return to interrupted point
 	.set	at
-END(MIPSX(KernIntr))
+END(MIPSX(kern_intr))
 
 /*----------------------------------------------------------------------------
  * XXX this comment block should be updated XXX
- * mipsN_UserIntr --
+ * mipsN_user_intr --
  *
  *	Handle an interrupt from user mode.
  *	Note: we save minimal state in the u.u_pcb struct and use the standard
@@ -1259,7 +1259,7 @@ END(MIPSX(KernIntr))
  *
  *----------------------------------------------------------------------------
  */
-NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
+NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
 /*
@@ -1455,7 +1455,7 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 	nop
 	eret					# return to interrupted point
 	.set	at
-END(MIPSX(UserIntr))
+END(MIPSX(user_intr))
 
 
 /*----------------------------------------------------------------------------
@@ -1468,7 +1468,7 @@ END(MIPSX(UserIntr))
 
 /*----------------------------------------------------------------------------
  *
- * mips3_TLBInvalidException --
+ * mips3_tlb_invalid_exception --
  *
  *	Handle a TLB invalid exception from kernel mode in kernel space.
  *	The BaddVAddr, Context, and EntryHi registers contain the failed
@@ -1490,7 +1490,7 @@ END(MIPSX(UserIntr))
  *
  *----------------------------------------------------------------------------
  */
-LEAF_NOPROFILE(MIPSX(TLBInvalidException))
+LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	.set	noat
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
 #if VM_MIN_KERNEL_ADDRESS == MIPS_KSEG2_START
@@ -1499,7 +1499,7 @@ LEAF_NOPROFILE(MIPSX(TLBInvalidException))
 	li	k1, VM_MIN_KERNEL_ADDRESS>>32	# compute index
 	dsll32	k1, k1, 0
 #endif
-	bgez	k0, _C_LABEL(MIPSX(KernGenException))	# full trap processing
+	bgez	k0, _C_LABEL(MIPSX(kern_gen_exception))	# full trap processing
 	PTR_SUBU k0, k0, k1
 	INT_L	k1, _C_LABEL(Sysmapsize)	# index within range?
 	PTR_SRL	k0, k0, PGSHIFT
@@ -1528,7 +1528,7 @@ LEAF_NOPROFILE(MIPSX(TLBInvalidException))
 	COP0_SYNC
 	and	k0, k0, MIPS3_PG_V		# check for valid entry
 	nop					# required for QED5230
-	beq	k0, zero, _C_LABEL(MIPSX(KernGenException))	# PTE invalid
+	beq	k0, zero, _C_LABEL(MIPSX(kern_gen_exception))	# PTE invalid
 	INT_L	k0, 4(k1)			# get odd PTE entry
 	_SLL	k0, k0, WIRED_SHIFT
 	mfc0	k1, MIPS_COP_0_TLB_INDEX
@@ -1560,7 +1560,7 @@ KernTLBIOdd:
 	COP0_SYNC
 	and	k0, k0, MIPS3_PG_V		# check for valid entry
 	nop					# required for QED5230
-	beq	k0, zero, _C_LABEL(MIPSX(KernGenException))	# PTE invalid
+	beq	k0, zero, _C_LABEL(MIPSX(kern_gen_exception))	# PTE invalid
 	INT_L	k0, -4(k1)			# get even PTE entry
 	_SLL	k0, k0, WIRED_SHIFT
 	mfc0	k1, MIPS_COP_0_TLB_INDEX
@@ -1579,11 +1579,11 @@ KernTLBIOdd:
 	nop
 	nop
 	eret
-END(MIPSX(TLBInvalidException))
+END(MIPSX(tlb_invalid_exception))
 
 /*----------------------------------------------------------------------------
  *
- * mipsN_TLBMissException --
+ * mipsN_tlb_miss_exception --
  *
  *	Handle a TLB miss exception from kernel mode in kernel space.
  *	The BaddVAddr, Context, and EntryHi registers contain the failed
@@ -1597,7 +1597,7 @@ END(MIPSX(TLBInvalidException))
  *
  *----------------------------------------------------------------------------
  */
-LEAF_NOPROFILE(MIPSX(TLBMissException))
+LEAF_NOPROFILE(MIPSX(tlb_miss_exception))
 	.set	noat
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
 #if VM_MIN_KERNEL_ADDRESS == MIPS_KSEG2_START
@@ -1670,7 +1670,7 @@ MIPSX(outofworld):
 	eret
 
 	.set	at
-END(MIPSX(TLBMissException))
+END(MIPSX(tlb_miss_exception))
 
 	MSG("TLB out of universe: ksp %p epc %p vaddr %p")
 
@@ -1699,7 +1699,7 @@ _C_LABEL(MIPSX(exceptionentry_end)):
  *
  *--------------------------------------------------------------------------
  */
-LEAF(MIPSX(SetPID))
+LEAF(MIPSX(tlb_set_asid))
 	_MTC0	a0, MIPS_COP_0_TLB_HI		# Write the hi reg value
 	COP0_SYNC
 	/* XXX simonb: lose these nops for mips32/64? */
@@ -1707,7 +1707,7 @@ LEAF(MIPSX(SetPID))
 	nop					# required for QED5230
 	j	ra
 	nop
-END(MIPSX(SetPID))
+END(MIPSX(tlb_set_asid))
 
 #if defined(ENABLE_MIPS3_WIRED_MAP)
 /*--------------------------------------------------------------------------
@@ -1717,7 +1717,7 @@ END(MIPSX(SetPID))
  *      Write the given entry into the TLB at the given index.
  *      Pass full R4000 style TLB info including variable page size mask.
  *
- *      mipsN_TLBWriteIndexed(unsigned int index, struct tlb *tlb)
+ *      mipsN_tlb_write_indexed(size_t tlb_index, const struct tlbmask *tlb)
  *
  * Results:
  *      None.
@@ -1727,7 +1727,7 @@ END(MIPSX(SetPID))
  *
  *--------------------------------------------------------------------------
  */
-LEAF(MIPSX(TLBWriteIndexedVPS))
+LEAF(MIPSX(tlb_write_indexed_VPS))
 	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
 	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
@@ -1768,17 +1768,16 @@ LEAF(MIPSX(TLBWriteIndexedVPS))
 	nop
 	j       ra
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
-END(MIPSX(TLBWriteIndexedVPS))
+END(MIPSX(tlb_write_indexed_VPS))
 #endif /* ENABLE_MIPS3_WIRED_MAP */
 	
 /*--------------------------------------------------------------------------
  *
- * mipsN_TLBUpdate --
+ * mipsN_tlb_update --
  *
  *	Update the TLB if highreg is found; otherwise do nothing.
  *
- *	mips3_TLBUpdate(virpageadr, lowregx)
- *		unsigned virpageadr, lowregx;
+ *	long mipsN_tlb_update(vaddr_t va, register_t lowreg)
  *
  * Results:
  *	< 0 if skipped, >= 0 if updated.
@@ -1788,7 +1787,7 @@ END(MIPSX(TLBWriteIndexedVPS))
  *
  *--------------------------------------------------------------------------
  */
-LEAF(MIPSX(TLBUpdate))
+LEAF(MIPSX(tlb_update))
 	mfc0	v1, MIPS_COP_0_STATUS	# Save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS	# Disable interrupts
 	COP0_SYNC
@@ -1861,7 +1860,7 @@ LEAF(MIPSX(TLBUpdate))
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
 	COP0_SYNC				# XXXX - not executed!!
-END(MIPSX(TLBUpdate))
+END(MIPSX(tlb_update))
 
 /*--------------------------------------------------------------------------
  *
@@ -1869,9 +1868,7 @@ END(MIPSX(TLBUpdate))
  *
  *	Read the TLB entry.
  *
- *	mips3_TLBRead(entry, tlb)
- *		unsigned entry;
- *		struct tlb *tlb;
+ *	void mipsN_tlb_read_indexed(size_t tlb_index, struct tlbmask *tlb);
  *
  * Results:
  *	None.
@@ -1881,7 +1878,7 @@ END(MIPSX(TLBUpdate))
  *
  *--------------------------------------------------------------------------
  */
-LEAF(MIPSX(TLBRead))
+LEAF(MIPSX(tlb_read_indexed))
 	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
 	COP0_SYNC
@@ -1918,12 +1915,12 @@ LEAF(MIPSX(TLBRead))
 	sw	ta0, 8(a1)
 	j	ra
 	sw	ta1, 12(a1)
-END(MIPSX(TLBRead))
+END(MIPSX(tlb_read_indexed))
 
 #if defined(MIPS3) && !defined(MIPS3_5900)
 /*----------------------------------------------------------------------------
  *
- * mips3_VCED --
+ * mipsN_VCED --
  *
  *	Handle virtual coherency exceptions.
  *	Called directly from the mips3 execption-table code.
@@ -2209,11 +2206,11 @@ resume:
 END(MIPSX(cpu_switch_resume))
 
 /*
- * void mipsN_TBIS(vaddr_t va)
+ * void mipsN_tlb_invalidate_addr(vaddr_t va)
  *
  * Invalidate a TLB entry which has the given vaddr and ASID if found.
  */
-LEAF_NOPROFILE(MIPSX(TBIS))
+LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 	COP0_SYNC
@@ -2266,15 +2263,15 @@ LEAF_NOPROFILE(MIPSX(TBIS))
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	COP0_SYNC				# XXXX - not executed!!
-END(MIPSX(TBIS))
+END(MIPSX(tlb_invalidate_addr))
 
 /*
- * void mips3_TBIAP(int sizeofTLB)
+ * void mipsN_tlb_invalidate_all_nonkernel(size_t sizeofTLB)
  *
  * Invalidate TLB entries belong to per process user spaces while
  * leaving entries for kernel space marked global intact.
  */
-LEAF_NOPROFILE(MIPSX(TBIAP))
+LEAF_NOPROFILE(MIPSX(tlb_invalidate_all_nonkernel))
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 	COP0_SYNC
@@ -2329,14 +2326,14 @@ LEAF_NOPROFILE(MIPSX(TBIAP))
 	j	ra				# new ASID will be set soon
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	COP0_SYNC				# XXXX - not executed!!
-END(MIPSX(TBIAP))
+END(MIPSX(tlb_invalidate_all_nonkernel))
 
 /*
- * void mipsN_TBIA(int sizeofTLB)
+ * void mipsN_tlb_invalidate_all(size_t sizeofTLB)
  *
  * Invalidate all of non-wired TLB entries.
  */
-LEAF_NOPROFILE(MIPSX(TBIA))
+LEAF_NOPROFILE(MIPSX(tlb_invalidate_all))
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 	COP0_SYNC
@@ -2378,7 +2375,7 @@ LEAF_NOPROFILE(MIPSX(TBIA))
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	COP0_SYNC				# XXXX - not executed!!
-END(MIPSX(TBIA))
+END(MIPSX(tlb_invalidate_all))
 
 #ifdef USE_64BIT_INSTRUCTIONS
 LEAF(MIPSX(pagezero))
@@ -2414,86 +2411,86 @@ MIPSX(excpt_sw):
 	####
 	#### The kernel exception handlers.
 	####
-	PTR_WORD _C_LABEL(MIPSX(KernIntr))		#  0 external interrupt
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	#  1 TLB modification
-	PTR_WORD _C_LABEL(MIPSX(TLBInvalidException))# 2 TLB miss (LW/I-fetch)
-	PTR_WORD _C_LABEL(MIPSX(TLBInvalidException))# 3 TLB miss (SW)
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	#  4 address error (LW/I-fetch)
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	#  5 address error (SW)
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	#  6 bus error (I-fetch)
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	#  7 bus error (load or store)
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	#  8 system call
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	#  9 breakpoint
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 10 reserved instruction
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 11 coprocessor unusable
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 12 arithmetic overflow
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 13 r4k trap exception
+	PTR_WORD _C_LABEL(MIPSX(kern_intr))		#  0 external interrupt
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	#  1 TLB modification
+	PTR_WORD _C_LABEL(MIPSX(tlb_invalid_exception))	#  2 TLB miss (LW/I-fetch)
+	PTR_WORD _C_LABEL(MIPSX(tlb_invalid_exception))	#  3 TLB miss (SW)
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	#  4 address error (LW/I-fetch)
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	#  5 address error (SW)
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	#  6 bus error (I-fetch)
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	#  7 bus error (load or store)
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	#  8 system call
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	#  9 breakpoint
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 10 reserved instruction
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 11 coprocessor unusable
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 12 arithmetic overflow
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 13 r4k trap exception
 #if defined(MIPS3) && !defined(MIPS3_5900)
 	PTR_WORD _C_LABEL(mips3_VCEI)			# 14 r4k virt coherence
 #else
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 14 reserved
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 14 reserved
 #endif
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 15 r4k FP exception
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 16 reserved
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 17 reserved
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 18 reserved
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 19 reserved
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 20 reserved
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 21 reserved
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 22 reserved
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 23 watch exception
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 24 reserved
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 25 reserved
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 26 reserved
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 27 reserved
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 28 reserved
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 29 reserved
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 30 reserved
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 15 r4k FP exception
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 16 reserved
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 17 reserved
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 18 reserved
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 19 reserved
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 20 reserved
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 21 reserved
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 22 reserved
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 23 watch exception
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 24 reserved
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 25 reserved
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 26 reserved
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 27 reserved
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 28 reserved
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 29 reserved
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 30 reserved
 #if defined(MIPS3) && !defined(MIPS3_5900)
 	PTR_WORD _C_LABEL(mips3_VCED)		# 31 v. coherence exception data
 #else
-	PTR_WORD _C_LABEL(MIPSX(KernGenException))	# 31 reserved
+	PTR_WORD _C_LABEL(MIPSX(kern_gen_exception))	# 31 reserved
 #endif
 	#####
 	##### The user exception handlers.
 	#####
-	PTR_WORD _C_LABEL(MIPSX(UserIntr))		#  0
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	#  1
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	#  2
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	#  3
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	#  4
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	#  5
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	#  6
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	#  7
-	PTR_WORD _C_LABEL(MIPSX(SystemCall))		#  8
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	#  9
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 10
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 11
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 12
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 13
+	PTR_WORD _C_LABEL(MIPSX(user_intr))		#  0
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	#  1
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	#  2
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	#  3
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	#  4
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	#  5
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	#  6
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	#  7
+	PTR_WORD _C_LABEL(MIPSX(systemcall))		#  8
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	#  9
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 10
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 11
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 12
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 13
 #if defined(MIPS3) && !defined(MIPS3_5900)
 	PTR_WORD _C_LABEL(mips3_VCEI)			# 14
 #else
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 14
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 14
 #endif
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 15
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 16
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 17
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 18
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 19
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 20
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 21
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 22
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 23
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 24
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 25
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 26
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 27
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 28
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 29
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 30
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 15
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 16
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 17
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 18
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 19
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 20
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 21
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 22
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 23
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 24
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 25
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 26
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 27
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 28
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 29
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 30
 #if defined(MIPS3) && !defined(MIPS3_5900)
 	PTR_WORD _C_LABEL(mips3_VCED)			# 31 v. coherence exception data
 #else
-	PTR_WORD _C_LABEL(MIPSX(UserGenException))	# 31
+	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 31
 #endif

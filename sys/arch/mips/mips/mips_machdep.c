@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.24 2010/01/14 17:26:20 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.25 2010/01/15 06:46:59 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.24 2010/01/14 17:26:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.25 2010/01/15 06:46:59 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -230,10 +230,13 @@ struct	cpu_info cpu_info_store = {
 	.ci_curlwp = &lwp0,
 	.ci_fpcurlwp = &lwp0,
 	.ci_ebase = MIPS_KSEG0_START,
+	.ci_pmap_asid_max =
+	    __builtin_constant_p(MIPS_TLB_NUM_PIDS) ? MIPS_TLB_NUM_PIDS : 0,
+	.ci_pmap_asid_next = 1,
+	.ci_pmap_segbase = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
 };
 
 struct	user *proc0paddr;
-struct	segtab *segbase = (void *)(MIPS_KSEG2_START + 0x1eadbeef);
 
 void *	msgbufaddr;
 
@@ -531,31 +534,32 @@ static const char * const cidnames[] = {
  * MIPS-I locore function vector
  */
 static const mips_locore_jumpvec_t mips1_locore_vec = {
-	mips1_SetPID,
-	mips1_TBIAP,
-	mips1_TBIS,
-	mips1_TLBUpdate,
+	mips1_tlb_set_asid,
+	mips1_tlb_invalidate_all_nonkernel,
+	mips1_tlb_invalidate_addr,
+	mips1_tlb_update,
+	mips1_tlb_read_indexed,
 	mips1_wbflush,
 };
 
 static void
 mips1_vector_init(void)
 {
-	extern char mips1_UTLBMiss[], mips1_UTLBMissEnd[];
-	extern char mips1_exception[], mips1_exceptionEnd[];
+	extern char mips1_utlb_miss[], mips1_utlb_miss_end[];
+	extern char mips1_exception[], mips1_exception_end[];
 
 	/*
 	 * Copy down exception vector code.
 	 */
-	if (mips1_UTLBMissEnd - mips1_UTLBMiss > 0x80)
+	if (mips1_utlb_miss_end - mips1_utlb_miss > 0x80)
 		panic("startup: UTLB vector code too large");
-	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips1_UTLBMiss,
-		mips1_UTLBMissEnd - mips1_UTLBMiss);
+	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips1_utlb_miss,
+		mips1_utlb_miss_end - mips1_utlb_miss);
 
-	if (mips1_exceptionEnd - mips1_exception > 0x80)
+	if (mips1_exception_end - mips1_exception > 0x80)
 		panic("startup: general exception vector code too large");
 	memcpy((void *)MIPS1_GEN_EXC_VEC, mips1_exception,
-		mips1_exceptionEnd - mips1_exception);
+		mips1_exception_end - mips1_exception);
 
 	/*
 	 * Copy locore-function vector.
@@ -576,10 +580,11 @@ mips1_vector_init(void)
  * MIPS III locore function vector
  */
 static const mips_locore_jumpvec_t mips3_locore_vec = {
-	mips3_SetPID,
-	mips3_TBIAP,
-	mips3_TBIS,
-	mips3_TLBUpdate,
+	mips3_tlb_set_asid,
+	mips3_tlb_invalidate_all_nonkernel,
+	mips3_tlb_invalidate_addr,
+	mips3_tlb_update,
+	mips3_tlb_read_indexed,
 	mips3_wbflush,
 };
 
@@ -587,38 +592,38 @@ static void
 mips3_vector_init(void)
 {
 	/* r4000 exception handler address and end */
-	extern char mips3_exception[], mips3_exceptionEnd[];
+	extern char mips3_exception[], mips3_exception_end[];
 
 	/* TLB miss handler address and end */
-	extern char mips3_TLBMiss[], mips3_TLBMissEnd[];
-	extern char mips3_XTLBMiss[], mips3_XTLBMissEnd[];
+	extern char mips3_tlb_miss[], mips3_tlb_miss_end[];
+	extern char mips3_xtlb_miss[], mips3_xtlb_miss_end[];
 
 	/* Cache error handler */
-	extern char mips3_cache[], mips3_cacheEnd[];
+	extern char mips3_cache[], mips3_cache_end[];
 
 	/*
 	 * Copy down exception vector code.
 	 */
 
-	if (mips3_TLBMissEnd - mips3_TLBMiss > 0x80)
+	if (mips3_tlb_miss_end - mips3_tlb_miss > 0x80)
 		panic("startup: UTLB vector code too large");
-	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips3_TLBMiss,
-	      mips3_TLBMissEnd - mips3_TLBMiss);
+	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips3_tlb_miss,
+	      mips3_tlb_miss_end - mips3_tlb_miss);
 
-	if (mips3_XTLBMissEnd - mips3_XTLBMiss > 0x80)
+	if (mips3_xtlb_miss_end - mips3_xtlb_miss > 0x80)
 		panic("startup: XTLB vector code too large");
-	memcpy((void *)MIPS3_XTLB_MISS_EXC_VEC, mips3_XTLBMiss,
-	      mips3_XTLBMissEnd - mips3_XTLBMiss);
+	memcpy((void *)MIPS3_XTLB_MISS_EXC_VEC, mips3_xtlb_miss,
+	      mips3_xtlb_miss_end - mips3_xtlb_miss);
 
-	if (mips3_cacheEnd - mips3_cache > 0x80)
+	if (mips3_cache_end - mips3_cache > 0x80)
 		panic("startup: Cache error vector code too large");
 	memcpy((void *)MIPS3_CACHE_ERR_EXC_VEC, mips3_cache,
-	      mips3_cacheEnd - mips3_cache);
+	      mips3_cache_end - mips3_cache);
 
-	if (mips3_exceptionEnd - mips3_exception > 0x80)
+	if (mips3_exception_end - mips3_exception > 0x80)
 		panic("startup: General exception vector code too large");
 	memcpy((void *)MIPS3_GEN_EXC_VEC, mips3_exception,
-	      mips3_exceptionEnd - mips3_exception);
+	      mips3_exception_end - mips3_exception);
 
 	/*
 	 * Copy locore-function vector.
@@ -639,20 +644,21 @@ mips3_vector_init(void)
  * Same as MIPS32 - all MMU registers are 32bit.
  */
 static const mips_locore_jumpvec_t r5900_locore_vec = {
-	mips5900_SetPID,
-	mips5900_TBIAP,
-	mips5900_TBIS,
-	mips5900_TLBUpdate,
+	mips5900_tlb_set_asid,
+	mips5900_tlb_invalidate_all_nonkernel,
+	mips5900_tlb_invalidate_addr,
+	mips5900_tlb_update,
+	mips5900_tlb_read_indexed,
 	mips5900_wbflush,
 };
 
 static void
 r5900_vector_init(void)
 {
-	extern char mips5900_exception[], mips5900_exceptionEnd[];
-	extern char mips5900_TLBMiss[], mips5900_TLBMissEnd[];
-	size_t esz = mips5900_exceptionEnd - mips5900_exception;
-	size_t tsz = mips5900_TLBMissEnd - mips5900_TLBMiss;
+	extern char mips5900_exception[], mips5900_exception_end[];
+	extern char mips5900_tlb_miss[], mips5900_tlb_miss_end[];
+	size_t esz = mips5900_exception_end - mips5900_exception;
+	size_t tsz = mips5900_tlb_miss_end - mips5900_tlb_miss;
 
 	KDASSERT(tsz <= 0x80);
 	KDASSERT(esz <= 0x80);
@@ -662,7 +668,7 @@ r5900_vector_init(void)
 	if (esz > 0x80)
 		panic("startup: General exception vector code too large");
 
-	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips5900_TLBMiss, tsz);
+	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips5900_tlb_miss, tsz);
 	memcpy((void *)MIPS_R5900_COUNTER_EXC_VEC, mips5900_exception, esz);
 	memcpy((void *)MIPS_R5900_DEBUG_EXC_VEC, mips5900_exception, esz);
 	memcpy((void *)MIPS3_GEN_EXC_VEC, mips5900_exception, esz);
@@ -686,10 +692,11 @@ r5900_vector_init(void)
  * MIPS32 locore function vector
  */
 static const mips_locore_jumpvec_t mips32_locore_vec = {
-	mips32_SetPID,
-	mips32_TBIAP,
-	mips32_TBIS,
-	mips32_TLBUpdate,
+	mips32_tlb_set_asid,
+	mips32_tlb_invalidate_all_nonkernel,
+	mips32_tlb_invalidate_addr,
+	mips32_tlb_update,
+	mips32_tlb_read_indexed,
 	mips32_wbflush,
 };
 
@@ -697,44 +704,44 @@ static void
 mips32_vector_init(void)
 {
 	/* r4000 exception handler address and end */
-	extern char mips32_exception[], mips32_exceptionEnd[];
+	extern char mips32_exception[], mips32_exception_end[];
 
 	/* TLB miss handler address and end */
-	extern char mips32_TLBMiss[], mips32_TLBMissEnd[];
+	extern char mips32_tlb_miss[], mips32_tlb_miss_end[];
 
 	/* Cache error handler */
-	extern char mips32_cache[], mips32_cacheEnd[];
+	extern char mips32_cache[], mips32_cache_end[];
 
 	/* MIPS32/MIPS64 interrupt exception handler */
-	extern char mips32_intr[], mips32_intrEnd[];
+	extern char mips32_intr[], mips32_intr_end[];
 
 	/*
 	 * Copy down exception vector code.
 	 */
 
-	if (mips32_TLBMissEnd - mips32_TLBMiss > 0x80)
+	if (mips32_tlb_miss_end - mips32_tlb_miss > 0x80)
 		panic("startup: UTLB vector code too large");
-	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips32_TLBMiss,
-		      mips32_TLBMissEnd - mips32_TLBMiss);
+	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips32_tlb_miss,
+		      mips32_tlb_miss_end - mips32_tlb_miss);
 
-	if (mips32_cacheEnd - mips32_cache > 0x80)
+	if (mips32_cache_end - mips32_cache > 0x80)
 		panic("startup: Cache error vector code too large");
 	memcpy((void *)MIPS3_CACHE_ERR_EXC_VEC, mips32_cache,
-	      mips32_cacheEnd - mips32_cache);
+	      mips32_cache_end - mips32_cache);
 
-	if (mips32_exceptionEnd - mips32_exception > 0x80)
+	if (mips32_exception_end - mips32_exception > 0x80)
 		panic("startup: General exception vector code too large");
 	memcpy((void *)MIPS3_GEN_EXC_VEC, mips32_exception,
-	      mips32_exceptionEnd - mips32_exception);
+	      mips32_exception_end - mips32_exception);
 
-	if (mips32_intrEnd - mips32_intr > 0x80)
+	if (mips32_intr_end - mips32_intr > 0x80)
 		panic("startup: interrupt exception vector code too large");
 #if 0	/* XXX - why doesn't mipsNN_intr() work? */
 	memcpy((void *)MIPS3_INTR_EXC_VEC, mips32_intr,
-	      mips32_intrEnd - mips32_intr);
+	      mips32_intr_end - mips32_intr);
 #else
 	memcpy((void *)MIPS3_INTR_EXC_VEC, mips32_exception,
-	      mips32_exceptionEnd - mips32_exception);
+	      mips32_exception_end - mips32_exception);
 #endif
 
 	/*
@@ -755,10 +762,11 @@ mips32_vector_init(void)
  * MIPS64 locore function vector
  */
 const mips_locore_jumpvec_t mips64_locore_vec = {
-	mips64_SetPID,
-	mips64_TBIAP,
-	mips64_TBIS,
-	mips64_TLBUpdate,
+	mips64_tlb_set_asid,
+	mips64_tlb_invalidate_all_nonkernel,
+	mips64_tlb_invalidate_addr,
+	mips64_tlb_update,
+	mips64_tlb_read_indexed,
 	mips64_wbflush,
 };
 
@@ -766,50 +774,50 @@ static void
 mips64_vector_init(void)
 {
 	/* r4000 exception handler address and end */
-	extern char mips64_exception[], mips64_exceptionEnd[];
+	extern char mips64_exception[], mips64_exception_end[];
 
 	/* TLB miss handler address and end */
-	extern char mips64_TLBMiss[], mips64_TLBMissEnd[];
-	extern char mips64_XTLBMiss[], mips64_XTLBMissEnd[];
+	extern char mips64_tlb_miss[], mips64_tlb_miss_end[];
+	extern char mips64_xtlb_miss[], mips64_xtlb_miss_end[];
 
 	/* Cache error handler */
-	extern char mips64_cache[], mips64_cacheEnd[];
+	extern char mips64_cache[], mips64_cache_end[];
 
 	/* MIPS32/MIPS64 interrupt exception handler */
-	extern char mips64_intr[], mips64_intrEnd[];
+	extern char mips64_intr[], mips64_intr_end[];
 
 	/*
 	 * Copy down exception vector code.
 	 */
 
-	if (mips64_TLBMissEnd - mips64_TLBMiss > 0x80)
+	if (mips64_tlb_miss_end - mips64_tlb_miss > 0x80)
 		panic("startup: UTLB vector code too large");
-	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips64_TLBMiss,
-	      mips64_TLBMissEnd - mips64_TLBMiss);
+	memcpy((void *)MIPS_UTLB_MISS_EXC_VEC, mips64_tlb_miss,
+	      mips64_tlb_miss_end - mips64_tlb_miss);
 
-	if (mips64_XTLBMissEnd - mips64_XTLBMiss > 0x80)
+	if (mips64_xtlb_miss_end - mips64_xtlb_miss > 0x80)
 		panic("startup: XTLB vector code too large");
-	memcpy((void *)MIPS3_XTLB_MISS_EXC_VEC, mips64_XTLBMiss,
-	      mips64_XTLBMissEnd - mips64_XTLBMiss);
+	memcpy((void *)MIPS3_XTLB_MISS_EXC_VEC, mips64_xtlb_miss,
+	      mips64_xtlb_miss_end - mips64_xtlb_miss);
 
-	if (mips64_cacheEnd - mips64_cache > 0x80)
+	if (mips64_cache_end - mips64_cache > 0x80)
 		panic("startup: Cache error vector code too large");
 	memcpy((void *)MIPS3_CACHE_ERR_EXC_VEC, mips64_cache,
-	      mips64_cacheEnd - mips64_cache);
+	      mips64_cache_end - mips64_cache);
 
-	if (mips64_exceptionEnd - mips64_exception > 0x80)
+	if (mips64_exception_end - mips64_exception > 0x80)
 		panic("startup: General exception vector code too large");
 	memcpy((void *)MIPS3_GEN_EXC_VEC, mips64_exception,
-	      mips64_exceptionEnd - mips64_exception);
+	      mips64_exception_end - mips64_exception);
 
-	if (mips64_intrEnd - mips64_intr > 0x80)
+	if (mips64_intr_end - mips64_intr > 0x80)
 		panic("startup: interrupt exception vector code too large");
 #if 0	/* XXX - why doesn't mipsNN_intr() work? */
 	memcpy((void *)MIPS3_INTR_EXC_VEC, mips64_intr,
-	      mips64_intrEnd - mips64_intr);
+	      mips64_intr_end - mips64_intr);
 #else
 	memcpy((void *)MIPS3_INTR_EXC_VEC, mips64_exception,
-	      mips64_exceptionEnd - mips64_exception);
+	      mips64_exception_end - mips64_exception);
 #endif
 
 	/*
@@ -981,7 +989,9 @@ mips_vector_init(void)
 	switch (cpu_arch) {
 #if defined(MIPS1)
 	case CPU_ARCH_MIPS1:
-		mips1_TBIA(mips_num_tlb_entries);
+		if (!__builtin_constant_p(MIPS_TLB_NUM_PIDS))
+			curcpu()->ci_pmap_asid_max = MIPS_TLB_NUM_PIDS;
+		mips1_tlb_invalidate_all(mips_num_tlb_entries);
 		mips1_vector_init();
 		mips_locoresw = mips1_locoresw;
 		break;
@@ -993,7 +1003,7 @@ mips_vector_init(void)
 #if defined(MIPS3_5900)	/* XXX */
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
-		mips5900_TBIA(mips_num_tlb_entries);
+		mips5900_tlb_invalidate_all(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
 		r5900_vector_init();
 		mips_locoresw = mips5900_locoresw;
@@ -1005,7 +1015,7 @@ mips_vector_init(void)
 #endif
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
-		mips3_TBIA(mips_num_tlb_entries);
+		mips3_tlb_invalidate_all(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
 		mips3_vector_init();
 		mips_locoresw = mips3_locoresw;
@@ -1017,7 +1027,7 @@ mips_vector_init(void)
 		mips3_tlb_probe();
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
-		mips32_TBIA(mips_num_tlb_entries);
+		mips32_tlb_invalidate_all(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
 		mips32_vector_init();
 		mips_locoresw = mips32_locoresw;
@@ -1028,7 +1038,7 @@ mips_vector_init(void)
 		mips3_tlb_probe();
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
-		mips64_TBIA(mips_num_tlb_entries);
+		mips64_tlb_invalidate_all(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
 		mips64_vector_init();
 		mips_locoresw = mips64_locoresw;
@@ -1056,7 +1066,7 @@ mips_set_wbflush(flush_fn)
 	void (*flush_fn)(void);
 {
 #undef wbflush
-	mips_locore_jumpvec.wbflush = flush_fn;
+	mips_locore_jumpvec.ljv_wbflush = flush_fn;
 	(*flush_fn)();
 }
 
@@ -1064,6 +1074,8 @@ mips_set_wbflush(flush_fn)
 static void
 mips3_tlb_probe(void)
 {
+	if (!__builtin_constant_p(MIPS_TLB_NUM_PIDS))
+		curcpu()->ci_pmap_asid_max = MIPS_TLB_NUM_PIDS;
 	mips3_tlb_pg_mask = mips_cp0_tlb_page_mask_probe();
 	if (CPUIS64BITS) {
 		mips3_tlb_vpn_mask = mips_cp0_tlb_entry_hi_probe();

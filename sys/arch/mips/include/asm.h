@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.40.38.9 2009/09/07 21:51:25 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.40.38.10 2010/01/15 06:46:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -239,11 +239,11 @@ _C_LABEL(x):
 
 #ifdef __STDC__
 #define	VECTOR_END(x)			\
-	EXPORT(x ## End);		\
+	EXPORT(x ## _end);		\
 	END(x)
 #else
 #define	VECTOR_END(x)			\
-	EXPORT(x/**/End);		\
+	EXPORT(x/**/_end);		\
 	END(x)
 #endif
 

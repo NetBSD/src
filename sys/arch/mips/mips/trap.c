@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.13 2010/01/08 22:15:13 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.14 2010/01/15 06:47:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.13 2010/01/08 22:15:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.14 2010/01/15 06:47:00 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -289,7 +289,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			entry |= mips_pg_m_bit();
 			pte->pt_entry = entry;
 			vaddr &= ~PGOFSET;
-			MachTLBUpdate(vaddr, entry);
+			tlb_update(vaddr, entry);
 			pa = mips_tlbpfn_to_paddr(entry);
 			if (!IS_VM_PHYSADDR(pa)) {
 				panic("ktlbmod: unmanaged page:"
@@ -322,8 +322,8 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		entry |= mips_pg_m_bit();
 		pte->pt_entry = entry;
 		vaddr = (vaddr & ~PGOFSET) |
-			(pmap->pm_asid << MIPS_TLB_PID_SHIFT);
-		MachTLBUpdate(vaddr, entry);
+		    (PMAP_PAI(pmap, curcpu())->pai_asid << MIPS_TLB_PID_SHIFT);
+		tlb_update(vaddr, entry);
 		pa = mips_tlbpfn_to_paddr(entry);
 		if (!IS_VM_PHYSADDR(pa)) {
 			panic("utlbmod: unmanaged page:"
@@ -729,16 +729,42 @@ kdbrpeek(vaddr_t addr, size_t n)
 }
 
 extern char start[], edata[], verylocore[];
-extern char mips1_KernGenException[];
-extern char mips1_UserGenException[];
-extern char mips1_KernIntr[];
-extern char mips1_UserIntr[];
-extern char mips1_SystemCall[];
-extern char mips3_KernGenException[];
-extern char mips3_UserGenException[];
-extern char mips3_KernIntr[];
-extern char mips3_UserIntr[];
-extern char mips3_SystemCall[];
+#ifdef MIPS1
+extern char mips1_kern_gen_exception[];
+extern char mips1_user_gen_exception[];
+extern char mips1_kern_intr[];
+extern char mips1_user_intr[];
+extern char mips1_systemcall[];
+#endif
+#ifdef MIPS3
+extern char mips3_kern_gen_exception[];
+extern char mips3_user_gen_exception[];
+extern char mips3_kern_intr[];
+extern char mips3_user_intr[];
+extern char mips3_systemcall[];
+#endif
+#ifdef MIPS3_5900
+extern char mips3_5900_kern_gen_exception[];
+extern char mips3_5900_user_gen_exception[];
+extern char mips3_5900_kern_intr[];
+extern char mips3_5900_user_intr[];
+extern char mips3_5900_systemcall[];
+#endif
+#ifdef MIPS32
+extern char mips32_kern_gen_exception[];
+extern char mips32_user_gen_exception[];
+extern char mips32_kern_intr[];
+extern char mips32_user_intr[];
+extern char mips32_systemcall[];
+#endif
+#ifdef MIPS64
+extern char mips64_kern_gen_exception[];
+extern char mips64_user_gen_exception[];
+extern char mips64_kern_intr[];
+extern char mips64_user_intr[];
+extern char mips64_systemcall[];
+#endif
+
 int main(void *);	/* XXX */
 
 /*
@@ -986,28 +1012,51 @@ finish:
 #else
 #define Name(_fn) { _fn, "_fn"}
 #endif
-static struct { void *addr; const char *name;} names[] = {
+const static struct { void *addr; const char *name;} names[] = {
 	Name(stacktrace),
 	Name(stacktrace_subr),
 	Name(main),
 	Name(trap),
 
 #ifdef MIPS1	/*  r2000 family  (mips-I CPU) */
-	Name(mips1_KernGenException),
-	Name(mips1_UserGenException),
-	Name(mips1_SystemCall),
-	Name(mips1_KernIntr),
-	Name(mips1_UserIntr),
+	Name(mips1_kern_gen_exception),
+	Name(mips1_user_gen_exception),
+	Name(mips1_systemcall),
+	Name(mips1_kern_intr),
+	Name(mips1_user_intr),
 #endif	/* MIPS1 */
 
-/* XXX simonb: need mips32 and mips64 checks here too */
-#if defined(MIPS3) && !defined(MIPS3_5900) /* r4000 family (mips-III CPU) */
-	Name(mips3_KernGenException),
-	Name(mips3_UserGenException),
-	Name(mips3_SystemCall),
-	Name(mips3_KernIntr),
-	Name(mips3_UserIntr),
-#endif	/* MIPS3 && !MIPS3_5900 */
+#if defined(MIPS3)			/* r4000 family (mips-III CPU) */
+	Name(mips3_kern_gen_exception),
+	Name(mips3_user_gen_exception),
+	Name(mips3_systemcall),
+	Name(mips3_kern_intr),
+	Name(mips3_user_intr),
+#endif	/* MIPS3 */
+
+#if defined(MIPS3_5900)			/* r5900 family (mips-III CPU) */
+	Name(mips5900_kern_gen_exception),
+	Name(mips5900_user_gen_exception),
+	Name(mips5900_systemcall),
+	Name(mips5900_kern_intr),
+	Name(mips5900_user_intr),
+#endif	/* MIPS3_5900 */
+
+#if defined(MIPS32)			/* MIPS32 family (mips-III CPU) */
+	Name(mips32_kern_gen_exception),
+	Name(mips32_user_gen_exception),
+	Name(mips32_systemcall),
+	Name(mips32_kern_intr),
+	Name(mips32_user_intr),
+#endif	/* MIPS32 */
+
+#if defined(MIPS64)			/* MIPS64 family (mips-III CPU) */
+	Name(mips64_kern_gen_exception),
+	Name(mips64_user_gen_exception),
+	Name(mips64_systemcall),
+	Name(mips64_kern_intr),
+	Name(mips64_user_intr),
+#endif	/* MIPS64 */
 
 	Name(cpu_idle),
 	Name(cpu_switchto),
