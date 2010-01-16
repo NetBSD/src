@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.66 2010/01/16 07:17:39 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.67 2010/01/16 07:37:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.66 2010/01/16 07:17:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67 2010/01/16 07:37:21 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -494,15 +494,15 @@ trap(int type, struct trapframe *frame)
 	u_int opcode, onfault;
 	int ret;
 	const char *tts;
-	int type_raw;
+	int trapnum;
 #ifdef DIAGNOSTIC
 	extern int emergency_stack_start, emergency_stack_end;
 #endif
 
-	type_raw = type & ~T_USER;
+	trapnum = type & ~T_USER;
 	opcode = frame->tf_iir;
-	if (type_raw == T_ITLBMISS || type_raw == T_ITLBMISSNA ||
-	    type_raw == T_IBREAK || type_raw == T_TAKENBR) {
+	if (trapnum == T_ITLBMISS || trapnum == T_ITLBMISSNA ||
+	    trapnum == T_IBREAK || trapnum == T_TAKENBR) {
 		va = frame->tf_iioq_head;
 		space = frame->tf_iisq_head;
 		vftype = VM_PROT_EXECUTE;
@@ -518,8 +518,7 @@ trap(int type, struct trapframe *frame)
 	if ((type & T_USER) != 0)
 		LWP_CACHE_CREDS(l, p);
 
-	tts = (type & ~T_USER) > trap_types ? "reserved" :
-		trap_type[type & ~T_USER];
+	tts = (trapnum > trap_types) ? "reserved" : trap_type[trapnum];
 
 #ifdef DIAGNOSTIC
 	/*
@@ -562,11 +561,11 @@ trap(int type, struct trapframe *frame)
 		l->l_md.md_regs = frame;
 
 #ifdef TRAPDEBUG
-	if (type_raw != T_INTERRUPT && type_raw != T_IBREAK)
+	if (trapnum != T_INTERRUPT && trapnum != T_IBREAK)
 		printf("trap: %d, %s for %x:%x at %x:%x, fp=%p, rp=%x\n",
 		    type, tts, space, (u_int)va, frame->tf_iisq_head,
 		    frame->tf_iioq_head, frame, frame->tf_rp);
-	else if (type_raw == T_IBREAK)
+	else if (trapnum == T_IBREAK)
 		printf("trap: break instruction %x:%x at %x:%x, fp=%p\n",
 		    break5(opcode), break13(opcode),
 		    frame->tf_iisq_head, frame->tf_iioq_head, frame);
@@ -582,7 +581,7 @@ trap(int type, struct trapframe *frame)
 	pcb = lwp_getpcb(l);
 
 	/* If this is a trap, not an interrupt, reenable interrupts. */
-	if (type_raw != T_INTERRUPT) {
+	if (trapnum != T_INTERRUPT) {
 		uvmexp.traps++;
 		mtctl(frame->tf_eiem, CR_EIEM);
 	}
@@ -694,7 +693,7 @@ do_onfault:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGTRAP;
 		ksi.ksi_code = TRAP_TRACE;
-		ksi.ksi_trap = type_raw;
+		ksi.ksi_trap = trapnum;
 		ksi.ksi_addr = (void *)frame->tf_iioq_head;
 #ifdef PTRACE
 		ss_clear_breakpoints(l);
@@ -713,7 +712,7 @@ do_onfault:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGTRAP;
 		ksi.ksi_code = TRAP_TRACE;
-		ksi.ksi_trap = type_raw;
+		ksi.ksi_trap = trapnum;
 		ksi.ksi_addr = (void *)frame->tf_iioq_head;
 
                 /* pass to user debugger */
