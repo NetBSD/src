@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.23.4.2 2009/02/02 03:40:11 snj Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.23.4.3 2010/01/16 17:41:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.23.4.2 2009/02/02 03:40:11 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.23.4.3 2010/01/16 17:41:14 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -527,7 +527,12 @@ softint_execute(softint_t *si, lwp_t *l, int s)
 		splx(s);
 
 		/* Run the handler. */
-		if ((sh->sh_flags & SOFTINT_MPSAFE) == 0 && !havelock) {
+		if (sh->sh_flags & SOFTINT_MPSAFE) {
+			if (havelock) {
+				KERNEL_UNLOCK_ONE(l);
+				havelock = false;
+			}
+		} else if (!havelock) {
 			KERNEL_LOCK(1, l);
 			havelock = true;
 		}
