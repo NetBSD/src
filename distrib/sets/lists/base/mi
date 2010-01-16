@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.853 2010/01/16 15:34:22 roy Exp $
+# $NetBSD: mi,v 1.854 2010/01/16 16:12:01 roy Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -610,7 +610,7 @@
 ./usr/bin/tftp					base-netutil-bin
 ./usr/bin/time					base-util-bin
 ./usr/bin/tip					base-util-bin
-./usr/bin/tn3270				base-obsolete		obselete
+./usr/bin/tn3270				base-obsolete		obsolete
 ./usr/bin/top					base-util-bin
 ./usr/bin/touch					base-util-bin
 ./usr/bin/tput					base-util-bin
