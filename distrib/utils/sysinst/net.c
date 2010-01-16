@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.117.8.2 2009/01/22 22:18:26 snj Exp $	*/
+/*	$NetBSD: net.c,v 1.117.8.3 2010/01/16 17:43:34 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -301,7 +301,25 @@ get_ifconfig_info(void)
 }
 
 static int
-do_ifreq(struct ifmediareq *ifmr, unsigned long cmd)
+do_ifreq(struct ifreq *ifr, unsigned long cmd)
+{
+	int sock;
+	int rval;
+
+	sock = socket(PF_INET, SOCK_DGRAM, 0);
+	if (sock == -1)
+		return -1;
+
+	memset(ifr, 0, sizeof *ifr);
+	strncpy(ifr->ifr_name, net_dev, sizeof ifr->ifr_name);
+	rval = ioctl(sock, cmd, ifr);
+	close(sock);
+
+	return rval;
+}
+
+static int
+do_ifmreq(struct ifmediareq *ifmr, unsigned long cmd)
 {
 	int sock;
 	int rval;
@@ -322,19 +340,20 @@ do_ifreq(struct ifmediareq *ifmr, unsigned long cmd)
 static void
 get_ifinterface_info(void)
 {
+	struct ifreq ifr;
 	struct ifmediareq ifmr;
-	struct sockaddr_in *sa_in = (void *)&((struct ifreq *)&ifmr)->ifr_addr;
+	struct sockaddr_in *sa_in = (void*)&ifr.ifr_addr;
 	int modew;
 	const char *media_opt;
 	const char *sep;
 
-	if (do_ifreq(&ifmr, SIOCGIFADDR) == 0 && sa_in->sin_addr.s_addr != 0)
+	if (do_ifreq(&ifr, SIOCGIFADDR) == 0 && sa_in->sin_addr.s_addr != 0)
 		strlcpy(net_ip, inet_ntoa(sa_in->sin_addr), sizeof net_ip);
 
-	if (do_ifreq(&ifmr, SIOCGIFNETMASK) == 0 && sa_in->sin_addr.s_addr != 0)
+	if (do_ifreq(&ifr, SIOCGIFNETMASK) == 0 && sa_in->sin_addr.s_addr != 0)
 		strlcpy(net_mask, inet_ntoa(sa_in->sin_addr), sizeof net_mask);
 
-	if (do_ifreq(&ifmr, SIOCGIFMEDIA) == 0) {
+	if (do_ifmreq(&ifmr, SIOCGIFMEDIA) == 0) {
 		/* Get the name of the media word */
 		modew = ifmr.ifm_current;
 		strlcpy(net_media, get_media_subtype_string(modew),
