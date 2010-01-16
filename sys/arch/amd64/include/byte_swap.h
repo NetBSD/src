@@ -1,7 +1,7 @@
-/*	$NetBSD: byte_swap.h,v 1.6 2008/10/26 00:08:15 mrg Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.6.4.1 2010/01/16 17:53:52 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,6 +41,15 @@
 #ifdef  __GNUC__
 #include <sys/types.h>
 __BEGIN_DECLS
+
+#define	__BYTE_SWAP_U64_VARIABLE __byte_swap_u64_variable
+static __inline uint64_t __byte_swap_u64_variable(uint64_t);
+static __inline uint64_t
+__byte_swap_u64_variable(uint64_t x)
+{
+	__asm volatile ( "bswap %1" : "=r" (x) : "0" (x));
+	return (x);
+}
 
 #define	__BYTE_SWAP_U32_VARIABLE __byte_swap_u32_variable
 static __inline uint32_t __byte_swap_u32_variable(uint32_t);
