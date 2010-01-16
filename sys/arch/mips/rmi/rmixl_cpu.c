@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1.2.3 2010/01/13 21:16:13 matt Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.1.2.1 2010/01/16 23:47:30 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,19 +38,18 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.2.3 2010/01/13 21:16:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.1 2010/01/16 23:47:30 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
-#include <evbmips/rmixl/cpucorevar.h>
+#include <mips/rmi/rmixl_cpucorevar.h>
 
 static int	cpu_match(device_t, cfdata_t, void *);
 static void	cpu_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(cpu, 0,
-    cpu_match, cpu_attach, NULL, NULL);
+CFATTACH_DECL_NEW(cpu, 0, cpu_match, cpu_attach, NULL, NULL);
 
 static int
 cpu_match(device_t parent, cfdata_t cf, void *aux)
