@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2006/03/23 20:01:20 wiz Exp $
+#	$NetBSD: Makefile,v 1.6 2010/01/16 16:10:39 roy Exp $
 
 SUBDIR+=man-adosfs-catman
 SUBDIR+=man-adosfs-man
@@ -108,8 +108,6 @@ SUBDIR+=man-sysutil-man
 SUBDIR+=man-texinfo-info
 SUBDIR+=man-timed-catman
 SUBDIR+=man-timed-man
-SUBDIR+=man-tn3270-catman
-SUBDIR+=man-tn3270-man
 SUBDIR+=man-util-catman
 SUBDIR+=man-util-info
 SUBDIR+=man-util-man
