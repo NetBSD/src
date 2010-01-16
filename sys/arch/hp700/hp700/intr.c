@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.19 2009/11/30 16:58:40 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.20 2010/01/16 07:38:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.19 2009/11/30 16:58:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20 2010/01/16 07:38:56 skrll Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -514,7 +514,8 @@ hp700_intr_dispatch(int ncpl, int eiem, struct trapframe *frame)
 		cpl = ncpl | int_bit->int_bit_spl;
 		mtctl(eiem, CR_EIEM);
 
-		/* Dispatch the interrupt. */
+		/* Count and dispatch the interrupt. */
+		uvmexp.intrs++;
 		handled = (*int_bit->int_bit_handler)(arg);
 #if 0
 		if (!handled)
