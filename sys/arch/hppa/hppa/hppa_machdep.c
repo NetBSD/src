@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.18 2009/11/21 15:36:33 rmind Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.19 2010/01/16 13:29:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.18 2009/11/21 15:36:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.19 2010/01/16 13:29:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,10 +363,14 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 	if (ci->ci_want_resched && !immed)
 		return;
 	ci->ci_want_resched = 1;
+	/* setsoftast(ci->ci_data.cpu_onproc); */
+	setsoftast();
+
 #ifdef MULTIPROCESSOR
-        if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
-		/* aston(ci->ci_curlwp); */
-		setsoftast();
+	if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
+		if (immed && ci != curcpu()) {
+			/* XXX send IPI */
+		}
 	}
 #endif
 }
