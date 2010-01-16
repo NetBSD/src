@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.46 2009/11/23 02:13:45 rmind Exp $ */
+/*	$NetBSD: kdb.c,v 1.47 2010/01/16 18:43:34 dyoung Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.46 2009/11/23 02:13:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.47 2010/01/16 18:43:34 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -301,34 +301,6 @@ kdbintr(void *arg)
 	mscp_intr(sc->sc_softc);
 	KERNEL_UNLOCK_ONE(NULL);
 }
-
-#ifdef notyet
-/*
- * The KDB50 has been reset.  Reinitialise the controller
- * and requeue outstanding I/O.
- */
-void
-kdbreset(int ctlr)
-{
-	struct kdb_softc *sc;
-
-	sc = device_lookup_private(&kdb_cd, ctlr);
-	printf(" kdb%d", ctlr);
-
-
-	/* reset queues and requeue pending transfers */
-	mscp_requeue(sc->sc_softc);
-
-	/*
-	 * If it fails to initialise we will notice later and
-	 * try again (and again...).  Do not call kdbstart()
-	 * here; it will be done after the controller finishes
-	 * initialisation.
-	 */
-	if (kdbinit(sc))
-		printf(" (hung)");
-}
-#endif
 
 void
 kdbctlrdone(device_t usc)
