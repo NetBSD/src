@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.36 2009/12/15 22:47:21 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.37 2010/01/16 13:53:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -430,7 +430,7 @@ syscall_return:
 	/* t3 == VA trapframe */
 	/* check for AST ? XXX */
 
-	/* splhigh(), just in case */
+	/* disable interrupts, just in case */
 	mtctl	%r0, %eiem
 
 	/*
