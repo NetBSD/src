@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1343 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1344 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -521,3 +521,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	sparc: Add apc(4), a driver for the Aurora Personality Chip (APC)
 		found on SPARCstation-4/5 and qemu. Allows to idle the
 		CPU when in the idle loop.  [bouyer 20100115]
+	tn3270: Removed from base [roy 20100116]	
