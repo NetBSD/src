@@ -1,4 +1,4 @@
-/*	$NetBSD: cpucore.c,v 1.1.2.3 2010/01/14 00:40:35 matt Exp $	*/
+/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.1 2010/01/16 23:48:16 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,33 +38,33 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpucore.c,v 1.1.2.3 2010/01/14 00:40:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.1 2010/01/16 23:48:16 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
-#include <evbmips/rmixl/autoconf.h>
-#include <evbmips/rmixl/cpucorevar.h>
+#include <mips/rmi/rmixl_cpunodevar.h>
+#include <mips/rmi/rmixl_cpucorevar.h>
 
 static int	cpucore_match(device_t, cfdata_t, void *);
 static void	cpucore_attach(device_t, device_t, void *);
 static int	cpucore_print(void *, const char *);
 
 CFATTACH_DECL_NEW(cpucore, sizeof(struct cpucore_softc),
-    cpucore_match, cpucore_attach, NULL, NULL);
+	cpucore_match, cpucore_attach, NULL, NULL);
 
 static int
 cpucore_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct mainbus_attach_args *ma = aux;
-	int core = cf->cf_loc[MAINBUSCF_CORE];
+	struct cpunode_attach_args *na = aux;
+	int core = cf->cf_loc[CPUNODECF_CORE];
 
-	if (strncmp(ma->ma_name, cf->cf_name, strlen(cf->cf_name)) == 0
+	if (strncmp(na->na_name, cf->cf_name, strlen(cf->cf_name)) == 0
 #ifndef MULTIPROCESSOR
-	    && ma->ma_core == 0
+	    && na->na_core == 0
 #endif
-	    && (core == MAINBUSCF_CORE_DEFAULT || core == ma->ma_core))
+	    && (core == CPUNODECF_CORE_DEFAULT || core == na->na_core))
 		return 1;
 
 	return 0;
@@ -74,12 +74,12 @@ static void
 cpucore_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpucore_softc * const sc = device_private(self);
-	struct mainbus_attach_args *ma = aux;
+	struct cpunode_attach_args *na = aux;
 	struct cpucore_attach_args ca;
 	u_int nthreads;
 
 	sc->sc_dev = self;
-	sc->sc_core = ma->ma_core;
+	sc->sc_core = na->na_core;
 
 	aprint_normal("\n");
 	aprint_normal_dev(self, "%lu.%02luMHz (hz cycles = %lu, "
