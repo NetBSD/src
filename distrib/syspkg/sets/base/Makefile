@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2008/11/12 12:35:51 ad Exp $
+#	$NetBSD: Makefile,v 1.11 2010/01/16 16:10:39 roy Exp $
 
 SUBDIR+=base-adosfs-root
 SUBDIR+=base-amd-bin
@@ -141,7 +141,6 @@ SUBDIR+=base-texinfo-share
 SUBDIR+=base-texinfo_locale-de
 SUBDIR+=base-texinfo_locale-fr
 SUBDIR+=base-timed-bin
-SUBDIR+=base-tn3270-bin
 SUBDIR+=base-usd-share
 SUBDIR+=base-util-bin
 SUBDIR+=base-util-root
