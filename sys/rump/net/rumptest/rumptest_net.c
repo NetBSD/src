@@ -1,4 +1,4 @@
-/*	$NetBSD: rumptest_net.c,v 1.13 2010/01/15 18:38:16 pooka Exp $	*/
+/*	$NetBSD: rumptest_net.c,v 1.14 2010/01/16 20:47:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -35,14 +35,21 @@
 #include <sys/sysctl.h>
 
 #include <arpa/inet.h>
+#include <net/bpf.h>
+#include <net/ethertypes.h>
 #include <net/if.h>
+#include <net/if_ether.h>
 #include <net/route.h>
+#include <netinet/in_systm.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 
 #include <err.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,11 +73,13 @@
  *
  * The usability is likely to be improved later.
  */
-#define MYADDR "10.181.181.11"
+#define MYADDR "10.181.181.0"
 #define MYBCAST "10.181.181.255"
 #define MYMASK "255.255.255.0"
 #define MYGW "10.181.181.1"
 #define IFNAME "virt0" /* XXX: hardcoded */
+
+static in_addr_t myaddr, youraddr;
 
 static void
 configure_interface(void)
@@ -97,13 +106,18 @@ configure_interface(void)
 	if (s == -1)
 		err(1, "configuration socket");
 
+	srandom(time(NULL));
+	myaddr = inet_addr(MYADDR);
+	myaddr = htonl(ntohl(myaddr) + (random() % 126 + 1));
+
 	/* fill out struct ifaliasreq */
 	memset(&ia, 0, sizeof(ia));
 	strcpy(ia.ifra_name, IFNAME);
 	sin = (struct sockaddr_in *)&ia.ifra_addr;
 	sin->sin_family = AF_INET;
 	sin->sin_len = sizeof(struct sockaddr_in);
-	sin->sin_addr.s_addr = inet_addr(MYADDR);
+	sin->sin_addr.s_addr = myaddr;
+	printf("using address %s\n", inet_ntoa(sin->sin_addr));
 
 	sin = (struct sockaddr_in *)&ia.ifra_broadaddr;
 	sin->sin_family = AF_INET;
@@ -190,6 +204,118 @@ printstats(void)
 	printf("total mbufs: %d\n", totalmbuf);
 }
 
+static void
+dobpfread(void)
+{
+	struct bpf_program bpf_prog;
+	struct bpf_insn bpf_ins;
+	struct bpf_hdr *bhdr;
+	void *buf;
+	struct ifreq ifr;
+	int bpfd;
+	u_int bpflen, x;
+
+	bpfd = rump_sys_open("/dev/bpf", O_RDWR);
+	if (bpfd == -1)
+		err(1, "bpf open");
+
+	if (rump_sys_ioctl(bpfd, BIOCGBLEN, &bpflen) == -1)
+		err(1, "BIOCGBLEN");
+
+	buf = malloc(bpflen);
+	if (buf == NULL)
+		err(1, "malloc bpfbuf");
+
+	memset(&ifr, 0, sizeof(ifr));
+	strcpy(ifr.ifr_name, IFNAME);
+
+	if (rump_sys_ioctl(bpfd, BIOCSETIF, &ifr) == -1)
+		err(1, "BIOCSETIF");
+
+	/* accept all packets up to 9000 bytes */
+	memset(&bpf_ins, 0, sizeof(bpf_ins));
+	bpf_ins.code = BPF_RET + BPF_K;
+	bpf_ins.k = 9000;
+	bpf_prog.bf_len = 1;
+	bpf_prog.bf_insns = &bpf_ins;
+	if (rump_sys_ioctl(bpfd, BIOCSETF, &bpf_prog) == -1)
+		err(1, "BIOCSETF");
+
+	/* we want all packets delivered immediately */
+	x = 1;
+	if (rump_sys_ioctl(bpfd, BIOCIMMEDIATE, &x) == -1)
+		err(1, "BIOCIMMEDIATE");
+
+
+	for (;;) {
+		char fmt[64];
+		struct ether_header *ehdr;
+		struct ip *ip;
+		struct tcphdr *tcph;
+		ssize_t n;
+
+		memset(buf, 0, bpflen);
+		n = rump_sys_read(bpfd, buf, bpflen);
+		if (n == 0) {
+			printf("EOF\n");
+			exit(0);
+		} else if (n == -1) {
+			err(1, "read");
+		}
+
+		bhdr = buf;
+		while (bhdr->bh_caplen) {
+			printf("got packet, caplen %d\n", bhdr->bh_caplen);
+			ehdr = (void *)((uint8_t *)bhdr + bhdr->bh_hdrlen);
+			switch (ntohs(ehdr->ether_type)) {
+			case ETHERTYPE_ARP:
+				printf("ARP\n");
+				break;
+			case ETHERTYPE_IP:
+				printf("IP, ");
+				ip = (void *)((uint8_t *)ehdr + sizeof(*ehdr));
+				printf("version %d, proto ", ip->ip_v);
+				if (ip->ip_p == IPPROTO_TCP)
+					printf("TCP");
+				else if (ip->ip_p == IPPROTO_UDP)
+					printf("UDP");
+				else
+					printf("unknown");
+				printf("\n");
+
+				/*
+				 * if it's the droids we're looking for,
+				 * print segment contents.
+				 */
+				if (ip->ip_src.s_addr != youraddr ||
+				    ip->ip_dst.s_addr != myaddr ||
+				    ip->ip_p != IPPROTO_TCP)
+					break;
+				tcph = (void *)((uint8_t *)ip + (ip->ip_hl<<2));
+				if (ntohs(tcph->th_sport) != 80)
+					break;
+
+				printf("requested data:\n");
+				sprintf(fmt, "%%%ds\n",
+				    ntohs(ip->ip_len) - (ip->ip_hl<<2));
+				printf(fmt, (char *)tcph + (tcph->th_off<<2));
+
+				break;
+			case ETHERTYPE_IPV6:
+				printf("IPv6\n");
+				break;
+			default:
+				printf("unknown type 0x%04x\n",
+				    ntohs(ehdr->ether_type));
+				break;
+			}
+
+			bhdr = (void *)((uint8_t *)bhdr +
+			    BPF_WORDALIGN(bhdr->bh_hdrlen + bhdr->bh_caplen));
+		}
+	}
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -220,7 +346,7 @@ main(int argc, char *argv[])
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(DEST_PORT);
-	sin.sin_addr.s_addr = inet_addr(DEST_ADDR);
+	sin.sin_addr.s_addr = youraddr = inet_addr(DEST_ADDR);
 
 	if (rump_sys_connect(s, (struct sockaddr *)&sin, sizeof(sin)) == -1) {
 		err(1, "connect failed");
@@ -236,6 +362,11 @@ main(int argc, char *argv[])
 		err(1, "wrote only %zd vs. %zu\n",
 		    n, strlen(buf));
 
+#ifdef FULL_NETWORK_STACK
+	if (argc > 1)
+		dobpfread();
+#endif
+
 	/* wait for mbufs to accumulate.  hacky, but serves purpose.  */
 	sleep(1);
 	printstats();
@@ -249,6 +380,9 @@ main(int argc, char *argv[])
 	}
 	printf("read %zd (max %zu):\n", off, sizeof(buf));
 	printf("%s", buf);
+
+	rump_sys_close(s);
+	sleep(1);
 
 	return 0;
 }
