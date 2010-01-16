@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.65 2010/01/06 07:42:58 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.66 2010/01/16 07:17:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.65 2010/01/06 07:42:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.66 2010/01/16 07:17:39 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -558,10 +558,6 @@ trap(int type, struct trapframe *frame)
 	frame_sanity_check(0xdead01, type, frame, l);
 #endif /* DEBUG */
 
-	/* If this is a trap, not an interrupt, reenable interrupts. */
-	if (type_raw != T_INTERRUPT)
-		mtctl(frame->tf_eiem, CR_EIEM);
-
 	if (frame->tf_flags & TFF_LAST)
 		l->l_md.md_regs = frame;
 
@@ -584,6 +580,12 @@ trap(int type, struct trapframe *frame)
 	}
 #endif
 	pcb = lwp_getpcb(l);
+
+	/* If this is a trap, not an interrupt, reenable interrupts. */
+	if (type_raw != T_INTERRUPT) {
+		uvmexp.traps++;
+		mtctl(frame->tf_eiem, CR_EIEM);
+	}
 
 	switch (type) {
 	case T_NONEXIST:
