@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.64.26.1.2.3 2010/01/15 06:46:59 matt Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.64.26.1.2.4 2010/01/16 20:56:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -132,6 +132,7 @@ VECTOR(mips1_exception, unknown)
 						#  we dont have to shift
 	lw	k0, 0(k0)			# get the function address
 	nop
+	lw	k1, CPUVAR(CURLWP)		# get the current lwp
 	j	k0				# jump to the function
 	nop
 	.set	at
@@ -921,10 +922,10 @@ LEAF(mips1_tlb_read_indexed)
 	tlbr					# Read from the TLB
 	mfc0	t2, MIPS_COP_0_TLB_HI		# fetch the hi entry
 	mfc0	t3, MIPS_COP_0_TLB_LOW		# fetch the low entry
-	sw	zero, 0(a1)
-	sw	t2, 4(a1)
-	sw	t3, 8(a1)
-	sw	zero, 12(a1)
+	sw	t2, TLBMASK_HI(a1)
+	sw	t3, TLBMASK_LO0(a1)
+	sw	zero, TLBMASK_LO1(a1)
+	sw	zero, TLBMASK_MASK(a1)
 
 	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	j	ra

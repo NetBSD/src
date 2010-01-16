@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44.12.8 2010/01/15 06:46:59 matt Exp $
+#	$NetBSD: genassym.cf,v 1.44.12.9 2010/01/16 20:56:33 matt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -318,3 +318,8 @@ define	MTX_IPL		offsetof(struct kmutex, mtx_ipl)
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_FPCURLWP	offsetof(struct cpu_info, ci_fpcurlwp)
 define	CPU_INFO_PMAP_SEGBASE	offsetof(struct cpu_info, ci_pmap_segbase)
+
+define	TLBMASK_HI		offsetof(struct tlbmask, tlb_hi)
+define	TLBMASK_LO0		offsetof(struct tlbmask, tlb_lo0)
+define	TLBMASK_LO1		offsetof(struct tlbmask, tlb_lo1)
+define	TLBMASK_MASK		offsetof(struct tlbmask, tlb_mask)
