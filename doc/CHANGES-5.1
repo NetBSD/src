@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.174 2010/01/15 04:21:58 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.175 2010/01/16 17:55:39 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16022,4 +16022,69 @@ crypto/dist/openssl/ssl/ssl_locl.h 		patch
 
 	Disable OpenSSL renegotiation, thus avoiding CVE-2009-3555.
 	[tonnerre, ticket #1237]
+
+gnu/usr.bin/xcvs/cvsbug/Makefile 		patch
+
+	Properly replace @MKTEMP_SH_FUNCTION@, @MKTEMP@, and @SENDMAIL@.
+	Fixes PR bin/39629.
+	[snj, ticket #1215]
+
+sys/kern/kern_sig.c				1.302
+
+	sigactsunshare(): set reference count in a case of new sigacts
+	allocation.
+	Bug (e.g. memory leak) can happen when using clone(2) call.
+	[rmind, ticket #1238]
+
+external/mit/xorg/lib/dri/i915/Makefile		1.5, 1.6
+external/mit/xorg/lib/dri/i965/Makefile		1.7, 1.8
+
+	replace LIBS with LIBDPLIBS.  makes these actually link against
+	drm_intel.  should fix a problem reported by snj@.
+	link in libOSMesa as well.
+	[mrg, ticket #1239]
+
+sys/kern/kern_runq.c				1.28
+
+	sched_catchlwp: fix the case when other CPU might see
+	curlwp->l_cpu != curcpu() while LWP is finishing context switch.
+	Should fix PR/42539, tested by martin@.
+	[rmind, ticket #1240]
+
+sys/kern/kern_softint.c				1.30
+
+	softint_execute: release/re-acquire kernel-lock depending on
+	SOFTINT_MPSAFE flag.  Keeping it held for MP-safe cases break the
+	lock order assumptions.  Per discussion with <martin>.
+	[rmind, ticket #1241]
+
+distrib/utils/sysinst/net.c			1.124
+
+	Use the proper structs for ioctls to fetch network configuration.
+	Might fix PR 42436.
+	[martin, ticket #1242]
+
+sys/dev/usb/ums.c				1.80
+sys/dev/usb/usbdevs				1.540
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+
+	Make ums.c work with a "Microsoft Natural Ergonomic Desktop 7000" mouse.
+	XXX The tilt function still doesn't work for me.
+	[matthias, ticket #1243]
+
+sys/fs/puffs/puffs_vnops.c			1.142
+
+	Since VOP_GETATTR() does not require a locked vnode, resolve and
+	reference the puffs_node before sending the request to the file
+	server.  This diminishes the window where the inode can be reclaimed
+	and be invalidated before it is accessed (but does not completely
+	eliminate the race, as that is a caller problem which we cannot
+	fix here).
+	[pooka, ticket #1244]
+
+sys/arch/amd64/include/byte_swap.h		1.7
+
+	Provide inline assembly version of bswap64.
+	[joerg, ticket #1245]
 
