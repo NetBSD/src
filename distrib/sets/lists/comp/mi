@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1363 2010/01/14 21:35:57 pooka Exp $
+#	$NetBSD: mi,v 1.1364 2010/01/16 15:34:22 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3051,7 +3051,7 @@
 ./usr/libdata/debug/usr/bin/mkstr.debug		comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/mktemp.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/modstat.debug	comp-obsolete		obsolete
-./usr/libdata/debug/usr/bin/mset.debug		comp-tn3270-debug	debug
+./usr/libdata/debug/usr/bin/mset.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/msgattrib.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/msgc.debug		comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/msgcat.debug	comp-c-debug		debug
@@ -3174,7 +3174,7 @@
 ./usr/libdata/debug/usr/bin/tftp.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/time.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tip.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/tn3270.debug	comp-tn3270-debug	debug
+./usr/libdata/debug/usr/bin/tn3270.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/top.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/touch.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tput.debug		comp-util-debug		debug

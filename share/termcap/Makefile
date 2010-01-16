@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.29 2003/10/21 10:01:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.30 2010/01/16 15:34:23 roy Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/8/93
 
 MAN=	termcap.5
 
 CLEANFILES= termcap.db
 realall: termcap.db
-FILES=termcap.db termcap.src map3270
+FILES=termcap.db termcap.src
 FILESNAME_termcap.src=termcap
 FILESDIR=${BINDIR}/misc
 

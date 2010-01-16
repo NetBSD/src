@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1184 2010/01/14 21:35:57 pooka Exp $
+# $NetBSD: mi,v 1.1185 2010/01/16 15:34:23 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -286,7 +286,7 @@
 ./usr/share/man/cat1/mopprobe.0			man-bootserver-catman	.cat
 ./usr/share/man/cat1/moptrace.0			man-bootserver-catman	.cat
 ./usr/share/man/cat1/more.0			man-util-catman		.cat
-./usr/share/man/cat1/mset.0			man-tn3270-catman	.cat
+./usr/share/man/cat1/mset.0			man-obsolete		obsolete
 ./usr/share/man/cat1/msgattrib.0		man-locale-catman	.cat
 ./usr/share/man/cat1/msgcat.0			man-locale-catman	.cat
 ./usr/share/man/cat1/msgcmp.0			man-locale-catman	.cat
@@ -494,7 +494,7 @@
 ./usr/share/man/cat1/tftp.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/time.0			man-util-catman		.cat
 ./usr/share/man/cat1/tip.0			man-util-catman		.cat
-./usr/share/man/cat1/tn3270.0			man-tn3270-catman	.cat
+./usr/share/man/cat1/tn3270.0			man-obsolete		obsolete
 ./usr/share/man/cat1/top.0			man-util-catman		.cat
 ./usr/share/man/cat1/touch.0			man-util-catman		.cat
 ./usr/share/man/cat1/tput.0			man-util-catman		.cat
@@ -1807,7 +1807,7 @@
 ./usr/share/man/cat5/magic.0			man-util-catman		.cat
 ./usr/share/man/cat5/mailer.conf.0		man-mailwrapper-catman	.cat
 ./usr/share/man/cat5/man.conf.0			man-man-catman		.cat
-./usr/share/man/cat5/map3270.0			man-tn3270-catman	.cat
+./usr/share/man/cat5/map3270.0			man-obsolete		obsolete
 ./usr/share/man/cat5/master.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/master.passwd.0		man-sys-catman		.cat
 ./usr/share/man/cat5/mixerctl.conf.0		man-audio-catman	.cat
@@ -2985,7 +2985,7 @@
 ./usr/share/man/html1/mopprobe.html		man-bootserver-htmlman	html
 ./usr/share/man/html1/moptrace.html		man-bootserver-htmlman	html
 ./usr/share/man/html1/more.html			man-util-htmlman	html
-./usr/share/man/html1/mset.html			man-tn3270-htmlman	html
+./usr/share/man/html1/mset.html			man-obsolete		obsolete
 ./usr/share/man/html1/msgattrib.html		man-locale-htmlman	html
 ./usr/share/man/html1/msgcat.html		man-locale-htmlman	html
 ./usr/share/man/html1/msgcmp.html		man-locale-htmlman	html
@@ -3187,7 +3187,7 @@
 ./usr/share/man/html1/tftp.html			man-netutil-htmlman	html
 ./usr/share/man/html1/time.html			man-util-htmlman	html
 ./usr/share/man/html1/tip.html			man-util-htmlman	html
-./usr/share/man/html1/tn3270.html		man-tn3270-htmlman	html
+./usr/share/man/html1/tn3270.html		man-obsolete		obsolete
 ./usr/share/man/html1/top.html			man-util-htmlman	html
 ./usr/share/man/html1/touch.html		man-util-htmlman	html
 ./usr/share/man/html1/tput.html			man-util-htmlman	html
@@ -4353,7 +4353,7 @@
 ./usr/share/man/html5/magic.html		man-util-htmlman	html
 ./usr/share/man/html5/mailer.conf.html		man-mailwrapper-htmlman	html
 ./usr/share/man/html5/man.conf.html		man-man-htmlman		html
-./usr/share/man/html5/map3270.html		man-tn3270-htmlman	html
+./usr/share/man/html5/map3270.html		man-obsolete		obsolete
 ./usr/share/man/html5/master.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/master.passwd.html	man-sys-htmlman		html
 ./usr/share/man/html5/mixerctl.conf.html	man-audio-htmlman	html
@@ -5332,7 +5332,7 @@
 ./usr/share/man/man1/mopprobe.1			man-bootserver-man	.man
 ./usr/share/man/man1/moptrace.1			man-bootserver-man	.man
 ./usr/share/man/man1/more.1			man-util-man		.man
-./usr/share/man/man1/mset.1			man-tn3270-man		.man
+./usr/share/man/man1/mset.1			man-obsolete		obsolete
 ./usr/share/man/man1/msgattrib.1		man-locale-man		.man
 ./usr/share/man/man1/msgcat.1			man-locale-man		.man
 ./usr/share/man/man1/msgcmp.1			man-locale-man		.man
@@ -5540,7 +5540,7 @@
 ./usr/share/man/man1/tftp.1			man-netutil-man		.man
 ./usr/share/man/man1/time.1			man-util-man		.man
 ./usr/share/man/man1/tip.1			man-util-man		.man
-./usr/share/man/man1/tn3270.1			man-tn3270-man		.man
+./usr/share/man/man1/tn3270.1			man-obsolete		obsolete
 ./usr/share/man/man1/top.1			man-util-man		.man
 ./usr/share/man/man1/touch.1			man-util-man		.man
 ./usr/share/man/man1/tput.1			man-util-man		.man
@@ -6853,7 +6853,7 @@
 ./usr/share/man/man5/magic.5			man-util-man		.man
 ./usr/share/man/man5/mailer.conf.5		man-mailwrapper-man	.man
 ./usr/share/man/man5/man.conf.5			man-man-man		.man
-./usr/share/man/man5/map3270.5			man-tn3270-man		.man
+./usr/share/man/man5/map3270.5			man-obsolete		obsolete
 ./usr/share/man/man5/master.5			man-postfix-man		postfix,.man
 ./usr/share/man/man5/master.passwd.5		man-sys-man		.man
 ./usr/share/man/man5/mixerctl.conf.5		man-audio-man		.man
