@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.68 2010/01/16 07:45:53 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.69 2010/01/16 07:56:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.68 2010/01/16 07:45:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.69 2010/01/16 07:56:16 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -497,6 +497,7 @@ trap(int type, struct trapframe *frame)
 	int trapnum;
 #ifdef DIAGNOSTIC
 	extern int emergency_stack_start, emergency_stack_end;
+	int oldcpl = cpl;
 #endif
 
 	trapnum = type & ~T_USER;
@@ -948,6 +949,12 @@ do_onfault:
 		panic ("trap: unimplemented \'%s\' (%d)", tts, type);
 	}
 
+#ifdef DIAGNOSTIC
+	if (cpl != oldcpl)
+		printf("WARNING: SPL (%d) NOT LOWERED ON TRAP (%d) EXIT\n",
+		    cpl, trapnum);
+#endif
+
 	if (type & T_USER)
 		userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 
@@ -1090,6 +1097,9 @@ syscall(struct trapframe *frame, int *args)
 	int nsys, code, error;
 	int tmp;
 	int rval[2];
+#ifdef DIAGNOSTIC
+	int oldcpl = cpl;
+#endif
 
 	uvmexp.syscalls++;
 
@@ -1257,6 +1267,16 @@ out:
 		trace_exit(code, rval, error);
 
 	userret(l, frame->tf_iioq_head, 0);
+
+#ifdef DIAGNOSTIC
+	if (cpl != oldcpl) {
+		printf("WARNING: SPL (0x%x) NOT LOWERED ON "
+		    "syscall(0x%x, 0x%x, 0x%x, 0x%x...) EXIT, PID %d\n",
+		    cpl, code, args[0], args[1], args[2], p->p_pid);
+		cpl = oldcpl;
+	}
+#endif
+
 #ifdef DEBUG
 	frame_sanity_check(0xdead05, 0, frame, l);
 #endif /* DEBUG */
