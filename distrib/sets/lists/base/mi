@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.852 2010/01/14 21:35:57 pooka Exp $
+# $NetBSD: mi,v 1.853 2010/01/16 15:34:22 roy Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -496,7 +496,7 @@
 ./usr/bin/mktemp				base-util-bin
 ./usr/bin/modstat				base-obsolete		obsolete
 ./usr/bin/more					base-util-bin
-./usr/bin/mset					base-tn3270-bin
+./usr/bin/mset					base-obsolete		obsolete
 ./usr/bin/msgs					base-util-bin
 ./usr/bin/nbsvtool				base-crypto-bin		crypto
 ./usr/bin/netgroup				base-nis-bin
@@ -610,7 +610,7 @@
 ./usr/bin/tftp					base-netutil-bin
 ./usr/bin/time					base-util-bin
 ./usr/bin/tip					base-util-bin
-./usr/bin/tn3270				base-tn3270-bin
+./usr/bin/tn3270				base-obsolete		obselete
 ./usr/bin/top					base-util-bin
 ./usr/bin/touch					base-util-bin
 ./usr/bin/tput					base-util-bin
@@ -3552,7 +3552,7 @@
 ./usr/share/misc/magic.mime.mgc			base-obsolete		obsolete
 ./usr/share/misc/mail.help			base-reference-share	share
 ./usr/share/misc/mail.tildehelp			base-reference-share	share
-./usr/share/misc/map3270			base-reference-share	share
+./usr/share/misc/map3270			base-obsolete		obsolete
 ./usr/share/misc/more.help			base-obsolete		obsolete
 ./usr/share/misc/nslookup.help			base-obsolete		obsolete
 ./usr/share/misc/termcap			base-termcap-share	share
