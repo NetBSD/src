@@ -1,4 +1,4 @@
-#	$NetBSD: files.rmixl,v 1.1.2.3 2010/01/13 09:41:32 cliff Exp $
+#	$NetBSD: files.rmixl,v 1.1.2.4 2010/01/16 23:49:32 cliff Exp $
 
 file	arch/evbmips/rmixl/autoconf.c
 file	arch/evbmips/rmixl/machdep.c
@@ -12,17 +12,9 @@ file	arch/mips/mips/mips3_clockintr.c
 file	arch/mips/mips/softintr.c
 
 # The autoconfiguration root.
-device	mainbus { [core = -1] }
+device	mainbus { [node = -1] }
 attach	mainbus at root
 file	arch/mips/rmi/rmixl_mainbus.c		mainbus
-
-device	cpucore { [ thread = -1] }
-attach	cpucore at mainbus
-file	arch/evbmips/rmixl/cpucore.c		cpucore
-
-device	cpu
-attach	cpu at cpucore
-file	arch/evbmips/rmixl/cpu.c		cpu
 
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"
