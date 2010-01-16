@@ -1,4 +1,4 @@
-/*	$NetBSD: unifdef.c,v 1.15 2009/07/13 19:05:41 roy Exp $	*/
+/*	$NetBSD: unifdef.c,v 1.16 2010/01/16 21:26:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -77,7 +77,7 @@ static const char copyright[] =
 #endif
 #ifdef __IDSTRING
 __IDSTRING(Berkeley, "@(#)unifdef.c	8.1 (Berkeley) 6/6/93");
-__IDSTRING(NetBSD, "$NetBSD: unifdef.c,v 1.15 2009/07/13 19:05:41 roy Exp $");
+__IDSTRING(NetBSD, "$NetBSD: unifdef.c,v 1.16 2010/01/16 21:26:59 christos Exp $");
 __IDSTRING(dotat, "$dotat: things/unifdef.c,v 1.161 2003/07/01 15:32:48 fanf2 Exp $");
 #endif
 #endif /* not lint */
@@ -760,7 +760,7 @@ eval_unary(const struct ops *ops, int *valp, const char **cpp)
 			return (LT_IF);
 		cp = skipcomment(cp);
 		sym = findsym(cp);
-		if (sym < 0 || !symlist)
+		if (sym < 0 || symlist)
 			return (LT_IF);
 		*valp = (value[sym] != NULL);
 		cp = skipsym(cp);
@@ -771,7 +771,7 @@ eval_unary(const struct ops *ops, int *valp, const char **cpp)
 	} else if (!endsym(*cp)) {
 		debug("eval%d symbol", ops - eval_ops);
 		sym = findsym(cp);
-		if (sym < 0 || !symlist)
+		if (sym < 0 || symlist)
 			return (LT_IF);
 		if (value[sym] == NULL)
 			*valp = 0;
