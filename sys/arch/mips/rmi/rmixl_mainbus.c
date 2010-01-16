@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_mainbus.c,v 1.1.2.5 2010/01/13 09:56:10 cliff Exp $	*/
+/*	$NetBSD: rmixl_mainbus.c,v 1.1.2.6 2010/01/16 23:50:59 cliff Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_mainbus.c,v 1.1.2.5 2010/01/13 09:56:10 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_mainbus.c,v 1.1.2.6 2010/01/16 23:50:59 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +57,12 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_mainbus.c,v 1.1.2.5 2010/01/13 09:56:10 cliff 
 
 static int  mainbusmatch(device_t,  cfdata_t, void *);
 static void mainbusattach(device_t,  device_t,  void *);
-static int  mainbus_print_core(void *, const char *);
+static int  mainbus_node_alloc(struct mainbus_softc *, int);
+static int  mainbus_search(device_t, cfdata_t, const int *, void *);
+static int  mainbus_print(void *, const char *);
 
-CFATTACH_DECL_NEW(mainbus, 0, mainbusmatch, mainbusattach, NULL, NULL);
+CFATTACH_DECL_NEW(mainbus, sizeof(struct mainbus_softc),
+	mainbusmatch, mainbusattach, NULL, NULL);
 
 static int mainbus_found;
 
@@ -74,59 +77,81 @@ mainbusmatch(device_t parent, cfdata_t cf, void *aux)
 static void
 mainbusattach(device_t parent, device_t self, void *aux)
 {
-	u_int sz;
-	u_int ncores;
-	struct mainbus_attach_args aa;
+	struct mainbus_softc *sc = device_private(self);
 
 	aprint_naive("\n");
 	aprint_normal("\n");
 
+	sc->sc_dev = self;
+	sc->sc_node_next = 0;
+	sc->sc_node_mask = 0;
+
 	mainbus_found = 1;
 
-	switch (mycpu->cpu_cidflags & MIPS_CIDFL_RMI_TYPE) {
-	case CIDFL_RMI_TYPE_XLR:
-	case CIDFL_RMI_TYPE_XLS:
-		/*
-		 * L2 is unified on XLR, XLS
-		 */
-		sz = (size_t)MIPS_CIDFL_RMI_L2SZ(mycpu->cpu_cidflags);
-		aprint_normal("%s: %dKB/32B %d-banked 8-way set associative"
-			" unified L2 cache\n", device_xname(self),
-			sz/1024, sz/(256 * 1024));
-		break;
-	case CIDFL_RMI_TYPE_XLP:
-		/* TBD */
-		break;
-	}
-
-	ncores = MIPS_CIDFL_RMI_NTHREADS(mycpu->cpu_cidflags);
-	aprint_normal("%s: %d %s on chip\n", device_xname(self), ncores,
-		ncores == 1 ? "core" : "cores");
-
 	/*
-	 * Attach cpu (RMI thread) devices
+	 * attach mainbus devices 
 	 */
-	for (int i=0; i < ncores; i++) {
-		aa.ma_name = "cpucore";
-		aa.ma_core = i;
-		config_found(self, &aa, mainbus_print_core);
-	}
-
-	/*
-	 * Attach obio
-	 */
-	aa.ma_name = "obio";
-	config_found(self, &aa, NULL);
+        config_search_ia(mainbus_search, self, "mainbus", mainbus_print);
 }
 
 static int
-mainbus_print_core(void *aux, const char *pnp)
+mainbus_print(void *aux, const char *pnp)
 {
-	struct mainbus_attach_args *aa = aux;
+	struct mainbus_attach_args *ma = aux;
 
 	if (pnp != NULL)
 		aprint_normal("%s:", pnp);
-	aprint_normal(" core %d", aa->ma_core);
+	aprint_normal(" node %d", ma->ma_node);
 
 	return (UNCONF);
 }
+
+static int
+mainbus_node_alloc(struct mainbus_softc *sc, int node)
+{
+	uint64_t bit;
+
+	if (node == MAINBUSCF_NODE_DEFAULT) {
+		for (node=sc->sc_node_next; node < 64; node++) {
+			bit = 1 << node;
+			if ((sc->sc_node_mask & bit) == 0) {
+				sc->sc_node_mask |= bit;
+				sc->sc_node_next = node + 1;
+				return node;
+			}
+		}
+		panic("%s: node mask underflow", __func__);   
+	} else {
+		if (node >= 64) 
+			panic("%s: node >= 64", __func__);   
+		if (node < 0)
+			panic("%s: bad node %d", __func__, node);   
+		bit = 1 << node;
+		if ((sc->sc_node_mask & bit) == 0) {
+			sc->sc_node_mask |= bit;
+			sc->sc_node_next = node + 1;
+			return node;
+		} else {
+			panic("%s: node %d already used\n",
+				__func__, node);
+		}
+	}
+
+	/*NOTREACHED*/
+	return -1;	/* as if */
+}
+
+static int
+mainbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
+{
+	struct mainbus_softc *sc = device_private(parent);
+	struct mainbus_attach_args ma;
+
+	ma.ma_node = mainbus_node_alloc(sc, cf->cf_loc[MAINBUSCF_NODE]);
+
+	if (config_match(parent, cf, &ma) > 0)
+		config_attach(parent, cf, &ma, mainbus_print);
+
+	return 0;
+}
+
