@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.41 2009/06/05 08:40:51 jnemeth Exp $
+.\"	$NetBSD: bpf.4,v 1.42 2010/01/16 18:47:50 pooka Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd August 4, 2006
+.Dd January 16, 2010
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -348,7 +348,7 @@ The following structure is prepended to each packet returned by
 .Xr read 2 :
 .Bd -literal -offset indent
 struct bpf_hdr {
-	struct timeval bh_tstamp;
+	struct bpf_timeval bh_tstamp;
 	uint32_t bh_caplen;
 	uint32_t bh_datalen;
 	uint16_t bh_hdrlen;
@@ -359,6 +359,10 @@ The fields, whose values are stored in host order, and are:
 .Bl -tag -width bh_datalen -offset indent
 .It Va bh_tstamp
 The time at which the packet was processed by the packet filter.
+This structure differs from the standard
+.Vt struct timeval
+in that both members are of type
+.Vt long .
 .It Va bh_caplen
 The length of the captured portion of the packet.
 This is the minimum of
