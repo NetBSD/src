@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.107 2008/11/11 06:46:43 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.108 2010/01/16 21:05:28 phx Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.107 2008/11/11 06:46:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2010/01/16 21:05:28 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,9 @@ void ofwppc_batinit(void);
 void ofppc_bootstrap_console(void);
 
 extern u_int l2cr_config;
+#if (NRTAS > 0)
 extern int machine_has_rtas;
+#endif
 
 struct model_data modeldata;
 
@@ -212,8 +214,10 @@ cpu_reboot(int howto, char *what)
 {
 	static int syncing;
 	static char str[256];
-	int junk;
 	char *ap = str, *ap1 = ap;
+#if (NRTAS > 0)
+	int junk;
+#endif
 
 	boothowto = howto;
 	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
@@ -226,9 +230,11 @@ cpu_reboot(int howto, char *what)
 		doshutdownhooks();
 		pmf_system_shutdown(boothowto);
 		aprint_normal("halted\n\n");
+#if (NRTAS > 0)
 		if ((howto & 0x800) && machine_has_rtas &&
 		    rtas_has_func(RTAS_FUNC_POWER_OFF))
 			rtas_call(RTAS_FUNC_POWER_OFF, 2, 1, 0, 0, &junk);
+#endif
 		ppc_exit();
 	}
 	if (!cold && (howto & RB_DUMP))
@@ -238,11 +244,12 @@ cpu_reboot(int howto, char *what)
 	pmf_system_shutdown(boothowto);
 	aprint_normal("rebooting\n\n");
 
+#if (NRTAS > 0)
 	if (machine_has_rtas && rtas_has_func(RTAS_FUNC_SYSTEM_REBOOT)) {
 		rtas_call(RTAS_FUNC_SYSTEM_REBOOT, 0, 1, &junk);
 		for(;;);
 	}
-
+#endif
 	if (what && *what) {
 		if (strlen(what) > sizeof str - 5)
 			aprint_normal("boot string too large, ignored\n");
