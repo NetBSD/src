@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.1,v 1.1.2.44 2009/07/29 22:35:18 snj Exp $
+# $NetBSD: CHANGES-5.0.1,v 1.1.2.45 2010/01/16 17:54:33 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.0.1
 release:
@@ -732,4 +732,25 @@ sys/sys/param.h					patch
 
 	Welcome to 5.0.1!
 	[snj]
+
+sys/kern/kern_sig.c				1.302
+
+	sigactsunshare(): set reference count in a case of new sigacts
+	allocation.
+	Bug (e.g. memory leak) can happen when using clone(2) call.
+	[rmind, ticket #1238]
+
+sys/kern/kern_runq.c				1.28
+
+	sched_catchlwp: fix the case when other CPU might see
+	curlwp->l_cpu != curcpu() while LWP is finishing context switch.
+	Should fix PR/42539, tested by martin@.
+	[rmind, ticket #1240]
+
+sys/kern/kern_softint.c				1.30
+
+	softint_execute: release/re-acquire kernel-lock depending on
+	SOFTINT_MPSAFE flag.  Keeping it held for MP-safe cases break the
+	lock order assumptions.  Per discussion with <martin>.
+	[rmind, ticket #1241]
 
