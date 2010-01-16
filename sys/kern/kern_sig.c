@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.289.4.5 2009/04/01 21:56:50 snj Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.289.4.5.2.1 2010/01/16 17:32:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.289.4.5 2009/04/01 21:56:50 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.289.4.5.2.1 2010/01/16 17:32:45 bouyer Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -200,24 +200,19 @@ sigacts_poolpage_free(struct pool *pp, void *v)
 struct sigacts *
 sigactsinit(struct proc *pp, int share)
 {
-	struct sigacts *ps, *ps2;
+	struct sigacts *ps = pp->p_sigacts, *ps2;
 
-	ps = pp->p_sigacts;
-
-	if (share) {
+	if (__predict_false(share)) {
 		atomic_inc_uint(&ps->sa_refcnt);
-		ps2 = ps;
-	} else {
-		ps2 = pool_cache_get(sigacts_cache, PR_WAITOK);
-		/* XXXAD get rid of this */
-		mutex_init(&ps2->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
-		mutex_enter(&ps->sa_mutex);
-		memcpy(&ps2->sa_sigdesc, ps->sa_sigdesc,
-		    sizeof(ps2->sa_sigdesc));
-		mutex_exit(&ps->sa_mutex);
-		ps2->sa_refcnt = 1;
+		return ps;
 	}
+	ps2 = pool_cache_get(sigacts_cache, PR_WAITOK);
+	mutex_init(&ps2->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
+	ps2->sa_refcnt = 1;
 
+	mutex_enter(&ps->sa_mutex);
+	memcpy(ps2->sa_sigdesc, ps->sa_sigdesc, sizeof(ps2->sa_sigdesc));
+	mutex_exit(&ps->sa_mutex);
 	return ps2;
 }
 
@@ -230,15 +225,16 @@ sigactsinit(struct proc *pp, int share)
 void
 sigactsunshare(struct proc *p)
 {
-	struct sigacts *ps, *oldps;
+	struct sigacts *ps, *oldps = p->p_sigacts;
 
-	oldps = p->p_sigacts;
-	if (oldps->sa_refcnt == 1)
+	if (__predict_true(oldps->sa_refcnt == 1))
 		return;
+
 	ps = pool_cache_get(sigacts_cache, PR_WAITOK);
-	/* XXXAD get rid of this */
 	mutex_init(&ps->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
-	memset(&ps->sa_sigdesc, 0, sizeof(ps->sa_sigdesc));
+	memset(ps->sa_sigdesc, 0, sizeof(ps->sa_sigdesc));
+	ps->sa_refcnt = 1;
+
 	p->p_sigacts = ps;
 	sigactsfree(oldps);
 }
