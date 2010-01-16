@@ -1,4 +1,4 @@
-#	$NetBSD: files.rmixl,v 1.1.2.7 2009/12/14 07:23:07 cliff Exp $
+#	$NetBSD: files.rmixl,v 1.1.2.8 2010/01/16 23:50:04 cliff Exp $
 #
 # Configuration info for RMI XLP, XLR, XLS
 #
@@ -6,10 +6,26 @@
 file	arch/mips/rmi/rmixl_intr.c
 file	arch/mips/rmi/rmixl_subr.S
 
+
+# node is parent of one or more core
+device	cpunode { [ core = -1] }
+attach	cpunode at mainbus
+file	arch/mips/rmi/rmixl_cpunode.c		cpunode
+
+# core is parent of one or more cpu
+device	cpucore { [ thread = -1] }
+attach	cpucore at cpunode
+file	arch/mips/rmi/rmixl_cpucore.c		cpucore
+
+# each cpu is a RMI 'thread' or 'vCPU'
+device	cpu
+attach	cpu at cpucore
+file	arch/mips/rmi/rmixl_cpu.c		cpu
+
 # OBIO: offsets are from System Bridge Controller base
 define obio { [addr=-1], [size=0], [intr=-1], [mult=1] }
 device	obio: obio
-attach	obio at mainbus
+attach	obio at cpunode
 file	arch/mips/rmi/rmixl_obio.c		obio needs-count
 file    arch/mips/rmi/rmixl_obio_eb_space.c	obio
 file    arch/mips/rmi/rmixl_obio_el_space.c	obio
