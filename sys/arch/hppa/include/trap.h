@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.3 2009/11/03 05:07:26 snj Exp $	*/
+/*	$NetBSD: trap.h,v 1.4 2010/01/16 10:06:31 skrll Exp $	*/
 
 /*	$OpenBSD: trap.h,v 1.8 2000/02/10 20:05:39 mickey Exp $	*/
 
@@ -53,7 +53,7 @@
 #define	T_ITLBMISSNA	16	/* ITLB non-access miss */
 #define	T_DTLBMISSNA	17	/* DTLB non-access miss */
 #define	T_DPROT		18	/* data protection/rights/alignment <7100 */
-#define	T_DBREAK	19	/* data break */
+#define	T_DBREAK	19	/* data memory break */
 #define	T_TLB_DIRTY	20	/* TLB dirty bit */
 #define	T_PAGEREF	21	/* page reference */
 #define	T_EMULATION	22	/* assist emulation */
