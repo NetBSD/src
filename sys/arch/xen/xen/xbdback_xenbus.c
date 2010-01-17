@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.29 2009/12/15 00:19:52 haad Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.30 2010/01/17 12:08:29 haad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.29 2009/12/15 00:19:52 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.30 2010/01/17 12:08:29 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -731,9 +731,9 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 		    "for domain %d\n", wi.dkw_devname, xbdi->xbdi_size,
 		    xbdi->xbdi_domid);
 	}
-	/* ENOTTY should be returned only when device doesn't implement
-	   DIOCGWEDGEINFO and we are working with non wedge like device. */
-	if (err != ENOTTY) {
+	if ((err != 0) && (err != ENOTTY)) {
+		/* ENOTTY should be returned only when device doesn't implement
+		   DIOCGWEDGEINFO and we are working with non wedge like device. */
 		printf("xbdback %s: can't DIOCGWEDGEINFO device "
 		    "0x%"PRIx64": %d\n", xbusd->xbusd_path,
 		    xbdi->xbdi_dev, err);		
