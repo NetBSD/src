@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.70 2010/01/16 13:29:47 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.71 2010/01/17 08:50:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.70 2010/01/16 13:29:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.71 2010/01/17 08:50:04 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -462,10 +462,15 @@ do {							\
 
 		SANITY(l != NULL || (tf->tf_sp >= minsp && tf->tf_sp < maxsp));
 	} else {
+		bool ok;
+		paddr_t pa;
+
+		ok = pmap_extract(pmap_kernel(), uvm_lwp_getuarea(l), &pa);
+		KASSERT(ok);
+
 		SANITY(USERMODE(tf->tf_iioq_head));
 		SANITY(USERMODE(tf->tf_iioq_tail));
-		SANITY(l != NULL &&
-		    tf->tf_cr30 == kvtop((void *)uvm_lwp_getuarea(l)));
+		SANITY(l != NULL && tf->tf_cr30 == pa);
 	}
 #undef SANITY
 out:
