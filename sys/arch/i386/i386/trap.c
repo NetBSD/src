@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.252 2010/01/10 15:37:36 dsl Exp $	*/
+/*	$NetBSD: trap.c,v 1.253 2010/01/17 22:21:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.252 2010/01/10 15:37:36 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.253 2010/01/17 22:21:18 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -123,7 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.252 2010/01/10 15:37:36 dsl Exp $");
 static inline int xmm_si_code(struct lwp *);
 void trap(struct trapframe *);
 void trap_tss(struct i386tss *, int, int);
-void trap_return_iret(struct trapframe *) __dead;
+void trap_return_fault_return(struct trapframe *) __dead;
 
 #ifdef KVM86
 #include <machine/kvm86.h>
@@ -300,7 +300,7 @@ trap(struct trapframe *frame)
 	struct proc *p;
 	struct pcb *pcb;
 	extern char fusubail[], kcopy_fault[], return_address_fault[],
-	    trapreturn[], IDTVEC(osyscall)[];
+	    IDTVEC(osyscall)[];
 	struct trapframe *vframe;
 	ksiginfo_t ksi;
 	void *onfault;
@@ -398,96 +398,76 @@ copyfault:
 
 		/*
 		 * Check for failure during return to user mode.
+		 * This can happen loading invalid values into the segment
+		 * registers, or during the 'iret' itself.
 		 *
 		 * We do this by looking at the instruction we faulted on.
 		 * The specific instructions we recognize only happen when
 		 * returning from a trap, syscall, or interrupt.
-		 *
-		 * At this point, there are (at least) two trap frames on
-		 * the kernel stack; we presume here that we faulted while
-		 * loading our registers out of the outer one.
 		 */
 
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
-		/* There is no fault address! */
 		ksi.ksi_code = SEGV_ACCERR;
 		ksi.ksi_trap = type;
 
 		switch (*(u_char *)frame->tf_eip) {
 		case 0xcf:	/* iret */
 			/*
-			 * The outer trap frame only contains the user space
-			 * return address and stack pointer.
-			 * The user registers are in the inner frame following
-			 * the kernel address of the iret.
-			 * We must copy the registers next to the userspace
-			 * return address so we have a frame for md_regs.
-			 *
-			 * Also, we might have faulted trying to execute the
-			 * trampoline for a local (nested) signal handler.
-			 * If we change the %cs (eg to include the stack)
-			 * just return the return to user.
+			 * The 'iret' instruction faulted, so we have the
+			 * 'user' registers saved after the kernel %eip:%cs:%fl
+			 * of the 'iret' and below that the user %eip:%cs:%fl
+			 * the 'iret' was processing.
+			 * We must delete the 3 words of kernel return address
+			 * from the stack to generate a normal stack frame
+			 * (eg for sending a SIGSEGV).
 			 */
 			vframe = (void *)((int *)frame + 3);
 			if (KERNELMODE(vframe->tf_cs, vframe->tf_eflags))
 				goto we_re_toast;
 			memmove(vframe, frame,
 			    offsetof(struct trapframe, tf_eip));
-			l->l_md.md_regs = vframe;
+			/* Set the faulting address to the user %eip */
 			ksi.ksi_addr = (void *)vframe->tf_eip;
-			if (!pmap_exec_fixup(&p->p_vmspace->vm_map, vframe,
-			    lwp_getpcb(l)))
-				(*p->p_emul->e_trapsignal)(l, &ksi);
-			trap_return_iret(vframe);
-			/* NOTREACHED */
+			break;
 		case 0x8e:
 			switch (*(uint32_t *)frame->tf_eip) {
-			case 0x0c245c8e:	/* movl 0xc(%esp,1),%ds */
-			case 0x0824448e:	/* movl 0x8(%esp,1),%es */
-			case 0x0424648e:	/* movl 0x4(%esp,1),%fs */
-			case 0x00246c8e:	/* movl 0x0(%esp,1),%gs */
+			case 0x8e242c8e:	/* mov (%esp,%gs), then */
+			case 0x0424648e:	/* mov 0x4(%esp),%fs */
+			case 0x0824448e:	/* mov 0x8(%esp),%es */
+			case 0x0c245c8e:	/* mov 0xc(%esp),%ds */
 				break;
 			default:
 				goto we_re_toast;
 			}
+			/*
+			 * We faulted loading one if the user segment registers.
+			 * The stack frame containing the user registers is
+			 * still valid and is just below the %eip:%cs:%fl of
+			 * the kernel fault frame.
+			 */
+			vframe = (void *)(&frame->tf_eflags + 1);
+			if (KERNELMODE(vframe->tf_cs, vframe->tf_eflags))
+				goto we_re_toast;
+			/* There is no valid address for the fault */
 			break;
 		default:
 			goto we_re_toast;
 		}
-
-		vframe = (void *)(int)&frame->tf_esp;
-		if (KERNELMODE(vframe->tf_cs, vframe->tf_eflags))
-			goto we_re_toast;
-
 		/*
-		 * Arrange to signal the thread, which will reset its
-		 * registers in the outer frame.  This also allows us to
-		 * capture the invalid register state in sigcontext,
-		 * packaged up with the signal delivery.  We restart
-		 * on return at 'trapreturn', acting as if nothing
-		 * happened, restarting the return to user with our new
-		 * set of registers.
-		 *
-		 * Clear PSL_NT.  It can be set by userland because setting
-		 * it isn't a privileged operation.
-		 *
-		 * Set PSL_I.  Otherwise, if SIGSEGV is ignored, we'll
-		 * continue to generate traps infinitely with
-		 * interrupts disabled.
+		 * We might have faulted trying to execute the
+		 * trampoline for a local (nested) signal handler.
+		 * Only generate SIGSEGV if the user %cs isn't changed.
+		 * (This is only strictly necessary in the 'iret' case.)
 		 */
-		/* We don't want to fault unwinding the inner frame */
-		frame->tf_ds = GSEL(GDATA_SEL, SEL_KPL);
-		frame->tf_es = GSEL(GDATA_SEL, SEL_KPL);
-		frame->tf_gs = GSEL(GDATA_SEL, SEL_KPL);
-		frame->tf_fs = GSEL(GCPU_SEL, SEL_KPL);
-		/* Reload the entire outer (user) frame */
-		frame->tf_eip = (uintptr_t)trapreturn;
-		frame->tf_eflags = (frame->tf_eflags & ~PSL_NT) | PSL_I;
-		/* Save outer frame for any signal return */
-		l->l_md.md_regs = vframe;
-		(*p->p_emul->e_trapsignal)(l, &ksi);
-		return;
+		if (!pmap_exec_fixup(&p->p_vmspace->vm_map, vframe, pcb)) {
+			/* Save outer frame for any signal return */
+			l->l_md.md_regs = vframe;
+			(*p->p_emul->e_trapsignal)(l, &ksi);
+		}
+		/* Return to user by reloading the user frame */
+		trap_return_fault_return(vframe);
+		/* NOTREACHED */
 
 	case T_PROTFLT|T_USER:		/* protection fault */
 	case T_TSSFLT|T_USER:
@@ -522,8 +502,7 @@ copyfault:
 			 * If pmap_exec_fixup does something,
 			 * let's retry the trap.
 			 */
-			if (pmap_exec_fixup(&p->p_vmspace->vm_map, frame,
-			    lwp_getpcb(l))) {
+			if (pmap_exec_fixup(&p->p_vmspace->vm_map, frame, pcb)){
 				goto out;
 			}
 			ksi.ksi_signo = SIGSEGV;
