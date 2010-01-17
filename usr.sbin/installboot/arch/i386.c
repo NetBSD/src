@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.35 2010/01/14 17:49:32 drochner Exp $ */
+/* $NetBSD: i386.c,v 1.36 2010/01/17 14:54:44 drochner Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.35 2010/01/14 17:49:32 drochner Exp $");
+__RCSID("$NetBSD: i386.c,v 1.36 2010/01/17 14:54:44 drochner Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -275,9 +275,9 @@ update_i386_boot_params(ib_params *params, struct x86_boot_params  *bpp)
 	if (params->flags & IB_KEYMAP)
 		strlcpy(bp.bp_keymap, params->keymap, sizeof bp.bp_keymap);
 	if (params->flags & IB_MODULES)
-		bp.bp_flags ^= htole32(X86_BP_FLAGS_LOADMODULES);
+		bp.bp_flags ^= htole32(X86_BP_FLAGS_NOMODULES);
 	if (params->flags & IB_BOOTCONF)
-		bp.bp_flags ^= htole32(X86_BP_FLAGS_READBOOTCONF);
+		bp.bp_flags ^= htole32(X86_BP_FLAGS_NOBOOTCONF);
 
 	if (params->flags & (IB_NOWRITE | IB_VERBOSE))
 		show_i386_boot_params(&bp);
