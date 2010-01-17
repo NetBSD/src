@@ -1,4 +1,4 @@
-/* $NetBSD: hashhl.c,v 1.3 2009/03/06 18:15:23 apb Exp $ */
+/* $NetBSD: hashhl.c,v 1.4 2010/01/17 23:10:20 wiz Exp $ */
 
 /*
  * ----------------------------------------------------------------------------
@@ -106,8 +106,10 @@ FNPREFIX(FileChunk)(const char *filename, char *buf, off_t off, off_t len)
 		}
 		len = sb.st_size;
 	}
-	if (off > 0 && lseek(fd, off, SEEK_SET) < 0)
+	if (off > 0 && lseek(fd, off, SEEK_SET) < 0) {
+		close(fd);
 		return (NULL);
+	}
 
 	while ((nr = read(fd, buffer, (size_t) MIN((off_t)sizeof(buffer), len)))
 	    > 0) {
