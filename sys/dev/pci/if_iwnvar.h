@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_iwnvar.h,v 1.8 2008/12/03 17:17:08 damien Exp $	*/
-/*	$NetBSD: if_iwnvar.h,v 1.6 2009/09/11 01:28:20 christos Exp $	*/
+/*	$NetBSD: if_iwnvar.h,v 1.7 2010/01/17 19:45:06 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -288,7 +288,7 @@ struct iwn_softc {
 	void			*powerhook;
 
 #if NBPFILTER > 0
-	void *			sc_drvbpf;
+	struct bpf_if *		sc_drvbpf;
 
 	union {
 		struct iwn_rx_radiotap_header th;
