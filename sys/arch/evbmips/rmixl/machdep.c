@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.13 2010/01/08 08:01:22 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.14 2010/01/17 00:02:00 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.13 2010/01/08 08:01:22 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.14 2010/01/17 00:02:00 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -251,6 +251,13 @@ static void rmixl_physaddr_init(void);
 static u_int ram_seg_resv(phys_ram_seg_t *, u_int, u_quad_t, u_quad_t);
 void rmixlfw_mmap_print(rmixlfw_mmap_t *);
 
+#ifdef MULTIPROCESSOR
+void rmixl_get_wakeup_info(struct rmixl_config *);
+#ifdef MACHDEP_DEBUG
+static void rmixl_wakeup_info_print(volatile rmixlfw_cpu_wakeup_info_t *);
+#endif
+#endif
+
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait during
@@ -272,7 +279,9 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	phys_ram_seg_t vm_clusters[VM_PHYSSEG_MAX];
 	extern char edata[], end[];
 
+#ifndef MULTIPROCESSOR
 	rmixl_mtcr(0, 1);		/* disable all threads except #0 */
+#endif
 
 	r = rmixl_mfcr(0x300);
 	r &= ~__BIT(14);		/* disabled Unaligned Access */
@@ -297,6 +306,10 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	 */
 	mips_vector_init();
 
+	/* mips_vector_init initialized mycpu */
+	strcpy(cpu_model, mycpu->cpu_name);
+
+	/* get system info from firmware */
 	memsize = rmixlfw_init(infop);
 
 	/* set the VM page size */
@@ -313,6 +326,14 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 
 	printf("\nNetBSD/rmixl\n");
 	printf("memsize = %#lx\n", memsize);
+
+#if defined(MULTIPROCESSOR) && defined(MACHDEP_DEBUG)
+	rmixl_wakeup_info_print(rcp->rc_cpu_wakeup_info);
+	rmixl_wakeup_info_print(rcp->rc_cpu_wakeup_info + 1);
+	printf("cpu_wakeup_info %p, cpu_wakeup_end %p\n",
+		rcp->rc_cpu_wakeup_info,
+		rcp->rc_cpu_wakeup_end);
+#endif
 
 	rmixl_physaddr_init();
 
@@ -375,6 +396,19 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	/* should never be in our clusters anyway... */
 	vm_cluster_cnt = ram_seg_resv(vm_clusters, vm_cluster_cnt,
 		0x1FC00000, 0x1FC00000+NBPG);
+
+#ifdef MULTIPROCEESOR
+	/* reserve the cpu_wakeup_info area */
+	vm_cluster_cnt = ram_seg_resv(vm_clusters, vm_cluster_cnt,
+		(u_quad_t)trunc_page(rcp->rc_cpu_wakeup_info),
+		(u_quad_t)round_page(rcp->rc_cpu_wakeup_end));
+#endif
+
+#if 0
+	/* reserve everything > 4GB */
+	vm_cluster_cnt = ram_seg_resv(vm_clusters, vm_cluster_cnt,
+		0x100000000, (u_quad_t)~0);
+#endif
 
 	/*
 	 * Load vm_clusters[] into the VM system.
@@ -585,7 +619,9 @@ rmixlfw_init(int64_t infop)
 {
 	struct rmixl_config *rcp = &rmixl_configuration;
 
-	strcpy(cpu_model, "RMI XLS616ATX VIIA");	/* XXX */
+#ifdef MULTIPROCESSOR
+	rmixl_get_wakeup_info(rcp);
+#endif
 
 	infop |= MIPS_KSEG0_START;
 	rmixlfw_info = *(rmixlfw_info_t *)(intptr_t)infop;
@@ -776,6 +812,107 @@ mem_clusters_init(
 	mem_cluster_cnt = cnt;
 	return sum;
 }
+
+#ifdef MULTIPROCESSOR
+/*
+ * firmware passes wakeup info structure in CP0 OS Scratch reg #7
+ * they do not explicitly give us the size of the wakeup area.
+ * we "know" that firmware loader sets wip->gp thusly:
+ *   gp = stack_start[vcpu] = round_page(wakeup_end) + (vcpu * (PAGE_SIZE * 2))
+ * so
+ *   round_page(wakeup_end) == gp - (vcpu * (PAGE_SIZE * 2))
+ * Only the "master" cpu runs this function, so
+ *   vcpu = wip->master_cpu
+ */
+void
+rmixl_get_wakeup_info(struct rmixl_config *rcp)
+{
+	volatile rmixlfw_cpu_wakeup_info_t *wip;
+	int32_t scratch_7;
+	intptr_t end;
+
+	__asm__ volatile(
+		".set push"				"\n"
+		".set noreorder"			"\n"
+		".set mips64"				"\n" 
+		"dmfc0	%0, $22, 7"			"\n"
+		".set pop"				"\n"
+			: "=r"(scratch_7));
+
+	wip = (volatile rmixlfw_cpu_wakeup_info_t *)
+			(intptr_t)scratch_7;
+	end = wip->entry.gp - (wip->master_cpu & (PAGE_SIZE * 2));;
+
+	if (wip->valid == 1) {
+		rcp->rc_cpu_wakeup_end = (const void *)end;
+		rcp->rc_cpu_wakeup_info = wip;
+	}
+};
+
+#ifdef MACHDEP_DEBUG
+static void
+rmixl_wakeup_info_print(volatile rmixlfw_cpu_wakeup_info_t *wip)
+{
+	int i;
+
+	printf("%s: wip %p\n", __func__, wip);
+
+	printf("cpu_status %#x\n",  wip->cpu_status);
+	printf("valid: %d\n", wip->valid);
+	printf("entry: addr %#x, args %#x, sp %#"PRIx64", gp %#"PRIx64"\n",
+		wip->entry.addr,
+		wip->entry.args,
+		wip->entry.sp,
+		wip->entry.gp);
+	printf("master_cpu %d\n", wip->master_cpu);
+	printf("master_cpu_mask %#x\n", wip->master_cpu_mask);
+	printf("buddy_cpu_mask %#x\n", wip->buddy_cpu_mask);
+	printf("psb_os_cpu_map %#x\n", wip->psb_os_cpu_map);
+	printf("argc %d\n", wip->argc);
+	printf("argv:");
+	for (i=0; i < wip->argc; i++)
+		printf(" %#x", wip->argv[i]);
+	printf("\n");
+	printf("valid_tlb_entries %d\n", wip->valid_tlb_entries);
+	printf("tlb_map:\n");
+	for (i=0; i < wip->valid_tlb_entries; i++) {
+		volatile const struct lib_cpu_tlb_mapping *m =
+			&wip->tlb_map[i];
+		printf(" %d", m->page_size);
+		printf(", %d", m->asid);
+		printf(", %d", m->coherency);
+		printf(", %d", m->coherency);
+		printf(", %d", m->attr);
+		printf(", %#x", m->virt);
+		printf(", %#"PRIx64"\n", m->phys);
+	}
+	printf("elf segs:\n");
+	for (i=0; i < MAX_ELF_SEGMENTS; i++) {
+		volatile const struct core_segment_info *e =
+			&wip->seg_info[i];
+		printf(" %#"PRIx64"", e->vaddr);
+		printf(", %#"PRIx64"", e->memsz);
+		printf(", %#x\n", e->flags);
+	}
+	printf("envc %d\n", wip->envc);
+	for (i=0; i < wip->envc; i++)
+		printf(" %#x \"%s\"", wip->envs[i],
+			(char *)(intptr_t)(int32_t)(wip->envs[i]));
+	printf("\n");
+	printf("app_mode %d\n", wip->app_mode);
+	printf("printk_lock %#x\n", wip->printk_lock);
+	printf("kseg_master %d\n", wip->kseg_master);
+	printf("kuseg_reentry_function %#x\n", wip->kuseg_reentry_function);
+	printf("kuseg_reentry_args %#x\n", wip->kuseg_reentry_args);
+	printf("app_shared_mem_addr %#"PRIx64"\n", wip->app_shared_mem_addr);
+	printf("app_shared_mem_size %#"PRIx64"\n", wip->app_shared_mem_size);
+	printf("app_shared_mem_orig %#"PRIx64"\n", wip->app_shared_mem_orig);
+	printf("loader_lock %#x\n", wip->loader_lock);
+	printf("global_wakeup_mask %#x\n", wip->global_wakeup_mask);
+	printf("unused_0 %#x\n", wip->unused_0);
+}
+#endif	/* MACHDEP_DEBUG */
+#endif 	/* MULTIPROCESSOR */
 
 void
 consinit(void)
