@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlreg.h,v 1.1.2.6 2010/01/03 08:37:07 cliff Exp $	*/
+/*	$NetBSD: rmixlreg.h,v 1.1.2.7 2010/01/17 00:01:23 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -371,9 +371,11 @@
 #define RMIXL_PIC_IPIBASE_NMI		__BIT(8)
 #define RMIXL_PIC_IPIBASE_ID		__BITS(31,16)
 #define RMIXL_PIC_IPIBASE_ID_RESb	__BITS(31,23)
-#define RMIXL_PIC_IPIBASE_ID_CPU	__BITS(22,20)	/* Physical CPU ID */
+#define RMIXL_PIC_IPIBASE_ID_CORE	__BITS(22,20)	/* Physical CPU ID */
+#define RMIXL_PIC_IPIBASE_ID_CORE_SHIFT		20
 #define RMIXL_PIC_IPIBASE_ID_RESc	__BITS(19,18)
-#define RMIXL_PIC_IPIBASE_ID_THREAD	__BITS(22,20)	/* Thread ID */
+#define RMIXL_PIC_IPIBASE_ID_THREAD	__BITS(17,16)	/* Thread ID */
+#define RMIXL_PIC_IPIBASE_ID_THREAD_SHIFT	16
 #define RMIXL_PIC_IPIBASE_ID_RESV	\
 		(RMIXL_PIC_IPIBASE_ID_RESa|RMIXL_PIC_IPIBASE_ID_RESb	\
 		|RMIXL_PIC_IPIBASE_ID_RESc)
