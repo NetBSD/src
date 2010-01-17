@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.7 2009/08/12 07:28:40 dholland Exp $	*/
+/*	$NetBSD: alloc.c,v 1.8 2010/01/17 22:55:20 wiz Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,41 +63,21 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: alloc.c,v 1.7 2009/08/12 07:28:40 dholland Exp $");
+__RCSID("$NetBSD: alloc.c,v 1.8 2010/01/17 22:55:20 wiz Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
 #include "hack.h"
 #include "extern.h"
 
-#ifdef LINT
-
-/*
-   a ridiculous definition, suppressing
-	"possible pointer alignment problem" for (long *) malloc()
-	"enlarg defined but never used"
-	"ftell defined (in <stdio.h>) but never used"
-   from lint
-*/
-long *
-alloc(unsigned n)
-{
-	long            dummy = ftell(stderr);
-	if (n)
-		dummy = 0;	/* make sure arg is used */
-	return (&dummy);
-}
-
-#else
-
 long *
 alloc(unsigned lth)
 {
-	char  *ptr;
+	long  *ptr;
 
 	if (!(ptr = malloc(lth)))
 		panic("Cannot get %d bytes", lth);
-	return ((long *) ptr);
+	return (ptr);
 }
 
 #if 0 /* unused */
@@ -111,5 +91,3 @@ enlarge(char *ptr, unsigned lth)
 	return ((long *) nptr);
 }
 #endif
-
-#endif	/* LINT */
