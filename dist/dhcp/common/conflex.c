@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: conflex.c,v 1.5 2005/08/11 17:13:21 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: conflex.c,v 1.6 2010/01/17 22:42:36 wiz Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -467,7 +467,7 @@ static enum dhcp_token read_number (c, cfile)
 			log_fatal("read_number():%s:%d: impossible case", MDL);
 		}
 #else /* OLD_LEXER */
-		if (!seenx && (c == 'x') {
+		if (!seenx && (c == 'x')) {
 			seenx = 1;
 		} else if (!isascii (c) || !isxdigit (c)) {
 			if (c != EOF) {
