@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbd.c,v 1.8 2010/01/02 18:06:57 dsl Exp $	*/
+/*	$NetBSD: wskbd.c,v 1.9 2010/01/17 22:48:50 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wskbd.c,v 1.8 2010/01/02 18:06:57 dsl Exp $");
+__RCSID("$NetBSD: wskbd.c,v 1.9 2010/01/17 22:48:50 wiz Exp $");
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -96,7 +96,7 @@ get_kb_encoding(void)
 	const char *dflt = msg_string(MSG_kb_default);
 
 	fd = open("/dev/wskbd0", O_WRONLY);
-	if (fd <= 0)
+	if (fd < 0)
 		return;
 	if (ioctl(fd, WSKBDIO_GETENCODING, &kbdencoding) >=  0) {
 		memset(&opt, 0, sizeof opt);
