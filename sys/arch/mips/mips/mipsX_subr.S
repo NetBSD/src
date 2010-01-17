@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.18 2010/01/16 20:56:33 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.19 2010/01/17 00:20:14 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1128,7 +1128,7 @@ NESTED_NOPROFILE(MIPSX(cache_exception), KERNFRAME_SIZ, ra)
 	eret
 
 #if defined(MIPS64_XLS)
-	MSG("cache error @ EPC %#x\nL1D_CACHE_ERROR_LOG %#lx\nL1D_CACHE_INTERRUPT %#lx\nstatus %#x, cause %#x");
+	MSG("cache error @ EPC %#lx\nL1D_CACHE_ERROR_LOG %#lx\nL1D_CACHE_INTERRUPT %#lx\nstatus %#x, cause %#x");
 #else
 	MSG("cache error @ EPC 0x%x ErrCtl 0x%x CacheErr 0x%x");
 #endif
