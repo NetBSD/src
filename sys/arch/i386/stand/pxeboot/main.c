@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2010/01/14 17:49:31 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2010/01/17 14:54:44 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -130,11 +130,11 @@ main(void)
 	initio(CONSDEV_PC);
 #endif
 	gateA20();
-	boot_modules_enabled = !!(boot_params.bp_flags
-				  & X86_BP_FLAGS_LOADMODULES);
+	boot_modules_enabled = !(boot_params.bp_flags
+				 & X86_BP_FLAGS_NOMODULES);
 
 #ifndef SMALL
-	if (boot_params.bp_flags & X86_BP_FLAGS_READBOOTCONF)
+	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF))
 		parsebootconf(BOOTCONF);
 
 	/*
