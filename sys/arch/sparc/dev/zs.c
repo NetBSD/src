@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.116 2009/05/31 17:09:03 martin Exp $	*/
+/*	$NetBSD: zs.c,v 1.117 2010/01/17 16:23:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.116 2009/05/31 17:09:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.117 2010/01/17 16:23:43 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -464,6 +464,10 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 			}
 		} else {
 			zsc_args.hwflags = hwflags;
+			if (zsc_args.hwflags & ZS_HWFLAG_CONSOLE) {
+				zsc_args.hwflags |= ZS_HWFLAG_USE_CONSDEV;
+				zsc_args.consdev = &zs_consdev;
+			}
 		}
 #endif
 		if ((zsc_args.hwflags & ZS_HWFLAG_CONSOLE_INPUT) != 0) {
