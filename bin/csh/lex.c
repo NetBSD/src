@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.26 2007/07/16 18:26:10 christos Exp $ */
+/* $NetBSD: lex.c,v 1.27 2010/01/17 12:15:36 wiz Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.c,v 1.26 2007/07/16 18:26:10 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.27 2010/01/17 12:15:36 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1476,7 +1476,9 @@ again:
 	    }
 	    else if (errno != EINTR)
 		break;
+#ifdef FILEC
 	}
+#endif
 	if (c <= 0)
 	    return (-1);
 	feobp += c;
