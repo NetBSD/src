@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.17 2009/02/13 22:41:03 apb Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.18 2010/01/17 16:47:17 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.17 2009/02/13 22:41:03 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.18 2010/01/17 16:47:17 phx Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -349,7 +349,7 @@ restore_ofmap(struct ofw_translations *map, int len)
 
 
 /*
- * Scan the device tree for ranges, and batmap them.
+ * Scan the device tree for ranges, and return them as bitmap 0..15
  */
 
 static u_int16_t
@@ -373,7 +373,11 @@ ranges_bitmap(int node, u_int16_t bitmap)
 		if (j == -1)
 			goto noranges;
 
+#ifdef ofppc
+		reclen = acells + modeldata.ranges_offset + scells;
+#else
 		reclen = acells + 1 + scells;
+#endif
 
 		for (i=0; i < (mlen/4)/reclen; i++) {
 			addr = map[reclen * i + acells];
