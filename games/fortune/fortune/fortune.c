@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.62 2009/08/27 03:09:17 dholland Exp $	*/
+/*	$NetBSD: fortune.c,v 1.63 2010/01/17 22:52:00 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.62 2009/08/27 03:09:17 dholland Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.63 2010/01/17 22:52:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -233,6 +233,7 @@ main(int ac, char *av[])
 #ifdef LOCK_EX
 	(void) flock(fd, LOCK_UN);
 #endif /* LOCK_EX */
+	close(fd);
 #endif /* OK_TO_WRITE_DISK */
 	if (Wait) {
 		if (Fort_len == 0)
@@ -716,6 +717,7 @@ add_dir(FILEDESC *fp)
 		else
 			free(name);
 	}
+	(void) closedir(dir);
 	if (fp->num_children == 0) {
 		warnx("`%s': No fortune files in directory.", fp->path);
 		return FALSE;
