@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.145 2009/10/05 21:25:05 dyoung Exp $	*/
+/*	$NetBSD: if.h,v 1.146 2010/01/17 19:45:06 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -213,7 +213,7 @@ struct ifnet {				/* and the entries */
 	TAILQ_HEAD(, ifaddr) if_addrlist; /* linked list of addresses per if */
 	char	if_xname[IFNAMSIZ];	/* external name (name + unit) */
 	int	if_pcount;		/* number of promiscuous listeners */
-	void *	if_bpf;			/* packet filter structure */
+	struct bpf_if *if_bpf;		/* packet filter structure */
 	u_short	if_index;		/* numeric abbreviation for this if */
 	short	if_timer;		/* time 'til if_watchdog called */
 	short	if_flags;		/* up/down, broadcast, etc. */

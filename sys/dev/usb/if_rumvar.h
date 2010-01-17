@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rumvar.h,v 1.5 2009/05/29 18:49:21 plunky Exp $	*/
+/*	$NetBSD: if_rumvar.h,v 1.6 2010/01/17 19:45:06 pooka Exp $	*/
 /*	$OpenBSD: if_rumvar.h,v 1.7 2006/11/13 20:06:38 damien Exp $	*/
 
 /*-
@@ -135,7 +135,7 @@ struct rum_softc {
 	uint8_t				bbp17;
 
 #if NBPFILTER > 0
-	void *				sc_drvbpf;
+	struct bpf_if *			sc_drvbpf;
 
 	union {
 		struct rum_rx_radiotap_header th;

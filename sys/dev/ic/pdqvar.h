@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.41 2009/03/18 16:00:18 cegger Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.42 2010/01/17 19:45:06 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -348,7 +348,7 @@ typedef struct _pdq_os_ctx_t {
 #if !defined(__bsdi__) || _BSDI_VERSION >= 199401
 #define	sc_bpf		sc_if.if_bpf
 #else
-    void *sc_bpf;
+    struct bpf_if *sc_bpf;
 #endif
 #if defined(PDQ_BUS_DMA)
 #if !defined(__NetBSD__)

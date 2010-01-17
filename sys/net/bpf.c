@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.151 2010/01/15 22:16:46 pooka Exp $	*/
+/*	$NetBSD: bpf.c,v 1.152 2010/01/17 19:45:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.151 2010/01/15 22:16:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.152 2010/01/17 19:45:06 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1078,7 +1078,7 @@ bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 		    strcmp(ifp->if_xname, ifr->ifr_name) != 0)
 			continue;
 		/* skip additional entry */
-		if ((void **)bp->bif_driverp != &ifp->if_bpf)
+		if (bp->bif_driverp != &ifp->if_bpf)
 			continue;
 		/*
 		 * We found the requested interface.
@@ -1249,9 +1249,8 @@ bpf_kqfilter(struct file *fp, struct knote *kn)
  * buffer.
  */
 void
-bpf_tap(void *arg, u_char *pkt, u_int pktlen)
+bpf_tap(struct bpf_if *bp, u_char *pkt, u_int pktlen)
 {
-	struct bpf_if *bp;
 	struct bpf_d *d;
 	u_int slen;
 	struct timespec ts;
@@ -1262,7 +1261,6 @@ bpf_tap(void *arg, u_char *pkt, u_int pktlen)
 	 * The only problem that could arise here is that if two different
 	 * interfaces shared any data.  This is not the case.
 	 */
-	bp = arg;
 	for (d = bp->bif_dlist; d != 0; d = d->bd_next) {
 		++d->bd_rcount;
 		++bpf_gstats.bs_recv;
@@ -1341,9 +1339,8 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
  * a buffer, and the tail is in an mbuf chain.
  */
 void
-bpf_mtap2(void *arg, void *data, u_int dlen, struct mbuf *m)
+bpf_mtap2(struct bpf_if *bp, void *data, u_int dlen, struct mbuf *m)
 {
-	struct bpf_if *bp = arg;
 	u_int pktlen;
 	struct mbuf mb;
 
@@ -1366,10 +1363,9 @@ bpf_mtap2(void *arg, void *data, u_int dlen, struct mbuf *m)
  * Incoming linkage from device drivers, when packet is in an mbuf chain.
  */
 void
-bpf_mtap(void *arg, struct mbuf *m)
+bpf_mtap(struct bpf_if *bp, struct mbuf *m)
 {
 	void *(*cpfn)(void *, const void *, size_t);
-	struct bpf_if *bp = arg;
 	u_int pktlen, buflen;
 	void *marg;
 
@@ -1397,7 +1393,7 @@ bpf_mtap(void *arg, struct mbuf *m)
  * try to free it or keep a pointer a to it).
  */
 void
-bpf_mtap_af(void *arg, uint32_t af, struct mbuf *m)
+bpf_mtap_af(struct bpf_if *bp, uint32_t af, struct mbuf *m)
 {
 	struct mbuf m0;
 
@@ -1406,11 +1402,11 @@ bpf_mtap_af(void *arg, uint32_t af, struct mbuf *m)
 	m0.m_len = 4;
 	m0.m_data = (char *)&af;
 
-	bpf_mtap(arg, &m0);
+	bpf_mtap(bp, &m0);
 }
 
 void
-bpf_mtap_et(void *arg, uint16_t et, struct mbuf *m)
+bpf_mtap_et(struct bpf_if *bp, uint16_t et, struct mbuf *m)
 {
 	struct mbuf m0;
 
@@ -1424,7 +1420,7 @@ bpf_mtap_et(void *arg, uint16_t et, struct mbuf *m)
 	((uint32_t *)m0.m_data)[2] = 0;
 	((uint16_t *)m0.m_data)[6] = et;
 
-	bpf_mtap(arg, &m0);
+	bpf_mtap(bp, &m0);
 }
 
 #if NSL > 0 || NSTRIP > 0
@@ -1435,7 +1431,7 @@ bpf_mtap_et(void *arg, uint16_t et, struct mbuf *m)
  * in the input buffer.
  */
 void
-bpf_mtap_sl_in(void *arg, u_char *chdr, struct mbuf **m)
+bpf_mtap_sl_in(struct bpf_if *bp, u_char *chdr, struct mbuf **m)
 {
 	int s;
 	u_char *hp;
@@ -1449,7 +1445,7 @@ bpf_mtap_sl_in(void *arg, u_char *chdr, struct mbuf **m)
 	(void)memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
 
 	s = splnet();
-	bpf_mtap(arg, *m);
+	bpf_mtap(bp, *m);
 	splx(s);
 
 	m_adj(*m, SLIP_HDRLEN);
@@ -1461,7 +1457,7 @@ bpf_mtap_sl_in(void *arg, u_char *chdr, struct mbuf **m)
  * at the beginning of the mbuf.
  */
 void
-bpf_mtap_sl_out(void *arg, u_char *chdr, struct mbuf *m)
+bpf_mtap_sl_out(struct bpf_if *bp, u_char *chdr, struct mbuf *m)
 {
 	struct mbuf m0;
 	u_char *hp;
@@ -1478,7 +1474,7 @@ bpf_mtap_sl_out(void *arg, u_char *chdr, struct mbuf *m)
 	(void)memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
 
 	s = splnet();
-	bpf_mtap(arg, &m0);
+	bpf_mtap(bp, &m0);
 	splx(s);
 	m_freem(m);
 }
@@ -1626,7 +1622,7 @@ bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen)
  * (variable length headers not yet supported).
  */
 void
-bpfattach2(struct ifnet *ifp, u_int dlt, u_int hdrlen, void *driverp)
+bpfattach2(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
 {
 	struct bpf_if *bp;
 	bp = malloc(sizeof(*bp), M_DEVBUF, M_DONTWAIT);
@@ -1700,7 +1696,7 @@ bpf_change_type(struct ifnet *ifp, u_int dlt, u_int hdrlen)
 	struct bpf_if *bp;
 
 	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
-		if ((void **)bp->bif_driverp == &ifp->if_bpf)
+		if (bp->bif_driverp == &ifp->if_bpf)
 			break;
 	}
 	if (bp == NULL)
