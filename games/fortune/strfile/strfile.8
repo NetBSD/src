@@ -1,4 +1,4 @@
-.\"	$NetBSD: strfile.8,v 1.12 2004/09/09 22:03:21 wiz Exp $
+.\"	$NetBSD: strfile.8,v 1.13 2010/01/17 13:35:00 mbalmer Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)strfile.8	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd January 17, 2010
 .Dt STRFILE 8
 .Os
 .Sh NAME
@@ -57,7 +57,7 @@ a header structure and a table of file offsets for each group of lines.
 This allows random access of the strings.
 .Pp
 The output file, if not specified on the command line, is named
-.Ar source_file Ns Sy .out .
+.Ar source_file Ns Sy .dat .
 .Pp
 The options are as follows:
 .Bl -tag -width "-c char"
@@ -130,7 +130,7 @@ is run and then using
 to dump them out in the table order.
 .Sh FILES
 .Bl -tag -width strfile.out -compact
-.It Pa strfile.out
+.It Pa strfile.dat
 default output file.
 .El
 .Sh SEE ALSO
