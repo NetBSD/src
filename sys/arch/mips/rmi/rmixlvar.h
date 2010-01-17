@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.1.2.10 2010/01/10 02:48:47 matt Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.1.2.11 2010/01/17 00:00:55 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -41,6 +41,7 @@
 #include <mips/cpu.h>
 #include <dev/pci/pcivar.h>
 #include <machine/bus.h>
+#include <mips/rmi/rmixl_firmware.h>
 
 static inline bool
 cpu_rmixl(const struct pridtab *ct)
@@ -117,6 +118,9 @@ struct rmixl_config {
 	struct extent		*rc_pcie_mem_ex;
 	struct extent		*rc_pcie_io_ex;
 	int			 rc_mallocsafe;
+	volatile struct rmixlfw_cpu_wakeup_info
+				*rc_cpu_wakeup_info;
+	const void		*rc_cpu_wakeup_end;
 };
 
 extern struct rmixl_config rmixl_configuration;
