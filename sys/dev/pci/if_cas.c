@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.2 2010/01/09 13:34:33 martin Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.3 2010/01/17 11:57:29 jdc Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.2 2010/01/09 13:34:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.3 2010/01/17 11:57:29 jdc Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -115,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.2 2010/01/09 13:34:33 martin Exp $");
 
 #define TRIES	10000
 
-static bool	cas_estintr(struct cas_softc *sc);
+static bool	cas_estintr(struct cas_softc *sc, int);
 bool		cas_shutdown(device_t, int);
 static bool	cas_suspend(device_t, pmf_qual_t);
 static bool	cas_resume(device_t, pmf_qual_t);
@@ -385,7 +385,7 @@ cas_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_pc = pa->pa_pc;
-	if (!cas_estintr(sc)) {
+	if (!cas_estintr(sc, CAS_INTR_PCI)) {
 		bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_size);
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
 		return;
@@ -657,6 +657,8 @@ cas_detach(device_t self, int flags)
 {
 	int i;
 	struct cas_softc *sc = device_private(self);
+	bus_space_tag_t t = sc->sc_memt;
+	bus_space_handle_t h = sc->sc_memh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	/*
@@ -665,6 +667,7 @@ cas_detach(device_t self, int flags)
 	 */
 	switch (sc->sc_att_stage) {
 	case CAS_ATT_FINISHED:
+		bus_space_write_4(t, h, CAS_INTMASK, ~(uint32_t)0);
 		pmf_device_deregister(self);
 		cas_stop(&sc->sc_ethercom.ec_if, 1);
 		evcnt_detach(&sc->sc_ev_intr);
@@ -695,7 +698,7 @@ cas_detach(device_t self, int flags)
 		for (i = 0; i < CAS_NRXDESC; i++) {
 			if (sc->sc_rxsoft[i].rxs_dmamap != NULL)
 				bus_dmamap_unload(sc->sc_dmatag,
-		   		    sc->sc_rxsoft[i].rxs_dmamap);
+				    sc->sc_rxsoft[i].rxs_dmamap);
 			if (sc->sc_rxsoft[i].rxs_dmamap != NULL)
 				bus_dmamap_destroy(sc->sc_dmatag,
 				    sc->sc_rxsoft[i].rxs_dmamap);
@@ -1139,18 +1142,7 @@ cas_init(struct ifnet *ifp)
 	}
 
 	/* step 8. Global Configuration & Interrupt Mask */
-	bus_space_write_4(t, h, CAS_INTMASK,
-		      ~(CAS_INTR_TX_INTME|CAS_INTR_TX_EMPTY|
-			CAS_INTR_TX_TAG_ERR|
-			CAS_INTR_RX_DONE|CAS_INTR_RX_NOBUF|
-			CAS_INTR_RX_TAG_ERR|
-			CAS_INTR_RX_COMP_FULL|CAS_INTR_PCS|
-			CAS_INTR_MAC_CONTROL|CAS_INTR_MIF|
-			CAS_INTR_BERR));
-	bus_space_write_4(t, h, CAS_MAC_RX_MASK,
-	    CAS_MAC_RX_DONE|CAS_MAC_RX_FRAME_CNT);
-	bus_space_write_4(t, h, CAS_MAC_TX_MASK, CAS_MAC_TX_XMIT_DONE);
-	bus_space_write_4(t, h, CAS_MAC_CONTROL_MASK, 0); /* XXXX */
+	cas_estintr(sc, CAS_INTR_REG);
 
 	/* step 9. ETX Configuration: use mostly default values */
 
@@ -1240,7 +1232,7 @@ cas_init_regs(struct cas_softc *sc)
 
 		/* Secondary MAC addresses set to 0:0:0:0:0:0 */
 		for (r = CAS_MAC_ADDR3; r < CAS_MAC_ADDR42; r += 4)
-		  	bus_space_write_4(t, h, r, 0);
+			bus_space_write_4(t, h, r, 0);
 
 		/* MAC control addr set to 0:1:c2:0:1:80 */
 		bus_space_write_4(t, h, CAS_MAC_ADDR42, 0x0001);
@@ -1515,9 +1507,9 @@ cas_intr(void *v)
 	if (status & CAS_INTR_RX_MAC) {
 		int rxstat = bus_space_read_4(t, seb, CAS_MAC_RX_STATUS);
 #ifdef CAS_DEBUG
- 		if (rxstat & ~CAS_MAC_RX_DONE)
- 			printf("%s: MAC rx fault, status %x\n",
- 			    device_xname(sc->sc_dev), rxstat);
+		if (rxstat & ~CAS_MAC_RX_DONE)
+			printf("%s: MAC rx fault, status %x\n",
+			    device_xname(sc->sc_dev), rxstat);
 #endif
 		/*
 		 * On some chip revisions CAS_MAC_RX_OVERFLOW happen often
@@ -1833,11 +1825,6 @@ cas_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 	}
 
-	/* Try to get things going again */
-/*
-	if (ifp->if_flags & IFF_UP)
-		cas_start(ifp);
-*/
 	splx(s);
 	return (error);
 }
@@ -1846,7 +1833,10 @@ static bool
 cas_suspend(device_t self, pmf_qual_t qual)
 {
 	struct cas_softc *sc = device_private(self);
+	bus_space_tag_t t = sc->sc_memt;
+	bus_space_handle_t h = sc->sc_memh;
 
+	bus_space_write_4(t, h, CAS_INTMASK, ~(uint32_t)0);
 	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 		sc->sc_ih = NULL;
@@ -1860,26 +1850,48 @@ cas_resume(device_t self, pmf_qual_t qual)
 {
 	struct cas_softc *sc = device_private(self);
 
-	return cas_estintr(sc);
+	return cas_estintr(sc, CAS_INTR_PCI | CAS_INTR_REG);
 }
 
 static bool
-cas_estintr(struct cas_softc *sc)
+cas_estintr(struct cas_softc *sc, int what)
 {
+	bus_space_tag_t t = sc->sc_memt;
+	bus_space_handle_t h = sc->sc_memh;
 	const char *intrstr = NULL;
 
-	intrstr = pci_intr_string(sc->sc_pc, sc->sc_handle);
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->sc_handle,
-	    IPL_NET, cas_intr, sc);
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
-		if (intrstr != NULL)
-			aprint_error(" at %s", intrstr);
-		aprint_error("\n");
-		return false;
+	/* PCI interrupts */
+	if (what & CAS_INTR_PCI) {
+		intrstr = pci_intr_string(sc->sc_pc, sc->sc_handle);
+		sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->sc_handle,
+		    IPL_NET, cas_intr, sc);
+		if (sc->sc_ih == NULL) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to establish interrupt");
+			if (intrstr != NULL)
+				aprint_error(" at %s", intrstr);
+			aprint_error("\n");
+			return false;
+		}
+
+		aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 	}
 
-	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
+	/* Interrupt register */
+	if (what & CAS_INTR_REG) {
+		bus_space_write_4(t, h, CAS_INTMASK,
+		    ~(CAS_INTR_TX_INTME|CAS_INTR_TX_EMPTY|
+		    CAS_INTR_TX_TAG_ERR|
+		    CAS_INTR_RX_DONE|CAS_INTR_RX_NOBUF|
+		    CAS_INTR_RX_TAG_ERR|
+		    CAS_INTR_RX_COMP_FULL|CAS_INTR_PCS|
+		    CAS_INTR_MAC_CONTROL|CAS_INTR_MIF|
+		    CAS_INTR_BERR));
+		bus_space_write_4(t, h, CAS_MAC_RX_MASK,
+		    CAS_MAC_RX_DONE|CAS_MAC_RX_FRAME_CNT);
+		bus_space_write_4(t, h, CAS_MAC_TX_MASK, CAS_MAC_TX_XMIT_DONE);
+		bus_space_write_4(t, h, CAS_MAC_CONTROL_MASK, 0); /* XXXX */
+	}
 	return true;
 }
 
