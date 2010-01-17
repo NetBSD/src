@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.43 2009/05/19 09:34:52 tteras Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.44 2010/01/17 23:02:48 wiz Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -3830,6 +3830,7 @@ set_identifier_qual(vpp, type, value, qual)
 				memcpy(new->v + tlen, b, len);
 				tlen += len;
 			}
+			fclose(fp);
 			break;
 		}
 
