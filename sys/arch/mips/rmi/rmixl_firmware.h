@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_firmware.h,v 1.1.2.2 2009/11/09 10:02:48 cliff Exp $	*/
+/*	$NetBSD: rmixl_firmware.h,v 1.1.2.3 2010/01/17 00:01:39 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -127,5 +127,66 @@ typedef struct rmixlfw_mmap {
 		uint32_t type;
 	} entry[RMIXLFW_MMAP_MAX_MMAPS];
 } rmixlfw_mmap_t;
+
+#define XLR_ARGV_BUF_SIZE	256
+#define XLR_ENV_BUF_SIZE	256
+#define XLR_MAX_ARGV		32
+#define XLR_MAX_ENV		32
+#define MAX_ELF_SEGMENTS	16
+#define MAX_TLB_MAPPINGS	16
+
+struct lib_cpu_tlb_mapping {
+	int page_size;
+	int asid;
+	int coherency;
+	int attr;
+	uint32_t virt;
+	uint64_t phys;
+};
+
+struct core_segment_info
+{
+	uint64_t vaddr;
+	uint64_t memsz;
+	uint32_t flags;
+};
+
+typedef struct rmixlfw_cpu_wakeup_info {
+	volatile uint32_t cpu_status;
+	int valid;			/* structure is valid */
+	struct {
+		int32_t addr;
+		int32_t args;
+		uint64_t sp;
+		uint64_t gp;
+	} entry;
+	u_int master_cpu;
+	uint32_t master_cpu_mask;
+	uint32_t buddy_cpu_mask;
+	uint32_t psb_os_cpu_map;
+	int argc;
+	uint32_t argv[XLR_MAX_ARGV];		/* pointers ... */
+	char argv_buf[XLR_ARGV_BUF_SIZE];	/* ... storage */
+	int valid_tlb_entries;;
+	struct lib_cpu_tlb_mapping tlb_map[MAX_TLB_MAPPINGS];
+	struct core_segment_info seg_info[MAX_ELF_SEGMENTS];
+	int envc;
+	uint32_t envs[XLR_MAX_ENV];   
+	char env_buf[XLR_ENV_BUF_SIZE];
+	uint32_t app_mode; 
+	int32_t printk_lock;
+	int kseg_master;
+	int32_t kuseg_reentry_function;
+	uint32_t kuseg_reentry_args;
+	uint64_t app_shared_mem_addr;
+	uint64_t app_shared_mem_size;
+	uint64_t app_shared_mem_orig;
+	int32_t loader_lock;
+	int32_t global_wakeup_mask;
+	union {
+		uint32_t unused_0;
+		struct vcpu_extended_info *vcpu_extended_info;
+	};
+} rmixlfw_cpu_wakeup_info_t;
 
 #endif	/* _ARCH_MIPS_RMI_RMIXL_FIRMWARE_H_ */
