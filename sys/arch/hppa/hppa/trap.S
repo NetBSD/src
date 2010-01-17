@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.37 2010/01/16 13:53:58 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.38 2010/01/17 08:48:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -664,7 +664,6 @@ LDILDO(tlbd_u)
 #define	DTLBPRE \
 	mfctl	%ior, %r9		/* Offset */			! \
 	mfctl	%isr, %r8		/* Space  */
-	/* CR28XXX according to a popular belief cr28 should be read here */
 
 #define	HPMCPRE	\
 	nop
