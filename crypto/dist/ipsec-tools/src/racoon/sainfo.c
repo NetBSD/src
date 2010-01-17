@@ -1,4 +1,4 @@
-/*	$NetBSD: sainfo.c,v 1.11 2008/11/06 14:12:28 vanhu Exp $	*/
+/*	$NetBSD: sainfo.c,v 1.12 2010/01/17 23:03:01 wiz Exp $	*/
 
 /*	$KAME: sainfo.c,v 1.16 2003/06/27 07:32:39 sakane Exp $	*/
 
@@ -115,6 +115,7 @@ getsainfo(loc, rmt, peer, client, remoteid)
                 racoon_free(dloc);
                 racoon_free(drmt);
                 racoon_free(dpeer);
+                racoon_free(dclient);
 	}
 
 	LIST_FOREACH(s, &sitree, chain) {
