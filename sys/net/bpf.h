@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.50 2009/01/13 19:10:52 christos Exp $	*/
+/*	$NetBSD: bpf.h,v 1.51 2010/01/17 19:45:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -258,16 +258,18 @@ struct bpf_dltlist {
 };
 
 #ifdef _KERNEL
+struct bpf_if;
+
 int	 bpf_validate(struct bpf_insn *, int);
-void	 bpf_tap(void *, u_char *, u_int);
-void	 bpf_mtap(void *, struct mbuf *);
-void	 bpf_mtap2(void *, void *, u_int, struct mbuf *);
-void	 bpf_mtap_af(void *, uint32_t, struct mbuf *);
-void	 bpf_mtap_et(void *, uint16_t, struct mbuf *);
-void	 bpf_mtap_sl_in(void *, u_char *, struct mbuf **);
-void	 bpf_mtap_sl_out(void *, u_char *, struct mbuf *);
+void	 bpf_tap(struct bpf_if *, u_char *, u_int);
+void	 bpf_mtap(struct bpf_if *, struct mbuf *);
+void	 bpf_mtap2(struct bpf_if *, void *, u_int, struct mbuf *);
+void	 bpf_mtap_af(struct bpf_if *, uint32_t, struct mbuf *);
+void	 bpf_mtap_et(struct bpf_if *, uint16_t, struct mbuf *);
+void	 bpf_mtap_sl_in(struct bpf_if *, u_char *, struct mbuf **);
+void	 bpf_mtap_sl_out(struct bpf_if *, u_char *, struct mbuf *);
 void	 bpfattach(struct ifnet *, u_int, u_int);
-void	 bpfattach2(struct ifnet *, u_int, u_int, void *);
+void	 bpfattach2(struct ifnet *, u_int, u_int, struct bpf_if **);
 void	 bpfdetach(struct ifnet *);
 void	 bpf_change_type(struct ifnet *, u_int, u_int);
 void	 bpfilterattach(int);

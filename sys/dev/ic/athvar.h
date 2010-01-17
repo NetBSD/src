@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.29 2009/09/16 16:34:50 dyoung Exp $	*/
+/*	$NetBSD: athvar.h,v 1.30 2010/01/17 19:45:06 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -243,7 +243,7 @@ struct ath_softc {
 	u_int16_t		sc_ledoff;	/* off time for current blink */
 	struct callout		sc_ledtimer;	/* led off timer */
 
-	void *			sc_drvbpf;
+	struct bpf_if *		sc_drvbpf;
 	union {
 		struct ath_tx_radiotap_header th;
 		u_int8_t	pad[64];

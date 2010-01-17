@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.40 2010/01/08 20:02:39 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.41 2010/01/17 19:45:06 pooka Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -458,7 +458,7 @@ struct rtw_softc {
 
 	struct rtw_mtbl		sc_mtbl;
 
-	void *			sc_radiobpf;
+	struct bpf_if *		sc_radiobpf;
 
 	struct callout		sc_scan_ch;
 	u_int			sc_cur_chan;
