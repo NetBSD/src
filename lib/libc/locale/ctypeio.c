@@ -1,4 +1,4 @@
-/* $NetBSD: ctypeio.c,v 1.10 2009/10/21 01:07:45 snj Exp $ */
+/* $NetBSD: ctypeio.c,v 1.11 2010/01/17 23:12:30 wiz Exp $ */
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ctypeio.c,v 1.10 2009/10/21 01:07:45 snj Exp $");
+__RCSID("$NetBSD: ctypeio.c,v 1.11 2010/01/17 23:12:30 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -74,8 +74,10 @@ __loadctype(const char * __restrict path, _BSDCTypeLocale ** __restrict pdata)
 
 	ptr = malloc(sizeof(*data) + ((sizeof(uint8_t) +
 	    sizeof(int16_t) + sizeof(int16_t)) * (len + 1)));
-	if (ptr == NULL)
+	if (ptr == NULL) {
+		fclose(fp);
 		return ENOMEM;
+	}
 
 	data = (_BSDCTypeLocale *)(void *)ptr;
 	ptr += sizeof(*data);
@@ -117,5 +119,6 @@ __loadctype(const char * __restrict path, _BSDCTypeLocale ** __restrict pdata)
 bad1:
 	free(data);
 bad0:
+	fclose(fp);
 	return EFTYPE;
 }
