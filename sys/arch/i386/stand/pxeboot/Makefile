@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2010/01/17 14:54:44 drochner Exp $
+#	$NetBSD: Makefile,v 1.20 2010/01/17 17:02:47 drochner Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -65,7 +65,7 @@ CPPFLAGS+= -DEPIA_HACK
 
 # modules and boot.cfg need special DHCP server setup, disable
 # per default for compatibility with existing setups
-CPPFLAGS+= -DBOOTPARAM_DEFFLAGS=0xc0
+CPPFLAGS+= -DBOOTPARAM_DEFFLAGS=0x0c
 
 #CFLAGS= -O2 -fomit-frame-pointer -fno-defer-pop
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wno-main
