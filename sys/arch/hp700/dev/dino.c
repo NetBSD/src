@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.21 2009/12/08 09:56:42 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.22 2010/01/17 08:29:00 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.21 2009/12/08 09:56:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.22 2010/01/17 08:29:00 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.21 2009/12/08 09:56:42 skrll Exp $");
 extern struct extent *hp700_io_extent;
 
 struct dino_regs {
+	/* HPA Supervisory Register Set */
 	uint32_t	pad0;		/* 0x000 */
 	uint32_t	iar0;		/* 0x004 rw intr addr reg 0 */
 	uint32_t	iodc;		/* 0x008 rw iodc data/addr */
@@ -78,6 +79,8 @@ struct dino_regs {
 	uint32_t	io_status;	/* 0x034 r  status register */
 	uint32_t	io_control;	/* 0x038 rw control register */
 	uint32_t	pad2;		/* 0x03c AUX registers follow */
+
+	/* HPA Auxiliary Register Set */
 	uint32_t	io_gsc_err_addr;/* 0x040 GSC error address */
 	uint32_t	io_err_info;	/* 0x044 error info register */
 	uint32_t	io_pci_err_addr;/* 0x048 PCI error address */
@@ -89,8 +92,12 @@ struct dino_regs {
 	uint32_t	pci_io_data;	/* 0x06c PCI io data reg */
 	uint32_t	pci_mem_data;	/* 0x070 PCI memory data reg */
 	uint32_t	pad4[0x740/4];	/* 0x074 */
+
+	/* HPA Bus (GSC) Specific-Dependent Register Set */
 	uint32_t	gsc2x_config;	/* 0x7b4 GSC2X config reg */
 	uint32_t	pad5[0x48/4];	/* 0x7b8: BSRS registers follow */
+
+	/* HPA HVERSION (Dino)-Dependent Register Set */
 	uint32_t	gmask;		/* 0x800 GSC arbitration mask */
 	uint32_t	pamr;		/* 0x804 PCI arbitration mask */
 	uint32_t	papr;		/* 0x808 PCI arbitration priority */
