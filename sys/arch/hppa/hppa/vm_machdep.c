@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.39 2009/11/29 04:15:42 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.40 2010/01/17 08:50:04 skrll Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.39 2009/11/29 04:15:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.40 2010/01/17 08:50:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ static inline void
 cpu_activate_pcb(struct lwp *l)
 {
 	struct trapframe *tf = l->l_md.md_regs;
+	bool ok;
 	struct pcb *pcb = lwp_getpcb(l);
 	vaddr_t uarea = (vaddr_t)pcb;
 #ifdef DIAGNOSTIC
@@ -64,7 +65,9 @@ cpu_activate_pcb(struct lwp *l)
 	 * Stash the physical for the pcb of U for later perusal
 	 */
 	pcb->pcb_uva = uarea;
-	tf->tf_cr30 = kvtop((void *)uarea);
+	ok = pmap_extract(pmap_kernel(), uarea, (paddr_t *)&tf->tf_cr30);
+	KASSERT(ok);
+
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb, sizeof(struct pcb));
 
 #ifdef DIAGNOSTIC
