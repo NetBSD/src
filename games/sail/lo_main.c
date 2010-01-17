@@ -1,4 +1,4 @@
-/*	$NetBSD: lo_main.c,v 1.17 2009/08/12 09:05:08 dholland Exp $	*/
+/*	$NetBSD: lo_main.c,v 1.18 2010/01/17 22:56:32 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lo_main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lo_main.c,v 1.17 2009/08/12 09:05:08 dholland Exp $");
+__RCSID("$NetBSD: lo_main.c,v 1.18 2010/01/17 22:56:32 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,7 @@ lo_main(void)
 			title[n++], sbuf, ship->shipname, log.l_netpoints,
 			(float) log.l_netpoints / ship->specs->pts);
 	}
+	fclose(fp);
 	printf("\n%d people have played.\n", npeople);
 	return 0;
 }
