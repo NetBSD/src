@@ -1,4 +1,4 @@
-/* $NetBSD: arithchk.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
+/* $NetBSD: arithchk.c,v 1.3 2010/01/17 23:06:31 wiz Exp $ */
 
 /****************************************************************
 Copyright (C) 1997, 1998 Lucent Technologies
@@ -178,8 +178,14 @@ main()
 			fprintf(f, "#define NO_LONG_LONG\n");
 		if (a->kind <= 2 && fzcheck())
 			fprintf(f, "#define Sudden_Underflow\n");
+#ifdef WRITE_ARITH_H
+		fclose(f);
+#endif
 		return 0;
 		}
 	fprintf(f, "/* Unknown arithmetic */\n");
+#ifdef WRITE_ARITH_H
+	fclose(f);
+#endif
 	return 1;
 	}
