@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.56 2010/01/02 18:06:58 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.57 2010/01/17 22:47:18 wiz Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -777,6 +777,7 @@ getName(part, len_name, name)
 		    strncat(name, " (", len_name-strlen(name));
 		    strncat(name, &macosblk[37], len_name-strlen(name));
 		    strncat(name, ")", len_name-strlen(name));
+		    close(fd);
 		}
 		break;
 	    default:
