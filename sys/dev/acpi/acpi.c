@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.144 2010/01/12 12:21:04 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.145 2010/01/18 17:34:37 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.144 2010/01/12 12:21:04 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.145 2010/01/18 17:34:37 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1189,26 +1189,40 @@ acpi_eval_set_integer(ACPI_HANDLE handle, const char *path, ACPI_INTEGER arg)
 ACPI_STATUS
 acpi_eval_string(ACPI_HANDLE handle, const char *path, char **stringp)
 {
-	ACPI_STATUS rv;
+	ACPI_OBJECT *obj;
 	ACPI_BUFFER buf;
+	ACPI_STATUS rv;
 
-	if (handle == NULL)
-		handle = ACPI_ROOT_OBJECT;
+	rv = acpi_eval_struct(handle, path, &buf);
 
-	buf.Pointer = NULL;
-	buf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
+	if (ACPI_FAILURE(rv))
+		return rv;
 
-	rv = AcpiEvaluateObjectTyped(handle, path, NULL, &buf, ACPI_TYPE_STRING);
-	if (ACPI_SUCCESS(rv)) {
-		ACPI_OBJECT *param = buf.Pointer;
-		const char *ptr = param->String.Pointer;
-		size_t len = param->String.Length;
-		if ((*stringp = ACPI_ALLOCATE(len)) == NULL)
-			rv = AE_NO_MEMORY;
-		else
-			(void)memcpy(*stringp, ptr, len);
-		ACPI_FREE(param);
+	obj = buf.Pointer;
+
+	if (obj->Type != ACPI_TYPE_STRING) {
+		rv = AE_TYPE;
+		goto out;
 	}
+
+	if (obj->String.Length == 0) {
+		rv = AE_BAD_DATA;
+		goto out;
+	}
+
+	*stringp = ACPI_ALLOCATE(obj->String.Length + 1);
+
+	if (*stringp == NULL) {
+		rv = AE_NO_MEMORY;
+		goto out;
+	}
+
+	(void)memcpy(*stringp, obj->String.Pointer, obj->String.Length);
+
+	(*stringp)[obj->String.Length] = '\0';
+
+out:
+	ACPI_FREE(buf.Pointer);
 
 	return rv;
 }
