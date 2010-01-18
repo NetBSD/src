@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_cardbus.c,v 1.16 2009/05/12 14:17:31 cegger Exp $	*/
+/*	$NetBSD: if_ral_cardbus.c,v 1.17 2010/01/18 18:52:35 pooka Exp $	*/
 /*	$OpenBSD: if_ral_cardbus.c,v 1.6 2006/01/09 20:03:31 damien Exp $  */
 
 /*-
@@ -22,9 +22,8 @@
  * CardBus front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.16 2009/05/12 14:17:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.17 2010/01/18 18:52:35 pooka Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/sockio.h>
