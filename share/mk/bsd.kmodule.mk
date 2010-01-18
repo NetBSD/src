@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.23 2009/12/14 08:51:16 mrg Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.24 2010/01/18 23:39:07 jmmv Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -21,6 +21,18 @@ CPPFLAGS+=	-D_KERNEL -D_LKM -D_MODULE
 # XXX until the kernel is fixed again...
 .if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 CFLAGS+=	-fno-strict-aliasing -Wno-pointer-sign
+.endif
+
+# XXX This is a workaround for platforms that have relative relocations
+# that, when relocated by the module loader, result in addresses that
+# overflow the size of the relocation (e.g. R_PPC_REL24 in powerpc).
+# The real solution to this involves generating trampolines for those
+# relocations inside the loader and removing this workaround, as the
+# resulting code would be much faster.
+.if ${MACHINE_CPU} == "arm"
+CFLAGS+=	-mlong-calls
+.elif ${MACHINE_CPU} == "powerpc"
+CFLAGS+=	-mlongcall
 .endif
 
 _YKMSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
