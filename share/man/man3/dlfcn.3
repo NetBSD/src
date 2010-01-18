@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.24 2010/01/18 15:25:52 skrll Exp $
+.\"	$NetBSD: dlfcn.3,v 1.25 2010/01/18 15:36:11 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -101,9 +101,9 @@ The
 parameter specifies symbol resolution time and symbol visibility.
 One of the following values may be used to specify symbol resolution time:
 .Bl -tag -width "RTLD_LAZYXX" -offset indent
-.It Sy RTLD_NOW
+.It Dv RTLD_NOW
 Symbols are resolved immediately.
-.It Sy RTLD_LAZY
+.It Dv RTLD_LAZY
 Symbols are resolved when they are first referred to.
 This is the default value if resolution time is unspecified.
 .El
@@ -111,10 +111,10 @@ This is the default value if resolution time is unspecified.
 One of the following values may be used to specify symbol visibility:
 .Pp
 .Bl -tag -width "RTLD_GLOBAL" -compact -offset indent
-.It Sy RTLD_GLOBAL
+.It Dv RTLD_GLOBAL
 The object's symbols and the symbols of its dependencies will be visible to
 other objects.
-.It Sy RTLD_LOCAL
+.It Dv RTLD_LOCAL
 The object's symbols and the symbols of its dependencies will not be visible to
 other objects.
 This is the default value if visibility is unspecified.
@@ -122,8 +122,12 @@ This is the default value if visibility is unspecified.
 .Pp
 To specify both resolution time and visibility, bitwise inclusive OR one of
 each of the above values together.
-If an object was opened with RTLD_LOCAL and later opened with RTLD_GLOBAL,
-then it is promoted to RTLD_GLOBAL.
+If an object was opened with
+.Dv RTLD_LOCAL
+and later opened with
+.Dv RTLD_GLOBAL ,
+then it is promoted to
+.Dv RTLD_GLOBAL .
 .Pp
 .Fn dlopen
 returns a
@@ -184,16 +188,16 @@ The following special
 values may be used with
 .Fn dlsym :
 .Bl -tag -width "RTLD_DEFAULTXX" -offset indent
-.It Sy NULL
+.It Dv NULL
 Interpreted as a reference to the executable or shared object
 from which the call is being made.
 Thus an object can reference its own symbols and the symbols of its
 dependencies without calling
 .Fn dlopen .
-.It Sy RTLD_DEFAULT
+.It Dv RTLD_DEFAULT
 All the visible shared objects and the executable will be searched in the order they
 were loaded.
-.It Sy RTLD_NEXT
+.It Dv RTLD_NEXT
 The search for
 .Fa symbol
 is limited to the visible shared objects which were loaded after the one issuing the
@@ -204,7 +208,7 @@ Thus, if
 is called from the main program, all the visible shared libraries are searched.
 If it is called from a shared library, all subsequently visible shared
 libraries are searched.
-.It Sy RTLD_SELF
+.It Dv RTLD_SELF
 The search for
 .Fa symbol
 is limited to the shared object issuing the call to
