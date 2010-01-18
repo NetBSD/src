@@ -1,4 +1,4 @@
-/*	$NetBSD: probe.c,v 1.10 2006/05/11 08:37:24 mrg Exp $	*/
+/*	$NetBSD: probe.c,v 1.11 2010/01/18 04:53:10 christos Exp $	*/
 /*	$KAME: probe.c,v 1.15 2002/05/31 21:22:08 itojun Exp $	*/
 
 /*
@@ -116,7 +116,7 @@ defrouter_probe(struct ifinfo *ifinfo)
 		goto closeandend;
 	}
 
-	for (i = 0; dr.defrouter[i].if_index && i < PRLSTSIZ; i++) {
+	for (i = 0; i < PRLSTSIZ && dr.defrouter[i].if_index; i++) {
 		if (ifindex && dr.defrouter[i].if_index == ifindex) {
 			/* sanity check */
 			if (!IN6_IS_ADDR_LINKLOCAL(&dr.defrouter[i].rtaddr)) {
