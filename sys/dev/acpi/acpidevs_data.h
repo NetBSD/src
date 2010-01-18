@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.11 2009/09/27 14:11:58 jmcneill Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.12 2010/01/18 16:50:08 jruoho Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.13 2009/09/27 14:11:07 jmcneill Exp
+ *	# NetBSD: acpidevs,v 1.14 2010/01/18 16:34:47 jruoho Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -1311,6 +1311,38 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "ACPI0006",
 	    "GPE Block Device",
+	},
+	{
+	    "ACPI0007",
+	    "Processor Device",
+	},
+	{
+	    "ACPI0008",
+	    "Ambient Light Sensor",
+	},
+	{
+	    "ACPI0009",
+	    "I/O APIC/SAPIC Device",
+	},
+	{
+	    "ACPI000A",
+	    "I/O APIC Device",
+	},
+	{
+	    "ACPI000B",
+	    "I/O SAPIC Device",
+	},
+	{
+	    "ACPI000C",
+	    "Processor Aggregator",
+	},
+	{
+	    "ACPI000D",
+	    "Power Meter",
+	},
+	{
+	    "ACPI000E",
+	    "Wake Alarm Device",
 	},
 	{
 	    "INT0800",
