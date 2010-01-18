@@ -1,4 +1,4 @@
-.\"	$NetBSD: sab.4,v 1.3 2008/04/30 13:10:56 martin Exp $
+.\"	$NetBSD: sab.4,v 1.4 2010/01/18 15:55:11 jdc Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 29, 2003
+.Dd January 18, 2010
 .Dt SAB 4 sparc64
 .Os
 .Sh NAME
@@ -45,16 +45,24 @@ support for the
 .Tn Infineon
 (previously
 .Tn Siemens )
-82532 serial communications interface found in Sun Ultra 5/10
-workstations.
+82532 serial communications interface found in many
+.Tn Sun Ultra
+workstations and servers.
 .Pp
 Input and output speeds for each line may be set to any baud rate in the
-following list: 50, 75, 110, 134, 150, 200, 300, 600, 1200, 1800, 2400, 
-4800, 9600, 19200, 38400, 57600, 76800, 115200, 153600, 230400, 307200, 
+following list: 50, 75, 110, 134, 150, 200, 300, 600, 1200, 1800, 2400,
+4800, 9600, 19200, 38400, 57600, 76800, 115200, 153600, 230400, 307200,
 460800, 614400, 921600.
+.Sh NOTES
+The speed cannot be changed on the ports connected the
+.Tn Remote System Control
+(RSC) on a
+.Tn Sun Enterprise[tm] 250 Server
+(ttyh2 and ttyh3).
+These ports are fixed at 115200 baud.
 .Sh FILES
 .Bl -tag -width XdevXttyh0X
-.It Pa /dev/ttyh[01]
+.It Pa /dev/ttyh[0123]
 serial ports
 .El
 .Sh DIAGNOSTICS
