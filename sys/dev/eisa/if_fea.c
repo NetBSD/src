@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.42 2009/12/04 11:13:04 njoly Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.43 2010/01/18 19:00:58 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.42 2009/12/04 11:13:04 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.43 2010/01/18 19:00:58 pooka Exp $");
 
 #include "opt_inet.h"
 
@@ -54,12 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.42 2009/12/04 11:13:04 njoly Exp $");
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
-
-#include "bpfilter.h"
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>

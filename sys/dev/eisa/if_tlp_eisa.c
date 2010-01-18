@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_eisa.c,v 1.23 2009/12/04 11:13:04 njoly Exp $	*/
+/*	$NetBSD: if_tlp_eisa.c,v 1.24 2010/01/18 19:00:58 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,10 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.23 2009/12/04 11:13:04 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.24 2010/01/18 19:00:58 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,10 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.23 2009/12/04 11:13:04 njoly Exp $
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
