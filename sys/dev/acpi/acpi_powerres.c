@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_powerres.c,v 1.8 2010/01/05 13:39:49 jruoho Exp $ */
+/* $NetBSD: acpi_powerres.c,v 1.9 2010/01/18 18:36:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2001 Michael Smith
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_powerres.c,v 1.8 2010/01/05 13:39:49 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_powerres.c,v 1.9 2010/01/18 18:36:50 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -487,36 +487,10 @@ acpi_pwr_reference_resource(ACPI_OBJECT *obj, void *arg)
 
 	ACPI_FUNCTION_TRACE(__func__);
 
-	/* check the object type */
-	switch (obj->Type) {
-	case ACPI_TYPE_LOCAL_REFERENCE:
-	case ACPI_TYPE_ANY:
-		ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS, "building reference from %s to %s\n",
-				     acpi_name(pc->ac_consumer), acpi_name(obj->Reference.Handle)));
+	status = acpi_eval_reference_handle(obj, &res);
 
-		res = obj->Reference.Handle;
-		break;
-
-	case ACPI_TYPE_STRING:
-		ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS,
-				     "building reference from %s to %s\n",
-				     acpi_name(pc->ac_consumer),
-				     obj->String.Pointer));
-
-		/* get the handle of the resource */
-		status = AcpiGetHandle(NULL, obj->String.Pointer, &res);
-		if (ACPI_FAILURE(status)) {
-			ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS,
-					     "couldn't find power resource %s\n",
-					     obj->String.Pointer));
-			return_ACPI_STATUS(AE_OK);
-		}
-		break;
-
-	default:
-		ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS,
-				     "don't know how to create a power reference to object type %d\n",
-				     obj->Type));
+	if (ACPI_FAILURE(status)) {
+		ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS, "failed to get handle\n"));
 		return_ACPI_STATUS(AE_OK);
 	}
 

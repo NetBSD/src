@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.55 2010/01/18 17:09:17 jruoho Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.56 2010/01/18 18:36:50 jruoho Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.55 2010/01/18 17:09:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.56 2010/01/18 18:36:50 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -393,23 +393,10 @@ acpitz_switch_cooler(ACPI_OBJECT *obj, void *arg)
 	else
 		pwr_state = ACPI_STATE_D3;
 
-	switch(obj->Type) {
-	case ACPI_TYPE_LOCAL_REFERENCE:
-	case ACPI_TYPE_ANY:
-		cooler = obj->Reference.Handle;
-		break;
-	case ACPI_TYPE_STRING:
-		rv = AcpiGetHandle(NULL, obj->String.Pointer, &cooler);
-		if (ACPI_FAILURE(rv)) {
-			aprint_error("%s: failed to get handler from %s\n",
-			    __func__, obj->String.Pointer);
-			return rv;
-		}
-		break;
-	default:
-		aprint_error("%s: unknown power type: %u\n",
-		    __func__, obj->Type);
-		return AE_OK;
+	rv = acpi_eval_reference_handle(obj, &cooler);
+	if (ACPI_FAILURE(rv)) {
+		aprint_error("%s: failed to get handle\n", __func__);
+		return rv;
 	}
 
 	rv = acpi_pwr_switch_consumer(cooler, pwr_state);
