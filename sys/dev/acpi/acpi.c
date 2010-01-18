@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.145 2010/01/18 17:34:37 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.146 2010/01/18 18:06:31 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.145 2010/01/18 17:34:37 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.146 2010/01/18 18:06:31 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1248,6 +1248,38 @@ acpi_eval_struct(ACPI_HANDLE handle, const char *path, ACPI_BUFFER *bufp)
 	rv = AcpiEvaluateObject(handle, path, NULL, bufp);
 
 	return rv;
+}
+
+/*
+ * acpi_eval_reference_handle:
+ *
+ *	Evaluate a reference handle from an element in a package.
+ */
+ACPI_STATUS
+acpi_eval_reference_handle(ACPI_OBJECT *elm, ACPI_HANDLE *handle)
+{
+
+	if (elm == NULL || handle == NULL)
+		return AE_BAD_PARAMETER;
+
+	switch (elm->Type) {
+
+	case ACPI_TYPE_ANY:
+	case ACPI_TYPE_LOCAL_REFERENCE:
+
+		if (elm->Reference.Handle == NULL)
+			return AE_NULL_ENTRY;
+
+		*handle = elm->Reference.Handle;
+
+		return AE_OK;
+
+	case ACPI_TYPE_STRING:
+		return AcpiGetHandle(NULL, elm->String.Pointer, handle);
+
+	default:
+		return AE_TYPE;
+	}
 }
 
 /*
