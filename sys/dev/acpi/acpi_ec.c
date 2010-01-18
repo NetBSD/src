@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.58 2010/01/08 20:40:41 dyoung Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.59 2010/01/18 18:36:49 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.58 2010/01/08 20:40:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.59 2010/01/18 18:36:49 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -459,27 +459,16 @@ acpiec_parse_gpe_package(device_t self, ACPI_HANDLE ec_handle,
 	}
 
 	c = &p->Package.Elements[0];
-	switch (c->Type) {
-	case ACPI_TYPE_LOCAL_REFERENCE:
-	case ACPI_TYPE_ANY:
-		*gpe_handle = c->Reference.Handle;
-		break;
-	case ACPI_TYPE_STRING:
-		/* XXX should be using real scope here */
-		rv = AcpiGetHandle(NULL, p->String.Pointer, gpe_handle);
-		if (rv != AE_OK) {
-			aprint_error_dev(self,
-			    "_GPE device reference unresolvable\n");
-			ACPI_FREE(p);
-			return false;
-		}
-		break;
-	default:
-		aprint_error_dev(self, "_GPE device reference incorrect\n");
+	rv = acpi_eval_reference_handle(c, gpe_handle);
+
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(self, "failed to evaluate _GPE handle\n");
 		ACPI_FREE(p);
 		return false;
 	}
+
 	c = &p->Package.Elements[1];
+
 	if (c->Type != ACPI_TYPE_INTEGER) {
 		aprint_error_dev(self,
 		    "_GPE package needs integer as 2nd field\n");
