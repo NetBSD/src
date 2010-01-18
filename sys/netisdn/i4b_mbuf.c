@@ -27,7 +27,7 @@
  *	i4b - mbuf handling support routines
  *	------------------------------------
  *
- *	$Id: i4b_mbuf.c,v 1.5 2005/12/11 12:25:06 christos Exp $
+ *	$Id: i4b_mbuf.c,v 1.6 2010/01/18 16:29:51 pooka Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_mbuf.c,v 1.5 2005/12/11 12:25:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_mbuf.c,v 1.6 2010/01/18 16:29:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_mbuf.c,v 1.5 2005/12/11 12:25:06 christos Exp $"
 #include <netisdn/i4b_mbuf.h>
 #include <netisdn/i4b_global.h>
 
+#ifndef I4B_MBUF_DEBUG
 #define I4B_MBUF_DEBUG
+#endif
 #undef I4B_MBUF_TYPE_DEBUG
 
 #ifdef I4B_MBUF_TYPE_DEBUG
