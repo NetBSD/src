@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.41 2009/12/10 14:13:51 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.42 2010/01/18 23:35:51 jmmv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,9 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.41 2009/12/10 14:13:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.42 2010/01/18 23:35:51 jmmv Exp $");
 
 #include "opt_altivec.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -48,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.41 2009/12/10 14:13:51 matt Ex
 #include <sys/sysctl.h>
 #include <sys/ucontext.h>
 #include <sys/cpu.h>
+#include <sys/module.h>
 
 int cpu_timebase;
 int cpu_printfataltraps;
@@ -301,3 +303,12 @@ cpu_intr_p(void)
 	return curcpu()->ci_idepth != 0;
 }
 
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the boot loader.
+ */
+void
+module_init_md(void)
+{
+}
+#endif /* MODULAR */
