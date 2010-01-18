@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2009/12/18 04:12:36 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.15 2010/01/18 10:25:29 plunky Exp $
 
 .include <bsd.own.mk>
 
@@ -56,6 +56,6 @@ distrib-dirs: .PHONY check_DESTDIR NetBSD.dist
 .endif	# MKUNPRIVED							# }
 .endif	# DISTRIBUTION_DONE						# }
 
-CLEANFILES+=	NetBSD.dist
+CLEANFILES+=	NetBSD.dist NetBSD.dist.tmp
 
 .include <bsd.prog.mk>
