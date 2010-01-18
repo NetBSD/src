@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.41 2009/12/04 11:13:04 njoly Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.42 2010/01/18 19:00:58 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,10 +64,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.41 2009/12/04 11:13:04 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.42 2010/01/18 19:00:58 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,12 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.41 2009/12/04 11:13:04 njoly Exp $"
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
-#endif
-
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 #endif
 
 #include <sys/cpu.h>
