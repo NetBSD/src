@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.40 2010/01/12 09:09:59 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.41 2010/01/18 18:52:24 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -940,4 +940,25 @@ crypto/dist/openssl/ssl/ssl_locl.h 		patch
 
 	Disable OpenSSL renegotiation, thus avoiding CVE-2009-3555.
 	[tonnerre, ticket #1237]
+
+sys/kern/kern_sig.c				1.302
+
+	sigactsunshare(): set reference count in a case of new sigacts
+	allocation.
+	Bug (e.g. memory leak) can happen when using clone(2) call.
+	[rmind, ticket #1238]
+
+sys/kern/kern_runq.c				1.28
+
+	sched_catchlwp: fix the case when other CPU might see
+	curlwp->l_cpu != curcpu() while LWP is finishing context switch.
+	Should fix PR/42539, tested by martin@.
+	[rmind, ticket #1240]
+
+sys/kern/kern_softint.c				1.30
+
+	softint_execute: release/re-acquire kernel-lock depending on
+	SOFTINT_MPSAFE flag.  Keeping it held for MP-safe cases break the
+	lock order assumptions.  Per discussion with <martin>.
+	[rmind, ticket #1241]
 
