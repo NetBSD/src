@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.181 2009/08/21 03:39:41 thorpej Exp $
+# $NetBSD: files.alpha,v 1.182 2010/01/18 17:53:35 pooka Exp $
 #
 # alpha-specific configuration info
 
@@ -353,13 +353,6 @@ device	pceb: isabus, eisabus, cy82c693, alpha_shared_intr
 attach	pceb at pci
 file	arch/alpha/pci/sio.c		sio | pceb	needs-flag
 file	arch/alpha/pci/sio_pic.c	sio | pceb
-
-#
-# A12 if_de hack
-#
-device	ade: ether, ifnet, arp
-attach	ade at pci
-file	arch/alpha/a12/if_ade.c		ade
 
 #
 # alpha/a12 platform-specific drivers
