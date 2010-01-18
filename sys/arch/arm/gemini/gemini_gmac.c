@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmac.c,v 1.3 2008/12/23 02:15:10 matt Exp $ */
+/* $NetBSD: gemini_gmac.c,v 1.4 2010/01/18 18:23:53 pooka Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@
 
 #include <sys/gpio.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.3 2008/12/23 02:15:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.4 2010/01/18 18:23:53 pooka Exp $");
 
 #define	SWFREEQ_DESCS	256	/* one page worth */
 #define	HWFREEQ_DESCS	256	/* one page worth */
@@ -550,7 +550,7 @@ gmac_hwqueue_txconsume(gmac_hwqueue_t *hwq, const gmac_desc_t *d)
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp->if_bpf, m);
 #endif
 	m_freem(m);
 }
@@ -860,7 +860,7 @@ gmac_hwqueue_rxconsume(gmac_hwqueue_t *hwq, const gmac_desc_t *d)
 		KASSERT(m_length(m) == m->m_pkthdr.len);
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp, m);
+			bpf_mtap(ifp->if_bpf, m);
 #endif
 		(*ifp->if_input)(ifp, m);
 		break;
