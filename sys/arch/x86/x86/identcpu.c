@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.17 2009/10/02 18:50:03 jmcneill Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.18 2010/01/18 16:40:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.17 2009/10/02 18:50:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.18 2010/01/18 16:40:18 rmind Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -652,7 +652,7 @@ cpu_probe(struct cpu_info *ci)
 	cpu_probe_c3(ci);
 	cpu_probe_geode(ci);
 
-	x86_cpu_toplogy(ci);
+	x86_cpu_topology(ci);
 
 	if (cpu_vendor != CPUVENDOR_AMD && (ci->ci_feature_flags & CPUID_TM) &&
 	    (rdmsr(MSR_MISC_ENABLE) & (1 << 3)) == 0) {
