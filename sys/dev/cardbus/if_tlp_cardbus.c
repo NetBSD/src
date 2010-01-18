@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.61 2009/04/17 10:20:32 cegger Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.62 2010/01/18 18:52:35 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,10 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.61 2009/04/17 10:20:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.62 2010/01/18 18:52:35 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,10 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.61 2009/04/17 10:20:32 cegger E
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
