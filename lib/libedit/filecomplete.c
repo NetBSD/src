@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.17 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.18 2010/01/18 19:17:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.17 2009/12/30 22:37:40 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.18 2010/01/18 19:17:42 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -419,9 +419,9 @@ fn_complete(EditLine *el,
 
 	len = li->cursor - ctemp;
 #if defined(__SSP__) || defined(__SSP_ALL__)
-	temp = malloc(len + 1);
+	temp = malloc(sizeof(*temp) * (len + 1));
 #else
-	temp = alloca(len + 1);
+	temp = alloca(sizeof(*temp) * (len + 1));
 #endif
 	(void)Strncpy(temp, ctemp, len);
 	temp[len] = '\0';
