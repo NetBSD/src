@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.32 2009/08/16 11:04:48 yamt Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.33 2010/01/18 22:31:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,14 +42,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.32 2009/08/16 11:04:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.33 2010/01/18 22:31:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/vnode.h>
-#include <sys/proc.h>
 
 #include <miscfs/procfs/procfs.h>
 
@@ -57,17 +56,18 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.32 2009/08/16 11:04:48 yamt Exp
 #include <machine/reg.h>
 #include <machine/specialreg.h>
 
-extern int i386_fpu_present, i386_fpu_exception, i386_fpu_fdivbug;
-extern char cpu_model[];
+extern int	i386_fpu_present, i386_fpu_exception, i386_fpu_fdivbug;
+extern char	cpu_model[];
 
-static const char * const i386_features[] = {
+static const char * const x86_features[] = {
+	/* Intel-defined */
 	"fpu", "vme", "de", "pse", "tsc", "msr", "pae", "mce",
-	"cx8", "apic", "10", "sep", "mtrr", "pge", "mca", "cmov",
-	"pat", "pse36", "pn", "clflush", "20", "dts", "acpi", "mmx",
-	"fxsr", "sse", "sse2", "ss", "ht", "tm", "ia64", "31"
+	"cx8", "apic", NULL, "sep", "mtrr", "pge", "mca", "cmov",
+	"pat", "pse36", "pn", "clflush", NULL, "dts", "acpi", "mmx",
+	"fxsr", "sse", "sse2", "ss", "ht", "tm", "ia64", NULL
 };
 
-static int procfs_getonecpu(int, struct cpu_info *, char *, int *);
+static int	procfs_getonecpu(int, struct cpu_info *, char *, int *);
 
 /*
  * Linux-style /proc/cpuinfo.
@@ -96,7 +96,7 @@ procfs_getcpuinfstr(char *bf, int *len)
 			*len += used + 1;
 			used = --total;
 			if (used == 0)
-			    break;
+				break;
 		} else {
 			*len += used;
 			break;
@@ -112,10 +112,10 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 	char featurebuf[256], *p;
 
 	p = featurebuf;
-	left = sizeof featurebuf;
+	left = sizeof(featurebuf);
 	for (i = 0; i < 32; i++) {
-		if (ci->ci_feature_flags & (1 << i)) {
-			l = snprintf(p, left, "%s ", i386_features[i]);
+		if ((ci->ci_feature_flags & (1 << i)) && x86_features[i]) {
+			l = snprintf(p, left, "%s ", x86_features[i]);
 			left -= l;
 			p += l;
 			if (left <= 0)
@@ -126,20 +126,18 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 	p = bf;
 	left = *len;
 	l = snprintf(p, left,
-		"processor\t: %d\n"
-		"vendor_id\t: %s\n"
-		"cpu family\t: %d\n"
-		"model\t\t: %d\n"
-		"model name\t: %s\n"
-		"stepping\t: ",
-		xcpu,
-		(char *)ci->ci_vendor,
-		cpuid_level >= 0 ?
-		    ((ci->ci_signature >> 8) & 15) : cpu_class + 3,
-		cpuid_level >= 0 ?
-		    ((ci->ci_signature >> 4) & 15) : 0,
-		cpu_brand_string
-	    );
+	    "processor\t: %d\n"
+	    "vendor_id\t: %s\n"
+	    "cpu family\t: %d\n"
+	    "model\t\t: %d\n"
+	    "model name\t: %s\n"
+	    "stepping\t: ",
+	    xcpu,
+	    (char *)ci->ci_vendor,
+	    cpuid_level >= 0 ? ((ci->ci_signature >> 8) & 15) : cpu_class + 3,
+	    cpuid_level >= 0 ? ((ci->ci_signature >> 4) & 15) : 0,
+	    cpu_brand_string
+	);
 
 	left -= l;
 	p += l;
@@ -156,7 +154,6 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 	if (left <= 0)
 		return 0;
 
-		
 	if (ci->ci_data.cpu_cc_freq != 0) {
 		uint64_t freq, fraq;
 
@@ -173,18 +170,25 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 		return 0;
 
 	l = snprintf(p, left,
-		"fdiv_bug\t: %s\n"
-		"fpu\t\t: %s\n"
-		"fpu_exception\t: %s\n"
-		"cpuid level\t: %d\n"
-		"wp\t\t: %s\n"
-		"flags\t\t: %s\n",
-		i386_fpu_fdivbug ? "yes" : "no",
-		i386_fpu_present ? "yes" : "no",
-		i386_fpu_exception ? "yes" : "no",
-		cpuid_level,
-		(rcr0() & CR0_WP) ? "yes" : "no",
-		featurebuf);
+	    "fdiv_bug\t: %s\n"
+	    "fpu\t\t: %s\n"
+	    "fpu_exception\t: %s\n"
+	    "cpuid level\t: %d\n"
+	    "wp\t\t: %s\n"
+	    "flags\t\t: %s\n",
+#ifdef __x86_64__
+	    "no",	/* XXX */
+	    "yes",	/* XXX */
+	    "yes",	/* XXX */
+#else
+	    i386_fpu_fdivbug ? "yes" : "no",
+	    i386_fpu_present ? "yes" : "no",
+	    i386_fpu_exception ? "yes" : "no",
+#endif
+	    cpuid_level,
+	    (rcr0() & CR0_WP) ? "yes" : "no",
+	    featurebuf
+	);
 
 	if (l > left)
 		return 0;
@@ -194,19 +198,20 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 }
 
 #ifdef __HAVE_PROCFS_MACHDEP
+
 void
 procfs_machdep_allocvp(struct vnode *vp)
 {
 	struct pfsnode *pfs = vp->v_data;
 
 	switch (pfs->pfs_type) {
-	case Pmachdep_xmmregs:	/* /proc/N/xmmregs = -rw------- */
+	case Pmachdep_xmmregs:
+		/* /proc/N/xmmregs = -rw------- */
 		pfs->pfs_mode = S_IRUSR|S_IWUSR;
 		vp->v_type = VREG;
 		break;
-
 	default:
-		panic("procfs_machdep_allocvp");
+		KASSERT(false);
 	}
 }
 
@@ -218,18 +223,14 @@ procfs_machdep_rw(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 	switch (pfs->pfs_type) {
 	case Pmachdep_xmmregs:
 		return (procfs_machdep_doxmmregs(curl, l, pfs, uio));
-
 	default:
-		panic("procfs_machdep_rw");
+		KASSERT(false);
 	}
-
-	/* NOTREACHED */
-	return (EINVAL);
+	return EINVAL;
 }
 
 int
-procfs_machdep_getattr(struct vnode *vp, struct vattr *vap,
-    struct proc *procp)
+procfs_machdep_getattr(struct vnode *vp, struct vattr *vap, struct proc *procp)
 {
 	struct pfsnode *pfs = VTOPFS(vp);
 
@@ -237,12 +238,10 @@ procfs_machdep_getattr(struct vnode *vp, struct vattr *vap,
 	case Pmachdep_xmmregs:
 		vap->va_bytes = vap->va_size = sizeof(struct xmmregs);
 		break;
-
 	default:
-		panic("procfs_machdep_getattr");
+		KASSERT(false);
 	}
-
-	return (0);
+	return 0;
 }
 
 int
@@ -250,13 +249,14 @@ procfs_machdep_doxmmregs(struct lwp *curl, struct lwp *l,
     struct pfsnode *pfs, struct uio *uio)
 {
 
-	return (process_machdep_doxmmregs(curl, l, uio));
+	return process_machdep_doxmmregs(curl, l, uio);
 }
 
 int
 procfs_machdep_validxmmregs(struct lwp *l, struct mount *mp)
 {
 
-	return (process_machdep_validxmmregs(l->l_proc));
+	return process_machdep_validxmmregs(l->l_proc);
 }
+
 #endif
