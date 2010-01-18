@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.540 2010/01/14 09:30:39 matthias Exp $
+$NetBSD: usbdevs,v 1.541 2010/01/18 20:54:22 martin Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1107,6 +1107,8 @@ product FTDI MHAM_DB9		0xeeed	DB9
 product FTDI MHAM_RS232		0xeeee	RS232
 product FTDI MHAM_Y9		0xeeef	Y9
 product FTDI COASTAL_TNCX	0xf448	Coastal ChipWorks TNC-X
+product FTDI CTI_485_MINI	0xf608	CTI 485 Mini
+product FTDI CTI_NANO_485	0xf60b	CTI Nano 485
 product FTDI LCD_MX200_USB	0xfa01	Matrix Orbital MX2/MX3/MX6 Series
 product FTDI LCD_MX4_MX5_USB	0xfa02	Matrix Orbital MX4/MX5 Series LCD
 product FTDI LCD_LK202_24_USB	0xfa03	Matrix Orbital LK/VK/PK202-24 LCD
