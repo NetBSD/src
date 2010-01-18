@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.35 2009/10/26 19:16:54 cegger Exp $ */
+/*	$NetBSD: if_qn.c,v 1.36 2010/01/18 18:14:43 pooka Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.35 2009/10/26 19:16:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.36 2010/01/18 18:14:43 pooka Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -147,9 +147,6 @@ struct	qn_softc {
 	u_short	volatile *nic_reset;
 	u_short	volatile *nic_len;
 	u_char	transmit_pending;
-#if NBPFILTER > 0
-	void *	sc_bpf;
-#endif
 } qn_softc[NQN];
 
 #if NBPFILTER > 0
@@ -414,8 +411,8 @@ qnstart(struct ifnet *ifp)
 	 * that RAM is not visible to the host but is read from FIFO)
 	 *
 	 */
-	if (sc->sc_bpf)
-		bpf_mtap(sc->sc_bpf, m);
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m);
 #endif
 	len = qn_put(sc->nic_fifo, m);
 	m_freem(m);
@@ -598,8 +595,8 @@ qn_get_packet(struct qn_softc *sc, u_short len)
 	}
 
 #if NBPFILTER > 0
-	if (sc->sc_bpf)
-		bpf_mtap(sc->sc_bpf, head);
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, head);
 #endif
 
 	(*ifp->if_input)(ifp, head);
