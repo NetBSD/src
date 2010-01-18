@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.38 2009/11/29 21:32:50 cegger Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.39 2010/01/18 18:06:31 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -271,6 +271,7 @@ ACPI_STATUS	acpi_eval_set_integer(ACPI_HANDLE handle, const char *path,
 		    ACPI_INTEGER arg);
 ACPI_STATUS	acpi_eval_string(ACPI_HANDLE, const char *, char **);
 ACPI_STATUS	acpi_eval_struct(ACPI_HANDLE, const char *, ACPI_BUFFER *);
+ACPI_STATUS	acpi_eval_reference_handle(ACPI_OBJECT *, ACPI_HANDLE *);
 
 ACPI_STATUS	acpi_foreach_package_object(ACPI_OBJECT *,
 		    ACPI_STATUS (*)(ACPI_OBJECT *, void *), void *);
