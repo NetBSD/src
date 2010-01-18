@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_l4mgmt.c,v 1.17 2007/07/09 21:11:14 ad Exp $	*/
+/*	$NetBSD: i4b_l4mgmt.c,v 1.18 2010/01/18 16:37:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_l4mgmt.c - layer 4 calldescriptor management utilites
  *	-----------------------------------------------------------
  *
- *	$Id: i4b_l4mgmt.c,v 1.17 2007/07/09 21:11:14 ad Exp $
+ *	$Id: i4b_l4mgmt.c,v 1.18 2010/01/18 16:37:41 pooka Exp $
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.17 2007/07/09 21:11:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.18 2010/01/18 16:37:41 pooka Exp $");
 
 #include "isdn.h"
 
@@ -376,104 +376,5 @@ i4b_init_callout(call_desc_t *cd)
 		cd->callouts_inited = 1;
 	}
 }
-
-#ifdef I4B_CD_DEBUG_PRINT
-
-extern char *print_l3state(call_desc_t *cd);
-
-void i4b_print_cdp(call_desc_t *cdp);
-void i4b_print_cdx(int index);
-void i4b_print_cda(void);
-void i4b_print_cdaa(void);
-
-/*---------------------------------------------------------------------------*
- *	print a call descriptor by cd-pointer
- *---------------------------------------------------------------------------*/
-void
-i4b_print_cdp(call_desc_t *cdp)
-{
-	if((cdp > &(call_desc[num_call_desc])) || (cdp < &(call_desc[0])))
-	{
-		printf("i4b_print_cd: cdp out of range!\n");
-		return;
-	}
-
-	printf("i4b_print_cd: printing call descriptor %d at 0x%lx:\n", cdp - (&(call_desc[0])), (unsigned long)cdp);
-
-	printf("         cdid = %d\n", cdp->cdid);
-	printf("   controller = %d (u=%d, dl=%d, b1=%d, b2=%d)\n",
-			cdp->controller,
-			ctrl_desc[cdp->controller].unit,
-			ctrl_desc[cdp->controller].dl_est,
-			ctrl_desc[cdp->controller].bch_state[CHAN_B1],
-			ctrl_desc[cdp->controller].bch_state[CHAN_B2]);
-	printf("           cr = 0x%02x\n", cdp->cr);
-	printf("       crflag = %d\n", cdp->crflag);
-	printf("    channelid = %d\n", cdp->channelid);
-	printf("        bprot = %d\n", cdp->bprot);
-	printf("       driver = %d\n", cdp->driver);
-	printf("  driver_unit = %d\n", cdp->driver_unit);
-	printf("   call_state = %d\n", cdp->call_state);
-	printf("    Q931state = %s\n", print_l3state(cdp));
-	printf("        event = %d\n", cdp->event);
-	printf("     response = %d\n", cdp->response);
-	printf("         T303 = %d\n", cdp->T303);
-	printf("T303_first_to = %d\n", cdp->T303_first_to);
-	printf("         T305 = %d\n", cdp->T305);
-	printf("         T308 = %d\n", cdp->T308);
-	printf("T308_first_to = %d\n", cdp->T308_first_to);
-	printf("         T309 = %d\n", cdp->T309);
-	printf("         T310 = %d\n", cdp->T310);
-	printf("         T313 = %d\n", cdp->T313);
-	printf("         T400 = %d\n", cdp->T400);
-	printf("          dir = %s\n", cdp->dir == DIR_OUTGOING ? "out" : "in");
-}
-
-/*---------------------------------------------------------------------------*
- *	print a call descriptor by index
- *---------------------------------------------------------------------------*/
-void
-i4b_print_cdx(int index)
-{
-	if(index >= num_call_desc)
-	{
-		printf("i4b_print_cdx: index %d >= N_CALL_DESC %d\n", index, N_CALL_DESC);
-		return;
-	}
-	i4b_print_cdp(&(call_desc[index]));
-}
-
-/*---------------------------------------------------------------------------*
- *	print all call descriptors
- *---------------------------------------------------------------------------*/
-void
-i4b_print_cda(void)
-{
-	int i;
-
-	for(i=0; i < num_call_desc; i++)
-	{
-		i4b_print_cdp(&(call_desc[i]));
-	}
-}
-
-/*---------------------------------------------------------------------------*
- *	print all active call descriptors
- *---------------------------------------------------------------------------*/
-void
-i4b_print_cdaa(void)
-{
-	int i;
-
-	for(i=0; i < num_call_desc; i++)
-	{
-		if(call_desc[i].cdid != CDID_UNUSED)
-		{
-			i4b_print_cdp(&(call_desc[i]));
-		}
-	}
-}
-
-#endif /* I4B_CD_DEBUG_PRINT */
 
 #endif /* NISDN > 0 */
