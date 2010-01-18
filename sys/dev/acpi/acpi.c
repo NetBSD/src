@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.146 2010/01/18 18:06:31 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.147 2010/01/18 18:49:27 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.146 2010/01/18 18:06:31 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.147 2010/01/18 18:49:27 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -161,7 +161,7 @@ struct acpi_softc *acpi_softc;
 extern kmutex_t acpi_interrupt_list_mtx;
 
 /*
- * Ignored HIDs
+ * Ignored HIDs.
  */
 static const char * const acpi_ignored_ids[] = {
 #if defined(i386) || defined(x86_64)
@@ -464,7 +464,7 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	acpi_softc = sc;
 
 	/*
-	 * Register null power management handler
+	 * Register null power management handler.
 	 */
 	if (!pmf_device_register(self, acpi_suspend, acpi_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -499,7 +499,7 @@ acpi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* early EC handler initialization if ECDT table is available */
+	/* Early EC handler initialization if ECDT table is available. */
 	config_found_ia(self, "acpiecdtbus", NULL, NULL);
 
 	rv = AcpiInitializeObjects(ACPI_FULL_INITIALIZATION);
@@ -598,7 +598,7 @@ acpi_detach(device_t self, int flags)
 		return;
 	}
 
-	/* early EC handler initialization if ECDT table is available */
+	/* Early EC handler initialization if ECDT table is available. */
 	config_found_ia(self, "acpiecdtbus", NULL, NULL);
 
 	rv = AcpiInitializeObjects(ACPI_FULL_INITIALIZATION);
@@ -1044,7 +1044,6 @@ acpi_enable_fixed_events(struct acpi_softc *sc)
 	/*
 	 * Check for fixed-hardware buttons.
 	 */
-
 	if ((AcpiGbl_FADT.Flags & ACPI_FADT_POWER_BUTTON) == 0) {
 		aprint_verbose_dev(sc->sc_dev,
 		    "fixed-feature power button present\n");
@@ -1163,6 +1162,11 @@ acpi_eval_integer(ACPI_HANDLE handle, const char *path, ACPI_INTEGER *valp)
 	return rv;
 }
 
+/*
+ * acpi_eval_set_integer:
+ *
+ *	Evaluate an integer object with a single integer input parameter.
+ */
 ACPI_STATUS
 acpi_eval_set_integer(ACPI_HANDLE handle, const char *path, ACPI_INTEGER arg)
 {
@@ -1227,7 +1231,6 @@ out:
 	return rv;
 }
 
-
 /*
  * acpi_eval_struct:
  *
@@ -1285,11 +1288,10 @@ acpi_eval_reference_handle(ACPI_OBJECT *elm, ACPI_HANDLE *handle)
 /*
  * acpi_foreach_package_object:
  *
- *	Iterate over all objects in a in a packages and pass then all
+ *	Iterate over all objects in a package, and pass them all
  *	to a function. If the called function returns non AE_OK, the
  *	iteration is stopped and that value is returned.
  */
-
 ACPI_STATUS
 acpi_foreach_package_object(ACPI_OBJECT *pkg,
     ACPI_STATUS (*func)(ACPI_OBJECT *, void *),
@@ -1310,6 +1312,15 @@ acpi_foreach_package_object(ACPI_OBJECT *pkg,
 	return rv;
 }
 
+/*
+ * acpi_name:
+ *
+ *	Return a complete pathname from a handle.
+ *
+ *	Note that the function uses static data storage;
+ *	if the data is needed for future use, it should be
+ *	copied before any subsequent calls overwrite it.
+ */
 const char *
 acpi_name(ACPI_HANDLE handle)
 {
@@ -1346,7 +1357,7 @@ acpi_get(ACPI_HANDLE handle, ACPI_BUFFER *buf,
 /*
  * acpi_match_hid
  *
- *	Match given ids against _HID and _CIDs
+ *	Match given ids against _HID and _CIDs.
  */
 int
 acpi_match_hid(ACPI_DEVICE_INFO *ad, const char * const *ids)
@@ -1374,7 +1385,7 @@ acpi_match_hid(ACPI_DEVICE_INFO *ad, const char * const *ids)
 /*
  * acpi_wake_gpe_helper
  *
- *	Set/unset GPE as both Runtime and Wake
+ *	Set/unset GPE as both Runtime and Wake.
  */
 static void
 acpi_wake_gpe_helper(ACPI_HANDLE handle, bool enable)
@@ -1440,7 +1451,7 @@ out:
 /*
  * acpi_clear_wake_gpe
  *
- *	Clear GPE as both Runtime and Wake
+ *	Clear GPE as both Runtime and Wake.
  */
 void
 acpi_clear_wake_gpe(ACPI_HANDLE handle)
@@ -1451,7 +1462,7 @@ acpi_clear_wake_gpe(ACPI_HANDLE handle)
 /*
  * acpi_set_wake_gpe
  *
- *	Set GPE as both Runtime and Wake
+ *	Set GPE as both Runtime and Wake.
  */
 void
 acpi_set_wake_gpe(ACPI_HANDLE handle)
@@ -1476,7 +1487,7 @@ is_available_state(struct acpi_softc *sc, int state)
 /*
  * acpi_enter_sleep_state:
  *
- *	enter to the specified sleep state.
+ *	Enter to the specified sleep state.
  */
 
 ACPI_STATUS
