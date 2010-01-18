@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.854 2010/01/16 16:12:01 roy Exp $
+# $NetBSD: mi,v 1.855 2010/01/18 16:57:39 ahoka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3994,6 +3994,9 @@
 ./usr/share/wscons/fonts/vt220l.810		base-util-share		share
 ./usr/share/wscons/fonts/vt220l.814		base-util-share		share
 ./usr/share/wscons/fonts/vt220l.816		base-util-share		share
+./usr/share/wscons/fonts/latin2.808		base-util-share		share
+./usr/share/wscons/fonts/latin2.814		base-util-share		share
+./usr/share/wscons/fonts/latin2.816		base-util-share		share
 ./usr/share/wscons/keymaps			base-util-share
 ./usr/share/wscons/keymaps/amikbd.pl.qwertz.iso8859-2	base-util-share		share
 ./usr/share/wscons/keymaps/mkbd.pt.iso8859-1	base-util-share		share
