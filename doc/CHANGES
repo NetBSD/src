@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1344 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1345 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -522,3 +522,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		found on SPARCstation-4/5 and qemu. Allows to idle the
 		CPU when in the idle loop.  [bouyer 20100115]
 	tn3270: Removed from base [roy 20100116]	
+	macppc: Add support for new-style kernel modules.  [jmmv 20100118]
+	shark: Add support for new-style kernel modules.  [jmmv 20100118]
