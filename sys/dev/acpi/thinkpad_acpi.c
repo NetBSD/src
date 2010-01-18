@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.22 2010/01/08 20:40:41 dyoung Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.23 2010/01/18 17:11:00 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.22 2010/01/08 20:40:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.23 2010/01/18 17:11:00 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -94,6 +94,9 @@ typedef struct thinkpad_softc {
 #define	THINKPAD_NOTIFY_BrightnessDown	0x011
 #define	THINKPAD_NOTIFY_ThinkLight	0x012
 #define	THINKPAD_NOTIFY_Zoom		0x014
+#define	THINKPAD_NOTIFY_VolumeUp	0x015
+#define	THINKPAD_NOTIFY_VolumeDown	0x016
+#define	THINKPAD_NOTIFY_VolumeMute	0x017
 #define	THINKPAD_NOTIFY_ThinkVantage	0x018
 
 #define	THINKPAD_CMOS_BRIGHTNESS_UP	0x04
@@ -386,6 +389,9 @@ thinkpad_get_hotkeys(void *opaque)
 		case THINKPAD_NOTIFY_FnF10:
 		case THINKPAD_NOTIFY_FnF11:
 		case THINKPAD_NOTIFY_ThinkLight:
+		case THINKPAD_NOTIFY_VolumeUp:
+		case THINKPAD_NOTIFY_VolumeDown:
+		case THINKPAD_NOTIFY_VolumeMute:
 			/* XXXJDM we should deliver hotkeys as keycodes */
 			break;
 		default:
