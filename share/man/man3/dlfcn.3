@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.23 2009/03/13 14:23:30 joerg Exp $
+.\"	$NetBSD: dlfcn.3,v 1.24 2010/01/18 15:25:52 skrll Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 31, 2008
+.Dd January 18, 2010
 .Dt DLFCN 3
 .Os
 .Sh NAME
@@ -39,7 +39,8 @@
 .Nm dlerror
 .Nd dynamic link interface
 .Sh LIBRARY
-(These functions are not in a library.  They are included in every
+(These functions are not in a library.
+They are included in every
 dynamically linked program automatically.)
 .Sh SYNOPSIS
 .In dlfcn.h
@@ -60,41 +61,85 @@ These functions provide an interface to the run-time linker
 .Xr ld.so 1 .
 They allow new shared objects to be loaded into the process' address space
 under program control.
+.Pp
 The
 .Fn dlopen
-function takes a name of a shared object as the first argument.
-The shared object is mapped into the address space, relocated and
+function takes the name of a shared object as the first argument.
+The shared object is mapped into the address space, relocated, and
 its external references are resolved in the same way as is done
 with the implicitly loaded shared libraries at program startup.
-The argument can either be an absolute pathname or it can be of the form
+.Pp
+The
+.Fa path
+argument can be specified as either an absolute pathname to a shared object
+or just the name of the shared object itself.
+When an absolute pathname is specified,
+only the path provided will be searched.
+When just a shared object name is specified, the same search rules apply that are
+used for
+.Dq intrinsic
+shared object searches.
+.Pp
+Shared libraries take the following form:
 .Sm off
 .Do lib Ao name Ac .so Oo .xx Oo .yy Oc Oc
 .Dc
-.Sm on
-in which case the same library search rules apply that are used for
-.Dq intrinsic
-shared library searches.
+.Sm on .
+.Pp
 If the first argument is
 .Dv NULL ,
 .Fn dlopen
-returns a handle on the global symbol object. This object
+returns a
+.Fa handle
+on the global symbol object.
+This object
 provides access to all symbols from an ordered set of objects consisting
 of the original program image and any dependencies loaded during startup.
 .Pp
-The second argument has currently no effect, but should be set to
-.Dv RTLD_LAZY
-for future compatibility.
+The
+.Fa mode
+parameter specifies symbol resolution time and symbol visibility.
+One of the following values may be used to specify symbol resolution time:
+.Bl -tag -width "RTLD_LAZYXX" -offset indent
+.It Sy RTLD_NOW
+Symbols are resolved immediately.
+.It Sy RTLD_LAZY
+Symbols are resolved when they are first referred to.
+This is the default value if resolution time is unspecified.
+.El
+.Pp
+One of the following values may be used to specify symbol visibility:
+.Pp
+.Bl -tag -width "RTLD_GLOBAL" -compact -offset indent
+.It Sy RTLD_GLOBAL
+The object's symbols and the symbols of its dependencies will be visible to
+other objects.
+.It Sy RTLD_LOCAL
+The object's symbols and the symbols of its dependencies will not be visible to
+other objects.
+This is the default value if visibility is unspecified.
+.El
+.Pp
+To specify both resolution time and visibility, bitwise inclusive OR one of
+each of the above values together.
+If an object was opened with RTLD_LOCAL and later opened with RTLD_GLOBAL,
+then it is promoted to RTLD_GLOBAL.
+.Pp
 .Fn dlopen
-returns a handle to be used in calls to
+returns a
+.Fa handle
+to be used in calls to
 .Fn dlclose ,
-.Fn dlsym
+.Fn dlsym ,
 and
 .Fn dlctl .
 If the named shared object has already
 been loaded by a previous call to
 .Fn dlopen
 .Pq and not yet unloaded by Fn dlclose ,
-a handle referring to the resident copy is returned.
+a
+.Fa handle
+referring to the resident copy is returned.
 .Pp
 .Fn dlclose
 unlinks and removes the object referred to by
@@ -102,20 +147,70 @@ unlinks and removes the object referred to by
 from the process address space.
 If multiple calls to
 .Fn dlopen
-have been done on this object
-.Po or the object was one loaded at startup time
-.Pc
-the object is removed when its reference count drops to zero.
+have been done on this object, or the object was one loaded at startup time,
+or the object is a dependency of another object
+then the object is removed when its reference count drops to zero.
+.Fn dlclose
+returns 0 on success and non-zero on failure.
 .Pp
 .Fn dlsym
 looks for a definition of
 .Fa symbol
 in the shared object designated by
-.Fa handle .
-The symbols address is returned.
+.Fa handle ,
+and all shared objects that are listed as dependencies.
+The symbol's address is returned.
 If the symbol cannot be resolved,
 .Dv NULL
 is returned.
+.Pp
+.Fn dlsym
+may also be called with special
+.Fa handle
+values.
+.Fn dlsym
+respects symbol visibility as specified by the
+.Fn dlopen
+.Fa mode
+parameter.
+However, the symbols of an object's dependencies are always visible to it.
+All shared objects loaded at program startup are globally visible.
+Only the symbols in the main executable that are referenced by a
+shared object at link time will be visible unless it has been linked
+with the --export-dynamic option where all of its symbols will be
+visible.
+The following special
+.Fa handle
+values may be used with
+.Fn dlsym :
+.Bl -tag -width "RTLD_DEFAULTXX" -offset indent
+.It Sy NULL
+Interpreted as a reference to the executable or shared object
+from which the call is being made.
+Thus an object can reference its own symbols and the symbols of its
+dependencies without calling
+.Fn dlopen .
+.It Sy RTLD_DEFAULT
+All the visible shared objects and the executable will be searched in the order they
+were loaded.
+.It Sy RTLD_NEXT
+The search for
+.Fa symbol
+is limited to the visible shared objects which were loaded after the one issuing the
+call to
+.Fn dlsym .
+Thus, if
+.Fn dlsym
+is called from the main program, all the visible shared libraries are searched.
+If it is called from a shared library, all subsequently visible shared
+libraries are searched.
+.It Sy RTLD_SELF
+The search for
+.Fa symbol
+is limited to the shared object issuing the call to
+.Fn dlsym
+and those shared objects which were loaded after it that are visible.
+.El
 .Pp
 .Fn dladdr
 examines all currently mapped shared objects for a symbol whose address --
@@ -127,10 +222,12 @@ The symbols of a shared object are only eligible if
 is between the base address of the shared object and the value of the
 symbol
 .Dq _end
-in the same shared object. If no object for which this condition holds
+in the same shared object.
+If no object for which this condition holds
 true can be found,
 .Fn dladdr
-will return 0. Otherwise, a non-zero value is returned and the
+will return 0.
+Otherwise, a non-zero value is returned and the
 .Fa dli
 argument will be used to provide information on the selected symbol
 and the shared object it is contained in.
@@ -148,24 +245,15 @@ typedef struct {
 } Dl_info;
 .Ed
 .Pp
-The member
-.Va dli_sname
-points at the nul-terminated name of the selected symbol, and
-.Va dli_saddr
-is the actual address
-.Pq as it appears in the process address space
-of the symbol.
-The member
-.Va dli_fname
-points at the file name corresponding to the shared object in which the
-symbol was found, while
-.Va dli_fbase
-is the base address at which this shared object is loaded in the process
+The structure members are further described as follows:
+.Bl -tag -width "dli_fnameXX"
+.It Li "dli_fname"
+The pathname of the shared object containing the address
+.Fa addr .
+.It Li "dli_fbase"
+The base address at which this shared object is loaded in the process
 address space.
-.Va dli_fname
-and
-.Va dli_fbase
-may be zero if the symbol was found in the internally generated
+This may be zero if the symbol was found in the internally generated
 .Dq copy
 section
 .Po
@@ -173,12 +261,27 @@ see
 .Xr link 5
 .Pc
 which is not associated with a file.
+.It Li "dli_sname"
+points at the nul-terminated name of the selected symbol
+.It Li "dli_saddr"
+is the actual address
+.Pq as it appears in the process address space
+of the symbol.
+.El
+.Pp
 Note: both strings pointed at by
 .Va dli_fname
 and
 .Va dli_sname
 reside in memory private to the run-time linker module and should not
 be modified by the caller.
+.Pp
+In dynamically linked programs, the address of a global function will
+point to its program linkage table entry, rather than to the entry
+point of the function itself.
+This causes most global functions to appear to be defined within the
+main executable, rather than in the shared libraries where the actual
+code resides.
 .Pp
 .Fn dlctl
 provides an interface similar to
@@ -208,7 +311,3 @@ being returned.
 Some of the
 .Nm dl*
 functions first appeared in SunOS 4.
-.Sh BUGS
-An error that occurs while processing a
-.Fn dlopen
-request results in the termination of the program.
