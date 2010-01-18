@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.37 2010/01/08 19:47:42 dyoung Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.38 2010/01/18 18:52:35 pooka Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.37 2010/01/08 19:47:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.38 2010/01/18 18:52:35 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,10 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.37 2010/01/08 19:47:42 dyoung E
 
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
