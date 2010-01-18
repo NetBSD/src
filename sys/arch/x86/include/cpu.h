@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19 2010/01/09 20:56:17 cegger Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20 2010/01/18 16:40:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -355,7 +355,7 @@ void 	cpu_probe(struct cpu_info *);
 void	cpu_identify(struct cpu_info *);
 
 /* cpu_topology.c */
-void	x86_cpu_toplogy(struct cpu_info *);
+void	x86_cpu_topology(struct cpu_info *);
 
 /* vm_machdep.c */
 void	cpu_proc_fork(struct proc *, struct proc *);
