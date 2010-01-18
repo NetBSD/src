@@ -1,4 +1,4 @@
-/*	$NetBSD: if_casvar.h,v 1.1 2010/01/07 09:19:55 jdc Exp $ */
+/*	$NetBSD: if_casvar.h,v 1.2 2010/01/18 18:09:22 jdc Exp $ */
 /*	$OpenBSD: if_casvar.h,v 1.6 2009/06/13 12:18:58 kettenis Exp $	*/
 
 /*
@@ -255,6 +255,9 @@ do {									\
 	    CAS_DMA_WRITE((s));						\
 	CAS_CDRXSYNC((sc), (d), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
 } while (0)
+
+#define CAS_INTR_PCI	1
+#define CAS_INTR_REG	2
 
 #define ETHER_ALIGN	2
 
