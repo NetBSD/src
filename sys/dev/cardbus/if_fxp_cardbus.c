@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.40 2009/09/05 14:50:10 tsutsui Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.41 2010/01/18 18:52:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,10 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.40 2009/09/05 14:50:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.41 2010/01/18 18:52:35 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -60,10 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.40 2009/09/05 14:50:10 tsutsui 
 #include <net/if_ether.h>
 
 #include <machine/endian.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
