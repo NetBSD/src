@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.227 2010/01/07 18:49:30 tnn Exp $
+# $NetBSD: ALL,v 1.228 2010/01/18 16:43:15 pooka Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.227 $"
+#ident 		"ALL-$Revision: 1.228 $"
 
 maxusers	64		# estimated number of users
 
@@ -1645,6 +1645,94 @@ options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
 options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard
 
+#
+# NetBSD: GENERIC_ISDN,v 1.16 2010/01/03 03:53:34 dholland Exp
+#
+
+#---------------------------------------------------------------------
+# Various ISDN board drivers:
+#---------------------------------------------------------------------
+# Legacy ISA cards (no P&P support):
+#
+# Teles S0/8 or Niccy 1008
+options 	ISICISA_TEL_S0_8
+#isic0		at isa? iomem 0xd0000 irq 2
+# Teles S0/16 or Creatix ISDN-S0 or Niccy 1016
+options 	ISICISA_TEL_S0_16
+#isic0		at isa? port 0xd80 iomem 0xd0000 irq 9
+# Teles S0/16.3
+options 	ISICISA_TEL_S0_16_3
+#isic0		at isa? port 0xd80 irq 12
+# AVM A1 or AVM Fritz!Card
+options 	ISICISA_AVM_A1
+isic0		at isa? port 0x340 irq 10
+# USRobotics Sportster ISDN TA intern
+options 	ISICISA_USR_STI
+#isic0		at isa? port 0x268 irq 10
+# ITK ix1 micro
+options 	ISICISA_ITKIX1
+#isic0		at isa? port 0x398 irq 10
+#
+# XXX not ready yet:
+# Active EICON/Diehl Cards: S, SX, SXn, SCOM or QUADRO
+#daic0		at isa? iomem 0xd8000 irq 10
+#
+#---------------------------------------------------------------------
+# Supported ISA Plug & Play cards:
+#
+options 	ISICPNP_TEL_S0_16_3_P	# Teles S0/16PnP (but not 16.3c !)
+options 	ISICPNP_CRTX_S0_P	# Creatix ISDN-S0 P&P
+options 	ISICPNP_DRN_NGO		# Dr. Neuhaus Niccy GO@
+options 	ISICPNP_ELSA_QS1ISA	# ELSA QuickStep 1000 (ISA Version)
+options 	ISICPNP_ELSA_PCC16	# later variant of ELSA QuickStep
+options 	ISICPNP_SEDLBAUER	# Sedlbauer WinSpeed
+options 	ISICPNP_DYNALINK	# Dynalink IS64PH
+options 	ISICPNP_SIEMENS_ISURF2	# Siemens I-Surf
+options 	ISICPNP_ITKIX		# ITK IX PnP cards
+isic*		at isapnp?
+#
+#---------------------------------------------------------------------
+# Supported PCI cards:
+#
+isic*		at pci?
+
+# Winbond W6692
+iwic*		at pci?
+
+# AVM Fritz!PCI card
+ifpci*		at pci?
+
+# AVM Fritz!PCI V2 card
+ifritz* 	at pci?
+
+# AVM B1/T1 PCI card
+iavc*		at pci?
+
+#
+#---------------------------------------------------------------------
+# Supported PCMCIA cards:
+#
+options 	ISICPCMCIA_AVM_A1	# Fritz!Card PCMCIA Version
+options 	ISICPCMCIA_ELSA_ISDNMC	# ELSA MicroLink ISDN/MC
+options 	ISICPCMCIA_ELSA_MCALL	# ELSA MicroLink MC/all
+options 	ISICPCMCIA_SBSPEEDSTAR2	# Sedlbauer speed star II
+isic*		at pcmcia? function ?
+#
+
+#---------------------------------------------------------------------
+# ISDN user land devices, drivers and pseudo-devices.
+#---------------------------------------------------------------------
+#
+pseudo-device	isdn		  # communication with userland daemon
+pseudo-device	isdntrc		2 # userland driver to do ISDN tracing
+pseudo-device	isdnctl		  # userland driver to control the whole thing
+pseudo-device	isdnbchan	4 # userland driver for access to raw B channel
+pseudo-device	isdntel		2 # userland driver for telephony
+options 	IRIP_VJ		  # compile support for VJ compression
+pseudo-device	irip		2 # network driver for IP over raw HDLC ISDN
+pseudo-device	ippp		2 # synchronous PPP over ISDN
+#---------------------------------------------------------------------
+
 options ATHHAL_DEBUG
 options A9PCIC_DEBUG
 options AAC_DEBUG
@@ -1903,7 +1991,6 @@ options HSCXADEBUG
 options HSCXBDEBUG
 options I2ODEBUG
 options I4BISPPPDEBUG
-options I4B_CD_DEBUG_PRINT
 options I4B_MBUF_DEBUG
 options I4B_MBUF_TYPE_DEBUG
 options IBCS2_DEBUG
