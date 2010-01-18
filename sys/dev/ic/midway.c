@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.88 2009/04/15 20:44:25 elad Exp $	*/
+/*	$NetBSD: midway.c,v 1.89 2010/01/18 01:51:25 pooka Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.88 2009/04/15 20:44:25 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.89 2010/01/18 01:51:25 pooka Exp $");
 
 #include "opt_natm.h"
 
@@ -139,8 +139,6 @@ __KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.88 2009/04/15 20:44:25 elad Exp $");
 #ifdef __NetBSD__
 #include "opt_ddb.h"
 #include "opt_inet.h"
-#else
-#define snprintb((q), (f), "%b", q,f,b,l) snprintf((b), (l))
 #endif
 
 #if NEN > 0 || !defined(__FreeBSD__)
