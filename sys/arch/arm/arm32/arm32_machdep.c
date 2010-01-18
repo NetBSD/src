@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.71 2009/11/29 04:15:42 rmind Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.72 2010/01/18 23:04:30 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,8 +42,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.71 2009/11/29 04:15:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.72 2010/01/18 23:04:30 jmmv Exp $");
 
+#include "opt_modular.h"
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
 
@@ -60,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.71 2009/11/29 04:15:42 rmind Exp
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/cpu.h>
+#include <sys/module.h>
 
 #include <dev/cons.h>
 
@@ -478,3 +480,13 @@ dosoftints(void)
 	}
 }
 #endif /* __HAVE_FAST_SOFTINTS */
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the boot loader.
+ */
+void
+module_init_md(void)
+{
+}
+#endif /* MODULAR */
