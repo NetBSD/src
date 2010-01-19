@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.16 2008/11/07 00:20:02 dyoung Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.17 2010/01/19 22:06:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,11 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.16 2008/11/07 00:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.17 2010/01/19 22:06:22 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -74,10 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.16 2008/11/07 00:20:02 dyoung Exp $");
 #include <netns/ns_if.h>
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
@@ -332,11 +329,9 @@ ec_start(struct ifnet *ifp)
 		return;
 	}
 
-#if NBPFILTER > 0
 	/* The BPF tap. */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m0);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 	/* Size the packet. */
 	count = EC_BUF_SZ - m0->m_pkthdr.len;
@@ -543,14 +538,12 @@ ec_recv(struct ec_softc *sc, int intbit)
 	if (total_length == 0) {
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 		/*
 	 	* Check if there's a BPF listener on this interface.
 	 	* If so, hand off the raw packet to BPF.
 	 	*/
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 		/* Pass the packet up. */
 		(*ifp->if_input)(ifp, m0);

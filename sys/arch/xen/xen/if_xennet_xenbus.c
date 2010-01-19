@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.39 2009/10/23 02:32:34 snj Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.40 2010/01/19 22:06:23 pooka Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,12 +85,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.39 2009/10/23 02:32:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.40 2010/01/19 22:06:23 pooka Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
 #include "rnd.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -106,10 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.39 2009/10/23 02:32:34 snj Ex
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #if defined(NFS_BOOT_BOOTSTATIC)
 #include <sys/fstypes.h>
@@ -922,13 +919,11 @@ again:
 				continue;
 			}
 		}
-#if NBPFILTER > 0
 		/*
 		 * Pass packet to bpf if there is a listener.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		ifp->if_ipackets++;
 
@@ -1140,14 +1135,12 @@ xennet_softstart(void *arg)
 		    txreq->flags, req_prod));
 #endif
 
-#if NBPFILTER > 0
 		/*
 		 * Pass packet to bpf if there is a listener.
 		 */
 		if (ifp->if_bpf) {
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		}
-#endif
 	}
 
 	if (do_notify) {

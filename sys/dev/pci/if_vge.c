@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.49 2009/09/07 12:44:29 tsutsui Exp $ */
+/* $NetBSD: if_vge.c,v 1.50 2010/01/19 22:07:02 pooka Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.49 2009/09/07 12:44:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.50 2010/01/19 22:07:02 pooka Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.49 2009/09/07 12:44:29 tsutsui Exp $");
  * and sample NICs for testing.
  */
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -1369,13 +1368,11 @@ vge_rxeof(struct vge_softc *sc)
 			    bswap16(rxctl & VGE_RDCTL_VLANID), continue);
 		}
 
-#if NBPFILTER > 0
 		/*
 		 * Handle BPF listeners.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		(*ifp->if_input)(ifp, m);
 
@@ -1747,10 +1744,8 @@ vge_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 	}
 
 	if (sc->sc_tx_free < ofree) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.27 2009/03/14 21:04:11 dsl Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.28 2010/01/19 22:06:21 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.27 2009/03/14 21:04:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.28 2010/01/19 22:06:21 pooka Exp $");
 
 #include "opt_inet.h"
 
@@ -65,11 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.27 2009/03/14 21:04:11 dsl Exp $");
 #include <netinet/ip.h>
 #endif
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <machine/bus.h>
 
@@ -275,14 +272,12 @@ mcstart(struct ifnet *ifp)
 		if (m == 0)
 			return;
 
-#if NBPFILTER > 0
 		/*
 		 * If bpf is listening on this interface, let it
 		 * see the packet before we commit it to the wire.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/*
 		 * Copy the mbuf chain into the transmit buffer.
@@ -601,11 +596,9 @@ mace_read(struct mc_softc *sc, uint8_t *pkt, int len)
 
 	ifp->if_ipackets++;
 
-#if NBPFILTER > 0 
 	/* Pass this up to any BPF listeners. */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m); 
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m); 
 
 	/* Pass the packet up. */
 	(*ifp->if_input)(ifp, m);

@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.5 2008/12/16 22:35:24 christos Exp $ */
+/* $NetBSD: if_admsw.c,v 1.6 2010/01/19 22:06:21 pooka Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,9 +76,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.5 2008/12/16 22:35:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.6 2010/01/19 22:06:21 pooka Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,9 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.5 2008/12/16 22:35:24 christos Exp $"
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -679,11 +676,9 @@ admsw_start(struct ifnet *ifp)
 		sc->sc_txfree--;
 		sc->sc_txnext = ADMSW_NEXTTXL(nexttx);
 
-#if NBPFILTER > 0
 		/* Pass the packet to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 		/* Set a watchdog timer in case the chip flakes out. */
 		sc->sc_ethercom[0].ec_if.if_timer = 5;
@@ -1005,11 +1000,9 @@ admsw_rxintr(struct admsw_softc *sc, int high)
 			if (stat & ADM5120_DMA_CSUMFAIL)
 				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
 		}
-#if NBPFILTER > 0
 		/* Pass this up to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);

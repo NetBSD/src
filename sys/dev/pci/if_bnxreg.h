@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.9 2009/11/18 23:11:16 bouyer Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.10 2010/01/19 22:07:00 pooka Exp $	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.33 2009/09/05 16:02:28 claudio Exp $  */
 
 /*-
@@ -38,7 +38,6 @@
 #define _BNX_H_DEFINED
 
 #ifdef _KERNEL_OPT
-#include "bpfilter.h"
 #include "opt_inet.h"
 #endif
 
@@ -68,9 +67,7 @@
 
 #include <net/if_vlanvar.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

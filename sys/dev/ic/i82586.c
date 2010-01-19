@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.66 2009/03/14 21:04:20 dsl Exp $	*/
+/*	$NetBSD: i82586.c,v 1.67 2010/01/19 22:06:24 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,9 +137,8 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.66 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.67 2010/01/19 22:06:24 pooka Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,10 +155,8 @@ __KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.66 2009/03/14 21:04:20 dsl Exp $");
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <sys/bus.h>
 
@@ -1036,12 +1033,10 @@ ie_readframe(
 	}
 #endif
 
-#if NBPFILTER > 0
 	/* Check for a BPF filter; if so, hand it up. */
 	if (sc->sc_ethercom.ec_if.if_bpf != 0)
 		/* Pass it up. */
-		bpf_mtap(sc->sc_ethercom.ec_if.if_bpf, m);
-#endif /* NBPFILTER > 0 */
+		bpf_ops->bpf_mtap(sc->sc_ethercom.ec_if.if_bpf, m);
 
 	/*
 	 * Finally pass this packet up to higher layers.
@@ -1158,11 +1153,9 @@ i82586_start(struct ifnet *ifp)
 		if ((m0->m_flags & M_PKTHDR) == 0)
 			panic("i82586_start: no header mbuf");
 
-#if NBPFILTER > 0
 		/* Tap off here if there is a BPF listener. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 #if I82586_DEBUG
 		if (sc->sc_debug & IED_ENQ)

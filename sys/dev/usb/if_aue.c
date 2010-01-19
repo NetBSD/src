@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.117 2009/12/08 20:38:16 jakllsch Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.118 2010/01/19 22:07:43 pooka Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,10 +77,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.117 2009/12/08 20:38:16 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.118 2010/01/19 22:07:43 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -101,11 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.117 2009/12/08 20:38:16 jakllsch Exp $"
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#define BPF_MTAP(ifp, m) bpf_mtap((ifp)->if_bpf, (m))
-
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <net/if_ether.h>
 #ifdef INET
@@ -1170,7 +1165,6 @@ aue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto done1;
 	}
 
-#if NBPFILTER > 0
 	/*
 	 * Handle BPF listeners. Let the BPF user see the packet, but
 	 * don't pass it up to the ether_input() layer unless it's
@@ -1178,8 +1172,7 @@ aue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	 * address or the interface is in promiscuous mode.
 	 */
 	if (ifp->if_bpf)
-		BPF_MTAP(ifp, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", device_xname(sc->aue_dev),
 		    __func__, m->m_len));
@@ -1384,14 +1377,12 @@ aue_start(struct ifnet *ifp)
 
 	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
-#if NBPFILTER > 0
 	/*
 	 * If there's a BPF listener, bounce a copy of this frame
 	 * to him.
 	 */
 	if (ifp->if_bpf)
-		BPF_MTAP(ifp, m_head);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 
 	ifp->if_flags |= IFF_OACTIVE;
 

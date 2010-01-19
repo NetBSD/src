@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.36 2009/03/14 21:04:11 dsl Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.37 2010/01/19 22:06:21 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,11 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.36 2009/03/14 21:04:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.37 2010/01/19 22:06:21 pooka Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,9 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.36 2009/03/14 21:04:11 dsl Exp $");
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -385,14 +382,12 @@ gmac_rint(struct gmac_softc *sc)
 			goto next;
 		}
 
-#if NBPFILTER > 0
 		/*
 		 * Check if there's a BPF listener on this interface.
 		 * If so, hand off the raw packet to BPF.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		(*ifp->if_input)(ifp, m);
 		ifp->if_ipackets++;
 
@@ -499,14 +494,12 @@ gmac_start(struct ifnet *ifp)
 		gmac_write_reg(sc, GMAC_TXDMAKICK, i);
 		sc->sc_txnext = i;
 
-#if NBPFILTER > 0
 		/*
 		 * If BPF is listening on this interface, let it see the
 		 * packet before we commit it to the wire.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		m_freem(m);
 
 		i++;

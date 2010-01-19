@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.36 2008/11/07 00:20:03 dyoung Exp $ */
+/*      $NetBSD: sgec.c,v 1.37 2010/01/19 22:06:25 pooka Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,10 +45,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.36 2008/11/07 00:20:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.37 2010/01/19 22:06:25 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -66,10 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.36 2008/11/07 00:20:03 dyoung Exp $");
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <sys/bus.h>
 
@@ -470,10 +467,8 @@ sgec_intr(struct ze_softc *sc)
 				m->m_pkthdr.rcvif = ifp;
 				m->m_pkthdr.len = m->m_len =
 				    len - ETHER_CRC_LEN;
-#if NBPFILTER > 0
 				if (ifp->if_bpf)
-					bpf_mtap(ifp->if_bpf, m);
-#endif
+					bpf_ops->bpf_mtap(ifp->if_bpf, m);
 				(*ifp->if_input)(ifp, m);
 			}
 		}
@@ -514,10 +509,8 @@ sgec_intr(struct ze_softc *sc)
 			ifp->if_opackets++;
 			bus_dmamap_unload(sc->sc_dmat, map);
 			KASSERT(sc->sc_txmbuf[lastack]);
-#if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, sc->sc_txmbuf[lastack]);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, sc->sc_txmbuf[lastack]);
 			m_freem(sc->sc_txmbuf[lastack]);
 			sc->sc_txmbuf[lastack] = 0;
 			if (++lastack == TXDESCS)

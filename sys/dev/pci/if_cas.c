@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.3 2010/01/17 11:57:29 jdc Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.4 2010/01/19 22:07:00 pooka Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,10 +44,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.3 2010/01/17 11:57:29 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.4 2010/01/19 22:07:00 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,9 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.3 2010/01/17 11:57:29 jdc Exp $");
 #include <netinet/udp.h>
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -1327,14 +1324,12 @@ cas_rint(struct cas_softc *sc)
 
 			if (m != NULL) {
 
-#if NBPFILTER > 0
 				/*
 				 * Pass this up to any BPF listeners, but only
 				 * pass it up the stack if its for us.
 				 */
 				if (ifp->if_bpf)
-					bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+					bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 				ifp->if_ipackets++;
 				m->m_pkthdr.csum_flags = 0;
@@ -1363,14 +1358,12 @@ cas_rint(struct cas_softc *sc)
 				cas_add_rxbuf(sc, idx);
 
 			if (m != NULL) {
-#if NBPFILTER > 0
 				/*
 				 * Pass this up to any BPF listeners, but only
 				 * pass it up the stack if its for us.
 				 */
 				if (ifp->if_bpf)
-					bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+					bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 				ifp->if_ipackets++;
 				m->m_pkthdr.csum_flags = 0;
@@ -2076,14 +2069,12 @@ cas_start(struct ifnet *ifp)
 		if (m == NULL)
 			break;
 
-#if NBPFILTER > 0
 		/*
 		 * If BPF is listening on this interface, let it see the
 		 * packet before we commit it to the wire.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/*
 		 * Encapsulate this packet and start it going...

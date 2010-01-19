@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.70 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.71 2010/01/19 22:08:01 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.70 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.71 2010/01/19 22:08:01 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.70 2008/11/07 00:20:13 dyoung Exp $");
 #include "opt_ipx.h"
 #include "opt_mbuftrace.h"
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,9 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.70 2008/11/07 00:20:13 dyoung Exp $");
 #include <netatalk/at_var.h>
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #if defined(LARGE_LOMTU)
 #define LOMTU	(131072 +  MHLEN + MLEN)
@@ -177,9 +174,7 @@ loop_clone_create(struct if_clone *ifc, int unit)
 		lo0ifp = ifp;
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
-#if NBPFILTER > 0
-	bpfattach(ifp, DLT_NULL, sizeof(u_int));
-#endif
+	bpf_ops->bpf_attach(ifp, DLT_NULL, sizeof(u_int), &ifp->if_bpf);
 #ifdef MBUFTRACE
 	ifp->if_mowner = malloc(sizeof(struct mowner), M_DEVBUF,
 	    M_WAITOK | M_ZERO);
@@ -203,9 +198,7 @@ loop_clone_destroy(struct ifnet *ifp)
 	free(ifp->if_mowner, M_DEVBUF);
 #endif
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
+	bpf_ops->bpf_detach(ifp);
 	if_detach(ifp);
 
 	free(ifp, M_DEVBUF);
@@ -223,10 +216,8 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	MCLAIM(m, ifp->if_mowner);
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("looutput: no header mbuf");
-#if NBPFILTER > 0
 	if (ifp->if_bpf && (ifp->if_flags & IFF_LOOPBACK))
-		bpf_mtap_af(ifp->if_bpf, dst->sa_family, m);
-#endif
+		bpf_ops->bpf_mtap_af(ifp->if_bpf, dst->sa_family, m);
 	m->m_pkthdr.rcvif = ifp;
 
 	if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.9 2009/10/08 08:57:19 cegger Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.10 2010/01/19 22:07:00 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,9 +32,8 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.9 2009/10/08 08:57:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.10 2010/01/19 22:07:00 pooka Exp $");
 
-#include "bpfilter.h"
 #include "vlan.h"
 
 #include <sys/param.h>
@@ -68,9 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.9 2009/10/08 08:57:19 cegger Exp $");
 #include <net/if_types.h>
 #include <net/if_vlanvar.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/rnd.h>
 
@@ -1076,14 +1073,12 @@ ale_start(struct ifnet *ifp)
 		}
 		enq = 1;
 
-#if NBPFILTER > 0
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
 		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m_head);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 	}
 
 	if (enq) {
@@ -1555,10 +1550,8 @@ ale_rxeof(struct ale_softc *sc)
 #endif
 
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass it to upper layer. */
 		ether_input(ifp, m);

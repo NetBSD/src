@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.128 2009/09/15 19:29:17 dyoung Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.129 2010/01/19 22:06:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.128 2009/09/15 19:29:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.129 2010/01/19 22:06:25 pooka Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -111,7 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.128 2009/09/15 19:29:17 dyoung Exp $")
  * driver is 7500 bytes.
  */
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -134,9 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.128 2009/09/15 19:29:17 dyoung Exp $")
 #include <netinet/in.h>		/* XXX for IP_MAXPACKET */
 #include <netinet/ip.h>		/* XXX for IP_MAXPACKET */
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/bus.h>
 
@@ -1302,10 +1299,8 @@ re_rxeof(struct rtk_softc *sc)
 			     bswap16(rxvlan & RE_RDESC_VLANCTL_DATA),
 			     continue);
 		}
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		(*ifp->if_input)(ifp, m);
 	}
 
@@ -1669,14 +1664,12 @@ re_start(struct ifnet *ifp)
 		sc->re_ldata.re_tx_free -= nsegs;
 		sc->re_ldata.re_tx_nextfree = curdesc;
 
-#if NBPFILTER > 0
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 	}
 
 	if (sc->re_ldata.re_txq_free < ofree) {

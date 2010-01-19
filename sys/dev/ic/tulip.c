@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.173 2009/12/04 22:45:28 dyoung Exp $	*/
+/*	$NetBSD: tulip.c,v 1.174 2010/01/19 22:06:25 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,9 +36,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.173 2009/12/04 22:45:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.174 2010/01/19 22:06:25 pooka Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,9 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.173 2009/12/04 22:45:28 dyoung Exp $");
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -868,13 +865,11 @@ tlp_start(struct ifnet *ifp)
 
 		last_txs = txs;
 
-#if NBPFILTER > 0
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 	}
 
 	if (txs == NULL || sc->sc_txfree == 0) {
@@ -1381,14 +1376,12 @@ tlp_rxintr(struct tulip_softc *sc)
 				    ETHER_MAX_FRAME(ifp, etype, 0);
 		}
 
-#if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
 		 * pass it up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/*
 		 * We sometimes have to run the 21140 in Hash-Only

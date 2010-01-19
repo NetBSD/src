@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.53 2009/03/18 15:14:30 cegger Exp $ */
+/*	$NetBSD: if_ie.c,v 1.54 2010/01/19 22:06:22 pooka Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,11 +98,10 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.53 2009/03/18 15:14:30 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.54 2010/01/19 22:06:22 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,10 +119,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.53 2009/03/18 15:14:30 cegger Exp $");
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -688,12 +685,10 @@ ether_cmp(uint8_t *one, uint8_t *two)
 static inline int 
 check_eh(struct ie_softc *sc, struct ether_header *eh, int *to_bpf)
 {
-#if NBPFILTER > 0
 	struct ifnet *ifp;
 
 	ifp = &sc->sc_if;
 	*to_bpf = (ifp->if_bpf != 0);
-#endif
 
 	/*
 	 * This is all handled at a higher level now.
@@ -763,16 +758,14 @@ iexmit(struct ie_softc *sc)
 		    sc->xctail);
 #endif
 
-#if NBPFILTER > 0
 	/*
 	 * If BPF is listening on this interface, let it see the packet before
 	 * we push it on the wire.
 	 */
 	if (ifp->if_bpf)
-		bpf_tap(ifp->if_bpf,
+		bpf_ops->bpf_tap(ifp->if_bpf,
 		    sc->xmit_cbuffs[sc->xctail],
 		    SWAP(sc->xmit_buffs[sc->xctail]->ie_xmit_flags));
-#endif
 
 	sc->xmit_buffs[sc->xctail]->ie_xmit_flags |= IE_XMIT_LAST;
 	sc->xmit_buffs[sc->xctail]->ie_xmit_next = SWAP(0xffff);
@@ -945,9 +938,7 @@ ie_readframe(struct ie_softc *sc, int num)
 {
 	int status;
 	struct mbuf *m = 0;
-#if NBPFILTER > 0
 	int bpf_gets_it = 0;
-#endif
 
 	status = sc->rframes[num]->ie_fd_status;
 
@@ -959,11 +950,7 @@ ie_readframe(struct ie_softc *sc, int num)
 	sc->rfhead = (sc->rfhead + 1) % sc->nframes;
 
 	if (status & IE_FD_OK) {
-#if NBPFILTER > 0
 		m = ieget(sc, &bpf_gets_it);
-#else
-		m = ieget(sc, NULL);
-#endif
 		ie_drop_packet_buffer(sc);
 	}
 	if (m == 0) {
@@ -981,7 +968,6 @@ ie_readframe(struct ie_softc *sc, int num)
 	}
 #endif
 
-#if NBPFILTER > 0
 	/*
 	 * Check for a BPF filter; if so, hand it up.
 	 * Note that we have to stick an extra mbuf up front, because
@@ -992,7 +978,7 @@ ie_readframe(struct ie_softc *sc, int num)
 	 */
 	if (bpf_gets_it) {
 		/* Pass it up. */
-		bpf_mtap(sc->sc_if.if_bpf, m);
+		bpf_ops->bpf_mtap(sc->sc_if.if_bpf, m);
 
 		/*
 		 * A signal passed up from the filtering code indicating that
@@ -1005,7 +991,6 @@ ie_readframe(struct ie_softc *sc, int num)
 			return;
 		}
 	}
-#endif	/* NBPFILTER > 0 */
 
 	/*
 	 * In here there used to be code to check destination addresses upon
@@ -1082,11 +1067,9 @@ iestart(struct ifnet *ifp)
 		if ((m0->m_flags & M_PKTHDR) == 0)
 			panic("%s: no header mbuf", __func__);
 
-#if NBPFILTER > 0
 		/* Tap off here if there is a BPF listener. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 #ifdef IEDEBUG
 		if (sc->sc_debug & IED_ENQ)

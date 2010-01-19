@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.53 2009/12/06 23:05:06 dyoung Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.54 2010/01/19 22:07:43 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,10 +105,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.53 2009/12/06 23:05:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.54 2010/01/19 22:07:43 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,10 +138,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.53 2009/12/06 23:05:06 dyoung Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 /*
  * Let these be patchable variables, initialized from macros that can
@@ -671,10 +668,8 @@ cnw_start(struct ifnet *ifp)
 		if (m0 == 0)
 			break;
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 		cnw_transmit(sc, m0);
 		++ifp->if_opackets;
@@ -859,10 +854,8 @@ cnw_recv(struct cnw_softc *sc)
 		}
 		++ifp->if_ipackets;
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass the packet up. */
 		(*ifp->if_input)(ifp, m);

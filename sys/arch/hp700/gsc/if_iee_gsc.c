@@ -1,4 +1,4 @@
-/* $NetBSD: if_iee_gsc.c,v 1.16 2009/12/01 23:16:01 skrll Exp $ */
+/* $NetBSD: if_iee_gsc.c,v 1.17 2010/01/19 22:06:20 pooka Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.16 2009/12/01 23:16:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.17 2010/01/19 22:06:20 pooka Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -69,11 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.16 2009/12/01 23:16:01 skrll Exp $"
 #include <net/if_ether.h>
 #include <sys/socket.h>
 #include <sys/mbuf.h>
-
-#include "bpfilter.h"
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 #include <dev/ic/i82596reg.h>
 #include <dev/ic/i82596var.h>

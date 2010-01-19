@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.27 2009/05/16 16:40:58 cegger Exp $ */
+/* $NetBSD: if_ie.c,v 1.28 2010/01/19 22:06:18 pooka Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.27 2009/05/16 16:40:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.28 2010/01/19 22:06:18 pooka Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -106,11 +106,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.27 2009/05/16 16:40:58 cegger Exp $");
 
 /* BPF support */
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 /* Some useful defines and macros */
 
@@ -1287,11 +1284,9 @@ ie_read_frame(struct ie_softc *sc, int num)
 
     ifp->if_ipackets++;
 
-#if NBPFILTER > 0
     if ( ifp->if_bpf ) {
-	bpf_mtap(ifp->if_bpf, m );
+	bpf_ops->bpf_mtap(ifp->if_bpf, m);
     };
-#endif
 
     (*ifp->if_input)(ifp, m);
 }
@@ -1498,10 +1493,8 @@ iestart(struct ifnet *ifp)
 			len += m->m_len;
 		}
 
-#if NBPFILTER > 0
 		if ( ifp->if_bpf )
-		    bpf_mtap(ifp->if_bpf, m0);
-#endif
+		    bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 		m_freem(m0);
 		if (len < ETHER_MIN_LEN - ETHER_CRC_LEN) {

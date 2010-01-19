@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.29 2010/01/08 19:56:51 dyoung Exp $	 */
+/* $NetBSD: if_bce.c,v 1.30 2010/01/19 22:07:00 pooka Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,9 +35,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.29 2010/01/08 19:56:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.30 2010/01/19 22:07:00 pooka Exp $");
 
-#include "bpfilter.h"
 #include "vlan.h"
 #include "rnd.h"
 
@@ -56,9 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.29 2010/01/08 19:56:51 dyoung Exp $");
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -630,11 +627,9 @@ bce_start(struct ifnet *ifp)
 
 		newpkts++;
 
-#if NBPFILTER > 0
 		/* Pass the packet to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif				/* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 	}
 	if (txsfree == 0) {
 		/* No more slots left; notify upper layer. */
@@ -822,14 +817,12 @@ bce_rxintr(struct bce_softc *sc)
 		m->m_pkthdr.len = m->m_len = len;
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
 		 * pass it up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif				/* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass it on. */
 		(*ifp->if_input) (ifp, m);

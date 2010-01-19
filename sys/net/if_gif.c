@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.76 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.77 2010/01/19 22:08:00 pooka Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.76 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.77 2010/01/19 22:08:00 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -85,7 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.76 2008/11/07 00:20:13 dyoung Exp $");
 #include <netinet/ip_encap.h>
 #include <net/if_gif.h>
 
-#include "bpfilter.h"
 
 #include <net/net_osdep.h>
 
@@ -161,9 +160,8 @@ gifattach0(struct gif_softc *sc)
 	IFQ_SET_READY(&sc->gif_if.if_snd);
 	if_attach(&sc->gif_if);
 	if_alloc_sadl(&sc->gif_if);
-#if NBPFILTER > 0
-	bpfattach(&sc->gif_if, DLT_NULL, sizeof(u_int));
-#endif
+	bpf_ops->bpf_attach(&sc->gif_if, DLT_NULL,
+	    sizeof(u_int), &sc->gif_if.if_bpf);
 }
 
 static int
@@ -180,9 +178,7 @@ gif_clone_destroy(struct ifnet *ifp)
 	encap_detach(sc->encap_cookie4);
 #endif
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
+	bpf_ops->bpf_detach(ifp);
 	if_detach(ifp);
 	rtcache_free(&sc->gif_ro);
 
@@ -366,10 +362,8 @@ gifintr(void *arg)
 			}
 		}
 		family = *mtod(m, int *);
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		m_adj(m, sizeof(int));
 
 		len = m->m_pkthdr.len;
@@ -415,10 +409,8 @@ gif_input(struct mbuf *m, int af, struct ifnet *ifp)
 
 	m->m_pkthdr.rcvif = ifp;
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap_af(ifp->if_bpf, af, m);
-#endif /*NBPFILTER > 0*/
+		bpf_ops->bpf_mtap_af(ifp->if_bpf, af, m);
 
 	/*
 	 * Put the packet to the network layer input queue according to the

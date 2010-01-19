@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.31 2008/11/07 00:20:02 dyoung Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.32 2010/01/19 22:06:21 pooka Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.31 2008/11/07 00:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.32 2010/01/19 22:06:21 pooka Exp $");
 
 #include "opt_inet.h"
 
@@ -45,11 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.31 2008/11/07 00:20:02 dyoung Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <machine/cpu.h>
 #include <newsmips/apbus/apbusvar.h>
@@ -333,14 +330,12 @@ outloop:
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("%s: snstart: no header mbuf", device_xname(sc->sc_dev));
 
-#if NBPFILTER > 0
 	/*
 	 * If bpf is listening on this interface, let it
 	 * see the packet before we commit it to the wire.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	/*
 	 * If there is nothing in the o/p queue, and there is room in
@@ -1063,11 +1058,9 @@ sonic_read(struct sn_softc *sc, void *pkt, int len)
 	m = sonic_get(sc, pkt, len);
 	if (m == NULL)
 		return 0;
-#if NBPFILTER > 0
 	/* Pass the packet to any BPF listeners. */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 	(*ifp->if_input)(ifp, m);
 	return 1;
 }

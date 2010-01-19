@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.20 2009/11/26 15:17:09 njoly Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.21 2010/01/19 22:07:01 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,9 +30,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.20 2009/11/26 15:17:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.21 2010/01/19 22:07:01 pooka Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,9 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.20 2009/11/26 15:17:09 njoly Exp $");
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -999,13 +996,11 @@ kse_start(struct ifnet *ifp)
 		sc->sc_txnext = nexttx;
 		sc->sc_txsfree--;
 		sc->sc_txsnext = KSE_NEXTTXS(sc->sc_txsnext);
-#if NBPFILTER > 0
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 	}
 
 	if (sc->sc_txsfree == 0 || sc->sc_txfree == 0) {
@@ -1202,10 +1197,8 @@ rxintr(struct kse_softc *sc)
 			if (rxstat & (R0_TCPE | R0_UDPE))
 				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
 		}
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		(*ifp->if_input)(ifp, m);
 #ifdef KSEDIAGNOSTIC
 		if (kse_monitor_rxintr > 0) {

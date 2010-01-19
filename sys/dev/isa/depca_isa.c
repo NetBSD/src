@@ -1,4 +1,4 @@
-/*	$NetBSD: depca_isa.c,v 1.14 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: depca_isa.c,v 1.15 2010/01/19 22:06:59 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -65,10 +65,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca_isa.c,v 1.14 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca_isa.c,v 1.15 2010/01/19 22:06:59 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

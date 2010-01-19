@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.87 2009/11/26 15:17:10 njoly Exp $ */
+/* $NetBSD: if_ti.c,v 1.88 2010/01/19 22:07:01 pooka Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,9 +81,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.87 2009/11/26 15:17:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.88 2010/01/19 22:07:01 pooka Exp $");
 
-#include "bpfilter.h"
 #include "opt_inet.h"
 
 #include <sys/param.h>
@@ -105,9 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.87 2009/11/26 15:17:10 njoly Exp $");
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -1975,7 +1972,6 @@ ti_rxeof(struct ti_softc *sc)
 		ifp->if_ipackets++;
 		m->m_pkthdr.rcvif = ifp;
 
-#if NBPFILTER > 0
 		/*
 	 	 * Handle BPF listeners. Let the BPF user see the packet, but
 	 	 * don't pass it up to the ether_input() layer unless it's
@@ -1983,8 +1979,7 @@ ti_rxeof(struct ti_softc *sc)
 	 	 * address or the interface is in promiscuous mode.
 	 	 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		eh = mtod(m, struct ether_header *);
 		switch (ntohs(eh->ether_type)) {
@@ -2452,10 +2447,8 @@ ti_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 	}
 
 	/* Transmit */

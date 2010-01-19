@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.43 2008/04/08 12:07:27 cegger Exp $ */
+/* $NetBSD: seeq8005.c,v 1.44 2010/01/19 22:06:25 pooka Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.43 2008/04/08 12:07:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.44 2010/01/19 22:06:25 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,11 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.43 2008/04/08 12:07:27 cegger Exp $")
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include "rnd.h"
 #if NRND > 0
@@ -917,11 +914,9 @@ eatxpacket(struct seeq8005_softc *sc)
 		return;
 	}
 
-#if NBPFILTER > 0
 	/* Give the packet to the bpf, if any. */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m0);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 	DPRINTF(SEEQ_DEBUG_TX, ("Tx new packet\n"));
 
@@ -1253,14 +1248,12 @@ ea_read(struct seeq8005_softc *sc, int addr, int len)
 	if (m == 0)
 		return;
 
-#if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to bpf.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	(*ifp->if_input)(ifp, m);
 }

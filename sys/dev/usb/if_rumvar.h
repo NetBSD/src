@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rumvar.h,v 1.6 2010/01/17 19:45:06 pooka Exp $	*/
+/*	$NetBSD: if_rumvar.h,v 1.7 2010/01/19 22:07:44 pooka Exp $	*/
 /*	$OpenBSD: if_rumvar.h,v 1.7 2006/11/13 20:06:38 damien Exp $	*/
 
 /*-
@@ -134,7 +134,6 @@ struct rum_softc {
 	int				sifs;
 	uint8_t				bbp17;
 
-#if NBPFILTER > 0
 	struct bpf_if *			sc_drvbpf;
 
 	union {
@@ -150,5 +149,4 @@ struct rum_softc {
 	}				sc_txtapu;
 #define sc_txtap	sc_txtapu.th
 	int				sc_txtap_len;
-#endif
 };

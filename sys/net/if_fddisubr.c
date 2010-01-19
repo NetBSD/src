@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.78 2009/11/20 02:14:56 christos Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.79 2010/01/19 22:08:00 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.78 2009/11/20 02:14:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.79 2010/01/19 22:08:00 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -104,7 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.78 2009/11/20 02:14:56 christos Ex
 #include "opt_ipx.h"
 #include "opt_mbuftrace.h"
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,9 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.78 2009/11/20 02:14:56 christos Ex
 #include <net/if_dl.h>
 #include <net/if_types.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -182,7 +179,6 @@ extern u_char	aarp_org_code[ 3 ];
 #endif /* NETATALK */
 
 
-#include "bpfilter.h"
 
 #define senderr(e) { error = (e); goto bad;}
 
@@ -446,7 +442,6 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		break;
 	}
 
-#if NBPFILTER > 0
 	case AF_IMPLINK:
 	{
 		fh = mtod(m, struct fddi_header *);
@@ -480,7 +475,6 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 			m->m_flags |= (M_BCAST|M_MCAST);
 		goto queue_it;
 	}
-#endif
 	default:
 		printf("%s: can't handle af%d\n", ifp->if_xname,
 		       dst->sa_family);
@@ -511,9 +505,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	fh = mtod(m, struct fddi_header *);
 	fh->fddi_fc = FDDIFC_LLC_ASYNC|FDDIFC_LLC_PRIO4;
  	memcpy(fh->fddi_dhost, edst, sizeof (edst));
-#if NBPFILTER > 0
   queue_it:
-#endif
 	if (hdrcmplt)
 		memcpy(fh->fddi_shost, esrc, sizeof(fh->fddi_shost));
 	else
@@ -790,9 +782,8 @@ fddi_ifattach(struct ifnet *ifp, void *lla)
 	if_set_sadl(ifp, lla, 6, true);
 
 	ifp->if_broadcastaddr = fddibroadcastaddr;
-#if NBPFILTER > 0
-	bpfattach(ifp, DLT_FDDI, sizeof(struct fddi_header));
-#endif /* NBPFILTER > 0 */
+	bpf_ops->bpf_attach(ifp, DLT_FDDI,
+	    sizeof(struct fddi_header), &ifp->if_bpf);
 #ifdef MBUFTRACE
 	strlcpy(ec->ec_tx_mowner.mo_name, ifp->if_xname,
 	    sizeof(ec->ec_tx_mowner.mo_name));

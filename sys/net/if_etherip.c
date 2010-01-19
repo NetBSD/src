@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.27 2009/03/18 15:14:31 cegger Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.28 2010/01/19 22:08:00 pooka Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,10 +86,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.27 2009/03/18 15:14:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.28 2010/01/19 22:08:00 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,9 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.27 2009/03/18 15:14:31 cegger Exp $
 #include <net/if_media.h>
 #include <net/route.h>
 #include <net/if_etherip.h>
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -376,10 +373,8 @@ etheripintr(void *arg)
 		if (m == NULL)
 			break;
 		
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		
 		ifp->if_opackets++;
 		if (sc->sc_src && sc->sc_dst) {

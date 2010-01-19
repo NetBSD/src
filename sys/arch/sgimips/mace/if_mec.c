@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.41 2009/12/14 00:46:13 matt Exp $ */
+/* $NetBSD: if_mec.c,v 1.42 2010/01/19 22:06:22 pooka Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,10 +61,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.41 2009/12/14 00:46:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.42 2010/01/19 22:06:22 pooka Exp $");
 
 #include "opt_ddb.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -93,9 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.41 2009/12/14 00:46:13 matt Exp $");
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -1329,13 +1326,11 @@ mec_start(struct ifnet *ifp)
 			    len - buflen, BUS_DMASYNC_PREWRITE);
 		}
 
-#if NBPFILTER > 0
 		/*
 		 * Pass packet to bpf if there is a listener.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 		MEC_EVCNT_INCR(&sc->sc_ev_txpkts);
 
 		/*
@@ -1779,14 +1774,12 @@ mec_rxintr(struct mec_softc *sc)
 
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
 		 * pass it up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);

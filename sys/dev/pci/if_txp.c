@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.35 2009/09/27 12:52:59 tsutsui Exp $ */
+/* $NetBSD: if_txp.c,v 1.36 2010/01/19 22:07:02 pooka Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,9 +32,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.35 2009/09/27 12:52:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.36 2010/01/19 22:07:02 pooka Exp $");
 
-#include "bpfilter.h"
 #include "opt_inet.h"
 
 #include <sys/param.h>
@@ -63,9 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.35 2009/09/27 12:52:59 tsutsui Exp $");
 
 #include <net/if_media.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <uvm/uvm_extern.h>              /* for PAGE_SIZE */
 #include <sys/bus.h>
@@ -726,13 +723,11 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r, struct txp_dma_alloc
 		}
 #endif
 
-#if NBPFILTER > 0
 		/*
 		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		if (rxd->rx_stat & htole32(RX_STAT_IPCKSUMBAD))
 			sumflags |= (M_CSUM_IPv4|M_CSUM_IPv4_BAD);
@@ -1512,10 +1507,8 @@ txp_start(struct ifnet *ifp)
 
 		ifp->if_timer = 5;
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		txd->tx_flags |= TX_FLAGS_VALID;
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_txhiring_dma.dma_map,

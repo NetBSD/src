@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.231 2009/09/15 20:51:12 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.232 2010/01/19 22:06:25 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.231 2009/09/15 20:51:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.232 2010/01/19 22:06:25 pooka Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -107,7 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.231 2009/09/15 20:51:12 dyoung Exp $");
 #undef WI_RING_DEBUG
 #define STATIC static
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -134,10 +133,8 @@ __KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.231 2009/09/15 20:51:12 dyoung Exp $");
 #include <net80211/ieee80211_radiotap.h>
 #include <net80211/ieee80211_rssadapt.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <sys/bus.h>
 
@@ -562,10 +559,8 @@ wi_attach(struct wi_softc *sc, const u_int8_t *macaddr)
 
 	ieee80211_media_init(ic, wi_media_change, wi_media_status);
 
-#if NBPFILTER > 0
-	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
+	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + 64, &sc->sc_drvbpf);
-#endif
 
 	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));
 	sc->sc_rxtap.wr_ihdr.it_len = htole16(sizeof(sc->sc_rxtapu));
@@ -1118,10 +1113,8 @@ wi_start(struct ifnet *ifp)
 			ifp->if_opackets++;
 			m_copydata(m0, 0, ETHER_HDR_LEN,
 			    (void *)&frmhdr.wi_ehdr);
-#if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m0);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 			eh = mtod(m0, struct ether_header *);
 			ni = ieee80211_find_txnode(ic, eh->ether_dhost);
@@ -1142,10 +1135,8 @@ wi_start(struct ifnet *ifp)
 			wh = mtod(m0, struct ieee80211_frame *);
 		} else
 			break;
-#if NBPFILTER > 0
 		if (ic->ic_rawbpf)
-			bpf_mtap(ic->ic_rawbpf, m0);
-#endif
+			bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
 		frmhdr.wi_tx_ctl =
 		    htole16(WI_ENC_TX_802_11|WI_TXCNTL_TX_EX|WI_TXCNTL_TX_OK);
 #ifndef	IEEE80211_NO_HOSTAP
@@ -1165,7 +1156,6 @@ wi_start(struct ifnet *ifp)
 		rateidx = wi_choose_rate(ic, ni, wh, m0->m_pkthdr.len);
 		rs = &ni->ni_rates;
 
-#if NBPFILTER > 0
 		if (sc->sc_drvbpf) {
 			struct wi_tx_radiotap_header *tap = &sc->sc_txtap;
 
@@ -1176,9 +1166,9 @@ wi_start(struct ifnet *ifp)
 			    htole16(ic->ic_bss->ni_chan->ic_flags);
 			/* TBD tap->wt_flags */
 
-			bpf_mtap2(sc->sc_drvbpf, tap, tap->wt_ihdr.it_len, m0);
+			bpf_ops->bpf_mtap2(sc->sc_drvbpf,
+			    tap, tap->wt_ihdr.it_len, m0);
 		}
-#endif
 
 		rd = SLIST_FIRST(&sc->sc_rssdfree);
 		id = &rd->rd_desc;
@@ -1619,7 +1609,6 @@ wi_rx_intr(struct wi_softc *sc)
 		 */
 		wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
 	}
-#if NBPFILTER > 0
 	if (sc->sc_drvbpf) {
 		struct wi_rx_radiotap_header *tap = &sc->sc_rxtap;
 
@@ -1632,9 +1621,8 @@ wi_rx_intr(struct wi_softc *sc)
 			tap->wr_flags |= IEEE80211_RADIOTAP_F_CFP;
 
 		/* XXX IEEE80211_RADIOTAP_F_WEP */
-		bpf_mtap2(sc->sc_drvbpf, tap, tap->wr_ihdr.it_len, m);
+		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, tap->wr_ihdr.it_len, m);
 	}
-#endif
 
 	/* synchronize driver's BSSID with firmware's BSSID */
 	dir = wh->i_fc[1] & IEEE80211_FC1_DIR_MASK;

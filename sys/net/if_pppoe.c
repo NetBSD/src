@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.94 2009/02/19 15:17:50 christos Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.95 2010/01/19 22:08:01 pooka Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.94 2009/02/19 15:17:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.95 2010/01/19 22:08:01 pooka Exp $");
 
 #include "pppoe.h"
-#include "bpfilter.h"
 #include "opt_pfil_hooks.h"
 #include "opt_pppoe.h"
 
@@ -57,9 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.94 2009/02/19 15:17:50 christos Exp $
 #include <net/if_spppvar.h>
 #include <net/if_pppoe.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 
 #undef PPPOE_DEBUG		/* XXX - remove this or make it an option */
@@ -250,9 +247,8 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	if_attach(&sc->sc_sppp.pp_if);
 	sppp_attach(&sc->sc_sppp.pp_if);
 
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_sppp.pp_if, DLT_PPP_ETHER, 0);
-#endif
+	bpf_ops->bpf_attach(&sc->sc_sppp.pp_if, DLT_PPP_ETHER,
+	    0, &sc->sc_sppp.pp_if.if_bpf);
 #ifdef PFIL_HOOKS
 	if (LIST_EMPTY(&pppoe_softc_list))
 		pfil_add_hook(pppoe_ifattach_hook, NULL,
@@ -274,9 +270,7 @@ pppoe_clone_destroy(struct ifnet *ifp)
 		pfil_remove_hook(pppoe_ifattach_hook, NULL,
 		    PFIL_IFNET|PFIL_WAITOK, &if_pfil);
 #endif
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
+	bpf_ops->bpf_detach(ifp);
 	sppp_detach(&sc->sc_sppp.pp_if);
 	if_detach(ifp);
 	if (sc->sc_concentrator_name)
@@ -811,10 +805,8 @@ pppoe_data_input(struct mbuf *m)
 
 	plen = ntohs(ph->plen);
 
-#if NBPFILTER > 0
 	if(sc->sc_sppp.pp_if.if_bpf)
-		bpf_mtap(sc->sc_sppp.pp_if.if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(sc->sc_sppp.pp_if.if_bpf, m);
 
 	m_adj(m, PPPOE_HEADERLEN);
 
@@ -1496,10 +1488,8 @@ pppoe_start(struct ifnet *ifp)
 		p = mtod(m, uint8_t *);
 		PPPOE_ADD_HEADER(p, 0, sc->sc_session, len);
 
-#if NBPFILTER > 0
 		if(sc->sc_sppp.pp_if.if_bpf)
-			bpf_mtap(sc->sc_sppp.pp_if.if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(sc->sc_sppp.pp_if.if_bpf, m);
 
 		pppoe_output(sc, m);
 	}

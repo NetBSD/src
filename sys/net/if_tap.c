@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.62 2009/12/20 09:36:06 dsl Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.63 2010/01/19 22:08:01 pooka Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,10 +33,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.62 2009/12/20 09:36:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.63 2010/01/19 22:08:01 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "bpfilter.h"
+
 #include "opt_modular.h"
 #include "opt_compat_netbsd.h"
 #endif
@@ -68,9 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.62 2009/12/20 09:36:06 dsl Exp $");
 #include <net/if_ether.h>
 #include <net/if_media.h>
 #include <net/if_tap.h>
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <compat/sys/sockio.h>
 
@@ -483,10 +481,8 @@ tap_start(struct ifnet *ifp)
 				return;
 
 			ifp->if_opackets++;
-#if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m0);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 			m_freem(m0);
 		}
@@ -855,10 +851,8 @@ tap_dev_close(struct tap_softc *sc)
 				break;
 
 			ifp->if_opackets++;
-#if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m);
 			m_freem(m);
 		}
 	}
@@ -952,10 +946,8 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 	}
 
 	ifp->if_opackets++;
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	/*
 	 * One read is one packet.
@@ -1066,10 +1058,8 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 	ifp->if_ipackets++;
 	m->m_pkthdr.rcvif = ifp;
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 	s =splnet();
 	(*ifp->if_input)(ifp, m);
 	splx(s);

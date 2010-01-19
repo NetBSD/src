@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.58 2009/11/20 02:14:57 christos Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.59 2010/01/19 22:08:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,14 +92,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.58 2009/11/20 02:14:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.59 2010/01/19 22:08:01 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_iso.h"
 #include "opt_gateway.h"
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,9 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.58 2009/11/20 02:14:57 christos E
 #include <net/if_dl.h>
 #include <net/if_types.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <net/if_ether.h>
 #include <net/if_token.h>
@@ -151,7 +148,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.58 2009/11/20 02:14:57 christos E
 #include <netiso/iso_snpac.h>
 #endif
 
-#include "bpfilter.h"
 
 #define senderr(e) { error = (e); goto bad;}
 
@@ -658,18 +654,15 @@ token_ifattach(struct ifnet *ifp, void *lla)
 
 	if_set_sadl(ifp, lla, ISO88025_ADDR_LEN, true);
 
-#if NBPFILTER > 0
-	bpfattach(ifp, DLT_IEEE802, sizeof(struct token_header));
-#endif
+	bpf_ops->bpf_attach(ifp, DLT_IEEE802,
+	    sizeof(struct token_header), &ifp->if_bpf);
 }
 
 void
 token_ifdetach(struct ifnet *ifp)
 {
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
+	bpf_ops->bpf_detach(ifp);
 #if 0	/* done in if_detach() */
 	if_free_sadl(ifp);
 #endif

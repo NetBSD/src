@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.34 2009/12/14 00:46:13 matt Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.35 2010/01/19 22:06:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,9 +33,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.34 2009/12/14 00:46:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.35 2010/01/19 22:06:22 pooka Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,9 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.34 2009/12/14 00:46:13 matt Exp $");
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -632,13 +629,11 @@ sq_start(struct ifnet *ifp)
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
-#if NBPFILTER > 0
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 		if (m != NULL) {
 			m_freem(m0);
 			m0 = m;
@@ -1029,10 +1024,8 @@ sq_rxintr(struct sq_softc *sc)
 		SQ_DPRINTF(("%s: sq_rxintr: buf %d len %d\n",
 			    sc->sc_dev.dv_xname, i, framelen));
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		(*ifp->if_input)(ifp, m);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.26 2009/08/19 13:07:59 cegger Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.27 2010/01/19 22:08:00 pooka Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -790,7 +790,11 @@ typedef unsigned int    u_32_t;
 #  include <stddef.h>
 # endif
 # if defined(_KERNEL) && !defined(IPFILTER_LKM)
-#  include "bpfilter.h"
+#  if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 599002300)
+#    define NBPFILTER 1
+#  else
+#    include "bpfilter.h"
+#  endif
 #  if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 104110000)
 #   include "opt_inet.h"
 #  endif

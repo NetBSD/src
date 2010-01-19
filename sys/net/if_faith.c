@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.45 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.46 2010/01/19 22:08:00 pooka Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.45 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.46 2010/01/19 22:08:00 pooka Exp $");
 
 #include "opt_inet.h"
 
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.45 2008/11/07 00:20:13 dyoung Exp $")
 #include <netinet6/ip6_var.h>
 #endif
 
-#include "bpfilter.h"
 
 #include <net/net_osdep.h>
 
@@ -127,9 +126,7 @@ faith_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_dlt = DLT_NULL;
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
-#if NBPFILTER > 0
-	bpfattach(ifp, DLT_NULL, sizeof(u_int));
-#endif
+	bpf_ops->bpf_attach(ifp, DLT_NULL, sizeof(u_int), &ifp->if_bpf);
 	return (0);
 }
 
@@ -137,9 +134,7 @@ int
 faith_clone_destroy(struct ifnet *ifp)
 {
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
+	bpf_ops->bpf_detach(ifp);
 	if_detach(ifp);
 	free(ifp, M_DEVBUF);
 
@@ -157,7 +152,6 @@ faithoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("faithoutput no HDR");
 	af = dst->sa_family;
-#if NBPFILTER > 0
 	/* BPF write needs to be handled specially */
 	if (af == AF_UNSPEC) {
 		af = *(mtod(m, int *));
@@ -165,8 +159,7 @@ faithoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 
 	if (ifp->if_bpf)
-		bpf_mtap_af(ifp->if_bpf, af, m);
-#endif
+		bpf_ops->bpf_mtap_af(ifp->if_bpf, af, m);
 
 	if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)) {
 		m_freem(m);

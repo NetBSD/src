@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.175 2009/11/28 09:20:37 mbalmer Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.176 2010/01/19 22:08:00 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.175 2009/11/28 09:20:37 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.176 2010/01/19 22:08:00 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -74,7 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.175 2009/11/28 09:20:37 mbalmer E
 #include "vlan.h"
 #include "pppoe.h"
 #include "bridge.h"
-#include "bpfilter.h"
 #include "arp.h"
 #include "agr.h"
 
@@ -112,9 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.175 2009/11/28 09:20:37 mbalmer E
 #error You have included NETATALK or a pseudo-device in your configuration that depends on the presence of ethernet interfaces, but have no such interfaces configured. Check if you really need pseudo-device bridge, pppoe, vlan or options NETATALK.
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <net/if_ether.h>
 #if NVLAN > 0
@@ -1084,9 +1081,8 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 
 	LIST_INIT(&ec->ec_multiaddrs);
 	ifp->if_broadcastaddr = etherbroadcastaddr;
-#if NBPFILTER > 0
-	bpfattach(ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
+	bpf_ops->bpf_attach(ifp, DLT_EN10MB,
+	    sizeof(struct ether_header), &ifp->if_bpf);
 #ifdef MBUFTRACE
 	strlcpy(ec->ec_tx_mowner.mo_name, ifp->if_xname,
 	    sizeof(ec->ec_tx_mowner.mo_name));
@@ -1114,9 +1110,7 @@ ether_ifdetach(struct ifnet *ifp)
 		bridge_ifdetach(ifp);
 #endif
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
+	bpf_ops->bpf_detach(ifp);
 
 #if NVLAN > 0
 	if (ec->ec_nvlans)

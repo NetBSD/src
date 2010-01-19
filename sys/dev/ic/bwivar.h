@@ -1,4 +1,4 @@
-/*	$NetBSD: bwivar.h,v 1.5 2010/01/08 20:02:39 dyoung Exp $	*/
+/*	$NetBSD: bwivar.h,v 1.6 2010/01/19 22:06:24 pooka Exp $	*/
 /*	$OpenBSD: bwivar.h,v 1.23 2008/02/25 20:36:54 mglocker Exp $	*/
 
 /*
@@ -636,7 +636,6 @@ struct bwi_softc {
 	int			 sc_txpwr_calib;
 	int			 sc_debug;	/* BWI_DBG_ */
 
-#if NBPFILTER > 0
 	struct bpf_if		*sc_drvbpf;
  
 	union {
@@ -652,7 +651,6 @@ struct bwi_softc {
 	}			 sc_txtapu;
 #define sc_txtap		 sc_txtapu.th
 	int			 sc_txtap_len;
-#endif
 };
 
 #define BWI_F_BUS_INITED	0x1

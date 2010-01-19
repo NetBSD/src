@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.27 2009/12/06 20:20:12 dyoung Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.28 2010/01/19 22:07:44 pooka Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,10 +44,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.27 2009/12/06 20:20:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.28 2010/01/19 22:07:44 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -66,10 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.27 2009/12/06 20:20:12 dyoung Exp $");
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
-#define	BPF_MTAP(ifp, m)	bpf_mtap((ifp)->if_bpf, (m))
 
 #include <net/if_ether.h>
 #ifdef INET
@@ -995,10 +991,8 @@ udav_start(struct ifnet *ifp)
 
 	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m_head);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 
 	ifp->if_flags |= IFF_OACTIVE;
 
@@ -1181,10 +1175,8 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto done1;
 	}
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		BPF_MTAP(ifp, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	DPRINTF(("%s: %s: deliver %d\n", USBDEVNAME(sc->sc_dev),
 		 __func__, m->m_len));

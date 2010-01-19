@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.959 2010/01/07 18:49:30 tnn Exp $
+# $NetBSD: GENERIC,v 1.960 2010/01/19 22:06:20 pooka Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.959 $"
+#ident 		"GENERIC-$Revision: 1.960 $"
 
 maxusers	64		# estimated number of users
 
@@ -90,7 +90,7 @@ options 	INSECURE	# disable kernel security levels - X needs this
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
-options 	KTRACE		# system call tracing via ktrace(1)
+#options 	KTRACE		# system call tracing via ktrace(1)
 
 # Note: SysV IPC parameters could be changed dynamically, see sysctl(8).
 options 	SYSVMSG		# System V-like message queues

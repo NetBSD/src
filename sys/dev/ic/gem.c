@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.91 2010/01/11 09:30:41 jdc Exp $ */
+/*	$NetBSD: gem.c,v 1.92 2010/01/19 22:06:24 pooka Exp $ */
 
 /*
  *
@@ -37,10 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.91 2010/01/11 09:30:41 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.92 2010/01/19 22:06:24 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,9 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.91 2010/01/11 09:30:41 jdc Exp $");
 #include <netinet/udp.h>
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -1588,13 +1585,11 @@ gem_start(struct ifnet *ifp)
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs_q);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txdirtyq, txs, txs_q);
 
-#if NBPFILTER > 0
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 	}
 
 	if (txs == NULL || sc->sc_txfree == 0) {
@@ -1846,14 +1841,12 @@ gem_rint(struct gem_softc *sc)
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
-#if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
 		 * pass it up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 #ifdef INET
 		/* hardware checksum */

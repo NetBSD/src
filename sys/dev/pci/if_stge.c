@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.48 2009/09/14 12:02:48 tsutsui Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.49 2010/01/19 22:07:01 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,9 +35,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.48 2009/09/14 12:02:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.49 2010/01/19 22:07:01 pooka Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,9 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.48 2009/09/14 12:02:48 tsutsui Exp $")
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -955,13 +952,11 @@ stge_start(struct ifnet *ifp)
 		sc->sc_txpending++;
 		sc->sc_txlast = nexttx;
 
-#if NBPFILTER > 0
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 	}
 
 	if (sc->sc_txpending == (STGE_NTXDESC - 1)) {
@@ -1341,14 +1336,12 @@ stge_rxintr(struct stge_softc *sc)
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = len;
 
-#if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
 		 * pass if up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 #ifdef	STGE_VLAN_UNTAG
 		/*
 		 * Check for VLAN tagged packets

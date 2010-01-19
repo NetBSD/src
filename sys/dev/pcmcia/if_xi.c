@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.69 2009/12/06 23:05:39 dyoung Exp $ */
+/*	$NetBSD: if_xi.c,v 1.70 2010/01/19 22:07:43 pooka Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,11 +55,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.69 2009/12/06 23:05:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.70 2010/01/19 22:07:43 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,10 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.69 2009/12/06 23:05:39 dyoung Exp $");
 #endif
 
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 /*
  * Maximum number of bytes to read per interrupt.  Linux recommends
@@ -488,10 +485,8 @@ xi_get(struct xi_softc *sc)
 
 	ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, top);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, top);
 
 	(*ifp->if_input)(ifp, top);
 	return (recvcount);
@@ -811,10 +806,8 @@ xi_start(struct ifnet *ifp)
 
 	IFQ_DEQUEUE(&ifp->if_snd, m0);
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m0);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 	/*
 	 * Do the output at splhigh() so that an interrupt from another device

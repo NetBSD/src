@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.48 2009/09/16 21:14:15 dyoung Exp $ */
+/* $NetBSD: if_lmc.c,v 1.49 2010/01/19 22:07:01 pooka Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -74,11 +74,10 @@
  */
 
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.48 2009/09/16 21:14:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.49 2010/01/19 22:07:01 pooka Exp $");
 # include <sys/param.h>	/* OS version */
 # include "opt_inet.h"	/* INET6, INET */
 # include "opt_altq_enabled.h" /* ALTQ */
-# include "bpfilter.h"	/* NBPFILTER */
 # define IOREF_CSR 1	/* 1=IO refs; 0=MEM refs */
 # define IFNET 1
 # define NETDEV 0
@@ -117,9 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.48 2009/09/16 21:14:15 dyoung Exp $");
 # if SPPP
 #  include <net/if_spppvar.h>
 # endif
-# if NBPFILTER
 #  include <net/bpf.h>
-# endif
 # if !defined(ALTQ)
 #  define ALTQ 0
 # endif
@@ -5365,7 +5362,7 @@ print_driver_info(void)
     printf("LMC driver version %d/%d/%d; options",
      VER_YEAR, VER_MONTH, VER_DAY);
     if (ALTQ)           printf(" ALTQ");
-    if (NBPFILTER)      printf(" BPF");
+                        printf(" BPF"); /* always defined */
     if (NAPI)           printf(" NAPI");
     if (DEVICE_POLLING) printf(" POLL");
     if (P2P)            printf(" P2P");

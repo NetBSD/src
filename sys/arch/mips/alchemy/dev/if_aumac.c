@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.25 2008/01/20 14:18:05 dogcow Exp $ */
+/* $NetBSD: if_aumac.c,v 1.26 2010/01/19 22:06:21 pooka Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,9 +46,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.25 2008/01/20 14:18:05 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.26 2010/01/19 22:06:21 pooka Exp $");
 
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -70,9 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.25 2008/01/20 14:18:05 dogcow Exp $")
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -460,11 +457,9 @@ aumac_start(struct ifnet *ifp)
 		sc->sc_txfree--;
 		sc->sc_txnext = AUMAC_NEXTTX(nexttx);
 
-#if NBPFILTER > 0
 		/* Pass the packet to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		m_freem(m);
 
@@ -732,11 +727,9 @@ aumac_rxintr(struct aumac_softc *sc)
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
-#if NBPFILTER > 0
 		/* Pass this up to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);

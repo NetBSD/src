@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.77 2009/12/06 23:05:06 dyoung Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.78 2010/01/19 22:07:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,10 +57,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.77 2009/12/06 23:05:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.78 2010/01/19 22:07:43 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,10 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.77 2009/12/06 23:05:06 dyoung Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <sys/cpu.h>
 #include <sys/bus.h>
@@ -1225,21 +1222,19 @@ ray_intr_start(struct ray_softc *sc)
 			}
 			bufp += len;
 		}
-#if NBPFILTER > 0
 		if (ifp->if_bpf) {
 			if (ifp->if_flags & IFF_LINK0) {
 				m0->m_data += sizeof(struct ieee80211_frame);
 				m0->m_len -=  sizeof(struct ieee80211_frame);
 				m0->m_pkthdr.len -=  sizeof(struct ieee80211_frame);
 			}
-			bpf_mtap(ifp->if_bpf, m0);
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 			if (ifp->if_flags & IFF_LINK0) {
 				m0->m_data -= sizeof(struct ieee80211_frame);
 				m0->m_len +=  sizeof(struct ieee80211_frame);
 				m0->m_pkthdr.len +=  sizeof(struct ieee80211_frame);
 			}
 		}
-#endif
 
 #ifdef RAY_DEBUG
 		if (ray_debug && ray_debug_dump_tx)
@@ -1518,10 +1513,8 @@ done:
 		eh = (struct ether_header *)(frame + 1);
 	}
 	m_adj(m, (char *)eh - (char *)frame);
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 	/* XXX doesn't appear to be included m->m_flags |= M_HASFCS; */
 	ifp->if_ipackets++;
 	(*ifp->if_input)(ifp, m);

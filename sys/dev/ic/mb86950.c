@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.16 2009/12/06 23:18:37 dyoung Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.17 2010/01/19 22:06:24 pooka Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.16 2009/12/06 23:18:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.17 2010/01/19 22:06:24 pooka Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -120,7 +120,6 @@ __KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.16 2009/12/06 23:18:37 dyoung Exp $");
  */
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -150,10 +149,8 @@ __KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.16 2009/12/06 23:18:37 dyoung Exp $");
 #endif
 
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <sys/bus.h>
 
@@ -579,11 +576,9 @@ mb86950_start(struct ifnet *ifp)
 	if (m == 0)
 		return;
 
-#if NBPFILTER > 0
 	/* Tap off here if there is a BPF listener. */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	/* Send the packet to the mb86950 */
 	len = mb86950_put_fifo(sc,m);
@@ -913,14 +908,12 @@ mb86950_get_fifo(struct mb86950_softc *sc, u_int len)
 	/* Get a packet. */
 	bus_space_read_multi_stream_2(bst, bsh, BMPR_FIFO, mtod(m, u_int16_t *), (len + 1) >> 1);
 
-#if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.  If so, hand off
 	 * the raw packet to bpf.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	(*ifp->if_input)(ifp, m);
 	return (0);

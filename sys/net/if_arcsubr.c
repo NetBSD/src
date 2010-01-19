@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.61 2009/11/20 02:14:56 christos Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.62 2010/01/19 22:08:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,11 +35,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.61 2009/11/20 02:14:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.62 2010/01/19 22:08:00 pooka Exp $");
 
 #include "opt_inet.h"
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.61 2009/11/20 02:14:56 christos Exp
 #include <net/if_arp.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -653,7 +650,5 @@ arc_ifattach(struct ifnet *ifp, uint8_t lla)
 
 	ifp->if_broadcastaddr = &arcbroadcastaddr;
 
-#if NBPFILTER > 0
-	bpfattach(ifp, DLT_ARCNET, ARC_HDRLEN);
-#endif
+	bpf_ops->bpf_attach(ifp, DLT_ARCNET, ARC_HDRLEN, &ifp->if_bpf);
 }

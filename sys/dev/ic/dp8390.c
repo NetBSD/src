@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.72 2009/12/06 23:17:09 dyoung Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.73 2010/01/19 22:06:24 pooka Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,11 +14,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.72 2009/12/06 23:17:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.73 2010/01/19 22:06:24 pooka Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -49,10 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.72 2009/12/06 23:17:09 dyoung Exp $");
 #endif
 
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <sys/bus.h>
 
@@ -477,11 +474,9 @@ outloop:
 	if ((m0->m_flags & M_PKTHDR) == 0)
 		panic("dp8390_start: no header mbuf");
 
-#if NBPFILTER > 0
 	/* Tap off here if there is a BPF listener. */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m0);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 	/* txb_new points to next open buffer slot. */
 	buffer = sc->mem_start +
@@ -964,14 +959,12 @@ dp8390_read(struct dp8390_softc *sc, int buf, u_short len)
 
 	ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to bpf.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	(*ifp->if_input)(ifp, m);
 }

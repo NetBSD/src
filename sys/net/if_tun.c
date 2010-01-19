@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.111 2009/05/08 11:09:44 elad Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.112 2010/01/19 22:08:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.111 2009/05/08 11:09:44 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.112 2010/01/19 22:08:01 pooka Exp $");
 
 #include "opt_inet.h"
 
@@ -53,11 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.111 2009/05/08 11:09:44 elad Exp $");
 #endif
 
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <sys/time.h>
 #include <net/bpf.h>
-#endif
 
 #include <net/if_tun.h>
 
@@ -218,9 +215,7 @@ tunattach0(struct tun_softc *tp)
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
-#if NBPFILTER > 0
-	bpfattach(ifp, DLT_NULL, sizeof(uint32_t));
-#endif
+	bpf_ops->bpf_attach(ifp, DLT_NULL, sizeof(uint32_t), &ifp->if_bpf);
 }
 
 static int
@@ -256,9 +251,7 @@ tun_clone_destroy(struct ifnet *ifp)
 	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
 		fownsignal(tp->tun_pgid, SIGIO, POLL_HUP, 0, NULL);
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
+	bpf_ops->bpf_detach(ifp);
 	if_detach(ifp);
 
 	if (!zombie) {
@@ -527,10 +520,8 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	 */
 	IFQ_CLASSIFY(&ifp->if_snd, m0, dst->sa_family, &pktattr);
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap_af(ifp->if_bpf, dst->sa_family, m0);
-#endif
+		bpf_ops->bpf_mtap_af(ifp->if_bpf, dst->sa_family, m0);
 
 	switch(dst->sa_family) {
 #ifdef INET6
@@ -944,10 +935,8 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	top->m_pkthdr.len = tlen;
 	top->m_pkthdr.rcvif = ifp;
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap_af(ifp->if_bpf, dst.sa_family, top);
-#endif
+		bpf_ops->bpf_mtap_af(ifp->if_bpf, dst.sa_family, top);
 
 	s = splnet();
 	simple_lock(&tp->tun_lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.30 2009/12/06 20:20:12 dyoung Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.31 2010/01/19 22:07:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,14 +73,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.30 2009/12/06 20:20:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.31 2010/01/19 22:07:43 pooka Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
 #include "rnd.h"
 #endif
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,11 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.30 2009/12/06 20:20:12 dyoung Exp $");
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#define BPF_MTAP(ifp, m) bpf_mtap((ifp)->if_bpf, (m))
-
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #if defined(__NetBSD__)
 #include <net/if_ether.h>
@@ -836,10 +831,8 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto done1;
 	}
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		BPF_MTAP(ifp, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->axe_dev),
 		    __func__, m->m_len));
@@ -1018,10 +1011,8 @@ axe_start(struct ifnet *ifp)
 	 * If there's a BPF listener, bounce a copy of this frame
 	 * to him.
 	 */
-#if NBPFILTER > 0
 	 if (ifp->if_bpf)
-	 	BPF_MTAP(ifp, m_head);
-#endif
+	 	bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 
 	ifp->if_flags |= IFF_OACTIVE;
 
@@ -1338,4 +1329,3 @@ axe_stop(struct axe_softc *sc)
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
-

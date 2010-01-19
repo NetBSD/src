@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.134 2009/11/26 15:17:09 njoly Exp $	*/
+/*	$NetBSD: if_de.c,v 1.135 2010/01/19 22:07:00 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.134 2009/11/26 15:17:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.135 2010/01/19 22:07:00 pooka Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -83,11 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.134 2009/11/26 15:17:09 njoly Exp $");
 #include <dev/mii/miivar.h>
 #endif
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -3652,14 +3649,12 @@ tulip_rx_intr(
 #endif /* TULIP_BUS_DMA */
 
 	    eh = *mtod(ms, struct ether_header *);
-#if NBPFILTER > 0
 	    if (sc->tulip_bpf != NULL) {
 		if (me == ms)
 		    TULIP_BPF_TAP(sc, mtod(ms, void *), total_len);
 		else
 		    TULIP_BPF_MTAP(sc, ms);
 	    }
-#endif
 	    sc->tulip_flags |= TULIP_RXACT;
 	    if ((sc->tulip_flags & (TULIP_PROMISC|TULIP_HASHONLY))
 		    && (eh.ether_dhost[0] & 1) == 0
@@ -3910,10 +3905,8 @@ tulip_tx_intr(
 		    TULIP_TXMAP_POSTSYNC(sc, map);
 		    tulip_free_txmap(sc, map);
 #endif /* TULIP_BUS_DMA */
-#if NBPFILTER > 0
 		    if (sc->tulip_bpf != NULL)
 			TULIP_BPF_MTAP(sc, m);
-#endif
 		    m_freem(m);
 #if defined(TULIP_DEBUG)
 		} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.41 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.42 2010/01/19 22:08:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.41 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.42 2010/01/19 22:08:01 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,9 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.41 2008/11/07 00:20:13 dyoung 
 #include <net/netisr.h>
 #include <net/route.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -210,7 +207,6 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	if (mcopy)
 		looutput(ifp, mcopy, dst, rt);
 	myaddr = (const struct ieee1394_hwaddr *)CLLADDR(ifp->if_sadl);
-#if NBPFILTER > 0
 	if (ifp->if_bpf) {
 		struct ieee1394_bpfhdr h;
 		if (unicast)
@@ -221,9 +217,8 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			    ifp->if_broadcastaddr)->iha_uid, 8);
 		memcpy(h.ibh_shost, myaddr->iha_uid, 8);
 		h.ibh_type = etype;
-		bpf_mtap2(ifp->if_bpf, &h, sizeof(h), m0);
+		bpf_ops->bpf_mtap2(ifp->if_bpf, &h, sizeof(h), m0);
 	}
-#endif
 	if ((ifp->if_flags & IFF_SIMPLEX) &&
 	    unicast &&
 	    memcmp(hwdst, myaddr, IEEE1394_ADDR_LEN) == 0)
@@ -385,7 +380,6 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m, uint16_t src)
 
 	/* strip off the ieee1394 header */
 	m_adj(m, sizeof(*iuh));
-#if NBPFILTER > 0
 	if (ifp->if_bpf) {
 		struct ieee1394_bpfhdr h;
 		struct m_tag *mtag;
@@ -407,9 +401,8 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m, uint16_t src)
 			memcpy(h.ibh_dhost, myaddr->iha_uid, 8);
 		}
 		h.ibh_type = htons(etype);
-		bpf_mtap2(ifp->if_bpf, &h, sizeof(h), m);
+		bpf_ops->bpf_mtap2(ifp->if_bpf, &h, sizeof(h), m);
 	}
-#endif
 
 	switch (etype) {
 #ifdef INET
@@ -694,19 +687,15 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 	memset(baddr->iha_offset, 0, sizeof(baddr->iha_offset));
 	ifp->if_broadcastaddr = (uint8_t *)baddr;
 	LIST_INIT(&ic->ic_reassq);
-#if NBPFILTER > 0
-	bpfattach(ifp,
-	    DLT_APPLE_IP_OVER_IEEE1394, sizeof(struct ieee1394_hwaddr));
-#endif
+	bpf_ops->bpf_attach(ifp, DLT_APPLE_IP_OVER_IEEE1394,
+	    sizeof(struct ieee1394_hwaddr), &ifp->if_bpf);
 }
 
 void
 ieee1394_ifdetach(struct ifnet *ifp)
 {
 	ieee1394_drain(ifp);
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
+	bpf_ops->bpf_detach(ifp);
 	free(__UNCONST(ifp->if_broadcastaddr), M_DEVBUF);
 	ifp->if_broadcastaddr = NULL;
 #if 0	/* done in if_detach() */

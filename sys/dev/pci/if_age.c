@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.35 2010/01/08 19:56:51 dyoung Exp $ */
+/*	$NetBSD: if_age.c,v 1.36 2010/01/19 22:07:00 pooka Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,9 +31,8 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.35 2010/01/08 19:56:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.36 2010/01/19 22:07:00 pooka Exp $");
 
-#include "bpfilter.h"
 #include "vlan.h"
 
 #include <sys/param.h>
@@ -64,9 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.35 2010/01/08 19:56:51 dyoung Exp $");
 #include <net/if_types.h>
 #include <net/if_vlanvar.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/rnd.h>
 
@@ -1058,14 +1055,12 @@ age_start(struct ifnet *ifp)
 		}
 		enq = 1;
 
-#if NBPFILTER > 0
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
 		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m_head);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 	}
 
 	if (enq) {
@@ -1485,10 +1480,8 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 			}
 #endif
 
-#if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m);
 			/* Pass it on. */
 			ether_input(ifp, m);
 

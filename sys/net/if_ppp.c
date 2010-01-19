@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.129 2009/04/15 20:44:25 elad Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.130 2010/01/19 22:08:01 pooka Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.129 2009/04/15 20:44:25 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.130 2010/01/19 22:08:01 pooka Exp $");
 
 #include "ppp.h"
 
@@ -148,14 +148,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.129 2009/04/15 20:44:25 elad Exp $");
 #include <netinet/ip.h>
 #endif
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
-#if defined(PPP_FILTER) || NBPFILTER > 0
 #include <net/slip.h>
-#endif
 
 #ifdef VJC
 #include <net/slcompress.h>
@@ -309,9 +304,7 @@ ppp_create(const char *name, int unit)
     IFQ_SET_READY(&sc->sc_if.if_snd);
     if_attach(&sc->sc_if);
     if_alloc_sadl(&sc->sc_if);
-#if NBPFILTER > 0
-    bpfattach(&sc->sc_if, DLT_NULL, 0);
-#endif
+    bpf_ops->bpf_attach(&sc->sc_if, DLT_NULL, 0, &sc->sc_if.if_bpf);
     return sc;
 }
 
@@ -333,9 +326,7 @@ ppp_clone_destroy(struct ifnet *ifp)
     LIST_REMOVE(sc, sc_iflist);
     simple_unlock(&ppp_list_mutex);
 
-#if NBPFILTER > 0
-    bpfdetach(ifp);
-#endif
+    bpf_ops->bpf_detach(ifp);
     if_detach(ifp);
 
     free(sc, M_DEVBUF);
@@ -1000,13 +991,11 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 #endif /* PPP_FILTER */
     }
 
-#if NBPFILTER > 0
     /*
      * See if bpf wants to look at the packet.
      */
     if (sc->sc_if.if_bpf)
-	bpf_mtap(sc->sc_if.if_bpf, m0);
-#endif
+	bpf_ops->bpf_mtap(sc->sc_if.if_bpf, m0);
 
     /*
      * Put the packet on the appropriate queue.
@@ -1638,11 +1627,9 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 #endif /* PPP_FILTER */
     }
 
-#if NBPFILTER > 0
     /* See if bpf wants to look at the packet. */
     if (sc->sc_if.if_bpf)
-	bpf_mtap(sc->sc_if.if_bpf, m);
-#endif
+	bpf_ops->bpf_mtap(sc->sc_if.if_bpf, m);
 
     rv = 0;
     switch (proto) {
