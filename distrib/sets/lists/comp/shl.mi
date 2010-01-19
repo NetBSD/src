@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.98 2010/01/14 13:47:41 wiz Exp $
+# $NetBSD: shl.mi,v 1.99 2010/01/19 22:46:34 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -88,6 +88,7 @@
 ./usr/lib/librump_pic.a				comp-c-piclib
 ./usr/lib/librumpcrypto_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_pic.a			comp-c-piclib
+./usr/lib/librumpdev_bpf_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_cgd_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_disk_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_dm_pic.a			comp-c-piclib
