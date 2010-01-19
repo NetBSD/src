@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.4 2010/01/12 19:40:50 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.5 2010/01/19 22:38:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.4 2010/01/12 19:40:50 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.5 2010/01/19 22:38:08 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include "histedit.h"
@@ -116,6 +116,11 @@ el_set(EditLine *el, int op, ...)
 
 	case EL_TERMINAL:       /* const char * */
 		ret = el_wset(el, op, va_arg(ap, char *));
+		break;
+
+	case EL_EDITOR:		/* const wchar_t * */
+		ret = el_wset(el, op, ct_decode_string(va_arg(ap, char *),
+		    &el->el_lgcyconv));
 		break;
 
 	case EL_SIGNAL:         /* int */
