@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.56 2009/12/06 20:20:12 dyoung Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.57 2010/01/19 22:07:43 pooka Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,14 +56,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.56 2009/12/06 20:20:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.57 2010/01/19 22:07:43 pooka Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "rnd.h"
 #elif defined(__OpenBSD__)
-#include "bpfilter.h"
+include "bpfilter.h"
 #endif /* defined(__OpenBSD__) */
 
 #include <sys/param.h>
@@ -88,11 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.56 2009/12/06 20:20:12 dyoung Exp $");
 #endif
 #include <net/if_dl.h>
 
-#define BPF_MTAP(ifp, m) bpf_mtap((ifp)->if_bpf, (m))
-
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #if defined(__NetBSD__)
 #include <net/if_ether.h>
@@ -819,7 +814,6 @@ cue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto done1;
 	}
 
-#if NBPFILTER > 0
 	/*
 	 * Handle BPF listeners. Let the BPF user see the packet, but
 	 * don't pass it up to the ether_input() layer unless it's
@@ -827,8 +821,7 @@ cue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	 * address or the interface is in promiscuous mode.
 	 */
 	if (ifp->if_bpf)
-		BPF_MTAP(ifp, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->cue_dev),
 		    __func__, m->m_len));
@@ -1004,14 +997,12 @@ cue_start(struct ifnet *ifp)
 
 	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
-#if NBPFILTER > 0
 	/*
 	 * If there's a BPF listener, bounce a copy of this frame
 	 * to him.
 	 */
 	if (ifp->if_bpf)
-		BPF_MTAP(ifp, m_head);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 
 	ifp->if_flags |= IFF_OACTIVE;
 

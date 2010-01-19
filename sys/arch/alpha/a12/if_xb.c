@@ -1,4 +1,4 @@
-/* $NetBSD: if_xb.c,v 1.24 2009/03/18 10:22:22 cegger Exp $ */
+/* $NetBSD: if_xb.c,v 1.25 2010/01/19 22:06:18 pooka Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -74,7 +74,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.24 2009/03/18 10:22:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.25 2010/01/19 22:06:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ xbattach(struct device *parent, struct device *self, void *aux)
 	xbfound = 1;
 	ccp = &xb_configuration;
 	xb_init_config(ccp, 1);
-	printf(": driver %s mtu %lu\n", "$Revision: 1.24 $", xbi.if_mtu);
+	printf(": driver %s mtu %lu\n", "$Revision: 1.25 $", xbi.if_mtu);
 }
 
 static void
@@ -746,7 +746,5 @@ a12_xbar_setup()
 	if_attach(&xbi);
 	if_alloc_sadl(&xbi);
 
-#if NBPFILTER > 0
-	bpfattach(&xbi, DLT_NULL, 0);
-#endif
+	bpf_ops->bpf_attach(&xbi, DLT_NULL, 0, &xbi.if_bpf);
 }

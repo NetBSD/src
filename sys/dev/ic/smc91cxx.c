@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.76 2009/12/06 23:18:37 dyoung Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.77 2010/01/19 22:06:25 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,10 +71,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.76 2009/12/06 23:18:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.77 2010/01/19 22:06:25 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -109,10 +108,8 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.76 2009/12/06 23:18:37 dyoung Exp $")
 #include <netinet/ip.h>
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -814,11 +811,9 @@ smc91cxx_start(struct ifnet *ifp)
 
 	ifp->if_timer = 5;
 
-#if NBPFILTER > 0
 	/* Hand off a copy to the bpf. */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	ifp->if_opackets++;
 	m_freem(m);
@@ -1295,13 +1290,11 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 
 	m->m_pkthdr.len = m->m_len = packetlen;
 
-#if NBPFILTER > 0
 	/*
 	 * Hand the packet off to bpf listeners.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	(*ifp->if_input)(ifp, m);
 

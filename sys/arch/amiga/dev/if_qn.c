@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.36 2010/01/18 18:14:43 pooka Exp $ */
+/*	$NetBSD: if_qn.c,v 1.37 2010/01/19 22:06:19 pooka Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.36 2010/01/18 18:14:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.37 2010/01/19 22:06:19 pooka Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.36 2010/01/18 18:14:43 pooka Exp $");
 #define QN_DEBUG1_no /* hides some old tests */
 #define QN_CHECKS_no /* adds some checks (not needed in normal situations) */
 
-#include "bpfilter.h"
 
 /*
  * Fujitsu MB86950 Ethernet Controller (as used in the QuickNet QN2000
@@ -149,10 +148,8 @@ struct	qn_softc {
 	u_char	transmit_pending;
 } qn_softc[NQN];
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 
 int	qnmatch(struct device *, struct cfdata *, void *);
@@ -402,7 +399,6 @@ qnstart(struct ifnet *ifp)
 	if (m == 0)
 		return;
 
-#if NBPFILTER > 0
 	/*
 	 * If bpf is listening on this interface, let it
 	 * see the packet before we commit it to the wire
@@ -412,8 +408,7 @@ qnstart(struct ifnet *ifp)
 	 *
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 	len = qn_put(sc->nic_fifo, m);
 	m_freem(m);
 
@@ -594,10 +589,8 @@ qn_get_packet(struct qn_softc *sc, u_short len)
 		len -= len1;
 	}
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, head);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, head);
 
 	(*ifp->if_input)(ifp, head);
 	return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.61 2010/01/10 07:06:12 snj Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.62 2010/01/19 22:06:25 pooka Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,13 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.61 2010/01/10 07:06:12 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.62 2010/01/19 22:06:25 pooka Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,10 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.61 2010/01/10 07:06:12 snj Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <sys/bus.h>
 #include <sys/cpu.h>
@@ -384,7 +381,6 @@ bah_start(struct ifnet *ifp)
 	if (m == 0)
 		return;
 
-#if NBPFILTER > 0
 	/*
 	 * If bpf is listening on this interface, let it
 	 * see the packet before we commit it to the wire
@@ -393,8 +389,7 @@ bah_start(struct ifnet *ifp)
 	 * that RAM is just accessed as on every other byte)
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 #ifdef BAH_DEBUG
 	if (m->m_len < ARC_HDRLEN)
@@ -606,10 +601,8 @@ bah_srint(void *vsc)
 		len -= len1;
 	}
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, head);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, head);
 
 	(*sc->sc_arccom.ac_if.if_input)(&sc->sc_arccom.ac_if, head);
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_ze.c,v 1.15 2008/03/14 21:35:01 jkunz Exp $ */
+/*      $NetBSD: if_ze.c,v 1.16 2010/01/19 22:06:23 pooka Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ze.c,v 1.15 2008/03/14 21:35:01 jkunz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ze.c,v 1.16 2010/01/19 22:06:23 pooka Exp $");
 
 #include "opt_cputype.h"
 
@@ -46,11 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ze.c,v 1.15 2008/03/14 21:35:01 jkunz Exp $");
 
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/nexus.h>

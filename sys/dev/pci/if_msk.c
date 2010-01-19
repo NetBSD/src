@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.31 2010/01/08 19:56:51 dyoung Exp $ */
+/* $NetBSD: if_msk.c,v 1.32 2010/01/19 22:07:01 pooka Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,9 +52,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.31 2010/01/08 19:56:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.32 2010/01/19 22:07:01 pooka Exp $");
 
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -81,9 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.31 2010/01/08 19:56:51 dyoung Exp $");
 
 #include <net/if_media.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -1604,10 +1601,8 @@ msk_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 	}
 	if (pkts == 0)
 		return;
@@ -1752,10 +1747,8 @@ msk_rxeof(struct sk_if_softc *sc_if, u_int16_t len, u_int32_t rxstat)
 
 	ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	/* pass it on. */
 	(*ifp->if_input)(ifp, m);

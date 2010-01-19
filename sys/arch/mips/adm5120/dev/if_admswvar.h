@@ -1,4 +1,4 @@
-/* $NetBSD: if_admswvar.h,v 1.1 2007/03/20 08:52:02 dyoung Exp $ */
+/* $NetBSD: if_admswvar.h,v 1.2 2010/01/19 22:06:21 pooka Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -34,9 +34,7 @@
 #define	_IF_ADMSWVAR_H_
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admswvar.h,v 1.1 2007/03/20 08:52:02 dyoung Exp $");
-
-#include "bpfilter.h"
+__KERNEL_RCSID(0, "$NetBSD: if_admswvar.h,v 1.2 2010/01/19 22:06:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,10 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_admswvar.h,v 1.1 2007/03/20 08:52:02 dyoung Exp $
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>

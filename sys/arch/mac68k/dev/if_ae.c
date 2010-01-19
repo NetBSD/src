@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.79 2007/01/06 13:25:19 martin Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.80 2010/01/19 22:06:20 pooka Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,9 +14,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.79 2007/01/06 13:25:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.80 2010/01/19 22:06:20 pooka Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

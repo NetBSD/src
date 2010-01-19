@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.28 2009/11/26 15:17:09 njoly Exp $ */
+/*	$NetBSD: if_dge.c,v 1.29 2010/01/19 22:07:00 pooka Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,9 +80,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.28 2009/11/26 15:17:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.29 2010/01/19 22:07:00 pooka Exp $");
 
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -108,9 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.28 2009/11/26 15:17:09 njoly Exp $");
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <netinet/in.h>			/* XXX for struct ip */
 #include <netinet/in_systm.h>		/* XXX for struct ip */
@@ -1351,11 +1348,9 @@ dge_start(struct ifnet *ifp)
 		sc->sc_txsfree--;
 		sc->sc_txsnext = DGE_NEXTTXS(sc->sc_txsnext);
 
-#if NBPFILTER > 0
 		/* Pass the packet to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 	}
 
 	if (sc->sc_txsfree == 0 || sc->sc_txfree <= 2) {
@@ -1776,11 +1771,9 @@ dge_rxintr(struct dge_softc *sc)
 
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 		/* Pass this up to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);

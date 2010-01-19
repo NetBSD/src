@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.969 2010/01/19 16:24:44 pooka Exp $
+#	$NetBSD: files,v 1.970 2010/01/19 22:06:23 pooka Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -1569,8 +1569,9 @@ file	miscfs/genfs/layer_vnops.c	nullfs | overlay | umapfs
 file	miscfs/specfs/spec_vnops.c
 file	miscfs/syncfs/sync_subr.c
 file	miscfs/syncfs/sync_vnops.c
-file	net/bpf.c			bpfilter		needs-flag
+file	net/bpf.c			bpfilter
 file	net/bpf_filter.c		bpf_filter
+file	net/bpf_stub.c
 file	net/bsd-comp.c			ppp & ppp_bsdcomp
 file	net/if.c
 file	net/if_arcsubr.c		arcnet			needs-flag

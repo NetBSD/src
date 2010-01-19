@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.192 2010/01/14 18:56:02 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.193 2010/01/19 22:07:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,9 +76,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.192 2010/01/14 18:56:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.193 2010/01/19 22:07:02 pooka Exp $");
 
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -105,9 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.192 2010/01/14 18:56:02 msaitoh Exp $");
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <netinet/in.h>			/* XXX for struct ip */
 #include <netinet/in_systm.h>		/* XXX for struct ip */
@@ -2402,11 +2399,9 @@ wm_start(struct ifnet *ifp)
 		sc->sc_txsfree--;
 		sc->sc_txsnext = WM_NEXTTXS(sc, sc->sc_txsnext);
 
-#if NBPFILTER > 0
 		/* Pass the packet to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 	}
 
 	if (sc->sc_txsfree == 0 || sc->sc_txfree <= 2) {
@@ -2897,11 +2892,9 @@ wm_rxintr(struct wm_softc *sc)
 
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 		/* Pass this up to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);

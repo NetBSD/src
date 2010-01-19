@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.12 2010/01/08 20:02:39 dyoung Exp $	*/
+/*	$NetBSD: bwi.c,v 1.13 2010/01/19 22:06:24 pooka Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -46,10 +46,9 @@
    think should be in NetBSD's generic 802.11 code, not in this
    driver.] */
 
-#include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.12 2010/01/08 20:02:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.13 2010/01/19 22:06:24 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -72,9 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.12 2010/01/08 20:02:39 dyoung Exp $");
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <net80211/ieee80211_var.h>
 /* [TRC: XXX amrr] */
@@ -1027,8 +1024,7 @@ bwi_attach(struct bwi_softc *sc)
 
 	ieee80211_media_init(ic, bwi_media_change, ieee80211_media_status);
 
-#if NBPFILTER > 0
-	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
+	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
 	    &sc->sc_drvbpf);
 
@@ -1041,7 +1037,6 @@ bwi_attach(struct bwi_softc *sc)
 	sc->sc_txtap_len = sizeof(sc->sc_txtapu);
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(BWI_TX_RADIOTAP_PRESENT);
-#endif
 
 	splx(s);
 	ieee80211_announce(ic);
@@ -1061,9 +1056,7 @@ bwi_detach(struct bwi_softc *sc)
 
 	bwi_stop(ifp, 1);
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
+	bpf_ops->bpf_detach(ifp);
 
 	ieee80211_ifdetach(&sc->sc_ic);
 	if_detach(ifp);
@@ -7449,10 +7442,8 @@ bwi_start(struct ifnet *ifp)
 			   filtered?  Different drivers appear to do it
 			   at different times.] */
 			/* TODO: PS */
-#if NBPFILTER > 0
 			if (ifp->if_bpf != NULL)
-				bpf_mtap(ifp->if_bpf, m);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m);
 			m = ieee80211_encap(ic, m, ni);
 			if (m == NULL) {
 				ifp->if_oerrors++;
@@ -7460,10 +7451,8 @@ bwi_start(struct ifnet *ifp)
 				continue;
 			}
 		}
-#if NBPFILTER > 0
 		if (ic->ic_rawbpf != NULL)
-			bpf_mtap(ic->ic_rawbpf, m);
-#endif
+			bpf_ops->bpf_mtap(ic->ic_rawbpf, m);
 
 		wh = mtod(m, struct ieee80211_frame *);
 		/* [TRC: XXX What about ic->ic_flags & IEEE80211_F_PRIVACY?] */
@@ -8509,7 +8498,6 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 		else
 			rate = bwi_ds_plcp2rate(plcp);
 
-#if NBPFILTER > 0
 		/* RX radio tap */
 		if (sc->sc_drvbpf != NULL) {
 			struct mbuf mb;
@@ -8531,9 +8519,8 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 			mb.m_nextpkt = NULL;
 			mb.m_type = 0;
 			mb.m_flags = 0;
-			bpf_mtap(sc->sc_drvbpf, &mb);
+			bpf_ops->bpf_mtap(sc->sc_drvbpf, &mb);
 		}
-#endif
 
 		m_adj(m, -IEEE80211_CRC_LEN);
 
@@ -9090,7 +9077,6 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	}
 	sc->sc_tx_rate = rate;
 
-#if NBPFILTER > 0
 	/* TX radio tap */
 	if (sc->sc_drvbpf != NULL) {
 		struct mbuf mb;
@@ -9109,9 +9095,8 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		mb.m_nextpkt = NULL;
 		mb.m_type = 0;
 		mb.m_flags = 0;
-		bpf_mtap(sc->sc_drvbpf, &mb);
+		bpf_ops->bpf_mtap(sc->sc_drvbpf, &mb);
 	}
-#endif
 
 	/*
 	 * Setup the embedded TX header

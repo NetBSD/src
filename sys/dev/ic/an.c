@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.57 2009/11/12 19:28:59 dyoung Exp $	*/
+/*	$NetBSD: an.c,v 1.58 2010/01/19 22:06:24 pooka Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,9 +77,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.57 2009/11/12 19:28:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.58 2010/01/19 22:06:24 pooka Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -109,10 +108,8 @@ __KERNEL_RCSID(0, "$NetBSD: an.c,v 1.57 2009/11/12 19:28:59 dyoung Exp $");
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_radiotap.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <dev/ic/anreg.h>
 #include <dev/ic/anvar.h>
@@ -322,10 +319,8 @@ an_attach(struct an_softc *sc)
 	/*
 	 * radiotap BPF device
 	 */
-#if NBPFILTER > 0
-	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
+	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + 64, &sc->sc_drvbpf);
-#endif
 
 	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));
 	sc->sc_rxtap.ar_ihdr.it_len = htole16(sizeof(sc->sc_rxtapu));
@@ -714,10 +709,8 @@ an_start(struct ifnet *ifp)
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		ifp->if_opackets++;
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		eh = mtod(m, struct ether_header *);
 		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 		if (ni == NULL) {
@@ -727,10 +720,8 @@ an_start(struct ifnet *ifp)
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL)
 			goto bad;
 		ieee80211_free_node(ni);
-#if NBPFILTER > 0
 		if (ic->ic_rawbpf)
-			bpf_mtap(ic->ic_rawbpf, m);
-#endif
+			bpf_ops->bpf_mtap(ic->ic_rawbpf, m);
 
 		wh = mtod(m, struct ieee80211_frame *);
 		if (ic->ic_flags & IEEE80211_F_PRIVACY)
@@ -770,16 +761,14 @@ an_start(struct ifnet *ifp)
 			frmhdr.an_tx_rate = 0;
 
 		/* XXX radiotap for tx must be completed */
-#if NBPFILTER > 0
 		if (sc->sc_drvbpf) {
 			struct an_tx_radiotap_header *tap = &sc->sc_txtap;
 			tap->at_rate = ic->ic_bss->ni_rates.rs_rates[ic->ic_bss->ni_txrate];
 			tap->at_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
 			tap->at_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
 			/* TBD tap->wt_flags */
-			bpf_mtap2(sc->sc_drvbpf, tap, tap->at_ihdr.it_len, m);
+			bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, tap->at_ihdr.it_len, m);
 		}
-#endif
 
 #ifdef AN_DEBUG
 		if ((ifp->if_flags & (IFF_DEBUG|IFF_LINK2)) ==
@@ -1459,7 +1448,6 @@ an_rx_intr(struct an_softc *sc)
 	m->m_pkthdr.rcvif = ifp;
 	CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_RX);
 
-#if NBPFILTER > 0
 	if (sc->sc_drvbpf) {
 		struct an_rx_radiotap_header *tap = &sc->sc_rxtap;
 
@@ -1472,9 +1460,8 @@ an_rx_intr(struct an_softc *sc)
 		    (le16toh(frmhdr.an_rx_status) & AN_STAT_UNDECRYPTABLE))
 		    tap->ar_flags |= IEEE80211_RADIOTAP_F_BADFCS;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, tap->ar_ihdr.it_len, m);
+		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, tap->ar_ihdr.it_len, m);
 	}
-#endif
 	wh = mtod(m, struct ieee80211_frame_min *);
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		/*

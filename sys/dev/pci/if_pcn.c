@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.48 2009/09/06 13:39:56 tsutsui Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.49 2010/01/19 22:07:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,9 +65,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.48 2009/09/06 13:39:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.49 2010/01/19 22:07:01 pooka Exp $");
 
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -93,9 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.48 2009/09/06 13:39:56 tsutsui Exp $");
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -1138,11 +1135,9 @@ pcn_start(struct ifnet *ifp)
 		sc->sc_txsfree--;
 		sc->sc_txsnext = PCN_NEXTTXS(sc->sc_txsnext);
 
-#if NBPFILTER > 0
 		/* Pass the packet to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 	}
 
 	if (sc->sc_txsfree == 0 || sc->sc_txfree == 0) {
@@ -1564,11 +1559,9 @@ pcn_rxintr(struct pcn_softc *sc)
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
-#if NBPFILTER > 0
 		/* Pass this up to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);

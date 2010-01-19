@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.168 2009/09/05 14:09:55 tsutsui Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.169 2010/01/19 22:07:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,9 +79,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.168 2009/09/05 14:09:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.169 2010/01/19 22:07:00 pooka Exp $");
 
-#include "bpfilter.h"
 #include "vlan.h"
 #include "rnd.h"
 
@@ -119,9 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.168 2009/09/05 14:09:55 tsutsui Exp $")
 #include <netinet/tcp.h>		/* for struct tcphdr */
 
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -3001,13 +2998,11 @@ bge_rxeof(struct bge_softc *sc)
 		m->m_pkthdr.len = m->m_len = cur_rx->bge_len - ETHER_CRC_LEN;
 		m->m_pkthdr.rcvif = ifp;
 
-#if NBPFILTER > 0
 		/*
 		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		m->m_pkthdr.csum_flags = M_CSUM_IPv4;
 
@@ -3812,14 +3807,12 @@ bge_start(struct ifnet *ifp)
 		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		pkts++;
 
-#if NBPFILTER > 0
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 	}
 	if (pkts == 0)
 		return;

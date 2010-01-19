@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.33 2009/11/20 02:14:56 christos Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.34 2010/01/19 22:08:00 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,9 +58,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.33 2009/11/20 02:14:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.34 2010/01/19 22:08:00 pooka Exp $");
 
-#include "bpfilter.h"
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
 
@@ -79,9 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.33 2009/11/20 02:14:56 christos Exp
 #include <net/netisr.h>
 #include <net/route.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <net/ethertypes.h>
@@ -135,9 +132,7 @@ eco_ifattach(struct ifnet *ifp, const uint8_t *lla)
 
 	LIST_INIT(&ec->ec_retries);
 
-#if NBPFILTER > 0
-	bpfattach(ifp, ifp->if_dlt, ECO_HDR_LEN);
-#endif
+	bpf_ops->bpf_attach(ifp, ifp->if_dlt, ECO_HDR_LEN, &ifp->if_bpf);
 }
 
 #define senderr(e) do {							\

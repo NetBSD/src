@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.35 2009/12/06 20:20:12 dyoung Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.36 2010/01/19 22:07:44 pooka Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,10 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.35 2009/12/06 20:20:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.36 2010/01/19 22:07:44 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -59,11 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.35 2009/12/06 20:20:12 dyoung Exp $");
 #include <net/if_dl.h>
 #include <net/netisr.h>
 
-#define BPF_MTAP(ifp, m) bpf_mtap((ifp)->if_bpf, (m))
-
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -308,9 +303,7 @@ USB_ATTACH(upl)
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
-#if NBPFILTER > 0
-	bpfattach(ifp, DLT_RAW, 0);
-#endif
+	bpf_ops->bpf_attach(ifp, DLT_RAW, 0, &ifp->if_bpf);
 #if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, USBDEVNAME(sc->sc_dev),
 	    RND_TYPE_NET, 0);
@@ -347,9 +340,7 @@ USB_DETACH(upl)
 #if NRND > 0
 	rnd_detach_source(&sc->sc_rnd_source);
 #endif
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
+	bpf_ops->bpf_detach(ifp);
 
 	if_detach(ifp);
 
@@ -541,7 +532,6 @@ upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto done1;
 	}
 
-#if NBPFILTER > 0
 	/*
 	 * Handle BPF listeners. Let the BPF user see the packet, but
 	 * don't pass it up to the ether_input() layer unless it's
@@ -549,9 +539,8 @@ upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	 * address or the interface is in promiscuous mode.
 	 */
 	if (ifp->if_bpf) {
-		BPF_MTAP(ifp, m);
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 	}
-#endif
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->sc_dev),
 		    __func__, m->m_len));
@@ -687,14 +676,12 @@ upl_start(struct ifnet *ifp)
 
 	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
-#if NBPFILTER > 0
 	/*
 	 * If there's a BPF listener, bounce a copy of this frame
 	 * to him.
 	 */
 	if (ifp->if_bpf)
-		BPF_MTAP(ifp, m_head);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 
 	ifp->if_flags |= IFF_OACTIVE;
 

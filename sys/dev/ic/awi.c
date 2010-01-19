@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.85 2009/11/12 19:32:14 dyoung Exp $	*/
+/*	$NetBSD: awi.c,v 1.86 2010/01/19 22:06:24 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -78,10 +78,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.85 2009/11/12 19:32:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.86 2010/01/19 22:06:24 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,9 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.85 2009/11/12 19:32:14 dyoung Exp $");
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/cpu.h>
 #include <sys/bus.h>
@@ -697,10 +694,8 @@ awi_start(struct ifnet *ifp)
 			}
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			ifp->if_opackets++;
-#if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m0);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 			eh = mtod(m0, struct ether_header *);
 			ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 			if (ni == NULL) {
@@ -731,10 +726,8 @@ awi_start(struct ifnet *ifp)
 				continue;
 			}
 		}
-#if NBPFILTER > 0
 		if (ic->ic_rawbpf)
-			bpf_mtap(ic->ic_rawbpf, m0);
-#endif
+			bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
 		if (dowep) {
 			if ((ieee80211_crypto_encap(ic, ni, m0)) == NULL) {
 				m_freem(m0);

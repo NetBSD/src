@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.31 2009/12/06 23:05:39 dyoung Exp $	*/
+/*	$NetBSD: xirc.c,v 1.32 2010/01/19 22:07:43 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -31,10 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.31 2009/12/06 23:05:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.32 2010/01/19 22:07:43 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,10 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.31 2009/12/06 23:05:39 dyoung Exp $");
 #endif
 
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <sys/intr.h>
 #include <sys/bus.h>

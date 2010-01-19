@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.16 2009/01/11 07:40:02 matt Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.17 2010/01/19 22:07:43 pooka Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,10 +80,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.16 2009/01/11 07:40:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.17 2010/01/19 22:07:43 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,10 +109,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.16 2009/01/11 07:40:02 matt Exp $");
 #include <netinet/ip.h>
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 
 #include <sys/bus.h>
@@ -461,10 +458,8 @@ qtstart(struct ifnet *ifp)
 		if ((rp->tmd3 & TMD3_OWN) == 0)
 			panic("qtstart");
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		len = if_ubaput(&sc->sc_ifuba, &sc->sc_ifw[sc->xnext], m);
 		if (len < MINPACKETSIZE)
@@ -591,10 +586,8 @@ qtrint(struct qt_softc *sc)
 			sc->is_if.if_ierrors++;
 			goto rnext;
 		}
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		(*ifp->if_input)(ifp, m);
 rnext:
 		--sc->nrcv;
