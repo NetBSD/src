@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.12 2010/01/10 16:20:45 tsutsui Exp $	*/
+/*	$NetBSD: wdc.c,v 1.13 2010/01/19 15:28:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 #include <sys/bootblock.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 #include <machine/param.h>
 
 #include "boot.h"
@@ -259,9 +260,9 @@ wdccommandext(struct wd_softc *wd, struct wdc_command *wd_c)
 	struct wdc_channel *chp = &wd->sc_channel;
 
 #if 0
-	DPRINTF(("%s(%d, %x, %ld, %d)\n", __func__,
+	DPRINTF(("%s(%d, %x, %" PRId64 ", %d)\n", __func__,
 	    wd_c->drive, wd_c->r_command,
-	    (u_long)wd_c->r_blkno, wd_c->r_count));
+	    wd_c->r_blkno, wd_c->r_count));
 #endif
 
 	/* Select drive, head, and addressing mode. */
