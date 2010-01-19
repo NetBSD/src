@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1014 2010/01/14 11:27:23 sborrill Exp $
+$NetBSD: pcidevs,v 1.1015 2010/01/19 11:43:33 mbalmer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2145,6 +2145,8 @@ product IBM IBMETHER	0x01ff	10/100 Ethernet
 product IBM GXT6500P	0x021b	GXT-6500P Graphics Adapter
 product IBM GXT4500P	0x021c	GXT-4500P Graphics Adapter
 product IBM GXT135P	0x0233	GXT-135P Graphics Adapter
+product IBM 4810_BSP	0x0295	4810 BSP
+product IBM 4810_SCC	0x0297	4810 SCC
 product IBM SERVERAID8K	0x9580	ServeRAID 8k
 product IBM MPIC2	0xffff	MPIC-II
 
