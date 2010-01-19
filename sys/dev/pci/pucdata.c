@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.58 2009/11/18 00:28:09 enami Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.59 2010/01/19 12:11:21 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.58 2009/11/18 00:28:09 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.59 2010/01/19 12:11:21 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,6 +205,17 @@ const struct puc_device_description puc_devices[] = {
 	 * XXX Dolphin Peripherals 4078 (dual serial and single parallel)
 	 */
 
+	/* IBM SurePOS 300 Series (481033H) serial ports */
+	{   "IBM SurePOS 300 Series (481033H)",
+	    {   PCI_VENDOR_IBM, PCI_PRODUCT_IBM_4810_SCC, 0, 0 },
+	    {   0xffff, 0xfff,                            0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ }, /* Port C */
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ }, /* Port D */
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ }, /* Port E */
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ }, /* Port F */
+	    },
+	},
 
 	/*
 	 * SIIG Boards.
