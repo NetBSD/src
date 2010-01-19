@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.968 2010/01/12 21:08:08 dyoung Exp $
+#	$NetBSD: files,v 1.969 2010/01/19 16:24:44 pooka Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -1261,9 +1261,9 @@ defpseudo gif:		ifnet
 defpseudo faith:	ifnet
 defpseudo srt:		ifnet
 defpseudo stf:		ifnet
-defpseudodev tap:	ifnet, ether, arp, bpf_filter
-defpseudo carp:		ifnet, ether, arp, bpf_filter
-defpseudodev etherip:	ifnet, ether, arp, bpf_filter
+defpseudodev tap:	ifnet, ether, arp
+defpseudo carp:		ifnet, ether, arp
+defpseudodev etherip:	ifnet, ether, arp
 
 defpseudo sequencer
 defpseudo clockctl
