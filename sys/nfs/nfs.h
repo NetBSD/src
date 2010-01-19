@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.70 2008/10/22 11:36:06 matt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.71 2010/01/19 13:29:40 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -329,7 +329,6 @@ struct nfsreq {
 	int		r_flags;	/* flags on request, see below */
 	int		r_retry;	/* max retransmission count */
 	int		r_rexmit;	/* current retrans count */
-	int		r_timer;	/* tick counter on reply */
 	u_int32_t	r_procnum;	/* NFS procedure number */
 	int		r_rtt;		/* RTT for rpc */
 	struct lwp	*r_lwp;		/* LWP that did I/O system call */
