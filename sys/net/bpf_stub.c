@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_stub.c,v 1.2 2010/01/19 22:33:35 pooka Exp $	*/
+/*	$NetBSD: bpf_stub.c,v 1.3 2010/01/19 23:11:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -27,8 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_stub.c,v 1.2 2010/01/19 22:33:35 pooka Exp $");
-");
+__KERNEL_RCSID(0, "$NetBSD: bpf_stub.c,v 1.3 2010/01/19 23:11:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
