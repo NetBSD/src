@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.381 2010/01/08 19:48:12 dyoung Exp $ */
+/*	$NetBSD: wd.c,v 1.382 2010/01/19 22:28:31 pooka Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.381 2010/01/08 19:48:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.382 2010/01/19 22:28:31 pooka Exp $");
 
 #include "opt_ata.h"
 
@@ -175,7 +175,7 @@ void	wdioctlstrategy(struct buf *);
 void  wdgetdefaultlabel(struct wd_softc *, struct disklabel *);
 void  wdgetdisklabel(struct wd_softc *);
 void  wdstart(void *);
-void  __wdstart(struct wd_softc*, struct buf *);
+void  wdstart1(struct wd_softc*, struct buf *);
 void  wdrestart(void *);
 void  wddone(void *);
 int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
@@ -585,7 +585,7 @@ wdstart(void *arg)
 		wd->openings--;
 
 		wd->retries = 0;
-		__wdstart(wd, bp);
+		wdstart1(wd, bp);
 	}
 }
 
@@ -623,7 +623,7 @@ wd_split_mod15_write(struct buf *bp)
 	bp->b_data = (char *)bp->b_data + bp->b_bcount;
 	bp->b_blkno += (bp->b_bcount / 512);
 	bp->b_rawblkno += (bp->b_bcount / 512);
-	__wdstart(sc, bp);
+	wdstart1(sc, bp);
 	return;
 
  done:
@@ -636,7 +636,7 @@ wd_split_mod15_write(struct buf *bp)
 }
 
 void
-__wdstart(struct wd_softc *wd, struct buf *bp)
+wdstart1(struct wd_softc *wd, struct buf *bp)
 {
 
 	/*
@@ -721,7 +721,7 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 	case ATACMD_COMPLETE:
 		break;
 	default:
-		panic("__wdstart: bad return code from ata_bio()");
+		panic("wdstart1: bad return code from ata_bio()");
 	}
 }
 
@@ -831,7 +831,7 @@ wdrestart(void *v)
 	ATADEBUG_PRINT(("wdrestart %s\n", device_xname(wd->sc_dev)),
 	    DEBUG_XFERS);
 	s = splbio();
-	__wdstart(v, bp);
+	wdstart1(v, bp);
 	splx(s);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: __assert.c,v 1.11 2007/09/24 14:19:03 pooka Exp $	*/
+/*	$NetBSD: kern_assert.c,v 1.1 2010/01/19 22:28:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@
 #endif
 
 void
-__kernassert(const char *t, const char *f, int l, const char *e)
+kern_assert(const char *t, const char *f, int l, const char *e)
 {
 
 #ifdef _KERNEL
