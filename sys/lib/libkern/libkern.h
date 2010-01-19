@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.92 2009/07/21 14:55:33 joerg Exp $	*/
+/*	$NetBSD: libkern.h,v 1.93 2010/01/19 22:28:30 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -179,10 +179,10 @@ tolower(int ch)
 #else
 #ifdef __STDC__
 #define	assert(e)	(__predict_true((e)) ? (void)0 :		    \
-			    __kernassert("", __FILE__, __LINE__, #e))
+			    kern_assert("", __FILE__, __LINE__, #e))
 #else
 #define	assert(e)	(__predict_true((e)) ? (void)0 :		    \
-			    __kernassert("", __FILE__, __LINE__, "e"))
+			    kern_assert("", __FILE__, __LINE__, "e"))
 #endif
 #endif
 
@@ -213,10 +213,10 @@ tolower(int ch)
 	} while (/*CONSTCOND*/ 0)
 #ifdef __STDC__
 #define	KASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
-			    __kernassert("diagnostic ", __FILE__, __LINE__, #e))
+			    kern_assert("diagnostic ", __FILE__, __LINE__, #e))
 #else
 #define	KASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
-			    __kernassert("diagnostic ", __FILE__, __LINE__,"e"))
+			    kern_assert("diagnostic ", __FILE__, __LINE__,"e"))
 #endif
 #endif
 
@@ -229,10 +229,10 @@ tolower(int ch)
 #else
 #ifdef __STDC__
 #define	KDASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
-			    __kernassert("debugging ", __FILE__, __LINE__, #e))
+			    kern_assert("debugging ", __FILE__, __LINE__, #e))
 #else
 #define	KDASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
-			    __kernassert("debugging ", __FILE__, __LINE__, "e"))
+			    kern_assert("debugging ", __FILE__, __LINE__, "e"))
 #endif
 #endif
 /*
@@ -298,7 +298,7 @@ int	 ffs(int);
 #define	ffs(x)		__builtin_ffs(x)
 #endif
 
-void	 __kernassert(const char *, const char *, int, const char *);
+void	 kern_assert(const char *, const char *, int, const char *);
 unsigned int
 	bcdtobin(unsigned int);
 unsigned int
