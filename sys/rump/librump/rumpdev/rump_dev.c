@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev.c,v 1.11 2010/01/10 13:42:34 martin Exp $	*/
+/*	$NetBSD: rump_dev.c,v 1.12 2010/01/19 22:38:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.11 2010/01/10 13:42:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.12 2010/01/19 22:38:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.11 2010/01/10 13:42:34 martin Exp $")
 
 void nocomponent(void);
 void nocomponent() {}
+__weak_alias(rump_dev_bpf_init,nocomponent);
 __weak_alias(rump_dev_cgd_init,nocomponent);
 __weak_alias(rump_dev_dm_init,nocomponent);
 __weak_alias(rump_dev_raidframe_init,nocomponent);
@@ -43,6 +44,7 @@ __weak_alias(rump_dev_rnd_init,nocomponent);
 __weak_alias(rump_dev_rumpusbhc_init,nocomponent);
 
 __weak_alias(rump_device_configuration,nocomponent);
+__weak_alias(rump_wscons_configuration,nocomponent);
 
 const char *rootspec = "rump0a"; /* usually comes from config */
 
@@ -57,6 +59,7 @@ rump_dev_init(void)
 
 	config_init_mi();
 
+	rump_dev_bpf_init();
 	rump_dev_cgd_init();
 	rump_dev_dm_init();
 	rump_dev_raidframe_init();
@@ -67,6 +70,7 @@ rump_dev_init(void)
 	rump_pdev_finalize();
 
 	rump_device_configuration();
+	rump_wscons_configuration();
 
 	cold = 0;
 	if (config_rootfound("mainbus", NULL) == NULL)
