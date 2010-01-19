@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_net.c,v 1.10 2009/10/04 13:24:58 pooka Exp $	*/
+/*	$NetBSD: rump_net.c,v 1.11 2010/01/19 22:08:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.10 2009/10/04 13:24:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.11 2010/01/19 22:08:18 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -34,6 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump_net.c,v 1.10 2009/10/04 13:24:58 pooka Exp $");
 #include <sys/mbuf.h>
 #include <sys/socketvar.h>
 
+#include <net/bpf.h>
 #include <net/radix.h>
 #include <net/route.h>
 
@@ -50,6 +51,8 @@ __weak_alias(rump_net_virtif_init,nocomponent);
 void
 rump_net_init(void)
 {
+
+	bpf_setops();
 
 	mbinit();
 	soinit();

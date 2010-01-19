@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrsubr.c,v 1.8 2007/09/01 03:07:24 dyoung Exp $	*/
+/*	$NetBSD: if_agrsubr.c,v 1.9 2010/01/19 22:08:17 pooka Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,9 +27,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrsubr.c,v 1.8 2007/09/01 03:07:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrsubr.c,v 1.9 2010/01/19 22:08:17 pooka Exp $");
 
-#include "bpfilter.h"
 #include "opt_inet.h"
 
 #include <sys/param.h>
