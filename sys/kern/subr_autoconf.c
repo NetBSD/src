@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.198 2010/01/19 21:24:36 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.199 2010/01/19 21:54:53 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.198 2010/01/19 21:24:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.199 2010/01/19 21:54:53 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -250,7 +250,7 @@ config_init(void)
 
 	KASSERT(config_initialized == false);
 
-	mutex_init(&alldevs_mtx, MUTEX_DEFAULT, IPL_HIGH);
+	mutex_init(&alldevs_mtx, MUTEX_DEFAULT, IPL_VM);
 
 	mutex_init(&config_misc_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&config_misc_cv, "cfgmisc");
