@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj_vfs.c,v 1.1 2009/11/27 17:54:11 pooka Exp $	*/
+/*	$NetBSD: subr_kobj_vfs.c,v 1.2 2010/01/19 22:17:44 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -72,10 +72,10 @@
 #include <sys/vnode.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj_vfs.c,v 1.1 2009/11/27 17:54:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj_vfs.c,v 1.2 2010/01/19 22:17:44 pooka Exp $");
 
 static void
-kobj_close_file(kobj_t ko)
+kobj_close_vfs(kobj_t ko)
 {
 
 	VOP_UNLOCK(ko->ko_source, 0);
@@ -88,7 +88,7 @@ kobj_close_file(kobj_t ko)
  *	Utility function: read from the object.
  */
 static int
-kobj_read_file(kobj_t ko, void **basep, size_t size, off_t off,
+kobj_read_vfs(kobj_t ko, void **basep, size_t size, off_t off,
 	bool allocate)
 {
 	size_t resid;
@@ -126,12 +126,12 @@ kobj_read_file(kobj_t ko, void **basep, size_t size, off_t off,
 }
 
 /*
- * kobj_load_file:
+ * kobj_load_vfs:
  *
  *	Load an object located in the file system.
  */
 int
-kobj_load_file(kobj_t *kop, const char *path, const bool nochroot)
+kobj_load_vfs(kobj_t *kop, const char *path, const bool nochroot)
 {
 	struct nameidata nd;
 	kauth_cred_t cred;
@@ -156,8 +156,8 @@ kobj_load_file(kobj_t *kop, const char *path, const bool nochroot)
 
 	ko->ko_type = KT_VNODE;
 	ko->ko_source = nd.ni_vp;
-	ko->ko_read = kobj_read_file;
-	ko->ko_close = kobj_close_file;
+	ko->ko_read = kobj_read_vfs;
+	ko->ko_close = kobj_close_vfs;
 
 	*kop = ko;
 	return kobj_load(ko);
@@ -166,7 +166,7 @@ kobj_load_file(kobj_t *kop, const char *path, const bool nochroot)
 #else /* MODULAR */
 
 int
-kobj_load_file(kobj_t *kop, const char *path, const bool nochroot)
+kobj_load_vfs(kobj_t *kop, const char *path, const bool nochroot)
 {
 
 	return ENOSYS;
