@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.13 2009/05/12 08:23:01 cegger Exp $ */
+/*      $NetBSD: if_xge.c,v 1.14 2010/01/19 22:07:02 pooka Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,9 +43,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.13 2009/05/12 08:23:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.14 2010/01/19 22:07:02 pooka Exp $");
 
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -65,9 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.13 2009/05/12 08:23:01 cegger Exp $");
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -813,10 +810,8 @@ xge_intr(void *pv)
 				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
 		}
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		(*ifp->if_input)(ifp, m);
 
@@ -999,10 +994,8 @@ xge_start(struct ifnet *ifp)
 		TXP_WCSR(TXDL_PAR, par);
 		TXP_WCSR(TXDL_LCR, lcr);
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		sc->sc_nexttx = NEXTTX(nexttx);
 	}

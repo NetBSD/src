@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.43 2009/09/04 16:21:24 tsutsui Exp $	*/
+/*	$NetBSD: lance.c,v 1.44 2010/01/19 22:06:24 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,9 +65,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.43 2009/09/04 16:21:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.44 2010/01/19 22:06:24 pooka Exp $");
 
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -89,10 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.43 2009/09/04 16:21:24 tsutsui Exp $");
 #include <net/if_media.h>
 
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <dev/ic/lancereg.h>
 #include <dev/ic/lancevar.h>
@@ -481,14 +478,12 @@ lance_read(struct lance_softc *sc, int boff, int len)
 		return;
 	}
 
-#if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	/* Pass the packet up. */
 	(*ifp->if_input)(ifp, m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.70 2009/05/17 11:34:21 cegger Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.71 2010/01/19 22:08:00 pooka Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,12 +80,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.70 2009/05/17 11:34:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.71 2010/01/19 22:08:00 pooka Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -100,9 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.70 2009/05/17 11:34:21 cegger Exp $"
 #include <sys/kauth.h>
 #include <sys/cpu.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>

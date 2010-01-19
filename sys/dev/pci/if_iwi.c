@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.82 2009/09/05 14:09:55 tsutsui Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.83 2010/01/19 22:07:00 pooka Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,14 +28,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.82 2009/09/05 14:09:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.83 2010/01/19 22:07:00 pooka Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
  * http://www.intel.com/network/connectivity/products/wireless/prowireless_mobile.htm
  */
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -58,9 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.82 2009/09/05 14:09:55 tsutsui Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/if_dl.h>
@@ -414,9 +411,8 @@ iwi_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 
-#if NBPFILTER > 0
-	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
-	    sizeof (struct ieee80211_frame) + 64, &sc->sc_drvbpf);
+	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
+	    sizeof(struct ieee80211_frame) + 64, &sc->sc_drvbpf);
 
 	sc->sc_rxtap_len = sizeof sc->sc_rxtapu;
 	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
@@ -425,7 +421,6 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_txtap_len = sizeof sc->sc_txtapu;
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(IWI_TX_RADIOTAP_PRESENT);
-#endif
 
 	iwi_sysctlattach(sc);	
 
@@ -1216,7 +1211,6 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data, int i,
 	if (ic->ic_state == IEEE80211_S_SCAN)
 		iwi_fix_channel(ic, m);
 
-#if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct iwi_rx_radiotap_header *tap = &sc->sc_rxtap;
 
@@ -1229,9 +1223,8 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data, int i,
 		tap->wr_antsignal = frame->signal;
 		tap->wr_antenna = frame->antenna;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
 	}
-#endif
 	wh = mtod(m, struct ieee80211_frame *);
 	ni = ieee80211_find_rxnode(ic, (struct ieee80211_frame_min *)wh);
 
@@ -1594,7 +1587,6 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni,
 		wh = mtod(m0, struct ieee80211_frame *);
 	}
 
-#if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct iwi_tx_radiotap_header *tap = &sc->sc_txtap;
 
@@ -1602,9 +1594,8 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni,
 		tap->wt_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
 		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
 	}
-#endif
 
 	data = &txq->data[txq->cur];
 	desc = &txq->desc[txq->cur];
@@ -1763,10 +1754,8 @@ iwi_start(struct ifnet *ifp)
 			break;
 		}
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 		m0 = ieee80211_encap(ic, m0, ni);
 		if (m0 == NULL) {
@@ -1775,10 +1764,8 @@ iwi_start(struct ifnet *ifp)
 			continue;
 		}
 
-#if NBPFILTER > 0
 		if (ic->ic_rawbpf != NULL)
-			bpf_mtap(ic->ic_rawbpf, m0);
-#endif
+			bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
 
 		if (iwi_tx_start(ifp, m0, ni, ac) != 0) {
 			ieee80211_free_node(ni);

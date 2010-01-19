@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.35 2009/12/14 00:46:08 matt Exp $ */
+/* $NetBSD: sbmac.c,v 1.36 2010/01/19 22:06:21 pooka Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,9 +33,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.35 2009/12/14 00:46:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.36 2010/01/19 22:06:21 pooka Exp $");
 
-#include "bpfilter.h"
 #include "opt_inet.h"
 #include "opt_ns.h"
 
@@ -55,9 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.35 2009/12/14 00:46:08 matt Exp $");
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -936,7 +933,6 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 			 */
 			sbdma_add_rcvbuffer(d, NULL);
 
-#if (NBPFILTER > 0)
 			/*
 			 * Handle BPF listeners. Let the BPF user see the
 			 * packet, but don't pass it up to the ether_input()
@@ -946,8 +942,7 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 			 */
 
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m);
 			/*
 			 * Pass the buffer to the kernel
 			 */
@@ -1817,10 +1812,8 @@ sbmac_start(struct ifnet *ifp)
 			 * If there's a BPF listener, bounce a copy of this
 			 * frame to it.
 			 */
-#if (NBPFILTER > 0)
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m_head);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 			if (!sc->sbm_pass3_dma) {
 				/*
 				 * Don't free mbuf if we're not copying to new

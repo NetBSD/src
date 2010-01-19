@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.12 2009/12/20 10:57:35 kiyohara Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.13 2010/01/19 22:06:24 pooka Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.12 2009/12/20 10:57:35 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.13 2010/01/19 22:06:24 pooka Exp $");
 
 /*
  * The LAN9118 Family
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.12 2009/12/20 10:57:35 kiyohara Exp $"
  *   Also support HP Auto-MDIX.
  */
 
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -67,9 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.12 2009/12/20 10:57:35 kiyohara Exp $"
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -454,13 +451,11 @@ lan9118_start(struct ifnet *ifp)
 		    (m->m_len + dso + 3) >> 2);
 
 discard:
-#if NBPFILTER > 0
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 		m_freem(m0);
 	}
@@ -1010,14 +1005,12 @@ dropit:
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = (pktlen - ETHER_CRC_LEN);
 
-#if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
 		 * pass if up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);

@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.23 2009/12/06 20:20:12 dyoung Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.24 2010/01/19 22:07:44 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,9 +22,8 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.23 2009/12/06 20:20:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.24 2010/01/19 22:07:44 pooka Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -40,9 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.23 2009/12/06 20:20:12 dyoung Exp $");
 #include <sys/bus.h>
 #include <machine/endian.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/if_dl.h>
@@ -437,8 +434,7 @@ zyd_complete_attach(struct zyd_softc *sc)
 	ic->ic_newstate = zyd_newstate;
 	ieee80211_media_init(ic, zyd_media_change, ieee80211_media_status);
 
-#if NBPFILTER > 0
-	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
+	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof (struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
 	    &sc->sc_drvbpf);
 
@@ -449,7 +445,6 @@ zyd_complete_attach(struct zyd_softc *sc)
 	sc->sc_txtap_len = sizeof sc->sc_txtapu;
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(ZYD_TX_RADIOTAP_PRESENT);
-#endif
 
 	ieee80211_announce(ic);
 
@@ -483,9 +478,7 @@ zyd_detach(device_t self, int flags)
 
 	sc->attached = 0;
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
+	bpf_ops->bpf_detach(ifp);
 	ieee80211_ifdetach(ic);
 	if_detach(ifp);
 
@@ -1967,7 +1960,6 @@ zyd_rx_data(struct zyd_softc *sc, const uint8_t *buf, uint16_t len)
 
 	s = splnet();
 
-#if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct zyd_rx_radiotap_header *tap = &sc->sc_rxtap;
 		static const uint8_t rates[] = {
@@ -1982,9 +1974,8 @@ zyd_rx_data(struct zyd_softc *sc, const uint8_t *buf, uint16_t len)
 		tap->wr_rssi = stat->rssi;
 		tap->wr_rate = rates[plcp->signal & 0xf];
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
 	}
-#endif
 
 	wh = mtod(m, struct ieee80211_frame *);
 	ni = ieee80211_find_rxnode(ic, (struct ieee80211_frame_min *)wh);
@@ -2135,7 +2126,6 @@ zyd_tx_mgt(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 			desc->plcp_service |= ZYD_PLCP_LENGEXT;
 	}
 
-#if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct zyd_tx_radiotap_header *tap = &sc->sc_txtap;
 
@@ -2144,9 +2134,8 @@ zyd_tx_mgt(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		tap->wt_chan_freq = htole16(ic->ic_curchan->ic_freq);
 		tap->wt_chan_flags = htole16(ic->ic_curchan->ic_flags);
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
 	}
-#endif
 
 	m_copydata(m0, 0, m0->m_pkthdr.len,
 	    data->buf + sizeof (struct zyd_tx_desc));
@@ -2295,7 +2284,6 @@ zyd_tx_data(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 			desc->plcp_service |= ZYD_PLCP_LENGEXT;
 	}
 
-#if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct zyd_tx_radiotap_header *tap = &sc->sc_txtap;
 
@@ -2304,9 +2292,8 @@ zyd_tx_data(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		tap->wt_chan_freq = htole16(ic->ic_curchan->ic_freq);
 		tap->wt_chan_flags = htole16(ic->ic_curchan->ic_flags);
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
 	}
-#endif
 
 	m_copydata(m0, 0, m0->m_pkthdr.len,
 	    data->buf + sizeof (struct zyd_tx_desc));
@@ -2349,10 +2336,8 @@ zyd_start(struct ifnet *ifp)
 
 			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
 			m0->m_pkthdr.rcvif = NULL;
-#if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)
-				bpf_mtap(ic->ic_rawbpf, m0);
-#endif
+				bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
 			if (zyd_tx_mgt(sc, m0, ni) != 0)
 				break;
 		} else {
@@ -2377,19 +2362,15 @@ zyd_start(struct ifnet *ifp)
 				m_freem(m0);
 				continue;
 			}
-#if NBPFILTER > 0
 			if (ifp->if_bpf != NULL)
-				bpf_mtap(ifp->if_bpf, m0);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 			if ((m0 = ieee80211_encap(ic, m0, ni)) == NULL) {
 				ieee80211_free_node(ni);
 				ifp->if_oerrors++;
 				continue;
 			}
-#if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)
-				bpf_mtap(ic->ic_rawbpf, m0);
-#endif
+				bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
 			if (zyd_tx_data(sc, m0, ni) != 0) {
 				ieee80211_free_node(ni);
 				ifp->if_oerrors++;

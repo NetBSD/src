@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.109 2009/09/15 19:20:30 dyoung Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.110 2010/01/19 22:06:24 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,9 +30,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.109 2009/09/15 19:20:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.110 2010/01/19 22:06:24 pooka Exp $");
 
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -57,10 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.109 2009/09/15 19:20:30 dyoung Exp $")
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <sys/cpu.h>
 #include <sys/bus.h>
@@ -1201,13 +1198,11 @@ ex_start(struct ifnet *ifp)
 			sc->tx_tail = sc->tx_head = txp;
 		}
 
-#if NBPFILTER > 0
 		/*
 		 * Pass packet to bpf if there is a listener.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, mb_head);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, mb_head);
 	}
  out:
 	if (sc->tx_head) {
@@ -1384,10 +1379,9 @@ ex_intr(void *arg)
 					}
 					m->m_pkthdr.rcvif = ifp;
 					m->m_pkthdr.len = m->m_len = total_len;
-#if NBPFILTER > 0
 					if (ifp->if_bpf)
-						bpf_mtap(ifp->if_bpf, m);
-#endif
+						bpf_ops->bpf_mtap(
+						    ifp->if_bpf, m);
 		/*
 		 * Set the incoming checksum information for the packet.
 		 */

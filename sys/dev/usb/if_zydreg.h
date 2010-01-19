@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zydreg.h,v 1.19 2006/11/30 19:28:07 damien Exp $	*/
-/*	$NetBSD: if_zydreg.h,v 1.3 2010/01/17 19:45:06 pooka Exp $	*/
+/*	$NetBSD: if_zydreg.h,v 1.4 2010/01/19 22:07:44 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1218,7 +1218,6 @@ struct zyd_softc {
 
 	int				tx_timer;
 
-#if NBPFILTER > 0
 	struct bpf_if *			sc_drvbpf;
 
 	union {
@@ -1234,5 +1233,4 @@ struct zyd_softc {
 	}				sc_txtapu;
 #define sc_txtap	sc_txtapu.th
 	int				sc_txtap_len;
-#endif
 };

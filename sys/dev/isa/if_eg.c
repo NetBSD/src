@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.80 2009/05/12 09:10:15 cegger Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.81 2010/01/19 22:06:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,10 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.80 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.81 2010/01/19 22:06:59 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -74,10 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.80 2009/05/12 09:10:15 cegger Exp $");
 #endif
 
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <sys/cpu.h>
 #include <sys/intr.h>
@@ -600,10 +597,8 @@ loop:
 	}
 	len = max(m0->m_pkthdr.len, ETHER_MIN_LEN - ETHER_CRC_LEN);
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m0);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 	sc->eg_pcb[0] = EG_CMD_SENDPACKET;
 	sc->eg_pcb[1] = 0x06;
@@ -752,14 +747,12 @@ egread(struct eg_softc *sc, void *buf, int len)
 
 	ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	(*ifp->if_input)(ifp, m);
 }

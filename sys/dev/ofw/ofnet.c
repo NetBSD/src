@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.48 2009/05/12 14:39:22 cegger Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.49 2010/01/19 22:07:00 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,11 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.48 2009/05/12 14:39:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.49 2010/01/19 22:07:00 pooka Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,10 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.48 2009/05/12 14:39:22 cegger Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <dev/ofw/openfirm.h>
 
@@ -262,10 +259,8 @@ ofnet_read(struct ofnet_softc *of)
 		if (head == 0)
 			continue;
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		ifp->if_ipackets++;
 		(*ifp->if_input)(ifp, head);
 	}
@@ -327,10 +322,8 @@ ofnet_start(struct ifnet *ifp)
 			panic("ofnet_start: no header mbuf");
 		len = m0->m_pkthdr.len;
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 		if (len > ETHERMTU + sizeof(struct ether_header)) {
 			/* packet too large, toss it */

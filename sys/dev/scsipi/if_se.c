@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.79 2009/10/21 21:12:05 rmind Exp $	*/
+/*	$NetBSD: if_se.c,v 1.80 2010/01/19 22:07:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,11 +59,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.79 2009/10/21 21:12:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.80 2010/01/19 22:07:43 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,10 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.79 2009/10/21 21:12:05 rmind Exp $");
 #endif
 
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #define SETIMEOUT	1000
 #define	SEOUTSTANDING	4
@@ -422,13 +419,11 @@ se_ifstart(struct ifnet *ifp)
 	IFQ_DEQUEUE(&ifp->if_snd, m0);
 	if (m0 == 0)
 		return;
-#if NBPFILTER > 0
 	/* If BPF is listening on this interface, let it see the
 	 * packet before we commit it to the wire.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m0);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 	/* We need to use m->m_pkthdr.len, so require the header */
 	if ((m0->m_flags & M_PKTHDR) == 0)
@@ -667,14 +662,12 @@ se_read(struct se_softc *sc, char *data, int datalen)
 		}
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 		/*
 		 * Check if there's a BPF listener on this interface.
 		 * If so, hand off the raw packet to BPF.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass the packet up. */
 		(*ifp->if_input)(ifp, m);
@@ -795,12 +788,10 @@ se_init(struct se_softc *sc)
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	int error;
 
-#if NBPFILTER > 0
 	if (ifp->if_flags & IFF_PROMISC) {
 		error = se_set_mode(sc, MAX_SNAP, 1);
 	}
 	else
-#endif
 		error = se_set_mode(sc, ETHERMTU + sizeof(struct ether_header),
 		    0);
 	if (error != 0)

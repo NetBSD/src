@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uralvar.h,v 1.9 2010/01/17 19:45:06 pooka Exp $ */
+/*	$NetBSD: if_uralvar.h,v 1.10 2010/01/19 22:07:44 pooka Exp $ */
 /*	$OpenBSD: if_ralvar.h,v 1.2 2005/05/13 18:42:50 damien Exp $  */
 
 /*-
@@ -124,7 +124,6 @@ struct ural_softc {
 	int			tx_ant;
 	int			nb_ant;
 
-#if NBPFILTER > 0
 	struct bpf_if *		sc_drvbpf;
 
 	union {
@@ -140,5 +139,4 @@ struct ural_softc {
 	}			sc_txtapu;
 #define sc_txtap	sc_txtapu.th
 	int			sc_txtap_len;
-#endif
 };

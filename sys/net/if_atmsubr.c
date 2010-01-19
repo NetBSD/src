@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.46 2009/04/18 14:58:04 tsutsui Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.47 2010/01/19 22:08:00 pooka Exp $       */
 
 /*
  *
@@ -37,13 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.46 2009/04/18 14:58:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.47 2010/01/19 22:08:00 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
 #include "opt_natm.h"
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,9 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.46 2009/04/18 14:58:04 tsutsui Exp 
 #include <net/if_atm.h>
 #include <net/ethertypes.h> /* XXX: for ETHERTYPE_* */
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/if_atm.h>
@@ -340,9 +337,8 @@ atm_ifattach(struct ifnet *ifp)
 	if_alloc_sadl(ifp);
 	/* XXX Store LLADDR for ATMARP. */
 
-#if NBPFILTER > 0
-	bpfattach(ifp, DLT_ATM_RFC1483, sizeof(struct atmllc));
-#endif
+	bpf_ops->bpf_attach(ifp, DLT_ATM_RFC1483,
+	    sizeof(struct atmllc), &ifp->if_bpf);
 }
 
 #ifdef ATM_PVCEXT

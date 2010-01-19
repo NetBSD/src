@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.84 2009/11/03 22:06:30 jakllsch Exp $	*/
+/*	$NetBSD: hme.c,v 1.85 2010/01/19 22:06:24 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,12 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.84 2009/11/03 22:06:30 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.85 2010/01/19 22:06:24 pooka Exp $");
 
 /* #define HMEDEBUG */
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -73,10 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.84 2009/11/03 22:06:30 jakllsch Exp $");
 #endif
 
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -893,14 +890,12 @@ hme_read(struct hme_softc *sc, int ix, uint32_t flags)
 
 	ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	/* Pass the packet up. */
 	(*ifp->if_input)(ifp, m);
@@ -927,14 +922,12 @@ hme_start(struct ifnet *ifp)
 		if (m == 0)
 			break;
 
-#if NBPFILTER > 0
 		/*
 		 * If BPF is listening on this interface, let it see the
 		 * packet before we commit it to the wire.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 #ifdef INET
 		/* collect bits for h/w csum, before hme_put frees the mbuf */

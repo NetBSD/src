@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.89 2010/01/18 01:51:25 pooka Exp $	*/
+/*	$NetBSD: midway.c,v 1.90 2010/01/19 22:06:24 pooka Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.89 2010/01/18 01:51:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.90 2010/01/19 22:06:24 pooka Exp $");
 
 #include "opt_natm.h"
 
@@ -228,17 +228,12 @@ __KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.89 2010/01/18 01:51:25 pooka Exp $");
 # endif
 #endif /*ATM_PVCEXT*/
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #ifdef __FreeBSD__
-#define BPFATTACH(ifp, dlt, hlen)	bpfattach((ifp), (dlt), (hlen))
 #define BPF_MTAP(ifp, m)		bpf_mtap((ifp), (m))
 #else
-#define BPFATTACH(ifp, dlt, hlen)	bpfattach(&(ifp)->if_bpf, (ifp), (dlt), (hlen))
-#define BPF_MTAP(ifp, m)		bpf_mtap((ifp)->if_bpf, (m))
+#define BPF_MTAP(ifp, m)		bpf_ops->bpf_mtap((ifp)->if_bpf, (m))
 #endif
-#endif /* NBPFILTER > 0 */
 
 /*
  * params
@@ -2189,7 +2184,6 @@ again:
 
   en_txlaunch(sc, chan, &launch);
 
-#if NBPFILTER > 0
   if (ifp->if_bpf) {
       /*
        * adjust the top of the mbuf to skip the pseudo atm header
@@ -2208,7 +2202,6 @@ again:
       launch.t->m_data -= size;
       launch.t->m_len += size;
   }
-#endif /* NBPFILTER > 0 */
   /*
    * do some housekeeping and get the next packet
    */
@@ -2784,10 +2777,8 @@ EN_INTR_TYPE en_intr(void *arg)
 	  ifp->if_ipackets++;
 #endif
 
-#if NBPFILTER > 0
 	  if (ifp->if_bpf)
 	    BPF_MTAP(ifp, m);
-#endif
 
 	  atm_input(ifp, &ah, m, sc->rxslot[slot].rxhand);
 	}

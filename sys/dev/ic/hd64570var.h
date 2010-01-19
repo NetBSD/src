@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570var.h,v 1.8 2007/03/04 06:01:55 christos Exp $	*/
+/*	$NetBSD: hd64570var.h,v 1.9 2010/01/19 22:06:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -39,8 +39,6 @@
 
 #ifndef _DEV_IC_HD64570VAR_H_
 #define _DEV_IC_HD64570VAR_H_
-
-#include "bpfilter.h"
 
 #define SCA_USE_FASTQ		/* use a split queue, one for fast traffic */
 

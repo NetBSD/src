@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.12 2009/12/09 00:44:26 dyoung Exp $ */
+/* $NetBSD: if_srt.c,v 1.13 2010/01/19 22:08:01 pooka Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.12 2009/12/09 00:44:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.13 2010/01/19 22:08:01 pooka Exp $");
 
 #include "opt_inet.h"
 
@@ -35,11 +35,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.12 2009/12/09 00:44:26 dyoung Exp $");
 #include <machine/stdarg.h>
 
 #include "if_srt.h"
-#include "bpfilter.h"
 
 /* until we know what to pass to bpfattach.... */
-#undef NBPFILTER
-#define NBPFILTER 0
+/* #define BPFILTER_NOW_AVAILABLE */
 
 struct srt_softc {
 	struct ifnet intf;	/* XXX interface botch */
@@ -263,8 +261,8 @@ srt_clone_create(struct if_clone *cl, int unit)
 	sc->intf.if_dlt = DLT_RAW;
 	if_attach(&sc->intf);
 	if_alloc_sadl(&sc->intf);
-#if NBPFILTER > 0 /* see comment near top */
-	bpfattach(&sc->intf,0/*???*/,0/*???*/);
+#ifdef BPFILTER_NOW_AVAILABLE
+	bpf_ops->bpf_attach(&sc->intf, 0, 0, &sc->intf.if_bpf);
 #endif
 	softcv[unit] = sc;
 	return 0;
@@ -278,8 +276,8 @@ srt_clone_destroy(struct ifnet *ifp)
 	sc = ifp->if_softc;
 	if ((ifp->if_flags & IFF_UP) || (sc->kflags & SKF_CDEVOPEN))
 		return EBUSY;
-#if NBPFILTER > 0
-	bpfdetach(ifp);
+#ifdef BPFILTER_NOW_AVAILABLE
+	bpf_ops->bpf_detach(ifp);
 #endif
 	if_detach(ifp);
 	if (sc->unit < 0 || sc->unit > SRT_MAXUNIT) {

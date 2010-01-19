@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.35 2009/10/26 19:16:58 cegger Exp $	*/
+/*	$NetBSD: if_le.c,v 1.36 2010/01/19 22:06:23 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,10 +65,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.35 2009/10/26 19:16:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.36 2010/01/19 22:06:23 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/syslog.h>

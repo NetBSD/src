@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.413 2009/12/23 00:21:38 elad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.414 2010/01/19 22:08:00 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.413 2009/12/23 00:21:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.414 2010/01/19 22:08:00 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -232,6 +232,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.413 2009/12/23 00:21:38 elad Exp $")
 #include <dev/sysmon/sysmonvar.h>
 #endif
 
+#include <net/bpf.h>
 #include <net/if.h>
 #include <net/raw_cb.h>
 
@@ -340,6 +341,12 @@ main(void)
 	kauth_init();
 
 	spec_init();
+
+	/*
+	 * Set BPF op vector.  Can't do this in bpf attach, since
+	 * network drivers attach before bpf.
+	 */
+	bpf_setops();
 
 	/* Start module system. */
 	module_init();

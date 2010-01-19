@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_iwnvar.h,v 1.8 2008/12/03 17:17:08 damien Exp $	*/
-/*	$NetBSD: if_iwnvar.h,v 1.7 2010/01/17 19:45:06 pooka Exp $	*/
+/*	$NetBSD: if_iwnvar.h,v 1.8 2010/01/19 22:07:01 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -287,7 +287,6 @@ struct iwn_softc {
 	int			sc_tx_timer;
 	void			*powerhook;
 
-#if NBPFILTER > 0
 	struct bpf_if *		sc_drvbpf;
 
 	union {
@@ -303,7 +302,6 @@ struct iwn_softc {
 	} sc_txtapu;
 #define sc_txtap	sc_txtapu.th
 	int			sc_txtap_len;
-#endif
 	bool		is_scanning;
 	bool		sc_radio;
 };
