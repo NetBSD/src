@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1345 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1346 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -524,3 +524,10 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	tn3270: Removed from base [roy 20100116]	
 	macppc: Add support for new-style kernel modules.  [jmmv 20100118]
 	shark: Add support for new-style kernel modules.  [jmmv 20100118]
+	daily.conf(5): Add fetch_pkg_vulnerabilities to keep the packages
+		vulnerabilities database up to date, if it exists.
+		[jmmv 20100119]
+	security.conf(5): Add check_pkg_vulnerabilities and
+		check_pkg_signatures to validate the installed packages
+		against the vulnerabilities database and the expected
+		checksums for their files.  [jmmv 20100119]
