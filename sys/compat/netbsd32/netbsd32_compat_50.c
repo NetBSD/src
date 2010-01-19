@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.8 2009/12/21 16:18:17 njoly Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.9 2010/01/19 23:15:50 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.8 2009/12/21 16:18:17 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.9 2010/01/19 23:15:50 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -550,7 +550,7 @@ compat_50_netbsd32___sigtimedwait(struct lwp *l,
 	NETBSD32TOP_UAP(info, siginfo_t);
 	NETBSD32TOP_UAP(timeout, struct timespec);
 
-	return __sigtimedwait1(l, &ua, retval,
+	return sigtimedwait1(l, &ua, retval,
 	    compat_50_netbsd32_sigtimedwait_put_info,
 	    compat_50_netbsd32_sigtimedwait_fetch_timeout,
 	    compat_50_netbsd32_sigtimedwait_put_timeout);

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.32 2009/01/11 02:45:49 christos Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.33 2010/01/19 23:15:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.32 2009/01/11 02:45:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.33 2010/01/19 23:15:50 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,7 +481,7 @@ netbsd32_____sigtimedwait50(struct lwp *l, const struct netbsd32_____sigtimedwai
 	NETBSD32TOP_UAP(info, siginfo_t);
 	NETBSD32TOP_UAP(timeout, struct timespec);
 
-	return __sigtimedwait1(l, &ua, retval,
+	return sigtimedwait1(l, &ua, retval,
 	    netbsd32_sigtimedwait_put_info,
 	    netbsd32_sigtimedwait_fetch_timeout,
 	    netbsd32_sigtimedwait_put_timeout);
