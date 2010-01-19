@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.106 2009/01/27 10:32:18 haad Exp $
+#	$NetBSD: security,v 1.107 2010/01/19 22:08:11 jmmv Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -25,7 +25,7 @@ fi
 # Set reasonable defaults (if they're not set in security.conf)
 #
 backup_dir=${backup_dir:-/var/backups}
-pkgdb_dir=${pkgdb_dir:-/var/db/pkg}
+pkgdb_dir=${pkgdb_dir:-/var/db/pkg} # TODO Inherit from daily.conf.
 max_loginlen=${max_loginlen:-8}
 max_grouplen=${max_grouplen:-8}
 pkg_info=${pkg_info:-/usr/sbin/pkg_info}
@@ -990,6 +990,24 @@ if [ -n "$CHANGELIST" ]; then
 	comm -23 $TMP1 $TMP2 | while read file; do
 		backup_and_diff "$file" yes
 	done
+fi
+
+if pkg_info -K ${pkgdb_dir} -q -E '*'; then
+	if checkyesno check_pkg_vulnerabilities; then
+		pkg_admin -K ${pkgdb_dir} audit >${OUTPUT} 2>&1
+		if [ -s ${OUTPUT} ]; then
+			printf "\nInstalled vulnerable packages:\n"
+			cat ${OUTPUT}
+		fi
+	fi
+
+	if checkyesno check_pkg_signatures; then
+		pkg_admin -K ${pkgdb_dir} check >${OUTPUT} 2>&1
+		if [ $? -ne 0 ]; then
+			printf "\nFiles with invalid signatures:\n"
+			cat ${OUTPUT}
+		fi
+	fi
 fi
 
 if [ -f /etc/security.local ]; then
