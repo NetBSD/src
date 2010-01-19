@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.14 2010/01/17 19:45:06 pooka Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.15 2010/01/19 22:07:02 pooka Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -169,7 +169,6 @@ struct wpi_softc {
 
 	int			sc_tx_timer;
 
-#if NBPFILTER > 0
 	struct bpf_if *		sc_drvbpf;
 
 	union {
@@ -185,7 +184,6 @@ struct wpi_softc {
 	} sc_txtapu;
 #define sc_txtap	sc_txtapu.th
 	int			sc_txtap_len;
-#endif
 
 	bool		is_scanning;
 

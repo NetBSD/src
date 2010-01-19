@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.101 2010/01/08 19:56:52 dyoung Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.102 2010/01/19 22:07:02 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.101 2010/01/08 19:56:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.102 2010/01/19 22:07:02 pooka Exp $");
 
 #include "rnd.h"
 
@@ -123,10 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.101 2010/01/08 19:56:52 dyoung Exp $");
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -761,7 +758,6 @@ vr_rxeof(struct vr_softc *sc)
 		ifp->if_ipackets++;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = total_len;
-#if NBPFILTER > 0
 		/*
 		 * Handle BPF listeners. Let the BPF user see the packet, but
 		 * don't pass it up to the ether_input() layer unless it's
@@ -769,8 +765,7 @@ vr_rxeof(struct vr_softc *sc)
 		 * address or the interface is in promiscuous mode.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
 	}
@@ -1084,14 +1079,12 @@ vr_start(struct ifnet *ifp)
 		 */
 		ds->ds_mbuf = m0;
 
-#if NBPFILTER > 0
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 		/*
 		 * Fill in the transmit descriptor.

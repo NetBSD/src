@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.93 2009/10/19 18:41:15 bouyer Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.94 2010/01/19 22:07:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.93 2009/10/19 18:41:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.94 2010/01/19 22:07:02 pooka Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -62,11 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.93 2009/10/19 18:41:15 bouyer Exp $");
 #include <net/route.h>
 #include <net/netisr.h>
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include "rnd.h"
 #if NRND > 0
@@ -1085,10 +1082,8 @@ tl_intr(void *v)
 					ether_printheader(eh);
 				}
 #endif
-#if NBPFILTER > 0
 				if (ifp->if_bpf)
-					bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+					bpf_ops->bpf_mtap(ifp->if_bpf, m);
 				(*ifp->if_input)(ifp, m);
 			}
 		}
@@ -1418,11 +1413,9 @@ tbdinit:
 			    sc->last_Rx->hw_list->fwd);
 #endif
 	}
-#if NBPFILTER > 0
 	/* Pass packet to bpf if there is a listener */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, mb_head);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, mb_head);
 	/*
 	 * Set a 5 second timer just in case we don't hear from the card again.
 	 */

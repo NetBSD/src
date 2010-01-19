@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560var.h,v 1.7 2010/01/17 19:45:06 pooka Exp $	*/
+/*	$NetBSD: rt2560var.h,v 1.8 2010/01/19 22:06:25 pooka Exp $	*/
 /*	$OpenBSD: rt2560var.h,v 1.2 2006/01/14 12:43:27 damien Exp $  */
 
 /*-
@@ -149,7 +149,6 @@ struct rt2560_softc {
 
 	int			dwelltime;
 
-#if NBPFILTER > 0
 	struct bpf_if *		sc_drvbpf;
 
 	union {
@@ -165,7 +164,6 @@ struct rt2560_softc {
 	}			sc_txtapu;
 #define sc_txtap		sc_txtapu.th
 	int			sc_txtap_len;
-#endif
 };
 
 #define	sc_if		sc_ec.ec_if

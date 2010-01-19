@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661var.h,v 1.9 2010/01/17 19:45:06 pooka Exp $	*/
+/*	$NetBSD: rt2661var.h,v 1.10 2010/01/19 22:06:25 pooka Exp $	*/
 /*	$OpenBSD: rt2661var.h,v 1.4 2006/02/25 12:56:47 damien Exp $	*/
 
 /*-
@@ -158,7 +158,6 @@ struct rt2661_softc {
 	uint8_t				bbp17;
 	uint8_t				bbp64;
 
-#if NBPFILTER > 0
 	struct bpf_if *			sc_drvbpf;
 
 	union {
@@ -174,7 +173,6 @@ struct rt2661_softc {
 	}			sc_txtapu;
 #define sc_txtap		sc_txtapu.th
 	int			sc_txtap_len;
-#endif
 };
 
 #define	sc_if		sc_ec.ec_if

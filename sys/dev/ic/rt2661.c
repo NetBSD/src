@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.26 2009/09/05 14:19:30 tsutsui Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.27 2010/01/19 22:06:25 pooka Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,9 +25,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.26 2009/09/05 14:19:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.27 2010/01/19 22:06:25 pooka Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -45,9 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.26 2009/09/05 14:19:30 tsutsui Exp $");
 #include <machine/endian.h>
 #include <sys/intr.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/if_dl.h>
@@ -112,9 +109,7 @@ static void	rt2661_mcu_beacon_expire(struct rt2661_softc *);
 static void	rt2661_mcu_wakeup(struct rt2661_softc *);
 static void	rt2661_mcu_cmd_intr(struct rt2661_softc *);
 int		rt2661_intr(void *);
-#if NBPFILTER > 0
 static uint8_t	rt2661_rxrate(struct rt2661_rx_desc *);
-#endif
 static int	rt2661_ack_rate(struct ieee80211com *, int);
 static uint16_t	rt2661_txtime(int, int, uint32_t);
 static uint8_t	rt2661_plcp_signal(int);
@@ -352,9 +347,8 @@ rt2661_attach(void *xsc, int id)
 	ic->ic_newstate = rt2661_newstate;
 	ieee80211_media_init(ic, rt2661_media_change, ieee80211_media_status);
 
-#if NBPFILTER > 0
-	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
-	    sizeof (struct ieee80211_frame) + sizeof(sc->sc_txtap),
+	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
+	    sizeof(struct ieee80211_frame) + sizeof(sc->sc_txtap),
 	    &sc->sc_drvbpf);
 
 	sc->sc_rxtap_len = roundup(sizeof(sc->sc_rxtap), sizeof(u_int32_t));
@@ -364,7 +358,6 @@ rt2661_attach(void *xsc, int id)
 	sc->sc_txtap_len = roundup(sizeof(sc->sc_txtap), sizeof(u_int32_t));
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RT2661_TX_RADIOTAP_PRESENT);
-#endif
 
 	ieee80211_announce(ic);
 
@@ -1119,7 +1112,6 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 		m->m_pkthdr.len = m->m_len =
 		    (le32toh(desc->flags) >> 16) & 0xfff;
 
-#if NBPFILTER > 0
 		if (sc->sc_drvbpf != NULL) {
 			struct rt2661_rx_radiotap_header *tap = &sc->sc_rxtap;
 			uint32_t tsf_lo, tsf_hi;
@@ -1136,9 +1128,9 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 			tap->wr_chan_flags = htole16(sc->sc_curchan->ic_flags);
 			tap->wr_antsignal = desc->rssi;
 
-			bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+			bpf_ops->bpf_mtap2(sc->sc_drvbpf,
+			    tap, sc->sc_rxtap_len, m);
 		}
-#endif
 
 		wh = mtod(m, struct ieee80211_frame *);
 		ni = ieee80211_find_rxnode(ic, 
@@ -1296,7 +1288,6 @@ rt2661_intr(void *arg)
  * This function is only used by the Rx radiotap code. It returns the rate at
  * which a given frame was received.
  */
-#if NBPFILTER > 0
 static uint8_t
 rt2661_rxrate(struct rt2661_rx_desc *desc)
 {
@@ -1324,7 +1315,6 @@ rt2661_rxrate(struct rt2661_rx_desc *desc)
 	}
 	return 2;	/* should not get there */
 }
-#endif
 
 /*
  * Return the expected ack rate for a frame transmitted at rate `rate'.
@@ -1511,7 +1501,6 @@ rt2661_tx_mgt(struct rt2661_softc *sc, struct mbuf *m0,
 		return error;
 	}
 
-#if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct rt2661_tx_radiotap_header *tap = &sc->sc_txtap;
 
@@ -1520,9 +1509,8 @@ rt2661_tx_mgt(struct rt2661_softc *sc, struct mbuf *m0,
 		tap->wt_chan_freq = htole16(sc->sc_curchan->ic_freq);
 		tap->wt_chan_flags = htole16(sc->sc_curchan->ic_flags);
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
 	}
-#endif
 
 	data->m = m0;
 	data->ni = ni;
@@ -1751,7 +1739,6 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 		wh = mtod(m0, struct ieee80211_frame *);
 	}
 
-#if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct rt2661_tx_radiotap_header *tap = &sc->sc_txtap;
 
@@ -1760,9 +1747,8 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 		tap->wt_chan_freq = htole16(sc->sc_curchan->ic_freq);
 		tap->wt_chan_flags = htole16(sc->sc_curchan->ic_flags);
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
 	}
-#endif
 
 	data->m = m0;
 	data->ni = ni;
@@ -1823,10 +1809,8 @@ rt2661_start(struct ifnet *ifp)
 
 			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
 			m0->m_pkthdr.rcvif = NULL;
-#if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)
-				bpf_mtap(ic->ic_rawbpf, m0);
-#endif
+				bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
 			if (rt2661_tx_mgt(sc, m0, ni) != 0)
 				break;
 
@@ -1855,20 +1839,16 @@ rt2661_start(struct ifnet *ifp)
 				continue;
 			}
 
-#if NBPFILTER > 0
 			if (ifp->if_bpf != NULL)
-				bpf_mtap(ifp->if_bpf, m0);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 			m0 = ieee80211_encap(ic, m0, ni);
 			if (m0 == NULL) {
 				ieee80211_free_node(ni);
 				ifp->if_oerrors++;
 				continue;
 			}
-#if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)
-				bpf_mtap(ic->ic_rawbpf, m0);
-#endif
+				bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
 			if (rt2661_tx_data(sc, m0, ni, 0) != 0) {
 				if (ni != NULL)
 					ieee80211_free_node(ni);

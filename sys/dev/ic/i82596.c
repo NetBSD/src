@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.27 2009/05/13 13:12:06 tsutsui Exp $ */
+/* $NetBSD: i82596.c,v 1.28 2010/01/19 22:06:24 pooka Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.27 2009/05/13 13:12:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.28 2010/01/19 22:06:24 pooka Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -73,10 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.27 2009/05/13 13:12:06 tsutsui Exp $");
 #include <sys/socket.h>
 #include <sys/mbuf.h>
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <dev/ic/i82596reg.h>
 #include <dev/ic/i82596var.h>
@@ -283,10 +280,8 @@ iee_intr(void *intarg)
 			    device_xname(sc->sc_dev));
 		bus_dmamap_sync(sc->sc_dmat, rx_map, 0,
 		    rx_map->dm_mapsize, BUS_DMASYNC_PREREAD);
-#if NBPFILTER > 0
 		if (ifp->if_bpf != 0)
-			bpf_mtap(ifp->if_bpf, rx_mbuf);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, rx_mbuf);
 		(*ifp->if_input)(ifp, rx_mbuf);
 		ifp->if_ipackets++;
 		sc->sc_rx_mbuf[sc->sc_rx_done] = new_mbuf;
@@ -812,11 +807,9 @@ iee_start(struct ifnet *ifp)
 		else
 			iee_cb_setup(sc, IEE_CB_CMD_TR);
 		sc->sc_next_tbd += n;
-#if NBPFILTER > 0
 		/* Pass packet to bpf if someone listens. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, sc->sc_tx_mbuf[t]);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, sc->sc_tx_mbuf[t]);
 	}
 	if (t == 0)
 		/* No packets got set up for TX. */

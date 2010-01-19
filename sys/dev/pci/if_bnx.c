@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.30 2009/11/20 18:24:29 bouyer Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.31 2010/01/19 22:07:00 pooka Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.30 2009/11/20 18:24:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.31 2010/01/19 22:07:00 pooka Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -4445,14 +4445,12 @@ bnx_rx_intr(struct bnx_softc *sc)
 				    continue);
 			}
 
-#if NBPFILTER > 0
 			/*
 			 * Handle BPF listeners. Let the BPF
 			 * user see the packet.
 			 */
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 			/* Pass the mbuf off to the upper layers. */
 			ifp->if_ipackets++;
@@ -4955,11 +4953,9 @@ bnx_start(struct ifnet *ifp)
 		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		count++;
 
-#if NBPFILTER > 0
 		/* Send a copy of the frame to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 	}
 
 	if (count == 0) {

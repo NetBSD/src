@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.35 2010/01/08 19:56:51 dyoung Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.36 2010/01/19 22:07:00 pooka Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.49 2009/03/29 21:53:52 sthen Exp $	*/
 
 /*-
@@ -23,9 +23,8 @@
  * 802.11 network adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.35 2010/01/08 19:56:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.36 2010/01/19 22:07:00 pooka Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -48,9 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.35 2010/01/08 19:56:51 dyoung Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/if_dl.h>
@@ -614,10 +611,8 @@ iwn_detach(device_t self, int flags __unused)
 	int ac;
 
 	iwn_stop(ifp, 1);
-#if NBPFILTER > 0
 	if (ifp != NULL)
-		bpfdetach(ifp);
-#endif
+		bpf_ops->bpf_detach(ifp);
 	ieee80211_ifdetach(&sc->sc_ic);
 	if (ifp != NULL)
 		if_detach(ifp);
@@ -740,10 +735,10 @@ static void
 iwn_radiotap_attach(struct iwn_softc *sc)
 {
 	struct ifnet *ifp = sc->sc_ic.ic_ifp;
-#if NBPFILTER > 0
-	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
-		   sizeof (struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
-		   &sc->sc_drvbpf);
+
+	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
+	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
+	    &sc->sc_drvbpf);
 
 	sc->sc_rxtap_len = sizeof sc->sc_rxtapu;
 	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
@@ -752,7 +747,6 @@ iwn_radiotap_attach(struct iwn_softc *sc)
 	sc->sc_txtap_len = sizeof sc->sc_txtapu;
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(IWN_TX_RADIOTAP_PRESENT);
-#endif
 }
 
 #if 0 /* XXX */
@@ -2032,7 +2026,6 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	if (ic->ic_state == IEEE80211_S_SCAN)
 		iwn_fix_channel(ic, m);
 
-#if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct iwn_rx_radiotap_header *tap = &sc->sc_rxtap;
 
@@ -2065,9 +2058,8 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		default:  tap->wr_rate =   0;
 		}
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
 	}
-#endif
 
 	/* Send the frame to the 802.11 layer. */
 	ieee80211_input(ic, m, ni, rssi, 0);
@@ -2803,7 +2795,6 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	}
 	rinfo = &iwn_rates[ridx];
 
-#if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct iwn_tx_radiotap_header *tap = &sc->sc_txtap;
 
@@ -2815,9 +2806,8 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP)
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m);
+		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m);
 	}
-#endif
 
 	totlen = m->m_pkthdr.len;
 
@@ -3136,20 +3126,16 @@ iwn_start(struct ifnet *ifp)
 		/* no QoS encapsulation for EAPOL frames */
 		ac = (eh->ether_type != htons(ETHERTYPE_PAE)) ?
 		    M_WME_GETAC(m) : WME_AC_BE;
-#if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
 			ieee80211_free_node(ni);
 			ifp->if_oerrors++;
 			continue;
 		}
 sendit:
-#if NBPFILTER > 0
 		if (ic->ic_rawbpf != NULL)
-			bpf_mtap(ic->ic_rawbpf, m);
-#endif
+			bpf_ops->bpf_mtap(ic->ic_rawbpf, m);
 		if (iwn_tx(sc, m, ni, ac) != 0) {
 			ieee80211_free_node(ni);
 			ifp->if_oerrors++;

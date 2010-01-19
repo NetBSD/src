@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.34 2009/12/06 20:20:12 dyoung Exp $ */
+/*	$NetBSD: if_atu.c,v 1.35 2010/01/19 22:07:43 pooka Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,9 +48,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.34 2009/12/06 20:20:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.35 2010/01/19 22:07:43 pooka Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -77,10 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.34 2009/12/06 20:20:12 dyoung Exp $");
 #include <dev/microcode/atmel/atmel_rfmd2958_fw.h>
 #include <dev/microcode/atmel/atmel_rfmd_fw.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -1855,10 +1852,8 @@ atu_start(struct ifnet *ifp)
 				splx(s);
 				break;
 			}
-#if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m);
 			ni = ieee80211_find_txnode(ic,
 			    mtod(m, struct ether_header *)->ether_dhost);
 			if (ni == NULL) {
@@ -1887,10 +1882,8 @@ atu_start(struct ifnet *ifp)
 			/* sc->sc_stats.ast_tx_mgmt++; */
 		}
 
-#if NBPFILTER > 0
 		if (ic->ic_rawbpf)
-			bpf_mtap(ic->ic_rawbpf, m);
-#endif
+			bpf_ops->bpf_mtap(ic->ic_rawbpf, m);
 
 		if (atu_tx_start(sc, ni, c, m)) {
 bad:

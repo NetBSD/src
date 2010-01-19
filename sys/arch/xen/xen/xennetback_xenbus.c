@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.31 2009/10/19 18:41:12 bouyer Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.32 2010/01/19 22:06:23 pooka Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -46,11 +46,8 @@
 #include <net/if_dl.h>
 #include <net/route.h>
 #include <net/netisr.h>
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <net/if_ether.h>
 
@@ -813,10 +810,8 @@ so always copy for now.
 		m->m_pkthdr.rcvif = ifp;
 		ifp->if_ipackets++;
 		
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		(*ifp->if_input)(ifp, m);
 	}
 	xen_rmb(); /* be sure to read the request before updating pointer */
@@ -1006,10 +1001,8 @@ xennetback_ifsoftstart_transfer(void *arg)
 			resp_prod++;
 			i++; /* this packet has been queued */
 			ifp->if_opackets++;
-#if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		}
 		if (i != 0) {
 			/*
@@ -1279,10 +1272,8 @@ xennetback_ifsoftstart_copy(void *arg)
 			resp_prod++;
 			i++; /* this packet has been queued */
 			ifp->if_opackets++;
-#if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		}
 		if (i != 0) {
 			if (HYPERVISOR_grant_table_op(GNTTABOP_copy,

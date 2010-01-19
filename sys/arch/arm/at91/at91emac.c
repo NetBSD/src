@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.6 2009/10/23 06:53:13 snj Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.6 2009/10/23 06:53:13 snj Exp $	*/
+/*	$Id: at91emac.c,v 1.7 2010/01/19 22:06:19 pooka Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.7 2010/01/19 22:06:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.6 2009/10/23 06:53:13 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.7 2010/01/19 22:06:19 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,11 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.6 2009/10/23 06:53:13 snj Exp $");
 #include <netns/ns_if.h>
 #endif
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #ifdef IPKDB_AT91	// @@@
 #include <ipkdb/ipkdb.h>
@@ -287,10 +284,8 @@ emac_intr(void *arg)
 				sc->rxq[bi].m->m_pkthdr.rcvif = ifp;
 				sc->rxq[bi].m->m_pkthdr.len = 
 					sc->rxq[bi].m->m_len = fl;
-#if NBPFILTER > 0
 				if (ifp->if_bpf) 
-					bpf_mtap(ifp->if_bpf, sc->rxq[bi].m);
-#endif /* NBPFILTER > 0 */
+					bpf_ops->bpf_mtap(ifp->if_bpf, sc->rxq[bi].m);
 				DPRINTFN(2,("received %u bytes packet\n", fl));
                                 (*ifp->if_input)(ifp, sc->rxq[bi].m);
 				if (mtod(m, intptr_t) & 3) {
@@ -681,10 +676,8 @@ start:
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 	}
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf) 
-		bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	nsegs = sc->txq[bi].m_dmamap->dm_nsegs;
 	segs = sc->txq[bi].m_dmamap->dm_segs;

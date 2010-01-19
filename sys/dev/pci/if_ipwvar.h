@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipwvar.h,v 1.14 2008/11/07 14:58:27 joerg Exp $	*/
+/*	$NetBSD: if_ipwvar.h,v 1.15 2010/01/19 22:07:00 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -146,7 +146,6 @@ struct ipw_softc {
 
 	int				dwelltime;
 
-#if NBPFILTER > 0
 	struct bpf_if			*sc_drvbpf;
 
 	union {
@@ -162,7 +161,6 @@ struct ipw_softc {
 	} sc_txtapu;
 #define sc_txtap	sc_txtapu.th
 	int				sc_txtap_len;
-#endif
 };
 
 #define	sc_if	sc_ec.ec_if

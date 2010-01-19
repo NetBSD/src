@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.152 2010/01/17 19:45:06 pooka Exp $	*/
+/*	$NetBSD: bpf.c,v 1.153 2010/01/19 22:08:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.152 2010/01/17 19:45:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.153 2010/01/19 22:08:00 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1248,7 +1248,7 @@ bpf_kqfilter(struct file *fp, struct knote *kn)
  * by each process' filter, and if accepted, stashed into the corresponding
  * buffer.
  */
-void
+static void
 bpf_tap(struct bpf_if *bp, u_char *pkt, u_int pktlen)
 {
 	struct bpf_d *d;
@@ -1338,7 +1338,7 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
  * Incoming linkage from device drivers, when the head of the packet is in
  * a buffer, and the tail is in an mbuf chain.
  */
-void
+static void
 bpf_mtap2(struct bpf_if *bp, void *data, u_int dlen, struct mbuf *m)
 {
 	u_int pktlen;
@@ -1362,7 +1362,7 @@ bpf_mtap2(struct bpf_if *bp, void *data, u_int dlen, struct mbuf *m)
 /*
  * Incoming linkage from device drivers, when packet is in an mbuf chain.
  */
-void
+static void
 bpf_mtap(struct bpf_if *bp, struct mbuf *m)
 {
 	void *(*cpfn)(void *, const void *, size_t);
@@ -1392,7 +1392,7 @@ bpf_mtap(struct bpf_if *bp, struct mbuf *m)
  * will only read from the mbuf (i.e., it won't
  * try to free it or keep a pointer a to it).
  */
-void
+static void
 bpf_mtap_af(struct bpf_if *bp, uint32_t af, struct mbuf *m)
 {
 	struct mbuf m0;
@@ -1405,7 +1405,7 @@ bpf_mtap_af(struct bpf_if *bp, uint32_t af, struct mbuf *m)
 	bpf_mtap(bp, &m0);
 }
 
-void
+static void
 bpf_mtap_et(struct bpf_if *bp, uint16_t et, struct mbuf *m)
 {
 	struct mbuf m0;
@@ -1423,14 +1423,13 @@ bpf_mtap_et(struct bpf_if *bp, uint16_t et, struct mbuf *m)
 	bpf_mtap(bp, &m0);
 }
 
-#if NSL > 0 || NSTRIP > 0
 /*
  * Put the SLIP pseudo-"link header" in place.
  * Note this M_PREPEND() should never fail,
  * swince we know we always have enough space
  * in the input buffer.
  */
-void
+static void
 bpf_mtap_sl_in(struct bpf_if *bp, u_char *chdr, struct mbuf **m)
 {
 	int s;
@@ -1456,7 +1455,7 @@ bpf_mtap_sl_in(struct bpf_if *bp, u_char *chdr, struct mbuf **m)
  * place.  The compressed header is now
  * at the beginning of the mbuf.
  */
-void
+static void
 bpf_mtap_sl_out(struct bpf_if *bp, u_char *chdr, struct mbuf *m)
 {
 	struct mbuf m0;
@@ -1478,7 +1477,6 @@ bpf_mtap_sl_out(struct bpf_if *bp, u_char *chdr, struct mbuf *m)
 	splx(s);
 	m_freem(m);
 }
-#endif
 
 /*
  * Move the packet data from interface memory (pkt) into the
@@ -1606,23 +1604,12 @@ bpf_freed(struct bpf_d *d)
 }
 
 /*
- * Attach an interface to bpf.  dlt is the link layer type; hdrlen is the
- * fixed size of the link header (variable length headers not yet supported).
- */
-void
-bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen)
-{
-
-	bpfattach2(ifp, dlt, hdrlen, &ifp->if_bpf);
-}
-
-/*
- * Attach additional dlt for a interface to bpf.  dlt is the link layer type;
+ * Attach an interface to bpf.  dlt is the link layer type;
  * hdrlen is the fixed size of the link header for the specified dlt
  * (variable length headers not yet supported).
  */
-void
-bpfattach2(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
+static void
+bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
 {
 	struct bpf_if *bp;
 	bp = malloc(sizeof(*bp), M_DEVBUF, M_DONTWAIT);
@@ -1655,7 +1642,7 @@ bpfattach2(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
 /*
  * Remove an interface from bpf.
  */
-void
+static void
 bpfdetach(struct ifnet *ifp)
 {
 	struct bpf_if *bp, **pbp;
@@ -1690,7 +1677,7 @@ bpfdetach(struct ifnet *ifp)
 /*
  * Change the data link type of a interface.
  */
-void
+static void
 bpf_change_type(struct ifnet *ifp, u_int dlt, u_int hdrlen)
 {
 	struct bpf_if *bp;
@@ -1907,4 +1894,25 @@ SYSCTL_SETUP(sysctl_net_bpf_setup, "sysctl net.bpf subtree setup")
 			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
 	}
 
+}
+
+struct bpf_ops bpf_ops_kernel = {
+	.bpf_attach =		bpfattach,
+	.bpf_detach =		bpfdetach,
+	.bpf_change_type =	bpf_change_type,
+
+	.bpf_tap =		bpf_tap,
+	.bpf_mtap =		bpf_mtap,
+	.bpf_mtap2 =		bpf_mtap2,
+	.bpf_mtap_af =		bpf_mtap_af,
+	.bpf_mtap_et =		bpf_mtap_et,
+	.bpf_mtap_sl_in =	bpf_mtap_sl_in,
+	.bpf_mtap_sl_out =	bpf_mtap_sl_out,
+};
+
+void
+bpf_setops()
+{
+
+	bpf_ops = &bpf_ops_kernel;
 }

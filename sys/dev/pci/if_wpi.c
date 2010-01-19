@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.44 2010/01/08 19:56:52 dyoung Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.45 2010/01/19 22:07:02 pooka Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,13 +18,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.44 2010/01/08 19:56:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.45 2010/01/19 22:07:02 pooka Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
  */
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -48,9 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.44 2010/01/08 19:56:52 dyoung Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/if_dl.h>
@@ -365,10 +362,9 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-#if NBPFILTER > 0
-	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
-		sizeof (struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
-		&sc->sc_drvbpf);
+	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
+	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
+	    &sc->sc_drvbpf);
 
 	sc->sc_rxtap_len = sizeof sc->sc_rxtapu;
 	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
@@ -377,7 +373,6 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	sc->sc_txtap_len = sizeof sc->sc_txtapu;
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(WPI_TX_RADIOTAP_PRESENT);
-#endif
 
 	ieee80211_announce(ic);
 
@@ -400,10 +395,8 @@ wpi_detach(device_t self, int flags __unused)
 
 	wpi_stop(ifp, 1);
 
-#if NBPFILTER > 0
 	if (ifp != NULL)
-		bpfdetach(ifp);
-#endif
+		bpf_ops->bpf_detach(ifp);
 	ieee80211_ifdetach(&sc->sc_ic);
 	if (ifp != NULL)
 		if_detach(ifp);
@@ -1482,7 +1475,6 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	if (ic->ic_state == IEEE80211_S_SCAN)
 		wpi_fix_channel(ic, m);
 	
-#if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct wpi_rx_radiotap_header *tap = &sc->sc_rxtap;
 
@@ -1516,9 +1508,8 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		if (le16toh(head->flags) & 0x4)
 			tap->wr_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
 	}
-#endif
 
 	/* grab a reference to the source node */
 	wh = mtod(m, struct ieee80211_frame *);
@@ -1824,7 +1815,6 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	rate &= IEEE80211_RATE_VAL;
 
 
-#if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct wpi_tx_radiotap_header *tap = &sc->sc_txtap;
 
@@ -1836,9 +1826,8 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP)
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
 	}
-#endif
 
 	cmd = &ring->cmd[ring->cur];
 	cmd->code = WPI_CMD_TX_DATA;
@@ -1993,10 +1982,8 @@ wpi_start(struct ifnet *ifp)
 				ifp->if_oerrors++;
 				continue;
 			}
-#if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)
-				bpf_mtap(ic->ic_rawbpf, m0);
-#endif
+				bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
 			if (wpi_tx_data(sc, m0, ni, 0) != 0) {
 				ifp->if_oerrors++;
 				break;
@@ -2039,20 +2026,16 @@ wpi_start(struct ifnet *ifp)
 				break;
 			}
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
-#if NBPFILTER > 0
 			if (ifp->if_bpf != NULL)
-				bpf_mtap(ifp->if_bpf, m0);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 			m0 = ieee80211_encap(ic, m0, ni);
 			if (m0 == NULL) {
 				ieee80211_free_node(ni);
 				ifp->if_oerrors++;
 				continue;
 			}
-#if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)
-				bpf_mtap(ic->ic_rawbpf, m0);
-#endif
+				bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
 			if (wpi_tx_data(sc, m0, ni, ac) != 0) {
 				ieee80211_free_node(ni);
 				ifp->if_oerrors++;

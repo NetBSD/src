@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.29 2009/12/01 01:05:23 dyoung Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.30 2010/01/19 22:06:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.29 2009/12/01 01:05:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.30 2010/01/19 22:06:24 pooka Exp $");
 
 #include "opt_inet.h"
 
@@ -239,11 +239,8 @@ __KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.29 2009/12/01 01:05:23 dyoung Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -1676,14 +1673,12 @@ cs_ether_input(struct cs_softc *sc, struct mbuf *m)
 
 	ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	/* Pass the packet up. */
 	(*ifp->if_input)(ifp, m);
@@ -1932,14 +1927,12 @@ cs_start_output(struct ifnet *ifp)
 		if (pMbufChain == NULL)
 			break;
 
-#if NBPFILTER > 0
 		/*
 	         * If BPF is listening on this interface, let it see the packet
 	         * before we commit it to the wire.
 	         */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, pMbufChain);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, pMbufChain);
 
 		/* Find the total length of the data to transmit */
 		Length = 0;

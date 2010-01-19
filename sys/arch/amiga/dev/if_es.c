@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.48 2009/10/26 19:16:54 cegger Exp $ */
+/*	$NetBSD: if_es.c,v 1.49 2010/01/19 22:06:19 pooka Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,9 +33,8 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.48 2009/10/26 19:16:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.49 2010/01/19 22:06:19 pooka Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,10 +97,8 @@ struct	es_softc {
 #endif
 };
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #ifdef ESDEBUG
 /* console error messages */
@@ -722,14 +719,12 @@ esrint(struct es_softc *sc)
 	while (smc->b2.mmucr & MMUCR_BUSY)
 		;
 #endif
-#if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.  If so, hand off
 	 * the raw packet to bpf.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, top);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, top);
 	(*ifp->if_input)(ifp, top);
 #ifdef ESDEBUG
 	if (--sc->sc_smcbusy) {
@@ -931,10 +926,8 @@ esstart(struct ifnet *ifp)
 		if (smc->b2.pnr != active_pnr)
 			printf("%s: esstart - PNR changed %x->%x\n",
 			    sc->sc_dev.dv_xname, active_pnr, smc->b2.pnr);
-#if NBPFILTER > 0
 		if (sc->sc_ethercom.ec_if.if_bpf)
-			bpf_mtap(sc->sc_ethercom.ec_if.if_bpf, m0);
-#endif
+			bpf_ops->bpf_mtap(sc->sc_ethercom.ec_if.if_bpf, m0);
 		m_freem(m0);
 		sc->sc_ethercom.ec_if.if_opackets++;	/* move to interrupt? */
 		sc->sc_intctl |= MSK_TX_EMPTY | MSK_TX;

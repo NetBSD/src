@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pfsync.c,v 1.3 2009/09/14 10:36:49 degroote Exp $	*/
+/*	$NetBSD: if_pfsync.c,v 1.4 2010/01/19 22:08:00 pooka Exp $	*/
 /*	$OpenBSD: if_pfsync.c,v 1.83 2007/06/26 14:44:12 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.3 2009/09/14 10:36:49 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.4 2010/01/19 22:08:00 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -90,7 +90,6 @@ percpu_t	*pfsyncstat_percpu;
 #define	PFSYNC_STATINC(x) _NET_STATINC(pfsyncstat_percpu, x)
 #endif /* __NetBSD__ */
 
-#include "bpfilter.h"
 #include "pfsync.h"
 
 #define PFSYNC_MINMTU	\
@@ -192,9 +191,8 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
-#if NBPFILTER > 0
-	bpfattach(&pfsyncif->sc_if, DLT_PFSYNC, PFSYNC_HDRLEN);
-#endif
+	bpf_ops->bpf_attach(&pfsyncif->sc_if, DLT_PFSYNC, PFSYNC_HDRLEN,
+	    &pfsyncif->sc_if->if_bpf);
 
 	return (0);
 }
@@ -202,9 +200,7 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 int
 pfsync_clone_destroy(struct ifnet *ifp)
 {
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
+	bpf_ops->bpf_detach(ifp);
 	if_detach(ifp);
 	free(pfsyncif, M_DEVBUF);
 	pfsyncif = NULL;
@@ -1544,9 +1540,7 @@ pfsync_bulkfail(void *v)
 int
 pfsync_sendout(struct pfsync_softc *sc)
 {
-#if NBPFILTER > 0
 	struct ifnet *ifp = &sc->sc_if;
-#endif
 	struct mbuf *m;
 
 	callout_stop(&sc->sc_tmo);
@@ -1557,10 +1551,8 @@ pfsync_sendout(struct pfsync_softc *sc)
 	sc->sc_mbuf = NULL;
 	sc->sc_statep.s = NULL;
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	if (sc->sc_mbuf_net) {
 		m_freem(m);
@@ -1575,9 +1567,7 @@ pfsync_sendout(struct pfsync_softc *sc)
 int
 pfsync_tdb_sendout(struct pfsync_softc *sc)
 {
-#if NBPFILTER > 0
 	struct ifnet *ifp = &sc->sc_if;
-#endif
 	struct mbuf *m;
 
 	callout_stop(&sc->sc_tdb_tmo);
@@ -1588,10 +1578,8 @@ pfsync_tdb_sendout(struct pfsync_softc *sc)
 	sc->sc_mbuf_tdb = NULL;
 	sc->sc_statep_tdb.t = NULL;
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	return pfsync_sendout_mbuf(sc, m);
 }

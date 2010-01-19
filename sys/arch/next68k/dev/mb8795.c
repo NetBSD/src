@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.46 2009/10/26 19:16:57 cegger Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.47 2010/01/19 22:06:22 pooka Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.46 2009/10/26 19:16:57 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.47 2010/01/19 22:06:22 pooka Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -65,10 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.46 2009/10/26 19:16:57 cegger Exp $");
 
 
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -332,13 +329,11 @@ mb8795_rint(struct mb8795_softc *sc)
 			}
 #endif
 
-#if NBPFILTER > 0
 			/*
 			 * Pass packet to bpf if there is a listener.
 			 */
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 			{
 				ifp->if_ipackets++;
@@ -725,13 +720,11 @@ mb8795_start(struct ifnet *ifp)
 			return;
 		}
 
-#if NBPFILTER > 0
 		/*
 		 * Pass packet to bpf if there is a listener.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		s = spldma();
 		IF_ENQUEUE(&sc->sc_tx_snd, m);

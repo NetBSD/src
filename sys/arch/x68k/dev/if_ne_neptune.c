@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_neptune.c,v 1.18 2009/11/28 03:10:09 isaki Exp $	*/
+/*	$NetBSD: if_ne_neptune.c,v 1.19 2010/01/19 22:06:23 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,11 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.18 2009/11/28 03:10:09 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.19 2010/01/19 22:06:23 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,11 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.18 2009/11/28 03:10:09 isaki Exp
 #ifdef NS
 #include <netns/ns.h>
 #include <netns/ns_if.h>
-#endif
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 #endif
 
 #include <machine/bus.h>

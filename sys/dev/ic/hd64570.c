@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.41 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.42 2010/01/19 22:06:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,9 +65,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.41 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.42 2010/01/19 22:06:24 pooka Exp $");
 
-#include "bpfilter.h"
 #include "opt_inet.h"
 #include "opt_iso.h"
 
@@ -99,9 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.41 2009/03/14 15:36:17 dsl Exp $");
 #include <netiso/iso_var.h>
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/cpu.h>
 #include <sys/bus.h>
@@ -463,9 +460,7 @@ sca_port_attach(struct sca_softc *sc, u_int port)
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
-#if NBPFILTER > 0
-	bpfattach(ifp, DLT_HDLC, HDLC_HDRLEN);
-#endif
+	bpf_ops->bpf_attach(ifp, DLT_HDLC, HDLC_HDRLEN, &ifp->if_bpf);
 
 	if (sc->sc_parent == NULL)
 		printf("%s: port %d\n", ifp->if_xname, port);
@@ -1141,13 +1136,11 @@ X
 
 	ifp->if_opackets++;
 
-#if NBPFILTER > 0
 	/*
 	 * Pass packet to bpf if there is a listener.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, mb_head);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, mb_head);
 
 	m_freem(mb_head);
 
@@ -1603,10 +1596,8 @@ sca_frame_process(sca_port_t *scp)
 		return;
 	}
 
-#if NBPFILTER > 0
 	if (scp->sp_if.if_bpf)
-		bpf_mtap(scp->sp_if.if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(scp->sp_if.if_bpf, m);
 
 	scp->sp_if.if_ipackets++;
 
