@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.197 2010/01/12 22:11:13 rmind Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.198 2010/01/19 21:24:36 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.197 2010/01/12 22:11:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.198 2010/01/19 21:24:36 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -162,6 +162,11 @@ struct matchinfo {
 	int	pri;
 };
 
+struct alldevs_foray {
+	int			af_s;
+	struct devicelist	af_garbage;
+};
+
 static char *number(char *, int);
 static void mapply(struct matchinfo *, cfdata_t);
 static device_t config_devalloc(const device_t, const cfdata_t, const int *);
@@ -171,6 +176,8 @@ static void config_makeroom(int, struct cfdriver *);
 static void config_devlink(device_t);
 static void config_alldevs_unlock(int);
 static int config_alldevs_lock(void);
+static void config_alldevs_enter(struct alldevs_foray *);
+static void config_alldevs_exit(struct alldevs_foray *);
 
 static void config_collect_garbage(struct devicelist *);
 static void config_dump_garbage(struct devicelist *);
@@ -370,11 +377,10 @@ config_cfdriver_attach(struct cfdriver *cd)
 int
 config_cfdriver_detach(struct cfdriver *cd)
 {
-	struct devicelist garbage = TAILQ_HEAD_INITIALIZER(garbage);
-	int i, rc = 0, s;
+	struct alldevs_foray af;
+	int i, rc = 0;
 
-	s = config_alldevs_lock();
-	config_collect_garbage(&garbage);
+	config_alldevs_enter(&af);
 	/* Make sure there are no active instances. */
 	for (i = 0; i < cd->cd_ndevs; i++) {
 		if (cd->cd_devs[i] != NULL) {
@@ -382,8 +388,7 @@ config_cfdriver_detach(struct cfdriver *cd)
 			break;
 		}
 	}
-	config_alldevs_unlock(s);
-	config_dump_garbage(&garbage);
+	config_alldevs_exit(&af);
 
 	if (rc != 0)
 		return rc;
@@ -445,17 +450,16 @@ config_cfattach_attach(const char *driver, struct cfattach *ca)
 int
 config_cfattach_detach(const char *driver, struct cfattach *ca)
 {
-	struct devicelist garbage = TAILQ_HEAD_INITIALIZER(garbage);
+	struct alldevs_foray af;
 	struct cfdriver *cd;
 	device_t dev;
-	int i, rc = 0, s;
+	int i, rc = 0;
 
 	cd = config_cfdriver_lookup(driver);
 	if (cd == NULL)
 		return ESRCH;
 
-	s = config_alldevs_lock();
-	config_collect_garbage(&garbage);
+	config_alldevs_enter(&af);
 	/* Make sure there are no active instances. */
 	for (i = 0; i < cd->cd_ndevs; i++) {
 		if ((dev = cd->cd_devs[i]) == NULL)
@@ -465,8 +469,7 @@ config_cfattach_detach(const char *driver, struct cfattach *ca)
 			break;
 		}
 	}
-	config_alldevs_unlock(s);
-	config_dump_garbage(&garbage);
+	config_alldevs_exit(&af);
 
 	if (rc != 0)
 		return rc;
@@ -1116,12 +1119,11 @@ config_unit_nextfree(cfdriver_t cd, cfdata_t cf)
 static int
 config_unit_alloc(device_t dev, cfdriver_t cd, cfdata_t cf)
 {
-	struct devicelist garbage = TAILQ_HEAD_INITIALIZER(garbage);
-	int s, unit;
+	struct alldevs_foray af;
+	int unit;
 
-	s = config_alldevs_lock();
+	config_alldevs_enter(&af);
 	for (;;) {
-		config_collect_garbage(&garbage);
 		unit = config_unit_nextfree(cd, cf);
 		if (unit == -1)
 			break;
@@ -1132,8 +1134,7 @@ config_unit_alloc(device_t dev, cfdriver_t cd, cfdata_t cf)
 		}
 		config_makeroom(unit, cd);
 	}
-	config_alldevs_unlock(s);
-	config_dump_garbage(&garbage);
+	config_alldevs_exit(&af);
 
 	return unit;
 }
@@ -1141,7 +1142,6 @@ config_unit_alloc(device_t dev, cfdriver_t cd, cfdata_t cf)
 static device_t
 config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 {
-	struct devicelist garbage = TAILQ_HEAD_INITIALIZER(garbage);
 	cfdriver_t cd;
 	cfattach_t ca;
 	size_t lname, lunit;
@@ -1420,7 +1420,7 @@ config_dump_garbage(struct devicelist *garbage)
 int
 config_detach(device_t dev, int flags)
 {
-	struct devicelist garbage = TAILQ_HEAD_INITIALIZER(garbage);
+	struct alldevs_foray af;
 	struct cftable *ct;
 	cfdata_t cf;
 	const struct cfattach *ca;
@@ -1528,16 +1528,12 @@ config_detach(device_t dev, int flags)
 		aprint_normal_dev(dev, "detached\n");
 
 out:
-	s = config_alldevs_lock();
+	config_alldevs_enter(&af);
 	KASSERT(alldevs_nwrite != 0);
 	--alldevs_nwrite;
-	if (rv == 0 && dev->dv_del_gen == 0) {
-		dev->dv_del_gen = alldevs_gen;
-		alldevs_garbage = true;
-	}
-	config_collect_garbage(&garbage);
-	config_alldevs_unlock(s);
-	config_dump_garbage(&garbage);
+	if (rv == 0 && dev->dv_del_gen == 0)
+		config_devunlink(dev, &af.af_garbage);
+	config_alldevs_exit(&af);
 
 	return rv;
 }
@@ -1886,6 +1882,21 @@ config_alldevs_lock(void)
 }
 
 static void
+config_alldevs_enter(struct alldevs_foray *af)
+{
+	TAILQ_INIT(&af->af_garbage);
+	af->af_s = config_alldevs_lock();
+	config_collect_garbage(&af->af_garbage);
+} 
+
+static void
+config_alldevs_exit(struct alldevs_foray *af)
+{
+	config_alldevs_unlock(af->af_s);
+	config_dump_garbage(&af->af_garbage);
+}
+
+static void
 config_alldevs_unlock(int s)
 {
 	mutex_exit(&alldevs_mtx);
@@ -1900,7 +1911,6 @@ config_alldevs_unlock(int s)
 device_t
 device_lookup(cfdriver_t cd, int unit)
 {
-	struct devicelist garbage = TAILQ_HEAD_INITIALIZER(garbage);
 	device_t dv;
 	int s;
 
@@ -1911,7 +1921,6 @@ device_lookup(cfdriver_t cd, int unit)
 	else if ((dv = cd->cd_devs[unit]) != NULL && dv->dv_del_gen != 0)
 		dv = NULL;
 	config_alldevs_unlock(s);
-	config_dump_garbage(&garbage);
 
 	return dv;
 }
@@ -1924,12 +1933,8 @@ device_lookup(cfdriver_t cd, int unit)
 void *
 device_lookup_private(cfdriver_t cd, int unit)
 {
-	device_t dv;
 
-	if ((dv = device_lookup(cd, unit)) == NULL)
-		return NULL;
-
-	return dv->dv_private;
+	return device_private(device_lookup(cd, unit));
 }
 
 /*
