@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.157 2008/04/03 22:46:22 xtraeme Exp $
+#	$NetBSD: files.isa,v 1.158 2010/01/19 12:41:41 pooka Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -217,12 +217,6 @@ file	dev/isa/if_tscs_isa.c		tscs_isa
 # device in sys/conf/files
 attach	fmv at isa with fmv_isa
 file	dev/isa/if_fmv_isa.c		fmv_isa
-
-# HP Lan Ethernet controllers
-# XXX currently broken
-#device hp: ether, ifnet, arp
-#attach	hp at isa
-#file	dev/isa/if_hp.c			hp
 
 # Intel i82595-based boards.
 # (Intel EtherExpress PRO)
