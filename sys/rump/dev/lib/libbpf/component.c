@@ -1,7 +1,7 @@
-/*	$NetBSD: rump_dev_private.h,v 1.8 2010/01/19 22:38:21 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.1 2010/01/19 22:38:21 pooka Exp $	*/
 
 /*
- * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,27 +25,34 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _SYS_RUMP_DEV_PRIVATE_H_
-#define _SYS_RUMP_DEV_PRIVATE_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2010/01/19 22:38:21 pooka Exp $");
 
-void	rump_dev_init(void);
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/mbuf.h>
+#include <sys/stat.h>
 
-void	rump_pdev_add(void (*fn)(int), int);
-void	rump_pdev_finalize(void);
+#include <net/bpf.h>
 
-void 	rump_dev_bpf_init(void);
-void 	rump_dev_cgd_init(void);
-void 	rump_dev_dm_init(void);
-void 	rump_dev_raidframe_init(void);
-void 	rump_dev_netsmb_init(void);
-void 	rump_dev_rnd_init(void);
-void	rump_dev_rumpusbhc_init(void);
+#include "rump_dev_private.h"
+#include "rump_vfs_private.h"
 
-void	rump_device_configuration(void);
-void	rump_wscons_configuration(void);
+void bpfilterattach(int);
 
-struct mainbus_attach_args {
-	int maa_unit;
-};
+void
+rump_dev_bpf_init()
+{
+        extern const struct cdevsw bpf_cdevsw;
+	devmajor_t bmaj, cmaj;
+	int error;
 
-#endif /* _SYS_RUMP_DEV_PRIVATE_H_ */
+	bmaj = cmaj = NODEVMAJOR;
+	if ((error = devsw_attach("bpf", NULL, &bmaj, &bpf_cdevsw, &cmaj)) != 0)
+		panic("bpf devsw attach failed: %d", error);
+	if ((error = rump_vfs_makeonedevnode(S_IFCHR, "/dev/bpf", cmaj, 0)) !=0)
+		panic("cannot create bpf device nodes: %d", error);
+
+	rump_pdev_add(bpfilterattach, 1);
+}
