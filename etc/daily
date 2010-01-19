@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.72 2009/03/29 16:04:15 perry Exp $
+#	$NetBSD: daily,v 1.73 2010/01/19 22:08:11 jmmv Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -239,6 +239,16 @@ if checkyesno run_rdist && [ -f /etc/Distfile ]; then
 		rdist -f /etc/Distfile 2>&1 | tee /var/log/rdist/$logf
 	else
 		rdist -f /etc/Distfile 
+	fi
+fi
+
+: ${pkgdb_dir:=/var/db/pkg}
+
+if pkg_info -K ${pkgdb_dir} -q -E '*'; then
+	if checkyesno fetch_pkg_vulnerabilities; then
+		echo ""
+		echo "Fetching package vulnerabilities database:"
+		pkg_admin -K ${pkgdb_dir} fetch-pkg-vulnerabilities -u
 	fi
 fi
 
