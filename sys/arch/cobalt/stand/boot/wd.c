@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.11 2010/01/10 16:20:45 tsutsui Exp $	*/
+/*	$NetBSD: wd.c,v 1.12 2010/01/19 15:28:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -98,8 +98,8 @@ wd_get_params(struct wd_softc *wd)
 		    wd->sc_params.atap_heads *
 		    wd->sc_params.atap_sectors;
 	}
-	DPRINTF(("wd->sc_capacity = %ld, wd->sc_capacity28 = %d.\n",
-	    (u_long)wd->sc_capacity, wd->sc_capacity28));
+	DPRINTF(("wd->sc_capacity = %" PRId64 ", wd->sc_capacity28 = %d.\n",
+	    wd->sc_capacity, wd->sc_capacity28));
 
 	return 0;
 }
