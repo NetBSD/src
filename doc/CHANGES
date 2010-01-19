@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1346 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1347 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -531,3 +531,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		check_pkg_signatures to validate the installed packages
 		against the vulnerabilities database and the expected
 		checksums for their files.  [jmmv 20100119]
+	bpf: Make bpf interface with an ops vector backed by stubs
+		if bpf is not present in the kernel.  The client
+		linkage is now always the same.  [pooka 20100119]
