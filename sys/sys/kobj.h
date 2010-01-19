@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj.h,v 1.12 2009/06/17 21:04:25 dyoung Exp $	*/
+/*	$NetBSD: kobj.h,v 1.13 2010/01/19 22:17:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 typedef struct kobj *kobj_t;
 
 /* External interface. */
-int		kobj_load_file(kobj_t *, const char *, const bool);
+int		kobj_load_vfs(kobj_t *, const char *, const bool);
 int		kobj_load_mem(kobj_t *, void *, ssize_t);
 int		kobj_affix(kobj_t, const char *);
 void		kobj_unload(kobj_t);

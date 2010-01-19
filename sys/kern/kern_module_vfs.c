@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_vfs.c,v 1.1 2009/11/18 17:40:45 pooka Exp $	*/
+/*	$NetBSD: kern_module_vfs.c,v 1.2 2010/01/19 22:17:44 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.1 2009/11/18 17:40:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.2 2010/01/19 22:17:44 pooka Exp $");
 
 #define _MODULE_INTERNAL
 #include <sys/param.h>
@@ -49,8 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.1 2009/11/18 17:40:45 pooka Ex
 
 #include <prop/proplib.h>
 
-static int	module_load_plist_file(const char *, const bool,
-				       prop_dictionary_t *);
+static int	module_load_plist_vfs(const char *, const bool,
+				      prop_dictionary_t *);
 
 int
 module_load_vfs(const char *name, int flags, bool autoload,
@@ -70,13 +70,13 @@ module_load_vfs(const char *name, int flags, bool autoload,
 	if (!autoload) {
 		nochroot = false;
 		snprintf(path, MAXPATHLEN, "%s", name);
-		error = kobj_load_file(&mod->mod_kobj, path, nochroot);
+		error = kobj_load_vfs(&mod->mod_kobj, path, nochroot);
 	}
 	if (autoload || (error == ENOENT)) {
 		nochroot = true;
 		snprintf(path, MAXPATHLEN, "%s/%s/%s.kmod",
 		    module_base, name, name);
-		error = kobj_load_file(&mod->mod_kobj, path, nochroot);
+		error = kobj_load_vfs(&mod->mod_kobj, path, nochroot);
 	}
 	if (error != 0) {
 		PNBUF_PUT(path);
@@ -94,7 +94,7 @@ module_load_vfs(const char *name, int flags, bool autoload,
 	 * Load and process <module>.prop if it exists.
 	 */
 	if ((flags & MODCTL_NO_PROP) == 0 && filedictp) {
-		error = module_load_plist_file(path, nochroot, filedictp);
+		error = module_load_plist_vfs(path, nochroot, filedictp);
 		if (error != 0) {
 			module_print("plist load returned error %d for `%s'",
 			    error, path);
@@ -113,12 +113,12 @@ module_load_vfs(const char *name, int flags, bool autoload,
 }
 
 /*
- * module_load_plist_file:
+ * module_load_plist_vfs:
  *
  *	Load a plist located in the file system into memory.
  */
 static int
-module_load_plist_file(const char *modpath, const bool nochroot,
+module_load_plist_vfs(const char *modpath, const bool nochroot,
 		       prop_dictionary_t *filedictp)
 {
 	struct nameidata nd;
