@@ -1,4 +1,4 @@
-/*	$NetBSD: tlp.c,v 1.8 2008/04/28 20:23:16 martin Exp $	*/
+/*	$NetBSD: tlp.c,v 1.9 2010/01/19 15:28:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -238,7 +238,7 @@ tlp_init(void *cookie)
 	en[4] = val;
 	en[5] = val >> 8;
 
-	DPRINTF(("tlp: MAC address %x:%x:%x:%x:%x:%x\n",
+	DPRINTF(("tlp: MAC address %02x:%02x:%02x:%02x:%02x:%02x\n",
 	    en[0], en[1], en[2], en[3], en[4], en[5]));
 
 	rxd = &l->rxd[0];
