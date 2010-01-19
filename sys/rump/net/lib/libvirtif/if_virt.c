@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.15 2010/01/16 17:55:50 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.16 2010/01/19 22:08:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.15 2010/01/16 17:55:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.16 2010/01/19 22:08:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.15 2010/01/16 17:55:50 pooka Exp $");
 
 #include "rump_private.h"
 #include "rump_net_private.h"
-
-#include "bpfilter.h"
 
 /*
  * Virtual interface for userspace purposes.  Uses tap(4) to
@@ -234,11 +232,9 @@ virtif_worker(void *arg)
 		}
 		m->m_len = m->m_pkthdr.len = n;
 		m->m_pkthdr.rcvif = ifp;
-#if NBPFILTER > 0
 		if (ifp->if_bpf) {
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		}
-#endif
 		ether_input(ifp, m);
 	}
 
@@ -273,11 +269,9 @@ virtif_sender(void *arg)
 		}
 		if (i == LB_SH)
 			panic("lazy bum");
-#if NBPFILTER > 0
 		if (ifp->if_bpf) {
-			bpf_mtap(ifp->if_bpf, m0);
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 		}
-#endif
 		rumpuser_writev(sc->sc_tapfd, io, i, &error);
 		m_freem(m0);
 		mutex_enter(&sc->sc_sendmtx);
