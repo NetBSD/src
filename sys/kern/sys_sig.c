@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.25 2009/12/20 04:49:09 rmind Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.26 2010/01/19 22:28:31 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.25 2009/12/20 04:49:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.26 2010/01/19 22:28:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -315,7 +315,7 @@ sys_____sigtimedwait50(struct lwp *l,
     const struct sys_____sigtimedwait50_args *uap, register_t *retval)
 {
 
-	return __sigtimedwait1(l, uap, retval, copyout, copyin, copyout);
+	return sigtimedwait1(l, uap, retval, copyout, copyin, copyout);
 }
 
 int
@@ -620,7 +620,7 @@ sigaltstack1(struct lwp *l, const struct sigaltstack *nss,
 }
 
 int
-__sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
+sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
     register_t *retval, copyout_t storeinf, copyin_t fetchts, copyout_t storets)
 {
 	/* {
