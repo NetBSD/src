@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.56 2010/01/01 03:22:13 dholland Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.57 2010/01/19 15:23:14 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.56 2010/01/01 03:22:13 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.57 2010/01/19 15:23:14 pooka Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -625,10 +625,7 @@ module_do_load(const char *name, bool isdep, int flags,
 
 	/*
 	 * Load the module and link.  Before going to the file system,
-	 * scan the list of modules loaded by the boot loader.  Just
-	 * before init is started the list of modules loaded at boot
-	 * will be purged.  Before init is started we can assume that
-	 * `name' is a module name and not a path name.
+	 * scan the list of modules loaded by the boot loader.
 	 */
 	TAILQ_FOREACH(mod, &module_bootlist, mod_chain) {
 		if (strcmp(mod->mod_info->mi_name, name) == 0) {
