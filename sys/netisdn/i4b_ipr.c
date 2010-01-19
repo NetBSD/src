@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.33 2009/03/18 10:22:43 cegger Exp $
+ *	$Id: i4b_ipr.c,v 1.34 2010/01/19 22:08:17 pooka Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.33 2009/03/18 10:22:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.34 2010/01/19 22:08:17 pooka Exp $");
 
 #include "irip.h"
 #include "opt_irip.h"
@@ -124,7 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.33 2009/03/18 10:22:43 cegger Exp $");
 #if defined(__FreeBSD_version) &&  __FreeBSD_version >= 400008
 #include "bpf.h"
 #else
-#include "bpfilter.h"
+#define NBPFILTER 1
 #endif
 #if NBPFILTER > 0 || NBPF > 0
 #include <sys/time.h>
@@ -404,7 +404,7 @@ iripattach(void)
 #ifdef __FreeBSD__
 		bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int));
 #else
-		bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int));
+		bpf_ops->bpf_attach(&sc->sc_if, DLT_NULL, sizeof(u_int), &sc->sc_if.if_bpf);
 #endif
 #endif
 	}
@@ -1073,7 +1073,7 @@ error:
 #ifdef __FreeBSD__
 		bpf_mtap(&sc->sc_if, &mm);
 #else
-		bpf_mtap(sc->sc_if.if_bpf, &mm);
+		bpf_ops->bpf_mtap(sc->sc_if.if_bpf, &mm);
 #endif
 	}
 #endif /* NBPFILTER > 0  || NBPF > 0 */
@@ -1140,7 +1140,7 @@ ipr_tx_queue_empty(void *softc)
 #ifdef __FreeBSD__
 			bpf_mtap(&sc->sc_if, &mm);
 #else
-			bpf_mtap(sc->sc_if.if_bpf, &mm);
+			bpf_ops->bpf_mtap(sc->sc_if.if_bpf, &mm);
 #endif
 		}
 #endif /* NBPFILTER */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpnet,v 1.9 2009/10/16 00:16:32 pooka Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.10 2010/01/19 22:08:18 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -23,6 +23,9 @@ SRCS+=	radix.c
 
 # compat
 SRCS+=	rtsock_50.c
+
+# bpf stubs, required for all kernels
+SRCS+=	bpf_stub.c
 
 # automatically in sync src/lib
 SHLIB_MAJOR=    0
