@@ -1,4 +1,4 @@
-/*	$NetBSD: rumptest_net.c,v 1.14 2010/01/16 20:47:01 pooka Exp $	*/
+/*	$NetBSD: rumptest_net.c,v 1.15 2010/01/19 17:51:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -58,6 +58,8 @@
 #define DEST_ADDR "204.152.190.12"	/* www.NetBSD.org */
 #define DEST_PORT 80			/* take a wild guess */
 
+static in_addr_t youraddr;
+
 #ifdef FULL_NETWORK_STACK
 /*
  * If we are running with the full networking stack, configure
@@ -79,7 +81,7 @@
 #define MYGW "10.181.181.1"
 #define IFNAME "virt0" /* XXX: hardcoded */
 
-static in_addr_t myaddr, youraddr;
+static in_addr_t myaddr;
 
 static void
 configure_interface(void)
@@ -177,31 +179,6 @@ configure_interface(void)
 	if (rump_sys_write(s, &m_rtmsg, len) != len)
 		err(1, "routing incomplete");
 	rump_sys_close(s);
-}
-#endif /* FULL_NETWORK_STACK */
-
-static void
-printstats(void)
-{
-	struct mbstat mbstat;
-	int ctl[] = { CTL_KERN, KERN_MBUF, MBUF_STATS };
-	int totalmbuf = 0;
-	size_t mbslen = sizeof(struct mbstat);
-	unsigned i;
-
-	if (rump_sys___sysctl(ctl, __arraycount(ctl), &mbstat, &mbslen,
-	    NULL, 0) == -1)
-		return;
-
-	printf("  mbuf count:\n");
-	for (i = 0; i < __arraycount(mbstat.m_mtypes); i++) {
-		if (mbstat.m_mtypes[i] == 0)
-			continue;
-		printf("%s (%d) mbuf count %d\n",
-		    i == MT_DATA ? "data" : "unknown", i, mbstat.m_mtypes[i]);
-		totalmbuf += mbstat.m_mtypes[i];
-	}
-	printf("total mbufs: %d\n", totalmbuf);
 }
 
 static void
@@ -314,6 +291,31 @@ dobpfread(void)
 			    BPF_WORDALIGN(bhdr->bh_hdrlen + bhdr->bh_caplen));
 		}
 	}
+}
+#endif /* FULL_NETWORK_STACK */
+
+static void
+printstats(void)
+{
+	struct mbstat mbstat;
+	int ctl[] = { CTL_KERN, KERN_MBUF, MBUF_STATS };
+	int totalmbuf = 0;
+	size_t mbslen = sizeof(struct mbstat);
+	unsigned i;
+
+	if (rump_sys___sysctl(ctl, __arraycount(ctl), &mbstat, &mbslen,
+	    NULL, 0) == -1)
+		return;
+
+	printf("  mbuf count:\n");
+	for (i = 0; i < __arraycount(mbstat.m_mtypes); i++) {
+		if (mbstat.m_mtypes[i] == 0)
+			continue;
+		printf("%s (%d) mbuf count %d\n",
+		    i == MT_DATA ? "data" : "unknown", i, mbstat.m_mtypes[i]);
+		totalmbuf += mbstat.m_mtypes[i];
+	}
+	printf("total mbufs: %d\n", totalmbuf);
 }
 
 int
