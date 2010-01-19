@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.24 2009/06/09 22:21:54 yamt Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.25 2010/01/19 22:08:16 pooka Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,9 +27,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.24 2009/06/09 22:21:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.25 2010/01/19 22:08:16 pooka Exp $");
 
-#include "bpfilter.h"
 #include "opt_inet.h"
 
 #include <sys/param.h>
@@ -43,9 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.24 2009/06/09 22:21:54 yamt Exp $");
 #include <sys/proc.h>	/* XXX for curproc */
 #include <sys/kauth.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
@@ -147,11 +144,9 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 	}
 #endif
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf) {
-		bpf_mtap(ifp->if_bpf, m);
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 	}
-#endif
 
 	(*ifp->if_input)(ifp, m);
 }
@@ -437,11 +432,9 @@ agr_start(struct ifnet *ifp)
 		if (m == NULL) {
 			break;
 		}
-#if NBPFILTER > 0
 		if (ifp->if_bpf) {
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		}
-#endif
 		port = agr_select_tx_port(sc, m);
 		if (port) {
 			int error;

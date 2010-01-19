@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.49 2009/01/10 12:53:45 cegger Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.50 2010/01/19 22:08:17 pooka Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.22 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.49 2009/01/10 12:53:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.50 2010/01/19 22:08:17 pooka Exp $");
 #endif
 
 /*
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.49 2009/01/10 12:53:45 cegger Exp $"
  */
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -159,10 +158,8 @@ ieee80211_ifattach(struct ieee80211com *ic)
 #endif /* __NetBSD__ */
 
 	ether_ifattach(ifp, ic->ic_myaddr);
-#if NBPFILTER > 0
-	bpfattach2(ifp, DLT_IEEE802_11,
+	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11,
 	    sizeof(struct ieee80211_frame_addr4), &ic->ic_rawbpf);
-#endif
 
 	ieee80211_crypto_attach(ic);
 
@@ -264,9 +261,7 @@ ieee80211_ifdetach(struct ieee80211com *ic)
 
 	IEEE80211_BEACON_LOCK_DESTROY(ic);
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
+	bpf_ops->bpf_detach(ifp);
 	ether_ifdetach(ifp);
 }
 
