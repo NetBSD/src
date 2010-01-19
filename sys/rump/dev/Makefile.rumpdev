@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.rumpdev,v 1.6 2009/12/04 22:13:59 haad Exp $
+#	$NetBSD: Makefile.rumpdev,v 1.7 2010/01/19 22:38:21 pooka Exp $
 #
 
-RUMPDEVLIST=	cgd disk netsmb raidframe rnd dm
+RUMPDEVLIST=	bpf cgd disk netsmb raidframe rnd dm
 
 .for var in ${RUMPDEVLIST}
 RUMPDEVLIBS+=lib${var}
