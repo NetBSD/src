@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.67 2010/01/20 18:55:17 dyoung Exp $ */
+/* $NetBSD: cgd.c,v 1.68 2010/01/20 19:00:47 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.67 2010/01/20 18:55:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.68 2010/01/20 19:00:47 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -496,7 +496,6 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct	cgd_softc *cs;
 	struct	dk_softc *dksc;
 	struct	disk *dk;
-	int	ret;
 	int	part = DISKPART(dev);
 	int	pmask = 1 << part;
 
@@ -515,18 +514,12 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 	case CGDIOCSET:
 		if (dksc->sc_flags & DKF_INITED)
-			ret = EBUSY;
-		else
-			ret = cgd_ioctl_set(cs, data, l);
-		break;
+			return EBUSY;
+		return cgd_ioctl_set(cs, data, l);
 	case CGDIOCCLR:
-
 		if (DK_BUSY(&cs->sc_dksc, pmask))
-			ret = EBUSY;
-		else
-			ret = cgd_ioctl_clr(cs, l);
-		break;
-
+			return EBUSY;
+		return cgd_ioctl_clr(cs, l);
 	case DIOCCACHESYNC:
 		/*
 		 * XXX Do we really need to care about having a writable
@@ -538,15 +531,10 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		/*
 		 * We pass this call down to the underlying disk.
 		 */
-		ret = VOP_IOCTL(cs->sc_tvn, cmd, data, flag, l->l_cred);
-		break;
-
+		return VOP_IOCTL(cs->sc_tvn, cmd, data, flag, l->l_cred);
 	default:
-		ret = dk_ioctl(di, dksc, dev, cmd, data, flag, l);
-		break;
+		return dk_ioctl(di, dksc, dev, cmd, data, flag, l);
 	}
-
-	return ret;
 }
 
 static int
