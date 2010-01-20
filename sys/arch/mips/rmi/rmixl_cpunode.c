@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpunode.c,v 1.1.2.2 2010/01/20 09:04:35 matt Exp $	*/
+/*	$NetBSD: rmixl_cpunode.c,v 1.1.2.3 2010/01/20 20:48:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpunode.c,v 1.1.2.2 2010/01/20 09:04:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpunode.c,v 1.1.2.3 2010/01/20 20:48:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,21 +52,27 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_cpunode.c,v 1.1.2.2 2010/01/20 09:04:35 matt E
 #include <sys/device.h>
 
 #include <evbmips/rmixl/autoconf.h>
+
+#include <mips/rmi/rmixlvar.h>
 #include <mips/rmi/rmixl_cpunodevar.h>
+
 #include <machine/bus.h>
 #include "locators.h"
 
-static int  cpunode_match(device_t,  cfdata_t, void *);
-static void cpunode_attach(device_t,  device_t,  void *);
-static int  cpunode_print_core(void *, const char *);
+static int  cpunode_rmixl_match(device_t, cfdata_t, void *);
+static void cpunode_rmixl_attach(device_t, device_t, void *);
+static int  cpunode_rmixl_print(void *, const char *);
 
-CFATTACH_DECL_NEW(cpunode, sizeof(struct cpunode_softc),
-	cpunode_match, cpunode_attach, NULL, NULL);
+CFATTACH_DECL_NEW(cpunode_rmixl, sizeof(struct cpunode_softc),
+	cpunode_rmixl_match, cpunode_rmixl_attach, NULL, NULL);
 
 static int
-cpunode_match(device_t parent, cfdata_t cf, void *aux)
+cpunode_rmixl_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
+
+	if (!cpu_rmixl(mips_options.mips_cpu))
+		return 0;
 
 	/* XXX for now attach one node only */
 	if (ma->ma_node != 0)
@@ -76,7 +82,7 @@ cpunode_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 static void
-cpunode_attach(device_t parent, device_t self, void *aux)
+cpunode_rmixl_attach(device_t parent, device_t self, void *aux)
 {
 	u_int sz;
 	u_int ncores;
@@ -119,7 +125,7 @@ cpunode_attach(device_t parent, device_t self, void *aux)
 		na.na_name = "cpucore";
 		na.na_node = ma->ma_node;
 		na.na_core = i;
-		config_found(self, &na, cpunode_print_core);
+		config_found(self, &na, cpunode_rmixl_print);
 	}
 
 	/*
@@ -130,7 +136,7 @@ cpunode_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-cpunode_print_core(void *aux, const char *pnp)
+cpunode_rmixl_print(void *aux, const char *pnp)
 {
 	struct cpunode_attach_args *na = aux;
 
