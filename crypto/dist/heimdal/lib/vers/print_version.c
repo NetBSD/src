@@ -34,9 +34,15 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 __RCSID("$Heimdal: print_version.c 22428 2008-01-13 09:58:05Z lha $"
-        "$NetBSD: print_version.c,v 1.8 2008/03/22 08:37:23 mlelstv Exp $");
+        "$NetBSD: print_version.c,v 1.9 2010/01/20 12:54:17 tsutsui Exp $");
 #endif
+
+#ifdef HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#include "roken-common.h"
+#else
 #include "roken.h"
+#endif
 
 #include "print_version.h"
 
