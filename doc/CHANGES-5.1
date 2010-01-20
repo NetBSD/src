@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.175 2010/01/16 17:55:39 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.176 2010/01/20 05:33:10 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16087,4 +16087,16 @@ sys/arch/amd64/include/byte_swap.h		1.7
 
 	Provide inline assembly version of bswap64.
 	[joerg, ticket #1245]
+
+external/gpl2/libdevmapper/*			delete
+external/gpl2/lvm2tools/*			delete
+
+	Remove obsolete LVM sources.
+	[tron, ticket #1211]
+
+sys/lib/libkern/arc4random.c			1.21
+
+	Keep arc4_i and arc4_j synchronised after a rekeying. This
+	prevents accidentally ending up in a short ARC4 cycle.
+	[joerg, ticket #1253]
 
