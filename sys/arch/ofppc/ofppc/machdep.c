@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.108 2010/01/16 21:05:28 phx Exp $	*/
+/*	$NetBSD: machdep.c,v 1.109 2010/01/20 17:12:08 phx Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2010/01/16 21:05:28 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2010/01/20 17:12:08 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2010/01/16 21:05:28 phx Exp $");
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 #endif
+#include "rtas.h"
 
 struct pmap ofw_pmap;
 char bootpath[256];
