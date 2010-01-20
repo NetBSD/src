@@ -1,4 +1,4 @@
-/*	$NetBSD: unifdef.c,v 1.16 2010/01/16 21:26:59 christos Exp $	*/
+/*	$NetBSD: unifdef.c,v 1.17 2010/01/20 19:02:42 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -77,7 +77,7 @@ static const char copyright[] =
 #endif
 #ifdef __IDSTRING
 __IDSTRING(Berkeley, "@(#)unifdef.c	8.1 (Berkeley) 6/6/93");
-__IDSTRING(NetBSD, "$NetBSD: unifdef.c,v 1.16 2010/01/16 21:26:59 christos Exp $");
+__IDSTRING(NetBSD, "$NetBSD: unifdef.c,v 1.17 2010/01/20 19:02:42 ginsbach Exp $");
 __IDSTRING(dotat, "$dotat: things/unifdef.c,v 1.161 2003/07/01 15:32:48 fanf2 Exp $");
 #endif
 #endif /* not lint */
@@ -342,13 +342,13 @@ main(int argc, char *argv[])
 	if (ofilename == NULL) {
 		output = stdout;
 	} else {
-		if (stat(ofilename, &osb) != 0)
-			err(2, "can't stat %s", ofilename);
-		if (fstat(fileno(input), &isb) != 0)
-			err(2, "can't fstat %s", filename);
+		if (stat(ofilename, &osb) == 0) {
+			if (fstat(fileno(input), &isb) != 0)
+				err(2, "can't fstat %s", filename);
 
-		overwriting = (osb.st_dev == isb.st_dev &&
-		    osb.st_ino == osb.st_ino);
+			overwriting = (osb.st_dev == isb.st_dev &&
+			    osb.st_ino == osb.st_ino);
+		}
 		if (overwriting) {
 			int ofd;
 
