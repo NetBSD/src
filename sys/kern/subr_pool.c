@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.181 2010/01/03 09:42:22 mlelstv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.182 2010/01/20 23:40:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.181 2010/01/03 09:42:22 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.182 2010/01/20 23:40:42 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -2315,6 +2315,7 @@ void
 pool_cache_invalidate(pool_cache_t pc)
 {
 	pcg_t *full, *empty, *part;
+#if 0
 	uint64_t where;
 
 	if (ncpu < 2 || !mp_online) {
@@ -2333,7 +2334,7 @@ pool_cache_invalidate(pool_cache_t pc)
 		where = xc_broadcast(0, (xcfunc_t)pool_cache_xcall, pc, NULL);
 		xc_wait(where);
 	}
-
+#endif
 	mutex_enter(&pc->pc_lock);
 	full = pc->pc_fullgroups;
 	empty = pc->pc_emptygroups;
