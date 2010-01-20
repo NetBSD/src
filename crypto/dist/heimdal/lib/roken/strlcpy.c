@@ -34,10 +34,14 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+#ifdef HAVE_NBTOOL_CONFIG_H
+#include "roken-common.h"
+#else
 #include "roken.h"
+#endif
 
 __RCSID("$Heimdal: strlcpy.c 14773 2005-04-12 11:29:18Z lha $"
-        "$NetBSD: strlcpy.c,v 1.5 2008/03/22 08:37:22 mlelstv Exp $");
+        "$NetBSD: strlcpy.c,v 1.6 2010/01/20 12:54:17 tsutsui Exp $");
 
 #ifndef HAVE_STRLCPY
 
