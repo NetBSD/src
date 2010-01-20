@@ -1,4 +1,4 @@
-.\" $NetBSD: pmf.9,v 1.12 2009/10/21 16:06:59 snj Exp $
+.\" $NetBSD: pmf.9,v 1.13 2010/01/20 00:39:30 dyoung Exp $
 .\"
 .\" Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -52,21 +52,21 @@
 .Sh SYNOPSIS
 .In sys/device.h
 .Ft bool
-.Fn pmf_device_register "device_t dev" "bool (*suspend)(device_t dev)" "bool (*resume)(device_t dev)"
+.Fn pmf_device_register "device_t dev" "bool (*suspend)(device_t dev, pmf_qual_t qual)" "bool (*resume)(device_t dev, pmf_qual_t qual)"
 .Ft bool
-.Fn pmf_device_register1 "device_t dev" "bool (*suspend)(device_t dev)" "bool (*resume)(device_t dev)" "bool (*shutdown)(device_t dev, int how)"
+.Fn pmf_device_register1 "device_t dev" "bool (*suspend)(device_t dev, pmf_qual_t qual)" "bool (*resume)(device_t dev, pmf_qual_t qual)" "bool (*shutdown)(device_t dev, int how)"
 .Ft void
 .Fn pmf_device_deregister "device_t dev"
 .Ft bool
-.Fn pmf_device_suspend "device_t dev"
+.Fn pmf_device_suspend "device_t dev" "pmf_qual_t qual"
 .Ft bool
-.Fn pmf_device_resume "device_t dev"
+.Fn pmf_device_resume "device_t dev" "pmf_qual_t qual"
 .Ft bool
-.Fn pmf_device_recursive_suspend "device_t dev"
+.Fn pmf_device_recursive_suspend "device_t dev" "pmf_qual_t qual"
 .Ft bool
-.Fn pmf_device_recursive_resume "device_t dev"
+.Fn pmf_device_recursive_resume "device_t dev" "pmf_qual_t qual"
 .Ft bool
-.Fn pmf_device_resume_subtree "device_t dev"
+.Fn pmf_device_subtree_resume "device_t dev" "pmf_qual_t qual"
 .Ft void
 .Fn pmf_class_network_register "device_t dev" "struct ifnet *ifp"
 .Ft bool
@@ -74,9 +74,9 @@
 .Ft bool
 .Fn pmf_class_display_register "device_t dev"
 .Ft bool
-.Fn pmf_system_suspend "void"
+.Fn pmf_system_suspend "pmf_qual_t qual"
 .Ft bool
-.Fn pmf_system_resume "void"
+.Fn pmf_system_resume "pmf_qual_t qual"
 .Ft void
 .Fn pmf_system_shutdown "int"
 .Ft bool
@@ -99,6 +99,10 @@ Drivers for devices implementing
 .Nm
 may make use of the following data type:
 .Bl -tag -width compact
+.It Fa pmf_qual_t
+An opaque aggregate of qualifications on a
+.Nm
+suspend or resume call.
 .It Fa pmf_generic_event_t
 A device driver can register as a listener for specific events, or inject
 events into the message queue.
@@ -139,7 +143,9 @@ and
 .Fa resume
 are passed
 .Fa dev
-and they return
+and a
+.Fa pmf_qual_t ;
+they return
 .Dv true
 on success and
 .Dv false
@@ -178,25 +184,25 @@ on success and
 on failure.
 .It Fn pmf_device_deregister "dev"
 Deregister a device with the power management framework.
-.It Fn pmf_device_suspend "dev"
+.It Fn pmf_device_suspend "dev" "qual"
 Suspend a device by first calling the class suspend handler, followed by
 the driver suspend handler, and finally the bus suspend handler.
-.It Fn pmf_device_resume "dev"
+.It Fn pmf_device_resume "dev" "qual"
 Resume a device by first calling the bus resume handler, followed by the
 driver resume handler, and finally the class resume handler.
-.It Fn pmf_device_recursive_suspend "dev"
+.It Fn pmf_device_recursive_suspend "dev" "qual"
 As
 .Fn pmf_device_suspend ,
 but ensures that all child devices of
 .Fa dev
 are suspended.
-.It Fn pmf_device_recursive_resume "dev"
+.It Fn pmf_device_recursive_resume "dev" "qual"
 As
 .Fn pmf_device_resume ,
 but ensures that all parent devices of
 .Fa dev
 are resumed.
-.It Fn pmf_device_resume_subtree "dev"
+.It Fn pmf_device_subtree_resume "dev" "qual"
 As
 .Fn pmf_device_resume ,
 but ensures that all child devices of
@@ -211,13 +217,13 @@ device.
 .It Fn pmf_class_display_register "dev"
 Register a device with the power management framework as a display-class
 device.
-.It Fn pmf_system_suspend "void"
+.It Fn pmf_system_suspend "qual"
 Suspend all attached devices.
-Devices are suspended by traversing the
-autoconfiguration tree beginning with the leaf nodes.
+Devices are suspended by traversing the autoconfiguration tree
+beginning with the leaf nodes.
 This function will fail if any attached drivers do not support the power
 management framework.
-.It Fn pmf_system_resume "void"
+.It Fn pmf_system_resume "qual"
 Resume all attached devices.
 Devices are resumed by traversing the
 autoconfiguration tree beginning with devices that do not have a parent.
