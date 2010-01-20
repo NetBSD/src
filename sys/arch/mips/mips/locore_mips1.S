@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.64.26.1.2.4 2010/01/16 20:56:33 matt Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.64.26.1.2.5 2010/01/20 06:58:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -771,7 +771,7 @@ LEAF_NOPROFILE(mips1_tlb_mod_exception)
 	li	k1, MIPS_KSEG0_START
 	subu	k0, k0, k1
 	srl	k0, k0, MIPS1_TLB_PHYS_PAGE_SHIFT
-	la	k1, pmap_attributes
+	la	k1, pmap_attributes		# DANGER!  DANGER!
 	addu	k0, k0, k1
 	lbu	k1, 0(k0)			# fetch old value
 	nop
@@ -1193,12 +1193,13 @@ LEAF(mips1_tlb_invalidate_addr)
 END(mips1_tlb_invalidate_addr)
 
 /*
- * void mips1_tlb_invalidate_all_nonkernel(size_t sizeofTLB)
+ * void mips1_tlb_invalidate_asids(size_t sizeofTLB, uint32_t asid_lo,
+ *	    uint32_t asid_hi)
  *
- * Invalidate TLB entries belonging to per process user spaces while
+ * Invalidate TLB entries belonging to asids (asid_lo,asid_hi]
  * leaving entries for kernel space marked global intact.
  */
-LEAF(mips1_tlb_invalidate_all_nonkernel)
+LEAF(mips1_tlb_invalidate_asids)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
@@ -1211,11 +1212,22 @@ LEAF(mips1_tlb_invalidate_all_nonkernel)
 	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set index
 	nop
 	tlbr					# obtain an entry
-	mfc0	a0, MIPS_COP_0_TLB_LOW
+	mfc0	ta0, MIPS_COP_0_TLB_LOW
 	nop
-	and	a0, a0, MIPS1_PG_G		# check to see it has G bit
-	bnez	a0, 2f
+	and	ta0, ta0, MIPS1_PG_G		# check to see it has G bit
+	bnez	ta0, 2f
+	 nop
+
+	mfc0	ta0, MIPS_COP_0_TLB_HI		# get va and ASID
 	nop
+	and	ta0, ta0, PG_ASID		# mask off ASID
+	sltu	ta1, ta0, a1			# < asid_lo
+	bnez	ta1, 2f				# yes, next tlb entry
+	 nop
+	sltu	ta2, ta0, a2			# < asid_hi
+	beqz	ta2, 2f				# no, next tlb entry
+	 nop
+
 	mtc0	v0, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	mtc0	zero, MIPS_COP_0_TLB_LOW	# zero out entryLo
 	nop
@@ -1227,7 +1239,7 @@ LEAF(mips1_tlb_invalidate_all_nonkernel)
 
 	j	ra				# new TLBpid will be set soon
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
-END(mips1_tlb_invalidate_all_nonkernel)
+END(mips1_tlb_invalidate_asids)
 
 /*
  * void mips1_tlb_invalidate_all(size_t sizeofTLB)
@@ -1264,6 +1276,7 @@ _C_LABEL(mips1_locoresw):
 	.word _C_LABEL(mips1_lwp_trampoline)
 	.word _C_LABEL(nullop)			# idle
 	.word _C_LABEL(mips1_setfunc_trampoline)
+	.word _C_LABEL(nullop)			# boot secondary processors
 
 mips1_excpt_sw:
 	####

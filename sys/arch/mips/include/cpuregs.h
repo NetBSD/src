@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.74.28.12 2009/11/14 21:49:05 matt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.74.28.13 2010/01/20 06:58:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,7 +120,7 @@
 #define	MIPS_PHYS_TO_XKPHYS_UNCACHED(x) \
 	(MIPS_XKPHYS_START | ((uint64_t)(CCA_UNCACHED) << 59) | (x))
 #define	MIPS_PHYS_TO_XKPHYS_CACHED(x) \
-	(mips3_xkphys_cached | (x))
+	(mips_options.mips3_xkphys_cached | (x))
 #define	MIPS_PHYS_TO_XKPHYS(cca,x) \
 	(MIPS_XKPHYS_START | ((uint64_t)(cca) << 59) | (x))
 #define	MIPS_XKPHYS_TO_PHYS(x)	((uint64_t)(x) & 0x07ffffffffffffffLL)
@@ -647,7 +647,7 @@
 #define	MIPS3_TLB_MOD_BIT		MIPS3_TLB_DIRTY_BIT
 
 /*
- * MIPS3_TLB_ATTR values - coherency algorithm:
+ * MIPS3_TLB_ATTR (CCA) values - coherency algorithm:
  * 0: cacheable, noncoherent, write-through, no write allocate
  * 1: cacheable, noncoherent, write-through, write allocate
  * 2: uncached
@@ -725,6 +725,41 @@
 #define	MIPS_TLB_NUM_PIDS \
     ((MIPS_HAS_R4K_MMU) ? MIPS3_TLB_NUM_ASIDS : MIPS1_TLB_NUM_PIDS)
 #endif
+
+/*
+ * Hints for the prefetch instruction
+ */
+
+/*
+ * Prefetched data is expected to be read (not modified)
+ */
+#define	PREF_LOAD		0	
+#define	PREF_LOAD_STREAMED	4	/* but not reused extensively; it */
+					/* "streams" through cache.  */
+#define	PREF_LOAD_RETAINED	6	/* and reused extensively; it should */
+					/* be "retained" in the cache.  */
+
+/*
+ * Prefetched data is expected to be stored or modified
+ */
+#define	PREF_STORE		1	
+#define	PREF_STORE_STREAMED	5	/* but not reused extensively; it */
+					/* "streams" through cache.  */
+#define	PREF_STORE_RETAINED	7	/* and reused extensively; it should */
+					/* be "retained" in the cache.  */
+
+/*
+ * data is no longer expected to be used.  For a WB cache, schedule a
+ * writeback of any dirty data and afterwards free the cache lines.
+ */
+#define	PREF_WB_INV		25	
+#define	PREF_NUDGE		PREF_WB_INV
+
+/*
+ * Prepare for writing an entire cache line without the overhead
+ * involved in filling the line from memory.
+ */
+#define	PREF_PREPAREFORSTORE	30	
 
 /*
  * CPU processor revision IDs for company ID == 0 (non mips32/64 chips)

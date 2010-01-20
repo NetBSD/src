@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.26 2010/01/16 20:56:33 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.27 2010/01/20 06:58:36 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.26 2010/01/16 20:56:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.27 2010/01/20 06:58:36 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -209,24 +209,12 @@ mips_locore_jumpvec_t mips_locore_jumpvec;
 
 struct locoresw mips_locoresw;
 
-int cpu_arch;
-int cpu_mhz;
-int mips_num_tlb_entries;
-int mips_cpu_flags;
-int mips_has_llsc;
-int mips_has_r4k_mmu;
-int mips3_pg_cached;
-#ifdef _LP64
-uint64_t mips3_xkphys_cached;
-#endif
-u_int mips3_pg_shift;
-#ifdef MIPS3_PLUS
-uint64_t mips3_tlb_vpn_mask;
-uint64_t mips3_tlb_pfn_mask;
-uint32_t mips3_tlb_pg_mask;
-#endif
+struct mips_options mips_options = {
+	.mips_cpu_id = 0xffffffff,
+	.mips_fpu_id = 0xffffffff,
+};
 
-struct	cpu_info cpu_info_store = {
+struct cpu_info cpu_info_store = {
 	.ci_curlwp = &lwp0,
 	.ci_fpcurlwp = &lwp0,
 	.ci_ebase = MIPS_KSEG0_START,
@@ -259,8 +247,6 @@ char	cpu_model[128];
  */
 #define	MIPS32_FLAGS	CPU_MIPS_R4K_MMU | CPU_MIPS_CAUSE_IV | CPU_MIPS_USE_WAIT
 #define	MIPS64_FLAGS	MIPS32_FLAGS	/* same as MIPS32 flags (for now) */
-
-const struct pridtab *mycpu;
 
 static const struct pridtab cputab[] = {
 	{ 0, MIPS_R2000, -1, -1,		CPU_ARCH_MIPS1, 64,
@@ -535,7 +521,7 @@ static const char * const cidnames[] = {
  */
 static const mips_locore_jumpvec_t mips1_locore_vec = {
 	mips1_tlb_set_asid,
-	mips1_tlb_invalidate_all_nonkernel,
+	mips1_tlb_invalidate_asids,
 	mips1_tlb_invalidate_addr,
 	mips1_tlb_update,
 	mips1_tlb_read_indexed,
@@ -581,7 +567,7 @@ mips1_vector_init(void)
  */
 static const mips_locore_jumpvec_t mips3_locore_vec = {
 	mips3_tlb_set_asid,
-	mips3_tlb_invalidate_all_nonkernel,
+	mips3_tlb_invalidate_asids,
 	mips3_tlb_invalidate_addr,
 	mips3_tlb_update,
 	mips3_tlb_read_indexed,
@@ -641,7 +627,7 @@ mips3_vector_init(void)
  */
 static const mips_locore_jumpvec_t r5900_locore_vec = {
 	mips5900_tlb_set_asid,
-	mips5900_tlb_invalidate_all_nonkernel,
+	mips5900_tlb_invalidate_asids,
 	mips5900_tlb_invalidate_addr,
 	mips5900_tlb_update,
 	mips5900_tlb_read_indexed,
@@ -689,7 +675,7 @@ r5900_vector_init(void)
  */
 static const mips_locore_jumpvec_t mips32_locore_vec = {
 	mips32_tlb_set_asid,
-	mips32_tlb_invalidate_all_nonkernel,
+	mips32_tlb_invalidate_asids,
 	mips32_tlb_invalidate_addr,
 	mips32_tlb_update,
 	mips32_tlb_read_indexed,
@@ -750,7 +736,7 @@ mips32_vector_init(void)
  */
 const mips_locore_jumpvec_t mips64_locore_vec = {
 	mips64_tlb_set_asid,
-	mips64_tlb_invalidate_all_nonkernel,
+	mips64_tlb_invalidate_asids,
 	mips64_tlb_invalidate_addr,
 	mips64_tlb_update,
 	mips64_tlb_read_indexed,
@@ -832,22 +818,10 @@ mips64_vector_init(void)
 void
 mips_vector_init(void)
 {
+	struct mips_options * const opts = &mips_options;
 	const struct pridtab *ct;
+	const mips_prid_t cpu_id = opts->mips_cpu_id;
 
-#if 0
-	/*
-	 * XXX Set-up curlwp/curcpu again.  They may have been clobbered
-	 * beween verylocore and here.
-	 */
-	lwp0.l_cpu = &cpu_info_store;
-	cpu_info_store.ci_curlwp = &lwp0;
-	cpu_info_store.ci_fpcurlwp = &lwp0;
-#endif
-#if 0
-	curlwp = &lwp0;		/* handled in locore.S */
-#endif
-
-	mycpu = NULL;
 	for (ct = cputab; ct->cpu_name != NULL; ct++) {
 		if (MIPS_PRID_CID(cpu_id) != ct->cpu_cid ||
 		    MIPS_PRID_IMPL(cpu_id) != ct->cpu_pid)
@@ -859,13 +833,13 @@ mips_vector_init(void)
 		    MIPS_PRID_COPTS(cpu_id) != ct->cpu_copts)
 			continue;
 
-		mycpu = ct;
-		cpu_arch = ct->cpu_isa;
-		mips_num_tlb_entries = ct->cpu_ntlb;
+		opts->mips_cpu = ct;
+		opts->mips_cpu_arch = ct->cpu_isa;
+		opts->mips_num_tlb_entries = ct->cpu_ntlb;
 		break;
 	}
 
-	if (mycpu == NULL)
+	if (opts->mips_cpu == NULL)
 		panic("CPU type (0x%x) not supported", cpu_id);
 
 #if defined(MIPS32) || defined(MIPS64)
@@ -879,10 +853,10 @@ mips_vector_init(void)
 		/* pick CPU type */
 		switch (MIPSNN_GET(CFG_AT, cfg)) {
 		case MIPSNN_CFG_AT_MIPS32:
-			cpu_arch = CPU_ARCH_MIPS32;
+			opts->mips_cpu_arch = CPU_ARCH_MIPS32;
 			break;
 		case MIPSNN_CFG_AT_MIPS64:
-			cpu_arch = CPU_ARCH_MIPS64;
+			opts->mips_cpu_arch = CPU_ARCH_MIPS64;
 			break;
 		case MIPSNN_CFG_AT_MIPS64S:
 		default:
@@ -903,7 +877,7 @@ mips_vector_init(void)
 		/* figure out MMU type (and number of TLB entries) */
 		switch (MIPSNN_GET(CFG_MT, cfg)) {
 		case MIPSNN_CFG_MT_TLB:
-			mips_num_tlb_entries = MIPSNN_CFG1_MS(cfg1);
+			opts->mips_num_tlb_entries = MIPSNN_CFG1_MS(cfg1);
 			break;
 		case MIPSNN_CFG_MT_NONE:
 		case MIPSNN_CFG_MT_BAT:
@@ -915,37 +889,37 @@ mips_vector_init(void)
 	}
 #endif /* defined(MIPS32) || defined(MIPS64) */
 
-	if (cpu_arch < 1)
+	if (opts->mips_cpu_arch < 1)
 		panic("Unknown CPU ISA for CPU type 0x%x", cpu_id);
-	if (mips_num_tlb_entries < 1)
+	if (opts->mips_num_tlb_entries < 1)
 		panic("Unknown number of TLBs for CPU type 0x%x", cpu_id);
 
 	/*
 	 * Check CPU-specific flags.
 	 */
-	mips_cpu_flags = mycpu->cpu_flags;
-	mips_has_r4k_mmu = mips_cpu_flags & CPU_MIPS_R4K_MMU;
-	mips_has_llsc = (mips_cpu_flags & CPU_MIPS_NO_LLSC) == 0;
+	opts->mips_cpu_flags = opts->mips_cpu->cpu_flags;
+	opts->mips_has_r4k_mmu = (opts->mips_cpu_flags & CPU_MIPS_R4K_MMU) != 0;
+	opts->mips_has_llsc = (opts->mips_cpu_flags & CPU_MIPS_NO_LLSC) == 0;
 #if defined(MIPS3_4100)
 	if (MIPS_PRID_IMPL(cpu_id) == MIPS_R4100)
-		mips3_pg_shift = MIPS3_4100_PG_SHIFT;
+		opts->mips3_pg_shift = MIPS3_4100_PG_SHIFT;
 	else
 #endif
-		mips3_pg_shift = MIPS3_DEFAULT_PG_SHIFT;
+		opts->mips3_pg_shift = MIPS3_DEFAULT_PG_SHIFT;
 
-	if (mycpu->cpu_flags & CPU_MIPS_HAVE_SPECIAL_CCA) {
+	if (opts->mips_cpu_flags & CPU_MIPS_HAVE_SPECIAL_CCA) {
 		uint32_t cca;
 
-		cca = (ct->cpu_flags & CPU_MIPS_CACHED_CCA_MASK) >>
+		cca = (opts->mips_cpu_flags & CPU_MIPS_CACHED_CCA_MASK) >>
 		    CPU_MIPS_CACHED_CCA_SHIFT;
-		mips3_pg_cached = MIPS3_CCA_TO_PG(cca);
+		opts->mips3_pg_cached = MIPS3_CCA_TO_PG(cca);
 #ifdef _LP64
-		mips3_xkphys_cached = MIPS_PHYS_TO_XKPHYS(cca, 0);
+		opts->mips3_xkphys_cached = MIPS_PHYS_TO_XKPHYS(cca, 0);
 #endif
 	} else {
-		mips3_pg_cached = MIPS3_DEFAULT_PG_CACHED;
+		opts->mips3_pg_cached = MIPS3_DEFAULT_PG_CACHED;
 #ifdef _LP64
-		mips3_xkphys_cached = MIPS3_DEFAULT_XKPHYS_CACHED;
+		opts->mips3_xkphys_cached = MIPS3_DEFAULT_XKPHYS_CACHED;
 #endif
 	}
 
@@ -962,12 +936,12 @@ mips_vector_init(void)
 	/*
 	 * Now initialize our ISA-dependent function vector.
 	 */
-	switch (cpu_arch) {
+	switch (opts->mips_cpu_arch) {
 #if defined(MIPS1)
 	case CPU_ARCH_MIPS1:
 		if (!__builtin_constant_p(MIPS_TLB_NUM_PIDS))
 			curcpu()->ci_pmap_asid_max = MIPS_TLB_NUM_PIDS;
-		mips1_tlb_invalidate_all(mips_num_tlb_entries);
+		mips1_tlb_invalidate_all(opts->mips_num_tlb_entries);
 		mips1_vector_init();
 		mips_locoresw = mips1_locoresw;
 		break;
@@ -979,7 +953,7 @@ mips_vector_init(void)
 #if defined(MIPS3_5900)	/* XXX */
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
-		mips5900_tlb_invalidate_all(mips_num_tlb_entries);
+		mips5900_tlb_invalidate_all(opts->mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
 		r5900_vector_init();
 		mips_locoresw = mips5900_locoresw;
@@ -991,7 +965,7 @@ mips_vector_init(void)
 #endif
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
-		mips3_tlb_invalidate_all(mips_num_tlb_entries);
+		mips3_tlb_invalidate_all(opts->mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
 		mips3_vector_init();
 		mips_locoresw = mips3_locoresw;
@@ -1003,7 +977,7 @@ mips_vector_init(void)
 		mips3_tlb_probe();
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
-		mips32_tlb_invalidate_all(mips_num_tlb_entries);
+		mips32_tlb_invalidate_all(opts->mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
 		mips32_vector_init();
 		mips_locoresw = mips32_locoresw;
@@ -1014,7 +988,7 @@ mips_vector_init(void)
 		mips3_tlb_probe();
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
-		mips64_tlb_invalidate_all(mips_num_tlb_entries);
+		mips64_tlb_invalidate_all(opts->mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
 		mips64_vector_init();
 		mips_locoresw = mips64_locoresw;
@@ -1022,7 +996,7 @@ mips_vector_init(void)
 	}
 #endif
 	default:
-		printf("cpu_arch 0x%x: not supported\n", cpu_arch);
+		printf("cpu_arch 0x%x: not supported\n", opts->mips_cpu_arch);
 		cpu_reboot(RB_HALT, NULL);
 	}
 
@@ -1031,15 +1005,14 @@ mips_vector_init(void)
 	/*
 	 * Install power-saving idle routines.
 	 */
-	if ((mips_cpu_flags & CPU_MIPS_USE_WAIT) &&
-	    !(mips_cpu_flags & CPU_MIPS_NO_WAIT))
+	if ((opts->mips_cpu_flags & CPU_MIPS_USE_WAIT) &&
+	    !(opts->mips_cpu_flags & CPU_MIPS_NO_WAIT))
 		mips_locoresw.lsw_cpu_idle = mips_wait_idle;
 #endif /* (MIPS3 && !MIPS3_5900) || MIPS32 || MIPS64 */
 }
 
 void
-mips_set_wbflush(flush_fn)
-	void (*flush_fn)(void);
+mips_set_wbflush(void (*flush_fn)(void))
 {
 #undef wbflush
 	mips_locore_jumpvec.ljv_wbflush = flush_fn;
@@ -1050,14 +1023,15 @@ mips_set_wbflush(flush_fn)
 static void
 mips3_tlb_probe(void)
 {
+	struct mips_options * const opts = &mips_options;
 	if (!__builtin_constant_p(MIPS_TLB_NUM_PIDS))
 		curcpu()->ci_pmap_asid_max = MIPS_TLB_NUM_PIDS;
-	mips3_tlb_pg_mask = mips_cp0_tlb_page_mask_probe();
+	opts->mips3_tlb_pg_mask = mips_cp0_tlb_page_mask_probe();
 	if (CPUIS64BITS) {
-		mips3_tlb_vpn_mask = mips_cp0_tlb_entry_hi_probe();
-		mips3_tlb_vpn_mask <<= 2;
-		mips3_tlb_vpn_mask >>= 2;
-		mips3_tlb_pfn_mask = mips_cp0_tlb_entry_lo_probe();
+		opts->mips3_tlb_vpn_mask = mips_cp0_tlb_entry_hi_probe();
+		opts->mips3_tlb_vpn_mask <<= 2;
+		opts->mips3_tlb_vpn_mask >>= 2;
+		opts->mips3_tlb_pfn_mask = mips_cp0_tlb_entry_lo_probe();
 	}
 }
 #endif
@@ -1068,6 +1042,10 @@ mips3_tlb_probe(void)
 void
 cpu_identify(device_t dev)
 {
+	const struct mips_options * const opts = &mips_options;
+	const struct mips_cache_info * const mci = &mips_cache_info;
+	const mips_prid_t cpu_id = opts->mips_cpu_id;
+	const mips_prid_t fpu_id = opts->mips_fpu_id;
 	static const char * const waynames[] = {
 		"fully set-associative",	/* 0 */
 		"direct-mapped",		/* 1 */
@@ -1087,7 +1065,7 @@ cpu_identify(device_t dev)
 	const char *cpuname, *fpuname;
 	int i;
 
-	cpuname = mycpu->cpu_name;
+	cpuname = opts->mips_cpu->cpu_name;
 
 	fpuname = NULL;
 	for (i = 0; i < sizeof(fputab)/sizeof(fputab[0]); i++) {
@@ -1104,11 +1082,11 @@ cpu_identify(device_t dev)
 	if (MIPS_PRID_IMPL(cpu_id) == MIPS_RC64470)	/* FPU PRid is 0x21 */
 		fpuname = "built-in FPU";
 
-	if (mycpu->cpu_cid != 0) {
-		if (mycpu->cpu_cid <= ncidnames)
-			aprint_normal("%s ", cidnames[mycpu->cpu_cid]);
+	if (opts->mips_cpu->cpu_cid != 0) {
+		if (opts->mips_cpu->cpu_cid <= ncidnames)
+			aprint_normal("%s ", cidnames[opts->mips_cpu->cpu_cid]);
 		else {
-			aprint_normal("Unknown Company ID - 0x%x", mycpu->cpu_cid);
+			aprint_normal("Unknown Company ID - 0x%x", opts->mips_cpu->cpu_cid);
 			aprint_normal_dev(dev, "");
 		}
 	}
@@ -1126,7 +1104,7 @@ cpu_identify(device_t dev)
 		aprint_normal(" with %s", fpuname);
 	else
 		aprint_normal(" with unknown FPC type (0x%x)", fpu_id);
-	if (fpu_id != 0) {
+	if (opts->mips_fpu_id != 0) {
 		if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_PREHISTORIC)
 			aprint_normal(" Rev. %d.%d", MIPS_PRID_REV_MAJ(fpu_id),
 			    MIPS_PRID_REV_MIN(fpu_id));
@@ -1142,27 +1120,27 @@ cpu_identify(device_t dev)
 		    "dmesg lines.\n", device_xname(dev));
 	}
 
-	KASSERT(mips_picache_ways < nwaynames);
-	KASSERT(mips_pdcache_ways < nwaynames);
-	KASSERT(mips_sicache_ways < nwaynames);
-	KASSERT(mips_sdcache_ways < nwaynames);
+	KASSERT(mci->mci_picache_ways < nwaynames);
+	KASSERT(mci->mci_pdcache_ways < nwaynames);
+	KASSERT(mci->mci_sicache_ways < nwaynames);
+	KASSERT(mci->mci_sdcache_ways < nwaynames);
 
-	switch (cpu_arch) {
+	switch (opts->mips_cpu_arch) {
 #if defined(MIPS1)
 	case CPU_ARCH_MIPS1:
-		if (mips_picache_size)
+		if (mci->mci_picache_size)
 			aprint_normal_dev(dev, "%dKB/%dB %s Instruction cache, "
-			    "%d TLB entries\n", mips_picache_size / 1024,
-			    mips_picache_line_size, waynames[mips_picache_ways],
+			    "%d TLB entries\n", mci->mci_picache_size / 1024,
+			    mci->mci_picache_line_size, waynames[mci->mci_picache_ways],
 			    mips_num_tlb_entries);
 		else
 			aprint_normal_dev(dev, "%d TLB entries\n", 
 			    mips_num_tlb_entries);
-		if (mips_pdcache_size)
+		if (mci->mci_pdcache_size)
 			aprint_normal_dev(dev, "%dKB/%dB %s %s Data cache\n",
-			    mips_pdcache_size / 1024, mips_pdcache_line_size,
-			    waynames[mips_pdcache_ways],
-			    wtnames[mips_pdcache_write_through]);
+			    mci->mci_pdcache_size / 1024, mci->mci_pdcache_line_size,
+			    waynames[mci->mci_pdcache_ways],
+			    wtnames[mci->mci_pdcache_write_through]);
 		break;
 #endif /* MIPS1 */
 #if defined(MIPS3) || defined(MIPS32) || defined(MIPS64)
@@ -1172,21 +1150,21 @@ cpu_identify(device_t dev)
 	case CPU_ARCH_MIPS64: {
 		const char *sufx = "KMGTPE";
 		uint32_t pg_mask;
-		aprint_normal_dev(dev, "%d TLB entries", mips_num_tlb_entries);
+		aprint_normal_dev(dev, "%d TLB entries", opts->mips_num_tlb_entries);
 #if !defined(__mips_o32)
 		if (CPUIS64BITS) {
 			int64_t pfn_mask;
-			i = ffs(~(mips3_tlb_vpn_mask >> 31)) + 30;
+			i = ffs(~(opts->mips3_tlb_vpn_mask >> 31)) + 30;
 			aprint_normal(", %d%cB (%d-bit) VAs",
 			    1 << (i % 10), sufx[(i / 10) - 1], i);
-			for (i = 64, pfn_mask = mips3_tlb_pfn_mask << 6;
+			for (i = 64, pfn_mask = opts->mips3_tlb_pfn_mask << 6;
 			     pfn_mask > 0; i--, pfn_mask <<= 1)
 				;
 			aprint_normal(", %d%cB (%d-bit) PAs",
 			      1 << (i % 10), sufx[(i / 10) - 1], i);
 		}
 #endif
-		for (i = 4, pg_mask = mips3_tlb_pg_mask >> 13;
+		for (i = 4, pg_mask = opts->mips3_tlb_pg_mask >> 13;
 		     pg_mask != 0; ) {
 			if ((pg_mask & 3) != 3)
 				break;
@@ -1198,24 +1176,24 @@ cpu_identify(device_t dev)
 			}
 		}
 		aprint_normal(", %d%cB max page size\n", i, sufx[0]);
-		if (mips_picache_size)
+		if (mci->mci_picache_size)
 			aprint_normal_dev(dev,
 			    "%dKB/%dB %s L1 Instruction cache\n",
-			    mips_picache_size / 1024,
-			    mips_picache_line_size, waynames[mips_picache_ways]);
-		if (mips_pdcache_size)
+			    mci->mci_picache_size / 1024,
+			    mci->mci_picache_line_size, waynames[mci->mci_picache_ways]);
+		if (mci->mci_pdcache_size)
 			aprint_normal_dev(dev,
 			    "%dKB/%dB %s %s L1 Data cache\n",
-			    mips_pdcache_size / 1024, mips_pdcache_line_size,
-			    waynames[mips_pdcache_ways],
-			    wtnames[mips_pdcache_write_through]);
-		if (mips_sdcache_line_size)
+			    mci->mci_pdcache_size / 1024, mci->mci_pdcache_line_size,
+			    waynames[mci->mci_pdcache_ways],
+			    wtnames[mci->mci_pdcache_write_through]);
+		if (mci->mci_sdcache_line_size)
 			aprint_normal_dev(dev,
 			    "%dKB/%dB %s %s L2 %s cache\n",
-			    mips_sdcache_size / 1024, mips_sdcache_line_size,
-			    waynames[mips_sdcache_ways],
-			    wtnames[mips_sdcache_write_through],
-			    mips_scache_unified ? "Unified" : "Data");
+			    mci->mci_sdcache_size / 1024, mci->mci_sdcache_line_size,
+			    waynames[mci->mci_sdcache_ways],
+			    wtnames[mci->mci_sdcache_write_through],
+			    mci->mci_scache_unified ? "Unified" : "Data");
 		break;
 	}
 #endif /* MIPS3 */
@@ -2303,9 +2281,10 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 void
 cpu_idle(void)
 {
-	void (*mach_idle)(void) = mips_locoresw.lsw_cpu_idle;
+	void (*const mach_idle)(void) = mips_locoresw.lsw_cpu_idle;
+	struct cpu_info * const ci = curcpu();
 
-	while (!curcpu()->ci_want_resched)
+	while (!ci->ci_want_resched)
 		(*mach_idle)();
 }
 
@@ -2315,3 +2294,12 @@ cpu_intr_p(void)
 
 	return curcpu()->ci_idepth != 0;
 }
+
+#ifdef MULTIPROCESSOR
+void
+cpu_boot_secondary_processors(void)
+{
+
+	(*mips_locoresw.lsw_boot_secondary_processors)();
+}
+#endif

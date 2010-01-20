@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.19 2010/01/17 00:20:14 cliff Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.20 2010/01/20 06:58:36 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2305,12 +2305,12 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 END(MIPSX(tlb_invalidate_addr))
 
 /*
- * void mipsN_tlb_invalidate_all_nonkernel(size_t sizeofTLB)
+ * void mipsN_tlb_invalidate_asids(size_t sizeofTLB)
  *
  * Invalidate TLB entries belong to per process user spaces while
  * leaving entries for kernel space marked global intact.
  */
-LEAF_NOPROFILE(MIPSX(tlb_invalidate_all_nonkernel))
+LEAF_NOPROFILE(MIPSX(tlb_invalidate_asids))
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 	COP0_SYNC
@@ -2365,7 +2365,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_all_nonkernel))
 	j	ra				# new ASID will be set soon
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	COP0_SYNC				# XXXX - not executed!!
-END(MIPSX(tlb_invalidate_all_nonkernel))
+END(MIPSX(tlb_invalidate_asids))
 
 /*
  * void mipsN_tlb_invalidate_all(size_t sizeofTLB)
@@ -2445,6 +2445,7 @@ _C_LABEL(MIPSX(locoresw)):
 	PTR_WORD _C_LABEL(MIPSX(lwp_trampoline))
 	PTR_WORD _C_LABEL(nullop)
 	PTR_WORD _C_LABEL(MIPSX(setfunc_trampoline))
+	PTR_WORD _C_LABEL(nullop)
 
 MIPSX(excpt_sw):
 	####

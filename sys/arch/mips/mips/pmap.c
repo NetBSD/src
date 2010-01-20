@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.10 2010/01/15 06:46:59 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.11 2010/01/20 06:58:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.10 2010/01/15 06:46:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.11 2010/01/20 06:58:36 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -122,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.10 2010/01/15 06:46:59 matt Exp $"
 #include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/pool.h>
+#include <sys/atomic.h>
 #include <sys/mutex.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
@@ -199,15 +200,17 @@ CTASSERT(PMAP_ASID_RESERVED == 0);
 /*
  * Initialize the kernel pmap.
  */
-struct pmap kernel_pmap_store = {
-	.pm_count = 1,
-	.pm_segtab = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
-};
 #ifdef MULTIPROCESSOR
 #define	PMAP_SIZE	offsetof(struct pmap, pm_pai[MAXCPUS])
 #else
 #define	PMAP_SIZE	sizeof(struct pmap)
 #endif
+struct pmap_kernel kernel_pmap_store = {
+	.kernel_pmap = {
+		.pm_count = 1,
+		.pm_segtab = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
+	},
+};
 
 paddr_t mips_avail_start;	/* PA of first available physical page */
 paddr_t mips_avail_end;		/* PA of last available physical page */
@@ -241,7 +244,7 @@ bool		pmap_initialized = false;
 
 /* Forward function declarations */
 void pmap_remove_pv(pmap_t, vaddr_t, struct vm_page *);
-uint32_t pmap_asid_alloc(pmap_t pmap);
+uint32_t pmap_tlb_asid_alloc(pmap_t pmap, struct cpu_info *ci);
 void pmap_enter_pv(pmap_t, vaddr_t, struct vm_page *, u_int *);
 pt_entry_t *pmap_pte(pmap_t, vaddr_t);
 
@@ -261,6 +264,38 @@ struct pool_allocator pmap_pv_page_allocator = {
 /*
  * Misc. functions.
  */
+
+static inline bool
+pmap_clear_page_attributes(struct vm_page *pg, u_int attributes)
+{
+	volatile u_int * const attrp = &pg->mdpage.pvh_attrs;
+#ifdef MULTIPROCESSOR
+	for (;;) {
+		u_int old_attr = *attrp;
+		if ((old_attr & attributes) == 0)
+			return false;
+		u_int new_attr = old_attr & ~attributes;
+		if (old_attr == atomic_cas_uint(attrp, old_attr, new_attr))
+			return true;
+	}
+#else
+	u_int old_attr = *attrp;
+	if ((old_attr & attributes) == 0)
+		return false;
+	*attrp &= ~attributes;
+	return true;
+#endif
+}
+
+static inline void
+pmap_set_page_attributes(struct vm_page *pg, u_int attributes)
+{
+#ifdef MULTIPROCESSOR
+	atomic_or_uint(&pg->mdpage.pvh_attrs, attributes);
+#else
+	pg->mdpage.pvh_attrs |= attributes;
+#endif
+}
 
 #if defined(MIPS3_PLUS)	/* XXX mmu XXX */
 void mips_dump_segtab(struct proc *);
@@ -643,7 +678,7 @@ pmap_activate(struct lwp *l)
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	unsigned int asid;
 
-	asid = pmap_asid_alloc(pmap);
+	asid = pmap_tlb_asid_alloc(pmap, l->l_cpu);
 	if (l == curlwp) {
 		pmap_segtab_activate(l);
 		tlb_set_asid(asid);
@@ -658,6 +693,17 @@ pmap_deactivate(struct lwp *l)
 {
 
 	/* Nothing to do. */
+}
+
+void
+pmap_update(struct pmap *pmap)
+{
+#if 0
+	__asm __volatile(
+		"mtc0\t$ra,$%0; nop; eret"
+	    :
+	    : "n"(MIPS_COP_0_ERROR_PC));
+#endif
 }
 
 /*
@@ -846,7 +892,7 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *pte,
 		 */
 		if (needupdate)
 			tlb_update(sva | asid, entry);
-#ifdef MULTIPROCESSOR
+#ifdef MULTIPROCESSORX
 #error TLB shootdown needed
 #endif
 	}
@@ -944,7 +990,8 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 		 * shouldn't need to do this for physical d$?
 		 * should need to do this for virtual i$ if prot == EXEC?
 		 */
-		if (p == curlwp->l_proc && mips_pdcache_way_mask < PAGE_SIZE)
+		if (p == curlwp->l_proc
+		    && mips_cache_info.mci_pdcache_way_mask < PAGE_SIZE)
 		    /* XXX check icache mask too? */
 			mips_icache_sync_range(va, len);
 		else
@@ -1103,13 +1150,11 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	pg = PHYS_TO_VM_PAGE(pa);
 
 	if (pg) {
-		int *attrs = &pg->mdpage.pvh_attrs;
-
 		/* Set page referenced/modified status based on flags */
 		if (flags & VM_PROT_WRITE)
-			*attrs |= PV_MODIFIED | PV_REFERENCED;
+			pmap_set_page_attributes(pg, PV_MODIFIED|PV_REFERENCED);
 		else if (flags & VM_PROT_ALL)
-			*attrs |= PV_REFERENCED;
+			pmap_set_page_attributes(pg, PV_REFERENCED);
 		if (!(prot & VM_PROT_WRITE))
 			/*
 			 * If page is not yet referenced, we could emulate this
@@ -1122,14 +1167,14 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		else {
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
 			if (cached == 0) {
-				if (*attrs & PV_MODIFIED) {
+				if (pg->mdpage.pvh_attrs & PV_MODIFIED) {
 					npte = mips_pg_rwncpage_bit();
 				} else {
 					npte = mips_pg_cwncpage_bit();
 				}
 			} else {
 #endif
-				if (*attrs & PV_MODIFIED) {
+				if (pg->mdpage.pvh_attrs & PV_MODIFIED) {
 					npte = mips_pg_rwpage_bit();
 				} else {
 					npte = mips_pg_cwpage_bit();
@@ -1543,7 +1588,7 @@ pmap_zero_page(paddr_t phys)
 		printf("pmap_zero_page(%#"PRIxPADDR") nonphys\n", phys);
 #endif
 #ifdef _LP64
-	KASSERT(mips3_xkphys_cached);
+	KASSERT(mips_options.mips3_xkphys_cached);
 	va = MIPS_PHYS_TO_XKPHYS_CACHED(phys);
 #else
 	va = MIPS_PHYS_TO_KSEG0(phys);
@@ -1551,7 +1596,7 @@ pmap_zero_page(paddr_t phys)
 
 #if defined(MIPS3_PLUS)	/* XXX mmu XXX */
 	pg = PHYS_TO_VM_PAGE(phys);
-	if (mips_cache_virtual_alias) {
+	if (mips_cache_info.mci_cache_virtual_alias) {
 		pv = pg->mdpage.pvh_list;
 		if ((pv->pv_flags & PV_UNCACHED) == 0 &&
 		    mips_cache_indexof(pv->pv_va) != mips_cache_indexof(va))
@@ -1588,7 +1633,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 		printf("pmap_copy_page(%#"PRIxPADDR", %#"PRIxPADDR")\n", src, dst);
 #endif
 #ifdef _LP64
-	KASSERT(mips3_xkphys_cached);
+	KASSERT(mips_options.mips3_xkphys_cached);
 	src_va = MIPS_PHYS_TO_XKPHYS_CACHED(src);
 	dst_va = MIPS_PHYS_TO_XKPHYS_CACHED(dst);
 #else
@@ -1616,7 +1661,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	 * It would probably be better to map the destination as a
 	 * write-through no allocate to reduce cache thrash.
 	 */
-	if (mips_cache_virtual_alias) {
+	if (mips_cache_info.mci_cache_virtual_alias) {
 		/*XXX FIXME Not very sophisticated */
 		mips_flushcache_allpvh(src);
 #if 0
@@ -1639,7 +1684,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	 *
 	 * XXXJRT -- This is totally disgusting.
 	 */
-	if (mips_cache_virtual_alias) {
+	if (mips_cache_info.mci_cache_virtual_alias) {
 		mips_dcache_wbinv_range(src_va, PAGE_SIZE);
 		mips_dcache_wbinv_range(dst_va, PAGE_SIZE);
 	}
@@ -1654,18 +1699,12 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 bool
 pmap_clear_reference(struct vm_page *pg)
 {
-	int *attrp;
-	bool rv;
-
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_reference(%#"PRIxPADDR")\n",
 		    VM_PAGE_TO_PHYS(pg));
 #endif
-	attrp = &pg->mdpage.pvh_attrs;
-	rv = *attrp & PV_REFERENCED;
-	*attrp &= ~PV_REFERENCED;
-	return rv;
+	return pmap_clear_page_attributes(pg, PV_REFERENCED);
 }
 
 /*
@@ -1688,19 +1727,13 @@ bool
 pmap_clear_modify(struct vm_page *pg)
 {
 	struct pv_entry *pv;
-	int *attrp;
-	bool rv;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_modify(%#"PRIxPADDR")\n", VM_PAGE_TO_PHYS(pg));
 #endif
-	attrp = &pg->mdpage.pvh_attrs;
-	rv = *attrp & PV_MODIFIED;
-	*attrp &= ~PV_MODIFIED;
-	if (!rv) {
-		return rv;
-	}
+	if (!pmap_clear_page_attributes(pg, PV_MODIFIED))
+		return false;
 	pv = pg->mdpage.pvh_list;
 	if (pv->pv_pmap == NULL) {
 		return true;
@@ -1731,8 +1764,10 @@ pmap_clear_modify(struct vm_page *pg)
 		if (pte->pt_entry == pt_entry) {
 			continue;
 		}
-		if (MIPS_HAS_R4K_MMU) {
-#ifdef MULTIPROCESSOR
+		if (MIPS_HAS_R4K_MMU &&
+		    (1 || mips_cache_info.mci_cache_virtual_alias
+		     || (mips_options.mips_cpu_flags & CPU_MIPS_D_CACHE_COHERENT) == 0)) {
+#ifdef MULTIPROCESSORX
 #error fix me
 #endif
 			if (PMAP_IS_ACTIVE(pmap)) {
@@ -1770,34 +1805,40 @@ pmap_is_modified(struct vm_page *pg)
 void
 pmap_set_modified(paddr_t pa)
 {
-	struct vm_page *pg;
-
-	pg = PHYS_TO_VM_PAGE(pa);
-	pg->mdpage.pvh_attrs |= PV_MODIFIED | PV_REFERENCED;
+	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
+	pmap_set_page_attributes(pg, PV_MODIFIED | PV_REFERENCED);
 }
 
 /******************** misc. functions ********************/
 
 /*
- * Allocate TLB address space tag (called ASID or TLBPID) and return it.
- * It takes almost as much or more time to search the TLB for a
- * specific ASID and flush those entries as it does to flush the entire TLB.
+ * Allocate a TLB address space tag (called ASID or TLBPID) and return it.
+ * Each cpu has its own ASID space which might be a subset of the entire
+ * ASID available (A core might have 256 ASIDs shared among N hw-threads).
+ * To avoid dealing with locking, we just partition the ASIDs among the
+ * hw-threads so each has its own independent space.
+ *
+ * Since all hw-threads share the TLB, we can't invalidate all non-global TLB
+ * entries.  Instead we need to make sure they match the proper range of ASIDs
+ * reserved for that CPU.
+ *
  * Therefore, when we allocate a new ASID, we just take the next number. When
- * we run out of numbers, we flush the TLB, increment the generation count
- * and start over. ASID zero is reserved for kernel use.
+ * we run out of numbers, we flush the ASIDs the TLB, increment the generation
+ * count and start over. The low ASID of the range is reserved for kernel use
+ * (even though we only use 0 for that purpose).
  */
 uint32_t
-pmap_asid_alloc(pmap_t pmap)
+pmap_tlb_asid_alloc(pmap_t pmap, struct cpu_info *ci)
 {
-	struct cpu_info * const ci = curcpu();
 	struct pmap_asid_info * const pai = PMAP_PAI(pmap, ci);
 
-	if (pai->pai_asid == PMAP_ASID_RESERVED ||
-	    pai->pai_asid_generation != ci->ci_pmap_asid_generation) {
+	if (!PMAP_PAI_ASIDVALID_P(pai, ci)) {
 		if (ci->ci_pmap_asid_next == ci->ci_pmap_asid_max) {
-			tlb_invalidate_all_nonkernel();
+			tlb_invalidate_asids(ci->ci_pmap_asid_reserved + 1,
+			    ci->ci_pmap_asid_max);
 			ci->ci_pmap_asid_generation++; /* ok to wrap to 0 */
-			ci->ci_pmap_asid_next = 1;	/* 0 means invalid */
+			ci->ci_pmap_asid_next =		/* 0 means invalid */
+			    ci->ci_pmap_asid_reserved + 1;
 		}
 		pai->pai_asid = ci->ci_pmap_asid_next++;
 		pai->pai_asid_generation = ci->ci_pmap_asid_generation;
@@ -1805,7 +1846,7 @@ pmap_asid_alloc(pmap_t pmap)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_TLBPID)) {
-		printf("pmap_asid_alloc: curlwp %d.%d '%s' ",
+		printf("pmap_tlb_asid_alloc: curlwp %d.%d '%s' ",
 		    curlwp->l_proc->p_pid, curlwp->l_lid,
 		    curlwp->l_proc->p_comm);
 		printf("segtab %p asid %d\n", pmap->pm_segtab, pai->pai_asid);
@@ -1852,7 +1893,7 @@ again:
 		pv->pv_next = NULL;
 	} else {
 #if defined(MIPS3_PLUS) /* XXX mmu XXX */
-		if (mips_cache_virtual_alias) {
+		if (mips_cache_info.mci_cache_virtual_alias) {
 			/*
 			 * There is at least one other VA mapping this page.
 			 * Check if they are cache index compatible.
@@ -2061,13 +2102,13 @@ pmap_pv_page_alloc(struct pool *pp, int flags)
 
 	const paddr_t pa = VM_PAGE_TO_PHYS(pg);
 #ifdef _LP64
-	KASSERT(mips3_xkphys_cached);
+	KASSERT(mips_options.mips3_xkphys_cached);
 	const vaddr_t va = MIPS_PHYS_TO_XKPHYS_CACHED(pa);
 #else
 	const vaddr_t va = MIPS_PHYS_TO_KSEG0(pa);
 #endif
 #if defined(MIPS3_PLUS)
-	if (mips_cache_virtual_alias) {
+	if (mips_cache_info.mci_cache_virtual_alias) {
 		pv_entry_t pv = pg->mdpage.pvh_list;
 		if ((pv->pv_flags & PV_UNCACHED) == 0 &&
 		    mips_cache_indexof(pv->pv_va) != mips_cache_indexof(va))
@@ -2088,7 +2129,7 @@ pmap_pv_page_free(struct pool *pp, void *v)
 	paddr_t phys;
 
 #ifdef MIPS3_PLUS
-	if (mips_cache_virtual_alias)
+	if (mips_cache_info.mci_cache_virtual_alias)
 		mips_dcache_inv_range((vaddr_t)v, PAGE_SIZE);
 #endif
 #ifdef _LP64
@@ -2120,6 +2161,7 @@ pmap_pte(pmap_t pmap, vaddr_t va)
 void
 pmap_prefer(vaddr_t foff, vaddr_t *vap, int td)
 {
+	const struct mips_cache_info * const mci = &mips_cache_info;
 	vaddr_t	va;
 	vsize_t d;
 
@@ -2127,9 +2169,9 @@ pmap_prefer(vaddr_t foff, vaddr_t *vap, int td)
 		va = *vap;
 
 		d = foff - va;
-		d &= mips_cache_prefer_mask;
+		d &= mci->mci_cache_prefer_mask;
 		if (td && d)
-			d = -((-d) & mips_cache_prefer_mask);
+			d = -((-d) & mci->mci_cache_prefer_mask);
 		*vap = va + d;
 	}
 }
@@ -2161,7 +2203,7 @@ mips_pmap_map_poolpage(paddr_t pa)
 #endif
 
 #ifdef _LP64
-	KASSERT(mips3_xkphys_cached);
+	KASSERT(mips_options.mips3_xkphys_cached);
 	va = MIPS_PHYS_TO_XKPHYS_CACHED(pa);
 #else
 	if (pa > MIPS_PHYS_MASK)
@@ -2171,7 +2213,7 @@ mips_pmap_map_poolpage(paddr_t pa)
 	va = MIPS_PHYS_TO_KSEG0(pa);
 #endif
 #if defined(MIPS3_PLUS)
-	if (mips_cache_virtual_alias) {
+	if (mips_cache_info.mci_cache_virtual_alias) {
 		pg = PHYS_TO_VM_PAGE(pa);
 		pv = pg->mdpage.pvh_list;
 		if ((pv->pv_flags & PV_UNCACHED) == 0 &&
@@ -2194,7 +2236,7 @@ mips_pmap_unmap_poolpage(vaddr_t va)
 	pa = MIPS_KSEG0_TO_PHYS(va);
 #endif
 #if defined(MIPS3_PLUS)
-	if (mips_cache_virtual_alias) {
+	if (mips_cache_info.mci_cache_virtual_alias) {
 		mips_dcache_inv_range(va, PAGE_SIZE);
 	}
 #endif
