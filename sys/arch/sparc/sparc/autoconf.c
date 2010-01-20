@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.237 2009/11/27 03:23:14 rmind Exp $ */
+/*	$NetBSD: autoconf.c,v 1.238 2010/01/20 22:54:22 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.237 2009/11/27 03:23:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.238 2010/01/20 22:54:22 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.237 2009/11/27 03:23:14 rmind Exp $")
 #include <sys/ksyms.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #include <dev/cons.h>
 
@@ -1487,6 +1488,7 @@ static int bus_class(struct device *);
 static const char *bus_compatible(const char *);
 static int instance_match(struct device *, void *, struct bootpath *);
 static void nail_bootdev(struct device *, struct bootpath *);
+static void set_network_props(struct device *, void *);
 
 static struct {
 	const char	*name;
@@ -1565,6 +1567,46 @@ bus_class(struct device *dev)
 		class = BUSCLASS_SBUS;
 
 	return (class);
+}
+
+static void
+set_network_props(struct device *dev, void *aux)
+{
+	struct mainbus_attach_args *ma;
+	struct sbus_attach_args *sa;
+	struct iommu_attach_args *iom;
+	struct pci_attach_args *pa;
+	uint8_t eaddr[ETHER_ADDR_LEN];
+	prop_dictionary_t dict;
+	prop_data_t blob;
+	int ofnode;
+
+	ofnode = 0;
+	switch (bus_class(device_parent(dev))) {
+	case BUSCLASS_MAINBUS:
+		ma = aux;
+		ofnode = ma->ma_node;
+		break;
+	case BUSCLASS_SBUS:
+		sa = aux;
+		ofnode = sa->sa_node;
+		break;
+	case BUSCLASS_IOMMU:
+		iom = aux;
+		ofnode = iom->iom_node;
+		break;
+	case BUSCLASS_PCI:
+		pa = aux;
+		ofnode = PCITAG_NODE(pa->pa_tag);
+		break;
+	}
+	if (!ofnode) return;
+
+	prom_getether(ofnode, eaddr);
+	dict = device_properties(dev);
+	blob = prop_data_create_data(eaddr, ETHER_ADDR_LEN);
+	prop_dictionary_set(dict, "mac-address", blob);
+	prop_object_release(blob);
 }
 
 int
@@ -1742,6 +1784,9 @@ device_register(struct device *dev, void *aux)
 	} else if (device_is_a(dev, "le") ||
 		   device_is_a(dev, "hme") ||
 		   device_is_a(dev, "be")) {
+
+		set_network_props(dev, aux);
+
 		/*
 		 * LANCE, Happy Meal, or BigMac ethernet device
 		 */
