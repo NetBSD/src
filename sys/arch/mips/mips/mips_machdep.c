@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.28 2010/01/20 09:04:35 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.29 2010/01/20 22:15:27 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.28 2010/01/20 09:04:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.29 2010/01/20 22:15:27 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -443,7 +443,7 @@ static const struct pridtab cputab[] = {
 
 	{ MIPS_PRID_CID_RMI, MIPS_XLS616, -1,	-1, -1, 0,
 	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR |
-	  CPU_MIPS_HAVE_MxCR,
+	  CPU_MIPS_I_D_CACHE_COHERENT | CPU_MIPS_HAVE_MxCR,
 	  MIPS_CP0FL_USE |MIPS_CP0FL_EIRR | MIPS_CP0FL_EIMR | MIPS_CP0FL_EBASE |
 	  MIPS_CP0FL_CONFIGn(0) | MIPS_CP0FL_CONFIGn(1) | MIPS_CP0FL_CONFIGn(7),
 	  CIDFL_RMI_TYPE_XLS|MIPS_CIDFL_RMI_CPUS(4,4)|MIPS_CIDFL_RMI_L2(1MB),
@@ -451,7 +451,7 @@ static const struct pridtab cputab[] = {
 
 	{ MIPS_PRID_CID_RMI, MIPS_XLS416, -1,	-1, -1, 0,
 	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR |
-	  CPU_MIPS_HAVE_MxCR,
+	  CPU_MIPS_I_D_CACHE_COHERENT | CPU_MIPS_HAVE_MxCR,
 	  MIPS_CP0FL_USE |MIPS_CP0FL_EIRR | MIPS_CP0FL_EIMR | MIPS_CP0FL_EBASE |
 	  MIPS_CP0FL_CONFIGn(0) | MIPS_CP0FL_CONFIGn(1) | MIPS_CP0FL_CONFIGn(7),
 	  CIDFL_RMI_TYPE_XLS|MIPS_CIDFL_RMI_CPUS(4,4)|MIPS_CIDFL_RMI_L2(1MB),
@@ -459,7 +459,7 @@ static const struct pridtab cputab[] = {
 
 	{ MIPS_PRID_CID_RMI, MIPS_XLS408, -1,	-1, -1, 0,
 	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR |
-	  CPU_MIPS_HAVE_MxCR,
+	  CPU_MIPS_I_D_CACHE_COHERENT | CPU_MIPS_HAVE_MxCR,
 	  MIPS_CP0FL_USE |MIPS_CP0FL_EIRR | MIPS_CP0FL_EIMR | MIPS_CP0FL_EBASE |
 	  MIPS_CP0FL_CONFIGn(0) | MIPS_CP0FL_CONFIGn(1) | MIPS_CP0FL_CONFIGn(7),
 	  CIDFL_RMI_TYPE_XLS|MIPS_CIDFL_RMI_CPUS(2,4)|MIPS_CIDFL_RMI_L2(1MB),
@@ -467,19 +467,19 @@ static const struct pridtab cputab[] = {
 
 	{ MIPS_PRID_CID_RMI, MIPS_XLS408LITE, -1, -1, -1, 0,
 	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR |
-	  CPU_MIPS_HAVE_MxCR,
+	  CPU_MIPS_I_D_CACHE_COHERENT | CPU_MIPS_HAVE_MxCR,
 	  MIPS_CP0FL_USE |MIPS_CP0FL_EIRR | MIPS_CP0FL_EIMR | MIPS_CP0FL_EBASE |
 	  MIPS_CP0FL_CONFIGn(0) | MIPS_CP0FL_CONFIGn(1) | MIPS_CP0FL_CONFIGn(7),
 	  CIDFL_RMI_TYPE_XLS|MIPS_CIDFL_RMI_CPUS(2,4)|MIPS_CIDFL_RMI_L2(1MB),
-	  "XLS408LITE"		},
+	  "XLS408lite"		},
 
 	{ MIPS_PRID_CID_RMI, MIPS_XLS404LITE, -1, -1, -1, 0,
 	  MIPS64_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_NO_LLADDR |
-	  CPU_MIPS_HAVE_MxCR,
+	  CPU_MIPS_I_D_CACHE_COHERENT | CPU_MIPS_HAVE_MxCR,
 	  MIPS_CP0FL_USE |MIPS_CP0FL_EIRR | MIPS_CP0FL_EIMR | MIPS_CP0FL_EBASE |
 	  MIPS_CP0FL_CONFIGn(0) | MIPS_CP0FL_CONFIGn(1) | MIPS_CP0FL_CONFIGn(7),
 	  CIDFL_RMI_TYPE_XLS|MIPS_CIDFL_RMI_CPUS(1,4)|MIPS_CIDFL_RMI_L2(512KB),
-	  "XLS404LITE"		},
+	  "XLS404lite"		},
 
 	{ 0, 0, 0,				0, 0, 0,
 	  0, 0, 0,				NULL			}
@@ -1178,22 +1178,24 @@ cpu_identify(device_t dev)
 		aprint_normal(", %d%cB max page size\n", i, sufx[0]);
 		if (mci->mci_picache_size)
 			aprint_normal_dev(dev,
-			    "%dKB/%dB %s L1 Instruction cache\n",
+			    "%dKB/%dB %s L1 instruction cache\n",
 			    mci->mci_picache_size / 1024,
 			    mci->mci_picache_line_size, waynames[mci->mci_picache_ways]);
 		if (mci->mci_pdcache_size)
 			aprint_normal_dev(dev,
-			    "%dKB/%dB %s %s L1 Data cache\n",
+			    "%dKB/%dB %s %s %sL1 data cache\n",
 			    mci->mci_pdcache_size / 1024, mci->mci_pdcache_line_size,
 			    waynames[mci->mci_pdcache_ways],
-			    wtnames[mci->mci_pdcache_write_through]);
+			    wtnames[mci->mci_pdcache_write_through],
+			    ((opts->mips_cpu_flags & CPU_MIPS_D_CACHE_COHERENT)
+				? "coherent " : ""));
 		if (mci->mci_sdcache_line_size)
 			aprint_normal_dev(dev,
 			    "%dKB/%dB %s %s L2 %s cache\n",
 			    mci->mci_sdcache_size / 1024, mci->mci_sdcache_line_size,
 			    waynames[mci->mci_sdcache_ways],
 			    wtnames[mci->mci_sdcache_write_through],
-			    mci->mci_scache_unified ? "Unified" : "Data");
+			    mci->mci_scache_unified ? "unified" : "data");
 		break;
 	}
 #endif /* MIPS3 */
