@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.41 2010/01/18 18:52:24 bouyer Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.42 2010/01/20 05:36:59 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -961,4 +961,10 @@ sys/kern/kern_softint.c				1.30
 	SOFTINT_MPSAFE flag.  Keeping it held for MP-safe cases break the
 	lock order assumptions.  Per discussion with <martin>.
 	[rmind, ticket #1241]
+
+sys/lib/libkern/arc4random.c			1.21
+
+	Keep arc4_i and arc4_j synchronised after a rekeying. This
+	prevents accidentally ending up in a short ARC4 cycle.
+	[joerg, ticket #1253]
 
