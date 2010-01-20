@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.2 2010/01/20 09:04:35 matt Exp $	*/
+/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.3 2010/01/20 20:48:12 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,27 +38,31 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.2 2010/01/20 09:04:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.3 2010/01/20 20:48:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+#include <mips/rmi/rmixlvar.h>
 #include <mips/rmi/rmixl_cpunodevar.h>
 #include <mips/rmi/rmixl_cpucorevar.h>
 
-static int	cpucore_match(device_t, cfdata_t, void *);
-static void	cpucore_attach(device_t, device_t, void *);
-static int	cpucore_print(void *, const char *);
+static int	cpucore_rmixl_match(device_t, cfdata_t, void *);
+static void	cpucore_rmixl_attach(device_t, device_t, void *);
+static int	cpucore_rmixl_print(void *, const char *);
 
-CFATTACH_DECL_NEW(cpucore, sizeof(struct cpucore_softc),
-	cpucore_match, cpucore_attach, NULL, NULL);
+CFATTACH_DECL_NEW(cpucore_rmixl, sizeof(struct cpucore_softc),
+	cpucore_rmixl_match, cpucore_rmixl_attach, NULL, NULL);
 
 static int
-cpucore_match(device_t parent, cfdata_t cf, void *aux)
+cpucore_rmixl_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct cpunode_attach_args *na = aux;
 	int core = cf->cf_loc[CPUNODECF_CORE];
+
+	if (!cpu_rmixl(mips_options.mips_cpu))
+		return 0;
 
 	if (strncmp(na->na_name, cf->cf_name, strlen(cf->cf_name)) == 0
 #ifndef MULTIPROCESSOR
@@ -71,7 +75,7 @@ cpucore_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 static void
-cpucore_attach(device_t parent, device_t self, void *aux)
+cpucore_rmixl_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpucore_softc * const sc = device_private(self);
 	struct cpunode_attach_args *na = aux;
@@ -102,12 +106,12 @@ cpucore_attach(device_t parent, device_t self, void *aux)
 		ca.ca_name = "cpu";
 		ca.ca_thread = i;
 		ca.ca_core = sc->sc_core;
-		config_found(self, &ca, cpucore_print);
+		config_found(self, &ca, cpucore_rmixl_print);
 	}
 }
 
 static int
-cpucore_print(void *aux, const char *pnp)
+cpucore_rmixl_print(void *aux, const char *pnp)
 {
 	struct cpucore_attach_args *ca = aux;
 
