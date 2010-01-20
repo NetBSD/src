@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.71 2010/01/08 19:56:51 dyoung Exp $	*/
+/*	$NetBSD: azalia.c,v 1.72 2010/01/20 09:05:12 tonnerre Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.71 2010/01/08 19:56:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.72 2010/01/20 09:05:12 tonnerre Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -2238,7 +2238,7 @@ azalia_query_devinfo(void *v, mixer_devinfo_t *mdev)
 
 	az = v;
 	co = &az->codecs[az->codecno];
-	if (mdev->index >= co->nmixers)
+	if (mdev->index < 0 || mdev->index >= co->nmixers)
 		return ENXIO;
 	*mdev = co->mixers[mdev->index].devinfo;
 	return 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.18 2010/01/08 19:56:52 dyoung Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.19 2010/01/20 09:05:12 tonnerre Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.18 2010/01/08 19:56:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.19 2010/01/20 09:05:12 tonnerre Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3500,7 +3500,7 @@ hdaudio_afg_query_devinfo(void *opaque, mixer_devinfo_t *di)
 	struct hdaudio_audiodev *ad = opaque;
 	struct hdaudio_afg_softc *sc = ad->ad_sc;
 
-	if (di->index >= sc->sc_nmixers)
+	if (di->index < 0 || di->index >= sc->sc_nmixers)
 		return ENXIO;
 
 	*di = sc->sc_mixers[di->index].mx_di;
