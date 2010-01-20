@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.2 2009/06/30 02:44:52 agc Exp $ */
+/* $NetBSD: disk.c,v 1.3 2010/01/20 00:50:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -1398,6 +1398,7 @@ disk_write(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint8_t lun,
 	if (target_transfer_data(sess, args, &sg, 1) != 0) {
 		iscsi_err(__FILE__, __LINE__,
 			"target_transfer_data() failed\n");
+		return -1;
 	}
 	/* Finish up write */
 	if (de_lseek(&disks.v[sess->d].lunv->v[lun].de, (off_t)byte_offset,
