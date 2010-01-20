@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.163 2010/01/10 13:52:06 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.164 2010/01/20 15:45:52 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.163 2010/01/10 13:52:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.164 2010/01/20 15:45:52 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.163 2010/01/10 13:52:06 martin Exp $"
 #include <prop/proplib.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #include <dev/cons.h>
 #include <sparc64/dev/cons.h>
@@ -906,17 +907,45 @@ device_register(struct device *dev, void *aux)
 		return;
 
 	if (ofnode != 0) {
-		char devtype[32];
+		uint8_t eaddr[ETHER_ADDR_LEN];
+		char tmpstr[32];
 		uint64_t nwwn = 0, pwwn = 0;
 		prop_dictionary_t dict;
+		prop_data_t blob;
 		prop_number_t pwwnd = NULL, nwwnd = NULL;
 
 		device_setofnode(dev, ofnode);
 		dev_path_exact_match(dev, ofnode);
 
+		if (OF_getprop(ofnode, "name", tmpstr, sizeof(tmpstr)) <= 0)
+			tmpstr[0] = 0;
+
+		/*
+		 * If this is a network interface, note the
+		 * mac address.
+		 */
+		if (strcmp(tmpstr, "network") == 0
+		   || strcmp(tmpstr, "ethernet") == 0
+		   || OF_getprop(ofnode, "mac-address", &eaddr, sizeof(eaddr))
+		      == sizeof(eaddr)) {
+			prom_getether(ofnode, eaddr);
+			dict = device_properties(dev);
+			blob = prop_data_create_data(eaddr, ETHER_ADDR_LEN);
+			prop_dictionary_set(dict, "mac-address", blob);
+			prop_object_release(blob);
+		}
+		/*
+		 * Is it a network interface with FCode? (others are called
+		 * "ethernet" by the firmware)
+		 */
+		if (strcmp(tmpstr, "network") == 0) {
+			dict = device_properties(dev);
+			prop_dictionary_set_bool(dict, "without-seeprom", true);
+		}
+
 		/* is this a FC node? */
-		if (OF_getprop(ofnode, "device_type", devtype,
-		    sizeof(devtype)) > 0 && strcmp(devtype, "scsi-fcp") == 0) {
+		if (OF_getprop(ofnode, "device_type", tmpstr,
+		    sizeof(tmpstr)) > 0 && strcmp(tmpstr, "scsi-fcp") == 0) {
 
 			dict = device_properties(dev);
 
