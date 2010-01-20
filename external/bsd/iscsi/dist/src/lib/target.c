@@ -43,6 +43,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
+#include <assert.h>
 #include <stdlib.h>
 
 #ifdef HAVE_NETINET_TCP_H
@@ -1545,6 +1546,7 @@ worker_proc_t(void *arg)
 
 	ISCSI_LOCK(&g_session_q_mutex, return -1);
 	(void) memset(sess, 0x0, sizeof(*sess));
+	sess->d = -1;
 	if (iscsi_queue_insert(&g_session_q, sess) != 0) {
 		iscsi_err(__FILE__, __LINE__,
 				"iscsi_queue_insert() failed\n");
@@ -1988,6 +1990,7 @@ iscsi_target_start(iscsi_target_t *tgt)
 	tgt->main_pid = getpid();
 	for (i = 0; i < maxsessions; i++) {
 		g_session[i].id = i;
+		g_session[i].d = -1;
 		if (iscsi_queue_insert(&g_session_q, &g_session[i]) != 0) {
 			iscsi_err(__FILE__, __LINE__,
 				"iscsi_queue_insert() failed\n");
@@ -1995,8 +1998,9 @@ iscsi_target_start(iscsi_target_t *tgt)
 		}
 	}
 	for (j = 0 ; j < lunv->c ; j++) {
-		g_session[j].d = device_init(tgt, lunv, &lunv->v[j]);
-		if (g_session[j].d < 0) {
+		int d = device_init(tgt, lunv, &lunv->v[j]);
+
+		if (d < 0) {
 			iscsi_err(__FILE__, __LINE__,
 				"device_init() failed\n");
 			return -1;
@@ -2131,6 +2135,7 @@ iscsi_target_listen(iscsi_target_t *tgt)
 			goto done;
 		}
 		ISCSI_UNLOCK(&g_session_q_mutex, return -1);
+		assert(sess->d == -1);
 #if 0
 		(void) memset(sess, 0x0, sizeof(*sess));
 #endif
