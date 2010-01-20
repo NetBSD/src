@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.42 2009/10/24 12:18:05 reed Exp $
+.\"	$NetBSD: afterboot.8,v 1.43 2010/01/20 22:24:18 jmmv Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -59,7 +59,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 18, 2009
+.Dd January 20, 2010
 .Dt AFTERBOOT 8
 .Os
 .Sh NAME
@@ -94,6 +94,20 @@ bugs in the release have been found.
 All significant and easily fixed problems will be reported at
 .Pa http://www.NetBSD.org/support/security/ .
 It is recommended that you check this page regularly.
+.Pp
+Additionally, you should set
+.Dq fetch_pkg_vulnerabilities=YES
+in
+.Pa /etc/daily.conf
+to allow your system to automatically update the local database of known
+vulnerable packages to the latest version available on-line.
+The system will later check, on a daily basis, if any of your installed
+packages are vulnerable based on the contents of this database.
+See
+.Xr daily.conf 5
+and
+.Xr security.conf 5
+for more details.
 .Ss Login
 Login as
 .Dq Ic root .
