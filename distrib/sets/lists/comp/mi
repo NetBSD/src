@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1365 2010/01/19 22:46:33 pooka Exp $
+#	$NetBSD: mi,v 1.1366 2010/01/20 00:39:30 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9138,7 +9138,7 @@
 ./usr/share/man/cat9/pmf_device_register.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pmf_device_register1.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pmf_device_resume.0	comp-sys-catman		.cat
-./usr/share/man/cat9/pmf_device_resume_subtree.0 comp-sys-catman	.cat
+./usr/share/man/cat9/pmf_device_subtree_resume.0 comp-sys-catman	.cat
 ./usr/share/man/cat9/pmf_device_suspend.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pmf_event_deregister.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pmf_event_inject.0		comp-sys-catman		.cat
@@ -14653,7 +14653,7 @@
 ./usr/share/man/html9/pmf_device_register.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pmf_device_register1.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pmf_device_resume.html	comp-sys-htmlman	html
-./usr/share/man/html9/pmf_device_resume_subtree.html comp-sys-htmlman	html
+./usr/share/man/html9/pmf_device_subtree_resume.html comp-sys-htmlman	html
 ./usr/share/man/html9/pmf_device_suspend.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pmf_event_deregister.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pmf_event_inject.html	comp-sys-htmlman	html
@@ -20337,7 +20337,7 @@
 ./usr/share/man/man9/pmf_device_register.9	comp-sys-man		.man
 ./usr/share/man/man9/pmf_device_register1.9	comp-sys-man		.man
 ./usr/share/man/man9/pmf_device_resume.9	comp-sys-man		.man
-./usr/share/man/man9/pmf_device_resume_subtree.9 comp-sys-man		.man
+./usr/share/man/man9/pmf_device_subtree_resume.9 comp-sys-man		.man
 ./usr/share/man/man9/pmf_device_suspend.9	comp-sys-man		.man
 ./usr/share/man/man9/pmf_event_deregister.9	comp-sys-man		.man
 ./usr/share/man/man9/pmf_event_inject.9		comp-sys-man		.man

@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.304 2010/01/20 00:35:05 pooka Exp $
+#       $NetBSD: Makefile,v 1.305 2010/01/20 00:39:30 dyoung Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -537,7 +537,7 @@ MLINKS+=pmf.9 pmf_device_register.9 pmf.9 pmf_device_register1.9 \
 	pmf.9 pmf_device_suspend.9 pmf.9 pmf_device_resume.9 \
 	pmf.9 pmf_device_recursive_suspend.9 \
 	pmf.9 pmf_device_recursive_resume.9 \
-	pmf.9 pmf_device_resume_subtree.9 \
+	pmf.9 pmf_device_subtree_resume.9 \
 	pmf.9 pmf_class_network_register.9 pmf.9 pmf_class_input_register.9 \
 	pmf.9 pmf_class_display_register.9 \
 	pmf.9 pmf_system_suspend.9 pmf.9 pmf_system_resume.9 \
