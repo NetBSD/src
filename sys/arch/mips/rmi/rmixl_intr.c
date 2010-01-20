@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.6 2009/12/12 00:18:34 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.7 2010/01/20 09:04:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.6 2009/12/12 00:18:34 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.7 2010/01/20 09:04:35 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -328,7 +328,7 @@ evbmips_intr_init(void)
 	uint32_t r;
 	int i;
 
-	KASSERT(cpu_rmixls(mycpu));
+	KASSERT(cpu_rmixls(mips_options.mips_cpu));
 
 #ifdef DIAGNOSTIC
 	if (evbmips_intr_init_done != 0)
@@ -385,7 +385,7 @@ rmixl_intr_string(int irq)
 		panic("%s: irq %d out of range, max %d",
 			__func__, irq, NIRQS - 1);
 
-	switch (MIPS_PRID_IMPL(cpu_id)) {
+	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
 	case MIPS_XLS104:
 	case MIPS_XLS108:
 	case MIPS_XLS204:

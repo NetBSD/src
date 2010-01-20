@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.35.16.2 2010/01/14 00:44:02 matt Exp $	*/
+/*	$NetBSD: bus.c,v 1.35.16.3 2010/01/20 09:04:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.35.16.2 2010/01/14 00:44:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.35.16.3 2010/01/20 09:04:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -557,22 +557,24 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			mips_dcache_wbinv_range(start, minlen);
 			break;
 
-		case BUS_DMASYNC_PREREAD:
+		case BUS_DMASYNC_PREREAD: {
+			struct mips_cache_info * const mci = &mips_cache_info;
 			end = start + minlen;
-			preboundary = start & ~mips_dcache_align_mask;
-			firstboundary = (start + mips_dcache_align_mask)
-			    & ~mips_dcache_align_mask;
-			lastboundary = end & ~mips_dcache_align_mask;
+			preboundary = start & ~mci->mci_dcache_align_mask;
+			firstboundary = (start + mci->mci_dcache_align_mask)
+			    & ~mci->mci_dcache_align_mask;
+			lastboundary = end & ~mci->mci_dcache_align_mask;
 			if (preboundary < start && preboundary < lastboundary)
 				mips_dcache_wbinv_range(preboundary,
-				    mips_dcache_align);
+				    mci->mci_dcache_align);
 			if (firstboundary < lastboundary)
 				mips_dcache_inv_range(firstboundary,
 				    lastboundary - firstboundary);
 			if (lastboundary < end)
 				mips_dcache_wbinv_range(lastboundary,
-				    mips_dcache_align);
+				    mci->mci_dcache_align);
 			break;
+		}
 
 		case BUS_DMASYNC_PREWRITE:
 			mips_dcache_wb_range(start, minlen);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14.10.1 2009/09/07 23:46:46 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14.10.2 2010/01/20 09:04:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14.10.1 2009/09/07 23:46:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14.10.2 2010/01/20 09:04:33 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -148,7 +148,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
 	curcpu()->ci_divisor_delay =
 	    ((curcpu()->ci_cpu_freq + 500000) / 1000000);
-	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
+	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
 		curcpu()->ci_cycles_per_hz /= 2;
 		curcpu()->ci_divisor_delay /= 2;
 	}

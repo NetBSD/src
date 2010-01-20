@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.27 2010/01/20 06:58:36 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.28 2010/01/20 09:04:35 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.27 2010/01/20 06:58:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.28 2010/01/20 09:04:35 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -1132,10 +1132,10 @@ cpu_identify(device_t dev)
 			aprint_normal_dev(dev, "%dKB/%dB %s Instruction cache, "
 			    "%d TLB entries\n", mci->mci_picache_size / 1024,
 			    mci->mci_picache_line_size, waynames[mci->mci_picache_ways],
-			    mips_num_tlb_entries);
+			    opts->mips_num_tlb_entries);
 		else
 			aprint_normal_dev(dev, "%d TLB entries\n", 
-			    mips_num_tlb_entries);
+			    opts->mips_num_tlb_entries);
 		if (mci->mci_pdcache_size)
 			aprint_normal_dev(dev, "%dKB/%dB %s %s Data cache\n",
 			    mci->mci_pdcache_size / 1024, mci->mci_pdcache_line_size,

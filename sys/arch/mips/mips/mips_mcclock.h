@@ -1,4 +1,4 @@
-/* $NetBSD: mips_mcclock.h,v 1.5 2005/12/11 12:18:09 christos Exp $ */
+/* $NetBSD: mips_mcclock.h,v 1.5.96.1 2010/01/20 09:04:35 matt Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -42,9 +42,4 @@
 unsigned mc_cpuspeed(vaddr_t, int);
 int mips_mcclock_loop_with_clock(int);
 int mips_mcclock_loop_without_clock(int);
-
-/*
- * CPU speed in MHz, as estimated by mc_cpuspeed(). Read-only.
- */
-extern int cpu_mhz;
 #endif

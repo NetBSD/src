@@ -1,4 +1,4 @@
-/* $NetBSD: dbau1550.c,v 1.8 2007/01/24 13:08:14 hubertf Exp $ */
+/* $NetBSD: dbau1550.c,v 1.8.66.1 2010/01/20 09:04:33 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.8 2007/01/24 13:08:14 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.8.66.1 2010/01/20 09:04:33 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -115,7 +115,7 @@ dbau1550_init(void)
 	uint32_t		sysclk;
 	uint32_t		pinfunc;
 
-	if (MIPS_PRID_COPTS(cpu_id) != MIPS_AU1550)
+	if (MIPS_PRID_COPTS(mips_options.mips_cpu_id) != MIPS_AU1550)
 		panic("dbau1550: CPU not Au1550");
 
 	/* check the whoami register for a match */

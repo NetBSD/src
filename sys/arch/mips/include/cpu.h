@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.13 2010/01/20 06:58:35 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.14 2010/01/20 09:04:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -241,13 +241,15 @@ struct mips_options {
 	const struct pridtab *mips_cpu;
 
 	u_int mips_cpu_arch;
-	u_int mips_cpu_mhz;
+	u_int mips_cpu_mhz; /* CPU speed in MHz, estimated by mc_cpuspeed(). */
 	u_int mips_cpu_flags;
 	u_int mips_num_tlb_entries;
 	mips_prid_t mips_cpu_id;
 	mips_prid_t mips_fpu_id;
 	bool mips_has_r4k_mmu;
 	bool mips_has_llsc;
+	u_int mips3_pg_shift;
+	u_int mips3_pg_cached;
 #ifdef MIPS3_PLUS
 #ifdef _LP64
 	uint64_t mips3_xkphys_cached;
@@ -255,8 +257,6 @@ struct mips_options {
 	uint64_t mips3_tlb_vpn_mask;
 	uint64_t mips3_tlb_pfn_mask;
 	uint32_t mips3_tlb_pg_mask;
-	u_int mips3_pg_cached;
-	u_int mips3_pg_shift;
 #endif
 };
 extern struct mips_options mips_options;

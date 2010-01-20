@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98.10.1 2009/09/07 23:46:46 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98.10.2 2010/01/20 09:04:34 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.10.1 2009/09/07 23:46:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.10.2 2010/01/20 09:04:34 matt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -436,7 +436,7 @@ mips_machdep_cache_config(void)
 {
 	/* All r4k news boxen have a 1MB L2 cache. */
 	if (CPUISMIPS3)
-		mips_sdcache_size = 1024 * 1024;
+		mips_cache_info.mci_sdcache_size = 1024 * 1024;
 }
 
 /*
