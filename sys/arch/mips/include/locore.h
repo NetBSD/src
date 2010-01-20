@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.9 2010/01/20 06:58:35 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.10 2010/01/20 20:40:45 cyber Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -231,7 +231,7 @@ mips3_lw_a64(uint64_t addr)
 		".set noat		\n\t"
 		"dsll32	%M1,%M1,0	\n\t"
 		"dsll32	%L1,%L1,0	\n\t"
-		"dsrl32	$L1,%L1,0	\n\t"
+		"dsrl32	%L1,%L1,0	\n\t"
 		"or	%1,%M1,%L1	\n\t"
 		"lw	%0, 0(%1)	\n\t"
 		".set pop"
@@ -264,7 +264,7 @@ mips3_sw_a64(uint64_t addr, uint32_t val)
 		".set noat		\n\t"
 		"dsll32	%M0,%M0,0	\n\t"
 		"dsll32	%L0,%L0,0	\n\t"
-		"dsrl32	$L0,%L0,0	\n\t"
+		"dsrl32	%L0,%L0,0	\n\t"
 		"or	%0,%M0,%L0	\n\t"
 		"sw	%1, 0(%0)	\n\t"
 		".set pop"
