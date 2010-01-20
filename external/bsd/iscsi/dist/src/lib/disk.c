@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.3 2010/01/20 00:50:09 yamt Exp $ */
+/* $NetBSD: disk.c,v 1.4 2010/01/20 00:58:49 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -715,12 +715,12 @@ de_allocate(disc_de_t *de, char *filename)
 	}
 	if (de_read(de, block, sizeof(block)) == -1) {
 		iscsi_err(__FILE__, __LINE__,
-				"error reading \"%s\"", filename);
+				"error reading \"%s\"\n", filename);
 		return 0;
 	}
 	if (de_write(de, block, sizeof(block)) == -1) {
 		iscsi_err(__FILE__, __LINE__,
-				"error writing \"%s\"", filename);
+				"error writing \"%s\"\n", filename);
 		return 0;
 	}
 	return 1;
@@ -863,7 +863,7 @@ device_init(iscsi_target_t *tgt, targv_t *tvp, disc_target_t *tp)
 	}
 	if (!(tp->flags & TARGET_READONLY) && !allocate_space(tp)) {
 		iscsi_err(__FILE__, __LINE__,
-			"error allocating space for \"%s\"", tp->target);
+			"error allocating space for \"%s\"\n", tp->target);
 		return -1;
 	}
 	printf("%" PRIu64 " MB %sdisk storage for \"%s\"\n",
