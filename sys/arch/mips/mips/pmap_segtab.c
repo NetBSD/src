@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.1.2.2 2010/01/15 06:46:59 matt Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.1.2.3 2010/01/20 06:58:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.1.2.2 2010/01/15 06:46:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.1.2.3 2010/01/20 06:58:37 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -207,7 +207,7 @@ pmap_segtab_alloc(pmap_t pmap)
 		}
 
 #ifdef _LP64
-		KASSERT(mips3_xkphys_cached);
+		KASSERT(mips_options.mips3_xkphys_cached);
 		stp = (struct segtab *)MIPS_PHYS_TO_XKPHYS_CACHED(stp_pa);
 #else
 		stp = (struct segtab *)MIPS_PHYS_TO_KSEG0(stp_pa);
@@ -277,7 +277,7 @@ pmap_segtab_free(pmap_t pmap)
 		 * is reused with KSEG2 (mapped) addresses.  This may
 		 * cause problems on machines without VCED/VCEI.
 		 */
-		if (mips_cache_virtual_alias)
+		if (mips_cache_info.mci_cache_virtual_alias)
 			mips_dcache_inv_range((vaddr_t)pte, PAGE_SIZE);
 #endif	/* MIPS3_PLUS */
 #ifdef _LP64
@@ -375,7 +375,7 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 
 		const paddr_t pa = VM_PAGE_TO_PHYS(pg);
 #ifdef _LP64
-		KASSERT(mips3_xkphys_cached);
+		KASSERT(mips_options.mips3_xkphys_cached);
 		pte = (pt_entry_t *)MIPS_PHYS_TO_XKPHYS_CACHED(pa);
 #else
 		pte = (pt_entry_t *)MIPS_PHYS_TO_KSEG0(pa);

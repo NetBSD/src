@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.23.38.4 2010/01/15 06:46:58 matt Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.23.38.5 2010/01/20 06:58:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -126,7 +126,7 @@ unsigned int 	pg_g:1,			/* HW: ignore asid bit */
 #define	MIPS3_PG_CACHED		MIPS3_PG_UNCACHED	/* XXX: brain damaged!!! */
 #else /* HPCMIPS_L1CACHE_DISABLE */
 #define	MIPS3_DEFAULT_XKPHYS_CACHED	MIPS_PHYS_TO_XKPHYS(3, 0)
-#define	MIPS3_PG_CACHED		mips3_pg_cached
+#define	MIPS3_PG_CACHED		mips_options.mips3_pg_cached
 #define	MIPS3_DEFAULT_PG_CACHED	MIPS3_CCA_TO_PG(3)
 #endif /* ! HPCMIPS_L1CACHE_DISABLE */
 #define	MIPS3_PG_CACHEMODE	MIPS3_CCA_TO_PG(7)
@@ -155,7 +155,7 @@ unsigned int 	pg_g:1,			/* HW: ignore asid bit */
 
 /* NEC Vr4100 CPUs have different PFN layout to support 1kbytes/page */
 #if defined(MIPS3_4100)
-#define MIPS3_PG_SHIFT	mips3_pg_shift
+#define MIPS3_PG_SHIFT	mips_options.mips3_pg_shift
 #else
 #define MIPS3_PG_SHIFT	MIPS3_DEFAULT_PG_SHIFT
 #endif

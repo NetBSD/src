@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.9 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: cache.h,v 1.9.96.1 2010/01/20 06:58:35 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -154,57 +154,69 @@ struct mips_cache_ops {
 extern struct mips_cache_ops mips_cache_ops;
 
 /* PRIMARY CACHE VARIABLES */
-extern u_int mips_picache_size;
-extern u_int mips_picache_line_size;
-extern u_int mips_picache_ways;
-extern u_int mips_picache_way_size;
-extern u_int mips_picache_way_mask;
+struct mips_cache_info {
+	u_int mci_picache_size;
+	u_int mci_picache_line_size;
+	u_int mci_picache_ways;
+	u_int mci_picache_way_size;
+	u_int mci_picache_way_mask;
 
-extern u_int mips_pdcache_size;		/* and unified */
-extern u_int mips_pdcache_line_size;
-extern u_int mips_pdcache_ways;
-extern u_int mips_pdcache_way_size;
-extern u_int mips_pdcache_way_mask;
-extern int mips_pdcache_write_through;
+	u_int mci_pdcache_size;		/* and unified */
+	u_int mci_pdcache_line_size;
+	u_int mci_pdcache_ways;
+	u_int mci_pdcache_way_size;
+	u_int mci_pdcache_way_mask;
+	bool mci_pdcache_write_through;
 
-extern int mips_pcache_unified;
+	bool mci_pcache_unified;
 
-/* SECONDARY CACHE VARIABLES */
-extern u_int mips_sicache_size;
-extern u_int mips_sicache_line_size;
-extern u_int mips_sicache_ways;
-extern u_int mips_sicache_way_size;
-extern u_int mips_sicache_way_mask;
+	/* SECONDARY CACHE VARIABLES */
+	u_int mci_sicache_size;
+	u_int mci_sicache_line_size;
+	u_int mci_sicache_ways;
+	u_int mci_sicache_way_size;
+	u_int mci_sicache_way_mask;
 
-extern u_int mips_sdcache_size;		/* and unified */
-extern u_int mips_sdcache_line_size;
-extern u_int mips_sdcache_ways;
-extern u_int mips_sdcache_way_size;
-extern u_int mips_sdcache_way_mask;
-extern int mips_sdcache_write_through;
+	u_int mci_sdcache_size;		/* and unified */
+	u_int mci_sdcache_line_size;
+	u_int mci_sdcache_ways;
+	u_int mci_sdcache_way_size;
+	u_int mci_sdcache_way_mask;
+	bool mci_sdcache_write_through;
 
-extern int mips_scache_unified;
+	bool mci_scache_unified;
 
-/* TERTIARY CACHE VARIABLES */
-extern u_int mips_tcache_size;		/* always unified */
-extern u_int mips_tcache_line_size;
-extern u_int mips_tcache_ways;
-extern u_int mips_tcache_way_size;
-extern u_int mips_tcache_way_mask;
-extern int mips_tcache_write_through;
+	/* TERTIARY CACHE VARIABLES */
+	u_int mci_tcache_size;		/* always unified */
+	u_int mci_tcache_line_size;
+	u_int mci_tcache_ways;
+	u_int mci_tcache_way_size;
+	u_int mci_tcache_way_mask;
+	bool mci_tcache_write_through;
 
-extern u_int mips_dcache_align;
-extern u_int mips_dcache_align_mask;
+	/*
+	 * These two variables inform the rest of the kernel about the
+	 * size of the largest D-cache line present in the system.  The
+	 * mask can be used to determine if a region of memory is cache
+	 * line size aligned.
+	 *
+	 * Whenever any code updates a data cache line size, it should
+	 * call mips_dcache_compute_align() to recompute these values.
+	 */
+	u_int mci_dcache_align;
+	u_int mci_dcache_align_mask;
 
-extern u_int mips_cache_alias_mask;
-extern u_int mips_cache_prefer_mask;
+	u_int mci_cache_alias_mask;
+	u_int mci_cache_prefer_mask;
 
-extern int mips_cache_virtual_alias;
+	bool mci_cache_virtual_alias;
+};
 
+extern struct mips_cache_info mips_cache_info;
 /*
  * XXX XXX XXX THIS SHOULD NOT EXIST XXX XXX XXX
  */
-#define	mips_cache_indexof(x)	(((vaddr_t)(x)) & mips_cache_alias_mask)
+#define	mips_cache_indexof(x)	(((vaddr_t)(x)) & mips_cache_info.mci_cache_alias_mask)
 
 #define	__mco_noargs(prefix, x)						\
 do {									\

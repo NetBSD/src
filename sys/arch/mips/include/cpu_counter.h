@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.3 2006/02/16 20:17:14 perry Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.3.90.1 2010/01/20 06:58:35 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -37,7 +37,7 @@
 
 #ifdef _KERNEL
 
-#ifdef MIPS3_PLUS
+#if !defined(__mips_o32) || defined(MIPS3_PLUS)
 static __inline int
 cpu_hascounter(void)
 {
@@ -58,12 +58,11 @@ cpu_counter32(void)
 	return mips3_cp0_count_read();
 }
 
-#if 0	/* XXX MI microtime() needs frequency of CPU counter. */
 static __inline uint64_t
 cpu_frequency(struct cpu_info *ci)
 {
+	return ci->ci_cctr_freq;
 }
-#endif
 #endif
 
 #endif /* _KERNEL */

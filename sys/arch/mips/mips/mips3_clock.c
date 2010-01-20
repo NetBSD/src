@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clock.c,v 1.10 2008/01/31 17:37:45 tsutsui Exp $	*/
+/*	$NetBSD: mips3_clock.c,v 1.10.28.1 2010/01/20 06:58:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.10 2008/01/31 17:37:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.10.28.1 2010/01/20 06:58:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,9 +155,10 @@ mips3_init_tc(void)
 	};
 
 	tc.tc_frequency = curcpu()->ci_cpu_freq;
-	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
+	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
 		tc.tc_frequency /= 2;
 	}
+	curcpu()->ci_cctr_freq = tc.tc_frequency;
 
 	tc_init(&tc);
 #endif

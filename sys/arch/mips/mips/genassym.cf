@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44.12.9 2010/01/16 20:56:33 matt Exp $
+#	$NetBSD: genassym.cf,v 1.44.12.10 2010/01/20 06:58:36 matt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -142,6 +142,7 @@ define	MIPSX_FLUSHICACHE	0
 define	MIPSX_CPU_SWITCH_RESUME	offsetof(struct locoresw, lsw_cpu_switch_resume)
 define	MIPSX_CPU_IDLE		offsetof(struct locoresw, lsw_cpu_idle)
 
+define	PG_ASID			PG_ASID
 define	MIPS1_PG_G		MIPS1_PG_G
 define	MIPS1_PG_V		MIPS1_PG_V
 define	MIPS3_PG_G		MIPS3_PG_G
@@ -323,3 +324,6 @@ define	TLBMASK_HI		offsetof(struct tlbmask, tlb_hi)
 define	TLBMASK_LO0		offsetof(struct tlbmask, tlb_lo0)
 define	TLBMASK_LO1		offsetof(struct tlbmask, tlb_lo1)
 define	TLBMASK_MASK		offsetof(struct tlbmask, tlb_mask)
+
+define	MO_CPU_ID		offsetof(struct mips_options, mips_cpu_id)
+define	MO_FPU_ID		offsetof(struct mips_options, mips_fpu_id)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.5 2010/01/15 06:46:59 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.6 2010/01/20 06:58:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -141,9 +141,9 @@ void pmap_segtab_free(struct pmap *);
  * Per cpu asid info
  */
 struct pmap_asid_info {
-	uint32_t		pai_asid;	/* TLB address space tag */
-	uint32_t		pai_asid_generation; /* its generation number */
-	struct tlb		*pai_tlb;
+	uint32_t	pai_asid;	/* TLB address space tag */
+	uint32_t	pai_asid_generation; /* its generation number */
+	struct tlb	*pai_tlb;
 };
 
 #ifdef MULTIPROCESSOR
@@ -152,7 +152,9 @@ struct pmap_asid_info {
 #define	PMAP_PAI(pmap, ci)	(&(pmap)->pm_pai[0])
 #endif
 #define	PMAP_PAI_ASIDVALID_P(pai, ci)	\
-		((pai)->pai_asid_generation == (ci)->ci_pmap_asid_generation)
+		((pai)->pai_asid != (ci)->ci_pmap_asid_reserved \
+		 && (pai)->pai_asid_generation == (ci)->ci_pmap_asid_generation)
+
 /*
  * Machine dependent pmap structure.
  */
@@ -186,17 +188,22 @@ typedef struct pv_entry {
 
 #ifdef	_KERNEL
 
-extern char *pmap_attributes;		/* reference and modify bits */
-extern struct pmap kernel_pmap_store;
+struct pmap_kernel {
+	struct pmap kernel_pmap;
+#ifdef MULTIPROCESSOR
+	struct pmap_asid_info kernel_pai[MAXCPUS-1];
+#endif
+};
+
+extern struct pmap_kernel kernel_pmap_store;
 extern paddr_t mips_avail_start;
 extern paddr_t mips_avail_end;
 extern vaddr_t mips_virtual_end;
 
-#define pmap_kernel()		(&kernel_pmap_store)
+#define pmap_kernel()		(&kernel_pmap_store.kernel_pmap)
 #define	pmap_wired_count(pmap) 	((pmap)->pm_stats.wired_count)
 #define pmap_resident_count(pmap) ((pmap)->pm_stats.resident_count)
 
-#define	pmap_update(pmap)	/* nothing (yet) */
 #define pmap_phys_address(x)	mips_ptob(x)
 
 static __inline void
