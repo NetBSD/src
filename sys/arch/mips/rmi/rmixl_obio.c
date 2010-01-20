@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio.c,v 1.1.2.11 2010/01/13 09:43:31 cliff Exp $	*/
+/*	$NetBSD: rmixl_obio.c,v 1.1.2.12 2010/01/20 20:48:12 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.11 2010/01/13 09:43:31 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.12 2010/01/20 20:48:12 matt Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -65,8 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.11 2010/01/13 09:43:31 cliff Ex
 #include <evbmips/rmixl/autoconf.h>
 
 #ifdef OBIO_DEBUG
-int obio_debug = OBIO_DEBUG;
-# define DPRINTF(x)	do { if (obio_debug) printf x ; } while (0)
+int obio_rmixl_debug = OBIO_DEBUG;
+# define DPRINTF(x)	do { if (obio_rmixl_debug) printf x ; } while (0)
 #else
 # define DPRINTF(x)
 #endif
@@ -80,7 +80,7 @@ static void obio_dma_init_64(bus_dma_tag_t);
 static int  rmixl_addr_error_intr(void *);
 
 
-CFATTACH_DECL_NEW(obio, sizeof(struct obio_softc),
+CFATTACH_DECL_NEW(obio_rmixl, sizeof(struct obio_softc),
     obio_match, obio_attach, NULL, NULL);
 
 int obio_found;

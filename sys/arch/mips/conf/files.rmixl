@@ -1,4 +1,4 @@
-#	$NetBSD: files.rmixl,v 1.1.2.8 2010/01/16 23:50:04 cliff Exp $
+#	$NetBSD: files.rmixl,v 1.1.2.9 2010/01/20 20:48:12 matt Exp $
 #
 # Configuration info for RMI XLP, XLR, XLS
 #
@@ -9,34 +9,34 @@ file	arch/mips/rmi/rmixl_subr.S
 
 # node is parent of one or more core
 device	cpunode { [ core = -1] }
-attach	cpunode at mainbus
-file	arch/mips/rmi/rmixl_cpunode.c		cpunode
+attach	cpunode at mainbus with cpunode_rmixl
+file	arch/mips/rmi/rmixl_cpunode.c		cpunode_rmixl
 
 # core is parent of one or more cpu
 device	cpucore { [ thread = -1] }
-attach	cpucore at cpunode
-file	arch/mips/rmi/rmixl_cpucore.c		cpucore
+attach	cpucore at cpunode with cpucore_rmixl
+file	arch/mips/rmi/rmixl_cpucore.c		cpucore_rmixl
 
 # each cpu is a RMI 'thread' or 'vCPU'
 device	cpu
-attach	cpu at cpucore
-file	arch/mips/rmi/rmixl_cpu.c		cpu
+attach	cpu at cpucore with cpu_rmixl
+file	arch/mips/rmi/rmixl_cpu.c		cpu_rmixl
 
 # OBIO: offsets are from System Bridge Controller base
 define obio { [addr=-1], [size=0], [intr=-1], [mult=1] }
 device	obio: obio
-attach	obio at cpunode
-file	arch/mips/rmi/rmixl_obio.c		obio needs-count
-file    arch/mips/rmi/rmixl_obio_eb_space.c	obio
-file    arch/mips/rmi/rmixl_obio_el_space.c	obio
+attach	obio at cpunode with obio_rmixl
+file	arch/mips/rmi/rmixl_obio.c		obio_rmixl
+file    arch/mips/rmi/rmixl_obio_eb_space.c	obio_rmixl
+file    arch/mips/rmi/rmixl_obio_el_space.c	obio_rmixl
 file    arch/mips/rmi/rmixl_pcie_cfg_space.c	pci
 file    arch/mips/rmi/rmixl_pcie_ecfg_space.c	pci
 file    arch/mips/rmi/rmixl_pcie_io_space.c	pci
 file    arch/mips/rmi/rmixl_pcie_mem_space.c	pci
 
 # NS16550 compatible serial ports
-attach com at obio with rmixl_com
-file	arch/mips/rmi/rmixl_com.c		rmixl_com
+attach com at obio with com_rmixl
+file	arch/mips/rmi/rmixl_com.c		com_rmixl
 defparam opt_com.h				CONSADDR CONSFREQ CONSPEED CONMODE
 
 # PCI

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.1.2.1 2010/01/16 23:47:30 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.1.2.2 2010/01/20 20:48:12 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,24 +38,28 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.1 2010/01/16 23:47:30 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.2 2010/01/20 20:48:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+#include <mips/rmi/rmixlvar.h>
 #include <mips/rmi/rmixl_cpucorevar.h>
 
-static int	cpu_match(device_t, cfdata_t, void *);
-static void	cpu_attach(device_t, device_t, void *);
+static int	cpu_rmixl_match(device_t, cfdata_t, void *);
+static void	cpu_rmixl_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(cpu, 0, cpu_match, cpu_attach, NULL, NULL);
+CFATTACH_DECL_NEW(cpu_rmixl, 0, cpu_rmixl_match, cpu_rmixl_attach, NULL, NULL);
 
 static int
-cpu_match(device_t parent, cfdata_t cf, void *aux)
+cpu_rmixl_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct cpucore_attach_args *ca = aux;
 	int thread = cf->cf_loc[CPUCORECF_THREAD];
+
+	if (!cpu_rmixl(mips_options.mips_cpu))
+		return 0;
 
 	if (strncmp(ca->ca_name, cf->cf_name, strlen(cf->cf_name)) == 0
 #ifndef MULTIPROCESSOR
@@ -68,7 +72,7 @@ cpu_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 static void
-cpu_attach(device_t parent, device_t self, void *aux)
+cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpucore_attach_args *ca = aux;
 	if (ca->ca_thread == 0 && ca->ca_core == 0) {

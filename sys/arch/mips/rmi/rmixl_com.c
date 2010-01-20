@@ -1,4 +1,4 @@
-/* $Id: rmixl_com.c,v 1.1.2.9 2009/12/14 07:18:55 cliff Exp $ */
+/* $Id: rmixl_com.c,v 1.1.2.10 2010/01/20 20:48:12 matt Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.9 2009/12/14 07:18:55 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.10 2010/01/20 20:48:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,14 +133,14 @@ static void rmixl_com_initmap(struct com_regs *);
 static int rmixl_com_match(device_t, cfdata_t , void *);
 static void rmixl_com_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(rmixl_com, sizeof(struct rmixl_com_softc),
+CFATTACH_DECL_NEW(com_rmixl, sizeof(struct rmixl_com_softc),
     rmixl_com_match, rmixl_com_attach, NULL, NULL);
 
 #ifndef	COM_REGMAP
 #error	COM_REGMAP not defined!
 #endif
 
-volatile uint32_t *com0addr = (uint32_t *)
+volatile int32_t *com0addr = (int32_t *)
 	MIPS_PHYS_TO_KSEG1(RMIXL_IO_DEV_PBASE + RMIXL_IO_DEV_UART_1);
 
 extern int comcnfreq;
