@@ -34,21 +34,13 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 __RCSID("$Heimdal: getarg.c 21005 2007-06-08 01:54:35Z lha $"
-        "$NetBSD: getarg.c,v 1.4 2010/01/20 12:54:17 tsutsui Exp $");
+        "$NetBSD: getarg.c,v 1.5 2010/01/20 15:03:50 tsutsui Exp $");
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#ifdef HAVE_TERMIOS_H	/* XXX for struct winsize */
-#include <termios.h>
-#endif
-#include "roken-common.h"
-#else
 #include "roken.h"
-#endif
 #include "getarg.h"
 
 #define ISFLAG(X) ((X).type == arg_flag || (X).type == arg_negative_flag)
