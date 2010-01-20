@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.10 2009/03/18 10:22:34 cegger Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.11 2010/01/20 16:36:55 macallan Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.10 2009/03/18 10:22:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.11 2010/01/20 16:36:55 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -248,6 +248,12 @@ device_register(struct device *dev, void *aux)
 				/* setup display properties for fb driver */
 				prop_dictionary_set_bool(dict, "is_console", 0);
 				copy_disp_props(dev, node, dict);
+			}
+			if (pci_class == PCI_CLASS_NETWORK) {
+				of_to_dataprop(dict, node, "local-mac-address",
+				    "mac-address");
+				of_to_dataprop(dict, node, "shared-pins",
+				    "shared-pins");
 			}
 		}
 	}
