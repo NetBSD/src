@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167.38.4 2009/12/30 04:51:26 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.167.38.5 2010/01/20 06:58:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,8 +136,8 @@ _C_LABEL(kernel_text):
 #else
 	cfc1	t1, MIPS_FPU_ID			# read FPU ID register
 #endif
-	INT_S	t0, _C_LABEL(cpu_id)		# save PRID register
-	INT_S	t1, _C_LABEL(fpu_id)		# save FPU ID register
+	INT_S	t0, _C_LABEL(mips_options)+MO_CPU_ID # save PRID register
+	INT_S	t1, _C_LABEL(mips_options)+MO_FPU_ID # save FPU ID register
 	PTR_LA	MIPS_CURLWP, _C_LABEL(lwp0)	# set curlwp
 	jal	_C_LABEL(mach_init)		# mach_init(a0, a1, a2, a3)
 	nop
@@ -878,13 +878,6 @@ END(stacktrace)
 	.globl	_C_LABEL(esym)
 _C_LABEL(esym):
 	.word 0
-
-	.globl	_C_LABEL(cpu_id)
-	.globl	_C_LABEL(fpu_id)
-_C_LABEL(cpu_id):
-	.word	0
-_C_LABEL(fpu_id):
-	.word	0
 
 #ifdef MIPS_DYNAMIC_STATUS_MASK
 	.globl	_C_LABEL(mips_dynamic_status_mask)

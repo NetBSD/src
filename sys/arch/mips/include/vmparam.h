@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41.28.8 2009/12/30 04:51:26 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.28.9 2010/01/20 06:58:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -211,12 +211,22 @@
  */
 struct vm_page_md {
 	struct pv_entry *pvh_list;	/* pv_entry list */
+#ifdef MULTIPROCESSOR
+	volatile u_int pvh_attrs;	/* page attributes */
+	__cpu_simple_lock_t pvh_slock;	/* pv list lock */
+#define	VM_MDPAGE_SLOCK_INIT(pg)	\
+	__cpu_simple_lock_clear(&(pg)->mdpage.pvh_slock)
+#else
 	u_int pvh_attrs;		/* page attributes */
+#define	VM_MDPAGE_SLOCK_INIT(pg)	do { } while (/*CONSTCOND*/ 0)
+#endif
 };
 
 #define VM_MDPAGE_INIT(pg)						\
 do {									\
 	(pg)->mdpage.pvh_list = NULL;					\
+	VM_MDPAGE_SLOCK_INIT(pg);					\
+	(pg)->mdpage.pvh_attrs = 0;					\
 } while (/* CONSTCOND */ 0)
 
 #ifndef VM_NFREELIST

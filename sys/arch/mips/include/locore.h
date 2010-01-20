@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.8 2010/01/15 06:46:58 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.9 2010/01/20 06:58:35 matt Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -48,7 +48,7 @@ void _clrsoftintr(int);
 #ifdef MIPS1
 void	mips1_tlb_set_asid(uint32_t);
 void	mips1_tlb_invalidate_all(size_t);
-void	mips1_tlb_invalidate_all_nonkernel(size_t);
+void	mips1_tlb_invalidate_asids(size_t, uint32_t, uint32_t);
 void	mips1_tlb_invalidate_addr(vaddr_t);
 int	mips1_tlb_update(vaddr_t, uint32_t);
 void	mips1_tlb_read_indexed(size_t, struct tlbmask *);
@@ -63,7 +63,7 @@ uint32_t tx3900_cp0_config_read(void);
 #if defined(MIPS3) || defined(MIPS4)
 void	mips3_tlb_set_asid(uint32_t);
 void	mips3_tlb_invalidate_all(size_t);
-void	mips3_tlb_invalidate_all_nonkernel(size_t);
+void	mips3_tlb_invalidate_asids(size_t, uint32_t, uint32_t);
 void	mips3_tlb_invalidate_addr(vaddr_t);
 int	mips3_tlb_update(vaddr_t, uint32_t);
 void	mips3_tlb_read_indexed(size_t, struct tlbmask *);
@@ -77,7 +77,7 @@ void	mips3_pagezero(void *dst);
 #ifdef MIPS3_5900
 void	mips5900_tlb_set_asid(uint32_t);
 void	mips5900_tlb_invalidate_all(size_t);
-void	mips5900_tlb_invalidate_all_nonkernel(size_t);
+void	mips5900_tlb_invalidate_asids(size_t, uint32_t, uint32_t);
 void	mips5900_tlb_invalidate_addr(vaddr_t);
 int	mips5900_tlb_update(vaddr_t, uint32_t);
 void	mips5900_tlb_read_indexed(size_t, struct tlbmask *);
@@ -93,7 +93,7 @@ void	mips5900_pagezero(void *dst);
 #ifdef MIPS32
 void	mips32_tlb_set_asid(uint32_t);
 void	mips32_tlb_invalidate_all(size_t);
-void	mips32_tlb_invalidate_all_nonkernel(size_t);
+void	mips32_tlb_invalidate_asids(size_t, uint32_t, uint32_t);
 void	mips32_tlb_invalidate_addr(vaddr_t);
 int	mips32_tlb_update(vaddr_t, uint32_t);
 void	mips32_tlb_read_indexed(size_t, struct tlbmask *);
@@ -107,7 +107,7 @@ void	mips32_cpu_switch_resume(void);
 #ifdef MIPS64
 void	mips64_tlb_set_asid(uint32_t);
 void	mips64_tlb_invalidate_all(size_t);
-void	mips64_tlb_invalidate_all_nonkernel(size_t);
+void	mips64_tlb_invalidate_asids(size_t, uint32_t, uint32_t);
 void	mips64_tlb_invalidate_addr(vaddr_t);
 int	mips64_tlb_update(vaddr_t, uint32_t);
 void	mips64_tlb_read_indexed(size_t, struct tlbmask *);
@@ -289,7 +289,7 @@ mips3_sw_a64(uint64_t addr, uint32_t val)
  */
 typedef struct  {
 	void (*ljv_tlb_set_asid)(uint32_t pid);
-	void (*ljv_tlb_invalidate_all_nonkernel)(size_t);
+	void (*ljv_tlb_invalidate_asids)(size_t, uint32_t, uint32_t);
 	void (*ljv_tlb_invalidate_addr)(vaddr_t);
 	int  (*ljv_tlb_update)(vaddr_t, uint32_t);
 	void (*ljv_tlb_read_indexed)(size_t, struct tlbmask *);
@@ -307,6 +307,7 @@ struct locoresw {
 	uintptr_t lsw_lwp_trampoline;
 	void (*lsw_cpu_idle)(void);
 	uintptr_t lsw_setfunc_trampoline;
+	void (*lsw_boot_secondary_processors)(void);
 };
 
 struct mips_vmfreelist {
@@ -323,9 +324,10 @@ extern struct locoresw mips_locoresw;
 
 #if    defined(MIPS1) && !defined(MIPS3) && !defined(MIPS32) && !defined(MIPS64)
 #define tlb_set_asid		mips1_tlb_set_asid
-#define tlb_invalidate_all_nonkernel() \
-		mips1_tlb_invalidate_all_nonkernel(mips_num_tlb_entries)
+#define tlb_invalidate_asids(asid_lo, asid_hi) \
+		mips1_tlb_invalidate_asids(mips_options.mips_num_tlb_entries, asid_lo, asid_hi)
 #define tlb_invalidate_addr	mips1_tlb_invalidate_addr
+#define tlb_invalidate_asid	mips1_tlb_invalidate_asid
 #define tlb_update		mips1_tlb_update
 #define tlb_read_indexed	mips1_tlb_read_indexed
 #define wbflush()		mips1_wbflush()
@@ -333,9 +335,10 @@ extern struct locoresw mips_locoresw;
 #define setfunc_trampoline	mips1_setfunc_trampoline
 #elif !defined(MIPS1) &&  defined(MIPS3) && !defined(MIPS32) && !defined(MIPS64) && !defined(MIPS3_5900)
 #define tlb_set_asid		mips3_tlb_set_asid
-#define tlb_invalidate_all_nonkernel() \
-		mips3_tlb_invalidate_all_nonkernel(mips_num_tlb_entries)
+#define tlb_invalidate_asids(asid_lo, asid_hi) \
+		mips3_tlb_invalidate_asids(mips_options.mips_num_tlb_entries, asid_lo, asid_hi)
 #define tlb_invalidate_addr	mips3_tlb_invalidate_addr
+#define tlb_invalidate_asid	mips3_tlb_invalidate_asid
 #define tlb_update		mips3_tlb_update
 #define tlb_read_indexed	mips3_tlb_read_indexed
 #define tlb_write_indexed_VPS	mips3_tlb_write_indexed_VPS
@@ -344,9 +347,10 @@ extern struct locoresw mips_locoresw;
 #define wbflush()		mips3_wbflush()
 #elif !defined(MIPS1) && !defined(MIPS3) &&  defined(MIPS32) && !defined(MIPS64)
 #define tlb_set_asid		mips32_tlb_set_asid
-#define tlb_invalidate_all_nonkernel() \
-		mips32_tlb_invalidate_all_nonkernel(mips_num_tlb_entries)
+#define tlb_invalidate_asids(asid_lo, asid_hi) \
+		mips32_tlb_invalidate_asids(mips_options.mips_num_tlb_entries, asid_lo, asid_hi)
 #define tlb_invalidate_addr	mips32_tlb_invalidate_addr
+#define tlb_invalidate_asid	mips32_tlb_invalidate_asid
 #define tlb_update		mips32_tlb_update
 #define tlb_read_indexed	mips32_tlb_read_indexed
 #define tlb_write_indexed_VPS	mips32_tlb_write_indexed_VPS
@@ -356,9 +360,10 @@ extern struct locoresw mips_locoresw;
 #elif !defined(MIPS1) && !defined(MIPS3) && !defined(MIPS32) &&  defined(MIPS64)
  /* all common with mips3 */
 #define tlb_set_asid		mips64_tlb_set_asid
-#define tlb_invalidate_all_nonkernel() \
-		mips64_tlb_invalidate_all_nonkernel(mips_num_tlb_entries)
+#define tlb_invalidate_asids(asid_lo, asid_hi) \
+		mips64_tlb_invalidate_asids(mips_options.mips_num_tlb_entries, asid_lo, asid_hi)
 #define tlb_invalidate_addr	mips64_tlb_invalidate_addr
+#define tlb_invalidate_asid	mips64_tlb_invalidate_asid
 #define tlb_update		mips64_tlb_update
 #define tlb_read_indexed	mips64_tlb_read_indexed
 #define tlb_write_indexed_VPS	mips64_tlb_write_indexed_VPS
@@ -367,9 +372,10 @@ extern struct locoresw mips_locoresw;
 #define wbflush()		mips64_wbflush()
 #elif !defined(MIPS1) &&  defined(MIPS3) && !defined(MIPS32) && !defined(MIPS64) && defined(MIPS3_5900)
 #define tlb_set_asid		mips5900_tlb_set_asid
-#define tlb_invalidate_all_nonkernel() \
-		mips5900_tlb_invalidate_all_nonkernel(mips_num_tlb_entries)
+#define tlb_invalidate_asids(asid_lo, asid_hi) \
+		mips5900_tlb_invalidate_asids(mips_options.mips_num_tlb_entries, asid_lo, asid_hi)
 #define tlb_invalidate_addr	mips5900_tlb_invalidate_addr
+#define tlb_invalidate_asid	mips5900_tlb_invalidate_asid
 #define tlb_update		mips5900_tlb_update
 #define tlb_read_indexed	mips5900_tlb_read_indexed
 #define tlb_write_indexed_VPS	mips5900_tlb_write_indexed_VPS
@@ -378,8 +384,8 @@ extern struct locoresw mips_locoresw;
 #define wbflush()		mips5900_wbflush()
 #else
 #define tlb_set_asid		(*(mips_locore_jumpvec.ljv_tlb_set_asid))
-#define tlb_invalidate_all_nonkernel() \
-		(*(mips_locore_jumpvec.ljv_tlb_invalidate_all_nonkernel))(mips_num_tlb_entries)
+#define tlb_invalidate_asids(asid_lo, asid_hi) \
+		(*(mips_locore_jumpvec.ljv_tlb_invalidate_asids))(mips_options.mips_num_tlb_entries, asid_lo, asid_hi)
 #define tlb_invalidate_addr	(*(mips_locore_jumpvec.ljv_tlb_invalidate_addr))
 #define tlb_update		(*(mips_locore_jumpvec.ljv_tlb_update))
 #define tlb_read_indexed	(*(mips_locore_jumpvec.ljv_tlb_read_indexed))
@@ -427,11 +433,6 @@ typedef int mips_prid_t;
  * Global variables used to communicate CPU type, and parameters
  * such as cache size, from locore to higher-level code (e.g., pmap).
  */
-
-extern mips_prid_t cpu_id;
-extern mips_prid_t fpu_id;
-extern int	mips_num_tlb_entries;
-
 void mips_pagecopy(void *dst, void *src);
 void mips_pagezero(void *dst);
 

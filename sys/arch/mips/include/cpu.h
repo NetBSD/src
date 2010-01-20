@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.12 2010/01/15 06:46:58 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.13 2010/01/20 06:58:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -65,8 +65,6 @@ struct pridtab {
 	u_int	cpu_cidflags;	/* company-specific flags */
 	const char	*cpu_name;
 };
-
-extern const struct pridtab *mycpu;
 
 /*
  * bitfield defines for cpu_cp0flags
@@ -139,13 +137,15 @@ struct cpu_info {
 	device_t ci_dev;		/* owning device */
 	vaddr_t ci_ebase;		/* VA of exception base */
 	paddr_t ci_ebase_pa;		/* PA of exception base */
+	u_long ci_cctr_freq;		/* cycle counter frequency */
 	/*
 	 * Per-cpu pmap information
 	 */
-	uint32_t ci_pmap_asid_max;
-	uint32_t ci_pmap_asid_next;
-	uint32_t ci_pmap_asid_generation;
 	struct segtab *ci_pmap_segbase;
+	uint32_t ci_pmap_asid_next;	/* next asid to be assigned */
+	uint32_t ci_pmap_asid_generation; /* current asid generation */
+	uint32_t ci_pmap_asid_reserved;	/* base of ASID space */
+	uint32_t ci_pmap_asid_max;	/* max (exclusive) assignable asid */
 };
 
 #define	CPU_INFO_ITERATOR		int
@@ -222,7 +222,11 @@ register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
 #define	curcpu()		(curlwp->l_cpu)
 #define	curpcb			((struct pcb *)curlwp->l_addr)
 #define	fpcurlwp		(curcpu()->ci_fpcurlwp)
+#ifdef MULTIPROCESSOR
+#define	cpu_number()		(curcpu()->ci_cpuid)
+#else
 #define	cpu_number()		(0)
+#endif
 #define	cpu_proc_fork(p1, p2)	((void)((p2)->p_md.md_abi = (p1)->p_md.md_abi))
 
 /* XXX simonb
@@ -233,15 +237,29 @@ register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
  * Some SGI's apparently support R12k and R14k in the same
  * box.)
  */
-extern int cpu_arch;
-extern int mips_cpu_flags;
-extern int mips_has_r4k_mmu;
-extern int mips_has_llsc;
-extern int mips3_pg_cached;
+struct mips_options {
+	const struct pridtab *mips_cpu;
+
+	u_int mips_cpu_arch;
+	u_int mips_cpu_mhz;
+	u_int mips_cpu_flags;
+	u_int mips_num_tlb_entries;
+	mips_prid_t mips_cpu_id;
+	mips_prid_t mips_fpu_id;
+	bool mips_has_r4k_mmu;
+	bool mips_has_llsc;
+#ifdef MIPS3_PLUS
 #ifdef _LP64
-extern uint64_t mips3_xkphys_cached;
+	uint64_t mips3_xkphys_cached;
 #endif
-extern u_int mips3_pg_shift;
+	uint64_t mips3_tlb_vpn_mask;
+	uint64_t mips3_tlb_pfn_mask;
+	uint32_t mips3_tlb_pg_mask;
+	u_int mips3_pg_cached;
+	u_int mips3_pg_shift;
+#endif
+};
+extern struct mips_options mips_options;
 
 #define	CPU_MIPS_R4K_MMU		0x0001
 #define	CPU_MIPS_NO_LLSC		0x0002
@@ -290,9 +308,9 @@ extern u_int mips3_pg_shift;
 #   define MIPS_HAS_LLSC	0
 #  endif
 # else	/* _LOCORE */
-#  define MIPS_HAS_LLSC		(mips_has_llsc)
+#  define MIPS_HAS_LLSC		(mips_options.mips_has_llsc)
 # endif	/* _LOCORE */
-# define MIPS_HAS_LLADDR	((mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
+# define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 
 #elif defined(MIPS32)
 
@@ -304,7 +322,7 @@ extern u_int mips3_pg_shift;
 # define MIPS_HAS_R4K_MMU	1
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
-# define MIPS_HAS_LLADDR	((mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
+# define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 
 #elif defined(MIPS64)
 
@@ -316,7 +334,7 @@ extern u_int mips3_pg_shift;
 # define MIPS_HAS_R4K_MMU	1
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
-# define MIPS_HAS_LLADDR	((mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
+# define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 
 #endif
 
@@ -324,22 +342,24 @@ extern u_int mips3_pg_shift;
 
 #ifndef	_LOCORE
 
-#define	MIPS_HAS_R4K_MMU	(mips_has_r4k_mmu)
-#define	MIPS_HAS_LLSC		(mips_has_llsc)
-#define	MIPS_HAS_LLADDR		((mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
+#define	MIPS_HAS_R4K_MMU	(mips_options.mips_has_r4k_mmu)
+#define	MIPS_HAS_LLSC		(mips_options.mips_has_llsc)
+#define	MIPS_HAS_LLADDR		((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 
 /* This test is ... rather bogus */
-#define	CPUISMIPS3	((cpu_arch & \
+#define	CPUISMIPS3	((mips_options.mips_cpu_arch & \
 	(CPU_ARCH_MIPS3 | CPU_ARCH_MIPS4 | CPU_ARCH_MIPS32 | CPU_ARCH_MIPS64)) != 0)
 
 /* And these aren't much better while the previous test exists as is... */
-#define	CPUISMIPS32	((cpu_arch & CPU_ARCH_MIPS32) != 0)
-#define	CPUISMIPS64	((cpu_arch & CPU_ARCH_MIPS64) != 0)
-#define	CPUISMIPSNN	((cpu_arch & (CPU_ARCH_MIPS32 | CPU_ARCH_MIPS64)) != 0)
-#define	CPUIS64BITS	((cpu_arch & \
+#define	CPUISMIPS4	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS4) != 0)
+#define	CPUISMIPS5	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS5) != 0)
+#define	CPUISMIPS32	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS32) != 0)
+#define	CPUISMIPS64	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS64) != 0)
+#define	CPUISMIPSNN	((mips_options.mips_cpu_arch & (CPU_ARCH_MIPS32 | CPU_ARCH_MIPS64)) != 0)
+#define	CPUIS64BITS	((mips_options.mips_cpu_arch & \
 	(CPU_ARCH_MIPS3 | CPU_ARCH_MIPS4 | CPU_ARCH_MIPS64)) != 0)
 
-#define	MIPS_HAS_CLOCK	(cpu_arch >= CPU_ARCH_MIPS3)
+#define	MIPS_HAS_CLOCK	(mips_options.mips_cpu_arch >= CPU_ARCH_MIPS3)
 
 #else	/* !_LOCORE */
 
@@ -524,6 +544,7 @@ struct mips_vmfreelist;
 struct phys_ram_seg;
 void	dumpsys(void);
 int	savectx(struct user *);
+void	mips_vector_init(void);
 void	mips_init_msgbuf(void);
 void	mips_init_lwp0_uarea(void);
 void	mips_page_physload(vaddr_t, vaddr_t,
@@ -531,14 +552,14 @@ void	mips_page_physload(vaddr_t, vaddr_t,
 	    const struct mips_vmfreelist *, size_t);
 void	savefpregs(struct lwp *);
 void	loadfpregs(struct lwp *);
+void	cpu_identify(device_t);
+#ifdef MULTIPROCESSOR
+void	cpu_boot_secondary_processors(void);
+#endif
 
 /* locore*.S */
 int	badaddr(void *, size_t);
 int	badaddr64(uint64_t, size_t);
-
-/* mips_machdep.c */
-void	cpu_identify(device_t);
-void	mips_vector_init(void);
 
 #endif /* ! _LOCORE */
 #endif /* _KERNEL */

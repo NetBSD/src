@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64.16.12 2010/01/15 06:46:59 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.64.16.13 2010/01/20 06:58:36 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.12 2010/01/15 06:46:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.13 2010/01/20 06:58:36 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -356,7 +356,7 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	if (MIPS_HAS_R4K_MMU) {
 		int i;
 
-		for (i = 0; i < mips_num_tlb_entries; i++) {
+		for (i = 0; i < mips_options.mips_num_tlb_entries; i++) {
 			tlb_read_indexed(i, &tlb);
 			db_printf("TLB%c%2d Hi 0x%08"PRIxVADDR" ",
 			(tlb.tlb_lo0 | tlb.tlb_lo1) & MIPS3_PG_V ? ' ' : '*',
@@ -461,7 +461,7 @@ void
 db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	       const char *modif)
 {
-	u_int cp0flags = mycpu->cpu_cp0flags;
+	u_int cp0flags = mips_options.mips_cpu->cpu_cp0flags;
 
 	SHOW32(MIPS_COP_0_TLB_INDEX, "index");
 	SHOW32(MIPS_COP_0_TLB_RANDOM, "random");
@@ -495,7 +495,7 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		SHOW32(MIPS_COP_0_BAD_VADDR, "badvaddr");
 	}
 
-	if (cpu_arch >= CPU_ARCH_MIPS3) {
+	if (mips_options.mips_cpu_arch >= CPU_ARCH_MIPS3) {
 		SHOW32(MIPS_COP_0_COUNT, "count");
 	}
 
@@ -510,7 +510,7 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		SHOW32(MIPS_COP_0_TLB_HI, "entryhi");
 	}
 
-	if (cpu_arch >= CPU_ARCH_MIPS3) {
+	if (mips_options.mips_cpu_arch >= CPU_ARCH_MIPS3) {
 		SHOW32(MIPS_COP_0_COMPARE, "compare");
 	}
 
@@ -609,7 +609,7 @@ db_mfcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 {
 	uint64_t value;
 
-	if ((mycpu->cpu_flags & CPU_MIPS_HAVE_MxCR) == 0) {
+	if ((mips_options.mips_cpu->cpu_flags & CPU_MIPS_HAVE_MxCR) == 0) {
 		db_printf("mfcr not implemented on this CPU\n");
 		return;
 	}
@@ -637,7 +637,7 @@ db_mtcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 {
 	db_expr_t value;
 
-	if ((mycpu->cpu_flags & CPU_MIPS_HAVE_MxCR) == 0) {
+	if ((mips_options.mips_cpu->cpu_flags & CPU_MIPS_HAVE_MxCR) == 0) {
 		db_printf("mtcr not implemented on this CPU\n");
 		return;
 	}
