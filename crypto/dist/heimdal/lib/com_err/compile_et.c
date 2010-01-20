@@ -36,8 +36,9 @@
 #include <getarg.h>
 
 __RCSID("$Heimdal: compile_et.c 15426 2005-06-16 19:21:42Z lha $"
-        "$NetBSD: compile_et.c,v 1.7 2010/01/20 12:54:17 tsutsui Exp $");
+        "$NetBSD: compile_et.c,v 1.8 2010/01/20 19:54:07 tsutsui Exp $");
 
+#include <roken.h>
 #include <err.h>
 #include "parse.h"
 

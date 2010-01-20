@@ -34,17 +34,12 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 __RCSID("$Heimdal: strupr.c 21005 2007-06-08 01:54:35Z lha $"
-        "$NetBSD: strupr.c,v 1.6 2010/01/20 12:54:17 tsutsui Exp $");
+        "$NetBSD: strupr.c,v 1.7 2010/01/20 19:54:07 tsutsui Exp $");
 #endif
 #include <string.h>
 #include <ctype.h>
 
-#ifdef HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#include "roken-common.h"
-#else
 #include "roken.h"
-#endif
 
 #ifndef HAVE_STRUPR
 char * ROKEN_LIB_FUNCTION
