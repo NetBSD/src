@@ -34,14 +34,10 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
-#ifdef HAVE_NBTOOL_CONFIG_H
-#include "roken-common.h"
-#else
 #include "roken.h"
-#endif
 
 __RCSID("$Heimdal: strlcat.c 14773 2005-04-12 11:29:18Z lha $"
-        "$NetBSD: strlcat.c,v 1.6 2010/01/20 12:54:17 tsutsui Exp $");
+        "$NetBSD: strlcat.c,v 1.7 2010/01/20 19:54:07 tsutsui Exp $");
 
 #ifndef HAVE_STRLCAT
 
