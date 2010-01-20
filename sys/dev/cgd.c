@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.66 2010/01/12 23:49:34 dyoung Exp $ */
+/* $NetBSD: cgd.c,v 1.67 2010/01/20 18:55:17 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.66 2010/01/12 23:49:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.67 2010/01/20 18:55:17 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -193,23 +193,21 @@ cgd_attach(device_t parent, device_t self, void *aux)
 static int
 cgd_detach(device_t self, int flags)
 {
-	int	ret = 0;
-	int	pmask = 1 << RAW_PART;
+	int ret;
+	const int pmask = 1 << RAW_PART;
 	struct cgd_softc *sc = device_private(self);
-	struct dk_softc *dksc;
+	struct dk_softc *dksc = &sc->sc_dksc;
 
-	dksc = &sc->sc_dksc;
-	if ((dksc->sc_flags & DKF_INITED) != 0)
-	{
-		if (DK_BUSY(&sc->sc_dksc, pmask))
-			ret = EBUSY;
-		else
-			ret = cgd_ioctl_clr(sc, curlwp);
-	}
+	if (DK_BUSY(dksc, pmask))
+		return EBUSY;
 
-	disk_destroy(&sc->sc_dksc.sc_dkdev);
+	if ((dksc->sc_flags & DKF_INITED) != 0 &&
+	    (ret = cgd_ioctl_clr(sc, curlwp)) != 0)
+		return ret;
 
-	return ret;
+	disk_destroy(&dksc->sc_dkdev);
+
+	return 0;
 }
 
 void
