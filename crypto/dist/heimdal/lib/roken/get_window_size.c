@@ -34,7 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 __RCSID("$Heimdal: get_window_size.c 21005 2007-06-08 01:54:35Z lha $"
-        "$NetBSD: get_window_size.c,v 1.4 2010/01/20 12:54:17 tsutsui Exp $");
+        "$NetBSD: get_window_size.c,v 1.5 2010/01/20 15:03:50 tsutsui Exp $");
 #endif
 
 #include <stdlib.h>
@@ -59,11 +59,7 @@ __RCSID("$Heimdal: get_window_size.c 21005 2007-06-08 01:54:35Z lha $"
 #include <termios.h>
 #endif
 
-#ifdef HAVE_NBTOOL_CONFIG_H
-#include "roken-common.h"
-#else
 #include "roken.h"
-#endif
 
 int ROKEN_LIB_FUNCTION
 get_window_size(int fd, struct winsize *wp)
