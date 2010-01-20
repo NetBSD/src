@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.30 2009/05/17 01:33:25 tsutsui Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.31 2010/01/20 22:58:37 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.30 2009/05/17 01:33:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.31 2010/01/20 22:58:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,17 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.30 2009/05/17 01:33:25 tsutsui Exp 
 #include <dev/pci/pcidevs.h>
 
 #include <dev/ic/hmevar.h>
-#ifdef __sparc__
-#include <machine/promlib.h>
-#endif
-
-#ifndef HME_USE_LOCAL_MAC_ADDRESS
-#ifdef __sparc__
-#define HME_USE_LOCAL_MAC_ADDRESS	0	/* use system-wide address */
-#else
-#define HME_USE_LOCAL_MAC_ADDRESS	1
-#endif
-#endif
 
 struct hme_pci_softc {
 	struct	hme_softc	hsc_hme;	/* HME device */
@@ -92,7 +81,6 @@ hmematch_pci(device_t parent, cfdata_t cf, void *aux)
 	return (0);
 }
 
-#if HME_USE_LOCAL_MAC_ADDRESS
 static inline int
 hmepromvalid(uint8_t* buf)
 {
@@ -118,7 +106,6 @@ hmevpdoff(bus_space_tag_t romt, bus_space_handle_t romh, int vpdoff, int dev)
 	}
 	return vpdoff;
 }
-#endif
 
 void
 hmeattach_pci(device_t parent, device_t self, void *aux)
@@ -130,8 +117,8 @@ hmeattach_pci(device_t parent, device_t self, void *aux)
 	pcireg_t csr;
 	const char *intrstr;
 	int type;
-#if HME_USE_LOCAL_MAC_ADDRESS
 	struct pci_attach_args	ebus_pa;
+	prop_data_t		eaddrprop;
 	pcireg_t		ebus_cl, ebus_id;
 	uint8_t			*enaddr;
 	bus_space_tag_t		romt;
@@ -150,7 +137,6 @@ hmeattach_pci(device_t parent, device_t self, void *aux)
 	};
 #define PROMDATA_PTR_VPD	0x08
 #define PROMDATA_DATA2		0x0a
-#endif	/* HME_USE_LOCAL_MAC_ADDRESS */
 
 	sc->sc_dev = self;
 
@@ -220,7 +206,18 @@ hmeattach_pci(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-#if HME_USE_LOCAL_MAC_ADDRESS
+
+	/*
+	 * Check if we got a mac-address property passed
+	 */
+	eaddrprop = prop_dictionary_get(device_properties(self), "mac-address");
+
+	if (eaddrprop != NULL && prop_data_size(eaddrprop) == ETHER_ADDR_LEN) {
+		memcpy(&sc->sc_enaddr, prop_data_data_nocopy(eaddrprop),
+			    ETHER_ADDR_LEN);
+		goto got_eaddr;
+	}
+
 	/*
 	 * Dig out VPD (vital product data) and acquire Ethernet address.
 	 * The VPD of hme resides in the Boot PROM (PCI FCode) attached
@@ -291,15 +288,13 @@ hmeattach_pci(device_t parent, device_t self, void *aux)
 		bus_space_unmap(romt, romh, romsize);
 	}
 
-	if (enaddr)
+	if (enaddr) {
 		memcpy(sc->sc_enaddr, enaddr, ETHER_ADDR_LEN);
-	else
-#endif	/* HME_USE_LOCAL_MAC_ADDRESS */
-#ifdef __sparc__
-		prom_getether(PCITAG_NODE(pa->pa_tag), sc->sc_enaddr);
-#else
-		printf("%s: no Ethernet address found\n", device_xname(self));
-#endif
+		goto got_eaddr;
+	}
+
+	aprint_error_dev(self, "no Ethernet address found\n");
+got_eaddr:
 
 	/*
 	 * Map and establish our interrupt.
