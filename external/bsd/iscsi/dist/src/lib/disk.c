@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.4 2010/01/20 00:58:49 yamt Exp $ */
+/* $NetBSD: disk.c,v 1.5 2010/01/20 10:33:08 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -765,15 +765,31 @@ strpadcpy(uint8_t *dst, size_t dstlen, const char *src, const size_t srclen,
 
 /* handle REPORT LUNs SCSI command */
 static int
-report_luns(uint64_t *data, int64_t luns)
+report_luns(uint8_t *data, uint64_t luns)
 {
-	uint64_t	i;
-	int32_t		off;
+	uint64_t i;
+	uint32_t len;
 
-	for (i = 0, off = 8 ; i < (uint64_t)luns ; i++, off += sizeof(i)) {
-		data[(int)i] = ISCSI_HTONLL(i);
+	len = 8;
+	for (i = 0; i < luns; i++) {
+		uint8_t *p = &data[len];
+
+		if (i < 256) {
+			memset(p, 0, 8);
+			p[1] = (uint8_t)(i & 0xff);
+			len += 8;
+		} else if (i < 16384) {
+			memset(p, 0, 8);
+			p[0] = (uint8_t)(0x40 | ((i >> 8) & 0x3f));
+			p[1] = (uint8_t)(i & 0xff);
+			len += 8;
+		} else {
+			/* XXX */
+		}
 	}
-	return off;
+	*((uint32_t *)(void *)data) = ISCSI_HTONL(len - 8);
+	memset(&data[4], 0, 4);
+	return len;
 }
 
 /* handle persistent reserve in command */
@@ -1309,12 +1325,8 @@ device_command(target_session_t *sess, target_cmd_t *cmd)
 
 	case REPORT_LUNS:
 		iscsi_trace(TRACE_SCSI_CMD, "REPORT LUNS\n");
-		args->length = report_luns(
-				(uint64_t *)(void *)&args->send_data[8],
-				(off_t)disks.v[sess->d].luns);
-		*((uint32_t *)(void *)args->send_data) =
-				ISCSI_HTONL(disks.v[sess->d].luns *
-				sizeof(uint64_t));
+		args->length = report_luns(args->send_data,
+				disks.v[sess->d].luns);
 		args->input = 8;
 		args->status = SCSI_SUCCESS;
 		break;
