@@ -1841,8 +1841,8 @@ target_transfer_data(target_session_t * sess, iscsi_scsi_cmd_args_t * args,
 #if 0
 		RETURN_NOT_EQUAL("Final bit", args->final, 1, TTD_CLEANUP, -1);
 #else
-		if (data.final != 1) {
-			iscsi_err(__FILE__, __LINE__, "Final bit");
+		if (args->final != 1) {
+			iscsi_err(__FILE__, __LINE__, "Final bit\n");
 			TTD_CLEANUP;
 			return -1;
 		}
