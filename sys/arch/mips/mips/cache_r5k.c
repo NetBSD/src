@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.12 2005/12/24 20:07:19 perry Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.12.96.1 2010/01/20 09:04:35 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.12 2005/12/24 20:07:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.12.96.1 2010/01/20 09:04:35 matt Exp $");
 
 #include <sys/param.h>
 
@@ -89,7 +89,7 @@ void
 r5k_icache_sync_all_32(void)
 {
 	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
-	vaddr_t eva = va + mips_picache_size;
+	vaddr_t eva = va + mips_cache_info.mci_picache_size;
 
 	/*
 	 * Since we're hitting the whole thing, we don't have to
@@ -148,11 +148,11 @@ r5k_icache_sync_range_index_32(vaddr_t va, vsize_t size)
 	 * bits that determine the cache index, and make a KSEG0
 	 * address out of them.
 	 */
-	va = MIPS_PHYS_TO_KSEG0(orig_va & mips_picache_way_mask);
+	va = MIPS_PHYS_TO_KSEG0(orig_va & mips_cache_info.mci_picache_way_mask);
 
 	eva = round_line(va + size);
 	va = trunc_line(va);
-	w2va = va + mips_picache_way_size;
+	w2va = va + mips_cache_info.mci_picache_way_size;
 
 	while ((eva - va) >= (16 * 32)) {
 		cache_r4k_op_16lines_32_2way(va, w2va,
@@ -173,7 +173,7 @@ void
 r5k_pdcache_wbinv_all_16(void)
 {
 	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
-	vaddr_t eva = va + mips_pdcache_size;
+	vaddr_t eva = va + mips_cache_info.mci_pdcache_size;
 
 	/*
 	 * Since we're hitting the whole thing, we don't have to
@@ -191,7 +191,7 @@ void
 r5k_pdcache_wbinv_all_32(void)
 {
 	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
-	vaddr_t eva = va + mips_pdcache_size;
+	vaddr_t eva = va + mips_cache_info.mci_pdcache_size;
 
 	/*
 	 * Since we're hitting the whole thing, we don't have to
@@ -223,7 +223,7 @@ r4600v1_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
 	 * To make this a little less painful, just hit the entire
 	 * cache if we have a range >= the cache size.
 	 */
-	if ((eva - va) >= mips_pdcache_size) {
+	if ((eva - va) >= mips_cache_info.mci_pdcache_size) {
 		r5k_pdcache_wbinv_all_32();
 		return;
 	}
@@ -340,11 +340,11 @@ r5k_pdcache_wbinv_range_index_16(vaddr_t va, vsize_t size)
 	 * bits that determine the cache index, and make a KSEG0
 	 * address out of them.
 	 */
-	va = MIPS_PHYS_TO_KSEG0(va & mips_pdcache_way_mask);
+	va = MIPS_PHYS_TO_KSEG0(va & mips_cache_info.mci_pdcache_way_mask);
 
 	eva = round_line16(va + size);
 	va = trunc_line16(va);
-	w2va = va + mips_pdcache_way_size;
+	w2va = va + mips_cache_info.mci_pdcache_way_size;
 
 	while ((eva - va) >= (16 * 16)) {
 		cache_r4k_op_16lines_16_2way(va, w2va,
@@ -372,11 +372,11 @@ r5k_pdcache_wbinv_range_index_32(vaddr_t va, vsize_t size)
 	 * bits that determine the cache index, and make a KSEG0
 	 * address out of them.
 	 */
-	va = MIPS_PHYS_TO_KSEG0(va & mips_pdcache_way_mask);
+	va = MIPS_PHYS_TO_KSEG0(va & mips_cache_info.mci_pdcache_way_mask);
 
 	eva = round_line(va + size);
 	va = trunc_line(va);
-	w2va = va + mips_pdcache_way_size;
+	w2va = va + mips_cache_info.mci_pdcache_way_size;
 
 	while ((eva - va) >= (16 * 32)) {
 		cache_r4k_op_16lines_32_2way(va, w2va,
@@ -604,7 +604,7 @@ void
 r5k_sdcache_wbinv_all(void)
 {
 
-	r5k_sdcache_wbinv_range(MIPS_PHYS_TO_KSEG0(0), mips_sdcache_size);
+	r5k_sdcache_wbinv_range(MIPS_PHYS_TO_KSEG0(0), mips_cache_info.mci_sdcache_size);
 }
 
 void
@@ -617,7 +617,7 @@ r5k_sdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 	 * bits that determine the cache index, and make a KSEG0
 	 * address out of them.
 	 */
-	va = MIPS_PHYS_TO_KSEG0(va & (mips_sdcache_size - 1));
+	va = MIPS_PHYS_TO_KSEG0(va & (mips_cache_info.mci_sdcache_size - 1));
 	r5k_sdcache_wbinv_range(va, size);
 }
 

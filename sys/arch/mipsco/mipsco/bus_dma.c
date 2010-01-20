@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22.16.1 2010/01/14 00:37:27 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.22.16.2 2010/01/20 09:04:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.1 2010/01/14 00:37:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.2 2010/01/20 09:04:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -489,7 +489,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	 * NOTE: Even though this is `wbinv_all', since the cache is
 	 * write-through, it just invalidates it.
 	 */
-	if (len >= mips_pdcache_size) {
+	if (len >= mips_cache_info.mci_pdcache_size) {
 		mips_dcache_wbinv_all();
 		return;
 	}

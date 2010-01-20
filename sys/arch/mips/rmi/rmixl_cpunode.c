@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpunode.c,v 1.1.2.1 2010/01/17 00:11:11 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpunode.c,v 1.1.2.2 2010/01/20 09:04:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpunode.c,v 1.1.2.1 2010/01/17 00:11:11 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpunode.c,v 1.1.2.2 2010/01/20 09:04:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,7 @@ cpunode_attach(device_t parent, device_t self, void *aux)
 	struct cpunode_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 	struct cpunode_attach_args na;
+	const u_int cpu_cidflags = mips_options.mips_cpu->cpu_cidflags;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -91,13 +92,13 @@ cpunode_attach(device_t parent, device_t self, void *aux)
 	sc->sc_node = ma->ma_node;
 	sc->sc_attached = 1;
 
-	switch (mycpu->cpu_cidflags & MIPS_CIDFL_RMI_TYPE) {
+	switch (cpu_cidflags & MIPS_CIDFL_RMI_TYPE) {
 	case CIDFL_RMI_TYPE_XLR:
 	case CIDFL_RMI_TYPE_XLS:
 		/*
 		 * L2 is unified on XLR, XLS
 		 */
-		sz = (size_t)MIPS_CIDFL_RMI_L2SZ(mycpu->cpu_cidflags);
+		sz = (size_t)MIPS_CIDFL_RMI_L2SZ(cpu_cidflags);
 		aprint_normal("%s: %dKB/32B %d-banked 8-way set associative"
 			" unified L2 cache\n", device_xname(self),
 			sz/1024, sz/(256 * 1024));
@@ -107,7 +108,7 @@ cpunode_attach(device_t parent, device_t self, void *aux)
 		break;
 	}
 
-	ncores = MIPS_CIDFL_RMI_NTHREADS(mycpu->cpu_cidflags);
+	ncores = MIPS_CIDFL_RMI_NTHREADS(cpu_cidflags);
 	aprint_normal("%s: %d %s on node\n", device_xname(self), ncores,
 		ncores == 1 ? "core" : "cores");
 

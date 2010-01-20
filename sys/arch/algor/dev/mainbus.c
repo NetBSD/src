@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.20 2008/04/28 20:23:10 martin Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.20.18.1 2010/01/20 09:04:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20.18.1 2010/01/20 09:04:32 matt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -194,7 +194,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 #endif /* ALGOR_P4032 || ALGOR_P5064 || ALGOR_P6032 */
 
-	pci_configure_bus(pc, ioext, memext, NULL, 0, mips_dcache_align);
+	pci_configure_bus(pc, ioext, memext, NULL, 0, mips_cache_info.mci_dcache_align);
 	extent_destroy(ioext);
 	extent_destroy(memext);
 

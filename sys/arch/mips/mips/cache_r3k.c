@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r3k.c,v 1.4 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: cache_r3k.c,v 1.4.96.1 2010/01/20 09:04:34 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_r3k.c,v 1.4 2005/12/11 12:18:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_r3k.c,v 1.4.96.1 2010/01/20 09:04:34 matt Exp $");
 
 #include <sys/param.h>
 
@@ -58,7 +58,7 @@ void
 r3k_icache_sync_all(void)
 {
 	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
-	vaddr_t eva = va + mips_picache_size;
+	vaddr_t eva = va + mips_cache_info.mci_picache_size;
 
 	r3k_picache_do_inv(va, eva);
 }
@@ -70,7 +70,7 @@ r3k_icache_sync_range(vaddr_t va, vsize_t size)
 
 	va = trunc_line(va);
 
-	if ((eva - va) >= mips_picache_size) {
+	if ((eva - va) >= mips_cache_info.mci_picache_size) {
 		r3k_icache_sync_all();
 		return;
 	}
@@ -82,7 +82,7 @@ void
 r3k_pdcache_wbinv_all(void)
 {
 	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
-	vaddr_t eva = va + mips_pdcache_size;
+	vaddr_t eva = va + mips_cache_info.mci_pdcache_size;
 
 	/* Cache is write-through. */
 
@@ -96,7 +96,7 @@ r3k_pdcache_inv_range(vaddr_t va, vsize_t size)
 
 	va = trunc_line(va);
 
-	if ((eva - va) >= mips_pdcache_size) {
+	if ((eva - va) >= mips_cache_info.mci_pdcache_size) {
 		r3k_pdcache_wbinv_all();
 		return;
 	}

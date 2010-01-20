@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.1 2010/01/16 23:48:16 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.2 2010/01/20 09:04:35 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.1 2010/01/16 23:48:16 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.2 2010/01/20 09:04:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -91,7 +91,7 @@ cpucore_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("%s: ", device_xname(self));
 	cpu_identify(self);
 
-	nthreads = MIPS_CIDFL_RMI_NTHREADS(mycpu->cpu_cidflags);
+	nthreads = MIPS_CIDFL_RMI_NTHREADS(mips_options.mips_cpu->cpu_cidflags);
 	aprint_normal_dev(self, "%d %s on core\n", nthreads,
 		nthreads == 1 ? "thread" : "threads");
 

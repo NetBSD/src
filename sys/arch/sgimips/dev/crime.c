@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.33 2008/08/08 16:05:47 tsutsui Exp $	*/
+/*	$NetBSD: crime.c,v 1.33.12.1 2010/01/20 09:04:31 matt Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.33 2008/08/08 16:05:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.33.12.1 2010/01/20 09:04:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -99,6 +99,7 @@ static void
 crime_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
+	struct cpu_info * const ci = curcpu();
 	uint64_t crm_id;
 	uint64_t baseline, endline;
 	uint32_t startctr, endctr, cps;
@@ -157,11 +158,12 @@ crime_attach(struct device *parent, struct device *self, void *aux)
 	} while (endline - baseline < (CRIME_TIMER_FREQ / 10));
 
 	cps = (endctr - startctr) * 10;
-	curcpu()->ci_cpu_freq = cps;
-	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
-		curcpu()->ci_cpu_freq *= 2;
-	curcpu()->ci_cycles_per_hz = (cps + (hz / 2)) / hz;
-	curcpu()->ci_divisor_delay = (cps + (1000000 / 2)) / 1000000;
+	ci->ci_cpu_freq = cps;
+	ci->ci_cctr_freq = cps;
+	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
+		ci->ci_cpu_freq *= 2;
+	ci->ci_cycles_per_hz = (cps + (hz / 2)) / hz;
+	ci->ci_divisor_delay = (cps + (1000000 / 2)) / 1000000;
 
 	/* Turn on memory error and crime error interrupts.
 	   All others turned on as devices are registered. */

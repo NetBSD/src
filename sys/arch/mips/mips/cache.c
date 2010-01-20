@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.33.96.1 2010/01/20 06:58:36 matt Exp $	*/
+/*	$NetBSD: cache.c,v 1.33.96.2 2010/01/20 09:04:34 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.33.96.1 2010/01/20 06:58:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.33.96.2 2010/01/20 09:04:34 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -159,8 +159,10 @@ mips_dcache_compute_align(void)
 void
 mips_config_cache(void)
 {
+#ifdef DIAGNOSTIC
 	struct mips_cache_info * const mci = &mips_cache_info;
 	struct mips_cache_ops * const mco = &mips_cache_ops;
+#endif
 	const mips_prid_t cpu_id = mips_options.mips_cpu_id;
 	
 #if defined(MIPS1) || defined(MIPS3) || defined(MIPS4)
@@ -216,8 +218,9 @@ mips_config_cache(void)
 void
 mips_config_cache_prehistoric(void)
 {
-	struct mips_cache_info * const info = &mips_cache_info;
+	struct mips_cache_info * const mci = &mips_cache_info;
 	struct mips_cache_ops * const mco = &mips_cache_ops;
+	const mips_prid_t cpu_id = mips_options.mips_cpu_id;
 #if defined(MIPS3) || defined(MIPS4)
 	int csizebase = MIPS3_CONFIG_C_DEFBASE;
 #endif
@@ -339,7 +342,7 @@ mips_config_cache_prehistoric(void)
 		/* change to write-through mode */
 		tx39_cache_config_write_through();
 
-		uvmexp.ncolors = atop(mips_pdcache_size) / mips_pdcache_ways;
+		uvmexp.ncolors = atop(mci->mci_pdcache_size) / mci->mci_pdcache_ways;
 		break;
 #endif /* ENABLE_MIPS_TX3900 */
 #endif /* MIPS1 */
@@ -369,17 +372,17 @@ mips_config_cache_prehistoric(void)
 	case MIPS_R4000:
 	case MIPS_R4300:
 		mci->mci_picache_ways = 1;
-		mips_pdcache_ways = 1;
-		mips_sdcache_ways = 1;
+		mci->mci_pdcache_ways = 1;
+		mci->mci_sdcache_ways = 1;
 
 		mips3_get_cache_config(csizebase);
 
-		if (mips_picache_size > PAGE_SIZE ||
-		    mips_pdcache_size > PAGE_SIZE)
+		if (mci->mci_picache_size > PAGE_SIZE ||
+		    mci->mci_pdcache_size > PAGE_SIZE)
 			/* no VCE support if there is no L2 cache */
-			mips_cache_virtual_alias = true;
+			mci->mci_cache_virtual_alias = true;
 
-		switch (mips_picache_line_size) {
+		switch (mci->mci_picache_line_size) {
 		case 16:
 			mco->mco_icache_sync_all =
 			    r4k_icache_sync_all_16;
@@ -400,10 +403,10 @@ mips_config_cache_prehistoric(void)
 
 		default:
 			panic("r4k picache line size %d",
-			    mips_picache_line_size);
+			    mci->mci_picache_line_size);
 		}
 
-		switch (mips_pdcache_line_size) {
+		switch (mci->mci_pdcache_line_size) {
 		case 16:
 			mco->mco_pdcache_wbinv_all =
 			    r4k_pdcache_wbinv_all_16;
@@ -432,7 +435,7 @@ mips_config_cache_prehistoric(void)
 
 		default:
 			panic("r4k pdcache line size %d",
-			    mips_pdcache_line_size);
+			    mci->mci_pdcache_line_size);
 		}
 
 		/* Virtually-indexed cache; no use for colors. */
@@ -447,16 +450,16 @@ mips_config_cache_prehistoric(void)
 #endif
 	case MIPS_RM5200:
 primary_cache_is_2way:
-		mips_picache_ways = 2;
-		mips_pdcache_ways = 2;
+		mci->mci_picache_ways = 2;
+		mci->mci_pdcache_ways = 2;
 
 		mips3_get_cache_config(csizebase);
 
-		if ((mips_picache_size / mips_picache_ways) > PAGE_SIZE ||
-		    (mips_pdcache_size / mips_pdcache_ways) > PAGE_SIZE)
-			mips_cache_virtual_alias = true;
+		if ((mci->mci_picache_size / mci->mci_picache_ways) > PAGE_SIZE ||
+		    (mci->mci_pdcache_size / mci->mci_pdcache_ways) > PAGE_SIZE)
+			mci->mci_cache_virtual_alias = true;
 
-		switch (mips_picache_line_size) {
+		switch (mci->mci_picache_line_size) {
 		case 32:
 			mco->mco_icache_sync_all =
 			    r5k_icache_sync_all_32;
@@ -468,10 +471,10 @@ primary_cache_is_2way:
 
 		default:
 			panic("r5k picache line size %d",
-			    mips_picache_line_size);
+			    mci->mci_picache_line_size);
 		}
 
-		switch (mips_pdcache_line_size) {
+		switch (mci->mci_pdcache_line_size) {
 		case 16:
 			mco->mco_pdcache_wbinv_all =
 			    r5k_pdcache_wbinv_all_16;
@@ -500,7 +503,7 @@ primary_cache_is_2way:
 
 		default:
 			panic("r5k pdcache line size %d",
-			    mips_pdcache_line_size);
+			    mci->mci_pdcache_line_size);
 		}
 
 		/*
@@ -508,7 +511,7 @@ primary_cache_is_2way:
 		 */
 		if (MIPS_PRID_IMPL(cpu_id) == MIPS_R4600 &&
 		    MIPS_PRID_REV_MAJ(cpu_id) == 1) {
-			KASSERT(mips_pdcache_line_size == 32);
+			KASSERT(mci->mci_pdcache_line_size == 32);
 			mco->mco_pdcache_wbinv_range =
 			    r4600v1_pdcache_wbinv_range_32;
 			mco->mco_pdcache_inv_range =
@@ -517,7 +520,7 @@ primary_cache_is_2way:
 			    r4600v1_pdcache_wb_range_32;
 		} else if (MIPS_PRID_IMPL(cpu_id) == MIPS_R4600 &&
 			   MIPS_PRID_REV_MAJ(cpu_id) == 2) {
-			KASSERT(mips_pdcache_line_size == 32);
+			KASSERT(mci->mci_pdcache_line_size == 32);
 			mco->mco_pdcache_wbinv_range =
 			    r4600v2_pdcache_wbinv_range_32;
 			mco->mco_pdcache_inv_range =
@@ -531,7 +534,7 @@ primary_cache_is_2way:
 		 */
 		if (MIPS_PRID_IMPL(cpu_id) == MIPS_R4100 &&
 		    MIPS_PRID_REV_MAJ(cpu_id) == 8) {
-			KASSERT(mips_pdcache_line_size == 16);
+			KASSERT(mci->mci_pdcache_line_size == 16);
 			mco->mco_pdcache_wbinv_range =
 			    vr4131v1_pdcache_wbinv_range_16;
 		}
@@ -541,17 +544,17 @@ primary_cache_is_2way:
 #ifdef MIPS3_5900
 	case MIPS_R5900:
 		/* cache spec */
-		mips_picache_ways = 2;
-		mips_pdcache_ways = 2;
-		mips_picache_size = CACHE_R5900_SIZE_I;
-		mips_picache_line_size = CACHE_R5900_LSIZE_I;
-		mips_pdcache_size = CACHE_R5900_SIZE_D;
-		mips_pdcache_line_size = CACHE_R5900_LSIZE_D;
-		mips_cache_alias_mask =
-		    ((mips_pdcache_size / mips_pdcache_ways) - 1) & ~PAGE_MASK;
-		mips_cache_prefer_mask =
-		    max(mips_pdcache_size, mips_picache_size) - 1;
-		mips_cache_virtual_alias = true;
+		mci->mci_picache_ways = 2;
+		mci->mci_pdcache_ways = 2;
+		mci->mci_picache_size = CACHE_R5900_SIZE_I;
+		mci->mci_picache_line_size = CACHE_R5900_LSIZE_I;
+		mci->mci_pdcache_size = CACHE_R5900_SIZE_D;
+		mci->mci_pdcache_line_size = CACHE_R5900_LSIZE_D;
+		mci->mci_cache_alias_mask =
+		    ((mci->mci_pdcache_size / mci->mci_pdcache_ways) - 1) & ~PAGE_MASK;
+		mci->mci_cache_prefer_mask =
+		    max(mci->mci_pdcache_size, mci->mci_picache_size) - 1;
+		mci->mci_cache_virtual_alias = true;
 		/* cache ops */
 		mco->mco_icache_sync_all =
 		    r5900_icache_sync_all_64;
@@ -575,9 +578,9 @@ primary_cache_is_2way:
 	case MIPS_R10000:
 	case MIPS_R12000:
 	case MIPS_R14000:
-		mips_picache_ways = 2;
-		mips_pdcache_ways = 2;
-		mips_sdcache_ways = 2;
+		mci->mci_picache_ways = 2;
+		mci->mci_pdcache_ways = 2;
+		mci->mci_sdcache_ways = 2;
 
 		mips4_get_cache_config(csizebase);
 
@@ -611,20 +614,20 @@ primary_cache_is_2way:
 	/*
 	 * Compute the "way mask" for each cache.
 	 */
-	if (mips_picache_size) {
-		KASSERT(mips_picache_ways != 0);
-		mips_picache_way_size = (mips_picache_size / mips_picache_ways);
-		mips_picache_way_mask = mips_picache_way_size - 1;
+	if (mci->mci_picache_size) {
+		KASSERT(mci->mci_picache_ways != 0);
+		mci->mci_picache_way_size = (mci->mci_picache_size / mci->mci_picache_ways);
+		mci->mci_picache_way_mask = mci->mci_picache_way_size - 1;
 	}
-	if (mips_pdcache_size) {
-		KASSERT(mips_pdcache_ways != 0);
-		mips_pdcache_way_size = (mips_pdcache_size / mips_pdcache_ways);
-		mips_pdcache_way_mask = mips_pdcache_way_size - 1;
+	if (mci->mci_pdcache_size) {
+		KASSERT(mci->mci_pdcache_ways != 0);
+		mci->mci_pdcache_way_size = (mci->mci_pdcache_size / mci->mci_pdcache_ways);
+		mci->mci_pdcache_way_mask = mci->mci_pdcache_way_size - 1;
 	}
 
 	mips_dcache_compute_align();
 
-	if (mips_sdcache_line_size == 0)
+	if (mci->mci_sdcache_line_size == 0)
 		return;
 
 	/*
@@ -650,19 +653,19 @@ primary_cache_is_2way:
 		 * accesses which can't be managed by PMAP_PREFER(9))
 		 * will still be resolved by the VCED/VCEI handler.
 		 */
-		mips_cache_alias_mask =
+		mci->mci_cache_alias_mask =
 		    (MIPS3_MAX_PCACHE_SIZE - 1) & ~PAGE_MASK;	/* va[14:12] */
-		mips_cache_prefer_mask = MIPS3_MAX_PCACHE_SIZE - 1;
+		mci->mci_cache_prefer_mask = MIPS3_MAX_PCACHE_SIZE - 1;
 
-		mips_cache_virtual_alias = 0;
+		mci->mci_cache_virtual_alias = 0;
 		/* FALLTHROUGH */
 	case MIPS_R4600:
 #ifdef ENABLE_MIPS_R4700
 	case MIPS_R4700:
 #endif
-		switch (mips_sdcache_ways) {
+		switch (mci->mci_sdcache_ways) {
 		case 1:
-			switch (mips_sdcache_line_size) {
+			switch (mci->mci_sdcache_line_size) {
 			case 32:
 				mco->mco_sdcache_wbinv_all =
 				    r4k_sdcache_wbinv_all_32;
@@ -705,20 +708,20 @@ primary_cache_is_2way:
 
 			default:
 				panic("r4k sdcache %d way line size %d",
-				    mips_sdcache_ways, mips_sdcache_line_size);
+				    mci->mci_sdcache_ways, mci->mci_sdcache_line_size);
 			}
 			break;
 
 		default:
 			panic("r4k sdcache %d way line size %d",
-			    mips_sdcache_ways, mips_sdcache_line_size);
+			    mci->mci_sdcache_ways, mci->mci_sdcache_line_size);
 		}
 		break;
 #ifndef ENABLE_MIPS_R3NKK
 	case MIPS_R5000:
 #endif
 	case MIPS_RM5200:
-		mips_sdcache_write_through = true;
+		mci->mci_sdcache_write_through = true;
 		mco->mco_sdcache_wbinv_all =
 		    r5k_sdcache_wbinv_all;
 		mco->mco_sdcache_wbinv_range =
@@ -756,10 +759,10 @@ primary_cache_is_2way:
 	/*
 	 * Compute the "way mask" for each secondary cache.
 	 */
-	if (mips_sdcache_size) {
-		KASSERT(mips_sdcache_ways != 0);
-		mips_sdcache_way_size = (mips_sdcache_size / mips_sdcache_ways);
-		mips_sdcache_way_mask = mips_sdcache_way_size - 1;
+	if (mci->mci_sdcache_size) {
+		KASSERT(mci->mci_sdcache_ways != 0);
+		mci->mci_sdcache_way_size = (mci->mci_sdcache_size / mci->mci_sdcache_ways);
+		mci->mci_sdcache_way_mask = mci->mci_sdcache_way_size - 1;
 	}
 
 	mips_dcache_compute_align();
@@ -775,14 +778,15 @@ primary_cache_is_2way:
 void
 tx3900_get_cache_config(void)
 {
+	struct mips_cache_info * const mci = &mips_cache_info;
 	uint32_t config;
 
 	config = tx3900_cp0_config_read();
 
-	mips_picache_size = R3900_C_SIZE_MIN <<
+	mci->mci_picache_size = R3900_C_SIZE_MIN <<
 	    ((config & R3900_CONFIG_ICS_MASK) >> R3900_CONFIG_ICS_SHIFT);
 
-	mips_pdcache_size = R3900_C_SIZE_MIN <<
+	mci->mci_pdcache_size = R3900_C_SIZE_MIN <<
 	    ((config & R3900_CONFIG_DCS_MASK) >> R3900_CONFIG_DCS_SHIFT);
 }
 
@@ -794,13 +798,14 @@ tx3900_get_cache_config(void)
 void
 tx3920_get_cache_config(void)
 {
+	struct mips_cache_info * const mci = &mips_cache_info;
 
 	/* Size is the same as TX3900. */
 	tx3900_get_cache_config();
 
 	/* Now determine write-through/write-back mode. */
 	if ((tx3900_cp0_config_read() & R3900_CONFIG_WBON) == 0)
-		mips_pdcache_write_through = true;
+		mci->mci_pdcache_write_through = true;
 }
 
 /*
@@ -842,23 +847,24 @@ void
 mips3_get_cache_config(int csizebase)
 {
 	struct mips_cache_info * const mci = &mips_cache_info;
+	const mips_prid_t cpu_id = mips_options.mips_cpu_id;
 	bool has_sdcache_enable = false;
 	uint32_t config = mips3_cp0_config_read();
 
-	mips_picache_size = MIPS3_CONFIG_CACHE_SIZE(config,
+	mci->mci_picache_size = MIPS3_CONFIG_CACHE_SIZE(config,
 	    MIPS3_CONFIG_IC_MASK, csizebase, MIPS3_CONFIG_IC_SHIFT);
-	mips_picache_line_size = MIPS3_CONFIG_CACHE_L1_LSIZE(config,
+	mci->mci_picache_line_size = MIPS3_CONFIG_CACHE_L1_LSIZE(config,
 	    MIPS3_CONFIG_IB);
 
-	mips_pdcache_size = MIPS3_CONFIG_CACHE_SIZE(config,
+	mci->mci_pdcache_size = MIPS3_CONFIG_CACHE_SIZE(config,
 	    MIPS3_CONFIG_DC_MASK, csizebase, MIPS3_CONFIG_DC_SHIFT);
-	mips_pdcache_line_size = MIPS3_CONFIG_CACHE_L1_LSIZE(config,
+	mci->mci_pdcache_line_size = MIPS3_CONFIG_CACHE_L1_LSIZE(config,
 	    MIPS3_CONFIG_DB);
 
-	mips_cache_alias_mask =
-	    ((mips_pdcache_size / mips_pdcache_ways) - 1) & ~PAGE_MASK;
-	mips_cache_prefer_mask =
-	    max(mips_pdcache_size, mips_picache_size) - 1;
+	mci->mci_cache_alias_mask =
+	    ((mci->mci_pdcache_size / mci->mci_pdcache_ways) - 1) & ~PAGE_MASK;
+	mci->mci_cache_prefer_mask =
+	    max(mci->mci_pdcache_size, mci->mci_picache_size) - 1;
 
 	switch(MIPS_PRID_IMPL(cpu_id)) {
 #ifndef ENABLE_MIPS_R3NKK
@@ -878,10 +884,10 @@ mips3_get_cache_config(int csizebase)
 	if ((config & MIPS3_CONFIG_SC) == 0) {
 		if (has_sdcache_enable == 0 ||
 		    (has_sdcache_enable && (config & MIPS3_CONFIG_SE))) {
-			mips_sdcache_line_size = 
+			mci->mci_sdcache_line_size = 
 				MIPS3_CONFIG_CACHE_L2_LSIZE(config);
 			if ((config & MIPS3_CONFIG_SS) == 0)
-				mips_scache_unified = true;
+				mci->mci_scache_unified = true;
 		} else {
 #ifdef CACHE_DEBUG
 			printf("External cache detected, but is disabled -- WILL NOT ENABLE!\n");
@@ -894,20 +900,21 @@ mips3_get_cache_config(int csizebase)
 void
 mips4_get_cache_config(int csizebase)
 {
+	struct mips_cache_info * const mci = &mips_cache_info;
 	uint32_t config = mips3_cp0_config_read();
 
-	mips_picache_size = MIPS4_CONFIG_CACHE_SIZE(config,
+	mci->mci_picache_size = MIPS4_CONFIG_CACHE_SIZE(config,
 	    MIPS4_CONFIG_IC_MASK, csizebase, MIPS4_CONFIG_IC_SHIFT);
-	mips_picache_line_size = 64;	/* 64 Byte */
+	mci->mci_picache_line_size = 64;	/* 64 Byte */
 
-	mips_pdcache_size = MIPS4_CONFIG_CACHE_SIZE(config,
+	mci->mci_pdcache_size = MIPS4_CONFIG_CACHE_SIZE(config,
 	    MIPS4_CONFIG_DC_MASK, csizebase, MIPS4_CONFIG_DC_SHIFT);
-	mips_pdcache_line_size = 32;	/* 32 Byte */
+	mci->mci_pdcache_line_size = 32;	/* 32 Byte */
 
-	mips_cache_alias_mask =
-	    ((mips_pdcache_size / mips_pdcache_ways) - 1) & ~PAGE_MASK;
-	mips_cache_prefer_mask =
-	    max(mips_pdcache_size, mips_picache_size) - 1;
+	mci->mci_cache_alias_mask =
+	    ((mci->mci_pdcache_size / mci->mci_pdcache_ways) - 1) & ~PAGE_MASK;
+	mci->mci_cache_prefer_mask =
+	    max(mci->mci_pdcache_size, mci->mci_picache_size) - 1;
 }
 #endif /* ENABLE_MIPS4_CACHE_R10K */
 #endif /* MIPS3 || MIPS4 */

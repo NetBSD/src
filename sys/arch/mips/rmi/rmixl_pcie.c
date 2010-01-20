@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.1.2.6 2010/01/10 02:48:47 matt Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.1.2.7 2010/01/20 09:04:35 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.6 2010/01/10 02:48:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.7 2010/01/20 09:04:35 matt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -501,7 +501,7 @@ rmixl_pcie_lnkcfg(struct rmixl_pcie_softc *sc)
 	r = RMIXL_IOREG_READ(RMIXL_IO_DEV_GPIO + RMIXL_GPIO_RESET_CFG);
 	DPRINTF(("%s: GPIO RCR %#x\n", __func__, r));
 
-	switch (MIPS_PRID_IMPL(cpu_id)) {
+	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
 	case MIPS_XLS104:
 	case MIPS_XLS108:
 		rmixl_pcie_lnkcfg_1xx(&sc->sc_pcie_lnktab, r);
@@ -533,6 +533,7 @@ rmixl_pcie_lnkcfg(struct rmixl_pcie_softc *sc)
 static void
 rmixl_pcie_errata(struct rmixl_pcie_softc *sc)
 {
+	const mips_prid_t cpu_id = mips_options.mips_cpu_id;
 	u_int rev;
 	u_int lanes;
 	bool e391 = false;
@@ -658,7 +659,8 @@ rmixl_pcie_init(struct rmixl_pcie_softc *sc)
 		rcp->rc_pci_mem_pbase + rcp->rc_pci_mem_size - 1,
 		M_DEVBUF, NULL, 0, EX_NOWAIT);
 
-	pci_configure_bus(pc, ioext, memext, NULL, 0, mips_dcache_align);
+	pci_configure_bus(pc, ioext, memext, NULL, 0,
+	    mips_cache_info.mci_dcache_align);
 
 	extent_destroy(ioext);
 	extent_destroy(memext);
@@ -734,7 +736,7 @@ rmixl_pcie_init_ecfg(struct rmixl_pcie_softc *sc)
 	rmixl_pcie_conf_write(v, tag, RMIXL_PCIE_ECFG_RECR, r);
 
 
-	if (MIPS_PRID_IMPL(cpu_id) == MIPS_XLS408LITE) {
+	if (MIPS_PRID_IMPL(mips_options.mips_cpu_id) == MIPS_XLS408LITE) {
 		/*
 		 * establish ISR for PCIE Fatal Error interrupt
 		 * XXX for XLS408Lite, XLS2xx, XLS1xx only
@@ -982,7 +984,7 @@ rmixl_pcie_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *pih)
 	/*
 	 * XXX cpu implementation specific
 	 */
-	switch (MIPS_PRID_IMPL(cpu_id)) {
+	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
 	case MIPS_XLS408LITE:
 		switch (pa->pa_bus) {
 		case 1:
@@ -1016,7 +1018,7 @@ rmixl_pcie_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *pih)
 		break;
 	default:
 		panic("%s: cpu IMPL %#x not supported\n",
-			__func__, MIPS_PRID_IMPL(cpu_id));
+			__func__, MIPS_PRID_IMPL(mips_options.mips_cpu_id));
 	}
 
 	*pih = irq;
@@ -1030,7 +1032,7 @@ rmixl_pcie_intr_string(void *v, pci_intr_handle_t pih)
 	const char *name = "(illegal)";
 	int irq = (int)pih;
 
-	switch (MIPS_PRID_IMPL(cpu_id)) {
+	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
 	case MIPS_XLS408LITE:
 		switch (irq) {
 		case 26:

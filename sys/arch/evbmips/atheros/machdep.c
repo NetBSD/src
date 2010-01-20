@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.13.10.3 2010/01/10 02:48:45 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.13.10.4 2010/01/20 09:04:33 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,7 +147,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.10.3 2010/01/10 02:48:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.10.4 2010/01/20 09:04:33 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -202,9 +202,10 @@ cal_timer(void)
 	cntfreq = curcpu()->ci_cpu_freq = ar531x_cpu_freq();
 	
 	/* MIPS 4Kc CP0 counts every other clock */
-	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
+	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
 		cntfreq /= 2;
 
+	curcpu()->ci_cctr_freq = cntfreq;
 	curcpu()->ci_cycles_per_hz = (cntfreq + hz / 2) / hz;
 
 	/* Compute number of cycles per 1us (1/MHz). 0.5MHz is for roundup. */

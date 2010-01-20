@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121.8.2 2009/09/10 01:51:32 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121.8.3 2010/01/20 09:04:32 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121.8.2 2009/09/10 01:51:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121.8.3 2010/01/20 09:04:32 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -953,17 +953,18 @@ void ddb_trap_hook(int where)
 
 void mips_machdep_cache_config(void)
 {
+
 	arcbios_tree_walk(mips_machdep_find_l2cache, NULL);
 
-	switch (MIPS_PRID_IMPL(cpu_id)) {
+	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
 #if defined(INDY_R4600_CACHE)
 	case MIPS_R4600:
 		/*
 		 * R4600 is on Indy-class machines only.  Disable and
 		 * flush pcache.
 		 */
-		mips_sdcache_size = 0;
-		mips_sdcache_line_size = 0;
+		mips_cache_info.mci_sdcache_size = 0;
+		mips_cache_info.mci_sdcache_line_size = 0;
 		ip22_sdcache_disable();
 		break;
 #endif
@@ -979,7 +980,8 @@ void mips_machdep_cache_config(void)
 void
 mips_machdep_find_l2cache(struct arcbios_component *comp, struct arcbios_treewalk_context *atc)
 {
-	struct device *self = atc->atc_cookie;
+	struct mips_cache_info * const mci = &mips_cache_info;
+	device_t self = atc->atc_cookie;
 
 	if (comp->Class != COMPONENT_CLASS_CacheClass)
 		return;
@@ -989,11 +991,11 @@ mips_machdep_find_l2cache(struct arcbios_component *comp, struct arcbios_treewal
 		panic("%s: split L2 cache", self->dv_xname);
 	case COMPONENT_TYPE_SecondaryDCache:
 	case COMPONENT_TYPE_SecondaryCache:
-		mips_sdcache_size = COMPONENT_KEY_Cache_CacheSize(comp->Key);
-		mips_sdcache_line_size =
+		mci->mci_sdcache_size = COMPONENT_KEY_Cache_CacheSize(comp->Key);
+		mci->mci_sdcache_line_size =
 		    COMPONENT_KEY_Cache_LineSize(comp->Key);
 		/* XXX */
-		mips_sdcache_ways = 1;
+		mci->mci_sdcache_ways = 1;
 		break;
 	}
 }

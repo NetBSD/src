@@ -1,4 +1,4 @@
-/* $NetBSD: au1000.c,v 1.7 2007/02/28 04:21:52 thorpej Exp $ */
+/* $NetBSD: au1000.c,v 1.7.62.1 2010/01/20 09:04:34 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -205,7 +205,7 @@ bool
 au1000_match(struct au_chipdep **cpp)
 {
 
-	if (MIPS_PRID_COPTS(cpu_id) == MIPS_AU1000) {
+	if (MIPS_PRID_COPTS(mips_options.mips_cpu_id) == MIPS_AU1000) {
 		*cpp = &au1000_chipdep;
 		return true;
 	}
