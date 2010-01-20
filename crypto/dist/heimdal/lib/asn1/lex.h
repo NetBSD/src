@@ -32,14 +32,9 @@
  */
 
 /* $Heimdal: lex.h 15617 2005-07-12 06:27:42Z lha $
-   $NetBSD: lex.h,v 1.3 2010/01/20 12:54:17 tsutsui Exp $ */
+   $NetBSD: lex.h,v 1.4 2010/01/20 19:54:07 tsutsui Exp $ */
 
-#ifdef HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#include <roken-common.h>
-#else
 #include <roken.h>
-#endif
 
 void error_message (const char *, ...)
 __attribute__ ((format (printf, 1, 2)));

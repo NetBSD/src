@@ -34,16 +34,10 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 __RCSID("$Heimdal: warnerr.c 14773 2005-04-12 11:29:18Z lha $"
-        "$NetBSD: warnerr.c,v 1.4 2010/01/20 12:54:17 tsutsui Exp $");
+        "$NetBSD: warnerr.c,v 1.5 2010/01/20 19:54:07 tsutsui Exp $");
 #endif
 
-#ifdef HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#include "roken-common.h"
-#else
 #include "roken.h"
-#endif
-
 #include "err.h"
 
 void ROKEN_LIB_FUNCTION

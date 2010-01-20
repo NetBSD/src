@@ -32,7 +32,7 @@
  */
 
 /* $Heimdal: compile_et.h 15426 2005-06-16 19:21:42Z lha $
-   $NetBSD: compile_et.h,v 1.3 2010/01/20 12:54:17 tsutsui Exp $ */
+   $NetBSD: compile_et.h,v 1.4 2010/01/20 19:54:07 tsutsui Exp $ */
 
 #ifndef __COMPILE_ET_H__
 #define __COMPILE_ET_H__
@@ -47,11 +47,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <ctype.h>
-#ifdef HAVE_NBTOOL_CONFIG_H
-#include <roken-common.h>
-#else
 #include <roken.h>
-#endif
 
 extern long base_id;
 extern int number;
