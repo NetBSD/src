@@ -1,4 +1,4 @@
-/* $NetBSD: au_timer.c,v 1.9 2008/05/26 15:59:30 tsutsui Exp $ */
+/* $NetBSD: au_timer.c,v 1.9.16.1 2010/01/20 09:04:34 matt Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_timer.c,v 1.9 2008/05/26 15:59:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_timer.c,v 1.9.16.1 2010/01/20 09:04:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -70,6 +70,7 @@ do {									\
 void
 au_cal_timers(bus_space_tag_t st, bus_space_handle_t sh)
 {
+	struct cpu_info * const ci = curcpu();
 	uint32_t ctrdiff[4], startctr, endctr;
 	uint32_t ctl, ctr, octr;
 	int i;
@@ -109,24 +110,24 @@ au_cal_timers(bus_space_tag_t st, bus_space_handle_t sh)
 		SET_PC_REG(PC_COUNTER_CONTROL, 0, ctl);
 
 	/* Compute the number of cycles per second. */
-	curcpu()->ci_cpu_freq = ((ctrdiff[2] + ctrdiff[3]) / 2) * 16;
+	ci->ci_cpu_freq = ((ctrdiff[2] + ctrdiff[3]) / 2) * 16;
+	ci->ci_cctr_freq = ci->ci_cpu_freq;
 
 	/* Compute the number of ticks for hz. */
-	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
+	ci->ci_cycles_per_hz = (ci->ci_cpu_freq + hz / 2) / hz;
 
 	/* Compute the delay divisor. */
-	curcpu()->ci_divisor_delay =
-	    ((curcpu()->ci_cpu_freq + 500000) / 1000000);
+	ci->ci_divisor_delay = (ci->ci_cpu_freq + 500000) / 1000000;
 
 	/*
 	 * Get correct cpu frequency if the CPU runs at twice the
 	 * external/cp0-count frequency.
 	 */
-	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
-		curcpu()->ci_cpu_freq *= 2;
+	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
+		ci->ci_cpu_freq *= 2;
 
 #ifdef DEBUG
 	printf("Timer calibration: %lu cycles/sec [(%u, %u) * 16]\n",
-	    curcpu()->ci_cpu_freq, ctrdiff[2], ctrdiff[3]);
+	    ci->ci_cpu_freq, ctrdiff[2], ctrdiff[3]);
 #endif
 }

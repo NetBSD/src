@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.c,v 1.10 2005/12/24 20:07:19 perry Exp $	*/
+/*	$NetBSD: cache_r4k.c,v 1.10.96.1 2010/01/20 09:04:34 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_r4k.c,v 1.10 2005/12/24 20:07:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_r4k.c,v 1.10.96.1 2010/01/20 09:04:34 matt Exp $");
 
 #include <sys/param.h>
 
@@ -62,7 +62,7 @@ void
 r4k_icache_sync_all_16(void)
 {
 	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
-	vaddr_t eva = va + mips_picache_size;
+	vaddr_t eva = va + mips_cache_info.mci_picache_size;
 
 	mips_dcache_wbinv_all();
 
@@ -116,7 +116,7 @@ r4k_icache_sync_range_index_16(vaddr_t va, vsize_t size)
 	 * bits that determine the cache index, and make a KSEG0
 	 * address out of them.
 	 */
-	va = MIPS_PHYS_TO_KSEG0(orig_va & mips_picache_way_mask);
+	va = MIPS_PHYS_TO_KSEG0(orig_va & mips_cache_info.mci_picache_way_mask);
 
 	eva = round_line(va + size);
 	va = trunc_line(va);
@@ -136,7 +136,7 @@ void
 r4k_pdcache_wbinv_all_16(void)
 {
 	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
-	vaddr_t eva = va + mips_pdcache_size;
+	vaddr_t eva = va + mips_cache_info.mci_pdcache_size;
 
 	while (va < eva) {
 		cache_r4k_op_32lines_16(va,
@@ -175,7 +175,7 @@ r4k_pdcache_wbinv_range_index_16(vaddr_t va, vsize_t size)
 	 * bits that determine the cache index, and make a KSEG0
 	 * address out of them.
 	 */
-	va = MIPS_PHYS_TO_KSEG0(va & (mips_pdcache_size - 1));
+	va = MIPS_PHYS_TO_KSEG0(va & (mips_cache_info.mci_pdcache_size - 1));
 
 	eva = round_line(va + size);
 	va = trunc_line(va);
@@ -238,7 +238,7 @@ void
 r4k_icache_sync_all_32(void)
 {
 	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
-	vaddr_t eva = va + mips_picache_size;
+	vaddr_t eva = va + mips_cache_info.mci_picache_size;
 
 	mips_dcache_wbinv_all();
 
@@ -290,7 +290,7 @@ r4k_icache_sync_range_index_32(vaddr_t va, vsize_t size)
 	 * bits that determine the cache index, and make a KSEG0
 	 * address out of them.
 	 */
-	va = MIPS_PHYS_TO_KSEG0(va & mips_picache_way_mask);
+	va = MIPS_PHYS_TO_KSEG0(va & mips_cache_info.mci_picache_way_mask);
 
 	eva = round_line(va + size);
 	va = trunc_line(va);
@@ -310,7 +310,7 @@ void
 r4k_pdcache_wbinv_all_32(void)
 {
 	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
-	vaddr_t eva = va + mips_pdcache_size;
+	vaddr_t eva = va + mips_cache_info.mci_pdcache_size;
 
 	while (va < eva) {
 		cache_r4k_op_32lines_32(va,
@@ -349,7 +349,7 @@ r4k_pdcache_wbinv_range_index_32(vaddr_t va, vsize_t size)
 	 * bits that determine the cache index, and make a KSEG0
 	 * address out of them.
 	 */
-	va = MIPS_PHYS_TO_KSEG0(va & (mips_pdcache_size - 1));
+	va = MIPS_PHYS_TO_KSEG0(va & (mips_cache_info.mci_pdcache_size - 1));
 
 	eva = round_line(va + size);
 	va = trunc_line(va);
@@ -406,7 +406,7 @@ void
 r4k_sdcache_wbinv_all_32(void)
 {
 	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
-	vaddr_t eva = va + mips_sdcache_size;
+	vaddr_t eva = va + mips_cache_info.mci_sdcache_size;
 
 	while (va < eva) {
 		cache_r4k_op_32lines_32(va,
@@ -445,7 +445,7 @@ r4k_sdcache_wbinv_range_index_32(vaddr_t va, vsize_t size)
 	 * bits that determine the cache index, and make a KSEG0
 	 * address out of them.
 	 */
-	va = MIPS_PHYS_TO_KSEG0(va & (mips_sdcache_size - 1));
+	va = MIPS_PHYS_TO_KSEG0(va & (mips_cache_info.mci_sdcache_size - 1));
 
 	eva = round_line(va + size);
 	va = trunc_line(va);
@@ -508,7 +508,7 @@ void
 r4k_sdcache_wbinv_all_128(void)
 {
 	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
-	vaddr_t eva = va + mips_sdcache_size;
+	vaddr_t eva = va + mips_cache_info.mci_sdcache_size;
 
 	while (va < eva) {
 		cache_r4k_op_32lines_128(va,
@@ -547,7 +547,7 @@ r4k_sdcache_wbinv_range_index_128(vaddr_t va, vsize_t size)
 	 * bits that determine the cache index, and make a KSEG0
 	 * address out of them.
 	 */
-	va = MIPS_PHYS_TO_KSEG0(va & (mips_sdcache_size - 1));
+	va = MIPS_PHYS_TO_KSEG0(va & (mips_cache_info.mci_sdcache_size - 1));
 
 	eva = round_line(va + size);
 	va = trunc_line(va);
@@ -603,15 +603,15 @@ r4k_sdcache_wb_range_128(vaddr_t va, vsize_t size)
 #undef round_line
 #undef trunc_line
 
-#define	round_line(x)		(((x) + mips_sdcache_line_size - 1) & ~(mips_sdcache_line_size - 1))
-#define	trunc_line(x)		((x) & ~(mips_sdcache_line_size - 1))
+#define	round_line(x)		(((x) + mips_cache_info.mci_sdcache_line_size - 1) & ~(mips_cache_info.mci_sdcache_line_size - 1))
+#define	trunc_line(x)		((x) & ~(mips_cache_info.mci_sdcache_line_size - 1))
 
 void
 r4k_sdcache_wbinv_all_generic(void)
 {
 	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
-	vaddr_t eva = va + mips_sdcache_size;
-	int line_size = mips_sdcache_line_size;
+	vaddr_t eva = va + mips_cache_info.mci_sdcache_size;
+	int line_size = mips_cache_info.mci_sdcache_line_size;
 
 	while (va < eva) {
 		cache_op_r4k_line(va, CACHE_R4K_SD|CACHEOP_R4K_INDEX_WB_INV);
@@ -623,7 +623,7 @@ void
 r4k_sdcache_wbinv_range_generic(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva = round_line(va + size);
-	int line_size = mips_sdcache_line_size;
+	int line_size = mips_cache_info.mci_sdcache_line_size;
 
 	va = trunc_line(va);
 
@@ -637,7 +637,7 @@ void
 r4k_sdcache_wbinv_range_index_generic(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva;
-	int line_size = mips_sdcache_line_size;
+	int line_size = mips_cache_info.mci_sdcache_line_size;
 
 	/*
 	 * Since we're doing Index ops, we expect to not be able
@@ -645,7 +645,7 @@ r4k_sdcache_wbinv_range_index_generic(vaddr_t va, vsize_t size)
 	 * bits that determine the cache index, and make a KSEG0
 	 * address out of them.
 	 */
-	va = MIPS_PHYS_TO_KSEG0(va & (mips_sdcache_size - 1));
+	va = MIPS_PHYS_TO_KSEG0(va & (mips_cache_info.mci_sdcache_size - 1));
 
 	eva = round_line(va + size);
 	va = trunc_line(va);
@@ -660,7 +660,7 @@ void
 r4k_sdcache_inv_range_generic(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva = round_line(va + size);
-	int line_size = mips_sdcache_line_size;
+	int line_size = mips_cache_info.mci_sdcache_line_size;
 
 	va = trunc_line(va);
 
@@ -674,7 +674,7 @@ void
 r4k_sdcache_wb_range_generic(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva = round_line(va + size);
-	int line_size = mips_sdcache_line_size;
+	int line_size = mips_cache_info.mci_sdcache_line_size;
 
 	va = trunc_line(va);
 

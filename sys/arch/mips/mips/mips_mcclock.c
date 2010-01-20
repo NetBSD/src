@@ -1,4 +1,4 @@
-/* $NetBSD: mips_mcclock.c,v 1.16 2008/01/03 22:35:27 joerg Exp $ */
+/* $NetBSD: mips_mcclock.c,v 1.16.28.1 2010/01/20 09:04:35 matt Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.16 2008/01/03 22:35:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.16.28.1 2010/01/20 09:04:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,11 +123,11 @@ mips_mc_cpuspeed(mcclock_addr, clockmask, tickpollfn)
 	 * appropriate base for  DELAY() and delay(), from
 	 * the number of completed iterations.
 	 */
-	cpu_mhz = mips_mcclock_to_mhz(iters);
+	mips_options.mips_cpu_mhz = mips_mcclock_to_mhz(iters);
 
 #if defined(DEBUG)
 	printf("mcclock: iters %d computed MHz %d, instrs per usec=%d\n",
-	       iters, cpu_mhz, cpuspeed);
+	       iters, mips_options.mips_cpu_mhz, cpuspeed);
 #endif
 	return (iters);
 }

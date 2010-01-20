@@ -1,4 +1,4 @@
-/* $NetBSD: omsal400.c,v 1.5 2007/02/23 13:34:34 kiyohara Exp $ */
+/* $NetBSD: omsal400.c,v 1.5.64.1 2010/01/20 09:04:33 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,7 +36,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omsal400.c,v 1.5 2007/02/23 13:34:34 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omsal400.c,v 1.5.64.1 2010/01/20 09:04:33 matt Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -100,7 +100,7 @@ omsal400_init(void)
 {
 	/* uint16_t whoami; */
 
-	if (MIPS_PRID_COPTS(cpu_id) != MIPS_AU1550)
+	if (MIPS_PRID_COPTS(mips_options.mips_cpu_id) != MIPS_AU1550)
 		panic("omsal400: CPU not Au1550");
 
 #if 0 /* XXX: TODO borad identification */

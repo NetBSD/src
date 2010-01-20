@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2a.c,v 1.3 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: tr2a.c,v 1.3.18.1 2010/01/20 09:04:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2a.c,v 1.3 2008/04/28 20:23:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2a.c,v 1.3.18.1 2010/01/20 09:04:33 matt Exp $");
 
 #include "fb_sbdio.h"
 #include "kbms_sbdio.h"
@@ -170,7 +170,7 @@ void
 tr2a_cache_config(void)
 {
 
-	mips_sdcache_size = 1024 * 1024;	/* 1MB L2-cache */
+	mips_cache_info.mci_sdcache_size = 1024 * 1024;	/* 1MB L2-cache */
 }
 
 void

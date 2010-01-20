@@ -1,4 +1,4 @@
-/* $NetBSD: admpci.c,v 1.1.62.1 2010/01/10 02:48:46 matt Exp $ */
+/* $NetBSD: admpci.c,v 1.1.62.2 2010/01/20 09:04:34 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -64,7 +64,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.1.62.1 2010/01/10 02:48:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.1.62.2 2010/01/20 09:04:34 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -252,7 +252,7 @@ admpciattach(struct device *parent, struct device *self, void *aux)
 	    M_DEVBUF, NULL, 0, EX_WAITOK);
 
 	pci_configure_bus(&sc->sc_pc,
-	    io_ex, mem_ex, NULL, 0, mips_dcache_align);
+	    io_ex, mem_ex, NULL, 0, mips_cache_info.mci_dcache_align);
 	extent_destroy(mem_ex);
 	extent_destroy(io_ex);
 #endif

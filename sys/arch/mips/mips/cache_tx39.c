@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_tx39.c,v 1.6 2008/01/26 14:40:08 tsutsui Exp $	*/
+/*	$NetBSD: cache_tx39.c,v 1.6.28.1 2010/01/20 09:04:35 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_tx39.c,v 1.6 2008/01/26 14:40:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_tx39.c,v 1.6.28.1 2010/01/20 09:04:35 matt Exp $");
 
 #include <sys/param.h>
 
@@ -63,7 +63,7 @@ tx3900_icache_sync_all_16(void)
 {
 
 	tx3900_icache_do_inv_index_16(MIPS_PHYS_TO_KSEG0(0),
-	    MIPS_PHYS_TO_KSEG0(mips_picache_size));
+	    MIPS_PHYS_TO_KSEG0(mips_cache_info.mci_picache_size));
 }
 
 void
@@ -73,10 +73,10 @@ tx3900_icache_sync_range_16(vaddr_t va, vsize_t size)
 
 	va = trunc_line(va);
 
-	if ((eva - va) >= mips_picache_size) {
+	if ((eva - va) >= mips_cache_info.mci_picache_size) {
 		/* Just hit the whole thing. */
 		va = MIPS_PHYS_TO_KSEG0(0);
-		eva = MIPS_PHYS_TO_KSEG0(mips_picache_size);
+		eva = MIPS_PHYS_TO_KSEG0(mips_cache_info.mci_picache_size);
 	}
 
 	tx3900_icache_do_inv_index_16(va, eva);
@@ -94,7 +94,7 @@ void
 tx3900_pdcache_wbinv_all_4(void)
 {
 	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
-	vaddr_t eva = va + mips_pdcache_size;
+	vaddr_t eva = va + mips_cache_info.mci_pdcache_size;
 	volatile int *p;
 
 	/*
@@ -157,7 +157,7 @@ tx3920_icache_sync_all_16wb(void)
 	__asm volatile(".set push; .set mips2; sync; .set pop");
 
 	tx3920_icache_do_inv_16(MIPS_PHYS_TO_KSEG0(0),
-	    MIPS_PHYS_TO_KSEG0(mips_picache_size));
+	    MIPS_PHYS_TO_KSEG0(mips_cache_info.mci_picache_size));
 }
 
 void
@@ -188,7 +188,7 @@ void
 tx3920_pdcache_wbinv_all_16wt(void)
 {
 	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
-	vaddr_t eva = va + mips_pdcache_size;
+	vaddr_t eva = va + mips_cache_info.mci_pdcache_size;
 
 	/*
 	 * Since we're hitting the whole thing, we don't have to
@@ -206,7 +206,7 @@ void
 tx3920_pdcache_wbinv_all_16wb(void)
 {
 	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
-	vaddr_t eva = va + mips_pdcache_size;
+	vaddr_t eva = va + mips_cache_info.mci_pdcache_size;
 
 	/*
 	 * Since we're hitting the whole thing, we don't have to

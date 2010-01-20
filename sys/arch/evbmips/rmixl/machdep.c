@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.14 2010/01/17 00:02:00 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.15 2010/01/20 09:04:33 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.14 2010/01/17 00:02:00 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.15 2010/01/20 09:04:33 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -306,8 +306,8 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	 */
 	mips_vector_init();
 
-	/* mips_vector_init initialized mycpu */
-	strcpy(cpu_model, mycpu->cpu_name);
+	/* mips_vector_init initialized mips_options */
+	strcpy(cpu_model, mips_options.mips_cpu->cpu_name);
 
 	/* get system info from firmware */
 	memsize = rmixlfw_init(infop);
@@ -345,10 +345,11 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
          *  external/cp0-count frequency
 	 */
 	curcpu()->ci_cpu_freq = rmixlfw_info.cpu_frequency;
+	curcpu()->ci_cctr_freq = curcpu()->ci_cpu_freq;
 	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
 	curcpu()->ci_divisor_delay =
 		((curcpu()->ci_cpu_freq + 500000) / 1000000);
-        if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
+        if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
 		curcpu()->ci_cpu_freq *= 2;
 
 	/*

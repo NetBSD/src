@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64.16.13 2010/01/20 06:58:36 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.64.16.14 2010/01/20 09:04:35 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.13 2010/01/20 06:58:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.14 2010/01/20 09:04:35 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -339,7 +339,7 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	if (!MIPS_HAS_R4K_MMU) {
 		int i;
 
-		for (i = 0; i < mips_num_tlb_entries; i++) {
+		for (i = 0; i < mips_options.mips_num_tlb_entries; i++) {
 			mips1_tlb_read_indexed(i, &tlb);
 			db_printf("TLB%c%2d Hi 0x%08x Lo 0x%08x",
 				(tlb.tlb_lo1 & MIPS1_PG_V) ? ' ' : '*',
