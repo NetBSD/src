@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1367 2010/01/20 07:27:09 wiz Exp $
+#	$NetBSD: mi,v 1.1368 2010/01/20 12:14:00 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8461,6 +8461,7 @@
 ./usr/share/man/cat9/boothowto.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/boottime.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bounds_check_with_label.0	comp-sys-catman		.cat
+./usr/share/man/cat9/bpf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bread.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/breada.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/breadn.0			comp-sys-catman		.cat
@@ -14006,6 +14007,7 @@
 ./usr/share/man/html9/boothowto.html		comp-sys-htmlman	html
 ./usr/share/man/html9/boottime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bounds_check_with_label.html	comp-sys-htmlman	html
+./usr/share/man/html9/bpf.html			comp-sys-htmlman	html
 ./usr/share/man/html9/bread.html		comp-sys-htmlman	html
 ./usr/share/man/html9/breada.html		comp-sys-htmlman	html
 ./usr/share/man/html9/breadn.html		comp-sys-htmlman	html
@@ -19662,6 +19664,7 @@
 ./usr/share/man/man9/boothowto.9		comp-sys-man		.man
 ./usr/share/man/man9/boottime.9			comp-sys-man		.man
 ./usr/share/man/man9/bounds_check_with_label.9	comp-sys-man		.man
+./usr/share/man/man9/bpf.9			comp-sys-man		.man
 ./usr/share/man/man9/bread.9			comp-sys-man		.man
 ./usr/share/man/man9/breada.9			comp-sys-man		.man
 ./usr/share/man/man9/breadn.9			comp-sys-man		.man
