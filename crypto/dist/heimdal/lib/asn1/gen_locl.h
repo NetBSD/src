@@ -32,7 +32,7 @@
  */
 
 /* $Heimdal: gen_locl.h 18008 2006-09-05 12:29:18Z lha $
-   $NetBSD: gen_locl.h,v 1.2 2008/03/22 08:37:04 mlelstv Exp $ */
+   $NetBSD: gen_locl.h,v 1.3 2010/01/20 12:54:17 tsutsui Exp $ */
 
 #ifndef __GEN_LOCL_H__
 #define __GEN_LOCL_H__
@@ -49,7 +49,11 @@
 #include <time.h>
 #include <errno.h>
 #include <err.h>
+#ifdef HAVE_NBTOOL_CONFIG_H
+#include <roken-common.h>
+#else
 #include <roken.h>
+#endif
 #include "hash.h"
 #include "symbol.h"
 #include "asn1-common.h"
