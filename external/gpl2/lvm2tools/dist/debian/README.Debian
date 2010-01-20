@@ -1,6 +1,0 @@
-LVM2 requires the device-mapper kernel module (dm-mod).  This is
-available as a kernel patch for 2.4 (in kernel-patch-device-mapper), and
-is distributed with linux 2.5 and above.  The LVM1 kernel module (lvm-mod)
-will not work with lvm2 packages.  dm-mod and lvm-mod may both be loaded
-in the kernel at the same time with no problems.  Without dm-mod, this
-package is pretty useless.
