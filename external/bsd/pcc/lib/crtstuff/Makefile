@@ -1,17 +1,14 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/24 05:47:05 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.2 2010/01/20 11:45:55 plunky Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
-DIST=   ${NETBSDSRCDIR}/external/bsd/pcc/dist/pcc-libs
-SUBDIST=${DIST}/csu/netbsd
-.PATH:  ${SUBDIST}
-
-#CPPFLAGS+=-I${SUBDIST}
-
-#.include "../../Makefile.inc"
+.PATH: ${PCC_LIBS}/csu/${TARGOS}
 
 SRCS+=		crtbegin.c crtend.c
 OBJS+=		crtbegin.o crtend.o
+
+CPPFLAGS+=	-I${PCC_LIBS}/csu/${TARGOS}
+CPPFLAGS+=	-Wno-missing-prototypes
 
 realall: ${OBJS}
 

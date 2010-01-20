@@ -1,16 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2009/09/04 00:50:05 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.3 2010/01/20 11:45:55 plunky Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
-USE_FORT?= no
-
-DIST=	${NETBSDSRCDIR}/external/bsd/pcc/dist/pcc-libs
-SUBDIST=${DIST}/libpcc
-.PATH:	${SUBDIST}
-
-CPPFLAGS+=-I${.CURDIR}/../..
-CPPFLAGS+=-I${SUBDIST}/arch/${TARGMACH}
-CPPFLAGS+=-I${DESTDIR}/usr/include
+.PATH:	${PCC_LIBS}/libpcc
 
 LIB=	pcc
 
@@ -21,6 +13,6 @@ SRCS=	cmpdi2.c divdi3.c fixdfdi.c fixsfdi.c fixunsdfdi.c \
 SRCS+=	ashldi3.c ashrdi3.c lshrdi3.c
 SRCS+=	ssp.c
 
-.include "../../Makefile.inc"
+COPTS.ssp.c+=	-Wno-error
 
 .include <bsd.lib.mk>

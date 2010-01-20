@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.1 2008/08/24 05:47:05 gmcgarry Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2010/01/20 11:45:54 plunky Exp $
 
-MDIR=	${DIST}/arch/${TARGMACH}
-MIPDIR=	${DIST}/mip
+PCC_DIR:=${.PARSEDIR}
+PCC_DIST=${PCC_DIR}/dist/pcc
+PCC_LIBS=${PCC_DIR}/dist/pcc-libs
 
 TARGOS = netbsd
-# XXX Currently only handles i386
+
 .if ${MACHINE_ARCH} == "i386"
 TARGMACH = i386
 .elif ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
@@ -18,9 +19,11 @@ ERROR!= echo "ERROR: ${MACHINE_ARCH} not yet supported - write code!" >&2;echo
 libexecdir = /usr/libexec
 includedir = /usr/include
 
-CPPFLAGS+= -DLIBEXECDIR=\"${libexecdir}\" -DINCLUDEDIR=\"${includedir}\"
-CPPFLAGS+= -I${DIST}/os/${TARGOS} -I${MDIR} -Dmach_${TARGMACH} -Dos_${TARGOS}
-CPPFLAGS+= -I${.CURDIR} -I${.CURDIR}/..
+CPPFLAGS+=	-DLIBEXECDIR=\"${libexecdir}/\"
+CPPFLAGS+=	-DINCLUDEDIR=\"${includedir}/\"
+CPPFLAGS+=	-Dos_${TARGOS}
+CPPFLAGS+=	-Dmach_${TARGMACH}
+CPPFLAGS+=	-I${PCC_DIR}
 
 .if exists(${.CURDIR}/../../../Makefile.inc)
 .include "${.CURDIR}/../../../Makefile.inc"
