@@ -1,49 +1,43 @@
-#	$NetBSD: Makefile,v 1.3 2009/09/04 00:50:05 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.4 2010/01/20 11:45:55 plunky Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
-# USE_FORT?= yes
-
-DIST=	${NETBSDSRCDIR}/external/bsd/pcc/dist/pcc
-SUBDIST=${DIST}/cc/ccom
+.PATH:	${PCC_DIST}/cc/ccom \
+	${PCC_DIST}/arch/${TARGMACH} \
+	${PCC_DIST}/mip
 
 PROG=	ccom
+
 SRCS=   cgram.y
-SRCS+=  optim.c pftn.c scan.c trees.c inline.c symtabs.c
-SRCS+=	gcc_compat.c init.c local.c code.c stabs.c match.c reader.c optim2.c
-SRCS+=	regs.c local2.c order.c table.c common.c main.c external.c
+SRCS+=	scan.l
+SRCS+=	optim.c pftn.c trees.c inline.c symtabs.c
+SRCS+=	gcc_compat.c init.c local.c code.c stabs.c
+SRCS+=	match.c reader.c optim2.c regs.c local2.c order.c table.c
+SRCS+=	common.c main.c external.c
 
 MAN=    ccom.1
 
-BINDIR= /usr/libexec
+# generate cgram.h
+YHEADER=
 
-CPPFLAGS+=	-I${SUBDIST} -I${.CURDIR} -I${DIST}/mip
-CPPFLAGS+=	-I${.CURDIR}/../..
+CPPFLAGS+=	-DPCC_DEBUG
+CPPFLAGS+=	-DGCC_COMPAT
 CPPFLAGS+=	-I${.OBJDIR}
-CPPFLAGS+=	-DPCC_DEBUG -DGCC_COMPAT
-YFLAGS+=	-d
+CPPFLAGS+=	-I${PCC_DIST}/mip
+CPPFLAGS+=	-I${PCC_DIST}/os/${TARGOS}
+CPPFLAGS+=	-I${PCC_DIST}/arch/${TARGMACH}
+CPPFLAGS+=	-I${PCC_DIST}/cc/ccom
 
-COPTS.scan.c += -Wno-error
+COPTS.scan.c+= -Wno-error
+COPTS.cgram.c+=-Wno-uninitialized
+COPTS.local.c+=-Wno-unused
 
-DPSRCS=	external.h
+DPSRCS=	external.c external.h
 
-CLEANFILES+=	external.h external.c ccom.cat1 cgram.h mkext scan.c
-CLEANFILES+=    ccom.cat1
+external.c external.h: mkext.c table.c common.c
+	${HOST_CC} ${CFLAGS} ${CPPFLAGS} -DMKEXT -o ${.OBJDIR}/mkext ${.ALLSRC}
+	${.OBJDIR}/mkext
 
-
-.include "../../Makefile.inc"
-
-trees.c: pass2.h
-
-pass2.h: external.h
-
-optim2.o reader.o: external.h
+CLEANFILES+=	external.c external.h mkext
 
 .include <bsd.prog.mk>
-
-.PATH:	${SUBDIST} ${MIPDIR} ${MDIR}
-
-external.h external.c: ${MIPDIR}/mkext.c $(MDIR)/table.c
-	$(HOST_CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -DMKEXT -o ${.OBJDIR}/mkext ${MIPDIR}/mkext.c \
-	$(MDIR)/table.c ${MIPDIR}/common.c
-	${.OBJDIR}/mkext
