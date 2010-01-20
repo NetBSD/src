@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.51 2009/04/09 09:53:37 apb Exp $
+.\"	$NetBSD: mtree.8,v 1.52 2010/01/20 13:50:27 uebayasi Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,7 +56,7 @@
 .\"
 .\"     @(#)mtree.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd April 9, 2009
+.Dd Jan 20, 2010
 .Dt MTREE 8
 .Os
 .Sh NAME
@@ -258,6 +258,9 @@ of the files for which the keyword
 .Sy cksum
 was specified.
 The checksum is seeded with the specified value.
+.It Fl t
+Modify the modified time of existing files, the device type of devices, and
+symbolic link targets, to match the specification.
 .It Fl U
 Same as
 .Fl u
