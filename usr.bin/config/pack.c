@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.6 2009/04/11 12:41:10 lukem Exp $	*/
+/*	$NetBSD: pack.c,v 1.7 2010/01/21 18:06:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -132,7 +132,7 @@ pack(void)
 /*
  * Pack device instances together wherever possible.
  */
-void
+static void
 packdevi(void)
 {
 	struct devi *firststar, *i, **ip, *l, *p;
