@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.139 2009/12/29 04:23:43 elad Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.140 2010/01/21 04:40:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.139 2009/12/29 04:23:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.140 2010/01/21 04:40:22 pgoyette Exp $");
 
 #include "opt_pipe.h"
 
@@ -233,7 +233,6 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 	sounlock(so);
 	if (error) {
 		/* an error occurred, free the file descriptor and mbuf */
-		kauth_cred_free(so2->so_cred);
 		m_freem(nam);
 		mutex_enter(&fp2->f_lock);
 		fp2->f_count++;
