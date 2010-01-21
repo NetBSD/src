@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.23 2009/12/06 22:42:48 dyoung Exp $ */
+/* $NetBSD: radio.c,v 1.24 2010/01/21 02:19:55 dyoung Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -30,7 +30,7 @@
 /* This is the /dev/radio driver from OpenBSD */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.23 2009/12/06 22:42:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.24 2010/01/21 02:19:55 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,17 +48,15 @@ struct radio_softc {
 	void		*hw_hdl;	/* hardware driver handle */
 	device_t 	sc_dev;		/* hardware device struct */
 	const struct radio_hw_if *hw_if; /* hardware interface */
-	char		sc_dying;	/* device detached */
 };
 
 static int	radioprobe(device_t, cfdata_t, void *);
 static void	radioattach(device_t, device_t, void *);
 static int	radioprint(void *, const char *);
 static int	radiodetach(device_t, int);
-static int	radioactivate(device_t, enum devact);
 
 CFATTACH_DECL_NEW(radio, sizeof(struct radio_softc),
-    radioprobe, radioattach, radiodetach, radioactivate);
+    radioprobe, radioattach, radiodetach, NULL);
 
 static dev_type_open(radioopen);
 static dev_type_close(radioclose);
@@ -194,18 +192,4 @@ radiodetach(device_t self, int flags)
 	vdevgone(maj, mn, mn, VCHR);
 
 	return (0);
-}
-
-static int
-radioactivate(device_t self, enum devact act)
-{
-	struct radio_softc *sc = device_private(self);
-
-	switch (act) {
-	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
-		return 0;
-	default:
-		return EOPNOTSUPP;
-	}
 }
