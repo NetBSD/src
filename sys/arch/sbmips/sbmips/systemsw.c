@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.c,v 1.14.28.2 2009/12/08 01:55:07 cyber Exp $ */
+/* $NetBSD: systemsw.c,v 1.14.28.3 2010/01/21 04:09:59 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: systemsw.c,v 1.14.28.2 2009/12/08 01:55:07 cyber Exp $");
+__KERNEL_RCSID(0, "$NetBSD: systemsw.c,v 1.14.28.3 2010/01/21 04:09:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,15 +65,15 @@ struct systemsw systemsw = {
 	NULL,			/* intr_establish */
 };
 
-int
+bool
 system_set_clockfns(void *arg, void (*init)(void *))
 {
 
 	if (systemsw.s_clock_init != clock_init_triv)
-		return 1;
+		return true;
 	systemsw.s_clock_arg = arg;
 	systemsw.s_clock_init = init;
-	return 0;
+	return false;
 }
 
 static void
