@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.60 2009/03/14 21:04:22 dsl Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.61 2010/01/21 05:32:18 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.60 2009/03/14 21:04:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.61 2010/01/21 05:32:18 macallan Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -283,13 +283,19 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 
 	/* Now centre our window if needs be */
 	ri->ri_origbits = ri->ri_bits;
+	ri->ri_hworigbits = ri->ri_hwbits;
 
 	if ((ri->ri_flg & RI_CENTER) != 0) {
 		ri->ri_bits += (((ri->ri_width * bpp >> 3) -
 		    ri->ri_emustride) >> 1) & ~3;
 		ri->ri_bits += ((ri->ri_height - ri->ri_emuheight) >> 1) *
 		    ri->ri_stride;
-
+		if (ri->ri_hwbits != NULL) {
+			ri->ri_hwbits += (((ri->ri_width * bpp >> 3) -
+			    ri->ri_emustride) >> 1) & ~3;
+			ri->ri_hwbits += ((ri->ri_height - ri->ri_emuheight) >> 1) *
+			    ri->ri_stride;
+		}
 		ri->ri_yorigin = (int)(ri->ri_bits - ri->ri_origbits)
 		   / ri->ri_stride;
 		ri->ri_xorigin = (((int)(ri->ri_bits - ri->ri_origbits)
@@ -827,7 +833,7 @@ rasops_eraserows(void *cookie, int row, int num, long attr)
 		num = ri->ri_height;
 		dp = (int32_t *)ri->ri_origbits;
 		if (ri->ri_hwbits)
-			hp = (int32_t *)ri->ri_hwbits;
+			hp = (int32_t *)ri->ri_hworigbits;
 		delta = 0;
 	} else {
 		np = ri->ri_emustride >> 5;
