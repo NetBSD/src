@@ -1,4 +1,4 @@
-/* $NetBSD: sbbrz_pci.c,v 1.1.2.2 2010/01/21 06:59:12 matt Exp $ */
+/* $NetBSD: sbbrz_pci.c,v 1.1.2.3 2010/01/21 08:31:24 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.1.2.2 2010/01/21 06:59:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.1.2.3 2010/01/21 08:31:24 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ sbbrz_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		return EINVAL;
 	if (bus == 0) {
 		*ihp = K_INT_PCI_INTA
-		    + ((device + pa->pa_intrpin - PCI_INTERRUPT_PIN_A) % 4);
+		    + (((device-5) + pa->pa_intrswiz + pa->pa_intrpin - PCI_INTERRUPT_PIN_A) % 4);
 		return 0;
 	}
 	return EOPNOTSUPP;
