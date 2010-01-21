@@ -1,6 +1,6 @@
 Frequently Asked Questions about BIND 9
 
-Copyright © 2004-2007 Internet Systems Consortium, Inc. ("ISC")
+Copyright © 2004-2009 Internet Systems Consortium, Inc. ("ISC")
 
 Copyright © 2000-2003 Internet Software Consortium.
 
@@ -153,24 +153,29 @@ A: BIND 9.3 and later: Use TSIG to select the appropriate view.
 
    Master 10.0.1.1:
            key "external" {
-                   algorithm hmac-md5;
-                   secret "xxxxxxxx";
+                   algorithm hmac-sha256;
+                   secret "xxxxxxxxxxxxxxxxxxxxxxxx";
            };
            view "internal" {
-                   match-clients { !key external; 10.0.1/24; };
+                   match-clients { !key external; // reject message ment for the
+                                                  // external view.
+                                   10.0.1/24; };  // accept from these addresses.
                    ...
            };
            view "external" {
                    match-clients { key external; any; };
-                   server 10.0.1.2 { keys external; };
+                   server 10.0.1.2 { keys external; };  // tag messages from the
+                                                        // external view to the
+                                                        // other servers for the
+                                                        // view.
                    recursion no;
                    ...
            };
 
    Slave 10.0.1.2:
            key "external" {
-                   algorithm hmac-md5;
-                   secret "xxxxxxxx";
+                   algorithm hmac-sha256;
+                   secret "xxxxxxxxxxxxxxxxxxxxxxxx";
            };
            view "internal" {
                    match-clients { !key external; 10.0.1/24; };
@@ -218,13 +223,13 @@ A: You choose one view to be master and the second a slave and transfer
 
    Master 10.0.1.1:
            key "external" {
-                   algorithm hmac-md5;
-                   secret "xxxxxxxx";
+                   algorithm hmac-sha256;
+                   secret "xxxxxxxxxxxxxxxxxxxxxxxx";
            };
 
            key "mykey" {
-                   algorithm hmac-md5;
-                   secret "yyyyyyyy";
+                   algorithm hmac-sha256;
+                   secret "yyyyyyyyyyyyyyyyyyyyyyyy";
            };
 
            view "internal" {
@@ -237,7 +242,7 @@ A: You choose one view to be master and the second a slave and transfer
                            type master;
                            file "internal/example.db";
                            allow-update { key mykey; };
-                           notify-also { 10.0.1.1; };
+                           also-notify { 10.0.1.1; };
                    };
            };
 
@@ -247,7 +252,7 @@ A: You choose one view to be master and the second a slave and transfer
                            type slave;
                            file "external/example.db";
                            masters { 10.0.1.1; };
-                           transfer-source { 10.0.1.1; };
+                           transfer-source 10.0.1.1;
                            // allow-update-forwarding { any; };
                            // allow-notify { ... };
                    };
@@ -733,7 +738,6 @@ A: /dev/random is not configured. Use rndcontrol(8) to tell the kernel to
    use certain interrupts as a source of random events. You can make this
    permanent by setting rand_irqs in /etc/rc.conf.
 
-   /etc/rc.conf
    rand_irqs="3 14 15"
 
    See also http://people.freebsd.org/~dougb/randomness.html

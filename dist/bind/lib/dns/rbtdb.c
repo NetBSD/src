@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb.c,v 1.1.1.4.4.1.2.1 2008/07/16 03:10:36 snj Exp $	*/
+/*	$NetBSD: rbtdb.c,v 1.1.1.4.4.1.2.2 2010/01/21 18:57:09 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -3072,7 +3072,7 @@ cache_zonecut_callback(dns_rbtnode_t *node, dns_name_t *name, void *arg) {
 	}
 
 	if (dname_header != NULL &&
-	    (dname_header->trust != dns_trust_pending ||
+	    (!DNS_TRUST_PENDING(dname_header->trust) ||
 	     (search->options & DNS_DBFIND_PENDINGOK) != 0)) {
 		/*
 		 * We increment the reference count on node to ensure that
@@ -3586,7 +3586,7 @@ cache_find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 	if (found == NULL ||
 	    (found->trust == dns_trust_glue &&
 	     ((options & DNS_DBFIND_GLUEOK) == 0)) ||
-	    (found->trust == dns_trust_pending &&
+	    (DNS_TRUST_PENDING(found->trust) &&
 	     ((options & DNS_DBFIND_PENDINGOK) == 0))) {
 		/*
 		 * If there is an NS rdataset at this node, then this is the

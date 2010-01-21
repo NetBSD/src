@@ -1,4 +1,4 @@
-/*	$NetBSD: opensslrsa_link.c,v 1.1.1.1.6.1 2007/05/17 00:40:40 jdc Exp $	*/
+/*	$NetBSD: opensslrsa_link.c,v 1.1.1.1.6.1.2.1 2010/01/21 18:57:08 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
@@ -248,7 +248,7 @@ opensslrsa_verify(dst_context_t *dctx, const isc_region_t *sig) {
 
 	status = RSA_verify(type, digest, digestlen, sig->base,
 			    RSA_size(rsa), rsa);
-	if (status == 0)
+	if (status != 1)
 		return (dst__openssl_toresult(DST_R_VERIFYFAILURE));
 
 	return (ISC_R_SUCCESS);
