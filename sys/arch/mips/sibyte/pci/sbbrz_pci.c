@@ -1,4 +1,4 @@
-/* $NetBSD: sbbrz_pci.c,v 1.1.2.4 2010/01/21 08:45:41 cyber Exp $ */
+/* $NetBSD: sbbrz_pci.c,v 1.1.2.5 2010/01/21 08:47:22 cyber Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.1.2.4 2010/01/21 08:45:41 cyber Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.1.2.5 2010/01/21 08:47:22 cyber Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,6 @@ pcireg_t
 sbbrz_pci_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	uint64_t addr;
-	pcitag_t tmptag;
 
 #ifdef DIAGNOSTIC
 	if ((offset & 0x3) != 0)
