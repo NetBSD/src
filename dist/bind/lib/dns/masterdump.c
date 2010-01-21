@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.c,v 1.1.1.4.4.1 2007/05/17 00:40:38 jdc Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.1.1.4.4.2 2010/01/21 19:07:04 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
@@ -776,7 +776,8 @@ dump_order_compare(const void *a, const void *b) {
 
 static const char *trustnames[] = {
 	"none",
-	"pending",
+	"pending-additional",
+	"pending-answer",
 	"additional",
 	"glue",
 	"answer",
