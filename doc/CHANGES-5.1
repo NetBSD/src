@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.176 2010/01/20 05:33:10 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.177 2010/01/21 08:39:22 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16099,4 +16099,10 @@ sys/lib/libkern/arc4random.c			1.21
 	Keep arc4_i and arc4_j synchronised after a rekeying. This
 	prevents accidentally ending up in a short ARC4 cycle.
 	[joerg, ticket #1253]
+
+sys/dev/pci/azalia.c				1.72
+sys/dev/pci/hdaudio/hdaudio_afg.c		1.19
+
+	Signedness bug/crash in azalia and hdaudio. Fixes PR 42604.
+	[tonnerre, ticket #1258]
 
