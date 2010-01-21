@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.193 2010/01/19 22:07:02 pooka Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.194 2010/01/21 08:52:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.193 2010/01/19 22:07:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.194 2010/01/21 08:52:20 msaitoh Exp $");
 
 #include "rnd.h"
 
@@ -937,9 +937,9 @@ wm_lookup(const struct pci_attach_args *pa)
 	for (wmp = wm_products; wmp->wmp_name != NULL; wmp++) {
 		if (PCI_VENDOR(pa->pa_id) == wmp->wmp_vendor &&
 		    PCI_PRODUCT(pa->pa_id) == wmp->wmp_product)
-			return (wmp);
+			return wmp;
 	}
-	return (NULL);
+	return NULL;
 }
 
 static int
@@ -948,9 +948,9 @@ wm_match(device_t parent, cfdata_t cf, void *aux)
 	struct pci_attach_args *pa = aux;
 
 	if (wm_lookup(pa) != NULL)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -1229,8 +1229,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	    sizeof(struct wm_control_data_82542) :
 	    sizeof(struct wm_control_data_82544);
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, cdata_size, PAGE_SIZE,
-				      (bus_size_t) 0x100000000ULL,
-				      &seg, 1, &rseg, 0)) != 0) {
+		    (bus_size_t) 0x100000000ULL, &seg, 1, &rseg, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to allocate control data, error = %d\n",
 		    error);
@@ -1238,15 +1237,14 @@ wm_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, cdata_size,
-				    (void **)&sc->sc_control_data, 
-				    BUS_DMA_COHERENT)) != 0) {
+		    (void **)&sc->sc_control_data, BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to map control data, error = %d\n", error);
 		goto fail_1;
 	}
 
 	if ((error = bus_dmamap_create(sc->sc_dmat, cdata_size, 1, cdata_size,
-				       0, 0, &sc->sc_cddmamap)) != 0) {
+		    0, 0, &sc->sc_cddmamap)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to create control data DMA map, error = %d\n",
 		    error);
@@ -1254,8 +1252,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
-				     sc->sc_control_data, cdata_size, NULL,
-				     0)) != 0) {
+		    sc->sc_control_data, cdata_size, NULL, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to load control data DMA map, error = %d\n",
 		    error);
@@ -1270,8 +1267,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	    WM_TXQUEUELEN_MAX_82547 : WM_TXQUEUELEN_MAX;
 	for (i = 0; i < WM_TXQUEUELEN(sc); i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, WM_MAXTXDMA,
-					       WM_NTXSEGS, WTX_MAX_LEN, 0, 0,
-					  &sc->sc_txsoft[i].txs_dmamap)) != 0) {
+			    WM_NTXSEGS, WTX_MAX_LEN, 0, 0,
+			    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to create Tx DMA map %d, error = %d\n",
 			    i, error);
@@ -1284,8 +1281,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 */
 	for (i = 0; i < WM_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
-					       MCLBYTES, 0, 0,
-					  &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
+			    MCLBYTES, 0, 0,
+			    &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to create Rx DMA map %d error = %d\n",
 			    i, error);
@@ -1846,7 +1843,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		 */
 		*fieldsp = 0;
 		*cmdp = 0;
-		return (0);
+		return 0;
 	}
 
 	if ((m0->m_pkthdr.csum_flags &
@@ -1998,7 +1995,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	*cmdp = cmd;
 	*fieldsp = fields;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -2086,7 +2083,7 @@ wm_82547_txfifo_bugchk(struct wm_softc *sc, struct mbuf *m0)
 
 	/* Just return if already stalled. */
 	if (sc->sc_txfifo_stall)
-		return (1);
+		return 1;
 
 	if (sc->sc_mii.mii_media_active & IFM_FDX) {
 		/* Stall only occurs in half-duplex mode. */
@@ -2096,7 +2093,7 @@ wm_82547_txfifo_bugchk(struct wm_softc *sc, struct mbuf *m0)
 	if (len >= WM_82547_PAD_LEN + space) {
 		sc->sc_txfifo_stall = 1;
 		callout_schedule(&sc->sc_txfifo_ch, 1);
-		return (1);
+		return 1;
 	}
 
  send_packet:
@@ -2104,7 +2101,7 @@ wm_82547_txfifo_bugchk(struct wm_softc *sc, struct mbuf *m0)
 	if (sc->sc_txfifo_head >= sc->sc_txfifo_size)
 		sc->sc_txfifo_head -= sc->sc_txfifo_size;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -2544,7 +2541,7 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	wm_start(ifp);
 
 	splx(s);
-	return (error);
+	return error;
 }
 
 /*
@@ -2611,7 +2608,7 @@ wm_intr(void *arg)
 		wm_start(ifp);
 	}
 
-	return (handled);
+	return handled;
 }
 
 /*
@@ -2970,7 +2967,6 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 			== IFM_1000_T)) {
 
 			if ((sc->sc_mii.mii_media_status & IFM_ACTIVE) != 0) {
-				printf("XXX link sall wa\n");
 				delay(200*1000); /* XXX too big */
 
 				/* Link stall fix for link up */
@@ -3180,7 +3176,7 @@ wm_reset(struct wm_softc *sc)
 	delay(10*1000);
 
 	/* Must acquire the MDIO ownership before MAC reset */
-	switch(sc->sc_type) {
+	switch (sc->sc_type) {
 	case WM_T_82573:
 	case WM_T_82574:
 	case WM_T_82583:
@@ -3291,7 +3287,7 @@ wm_reset(struct wm_softc *sc)
 		wm_get_cfg_done(sc);
 
 	/* reload EEPROM */
-	switch(sc->sc_type) {
+	switch (sc->sc_type) {
 	case WM_T_82542_2_0:
 	case WM_T_82542_2_1:
 	case WM_T_82543:
@@ -3728,7 +3724,7 @@ wm_init(struct ifnet *ifp)
 		sc->sc_rctl |= RCTL_2k;
 	} else {
 		if (sc->sc_type >= WM_T_82543) {
-			switch(MCLBYTES) {
+			switch (MCLBYTES) {
 			case 4096:
 				sc->sc_rctl |= RCTL_BSEX | RCTL_BSEX_4k;
 				break;
@@ -3760,7 +3756,7 @@ wm_init(struct ifnet *ifp)
 	if (error)
 		log(LOG_ERR, "%s: interface not running\n",
 		    device_xname(sc->sc_dev));
-	return (error);
+	return error;
 }
 
 /*
@@ -4030,11 +4026,11 @@ wm_acquire_eeprom(struct wm_softc *sc)
 				wm_put_swfw_semaphore(sc, SWFW_EEP_SM);
 			else if (sc->sc_flags & WM_F_EEPROM_SEMAPHORE)
 				wm_put_swsm_semaphore(sc);
-			return (1);
+			return 1;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -4154,7 +4150,7 @@ wm_read_eeprom_uwire(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		delay(2);
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -4176,9 +4172,9 @@ wm_spi_eeprom_ready(struct wm_softc *sc)
 	}
 	if (usec >= SPI_MAX_RETRIES) {
 		aprint_error_dev(sc->sc_dev, "EEPROM failed to become ready\n");
-		return (1);
+		return 1;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -4199,7 +4195,7 @@ wm_read_eeprom_spi(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	delay(2);
 
 	if (wm_spi_eeprom_ready(sc))
-		return (1);
+		return 1;
 
 	/* Toggle CS to flush commands. */
 	CSR_WRITE(sc, WMREG_EECD, reg | EECD_CS);
@@ -4224,7 +4220,7 @@ wm_read_eeprom_spi(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	CSR_WRITE(sc, WMREG_EECD, reg);
 	delay(2);
 
-	return (0);
+	return 0;
 }
 
 #define EEPROM_CHECKSUM		0xBABA
@@ -4341,12 +4337,12 @@ wm_add_rxbuf(struct wm_softc *sc, int idx)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
-		return (ENOBUFS);
+		return ENOBUFS;
 
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
-		return (ENOBUFS);
+		return ENOBUFS;
 	}
 
 	if (rxs->rxs_mbuf != NULL)
@@ -4370,7 +4366,7 @@ wm_add_rxbuf(struct wm_softc *sc, int idx)
 
 	WM_INIT_RXDESC(sc, idx);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -4732,7 +4728,7 @@ wm_tbi_mediachange(struct ifnet *ifp)
 
 	wm_tbi_set_linkled(sc);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -5170,7 +5166,7 @@ wm_gmii_mediachange(struct ifnet *ifp)
 		sc->sc_ctrl |= CTRL_FRCSPD | CTRL_FRCFDX;
 		if (ife->ifm_media & IFM_FDX)
 			sc->sc_ctrl |= CTRL_FD;
-		switch(IFM_SUBTYPE(ife->ifm_media)) {
+		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_10_T:
 			sc->sc_ctrl |= CTRL_SPEED_10;
 			break;
@@ -5252,7 +5248,7 @@ i82543_mii_recvbits(struct wm_softc *sc)
 	CSR_WRITE(sc, WMREG_CTRL, v);
 	delay(10);
 
-	return (data);
+	return data;
 }
 
 #undef MDI_IO
@@ -5279,7 +5275,7 @@ wm_gmii_i82543_readreg(device_t self, int phy, int reg)
 	    ("%s: GMII: read phy %d reg %d -> 0x%04x\n",
 	    device_xname(sc->sc_dev), phy, reg, rv));
 
-	return (rv);
+	return rv;
 }
 
 /*
@@ -5336,7 +5332,7 @@ wm_gmii_i82544_readreg(device_t self, int phy, int reg)
 			rv = 0;
 	}
 
-	return (rv);
+	return rv;
 }
 
 /*
@@ -5405,7 +5401,7 @@ wm_gmii_i80003_readreg(device_t self, int phy, int reg)
 	delay(200);
 
 	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
-	return (rv);
+	return rv;
 }
 
 /*
@@ -5477,7 +5473,7 @@ wm_gmii_bm_readreg(device_t self, int phy, int reg)
 
 	rv = wm_gmii_i82544_readreg(self, phy, reg & GG82563_MAX_REG_ADDRESS);
 	wm_put_swfw_semaphore(sc, func ? SWFW_PHY1_SM : SWFW_PHY0_SM);
-	return (rv);
+	return rv;
 }
 
 /*
@@ -5603,7 +5599,7 @@ wm_gmii_hv_readreg(device_t self, int phy, int reg)
 
 	rv = wm_gmii_i82544_readreg(self, phy, regnum & IGPHY_MAXREGADDR);
 	wm_put_swfw_semaphore(sc, SWFW_PHY0_SM);
-	return (rv);
+	return rv;
 }
 
 /*
@@ -5708,7 +5704,7 @@ wm_gmii_statchg(device_t self)
 	CSR_WRITE(sc, (sc->sc_type < WM_T_82543) ? WMREG_OLD_FCRTL
 						 : WMREG_FCRTL, sc->sc_fcrtl);
 	if (sc->sc_type == WM_T_80003) {
-		switch(IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
+		switch (IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
 		case IFM_1000_T:
 			wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_HD_CTRL,
 			    KUMCTRLSTA_HD_CTRL_1000_DEFAULT);
@@ -5760,7 +5756,7 @@ wm_kmrn_readreg(struct wm_softc *sc, int reg)
 	else if (sc->sc_flags == WM_F_SWFWHW_SYNC)
 		wm_put_swfwhw_semaphore(sc);
 
-	return (rv);
+	return rv;
 }
 
 /*
@@ -5863,7 +5859,7 @@ wm_get_swfw_semaphore(struct wm_softc *sc, uint16_t mask)
 	uint32_t fwmask = mask << SWFW_FIRM_SHIFT;
 	int timeout = 200;
 
-	for(timeout = 0; timeout < 200; timeout++) {
+	for (timeout = 0; timeout < 200; timeout++) {
 		if (sc->sc_flags & WM_F_EEPROM_SEMAPHORE) {
 			if (wm_get_swsm_semaphore(sc)) {
 				aprint_error_dev(sc->sc_dev,
@@ -5911,7 +5907,7 @@ wm_get_swfwhw_semaphore(struct wm_softc *sc)
 	uint32_t ext_ctrl;
 	int timeout = 200;
 
-	for(timeout = 0; timeout < 200; timeout++) {
+	for (timeout = 0; timeout < 200; timeout++) {
 		ext_ctrl = CSR_READ(sc, WMREG_EXTCNFCTR);
 		ext_ctrl |= E1000_EXTCNF_CTRL_SWFLAG;
 		CSR_WRITE(sc, WMREG_EXTCNFCTR, ext_ctrl);
@@ -5977,49 +5973,49 @@ wm_valid_nvm_bank_detect_ich8lan(struct wm_softc *sc, unsigned int *bank)
 static int
 wm_read_eeprom_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 {
-    int32_t  error = 0;
-    uint32_t flash_bank = 0;
-    uint32_t act_offset = 0;
-    uint32_t bank_offset = 0;
-    uint16_t word = 0;
-    uint16_t i = 0;
+	int32_t  error = 0;
+	uint32_t flash_bank = 0;
+	uint32_t act_offset = 0;
+	uint32_t bank_offset = 0;
+	uint16_t word = 0;
+	uint16_t i = 0;
 
-    /* We need to know which is the valid flash bank.  In the event
-     * that we didn't allocate eeprom_shadow_ram, we may not be
-     * managing flash_bank.  So it cannot be trusted and needs
-     * to be updated with each read.
-     */
-    error = wm_valid_nvm_bank_detect_ich8lan(sc, &flash_bank);
-    if (error) {
-	    aprint_error_dev(sc->sc_dev, "%s: failed to detect NVM bank\n",
+	/* We need to know which is the valid flash bank.  In the event
+	 * that we didn't allocate eeprom_shadow_ram, we may not be
+	 * managing flash_bank.  So it cannot be trusted and needs
+	 * to be updated with each read.
+	 */
+	error = wm_valid_nvm_bank_detect_ich8lan(sc, &flash_bank);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to detect NVM bank\n",
 		    __func__);
-        return error;
-    }
+		return error;
+	}
 
-    /* Adjust offset appropriately if we're on bank 1 - adjust for word size */
-    bank_offset = flash_bank * (sc->sc_ich8_flash_bank_size * 2);
+	/* Adjust offset appropriately if we're on bank 1 - adjust for word size */
+	bank_offset = flash_bank * (sc->sc_ich8_flash_bank_size * 2);
 
-    error = wm_get_swfwhw_semaphore(sc);
-    if (error) {
-	    aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
-		__func__);
-        return error;
-    }
-
-    for (i = 0; i < words; i++) {
-            /* The NVM part needs a byte offset, hence * 2 */
-            act_offset = bank_offset + ((offset + i) * 2);
-            error = wm_read_ich8_word(sc, act_offset, &word);
-            if (error) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to read NVM\n",
+	error = wm_get_swfwhw_semaphore(sc);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
 		    __func__);
-                break;
-	    }
-            data[i] = word;
-    }
+		return error;
+	}
 
-    wm_put_swfwhw_semaphore(sc);
-    return error;
+	for (i = 0; i < words; i++) {
+		/* The NVM part needs a byte offset, hence * 2 */
+		act_offset = bank_offset + ((offset + i) * 2);
+		error = wm_read_ich8_word(sc, act_offset, &word);
+		if (error) {
+			aprint_error_dev(sc->sc_dev, "%s: failed to read NVM\n",
+			    __func__);
+			break;
+		}
+		data[i] = word;
+	}
+
+	wm_put_swfwhw_semaphore(sc);
+	return error;
 }
 
 /******************************************************************************
@@ -6031,57 +6027,67 @@ wm_read_eeprom_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 static int32_t
 wm_ich8_cycle_init(struct wm_softc *sc)
 {
-    uint16_t hsfsts;
-    int32_t error = 1;
-    int32_t i     = 0;
+	uint16_t hsfsts;
+	int32_t error = 1;
+	int32_t i     = 0;
 
-    hsfsts = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFSTS);
+	hsfsts = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFSTS);
 
-    /* May be check the Flash Des Valid bit in Hw status */
-    if ((hsfsts & HSFSTS_FLDVAL) == 0) {
-        return error;
-    }
+	/* May be check the Flash Des Valid bit in Hw status */
+	if ((hsfsts & HSFSTS_FLDVAL) == 0) {
+		return error;
+	}
 
-    /* Clear FCERR in Hw status by writing 1 */
-    /* Clear DAEL in Hw status by writing a 1 */
-    hsfsts |= HSFSTS_ERR | HSFSTS_DAEL;
+	/* Clear FCERR in Hw status by writing 1 */
+	/* Clear DAEL in Hw status by writing a 1 */
+	hsfsts |= HSFSTS_ERR | HSFSTS_DAEL;
 
-    ICH8_FLASH_WRITE16(sc, ICH_FLASH_HSFSTS, hsfsts);
+	ICH8_FLASH_WRITE16(sc, ICH_FLASH_HSFSTS, hsfsts);
 
-    /* Either we should have a hardware SPI cycle in progress bit to check
-     * against, in order to start a new cycle or FDONE bit should be changed
-     * in the hardware so that it is 1 after harware reset, which can then be
-     * used as an indication whether a cycle is in progress or has been
-     * completed .. we should also have some software semaphore mechanism to
-     * guard FDONE or the cycle in progress bit so that two threads access to
-     * those bits can be sequentiallized or a way so that 2 threads dont
-     * start the cycle at the same time */
+	/*
+	 * Either we should have a hardware SPI cycle in progress bit to check
+	 * against, in order to start a new cycle or FDONE bit should be
+	 * changed in the hardware so that it is 1 after harware reset, which
+	 * can then be used as an indication whether a cycle is in progress or
+	 * has been completed .. we should also have some software semaphore me
+	 * chanism to guard FDONE or the cycle in progress bit so that two
+	 * threads access to those bits can be sequentiallized or a way so that
+	 * 2 threads dont start the cycle at the same time
+	 */
 
-    if ((hsfsts & HSFSTS_FLINPRO) == 0) {
-        /* There is no cycle running at present, so we can start a cycle */
-        /* Begin by setting Flash Cycle Done. */
-        hsfsts |= HSFSTS_DONE;
-        ICH8_FLASH_WRITE16(sc, ICH_FLASH_HSFSTS, hsfsts);
-        error = 0;
-    } else {
-        /* otherwise poll for sometime so the current cycle has a chance
-         * to end before giving up. */
-        for (i = 0; i < ICH_FLASH_COMMAND_TIMEOUT; i++) {
-            hsfsts = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFSTS);
-            if ((hsfsts & HSFSTS_FLINPRO) == 0) {
-                error = 0;
-                break;
-            }
-            delay(1);
-        }
-        if (error == 0) {
-            /* Successful in waiting for previous cycle to timeout,
-             * now set the Flash Cycle Done. */
-            hsfsts |= HSFSTS_DONE;
-            ICH8_FLASH_WRITE16(sc, ICH_FLASH_HSFSTS, hsfsts);
-        }
-    }
-    return error;
+	if ((hsfsts & HSFSTS_FLINPRO) == 0) {
+		/*
+		 * There is no cycle running at present, so we can start a
+		 * cycle
+		 */
+
+		/* Begin by setting Flash Cycle Done. */
+		hsfsts |= HSFSTS_DONE;
+		ICH8_FLASH_WRITE16(sc, ICH_FLASH_HSFSTS, hsfsts);
+		error = 0;
+	} else {
+		/*
+		 * otherwise poll for sometime so the current cycle has a
+		 * chance to end before giving up.
+		 */
+		for (i = 0; i < ICH_FLASH_COMMAND_TIMEOUT; i++) {
+			hsfsts = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFSTS);
+			if ((hsfsts & HSFSTS_FLINPRO) == 0) {
+				error = 0;
+				break;
+			}
+			delay(1);
+		}
+		if (error == 0) {
+			/*
+			 * Successful in waiting for previous cycle to timeout,
+			 * now set the Flash Cycle Done.
+			 */
+			hsfsts |= HSFSTS_DONE;
+			ICH8_FLASH_WRITE16(sc, ICH_FLASH_HSFSTS, hsfsts);
+		}
+	}
+	return error;
 }
 
 /******************************************************************************
@@ -6092,28 +6098,28 @@ wm_ich8_cycle_init(struct wm_softc *sc)
 static int32_t
 wm_ich8_flash_cycle(struct wm_softc *sc, uint32_t timeout)
 {
-    uint16_t hsflctl;
-    uint16_t hsfsts;
-    int32_t error = 1;
-    uint32_t i = 0;
+	uint16_t hsflctl;
+	uint16_t hsfsts;
+	int32_t error = 1;
+	uint32_t i = 0;
 
-    /* Start a cycle by writing 1 in Flash Cycle Go in Hw Flash Control */
-    hsflctl = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFCTL);
-    hsflctl |= HSFCTL_GO;
-    ICH8_FLASH_WRITE16(sc, ICH_FLASH_HSFCTL, hsflctl);
+	/* Start a cycle by writing 1 in Flash Cycle Go in Hw Flash Control */
+	hsflctl = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFCTL);
+	hsflctl |= HSFCTL_GO;
+	ICH8_FLASH_WRITE16(sc, ICH_FLASH_HSFCTL, hsflctl);
 
-    /* wait till FDONE bit is set to 1 */
-    do {
-        hsfsts = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFSTS);
-        if (hsfsts & HSFSTS_DONE)
-            break;
-        delay(1);
-        i++;
-    } while (i < timeout);
-    if ((hsfsts & HSFSTS_DONE) == 1 && (hsfsts & HSFSTS_ERR) == 0) {
-        error = 0;
-    }
-    return error;
+	/* wait till FDONE bit is set to 1 */
+	do {
+		hsfsts = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFSTS);
+		if (hsfsts & HSFSTS_DONE)
+			break;
+		delay(1);
+		i++;
+	} while (i < timeout);
+	if ((hsfsts & HSFSTS_DONE) == 1 && (hsfsts & HSFSTS_ERR) == 0)
+		error = 0;
+
+	return error;
 }
 
 /******************************************************************************
@@ -6126,70 +6132,76 @@ wm_ich8_flash_cycle(struct wm_softc *sc, uint32_t timeout)
  *****************************************************************************/
 static int32_t
 wm_read_ich8_data(struct wm_softc *sc, uint32_t index,
-                     uint32_t size, uint16_t* data)
+    uint32_t size, uint16_t* data)
 {
-    uint16_t hsfsts;
-    uint16_t hsflctl;
-    uint32_t flash_linear_address;
-    uint32_t flash_data = 0;
-    int32_t error = 1;
-    int32_t count = 0;
+	uint16_t hsfsts;
+	uint16_t hsflctl;
+	uint32_t flash_linear_address;
+	uint32_t flash_data = 0;
+	int32_t error = 1;
+	int32_t count = 0;
 
-    if (size < 1  || size > 2 || data == 0x0 ||
-        index > ICH_FLASH_LINEAR_ADDR_MASK)
-        return error;
+	if (size < 1  || size > 2 || data == 0x0 ||
+	    index > ICH_FLASH_LINEAR_ADDR_MASK)
+		return error;
 
-    flash_linear_address = (ICH_FLASH_LINEAR_ADDR_MASK & index) +
-                           sc->sc_ich8_flash_base;
+	flash_linear_address = (ICH_FLASH_LINEAR_ADDR_MASK & index) +
+	    sc->sc_ich8_flash_base;
 
-    do {
-        delay(1);
-        /* Steps */
-        error = wm_ich8_cycle_init(sc);
-        if (error)
-            break;
+	do {
+		delay(1);
+		/* Steps */
+		error = wm_ich8_cycle_init(sc);
+		if (error)
+			break;
 
-        hsflctl = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFCTL);
-        /* 0b/1b corresponds to 1 or 2 byte size, respectively. */
-        hsflctl |=  ((size - 1) << HSFCTL_BCOUNT_SHIFT) & HSFCTL_BCOUNT_MASK;
-        hsflctl |= ICH_CYCLE_READ << HSFCTL_CYCLE_SHIFT;
-        ICH8_FLASH_WRITE16(sc, ICH_FLASH_HSFCTL, hsflctl);
+		hsflctl = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFCTL);
+		/* 0b/1b corresponds to 1 or 2 byte size, respectively. */
+		hsflctl |=  ((size - 1) << HSFCTL_BCOUNT_SHIFT)
+		    & HSFCTL_BCOUNT_MASK;
+		hsflctl |= ICH_CYCLE_READ << HSFCTL_CYCLE_SHIFT;
+		ICH8_FLASH_WRITE16(sc, ICH_FLASH_HSFCTL, hsflctl);
 
-        /* Write the last 24 bits of index into Flash Linear address field in
-         * Flash Address */
-        /* TODO: TBD maybe check the index against the size of flash */
+		/*
+		 * Write the last 24 bits of index into Flash Linear address
+		 * field in Flash Address
+		 */
+		/* TODO: TBD maybe check the index against the size of flash */
 
-        ICH8_FLASH_WRITE32(sc, ICH_FLASH_FADDR, flash_linear_address);
+		ICH8_FLASH_WRITE32(sc, ICH_FLASH_FADDR, flash_linear_address);
 
-        error = wm_ich8_flash_cycle(sc, ICH_FLASH_COMMAND_TIMEOUT);
+		error = wm_ich8_flash_cycle(sc, ICH_FLASH_COMMAND_TIMEOUT);
 
-        /* Check if FCERR is set to 1, if set to 1, clear it and try the whole
-         * sequence a few more times, else read in (shift in) the Flash Data0,
-         * the order is least significant byte first msb to lsb */
-        if (error == 0) {
-            flash_data = ICH8_FLASH_READ32(sc, ICH_FLASH_FDATA0);
-            if (size == 1) {
-                *data = (uint8_t)(flash_data & 0x000000FF);
-            } else if (size == 2) {
-                *data = (uint16_t)(flash_data & 0x0000FFFF);
-            }
-            break;
-        } else {
-            /* If we've gotten here, then things are probably completely hosed,
-             * but if the error condition is detected, it won't hurt to give
-             * it another try...ICH_FLASH_CYCLE_REPEAT_COUNT times.
-             */
-            hsfsts = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFSTS);
-            if (hsfsts & HSFSTS_ERR) {
-                /* Repeat for some time before giving up. */
-                continue;
-            } else if ((hsfsts & HSFSTS_DONE) == 0) {
-                break;
-            }
-        }
-    } while (count++ < ICH_FLASH_CYCLE_REPEAT_COUNT);
+		/*
+		 * Check if FCERR is set to 1, if set to 1, clear it and try
+		 * the whole sequence a few more times, else read in (shift in)
+		 * the Flash Data0, the order is least significant byte first
+		 * msb to lsb
+		 */
+		if (error == 0) {
+			flash_data = ICH8_FLASH_READ32(sc, ICH_FLASH_FDATA0);
+			if (size == 1)
+				*data = (uint8_t)(flash_data & 0x000000FF);
+			else if (size == 2)
+				*data = (uint16_t)(flash_data & 0x0000FFFF);
+			break;
+		} else {
+			/*
+			 * If we've gotten here, then things are probably
+			 * completely hosed, but if the error condition is
+			 * detected, it won't hurt to give it another try...
+			 * ICH_FLASH_CYCLE_REPEAT_COUNT times.
+			 */
+			hsfsts = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFSTS);
+			if (hsfsts & HSFSTS_ERR) {
+				/* Repeat for some time before giving up. */
+				continue;
+			} else if ((hsfsts & HSFSTS_DONE) == 0)
+				break;
+		}
+	} while (count++ < ICH_FLASH_CYCLE_REPEAT_COUNT);
 
-    return error;
+	return error;
 }
 
 /******************************************************************************
@@ -6202,15 +6214,14 @@ wm_read_ich8_data(struct wm_softc *sc, uint32_t index,
 static int32_t
 wm_read_ich8_byte(struct wm_softc *sc, uint32_t index, uint8_t* data)
 {
-    int32_t status;
-    uint16_t word = 0;
+	int32_t status;
+	uint16_t word = 0;
 
-    status = wm_read_ich8_data(sc, index, 1, &word);
-    if (status == 0) {
-        *data = (uint8_t)word;
-    }
+	status = wm_read_ich8_data(sc, index, 1, &word);
+	if (status == 0)
+		*data = (uint8_t)word;
 
-    return status;
+	return status;
 }
 
 /******************************************************************************
@@ -6223,10 +6234,10 @@ wm_read_ich8_byte(struct wm_softc *sc, uint32_t index, uint8_t* data)
 static int32_t
 wm_read_ich8_word(struct wm_softc *sc, uint32_t index, uint16_t *data)
 {
-    int32_t status;
+	int32_t status;
 
-    status = wm_read_ich8_data(sc, index, 2, data);
-    return status;
+	status = wm_read_ich8_data(sc, index, 2, data);
+	return status;
 }
 
 static int
@@ -6420,7 +6431,7 @@ wm_check_for_link(struct wm_softc *sc)
 		 */
 		sc->sc_ctrl = ctrl | CTRL_SLU | CTRL_FD;
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-	} else if(((status & STATUS_LU) != 0)
+	} else if (((status & STATUS_LU) != 0)
 	    && ((rxcw & RXCW_C) != 0)
 	    && (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)) {
 		sc->sc_tbi_linkup = 1;
