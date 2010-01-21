@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.165 2010/01/21 11:43:20 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.166 2010/01/21 15:58:32 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.165 2010/01/21 11:43:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.166 2010/01/21 15:58:32 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -945,6 +945,8 @@ device_register(struct device *dev, void *aux)
 			blob = prop_data_create_data(eaddr, ETHER_ADDR_LEN);
 			prop_dictionary_set(dict, "mac-address", blob);
 			prop_object_release(blob);
+			of_to_dataprop(dict, ofnode, "shared-pins",
+			    "shared-pins");
 		}
 noether:
 
