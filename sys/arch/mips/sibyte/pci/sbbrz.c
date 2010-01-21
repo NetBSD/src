@@ -1,4 +1,4 @@
-/* $NetBSD: sbbrz.c,v 1.1.2.2 2010/01/21 04:53:06 snj Exp $ */
+/* $NetBSD: sbbrz.c,v 1.1.2.3 2010/01/21 08:00:23 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -107,6 +107,8 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#include <mips/sibyte/include/sb1250_regs.h>
+#include <mips/sibyte/include/sb1250_scd.h>
 #include <mips/sibyte/include/zbbusvar.h>
 #include <mips/sibyte/pci/sbbrzvar.h>
 
@@ -167,8 +169,14 @@ sbbrz_attach(device_t parent, device_t self, void *aux)
 {
 	struct sbbrz_softc *sc = &sbbrz_softc;
 	struct pcibus_attach_args pba;
+        uint64_t regval;
+        bool host;
 
-	aprint_normal("\n");	// zbbus leaves this open for addition info
+        /* Tell the user whether it's host or device mode. */
+        regval = mips3_ld((void *)MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_CFG));
+        host = (regval & M_SYS_PCI_HOST) != 0;
+
+        aprint_normal(": %s pci mode\n", host ? "host" : "device");
 
 	/* note that we've attached the bridge; can't have two. */
 	sc->sc_dev = self;
