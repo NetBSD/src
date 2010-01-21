@@ -177,6 +177,41 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:Checking that a bad CNAME signature is caught after a +CD query ($n)"
+ret=0
+#prime
+$DIG $DIGOPTS +cd bad-cname.example. @10.53.0.4 > dig.out.ns4.prime$n || ret=1
+#check: requery with +CD.  pending data should be returned even if it's bogus
+expect="a.example.
+10.0.0.1"
+ans=`$DIG $DIGOPTS +cd +nodnssec +short bad-cname.example. @10.53.0.4` || ret=1
+test "$ans" = "$expect" || ret=1
+test $ret = 0 || echo I:failed, got "'""$ans""'", expected "'""$expect""'"
+#check: requery without +CD.  bogus cached data should be rejected.
+$DIG $DIGOPTS +nodnssec bad-cname.example. @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "SERVFAIL" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:Checking that a bad DNAME signature is caught after a +CD query ($n)"
+ret=0
+#prime
+$DIG $DIGOPTS +cd a.bad-dname.example. @10.53.0.4 > dig.out.ns4.prime$n || ret=1
+#check: requery with +CD.  pending data should be returned even if it's bogus
+expect="example.
+a.example.
+10.0.0.1"
+ans=`$DIG $DIGOPTS +cd +nodnssec +short a.bad-dname.example. @10.53.0.4` || ret=1
+test "$ans" = "$expect" || ret=1
+test $ret = 0 || echo I:failed, got "'""$ans""'", expected "'""$expect""'"
+#check: requery without +CD.  bogus cached data should be rejected.
+$DIG $DIGOPTS +nodnssec a.bad-dname.example. @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "SERVFAIL" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 # Check the insecure.secure.example domain (insecurity proof)
 
 echo "I:checking 2-server insecurity proof ($n)"

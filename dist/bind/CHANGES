@@ -1,3 +1,39 @@
+	--- 9.4.3-P5 released ---
+
+2831.	[security]	Do not attempt to validate or cache
+			out-of-bailiwick data returned with a secure
+			answer; it must be re-fetched from its original
+			source and validated in that context. [RT #20819]
+
+2828.	[security]	Cached CNAME or DNAME RR could be returned to clients
+			without DNSSEC validation. [RT #20737]
+
+2827.	[security]	Bogus NXDOMAIN could be cached as if valid. [RT #20712]
+
+	--- 9.4.3-P4 released ---
+
+2772.	[security]	When validating, track whether pending data was from
+			the additional section or not and only return it if
+			validates as secure. [RT #20438]
+
+	--- 9.4.3-P3 released ---
+
+2640.	[security]	A specially crafted update packet will cause named
+			to exit. [RT #20000]
+
+	--- 9.4.3-P2 released ---
+
+2579.	[bug]		DNSSEC lookaside validation failed to handle unknown
+			algorithms. [RT #19479]
+
+	--- 9.4.3-P1 released ---
+
+2522.	[security]	Handle -1 from DSA_do_verify().
+
+2498.	[bug]		Removed a bogus function argument used with
+			ISC_SOCKET_USE_POLLWATCH: it could cause compiler
+			warning or crash named with the debug 1 level
+			of logging. [RT #18917]
 	--- 9.4.2-P2 released ---
 
 2406.   [bug]           Some operating systems have FD_SETSIZE set to a
