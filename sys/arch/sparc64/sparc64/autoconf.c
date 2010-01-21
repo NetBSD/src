@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.164 2010/01/20 15:45:52 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.165 2010/01/21 11:43:20 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.164 2010/01/20 15:45:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.165 2010/01/21 11:43:20 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -927,21 +927,26 @@ device_register(struct device *dev, void *aux)
 		if (strcmp(tmpstr, "network") == 0
 		   || strcmp(tmpstr, "ethernet") == 0
 		   || OF_getprop(ofnode, "mac-address", &eaddr, sizeof(eaddr))
-		      == sizeof(eaddr)) {
-			prom_getether(ofnode, eaddr);
+		      >= ETHER_ADDR_LEN) {
+
 			dict = device_properties(dev);
+
+			/*
+			 * Is it a network interface with FCode?
+			 */
+			if (strcmp(tmpstr, "network") == 0) {
+				prop_dictionary_set_bool(dict,
+				    "without-seeprom", true);
+				prom_getether(ofnode, eaddr);
+			} else {
+				if (!prom_get_node_ether(ofnode, eaddr))
+					goto noether;
+			}
 			blob = prop_data_create_data(eaddr, ETHER_ADDR_LEN);
 			prop_dictionary_set(dict, "mac-address", blob);
 			prop_object_release(blob);
 		}
-		/*
-		 * Is it a network interface with FCode? (others are called
-		 * "ethernet" by the firmware)
-		 */
-		if (strcmp(tmpstr, "network") == 0) {
-			dict = device_properties(dev);
-			prop_dictionary_set_bool(dict, "without-seeprom", true);
-		}
+noether:
 
 		/* is this a FC node? */
 		if (OF_getprop(ofnode, "device_type", tmpstr,
