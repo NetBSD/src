@@ -26,14 +26,9 @@ file	arch/mips/sibyte/pci/sbbrz_bus_io.c	sbbrz
 file	arch/mips/sibyte/pci/sbbrz_bus_mem.c	sbbrz
 
 # Instantiated SB-1250 PCI Host bridge
-device	sbpcihb: pcibus
+device	sbpcihb
 attach	sbpcihb at pci
 file	arch/mips/sibyte/pci/sbpcihb.c		sbpcihb
-
-# SB-1250 LDT Host bridge (acts like ppb)
-device	sbldthb: pcibus
-attach	sbldthb at pci
-file	arch/mips/sibyte/pci/sbldthb.c		sbldthb
 
 # sbscd children
 
