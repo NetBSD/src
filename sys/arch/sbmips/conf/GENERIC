@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.70.8.1 2010/01/21 04:23:29 matt Exp $
+# $NetBSD: GENERIC,v 1.70.8.2 2010/01/21 07:46:01 matt Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.70.8.1 $"
+#ident 		"GENERIC-$Revision: 1.70.8.2 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -144,10 +144,9 @@ sbobio*		at zbbus? busid ?
 pci*		at sbbrz? bus ?
 
 sbpcihb*	at pci? dev ?
-sbldthb*	at pci? dev ?
+ppb*		at pci? dev ?
 
-pci*		at sbpcihb? bus ?
-pci*		at sbldthb? bus ?
+pci*		at ppb?
 
 bge*		at pci? dev ?
 #vga*		at pci? dev ?
