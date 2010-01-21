@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.110 2010/01/08 19:48:11 dyoung Exp $	*/
+/*	$NetBSD: ata.c,v 1.111 2010/01/21 02:53:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.110 2010/01/08 19:48:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.111 2010/01/21 02:53:51 dyoung Exp $");
 
 #include "opt_ata.h"
 
@@ -1409,8 +1409,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 
 /* management of the /dev/atabus* devices */
 int
-atabusopen(dev_t dev, int flag, int fmt,
-    struct lwp *l)
+atabusopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct atabus_softc *sc;
 	int error;
@@ -1432,8 +1431,7 @@ atabusopen(dev_t dev, int flag, int fmt,
 
 
 int
-atabusclose(dev_t dev, int flag, int fmt,
-    struct lwp *l)
+atabusclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct atabus_softc *sc =
 	    device_lookup_private(&atabus_cd, minor(dev));
@@ -1446,8 +1444,7 @@ atabusclose(dev_t dev, int flag, int fmt,
 }
 
 int
-atabusioctl(dev_t dev, u_long cmd, void *addr, int flag,
-    struct lwp *l)
+atabusioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct atabus_softc *sc =
 	    device_lookup_private(&atabus_cd, minor(dev));
@@ -1474,8 +1471,7 @@ atabusioctl(dev_t dev, u_long cmd, void *addr, int flag,
 		s = splbio();
 		ata_reset_channel(sc->sc_chan, AT_WAIT | AT_POLL);
 		splx(s);
-		error = 0;
-		break;
+		return 0;
 	case ATABUSIOSCAN:
 	{
 #if 0
@@ -1515,14 +1511,12 @@ atabusioctl(dev_t dev, u_long cmd, void *addr, int flag,
 				KASSERT(chp->ch_drive[drive].drv_softc == NULL);
 			}
 		}
-		error = 0;
-		break;
+		return 0;
 	}
 	default:
-		error = ENOTTY;
+		return ENOTTY;
 	}
-	return (error);
-};
+}
 
 static bool
 atabus_suspend(device_t dv, pmf_qual_t qual)
