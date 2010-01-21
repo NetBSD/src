@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.h,v 1.23 2008/04/28 20:23:36 martin Exp $ */
+/*	$NetBSD: promlib.h,v 1.24 2010/01/21 11:40:01 martin Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -129,6 +129,7 @@ int	prom_makememarr(struct memarr *, int, int);
 
 struct idprom	*prom_getidprom(void);
 void		prom_getether(int, u_char *);
+bool		prom_get_node_ether(int, u_char*);
 const char	*prom_pa_location(u_int, u_int);
 
 void	prom_init(void);	/* To setup promops */

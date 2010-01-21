@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.41 2008/04/28 20:23:36 martin Exp $ */
+/*	$NetBSD: promlib.c,v 1.42 2010/01/21 11:40:01 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.41 2008/04/28 20:23:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.42 2010/01/21 11:40:01 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -993,12 +993,24 @@ prom_getidprom(void)
 
 void prom_getether(int node, u_char *cp)
 {
-	struct idprom *idp = prom_getidprom();
+	struct idprom *idp;
+
+	if (prom_get_node_ether(node, cp))
+		return;
+
+	/* Fall back on the machine's global ethernet address */
+	idp = prom_getidprom();
+	memcpy(cp, idp->idp_etheraddr, 6);
+}
+
+bool
+prom_get_node_ether(int node, u_char *cp)
+{
 	char buf[6+1], *bp;
 	int nitem;
 
 	if (node == 0)
-		goto read_idprom;
+		return false;
 
 	/*
 	 * First, try the node's "mac-address" property.
@@ -1013,7 +1025,7 @@ void prom_getether(int node, u_char *cp)
 	if (prom_getprop(node, "mac-address", 1, &nitem, &bp) == 0 &&
 	    nitem >= 6) {
 		memcpy(cp, bp, 6);
-		return;
+		return true;
 	}
 
 	/*
@@ -1023,17 +1035,15 @@ void prom_getether(int node, u_char *cp)
 	 */
 	if (prom_getoption("local-mac-address?", buf, sizeof buf) != 0 ||
 	    strcmp(buf, "true") != 0)
-		goto read_idprom;
+		return false;
 
 	/* Retrieve the node's "local-mac-address" property, if any */
 	nitem = 6;
 	if (prom_getprop(node, "local-mac-address", 1, &nitem, &cp) == 0 &&
 	    nitem == 6)
-		return;
+		return true;
 
-	/* Fall back on the machine's global ethernet address */
-read_idprom:
-	memcpy(cp, idp->idp_etheraddr, 6);
+	return false;
 }
 
 /*
