@@ -36,6 +36,9 @@ d			A	10.0.0.4
 foo			TXT	"testing"
 foo			A	10.0.1.0
 
+bad-cname		CNAME   a
+bad-dname		DNAME   @
+
 ; Used for testing CNAME queries
 cname1			CNAME	cname1-target
 cname1-target		TXT	"testing cname"
