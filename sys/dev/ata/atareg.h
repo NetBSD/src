@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.35 2010/01/10 16:04:25 tsutsui Exp $	*/
+/*	$NetBSD: atareg.h,v 1.36 2010/01/21 23:26:58 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -261,7 +261,7 @@ atacmd_tostatq(int cmd32)
  */
 struct ataparams {
     /* drive info */
-    u_int16_t	atap_config;		/* 0: general configuration */
+    uint16_t	atap_config;		/* 0: general configuration */
 #define WDC_CFG_ATAPI_MASK    	0xc000
 #define WDC_CFG_ATAPI    	0x8000
 #define	ATA_CFG_REMOVABLE	0x0080
@@ -277,21 +277,21 @@ struct ataparams {
 #define ATAPI_CFG_CMD_12	0x0000
 #define ATAPI_CFG_CMD_16	0x0001
 /* words 1-9 are ATA only */
-    u_int16_t	atap_cylinders;		/* 1: # of non-removable cylinders */
-    u_int16_t	__reserved1;
-    u_int16_t	atap_heads;		/* 3: # of heads */
-    u_int16_t	__retired1[2];		/* 4-5: # of unform. bytes/track */
-    u_int16_t	atap_sectors;		/* 6: # of sectors */
-    u_int16_t	__retired2[3];
+    uint16_t	atap_cylinders;		/* 1: # of non-removable cylinders */
+    uint16_t	__reserved1;
+    uint16_t	atap_heads;		/* 3: # of heads */
+    uint16_t	__retired1[2];		/* 4-5: # of unform. bytes/track */
+    uint16_t	atap_sectors;		/* 6: # of sectors */
+    uint16_t	__retired2[3];
 
-    u_int8_t	atap_serial[20];	/* 10-19: serial number */
-    u_int16_t	__retired3[2];
-    u_int16_t	__obsolete1;
-    u_int8_t	atap_revision[8];	/* 23-26: firmware revision */
-    u_int8_t	atap_model[40];		/* 27-46: model number */
-    u_int16_t	atap_multi;		/* 47: maximum sectors per irq (ATA) */
-    u_int16_t	__reserved2;
-    u_int16_t	atap_capabilities1;	/* 49: capability flags */
+    uint8_t	atap_serial[20];	/* 10-19: serial number */
+    uint16_t	__retired3[2];
+    uint16_t	__obsolete1;
+    uint8_t	atap_revision[8];	/* 23-26: firmware revision */
+    uint8_t	atap_model[40];		/* 27-46: model number */
+    uint16_t	atap_multi;		/* 47: maximum sectors per irq (ATA) */
+    uint16_t	__reserved2;
+    uint16_t	atap_capabilities1;	/* 49: capability flags */
 #define WDC_CAP_IORDY	0x0800
 #define WDC_CAP_IORDY_DSBL 0x0400
 #define	WDC_CAP_LBA	0x0200
@@ -301,69 +301,69 @@ struct ataparams {
 #define ATAPI_CAP_CMD_QUEUE	0x4000
 #define	ATAPI_CAP_OVERLP	0X2000
 #define ATAPI_CAP_ATA_RST	0x1000
-    u_int16_t	atap_capabilities2;	/* 50: capability flags (ATA) */
+    uint16_t	atap_capabilities2;	/* 50: capability flags (ATA) */
 #if BYTE_ORDER == LITTLE_ENDIAN
-    u_int8_t	__junk2;
-    u_int8_t	atap_oldpiotiming;	/* 51: old PIO timing mode */
-    u_int8_t	__junk3;
-    u_int8_t	atap_olddmatiming;	/* 52: old DMA timing mode (ATA) */
+    uint8_t	__junk2;
+    uint8_t	atap_oldpiotiming;	/* 51: old PIO timing mode */
+    uint8_t	__junk3;
+    uint8_t	atap_olddmatiming;	/* 52: old DMA timing mode (ATA) */
 #else
-    u_int8_t	atap_oldpiotiming;	/* 51: old PIO timing mode */
-    u_int8_t	__junk2;
-    u_int8_t	atap_olddmatiming;	/* 52: old DMA timing mode (ATA) */
-    u_int8_t	__junk3;
+    uint8_t	atap_oldpiotiming;	/* 51: old PIO timing mode */
+    uint8_t	__junk2;
+    uint8_t	atap_olddmatiming;	/* 52: old DMA timing mode (ATA) */
+    uint8_t	__junk3;
 #endif
-    u_int16_t	atap_extensions;	/* 53: extensions supported */
+    uint16_t	atap_extensions;	/* 53: extensions supported */
 #define WDC_EXT_UDMA_MODES	0x0004
 #define WDC_EXT_MODES		0x0002
 #define WDC_EXT_GEOM		0x0001
 /* words 54-62 are ATA only */
-    u_int16_t	atap_curcylinders;	/* 54: current logical cylinders */
-    u_int16_t	atap_curheads;		/* 55: current logical heads */
-    u_int16_t	atap_cursectors;	/* 56: current logical sectors/tracks */
-    u_int16_t	atap_curcapacity[2];	/* 57-58: current capacity */
-    u_int16_t	atap_curmulti;		/* 59: current multi-sector setting */
+    uint16_t	atap_curcylinders;	/* 54: current logical cylinders */
+    uint16_t	atap_curheads;		/* 55: current logical heads */
+    uint16_t	atap_cursectors;	/* 56: current logical sectors/tracks */
+    uint16_t	atap_curcapacity[2];	/* 57-58: current capacity */
+    uint16_t	atap_curmulti;		/* 59: current multi-sector setting */
 #define WDC_MULTI_VALID 0x0100
 #define WDC_MULTI_MASK  0x00ff
-    u_int16_t	atap_capacity[2];  	/* 60-61: total capacity (LBA only) */
-    u_int16_t	__retired4;
+    uint16_t	atap_capacity[2];  	/* 60-61: total capacity (LBA only) */
+    uint16_t	__retired4;
 #if BYTE_ORDER == LITTLE_ENDIAN
-    u_int8_t	atap_dmamode_supp; 	/* 63: multiword DMA mode supported */
-    u_int8_t	atap_dmamode_act; 	/*     multiword DMA mode active */
-    u_int8_t	atap_piomode_supp;       /* 64: PIO mode supported */
-    u_int8_t	__junk4;
+    uint8_t	atap_dmamode_supp; 	/* 63: multiword DMA mode supported */
+    uint8_t	atap_dmamode_act; 	/*     multiword DMA mode active */
+    uint8_t	atap_piomode_supp;	/* 64: PIO mode supported */
+    uint8_t	__junk4;
 #else
-    u_int8_t	atap_dmamode_act; 	/*     multiword DMA mode active */
-    u_int8_t	atap_dmamode_supp; 	/* 63: multiword DMA mode supported */
-    u_int8_t	__junk4;
-    u_int8_t	atap_piomode_supp;       /* 64: PIO mode supported */
+    uint8_t	atap_dmamode_act; 	/*     multiword DMA mode active */
+    uint8_t	atap_dmamode_supp; 	/* 63: multiword DMA mode supported */
+    uint8_t	__junk4;
+    uint8_t	atap_piomode_supp;	/* 64: PIO mode supported */
 #endif
-    u_int16_t	atap_dmatiming_mimi;	/* 65: minimum DMA cycle time */
-    u_int16_t	atap_dmatiming_recom;	/* 66: recommended DMA cycle time */
-    u_int16_t	atap_piotiming;    	/* 67: mini PIO cycle time without FC */
-    u_int16_t	atap_piotiming_iordy;	/* 68: mini PIO cycle time with IORDY FC */
-    u_int16_t	__reserved3[2];
+    uint16_t	atap_dmatiming_mimi;	/* 65: minimum DMA cycle time */
+    uint16_t	atap_dmatiming_recom;	/* 66: recommended DMA cycle time */
+    uint16_t	atap_piotiming;		/* 67: mini PIO cycle time without FC */
+    uint16_t	atap_piotiming_iordy;	/* 68: mini PIO cycle time with IORDY FC */
+    uint16_t	__reserved3[2];
 /* words 71-72 are ATAPI only */
-    u_int16_t	atap_pkt_br;		/* 71: time (ns) to bus release */
-    u_int16_t	atap_pkt_bsyclr;	/* 72: tme to clear BSY after service */
-    u_int16_t	__reserved4[2];
-    u_int16_t	atap_queuedepth;   	/* 75: */
+    uint16_t	atap_pkt_br;		/* 71: time (ns) to bus release */
+    uint16_t	atap_pkt_bsyclr;	/* 72: tme to clear BSY after service */
+    uint16_t	__reserved4[2];
+    uint16_t	atap_queuedepth;	/* 75: */
 #define WDC_QUEUE_DEPTH_MASK 0x1F
-    u_int16_t   atap_sata_caps;/* 76: */
+    uint16_t	atap_sata_caps;		/* 76: */
 #define SATA_SIGNAL_GEN1	0x02
 #define SATA_SIGNAL_GEN2	0x04
 #define SATA_NATIVE_CMDQ	0x0100
 #define SATA_HOST_PWR_MGMT	0x0200
 #define SATA_PHY_EVNT_CNT	0x0400
-    u_int16_t   atap_sata_reserved;    /* 77: */
-    u_int16_t   atap_sata_features_supp;    /* 78: */
+    uint16_t	atap_sata_reserved;	/* 77: */
+    uint16_t	atap_sata_features_supp; /* 78: */
 #define SATA_NONZERO_OFFSETS	0x02
 #define SATA_DMA_SETUP_AUTO	0x04
 #define SATA_DRIVE_PWR_MGMT	0x08
 #define SATA_IN_ORDER_DATA	0x10
 #define SATA_SW_STTNGS_PRS	0x40
-    u_int16_t   atap_sata_features_en;    /* 79: */
-    u_int16_t	atap_ata_major;  	/* 80: Major version number */
+    uint16_t	atap_sata_features_en;	/* 79: */
+    uint16_t	atap_ata_major;  	/* 80: Major version number */
 #define	WDC_VER_ATA1	0x0002
 #define	WDC_VER_ATA2	0x0004
 #define	WDC_VER_ATA3	0x0008
@@ -371,8 +371,8 @@ struct ataparams {
 #define	WDC_VER_ATA5	0x0020
 #define	WDC_VER_ATA6	0x0040
 #define	WDC_VER_ATA7	0x0080
-    u_int16_t   atap_ata_minor;  	/* 81: Minor version number */
-    u_int16_t	atap_cmd_set1;    	/* 82: command set supported */
+    uint16_t	atap_ata_minor;		/* 81: Minor version number */
+    uint16_t	atap_cmd_set1;		/* 82: command set supported */
 #define	WDC_CMD1_NOP	0x4000		/*	NOP */
 #define	WDC_CMD1_RB	0x2000		/*	READ BUFFER */
 #define	WDC_CMD1_WB	0x1000		/*	WRITE BUFFER */
@@ -388,7 +388,7 @@ struct ataparams {
 #define	WDC_CMD1_REMOV	0x0004		/*	Removable Media */
 #define	WDC_CMD1_SEC	0x0002		/*	Security Mode */
 #define	WDC_CMD1_SMART	0x0001		/*	SMART */
-    u_int16_t	atap_cmd_set2;    	/* 83: command set supported */
+    uint16_t	atap_cmd_set2;		/* 83: command set supported */
 #define	ATA_CMD2_FCE	0x2000		/*	FLUSH CACHE EXT */
 #define	WDC_CMD2_FC	0x1000		/*	FLUSH CACHE */
 #define	WDC_CMD2_DCO	0x0800		/*	Device Configuration Overlay */
@@ -403,7 +403,7 @@ struct ataparams {
 #define	ATA_CMD2_CFA	0x0004		/*	CFA */
 #define	ATA_CMD2_RWQ	0x0002		/*	READ/WRITE DMA QUEUED */
 #define	WDC_CMD2_DM	0x0001		/*	DOWNLOAD MICROCODE */
-    u_int16_t	atap_cmd_ext;		/* 84: command/features supp. ext. */
+    uint16_t	atap_cmd_ext;		/* 84: command/features supp. ext. */
 #define	ATA_CMDE_TLCONT	0x1000		/*	Time-limited R/W Continuous */
 #define	ATA_CMDE_TL	0x0800		/*	Time-limited R/W */
 #define	ATA_CMDE_URGW	0x0400		/*	URG for WRITE STREAM DMA/PIO */
@@ -417,31 +417,31 @@ struct ataparams {
 #define	ATA_CMDE_MS	0x0004		/*	Media serial number */
 #define	ATA_CMDE_SST	0x0002		/*	SMART self-test */
 #define	ATA_CMDE_SEL	0x0001		/*	SMART error logging */
-    u_int16_t	atap_cmd1_en;		/* 85: cmd/features enabled */
+    uint16_t	atap_cmd1_en;		/* 85: cmd/features enabled */
 /* bits are the same as atap_cmd_set1 */
-    u_int16_t	atap_cmd2_en;		/* 86: cmd/features enabled */
+    uint16_t	atap_cmd2_en;		/* 86: cmd/features enabled */
 /* bits are the same as atap_cmd_set2 */
-    u_int16_t	atap_cmd_def;		/* 87: cmd/features default */
+    uint16_t	atap_cmd_def;		/* 87: cmd/features default */
 #if BYTE_ORDER == LITTLE_ENDIAN
-    u_int8_t	atap_udmamode_supp; 	/* 88: Ultra-DMA mode supported */
-    u_int8_t	atap_udmamode_act; 	/*     Ultra-DMA mode active */
+    uint8_t	atap_udmamode_supp; 	/* 88: Ultra-DMA mode supported */
+    uint8_t	atap_udmamode_act; 	/*     Ultra-DMA mode active */
 #else
-    u_int8_t	atap_udmamode_act; 	/*     Ultra-DMA mode active */
-    u_int8_t	atap_udmamode_supp; 	/* 88: Ultra-DMA mode supported */
+    uint8_t	atap_udmamode_act; 	/*     Ultra-DMA mode active */
+    uint8_t	atap_udmamode_supp; 	/* 88: Ultra-DMA mode supported */
 #endif
 /* 89-92 are ATA-only */
-    u_int16_t	atap_seu_time;		/* 89: Sec. Erase Unit compl. time */
-    u_int16_t	atap_eseu_time;		/* 90: Enhanced SEU compl. time */
-    u_int16_t	atap_apm_val;		/* 91: current APM value */
-    u_int16_t	__reserved5[8];		/* 92-99: reserved */
-    u_int16_t	atap_max_lba[4];	/* 100-103: Max. user LBA addr */
-    u_int16_t	__reserved6[4];		/* 104-107: reserved */
-    u_int16_t 	atap_wwn[4];		/* 108-111: World Wide Name */
-    u_int16_t	__reserved7[15];	/* 112-126: reserved */
-    u_int16_t	atap_rmsn_supp;		/* 127: remov. media status notif. */
+    uint16_t	atap_seu_time;		/* 89: Sec. Erase Unit compl. time */
+    uint16_t	atap_eseu_time;		/* 90: Enhanced SEU compl. time */
+    uint16_t	atap_apm_val;		/* 91: current APM value */
+    uint16_t	__reserved5[8];		/* 92-99: reserved */
+    uint16_t	atap_max_lba[4];	/* 100-103: Max. user LBA addr */
+    uint16_t	__reserved6[4];		/* 104-107: reserved */
+    uint16_t 	atap_wwn[4];		/* 108-111: World Wide Name */
+    uint16_t	__reserved7[15];	/* 112-126: reserved */
+    uint16_t	atap_rmsn_supp;		/* 127: remov. media status notif. */
 #define WDC_RMSN_SUPP_MASK 0x0003
 #define WDC_RMSN_SUPP 0x0001
-    u_int16_t	atap_sec_st;		/* 128: security status */
+    uint16_t	atap_sec_st;		/* 128: security status */
 #define WDC_SEC_LEV_MAX	0x0100
 #define WDC_SEC_ESE_SUPP 0x0020
 #define WDC_SEC_EXP	0x0010
@@ -468,62 +468,62 @@ struct ataparams {
  */
 
 struct ata_smart_attr {
-	u_int8_t		id;		/* attribute id number */
-	u_int16_t		flags;
-	u_int8_t		value;		/* attribute value */
-	u_int8_t		worst;
-	u_int8_t		raw[6];
-	u_int8_t		reserved;
+	uint8_t		id;		/* attribute id number */
+	uint16_t	flags;
+	uint8_t		value;		/* attribute value */
+	uint8_t		worst;
+	uint8_t		raw[6];
+	uint8_t		reserved;
 } __packed;
 
 struct ata_smart_attributes {
-	u_int16_t		data_structure_revision;
-	struct ata_smart_attr	attributes[30];
-	u_int8_t		offline_data_collection_status;
-	u_int8_t		self_test_exec_status;
-	u_int16_t		total_time_to_complete_off_line;
-	u_int8_t		vendor_specific_366;
-	u_int8_t		offline_data_collection_capability;
-	u_int16_t		smart_capability;
-	u_int8_t		errorlog_capability;
-	u_int8_t		vendor_specific_371;
-	u_int8_t		short_test_completion_time;
-	u_int8_t		extend_test_completion_time;
-	u_int8_t		reserved_374_385[12];
-	u_int8_t		vendor_specific_386_509[125];
-	int8_t			checksum;
+	uint16_t	data_structure_revision;
+	struct ata_smart_attr attributes[30];
+	uint8_t		offline_data_collection_status;
+	uint8_t		self_test_exec_status;
+	uint16_t	total_time_to_complete_off_line;
+	uint8_t		vendor_specific_366;
+	uint8_t		offline_data_collection_capability;
+	uint16_t	smart_capability;
+	uint8_t		errorlog_capability;
+	uint8_t		vendor_specific_371;
+	uint8_t		short_test_completion_time;
+	uint8_t		extend_test_completion_time;
+	uint8_t		reserved_374_385[12];
+	uint8_t		vendor_specific_386_509[125];
+	int8_t		checksum;
 } __packed;
 
 struct ata_smart_thresh {
-	u_int8_t		id;
-	u_int8_t		value;
-	u_int8_t		reserved[10];
+	uint8_t		id;
+	uint8_t		value;
+	uint8_t		reserved[10];
 } __packed;
 
 struct ata_smart_thresholds {
-	u_int16_t		data_structure_revision;
+	uint16_		data_structure_revision;
 	struct ata_smart_thresh	thresholds[30];
-	u_int8_t		reserved[18];
-	u_int8_t		vendor_specific[131];
-	int8_t			checksum;
+	uint8_t		reserved[18];
+	uint8_t		vendor_specific[131];
+	int8_t		checksum;
 } __packed;
 
 struct ata_smart_selftest {
-	u_int8_t		number;
-	u_int8_t		status;
-	uint16_t		time_stamp;
-	u_int8_t		failure_check_point;
-	u_int32_t		lba_first_error;
-	u_int8_t		vendor_specific[15];
+	uint8_t		number;
+	uint8_t		status;
+	uint16_t	time_stamp;
+	uint8_t		failure_check_point;
+	uint32_t	lba_first_error;
+	uint8_t		vendor_specific[15];
 } __packed;
 
 struct ata_smart_selftestlog {
-	u_int16_t		data_structure_revision;
+	uint16_t	data_structure_revision;
 	struct ata_smart_selftest log_entries[21];
-	u_int8_t		vendorspecific[2];
-	u_int8_t		mostrecenttest;
-	u_int8_t		reserved[2];
-	u_int8_t		checksum;
+	uint8_t		vendorspecific[2];
+	uint8_t		mostrecenttest;
+	uint8_t		reserved[2];
+	uint8_t		checksum;
 } __packed;
 
 #endif /* _DEV_ATA_ATAREG_H_ */
