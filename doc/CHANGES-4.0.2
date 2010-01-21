@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.65 2010/01/12 09:21:06 snj Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.66 2010/01/21 08:37:19 snj Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -968,4 +968,15 @@ crypto/dist/openssl/ssl/ssl_locl.h		patch
 
 	Disable OpenSSL renegotiation, thus avoiding CVE-2009-3555.
 	[tonnerre, ticket #1373]
+
+sys/lib/libkern/arc4random.c			1.21
+
+	Keep arc4_i and arc4_j synchronised after a rekeying. This
+	prevents accidentally ending up in a short ARC4 cycle.
+	[joerg, ticket #1374]
+
+sys/dev/pci/azalia.c				patch
+
+	Signedness bug/crash in azalia.  Fixes PR 42604.
+	[tonnerre, ticket #1375]
 
