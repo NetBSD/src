@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.107 2009/12/16 23:19:07 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.108 2010/01/21 01:23:14 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.107 2009/12/16 23:19:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2010/01/21 01:23:14 pooka Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -192,7 +192,7 @@ static int __bicons_enable;
 #endif
 
 /* the following is used externally (sysctl_hw) */
-char	cpu_name[40];			/* set CPU depend xx_init() */
+char	hpcmips_cpuname[40];		/* set CPU depend xx_init() */
 
 struct cpu_info cpu_info_store;		/* only one CPU */
 int	cpuspeed = 1;			/* approx # instr per usec. */
@@ -551,7 +551,7 @@ cpu_startup(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
-	sprintf(cpu_model, "%s (%s)", platid_name(&platid), cpu_name);
+	sprintf(cpu_model, "%s (%s)", platid_name(&platid), hpcmips_cpuname);
 	printf("%s\n", cpu_model);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);

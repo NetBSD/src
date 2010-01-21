@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.40 2009/03/18 10:22:29 cegger Exp $ */
+/*	$NetBSD: tx39.c,v 1.41 2010/01/21 01:23:15 pooka Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.40 2009/03/18 10:22:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.41 2010/01/21 01:23:15 pooka Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -119,12 +119,13 @@ tx_init(void)
 	switch (model) {
 	default:
 		/* Unknown TOSHIBA TX39-series */
-		sprintf(cpu_name, "Unknown TOSHIBA TX39-series %x", model);
+		sprintf(hpcmips_cpuname,
+		    "Unknown TOSHIBA TX39-series %x", model);
 		break;
 	case TMPR3912:
 		tx39clock_cpuspeed(&cpuclock, &cpuspeed);
 
-		sprintf(cpu_name, "TOSHIBA TMPR3912 %d.%02d MHz",
+		sprintf(hpcmips_cpuname, "TOSHIBA TMPR3912 %d.%02d MHz",
 		    cpuclock / 1000000, (cpuclock % 1000000) / 10000);
 		tc->tc_chipset = __TX391X;
 		break;
@@ -132,7 +133,7 @@ tx_init(void)
 		tx39clock_cpuspeed(&cpuclock, &cpuspeed);
 		rev = tx_conf_read(tc, TX3922_REVISION_REG);
 
-		sprintf(cpu_name, "TOSHIBA TMPR3922 rev. %x.%x "
+		sprintf(hpcmips_cpuname, "TOSHIBA TMPR3922 rev. %x.%x "
 		    "%d.%02d MHz", (rev >> 4) & 0xf, rev & 0xf, 
 		    cpuclock / 1000000, (cpuclock % 1000000) / 10000);
 		tc->tc_chipset = __TX392X;
