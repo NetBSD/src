@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1015 2010/01/19 11:43:33 mbalmer Exp $
+$NetBSD: pcidevs,v 1.1016 2010/01/21 23:23:44 hubertf Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1916,8 +1916,8 @@ product O2MICRO OZ6872		0x6872	OZ6812/OZ6872 PCI-CardBus Bridge
 product O2MICRO OZ6922		0x6925	OZ6922 PCI-CardBus Bridge
 product O2MICRO OZ6933		0x6933	OZ6933 PCI-CardBus Bridge
 product O2MICRO OZ6972		0x6972	OZ6912/OZ6972 PCI-CardBus Bridge
-product O2MICRO 7120		0x7120	Integrated MMC/SD Controller
-product O2MICRO 7130		0x7130	Integrated MS/xD/SM Controller
+product O2MICRO 7120		0x7120	OZ7120 Integrated MMC/SD Controller
+product O2MICRO 7130		0x7130	OZ7130 Integrated MS/xD/SM Controller
 product O2MICRO 7223		0x7223	OZ711E0 PCI-CardBus Bridge
 
 /* Evans & Sutherland products */
@@ -3522,6 +3522,7 @@ product PLX 9050	0x5201	9050 I/O Accelrator
 product PLX 9054	0x9054	9054 I/O Accelerator
 product PLX 9060ES	0x906e	9060ES PCI Bus Controller
 product PLX 9656	0x9656	9656 I/O Accelerator
+product PLX 9656FPBGA	0x5601	9656 I/O Accelerator FPBGA
 
 /* Powerhouse Systems products */
 product POWERHOUSE POWERTOP	0x6037	PowerTop PowerPC System Controller
