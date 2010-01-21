@@ -1,4 +1,4 @@
-/*	$NetBSD: sbbrz_bus_mem.c,v 1.1.2.1 2010/01/21 04:22:33 matt Exp $	*/
+/*	$NetBSD: sbbrz_bus_mem.c,v 1.1.2.2 2010/01/21 08:50:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbbrz_bus_mem.c,v 1.1.2.1 2010/01/21 04:22:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbbrz_bus_mem.c,v 1.1.2.2 2010/01/21 08:50:00 matt Exp $");
 
 #include <sys/param.h>
 
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbbrz_bus_mem.c,v 1.1.2.1 2010/01/21 04:22:33 matt E
 
 #define	CHIP			sbbrz
 #define	CHIP_MEM		/* defined */
+#define	CHIP_LITTLE_ENDIAN
 
 #define	CHIP_EX_MALLOC_SAFE(v)	true
 #define	CHIP_EXTENT(v)		(((struct sbbrz_softc *)(v))->sc_mem_ex)
