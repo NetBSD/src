@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.66 2010/01/21 08:37:19 snj Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.67 2010/01/21 19:05:41 snj Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -979,4 +979,43 @@ sys/dev/pci/azalia.c				patch
 
 	Signedness bug/crash in azalia.  Fixes PR 42604.
 	[tonnerre, ticket #1375]
+
+dist/bind/CHANGES				patch
+dist/bind/FAQ					patch
+dist/bind/FAQ.xml				patch
+dist/bind/bin/named/query.c			patch
+dist/bind/bin/tests/system/conf.sh.in		patch
+dist/bind/bin/tests/system/dnssec/ns2/example.db.in patch
+dist/bind/bin/tests/system/dnssec/ns2/sign.sh	patch
+dist/bind/bin/tests/system/dnssec/tests.sh	patch
+dist/bind/doc/rfc/index				patch
+dist/bind/lib/dns/api				patch
+dist/bind/lib/dns/include/dns/types.h		patch
+dist/bind/lib/dns/masterdump.c			patch
+dist/bind/lib/dns/openssldsa_link.c		patch
+dist/bind/lib/dns/opensslrsa_link.c		patch
+dist/bind/lib/dns/rbtdb.c			patch
+dist/bind/lib/dns/resolver.c			patch
+dist/bind/lib/dns/validator.c			patch
+dist/bind/lib/lwres/man/lwres.html		patch
+dist/bind/lib/lwres/man/lwres_buffer.html	patch
+dist/bind/lib/lwres/man/lwres_config.html	patch
+dist/bind/lib/lwres/man/lwres_context.html	patch
+dist/bind/lib/lwres/man/lwres_gabn.html		patch
+dist/bind/lib/lwres/man/lwres_gai_strerror.html	patch
+dist/bind/lib/lwres/man/lwres_getaddrinfo.html	patch
+dist/bind/lib/lwres/man/lwres_gethostent.html	patch
+dist/bind/lib/lwres/man/lwres_getipnode.html	patch
+dist/bind/lib/lwres/man/lwres_getnameinfo.html	patch
+dist/bind/lib/lwres/man/lwres_getrrsetbyname.html patch
+dist/bind/lib/lwres/man/lwres_gnba.html		patch
+dist/bind/lib/lwres/man/lwres_hstrerror.html	patch
+dist/bind/lib/lwres/man/lwres_inetntop.html	patch
+dist/bind/lib/lwres/man/lwres_noop.html		patch
+dist/bind/lib/lwres/man/lwres_packet.html	patch
+dist/bind/lib/lwres/man/lwres_resutil.html	patch
+dist/bind/version				patch
+
+	Update BIND to 9.4.3-P5, fixing a number of security issues.
+	[christos, ticket #1376]
 
