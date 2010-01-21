@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.115 2009/09/01 21:46:53 jmcneill Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.116 2010/01/21 16:14:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.115 2009/09/01 21:46:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.116 2010/01/21 16:14:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.115 2009/09/01 21:46:53 jmcneill Ex
 
 #include <sys/bus.h>
 #include <sys/intr.h>
-#ifdef __sparc__
-#include <machine/promlib.h>
-#endif
 
 #include <dev/mii/miivar.h>
 #include <dev/mii/mii_bitbang.h>
@@ -645,7 +642,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 		 * XXX dependent wart from the PCI front-end.
 		 */
 		ea = prop_dictionary_get(device_properties(self),
-					 "mac-addr");
+					 "mac-address");
 		if (ea != NULL) {
 			extern int tlp_srom_debug;
 			KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
@@ -930,17 +927,20 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 		 * multi-port boards).
 		 */
 		if (!tlp_isv_srom_enaddr(sc, enaddr)) {
-#ifdef __sparc__
-			if ((sc->sc_srom[20] == 0 &&
-			     sc->sc_srom[21] == 0 &&
-			     sc->sc_srom[22] == 0) ||
-			    (sc->sc_srom[20] == 0xff &&
-			     sc->sc_srom[21] == 0xff &&
-			     sc->sc_srom[22] == 0xff)) {
-				prom_getether(PCITAG_NODE(pa->pa_tag), enaddr);
-			} else
-#endif
-			memcpy(enaddr, &sc->sc_srom[20], ETHER_ADDR_LEN);
+
+			prop_data_t eaddrprop;
+
+			eaddrprop = prop_dictionary_get(
+				device_properties(self), "mac-address");
+
+			if (eaddrprop != NULL
+			    && prop_data_size(eaddrprop) == ETHER_ADDR_LEN)
+				memcpy(enaddr,
+				    prop_data_data_nocopy(eaddrprop),
+				    ETHER_ADDR_LEN);
+			else
+				memcpy(enaddr, &sc->sc_srom[20],
+				    ETHER_ADDR_LEN);
 		}
 
 		/*
