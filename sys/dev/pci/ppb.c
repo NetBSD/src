@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.39 2008/05/03 05:44:06 cegger Exp $	*/
+/*	$NetBSD: ppb.c,v 1.39.18.1 2010/01/21 07:43:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.39 2008/05/03 05:44:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.39.18.1 2010/01/21 07:43:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,13 @@ ppbmatch(device_t parent, cfdata_t match, void *aux)
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_PCI)
 		return 1;
+
+#ifdef _MIPS_PADDR_T_64BIT
+        /* The LDT HB acts just like a PPB.  */
+        if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SIBYTE &&
+            PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIBYTE_BCM1250_LDTHB)
+                return 1;
+#endif
 
 	return 0;
 }
