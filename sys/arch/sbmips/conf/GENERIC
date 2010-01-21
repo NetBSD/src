@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.70.8.2 2010/01/21 07:46:01 matt Exp $
+# $NetBSD: GENERIC,v 1.70.8.3 2010/01/21 08:38:46 cyber Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.70.8.2 $"
+#ident 		"GENERIC-$Revision: 1.70.8.3 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -35,7 +35,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 #makeoptions 	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=330000	# size for embedded symbol table
+options 	SYMTAB_SPACE=340000	# size for embedded symbol table
 
 # Compatibility options
 options 	COMPAT_43	# compatibility with 4.3BSD binaries
@@ -142,14 +142,10 @@ sbbrz*		at zbbus? busid ?
 sbobio*		at zbbus? busid ?
 
 pci*		at sbbrz? bus ?
-
-sbpcihb*	at pci? dev ?
 ppb*		at pci? dev ?
-
 pci*		at ppb?
 
 bge*		at pci? dev ?
-#vga*		at pci? dev ?
 
 #sbicu*		at sbscd? offset ?
 sbwdog*		at sbscd? offset ? intr ?
