@@ -22,9 +22,11 @@ device	sbbrz: pcibus
 attach	sbbrz at zbbus
 file	arch/mips/sibyte/pci/sbbrz.c		sbbrz
 file	arch/mips/sibyte/pci/sbbrz_pci.c	sbbrz
+file	arch/mips/sibyte/pci/sbbrz_bus_io.c	sbbrz
+file	arch/mips/sibyte/pci/sbbrz_bus_mem.c	sbbrz
 
 # Instantiated SB-1250 PCI Host bridge
-device	sbpcihb
+device	sbpcihb: pcibus
 attach	sbpcihb at pci
 file	arch/mips/sibyte/pci/sbpcihb.c		sbpcihb
 

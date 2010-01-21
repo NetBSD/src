@@ -1,4 +1,4 @@
-/* $NetBSD: sbbrz_pci.c,v 1.1.2.1 2010/01/21 04:22:33 matt Exp $ */
+/* $NetBSD: sbbrz_pci.c,v 1.1.2.2 2010/01/21 06:59:12 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.1.2.1 2010/01/21 04:22:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.1.2.2 2010/01/21 06:59:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,37 +78,64 @@ __KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.1.2.1 2010/01/21 04:22:33 matt Exp $
 #include <machine/locore.h>
 #include <mips/sibyte/include/sb1250_regs.h>
 #include <mips/sibyte/include/sb1250_scd.h>
+#include <mips/sibyte/include/sb1250_int.h>
 #include <mips/sibyte/pci/sbbrzvar.h>
 
-void		sbbrz_attach_hook(device_t, device_t,
+void		sbbrz_pci_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
-static int	sbbrz_bus_maxdevs(void *, int);
-static pcitag_t	sbbrz_make_tag(void *, int, int, int);
-static void	sbbrz_decompose_tag(void *, pcitag_t, int *, int *, int *);
-static pcireg_t	sbbrz_conf_read(void *, pcitag_t, int);
-static void	sbbrz_conf_write(void *, pcitag_t, int, pcireg_t);
+static int	sbbrz_pci_bus_maxdevs(void *, int);
+static pcitag_t	sbbrz_pci_make_tag(void *, int, int, int);
+static void	sbbrz_pci_decompose_tag(void *, pcitag_t, int *, int *, int *);
+
+static pcireg_t	sbbrz_pci_conf_read(void *, pcitag_t, int);
+static void	sbbrz_pci_conf_write(void *, pcitag_t, int, pcireg_t);
+#ifdef PCI_NETBSD_CONFIGURE
+static void	sbbrz_pci_conf_interrupt(void *, int, int, int, int, int *);
+#endif
+
+static int	sbbrz_pci_intr_map(struct pci_attach_args *,
+		    pci_intr_handle_t *);
+static const char *
+		sbbrz_pci_intr_string(void *, pci_intr_handle_t);
+static const struct evcnt *
+		sbbrz_pci_intr_evcnt(void *, pci_intr_handle_t);
+static void *	sbbrz_pci_intr_establish(void *, pci_intr_handle_t,
+		    int, int (*)(void *), void *);
+static void	sbbrz_pci_intr_disestablish(void *, void *);
+
 
 void
 sbbrz_pci_init(pci_chipset_tag_t pc, void *v)
 {
 
 	pc->pc_conf_v = v;
-	pc->pc_attach_hook = sbbrz_attach_hook;
-	pc->pc_bus_maxdevs = sbbrz_bus_maxdevs;
-	pc->pc_make_tag = sbbrz_make_tag;
-	pc->pc_decompose_tag = sbbrz_decompose_tag;
-	pc->pc_conf_read = sbbrz_conf_read;
-	pc->pc_conf_write = sbbrz_conf_write;
+	pc->pc_attach_hook = sbbrz_pci_attach_hook;
+	pc->pc_bus_maxdevs = sbbrz_pci_bus_maxdevs;
+	pc->pc_make_tag = sbbrz_pci_make_tag;
+	pc->pc_decompose_tag = sbbrz_pci_decompose_tag;
+	pc->pc_conf_read = sbbrz_pci_conf_read;
+	pc->pc_conf_write = sbbrz_pci_conf_write;
+	pc->pc_intr_map = sbbrz_pci_intr_map;
+	pc->pc_intr_string = sbbrz_pci_intr_string;
+	pc->pc_intr_evcnt = sbbrz_pci_intr_evcnt;
+	pc->pc_intr_establish = sbbrz_pci_intr_establish;
+	pc->pc_intr_disestablish = sbbrz_pci_intr_disestablish;
+#ifdef PCI_NETBSD_CONFIGURE
+	pc->pc_conf_interrupt = sbbrz_pci_conf_interrupt;
+#endif
+#ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
+	pc->pc_pciide_compat_intr_establish = sbbrz_pciide_compat_intr_establish;
+#endif
 }
 
 void
-sbbrz_attach_hook(device_t parent, device_t self,
+sbbrz_pci_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 }
 
 int
-sbbrz_bus_maxdevs(void *cpv, int busno)
+sbbrz_pci_bus_maxdevs(void *cpv, int busno)
 {
 	uint64_t regval;
 	int host;
@@ -125,14 +152,14 @@ sbbrz_bus_maxdevs(void *cpv, int busno)
 }
 
 pcitag_t
-sbbrz_make_tag(void *cpv, int b, int d, int f)
+sbbrz_pci_make_tag(void *cpv, int b, int d, int f)
 {
 
 	return (b << 16) | (d << 11) | (f << 8);
 }
 
 void
-sbbrz_decompose_tag(void *cpv, pcitag_t tag,
+sbbrz_pci_decompose_tag(void *cpv, pcitag_t tag,
 	int *bp, int *dp, int *fp)
 {
 
@@ -145,7 +172,7 @@ sbbrz_decompose_tag(void *cpv, pcitag_t tag,
 }
 
 pcireg_t
-sbbrz_conf_read(void *cpv, pcitag_t tag, int offset)
+sbbrz_pci_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	uint64_t addr;
 	pcitag_t tmptag;
@@ -180,7 +207,7 @@ printf("s_c_r XKSEG (%"PRIx64"): %"PRIx64"\n", addr, (uint64_t)tmptag);
 }
 
 void
-sbbrz_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
+sbbrz_pci_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	uint64_t addr;
 
@@ -194,4 +221,51 @@ sbbrz_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 printf("s_c_W XKSEG (%"PRIx64"): %"PRIx64"\n", addr, (uint64_t)data);
 
 	return mips3_sw_a64(addr, data);
+}
+
+int
+sbbrz_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+{
+	int bus, device, func;
+	sbbrz_pci_decompose_tag(NULL, pa->pa_intrtag, &bus, &device, &func);
+	*ihp = 0;
+	if (pa->pa_intrpin == PCI_INTERRUPT_PIN_NONE)
+		return EINVAL;
+	if (bus == 0) {
+		*ihp = K_INT_PCI_INTA
+		    + ((device + pa->pa_intrpin - PCI_INTERRUPT_PIN_A) % 4);
+		return 0;
+	}
+	return EOPNOTSUPP;
+}
+
+const char *
+sbbrz_pci_intr_string(void *v, pci_intr_handle_t ih)
+{
+	switch (ih) {
+	default:		return NULL;
+	case K_INT_PCI_INTA:	return "pci inta";
+	case K_INT_PCI_INTB:	return "pci intb";
+	case K_INT_PCI_INTC:	return "pci intc";
+	case K_INT_PCI_INTD:	return "pci intd";
+	}
+}
+
+const struct evcnt *
+sbbrz_pci_intr_evcnt(void *v, pci_intr_handle_t ih)
+{
+	return NULL;
+}
+
+void *
+sbbrz_pci_intr_establish(void *v, pci_intr_handle_t ih, int level,
+	int (*handler)(void *), void *arg)
+{
+	return cpu_intr_establish(ih, level,
+	    (void (*)(void *, uint32_t, vaddr_t))handler, arg);
+}
+
+void
+sbbrz_pci_intr_disestablish(void *v, void *ih)
+{
 }
