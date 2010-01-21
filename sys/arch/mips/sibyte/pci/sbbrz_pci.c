@@ -1,4 +1,4 @@
-/* $NetBSD: sbbrz_pci.c,v 1.1.2.3 2010/01/21 08:31:24 matt Exp $ */
+/* $NetBSD: sbbrz_pci.c,v 1.1.2.4 2010/01/21 08:45:41 cyber Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.1.2.3 2010/01/21 08:31:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.1.2.4 2010/01/21 08:45:41 cyber Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,27 +183,14 @@ sbbrz_pci_conf_read(void *cpv, pcitag_t tag, int offset)
 #endif
 
 	addr = A_PHYS_LDTPCI_CFG_MATCH_BITS + tag + offset;
-#if 0
-addr = mips3_ld((void *)MIPS_PHYS_TO_KSEG1(addr));
-tmptag = mips3_lw_a64(addr);
-printf("s_c_r KSEG1: %"PRIx64"\n", (uint64_t)tmptag);
-#endif
 	addr = MIPS_PHYS_TO_XKPHYS(MIPS3_TLB_ATTR_UNCACHED, addr);
-
-tmptag = mips3_lw_a64(addr);
-printf("s_c_r XKSEG (%"PRIx64"): %"PRIx64"\n", addr, (uint64_t)tmptag);
-
 
 #ifdef _punt_on_64
 	if (badaddr64(addr, 4) != 0)
 		return 0xffffffff;
 #endif
 
-#if not_yet
 	return mips3_lw_a64(addr);
-#else
-	return tmptag;
-#endif
 }
 
 void
@@ -218,7 +205,6 @@ sbbrz_pci_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 
 	addr = A_PHYS_LDTPCI_CFG_MATCH_BITS + tag + offset;
 	addr = MIPS_PHYS_TO_XKPHYS(MIPS3_TLB_ATTR_UNCACHED, addr);
-printf("s_c_W XKSEG (%"PRIx64"): %"PRIx64"\n", addr, (uint64_t)data);
 
 	return mips3_sw_a64(addr, data);
 }
