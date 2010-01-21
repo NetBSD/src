@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.61 2009/10/22 20:15:45 snj Exp $	*/
+/*	$NetBSD: md.c,v 1.62 2010/01/21 02:14:42 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.61 2009/10/22 20:15:45 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.62 2010/01/21 02:14:42 dyoung Exp $");
 
 #include "opt_md.h"
 #include "opt_tftproot.h"
@@ -324,7 +324,7 @@ mdread(dev_t dev, struct uio *uio, int flags)
 
 	sc = device_lookup_private(&md_cd, MD_UNIT(dev));
 
-	if (sc->sc_type == MD_UNCONFIGURED)
+	if (sc == NULL || sc->sc_type == MD_UNCONFIGURED)
 		return ENXIO;
 
 	return (physio(mdstrategy, NULL, dev, B_READ, minphys, uio));
@@ -337,7 +337,7 @@ mdwrite(dev_t dev, struct uio *uio, int flags)
 
 	sc = device_lookup_private(&md_cd, MD_UNIT(dev));
 
-	if (sc->sc_type == MD_UNCONFIGURED)
+	if (sc == NULL || sc->sc_type == MD_UNCONFIGURED)
 		return ENXIO;
 
 	return (physio(mdstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -356,7 +356,7 @@ mdstrategy(struct buf *bp)
 
 	sc = device_lookup_private(&md_cd, MD_UNIT(bp->b_dev));
 
-	if (sc->sc_type == MD_UNCONFIGURED) {
+	if (sc == NULL || sc->sc_type == MD_UNCONFIGURED) {
 		bp->b_error = ENXIO;
 		goto done;
 	}
@@ -409,7 +409,8 @@ mdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct md_softc *sc;
 	struct md_conf *umd;
 
-	sc = device_lookup_private(&md_cd, MD_UNIT(dev));
+	if ((sc = device_lookup_private(&md_cd, MD_UNIT(dev))) == NULL)
+		return ENXIO;
 
 	/* If this is not the raw partition, punt! */
 	if (DISKPART(dev) != RAW_PART)
