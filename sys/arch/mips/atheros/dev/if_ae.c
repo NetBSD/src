@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.17 2010/01/19 22:06:21 pooka Exp $ */
+/* $Id: if_ae.c,v 1.18 2010/01/22 08:56:05 martin Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.17 2010/01/19 22:06:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.18 2010/01/22 08:56:05 martin Exp $");
 
 
 #include <sys/param.h>
@@ -235,7 +235,7 @@ ae_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Try to get MAC address.
 	 */
-	ea = prop_dictionary_get(device_properties(&sc->sc_dev), "mac-addr");
+	ea = prop_dictionary_get(device_properties(&sc->sc_dev), "mac-address");
 	if (ea == NULL) {
 		printf("%s: unable to get mac-addr property\n",
 		    sc->sc_dev.dv_xname);

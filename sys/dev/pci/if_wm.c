@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.194 2010/01/21 08:52:20 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.195 2010/01/22 08:56:06 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.194 2010/01/21 08:52:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.195 2010/01/22 08:56:06 martin Exp $");
 
 #include "rnd.h"
 
@@ -1452,7 +1452,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 * Read the Ethernet address from the EEPROM, if not first found
 	 * in device properties.
 	 */
-	ea = prop_dictionary_get(dict, "mac-addr");
+	ea = prop_dictionary_get(dict, "mac-address");
 	if (ea != NULL) {
 		KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
 		KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);

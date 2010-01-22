@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.3 2008/04/28 20:23:17 martin Exp $ */
+/* $NetBSD: autoconf.c,v 1.4 2010/01/22 08:56:05 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2010/01/22 08:56:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,10 +113,10 @@ device_register(struct device *dev, void *aux)
 		prop_object_release(po);
 	}
 	if (device_is_a(dev, "admsw") &&
-	    (po = prop_dictionary_get(properties, "mac-addr")) != NULL) {
+	    (po = prop_dictionary_get(properties, "mac-address")) != NULL) {
 
 		if (prop_dictionary_set(device_properties(dev),
-					"mac-addr", po) == FALSE) {
+					"mac-address", po) == FALSE) {
 			printf("WARNING: unable to set mac-addr "
 			    "property for %s\n", dev->dv_xname);
 		}

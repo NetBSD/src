@@ -1,4 +1,4 @@
-/* $NetBSD: ar5312.c,v 1.5 2008/01/23 05:23:59 dyoung Exp $ */
+/* $NetBSD: ar5312.c,v 1.6 2010/01/22 08:56:05 martin Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -264,7 +264,7 @@ ar531x_device_register(struct device *dev, void *aux)
 		else
 			return;
 
-		addprop_data(dev, "mac-addr", enet, ETHER_ADDR_LEN);
+		addprop_data(dev, "mac-address", enet, ETHER_ADDR_LEN);
 	}
 
 	if (device_is_a(dev, "ath")) {
@@ -277,7 +277,7 @@ ar531x_device_register(struct device *dev, void *aux)
 		else
 			return;
 
-		addprop_data(dev, "mac-addr", enet, ETHER_ADDR_LEN);
+		addprop_data(dev, "mac-address", enet, ETHER_ADDR_LEN);
 
 		addprop_integer(dev, "wmac-rev",
 		    AR5312_REVISION_WMAC(GETSYSREG(AR5312_SYSREG_REVISION)));

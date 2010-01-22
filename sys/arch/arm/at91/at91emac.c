@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.7 2010/01/19 22:06:19 pooka Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.7 2010/01/19 22:06:19 pooka Exp $	*/
+/*	$Id: at91emac.c,v 1.8 2010/01/22 08:56:04 martin Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.8 2010/01/22 08:56:04 martin Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.7 2010/01/19 22:06:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.8 2010/01/22 08:56:04 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -171,7 +171,7 @@ emac_attach(device_t parent, device_t self, void *aux)
 	EMAC_WRITE(ETH_RSR, (u & (ETH_RSR_OVR|ETH_RSR_REC|ETH_RSR_BNA)));
 
 	/* Fetch the Ethernet address from property if set. */
-	enaddr = prop_dictionary_get(device_properties(self), "mac-addr");
+	enaddr = prop_dictionary_get(device_properties(self), "mac-address");
 
 	if (enaddr != NULL) {
 		KASSERT(prop_object_type(enaddr) == PROP_TYPE_DATA);

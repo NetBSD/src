@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_machdep.c,v 1.18 2009/12/26 16:01:23 uebayasi Exp $	*/
+/*	$NetBSD: armadillo9_machdep.c,v 1.19 2010/01/22 08:56:04 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -110,7 +110,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.18 2009/12/26 16:01:23 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.19 2010/01/22 08:56:04 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -315,7 +315,7 @@ armadillo9_device_register(device_t dev, void *aux)
 		    armadillo9_ethaddr, ETHER_ADDR_LEN);
 		KASSERT(pd != NULL);
 		if (prop_dictionary_set(device_properties(dev),
-					"mac-addr", pd) == false) {
+					"mac-address", pd) == false) {
 			printf("WARNING: unable to set mac-addr property "
 			    "for %s\n", dev->dv_xname);
 		}

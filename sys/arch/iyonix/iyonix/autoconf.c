@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 2009/08/02 11:32:05 gavan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 2010/01/22 08:56:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2009/08/02 11:32:05 gavan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2010/01/22 08:56:05 martin Exp $");
 
 #include "opt_md.h"
 
@@ -134,7 +134,7 @@ device_register(struct device *dev, void *aux)
 							   ETHER_ADDR_LEN);
 			KASSERT(mac != NULL);
 
-			SETPROP("mac-addr", mac);
+			SETPROP("mac-address", mac);
 			SETPROP("i82543-cfg1", cfg1);
 			SETPROP("i82543-cfg2", cfg2);
 			SETPROP("i82543-swdpin", swdpin);
