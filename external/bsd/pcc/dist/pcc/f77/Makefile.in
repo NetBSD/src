@@ -1,4 +1,4 @@
-#	$Id: Makefile.in,v 1.1.1.1 2008/08/24 05:33:05 gmcgarry Exp $
+#	$Id: Makefile.in,v 1.2 2010/01/22 11:08:40 plunky Exp $
 #
 # Makefile.in for top-level of pcc.
 #
@@ -16,16 +16,16 @@ SUBDIR=f77 fcom
 all: ${SUBDIR}
 
 install:
-	cd f77 && ${MAKE} install
-	cd fcom && ${MAKE} install
+	(cd f77 && ${MAKE} install)
+	(cd fcom && ${MAKE} install)
 
 clean:
-	cd f77 && ${MAKE} clean
-	cd fcom && ${MAKE} clean
+	(cd f77 && ${MAKE} clean)
+	(cd fcom && ${MAKE} clean)
 
 distclean:
-	cd f77 && ${MAKE} distclean
-	cd fcom && ${MAKE} distclean
+	(cd f77 && ${MAKE} distclean)
+	(cd fcom && ${MAKE} distclean)
 	/bin/rm -rf Makefile config.log stamp-h1 config.status \
 	configure.lineno config.h autom4te.cache
 
