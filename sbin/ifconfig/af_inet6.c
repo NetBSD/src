@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.25 2009/09/11 22:06:29 dyoung Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.26 2010/01/22 23:50:07 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.25 2009/09/11 22:06:29 dyoung Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.26 2010/01/22 23:50:07 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -247,7 +247,7 @@ setia6eui64_impl(prop_dictionary_t env, struct in6_aliasreq *ifra)
 			}
 		}
 	}
-	if (!lladdr)
+	if (lladdr == NULL)
 		errx(EXIT_FAILURE, "could not determine link local address"); 
 
  	memcpy(&in6->s6_addr[8], &lladdr->s6_addr[8], 8);
