@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.11 2010/01/20 06:58:36 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.12 2010/01/22 07:41:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.11 2010/01/20 06:58:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.12 2010/01/22 07:41:10 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -244,7 +244,6 @@ bool		pmap_initialized = false;
 
 /* Forward function declarations */
 void pmap_remove_pv(pmap_t, vaddr_t, struct vm_page *);
-uint32_t pmap_tlb_asid_alloc(pmap_t pmap, struct cpu_info *ci);
 void pmap_enter_pv(pmap_t, vaddr_t, struct vm_page *, u_int *);
 pt_entry_t *pmap_pte(pmap_t, vaddr_t);
 
@@ -359,6 +358,7 @@ pmap_bootstrap(void)
 	 */
 
 	/* Get size of buffer cache and set an upper limit */
+	buf_setvalimit((VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / 8);
 	bufsz = buf_memcalc();
 	buf_setvalimit(bufsz);
 
@@ -384,6 +384,13 @@ pmap_bootstrap(void)
 	mips_avail_start = ptoa(vm_physmem[0].start);
 	mips_avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
 	mips_virtual_end = VM_MIN_KERNEL_ADDRESS + Sysmapsize * NBPG;
+#ifndef _LP64
+	if (mips_virtual_end > VM_MAX_KERNEL_ADDRESS) {
+		mips_virtual_end = VM_MAX_KERNEL_ADDRESS;
+		Sysmapsize =
+		    (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / NBPG;
+	}
+#endif
 
 	/*
 	 * Now actually allocate the kernel PTE array (must be done
@@ -717,11 +724,6 @@ static bool
 pmap_pte_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *pte,
 	uintptr_t flags)
 {
-	struct cpu_info * const ci = curcpu();
-	struct pmap_asid_info * const pai = PMAP_PAI(pmap, ci);
-	const uint32_t asid = pai->pai_asid << MIPS_TLB_PID_SHIFT;
-	const bool needflush = PMAP_PAI_ASIDVALID_P(pai, ci);
-
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT)) {
 		printf("%s: %p, %"PRIxVADDR", %"PRIxVADDR", %p, %"PRIxPTR"\n",
@@ -731,25 +733,23 @@ pmap_pte_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *pte,
 
 	for (; sva < eva; sva += NBPG, pte++) {
 		struct vm_page *pg;
-		uint32_t entry = pte->pt_entry;
-		if (!mips_pg_v(entry))
+		uint32_t pt_entry = pte->pt_entry;
+		if (!mips_pg_v(pt_entry))
 			continue;
-		if (mips_pg_wired(entry))
+		if (mips_pg_wired(pt_entry))
 			pmap->pm_stats.wired_count--;
 		pmap->pm_stats.resident_count--;
-		pg = PHYS_TO_VM_PAGE(mips_tlbpfn_to_paddr(entry));
+		pg = PHYS_TO_VM_PAGE(mips_tlbpfn_to_paddr(pt_entry));
 		if (pg)
 			pmap_remove_pv(pmap, sva, pg);
 		pte->pt_entry = mips_pg_nv_bit();
 		/*
 		 * Flush the TLB for the given address.
 		 */
-		if (needflush) {
-			tlb_invalidate_addr(sva | asid);
+		pmap_tlb_invalidate_addr(pmap, sva);
 #ifdef DEBUG
-			remove_stats.flushes++;
+		remove_stats.flushes++;
 #endif
-		}
 	}
 	return false;
 }
@@ -772,13 +772,13 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 #endif
 		pt_entry_t *pte = kvtopte(sva);
 		for (; sva < eva; sva += NBPG, pte++) {
-			uint32_t entry = pte->pt_entry;
-			if (!mips_pg_v(entry))
+			uint32_t pt_entry = pte->pt_entry;
+			if (!mips_pg_v(pt_entry))
 				continue;
-			if (mips_pg_wired(entry))
+			if (mips_pg_wired(pt_entry))
 				pmap->pm_stats.wired_count--;
 			pmap->pm_stats.resident_count--;
-			pg = PHYS_TO_VM_PAGE(mips_tlbpfn_to_paddr(entry));
+			pg = PHYS_TO_VM_PAGE(mips_tlbpfn_to_paddr(pt_entry));
 			if (pg)
 				pmap_remove_pv(pmap, sva, pg);
 			if (MIPS_HAS_R4K_MMU)
@@ -790,10 +790,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			/*
 			 * Flush the TLB for the given address.
 			 */
-			tlb_invalidate_addr(sva);
-#ifdef DEBUG
-			remove_stats.flushes++;
-#endif
+			pmap_tlb_invalidate_addr(pmap, sva);
 		}
 		return;
 	}
@@ -870,31 +867,24 @@ static bool
 pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *pte,
 	uintptr_t flags)
 {
-	struct cpu_info * const ci = curcpu();
-	struct pmap_asid_info * const pai = PMAP_PAI(pmap, ci);
-	const bool needupdate = PMAP_PAI_ASIDVALID_P(pai, ci);
-	const uint32_t asid = pai->pai_asid << MIPS_TLB_PID_SHIFT;
+	const uint32_t pg_mask = ~(mips_pg_m_bit() | mips_pg_ro_bit());
 	const uint32_t p = flags;
 
 	/*
 	 * Change protection on every valid mapping within this segment.
 	 */
 	for (; sva < eva; sva += NBPG, pte++) {
-		uint32_t entry = pte->pt_entry;
-		if (!mips_pg_v(entry))
+		uint32_t pt_entry = pte->pt_entry;
+		if (!mips_pg_v(pt_entry))
 			continue;
-		if (MIPS_HAS_R4K_MMU && entry & mips_pg_m_bit())
+		if (MIPS_HAS_R4K_MMU && (pt_entry & mips_pg_m_bit()))
 			mips_dcache_wbinv_range_index(sva, PAGE_SIZE);
-		entry = (entry & ~(mips_pg_m_bit() | mips_pg_ro_bit())) | p;
-		pte->pt_entry = entry;
+		pt_entry = (pt_entry & pg_mask) | p;
+		pte->pt_entry = pt_entry;
 		/*
-		 * Update the TLB if the given address is in the cache.
+		 * Update the TLB if needed.
 		 */
-		if (needupdate)
-			tlb_update(sva | asid, entry);
-#ifdef MULTIPROCESSORX
-#error TLB shootdown needed
-#endif
+		pmap_tlb_update(pmap, sva, pt_entry);
 	}
 	return false;
 }
@@ -906,6 +896,7 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *pte,
 void
 pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
+	const uint32_t pg_mask = ~(mips_pg_m_bit() | mips_pg_ro_bit());
 	pt_entry_t *pte;
 	u_int p;
 
@@ -936,15 +927,14 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 #endif
 		pte = kvtopte(sva);
 		for (; sva < eva; sva += NBPG, pte++) {
-			uint32_t entry = pte->pt_entry;
-			if (!mips_pg_v(entry))
+			uint32_t pt_entry = pte->pt_entry;
+			if (!mips_pg_v(pt_entry))
 				continue;
-			if (MIPS_HAS_R4K_MMU && entry & mips_pg_m_bit())
+			if (MIPS_HAS_R4K_MMU && (pt_entry & mips_pg_m_bit()))
 				mips_dcache_wb_range(sva, PAGE_SIZE);
-			entry &= ~(mips_pg_m_bit() | mips_pg_ro_bit());
-			entry |= p;
-			pte->pt_entry = entry;
-			tlb_update(sva, entry);
+			pt_entry &= (pt_entry & pg_mask) | p;
+			pte->pt_entry = pt_entry;
+			pmap_tlb_update(pmap, sva, pt_entry);
 		}
 		return;
 	}
@@ -1052,35 +1042,27 @@ pmap_page_cache(struct vm_page *pg, int mode)
 	newmode = mode & PV_UNCACHED ? MIPS3_PG_UNCACHED : MIPS3_PG_CACHED;
 	pv = pg->mdpage.pvh_list;
 
-	struct cpu_info * const ci = curcpu();
 	while (pv) {
 		pmap_t pmap = pv->pv_pmap;
-		struct pmap_asid_info * const pai = PMAP_PAI(pmap, ci);
-		uint32_t asid = pai->pai_asid;
-		bool needupdate;
 		pt_entry_t *pte;
-		unsigned entry;
+		uint32_t entry;
 
 		pv->pv_flags = (pv->pv_flags & ~PV_UNCACHED) | mode;
-		if (pv->pv_pmap == pmap_kernel()) {
+		if (pmap == pmap_kernel()) {
 			/*
 			 * Change entries in kernel pmap.
 			 */
 			pte = kvtopte(pv->pv_va);
-			entry = pte->pt_entry;
-			needupdate = true;
 		} else {
-			pte = pmap_pte_lookup(pv->pv_pmap, pv->pv_va);
+			pte = pmap_pte_lookup(pmap, pv->pv_va);
 			if (pte == NULL)
 				continue;
-			entry = pte->pt_entry;
-			needupdate = PMAP_PAI_ASIDVALID_P(pai, ci);
 		}
+		entry = pte->pt_entry;
 		if (entry & MIPS3_PG_V) {
 			entry = (entry & ~MIPS3_PG_CACHEMODE) | newmode;
 			pte->pt_entry = entry;
-			if (needupdate)
-				tlb_update(pv->pv_va | asid, entry);
+			pmap_tlb_update(pv->pv_pmap, pv->pv_va, entry);
 		}
 		pv = pv->pv_next;
 	}
@@ -1239,8 +1221,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			pmap->pm_stats.wired_count++;
 			npte |= mips_pg_wired_bit();
 		}
-		if (mips_pg_v(pte->pt_entry) &&
-		    mips_tlbpfn_to_paddr(pte->pt_entry) != pa) {
+		if (mips_pg_v(pte->pt_entry)
+		    && mips_tlbpfn_to_paddr(pte->pt_entry) != pa) {
 			pmap_remove(pmap, va, va + NBPG);
 #ifdef DEBUG
 			enter_stats.mchange++;
@@ -1254,7 +1236,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		 * Update the same virtual address entry.
 		 */
 
-		tlb_update(va, npte);
+		pmap_tlb_update(pmap, va, npte);
 		return 0;
 	}
 
@@ -1320,7 +1302,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	pte->pt_entry = npte;
 
 	if (needsupdate)
-		tlb_update(va | asid, npte);
+		pmap_tlb_update(pmap, va, npte);
 
 #ifdef MIPS3_PLUS	/* XXX mmu XXX */
 	if (MIPS_HAS_R4K_MMU && (prot == (VM_PROT_READ | VM_PROT_EXECUTE))) {
@@ -1379,7 +1361,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	pte = kvtopte(va);
 	KASSERT(!mips_pg_v(pte->pt_entry));
 	pte->pt_entry = npte;
-	tlb_update(va, npte);
+	pmap_tlb_update(pmap_kernel(), va, npte);
 }
 
 void
@@ -1409,7 +1391,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		} else {
 			pte->pt_entry = MIPS1_PG_NV;
 		}
-		tlb_invalidate_addr(va);
+		pmap_tlb_invalidate_addr(pmap_kernel(), va);
 	}
 }
 
@@ -1744,32 +1726,27 @@ pmap_clear_modify(struct vm_page *pg)
 	 * so we can tell if they are written to again later.
 	 * flush the VAC first if there is one.
 	 */
-	struct cpu_info * const ci = curcpu();
 	for (; pv; pv = pv->pv_next) {
 		pmap_t pmap = pv->pv_pmap;
-		struct pmap_asid_info * const pai = PMAP_PAI(pmap, ci);
 		vaddr_t va = pv->pv_va;
 		pt_entry_t *pte;
-		uint32_t asid;
 		uint32_t pt_entry;
 		if (pmap == pmap_kernel()) {
 			pte = kvtopte(va);
-			asid = 0;
 		} else {
 			pte = pmap_pte_lookup(pmap, va);
 			KASSERT(pte);
-			asid = pai->pai_asid << MIPS_TLB_PID_SHIFT;
 		}
 		pt_entry = pte->pt_entry & ~mips_pg_m_bit();
 		if (pte->pt_entry == pt_entry) {
 			continue;
 		}
-		if (MIPS_HAS_R4K_MMU &&
-		    (1 || mips_cache_info.mci_cache_virtual_alias
-		     || (mips_options.mips_cpu_flags & CPU_MIPS_D_CACHE_COHERENT) == 0)) {
-#ifdef MULTIPROCESSORX
-#error fix me
-#endif
+		KASSERT(pt_entry & MIPS3_PG_V);
+		/*
+		 * Why? Why?
+		 */
+		if (MIPS_HAS_R4K_MMU
+		    && mips_cache_info.mci_cache_virtual_alias) {
 			if (PMAP_IS_ACTIVE(pmap)) {
 				mips_dcache_wbinv_range(va, PAGE_SIZE);
 			} else {
@@ -1777,9 +1754,7 @@ pmap_clear_modify(struct vm_page *pg)
 			}
 		}
 		pte->pt_entry = pt_entry;
-		if (PMAP_PAI_ASIDVALID_P(pai, ci)) {
-			tlb_invalidate_addr(va | asid);
-		}
+		pmap_tlb_invalidate_addr(pmap, va);
 	}
 	return true;
 }
@@ -1807,52 +1782,6 @@ pmap_set_modified(paddr_t pa)
 {
 	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
 	pmap_set_page_attributes(pg, PV_MODIFIED | PV_REFERENCED);
-}
-
-/******************** misc. functions ********************/
-
-/*
- * Allocate a TLB address space tag (called ASID or TLBPID) and return it.
- * Each cpu has its own ASID space which might be a subset of the entire
- * ASID available (A core might have 256 ASIDs shared among N hw-threads).
- * To avoid dealing with locking, we just partition the ASIDs among the
- * hw-threads so each has its own independent space.
- *
- * Since all hw-threads share the TLB, we can't invalidate all non-global TLB
- * entries.  Instead we need to make sure they match the proper range of ASIDs
- * reserved for that CPU.
- *
- * Therefore, when we allocate a new ASID, we just take the next number. When
- * we run out of numbers, we flush the ASIDs the TLB, increment the generation
- * count and start over. The low ASID of the range is reserved for kernel use
- * (even though we only use 0 for that purpose).
- */
-uint32_t
-pmap_tlb_asid_alloc(pmap_t pmap, struct cpu_info *ci)
-{
-	struct pmap_asid_info * const pai = PMAP_PAI(pmap, ci);
-
-	if (!PMAP_PAI_ASIDVALID_P(pai, ci)) {
-		if (ci->ci_pmap_asid_next == ci->ci_pmap_asid_max) {
-			tlb_invalidate_asids(ci->ci_pmap_asid_reserved + 1,
-			    ci->ci_pmap_asid_max);
-			ci->ci_pmap_asid_generation++; /* ok to wrap to 0 */
-			ci->ci_pmap_asid_next =		/* 0 means invalid */
-			    ci->ci_pmap_asid_reserved + 1;
-		}
-		pai->pai_asid = ci->ci_pmap_asid_next++;
-		pai->pai_asid_generation = ci->ci_pmap_asid_generation;
-	}
-
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_TLBPID)) {
-		printf("pmap_tlb_asid_alloc: curlwp %d.%d '%s' ",
-		    curlwp->l_proc->p_pid, curlwp->l_lid,
-		    curlwp->l_proc->p_comm);
-		printf("segtab %p asid %d\n", pmap->pm_segtab, pai->pai_asid);
-	}
-#endif
-	return pai->pai_asid;
 }
 
 /******************** pv_entry management ********************/
@@ -1962,24 +1891,24 @@ again:
 			if (pmap == npv->pv_pmap && va == npv->pv_va) {
 #ifdef PARANOIADIAG
 				pt_entry_t *pte;
-				unsigned entry;
+				unsigned pt_entry;
 
-				if (pmap == pmap_kernel())
-					entry = kvtopte(va)->pt_entry;
-				else {
+				if (pmap == pmap_kernel()) {
+					pt_entry = kvtopte(va)->pt_entry;
+				} else {
 					pte = pmap_pte_lookup(pmap, va);
 					if (pte) {
-						entry = pte->pt_entry;
+						pt_entry = pte->pt_entry;
 					} else
-						entry = 0;
+						pt_entry = 0;
 				}
-				if (!mips_pg_v(entry) ||
-				    mips_tlbpfn_to_paddr(entry) !=
+				if (!mips_pg_v(pt_entry) ||
+				    mips_tlbpfn_to_paddr(pt_entry) !=
 				    VM_PAGE_TO_PHYS(pg))
 					printf(
 		"pmap_enter: found va %#"PRIxVADDR" pa %#"PRIxPADDR" in pv_table but != %x\n",
 					    va, VM_PAGE_TO_PHYS(pg),
-					    entry);
+					    pt_entry);
 #endif
 				return;
 			}
