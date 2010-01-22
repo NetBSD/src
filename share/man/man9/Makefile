@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.306 2010/01/20 12:09:39 pooka Exp $
+#       $NetBSD: Makefile,v 1.307 2010/01/22 23:14:29 dyoung Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -38,7 +38,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	mstohz.9 mutex.9 m_tag.9 namecache.9 \
 	namei.9 opencrypto.9 optstr.9 \
 	panic.9 pci.9 pci_configure_bus.9 pci_intr.9 pckbport.9 \
-	pcmcia.9 pcq.9 pfil.9 physio.9 pmap.9 pmatch.9 pmc.9 pmf.9 \
+	pcmcia.9 pcq.9 percpu.9 pfil.9 physio.9 pmap.9 pmatch.9 pmc.9 pmf.9 \
 	pool.9 pool_cache.9 powerhook_establish.9 ppsratecheck.9 \
 	preempt.9 putter.9 \
 	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rssadapt.9 \
@@ -55,7 +55,8 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	vnfileops.9 vnode.9 vnodeops.9 vnsubr.9 \
 	ubc.9 usbdi.9 uvm.9 vmem.9 \
 	wdc.9 workqueue.9 \
-	wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9
+	wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9 \
+	xc.9
 
 MAN+=	boothowto.9
 MLINKS+=boothowto.9 BOOT_FLAG.9
@@ -503,6 +504,13 @@ MLINKS+=pcmcia.9 pcmcia_function_init.9 \
 	pcmcia.9 pcmcia_cis_read_4.9 \
 	pcmcia.9 pcmcia_cis_read_n.9 \
 	pcmcia.9 pcmcia_scan_cis.9
+MLINKS+=percpu.9 percpu_init.9 \
+	percpu.9 percpu_init_cpu.9 \
+	percpu.9 percpu_alloc.9 \
+	percpu.9 percpu_free.9 \
+	percpu.9 percpu_getref.9 \
+	percpu.9 percpu_putref.9 \
+	percpu.9 percpu_foreach.9
 MLINKS+=pfil.9 pfil_hook_get.9 \
 	pfil.9 pfil_add_hook.9 \
 	pfil.9 pfil_remove_hook.9 \
@@ -850,6 +858,10 @@ MLINKS+=wskbd.9 wskbd_input.9 \
 	wskbd.9 wskbddevprint.9
 MLINKS+=wsmouse.9 wsmouse_input.9 \
 	wsmouse.9 wsmousedevprint.9
+MLINKS+=xc.9 xc_init_cpu.9 \
+	xc.9 xc_broadcast.9 \
+	xc.9 xc_unicast.9 \
+	xc.9 xc_wait.9
 
 SUBDIR= man9.i386 man9.sun3
 

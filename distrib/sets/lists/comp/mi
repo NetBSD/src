@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1368 2010/01/20 12:14:00 pooka Exp $
+#	$NetBSD: mi,v 1.1369 2010/01/22 23:14:28 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9100,6 +9100,14 @@
 ./usr/share/man/cat9/pcq_maxitems.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pcq_peek.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pcq_put.0			comp-sys-catman		.cat
+./usr/share/man/cat9/percpu.0			comp-sys-catman		.cat
+./usr/share/man/cat9/percpu_init.0		comp-sys-catman		.cat
+./usr/share/man/cat9/percpu_init_cpu.0		comp-sys-catman		.cat
+./usr/share/man/cat9/percpu_alloc.0		comp-sys-catman		.cat
+./usr/share/man/cat9/percpu_free.0		comp-sys-catman		.cat
+./usr/share/man/cat9/percpu_getref.0		comp-sys-catman		.cat
+./usr/share/man/cat9/percpu_putref.0		comp-sys-catman		.cat
+./usr/share/man/cat9/percpu_foreach.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pfil.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pfil_add_hook.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pfil_get_head.0		comp-obsolete		obsolete
@@ -9595,6 +9603,11 @@
 ./usr/share/man/cat9/wsmouse.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/wsmouse_input.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/wsmousedevprint.0		comp-sys-catman		.cat
+./usr/share/man/cat9/xc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/xc_init_cpu.0		comp-sys-catman		.cat
+./usr/share/man/cat9/xc_broadcast.0		comp-sys-catman		.cat
+./usr/share/man/cat9/xc_unicast.0		comp-sys-catman		.cat
+./usr/share/man/cat9/xc_wait.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/yield.0			comp-sys-catman		.cat
 ./usr/share/man/html1/addr2line.html		comp-debug-htmlman	binutils,html
 ./usr/share/man/html1/ar.html			comp-util-htmlman	binutils,html
@@ -14618,6 +14631,14 @@
 ./usr/share/man/html9/pcq_maxitems.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pcq_peek.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pcq_put.html		comp-sys-htmlman	html
+./usr/share/man/html9/percpu.html		comp-sys-htmlman	html
+./usr/share/man/html9/percpu_init.html		comp-sys-htmlman	html
+./usr/share/man/html9/percpu_init_cpu.html	comp-sys-htmlman	html
+./usr/share/man/html9/percpu_alloc.html		comp-sys-htmlman	html
+./usr/share/man/html9/percpu_free.html		comp-sys-htmlman	html
+./usr/share/man/html9/percpu_getref.html	comp-sys-htmlman	html
+./usr/share/man/html9/percpu_putref.html	comp-sys-htmlman	html
+./usr/share/man/html9/percpu_foreach.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pfil.html			comp-sys-htmlman	html
 ./usr/share/man/html9/pfil_add_hook.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pfil_head_get.html	comp-sys-htmlman	html
@@ -15067,6 +15088,11 @@
 ./usr/share/man/html9/wsmouse.html		comp-sys-htmlman	html
 ./usr/share/man/html9/wsmouse_input.html	comp-sys-htmlman	html
 ./usr/share/man/html9/wsmousedevprint.html	comp-sys-htmlman	html
+./usr/share/man/html9/xc.html			comp-sys-htmlman	html
+./usr/share/man/html9/xc_init_cpu.html		comp-sys-htmlman	html
+./usr/share/man/html9/xc_broadcast.html		comp-sys-htmlman	html
+./usr/share/man/html9/xc_unicast.html		comp-sys-htmlman	html
+./usr/share/man/html9/xc_wait.html		comp-sys-htmlman	html
 ./usr/share/man/html9/yield.html		comp-sys-htmlman	html
 ./usr/share/man/man1/addr2line.1		comp-debug-man		binutils,.man
 ./usr/share/man/man1/ar.1			comp-util-man		binutils,.man
@@ -20303,6 +20329,14 @@
 ./usr/share/man/man9/pcq_maxitems.9		comp-sys-man		.man
 ./usr/share/man/man9/pcq_peek.9			comp-sys-man		.man
 ./usr/share/man/man9/pcq_put.9			comp-sys-man		.man
+./usr/share/man/man9/percpu.9			comp-sys-man		.man
+./usr/share/man/man9/percpu_init.9		comp-sys-man		.man
+./usr/share/man/man9/percpu_init_cpu.9		comp-sys-man		.man
+./usr/share/man/man9/percpu_alloc.9		comp-sys-man		.man
+./usr/share/man/man9/percpu_free.9		comp-sys-man		.man
+./usr/share/man/man9/percpu_getref.9		comp-sys-man		.man
+./usr/share/man/man9/percpu_putref.9		comp-sys-man		.man
+./usr/share/man/man9/percpu_foreach.9		comp-sys-man		.man
 ./usr/share/man/man9/pfil.9			comp-sys-man		.man
 ./usr/share/man/man9/pfil_add_hook.9		comp-sys-man		.man
 ./usr/share/man/man9/pfil_get_head.9		comp-obsolete		obsolete
@@ -20798,6 +20832,11 @@
 ./usr/share/man/man9/wsmouse.9			comp-sys-man		.man
 ./usr/share/man/man9/wsmouse_input.9		comp-sys-man		.man
 ./usr/share/man/man9/wsmousedevprint.9		comp-sys-man		.man
+./usr/share/man/man9/xc.9			comp-sys-man		.man
+./usr/share/man/man9/xc_init_cpu.9		comp-sys-man		.man
+./usr/share/man/man9/xc_broadcast.9		comp-sys-man		.man
+./usr/share/man/man9/xc_unicast.9		comp-sys-man		.man
+./usr/share/man/man9/xc_wait.9			comp-sys-man		.man
 ./usr/share/man/man9/yield.9			comp-sys-man		.man
 ./usr/share/misc/gprof.callg			comp-obsolete		obsolete
 ./usr/share/misc/gprof.flat			comp-obsolete		obsolete
