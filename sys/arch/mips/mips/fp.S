@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.33.38.6 2009/09/05 03:24:21 matt Exp $	*/
+/*	$NetBSD: fp.S,v 1.33.38.7 2010/01/22 08:37:08 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -3218,8 +3218,14 @@ STATIC_LEAF(get_ft_fs_d)
 	andi	ta3, ta3, FPX_REGEVENMASK	# Even regs only
 	PTR_ADDU ta0, ta3
 
+#if defined(__mips_n32) || defined(__mips_n64)
+	FPX_L	ta3, U_PCB_FPREGS+FRAME_FP0(ta0)
+	dsrl	ta0, ta3, 32
+	srl	ta3, ta3, 0
+#else
 	lw	ta3, U_PCB_FPREGS+FRAME_FP0(ta0)
 	lw	ta0, U_PCB_FPREGS+FRAME_FP0+SZFPREG(ta0)
+#endif
 
 	srl	ta1, ta0, 20			# get exponent
 	and	ta1, ta1, 0x7FF
@@ -3353,8 +3359,14 @@ STATIC_XLEAF(get_fs_d)
 	andi	t3, t3, FPX_REGEVENMASK		# Even regs only
 	PTR_ADDU t0, t3
 
+#if defined(__mips_n32) || defined(__mips_n64)
+	FPX_L	t3, U_PCB_FPREGS+FRAME_FP0(t0)
+	dsrl	t0, t3, 32
+	srl	t3, t3, 0
+#else
 	lw	t3, U_PCB_FPREGS+FRAME_FP0(t0)
 	lw	t0, U_PCB_FPREGS+FRAME_FP0+SZFPREG(t0)
+#endif
 
 	srl	t1, t0, 20			# get exponent
 	and	t1, t1, 0x7FF
@@ -3695,8 +3707,14 @@ STATIC_LEAF(get_cmp_d)
 	andi	t1, t1, FPX_REGEVENMASK			# Even regs only
 	PTR_ADDU t0, ta2, t1
 
+#if defined(__mips_n32) || defined(__mips_n64)
+	FPX_L	t3, U_PCB_FPREGS+FRAME_FP0(t0)
+	dsrl	t0, t3, 32
+	srl	t3, t3, 0
+#else
 	FPX_L	t3, U_PCB_FPREGS+FRAME_FP0(t0)
 	FPX_L	t0, U_PCB_FPREGS+FRAME_FP0+SZFPREG(t0)
+#endif
 
 	srl	t1, t0, 20			# get exponent
 	and	t1, t1, 0x7FF
@@ -3707,8 +3725,14 @@ STATIC_LEAF(get_cmp_d)
 	andi	ta0, ta0, FPX_REGEVENMASK		# Even regs only
 	PTR_ADDU ta2, ta2, ta0
 
+#if defined(__mips_n32) || defined(__mips_n64)
+	FPX_L	ta3, U_PCB_FPREGS+FRAME_FP0(ta2)
+	dsrl	ta0, ta3, 32
+	srl	ta3, ta3, 0
+#else
 	lw	ta3, U_PCB_FPREGS+FRAME_FP0(ta2)
 	lw	ta0, U_PCB_FPREGS+FRAME_FP0+SZFPREG(ta2)
+#endif
 
 	srl	ta1, ta0, 20			# get exponent
 	and	ta1, ta1, 0x7FF
@@ -4048,8 +4072,14 @@ STATIC_LEAF(set_fd_d)
 
 	andi	t1, t1, FPX_REGEVENMASK
 	PTR_ADDU t2, t2, t1
+#if defined(__mips_n32) || defined(__mips_n64)
+	dsll	t0, t0, 32
+	or	t0, t0, t3
+	FPX_S	t0, U_PCB_FPREGS+FRAME_FP0(t2)
+#else
 	FPX_S	t3, U_PCB_FPREGS+FRAME_FP0(t2)
 	FPX_S	t0, U_PCB_FPREGS+FRAME_FP0+4(t2)
+#endif
 	j	ra
 #else
 	sll	t0, t0, 31			# set sign
