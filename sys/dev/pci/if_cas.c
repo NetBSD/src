@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.4 2010/01/19 22:07:00 pooka Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.5 2010/01/22 14:34:34 jdc Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.4 2010/01/19 22:07:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.5 2010/01/22 14:34:34 jdc Exp $");
 
 #include "opt_inet.h"
 
@@ -90,25 +90,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.4 2010/01/19 22:07:00 pooka Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+#include <prop/proplib.h>
 
 #include <dev/pci/if_casreg.h>
 #include <dev/pci/if_casvar.h>
-
-/* XXX Should use Properties when that's fleshed out. */
-#ifdef macppc
-#include <dev/ofw/openfirm.h>
-#endif /* macppc */
-#ifdef __sparc__
-#include <machine/promlib.h>
-#endif
-
-#ifndef CAS_USE_LOCAL_MAC_ADDRESS
-#if defined (macppc) || defined (__sparc__)
-#define CAS_USE_LOCAL_MAC_ADDRESS	0	/* use system-wide address */
-#else
-#define CAS_USE_LOCAL_MAC_ADDRESS	1
-#endif
-#endif
 
 #define TRIES	10000
 
@@ -127,9 +112,7 @@ CFATTACH_DECL3_NEW(cas, sizeof(struct cas_softc),
     cas_match, cas_attach, cas_detach, NULL, NULL, NULL,
     DVF_DETACH_SHUTDOWN);
 
-#if CAS_USE_LOCAL_MAC_ADDRESS
 int	cas_pci_enaddr(struct cas_softc *, struct pci_attach_args *, uint8_t *);
-#endif
 
 void		cas_config(struct cas_softc *, const uint8_t *);
 void		cas_start(struct ifnet *);
@@ -194,7 +177,6 @@ cas_match(device_t parent, cfdata_t cf, void *aux)
 	return 0;
 }
 
-#if CAS_USE_LOCAL_MAC_ADDRESS
 #define	PROMHDR_PTR_DATA	0x18
 #define	PROMDATA_PTR_VPD	0x08
 #define	PROMDATA_DATA2		0x0a
@@ -307,7 +289,7 @@ next:
 				continue;
 			desc += strlen("local-mac-address") + 1;
 					
-			memcpy(enaddr, enp, ETHER_ADDR_LEN);
+			memcpy(enaddr, desc, ETHER_ADDR_LEN);
 			rv = 0;
 		}
 		break;
@@ -326,7 +308,6 @@ next:
 
 	return (rv);
 }
-#endif /* CAS_USE_LOCAL_MAC_ADDRESS */
 
 void
 cas_attach(device_t parent, device_t self, void *aux)
@@ -334,6 +315,7 @@ cas_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct cas_softc *sc = device_private(self);
 	char devinfo[256];
+	prop_data_t data;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 
 	sc->sc_dev = self;
@@ -350,27 +332,11 @@ cas_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-#if CAS_USE_LOCAL_MAC_ADDRESS
-	if (cas_pci_enaddr(sc, pa, enaddr) != 0)
+	if ((data = prop_dictionary_get(device_properties(sc->sc_dev),
+	    "mac-address")) != NULL)
+		memcpy(enaddr, prop_data_data_nocopy(data), ETHER_ADDR_LEN);
+	else if (cas_pci_enaddr(sc, pa, enaddr) != 0)
 		aprint_error_dev(sc->sc_dev, "no Ethernet address found\n");
-#endif
-#ifdef __sparc64__
-	prom_getether(PCITAG_NODE(pa->pa_tag), enaddr);
-#else
-#ifdef macppc
-	{
-		int node;
-
-		node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
-		if (node == 0) {
-			aprint_error_dev(sc->sc_dev, "unable to locate OpenFirmware node\n");
-			return;
-		}
-
-		OF_getprop(node, "local-mac-address", enaddr, sizeof(enaddr));
-	}
-#endif /* macppc */
-#endif /* __sparc__ */
 
 	sc->sc_burst = 16;	/* XXX */
 
