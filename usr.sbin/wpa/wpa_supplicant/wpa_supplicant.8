@@ -1,4 +1,4 @@
-.\" $NetBSD: wpa_supplicant.8,v 1.5 2006/06/28 15:06:59 drochner Exp $
+.\" $NetBSD: wpa_supplicant.8,v 1.6 2010/01/22 16:41:57 sborrill Exp $
 .\"
 .\" Copyright (c) 2005 Sam Leffler <sam@errno.com>
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" Based on:
 .\" $FreeBSD: /repoman/r/ncvs/src/usr.sbin/wpa/wpa_supplicant/wpa_supplicant.8,v 1.2 2005/06/27 06:40:43 ru Exp $
 .\"
-.Dd October 1, 2005
+.Dd January 22, 2010
 .Dt WPA_SUPPLICANT 8
 .Os
 .Sh NAME
@@ -37,6 +37,7 @@
 .Nm
 .Op Fl BdehLqvw
 .Fl i Ar ifname
+.Fl f Ar debug-file
 .Fl c Ar config-file
 .Op Fl N i Ar ifname Fl c Ar config-file ...
 .Sh DESCRIPTION
@@ -99,10 +100,18 @@ in the background.
 .It Fl d
 Enable debugging messages.
 If this option is supplied twice, more verbose messages are displayed.
+Messages are sent to stdout by default, even when daemonised.
+This can be changed with the
+.Fl f
+flag.
 .It Fl e
 Use an external IEEE 802.1X Supplicant program and disable the
 internal Supplicant.
 This option is not normally used.
+.It Fl f
+Specifies a file to send debug messages to when enabled with the
+.Fl d
+flag.
 .It Fl h
 Show help text.
 .It Fl K
