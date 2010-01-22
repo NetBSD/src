@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.42 2008/06/04 12:45:28 ad Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.42.16.1 2010/01/22 05:17:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42 2008/06/04 12:45:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42.16.1 2010/01/22 05:17:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,9 +82,6 @@ static void
 uvm_pglist_add(struct vm_page *pg, struct pglist *rlist)
 {
 	int free_list, color, pgflidx;
-#ifdef DEBUG
-	struct vm_page *tp;
-#endif
 
 	KASSERT(mutex_owned(&uvm_fpageqlock));
 
@@ -95,11 +92,11 @@ uvm_pglist_add(struct vm_page *pg, struct pglist *rlist)
 	free_list = uvm_page_lookup_freelist(pg);
 	color = VM_PGCOLOR_BUCKET(pg);
 	pgflidx = (pg->flags & PG_ZERO) ? PGFL_ZEROS : PGFL_UNKNOWN;
-#ifdef DEBUG
-	for (tp = LIST_FIRST(&uvm.page_free[
-		free_list].pgfl_buckets[color].pgfl_queues[pgflidx]);
-	     tp != NULL;
-	     tp = LIST_NEXT(tp, pageq.list)) {
+#if defined(DEBUG) && DEBUG > 1
+	struct vm_page *tp;
+	LIST_FOREACH(tp,
+	    &uvm.page_free[free_list].pgfl_buckets[color].pgfl_queues[pgflidx],
+	    pageq.list) {
 		if (tp == pg)
 			break;
 	}
@@ -124,7 +121,8 @@ static int
 uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
     paddr_t alignment, paddr_t boundary, struct pglist *rlist)
 {
-	int try, limit, tryidx, end, idx;
+	signed int try, limit, tryidx, end, idx, skip;
+	const signed int align = atop(alignment);
 	struct vm_page *pgs;
 	int pagemask;
 #ifdef DEBUG
@@ -138,11 +136,15 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 
 	KASSERT(mutex_owned(&uvm_fpageqlock));
 
-	try = roundup(max(atop(low), ps->avail_start), atop(alignment));
+	try = roundup(max(atop(low), ps->avail_start), align);
 	limit = min(atop(high), ps->avail_end);
 	pagemask = ~((boundary >> PAGE_SHIFT) - 1);
+	skip = 0;
 
 	for (;;) {
+		bool ok = true;
+		int cnt;
+
 		if (try + num > limit) {
 			/*
 			 * We've run past the allowable range.
@@ -156,7 +158,7 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 			 * just crossed and ensure alignment.
 			 */
 			try = (try + num - 1) & pagemask;
-			try = roundup(try, atop(alignment));
+			try = roundup(try, align);
 			continue;
 		}
 #ifdef DEBUG
@@ -180,9 +182,42 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 		/*
 		 * Found a suitable starting page.  See if the range is free.
 		 */
-		for (idx = tryidx; idx < end; idx++) {
-			if (VM_PAGE_IS_FREE(&pgs[idx]) == 0)
+#ifdef PGALLOC_VERBOSE
+		printf("%s: ps=%p try=%#x end=%#x skip=%#x, align=%#x",
+		    __func__, ps, tryidx, end, skip, align);
+#endif
+		/*
+		 * Test both the ending and starting pages to see if they are
+		 * both free.  If the ending and starting pages are same page,
+		 * we only test one of them.  If the pages aren't free, there
+		 * is no reason to continue this iteration so advance to the
+		 * next address and try again.
+		 */
+		if (VM_PAGE_IS_FREE(&pgs[end - 1]) == 0
+		    || end - 1 == tryidx + skip
+		    || VM_PAGE_IS_FREE(&pgs[tryidx + skip]) == 0) {
+			try += roundup(num, align);
+			skip = 0;
+			continue;
+		}
+
+		/*
+		 * We start at the end since if we find a non-free page, it
+		 * make no sense to ever test any pages before it since the
+		 * conditions for this allocation could never be satisified.
+		 *
+		 * Also since we have "vetted" these free pages, if this
+		 * iteration fails, we may be able to skip testing those pages
+		 * in the next iteration.
+		 *
+		 * The loop condition will never be satisfied if we've already
+		 * found enough pages (either one or two).
+		 */
+		for (idx = end - 2; idx >= tryidx + skip + 1; idx--) {
+			if (VM_PAGE_IS_FREE(&pgs[idx]) == 0) {
+				ok = false;
 				break;
+			}
 
 #ifdef DEBUG
 			idxpa = VM_PAGE_TO_PHYS(&pgs[idx]);
@@ -205,18 +240,42 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 			}
 #endif
 		}
-		if (idx == end)
-			break;
 
-		try += atop(alignment);
+		if (ok) {
+			while (skip-- > 0) {
+				KDASSERT(VM_PAGE_IS_FREE(&pgs[tryidx + skip]));
+			}
+#ifdef PGALLOC_VERBOSE
+			printf(": ok\n");
+#endif
+			break;
+		}
+
+#ifdef PGALLOC_VERBOSE
+		printf(": non-free at %#x\n", idx - tryidx);
+#endif
+		/*
+		 * count the number of pages we can advance
+		 * since we know they aren't all free.
+		 */
+		cnt = idx + 1 - tryidx;
+		/*
+		 * now round up that to the needed alignment.
+		 */
+		cnt = roundup(cnt, align);
+		/*
+		 * The number of pages we can skip checking 
+		 * (might be 0 is cnt > num).
+		 */
+		skip = max(num - cnt, 0);
+		try += cnt;
 	}
 
 	/*
 	 * we have a chunk of memory that conforms to the requested constraints.
 	 */
-	idx = tryidx;
-	while (idx < end)
-		uvm_pglist_add(&pgs[idx++], rlist);
+	for (idx = tryidx, pgs += idx; idx < end; idx++, pgs++)
+		uvm_pglist_add(pgs, rlist);
 
 #ifdef PGALLOC_VERBOSE
 	printf("got %d pgs\n", num);
