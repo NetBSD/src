@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.14.78.6 2010/01/22 07:05:28 matt Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.14.78.7 2010/01/22 08:35:59 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.6 2010/01/22 07:05:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.7 2010/01/22 08:35:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR,
 	vaddr_t nextpc;
 
 	if (instpc < MIPS_KSEG0_START)
-		inst.word = fuiword((void *)instpc);
+		inst.word = ufetch_uint32((void *)instpc);
 	else
 		inst.word = *(unsigned *)instpc;
 
@@ -452,7 +452,7 @@ MachEmulateLWC1(uint32_t inst, struct frame *frame, uint32_t cause)
 			return;
 
 		vaddr = frame->f_regs[_R_PC];	/* XXX truncates to 32 bits */
-		inst = fuiword((uint32_t *)vaddr);
+		inst = ufetch_uint32((uint32_t *)vaddr);
 		if (((InstFmt)inst).FRType.op != OP_LWC1)
 			return;
 
@@ -542,7 +542,7 @@ MachEmulateSWC1(uint32_t inst, struct frame *frame, uint32_t cause)
 			return;
 
 		vaddr = frame->f_regs[_R_PC];	/* XXX truncates to 32 bits */
-		inst = fuiword((uint32_t *)vaddr);
+		inst = ufetch_uint32((uint32_t *)vaddr);
 		if (((InstFmt)inst).FRType.op != OP_SWC1)
 			return;
 
@@ -896,7 +896,7 @@ bcemul_sb(uint32_t inst, struct frame *frame, uint32_t cause)
 		return;
 	}
 
-	if (subyte((void *)vaddr, frame->f_regs[(inst>>16)&0x1F]) < 0) {
+	if (ustore_uint8((void *)vaddr, frame->f_regs[(inst>>16)&0x1F]) < 0) {
 		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
 		return;
 	}
@@ -919,7 +919,7 @@ bcemul_sh(uint32_t inst, struct frame *frame, uint32_t cause)
 		return;
 	}
 
-	if (susword((void *)vaddr, frame->f_regs[(inst>>16)&0x1F]) < 0) {
+	if (ustore_uint16((void *)vaddr, frame->f_regs[(inst>>16)&0x1F]) < 0) {
 		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
 		return;
 	}
