@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.14.78.5 2009/11/14 21:52:08 matt Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.14.78.6 2010/01/22 07:05:28 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.5 2009/11/14 21:52:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.6 2010/01/22 07:05:28 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,8 +115,8 @@ MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR,
 		else if (allowNonBranch)
 			nextpc = instpc + 4;
 		else
-			panic("MachEmulateBranch: Non-branch instruction at "
-			    "pc 0x%lx", (long)instpc);
+			panic("%s: %s instruction %08x at pc 0x%"PRIxVADDR,
+			    __func__, "non-branch", inst.word, instpc);
 		break;
 
 	case OP_BCOND:
@@ -142,7 +142,8 @@ MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR,
 			break;
 
 		default:
-			panic("MachEmulateBranch: Bad branch cond");
+			panic("%s: %s instruction 0x%08x at pc 0x%"PRIxVADDR,
+			    __func__, "bad branch", inst.word, instpc);
 		}
 		break;
 
@@ -197,13 +198,14 @@ MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR,
 		else if (allowNonBranch)
 			nextpc = instpc + 4;
 		else
-			panic("MachEmulateBranch: Bad COP1 branch instruction");
+			panic("%s: %s instruction 0x%08x at pc 0x%"PRIxVADDR,
+			    __func__, "bad COP1 branch", inst.word, instpc);
 		break;
 
 	default:
 		if (!allowNonBranch)
-			panic("MachEmulateBranch: Non-branch instruction at "
-			    "pc 0x%lx", (long)instpc);
+			panic("%s: %s instruction 0x%08x at pc 0x%"PRIxVADDR,
+			    __func__, "non-branch", inst.word, instpc);
 		nextpc = instpc + 4;
 	}
 	return nextpc;
