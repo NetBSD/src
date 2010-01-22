@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.27 2009/05/12 14:47:27 cegger Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.28 2010/01/22 16:12:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.27 2009/05/12 14:47:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.28 2010/01/22 16:12:41 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,9 +162,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.27 2009/05/12 14:47:27 cegger Exp $"
 
 #include <sys/bus.h>
 #include <sys/intr.h>
-#ifdef __sparc__
-#include <machine/autoconf.h>
-#endif
 #include <dev/vme/vmevar.h>
 
 #include <dev/ic/i82586reg.h>
@@ -476,7 +473,7 @@ ie_vme_attach(device_t parent, device_t self, void *aux)
 	vme_size_t memsize;
 	vme_mapresc_t resc;
 	int lcv;
-
+	prop_data_t eaddrprop;
 	vme_am_t mod;
 
 	/*
@@ -567,9 +564,11 @@ ie_vme_attach(device_t parent, device_t self, void *aux)
 
 	printf("\n%s:", device_xname(self));
 
-#ifdef __sparc__
-	prom_getether(0, myaddr);
-#endif
+	eaddrprop = prop_dictionary_get(device_properties(self), "mac-address");
+	if (eaddrprop != NULL && prop_data_size(eaddrprop) == ETHER_ADDR_LEN)
+		memcpy(myaddr, prop_data_data_nocopy(eaddrprop),
+			ETHER_ADDR_LEN);
+
 	i82586_attach(sc, "multibus/vme", myaddr, media, NMEDIA, media[0]);
 
 	vme_intr_map(ct, va->ilevel, va->ivector, &ih);
