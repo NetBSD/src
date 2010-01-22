@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.6 2010/01/19 22:06:21 pooka Exp $ */
+/* $NetBSD: if_admsw.c,v 1.7 2010/01/22 08:56:05 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.6 2010/01/19 22:06:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.7 2010/01/22 08:56:05 martin Exp $");
 
 
 #include <sys/param.h>
@@ -341,7 +341,7 @@ admsw_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = aa->oba_dt;
 	sc->sc_st = aa->oba_st;
 
-	pd = prop_dictionary_get(device_properties(&sc->sc_dev), "mac-addr");
+	pd = prop_dictionary_get(device_properties(&sc->sc_dev), "mac-address");
 
 	if (pd == NULL) {
 		enaddr[0] = 0x02;
