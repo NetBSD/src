@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.177 2010/01/21 08:39:22 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.178 2010/01/22 22:21:16 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16105,4 +16105,135 @@ sys/dev/pci/hdaudio/hdaudio_afg.c		1.19
 
 	Signedness bug/crash in azalia and hdaudio. Fixes PR 42604.
 	[tonnerre, ticket #1258]
+
+dist/bind/CHANGES				patch
+dist/bind/FAQ					patch
+dist/bind/FAQ.xml				patch
+dist/bind/bin/named/query.c			patch
+dist/bind/bin/tests/system/conf.sh.in		patch
+dist/bind/bin/tests/system/dnssec/ns1/sign.sh	patch
+dist/bind/bin/tests/system/dnssec/ns2/example.db.in patch
+dist/bind/bin/tests/system/dnssec/ns2/sign.sh	patch
+dist/bind/bin/tests/system/dnssec/tests.sh	patch
+dist/bind/bin/tests/system/pending/clean.sh	patch
+dist/bind/bin/tests/system/pending/ns1/named.conf patch
+dist/bind/bin/tests/system/pending/ns1/root.db.in patch
+dist/bind/bin/tests/system/pending/ns1/sign.sh	patch
+dist/bind/bin/tests/system/pending/ns2/example.com.db.in patch
+dist/bind/bin/tests/system/pending/ns2/example.db.in patch
+dist/bind/bin/tests/system/pending/ns2/forgery.db patch
+dist/bind/bin/tests/system/pending/ns2/named.conf patch
+dist/bind/bin/tests/system/pending/ns2/sign.sh	patch
+dist/bind/bin/tests/system/pending/ns3/hostile.db patch
+dist/bind/bin/tests/system/pending/ns3/mail.example.db patch
+dist/bind/bin/tests/system/pending/ns3/named.conf patch
+dist/bind/bin/tests/system/pending/ns4/named.conf patch
+dist/bind/bin/tests/system/pending/prereq.sh	patch
+dist/bind/bin/tests/system/pending/setup.sh	patch
+dist/bind/bin/tests/system/pending/tests.sh	patch
+dist/bind/doc/arm/Bv9ARM.pdf			patch
+dist/bind/doc/draft/draft-baba-dnsext-acl-reqts-01.txt delete
+dist/bind/doc/draft/draft-daigle-napstr-04.txt	delete
+dist/bind/doc/draft/draft-danisch-dns-rr-smtp-03.txt delete
+dist/bind/doc/draft/draft-dnsext-opcode-discover-02.txt delete
+dist/bind/doc/draft/draft-durand-dnsop-dynreverse-00.txt delete
+dist/bind/doc/draft/draft-ietf-6man-text-addr-representation-01.txt patch
+dist/bind/doc/draft/draft-ietf-behave-dns64-01.txt patch
+dist/bind/doc/draft/draft-ietf-dnsext-2929bis-01.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-axfr-clarify-05.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-axfr-clarify-12.txt patch
+dist/bind/doc/draft/draft-ietf-dnsext-dns-name-p-s-00.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-dns-tcp-requirements-01.txt patch
+dist/bind/doc/draft/draft-ietf-dnsext-dnssec-2535typecode-change-06.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-dnssec-bis-updates-01.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-dnssec-bis-updates-09.txt patch
+dist/bind/doc/draft/draft-ietf-dnsext-dnssec-experiments-03.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-dnssec-gost-05.txt patch
+dist/bind/doc/draft/draft-ietf-dnsext-dnssec-online-signing-02.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-dnssec-opt-in-07.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-dnssec-rsasha256-00.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-dnssec-trans-02.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-ds-sha256-05.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-forgery-resilience-00.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-keyrr-key-signing-flag-12.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-mdns-46.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-nsec3-12.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-nsid-01.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-rfc2536bis-dsa-07.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-rfc2539bis-dhk-07.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-rfc2671bis-edns0-02.txt patch
+dist/bind/doc/draft/draft-ietf-dnsext-rfc2672bis-dname-06.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-rfc2672bis-dname-18.txt patch
+dist/bind/doc/draft/draft-ietf-dnsext-rfc3597-bis-00.txt patch
+dist/bind/doc/draft/draft-ietf-dnsext-signed-nonexistence-requirements-01.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-tkey-renewal-mode-05.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-trustupdate-threshold-00.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-trustupdate-timers-05.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-tsig-md5-deprecated-03.txt patch
+dist/bind/doc/draft/draft-ietf-dnsext-tsig-sha-06.txt delete
+dist/bind/doc/draft/draft-ietf-dnsext-wcard-clarify-10.txt delete
+dist/bind/doc/draft/draft-ietf-dnsop-default-local-zones-03.txt delete
+dist/bind/doc/draft/draft-ietf-dnsop-default-local-zones-09.txt patch
+dist/bind/doc/draft/draft-ietf-dnsop-ipv6-dns-configuration-06.txt delete
+dist/bind/doc/draft/draft-ietf-dnsop-ipv6-dns-issues-11.txt delete
+dist/bind/doc/draft/draft-ietf-dnsop-ipv6-transport-guidelines-01.txt delete
+dist/bind/doc/draft/draft-ietf-dnsop-key-rollover-requirements-02.txt delete
+dist/bind/doc/draft/draft-ietf-dnsop-name-server-management-reqs-02.txt patch
+dist/bind/doc/draft/draft-ietf-dnsop-serverid-06.txt delete
+dist/bind/doc/draft/draft-ietf-enum-e164-gstn-np-05.txt delete
+dist/bind/doc/draft/draft-ietf-ipv6-node-requirements-08.txt delete
+dist/bind/doc/draft/draft-ietf-secsh-dns-05.txt	delete
+dist/bind/doc/draft/draft-ihren-dnsext-threshold-validation-00.txt delete
+dist/bind/doc/draft/draft-park-ipv6-extensions-dns-pnp-00.txt delete
+dist/bind/doc/rfc/index				patch
+dist/bind/doc/rfc/rfc1912.txt			patch
+dist/bind/doc/rfc/rfc3755.txt			patch
+dist/bind/doc/rfc/rfc4294.txt			patch
+dist/bind/doc/rfc/rfc4339.txt			patch
+dist/bind/doc/rfc/rfc4471.txt			patch
+dist/bind/doc/rfc/rfc4472.txt			patch
+dist/bind/doc/rfc/rfc4697.txt			patch
+dist/bind/doc/rfc/rfc4955.txt			patch
+dist/bind/doc/rfc/rfc4956.txt			patch
+dist/bind/doc/rfc/rfc5001.txt			patch
+dist/bind/doc/rfc/rfc5011.txt			patch
+dist/bind/doc/rfc/rfc5452.txt			patch
+dist/bind/doc/rfc/rfc5625.txt			patch
+dist/bind/doc/rfc/rfc5702.txt			patch
+dist/bind/lib/dns/include/dns/db.h		patch
+dist/bind/lib/dns/include/dns/types.h		patch
+dist/bind/lib/dns/rbtdb.c			patch
+dist/bind/lib/dns/resolver.c			patch
+dist/bind/lib/dns/validator.c			patch
+dist/bind/lib/lwres/man/lwres.html		patch
+dist/bind/lib/lwres/man/lwres_buffer.html	patch
+dist/bind/lib/lwres/man/lwres_config.html	patch
+dist/bind/lib/lwres/man/lwres_context.html	patch
+dist/bind/lib/lwres/man/lwres_gabn.html		patch
+dist/bind/lib/lwres/man/lwres_gai_strerror.html	patch
+dist/bind/lib/lwres/man/lwres_getaddrinfo.html	patch
+dist/bind/lib/lwres/man/lwres_gethostent.html	patch
+dist/bind/lib/lwres/man/lwres_getipnode.html	patch
+dist/bind/lib/lwres/man/lwres_getnameinfo.html	patch
+dist/bind/lib/lwres/man/lwres_getrrsetbyname.html patch
+dist/bind/lib/lwres/man/lwres_gnba.html		patch
+dist/bind/lib/lwres/man/lwres_hstrerror.html	patch
+dist/bind/lib/lwres/man/lwres_inetntop.html	patch
+dist/bind/lib/lwres/man/lwres_noop.html		patch
+dist/bind/lib/lwres/man/lwres_packet.html	patch
+dist/bind/lib/lwres/man/lwres_resutil.html	patch
+dist/bind/version				patch
+distrib/sets/lists/base/md.amd64		patch
+distrib/sets/lists/base/md.sparc64		patch
+distrib/sets/lists/base/shl.mi			patch
+doc/3RDPARTY					patch
+lib/libdns/shlib_version			patch
+
+	Update BIND to 9.5.2-P2.
+	[spz, ticket #1264]
+
+crypto/dist/openssl/crypto/comp/c_zlib.c	patch
+
+	Fix CVE-2009-4355.
+	[taca, ticket #1265]                     
 
