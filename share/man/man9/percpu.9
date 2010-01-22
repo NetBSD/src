@@ -1,4 +1,4 @@
-.\"     $NetBSD: percpu.9,v 1.1 2010/01/22 20:11:16 dyoung Exp $
+.\"     $NetBSD: percpu.9,v 1.2 2010/01/22 20:18:46 dyoung Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,8 +31,15 @@
 .Dt PERCPU 9
 .Os
 .Sh NAME
-.Nm percpu
-.Nd Per-CPU storage
+.Nm PERCPU ,
+.Nm percpu_init ,
+.Nm percpu_init_cpu ,
+.Nm percpu_alloc ,
+.Nm percpu_free ,
+.Nm percpu_getref ,
+.Nm percpu_putref ,
+.Nm percpu_foreach
+.Nd Per-CPU storage allocator
 .Sh SYNOPSIS
 .In sys/percpu.h
 .Vt typedef void (*percpu_callback_t)(void *, void *, struct cpu_info *);
