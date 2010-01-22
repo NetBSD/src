@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.15 2010/01/20 09:04:33 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.16 2010/01/22 07:58:51 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.15 2010/01/20 09:04:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.16 2010/01/22 07:58:51 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -244,12 +244,13 @@ u_int mem_cluster_cnt;
 
 void configure(void);
 void mach_init(int, int32_t *, void *, int64_t);
-static u_long rmixlfw_init(int64_t);
-static u_long mem_clusters_init(rmixlfw_mmap_t *, rmixlfw_mmap_t *);
+static uint64_t rmixlfw_init(int64_t);
+static uint64_t mem_clusters_init(rmixlfw_mmap_t *, rmixlfw_mmap_t *);
 static void __attribute__((__noreturn__)) rmixl_reset(void);
 static void rmixl_physaddr_init(void);
 static u_int ram_seg_resv(phys_ram_seg_t *, u_int, u_quad_t, u_quad_t);
 void rmixlfw_mmap_print(rmixlfw_mmap_t *);
+
 
 #ifdef MULTIPROCESSOR
 void rmixl_get_wakeup_info(struct rmixl_config *);
@@ -273,7 +274,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 {
 	struct rmixl_config *rcp = &rmixl_configuration;
 	void *kernend;
-	u_long memsize;
+	uint64_t memsize;
 	u_int vm_cluster_cnt;
 	uint32_t r;
 	phys_ram_seg_t vm_clusters[VM_PHYSSEG_MAX];
@@ -281,15 +282,14 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 
 #ifndef MULTIPROCESSOR
 	rmixl_mtcr(0, 1);		/* disable all threads except #0 */
+	rmixl_mtcr(0x400, 0);		/* enable MMU clock gating */
+					/* set single MMU Thread Mode */
+					/* TLB is partitioned (1 partition) */
 #endif
 
 	r = rmixl_mfcr(0x300);
 	r &= ~__BIT(14);		/* disabled Unaligned Access */
 	rmixl_mtcr(0x300, r);
-
-	rmixl_mtcr(0x400, 0);		/* enable MMU clock gating */
-					/* set single MMU Thread Mode */
-					/* TLB is partitioned (1 partition) */
 
 	/*
 	 * Clear the BSS segment.
@@ -325,7 +325,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 #endif
 
 	printf("\nNetBSD/rmixl\n");
-	printf("memsize = %#lx\n", memsize);
+	printf("memsize = %#"PRIx64"\n", memsize);
 
 #if defined(MULTIPROCESSOR) && defined(MACHDEP_DEBUG)
 	rmixl_wakeup_info_print(rcp->rc_cpu_wakeup_info);
@@ -615,7 +615,7 @@ rmixl_physaddr_init(void)
 #endif
 }
 
-static u_long
+static uint64_t
 rmixlfw_init(int64_t infop)
 {
 	struct rmixl_config *rcp = &rmixl_configuration;
@@ -698,7 +698,7 @@ rmixlfw_mmap_print(rmixlfw_mmap_t *map)
  * these will be limited by MEMSIZE if it is configured.
  * if neither are available, just use MEMSIZE.
  */
-static u_long
+static uint64_t
 mem_clusters_init(
 	rmixlfw_mmap_t *psb_physaddr_map,
 	rmixlfw_mmap_t *avail_mem_map)
@@ -709,7 +709,7 @@ mem_clusters_init(
 	uint64_t sum;
 	u_int cnt;
 #ifdef MEMSIZE
-	u_long memsize = MEMSIZE;
+	uint64_t memsize = MEMSIZE;
 #endif
 
 #ifdef MACHDEP_DEBUG
@@ -856,7 +856,7 @@ rmixl_wakeup_info_print(volatile rmixlfw_cpu_wakeup_info_t *wip)
 {
 	int i;
 
-	printf("%s: wip %p\n", __func__, wip);
+	printf("%s: wip %p, size %lu\n", __func__, wip, sizeof(*wip));
 
 	printf("cpu_status %#x\n",  wip->cpu_status);
 	printf("valid: %d\n", wip->valid);
