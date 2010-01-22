@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.36 2010/01/21 23:26:58 jakllsch Exp $	*/
+/*	$NetBSD: atareg.h,v 1.37 2010/01/22 01:22:00 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -501,7 +501,7 @@ struct ata_smart_thresh {
 } __packed;
 
 struct ata_smart_thresholds {
-	uint16_		data_structure_revision;
+	uint16_t	data_structure_revision;
 	struct ata_smart_thresh	thresholds[30];
 	uint8_t		reserved[18];
 	uint8_t		vendor_specific[131];
