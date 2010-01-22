@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.139 2010/01/08 11:35:11 pooka Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.140 2010/01/22 22:46:00 njoly Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.139 2010/01/08 11:35:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.140 2010/01/22 22:46:00 njoly Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -458,7 +458,6 @@ kernfs_xread(struct kernfs_node *kfs, int off, char **bufp, size_t len, size_t *
 		memcpy(*bufp, cp, xlen);
 		(*bufp)[xlen] = '\n';
 		(*bufp)[xlen+1] = '\0';
-		len = strlen(*bufp);
 		break;
 	}
 
