@@ -1,0 +1,13 @@
+$TTL 30
+$ORIGIN good.
+@			IN SOA	mname1. . (
+				2009110300 ; serial
+				20         ; refresh (20 seconds)
+				20         ; retry (20 seconds)
+				1814400    ; expire (3 weeks)
+				3600       ; minimum (1 hour)
+				)
+			NS	ns2
+ns2			A	10.53.0.2
+
+nice.good.		CNAME	worse.example.

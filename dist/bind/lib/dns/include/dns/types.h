@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1.1.5.8.1 2009/12/03 17:31:31 snj Exp $	*/
+/*	$NetBSD: types.h,v 1.1.1.5.8.2 2010/01/22 22:05:41 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: types.h,v 1.126.62.6.2.1 2009/11/18 23:41:18 marka Exp */
+/* Id: types.h,v 1.126.62.6.2.2 2009/12/31 21:02:45 each Exp */
 
 #ifndef DNS_TYPES_H
 #define DNS_TYPES_H 1
@@ -297,6 +297,8 @@ enum {
 };
 
 #define DNS_TRUST_PENDING(x)		((x) == dns_trust_pending_answer || \
+					 (x) == dns_trust_pending_additional)
+#define DNS_TRUST_ADDITIONAL(x)		((x) == dns_trust_additional || \
 					 (x) == dns_trust_pending_additional)
 #define DNS_TRUST_GLUE(x)		((x) == dns_trust_glue)
 

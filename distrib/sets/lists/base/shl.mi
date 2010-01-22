@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.450.2.1.2.2 2009/12/03 17:31:44 snj Exp $
+# $NetBSD: shl.mi,v 1.450.2.1.2.3 2010/01/22 22:05:42 snj Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -64,7 +64,7 @@
 ./usr/lib/libcrypto.so.4.2			base-crypto-shlib	crypto
 ./usr/lib/libcurses.so.6.4			base-sys-shlib
 ./usr/lib/libdes.so.7.0				base-crypto-shlib	crypto
-./usr/lib/libdns.so.1.1				base-bind-shlib
+./usr/lib/libdns.so.1.2				base-bind-shlib
 ./usr/lib/libedit.so.2.11			base-sys-shlib
 ./usr/lib/libevent.so.2.0			base-sys-shlib
 ./usr/lib/libfetch.so.1.0			base-sys-shlib
