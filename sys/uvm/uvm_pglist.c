@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.42.16.2 2010/01/22 06:05:16 snj Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.42.16.3 2010/01/22 08:54:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42.16.2 2010/01/22 06:05:16 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42.16.3 2010/01/22 08:54:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,41 +187,22 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 		    __func__, ps, tryidx, end, skip, align);
 #endif
 		/*
-		 * Test both the ending and starting pages to see if they are
-		 * both free.  If the ending and starting pages are same page,
-		 * we only test one of them.  If the pages aren't free, there
-		 * is no reason to continue this iteration so advance to the
-		 * next address and try again.
-		 */
-		if (VM_PAGE_IS_FREE(&pgs[end - 1]) == 0
-		    || end - 1 == tryidx + skip
-		    || VM_PAGE_IS_FREE(&pgs[tryidx + skip]) == 0) {
-			try += roundup(num, align);
-			skip = 0;
-			continue;
-		}
-
-		/*
-		 * We start at the end since if we find a non-free page, it
-		 * makes no sense to ever test any pages before it since the
-		 * conditions for this allocation could never be satisified.
+		 * We start at the end and work backwards since if we find a
+		 * non-free page, it makes no sense to continue.
 		 *
-		 * Also since we have "vetted" these free pages, if this
-		 * iteration fails, we may be able to skip testing those pages
-		 * in the next iteration.
-		 *
-		 * The loop condition will never be satisfied if we've already
-		 * found enough pages (either one or two).
+		 * But on the plus size we have "vetted" some number of free
+		 * pages.  If this iteration fails, we may be able to skip
+		 * testing most of those pages again in the next pass.
 		 */
-		for (idx = end - 2; idx >= tryidx + skip + 1; idx--) {
+		for (idx = end - 1; idx >= tryidx + skip; idx--) {
 			if (VM_PAGE_IS_FREE(&pgs[idx]) == 0) {
 				ok = false;
 				break;
 			}
 
 #ifdef DEBUG
-			idxpa = VM_PAGE_TO_PHYS(&pgs[idx]);
 			if (idx > tryidx) {
+				idxpa = VM_PAGE_TO_PHYS(&pgs[idx]);
 				lastidxpa = VM_PAGE_TO_PHYS(&pgs[idx - 1]);
 				if ((lastidxpa + PAGE_SIZE) != idxpa) {
 					/*
