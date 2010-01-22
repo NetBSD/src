@@ -1,5 +1,5 @@
 .\"	$OpenBSD: crypto.9,v 1.25 2003/07/11 13:47:41 jmc Exp $
-.\"	$NetBSD: opencrypto.9,v 1.8 2009/12/08 09:23:06 mbalmer Exp $
+.\"	$NetBSD: opencrypto.9,v 1.9 2010/01/22 09:18:07 hubertf Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -16,7 +16,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd December 20, 2003
+.Dd January 1, 2010
 .Dt OPENCRYPTO 9
 .Os
 .Sh NAME
@@ -324,7 +324,8 @@ decrypting (subject to
 For MAC algorithms, this is where the result of the keyed hash will be
 inserted.
 .It Fa crd_flags
-The following flags are defined:
+For adjusting general operation from userland,
+the following flags are defined:
 .Bl -tag -width CRD_F_IV_EXPLICIT
 .It Dv CRD_F_ENCRYPT
 For encryption algorithms, this bit is set when encryption is required
@@ -428,6 +429,28 @@ An array of kernel memory blocks containing the parameters.
 Identifier specifying which low-level driver is being used.
 .It Fa krp_callback
 Callback called on completion of a keying operation.
+.El
+.Pp
+The following sysctl entries exist to adjust 
+the behaviour of the system from userland:
+.Bl -tag -width kern.cryptodevallowsoft
+.It kern.usercrypto
+Allow (1) or forbid (0) userland acces to 
+.Pa /dev/crypto .
+.It kern.userasymcrypto
+Allow (1) or forbid (0) userland acces to 
+do asymmetric crypto requests.
+.It kern.cryptodevallowsoft
+Enable/disable access to hardware versus software operations:
+.Bl -tag -width xxx
+.It < 0
+Force userlevel requests to use software operations, always.
+.It = 0
+Use hardware if present, grant userlevel requests for non-accelerated
+operations (handling the latter in software).
+.It > 0
+Allow user requests only for operations which are hardware-accelerated.
+.El
 .El
 .Sh DRIVER-SIDE API
 The
@@ -559,9 +582,11 @@ The callback is provided with an error code in case of failure, in the
 .Fa crp_etype
 field.
 .Sh FILES
-.Bl -tag -width sys/crypto/crypto.c
-.It Pa sys/crypto/crypto.c
+.Bl -tag -width sys/opencrypto/crypto.c
+.It Pa sys/opencrypto/crypto.c
 most of the framework code
+.It Pa sys/crypto
+crypto algorithm implementations
 .El
 .Sh SEE ALSO
 .Xr ipsec 4 ,
