@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2008/12/12 21:41:04 christos Exp $
+# $NetBSD: Makefile,v 1.12 2010/01/22 16:41:57 sborrill Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -25,6 +25,7 @@ CPPFLAGS+= \
 
 CPPFLAGS+= -DCONFIG_DRIVER_BSD
 CPPFLAGS+= -DCONFIG_CTRL_IFACE
+CPPFLAGS+= -DCONFIG_DEBUG_FILE
 DPADD+=	${LIBPCAP}
 LDADD+=	-lpcap
 
