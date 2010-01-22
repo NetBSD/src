@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.42.16.1 2010/01/22 05:17:32 matt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.42.16.2 2010/01/22 06:05:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42.16.1 2010/01/22 05:17:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42.16.2 2010/01/22 06:05:16 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,7 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 
 		/*
 		 * We start at the end since if we find a non-free page, it
-		 * make no sense to ever test any pages before it since the
+		 * makes no sense to ever test any pages before it since the
 		 * conditions for this allocation could never be satisified.
 		 *
 		 * Also since we have "vetted" these free pages, if this
@@ -265,7 +265,7 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 		cnt = roundup(cnt, align);
 		/*
 		 * The number of pages we can skip checking 
-		 * (might be 0 is cnt > num).
+		 * (might be 0 if cnt > num).
 		 */
 		skip = max(num - cnt, 0);
 		try += cnt;
