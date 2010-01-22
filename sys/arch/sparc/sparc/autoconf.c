@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.238 2010/01/20 22:54:22 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.239 2010/01/22 16:11:26 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.238 2010/01/20 22:54:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.239 2010/01/22 16:11:26 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1600,7 +1600,6 @@ set_network_props(struct device *dev, void *aux)
 		ofnode = PCITAG_NODE(pa->pa_tag);
 		break;
 	}
-	if (!ofnode) return;
 
 	prom_getether(ofnode, eaddr);
 	dict = device_properties(dev);
@@ -1783,7 +1782,8 @@ device_register(struct device *dev, void *aux)
 		}
 	} else if (device_is_a(dev, "le") ||
 		   device_is_a(dev, "hme") ||
-		   device_is_a(dev, "be")) {
+		   device_is_a(dev, "be") ||
+		   device_is_a(dev, "ie")) {
 
 		set_network_props(dev, aux);
 
