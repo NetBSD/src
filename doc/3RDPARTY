@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.744 2010/01/10 07:37:09 mlelstv Exp $
+#	$NetBSD: 3RDPARTY,v 1.745 2010/01/22 20:33:18 snj Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -718,7 +718,7 @@ We have lots of local fixes.
 
 Package:	OpenLDAP
 Version:	2.4.11
-Current Vers:	2.4.16
+Current Vers:	2.4.21
 Maintainer:	OpenLDAP Foundation
 Archive Site:	http://www.openldap.org/
 Home Page:	http://www.openldap.org/
