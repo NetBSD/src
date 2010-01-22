@@ -1,4 +1,4 @@
-.\"     $NetBSD: percpu.9,v 1.2 2010/01/22 20:18:46 dyoung Exp $
+.\"     $NetBSD: percpu.9,v 1.3 2010/01/22 20:27:57 dyoung Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -84,8 +84,8 @@ without causing interprocessor memory synchronization.
 .Sh FUNCTIONS
 .Bl -tag -width compact
 .It Fn percpu_init "void"
-Initialize the per-CPU storage subsystem.  This is
-called just once, in
+Initialize the per-CPU storage subsystem.
+This is called just once, in
 .Fn main .
 .It Fn percpu_init_cpu "ci"
 Initialize per-CPU storage on the CPU given by
