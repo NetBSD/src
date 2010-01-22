@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.34 2010/01/19 22:06:22 pooka Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.35 2010/01/22 08:56:05 martin Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.34 2010/01/19 22:06:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.35 2010/01/22 08:56:05 martin Exp $");
 
 
 #include <sys/param.h>
@@ -395,7 +395,7 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	emac_reset(sc);
 
 	/* Fetch the Ethernet address. */
-	ea = prop_dictionary_get(device_properties(&sc->sc_dev), "mac-addr");
+	ea = prop_dictionary_get(device_properties(&sc->sc_dev), "mac-address");
 	if (ea == NULL) {
 		printf("%s: unable to get mac-addr property\n",
 		    sc->sc_dev.dv_xname);

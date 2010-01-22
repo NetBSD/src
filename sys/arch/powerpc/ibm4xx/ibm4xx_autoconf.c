@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_autoconf.c,v 1.11 2007/02/22 16:57:56 thorpej Exp $	*/
+/*	$NetBSD: ibm4xx_autoconf.c,v 1.12 2010/01/22 08:56:06 martin Exp $	*/
 /*	Original Tag: ibm4xxgpx_autoconf.c,v 1.2 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.11 2007/02/22 16:57:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.12 2010/01/22 08:56:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -70,7 +70,7 @@ ibm4xx_device_register(struct device *dev, void *aux)
 				return;
 			}
 			if (prop_dictionary_set(device_properties(dev),
-						"mac-addr", pd) == false) {
+						"mac-address", pd) == false) {
 				printf("WARNING: unable to set mac-addr "
 				    "property for %s\n", dev->dv_xname);
 			}
