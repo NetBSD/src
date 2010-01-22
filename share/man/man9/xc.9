@@ -1,0 +1,146 @@
+.\"     $NetBSD: xc.9,v 1.1 2010/01/22 20:43:48 dyoung Exp $
+.\"
+.\" Copyright (c) 2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Andrew Doran.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 22, 2010
+.Dt XC 9
+.Os
+.Sh NAME
+.Nm XC ,
+.Nm xc_init_cpu ,
+.Nm xc_broadcast ,
+.Nm xc_unicast ,
+.Nm xc_wait
+.Nd Cross-call interface
+.Sh SYNOPSIS
+.In sys/xcall.h
+.Vt typedef void (*xcfunc_t)(void *, void *);
+.Ft void
+.Fn xc_init_cpu "struct cpu_info *ci"
+.Ft uint64_t
+.Fn xc_broadcast "u_int flags" "xcfunc_t func" "void *arg1" "void *arg2"
+.Ft uint64_t
+.Fn xc_unicast "u_int flags" "xcfunc_t func" "void *arg1" "void *arg2" "struct cpu_info *ci"
+.Ft void
+.Fn xc_wait "uint64_t where"
+.Sh DESCRIPTION
+The machine-independent
+.Nm
+interface allows any CPU in the system to request that an arbitrary
+function be executed on any other CPU.
+.Pp
+Sometimes it is necessary to modify hardware state that is tied
+directly to individual CPUs
+.Po
+such as a CPU's local timer
+.Pc ,
+and these updates can not be done remotely by another CPU.
+The LWP requesting the update may be unable to guarantee that it
+will be running on the CPU where the update must occur, when the
+update occurs.
+.Pp
+Additionally, it's sometimes necessary to modify per-CPU software
+state from a remote CPU.
+Where these update operations are so rare or the access to the
+per-CPU data so frequent that the cost of using locking or atomic
+operations to provide coherency is prohibitive, another way must
+be found.
+.Pp
+Cross calls help to solve these types of problem.
+.Sh FUNCTIONS
+.Bl -tag -width compact
+.It Fn xc_init_cpu "ci"
+Initialize the cross-call subsystem.
+Called once for each CPU in the system as it is attached.
+.It Fn xc_broadcast "flags" "func" "arg1" "arg2"
+Call
+.Fo "(*func)"
+.Fa "arg1"
+.Fa "arg2"
+.Fc
+on all CPUs in the system.
+Return a
+.Vt uint64_t
+.Dq ticket
+to
+.Fn xc_wait
+on for the cross-call to complete.
+Always call
+.Fn xc_broadcast
+from thread context.
+Treat this as an expensive operation.
+.It Fn xc_unicast "flags" "func" "arg1" "arg2" "ci"
+Like
+.Fn xc_broadcast ,
+but call
+.Fn "(*func)" 
+on only the CPU indicated by
+.Fa ci .
+.Fn xc_unicast
+also returns a
+.Dq ticket .
+.It Fn xc_wait "where"
+Wait on the
+.Dq ticket
+returned by a prior
+.Fn xc_broadcast
+or
+.Fn xc_unicast
+for the corresponding cross-call to complete.
+.El
+.Sh CODE REFERENCES
+This section describes places within the
+.Nx
+source tree where actual code implementing the
+.Nm
+interface
+can be found.
+All pathnames are relative to
+.Pa /usr/src .
+.Pp
+The
+.Nm
+interface is implemented within the file
+.Pa sys/kern/subr_xcall.c .
+.\" .Sh EXAMPLES
+.Sh SEE ALSO
+.Xr percpu 9
+.Sh HISTORY
+The
+.Nm
+interface first appeared in
+.Nx 5.0 .
+.Sh AUTHORS
+.An Andrew Doran Aq ad@NetBSD.org
+.Sh CAVEATS
+Cross calls must not allocate memory, as the pagedaemon uses them
+.Po
+and memory allocation may need to wait on the pagedaemon
+.Pc .
+.\" .Sh BUGS
+.\" .Sh SECURITY CONSIDERATIONS
