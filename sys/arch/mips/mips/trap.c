@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.14 2010/01/15 06:47:00 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.15 2010/01/22 07:41:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.14 2010/01/15 06:47:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.15 2010/01/22 07:41:10 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -289,7 +289,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			entry |= mips_pg_m_bit();
 			pte->pt_entry = entry;
 			vaddr &= ~PGOFSET;
-			tlb_update(vaddr, entry);
+			pmap_tlb_update(pmap_kernel(), vaddr, entry);
 			pa = mips_tlbpfn_to_paddr(entry);
 			if (!IS_VM_PHYSADDR(pa)) {
 				panic("ktlbmod: unmanaged page:"
@@ -303,28 +303,27 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	case T_TLB_MOD+T_USER:
 	    {
 		pt_entry_t *pte;
-		unsigned entry;
+		uint32_t pt_entry;
 		paddr_t pa;
 		pmap_t pmap;
 
-		pmap  = p->p_vmspace->vm_map.pmap;
+		pmap = p->p_vmspace->vm_map.pmap;
 		if (!(pte = pmap_pte_lookup(pmap, vaddr)))
-			panic("utlbmod: invalid segmap");
-		entry = pte->pt_entry;
-		if (!mips_pg_v(entry) || (entry & mips_pg_m_bit()))
+			panic("utlbmod: no pte");
+		pt_entry = pte->pt_entry;
+		if (!mips_pg_v(pt_entry) || (pt_entry & mips_pg_m_bit()))
 			panic("utlbmod: invalid pte");
 
-		if (entry & mips_pg_ro_bit()) {
+		if (pt_entry & mips_pg_ro_bit()) {
 			/* write to read only page */
 			ftype = VM_PROT_WRITE;
 			goto pagefault;
 		}
-		entry |= mips_pg_m_bit();
-		pte->pt_entry = entry;
-		vaddr = (vaddr & ~PGOFSET) |
-		    (PMAP_PAI(pmap, curcpu())->pai_asid << MIPS_TLB_PID_SHIFT);
-		tlb_update(vaddr, entry);
-		pa = mips_tlbpfn_to_paddr(entry);
+		pt_entry |= mips_pg_m_bit();
+		pte->pt_entry = pt_entry;
+		vaddr = trunc_page(vaddr);
+		pmap_tlb_update(pmap, vaddr, pt_entry);
+		pa = mips_tlbpfn_to_paddr(pt_entry);
 		if (!IS_VM_PHYSADDR(pa)) {
 			panic("utlbmod: unmanaged page:"
 			    " va %#"PRIxVADDR" pa %#"PRIxPADDR,
