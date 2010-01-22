@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1012 2010/01/19 12:00:51 mbalmer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1013 2010/01/22 08:01:49 hubertf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1015 2010/01/19 11:43:33 mbalmer Exp
+ *	NetBSD: pcidevs,v 1.1016 2010/01/21 23:23:44 hubertf Exp
  */
 
 /*
@@ -1923,8 +1923,8 @@
 #define	PCI_PRODUCT_O2MICRO_OZ6922	0x6925		/* OZ6922 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_O2MICRO_OZ6933	0x6933		/* OZ6933 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_O2MICRO_OZ6972	0x6972		/* OZ6912/OZ6972 PCI-CardBus Bridge */
-#define	PCI_PRODUCT_O2MICRO_7120	0x7120		/* Integrated MMC/SD Controller */
-#define	PCI_PRODUCT_O2MICRO_7130	0x7130		/* Integrated MS/xD/SM Controller */
+#define	PCI_PRODUCT_O2MICRO_7120	0x7120		/* OZ7120 Integrated MMC/SD Controller */
+#define	PCI_PRODUCT_O2MICRO_7130	0x7130		/* OZ7130 Integrated MS/xD/SM Controller */
 #define	PCI_PRODUCT_O2MICRO_7223	0x7223		/* OZ711E0 PCI-CardBus Bridge */
 
 /* Evans & Sutherland products */
@@ -3529,6 +3529,7 @@
 #define	PCI_PRODUCT_PLX_9054	0x9054		/* 9054 I/O Accelerator */
 #define	PCI_PRODUCT_PLX_9060ES	0x906e		/* 9060ES PCI Bus Controller */
 #define	PCI_PRODUCT_PLX_9656	0x9656		/* 9656 I/O Accelerator */
+#define	PCI_PRODUCT_PLX_9656FPBGA	0x5601		/* 9656 I/O Accelerator FPBGA */
 
 /* Powerhouse Systems products */
 #define	PCI_PRODUCT_POWERHOUSE_POWERTOP	0x6037		/* PowerTop PowerPC System Controller */
