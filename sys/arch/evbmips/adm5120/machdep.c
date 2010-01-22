@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.14 2009/12/14 00:46:00 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.15 2010/01/22 08:56:05 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2009/12/14 00:46:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2010/01/22 08:56:05 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -290,7 +290,7 @@ parse_args(prop_dictionary_t properties, int argc, char **argv,
 				printf("%s: prop_data_create_data\n", __func__);
 				continue;
 			}
-			if (!prop_dictionary_set(properties, "mac-addr", pd)) {
+			if (!prop_dictionary_set(properties, "mac-address", pd)) {
 				printf("%s: prop_dictionary_set(mac)\n",
 				    __func__);
 			}
