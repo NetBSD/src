@@ -1,5 +1,5 @@
 .\"	$OpenBSD: crypto.9,v 1.25 2003/07/11 13:47:41 jmc Exp $
-.\"	$NetBSD: opencrypto.9,v 1.9 2010/01/22 09:18:07 hubertf Exp $
+.\"	$NetBSD: opencrypto.9,v 1.10 2010/01/22 10:28:08 wiz Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -105,7 +105,7 @@ struct crparam {
 
 struct cryptkop {
 	TAILQ_ENTRY(cryptkop) krp_next;
-        u_int              krp_op;         /* ie. CRK_MOD_EXP or other */
+        u_int              krp_op;         /* i.e. CRK_MOD_EXP or other */
         u_int              krp_status;     /* return status */
         u_short            krp_iparams;    /* # of input parameters */
         u_short            krp_oparams;    /* # of output parameters */
@@ -431,24 +431,24 @@ Identifier specifying which low-level driver is being used.
 Callback called on completion of a keying operation.
 .El
 .Pp
-The following sysctl entries exist to adjust 
+The following sysctl entries exist to adjust
 the behaviour of the system from userland:
 .Bl -tag -width kern.cryptodevallowsoft
 .It kern.usercrypto
-Allow (1) or forbid (0) userland acces to 
+Allow (1) or forbid (0) userland access to
 .Pa /dev/crypto .
 .It kern.userasymcrypto
-Allow (1) or forbid (0) userland acces to 
+Allow (1) or forbid (0) userland access to
 do asymmetric crypto requests.
 .It kern.cryptodevallowsoft
 Enable/disable access to hardware versus software operations:
 .Bl -tag -width xxx
-.It < 0
+.It \*[Lt] 0
 Force userlevel requests to use software operations, always.
 .It = 0
 Use hardware if present, grant userlevel requests for non-accelerated
 operations (handling the latter in software).
-.It > 0
+.It \*[Gt] 0
 Allow user requests only for operations which are hardware-accelerated.
 .El
 .El
