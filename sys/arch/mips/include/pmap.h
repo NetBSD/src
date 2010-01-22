@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.6 2010/01/20 06:58:35 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.7 2010/01/22 07:41:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -218,9 +218,13 @@ pmap_remove_all(struct pmap *pmap)
 void	pmap_bootstrap(void);
 
 void	pmap_set_modified(paddr_t);
-
 void	pmap_procwr(struct proc *, vaddr_t, size_t);
 #define	PMAP_NEED_PROCWR
+
+uint32_t pmap_tlb_asid_alloc(pmap_t pmap, struct cpu_info *ci);
+void	pmap_tlb_invalidate_asid(pmap_t pmap);
+int	pmap_tlb_update(pmap_t pmap, vaddr_t, uint32_t);
+void	pmap_tlb_invalidate_addr(pmap_t pmap, vaddr_t);
 
 /*
  * pmap_prefer() helps reduce virtual-coherency exceptions in
