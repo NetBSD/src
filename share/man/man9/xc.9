@@ -1,4 +1,4 @@
-.\"     $NetBSD: xc.9,v 1.1 2010/01/22 20:43:48 dyoung Exp $
+.\"     $NetBSD: xc.9,v 1.2 2010/01/22 23:27:01 dyoung Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,6 +72,22 @@ operations to provide coherency is prohibitive, another way must
 be found.
 .Pp
 Cross calls help to solve these types of problem.
+.Pp
+.Nm
+provides a slow mechanism for making
+.Dq "low priority"
+cross calls.
+The function to be executed runs on the remote CPU within a bound
+kthread.
+No queueing is provided, and the implementation uses global state.
+The function being called may block briefly on locks, but in doing
+so must be careful to not interfere with other cross calls in the
+system.
+The function is called with thread context and not from a soft
+interrupt, so it can ensure that it is not interrupting other code
+running on the CPU, and so has exclusive access to the CPU.
+Since this facility is heavyweight, it's expected that it will not
+be used often.
 .Sh FUNCTIONS
 .Bl -tag -width compact
 .It Fn xc_init_cpu "ci"
@@ -93,7 +109,12 @@ on for the cross-call to complete.
 Always call
 .Fn xc_broadcast
 from thread context.
-Treat this as an expensive operation.
+Because
+.Fn (*func)
+is run at a low priority, it can be preempted.
+Treat
+.Fn xc_broadcast
+as an expensive operation.
 .It Fn xc_unicast "flags" "func" "arg1" "arg2" "ci"
 Like
 .Fn xc_broadcast ,
@@ -129,7 +150,8 @@ interface is implemented within the file
 .Pa sys/kern/subr_xcall.c .
 .\" .Sh EXAMPLES
 .Sh SEE ALSO
-.Xr percpu 9
+.Xr percpu 9 ,
+.Xr kpreempt 9
 .Sh HISTORY
 The
 .Nm
