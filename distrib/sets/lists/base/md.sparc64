@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.23.2.6 2009/12/03 17:38:35 snj Exp $
+# $NetBSD: md.sparc64,v 1.23.2.7 2010/01/22 21:05:06 snj Exp $
 ./sbin/edlabel					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/sparc					base-compat-lib		compat
@@ -74,7 +74,7 @@
 ./usr/lib/sparc/libdes.so.7			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdes.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdns.so.1			base-compat-shlib	compat,pic
-./usr/lib/sparc/libdns.so.1.1			base-compat-shlib	compat,pic
+./usr/lib/sparc/libdns.so.1.2			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libedit.so.2			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libedit.so.2.11			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libevent.so.2			base-compat-shlib	compat,pic

@@ -13,7 +13,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: example.db.in,v 1.17 2007/06/19 23:47:02 tbox Exp
+; Id: example.db.in,v 1.17.288.1 2009/12/31 21:02:44 each Exp
 
 $TTL 300	; 5 minutes
 @			IN SOA	mname1. . (
@@ -35,6 +35,9 @@ d			A	10.0.0.4
 ; Used for testing ANY queries
 foo			TXT	"testing"
 foo			A	10.0.1.0
+
+bad-cname		CNAME   a
+bad-dname		DNAME   @
 
 ; Used for testing CNAME queries
 cname1			CNAME	cname1-target
