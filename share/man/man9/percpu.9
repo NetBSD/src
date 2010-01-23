@@ -1,4 +1,4 @@
-.\"     $NetBSD: percpu.9,v 1.5 2010/01/22 20:41:50 dyoung Exp $
+.\"     $NetBSD: percpu.9,v 1.6 2010/01/23 00:17:07 rmind Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,26 +27,20 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 22, 2010
+.Dd January 23, 2010
 .Dt PERCPU 9
 .Os
 .Sh NAME
-.Nm PERCPU ,
-.Nm percpu_init ,
-.Nm percpu_init_cpu ,
+.Nm percpu ,
 .Nm percpu_alloc ,
 .Nm percpu_free ,
 .Nm percpu_getref ,
 .Nm percpu_putref ,
 .Nm percpu_foreach
-.Nd Per-CPU storage allocator
+.Nd per-CPU storage allocator
 .Sh SYNOPSIS
 .In sys/percpu.h
 .Vt typedef void (*percpu_callback_t)(void *, void *, struct cpu_info *);
-.Ft void
-.Fn percpu_init "void"
-.Ft void
-.Fn percpu_init_cpu "struct cpu_info *ci"
 .Ft percpu_t *
 .Fn percpu_alloc "size_t size"
 .Ft void
@@ -83,16 +77,6 @@ the thread may read or write the region at
 without causing interprocessor memory synchronization.
 .Sh FUNCTIONS
 .Bl -tag -width compact
-.It Fn percpu_init "void"
-Initialize the per-CPU storage subsystem.
-This is called just once, in
-.Fn main .
-.It Fn percpu_init_cpu "ci"
-Initialize per-CPU storage on the CPU given by
-.Fa ci .
-The kernel must call this before the CPU appears on the
-global CPUs list for
-.Dv CPU_INFO_FOREACH .
 .It Fn percpu_alloc "size"
 Call this in thread context to allocate
 .Fa size
