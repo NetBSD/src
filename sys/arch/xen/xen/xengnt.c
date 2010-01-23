@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.16 2009/11/07 07:27:49 cegger Exp $      */
+/*      $NetBSD: xengnt.c,v 1.17 2010/01/23 22:32:42 cegger Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.16 2009/11/07 07:27:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.17 2010/01/23 22:32:42 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -127,14 +127,14 @@ static int
 xengnt_more_entries(void)
 {
 	gnttab_setup_table_t setup;
-	unsigned long *pages;
+	u_long *pages;
 	int nframes_new = gnt_nr_grant_frames + 1;
 	int i;
 
 	if (gnt_nr_grant_frames == gnt_max_grant_frames)
 		return ENOMEM;
 
-	pages = malloc(nframes_new * sizeof(long), M_DEVBUF, M_NOWAIT);
+	pages = malloc(nframes_new * sizeof(u_long), M_DEVBUF, M_NOWAIT);
 	if (pages == NULL)
 		return ENOMEM;
 
@@ -165,7 +165,8 @@ xengnt_more_entries(void)
 	 * the grant table frames
 	 */
 	pmap_kenter_ma(((vaddr_t)grant_table) + gnt_nr_grant_frames * PAGE_SIZE,
-	    pages[gnt_nr_grant_frames] << PAGE_SHIFT, VM_PROT_WRITE, 0);
+	    ((paddr_t)pages[gnt_nr_grant_frames]) << PAGE_SHIFT,
+	    VM_PROT_WRITE, 0);
 
 	/*
 	 * add the grant entries associated to the last grant table frame
