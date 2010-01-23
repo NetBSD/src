@@ -1,4 +1,4 @@
-.\"     $NetBSD: xcall.9,v 1.2 2010/01/23 00:17:07 rmind Exp $
+.\"     $NetBSD: xcall.9,v 1.3 2010/01/23 00:47:03 rmind Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@ The LWP requesting the update may be unable to guarantee that it
 will be running on the CPU where the update must occur, when the
 update occurs.
 .Pp
-Additionally, it's sometimes necessary to modify per-CPU software
+Additionally, it is sometimes necessary to modify per-CPU software
 state from a remote CPU.
 Where these update operations are so rare or the access to the
 per-CPU data so frequent that the cost of using locking or atomic
@@ -69,22 +69,22 @@ operations to provide coherency is prohibitive, another way must
 be found.
 .Pp
 Cross calls help to solve these types of problem.
+However, since this facility is heavyweight, it is expected that
+it will not be used often.
 .Pp
 .Nm
-provides a slow mechanism for making
+provides a mechanism for making
 .Dq "low priority"
 cross calls.
-The function to be executed runs on the remote CPU within a bound
-kthread.
-No queueing is provided, and the implementation uses global state.
-The function being called may block briefly on locks, but in doing
-so must be careful to not interfere with other cross calls in the
-system.
-The function is called with thread context and not from a soft
-interrupt, so it can ensure that it is not interrupting other code
-running on the CPU, and so has exclusive access to the CPU.
-Since this facility is heavyweight, it's expected that it will not
-be used often.
+The function to be executed runs on the remote CPU within a thread
+context, and not from a software interrupt, so it can ensure that it is
+not interrupting other code running on the CPU, and so has exclusive
+access to the CPU.
+Keep in mind that unless disabled, it may cause a kernel preemption.
+.Sh NOTES
+Functions being called should be relatively lightweight.
+They may block on locks, but carefully and minimally, to not interfere
+with other cross calls in the system.
 .Sh FUNCTIONS
 .Bl -tag -width compact
 .It Fn xc_broadcast "flags" "func" "arg1" "arg2"
@@ -100,15 +100,10 @@ Return a
 to
 .Fn xc_wait
 on for the cross-call to complete.
-Always call
+.Fa flags
+should be 0.
 .Fn xc_broadcast
-from thread context.
-Because
-.Fn (*func)
-is run at a low priority, it can be preempted.
-Treat
-.Fn xc_broadcast
-as an expensive operation.
+should not be called from interrupt context.
 .It Fn xc_unicast "flags" "func" "arg1" "arg2" "ci"
 Like
 .Fn xc_broadcast ,
@@ -153,10 +148,3 @@ interface first appeared in
 .Nx 5.0 .
 .Sh AUTHORS
 .An Andrew Doran Aq ad@NetBSD.org
-.Sh CAVEATS
-Cross calls must not allocate memory, as the pagedaemon uses them
-.Po
-and memory allocation may need to wait on the pagedaemon
-.Pc .
-.\" .Sh BUGS
-.\" .Sh SECURITY CONSIDERATIONS
