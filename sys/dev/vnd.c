@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.205 2009/12/06 16:33:18 dsl Exp $	*/
+/*	$NetBSD: vnd.c,v 1.206 2010/01/23 18:31:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.205 2009/12/06 16:33:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.206 2010/01/23 18:31:04 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -874,6 +874,7 @@ vndiodone(struct buf *bp)
 	struct vndxfer *vnx = VND_BUFTOXFER(bp);
 	struct vnd_softc *vnd = vnx->vx_vnd;
 	struct buf *obp = bp->b_private;
+	int s = splbio();
 
 	KASSERT(&vnx->vx_buf == bp);
 	KASSERT(vnd->sc_active > 0);
@@ -889,6 +890,7 @@ vndiodone(struct buf *bp)
 	if (vnd->sc_active == 0) {
 		wakeup(&vnd->sc_tab);
 	}
+	splx(s);
 	obp->b_error = bp->b_error;
 	obp->b_resid = bp->b_resid;
 	buf_destroy(bp);
