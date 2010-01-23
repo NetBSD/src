@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.44 2010/01/22 22:18:10 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.45 2010/01/23 20:37:34 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -1103,4 +1103,10 @@ crypto/dist/openssl/crypto/comp/c_zlib.c	patch
 
 	Fix CVE-2009-4355.
 	[taca, ticket #1265]
+
+libexec/ld.elf_so/rtld.h			1.88
+
+	Restore backwards compatibility for binaries referencing the main
+	Obj_Entry.
+	[skrll, ticket #1249]
 
