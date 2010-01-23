@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.129 2010/01/10 09:08:23 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.130 2010/01/23 01:32:06 mrg Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -938,12 +938,33 @@ kernels compiled with
 .Dv DEBUG
 option.
 .El
+.Ss POWERPC
+.Bl -tag -width "traptrace" -compact
+.It Ic ctx
+Print process MMU context information.
+.It Ic pv
+Print PA->VA mapping information.
+.It Ic reset
+Reset the system.
+.It Ic tf
+Display the contents of the trapframe.
+.It Ic tlb
+Display instruction translation storage buffer information.
+.It Ic dcr
+Set the DCR register.
+Must be between 0x00 and 0x3ff.
+.It Ic user
+Display user memory.
+Use the
+.Dq i
+modifier to get instruction decoding.
+.El
 .Ss SH3
 .Bl -tag -width "traptrace" -compact
 .It Ic tlb
-Print TLB entries
+Print TLB entries.
 .It Ic cache
-Print cache entries
+Print cache entries.
 .It Ic frame
 Print switch frame and trap frames.
 .It Ic stack

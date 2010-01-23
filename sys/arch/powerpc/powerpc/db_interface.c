@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.39 2007/10/17 19:56:47 garbled Exp $ */
+/*	$NetBSD: db_interface.c,v 1.40 2010/01/23 01:32:06 mrg Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.39 2007/10/17 19:56:47 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.40 2010/01/23 01:32:06 mrg Exp $");
 
 #define USERACC
 
@@ -194,16 +194,33 @@ branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 
 #ifdef DDB
 const struct db_command db_machine_command_table[] = {
-	{ DDB_ADD_CMD("ctx",	db_ppc4xx_ctx,		0,	NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("pv",		db_ppc4xx_pv,		0,	NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("reset",	db_ppc4xx_reset,	0,	NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("tf",		db_ppc4xx_tf,		0,	NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("tlb",	db_ppc4xx_dumptlb,	0,	NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("dcr",	db_ppc4xx_dcr,		CS_MORE|CS_SET_DOT,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("ctx",	db_ppc4xx_ctx,		0,
+	  "Print process MMU context information", NULL,NULL) },
+	{ DDB_ADD_CMD("pv",	db_ppc4xx_pv,		0,
+	  "Print PA->VA mapping information",
+	  "address",
+	  "   address:\tphysical address to look up") },
+	{ DDB_ADD_CMD("reset",	db_ppc4xx_reset,	0,
+	  "Reset the system ", NULL,NULL) },
+	{ DDB_ADD_CMD("tf",	db_ppc4xx_tf,		0,
+	  "Display the contents of the trapframe",
+	  "address",
+	  "   address:\tthe struct trapframe to print") },
+	{ DDB_ADD_CMD("tlb",	db_ppc4xx_dumptlb,	0,
+	  "Display instruction translation storage buffer information.",
+	  NULL,NULL) },
+	{ DDB_ADD_CMD("dcr",	db_ppc4xx_dcr,		CS_MORE|CS_SET_DOT,
+	  "Set the DCR register",
+	  "dcr",
+	  "   dcr:\tNew DCR value (between 0x0 and 0x3ff)") },
 #ifdef USERACC
-	{ DDB_ADD_CMD("user",	db_ppc4xx_useracc,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("user",	db_ppc4xx_useracc,	0,
+	   "Display user memory.", "[address][,count]",
+	   "   address:\tuserspace address to start\n"
+	   "   count:\tnumber of bytes to display") },
 #endif
-	{ DDB_ADD_CMD(NULL,     NULL,               0,  NULL,NULL,NULL) }
+	{ DDB_ADD_CMD(NULL,	NULL,			0, 
+	  NULL,NULL,NULL) }
 };
 
 static void
