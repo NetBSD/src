@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_firmware.h,v 1.1.2.3 2010/01/17 00:01:39 cliff Exp $	*/
+/*	$NetBSD: rmixl_firmware.h,v 1.1.2.4 2010/01/23 07:45:58 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -188,5 +188,10 @@ typedef struct rmixlfw_cpu_wakeup_info {
 		struct vcpu_extended_info *vcpu_extended_info;
 	};
 } rmixlfw_cpu_wakeup_info_t;
+
+/* RMI firmware-defined IPI IRQs */
+#define RMIXLFW_IPI_STOP	51
+#define RMIXLFW_IPI_WAKEUP	52
+#define RMIXLFW_IPI_RECLAIM	53
 
 #endif	/* _ARCH_MIPS_RMI_RMIXL_FIRMWARE_H_ */
