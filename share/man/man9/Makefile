@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.307 2010/01/22 23:14:29 dyoung Exp $
+#       $NetBSD: Makefile,v 1.308 2010/01/23 00:03:38 rmind Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -56,7 +56,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	ubc.9 usbdi.9 uvm.9 vmem.9 \
 	wdc.9 workqueue.9 \
 	wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9 \
-	xc.9
+	xcall.9
 
 MAN+=	boothowto.9
 MLINKS+=boothowto.9 BOOT_FLAG.9
@@ -858,10 +858,9 @@ MLINKS+=wskbd.9 wskbd_input.9 \
 	wskbd.9 wskbddevprint.9
 MLINKS+=wsmouse.9 wsmouse_input.9 \
 	wsmouse.9 wsmousedevprint.9
-MLINKS+=xc.9 xc_init_cpu.9 \
-	xc.9 xc_broadcast.9 \
-	xc.9 xc_unicast.9 \
-	xc.9 xc_wait.9
+MLINKS+=xcall.9 xc_broadcast.9 \
+	xcall.9 xc_unicast.9 \
+	xcall.9 xc_wait.9
 
 SUBDIR= man9.i386 man9.sun3
 
