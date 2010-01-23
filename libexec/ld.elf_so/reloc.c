@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.96.4.1 2009/10/14 09:31:27 sborrill Exp $	 */
+/*	$NetBSD: reloc.c,v 1.96.4.2 2010/01/23 17:34:16 bouyer Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.96.4.1 2009/10/14 09:31:27 sborrill Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.96.4.2 2010/01/23 17:34:16 bouyer Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -210,7 +210,6 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 		obj->dlerror = dlerror;
 		obj->dlclose = dlclose;
 		obj->dladdr = dladdr;
-		obj->dlinfo = dlinfo;
 
 		dbg(("fixing up PLTGOT"));
 		/* Set the special PLTGOT entries. */

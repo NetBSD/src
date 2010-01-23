@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.79.4.1 2009/10/14 09:31:27 sborrill Exp $	 */
+/*	$NetBSD: rtld.h,v 1.79.4.2 2010/01/23 17:34:16 bouyer Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -130,7 +130,6 @@ typedef struct Struct_Obj_Entry {
 	caddr_t         entry;		/* Entry point */
 	const Elf_Phdr *__junk001;
 	size_t		pathlen;	/* Pathname length */
-	void		*ehdr;
 
 	/* Items from the dynamic section. */
 	Elf_Addr       *pltgot;		/* PLTGOT table */
@@ -168,7 +167,6 @@ typedef struct Struct_Obj_Entry {
 	char           *(*dlerror)(void);
 	int             (*dlclose)(void *);
 	int             (*dladdr)(const void *, Dl_info *);
-	int		(*dlinfo)(void *, int, void *);
 
 	u_int32_t	mainprog:1,	/* True if this is the main program */
 	        	rtld:1,		/* True if this is the dynamic linker */
@@ -196,6 +194,8 @@ typedef struct Struct_Obj_Entry {
 	Objlist         dagmembers;	/* DAG has these members (%) */
 	dev_t           dev;		/* Object's filesystem's device */
 	ino_t           ino;		/* Object's inode number */
+
+	void		*ehdr;
 } Obj_Entry;
 
 #if defined(_RTLD_SOURCE)
