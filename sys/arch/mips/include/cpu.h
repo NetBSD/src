@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.94 2009/12/14 00:46:04 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.95 2010/01/23 15:55:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -61,7 +61,7 @@ struct pridtab {
 	int	cpu_flags;
 	u_int	cpu_cp0flags;	/* presence of some cp0 regs */
 	u_int	cpu_cidflags;	/* company-specific flags */
-	const char	*cpu_name;
+	const char	*cpu_displayname;
 };
 
 extern const struct pridtab *mycpu;
