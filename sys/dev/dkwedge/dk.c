@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.52 2009/12/27 01:37:17 jakllsch Exp $	*/
+/*	$NetBSD: dk.c,v 1.53 2010/01/23 18:31:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.52 2009/12/27 01:37:17 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.53 2010/01/23 18:31:04 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1198,13 +1198,14 @@ dkstart(struct dkwedge_softc *sc)
  * dkiodone:
  *
  *	I/O to a wedge has completed; alert the top half.
- *	NOTE: Must be called at splbio()!
  */
 static void
 dkiodone(struct buf *bp)
 {
 	struct buf *obp = bp->b_private;
 	struct dkwedge_softc *sc = dkwedge_lookup(obp->b_dev);
+
+	int s = splbio();
 
 	if (bp->b_error != 0)
 		obp->b_error = bp->b_error;
@@ -1223,6 +1224,7 @@ dkiodone(struct buf *bp)
 
 	/* Kick the queue in case there is more work we can do. */
 	dkstart(sc);
+	splx(s);
 }
 
 /*
