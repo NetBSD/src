@@ -1,4 +1,4 @@
-.\"     $NetBSD: percpu.9,v 1.7 2010/01/23 00:54:43 rmind Exp $
+.\"     $NetBSD: percpu.9,v 1.8 2010/01/23 10:37:21 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@ The machine-independent
 interface provides per-CPU, CPU-local memory reservations to kernel
 subsystems.
 .Fo percpu_alloc
-.Fa size 
+.Fa size
 .Fc
 reserves on each CPU an independent memory region of
 .Fa size
@@ -161,7 +161,7 @@ interface is implemented within the file
 .Xr kmem 9 ,
 .Xr pcq 9 ,
 .Xr pool_cache 9 ,
-.Xr xc 9
+.Xr xcall 9
 .Sh HISTORY
 The
 .Nm
