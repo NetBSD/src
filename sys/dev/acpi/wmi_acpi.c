@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.9 2010/01/09 15:34:59 jruoho Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.10 2010/01/23 12:48:19 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.9 2010/01/09 15:34:59 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.10 2010/01/23 12:48:19 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -581,7 +581,7 @@ acpi_wmi_input(struct wmi_t *wmi, uint8_t flag, uint8_t idx)
 	if (!(wmi->guid.flags & flag))
 		return false;
 
-	if (wmi->guid.count == 0x00 || wmi->guid.flags == 0x00)
+	if (wmi->guid.count == 0x00)
 		return false;
 
 	if (wmi->guid.count < idx)
@@ -740,7 +740,7 @@ acpi_wmi_method(device_t self, const char *guid, uint8_t idx,
 	obj[2].Buffer.Pointer = ibuf->Pointer;
 
 	obj[2].Type = (wmi->guid.flags & ACPI_WMI_FLAG_STRING) ?
-	    ACPI_TYPE_STRING : ACPI_TYPE_INTEGER;
+	    ACPI_TYPE_STRING : ACPI_TYPE_BUFFER;
 
 	arg.Count = 0x03;
 	arg.Pointer = obj;
