@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2009/07/20 06:12:41 kiyohara Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7 2010/01/23 06:13:20 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,15 +29,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2009/07/20 06:12:41 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2010/01/23 06:13:20 kiyohara Exp $");
 
-#include "acpi.h"
+#include "acpica.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 
+#if NACPICA > 0
 #include <dev/acpi/acpivar.h>
+#endif
 
 
 static int mainbus_match(device_t, cfdata_t, void *);
@@ -64,14 +66,14 @@ mainbus_match(device_t parent, cfdata_t match, void *aux)
 static void
 mainbus_attach(device_t parent, device_t self, void *aux)
 {
-#if NACPI > 0
+#if NACPICA > 0
 	struct acpibus_attach_args aaa;
 #endif
 
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-#if NACPI > 0
+#if NACPICA > 0
 	acpi_probe();
 
 	aaa.aa_iot = IA64_BUS_SPACE_IO;
