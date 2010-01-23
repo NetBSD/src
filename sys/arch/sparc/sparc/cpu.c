@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.220 2009/12/20 03:42:29 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.221 2010/01/23 16:06:57 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.220 2009/12/20 03:42:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.221 2010/01/23 16:06:57 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -348,7 +348,7 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 	/* Stuff to only run on the boot CPU */
 	cpu_setup();
 	snprintf(buf, sizeof buf, "%s @ %s MHz, %s FPU",
-		cpi->cpu_name, clockfreq(cpi->hz), cpi->fpu_name);
+		cpi->cpu_longname, clockfreq(cpi->hz), cpi->fpu_name);
 	snprintf(cpu_model, sizeof cpu_model, "%s (%s)",
 		machine_model, buf);
 	printf(": %s\n", buf);
@@ -437,7 +437,7 @@ cpu_attach_non_boot(struct cpu_softc *sc, struct cpu_info *cpi, int node)
 
 	/* Now start this CPU */
 	cpu_spinup(cpi);
-	printf(": %s @ %s MHz, %s FPU\n", cpi->cpu_name,
+	printf(": %s @ %s MHz, %s FPU\n", cpi->cpu_longname,
 		clockfreq(cpi->hz), cpi->fpu_name);
 
 	cache_print(sc);
@@ -1498,7 +1498,7 @@ cpumatch_turbosparc(struct cpu_info *sc, struct module_info *mp, int node)
 	 * A cloaked Turbosparc: clear any items in cpuinfo that
 	 * might have been set to uS2 versions during bootstrap.
 	 */
-	sc->cpu_name = 0;
+	sc->cpu_longname = 0;
 	sc->mmu_ncontext = 0;
 	sc->cpu_type = 0;
 	sc->cacheinfo.c_vactype = 0;
@@ -1879,8 +1879,8 @@ getcpuinfo(struct cpu_info *sc, int node)
 			/* Additional fixups */
 			mp->minfo->cpu_match(sc, mp->minfo, node);
 		}
-		if (sc->cpu_name == 0)
-			sc->cpu_name = mp->name;
+		if (sc->cpu_longname == 0)
+			sc->cpu_longname = mp->name;
 
 		if (sc->mmu_ncontext == 0)
 			sc->mmu_ncontext = mp->minfo->ncontext;
