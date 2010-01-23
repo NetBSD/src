@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.4.3 2009/09/05 12:55:11 bouyer Exp $
+#	$NetBSD: Makefile,v 1.4.4.4 2010/01/23 17:59:31 bouyer Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 NOLINT=		# Until someone explains to me how to avoid lint stupidity
@@ -91,5 +91,7 @@ MLINKS+=evdns.3 evdns_set_log_fn.3
 
 event-config.h:	config.h
 	sed -e 's/#define /#define _EVENT_/' ${.ALLSRC} > ${.OBJDIR}/${.TARGET}
+
+CLEANFILES+=3D	event-config.h
 
 .include <bsd.lib.mk>
