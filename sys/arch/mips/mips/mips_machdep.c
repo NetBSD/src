@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.224 2009/12/15 18:24:47 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.225 2010/01/23 15:55:54 mrg Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.224 2009/12/15 18:24:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.225 2010/01/23 15:55:54 mrg Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -860,7 +860,7 @@ mips_vector_init(void)
 	curlwp = &lwp0;
 
 	mycpu = NULL;
-	for (ct = cputab; ct->cpu_name != NULL; ct++) {
+	for (ct = cputab; ct->cpu_displayname != NULL; ct++) {
 		if (MIPS_PRID_CID(cpu_id) != ct->cpu_cid ||
 		    MIPS_PRID_IMPL(cpu_id) != ct->cpu_pid)
 			continue;
@@ -1095,13 +1095,13 @@ cpu_identify(void)
 	const char *cpuname, *fpuname;
 	int i;
 
-	cpuname = mycpu->cpu_name;
+	cpuname = mycpu->cpu_displayname;
 
 	fpuname = NULL;
 	for (i = 0; i < sizeof(fputab)/sizeof(fputab[0]); i++) {
 		if (MIPS_PRID_CID(fpu_id) == fputab[i].cpu_cid &&
 		    MIPS_PRID_IMPL(fpu_id) == fputab[i].cpu_pid) {
-			fpuname = fputab[i].cpu_name;
+			fpuname = fputab[i].cpu_displayname;
 			break;
 		}
 	}
