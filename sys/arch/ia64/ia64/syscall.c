@@ -1,11 +1,11 @@
-/* $NetBSD: syscall.c,v 1.4 2009/07/20 04:41:37 kiyohara Exp $ */
+/* $NetBSD: syscall.c,v 1.5 2010/01/23 06:20:31 kiyohara Exp $ */
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  *
- * Author: 
+ * Author:
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4 2009/07/20 04:41:37 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5 2010/01/23 06:20:31 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,8 +47,11 @@ void	syscall_fancy(struct lwp *, u_int64_t, struct trapframe *);
 void
 syscall_intern(struct proc *p)
 {
-printf("%s: not yet\n", __func__);
-	return;
+
+	if (trace_is_enabled(p))
+		p->p_md.md_syscall = syscall_fancy;
+	else
+		p->p_md.md_syscall = syscall_plain;
 }
 
 /*
