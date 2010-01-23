@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pfsync.c,v 1.4 2010/01/19 22:08:00 pooka Exp $	*/
+/*	$NetBSD: if_pfsync.c,v 1.5 2010/01/23 01:17:23 minskim Exp $	*/
 /*	$OpenBSD: if_pfsync.c,v 1.83 2007/06/26 14:44:12 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.4 2010/01/19 22:08:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.5 2010/01/23 01:17:23 minskim Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -192,7 +192,7 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 	if_alloc_sadl(ifp);
 
 	bpf_ops->bpf_attach(&pfsyncif->sc_if, DLT_PFSYNC, PFSYNC_HDRLEN,
-	    &pfsyncif->sc_if->if_bpf);
+	    &pfsyncif->sc_if.if_bpf);
 
 	return (0);
 }
