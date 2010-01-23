@@ -1,4 +1,4 @@
-.\"     $NetBSD: xcall.9,v 1.3 2010/01/23 00:47:03 rmind Exp $
+.\"     $NetBSD: xcall.9,v 1.4 2010/01/23 10:36:42 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd January 23, 2010
-.Dt xcall 9
+.Dt XCALL 9
 .Os
 .Sh NAME
 .Nm xcall ,
@@ -108,7 +108,7 @@ should not be called from interrupt context.
 Like
 .Fn xc_broadcast ,
 but call
-.Fn "(*func)" 
+.Fn "(*func)"
 on only the CPU indicated by
 .Fa ci .
 .Fn xc_unicast
@@ -139,8 +139,8 @@ interface is implemented within the file
 .Pa sys/kern/subr_xcall.c .
 .\" .Sh EXAMPLES
 .Sh SEE ALSO
-.Xr percpu 9 ,
-.Xr kpreempt 9
+.Xr kpreempt 9 ,
+.Xr percpu 9
 .Sh HISTORY
 The
 .Nm
