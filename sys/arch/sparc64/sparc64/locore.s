@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.304 2010/01/23 23:06:27 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.305 2010/01/23 23:39:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -383,12 +383,6 @@
 	.data
 	.globl	_C_LABEL(data_start)
 _C_LABEL(data_start):					! Start of data segment
-#define DATA_START	_C_LABEL(data_start)
-
-#if 1
-/* XXX this shouldn't be needed... but kernel usually hangs without it */
-	.space	USPACE
-#endif
 
 #ifdef KGDB
 /*
@@ -1848,13 +1842,7 @@ data_miss:
 	set	0x0800000, %g6				! 8MB
 	sub	%g3, %g7, %g7
 	cmp	%g7, %g6
-	sethi	%hi(DATA_START), %g7
-	mov	6, %g6		! debug
-	stb	%g6, [%g7+0x20]	! debug
 	tlu	%xcc, 1; nop
-	blu,pn	%xcc, winfix				! Next insn in delay slot is unimportant
-	 mov	7, %g6		! debug
-	stb	%g6, [%g7+0x20]	! debug
 1:	
 #endif
 	srlx	%g3, STSHIFT, %g6
@@ -2626,13 +2614,7 @@ instr_miss:
 	set	0x0800000, %g6				! 8MB
 	sub	%g3, %g7, %g7
 	cmp	%g7, %g6
-	mov	6, %g6		! debug
-	sethi	%hi(DATA_START), %g7
-	stb	%g6, [%g7+0x30]	! debug
 	tlu	%xcc, 1; nop
-	blu,pn	%xcc, textfault				! Next insn in delay slot is unimportant
-	 mov	7, %g6		! debug
-	stb	%g6, [%g7+0x30]	! debug
 1:	
 #endif
 	srlx	%g3, STSHIFT, %g6
