@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.42.16.3 2010/01/22 08:54:41 matt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.42.16.4 2010/01/23 19:54:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42.16.3 2010/01/22 08:54:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42.16.4 2010/01/23 19:54:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,9 +122,9 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
     paddr_t alignment, paddr_t boundary, struct pglist *rlist)
 {
 	signed int try, limit, tryidx, end, idx, skip;
-	const signed int align = atop(alignment);
 	struct vm_page *pgs;
 	int pagemask;
+	bool second_pass;
 #ifdef DEBUG
 	paddr_t idxpa, lastidxpa;
 	int cidx = 0;	/* XXX: GCC */
@@ -136,20 +136,42 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 
 	KASSERT(mutex_owned(&uvm_fpageqlock));
 
-	try = roundup(max(atop(low), ps->avail_start), align);
-	limit = min(atop(high), ps->avail_end);
+	low = atop(low);
+	high = atop(high);
+	alignment = atop(alignment);
+
+	/*
+	 * We start our search at the just after where the last allocation
+	 * succeeded.
+	 */
+	try = roundup(max(low, ps->avail_start + ps->start_hint), alignment);
+	limit = min(high, ps->avail_end);
 	pagemask = ~((boundary >> PAGE_SHIFT) - 1);
 	skip = 0;
+	second_pass = true;
+	pgs = ps->pgs;
 
 	for (;;) {
 		bool ok = true;
-		int cnt;
+		signed int cnt;
 
 		if (try + num > limit) {
+			if (ps->start_hint == 0 || second_pass) {
+				/*
+				 * We've run past the allowable range.
+				 */
+				return 0; /* FAIL = 0 pages*/
+			}
 			/*
-			 * We've run past the allowable range.
+			 * We've wrapped around the end of this segment
+			 * so restart at the beginning but now our limit
+			 * is were we started.
 			 */
-			return (0); /* FAIL */
+			second_pass = true;
+			try = roundup(max(low, ps->avail_start), alignment);
+			limit = min(high, ps->avail_start + ps->start_hint);
+			skip = 0;
+			continue;
 		}
 		if (boundary != 0 &&
 		    ((try ^ (try + num - 1)) & pagemask) != 0) {
@@ -158,7 +180,8 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 			 * just crossed and ensure alignment.
 			 */
 			try = (try + num - 1) & pagemask;
-			try = roundup(try, align);
+			try = roundup(try, alignment);
+			skip = 0;
 			continue;
 		}
 #ifdef DEBUG
@@ -177,14 +200,13 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 #endif
 		tryidx = try - ps->start;
 		end = tryidx + num;
-		pgs = ps->pgs;
 
 		/*
 		 * Found a suitable starting page.  See if the range is free.
 		 */
 #ifdef PGALLOC_VERBOSE
 		printf("%s: ps=%p try=%#x end=%#x skip=%#x, align=%#x",
-		    __func__, ps, tryidx, end, skip, align);
+		    __func__, ps, tryidx, end, skip, alignment);
 #endif
 		/*
 		 * We start at the end and work backwards since if we find a
@@ -243,7 +265,7 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 		/*
 		 * now round up that to the needed alignment.
 		 */
-		cnt = roundup(cnt, align);
+		cnt = roundup(cnt, alignment);
 		/*
 		 * The number of pages we can skip checking 
 		 * (might be 0 if cnt > num).
@@ -258,10 +280,16 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 	for (idx = tryidx, pgs += idx; idx < end; idx++, pgs++)
 		uvm_pglist_add(pgs, rlist);
 
+	/*
+	 * the next time we need to search this segment, start after this
+	 * chunk of pages we just allocated.
+	 */
+	ps->start_hint = tryidx + num;
+
 #ifdef PGALLOC_VERBOSE
 	printf("got %d pgs\n", num);
 #endif
-	return (num); /* number of pages allocated */
+	return num; /* number of pages allocated */
 }
 
 static int
@@ -327,6 +355,7 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 {
 	int todo, limit, try;
 	struct vm_page *pg;
+	bool second_pass;
 #ifdef DEBUG
 	int cidx = 0;	/* XXX: GCC */
 #endif
@@ -337,25 +366,44 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 
 	KASSERT(mutex_owned(&uvm_fpageqlock));
 
+	low = atop(low);
+	high = atop(high);
 	todo = num;
-	limit = min(atop(high), ps->avail_end);
+	try = max(low, ps->avail_start + ps->start_hint);
+	limit = min(high, ps->avail_end);
+	pg = &ps->pgs[try - ps->start];
+	second_pass = false;
 
-	for (try = max(atop(low), ps->avail_start);
-	     try < limit; try ++) {
+	for (;; try++, pg++) {
+		if (try >= limit) {
+			if (ps->start_hint == 0 || second_pass)
+				break;
+			second_pass = true;
+			try = max(low, ps->avail_start);
+			limit = min(high, ps->avail_start + ps->start_hint);
+			pg = &ps->pgs[try - ps->start];
+			continue;
+		}
 #ifdef DEBUG
 		if (vm_physseg_find(try, &cidx) != ps - vm_physmem)
 			panic("pgalloc simple: botch1");
 		if (cidx != (try - ps->start))
 			panic("pgalloc simple: botch2");
 #endif
-		pg = &ps->pgs[try - ps->start];
 		if (VM_PAGE_IS_FREE(pg) == 0)
 			continue;
 
 		uvm_pglist_add(pg, rlist);
-		if (--todo == 0)
+		if (--todo == 0) {
 			break;
+		}
 	}
+
+	/*
+	 * The next time we need to search this segment,
+	 * start just after the pages we just allocated.
+	 */
+	ps->start_hint = try + 1 - ps->start;
 
 #ifdef PGALLOC_VERBOSE
 	printf("got %d pgs\n", num - todo);
