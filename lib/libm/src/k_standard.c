@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: k_standard.c,v 1.12 2005/07/21 16:58:39 christos Exp $");
+__RCSID("$NetBSD: k_standard.c,v 1.12.26.1 2010/01/23 18:02:33 bouyer Exp $");
 #endif
 
 #include "math.h"
@@ -103,9 +103,10 @@ __kernel_standard(double x, double y, int type)
 		exc.type = DOMAIN;
 		exc.name = type < 100 ? "acos" : "acosf";
 		exc.retval = zero;
-		if (_LIB_VERSION == _POSIX_)
+		if (_LIB_VERSION == _POSIX_) {
+		  exc.retval = zero/zero;
 		  errno = EDOM;
-		else if (!matherr(&exc)) {
+		} else if (!matherr(&exc)) {
 		  if(_LIB_VERSION == _SVID_) {
 		    (void) WRITE2("acos: DOMAIN error\n", 19);
 		  }
@@ -118,9 +119,10 @@ __kernel_standard(double x, double y, int type)
 		exc.type = DOMAIN;
 		exc.name = type < 100 ? "asin" : "asinf";
 		exc.retval = zero;
-		if(_LIB_VERSION == _POSIX_)
+		if(_LIB_VERSION == _POSIX_) {
+		  exc.retval = zero/zero;
 		  errno = EDOM;
-		else if (!matherr(&exc)) {
+		} else if (!matherr(&exc)) {
 		  if(_LIB_VERSION == _SVID_) {
 		    	(void) WRITE2("asin: DOMAIN error\n", 19);
 		  }
