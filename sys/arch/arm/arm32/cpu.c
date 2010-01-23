@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.71 2008/10/25 18:15:19 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.72 2010/01/23 15:58:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.71 2008/10/25 18:15:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.72 2010/01/23 15:58:13 mrg Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -285,7 +285,7 @@ static const char * const ixp425_steppings[16] = {
 struct cpuidtab {
 	u_int32_t	cpuid;
 	enum		cpu_class cpu_class;
-	const char	*cpu_name;
+	const char	*cpu_classname;
 	const char * const *cpu_steppings;
 };
 
@@ -488,7 +488,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 			steppingstr = cpuids[i].cpu_steppings[cpuid &
 			    CPU_ID_REVISION_MASK],
 			sprintf(cpu_model, "%s%s%s (%s core)",
-			    cpuids[i].cpu_name,
+			    cpuids[i].cpu_classname,
 			    steppingstr[0] == '*' ? "" : " ",
 			    &steppingstr[steppingstr[0] == '*'],
 			    cpu_classes[cpu_class].class_name);
