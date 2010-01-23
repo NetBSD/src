@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.42.16.4 2010/01/23 19:54:04 matt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.42.16.5 2010/01/23 20:03:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42.16.4 2010/01/23 19:54:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42.16.5 2010/01/23 20:03:28 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 	 * We start our search at the just after where the last allocation
 	 * succeeded.
 	 */
-	try = roundup(max(low, ps->avail_start + ps->start_hint), alignment);
+	try = roundup2(max(low, ps->avail_start + ps->start_hint), alignment);
 	limit = min(high, ps->avail_end);
 	pagemask = ~((boundary >> PAGE_SHIFT) - 1);
 	skip = 0;
@@ -168,7 +168,7 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 			 * is were we started.
 			 */
 			second_pass = true;
-			try = roundup(max(low, ps->avail_start), alignment);
+			try = roundup2(max(low, ps->avail_start), alignment);
 			limit = min(high, ps->avail_start + ps->start_hint);
 			skip = 0;
 			continue;
@@ -180,7 +180,7 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 			 * just crossed and ensure alignment.
 			 */
 			try = (try + num - 1) & pagemask;
-			try = roundup(try, alignment);
+			try = roundup2(try, alignment);
 			skip = 0;
 			continue;
 		}
@@ -265,7 +265,7 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 		/*
 		 * now round up that to the needed alignment.
 		 */
-		cnt = roundup(cnt, alignment);
+		cnt = roundup2(cnt, alignment);
 		/*
 		 * The number of pages we can skip checking 
 		 * (might be 0 if cnt > num).
@@ -499,7 +499,7 @@ uvm_pglistalloc(psize_t size, paddr_t low, paddr_t high, paddr_t alignment,
 	if (boundary != 0 && boundary < size)
 		return (EINVAL);
 	num = atop(round_page(size));
-	low = roundup(low, alignment);
+	low = roundup2(low, alignment);
 
 	TAILQ_INIT(rlist);
 
