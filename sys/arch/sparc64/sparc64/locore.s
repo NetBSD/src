@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.302 2010/01/23 21:46:59 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.303 2010/01/23 22:55:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -1195,118 +1195,6 @@ cleanwin_overflow:
 	.text
 #endif
 
-#ifdef DEBUG
-#define CHKREG(r) \
-	ldx	[%o0 + 8*1], %o1; \
-	cmp	r, %o1; \
-	stx	%o0, [%o0]; \
-	tne	1
-	.data
-globreg_debug:
-	.xword	-1, 0, 0, 0, 0, 0, 0, 0
-	.text
-globreg_set:
-	save	%sp, -CC64FSZ, %sp
-	set	globreg_debug, %o0
-	stx	%g0, [%o0]
-	stx	%g1, [%o0 + 8*1]
-	stx	%g2, [%o0 + 8*2]
-	stx	%g3, [%o0 + 8*3]
-	stx	%g4, [%o0 + 8*4]
-	stx	%g5, [%o0 + 8*5]
-	stx	%g6, [%o0 + 8*6]
-	stx	%g7, [%o0 + 8*7]
-	ret
-	 restore
-globreg_check:
-	save	%sp, -CC64FSZ, %sp
-	rd	%pc, %o7
-	set	globreg_debug, %o0
-	ldx	[%o0], %o1
-	brnz,pn	%o1, 1f		! Don't re-execute this
-	CHKREG(%g1)
-	CHKREG(%g2)
-	CHKREG(%g3)
-	CHKREG(%g4)
-	CHKREG(%g5)
-	CHKREG(%g6)
-	CHKREG(%g7)
-	nop
-1:	ret
-	 restore
-
-	/*
-	 * Checkpoint:	 store a byte value at DATA_START+0x21
-	 *		uses two temp regs
-	 */
-#define CHKPT(r1,r2,val) \
-	sethi	%hi(DATA_START), r1; \
-	mov	val, r2; \
-	stb	r2, [r1 + 0x21]
-
-	/*
-	 * Debug routine:
-	 *
-	 * If datafault manages to get an unaligned pmap entry
-	 * we come here.  We want to save as many regs as we can.
-	 * %g3 has the sfsr, and %g7 the result of the wstate
-	 * both of which we can toast w/out much lossage.
-	 *
-	 */
-	.data
-pmap_dumpflag:
-	.xword	0		! semaphore
-	.globl	pmap_dumparea	! Get this into the kernel syms
-pmap_dumparea:
-	.space	(32*8)		! room to save 32 registers
-pmap_edumparea:
-	.text
-pmap_screwup:
-	rd	%pc, %g3
-	sub	%g3, (pmap_edumparea-pmap_dumparea), %g3! pc relative addressing 8^)
-	ldstub	[%g3+( 0*0x8)], %g3
-	tst	%g3		! Semaphore set?
-	tnz	%xcc, 1; nop		! Then trap
-	set	pmap_dumparea, %g3
-	stx	%g3, [%g3+( 0*0x8)]	! set semaphore
-	stx	%g1, [%g3+( 1*0x8)]	! Start saving regs
-	stx	%g2, [%g3+( 2*0x8)]
-	stx	%g3, [%g3+( 3*0x8)]	! Redundant, I know...
-	stx	%g4, [%g3+( 4*0x8)]
-	stx	%g5, [%g3+( 5*0x8)]
-	stx	%g6, [%g3+( 6*0x8)]
-	stx	%g7, [%g3+( 7*0x8)]
-	stx	%i0, [%g3+( 8*0x8)]
-	stx	%i1, [%g3+( 9*0x8)]
-	stx	%i2, [%g3+(10*0x8)]
-	stx	%i3, [%g3+(11*0x8)]
-	stx	%i4, [%g3+(12*0x8)]
-	stx	%i5, [%g3+(13*0x8)]
-	stx	%i6, [%g3+(14*0x8)]
-	stx	%i7, [%g3+(15*0x8)]
-	stx	%l0, [%g3+(16*0x8)]
-	stx	%l1, [%g3+(17*0x8)]
-	stx	%l2, [%g3+(18*0x8)]
-	stx	%l3, [%g3+(19*0x8)]
-	stx	%l4, [%g3+(20*0x8)]
-	stx	%l5, [%g3+(21*0x8)]
-	stx	%l6, [%g3+(22*0x8)]
-	stx	%l7, [%g3+(23*0x8)]
-	stx	%o0, [%g3+(24*0x8)]
-	stx	%o1, [%g3+(25*0x8)]
-	stx	%o2, [%g3+(26*0x8)]
-	stx	%o3, [%g3+(27*0x8)]
-	stx	%o4, [%g3+(28*0x8)]
-	stx	%o5, [%g3+(29*0x8)]
-	stx	%o6, [%g3+(30*0x8)]
-	stx	%o7, [%g3+(31*0x8)]
-	ta	1; nop		! Break into the debugger
-
-#else
-#define	CHKPT(r1,r2,val)
-#define CHKREG(r)
-#endif
-
 #ifdef NOTDEF_DEBUG
 /*
  * A hardware red zone is impossible.  We simulate one in software by
@@ -2079,7 +1967,6 @@ winfix:
 	 sethi	%hi(CPCB), %g6		! get current pcb
 
 
-	CHKPT(%g4,%g7,0x20)
 	wrpr	%g1, 0, %tl		! Pop a trap level
 	rdpr	%tt, %g7		! Read type of prev. trap
 	rdpr	%tstate, %g4		! Try to restore prev %cwp if we were executing a restore
@@ -2164,7 +2051,6 @@ winfixfill:
 	wrpr	%g0, 0, %cleanwin
 	dec	1, %g5					! NWINDOWS-1-1
 	wrpr	%g5, 0, %cansave			! Invalidate all windows
-	CHKPT(%g5,%g7,0xe)
 !	flushw						! DEBUG
 	ba,pt	%icc, datafault
 	 wrpr	%g4, 0, %tnpc
@@ -2175,7 +2061,6 @@ winfixfill:
 	rdpr	%tt, %g5
 	wrpr	%g0, 1, %tl				! Revert to TL==1 XXX what if this wasn't in rft_user? Oh well.
 	wrpr	%g5, %g0, %tt				! Set trap type correctly
-	CHKPT(%g5,%g7,0xe)
 /*
  * Here we need to implement the beginning of datafault.
  * TRAP_SETUP expects to come from either kernel mode or
@@ -2205,7 +2090,6 @@ winfixfill:
 	set	0x20, %g6				! debug
 	stx	%g0, [%g7]				! debug
 	stb	%g6, [%g7 + 0x20]			! debug
-	CHKPT(%g4,%g7,0xf)
 #endif
 	wr	%g0, ASI_DMMU, %asi			! We need to re-load trap info
 	ldxa	[%g0 + TLB_TAG_ACCESS] %asi, %g1	! Get fault address from tag access register
@@ -2247,7 +2131,6 @@ winfixspill:
 	set	0x12, %g5				! debug
 	sethi	%hi(DATA_START), %g7			! debug
 	stb	%g5, [%g7 + 0x20]			! debug
-	CHKPT(%g5,%g7,0x11)
 #endif
 
 	/*
@@ -2317,7 +2200,6 @@ winfixspill:
 	sir						! Force a watchdog
 1:
 #endif
-	CHKPT(%g5,%g7,0x12)
 	rdpr	%otherwin, %g7
 	brnz,pt	%g7, 1f
 	 rdpr	%canrestore, %g5
@@ -2329,7 +2211,6 @@ winfixspill:
 	wrpr	%g7, 0, %otherwin			! Still in user mode -- need to switch to kernel mode
 1:
 	mov	%g7, %g1
-	CHKPT(%g5,%g7,0x13)
 	add	%g6, PCB_NSAVED, %g7
 	DLFLUSH(%g7,%g5)
 	lduba	[%g6 + PCB_NSAVED] %asi, %g7		! Start incrementing pcb_nsaved
@@ -2343,7 +2224,6 @@ winfixspill:
 	 saved						! frob window registers
 
 	/* PANIC */
-!	CHKPT(%g4,%g7,0x10)	! Checkpoint
 !	sir						! Force a watchdog
 #ifdef DEBUG
 	wrpr	%g2, 0, %tl
@@ -2403,7 +2283,6 @@ winfixsave:
 
 	/* fix up pcb fields */
 	stba	%g7, [%g6 + PCB_NSAVED] %asi		! cpcb->pcb_nsaved = n
-	CHKPT(%g5,%g1,0x14)
 #if 0
 	mov	%g7, %g5				! fixup window registers
 5:
@@ -2482,13 +2361,11 @@ winfixsave:
 	_ALIGN
 	.text
 #endif
-	CHKPT(%g5,%g1,0x15)
 !	rdpr	%tl, %g2				! DEBUG DEBUG -- did we trap somewhere?
 	sub	%g2, 1, %g1
 	rdpr	%tt, %g2
 	wrpr	%g1, 0, %tl				! We will not attempt to re-execute the spill, so dump our trap frame permanently
 	wrpr	%g2, 0, %tt				! Move trap type from fault frame here, overwriting spill
-	CHKPT(%g2,%g5,0x16)
 
 	/* Did we save a user or kernel window ? */
 !	srax	%g3, 48, %g5				! User or kernel store? (TAG TARGET)
@@ -2503,7 +2380,6 @@ winfixsave:
 	set	DATA_START, %g7				! debug
 	set	0x11, %g6				! debug
 	stb	%g6, [%g7 + 0x20]			! debug
-	CHKPT(%g2,%g1,0x17)
 !	sir
 #endif
 	!!
@@ -2541,7 +2417,6 @@ winfixsave:
 #endif
 
 #ifdef DEBUG
-	CHKPT(%g2,%g1,0x18)
 	set	DATA_START, %g7				! debug
 	set	0x19, %g6				! debug
 	stb	%g6, [%g7 + 0x20]			! debug
@@ -2624,7 +2499,6 @@ datafault:
 	set	0x20, %g6				! debug
 	stx	%g0, [%g7]				! debug
 	stb	%g6, [%g7 + 0x20]			! debug
-	CHKPT(%g4,%g7,0xf)
 #endif
 	wr	%g0, ASI_DMMU, %asi			! We need to re-load trap info
 	ldxa	[%g0 + TLB_TAG_ACCESS] %asi, %g1	! Get fault address from tag access register
@@ -2679,10 +2553,8 @@ Ldatafault_internal:
 	rdpr	%tl, %g7
 	dec	%g7
 	movrlz	%g7, %g0, %g7
-	CHKPT(%g1,%g3,0x21)
 	wrpr	%g0, %g7, %tl		! Revert to kernel mode
 #else
-	CHKPT(%g1,%g3,0x21)
 	wrpr	%g0, 0, %tl		! Revert to kernel mode
 #endif
 	/* Finish stackframe, call C trap handler */
@@ -2734,7 +2606,6 @@ Ldatafault_internal:
 	wrpr	%g0, PSTATE_KERN, %pstate		! disable interrupts
 
 data_recover:
-	CHKPT(%o1,%o2,1)
 #ifdef TRAPSTATS
 	set	_C_LABEL(uintrcnt), %g1
 	stw	%g0, [%g1]
@@ -2935,7 +2806,6 @@ textfault:
 	rdpr	%tl, %g7
 	dec	%g7
 	movrlz	%g7, %g0, %g7
-	CHKPT(%g1,%g3,0x22)
 	wrpr	%g0, %g7, %tl		! Revert to kernel mode
 
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI
@@ -2954,7 +2824,6 @@ textfault:
 	call	_C_LABEL(text_access_fault)	! mem_access_fault(&tf, type, pc, sfsr)
 	 add	%sp, CC64FSZ + STKB, %o0	! (argument: &tf)
 text_recover:
-	CHKPT(%o1,%o2,2)
 	wrpr	%g0, PSTATE_KERN, %pstate	! disable interrupts
 	b	return_from_trap		! go return
 	 ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1	! Load this for return_from_trap
@@ -3126,7 +2995,6 @@ Lslowtrap_reenter:
 	rdpr	%tl, %g1
 	dec	%g1
 	movrlz	%g1, %g0, %g1
-	CHKPT(%g2,%g3,0x24)
 	wrpr	%g0, %g1, %tl		! Revert to kernel mode
 	!! In the EMBEDANY memory model %g4 points to the start of the data segment.
 	!! In our case we need to clear it before calling any C-code
@@ -3137,7 +3005,6 @@ Lslowtrap_reenter:
 	call	_C_LABEL(trap)			! trap(tf, type, pc, pstate)
 	 nop
 
-	CHKPT(%o1,%o2,3)
 	ba,a,pt	%icc, return_from_trap
 	 nop
 	NOTREACHED
@@ -3498,7 +3365,6 @@ syscall_setup:
 	rd	%y, %o4
 	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + ( 5*8)]
 	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + ( 6*8)]
-	CHKPT(%g5,%g6,0x31)
 	wrpr	%g0, 0, %tl			! return to tl=0
 	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + ( 7*8)]
 	add	%sp, CC64FSZ + STKB, %o0	! (&tf)
@@ -3527,9 +3393,7 @@ syscall_setup:
 	/* see `lwp_trampoline' for the reason for this label */
 return_from_syscall:
 	wrpr	%g0, PSTATE_KERN, %pstate	! Disable intterrupts
-	CHKPT(%o1,%o2,0x32)
 	wrpr	%g0, 0, %tl			! Return to tl==0
-	CHKPT(%o1,%o2,4)
 	ba,a,pt	%icc, return_from_trap
 	 nop
 	NOTREACHED
@@ -4039,7 +3903,6 @@ ENTRY_NOPROFILE(sparc_interrupt)
 	rdpr	%tl, %l3		! Dump our trap frame now we have taken the IRQ
 	stw	%l6, [%sp + CC64FSZ + STKB + TF_Y]	! Silly, but we need to save this for rft
 	dec	%l3
-	CHKPT(%l4,%l7,0x26)
 	wrpr	%g0, %l3, %tl
 	sth	%l5, [%sp + CC64FSZ + STKB + TF_TT]! debug
 	stx	%l0, [%sp + CC64FSZ + STKB + TF_TSTATE]	! set up intrframe/clockframe
@@ -4185,7 +4048,6 @@ intrcmplt:
 	ldub	[%sp + CC64FSZ + STKB + TF_OLDPIL], %l3	! restore old %pil
 	wrpr	%l3, 0, %pil
 
-	CHKPT(%o1,%o2,5)
 	ba,a,pt	%icc, return_from_trap
 	 nop
 
@@ -4306,7 +4168,6 @@ return_from_trap:
 
 	/* Returning to user mode or kernel mode? */
 	btst	TSTATE_PRIV, %g1		! returning to userland?
-	CHKPT(%g4, %g7, 6)
 	bz,pt	%icc, rft_user
 	 sethi	%hi(CPUINFO_VA+CI_WANT_AST), %g7	! first instr of rft_user
 
@@ -4325,9 +4186,7 @@ rft_kernel:
 	wrpr	%g3, 0, %tnpc
 	wrpr	%g2, 0, %tpc
 	wrpr	%g1, 0, %tstate
-	CHKPT(%g1,%g2,7)
 	restore
-	CHKPT(%g1,%g2,0)			! Clear this out
 	rdpr	%tstate, %g1			! Since we may have trapped our regs may be toast
 	rdpr	%cwp, %g2
 	andn	%g1, CWP, %g1
@@ -4375,7 +4234,6 @@ rft_user:
 	brnz,pn	%g7, softtrap			! yes, re-enter trap with type T_AST
 	 mov	T_AST, %g4
 
-	CHKPT(%g4,%g7,8)
 #ifdef NOTDEF_DEBUG
 	sethi	%hi(CPCB), %g4
 	LDPTR	[%g4 + %lo(CPCB)], %g4
@@ -4434,7 +4292,6 @@ rft_user:
 	LDPTR	[%g6 + %lo(CPCB)], %g6
 	wrpr	%g0, 0, %otherwin
 
-	CHKPT(%g4,%g7,9)
 	ldub	[%g6 + PCB_NSAVED], %g7		! Any saved reg windows?
 	wrpr	%g0, WSTATE_USER, %wstate	! Need to know where our sp points
 
@@ -4563,7 +4420,6 @@ rft_user:
 	wrpr	%g1, %g0, %tstate
 	restore
 6:
-	CHKPT(%g4,%g7,0xa)
 	rdpr	%canrestore, %g5
 	wrpr	%g5, 0, %cleanwin			! Force cleanup of kernel windows
 
@@ -4613,7 +4469,6 @@ badregs:
 	rdpr	%cwp, %g7			! Find our cur window
 	andn	%g1, CWP, %g1			! Clear it from %tstate
 	wrpr	%g1, %g7, %tstate		! Set %tstate with %cwp
-	CHKPT(%g4,%g7,0xb)
 
 	wr	%g0, ASI_DMMU, %asi		! restore the user context
 	ldxa	[CTX_SECONDARY] %asi, %g4
@@ -4622,7 +4477,6 @@ badregs:
 	membar	#Sync				! Should not be needed due to retry
 	flush	%g7				! Should not be needed due to retry
 	CLRTT
-	CHKPT(%g4,%g7,0xd)
 #ifdef TRAPSTATS
 	set	_C_LABEL(rftudone), %g1
 	lduw	[%g1], %g2
@@ -6798,7 +6652,6 @@ ENTRY(lwp_trampoline)
 	/*
 	 * Here we finish up as in syscall, but simplified.
 	 */
-	CHKPT(%o3,%o4,0x35)
 	ba,a,pt	%icc, return_from_trap
 	 nop
 
@@ -9946,7 +9799,6 @@ ENTRY(longjmp)
 	 */
 ENTRY(savetstate)
 	mov	%o0, %o1
-	CHKPT(%o4,%o3,0x28)
 	rdpr	%tl, %o0
 	brz	%o0, 2f
 	 mov	%o0, %o2
@@ -9979,11 +9831,9 @@ ENTRY(savetstate)
 	 * Maybe this should be re-written to increment tl instead of decrementing.
 	 */
 ENTRY(restoretstate)
-	CHKPT(%o4,%o3,0x36)
 	flushw			! Make sure we don't have stack probs & lose hibits of %o
 	brz,pn	%o0, 2f
 	 mov	%o0, %o2
-	CHKPT(%o4,%o3,0x29)
 	wrpr	%o0, 0, %tl
 1:
 	ldx	[%o1], %o3
@@ -10002,7 +9852,6 @@ ENTRY(restoretstate)
 	bnz	1b
 	 wrpr	%o2, 0, %tl
 2:
-	CHKPT(%o4,%o3,0x30)
 	retl
 	 wrpr	%o0, 0, %tl
 
