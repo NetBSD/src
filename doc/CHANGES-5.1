@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.178 2010/01/22 22:21:16 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.179 2010/01/23 18:03:37 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16236,4 +16236,81 @@ crypto/dist/openssl/crypto/comp/c_zlib.c	patch
 
 	Fix CVE-2009-4355.
 	[taca, ticket #1265]                     
+
+libexec/ld.elf_so/reloc.c			1.101
+libexec/ld.elf_so/rtld.h			1.87, 1.88
+
+	Restore backwards compatibility for binaries referencing the main
+	Obj_Entry.
+	[skrll, ticket #1249]
+
+games/fortune/strfile/strfile.8			1.13
+
+	The default output file extension is '.dat', not '.out'.
+	From Lars Nooden via OpenBSD.
+	[mbalmer, ticket #1250]
+
+distrib/sparc/miniroot/Makefile.inc		1.16
+distrib/sparc/ramdisk/dot.profile		1.20
+sys/arch/sparc/dev/audioamd.c			1.25
+sys/arch/sparc/dev/fd.c				1.147
+sys/arch/sparc/sparc/auxreg.h			1.13
+sys/arch/sparc/stand/common/promdev.c		1.23
+
+	Build miniroot binaries for sparc with -Os to shrink instfs.tgz
+	for the second boot floppy which use miniroot objects.
+	This is workaround for PR install/42146, and ok'ed by mrg@.
+
+	Don't try to read disklabel to check FS_RAID on floppy boot since
+	reopening floppy could cause Data Access Exception later.
+	Fixes PR port-sparc/42186, ok'ed by mrg@.
+
+	Disable "fast trap" handlers which invoke software interrupts
+	in sparc/amd7930intr.s and sparc/bsd_fdintr.s until they are
+	rewritten to adapt new MI softint(9) API.
+	No particular comments on PR port-sparc/42192, but
+	this fixes timeout problem on floppy access on my SPARCstation 1+.
+
+	Use /dev/fd0a rather than /dev/rfd0a to read instfs.tgz image from
+	floppy.  It looks newer (appearred after 1.6) gzip tries to read
+	less than DEV_BSIZE (to check header?) so we can't use raw device
+	directly.  (note sparc bootfs ramdisk doesn't have dd(1))
+	Workaround for PR port-sparc/42193, and would also fix PR install/28734.
+
+	Explicitly clear AUXIO4M_FTC bit in FTC_FLIP macro used on
+	pseudo-dma for floppy, as well as AUXIO4C_FTC bit for sun4c.
+	A comment in the macro says AUXIO4M_FTC bit is auto-clear,
+	but my two SS20s (including compatible) with 150MHz hyperSPARCs
+	get data_overrun without it, and no bad side effect on SS5
+	(works with and without this change).
+	Closes PR port-sparc/42516, which is the last one of a bunch of
+	floppy issue on NetBSD/sparc since NetBSD 2.0 days. See
+	http://mail-index.NetBSD.org/port-sparc/2009/12/20/msg000484.html
+	for details.
+	[tsutsui, ticket #1251]
+
+sys/dev/pci/pcidevs				1.1015
+sys/dev/pci/pcidevs.h				releng
+sys/dev/pci/pcidevs_data.h			releng
+
+	Add two IBM RSS devices.
+	[mbalmer, ticket #1254]
+
+sys/dev/pci/pucdata.c				1.59
+
+	Add the IBM 481033H SCC
+	[mbalmer, ticket #1255]
+
+lib/libevent/Makefile				patch
+	Make sure that the automatically generated file "event-config.h"
+	gets removed by the "cleandir" target.
+	[tron, ticket #1259]
+
+lib/libm/src/k_standard.c			1.13, 1.14
+
+	PR/42630 asin(2.0) and acos(2.0) doesn't return NaN.
+	reported by NARUSE, Yui -san, Thanks!
+	let the previous fix apply to acos rather than atan2,
+	and get rid of #ifdef vax
+	[tnozaki, ticket #1261]
 
