@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.301 2009/12/10 05:10:03 rmind Exp $	*/
+/*	$NetBSD: locore.s,v 1.302 2010/01/23 21:46:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -56,7 +56,7 @@
  */
 
 #ifndef SCHIZO_BUS_SPACE_BROKEN /* Need phys access for USIII so far */
-#define	SPITFIRE		/* We don't support Cheetah (USIII) yet */
+#define	SPITFIRE		/* Cheetah (USIII) */
 #endif
 #undef	PARANOID		/* Extremely expensive consistency checks */
 #undef	NO_VCACHE		/* Map w/D$ disabled */
