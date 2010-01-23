@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.68 2010/01/20 19:00:47 dyoung Exp $ */
+/* $NetBSD: cgd.c,v 1.69 2010/01/23 18:31:04 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.68 2010/01/20 19:00:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.69 2010/01/23 18:31:04 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -411,13 +411,13 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	return 0;
 }
 
-/* expected to be called at splbio() */
 static void
 cgdiodone(struct buf *nbp)
 {
 	struct	buf *obp = nbp->b_private;
 	struct	cgd_softc *cs = getcgd_softc(obp->b_dev);
 	struct	dk_softc *dksc = &cs->sc_dksc;
+	int s;
 
 	KDASSERT(cs);
 
@@ -453,10 +453,12 @@ cgdiodone(struct buf *nbp)
 	obp->b_resid = 0;
 	if (obp->b_error != 0)
 		obp->b_resid = obp->b_bcount;
+	s = splbio();
 	disk_unbusy(&dksc->sc_dkdev, obp->b_bcount - obp->b_resid,
 	    (obp->b_flags & B_READ));
 	biodone(obp);
 	dk_iodone(di, dksc);
+	splx(s);
 }
 
 /* XXX: we should probably put these into dksubr.c, mostly */
