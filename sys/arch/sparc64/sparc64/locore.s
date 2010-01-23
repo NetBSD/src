@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.303 2010/01/23 22:55:04 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.304 2010/01/23 23:06:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -1774,13 +1774,6 @@ dmmu_write_fault:
 	stx	%g4, [%g2+8]				! Update TSB entry data
 	nop
 
-#ifdef DEBUG
-	set	DATA_START, %g6	! debug
-	stx	%g1, [%g6+0x40]	! debug
-	set	0x88, %g5	! debug
-	stx	%g4, [%g6+0x48]	! debug -- what we tried to enter in TLB
-	stb	%g5, [%g6+0x8]	! debug
-#endif
 #ifdef TRAPSTATS
 	sethi	%hi(_C_LABEL(protfix)), %g1
 	lduw	[%g1+%lo(_C_LABEL(protfix))], %g2
@@ -1902,13 +1895,6 @@ data_miss:
 1:	
 	stx	%g1, [%g2]				! Update TSB entry tag
 	stx	%g4, [%g2+8]				! Update TSB entry data
-#ifdef DEBUG
-	set	DATA_START, %g6	! debug
-	stx	%g3, [%g6+8]	! debug
-	set	0xa, %g5	! debug
-	stx	%g4, [%g6]	! debug -- what we tried to enter in TLB
-	stb	%g5, [%g6+0x20]	! debug
-#endif
 	stxa	%g4, [%g0] ASI_DMMU_DATA_IN		! Enter new mapping
 	membar	#Sync
 	CLRTT
@@ -2085,12 +2071,6 @@ winfixfill:
 #ifdef TRAPS_USE_IG
 	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! We need to save volatile stuff to AG regs
 #endif
-#ifdef DEBUG
-	set	DATA_START, %g7				! debug
-	set	0x20, %g6				! debug
-	stx	%g0, [%g7]				! debug
-	stb	%g6, [%g7 + 0x20]			! debug
-#endif
 	wr	%g0, ASI_DMMU, %asi			! We need to re-load trap info
 	ldxa	[%g0 + TLB_TAG_ACCESS] %asi, %g1	! Get fault address from tag access register
 	ldxa	[SFAR] %asi, %g2			! sync virt addr; must be read first
@@ -2126,11 +2106,6 @@ winfixspill:
 	lduw	[%g7], %g5
 	inc	%g5
 	stw	%g5, [%g7]
-#endif
-#ifdef DEBUG
-	set	0x12, %g5				! debug
-	sethi	%hi(DATA_START), %g7			! debug
-	stb	%g5, [%g7 + 0x20]			! debug
 #endif
 
 	/*
@@ -2376,12 +2351,6 @@ winfixsave:
 
 	and	%g4, CWP, %g4				! %g4 = %cwp of trap
 	wrpr	%g4, 0, %cwp				! Kernel fault -- restore %cwp and force and trap to debugger
-#ifdef DEBUG
-	set	DATA_START, %g7				! debug
-	set	0x11, %g6				! debug
-	stb	%g6, [%g7 + 0x20]			! debug
-!	sir
-#endif
 	!!
 	!! Here we managed to fault trying to access a kernel window
 	!! This is a bug.  Switch to the interrupt stack if we aren't
@@ -2416,11 +2385,6 @@ winfixsave:
 	 dec	8, %g7
 #endif
 
-#ifdef DEBUG
-	set	DATA_START, %g7				! debug
-	set	0x19, %g6				! debug
-	stb	%g6, [%g7 + 0x20]			! debug
-#endif
 #ifdef NOTDEF_DEBUG
 	set	panicstack-CC64FSZ, %g5
 	save	%g5, 0, %sp
@@ -2494,12 +2458,6 @@ datafault:
 #ifdef TRAPS_USE_IG
 	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! We need to save volatile stuff to AG regs
 #endif
-#ifdef DEBUG
-	set	DATA_START, %g7				! debug
-	set	0x20, %g6				! debug
-	stx	%g0, [%g7]				! debug
-	stb	%g6, [%g7 + 0x20]			! debug
-#endif
 	wr	%g0, ASI_DMMU, %asi			! We need to re-load trap info
 	ldxa	[%g0 + TLB_TAG_ACCESS] %asi, %g1	! Get fault address from tag access register
 	ldxa	[SFAR] %asi, %g2			! sync virt addr; must be read first
@@ -2535,11 +2493,6 @@ Ldatafault_internal:
 	rd	%y, %g5						! save y
 	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + (7*8)]	! sneak in g7
 
-#ifdef DEBUG
-	set	DATA_START, %g7					! debug
-	set	0x21, %g6					! debug
-	stb	%g6, [%g7 + 0x20]				! debug
-#endif
 	sth	%o1, [%sp + CC64FSZ + STKB + TF_TT]
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]		! set tf.tf_psr, tf.tf_pc
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_PC]		! set tf.tf_npc
@@ -2725,13 +2678,6 @@ instr_miss:
 1:
 	stx	%g1, [%g2]				! Update TSB entry tag
 	stx	%g4, [%g2+8]				! Update TSB entry data
-#ifdef DEBUG
-	set	DATA_START, %g6	! debug
-	stx	%g3, [%g6+8]	! debug
-	set	0xaa, %g3	! debug
-	stx	%g4, [%g6]	! debug -- what we tried to enter in TLB
-	stb	%g3, [%g6+0x20]	! debug
-#endif
 	stxa	%g4, [%g0] ASI_IMMU_DATA_IN		! Enter new mapping
 	membar	#Sync
 	CLRTT
@@ -5221,11 +5167,6 @@ ENTRY(openfirmware_exit)
  */
 	.align 8
 ENTRY(sp_tlb_flush_pte)
-#ifdef DEBUG
-	set	DATA_START, %o4				! Forget any recent TLB misses
-	stx	%g0, [%o4]
-	stx	%g0, [%o4+16]
-#endif
 #ifdef DEBUG
 	set	pmapdebug, %o3
 	lduw	[%o3], %o3
