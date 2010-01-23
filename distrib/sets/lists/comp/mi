@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1369 2010/01/22 23:14:28 dyoung Exp $
+#	$NetBSD: mi,v 1.1370 2010/01/23 00:03:38 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9603,8 +9603,7 @@
 ./usr/share/man/cat9/wsmouse.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/wsmouse_input.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/wsmousedevprint.0		comp-sys-catman		.cat
-./usr/share/man/cat9/xc.0			comp-sys-catman		.cat
-./usr/share/man/cat9/xc_init_cpu.0		comp-sys-catman		.cat
+./usr/share/man/cat9/xcall.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/xc_broadcast.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/xc_unicast.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/xc_wait.0			comp-sys-catman		.cat
@@ -15088,8 +15087,7 @@
 ./usr/share/man/html9/wsmouse.html		comp-sys-htmlman	html
 ./usr/share/man/html9/wsmouse_input.html	comp-sys-htmlman	html
 ./usr/share/man/html9/wsmousedevprint.html	comp-sys-htmlman	html
-./usr/share/man/html9/xc.html			comp-sys-htmlman	html
-./usr/share/man/html9/xc_init_cpu.html		comp-sys-htmlman	html
+./usr/share/man/html9/xcall.html		comp-sys-htmlman	html
 ./usr/share/man/html9/xc_broadcast.html		comp-sys-htmlman	html
 ./usr/share/man/html9/xc_unicast.html		comp-sys-htmlman	html
 ./usr/share/man/html9/xc_wait.html		comp-sys-htmlman	html
@@ -20832,8 +20830,7 @@
 ./usr/share/man/man9/wsmouse.9			comp-sys-man		.man
 ./usr/share/man/man9/wsmouse_input.9		comp-sys-man		.man
 ./usr/share/man/man9/wsmousedevprint.9		comp-sys-man		.man
-./usr/share/man/man9/xc.9			comp-sys-man		.man
-./usr/share/man/man9/xc_init_cpu.9		comp-sys-man		.man
+./usr/share/man/man9/xcall.9			comp-sys-man		.man
 ./usr/share/man/man9/xc_broadcast.9		comp-sys-man		.man
 ./usr/share/man/man9/xc_unicast.9		comp-sys-man		.man
 ./usr/share/man/man9/xc_wait.9			comp-sys-man		.man
