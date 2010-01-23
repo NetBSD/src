@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.h,v 1.12 2005/11/16 03:00:23 uwe Exp $ */
+/*	$NetBSD: auxreg.h,v 1.12.88.1 2010/01/23 17:47:36 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -105,6 +105,9 @@
 	if (CPU_ISSUN4M) {						\
 		/* AUXIO4M_FTC bit is auto-clear */			\
 		*AUXIO4M_REG = auxio_regval | AUXIO4M_FTC;		\
+		/* XXX we need to clear it on hyperSPARC SS20 */	\
+		DELAY(10);						\
+		*AUXIO4M_REG = auxio_regval;				\
 	} else {							\
 		auxio_regval |= AUXIO4C_FTC;				\
 		*AUXIO4C_REG = auxio_regval;				\
