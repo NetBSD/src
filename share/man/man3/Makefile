@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2010/01/24 21:05:45 jruoho Exp $
+#	$NetBSD: Makefile,v 1.35 2010/01/24 22:21:34 njoly Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 CMSG_DATA.3 assert.3 bits.3 bitstring.3 dlfcn.3 end.3 \
@@ -186,8 +186,7 @@ MLINKS+=stdarg.3 va_arg.3 stdarg.3 va_copy.3 \
 	stdarg.3 va_end.3 stdarg.3 va_start.3
 MLINKS+=dlfcn.3 dlopen.3 dlfcn.3 dlclose.3 dlfcn.3 dlsym.3 dlfcn.3 dlctl.3 \
 	dlfcn.3 dlerror.3 dlfcn.3 dladdr.3
-MLINKS+=timeradd.3 timeradd.3 \
-	timeradd.3 timersub.3 \
+MLINKS+=timeradd.3 timersub.3 \
 	timeradd.3 timerclear.3 \
 	timeradd.3 timerisset.3 \
 	timeradd.3 timercmp.3
