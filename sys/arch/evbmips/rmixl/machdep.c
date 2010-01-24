@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.16 2010/01/22 07:58:51 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.17 2010/01/24 05:34:20 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.16 2010/01/22 07:58:51 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.17 2010/01/24 05:34:20 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -202,15 +202,6 @@ static uint64_t rmiclfw_psb_versions[] = {
 };
 #define RMICLFW_PSB_VERSIONS_LEN \
 	(sizeof(rmiclfw_psb_versions)/sizeof(rmiclfw_psb_versions[0]))
-
-/*
- * kernel copies of firmware info
- */
-static rmixlfw_info_t rmixlfw_info;
-static rmixlfw_mmap_t rmixlfw_phys_mmap;
-static rmixlfw_mmap_t rmixlfw_avail_mmap;
-#define RMIXLFW_INFOP_LEGAL	0x8c000000
-
 
 /*
  * storage for fixed extent used to allocate physical address regions
@@ -333,6 +324,13 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	printf("cpu_wakeup_info %p, cpu_wakeup_end %p\n",
 		rcp->rc_cpu_wakeup_info,
 		rcp->rc_cpu_wakeup_end);
+	printf("userapp_cpu_map: %#"PRIx64"\n", rcp->rc_psb_info.userapp_cpu_map);
+	printf("wakeup: %#"PRIx64"\n", rcp->rc_psb_info.wakeup);
+{
+	register_t sp;
+	asm volatile ("move	%0, $sp\n" : "=r"(sp));
+	printf("sp: %#"PRIx64"\n", sp);
+}
 #endif
 
 	rmixl_physaddr_init();
@@ -344,7 +342,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	 * Double the Hz if this CPU runs at twice the
          *  external/cp0-count frequency
 	 */
-	curcpu()->ci_cpu_freq = rmixlfw_info.cpu_frequency;
+	curcpu()->ci_cpu_freq = rcp->rc_psb_info.cpu_frequency;
 	curcpu()->ci_cctr_freq = curcpu()->ci_cpu_freq;
 	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
 	curcpu()->ci_divisor_delay =
@@ -625,10 +623,10 @@ rmixlfw_init(int64_t infop)
 #endif
 
 	infop |= MIPS_KSEG0_START;
-	rmixlfw_info = *(rmixlfw_info_t *)(intptr_t)infop;
+	rcp->rc_psb_info = *(rmixlfw_info_t *)(intptr_t)infop;
 
 	for (int i=0; i < RMICLFW_PSB_VERSIONS_LEN; i++) {
-		if (rmiclfw_psb_versions[i] == rmixlfw_info.psb_version)
+		if (rmiclfw_psb_versions[i] == rcp->rc_psb_info.psb_version)
 			goto found;
 	}
 
@@ -637,7 +635,7 @@ rmixlfw_init(int64_t infop)
 
 #ifdef DIAGNOSTIC
 	rmixl_puts("\r\nWARNING: untested psb_version: ");
-	rmixl_puthex64(rmixlfw_info.psb_version);
+	rmixl_puthex64(rcp->rc_psb_info.psb_version);
 	rmixl_puts("\r\n");
 #endif
 
@@ -654,7 +652,7 @@ rmixlfw_init(int64_t infop)
 #endif
 
  found:
-	rcp->rc_io_pbase = MIPS_KSEG1_TO_PHYS(rmixlfw_info.io_base);
+	rcp->rc_io_pbase = MIPS_KSEG1_TO_PHYS(rcp->rc_psb_info.io_base);
 	rmixl_putchar_init(rcp->rc_io_pbase);
 #ifdef MACHDEP_DEBUG
 	rmixl_puts("\r\ninfop: ");
@@ -662,13 +660,13 @@ rmixlfw_init(int64_t infop)
 #endif
 #ifdef DIAGNOSTIC
 	rmixl_puts("\r\nrecognized psb_version: ");
-	rmixl_puthex64(rmixlfw_info.psb_version);
+	rmixl_puthex64(rcp->rc_psb_info.psb_version);
 	rmixl_puts("\r\n");
 #endif
 
 	return mem_clusters_init(
-		(rmixlfw_mmap_t *)(intptr_t)rmixlfw_info.psb_physaddr_map,
-		(rmixlfw_mmap_t *)(intptr_t)rmixlfw_info.avail_mem_map);
+		(rmixlfw_mmap_t *)(intptr_t)rcp->rc_psb_info.psb_physaddr_map,
+		(rmixlfw_mmap_t *)(intptr_t)rcp->rc_psb_info.avail_mem_map);
 }
 
 void
@@ -718,8 +716,7 @@ mem_clusters_init(
 	rmixl_puts("\r\n");
 #endif
 	if (psb_physaddr_map != NULL) {
-		rmixlfw_phys_mmap = *psb_physaddr_map;
-		map = &rmixlfw_phys_mmap;
+		map = psb_physaddr_map;
 		mapname = "psb_physaddr_map";
 		rmixlfw_mmap_print(map);
 	}
@@ -735,8 +732,7 @@ mem_clusters_init(
 	rmixl_puts("\r\n");
 #endif
 	if (avail_mem_map != NULL) {
-		rmixlfw_avail_mmap = *avail_mem_map;
-		map = &rmixlfw_avail_mmap;
+		map = avail_mem_map;
 		mapname = "avail_mem_map";
 		rmixlfw_mmap_print(map);
 	}
