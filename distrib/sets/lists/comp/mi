@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1373 2010/01/24 21:06:55 jruoho Exp $
+#	$NetBSD: mi,v 1.1374 2010/01/24 21:19:53 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4656,8 +4656,15 @@
 ./usr/share/man/cat3/X509_NAME_ENTRY_get_object.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/X509_NAME_add_entry_by_txt.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/X509_NAME_get_index_by_NID.0	comp-c-catman		crypto,.cat
-./usr/share/man/cat3/X509_NAME_print_ex.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/X509_NAME_print_ex.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/X509_STORE_CTX_get_error.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/X509_STORE_CTX_get_ex_new_index.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/X509_STORE_CTX_new.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/X509_STORE_CTX_set_verify_cb.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/X509_STORE_set_verify_cb_func.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/X509_VERIFY_PARAM_set_flags.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/X509_new.0			comp-c-catman		crypto,.cat
+./usr/share/man/cat3/X509_verify_cert.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/_DIAGASSERT.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__BIT.0			comp-c-catman		.cat
 ./usr/share/man/cat3/__BITS.0			comp-c-catman		.cat
@@ -10378,7 +10385,14 @@
 ./usr/share/man/html3/X509_NAME_add_entry_by_txt.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/X509_NAME_get_index_by_NID.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/X509_NAME_print_ex.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/X509_STORE_CTX_get_error.html		comp-c-htmlman		crypto,html
+./usr/share/man/html3/X509_STORE_CTX_get_ex_new_index.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/X509_STORE_CTX_new.html			comp-c-htmlman		crypto,html
+./usr/share/man/html3/X509_STORE_CTX_set_verify_cb.html		comp-c-htmlman		crypto,html
+./usr/share/man/html3/X509_STORE_set_verify_cb_func.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/X509_VERIFY_PARAM_set_flags.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/X509_new.html		comp-c-htmlman		crypto,html
+./usr/share/man/html3/X509_verify_cert.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/_DIAGASSERT.html		comp-c-htmlman		html
 ./usr/share/man/html3/__BIT.html		comp-c-htmlman		html
 ./usr/share/man/html3/__BITS.html		comp-c-htmlman		html
@@ -15898,8 +15912,15 @@
 ./usr/share/man/man3/X509_NAME_ENTRY_get_object.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/X509_NAME_add_entry_by_txt.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/X509_NAME_get_index_by_NID.3	comp-c-man		crypto,.man
-./usr/share/man/man3/X509_NAME_print_ex.3	comp-c-man		crypto,.man
+./usr/share/man/man3/X509_NAME_print_ex.3		comp-c-man		crypto,.man
+./usr/share/man/man3/X509_STORE_CTX_get_error.3		comp-c-man		crypto,.man
+./usr/share/man/man3/X509_STORE_CTX_get_ex_new_index.3	comp-c-man		crypto,.man
+./usr/share/man/man3/X509_STORE_CTX_new.3		comp-c-man		crypto,.man
+./usr/share/man/man3/X509_STORE_CTX_set_verify_cb.3	comp-c-man		crypto,.man
+./usr/share/man/man3/X509_STORE_set_verify_cb_func.3	comp-c-man		crypto,.man
+./usr/share/man/man3/X509_VERIFY_PARAM_set_flags.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/X509_new.3			comp-c-man		crypto,.man
+./usr/share/man/man3/X509_verify_cert.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/_DIAGASSERT.3		comp-c-man		.man
 ./usr/share/man/man3/__BIT.3			comp-c-man		.man
 ./usr/share/man/man3/__BITS.3			comp-c-man		.man

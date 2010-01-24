@@ -66,7 +66,7 @@ values:
 
 =over 4
 
-=item 1
+=item Z<>1
 
 The operation succeeded.
 
