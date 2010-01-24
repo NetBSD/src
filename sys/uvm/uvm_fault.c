@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.129 2009/12/17 01:25:10 rmind Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.130 2010/01/24 15:03:02 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.129 2009/12/17 01:25:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.130 2010/01/24 15:03:02 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -689,8 +689,8 @@ done:
 			 ~VM_PROT_WRITE : VM_PROT_ALL)
 
 /* fault_flag values passed from uvm_fault_wire to uvm_fault_internal */
-#define UVM_FAULT_WIRE 1
-#define UVM_FAULT_WIREMAX 2
+#define UVM_FAULT_WIRE		(1 << 0)
+#define UVM_FAULT_MAXPROT	(1 << 1)
 
 int
 uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
@@ -724,7 +724,7 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 	ufi.orig_map = orig_map;
 	ufi.orig_rvaddr = trunc_page(vaddr);
 	ufi.orig_size = PAGE_SIZE;	/* can't get any smaller than this */
-	wire_fault = (fault_flag > 0);
+	wire_fault = (fault_flag & UVM_FAULT_WIRE) != 0;
 	if (wire_fault)
 		narrow = true;		/* don't look for neighborhood
 					 * pages on wire */
@@ -761,7 +761,7 @@ ReFault:
 	 * check protection
 	 */
 
-	check_prot = fault_flag == UVM_FAULT_WIREMAX ?
+	check_prot = (fault_flag & UVM_FAULT_MAXPROT) ?
 	    ufi.entry->max_protection : ufi.entry->protection;
 	if ((check_prot & access_type) != access_type) {
 		UVMHIST_LOG(maphist,
@@ -797,7 +797,7 @@ ReFault:
 
 	if (UVM_ET_ISNEEDSCOPY(ufi.entry)) {
 		if (cow_now || (ufi.entry->object.uvm_obj == NULL)) {
-			KASSERT(fault_flag != UVM_FAULT_WIREMAX);
+			KASSERT((fault_flag & UVM_FAULT_MAXPROT) == 0);
 			/* need to clear */
 			UVMHIST_LOG(maphist,
 			    "  need to clear needs_copy and refault",0,0,0,0);
@@ -1854,7 +1854,7 @@ done:
 
 int
 uvm_fault_wire(struct vm_map *map, vaddr_t start, vaddr_t end,
-    vm_prot_t access_type, int wiremax)
+    vm_prot_t access_type, int maxprot)
 {
 	vaddr_t va;
 	int error;
@@ -1875,7 +1875,7 @@ uvm_fault_wire(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 	for (va = start ; va < end ; va += PAGE_SIZE) {
 		error = uvm_fault_internal(map, va, access_type,
-				wiremax ? UVM_FAULT_WIREMAX : UVM_FAULT_WIRE);
+				(maxprot ? UVM_FAULT_MAXPROT : 0) | UVM_FAULT_WIRE);
 		if (error) {
 			if (va != start) {
 				uvm_fault_unwire(map, start, va);
