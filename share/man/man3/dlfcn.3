@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.25 2010/01/18 15:36:11 wiz Exp $
+.\"	$NetBSD: dlfcn.3,v 1.26 2010/01/24 20:03:24 joerg Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,10 +81,7 @@ used for
 shared object searches.
 .Pp
 Shared libraries take the following form:
-.Sm off
-.Do lib Ao name Ac .so Oo .xx Oo .yy Oc Oc
-.Dc
-.Sm on .
+.Do lib Ns Ao name Ns Ac Ns .so Ns Oo .xx Ns Oo .yy Oc Oc Dc .
 .Pp
 If the first argument is
 .Dv NULL ,
