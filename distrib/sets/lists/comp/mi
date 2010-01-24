@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1372 2010/01/23 10:40:58 wiz Exp $
+#	$NetBSD: mi,v 1.1373 2010/01/24 21:06:55 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7993,6 +7993,11 @@
 ./usr/share/man/cat3/timelocal.0		comp-c-catman		.cat
 ./usr/share/man/cat3/timeoff.0			comp-c-catman		.cat
 ./usr/share/man/cat3/timeout.0			comp-c-catman		.cat
+./usr/share/man/cat3/timeradd.0			comp-c-catman		.cat
+./usr/share/man/cat3/timerclear.0		comp-c-catman		.cat
+./usr/share/man/cat3/timercmp.0			comp-c-catman		.cat
+./usr/share/man/cat3/timerisset.0		comp-c-catman		.cat
+./usr/share/man/cat3/timersub.0			comp-c-catman		.cat
 ./usr/share/man/cat3/times.0			comp-c-catman		.cat
 ./usr/share/man/cat3/timezone.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tmpfile.0			comp-c-catman		.cat
@@ -13572,6 +13577,11 @@
 ./usr/share/man/html3/timelocal.html		comp-c-htmlman		html
 ./usr/share/man/html3/timeoff.html		comp-c-htmlman		html
 ./usr/share/man/html3/timeout.html		comp-c-htmlman		html
+./usr/share/man/html3/timeradd.html		comp-c-htmlman		html
+./usr/share/man/html3/timerclear.html		comp-c-htmlman		html
+./usr/share/man/html3/timercmp.html		comp-c-htmlman		html
+./usr/share/man/html3/timerisset.html		comp-c-htmlman		html
+./usr/share/man/html3/timersub.html		comp-c-htmlman		html
 ./usr/share/man/html3/times.html		comp-c-htmlman		html
 ./usr/share/man/html3/timezone.html		comp-c-htmlman		html
 ./usr/share/man/html3/tmpfile.html		comp-c-htmlman		html
@@ -19221,6 +19231,11 @@
 ./usr/share/man/man3/timelocal.3		comp-c-man		.man
 ./usr/share/man/man3/timeoff.3			comp-c-man		.man
 ./usr/share/man/man3/timeout.3			comp-c-man		.man
+./usr/share/man/man3/timeradd.3			comp-c-man		.man
+./usr/share/man/man3/timerclear.3		comp-c-man		.man
+./usr/share/man/man3/timercmp.3			comp-c-man		.man
+./usr/share/man/man3/timerisset.3		comp-c-man		.man
+./usr/share/man/man3/timersub.3			comp-c-man		.man
 ./usr/share/man/man3/times.3			comp-c-man		.man
 ./usr/share/man/man3/timezone.3			comp-c-man		.man
 ./usr/share/man/man3/tmpfile.3			comp-c-man		.man

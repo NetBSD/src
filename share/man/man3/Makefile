@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.33 2009/04/04 01:45:18 perry Exp $
+#	$NetBSD: Makefile,v 1.34 2010/01/24 21:05:45 jruoho Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 CMSG_DATA.3 assert.3 bits.3 bitstring.3 dlfcn.3 end.3 \
-	gcq.3 intro.3 queue.3 stdarg.3 sysexits.3 tree.3 varargs.3
+	gcq.3 intro.3 queue.3 stdarg.3 sysexits.3 timeradd.3 tree.3 varargs.3
 
 USETBL=	# used by queue.3
 
@@ -186,6 +186,11 @@ MLINKS+=stdarg.3 va_arg.3 stdarg.3 va_copy.3 \
 	stdarg.3 va_end.3 stdarg.3 va_start.3
 MLINKS+=dlfcn.3 dlopen.3 dlfcn.3 dlclose.3 dlfcn.3 dlsym.3 dlfcn.3 dlctl.3 \
 	dlfcn.3 dlerror.3 dlfcn.3 dladdr.3
+MLINKS+=timeradd.3 timeradd.3 \
+	timeradd.3 timersub.3 \
+	timeradd.3 timerclear.3 \
+	timeradd.3 timerisset.3 \
+	timeradd.3 timercmp.3
 MLINKS+=tree.3 SPLAY_PROTOTYPE.3 tree.3 SPLAY_GENERATE.3 \
 	tree.3 SPLAY_ENTRY.3 tree.3 SPLAY_HEAD.3 \
 	tree.3 SPLAY_INITIALIZER.3 tree.3 SPLAY_ROOT.3 \
