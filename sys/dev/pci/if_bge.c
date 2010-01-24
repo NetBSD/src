@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.170 2010/01/24 14:10:00 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.171 2010/01/24 15:29:10 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.170 2010/01/24 14:10:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.171 2010/01/24 15:29:10 msaitoh Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -2357,20 +2357,15 @@ bge_attach(device_t parent, device_t self, void *aux)
 	    pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL) &
 	    BGE_PCIMISCCTL_ASICREV;
 
-	/*
-	 * Detect PCI-Express devices
-	 * XXX: guessed from Linux/FreeBSD; no documentation
-	 */
 	if (pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_PCIEXPRESS,
-	        NULL, NULL) != 0)
+	        NULL, NULL) != 0) {
+		/* PCIe */
 		sc->bge_flags |= BGE_PCIE;
-
-	/*
-	 * PCI-X check.
-	 */
-	if ((pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_PCISTATE) &
-		BGE_PCISTATE_PCI_BUSMODE) == 0)
+	} else if ((pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_PCISTATE) &
+		BGE_PCISTATE_PCI_BUSMODE) == 0) {
+		/* PCI-X */
 		sc->bge_flags |= BGE_PCIX;
+	}
 
 	if (sc->bge_chipid == BGE_CHIPID_BCM5701_A0 ||
 	    sc->bge_chipid == BGE_CHIPID_BCM5701_B0)
