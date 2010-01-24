@@ -1,11 +1,13 @@
-/*	$NetBSD: rmixl_subr.S,v 1.1.2.2 2009/12/31 00:53:00 matt Exp $	*/
+/*	$NetBSD: rmixl_subr.S,v 1.1.2.3 2010/01/24 05:39:57 cliff Exp $	*/
 
 #include "opt_cputype.h"
 
 #include <sys/cdefs.h>
 
-#include <mips/asm.h>
 #include <mips/cpuregs.h>
+#include <mips/asm.h>
+
+#include "assym.h"
 
 	.set	push
         .set    noreorder
@@ -37,5 +39,34 @@ LEAF(rmixl_mtcr)
 	j	ra
 	mtcr	a1, a0
 END(rmixl_mtcr)
+
+/*
+ * rmixlfw_wakeup_cpu(func, args, mask, callback)
+ */
+NESTED(rmixlfw_wakeup_cpu, CALLFRAME_SIZ, ra)
+	PTR_ADDU	sp, sp, -CALLFRAME_SIZ
+	REG_S		ra, CALLFRAME_RA(sp)
+	REG_S		s0, CALLFRAME_S0(sp)
+
+	move		s0, sp			/* save sp */
+	srl		t0, sp, 0		/* nuke upper half */
+	li		t1, MIPS_KSEG0_START
+	jalr		a3			/* callback to firmware */
+	 or		sp, t0, t1		/* delay slot */
+	move		sp, s0			/* restore sp */
+
+	REG_L		s0, CALLFRAME_S0(sp)
+	REG_L		ra, CALLFRAME_RA(sp)
+	jr		ra
+	 PTR_ADDU	sp, sp, CALLFRAME_SIZ	/* delay slot */
+END(rmixlfw_wakeup_cpu)
+
+/*
+ * cpu_wakeup_trampoline
+ */
+NESTED(cpu_wakeup_trampoline, CALLFRAME_SIZ, ra)
+	j	.
+	nop
+END(cpu_wakeup_trampoline)
 
 	.set	pop
