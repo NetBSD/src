@@ -1,7 +1,6 @@
 Content-Type: application/X-atf-atffile; version="1"
+X-NetBSD-Id: "$NetBSD: Atffile,v 1.1 2010/01/24 21:12:17 joerg Exp $"
 
 prop: test-suite = "NetBSD"
 
-tp: hash
-tp: stdlib
-tp: string
+tp: t_sha2

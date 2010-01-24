@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.8 2009/12/05 20:11:02 pooka Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.9 2010/01/24 21:12:17 joerg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -207,6 +207,7 @@
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write
 ./usr/libdata/debug/usr/tests/lib
 ./usr/libdata/debug/usr/tests/lib/libc
+./usr/libdata/debug/usr/tests/lib/libc/hash
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib
 ./usr/libdata/debug/usr/tests/lib/libc/string
 ./usr/libdata/debug/usr/tests/lib/libevent
@@ -1092,6 +1093,7 @@
 ./usr/tests/kernel/kqueue/write
 ./usr/tests/lib
 ./usr/tests/lib/libc
+./usr/tests/lib/libc/hash
 ./usr/tests/lib/libc/stdlib
 ./usr/tests/lib/libc/string
 ./usr/tests/lib/libevent
