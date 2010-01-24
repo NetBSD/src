@@ -1,4 +1,4 @@
-.\"	$NetBSD: firmload.9,v 1.5 2009/06/24 16:28:48 dholland Exp $
+.\"	$NetBSD: firmload.9,v 1.6 2010/01/24 14:14:55 jruoho Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,13 +63,12 @@ devices that they control.
 Firmware images reside in sub-directories, one for each driver, of a series
 of colon-separated path prefixes specified by the sysctl variable
 .Dv hw.firmware.path .
-.Pp
+.Sh FUNCTIONS
 The following functions are provided by the
 .Nm
 API:
 .Bl -tag -width indent
-.It int Fn "firmware_open" "const char *drvname" "const char *imgname" \
-"firmware_handle_t *fhp"
+.It Fn "firmware_open" "drvname" "imgname" "fhp"
 .Pp
 Open then firmware image
 .Fa imgname
@@ -83,17 +82,16 @@ Upon success,
 returns 0 and stores a firmware image handle in the location pointed to by
 .Fa fhp .
 Otherwise, an error code is returned to indicate the reason for failure.
-.It int Fn "firmware_close" "firmware_handle_t fh"
+.It Fn "firmware_close" "fh"
 .Pp
 Close the firmware image file associated with the firmware handle
 .Fa fh .
 Returns 0 upon success or an error code to indicate the reason for failure.
-.It off_t Fn "firmware_get_size" "firmware_handle_t fh"
+.It Fn "firmware_get_size" "fh"
 .Pp
 Returns the size of the image file associated with the firmware handle
 .Fa fh .
-.It int Fn "firmware_read" "firmware_handle_t fh" "off_t offset" "void *buf" \
-"size_t size"
+.It Fn "firmware_read" "fh" "offset" "buf" "size"
 .Pp
 Reads from the image file associated with the firmware handle
 .Fa fh
@@ -104,14 +102,14 @@ for length
 The firmware image data is placed into the buffer specified by
 .Fa buf .
 Returns 0 upon success or an error code to indicate the reason for failure.
-.It void * Ns Fn "firmware_malloc" "size_t size"
+.It Fn "firmware_malloc" "size"
 .Pp
 Allocates a region of wired kernel memory of size
 .Fa size .
 Note:
 .Fn firmware_malloc
 may block.
-.It void Fn "firmware_free" "void *buf" "size_t size"
+.It Fn "firmware_free" "buf" "size"
 .Pp
 Frees a region of memory previously allocated by
 .Fn firmware_malloc .
