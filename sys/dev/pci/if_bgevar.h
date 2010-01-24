@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.1 2009/04/23 10:47:44 msaitoh Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.2 2010/01/24 16:21:09 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -70,15 +70,14 @@
 #include <net/if_ether.h>
 #include <dev/pci/pcivar.h>
 
-static __inline void
-bge_set_hostaddr(volatile bge_hostaddr *x, bus_addr_t y)
-{
-	x->bge_addr_lo = y & 0xffffffff;
-	if (sizeof (bus_addr_t) == 8)
-		x->bge_addr_hi = (u_int64_t)y >> 32;
-	else
-		x->bge_addr_hi = 0;
-}
+#define BGE_HOSTADDR(x, y)						\
+	do {								\
+		(x).bge_addr_lo = ((uint64_t) (y) & 0xffffffff);	\
+		if (sizeof (bus_addr_t) == 8)				\
+			(x).bge_addr_hi = ((u_int64_t) (y) >> 32);	\
+		else							\
+			(x).bge_addr_hi = 0;				\
+	} while(0)
 
 #define RCB_WRITE_4(sc, rcb, offset, val) \
 	bus_space_write_4(sc->bge_btag, sc->bge_bhandle, \
@@ -200,7 +199,7 @@ struct bge_type {
 	char			*bge_name;
 };
 
-#define BGE_TIMEOUT		1000
+#define BGE_TIMEOUT		100000
 #define BGE_TXCONS_UNSET		0xFFFF	/* impossible value */
 
 struct bge_jpool_entry {
@@ -229,7 +228,6 @@ struct bge_softc {
 
 	struct mii_data		bge_mii;
 	struct ifmedia		bge_ifmedia;	/* media info */
-	u_int8_t		bge_extram;	/* has external SSRAM */
 	u_int32_t		bge_return_ring_cnt;
 	u_int32_t		bge_tx_prodidx;
 	bus_dma_tag_t		bge_dmatag;
