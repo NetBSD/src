@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.8 2009/07/21 09:49:15 phx Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.9 2010/01/24 15:39:50 phx Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.8 2009/07/21 09:49:15 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.9 2010/01/24 15:39:50 phx Exp $");
 
 #include <sys/param.h>
 #include <amiga/amiga/cc.h>
@@ -46,10 +46,6 @@ int machineid;
 vaddr_t CHIPMEMADDR;
 vaddr_t chipmem_start;
 vaddr_t chipmem_end;
-
-vaddr_t z2mem_start;
-static vaddr_t z2mem_end;
-int use_z2_mem = 0;		/* usually no Z2-mem on A3000/A4000 */
 
 u_long boot_fphystart, boot_fphysize, cphysize;
 u_long boot_flags;
@@ -125,19 +121,12 @@ chipmem_steal(long amount)
 }
 
 /*
- * XXX
- * used by certain drivers currently to allocate zorro II memory
- * for bounce buffers, if use_z2_mem is NULL, chipmem will be
- * returned instead.
- * XXX
+ * Used by certain drivers currently to allocate zorro II or chip mem
+ * for bounce buffers. For amigappc we will only return chip memory.
  */
 void *
 alloc_z2mem(long amount)
 {
 
-	if (use_z2_mem && z2mem_end && (z2mem_end - amount) >= z2mem_start) {
-		z2mem_end -= amount;
-		return ((void *)z2mem_end);
-	}
 	return (alloc_chipmem(amount));
 }
