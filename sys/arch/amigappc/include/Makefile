@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2009/07/21 09:49:15 phx Exp $
+#	$NetBSD: Makefile,v 1.23 2010/01/24 10:36:34 phx Exp $
 
 INCSDIR= /usr/include/amigappc
 
@@ -6,6 +6,4 @@ INCS=	disklabel.h \
 	intr.h \
 	vmparam.h
 
-include "../../powerpc/include/Makefile"
-
-.include <bsd.kinc.mk>
+.include "../../powerpc/include/Makefile"
