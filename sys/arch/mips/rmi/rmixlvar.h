@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.1.2.11 2010/01/17 00:00:55 cliff Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.1.2.12 2010/01/24 05:32:36 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -108,8 +108,8 @@ struct rmixl_config {
 	struct mips_bus_space	 rc_pci_memt; 		/* PCI MEM */
 	struct mips_bus_space	 rc_pci_iot; 		/* PCI IO  */
 	struct mips_bus_dma_tag	 rc_64bit_dmat;
-	bus_dma_tag_t		rc_32bit_dmat;
-	bus_dma_tag_t		rc_29bit_dmat;
+	bus_dma_tag_t		 rc_32bit_dmat;
+	bus_dma_tag_t		 rc_29bit_dmat;
 	struct extent		*rc_phys_ex;	/* Note: MB units */
 	struct extent		*rc_obio_eb_ex;
 	struct extent		*rc_obio_el_ex;
@@ -118,6 +118,7 @@ struct rmixl_config {
 	struct extent		*rc_pcie_mem_ex;
 	struct extent		*rc_pcie_io_ex;
 	int			 rc_mallocsafe;
+	rmixlfw_info_t 		 rc_psb_info;
 	volatile struct rmixlfw_cpu_wakeup_info
 				*rc_cpu_wakeup_info;
 	const void		*rc_cpu_wakeup_end;
