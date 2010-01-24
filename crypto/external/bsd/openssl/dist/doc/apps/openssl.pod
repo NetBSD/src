@@ -155,7 +155,7 @@ Generation of Private Key or Parameters.
 
 Generation of RSA Private Key. Superceded by L<B<genpkey>|genpkey(1)>.
 
-=item L<B<nseq>|nseq(1)
+=item L<B<nseq>|nseq(1)>
 
 Create or examine a netscape certificate sequence
 
@@ -287,8 +287,6 @@ SHA Digest
 
 SHA-1 Digest
 
-=back
-
 =item B<sha224>
 
 SHA-224 Digest
@@ -304,6 +302,8 @@ SHA-384 Digest
 =item B<sha512>
 
 SHA-512 Digest
+
+=back
 
 =head2 ENCODING AND CIPHER COMMANDS
 
