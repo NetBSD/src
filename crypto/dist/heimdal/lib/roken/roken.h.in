@@ -33,7 +33,7 @@
  */
 
 /* $Heimdal: roken.h.in 18612 2006-10-19 16:35:16Z lha $
-   $NetBSD: roken.h.in,v 1.5 2008/03/22 08:37:21 mlelstv Exp $ */
+   $NetBSD: roken.h.in,v 1.6 2010/01/24 16:42:12 christos Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -429,7 +429,7 @@ struct winsize {
 };
 #endif
 
-int ROKEN_LIB_FUNCTION get_window_size(int fd, struct winsize *);
+int ROKEN_LIB_FUNCTION get_window_size(int, int *, int *);
 
 #ifndef HAVE_VSYSLOG
 void ROKEN_LIB_FUNCTION vsyslog(int, const char *, va_list);

@@ -34,7 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 __RCSID("$Heimdal: getarg.c 21005 2007-06-08 01:54:35Z lha $"
-        "$NetBSD: getarg.c,v 1.5 2010/01/20 15:03:50 tsutsui Exp $");
+        "$NetBSD: getarg.c,v 1.6 2010/01/24 16:42:12 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -209,7 +209,6 @@ arg_printusage (struct getargs *args,
     size_t max_len = 0;
     char buf[128];
     int col = 0, columns;
-    struct winsize ws;
 
     if (progname == NULL)
 	progname = getprogname();
@@ -218,9 +217,7 @@ arg_printusage (struct getargs *args,
 	mandoc_template(args, num_args, progname, extra_string);
 	return;
     }
-    if(get_window_size(2, &ws) == 0)
-	columns = ws.ws_col;
-    else
+    if(get_window_size(2, NULL, &columns) == -1)
 	columns = 80;
     col = 0;
     col += fprintf (stderr, "Usage: %s", progname);
