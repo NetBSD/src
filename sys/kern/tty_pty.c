@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.120 2009/12/20 19:06:44 pooka Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.121 2010/01/24 19:56:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.120 2009/12/20 19:06:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.121 2010/01/24 19:56:26 dholland Exp $");
 
 #include "opt_ptm.h"
 
@@ -119,7 +119,11 @@ const struct cdevsw pts_cdevsw = {
 };
 
 #if defined(pmax)
-/* see arch/pmax/conf/majors.pmax */
+/*
+ * Used by arch/pmax/conf/majors.pmax, which needs a second copy as it
+ * needs to map this stuff to two pairs of majors.
+ */
+
 const struct cdevsw ptc_ultrix_cdevsw = {
 	ptcopen, ptcclose, ptcread, ptcwrite, ptyioctl,
 	nullstop, ptytty, ptcpoll, nommap, ptckqfilter, D_TTY
