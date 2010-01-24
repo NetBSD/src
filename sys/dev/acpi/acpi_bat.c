@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.77 2010/01/23 15:06:47 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.78 2010/01/24 11:32:13 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.77 2010/01/23 15:06:47 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.78 2010/01/24 11:32:13 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,6 +152,7 @@ struct acpibat_softc {
 	envsys_data_t		 sc_sensor[ACPIBAT_COUNT];
 	kmutex_t		 sc_mutex;
 	kcondvar_t		 sc_condvar;
+	int                      sc_present;
 };
 
 static const char * const bat_hid[] = {
@@ -233,6 +234,7 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": ACPI Battery\n");
 
 	sc->sc_node = aa->aa_node;
+	sc->sc_present = 0;
 
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_condvar, device_xname(self));
@@ -498,6 +500,7 @@ acpibat_get_status(device_t dv)
 	sc->sc_sensor[ACPIBAT_VOLTAGE].value_cur = val;
 	sc->sc_sensor[ACPIBAT_VOLTAGE].state = ACPIBAT_VAL_ISVALID(val);
 
+	sc->sc_sensor[ACPIBAT_CHARGE_STATE].state = ENVSYS_SVALID;
 	sc->sc_sensor[ACPIBAT_CHARGE_STATE].value_cur =
 	    ENVSYS_BATTERY_CAPACITY_NORMAL;
 
@@ -552,6 +555,8 @@ acpibat_update_info(void *arg)
 		}
 	}
 
+	sc->sc_present = rv;
+
 	mutex_exit(&sc->sc_mutex);
 }
 
@@ -566,9 +571,13 @@ acpibat_update_status(void *arg)
 
 	rv = acpibat_get_sta(dv);
 
-	if (rv > 0)
+	if (rv > 0) {
+
+		if (sc->sc_present == 0)
+			acpibat_get_info(dv);
+
 		acpibat_get_status(dv);
-	else {
+	} else {
 		i = (rv < 0) ? 0 : ACPIBAT_DCAPACITY;
 
 		while (i < ACPIBAT_COUNT) {
@@ -576,6 +585,8 @@ acpibat_update_status(void *arg)
 			i++;
 		}
 	}
+
+	sc->sc_present = rv;
 
 	microtime(&sc->sc_lastupdate);
 	cv_broadcast(&sc->sc_condvar);
