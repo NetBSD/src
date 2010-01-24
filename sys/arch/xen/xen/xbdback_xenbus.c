@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.30 2010/01/17 12:08:29 haad Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.31 2010/01/24 04:06:31 haad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.30 2010/01/17 12:08:29 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.31 2010/01/24 04:06:31 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -730,10 +730,22 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 		printf("xbd backend: attach device %s (size %" PRIu64 ") "
 		    "for domain %d\n", wi.dkw_devname, xbdi->xbdi_size,
 		    xbdi->xbdi_domid);
+       	} else {
+		/* disk device, get partition data */
+		struct partinfo dpart;
+		if ((err = VOP_IOCTL(xbdi->xbdi_vp, DIOCGPART, &dpart,
+			    FREAD, 0)) == 0) {
+		xbdi->xbdi_size = dpart.part->p_size;
+		printf("xbd backend: attach device %s%"PRId32
+		    "%c (size %" PRIu64 ") for domain %d\n",
+		    devname, DISKUNIT(xbdi->xbdi_dev),
+		    (char)DISKPART(xbdi->xbdi_dev) + 'a', xbdi->xbdi_size,
+		    xbdi->xbdi_domid);
+		}
 	}
-	if ((err != 0) && (err != ENOTTY)) {
-		/* ENOTTY should be returned only when device doesn't implement
-		   DIOCGWEDGEINFO and we are working with non wedge like device. */
+
+	if (err != 0) {
+		/* If both Ioctls failed set device size to 0 and return */
 		printf("xbdback %s: can't DIOCGWEDGEINFO device "
 		    "0x%"PRIx64": %d\n", xbusd->xbusd_path,
 		    xbdi->xbdi_dev, err);		
@@ -741,24 +753,6 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 		vn_close(xbdi->xbdi_vp, FREAD, NOCRED);
 		xbdi->xbdi_vp = NULL;
 		return;
-	} else {
-		/* disk device, get partition data */
-		struct partinfo dpart;
-		err = VOP_IOCTL(xbdi->xbdi_vp, DIOCGPART, &dpart, FREAD, 0);
-		if (err) {
-			printf("xbdback %s: can't DIOCGPART device 0x%"PRIx64": %d\n",
-			    xbusd->xbusd_path, xbdi->xbdi_dev, err);
-			xbdi->xbdi_size = xbdi->xbdi_dev = 0;
-			vn_close(xbdi->xbdi_vp, FREAD, NOCRED);
-			xbdi->xbdi_vp = NULL;
-			return;
-		}
-		xbdi->xbdi_size = dpart.part->p_size;
-		printf("xbd backend: attach device %s%"PRId32
-		    "%c (size %" PRIu64 ") for domain %d\n",
-		    devname, DISKUNIT(xbdi->xbdi_dev),
-		    (char)DISKPART(xbdi->xbdi_dev) + 'a', xbdi->xbdi_size,
-		    xbdi->xbdi_domid);
 	}
 again:
 	xbt = xenbus_transaction_start();
