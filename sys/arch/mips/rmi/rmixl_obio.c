@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio.c,v 1.1.2.12 2010/01/20 20:48:12 matt Exp $	*/
+/*	$NetBSD: rmixl_obio.c,v 1.1.2.13 2010/01/24 04:38:28 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,10 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.12 2010/01/20 20:48:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.13 2010/01/24 04:38:28 cliff Exp $");
 
 #include "locators.h"
-#include "obio.h"
 #include "pci.h"
 
 #include <sys/param.h>
