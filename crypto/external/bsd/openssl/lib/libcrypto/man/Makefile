@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/07/19 23:30:50 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2010/01/24 19:16:05 joerg Exp $
 
 # the makefile is not, and should not be visited during normal build process.
 # try to use latest pod2man, which comes with the latest perl.
@@ -9,7 +9,7 @@
 CRYPTODIST=	${NETBSDSRCDIR}/crypto
 .include "${NETBSDSRCDIR}/crypto/Makefile.openssl"
 
-VERSION!=	grep VERSION ${OPENSSLSRC}/Makefile | head -1 | sed -e 's/VERSION=//'
+VERSION!=	head -2 ${OPENSSLSRC}/README | tail -1 | awk '{ print $$2; }'
 
 manpages:
 	for i in ${OPENSSLSRC}/doc/apps/*.pod; do \
