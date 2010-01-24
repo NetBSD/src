@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.174 2010/01/24 23:09:26 martin Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.175 2010/01/24 23:27:39 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.174 2010/01/24 23:09:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.175 2010/01/24 23:27:39 martin Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -2792,7 +2792,7 @@ got_eaddr:
 	 */
 	if (bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM_SIG) == BGE_MAGIC_NUMBER) {
 		hwcfg = bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM_NICCFG);
-	} else {
+	} else if (!(sc->bge_flags & BGE_NO_EEPROM)) {
 		bge_read_eeprom(sc, (void *)&hwcfg,
 		    BGE_EE_HWCFG_OFFSET, sizeof(hwcfg));
 		hwcfg = be32toh(hwcfg);
