@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.23 2009/12/26 16:01:24 uebayasi Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.24 2010/01/24 03:46:48 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -185,7 +185,9 @@
 
 /* Kernel text starts 2MB in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
+#ifndef KERNEL_VM_BASE
 #define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
+#endif
 
 /*
  * The range 0xc1000000 - 0xccffffff is available for kernel VM space
@@ -244,7 +246,7 @@ extern int pmap_debug_level;
 
 #define KERNEL_PT_SYS		0	/* Page table for mapping proc0 zero page */
 #define KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */
-#define	KERNEL_PT_KERNEL_NUM	4
+#define	KERNEL_PT_KERNEL_NUM	((KERNEL_VM_BASE - KERNEL_BASE) >> 22)
 #define KERNEL_PT_VMDATA	(KERNEL_PT_KERNEL+KERNEL_PT_KERNEL_NUM)
 				        /* Page tables for mapping kernel VM */
 #define	KERNEL_PT_VMDATA_NUM	4	/* start with 16MB of KVM */
