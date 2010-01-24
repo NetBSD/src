@@ -34,7 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 __RCSID("$Heimdal: get_window_size.c 21005 2007-06-08 01:54:35Z lha $"
-        "$NetBSD: get_window_size.c,v 1.6 2010/01/24 16:42:12 christos Exp $");
+        "$NetBSD: get_window_size.c,v 1.7 2010/01/24 16:45:57 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -105,7 +105,7 @@ get_window_size(int fd, int *lines, int *columns)
     }
 #endif
     if (columns) {
-    `	if ((s = getenv("COLUMNS")))
+    	if ((s = getenv("COLUMNS")))
 	    *columns = atoi(s);
 	else
 	    return -1;
