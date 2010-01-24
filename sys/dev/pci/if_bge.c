@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.173 2010/01/24 17:56:54 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.174 2010/01/24 23:09:26 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.173 2010/01/24 17:56:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.174 2010/01/24 23:09:26 martin Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -2365,6 +2365,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t		memaddr;
 	bus_size_t		memsize;
 	uint32_t		pm_ctl;
+	prop_data_t		eaddrprop;
+	bool			no_seeprom;
 
 	bp = bge_lookup(pa);
 	KASSERT(bp != NULL);
@@ -2611,8 +2613,16 @@ bge_attach(device_t parent, device_t self, void *aux)
 			sc->bge_flags |= BGE_PHY_BER_BUG;
 	}
 
-	/* SEEPROM check. Check the 'ROM failed' bit on the RX CPU */
-	if (CSR_READ_4(sc, BGE_RXCPU_MODE) & BGE_RXCPUMODE_ROMFAIL)
+	/*
+	 * SEEPROM check.
+	 * First check if firmware knows we do not have SEEPROM.
+	 */
+	 if (prop_dictionary_get_bool(device_properties(self),
+	     "without-seeprom", &no_seeprom) && no_seeprom)
+	 	sc->bge_flags |= BGE_NO_EEPROM;
+
+	/* Now check the 'ROM failed' bit on the RX CPU */
+	else if (CSR_READ_4(sc, BGE_RXCPU_MODE) & BGE_RXCPUMODE_ROMFAIL)
 		sc->bge_flags |= BGE_NO_EEPROM;
 
 	/* Try to reset the chip. */
@@ -2626,8 +2636,17 @@ bge_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/*
-	 * Get station address from the EEPROM.
+	 * Get station address from the EEPROM (or use firmware values
+	 * if provided via device properties)
 	 */
+	eaddrprop = prop_dictionary_get(device_properties(self), "mac-address");
+
+	if (eaddrprop != NULL && prop_data_size(eaddrprop) == ETHER_ADDR_LEN) {
+		memcpy(eaddr, prop_data_data_nocopy(eaddrprop),
+			    ETHER_ADDR_LEN);
+		goto got_eaddr;
+	}
+
 	if (bge_get_eaddr(sc, eaddr)) {
 		aprint_error_dev(sc->bge_dev, 
 		"failed to read station address\n");
@@ -2635,6 +2654,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+got_eaddr:
 	br = bge_lookup_rev(sc->bge_chipid);
 
 	if (br == NULL) {
