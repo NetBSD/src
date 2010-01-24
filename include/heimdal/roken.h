@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: roken.h,v 1.12 2008/03/22 08:37:24 mlelstv Exp $ */
+/* $Id: roken.h,v 1.13 2010/01/24 16:45:57 christos Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -169,7 +169,7 @@ ssize_t ROKEN_LIB_FUNCTION net_read (int, void *, size_t);
 int ROKEN_LIB_FUNCTION issuid(void);
 
 
-int ROKEN_LIB_FUNCTION get_window_size(int fd, struct winsize *);
+int ROKEN_LIB_FUNCTION get_window_size(int fd, int *, int *);
 
 
 
