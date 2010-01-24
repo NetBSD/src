@@ -1,8 +1,8 @@
-/* $NetBSD: gpio.c,v 1.30 2010/01/08 19:48:18 dyoung Exp $ */
+/* $NetBSD: gpio.c,v 1.31 2010/01/24 12:25:20 mbalmer Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
- * Copyright (c) 2008, 2009 Marc Balmer <marc@msys.ch>
+ * Copyright (c) 2008, 2009, 2010 Marc Balmer <marc@msys.ch>
  * Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.30 2010/01/08 19:48:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.31 2010/01/24 12:25:20 mbalmer Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -183,8 +183,7 @@ gpio_detach(device_t self, int flags)
 }
 
 int
-gpio_search(device_t parent, cfdata_t cf,
-    const int *ldesc, void *aux)
+gpio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct gpio_attach_args ga;
 
@@ -225,7 +224,6 @@ gpiobus_print(void *aux, const char *pnp)
 }
 
 /* return 1 if all pins can be mapped, 0 if not */
-
 int
 gpio_pin_can_map(void *gpio, int offset, u_int32_t mask)
 {
