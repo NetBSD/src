@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.172 2010/01/24 16:21:09 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.173 2010/01/24 17:56:54 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.172 2010/01/24 16:21:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.173 2010/01/24 17:56:54 msaitoh Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -4669,7 +4669,7 @@ bge_debug_info(struct bge_softc *sc)
 	if (sc->bge_flags & BGE_JUMBO_CAPABLE)
 		printf(" - Supports Jumbo Frames\n");
 	if (sc->bge_flags & BGE_NO_EEPROM)
-		printf(" - Supports Jumbo Frames\n");
+		printf(" - No EEPROM\n");
 	if (sc->bge_flags & BGE_PCIX)
 		printf(" - PCI-X Bus\n");
 	if (sc->bge_flags & BGE_PCIE)
