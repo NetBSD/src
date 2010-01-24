@@ -1,4 +1,4 @@
-#	$NetBSD: man.inc,v 1.1 2009/07/19 23:30:43 christos Exp $
+#	$NetBSD: man.inc,v 1.2 2010/01/24 21:19:53 joerg Exp $
 
 .PATH:	${.CURDIR}/man
 
@@ -90,7 +90,11 @@ MAN+=	RSA_padding_add_PKCS1_type_1.3 openssl_mdc2.3 BIO_f_base64.3 \
 	BIO_should_retry.3 CONF_modules_free.3 CONF_modules_load_file.3 \
 	OPENSSL_config.3 OPENSSL_load_builtin_modules.3 \
 	ASN1_generate_nconf.3 BN_BLINDING_new.3 ERR_set_mark.3 \
-	OPENSSL_Applink.3 OPENSSL_ia32cap.3 openssl_ecdsa.3 openssl_x509.3
+	OPENSSL_Applink.3 OPENSSL_ia32cap.3 openssl_ecdsa.3 openssl_x509.3 \
+	X509_STORE_CTX_get_error.3 X509_STORE_CTX_get_ex_new_index.3 \
+	X509_STORE_CTX_new.3 X509_STORE_CTX_set_verify_cb.3 \
+	X509_STORE_CTX_set_verify_cb.3 X509_STORE_set_verify_cb_func.3 \
+	X509_VERIFY_PARAM_set_flags.3 X509_verify_cert.3
 
 MAN+=	openssl.cnf.5
 
