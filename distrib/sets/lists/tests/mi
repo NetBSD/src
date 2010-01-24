@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.59 2010/01/14 12:06:13 wiz Exp $
+# $NetBSD: mi,v 1.60 2010/01/24 21:12:17 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -147,6 +147,8 @@
 ./usr/libdata/debug/usr/tests/kernel/t_writev.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/lib					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc					tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/hash				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/hash/t_sha2.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_mi_vector_hash.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string				tests-lib-debug
@@ -926,6 +928,9 @@
 ./usr/tests/lib/Atffile				tests-lib-tests		atf
 ./usr/tests/lib/libc				tests-lib-tests
 ./usr/tests/lib/libc/Atffile			tests-lib-tests		atf
+./usr/tests/lib/libc/hash			tests-lib-tests
+./usr/tests/lib/libc/hash/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/hash/t_sha2		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib			tests-lib-tests
 ./usr/tests/lib/libc/stdlib/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_mi_vector_hash	tests-lib-tests		atf
