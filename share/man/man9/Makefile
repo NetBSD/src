@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.310 2010/01/25 07:51:17 jruoho Exp $
+#       $NetBSD: Makefile,v 1.311 2010/01/25 16:16:33 jruoho Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -48,8 +48,9 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	secmodel_suser.9 setjmp.9 shutdownhook_establish.9 \
 	signal.9 sockopt.9 softintr.9 spl.9 splraiseipl.9 \
 	store.9 suspendsched.9 \
-	sysctl.9 sysmon_envsys.9 tc.9 tcp_congctl.9 timecounter.9 \
-	time_second.9 todr.9 tvtohz.9 uiomove.9 ucom.9 userret.9 \
+	sysctl.9 sysmon_envsys.9 sysmon_taskq.9 tc.9 tcp_congctl.9 \
+	timecounter.9 time_second.9 todr.9 tvtohz.9 \
+	uiomove.9 ucom.9 userret.9 \
 	vattr.9 veriexec.9 vcons.9 vfs.9 vfs_hooks.9 vfsops.9 vfssubr.9 \
 	video.9 vme.9 \
 	vnfileops.9 vnode.9 vnodeops.9 vnsubr.9 \
@@ -658,6 +659,7 @@ MLINKS+=sysmon_envsys.9 sysmon_envsys_create.9 \
 	sysmon_envsys.9 sysmon_envsys_unregister.9 \
 	sysmon_envsys.9 sysmon_envsys_sensor_attach.9 \
 	sysmon_envsys.9 sysmon_envsys_sensor_detach.9
+MLINKS+=sysmon_taskq.9 sysmon_task_queue_sched.9
 MLINKS+=time_second.9 boottime.9 time_second.9 time_uptime.9
 MLINKS+=timecounter.9 tc_init.9
 MLINKS+=tc.9 tc_intr_establish.9 \
