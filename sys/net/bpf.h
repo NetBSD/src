@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.52 2010/01/19 22:08:00 pooka Exp $	*/
+/*	$NetBSD: bpf.h,v 1.53 2010/01/25 22:18:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -275,6 +275,9 @@ struct bpf_ops {
 };
 extern struct bpf_ops *bpf_ops;
 void     bpf_setops(void);
+
+void     bpf_ops_handover_enter(struct bpf_ops *);
+void     bpf_ops_handover_exit(void);
 
 void	 bpfilterattach(int);
 
