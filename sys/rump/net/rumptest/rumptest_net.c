@@ -1,4 +1,4 @@
-/*	$NetBSD: rumptest_net.c,v 1.15 2010/01/19 17:51:03 pooka Exp $	*/
+/*	$NetBSD: rumptest_net.c,v 1.16 2010/01/25 22:25:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,6 +29,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/module.h>
 #include <sys/mbuf.h>
 #include <sys/time.h>
 #include <sys/sockio.h>
@@ -189,12 +190,37 @@ dobpfread(void)
 	struct bpf_hdr *bhdr;
 	void *buf;
 	struct ifreq ifr;
-	int bpfd;
+	int bpfd, modfd;
 	u_int bpflen, x;
 
 	bpfd = rump_sys_open("/dev/bpf", O_RDWR);
-	if (bpfd == -1)
-		err(1, "bpf open");
+
+	/* fail?  try to load kernel module */
+	if (bpfd == -1) {
+		modctl_load_t ml;
+
+		/* XXX: struct stat size */
+		modfd = open("./bpf.kmod", O_RDONLY);
+		if (modfd == -1)
+			err(1, "no bpf, no bpf kmod");
+		close(modfd);
+
+		rump_pub_etfs_register("/bpf.kmod",
+		    "./bpf.kmod", RUMP_ETFS_REG);
+		ml.ml_filename = "/bpf.kmod";
+		ml.ml_flags = 0;
+		ml.ml_props = NULL;
+		ml.ml_propslen = 0;
+
+		if (rump_sys_modctl(MODCTL_LOAD, &ml) == -1)
+			err(1, "load bpf module");
+		/* XXX: I "know" it's 256 XXX */
+		rump_sys_mknod("/dev/bpf", 0777 | S_IFCHR, makedev(256,0));
+
+		bpfd = rump_sys_open("/dev/bpf", O_RDWR);
+		if (bpfd == -1)
+			err(1, "open bpf");
+	}
 
 	if (rump_sys_ioctl(bpfd, BIOCGBLEN, &bpflen) == -1)
 		err(1, "BIOCGBLEN");
