@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.8 2009/12/01 09:50:51 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.9 2010/01/25 18:37:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.8 2009/12/01 09:50:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.9 2010/01/25 18:37:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -87,6 +87,7 @@ rump_scheduler_init()
 		rump_cpu_bootstrap(ci);
 		ci->ci_schedstate.spc_mutex =
 		    mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+		ci->ci_schedstate.spc_flags = SPCF_RUNNING;
 		rcpu->rcpu_ci = ci;
 		LIST_INSERT_HEAD(&cpu_freelist, rcpu, rcpu_entries);
 		rcpu->rcpu_flags = RCPU_FREELIST;
