@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.153 2010/01/19 22:08:00 pooka Exp $	*/
+/*	$NetBSD: bpf.c,v 1.154 2010/01/25 22:18:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.153 2010/01/19 22:08:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.154 2010/01/25 22:18:17 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.153 2010/01/19 22:08:00 pooka Exp $");
 #include <sys/vnode.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/module.h>
+#include <sys/once.h>
 
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -359,13 +361,8 @@ bpf_detachd(struct bpf_d *d)
 	d->bd_bif = 0;
 }
 
-
-/*
- * bpfilterattach() is called at boot time.
- */
-/* ARGSUSED */
-void
-bpfilterattach(int n)
+static int
+doinit(void)
 {
 
 	mutex_init(&bpf_mtx, MUTEX_DEFAULT, IPL_NONE);
@@ -375,6 +372,20 @@ bpfilterattach(int n)
 	bpf_gstats.bs_recv = 0;
 	bpf_gstats.bs_drop = 0;
 	bpf_gstats.bs_capt = 0;
+
+	return 0;
+}
+
+/*
+ * bpfilterattach() is called at boot time.
+ */
+/* ARGSUSED */
+void
+bpfilterattach(int n)
+{
+	static ONCE_DECL(control);
+
+	RUN_ONCE(&control, doinit);
 }
 
 /*
@@ -1910,9 +1921,43 @@ struct bpf_ops bpf_ops_kernel = {
 	.bpf_mtap_sl_out =	bpf_mtap_sl_out,
 };
 
-void
-bpf_setops()
-{
+MODULE(MODULE_CLASS_DRIVER, bpf, NULL);
 
-	bpf_ops = &bpf_ops_kernel;
+static int
+bpf_modcmd(modcmd_t cmd, void *arg)
+{
+	devmajor_t bmajor, cmajor;
+	int error;
+
+	bmajor = cmajor = NODEVMAJOR;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		bpfilterattach(0);
+		error = devsw_attach("bpf", NULL, &bmajor,
+		    &bpf_cdevsw, &cmajor);
+		if (error == EEXIST)
+			error = 0; /* maybe built-in ... improve eventually */
+		if (error)
+			break;
+
+		bpf_ops_handover_enter(&bpf_ops_kernel);
+		atomic_swap_ptr(&bpf_ops, &bpf_ops_kernel);
+		bpf_ops_handover_exit();
+		break;
+
+	case MODULE_CMD_FINI:
+		/*
+		 * bpf_ops is not (yet) referenced in the callers before
+		 * attach.  maybe other issues too.  "safety first".
+		 */
+		error = EOPNOTSUPP;
+		break;
+
+	default:
+		error = ENOTTY;
+		break;
+	}
+
+	return error;
 }
