@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2010/01/05 20:49:04 dyoung Exp $
+#	$NetBSD: Makefile,v 1.38 2010/01/25 22:21:28 pooka Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,7 @@ SUBDIR=		accf_dataready
 SUBDIR+=	accf_httpready
 SUBDIR+=	adosfs
 SUBDIR+=	aio
+SUBDIR+=	bpf
 SUBDIR+=	cd9660
 SUBDIR+=	coda
 SUBDIR+=	coda5
