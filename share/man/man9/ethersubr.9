@@ -1,4 +1,4 @@
-.\"	$NetBSD: ethersubr.9,v 1.19 2009/03/09 17:17:02 joerg Exp $
+.\"	$NetBSD: ethersubr.9,v 1.20 2010/01/25 19:58:46 jruoho Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -84,7 +84,7 @@ Note that you also need the
 .Xr arp 9
 stuff to support IPv4 on your hardware.
 .Bl -tag -width compact
-.It Fn ether_ifattach
+.It Fn ether_ifattach "ifp" "lla"
 Perform the device-independent, but Ethernet-specific initialization of
 the interface pointed to by
 .Fa ifp .
@@ -96,10 +96,10 @@ pointed to by
 there.
 .Pp
 You must call this function from the driver's attach function.
-.It Fn fddi_ifattach
+.It Fn fddi_ifattach "ifp" "lla"
 corresponding function for FDDI devices.
-.It Fn ether_addmulti
-.It Fn ether_delmulti
+.It Fn ether_addmulti "sa" "ec"
+.It Fn ether_delmulti "sa" "ec"
 Add
 .Pq Fn ether_addmulti
 or delete
@@ -145,15 +145,15 @@ returns, in addition to the above errors,
 .Er ENXIO
 if the specified address
 can't be found in the list of multicast addresses.
-.It Fn fddi_addmulti
-.It Fn fddi_delmulti
+.It Fn fddi_addmulti "sa" "ec"
+.It Fn fddi_delmulti "sa" "ec"
 corresponding functions for FDDI devices.
-.It Fn ETHER_NEXT_MULTI
+.It Fn ETHER_NEXT_MULTI "step" "enm"
 is a macro to step through all of the ether_multi records, one at a time.
 The current position is remembered in
 .Fa step ,
 which the caller must provide.
-.It Fn ETHER_FIRST_MULTI
+.It Fn ETHER_FIRST_MULTI "step" "ec" "enm"
 must be called to initialize
 .Fa step
 and get the first record.
@@ -161,7 +161,7 @@ Both macros return a
 .Dv NULL
 .Fa enm
 when there are no remaining records.
-.It Fn ETHER_IS_MULTICAST
+.It Fn ETHER_IS_MULTICAST "addr"
 returns 1, if
 .Fa addr
 points to an Ethernet/FDDI multicast (or broadcast) address.
