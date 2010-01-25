@@ -1,4 +1,4 @@
-.\"	$NetBSD: dmover.9,v 1.13 2009/05/04 19:41:09 wiz Exp $
+.\"	$NetBSD: dmover.9,v 1.14 2010/01/25 19:34:37 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -263,8 +263,7 @@ array, is specified by the algorithm description for the session.
 .Ss CLIENT INTERFACE
 The following functions are provided to the client:
 .Bl -tag -width "XXXX"
-.It int Fn dmover_session_create "const char *function" \
-    "struct dmover_session **sessionp"
+.It Fn dmover_session_create "function" "sessionp"
 .Pp
 The
 .Fn dmover_session_create
@@ -272,7 +271,7 @@ function creates a data mover session for the specified data movement
 function
 .Fa function .
 A handle to the new session is returned in
-.Fa *sessionp .
+.Fa sessionp .
 .Pp
 The following are valid data movement function names:
 .Bl -tag -width "fill8xx"
@@ -350,14 +349,13 @@ errors:
 .Dq xor8
 .Pq Va dmover_funcname_xor8
 .El
-.It void Fn dmover_session_destroy "struct dmover_session *session"
+.It Fn dmover_session_destroy "session"
 .Pp
 The
 .Fn dmover_session_destroy
 function tears down a data mover session and releases all resources
 associated with it.
-.It struct dmover_request * Fn dmover_request_alloc \
-    "struct dmover_session *session" "dmover_buffer *inbuf"
+.It Fn dmover_request_alloc "session" "inbuf"
 .Pp
 The
 .Fn dmover_request_alloc
@@ -385,7 +383,7 @@ If the request structure or input buffer descriptors cannot be allocated,
 return
 .Dv NULL
 to indicate failure.
-.It void Fn dmover_request_free "struct dmover_request *req"
+.It Fn dmover_request_free "req"
 .Pp
 The
 .Fn dmover_request_free
@@ -400,7 +398,7 @@ associated with
 were allocated by
 .Fn dmover_request_alloc ,
 then the input buffer descriptors will also be freed.
-.It void Fn dmover_process "struct dmover_request *req"
+.It Fn dmover_process "req"
 .Pp
 The
 .Fn dmover_process
@@ -520,7 +518,7 @@ should be registered at IPL_VM.
 .Pp
 The following functions are provided to the back-ends:
 .Bl -tag -width "XXXX"
-.It void Fn dmover_backend_register "struct dmover_backend *backend"
+.It Fn dmover_backend_register "backend"
 .Pp
 The
 .Fn dmover_backend_register
@@ -529,7 +527,7 @@ function registers the back-end
 with the
 .Nm dmover
 facility.
-.It void Fn dmover_backend_unregister "struct dmover_backend *backend"
+.It Fn dmover_backend_unregister "backend"
 .Pp
 The
 .Fn dmover_backend_unregister
@@ -539,7 +537,7 @@ from the
 .Nm dmover
 facility.
 The back-end must already be registered.
-.It void Fn dmover_done "struct dmover_request *req"
+.It Fn dmover_done "req"
 .Pp
 The
 .Fn dmover_done
