@@ -1,4 +1,4 @@
-.\" $NetBSD: acpidalb.4,v 1.3 2010/01/25 09:33:29 jruoho Exp $
+.\" $NetBSD: acpidalb.4,v 1.4 2010/01/25 10:05:14 jruoho Exp $
 .\"
 .\" Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
 .\" All rights reserved.
@@ -31,33 +31,23 @@
 .Nm acpidalb
 .Nd Direct Application Launch Buttons
 .Sh SYNOPSIS
-.Cd "acpidalb* at acpi?"
+.Cd "acpidalb*    at acpi?"
 .Sh DESCRIPTION
-This driver provides support for
-.Tn PNP0C32
-.Tn ACPI
-hotkeys a.k.a.
+This driver provides support for PNP0C32 ACPI hotkeys aka
 .Dq The Direct Application Launch Buttons .
 .Pp
 These are recognized on startup from system-wake or at runtime.
 Behaviour may differ from the standard specification in relation
 to the ACPI implementation.
 .Pp
-The hotkeys are reported to the power management daemon as
+The hotkeys are reported to the power daemon as
 .Dv hotkey_button .
 .Sh SEE ALSO
 .Xr acpi 4 ,
 .Xr powerd 8
-.Pp
-The
-.Tn PNP0C32
-specification is described in:
-.Rs
-.%A Microsoft Corporation
-.%D October 26, 2006
-.%T Direct Application Launch from System Startup on Windows Vista
-.%U http://www.microsoft.com/whdc/system/vista/DirAppLaunch.mspx
-.Re
+.Sh STANDARDS
+This drivers conforms to the PNP0C32 specification provided at
+.Lk http://www.microsoft.com/whdc/system/vista/DirAppLaunch.mspx
 .Sh HISTORY
 The
 .Nm
