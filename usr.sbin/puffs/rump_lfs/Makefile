@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2009/11/05 14:17:07 pooka Exp $
+#	$NetBSD: Makefile,v 1.8 2010/01/25 15:55:36 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -9,6 +9,7 @@ LDADD+=		-lrumpfs_ffs
 DPADD+=		${LIBRUMPFS_FFS}
 
 ISRUMP=		# don't deny it
+RUMP_DISKFS=
 
 CPPFLAGS+=	-DUSE_RUMP -DLFS_CLEANER_AS_LIB
 

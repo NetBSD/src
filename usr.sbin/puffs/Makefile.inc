@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2009/11/05 11:41:43 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2010/01/25 15:55:36 pooka Exp $
 
 WARNS?=	4
 
@@ -37,6 +37,11 @@ LDADD+=		-lrumpfs_${MOUNTNAME}
 
 .PATH:		${MOUNT} ${MOUNTDIR}/mount_${MOUNTNAME}
 .endif # MOUNTNAME
+
+# disk components for disk-based file systems
+.if RUMP_DISKFS
+LDADD+=		-lrumpdev_disk -lrumpdev
+.endif
 
 LDADD+=		-lp2k -lukfs -lrumpvfs -lrump -lrumpuser -lpuffs -lutil
 LDADD+=		-lpthread
