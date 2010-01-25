@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.76 2009/06/29 05:08:17 dholland Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.77 2010/01/25 15:30:44 mlelstv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.76 2009/06/29 05:08:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.77 2010/01/25 15:30:44 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -501,6 +501,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 		psize = dpart.part->p_size;
 	} else {
 		struct dkwedge_info dkw;
+		struct disk *pdk;
 		error = VOP_IOCTL(devvp, DIOCGWEDGEINFO, &dkw, FREAD, NOCRED);
 		secsize = 512;	/* XXX */
 		dtype = DTYPE_FLOPPY; /* XXX */
@@ -513,6 +514,12 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 				goto error_exit;
 			}
 		} else {
+			pdk = disk_find(dkw.dkw_parent);
+			if (pdk == NULL) {
+				error = ENODEV;
+				goto error_exit;
+			}
+			secsize = DEV_BSIZE << pdk->dk_blkshift;
 			fstype = strcmp(dkw.dkw_ptype, DKW_PTYPE_FAT) == 0 ?
 			    FS_MSDOS : -1;
 			psize = dkw.dkw_size;
