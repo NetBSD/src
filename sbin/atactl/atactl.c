@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.55 2009/06/08 23:26:13 jakllsch Exp $	*/
+/*	$NetBSD: atactl.c,v 1.56 2010/01/25 01:24:11 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.55 2009/06/08 23:26:13 jakllsch Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.56 2010/01/25 01:24:11 jakllsch Exp $");
 #endif
 
 
@@ -762,7 +762,7 @@ getataparams()
 
 	req.flags = ATACMD_READ;
 	req.command = WDCC_IDENTIFY;
-	req.databuf = (caddr_t)&inbuf;
+	req.databuf = &inbuf;
 	req.datalen = sizeof(inbuf);
 	req.timeout = 1000;
 
@@ -859,14 +859,28 @@ device_identify(int argc, char *argv[])
 	char model[sizeof(inqbuf->atap_model)+1];
 	char revision[sizeof(inqbuf->atap_revision)+1];
 	char serial[sizeof(inqbuf->atap_serial)+1];
+	char hnum[12];
 	uint64_t capacity;
+	uint64_t sectors;
+	uint32_t secsize;
+	int lb_per_pb;
 	int needswap = 0;
+	int i;
+	uint8_t checksum;
 
 	/* No arguments. */
 	if (argc != 0)
 		usage();
 
 	inqbuf = getataparams();
+
+	if ((inqbuf->atap_integrity & WDC_INTEGRITY_MAGIC_MASK) ==
+	    WDC_INTEGRITY_MAGIC) {
+		for (i = checksum = 0; i < 512; i++)
+			checksum += ((uint8_t *)inqbuf)[i];
+		if (checksum != 0)
+			puts("IDENTIFY DEVICE data checksum invalid\n");
+	}
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	/*
@@ -912,32 +926,63 @@ device_identify(int argc, char *argv[])
 	       "ATAPI" : "ATA", inqbuf->atap_config & ATA_CFG_FIXED ? "fixed" :
 	       "removable");
 
-	capacity = 0;
-
 	if (inqbuf->atap_cmd2_en != 0 && inqbuf->atap_cmd2_en != 0xffff &&
 	    inqbuf->atap_cmd2_en & ATA_CMD2_LBA48) {
-		capacity =
+		sectors =
 		    ((uint64_t)inqbuf->atap_max_lba[3] << 48) |
 		    ((uint64_t)inqbuf->atap_max_lba[2] << 32) |
 		    ((uint64_t)inqbuf->atap_max_lba[1] << 16) |
 		    ((uint64_t)inqbuf->atap_max_lba[0] <<  0);
 	} else if (inqbuf->atap_capabilities1 & WDC_CAP_LBA) {
-		capacity = (inqbuf->atap_capacity[1] << 16) |
+		sectors = (inqbuf->atap_capacity[1] << 16) |
 		    inqbuf->atap_capacity[0];
+	} else {
+		sectors = inqbuf->atap_cylinders *
+		    inqbuf->atap_heads * inqbuf->atap_sectors;
 	}
-	if ((inqbuf->atap_config & WDC_CFG_ATAPI_MASK) != WDC_CFG_ATAPI) {
-		if (capacity == 0)
-			capacity = inqbuf->atap_cylinders *
-			    inqbuf->atap_heads * inqbuf->atap_sectors;
-		printf("Cylinders: %d, heads: %d, sec/track: %d, total "
-		       "sectors: %" PRIu64 "\n", inqbuf->atap_cylinders,
-		       inqbuf->atap_heads, inqbuf->atap_sectors, capacity);
+
+	secsize = 512;
+
+	if ((inqbuf->atap_secsz & ATA_SECSZ_VALID_MASK) == ATA_SECSZ_VALID) {
+		if (inqbuf->atap_secsz & ATA_SECSZ_LLS) {
+			secsize = 2 *		/* words to bytes */
+			    (inqbuf->atap_lls_secsz[1] << 16 |
+			    inqbuf->atap_lls_secsz[0] <<  0);
+		}
+	}
+
+	capacity = sectors * secsize;
+
+	humanize_number(hnum, sizeof(hnum), capacity, "bytes",
+		HN_AUTOSCALE, HN_DIVISOR_1000);
+
+	printf("Capacity %s, %" PRIu64 " sectors, %" PRIu32 " bytes/sector\n", 
+		       hnum, sectors, secsize);
+
+	printf("Cylinders: %d, heads: %d, sec/track: %d\n",
+		inqbuf->atap_cylinders, inqbuf->atap_heads,
+		inqbuf->atap_sectors);
+	
+	lb_per_pb = 1;
+
+	if ((inqbuf->atap_secsz & ATA_SECSZ_VALID_MASK) == ATA_SECSZ_VALID) {
+		if (inqbuf->atap_secsz & ATA_SECSZ_LPS) {
+			lb_per_pb <<= inqbuf->atap_secsz & ATA_SECSZ_LPS_SZMSK;
+			printf("Physical sector size: %d bytes\n",
+			    lb_per_pb * secsize);
+			if ((inqbuf->atap_logical_align &
+			    ATA_LA_VALID_MASK) == ATA_LA_VALID) {
+				printf("First physically aligned sector: %d\n",
+				    lb_per_pb - (inqbuf->atap_logical_align &
+					ATA_LA_MASK));
+			}
+		}
 	}
 
 	if (((inqbuf->atap_sata_caps & SATA_NATIVE_CMDQ) ||
 	    (inqbuf->atap_cmd_set2 & ATA_CMD2_RWQ)) &&
 	    (inqbuf->atap_queuedepth & WDC_QUEUE_DEPTH_MASK))
-		printf("Device supports command queue depth of %d\n",
+		printf("Command queue depth: %d\n",
 		    (inqbuf->atap_queuedepth & WDC_QUEUE_DEPTH_MASK) + 1);
 
 	printf("Device capabilities:\n");
