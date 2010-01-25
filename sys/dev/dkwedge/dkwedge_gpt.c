@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_gpt.c,v 1.10 2008/10/23 19:37:40 jakllsch Exp $	*/
+/*	$NetBSD: dkwedge_gpt.c,v 1.11 2010/01/25 14:51:03 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.10 2008/10/23 19:37:40 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.11 2010/01/25 14:51:03 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,6 +130,7 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 	static const char gpt_hdr_sig[] = GPT_HDR_SIG;
 	struct dkwedge_info dkw;
 	void *buf;
+	uint32_t secsize;
 	struct gpt_hdr *hdr;
 	struct gpt_ent *ent;
 	uint32_t entries, entsz;
@@ -138,7 +139,8 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 	int error;
 	u_int i;
 
-	buf = malloc(DEV_BSIZE, M_DEVBUF, M_WAITOK);
+	secsize = DEV_BSIZE << pdk->dk_blkshift;
+	buf = malloc(secsize, M_DEVBUF, M_WAITOK);
 
 	/*
 	 * Note: We don't bother with a Legacy or Protective MBR
@@ -147,7 +149,7 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 	 */
 
 	/* Read in the GPT Header. */
-	error = dkwedge_read(pdk, vp, GPT_HDR_BLKNO, buf, DEV_BSIZE);
+	error = dkwedge_read(pdk, vp, GPT_HDR_BLKNO << pdk->dk_blkshift, buf, secsize);
 	if (error)
 		goto out;
 	hdr = buf;
@@ -163,7 +165,7 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 		error = ESRCH;
 		goto out;
 	}
-	if (le32toh(hdr->hdr_size) > DEV_BSIZE) {
+	if (le32toh(hdr->hdr_size) > secsize) {
 		/* XXX Should check at end-of-disk. */
 		error = ESRCH;
 		goto out;
@@ -212,9 +214,9 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 	}
 
 	free(buf, M_DEVBUF);
-	buf = malloc(roundup(entries * entsz, DEV_BSIZE), M_DEVBUF, M_WAITOK);
-	error = dkwedge_read(pdk, vp, lba_table, buf,
-			     roundup(entries * entsz, DEV_BSIZE));
+	buf = malloc(roundup(entries * entsz, secsize), M_DEVBUF, M_WAITOK);
+	error = dkwedge_read(pdk, vp, lba_table << pdk->dk_blkshift, buf,
+			     roundup(entries * entsz, secsize));
 	if (error) {
 		/* XXX Should check alternate location. */
 		aprint_error("%s: unable to read GPT partition array, "

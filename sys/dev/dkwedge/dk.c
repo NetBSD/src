@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.53 2010/01/23 18:31:04 bouyer Exp $	*/
+/*	$NetBSD: dk.c,v 1.54 2010/01/25 14:51:03 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.53 2010/01/23 18:31:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.54 2010/01/25 14:51:03 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1098,6 +1098,7 @@ static void
 dkstrategy(struct buf *bp)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(bp->b_dev);
+	uint64_t p_size, p_offset;
 	int s;
 
 	if (sc->sc_state != DKW_STATE_RUNNING) {
@@ -1109,12 +1110,15 @@ dkstrategy(struct buf *bp)
 	if (bp->b_bcount == 0)
 		goto done;
 
+	p_offset = sc->sc_offset << sc->sc_parent->dk_blkshift;
+	p_size   = sc->sc_size << sc->sc_parent->dk_blkshift;
+
 	/* Make sure it's in-range. */
-	if (bounds_check_with_mediasize(bp, DEV_BSIZE, sc->sc_size) <= 0)
+	if (bounds_check_with_mediasize(bp, DEV_BSIZE, p_size) <= 0)
 		goto done;
 
 	/* Translate it to the parent's raw LBA. */
-	bp->b_rawblkno = bp->b_blkno + sc->sc_offset;
+	bp->b_rawblkno = bp->b_blkno + p_offset;
 
 	/* Place it in the queue and start I/O on the unit. */
 	s = splbio();
