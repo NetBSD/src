@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.614 2009/12/14 05:25:21 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.615 2010/01/25 00:43:00 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -81,7 +81,7 @@ PRINTOBJDIR=	echo # prevent infinite recursion
 # and setting _SRC_TOP_ to the result.
 #
 .if !defined(_SRC_TOP_)			# {
-_SRC_TOP_!= cd ${.CURDIR}; while :; do \
+_SRC_TOP_!= cd "${.CURDIR}"; while :; do \
 		here=`pwd`; \
 		[ -f build.sh  ] && [ -d tools ] && { echo $$here; break; }; \
 		case $$here in /) echo ""; break;; esac; \
@@ -100,7 +100,7 @@ _SRC_TOP_!= cd ${.CURDIR}; while :; do \
 NETBSDSRCDIR?=	${_SRC_TOP_}
 
 .if !defined(_SRC_TOP_OBJ_)
-_SRC_TOP_OBJ_!=		cd ${_SRC_TOP_} && ${PRINTOBJDIR}
+_SRC_TOP_OBJ_!=		cd "${_SRC_TOP_}" && ${PRINTOBJDIR}
 .MAKEOVERRIDES+=	_SRC_TOP_OBJ_
 .endif
 
@@ -612,7 +612,7 @@ distclean:	cleandir
 cleandir:	clean
 
 dependall:	.NOTMAIN realdepend .MAKE
-	@cd ${.CURDIR}; ${MAKE} realall
+	@cd "${.CURDIR}"; ${MAKE} realall
 .endif
 
 #
@@ -860,7 +860,7 @@ ${var}?= yes
 #
 .if !defined(X11SRCDIR)
 .if exists(${NETBSDSRCDIR}/../xsrc)
-X11SRCDIR!=		cd ${NETBSDSRCDIR}/../xsrc && pwd
+X11SRCDIR!=		cd "${NETBSDSRCDIR}/../xsrc" && pwd
 .else
 X11SRCDIR=		/usr/xsrc
 .endif
@@ -955,7 +955,7 @@ X11LOADABLE?=			yes
 #
 .if !defined(EXTSRCSRCDIR)
 .if exists(${NETBSDSRCDIR}/../extsrc)
-EXTSRCSRCDIR!=		cd ${NETBSDSRCDIR}/../extsrc && pwd
+EXTSRCSRCDIR!=		cd "${NETBSDSRCDIR}/../extsrc" && pwd
 .else
 EXTSRCSRCDIR=		/usr/extsrc
 .endif
