@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1374 2010/01/24 21:19:53 joerg Exp $
+#	$NetBSD: mi,v 1.1375 2010/01/25 07:57:05 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8304,6 +8304,7 @@
 ./usr/share/man/cat9/Cardbus_make_tag.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/Cardbus_mapreg_map.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/Cardbus_mapreg_unmap.0	comp-sys-catman		.cat
+./usr/share/man/cat9/CTASSERT.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/DELAY.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ETHER_FIRST_MULTI.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/ETHER_IS_MULTICAST.0	comp-sys-catman		.cat
@@ -13886,6 +13887,7 @@
 ./usr/share/man/html9/Cardbus_make_tag.html	comp-sys-htmlman	html
 ./usr/share/man/html9/Cardbus_mapreg_map.html	comp-sys-htmlman	html
 ./usr/share/man/html9/Cardbus_mapreg_unmap.html	comp-sys-htmlman	html
+./usr/share/man/html9/CTASSERT.html		comp-sys-htmlman	html
 ./usr/share/man/html9/DELAY.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ETHER_FIRST_MULTI.html	comp-sys-htmlman	html
 ./usr/share/man/html9/ETHER_IS_MULTICAST.html	comp-sys-htmlman	html
@@ -19555,6 +19557,7 @@
 ./usr/share/man/man9/Cardbus_make_tag.9		comp-sys-man		.man
 ./usr/share/man/man9/Cardbus_mapreg_map.9	comp-sys-man		.man
 ./usr/share/man/man9/Cardbus_mapreg_unmap.9	comp-sys-man		.man
+./usr/share/man/man9/CTASSERT.9			comp-sys-man		.man
 ./usr/share/man/man9/DELAY.9			comp-sys-man		.man
 ./usr/share/man/man9/ETHER_FIRST_MULTI.9	comp-sys-man		.man
 ./usr/share/man/man9/ETHER_IS_MULTICAST.9	comp-sys-man		.man
