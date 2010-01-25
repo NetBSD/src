@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.302 2009/12/30 12:34:13 abs Exp $
+#	$NetBSD: bsd.lib.mk,v 1.303 2010/01/25 00:43:00 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -52,7 +52,7 @@ AFLAGS+=        ${PIE_AFLAGS}
 .if defined(LIBDPLIBS) && ${MKPIC} != "no"				# {
 .for _lib _dir in ${LIBDPLIBS}
 .if !defined(LIBDO.${_lib})
-LIBDO.${_lib}!=	cd ${_dir} && ${PRINTOBJDIR}
+LIBDO.${_lib}!=	cd "${_dir}" && ${PRINTOBJDIR}
 .MAKEOVERRIDES+=LIBDO.${_lib}
 .endif
 LDADD+=		-L${LIBDO.${_lib}} -l${_lib}
@@ -84,7 +84,7 @@ DPADD+=	${SHLIB_VERSION_FILE}
 .if !defined(NOCHECKVER) && !defined(NOCHECKVER_${LIB}) && \
 	exists(${NETBSDSRCDIR}/lib/checkver)
 checkver:
-	@(cd ${.CURDIR} && \
+	@(cd "${.CURDIR}" && \
 	    HOST_SH=${HOST_SH:Q} AWK=${TOOL_AWK:Q} \
 	    ${HOST_SH} ${NETBSDSRCDIR}/lib/checkver -v ${SHLIB_VERSION_FILE} \
 		    -d ${DESTDIR}${_LIBSODIR} ${LIB})

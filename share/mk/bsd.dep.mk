@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.68 2008/10/25 22:27:36 apb Exp $
+#	$NetBSD: bsd.dep.mk,v 1.69 2010/01/25 00:43:00 christos Exp $
 
 ##### Basic targets
 cleandir:	cleandepend
@@ -74,7 +74,7 @@ cleandepend: .PHONY
 .if !target(tags)
 tags: ${SRCS}
 .if defined(SRCS)
-	-cd ${.CURDIR}; ctags -f /dev/stdout ${.ALLSRC:N*.h} | \
+	-cd "${.CURDIR}"; ctags -f /dev/stdout ${.ALLSRC:N*.h} | \
 	    ${TOOL_SED} "s;\${.CURDIR}/;;" > tags
 .endif
 .endif
