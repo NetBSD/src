@@ -1,4 +1,4 @@
-.\"	$NetBSD: ethersubr.9,v 1.20 2010/01/25 19:58:46 jruoho Exp $
+.\"	$NetBSD: ethersubr.9,v 1.21 2010/01/25 20:09:15 jruoho Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,9 +95,9 @@ pointed to by
 .Fa lla
 there.
 .Pp
-You must call this function from the driver's attach function.
+This function must be called from the driver's attach function.
 .It Fn fddi_ifattach "ifp" "lla"
-corresponding function for FDDI devices.
+Corresponding function for FDDI devices.
 .It Fn ether_addmulti "sa" "ec"
 .It Fn ether_delmulti "sa" "ec"
 Add
@@ -115,7 +115,7 @@ handle
 and
 .Dv SIOCDELMULTI
 requests.
-If they return
+If these return
 .Er ENETRESET ,
 the hardware multicast filter must be reinitialized.
 .Pp
@@ -129,6 +129,7 @@ In the latter case,
 is mapped to a range describing all the Ethernet address
 space reserved for IPv4 multicast addresses.
 .Pp
+The
 .Fn ether_addmulti
 returns
 .Er EAFNOSUPPORT
@@ -140,6 +141,7 @@ if
 the multicast list really changed and the driver should synchronize
 its hardware filter with it.
 .Pp
+The
 .Fn ether_delmulti
 returns, in addition to the above errors,
 .Er ENXIO
@@ -147,14 +149,16 @@ if the specified address
 can't be found in the list of multicast addresses.
 .It Fn fddi_addmulti "sa" "ec"
 .It Fn fddi_delmulti "sa" "ec"
-corresponding functions for FDDI devices.
+Corresponding functions for FDDI devices.
 .It Fn ETHER_NEXT_MULTI "step" "enm"
-is a macro to step through all of the ether_multi records, one at a time.
+A macro to step through all of the
+.Em ether_multi
+records, one at a time.
 The current position is remembered in
 .Fa step ,
 which the caller must provide.
 .It Fn ETHER_FIRST_MULTI "step" "ec" "enm"
-must be called to initialize
+A macro that must be called to initialize
 .Fa step
 and get the first record.
 Both macros return a
@@ -162,10 +166,9 @@ Both macros return a
 .Fa enm
 when there are no remaining records.
 .It Fn ETHER_IS_MULTICAST "addr"
-returns 1, if
+A macro that returns 1, if
 .Fa addr
 points to an Ethernet/FDDI multicast (or broadcast) address.
-Implemented as a macro.
 .El
 .Sh SEE ALSO
 .Xr arp 9
