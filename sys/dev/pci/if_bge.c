@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.175 2010/01/24 23:27:39 martin Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.176 2010/01/25 10:25:30 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.175 2010/01/24 23:27:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.176 2010/01/25 10:25:30 martin Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -2365,7 +2365,6 @@ bge_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t		memaddr;
 	bus_size_t		memsize;
 	uint32_t		pm_ctl;
-	prop_data_t		eaddrprop;
 	bool			no_seeprom;
 
 	bp = bge_lookup(pa);
@@ -2636,17 +2635,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/*
-	 * Get station address from the EEPROM (or use firmware values
-	 * if provided via device properties)
+	 * Get station address from the EEPROM
 	 */
-	eaddrprop = prop_dictionary_get(device_properties(self), "mac-address");
-
-	if (eaddrprop != NULL && prop_data_size(eaddrprop) == ETHER_ADDR_LEN) {
-		memcpy(eaddr, prop_data_data_nocopy(eaddrprop),
-			    ETHER_ADDR_LEN);
-		goto got_eaddr;
-	}
-
 	if (bge_get_eaddr(sc, eaddr)) {
 		aprint_error_dev(sc->bge_dev, 
 		"failed to read station address\n");
@@ -2654,7 +2644,6 @@ bge_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-got_eaddr:
 	br = bge_lookup_rev(sc->bge_chipid);
 
 	if (br == NULL) {
