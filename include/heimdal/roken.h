@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: roken.h,v 1.13 2010/01/24 16:45:57 christos Exp $ */
+/* $Id: roken.h,v 1.14 2010/01/25 00:26:04 christos Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,23 +78,6 @@
 ROKEN_CPP_START
 
 #define rk_UNCONST(x) ((void *)(uintptr_t)(const void *)(x))
-
-
-
-
-
-
-
-
-
-
-int ROKEN_LIB_FUNCTION
-    asnprintf (char **, size_t, const char *, ...)
-     __attribute__ ((format (printf, 3, 4)));
-
-int ROKEN_LIB_FUNCTION
-    vasnprintf (char **, size_t, const char *, va_list)
-     __attribute__((format (printf, 3, 0)));
 
 
 
