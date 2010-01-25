@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.48 2007/12/11 14:06:04 lukem Exp $
+#	$NetBSD: bsd.obj.mk,v 1.49 2010/01/25 00:43:00 christos Exp $
 
 .if !defined(_BSD_OBJ_MK_)
 _BSD_OBJ_MK_=1
@@ -52,7 +52,7 @@ __need_objdir_target=yes
 # In case .CURDIR has been twiddled by a .mk file and is now relative,
 # make it absolute again.
 .if ${__curdir:M/*} == ""
-__curdir!=	cd ${__curdir} && ${PAWD}
+__curdir!=	cd "${__curdir}" && ${PAWD}
 .endif
 
 __objdir:=	${__objdir}.${HOST_OSTYPE}
@@ -66,7 +66,7 @@ __need_objdir_target=yes
 .endif
 
 obj:
-	@cd ${__curdir}; \
+	@cd "${__curdir}"; \
 	here=`${PAWD}`/; subdir=$${here#${BSDSRCDIR}/}; \
 	if [ "$$here" != "$$subdir" ]; then \
 		if [ ! -d ${__usrobjdir} ]; then \
