@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.37 2010/01/22 01:22:00 jakllsch Exp $	*/
+/*	$NetBSD: atareg.h,v 1.38 2010/01/25 00:39:51 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -435,9 +435,18 @@ struct ataparams {
     uint16_t	atap_apm_val;		/* 91: current APM value */
     uint16_t	__reserved5[8];		/* 92-99: reserved */
     uint16_t	atap_max_lba[4];	/* 100-103: Max. user LBA addr */
-    uint16_t	__reserved6[4];		/* 104-107: reserved */
+    uint16_t	__reserved6[2];		/* 104-105: reserved */
+    uint16_t	atap_secsz;		/* 106: physical/logical sector size */
+#define ATA_SECSZ_VALID_MASK 0xc000
+#define ATA_SECSZ_VALID      0x4000
+#define ATA_SECSZ_LPS        0x2000	/* long physical sectors */
+#define ATA_SECSZ_LLS        0x1000	/* long logical sectors */
+#define ATA_SECSZ_LPS_SZMSK  0x000f	/* 2**N logical per physical */
+    uint16_t	atap_iso7779_isd;	/* 107: ISO 7779 inter-seek delay */
     uint16_t 	atap_wwn[4];		/* 108-111: World Wide Name */
-    uint16_t	__reserved7[15];	/* 112-126: reserved */
+    uint16_t	__reserved7[5];		/* 112-116 */
+    uint16_t	atap_lls_secsz[2];	/* 117-118: long logical sector size */
+    uint16_t	__reserved8[8];		/* 119-126 */
     uint16_t	atap_rmsn_supp;		/* 127: remov. media status notif. */
 #define WDC_RMSN_SUPP_MASK 0x0003
 #define WDC_RMSN_SUPP 0x0001
@@ -449,6 +458,23 @@ struct ataparams {
 #define WDC_SEC_LOCKED	0x0004
 #define WDC_SEC_EN	0x0002
 #define WDC_SEC_SUPP	0x0001
+    uint16_t	__reserved9[31];	/* 129-159: vendor specific */
+    uint16_t	atap_cfa_power;		/* 160: CFA powermode */
+#define ATA_CFA_MAX_MASK  0x0fff
+#define ATA_CFA_MODE1_DIS 0x1000	/* CFA Mode 1 Disabled */
+#define ATA_CFA_MODE1_REQ 0x2000	/* CFA Mode 1 Required */
+#define ATA_CFA_WORD160   0x8000	/* Word 160 supported */
+    uint16_t	__reserved10[15];	/* 161-175: reserved for CFA */
+    uint8_t	atap_media_serial[60];	/* 176-205: media serial number */
+    uint16_t	__reserved11[3];	/* 206-208: */
+    uint16_t	atap_logical_align;	/* 209: logical/physical alignment */
+#define ATA_LA_VALID_MASK 0xc000
+#define ATA_LA_VALID      0x4000
+#define ATA_LA_MASK       0x3fff	/* offset of sector LBA 0 in PBA 0 */
+    uint16_t	__reserved12[45];	/* 210-254: */
+    uint16_t	atap_integrity;		/* 255: Integrity word */
+#define WDC_INTEGRITY_MAGIC_MASK 0x00ff
+#define WDC_INTEGRITY_MAGIC      0x00a5
 };
 
 /*
