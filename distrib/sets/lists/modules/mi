@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.5 2009/12/05 20:11:02 pooka Exp $
+# $NetBSD: mi,v 1.6 2010/01/25 22:21:28 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -14,6 +14,8 @@
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/aio				base-kernel-modules	kmod
 ./@MODULEDIR@/aio/aio.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/bpf				base-kernel-modules	kmod
+./@MODULEDIR@/bpf/bpf.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/cd9660				base-kernel-modules	kmod
 ./@MODULEDIR@/cd9660/cd9660.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/coda				base-kernel-modules	kmod
