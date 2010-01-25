@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.32 2010/01/25 11:02:56 jruoho Exp $
+.\" $NetBSD: acpi.4,v 1.33 2010/01/25 11:41:10 jruoho Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,14 +35,18 @@
 .Cd "acpiacad* at acpi?"
 .Cd "acpibat*  at acpi?"
 .Cd "acpibut*  at acpi?"
+.Cd "acpidalb* at acpi?"
 .Cd "acpiec*   at acpi?"
+.Cd "acpiecdt* at acpi?"
 .Cd "acpilid*  at acpi?"
 .Cd "acpitz*   at acpi?"
-.Cd "attimer*  at acpi?"
 .Cd "aiboost*  at acpi?"
+.Cd "asus*     at acpi?"
+.Cd "attimer*  at acpi?"
 .Cd "com*      at acpi?"
 .Cd "fdc*      at acpi?"
 .Cd "hpet*     at acpi?"
+.Cd "hpqlb*    at acpi?"
 .Cd "joy*      at acpi?"
 .Cd "lpt*      at acpi?"
 .Cd "mpu*      at acpi?"
@@ -51,8 +55,10 @@
 .Cd "pcppi*    at acpi?"
 .Cd "sony*     at acpi?"
 .Cd "spic*     at acpi?"
+.Cd "thinkpad* at acpi?"
 .Cd "ug*       at acpi?"
 .Cd "vald*     at acpi?"
+.Cd "wb*       at acpi?"
 .Cd "wss*      at acpi?"
 .Cd "ym*       at acpi?"
 .Pp
@@ -181,25 +187,35 @@ Control Method Batteries.
 .It acpibut
 .Tn ACPI
 power and sleep buttons.
+.It acpidalb
+.Tn ACPI
+Direction Application Launch Buttons.
 .It acpiec
 .Tn ACPI
 Embedded Controllers.
+.It acpiecdt
+.Tn ACPI
+Embedded Controller Boot Resource Table.
 .It acpilid
 .Tn ACPI
 lid switches.
 .It acpitz
 .Tn ACPI
 thermal zones.
-.It attimer
-AT Timer.
 .It aiboost
 ASUS AI Booster Hardware monitor.
+.It asus
+ASUS laptop hotkeys.
+.It attimer
+AT Timer.
 .It com
 NS8250-, NS16450-, and NS16550-based serial ports.
 .It fdc
 Floppy disk controllers.
 .It hpet
 High Precision Event Timer.
+.It hpqlb
+HP Quick Launch Buttons.
 .It joy
 Joystick/Game port interface.
 .It lpt
@@ -208,8 +224,12 @@ Standard ISA parallel port interface.
 Roland MPU-401 (compatible) MIDI UART.
 .It pcppi
 AT-style speaker sound.
+.It thinkpad
+IBM/Lenovo ThinkPad laptop device driver.
 .It ug
 Abit uGuru Hardware monitor.
+.It wb
+Winbond W83L518D Integrated Media Reader.
 .It wss
 Windows Sound System-compatible sound cards based on the AD1848 and compatible chips.
 .It ym
@@ -232,6 +252,7 @@ Toshiba Libretto device.
 .Xr acpiacad 4 ,
 .Xr acpibat 4 ,
 .Xr acpibut 4 ,
+.Xr acpidalb 4 ,
 .Xr acpiec 4 ,
 .Xr acpilid 4 ,
 .Xr acpitz 4 ,
@@ -240,6 +261,7 @@ Toshiba Libretto device.
 .Xr attimer 4 ,
 .Xr com 4 ,
 .Xr fdc 4 ,
+.Xr hpqlb 4 ,
 .Xr joy 4 ,
 .Xr lpt 4 ,
 .Xr mpu 4 ,
@@ -249,8 +271,10 @@ Toshiba Libretto device.
 .Xr pcppi 4 ,
 .Xr sony 4 ,
 .Xr spic 4 ,
+.Xr thinkpad 4 ,
 .Xr ug 4 ,
 .Xr vald 4 ,
+.Xr wb 4 ,
 .Xr wss 4 ,
 .Xr ym 4 ,
 .Xr acpidump 8 ,
