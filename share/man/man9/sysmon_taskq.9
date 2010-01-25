@@ -1,4 +1,4 @@
-.\" $NetBSD: sysmon_taskq.9,v 1.1 2010/01/25 16:16:33 jruoho Exp $
+.\" $NetBSD: sysmon_taskq.9,v 1.2 2010/01/25 18:25:08 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,6 +57,17 @@ The single argument passed to
 .Fa func
 is specified by
 .Fa arg .
+.Sh RETURN VALUES
+Upon successful completion,
+.Fn sysmon_task_queue_sched
+returns 0.
+Otherwise, the following error values are returned:
+.Bl -tag -width [EINVAL]
+.It Bq Er EINVAL
+An invalid parameter was specified.
+.It Bq Er ENOMEM
+There was not enough memory.
+.El
 .Sh SEE ALSO
 .Xr queue 3 ,
 .Xr kthread 9 ,
