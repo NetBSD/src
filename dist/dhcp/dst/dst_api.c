@@ -1,5 +1,5 @@
 #ifndef LINT
-static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/dst_api.c,v 1.5 2005/08/11 17:13:21 drochner Exp $";
+static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/dst_api.c,v 1.6 2010/01/25 20:33:57 drochner Exp $";
 #endif
 
 /*
@@ -684,9 +684,10 @@ dst_dnskey_to_key(const char *in_name,
 		if (key_st->dk_func->from_dns_key(key_st, &rdata[start],
 						  len - start) > 0)
 			return (key_st);
-	} else
+	} else {
 		EREPORT(("dst_dnskey_to_public_key(): unsuppored alg %d\n",
 			 alg));
+	}
 
 	SAFE_FREE(key_st);
 	return (key_st);
@@ -745,9 +746,10 @@ dst_key_to_dnskey(const DST_KEY *key, u_char *out_storage,
 			return (enc_len + loc);
 		else
 			return (-1);
-	} else
+	} else {
 		EREPORT(("dst_key_to_dnskey(): Unsupported ALG %d\n",
 			 key->dk_alg));
+	}
 	return (-1);
 }
 
@@ -877,10 +879,11 @@ dst_s_read_private_key_file(char *name, DST_KEY *pk_key, unsigned in_id,
 		EREPORT(("dst_s_read_private_key_file(): Unknown keyfile %d.%d version for %s\n",
 			 file_major, file_minor, name));
 		goto fail;
-	} else if (file_major > major || file_minor > minor)
+	} else if (file_major > major || file_minor > minor) {
 		EREPORT((
 				"dst_s_read_private_key_file(): Keyfile %s version higher than mine %d.%d MAY FAIL\n",
 				name, file_major, file_minor));
+	}
 
 	while (*p++ != '\n') ;	/* skip to end of line */
 

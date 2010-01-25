@@ -1,5 +1,5 @@
 #ifndef LINT
-static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/prandom.c,v 1.4 2005/08/11 17:13:21 drochner Exp $";
+static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/prandom.c,v 1.5 2010/01/25 20:33:57 drochner Exp $";
 #endif
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -850,8 +850,9 @@ dst_s_semi_random(u_char *output, unsigned size)
 		i = dst_sign_data(SIG_MODE_ALL, my_key, NULL, 
 				  (u_char *) counter, hb_size,
 				  semi_old, sizeof(semi_old));
-		if (i != hb_size)
+		if (i != hb_size) {
 			EREPORT(("HMAC SIGNATURE FAILURE %d\n", i));
+		}
 		cnt++;
 		if (size - out < i)	/* Not all data is needed */
 			semi_loc = i = size - out;
