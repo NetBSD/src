@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.5 2009/09/08 07:46:14 uebayasi Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.6 2010/01/26 21:07:14 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.5 2009/09/08 07:46:14 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.6 2010/01/26 21:07:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,6 +291,12 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 }
 #endif
 
+static struct evcnt evcnt_vmapbuf =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "vmapbuf", "calls");
+static struct evcnt evcnt_vmapbuf_adjustments =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &evcnt_vmapbuf,
+	"vmapbuf", "adjustments");
+
 /*
  * Map a user I/O request into kernel virtual address space.
  */
@@ -302,14 +308,21 @@ vmapbuf(struct buf *bp, vsize_t len)
 	vaddr_t kva;	/* Kernel VA (new to) */
 	paddr_t pa;	/* physical address */
 	vsize_t off;
+	vsize_t coloroff;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 
+	evcnt_vmapbuf.ev_count++;
 	uva = mips_trunc_page(bp->b_saveaddr = bp->b_data);
+	coloroff = uva & ptoa(uvmexp.colormask);
+	if (coloroff)
+		evcnt_vmapbuf_adjustments.ev_count++;
 	off = (vaddr_t)bp->b_data - uva;
 	len = mips_round_page(off + len);
-	kva = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+	kva = uvm_km_alloc(phys_map, len + coloroff, ptoa(uvmexp.ncolors),
+	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+	kva += coloroff;
 	bp->b_data = (void *)(kva + off);
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	do {
@@ -332,16 +345,18 @@ vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t kva;
 	vsize_t off;
+	vsize_t coloroff;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 
 	kva = mips_trunc_page(bp->b_data);
+	coloroff = kva & ptoa(uvmexp.colormask);
 	off = (vaddr_t)bp->b_data - kva;
 	len = mips_round_page(off + len);
 	pmap_remove(vm_map_pmap(phys_map), kva, kva + len);
 	pmap_update(pmap_kernel());
-	uvm_km_free(phys_map, kva, len, UVM_KMF_VAONLY);
+	uvm_km_free(phys_map, kva - coloroff, len + coloroff, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
