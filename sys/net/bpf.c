@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.154 2010/01/25 22:18:17 pooka Exp $	*/
+/*	$NetBSD: bpf.c,v 1.155 2010/01/26 01:06:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.154 2010/01/25 22:18:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.155 2010/01/26 01:06:23 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.154 2010/01/25 22:18:17 pooka Exp $");
 #include <sys/stat.h>
 #include <sys/module.h>
 #include <sys/once.h>
+#include <sys/atomic.h>
 
 #include <sys/file.h>
 #include <sys/filedesc.h>
