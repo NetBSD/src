@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1377 2010/01/26 08:30:20 jruoho Exp $
+#	$NetBSD: mi,v 1.1378 2010/01/26 14:06:35 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9376,6 +9376,10 @@
 ./usr/share/man/cat9/sysmon_envsys_sensor_attach.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/sysmon_envsys_sensor_detach.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/sysmon_envsys_unregister.0	comp-sys-catman		.cat
+./usr/share/man/cat9/sysmon_pswitch.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sysmon_pswitch_event.0	comp-sys-catman		.cat
+./usr/share/man/cat9/sysmon_pswitch_register.0	comp-sys-catman		.cat
+./usr/share/man/cat9/sysmon_pswitch_unregister.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/sysmon_taskq.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sysmon_task_queue_fini.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/sysmon_task_queue_init.0	comp-sys-catman		.cat
@@ -14904,6 +14908,10 @@
 ./usr/share/man/html9/sysmon_envsys_sensor_attach.html	comp-sys-htmlan		html
 ./usr/share/man/html9/sysmon_envsys_sensor_detach.html	comp-sys-htmlman	html
 ./usr/share/man/html9/sysmon_envsys_unregister.html	comp-sys-htmlman	html
+./usr/share/man/html9/sysmon_pswitch.html		comp-sys-htmlman	html
+./usr/share/man/html9/sysmon_pswitch_event.html		comp-sys-htmlman	html
+./usr/share/man/html9/sysmon_pswitch_register.html	comp-sys-htmlman	html
+./usr/share/man/html9/sysmon_pswitch_unregister.html	comp-sys-htmlman	html
 ./usr/share/man/html9/sysmon_taskq.html		comp-sys-htmlman	html
 ./usr/share/man/html9/sysmon_task_queue_fini.html	comp-sys-htmlman	html
 ./usr/share/man/html9/sysmon_task_queue_init.html	comp-sys-htmlman	html
@@ -20639,6 +20647,10 @@
 ./usr/share/man/man9/sysmon_envsys_sensor_attach.9	comp-sys-man		.man
 ./usr/share/man/man9/sysmon_envsys_sensor_detach.9	comp-sys-man		.man
 ./usr/share/man/man9/sysmon_envsys_unregister.9	comp-sys-man		.man
+./usr/share/man/man9/sysmon_pswitch.9		comp-sys-man		.man
+./usr/share/man/man9/sysmon_pswitch_event.9	comp-sys-man		.man
+./usr/share/man/man9/sysmon_pswitch_register.9	comp-sys-man		.man
+./usr/share/man/man9/sysmon_pswitch_unregister.9	comp-sys-man		.man
 ./usr/share/man/man9/sysmon_taskq.9		comp-sys-man		.man
 ./usr/share/man/man9/sysmon_task_queue_fini.9	comp-sys-man		.man
 ./usr/share/man/man9/sysmon_task_queue_init.9	comp-sys-man		.man
