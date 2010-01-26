@@ -1,4 +1,4 @@
-/*	$NetBSD: posix_memalign.c,v 1.2 2008/04/28 20:23:05 martin Exp $	*/
+/*	$NetBSD: posix_memalign.c,v 1.3 2010/01/26 22:14:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,17 +29,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: posix_memalign.c,v 1.2 2008/04/28 20:23:05 martin Exp $");
+__RCSID("$NetBSD: posix_memalign.c,v 1.3 2010/01/26 22:14:01 mrg Exp $");
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <err.h>
+#include <stdbool.h>
 
-size_t size[] = {
-	1, 2, 3, 4, 10, 100, 16384
-};
-size_t align[] = {
-	512, 1024, 16, 32, 64, 4, 2048
+#ifdef _LP64
+#define FOURFAIL	true
+#else
+#define FOURFAIL	false
+#endif
+
+struct {
+	size_t	size;
+	size_t	align;
+	bool	fail;
+} testlist[] = {
+	{ 1, 512, false, },
+	{ 2, 1024, false, },
+	{ 3, 16, false, },
+	{ 4, 32, false, },
+	{ 10, 64, false, },
+	{ 100, 4, FOURFAIL, },
+	{ 10, 2, true, },
+	{ 16384, 2048, false, },
 };
 
 int
@@ -47,17 +63,24 @@ main(int argc, char *argv[])
 {
 	size_t i;
 	void *p;
+	int error;
 
-	for (i = 0; i < __arraycount(size); i++) {
-		if (posix_memalign(&p, align[i], size[i]) != 0)
-			err(1, "a=%zu, s=%zu", align[i], size[i]);
-		if (((intptr_t)p) & (align[i] - 1))
-			errx(1, "p=%p a=%zu, s=%zu", p, align[i], size[i]);
+	for (i = 0; i < __arraycount(testlist); i++) {
+		error = posix_memalign(&p, testlist[i].align, testlist[i].size);
+		if (testlist[i].fail == false) {
+			if (error != 0) {
+				errno = error;
+				err(1, "a=%zu, s=%zu", testlist[i].align, testlist[i].size);
+			}
+			if (((intptr_t)p) & (testlist[i].align - 1))
+				errx(1, "p=%p a=%zu, s=%zu", p, testlist[i].align, testlist[i].size);
+		} else if (error == 0)
+			errx(1, "didn't fail: a=%zu, s=%zu", testlist[i].align, testlist[i].size);
 	}
 
 	/* This can fail */
 	if (posix_memalign(&p, 32768, 16) == 0)
 		if (((intptr_t)p) & (32768 - 1))
-			errx(1, "p=%p a=%zu, s=%zu", p, align[i], size[i]);
+			errx(1, "p=%p a=%zu, s=%zu", p, 32768, 16);
 	return 0;
 }
