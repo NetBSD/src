@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64.16.14 2010/01/20 09:04:35 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.64.16.15 2010/01/26 04:37:38 cliff Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.14 2010/01/20 09:04:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.15 2010/01/26 04:37:38 cliff Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -405,54 +405,36 @@ do {									\
 	    "", __val);							\
 } while (0)
 
-/* XXX not 64-bit ABI safe! */
-#define	SHOW64(reg, name)						\
-do {									\
-	uint64_t __val;							\
-									\
-	__asm volatile(						\
-		".set push 			\n\t"			\
-		".set mips3			\n\t"			\
-		".set noat			\n\t"			\
-		"dmfc0 %0,$" ___STRING(reg) "	\n\t"			\
-		"dsll %L0,%0,32			\n\t"			\
-		"dsrl %L0,%L0,32		\n\t"			\
-		"dsrl %M0,%0,32			\n\t"			\
-		".set pop"						\
-	    : "=r"(__val));						\
-	printf("  %s:%*s %#"PRIx64"\n", name, FLDWIDTH - (int) strlen(name), \
-	    "", __val);							\
-} while (0)
+#define SHOW64(reg, name)	MIPS64_SHOW64(reg, 0, name)
 
-#define	MIPS64_SHOW32(num, sel, name)						\
+#define	MIPS64_SHOW32(num, sel, name)					\
 do {									\
 	uint32_t __val;							\
 									\
+	KASSERT (CPUIS64BITS);						\
 	__asm volatile(							\
 		".set push			\n\t"			\
 		".set mips64			\n\t"			\
-		"mfc0 %0,$" ___STRING(num) "," ___STRING(sel) "\n\t"	\
+		"mfc0 %0,$%1,%2			\n\t"			\
 		".set pop			\n\t"			\
-	    : "=r"(__val));						\
+	    : "=r"(__val) : "n"(num), "n"(sel));			\
 	printf("  %s:%*s %#x\n", name, FLDWIDTH - (int) strlen(name),	\
 	    "", __val);							\
 } while (0)
 
 /* XXX not 64-bit ABI safe! */
-#define	MIPS64_SHOW64(num, sel, name)						\
+#define	MIPS64_SHOW64(num, sel, name)					\
 do {									\
 	uint64_t __val;							\
 									\
+	KASSERT (CPUIS64BITS);						\
 	__asm volatile(							\
 		".set push 			\n\t"			\
 		".set mips64			\n\t"			\
 		".set noat			\n\t"			\
-		"dmfc0 %0,$" ___STRING(num) "," ___STRING(sel) "\n\t"	\
-		"dsll %L0,%0,32			\n\t"			\
-		"dsrl %L0,%L0,32		\n\t"			\
-		"dsrl %M0,%0,32			\n\t"			\
+		"dmfc0 %0,$%1,%2		\n\t"			\
 		".set pop"						\
-	    : "=r"(__val));						\
+	    : "=r"(__val) : "n"(num), "n"(sel));			\
 	printf("  %s:%*s %#"PRIx64"\n", name, FLDWIDTH - (int) strlen(name), \
 	    "", __val);							\
 } while (0)
