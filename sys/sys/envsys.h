@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.26 2009/06/13 16:08:25 pgoyette Exp $ */
+/* $NetBSD: envsys.h,v 1.27 2010/01/26 14:22:00 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -47,6 +47,20 @@
 #define ENVSYS_MAXSENSORS	512
 #define ENVSYS_DESCLEN		32
 
+/*
+ * Thresholds/limits that are being monitored
+ */
+struct sysmon_envsys_lim {
+	int32_t		sel_flags;	/* Which limits are valid during
+					 * get_limits()/set_limits calls */
+	int32_t		sel_critmax;
+	int32_t		sel_warnmax;
+	int32_t		sel_warnmin;
+	int32_t		sel_critmin;
+};
+
+typedef struct sysmon_envsys_lim sysmon_envsys_lim_t;
+
 /* struct used by a sensor */
 struct envsys_data {
 	TAILQ_ENTRY(envsys_data)	sensors_head;
@@ -60,6 +74,7 @@ struct envsys_data {
 	int32_t		value_max;	/* max value */
 	int32_t		value_min;	/* min value */
 	int32_t		value_avg;	/* avg value */
+	sysmon_envsys_lim_t limits;	/* thresholds for monitoring */
 	int		upropset;	/* userland property set? */
 	bool		monitor;	/* monitoring enabled/disabled */
 	char		desc[ENVSYS_DESCLEN];	/* sensor description */
@@ -159,19 +174,6 @@ enum envsys_battery_capacity_states {
 
 #define	PROP_DRIVER_LIMITS	0x8000
 #define	PROP_LIMITS		0x003f
-
-/*
- * Thresholds/limits that are being monitored
- */
-struct sysmon_envsys_lim {
-	uint32_t	sel_flags;	/* Flag which limits are present */
-	int32_t		sel_critmax;
-	int32_t		sel_warnmax;
-	int32_t		sel_warnmin;
-	int32_t		sel_critmin;
-};
-
-typedef struct sysmon_envsys_lim sysmon_envsys_lim_t;
 
 /*
  * Compatibility with old interface. Only ENVSYS_GTREDATA
