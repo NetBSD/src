@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.9 2010/01/24 21:12:17 joerg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.10 2010/01/26 15:11:56 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -241,10 +241,14 @@
 ./usr/share/dict/special
 ./usr/share/doc
 ./usr/share/doc/atf
+./usr/share/doc/groff
+./usr/share/doc/groff/mom
 ./usr/share/doc/html
 ./usr/share/doc/html/bind9
 ./usr/share/doc/html/bind9/arm
 ./usr/share/doc/html/bzip2
+./usr/share/doc/html/groff
+./usr/share/doc/html/groff/mom
 ./usr/share/doc/html/postfix
 ./usr/share/doc/html/ntp
 ./usr/share/doc/html/ntp/build
