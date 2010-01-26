@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.137 2009/11/03 05:23:28 dyoung Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.138 2010/01/26 12:59:50 he Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.137 2009/11/03 05:23:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.138 2010/01/26 12:59:50 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -202,8 +202,7 @@ twiddle(void)
  * panic: handle an unresolvable fatal error
  *
  * prints "panic: <message>" and reboots.   if called twice (i.e. recursive
- * call) we avoid trying to sync the disk and just reboot (to avoid
- * recursive panics).
+ * call) we avoid trying to dump and just reboot (to avoid recursive panics).
  */
 
 void
@@ -246,8 +245,12 @@ panic(const char *fmt, ...)
 	}
 
 	bootopt = RB_AUTOBOOT | RB_NOSYNC;
-	if (dumponpanic)
-		bootopt |= RB_DUMP;
+	if (!doing_shutdown) {
+		if (dumponpanic)
+			bootopt |= RB_DUMP;
+	} else
+		printf("Skipping crash dump on recursive panic\n");
+
 	if (!panicstr)
 		panicstr = fmt;
 	doing_shutdown = 1;
