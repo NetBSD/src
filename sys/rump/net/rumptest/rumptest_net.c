@@ -1,4 +1,4 @@
-/*	$NetBSD: rumptest_net.c,v 1.16 2010/01/25 22:25:38 pooka Exp $	*/
+/*	$NetBSD: rumptest_net.c,v 1.17 2010/01/26 17:52:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -55,11 +55,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
 
 #define DEST_ADDR "204.152.190.12"	/* www.NetBSD.org */
 #define DEST_PORT 80			/* take a wild guess */
 
 static in_addr_t youraddr;
+static in_addr_t myaddr;
+
+#ifdef FULL_NETWORK_STACK
+#define IFNAME "virt0" /* XXX: hardcoded */
+#else
+#define IFNAME "sockin0"
+#endif
 
 #ifdef FULL_NETWORK_STACK
 /*
@@ -80,9 +88,6 @@ static in_addr_t youraddr;
 #define MYBCAST "10.181.181.255"
 #define MYMASK "255.255.255.0"
 #define MYGW "10.181.181.1"
-#define IFNAME "virt0" /* XXX: hardcoded */
-
-static in_addr_t myaddr;
 
 static void
 configure_interface(void)
@@ -181,6 +186,71 @@ configure_interface(void)
 		err(1, "routing incomplete");
 	rump_sys_close(s);
 }
+#endif /* FULL_NETWORK_STACK */
+
+static void
+dump_ether(uint8_t *data, size_t caplen)
+{
+	char fmt[64];
+	struct ether_header *ehdr;
+	struct ip *ip;
+	struct tcphdr *tcph;
+
+	ehdr = (void *)data;
+	switch (ntohs(ehdr->ether_type)) {
+	case ETHERTYPE_ARP:
+		printf("ARP\n");
+		break;
+	case ETHERTYPE_IP:
+		printf("IP, ");
+		ip = (void *)((uint8_t *)ehdr + sizeof(*ehdr));
+		printf("version %d, proto ", ip->ip_v);
+		if (ip->ip_p == IPPROTO_TCP)
+			printf("TCP");
+		else if (ip->ip_p == IPPROTO_UDP)
+			printf("UDP");
+		else
+			printf("unknown");
+		printf("\n");
+
+		/*
+		 * if it's the droids we're looking for,
+		 * print segment contents.
+		 */
+		if (ip->ip_src.s_addr != youraddr ||
+		    ip->ip_dst.s_addr != myaddr ||
+		    ip->ip_p != IPPROTO_TCP)
+			break;
+		tcph = (void *)((uint8_t *)ip + (ip->ip_hl<<2));
+		if (ntohs(tcph->th_sport) != 80)
+			break;
+
+		printf("requested data:\n");
+		sprintf(fmt, "%%%ds\n",
+		    ntohs(ip->ip_len) - (ip->ip_hl<<2));
+		printf(fmt, (char *)tcph + (tcph->th_off<<2));
+
+		break;
+	case ETHERTYPE_IPV6:
+		printf("IPv6\n");
+		break;
+	default:
+		printf("unknown type 0x%04x\n",
+		    ntohs(ehdr->ether_type));
+		break;
+	}
+}
+
+/* in luck we trust (i.e. true story on how an os works) */
+static void
+dump_nodlt(uint8_t *data, size_t caplen)
+{
+	char buf[32768];
+
+	/* +4 = skip AF */
+	strvisx(buf, (const char *)data+4, caplen-4, 0);
+	printf("%s\n", buf);
+}
 
 static void
 dobpfread(void)
@@ -191,7 +261,8 @@ dobpfread(void)
 	void *buf;
 	struct ifreq ifr;
 	int bpfd, modfd;
-	u_int bpflen, x;
+	u_int bpflen, x, dlt;
+	ssize_t n;
 
 	bpfd = rump_sys_open("/dev/bpf", O_RDWR);
 
@@ -249,13 +320,10 @@ dobpfread(void)
 	if (rump_sys_ioctl(bpfd, BIOCIMMEDIATE, &x) == -1)
 		err(1, "BIOCIMMEDIATE");
 
-
+	if (rump_sys_ioctl(bpfd, BIOCGDLT, &dlt) == -1)
+		err(1, "BIOCGDLT");
+	
 	for (;;) {
-		char fmt[64];
-		struct ether_header *ehdr;
-		struct ip *ip;
-		struct tcphdr *tcph;
-		ssize_t n;
 
 		memset(buf, 0, bpflen);
 		n = rump_sys_read(bpfd, buf, bpflen);
@@ -268,57 +336,21 @@ dobpfread(void)
 
 		bhdr = buf;
 		while (bhdr->bh_caplen) {
+			uint8_t *data;
+
 			printf("got packet, caplen %d\n", bhdr->bh_caplen);
-			ehdr = (void *)((uint8_t *)bhdr + bhdr->bh_hdrlen);
-			switch (ntohs(ehdr->ether_type)) {
-			case ETHERTYPE_ARP:
-				printf("ARP\n");
-				break;
-			case ETHERTYPE_IP:
-				printf("IP, ");
-				ip = (void *)((uint8_t *)ehdr + sizeof(*ehdr));
-				printf("version %d, proto ", ip->ip_v);
-				if (ip->ip_p == IPPROTO_TCP)
-					printf("TCP");
-				else if (ip->ip_p == IPPROTO_UDP)
-					printf("UDP");
-				else
-					printf("unknown");
-				printf("\n");
+			data = (void *)((uint8_t *)bhdr + bhdr->bh_hdrlen);
 
-				/*
-				 * if it's the droids we're looking for,
-				 * print segment contents.
-				 */
-				if (ip->ip_src.s_addr != youraddr ||
-				    ip->ip_dst.s_addr != myaddr ||
-				    ip->ip_p != IPPROTO_TCP)
-					break;
-				tcph = (void *)((uint8_t *)ip + (ip->ip_hl<<2));
-				if (ntohs(tcph->th_sport) != 80)
-					break;
-
-				printf("requested data:\n");
-				sprintf(fmt, "%%%ds\n",
-				    ntohs(ip->ip_len) - (ip->ip_hl<<2));
-				printf(fmt, (char *)tcph + (tcph->th_off<<2));
-
-				break;
-			case ETHERTYPE_IPV6:
-				printf("IPv6\n");
-				break;
-			default:
-				printf("unknown type 0x%04x\n",
-				    ntohs(ehdr->ether_type));
-				break;
-			}
+			if (dlt == DLT_NULL)
+				dump_nodlt(data, bhdr->bh_caplen);
+			else
+				dump_ether(data, bhdr->bh_caplen);
 
 			bhdr = (void *)((uint8_t *)bhdr +
 			    BPF_WORDALIGN(bhdr->bh_hdrlen + bhdr->bh_caplen));
 		}
 	}
 }
-#endif /* FULL_NETWORK_STACK */
 
 static void
 printstats(void)
@@ -390,10 +422,8 @@ main(int argc, char *argv[])
 		err(1, "wrote only %zd vs. %zu\n",
 		    n, strlen(buf));
 
-#ifdef FULL_NETWORK_STACK
 	if (argc > 1)
 		dobpfread();
-#endif
 
 	/* wait for mbufs to accumulate.  hacky, but serves purpose.  */
 	sleep(1);
