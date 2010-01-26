@@ -159,16 +159,25 @@ int drm_addmap(struct drm_device * dev, unsigned long offset,
 	map->size = size;
 	map->type = type;
 	map->flags = flags;
-#ifdef __NetBSD__
-	map->cnt = NULL;
+#if defined(__NetBSD__)
+	map->fullmap = NULL;
 	map->mapsize = 0;
 #endif
 
 	switch (map->type) {
 	case _DRM_REGISTERS:
 		map->handle = drm_ioremap(dev, map);
+		if (map->handle == NULL) {
+			DRM_ERROR("drm_addmap couldn't ioremap registers with "
+				"base %lX, size %lX\n",
+				(long) offset, (long) size);
+			DRM_LOCK();
+			return EINVAL;
+		}
+
 		if (!(map->flags & _DRM_WRITE_COMBINING))
 			break;
+
 		/* FALLTHROUGH */
 	case _DRM_FRAME_BUFFER:
 		if (drm_mtrr_add(map->offset, map->size, DRM_MTRR_WC) == 0)

@@ -658,6 +658,18 @@ typedef struct drm_sg_mem {
 
 typedef TAILQ_HEAD(drm_map_list, drm_local_map) drm_map_list_t;
 
+#if defined(__NetBSD__)
+typedef struct {
+	int			mapped;
+	int			maptype;
+	bus_addr_t		base;
+	bus_size_t		size;
+	bus_space_handle_t	bsh;
+	int			flags;
+	void *			vaddr;
+} pci_map_data_t;
+#endif
+
 typedef struct drm_local_map {
 	unsigned long	offset;	 /* Physical address (0 for SAREA)*/
 	unsigned long	size;	 /* Physical size (bytes)	    */
@@ -675,7 +687,7 @@ typedef struct drm_local_map {
 	bus_space_handle_t bsh;
 	drm_dma_handle_t *dmah;
 #if defined(__NetBSD__)
-	int *cnt;
+	pci_map_data_t *fullmap;
 	bus_size_t mapsize;
 #endif
 	TAILQ_ENTRY(drm_local_map) link;
@@ -791,18 +803,6 @@ struct drm_driver_info {
 
 /* Length for the array of resource pointers for drm_get_resource_*. */
 #define DRM_MAX_PCI_RESOURCE	6
-
-#if defined(__NetBSD__)
-typedef struct {
-	int			mapped;
-	int			maptype;
-	bus_addr_t		base;
-	bus_size_t		size;
-	bus_space_handle_t	bsh;
-	int			flags;
-	void *			vaddr;
-} pci_map_data_t;
-#endif
 
 /** 
  * DRM device functions structure
