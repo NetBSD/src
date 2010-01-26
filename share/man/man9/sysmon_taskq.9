@@ -1,4 +1,4 @@
-.\" $NetBSD: sysmon_taskq.9,v 1.4 2010/01/26 07:53:25 jruoho Exp $
+.\" $NetBSD: sysmon_taskq.9,v 1.5 2010/01/26 07:58:16 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@ and power management, also other comparable functions are suitable for
 The necessary internal data structures
 are initialized during system startup by
 .Fn sysmon_task_queue_preinit .
-Before actual usage, a machine-independent
+Before actual usage, a machine-dependent
 procedure should finish the initialization
 by calling
 .Fn sysmon_task_queue_init .
