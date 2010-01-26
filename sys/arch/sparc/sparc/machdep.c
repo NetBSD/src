@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.300 2010/01/03 23:03:21 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.301 2010/01/26 03:06:01 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.300 2010/01/03 23:03:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.301 2010/01/26 03:06:01 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.300 2010/01/03 23:03:21 mrg Exp $");
 #include <sys/ucontext.h>
 #include <sys/simplelock.h>
 #include <sys/module.h>
+#include <sys/mutex.h>
 
 #include <uvm/uvm.h>		/* we use uvm.kernel_object */
 
@@ -139,7 +140,7 @@ extern paddr_t avail_end;
 
 int	physmem;
 
-struct simplelock fpulock = SIMPLELOCK_INITIALIZER;
+kmutex_t fpu_mtx;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -338,6 +339,8 @@ cpu_startup(void)
 	printf("avail memory = %s\n", pbuf);
 
 	pmap_redzone();
+
+	mutex_init(&fpu_mtx, MUTEX_DEFAULT, IPL_SCHED);
 }
 
 /*

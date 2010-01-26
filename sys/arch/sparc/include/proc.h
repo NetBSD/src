@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.16 2009/11/21 04:04:07 rmind Exp $ */
+/*	$NetBSD: proc.h,v 1.17 2010/01/26 03:06:01 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,17 +66,17 @@ struct mdproc {
 /*
  * FPU context switch lock
  * Prevent interrupts that grab the kernel lock
+ * XXX mrg: remove (s) argument
  */
-extern struct simplelock	fpulock;
+extern kmutex_t fpu_mtx;
 
 #define FPU_LOCK(s)		do {	\
-	s = splclock();			\
-	simple_lock(&fpulock);		\
+	(void)&(s);			\
+	mutex_enter(&fpu_mtx);		\
 } while (/* CONSTCOND */ 0)
 
 #define FPU_UNLOCK(s)		do {	\
-	simple_unlock(&fpulock);	\
-	splx(s);			\
+	mutex_exit(&fpu_mtx);		\
 } while (/* CONSTCOND */ 0)
 
 #endif /* _SPARC_PROC_H_ */
