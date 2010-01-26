@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.311 2010/01/25 16:16:33 jruoho Exp $
+#       $NetBSD: Makefile,v 1.312 2010/01/26 08:14:09 jruoho Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -659,7 +659,10 @@ MLINKS+=sysmon_envsys.9 sysmon_envsys_create.9 \
 	sysmon_envsys.9 sysmon_envsys_unregister.9 \
 	sysmon_envsys.9 sysmon_envsys_sensor_attach.9 \
 	sysmon_envsys.9 sysmon_envsys_sensor_detach.9
-MLINKS+=sysmon_taskq.9 sysmon_task_queue_sched.9
+MLINKS+=sysmon_taskq.9 sysmon_task_queue_fini.9 \
+	sysmon_taskq.9 sysmon_task_queue_init.9 \
+	sysmon_taskq.9 sysmon_task_queue_preinit.9 \
+	sysmon_taskq.9 sysmon_task_queue_sched.9
 MLINKS+=time_second.9 boottime.9 time_second.9 time_uptime.9
 MLINKS+=timecounter.9 tc_init.9
 MLINKS+=tc.9 tc_intr_establish.9 \
