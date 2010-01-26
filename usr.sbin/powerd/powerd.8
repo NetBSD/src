@@ -1,4 +1,4 @@
-.\"	$NetBSD: powerd.8,v 1.19 2009/05/04 19:11:49 wiz Exp $
+.\"	$NetBSD: powerd.8,v 1.20 2010/01/26 14:28:23 jruoho Exp $
 .\"
 .\" Copyright (c) 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -98,27 +98,27 @@ Power switch scripts are called with two arguments: the device with which
 the device is associated, and the event type.
 .Pp
 The following power switch script names are defined:
-.Bl -tag -width "power_button"
-.It power_button
+.Bl -tag -width "hotkey_button"
+.It Em power_button
 This script is called when an event occurs on a power button device.
-.It reset_button
+.It Em reset_button
 This script is called when an event occurs on a reset button device.
-.It sleep_button
+.It Em sleep_button
 This script is called when an event occurs on a sleep button device.
-.It lid_switch
+.It Em lid_switch
 This script is called when an event occurs on a lid switch device.
-.It acadapter
+.It Em acadapter
 This script is called when an online or offline event occurs on an
 AC adapter device.
-.It hotkey_button
+.It Em hotkey_button
 This script is called when an event occurs on a hotkey button device.
 .El
 .Pp
 The following events are defined for power switch devices:
-.Bl -tag -width "released"
-.It pressed
+.Bl -tag -width "hotkey_button"
+.It Em pressed
 The button was pressed, the lid closed, or the AC adapter connected.
-.It released
+.It Em released
 The button was released, the lid opened, or the AC adapter disconnected.
 Note that power and sleep button devices usually do not
 post this type of event.
@@ -142,22 +142,22 @@ scripts uses a fourth argument: state description.
 .Pp
 The following envsys script names are defined:
 .Bl -tag -width "sensor_temperature"
-.It sensor_battery
+.It Em sensor_battery
 This script is called when an event occurs on a battery sensor
 (Wh/Ah/Battery state).
-.It sensor_drive
+.It Em sensor_drive
 This script is called when an event occurs on a drive sensor.
-.It sensor_fan
+.It Em sensor_fan
 This script is called when an event occurs on a fan sensor.
-.It sensor_indicator
+.It Em sensor_indicator
 This script is called when an event ocurrs on a indicator/integer sensor.
-.It sensor_power
+.It Em sensor_power
 This script is called when an event occurs on a power sensor (W/Ampere).
-.It sensor_resistance
+.It Em sensor_resistance
 This script is called when an event occurs on a resistance sensor (Ohm).
-.It sensor_temperature
+.It Em sensor_temperature
 This script is called when an event occurs on a temperature sensor.
-.It sensor_voltage
+.It Em sensor_voltage
 This script is called when an event occurs on a voltage sensor.
 .El
 .Pp
@@ -171,23 +171,23 @@ A normal state/capacity/condition was triggered.
 The following events are defined for fan, indicator, power,
 resistance, temperature and voltage sensors:
 .Bl -tag -width "sensor_temperature"
-.It critical
+.It Em critical
 A critical condition was triggered.
-.It critical-under
+.It Em critical-under
 A critical under condition was triggered.
-.It critical-over
+.It Em critical-over
 A critical over condition was triggered.
-.It warning-under
+.It Em warning-under
 A warning under condition was triggered.
-.It warning-over
+.It Em warning-over
 A warning over condition was triggered.
 .El
 .Pp
 The following events are defined only for battery sensors:
 .Bl -tag -width "sensor_temperature"
-.It user-capacity
+.It Em user-capacity
 Capacity dropped below the limit set by the user.
-.It low-power
+.It Em low-power
 System is running in low power, that means that there is not
 any AC Adapter connected and all batteries are in critical or
 low capacity.
@@ -198,7 +198,7 @@ The script shutdowns the system gracefully by default.
 .Pp
 The following events are defined for drive and battery sensors:
 .Bl -tag -width "sensor_temperature"
-.It state-changed
+.It Em state-changed
 The state on the sensor has been changed and it's not in normal state.
 .El
 .Pp
