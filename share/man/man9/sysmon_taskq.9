@@ -1,4 +1,4 @@
-.\" $NetBSD: sysmon_taskq.9,v 1.5 2010/01/26 07:58:16 jruoho Exp $
+.\" $NetBSD: sysmon_taskq.9,v 1.6 2010/01/26 08:48:39 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,6 +63,7 @@ by calling
 .Fn sysmon_task_queue_init .
 This will create a kernel thread that can be later halted by
 .Fn sysmon_task_queue_fini .
+All scheduled tasks are executed before the queue is halted.
 .Pp
 The
 .Fn sysmon_task_queue_sched
