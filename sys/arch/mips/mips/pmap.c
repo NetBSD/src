@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.13 2010/01/26 21:19:25 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.14 2010/01/26 22:49:58 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.13 2010/01/26 21:19:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.14 2010/01/26 22:49:58 snj Exp $");
 
 /*
  *	Manages physical address maps.
@@ -647,9 +647,9 @@ pmap_init(void)
 
 #ifndef _LP64
 	/*
-	 * If we have more memory than can be mapped by KSEG0, we need allocate
-	 * enough VA so we can map pages with the right color (to avoid cache
-	 * alias problems).
+	 * If we have more memory than can be mapped by KSEG0, we need to
+	 * allocate enough VA so we can map pages with the right color
+	 * (to avoid cache alias problems).
 	 */
 	if (mips_avail_end > MIPS_KSEG1_START - MIPS_KSEG0_START) {
 		curcpu()->ci_pmap_dstbase = uvm_km_alloc(kernel_map,
@@ -2032,7 +2032,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, bool dirty)
 		if (last) {
 			/*
 			 * If this was the page's last mapping, we no longer
-			 * care about it execness.
+			 * care about its execness.
 			 */
 			pmap_clear_page_attributes(pg, PG_MD_EXECPAGE);
 			PMAP_COUNT(exec_uncached_remove);
