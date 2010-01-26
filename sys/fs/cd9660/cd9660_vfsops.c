@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.69 2010/01/08 11:35:08 pooka Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.70 2010/01/26 21:29:48 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.69 2010/01/08 11:35:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.70 2010/01/26 21:29:48 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -368,8 +368,7 @@ iso_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
 	iso_bsize = ISO_DEFAULT_BLOCK_SIZE;
 
 	error = VOP_IOCTL(devvp, DIOCGDINFO, &label, FREAD, FSCRED);
-	if (!error &&
-	    label.d_partitions[DISKPART(dev)].p_fstype == FS_ISO9660) {
+	if (!error) {
 		/* XXX more sanity checks? */
 		sess = label.d_partitions[DISKPART(dev)].p_cdsession;
 	} else {
