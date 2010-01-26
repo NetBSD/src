@@ -1,4 +1,4 @@
-.\" $NetBSD: fileassoc.9,v 1.23 2010/01/26 21:37:02 jruoho Exp $
+.\" $NetBSD: fileassoc.9,v 1.24 2010/01/26 21:40:34 jruoho Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -202,7 +202,7 @@ of all fileassoc types added will be called with a pointer to the corresponding
 private data structure and indication of
 .Dv FILEASSOC_CLEANUP_FILE .
 .El
-.Ss Fileassoc-specific Routines
+.Ss FILEASSOC-SPECIFIC ROUTINES
 .Bl -tag -width "123456"
 .It Fn fileassoc_add "vp" "id" "data"
 Add private data in
@@ -330,7 +330,10 @@ For example usage of
 .Nm ,
 see the Veriexec code.
 .Sh CODE REFERENCES
-.Pa src/sys/kern/kern_fileassoc.c
+The
+.Nm
+is implemented within
+.Pa src/sys/kern/kern_fileassoc.c .
 .Sh HISTORY
 The
 .Nm
