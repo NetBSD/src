@@ -1,4 +1,4 @@
-.\" $NetBSD: pmf.9,v 1.15 2010/01/26 21:50:57 jruoho Exp $
+.\" $NetBSD: pmf.9,v 1.16 2010/01/26 22:35:11 jruoho Exp $
 .\"
 .\" Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -28,7 +28,26 @@
 .Dt PMF 9
 .Os
 .Sh NAME
-.Nm pmf
+.Nm PMF ,
+.Nm pmf_device_register ,
+.Nm pmf_device_register1 ,
+.Nm pmf_device_deregister ,
+.Nm pmf_device_suspend ,
+.Nm pmf_device_resume ,
+.Nm pmf_device_recursive_suspend ,
+.Nm pmf_device_recursive_resume ,
+.Nm pmf_device_resume_subtree ,
+.Nm pmf_class_network_register ,
+.Nm pmf_class_input_register ,
+.Nm pmf_class_display_register ,
+.Nm pmf_system_suspend ,
+.Nm pmf_system_resume ,
+.Nm pmf_system_shutdown ,
+.Nm pmf_event_register ,
+.Nm pmf_event_deregister ,
+.Nm pmf_event_inject ,
+.Nm pmf_set_platform ,
+.Nm pmf_get_platform
 .Nd power management and inter-driver messaging framework
 .Sh SYNOPSIS
 .In sys/device.h
