@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.192.4.1 2008/11/17 18:56:05 snj Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.192.4.1.4.1 2010/01/26 04:41:07 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.192.4.1 2008/11/17 18:56:05 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.192.4.1.4.1 2010/01/26 04:41:07 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -786,6 +786,7 @@ setroot(struct device *bootdv, int bootpartition)
 	 * find a reasonable network interface for "rootspec".
 	 */
 	vops = vfs_getopsbyname("nfs");
+printf("%s:%d\n", __func__, __LINE__);
 	if (vops != NULL && vops->vfs_mountroot == mountroot &&
 	    rootspec == NULL &&
 	    (bootdv == NULL || device_class(bootdv) != DV_IFNET)) {
@@ -974,11 +975,20 @@ setroot(struct device *bootdv, int bootpartition)
 		 */
 
 		/*
+		 * if rootspec is not configured, ask (again)
+		 */
+		dv = finddevice(rootspec);
+		if (dv == NULL) {
+			printf("device %s not configured\n", rootspec);
+			boothowto |= RB_ASKNAME;
+			goto top;
+		}
+
+		/*
 		 * If it's a network interface, we can bail out
 		 * early.
 		 */
-		dv = finddevice(rootspec);
-		if (dv != NULL && device_class(dv) == DV_IFNET) {
+		if (device_class(dv) == DV_IFNET) {
 			rootdv = dv;
 			goto haveroot;
 		}
@@ -1011,6 +1021,7 @@ setroot(struct device *bootdv, int bootpartition)
 
 	root_device = rootdv;
 
+printf("%s:%d\n", __func__, __LINE__);
 	switch (device_class(rootdv)) {
 	case DV_IFNET:
 	case DV_DISK:
