@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.9.18.5 2009/09/06 23:00:38 matt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.9.18.6 2010/01/26 21:05:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 #include "opt_cputype.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
+
+#include <sys/errno.h>
 
 #include <machine/asm.h>
 #include <machine/cpu.h>
@@ -120,6 +122,74 @@ STRONG_ALIAS(_atomic_cas_32_ni,_atomic_cas_uint)
 STRONG_ALIAS(atomic_cas_32_ni,_atomic_cas_uint)
 STRONG_ALIAS(_atomic_cas_uint_ni,_atomic_cas_uint)
 STRONG_ALIAS(atomic_cas_uint_ni,_atomic_cas_uint)
+
+/*
+ * int ucas_32(volatile uint32_t *ptr, uint32_t old, uint32_t new, uint32_t *ret)
+ */
+LEAF(ucas_32)
+	.set at
+	PTR_LA	v0, _C_LABEL(ucaserr)
+	.set noat
+	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_S	v0, U_PCB_ONFAULT(v1)
+	blt	a0, zero, _C_LABEL(ucaserr)
+	 nop
+	move	v0, zero
+
+1:	INT_LL	t0, 0(a0)
+	 nop
+	bne	t0, a1, 2f
+	 move	t1, a2
+	INT_SC	t1, 0(a0)
+	beqz	t1, 1b
+	 nop
+
+2:	PTR_S	zero, U_PCB_ONFAULT(v1)
+	j	ra
+	 INT_S	t0, 0(a3)
+END(ucas_32)
+
+STRONG_ALIAS(ucas_int, ucas_32)
+STRONG_ALIAS(ucas_uint, ucas_32)
+#ifndef _LP64
+STRONG_ALIAS(ucas_long, ucas_32)
+STRONG_ALIAS(ucas_ulong, ucas_32)
+STRONG_ALIAS(ucas_ptr, ucas_32)
+#endif
+
+#ifndef __mips_o32
+/*
+ * int ucas_64(volatile uint64_t *ptr, uint64_t old, uint64_t new, uint64_t *ret)
+ */
+LEAF(ucas_64)
+	.set at
+	PTR_LA	v0, _C_LABEL(ucaserr)
+	.set noat
+	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_S	v0, U_PCB_ONFAULT(v1)
+	blt	a0, zero, _C_LABEL(ucaserr)
+	 nop
+	move	v0, zero
+
+1:	REG_LL	t0, 0(a0)
+	 nop
+	bne	t0, a1, 2f
+	 move	t1, a2
+	REG_SC	t1, 0(a0)
+	beqz	t1, 1b
+	 nop
+
+2:	PTR_S	zero, U_PCB_ONFAULT(v1)
+	j	ra
+	 REG_S	t0, 0(a3)
+END(ucas_64)
+#ifdef _LP64
+STRONG_ALIAS(ucas_ptr, ucas_64)
+STRONG_ALIAS(ucas_long, ucas_64)
+STRONG_ALIAS(ucas_ulong, ucas_64)
+#endif
+
+#endif /* !__mips_o32 */
 
 #ifndef LOCKDEBUG
 
@@ -243,7 +313,7 @@ END(mutex_spin_enter)
  *     unsigned long old, unsigned long new);
  */
 	.text
-	.align	7
+	.p2align 7
 
 EXPORT(_lock_ras_start)
 
@@ -280,7 +350,26 @@ STRONG_ALIAS(atomic_cas_uint_ni,_atomic_cas_ulong)
 STRONG_ALIAS(_atomic_cas_ptr_ni,_atomic_cas_ulong)
 STRONG_ALIAS(atomic_cas_ptr_ni,_atomic_cas_ulong)
 
+	.p2align 5
+	nop
+	nop
+	nop
+LEAF_NOPROFILE(_ucas_32_ras)
+	PTR_L	t0, (a0)	/* <- critical section start */
+_ucas_32_ras_start:
+	 nop
+	bne	t0, a1, 1f
+ 	 nop
+	PTR_S	a2, (a0)	/* <- critical section end */
+1:
+	PTR_S	zero, U_PCB_ONFAULT(v1)
+	j	ra
+	 INT_S	t0, 0(a3)
+END(_ucas_32_ras)
+
+
 #ifndef LOCKDEBUG
+	.p2align 5
 /*
  * int mutex_enter(kmutex_t *mtx);
  */
@@ -303,6 +392,7 @@ END(mutex_enter)
 /*
  * int mutex_exit(kmutex_t *mtx);
  */
+	.p2align 5
 	nop
 	nop
 	nop
@@ -319,7 +409,7 @@ _mutex_exit_start:
 END(mutex_exit)
 	 nop
 
-	.align	7			/* Get out of the RAS block */
+	.p2align 7			/* Get out of the RAS block */
 
 /*
  * void	mutex_spin_enter(kmutex_t *mtx);
@@ -389,6 +479,9 @@ LEAF_NOPROFILE(_lock_ras)
 	la	t0, _atomic_cas_start
 	beq	t2, t0, 1f
 	 nop
+	addiu	t0, _ucas_32_ras_start - _atomic_cas_start
+	beq	t2, t0, 1f
+	 nop
 #ifndef LOCKDEBUG
 	addiu	t0, _mutex_enter_start - _atomic_cas_start
 	beq	t2, t0, 1f
@@ -404,7 +497,34 @@ LEAF_NOPROFILE(_lock_ras)
 	 addiu	k1, t0, -4
 END(_lock_ras)
 
+/*
+ * int ucas_32(volatile uint32_t *ptr, uint32_t old, uint32_t new, uint32_t *ret)
+ */
+LEAF(ucas_32)
+	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	PTR_LA	v0, _C_LABEL(ucaserr)
+	PTR_S	v0, U_PCB_ONFAULT(v1)
+	blt	a0, zero, _C_LABEL(ucaserr)
+	 nop
+	b	_C_LABEL(_ucas_32_ras)
+	 move	v0, zero
+END(ucas_32)
+
+STRONG_ALIAS(ucas_int, ucas_32)
+STRONG_ALIAS(ucas_uint, ucas_32)
+STRONG_ALIAS(ucas_long, ucas_32)
+STRONG_ALIAS(ucas_ulong, ucas_32)
+STRONG_ALIAS(ucas_ptr, ucas_32)
 #endif	/* MIPS_HAS_LLSC == 0 */
+
+/*
+ *
+ */
+LEAF(ucaserr)
+	PTR_S	zero, U_PCB_ONFAULT(v1)		# reset fault handler
+	j	ra
+	 li	v0, EFAULT			# return EFAULT on error
+END(ucaserr)
 
 #ifndef LOCKDEBUG
 
