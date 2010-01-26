@@ -1,4 +1,4 @@
-.\"	$NetBSD: powerd.8,v 1.20 2010/01/26 14:28:23 jruoho Exp $
+.\"	$NetBSD: powerd.8,v 1.21 2010/01/26 20:37:13 jruoho Exp $
 .\"
 .\" Copyright (c) 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -63,27 +63,13 @@ Verbose messages will be sent to stderr and
 will stay in the foreground of the controlling terminal.
 .El
 .Sh CONFIGURATION SCRIPTS
-All of
+All configuration of
 .Nm
-configuration is encapsulated into scripts that are run when power
-management events occur.
-.Nm
-will look for these scripts in two locations.
-The first location is
-.Pa /etc/powerd/scripts/\*[Lt]power_type\*[Gt] ,
-where
-.Aq Pa power_type
-is defined by the power management mechanism supported by the system,
-e.g.,
-.Dq apm
-or
-.Dq acpi .
-If the script is not found in the first location,
-.Nm
-looks in
+is encapsulated into scripts that are run when power management events occur.
+The daemon will look for the scripts from the directory
 .Pa /etc/powerd/scripts .
 .Pp
-Configuration scripts are run synchronously, i.e.,
+Configuration scripts are run synchronously;
 .Nm
 will start the script and wait for its completion before it handles
 the next event.
@@ -95,7 +81,7 @@ These classes are described in the following sections.
 Power switch scripts are called when a state change event occurs on
 a power switch device.
 Power switch scripts are called with two arguments: the device with which
-the device is associated, and the event type.
+the event is associated, and the event type.
 .Pp
 The following power switch script names are defined:
 .Bl -tag -width "hotkey_button"
@@ -117,9 +103,11 @@ This script is called when an event occurs on a hotkey button device.
 The following events are defined for power switch devices:
 .Bl -tag -width "hotkey_button"
 .It Em pressed
-The button was pressed, the lid closed, or the AC adapter connected.
+The button was pressed, the lid was closed,
+or the AC adapter was connected.
 .It Em released
-The button was released, the lid opened, or the AC adapter disconnected.
+The button was released, the lid was opened,
+or the AC adapter was disconnected.
 Note that power and sleep button devices usually do not
 post this type of event.
 .El
@@ -127,13 +115,13 @@ post this type of event.
 The following is an example of how a power button script might be invoked
 when a power button is pressed by the operator:
 .Bd -literal -offset indent
-/etc/powerd/scripts/power_button acpi0 pressed
+/etc/powerd/scripts/power_button acpibut0 pressed
 .Ed
 .Ss ENVSYS SCRIPTS
 .Xr envsys 4
 scripts are called when a condition was triggered in a sensor.
 These scripts are called with three arguments: the
-device associated, the event type and sensor's name.
+device associated, the event type, and the sensor's name.
 The
 .Sy sensor_drive
 and the
@@ -161,15 +149,8 @@ This script is called when an event occurs on a temperature sensor.
 This script is called when an event occurs on a voltage sensor.
 .El
 .Pp
-The following event is defined for all scripts but is only sent if
-a critical/warning or any other event was previously sent:
-.Bl -tag -width "sensor_temperature"
-.It normal
-A normal state/capacity/condition was triggered.
-.El
-.Pp
 The following events are defined for fan, indicator, power,
-resistance, temperature and voltage sensors:
+resistance, temperature, and voltage sensors:
 .Bl -tag -width "sensor_temperature"
 .It Em critical
 A critical condition was triggered.
@@ -183,23 +164,28 @@ A warning under condition was triggered.
 A warning over condition was triggered.
 .El
 .Pp
+The following event is defined for all scripts, but it is only sent if
+any of the previous events has been previously sent:
+.Bl -tag -width "sensor_temperature"
+.It Em normal
+A normal state/capacity/condition was triggered.
+.El
+.Pp
 The following events are defined only for battery sensors:
 .Bl -tag -width "sensor_temperature"
 .It Em user-capacity
 Capacity dropped below the limit set by the user.
 .It Em low-power
-System is running in low power, that means that there is not
-any AC Adapter connected and all batteries are in critical or
-low capacity.
-When this event is received there's no much time so you should only
-suspend or shutdown the system.
+System is running in low power.
+This implies that the AC adapter is disconnected and
+all batteries are in critical or low capacity.
 The script shutdowns the system gracefully by default.
 .El
 .Pp
 The following events are defined for drive and battery sensors:
 .Bl -tag -width "sensor_temperature"
 .It Em state-changed
-The state on the sensor has been changed and it's not in normal state.
+The state of the sensor has been changed and it is not in the normal state.
 .El
 .Pp
 The following is an example of how a temperature sensor script might be
