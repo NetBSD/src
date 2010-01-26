@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41.28.9 2010/01/20 06:58:35 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.28.10 2010/01/26 21:19:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -209,8 +209,32 @@
 /*
  * pmap-specific data stored in the vm_page structure.
  */
+/*
+ * For each struct vm_page, there is a list of all currently valid virtual
+ * mappings of that page.  An entry is a pv_entry_t, the list is pv_table.
+ * XXX really should do this as a part of the higher level code.
+ */
+typedef struct pv_entry {
+	struct pv_entry	*pv_next;	/* next pv_entry */
+	struct pmap	*pv_pmap;	/* pmap where mapping lies */
+	vaddr_t		pv_va;		/* virtual address for mapping */
+} *pv_entry_t;
+
+#define	PG_MD_UNCACHED		0x0001	/* page is mapped uncached */
+#define	PG_MD_MODIFIED		0x0002	/* page has been modified */
+#define	PG_MD_REFERENCED	0x0004	/* page has been recently referenced */
+#define	PG_MD_POOLPAGE		0x0008	/* page is used as a poolpage */
+#define	PG_MD_EXECPAGE		0x0010	/* page is exec mapped */
+
+#define	PG_MD_CACHED_P(pg)	(((pg)->mdpage.pvh_attrs & PG_MD_UNCACHED) == 0)
+#define	PG_MD_UNCACHED_P(pg)	(((pg)->mdpage.pvh_attrs & PG_MD_UNCACHED) != 0)
+#define	PG_MD_MODIFIED_P(pg)	(((pg)->mdpage.pvh_attrs & PG_MD_MODIFIED) != 0)
+#define	PG_MD_REFERENCED_P(pg)	(((pg)->mdpage.pvh_attrs & PG_MD_REFERENCED) != 0)
+#define	PG_MD_POOLPAGE_P(pg)	(((pg)->mdpage.pvh_attrs & PG_MD_POOLPAGE) != 0)
+#define	PG_MD_EXECPAGE_P(pg)	(((pg)->mdpage.pvh_attrs & PG_MD_EXECPAGE) != 0)
+
 struct vm_page_md {
-	struct pv_entry *pvh_list;	/* pv_entry list */
+	struct pv_entry pvh_first;	/* pv_entry first */
 #ifdef MULTIPROCESSOR
 	volatile u_int pvh_attrs;	/* page attributes */
 	__cpu_simple_lock_t pvh_slock;	/* pv list lock */
@@ -224,7 +248,9 @@ struct vm_page_md {
 
 #define VM_MDPAGE_INIT(pg)						\
 do {									\
-	(pg)->mdpage.pvh_list = NULL;					\
+	(pg)->mdpage.pvh_first.pv_next = NULL;				\
+	(pg)->mdpage.pvh_first.pv_pmap = NULL;				\
+	(pg)->mdpage.pvh_first.pv_va = (pg)->phys_addr;			\
 	VM_MDPAGE_SLOCK_INIT(pg);					\
 	(pg)->mdpage.pvh_attrs = 0;					\
 } while (/* CONSTCOND */ 0)

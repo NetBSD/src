@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.23.38.5 2010/01/20 06:58:35 matt Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.23.38.6 2010/01/26 21:19:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -172,7 +172,7 @@ unsigned int 	pg_g:1,			/* HW: ignore asid bit */
 
 #define MIPS3_PTE_TO_PADDR(pte) (mips3_tlbpfn_to_paddr(pte))
 #define MIPS3_PAGE_IS_RDONLY(pte,va) \
-    (pmap_is_page_ro(pmap_kernel(), mips_trunc_page(va), (pte)))
+    (pmap_is_page_ro_p(pmap_kernel(), mips_trunc_page(va), (pte)))
 
 
 #define	MIPS3_PG_SIZE_4K	0x00000000

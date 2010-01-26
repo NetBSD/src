@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.7 2010/01/22 07:41:10 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.8 2010/01/26 21:19:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -169,23 +169,6 @@ typedef struct pmap {
 	struct pmap_asid_info	pm_pai[1];
 } *pmap_t;
 
-/*
- * For each struct vm_page, there is a list of all currently valid virtual
- * mappings of that page.  An entry is a pv_entry_t, the list is pv_table.
- * XXX really should do this as a part of the higher level code.
- */
-typedef struct pv_entry {
-	struct pv_entry	*pv_next;	/* next pv_entry */
-	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vaddr_t		pv_va;		/* virtual address for mapping */
-	int		pv_flags;	/* some flags for the mapping */
-} *pv_entry_t;
-
-#define	PV_UNCACHED	0x0001		/* page is mapped uncached */
-#define	PV_MODIFIED	0x0002		/* page has been modified */
-#define	PV_REFERENCED	0x0004		/* page has been recently referenced */
-
-
 #ifdef	_KERNEL
 
 struct pmap_kernel {
@@ -231,8 +214,8 @@ void	pmap_tlb_invalidate_addr(pmap_t pmap, vaddr_t);
  * the virtually-indexed cache on mips3 CPUs.
  */
 #ifdef MIPS3_PLUS
-#define PMAP_PREFER(pa, va, sz, td)	pmap_prefer((pa), (va), (td))
-void	pmap_prefer(vaddr_t, vaddr_t *, int);
+#define PMAP_PREFER(pa, va, sz, td)	pmap_prefer((pa), (va), (sz), (td))
+void	pmap_prefer(vaddr_t, vaddr_t *, vsize_t, int);
 #endif /* MIPS3_PLUS */
 
 #define	PMAP_STEAL_MEMORY	/* enable pmap_steal_memory() */
