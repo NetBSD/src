@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.77 2010/01/25 15:30:44 mlelstv Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.78 2010/01/26 21:29:48 mlelstv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.77 2010/01/25 15:30:44 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.78 2010/01/26 21:29:48 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -471,7 +471,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	struct byte_bpb710 *b710;
 	u_int8_t SecPerClust;
 	int	ronly, error, tmp;
-	int	bsize, dtype, fstype, secsize;
+	int	bsize, secsize;
 	u_int64_t psize;
 
 	/* Flush out any old buffers remaining from a previous use. */
@@ -485,9 +485,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 
 	/*
  	 * We need the disklabel to calculate the size of a FAT entry
-	 * later on. Also make sure the partition contains a filesystem
-	 * of type FS_MSDOS. This doesn't work for floppies, so we have
-	 * to check for them too.
+	 * later on.
  	 *
  	 * There might still be parts of the msdos fs driver which assume
 	 * that the size of a disk block will always be 512 bytes.
@@ -496,16 +494,12 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED);
 	if (error == 0) {
 		secsize = dpart.disklab->d_secsize;
-		dtype = dpart.disklab->d_type;
-		fstype = dpart.part->p_fstype;
 		psize = dpart.part->p_size;
 	} else {
 		struct dkwedge_info dkw;
 		struct disk *pdk;
 		error = VOP_IOCTL(devvp, DIOCGWEDGEINFO, &dkw, FREAD, NOCRED);
 		secsize = 512;	/* XXX */
-		dtype = DTYPE_FLOPPY; /* XXX */
-		fstype = FS_MSDOS;
 		psize = -1;
 		if (error) {
 			if (error != ENOTTY) {
@@ -520,16 +514,13 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 				goto error_exit;
 			}
 			secsize = DEV_BSIZE << pdk->dk_blkshift;
-			fstype = strcmp(dkw.dkw_ptype, DKW_PTYPE_FAT) == 0 ?
-			    FS_MSDOS : -1;
 			psize = dkw.dkw_size;
 		}
 	}
 	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
 		bsize = secsize;
 		if (bsize != 512) {
-			DPRINTF(("bsize %d dtype %d fstype %d\n", bsize, dtype,
-			    fstype));
+			DPRINTF(("Invalid block bsize %d for gemdos\n", bsize));
 			error = EINVAL;
 			goto error_exit;
 		}
@@ -696,11 +687,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	pmp->pm_fatsize = pmp->pm_FATsecs * pmp->pm_BytesPerSec;
 
 	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
-		if (pmp->pm_nmbrofclusters <= (0xff0 - 2)
-		      && (dtype == DTYPE_FLOPPY
-			  || (dtype == DTYPE_VND
-				&& (pmp->pm_Heads == 1 || pmp->pm_Heads == 2)))
-		    ) {
+		if (pmp->pm_nmbrofclusters <= (0xff0 - 2)) {
 			pmp->pm_fatmask = FAT12_MASK;
 			pmp->pm_fatmult = 3;
 			pmp->pm_fatdiv = 2;
