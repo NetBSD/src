@@ -81,6 +81,8 @@ static bfd_boolean elf32_mips_grok_prstatus
   (bfd *, Elf_Internal_Note *);
 static bfd_boolean elf32_mips_grok_psinfo
   (bfd *, Elf_Internal_Note *);
+static bfd_boolean mips_elf_n32_is_local_label_name
+  (bfd *, const char *);
 static irix_compat_t elf_n32_mips_irix_compat
   (bfd *);
 
@@ -2239,6 +2241,17 @@ elf32_mips_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
   return TRUE;
 }
 
+/* MIPS ELF local labels start with "$L".  */
+static bfd_boolean
+mips_elf_n32_is_local_label_name (bfd *abfd, const char *name)
+{
+  if (name[0] == '$' && name[1] == 'L')
+    return TRUE;
+
+  /* We accept the generic ELF local label syntax as well.  */
+  return _bfd_elf_is_local_label_name (abfd, name);
+}
+
 /* Depending on the target vector we generate some version of Irix
    executables or "normal" MIPS ELF ABI executables.  */
 static irix_compat_t
@@ -2355,6 +2368,8 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 #define elf_backend_write_section	_bfd_mips_elf_write_section
 #define elf_backend_mips_irix_compat	elf_n32_mips_irix_compat
 #define elf_backend_mips_rtype_to_howto	mips_elf_n32_rtype_to_howto
+#define bfd_elf32_bfd_is_local_label_name \
+				mips_elf_n32_is_local_label_name
 #define bfd_elf32_find_nearest_line	_bfd_mips_elf_find_nearest_line
 #define bfd_elf32_new_section_hook	_bfd_mips_elf_new_section_hook
 #define bfd_elf32_set_section_contents	_bfd_mips_elf_set_section_contents
