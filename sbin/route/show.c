@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.39 2009/03/17 00:53:42 lukem Exp $	*/
+/*	$NetBSD: show.c,v 1.40 2010/01/26 21:27:54 is Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.39 2009/03/17 00:53:42 lukem Exp $");
+__RCSID("$NetBSD: show.c,v 1.40 2010/01/26 21:27:54 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -363,6 +363,13 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *nm, int flags, int width)
 #endif /* INET6 */
 
 #ifndef SMALL
+	case AF_APPLETALK:
+		if (getnameinfo(sa, sa->sa_len, workbuf, sizeof(workbuf),
+		    NULL, 0, NI_NUMERICHOST) != 0)
+			strlcpy(workbuf, "invalid", sizeof(workbuf));
+		cp = workbuf;
+		break;
+
 #endif /* SMALL */
 
 	default:
