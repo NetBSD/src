@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.1.2.3 2010/01/20 06:58:37 matt Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.1.2.4 2010/01/26 21:19:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.1.2.3 2010/01/20 06:58:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.1.2.4 2010/01/26 21:19:25 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -277,7 +277,7 @@ pmap_segtab_free(pmap_t pmap)
 		 * is reused with KSEG2 (mapped) addresses.  This may
 		 * cause problems on machines without VCED/VCEI.
 		 */
-		if (mips_cache_info.mci_cache_virtual_alias)
+		if (MIPS_CACHE_VIRTUAL_ALIAS)
 			mips_dcache_inv_range((vaddr_t)pte, PAGE_SIZE);
 #endif	/* MIPS3_PLUS */
 #ifdef _LP64

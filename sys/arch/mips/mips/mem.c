@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.35.38.4 2010/01/20 06:58:36 matt Exp $	*/
+/*	$NetBSD: mem.c,v 1.35.38.5 2010/01/26 21:19:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -80,7 +80,7 @@
 #include "opt_mips_cache.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.38.4 2010/01/20 06:58:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.38.5 2010/01/26 21:19:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -155,7 +155,7 @@ mmrw(dev, uio, flags)
 #endif
 			error = uiomove((void *)v, c, uio);
 #if defined(MIPS3_PLUS)
-			if (mips_cache_info.mci_cache_virtual_alias)
+			if (MIPS_CACHE_VIRTUAL_ALIAS)
 				mips_dcache_wbinv_range(v, c);
 #endif
 			continue;
@@ -174,7 +174,7 @@ mmrw(dev, uio, flags)
 				return (EFAULT);
 			error = uiomove((void *)v, c, uio);
 #if defined(MIPS3_PLUS)
-			if (mips_cache_info.mci_cache_virtual_alias)
+			if (MIPS_CACHE_VIRTUAL_ALIAS)
 				mips_dcache_wbinv_range(v, c);
 #endif
 			continue;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.50.24.3 2009/09/16 03:22:03 matt Exp $
+#	$NetBSD: Makefile.mips,v 1.50.24.4 2010/01/26 21:19:25 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -63,8 +63,8 @@ SYSTEM_LD_TAIL_EXTRA+= \
 LDFLAGS+=	-m elf64ltsmip
 LINKFORMAT+=	-m elf64ltsmip
 SYSTEM_LD_TAIL_EXTRA+= \
-		;echo ${OBJCOPY} -O elf32-nlittlemips $@ $@.elf32; \
-		${OBJCOPY} -O elf32-nlittlemips $@ $@.elf32
+	;echo ${OBJCOPY} -O elf32-nlittlemips $@ $@.elf32; \
+	${OBJCOPY} -O elf32-nlittlemips $@ $@.elf32
 .endif
 .endif # LP64=yes
 AFLAGS+=	-mno-abicalls -x assembler-with-cpp -traditional-cpp ${AOPTS}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.33.96.2 2010/01/20 09:04:34 matt Exp $	*/
+/*	$NetBSD: cache.c,v 1.33.96.3 2010/01/26 21:19:25 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.33.96.2 2010/01/20 09:04:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.33.96.3 2010/01/26 21:19:25 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -961,11 +961,12 @@ mips_config_cache_modern(void)
 
 		/*
 		 * Compute the total size and "way mask" for the
-		 * primary Icache.
+		 * primary Dcache.
 		 */
 		mci->mci_pdcache_size =
 		    mci->mci_pdcache_way_size * mci->mci_pdcache_ways;
 		mci->mci_pdcache_way_mask = mci->mci_pdcache_way_size - 1;
+		uvmexp.ncolors = atop(mci->mci_pdcache_size) / mci->mci_pdcache_ways;
 		break;
 	}
 
