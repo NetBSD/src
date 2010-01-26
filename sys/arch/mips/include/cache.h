@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.9.96.1 2010/01/20 06:58:35 matt Exp $	*/
+/*	$NetBSD: cache.h,v 1.9.96.2 2010/01/26 21:19:25 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -206,17 +206,30 @@ struct mips_cache_info {
 	u_int mci_dcache_align;
 	u_int mci_dcache_align_mask;
 
-	u_int mci_cache_alias_mask;
 	u_int mci_cache_prefer_mask;
+#if defined(MIPS2) || defined(MIPS3) || defined(MIPS3_5900)
+	u_int mci_cache_alias_mask;
 
 	bool mci_cache_virtual_alias;
+
+#define	MIPS_CACHE_ALIAS_MASK		mips_cache_info.mci_cache_alias_mask
+#define	MIPS_CACHE_VIRTUAL_ALIAS	mips_cache_info.mci_cache_virtual_alias
+#elif defined(MIPS1) || defined(MIPS32) || defined(MIPS64)
+#define	MIPS_CACHE_ALIAS_MASK		0
+#define	MIPS_CACHE_VIRTUAL_ALIAS	false
+#else
+#error mci_cache screw up
+#endif
 };
 
 extern struct mips_cache_info mips_cache_info;
+
+
 /*
  * XXX XXX XXX THIS SHOULD NOT EXIST XXX XXX XXX
  */
-#define	mips_cache_indexof(x)	(((vaddr_t)(x)) & mips_cache_info.mci_cache_alias_mask)
+#define	mips_cache_indexof(x)	(((vaddr_t)(x)) & MIPS_CACHE_ALIAS_MASK)
+#define	mips_cache_badalias(x,y) (((vaddr_t)(x)^(vaddr_t)(y)) & MIPS_CACHE_ALIAS_MASK)
 
 #define	__mco_noargs(prefix, x)						\
 do {									\

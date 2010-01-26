@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.14 2010/01/20 09:04:34 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.15 2010/01/26 21:19:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -142,6 +142,8 @@ struct cpu_info {
 	 * Per-cpu pmap information
 	 */
 	struct segtab *ci_pmap_segbase;
+	vaddr_t ci_pmap_srcbase;	/* starting VA of ephemeral src space */
+	vaddr_t ci_pmap_dstbase;	/* starting VA of ephemeral dst space */
 	uint32_t ci_pmap_asid_next;	/* next asid to be assigned */
 	uint32_t ci_pmap_asid_generation; /* current asid generation */
 	uint32_t ci_pmap_asid_reserved;	/* base of ASID space */
