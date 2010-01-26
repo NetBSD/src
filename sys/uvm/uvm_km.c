@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.101.4.2.4.1 2010/01/09 05:54:40 matt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.101.4.2.4.2 2010/01/26 21:26:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.101.4.2.4.1 2010/01/09 05:54:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.101.4.2.4.2 2010/01/26 21:26:28 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -589,7 +589,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	loopva = kva;
 	loopsize = size;
 
-	pgaflags = 0;
+	pgaflags = UVM_FLAG_COLORMATCH;
 	if (flags & UVM_KMF_NOWAIT)
 		pgaflags |= UVM_PGA_USERESERVE;
 	if (flags & UVM_KMF_ZERO)
