@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.47 2009/08/12 20:24:30 seanb Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.48 2010/01/26 21:27:54 is Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.47 2009/08/12 20:24:30 seanb Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.48 2010/01/26 21:27:54 is Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: getnameinfo.c,v 1.47 2009/08/12 20:24:30 seanb Exp $");
 #include <net/if_dl.h>
 #include <net/if_ieee1394.h>
 #include <net/if_types.h>
+#include <netatalk/at.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
@@ -102,6 +103,9 @@ static int ip6_parsenumeric __P((const struct sockaddr *, const char *, char *,
 static int ip6_sa2str __P((const struct sockaddr_in6 *, char *, size_t,
 				 int));
 #endif
+static int getnameinfo_atalk __P((const struct sockaddr *, socklen_t, char *,
+    socklen_t, char *, socklen_t, int));
+
 static int getnameinfo_link __P((const struct sockaddr *, socklen_t, char *,
     socklen_t, char *, socklen_t, int));
 static int hexname __P((const u_int8_t *, size_t, char *, socklen_t));
@@ -120,6 +124,9 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 {
 
 	switch (sa->sa_family) {
+	case AF_APPLETALK:
+		return getnameinfo_atalk(sa, salen, host, hostlen,
+		    serv, servlen, flags);
 	case AF_INET:
 	case AF_INET6:
 		return getnameinfo_inet(sa, salen, host, hostlen,
@@ -132,6 +139,45 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	}
 }
 
+/*
+ * getnameinfo_atalk():
+ * Format an AppleTalk address into a printable format.
+ */
+/* ARGSUSED */
+static int
+getnameinfo_atalk(const struct sockaddr *sa, socklen_t salen,
+    char *host, socklen_t hostlen, char *serv, socklen_t servlen,
+    int flags)
+{
+	char numserv[8];
+	int n;
+
+	const struct sockaddr_at *sat =
+	    (const struct sockaddr_at *)(const void *)sa;
+
+	if (serv != NULL && servlen > 0) {
+		snprintf(numserv, sizeof(numserv), "%u", sat->sat_port);
+		if (strlen(numserv) + 1 > servlen)
+			return EAI_MEMORY;
+		strlcpy(serv, numserv, servlen);
+	}
+
+	if (sat->sat_range.r_netrange.nr_phase) {
+        	n = snprintf(host, hostlen, "%u.%u phase %u",
+		    ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node,
+			sat->sat_range.r_netrange.nr_phase);
+	} else {
+        	n = snprintf(host, hostlen, "%u.%u",
+		    ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node);
+	}
+
+	if (n < 0 || (socklen_t) n >= hostlen) {
+		if (host != NULL && hostlen > 0)
+			*host = '\0';	/* XXX ??? */
+		return EAI_MEMORY;
+	}
+	return 0;
+}
 
 /*
  * getnameinfo_inet():
