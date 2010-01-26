@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.192.4.1.4.1 2010/01/26 04:41:07 cliff Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.192.4.1.4.2 2010/01/26 04:51:03 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.192.4.1.4.1 2010/01/26 04:41:07 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.192.4.1.4.2 2010/01/26 04:51:03 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -786,7 +786,6 @@ setroot(struct device *bootdv, int bootpartition)
 	 * find a reasonable network interface for "rootspec".
 	 */
 	vops = vfs_getopsbyname("nfs");
-printf("%s:%d\n", __func__, __LINE__);
 	if (vops != NULL && vops->vfs_mountroot == mountroot &&
 	    rootspec == NULL &&
 	    (bootdv == NULL || device_class(bootdv) != DV_IFNET)) {
@@ -1020,8 +1019,6 @@ printf("%s:%d\n", __func__, __LINE__);
  haveroot:
 
 	root_device = rootdv;
-
-printf("%s:%d\n", __func__, __LINE__);
 	switch (device_class(rootdv)) {
 	case DV_IFNET:
 	case DV_DISK:
