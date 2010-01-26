@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.148.4.2 2009/04/01 00:25:23 snj Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.148.4.2.4.1 2010/01/26 21:26:28 matt Exp $	*/
 
 /*
  *
@@ -146,6 +146,7 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 #define UVM_FLAG_QUANTUM 0x800000 /* entry can never be split later */
 #define UVM_FLAG_WAITVA  0x1000000 /* wait for va */
 #define UVM_FLAG_VAONLY  0x2000000 /* unmap: no pages are mapped */
+#define UVM_FLAG_COLORMATCH 0x4000000 /* match color given in off */
 
 /* macros to extract info */
 #define UVM_PROTECTION(X)	((X) & UVM_PROT_MASK)

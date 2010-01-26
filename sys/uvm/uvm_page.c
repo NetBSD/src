@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.140.6.3.4.1 2009/09/12 18:38:46 matt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.140.6.3.4.2 2010/01/26 21:26:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.140.6.3.4.1 2009/09/12 18:38:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.140.6.3.4.2 2010/01/26 21:26:28 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1074,7 +1074,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	lwp_t *l;
 
 	KASSERT(obj == NULL || anon == NULL);
-	KASSERT(anon == NULL || off == 0);
+	KASSERT(anon == NULL || (flags & UVM_FLAG_COLORMATCH) || off == 0);
 	KASSERT(off == trunc_page(off));
 	KASSERT(obj == NULL || mutex_owned(&obj->vmobjlock));
 	KASSERT(anon == NULL || mutex_owned(&anon->an_lock));
@@ -1089,7 +1089,11 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	 */
 
 	ucpu = curcpu()->ci_data.cpu_uvm;
-	color = ucpu->page_free_nextcolor;
+	if (flags & UVM_FLAG_COLORMATCH) {
+		color = atop(off) & uvmexp.colormask;
+	} else {
+		color = ucpu->page_free_nextcolor;
+	}
 
 	/*
 	 * check to see if we need to generate some free pages waking
