@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.1 2010/01/19 22:38:21 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.2 2010/01/26 17:50:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2010/01/19 22:38:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2 2010/01/26 17:50:02 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -38,8 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2010/01/19 22:38:21 pooka Exp $");
 
 #include "rump_dev_private.h"
 #include "rump_vfs_private.h"
-
-void bpfilterattach(int);
 
 void
 rump_dev_bpf_init()
@@ -53,6 +51,4 @@ rump_dev_bpf_init()
 		panic("bpf devsw attach failed: %d", error);
 	if ((error = rump_vfs_makeonedevnode(S_IFCHR, "/dev/bpf", cmaj, 0)) !=0)
 		panic("cannot create bpf device nodes: %d", error);
-
-	rump_pdev_add(bpfilterattach, 1);
 }
