@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.299 2009/09/09 22:41:28 darran Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.300 2010/01/26 18:09:07 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.299 2009/09/09 22:41:28 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.300 2010/01/26 18:09:07 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -239,7 +239,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.299 2009/09/09 22:41:28 darran Exp $
 int	tcprexmtthresh = 3;
 int	tcp_log_refused;
 
-int	tcp_do_autorcvbuf = 0;
+int	tcp_do_autorcvbuf = 1;
 int	tcp_autorcvbuf_inc = 16 * 1024;
 int	tcp_autorcvbuf_max = 256 * 1024;
 int	tcp_msl = (TCPTV_MSL / PR_SLOWHZ);
