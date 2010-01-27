@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.147 2010/01/02 21:16:46 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.148 2010/01/27 11:02:03 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -409,7 +409,7 @@ unsigned int    set_X11_selected(void);
 int 	get_and_unpack_sets(int, msg, msg, msg);
 int	sanity_check(void);
 int	set_timezone(void);
-int	set_crypt_type(void);
+void	set_crypt_type(void);
 int	set_root_password(void);
 int	set_root_shell(void);
 void	scripting_fprintf(FILE *, const char *, ...);
