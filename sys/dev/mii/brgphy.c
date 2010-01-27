@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.40.4.1 2009/08/04 19:46:20 snj Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.40.4.2 2010/01/27 22:03:18 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.40.4.1 2009/08/04 19:46:20 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.40.4.2 2010/01/27 22:03:18 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,6 +165,12 @@ static const struct mii_phydesc brgphys[] = {
 
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5708C,
 	  MII_STR_BROADCOM_BCM5708C },
+
+	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5709C,
+	  MII_STR_BROADCOM2_BCM5709C },
+
+	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5709CAX,
+	  MII_STR_BROADCOM2_BCM5709CAX },
 
 	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5722,
 	  MII_STR_BROADCOM2_BCM5722 },
@@ -304,8 +310,8 @@ setit:
 			}
 
 			PHY_WRITE(sc, MII_100T2CR, 0);
-			PHY_WRITE(sc, MII_BMCR, speed);
 			PHY_WRITE(sc, MII_ANAR, ANAR_CSMA);
+			PHY_WRITE(sc, MII_BMCR, speed);
 
 			if (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)
 				break;
