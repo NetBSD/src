@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.33 2009/08/06 18:26:03 macallan Exp $
+#	$NetBSD: files.sbus,v 1.34 2010/01/27 21:01:33 macallan Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -115,7 +115,7 @@ attach	cgthree at sbus with cgthree_sbus
 file	dev/sbus/cgthree_sbus.c		cgthree_sbus
 
 # framebuffer devices implemented only on SBus
-device	tcx: bt_dac, fb, rasops8, wsemuldisplaydev, vcons
+device	tcx: fb, rasops8, wsemuldisplaydev, vcons
 attach	tcx at sbus
 file	dev/sbus/tcx.c			tcx needs-flag
 
