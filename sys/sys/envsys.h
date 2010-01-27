@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.27 2010/01/26 14:22:00 pgoyette Exp $ */
+/* $NetBSD: envsys.h,v 1.28 2010/01/27 04:36:34 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -173,7 +173,10 @@ enum envsys_battery_capacity_states {
 #define	PROP_RFACT		0x0080
 
 #define	PROP_DRIVER_LIMITS	0x8000
-#define	PROP_LIMITS		0x003f
+#define	PROP_CAP_LIMITS		(PROP_BATTCAP | PROP_BATTWARN)
+#define	PROP_VAL_LIMITS		(PROP_CRITMAX | PROP_CRITMIN | \
+				 PROP_WARNMAX | PROP_WARNMIN)
+#define	PROP_LIMITS		(PROP_CAP_LIMITS | PROP_VAL_LIMITS)
 
 /*
  * Compatibility with old interface. Only ENVSYS_GTREDATA
