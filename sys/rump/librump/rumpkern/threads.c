@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.6 2009/12/05 12:54:11 pooka Exp $	*/
+/*	$NetBSD: threads.c,v 1.7 2010/01/27 20:16:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.6 2009/12/05 12:54:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.7 2010/01/27 20:16:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -118,6 +118,10 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 		} else if (strcmp(thrstore, "unpgc") == 0) {
 			printf("rump warning: threads not enabled, not enabling"
 			   " UNP garbage collection\n");
+			return 0;
+		} else if (strncmp(thrstore, "pmf", sizeof("pmf")-1) == 0) {
+			printf("rump warning: threads not enabled, not enabling"
+			   " pmf thread\n");
 			return 0;
 		} else if (strncmp(thrstore, "xcall", sizeof("xcall")-1) == 0) {
 			printf("rump warning: threads not enabled, CPU xcall"
