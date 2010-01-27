@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_modff.c,v 1.8 2008/04/25 22:21:53 christos Exp $");
+__RCSID("$NetBSD: s_modff.c,v 1.9 2010/01/27 14:07:41 drochner Exp $");
 #endif
 
 #include "math.h"
@@ -50,6 +50,8 @@ modff(float x, float *iptr)
 	} else {			/* no fraction part */
 	    u_int32_t ix;
 	    *iptr = x*one;
+	    if (jj0 == 0x80)		/* +-inf or NaN */
+		return 0.0 / x;		/* +-0 or NaN */
 	    GET_FLOAT_WORD(ix,x);
 	    SET_FLOAT_WORD(x,ix&0x80000000);	/* return +-0 */
 	    return x;
