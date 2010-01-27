@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.43 2009/12/10 20:20:59 jld Exp $   */
+/*      $NetBSD: raidctl.c,v 1.44 2010/01/27 17:02:06 pooka Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.43 2009/12/10 20:20:59 jld Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.44 2010/01/27 17:02:06 pooka Exp $");
 #endif
 
 
@@ -382,7 +382,7 @@ rf_configure(int fd, char *config_file, int force)
 
 	if (rf_MakeConfig( config_file, &cfg ) != 0) {
 		fprintf(stderr,"%s: unable to create RAIDframe %s\n",
-			getprogname(), "configuration structure\n");
+			getprogname(), "configuration structure");
 		exit(1);
 	}
 	
