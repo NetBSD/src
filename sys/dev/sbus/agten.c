@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.22 2009/09/17 16:39:48 tsutsui Exp $ */
+/*	$NetBSD: agten.c,v 1.23 2010/01/27 21:02:22 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.22 2009/09/17 16:39:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.23 2010/01/27 21:02:22 macallan Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -73,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.22 2009/09/17 16:39:48 tsutsui Exp $");
 #include <dev/ic/ibm561reg.h>
 #include <dev/ic/i128reg.h>
 #include <dev/ic/i128var.h>
+
+#include <machine/vmparam.h>
 
 #include "opt_agten.h"
 #include "ioconf.h"
@@ -246,7 +248,7 @@ agten_attach(device_t parent, device_t dev, void *aux)
 	sc->sc_i128_fbsz = prom_getpropint(node, "i128_fb_size", -1);
 	if (sbus_bus_map(sc->sc_bustag,
 	    sa->sa_reg[0].oa_space, sa->sa_reg[0].oa_base + reg,
-	    sc->sc_stride * sc->sc_height,
+	    (sc->sc_stride * sc->sc_height + PAGE_MASK) & ~PAGE_MASK,
 	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE, 
 	    &sc->sc_i128_fbh) != 0) {
 
