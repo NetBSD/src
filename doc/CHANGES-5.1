@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.186 2010/01/27 21:41:04 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.187 2010/01/27 21:43:00 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16379,4 +16379,12 @@ sys/dev/ic/mfi.c				1.31
 	bio(4) is MP-safe but mfi(4) is not. So get the kernel_lock at
 	mfi_ioctl() entry and release it on exit.
 	[bouyer, #ticket 1257]
+
+usr.sbin/wpa/wpa_supplicant/Makefile		1.12
+usr.sbin/wpa/wpa_supplicant/wpa_supplicant.8	1.6, 1.7
+
+	Enable CONFIG_DEBUG_FILE option to allow debug messages to be sent to
+	a file instead of stdout.
+	-f is not mandatory.
+	[sborrill, ticket #1267]
 
