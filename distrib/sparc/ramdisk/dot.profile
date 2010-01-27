@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.18 2003/07/11 12:16:56 pk Exp $
+# $NetBSD: dot.profile,v 1.18.16.1 2010/01/27 20:59:46 bouyer Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -83,7 +83,7 @@ floppy()
 	local dev rval
 
 	rval=0
-	dev="/dev/rfd0a"
+	dev="/dev/fd0a"
 
 	echo "Ejecting floppy disk"
 	eject $dev
