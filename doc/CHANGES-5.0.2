@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.45 2010/01/23 20:37:34 bouyer Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.46 2010/01/27 20:45:27 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -1109,4 +1109,16 @@ libexec/ld.elf_so/rtld.h			1.88
 	Restore backwards compatibility for binaries referencing the main
 	Obj_Entry.
 	[skrll, ticket #1249]
+
+xsrc/external/mit/expat/dist/lib/xmlparse.c		1.2
+
+	Add patch from upstream CVS to fix CVE-2009-3560 (possible DOS due to
+	crash on bad input).
+	[tron, ticket #1283]
+
+xsrc/xfree/xc/extras/expat/lib/xmlparse.c		1.2
+
+	Add patch from upstream CVS to fix CVE-2009-3560 (possible DOS due to
+	crash on bad input).
+	[tron, ticket #1284]
 
