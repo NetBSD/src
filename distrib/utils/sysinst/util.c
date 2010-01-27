@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.162 2010/01/02 18:06:57 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.163 2010/01/27 11:02:03 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,6 +47,7 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <curses.h>
+#include <err.h>
 #include <errno.h>
 #include <dirent.h>
 #include <util.h>
@@ -248,6 +249,32 @@ run_makedev(void)
 
 	chdir(owd);
 	free(owd);
+}
+
+/*
+ * Performs in-place replacement of a set of patterns in a file that lives
+ * inside the installed system.  The patterns must be separated by a semicolon.
+ * For example:
+ *
+ * replace("/etc/some-file.conf", "s/prop1=NO/prop1=YES/;s/foo/bar/");
+ */
+static
+void
+replace(const char *path, const char *patterns, ...)
+{
+	char *spatterns;
+	va_list ap;
+
+	va_start(ap, patterns);
+	vasprintf(&spatterns, patterns, ap);
+	va_end(ap);
+	if (spatterns == NULL)
+		err(1, "vasprintf(&spatterns, \"%s\", ...)", patterns);
+
+	run_program(RUN_CHROOT, "sed -an -e '%s;H;$!d;g;w %s' %s", spatterns,
+	    path, path);
+
+	free(spatterns);
 }
 
 static int
@@ -1152,61 +1179,39 @@ done:
 	return 1;
 }
 
-int
+static
+void
+replace_crypt_type(const char *localcipher, const char *ypcipher)
+{
+
+	replace("/etc/passwd.conf", "s/^.*default:.*$/default:/;"
+	    "s/^.*localcipher.*$/\tlocalcipher = %s/;"
+	    "s/^.*ypcipher.*$/\typcipher = %s/", localcipher, ypcipher);
+}
+
+void
 set_crypt_type(void)
 {
-	FILE *pwc;
-	char *fn;
 
 	msg_display(MSG_choose_crypt);
 	process_menu(MENU_crypttype, NULL);
-	fn = strdup(target_expand("/etc/passwd.conf"));
-	if (fn == NULL)
-		return -1;
 
 	switch (yesno) {
 	case 0:
 		break;
 	case 1:	/* DES */
-		rename(fn, target_expand("/etc/passwd.conf.pre-sysinst"));
-		pwc = fopen(fn, "w");
-		fprintf(pwc,
-		    "default:\n"
-		    "  localcipher = old\n"
-		    "  ypcipher = old\n");
-		fclose(pwc);
+		replace_crypt_type("old", "old");
 		break;
 	case 2:	/* MD5 */
-		rename(fn, target_expand("/etc/passwd.conf.pre-sysinst"));
-		pwc = fopen(fn, "w");
-		fprintf(pwc,
-		    "default:\n"
-		    "  localcipher = md5\n"
-		    "  ypcipher = md5\n");
-		fclose(pwc);
+		replace_crypt_type("md5", "md5");
 		break;
 	case 3:	/* blowfish 2^7 */
-		rename(fn, target_expand("/etc/passwd.conf.pre-sysinst"));
-		pwc = fopen(fn, "w");
-		fprintf(pwc,
-		    "default:\n"
-		    "  localcipher = blowfish,7\n"
-		    "  ypcipher = blowfish,7\n");
-		fclose(pwc);
+		replace_crypt_type("blowfish,7", "blowfish,7");
 		break;
 	case 4:	/* sha1 */
-		rename(fn, target_expand("/etc/passwd.conf.pre-sysinst"));
-		pwc = fopen(fn, "w");
-		fprintf(pwc,
-		    "default:\n"
-		    "  localcipher = sha1\n"
-		    "  ypcipher = sha1\n");
-		fclose(pwc);
+		replace_crypt_type("sha1", "sha1");
 		break;
 	}
-
-	free(fn);
-	return (0);
 }
 
 int
@@ -1291,9 +1296,8 @@ add_sysctl_conf(const char *fmt, ...)
 void
 enable_rc_conf(void)
 {
-	run_program(RUN_CHROOT,
-		    "sed -an -e 's/^rc_configured=NO/rc_configured=YES/;"
-				    "H;$!d;g;w /etc/rc.conf' /etc/rc.conf");
+
+	replace("/etc/rc.conf", "s/^rc_configured=NO/rc_configured=YES/");
 }
 
 int
