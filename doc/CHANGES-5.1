@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.188 2010/01/27 22:08:21 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.189 2010/01/27 22:29:11 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16389,7 +16389,11 @@ usr.sbin/wpa/wpa_supplicant/wpa_supplicant.8	1.6, 1.7
 	[sborrill, ticket #1267]
 
 sys/dev/mii/miidevs				1.90 via patch
+sys/dev/mii/miidevs.h				regen
+sys/dev/mii/miidevs_data.h			regen
 sys/dev/pci/pcidevs				1.1001 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
 sys/dev/mii/brgphy.c				1.51 via patch
 sys/dev/microcode/bnx/bnxfw.h			1.3 via patch
 sys/dev/pci/if_bnx.c				1.29-1.30 via patch
@@ -16400,4 +16404,43 @@ sys/dev/pci/if_bnxreg.h				1.9 via patch
 	Replace TX dmamap array with a dynamically-grown list.
 	Support associated BCM5709CAX and BCM5709C PHYs.
 	[bouyer, ticket #1268]
+
+sys/dev/pci/if_wm.c				1.184-1.194
+sys/dev/pci/if_wmreg.h				1.29-1.35
+sys/dev/pci/if_wmvar.h				1.5-1.8
+sys/dev/pci/pcidevs		1.1006,1.1009-1.1010, 1.1012-1.1013 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/mii/igphyreg.h				1.5
+sys/dev/mii/inbmphyreg.h			1.1
+
+	- Add support for i82583V.
+	- Add some ICH9 and ICH10 devices.
+	- Add support for PCH.
+	- Fix the bug that ICH9 can't found a PHY. Fixes PR#42237
+	- Fix an incorrect test for WM_F_EEPROM_INVALID since rev. 1.183.
+	  Some old chips don't set EECD_EE_PRES.
+	- Fix a bug that both WM_F_EEPROM_SPI and WM_F_EEPROM_FLASH are set.
+	- Add a missing decrement for a timeout reported by Wolfgang
+	  Stukenbrock in PR#42422.
+	- PBA setting for i82574 is not 12K but 20K.
+	- Enable checking the management mode on 82574.
+	- Fix the length of the delay() in wm_gmii_reset(). It fixed the
+	  problem that sometimes the driver misunderstood PHYs in
+	  mii_attach(). It was reported by MATSUI Yoshihiro. We observed
+	  it on ICH9.
+	- Fix the checking of jumbo frame function
+	- Remove the extra macro definition for the offset 0x1a in EEPROM.
+	- Add missing break in wm_reset()...
+	- Fix the offset of WMREG_PBS...
+	- Make wm_reset() and wm_gmii_reset() close to e1000 driver.
+	  At least, this change make wm_attach() stable on ICH9.
+	- Reset GMII interface after wm_reset() in wm_init().
+	- Rework for assigning mii_{read,write}reg(). Use PCI product ID
+	  to identify the PHY.
+	- Add code about LPLU(Low Power Link Up) function. It seems that
+	  we have to do the same work for ICH9.
+	- Fixes the rx stall problem on 82578 with a lot of workaround
+	  code. We need more work for 82577.
+	[msaitoh, ticket #1277]
 
