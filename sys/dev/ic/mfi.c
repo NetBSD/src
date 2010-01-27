@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.19.8.1 2009/09/10 07:09:43 snj Exp $ */
+/* $NetBSD: mfi.c,v 1.19.8.2 2010/01/27 21:43:48 sborrill Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.19.8.1 2009/09/10 07:09:43 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.19.8.2 2010/01/27 21:43:48 sborrill Exp $");
 
 #include "bio.h"
 
@@ -1321,7 +1321,10 @@ mfi_ioctl(struct device *dev, u_long cmd, void *addr)
 {
 	struct mfi_softc	*sc = (struct mfi_softc *)dev;
 	int error = 0;
-	int s = splbio();
+	int s;
+
+	KERNEL_LOCK(1, curlwp);
+	s = splbio();
 
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl ", DEVNAME(sc));
 
@@ -1361,6 +1364,7 @@ mfi_ioctl(struct device *dev, u_long cmd, void *addr)
 		error = EINVAL;
 	}
 	splx(s);
+	KERNEL_UNLOCK_ONE(curlwp);
 
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl return %x\n", DEVNAME(sc), error);
 	return error;
