@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.78 2010/01/24 11:32:13 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.79 2010/01/27 22:17:28 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.78 2010/01/24 11:32:13 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.79 2010/01/27 22:17:28 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -462,20 +462,20 @@ acpibat_get_status(device_t dv)
 			rv = AE_TYPE;
 			goto out;
 		}
-
-		KDASSERT((uint64_t)elm[i].Integer.Value < INT_MAX);
 	}
 
-	rate = elm[ACPIBAT_BST_RATE].Integer.Value;
 	state = elm[ACPIBAT_BST_STATE].Integer.Value;
 
 	if ((state & ACPIBAT_ST_CHARGING) != 0) {
+		/* XXX rate can be invalid */
+		rate = elm[ACPIBAT_BST_RATE].Integer.Value;
 		sc->sc_sensor[ACPIBAT_CHARGERATE].state = ENVSYS_SVALID;
 		sc->sc_sensor[ACPIBAT_CHARGERATE].value_cur = rate * 1000;
 		sc->sc_sensor[ACPIBAT_DISCHARGERATE].state = ENVSYS_SINVALID;
 		sc->sc_sensor[ACPIBAT_CHARGING].state = ENVSYS_SVALID;
 		sc->sc_sensor[ACPIBAT_CHARGING].value_cur = 1;
 	} else if ((state & ACPIBAT_ST_DISCHARGING) != 0) {
+		rate = elm[ACPIBAT_BST_RATE].Integer.Value;
 		sc->sc_sensor[ACPIBAT_DISCHARGERATE].state = ENVSYS_SVALID;
 		sc->sc_sensor[ACPIBAT_DISCHARGERATE].value_cur = rate * 1000;
 		sc->sc_sensor[ACPIBAT_CHARGERATE].state = ENVSYS_SINVALID;
