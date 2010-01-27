@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.2.4.5 2009/07/22 22:31:06 snj Exp $ */
+/* $NetBSD: sha2.c,v 1.2.4.6 2010/01/27 21:05:52 bouyer Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.2.4.5 2009/07/22 22:31:06 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.2.4.6 2010/01/27 21:05:52 bouyer Exp $");
 
 #include <sys/param.h>	/* XXX: to pull <machine/macros.h> for vax memset(9) */
 #include <lib/libkern/libkern.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.2.4.5 2009/07/22 22:31:06 snj Exp $");
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha2.c,v 1.2.4.5 2009/07/22 22:31:06 snj Exp $");
+__RCSID("$NetBSD: sha2.c,v 1.2.4.6 2010/01/27 21:05:52 bouyer Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -941,7 +941,6 @@ SHA512_Last(SHA512_CTX *context)
 int
 SHA512_Final(uint8_t digest[], SHA512_CTX *context)
 {
-	uint64_t	*d = (void *)digest;
 	size_t i;
 
 	/* If no digest buffer is passed, we don't bother doing this: */
@@ -950,7 +949,7 @@ SHA512_Final(uint8_t digest[], SHA512_CTX *context)
 
 		/* Save the hash data for output: */
 		for (i = 0; i < 8; ++i)
-			d[i] = htobe64(context->state[i]);
+			be64enc(digest + 8 * i, context->state[i]);
 	}
 
 	/* Zero out state data */
