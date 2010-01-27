@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.20.8.1 2008/05/08 07:57:32 jdc Exp $ */
+/*	$NetBSD: promdev.c,v 1.20.8.2 2010/01/27 20:59:46 bouyer Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -213,6 +213,15 @@ devopen(struct open_file *f, const char *fname, char **file)
 #ifdef NOTDEF_DEBUG
 	printf("devopen: Checking disklabel for RAID partition\n");
 #endif
+
+		/*
+		 * Don't check disklabel on floppy boot since
+		 * reopening it could cause Data Access Exception later.
+		 */
+		if (strncmp(prom_bootdevice, "fd", 2) == 0 ||
+		    strstr(prom_bootdevice, "SUNW,fdtwo") != NULL ||
+		    strstr(prom_bootdevice, "fdthree") != NULL)
+			return 0;
 
 		/*
 		 * We need to read from the raw partition (i.e. the
