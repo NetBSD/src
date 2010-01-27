@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.194 2010/01/21 19:33:05 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.195 2010/01/27 21:10:16 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -3995,4 +3995,57 @@ dist/bind/version				patch
 	Backport changes from 9.4.3-9.4.3-P5 to 9.4.2, fixing a number of
 	security issues.
 	[christos, ticket #1376]
+
+xsrc/xfree/xc/extras/expat/lib/xmlparse.c		1.2
+
+	Add patch from upstream CVS to fix CVE-2009-3560 (possible DOS due to
+	crash on bad input).
+	[tron, ticket #1383]
+
+distrib/sparc/ramdisk/dot.profile		1.20
+sys/arch/sparc/sparc/auxreg.h			1.13
+sys/arch/sparc/stand/common/promdev.c		1.23
+
+	Don't try to read disklabel to check FS_RAID on floppy boot since
+	reopening floppy could cause Data Access Exception later.
+	Fixes PR port-sparc/42186, ok'ed by mrg@.
+
+	Use /dev/fd0a rather than /dev/rfd0a to read instfs.tgz image from
+	floppy.  It looks newer (appearred after 1.6) gzip tries to read
+	less than DEV_BSIZE (to check header?) so we can't use raw device
+	directly.  (note sparc bootfs ramdisk doesn't have dd(1))
+	Workaround for PR port-sparc/42193, and would also fix PR install/28734.
+
+	Explicitly clear AUXIO4M_FTC bit in FTC_FLIP macro used on
+	pseudo-dma for floppy, as well as AUXIO4C_FTC bit for sun4c.
+	A comment in the macro says AUXIO4M_FTC bit is auto-clear,
+	but my two SS20s (including compatible) with 150MHz hyperSPARCs
+	get data_overrun without it, and no bad side effect on SS5
+	(works with and without this change).
+	Closes PR port-sparc/42516, which is the last one of a bunch of
+	floppy issue on NetBSD/sparc since NetBSD 2.0 days. See
+	http://mail-index.NetBSD.org/port-sparc/2009/12/20/msg000484.html
+	for details.
+	[tsutsui, ticket #1379]
+
+bin/sh/cd.c					1.40
+bin/sh/sh.1					1.95, 1.97
+bin/sh/sh.1					1.97
+
+	Make the cd builtin accept and ignore -P, which is a kshism that
+	has been allowed to leak into POSIX and selects the behavior cd
+	already implements.
+	Closes PR bin/42557 and also relevant to PR pkg/42168.
+	[dholland, ticket #1380]
+
+common/lib/libc/hash/sha2/sha2.c		1.20
+
+	Fix unaligned access as reported in PR port-sparc/42273
+	[joerg, ticket #1381]
+
+common/lib/libc/hash/sha2/sha2.c		1.21
+
+	Fix unaligned access in *_Final for SHA224/SHA256/SHA384.
+	Remaining part of PR 42273.
+	[joerg, ticket #1382]
 
