@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.212 2010/01/08 13:07:26 pooka Exp $	*/
+/*	$NetBSD: vnode.h,v 1.213 2010/01/27 15:34:08 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ struct vnlock {
  * Reading or writing any of these items requires holding the appropriate
  * lock.  Field markings and the corresponding locks:
  *
- *	:	stable, reference to the vnode is is required
+ *	:	stable, reference to the vnode is required
  *	f	vnode_free_list_lock, or vrele_lock if VI_INACTPEND
  *	i	v_interlock
  *	m	mntvnode_lock
