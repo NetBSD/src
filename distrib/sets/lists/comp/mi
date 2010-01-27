@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1378 2010/01/26 14:06:35 jruoho Exp $
+#	$NetBSD: mi,v 1.1379 2010/01/27 19:10:30 drochner Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7456,7 +7456,7 @@
 ./usr/share/man/cat3/pw_init.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_lock.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_mkdb.0			comp-c-catman		.cat
-./usr/share/man/cat3/pw_policy.0		comp-c-catman		.cat
+./usr/share/man/cat3/pw_policy.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/pw_prompt.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pw_scan.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_setprefix.0		comp-c-catman		.cat
@@ -13094,7 +13094,7 @@
 ./usr/share/man/html3/pw_init.html		comp-c-htmlman		html
 ./usr/share/man/html3/pw_lock.html		comp-c-htmlman		html
 ./usr/share/man/html3/pw_mkdb.html		comp-c-htmlman		html
-./usr/share/man/html3/pw_policy.html		comp-c-htmlman		html
+./usr/share/man/html3/pw_policy.html		comp-obsolete		obsolete
 ./usr/share/man/html3/pw_prompt.html		comp-c-htmlman		html
 ./usr/share/man/html3/pw_scan.html		comp-c-htmlman		html
 ./usr/share/man/html3/pw_setprefix.html		comp-c-htmlman		html
@@ -18732,7 +18732,7 @@
 ./usr/share/man/man3/pw_init.3			comp-c-man		.man
 ./usr/share/man/man3/pw_lock.3			comp-c-man		.man
 ./usr/share/man/man3/pw_mkdb.3			comp-c-man		.man
-./usr/share/man/man3/pw_policy.3		comp-c-man		.man
+./usr/share/man/man3/pw_policy.3		comp-obsolete		obsolete
 ./usr/share/man/man3/pw_prompt.3		comp-c-man		.man
 ./usr/share/man/man3/pw_scan.3			comp-c-man		.man
 ./usr/share/man/man3/pw_setprefix.3		comp-c-man		.man

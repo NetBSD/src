@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.53 2009/10/13 22:00:31 pooka Exp $	*/
+/*	$NetBSD: util.h,v 1.54 2010/01/27 19:10:31 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -63,8 +63,6 @@ struct utmp;
 struct winsize;
 struct sockaddr;
 
-typedef struct pw_policy *pw_policy_t; 
-
 char	       *flags_to_string(unsigned long, const char *);
 pid_t		forkpty(int *, char *, struct termios *, struct winsize *);
 const char     *getbootfile(void);
@@ -110,9 +108,6 @@ const char     *pw_getprefix(void);
 void		pw_init(void);
 int		pw_lock(int);
 int		pw_mkdb(const char *, int);
-pw_policy_t	pw_policy_load(void *, int);
-int		pw_policy_test(pw_policy_t, char *);
-void		pw_policy_free(pw_policy_t);
 void		pw_prompt(void);
 int		pw_setprefix(const char *);
 int		raise_default_signal(int);
