@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.68 2010/01/21 19:32:42 snj Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.69 2010/01/27 21:09:49 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1019,4 +1019,10 @@ dist/bind/version				patch
 	Backport changes from 9.4.3-9.4.3-P5 to 9.4.2, fixing a number of
 	security issues.
 	[christos, ticket #1376]
+
+xsrc/xfree/xc/extras/expat/lib/xmlparse.c		1.2
+
+	Add patch from upstream CVS to fix CVE-2009-3560 (possible DOS due to
+	crash on bad input).
+	[tron, ticket #1383]
 
