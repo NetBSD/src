@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.35 2009/12/22 14:18:33 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.36 2010/01/27 22:03:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.35 2009/12/22 14:18:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.36 2010/01/27 22:03:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.35 2009/12/22 14:18:33 pooka Exp $");
 unsigned memwinsize = (1<<20);
 unsigned memwincnt = 16;
 
-#define STARTWIN(off)		((off) & ~(memwinsize-1))
+#define STARTWIN(off)		((off) & ~((off_t)memwinsize-1))
 #define INWIN(win,off)		((win)->win_off == STARTWIN(off))
 #define WINSIZE(rblk, win)	(MIN((rblk->rblk_size-win->win_off),memwinsize))
 #define WINVALID(win)		((win)->win_off != (off_t)-1)
