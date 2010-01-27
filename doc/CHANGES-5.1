@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.187 2010/01/27 21:43:00 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.188 2010/01/27 22:08:21 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16387,4 +16387,17 @@ usr.sbin/wpa/wpa_supplicant/wpa_supplicant.8	1.6, 1.7
 	a file instead of stdout.
 	-f is not mandatory.
 	[sborrill, ticket #1267]
+
+sys/dev/mii/miidevs				1.90 via patch
+sys/dev/pci/pcidevs				1.1001 via patch
+sys/dev/mii/brgphy.c				1.51 via patch
+sys/dev/microcode/bnx/bnxfw.h			1.3 via patch
+sys/dev/pci/if_bnx.c				1.29-1.30 via patch
+sys/dev/pci/if_bnxreg.h				1.9 via patch
+
+	Add support for the Broadcom BCM5709 and BCM5716 chips. Upgrade
+	the B06 firmware and add the B09 firmware required by the BCM5709.
+	Replace TX dmamap array with a dynamically-grown list.
+	Support associated BCM5709CAX and BCM5709C PHYs.
+	[bouyer, ticket #1268]
 
