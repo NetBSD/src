@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.152 2009/11/07 07:27:50 cegger Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153 2010/01/27 03:56:33 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.152 2009/11/07 07:27:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153 2010/01/27 03:56:33 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -156,8 +156,8 @@ vaddr_t uvm_zerocheckkva;
  * local prototypes
  */
 
-static void uvm_pageinsert(struct vm_page *);
-static void uvm_pageremove(struct vm_page *);
+static void uvm_pageinsert(struct uvm_object *, struct vm_page *);
+static void uvm_pageremove(struct uvm_object *, struct vm_page *);
 
 /*
  * per-object tree of pages
@@ -256,10 +256,10 @@ uvm_pageinsert_tree(struct uvm_object *uobj, struct vm_page *pg)
 }
 
 static inline void
-uvm_pageinsert(struct vm_page *pg)
+uvm_pageinsert(struct uvm_object *uobj, struct vm_page *pg)
 {
-	struct uvm_object *uobj = pg->uobject;
 
+	KDASSERT(uobj != NULL);
 	uvm_pageinsert_tree(uobj, pg);
 	uvm_pageinsert_list(uobj, pg, NULL);
 }
@@ -310,10 +310,10 @@ uvm_pageremove_tree(struct uvm_object *uobj, struct vm_page *pg)
 }
 
 static inline void
-uvm_pageremove(struct vm_page *pg)
+uvm_pageremove(struct uvm_object *uobj, struct vm_page *pg)
 {
-	struct uvm_object *uobj = pg->uobject;
 
+	KDASSERT(uobj != NULL);
 	uvm_pageremove_tree(uobj, pg);
 	uvm_pageremove_list(uobj, pg);
 }
@@ -1216,7 +1216,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 		atomic_inc_uint(&uvmexp.anonpages);
 	} else {
 		if (obj) {
-			uvm_pageinsert(pg);
+			uvm_pageinsert(obj, pg);
 		}
 		pg->pqflags = 0;
 	}
@@ -1284,7 +1284,7 @@ uvm_pagerealloc(struct vm_page *pg, struct uvm_object *newobj, voff_t newoff)
 	 */
 
 	if (pg->uobject) {
-		uvm_pageremove(pg);
+		uvm_pageremove(pg->uobject, pg);
 	}
 
 	/*
@@ -1294,7 +1294,7 @@ uvm_pagerealloc(struct vm_page *pg, struct uvm_object *newobj, voff_t newoff)
 	if (newobj) {
 		pg->uobject = newobj;
 		pg->offset = newoff;
-		uvm_pageinsert(pg);
+		uvm_pageinsert(newobj, pg);
 	}
 }
 
@@ -1386,7 +1386,7 @@ uvm_pagefree(struct vm_page *pg)
 		 */
 
 		if (pg->uobject != NULL) {
-			uvm_pageremove(pg);
+			uvm_pageremove(pg->uobject, pg);
 			pg->flags &= ~PG_CLEAN;
 		} else if (pg->uanon != NULL) {
 			if ((pg->pqflags & PQ_ANON) == 0) {
@@ -1419,7 +1419,7 @@ uvm_pagefree(struct vm_page *pg)
 	 */
 
 	if (pg->uobject != NULL) {
-		uvm_pageremove(pg);
+		uvm_pageremove(pg->uobject, pg);
 	} else if (pg->uanon != NULL) {
 		pg->uanon->an_page = NULL;
 		atomic_dec_uint(&uvmexp.anonpages);
