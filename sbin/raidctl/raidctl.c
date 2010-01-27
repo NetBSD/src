@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.44 2010/01/27 17:02:06 pooka Exp $   */
+/*      $NetBSD: raidctl.c,v 1.45 2010/01/27 18:34:02 christos Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.44 2010/01/27 17:02:06 pooka Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.45 2010/01/27 18:34:02 christos Exp $");
 #endif
 
 
@@ -270,21 +270,12 @@ main(int argc,char *argv[])
 #else
 	fd = opendisk(name, openmode, dev_name, sizeof(dev_name), 0);
 #endif
-	if (fd == -1) {
-		fprintf(stderr, "%s: unable to open device file: %s\n",
-			getprogname(), name);
-		exit(1);
-	}
-	if (fstat(fd, &st) != 0) {
-		fprintf(stderr,"%s: stat failure on: %s\n",
-			getprogname(), dev_name);
-		exit(1);
-	}
-	if (!S_ISBLK(st.st_mode) && !S_ISCHR(st.st_mode)) {
-		fprintf(stderr,"%s: invalid device: %s\n",
-			getprogname(), dev_name);
-		exit(1);
-	}
+	if (fd == -1)
+		err(1, "Unable to open device file: %s", name);
+	if (fstat(fd, &st) == -1)
+		err(1, "stat failure on: %s", dev_name);
+	if (!S_ISBLK(st.st_mode) && !S_ISCHR(st.st_mode))
+		err(1, "invalid device: %s", dev_name);
 
 	raidID = DISKUNIT(st.st_rdev);
 
@@ -367,10 +358,8 @@ main(int argc,char *argv[])
 void
 do_ioctl(int fd, unsigned long command, void *arg, const char *ioctl_name)
 {
-	if (ioctl(fd, command, arg) < 0) {
-		warn("ioctl (%s) failed", ioctl_name);
-		exit(1);
-	}
+	if (ioctl(fd, command, arg) == -1)
+		err(1, "ioctl (%s) failed", ioctl_name);
 }
 
 
@@ -380,11 +369,8 @@ rf_configure(int fd, char *config_file, int force)
 	void *generic;
 	RF_Config_t cfg;
 
-	if (rf_MakeConfig( config_file, &cfg ) != 0) {
-		fprintf(stderr,"%s: unable to create RAIDframe %s\n",
-			getprogname(), "configuration structure");
-		exit(1);
-	}
+	if (rf_MakeConfig( config_file, &cfg ) != 0)
+		err(1, "Unable to create RAIDframe configuration structure");
 	
 	cfg.force = force;
 
@@ -394,7 +380,7 @@ rf_configure(int fd, char *config_file, int force)
 	 * the configuration structure. 
 	 */
 
-	generic = (void *) &cfg;
+	generic = &cfg;
 	do_ioctl(fd, RAIDFRAME_CONFIGURE, &generic, "RAIDFRAME_CONFIGURE");
 }
 
@@ -579,11 +565,8 @@ rf_pm_configure(int fd, int raidID, char *parityconf, int parityparams[])
 
 		return;
 		/* XXX the control flow here could be prettier. */
-	} else {
-		fprintf(stderr, "%s: \"%s\" is not a valid parity map command"
-		    "\n", getprogname(), parityconf);
-		exit(1);
-	}
+	} else
+		err(1, "`%s' is not a valid parity map command", parityconf);
 
 	do_ioctl(fd, RAIDFRAME_PARITYMAP_SET_DISABLE, &dis,
 	    "RAIDFRAME_PARITYMAP_SET_DISABLE");
@@ -699,11 +682,8 @@ get_component_number(int fd, char *component_name, int *component_number,
 		}
 	}
 
-	if (!found) {
-		fprintf(stderr,"%s: %s is not a component %s", getprogname(), 
-			component_name, "of this device\n");
-		exit(1);
-	}
+	if (!found)
+		err(1,"%s is not a component of this device", component_name);
 }
 
 static void
@@ -1012,10 +992,8 @@ do_meter(int fd, u_long option)
 	char bar_buffer[1024];
 	char eta_buffer[1024];
 
-	if (gettimeofday(&start_time,NULL)) {
-		fprintf(stderr,"%s: gettimeofday failed!?!?\n", getprogname());
-		exit(errno);
-	}
+	if (gettimeofday(&start_time,NULL) == -1)
+		err(1, "gettimeofday failed!?!?");
 	memset(&progressInfo, 0, sizeof(RF_ProgressInfo_t));
 	pInfoPtr=&progressInfo;
 
@@ -1082,11 +1060,8 @@ do_meter(int fd, u_long option)
 
 		sleep(2);
 
-		if (gettimeofday(&current_time,NULL)) {
-			fprintf(stderr,"%s: gettimeofday failed!?!?\n",
-				getprogname());
-			exit(errno);
-		}
+		if (gettimeofday(&current_time,NULL) == -1)
+			err(1, "gettimeofday failed!?!?");
 
 		do_ioctl( fd, option, &pInfoPtr, "");
 		

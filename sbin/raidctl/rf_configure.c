@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.24 2009/04/06 12:47:20 lukem Exp $	*/
+/*	$NetBSD: rf_configure.c,v 1.25 2010/01/27 18:34:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -49,7 +49,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rf_configure.c,v 1.24 2009/04/06 12:47:20 lukem Exp $");
+__RCSID("$NetBSD: rf_configure.c,v 1.25 2010/01/27 18:34:02 christos Exp $");
 #endif
 
 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: rf_configure.c,v 1.24 2009/04/06 12:47:20 lukem Exp $");
 #include <stdlib.h>
 #include <errno.h>
 #include <strings.h>
+#include <err.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -500,16 +501,14 @@ rf_ReadSpareTable(RF_SparetWait_t *req, char *fname)
 	table = malloc(req->TablesPerSpareRegion * 
 		       sizeof(RF_SpareTableEntry_t *));
 	if (table == NULL) {
-		fprintf(stderr,
-			"rf_ReadSpareTable: Unable to allocate table\n");
+		warnx("rf_ReadSpareTable: Unable to allocate table");
 		return (NULL);
 	}
 	for (i = 0; i < req->TablesPerSpareRegion; i++) {
 		table[i] = malloc(req->BlocksPerTable * 
 				  sizeof(RF_SpareTableEntry_t));
 		if (table[i] == NULL) {
-			fprintf(stderr,
-				"rf_ReadSpareTable: Unable to allocate table\n");
+			warnx("rf_ReadSpareTable: Unable to allocate table");
 			return (NULL);  /* XXX should cleanup too! */
 		}
 		for (j = 0; j < req->BlocksPerTable; j++)
@@ -519,8 +518,7 @@ rf_ReadSpareTable(RF_SparetWait_t *req, char *fname)
 
 	/* 2.  open sparemap file, sanity check */
 	if ((fp = fopen(fname, "r")) == NULL) {
-		fprintf(stderr,
-		    "rf_ReadSpareTable:  Can't open sparemap file %s\n", fname);
+		warn("rf_ReadSpareTable: Can't open sparemap file %s", fname);
 		return (NULL);
 	}
 	if (rf_get_next_nonblank_line(buf, 1024, fp,
@@ -547,7 +545,8 @@ rf_ReadSpareTable(RF_SparetWait_t *req, char *fname)
 		numFound = fscanf(fp, " %d %d %d %d", &tableNum, &tupleNum,
 		    &spareDisk, &spareBlkOffset);
 		if (numFound != 4) {
-			fprintf(stderr, "Sparemap file prematurely exhausted after %d of %d lines\n", i, linecount);
+			warnx("Sparemap file prematurely exhausted after %d "
+			    "of %d lines", i, linecount);
 			fclose(fp);
 			return (NULL);
 		}
