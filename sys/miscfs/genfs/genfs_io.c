@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.21 2009/10/21 21:12:06 rmind Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.22 2010/01/27 15:24:54 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.21 2009/10/21 21:12:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.22 2010/01/27 15:24:54 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ genfs_getpages(void *v)
 		vm_prot_t a_access_type;
 		int a_advice;
 		int a_flags;
-	} */ *ap = v;
+	} */ * const ap = v;
 
 	off_t newsize, diskeof, memeof;
 	off_t offset, origoffset, startoffset, endoffset;
@@ -114,10 +114,10 @@ genfs_getpages(void *v)
 	size_t bytes, iobytes, tailstart, tailbytes, totalbytes, skipbytes;
 	vaddr_t kva;
 	struct buf *bp, *mbp;
-	struct vnode *vp = ap->a_vp;
+	struct vnode * const vp = ap->a_vp;
 	struct vnode *devvp;
-	struct genfs_node *gp = VTOG(vp);
-	struct uvm_object *uobj = &vp->v_uobj;
+	struct genfs_node * const gp = VTOG(vp);
+	struct uvm_object * const uobj = &vp->v_uobj;
 	struct vm_page *pg, **pgs, *pgs_onstack[UBC_MAX_PAGES];
 	int pgs_size;
 	kauth_cred_t cred = curlwp->l_cred;		/* XXXUBC curlwp */
@@ -753,7 +753,7 @@ genfs_putpages(void *v)
 		voff_t a_offlo;
 		voff_t a_offhi;
 		int a_flags;
-	} */ *ap = v;
+	} */ * const ap = v;
 
 	return genfs_do_putpages(ap->a_vp, ap->a_offlo, ap->a_offhi,
 	    ap->a_flags, NULL);
@@ -763,8 +763,8 @@ int
 genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
     int origflags, struct vm_page **busypg)
 {
-	struct uvm_object *uobj = &vp->v_uobj;
-	kmutex_t *slock = &uobj->vmobjlock;
+	struct uvm_object * const uobj = &vp->v_uobj;
+	kmutex_t * const slock = &uobj->vmobjlock;
 	off_t off;
 	/* Even for strange MAXPHYS, the shift rounds down to a page */
 #define maxpages (MAXPHYS >> PAGE_SHIFT)
@@ -774,8 +774,8 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	bool wasclean, by_list, needs_clean, yld;
 	bool async = (origflags & PGO_SYNCIO) == 0;
 	bool pagedaemon = curlwp == uvm.pagedaemon_lwp;
-	struct lwp *l = curlwp ? curlwp : &lwp0;
-	struct genfs_node *gp = VTOG(vp);
+	struct lwp * const l = curlwp ? curlwp : &lwp0;
+	struct genfs_node * const gp = VTOG(vp);
 	int flags;
 	int dirtygen;
 	bool modified;
