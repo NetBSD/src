@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.22 2010/01/27 15:24:54 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.23 2010/01/27 15:53:06 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.22 2010/01/27 15:24:54 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.23 2010/01/27 15:53:06 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,7 +229,7 @@ startover:
 			error = EBUSY;
 			goto out_err;
 		}
-		if (!rw_tryenter(&gp->g_glock, RW_READER)) {
+		if (!genfs_node_rdtrylock(vp)) {
 			genfs_rel_pages(ap->a_m, npages);
 
 			/*
@@ -244,7 +244,7 @@ startover:
 				}
 			}
 		} else {
-			rw_exit(&gp->g_glock);
+			genfs_node_unlock(vp);
 		}
 		error = (ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0);
 		goto out_err;
@@ -310,7 +310,7 @@ startover:
 	}
 	mutex_enter(&uobj->vmobjlock);
 	if (vp->v_size < origvsize) {
-		rw_exit(&gp->g_glock);
+		genfs_node_unlock(vp);
 		if (pgs != pgs_onstack)
 			kmem_free(pgs, pgs_size);
 		goto startover;
@@ -318,7 +318,7 @@ startover:
 
 	if (uvn_findpages(uobj, origoffset, &npages, &pgs[ridx],
 	    async ? UFP_NOWAIT : UFP_ALL) != orignpages) {
-		rw_exit(&gp->g_glock);
+		genfs_node_unlock(vp);
 		KASSERT(async != 0);
 		genfs_rel_pages(&pgs[ridx], orignpages);
 		mutex_exit(&uobj->vmobjlock);
@@ -339,7 +339,7 @@ startover:
 		}
 	}
 	if (i == npages) {
-		rw_exit(&gp->g_glock);
+		genfs_node_unlock(vp);
 		UVMHIST_LOG(ubchist, "returning cached pages", 0,0,0,0);
 		npages += ridx;
 		goto out;
@@ -350,7 +350,7 @@ startover:
 	 */
 
 	if (overwrite) {
-		rw_exit(&gp->g_glock);
+		genfs_node_unlock(vp);
 		UVMHIST_LOG(ubchist, "PGO_OVERWRITE",0,0,0,0);
 
 		for (i = 0; i < npages; i++) {
@@ -385,7 +385,7 @@ startover:
 		npgs = npages;
 		if (uvn_findpages(uobj, startoffset, &npgs, pgs,
 		    async ? UFP_NOWAIT : UFP_ALL) != npages) {
-			rw_exit(&gp->g_glock);
+			genfs_node_unlock(vp);
 			KASSERT(async != 0);
 			genfs_rel_pages(pgs, npages);
 			mutex_exit(&uobj->vmobjlock);
@@ -566,7 +566,7 @@ loopdone:
 	nestiobuf_done(mbp, skipbytes, error);
 	if (async) {
 		UVMHIST_LOG(ubchist, "returning 0 (async)",0,0,0,0);
-		rw_exit(&gp->g_glock);
+		genfs_node_unlock(vp);
 		error = 0;
 		goto out_err;
 	}
@@ -615,7 +615,7 @@ loopdone:
 			}
 		}
 	}
-	rw_exit(&gp->g_glock);
+	genfs_node_unlock(vp);
 
 	putiobuf(mbp);
 
