@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.185 2010/01/27 21:34:07 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.186 2010/01/27 21:41:04 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16373,4 +16373,10 @@ sys/dev/ic/mfi.c				1.21
 
 	Don't release CCB twice. Found by code inspection.
 	[bouyer, ticket #1256]
+
+sys/dev/ic/mfi.c				1.31
+
+	bio(4) is MP-safe but mfi(4) is not. So get the kernel_lock at
+	mfi_ioctl() entry and release it on exit.
+	[bouyer, #ticket 1257]
 
