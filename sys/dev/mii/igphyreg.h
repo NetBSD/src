@@ -1,4 +1,4 @@
-/*	$NetBSD: igphyreg.h,v 1.4 2005/12/11 12:22:42 christos Exp $	*/
+/*	$NetBSD: igphyreg.h,v 1.4.86.1 2010/01/27 22:27:41 sborrill Exp $	*/
 
 /*******************************************************************************
 
@@ -103,6 +103,8 @@
 #define MSE_CHANNEL_A			0xF000
 
 #define MII_IGPHY_PAGE_SELECT		0x1F
+#define IGPHY_MAXREGADDR		0x1F
+#define IGPHY_PAGEMASK			(~IGPHY_MAXREGADDR)
 
 /* IGP01E1000 AGC Registers - stores the cable length values*/
 #define MII_IGPHY_AGC_A			0x1172

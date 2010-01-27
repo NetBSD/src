@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.24.20.3 2009/12/23 10:37:37 sborrill Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.24.20.4 2010/01/27 22:27:42 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -220,7 +220,9 @@ struct livengood_tcpip_ctxdesc {
 #define	STATUS_SPEED_100  STATUS_SPEED(1)
 #define	STATUS_SPEED_1000 STATUS_SPEED(2)
 #define	STATUS_ASDV(x)	((x) << 8)	/* auto speed det. val. (Livengood) */
+#define	STATUS_LAN_INIT_DONE (1U << 9)	/* Lan Init Completion by NVM */
 #define	STATUS_MTXCKOK	(1U << 10)	/* MTXD clock running */
+#define	STATUS_PHYRA	(1U << 10)	/* PHY Reset Asserted (PCH) */
 #define	STATUS_PCI66	(1U << 11)	/* 66MHz bus (Livengood) */
 #define	STATUS_BUS64	(1U << 12)	/* 64-bit bus (Livengood) */
 #define	STATUS_PCIX_MODE (1U << 13)	/* PCIX mode (Cordova) */
@@ -273,6 +275,8 @@ struct livengood_tcpip_ctxdesc {
 #define	EEPROM_OFF_MACADDR	0x00	/* MAC address offset */
 #define	EEPROM_OFF_CFG1		0x0a	/* config word 1 */
 #define	EEPROM_OFF_CFG2		0x0f	/* config word 2 */
+#define	EEPROM_INIT_3GIO_3	0x1a	/* PCIe Initial Configuration Word 3 */ 
+#define	EEPROM_OFF_K1_CONFIG	0x1b	/* NVM K1 Config */
 #define	EEPROM_OFF_SWDPIN	0x20	/* SWD Pins (Cordova) */
 
 #define	EEPROM_CFG1_LVDID	(1U << 0)
@@ -304,10 +308,15 @@ struct livengood_tcpip_ctxdesc {
 #define	EEPROM_CFG2_APM_PME	(1U << 15)
 #define	EEPROM_CFG2_SWDPIO_SHIFT 4
 #define	EEPROM_CFG2_SWDPIO_MASK	(0xf << EEPROM_CFG2_SWDPIO_SHIFT)
+#define	EEPROM_CFG2_MNGM_MASK	(3U << 13) /* Manageability Operation mode */
+
+#define	EEPROM_K1_CONFIG_ENABLE	0x01
 
 #define	EEPROM_SWDPIN_MASK	0xdf
 #define	EEPROM_SWDPIN_SWDPIN_SHIFT 0
 #define	EEPROM_SWDPIN_SWDPIO_SHIFT 8
+
+#define EEPROM_3GIO_3_ASPM_MASK	(0x3 << 2)	/* Active State PM Support */
 
 #define	WMREG_EERD	0x0014	/* EEPROM read */
 #define	EERD_DONE	0x02    /* done bit */
@@ -334,6 +343,7 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_EXT_LINK_MODE_TBI	0x00C00000
 #define	CTRL_EXT_LINK_MODE_KMRN	0x00000000
 #define	CTRL_EXT_LINK_MODE_SERDES 0x00C00000
+#define	CTRL_EXT_PHYPDEN	0x00100000
 #define	CTRL_EXT_DRV_LOAD	0x10000000
 
 
@@ -598,6 +608,7 @@ struct livengood_tcpip_ctxdesc {
 #define	PBA_10K		0x000a
 #define	PBA_12K		0x000c
 #define	PBA_16K		0x0010		/* 16K, default Tx allocation */
+#define	PBA_20K		0x0014
 #define	PBA_22K		0x0016
 #define	PBA_24K		0x0018
 #define	PBA_30K		0x001e
@@ -605,7 +616,11 @@ struct livengood_tcpip_ctxdesc {
 #define	PBA_40K		0x0028
 #define	PBA_48K		0x0030		/* 48K, default Rx allocation */
 
-#define	WMREG_PBS	0x1000	/* Packet Buffer Size (ICH8 only ?) */
+#define	WMREG_PBS	0x1008	/* Packet Buffer Size (ICH) */
+
+#define WMREG_EEMNGCTL	0x1010	/* MNG EEprom Control */
+#define EEMNGCTL_CFGDONE_0 0x040000	/* MNG config cycle done */
+#define EEMNGCTL_CFGDONE_1 0x080000	/*  2nd port */
 
 #define	WMREG_TXDMAC	0x3000	/* Transfer DMA Control */
 #define	TXDMAC_DPP	(1U << 0)	/* disable packet prefetch */
@@ -646,6 +661,7 @@ struct livengood_tcpip_ctxdesc {
 #define	KUMCTRLSTA_OFFSET_INB_CTRL	0x00000002
 #define	KUMCTRLSTA_OFFSET_DIAG		0x00000003
 #define	KUMCTRLSTA_OFFSET_TIMEOUTS	0x00000004
+#define	KUMCTRLSTA_OFFSET_K1_CONFIG	0x00000007
 #define	KUMCTRLSTA_OFFSET_INB_PARAM	0x00000009
 #define	KUMCTRLSTA_OFFSET_HD_CTRL	0x00000010
 #define	KUMCTRLSTA_OFFSET_M2P_SERDES	0x0000001E
@@ -659,13 +675,19 @@ struct livengood_tcpip_ctxdesc {
 #define	KUMCTRLSTA_INB_CTRL_LINK_TMOUT_DFLT 0x00000500
 #define	KUMCTRLSTA_INB_CTRL_DIS_PADDING	0x00000010
 
+/* K1 Config */
+#define	KUMCTRLSTA_K1_ENABLE	0x0002
+
 /* Half-Duplex Control */
 #define	KUMCTRLSTA_HD_CTRL_10_100_DEFAULT 0x00000004
 #define	KUMCTRLSTA_HD_CTRL_1000_DEFAULT	0x00000000
 
 #define	WMREG_MDPHYA	0x003C	/* PHY address - RW */
 
-#define	WMREG_MANC2H	0x5860	/* Managment Control To Host - RW */
+#define	WMREG_MANC	0x5820	/* Management Control */
+#define	MANC_BLK_PHY_RST_ON_IDE	0x00040000
+
+#define	WMREG_MANC2H	0x5860	/* Manaegment Control To Host - RW */
 
 #define	WMREG_SWSM	0x5b50	/* SW Semaphore */
 #define	SWSM_SMBI	0x00000001	/* Driver Semaphore bit */
@@ -678,6 +700,7 @@ struct livengood_tcpip_ctxdesc {
 #define	FWSM_MODE_SHIFT		0x1
 #define	MNG_ICH_IAMT_MODE	0x2
 #define	MNG_IAMT_MODE		0x3
+#define FWSM_RSPCIPHY	0x00000040	/* Reset PHY on PCI reset */
 
 #define	WMREG_SW_FW_SYNC 0x5b5c	/* software-firmware semaphore */
 #define	SWFW_EEP_SM		0x0001 /* eeprom access */
@@ -686,6 +709,8 @@ struct livengood_tcpip_ctxdesc {
 #define	SWFW_MAC_CSR_SM		0x0008
 #define	SWFW_SOFT_SHIFT		0	/* software semaphores */
 #define	SWFW_FIRM_SHIFT		16	/* firmware semaphores */
+
+#define WMREG_CRC_OFFSET	0x5f50
 
 #define WMREG_EXTCNFCTR		0x0f00  /* Extended Configuration Control */
 #define EXTCNFCTR_PCIE_WRITE_ENABLE	0x00000001
@@ -697,6 +722,8 @@ struct livengood_tcpip_ctxdesc {
 #define EXTCNFCTR_MDIO_HW_OWNERSHIP	0x00000040
 #define EXTCNFCTR_EXT_CNF_POINTER	0x0FFF0000
 #define E1000_EXTCNF_CTRL_SWFLAG	EXTCNFCTR_MDIO_SW_OWNERSHIP
+
+#define	WMREG_PHY_CTRL	0x0f10	/* PHY control */
 
 /* ich8 flash control */
 #define ICH_FLASH_COMMAND_TIMEOUT            5000    /* 5000 uSecs - adjusted */
@@ -749,6 +776,3 @@ struct livengood_tcpip_ctxdesc {
 
 #define ICH_NVM_SIG_WORD	0x13
 #define ICH_NVM_SIG_MASK	0xc000
-
-#define	NVM_INIT_CONTROL2_REG	0x000f
-#define	NVM_INIT_CTRL2_MNGM	0x6000
