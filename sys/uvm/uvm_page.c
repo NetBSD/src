@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.140.6.3.4.2 2010/01/26 21:26:28 matt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.140.6.3.4.3 2010/01/27 07:45:19 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.140.6.3.4.2 2010/01/26 21:26:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.140.6.3.4.3 2010/01/27 07:45:19 nisimura Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1084,8 +1084,6 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	/*
 	 * This implements a global round-robin page coloring
 	 * algorithm.
-	 *
-	 * XXXJRT: What about virtually-indexed caches?
 	 */
 
 	ucpu = curcpu()->ci_data.cpu_uvm;
