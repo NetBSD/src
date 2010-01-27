@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.24 2009/10/26 19:16:57 cegger Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.25 2010/01/27 22:18:37 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -531,7 +531,7 @@ open_again:
 
 		ofdev.type = OFDEV_NET;
 		of->f_dev = ofdevsw;
-		of->f_devdata = NULL;
+		of->f_devdata = &ofdev;
 
 		if (!strncmp(*file,"/tftp:",6)) {
 			*file += 6;

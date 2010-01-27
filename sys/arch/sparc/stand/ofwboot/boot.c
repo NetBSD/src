@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.20 2009/10/26 19:16:57 cegger Exp $	*/
+/*	$NetBSD: boot.c,v 1.21 2010/01/27 22:18:37 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -359,6 +359,7 @@ start_kernel(char *kernel, char *bootline, void *ofw)
 		(void)printf("Loading %s: ", kernel);
 
 		if (fdloadfile(fd, marks, LOAD_ALL) != -1) {
+			close(fd);
 			jump_to_kernel(marks, kernel, bootline, ofw);
 		}
 	}
