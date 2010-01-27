@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_modf.c,v 1.13 2008/09/28 18:54:55 christos Exp $");
+__RCSID("$NetBSD: s_modf.c,v 1.14 2010/01/27 14:07:41 drochner Exp $");
 #endif
 
 /*
@@ -57,6 +57,8 @@ modf(double x, double *iptr)
 	} else if (jj0>51) {		/* no fraction part */
 	    u_int32_t high;
 	    *iptr = x*one;
+	    if (jj0 == 0x400)		/* +-inf or NaN */
+		return 0.0 / x;		/* +-0 or NaN */
 	    GET_HIGH_WORD(high,x);
 	    INSERT_WORDS(x,high&0x80000000,0);	/* return +-0 */
 	    return x;
