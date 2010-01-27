@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.174 2009/11/20 13:42:43 roy Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.175 2010/01/27 15:18:40 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.174 2009/11/20 13:42:43 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.175 2010/01/27 15:18:40 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -512,6 +512,14 @@ genfs_node_rdlock(struct vnode *vp)
 	struct genfs_node *gp = VTOG(vp);
 
 	rw_enter(&gp->g_glock, RW_READER);
+}
+
+void
+genfs_node_rdtrylock(struct vnode *vp)
+{
+	struct genfs_node *gp = VTOG(vp);
+
+	rw_tryenter(&gp->g_glock, RW_READER);
 }
 
 void
