@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.183 2010/01/27 21:18:36 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.184 2010/01/27 21:27:19 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16353,4 +16353,19 @@ sys/dev/DEVNAMES				1.255
 	Convenience power outlet management to be added.
 	Tested on qemu.
 	[bouyer, ticket #1248]
+
+sys/ufs/ufs/ufs_quota.c				1.65
+
+	vclean() actually sets v_tag to VT_NON but doesn't touch v_type.
+	getcleanvnode() sets v_type to VNON after releasing v_interlock.
+	So the thread doing quotaon(), quotaoff() or qsync() could vget()
+	a vnode which is being recycled in getcleanvnode(), after it has
+	been cleaned and v_interlock released, but before v_type has been
+	reset, leading to KASSERT(vp->v_usecount == 1) firing in
+	getnewvnode(), or qsync() dereferencing a NULL pointer as in
+	PR kern/42205.
+	Fix by using the same tests as other ffs functions traversing the
+	mount list: also check for VTOI(vp) == NULL, and VI_XLOCK in
+	addition to VI_CLEAN.
+	[bouyer, ticket #1252]
 
