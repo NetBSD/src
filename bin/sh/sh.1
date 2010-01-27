@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.85.2.1 2007/04/16 19:33:51 bouyer Exp $
+.\"	$NetBSD: sh.1,v 1.85.2.2 2010/01/27 21:01:58 bouyer Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd March 25, 2007
+.Dd January 1, 2010
 .Os
 .Dt SH 1
 .Sh NAME
@@ -1219,7 +1219,7 @@ Do not execute the command but
 search for the command and print the absolute pathname
 of utilities, the name for built-ins or the expansion of aliases.
 .El
-.It cd Op Ar directory Op Ar replace
+.It cd Oo Fl P Oc Op Ar directory Op Ar replace
 Switch to the specified directory (default
 .Ev $HOME ) .
 If
@@ -1244,6 +1244,21 @@ The format of
 .Ev CDPATH
 is the same as that of
 .Ev PATH .
+.Pp
+The
+.Fl P
+option instructs the shell to update
+.Ev PWD
+with the specified directory and change to that directory.
+This is the default.
+.Pp
+Some shells also support a
+.Fl L
+option, which instructs the shell to update
+.Ev PWD
+with incorrect information and to change the current directory
+accordingly.
+This is not supported.
 .Pp
 In an interactive shell, the
 .Ic cd
@@ -1532,11 +1547,9 @@ The default is
 .Fl L ,
 but note that the built-in
 .Ic cd
-command doesn't currently support
+command doesn't currently support the
 .Fl L
-or
-.Fl P
-and will cache (almost) the absolute path.
+option and will cache (almost) the absolute path.
 If
 .Ic cd
 is changed,
