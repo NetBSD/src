@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.c,v 1.5 2005/12/24 23:10:08 perry Exp $	*/
+/*	$NetBSD: flt_rounds.c,v 1.5.34.1 2010/01/27 06:55:25 matt Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 11, 1995
@@ -7,10 +7,11 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: flt_rounds.c,v 1.5 2005/12/24 23:10:08 perry Exp $");
+__RCSID("$NetBSD: flt_rounds.c,v 1.5.34.1 2010/01/27 06:55:25 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <machine/float.h>
+#include <ieeefp.h>
 
 static const int map[] = {
 	1,	/* round to nearest */
@@ -22,8 +23,12 @@ static const int map[] = {
 int
 __flt_rounds()
 {
+#ifdef SOFTFLOAT_FOR_GCC
+	return map[fpgetround()];
+#else
 	int x;
 
-	__asm("cfc1 %0,$31" : "=r" (x));
+	__asm("cfc1\t%0,$31" : "=r" (x));
 	return map[x & 0x03];
+#endif
 }

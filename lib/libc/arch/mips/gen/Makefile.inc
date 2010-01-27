@@ -1,6 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.28.34.1 2009/09/05 18:46:38 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.28.34.2 2010/01/27 06:55:25 matt Exp $
 
+.if ${MKSOFTFLOAT} == "no"
 SRCS+=	fabs.S ldexp.S modf.S
+.else
+SRCS+=	fabs_ieee754.c ldexp_ieee754.c modf_ieee754.c
+.endif
 
 # Common ieee754 constants and functions
 SRCS+=	infinityf_ieee754.c infinity_ieee754.c infinityl_dbl_ieee754.c
@@ -11,9 +15,12 @@ SRCS+=	isfinitef_ieee754.c isfinited_ieee754.c
 SRCS+=	signbitf_ieee754.c signbitd_ieee754.c
 
 SRCS+=	nanf.c
+SRCS+=	flt_rounds.c
 
-SRCS+=	flt_rounds.c fpgetmask.c fpgetround.c fpgetsticky.c fpsetmask.c \
+.if ${MKSOFTFLOAT} == "no"
+SRCS+=	fpgetmask.c fpgetround.c fpgetsticky.c fpsetmask.c \
 	fpsetround.c fpsetsticky.c
+.endif
 
 SRCS+=	setjmp.S longjmp.c
 SRCS+=	_setjmp.S

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_setjmp.S,v 1.1.34.2 2009/08/18 14:42:26 uebayasi Exp $	*/
+/*	$NetBSD: compat_setjmp.S,v 1.1.34.3 2010/01/27 06:55:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 	RCSID("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
 #else
-	RCSID("$NetBSD: compat_setjmp.S,v 1.1.34.2 2009/08/18 14:42:26 uebayasi Exp $")
+	RCSID("$NetBSD: compat_setjmp.S,v 1.1.34.3 2010/01/27 06:55:25 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -113,6 +113,7 @@ NON_LEAF(setjmp, SETJMP_FRAME_SIZE, ra)
 	REG_S	s8, _OFFSETOF_SC_REGS_S8(a0)
 	li	v0, 1				# be nice if we could tell
 	INT_S	v0, _OFFSETOF_SC_FPUSED(a0)	# sc_fpused = 1
+#if !defined(SOFTFLOAT_FOR_GCC)
 	cfc1	v0, $31
 	INT_S	v0, _OFFSETOF_SC_FPREGS_FCSR(a0)
 #if defined(__mips_o32) || defined(__mips_o64) || defined(__mips_n32)
@@ -135,6 +136,7 @@ NON_LEAF(setjmp, SETJMP_FRAME_SIZE, ra)
 	FP_S	$f29, _OFFSETOF_SC_FPREGS_F29(a0)
 	FP_S	$f31, _OFFSETOF_SC_FPREGS_F31(a0)
 #endif
+#endif /* SOFTFLOAT_FOR_GCC */
 	REG_EPILOGUE
 	j	ra
 	move	v0, zero
