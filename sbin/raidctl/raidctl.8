@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.60 2010/01/27 08:56:08 wiz Exp $
+.\"     $NetBSD: raidctl.8,v 1.61 2010/01/27 09:26:16 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -192,6 +192,7 @@ is given later.
 As for
 .Fl c ,
 but forces the configuration to take place.
+Fatal errors due to uninitialized components are ignored.
 This is required the first time a RAID set is configured.
 .It Fl f Ar component Ar dev
 This marks the specified
