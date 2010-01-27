@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.20.34.3 2009/12/12 19:08:57 cliff Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.20.34.4 2010/01/27 06:55:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@
 #if 0
 	RCSID("from: @(#)_setjmp.s	8.1 (Berkeley) 6/4/93")
 #else
-	RCSID("$NetBSD: _setjmp.S,v 1.20.34.3 2009/12/12 19:08:57 cliff Exp $")
+	RCSID("$NetBSD: _setjmp.S,v 1.20.34.4 2010/01/27 06:55:25 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -82,13 +82,14 @@ LEAF(_setjmp)
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_S	gp, _OFFSETOF_SC_REGS_GP(a0)	# newabi gp is callee-saved
 #endif
-	cfc1	v0, $31				# too bad cant check if FP used
 	/*
 	 * In N32, FP registers F20, F22, F24, F26, F28, F30 are callee-saved.
 	 * In N64, FP registers F23 .. F31 are callee-saved.
 	 * In O32, FP registers F20 .. F23 are callee-saved.
 	 */
 #ifndef SOFTFLOAT_FOR_GCC
+	cfc1	v0, $31				# too bad cant check if FP used
+	INT_S	v0, _OFFSETOF_SC_FPREGS_FCSR(a0)
 #if defined(__mips_n64) || defined(__mips_n32)
 	FP_S	$f30, _OFFSETOF_SC_FPREGS_F30(a0)
 	FP_S	$f28, _OFFSETOF_SC_FPREGS_F28(a0)
@@ -110,7 +111,6 @@ LEAF(_setjmp)
 	FP_S	$f31, _OFFSETOF_SC_FPREGS_F31(a0)
 #endif
 #endif	/* SOFTFLOAT_FOR_GCC */
-	INT_S	v0, _OFFSETOF_SC_FPREGS_FCSR(a0)
 	REG_EPILOGUE
 
 	j	ra
@@ -140,16 +140,16 @@ LEAF(_longjmp)
 	REG_L		gp, _OFFSETOF_SC_REGS_GP(a0)
 #endif
 	# get fpu status
-	INT_L		v0, _OFFSETOF_SC_FPREGS_FCSR(a0)
 	REG_L		sp, _OFFSETOF_SC_REGS_SP(a0)
 	REG_L		s8, _OFFSETOF_SC_REGS_S8(a0)
+#ifndef SOFTFLOAT_FOR_GCC
+	INT_L		v0, _OFFSETOF_SC_FPREGS_FCSR(a0)
 	ctc1		v0, $31
 	/*
 	 * In N32, FP registers F20, F22, F24, F26, F28, F30 are callee-saved.
 	 * In N64, FP registers F23 .. F31 are callee-saved.
 	 * In O32, FP registers F20 .. F23 are callee-saved.
 	 */
-#ifndef SOFTFLOAT_FOR_GCC
 #if defined(__mips_n64) || defined(__mips_n32)
 	FP_L	$f30, _OFFSETOF_SC_FPREGS_F30(a0)
 	FP_L	$f28, _OFFSETOF_SC_FPREGS_F28(a0)
