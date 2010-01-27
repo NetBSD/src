@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.2.46.1 2009/12/23 10:37:37 sborrill Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.2.46.2 2010/01/27 22:27:42 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -106,10 +106,31 @@ typedef enum {
 	WM_T_82572,			/* i82572 */
 	WM_T_82573,			/* i82573 */
 	WM_T_82574,			/* i82574 */
+	WM_T_82583,			/* i82583 */
 	WM_T_80003,			/* i80003 */
 	WM_T_ICH8,			/* ICH8 LAN */
 	WM_T_ICH9,			/* ICH9 LAN */
 	WM_T_ICH10,			/* ICH10 LAN */
+	WM_T_PCH,			/* PCH LAN */
 } wm_chip_type;
+
+typedef enum {
+	WMPHY_UNKNOWN = 0,
+	WMPHY_NONE,
+	WMPHY_M88,
+	WMPHY_IGP,
+	WMPHY_IGP_2,
+	WMPHY_GG82563,
+	WMPHY_IGP_3,
+	WMPHY_IFE,
+	WMPHY_BM,
+	WMPHY_82578,
+	WMPHY_82577
+} wm_phy_type;
+
+
+#define WM_PHY_CFG_TIMEOUT	100
+#define	WM_ICH8_LAN_INIT_TIMEOUT 1500
+#define	WM_MDIO_OWNERSHIP_TIMEOUT 10
 
 #endif /* _DEV_PCI_IF_WMVAR_H_ */

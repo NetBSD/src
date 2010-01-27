@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.9 2010/01/27 22:05:19 sborrill Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.10 2010/01/27 22:27:42 sborrill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -7668,6 +7668,14 @@ static const struct pci_product pci_products[] = {
 	    "i82571EB quad-1000baseT Ethernet",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82575EB_COPPER,
+	    "i82575EB dual-1000baseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82575EB_FIBER_SERDES,
+	    "i82575EB dual-1000baseX Ethernet (SERDES)",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER_KSP3,
 	    "i82546GB quad-port Gigabit Ethernet (KSP3)",
 	},
@@ -7720,24 +7728,56 @@ static const struct pci_product pci_products[] = {
 	    "i82801H IGP (MV) LAN Controller",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801J_D_BM_LF,
-	    "i82801J (LF) LAN Controller",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801J_R_BM_LM,
+	    "i82567LM-2 LAN Controller",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82567V,
-	    "i82567V LAN Controller",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801J_R_BM_LF,
+	    "i82567LF-2 LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801J_R_BM_V,
+	    "i82567V-2 LAN Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82574L,
 	    "i82574L 1000baseT Ethernet",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82567LM_3,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82575GB_QUAD_COPPER,
+	    "i82575GB quad-1000baseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801J_D_BM_LM,
 	    "i82567LM-3 LAN Controller",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82567LF_3,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801J_D_BM_LF,
 	    "i82567LF-3 LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82575GB_QUAD_COPPER_PM,
+	    "i82575GB Quad-1000baseT Ethernet (PM)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_BM,
+	    "i82567LM-4 LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCH_M_LM,
+	    "PCH LAN (82577LM) Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCH_M_LC,
+	    "PCH LAN (82577LC) Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCH_D_DM,
+	    "PCH LAN (82578DM) Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCH_D_DC,
+	    "PCH LAN (82578DC) Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IGP_M_AMT,
@@ -7874,6 +7914,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_HPLUG,
 	    "82870P2 P64H2 Hot Plug Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_82567V_3,
+	    "i82567V-3 LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82583V,
+	    "i82583V 1000baseT Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960_RP,
@@ -14760,4 +14808,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3089;
+const int pci_nproducts = 3101;
