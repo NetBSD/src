@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.184 2010/01/27 21:27:19 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.185 2010/01/27 21:34:07 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16368,4 +16368,9 @@ sys/ufs/ufs/ufs_quota.c				1.65
 	mount list: also check for VTOI(vp) == NULL, and VI_XLOCK in
 	addition to VI_CLEAN.
 	[bouyer, ticket #1252]
+
+sys/dev/ic/mfi.c				1.21
+
+	Don't release CCB twice. Found by code inspection.
+	[bouyer, ticket #1256]
 
