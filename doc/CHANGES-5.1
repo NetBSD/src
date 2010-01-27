@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.180 2010/01/23 18:20:30 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.181 2010/01/27 20:45:23 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16318,4 +16318,16 @@ xsrc/dist/*					remove
 
 	Remove obsolete and never used sources.
 	[tron, ticket #1260]
+
+xsrc/external/mit/expat/dist/lib/xmlparse.c		1.2
+
+	Add patch from upstream CVS to fix CVE-2009-3560 (possible DOS due to
+	crash on bad input).
+	[tron, ticket #1283]
+
+xsrc/xfree/xc/extras/expat/lib/xmlparse.c		1.2
+
+	Add patch from upstream CVS to fix CVE-2009-3560 (possible DOS due to
+	crash on bad input).
+	[tron, ticket #1284]
 
