@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.46 2010/01/27 20:45:27 bouyer Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.47 2010/01/27 21:45:44 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -1110,15 +1110,27 @@ libexec/ld.elf_so/rtld.h			1.88
 	Obj_Entry.
 	[skrll, ticket #1249]
 
-xsrc/external/mit/expat/dist/lib/xmlparse.c		1.2
+sys/dev/ic/mfi.c				1.31
+
+	bio(4) is MP-safe but mfi(4) is not. So get the kernel_lock at
+	mfi_ioctl() entry and release it on exit.
+	[bouyer, #ticket 1257]
+
+xsrc/external/mit/expat/dist/lib/xmlparse.c	1.2
 
 	Add patch from upstream CVS to fix CVE-2009-3560 (possible DOS due to
 	crash on bad input).
 	[tron, ticket #1283]
 
-xsrc/xfree/xc/extras/expat/lib/xmlparse.c		1.2
+xsrc/xfree/xc/extras/expat/lib/xmlparse.c	1.2
 
 	Add patch from upstream CVS to fix CVE-2009-3560 (possible DOS due to
 	crash on bad input).
 	[tron, ticket #1284]
+
+sys/dev/ic/mfi.c				1.31
+
+	bio(4) is MP-safe but mfi(4) is not. So get the kernel_lock at
+	mfi_ioctl() entry and release it on exit.
+	[bouyer, #ticket 1257]
 
