@@ -1,4 +1,4 @@
-/* $NetBSD: compat_modf_ieee754.c,v 1.2 2008/09/28 15:19:09 christos Exp $ */
+/* $NetBSD: compat_modf_ieee754.c,v 1.3 2010/01/27 14:10:41 drochner Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -49,11 +49,13 @@ modf(double val, double *iptr)
 	u_int64_t frac;
 
 	/*
-	 * If input is Inf or NaN, return it and leave i alone.
+	 * If input is +/-Inf or NaN, return +/-0 or NaN.
 	 */
 	u.dblu_d = val;
-	if (u.dblu_dbl.dbl_exp == DBL_EXP_INFNAN)
-		return (u.dblu_d);
+	if (u.dblu_dbl.dbl_exp == DBL_EXP_INFNAN) {
+		*iptr = u.dblu_d;
+		return (0.0 / u.dblu_d);
+	}
 
 	/*
 	 * If input can't have a fractional part, return
