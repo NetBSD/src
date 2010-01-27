@@ -1,4 +1,4 @@
-/*	$NetBSD: rumptest_net.c,v 1.17 2010/01/26 17:52:21 pooka Exp $	*/
+/*	$NetBSD: rumptest_net.c,v 1.18 2010/01/27 13:30:45 martti Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -92,7 +92,7 @@ static in_addr_t myaddr;
 static void
 configure_interface(void)
 {
-        struct sockaddr_in *sin;
+	struct sockaddr_in *sin;
 	struct sockaddr_in sinstore;
 	struct ifaliasreq ia;
 	ssize_t len;
@@ -149,37 +149,37 @@ configure_interface(void)
 		err(1, "routing socket");
 
 	/* create routing message */
-        memset(&m_rtmsg, 0, sizeof(m_rtmsg));
-        rtm.rtm_type = RTM_ADD;
-        rtm.rtm_flags = RTF_UP | RTF_GATEWAY | RTF_STATIC;
-        rtm.rtm_version = RTM_VERSION;
-        rtm.rtm_seq = 2;
-        rtm.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
+	memset(&m_rtmsg, 0, sizeof(m_rtmsg));
+	rtm.rtm_type = RTM_ADD;
+	rtm.rtm_flags = RTF_UP | RTF_GATEWAY | RTF_STATIC;
+	rtm.rtm_version = RTM_VERSION;
+	rtm.rtm_seq = 2;
+	rtm.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
 
 	/* dst */
-        memset(&sinstore, 0, sizeof(sinstore));
-        sinstore.sin_family = AF_INET;
-        sinstore.sin_len = sizeof(sinstore);
-        memcpy(bp, &sinstore, sizeof(sinstore));
-        bp += sizeof(sinstore);
+	memset(&sinstore, 0, sizeof(sinstore));
+	sinstore.sin_family = AF_INET;
+	sinstore.sin_len = sizeof(sinstore);
+	memcpy(bp, &sinstore, sizeof(sinstore));
+	bp += sizeof(sinstore);
 
 	/* gw */
-        memset(&sinstore, 0, sizeof(sinstore));
-        sinstore.sin_family = AF_INET;
-        sinstore.sin_len = sizeof(sinstore);
-        sinstore.sin_addr.s_addr = inet_addr(MYGW);
-        memcpy(bp, &sinstore, sizeof(sinstore));
-        bp += sizeof(sinstore);
+	memset(&sinstore, 0, sizeof(sinstore));
+	sinstore.sin_family = AF_INET;
+	sinstore.sin_len = sizeof(sinstore);
+	sinstore.sin_addr.s_addr = inet_addr(MYGW);
+	memcpy(bp, &sinstore, sizeof(sinstore));
+	bp += sizeof(sinstore);
 
 	/* netmask */
-        memset(&sinstore, 0, sizeof(sinstore));
-        sinstore.sin_family = AF_INET;
-        sinstore.sin_len = sizeof(sinstore);
-        memcpy(bp, &sinstore, sizeof(sinstore));
-        bp += sizeof(sinstore);
+	memset(&sinstore, 0, sizeof(sinstore));
+	sinstore.sin_family = AF_INET;
+	sinstore.sin_len = sizeof(sinstore);
+	memcpy(bp, &sinstore, sizeof(sinstore));
+	bp += sizeof(sinstore);
 
-        len = bp - (uint8_t *)&m_rtmsg;
-        rtm.rtm_msglen = len;
+	len = bp - (uint8_t *)&m_rtmsg;
+	rtm.rtm_msglen = len;
 
 	/* stuff that to the routing socket and wait for happy days */
 	if (rump_sys_write(s, &m_rtmsg, len) != len)
