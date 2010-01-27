@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.182 2010/01/27 21:01:20 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.183 2010/01/27 21:18:36 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16337,4 +16337,20 @@ sys/dev/usb/usbdi.c				1.127
 	then closed. Confirmed to fix the memory leak on close() with
 	umodem(4) and uplcom(4).
 	[bouyer, ticket #1247]
+
+sys/arch/sparc/conf/GENERIC			1.219
+sys/arch/sparc/conf/files.sparc			1.149
+sys/arch/sparc/dev/apc.c			1.1
+sys/arch/sparc/dev/apcreg.h			1.1
+sys/dev/DEVNAMES				1.255
+
+	Add apc(4), a driver for the Aurora Personality Chip (APC) found
+	on SPARCstation-4/5, and emulated by qemu to idle the simulator
+	when the CPU is idle. Infos about the registers from the linux driver.
+	Not enabled by default because it can cause some Sparc systems to
+	hang (so says the linux driver).
+	Only the CPU idle part implemented at this time; fan speed and
+	Convenience power outlet management to be added.
+	Tested on qemu.
+	[bouyer, ticket #1248]
 
