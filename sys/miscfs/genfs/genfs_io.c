@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.25 2010/01/28 07:26:25 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.26 2010/01/28 07:38:32 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.25 2010/01/28 07:26:25 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.26 2010/01/28 07:38:32 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,15 +106,11 @@ genfs_getpages(void *v)
 	} */ * const ap = v;
 
 	off_t diskeof, memeof;
-	off_t offset, origoffset, startoffset, endoffset;
+	off_t origoffset, startoffset, endoffset;
 	int i, error, npages, orignpages, npgs, run, ridx;
 	int fs_bshift, fs_bsize, dev_bshift;
 	const int flags = ap->a_flags;
-	size_t bytes, iobytes, tailstart, tailbytes, totalbytes, skipbytes;
-	vaddr_t kva;
-	struct buf *bp, *mbp;
 	struct vnode * const vp = ap->a_vp;
-	struct vnode *devvp;
 	struct genfs_node * const gp = VTOG(vp);
 	struct uvm_object * const uobj = &vp->v_uobj;
 	struct vm_page *pg, **pgs, *pgs_onstack[UBC_MAX_PAGES];
@@ -122,7 +118,6 @@ genfs_getpages(void *v)
 	kauth_cred_t cred = curlwp->l_cred;		/* XXXUBC curlwp */
 	const bool async = (flags & PGO_SYNCIO) == 0;
 	const bool write = (ap->a_access_type & VM_PROT_WRITE) != 0;
-	bool sawhole = false;
 	bool has_trans = false;
 	const bool overwrite = (flags & PGO_OVERWRITE) != 0;
 	const bool blockalloc = write && (flags & PGO_NOBLOCKALLOC) == 0;
@@ -362,6 +357,12 @@ startover:
 		goto out;
 	}
 
+    {
+	size_t bytes, iobytes, tailstart, tailbytes, totalbytes, skipbytes;
+	vaddr_t kva;
+	struct buf *bp, *mbp;
+	bool sawhole = false;
+
 	/*
 	 * the page wasn't resident and we're not overwriting,
 	 * so we're going to have to do some i/o.
@@ -449,11 +450,12 @@ startover:
 	 */
 
 	bp = NULL;
-	for (offset = startoffset;
+	for (off_t offset = startoffset;
 	    bytes > 0;
 	    offset += iobytes, bytes -= iobytes) {
 		daddr_t lbn, blkno;
 		int pidx;
+		struct vnode *devvp;
 
 		/*
 		 * skip pages which don't need to be read.
@@ -650,6 +652,7 @@ loopdone:
 		UVMHIST_LOG(ubchist, "returning error %d", error,0,0,0);
 		goto out_err;
 	}
+    }
 
 out:
 	UVMHIST_LOG(ubchist, "succeeding, npages %d", npages,0,0,0);
