@@ -1,4 +1,4 @@
-/*	$NetBSD: unifdef.c,v 1.17 2010/01/20 19:02:42 ginsbach Exp $	*/
+/*	$NetBSD: unifdef.c,v 1.18 2010/01/28 14:15:18 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -77,7 +77,7 @@ static const char copyright[] =
 #endif
 #ifdef __IDSTRING
 __IDSTRING(Berkeley, "@(#)unifdef.c	8.1 (Berkeley) 6/6/93");
-__IDSTRING(NetBSD, "$NetBSD: unifdef.c,v 1.17 2010/01/20 19:02:42 ginsbach Exp $");
+__IDSTRING(NetBSD, "$NetBSD: unifdef.c,v 1.18 2010/01/28 14:15:18 mbalmer Exp $");
 __IDSTRING(dotat, "$dotat: things/unifdef.c,v 1.161 2003/07/01 15:32:48 fanf2 Exp $");
 #endif
 #endif /* not lint */
@@ -936,7 +936,7 @@ skipsym(const char *cp)
 }
 
 /*
- * Look for the symbol in the symbol table. If is is found, we return
+ * Look for the symbol in the symbol table. If it is found, we return
  * the symbol table index, else we return -1.
  */
 static int
