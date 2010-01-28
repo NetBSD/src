@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.1.2.2 2009/12/14 06:30:17 mrg Exp $
+# $NetBSD: ad.mips64eb,v 1.1.2.3 2010/01/28 17:10:20 matt Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin	obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/mips				comp-c-include
@@ -402,8 +402,6 @@
 ./usr/lib/64/libstdc++_p.a			comp-c-proflib		compat,profile,cxx
 ./usr/lib/64/libstdc++_pic.a			comp-c-piclib		compat,pic,cxx
 ./usr/lib/64/libsupc++.a			comp-c-lib		compat,cxx
-./usr/lib/64/libsupc++.so			base-sys-shlib		compat,pic,cxx
-./usr/lib/64/libsupc++_pic.a			comp-c-piclib		compat,pic,cxx
 ./usr/lib/64/libtermcap.a			comp-c-lib		compat
 ./usr/lib/64/libtermcap.so			base-sys-shlib		compat,pic
 ./usr/lib/64/libtermcap_p.a			comp-c-proflib		compat,profile
@@ -777,8 +775,6 @@
 ./usr/lib/o32/libstdc++_p.a			comp-c-proflib		compat,profile,cxx
 ./usr/lib/o32/libstdc++_pic.a			comp-c-piclib		compat,pic,cxx
 ./usr/lib/o32/libsupc++.a			comp-c-lib		compat,cxx
-./usr/lib/o32/libsupc++.so			base-sys-shlib		compat,pic,cxx
-./usr/lib/o32/libsupc++_pic.a			comp-c-piclib		compat,pic,cxx
 ./usr/lib/o32/libtermcap.a			comp-c-lib		compat
 ./usr/lib/o32/libtermcap.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/libtermcap_p.a			comp-c-proflib		compat,profile
