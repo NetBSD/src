@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.24 2010/01/28 07:24:55 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.25 2010/01/28 07:26:25 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.24 2010/01/28 07:24:55 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.25 2010/01/28 07:26:25 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,6 @@ genfs_getpages(void *v)
 
 	off_t diskeof, memeof;
 	off_t offset, origoffset, startoffset, endoffset;
-	daddr_t lbn, blkno;
 	int i, error, npages, orignpages, npgs, run, ridx;
 	int fs_bshift, fs_bsize, dev_bshift;
 	const int flags = ap->a_flags;
@@ -453,6 +452,7 @@ startover:
 	for (offset = startoffset;
 	    bytes > 0;
 	    offset += iobytes, bytes -= iobytes) {
+		daddr_t lbn, blkno;
 		int pidx;
 
 		/*
