@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.41 2010/01/28 12:37:45 phx Exp $ */
+/*	$NetBSD: db_interface.c,v 1.42 2010/01/28 12:45:01 phx Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.41 2010/01/28 12:37:45 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.42 2010/01/28 12:45:01 phx Exp $");
 
 #define USERACC
 
@@ -18,12 +18,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.41 2010/01/28 12:37:45 phx Exp $"
 
 #include <machine/db_machdep.h>
 #include <machine/frame.h>
-#include <powerpc/spr.h>
-#include <powerpc/cpu.h>
-#include <powerpc/bat.h>
-
 #ifdef PPC_IBM4XX
 #include <machine/tlb.h>
+#include <powerpc/spr.h>
 #include <uvm/uvm_extern.h>
 #endif
 
@@ -50,7 +47,6 @@ db_regs_t ddb_regs;
 
 void ddb_trap(void);				/* Call into trap_subr.S */
 int ddb_trap_glue(struct trapframe *);		/* Called from trap_subr.S */
-static void db_show_bat(db_expr_t, bool, db_expr_t, const char *);
 #ifdef PPC_IBM4XX
 static void db_ppc4xx_ctx(db_expr_t, bool, db_expr_t, const char *);
 static void db_ppc4xx_pv(db_expr_t, bool, db_expr_t, const char *);
@@ -66,40 +62,6 @@ static void db_ppc4xx_useracc(db_expr_t, bool, db_expr_t, const char *);
 #endif /* PPC_IBM4XX */
 
 #ifdef DDB
-const struct db_command db_machine_command_table[] = {
-	{ DDB_ADD_CMD("bat",	db_show_bat,		0,
-	  "Show BAT register translations", NULL,NULL) },
-#ifdef PPC_IBM4XX
-	{ DDB_ADD_CMD("ctx",	db_ppc4xx_ctx,		0,
-	  "Print process MMU context information", NULL,NULL) },
-	{ DDB_ADD_CMD("pv",	db_ppc4xx_pv,		0,
-	  "Print PA->VA mapping information",
-	  "address",
-	  "   address:\tphysical address to look up") },
-	{ DDB_ADD_CMD("reset",	db_ppc4xx_reset,	0,
-	  "Reset the system ", NULL,NULL) },
-	{ DDB_ADD_CMD("tf",	db_ppc4xx_tf,		0,
-	  "Display the contents of the trapframe",
-	  "address",
-	  "   address:\tthe struct trapframe to print") },
-	{ DDB_ADD_CMD("tlb",	db_ppc4xx_dumptlb,	0,
-	  "Display instruction translation storage buffer information.",
-	  NULL,NULL) },
-	{ DDB_ADD_CMD("dcr",	db_ppc4xx_dcr,		CS_MORE|CS_SET_DOT,
-	  "Set the DCR register",
-	  "dcr",
-	  "   dcr:\tNew DCR value (between 0x0 and 0x3ff)") },
-#ifdef USERACC
-	{ DDB_ADD_CMD("user",	db_ppc4xx_useracc,	0,
-	   "Display user memory.", "[address][,count]",
-	   "   address:\tuserspace address to start\n"
-	   "   count:\tnumber of bytes to display") },
-#endif
-#endif /* PPC_IBM4XX */
-	{ DDB_ADD_CMD(NULL,	NULL,			0, 
-	  NULL,NULL,NULL) }
-};
-
 void
 cpu_Debugger(void)
 {
@@ -202,25 +164,6 @@ kdb_trap(int type, void *v)
 	return 1;
 }
 
-static void
-db_show_bat(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
-{
-	unsinged int cpuvers;
-	struct bat ibat[4];
-	struct bat dbat[4];
-
-	cpuvers = mfpvr() >> 16;
-
-#ifdef PPC_OEA601
-	if (cpuvers == MPC601) {
-		/* The 601 has four unified BATs with a different layout. */
-
-	} else
-#endif
-	{
-	}
-}
-
 #ifdef PPC_IBM4XX
 db_addr_t
 branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
@@ -249,8 +192,37 @@ branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 	return (0);
 }
 
-
 #ifdef DDB
+const struct db_command db_machine_command_table[] = {
+	{ DDB_ADD_CMD("ctx",	db_ppc4xx_ctx,		0,
+	  "Print process MMU context information", NULL,NULL) },
+	{ DDB_ADD_CMD("pv",	db_ppc4xx_pv,		0,
+	  "Print PA->VA mapping information",
+	  "address",
+	  "   address:\tphysical address to look up") },
+	{ DDB_ADD_CMD("reset",	db_ppc4xx_reset,	0,
+	  "Reset the system ", NULL,NULL) },
+	{ DDB_ADD_CMD("tf",	db_ppc4xx_tf,		0,
+	  "Display the contents of the trapframe",
+	  "address",
+	  "   address:\tthe struct trapframe to print") },
+	{ DDB_ADD_CMD("tlb",	db_ppc4xx_dumptlb,	0,
+	  "Display instruction translation storage buffer information.",
+	  NULL,NULL) },
+	{ DDB_ADD_CMD("dcr",	db_ppc4xx_dcr,		CS_MORE|CS_SET_DOT,
+	  "Set the DCR register",
+	  "dcr",
+	  "   dcr:\tNew DCR value (between 0x0 and 0x3ff)") },
+#ifdef USERACC
+	{ DDB_ADD_CMD("user",	db_ppc4xx_useracc,	0,
+	   "Display user memory.", "[address][,count]",
+	   "   address:\tuserspace address to start\n"
+	   "   count:\tnumber of bytes to display") },
+#endif
+	{ DDB_ADD_CMD(NULL,	NULL,			0, 
+	  NULL,NULL,NULL) }
+};
+
 static void
 db_ppc4xx_ctx(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
