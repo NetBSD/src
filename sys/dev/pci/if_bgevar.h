@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.2 2010/01/24 16:21:09 msaitoh Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.3 2010/01/28 03:09:13 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -217,6 +217,10 @@ struct txdmamap_pool_entry {
 	SLIST_ENTRY(txdmamap_pool_entry) link;
 };
 
+#define	ASF_ENABLE		1
+#define	ASF_NEW_HANDSHAKE	2
+#define	ASF_STACKUP		4
+
 struct bge_softc {
 	device_t		bge_dev;
 	struct ethercom		ethercom;		/* interface info */
@@ -231,8 +235,11 @@ struct bge_softc {
 	u_int32_t		bge_return_ring_cnt;
 	u_int32_t		bge_tx_prodidx;
 	bus_dma_tag_t		bge_dmatag;
+	int			bge_expcap;
 	u_int32_t		bge_chipid;
 	u_int32_t		bge_local_ctrl_reg;
+	uint8_t			bge_asf_mode;
+	uint8_t			bge_asf_count;
 	struct bge_ring_data	*bge_rdata;	/* rings */
 	struct bge_chain_data	bge_cdata;	/* mbufs */
 	bus_dmamap_t		bge_ring_map;
