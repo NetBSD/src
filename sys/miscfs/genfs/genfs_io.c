@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.28 2010/01/28 07:49:08 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.29 2010/01/28 08:02:12 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.28 2010/01/28 07:49:08 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.29 2010/01/28 08:02:12 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ genfs_getpages(void *v)
 
 	off_t diskeof, memeof;
 	off_t startoffset, endoffset;
-	int i, error, npages, orignpages, npgs, run, ridx;
+	int i, error, npages, npgs, run, ridx;
 	const int flags = ap->a_flags;
 	struct vnode * const vp = ap->a_vp;
 	struct genfs_node * const gp = VTOG(vp);
@@ -135,7 +135,7 @@ startover:
 	error = 0;
 	const voff_t origvsize = vp->v_size;
 	const off_t origoffset = ap->a_offset;
-	orignpages = *ap->a_count;
+	const int orignpages = *ap->a_count;
 	GOP_SIZE(vp, origvsize, &diskeof, 0);
 	if (flags & PGO_PASTEOF) {
 		off_t newsize;
@@ -255,9 +255,9 @@ startover:
 	    vp->v_mount->mnt_dev_bshift : DEV_BSHIFT;
 	const int fs_bsize = 1 << fs_bshift;
 
-	orignpages = MIN(orignpages,
+	const int orignmempages = MIN(orignpages,
 	    round_page(memeof - origoffset) >> PAGE_SHIFT);
-	npages = orignpages;
+	npages = orignmempages;
 	startoffset = origoffset & ~(fs_bsize - 1);
 	endoffset = round_page((origoffset + (npages << PAGE_SHIFT) +
 	    fs_bsize - 1) & ~(fs_bsize - 1));
@@ -307,10 +307,10 @@ startover:
 	}
 
 	if (uvn_findpages(uobj, origoffset, &npages, &pgs[ridx],
-	    async ? UFP_NOWAIT : UFP_ALL) != orignpages) {
+	    async ? UFP_NOWAIT : UFP_ALL) != orignmempages) {
 		genfs_node_unlock(vp);
 		KASSERT(async != 0);
-		genfs_rel_pages(&pgs[ridx], orignpages);
+		genfs_rel_pages(&pgs[ridx], orignmempages);
 		mutex_exit(&uobj->vmobjlock);
 		error = EBUSY;
 		goto out_err;
@@ -365,7 +365,7 @@ startover:
 	 */
 
 	npages = (endoffset - startoffset) >> PAGE_SHIFT;
-	if (startoffset != origoffset || npages != orignpages) {
+	if (startoffset != origoffset || npages != orignmempages) {
 
 		/*
 		 * we need to avoid deadlocks caused by locking
@@ -373,7 +373,7 @@ startover:
 		 * already have locked.  unlock them all and start over.
 		 */
 
-		genfs_rel_pages(&pgs[ridx], orignpages);
+		genfs_rel_pages(&pgs[ridx], orignmempages);
 		memset(pgs, 0, pgs_size);
 
 		UVMHIST_LOG(ubchist, "reset npages start 0x%x end 0x%x",
@@ -666,7 +666,7 @@ out:
 			pmap_clear_modify(pgs[i]);
 		}
 		KASSERT(!write || !blockalloc || (pg->flags & PG_RDONLY) == 0);
-		if (i < ridx || i >= ridx + orignpages || async) {
+		if (i < ridx || i >= ridx + orignmempages || async) {
 			UVMHIST_LOG(ubchist, "unbusy pg %p offset 0x%x",
 			    pg, pg->offset,0,0);
 			if (pg->flags & PG_WANTED) {
@@ -689,7 +689,7 @@ out:
 	mutex_exit(&uobj->vmobjlock);
 	if (ap->a_m != NULL) {
 		memcpy(ap->a_m, &pgs[ridx],
-		    orignpages * sizeof(struct vm_page *));
+		    orignmempages * sizeof(struct vm_page *));
 	}
 
 out_err:
