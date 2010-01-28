@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.63 2009/04/06 17:32:09 mkirby Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.64 2010/01/28 22:36:19 drochner Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -601,7 +601,7 @@
 #define KS_GROUP_Command	0xf400U
 #define KS_GROUP_Internal	0xf500U
 #define KS_GROUP_Dead		0xf801U		/* not encoded in keysym */
-#define KS_GROUP_Ascii		0xf802U		/* not encoded in keysym */
+#define KS_GROUP_Plain		0xf802U		/* not encoded in keysym */
 #define KS_GROUP_Keycode	0xf803U		/* not encoded in keysym */
 
 #define KS_NUMKEYCODES	0x1000
@@ -610,7 +610,7 @@
 #define KS_GROUP(k)	((k) >= 0x0300 && (k) < 0x0370 ? KS_GROUP_Dead : \
 			    (((k) & 0xf000) == 0xe000 ? KS_GROUP_Keycode : \
 			      (((k) & 0xf800) == 0xf000 ? ((k) & 0xff00) : \
-				KS_GROUP_Ascii)))
+				KS_GROUP_Plain)))
 
 #define KS_VALUE(k)	(((k) & 0xf000) == 0xe000 ? ((k) & 0x0fff) : \
 			    (((k) & 0xf800) == 0xf000 ? ((k) & 0x00ff) : (k)))

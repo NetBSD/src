@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_keys.c,v 1.9 2005/12/11 12:24:12 christos Exp $ */
+/* $NetBSD: wsemul_vt100_keys.c,v 1.10 2010/01/28 22:36:19 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_keys.c,v 1.9 2005/12/11 12:24:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_keys.c,v 1.10 2010/01/28 22:36:19 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,12 @@ wsemul_vt100_translate(void *cookie, keysym_t in, const char **out)
 	struct wsemul_vt100_emuldata *edp = cookie;
 	static char c;
 
+	if (KS_GROUP(in) == KS_GROUP_Plain) {
+		/* catch ISO-1 */
+		c = KS_VALUE(in);
+		*out = &c;
+		return (1);
+	}
 	if (in >= KS_f1 && in <= KS_f20) {
 		*out = vt100_fkeys[in - KS_f1];
 		return (5);

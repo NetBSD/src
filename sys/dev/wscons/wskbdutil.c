@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdutil.c,v 1.16 2009/04/06 17:32:09 mkirby Exp $	*/
+/*	$NetBSD: wskbdutil.c,v 1.17 2010/01/28 22:36:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdutil.c,v 1.16 2009/04/06 17:32:09 mkirby Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdutil.c,v 1.17 2010/01/28 22:36:19 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -354,7 +354,7 @@ ksym_upcase(keysym_t ksym)
 	if (ksym >= KS_f1 && ksym <= KS_f20)
 		return(KS_F1 - KS_f1 + ksym);
 
-	if (KS_GROUP(ksym) == KS_GROUP_Ascii && ksym <= 0xff &&
+	if (KS_GROUP(ksym) == KS_GROUP_Plain && ksym <= 0xff &&
 	    latin1_to_upper[ksym] != 0x00)
 		return(latin1_to_upper[ksym]);
 
