@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.26 2010/01/28 07:38:32 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.27 2010/01/28 07:44:54 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.26 2010/01/28 07:38:32 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.27 2010/01/28 07:44:54 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,9 +106,8 @@ genfs_getpages(void *v)
 	} */ * const ap = v;
 
 	off_t diskeof, memeof;
-	off_t origoffset, startoffset, endoffset;
+	off_t startoffset, endoffset;
 	int i, error, npages, orignpages, npgs, run, ridx;
-	int fs_bshift, fs_bsize, dev_bshift;
 	const int flags = ap->a_flags;
 	struct vnode * const vp = ap->a_vp;
 	struct genfs_node * const gp = VTOG(vp);
@@ -121,7 +120,6 @@ genfs_getpages(void *v)
 	bool has_trans = false;
 	const bool overwrite = (flags & PGO_OVERWRITE) != 0;
 	const bool blockalloc = write && (flags & PGO_NOBLOCKALLOC) == 0;
-	voff_t origvsize;
 	UVMHIST_FUNC("genfs_getpages"); UVMHIST_CALLED(ubchist);
 
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x/%x count %d",
@@ -135,8 +133,8 @@ genfs_getpages(void *v)
 
 startover:
 	error = 0;
-	origvsize = vp->v_size;
-	origoffset = ap->a_offset;
+	const voff_t origvsize = vp->v_size;
+	const off_t origoffset = ap->a_offset;
 	orignpages = *ap->a_count;
 	GOP_SIZE(vp, origvsize, &diskeof, 0);
 	if (flags & PGO_PASTEOF) {
@@ -251,14 +249,11 @@ startover:
 	 * leave space in the page array for a whole block.
 	 */
 
-	if (vp->v_type != VBLK) {
-		fs_bshift = vp->v_mount->mnt_fs_bshift;
-		dev_bshift = vp->v_mount->mnt_dev_bshift;
-	} else {
-		fs_bshift = DEV_BSHIFT;
-		dev_bshift = DEV_BSHIFT;
-	}
-	fs_bsize = 1 << fs_bshift;
+	const int fs_bshift = (vp->v_type != VBLK) ?
+	    vp->v_mount->mnt_fs_bshift : DEV_BSHIFT;
+	const int dev_bshift = (vp->v_type != VBLK) ?
+	    vp->v_mount->mnt_dev_bshift : DEV_BSHIFT;
+	const int fs_bsize = 1 << fs_bshift;
 
 	orignpages = MIN(orignpages,
 	    round_page(memeof - origoffset) >> PAGE_SHIFT);
