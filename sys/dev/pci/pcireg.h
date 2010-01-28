@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.61 2009/09/11 01:28:20 christos Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.62 2010/01/28 02:55:31 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -551,7 +551,9 @@ typedef u_int8_t pci_revision_t;
 #define PCI_PCIE_XCAP_SI	0x01000000
 #define PCI_PCIE_DCAP		0x04
 #define PCI_PCIE_DCSR		0x08
+#define PCI_PCIE_DCSR_MAX_READ_REQ	0x7000
 #define PCI_PCIE_DCSR_ENA_NO_SNOOP	0x00000800
+#define PCI_PCIE_DSR		0x0a
 #define PCI_PCIE_LCAP		0x0c
 #define PCI_PCIE_LCSR		0x10
 #define PCI_PCIE_LCSR_ASPM_L0S	0x00000001
