@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.177 2010/01/28 03:09:13 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.178 2010/01/28 07:34:12 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.177 2010/01/28 03:09:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.178 2010/01/28 07:34:12 msaitoh Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -343,31 +343,31 @@ static const struct bge_product {
 	  PCI_PRODUCT_BROADCOM_BCM5703_ALT,
 	  "Broadcom BCM5703 Gigabit Ethernet",
 	  },
-   	{ PCI_VENDOR_BROADCOM,
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5704C,
 	  "Broadcom BCM5704C Dual Gigabit Ethernet",
 	  },
-   	{ PCI_VENDOR_BROADCOM,
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5704S,
 	  "Broadcom BCM5704S Dual Gigabit Ethernet",
 	  },
-   	{ PCI_VENDOR_BROADCOM,
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5705,
 	  "Broadcom BCM5705 Gigabit Ethernet",
 	  },
-   	{ PCI_VENDOR_BROADCOM,
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5705F,
 	  "Broadcom BCM5705F Gigabit Ethernet",
 	  },
-   	{ PCI_VENDOR_BROADCOM,
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5705K,
 	  "Broadcom BCM5705K Gigabit Ethernet",
 	  },
-   	{ PCI_VENDOR_BROADCOM,
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5705M,
 	  "Broadcom BCM5705M Gigabit Ethernet",
 	  },
-   	{ PCI_VENDOR_BROADCOM,
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5705M_ALT,
 	  "Broadcom BCM5705M Gigabit Ethernet",
 	  },
@@ -491,23 +491,23 @@ static const struct bge_product {
 	  PCI_PRODUCT_BROADCOM_BCM5761SE,
 	  "Broadcom BCM5761SE Gigabit Ethernet",
 	},
-   	{ PCI_VENDOR_BROADCOM,
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5764,
 	  "Broadcom BCM5764 Gigabit Ethernet",
 	  },
-   	{ PCI_VENDOR_BROADCOM,
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5780,
 	  "Broadcom BCM5780 Gigabit Ethernet",
 	  },
-   	{ PCI_VENDOR_BROADCOM,
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5780S,
 	  "Broadcom BCM5780S Gigabit Ethernet",
 	  },
-   	{ PCI_VENDOR_BROADCOM,
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5781,
 	  "Broadcom BCM5781 Gigabit Ethernet",
 	  },
-   	{ PCI_VENDOR_BROADCOM,
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5782,
 	  "Broadcom BCM5782 Gigabit Ethernet",
 	},
@@ -527,23 +527,23 @@ static const struct bge_product {
 	  PCI_PRODUCT_BROADCOM_BCM5787M,
 	  "Broadcom BCM5787M Gigabit Ethernet",
 	},
-   	{ PCI_VENDOR_BROADCOM,
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5788,
 	  "Broadcom BCM5788 Gigabit Ethernet",
 	  },
-   	{ PCI_VENDOR_BROADCOM,
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5789,
 	  "Broadcom BCM5789 Gigabit Ethernet",
 	  },
-   	{ PCI_VENDOR_BROADCOM,
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5901,
 	  "Broadcom BCM5901 Fast Ethernet",
 	  },
-   	{ PCI_VENDOR_BROADCOM,
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5901A2,
 	  "Broadcom BCM5901A2 Fast Ethernet",
 	  },
-   	{ PCI_VENDOR_BROADCOM,
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5903M,
 	  "Broadcom BCM5903M Fast Ethernet",
 	  },
@@ -1304,7 +1304,8 @@ bge_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
  * Intialize a standard receive ring descriptor.
  */
 static int
-bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m, bus_dmamap_t dmamap)
+bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m,
+    bus_dmamap_t dmamap)
 {
 	struct mbuf		*m_new = NULL;
 	struct bge_rx_bd	*r;
@@ -1341,7 +1342,7 @@ bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m, bus_dmamap_t dmamap)
 	if (bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_new,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT))
 		return ENOBUFS;
-	bus_dmamap_sync(sc->bge_dmatag, dmamap, 0, dmamap->dm_mapsize, 
+	bus_dmamap_sync(sc->bge_dmatag, dmamap, 0, dmamap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
 	sc->bge_cdata.bge_rx_std_chain[i] = m_new;
@@ -1648,9 +1649,7 @@ bge_setmulti(struct bge_softc *sc)
 }
 
 static void
-bge_sig_pre_reset(sc, type)
-	struct bge_softc *sc;
-	int type;
+bge_sig_pre_reset(struct bge_softc *sc, int type)
 {
 	/*
 	 * Some chips don't like this so only do this if ASF is enabled
@@ -1671,10 +1670,9 @@ bge_sig_pre_reset(sc, type)
 }
 
 static void
-bge_sig_post_reset(sc, type)
-	struct bge_softc *sc;
-	int type;
+bge_sig_post_reset(struct bge_softc *sc, int type)
 {
+
 	if (sc->bge_asf_mode & ASF_NEW_HANDSHAKE) {
 		switch (type) {
 		case BGE_RESET_START:
@@ -1689,10 +1687,9 @@ bge_sig_post_reset(sc, type)
 }
 
 static void
-bge_sig_legacy(sc, type)
-	struct bge_softc *sc;
-	int type;
+bge_sig_legacy(struct bge_softc *sc, int type)
 {
+
 	if (sc->bge_asf_mode) {
 		switch (type) {
 		case BGE_RESET_START:
@@ -1706,8 +1703,7 @@ bge_sig_legacy(sc, type)
 }
 
 static void
-bge_stop_fw(sc)
-	struct bge_softc *sc;
+bge_stop_fw(struct bge_softc *sc)
 {
 	int i;
 
@@ -1716,7 +1712,7 @@ bge_stop_fw(sc)
 		CSR_WRITE_4(sc, BGE_CPU_EVENT,
 		    CSR_READ_4(sc, BGE_CPU_EVENT) | (1 << 14));
 
-		for (i = 0; i < 100; i++ ) {
+		for (i = 0; i < 100; i++) {
 			if (!(CSR_READ_4(sc, BGE_CPU_EVENT) & (1 << 14)))
 				break;
 			DELAY(10);
@@ -1731,9 +1727,8 @@ bge_stop_fw(sc)
 static int
 bge_chipinit(struct bge_softc *sc)
 {
-	int			i;
-	uint32_t		dma_rw_ctl;
-
+	int i;
+	uint32_t dma_rw_ctl;
 
 	/* Set endianness before we access any non-PCI registers. */
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL,
@@ -1817,7 +1812,7 @@ bge_chipinit(struct bge_softc *sc)
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701)
 		dma_rw_ctl |= BGE_PCIDMARWCTL_USE_MRM |
 		    BGE_PCIDMARWCTL_ASRT_ALL_BE;
- 
+
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704)
 		dma_rw_ctl &= ~BGE_PCIDMARWCTL_MINDMA;
@@ -2247,7 +2242,7 @@ bge_blockinit(struct bge_softc *sc)
 			bge_wdma_mode |= BGE_WDMAMODE_STATUS_TAG_FIX;
 
 		CSR_WRITE_4(sc, BGE_WDMA_MODE, bge_wdma_mode);
-        }
+	}
 
 	/* Turn on read DMA state machine */
 	{
@@ -2319,7 +2314,7 @@ bge_blockinit(struct bge_softc *sc)
 	/* Enable PHY auto polling (for MII/GMII only) */
 	if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
 		CSR_WRITE_4(sc, BGE_MI_STS, BGE_MISTS_LINK);
- 	} else {
+	} else {
 		BGE_STS_SETBIT(sc, BGE_STS_AUTOPOLL);
 		BGE_SETBIT(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL | (10 << 16));
 		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700)
@@ -2498,7 +2493,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 
 	DPRINTFN(5, ("pci_mem_find\n"));
 	memtype = pci_mapreg_type(sc->sc_pc, sc->sc_pcitag, BGE_PCI_BAR0);
- 	switch (memtype) {
+	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 		if (pci_mapreg_map(pa, BGE_PCI_BAR0,
@@ -2746,9 +2741,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	/* Try to reset the chip again the nice way. */
 	bge_stop_fw(sc);
 	bge_sig_pre_reset(sc, BGE_RESET_STOP);
-	if (bge_reset(sc)) {
+	if (bge_reset(sc))
 		aprint_error_dev(sc->bge_dev, "chip reset failed\n");
-	}
 
 	bge_sig_legacy(sc, BGE_RESET_STOP);
 	bge_sig_post_reset(sc, BGE_RESET_STOP);
@@ -2763,8 +2757,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * Get station address from the EEPROM
 	 */
 	if (bge_get_eaddr(sc, eaddr)) {
-		aprint_error_dev(sc->bge_dev, 
-		"failed to read station address\n");
+		aprint_error_dev(sc->bge_dev,
+		    "failed to read station address\n");
 		bge_release_resources(sc);
 		return;
 	}
@@ -3029,17 +3023,14 @@ bge_reset(struct bge_softc *sc)
 	int i, val;
 	void (*write_op)(struct bge_softc *, int, int);
 
-	if (BGE_IS_5750_OR_BEYOND(sc) && !BGE_IS_5714_FAMILY(sc) && 
-	    (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5906)) {
-	    	if (sc->bge_flags & BGE_PCIE) {
+	if (BGE_IS_5750_OR_BEYOND(sc) && !BGE_IS_5714_FAMILY(sc)
+	    && (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5906)) {
+	    	if (sc->bge_flags & BGE_PCIE)
 			write_op = bge_writemem_direct;
-		} else {
+		else
 			write_op = bge_writemem_ind;
-		}
-	} else {
+	} else
 		write_op = bge_writereg_ind;
-	}
-
 
 	/* Save some important PCI state. */
 	cachesize = pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CACHESZ);
@@ -3142,7 +3133,7 @@ bge_reset(struct bge_softc *sc)
 		if (BGE_IS_5714_FAMILY(sc)) {
 			marbmode = CSR_READ_4(sc, BGE_MARB_MODE);
 		}
- 		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | marbmode);
+		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | marbmode);
 	}
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
@@ -3204,7 +3195,7 @@ bge_reset(struct bge_softc *sc)
 		if (BGE_IS_5714_FAMILY(sc)) {
 			marbmode = CSR_READ_4(sc, BGE_MARB_MODE);
 		}
- 		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | marbmode);
+		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | marbmode);
 	}
 #endif
 
@@ -3359,14 +3350,14 @@ bge_rxeof(struct bge_softc *sc)
 
 		ifp->if_ipackets++;
 #ifndef __NO_STRICT_ALIGNMENT
-                /*
-                 * XXX: if the 5701 PCIX-Rx-DMA workaround is in effect,
-                 * the Rx buffer has the layer-2 header unaligned.
-                 * If our CPU requires alignment, re-align by copying.
-                 */
+		/*
+		 * XXX: if the 5701 PCIX-Rx-DMA workaround is in effect,
+		 * the Rx buffer has the layer-2 header unaligned.
+		 * If our CPU requires alignment, re-align by copying.
+		 */
 		if (sc->bge_flags & BGE_RX_ALIGNBUG) {
 			memmove(mtod(m, char *) + ETHER_ALIGN, m->m_data,
-                                cur_rx->bge_len);
+				cur_rx->bge_len);
 			m->m_data += ETHER_ALIGN;
 		}
 #endif
@@ -4260,11 +4251,10 @@ bge_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, BGE_MAC_ADDR1_HI, (htons(m[1]) << 16) | htons(m[2]));
 
 	/* Enable or disable promiscuous mode as needed. */
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC)
 		BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
-	} else {
+	else
 		BGE_CLRBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
-	}
 
 	/* Program multicast filter. */
 	bge_setmulti(sc);
@@ -4725,13 +4715,13 @@ bge_link_upd(struct bge_softc *sc)
 			BGE_STS_CLRBIT(sc, BGE_STS_LINK);
 			if_link_state_change(ifp, LINK_STATE_DOWN);
 		}
-        /*
+	/*
 	 * Discard link events for MII/GMII cards if MI auto-polling disabled.
 	 * This should not happen since mii callouts are locked now, but
 	 * we keep this check for debug.
 	 */
 	} else if (BGE_STS_BIT(sc, BGE_STS_AUTOPOLL)) {
-		/* 
+		/*
 		 * Some broken BCM chips have BGE_STATFLAG_LINKSTATE_CHANGED
 		 * bit in status word always set. Workaround this bug by
 		 * reading PHY link status directly.
@@ -4890,7 +4880,7 @@ bge_get_eaddr_fw(struct bge_softc *sc, uint8_t ether_addr[])
 	return 1;
 }
 
-static int 
+static int
 bge_get_eaddr_mem(struct bge_softc *sc, uint8_t ether_addr[])
 {
 	uint32_t mac_addr;
