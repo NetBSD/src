@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15 2008/07/06 13:29:50 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.16 2010/01/28 14:10:54 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15 2008/07/06 13:29:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.16 2010/01/28 14:10:54 mbalmer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,7 +288,7 @@ setstatclockrate(int newhz)
 }
 
 /*
- * This is is called by the "custom" interrupt handler.
+ * This is called by the "custom" interrupt handler.
  * Note that we can get ZS interrupts while this runs,
  * and zshard may touch the interrupt_reg, so we must
  * be careful to use the single_inst_* macros to modify

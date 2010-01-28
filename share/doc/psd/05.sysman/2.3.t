@@ -1,4 +1,4 @@
-.\"	$NetBSD: 2.3.t,v 1.3 2003/08/07 10:30:49 agc Exp $
+.\"	$NetBSD: 2.3.t,v 1.4 2010/01/28 14:05:03 mbalmer Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -474,7 +474,7 @@ provide IP source routing or security options.
 The 32-bit address is composed of network and host parts;
 the network part is variable in size and is frequency encoded.
 The host part may optionally be interpreted as a subnet field
-plus the host on the subnet; this is is enabled by setting a network address
+plus the host on the subnet; this is enabled by setting a network address
 mask at boot time.
 .Sh 4 "Access rights transmission
 .PP

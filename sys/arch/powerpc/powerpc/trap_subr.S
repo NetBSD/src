@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.65 2008/08/01 16:32:03 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.66 2010/01/28 14:10:54 mbalmer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -312,7 +312,7 @@ _C_LABEL(dsi601trap):
 	addis	%r31,%r31,_C_LABEL(battable)@ha
 	ldreg	%r30,_C_LABEL(battable)+SZREG@l(%r31)
 	mtcr	%r30
-	bf	25,1f			/* branch if Valid is is false,
+	bf	25,1f			/* branch if Valid is false,
 					   presently assumes supervisor only */
 
 	/* get batu */
