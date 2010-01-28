@@ -1,6 +1,6 @@
-.\"	$NetBSD: elf_getdata.3,v 1.1.1.1 2009/12/19 05:43:39 thorpej Exp $
+.\"	$NetBSD: elf_getdata.3,v 1.2 2010/01/28 21:38:29 darran Exp $
 .\"
-.\" Copyright (c) 2006 Joseph Koshy.  All rights reserved.
+.\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -25,7 +25,7 @@
 .\"
 .\" $FreeBSD: src/lib/libelf/elf_getdata.3,v 1.2.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $
 .\"
-.Dd August 26, 2006
+.Dd April 7, 2008
 .Os
 .Dt ELF_GETDATA 3
 .Sh NAME
@@ -144,6 +144,32 @@ always returns
 .Vt Elf_Data
 structures of type
 .Dv ELF_T_BYTE .
+.Ss Special handling of SHT_NOBITS sections
+For sections of type
+.Dv SHT_NOBITS ,
+the functions
+.Fn elf_getdata
+and
+.Fn elf_rawdata
+return a pointer to a valid
+.Vt Elf_Data
+structure that has its
+.Va d_buf
+member set to NULL and its
+.Va d_size
+member set to the size of the section.
+.Pp
+If an application wishes to create a section of type
+.Dv SHT_NOBITS ,
+it should add a data buffer to the section using function
+.Fn elf_newdata .
+It should then set the
+.Va d_buf
+and
+.Va d_size
+members of the returned
+.Vt Elf_Data
+structure to NULL and the desired size of the section respectively.
 .Sh RETURN VALUES
 These functions return a valid pointer to a data descriptor if successful, or
 NULL if an error occurs.

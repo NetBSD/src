@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_data.c,v 1.3 2009/12/29 17:05:58 thorpej Exp $	*/
+/*	$NetBSD: elf_data.c,v 1.4 2010/01/28 21:38:29 darran Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -41,7 +41,6 @@ Elf_Data *
 elf_getdata(Elf_Scn *s, Elf_Data *d)
 {
 	Elf *e;
-	char *dst;
 	size_t fsz, msz, count;
 	int elfclass, elftype;
 	unsigned int sh_type;
@@ -82,8 +81,8 @@ elf_getdata(Elf_Scn *s, Elf_Data *d)
 	}
 
 	if ((elftype = _libelf_xlate_shtype(sh_type)) < ELF_T_FIRST ||
-	    elftype > ELF_T_LAST ||
-	    sh_offset + sh_size > (uint64_t) e->e_rawsize) {
+	    elftype > ELF_T_LAST || (sh_type != SHT_NOBITS &&
+	    sh_offset + sh_size > (uint64_t) e->e_rawsize)) {
 		LIBELF_SET_ERROR(SECTION, 0);
 		return (NULL);
 	}
@@ -106,22 +105,27 @@ elf_getdata(Elf_Scn *s, Elf_Data *d)
 
 	assert(msz > 0);
 
-	if ((dst = malloc(msz*count)) == NULL) {
-		LIBELF_SET_ERROR(RESOURCE, 0);
-		return (NULL);
-	}
-
 	if ((d = _libelf_allocate_data(s)) == NULL)
 		return (NULL);
 
-	d->d_buf     = dst;
+	d->d_buf     = NULL;
 	d->d_off     = 0;
 	d->d_align   = sh_align;
 	d->d_size    = msz * count;
 	d->d_type    = elftype;
 	d->d_version = e->e_version;
 
+	if (sh_type == SHT_NOBITS)
+		return (d);
+
 	d->d_flags  |= LIBELF_F_MALLOCED;
+
+	if ((d->d_buf = malloc(msz*count)) == NULL) {
+		(void) _libelf_release_data(d);
+		LIBELF_SET_ERROR(RESOURCE, 0);
+		return (NULL);
+	}
+
 	STAILQ_INSERT_TAIL(&s->s_data, d, d_next);
 
 	xlate = _libelf_get_translator(elftype, ELF_TOMEMORY, elfclass);
@@ -181,6 +185,7 @@ Elf_Data *
 elf_rawdata(Elf_Scn *s, Elf_Data *d)
 {
 	Elf *e;
+	uint32_t sh_type;
 	int elf_class;
 	uint64_t sh_align, sh_offset, sh_size;
 
@@ -201,10 +206,12 @@ elf_rawdata(Elf_Scn *s, Elf_Data *d)
 	assert(elf_class == ELFCLASS32 || elf_class == ELFCLASS64);
 
 	if (elf_class == ELFCLASS32) {
+		sh_type   = s->s_shdr.s_shdr32.sh_type;
 		sh_offset = (uint64_t) s->s_shdr.s_shdr32.sh_offset;
 		sh_size   = (uint64_t) s->s_shdr.s_shdr32.sh_size;
 		sh_align  = (uint64_t) s->s_shdr.s_shdr32.sh_addralign;
 	} else {
+		sh_type   = s->s_shdr.s_shdr64.sh_type;
 		sh_offset = s->s_shdr.s_shdr64.sh_offset;
 		sh_size   = s->s_shdr.s_shdr64.sh_size;
 		sh_align  = s->s_shdr.s_shdr64.sh_addralign;
@@ -213,7 +220,7 @@ elf_rawdata(Elf_Scn *s, Elf_Data *d)
 	if ((d = _libelf_allocate_data(s)) == NULL)
 		return (NULL);
 
-	d->d_buf     = e->e_rawfile + sh_offset;
+	d->d_buf     = sh_type == SHT_NOBITS ? NULL : e->e_rawfile + sh_offset;
 	d->d_off     = 0;
 	d->d_align   = sh_align;
 	d->d_size    = sh_size;
