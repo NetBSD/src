@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.26 2009/12/20 09:36:05 dsl Exp $	*/
+/*	$NetBSD: putter.c,v 1.27 2010/01/28 18:12:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.26 2009/12/20 09:36:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.27 2010/01/28 18:12:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.26 2009/12/20 09:36:05 dsl Exp $");
 #include <dev/putter/putter_sys.h>
 
 /*
- * Device routines.  These are for when /dev/puffs is initially
+ * Device routines.  These are for when /dev/putter is initially
  * opened before it has been cloned.
  */
 
@@ -357,7 +357,7 @@ putter_fop_close(file_t *fp)
  restart:
 	mutex_enter(&pi_mtx);
 	/*
-	 * First check if the fs was never mounted.  In that case
+	 * First check if the driver was never born.  In that case
 	 * remove the instance from the list.  If mount is attempted later,
 	 * it will simply fail.
 	 */
@@ -386,7 +386,8 @@ putter_fop_close(file_t *fp)
 	}
 
 	/*
-	 * So we have a reference.  Proceed to unwrap the file system.
+	 * So we have a reference.  Proceed to unravel the
+	 * underlying driver.
 	 */
 	mutex_exit(&pi_mtx);
 
@@ -429,7 +430,7 @@ putter_fop_ioctl(file_t *fp, u_long cmd, void *data)
 
 	/*
 	 * work already done in sys_ioctl().  skip sanity checks to enable
-	 * setting non-blocking fd without yet having mounted the fs
+	 * setting non-blocking fd on an embryotic driver.
 	 */
 	if (cmd == FIONBIO)
 		return 0;
