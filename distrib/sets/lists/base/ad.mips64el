@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.1.2.2 2009/12/14 06:30:17 mrg Exp $
+# $NetBSD: ad.mips64el,v 1.1.2.3 2010/01/28 17:10:20 matt Exp $
 ./usr/lib/64					base-compat-lib		compat
 ./usr/lib/64/i18n				base-compat-lib		compat
 ./usr/lib/64/i18n/libBIG5.so.4			base-i18n-shlib		compat,pic
@@ -183,8 +183,6 @@
 ./usr/lib/64/libssl.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libstdc++.so.6			base-compat-shlib	compat,pic,cxx
 ./usr/lib/64/libstdc++.so.6.0			base-compat-shlib	compat,pic,cxx
-./usr/lib/64/libsupc++.so.0			base-compat-shlib	compat,pic,cxx
-./usr/lib/64/libsupc++.so.0.0			base-compat-shlib	compat,pic,cxx
 ./usr/lib/64/libtermcap.so.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libtermcap.so.0.6			base-compat-shlib	compat,pic
 ./usr/lib/64/libtermlib.so.0			base-compat-shlib	compat,pic
@@ -406,8 +404,6 @@
 ./usr/lib/o32/libssl.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libstdc++.so.6			base-compat-shlib	compat,pic,cxx
 ./usr/lib/o32/libstdc++.so.6.0			base-compat-shlib	compat,pic,cxx
-./usr/lib/o32/libsupc++.so.0			base-compat-shlib	compat,pic,cxx
-./usr/lib/o32/libsupc++.so.0.0			base-compat-shlib	compat,pic,cxx
 ./usr/lib/o32/libtermcap.so.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libtermcap.so.0.6			base-compat-shlib	compat,pic
 ./usr/lib/o32/libtermlib.so.0			base-compat-shlib	compat,pic
