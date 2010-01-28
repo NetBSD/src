@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.27 2010/01/28 07:44:54 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.28 2010/01/28 07:49:08 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.27 2010/01/28 07:44:54 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.28 2010/01/28 07:49:08 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -445,7 +445,8 @@ startover:
 	 */
 
 	bp = NULL;
-	for (off_t offset = startoffset;
+	off_t offset;
+	for (offset = startoffset;
 	    bytes > 0;
 	    offset += iobytes, bytes -= iobytes) {
 		daddr_t lbn, blkno;
