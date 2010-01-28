@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.29 2010/01/28 08:02:12 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.30 2010/01/28 08:20:00 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.29 2010/01/28 08:02:12 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.30 2010/01/28 08:20:00 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,8 +106,7 @@ genfs_getpages(void *v)
 	} */ * const ap = v;
 
 	off_t diskeof, memeof;
-	off_t startoffset, endoffset;
-	int i, error, npages, npgs, run, ridx;
+	int i, error, npages, npgs, ridx;
 	const int flags = ap->a_flags;
 	struct vnode * const vp = ap->a_vp;
 	struct genfs_node * const gp = VTOG(vp);
@@ -254,14 +253,17 @@ startover:
 	const int dev_bshift = (vp->v_type != VBLK) ?
 	    vp->v_mount->mnt_dev_bshift : DEV_BSHIFT;
 	const int fs_bsize = 1 << fs_bshift;
+#define	blk_mask	(fs_bsize - 1)
+#define	trunc_blk(x)	((x) & ~blk_mask)
+#define	round_blk(x)	(((x) + blk_mask) & ~blk_mask)
 
 	const int orignmempages = MIN(orignpages,
 	    round_page(memeof - origoffset) >> PAGE_SHIFT);
 	npages = orignmempages;
-	startoffset = origoffset & ~(fs_bsize - 1);
-	endoffset = round_page((origoffset + (npages << PAGE_SHIFT) +
-	    fs_bsize - 1) & ~(fs_bsize - 1));
-	endoffset = MIN(endoffset, round_page(memeof));
+	const off_t startoffset = trunc_blk(origoffset);
+	const off_t endoffset = MIN(
+	    round_page(round_blk(origoffset + (npages << PAGE_SHIFT))),
+	    round_page(memeof));
 	ridx = (origoffset - startoffset) >> PAGE_SHIFT;
 
 	pgs_size = sizeof(struct vm_page *) *
@@ -277,7 +279,6 @@ startover:
 		pgs = pgs_onstack;
 		(void)memset(pgs, 0, pgs_size);
 	}
-
 
 	UVMHIST_LOG(ubchist, "ridx %d npages %d startoff %ld endoff %ld",
 	    ridx, npages, startoffset, endoffset);
@@ -449,6 +450,7 @@ startover:
 	for (offset = startoffset;
 	    bytes > 0;
 	    offset += iobytes, bytes -= iobytes) {
+		int run;
 		daddr_t lbn, blkno;
 		int pidx;
 		struct vnode *devvp;
