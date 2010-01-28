@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.23 2010/01/27 15:53:06 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.24 2010/01/28 07:24:55 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.23 2010/01/27 15:53:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.24 2010/01/28 07:24:55 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,10 +105,10 @@ genfs_getpages(void *v)
 		int a_flags;
 	} */ * const ap = v;
 
-	off_t newsize, diskeof, memeof;
+	off_t diskeof, memeof;
 	off_t offset, origoffset, startoffset, endoffset;
 	daddr_t lbn, blkno;
-	int i, error, npages, orignpages, npgs, run, ridx, pidx, pcount;
+	int i, error, npages, orignpages, npgs, run, ridx;
 	int fs_bshift, fs_bsize, dev_bshift;
 	const int flags = ap->a_flags;
 	size_t bytes, iobytes, tailstart, tailbytes, totalbytes, skipbytes;
@@ -146,6 +146,7 @@ startover:
 	orignpages = *ap->a_count;
 	GOP_SIZE(vp, origvsize, &diskeof, 0);
 	if (flags & PGO_PASTEOF) {
+		off_t newsize;
 #if defined(DIAGNOSTIC)
 		off_t writeeof;
 #endif /* defined(DIAGNOSTIC) */
@@ -452,6 +453,7 @@ startover:
 	for (offset = startoffset;
 	    bytes > 0;
 	    offset += iobytes, bytes -= iobytes) {
+		int pidx;
 
 		/*
 		 * skip pages which don't need to be read.
@@ -501,6 +503,8 @@ startover:
 		iobytes = MIN((((off_t)lbn + 1 + run) << fs_bshift) - offset,
 		    bytes);
 		if (offset + iobytes > round_page(offset)) {
+			int pcount;
+
 			pcount = 1;
 			while (pidx + pcount < npages &&
 			    pgs[pidx + pcount]->flags & PG_FAKE) {
