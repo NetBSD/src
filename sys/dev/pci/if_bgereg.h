@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.54 2010/01/24 16:21:09 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.55 2010/01/28 03:09:13 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -62,7 +62,6 @@
  *    Flat mode consumes so much host address space that it is not
  *    recommended.
  */
-
 #define BGE_PAGE_ZERO			0x00000000
 #define BGE_PAGE_ZERO_END		0x000000FF
 #define BGE_SEND_RING_RCB		0x00000100
@@ -76,6 +75,9 @@
 #define BGE_SOFTWARE_GENCOMM		0x00000B50
 #define BGE_SOFTWARE_GENCOMM_SIG	0x00000B54
 #define BGE_SOFTWARE_GENCOMM_NICCFG	0x00000B58
+#define	BGE_SOFTWARE_GENCOMM_FW		0x00000B78
+#define	BGE_SOFTWARE_GENNCOMM_FW_LEN	0x00000B7C
+#define	BGE_SOFTWARE_GENNCOMM_FW_DATA	0x00000B80
 #define BGE_SOFTWARE_GENCOMM_END	0x00000FFF
 #define BGE_UNMAPPED			0x00001000
 #define BGE_UNMAPPED_END		0x00001FFF
@@ -83,6 +85,10 @@
 #define BGE_DMA_DESCRIPTORS_END		0x00003FFF
 #define BGE_SEND_RING_1_TO_4		0x00004000
 #define BGE_SEND_RING_1_TO_4_END	0x00005FFF
+
+/* Firmware interface */
+#define	BGE_FW_DRV_ALIVE		0x00000001
+#define	BGE_FW_PAUSE			0x00000002
 
 /* Mappings for internal memory configuration */
 #define BGE_STD_RX_RINGS		0x00006000
@@ -172,6 +178,26 @@
 #define BGE_PCI_MSI_DATA		0x64
 
 /*
+ * PCI Express definitions
+ * According to
+ * PCI Express base specification, REV. 1.0a
+ */
+
+/* PCI Express device control, 16bits */
+#define	BGE_PCIE_DEVCTL			0x08
+#define	BGE_PCIE_DEVCTL_MAX_READRQ_MASK	0x7000
+#define	BGE_PCIE_DEVCTL_MAX_READRQ_128	0x0000
+#define	BGE_PCIE_DEVCTL_MAX_READRQ_256	0x1000
+#define	BGE_PCIE_DEVCTL_MAX_READRQ_512	0x2000
+#define	BGE_PCIE_DEVCTL_MAX_READRQ_1024	0x3000
+#define	BGE_PCIE_DEVCTL_MAX_READRQ_2048	0x4000
+#define	BGE_PCIE_DEVCTL_MAX_READRQ_4096	0x5000
+
+/* PCI MSI. ??? */
+#define	BGE_PCIE_CAPID_REG		0xD0
+#define	BGE_PCIE_CAPID			0x10
+
+/*
  * PCI registers specific to the BCM570x family.
  */
 #define BGE_PCI_MISC_CTL		0x68
@@ -206,7 +232,6 @@
  */
 #define BGE_PCI_CONF_DEV_CTRL		0xD8
 #define BGE_PCI_CONF_DEV_STUS		0xDA
-
 
 /* PCI Misc. Host control register */
 #define BGE_PCIMISCCTL_CLEAR_INTA	0x00000001
@@ -411,11 +436,6 @@
 #define BGE_PCICLOCKCTL_PCIPLL_DISABLE	0x00004000
 #define BGE_PCICLOCKCTL_SYSPLL_DISABLE	0x00008000
 #define BGE_PCICLOCKCTL_BIST_ENABLE	0x00010000
-
-
-#ifndef PCIM_CMD_MWIEN
-#define PCIM_CMD_MWIEN			0x0010
-#endif
 
 /*
  * High priority mailbox registers
@@ -628,7 +648,6 @@
 #define BGE_SGDIG_CFG			0x05B0
 #define BGE_SGDIG_STS			0x05B4
 #define BGE_MAC_STATS			0x0800
-#define BGE_TX_STATS			0x0880
 
 /* Ethernet MAC Mode register */
 #define BGE_MACMODE_RESET		0x00000001
@@ -1718,7 +1737,7 @@
 #define BGE_MODE_CTL			0x6800
 #define BGE_MISC_CFG			0x6804
 #define BGE_MISC_LOCAL_CTL		0x6808
-#define BGE_MISC_TIMER			0x680c
+#define	BGE_CPU_EVENT			0x6810
 #define BGE_EE_ADDR			0x6838
 #define BGE_EE_DATA			0x683C
 #define BGE_EE_CTL			0x6840
@@ -1796,8 +1815,6 @@
 #define	BGE_PHY_TEST_CTRL_REG		0x7e2c
 #define	BGE_PHY_PCIE_SCRAM_MODE		0x0020
 #define	BGE_PHY_PCIE_LTASS_MODE		0x0040
-
-
 
 /* Mode control register */
 #define BGE_MODECTL_INT_SNDCOAL_ONLY	0x00000001
@@ -2099,6 +2116,7 @@ struct bge_status_block {
 #define BGE_HWCFG_VOLTAGE		0x00000003
 #define BGE_HWCFG_PHYLED_MODE		0x0000000C
 #define BGE_HWCFG_MEDIA			0x00000030
+#define	BGE_HWCFG_ASF			0x00000080
 
 #define BGE_VOLTAGE_1POINT3		0x00000000
 #define BGE_VOLTAGE_1POINT8		0x00000001
