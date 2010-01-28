@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.42 2010/01/28 12:45:01 phx Exp $ */
+/*	$NetBSD: db_interface.c,v 1.43 2010/01/28 21:10:49 phx Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.42 2010/01/28 12:45:01 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.43 2010/01/28 21:10:49 phx Exp $");
 
 #define USERACC
 
@@ -18,9 +18,13 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.42 2010/01/28 12:45:01 phx Exp $"
 
 #include <machine/db_machdep.h>
 #include <machine/frame.h>
+#include <powerpc/spr.h>
+#include <powerpc/cpu.h>
+#include <powerpc/bat.h>
+#include <powerpc/pte.h>
+
 #ifdef PPC_IBM4XX
 #include <machine/tlb.h>
-#include <powerpc/spr.h>
 #include <uvm/uvm_extern.h>
 #endif
 
@@ -47,6 +51,10 @@ db_regs_t ddb_regs;
 
 void ddb_trap(void);				/* Call into trap_subr.S */
 int ddb_trap_glue(struct trapframe *);		/* Called from trap_subr.S */
+#if defined (PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+static void db_show_bat(db_expr_t, bool, db_expr_t, const char *);
+static void db_show_mmu(db_expr_t, bool, db_expr_t, const char *);
+#endif /* PPC_OEA || PPC_OEA64 || PPC_OEA64_BRIDGE */
 #ifdef PPC_IBM4XX
 static void db_ppc4xx_ctx(db_expr_t, bool, db_expr_t, const char *);
 static void db_ppc4xx_pv(db_expr_t, bool, db_expr_t, const char *);
@@ -62,6 +70,44 @@ static void db_ppc4xx_useracc(db_expr_t, bool, db_expr_t, const char *);
 #endif /* PPC_IBM4XX */
 
 #ifdef DDB
+const struct db_command db_machine_command_table[] = {
+#if defined (PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+	{ DDB_ADD_CMD("bat",	db_show_bat,		0,
+	  "Print BAT register translations", NULL,NULL) },
+	{ DDB_ADD_CMD("mmu",	db_show_mmu,		0,
+	  "Print MMU registers", NULL,NULL) },
+#endif /* PPC_OEA || PPC_OEA64 || PPC_OEA64_BRIDGE */
+#ifdef PPC_IBM4XX
+	{ DDB_ADD_CMD("ctx",	db_ppc4xx_ctx,		0,
+	  "Print process MMU context information", NULL,NULL) },
+	{ DDB_ADD_CMD("pv",	db_ppc4xx_pv,		0,
+	  "Print PA->VA mapping information",
+	  "address",
+	  "   address:\tphysical address to look up") },
+	{ DDB_ADD_CMD("reset",	db_ppc4xx_reset,	0,
+	  "Reset the system ", NULL,NULL) },
+	{ DDB_ADD_CMD("tf",	db_ppc4xx_tf,		0,
+	  "Display the contents of the trapframe",
+	  "address",
+	  "   address:\tthe struct trapframe to print") },
+	{ DDB_ADD_CMD("tlb",	db_ppc4xx_dumptlb,	0,
+	  "Display instruction translation storage buffer information.",
+	  NULL,NULL) },
+	{ DDB_ADD_CMD("dcr",	db_ppc4xx_dcr,		CS_MORE|CS_SET_DOT,
+	  "Set the DCR register",
+	  "dcr",
+	  "   dcr:\tNew DCR value (between 0x0 and 0x3ff)") },
+#ifdef USERACC
+	{ DDB_ADD_CMD("user",	db_ppc4xx_useracc,	0,
+	   "Display user memory.", "[address][,count]",
+	   "   address:\tuserspace address to start\n"
+	   "   count:\tnumber of bytes to display") },
+#endif
+#endif /* PPC_IBM4XX */
+	{ DDB_ADD_CMD(NULL,	NULL,			0, 
+	  NULL,NULL,NULL) }
+};
+
 void
 cpu_Debugger(void)
 {
@@ -164,6 +210,169 @@ kdb_trap(int type, void *v)
 	return 1;
 }
 
+#if defined (PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+static void
+print_battranslation(struct bat *bat, unsigned int blidx)
+{
+	static const char *const batsizes[] = {
+		"128kB",
+		"256kB",
+		"512kB",
+		"1MB",
+		"2MB",
+		"4MB",
+		"8MB",
+		"16MB",
+		"32MB",
+		"64MB",
+		"128MB",
+		"256MB"
+	};
+	vsize_t len;
+
+	len = (0x20000L << blidx) - 1;
+	db_printf("\t%08lx %08lx %5s: 0x%08lx..0x%08lx -> 0x%08lx physical\n",
+	    bat->batu, bat->batl, batsizes[blidx], bat->batu & ~len,
+	    (bat->batu & ~len) + len, bat->batl & ~len);
+}
+
+static void
+print_batmodes(register_t super, register_t user, register_t pp)
+{
+	static const char *const accessmodes[] = {
+		"none",
+		"ro soft",
+		"read/write",
+		"read only"
+	};
+
+	db_printf("\tvalid: %c%c  access: %-10s  memory:",
+	    super ? 'S' : '-', user ? 'U' : '-', accessmodes[pp]);
+}
+
+static void
+print_wimg(register_t wimg)
+{
+	if (wimg & BAT_W)
+		db_printf(" wrthrough");
+	if (wimg & BAT_I)
+		db_printf(" nocache");
+	if (wimg & BAT_M)
+		db_printf(" coherent");
+	if (wimg & BAT_G)
+		db_printf(" guard");
+}
+
+static void
+print_bat(struct bat *bat)
+{
+	if ((bat->batu & BAT_V) == 0) {
+		db_printf("\tdisabled\n\n");
+		return;
+	}
+	print_battranslation(bat, 30 - __builtin_clz((bat->batu & BAT_BL)|2));
+	print_batmodes(bat->batu & BAT_Vs, bat->batu & BAT_Vu,
+	    bat->batl & BAT_PP);
+	print_wimg(bat->batl & BAT_WIMG);
+	db_printf("\n");
+}
+
+#ifdef PPC_OEA601
+static void
+print_bat601(struct bat *bat)
+{
+	if ((bat->batl & BAT601_V) == 0) {
+		db_printf("\tdisabled\n\n");
+		return;
+	}
+	print_battranslation(bat, 32 - __builtin_clz(bat->batl & BAT601_BSM));
+	print_batmodes(bat->batu & BAT601_Ks, bat->batu & BAT601_Ku,
+	    bat->batu & BAT601_PP);
+	print_wimg(bat->batu & (BAT601_W | BAT601_I | BAT601_M));
+	db_printf("\n");
+}
+#endif
+
+static void
+db_show_bat(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
+{
+	struct bat ibat[4];
+	struct bat dbat[4];
+	unsigned int cpuvers;
+	int i;
+
+	cpuvers = mfpvr() >> 16;
+
+	__asm volatile ("mfibatu %0,0" : "=r"(ibat[0].batu));
+	__asm volatile ("mfibatl %0,0" : "=r"(ibat[0].batl));
+	__asm volatile ("mfibatu %0,1" : "=r"(ibat[1].batu));
+	__asm volatile ("mfibatl %0,1" : "=r"(ibat[1].batl));
+	__asm volatile ("mfibatu %0,2" : "=r"(ibat[2].batu));
+	__asm volatile ("mfibatl %0,2" : "=r"(ibat[2].batl));
+	__asm volatile ("mfibatu %0,3" : "=r"(ibat[3].batu));
+	__asm volatile ("mfibatl %0,3" : "=r"(ibat[3].batl));
+
+	if (cpuvers != MPC601) {
+		/* The 601 has only four unified BATs */
+		__asm volatile ("mfdbatu %0,0" : "=r"(dbat[0].batu));
+		__asm volatile ("mfdbatl %0,0" : "=r"(dbat[0].batl));
+		__asm volatile ("mfdbatu %0,1" : "=r"(dbat[1].batu));
+		__asm volatile ("mfdbatl %0,1" : "=r"(dbat[1].batl));
+		__asm volatile ("mfdbatu %0,2" : "=r"(dbat[2].batu));
+		__asm volatile ("mfdbatl %0,2" : "=r"(dbat[2].batl));
+		__asm volatile ("mfdbatu %0,3" : "=r"(dbat[3].batu));
+		__asm volatile ("mfdbatl %0,3" : "=r"(dbat[3].batl));
+	}
+
+	for (i = 0; i < 4; i++) {
+#ifdef PPC_OEA601
+		if (cpuvers == MPC601) {
+			db_printf("bat%d:", i);
+			print_bat601(&ibat[i]);
+		} else
+#endif
+		{
+			db_printf("ibat%d:", i);
+			print_bat(&ibat[i]);
+		}
+	}
+	if (cpuvers != MPC601) {
+		for (i = 0; i < 4; i++) {
+			db_printf("dbat%d:", i);
+			print_bat(&dbat[i]);
+		}
+	}
+}
+
+static void
+db_show_mmu(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
+{
+	paddr_t sdr1;
+#if !defined(PPC_OEA64) && !defined(PPC_OEA64_BRIDGE)
+	register_t sr;
+	vaddr_t saddr;
+	int i;
+#endif
+
+	__asm volatile ("mfsdr1 %0" : "=r"(sdr1));
+	db_printf("sdr1\t\t0x%08lx\n", sdr1);
+
+#if defined(PPC_OEA64) || defined(PPC_OEA64_BRIDGE)
+	__asm volatile ("mfasr %0" : "=r"(sdr1));
+	db_printf("asr\t\t0x%08lx\n", sdr1);
+#else
+	saddr = 0;
+	for (i = 0; i<= 0xf; i++) {
+		if ((i & 3) == 0)
+			db_printf("sr%d-%d\t\t", i, i+3);
+		__asm volatile ("mfsrin %0,%1" : "=r"(sr) : "r"(saddr));
+		db_printf("0x%08lx   %c", sr, (i&3) == 3 ? '\n' : ' ');
+		saddr += 1 << ADDR_SR_SHFT;
+	}
+#endif
+}
+#endif /* PPC_OEA || PPC_OEA64 || PPC_OEA64_BRIDGE */
+
 #ifdef PPC_IBM4XX
 db_addr_t
 branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
@@ -192,37 +401,8 @@ branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 	return (0);
 }
 
-#ifdef DDB
-const struct db_command db_machine_command_table[] = {
-	{ DDB_ADD_CMD("ctx",	db_ppc4xx_ctx,		0,
-	  "Print process MMU context information", NULL,NULL) },
-	{ DDB_ADD_CMD("pv",	db_ppc4xx_pv,		0,
-	  "Print PA->VA mapping information",
-	  "address",
-	  "   address:\tphysical address to look up") },
-	{ DDB_ADD_CMD("reset",	db_ppc4xx_reset,	0,
-	  "Reset the system ", NULL,NULL) },
-	{ DDB_ADD_CMD("tf",	db_ppc4xx_tf,		0,
-	  "Display the contents of the trapframe",
-	  "address",
-	  "   address:\tthe struct trapframe to print") },
-	{ DDB_ADD_CMD("tlb",	db_ppc4xx_dumptlb,	0,
-	  "Display instruction translation storage buffer information.",
-	  NULL,NULL) },
-	{ DDB_ADD_CMD("dcr",	db_ppc4xx_dcr,		CS_MORE|CS_SET_DOT,
-	  "Set the DCR register",
-	  "dcr",
-	  "   dcr:\tNew DCR value (between 0x0 and 0x3ff)") },
-#ifdef USERACC
-	{ DDB_ADD_CMD("user",	db_ppc4xx_useracc,	0,
-	   "Display user memory.", "[address][,count]",
-	   "   address:\tuserspace address to start\n"
-	   "   count:\tnumber of bytes to display") },
-#endif
-	{ DDB_ADD_CMD(NULL,	NULL,			0, 
-	  NULL,NULL,NULL) }
-};
 
+#ifdef DDB
 static void
 db_ppc4xx_ctx(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
