@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.127 2010/01/08 19:51:11 dyoung Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.128 2010/01/28 22:36:19 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.127 2010/01/08 19:51:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.128 2010/01/28 22:36:19 drochner Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -1672,13 +1672,13 @@ wsdisplay_kbdinput(device_t dv, keysym_t ks)
 
 	tp = scr->scr_tty;
 
-	if (KS_GROUP(ks) == KS_GROUP_Ascii)
+	if (KS_GROUP(ks) == KS_GROUP_Plain && KS_VALUE(ks) <= 0x7f)
 		(*tp->t_linesw->l_rint)(KS_VALUE(ks), tp);
 	else if (WSSCREEN_HAS_EMULATOR(scr)) {
 		count = (*scr->scr_dconf->wsemul->translate)
 		    (scr->scr_dconf->wsemulcookie, ks, &dp);
 		while (count-- > 0)
-			(*tp->t_linesw->l_rint)(*dp++, tp);
+			(*tp->t_linesw->l_rint)((unsigned char)(*dp++), tp);
 	}
 }
 
