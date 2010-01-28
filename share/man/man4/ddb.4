@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.131 2010/01/23 10:41:42 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.132 2010/01/28 21:13:49 phx Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -938,7 +938,7 @@ kernels compiled with
 .Dv DEBUG
 option.
 .El
-.Ss POWERPC
+.Ss POWERPC 4xx
 .Bl -tag -width "traptrace" -compact
 .It Ic ctx
 Print process MMU context information.
@@ -958,6 +958,13 @@ Display user memory.
 Use the
 .Dq i
 modifier to get instruction decoding.
+.El
+.Ss POWERPC OEA
+.Bl -tag -width "traptrace" -compact
+.It Ic bat
+Print BAT registers and translations.
+.It Ic mmu
+Print MMU registers.
 .El
 .Ss SH3
 .Bl -tag -width "traptrace" -compact
