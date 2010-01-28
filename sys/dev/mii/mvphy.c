@@ -1,4 +1,4 @@
-/*	$NetBSD: mvphy.c,v 1.7 2008/05/04 17:06:10 xtraeme Exp $	*/
+/*	$NetBSD: mvphy.c,v 1.7.14.1 2010/01/28 17:43:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.7 2008/05/04 17:06:10 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.7.14.1 2010/01/28 17:43:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,10 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.7 2008/05/04 17:06:10 xtraeme Exp $");
 #define	MV_CPU_PORT	5			/* port # of CPU port */
 
 #define	MV_READ(p, phy, r) \
-	(*(p)->mii_pdata->mii_readreg)(device_parent(&(p)->mii_dev), \
+	(*(p)->mii_pdata->mii_readreg)(device_parent((p)->mii_dev), \
 	    phy, (r))
 #define	MV_WRITE(p, phy, r, v) \
-	(*(p)->mii_pdata->mii_writereg)(device_parent(&(p)->mii_dev), \
+	(*(p)->mii_pdata->mii_writereg)(device_parent((p)->mii_dev), \
 	    phy, (r), (v))
 
 /* XXX sysctl'able */
