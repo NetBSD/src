@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.39.18.1 2010/01/21 07:43:59 matt Exp $	*/
+/*	$NetBSD: ppb.c,v 1.39.18.2 2010/01/28 17:42:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.39.18.1 2010/01/21 07:43:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.39.18.2 2010/01/28 17:42:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ ppbmatch(device_t parent, cfdata_t match, void *aux)
 }
 
 static void
-ppb_fix_pcix(device_t self)
+ppb_fix_pcie(device_t self)
 {
 	struct ppb_softc *sc = device_private(self);
 	pcireg_t reg;
@@ -127,7 +127,7 @@ ppbattach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	ppb_fix_pcix(self);
+	ppb_fix_pcie(self);
 
 #if 0
 	/*
@@ -189,7 +189,7 @@ ppb_resume(device_t dv PMF_FN_ARGS)
 			    sc->sc_pciconfext[(off - 0x40)/4]);
 	}
 
-	ppb_fix_pcix(dv);
+	ppb_fix_pcie(dv);
 
 	return true;
 }
