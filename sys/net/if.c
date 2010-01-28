@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.241 2009/11/13 23:11:08 joerg Exp $	*/
+/*	$NetBSD: if.c,v 1.242 2010/01/28 14:12:11 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.241 2009/11/13 23:11:08 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.242 2010/01/28 14:12:11 mbalmer Exp $");
 
 #include "opt_inet.h"
 
@@ -1404,7 +1404,7 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 		/*
 		 * Allow the device to be "placed" into promiscuous
 		 * mode even if it is not configured up.  It will
-		 * consult IFF_PROMISC when it is is brought up.
+		 * consult IFF_PROMISC when it is brought up.
 		 */
 		if (ifp->if_pcount++ != 0)
 			return 0;

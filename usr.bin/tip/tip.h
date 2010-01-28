@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.30 2007/03/09 23:45:21 hubertf Exp $	*/
+/*	$NetBSD: tip.h,v 1.31 2010/01/28 14:15:18 mbalmer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -248,7 +248,7 @@ int	quit;			/* same; but on other end */
 int	stoprompt;		/* for interrupting a prompt session */
 int	timedout;		/* ~> transfer timedout */
 int	cumode;			/* simulating the "cu" program */
-int	bits8;			/* terminal is is 8-bit mode */
+int	bits8;			/* terminal is in 8-bit mode */
 #define STRIP_PAR	(bits8 ? 0377 : 0177)
 
 char	fname[80];		/* file name buffer for ~< */
