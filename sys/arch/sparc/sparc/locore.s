@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.254 2010/01/04 04:06:57 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.255 2010/01/28 05:08:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5881,8 +5881,8 @@ special_fp_store:
 	 * So we still have to check the blasted QNE bit.
 	 * With any luck it will usually not be set.
 	 */
-	ld	[%o0 + FS_FSR], %o4	! if (f->fs_fsr & QNE)
-	btst	%o5, %o4
+	ld	[%o0 + FS_FSR], %o2	! if (f->fs_fsr & QNE)
+	btst	%o5, %o2
 	bnz	Lfp_storeq		!	goto storeq;
 	 std	%f0, [%o0 + FS_REGS + (4*0)]	! f->fs_f0 = etc;
 Lfp_finish:
@@ -5917,6 +5917,7 @@ Lfp_storeq:
 	btst	%o5, %o4
 	bnz	1b
 	 inc	8, %o3
+	st	%o2, [%o0 + FS_FSR]	! fs->fs_fsr = original_fsr
 	b	Lfp_finish		! set qsize and finish storing fregs
 	 srl	%o3, 3, %o3		! (but first fix qsize)
 
