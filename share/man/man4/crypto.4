@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypto.4,v 1.16 2009/05/17 06:50:59 wiz Exp $
+.\"	$NetBSD: crypto.4,v 1.17 2010/01/28 08:35:06 hubertf Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -454,7 +454,7 @@ also be available:
 See below for discussion of the input and output parameter counts.
 .Ss Asymmetric-key commands
 .Bl -tag -width CIOCFKEY
-.It Dv CIOCASSYMFEAT Fa int *feature_mask
+.It Dv CIOCASYMFEAT Fa int *feature_mask
 Returns a bitmask of supported asymmetric-key operations.
 Each of the above-listed asymmetric operations is present
 if and only if the bit position numbered by the code for that operation
