@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_ehci.c,v 1.1.2.2 2010/01/03 08:37:07 cliff Exp $	*/
+/*	$NetBSD: rmixl_ehci.c,v 1.1.2.3 2010/01/29 00:23:18 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_ehci.c,v 1.1.2.2 2010/01/03 08:37:07 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_ehci.c,v 1.1.2.3 2010/01/29 00:23:18 cliff Exp $");
 
 #include "locators.h"
 
@@ -66,7 +66,8 @@ rmixl_ehci_match(device_t parent, cfdata_t match, void *aux)
 	struct rmixl_usbi_attach_args *usbi = aux;
 
         if (usbi->usbi_addr == (RMIXL_IO_DEV_USB_A + RMIXL_USB_HOST_EHCI_BASE))
-                return 1;
+                return rmixl_probe_4((volatile uint32_t *)
+			RMIXL_IOREG_VADDR(usbi->usbi_addr));
 
         return 0;
 }
