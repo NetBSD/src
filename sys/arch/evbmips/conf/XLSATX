@@ -1,17 +1,23 @@
-#	$NetBSD: XLSATX,v 1.1.2.5 2010/01/29 00:16:58 matt Exp $
+#	$NetBSD: XLSATX,v 1.1.2.6 2010/01/29 00:36:04 cliff Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.1.2.5 $"
+#ident 		"XLSATX-$Revision: 1.1.2.6 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32
 
 #
-# MEMSIZE can be used to limit memory size obtained from firmware or DRAM BARs
+# MEMSIZE can be used to limit memory amount used
 #
 ##options		MEMSIZE=0x10000000		# 256MB 
+
+#
+# MEMLIMIT can be used to limit memory address used
+#
+defparam opt_memsize.h MEMLIMIT
+##options	MEMLIMIT=0x10000000			# 256MB 
 
 options 	NOFPU		# No FPU
 #options 	FPEMUL		# emulate FPU insn
