@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.1.2.4 2010/01/16 23:49:10 cliff Exp $
+#	$NetBSD: XLSATX,v 1.1.2.5 2010/01/29 00:16:58 matt Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.1.2.4 $"
+#ident 		"XLSATX-$Revision: 1.1.2.5 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -14,7 +14,7 @@ maxusers	32
 ##options		MEMSIZE=0x10000000		# 256MB 
 
 options 	NOFPU		# No FPU
-options 	SOFTFLOAT	# emulate FPU insn
+#options 	FPEMUL		# emulate FPU insn
 
 # Standard system options
 options 	KTRACE		# system call tracing support
@@ -34,7 +34,7 @@ options 	USERCONF	# userconf(4) support
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=0x60000	# size for embedded symbol table
+options 	SYMTAB_SPACE=500000	# size for embedded symbol table
 #options	DDB_COMMANDONENTER="trace;show registers"
 options		DB_MAX_LINE=-1
 

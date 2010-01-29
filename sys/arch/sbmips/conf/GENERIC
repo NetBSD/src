@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.70.8.3 2010/01/21 08:38:46 cyber Exp $
+# $NetBSD: GENERIC,v 1.70.8.4 2010/01/29 00:16:58 matt Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.70.8.3 $"
+#ident 		"GENERIC-$Revision: 1.70.8.4 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -12,7 +12,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 # The following three options are required for BCM1250 pass 1 silicon
 #options 	SB1250_PASS1
 #options 	NOFPU
-#options 	SOFTFLOAT
+#options 	FPEMUL
 
 maxusers	32
 

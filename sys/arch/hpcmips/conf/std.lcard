@@ -1,4 +1,4 @@
-#	$NetBSD: std.lcard,v 1.7 2006/09/16 02:14:56 gdamore Exp $
+#	$NetBSD: std.lcard,v 1.7.76.1 2010/01/29 00:16:58 matt Exp $
 # standard, required hpcmips info
 
 machine hpcmips mips
@@ -6,7 +6,7 @@ include		"conf/std"	# MI standard options
 makeoptions	MACHINE_ARCH="mipsel"
 
 options 	NOFPU			# No FPU
-options 	SOFTFLOAT		# emulate FPU insn
+options 	FPEMUL			# emulate FPU insn
 
 options 	MIPS3			# R4000/R4400/R4600 CPUs
 options 	MIPS3_4100		# VR4100 core

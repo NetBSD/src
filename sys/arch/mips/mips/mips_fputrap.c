@@ -1,4 +1,4 @@
-/* $NetBSD: mips_fputrap.c,v 1.5.66.2 2009/08/26 14:33:59 matt Exp $ */
+/* $NetBSD: mips_fputrap.c,v 1.5.66.3 2010/01/29 00:16:58 matt Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -34,7 +34,7 @@
 #include <mips/cpuregs.h>
 #include <mips/regnum.h>
 
-#ifndef SOFTFLOAT
+#if defined(FPEMUL) || !defined(NOFPU)
 void mips_fpuexcept(struct lwp *, unsigned int);
 void mips_fpuillinst(struct lwp *, unsigned int, unsigned long);
 static int fpustat2sicode(unsigned int);
@@ -86,7 +86,7 @@ fpustat2sicode(unsigned int fpustat)
 			return (fpecodes[i].code);
 	return (FPE_FLTINV);
 }
-#endif /* !SOFTFLOAT */
+#endif /* FPEMUL || !NOFPU */
 
 void fpemul_trapsignal(struct lwp *, unsigned int, unsigned int);
 
