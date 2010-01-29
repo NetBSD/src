@@ -1,4 +1,4 @@
-.\" $NetBSD: sysmon_pswitch.9,v 1.2 2010/01/26 18:08:24 pgoyette Exp $
+.\" $NetBSD: sysmon_pswitch.9,v 1.3 2010/01/29 11:24:31 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,6 +67,7 @@ specifies the name of the power switch and
 .Fa smpsw_type
 defines the type of it.
 The following types are defined:
+.Pp
 .Bl -tag -width PSWITCH_HK_VENDOR_BUTTON -compact -offset indent
 .It PSWITCH_TYPE_POWER
 .It PSWITCH_TYPE_SLEEP
@@ -80,6 +81,7 @@ If the type is
 .Dv PSWITCH_TYPE_HOTKEY ,
 there are few predefined names that can be used for
 .Fa smpsw_name :
+.Pp
 .Bl -tag -width PSWITCH_HK_VENDOR_BUTTON -compact -offset indent
 .It PSWITCH_HK_DISPLAY_CYCLE
 .Em display-cycle
