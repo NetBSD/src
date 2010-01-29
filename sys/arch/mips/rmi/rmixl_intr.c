@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.7 2010/01/20 09:04:35 matt Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.8 2010/01/29 00:24:14 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.7 2010/01/20 09:04:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.8 2010/01/29 00:24:14 cliff Exp $");
 
 #include "opt_ddb.h"
 
@@ -167,7 +167,7 @@ static const char *rmixl_irqnames_xls1xx[NIRQS] = {
 	"int 26 (pcie_link0)",	/* 26 */
 	"int 27 (pcie_link1)",	/* 27 */
 	"int 28 (irq28)",	/* 28 */
-	"int 29 (irq29)",	/* 29 */
+	"int 29 (pcie_err)",	/* 29 */
 	"int 30 (gpio_b)",	/* 30 */
 	"int 31 (usb)",		/* 31 */
 };
@@ -212,7 +212,7 @@ static const char *rmixl_irqnames_xls4xx[NIRQS] = {
 };
 
 /*
- * rmixl_irqnames_xls4xx:
+ * rmixl_irqnames_generic:
  * - use for unknown cpu implementation
  */
 static const char *rmixl_irqnames_generic[NIRQS] = {
@@ -294,7 +294,7 @@ struct rmixl_intrvec {
 	LIST_HEAD(, evbmips_intrhand) iv_list;
 	uint32_t iv_ack;
 	rmixl_intr_trigger_t iv_trigger;
-        rmixl_intr_polarity_t iv_polarity;
+	rmixl_intr_polarity_t iv_polarity;
 	u_int iv_refcnt;
 };
 static struct rmixl_intrvec rmixl_intrvec[NINTRVECS];
@@ -394,11 +394,11 @@ rmixl_intr_string(int irq)
 	case MIPS_XLS408LITE:
 		name = rmixl_irqnames_xls1xx[irq];
 		break;
-        case MIPS_XLS404:
-        case MIPS_XLS408:
-        case MIPS_XLS416:
-        case MIPS_XLS608:
-        case MIPS_XLS616:
+	case MIPS_XLS404:
+	case MIPS_XLS408:
+	case MIPS_XLS416:
+	case MIPS_XLS608:
+	case MIPS_XLS616:
 		name = rmixl_irqnames_xls4xx[irq];
 		break;
 	default:
@@ -417,8 +417,39 @@ rmixl_intr_string(int irq)
 static void
 rmixl_intr_irt_init(int irq)
 {
+	uint32_t threads;
+
+#if defined(MULTIPROCESSOR) && defined(NOTYET)
+	/*
+	 * XXX make sure the threads are ours?
+	 */
+	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
+	case MIPS_XLS104:
+	case MIPS_XLS204:
+	case MIPS_XLS404:
+	case MIPS_XLS404LITE:
+		threads = __BITS(5,4) | __BITS(1,0);
+		break;
+	case MIPS_XLS108:
+	case MIPS_XLS208:
+	case MIPS_XLS408:
+	case MIPS_XLS408LITE:
+	case MIPS_XLS608:
+		threads = __BITS(7,0);
+		break;
+	case MIPS_XLS416:
+	case MIPS_XLS616:
+		threads = __BITS(15,0);
+		break;
+	default:
+		panic("%s: unknown cpu ID %#x\n", __func__,
+			mips_options.mips_cpu_id);
+	}
+#else
+	threads = 1;
+#endif
 	RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC1(irq), 0);	/* high word */
-	RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC0(irq), 1);	/* low  word */
+	RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC0(irq), threads);	/* low  word */
 }
 
 /*
@@ -617,16 +648,6 @@ rmixl_intr_disestablish(void *cookie)
 	free(ih, M_DEVBUF);
 }
 
-static inline void
-pci_int_status(const char *s, const int n)
-{
-#ifdef IOINTR_DEBUG
-	uint32_t r;
-	r = RMIXL_IOREG_READ(RMIXL_IO_DEV_PCIE_LE + 0xa0);
-	printf("%s:%d: PCIE_LINK0_INT_STATUS0 %#x\n", s, n, r);
-#endif
-}
-
 void
 evbmips_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
@@ -643,7 +664,6 @@ evbmips_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	asm volatile("dmfc0 %0, $9, 6;" : "=r"(eirr));
 	asm volatile("dmfc0 %0, $9, 7;" : "=r"(eimr));
 	printf("%s:%d: eirr %#lx, eimr %#lx\n", __func__, __LINE__, eirr, eimr);
-	pci_int_status(__func__, __LINE__);
 #endif
 
 	for (vec = NINTRVECS - 1; vec >= 2; vec--) {
@@ -670,8 +690,6 @@ evbmips_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 				rmixl_irqtab[ih->ih_irq].irq_count.ev_count++;
 			}
 		}
-
-		pci_int_status(__func__, __LINE__);
 
 		cause &= ~(MIPS_SOFT_INT_MASK_0 << vec);
 	}
