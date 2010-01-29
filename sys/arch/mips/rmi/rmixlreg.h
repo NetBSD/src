@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlreg.h,v 1.1.2.7 2010/01/17 00:01:23 cliff Exp $	*/
+/*	$NetBSD: rmixlreg.h,v 1.1.2.8 2010/01/29 00:21:49 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -216,6 +216,7 @@
  * offsets are relative to RMIXL_IO_DEV_BRIDGE
  */
 #define RMIXL_ADDR_ERR_DEVICE_MASK	_RMIXL_OFFSET(0x25)	/* Address Error Device Mask */
+#define RMIXL_ADDR_ERR_DEVICE_MASK_2	_RMIXL_OFFSET(0x44)	/* extension of Device Mask */
 #define RMIXL_ADDR_ERR_AERR0_LOG1	_RMIXL_OFFSET(0x26)	/* Address Error Set 0 Log 1 */
 #define RMIXL_ADDR_ERR_AERR0_LOG2	_RMIXL_OFFSET(0x27)	/* Address Error Set 0 Log 2 */
 #define RMIXL_ADDR_ERR_AERR0_LOG3	_RMIXL_OFFSET(0x28)	/* Address Error Set 0 Log 3 */
@@ -419,7 +420,7 @@
 #define RMIXL_GPIO_RESET		_RMIXL_OFFSET(0x8)	/* XLS Soft Reset register */
 
 /*
- * RMIXL_GPIO_RESET_CFG bits
+ * RMIXL_GPIO_RESET bits
  */
 #define RMIXL_GPIO_RESET_RESV		__BITS(31,1)
 #define RMIXL_GPIO_RESET_RESET		__BIT(0)
@@ -485,6 +486,28 @@
 #define RMIXL_GPIO_RESET_CFG_BIGEND		__BIT(11)	/* Big Endian Mode Enable Status */
 #define RMIXL_GPIO_RESET_CFG_PLL1_OUT_DIV	__BITS(10,8)	/* PLL1 (Core PLL) Output Divider */
 #define RMIXL_GPIO_RESET_CFG_PLL1_FB_DIV	__BITS(7,0)	/* PLL1 Feedback Divider */
+
+/*
+ * RMIXL_GPIO_LOW_PWR_DIS bits
+ * except as noted, all bits are:
+ *  0 = feature enable (default)
+ *  1 = feature disable
+ */
+/* XXX defines are for XLS6xx, XLS4xx-Lite and XLS4xx Devices */
+#define RMIXL_GPIO_LOW_PWR_DIS_LP		__BIT(0)	/* Low Power disable */
+#define RMIXL_GPIO_LOW_PWR_DIS_GMAC_QD_0	__BIT(1)	/* GMAC Quad 0 (GMAC 0..3) disable */
+#define RMIXL_GPIO_LOW_PWR_DIS_GMAC_QD_1	__BIT(2)	/* GMAC Quad 1 (GMAC 4..7) disable */
+#define RMIXL_GPIO_LOW_PWR_DIS_USB		__BIT(3)	/* USB disable */
+#define RMIXL_GPIO_LOW_PWR_DIS_PCIE		__BIT(4)	/* PCIE disable */
+#define RMIXL_GPIO_LOW_PWR_DIS_CDE		__BIT(5)	/* Compression/Decompression Engine disable */
+#define RMIXL_GPIO_LOW_PWR_DIS_DMA		__BIT(6)	/* DMA Engine disable */
+#define RMIXL_GPIO_LOW_PWR_DIS_SAE		__BITS(8,7)	/* Security Acceleration Engine disable:
+								 *  00 = enable (default)
+								 *  01 = reserved
+								 *  10 = reserved
+								 *  11 = disable
+								 */
+#define RMIXL_GPIO_LOW_PWR_DIS_RESV		__BITS(31,9)
 
 
 /*
