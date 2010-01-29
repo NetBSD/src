@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.180 2010/01/10 03:36:30 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.181 2010/01/29 05:17:36 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.180 2010/01/10 03:36:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.181 2010/01/29 05:17:36 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -967,7 +967,6 @@ kfault:
 			ksi.ksi_code = (rv == EACCES
 				? SEGV_ACCERR : SEGV_MAPERR);
 		}
-		ksi.ksi_errno = rv;
 		ksi.ksi_trap = type;
 		ksi.ksi_addr = (void *)v;
 		trapsignal(l, &ksi);
@@ -1255,7 +1254,6 @@ kfault:
 			ksi.ksi_code = (rv == EACCES)
 				? SEGV_ACCERR : SEGV_MAPERR;
 		}
-		ksi.ksi_errno = rv;
 		ksi.ksi_trap = type;
 		ksi.ksi_addr = (void *)sfva;
 		trapsignal(l, &ksi);
