@@ -1,4 +1,4 @@
-/*	$NetBSD: keysym.c,v 1.9 2009/04/06 12:35:20 lukem Exp $ */
+/*	$NetBSD: keysym.c,v 1.10 2010/01/29 09:49:34 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -180,7 +180,7 @@ ksym_upcase(keysym_t ksym)
 	if (ksym >= KS_f1 && ksym <= KS_f20)
 		return KS_F1 - KS_f1 + ksym;
 
-	if (KS_GROUP(ksym) == KS_GROUP_Ascii && ksym <= 0xff &&
+	if (KS_GROUP(ksym) == KS_GROUP_Plain && ksym <= 0xff &&
 	    latin1_to_upper[ksym] != 0x00)
 		return latin1_to_upper[ksym];
 
