@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.17 2010/01/24 05:34:20 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.18 2010/01/29 00:22:27 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.17 2010/01/24 05:34:20 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.18 2010/01/29 00:22:27 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -195,13 +195,17 @@ struct rmixl_config rmixl_configuration;
  * if you find new ones and they work
  * please add them
  */
-static uint64_t rmiclfw_psb_versions[] = {
-	0x4958d4fb00000056ULL,
-	0x49a5a8fa00000056ULL,
-	0x4aacdb6a00000056ULL,
+typedef struct rmiclfw_psb_id {
+	uint64_t		psb_version;
+	rmixlfw_psb_type_t	psb_type;
+} rmiclfw_psb_id_t;
+static rmiclfw_psb_id_t rmiclfw_psb_id[] = {
+	{	0x4958d4fb00000056ULL, PSB_TYPE_RMI  },
+	{	0x49a5a8fa00000056ULL, PSB_TYPE_DELL },
+	{	0x4aacdb6a00000056ULL, PSB_TYPE_RMI  },
 };
 #define RMICLFW_PSB_VERSIONS_LEN \
-	(sizeof(rmiclfw_psb_versions)/sizeof(rmiclfw_psb_versions[0]))
+	(sizeof(rmiclfw_psb_id)/sizeof(rmiclfw_psb_id[0]))
 
 /*
  * storage for fixed extent used to allocate physical address regions
@@ -324,7 +328,8 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	printf("cpu_wakeup_info %p, cpu_wakeup_end %p\n",
 		rcp->rc_cpu_wakeup_info,
 		rcp->rc_cpu_wakeup_end);
-	printf("userapp_cpu_map: %#"PRIx64"\n", rcp->rc_psb_info.userapp_cpu_map);
+	printf("userapp_cpu_map: %#"PRIx64"\n",
+		rcp->rc_psb_info.userapp_cpu_map);
 	printf("wakeup: %#"PRIx64"\n", rcp->rc_psb_info.wakeup);
 {
 	register_t sp;
@@ -403,10 +408,10 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 		(u_quad_t)round_page(rcp->rc_cpu_wakeup_end));
 #endif
 
-#if 0
-	/* reserve everything > 4GB */
+#ifdef MEMLIMIT
+	/* reserve everything > MEMLIMIT */
 	vm_cluster_cnt = ram_seg_resv(vm_clusters, vm_cluster_cnt,
-		0x100000000, (u_quad_t)~0);
+		(u_quad_t)MEMLIMIT, (u_quad_t)~0);
 #endif
 
 	/*
@@ -625,9 +630,13 @@ rmixlfw_init(int64_t infop)
 	infop |= MIPS_KSEG0_START;
 	rcp->rc_psb_info = *(rmixlfw_info_t *)(intptr_t)infop;
 
+	rcp->rc_psb_type = PSB_TYPE_UNKNOWN;
 	for (int i=0; i < RMICLFW_PSB_VERSIONS_LEN; i++) {
-		if (rmiclfw_psb_versions[i] == rcp->rc_psb_info.psb_version)
+		if (rmiclfw_psb_id[i].psb_version ==
+		    rcp->rc_psb_info.psb_version) {
+			rcp->rc_psb_type = rmiclfw_psb_id[i].psb_type;
 			goto found;
+		}
 	}
 
 	rcp->rc_io_pbase = RMIXL_IO_DEV_PBASE;
@@ -659,8 +668,10 @@ rmixlfw_init(int64_t infop)
 	rmixl_puthex64((uint64_t)(intptr_t)infop);
 #endif
 #ifdef DIAGNOSTIC
-	rmixl_puts("\r\nrecognized psb_version: ");
+	rmixl_puts("\r\nrecognized psb_version=");
 	rmixl_puthex64(rcp->rc_psb_info.psb_version);
+	rmixl_puts(", psb_type=");
+	rmixl_puts(rmixlfw_psb_type_name(rcp->rc_psb_type));
 	rmixl_puts("\r\n");
 #endif
 
