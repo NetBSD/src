@@ -1,4 +1,4 @@
-/*	$NetBSD: rumptest_net.c,v 1.18 2010/01/27 13:30:45 martti Exp $	*/
+/*	$NetBSD: rumptest_net.c,v 1.19 2010/01/29 12:34:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -114,9 +114,14 @@ configure_interface(void)
 	if (s == -1)
 		err(1, "configuration socket");
 
+	/*
+	 * Randomize last octet of source address.  This ~prevents
+	 * source/dest 4-tuple re-use if this program is run a few
+	 * times consecutively.
+	 */
 	srandom(time(NULL));
 	myaddr = inet_addr(MYADDR);
-	myaddr = htonl(ntohl(myaddr) + (random() % 126 + 1));
+	myaddr = htonl(ntohl(myaddr) + (random() % 126 + 2));
 
 	/* fill out struct ifaliasreq */
 	memset(&ia, 0, sizeof(ia));
