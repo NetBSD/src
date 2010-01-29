@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.12 2010/01/08 20:40:41 dyoung Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.13 2010/01/29 11:23:25 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008, 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.12 2010/01/08 20:40:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.13 2010/01/29 11:23:25 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -311,6 +311,9 @@ asus_resume(device_t self, pmf_qual_t qual)
 	if (ACPI_FAILURE(rv))
 		aprint_error_dev(self, "couldn't evaluate PBLS: %s\n",
 		    AcpiFormatException(rv));
+
+	if (ret.Pointer != NULL)
+		ACPI_FREE(ret);
 
 	return true;
 }
