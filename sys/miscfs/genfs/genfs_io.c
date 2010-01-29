@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.33 2010/01/29 04:33:37 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.34 2010/01/29 04:36:20 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.33 2010/01/29 04:33:37 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.34 2010/01/29 04:36:20 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,12 +352,6 @@ startover:
 		goto out;
 	}
 
-    {
-	size_t bytes, iobytes, tailstart, tailbytes, totalbytes, skipbytes;
-	vaddr_t kva;
-	struct buf *bp, *mbp;
-	bool sawhole = false;
-
 	/*
 	 * the page wasn't resident and we're not overwriting,
 	 * so we're going to have to do some i/o.
@@ -390,7 +384,14 @@ startover:
 			goto out_err_free;
 		}
 	}
+
 	mutex_exit(&uobj->vmobjlock);
+
+    {
+	size_t bytes, iobytes, tailstart, tailbytes, totalbytes, skipbytes;
+	vaddr_t kva;
+	struct buf *bp, *mbp;
+	bool sawhole = false;
 
 	/*
 	 * read the desired page(s).
@@ -624,6 +625,7 @@ loopdone:
 	genfs_node_unlock(vp);
 
 	putiobuf(mbp);
+    }
 
 	mutex_enter(&uobj->vmobjlock);
 
@@ -654,7 +656,6 @@ loopdone:
 		UVMHIST_LOG(ubchist, "returning error %d", error,0,0,0);
 		goto out_err_free;
 	}
-    }
 
 out:
 	UVMHIST_LOG(ubchist, "succeeding, npages %d", npages,0,0,0);
