@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.64 2009/10/26 19:16:54 cegger Exp $ */
+/*	$NetBSD: siop.c,v 1.65 2010/01/29 19:56:41 phx Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.64 2009/10/26 19:16:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.65 2010/01/29 19:56:41 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.64 2009/10/26 19:16:54 cegger Exp $");
 #include <machine/cpu.h>
 #ifdef __m68k__
 #include <m68k/cacheops.h>
+#else
+#define DCIAS(pa)
 #endif
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/isr.h>
