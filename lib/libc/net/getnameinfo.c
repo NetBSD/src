@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.48 2010/01/26 21:27:54 is Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.49 2010/01/29 22:26:48 is Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.48 2010/01/26 21:27:54 is Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.49 2010/01/29 22:26:48 is Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -150,7 +150,7 @@ getnameinfo_atalk(const struct sockaddr *sa, socklen_t salen,
     int flags)
 {
 	char numserv[8];
-	int n;
+	int n, m=0;
 
 	const struct sockaddr_at *sat =
 	    (const struct sockaddr_at *)(const void *)sa;
@@ -162,21 +162,41 @@ getnameinfo_atalk(const struct sockaddr *sa, socklen_t salen,
 		strlcpy(serv, numserv, servlen);
 	}
 
+        n = snprintf(host, hostlen, "%u.%u",
+	    ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node);
+
+	if (n < 0 || (socklen_t)(m+n) >= hostlen)
+		goto errout;
+
+	m += n;
+
 	if (sat->sat_range.r_netrange.nr_phase) {
-        	n = snprintf(host, hostlen, "%u.%u phase %u",
-		    ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node,
+        	n = snprintf(host+m, hostlen-m, " phase %u",
 			sat->sat_range.r_netrange.nr_phase);
-	} else {
-        	n = snprintf(host, hostlen, "%u.%u",
-		    ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node);
+
+		if (n < 0 || (socklen_t)(m+n) >= hostlen)
+			goto errout;
+
+		m += n;
+	}
+	if (sat->sat_range.r_netrange.nr_firstnet) {
+        	n = snprintf(host+m, hostlen-m, " range %u - %u",
+			ntohs(sat->sat_range.r_netrange.nr_firstnet),
+			ntohs(sat->sat_range.r_netrange.nr_lastnet ));
+
+		if (n < 0 || (socklen_t)(m+n) >= hostlen)
+			goto errout;
+
+		m += n;
 	}
 
-	if (n < 0 || (socklen_t) n >= hostlen) {
-		if (host != NULL && hostlen > 0)
-			*host = '\0';	/* XXX ??? */
-		return EAI_MEMORY;
-	}
 	return 0;
+
+errout:
+	if (host && hostlen>0)
+		host[m] = '\0';	/* XXX ??? */
+
+	return EAI_MEMORY;
 }
 
 /*
