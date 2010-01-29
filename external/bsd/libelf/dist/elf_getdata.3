@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_getdata.3,v 1.2 2010/01/28 21:38:29 darran Exp $
+.\"	$NetBSD: elf_getdata.3,v 1.3 2010/01/29 10:49:07 wiz Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -56,18 +56,24 @@ will return the next data descriptor associated with section descriptor
 The returned data descriptor will be setup to contain translated data.
 Argument
 .Ar data
-may be NULL, in which case the function returns the first data descriptor
+may be
+.Dv NULL ,
+in which case the function returns the first data descriptor
 associated with section
 .Ar scn .
 If argument
 .Ar data
-is not NULL, it must be a pointer to a data descriptor associated with
+is not
+.Dv NULL ,
+it must be a pointer to a data descriptor associated with
 section descriptor
 .Ar scn ,
 and function
 .Fn elf_getdata
 will return a pointer to the next data descriptor for the section,
-or NULL when the end of the section's descriptor list is reached.
+or
+.Dv NULL
+when the end of the section's descriptor list is reached.
 .Pp
 Function
 .Fn elf_newdata
@@ -79,7 +85,8 @@ The new data descriptor will be initialized as follows:
 .It Va d_align
 Set to 1.
 .It Va d_buf
-Initialized to NULL.
+Initialized to
+.Dv NULL .
 .It Va d_off
 Set to (off_t) -1.
 This field is under application control if the
@@ -126,17 +133,21 @@ In contrast to function
 this function returns untranslated data.
 If argument
 .Ar data
-is NULL, the first data descriptor associated with section
+is
+.Dv NULL ,
+the first data descriptor associated with section
 .Ar scn
 is returned.
 If argument
 .Ar data
-is not NULL, is must be a data descriptor associated with
-section
+is not
+.Dv NULL ,
+is must be a data descriptor associated with section
 .Ar scn ,
 and function
 .Fn elf_rawdata
-will return the next data descriptor in the list, or NULL
+will return the next data descriptor in the list, or
+.Dv NULL
 if no further descriptors are present.
 Function
 .Fn elf_rawdata
@@ -155,7 +166,9 @@ return a pointer to a valid
 .Vt Elf_Data
 structure that has its
 .Va d_buf
-member set to NULL and its
+member set to
+.Dv NULL
+and its
 .Va d_size
 member set to the size of the section.
 .Pp
@@ -169,19 +182,22 @@ and
 .Va d_size
 members of the returned
 .Vt Elf_Data
-structure to NULL and the desired size of the section respectively.
+structure to
+.Dv NULL
+and the desired size of the section respectively.
 .Sh RETURN VALUES
 These functions return a valid pointer to a data descriptor if successful, or
-NULL if an error occurs.
+.Dv NULL
+if an error occurs.
 .Sh ERRORS
 These functions may fail with the following errors:
-.Bl -tag -width "[ELF_E_RESOURCE]" 
+.Bl -tag -width "[ELF_E_RESOURCE]"
 .It Bq Er ELF_E_ARGUMENT
 Arguments
 .Ar scn
-was NULL.
-.It Bq Er ELF_E_ARGUMENT
-Data descriptor
+was
+.Dv NULL ,
+or data descriptor
 .Ar data
 was not associated with section descriptor
 .Ar scn .
