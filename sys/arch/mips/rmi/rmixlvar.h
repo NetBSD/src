@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.1.2.12 2010/01/24 05:32:36 cliff Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.1.2.13 2010/01/29 00:22:06 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -91,6 +91,27 @@ typedef enum {
 	RMIXL_INTR_LOW,
 } rmixl_intr_polarity_t;
 
+typedef enum {
+	PSB_TYPE_UNKNOWN=0,
+	PSB_TYPE_RMI,
+	PSB_TYPE_DELL,
+} rmixlfw_psb_type_t;
+
+static inline const char *
+rmixlfw_psb_type_name(rmixlfw_psb_type_t type)
+{
+	switch(type) {
+	case PSB_TYPE_UNKNOWN:
+		return "unknown";
+	case PSB_TYPE_RMI:
+		return "RMI";
+	case PSB_TYPE_DELL:
+		return "DELL";
+	default:
+		return "undefined";
+	}
+}
+
 struct rmixl_config {
 	uint64_t		 rc_io_pbase;	
 	bus_addr_t		 rc_pcie_cfg_pbase;	
@@ -119,6 +140,7 @@ struct rmixl_config {
 	struct extent		*rc_pcie_io_ex;
 	int			 rc_mallocsafe;
 	rmixlfw_info_t 		 rc_psb_info;
+	rmixlfw_psb_type_t	 rc_psb_type;
 	volatile struct rmixlfw_cpu_wakeup_info
 				*rc_cpu_wakeup_info;
 	const void		*rc_cpu_wakeup_end;
@@ -144,5 +166,62 @@ extern int  rmixl_addr_error_check(void);
 
 extern uint64_t rmixl_mfcr(u_int);
 extern void rmixl_mtcr(uint64_t, u_int);
+
+
+/*
+ * rmixl_cache_err_dis:
+ * - disable Cache, Data ECC, Snoop Tag Parity, Tag Parity errors
+ * - clear the cache error log
+ * - return previous value from RMIXL_PCR_L1D_CONFIG0
+ */
+static inline uint64_t
+rmixl_cache_err_dis(void)
+{
+	uint64_t r;
+
+	r = rmixl_mfcr(RMIXL_PCR_L1D_CONFIG0);
+	rmixl_mtcr(RMIXL_PCR_L1D_CONFIG0, r & ~0x2e);
+	rmixl_mtcr(RMIXL_PCR_L1D_CACHE_ERROR_LOG, 0);
+	return r;
+}
+
+/*
+ * rmixl_cache_err_restore:
+ * - clear the cache error log, cache error overflow log,
+ *   and cache interrupt registers
+ * - restore previous value to RMIXL_PCR_L1D_CONFIG0
+ */
+static inline void
+rmixl_cache_err_restore(uint64_t r)
+{
+	rmixl_mtcr(RMIXL_PCR_L1D_CACHE_ERROR_LOG, 0);
+	rmixl_mtcr(RMIXL_PCR_L1D_CACHE_ERROR_OVF_LO, 0);
+	rmixl_mtcr(RMIXL_PCR_L1D_CACHE_INTERRUPT, 0);
+	rmixl_mtcr(RMIXL_PCR_L1D_CONFIG0, r);
+}
+
+static inline uint64_t
+rmixl_cache_err_check(void)
+{
+	return rmixl_mfcr(RMIXL_PCR_L1D_CACHE_ERROR_LOG);
+}
+
+static inline int
+rmixl_probe_4(volatile uint32_t *va)
+{
+	uint32_t tmp;
+	uint32_t r;
+	int err;
+	int s;
+
+	s = splhigh();
+	r = rmixl_cache_err_dis();
+	tmp = *va;			/* probe */
+	err = rmixl_cache_err_check();
+	rmixl_cache_err_restore(r);
+	splx(s);
+
+	return (err == 0);
+}
 
 #endif	/* _MIPS_RMI_RMIXLVAR_H_ */
