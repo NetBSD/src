@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.14 2010/01/29 11:57:37 jruoho Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.15 2010/01/29 12:22:00 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008, 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.14 2010/01/29 11:57:37 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.15 2010/01/29 12:22:00 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,7 +58,7 @@ struct asus_softc {
 #define	ASUS_SENSOR_LAST	1
 	envsys_data_t		sc_sensor[ASUS_SENSOR_LAST];
 
-	ACPI_INTEGER		sc_brightness;
+	int32_t			sc_brightness;
 	ACPI_INTEGER		sc_cfvnum;
 
 	struct sysctllog	*sc_log;
@@ -264,14 +264,16 @@ static bool
 asus_suspend(device_t self, pmf_qual_t qual)
 {
 	struct asus_softc *sc = device_private(self);
+	ACPI_INTEGER val = 0;
 	ACPI_STATUS rv;
 
-	/* capture display brightness when we're sleeping */
-	rv = acpi_eval_integer(sc->sc_node->ad_handle, ASUS_METHOD_PBLG,
-	    &sc->sc_brightness);
-	if (ACPI_FAILURE(rv))
-		aprint_error_dev(sc->sc_dev, "couldn't evaluate PBLG: %s\n",
-		    AcpiFormatException(rv));
+	/* Capture display brightness. */
+	rv = acpi_eval_integer(sc->sc_node->ad_handle, ASUS_METHOD_PBLG, &val);
+
+	if (ACPI_FAILURE(rv) || val > INT32_MAX)
+		sc->sc_brightness = -1;
+	else
+		sc->sc_brightness = val;
 
 	return true;
 }
@@ -283,6 +285,9 @@ asus_resume(device_t self, pmf_qual_t qual)
 	ACPI_STATUS rv;
 
 	asus_init(self);
+
+	if (sc->sc_brightness < 0)
+		return true;
 
 	/* Restore previous display brightness. */
 	rv = acpi_eval_set_integer(sc->sc_node->ad_handle, ASUS_METHOD_PBLS,
