@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.12.14.2 2009/08/23 04:04:35 matt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.12.14.3 2010/01/29 00:16:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12.14.2 2009/08/23 04:04:35 matt Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12.14.3 2010/01/29 00:16:58 matt Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -127,7 +127,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 #endif
 
 	/* Save the FP state, if necessary, then copy it. */
-#ifndef SOFTFLOAT
+#if defined(FPEMUL) || !defined(NOFPU)
 	ksc.sc_fpused = l->l_md.md_flags & MDP_FPUSED;
 	if (ksc.sc_fpused) {
 		/* if FPU has current state, save it first */
@@ -269,7 +269,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	for (size_t i = 1; i < __arraycount(f->f_regs); i++)
 		f->f_regs[i] = ksc.sc_regs[i];
 #endif
-#ifndef	SOFTFLOAT
+#if defined(FPEMUL) || !defined(NOFPU)
 	if (scp->sc_fpused) {
 		/* Disable the FPU to fault in FP registers. */
 		f->f_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;

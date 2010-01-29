@@ -1,4 +1,4 @@
-# $NetBSD: MALTA64,v 1.1.2.3 2009/09/12 16:49:57 matt Exp $
+# $NetBSD: MALTA64,v 1.1.2.4 2010/01/29 00:16:58 matt Exp $
 #
 include "arch/evbmips/conf/MALTA"
 
@@ -8,6 +8,8 @@ no options 	MIPS32
 options 	EXEC_ELF64
 options 	COMPAT_NETBSD32
 no options 	SYMTAB_SPACE
-options 	SYMTAB_SPACE=395000	# size for embedded symbol table
+options 	SYMTAB_SPACE=450000	# size for embedded symbol table
+
+#options 	UVMHIST, UVMHIST_PRINT
 
 no ath*

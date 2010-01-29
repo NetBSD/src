@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.14.78.7 2010/01/22 08:35:59 matt Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.14.78.8 2010/01/29 00:16:58 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.7 2010/01/22 08:35:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.8 2010/01/29 00:16:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.7 2010/01/22 08:35:59 matt Exp
 #include <mips/vmparam.h>			/* for VM_MAX_ADDRESS */
 #include <mips/trap.h>
 
+#if !defined(NOFPU) || defined(FPEMUL)
 void MachEmulateFP(uint32_t, struct frame *, uint32_t);
+#endif
 
 static inline void	send_sigsegv(intptr_t, uint32_t, struct frame *,
 			    uint32_t);
@@ -221,6 +223,7 @@ MachEmulateInst(uint32_t status, uint32_t cause, vaddr_t opc,
 {
 	uint32_t inst;
 	ksiginfo_t ksi;
+	int code = ILL_ILLOPC;
 
 	/*
 	 *  Fetch the instruction.
@@ -241,32 +244,43 @@ MachEmulateInst(uint32_t status, uint32_t cause, vaddr_t opc,
 		MachEmulateSpecial(inst, frame, cause);
 		break;
 	case OP_COP1:
+#if defined(FPEMUL)
 		MachEmulateFP(inst, frame, cause);
 		break;
-#if defined(SOFTFLOAT)
+#endif
 	case OP_LWC1:
+#if defined(FPEMUL)
 		MachEmulateLWC1(inst, frame, cause);
 		break;
+#endif
 	case OP_LDC1:
+#if defined(FPEMUL)
 		MachEmulateLDC1(inst, frame, cause);
 		break;
+#endif
 	case OP_SWC1:
+#if defined(FPEMUL)
 		MachEmulateSWC1(inst, frame, cause);
 		break;
+#endif
 	case OP_SDC1:
+#if defined(FPEMUL)
 		MachEmulateSDC1(inst, frame, cause);
 		break;
+#else
+		code = ILL_COPROC;
+		/* FALLTHROUGH */
 #endif
 	default:
 #ifdef DEBUG
-		printf("pid %d(%s): trap: bad vaddr %#"PRIxVADDR" cause %#x insn %#x\n", curproc->p_pid, curproc->p_comm, opc, cause, inst);
+		printf("pid %d (%s): trap: bad insn %#"PRIxVADDR" cause %#x insn %#x\n", curproc->p_pid, curproc->p_comm, opc, cause, inst);
 #endif
 		frame->f_regs[_R_CAUSE] = cause;
 		frame->f_regs[_R_BADVADDR] = opc;
 		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_signo = SIGILL;
 		ksi.ksi_trap = cause; /* XXX */
-		ksi.ksi_code = SEGV_MAPERR;
+		ksi.ksi_code = code;
 		ksi.ksi_addr = (void *)opc;
 		(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
 		break;
@@ -411,7 +425,7 @@ MachEmulateSpecial(uint32_t inst, struct frame *frame, uint32_t cause)
 	update_pc(frame, cause);
 }
 
-#if defined(SOFTFLOAT)
+#if defined(FPEMUL)
 
 #define LWSWC1_MAXLOOP	12
 
@@ -1120,4 +1134,4 @@ bcemul_sdr(uint32_t inst, struct frame *frame, uint32_t cause)
 	update_pc(frame, cause);
 }
 #endif /* defined(__mips_n32) || defined(__mips_n64) || defined(__mips_o64) */
-#endif /* defined(SOFTFLOAT) */
+#endif /* defined(FPEMUL) */
