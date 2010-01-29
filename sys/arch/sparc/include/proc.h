@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.17 2010/01/26 03:06:01 mrg Exp $ */
+/*	$NetBSD: proc.h,v 1.18 2010/01/29 05:14:11 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,6 +63,7 @@ struct mdproc {
 #define	MDP_FIXALIGN	0x1		/* Fix unaligned memory accesses */
 
 
+#ifdef _KERNEL
 /*
  * FPU context switch lock
  * Prevent interrupts that grab the kernel lock
@@ -78,5 +79,6 @@ extern kmutex_t fpu_mtx;
 #define FPU_UNLOCK(s)		do {	\
 	mutex_exit(&fpu_mtx);		\
 } while (/* CONSTCOND */ 0)
+#endif
 
 #endif /* _SPARC_PROC_H_ */
