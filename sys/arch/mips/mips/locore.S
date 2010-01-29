@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167.38.5 2010/01/20 06:58:36 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.167.38.6 2010/01/29 00:16:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -620,7 +620,7 @@ LEAF(mips_cp0_tlb_page_mask_probe)
 END(mips_cp0_tlb_page_mask_probe)
 #endif /* MIPS3_PLUS */
 
-#if !defined(NOFPU) && !defined(SOFTFLOAT)
+#if !defined(NOFPU) || defined(FPEMUL)
 /*----------------------------------------------------------------------------
  *
  * MachFPInterrupt --
@@ -753,7 +753,7 @@ FPReturn:
 	j		ra
 	PTR_ADDU	sp, CALLFRAME_SIZ
 END(MachFPInterrupt)
-#endif /* !defined(NOFPU) && !defined(SOFTFLOAT) */
+#endif /* !defined(NOFPU) || defined(FPEMUL) */
 
 LEAF(mips_pagecopy)
 	.set	push

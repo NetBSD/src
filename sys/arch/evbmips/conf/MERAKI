@@ -1,10 +1,10 @@
-#	$NetBSD: MERAKI,v 1.6 2008/07/31 07:41:00 simonb Exp $
+#	$NetBSD: MERAKI,v 1.6.8.1 2010/01/29 00:16:58 matt Exp $
 
 include 	"arch/evbmips/conf/std.meraki"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"AP30-$Revision: 1.6 $"
+#ident 		"AP30-$Revision: 1.6.8.1 $"
 
 maxusers	32
 
@@ -13,7 +13,7 @@ makeoptions	ATH_MACHINE_HAL=ap51
 
 options 	MIPS32
 options 	NOFPU		# No FPU
-options 	SOFTFLOAT	# emulate FPU insn
+options 	FPEMUL		# emulate FPU insn
 options		WISOC_AR5315	# WiSoc select
 
 # Options for necessary to use MD
@@ -47,7 +47,7 @@ options 	DIAGNOSTIC	# extra kernel sanity checking
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=260000	# size for embedded symbol table
+options 	SYMTAB_SPACE=300000	# size for embedded symbol table
 
 # Compatibility options
 #options 	COMPAT_43	# compatibility with 4.3BSD binaries

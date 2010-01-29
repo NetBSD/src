@@ -1,7 +1,7 @@
-#	$NetBSD: files.mips,v 1.58.24.5 2010/01/22 07:41:10 matt Exp $
+#	$NetBSD: files.mips,v 1.58.24.6 2010/01/29 00:16:58 matt Exp $
 #
 
-defflag	opt_cputype.h		NOFPU
+defflag	opt_cputype.h		NOFPU FPEMUL
 				MIPS64_SB1
 				MIPS64_XLP MIPS64_XLR MIPS64_XLS
 					# and the rest...
@@ -58,9 +58,9 @@ file	arch/mips/mips/cache_r5900.c		mips3 & mips3_5900
 file	arch/mips/mips/cache_r10k.c	(mips3|mips4) & enable_mips4_cache_r10k
 file	arch/mips/mips/cache_mipsNN.c		mips32 | mips64
 
-file	arch/mips/mips/mips_fputrap.c		softfloat | !nofpu
+file	arch/mips/mips/mips_fputrap.c		!nofpu | fpemul
 file	arch/mips/mips/mips_emul.c
-file	arch/mips/mips/fp.S			softfloat | !nofpu
+file	arch/mips/mips/fp.S			!nofpu | fpemul
 
 file	arch/mips/mips/procfs_machdep.c		procfs
 

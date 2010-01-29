@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.33.38.7 2010/01/22 08:37:08 matt Exp $	*/
+/*	$NetBSD: fp.S,v 1.33.38.8 2010/01/29 00:16:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,7 +73,7 @@
 #define COND_LESS	0x4
 #define COND_SIGNAL	0x8
 
-#if defined(SOFTFLOAT)
+#if defined(FPEMUL)
 #if defined(__mips_o32) || defined(__mips_o64)
 #define FPX_L			INT_L
 #define FPX_S			INT_S
@@ -136,7 +136,7 @@ NESTED(MachEmulateFP, CALLFRAME_SIZ, ra)
  */
 	srl	v0, a0, 21 - PTR_SCALESHIFT	# get FMT field
 	andi	v0, v0, 0x1F << PTR_SCALESHIFT	# mask FMT field
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	PTR_L	a3, fmt_tbl(v0)			# switch on FUNC & FMT
 	INT_L	a2, U_PCB_FPREGS+FRAME_FSR(t0)
@@ -178,7 +178,7 @@ paired_single_op:
 #define	paired_single_op	ill
 #endif
 
-#ifndef SOFTFLOAT
+#ifndef FPEMUL
 #define	mfromc1		ill
 #define	dmfromc1	ill
 #define	cfromc1		ill
@@ -644,7 +644,7 @@ func_paired_single_tbl:
 
 	.text
 
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 mfromc1:
 	srl	t1, a0, 11-FPX_SCALESHIFT	# fs is in bits 15:11
 	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
@@ -681,7 +681,7 @@ mtoc1:
 
 	b	done
 
-#if defined(SOFTFLOAT) && (defined(__mips_n32) || defined(__mips_n64))
+#if defined(FPEMUL) && (defined(__mips_n32) || defined(__mips_n64))
 dmfromc1:
 	srl	t1, a0, 11-DFPX_SCALESHIFT	# fs is in bits 15:11
 	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
@@ -717,7 +717,7 @@ dmtoc1:
 	DFPX_S	v0, U_PCB_FPREGS+FRAME_FP0(t0)
 
 	b	done
-#endif /* SOFTFLOAT && (__mips_n32 || __mips_n64) */
+#endif /* FPEMUL && (__mips_n32 || __mips_n64) */
 
 cfromc1:
 	srl	t1, a0, 11
@@ -1313,7 +1313,7 @@ div_s:
 	or	a2, a2, MIPS_FPU_EXCEPTION_DIV0 | MIPS_FPU_STICKY_DIV0
 	and	v0, a2, MIPS_FPU_ENABLE_DIV0	# trap enabled?
 	bne	v0, zero, fpe_trap
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	PTR_L	t1, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(t1)
@@ -1393,7 +1393,7 @@ div_d:
 	or	a2, a2, MIPS_FPU_EXCEPTION_DIV0 | MIPS_FPU_STICKY_DIV0
 	and	v0, a2, MIPS_FPU_ENABLE_DIV0	# trap enabled?
 	bne	v0, zero, fpe_trap
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	PTR_L	t1, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(t1)
@@ -2011,7 +2011,7 @@ inexact_w:
 	or	a2, a2, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
@@ -2123,7 +2123,7 @@ set_cond:
 1:
 	or	a2, a2, MIPS_FPU_COND_BIT	# set condition bit
 2:
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
@@ -2146,7 +2146,7 @@ unordered:
 	and	v0, a2, MIPS_FPU_ENABLE_INVALID
 	bne	v0, zero, fpe_trap
 1:
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
@@ -2263,7 +2263,7 @@ inexact_nobias_s:
 	or	a2, a2, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
@@ -2384,7 +2384,7 @@ underflow_s:
 	or	a2, a2, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
@@ -2525,7 +2525,7 @@ inexact_nobias_d:
 	or	a2, a2, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
@@ -2668,7 +2668,7 @@ underflow_d:
 	or	a2, a2, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
 	bne	v0, zero, fpe_trap
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
@@ -2685,7 +2685,7 @@ invalid_s:					# trap invalid operation
 	or	a2, a2, MIPS_FPU_EXCEPTION_INVALID | MIPS_FPU_STICKY_INVALID
 	and	v0, a2, MIPS_FPU_ENABLE_INVALID
 	bne	v0, zero, fpe_trap
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
@@ -2706,7 +2706,7 @@ invalid_d:					# trap invalid operation
 	or	a2, a2, MIPS_FPU_EXCEPTION_INVALID | MIPS_FPU_STICKY_INVALID
 	and	v0, a2, MIPS_FPU_ENABLE_INVALID
 	bne	v0, zero, fpe_trap
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
@@ -2728,7 +2728,7 @@ invalid_w:					# trap invalid operation
 	or	a2, a2, MIPS_FPU_EXCEPTION_INVALID | MIPS_FPU_STICKY_INVALID
 	and	v0, a2, MIPS_FPU_ENABLE_INVALID
 	bne	v0, zero, fpe_trap
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
@@ -2746,7 +2746,7 @@ invalid_w:					# trap invalid operation
  * Trap if the hardware should have handled this case.
  */
 fpe_trap:
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
@@ -2774,7 +2774,7 @@ fpe_trap:
  * Send an illegal instruction signal to the current process.
  */
 ill:
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	PTR_L	v0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
 	INT_S	a2, U_PCB_FPREGS+FRAME_FSR(v0)
@@ -2859,7 +2859,7 @@ END(MachEmulateFP)
  *----------------------------------------------------------------------------
  */
 STATIC_LEAF(get_fs_int)
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	srl	t2, a0, 11 - FPX_SCALESHIFT
 	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	andi	t2, t2, FPX_REGEVENMASK		# Even regs only
@@ -2972,7 +2972,7 @@ END(get_fs_int)
  *----------------------------------------------------------------------------
  */
 STATIC_LEAF(get_ft_fs_s)
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	srl	ta0, a0, 16 - FPX_SCALESHIFT
 	PTR_L	ta1, L_ADDR(MIPS_CURLWP)	# get pcb of current process
 	andi	ta0, ta0, FPX_REGEVENMASK	# Even regs only
@@ -3089,7 +3089,7 @@ get_ft_s_done:
  *----------------------------------------------------------------------------
  */
 STATIC_XLEAF(get_fs_s)
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	srl	t0, a0, 11 - FPX_SCALESHIFT
 	PTR_L	t1, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	andi	t0, t0, FPX_REGEVENMASK		# Even regs only
@@ -3212,7 +3212,7 @@ END(get_ft_fs_s)
  *----------------------------------------------------------------------------
  */
 STATIC_LEAF(get_ft_fs_d)
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	srl	ta3, a0, 16 - FPX_SCALESHIFT
 	PTR_L	ta0, L_ADDR(MIPS_CURLWP)	# get pcb of current process
 	andi	ta3, ta3, FPX_REGEVENMASK	# Even regs only
@@ -3353,7 +3353,7 @@ get_ft_d_done:
  *----------------------------------------------------------------------------
  */
 STATIC_XLEAF(get_fs_d)
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	srl	t3, a0, 11 - FPX_SCALESHIFT
 	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	andi	t3, t3, FPX_REGEVENMASK		# Even regs only
@@ -3497,7 +3497,7 @@ END(get_ft_fs_d)
  *----------------------------------------------------------------------------
  */
 STATIC_LEAF(get_cmp_s)
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	srl	t1, a0, 11 - FPX_SCALESHIFT
 	PTR_L	ta2, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	andi	t1, t1, FPX_REGEVENMASK			# Even regs only
@@ -3701,7 +3701,7 @@ END(get_cmp_s)
  *----------------------------------------------------------------------------
  */
 STATIC_LEAF(get_cmp_d)
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	srl	t1, a0, 11-FPX_SCALESHIFT
 	PTR_L	ta2, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	andi	t1, t1, FPX_REGEVENMASK			# Even regs only
@@ -3960,7 +3960,7 @@ STATIC_LEAF(set_fd_s)
 	or	t2, t2, t0
 	or	t2, t2, t1
 STATIC_XLEAF(set_fd_word)
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	srl	t1, a0, 6 - FPX_SCALESHIFT
 	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	andi	t1, t1, FPX_REGEVENMASK		# Even regs only
@@ -4061,7 +4061,7 @@ END(set_fd_s)
  *----------------------------------------------------------------------------
  */
 STATIC_LEAF(set_fd_d)
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 	sll	t0, t0, 31			# set sign
 	sll	t1, t1, 20			# set exponent
 	or	t0, t0, t1
@@ -4404,7 +4404,7 @@ STATIC_LEAF(renorm_ft_d)
 	j	ra
 END(renorm_ft_d)
 
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 /*
  * Emulate branch delay slot CPU instruction.
  * Enter from BC1x emulation.
@@ -5177,7 +5177,7 @@ END(bcemul_delay_slot)
  * Args are same as MachEmulateFP.
  */
 STATIC_LEAF(fpemul_sigill)
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 STATIC_XLEAF(bcemul_sigill)
 #endif
 	li	t0, 0xFFFFFF00
@@ -5207,7 +5207,7 @@ STATIC_LEAF(fpemul_sigfpe)
 	j	_C_LABEL(fpemul_trapsignal)
 END(fpemul_sigfpe)
 
-#ifdef SOFTFLOAT
+#ifdef FPEMUL
 STATIC_LEAF(bcemul_sigfpe)
 	li	t0, 0xFFFFFF00
 	and	a2, a2, t0

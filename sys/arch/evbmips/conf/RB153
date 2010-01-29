@@ -1,17 +1,17 @@
-#	$NetBSD: RB153,v 1.2 2007/04/03 18:05:57 dyoung Exp $
-#	$Id: RB153,v 1.2 2007/04/03 18:05:57 dyoung Exp $
+#	$NetBSD: RB153,v 1.2.58.1 2010/01/29 00:16:58 matt Exp $
+#	$Id: RB153,v 1.2.58.1 2010/01/29 00:16:58 matt Exp $
 #
 # Example kernel config for the RouterBOARD 153.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.2 $"
+#ident 		"GENERIC-$Revision: 1.2.58.1 $"
 
 maxusers	32
 
 options 	MIPS32
 options 	NOFPU		# No FPU
-options 	SOFTFLOAT	# emulate FPU insn
+options 	FPEMUL		# emulate FPU insn
 options 	CONSPEED=115200	# YAMON default
 #options 	HZ=512		# for profiling
 #options	ADM5120_YAMON	# if our bootloader is YAMON
@@ -35,7 +35,7 @@ options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
 makeoptions 	CPUFLAGS="-march=4kc"
-options 	SYMTAB_SPACE=360000	# size for embedded symbol table
+options 	SYMTAB_SPACE=380000	# size for embedded symbol table
 
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk

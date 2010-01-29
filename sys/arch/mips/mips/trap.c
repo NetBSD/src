@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.15 2010/01/22 07:41:10 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.16 2010/01/29 00:16:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.15 2010/01/22 07:41:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.16 2010/01/29 00:16:58 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -535,7 +535,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	    }
 	case T_RES_INST+T_USER:
 	case T_COP_UNUSABLE+T_USER:
-#if !defined(SOFTFLOAT) && !defined(NOFPU)
+#if !defined(FPEMUL) && !defined(NOFPU)
 		if ((cause & MIPS_CR_COP_ERR) == 0x10000000) {
 			savefpregs(fpcurlwp);		/* yield FPA */
 			loadfpregs(l);          	/* load FPA */
@@ -549,7 +549,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		userret(l);
 		return; /* GEN */
 	case T_FPE+T_USER:
-#if defined(SOFTFLOAT)
+#if defined(FPEMUL)
 		MachEmulateInst(status, cause, opc, l->l_md.md_regs);
 #elif !defined(NOFPU)
 		MachFPTrap(status, cause, opc, l->l_md.md_regs);

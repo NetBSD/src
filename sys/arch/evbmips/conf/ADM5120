@@ -1,17 +1,17 @@
-#	$NetBSD: ADM5120,v 1.3 2008/05/30 20:10:01 tsutsui Exp $
+#	$NetBSD: ADM5120,v 1.3.12.1 2010/01/29 00:16:57 matt Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.3 $"
+#ident 		"GENERIC-$Revision: 1.3.12.1 $"
 
 maxusers	32
 
 options 	MIPS32
 options 	NOFPU		# No FPU
-options 	SOFTFLOAT	# emulate FPU insn
+options 	FPEMUL		# emulate FPU insn
 #options 	CONSPEED=115200	# YAMON default
 options 	HZ=512		# for profiling
 options 	MEMSIZE="(16*1024*1024)"
@@ -34,7 +34,7 @@ options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
 makeoptions 	CPUFLAGS="-march=4kc"
-options 	SYMTAB_SPACE=180000	# size for embedded symbol table
+options 	SYMTAB_SPACE=280000	# size for embedded symbol table
 
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
