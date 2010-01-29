@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.1.2.7 2010/01/20 09:04:35 matt Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.1.2.8 2010/01/29 00:23:54 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.7 2010/01/20 09:04:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.8 2010/01/29 00:23:54 cliff Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -125,6 +125,38 @@ static const struct {
 #define PCIE_ECFG_ERRS_OFFTAB_NENTRIES \
 	(sizeof(pcie_ecfg_errs_tab)/sizeof(pcie_ecfg_errs_tab[0]))
 
+typedef struct rmixl_pcie_int_csr {
+	uint r0;
+	uint r1;
+} rmixl_pcie_int_csr_t;
+
+static const rmixl_pcie_int_csr_t int_enb_offset[4] = {
+	{ RMIXL_PCIE_LINK0_INT_ENABLE0, RMIXL_PCIE_LINK0_INT_ENABLE1 },
+	{ RMIXL_PCIE_LINK1_INT_ENABLE0, RMIXL_PCIE_LINK1_INT_ENABLE1 },
+	{ RMIXL_PCIE_LINK2_INT_ENABLE0, RMIXL_PCIE_LINK2_INT_ENABLE1 },
+	{ RMIXL_PCIE_LINK3_INT_ENABLE0, RMIXL_PCIE_LINK3_INT_ENABLE1 },
+};
+
+static const rmixl_pcie_int_csr_t int_sts_offset[4] = {
+	{ RMIXL_PCIE_LINK0_INT_STATUS0, RMIXL_PCIE_LINK0_INT_STATUS1 },
+	{ RMIXL_PCIE_LINK1_INT_STATUS0, RMIXL_PCIE_LINK1_INT_STATUS1 },
+	{ RMIXL_PCIE_LINK2_INT_STATUS0, RMIXL_PCIE_LINK2_INT_STATUS1 },
+	{ RMIXL_PCIE_LINK3_INT_STATUS0, RMIXL_PCIE_LINK3_INT_STATUS1 },
+};
+
+static const u_int msi_enb_offset[4] = {
+	RMIXL_PCIE_LINK0_MSI_ENABLE,
+	RMIXL_PCIE_LINK1_MSI_ENABLE,
+	RMIXL_PCIE_LINK2_MSI_ENABLE,
+	RMIXL_PCIE_LINK3_MSI_ENABLE
+};
+
+#define RMIXL_PCIE_LINK_STATUS0_ERRORS	__BITS(6,4)
+#define RMIXL_PCIE_LINK_STATUS1_ERRORS	__BITS(10,0)
+#define RMIXL_PCIE_LINK_STATUS_ERRORS					\
+		((((uint64_t)RMIXL_PCIE_LINK_STATUS1_ERRORS) << 32) |	\
+		   (uint64_t)RMIXL_PCIE_LINK_STATUS0_ERRORS)
+
 static int	rmixl_pcie_match(device_t, cfdata_t, void *);
 static void	rmixl_pcie_attach(device_t, device_t, void *);
 static void	rmixl_pcie_init(struct rmixl_pcie_softc *);
@@ -136,6 +168,7 @@ static void	rmixl_pcie_lnkcfg_408Lite(rmixl_pcie_lnktab_t *, uint32_t);
 static void	rmixl_pcie_lnkcfg_2xx(rmixl_pcie_lnktab_t *, uint32_t);
 static void	rmixl_pcie_lnkcfg_1xx(rmixl_pcie_lnktab_t *, uint32_t);
 static void	rmixl_pcie_lnkcfg(struct rmixl_pcie_softc *);
+static void	rmixl_pcie_intcfg(struct rmixl_pcie_softc *);
 static void	rmixl_pcie_errata(struct rmixl_pcie_softc *);
 static void	rmixl_conf_interrupt(void *, int, int, int, int, int *);
 static int	rmixl_pcie_bus_maxdevs(void *, int);
@@ -155,9 +188,14 @@ static const char *
 		rmixl_pcie_intr_string(void *, pci_intr_handle_t);
 static const struct evcnt *
 		rmixl_pcie_intr_evcnt(void *, pci_intr_handle_t);
+static pci_intr_handle_t
+		rmixl_pcie_make_pih(u_int, u_int, u_int);
+static void	rmixl_pcie_decompose_pih(pci_intr_handle_t, u_int *, u_int *, u_int *);
+static void	rmixl_pcie_intr_disestablish(void *, void *);
 static void	*rmixl_pcie_intr_establish(void *, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
-static void	rmixl_pcie_intr_disestablish(void *, void *);
+static int	rmixl_pcie_intr(void *);
+static void	rmixl_pcie_link_error_intr(u_int, uint32_t, uint32_t);
 #if defined(DEBUG) || defined(DDB)
 int		rmixl_pcie_error_check(void);
 #endif
@@ -207,44 +245,6 @@ CFATTACH_DECL_NEW(rmixl_pcie, sizeof(struct rmixl_pcie_softc),
 
 static int rmixl_pcie_found;
 
-/*
- * rmixl_cache_err_dis:
- * - disable Cache, Data ECC, Snoop Tag Parity, Tag Parity errors
- * - clear the cache error log
- * - return previous value from RMIXL_PCR_L1D_CONFIG0
- */
-static inline uint64_t
-rmixl_cache_err_dis(void)
-{
-	uint64_t r;
-
-	r = rmixl_mfcr(RMIXL_PCR_L1D_CONFIG0);
-	rmixl_mtcr(RMIXL_PCR_L1D_CONFIG0, r & ~0x2e);
-	rmixl_mtcr(RMIXL_PCR_L1D_CACHE_ERROR_LOG, 0);
-	return r;
-}
-
-/*
- * rmixl_cache_err_restore:
- * - clear the cache error log, cache error overflow log,
- *   and cache interrupt registers
- * - restore previous value to RMIXL_PCR_L1D_CONFIG0
- */
-static inline void
-rmixl_cache_err_restore(uint64_t r)
-{
-	rmixl_mtcr(RMIXL_PCR_L1D_CACHE_ERROR_LOG, 0);
-	rmixl_mtcr(RMIXL_PCR_L1D_CACHE_ERROR_OVF_LO, 0);
-	rmixl_mtcr(RMIXL_PCR_L1D_CACHE_INTERRUPT, 0);
-	rmixl_mtcr(RMIXL_PCR_L1D_CONFIG0, r);
-}
-
-static inline uint64_t
-rmixl_cache_err_check(void)
-{
-	return rmixl_mfcr(RMIXL_PCR_L1D_CACHE_ERROR_LOG);
-}
-
 static int  
 rmixl_pcie_match(device_t parent, cfdata_t cf, void *aux)
 {        
@@ -258,7 +258,6 @@ rmixl_pcie_match(device_t parent, cfdata_t cf, void *aux)
 		return 0;
 
 	/* read GPIO Reset Configuration register */
-	/* XXX FIXME define the offset */
 	r = RMIXL_IOREG_READ(RMIXL_IO_DEV_GPIO + RMIXL_GPIO_RESET_CFG);
 	r >>= 26;
 	r &= 3;
@@ -283,6 +282,8 @@ rmixl_pcie_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(" RMI XLS PCIe Interface\n");
 
 	rmixl_pcie_lnkcfg(sc);
+
+	rmixl_pcie_intcfg(sc);
 
 	rmixl_pcie_errata(sc);
 
@@ -402,10 +403,10 @@ rmixl_pcie_lnkcfg_4xx(rmixl_pcie_lnktab_t *ltp, uint32_t grcr)
 		{{ LCFG_RC, 1}, {LCFG_RC, 1}, {LCFG_RC, 1}, {LCFG_RC, 1}},
 	};
 	static const char *lnkstr_4xx[4] = {
-		"EP 1x4",
-		"RC 1x4",
-		"EP 1x1, RC 4x1",
-		"RC 4x1"
+		"1EPx4",
+		"1RCx4",
+		"1EPx1, 3RCx1",
+		"4RCx1"
 	};
 	index = (grcr >> 20) & 3;
 	ltp->ncfgs = 4;
@@ -429,10 +430,10 @@ rmixl_pcie_lnkcfg_408Lite(rmixl_pcie_lnktab_t *ltp, uint32_t grcr)
 		{{ LCFG_RC, 1}, {LCFG_RC, 1}},
 	};
 	static const char *lnkstr_408Lite[4] = {
-		"EP 1x4",
-		"RC 1x4",
-		"EP 1x1, RC 1x1",
-		"RC 2x1"
+		"4EPx4",
+		"1RCx4",
+		"1EPx1, 1RCx1",
+		"2RCx1"
 	};
 
 	index = (grcr >> 20) & 3;
@@ -455,8 +456,8 @@ rmixl_pcie_lnkcfg_2xx(rmixl_pcie_lnktab_t *ltp, uint32_t grcr)
 		{{ LCFG_RC, 1}, {LCFG_RC, 1}, {LCFG_RC, 1}, {LCFG_RC, 1}}
 	};
 	static const char *lnkstr_2xx[2] = {
-		"EP 1x1, RC 3x1",
-		"RC 4x1",
+		"1EPx1, 3RCx1",
+		"4RCx1",
 	};
 
 	index = (grcr >> 20) & 1;
@@ -479,8 +480,8 @@ rmixl_pcie_lnkcfg_1xx(rmixl_pcie_lnktab_t *ltp, uint32_t grcr)
 		{{ LCFG_RC, 1}, {LCFG_RC, 1}}
 	};
 	static const char *lnkstr_1xx[2] = {
-		"EP 1x1, RC 1x1",
-		"RC 2x1",
+		"1EPx1, 1RCx1",
+		"2RCx1",
 	};
 
 	index = (grcr >> 20) & 1;
@@ -528,6 +529,30 @@ rmixl_pcie_lnkcfg(struct rmixl_pcie_softc *sc)
 
 	aprint_normal("%s: link config %s\n",
 		device_xname(sc->sc_dev), sc->sc_pcie_lnktab.str);
+}
+
+/*
+ * rmixl_pcie_intcfg - init PCIe Link interrupt enables
+ */
+static void
+rmixl_pcie_intcfg(struct rmixl_pcie_softc *sc)
+{
+	rmixl_pcie_link_intr_t *lip;
+	int link;
+
+	DPRINTF(("%s: disable all link interrupts\n", __func__));
+	for (link=0; link < sc->sc_pcie_lnktab.ncfgs; link++) {
+		RMIXL_IOREG_WRITE(RMIXL_IO_DEV_PCIE_LE + int_enb_offset[link].r0,
+			RMIXL_PCIE_LINK_STATUS0_ERRORS); 
+		RMIXL_IOREG_WRITE(RMIXL_IO_DEV_PCIE_LE + int_enb_offset[link].r1,
+			RMIXL_PCIE_LINK_STATUS1_ERRORS); 
+		RMIXL_IOREG_WRITE(RMIXL_IO_DEV_PCIE_LE + msi_enb_offset[link], 0); 
+		lip = &sc->sc_link_intr[link];
+		LIST_INIT(&lip->dispatch);
+		lip->ih = NULL;
+		lip->link = link;
+		lip->enabled = false;
+	}
 }
 
 static void
@@ -735,17 +760,24 @@ rmixl_pcie_init_ecfg(struct rmixl_pcie_softc *sc)
 	r = (pcireg_t)(~PCIE_ECFG_RECR_RESV);
 	rmixl_pcie_conf_write(v, tag, RMIXL_PCIE_ECFG_RECR, r);
 
-
-	if (MIPS_PRID_IMPL(mips_options.mips_cpu_id) == MIPS_XLS408LITE) {
-		/*
-		 * establish ISR for PCIE Fatal Error interrupt
-		 * XXX for XLS408Lite, XLS2xx, XLS1xx only
-		 *     tested on XLS408Lite only
-		 */
-		(void)rmixl_intr_establish(29, IPL_HIGH,
-			RMIXL_INTR_LEVEL, RMIXL_INTR_HIGH,
-			rmixl_pcie_error_intr, v);
+	/*
+	 * establish ISR for PCIE Fatal Error interrupt
+	 * - for XLS4xxLite, XLS2xx, XLS1xx only
+	 */
+	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
+	case MIPS_XLS104:
+	case MIPS_XLS108:
+	case MIPS_XLS204:
+	case MIPS_XLS208:
+	case MIPS_XLS404LITE:
+	case MIPS_XLS408LITE:
+		sc->sc_fatal_ih = rmixl_intr_establish(29, IPL_HIGH, RMIXL_INTR_LEVEL,
+			RMIXL_INTR_HIGH, rmixl_pcie_error_intr, v);
+		break;
+	default:
+		break;
 	}
+
 #if defined(DEBUG) || defined(DDB)
 	rmixl_pcie_v = v;
 #endif
@@ -972,6 +1004,7 @@ rmixl_pcie_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 int
 rmixl_pcie_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *pih)
 {
+	u_int link;
 	u_int irq;
 
 #ifdef DEBUG
@@ -982,34 +1015,48 @@ rmixl_pcie_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *pih)
 #endif
 
 	/*
-	 * XXX cpu implementation specific
+	 * PCIe Link INT irq assignment is cpu implementation specific
 	 */
 	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
+	case MIPS_XLS104:
+	case MIPS_XLS108:
+	case MIPS_XLS204:
+	case MIPS_XLS208:
+	case MIPS_XLS404LITE:
 	case MIPS_XLS408LITE:
 		switch (pa->pa_bus) {
 		case 1:
+			link = 0;
 			irq = 26;
 			break;
 		case 2:
+			link = 1;
 			irq = 27;
 			break;
 		default:
 			panic("%s: bad bus %d\n", __func__, pa->pa_bus);
 		}
 		break;
+	case MIPS_XLS404:
+	case MIPS_XLS408:
 	case MIPS_XLS416:
+	case MIPS_XLS608: 
 	case MIPS_XLS616:
 		switch (pa->pa_bus) {
 		case 1:
+			link = 0;
 			irq = 26;
 			break;
 		case 2:
+			link = 1;
 			irq = 27;
 			break;
 		case 3:
+			link = 2;
 			irq = 28;
 			break;
 		case 4:
+			link = 3;
 			irq = 29;
 			break;
 		default:
@@ -1021,7 +1068,10 @@ rmixl_pcie_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *pih)
 			__func__, MIPS_PRID_IMPL(mips_options.mips_cpu_id));
 	}
 
-	*pih = irq;
+	if (pa->pa_intrpin != PCI_INTERRUPT_PIN_NONE)
+		*pih = rmixl_pcie_make_pih(link, pa->pa_intrpin - 1, irq);
+	else
+		*pih = ~0;
 
 	return 0;
 }
@@ -1033,6 +1083,11 @@ rmixl_pcie_intr_string(void *v, pci_intr_handle_t pih)
 	int irq = (int)pih;
 
 	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
+	case MIPS_XLS104:
+	case MIPS_XLS108:
+	case MIPS_XLS204:
+	case MIPS_XLS208:
+	case MIPS_XLS404LITE:
 	case MIPS_XLS408LITE:
 		switch (irq) {
 		case 26:
@@ -1041,6 +1096,10 @@ rmixl_pcie_intr_string(void *v, pci_intr_handle_t pih)
 			break;
 		}
 		break;
+	case MIPS_XLS404:
+	case MIPS_XLS408:
+	case MIPS_XLS416:
+	case MIPS_XLS608: 
 	case MIPS_XLS616:
 		switch (irq) {
 		case 26:
@@ -1051,6 +1110,9 @@ rmixl_pcie_intr_string(void *v, pci_intr_handle_t pih)
 			break;
 		}
 		break;
+	default:
+		panic("%s: cpu IMPL %#x not supported\n",
+			__func__, MIPS_PRID_IMPL(mips_options.mips_cpu_id));
 	}
 
 	return name;
@@ -1062,17 +1124,44 @@ rmixl_pcie_intr_evcnt(void *v, pci_intr_handle_t pih)
 	return NULL;
 }
 
-static int
-rmixl_pcie_irq(pci_intr_handle_t pih)
+static pci_intr_handle_t
+rmixl_pcie_make_pih(u_int link, u_int bitno, u_int irq)
 {
-	return (int)pih;
+	pci_intr_handle_t pih;
+
+	KASSERT((link >= 0) && (link < RMIXL_PCIE_NLINKS_MAX));
+	KASSERT((bitno >= 0) && (bitno < 64));
+	KASSERT((irq >= 0) && (irq < 31));
+
+	pih  = (irq << 10);
+	pih |= (bitno << 4);
+	pih |= link;
+
+	return pih;
 }
+
+static void
+rmixl_pcie_decompose_pih(pci_intr_handle_t pih, u_int *link, u_int *bitno, u_int *irq)
+{
+	*link = (u_int)(pih & 0xf);
+	*bitno  = (u_int)((pih >> 4) & 0x3f);
+	*irq  = (u_int)(pih >> 10);
+
+	KASSERT((*link >= 0) && (*link < RMIXL_PCIE_NLINKS_MAX));
+	KASSERT((*bitno >= 0) && (*bitno < 64));
+	KASSERT((*irq >= 0) && (*irq < 31));
+}
+
+#if 0
 
 static void *
 rmixl_pcie_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
 	int (*func)(void *), void *arg)
 {
-	return rmixl_intr_establish(rmixl_pcie_irq((int)pih), ipl,
+	u_int link, bitno, irq;
+
+	rmixl_pcie_decompose_pih(pih, &link, &bitno, &irq);
+	return rmixl_intr_establish(irq, ipl,
 		RMIXL_INTR_LEVEL, RMIXL_INTR_HIGH, func, arg);
 }
 
@@ -1081,6 +1170,202 @@ rmixl_pcie_intr_disestablish(void *v, void *ih)
 {
 	rmixl_intr_disestablish(ih);
 }
+
+#else	/* 0 */
+
+static void
+rmixl_pcie_intr_disestablish(void *v, void *ih)
+{
+	rmixl_pcie_softc_t *sc = v;
+	rmixl_pcie_link_dispatch_t *dip = ih;
+	rmixl_pcie_link_intr_t *lip = &sc->sc_link_intr[dip->link];;
+	uint32_t r;
+	uint32_t bit;
+	u_int offset;
+	u_int other;
+
+	DPRINTF(("%s: link=%d bitno=%d irq=%d\n", __func__, dip->link, dip->bitno, dip->irq));
+	LIST_REMOVE(dip, next);
+
+	rmixl_intr_disestablish(lip->ih);
+
+	if (dip->bitno < 32) {
+		bit = 1 << dip->bitno;
+		offset = int_enb_offset[dip->link].r0;
+		other  = int_enb_offset[dip->link].r1;
+	} else {
+		bit = 1 << (dip->bitno - 32);
+		offset = int_enb_offset[dip->link].r1;
+		other  = int_enb_offset[dip->link].r1;
+	}
+
+	/* disable this interrupt in the PCIe bridge */
+	r = RMIXL_IOREG_READ(RMIXL_IO_DEV_PCIE_LE + offset);
+	r &= ~bit;
+	RMIXL_IOREG_WRITE(RMIXL_IO_DEV_PCIE_LE + offset, r);
+
+	/*
+	 * if both STATUS0 and STATUS1 are 0
+	 * mark the link interrupt disabled
+	 */
+	if (r == 0) {
+		/* check the other reg */
+		if (RMIXL_IOREG_READ(RMIXL_IO_DEV_PCIE_LE + other) == 0) {
+			lip->enabled = false;
+			DPRINTF(("%s: disabled link %d\n", __func__, lip->link));
+		}
+	}
+
+	evcnt_detach(&dip->count);
+
+	free(dip, M_DEVBUF);
+
+}
+
+static void *
+rmixl_pcie_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
+        int (*func)(void *), void *arg)
+{
+	rmixl_pcie_softc_t *sc = v;
+	u_int link, bitno, irq;
+	uint32_t r;
+	rmixl_pcie_link_intr_t *lip;
+	rmixl_pcie_link_dispatch_t *dip;
+	uint32_t bit;
+	u_int offset;
+	int s;
+	char strbuf[32];
+
+	if (pih == ~0) {
+		DPRINTF(("%s: bad pih=%#lx, implies PCI_INTERRUPT_PIN_NONE\n",
+			__func__, pih));
+		return NULL;
+	}
+
+	rmixl_pcie_decompose_pih(pih, &link, &bitno, &irq);
+	DPRINTF(("%s: link=%d bitno=%d irq=%d\n", __func__, link, bitno, irq));
+
+	lip = &sc->sc_link_intr[link];
+
+	s = splhigh();
+
+#ifdef DEBUG
+	LIST_FOREACH(dip, &lip->dispatch, next) {
+		if (dip->bitno == bitno)
+			panic("%s: bitno %d alread on dispatch list", __func__, bitno);
+	}
+#endif
+
+	/*
+	 * all intrs on a link get same ipl and sc
+	 * first intr established sets the standard
+	 */
+	if (lip->enabled == true) {
+		KASSERT(sc = lip->sc);
+		if (sc != lip->sc) {
+			printf("%s: sc %p mismatch\n", __func__, sc); 
+			goto out;
+		}
+		KASSERT(ipl = lip->ipl);
+		if (ipl != lip->ipl) {
+			printf("%s: ipl %d mismatch\n", __func__, ipl); 
+			goto out;
+		}
+	}
+
+	/*
+	 * allocate and initialize a dispatch handle
+	 */
+	dip = malloc(sizeof(*dip), M_DEVBUF, M_NOWAIT);
+	if (dip == NULL) {
+		printf("%s: cannot malloc dispatch handle\n", __func__);
+		goto out;
+	}
+
+	dip->link = link;
+	dip->bitno = bitno;
+	dip->irq = irq;
+	dip->func = func;
+	dip->arg = arg;
+	snprintf(strbuf, sizeof(strbuf), "link %d, bitno %d", link, bitno);
+	evcnt_attach_dynamic(&dip->count, EVCNT_TYPE_INTR, NULL,
+		"rmixl_pcie", strbuf);
+
+	if (bitno < 32) {
+		offset = int_enb_offset[link].r0;
+		bit = 1 << bitno;
+	} else {
+		offset = int_enb_offset[link].r1;
+		bit = 1 << (bitno - 32);
+	}
+
+	/* enable this interrupt in the PCIe bridge */
+	r = RMIXL_IOREG_READ(RMIXL_IO_DEV_PCIE_LE + offset); 
+	r |= bit;
+	RMIXL_IOREG_WRITE(RMIXL_IO_DEV_PCIE_LE + offset, r); 
+
+	if (lip->enabled == false) {
+		lip->ih = rmixl_intr_establish(irq, ipl,
+			RMIXL_INTR_LEVEL, RMIXL_INTR_HIGH, rmixl_pcie_intr, lip);
+		if (lip->ih == NULL)
+			panic("%s: cannot establish irq %d", __func__, link);
+
+		lip->sc = sc;
+		lip->ipl = ipl;
+		lip->enabled = true;
+		DPRINTF(("%s: enabled link %d\n", __func__, link));
+	}
+	LIST_INSERT_HEAD(&lip->dispatch, dip, next);
+
+ out:
+	splx(s);
+	return dip;
+}
+
+static int
+rmixl_pcie_intr(void *arg)
+{
+	rmixl_pcie_link_intr_t *lip = arg;
+	u_int link = lip->link;
+	int rv = 0;
+
+	uint32_t status0 = RMIXL_IOREG_READ(RMIXL_IO_DEV_PCIE_LE + int_sts_offset[link].r0); 
+	uint32_t status1 = RMIXL_IOREG_READ(RMIXL_IO_DEV_PCIE_LE + int_sts_offset[link].r1); 
+	uint64_t status = ((uint64_t)status1 << 32) | status0;
+	DPRINTF(("%s: %d:%#"PRIx64"\n", __func__, link, status));
+
+	if (status != 0) {
+		rmixl_pcie_link_dispatch_t *dip;
+
+		if (status & RMIXL_PCIE_LINK_STATUS_ERRORS)
+			rmixl_pcie_link_error_intr(link, status0, status1);
+
+		LIST_FOREACH(dip, &lip->dispatch, next) {
+			uint64_t bit = 1 << dip->bitno;
+			if ((status & bit) != 0) {
+				(void)(*dip->func)(dip->arg);
+				dip->count.ev_count++;
+				rv = 1;
+			}
+		}
+	}
+
+	return rv;
+}
+
+static void
+rmixl_pcie_link_error_intr(u_int link, uint32_t status0, uint32_t status1)
+{
+	printf("%s: mask %#"PRIx64"\n", 
+		__func__, RMIXL_PCIE_LINK_STATUS_ERRORS);
+	printf("%s: PCIe Link Error: link=%d status0=%#x status1=%#x\n",
+		__func__, link, status0, status1);
+#if defined(DDB) && defined(DEBUG)
+	Debugger();
+#endif
+}
+
+#endif	/* 0 */
 
 #if defined(DEBUG) || defined(DDB)
 /* this function exists to facilitate call from ddb */
