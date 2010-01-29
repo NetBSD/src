@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.13 2010/01/29 11:23:25 jruoho Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.14 2010/01/29 11:57:37 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008, 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.13 2010/01/29 11:23:25 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.14 2010/01/29 11:57:37 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -242,29 +242,18 @@ static void
 asus_init(device_t self)
 {
 	struct asus_softc *sc = device_private(self);
-	ACPI_STATUS rv;
-	ACPI_OBJECT param;
-	ACPI_OBJECT_LIST params;
-	ACPI_BUFFER ret;
 	ACPI_INTEGER cfv;
+	ACPI_STATUS rv;
 
-	ret.Pointer = NULL;
-	ret.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
-	param.Type = ACPI_TYPE_INTEGER;
-	param.Integer.Value = 0x40;	/* disable ASL display switching */
-	params.Pointer = &param;
-	params.Count = 1;
+	/* Disable ASL display switching. */
+	rv = acpi_eval_set_integer(sc->sc_node->ad_handle, "INIT", 0x40);
 
-	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "INIT",
-	    &params, &ret);
 	if (ACPI_FAILURE(rv))
 		aprint_error_dev(self, "couldn't evaluate INIT: %s\n",
 		    AcpiFormatException(rv));
 
-	if (ret.Pointer)
-		ACPI_FREE(ret.Pointer);
-
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, ASUS_METHOD_CFVG, &cfv);
+
 	if (ACPI_FAILURE(rv))
 		return;
 
@@ -292,28 +281,16 @@ asus_resume(device_t self, pmf_qual_t qual)
 {
 	struct asus_softc *sc = device_private(self);
 	ACPI_STATUS rv;
-	ACPI_OBJECT param;
-	ACPI_OBJECT_LIST params;
-	ACPI_BUFFER ret;
 
 	asus_init(self);
 
-	/* restore previous display brightness */
-	ret.Pointer = NULL;
-	ret.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
-	param.Type = ACPI_TYPE_INTEGER;
-	param.Integer.Value = sc->sc_brightness;
-	params.Pointer = &param;
-	params.Count = 1;
+	/* Restore previous display brightness. */
+	rv = acpi_eval_set_integer(sc->sc_node->ad_handle, ASUS_METHOD_PBLS,
+	    sc->sc_brightness);
 
-	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, ASUS_METHOD_PBLS,
-	    &params, &ret);
 	if (ACPI_FAILURE(rv))
 		aprint_error_dev(self, "couldn't evaluate PBLS: %s\n",
 		    AcpiFormatException(rv));
-
-	if (ret.Pointer != NULL)
-		ACPI_FREE(ret);
 
 	return true;
 }
@@ -323,11 +300,8 @@ asus_sysctl_verify(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
 	struct asus_softc *sc;
-	ACPI_STATUS rv;
 	ACPI_INTEGER cfv;
-	ACPI_OBJECT param, retval;
-	ACPI_OBJECT_LIST params;
-	ACPI_BUFFER ret;
+	ACPI_STATUS rv;
 	int err, tmp;
 
 	node = *rnode;
@@ -346,15 +320,9 @@ asus_sysctl_verify(SYSCTLFN_ARGS)
 		if (tmp < 0 || tmp >= sc->sc_cfvnum)
 			return EINVAL;
 
-		ret.Pointer = &retval;
-		ret.Length = sizeof(retval);
-		param.Type = ACPI_TYPE_INTEGER;
-		param.Integer.Value = tmp;
-		params.Pointer = &param;
-		params.Count = 1;
+		rv = acpi_eval_set_integer(sc->sc_node->ad_handle,
+		    ASUS_METHOD_CFVS, tmp);
 
-		rv = AcpiEvaluateObject(sc->sc_node->ad_handle,
-		    ASUS_METHOD_CFVS, &params, &ret);
 		if (ACPI_FAILURE(rv))
 			return ENXIO;
 	}
