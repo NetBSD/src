@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_usbi.c,v 1.1.2.2 2010/01/10 02:48:47 matt Exp $	*/
+/*	$NetBSD: rmixl_usbi.c,v 1.1.2.3 2010/01/29 00:24:33 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.1.2.2 2010/01/10 02:48:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.1.2.3 2010/01/29 00:24:33 cliff Exp $");
 
 #include "locators.h"
 
@@ -107,7 +107,7 @@ rmixl_usbi_match(device_t parent, cfdata_t match, void *aux)
 	struct obio_attach_args *obio = aux;
 
         if (obio->obio_addr == RMIXL_IO_DEV_USB_B)
-                return 1;
+		return rmixl_probe_4((volatile uint32_t *)RMIXL_IOREG_VADDR(obio->obio_addr));
 
         return 0;
 }
@@ -117,6 +117,7 @@ rmixl_usbi_attach(device_t parent, device_t self, void *aux)
 {
 	rmixl_usbi_softc_t *sc = device_private(self);
 	struct obio_attach_args *obio = aux;
+	uint32_t r;
 	void *ih;
 
 #ifdef RMIXL_USBI_DEBUG
@@ -128,6 +129,39 @@ rmixl_usbi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_addr = obio->obio_addr;
 	sc->sc_size = obio->obio_size;
 	sc->sc_dmat = obio->obio_32bit_dmat;
+
+	aprint_normal("\n%s", device_xname(self));
+
+	/*
+	 * fail attach if USB interface is disabled GPIO LOW_PWR_DIS reg
+	 */
+	r = RMIXL_IOREG_READ(RMIXL_IO_DEV_GPIO + RMIXL_GPIO_LOW_PWR_DIS);
+	if ((r & RMIXL_GPIO_LOW_PWR_DIS_USB) != 0) {
+		aprint_error(": USB_DIS set in LOW_PWR_DIS, abort attach\n");
+		return;
+	}
+
+	/*
+	 * fail attach if USB interface BIST failed
+	 */
+        r = RMIXL_IOREG_READ(RMIXL_IO_DEV_GPIO + RMIXL_GPIO_BIST_EACH_STS);
+	aprint_normal(": BIST status=");
+	if ((r & __BIT(18)) == 0) {			/* XXX USB_BIST */
+		aprint_normal("FAIL\n");
+		return;
+	}
+	aprint_normal("OK");
+
+	/*
+	 * set BYTESWAP_EN register nonzero when software is little endian
+	 */
+#if BYTE_ORDER == BIG_ENDIAN
+	r = 0;
+#else
+	r = 1;
+#endif
+	RMIXL_USBI_GEN_WRITE(RMIXL_USB_BYTESWAP_EN, r);
+	aprint_normal(" byteswap enable=%d", r);
 
 	for (int intr=0; intr <= RMIXL_UB_INTERRUPT_MAX; intr++) {
 		evcnt_attach_dynamic(&sc->sc_dispatch[intr].count,
