@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.1.2.3 2010/01/24 05:39:57 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.1.2.4 2010/01/29 00:22:53 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.3 2010/01/24 05:39:57 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.4 2010/01/29 00:22:53 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -92,8 +92,20 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 #ifdef MULTIPROCESSOR
 	} else {
 		struct pglist pglist;
+		rmixlfw_psb_type_t psb_type = rmixl_configuration.rc_psb_type;
 		int error;
 
+		switch (psb_type) {
+		case PSB_TYPE_RMI:
+			break;
+		case PSB_TYPE_DELL:
+			/* FALLTHROUGH */
+		default:
+			aprint_error(": psb type=%s cpu_wakeup unsupported\n",
+				rmixlfw_psb_type_name(psb_type));
+			return;
+		}
+ 
 		/*
 		 * Grab a page from the first 256MB to use to store
 		 * exception vectors and cpu_info for this cpu.
@@ -156,7 +168,7 @@ printf("\n%s: cpu %d, core %d, thread %d\n", __func__, cpu, core, thread);
 printf("%s: wip %p\n", __func__, wip);
 
 	llk = (__cpu_simple_lock_t *)(intptr_t)wip->loader_lock;
-printf("%s: llk %p\n", __func__, llk);
+printf("%s: llk %p: %#x\n", __func__, llk, *llk);
 
 	/* XXX WTF */
 	xflag = (volatile uint32_t *)(intptr_t)(wip->loader_lock + 0x2c);
@@ -183,6 +195,7 @@ printf("%s: sp %#"PRIx64"\n", __func__, sp);
 printf("%s: maskp %p\n", __func__, maskp);
 
 	__cpu_simple_lock(llk);
+printf("%s: llk %p: %#x\n", __func__, llk, *llk);
 
 	wip->entry.addr = addr;
 	wip->entry.args = 0;
@@ -202,6 +215,7 @@ if (0) {
 	RMIXL_IOREG_WRITE(RMIXL_PIC_IPIBASE, ipi);
 
 	__cpu_simple_unlock(llk);
+printf("%s: llk %p: %#x\n", __func__, llk, *llk);
 
 	Debugger();
 }
