@@ -374,9 +374,6 @@ mips*el-*-netbsd*)	targ_emul=elf32ltsmip
 mips*-*-netbsd*)	targ_emul=elf32btsmip
 			targ_extra_emuls="elf32ltsmip elf64btsmip elf64ltsmip"
 			;;
-mips*-*-netbsd*)	targ_emul=elf32btsmip
-			targ_extra_emuls="elf32ltsmip elf64btsmip elf64ltsmip"
-  			;;
 mips*-*-bsd*)		targ_emul=mipsbig ;;
 mips*vr4300el-*-elf*)	targ_emul=elf32l4300 ;;
 mips*vr4300-*-elf*)	targ_emul=elf32b4300 ;;
