@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.32 2010/01/28 14:25:17 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.33 2010/01/29 04:33:37 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.32 2010/01/28 14:25:17 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.33 2010/01/29 04:33:37 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,6 @@ genfs_getpages(void *v)
 	struct vnode * const vp = ap->a_vp;
 	struct genfs_node * const gp = VTOG(vp);
 	struct uvm_object * const uobj = &vp->v_uobj;
-	struct vm_page **pgs, *pgs_onstack[UBC_MAX_PAGES];
-	int pgs_size;
 	kauth_cred_t const cred = curlwp->l_cred;		/* XXXUBC curlwp */
 	const bool async = (flags & PGO_SYNCIO) == 0;
 	const bool write = (ap->a_access_type & VM_PROT_WRITE) != 0;
@@ -127,14 +125,12 @@ genfs_getpages(void *v)
 	KASSERT(vp->v_type == VREG || vp->v_type == VDIR ||
 	    vp->v_type == VLNK || vp->v_type == VBLK);
 
-	pgs = NULL;
-	pgs_size = 0;
-
 startover:
 	error = 0;
 	const voff_t origvsize = vp->v_size;
 	const off_t origoffset = ap->a_offset;
 	const int orignpages = *ap->a_count;
+
 	GOP_SIZE(vp, origvsize, &diskeof, 0);
 	if (flags & PGO_PASTEOF) {
 		off_t newsize;
@@ -267,8 +263,9 @@ startover:
 	    round_page(memeof));
 	const int ridx = (origoffset - startoffset) >> PAGE_SHIFT;
 
-	pgs_size = sizeof(struct vm_page *) *
+	const int pgs_size = sizeof(struct vm_page *) *
 	    ((endoffset - startoffset) >> PAGE_SHIFT);
+	struct vm_page **pgs, *pgs_onstack[UBC_MAX_PAGES];
 
 	if (pgs_size > sizeof(pgs_onstack)) {
 		pgs = kmem_zalloc(pgs_size, async ? KM_NOSLEEP : KM_SLEEP);
@@ -316,7 +313,7 @@ startover:
 		genfs_rel_pages(&pgs[ridx], orignmempages);
 		mutex_exit(&uobj->vmobjlock);
 		error = EBUSY;
-		goto out_err;
+		goto out_err_free;
 	}
 
 	/*
@@ -390,7 +387,7 @@ startover:
 			genfs_rel_pages(pgs, npages);
 			mutex_exit(&uobj->vmobjlock);
 			error = EBUSY;
-			goto out_err;
+			goto out_err_free;
 		}
 	}
 	mutex_exit(&uobj->vmobjlock);
@@ -575,7 +572,7 @@ loopdone:
 		UVMHIST_LOG(ubchist, "returning 0 (async)",0,0,0,0);
 		genfs_node_unlock(vp);
 		error = 0;
-		goto out_err;
+		goto out_err_free;
 	}
 	if (bp != NULL) {
 		error = biowait(mbp);
@@ -655,7 +652,7 @@ loopdone:
 		mutex_exit(&uvm_pageqlock);
 		mutex_exit(&uobj->vmobjlock);
 		UVMHIST_LOG(ubchist, "returning error %d", error,0,0,0);
-		goto out_err;
+		goto out_err_free;
 	}
     }
 
@@ -701,9 +698,10 @@ out:
 		    orignmempages * sizeof(struct vm_page *));
 	}
 
-out_err:
+out_err_free:
 	if (pgs != NULL && pgs != pgs_onstack)
 		kmem_free(pgs, pgs_size);
+out_err:
 	if (has_trans)
 		fstrans_done(vp->v_mount);
 	return (error);
