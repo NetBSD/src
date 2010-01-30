@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.33.4.1 2009/03/08 03:19:50 snj Exp $ */
+/* $NetBSD: privcmd.c,v 1.33.4.2 2010/01/30 19:12:26 snj Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.33.4.1 2009/03/08 03:19:50 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.33.4.2 2010/01/30 19:12:26 snj Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -362,7 +362,7 @@ privcmd_ioctl(void *v)
 		privcmd_mmap_t *mcmd = ap->a_data;
 		privcmd_mmap_entry_t mentry;
 		vaddr_t va;
-		u_long ma;
+		paddr_t ma;
 		struct vm_map *vmm = &curlwp->l_proc->p_vmspace->vm_map;
 
 		for (i = 0; i < mcmd->num; i++) {
@@ -383,7 +383,7 @@ privcmd_ioctl(void *v)
 			if (maddr == NULL)
 				return ENOMEM;
 			va = mentry.va & ~PAGE_MASK;
-			ma = mentry.mfn <<  PGSHIFT; /* XXX ??? */
+			ma = ((paddr_t)mentry.mfn) <<  PGSHIFT; /* XXX ??? */
 			for (j = 0; j < mentry.npages; j++) {
 				maddr[j] = ma;
 				ma += PAGE_SIZE;
@@ -400,7 +400,8 @@ privcmd_ioctl(void *v)
 		int i;
 		privcmd_mmapbatch_t* pmb = ap->a_data;
 		vaddr_t va0, va;
-		u_long mfn, ma;
+		u_long mfn;
+		paddr_t ma;
 		struct vm_map *vmm;
 		struct vm_map_entry *entry;
 		vm_prot_t prot;
@@ -446,7 +447,7 @@ privcmd_ioctl(void *v)
 				    UVM_KMF_VAONLY);
 				return error;
 			}
-			ma = mfn << PGSHIFT;
+			ma = ((paddr_t)mfn) << PGSHIFT;
 			if (pmap_enter_ma(pmap_kernel(), trymap, ma, 0,
 			    prot, PMAP_CANFAIL, pmb->dom)) {
 				mfn |= 0xF0000000;
