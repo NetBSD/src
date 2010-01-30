@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.1.1.5 2009/08/21 15:12:24 joerg Exp $	*/
+/*	$NetBSD: common.h,v 1.1.1.6 2010/01/30 21:26:09 joerg Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * All rights reserved.
@@ -53,6 +53,7 @@
 
 /* Connection */
 typedef struct fetchconn conn_t;
+
 struct fetchconn {
 	int		 sd;		/* socket descriptor */
 	char		*buf;		/* buffer */
@@ -71,8 +72,11 @@ struct fetchconn {
 	const SSL_METHOD *ssl_meth;	/* SSL method */
 #  endif
 #endif
-	int		 ref;		/* reference count */
-	int		 is_active;
+
+	struct url	*cache_url;
+	int		cache_af;
+	int		(*cache_close)(conn_t *);
+	conn_t		*next_cached;
 };
 
 /* Structure used for error message lists */
@@ -82,24 +86,20 @@ struct fetcherr {
 	const char	*string;
 };
 
-/* for fetch_writev */
-struct iovec;
-
 void		 fetch_seterr(struct fetcherr *, int);
 void		 fetch_syserr(void);
 void		 fetch_info(const char *, ...);
 int		 fetch_default_port(const char *);
 int		 fetch_default_proxy_port(const char *);
 int		 fetch_bind(int, int, const char *);
-conn_t		*fetch_connect(const char *, int, int, int);
+conn_t		*fetch_cache_get(const struct url *, int);
+void		 fetch_cache_put(conn_t *, int (*)(conn_t *));
+conn_t		*fetch_connect(struct url *, int, int);
 conn_t		*fetch_reopen(int);
-conn_t		*fetch_ref(conn_t *);
 int		 fetch_ssl(conn_t *, int);
 ssize_t		 fetch_read(conn_t *, char *, size_t);
 int		 fetch_getln(conn_t *);
-ssize_t		 fetch_write(conn_t *, const char *, size_t);
-ssize_t		 fetch_writev(conn_t *, struct iovec *, int);
-int		 fetch_putln(conn_t *, const char *, size_t);
+ssize_t		 fetch_write(conn_t *, const void *, size_t);
 int		 fetch_close(conn_t *);
 int		 fetch_add_entry(struct url_list *, struct url *, const char *, int);
 int		 fetch_netrc_auth(struct url *url);
