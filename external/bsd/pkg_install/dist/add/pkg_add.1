@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.1.1.8 2009/08/21 15:19:02 joerg Exp $
+.\" $NetBSD: pkg_add.1,v 1.1.1.9 2010/01/30 21:33:20 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd August 6, 2009
+.Dd January 30, 2010
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -25,7 +25,7 @@
 .Nd a utility for installing and upgrading software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl AfILnRuVv
+.Op Fl AfILnRUuVv
 .Op Fl K Ar pkg_dbdir
 .Op Fl m Ar machine
 .Op Fl P Ar destdir
@@ -128,14 +128,10 @@ architecture the package was built on differ from that of the host.
 .It Fl I
 If an installation script exists for a given package, do not execute it.
 .It Fl K Ar pkg_dbdir
-Set
-.Ar pkg_dbdir
-as the package database directory.
-If this option isn't specified, then the package database directory is
-taken from the value of the environment variable
-.Ev PKG_DBDIR
-if it's set, otherwise it defaults to
-.Pa /var/db/pkg .
+Override the value of the
+.Dv PKG_DBDIR
+configuration option with the value
+.Ar pkg_dbdir .
 .It Fl L
 Don't add the package to any views after installation.
 .It Fl m
@@ -148,32 +144,24 @@ would be taken if it was.
 Prefix all file and directory names with
 .Ar destdir .
 For packages without install scripts this has the same behavior as
-using chroot.
+using
+.Xr chroot 8 .
 .It Fl p Ar prefix
-Set
-.Ar prefix
-as the directory in which to extract files from a package.
-If a package has set its default directory, it will be overridden
-by this flag.
-Note that only the first
-.Cm @cwd
-directive will be replaced, since
-.Nm
-has no way of knowing which directory settings are relative and
-which are absolute.
-Only one directory transition is supported and the second one is expected to go
-into
-.Ar pkgdb .
+Override the prefix stored in the package with
+.Ar prefix .
 .It Fl R
 Do not record the installation of a package.
 This implies
 .Fl I .
 This means that you cannot deinstall it later, so only use this option if
 you know what you are doing!
+.It Fl U
+Replace an already installed version from a package.
+Implies
+.Fl u .
 .It Fl u
 If the package that's being installed is already installed,
 an update is performed.
-It is currently not possible to update to an identical version.
 If this is specified twice, then any dependent packages that are
 too old will also be updated to fulfill the dependency.
 See below for a more detailed description of the process.
@@ -182,27 +170,13 @@ Print version number and exit.
 .It Fl v
 Turn on verbose output.
 .It Fl W Ar viewbase
-Set
-.Ar viewbase
-as the base directory for the managed views.
-The default
-.Ar viewbase
-directory is set by
-.Xr pkg_view 1 .
-This value also may be set from the
-.Ev LOCALBASE
-environment variable.
+Passed down to
+.Xr pkg_view 1
+for managed views.
 .It Fl w Ar view
-Set the
-.Ar view
-to which packages should be added after installation.
-The default
-.Ar view
-is set by
-.Xr pkg_view 1 .
-This value also may be set from the
-.Ev PKG_VIEW
-environment variable.
+Passed down to
+.Xr pkg_view 1
+for managed views.
 .El
 .Pp
 One or more
@@ -348,18 +322,17 @@ after the package has been installed.
 After installation is complete, a copy of the packing list,
 .Ar deinstall
 script, description, and display files are copied into
-.Pa /var/db/pkg/\*[Lt]pkg-name\*[Gt]
+.Pa \*[Lt]PKG_DBDIR\*[Gt]/\*[Lt]pkg-name\*[Gt]
 for subsequent possible use by
 .Xr pkg_delete 1 .
 Any package dependencies are recorded in the other packages'
-.Pa /var/db/pkg/\*[Lt]other-pkg\*[Gt]/+REQUIRED_BY
-file
-(if an alternate package database directory is specified, then it
-overrides the
-.Pa /var/db/pkg
-path shown above).
+.Pa +REQUIRED_BY
+file.
 .It
-If the package is a depoted package, then add it to the default view.
+If the package is a depoted package, then add it to the registered
+by calling
+.Xr pkg_view 1
+accordingly.
 .It
 Finally, if we were upgrading a package, any
 .Pa +REQUIRED_BY
@@ -395,48 +368,19 @@ flag was given to
 .Ev PKG_DESTDIR
 will be set to
 .Ar destdir .
+Additionally,
+.Ev PKG_METADATA_DIR
+and
+.Ev PKG_REFCOUNT_DBDIR
+are prefixed with
+.Ar destdir .
 .Sh ENVIRONMENT
-.Bl -tag -width PKG_TMPDIR
-.It Ev LOCALBASE
-This is the location of the
-.Ar viewbase
-directory in which all the views are managed.
-The default
-.Ar viewbase
-directory is
-.Pa /usr/pkg .
-.It Ev PKG_DBDIR
-If the
-.Fl K
-flag isn't given, then
-.Ev PKG_DBDIR
-is the location of the package database directory.
-The default package database directory is
-.Pa /var/db/pkg .
-.It Ev PKG_PATH
-The value of the
-.Ev PKG_PATH
-variable overrides the
+See
 .Xr pkg_install.conf 5
-variable of the same name.
-It is used if a given package can't be found, it's usually set to
-.Pa /usr/pkgsrc/packages/All .
-The environment variable
-should be a series of entries separated by semicolons.
-Each entry consists of a directory name or URL.
-The current directory may be indicated implicitly by an empty directory
-name, or explicitly by a single period.
-.It Ev PKG_REFCOUNT_DBDIR
-Location of the package reference counts database directory.
-The default location is the path to the package database directory with
-.Dq .refcount
-appended to the path, e.g.
-.Pa /var/db/pkg.refcount .
-.It Ev PKG_VIEW
-The default view can be specified in the
-.Ev PKG_VIEW
-environment variable.
-.El
+for options, that can also be specified using the environment.
+Packages using views are also affected by the environment variables
+documented for
+.Xr pkg_view 1 .
 .Sh EXAMPLES
 In all cases,
 .Nm
@@ -460,59 +404,19 @@ emits more messages to terminal.
 .Pp
 You can grab a compiled binary package from remote location by specifying
 a URL.
-The URL can be put into an environment variable,
-.Ev PKG_PATH .
+The base URL can also be provided by the configuration variable,
+.Dv PKG_PATH .
 .Bd -literal
 # pkg_add -v ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/i386/3.1_2007Q2/All/firefox-2.0.0.4.tgz
 
 # export PKG_PATH=ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/i386/3.1_2007Q2/All
 # pkg_add -v firefox
 .Ed
-.Pp
-Over time, as problems are found in packages, they will be moved
-from the
-.Pa All
-subdirectory into the
-.Pa vulnerable
-subdirectory.
-If you want to accept vulnerable packages by default
-(and know what you are doing),
-you can add the
-.Pa vulnerable
-directory to your
-.Ev PKG_PATH
-like this:
-.Bd -literal
-# export PKG_PATH="ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/i386/3.1_2007Q2/All/;ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/i386/3.1_2007Q2/vulnerable/"
-.Ed
-.Pp
-(The quotes are needed because semicolon
-.Pq Sq \&;
-is a shell meta-character.)
-If you do this, consider using the audit capabilities in
-.Xr pkg_admin 1
-and running it after every
-.Nm .
-.Sh CONFIGURATION VARIABLES
-The following variables change the behavior of
-.Nm
-and are described in
-.Xr pkg_install.conf 5 :
-.Bl -tag -compact -offset indent -width CERTIFICATE_ANCHOR_PKGS
-.It Ev CHECK_LICENSE
-.It Ev CHECK_VULNERABILITIES
-.It Ev CERTIFICATE_ANCHOR_PKGS
-.It Ev CERTIFICATE_CHAIN
-.It Ev VERIFIED_INSTALLATION
-.El
 .Sh SEE ALSO
 .Xr pkg_admin 1 ,
 .Xr pkg_create 1 ,
 .Xr pkg_delete 1 ,
 .Xr pkg_info 1 ,
-.Xr tar 1 ,
-.Xr mktemp 3 ,
-.Xr sysconf 3 ,
 .Xr pkg_install.conf 5 ,
 .Xr pkgsrc 7
 .Sh AUTHORS
