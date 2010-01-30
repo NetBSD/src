@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.19.8.2 2010/01/30 20:46:20 snj Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.19.8.3 2010/01/30 21:19:19 snj Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.19.8.2 2010/01/30 20:46:20 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.19.8.3 2010/01/30 21:19:19 snj Exp $");
 
 #include "opt_ddb.h"
 
@@ -761,11 +761,11 @@ sys_aio_suspend(struct lwp *l, const struct sys_aio_suspend_args *uap, register_
 		timo = 0;
 
 	/* Get the list from user-space */
-	aiocbp_list = kmem_zalloc(nent * sizeof(struct aio_job), KM_SLEEP);
+	aiocbp_list = kmem_alloc(nent * sizeof(*aiocbp_list), KM_SLEEP);
 	error = copyin(SCARG(uap, list), aiocbp_list,
-	    nent * sizeof(struct aiocb));
+	    nent * sizeof(*aiocbp_list));
 	if (error) {
-		kmem_free(aiocbp_list, nent * sizeof(struct aio_job));
+		kmem_free(aiocbp_list, nent * sizeof(*aiocbp_list));
 		return error;
 	}
 
@@ -803,7 +803,7 @@ sys_aio_suspend(struct lwp *l, const struct sys_aio_suspend_args *uap, register_
 				}
 
 				kmem_free(aiocbp_list,
-				    nent * sizeof(struct aio_job));
+				    nent * sizeof(*aiocbp_list));
 				return error;
 			}
 		}
@@ -818,7 +818,7 @@ sys_aio_suspend(struct lwp *l, const struct sys_aio_suspend_args *uap, register_
 	}
 	mutex_exit(&aio->aio_mtx);
 
-	kmem_free(aiocbp_list, nent * sizeof(struct aio_job));
+	kmem_free(aiocbp_list, nent * sizeof(*aiocbp_list));
 	return error;
 }
 
@@ -898,9 +898,9 @@ sys_lio_listio(struct lwp *l, const struct sys_lio_listio_args *uap, register_t 
 	}
 
 	/* Get the list from user-space */
-	aiocbp_list = kmem_zalloc(nent * sizeof(struct aio_job), KM_SLEEP);
+	aiocbp_list = kmem_alloc(nent * sizeof(*aiocbp_list), KM_SLEEP);
 	error = copyin(SCARG(uap, list), aiocbp_list,
-	    nent * sizeof(struct aiocb));
+	    nent * sizeof(*aiocbp_list));
 	if (error) {
 		mutex_enter(&aio->aio_mtx);
 		goto err;
@@ -945,7 +945,7 @@ err:
 		aio_sendsig(p, &lio->sig);
 		pool_put(&aio_lio_pool, lio);
 	}
-	kmem_free(aiocbp_list, nent * sizeof(struct aio_job));
+	kmem_free(aiocbp_list, nent * sizeof(*aiocbp_list));
 	return error;
 }
 
