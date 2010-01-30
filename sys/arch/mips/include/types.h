@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.43.36.11 2010/01/20 06:58:35 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.43.36.12 2010/01/30 23:49:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -116,11 +116,12 @@ typedef struct label_t {
 #define	_L_S5		5
 #define	_L_S6		6
 #define	_L_S7		7
-#define	_L_GP		8
-#define	_L_SP		9
-#define	_L_S8		10
-#define	_L_RA		11
-#define	_L_SR		12
+#define	_L_T8		8
+#define	_L_GP		9
+#define	_L_SP		10
+#define	_L_S8		11
+#define	_L_RA		12
+#define	_L_SR		13
 #endif
 
 typedef	volatile int		__cpu_simple_lock_t;

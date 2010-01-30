@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.64.26.1.2.5 2010/01/20 06:58:36 matt Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.64.26.1.2.6 2010/01/30 23:49:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1034,7 +1034,7 @@ LEAF(mips1_lwp_trampoline)
 	la	t0, _C_LABEL(lwp_startup)
 	move	a0, v0
 	jal	ra, t0
-	move	a1, s7
+	move	a1, MIPS_CURLWP
 
 	# Call the routine specified by cpu_setfunc()
 	jal	ra, s0			

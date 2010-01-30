@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167.38.6 2010/01/29 00:16:58 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.167.38.7 2010/01/30 23:49:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -178,6 +178,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	REG_S	s5, U_PCB_CONTEXT+SF_REG_S5(a2)
 	REG_S	s6, U_PCB_CONTEXT+SF_REG_S6(a2)
 	REG_S	s7, U_PCB_CONTEXT+SF_REG_S7(a2)
+	REG_S	t8, U_PCB_CONTEXT+SF_REG_T8(a2)
 	REG_S	sp, U_PCB_CONTEXT+SF_REG_SP(a2)
 	REG_S	s8, U_PCB_CONTEXT+SF_REG_S8(a2)
 	REG_S	ra, U_PCB_CONTEXT+SF_REG_RA(a2)
@@ -244,6 +245,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	REG_L	s5, U_PCB_CONTEXT+SF_REG_S5(a0)
 	REG_L	s6, U_PCB_CONTEXT+SF_REG_S6(a0)
 	REG_L	s7, U_PCB_CONTEXT+SF_REG_S7(a0)
+	REG_L	t8, U_PCB_CONTEXT+SF_REG_T8(a0)
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_L	gp, U_PCB_CONTEXT+SF_REG_GP(a0)
 #endif
@@ -270,6 +272,7 @@ LEAF(savectx)
 	REG_S	s5, U_PCB_CONTEXT+SF_REG_S5(a0)
 	REG_S	s6, U_PCB_CONTEXT+SF_REG_S6(a0)
 	REG_S	s7, U_PCB_CONTEXT+SF_REG_S7(a0)
+	REG_S	t8, U_PCB_CONTEXT+SF_REG_T8(a0)
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_S	gp, U_PCB_CONTEXT+SF_REG_GP(a0)
 #endif
@@ -298,6 +301,7 @@ LEAF(setjmp)
 	REG_S	s5, SF_REG_S5(a0)
 	REG_S	s6, SF_REG_S6(a0)
 	REG_S	s7, SF_REG_S7(a0)
+	REG_S	t8, SF_REG_T8(a0)
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_S	gp, SF_REG_GP(a0)
 #endif
@@ -323,6 +327,7 @@ LEAF(longjmp)
 	REG_L	s5, SF_REG_S5(a0)
 	REG_L	s6, SF_REG_S6(a0)
 	REG_L	s7, SF_REG_S7(a0)
+	REG_L	t8, SF_REG_T8(a0)
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_L	gp, SF_REG_GP(a0)
 #endif
