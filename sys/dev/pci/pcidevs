@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1017 2010/01/24 15:53:29 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1018 2010/01/30 20:47:57 jakllsch Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -536,6 +536,7 @@ vendor USR2		0x16ec	US Robotics
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor NVIDIA_SGS	0x12d2	Nvidia & SGS-Thomson Microelectronics
 vendor RAINBOW		0x12de	Rainbow Technologies
+vendor DATUM		0x12e2	Datum Inc. Bancomm-Timing Division
 vendor AUREAL		0x12eb	Aureal Semiconductor
 vendor ADMTEK		0x1317	ADMtek
 vendor PACKETENGINES	0x1318	Packet Engines
@@ -610,11 +611,11 @@ vendor RMI		0x182e	Raza Microelectronics Inc. (NetLogic)
 vendor BBELEC		0x1896	B & B Electronics
 vendor RENESAS		0x1912	Renesas Technologies
 vendor ATTANSIC		0x1969	Attansic Technologies
+vendor JMICRON		0x197b	JMicron Technology
 vendor EVE		0x1adb	EVE
+vendor QUMRANET		0x1af4	Qumranet
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
-vendor DATUM		0x12e2	Datum Inc. Bancomm-Timing Division
-vendor JMICRON		0x197b	JMicron Technology
 vendor HINT		0x3388	HiNT
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
@@ -3606,6 +3607,72 @@ product QUANTUMDESIGNS 8580	0x0002	8580
 
 /* QuickLogic products */
 product QUICKLOGIC PCWATCHDOG	0x5030	PC Watchdog
+
+/* Qumranet products */
+product QUMRANET VIRTIO_1000	0x1000	Virtio
+product QUMRANET VIRTIO_1001	0x1001	Virtio
+product QUMRANET VIRTIO_1002	0x1002	Virtio
+product QUMRANET VIRTIO_1003	0x1003	Virtio
+product QUMRANET VIRTIO_1004	0x1004	Virtio
+product QUMRANET VIRTIO_1005	0x1005	Virtio
+product QUMRANET VIRTIO_1006	0x1006	Virtio
+product QUMRANET VIRTIO_1007	0x1007	Virtio
+product QUMRANET VIRTIO_1008	0x1008	Virtio
+product QUMRANET VIRTIO_1009	0x1009	Virtio
+product QUMRANET VIRTIO_100A	0x100a	Virtio
+product QUMRANET VIRTIO_100B	0x100b	Virtio
+product QUMRANET VIRTIO_100C	0x100c	Virtio
+product QUMRANET VIRTIO_100D	0x100d	Virtio
+product QUMRANET VIRTIO_100E	0x100e	Virtio
+product QUMRANET VIRTIO_100F	0x100f	Virtio
+product QUMRANET VIRTIO_1010	0x1010	Virtio
+product QUMRANET VIRTIO_1011	0x1011	Virtio
+product QUMRANET VIRTIO_1012	0x1012	Virtio
+product QUMRANET VIRTIO_1013	0x1013	Virtio
+product QUMRANET VIRTIO_1014	0x1014	Virtio
+product QUMRANET VIRTIO_1015	0x1015	Virtio
+product QUMRANET VIRTIO_1016	0x1016	Virtio
+product QUMRANET VIRTIO_1017	0x1017	Virtio
+product QUMRANET VIRTIO_1018	0x1018	Virtio
+product QUMRANET VIRTIO_1019	0x1019	Virtio
+product QUMRANET VIRTIO_101A	0x101a	Virtio
+product QUMRANET VIRTIO_101B	0x101b	Virtio
+product QUMRANET VIRTIO_101C	0x101c	Virtio
+product QUMRANET VIRTIO_101D	0x101d	Virtio
+product QUMRANET VIRTIO_101E	0x101e	Virtio
+product QUMRANET VIRTIO_101F	0x101f	Virtio
+product QUMRANET VIRTIO_1020	0x1020	Virtio
+product QUMRANET VIRTIO_1021	0x1021	Virtio
+product QUMRANET VIRTIO_1022	0x1022	Virtio
+product QUMRANET VIRTIO_1023	0x1023	Virtio
+product QUMRANET VIRTIO_1024	0x1024	Virtio
+product QUMRANET VIRTIO_1025	0x1025	Virtio
+product QUMRANET VIRTIO_1026	0x1026	Virtio
+product QUMRANET VIRTIO_1027	0x1027	Virtio
+product QUMRANET VIRTIO_1028	0x1028	Virtio
+product QUMRANET VIRTIO_1029	0x1029	Virtio
+product QUMRANET VIRTIO_102A	0x102a	Virtio
+product QUMRANET VIRTIO_102B	0x102b	Virtio
+product QUMRANET VIRTIO_102C	0x102c	Virtio
+product QUMRANET VIRTIO_102D	0x102d	Virtio
+product QUMRANET VIRTIO_102E	0x102e	Virtio
+product QUMRANET VIRTIO_102F	0x102f	Virtio
+product QUMRANET VIRTIO_1030	0x1030	Virtio
+product QUMRANET VIRTIO_1031	0x1031	Virtio
+product QUMRANET VIRTIO_1032	0x1032	Virtio
+product QUMRANET VIRTIO_1033	0x1033	Virtio
+product QUMRANET VIRTIO_1034	0x1034	Virtio
+product QUMRANET VIRTIO_1035	0x1035	Virtio
+product QUMRANET VIRTIO_1036	0x1036	Virtio
+product QUMRANET VIRTIO_1037	0x1037	Virtio
+product QUMRANET VIRTIO_1038	0x1038	Virtio
+product QUMRANET VIRTIO_1039	0x1039	Virtio
+product QUMRANET VIRTIO_103A	0x103a	Virtio
+product QUMRANET VIRTIO_103B	0x103b	Virtio
+product QUMRANET VIRTIO_103C	0x103c	Virtio
+product QUMRANET VIRTIO_103D	0x103d	Virtio
+product QUMRANET VIRTIO_103E	0x103e	Virtio
+product QUMRANET VIRTIO_103F	0x103f	Virtio
 
 /* Rainbow Technologies products */
 product RAINBOW	CS200		0x0200	CryptoSwift 200 PKI Accelerator
