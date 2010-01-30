@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.35 2010/01/30 05:19:20 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36 2010/01/30 12:06:20 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.35 2010/01/30 05:19:20 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36 2010/01/30 12:06:20 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -490,8 +490,9 @@ startover:
 		error = VOP_BMAP(vp, lbn, &devvp, &blkno, &run);
 		if (error) {
 			UVMHIST_LOG(ubchist, "VOP_BMAP lbn 0x%x -> %d\n",
-			    lbn, error,0,0);
+			    lbn,error,0,0);
 			skipbytes += bytes;
+			bytes = 0;
 			goto loopdone;
 		}
 
@@ -521,7 +522,7 @@ startover:
 		 * mark the pages we zeroed PG_RDONLY.
 		 */
 
-		if (blkno < 0) {
+		if (blkno == (daddr_t)-1) {
 			int holepages = (round_page(offset + iobytes) -
 			    trunc_page(offset)) >> PAGE_SHIFT;
 			UVMHIST_LOG(ubchist, "lbn 0x%x -> HOLE", lbn,0,0,0);
@@ -551,6 +552,8 @@ startover:
 		if (offset == startoffset && iobytes == bytes) {
 			bp = mbp;
 		} else {
+			UVMHIST_LOG(ubchist, "vp %p bp %p num now %d",
+			    vp, bp, vp->v_numoutput, 0);
 			bp = getiobuf(vp, true);
 			nestiobuf_setup(mbp, bp, offset - startoffset, iobytes);
 		}
@@ -562,7 +565,7 @@ startover:
 
 		UVMHIST_LOG(ubchist,
 		    "bp %p offset 0x%x bcount 0x%x blkno 0x%x",
-		    bp, offset, iobytes, bp->b_blkno);
+		    bp, offset, bp->b_bcount, bp->b_blkno);
 
 		VOP_STRATEGY(devvp, bp);
 	}
@@ -1283,13 +1286,11 @@ static int
 genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
     enum uio_rw rw, void (*iodone)(struct buf *))
 {
-	int s, error, run;
+	int s, error;
 	int fs_bshift, dev_bshift;
 	off_t eof, offset, startoffset;
 	size_t bytes, iobytes, skipbytes;
-	daddr_t lbn, blkno;
 	struct buf *mbp, *bp;
-	struct vnode *devvp;
 	const bool async = (flags & PGO_SYNCIO) == 0;
 	const bool iowrite = rw == UIO_WRITE;
 	const int brw = iowrite ? B_WRITE : B_READ;
@@ -1343,27 +1344,56 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	for (offset = startoffset;
 	    bytes > 0;
 	    offset += iobytes, bytes -= iobytes) {
+		int run;
+		daddr_t lbn, blkno;
+		struct vnode *devvp;
+
+		/*
+		 * bmap the file to find out the blkno to read from and
+		 * how much we can read in one i/o.  if bmap returns an error,
+		 * skip the rest of the top-level i/o.
+		 */
+
 		lbn = offset >> fs_bshift;
 		error = VOP_BMAP(vp, lbn, &devvp, &blkno, &run);
 		if (error) {
-			UVMHIST_LOG(ubchist, "VOP_BMAP() -> %d", error,0,0,0);
+			UVMHIST_LOG(ubchist, "VOP_BMAP lbn 0x%x -> %d\n",
+			    lbn,error,0,0);
 			skipbytes += bytes;
 			bytes = 0;
-			break;
+			goto loopdone;
 		}
+
+		/*
+		 * see how many pages can be read with this i/o.
+		 * reduce the i/o size if necessary to avoid
+		 * overwriting pages with valid data.
+		 */
 
 		iobytes = MIN((((off_t)lbn + 1 + run) << fs_bshift) - offset,
 		    bytes);
+
+		/*
+		 * if this block isn't allocated, zero it instead of
+		 * reading it.  unless we are going to allocate blocks,
+		 * mark the pages we zeroed PG_RDONLY.
+		 */
+
 		if (blkno == (daddr_t)-1) {
 			if (!iowrite) {
 				memset((char *)kva + (offset - startoffset), 0,
-				   iobytes);
+				    iobytes);
 			}
 			skipbytes += iobytes;
 			continue;
 		}
 
-		/* if it's really one i/o, don't make a second buf */
+		/*
+		 * allocate a sub-buf for this piece of the i/o
+		 * (or just use mbp if there's only 1 piece),
+		 * and start it going.
+		 */
+
 		if (offset == startoffset && iobytes == bytes) {
 			bp = mbp;
 		} else {
@@ -1377,12 +1407,15 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 		/* adjust physical blkno for partial blocks */
 		bp->b_blkno = blkno + ((offset - ((off_t)lbn << fs_bshift)) >>
 		    dev_bshift);
+
 		UVMHIST_LOG(ubchist,
-		    "vp %p offset 0x%x bcount 0x%x blkno 0x%x",
-		    vp, offset, bp->b_bcount, bp->b_blkno);
+		    "bp %p offset 0x%x bcount 0x%x blkno 0x%x",
+		    bp, offset, bp->b_bcount, bp->b_blkno);
 
 		VOP_STRATEGY(devvp, bp);
 	}
+
+loopdone:
 	if (skipbytes) {
 		UVMHIST_LOG(ubchist, "skipbytes %d", skipbytes, 0,0,0);
 	}
