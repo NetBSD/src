@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.203 2009/11/05 18:07:19 dyoung Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.204 2010/01/30 23:19:55 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,14 +79,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.203 2009/11/05 18:07:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.204 2010/01/30 23:19:55 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
-#include "opt_powerhook.h"
 #include "opt_tftproot.h"
 
 #include <sys/param.h>
@@ -136,6 +135,7 @@ int tftproot_dhcpboot(device_t);
 #endif
 
 dev_t	dumpcdev;	/* for savecore */
+int	powerhook_debug = 0;
 
 static void *
 hook_establish(hook_list_t *list, void (*fn)(void *), void *arg)
@@ -426,32 +426,28 @@ void
 dopowerhooks(int why)
 {
 	struct powerhook_desc *dp;
-
-#ifdef POWERHOOK_DEBUG
 	const char *why_name;
 	static const char * pwr_names[] = {PWR_NAMES};
 	why_name = why < __arraycount(pwr_names) ? pwr_names[why] : "???";
-#endif
 
 	if (why == PWR_RESUME || why == PWR_SOFTRESUME) {
 		CIRCLEQ_FOREACH_REVERSE(dp, &powerhook_list, sfd_list) {
-#ifdef POWERHOOK_DEBUG
-			printf("dopowerhooks %s: %s (%p)\n", why_name, dp->sfd_name, dp);
-#endif
+			if (powerhook_debug)
+				printf("dopowerhooks %s: %s (%p)\n",
+				    why_name, dp->sfd_name, dp);
 			(*dp->sfd_fn)(why, dp->sfd_arg);
 		}
 	} else {
 		CIRCLEQ_FOREACH(dp, &powerhook_list, sfd_list) {
-#ifdef POWERHOOK_DEBUG
-			printf("dopowerhooks %s: %s (%p)\n", why_name, dp->sfd_name, dp);
-#endif
+			if (powerhook_debug)
+				printf("dopowerhooks %s: %s (%p)\n",
+				    why_name, dp->sfd_name, dp);
 			(*dp->sfd_fn)(why, dp->sfd_arg);
 		}
 	}
 
-#ifdef POWERHOOK_DEBUG
-	printf("dopowerhooks: %s done\n", why_name);
-#endif
+	if (powerhook_debug)
+		printf("dopowerhooks: %s done\n", why_name);
 }
 
 static int
