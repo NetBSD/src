@@ -1,4 +1,4 @@
-.\"	$NetBSD: swwdog.4,v 1.3 2005/01/12 15:16:33 drochner Exp $
+.\"	$NetBSD: swwdog.4,v 1.4 2010/01/30 21:55:28 pooka Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Steven M. Bellovin
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 6, 2005
+.Dd January 30, 2010
 .\" Written by Steven M. Bellovin
 .Dt SWWDOG 4
 .Os
@@ -39,7 +39,7 @@
 .Nm swwdog
 .Nd software watchdog timer
 .Sh SYNOPSIS
-.Cd "pseudo-device swwdog" Op Ar count
+.Cd "pseudo-device swwdog"
 .Sh DESCRIPTION
 The
 .Nm
@@ -60,10 +60,7 @@ The
 driver was written by
 .An Steven M. Bellovin .
 .Sh BUGS
-Although more than one
-.Nm
-timer can be configured, it's a pointless thing to do, since only
-one watchdog timer can be active at any given time.
+Only one watchdog timer can be active at any given time.
 Arguably, this is a bug in the watchdog timer framework.
 .Pp
 Kernel tickle mode is useless with

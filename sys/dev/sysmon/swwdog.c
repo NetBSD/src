@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.7 2007/07/09 21:01:23 ad Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.8 2010/01/30 21:55:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.7 2007/07/09 21:01:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.8 2010/01/30 21:55:30 pooka Exp $");
 
 /*
  *
@@ -49,8 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.7 2007/07/09 21:01:23 ad Exp $");
 #include <sys/wdog.h>
 #include <dev/sysmon/sysmonvar.h>
 
-#include "swwdog.h"
-
+#define NSWWDOG 1
 struct swwdog_softc {
 	struct sysmon_wdog sc_smw;
 	struct callout sc_c;
