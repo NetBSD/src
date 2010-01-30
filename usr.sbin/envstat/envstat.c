@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.72 2009/04/04 18:43:01 christos Exp $ */
+/* $NetBSD: envstat.c,v 1.73 2010/01/30 02:56:39 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.72 2009/04/04 18:43:01 christos Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.73 2010/01/30 02:56:39 pgoyette Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -55,7 +55,6 @@ __RCSID("$NetBSD: envstat.c,v 1.72 2009/04/04 18:43:01 christos Exp $");
 #define ENVSYS_IFLAG 	0x00000010	/* skip invalid sensors */
 #define ENVSYS_SFLAG	0x00000020	/* remove all properties set */
 #define ENVSYS_TFLAG	0x00000040	/* make statistics */
-#define ENVSYS_WFLAG	0x00000080	/* print warn{min,max} values */
 #define ENVSYS_KFLAG	0x00000100	/* show temp in kelvin */
 
 /* Sensors */
@@ -175,9 +174,6 @@ int main(int argc, char **argv)
 		case 'T':	/* make statistics */
 			flags |= ENVSYS_TFLAG;
 			break;
-		case 'W':	/* print warn{max,min} vs crit{max,min} */
-			flags |= ENVSYS_WFLAG;
-			break;
 		case 'w':	/* width value for the lines */
 			width = (unsigned int)strtoul(optarg, &endptr, 10);
 			if (*endptr != '\0')
@@ -185,6 +181,8 @@ int main(int argc, char **argv)
 			break;
 		case 'x':	/* print the dictionary in raw format */
 			flags |= ENVSYS_XFLAG;
+			break;
+		case 'W':	/* No longer used, retained for campatability */
 			break;
 		case '?':
 		default:
@@ -204,9 +202,6 @@ int main(int argc, char **argv)
 		if (!interval)
 			errx(EXIT_FAILURE,
 		    	    "-T cannot be used without an interval (-i)");
-		if (flags & ENVSYS_WFLAG)
-			errx(EXIT_FAILURE,
-			    "-T cannot be used with -W");
 		else
 			statistics = true;
 	}
@@ -440,11 +435,9 @@ parse_dictionary(int fd)
 			goto out;
 		}
 		rval = check_sensors(str);
-		if (rval) {
-			free(str);
-			goto out;
-		}
 		free(str);
+		if (rval)
+			free(str);
 	}
 	if ((flags & ENVSYS_LFLAG) == 0 && (flags & ENVSYS_DFLAG) == 0)
 		print_sensors();
@@ -718,12 +711,12 @@ print_sensors(void)
 {
 	sensor_t sensor;
 	sensor_stats_t stats = NULL;
-	size_t maxlen = 0, ilen = 32 + 3;
+	size_t maxlen = 0, ilen;
 	double temp = 0;
 	const char *invalid = "N/A", *degrees, *tmpstr, *stype;
-	const char *a, *b, *c, *d, *units;
+	const char *a, *b, *c, *d, *e, *units;
 
-	tmpstr = stype = d = NULL;
+	tmpstr = stype = d = e = NULL;
 
 	/* find the longest description */
 	SIMPLEQ_FOREACH(sensor, &sensors_list, entries)
@@ -747,21 +740,18 @@ print_sensors(void)
 		b = "Max";
 		c = "Min";
 		d = "Avg";
-	} else if (flags & ENVSYS_WFLAG) {
-		b = "WarnMax";
-		c = "WarnMin";
-		d = "WarnCap";
 	} else {
 		b = "CritMax";
-		c = "CritMin";
-		d = "CritCap";
+		c = "WarnMax";
+		d = "WarnMin";
+		e = "CritMin";
 	}
 
 	if (!sensors || (!header_passes && sensors) ||
 	    (header_passes == 10 && sensors)) {
-		(void)printf("%s%*s  %10s %8s %8s %8s %8s\n",
+		(void)printf("%s%*s  %9s %8s %8s %8s %8s %4s\n",
 		    mydevname ? "" : "  ", (int)maxlen,
-		    "", a, b, c, d, units);
+		    "", a, b, c, d, e, units);
 		if (sensors && header_passes == 10)
 			header_passes = 0;
 	}
@@ -801,7 +791,7 @@ print_sensors(void)
 
 		/* print invalid string */
 		if (sensor->invalid) {
-			(void)printf(": %10s\n", invalid);
+			(void)printf(": %9s\n", invalid);
 			continue;
 		}
 
@@ -811,146 +801,112 @@ print_sensors(void)
 		if ((strcmp(sensor->type, "Indicator") == 0) ||
 		    (strcmp(sensor->type, "Battery charge") == 0)) {
 
-			(void)printf(": %10s", sensor->cur_value ? "ON" : "OFF");
+			(void)printf(":%10s", sensor->cur_value ? "ON" : "OFF");
 
-/* converts the value to degC or degF or keep in Kelvin */
-#define CONVERTTEMP(a, b, c)					\
+/* convert and print a temp value in degC, degF, or Kelvin */
+#define PRINTTEMP(a)						\
 do {								\
-	if (b) 							\
-		(a) = ((b) / 1000000.0);			\
-	if (flags & ENVSYS_FFLAG) {				\
-		if (b)						\
-			(a) = (a) * (9.0 / 5.0) - 459.67;	\
-		(c) = "degF";					\
-	} else if (flags & ENVSYS_KFLAG) {			\
-		(c) = "K";					\
-	} else {						\
-		if (b)						\
-			(a) = (a) - 273.15;			\
-		(c) = "degC";					\
-	}							\
+	if (a) {						\
+		temp = ((a) / 1000000.0);			\
+		if (flags & ENVSYS_FFLAG) {			\
+			temp = temp * (9.0 / 5.0) - 459.67;	\
+			degrees = "degF";			\
+		} else if (flags & ENVSYS_KFLAG) {		\
+			degrees = "K";				\
+		} else {					\
+			temp = temp - 273.15;			\
+			degrees = "degC";			\
+		}						\
+		(void)printf("%*.3f ", (int)ilen, temp);	\
+		ilen = 8;					\
+	} else							\
+		ilen += 9;					\
 } while (/* CONSTCOND */ 0)
-
 
 		/* temperatures */
 		} else if (strcmp(sensor->type, "Temperature") == 0) {
 
-			CONVERTTEMP(temp, sensor->cur_value, degrees);
+			ilen = 10;
+			degrees = "";
+			(void)printf(":");
+			PRINTTEMP(sensor->cur_value);
 			stype = degrees;
-			(void)printf(": %10.3f ", temp);
 
+			ilen = 8;
 			if (statistics) {
 				/* show statistics if flag set */
-				CONVERTTEMP(temp, stats->max, degrees);
-				(void)printf("%8.3f ", temp);
-				CONVERTTEMP(temp, stats->min, degrees);
-				(void)printf("%8.3f ", temp);
-				CONVERTTEMP(temp, stats->avg, degrees);
-				(void)printf("%8.3f ", temp);
-				ilen = 8;
-			} else if (flags & ENVSYS_WFLAG) {
-				if (sensor->warnmax_value) {
-					CONVERTTEMP(temp,
-					    sensor->warnmax_value, degrees);
-					(void)printf( "%8.3f ", temp);
-					ilen = 24 + 2;
-				}
-
-				if (sensor->warnmin_value) {
-					CONVERTTEMP(temp,
-					    sensor->warnmin_value, degrees);
-					if (sensor->warnmax_value)
-						ilen = 8;
-					else
-						ilen = 16 + 1;
-
-					(void)printf("%*.3f ", (int)ilen, temp);
-					ilen = 16 + 1;
-				}
+				PRINTTEMP(stats->max);
+				PRINTTEMP(stats->min);
+				PRINTTEMP(stats->avg);
+				ilen += 9;
 			} else {
-				if (sensor->critmax_value) {
-					CONVERTTEMP(temp,
-					    sensor->critmax_value, degrees);
-					(void)printf( "%8.3f ", temp);
-					ilen = 24 + 2;
-				}
-
-				if (sensor->critmin_value) {
-					CONVERTTEMP(temp,
-					    sensor->critmin_value, degrees);
-					if (sensor->critmax_value)
-						ilen = 8;
-					else
-						ilen = 16 + 1;
-
-					(void)printf("%*.3f ", (int)ilen, temp);
-					ilen = 16 + 1;
-				}
+				PRINTTEMP(sensor->critmax_value);
+				PRINTTEMP(sensor->warnmax_value);
+				PRINTTEMP(sensor->warnmin_value);
+				PRINTTEMP(sensor->warnmax_value);
 			}
-
-			(void)printf("%*s", (int)ilen, stype);
-#undef CONVERTTEMP
+			(void)printf("%*s", (int)ilen - 4, stype);
+#undef PRINTTEMP
 
 		/* fans */
 		} else if (strcmp(sensor->type, "Fan") == 0) {
 			stype = "RPM";
 
-			(void)printf(": %10u ", sensor->cur_value);
+			(void)printf(":%10u ", sensor->cur_value);
+
+			ilen = 8;
 			if (statistics) {
 				/* show statistics if flag set */
 				(void)printf("%8u %8u %8u ",
 				    stats->max, stats->min, stats->avg);
-				ilen = 8;
-			} else if (flags & ENVSYS_WFLAG) {
-				if (sensor->warnmax_value) {
-					(void)printf("%8u ",
-					    sensor->warnmax_value);
-					ilen = 24 + 2;
-				}
-
-				if (sensor->warnmin_value) {
-					if (sensor->warnmax_value)
-						ilen = 8;
-					else
-						ilen = 16 + 1;
-					(void)printf("%*u ", (int)ilen,
-					    sensor->warnmin_value);
-					ilen = 16 + 1;
-				}
+				ilen += 9;
 			} else {
 				if (sensor->critmax_value) {
-					(void)printf("%8u ",
+					(void)printf("%*u ", (int)ilen,
 					    sensor->critmax_value);
-					ilen = 24 + 2;
-				}
+					ilen = 8;
+				} else
+					ilen += 9;
+
+				if (sensor->warnmax_value) {
+					(void)printf("%*u ", (int)ilen,
+					    sensor->warnmax_value);
+					ilen = 8;
+				} else
+					ilen += 9;
+
+				if (sensor->warnmin_value) {
+					(void)printf("%*u ", (int)ilen,
+					    sensor->warnmin_value);
+					ilen = 8;
+				} else
+					ilen += 9;
 
 				if (sensor->critmin_value) {
-					if (sensor->critmax_value)
-						ilen = 8;
-					else
-						ilen = 16 + 1;
-					(void)printf("%*u ", (int)ilen,
-					    sensor->critmin_value);
-					ilen = 16 + 1;
-				}
+					(void)printf( "%*u ", (int)ilen,
+					    sensor->warnmax_value);
+					ilen = 8;
+				} else
+					ilen += 9;
+
 			}
 
-			(void)printf("%*s", (int)ilen, stype);
+			(void)printf("%*s", (int)ilen - 4, stype);
 
 		/* integers */
 		} else if (strcmp(sensor->type, "Integer") == 0) {
 
-			(void)printf(": %10d", sensor->cur_value);
+			(void)printf(":%10d", sensor->cur_value);
 
 		/* drives  */
 		} else if (strcmp(sensor->type, "Drive") == 0) {
 
-			(void)printf(": %10s", sensor->drvstate);
+			(void)printf(":%10s", sensor->drvstate);
 
 		/* Battery capacity */
 		} else if (strcmp(sensor->type, "Battery capacity") == 0) {
 
-			(void)printf(": %10s", sensor->battcap);
+			(void)printf(":%10s", sensor->battcap);
 
 		/* everything else */
 		} else {
@@ -969,58 +925,46 @@ do {								\
 			else if (strcmp(sensor->type, "Ampere hour") == 0)
 				stype = "Ah";
 
-			(void)printf(": %10.3f ",
+			(void)printf(":%10.3f ",
 			    sensor->cur_value / 1000000.0);
 
+			ilen = 8;
 			if (!statistics) {
-				if (flags & ENVSYS_WFLAG) {
-					if (sensor->warnmax_value) {
-						(void)printf("%8.3f ",
-						    sensor->warnmax_value / 1000000.0);
-						ilen = 24 + 2;
-					}
 
-					if (sensor->warnmin_value) {
-						if (sensor->warnmax_value)
-							ilen = 8;
-						else
-							ilen = 16 + 1;
-						(void)printf("%*.3f ", (int)ilen,
-						    sensor->warnmin_value / 1000000.0);
-						ilen = 16 + 1;
-					}
-					if (sensor->warncap_value) {
-						ilen = 24 + 2 - 1;
-						(void)printf("%*.2f%% ", (int)ilen,
-						    (sensor->warncap_value * 100.0) /
-						    sensor->max_value);
-						ilen = 8;
-					}
+/* Print percentage of max_value */
+#define PRINTPCT(a)							\
+do {									\
+	if (sensor->a && sensor->max_value) {				\
+		(void)printf("%*.3f%%", (int)ilen,			\
+			(sensor->a * 100.0) / sensor->max_value);	\
+		ilen = 8;						\
+	} else								\
+		ilen += 9;						\
+} while ( /* CONSTCOND*/ 0 )
+
+/* Print a generic sensor value */
+#define PRINTVAL(a)							\
+do {									\
+	if (sensor->a) {						\
+		(void)printf("%*.3f ", (int)ilen, sensor->a / 1000000.0); \
+		ilen = 8;						\
+	} else								\
+		ilen += 9;						\
+} while ( /* CONSTCOND*/ 0 )
+
+
+				if (sensor->percentage) {
+					ilen += 9 + 9;
+					PRINTPCT(warncap_value);
+					PRINTPCT(critcap_value);
 				} else {
-					if (sensor->critmax_value) {
-						(void)printf("%8.3f ",
-						    sensor->critmax_value / 1000000.0);
-						ilen = 24 + 2;
-					}
 
-					if (sensor->critmin_value) {
-						if (sensor->critmax_value)
-							ilen = 8;
-						else
-							ilen = 16 + 1;
-						(void)printf("%*.3f ", (int)ilen,
-						    sensor->critmin_value / 1000000.0);
-						ilen = 16 + 1;
-
-					}
-
-					if (sensor->critcap_value) {
-						ilen = 24 + 2 - 1;
-						(void)printf("%*.2f%% ", (int)ilen,
-						    (sensor->critcap_value * 100.0) /
-						    sensor->max_value);
-						ilen = 8;
-					}
+					PRINTVAL(critmax_value);
+					PRINTVAL(warnmax_value);
+					PRINTVAL(warnmin_value);
+					PRINTVAL(critmin_value);
+#undef PRINTPCT
+#undef PRINTVAL
 				}
 			}
 
@@ -1030,18 +974,18 @@ do {								\
 				    stats->max / 1000000.0,
 				    stats->min / 1000000.0,
 				    stats->avg / 1000000.0);
-				ilen = 8;
+				ilen += 9;
 			}
 
-			(void)printf("%*s", (int)ilen, stype);
+			(void)printf("%*s", (int)ilen - 4, stype);
+
 			if (sensor->percentage && sensor->max_value) {
-				(void)printf("  (%5.2f%%)",
+				(void)printf(" (%5.2f%%)",
 				    (sensor->cur_value * 100.0) /
 				    sensor->max_value);
 			}
 		}
 		(void)printf("\n");
-		ilen = 32 + 3;
 	}
 }
 
