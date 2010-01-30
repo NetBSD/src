@@ -1,4 +1,4 @@
-/*	$NetBSD: af_atalk.c,v 1.15 2008/08/01 22:44:17 dyoung Exp $	*/
+/*	$NetBSD: af_atalk.c,v 1.16 2010/01/30 18:30:33 is Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_atalk.c,v 1.15 2008/08/01 22:44:17 dyoung Exp $");
+__RCSID("$NetBSD: af_atalk.c,v 1.16 2010/01/30 18:30:33 is Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -41,6 +41,8 @@ __RCSID("$NetBSD: af_atalk.c,v 1.15 2008/08/01 22:44:17 dyoung Exp $");
 #include <net/if.h> 
 
 #include <netatalk/at.h>
+
+#include <netdb.h>
 
 #include <err.h>
 #include <errno.h>
@@ -177,19 +179,20 @@ at_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 }
 
 static void
-sat_print(const char *prefix, const struct sockaddr *sa)
+sat_print1(const char *prefix, const struct sockaddr *sa)
 {
-	const struct sockaddr_at *sat = satocsat(sa);
+	char buf[40];
+	int rc;
 
-	printf("%s%d.%d", prefix, ntohs(sat->sat_addr.s_net),
-	    sat->sat_addr.s_node);
+	rc = getnameinfo(sa, sa->sa_len, buf, sizeof(buf), NULL, 0, 0);
+	
+	printf("%s%s", prefix, buf);
 }
 
 static void
 at_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 {
 	struct sockaddr_at *sat;
-	struct netrange *nr;
 	struct ifreq ifr;
 	int s;
 	const char *ifname;
@@ -216,10 +219,7 @@ at_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 		warn("SIOCGIFADDR");
 	sat = (struct sockaddr_at *)&ifr.ifr_addr;
 
-	nr = (struct netrange *)&sat->sat_zero;
-	sat_print("\tatalk ", &ifr.ifr_addr);
-	printf(" range %d-%d phase %d",
-	    ntohs(nr->nr_firstnet), ntohs(nr->nr_lastnet), nr->nr_phase);
+	sat_print1("\tatalk ", &ifr.ifr_addr);
 
 	if (flags & IFF_POINTOPOINT) {
 		estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
@@ -229,11 +229,13 @@ at_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 			else
 				warn("SIOCGIFDSTADDR");
 		}
-		sat_print(" --> ", &ifr.ifr_dstaddr);
+		sat_print1(" --> ", &ifr.ifr_dstaddr);
 	}
 	if (flags & IFF_BROADCAST) {
 		/* note RTAX_BRD overlap with IFF_POINTOPOINT */
-		sat_print(" broadcast ", &ifr.ifr_broadaddr);
+		/* note Appletalk broadcast is fixed. */
+		printf(" broadcast %u.%u", ntohs(sat->sat_addr.s_net),
+			ATADDR_BCAST);
 	}
 	printf("\n");
 }
