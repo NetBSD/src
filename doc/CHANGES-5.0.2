@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.50 2010/01/30 20:44:51 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.51 2010/01/30 21:25:14 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -1155,4 +1155,12 @@ common/lib/libc/hash/sha2/sha2.c		1.21
 	Fix unaligned access in *_Final for SHA224/SHA256/SHA384.
 	Remaining part of PR 42273.
 	[joerg, ticket #1276]
+
+sys/kern/sys_aio.c				1.28 via patch
+
+	sys_aio_suspend, sys_lio_listio:
+	- fix the buffer sizes.
+	- use kmem_alloc instead of kmem_zalloc for buffers which we will
+	  overwrite soon.
+	[rmind, ticket #1288]
 
