@@ -85,29 +85,55 @@ void drm_mem_uninit(void)
 static void *
 drm_netbsd_ioremap(struct drm_device *dev, drm_local_map_t *map, int wc)
 {
+	bus_space_handle_t h;
 	int i, reg, reason;
 	for(i = 0; i<DRM_MAX_PCI_RESOURCE; i++) {
 		reg = PCI_MAPREG_START + i*4;
+
+		/* Does the requested mapping lie within this resource? */
 		if ((dev->pci_map_data[i].maptype == PCI_MAPREG_TYPE_MEM ||
 		     dev->pci_map_data[i].maptype ==
                       (PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT)) &&
-		    dev->pci_map_data[i].base == map->offset             &&
-		    dev->pci_map_data[i].size >= map->size)
+		    map->offset >= dev->pci_map_data[i].base             &&
+		    map->offset + map->size <= dev->pci_map_data[i].base +
+                                              dev->pci_map_data[i].size)
 		{
 			map->bst = dev->pa.pa_memt;
-			map->cnt = &(dev->pci_map_data[i].mapped);
-			map->mapsize = dev->pci_map_data[i].size;
+			map->fullmap = &(dev->pci_map_data[i]);
+			map->mapsize = map->size;
 			dev->pci_map_data[i].mapped++;
+
+			/* If we've already mapped this resource in, handle
+			 * submapping if needed, give caller a bus_space handle
+			 * and pointer for the offest they asked for */
 			if (dev->pci_map_data[i].mapped > 1)
 			{
-				map->bsh = dev->pci_map_data[i].bsh;
-				return dev->pci_map_data[i].vaddr;
+				if ((reason = bus_space_subregion(
+						dev->pa.pa_memt,
+						dev->pci_map_data[i].bsh,
+						map->offset - dev->pci_map_data[i].base,
+						map->size, &h)) != 0)  {
+					DRM_DEBUG("ioremap failed to "
+						"bus_space_subregion: %d\n",
+						reason);
+					return NULL;
+				}
+				map->bsh = h;
+				map->handle = bus_space_vaddr(dev->pa.pa_memt,
+									h);
+				return map->handle;
 			}
+
+			/* Map in entirety of resource - full size and handle
+			 * go in pci_map_data, specific mapping in callers
+			 * drm_local_map_t */
 			DRM_DEBUG("ioremap%s: flags %d\n", wc ? "_wc" : "",
 				  dev->pci_map_data[i].flags);
-			if ((reason = bus_space_map(map->bst, map->offset,
+			if ((reason = bus_space_map(map->bst,
+					dev->pci_map_data[i].base,
 					dev->pci_map_data[i].size,
-					dev->pci_map_data[i].flags, &map->bsh)))
+					dev->pci_map_data[i].flags,
+					&dev->pci_map_data[i].bsh)))
 			{
 				dev->pci_map_data[i].mapped--;
 #if NAGP_I810 > 0 /* XXX horrible kludge: agp might have mapped it */
@@ -118,13 +144,29 @@ drm_netbsd_ioremap(struct drm_device *dev, drm_local_map_t *map, int wc)
 					  reason);
 				return NULL;
 			}
-			dev->pci_map_data[i].bsh = map->bsh;
-			dev->pci_map_data[i].vaddr =
-				 	bus_space_vaddr(map->bst, map->bsh);
+
+			dev->pci_map_data[i].vaddr = bus_space_vaddr(map->bst,
+						dev->pci_map_data[i].bsh);
+
+			/* Caller might have requested a submapping of that */
+			if ((reason = bus_space_subregion(
+					dev->pa.pa_memt,
+					dev->pci_map_data[i].bsh,
+					map->offset - dev->pci_map_data[i].base,
+					map->size, &h)) != 0)  {
+				DRM_DEBUG("ioremap failed to "
+					"bus_space_subregion: %d\n",
+					reason);
+				return NULL;
+			}
+
 			DRM_DEBUG("ioremap mem found for %lx, %lx: %p\n",
 				map->offset, map->size,
 				dev->agp_map_data[i].vaddr);
-			return dev->pci_map_data[i].vaddr;
+
+			map->bsh = h;
+			map->handle = bus_space_vaddr(dev->pa.pa_memt, h);
+			return map->handle;
 		}
 	}
 	/* failed to find a valid mapping; all hope isn't lost though */
@@ -133,7 +175,7 @@ drm_netbsd_ioremap(struct drm_device *dev, drm_local_map_t *map, int wc)
 		    dev->agp_map_data[i].base == map->offset &&
 		    dev->agp_map_data[i].size >= map->size) {
 			map->bst = dev->pa.pa_memt;
-			map->cnt = &(dev->agp_map_data[i].mapped);
+			map->fullmap = &(dev->agp_map_data[i]);
 			map->mapsize = dev->agp_map_data[i].size;
 			dev->agp_map_data[i].mapped++;
 			map->bsh = dev->agp_map_data[i].bsh;
@@ -148,7 +190,7 @@ drm_netbsd_ioremap(struct drm_device *dev, drm_local_map_t *map, int wc)
 			dev->agp_map_data[i].size = map->size;
 			dev->agp_map_data[i].flags = BUS_SPACE_MAP_LINEAR;
 			dev->agp_map_data[i].maptype = PCI_MAPREG_TYPE_MEM;
-			map->cnt = &(dev->agp_map_data[i].mapped);
+			map->fullmap = &(dev->agp_map_data[i]);
 			map->mapsize = dev->agp_map_data[i].size;
 
 			DRM_DEBUG("ioremap%s: flags %d\n", wc ? "_wc" : "",
@@ -201,14 +243,16 @@ void drm_ioremapfree(drm_local_map_t *map)
 #if defined(__FreeBSD__)
 	pmap_unmapdev((vm_offset_t) map->handle, map->size);
 #elif   defined(__NetBSD__)
-	if (map->cnt == NULL) {
+	if (map->fullmap == NULL) {
 		DRM_INFO("drm_ioremapfree called for unknown map\n");
 		return;
 	}
-	if (*(map->cnt) > 0) {
-		(*(map->cnt))--;
-		if(*(map->cnt) == 0)
-			bus_space_unmap(map->bst, map->bsh, map->mapsize);
+
+	if (map->fullmap->mapped > 0) {
+		map->fullmap->mapped--;
+		if(map->fullmap->mapped == 0)
+			bus_space_unmap(map->bst, map->fullmap->bsh,
+					map->fullmap->size);
 	}
 #endif
 }
