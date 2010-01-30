@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.47 2010/01/27 21:45:44 sborrill Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.48 2010/01/30 20:10:23 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -1133,4 +1133,20 @@ sys/dev/ic/mfi.c				1.31
 	bio(4) is MP-safe but mfi(4) is not. So get the kernel_lock at
 	mfi_ioctl() entry and release it on exit.
 	[bouyer, #ticket 1257]
+
+sys/dev/cgd.c					1.69
+sys/dev/ata/wd.c				1.383 via patch
+sys/dev/dkwedge/dk.c				1.53
+sys/dev/vnd.c					1.206
+
+	struct buf::b_iodone is not called at splbio() any more.
+	Make sure non-MPsafe iodone callbacks raise the SPL as appropriate.
+	Fix buffer corruption issue I noticed in dk(4), and probable similar
+	issues in vnd(4) and cgd(4).
+	[bouyer, ticket #1269]
+
+sys/kern/sys_aio.c				1.25
+
+	aio_suspend1: fix a double free bug.
+	[rmind, ticket #1286]
 
