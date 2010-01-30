@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.76 2010/01/26 14:22:00 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.77 2010/01/30 02:46:52 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.76 2010/01/26 14:22:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.77 2010/01/30 02:46:52 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -93,6 +93,27 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	KASSERT(sdict != NULL);
 	KASSERT(edata != NULL);
 	KASSERT(sme != NULL);
+	KASSERT(lims != NULL);
+
+	/*
+	 * Some validation first for limit-checking events
+	 *
+	 * Capacity limits are permitted only if the sensor has the
+	 * ENVSYS_FPERCENT flag set.
+	 * Value limits are permitted only if the ENVSYS_FPERCENT
+	 * flag is not set and the units is not ENVSYS_INDICATOR.
+	 */
+
+	DPRINTF(("%s: units %d lim-flags 0x%04x edata-flags 0x%04x\n",
+		__func__, edata->units, lims->sel_flags, edata->flags));
+
+	if ((lims->sel_flags & PROP_VAL_LIMITS) &&
+	    ((edata->flags & ENVSYS_FPERCENT) ||
+	     (edata->units == ENVSYS_INDICATOR)))
+		return ENOTSUP;
+	if ((lims->sel_flags & PROP_CAP_LIMITS) &&
+	    !(edata->flags & ENVSYS_FPERCENT))
+		return ENOTSUP;
 
 	/* 
 	 * check if the event is already on the list and return
@@ -111,8 +132,8 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		 */
 		KASSERT(edata == osee->see_edata);
 
-		DPRINTF(("%s: dev %s sensor %s lim_flags 0x%04x event exists\n",
-		    __func__, sme->sme_name, edata->desc, lims->sel_flags));
+		DPRINTF(("%s: dev %s sensor %s: event type %d exists\n",
+		    __func__, sme->sme_name, edata->desc, crittype));
 
 		see = osee;
 		if (lims->sel_flags & PROP_CRITMAX) {
@@ -125,16 +146,14 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		}
 		if (lims->sel_flags & PROP_WARNMAX) {
 			if (lims->sel_warnmax == edata->limits.sel_warnmax) {
-				DPRINTF(("%s: type=%d (warnmax exists)\n",
-				    __func__, crittype));
+				DPRINTF(("%s: warnmax exists\n", __func__));
 				error = EEXIST;
 				lims->sel_flags &= ~PROP_WARNMAX;
 			}
 		}
 		if (lims->sel_flags & (PROP_WARNMIN | PROP_BATTWARN)) {
 			if (lims->sel_warnmin == edata->limits.sel_warnmin) {
-				DPRINTF(("%s: type=%d (warnmin exists)\n",
-				    __func__, crittype));
+				DPRINTF(("%s: warnmin exists\n", __func__));
 				error = EEXIST;
 				lims->sel_flags &=
 					~(PROP_WARNMIN | PROP_BATTWARN);
@@ -142,8 +161,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		}
 		if (lims->sel_flags & (PROP_CRITMIN | PROP_BATTCAP)) {
 			if (lims->sel_critmin == edata->limits.sel_critmin) {
-				DPRINTF(("%s: type=%d (critmin exists)\n",
-				    __func__, crittype));
+				DPRINTF(("%s: critmin exists\n", __func__));
 				error = EEXIST;
 				lims->sel_flags &=
 					~(PROP_CRITMIN | PROP_BATTCAP);
@@ -159,8 +177,8 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		if (see == NULL)
 			return ENOMEM;
 
-		DPRINTF(("%s: dev %s sensor %s lim_flags 0x%04x new event\n",
-		    __func__, sme->sme_name, edata->desc, lims->sel_flags));
+		DPRINTF(("%s: dev %s sensor %s: new event\n",
+		    __func__, sme->sme_name, edata->des));
 
 		see->see_type = crittype;
 		see->see_sme = sme;
