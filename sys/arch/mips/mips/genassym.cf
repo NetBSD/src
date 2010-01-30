@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44.12.11 2010/01/20 09:04:35 matt Exp $
+#	$NetBSD: genassym.cf,v 1.44.12.12 2010/01/30 23:49:31 matt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -306,6 +306,7 @@ define	SF_REG_S4	offsetof(label_t, val[_L_S4])
 define	SF_REG_S5	offsetof(label_t, val[_L_S5])
 define	SF_REG_S6	offsetof(label_t, val[_L_S6])
 define	SF_REG_S7	offsetof(label_t, val[_L_S7])
+define	SF_REG_T8	offsetof(label_t, val[_L_T8])
 define	SF_REG_GP	offsetof(label_t, val[_L_GP])
 define	SF_REG_SP	offsetof(label_t, val[_L_SP])
 define	SF_REG_S8	offsetof(label_t, val[_L_S8])

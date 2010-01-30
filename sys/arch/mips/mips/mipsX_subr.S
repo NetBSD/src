@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.20 2010/01/20 06:58:36 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.21 2010/01/30 23:49:31 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1390,7 +1390,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	REG_S	s4, FRAME_S4(a1)
 	REG_S	s5, FRAME_S5(a1)
 	REG_S	s6, FRAME_S6(a1)
-	#REG_S	s7, FRAME_S7(a1)		# MIPS_CURLWP_FRAME
+	REG_S	s7, FRAME_S7(a1)		# MIPS_CURLWP_FRAME
 	REG_S	s8, FRAME_S8(a1)
 	REG_L	a0, FRAME_EPC(a1)		# argument is interrupted PC
 #ifdef IPL_ICU_MASK
@@ -1431,7 +1431,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	REG_L	s4, FRAME_S4(a1)
 	REG_L	s5, FRAME_S5(a1)
 	REG_L	s6, FRAME_S6(a1)
-	#REG_L	s7, FRAME_S7(a1)		# MIPS_CURLWP_FRAME
+	REG_L	s7, FRAME_S7(a1)		# MIPS_CURLWP_FRAME
 	REG_L	s8, FRAME_S8(a1)
  #	mtc0	a0, MIPS_COP_0_STATUS		# this should disable interrupts
 
@@ -2063,7 +2063,7 @@ LEAF(MIPSX(lwp_trampoline))
 	PTR_LA	t0, _C_LABEL(lwp_startup)
 	move	a0, v0
 	jal	ra, t0
-	move	a1, s7
+	move	a1, MIPS_CURLWP
 
 	# Call the routine specified by cpu_setfunc()
 	jal	ra, s0			
