@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.48 2010/01/30 20:10:23 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.49 2010/01/30 20:39:46 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -1149,4 +1149,15 @@ sys/kern/sys_aio.c				1.25
 
 	aio_suspend1: fix a double free bug.
 	[rmind, ticket #1286]
+
+common/lib/libc/hash/sha2/sha2.c		1.20
+
+	Fix unaligned access as reported in PR port-sparc/42273.
+	[joerg, ticket #1275]
+
+common/lib/libc/hash/sha2/sha2.c		1.21
+
+	Fix unaligned access in *_Final for SHA224/SHA256/SHA384.
+	Remaining part of PR 42273.
+	[joerg, ticket #1276]
 
