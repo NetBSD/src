@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.24.4.2 2009/09/28 01:47:49 snj Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.24.4.3 2010/01/30 19:14:20 snj Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -604,7 +604,7 @@ xennetback_get_mcl_page(paddr_t *map)
 		 */
 		return -1;
 
-	*map = mcl_pages[mcl_pages_alloc] << PAGE_SHIFT;
+	*map = ((paddr_t)mcl_pages[mcl_pages_alloc]) << PAGE_SHIFT;
 	mcl_pages_alloc--;
 	return 0;
 	
