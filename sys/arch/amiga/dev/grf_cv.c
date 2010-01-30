@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.48 2009/10/26 19:16:54 cegger Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.49 2010/01/30 16:49:14 phx Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.48 2009/10/26 19:16:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.49 2010/01/30 16:49:14 phx Exp $");
 
 #include "grfcv.h"
 #if NGRFCV > 0
@@ -595,7 +595,7 @@ cv_boardinit(struct grf_softc *gp)
 	 * Set the roxxler register to use interrupt #2, not #6.
 	 */
 #if CV_INT_NUM == 2
-	cv_write_port(0x8080, ba - 0x02000000);
+	cv_write_port(0x8080, (volatile char*)ba - 0x02000000);
 #endif
 
 	/* Enable board interrupts */
@@ -910,7 +910,7 @@ cv_mode(register struct grf_softc *gp, u_long cmd, void *arg, u_long a2,
 
 	    case GM_GRFOFF:
 #ifndef CV64CONSOLE
-		cvscreen(1, gp->g_regkva - 0x02000000);
+		cvscreen(1, (volatile char *)gp->g_regkva - 0x02000000);
 #else
 		cv_load_mon(gp, &cvconsole_mode);
 		ite_reinit(gp->g_itedev);
