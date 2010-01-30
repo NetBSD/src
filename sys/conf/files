@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.971 2010/01/24 14:25:57 pooka Exp $
+#	$NetBSD: files,v 1.972 2010/01/30 23:19:55 pooka Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -73,7 +73,6 @@ defparam opt_malloclog.h	MALLOCLOGSIZE
 defflag	opt_malloc_debug.h	MALLOC_DEBUG
 defflag	opt_pool.h		POOL_DIAGNOSTIC
 defparam opt_poollog.h		POOL_LOGSIZE
-defflag	opt_powerhook.h		POWERHOOK_DEBUG
 
 defflag	opt_revcache.h		NAMECACHE_ENTER_REVERSE
 
