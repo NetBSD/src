@@ -1,7 +1,7 @@
-/*	$NetBSD: sys_aio.c,v 1.30 2009/11/22 19:09:16 mbalmer Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.31 2010/01/30 21:23:46 rmind Exp $	*/
 
 /*
- * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
+ * Copyright (c) 2007 Mindaugas Rasiukevicius <rmind at NetBSD org>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.30 2009/11/22 19:09:16 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.31 2010/01/30 21:23:46 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -69,20 +69,19 @@ MODULE(MODULE_CLASS_MISC, aio, NULL);
 /*
  * System-wide limits and counter of AIO operations.
  */
-u_int aio_listio_max = AIO_LISTIO_MAX;
-static u_int aio_max = AIO_MAX;
-static u_int aio_jobs_count;
+u_int			aio_listio_max = AIO_LISTIO_MAX;
+static u_int		aio_max = AIO_MAX;
+static u_int		aio_jobs_count;
 
-static struct pool aio_job_pool;
-static struct pool aio_lio_pool;
-static void *aio_ehook;
+static struct pool	aio_job_pool;
+static struct pool	aio_lio_pool;
+static void *		aio_ehook;
 
-/* Prototypes */
-static void aio_worker(void *);
-static void aio_process(struct aio_job *);
-static void aio_sendsig(struct proc *, struct sigevent *);
-static int aio_enqueue_job(int, void *, struct lio_req *);
-static void aio_exit(proc_t *, void *);
+static void	aio_worker(void *);
+static void	aio_process(struct aio_job *);
+static void	aio_sendsig(struct proc *, struct sigevent *);
+static int	aio_enqueue_job(int, void *, struct lio_req *);
+static void	aio_exit(proc_t *, void *);
 
 static const struct syscall_package aio_syscalls[] = {
 	{ SYS_aio_cancel, 0, (sy_call_t *)sys_aio_cancel },
@@ -830,6 +829,7 @@ sys___aio_suspend50(struct lwp *l, const struct sys___aio_suspend50_args *uap,
 		if (error)
 			return error;
 	}
+
 	list = kmem_alloc(nent * sizeof(*list), KM_SLEEP);
 	error = copyin(SCARG(uap, list), list, nent * sizeof(*list));
 	if (error)
@@ -862,11 +862,8 @@ aio_suspend1(struct lwp *l, struct aiocb **aiocbp_list, int nent,
 	} else
 		timo = 0;
 
-	/* Get the list from user-space */
-
 	mutex_enter(&aio->aio_mtx);
 	for (;;) {
-
 		for (i = 0; i < nent; i++) {
 
 			/* Skip NULL entries */
@@ -890,6 +887,7 @@ aio_suspend1(struct lwp *l, struct aiocb **aiocbp_list, int nent,
 
 				mutex_exit(&aio->aio_mtx);
 
+				/* Check if the job is done. */
 				error = copyin(aiocbp_list[i], &aiocbp,
 				    sizeof(struct aiocb));
 				if (error == 0 && aiocbp._state != JOB_DONE) {
