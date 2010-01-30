@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.8 2009/10/19 18:41:13 bouyer Exp $ */
+/* $NetBSD: siisata.c,v 1.9 2010/01/30 16:16:35 jakllsch Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -53,7 +53,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*-
+/*
  * Copyright (c) 2007, 2008, 2009 Jonathan A. Kollasch.
  * All rights reserved.
  *
@@ -76,8 +76,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.9 2010/01/30 16:16:35 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
