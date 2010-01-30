@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.189 2010/01/27 22:29:11 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.190 2010/01/30 20:26:50 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16443,4 +16443,108 @@ sys/dev/mii/inbmphyreg.h			1.1
 	- Fixes the rx stall problem on 82578 with a lot of workaround
 	  code. We need more work for 82577.
 	[msaitoh, ticket #1277]
+
+libexec/ld.elf_so/map_object.c			1.39
+libexec/ld.elf_so/rtld.h			1.83
+libexec/ld.elf_so/symbol.c			1.49
+
+	Reset the COMBRELOC cache Obj_Entry if it was freed.
+	Fixes PR 41482.
+	[skrll, ticket #1266]
+
+sys/dev/cgd.c					1.69
+sys/dev/ata/wd.c				1.383 via patch
+sys/dev/dkwedge/dk.c				1.53
+sys/dev/vnd.c					1.206
+
+	struct buf::b_iodone is not called at splbio() any more.
+	Make sure non-MPsafe iodone callbacks raise the SPL as appropriate.
+	Fix buffer corruption issue in dk(4), and probably similar issues
+	in vnd(4) and cgd(4).
+	[bouyer, ticket #1269]
+
+external/mit/MesaLib/dist/src/mesa/glapi/glapi.c 1.2
+external/mit/MesaLib/dist/src/mesa/glapi/glapi_getproc.c 1.2
+external/mit/MesaLib/dist/src/mesa/glapi/glthread.c 1.2
+
+	Decorate some GL APIs with PUBLIC so they're available to link
+	against; otherwise, e.g., the swrast DRI module can't find
+	_glapi_check_multithread.
+	[rafal, ticket #1270]
+
+sys/arch/xen/xen/privcmd.c			1.40
+sys/arch/xen/x86/xen_bus_dma.c			1.16
+sys/arch/xen/xen/xengnt.c			1.17 via patch
+sys/arch/xen/xen/xennetback_xenbus.c		1.33
+
+	Fix address overflow with 32bit PAE.
+	[bouyer, ticket #1271]
+
+bin/pax/options.c				1.106
+
+	Don't use NOGLOB_MTCH for pax, only for tar. Fixes fix for PR 41167
+	and closes PR 42301.
+	[dholland, ticket #1272]
+
+etc/Makefile					1.377, 1.378
+
+	Fix installation permissions of /var/db/locate.database as per
+	PR misc/41544.
+	[dholland, ticket #1273]
+
+bin/sh/cd.c					1.40
+bin/sh/sh.1					1.95, 1.97 via patch
+
+	Make the cd builtin accept and ignore -P, which is a kshism that
+	has been allowed to leak into POSIX and selects the behavior cd
+	already implements.  Closes PR bin/42557 and also relevant to
+	PR pkg/42168.
+	[dholland, ticket #1274]
+
+common/lib/libc/hash/sha2/sha2.c		1.20
+
+	Fix unaligned access as reported in PR port-sparc/42273.
+	[joerg, ticket #1275]
+
+common/lib/libc/hash/sha2/sha2.c		1.21
+
+	Fix unaligned access in *_Final for SHA224/SHA256/SHA384.
+	Remaining part of PR 42273.
+	[joerg, ticket #1276]
+
+sys/external/bsd/drm/dist/bsd-core/drmP.h	1.16
+sys/external/bsd/drm/dist/bsd-core/drm_bufs.c	1.7
+sys/external/bsd/drm/dist/bsd-core/drm_memory.c	1.7
+
+	Support drm drivers (Intel G33/G45) submapping pci resources.
+	Fixes PR xsrc/42262.
+	[jmorse, ticket #1280]
+
+crypto/dist/ipsec-tools/src/racoon/isakmp.c	1.59
+crypto/dist/ipsec-tools/src/racoon/racoon.conf.5 1.57
+
+	Export ISAKMP SA identity as REMOTE_ID for phase1 up script.
+	[hubertf, ticket #1281]
+
+sys/dev/pckbport/pckbd.c			1.26
+sys/dev/pckbport/pms.c				1.28
+
+	Use aprint_error.
+	[hubertf, ticket #1282]
+
+share/man/man4/crypto.4				1.17
+
+	Fix typo: CIOCASSYMFEAT -> CIOCASYMFEAT
+	[hubertf, ticket #1285]
+
+sys/kern/sys_aio.c				1.25
+
+	aio_suspend1: fix a double free bug.
+	[rmind, ticket #1286]
+
+dist/file/doc/file.1				patch
+dist/file/doc/libmagic.3			patch
+
+	Fix man page section numbers.
+	[dholland, ticket #1287]
 
