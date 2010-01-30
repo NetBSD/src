@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.1.1.9 2009/08/21 15:19:14 joerg Exp $ */
+/* $NetBSD: lib.h,v 1.1.1.10 2010/01/30 21:33:47 joerg Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -354,10 +354,18 @@ int	pkgdb_dump(void);
 int     pkgdb_remove(const char *);
 int	pkgdb_remove_pkg(const char *);
 char   *pkgdb_refcount_dir(void);
-char   *_pkgdb_getPKGDB_FILE(char *, unsigned);
-const char *_pkgdb_getPKGDB_DIR(void);
-void	_pkgdb_setPKGDB_DIR(const char *);
-
+char   *pkgdb_get_database(void);
+const char   *pkgdb_get_dir(void);
+/*
+ * Priorities:
+ * 0 builtin default
+ * 1 config file
+ * 2 environment
+ * 3 command line
+ * 4 destdir/views reset
+ */
+void	pkgdb_set_dir(const char *, int);
+char   *pkgdb_pkg_dir(const char *);
 char   *pkgdb_pkg_file(const char *, const char *);
 
 /* List of packages functions */
@@ -426,7 +434,9 @@ extern const char *certs_packages;
 extern const char *certs_pkg_vulnerabilities;
 extern const char *check_vulnerabilities;
 extern const char *config_file;
+extern const char *config_pkg_dbdir;
 extern const char *config_pkg_path;
+extern const char *config_pkg_refcount_dbdir;
 extern const char *do_license_check;
 extern const char *verified_installation;
 extern const char *gpg_cmd;
