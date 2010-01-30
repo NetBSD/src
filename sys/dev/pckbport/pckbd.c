@@ -1,7 +1,7 @@
-/* $NetBSD: pckbd.c,v 1.25 2008/06/11 17:35:02 drochner Exp $ */
+/* $NetBSD: pckbd.c,v 1.25.6.1 2010/01/30 19:49:05 snj Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.25 2008/06/11 17:35:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.25.6.1 2010/01/30 19:49:05 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,9 +204,7 @@ pckbd_set_xtscancode(pckbport_tag_t kbctag, pckbport_slot_t kbcslot)
 		res = pckbport_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
 		if (res) {
 			u_char cmdb[1];
-#ifdef DEBUG
-			printf("pckbd: error setting scanset 2\n");
-#endif
+			aprint_debug("pckbd: error setting scanset 2\n");
 			/*
 			 * XXX at least one keyboard is reported to lock up
 			 * if a "set table" is attempted, thus the "reset".
@@ -223,10 +221,8 @@ pckbd_set_xtscancode(pckbport_tag_t kbctag, pckbport_slot_t kbcslot)
 		cmd[0] = KBC_SETTABLE;
 		cmd[1] = 1;
 		res = pckbport_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
-#ifdef DEBUG
 		if (res)
-			printf("pckbd: error setting scanset 1\n");
-#endif
+			aprint_debug("pckbd: error setting scanset 1\n");
 	}
 	return res;
 }
@@ -275,10 +271,8 @@ pckbd_resume(device_t dv PMF_FN_ARGS)
 	cmd[0] = KBC_RESET;
 	res = pckbport_poll_cmd(sc->id->t_kbctag,
 	    sc->id->t_kbcslot, cmd, 1, 1, resp, 1);
-#ifdef DEBUG
 	if (res)
-		printf("pckbdprobe: reset error %d\n", res);
-#endif
+		aprint_debug("pckbdprobe: reset error %d\n", res);
 	if (resp[0] != KBR_RSTDONE)
 		printf("pckbdprobe: reset response 0x%x\n",
 		    resp[0]);
@@ -317,9 +311,7 @@ pckbdprobe(device_t parent, cfdata_t cf, void *aux)
 	cmd[0] = KBC_RESET;
 	res = pckbport_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 1, resp, 1);
 	if (res) {
-#ifdef DEBUG
-		printf("pckbdprobe: reset error %d\n", res);
-#endif
+		aprint_debug("pckbdprobe: reset error %d\n", res);
 		/*
 		 * There is probably no keyboard connected.
 		 * Let the probe succeed if the keyboard is used
@@ -414,9 +406,7 @@ pckbd_enable(void *v, int on)
 
 	if (on) {
 		if (sc->sc_enabled) {
-#ifdef DIAGNOSTIC
-			printf("pckbd_enable: bad enable\n");
-#endif
+			aprint_debug("pckbd_enable: bad enable\n");
 			return EBUSY;
 		}
 
