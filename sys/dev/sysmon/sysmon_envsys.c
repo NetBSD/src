@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.90 2009/07/10 13:09:09 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.91 2010/01/30 02:46:52 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.90 2009/07/10 13:09:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.91 2010/01/30 02:46:52 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1791,12 +1791,6 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		obj2 = prop_dictionary_get(udict, "critical-capacity");
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
-			if ((edata->flags & ENVSYS_FMONNOTSUPP) ||
-			    (edata->flags & ENVSYS_FPERCENT) == 0) {
-				error = ENOTSUP;
-				goto out;
-			}
-
 			lims.sel_critmin = prop_number_integer_value(obj2);
 			lims.sel_flags |= PROP_BATTCAP;
 		}
@@ -1807,12 +1801,6 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		obj2 = prop_dictionary_get(udict, "warning-capacity");
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
-			if ((edata->flags & ENVSYS_FMONNOTSUPP) ||
-			    (edata->flags & ENVSYS_FPERCENT) == 0) {
-				error = ENOTSUP;
-				goto out;
-			}
-
 			lims.sel_warnmin = prop_number_integer_value(obj2);
 			lims.sel_flags |= PROP_BATTWARN;
 		}
@@ -1823,13 +1811,6 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		obj2 = prop_dictionary_get(udict, "critical-max");
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
-			if (edata->units == ENVSYS_INDICATOR ||
-			    edata->flags &
-				    (ENVSYS_FPERCENT | ENVSYS_FMONNOTSUPP)) {
-				error = ENOTSUP;
-				goto out;
-			}
-
 			lims.sel_critmax = prop_number_integer_value(obj2);
 			lims.sel_flags |= PROP_CRITMAX;
 		}
@@ -1840,13 +1821,6 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		obj2 = prop_dictionary_get(udict, "warning-max");
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
-			if (edata->units == ENVSYS_INDICATOR ||
-			    edata->flags &
-				    (ENVSYS_FPERCENT | ENVSYS_FMONNOTSUPP)) {
-				error = ENOTSUP;
-				goto out;
-			}
-
 			lims.sel_warnmax = prop_number_integer_value(obj2);
 			lims.sel_flags |= PROP_WARNMAX;
 		}
@@ -1857,13 +1831,6 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		obj2 = prop_dictionary_get(udict, "critical-min");
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
-			if (edata->units == ENVSYS_INDICATOR ||
-			    edata->flags &
-				    (ENVSYS_FPERCENT | ENVSYS_FMONNOTSUPP)) {
-				error = ENOTSUP;
-				goto out;
-			}
-
 			lims.sel_critmin = prop_number_integer_value(obj2);
 			lims.sel_flags |= PROP_CRITMIN;
 		}
@@ -1874,18 +1841,15 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		obj2 = prop_dictionary_get(udict, "warning-min");
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
-			if (edata->units == ENVSYS_INDICATOR ||
-			    edata->flags &
-				    (ENVSYS_FPERCENT | ENVSYS_FMONNOTSUPP)) {
-				error = ENOTSUP;
-				goto out;
-			}
-
 			lims.sel_warnmin = prop_number_integer_value(obj2);
 			lims.sel_flags |= PROP_WARNMIN;
 		}
 
 		if (lims.sel_flags) {
+			if (edata->flags & ENVSYS_FMONNOTSUPP) {
+				error = ENOTSUP;
+				goto out;
+			}
 			error = sme_event_register(dict, edata, sme, &lims,
 					      (edata->flags & ENVSYS_FPERCENT)?
 						PENVSYS_EVENT_CAPACITY:
