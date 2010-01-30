@@ -1,4 +1,4 @@
-/*	$NetBSD: license.c,v 1.1.1.6 2009/11/05 18:39:05 joerg Exp $	*/
+/*	$NetBSD: license.c,v 1.1.1.7 2010/01/30 21:33:49 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -58,7 +58,9 @@ const char *default_acceptable_licenses =
     "cpl-1.0 "
     "open-font-license "
     "mpl-1.0 mpl-1.1 "
-    "zpl";
+    "zpl "
+    "python-software-foundation "
+    "info-zip";
 
 #ifdef DEBUG
 static size_t hash_collisions;

@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.11 2009/08/06 16:55:25 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.12 2010/01/30 21:33:40 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -13,7 +13,7 @@
 #if HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.11 2009/08/06 16:55:25 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.12 2010/01/30 21:33:40 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -336,9 +336,9 @@ static int
 pkg_do(const char *pkg)
 {
 	struct pkg_meta *meta;
-	char    log_dir[MaxPathSize];
 	int     code = 0;
 	const char   *binpkgfile = NULL;
+	char *pkgdir;
 
 	if (IS_URL(pkg) || (fexists(pkg) && isfile(pkg))) {
 #ifdef BOOTSTRAP
@@ -370,9 +370,8 @@ pkg_do(const char *pkg)
 	         * It's not an uninstalled package, try and find it among the
 	         * installed
 	         */
-		(void) snprintf(log_dir, sizeof(log_dir), "%s/%s",
-		    _pkgdb_getPKGDB_DIR(), pkg);
-		if (!fexists(log_dir) || !(isdir(log_dir) || islinktodir(log_dir))) {
+		pkgdir = pkgdb_pkg_dir(pkg);
+		if (!fexists(pkgdir) || !(isdir(pkgdir) || islinktodir(pkgdir))) {
 			switch (add_installed_pkgs_by_basename(pkg, &pkgs)) {
 			case 1:
 				return 0;
@@ -384,6 +383,7 @@ pkg_do(const char *pkg)
 				errx(EXIT_FAILURE, "Error during search in pkgdb for %s", pkg);
 			}
 		}
+		free(pkgdir);
 		meta = read_meta_data_from_pkgdb(pkg);
 	}
 

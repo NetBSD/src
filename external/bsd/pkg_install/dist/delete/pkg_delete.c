@@ -34,7 +34,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkg_delete.c,v 1.1.1.5 2009/08/06 16:55:25 joerg Exp $");
+__RCSID("$NetBSD: pkg_delete.c,v 1.1.1.6 2010/01/30 21:33:35 joerg Exp $");
 
 #if HAVE_ERR_H
 #include <err.h>
@@ -483,7 +483,7 @@ run_deinstall_script(const char *pkg, int do_postdeinstall)
 		return 0;
 	}
 
-	pkgdir = xasprintf("%s/%s", _pkgdb_getPKGDB_DIR(), pkg);
+	pkgdir = pkgdb_pkg_dir(pkg);
 	if (chmod(fname, 0555))
 		warn("chmod of `%s' failed", fname);
 	rv = fcexec(pkgdir, fname, pkg, target, NULL);
@@ -679,8 +679,8 @@ remove_pkg(const char *pkg)
 		add_plist_top(&plist, PLIST_NAME, pkg);
 	}
 
-	setenv(PKG_PREFIX_VNAME, p->name, 1);
-	fname = xasprintf("%s/%s", _pkgdb_getPKGDB_DIR(), pkg);
+	setenv(PKG_REFCOUNT_DBDIR_VNAME, config_pkg_refcount_dbdir, 1);
+	fname = pkgdb_pkg_dir(pkg);
 	setenv(PKG_METADATA_DIR_VNAME, fname, 1);
 	free(fname);
 
@@ -749,7 +749,7 @@ remove_pkg(const char *pkg)
 	 * Kill the pkgdb subdirectory. The files have been removed, so
 	 * this is way beyond the point of no return.
 	 */
-	pkgdir = xasprintf("%s/%s", _pkgdb_getPKGDB_DIR(), pkg);
+	pkgdir = pkgdb_pkg_dir(pkg);
 	(void) remove_files(pkgdir, "+*");
 	rv = 1;
 	if (isemptydir(pkgdir)&& rmdir(pkgdir) == 0)
@@ -793,7 +793,7 @@ main(int argc, char *argv[])
 			++Force;
 			break;
 		case 'K':
-			pkgdb = optarg;
+			pkgdb_set_dir(optarg, 3);
 			break;
 		case 'k':
 			keep_preserve = 1;
@@ -831,19 +831,16 @@ main(int argc, char *argv[])
 		}
 	}
 
+	pkg_install_config();
+
+	pkgdb = xstrdup(pkgdb_get_dir());
+
 	if (destdir != NULL) {
 		char *pkgdbdir;
 
-		if (pkgdb == NULL)
-			pkgdb = _pkgdb_getPKGDB_DIR();
-
 		pkgdbdir = xasprintf("%s/%s", destdir, pkgdb);
-		_pkgdb_setPKGDB_DIR(pkgdbdir);
+		pkgdb_set_dir(pkgdbdir, 4);
 		free(pkgdbdir);
-	} else if (pkgdb != NULL) {
-		_pkgdb_setPKGDB_DIR(pkgdb);
-	} else {
-		pkgdb = _pkgdb_getPKGDB_DIR();
 	}
 
 	argc -= optind;

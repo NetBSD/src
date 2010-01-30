@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.12 2009/11/05 18:39:00 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.13 2010/01/30 21:33:23 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.12 2009/11/05 18:39:00 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.13 2010/01/30 21:33:23 joerg Exp $");
 
 /*-
  * Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
@@ -140,10 +140,8 @@ add_pkg(const char *pkgdir, void *vp)
 	plist_t	       *p;
 	package_t	Plist;
 	char 	       *contents;
-	const char     *PkgDBDir;
 	char *PkgName, *dirp;
 	char 		file[MaxPathSize];
-	char		dir[MaxPathSize];
 	struct pkgdb_count *count;
 
 	if (!pkgdb_open(ReadWrite))
@@ -152,7 +150,6 @@ add_pkg(const char *pkgdir, void *vp)
 	count = vp;
 	++count->packages;
 
-	PkgDBDir = _pkgdb_getPKGDB_DIR();
 	contents = pkgdb_pkg_file(pkgdir, CONTENTS_FNAME);
 	if ((f = fopen(contents, "r")) == NULL)
 		errx(EXIT_FAILURE, "%s: can't open `%s'", pkgdir, CONTENTS_FNAME);
@@ -190,12 +187,10 @@ add_pkg(const char *pkgdir, void *vp)
 			++count->directories;
 			break;
 		case PLIST_CWD:
-			if (strcmp(p->name, ".") != 0) {
+			if (strcmp(p->name, ".") != 0)
 				dirp = p->name;
-			} else {
-				(void) snprintf(dir, sizeof(dir), "%s/%s", PkgDBDir, pkgdir);
-				dirp = dir;
-			}
+			else
+				dirp = pkgdb_pkg_dir(pkgdir);
 			break;
 		case PLIST_IGNORE:
 			p = p->next;
@@ -237,14 +232,14 @@ delete1pkg(const char *pkgdir)
 static void 
 rebuild(void)
 {
-	char		cachename[MaxPathSize];
+	char *cachename;
 	struct pkgdb_count count;
 
 	count.files = 0;
 	count.directories = 0;
 	count.packages = 0;
 
-	(void) _pkgdb_getPKGDB_FILE(cachename, sizeof(cachename));
+	cachename = pkgdb_get_database();
 	if (unlink(cachename) != 0 && errno != ENOENT)
 		err(EXIT_FAILURE, "unlink %s", cachename);
 
@@ -376,7 +371,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'K':
-			_pkgdb_setPKGDB_DIR(optarg);
+			pkgdb_set_dir(optarg, 3);
 			break;
 
 		case 'S':
