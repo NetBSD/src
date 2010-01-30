@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.7 2010/01/28 01:57:45 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.8 2010/01/30 23:49:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.7 2010/01/28 01:57:45 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.8 2010/01/30 23:49:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb = &l2->l_addr->u_pcb;
 	pcb->pcb_context.val[_L_S0] = (intptr_t)func;			/* S0 */
 	pcb->pcb_context.val[_L_S1] = (intptr_t)arg;			/* S1 */
-	pcb->pcb_context.val[MIPS_CURLWP_CARD - 16] = (intptr_t)l2;	/* S7 */
+	pcb->pcb_context.val[MIPS_CURLWP_LABEL] = (intptr_t)l2;		/* T8 */
 	pcb->pcb_context.val[_L_SP] = (intptr_t)f;			/* SP */
 	pcb->pcb_context.val[_L_RA] = (intptr_t)lwp_trampoline;		/* RA */
 #ifdef _LP64
@@ -198,7 +198,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 
 	pcb->pcb_context.val[_L_S0] = (intptr_t)func;			/* S0 */
 	pcb->pcb_context.val[_L_S1] = (intptr_t)arg;			/* S1 */
-	pcb->pcb_context.val[MIPS_CURLWP_CARD - 16] = (intptr_t)l;	/* S7 */
+	pcb->pcb_context.val[MIPS_CURLWP_LABEL] = (intptr_t)l;		/* T8 */
 	pcb->pcb_context.val[_L_SP] = (intptr_t)f;			/* SP */
 	pcb->pcb_context.val[_L_RA] = (intptr_t)setfunc_trampoline;	/* RA */
 #ifdef _LP64

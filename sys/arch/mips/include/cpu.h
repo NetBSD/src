@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.15 2010/01/26 21:19:25 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.16 2010/01/30 23:49:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -210,10 +210,10 @@ struct cpu_info {
 #define	CPU_ARCH_MIPS64	(1 << 6)
 
 /* Note: must be kept in sync with -ffixed-?? Makefile.mips. */
-#define MIPS_CURLWP             $23
-#define MIPS_CURLWP_QUOTED      "$23"
-#define MIPS_CURLWP_CARD	23
-#define	MIPS_CURLWP_FRAME(x)	FRAME_S7(x)
+#define MIPS_CURLWP             $24
+#define MIPS_CURLWP_QUOTED      "$24"
+#define MIPS_CURLWP_LABEL	_L_T8
+#define MIPS_CURLWP_FRAME(x)	FRAME_T8(x)
 
 #ifndef _LOCORE
 
