@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.23 2010/01/18 17:11:00 jruoho Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.24 2010/01/30 18:35:49 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.23 2010/01/18 17:11:00 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.24 2010/01/30 18:35:49 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.23 2010/01/18 17:11:00 jruoho Ex
 #include <sys/queue.h>
 #include <sys/kmem.h>
 
+#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_ecvar.h>
 
@@ -47,6 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.23 2010/01/18 17:11:00 jruoho Ex
 #include <dev/isa/isareg.h>
 #include <machine/pio.h>
 #endif
+
+#define _COMPONENT		ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME		("thinkpad_acpi")
 
 #define	THINKPAD_NTEMPSENSORS	8
 #define	THINKPAD_NFANSENSORS	1

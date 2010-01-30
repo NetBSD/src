@@ -1,4 +1,4 @@
-/* $NetBSD: hpqlb_acpi.c,v 1.4 2010/01/08 20:40:41 dyoung Exp $ */
+/* $NetBSD: hpqlb_acpi.c,v 1.5 2010/01/30 18:35:49 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2008  Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.4 2010/01/08 20:40:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.5 2010/01/30 18:35:49 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -38,12 +38,16 @@ __KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.4 2010/01/08 20:40:41 dyoung Exp $"
 #include <sys/device.h>
 #include <sys/pmf.h>
 
+#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
 #include <machine/pio.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/isa/isareg.h>
+
+#define _COMPONENT		ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME		("hpqlb_acpi")
 
 #ifdef HPQLB_DEBUG
 #define DPRINTF(x)		do { printf x; } while (/* CONSTCOND */0)

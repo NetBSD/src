@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.28 2009/08/25 10:34:08 jmcneill Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.29 2010/01/30 18:35:48 jruoho Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.28 2009/08/25 10:34:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.29 2010/01/30 18:35:48 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.28 2009/08/25 10:34:08 jmcneill Ex
 #include <dev/acpi/acpivar.h>
 
 #include <dev/sysmon/sysmonvar.h>
+
+#define _COMPONENT		ACPI_BUTTON_COMPONENT
+ACPI_MODULE_NAME		("acpi_button")
 
 struct acpibut_softc {
 	struct acpi_devnode *sc_node;	/* our ACPI devnode */
