@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.130 2010/01/24 15:03:02 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.131 2010/01/30 15:13:25 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.130 2010/01/24 15:03:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.131 2010/01/30 15:13:25 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -872,6 +872,8 @@ ReFault:
 		centeridx = 0;
 
 	}
+	/* offset from entry's start to pgs' start */
+	const voff_t eoff = startva - ufi.entry->start;
 
 	/* locked: maps(read) */
 	UVMHIST_LOG(maphist, "  narrow=%d, back=%d, forw=%d, startva=0x%x",
@@ -886,8 +888,7 @@ ReFault:
 	if (amap) {
 		amap_lock(amap);
 		anons = anons_store;
-		amap_lookups(&ufi.entry->aref, startva - ufi.entry->start,
-		    anons, npages);
+		amap_lookups(&ufi.entry->aref, eoff, anons, npages);
 	} else {
 		anons = NULL;	/* to be safe */
 	}
@@ -910,7 +911,7 @@ ReFault:
 
 		/* flush object? */
 		if (uobj) {
-			uoff = (startva - ufi.entry->start) + ufi.entry->offset;
+			uoff = ufi.entry->offset + eoff;
 			mutex_enter(&uobj->vmobjlock);
 			(void) (uobj->pgops->pgo_put)(uobj, uoff, uoff +
 				    (nback << PAGE_SHIFT), PGO_DEACTIVATE);
@@ -1049,8 +1050,7 @@ ReFault:
 
 		uvmexp.fltlget++;
 		gotpages = npages;
-		(void) uobj->pgops->pgo_get(uobj, ufi.entry->offset +
-				(startva - ufi.entry->start),
+		(void) uobj->pgops->pgo_get(uobj, ufi.entry->offset + eoff,
 				pages, &gotpages, centeridx,
 				access_type & MASK(ufi.entry),
 				ufi.entry->advice, PGO_LOCKED);
