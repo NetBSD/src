@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.49 2010/01/30 20:39:46 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.50 2010/01/30 20:44:51 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -1144,11 +1144,6 @@ sys/dev/vnd.c					1.206
 	Fix buffer corruption issue I noticed in dk(4), and probable similar
 	issues in vnd(4) and cgd(4).
 	[bouyer, ticket #1269]
-
-sys/kern/sys_aio.c				1.25
-
-	aio_suspend1: fix a double free bug.
-	[rmind, ticket #1286]
 
 common/lib/libc/hash/sha2/sha2.c		1.20
 
