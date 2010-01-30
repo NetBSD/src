@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.89 2009/10/26 19:16:54 cegger Exp $ */
+/*	$NetBSD: ite.c,v 1.90 2010/01/30 16:47:05 phx Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.89 2009/10/26 19:16:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.90 2010/01/30 16:47:05 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -434,6 +434,8 @@ iteinit(dev_t dev)
 
 	ip->cursorx = 0;
 	ip->cursory = 0;
+	if (ip->grf->g_iteinit == NULL)
+		return;  /* grf has no console */
 	SUBR_INIT(ip);
 	SUBR_CURSOR(ip, DRAW_CURSOR);
 	if (ip->tabs == NULL)
