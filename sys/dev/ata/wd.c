@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.363.8.3 2010/01/10 23:59:30 snj Exp $ */
+/*	$NetBSD: wd.c,v 1.363.8.4 2010/01/30 19:02:14 snj Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.363.8.3 2010/01/10 23:59:30 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.363.8.4 2010/01/30 19:02:14 snj Exp $");
 
 #include "opt_ata.h"
 
@@ -613,6 +613,7 @@ wd_split_mod15_write(struct buf *bp)
 	struct buf *obp = bp->b_private;
 	struct wd_softc *sc =
 	    device_lookup_private(&wd_cd, DISKUNIT(obp->b_dev));
+	int s;
 
 	if (__predict_false(bp->b_error != 0)) {
 		/*
@@ -641,15 +642,19 @@ wd_split_mod15_write(struct buf *bp)
 	bp->b_data = (char *)bp->b_data + bp->b_bcount;
 	bp->b_blkno += (bp->b_bcount / 512);
 	bp->b_rawblkno += (bp->b_bcount / 512);
+	s = splbio();
 	__wdstart(sc, bp);
+	splx(s);
 	return;
 
  done:
 	obp->b_error = bp->b_error;
 	obp->b_resid = bp->b_resid;
+	s = splbio();
 	putiobuf(bp);
 	biodone(obp);
 	sc->openings++;
+	splx(s);
 	/* wddone() will call wdstart() */
 }
 
