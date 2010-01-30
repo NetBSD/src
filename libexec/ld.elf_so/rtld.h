@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.79.4.2 2010/01/23 17:34:16 bouyer Exp $	 */
+/*	$NetBSD: rtld.h,v 1.79.4.3 2010/01/30 18:53:47 snj Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -278,6 +278,9 @@ const Elf_Sym *_rtld_symlook_default(const char *, unsigned long,
     const Obj_Entry *, const Obj_Entry **, bool);
 const Elf_Sym *_rtld_symlook_needed(const char *, unsigned long,
     const Needed_Entry *, const Obj_Entry **, bool);
+#ifdef COMBRELOC
+void _rtld_combreloc_reset(const Obj_Entry *);
+#endif
 
 /* map_object.c */
 Obj_Entry *_rtld_map_object(const char *, int, const struct stat *);
