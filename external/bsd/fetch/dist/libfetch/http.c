@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.1.1.6 2009/10/15 13:00:00 joerg Exp $	*/
+/*	$NetBSD: http.c,v 1.1.1.7 2010/01/30 21:26:14 joerg Exp $	*/
 /*-
  * Copyright (c) 2000-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2003 Thomas Klausner <wiz@NetBSD.org>
@@ -142,6 +142,7 @@ struct httpio
 {
 	conn_t		*conn;		/* connection */
 	int		 chunked;	/* chunked mode */
+	int		 keep_alive;	/* keep-alive mode */
 	char		*buf;		/* chunk buffer */
 	size_t		 bufsize;	/* size of chunk buffer */
 	ssize_t		 buflen;	/* amount of data currently in buffer */
@@ -149,6 +150,7 @@ struct httpio
 	int		 eof;		/* end-of-file flag */
 	int		 error;		/* error flag */
 	size_t		 chunksize;	/* remaining size of current chunk */
+	off_t		 contentlength;	/* remaining size of the content */
 };
 
 /*
@@ -211,6 +213,9 @@ http_fillbuf(struct httpio *io, size_t len)
 	if (io->eof)
 		return (0);
 
+	if (io->contentlength >= 0 && (off_t)len > io->contentlength)
+		len = io->contentlength;
+
 	if (io->chunked == 0) {
 		if (http_growbuf(io, len) == -1)
 			return (-1);
@@ -218,6 +223,8 @@ http_fillbuf(struct httpio *io, size_t len)
 			io->error = 1;
 			return (-1);
 		}
+		if (io->contentlength)
+			io->contentlength -= io->buflen;
 		io->bufpos = 0;
 		return (io->buflen);
 	}
@@ -229,6 +236,8 @@ http_fillbuf(struct httpio *io, size_t len)
 			return (-1);
 		case 0:
 			io->eof = 1;
+			if (fetch_getln(io->conn) == -1)
+				return (-1);
 			return (0);
 		}
 	}
@@ -242,6 +251,8 @@ http_fillbuf(struct httpio *io, size_t len)
 		return (-1);
 	}
 	io->chunksize -= io->buflen;
+	if (io->contentlength >= 0)
+		io->contentlength -= io->buflen;
 
 	if (io->chunksize == 0) {
 		char endl[2];
@@ -309,9 +320,23 @@ http_closefn(void *v)
 {
 	struct httpio *io = (struct httpio *)v;
 
-	fetch_close(io->conn);
-	if (io->buf)
-		free(io->buf);
+	if (io->keep_alive) {
+		int val;
+
+		val = 0;
+		setsockopt(io->conn->sd, IPPROTO_TCP, TCP_NODELAY, &val,
+			   sizeof(val));
+			  fetch_cache_put(io->conn, fetch_close);
+#ifdef TCP_NOPUSH
+		val = 1;
+		setsockopt(io->conn->sd, IPPROTO_TCP, TCP_NOPUSH, &val,
+		    sizeof(val));
+#endif
+	} else {
+		fetch_close(io->conn);
+	}
+
+	free(io->buf);
 	free(io);
 }
 
@@ -319,7 +344,7 @@ http_closefn(void *v)
  * Wrap a file descriptor up
  */
 static fetchIO *
-http_funopen(conn_t *conn, int chunked)
+http_funopen(conn_t *conn, int chunked, int keep_alive, off_t clength)
 {
 	struct httpio *io;
 	fetchIO *f;
@@ -330,6 +355,8 @@ http_funopen(conn_t *conn, int chunked)
 	}
 	io->conn = conn;
 	io->chunked = chunked;
+	io->contentlength = clength;
+	io->keep_alive = keep_alive;
 	f = fetchIO_unopen(io, http_readfn, http_writefn, http_closefn);
 	if (f == NULL) {
 		fetch_syserr();
@@ -350,6 +377,7 @@ typedef enum {
 	hdr_error = -1,
 	hdr_end = 0,
 	hdr_unknown = 1,
+	hdr_connection,
 	hdr_content_length,
 	hdr_content_range,
 	hdr_last_modified,
@@ -363,6 +391,7 @@ static struct {
 	hdr_t		 num;
 	const char	*name;
 } hdr_names[] = {
+	{ hdr_connection,		"Connection" },
 	{ hdr_content_length,		"Content-Length" },
 	{ hdr_content_range,		"Content-Range" },
 	{ hdr_last_modified,		"Last-Modified" },
@@ -393,7 +422,7 @@ http_cmd(conn_t *conn, const char *fmt, ...)
 		return (-1);
 	}
 
-	r = fetch_putln(conn, msg, len);
+	r = fetch_write(conn, msg, len);
 	free(msg);
 
 	if (r == -1) {
@@ -634,7 +663,7 @@ http_basic_auth(conn_t *conn, const char *hdr, const char *usr, const char *pwd)
 	free(upw);
 	if (auth == NULL)
 		return (-1);
-	r = http_cmd(conn, "%s: Basic %s", hdr, auth);
+	r = http_cmd(conn, "%s: Basic %s\r\n", hdr, auth);
 	free(auth);
 	return (r);
 }
@@ -676,13 +705,15 @@ http_authorize(conn_t *conn, const char *hdr, const char *p)
  * Connect to the correct HTTP server or proxy.
  */
 static conn_t *
-http_connect(struct url *URL, struct url *purl, const char *flags)
+http_connect(struct url *URL, struct url *purl, const char *flags, int *cached)
 {
 	conn_t *conn;
 	int af, verbose;
 #ifdef TCP_NOPUSH
 	int val;
 #endif
+
+	*cached = 1;
 
 #ifdef INET6
 	af = AF_UNSPEC;
@@ -706,7 +737,12 @@ http_connect(struct url *URL, struct url *purl, const char *flags)
 		return (NULL);
 	}
 
-	if ((conn = fetch_connect(URL->host, URL->port, af, verbose)) == NULL)
+	if ((conn = fetch_cache_get(URL, af)) != NULL) {
+		*cached = 1;
+		return (conn);
+	}
+
+	if ((conn = fetch_connect(URL, af, verbose)) == NULL)
 		/* fetch_connect() has already set an error code */
 		return (NULL);
 	if (strcasecmp(URL->scheme, SCHEME_HTTPS) == 0 &&
@@ -764,7 +800,7 @@ set_if_modified_since(conn_t *conn, time_t last_modified)
 	snprintf(buf, sizeof(buf), "%.3s, %02d %.3s %4d %02d:%02d:%02d GMT",
 	    weekdays + tm.tm_wday * 3, tm.tm_mday, months + tm.tm_mon * 3,
 	    tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
-	http_cmd(conn, "If-Modified-Since: %s", buf);
+	http_cmd(conn, "If-Modified-Since: %s\r\n", buf);
 }
 
 
@@ -784,7 +820,8 @@ http_request(struct url *URL, const char *op, struct url_stat *us,
 {
 	conn_t *conn;
 	struct url *url, *new;
-	int chunked, direct, if_modified_since, need_auth, noredirect, verbose;
+	int chunked, direct, if_modified_since, need_auth, noredirect;
+	int keep_alive, verbose, cached;
 	int e, i, n, val;
 	off_t offset, clength, length, size;
 	time_t mtime;
@@ -797,6 +834,7 @@ http_request(struct url *URL, const char *op, struct url_stat *us,
 	noredirect = CHECK_FLAG('A');
 	verbose = CHECK_FLAG('v');
 	if_modified_since = CHECK_FLAG('i');
+	keep_alive = 0;
 
 	if (direct && purl) {
 		fetchFreeURL(purl);
@@ -834,7 +872,7 @@ http_request(struct url *URL, const char *op, struct url_stat *us,
 		}
 
 		/* connect to server or proxy */
-		if ((conn = http_connect(url, purl, flags)) == NULL)
+		if ((conn = http_connect(url, purl, flags, &cached)) == NULL)
 			goto ouch;
 
 		host = url->host;
@@ -858,10 +896,10 @@ http_request(struct url *URL, const char *op, struct url_stat *us,
 			fetch_info("requesting %s://%s%s",
 			    url->scheme, host, url->doc);
 		if (purl) {
-			http_cmd(conn, "%s %s://%s%s HTTP/1.1",
+			http_cmd(conn, "%s %s://%s%s HTTP/1.1\r\n",
 			    op, url->scheme, host, url->doc);
 		} else {
-			http_cmd(conn, "%s %s HTTP/1.1",
+			http_cmd(conn, "%s %s HTTP/1.1\r\n",
 			    op, url->doc);
 		}
 
@@ -869,7 +907,7 @@ http_request(struct url *URL, const char *op, struct url_stat *us,
 			set_if_modified_since(conn, url->last_modified);
 
 		/* virtual host */
-		http_cmd(conn, "Host: %s", host);
+		http_cmd(conn, "Host: %s\r\n", host);
 
 		/* proxy authorization */
 		if (purl) {
@@ -897,19 +935,18 @@ http_request(struct url *URL, const char *op, struct url_stat *us,
 		/* other headers */
 		if ((p = getenv("HTTP_REFERER")) != NULL && *p != '\0') {
 			if (strcasecmp(p, "auto") == 0)
-				http_cmd(conn, "Referer: %s://%s%s",
+				http_cmd(conn, "Referer: %s://%s%s\r\n",
 				    url->scheme, host, url->doc);
 			else
-				http_cmd(conn, "Referer: %s", p);
+				http_cmd(conn, "Referer: %s\r\n", p);
 		}
 		if ((p = getenv("HTTP_USER_AGENT")) != NULL && *p != '\0')
-			http_cmd(conn, "User-Agent: %s", p);
+			http_cmd(conn, "User-Agent: %s\r\n", p);
 		else
-			http_cmd(conn, "User-Agent: %s ", _LIBFETCH_VER);
+			http_cmd(conn, "User-Agent: %s\r\n", _LIBFETCH_VER);
 		if (url->offset > 0)
-			http_cmd(conn, "Range: bytes=%lld-", (long long)url->offset);
-		http_cmd(conn, "Connection: close");
-		http_cmd(conn, "");
+			http_cmd(conn, "Range: bytes=%lld-\r\n", (long long)url->offset);
+		http_cmd(conn, "\r\n");
 
 		/*
 		 * Force the queued request to be dispatched.  Normally, one
@@ -973,6 +1010,9 @@ http_request(struct url *URL, const char *op, struct url_stat *us,
 		case HTTP_PROTOCOL_ERROR:
 			/* fall through */
 		case -1:
+			--i;
+			if (cached)
+				continue;
 			fetch_syserr();
 			goto ouch;
 		default:
@@ -991,6 +1031,10 @@ http_request(struct url *URL, const char *op, struct url_stat *us,
 			case hdr_error:
 				http_seterr(HTTP_PROTOCOL_ERROR);
 				goto ouch;
+			case hdr_connection:
+				/* XXX too weak? */
+				keep_alive = (strcasecmp(p, "keep-alive") == 0);
+				break;
 			case hdr_content_length:
 				http_parse_length(p, &clength);
 				break;
@@ -1120,13 +1164,20 @@ http_request(struct url *URL, const char *op, struct url_stat *us,
 	URL->offset = offset;
 	URL->length = clength;
 
+	if (clength == -1 && !chunked)
+		keep_alive = 0;
+
 	if (conn->err == HTTP_NOT_MODIFIED) {
 		http_seterr(HTTP_NOT_MODIFIED);
+		if (keep_alive) {
+			fetch_cache_put(conn, fetch_close);
+			conn = NULL;
+		}
 		goto ouch;
 	}
 
 	/* wrap it up in a fetchIO */
-	if ((f = http_funopen(conn, chunked)) == NULL) {
+	if ((f = http_funopen(conn, chunked, keep_alive, clength)) == NULL) {
 		fetch_syserr();
 		goto ouch;
 	}
@@ -1137,6 +1188,13 @@ http_request(struct url *URL, const char *op, struct url_stat *us,
 		fetchFreeURL(purl);
 
 	if (HTTP_ERROR(conn->err)) {
+
+		if (keep_alive) {
+			char buf[512];
+			do {
+			} while (fetchIO_read(f, buf, sizeof(buf)) > 0);
+		}
+
 		fetchIO_close(f);
 		f = NULL;
 	}
@@ -1356,6 +1414,7 @@ parse_index(struct index_parser *parser, const char *buf, size_t len)
 			return -1;
 		return end_attr + 1 - buf;
 	}
+	/* NOTREACHED */
 	abort();
 }
 

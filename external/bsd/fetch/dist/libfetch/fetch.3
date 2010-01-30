@@ -1,5 +1,6 @@
 .\"-
 .\" Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
+.\" Copyright (c) 2010 Joerg Sonnenberger <joerg@NetBSD.org>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,9 +25,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: fetch.3,v 1.64 2007/12/18 11:03:26 des Exp $
-.\" $NetBSD: fetch.3,v 1.1.1.7 2009/10/15 12:59:58 joerg Exp $
+.\" $NetBSD: fetch.3,v 1.1.1.8 2010/01/30 21:26:10 joerg Exp $
 .\"
-.Dd February 4, 2009
+.Dd January 22, 2010
 .Dt FETCH 3
 .Os
 .Sh NAME
@@ -64,6 +65,8 @@
 .Nm fetchUnquotePath ,
 .Nm fetchUnquoteFilename ,
 .Nm fetchStringifyURL ,
+.Nm fetchConnectionCacheInit ,
+.Nm fetchConnectionCacheClose ,
 .Nm fetch
 .Nd file transfer functions
 .Sh LIBRARY
@@ -141,6 +144,10 @@
 .Fn fetchUnquoteFilename "struct url *u"
 .Ft char *
 .Fn fetchStringifyURL "const struct url *u"
+.Ft void
+.Fn fetchConnectionCacheInit "int global" "int per_host"
+.Ft void
+.Fn fetchConnectionCacheClose "void"
 .Sh DESCRIPTION
 These functions implement a high-level library for retrieving and
 uploading files using Uniform Resource Locators (URLs).
@@ -306,6 +313,15 @@ and
 return a string that should be deallocated with
 .Fn free
 after use.
+.Pp
+.Fn fetchConnectionCacheInit
+enables the connection cache.
+The first argument specifies the global limit on cached connections.
+The second argument specifies the host limit.
+Entries are considered to specify the same host, if the host name
+from the URL is identical, indepent of the address or address family.
+.Fn fetchConnectionCacheClose
+flushed the connection cache and closes all cached connections.
 .Pp
 .Fn fetchXGet ,
 .Fn fetchGet ,
