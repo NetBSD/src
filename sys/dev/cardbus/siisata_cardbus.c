@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_cardbus.c,v 1.3 2010/01/08 19:47:42 dyoung Exp $ */
+/* $NetBSD: siisata_cardbus.c,v 1.4 2010/01/30 16:16:35 jakllsch Exp $ */
 /* Id: siisata_pci.c,v 1.11 2008/05/21 16:20:11 jakllsch Exp  */
 
 /*
@@ -26,7 +26,7 @@
  *
  */
 
-/*-
+/*
  * Copyright (c) 2007, 2008 Jonathan A. Kollasch.
  * All rights reserved.
  *
@@ -49,11 +49,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 #include <sys/cdefs.h>
-
+__KERNEL_RCSID(0, "$NetBSD: siisata_cardbus.c,v 1.4 2010/01/30 16:16:35 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
