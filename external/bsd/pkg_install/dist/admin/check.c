@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.1.1.3 2009/04/24 14:16:49 joerg Exp $	*/
+/*	$NetBSD: check.c,v 1.1.1.4 2010/01/30 21:33:23 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: check.c,v 1.1.1.3 2009/04/24 14:16:49 joerg Exp $");
+__RCSID("$NetBSD: check.c,v 1.1.1.4 2010/01/30 21:33:23 joerg Exp $");
 
 /*-
  * Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
@@ -87,7 +87,6 @@ check1pkg(const char *pkgdir, int *filecnt, int *pkgcnt)
 	package_t Plist;
 	char   *PkgName, *dirp = NULL, *md5file;
 	char    file[MaxPathSize];
-	char    dir[MaxPathSize];
 	char   *content;
 
 	content = pkgdb_pkg_file(pkgdir, CONTENTS_FNAME);
@@ -150,10 +149,8 @@ check1pkg(const char *pkgdir, int *filecnt, int *pkgcnt)
 		case PLIST_CWD:
 			if (strcmp(p->name, ".") != 0)
 				dirp = p->name;
-			else {
-				(void) snprintf(dir, sizeof(dir), "%s/%s", _pkgdb_getPKGDB_DIR(), pkgdir);
-				dirp = dir;
-			}
+			else
+				dirp = pkgdb_pkg_dir(pkgdir);
 			break;
 		case PLIST_IGNORE:
 			p = p->next;
