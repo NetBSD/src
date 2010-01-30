@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1014 2010/01/24 15:53:59 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1015 2010/01/30 20:50:19 jakllsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1017 2010/01/24 15:53:29 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1018 2010/01/30 20:47:57 jakllsch Exp
  */
 
 /*
@@ -543,6 +543,7 @@
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_NVIDIA_SGS	0x12d2		/* Nvidia & SGS-Thomson Microelectronics */
 #define	PCI_VENDOR_RAINBOW	0x12de		/* Rainbow Technologies */
+#define	PCI_VENDOR_DATUM	0x12e2		/* Datum Inc. Bancomm-Timing Division */
 #define	PCI_VENDOR_AUREAL	0x12eb		/* Aureal Semiconductor */
 #define	PCI_VENDOR_ADMTEK	0x1317		/* ADMtek */
 #define	PCI_VENDOR_PACKETENGINES	0x1318		/* Packet Engines */
@@ -617,11 +618,11 @@
 #define	PCI_VENDOR_BBELEC	0x1896		/* B & B Electronics */
 #define	PCI_VENDOR_RENESAS	0x1912		/* Renesas Technologies */
 #define	PCI_VENDOR_ATTANSIC	0x1969		/* Attansic Technologies */
+#define	PCI_VENDOR_JMICRON	0x197b		/* JMicron Technology */
 #define	PCI_VENDOR_EVE	0x1adb		/* EVE */
+#define	PCI_VENDOR_QUMRANET	0x1af4		/* Qumranet */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
-#define	PCI_VENDOR_DATUM	0x12e2		/* Datum Inc. Bancomm-Timing Division */
-#define	PCI_VENDOR_JMICRON	0x197b		/* JMicron Technology */
 #define	PCI_VENDOR_HINT	0x3388		/* HiNT */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic (2nd PCI Vendor ID) */
@@ -3613,6 +3614,72 @@
 
 /* QuickLogic products */
 #define	PCI_PRODUCT_QUICKLOGIC_PCWATCHDOG	0x5030		/* PC Watchdog */
+
+/* Qumranet products */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1000	0x1000		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1001	0x1001		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1002	0x1002		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1003	0x1003		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1004	0x1004		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1005	0x1005		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1006	0x1006		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1007	0x1007		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1008	0x1008		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1009	0x1009		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_100A	0x100a		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_100B	0x100b		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_100C	0x100c		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_100D	0x100d		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_100E	0x100e		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_100F	0x100f		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1010	0x1010		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1011	0x1011		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1012	0x1012		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1013	0x1013		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1014	0x1014		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1015	0x1015		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1016	0x1016		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1017	0x1017		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1018	0x1018		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1019	0x1019		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_101A	0x101a		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_101B	0x101b		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_101C	0x101c		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_101D	0x101d		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_101E	0x101e		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_101F	0x101f		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1020	0x1020		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1021	0x1021		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1022	0x1022		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1023	0x1023		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1024	0x1024		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1025	0x1025		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1026	0x1026		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1027	0x1027		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1028	0x1028		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1029	0x1029		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_102A	0x102a		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_102B	0x102b		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_102C	0x102c		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_102D	0x102d		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_102E	0x102e		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_102F	0x102f		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1030	0x1030		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1031	0x1031		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1032	0x1032		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1033	0x1033		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1034	0x1034		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1035	0x1035		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1036	0x1036		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1037	0x1037		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1038	0x1038		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_1039	0x1039		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_103A	0x103a		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_103B	0x103b		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_103C	0x103c		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_103D	0x103d		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_103E	0x103e		/* Virtio */
+#define	PCI_PRODUCT_QUMRANET_VIRTIO_103F	0x103f		/* Virtio */
 
 /* Rainbow Technologies products */
 #define	PCI_PRODUCT_RAINBOW_CS200	0x0200		/* CryptoSwift 200 PKI Accelerator */
