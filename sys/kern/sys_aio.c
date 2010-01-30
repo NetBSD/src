@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.19 2008/05/26 17:45:51 rmind Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.19.8.1 2010/01/30 19:53:21 snj Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.19 2008/05/26 17:45:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.19.8.1 2010/01/30 19:53:21 snj Exp $");
 
 #include "opt_ddb.h"
 
@@ -801,9 +801,6 @@ sys_aio_suspend(struct lwp *l, const struct sys_aio_suspend_args *uap, register_
 					mutex_enter(&aio->aio_mtx);
 					continue;
 				}
-
-				kmem_free(aiocbp_list,
-				    nent * sizeof(struct aio_job));
 				return error;
 			}
 		}
