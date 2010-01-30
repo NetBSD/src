@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.191 2010/01/30 20:46:20 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.192 2010/01/30 21:22:13 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16542,4 +16542,12 @@ dist/file/doc/libmagic.3			patch
 
 	Fix man page section numbers.
 	[dholland, ticket #1287]
+
+sys/kern/sys_aio.c				1.28 via patch
+
+	sys_aio_suspend, sys_lio_listio:
+	- fix the buffer sizes.
+	- use kmem_alloc instead of kmem_zalloc for buffers which we will
+	  overwrite soon.
+	[rmind, ticket #1288]
 
