@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.31 2010/01/08 20:40:41 dyoung Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.32 2010/01/30 18:35:48 jruoho Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.31 2010/01/08 20:40:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.32 2010/01/30 18:35:48 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.31 2010/01/08 20:40:41 dyoung Exp $")
 #include <dev/acpi/acpivar.h>
 
 #include <dev/sysmon/sysmonvar.h>
+
+#define _COMPONENT		ACPI_LID_COMPONENT
+ACPI_MODULE_NAME		("acpi_lid")
 
 struct acpilid_softc {
 	struct acpi_devnode *sc_node;	/* our ACPI devnode */
