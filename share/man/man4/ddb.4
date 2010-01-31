@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.133 2010/01/29 10:48:45 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.134 2010/01/31 21:52:23 phx Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd January 28, 2010
+.Dd January 31, 2010
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -852,7 +852,7 @@ an unrecoverable error in some systems such as i386.
 Watchpoints on user addresses work the best.
 .It Ic whatis Ar address
 Describe what an address is.
-.It Ic write Ns Oo Cm /bhl Oc Ar address Ar expression Oo Ar expression ... Oc
+.It Ic write Ns Oo Cm /bhlBHL Oc Ar address Ar expression Oo Ar expression ... Oc
 Write the
 .Ar expression Ns s
 at succeeding locations.
@@ -866,6 +866,15 @@ and
 If no modifier is specified,
 .Cm /l
 is used.
+.Pp
+Specifying the modifiers in upper case,
+.Cm /B ,
+.Cm /H ,
+.Cm /L ,
+will prevent
+.Nm
+from reading the memory location first, which is useful for avoiding
+side effects when writing to I/O memory regions.
 .Pp
 Warning: since there is no delimiter between
 .Ar expression Ns s ,
