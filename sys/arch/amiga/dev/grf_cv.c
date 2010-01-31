@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.49 2010/01/30 16:49:14 phx Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.50 2010/01/31 19:56:19 phx Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.49 2010/01/30 16:49:14 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.50 2010/01/31 19:56:19 phx Exp $");
 
 #include "grfcv.h"
 #if NGRFCV > 0
@@ -67,16 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.49 2010/01/30 16:49:14 phx Exp $");
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_cvreg.h>
 #include <amiga/dev/zbusvar.h>
-
-/*
- * finish all bus operations, flush pipelines
- * XXX is this really needed?
- */
-#if defined(__m68k__)
-#define cpu_sync() __asm volatile ("nop")
-#elif defined(__powerpc__)
-#define cpu_sync() __asm volatile ("sync; isync")
-#endif
 
 int	grfcvmatch(struct device *, struct cfdata *, void *);
 void	grfcvattach(struct device *, struct device *, void *);
