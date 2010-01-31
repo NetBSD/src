@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_hook.c,v 1.1 2010/01/31 01:38:48 pooka Exp $	*/
+/*	$NetBSD: kern_hook.c,v 1.2 2010/01/31 02:04:43 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.1 2010/01/31 01:38:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.2 2010/01/31 02:04:43 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -183,12 +183,12 @@ mountroothook_destroy(void)
 }
 
 void
-domountroothook(void)
+domountroothook(struct device *therootdev)
 {
 	struct hook_desc *hd;
 
 	LIST_FOREACH(hd, &mountroothook_list, hk_list) {
-		if (hd->hk_arg == (void *)root_device) {
+		if (hd->hk_arg == therootdev) {
 			(*hd->hk_fn)(hd->hk_arg);
 			return;
 		}
