@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.134 2010/01/31 07:37:24 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.135 2010/01/31 07:46:03 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.134 2010/01/31 07:37:24 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.135 2010/01/31 07:46:03 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1045,7 +1045,12 @@ ReFault:
 	 * (PGO_LOCKED).
 	 */
 
-	if (uobj) {
+	if (uobj == NULL) {
+		/* zero fill; don't care neighbor pages */
+		uobjpage = NULL;
+		goto lower_fault_lookup_done;
+	}
+
 		mutex_enter(&uobj->vmobjlock);
 		/* locked (!shadowed): maps(read), amap (if there), uobj */
 		/*
@@ -1147,10 +1152,7 @@ ReFault:
 			pmap_update(ufi.orig_map->pmap);
 
 lower_fault_lookup_done:
-		{}
-	} else {
-		uobjpage = NULL;
-	}
+	{}
 
 	/* locked: maps(read), amap(if there), uobj(if !null), uobjpage(if !null) */
 	KASSERT(!shadowed);
