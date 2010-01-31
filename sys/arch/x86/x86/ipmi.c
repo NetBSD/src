@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.41 2009/10/19 18:41:10 bouyer Exp $ */
+/*	$NetBSD: ipmi.c,v 1.42 2010/01/31 11:39:55 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.41 2009/10/19 18:41:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.42 2010/01/31 11:39:55 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1032,7 +1032,7 @@ ipmi_sendcmd(struct ipmi_softc *sc, int rssa, int rslun, int netfn, int cmd,
 		    txlen, data, &txlen);
 
 	if (buf == NULL) {
-		printf("ipmi: sendcmd malloc fails\n");
+		printf("ipmi: sendcmd buffer busy\n");
 		goto done;
 	}
 	rc = sc->sc_if->sendmsg(sc, txlen, buf);
@@ -1079,8 +1079,10 @@ ipmi_recvcmd(struct ipmi_softc *sc, int maxlen, int *rxlen, void *data)
 		return (-1);
 	}
 	/* Receive message from interface, copy out result data */
-	if (sc->sc_if->recvmsg(sc, maxlen + 3, &rawlen, buf))
+	if (sc->sc_if->recvmsg(sc, maxlen + 3, &rawlen, buf)) {
+		ipmi_buf_release(sc, buf);
 		return (-1);
+	}
 
 	*rxlen = rawlen - IPMI_MSG_DATARCV;
 	if (*rxlen > 0 && data)
