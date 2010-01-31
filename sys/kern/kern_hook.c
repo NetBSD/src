@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_hook.c,v 1.2 2010/01/31 02:04:43 pooka Exp $	*/
+/*	$NetBSD: kern_hook.c,v 1.3 2010/01/31 09:27:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,12 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.2 2010/01/31 02:04:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.3 2010/01/31 09:27:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/rwlock.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 /*
  * A generic linear hook.
