@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.92 2010/01/31 21:36:38 martin Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.93 2010/01/31 22:53:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.92 2010/01/31 21:36:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.93 2010/01/31 22:53:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1452,7 +1452,7 @@ sme_get_max_value(struct sysmon_envsys *sme,
 	uint32_t maxv, v;
 
 	/* 
-	 * iterate over all sensors and find temperature ones.
+	 * Iterate over all sensors that match the predicate
 	 */
 	maxv = 0;
 	TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
