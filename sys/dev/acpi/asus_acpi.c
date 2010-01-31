@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.15 2010/01/29 12:22:00 jruoho Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.16 2010/01/31 18:51:33 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008, 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.15 2010/01/29 12:22:00 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.16 2010/01/31 18:51:33 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -186,7 +186,14 @@ static int
 asus_detach(device_t self, int flags)
 {
 	struct asus_softc *sc = device_private(self);
+	ACPI_STATUS rv;
 	int i;
+
+	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
+	    ACPI_ALL_NOTIFY, asus_notify_handler);
+
+	if (ACPI_FAILURE(rv))
+		return EBUSY;
 
 	if (sc->sc_smpsw_valid)
 		for (i = 0; i < ASUS_PSW_LAST; i++)
