@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.31 2010/01/04 16:01:42 uebayasi Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.32 2010/01/31 11:54:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.31 2010/01/04 16:01:42 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.32 2010/01/31 11:54:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -138,6 +138,9 @@ static vmem_addr_t kmem_backend_alloc(vmem_t *, vmem_size_t, vmem_size_t *,
 static void kmem_backend_free(vmem_t *, vmem_addr_t, vmem_size_t);
 static int kmem_kva_reclaim_callback(struct callback_entry *, void *, void *);
 
+CTASSERT(KM_SLEEP == PR_WAITOK);
+CTASSERT(KM_NOSLEEP == PR_NOWAIT);
+
 static inline vm_flag_t
 kmf_to_vmf(km_flag_t kmflags)
 {
@@ -160,9 +163,6 @@ kmf_to_vmf(km_flag_t kmflags)
 static void *
 kmem_poolpage_alloc(struct pool *pool, int prflags)
 {
-
-	CTASSERT(KM_SLEEP == PR_WAITOK);
-	CTASSERT(KM_NOSLEEP == PR_NOWAIT);
 
 	return (void *)vmem_alloc(kmem_arena, pool->pr_alloc->pa_pagesz,
 	    kmf_to_vmf(prflags) | VM_INSTANTFIT);
@@ -205,8 +205,6 @@ kmem_alloc(size_t size, km_flag_t kmflags)
 	if (size >= kmem_cache_min && size <= kmem_cache_max) {
 		kc = &kmem_cache[(size + kmem_cache_mask) >> kmem_cache_shift];
 		KASSERT(size <= kc->kc_pa.pa_pagesz);
-		CTASSERT(KM_SLEEP == PR_WAITOK);
-		CTASSERT(KM_NOSLEEP == PR_NOWAIT);
 		kmflags &= (KM_SLEEP | KM_NOSLEEP);
 		p = pool_cache_get(kc->kc_cache, kmflags);
 	} else {
