@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev_private.h,v 1.8 2010/01/19 22:38:21 pooka Exp $	*/
+/*	$NetBSD: rump_dev_private.h,v 1.9 2010/01/31 03:07:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -40,6 +40,7 @@ void 	rump_dev_raidframe_init(void);
 void 	rump_dev_netsmb_init(void);
 void 	rump_dev_rnd_init(void);
 void	rump_dev_rumpusbhc_init(void);
+void	rump_dev_sysmon_init(void);
 
 void	rump_device_configuration(void);
 void	rump_wscons_configuration(void);
