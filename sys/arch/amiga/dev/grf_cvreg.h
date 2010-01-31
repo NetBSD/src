@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cvreg.h,v 1.13 2008/12/18 05:04:22 mhitch Exp $	*/
+/*	$NetBSD: grf_cvreg.h,v 1.14 2010/01/31 19:56:19 phx Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -59,12 +59,25 @@ struct grfcvtext_mode {
 #define MAXROWS 200
 #define MAXCOLS 200
 
+/*
+ * macros for
+ * finishing all bus operations and flush pipelines: cpu_sync()
+ * barrier to ensure in order execution: barrier()
+ */
+#if defined(__m68k__)
+#define cpu_sync() __asm volatile ("nop")
+#define barrier()
+#elif defined(__powerpc__)
+#define cpu_sync() __asm volatile ("sync; isync")
+#define barrier() __asm volatile ("eieio")
+#endif
+
 /* read VGA register */
 #define vgar(ba, reg) (*(((volatile char *)ba)+reg))
 
 /* write VGA register */
 #define vgaw(ba, reg, val) \
-	*(((volatile char *)ba)+reg) = ((val) & 0xff)
+	*(((volatile char *)ba)+reg) = ((val) & 0xff); barrier()
 
 
 /* read 32 Bit VGA register */
@@ -73,7 +86,7 @@ struct grfcvtext_mode {
 
 /* write 32 Bit VGA register */
 #define vgaw32(ba, reg, val) \
-	*((unsigned long *)  (((volatile char *)ba)+reg)) = val
+	*((unsigned long *)  (((volatile char *)ba)+reg)) = val; barrier()
 
 /* read 16 Bit VGA register */
 #define vgar16(ba, reg) \
@@ -81,7 +94,7 @@ struct grfcvtext_mode {
 
 /* write 16 Bit VGA register */
 #define vgaw16(ba, reg, val) \
-	*((volatile unsigned short *)  (((volatile char *)ba)+reg)) = val
+	*((volatile unsigned short *) (((volatile char *)ba)+reg)) = val; barrier()
 
 #ifdef _KERNEL
 int grfcv_cnprobe(void);
@@ -374,7 +387,7 @@ GfxBusyWait (ba)
 
 	do {
 		test = vgar16 (ba, ECR_GP_STAT);
-		__asm volatile ("nop");
+		cpu_sync();
 	} while (test & (1 << 9));
 }
 
