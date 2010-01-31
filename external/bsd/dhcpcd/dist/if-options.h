@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2009 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2010 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@
 
 /* Don't set any optional arguments here so we retain POSIX
  * compatibility with getopt */
-#define IF_OPTS "bc:de:f:gh:i:kl:m:no:pqr:s:t:u:v:wxy:z:ABC:DEF:GI:KLN:O:Q:S:TVW:X:Z:"
+#define IF_OPTS "bc:de:f:gh:i:kl:m:no:pqr:s:t:u:v:wxy:z:ABC:DEF:GHI:JKLN:O:Q:S:TVW:X:Z:"
 
 #define DEFAULT_TIMEOUT		30
 #define DEFAULT_REBOOT		10
@@ -74,6 +74,8 @@
 #define DHCPCD_WAITIP		(1 << 25)
 #define DHCPCD_WAITUP		(1 << 26)
 #define DHCPCD_CSR_WARNED	(1 << 27)
+#define DHCPCD_XID_HWADDR	(1 << 28)
+#define DHCPCD_BROADCAST	(1 << 29)
 
 extern const struct option cf_options[];
 
