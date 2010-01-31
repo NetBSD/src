@@ -439,9 +439,15 @@ discover_interfaces(int argc, char * const *argv)
 				free_interface(ifp);
 				continue;
 			}
-			if (ifp->family != ARPHRD_IEEE1394)
+			switch (ifp->family) {
+			case ARPHRD_IEEE1394: /* FALLTHROUGH */
+			case ARPHRD_INFINIBAND:
+				/* We don't warn for supported families */
+				break;
+			default:
 				syslog(LOG_WARNING,
 				    "%s: unknown hardware family", p);
+			}
 		}
 		if (ifl)
 			ifl->next = ifp; 
