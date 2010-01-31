@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.79 2010/01/27 22:17:28 drochner Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.80 2010/01/31 06:10:53 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.79 2010/01/27 22:17:28 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.80 2010/01/31 06:10:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,6 +188,7 @@ static const char * const bat_hid[] = {
 
 static int	    acpibat_match(device_t, cfdata_t, void *);
 static void	    acpibat_attach(device_t, device_t, void *);
+static int	    acpibat_detach(device_t, int);
 static int          acpibat_get_sta(device_t);
 static ACPI_OBJECT *acpibat_get_object(ACPI_HANDLE, const char *, int);
 static void         acpibat_get_info(device_t);
@@ -200,7 +201,7 @@ static void         acpibat_refresh(struct sysmon_envsys *, envsys_data_t *);
 static bool	    acpibat_resume(device_t, pmf_qual_t);
 
 CFATTACH_DECL_NEW(acpibat, sizeof(struct acpibat_softc),
-    acpibat_match, acpibat_attach, NULL, NULL);
+    acpibat_match, acpibat_attach, acpibat_detach, NULL);
 
 /*
  * acpibat_match:
@@ -235,6 +236,7 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_node = aa->aa_node;
 	sc->sc_present = 0;
+	sc->sc_sme = NULL;
 
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_condvar, device_xname(self));
@@ -249,6 +251,34 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 		acpibat_init_envsys(self);
 	else
 		aprint_error_dev(self, "couldn't install notify handler\n");
+}
+
+/*
+ * acpibat_detach:
+ *
+ *	Autoconfiguration `detach' routine.
+ */
+static int
+acpibat_detach(device_t self, int flags)
+{
+	struct acpibat_softc *sc = device_private(self);
+	ACPI_STATUS rv;
+
+	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
+	    ACPI_ALL_NOTIFY, acpibat_notify_handler);
+
+	if (ACPI_FAILURE(rv))
+		return EBUSY;
+
+	cv_destroy(&sc->sc_condvar);
+	mutex_destroy(&sc->sc_mutex);
+
+	if (sc->sc_sme != NULL)
+		sysmon_envsys_unregister(sc->sc_sme);
+
+	pmf_device_deregister(self);
+
+	return 0;
 }
 
 /*
@@ -694,6 +724,7 @@ acpibat_init_envsys(device_t dv)
 fail:
 	aprint_error_dev(dv, "failed to initialize sysmon\n");
 	sysmon_envsys_destroy(sc->sc_sme);
+	sc->sc_sme = NULL;
 }
 
 static void
