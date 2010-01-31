@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.230 2010/01/31 11:19:40 jruoho Exp $
+# $NetBSD: ALL,v 1.231 2010/01/31 12:14:45 jruoho Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.230 $"
+#ident 		"ALL-$Revision: 1.231 $"
 
 maxusers	64		# estimated number of users
 
@@ -353,7 +353,6 @@ options 	ACPI_SCANPCI	# find PCI roots using ACPI
 acpi0 		at mainbus0
 
 options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
-options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 
 # ACPI devices
 apm*		at acpi?		# ACPI apm emulation

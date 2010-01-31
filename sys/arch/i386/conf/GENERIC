@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.961 2010/01/21 12:02:25 pooka Exp $
+# $NetBSD: GENERIC,v 1.962 2010/01/31 12:14:45 jruoho Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.961 $"
+#ident 		"GENERIC-$Revision: 1.962 $"
 
 maxusers	64		# estimated number of users
 
@@ -344,7 +344,6 @@ options 	ACPI_SCANPCI	# find PCI roots using ACPI
 acpi0 		at mainbus0
 
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
-#options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 options 	VGA_POST		# in-kernel support for VGA POST
 
 # ACPI devices
