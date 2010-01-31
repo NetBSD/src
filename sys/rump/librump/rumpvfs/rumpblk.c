@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.36 2010/01/27 22:03:11 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.37 2010/01/31 13:15:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.36 2010/01/27 22:03:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.37 2010/01/31 13:15:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -156,6 +156,7 @@ static const struct cdevsw rumpblk_cdevsw = {
 static int blkfail;
 static unsigned randstate;
 static kmutex_t rumpblk_lock;
+static int sectshift = DEV_BSHIFT;
 
 static void
 makedefaultlabel(struct disklabel *lp, off_t size, int part)
@@ -165,8 +166,8 @@ makedefaultlabel(struct disklabel *lp, off_t size, int part)
 	memset(lp, 0, sizeof(*lp));
 
 	lp->d_secperunit = size;
-	lp->d_secsize = DEV_BSIZE;
-	lp->d_nsectors = size >> DEV_BSHIFT;
+	lp->d_secsize = 1 << sectshift;
+	lp->d_nsectors = size >> sectshift;
 	lp->d_ntracks = 1;
 	lp->d_ncylinders = 1;
 	lp->d_secpercyl = lp->d_nsectors;
@@ -184,7 +185,7 @@ makedefaultlabel(struct disklabel *lp, off_t size, int part)
 	for (i = 0; i < part; i++) {
 		lp->d_partitions[i].p_fstype = FS_UNUSED;
 	}
-	lp->d_partitions[part].p_size = size >> DEV_BSHIFT;
+	lp->d_partitions[part].p_size = size >> sectshift;
 	lp->d_npartitions = part+1;
 	/* XXX: file system type? */
 
@@ -336,6 +337,17 @@ rumpblk_init(void)
 		else
 			printf("invalid RUMP_BLKWINCOUNT %d, ", tmp);
 		printf("using %d for memwincount\n", memwincnt);
+	}
+	if (rumpuser_getenv("RUMP_BLKSECTSHIFT", buf, sizeof(buf), &error)==0){
+		printf("rumpblk: ");
+		tmp = strtoul(buf, NULL, 10);
+		if (tmp >= DEV_BSHIFT)
+			sectshift = tmp;
+		else
+			printf("RUMP_BLKSECTSHIFT must be least %d (now %d), ",
+			   DEV_BSHIFT, tmp); 
+		printf("using %d for sector shift (size %d)\n",
+		    sectshift, 1<<sectshift);
 	}
 
 	memset(minors, 0, sizeof(minors));
@@ -594,7 +606,7 @@ dostrategy(struct buf *bp)
 		ev_bread_total.ev_count++;
 	}
 
-	off = bp->b_blkno << DEV_BSHIFT;
+	off = bp->b_blkno << sectshift;
 	/*
 	 * Do bounds checking if we're working on a file.  Otherwise
 	 * invalid file systems might attempt to read beyond EOF.  This
@@ -688,9 +700,10 @@ dostrategy(struct buf *bp)
 			if (!async) {
 				/* O_DIRECT not fully automatic yet */
 #ifdef HAS_ODIRECT
-				if ((off & (DEV_BSIZE-1)) == 0
-				    && ((intptr_t)bp->b_data&(DEV_BSIZE-1)) == 0
-				    && (bp->b_bcount & (DEV_BSIZE-1)) == 0)
+				if ((off & ((1<<sectshift)-1)) == 0
+				    && ((intptr_t)bp->b_data
+				      & ((1<<sectshift)-1)) == 0
+				    && (bp->b_bcount & ((1<<sectshift)-1)) == 0)
 					fd = rblk->rblk_dfd;
 				else
 #endif
