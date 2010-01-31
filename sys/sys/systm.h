@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.238 2009/12/13 04:47:45 matt Exp $	*/
+/*	$NetBSD: systm.h,v 1.239 2010/01/31 02:04:43 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -360,7 +360,7 @@ extern const char *rootfstype;
 void	*mountroothook_establish(void (*)(struct device *), struct device *);
 void	mountroothook_disestablish(void *);
 void	mountroothook_destroy(void);
-void	domountroothook(void);
+void	domountroothook(struct device *);
 
 /*
  * Exec hooks. Subsystems may want to do cleanup when a process

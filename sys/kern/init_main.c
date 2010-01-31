@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.415 2010/01/31 00:43:37 hubertf Exp $	*/
+/*	$NetBSD: init_main.c,v 1.416 2010/01/31 02:04:43 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.415 2010/01/31 00:43:37 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.416 2010/01/31 02:04:43 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -349,7 +349,7 @@ main(void)
 	bpf_setops();
 
 	/* Start module system. */
-	module_init();
+	module_init(true);
 
 	/*
 	 * Initialize the kernel authorization subsystem and start the
@@ -619,7 +619,7 @@ main(void)
 
 	/* Mount the root file system. */
 	do {
-		domountroothook();
+		domountroothook(root_device);
 		if ((error = vfs_mountroot())) {
 			printf("cannot mount root, error = %d\n", error);
 			boothowto |= RB_ASKNAME;
