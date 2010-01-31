@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.36 2010/01/31 12:07:37 jruoho Exp $
+.\" $NetBSD: acpi.4,v 1.37 2010/01/31 15:05:20 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 16, 2009
+.Dd January 31, 2010
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -314,7 +314,8 @@ In addition, there is
 .Dv ACPI_DEBUG_DEFAULT
 that is used by
 .Tn ACPICA
-as the default debug level. It includes
+as the default debug level.
+It includes
 .Dv ACPI_LV_INIT
 and
 .Dv ACPI_LV_DEBUG_OBJECT .
@@ -346,7 +347,6 @@ The debug output can be stopped by setting
 to
 .Dv ACPI_DEBUG_NONE .
 .Ss EXAMPLE
-.Pp
 As an example, a driver may have defined the component it belongs to and
 the name of the module:
 .Bd -literal -offset indent
