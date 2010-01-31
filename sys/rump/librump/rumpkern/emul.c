@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.120 2010/01/31 02:08:36 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.121 2010/01/31 15:12:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.120 2010/01/31 02:08:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.121 2010/01/31 15:12:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -124,13 +124,6 @@ struct loadavg averunnable = {
 	  11 * FSCALE, },
 	FSCALE,
 };
-
-devclass_t
-device_class(device_t dev)
-{
-
-	return dev->dv_class;
-}
 
 void
 getnanouptime(struct timespec *ts)
@@ -316,12 +309,6 @@ calc_cache_size(struct vm_map *map, int pct, int va_pct)
 		panic("%s: needs tweak", __func__);
 	}
 	return t;
-}
-
-const char *
-device_xname(device_t dv)
-{
-	return "bogus0";
 }
 
 void
