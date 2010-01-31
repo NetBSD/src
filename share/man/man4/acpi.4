@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.34 2010/01/25 17:21:32 jruoho Exp $
+.\" $NetBSD: acpi.4,v 1.35 2010/01/31 11:29:31 jruoho Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -248,6 +248,143 @@ Sony programmable I/O controller.
 .It vald
 Toshiba Libretto device.
 .El
+.Sh DEBUGGING
+The
+.Tn ACPICA
+reference implementation provides a rich
+facility of different debugging methods.
+To ease the use of these,
+.Nx
+provides two
+.Xr sysctl 7
+variables that control the debug output at runtime.
+These are only available if the running kernel has been compiled with the
+.Tn ACPI_DEBUG
+option.
+.Pp
+The
+.Ic hw.acpi.debug_layer
+limits the output to a specific
+.Tn ACPI
+layer and the
+.Ic hw.acpi.debug_level
+controls the debug level.
+Both
+.Xr sysctl 7
+variables are string literals.
+The possible values are:
+.Bl -column -offset indent \
+"ACPI_RESOURCE_COMPONENT     " "ACPI_RESOURCE_COMPONENT     "
+.It Sy LAYER Ta Sy LEVEL
+.It Li ACPI_DEBUG_NONE Ta ACPI_DEBUG_NONE
+.It Li Ta
+.It Li ACPI_UTILITIES Ta ACPI_LV_INIT
+.It Li ACPI_HARDWARE Ta ACPI_LV_DEBUG_OBJECT
+.It Li ACPI_EVENTS Ta ACPI_LV_INFO
+.It Li ACPI_TABLES Ta ACPI_LV_ALL_EXCEPTIONS *
+.It Li ACPI_NAMESPACE Ta
+.It Li ACPI_PARSER Ta ACPI_LV_INIT_NAMES
+.It Li ACPI_DISPATCHER Ta ACPI_LV_PARSE
+.It Li ACPI_EXECUTER Ta ACPI_LV_LOAD
+.It Li ACPI_RESOURCES Ta ACPI_LV_DISPATCH
+.It Li ACPI_CA_DEBUGGER Ta ACPI_LV_EXEC
+.It Li ACPI_OS_SERVICES Ta ACPI_LV_NAMES
+.It Li ACPI_CA_DISASSEMBLER Ta ACPI_LV_OPREGION
+.It Li ACPI_COMPILER Ta ACPI_LV_BFIELD
+.It Li ACPI_TOOLS Ta ACPI_LV_TABLES
+.It Li ACPI_EXAMPLE Ta ACPI_LV_VALUES
+.It Li ACPI_DRIVER Ta ACPI_LV_OBJECTS
+.It Li ACPI_ALL_COMPONENTS * Ta ACPI_LV_RESOURCES
+.It Li Ta ACPI_LV_USER_REQUESTS
+.It Li ACPI_BUS_COMPONENT Ta ACPI_LV_PACKAGE
+.It Li ACPI_ACAD_COMPONENT Ta ACPI_LV_VERBOSITY1 *
+.It Li ACPI_BAT_COMPONENT Ta
+.It Li ACPI_BUTTON_COMPONENT Ta ACPI_LV_ALLOCATIONS
+.It Li APCI_EC_COMPONENT Ta ACPI_LV_FUNCTIONS
+.It Li ACPI_LID_COMPONENT Ta ACPI_LV_OPTIMIZATIONS
+.It Li ACPI_RESOURCE_COMPONENT Ta ACPI_LV_VERBOSITY2 *
+.It Li ACPI_TZ_COMPONENT Ta
+.It Li ACPI_ALL_DRIVERS * Ta ACPI_LV_MUTEX
+.It Li Ta ACPI_LV_THREADS
+.It Li Ta ACPI_LV_IO
+.It Li Ta ACPI_LV_AML_INTERRUPTS
+.It Li "* This is a compound" Ta ACPI_LV_VERBOSITY3 *
+.It Li "  constant, including" Ta
+.It Li "  all previous elements." Ta ACPI_LV_AML_DISASSEMBLE
+.It Li Ta ACPI_LV_VERBOSE_INFO
+.It Li Ta ACPI_LV_FULL_TABLES
+.It Li Ta ACPI_LV_EVENTS
+.It Li Ta ACPI_LV_VERBOSE *
+.El
+.Pp
+In addition, there is
+.Dv ACPI_DEBUG_DEFAULT
+that is used by
+.Tn ACPICA
+as the default debug level. It includes
+.Dv ACPI_LV_INIT
+and
+.Dv ACPI_LV_DEBUG_OBJECT .
+.Pp
+The debug layer can be divided into two groups:
+the first one is specific to the
+.Tn ACPICA
+interpreter and the second one contains the internal
+.Tn ACPI
+components of
+.Nx .
+The constant
+.Dv ACPI_ALL_DRIVERS
+includes all
+.Nx
+specific parts.
+.Pp
+The
+.Tn ACPICA
+interpreter uses several debug levels internally,
+but the
+.Nx
+specific parts are typically limited to
+.Dv ACPI_LV_DEBUG_OBJECT
+and
+.Dv ACPI_LV_DEBUG_INFO .
+The debug output can be stopped by setting
+.Ic hw.acpi.debug_level
+to
+.Dv ACPI_DEBUG_NONE .
+.Ss EXAMPLE
+.Pp
+As an example, a driver may have defined the component it belongs to and
+the name of the module:
+.Bd -literal -offset indent
+#define _COMPONENT	ACPI_BUS_COMPONENT
+ACPI_MODULE_NAME	("acpi_example")
+.Ed
+.Pp
+The driver may also utilize the debug facility:
+.Bd -literal -offset indent
+ACPI_DEBUG_PRINT((ACPI_DB_INFO, "Failed to evaluate _STA\\n"));
+.Ed
+.Pp
+With these options the debug message from the
+.Dv ACPI_DEBUG_PRINT
+macro is only visible when
+.Ic hw.acpi.debug_layer
+is either
+.Dv ACPI_BUS_COMPONENT
+or a compound constant including it, and
+.Ic hw.acpi.debug_level
+is
+.Dv ACPI_LV_INFO
+or some constant that includes it.
+Finally, it can be noted that the
+.Tn ACPI
+implementation uses the prefix
+.Dv ACPI_DB ,
+whereas the debug level
+.Xr sysctl 7
+variable is always specified with the prefix
+.Dv ACPI_LV .
 .Sh SEE ALSO
 .Xr acpiacad 4 ,
 .Xr acpibat 4 ,
