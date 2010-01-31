@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.136 2010/01/31 07:47:29 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.137 2010/01/31 09:20:31 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.136 2010/01/31 07:47:29 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.137 2010/01/31 09:20:31 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -697,23 +697,21 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
     vm_prot_t access_type, int fault_flag)
 {
 	struct uvm_faultinfo ufi;
-	vm_prot_t enter_prot, check_prot;
-	bool wired, narrow, promote, locked, shadowed, wire_fault, cow_now;
-	int npages, nback, nforw, centeridx, error, lcv, gotpages;
-	vaddr_t startva, currva;
-	voff_t uoff;
+	vm_prot_t enter_prot;
+	bool wired, narrow, shadowed, wire_fault, cow_now;
+	int npages, centeridx, error;
+	vaddr_t startva;
 	struct vm_amap *amap;
 	struct uvm_object *uobj;
-	struct vm_anon *anons_store[UVM_MAXRANGE], **anons, *anon, *oanon;
+	struct vm_anon *anons_store[UVM_MAXRANGE], **anons;
 	struct vm_anon *anon_spare;
-	struct vm_page *pages[UVM_MAXRANGE], *pg, *uobjpage;
+	struct vm_page *pages[UVM_MAXRANGE], *uobjpage;
 	UVMHIST_FUNC("uvm_fault"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "(map=0x%x, vaddr=0x%x, at=%d, ff=%d)",
 	      orig_map, vaddr, access_type, fault_flag);
 
-	anon = anon_spare = NULL;
-	pg = NULL;
+	anon_spare = NULL;
 
 	uvmexp.faults++;	/* XXX: locking? */
 
@@ -735,6 +733,11 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 	 * "goto ReFault" means restart the page fault from ground zero.
 	 */
 ReFault:
+
+/* uvm_fault_prepare */
+    {
+	vm_prot_t check_prot;
+	int nback, nforw;
 
 	/*
 	 * lookup and lock the maps
@@ -873,7 +876,7 @@ ReFault:
 
 	}
 	/* offset from entry's start to pgs' start */
-	voff_t eoff = startva - ufi.entry->start;
+	const voff_t eoff = startva - ufi.entry->start;
 
 	/* locked: maps(read) */
 	UVMHIST_LOG(maphist, "  narrow=%d, back=%d, forw=%d, startva=0x%x",
@@ -911,6 +914,8 @@ ReFault:
 
 		/* flush object? */
 		if (uobj) {
+			voff_t uoff;
+
 			uoff = ufi.entry->offset + eoff;
 			mutex_enter(&uobj->vmobjlock);
 			(void) (uobj->pgops->pgo_put)(uobj, uoff, uoff +
@@ -922,9 +927,19 @@ ReFault:
 			anons += nback;
 		startva += (nback << PAGE_SHIFT);
 		npages -= nback;
-		nback = centeridx = 0;
-		eoff = startva - ufi.entry->start;
+		centeridx = 0;
 	}
+    }
+
+	/*
+	 * => startva is fixed
+	 * => npages is fixed
+	 */
+
+/* uvm_fault_upper_lookup */
+    {
+	int lcv;
+	vaddr_t currva;
 
 	/* locked: maps(read), amap(if there) */
 	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
@@ -938,6 +953,7 @@ ReFault:
 	currva = startva;
 	shadowed = false;
 	for (lcv = 0 ; lcv < npages ; lcv++, currva += PAGE_SIZE) {
+		struct vm_anon *anon;
 
 		/*
 		 * dont play with VAs that are already mapped
@@ -1009,10 +1025,12 @@ ReFault:
 	 * XXX Actually, that is bad; pmap_enter() should just fail in that
 	 * XXX case.  --thorpej
 	 */
+    }
 
 	if (shadowed == true)
 		goto Case1;
 
+/* uvm_fault_lower */
 	/*
 	 * if the desired page is not shadowed by the amap and we have a
 	 * backing object, then we check to see if the backing object would
@@ -1022,6 +1040,7 @@ ReFault:
 	 */
 
 	if (uobj && uobj->pgops->pgo_fault != NULL) {
+/* uvm_fault_lower_special */
 		mutex_enter(&uobj->vmobjlock);
 		/* locked: maps(read), amap (if there), uobj */
 		error = uobj->pgops->pgo_fault(&ufi, startva, pages, npages,
@@ -1036,6 +1055,11 @@ ReFault:
 		 */
 		goto done;
 	}
+
+/* uvm_fault_lower_generic_lookup */
+    {
+	int lcv, gotpages;
+	vaddr_t currva;
 
 	/*
 	 * now, if the desired page is not shadowed by the amap and we have
@@ -1059,7 +1083,7 @@ ReFault:
 
 	uvmexp.fltlget++;
 	gotpages = npages;
-	(void) uobj->pgops->pgo_get(uobj, ufi.entry->offset + eoff,
+	(void) uobj->pgops->pgo_get(uobj, ufi.entry->offset + startva - ufi.entry->start,
 			pages, &gotpages, centeridx,
 			access_type & MASK(ufi.entry),
 			ufi.entry->advice, PGO_LOCKED);
@@ -1153,6 +1177,7 @@ ReFault:
 
 lower_fault_lookup_done:
 	{}
+    }
 
 	/* locked: maps(read), amap(if there), uobj(if !null), uobjpage(if !null) */
 	KASSERT(!shadowed);
@@ -1181,7 +1206,11 @@ lower_fault_lookup_done:
 
 	goto Case2;
 
+/* uvm_fault_upper */
 Case1:
+    {
+	struct vm_anon *anon, *oanon;
+
 	/* locked: maps(read), amap */
 	KASSERT(mutex_owned(&amap->am_l));
 
@@ -1269,6 +1298,7 @@ Case1:
 
 			/* >1 case is already ok */
 			if (anon->an_ref == 1) {
+				struct vm_page *pg;
 
 				/* get new un-owned replacement page */
 				pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -1339,6 +1369,7 @@ Case1:
 	 * if we are out of anon VM we kill the process (XXX: could wait?).
 	 */
 
+	struct vm_page *pg;
 	if (cow_now && anon->an_ref > 1) {
 
 		UVMHIST_LOG(maphist, "  case 1B: COW fault",0,0,0,0);
@@ -1452,8 +1483,14 @@ Case1:
 	pmap_update(ufi.orig_map->pmap);
 	error = 0;
 	goto done;
+    }
 
+/* uvm_fault_lower_generic */
 Case2:
+    {
+	struct vm_anon *anon;
+	bool promote;
+
 	/*
 	 * handle case 2: faulting on backing object or zero fill
 	 */
@@ -1496,6 +1533,10 @@ Case2:
 		/* update rusage counters */
 		curlwp->l_ru.ru_minflt++;
 	} else {
+		bool locked;
+		int gotpages;
+		voff_t uoff;
+
 		/* update rusage counters */
 		curlwp->l_ru.ru_majflt++;
 
@@ -1613,6 +1654,7 @@ Case2:
 	KASSERT(uobj == NULL || uobj == uobjpage->uobject);
 	KASSERT(uobj == NULL || !UVM_OBJ_IS_CLEAN(uobjpage->uobject) ||
 	    (uobjpage->flags & PG_CLEAN) != 0);
+	struct vm_page *pg;
 	if (promote == false) {
 
 		/*
@@ -1840,6 +1882,8 @@ Case2:
 	pmap_update(ufi.orig_map->pmap);
 	UVMHIST_LOG(maphist, "<- done (SUCCESS!)",0,0,0,0);
 	error = 0;
+    }
+
 done:
 	if (anon_spare != NULL) {
 		anon_spare->an_ref--;
