@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.35 2010/01/31 11:29:31 jruoho Exp $
+.\" $NetBSD: acpi.4,v 1.36 2010/01/31 12:07:37 jruoho Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,7 +65,6 @@
 .Cd "options   ACPI_DEBUG"
 .Cd "options   ACPIVERBOSE"
 .Cd "options   ACPI_ACTIVATE_DEV"
-.Cd "options   ACPICA_PEDANTIC"
 .Cd "options   ACPI_DSDT_OVERRIDE"
 .Sh DESCRIPTION
 .Nx
@@ -108,12 +107,6 @@ Determine if the
 .Tn ACPI
 driver should attempt to activate inactive devices.
 The default is off.
-.It Dv ACPICA_PEDANTIC
-Force strict conformance to the
-.Tn ACPI
-specification in the
-.Tn ACPI-CA .
-Do not enable this option unless you are debugging.
 .It Dv ACPI_DSDT_OVERRIDE
 Force a given Differentiated System Description Table
 .Pq Tn DSDT
@@ -129,22 +122,22 @@ is not specified, default to
 .Dq dsdt.hex
 in the build directory.
 .El
-.Ss sysctl support
-These
+.Sh SYSCTL SUPPORT
+Few
 .Xr sysctl 8
 variables are directly relevant for
 .Nm :
-.Bl -inset -width hw.acpi.supported_states
-.It Li hw.acpi.root
+.Bl -inset -width hw.acpi.supported_state -offset 3n
+.It Ic hw.acpi.root
 is the
 .Tn ACPI
 root pointer.
-.It Li hw.acpi.supported_states
+.It Ic hw.acpi.supported_states
 is a list of the supported
 .Tn ACPI
 states (see
 .Xr sysctl 7 ) .
-.It Li machdep.acpi_vbios_reset
+.It Ic machdep.acpi_vbios_reset
 defines the handling of the graphics card.
 The supported values are:
 .Bl -tag -width '2' -offset indent
@@ -176,8 +169,8 @@ using the in-kernel x86 emulator.
 .Nx
 .Tn ACPI
 supports several machine-dependent and machine-independent devices:
-.Ss machine-independent devices
-.Bl -tag -width pcdisplay -offset indent
+.Ss Machine-independent devices
+.Bl -tag -width pcdisplay -offset indent -compact
 .It acpiacad
 .Tn ACPI
 AC adapters.
@@ -236,7 +229,7 @@ Windows Sound System-compatible sound cards based on the AD1848 and compatible c
 Yamaha OPL3-SA2 and OPL3-SA3 audio device driver.
 .El
 .Ss i386-dependent devices
-.Bl -tag -width pcdisplay -offset indent
+.Bl -tag -width pcdisplay -offset indent -compact
 .It npx
 i386 numeric processing extension coprocessor.
 .It pckbc
