@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.52 2009/11/25 13:16:55 pooka Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.53 2010/01/31 00:43:37 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.52 2009/11/25 13:16:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.53 2010/01/31 00:43:37 hubertf Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -403,7 +403,7 @@ ksyms_addsyms_elf(int symsize, void *start, void *end)
 	    &kernel_symtab, start);
 
 #ifdef DEBUG
-	printf("Loaded initial symtab at %p, strtab at %p, # entries %ld\n",
+	aprint_normal("Loaded initial symtab at %p, strtab at %p, # entries %ld\n",
 	    kernel_symtab.sd_symstart, kernel_symtab.sd_strstart,
 	    (long)kernel_symtab.sd_symsize/sizeof(Elf_Sym));
 #endif
