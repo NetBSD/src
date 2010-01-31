@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.147 2010/01/18 18:49:27 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.148 2010/01/31 11:26:20 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.147 2010/01/18 18:49:27 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.148 2010/01/31 11:26:20 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -545,6 +545,10 @@ acpi_attach(device_t parent, device_t self, void *aux)
 #ifdef ACPI_DEBUGGER
 	if (acpi_dbgr & ACPI_DBGR_RUNNING)
 		acpi_osd_debugger();
+#endif
+
+#ifdef ACPI_DEBUG
+	acpi_debug_init();
 #endif
 }
 

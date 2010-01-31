@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.39 2010/01/18 18:06:31 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.40 2010/01/31 11:26:20 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -331,3 +331,7 @@ struct acpi_quirk {
 #define ACPI_QUIRK_IRQ0		0x00000008	/* bad 0->2 irq override */
 
 int acpi_find_quirks(void);
+
+#ifdef ACPI_DEBUG
+void acpi_debug_init(void);
+#endif
