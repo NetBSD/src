@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.131 2010/01/30 15:13:25 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.132 2010/01/31 01:40:12 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.131 2010/01/30 15:13:25 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.132 2010/01/31 01:40:12 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -873,7 +873,7 @@ ReFault:
 
 	}
 	/* offset from entry's start to pgs' start */
-	const voff_t eoff = startva - ufi.entry->start;
+	voff_t eoff = startva - ufi.entry->start;
 
 	/* locked: maps(read) */
 	UVMHIST_LOG(maphist, "  narrow=%d, back=%d, forw=%d, startva=0x%x",
@@ -923,6 +923,7 @@ ReFault:
 		startva += (nback << PAGE_SHIFT);
 		npages -= nback;
 		nback = centeridx = 0;
+		eoff = startva - ufi.entry->start;
 	}
 
 	/* locked: maps(read), amap(if there) */
