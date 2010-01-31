@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.416 2010/01/31 02:04:43 pooka Exp $	*/
+/*	$NetBSD: init_main.c,v 1.417 2010/01/31 03:57:01 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.416 2010/01/31 02:04:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.417 2010/01/31 03:57:01 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -349,7 +349,7 @@ main(void)
 	bpf_setops();
 
 	/* Start module system. */
-	module_init(true);
+	module_init();
 
 	/*
 	 * Initialize the kernel authorization subsystem and start the
