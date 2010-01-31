@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.972 2010/01/30 23:19:55 pooka Exp $
+#	$NetBSD: files,v 1.973 2010/01/31 01:38:48 pooka Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -1428,6 +1428,7 @@ file	kern/kern_exec.c
 file	kern/kern_exit.c
 file	kern/kern_fork.c
 file	kern/kern_idle.c
+file	kern/kern_hook.c
 file	kern/kern_kthread.c
 file	kern/kern_ktrace.c		ktrace
 file	kern/kern_ksyms.c		ksyms | ddb | modular needs-flag
