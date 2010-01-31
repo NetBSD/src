@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.62 2009/03/18 15:14:32 cegger Exp $	*/
+/*	$NetBSD: key.c,v 1.63 2010/01/31 00:43:38 hubertf Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.62 2009/03/18 15:14:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.63 2010/01/31 00:43:38 hubertf Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -7676,7 +7676,7 @@ key_do_init(void)
 	/* initialize key statistics */
 	keystat.getspi_count = 1;
 
-	printf("IPsec: Initialized Security Association Processing.\n");
+	aprint_verbose("IPsec: Initialized Security Association Processing.\n");
 
 	return (0);
 }
