@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.153 2010/01/08 11:35:11 pooka Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.154 2010/01/31 10:36:20 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.153 2010/01/08 11:35:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.154 2010/01/31 10:36:20 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -521,8 +521,9 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	struct buf *bp;
 	struct m_ext2fs *fs;
 	struct ext2fs *newfs;
-	struct partinfo dpart;
-	int i, size, error;
+	int i, error;
+	uint64_t numsecs;
+	unsigned secsize;
 	void *cp;
 	struct ufsmount *ump;
 
@@ -542,11 +543,12 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	/*
 	 * Step 2: re-read superblock from disk.
 	 */
-	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED) != 0)
-		size = DEV_BSIZE;
-	else
-		size = dpart.disklab->d_secsize;
-	error = bread(devvp, (daddr_t)(SBOFF / size), SBSIZE, NOCRED, 0, &bp);
+	error = getdisksize(devvp, &numsecs, &secsize);
+	if (error) {
+		brelse(bp, 0);
+		return (error);
+	}
+	error = bread(devvp, (daddr_t)(SBOFF / secsize), SBSIZE, NOCRED, 0, &bp);
 	if (error) {
 		brelse(bp, 0);
 		return (error);
@@ -667,8 +669,9 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	struct ext2fs *fs;
 	struct m_ext2fs *m_fs;
 	dev_t dev;
-	struct partinfo dpart;
-	int error, i, size, ronly;
+	int error, i, ronly;
+	uint64_t numsecs;
+	unsigned secsize;
 	kauth_cred_t cred;
 	struct proc *p;
 
@@ -684,10 +687,9 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred) != 0)
-		size = DEV_BSIZE;
-	else
-		size = dpart.disklab->d_secsize;
+	error = getdisksize(devvp, &numsecs, &secsize);
+	if (error)
+		return (error);
 
 	bp = NULL;
 	ump = NULL;
@@ -695,7 +697,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 #ifdef DEBUG_EXT2
 	printf("ext2 sb size: %d\n", sizeof(struct ext2fs));
 #endif
-	error = bread(devvp, (SBOFF / size), SBSIZE, cred, 0, &bp);
+	error = bread(devvp, (SBOFF / secsize), SBSIZE, cred, 0, &bp);
 	if (error)
 		goto out;
 	fs = (struct ext2fs *)bp->b_data;
