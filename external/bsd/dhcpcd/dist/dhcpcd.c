@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2009 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2010 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 
-const char copyright[] = "Copyright (c) 2006-2009 Roy Marples";
+const char copyright[] = "Copyright (c) 2006-2010 Roy Marples";
 
 #include <sys/file.h>
 #include <sys/socket.h>
@@ -142,7 +142,7 @@ read_pid(void)
 static void
 usage(void)
 {
-	printf("usage: "PACKAGE" [-dgknpqwxyADEGHKLOTV] [-c script] [-f file]"
+	printf("usage: "PACKAGE" [-dgknpqwxyADEGHJKLOTV] [-c script] [-f file]"
 	    " [-e var=val]\n"
 	    "              [-h hostname] [-i classID ] [-l leasetime]"
 	    " [-m metric] [-o option]\n"
@@ -271,6 +271,22 @@ stop_interface(struct interface *iface)
 		exit(EXIT_FAILURE);
 }
 
+static uint32_t
+dhcp_xid(struct interface *iface)
+{
+	uint32_t xid;
+
+	if (iface->state->options->options & DHCPCD_XID_HWADDR &&
+	    iface->hwlen >= sizeof(xid)) 
+		/* The lower bits are probably more unique on the network */
+		memcpy(&xid, (iface->hwaddr + iface->hwlen) - sizeof(xid),
+		    sizeof(xid));
+	else
+		xid = arc4random();
+
+	return xid;
+}
+
 static void
 send_message(struct interface *iface, int type,
     void (*callback)(void *))
@@ -387,6 +403,7 @@ start_expire(void *arg)
 	iface->state->interval = 0;
 	if (iface->addr.s_addr == 0) {
 		/* We failed to reboot, so enter discovery. */
+		iface->state->lease.addr.s_addr = 0;
 		start_discover(iface);
 		return;
 	}
@@ -717,7 +734,7 @@ send_release(struct interface *iface)
 		syslog(LOG_INFO, "%s: releasing lease of %s",
 		    iface->name, inet_ntoa(iface->state->lease.addr));
 		open_sockets(iface);
-		iface->state->xid = arc4random();
+		iface->state->xid = dhcp_xid(iface);
 		send_message(iface, DHCP_RELEASE, NULL);
 		/* Give the packet a chance to go before dropping the ip */
 		ts.tv_sec = RELEASE_DELAY_S;
@@ -759,6 +776,15 @@ configure_interface1(struct interface *iface)
 	 * of the hardware address family and the hardware address. */
 	if (iface->hwlen > DHCP_CHADDR_LEN)
 		ifo->options |= DHCPCD_CLIENTID;
+
+	/* Firewire and InfiniBand interfaces require ClientID and
+	 * the broadcast option being set. */
+	switch (iface->family) {
+	case ARPHRD_IEEE1394:	/* FALLTHROUGH */
+	case ARPHRD_INFINIBAND:
+		ifo->options |= DHCPCD_CLIENTID | DHCPCD_BROADCAST;
+		break;
+	}
 
 	free(iface->clientid);
 	if (*ifo->clientid) {
@@ -886,7 +912,7 @@ start_discover(void *arg)
 	struct if_options *ifo = iface->state->options;
 
 	iface->state->state = DHS_DISCOVER;
-	iface->state->xid = arc4random();
+	iface->state->xid = dhcp_xid(iface);
 	open_sockets(iface);
 	delete_timeout(NULL, iface);
 	if (ifo->fallback)
@@ -920,7 +946,7 @@ start_renew(void *arg)
 	syslog(LOG_INFO, "%s: renewing lease of %s",
 	    iface->name, inet_ntoa(iface->state->lease.addr));
 	iface->state->state = DHS_RENEW;
-	iface->state->xid = arc4random();
+	iface->state->xid = dhcp_xid(iface);
 	open_sockets(iface);
 	send_renew(iface);
 }
@@ -1020,7 +1046,7 @@ start_inform(struct interface *iface)
 	}
 
 	iface->state->state = DHS_INFORM;
-	iface->state->xid = arc4random();
+	iface->state->xid = dhcp_xid(iface);
 	open_sockets(iface);
 	send_inform(iface);
 }
@@ -1058,7 +1084,7 @@ start_reboot(struct interface *iface)
 		    iface->name, inet_ntoa(iface->state->lease.addr));
 	}
 	iface->state->state = DHS_REBOOT;
-	iface->state->xid = arc4random();
+	iface->state->xid = dhcp_xid(iface);
 	iface->state->lease.server.s_addr = 0;
 	delete_timeout(NULL, iface);
 	if (ifo->fallback)
@@ -1142,15 +1168,19 @@ start_interface(void *arg)
 				free(iface->state->offer);
 				iface->state->offer = NULL;
 			}
-		} else if (stat(iface->leasefile, &st) == 0 &&
-		    get_option_uint32(&l, iface->state->offer,
-			DHO_LEASETIME) == 0)
+		} else if (iface->state->lease.leasetime != ~0U &&
+		    stat(iface->leasefile, &st) == 0)
 		{
 			/* Offset lease times and check expiry */
 			gettimeofday(&now, NULL);
-			if ((time_t)l < now.tv_sec - st.st_mtime) {
+			if ((time_t)iface->state->lease.leasetime <
+			    now.tv_sec - st.st_mtime)
+			{
+				syslog(LOG_DEBUG,
+				    "%s: discarding expired lease", iface->name);
 				free(iface->state->offer);
 				iface->state->offer = NULL;
+				iface->state->lease.addr.s_addr = 0;
 			} else {
 				l = now.tv_sec - st.st_mtime;
 				iface->state->lease.leasetime -= l;
@@ -1302,7 +1332,7 @@ handle_ifa(int type, const char *ifname,
 		run_script(ifp);
 		if (ifo->options & DHCPCD_INFORM) {
 			ifp->state->state = DHS_INFORM;
-			ifp->state->xid = arc4random();
+			ifp->state->xid = dhcp_xid(ifp);
 			ifp->state->lease.server.s_addr =
 			    dst ? dst->s_addr : INADDR_ANY;
 			ifp->addr = *addr;
