@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.133 2010/01/31 07:32:35 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.134 2010/01/31 07:37:24 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.133 2010/01/31 07:32:35 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.134 2010/01/31 07:37:24 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1065,7 +1065,9 @@ ReFault:
 
 		uobjpage = NULL;
 
-		if (gotpages) {
+		if (gotpages == 0)
+			goto lower_fault_lookup_done;
+
 			currva = startva;
 			for (lcv = 0; lcv < npages;
 			     lcv++, currva += PAGE_SIZE) {
@@ -1143,7 +1145,9 @@ ReFault:
 				UVM_PAGE_OWN(curpg, NULL);
 			}
 			pmap_update(ufi.orig_map->pmap);
-		}
+
+lower_fault_lookup_done:
+		{}
 	} else {
 		uobjpage = NULL;
 	}
