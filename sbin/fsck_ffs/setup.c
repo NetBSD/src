@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.89 2009/09/27 17:13:37 bouyer Exp $	*/
+/*	$NetBSD: setup.c,v 1.90 2010/01/31 16:04:35 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.89 2009/09/27 17:13:37 bouyer Exp $");
+__RCSID("$NetBSD: setup.c,v 1.90 2010/01/31 16:04:35 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -554,6 +554,8 @@ readappleufs(void)
 	/* XXX do we have to deal with APPLEUFS_LABEL_OFFSET not
 	 * being block aligned (CD's?)
 	 */
+	if (APPLEUFS_LABEL_SIZE % dev_bsize != 0)
+		return 0;
 	if (bread(fsreadfd, (char *)appleufsblk.b_un.b_fs, label,
 	    (long)APPLEUFS_LABEL_SIZE) != 0)
 		return 0;
