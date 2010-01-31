@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.135 2010/01/31 07:46:03 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.136 2010/01/31 07:47:29 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.135 2010/01/31 07:46:03 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.136 2010/01/31 07:47:29 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1051,105 +1051,105 @@ ReFault:
 		goto lower_fault_lookup_done;
 	}
 
-		mutex_enter(&uobj->vmobjlock);
-		/* locked (!shadowed): maps(read), amap (if there), uobj */
+	mutex_enter(&uobj->vmobjlock);
+	/* locked (!shadowed): maps(read), amap (if there), uobj */
+	/*
+	 * the following call to pgo_get does _not_ change locking state
+	 */
+
+	uvmexp.fltlget++;
+	gotpages = npages;
+	(void) uobj->pgops->pgo_get(uobj, ufi.entry->offset + eoff,
+			pages, &gotpages, centeridx,
+			access_type & MASK(ufi.entry),
+			ufi.entry->advice, PGO_LOCKED);
+
+	/*
+	 * check for pages to map, if we got any
+	 */
+
+	uobjpage = NULL;
+
+	if (gotpages == 0)
+		goto lower_fault_lookup_done;
+
+	currva = startva;
+	for (lcv = 0; lcv < npages;
+	     lcv++, currva += PAGE_SIZE) {
+		struct vm_page *curpg;
+		bool readonly;
+
+		curpg = pages[lcv];
+		if (curpg == NULL || curpg == PGO_DONTCARE) {
+			continue;
+		}
+		KASSERT(curpg->uobject == uobj);
+
 		/*
-		 * the following call to pgo_get does _not_ change locking state
+		 * if center page is resident and not
+		 * PG_BUSY|PG_RELEASED then pgo_get
+		 * made it PG_BUSY for us and gave
+		 * us a handle to it.   remember this
+		 * page as "uobjpage." (for later use).
 		 */
 
-		uvmexp.fltlget++;
-		gotpages = npages;
-		(void) uobj->pgops->pgo_get(uobj, ufi.entry->offset + eoff,
-				pages, &gotpages, centeridx,
-				access_type & MASK(ufi.entry),
-				ufi.entry->advice, PGO_LOCKED);
+		if (lcv == centeridx) {
+			uobjpage = curpg;
+			UVMHIST_LOG(maphist, "  got uobjpage "
+			    "(0x%x) with locked get",
+			    uobjpage, 0,0,0);
+			continue;
+		}
 
 		/*
-		 * check for pages to map, if we got any
+		 * calling pgo_get with PGO_LOCKED returns us
+		 * pages which are neither busy nor released,
+		 * so we don't need to check for this.
+		 * we can just directly enter the pages.
 		 */
 
-		uobjpage = NULL;
+		mutex_enter(&uvm_pageqlock);
+		uvm_pageenqueue(curpg);
+		mutex_exit(&uvm_pageqlock);
+		UVMHIST_LOG(maphist,
+		  "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
+		  ufi.orig_map->pmap, currva, curpg, 0);
+		uvmexp.fltnomap++;
 
-		if (gotpages == 0)
-			goto lower_fault_lookup_done;
+		/*
+		 * Since this page isn't the page that's
+		 * actually faulting, ignore pmap_enter()
+		 * failures; it's not critical that we
+		 * enter these right now.
+		 */
+		KASSERT((curpg->flags & PG_PAGEOUT) == 0);
+		KASSERT((curpg->flags & PG_RELEASED) == 0);
+		KASSERT(!UVM_OBJ_IS_CLEAN(curpg->uobject) ||
+		    (curpg->flags & PG_CLEAN) != 0);
+		readonly = (curpg->flags & PG_RDONLY)
+		    || (curpg->loan_count > 0)
+		    || UVM_OBJ_NEEDS_WRITEFAULT(curpg->uobject);
 
-			currva = startva;
-			for (lcv = 0; lcv < npages;
-			     lcv++, currva += PAGE_SIZE) {
-				struct vm_page *curpg;
-				bool readonly;
+		(void) pmap_enter(ufi.orig_map->pmap, currva,
+		    VM_PAGE_TO_PHYS(curpg),
+		    readonly ?
+		    enter_prot & ~VM_PROT_WRITE :
+		    enter_prot & MASK(ufi.entry),
+		    PMAP_CANFAIL |
+		     (wired ? PMAP_WIRED : 0));
 
-				curpg = pages[lcv];
-				if (curpg == NULL || curpg == PGO_DONTCARE) {
-					continue;
-				}
-				KASSERT(curpg->uobject == uobj);
+		/*
+		 * NOTE: page can't be PG_WANTED or PG_RELEASED
+		 * because we've held the lock the whole time
+		 * we've had the handle.
+		 */
+		KASSERT((curpg->flags & PG_WANTED) == 0);
+		KASSERT((curpg->flags & PG_RELEASED) == 0);
 
-				/*
-				 * if center page is resident and not
-				 * PG_BUSY|PG_RELEASED then pgo_get
-				 * made it PG_BUSY for us and gave
-				 * us a handle to it.   remember this
-				 * page as "uobjpage." (for later use).
-				 */
-
-				if (lcv == centeridx) {
-					uobjpage = curpg;
-					UVMHIST_LOG(maphist, "  got uobjpage "
-					    "(0x%x) with locked get",
-					    uobjpage, 0,0,0);
-					continue;
-				}
-
-				/*
-				 * calling pgo_get with PGO_LOCKED returns us
-				 * pages which are neither busy nor released,
-				 * so we don't need to check for this.
-				 * we can just directly enter the pages.
-				 */
-
-				mutex_enter(&uvm_pageqlock);
-				uvm_pageenqueue(curpg);
-				mutex_exit(&uvm_pageqlock);
-				UVMHIST_LOG(maphist,
-				  "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
-				  ufi.orig_map->pmap, currva, curpg, 0);
-				uvmexp.fltnomap++;
-
-				/*
-				 * Since this page isn't the page that's
-				 * actually faulting, ignore pmap_enter()
-				 * failures; it's not critical that we
-				 * enter these right now.
-				 */
-				KASSERT((curpg->flags & PG_PAGEOUT) == 0);
-				KASSERT((curpg->flags & PG_RELEASED) == 0);
-				KASSERT(!UVM_OBJ_IS_CLEAN(curpg->uobject) ||
-				    (curpg->flags & PG_CLEAN) != 0);
-				readonly = (curpg->flags & PG_RDONLY)
-				    || (curpg->loan_count > 0)
-				    || UVM_OBJ_NEEDS_WRITEFAULT(curpg->uobject);
-
-				(void) pmap_enter(ufi.orig_map->pmap, currva,
-				    VM_PAGE_TO_PHYS(curpg),
-				    readonly ?
-				    enter_prot & ~VM_PROT_WRITE :
-				    enter_prot & MASK(ufi.entry),
-				    PMAP_CANFAIL |
-				     (wired ? PMAP_WIRED : 0));
-
-				/*
-				 * NOTE: page can't be PG_WANTED or PG_RELEASED
-				 * because we've held the lock the whole time
-				 * we've had the handle.
-				 */
-				KASSERT((curpg->flags & PG_WANTED) == 0);
-				KASSERT((curpg->flags & PG_RELEASED) == 0);
-
-				curpg->flags &= ~(PG_BUSY);
-				UVM_PAGE_OWN(curpg, NULL);
-			}
-			pmap_update(ufi.orig_map->pmap);
+		curpg->flags &= ~(PG_BUSY);
+		UVM_PAGE_OWN(curpg, NULL);
+	}
+	pmap_update(ufi.orig_map->pmap);
 
 lower_fault_lookup_done:
 	{}
