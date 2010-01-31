@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.24 2010/01/30 18:35:49 jruoho Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.25 2010/01/31 17:53:31 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.24 2010/01/30 18:35:49 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.25 2010/01/31 17:53:31 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -116,6 +116,7 @@ typedef struct thinkpad_softc {
 
 static int	thinkpad_match(device_t, cfdata_t, void *);
 static void	thinkpad_attach(device_t, device_t, void *);
+static int	thinkpad_detach(device_t, int);
 
 static ACPI_STATUS thinkpad_mask_init(thinkpad_softc_t *, uint32_t);
 static void	thinkpad_notify_handler(ACPI_HANDLE, UINT32, void *);
@@ -135,7 +136,7 @@ static uint8_t	thinkpad_brightness_read(thinkpad_softc_t *sc);
 static void	thinkpad_cmos(thinkpad_softc_t *, uint8_t);
 
 CFATTACH_DECL_NEW(thinkpad, sizeof(thinkpad_softc_t),
-    thinkpad_match, thinkpad_attach, NULL, NULL);
+    thinkpad_match, thinkpad_attach, thinkpad_detach, NULL);
 
 static const char * const thinkpad_ids[] = {
 	"IBM0068",
@@ -274,6 +275,36 @@ fail:
 	if (!pmf_event_register(self, PMFE_DISPLAY_BRIGHTNESS_DOWN,
 	    thinkpad_brightness_down, true))
 		aprint_error_dev(self, "couldn't register event handler\n");
+}
+
+static int
+thinkpad_detach(device_t self, int flags)
+{
+	struct thinkpad_softc *sc = device_private(self);
+	ACPI_STATUS rv;
+	int i;
+
+	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
+	    ACPI_DEVICE_NOTIFY, thinkpad_notify_handler);
+
+	if (ACPI_FAILURE(rv))
+		return EBUSY;
+
+	for (i = 0; i < TP_PSW_LAST; i++)
+		sysmon_pswitch_unregister(&sc->sc_smpsw[i]);
+
+	if (sc->sc_sme != NULL)
+		sysmon_envsys_unregister(sc->sc_sme);
+
+	pmf_device_deregister(self);
+
+	pmf_event_deregister(self, PMFE_DISPLAY_BRIGHTNESS_UP,
+	    thinkpad_brightness_up, true);
+
+	pmf_event_deregister(self, PMFE_DISPLAY_BRIGHTNESS_DOWN,
+	    thinkpad_brightness_down, true);
+
+	return 0;
 }
 
 static void
@@ -445,44 +476,50 @@ thinkpad_mask_init(thinkpad_softc_t *sc, uint32_t mask)
 static void
 thinkpad_sensors_init(thinkpad_softc_t *sc)
 {
-	char sname[5] = "TMP?";
-	char fname[5] = "FAN?";
-	int i, j, err;
+	int i, j;
 
 	if (sc->sc_ecdev == NULL)
 		return;	/* no chance of this working */
 
 	sc->sc_sme = sysmon_envsys_create();
-	for (i = 0; i < THINKPAD_NTEMPSENSORS; i++) {
-		sname[3] = '0' + i;
-		strcpy(sc->sc_sensor[i].desc, sname);
+
+	for (i = j = 0; i < THINKPAD_NTEMPSENSORS; i++) {
+
 		sc->sc_sensor[i].units = ENVSYS_STEMP;
 
-		if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[i]))
-			aprint_error_dev(sc->sc_dev,
-			    "couldn't attach sensor %s\n", sname);
+		(void)snprintf(sc->sc_sensor[i].desc,
+		    sizeof(sc->sc_sensor[i].desc), "TMP%d", i);
+
+		if (sysmon_envsys_sensor_attach(sc->sc_sme,
+			&sc->sc_sensor[i]) != 0)
+			goto fail;
 	}
-	j = i; /* THINKPAD_NTEMPSENSORS */
-	for (; i < (j + THINKPAD_NFANSENSORS); i++) {
-		fname[3] = '0' + (i - j);
-		strcpy(sc->sc_sensor[i].desc, fname);
+
+	for (i = THINKPAD_NTEMPSENSORS; i < THINKPAD_NSENSORS; i++, j++) {
+
 		sc->sc_sensor[i].units = ENVSYS_SFANRPM;
 
-		if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[i]))
-			aprint_error_dev(sc->sc_dev,
-			    "couldn't attach sensor %s\n", fname);
+		(void)snprintf(sc->sc_sensor[i].desc,
+		    sizeof(sc->sc_sensor[i].desc), "FAN%d", j);
+
+		if (sysmon_envsys_sensor_attach(sc->sc_sme,
+			&sc->sc_sensor[i]) != 0)
+			goto fail;
 	}
 
 	sc->sc_sme->sme_name = device_xname(sc->sc_dev);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = thinkpad_sensors_refresh;
 
-	err = sysmon_envsys_register(sc->sc_sme);
-	if (err) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't register with sysmon: %d\n", err);
-		sysmon_envsys_destroy(sc->sc_sme);
-	}
+	if (sysmon_envsys_register(sc->sc_sme) != 0)
+		goto fail;
+
+	return;
+
+fail:
+	aprint_error_dev(sc->sc_dev, "failed to initialize sysmon\n");
+	sysmon_envsys_destroy(sc->sc_sme);
+	sc->sc_sme = NULL;
 }
 
 static void
