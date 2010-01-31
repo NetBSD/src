@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1351 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1352 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -536,3 +536,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	bpf(9): Make bpf interface with an ops vector backed by stubs
 		if bpf is not present in the kernel.  The client
 		linkage is now always the same.  [pooka 20100119]
+	dhcpcd(8): Import dhcpcd-5.1.5. [roy 20100131]
