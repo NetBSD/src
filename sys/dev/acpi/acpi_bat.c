@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.80 2010/01/31 06:10:53 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.81 2010/01/31 06:45:09 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,11 +75,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.80 2010/01/31 06:10:53 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.81 2010/01/31 06:45:09 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>		/* for hz */
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/mutex.h>
 
@@ -149,7 +150,7 @@ struct acpibat_softc {
 	struct acpi_devnode	*sc_node;
 	struct sysmon_envsys	*sc_sme;
 	struct timeval		 sc_lastupdate;
-	envsys_data_t		 sc_sensor[ACPIBAT_COUNT];
+	envsys_data_t		*sc_sensor;
 	kmutex_t		 sc_mutex;
 	kcondvar_t		 sc_condvar;
 	int                      sc_present;
@@ -236,7 +237,9 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_node = aa->aa_node;
 	sc->sc_present = 0;
+
 	sc->sc_sme = NULL;
+	sc->sc_sensor = NULL;
 
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_condvar, device_xname(self));
@@ -247,10 +250,18 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_ALL_NOTIFY, acpibat_notify_handler, self);
 
-	if (ACPI_SUCCESS(rv))
-		acpibat_init_envsys(self);
-	else
+	if (ACPI_FAILURE(rv)) {
 		aprint_error_dev(self, "couldn't install notify handler\n");
+		return;
+	}
+
+	sc->sc_sensor = kmem_zalloc(ACPIBAT_COUNT *
+	    sizeof(*sc->sc_sensor), KM_SLEEP);
+
+	if (sc->sc_sensor == NULL)
+		return;
+
+	acpibat_init_envsys(self);
 }
 
 /*
@@ -275,6 +286,10 @@ acpibat_detach(device_t self, int flags)
 
 	if (sc->sc_sme != NULL)
 		sysmon_envsys_unregister(sc->sc_sme);
+
+	if (sc->sc_sensor != NULL)
+		kmem_free(sc->sc_sensor, ACPIBAT_COUNT *
+		    sizeof(*sc->sc_sensor));
 
 	pmf_device_deregister(self);
 
@@ -723,8 +738,12 @@ acpibat_init_envsys(device_t dv)
 
 fail:
 	aprint_error_dev(dv, "failed to initialize sysmon\n");
+
 	sysmon_envsys_destroy(sc->sc_sme);
+	kmem_free(sc->sc_sensor, ACPIBAT_COUNT * sizeof(*sc->sc_sensor));
+
 	sc->sc_sme = NULL;
+	sc->sc_sensor = NULL;
 }
 
 static void
