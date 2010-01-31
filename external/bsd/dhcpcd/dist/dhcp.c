@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2009 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2010 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -421,7 +421,7 @@ get_option_uint8(uint8_t *i, const struct dhcp_message *dhcp, uint8_t option)
 }
 
 /* Decode an RFC3397 DNS search order option into a space
- * seperated string. Returns length of string (including 
+ * separated string. Returns length of string (including
  * terminating zero) or zero on error. out may be NULL
  * to just determine output length. */
 static ssize_t
@@ -863,17 +863,16 @@ make_message(struct dhcp_message **message,
 	switch (iface->family) {
 	case ARPHRD_ETHER:
 	case ARPHRD_IEEE802:
-		dhcp->hwlen = ETHER_ADDR_LEN;
-		memcpy(&dhcp->chaddr, &iface->hwaddr, ETHER_ADDR_LEN);
-		break;
-	case ARPHRD_IEEE1394:
-	case ARPHRD_INFINIBAND:
-		dhcp->hwlen = 0;
-		if (dhcp->ciaddr == 0 &&
-		    type != DHCP_DECLINE && type != DHCP_RELEASE)
-			dhcp->flags = htons(BROADCAST_FLAG);
+		dhcp->hwlen = iface->hwlen;
+		memcpy(&dhcp->chaddr, &iface->hwaddr, iface->hwlen);
 		break;
 	}
+
+	if (ifo->options & DHCPCD_BROADCAST &&
+	    dhcp->ciaddr == 0 &&
+	    type != DHCP_DECLINE &&
+	    type != DHCP_RELEASE)
+		dhcp->flags = htons(BROADCAST_FLAG);
 
 	if (type != DHCP_DECLINE && type != DHCP_RELEASE) {
 		if (up < 0 || up > (time_t)UINT16_MAX)
