@@ -1,4 +1,4 @@
-/*	$NetBSD: dalb_acpi.c,v 1.5 2010/01/08 20:40:41 dyoung Exp $	*/
+/*	$NetBSD: dalb_acpi.c,v 1.6 2010/01/31 19:49:29 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.5 2010/01/08 20:40:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.6 2010/01/31 19:49:29 jruoho Exp $");
 
 /*
  * Direct Application Launch Button:
@@ -68,6 +68,7 @@ struct acpi_dalb_softc {
 
 static int	acpi_dalb_match(device_t, cfdata_t, void *);
 static void	acpi_dalb_attach(device_t, device_t, void *);
+static int	acpi_dalb_detach(device_t, int);
 static void	acpi_dalb_notify_handler(ACPI_HANDLE, UINT32, void *);
 static bool	acpi_dalb_resume(device_t, pmf_qual_t);
 
@@ -75,7 +76,7 @@ static void	acpi_dalb_get_wakeup_hotkeys(void *opaque);
 static void	acpi_dalb_get_runtime_hotkeys(void *opaque);
 
 CFATTACH_DECL_NEW(acpidalb, sizeof(struct acpi_dalb_softc),
-    acpi_dalb_match, acpi_dalb_attach, NULL, NULL);
+    acpi_dalb_match, acpi_dalb_attach, acpi_dalb_detach, NULL);
 
 static const char * const acpi_dalb_ids[] = {
         "PNP0C32", /* Direct Application Launch Button */
@@ -188,6 +189,24 @@ acpi_dalb_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, NULL, acpi_dalb_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+static int
+acpi_dalb_detach(device_t self, int flags)
+{
+	struct acpi_dalb_softc *sc = device_private(self);
+	ACPI_STATUS rv;
+
+	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
+	    ACPI_ALL_NOTIFY, acpi_dalb_notify_handler);
+
+	if (ACPI_FAILURE(rv))
+		return EBUSY;
+
+	pmf_device_deregister(self);
+	sysmon_pswitch_unregister(&sc->sc_smpsw);
+
+	return 0;
 }
 
 static void
