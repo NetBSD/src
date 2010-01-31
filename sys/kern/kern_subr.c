@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.204 2010/01/30 23:19:55 pooka Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.205 2010/01/31 00:48:07 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.204 2010/01/30 23:19:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.205 2010/01/31 00:48:07 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -202,7 +202,7 @@ hook_proc_run(hook_list_t *list, struct proc *p)
  * it won't be run again.
  */
 
-static hook_list_t shutdownhook_list;
+static hook_list_t shutdownhook_list = LIST_HEAD_INITIALIZER(shutdownhook_list);
 
 void *
 shutdownhook_establish(void (*fn)(void *), void *arg)
@@ -249,7 +249,7 @@ doshutdownhooks(void)
  * "Mountroot hook" types, functions, and variables.
  */
 
-static hook_list_t mountroothook_list;
+static hook_list_t mountroothook_list=LIST_HEAD_INITIALIZER(mountroothook_list);
 
 void *
 mountroothook_establish(void (*fn)(device_t), device_t dev)
@@ -282,7 +282,7 @@ domountroothook(void)
 	}
 }
 
-static hook_list_t exechook_list;
+static hook_list_t exechook_list = LIST_HEAD_INITIALIZER(exechook_list);
 
 void *
 exechook_establish(void (*fn)(struct proc *, void *), void *arg)
@@ -305,7 +305,7 @@ doexechooks(struct proc *p)
 	hook_proc_run(&exechook_list, p);
 }
 
-static hook_list_t exithook_list;
+static hook_list_t exithook_list = LIST_HEAD_INITIALIZER(exithook_list);
 extern krwlock_t exec_lock;
 
 void *
@@ -337,7 +337,7 @@ doexithooks(struct proc *p)
 	hook_proc_run(&exithook_list, p);
 }
 
-static hook_list_t forkhook_list;
+static hook_list_t forkhook_list = LIST_HEAD_INITIALIZER(forkhook_list);
 
 void *
 forkhook_establish(void (*fn)(struct proc *, struct proc *))
