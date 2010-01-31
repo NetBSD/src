@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.8 2010/01/30 21:55:30 pooka Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.9 2010/01/31 02:54:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.8 2010/01/30 21:55:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.9 2010/01/31 02:54:56 pooka Exp $");
 
 /*
  *
@@ -150,7 +150,7 @@ swwdog_panic(void *vsc)
 	swwdog_reboot = 1;
 	callout_schedule(&sc->sc_c, 60 * hz);	/* deliberate double-panic */
 
-	printf("%s: %d second timer expired", sc->sc_name,
+	printf("%s: %d second timer expired\n", sc->sc_name,
 	    sc->sc_smw.smw_period);
 
 	if (do_panic)
