@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.91 2010/01/30 02:46:52 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.92 2010/01/31 21:36:38 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.91 2010/01/30 02:46:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.92 2010/01/31 21:36:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -93,6 +93,8 @@ static void sme_remove_userprops(void);
 static int sme_add_property_dictionary(struct sysmon_envsys *, prop_array_t,
 				       prop_dictionary_t);
 static void sme_initial_refresh(void *);
+static uint32_t sme_get_max_value(struct sysmon_envsys *,
+     bool (*)(const envsys_data_t*), bool);
 
 /*
  * sysmon_envsys_init:
@@ -1409,6 +1411,71 @@ out:
 bad:
 	prop_object_release(dict);
 	return NULL;
+}
+
+/*
+ * Find the maximum of all currently reported values.
+ * The provided callback decides wether a sensor is part of the
+ * maximum calculation (by returning true) or ignored (callback
+ * returns false). Example usage: callback selects temperature
+ * sensors in a given thermal zone, the function calculates the
+ * maximum currently reported temperature in this zone.
+ * If the parameter "refresh" is true, new values will be aquired
+ * from the hardware, if not, the last reported value will be used.
+ */
+uint32_t
+sysmon_envsys_get_max_value(bool (*predicate)(const envsys_data_t*),
+	bool refresh)
+{
+	struct sysmon_envsys *sme;
+	uint32_t maxv, v;
+
+	maxv = 0;
+	mutex_enter(&sme_global_mtx);
+	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
+		sysmon_envsys_acquire(sme, false);
+		v = sme_get_max_value(sme, predicate, refresh);
+		sysmon_envsys_release(sme, false);
+		if (v > maxv)
+			maxv = v;
+	}
+	mutex_exit(&sme_global_mtx);
+	return maxv;
+}
+
+static uint32_t
+sme_get_max_value(struct sysmon_envsys *sme,
+    bool (*predicate)(const envsys_data_t*),
+    bool refresh)
+{
+	envsys_data_t *edata;
+	uint32_t maxv, v;
+
+	/* 
+	 * iterate over all sensors and find temperature ones.
+	 */
+	maxv = 0;
+	TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
+		if (!(*predicate)(edata))
+			continue;
+
+		/* 
+		 * refresh sensor data via sme_refresh only if the
+		 * flag is not set.
+		 */
+		if (refresh && (sme->sme_flags & SME_DISABLE_REFRESH) == 0) {
+			mutex_enter(&sme->sme_mtx);
+			(*sme->sme_refresh)(sme, edata);
+			mutex_exit(&sme->sme_mtx);
+		}
+
+		v = edata->value_cur;
+		if (v > maxv)
+			maxv = v;
+
+	}
+
+	return maxv;
 }
 
 /*
