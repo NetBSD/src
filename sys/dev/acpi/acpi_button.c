@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.29 2010/01/30 18:35:48 jruoho Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.30 2010/01/31 06:10:53 jruoho Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.29 2010/01/30 18:35:48 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.30 2010/01/31 06:10:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,12 +75,12 @@ static const char * const sleep_button_hid[] = {
 
 static int	acpibut_match(device_t, cfdata_t, void *);
 static void	acpibut_attach(device_t, device_t, void *);
-
-CFATTACH_DECL_NEW(acpibut, sizeof(struct acpibut_softc),
-    acpibut_match, acpibut_attach, NULL, NULL);
-
+static int	acpibut_detach(device_t, int);
 static void	acpibut_pressed_event(void *);
 static void	acpibut_notify_handler(ACPI_HANDLE, UINT32, void *);
+
+CFATTACH_DECL_NEW(acpibut, sizeof(struct acpibut_softc),
+    acpibut_match, acpibut_attach, acpibut_detach, NULL);
 
 /*
  * acpibut_match:
@@ -155,6 +155,29 @@ acpibut_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+/*
+ * acpibut_detach:
+ *
+ *	Autoconfiguration `detach' routine.
+ */
+static int
+acpibut_detach(device_t self, int flags)
+{
+	struct acpibut_softc *sc = device_private(self);
+	ACPI_STATUS rv;
+
+	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
+	    ACPI_DEVICE_NOTIFY, acpibut_notify_handler);
+
+	if (ACPI_FAILURE(rv))
+		return EBUSY;
+
+	pmf_device_deregister(self);
+	sysmon_pswitch_unregister(&sc->sc_smpsw);
+
+	return 0;
 }
 
 /*
