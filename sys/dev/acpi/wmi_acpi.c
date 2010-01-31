@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.11 2010/01/23 13:32:45 jruoho Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.12 2010/01/31 20:38:11 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.11 2010/01/23 13:32:45 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.12 2010/01/31 20:38:11 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -209,16 +209,20 @@ acpi_wmi_init(struct acpi_wmi_softc *sc)
 		goto fail;
 
 	obj = buf.Pointer;
-	len = obj->Buffer.Length;
 
-	KASSERT(obj->Type == ACPI_TYPE_BUFFER);
+	if (obj->Type != ACPI_TYPE_BUFFER) {
+		rv = AE_TYPE;
+		goto fail;
+	}
+
+	len = obj->Buffer.Length;
 
 	if (len != obj->Package.Count) {
 		rv = AE_BAD_VALUE;
 		goto fail;
 	}
 
-	KASSERT(sizeof(struct guid_t) == 20);
+	CTASSERT(sizeof(struct guid_t) == 20);
 
 	if (len < sizeof(struct guid_t) ||
 	    len % sizeof(struct guid_t) != 0) {
