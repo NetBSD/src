@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev.c,v 1.12 2010/01/19 22:38:21 pooka Exp $	*/
+/*	$NetBSD: rump_dev.c,v 1.13 2010/01/31 03:07:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.12 2010/01/19 22:38:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.13 2010/01/31 03:07:00 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -42,6 +42,7 @@ __weak_alias(rump_dev_raidframe_init,nocomponent);
 __weak_alias(rump_dev_netsmb_init,nocomponent);
 __weak_alias(rump_dev_rnd_init,nocomponent);
 __weak_alias(rump_dev_rumpusbhc_init,nocomponent);
+__weak_alias(rump_dev_sysmon_init,nocomponent);
 
 __weak_alias(rump_device_configuration,nocomponent);
 __weak_alias(rump_wscons_configuration,nocomponent);
@@ -66,6 +67,7 @@ rump_dev_init(void)
 	rump_dev_netsmb_init();
 	rump_dev_rnd_init();
 	rump_dev_rumpusbhc_init();
+	rump_dev_sysmon_init();
 
 	rump_pdev_finalize();
 
@@ -105,4 +107,3 @@ device_register_post_config(struct device *dev, void *v)
 	/* nada */
 }
 #endif
-
