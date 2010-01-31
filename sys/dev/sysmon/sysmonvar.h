@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.29 2009/06/14 19:43:12 pgoyette Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.30 2010/01/31 21:36:38 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -133,6 +133,8 @@ void	sysmon_envsys_unregister(struct sysmon_envsys *);
 
 int	sysmon_envsys_sensor_attach(struct sysmon_envsys *, envsys_data_t *);
 int	sysmon_envsys_sensor_detach(struct sysmon_envsys *, envsys_data_t *);
+
+uint32_t	sysmon_envsys_get_max_value(bool (*)(const envsys_data_t*), bool);
 
 void	sysmon_envsys_init(void);
 
