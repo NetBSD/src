@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.37 2009/12/03 13:12:16 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.38 2010/01/31 00:54:22 snj Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.37 2009/12/03 13:12:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.38 2010/01/31 00:54:22 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.37 2009/12/03 13:12:16 pooka Exp $");
  * and rumpuser routines is that while the kernel uses static
  * storage, rumpuser allocates the object from the heap.  This
  * indirection is necessary because we don't know the size of
- * pthread objects here.  It is also benefitial, since we can
+ * pthread objects here.  It is also beneficial, since we can
  * be easily compatible with the kernel ABI because all kernel
  * objects regardless of machine architecture are always at least
  * the size of a pointer.  The downside, of course, is a performance
