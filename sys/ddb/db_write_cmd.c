@@ -1,4 +1,4 @@
-/*	$NetBSD: db_write_cmd.c,v 1.23 2009/03/07 22:02:17 ad Exp $	*/
+/*	$NetBSD: db_write_cmd.c,v 1.24 2010/01/31 21:52:23 phx Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_write_cmd.c,v 1.23 2009/03/07 22:02:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_write_cmd.c,v 1.24 2010/01/31 21:52:23 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -49,11 +49,14 @@ db_write_cmd(db_expr_t address, bool have_addr,
 	db_expr_t	old_value;
 	db_expr_t	new_value;
 	int		size;
-	bool		wrote_one = false;
+	bool		wrote_one;
+	bool		show_old_val;
 
 	addr = (db_addr_t) address;
+	wrote_one = false;
+	show_old_val = islower((unsigned char)modif[0]);
 
-	switch (modif[0]) {
+	switch (tolower((unsigned char)modif[0])) {
 	case 'b':
 		size = 1;
 		break;
@@ -71,10 +74,14 @@ db_write_cmd(db_expr_t address, bool have_addr,
 	}
 
 	while (db_expression(&new_value)) {
-		old_value = db_get_value(addr, size, false);
 		db_printsym(addr, DB_STGY_ANY, db_printf);
-		db_printf("\t\t%s = ", db_num_to_str(old_value));
-		db_printf("%s\n", db_num_to_str(new_value));
+		if (show_old_val) {
+			old_value = db_get_value(addr, size, false);
+			db_printf("\t\t%s = ", db_num_to_str(old_value));
+			db_printf("%s\n", db_num_to_str(new_value));
+		}
+		else
+			db_printf("\t\t= %s\n", db_num_to_str(new_value));
 		db_put_value(addr, size, new_value);
 		addr += size;
 
