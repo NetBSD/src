@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.78 2010/01/26 21:29:48 mlelstv Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.79 2010/01/31 10:30:40 mlelstv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.78 2010/01/26 21:29:48 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.79 2010/01/31 10:30:40 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -464,15 +464,15 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	struct msdosfsmount *pmp;
 	struct buf *bp;
 	dev_t dev = devvp->v_rdev;
-	struct partinfo dpart;
 	union bootsector *bsp;
 	struct byte_bpb33 *b33;
 	struct byte_bpb50 *b50;
 	struct byte_bpb710 *b710;
-	u_int8_t SecPerClust;
+	uint8_t SecPerClust;
 	int	ronly, error, tmp;
-	int	bsize, secsize;
-	u_int64_t psize;
+	int	bsize;
+	uint64_t psize;
+	unsigned secsize;
 
 	/* Flush out any old buffers remaining from a previous use. */
 	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)) != 0)
@@ -483,40 +483,10 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	bp  = NULL; /* both used in error_exit */
 	pmp = NULL;
 
-	/*
- 	 * We need the disklabel to calculate the size of a FAT entry
-	 * later on.
- 	 *
- 	 * There might still be parts of the msdos fs driver which assume
-	 * that the size of a disk block will always be 512 bytes.
-	 * Let's root them out...
-	 */
-	error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED);
-	if (error == 0) {
-		secsize = dpart.disklab->d_secsize;
-		psize = dpart.part->p_size;
-	} else {
-		struct dkwedge_info dkw;
-		struct disk *pdk;
-		error = VOP_IOCTL(devvp, DIOCGWEDGEINFO, &dkw, FREAD, NOCRED);
-		secsize = 512;	/* XXX */
-		psize = -1;
-		if (error) {
-			if (error != ENOTTY) {
-				DPRINTF(("Error getting partition info %d\n",
-				    error));
-				goto error_exit;
-			}
-		} else {
-			pdk = disk_find(dkw.dkw_parent);
-			if (pdk == NULL) {
-				error = ENODEV;
-				goto error_exit;
-			}
-			secsize = DEV_BSIZE << pdk->dk_blkshift;
-			psize = dkw.dkw_size;
-		}
-	}
+	error = getdisksize(devvp, &psize, &secsize);
+	if (error)
+		goto error_exit;
+
 	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
 		bsize = secsize;
 		if (bsize != 512) {
