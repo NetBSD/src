@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.112 2010/01/19 22:06:25 pooka Exp $ */
+/* $NetBSD: rtw.c,v 1.113 2010/01/31 18:12:51 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.112 2010/01/19 22:06:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.113 2010/01/31 18:12:51 dyoung Exp $");
 
 
 #include <sys/param.h>
@@ -846,7 +846,7 @@ rtw_srom_parse(struct rtw_srom *sr, uint32_t *flags, uint8_t *cs_threshold,
 		rtw_srom_defaults(sr, flags, cs_threshold, rfchipid, rcr);
 		return 0;
 	} else {
-		aprint_verbose_dev(dev, "SROM version %d.%d",
+		aprint_verbose_dev(dev, "SROM version %d.%d\n",
 		    srom_version >> 8, srom_version & 0xff);
 	}
 
