@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.37 2010/01/30 18:07:06 jruoho Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.38 2010/01/31 07:34:10 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.37 2010/01/30 18:07:06 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.38 2010/01/31 07:34:10 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,18 +86,18 @@ static const char * const acad_hid[] = {
 #define AACAD_CLEAR(sc, f)	(void)((sc)->sc_flags &= ~(f))
 #define AACAD_ISSET(sc, f)	((sc)->sc_flags & (f))
 
-static int acpiacad_match(device_t, cfdata_t, void *);
+static int  acpiacad_match(device_t, cfdata_t, void *);
 static void acpiacad_attach(device_t, device_t, void *);
-
-CFATTACH_DECL_NEW(acpiacad, sizeof(struct acpiacad_softc),
-    acpiacad_match, acpiacad_attach, NULL, NULL);
-
+static int  acpiacad_detach(device_t, int);
 static void acpiacad_get_status(void *);
 static void acpiacad_clear_status(struct acpiacad_softc *);
 static void acpiacad_notify_handler(ACPI_HANDLE, UINT32, void *);
 static void acpiacad_init_envsys(device_t);
 static void acpiacad_refresh(struct sysmon_envsys *, envsys_data_t *);
 static bool acpiacad_resume(device_t, pmf_qual_t);
+
+CFATTACH_DECL_NEW(acpiacad, sizeof(struct acpiacad_softc),
+    acpiacad_match, acpiacad_attach, acpiacad_detach, NULL);
 
 /*
  * acpiacad_match:
@@ -140,6 +140,7 @@ acpiacad_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	sc->sc_sme = NULL;
 	sc->sc_status = -1;
 
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
@@ -159,6 +160,34 @@ acpiacad_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	acpiacad_init_envsys(self);
+}
+
+/*
+ * acpiacad_detach:
+ *
+ *	Autoconfiguration `detach' routine.
+ */
+static int
+acpiacad_detach(device_t self, int flags)
+{
+	struct acpiacad_softc *sc = device_private(self);
+	ACPI_STATUS rv;
+
+	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
+	    ACPI_ALL_NOTIFY, acpiacad_notify_handler);
+
+	if (ACPI_FAILURE(rv))
+		return EBUSY;
+
+	mutex_destroy(&sc->sc_mtx);
+
+	if (sc->sc_sme != NULL)
+		sysmon_envsys_unregister(sc->sc_sme);
+
+	pmf_device_deregister(self);
+	sysmon_pswitch_unregister(&sc->sc_smpsw);
+
+	return 0;
 }
 
 /*
@@ -298,11 +327,8 @@ acpiacad_init_envsys(device_t dv)
 	sc->sc_sensor.units = ENVSYS_INDICATOR;
  	strlcpy(sc->sc_sensor.desc, "connected", sizeof(sc->sc_sensor.desc));
 
-	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
-		aprint_error_dev(dv, "unable to add sensor\n");
-		sysmon_envsys_destroy(sc->sc_sme);
-		return;
-	}
+	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor) != 0)
+		goto fail;
 
 	sc->sc_sme->sme_name = device_xname(dv);
 	sc->sc_sme->sme_cookie = dv;
@@ -310,10 +336,15 @@ acpiacad_init_envsys(device_t dv)
 	sc->sc_sme->sme_class = SME_CLASS_ACADAPTER;
 	sc->sc_sme->sme_flags = SME_INIT_REFRESH;
 
-	if (sysmon_envsys_register(sc->sc_sme)) {
-		aprint_error_dev(dv, "unable to register with sysmon\n");
-		sysmon_envsys_destroy(sc->sc_sme);
-	}
+	if (sysmon_envsys_register(sc->sc_sme) != 0)
+		goto fail;
+
+	return;
+
+fail:
+	aprint_error_dev(dv, "failed to initialize sysmon\n");
+	sysmon_envsys_destroy(sc->sc_sme);
+	sc->sc_sme = NULL;
 }
 
 static void
