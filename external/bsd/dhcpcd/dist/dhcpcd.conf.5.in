@@ -1,4 +1,4 @@
-.\" Copyright (c) 2006-2009 Roy Marples
+.\" Copyright (c) 2006-2010 Roy Marples
 .\" All rights reserved
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 16, 2009
+.Dd January 28, 2010
 .Dt DHCPCD.CONF 5 SMM
 .Os
 .Sh NAME
@@ -83,6 +83,13 @@ Only accept packets from
 is ignored if
 .Ic whitelist
 is set.
+.It Ic broadcast
+Instructs the DHCP server to broadcast replies back to the client.
+Normally this is only set for non Ethernet interfaces,
+such as FireWire and InfiniBand.
+In most cases,
+.Nm dhcpcd
+will set this automatically.
 .It Ic env Ar value
 Push
 .Ar value
@@ -143,7 +150,7 @@ Request a leasetime of
 .It Ic metric Ar metric
 Metrics are used to prefer an interface over another one, lowest wins.
 .Nm dhcpcd
-will supply a default metic of 200 +
+will supply a default metric of 200 +
 .Xr if_nametoindex 3 .
 An extra 100 will be added for wireless interfaces.
 .It Ic noarp
@@ -176,7 +183,7 @@ from the server.
 It can be a variable to be used in
 .Xr dhcpcd-run-hooks 8
 or the numerical value.
-You can specify more options seperated by commas, spaces or more option lines.
+You can specify more options separated by commas, spaces or more option lines.
 .It Ic nooption Ar option
 Remove the option from the DHCP message.
 This should only be used when a DHCP server sends a non requested option
@@ -191,7 +198,7 @@ interface.
 Subsequent options are only parsed for this profile
 .Ar name .
 .It Ic quiet
-Supress any dhcpcd output to the console, except for errors.
+Suppress any dhcpcd output to the console, except for errors.
 .It Ic reboot Ar seconds
 Allow
 .Ar reboot
@@ -210,7 +217,7 @@ to be present in all DHCP messages, otherwise the message is ignored.
 It can be a variable to be used in
 .Xr dhcpcd-run-hooks 8
 or the numerical value.
-You can specify more options seperated by commas, spaces or more require lines.
+You can specify more options separated by commas, spaces or more require lines.
 To enforce that
 .Nm dhcpcd
 only responds to DHCP servers and not BOOTP servers, you can
@@ -253,7 +260,7 @@ be too long or too short and can be changed here.
 Tag the DHCP messages with the userclass.
 You can specify more than one.
 .It Ic vendor Ar code , Ns Ar value
-Add an enscapulated vendor option.
+Add an encapsulated vendor option.
 .Ar code
 should be between 1 and 254 inclusive.
 To add a raw vendor string, omit
@@ -267,13 +274,16 @@ Set the vendor option 02 with a hex code.
 .D1 vendor 02,01:02:03:04:05
 Set the vendor option 03 with an IP address as a string.
 .D1 vendor 03,\e"192.168.0.2\e"
-Set un-encapulated vendor option to hello world.
+Set un-encapsulated vendor option to hello world.
 .D1 vendor ,"hello world"
 .It Ic vendorclassid Ar string
 Change the default vendorclassid sent from dhcpcd-version.
 If not set then none is sent.
 .It Ic waitip
 Wait for an address to be assigned before forking to the background.
+.It Ic xidhwaddr
+Use the last four bytes of the hardware address as the DHCP xid instead
+of a randomly generated number.
 .El
 .Sh SEE ALSO
 .Xr dhcpcd-run-hooks 8 ,
