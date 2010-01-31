@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.132 2010/01/31 01:40:12 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.133 2010/01/31 07:32:35 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.132 2010/01/31 01:40:12 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.133 2010/01/31 07:32:35 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1010,6 +1010,9 @@ ReFault:
 	 * XXX case.  --thorpej
 	 */
 
+	if (shadowed == true)
+		goto Case1;
+
 	/*
 	 * if the desired page is not shadowed by the amap and we have a
 	 * backing object, then we check to see if the backing object would
@@ -1018,7 +1021,7 @@ ReFault:
 	 * providing a pgo_fault routine.
 	 */
 
-	if (uobj && shadowed == false && uobj->pgops->pgo_fault != NULL) {
+	if (uobj && uobj->pgops->pgo_fault != NULL) {
 		mutex_enter(&uobj->vmobjlock);
 		/* locked: maps(read), amap (if there), uobj */
 		error = uobj->pgops->pgo_fault(&ufi, startva, pages, npages,
@@ -1042,7 +1045,7 @@ ReFault:
 	 * (PGO_LOCKED).
 	 */
 
-	if (uobj && shadowed == false) {
+	if (uobj) {
 		mutex_enter(&uobj->vmobjlock);
 		/* locked (!shadowed): maps(read), amap (if there), uobj */
 		/*
@@ -1145,16 +1148,11 @@ ReFault:
 		uobjpage = NULL;
 	}
 
-	/* locked (shadowed): maps(read), amap */
-	/* locked (!shadowed): maps(read), amap(if there),
-		 uobj(if !null), uobjpage(if !null) */
-	if (shadowed) {
-		KASSERT(mutex_owned(&amap->am_l));
-	} else {
-		KASSERT(amap == NULL || mutex_owned(&amap->am_l));
-		KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
-		KASSERT(uobjpage == NULL || (uobjpage->flags & PG_BUSY) != 0);
-	}
+	/* locked: maps(read), amap(if there), uobj(if !null), uobjpage(if !null) */
+	KASSERT(!shadowed);
+	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
+	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
+	KASSERT(uobjpage == NULL || (uobjpage->flags & PG_BUSY) != 0);
 
 	/*
 	 * note that at this point we are done with any front or back pages.
@@ -1175,10 +1173,11 @@ ReFault:
 	 * redirect case 2: if we are not shadowed, go to case 2.
 	 */
 
-	if (shadowed == false)
-		goto Case2;
+	goto Case2;
 
+Case1:
 	/* locked: maps(read), amap */
+	KASSERT(mutex_owned(&amap->am_l));
 
 	/*
 	 * handle case 1: fault on an anon in our amap
