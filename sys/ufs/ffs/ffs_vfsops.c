@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.255 2010/01/31 10:50:23 mlelstv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.256 2010/01/31 10:54:10 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.255 2010/01/31 10:50:23 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.256 2010/01/31 10:54:10 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -585,8 +585,6 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	struct fs *fs, *newfs;
 	struct partinfo dpart;
 	int i, bsize, blks, error;
-	uint64_t numsecs;
-	unsigned secsize;
 	int32_t *lp;
 	struct ufsmount *ump;
 	daddr_t sblockloc;
@@ -608,11 +606,9 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	 * Step 2: re-read superblock from disk.
 	 */
 	fs = ump->um_fs;
-	error = getdisksize(devvp, &numsecs, &secsize);
-	if (error)
-		secsize = DEV_BSIZE;
+
 	/* XXX we don't handle possibility that superblock moved. */
-	error = bread(devvp, fs->fs_sblockloc / secsize, fs->fs_sbsize,
+	error = bread(devvp, fs->fs_sblockloc / DEV_BSIZE, fs->fs_sbsize,
 		      NOCRED, 0, &bp);
 	if (error) {
 		brelse(bp, 0);
@@ -665,7 +661,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		/* Manually look for an apple ufs label, and if a valid one
 		 * is found, then treat it like an Apple UFS filesystem anyway
 		 */
-		error = bread(devvp, (daddr_t)(APPLEUFS_LABEL_OFFSET / secsize),
+		error = bread(devvp, (daddr_t)(APPLEUFS_LABEL_OFFSET / DEV_BSIZE),
 			APPLEUFS_LABEL_SIZE, cred, 0, &bp);
 		if (error) {
 			brelse(bp, 0);
@@ -884,7 +880,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			fs = NULL;
 			goto out;
 		}
-		error = bread(devvp, sblock_try[i] / secsize, SBLOCKSIZE, cred,
+		error = bread(devvp, sblock_try[i] / DEV_BSIZE, SBLOCKSIZE, cred,
 			      0, &bp);
 		if (error) {
 			fs = NULL;
@@ -1032,7 +1028,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		/* Manually look for an apple ufs label, and if a valid one
 		 * is found, then treat it like an Apple UFS filesystem anyway
 		 */
-		error = bread(devvp, (daddr_t)(APPLEUFS_LABEL_OFFSET / size),
+		error = bread(devvp, (daddr_t)(APPLEUFS_LABEL_OFFSET / DEV_BSIZE),
 			APPLEUFS_LABEL_SIZE, cred, 0, &bp);
 		if (error)
 			goto out;
@@ -1186,7 +1182,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	ump->um_devvp = devvp;
 	ump->um_nindir = fs->fs_nindir;
 	ump->um_lognindir = ffs(fs->fs_nindir) - 1;
-	ump->um_bptrtodb = fs->fs_fsbtodb;
+	ump->um_bptrtodb = fs->fs_fshift - DEV_BSHIFT;
 	ump->um_seqinc = fs->fs_frag;
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
