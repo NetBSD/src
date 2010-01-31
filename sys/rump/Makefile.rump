@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.45 2009/12/12 17:10:19 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.46 2010/01/31 00:38:36 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -60,23 +60,46 @@ DPSRCS+=	${RUMPTOP}/Makefile.rump
 # toolchain to toolchain.  The good news, however, is that this will
 # be detected by a compile-time failure, so we can fairly easily manage
 # a quirktable here.
+#
+# We also allow calling ourselves externally with e.g.:
+# make -f /sys/rump/Makefile.rump RUMP_SYMREN=ffs.kobj
+#
 .if ${MACHINE_CPU} == "mips"
 _SYMQUIRK='|_gp_disp'
 .elif ${MACHINE_CPU} == "hppa"
 _SYMQUIRK='|\$$\$$'
 .endif
+
+rump_symren: __archivebuild
+.if !defined(RUMP_SYMREN)
+	@echo "Must supply RUMP_SYMREN for target rump_symren"
+	@false
+.endif
+
+# if we are called from lib build (RUMP_SYMREN is not specified),
+# build the arrrrchive.  otherwise just rename symbols.
 __archivebuild: .USE
+.if defined(RUMP_SYMREN) && defined(RUMPTOP)
+	@echo "ERROR: RUMP_SYMREN can only be used standalone"
+	@false
+.endif
+.if defined(RUMP_SYMREN)
+	${_MKMSG} " symbol rename " ${RUMP_SYMREN}
+.else
 	${_MKTARGET_BUILD}
 	rm -f ${.TARGET}
 	${AR} ${_ARFL} ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
-	${NM} -go ${.TARGET} | ${TOOL_AWK} '	\
+.endif
+	${NM} -go ${RUMP_SYMREN:U${.TARGET}} | ${TOOL_AWK} '	\
 	    $$NF!~/^(rump|RUMP|__|_GLOBAL_OFFSET_TABLE'${_SYMQUIRK}')/ \
 	      {printf "%s rumpns_%s\n", $$NF, $$NF}' \
 	    | sort | uniq  > renametab.${.TARGET}
 	${OBJCOPY} --preserve-dates --redefine-syms \
-	    renametab.${.TARGET} ${.TARGET}
+	    renametab.${.TARGET} ${RUMP_SYMREN:U${.TARGET}}
 	rm -f renametab.${.TARGET}
+.if !defined(RUMP_SYMREN)
 	${AR} ${_ARRANFL} ${.TARGET}
-
+.endif
+	
 .-include "${NETBSDSRCDIR}/sys/arch/${MACHINE_CPU}/include/Makefile.inc"
 .-include "${NETBSDSRCDIR}/sys/arch/${MACHINE}/include/Makefile.inc"
