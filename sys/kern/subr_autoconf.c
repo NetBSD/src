@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.199 2010/01/19 21:54:53 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.200 2010/01/31 15:10:12 pooka Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.199 2010/01/19 21:54:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.200 2010/01/31 15:10:12 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1935,150 +1935,6 @@ device_lookup_private(cfdriver_t cd, int unit)
 {
 
 	return device_private(device_lookup(cd, unit));
-}
-
-/*
- * Accessor functions for the device_t type.
- */
-devclass_t
-device_class(device_t dev)
-{
-
-	return dev->dv_class;
-}
-
-cfdata_t
-device_cfdata(device_t dev)
-{
-
-	return dev->dv_cfdata;
-}
-
-cfdriver_t
-device_cfdriver(device_t dev)
-{
-
-	return dev->dv_cfdriver;
-}
-
-cfattach_t
-device_cfattach(device_t dev)
-{
-
-	return dev->dv_cfattach;
-}
-
-int
-device_unit(device_t dev)
-{
-
-	return dev->dv_unit;
-}
-
-const char *
-device_xname(device_t dev)
-{
-
-	return dev->dv_xname;
-}
-
-device_t
-device_parent(device_t dev)
-{
-
-	return dev->dv_parent;
-}
-
-bool
-device_activation(device_t dev, devact_level_t level)
-{
-	int active_flags;
-
-	active_flags = DVF_ACTIVE;
-	switch (level) {
-	case DEVACT_LEVEL_FULL:
-		active_flags |= DVF_CLASS_SUSPENDED;
-		/*FALLTHROUGH*/
-	case DEVACT_LEVEL_DRIVER:
-		active_flags |= DVF_DRIVER_SUSPENDED;
-		/*FALLTHROUGH*/
-	case DEVACT_LEVEL_BUS:
-		active_flags |= DVF_BUS_SUSPENDED;
-		break;
-	}
-
-	return (dev->dv_flags & active_flags) == DVF_ACTIVE;
-}
-
-bool
-device_is_active(device_t dev)
-{
-	int active_flags;
-
-	active_flags = DVF_ACTIVE;
-	active_flags |= DVF_CLASS_SUSPENDED;
-	active_flags |= DVF_DRIVER_SUSPENDED;
-	active_flags |= DVF_BUS_SUSPENDED;
-
-	return (dev->dv_flags & active_flags) == DVF_ACTIVE;
-}
-
-bool
-device_is_enabled(device_t dev)
-{
-	return (dev->dv_flags & DVF_ACTIVE) == DVF_ACTIVE;
-}
-
-bool
-device_has_power(device_t dev)
-{
-	int active_flags;
-
-	active_flags = DVF_ACTIVE | DVF_BUS_SUSPENDED;
-
-	return (dev->dv_flags & active_flags) == DVF_ACTIVE;
-}
-
-int
-device_locator(device_t dev, u_int locnum)
-{
-
-	KASSERT(dev->dv_locators != NULL);
-	return dev->dv_locators[locnum];
-}
-
-void *
-device_private(device_t dev)
-{
-
-	/*
-	 * The reason why device_private(NULL) is allowed is to simplify the
-	 * work of a lot of userspace request handlers (i.e., c/bdev
-	 * handlers) which grab cfdriver_t->cd_units[n].
-	 * It avoids having them test for it to be NULL and only then calling
-	 * device_private.
-	 */
-	return dev == NULL ? NULL : dev->dv_private;
-}
-
-prop_dictionary_t
-device_properties(device_t dev)
-{
-
-	return dev->dv_properties;
-}
-
-/*
- * device_is_a:
- *
- *	Returns true if the device is an instance of the specified
- *	driver.
- */
-bool
-device_is_a(device_t dev, const char *dname)
-{
-
-	return strcmp(dev->dv_cfdriver->cd_name, dname) == 0;
 }
 
 /*
