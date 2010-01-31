@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.154 2010/01/31 10:36:20 mlelstv Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.155 2010/01/31 10:37:57 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.154 2010/01/31 10:36:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.155 2010/01/31 10:37:57 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -548,7 +548,7 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		brelse(bp, 0);
 		return (error);
 	}
-	error = bread(devvp, (daddr_t)(SBOFF / secsize), SBSIZE, NOCRED, 0, &bp);
+	error = bread(devvp, SBLOCK, SBSIZE, NOCRED, 0, &bp);
 	if (error) {
 		brelse(bp, 0);
 		return (error);
@@ -568,8 +568,7 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	fs->e2fs_ncg =
 	    howmany(fs->e2fs.e2fs_bcount - fs->e2fs.e2fs_first_dblock,
 	    fs->e2fs.e2fs_bpg);
-	/* XXX assume hw bsize = 512 */
-	fs->e2fs_fsbtodb = fs->e2fs.e2fs_log_bsize + 1;
+	fs->e2fs_fsbtodb = fs->e2fs.e2fs_log_bsize + LOG_MINBSIZE - DEV_BSHIFT;
 	fs->e2fs_bsize = MINBSIZE << fs->e2fs.e2fs_log_bsize;
 	fs->e2fs_bshift = LOG_MINBSIZE + fs->e2fs.e2fs_log_bsize;
 	fs->e2fs_qbmask = fs->e2fs_bsize - 1;
@@ -697,7 +696,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 #ifdef DEBUG_EXT2
 	printf("ext2 sb size: %d\n", sizeof(struct ext2fs));
 #endif
-	error = bread(devvp, (SBOFF / secsize), SBSIZE, cred, 0, &bp);
+	error = bread(devvp, SBLOCK, SBSIZE, cred, 0, &bp);
 	if (error)
 		goto out;
 	fs = (struct ext2fs *)bp->b_data;
@@ -731,8 +730,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	m_fs->e2fs_ncg =
 	    howmany(m_fs->e2fs.e2fs_bcount - m_fs->e2fs.e2fs_first_dblock,
 	    m_fs->e2fs.e2fs_bpg);
-	/* XXX assume hw bsize = 512 */
-	m_fs->e2fs_fsbtodb = m_fs->e2fs.e2fs_log_bsize + 1;
+	m_fs->e2fs_fsbtodb = m_fs->e2fs.e2fs_log_bsize + LOG_MINBSIZE - DEV_BSHIFT;
 	m_fs->e2fs_bsize = MINBSIZE << m_fs->e2fs.e2fs_log_bsize;
 	m_fs->e2fs_bshift = LOG_MINBSIZE + m_fs->e2fs.e2fs_log_bsize;
 	m_fs->e2fs_qbmask = m_fs->e2fs_bsize - 1;
