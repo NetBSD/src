@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.307 2010/02/01 06:26:15 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.308 2010/02/01 07:01:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3575,19 +3575,19 @@ sparc64_ipi_pause_trap_point:
 
 /*
  * IPI handler to flush single pte.
- * void sparc64_ipi_flush_pte(void *);
+ * void sparc64_ipi_flush_pte_us(void *);
+ * void sparc64_ipi_flush_pte_usiii(void *);
  *
  * On entry:
  *	%g2 = vaddr_t va
  *	%g3 = int ctx
  */
-ENTRY(sparc64_ipi_flush_pte)
+ENTRY(sparc64_ipi_flush_pte_us)
 #if  KTR_COMPILE & KTR_PMAP
-	CATR(KTR_TRAP, "sparc64_ipi_flush_pte:",
+	CATR(KTR_TRAP, "sparc64_ipi_flush_pte_us:",
 		 %g1, %g3, %g4, 10, 11, 12)
 12:
 #endif
-#ifdef SPITFIRE
 	srlx	%g2, PG_SHIFT4U, %g2		! drop unused va bits
 	mov	CTX_SECONDARY, %g5
 	sllx	%g2, PG_SHIFT4U, %g2
@@ -3608,7 +3608,22 @@ ENTRY(sparc64_ipi_flush_pte)
 	stxa	%g6, [%g5] ASI_DMMU		! Restore secondary context
 	membar	#Sync
 	IPIEVC_INC(IPI_EVCNT_TLB_PTE,%g2,%g3)
-#else
+	 
+	ba,a	ret_from_intr_vector
+	 nop
+
+ENTRY(sparc64_ipi_flush_pte_usiii)
+#if 0
+	rdpr	%pstate, %g1
+	andn	%g1, PSTATE_IE, %g4
+	wrpr	%g4, %pstate
+
+	rdpr	%tl, %g4
+	brnz	%g4, 1f
+	 add	%g4, 1, %g5
+	wrpr	%g5, %tl
+1:
+#endif
 	andn	%g2, 0xfff, %g2			! drop unused va bits
 	mov	CTX_PRIMARY, %g5
 	ldxa	[%g5] ASI_DMMU, %g6		! Save secondary context
@@ -3624,10 +3639,16 @@ ENTRY(sparc64_ipi_flush_pte)
 	stxa	%g2, [%g2] ASI_DMMU_DEMAP	! Do the demap
 	stxa	%g2, [%g2] ASI_IMMU_DEMAP	! Do the demap
 #endif
+	membar	#Sync
 	flush	%g7
 	stxa	%g6, [%g5] ASI_DMMU		! Restore primary context
 	membar	#Sync
+	flush	%g7
 	IPIEVC_INC(IPI_EVCNT_TLB_PTE,%g2,%g3)
+
+#if 0
+	wrpr	%g4, %tl
+	wrpr	%g1, %pstate
 #endif
 	 
 	ba,a	ret_from_intr_vector
@@ -5250,13 +5271,13 @@ ENTRY(sp_tlb_flush_pte)
 
 
 /*
- * sp_tlb_flush_all(void)
+ * sp_tlb_flush_all_us(void)/sp_tlb_flush_all_usiii(void)
  *
  * Flush all user TLB entries from both IMMU and DMMU.
+ * We have both UltraSPARC I+II, and UltraSPARC >=III versions.
  */
 	.align 8
-ENTRY(sp_tlb_flush_all)
-#ifdef SPITFIRE
+ENTRY(sp_tlb_flush_all_us)
 	rdpr	%pstate, %o3
 	andn	%o3, PSTATE_IE, %o4			! disable interrupts
 	wrpr	%o4, 0, %pstate
@@ -5321,7 +5342,9 @@ ENTRY(sp_tlb_flush_all)
 	flush	%o4
 	retl
 	 wrpr	%o3, %pstate
-#else
+
+	.align 8
+ENTRY(sp_tlb_flush_all_usiii)
 	rdpr	%tl, %o5
 	brnz,pt	%o5, 1f
 	 set	DEMAP_ALL, %o2
@@ -5341,7 +5364,6 @@ ENTRY(sp_tlb_flush_all)
 	wrpr	%o5, %tl
 	retl
 	 wrpr	%o3, %pstate
-#endif
 
 /*
  * blast_dcache()
@@ -5477,7 +5499,7 @@ ENTRY(cache_flush_phys)
 	dec	%o1
 
 	!!
-	!! Both D$ and I$ tags match pa bits 40-13, but
+	!! Both D$ and I$ tags match pa bits 42-13, but
 	!! they are shifted different amounts.  So we'll
 	!! generate a mask for bits 40-13.
 	!!
@@ -5516,10 +5538,15 @@ ENTRY(cache_flush_phys)
 	bgt,pt	%xcc, 3f
 	 nop
 	stxa	%g0, [%o4] ASI_ICACHE_TAG
-3:
 #else
+	cmp	%o0, %o3
+	blt,pt	%xcc, 3f
+	 cmp	%o1, %o3
+	bgt,pt	%xcc, 3f
+	 nop
 	stxa	%g0, [%o4] ASI_DCACHE_INVALIDATE ! Just right
 #endif
+3:
 	membar	#StoreLoad
 	dec	32, %o5
 	brgz,pt	%o5, 1b

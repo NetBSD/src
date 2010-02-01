@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.247 2010/02/01 02:42:33 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.248 2010/02/01 07:01:40 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.247 2010/02/01 02:42:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.248 2010/02/01 07:01:40 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -3066,7 +3066,10 @@ ctx_alloc(struct pmap *pm)
 				clrx(&curcpu()->ci_tsb_immu[i].data);
 			}
 		}
-		sp_tlb_flush_all();
+		if (CPU_IS_USIII_UP())
+			sp_tlb_flush_all_usiii();
+		else
+			sp_tlb_flush_all_us();
 		ctx = 1;
 		curcpu()->ci_pmap_next_ctx = 2;
 	}

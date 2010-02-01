@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.28 2010/02/01 05:00:59 mrg Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.29 2010/02/01 07:01:40 mrg Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.28 2010/02/01 05:00:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.29 2010/02/01 07:01:40 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -66,7 +66,8 @@ static void	sparc64_ipi_error(const char *, sparc64_cpuset_t, sparc64_cpuset_t);
  */
 void	sparc64_ipi_halt(void *);
 void	sparc64_ipi_pause(void *);
-void	sparc64_ipi_flush_pte(void *);
+void	sparc64_ipi_flush_pte_us(void *);
+void	sparc64_ipi_flush_pte_usiii(void *);
 
 /*
  * Process cpu stop-self event.
@@ -349,6 +350,12 @@ smp_tlb_flush_pte(vaddr_t va, pmap_t pm)
 	struct cpu_info *ci;
 	int ctx;
 	bool kpm = (pm == pmap_kernel());
+	ipifunc_t func;
+
+	if (CPU_IS_USIII_UP())
+		func = sparc64_ipi_flush_pte_usiii;
+	else
+		func = sparc64_ipi_flush_pte_us;
 
 	/* Flush our own TLB */
 	ctx = pm->pm_ctx[cpu_number()];
@@ -369,8 +376,7 @@ smp_tlb_flush_pte(vaddr_t va, pmap_t pm)
 			KASSERT(ctx >= 0);
 			if (!kpm && ctx == 0)
 				continue;
-			sparc64_send_ipi(ci->ci_cpuid, sparc64_ipi_flush_pte,
-					 va, ctx);
+			sparc64_send_ipi(ci->ci_cpuid, func, va, ctx);
 		}
 	}
 }
