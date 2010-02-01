@@ -1,4 +1,4 @@
-/*	$NetBSD: db_write_cmd.c,v 1.24 2010/01/31 21:52:23 phx Exp $	*/
+/*	$NetBSD: db_write_cmd.c,v 1.25 2010/02/01 09:56:58 tron Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,12 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_write_cmd.c,v 1.24 2010/01/31 21:52:23 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_write_cmd.c,v 1.25 2010/02/01 09:56:58 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 
 #include <ddb/ddb.h>
+
+#ifndef _KERNEL
+#include <ctype.h>
+#endif
 
 /*
  * Write to file.
