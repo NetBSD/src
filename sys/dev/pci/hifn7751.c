@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.43 2009/11/26 15:17:09 njoly Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.44 2010/02/01 22:34:29 hubertf Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.43 2009/11/26 15:17:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.44 2010/02/01 22:34:29 hubertf Exp $");
 
 #include "rnd.h"
 
@@ -384,9 +384,9 @@ hifn_attach(device_t parent, device_t self, void *aux)
 		rbase = 'M';
 		rseg /= 1024;
 	}
-	aprint_normal_dev(&sc->sc_dv, "%s, %d%cB %cram, interrupting at %s\n",
+	aprint_normal_dev(&sc->sc_dv, "%s, %d%cB %cRAM, interrupting at %s\n",
 	    hifncap, rseg, rbase,
-	    sc->sc_drammodel ? 'd' : 's', intrstr);
+	    sc->sc_drammodel ? 'D' : 'S', intrstr);
 
 	sc->sc_cid = crypto_get_driverid(0);
 	if (sc->sc_cid < 0) {
