@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.18 2010/01/29 00:22:27 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.19 2010/02/01 04:17:51 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.18 2010/01/29 00:22:27 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.19 2010/02/01 04:17:51 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -980,8 +980,7 @@ cpu_reboot(howto, bootstr)
 {
 
 	/* Take a snapshot before clobbering any registers. */
-	if (curproc)
-		savectx((struct user *)curpcb);
+	savectx(curlwp->l_addr);
 
 	if (cold) {
 		howto |= RB_HALT;
