@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.35.38.3 2009/09/07 21:54:39 matt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.35.38.4 2010/02/01 04:16:19 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.35.38.3 2009/09/07 21:54:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.35.38.4 2010/02/01 04:16:19 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -85,56 +85,56 @@ int db_mips_variable_func(const struct db_variable *, db_expr_t *, int);
 #define DBREGS_REG()
 
 const struct db_variable db_regs[] = {
-	{ "at",	(long *)&ddb_regs.f_regs[_R_AST],  DB_SETF_REGS },
-	{ "v0",	(long *)&ddb_regs.f_regs[_R_V0],  DB_SETF_REGS },
-	{ "v1",	(long *)&ddb_regs.f_regs[_R_V1],  DB_SETF_REGS },
-	{ "a0",	(long *)&ddb_regs.f_regs[_R_A0],  DB_SETF_REGS },
-	{ "a1",	(long *)&ddb_regs.f_regs[_R_A1],  DB_SETF_REGS },
-	{ "a2",	(long *)&ddb_regs.f_regs[_R_A2],  DB_SETF_REGS },
-	{ "a3",	(long *)&ddb_regs.f_regs[_R_A3],  DB_SETF_REGS },
+	{ "at",	(long *)&ddb_regs.r_regs[_R_AST],  DB_SETF_REGS },
+	{ "v0",	(long *)&ddb_regs.r_regs[_R_V0],  DB_SETF_REGS },
+	{ "v1",	(long *)&ddb_regs.r_regs[_R_V1],  DB_SETF_REGS },
+	{ "a0",	(long *)&ddb_regs.r_regs[_R_A0],  DB_SETF_REGS },
+	{ "a1",	(long *)&ddb_regs.r_regs[_R_A1],  DB_SETF_REGS },
+	{ "a2",	(long *)&ddb_regs.r_regs[_R_A2],  DB_SETF_REGS },
+	{ "a3",	(long *)&ddb_regs.r_regs[_R_A3],  DB_SETF_REGS },
 #if defined(__mips_n32) || defined(__mips_n64)
-	{ "a4",	(long *)&ddb_regs.f_regs[_R_A4],  DB_SETF_REGS },
-	{ "a5",	(long *)&ddb_regs.f_regs[_R_A5],  DB_SETF_REGS },
-	{ "a6",	(long *)&ddb_regs.f_regs[_R_A6],  DB_SETF_REGS },
-	{ "a7",	(long *)&ddb_regs.f_regs[_R_A7],  DB_SETF_REGS },
-	{ "t0",	(long *)&ddb_regs.f_regs[_R_T0],  DB_SETF_REGS },
-	{ "t1",	(long *)&ddb_regs.f_regs[_R_T1],  DB_SETF_REGS },
-	{ "t2",	(long *)&ddb_regs.f_regs[_R_T2],  DB_SETF_REGS },
-	{ "t3",	(long *)&ddb_regs.f_regs[_R_T3],  DB_SETF_REGS },
+	{ "a4",	(long *)&ddb_regs.r_regs[_R_A4],  DB_SETF_REGS },
+	{ "a5",	(long *)&ddb_regs.r_regs[_R_A5],  DB_SETF_REGS },
+	{ "a6",	(long *)&ddb_regs.r_regs[_R_A6],  DB_SETF_REGS },
+	{ "a7",	(long *)&ddb_regs.r_regs[_R_A7],  DB_SETF_REGS },
+	{ "t0",	(long *)&ddb_regs.r_regs[_R_T0],  DB_SETF_REGS },
+	{ "t1",	(long *)&ddb_regs.r_regs[_R_T1],  DB_SETF_REGS },
+	{ "t2",	(long *)&ddb_regs.r_regs[_R_T2],  DB_SETF_REGS },
+	{ "t3",	(long *)&ddb_regs.r_regs[_R_T3],  DB_SETF_REGS },
 #else
-	{ "t0",	(long *)&ddb_regs.f_regs[_R_T0],  DB_SETF_REGS },
-	{ "t1",	(long *)&ddb_regs.f_regs[_R_T1],  DB_SETF_REGS },
-	{ "t2",	(long *)&ddb_regs.f_regs[_R_T2],  DB_SETF_REGS },
-	{ "t3",	(long *)&ddb_regs.f_regs[_R_T3],  DB_SETF_REGS },
-	{ "t4",	(long *)&ddb_regs.f_regs[_R_T4],  DB_SETF_REGS },
-	{ "t5",	(long *)&ddb_regs.f_regs[_R_T5],  DB_SETF_REGS },
-	{ "t6",	(long *)&ddb_regs.f_regs[_R_T6],  DB_SETF_REGS },
-	{ "t7",	(long *)&ddb_regs.f_regs[_R_T7],  DB_SETF_REGS },
+	{ "t0",	(long *)&ddb_regs.r_regs[_R_T0],  DB_SETF_REGS },
+	{ "t1",	(long *)&ddb_regs.r_regs[_R_T1],  DB_SETF_REGS },
+	{ "t2",	(long *)&ddb_regs.r_regs[_R_T2],  DB_SETF_REGS },
+	{ "t3",	(long *)&ddb_regs.r_regs[_R_T3],  DB_SETF_REGS },
+	{ "t4",	(long *)&ddb_regs.r_regs[_R_T4],  DB_SETF_REGS },
+	{ "t5",	(long *)&ddb_regs.r_regs[_R_T5],  DB_SETF_REGS },
+	{ "t6",	(long *)&ddb_regs.r_regs[_R_T6],  DB_SETF_REGS },
+	{ "t7",	(long *)&ddb_regs.r_regs[_R_T7],  DB_SETF_REGS },
 #endif /* __mips_n32 || __mips_n64 */
-	{ "s0",	(long *)&ddb_regs.f_regs[_R_S0],  DB_SETF_REGS },
-	{ "s1",	(long *)&ddb_regs.f_regs[_R_S1],  DB_SETF_REGS },
-	{ "s2",	(long *)&ddb_regs.f_regs[_R_S2],  DB_SETF_REGS },
-	{ "s3",	(long *)&ddb_regs.f_regs[_R_S3],  DB_SETF_REGS },
-	{ "s4",	(long *)&ddb_regs.f_regs[_R_S4],  DB_SETF_REGS },
-	{ "s5",	(long *)&ddb_regs.f_regs[_R_S5],  DB_SETF_REGS },
-	{ "s6",	(long *)&ddb_regs.f_regs[_R_S6],  DB_SETF_REGS },
-	{ "s7",	(long *)&ddb_regs.f_regs[_R_S7],  DB_SETF_REGS },
-	{ "t8",	(long *)&ddb_regs.f_regs[_R_T8],  DB_SETF_REGS },
-	{ "t9",	(long *)&ddb_regs.f_regs[_R_T9],  DB_SETF_REGS },
-	{ "k0",	(long *)&ddb_regs.f_regs[_R_K0],  DB_SETF_REGS },
-	{ "k1",	(long *)&ddb_regs.f_regs[_R_K1],  DB_SETF_REGS },
-	{ "gp",	(long *)&ddb_regs.f_regs[_R_GP],  DB_SETF_REGS },
-	{ "sp",	(long *)&ddb_regs.f_regs[_R_SP],  DB_SETF_REGS },
-	{ "fp",	(long *)&ddb_regs.f_regs[_R_S8],  DB_SETF_REGS },/* frame ptr */
-	{ "ra",	(long *)&ddb_regs.f_regs[_R_RA],  DB_SETF_REGS },
-	{ "sr",	(long *)&ddb_regs.f_regs[_R_SR],  DB_SETF_REGS },
-	{ "mdlo",(long *)&ddb_regs.f_regs[_R_MULLO],  DB_SETF_REGS },
-	{ "mdhi",(long *)&ddb_regs.f_regs[_R_MULHI],  DB_SETF_REGS },
-	{ "bad", (long *)&ddb_regs.f_regs[_R_BADVADDR], DB_SETF_REGS },
-	{ "cs",	(long *)&ddb_regs.f_regs[_R_CAUSE],  DB_SETF_REGS },
-	{ "pc",	(long *)&ddb_regs.f_regs[_R_PC],  DB_SETF_REGS },
+	{ "s0",	(long *)&ddb_regs.r_regs[_R_S0],  DB_SETF_REGS },
+	{ "s1",	(long *)&ddb_regs.r_regs[_R_S1],  DB_SETF_REGS },
+	{ "s2",	(long *)&ddb_regs.r_regs[_R_S2],  DB_SETF_REGS },
+	{ "s3",	(long *)&ddb_regs.r_regs[_R_S3],  DB_SETF_REGS },
+	{ "s4",	(long *)&ddb_regs.r_regs[_R_S4],  DB_SETF_REGS },
+	{ "s5",	(long *)&ddb_regs.r_regs[_R_S5],  DB_SETF_REGS },
+	{ "s6",	(long *)&ddb_regs.r_regs[_R_S6],  DB_SETF_REGS },
+	{ "s7",	(long *)&ddb_regs.r_regs[_R_S7],  DB_SETF_REGS },
+	{ "t8",	(long *)&ddb_regs.r_regs[_R_T8],  DB_SETF_REGS },
+	{ "t9",	(long *)&ddb_regs.r_regs[_R_T9],  DB_SETF_REGS },
+	{ "k0",	(long *)&ddb_regs.r_regs[_R_K0],  DB_SETF_REGS },
+	{ "k1",	(long *)&ddb_regs.r_regs[_R_K1],  DB_SETF_REGS },
+	{ "gp",	(long *)&ddb_regs.r_regs[_R_GP],  DB_SETF_REGS },
+	{ "sp",	(long *)&ddb_regs.r_regs[_R_SP],  DB_SETF_REGS },
+	{ "fp",	(long *)&ddb_regs.r_regs[_R_S8],  DB_SETF_REGS },/* frame ptr */
+	{ "ra",	(long *)&ddb_regs.r_regs[_R_RA],  DB_SETF_REGS },
+	{ "sr",	(long *)&ddb_regs.r_regs[_R_SR],  DB_SETF_REGS },
+	{ "mdlo",(long *)&ddb_regs.r_regs[_R_MULLO],  DB_SETF_REGS },
+	{ "mdhi",(long *)&ddb_regs.r_regs[_R_MULHI],  DB_SETF_REGS },
+	{ "bad", (long *)&ddb_regs.r_regs[_R_BADVADDR], DB_SETF_REGS },
+	{ "cs",	(long *)&ddb_regs.r_regs[_R_CAUSE],  DB_SETF_REGS },
+	{ "pc",	(long *)&ddb_regs.r_regs[_R_PC],  DB_SETF_REGS },
 };
-const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs = db_regs + __arraycount(db_regs);
 
 void
 db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
@@ -146,15 +146,16 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	struct lwp *l;
 
 	if (!have_addr) {
-		stacktrace_subr(ddb_regs.f_regs[_R_A0],
-				ddb_regs.f_regs[_R_A1],
-				ddb_regs.f_regs[_R_A2],
-				ddb_regs.f_regs[_R_A3],
-				ddb_regs.f_regs[_R_PC],
-				ddb_regs.f_regs[_R_SP],
+		struct reg * regs = &ddb_regs;
+		stacktrace_subr(regs->r_regs[_R_A0],
+				regs->r_regs[_R_A1],
+				regs->r_regs[_R_A2],
+				regs->r_regs[_R_A3],
+				regs->r_regs[_R_PC],
+				regs->r_regs[_R_SP],
 				/* non-virtual frame pointer */
-				ddb_regs.f_regs[_R_S8],
-				ddb_regs.f_regs[_R_RA],
+				regs->r_regs[_R_S8],
+				regs->r_regs[_R_RA],
 				pr);
 		return;
 	}
@@ -196,9 +197,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	const char *name;
 	extern char verylocore[];
 
-	pc = ddb_regs.f_regs[_R_PC];
-	sp = ddb_regs.f_regs[_R_SP];
-	ra = ddb_regs.f_regs[_R_RA];
+	pc = ddb_regs.r_regs[_R_PC];
+	sp = ddb_regs.r_regs[_R_SP];
+	ra = ddb_regs.r_regs[_R_RA];
 	do {
 		va = pc;
 		do {

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.64.16.15 2010/01/26 04:37:38 cliff Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.64.16.16 2010/02/01 04:16:19 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.15 2010/01/26 04:37:38 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.16 2010/02/01 04:16:19 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.64.16.15 2010/01/26 04:37:38 clif
 
 int		db_active = 0;
 db_regs_t	ddb_regs;
-label_t		kdbaux; /* XXX struct switchframe: better inside curpcb? XXX */
 
 void db_tlbdump_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_kvtophys_cmd(db_expr_t, bool, db_expr_t, const char *);
@@ -78,7 +77,7 @@ static void	kdbpoke_2(vaddr_t addr, short newval);
 static void	kdbpoke_1(vaddr_t addr, char newval);
 static short	kdbpeek_2(vaddr_t addr);
 static char	kdbpeek_1(vaddr_t addr);
-vaddr_t		MachEmulateBranch(struct frame *, vaddr_t, unsigned, int);
+vaddr_t		MachEmulateBranch(struct trapframe *, vaddr_t, unsigned, int);
 
 paddr_t kvtophys(vaddr_t);
 
@@ -152,10 +151,8 @@ kdb_kbd_trap(int *tf)
 
 #ifndef KGDB
 int
-kdb_trap(int type, mips_reg_t /* struct trapframe */ *tfp)
+kdb_trap(int type, struct reg *regs)
 {
-
-	struct frame *f = (struct frame *)&ddb_regs;
 
 #ifdef notyet
 	switch (type) {
@@ -172,7 +169,7 @@ kdb_trap(int type, mips_reg_t /* struct trapframe */ *tfp)
 	}
 #endif
 	/* Should switch to kdb`s own stack here. */
-	db_set_ddb_regs(type, tfp);
+	ddb_regs = *regs;
 
 	db_active++;
 	cnpollc(1);
@@ -180,45 +177,7 @@ kdb_trap(int type, mips_reg_t /* struct trapframe */ *tfp)
 	cnpollc(0);
 	db_active--;
 
-	if (type & T_USER)
-		*curlwp->l_md.md_regs = *f;
-	else {
-		/* Synthetic full scale register context when trap happens */
-		tfp[TF_AST] = f->f_regs[_R_AST];
-		tfp[TF_V0] = f->f_regs[_R_V0];
-		tfp[TF_V1] = f->f_regs[_R_V1];
-		tfp[TF_A0] = f->f_regs[_R_A0];
-		tfp[TF_A1] = f->f_regs[_R_A1];
-		tfp[TF_A2] = f->f_regs[_R_A2];
-		tfp[TF_A3] = f->f_regs[_R_A3];
-		tfp[TF_T0] = f->f_regs[_R_T0];
-		tfp[TF_T1] = f->f_regs[_R_T1];
-		tfp[TF_T2] = f->f_regs[_R_T2];
-		tfp[TF_T3] = f->f_regs[_R_T3];
-		tfp[TF_TA0] = f->f_regs[_R_TA0];
-		tfp[TF_TA1] = f->f_regs[_R_TA1];
-		tfp[TF_TA2] = f->f_regs[_R_TA2];
-		tfp[TF_TA3] = f->f_regs[_R_TA3];
-		tfp[TF_T8] = f->f_regs[_R_T8];
-		tfp[TF_T9] = f->f_regs[_R_T9];
-		tfp[TF_RA] = f->f_regs[_R_RA];
-		tfp[TF_SR] = f->f_regs[_R_SR];
-		tfp[TF_MULLO] = f->f_regs[_R_MULLO];
-		tfp[TF_MULHI] = f->f_regs[_R_MULHI];
-		tfp[TF_EPC] = f->f_regs[_R_PC];
-		kdbaux.val[_L_S0] = f->f_regs[_R_S0];
-		kdbaux.val[_L_S1] = f->f_regs[_R_S1];
-		kdbaux.val[_L_S2] = f->f_regs[_R_S2];
-		kdbaux.val[_L_S3] = f->f_regs[_R_S3];
-		kdbaux.val[_L_S4] = f->f_regs[_R_S4];
-		kdbaux.val[_L_S5] = f->f_regs[_R_S5];
-		kdbaux.val[_L_S6] = f->f_regs[_R_S6];
-		kdbaux.val[_L_S7] = f->f_regs[_R_S7];
-		kdbaux.val[_L_GP] = f->f_regs[_R_GP];
-		kdbaux.val[_L_SP] = f->f_regs[_R_SP];
-		kdbaux.val[_L_S8] = f->f_regs[_R_S8];
-		kdbaux.val[_L_SR] = f->f_regs[_R_SR];
-	}
+	*regs = ddb_regs;
 
 	return (1);
 }
@@ -230,53 +189,6 @@ cpu_Debugger(void)
 	__asm("break");
 }
 #endif	/* !KGDB */
-
-void
-db_set_ddb_regs(int type, mips_reg_t *tfp)
-{
-	struct frame *f = (struct frame *)&ddb_regs;
-	
-	/* Should switch to kdb`s own stack here. */
-
-	if (type & T_USER)
-		*f = *curlwp->l_md.md_regs;
-	else {
-		/* Synthetic full scale register context when trap happens */
-		f->f_regs[_R_AST] = tfp[TF_AST];
-		f->f_regs[_R_V0] = tfp[TF_V0];
-		f->f_regs[_R_V1] = tfp[TF_V1];
-		f->f_regs[_R_A0] = tfp[TF_A0];
-		f->f_regs[_R_A1] = tfp[TF_A1];
-		f->f_regs[_R_A2] = tfp[TF_A2];
-		f->f_regs[_R_A3] = tfp[TF_A3];
-		f->f_regs[_R_T0] = tfp[TF_T0];
-		f->f_regs[_R_T1] = tfp[TF_T1];
-		f->f_regs[_R_T2] = tfp[TF_T2];
-		f->f_regs[_R_T3] = tfp[TF_T3];
-		f->f_regs[_R_TA0] = tfp[TF_TA0];
-		f->f_regs[_R_TA1] = tfp[TF_TA1];
-		f->f_regs[_R_TA2] = tfp[TF_TA2];
-		f->f_regs[_R_TA3] = tfp[TF_TA3];
-		f->f_regs[_R_T8] = tfp[TF_T8];
-		f->f_regs[_R_T9] = tfp[TF_T9];
-		f->f_regs[_R_RA] = tfp[TF_RA];
-		f->f_regs[_R_SR] = tfp[TF_SR];
-		f->f_regs[_R_MULLO] = tfp[TF_MULLO];
-		f->f_regs[_R_MULHI] = tfp[TF_MULHI];
-		f->f_regs[_R_PC] = tfp[TF_EPC];
-		f->f_regs[_R_S0] = kdbaux.val[_L_S0];
-		f->f_regs[_R_S1] = kdbaux.val[_L_S1];
-		f->f_regs[_R_S2] = kdbaux.val[_L_S2];
-		f->f_regs[_R_S3] = kdbaux.val[_L_S3];
-		f->f_regs[_R_S4] = kdbaux.val[_L_S4];
-		f->f_regs[_R_S5] = kdbaux.val[_L_S5];
-		f->f_regs[_R_S6] = kdbaux.val[_L_S6];
-		f->f_regs[_R_S7] = kdbaux.val[_L_S7];
-		f->f_regs[_R_GP] = kdbaux.val[_L_GP];
-		f->f_regs[_R_SP] = kdbaux.val[_L_SP];
-		f->f_regs[_R_S8] = kdbaux.val[_L_S8];
-	}
-}
 
 /*
  * Read bytes from kernel address space for debugger.
@@ -827,7 +739,7 @@ branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 	unsigned fpucsr;
 
 	fpucsr = PCB_FSR(&curlwp->l_addr->u_pcb);
-	ra = MachEmulateBranch((struct frame *)regs, pc, fpucsr, 0);
+	ra = MachEmulateBranch((struct trapframe *)regs, pc, fpucsr, 0);
 	return ra;
 }
 

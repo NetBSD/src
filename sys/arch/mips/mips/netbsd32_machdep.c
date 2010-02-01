@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.1.2.2 2009/09/12 19:26:27 matt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.1.2.3 2010/02/01 04:16:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.1.2.2 2009/09/12 19:26:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.1.2.3 2010/02/01 04:16:19 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sa.h"
@@ -169,7 +169,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	int sig = ksi->ksi_signo;
 	struct sigframe_siginfo32 *sfp = getframe(l, sig, &onstack);
 	struct sigframe_siginfo32 sf;
-	struct frame * const tf = l->l_md.md_regs;
+	struct trapframe * const tf = l->l_md.md_utf;
 	size_t sfsz;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
@@ -220,14 +220,14 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * handler.  The return address will be set up to point
 	 * to the signal trampoline to bounce us back.
 	 */
-	tf->f_regs[_R_A0] = sig;
-	tf->f_regs[_R_A1] = (intptr_t)&sfp->sf_si;
-	tf->f_regs[_R_A2] = (intptr_t)&sfp->sf_uc;
+	tf->tf_regs[_R_A0] = sig;
+	tf->tf_regs[_R_A1] = (intptr_t)&sfp->sf_si;
+	tf->tf_regs[_R_A2] = (intptr_t)&sfp->sf_uc;
 
-	tf->f_regs[_R_PC] = (intptr_t)catcher;
-	tf->f_regs[_R_T9] = (intptr_t)catcher;
-	tf->f_regs[_R_SP] = (intptr_t)sfp;
-	tf->f_regs[_R_RA] = (intptr_t)ps->sa_sigdesc[sig].sd_tramp;
+	tf->tf_regs[_R_PC] = (intptr_t)catcher;
+	tf->tf_regs[_R_T9] = (intptr_t)catcher;
+	tf->tf_regs[_R_SP] = (intptr_t)sfp;
+	tf->tf_regs[_R_RA] = (intptr_t)ps->sa_sigdesc[sig].sd_tramp;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
@@ -293,7 +293,7 @@ cpu_coredump32(struct lwp *l, void *iocookie, struct core32 *chdr)
 	int error;
 	struct coreseg cseg;
 	struct cpustate {
-		struct frame frame;
+		struct trapframe frame;
 		struct fpreg fpregs;
 	} cpustate;
 
@@ -308,7 +308,7 @@ cpu_coredump32(struct lwp *l, void *iocookie, struct core32 *chdr)
 
 	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
 		savefpregs(l);
-	cpustate.frame = *l->l_md.md_regs;
+	cpustate.frame = *l->l_md.md_utf;
 	cpustate.fpregs = l->l_addr->u_pcb.pcb_fpregs;
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);

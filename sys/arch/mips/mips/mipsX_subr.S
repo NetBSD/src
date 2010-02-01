@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.21 2010/01/30 23:49:31 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.22 2010/02/01 04:16:19 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -567,30 +567,12 @@ MIPSX(slowfault):
  *	register_t cf_pad;		(for 8 word alignment)
  *	register_t cf_sp;
  *	register_t cf_ra;
- *	mips_reg_t kf_regs[17];		- trapframe begins here
- * 	mips_reg_t kf_sr;		-
- * 	mips_reg_t kf_mullo;		-
- * 	mips_reg_t kf_mulhi;		-
- * 	mips_reg_t kf_epc;		- may be changed by trap() call
+ *	struct reg cf_tf;
  * };
  */
 NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
-#if defined(DDB) || defined(KGDB)
-	PTR_LA	k0, _C_LABEL(kdbaux)
-	REG_S	s0, SF_REG_S0(k0)
-	REG_S	s1, SF_REG_S1(k0)
-	REG_S	s2, SF_REG_S2(k0)
-	REG_S	s3, SF_REG_S3(k0)
-	REG_S	s4, SF_REG_S4(k0)
-	REG_S	s5, SF_REG_S5(k0)
-	REG_S	s6, SF_REG_S6(k0)
-	REG_S	s7, SF_REG_S7(k0)
-	REG_S	sp, SF_REG_SP(k0)
-	REG_S	s8, SF_REG_S8(k0)
-	REG_S	gp, SF_REG_RA(k0)
-#endif
 /*
  * Save the relevant kernel registers onto the stack.
  * We don't need to save s0 - s8, sp and gp because
@@ -625,6 +607,20 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	REG_S	v0, TF_BASE+TF_REG_MULLO(sp)
 	REG_S	v1, TF_BASE+TF_REG_MULHI(sp)
 	REG_S	a3, TF_BASE+TF_REG_EPC(sp)
+#if defined(DDB) || defined(KGDB)
+	REG_S	s0, TF_BASE+TF_REG_S0(sp)
+	REG_S	s1, TF_BASE+TF_REG_S1(sp)
+	REG_S	s2, TF_BASE+TF_REG_S2(sp)
+	REG_S	s3, TF_BASE+TF_REG_S3(sp)
+	REG_S	s4, TF_BASE+TF_REG_S4(sp)
+	REG_S	s5, TF_BASE+TF_REG_S5(sp)
+	REG_S	s6, TF_BASE+TF_REG_S6(sp)
+	REG_S	s7, TF_BASE+TF_REG_S7(sp)
+	PTR_ADDU v0, sp, KERNFRAME_SIZ
+	REG_S	v0, TF_BASE+TF_REG_SP(sp)
+	REG_S	s8, TF_BASE+TF_REG_S8(sp)
+	REG_S	gp, TF_BASE+TF_REG_GP(sp)
+#endif
 #if defined(__mips_o32) || defined(__mips_o64)
 	PTR_ADDU v0, sp, TF_BASE
 	REG_S	v0, KERNFRAME_ARG5(sp)		# 5th arg is p. to trapframe
@@ -710,21 +706,18 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	REG_L	t8, TF_BASE+TF_REG_T8(sp)
 	REG_L	t9, TF_BASE+TF_REG_T9(sp)
 	REG_L	ra, TF_BASE+TF_REG_RA(sp)
-	PTR_ADDU sp, sp, KERNFRAME_SIZ
 #ifdef DDBnotyet
-	PTR_LA	k0, _C_LABEL(kdbaux)
-	REG_L	s0, SF_REG_S0(k0)
-	REG_L	s1, SF_REG_S1(k0)
-	REG_L	s2, SF_REG_S2(k0)
-	REG_L	s3, SF_REG_S3(k0)
-	REG_L	s4, SF_REG_S4(k0)
-	REG_L	s5, SF_REG_S5(k0)
-	REG_L	s6, SF_REG_S6(k0)
-	REG_L	s7, SF_REG_S7(k0)
-	REG_L	sp, SF_REG_SP(k0)
-	REG_L	s8, SF_REG_S8(k0)
-	REG_L	gp, SF_REG_RA(k0)
+	REG_L	s0, TF_BASE+TF_REG_S0(k0)
+	REG_L	s1, TF_BASE+TF_REG_S1(k0)
+	REG_L	s2, TF_BASE+TF_REG_S2(k0)
+	REG_L	s3, TF_BASE+TF_REG_S3(k0)
+	REG_L	s4, TF_BASE+TF_REG_S4(k0)
+	REG_L	s5, TF_BASE+TF_REG_S5(k0)
+	REG_L	s6, TF_BASE+TF_REG_S6(k0)
+	REG_L	s7, TF_BASE+TF_REG_S7(k0)
+	REG_L	s8, TF_BASE+TF_REG_S8(k0)
 #endif
+	PTR_ADDU sp, sp, KERNFRAME_SIZ
 	eret					# return to interrupted point
 	.set	at
 END(MIPSX(kern_gen_exception))
@@ -746,50 +739,50 @@ NESTED_NOPROFILE(MIPSX(user_gen_exception), CALLFRAME_SIZ, ra)
  */
 	/* K1 already has CURLWP */
 	PTR_L	k0, L_ADDR(k1)
-	PTR_ADDU k0, k0, USPACE - FRAME_SIZ
-	REG_S	AT, FRAME_AST(k0)
-	REG_S	v0, FRAME_V0(k0)
-	REG_S	v1, FRAME_V1(k0)
+	PTR_ADDU k0, k0, USPACE - TF_SIZ
+	REG_S	AT, TF_REG_AST(k0)
+	REG_S	v0, TF_REG_V0(k0)
+	REG_S	v1, TF_REG_V1(k0)
 	mflo	v0
-	REG_S	a0, FRAME_A0(k0)
-	REG_S	a1, FRAME_A1(k0)
-	REG_S	a2, FRAME_A2(k0)
-	REG_S	a3, FRAME_A3(k0)
+	REG_S	a0, TF_REG_A0(k0)
+	REG_S	a1, TF_REG_A1(k0)
+	REG_S	a2, TF_REG_A2(k0)
+	REG_S	a3, TF_REG_A3(k0)
 	mfhi	v1
-	REG_S	t0, FRAME_T0(k0)
-	REG_S	t1, FRAME_T1(k0)
-	REG_S	t2, FRAME_T2(k0)
-	REG_S	t3, FRAME_T3(k0)
+	REG_S	t0, TF_REG_T0(k0)
+	REG_S	t1, TF_REG_T1(k0)
+	REG_S	t2, TF_REG_T2(k0)
+	REG_S	t3, TF_REG_T3(k0)
 	mfc0	a0, MIPS_COP_0_STATUS		# 1st arg is STATUS
-	REG_S	ta0, FRAME_TA0(k0)
-	REG_S	ta1, FRAME_TA1(k0)
-	REG_S	ta2, FRAME_TA2(k0)
-	REG_S	ta3, FRAME_TA3(k0)
+	REG_S	ta0, TF_REG_TA0(k0)
+	REG_S	ta1, TF_REG_TA1(k0)
+	REG_S	ta2, TF_REG_TA2(k0)
+	REG_S	ta3, TF_REG_TA3(k0)
 	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
-	REG_S	s0, FRAME_S0(k0)
-	REG_S	s1, FRAME_S1(k0)
-	REG_S	s2, FRAME_S2(k0)
-	REG_S	s3, FRAME_S3(k0)
+	REG_S	s0, TF_REG_S0(k0)
+	REG_S	s1, TF_REG_S1(k0)
+	REG_S	s2, TF_REG_S2(k0)
+	REG_S	s3, TF_REG_S3(k0)
 	_MFC0	a2, MIPS_COP_0_BAD_VADDR	# 3rd arg is fault address
-	REG_S	s4, FRAME_S4(k0)
-	REG_S	s5, FRAME_S5(k0)
-	REG_S	s6, FRAME_S6(k0)
-	REG_S	s7, FRAME_S7(k0)
+	REG_S	s4, TF_REG_S4(k0)
+	REG_S	s5, TF_REG_S5(k0)
+	REG_S	s6, TF_REG_S6(k0)
+	REG_S	s7, TF_REG_S7(k0)
 	_MFC0	a3, MIPS_COP_0_EXC_PC		# 4th arg is exception PC
-	REG_S	t8, FRAME_T8(k0)
-	REG_S	t9, FRAME_T9(k0)
-	REG_S	gp, FRAME_GP(k0)
-	REG_S	sp, FRAME_SP(k0)
-	REG_S	s8, FRAME_S8(k0)
-	REG_S	ra, FRAME_RA(k0)
-	REG_S	a0, FRAME_SR(k0)
-	REG_S	v0, FRAME_MULLO(k0)
-	REG_S	v1, FRAME_MULHI(k0)
-	REG_S	a3, FRAME_EPC(k0)
+	REG_S	t8, TF_REG_T8(k0)
+	REG_S	t9, TF_REG_T9(k0)
+	REG_S	gp, TF_REG_GP(k0)
+	REG_S	sp, TF_REG_SP(k0)
+	REG_S	s8, TF_REG_S8(k0)
+	REG_S	ra, TF_REG_RA(k0)
+	REG_S	a0, TF_REG_SR(k0)
+	REG_S	v0, TF_REG_MULLO(k0)
+	REG_S	v1, TF_REG_MULHI(k0)
+	REG_S	a3, TF_REG_EPC(k0)
 #ifdef IPL_ICU_MASK
 	.set at
 	INT_L	t0, _C_LABEL(md_imask)
-	INT_S	t0, FRAME_PPL(k0)
+	INT_S	t0, TF_PPL(k0)
 	.set noat
 #endif
 	PTR_ADDU sp, k0, -CALLFRAME_SIZ		# switch to kernel SP
@@ -820,7 +813,7 @@ NESTED_NOPROFILE(MIPSX(user_gen_exception), CALLFRAME_SIZ, ra)
  * We have pending asynchronous traps; all the state is already saved.
  */
 	jal	_C_LABEL(ast)
-	REG_L	a0, CALLFRAME_SIZ + FRAME_EPC(sp)
+	REG_L	a0, CALLFRAME_SIZ + TF_REG_EPC(sp)
 1:
 /*
  * Restore user registers and return.
@@ -839,54 +832,54 @@ NESTED_NOPROFILE(MIPSX(user_gen_exception), CALLFRAME_SIZ, ra)
 	PTR_ADDU a1, sp, CALLFRAME_SIZ
 #ifdef IPL_ICU_MASK
 	.set at
-	INT_L	t0, FRAME_PPL(a1)
+	INT_L	t0, TF_PPL(a1)
 	INT_S	t0, _C_LABEL(md_imask)
 	jal	_C_LABEL(md_imask_update)
 	nop
 	PTR_ADDU a1, sp, CALLFRAME_SIZ
 	.set noat
 #endif
- #	REG_L	a0, FRAME_SR(a1)
-	REG_L	t0, FRAME_MULLO(a1)
-	REG_L	t1, FRAME_MULHI(a1)
-	REG_L	v0, FRAME_EPC(a1)
+ #	REG_L	a0, TF_REG_SR(a1)
+	REG_L	t0, TF_REG_MULLO(a1)
+	REG_L	t1, TF_REG_MULHI(a1)
+	REG_L	v0, TF_REG_EPC(a1)
  #	mtc0	a0, MIPS_COP_0_STATUS		# still exception level
 	mtlo	t0
 	mthi	t1
 	_MTC0	v0, MIPS_COP_0_EXC_PC		# set return address
 	COP0_SYNC
 	move	k1, a1
-	REG_L	AT, FRAME_AST(k1)
-	REG_L	v0, FRAME_V0(k1)
-	REG_L	v1, FRAME_V1(k1)
-	REG_L	a0, FRAME_A0(k1)
-	REG_L	a1, FRAME_A1(k1)
-	REG_L	a2, FRAME_A2(k1)
-	REG_L	a3, FRAME_A3(k1)
-	REG_L	t0, FRAME_T0(k1)
-	REG_L	t1, FRAME_T1(k1)
-	REG_L	t2, FRAME_T2(k1)
-	REG_L	t3, FRAME_T3(k1)
-	REG_L	ta0, FRAME_TA0(k1)
-	REG_L	ta1, FRAME_TA1(k1)
-	REG_L	ta2, FRAME_TA2(k1)
-	REG_L	ta3, FRAME_TA3(k1)
-	REG_L	s0, FRAME_S0(k1)
-	REG_L	s1, FRAME_S1(k1)
-	REG_L	s2, FRAME_S2(k1)
-	REG_L	s3, FRAME_S3(k1)
-	REG_L	s4, FRAME_S4(k1)
-	REG_L	s5, FRAME_S5(k1)
-	REG_L	s6, FRAME_S6(k1)
-	REG_L	s7, FRAME_S7(k1)
-	REG_L	t8, FRAME_T8(k1)
-	REG_L	t9, FRAME_T9(k1)
-	REG_L	k0, FRAME_SR(k1)
+	REG_L	AT, TF_REG_AST(k1)
+	REG_L	v0, TF_REG_V0(k1)
+	REG_L	v1, TF_REG_V1(k1)
+	REG_L	a0, TF_REG_A0(k1)
+	REG_L	a1, TF_REG_A1(k1)
+	REG_L	a2, TF_REG_A2(k1)
+	REG_L	a3, TF_REG_A3(k1)
+	REG_L	t0, TF_REG_T0(k1)
+	REG_L	t1, TF_REG_T1(k1)
+	REG_L	t2, TF_REG_T2(k1)
+	REG_L	t3, TF_REG_T3(k1)
+	REG_L	ta0, TF_REG_TA0(k1)
+	REG_L	ta1, TF_REG_TA1(k1)
+	REG_L	ta2, TF_REG_TA2(k1)
+	REG_L	ta3, TF_REG_TA3(k1)
+	REG_L	s0, TF_REG_S0(k1)
+	REG_L	s1, TF_REG_S1(k1)
+	REG_L	s2, TF_REG_S2(k1)
+	REG_L	s3, TF_REG_S3(k1)
+	REG_L	s4, TF_REG_S4(k1)
+	REG_L	s5, TF_REG_S5(k1)
+	REG_L	s6, TF_REG_S6(k1)
+	REG_L	s7, TF_REG_S7(k1)
+	REG_L	t8, TF_REG_T8(k1)
+	REG_L	t9, TF_REG_T9(k1)
+	REG_L	k0, TF_REG_SR(k1)
 	DYNAMIC_STATUS_MASK_TOUSER(k0, ra)	# machine dependent masking
-	REG_L	gp, FRAME_GP(k1)
-	REG_L	sp, FRAME_SP(k1)
-	REG_L	s8, FRAME_S8(k1)
-	REG_L	ra, FRAME_RA(k1)
+	REG_L	gp, TF_REG_GP(k1)
+	REG_L	sp, TF_REG_SP(k1)
+	REG_L	s8, TF_REG_S8(k1)
+	REG_L	ra, TF_REG_RA(k1)
 	mtc0	k0, MIPS_COP_0_STATUS		# restore status
 	COP0_SYNC
 	nop
@@ -908,57 +901,57 @@ NESTED_NOPROFILE(MIPSX(systemcall), CALLFRAME_SIZ, ra)
 	/* k1 already cpulwp */
 	PTR_L	k0, L_ADDR(k1)
 	#nop					# -slip-
-	PTR_ADDU k0, k0, USPACE - FRAME_SIZ
-	#REG_S	AT, FRAME_AST(k0)
-	REG_S	v0, FRAME_V0(k0)		# syscall #
-	REG_S	v1, FRAME_V1(k0)		# used by syscall()
+	PTR_ADDU k0, k0, USPACE - TF_SIZ
+	#REG_S	AT, TF_REG_AST(k0)
+	REG_S	v0, TF_REG_V0(k0)		# syscall #
+	REG_S	v1, TF_REG_V1(k0)		# used by syscall()
 	mflo	v0
-	REG_S	a0, FRAME_A0(k0)
-	REG_S	a1, FRAME_A1(k0)
-	REG_S	a2, FRAME_A2(k0)
-	REG_S	a3, FRAME_A3(k0)
+	REG_S	a0, TF_REG_A0(k0)
+	REG_S	a1, TF_REG_A1(k0)
+	REG_S	a2, TF_REG_A2(k0)
+	REG_S	a3, TF_REG_A3(k0)
 	move	a0, k1				# 1st arg is curlwp
 	mfhi	v1
 	mfc0	a2, MIPS_COP_0_CAUSE		# 3rd arg is CAUSE
-	REG_S	s0, FRAME_S0(k0)
-	REG_S	s1, FRAME_S1(k0)
-	REG_S	s2, FRAME_S2(k0)
-	REG_S	s3, FRAME_S3(k0)
+	REG_S	s0, TF_REG_S0(k0)
+	REG_S	s1, TF_REG_S1(k0)
+	REG_S	s2, TF_REG_S2(k0)
+	REG_S	s3, TF_REG_S3(k0)
 	_MFC0	a3, MIPS_COP_0_EXC_PC		# 4th arg is PC
-	REG_S	s4, FRAME_S4(k0)
-	REG_S	s5, FRAME_S5(k0)
-	REG_S	s6, FRAME_S6(k0)
-	REG_S	s7, FRAME_S7(k0)
+	REG_S	s4, TF_REG_S4(k0)
+	REG_S	s5, TF_REG_S5(k0)
+	REG_S	s6, TF_REG_S6(k0)
+	REG_S	s7, TF_REG_S7(k0)
 	move	s0, t0				# since the saved registers have
 	move	s1, t1				# been saved we can use them to
 	move	s2, t2				# stash most of temporary regs
-	REG_S	t3, FRAME_T3(k0)		# syscall saved gp for fork
+	REG_S	t3, TF_REG_T3(k0)		# syscall saved gp for fork
 	mfc0	a1, MIPS_COP_0_STATUS		# 2nd arg is STATUS
 #if defined(__mips_n32) || defined(__mips_n64)
-	REG_S	a4, FRAME_A4(k0)
-	REG_S	a5, FRAME_A5(k0)
-	REG_S	a6, FRAME_A6(k0)
-	REG_S	a7, FRAME_A7(k0)
+	REG_S	a4, TF_REG_A4(k0)
+	REG_S	a5, TF_REG_A5(k0)
+	REG_S	a6, TF_REG_A6(k0)
+	REG_S	a7, TF_REG_A7(k0)
 #else
 	move	s4, ta0
 	move	s5, ta1
 	move	s6, ta2
 	move	s7, ta3
 #endif
-	#REG_S	t8, FRAME_T8(k0)
-	#REG_S	t9, FRAME_T9(k0)
-	REG_S	gp, FRAME_GP(k0)
-	REG_S	sp, FRAME_SP(k0)
-	REG_S	s8, FRAME_S8(k0)
-	REG_S	ra, FRAME_RA(k0)
-	REG_S	a1, FRAME_SR(k0)
-	REG_S	v0, FRAME_MULLO(k0)
-	REG_S	v1, FRAME_MULHI(k0)
-	REG_S	a3, FRAME_EPC(k0)
+	#REG_S	t8, TF_REG_T8(k0)
+	#REG_S	t9, TF_REG_T9(k0)
+	REG_S	gp, TF_REG_GP(k0)
+	REG_S	sp, TF_REG_SP(k0)
+	REG_S	s8, TF_REG_S8(k0)
+	REG_S	ra, TF_REG_RA(k0)
+	REG_S	a1, TF_REG_SR(k0)
+	REG_S	v0, TF_REG_MULLO(k0)
+	REG_S	v1, TF_REG_MULHI(k0)
+	REG_S	a3, TF_REG_EPC(k0)
 #ifdef IPL_ICU_MASK
 	.set at
 	INT_L	t0, _C_LABEL(md_imask)
-	INT_S	t0, FRAME_PPL(k0)
+	INT_S	t0, TF_PPL(k0)
 	.set noat
 #endif
 	PTR_L	t0, L_PROC(a0)			# curlwp->l_proc (used below)
@@ -995,7 +988,7 @@ NESTED_NOPROFILE(MIPSX(systemcall), CALLFRAME_SIZ, ra)
  * We have pending asynchronous traps; all the state is already saved.
  */
 	jal	_C_LABEL(ast)
-	PTR_L	a0, CALLFRAME_SIZ + FRAME_EPC(sp)
+	PTR_L	a0, CALLFRAME_SIZ + TF_REG_EPC(sp)
 1:
 /*
  * Restore user registers and return.
@@ -1018,61 +1011,61 @@ NESTED_NOPROFILE(MIPSX(systemcall), CALLFRAME_SIZ, ra)
 	PTR_ADDU a1, sp, CALLFRAME_SIZ
 #ifdef IPL_ICU_MASK
 	.set at
-	INT_L	t0, FRAME_PPL(a1)
+	INT_L	t0, TF_PPL(a1)
 	INT_S	t0, _C_LABEL(md_imask)
 	jal	_C_LABEL(md_imask_update)
 	nop
 	PTR_ADDU a1, sp, CALLFRAME_SIZ
 	.set noat
 #endif
- #	REG_L	a0, FRAME_SR(a1)
-	REG_L	t0, FRAME_MULLO(a1)
-	REG_L	t1, FRAME_MULHI(a1)
-	REG_L	v0, FRAME_EPC(a1)		# might be changed in syscall
+ #	REG_L	a0, TF_REG_SR(a1)
+	REG_L	t0, TF_REG_MULLO(a1)
+	REG_L	t1, TF_REG_MULHI(a1)
+	REG_L	v0, TF_REG_EPC(a1)		# might be changed in syscall
  #	mtc0	a0, MIPS_COP_0_STATUS		# this should disable interrupts
 	mtlo	t0
 	mthi	t1
 	_MTC0	v0, MIPS_COP_0_EXC_PC		# set return address
 	COP0_SYNC
 	move	k1, a1
-	REG_L	AT, FRAME_AST(k1)
-	REG_L	v0, FRAME_V0(k1)
-	REG_L	v1, FRAME_V1(k1)
-	REG_L	a0, FRAME_A0(k1)
-	REG_L	a1, FRAME_A1(k1)
-	REG_L	a2, FRAME_A2(k1)
-	REG_L	a3, FRAME_A3(k1)
+	REG_L	AT, TF_REG_AST(k1)
+	REG_L	v0, TF_REG_V0(k1)
+	REG_L	v1, TF_REG_V1(k1)
+	REG_L	a0, TF_REG_A0(k1)
+	REG_L	a1, TF_REG_A1(k1)
+	REG_L	a2, TF_REG_A2(k1)
+	REG_L	a3, TF_REG_A3(k1)
 	move	t0, s0			# restore the temps
 	move	t1, s1
 	move	t2, s2
-	REG_L	t3, FRAME_T3(k1)	# restore the syscall saved gp
+	REG_L	t3, TF_REG_T3(k1)	# restore the syscall saved gp
 #if defined(__mips_n32) || defined(__mips_n64)
-	REG_L	a4, FRAME_A4(k1)
-	REG_L	a5, FRAME_A5(k1)
-	REG_L	a6, FRAME_A6(k1)
-	REG_L	a7, FRAME_A7(k1)
+	REG_L	a4, TF_REG_A4(k1)
+	REG_L	a5, TF_REG_A5(k1)
+	REG_L	a6, TF_REG_A6(k1)
+	REG_L	a7, TF_REG_A7(k1)
 #else
 	move	ta0, s4
 	move	ta1, s5
 	move	ta2, s6
 	move	ta3, s7
 #endif
-	REG_L	s0, FRAME_S0(k1)
-	REG_L	s1, FRAME_S1(k1)
-	REG_L	s2, FRAME_S2(k1)
-	REG_L	s3, FRAME_S3(k1)
-	REG_L	s4, FRAME_S4(k1)
-	REG_L	s5, FRAME_S5(k1)
-	REG_L	s6, FRAME_S6(k1)
-	REG_L	s7, FRAME_S7(k1)
-	REG_L	t8, FRAME_T8(k1)
-	REG_L	t9, FRAME_T9(k1)
-	REG_L	k0, FRAME_SR(k1)
+	REG_L	s0, TF_REG_S0(k1)
+	REG_L	s1, TF_REG_S1(k1)
+	REG_L	s2, TF_REG_S2(k1)
+	REG_L	s3, TF_REG_S3(k1)
+	REG_L	s4, TF_REG_S4(k1)
+	REG_L	s5, TF_REG_S5(k1)
+	REG_L	s6, TF_REG_S6(k1)
+	REG_L	s7, TF_REG_S7(k1)
+	REG_L	t8, TF_REG_T8(k1)
+	REG_L	t9, TF_REG_T9(k1)
+	REG_L	k0, TF_REG_SR(k1)
 	DYNAMIC_STATUS_MASK_TOUSER(k0, ra)	# machine dependent masking
-	REG_L	gp, FRAME_GP(k1)
-	REG_L	sp, FRAME_SP(k1)
-	REG_L	s8, FRAME_S8(k1)
-	REG_L	ra, FRAME_RA(k1)
+	REG_L	gp, TF_REG_GP(k1)
+	REG_L	sp, TF_REG_SP(k1)
+	REG_L	s8, TF_REG_S8(k1)
+	REG_L	ra, TF_REG_RA(k1)
 	mtc0	k0, MIPS_COP_0_STATUS
 	COP0_SYNC
 	nop
@@ -1297,47 +1290,47 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
  */
 	/* k1 contains curlwp */
 	PTR_L	k0, L_ADDR(k1)
-	PTR_ADDU k0, k0, USPACE - FRAME_SIZ
-	REG_S	AT, FRAME_AST(k0)
-	REG_S	v0, FRAME_V0(k0)
-	REG_S	v1, FRAME_V1(k0)
+	PTR_ADDU k0, k0, USPACE - TF_SIZ
+	REG_S	AT, TF_REG_AST(k0)
+	REG_S	v0, TF_REG_V0(k0)
+	REG_S	v1, TF_REG_V1(k0)
 	mflo	v0
-	REG_S	a0, FRAME_A0(k0)
-	REG_S	a1, FRAME_A1(k0)
-	REG_S	a2, FRAME_A2(k0)
-	REG_S	a3, FRAME_A3(k0)
+	REG_S	a0, TF_REG_A0(k0)
+	REG_S	a1, TF_REG_A1(k0)
+	REG_S	a2, TF_REG_A2(k0)
+	REG_S	a3, TF_REG_A3(k0)
 	mfhi	v1
-	REG_S	t0, FRAME_T0(k0)
-	REG_S	t1, FRAME_T1(k0)
-	REG_S	t2, FRAME_T2(k0)
-	REG_S	t3, FRAME_T3(k0)
+	REG_S	t0, TF_REG_T0(k0)
+	REG_S	t1, TF_REG_T1(k0)
+	REG_S	t2, TF_REG_T2(k0)
+	REG_S	t3, TF_REG_T3(k0)
 	mfc0	a0, MIPS_COP_0_STATUS		# 1st arg is STATUS
-	REG_S	ta0, FRAME_TA0(k0)
-	REG_S	ta1, FRAME_TA1(k0)
-	REG_S	ta2, FRAME_TA2(k0)
-	REG_S	ta3, FRAME_TA3(k0)
+	REG_S	ta0, TF_REG_TA0(k0)
+	REG_S	ta1, TF_REG_TA1(k0)
+	REG_S	ta2, TF_REG_TA2(k0)
+	REG_S	ta3, TF_REG_TA3(k0)
 	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
-	REG_S	t8, FRAME_T8(k0)
-	REG_S	t9, FRAME_T9(k0)
-	REG_S	gp, FRAME_GP(k0)
-	REG_S	sp, FRAME_SP(k0)
+	REG_S	t8, TF_REG_T8(k0)
+	REG_S	t9, TF_REG_T9(k0)
+	REG_S	gp, TF_REG_GP(k0)
+	REG_S	sp, TF_REG_SP(k0)
 	_MFC0	a2, MIPS_COP_0_EXC_PC		# 3rd arg is PC
-	REG_S	ra, FRAME_RA(k0)
-	REG_S	a0, FRAME_SR(k0)
-	REG_S	v0, FRAME_MULLO(k0)
-	REG_S	v1, FRAME_MULHI(k0)
-	REG_S	a2, FRAME_EPC(k0)
+	REG_S	ra, TF_REG_RA(k0)
+	REG_S	a0, TF_REG_SR(k0)
+	REG_S	v0, TF_REG_MULLO(k0)
+	REG_S	v1, TF_REG_MULHI(k0)
+	REG_S	a2, TF_REG_EPC(k0)
 #ifdef IPL_ICU_MASK
 	.set at
 	INT_L	t0, _C_LABEL(md_imask)
-	INT_S	t0, FRAME_PPL(k0)
+	INT_S	t0, TF_PPL(k0)
 	.set noat
 #endif
 	PTR_ADDU sp, k0, -CALLFRAME_SIZ		# switch to kernel SP
 #ifdef __GP_SUPPORT__
 	PTR_LA	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
-	PTR_S	MIPS_CURLWP, MIPS_CURLWP_FRAME(k0)# save curlwp reg (s7)
+	PTR_S	MIPS_CURLWP, TF_MIPS_CURLWP(k0)# save curlwp reg (s7)
 	move	MIPS_CURLWP, k1			# set curlwp reg (s7)
 /*
  * Turn off fpu and enter kernel mode
@@ -1371,7 +1364,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	nop
 	nop
 	PTR_ADDU a1, sp, CALLFRAME_SIZ
- #	REG_L	a0, FRAME_SR(a1)
+ #	REG_L	a0, TF_REG_SR(a1)
 	INT_L	v0, L_MD_ASTPENDING(MIPS_CURLWP)# any pending ast?
  #	mtc0	a0, MIPS_COP_0_STATUS		# restore the SR, disable intrs
 	nop
@@ -1383,16 +1376,16 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 /*
  * We have pending asynchronous traps; save remaining user state in u_pcb.
  */
-	REG_S	s0, FRAME_S0(a1)
-	REG_S	s1, FRAME_S1(a1)
-	REG_S	s2, FRAME_S2(a1)
-	REG_S	s3, FRAME_S3(a1)
-	REG_S	s4, FRAME_S4(a1)
-	REG_S	s5, FRAME_S5(a1)
-	REG_S	s6, FRAME_S6(a1)
-	REG_S	s7, FRAME_S7(a1)		# MIPS_CURLWP_FRAME
-	REG_S	s8, FRAME_S8(a1)
-	REG_L	a0, FRAME_EPC(a1)		# argument is interrupted PC
+	REG_S	s0, TF_REG_S0(a1)
+	REG_S	s1, TF_REG_S1(a1)
+	REG_S	s2, TF_REG_S2(a1)
+	REG_S	s3, TF_REG_S3(a1)
+	REG_S	s4, TF_REG_S4(a1)
+	REG_S	s5, TF_REG_S5(a1)
+	REG_S	s6, TF_REG_S6(a1)
+	REG_S	s7, TF_REG_S7(a1)
+	REG_S	s8, TF_REG_S8(a1)
+	REG_L	a0, TF_REG_EPC(a1)		# argument is interrupted PC
 #ifdef IPL_ICU_MASK
 	jal	_C_LABEL(spllowersofthigh);
 	nop
@@ -1423,23 +1416,23 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	nop
 
 	PTR_ADDU a1, sp, CALLFRAME_SIZ
- #	REG_L	a0, FRAME_SR(a1)
-	REG_L	s0, FRAME_S0(a1)
-	REG_L	s1, FRAME_S1(a1)
-	REG_L	s2, FRAME_S2(a1)
-	REG_L	s3, FRAME_S3(a1)
-	REG_L	s4, FRAME_S4(a1)
-	REG_L	s5, FRAME_S5(a1)
-	REG_L	s6, FRAME_S6(a1)
-	REG_L	s7, FRAME_S7(a1)		# MIPS_CURLWP_FRAME
-	REG_L	s8, FRAME_S8(a1)
+ #	REG_L	a0, TF_REG_SR(a1)
+	REG_L	s0, TF_REG_S0(a1)
+	REG_L	s1, TF_REG_S1(a1)
+	REG_L	s2, TF_REG_S2(a1)
+	REG_L	s3, TF_REG_S3(a1)
+	REG_L	s4, TF_REG_S4(a1)
+	REG_L	s5, TF_REG_S5(a1)
+	REG_L	s6, TF_REG_S6(a1)
+	REG_L	s7, TF_REG_S7(a1)
+	REG_L	s8, TF_REG_S8(a1)
  #	mtc0	a0, MIPS_COP_0_STATUS		# this should disable interrupts
 
 1:
-	PTR_L	MIPS_CURLWP, MIPS_CURLWP_FRAME(a1)# restore curlwp reg
-	REG_L	t0, FRAME_MULLO(a1)
-	REG_L	t1, FRAME_MULHI(a1)
-	REG_L	v0, FRAME_EPC(a1)
+	PTR_L	MIPS_CURLWP, TF_MIPS_CURLWP(a1)# restore curlwp reg
+	REG_L	t0, TF_REG_MULLO(a1)
+	REG_L	t1, TF_REG_MULHI(a1)
+	REG_L	v0, TF_REG_EPC(a1)
 	mtlo	t0
 	mthi	t1
 	_MTC0	v0, MIPS_COP_0_EXC_PC		# set return address
@@ -1450,34 +1443,34 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	move	k1, a1
 #ifdef IPL_ICU_MASK
 	.set at
-	INT_L	t0, FRAME_PPL(k1)
+	INT_L	t0, TF_PPL(k1)
 	INT_S	t0, _C_LABEL(md_imask)
 	jal	_C_LABEL(md_imask_update)
 	nop
 	.set noat
 #endif
-	REG_L	AT, FRAME_AST(k1)
-	REG_L	v0, FRAME_V0(k1)
-	REG_L	v1, FRAME_V1(k1)
-	REG_L	a0, FRAME_A0(k1)
-	REG_L	a1, FRAME_A1(k1)
-	REG_L	a2, FRAME_A2(k1)
-	REG_L	a3, FRAME_A3(k1)
-	REG_L	t0, FRAME_T0(k1)
-	REG_L	t1, FRAME_T1(k1)
-	REG_L	t2, FRAME_T2(k1)
-	REG_L	t3, FRAME_T3(k1)
-	REG_L	ta0, FRAME_TA0(k1)
-	REG_L	ta1, FRAME_TA1(k1)
-	REG_L	ta2, FRAME_TA2(k1)
-	REG_L	ta3, FRAME_TA3(k1)
-	REG_L	t8, FRAME_T8(k1)
-	REG_L	t9, FRAME_T9(k1)
-	REG_L	k0, FRAME_SR(k1)
+	REG_L	AT, TF_REG_AST(k1)
+	REG_L	v0, TF_REG_V0(k1)
+	REG_L	v1, TF_REG_V1(k1)
+	REG_L	a0, TF_REG_A0(k1)
+	REG_L	a1, TF_REG_A1(k1)
+	REG_L	a2, TF_REG_A2(k1)
+	REG_L	a3, TF_REG_A3(k1)
+	REG_L	t0, TF_REG_T0(k1)
+	REG_L	t1, TF_REG_T1(k1)
+	REG_L	t2, TF_REG_T2(k1)
+	REG_L	t3, TF_REG_T3(k1)
+	REG_L	ta0, TF_REG_TA0(k1)
+	REG_L	ta1, TF_REG_TA1(k1)
+	REG_L	ta2, TF_REG_TA2(k1)
+	REG_L	ta3, TF_REG_TA3(k1)
+	REG_L	t8, TF_REG_T8(k1)
+	REG_L	t9, TF_REG_T9(k1)
+	REG_L	k0, TF_REG_SR(k1)
 	DYNAMIC_STATUS_MASK_TOUSER(k0, ra)	# machine dependent masking
-	REG_L	gp, FRAME_GP(k1)
-	REG_L	sp, FRAME_SP(k1)
-	REG_L	ra, FRAME_RA(k1)
+	REG_L	gp, TF_REG_GP(k1)
+	REG_L	sp, TF_REG_SP(k1)
+	REG_L	ra, TF_REG_RA(k1)
 	mtc0	k0, MIPS_COP_0_STATUS		# restore the SR
 	COP0_SYNC
 	nop					# required for QED 5230
@@ -2089,10 +2082,10 @@ LEAF(MIPSX(lwp_trampoline))
 	nop
 	nop
 	PTR_ADDU a1, sp, CALLFRAME_SIZ
- #	REG_L	a0, FRAME_SR(a1)
-	REG_L	t0, FRAME_MULLO(a1)
-	REG_L	t1, FRAME_MULHI(a1)
-	REG_L	v0, FRAME_EPC(a1)
+ #	REG_L	a0, TF_REG_SR(a1)
+	REG_L	t0, TF_REG_MULLO(a1)
+	REG_L	t1, TF_REG_MULHI(a1)
+	REG_L	v0, TF_REG_EPC(a1)
 	mtlo	t0
 	mthi	t1
 	_MTC0	v0, MIPS_COP_0_EXC_PC
@@ -2101,43 +2094,43 @@ LEAF(MIPSX(lwp_trampoline))
 	move	k1, a1
 #ifdef IPL_ICU_MASK
 	.set at
-	INT_L	t0, FRAME_PPL(k1)
+	INT_L	t0, TF_PPL(k1)
 	INT_S	t0, _C_LABEL(md_imask)
 	jal	_C_LABEL(md_imask_update)
 	nop
 	.set noat
 #endif
-	REG_L	AT, FRAME_AST(k1)
-	REG_L	v0, FRAME_V0(k1)
-	REG_L	v1, FRAME_V1(k1)
-	REG_L	a0, FRAME_A0(k1)
-	REG_L	a1, FRAME_A1(k1)
-	REG_L	a2, FRAME_A2(k1)
-	REG_L	a3, FRAME_A3(k1)
-	REG_L	t0, FRAME_T0(k1)
-	REG_L	t1, FRAME_T1(k1)
-	REG_L	t2, FRAME_T2(k1)
-	REG_L	t3, FRAME_T3(k1)
-	REG_L	ta0, FRAME_TA0(k1)
-	REG_L	ta1, FRAME_TA1(k1)
-	REG_L	ta2, FRAME_TA2(k1)
-	REG_L	ta3, FRAME_TA3(k1)
-	REG_L	s0, FRAME_S0(k1)
-	REG_L	s1, FRAME_S1(k1)
-	REG_L	s2, FRAME_S2(k1)
-	REG_L	s3, FRAME_S3(k1)
-	REG_L	s4, FRAME_S4(k1)
-	REG_L	s5, FRAME_S5(k1)
-	REG_L	s6, FRAME_S6(k1)
-	REG_L	s7, FRAME_S7(k1)
-	REG_L	t8, FRAME_T8(k1)
-	REG_L	t9, FRAME_T9(k1)
-	REG_L	k0, FRAME_SR(k1)
+	REG_L	AT, TF_REG_AST(k1)
+	REG_L	v0, TF_REG_V0(k1)
+	REG_L	v1, TF_REG_V1(k1)
+	REG_L	a0, TF_REG_A0(k1)
+	REG_L	a1, TF_REG_A1(k1)
+	REG_L	a2, TF_REG_A2(k1)
+	REG_L	a3, TF_REG_A3(k1)
+	REG_L	t0, TF_REG_T0(k1)
+	REG_L	t1, TF_REG_T1(k1)
+	REG_L	t2, TF_REG_T2(k1)
+	REG_L	t3, TF_REG_T3(k1)
+	REG_L	ta0, TF_REG_TA0(k1)
+	REG_L	ta1, TF_REG_TA1(k1)
+	REG_L	ta2, TF_REG_TA2(k1)
+	REG_L	ta3, TF_REG_TA3(k1)
+	REG_L	s0, TF_REG_S0(k1)
+	REG_L	s1, TF_REG_S1(k1)
+	REG_L	s2, TF_REG_S2(k1)
+	REG_L	s3, TF_REG_S3(k1)
+	REG_L	s4, TF_REG_S4(k1)
+	REG_L	s5, TF_REG_S5(k1)
+	REG_L	s6, TF_REG_S6(k1)
+	REG_L	s7, TF_REG_S7(k1)
+	REG_L	t8, TF_REG_T8(k1)
+	REG_L	t9, TF_REG_T9(k1)
+	REG_L	k0, TF_REG_SR(k1)
 	DYNAMIC_STATUS_MASK(k0, sp)		# machine dependent masking
-	REG_L	gp, FRAME_GP(k1)
-	REG_L	s8, FRAME_S8(k1)
-	REG_L	ra, FRAME_RA(k1)
-	REG_L	sp, FRAME_SP(k1)
+	REG_L	gp, TF_REG_GP(k1)
+	REG_L	s8, TF_REG_S8(k1)
+	REG_L	ra, TF_REG_RA(k1)
+	REG_L	sp, TF_REG_SP(k1)
 	mtc0	k0, MIPS_COP_0_STATUS
 	COP0_SYNC
 	nop

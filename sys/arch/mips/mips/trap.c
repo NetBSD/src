@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.16 2010/01/29 00:16:58 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.17 2010/02/01 04:16:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.16 2010/01/29 00:16:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.17 2010/02/01 04:16:20 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -160,9 +160,9 @@ const char * const trap_type[] = {
 void trap(unsigned int, unsigned int, vaddr_t, vaddr_t, struct trapframe *);
 void ast(unsigned int);
 
-vaddr_t MachEmulateBranch(struct frame *, vaddr_t, unsigned int, int);	/* XXX */
-void MachEmulateInst(uint32_t, uint32_t, vaddr_t, struct frame *);	/* XXX */
-void MachFPTrap(uint32_t, uint32_t, vaddr_t, struct frame *);	/* XXX */
+vaddr_t MachEmulateBranch(struct trapframe *, vaddr_t, unsigned int, int);	/* XXX */
+void MachEmulateInst(uint32_t, uint32_t, vaddr_t, struct trapframe *);	/* XXX */
+void MachFPTrap(uint32_t, uint32_t, vaddr_t, struct trapframe *);	/* XXX */
 
 /*
  * fork syscall returns directly to user process via lwp_trampoline(),
@@ -172,11 +172,11 @@ void
 child_return(void *arg)
 {
 	struct lwp *l = arg;
-	struct frame *frame = l->l_md.md_regs;
+	struct trapframe *utf = l->l_md.md_utf;
 
-	frame->f_regs[_R_V0] = 0;
-	frame->f_regs[_R_V1] = 1;
-	frame->f_regs[_R_A3] = 0;
+	utf->tf_regs[_R_V0] = 0;
+	utf->tf_regs[_R_V1] = 1;
+	utf->tf_regs[_R_A3] = 0;
 	userret(l);
 	ktrsysret(SYS_fork, 0, 0);
 }
@@ -195,14 +195,14 @@ child_return(void *arg)
  */
 void
 trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
-    struct trapframe *frame)
+    struct trapframe *tf)
 {
 	int type;
-	struct lwp *l = curlwp;
-	struct proc *p = curproc;
+	struct lwp * const l = curlwp;
+	struct proc * const p = curproc;
+	struct trapframe * const utf = l->l_md.md_utf;
 	vm_prot_t ftype;
 	ksiginfo_t ksi;
-	struct frame *fp;
 	extern void fswintrberr(void);
 	KSI_INIT_TRAP(&ksi);
 
@@ -234,22 +234,22 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		printf("status=0x%x, cause=0x%x, epc=%#" PRIxVADDR
 			", vaddr=%#" PRIxVADDR, status, cause, opc, vaddr);
 		if (USERMODE(status)) {
-			fp = l->l_md.md_regs;
+			KASSERT(tf == utf);
 			printf(" frame=%p usp=%#" PRIxREGISTER
 			    " ra=%#" PRIxREGISTER "\n",
-			   fp, fp->f_regs[_R_SP], fp->f_regs[_R_RA]);
+			   tf, tf->tf_regs[_R_SP], tf->tf_regs[_R_RA]);
 		} else {
 			printf(" tf=%p ksp=%p ra=%#" PRIxREGISTER "\n",
-			   frame, frame+1, frame->tf_regs[TF_RA]);
+			   tf, tf+1, tf->tf_regs[_R_RA]);
 		}
 			
 #if defined(DDB)
-		kdb_trap(type, frame->tf_regs);
+		kdb_trap(type, &tf->tf_registers);
 		/* XXX force halt XXX */
 #elif defined(KGDB)
 		{
-			struct frame *f = (struct frame *)&ddb_regs;
 			extern mips_reg_t kgdb_cause, kgdb_vaddr;
+			struct reg *regs = &ddb_regs;
 			kgdb_cause = cause;
 			kgdb_vaddr = vaddr;
 
@@ -259,10 +259,10 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			 * that db_machdep.h macros will work with it, and
 			 * allow gdb to alter the PC.
 			 */
-			db_set_ddb_regs(type, (mips_reg_t *) frame);
-			PC_BREAK_ADVANCE(f);
-			if (kgdb_trap(type, &ddb_regs)) {
-				frame->tf_regs[TF_EPC] = f->f_regs[_R_PC];
+			db_set_ddb_regs(type, tf);
+			PC_BREAK_ADVANCE(regs);
+			if (kgdb_trap(type, regs)) {
+				tf->tf_regs[TF_EPC] = regs->r_regs[_R_PC];
 				return;
 			}
 		}
@@ -347,7 +347,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			goto dopanic;
 		/* check for fuswintr() or suswintr() getting a page fault */
 		if (l->l_addr->u_pcb.pcb_onfault == (void *)fswintrberr) {
-			frame->tf_regs[TF_EPC] = (intptr_t)fswintrberr;
+			tf->tf_regs[_R_PC] = (intptr_t)l->l_addr->u_pcb.pcb_onfault;
 			return; /* KERN */
 		}
 		goto pagefault;
@@ -441,7 +441,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	copyfault:
 		if (l == NULL || l->l_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
-		frame->tf_regs[TF_EPC] = (intptr_t)l->l_addr->u_pcb.pcb_onfault;
+		tf->tf_regs[_R_PC] = (intptr_t)l->l_addr->u_pcb.pcb_onfault;
 		return; /* KERN */
 
 	case T_ADDR_ERR_LD+T_USER:	/* misaligned or kseg access */
@@ -456,12 +456,12 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 
 	case T_BREAK:
 #if defined(DDB)
-		kdb_trap(type, frame->tf_regs);
+		kdb_trap(type, &tf->tf_registers);
 		return;	/* KERN */
 #elif defined(KGDB)
 		{
-			struct frame *f = (struct frame *)&ddb_regs;
 			extern mips_reg_t kgdb_cause, kgdb_vaddr;
+			struct reg *regs = &ddb_regs;
 			kgdb_cause = cause;
 			kgdb_vaddr = vaddr;
 
@@ -471,13 +471,13 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			 * that db_machdep.h macros will work with it, and
 			 * allow gdb to alter the PC.
 			 */
-			db_set_ddb_regs(type, frame->f_regs);
-			PC_BREAK_ADVANCE(f);
-			if (!kgdb_trap(type, &ddb_regs))
+			db_set_ddb_regs(type, &tf->tf_registers);
+			PC_BREAK_ADVANCE(regs);
+			if (!kgdb_trap(type, regs))
 				printf("kgdb: ignored %s\n",
 				       trap_type[TRAPTYPE(cause)]);
 			else
-				frame->tf_regs[TF_EPC] = f->f_regs[_R_PC];
+				tf->tf_regs[_R_PC] = regs->r_regs[_R_PC];
 
 			return;
 		}
@@ -544,15 +544,15 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		} else
 #endif
 		{
-			MachEmulateInst(status, cause, opc, l->l_md.md_regs);
+			MachEmulateInst(status, cause, opc, utf);
 		}
 		userret(l);
 		return; /* GEN */
 	case T_FPE+T_USER:
 #if defined(FPEMUL)
-		MachEmulateInst(status, cause, opc, l->l_md.md_regs);
+		MachEmulateInst(status, cause, opc, utf);
 #elif !defined(NOFPU)
-		MachFPTrap(status, cause, opc, l->l_md.md_regs);
+		MachFPTrap(status, cause, opc, utf);
 #endif
 		userret(l);
 		return; /* GEN */
@@ -560,26 +560,24 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	case T_TRAP+T_USER:
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_signo = SIGFPE;
-		fp = l->l_md.md_regs;
-		ksi.ksi_addr = (void *)(intptr_t)fp->f_regs[_R_PC];
+		ksi.ksi_addr = (void *)(intptr_t)tf->tf_regs[_R_PC];
 		ksi.ksi_code = FPE_FLTOVF; /* XXX */
 		break; /* SIGNAL */
 	}
-	fp = l->l_md.md_regs;
-	fp->f_regs[_R_CAUSE] = cause;
-	fp->f_regs[_R_BADVADDR] = vaddr;
+	utf->tf_regs[_R_CAUSE] = cause;
+	utf->tf_regs[_R_BADVADDR] = vaddr;
 #if defined(DEBUG)
 	printf("trap: pid %d(%s): sig %d: cause=%#x epc=%#"PRIxREGISTER
 	    " va=%#"PRIxVADDR"\n",
 	    p->p_pid, p->p_comm, ksi.ksi_signo, cause,
-	    fp->f_regs[_R_PC], vaddr);
+	    utf->tf_regs[_R_PC], vaddr);
 	printf("registers:\n");
 	for (size_t i = 0; i < 32; i += 4) {
 		printf(
 		    "[%2zu]=%08"PRIxREGISTER" [%2zu]=%08"PRIxREGISTER
 		    " [%2zu]=%08"PRIxREGISTER" [%2zu]=%08"PRIxREGISTER "\n",
-		    i+0, fp->f_regs[i+0], i+1, fp->f_regs[i+1],
-		    i+2, fp->f_regs[i+2], i+3, fp->f_regs[i+3]);
+		    i+0, utf->tf_regs[i+0], i+1, utf->tf_regs[i+1],
+		    i+2, utf->tf_regs[i+2], i+3, utf->tf_regs[i+3]);
 	}
 #endif
 	(*p->p_emul->e_trapsignal)(l, &ksi);
@@ -632,8 +630,8 @@ ast(unsigned pc)	/* pc is program counter where to continue */
 int
 mips_singlestep(struct lwp *l)
 {
-	struct frame *f = l->l_md.md_regs;
-	struct proc *p = l->l_proc;
+	struct trapframe * const tf = l->l_md.md_utf;
+	struct proc * const p = l->l_proc;
 	vaddr_t pc, va;
 	int rv;
 
@@ -642,9 +640,9 @@ mips_singlestep(struct lwp *l)
 			p->p_comm, p->p_pid, l->l_md.md_ss_addr);
 		return EFAULT;
 	}
-	pc = (vaddr_t)f->f_regs[_R_PC];
-	if (fuiword((void *)pc) != 0) /* not a NOP instruction */
-		va = MachEmulateBranch(f, pc, PCB_FSR(&l->l_addr->u_pcb), 1);
+	pc = (vaddr_t)tf->tf_regs[_R_PC];
+	if (ufetch_uint32((void *)pc) != 0) /* not a NOP instruction */
+		va = MachEmulateBranch(tf, pc, PCB_FSR(&l->l_addr->u_pcb), 1);
 	else
 		va = pc + sizeof(int);
 

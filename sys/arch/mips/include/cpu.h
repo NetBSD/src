@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.16 2010/01/30 23:49:31 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.17 2010/02/01 04:16:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -213,7 +213,7 @@ struct cpu_info {
 #define MIPS_CURLWP             $24
 #define MIPS_CURLWP_QUOTED      "$24"
 #define MIPS_CURLWP_LABEL	_L_T8
-#define MIPS_CURLWP_FRAME(x)	FRAME_T8(x)
+#define TF_MIPS_CURLWP(x)	TF_REG_T8(x)
 
 #ifndef _LOCORE
 

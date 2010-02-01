@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.33.38.8 2010/01/29 00:16:58 matt Exp $	*/
+/*	$NetBSD: fp.S,v 1.33.38.9 2010/02/01 04:16:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -647,7 +647,7 @@ func_paired_single_tbl:
 #ifdef FPEMUL
 mfromc1:
 	srl	t1, a0, 11-FPX_SCALESHIFT	# fs is in bits 15:11
-	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
+	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of lwp
 	andi	t1, t1, FPX_REGMASK
 	PTR_ADDU t0, t0, t1
 
@@ -658,18 +658,18 @@ mfromc1:
 	PTR_ADDU t0, t0, a1
 
 	REG_PROLOGUE
-	REG_S	v0, FRAME_RZERO(t0)
+	REG_S	v0, TF_REG_ZERO(t0)
 	REG_EPILOGUE
 
 	b	done
 
 mtoc1:
 	REG_PROLOGUE
-	REG_S	zero, FRAME_RZERO(a1)		# ensure zero has value 0
+	REG_S	zero, TF_REG_ZERO(a1)		# ensure zero has value 0
 	srl	t0, a0, 16-REG_SCALESHIFT
 	andi	t0, t0, REG_REGMASK
 	PTR_ADDU v0, a1, t0
-	REG_L	v0, FRAME_RZERO(v0)
+	REG_L	v0, TF_REG_ZERO(v0)
 	REG_EPILOGUE
 
 	srl	t1, a0, 11-FPX_SCALESHIFT
@@ -695,18 +695,18 @@ dmfromc1:
 	PTR_ADDU t0, t0, a1
 
 	REG_PROLOGUE
-	REG_S	v0, FRAME_RZERO(t0)
+	REG_S	v0, TF_REG_ZERO(t0)
 	REG_EPILOGUE
 
 	b	done
 
 dmtoc1:
 	REG_PROLOGUE
-	REG_S	zero, FRAME_RZERO(a1)		# ensure zero has value 0
+	REG_S	zero, TF_REG_ZERO(a1)		# ensure zero has value 0
 	srl	t0, a0, 16-REG_SCALESHIFT
 	andi	t0, t0, REG_REGMASK
 	PTR_ADDU v0, a1, t0
-	REG_L	v0, FRAME_RZERO(v0)
+	REG_L	v0, TF_REG_ZERO(v0)
 	REG_EPILOGUE
 
 	srl	t1, a0, 11-DFPX_SCALESHIFT
@@ -736,14 +736,14 @@ cfinvalid:
 	PTR_ADDU t0, t0, a1
 
 	REG_PROLOGUE
-	REG_S	v0, FRAME_RZERO(t0)
+	REG_S	v0, TF_REG_ZERO(t0)
 	REG_EPILOGUE
 
 	b	done
 
 ctoc1:
 	REG_PROLOGUE
-	REG_S	zero, FRAME_RZERO(a1)		# ensure zero has value 0
+	REG_S	zero, TF_REG_ZERO(a1)		# ensure zero has value 0
 	REG_EPILOGUE
 
 	srl	t0, a0, 11
@@ -755,7 +755,7 @@ ctoc1:
 	andi	t0, t0, REG_REGMASK
 	PTR_ADDU v0, a1, t0
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(v0)
+	REG_L	v0, TF_REG_ZERO(v0)
 	REG_EPILOGUE
 	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get pcb of current process
 	#nop
@@ -821,9 +821,9 @@ bcfalse_l:
 	and	v0, v0, a2
 	beq	v0, zero, bcemul_branch
 	REG_PROLOGUE
-	REG_L	v0, FRAME_EPC(a1)
+	REG_L	v0, TF_REG_EPC(a1)
 	addiu	v0, v0, 4
-	REG_S	v0, FRAME_EPC(a1)
+	REG_S	v0, TF_REG_EPC(a1)
 	REG_EPILOGUE
 	b	done
 bctrue_l:
@@ -831,9 +831,9 @@ bctrue_l:
 	and	v0, v0, a2
 	bne	v0, zero, bcemul_branch
 	REG_PROLOGUE
-	REG_L	v0, FRAME_EPC(a1)
+	REG_L	v0, TF_REG_EPC(a1)
 	addiu	v0, v0, 4
-	REG_S	v0, FRAME_EPC(a1)
+	REG_S	v0, TF_REG_EPC(a1)
 	REG_EPILOGUE
 	b	done
 
@@ -841,7 +841,7 @@ bcemul_branch:
 	/* Fetch delay slot instruction */
 	REG_L	a1, CALLFRAME_FRAME(sp)
 	REG_PROLOGUE
-	REG_L	a0, FRAME_EPC(a1)
+	REG_L	a0, TF_REG_EPC(a1)
 	REG_EPILOGUE
 	PTR_ADDU a0, 4
 	jal	_C_LABEL(fuiword)
@@ -2814,7 +2814,7 @@ done:
  */
 	REG_L	t0, CALLFRAME_CAUSE(sp)
 	REG_PROLOGUE
-	REG_L	v0, FRAME_EPC(a1)
+	REG_L	v0, TF_REG_EPC(a1)
 	REG_EPILOGUE
 	bgez	t0, 1f				# Check the branch delay bit.
 /*
@@ -2838,7 +2838,7 @@ done:
 	addiu	v0, v0, 4			# v0 = next pc
 2:
 	REG_PROLOGUE
-	REG_S	v0, FRAME_EPC(a1)		# save new pc
+	REG_S	v0, TF_REG_EPC(a1)		# save new pc
 	REG_EPILOGUE
 
 	REG_L	ra, CALLFRAME_RA(sp)
@@ -4419,7 +4419,7 @@ END(renorm_ft_d)
  */
 STATIC_LEAF(bcemul_delay_slot)
 	REG_PROLOGUE
-	REG_S	zero, FRAME_RZERO(a1)		# ensure zero has value 0
+	REG_S	zero, TF_REG_ZERO(a1)		# ensure zero has value 0
 	REG_EPILOGUE
 
 	srl	t0, a0, 26-PTR_SCALESHIFT
@@ -4578,7 +4578,7 @@ bcemul_addi:
 	sll	t2, a0, 16
 	sra	t2, t2, 16
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v0, TF_REG_ZERO(t0)
 	REG_EPILOGUE
 	addu	t0, v0, t2
 
@@ -4595,7 +4595,7 @@ bcemul_addi:
 
 addiok:
 	REG_PROLOGUE
-	REG_S	t0, FRAME_RZERO(t1)
+	REG_S	t0, TF_REG_ZERO(t1)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4609,9 +4609,9 @@ bcemul_addiu:
 	sll	t2, a0, 16
 	sra	t2, t2, 16
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v0, TF_REG_ZERO(t0)
 	addu	v0, v0, t2
-	REG_S	v0, FRAME_RZERO(t1)
+	REG_S	v0, TF_REG_ZERO(t1)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4625,9 +4625,9 @@ bcemul_slti:
 	sll	t2, a0, 16
 	sra	t2, t2, 16
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v0, TF_REG_ZERO(t0)
 	slt	v0, v0, t2
-	REG_S	v0, FRAME_RZERO(t1)
+	REG_S	v0, TF_REG_ZERO(t1)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4641,9 +4641,9 @@ bcemul_sltiu:
 	sll	t2, a0, 16
 	sra	t2, t2, 16
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v0, TF_REG_ZERO(t0)
 	sltu	v0, v0, t2
-	REG_S	v0, FRAME_RZERO(t1)
+	REG_S	v0, TF_REG_ZERO(t1)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4656,9 +4656,9 @@ bcemul_andi:
 	PTR_ADDU t1, a1, t1
 	andi	t2, a0, 0xFFFF
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v0, TF_REG_ZERO(t0)
 	and	v0, v0, t2
-	REG_S	v0, FRAME_RZERO(t1)
+	REG_S	v0, TF_REG_ZERO(t1)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4671,9 +4671,9 @@ bcemul_ori:
 	PTR_ADDU t1, a1, t1
 	andi	t2, a0, 0xFFFF
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v0, TF_REG_ZERO(t0)
 	or	v0, v0, t2
-	REG_S	v0, FRAME_RZERO(t1)
+	REG_S	v0, TF_REG_ZERO(t1)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4686,9 +4686,9 @@ bcemul_xori:
 	PTR_ADDU t1, a1, t1
 	andi	t2, a0, 0xFFFF
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v0, TF_REG_ZERO(t0)
 	xor	v0, v0, t2
-	REG_S	v0, FRAME_RZERO(t1)
+	REG_S	v0, TF_REG_ZERO(t1)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4698,7 +4698,7 @@ bcemul_lui:
 	PTR_ADDU t0, a1, t0
 	sll	v0, a0, 16
 	REG_PROLOGUE
-	REG_S	v0, FRAME_RZERO(t0)
+	REG_S	v0, TF_REG_ZERO(t0)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4712,9 +4712,9 @@ bcemul_sll:
 	PTR_ADDU t0, a1, t0
 	PTR_ADDU t1, a1, t1
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v0, TF_REG_ZERO(t0)
 	sllv	v0, v0, t2
-	REG_S	v0, FRAME_RZERO(t1)
+	REG_S	v0, TF_REG_ZERO(t1)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4728,9 +4728,9 @@ bcemul_srl:
 	PTR_ADDU t0, a1, t0
 	PTR_ADDU t1, a1, t1
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v0, TF_REG_ZERO(t0)
 	srlv	v0, v0, t2
-	REG_S	v0, FRAME_RZERO(t1)
+	REG_S	v0, TF_REG_ZERO(t1)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4744,9 +4744,9 @@ bcemul_sra:
 	PTR_ADDU t0, a1, t0
 	PTR_ADDU t1, a1, t1
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
+	REG_L	v0, TF_REG_ZERO(t0)
 	srav	v0, v0, t2
-	REG_S	v0, FRAME_RZERO(t1)
+	REG_S	v0, TF_REG_ZERO(t1)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4761,10 +4761,10 @@ bcemul_sllv:
 	PTR_ADDU t1, a1, t1
 	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
-	REG_L	v1, FRAME_RZERO(t1)
+	REG_L	v0, TF_REG_ZERO(t0)
+	REG_L	v1, TF_REG_ZERO(t1)
 	sllv	v0, v1, v0
-	REG_S	v0, FRAME_RZERO(t2)
+	REG_S	v0, TF_REG_ZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4779,10 +4779,10 @@ bcemul_srlv:
 	PTR_ADDU t1, a1, t1
 	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
-	REG_L	v1, FRAME_RZERO(t1)
+	REG_L	v0, TF_REG_ZERO(t0)
+	REG_L	v1, TF_REG_ZERO(t1)
 	srlv	v0, v1, v0
-	REG_S	v0, FRAME_RZERO(t2)
+	REG_S	v0, TF_REG_ZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4797,10 +4797,10 @@ bcemul_srav:
 	PTR_ADDU t1, a1, t1
 	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
-	REG_L	v1, FRAME_RZERO(t1)
+	REG_L	v0, TF_REG_ZERO(t0)
+	REG_L	v1, TF_REG_ZERO(t1)
 	srav	v0, v1, v0
-	REG_S	v0, FRAME_RZERO(t2)
+	REG_S	v0, TF_REG_ZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4812,8 +4812,8 @@ bcemul_mfhi:
 	andi	t0, t0, REG_REGMASK
 	PTR_ADDU t0, a1, t0
 	REG_PROLOGUE
-	REG_L	v0, FRAME_MULHI(a1)
-	REG_S	v0, FRAME_RZERO(t0)
+	REG_L	v0, TF_REG_MULHI(a1)
+	REG_S	v0, TF_REG_ZERO(t0)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4822,8 +4822,8 @@ bcemul_mthi:
 	andi	t0, t0, REG_REGMASK
 	PTR_ADDU t0, a1, t0
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
-	REG_S	v0, FRAME_MULHI(a1)
+	REG_L	v0, TF_REG_ZERO(t0)
+	REG_S	v0, TF_REG_MULHI(a1)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4832,8 +4832,8 @@ bcemul_mflo:
 	andi	t0, t0, REG_REGMASK
 	PTR_ADDU t0, a1, t0
 	REG_PROLOGUE
-	REG_L	v0, FRAME_MULLO(a1)
-	REG_S	v0, FRAME_RZERO(t0)
+	REG_L	v0, TF_REG_MULLO(a1)
+	REG_S	v0, TF_REG_ZERO(t0)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4842,8 +4842,8 @@ bcemul_mtlo:
 	andi	t0, t0, REG_REGMASK
 	PTR_ADDU t0, a1, t0
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
-	REG_S	v0, FRAME_MULLO(a1)
+	REG_L	v0, TF_REG_ZERO(t0)
+	REG_S	v0, TF_REG_MULLO(a1)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4855,15 +4855,15 @@ bcemul_mult:
 	PTR_ADDU t0, a1, t0
 	PTR_ADDU t1, a1, t1
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
-	REG_L	v1, FRAME_RZERO(t1)
+	REG_L	v0, TF_REG_ZERO(t0)
+	REG_L	v1, TF_REG_ZERO(t1)
 	REG_EPILOGUE
 	mult	v0, v1
 	mflo	v0
 	mfhi	v1
 	REG_PROLOGUE
-	REG_S	v0, FRAME_MULLO(a1)
-	REG_S	v1, FRAME_MULHI(a1)
+	REG_S	v0, TF_REG_MULLO(a1)
+	REG_S	v1, TF_REG_MULHI(a1)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4875,15 +4875,15 @@ bcemul_multu:
 	PTR_ADDU t0, a1, t0
 	PTR_ADDU t1, a1, t1
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
-	REG_L	v1, FRAME_RZERO(t1)
+	REG_L	v0, TF_REG_ZERO(t0)
+	REG_L	v1, TF_REG_ZERO(t1)
 	REG_EPILOGUE
 	multu	v0, v1
 	mflo	v0
 	mfhi	v1
 	REG_PROLOGUE
-	REG_S	v0, FRAME_MULLO(a1)
-	REG_S	v1, FRAME_MULHI(a1)
+	REG_S	v0, TF_REG_MULLO(a1)
+	REG_S	v1, TF_REG_MULHI(a1)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4895,15 +4895,15 @@ bcemul_div:
 	PTR_ADDU t0, a1, t0
 	PTR_ADDU t1, a1, t1
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
-	REG_L	v1, FRAME_RZERO(t1)
+	REG_L	v0, TF_REG_ZERO(t0)
+	REG_L	v1, TF_REG_ZERO(t1)
 	REG_EPILOGUE
 	div	v0, v1
 	mflo	v0
 	mfhi	v1
 	REG_PROLOGUE
-	REG_S	v0, FRAME_MULLO(a1)
-	REG_S	v1, FRAME_MULHI(a1)
+	REG_S	v0, TF_REG_MULLO(a1)
+	REG_S	v1, TF_REG_MULHI(a1)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4915,15 +4915,15 @@ bcemul_divu:
 	PTR_ADDU t0, a1, t0
 	PTR_ADDU t1, a1, t1
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
-	REG_L	v1, FRAME_RZERO(t1)
+	REG_L	v0, TF_REG_ZERO(t0)
+	REG_L	v1, TF_REG_ZERO(t1)
 	REG_EPILOGUE
 	divu	v0, v1
 	mflo	v0
 	mfhi	v1
 	REG_PROLOGUE
-	REG_S	v0, FRAME_MULLO(a1)
-	REG_S	v1, FRAME_MULHI(a1)
+	REG_S	v0, TF_REG_MULLO(a1)
+	REG_S	v1, TF_REG_MULHI(a1)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4938,8 +4938,8 @@ bcemul_add:
 	PTR_ADDU t1, a1, t1
 	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
-	REG_L	v1, FRAME_RZERO(t1)
+	REG_L	v0, TF_REG_ZERO(t0)
+	REG_L	v1, TF_REG_ZERO(t1)
 	REG_EPILOGUE
 	addu	t0, v0, v1
 
@@ -4956,7 +4956,7 @@ bcemul_add:
 
 addok:
 	REG_PROLOGUE
-	REG_S	t0, FRAME_RZERO(t2)
+	REG_S	t0, TF_REG_ZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4971,10 +4971,10 @@ bcemul_addu:
 	PTR_ADDU t1, a1, t1
 	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
-	REG_L	v1, FRAME_RZERO(t1)
+	REG_L	v0, TF_REG_ZERO(t0)
+	REG_L	v1, TF_REG_ZERO(t1)
 	addu	v0, v0, v1
-	REG_S	v0, FRAME_RZERO(t2)
+	REG_S	v0, TF_REG_ZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -4989,8 +4989,8 @@ bcemul_sub:
 	PTR_ADDU t1, a1, t1
 	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
-	REG_L	v1, FRAME_RZERO(t1)
+	REG_L	v0, TF_REG_ZERO(t0)
+	REG_L	v1, TF_REG_ZERO(t1)
 	REG_EPILOGUE
 	subu	t0, v0, v1
 
@@ -5007,7 +5007,7 @@ bcemul_sub:
 
 subok:
 	REG_PROLOGUE
-	REG_S	t0, FRAME_RZERO(t2)
+	REG_S	t0, TF_REG_ZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -5022,10 +5022,10 @@ bcemul_subu:
 	PTR_ADDU t1, a1, t1
 	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
-	REG_L	v1, FRAME_RZERO(t1)
+	REG_L	v0, TF_REG_ZERO(t0)
+	REG_L	v1, TF_REG_ZERO(t1)
 	subu	v0, v0, v1
-	REG_S	v0, FRAME_RZERO(t2)
+	REG_S	v0, TF_REG_ZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -5040,10 +5040,10 @@ bcemul_and:
 	PTR_ADDU t1, a1, t1
 	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
-	REG_L	v1, FRAME_RZERO(t1)
+	REG_L	v0, TF_REG_ZERO(t0)
+	REG_L	v1, TF_REG_ZERO(t1)
 	and	v0, v0, v1
-	REG_S	v0, FRAME_RZERO(t2)
+	REG_S	v0, TF_REG_ZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -5058,10 +5058,10 @@ bcemul_or:
 	PTR_ADDU t1, a1, t1
 	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
-	REG_L	v1, FRAME_RZERO(t1)
+	REG_L	v0, TF_REG_ZERO(t0)
+	REG_L	v1, TF_REG_ZERO(t1)
 	or	v0, v0, v1
-	REG_S	v0, FRAME_RZERO(t2)
+	REG_S	v0, TF_REG_ZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -5076,10 +5076,10 @@ bcemul_xor:
 	PTR_ADDU t1, a1, t1
 	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
-	REG_L	v1, FRAME_RZERO(t1)
+	REG_L	v0, TF_REG_ZERO(t0)
+	REG_L	v1, TF_REG_ZERO(t1)
 	xor	v0, v0, v1
-	REG_S	v0, FRAME_RZERO(t2)
+	REG_S	v0, TF_REG_ZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -5094,10 +5094,10 @@ bcemul_nor:
 	PTR_ADDU t1, a1, t1
 	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
-	REG_L	v1, FRAME_RZERO(t1)
+	REG_L	v0, TF_REG_ZERO(t0)
+	REG_L	v1, TF_REG_ZERO(t1)
 	nor	v0, v0, v1
-	REG_S	v0, FRAME_RZERO(t2)
+	REG_S	v0, TF_REG_ZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -5112,10 +5112,10 @@ bcemul_slt:
 	PTR_ADDU t1, a1, t1
 	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
-	REG_L	v1, FRAME_RZERO(t1)
+	REG_L	v0, TF_REG_ZERO(t0)
+	REG_L	v1, TF_REG_ZERO(t1)
 	slt	v0, v0, v1
-	REG_S	v0, FRAME_RZERO(t2)
+	REG_S	v0, TF_REG_ZERO(t2)
 	REG_EPILOGUE
 	b	bcemul_done
 
@@ -5130,10 +5130,10 @@ bcemul_sltu:
 	PTR_ADDU t1, a1, t1
 	PTR_ADDU t2, a1, t2
 	REG_PROLOGUE
-	REG_L	v0, FRAME_RZERO(t0)
-	REG_L	v1, FRAME_RZERO(t1)
+	REG_L	v0, TF_REG_ZERO(t0)
+	REG_L	v1, TF_REG_ZERO(t1)
 	sltu	v0, v0, v1
-	REG_S	v0, FRAME_RZERO(t2)
+	REG_S	v0, TF_REG_ZERO(t2)
 	REG_EPILOGUE
 #	b	bcemul_done		# fall through to bcemul_done
 
@@ -5148,7 +5148,7 @@ bcemul_done:
 
 	/* Fetch previous branch instruction */
 	REG_PROLOGUE
-	REG_L	a0, FRAME_EPC(a1)
+	REG_L	a0, TF_REG_EPC(a1)
 	REG_EPILOGUE
 	jal	_C_LABEL(fuiword)
 
@@ -5158,10 +5158,10 @@ bcemul_done:
 	sll	t0, v0, 16
 	sra	t0, t0, 16-2
 	REG_PROLOGUE
-	REG_L	t1, FRAME_EPC(a1)
+	REG_L	t1, TF_REG_EPC(a1)
 	PTR_ADDU t0, t0, 4
 	PTR_ADDU t1, t0
-	REG_S	t1, FRAME_EPC(a1)
+	REG_S	t1, TF_REG_EPC(a1)
 	REG_EPILOGUE
 
 	REG_L	ra, CALLFRAME_RA(sp)
@@ -5184,7 +5184,7 @@ STATIC_XLEAF(bcemul_sigill)
 	and	a2, a2, t0
 	ori	a2, a2, T_RES_INST << MIPS_CR_EXC_CODE_SHIFT
 	REG_PROLOGUE
-	REG_S	a2, FRAME_CAUSE(a1)
+	REG_S	a2, TF_REG_CAUSE(a1)
 	REG_EPILOGUE
 
 	move	a2, a0				# code = instruction
@@ -5198,7 +5198,7 @@ STATIC_LEAF(fpemul_sigfpe)
 	and	a2, a2, t0
 	ori	a2, a2, T_FPE << MIPS_CR_EXC_CODE_SHIFT
 	REG_PROLOGUE
-	REG_S	a2, FRAME_CAUSE(a1)
+	REG_S	a2, TF_REG_CAUSE(a1)
 	REG_EPILOGUE
 
 	move	a2, a0				# code = instruction
@@ -5213,7 +5213,7 @@ STATIC_LEAF(bcemul_sigfpe)
 	and	a2, a2, t0
 	ori	a2, a2, T_OVFLOW << MIPS_CR_EXC_CODE_SHIFT
 	REG_PROLOGUE
-	REG_S	a2, FRAME_CAUSE(a1)
+	REG_S	a2, TF_REG_CAUSE(a1)
 	REG_EPILOGUE
 
 	move	a2, a0				# code = instruction

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.21.36.4 2009/12/30 04:51:26 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.21.36.5 2010/02/01 04:16:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,10 +44,10 @@ struct lwp;
 /*
  * Machine-dependent part of the lwp structure for MIPS
  */
-struct frame;
+struct trapframe;
 
 struct mdlwp {
-	struct frame *md_regs;		/* registers on current frame */
+	struct trapframe *md_utf;	/* trapframe from userspace */
 	int	md_flags;		/* machine-dependent flags */
 	int	md_upte[UPAGES];	/* ptes for mapping u page */
 	vaddr_t	md_ss_addr;		/* single step address for ptrace */
@@ -63,15 +63,6 @@ struct mdproc {
 
 /* md_flags */
 #define	MDP_FPUSED	0x0001	/* floating point coprocessor used */
-
-/*
- * MIPS trapframe
- */
-struct frame {
-	mips_reg_t f_regs[38];
-	u_int32_t f_ppl;	/* previous priority level */
-	mips_reg_t f_pad;	/* for quadword alignment */
-};
 
 #ifdef _KERNEL
 /* kernel single-step emulation */
