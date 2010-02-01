@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.138 2010/01/31 17:13:38 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.139 2010/02/01 05:48:19 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.138 2010/01/31 17:13:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.139 2010/02/01 05:48:19 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -780,7 +780,7 @@ uvm_fault_upper_lookup_done:
 			amap, uobj, anons_store, anons, &anon_spare,
 			pages, uobjpage);
 
-	if (error == -ERESTART)
+	if (error == ERESTART)
 		goto ReFault;
 
 done:
@@ -1144,7 +1144,7 @@ uvm_fault_lower_special(
 		/* locked: nothing, pgo_fault has unlocked everything */
 
 		if (error == ERESTART)
-			error = -ERESTART;		/* try again! */
+			error = ERESTART;		/* try again! */
 		/*
 		 * object fault routine responsible for pmap_update().
 		 */
@@ -1399,11 +1399,11 @@ uvm_fault_upper(
 		break;
 
 	case ERESTART:
-		return -ERESTART;
+		return ERESTART;
 
 	case EAGAIN:
 		kpause("fltagain1", false, hz/2, NULL);
-		return -ERESTART;
+		return ERESTART;
 
 	default:
 		return error;
@@ -1459,7 +1459,7 @@ uvm_fault_upper(
 					uvmfault_unlockall(ufi, amap, uobj,
 					    anon);
 					uvm_wait("flt_noram2");
-					return -ERESTART;
+					return ERESTART;
 				}
 
 				/*
@@ -1535,7 +1535,7 @@ uvm_fault_upper(
 		case 0:
 			break;
 		case ERESTART:
-			return -ERESTART;
+			return ERESTART;
 		default:
 			return error;
 		}
@@ -1601,7 +1601,7 @@ uvm_fault_upper(
 		}
 		/* XXX instrumentation */
 		uvm_wait("flt_pmfail1");
-		return -ERESTART;
+		return ERESTART;
 	}
 
 	/*
@@ -1634,8 +1634,7 @@ uvm_fault_upper(
 		mutex_exit(&anon->an_lock);
 	uvmfault_unlockall(ufi, amap, uobj, oanon);
 	pmap_update(ufi->orig_map->pmap);
-	error = 0;
-	return error;
+	return 0;
 }
 
 static int
@@ -1723,8 +1722,16 @@ uvm_fault_lower_generic2(
 				UVMHIST_LOG(maphist,
 				    "  pgo_get says TRY AGAIN!",0,0,0,0);
 				kpause("fltagain2", false, hz/2, NULL);
-				return -ERESTART;
+				return ERESTART;
 			}
+
+#if 0
+			KASSERT(error != ERESTART);
+#else
+			/* XXXUEBS don't re-fault? */
+			if (error == ERESTART)
+				error = EIO;
+#endif
 
 			UVMHIST_LOG(maphist, "<- pgo_get failed (code %d)",
 			    error, 0,0,0);
@@ -1779,12 +1786,12 @@ uvm_fault_lower_generic2(
 			if (uobjpage->flags & PG_RELEASED) {
 				uvmexp.fltpgrele++;
 				uvm_pagefree(uobjpage);
-				return -ERESTART;
+				return ERESTART;
 			}
 			uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
 			UVM_PAGE_OWN(uobjpage, NULL);
 			mutex_exit(&uobj->vmobjlock);
-			return -ERESTART;
+			return ERESTART;
 		}
 
 		/*
@@ -1871,7 +1878,7 @@ uvm_fault_lower_generic2(
 					  0,0,0,0);
 					uvmexp.fltnoram++;
 					uvm_wait("flt_noram4");
-					return -ERESTART;
+					return ERESTART;
 				}
 				uobjpage = pg;
 			}
@@ -1892,7 +1899,7 @@ uvm_fault_lower_generic2(
 		case 0:
 			break;
 		case ERESTART:
-			return -ERESTART;
+			return ERESTART;
 		default:
 			return error;
 		}
@@ -2005,7 +2012,7 @@ uvm_fault_lower_generic2(
 		}
 		/* XXX instrumentation */
 		uvm_wait("flt_pmfail2");
-		return -ERESTART;
+		return ERESTART;
 	}
 
 	mutex_enter(&uvm_pageqlock);
@@ -2042,8 +2049,7 @@ uvm_fault_lower_generic2(
 	uvmfault_unlockall(ufi, amap, uobj, anon);
 	pmap_update(ufi->orig_map->pmap);
 	UVMHIST_LOG(maphist, "<- done (SUCCESS!)",0,0,0,0);
-	error = 0;
-	return error;
+	return 0;
 }
 
 
