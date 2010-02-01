@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.69 2010/01/27 21:09:49 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.70 2010/02/01 21:47:34 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1025,4 +1025,9 @@ xsrc/xfree/xc/extras/expat/lib/xmlparse.c		1.2
 	Add patch from upstream CVS to fix CVE-2009-3560 (possible DOS due to
 	crash on bad input).
 	[tron, ticket #1383]
+
+crypto/dist/openssl/crypto/comp/c_zlib.c		patch
+
+	Fix to deal with CVE-2009-4355 from OpenSSL's repositroy.
+	[taca, ticket #1378]
 
