@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.44 2007/12/03 15:34:09 ad Exp $ */
+/* $NetBSD: dec_3100.c,v 1.44.36.1 2010/02/01 06:09:21 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.44 2007/12/03 15:34:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.44.36.1 2010/02/01 06:09:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ dec_3100_init()
 	/* calibrate cpu_mhz value */
 	mc_cpuspeed(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK), MIPS_INT_MASK_3);
 
-	if (cpu_mhz < 15)
+	if (mips_options.mips_cpu_mhz < 15)
 		submodel = "2100 (PMIN)";
 	else
 		submodel = "3100 (PMAX)";

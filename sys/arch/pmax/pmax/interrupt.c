@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.15 2008/04/28 20:23:31 martin Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.15.18.1 2010/02/01 06:09:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.15 2008/04/28 20:23:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.15.18.1 2010/02/01 06:09:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,7 +52,7 @@ struct evcnt pmax_fpu_evcnt =
 struct evcnt pmax_memerr_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "memerr", "intr");
 
-extern void MachFPInterrupt(unsigned, unsigned, unsigned, struct frame *);
+void MachFPInterrupt(unsigned, unsigned, unsigned, struct trapframe *);
 
 static const char * const intrnames[] = {
 	"serial0",
@@ -94,15 +94,15 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 			MIPS_INT_MASK_3|MIPS_INT_MASK_4)) {
 		(*platform.iointr)(status, cause, pc, ipending);
 	}
+#if !defined(NOFPU)
 	/* FPU notification */
 	if (ipending & MIPS_INT_MASK_5) {
 		if (!USERMODE(status))
 			goto kerneltouchedFPU;
 		pmax_fpu_evcnt.ev_count++;
-#if !defined(SOFTFLOAT)
-		MachFPInterrupt(status, cause, pc, curlwp->l_md.md_regs);
-#endif
+		MachFPInterrupt(status, cause, pc, curlwp->l_md.md_utf);
 	}
+#endif
 
 	ci->ci_idepth--;
 
