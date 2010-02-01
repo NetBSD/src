@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.246 2010/01/10 15:07:53 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.247 2010/02/01 02:42:33 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.246 2010/01/10 15:07:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.247 2010/02/01 02:42:33 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -311,27 +311,27 @@ struct {
 #define	ENTER_STAT(x)	enter_stats.x ++
 #define	REMOVE_STAT(x)	remove_stats.x ++
 
-#define	PDB_CREATE	0x0001
-#define	PDB_DESTROY	0x0002
-#define	PDB_REMOVE	0x0004
-#define	PDB_CHANGEPROT	0x0008
-#define	PDB_ENTER	0x0010
-#define PDB_DEMAP	0x0020
-#define	PDB_REF		0x0040
-#define PDB_COPY	0x0080
-
-#define	PDB_MMU_ALLOC	0x0100
-#define	PDB_MMU_STEAL	0x0200
-#define	PDB_CTX_ALLOC	0x0400
-#define	PDB_CTX_STEAL	0x0800
-#define	PDB_MMUREG_ALLOC	0x1000
-#define	PDB_MMUREG_STEAL	0x2000
-#define	PDB_CACHESTUFF	0x4000
-#define	PDB_ALIAS	0x8000
-#define PDB_EXTRACT	0x10000
-#define	PDB_BOOT	0x20000
-#define	PDB_BOOT1	0x40000
-#define	PDB_GROW	0x80000
+#define	PDB_CREATE		0x000001
+#define	PDB_DESTROY		0x000002
+#define	PDB_REMOVE		0x000004
+#define	PDB_CHANGEPROT		0x000008
+#define	PDB_ENTER		0x000010
+#define PDB_DEMAP		0x000020
+#define	PDB_REF			0x000040
+#define PDB_COPY		0x000080
+#define	PDB_MMU_ALLOC		0x000100
+#define	PDB_MMU_STEAL		0x000200
+#define	PDB_CTX_ALLOC		0x000400
+#define	PDB_CTX_STEAL		0x000800
+#define	PDB_MMUREG_ALLOC	0x001000
+#define	PDB_MMUREG_STEAL	0x002000
+#define	PDB_CACHESTUFF		0x004000
+#define	PDB_ALIAS		0x008000
+#define PDB_EXTRACT		0x010000
+#define	PDB_BOOT		0x020000
+#define	PDB_BOOT1		0x040000
+#define	PDB_GROW		0x080000
+#define	PDB_CTX_FLUSHALL	0x100000
 int	pmapdebug = 0;
 /* Number of H/W pages stolen for page tables */
 int	pmap_pages_stolen = 0;
@@ -3045,7 +3045,7 @@ ctx_alloc(struct pmap *pm)
 	 */
 
 	if (ctx == curcpu()->ci_numctx) {
-		DPRINTF(PDB_CTX_ALLOC,
+		DPRINTF(PDB_CTX_ALLOC|PDB_CTX_FLUSHALL,
 			("ctx_alloc: cpu%d run out of contexts %d\n",
 			 cpu_number(), curcpu()->ci_numctx));
 		write_user_windows();
@@ -3080,7 +3080,8 @@ ctx_alloc(struct pmap *pm)
 	);
 	pmap_ctx(pm) = ctx;
 	mutex_exit(&pmap_lock);
-	DPRINTF(PDB_CTX_ALLOC, ("ctx_alloc: allocated ctx %d\n", ctx));
+	DPRINTF(PDB_CTX_ALLOC, ("ctx_alloc: cpu%d allocated ctx %d\n",
+		cpu_number(), ctx));
 	return ctx;
 }
 
@@ -3112,7 +3113,8 @@ ctx_free(struct pmap *pm, struct cpu_info *ci)
 	}
 #endif
 	/* We should verify it has not been stolen and reallocated... */
-	DPRINTF(PDB_CTX_ALLOC, ("ctx_free: freeing ctx %d\n", oldctx));
+	DPRINTF(PDB_CTX_ALLOC, ("ctx_free: cpu%d freeing ctx %d\n",
+		cpu_number(), oldctx));
 	ci->ci_ctxbusy[oldctx] = 0UL;
 	pm->pm_ctx[ci->ci_index] = 0;
 	LIST_REMOVE(pm, pm_list[ci->ci_index]);
@@ -3141,7 +3143,8 @@ ctx_free(struct pmap *pm)
 	}
 #endif
 	/* We should verify it has not been stolen and reallocated... */
-	DPRINTF(PDB_CTX_ALLOC, ("ctx_free: freeing ctx %d\n", oldctx));
+	DPRINTF(PDB_CTX_ALLOC, ("ctx_free: cpu%d freeing ctx %d\n",
+		cpu_number(), oldctx));
 	curcpu()->ci_ctxbusy[oldctx] = 0UL;
 	pmap_ctx(pm) = 0;
 	LIST_REMOVE(pm, pm_list);
