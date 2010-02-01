@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.145 2010/02/01 09:18:41 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.146 2010/02/01 10:22:40 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.145 2010/02/01 09:18:41 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.146 2010/02/01 10:22:40 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -695,9 +695,9 @@ done:
 struct uvm_faultctx {
 	vm_prot_t access_type;
 	vm_prot_t enter_prot;
-	bool wired;
+	bool wire_mapping;
 	bool narrow;
-	bool wire_fault;
+	bool wire_paging;
 	bool maxprot;
 	bool cow_now;
 	int npages;
@@ -731,7 +731,14 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 	struct uvm_faultinfo ufi;
 	struct uvm_faultctx flt = {
 		.access_type = access_type,
-		.wire_fault = (fault_flag & UVM_FAULT_WIRE) != 0,
+
+		/* don't look for neighborhood * pages on "wire" fault */
+		.narrow = (fault_flag & UVM_FAULT_WIRE) != 0,
+
+		/* "wire" fault causes wiring of both mapping and paging */
+		.wire_mapping = (fault_flag & UVM_FAULT_WIRE) != 0,
+		.wire_paging = (fault_flag & UVM_FAULT_WIRE) != 0,
+
 		.maxprot = (fault_flag & UVM_FAULT_MAXPROT) != 0,
 	};
 	struct vm_anon *anons_store[UVM_MAXRANGE], **anons;
@@ -751,11 +758,6 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 	ufi.orig_map = orig_map;
 	ufi.orig_rvaddr = trunc_page(vaddr);
 	ufi.orig_size = PAGE_SIZE;	/* can't get any smaller than this */
-	if (flt.wire_fault)
-		flt.narrow = true;	/* don't look for neighborhood
-					 * pages on wire */
-	else
-		flt.narrow = false;	/* normal fault */
 
 	error = ERESTART;
 	while (error == ERESTART) {
@@ -835,8 +837,10 @@ uvm_fault_check(
 	 */
 
 	flt->enter_prot = ufi->entry->protection;
-	flt->wired = VM_MAPENT_ISWIRED(ufi->entry) || flt->wire_fault;
-	if (flt->wired) {
+	if (VM_MAPENT_ISWIRED(ufi->entry))
+		flt->wire_mapping = true;
+
+	if (flt->wire_mapping) {
 		flt->access_type = flt->enter_prot; /* full access for wired */
 		flt->cow_now = (check_prot & VM_PROT_WRITE) != 0;
 	} else {
@@ -1252,7 +1256,7 @@ uvm_fault_lower_generic_lookup(
 		    VM_PAGE_TO_PHYS(curpg),
 		    readonly ?  flt->enter_prot & ~VM_PROT_WRITE :
 		    flt->enter_prot & MASK(ufi->entry),
-		    PMAP_CANFAIL | (flt->wired ? PMAP_WIRED : 0));
+		    PMAP_CANFAIL | (flt->wire_mapping ? PMAP_WIRED : 0));
 
 		/*
 		 * NOTE: page can't be PG_WANTED or PG_RELEASED because we've
@@ -1528,7 +1532,7 @@ uvm_fault_upper(
 	UVMHIST_LOG(maphist, "  MAPPING: anon: pm=0x%x, va=0x%x, pg=0x%x",
 	    ufi->orig_map->pmap, ufi->orig_rvaddr, pg, 0);
 	if (pmap_enter(ufi->orig_map->pmap, ufi->orig_rvaddr, VM_PAGE_TO_PHYS(pg),
-	    flt->enter_prot, flt->access_type | PMAP_CANFAIL | (flt->wired ? PMAP_WIRED : 0))
+	    flt->enter_prot, flt->access_type | PMAP_CANFAIL | (flt->wire_mapping ? PMAP_WIRED : 0))
 	    != 0) {
 
 		/*
@@ -1559,7 +1563,7 @@ uvm_fault_upper(
 	 */
 
 	mutex_enter(&uvm_pageqlock);
-	if (flt->wire_fault) {
+	if (flt->wire_paging) {
 		uvm_pagewire(pg);
 
 		/*
@@ -1929,7 +1933,7 @@ uvm_fault_lower_generic2(
 		(pg->flags & PG_RDONLY) == 0);
 	if (pmap_enter(ufi->orig_map->pmap, ufi->orig_rvaddr, VM_PAGE_TO_PHYS(pg),
 	    pg->flags & PG_RDONLY ? flt->enter_prot & ~VM_PROT_WRITE : flt->enter_prot,
-	    flt->access_type | PMAP_CANFAIL | (flt->wired ? PMAP_WIRED : 0)) != 0) {
+	    flt->access_type | PMAP_CANFAIL | (flt->wire_mapping ? PMAP_WIRED : 0)) != 0) {
 
 		/*
 		 * No need to undo what we did; we can simply think of
@@ -1964,7 +1968,7 @@ uvm_fault_lower_generic2(
 	}
 
 	mutex_enter(&uvm_pageqlock);
-	if (flt->wire_fault) {
+	if (flt->wire_paging) {
 		uvm_pagewire(pg);
 		if (pg->pqflags & PQ_AOBJ) {
 
