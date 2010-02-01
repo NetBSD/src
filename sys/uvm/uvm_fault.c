@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.139 2010/02/01 05:48:19 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.140 2010/02/01 06:56:22 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.139 2010/02/01 05:48:19 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.140 2010/02/01 06:56:22 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -692,14 +692,27 @@ done:
 #define UVM_FAULT_WIRE		(1 << 0)
 #define UVM_FAULT_MAXPROT	(1 << 1)
 
+struct uvm_faultctx {
+	vm_prot_t access_type;
+	vm_prot_t enter_prot;
+	bool wired;
+	bool narrow;
+	bool shadowed;
+	bool wire_fault;
+	bool maxprot;
+	bool cow_now;
+	int npages;
+	int centeridx;
+	vaddr_t startva;
+	struct vm_anon *anon_spare;
+};
+
 typedef int
 uvm_fault_subfunc_t(
-	struct uvm_faultinfo *ufi, vm_prot_t access_type, vm_prot_t enter_prot,
-	bool wired, bool narrow, bool shadowed, bool wire_fault, bool cow_now,
-	int npages, int centeridx, vaddr_t startva,
+	struct uvm_faultinfo *ufi,
+	struct uvm_faultctx *flt,
 	struct vm_amap *amap, struct uvm_object *uobj,
 	struct vm_anon **anons_store, struct vm_anon **anons,
-	struct vm_anon **ranon_spare,
 	struct vm_page **pages, struct vm_page *uobjpage);
 static uvm_fault_subfunc_t uvm_fault_lower;
 static uvm_fault_subfunc_t uvm_fault_lower_special;
@@ -709,12 +722,10 @@ static uvm_fault_subfunc_t uvm_fault_upper;
 static uvm_fault_subfunc_t uvm_fault_lower_generic2;
 static void
 uvm_fault_lower_generic_lookup(
-	struct uvm_faultinfo *ufi, vm_prot_t access_type, vm_prot_t enter_prot,
-	bool wired, bool narrow, bool shadowed, bool wire_fault, bool cow_now,
-	int npages, int centeridx, vaddr_t startva,
+	struct uvm_faultinfo *ufi,
+	struct uvm_faultctx *flt,
 	struct vm_amap *amap, struct uvm_object *uobj,
 	struct vm_anon **anons_store, struct vm_anon **anons,
-	struct vm_anon **ranon_spare,
 	struct vm_page **pages, struct vm_page **ruobjpage);
 
 int
@@ -722,21 +733,20 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
     vm_prot_t access_type, int fault_flag)
 {
 	struct uvm_faultinfo ufi;
-	vm_prot_t enter_prot;
-	bool wired, narrow, shadowed, wire_fault, cow_now;
-	int npages, centeridx, error;
-	vaddr_t startva;
 	struct vm_amap *amap;
 	struct uvm_object *uobj;
+	struct uvm_faultctx flt = {
+		.access_type = access_type,
+		.wire_fault = (fault_flag & UVM_FAULT_WIRE) != 0,
+		.maxprot = (fault_flag & UVM_FAULT_MAXPROT) != 0,
+	};
 	struct vm_anon *anons_store[UVM_MAXRANGE], **anons;
-	struct vm_anon *anon_spare;
 	struct vm_page *pages[UVM_MAXRANGE], *uobjpage = NULL;
+	int error;
 	UVMHIST_FUNC("uvm_fault"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "(map=0x%x, vaddr=0x%x, at=%d, ff=%d)",
 	      orig_map, vaddr, access_type, fault_flag);
-
-	anon_spare = NULL;
 
 	uvmexp.faults++;	/* XXX: locking? */
 
@@ -747,12 +757,11 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 	ufi.orig_map = orig_map;
 	ufi.orig_rvaddr = trunc_page(vaddr);
 	ufi.orig_size = PAGE_SIZE;	/* can't get any smaller than this */
-	wire_fault = (fault_flag & UVM_FAULT_WIRE) != 0;
-	if (wire_fault)
-		narrow = true;		/* don't look for neighborhood
+	if (flt.wire_fault)
+		flt.narrow = true;	/* don't look for neighborhood
 					 * pages on wire */
 	else
-		narrow = false;		/* normal fault */
+		flt.narrow = false;	/* normal fault */
 
 	/*
 	 * "goto ReFault" means restart the page fault from ground zero.
@@ -765,28 +774,24 @@ uvm_fault_prepare_done:
 	goto uvm_fault_upper_lookup;
 uvm_fault_upper_lookup_done:
 
-	if (shadowed == true)
+	if (flt.shadowed == true)
 		error = uvm_fault_upper(
-			&ufi, access_type, enter_prot,
-			wired, narrow, shadowed, wire_fault, cow_now,
-			npages, centeridx, startva,
-			amap, uobj, anons_store, anons, &anon_spare,
+			&ufi, &flt,
+			amap, uobj, anons_store, anons,
 			pages, uobjpage);
 	else
 		error = uvm_fault_lower(
-			&ufi, access_type, enter_prot,
-			wired, narrow, shadowed, wire_fault, cow_now,
-			npages, centeridx, startva,
-			amap, uobj, anons_store, anons, &anon_spare,
+			&ufi, &flt,
+			amap, uobj, anons_store, anons,
 			pages, uobjpage);
 
 	if (error == ERESTART)
 		goto ReFault;
 
 done:
-	if (anon_spare != NULL) {
-		anon_spare->an_ref--;
-		uvm_anfree(anon_spare);
+	if (flt.anon_spare != NULL) {
+		flt.anon_spare->an_ref--;
+		uvm_anfree(flt.anon_spare);
 	}
 	return error;
 
@@ -822,10 +827,10 @@ uvm_fault_prepare:
 
 	check_prot = (fault_flag & UVM_FAULT_MAXPROT) ?
 	    ufi.entry->max_protection : ufi.entry->protection;
-	if ((check_prot & access_type) != access_type) {
+	if ((check_prot & flt.access_type) != flt.access_type) {
 		UVMHIST_LOG(maphist,
 		    "<- protection failure (prot=0x%x, access=0x%x)",
-		    ufi.entry->protection, access_type, 0, 0);
+		    ufi.entry->protection, flt.access_type, 0, 0);
 		uvmfault_unlockmaps(&ufi, false);
 		error = EACCES;
 		goto done;
@@ -838,13 +843,13 @@ uvm_fault_prepare:
 	 * the entry is wired or we are fault-wiring the pg.
 	 */
 
-	enter_prot = ufi.entry->protection;
-	wired = VM_MAPENT_ISWIRED(ufi.entry) || wire_fault;
-	if (wired) {
-		access_type = enter_prot; /* full access for wired */
-		cow_now = (check_prot & VM_PROT_WRITE) != 0;
+	flt.enter_prot = ufi.entry->protection;
+	flt.wired = VM_MAPENT_ISWIRED(ufi.entry) || flt.wire_fault;
+	if (flt.wired) {
+		flt.access_type = flt.enter_prot; /* full access for wired */
+		flt.cow_now = (check_prot & VM_PROT_WRITE) != 0;
 	} else {
-		cow_now = (access_type & VM_PROT_WRITE) != 0;
+		flt.cow_now = (flt.access_type & VM_PROT_WRITE) != 0;
 	}
 
 	/*
@@ -855,7 +860,7 @@ uvm_fault_prepare:
 	 */
 
 	if (UVM_ET_ISNEEDSCOPY(ufi.entry)) {
-		if (cow_now || (ufi.entry->object.uvm_obj == NULL)) {
+		if (flt.cow_now || (ufi.entry->object.uvm_obj == NULL)) {
 			KASSERT((fault_flag & UVM_FAULT_MAXPROT) == 0);
 			/* need to clear */
 			UVMHIST_LOG(maphist,
@@ -872,7 +877,7 @@ uvm_fault_prepare:
 			 * needs_copy is still true
 			 */
 
-			enter_prot &= ~VM_PROT_WRITE;
+			flt.enter_prot &= ~VM_PROT_WRITE;
 		}
 	}
 
@@ -902,14 +907,14 @@ uvm_fault_prepare:
 	 * ReFault we will disable this by setting "narrow" to true.
 	 */
 
-	if (narrow == false) {
+	if (flt.narrow == false) {
 
 		/* wide fault (!narrow) */
 		KASSERT(uvmadvice[ufi.entry->advice].advice ==
 			 ufi.entry->advice);
 		nback = MIN(uvmadvice[ufi.entry->advice].nback,
 			    (ufi.orig_rvaddr - ufi.entry->start) >> PAGE_SHIFT);
-		startva = ufi.orig_rvaddr - (nback << PAGE_SHIFT);
+		flt.startva = ufi.orig_rvaddr - (nback << PAGE_SHIFT);
 		nforw = MIN(uvmadvice[ufi.entry->advice].nforw,
 			    ((ufi.entry->end - ufi.orig_rvaddr) >>
 			     PAGE_SHIFT) - 1);
@@ -917,26 +922,26 @@ uvm_fault_prepare:
 		 * note: "-1" because we don't want to count the
 		 * faulting page as forw
 		 */
-		npages = nback + nforw + 1;
-		centeridx = nback;
+		flt.npages = nback + nforw + 1;
+		flt.centeridx = nback;
 
-		narrow = true;	/* ensure only once per-fault */
+		flt.narrow = true;	/* ensure only once per-fault */
 
 	} else {
 
 		/* narrow fault! */
 		nback = nforw = 0;
-		startva = ufi.orig_rvaddr;
-		npages = 1;
-		centeridx = 0;
+		flt.startva = ufi.orig_rvaddr;
+		flt.npages = 1;
+		flt.centeridx = 0;
 
 	}
 	/* offset from entry's start to pgs' start */
-	const voff_t eoff = startva - ufi.entry->start;
+	const voff_t eoff = flt.startva - ufi.entry->start;
 
 	/* locked: maps(read) */
 	UVMHIST_LOG(maphist, "  narrow=%d, back=%d, forw=%d, startva=0x%x",
-		    narrow, nback, nforw, startva);
+		    flt.narrow, nback, nforw, flt.startva);
 	UVMHIST_LOG(maphist, "  entry=0x%x, amap=0x%x, obj=0x%x", ufi.entry,
 		    amap, uobj, 0);
 
@@ -947,7 +952,7 @@ uvm_fault_prepare:
 	if (amap) {
 		amap_lock(amap);
 		anons = anons_store;
-		amap_lookups(&ufi.entry->aref, eoff, anons, npages);
+		amap_lookups(&ufi.entry->aref, eoff, anons, flt.npages);
 	} else {
 		anons = NULL;	/* to be safe */
 	}
@@ -981,9 +986,9 @@ uvm_fault_prepare:
 		/* now forget about the backpages */
 		if (amap)
 			anons += nback;
-		startva += (nback << PAGE_SHIFT);
-		npages -= nback;
-		centeridx = 0;
+		flt.startva += (nback << PAGE_SHIFT);
+		flt.npages -= nback;
+		flt.centeridx = 0;
 	}
     }
 	goto uvm_fault_prepare_done;
@@ -1007,16 +1012,16 @@ uvm_fault_upper_lookup:
 	 * we go.
 	 */
 
-	currva = startva;
-	shadowed = false;
-	for (lcv = 0 ; lcv < npages ; lcv++, currva += PAGE_SIZE) {
+	currva = flt.startva;
+	flt.shadowed = false;
+	for (lcv = 0 ; lcv < flt.npages ; lcv++, currva += PAGE_SIZE) {
 		struct vm_anon *anon;
 
 		/*
 		 * dont play with VAs that are already mapped
 		 * except for center)
 		 */
-		if (lcv != centeridx &&
+		if (lcv != flt.centeridx &&
 		    pmap_extract(ufi.orig_map->pmap, currva, NULL)) {
 			pages[lcv] = PGO_DONTCARE;
 			continue;
@@ -1035,8 +1040,8 @@ uvm_fault_upper_lookup:
 		 */
 
 		pages[lcv] = PGO_DONTCARE;
-		if (lcv == centeridx) {		/* save center for later! */
-			shadowed = true;
+		if (lcv == flt.centeridx) {		/* save center for later! */
+			flt.shadowed = true;
 			continue;
 		}
 		anon = anons[lcv];
@@ -1060,8 +1065,8 @@ uvm_fault_upper_lookup:
 
 			(void) pmap_enter(ufi.orig_map->pmap, currva,
 			    VM_PAGE_TO_PHYS(anon->an_page),
-			    (anon->an_ref > 1) ? (enter_prot & ~VM_PROT_WRITE) :
-			    enter_prot,
+			    (anon->an_ref > 1) ? (flt.enter_prot & ~VM_PROT_WRITE) :
+			    flt.enter_prot,
 			    PMAP_CANFAIL |
 			     (VM_MAPENT_ISWIRED(ufi.entry) ? PMAP_WIRED : 0));
 		}
@@ -1072,8 +1077,8 @@ uvm_fault_upper_lookup:
 	/* locked: maps(read), amap(if there) */
 	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
 	/* (shadowed == true) if there is an anon at the faulting address */
-	UVMHIST_LOG(maphist, "  shadowed=%d, will_get=%d", shadowed,
-	    (uobj && shadowed == false),0,0);
+	UVMHIST_LOG(maphist, "  shadowed=%d, will_get=%d", flt.shadowed,
+	    (uobj && flt.shadowed == false),0,0);
 
 	/*
 	 * note that if we are really short of RAM we could sleep in the above
@@ -1088,12 +1093,9 @@ uvm_fault_upper_lookup:
 
 static int
 uvm_fault_lower(
-	struct uvm_faultinfo *ufi, vm_prot_t access_type, vm_prot_t enter_prot,
-	bool wired, bool narrow, bool shadowed, bool wire_fault, bool cow_now,
-	int npages, int centeridx, vaddr_t startva,
+	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_amap *amap, struct uvm_object *uobj,
 	struct vm_anon **anons_store, struct vm_anon **anons,
-	struct vm_anon **ranon_spare,
 	struct vm_page **pages, struct vm_page *uobjpage)
 {
 	int error;
@@ -1108,17 +1110,13 @@ uvm_fault_lower(
 
 	if (uobj && uobj->pgops->pgo_fault != NULL) {
 		error = uvm_fault_lower_special(
-			ufi, access_type, enter_prot,
-			wired, narrow, shadowed, wire_fault, cow_now,
-			npages, centeridx, startva,
-			amap, uobj, anons_store, anons, ranon_spare,
+			ufi, flt,
+			amap, uobj, anons_store, anons,
 			pages, uobjpage);
 	} else {
 		error = uvm_fault_lower_generic(
-			ufi, access_type, enter_prot,
-			wired, narrow, shadowed, wire_fault, cow_now,
-			npages, centeridx, startva,
-			amap, uobj, anons_store, anons, ranon_spare,
+			ufi, flt,
+			amap, uobj, anons_store, anons,
 			pages, uobjpage);
 	}
 	return error;
@@ -1126,20 +1124,17 @@ uvm_fault_lower(
 
 static int
 uvm_fault_lower_special(
-	struct uvm_faultinfo *ufi, vm_prot_t access_type, vm_prot_t enter_prot,
-	bool wired, bool narrow, bool shadowed, bool wire_fault, bool cow_now,
-	int npages, int centeridx, vaddr_t startva,
+	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_amap *amap, struct uvm_object *uobj,
 	struct vm_anon **anons_store, struct vm_anon **anons,
-	struct vm_anon **ranon_spare,
 	struct vm_page **pages, struct vm_page *uobjpage)
 {
 	int error;
 
 		mutex_enter(&uobj->vmobjlock);
 		/* locked: maps(read), amap (if there), uobj */
-		error = uobj->pgops->pgo_fault(ufi, startva, pages, npages,
-		    centeridx, access_type, PGO_LOCKED|PGO_SYNCIO);
+		error = uobj->pgops->pgo_fault(ufi, flt->startva, pages, flt->npages,
+		    flt->centeridx, flt->access_type, PGO_LOCKED|PGO_SYNCIO);
 
 		/* locked: nothing, pgo_fault has unlocked everything */
 
@@ -1154,12 +1149,9 @@ uvm_fault_lower_special(
 
 static int
 uvm_fault_lower_generic(
-	struct uvm_faultinfo *ufi, vm_prot_t access_type, vm_prot_t enter_prot,
-	bool wired, bool narrow, bool shadowed, bool wire_fault, bool cow_now,
-	int npages, int centeridx, vaddr_t startva,
+	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_amap *amap, struct uvm_object *uobj,
 	struct vm_anon **anons_store, struct vm_anon **anons,
-	struct vm_anon **ranon_spare,
 	struct vm_page **pages, struct vm_page *uobjpage)
 {
 
@@ -1176,28 +1168,21 @@ uvm_fault_lower_generic(
 		uobjpage = NULL;
 	} else {
 		uvm_fault_lower_generic_lookup(
-			ufi, access_type, enter_prot,
-			wired, narrow, shadowed, wire_fault, cow_now,
-			npages, centeridx, startva,
-			amap, uobj, anons_store, anons, ranon_spare,
+			ufi, flt,
+			amap, uobj, anons_store, anons,
 			pages, &uobjpage);
 	}
 	return uvm_fault_lower_generic1(
-		ufi, access_type, enter_prot,
-		wired, narrow, shadowed, wire_fault, cow_now,
-		npages, centeridx, startva,
-		amap, uobj, anons_store, anons, ranon_spare,
+		ufi, flt,
+		amap, uobj, anons_store, anons,
 		pages, uobjpage);
 }
 
 static void
 uvm_fault_lower_generic_lookup(
-	struct uvm_faultinfo *ufi, vm_prot_t access_type, vm_prot_t enter_prot,
-	bool wired, bool narrow, bool shadowed, bool wire_fault, bool cow_now,
-	int npages, int centeridx, vaddr_t startva,
+	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_amap *amap, struct uvm_object *uobj,
 	struct vm_anon **anons_store, struct vm_anon **anons,
-	struct vm_anon **ranon_spare,
 	struct vm_page **pages, struct vm_page **ruobjpage)
 {
 	int lcv, gotpages;
@@ -1211,10 +1196,10 @@ uvm_fault_lower_generic_lookup(
 	 */
 
 	uvmexp.fltlget++;
-	gotpages = npages;
-	(void) uobj->pgops->pgo_get(uobj, ufi->entry->offset + startva - ufi->entry->start,
-			pages, &gotpages, centeridx,
-			access_type & MASK(ufi->entry),
+	gotpages = flt->npages;
+	(void) uobj->pgops->pgo_get(uobj, ufi->entry->offset + flt->startva - ufi->entry->start,
+			pages, &gotpages, flt->centeridx,
+			flt->access_type & MASK(ufi->entry),
 			ufi->entry->advice, PGO_LOCKED);
 
 	/*
@@ -1226,8 +1211,8 @@ uvm_fault_lower_generic_lookup(
 	if (gotpages == 0)
 		goto done;
 
-	currva = startva;
-	for (lcv = 0; lcv < npages;
+	currva = flt->startva;
+	for (lcv = 0; lcv < flt->npages;
 	     lcv++, currva += PAGE_SIZE) {
 		struct vm_page *curpg;
 		bool readonly;
@@ -1246,7 +1231,7 @@ uvm_fault_lower_generic_lookup(
 		 * page as "uobjpage." (for later use).
 		 */
 
-		if (lcv == centeridx) {
+		if (lcv == flt->centeridx) {
 			uobjpage = curpg;
 			UVMHIST_LOG(maphist, "  got uobjpage "
 			    "(0x%x) with locked get",
@@ -1286,10 +1271,10 @@ uvm_fault_lower_generic_lookup(
 		(void) pmap_enter(ufi->orig_map->pmap, currva,
 		    VM_PAGE_TO_PHYS(curpg),
 		    readonly ?
-		    enter_prot & ~VM_PROT_WRITE :
-		    enter_prot & MASK(ufi->entry),
+		    flt->enter_prot & ~VM_PROT_WRITE :
+		    flt->enter_prot & MASK(ufi->entry),
 		    PMAP_CANFAIL |
-		     (wired ? PMAP_WIRED : 0));
+		     (flt->wired ? PMAP_WIRED : 0));
 
 		/*
 		 * NOTE: page can't be PG_WANTED or PG_RELEASED
@@ -1309,17 +1294,14 @@ done:
 
 static int
 uvm_fault_lower_generic1(
-	struct uvm_faultinfo *ufi, vm_prot_t access_type, vm_prot_t enter_prot,
-	bool wired, bool narrow, bool shadowed, bool wire_fault, bool cow_now,
-	int npages, int centeridx, vaddr_t startva,
+	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_amap *amap, struct uvm_object *uobj,
 	struct vm_anon **anons_store, struct vm_anon **anons,
-	struct vm_anon **ranon_spare,
 	struct vm_page **pages, struct vm_page *uobjpage)
 {
 
 	/* locked: maps(read), amap(if there), uobj(if !null), uobjpage(if !null) */
-	KASSERT(!shadowed);
+	KASSERT(!flt->shadowed);
 	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
 	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
 	KASSERT(uobjpage == NULL || (uobjpage->flags & PG_BUSY) != 0);
@@ -1344,21 +1326,16 @@ uvm_fault_lower_generic1(
 	 */
 
 	return uvm_fault_lower_generic2(
-		ufi, access_type, enter_prot,
-		wired, narrow, shadowed, wire_fault, cow_now,
-		npages, centeridx, startva,
-		amap, uobj, anons_store, anons, ranon_spare,
+		ufi, flt,
+		amap, uobj, anons_store, anons,
 		pages, uobjpage);
 }
 
 static int
 uvm_fault_upper(
-	struct uvm_faultinfo *ufi, vm_prot_t access_type, vm_prot_t enter_prot,
-	bool wired, bool narrow, bool shadowed, bool wire_fault, bool cow_now,
-	int npages, int centeridx, vaddr_t startva,
+	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_amap *amap, struct uvm_object *uobj,
 	struct vm_anon **anons_store, struct vm_anon **anons,
-	struct vm_anon **ranon_spare,
 	struct vm_page **pages, struct vm_page *uobjpage)
 {
 	struct vm_anon *anon, *oanon;
@@ -1371,7 +1348,7 @@ uvm_fault_upper(
 	 * handle case 1: fault on an anon in our amap
 	 */
 
-	anon = anons[centeridx];
+	anon = anons[flt->centeridx];
 	UVMHIST_LOG(maphist, "  case 1 fault: anon=0x%x", anon, 0,0,0);
 	mutex_enter(&anon->an_lock);
 
@@ -1426,14 +1403,14 @@ uvm_fault_upper(
 
 	if (anon->an_page->loan_count) {
 
-		if (!cow_now) {
+		if (!flt->cow_now) {
 
 			/*
 			 * for read faults on loaned pages we just cap the
 			 * protection at read-only.
 			 */
 
-			enter_prot = enter_prot & ~VM_PROT_WRITE;
+			flt->enter_prot = flt->enter_prot & ~VM_PROT_WRITE;
 
 		} else {
 			/*
@@ -1523,14 +1500,14 @@ uvm_fault_upper(
 	 */
 
 	struct vm_page *pg;
-	if (cow_now && anon->an_ref > 1) {
+	if (flt->cow_now && anon->an_ref > 1) {
 
 		UVMHIST_LOG(maphist, "  case 1B: COW fault",0,0,0,0);
 		uvmexp.flt_acow++;
 		oanon = anon;		/* oanon = old, locked anon */
 
 		error = uvmfault_promote(ufi, oanon, PGO_DONTCARE,
-		    &anon, ranon_spare);
+		    &anon, &flt->anon_spare);
 		switch (error) {
 		case 0:
 			break;
@@ -1562,7 +1539,7 @@ uvm_fault_upper(
 		oanon = anon;		/* old, locked anon is same as anon */
 		pg = anon->an_page;
 		if (anon->an_ref > 1)     /* disallow writes to ref > 1 anons */
-			enter_prot = enter_prot & ~VM_PROT_WRITE;
+			flt->enter_prot = flt->enter_prot & ~VM_PROT_WRITE;
 
 	}
 
@@ -1578,7 +1555,7 @@ uvm_fault_upper(
 	UVMHIST_LOG(maphist, "  MAPPING: anon: pm=0x%x, va=0x%x, pg=0x%x",
 	    ufi->orig_map->pmap, ufi->orig_rvaddr, pg, 0);
 	if (pmap_enter(ufi->orig_map->pmap, ufi->orig_rvaddr, VM_PAGE_TO_PHYS(pg),
-	    enter_prot, access_type | PMAP_CANFAIL | (wired ? PMAP_WIRED : 0))
+	    flt->enter_prot, flt->access_type | PMAP_CANFAIL | (flt->wired ? PMAP_WIRED : 0))
 	    != 0) {
 
 		/*
@@ -1609,7 +1586,7 @@ uvm_fault_upper(
 	 */
 
 	mutex_enter(&uvm_pageqlock);
-	if (wire_fault) {
+	if (flt->wire_fault) {
 		uvm_pagewire(pg);
 
 		/*
@@ -1639,12 +1616,9 @@ uvm_fault_upper(
 
 static int
 uvm_fault_lower_generic2(
-	struct uvm_faultinfo *ufi, vm_prot_t access_type, vm_prot_t enter_prot,
-	bool wired, bool narrow, bool shadowed, bool wire_fault, bool cow_now,
-	int npages, int centeridx, vaddr_t startva,
+	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_amap *amap, struct uvm_object *uobj,
 	struct vm_anon **anons_store, struct vm_anon **anons,
-	struct vm_anon **ranon_spare,
 	struct vm_page **pages, struct vm_page *uobjpage)
 {
 	struct vm_anon *anon;
@@ -1675,7 +1649,7 @@ uvm_fault_lower_generic2(
 		promote = true;		/* always need anon here */
 	} else {
 		KASSERT(uobjpage != PGO_DONTCARE);
-		promote = cow_now && UVM_ET_ISCOPYONWRITE(ufi->entry);
+		promote = flt->cow_now && UVM_ET_ISCOPYONWRITE(ufi->entry);
 	}
 	UVMHIST_LOG(maphist, "  case 2 fault: promote=%d, zfill=%d",
 	    promote, (uobj == NULL), 0,0);
@@ -1708,7 +1682,7 @@ uvm_fault_lower_generic2(
 		gotpages = 1;
 		uoff = (ufi->orig_rvaddr - ufi->entry->start) + ufi->entry->offset;
 		error = uobj->pgops->pgo_get(uobj, uoff, &uobjpage, &gotpages,
-		    0, access_type & MASK(ufi->entry), ufi->entry->advice,
+		    0, flt->access_type & MASK(ufi->entry), ufi->entry->advice,
 		    PGO_SYNCIO);
 		/* locked: uobjpage(if no error) */
 		KASSERT(error != 0 || (uobjpage->flags & PG_BUSY) != 0);
@@ -1840,7 +1814,7 @@ uvm_fault_lower_generic2(
 		uvmexp.flt_obj++;
 		if (UVM_ET_ISCOPYONWRITE(ufi->entry) ||
 		    UVM_OBJ_NEEDS_WRITEFAULT(uobjpage->uobject))
-			enter_prot &= ~VM_PROT_WRITE;
+			flt->enter_prot &= ~VM_PROT_WRITE;
 		pg = uobjpage;		/* map in the actual object */
 
 		KASSERT(uobjpage != PGO_DONTCARE);
@@ -1851,10 +1825,10 @@ uvm_fault_lower_generic2(
 		 */
 
 		if (uobjpage->loan_count) {
-			if (!cow_now) {
+			if (!flt->cow_now) {
 				/* read fault: cap the protection at readonly */
 				/* cap! */
-				enter_prot = enter_prot & ~VM_PROT_WRITE;
+				flt->enter_prot = flt->enter_prot & ~VM_PROT_WRITE;
 			} else {
 				/* write fault: must break the loan here */
 
@@ -1894,7 +1868,7 @@ uvm_fault_lower_generic2(
 			panic("uvm_fault: want to promote data, but no anon");
 #endif
 		error = uvmfault_promote(ufi, NULL, uobjpage,
-		    &anon, ranon_spare);
+		    &anon, &flt->anon_spare);
 		switch (error) {
 		case 0:
 			break;
@@ -1977,11 +1951,11 @@ uvm_fault_lower_generic2(
 	UVMHIST_LOG(maphist,
 	    "  MAPPING: case2: pm=0x%x, va=0x%x, pg=0x%x, promote=%d",
 	    ufi->orig_map->pmap, ufi->orig_rvaddr, pg, promote);
-	KASSERT((access_type & VM_PROT_WRITE) == 0 ||
+	KASSERT((flt->access_type & VM_PROT_WRITE) == 0 ||
 		(pg->flags & PG_RDONLY) == 0);
 	if (pmap_enter(ufi->orig_map->pmap, ufi->orig_rvaddr, VM_PAGE_TO_PHYS(pg),
-	    pg->flags & PG_RDONLY ? enter_prot & ~VM_PROT_WRITE : enter_prot,
-	    access_type | PMAP_CANFAIL | (wired ? PMAP_WIRED : 0)) != 0) {
+	    pg->flags & PG_RDONLY ? flt->enter_prot & ~VM_PROT_WRITE : flt->enter_prot,
+	    flt->access_type | PMAP_CANFAIL | (flt->wired ? PMAP_WIRED : 0)) != 0) {
 
 		/*
 		 * No need to undo what we did; we can simply think of
@@ -2016,7 +1990,7 @@ uvm_fault_lower_generic2(
 	}
 
 	mutex_enter(&uvm_pageqlock);
-	if (wire_fault) {
+	if (flt->wire_fault) {
 		uvm_pagewire(pg);
 		if (pg->pqflags & PQ_AOBJ) {
 
