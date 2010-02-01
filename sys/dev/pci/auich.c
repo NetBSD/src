@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.135 2010/01/13 23:24:29 jakllsch Exp $	*/
+/*	$NetBSD: auich.c,v 1.136 2010/02/01 12:51:16 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.135 2010/01/13 23:24:29 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.136 2010/02/01 12:51:16 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1686,11 +1686,11 @@ auich_calibrate(struct auich_softc *sc)
 	else
 		ac97rate = ((actual_48k_rate + 500) / 1000) * 1000;
 
-	printf("%s: measured ac97 link rate at %d Hz",
-	       device_xname(sc->sc_dev), actual_48k_rate);
+	aprint_verbose_dev(sc->sc_dev, "measured ac97 link rate at %d Hz",
+	       actual_48k_rate);
 	if (ac97rate != actual_48k_rate)
-		printf(", will use %d Hz", ac97rate);
-	printf("\n");
+		aprint_verbose(", will use %d Hz", ac97rate);
+	aprint_verbose("\n");
 
 	sc->sc_ac97_clock = ac97rate;
 }
