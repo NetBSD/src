@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.19 2007/12/03 15:34:05 ad Exp $	*/
+/*	$NetBSD: news3400.c,v 1.19.36.1 2010/02/01 04:18:31 matt Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.19 2007/12/03 15:34:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.19.36.1 2010/02/01 04:18:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -42,8 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.19 2007/12/03 15:34:05 ad Exp $");
 
 #include <newsmips/dev/hbvar.h>
 
-#if !defined(SOFTFLOAT)
-extern void MachFPInterrupt(unsigned, unsigned, unsigned, struct frame *);
+#if !defined(FPEMUL)
+void MachFPInterrupt(unsigned, unsigned, unsigned, struct trapframe *);
 #endif
 
 int news3400_badaddr(void *, u_int);
@@ -127,8 +127,8 @@ news3400_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 			      pc, cause, status);
 
 		intrcnt[FPU_INTR]++;
-#if !defined(SOFTFLOAT)
-		MachFPInterrupt(status, cause, pc, curlwp->l_md.md_regs);
+#if !defined(FPEMUL)
+		MachFPInterrupt(status, cause, pc, curlwp->l_md.md_utf);
 #endif
 	}
 

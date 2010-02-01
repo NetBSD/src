@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_3x30.c,v 1.10 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: mips_3x30.c,v 1.10.18.1 2010/02/01 04:18:31 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.10 2008/04/28 20:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.10.18.1 2010/02/01 04:18:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: mips_3x30.c,v 1.10 2008/04/28 20:23:28 martin Exp $"
 #include <machine/mainboard.h>
 #include <machine/sysconf.h>
 
-extern void MachFPInterrupt (u_int, u_int, u_int, struct frame *);
+void MachFPInterrupt (u_int, u_int, vaddr_t, struct trapframe *);
 
 /* Local functions */
 void pizazz_init (void);
@@ -113,15 +113,15 @@ pizazz_intr(status, cause, pc, ipending)
 
 	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
+#if !defined(NOFPU)
 	/* FPU nofiticaition */
 	if (ipending & INT_MASK_FPU) {
 		if (!USERMODE(status))
 			panic("kernel used FPU: PC %x, CR %x, SR %x",
 			      pc, cause, status);
-#if !defined(SOFTFLOAT)
-		MachFPInterrupt(status, cause, pc, curlwp->l_md.md_regs);
-#endif
+		MachFPInterrupt(status, cause, pc, curlwp->l_md.md_utf);
 	}
+#endif
 }
 
 /*

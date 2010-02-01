@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.10.2 2010/01/20 09:04:32 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112.10.3 2010/02/01 04:17:50 matt Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112.10.2 2010/01/20 09:04:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112.10.3 2010/02/01 04:17:50 matt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -232,7 +232,6 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	int i;
 	paddr_t kernstartpfn, kernendpfn, first, last;
 	char *kernend;
-	vaddr_t v;
 #if NKSYMS > 0 || defined(DDB) || defined(LKM)
 	char *ssym = NULL;
 	char *esym = NULL;
@@ -497,11 +496,7 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	lwp0.l_addr->u_pcb.pcb_context.val[_L_SR] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	mips_init_lwp0_uarea();
 }
 
 void
@@ -630,8 +625,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 
 	/* take a snap shot before clobbering any registers */
-	if (curlwp)
-		savectx((struct user *)curpcb);
+	savectx(curlwp->l_addr);
 
 #ifdef DEBUG
 	if (panicstr)

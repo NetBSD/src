@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58.10.1 2009/09/07 23:46:46 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.58.10.2 2010/02/01 04:18:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58.10.1 2009/09/07 23:46:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58.10.2 2010/02/01 04:18:31 matt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -234,7 +234,7 @@ mach_init(argc, argv, envp, bim, bip)
 	char   *bip;
 {
 	u_long first, last;
-	char *kernend, *v;
+	char *kernend;
 	char *cp;
 	int i, howto;
 	extern char edata[], end[];
@@ -373,11 +373,7 @@ mach_init(argc, argv, envp, bim, bip)
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (void *)uvm_pageboot_alloc(USPACE); 
-	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	lwp0.l_addr->u_pcb.pcb_context.val[_L_SR] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	mips_init_lwp0_uarea();
 
 	/*
 	 * Set up interrupt handling and I/O addresses.
@@ -477,8 +473,7 @@ cpu_reboot(howto, bootstr)
 	char *bootstr;
 {
 	/* take a snap shot before clobbering any registers */
-	if (curlwp)
-		savectx((struct user *)curpcb);
+	savectx(curlwp->l_addr);
 
 #ifdef DEBUG
 	if (panicstr)

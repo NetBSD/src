@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.37.10.3 2010/01/10 02:48:45 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.37.10.4 2010/02/01 04:17:50 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37.10.3 2010/01/10 02:48:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37.10.4 2010/02/01 04:17:50 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -426,8 +426,7 @@ cpu_reboot(int howto, char *bootstr)
 	const struct alchemy_board *board;
 
 	/* Take a snapshot before clobbering any registers. */
-	if (curproc)
-		savectx((struct user *)curpcb);
+	savectx(curlwp->l_addr);
 
 	board = board_info();
 	KASSERT(board != NULL);

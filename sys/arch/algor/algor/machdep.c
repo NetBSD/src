@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38.10.4 2009/12/31 00:54:08 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38.10.5 2010/02/01 04:21:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.4 2009/12/31 00:54:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.5 2010/02/01 04:21:45 matt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -633,8 +633,7 @@ cpu_reboot(int howto, char *bootstr)
 	int tmp;
 
 	/* Take a snapshot before clobbering any registers. */
-	if (curlwp)
-		savectx((struct user *) curpcb);
+	savectx(curlwp->l_addr);
 
 	/* If "always halt" was specified as a boot flag, obey. */
 	if (boothowto & RB_HALT)
