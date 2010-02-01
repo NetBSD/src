@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.143 2010/02/01 08:23:13 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.144 2010/02/01 09:06:43 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.143 2010/02/01 08:23:13 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.144 2010/02/01 09:06:43 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -697,7 +697,6 @@ struct uvm_faultctx {
 	vm_prot_t enter_prot;
 	bool wired;
 	bool narrow;
-	bool shadowed;
 	bool wire_fault;
 	bool maxprot;
 	bool cow_now;
@@ -707,22 +706,23 @@ struct uvm_faultctx {
 	struct vm_anon *anon_spare;
 };
 
-static int
-uvm_fault_check(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_anon ***ranons, struct vm_page ***rpages);
-typedef int
-uvm_fault_subfunc_t(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_anon **anons, struct vm_page **pages);
-static uvm_fault_subfunc_t uvm_fault_upper_lookup;
-static uvm_fault_subfunc_t uvm_fault_upper;
-static uvm_fault_subfunc_t uvm_fault_lower;
-static uvm_fault_subfunc_t uvm_fault_lower_special;
-static uvm_fault_subfunc_t uvm_fault_lower_generic_lookup;
-static uvm_fault_subfunc_t uvm_fault_lower_generic;
-static uvm_fault_subfunc_t uvm_fault_lower_generic1;
-static uvm_fault_subfunc_t uvm_fault_lower_generic2;
+static int uvm_fault_check(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct vm_anon ***, struct vm_page ***);
+typedef int uvm_fault_upper_subfunc_t(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct vm_anon **, struct vm_page **);
+static uvm_fault_upper_subfunc_t uvm_fault_upper_lookup;
+static uvm_fault_upper_subfunc_t uvm_fault_upper;
+typedef int uvm_fault_lower_subfunc_t(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct vm_page **);
+static uvm_fault_lower_subfunc_t uvm_fault_lower;
+static uvm_fault_lower_subfunc_t uvm_fault_lower_special;
+static uvm_fault_lower_subfunc_t uvm_fault_lower_generic_lookup;
+static uvm_fault_lower_subfunc_t uvm_fault_lower_generic;
+static uvm_fault_lower_subfunc_t uvm_fault_lower_generic1;
+static uvm_fault_lower_subfunc_t uvm_fault_lower_generic2;
 
 int
 uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
@@ -757,10 +757,6 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 	else
 		flt.narrow = false;	/* normal fault */
 
-	/*
-	 * "goto ReFault" means restart the page fault from ground zero.
-	 */
-
 	error = ERESTART;
 	while (error == ERESTART) {
 		anons = anons_store;
@@ -774,10 +770,10 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 		if (error != 0)
 			continue;
 
-		if (flt.shadowed == true)
+		if (pages[flt.centeridx] == PGO_DONTCARE)
 			error = uvm_fault_upper(&ufi, &flt, anons, pages);
 		else
-			error = uvm_fault_lower(&ufi, &flt, anons, pages);
+			error = uvm_fault_lower(&ufi, &flt, pages);
 	}
 
 	if (flt.anon_spare != NULL) {
@@ -787,7 +783,7 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 	return error;
 }
 
-int
+static int
 uvm_fault_check(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_anon ***ranons, struct vm_page ***rpages)
@@ -996,7 +992,7 @@ uvm_fault_check(
 	return 0;
 }
 
-int
+static int
 uvm_fault_upper_lookup(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_anon **anons, struct vm_page **pages)
@@ -1004,6 +1000,7 @@ uvm_fault_upper_lookup(
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	int lcv;
 	vaddr_t currva;
+	bool shadowed;
 
 	/* locked: maps(read), amap(if there) */
 	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
@@ -1015,7 +1012,7 @@ uvm_fault_upper_lookup(
 	 */
 
 	currva = flt->startva;
-	flt->shadowed = false;
+	shadowed = false;
 	for (lcv = 0 ; lcv < flt->npages ; lcv++, currva += PAGE_SIZE) {
 		struct vm_anon *anon;
 
@@ -1043,7 +1040,7 @@ uvm_fault_upper_lookup(
 
 		pages[lcv] = PGO_DONTCARE;
 		if (lcv == flt->centeridx) {		/* save center for later! */
-			flt->shadowed = true;
+			shadowed = true;
 			continue;
 		}
 		anon = anons[lcv];
@@ -1079,8 +1076,8 @@ uvm_fault_upper_lookup(
 	/* locked: maps(read), amap(if there) */
 	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
 	/* (shadowed == true) if there is an anon at the faulting address */
-	UVMHIST_LOG(maphist, "  shadowed=%d, will_get=%d", flt->shadowed,
-	    (uobj && flt->shadowed == false),0,0);
+	UVMHIST_LOG(maphist, "  shadowed=%d, will_get=%d", shadowed,
+	    (uobj && shadowed != false),0,0);
 
 	/*
 	 * note that if we are really short of RAM we could sleep in the above
@@ -1096,7 +1093,7 @@ uvm_fault_upper_lookup(
 static int
 uvm_fault_lower(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_anon **anons, struct vm_page **pages)
+	struct vm_page **pages)
 {
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 	int error;
@@ -1110,9 +1107,9 @@ uvm_fault_lower(
 	 */
 
 	if (uobj && uobj->pgops->pgo_fault != NULL) {
-		error = uvm_fault_lower_special(ufi, flt, anons, pages);
+		error = uvm_fault_lower_special(ufi, flt, pages);
 	} else {
-		error = uvm_fault_lower_generic(ufi, flt, anons, pages);
+		error = uvm_fault_lower_generic(ufi, flt, pages);
 	}
 	return error;
 }
@@ -1120,7 +1117,7 @@ uvm_fault_lower(
 static int
 uvm_fault_lower_special(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_anon **anons, struct vm_page **pages)
+	struct vm_page **pages)
 {
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 	int error;
@@ -1144,7 +1141,7 @@ uvm_fault_lower_special(
 static int
 uvm_fault_lower_generic(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_anon **anons, struct vm_page **pages)
+	struct vm_page **pages)
 {
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 
@@ -1160,15 +1157,15 @@ uvm_fault_lower_generic(
 		/* zero fill; don't care neighbor pages */
 		pages[flt->centeridx] = NULL;
 	} else {
-		uvm_fault_lower_generic_lookup(ufi, flt, anons, pages);
+		uvm_fault_lower_generic_lookup(ufi, flt, pages);
 	}
-	return uvm_fault_lower_generic1(ufi, flt, anons, pages);
+	return uvm_fault_lower_generic1(ufi, flt, pages);
 }
 
 static int
 uvm_fault_lower_generic_lookup(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_anon **anons, struct vm_page **pages)
+	struct vm_page **pages)
 {
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 	int lcv, gotpages;
@@ -1270,14 +1267,13 @@ uvm_fault_lower_generic_lookup(
 static int
 uvm_fault_lower_generic1(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_anon **anons, struct vm_page **pages)
+	struct vm_page **pages)
 {
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 	struct vm_page *uobjpage = pages[flt->centeridx];
 
 	/* locked: maps(read), amap(if there), uobj(if !null), uobjpage(if !null) */
-	KASSERT(!flt->shadowed);
 	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
 	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
 	KASSERT(uobjpage == NULL || (uobjpage->flags & PG_BUSY) != 0);
@@ -1301,7 +1297,7 @@ uvm_fault_lower_generic1(
 	 * redirect case 2: if we are not shadowed, go to case 2.
 	 */
 
-	return uvm_fault_lower_generic2(ufi, flt, anons, pages);
+	return uvm_fault_lower_generic2(ufi, flt, pages);
 }
 
 static int
@@ -1590,7 +1586,7 @@ uvm_fault_upper(
 static int
 uvm_fault_lower_generic2(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_anon **anons, struct vm_page **pages)
+	struct vm_page **pages)
 {
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
