@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.60.22.1 2009/09/08 17:24:09 matt Exp $ */
+/* $NetBSD: dec_3min.c,v 1.60.22.2 2010/02/01 06:09:21 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.60.22.1 2009/09/08 17:24:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.60.22.2 2010/02/01 06:09:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ dec_3min_init()
 		physmem_boardmax = physmem_boardmax >> 2;
 	physmem_boardmax = MIPS_PHYS_TO_KSEG1(physmem_boardmax);
 
-	sprintf(cpu_model, "DECstation 5000/1%d (3MIN)", cpu_mhz);
+	sprintf(cpu_model, "DECstation 5000/1%d (3MIN)", mips_options.mips_cpu_mhz);
 }
 
 /*
@@ -511,8 +511,8 @@ dec_3min_tc_init(void)
 	};
 
 	if (MIPS_HAS_CLOCK) {
-		tc.tc_frequency = cpu_mhz * 1000000;
-		if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
+		tc.tc_frequency = mips_options.mips_cpu_mhz * 1000000;
+		if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
 			tc.tc_frequency /= 2;
 		}
 

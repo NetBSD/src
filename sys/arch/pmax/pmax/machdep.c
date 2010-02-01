@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223.8.1.2.4 2009/12/31 00:54:09 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.223.8.1.2.5 2010/02/01 06:09:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.8.1.2.4 2009/12/31 00:54:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.8.1.2.5 2010/02/01 06:09:21 matt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -127,9 +127,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.8.1.2.4 2009/12/31 00:54:09 matt E
 #include "ksyms.h"
 
 unsigned int ssir;			/* simulated interrupt register */
-
-/* Our exported CPU info; we can have only one. */  
-struct cpu_info cpu_info_store;
 
 /* maps for VM objects */
 struct vm_map *mb_map = NULL;
@@ -418,7 +415,7 @@ mips_machdep_cache_config(void)
 {
 	/* All r4k pmaxen have a 1MB L2 cache. */
 	if (CPUISMIPS3)
-		mips_sdcache_size = 1024 * 1024;
+		mips_cache_info.mci_sdcache_size = 1024 * 1024;
 }
 
 void
@@ -505,8 +502,7 @@ cpu_reboot(howto, bootstr)
 {
 
 	/* take a snap shot before clobbering any registers */
-	if (curlwp)
-		savectx((struct user *)curpcb);
+	savectx(curlwp->l_addr);
 
 #ifdef DEBUG
 	if (panicstr)
