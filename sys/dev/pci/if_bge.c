@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.178 2010/01/28 07:34:12 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.179 2010/02/01 05:38:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.178 2010/01/28 07:34:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.179 2010/02/01 05:38:36 msaitoh Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -3113,10 +3113,11 @@ bge_reset(struct bge_softc *sc)
 		devctl &= ~(0x0010 | PCI_PCIE_DCSR_ENA_NO_SNOOP);
 		/* Set PCIE max payload size to 128. */
 		devctl &= ~(0x00e0);
+		/* Clear device status register. Write 1b to clear */
+		devctl |= PCI_PCIE_DCSR_URD | PCI_PCIE_DCSR_FED
+		    | PCI_PCIE_DCSR_NFED | PCI_PCIE_DCSR_CED;
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag,
 		    sc->bge_expcap + PCI_PCIE_DCSR, devctl);
-		pci_conf_write(sc->sc_pc, sc->sc_pcitag,
-		    sc->bge_expcap + PCI_PCIE_DSR, 0);
 	}
 
 	/* Reset some of the PCI state that got zapped by reset */
