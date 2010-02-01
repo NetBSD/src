@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.195 2010/01/27 21:10:16 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.196 2010/02/01 21:46:44 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4048,4 +4048,9 @@ common/lib/libc/hash/sha2/sha2.c		1.21
 	Fix unaligned access in *_Final for SHA224/SHA256/SHA384.
 	Remaining part of PR 42273.
 	[joerg, ticket #1382]
+
+crypto/dist/openssl/crypto/comp/c_zlib.c		patch
+
+	Fix to deal with CVE-2009-4355 from OpenSSL's repositroy.
+	[taca, ticket #1378]
 
