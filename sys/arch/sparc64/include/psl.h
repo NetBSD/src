@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.45 2010/01/15 23:55:55 nakayama Exp $ */
+/*	$NetBSD: psl.h,v 1.46 2010/02/01 05:00:59 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -314,6 +314,11 @@ SPARC64_SETPR_DEF(cwp, int)			/* setcwp() */
 
 /* Version Register (PR 31) */
 SPARC64_GETPR64_DEF(ver)			/* getver() */
+
+/* Some simple macros to check the cpu type. */
+#define GETVER_CPU_IMPL()	((getver() & VER_IMPL) >> VER_IMPL_SHIFT)
+#define CPU_IS_JALAPENO()	(GETVER_CPU_IMPL() == IMPL_JALAPENO)
+#define CPU_IS_USIII_UP()	(GETVER_CPU_IMPL() >= IMPL_CHEETAH)
 
 static __inline int
 intr_disable(void)
