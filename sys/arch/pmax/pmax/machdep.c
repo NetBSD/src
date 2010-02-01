@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223.8.1.2.5 2010/02/01 06:09:21 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.223.8.1.2.6 2010/02/01 06:54:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.8.1.2.5 2010/02/01 06:09:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.8.1.2.6 2010/02/01 06:54:35 matt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -351,6 +351,13 @@ mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip
 #endif
 
 	/*
+	 * We need to do this early for badaddr().
+	 */
+	lwp0.l_addr = (struct user *)kernend;
+	kernend += USPACE;
+	mips_init_lwp0_uarea();
+
+	/*
 	 * Initialize physmem_boardmax; assume no SIMM-bank limits.
 	 * Adjust later in model-specific code if necessary.
 	 */
@@ -404,10 +411,12 @@ mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip
 	 */
 	pmap_bootstrap();
 
+#if 0
 	/*
 	 * Alloc u pages for proc0 stealing KSEG0 memory.
 	 */
 	mips_init_lwp0_uarea();
+#endif
 }
 
 void
