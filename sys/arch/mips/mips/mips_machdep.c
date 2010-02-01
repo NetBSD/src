@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.30 2010/02/01 04:16:19 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.31 2010/02/01 06:52:59 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.30 2010/02/01 04:16:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.31 2010/02/01 06:52:59 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -1620,8 +1620,16 @@ mips_init_msgbuf(void)
 void
 mips_init_lwp0_uarea(void)
 {
-	vaddr_t v = uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = proc0paddr = (struct user *)v;
+	struct lwp *l = curlwp;
+	vaddr_t v;
+	KASSERT(l == &lwp0);
+	if (l->l_addr == NULL) {
+		v = uvm_pageboot_alloc(USPACE);
+		l->l_addr = proc0paddr = (struct user *)v;
+	} else {
+		v = (vaddr_t)l->l_addr;
+		proc0paddr = l->l_addr;
+	}
 	lwp0.l_md.md_utf = (struct trapframe *)(v + USPACE) - 1;
 #ifdef _LP64
 	lwp0.l_md.md_utf->tf_regs[_R_SR] = MIPS_SR_KX;
