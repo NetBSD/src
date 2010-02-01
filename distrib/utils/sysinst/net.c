@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.125 2010/02/01 00:06:18 ahoka Exp $	*/
+/*	$NetBSD: net.c,v 1.126 2010/02/01 00:39:03 ahoka Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,17 +38,6 @@
 
 /* net.c -- routines to fetch files off the network. */
 
-#include <err.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <curses.h>
-#include <time.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <net/if.h>
-#include <net/if_media.h>
-#include <netinet/in.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/resource.h>
@@ -58,6 +47,18 @@
 #include <sys/statvfs.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
+#include <arpa/inet.h>
+#include <net/if.h>
+#include <net/if_media.h>
+#include <netinet/in.h>
+
+#include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <curses.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "defs.h"
 #include "md.h"
