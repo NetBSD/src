@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.141 2010/02/01 08:16:32 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.142 2010/02/01 08:19:17 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.141 2010/02/01 08:16:32 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.142 2010/02/01 08:19:17 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -760,32 +760,28 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 	/*
 	 * "goto ReFault" means restart the page fault from ground zero.
 	 */
-ReFault:
+
+	error = ERESTART;
+	while (error == ERESTART) {
 
 	anons = anons_store;
 	pages = pages_store;
 
 	error = uvm_fault_check(&ufi, &flt, &anons, &pages);
-	if (error == ERESTART)
-		goto ReFault;
-	else if (error)
-		goto done;
+	if (error != 0)
+		continue;
 
 	error = uvm_fault_upper_lookup(&ufi, &flt, anons, pages);
-	if (error == ERESTART)
-		goto ReFault;
-	else if (error)
-		goto done;
+	if (error != 0)
+		continue;
 
 	if (flt.shadowed == true)
 		error = uvm_fault_upper(&ufi, &flt, anons, pages);
 	else
 		error = uvm_fault_lower(&ufi, &flt, anons, pages);
 
-	if (error == ERESTART)
-		goto ReFault;
+	}
 
-done:
 	if (flt.anon_spare != NULL) {
 		flt.anon_spare->an_ref--;
 		uvm_anfree(flt.anon_spare);
