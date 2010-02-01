@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.10 2006/10/21 23:49:29 mrg Exp $ */
+/*	$NetBSD: cache.h,v 1.11 2010/02/01 03:43:27 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -74,7 +74,6 @@
 
 /* The following are for I$ and D$ flushes and are in locore.s */
 void 	dcache_flush_page(paddr_t);	/* flush page from D$ */
-void 	icache_flush_page(paddr_t);	/* flush page from I$ */
 void 	blast_dcache(void);		/* Clear entire D$ */
 void 	blast_icache(void);		/* Clear entire I$ */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.305 2010/01/23 23:39:27 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.306 2010/02/01 03:43:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -5511,50 +5511,6 @@ ENTRY(dcache_flush_page)
 	flush	%o5
 	retl
 	 membar	#Sync
-
-/*
- * icache_flush_page(paddr_t pa)
- *
- * Clear one page from I$.
- *
- */
-	.align 8
-ENTRY(icache_flush_page)
-#ifndef _LP64
-	COMBINE(%o0, %o1, %o0)
-#endif
-
-#ifdef SPITFIRE
-	!!
-	!! Linux sez that I$ flushes are not needed for cheetah.
-	!!
-	
-	!! Now do the I$
-	srlx	%o0, 13-8, %o2
-	mov	-1, %o1		! Generate mask for tag: bits [35..8]
-	srl	%o1, 32-35+7, %o1
-	clr	%o4
-	sll	%o1, 7, %o1	! Mask
-	set	(2*NBPG), %o5
-	
-1:
-	ldda	[%o4] ASI_ICACHE_TAG, %g0	! Tag goes in %g1
-	dec	32, %o5
-	xor	%g1, %o2, %g1
-	andcc	%g1, %o1, %g0
-	bne,pt	%xcc, 2f
-	 membar	#LoadStore
-	stxa	%g0, [%o4] ASI_ICACHE_TAG
-	membar	#StoreLoad
-2:
-	brnz,pt	%o5, 1b
-	 inc	32, %o4
-#endif
-	sethi	%hi(KERNBASE), %o5
-	flush	%o5
-	membar	#Sync
-	retl
-	 nop
 
 /*
  *	cache_flush_phys(paddr_t, psize_t, int);
