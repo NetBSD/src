@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.17 2010/02/01 04:16:20 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.18 2010/02/01 06:52:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.17 2010/02/01 04:16:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.18 2010/02/01 06:52:59 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -343,7 +343,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		 * It is an error for the kernel to access user space except
 		 * through the copyin/copyout routines.
 		 */
-		if (l == NULL || l->l_addr->u_pcb.pcb_onfault == NULL)
+		if (l->l_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
 		/* check for fuswintr() or suswintr() getting a page fault */
 		if (l->l_addr->u_pcb.pcb_onfault == (void *)fswintrberr) {
