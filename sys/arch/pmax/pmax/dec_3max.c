@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.45 2007/12/03 15:34:09 ad Exp $ */
+/* $NetBSD: dec_3max.c,v 1.45.36.1 2010/02/01 06:09:21 matt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.45 2007/12/03 15:34:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.45.36.1 2010/02/01 06:09:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,14 +132,14 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.45 2007/12/03 15:34:09 ad Exp $");
 #include <pmax/pmax/cons.h>
 #include "wsdisplay.h"
 
-void		dec_3max_init __P((void));		/* XXX */
-static void	dec_3max_bus_reset __P((void));
+void		dec_3max_init(void);		/* XXX */
+static void	dec_3max_bus_reset(void);
 
-static void	dec_3max_cons_init __P((void));
-static void	dec_3max_errintr __P((void));
-static void	dec_3max_intr __P((unsigned, unsigned, unsigned, unsigned));
-static void	dec_3max_intr_establish __P((struct device *, void *,
-		    int, int (*)(void *), void *));
+static void	dec_3max_cons_init(void);
+static void	dec_3max_errintr(void);
+static void	dec_3max_intr(uint32_t, uint32_t, vaddr_t, uint32_t);
+static void	dec_3max_intr_establish(device_t, void *,
+		    int, int (*)(void *), void *);
 
 
 #define	kn02_wbflush()	mips1_wbflush()	/* XXX to be corrected XXX */
@@ -154,9 +154,9 @@ static const int dec_3max_ipl2spl_table[] = {
 };
 
 void
-dec_3max_init()
+dec_3max_init(void)
 {
-	u_int32_t csr;
+	uint32_t csr;
 
 	platform.iobus = "tcbus";
 	platform.bus_reset = dec_3max_bus_reset;
@@ -167,7 +167,7 @@ dec_3max_init()
 	/* no high resolution timer available */
 
 	/* clear any memory errors */
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
+	*(uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
 	kn02_wbflush();
 
 	ipl2spl_table = dec_3max_ipl2spl_table;
@@ -179,9 +179,9 @@ dec_3max_init()
 	 * Enable ECC memory correction, turn off LEDs, and
 	 * disable all TURBOchannel interrupts.
 	 */
-	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
+	csr = *(uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
 	csr &= ~(KN02_CSR_WRESERVED|KN02_CSR_IOINTEN|KN02_CSR_CORRECT|0xff);
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
+	*(uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
 	kn02_wbflush();
 
 	strcpy(cpu_model, "DECstation 5000/200 (3MAX)");
@@ -197,10 +197,10 @@ dec_3max_bus_reset()
 	 * Reset interrupts, clear any errors from newconf probes
 	 */
 
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
+	*(uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
 	kn02_wbflush();
 
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CHKSYN) = 0;
+	*(uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CHKSYN) = 0;
 	kn02_wbflush();
 }
 
@@ -208,7 +208,7 @@ static void
 dec_3max_cons_init()
 {
 	int kbd, crt, screen;
-	extern int tcfb_cnattach __P((int));		/* XXX */
+	extern int tcfb_cnattach(int);		/* XXX */
 
 	kbd = crt = screen = 0;
 	prom_findcons(&kbd, &crt, &screen);
@@ -249,14 +249,14 @@ static const struct {
 
 static void
 dec_3max_intr_establish(dev, cookie, level, handler, arg)
-	struct device *dev;
+	device_t dev;
 	void *cookie;
 	int level;
-	int (*handler) __P((void *));
+	int (*handler)(void *);
 	void *arg;
 {
 	int i;
-	u_int32_t csr;
+	uint32_t csr;
 
 	for (i = 0; i < sizeof(kn02intrs)/sizeof(kn02intrs[0]); i++) {
 		if (kn02intrs[i].cookie == (int)cookie)
@@ -268,9 +268,9 @@ found:
 	intrtab[(int)cookie].ih_func = handler;
 	intrtab[(int)cookie].ih_arg = arg;
 
-	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) & 0x00ffff00;
+	csr = *(uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) & 0x00ffff00;
 	csr |= (kn02intrs[i].intrbit << 16);
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
+	*(uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
 	kn02_wbflush();
 }
 
@@ -282,20 +282,16 @@ found:
 	} while (0)
 
 static void
-dec_3max_intr(status, cause, pc, ipending)
-	unsigned status;
-	unsigned cause;
-	unsigned pc;
-	unsigned ipending;
+dec_3max_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
 {
 	static int warned = 0;
-	u_int32_t csr;
+	uint32_t csr;
 
 	/* handle clock interrupts ASAP */
 	if (ipending & MIPS_INT_MASK_1) {
 		struct clockframe cf;
 
-		csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
+		csr = *(uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
 		if ((csr & KN02_CSR_PSWARN) && !warned) {
 			warned = 1;
 			printf("WARNING: power supply is overheating!\n");
@@ -319,7 +315,7 @@ dec_3max_intr(status, cause, pc, ipending)
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_1));
 
 	if (ipending & MIPS_INT_MASK_0) {
-		csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
+		csr = *(uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
 		csr &= (csr >> KN02_CSR_IOINTEN_SHIFT);
 		if (csr & (KN02_IP_DZ | KN02_IP_LANCE | KN02_IP_SCSI)) {
 			if (csr & KN02_IP_DZ)
@@ -355,14 +351,14 @@ dec_3max_intr(status, cause, pc, ipending)
 static void
 dec_3max_errintr()
 {
-	u_int32_t erradr, errsyn, csr;
+	uint32_t erradr, errsyn, csr;
 
 	/* Fetch error address, ECC chk/syn bits, clear interrupt */
-	erradr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR);
+	erradr = *(uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR);
 	errsyn = MIPS_PHYS_TO_KSEG1(KN02_SYS_CHKSYN);
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
+	*(uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
 	kn02_wbflush();
-	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
+	csr = *(uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
 
 	/* Send to kn02/kn03 memory subsystem handler */
 	dec_mtasic_err(erradr, errsyn, csr & KN02_CSR_BNK32M);

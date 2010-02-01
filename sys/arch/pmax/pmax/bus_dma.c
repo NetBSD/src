@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.49.16.1 2009/08/26 03:46:40 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.49.16.2 2010/02/01 06:09:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.49.16.1 2009/08/26 03:46:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.49.16.2 2010/02/01 06:09:21 matt Exp $");
 
 #include "opt_cputype.h"
 
@@ -506,7 +506,7 @@ _bus_dmamap_sync_r3k(t, map, offset, len, ops)
 	 * NOTE: Even though this is `wbinv_all', since the cache is
 	 * write-though, it just invalidates it.
 	 */
-	if (len >= mips_pdcache_size) {
+	if (len >= mips_cache_info.mci_pdcache_size) {
 		mips_dcache_wbinv_all();
 		return;
 	}
@@ -702,7 +702,6 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	extern paddr_t avail_start, avail_end;		/* XXX */
 	vaddr_t curaddr, lastaddr;
 	psize_t high;
 	struct vm_page *m;
@@ -712,12 +711,12 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	/* Always round the size. */
 	size = round_page(size);
 
-	high = avail_end - PAGE_SIZE;
+	high = mips_avail_end - PAGE_SIZE;
 
 	/*
 	 * Allocate pages from the VM system.
 	 */
-	error = uvm_pglistalloc(size, avail_start, high, alignment, boundary,
+	error = uvm_pglistalloc(size, mips_avail_start, high, alignment, boundary,
 	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
 		return (error);
@@ -735,7 +734,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	for (; m != NULL; m = m->pageq.queue.tqe_next) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
-		if (curaddr < avail_start || curaddr >= high) {
+		if (curaddr < mips_avail_start || curaddr >= high) {
 			printf("uvm_pglistalloc returned non-sensical"
 			    " address 0x%lx\n", curaddr);
 			panic("_bus_dmamem_alloc");
