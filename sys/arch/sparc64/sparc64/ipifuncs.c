@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.27 2010/02/01 02:42:33 mrg Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.28 2010/02/01 05:00:59 mrg Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.27 2010/02/01 02:42:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.28 2010/02/01 05:00:59 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -78,7 +78,7 @@ sparc64_ipi_halt_thiscpu(void *arg)
 
 	printf("cpu%d: shutting down\n", cpu_number());
 	CPUSET_ADD(cpus_halted, cpu_number());
-	if (((getver() & VER_IMPL) >> VER_IMPL_SHIFT) >= IMPL_CHEETAH) {
+	if (CPU_IS_USIII_UP()) {
 		/*
 		 * prom_selfstop() doesn't seem to work on newer machines.
 		 */
@@ -201,7 +201,7 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 	 * UltraSPARC-IIIi CPUs select the BUSY/NACK pair based on the
 	 * lower two bits of the ITID.
 	 */
-	if (((getver() & VER_IMPL) >> VER_IMPL_SHIFT) == IMPL_JALAPENO)
+	if (CPU_IS_JALAPENO())
 		shift = (upaid & 0x3) * 2;
 
 	if (ldxa(0, ASR_IDSR) & (IDSR_BUSY << shift))
