@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ssp.c,v 1.4 2010/02/01 12:58:04 njoly Exp $	*/
+/*	$NetBSD: kern_ssp.c,v 1.5 2010/02/01 16:14:58 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ssp.c,v 1.4 2010/02/01 12:58:04 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ssp.c,v 1.5 2010/02/01 16:14:58 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,9 +48,7 @@ ssp_init(void)
 {
 	int s;
 
-#ifdef DIAGNOSTIC
-	aprint_normal("Initializing SSP: ");
-#endif
+	aprint_debug("Initializing SSP: ");
 	/*
 	 * We initialize ssp here carefully:
 	 *	1. after we got some entropy
@@ -64,11 +62,9 @@ ssp_init(void)
 	for (i = 0; i < __arraycount(guard); i++)
 		__stack_chk_guard[i] = guard[i];
 	splx(s);
-#ifdef DIAGNOSTIC
 	for (i = 0; i < __arraycount(guard); i++)
-		aprint_normal("%lx ", guard[i]);
-	aprint_normal("\n");
-#endif
+		aprint_debug("%lx ", guard[i]);
+	aprint_debug("\n");
 }
 #else
 void
