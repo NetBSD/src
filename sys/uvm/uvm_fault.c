@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.144 2010/02/01 09:06:43 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.145 2010/02/01 09:18:41 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.144 2010/02/01 09:06:43 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.145 2010/02/01 09:18:41 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1045,30 +1045,34 @@ uvm_fault_upper_lookup(
 		}
 		anon = anons[lcv];
 		mutex_enter(&anon->an_lock);
-		/* ignore loaned pages */
-		if (anon->an_page && anon->an_page->loan_count == 0 &&
-		    (anon->an_page->flags & PG_BUSY) == 0) {
-			mutex_enter(&uvm_pageqlock);
-			uvm_pageenqueue(anon->an_page);
-			mutex_exit(&uvm_pageqlock);
-			UVMHIST_LOG(maphist,
-			    "  MAPPING: n anon: pm=0x%x, va=0x%x, pg=0x%x",
-			    ufi->orig_map->pmap, currva, anon->an_page, 0);
-			uvmexp.fltnamap++;
 
-			/*
-			 * Since this isn't the page that's actually faulting,
-			 * ignore pmap_enter() failures; it's not critical
-			 * that we enter these right now.
-			 */
+		/* ignore loaned and busy pages */
+		if (anon->an_page == NULL || anon->an_page->loan_count != 0 ||
+		    (anon->an_page->flags & PG_BUSY) != 0)
+			goto uvm_fault_upper_lookup_enter_done;
 
-			(void) pmap_enter(ufi->orig_map->pmap, currva,
-			    VM_PAGE_TO_PHYS(anon->an_page),
-			    (anon->an_ref > 1) ? (flt->enter_prot & ~VM_PROT_WRITE) :
-			    flt->enter_prot,
-			    PMAP_CANFAIL |
-			     (VM_MAPENT_ISWIRED(ufi->entry) ? PMAP_WIRED : 0));
-		}
+		mutex_enter(&uvm_pageqlock);
+		uvm_pageenqueue(anon->an_page);
+		mutex_exit(&uvm_pageqlock);
+		UVMHIST_LOG(maphist,
+		    "  MAPPING: n anon: pm=0x%x, va=0x%x, pg=0x%x",
+		    ufi->orig_map->pmap, currva, anon->an_page, 0);
+		uvmexp.fltnamap++;
+
+		/*
+		 * Since this isn't the page that's actually faulting,
+		 * ignore pmap_enter() failures; it's not critical
+		 * that we enter these right now.
+		 */
+
+		(void) pmap_enter(ufi->orig_map->pmap, currva,
+		    VM_PAGE_TO_PHYS(anon->an_page),
+		    (anon->an_ref > 1) ? (flt->enter_prot & ~VM_PROT_WRITE) :
+		    flt->enter_prot,
+		    PMAP_CANFAIL |
+		     (VM_MAPENT_ISWIRED(ufi->entry) ? PMAP_WIRED : 0));
+
+uvm_fault_upper_lookup_enter_done:
 		pmap_update(ufi->orig_map->pmap);
 		mutex_exit(&anon->an_lock);
 	}
