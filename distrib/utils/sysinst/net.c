@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.124 2010/01/13 07:48:57 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.125 2010/02/01 00:06:18 ahoka Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,28 +45,25 @@
 #include <curses.h>
 #include <time.h>
 #include <unistd.h>
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <sys/statvfs.h>
-#ifdef INET6
-#include <sys/sysctl.h>
-#endif
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/statvfs.h>
-#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <net/if.h>
 #include <net/if_media.h>
-#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/ioctl.h>
+#include <sys/param.h>
+#include <sys/resource.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/statvfs.h>
+#include <sys/statvfs.h>
+#include <sys/sysctl.h>
+#include <sys/wait.h>
+
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
 #include "txtwalk.h"
-
-#include <sys/wait.h>
-#include <sys/resource.h>
-#include <sys/sysctl.h>
 
 int network_up = 0;
 /* Access to network information */
