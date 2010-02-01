@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.13.10.4 2010/01/20 09:04:33 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.13.10.5 2010/02/01 04:17:51 matt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,7 +147,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.10.4 2010/01/20 09:04:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.10.5 2010/02/01 04:17:51 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -393,8 +393,7 @@ cpu_reboot(int howto, char *bootstr)
 	static int waittime = -1;
 
 	/* Take a snapshot before clobbering any registers. */
-	if (curproc)
-		savectx((struct user *)curpcb);
+	savectx(curlwp->l_addr);
 
 	/* If "always halt" was specified as a boot flag, obey. */
 	if (boothowto & RB_HALT)

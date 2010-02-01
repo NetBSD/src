@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98.10.1 2009/09/07 23:46:45 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98.10.2 2010/02/01 04:17:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.10.1 2009/09/07 23:46:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.10.2 2010/02/01 04:17:50 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -147,7 +147,7 @@ extern struct user *proc0paddr;
 void
 mach_init(unsigned int memsize, u_int bim, char *bip)
 {
-	char *kernend, *v;
+	char *kernend;
 	u_long first, last;
 	extern char edata[], end[];
 	const char *bi_msg;
@@ -317,17 +317,7 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (char *)uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-#ifdef _LP64
-	lwp0.l_md.md_regs->f_regs[_R_SR] = MIPS_SR_KX;
-#endif
-	lwp0.l_addr->u_pcb.pcb_context.val[_L_SR] =
-#ifdef _LP64
-	    MIPS_SR_KX |
-#endif
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	mips_init_lwp0_uarea();
 }
 
 /*
@@ -371,8 +361,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 
 	/* Take a snapshot before clobbering any registers. */
-	if (curlwp)
-		savectx((struct user *)curpcb);
+	savectx(curlwp->l_addr);
 
 	if (cold) {
 		howto |= RB_HALT;

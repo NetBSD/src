@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.38.10.5 2009/12/31 00:54:09 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.38.10.6 2010/02/01 04:18:31 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.5 2009/12/31 00:54:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.6 2010/02/01 04:18:31 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"       /* for SYMTAB_SPACE */
@@ -387,8 +387,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 
 	/* Take a snapshot before clobbering any registers. */
-	if (curlwp)
-		savectx((struct user *)curpcb);
+	savectx(curlwp->l_addr);
 
 	if (cold) {
 		howto |= RB_HALT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.39 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: tx39.c,v 1.39.18.1 2010/02/01 04:18:31 matt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.39 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.39.18.1 2010/02/01 04:18:31 matt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.39 2008/04/28 20:23:21 martin Exp $");
 
 #include <mips/cache.h>
 
-#include <machine/locore.h>   /* cpu_id */
 #include <machine/bootinfo.h> /* bootinfo */
 #include <machine/sysconf.h>  /* platform */
 
@@ -114,7 +113,7 @@ tx_init()
 	platform.reboot		= tx_reboot;
 
 
-	model = MIPS_PRID_REV(cpu_id);
+	model = MIPS_PRID_REV(mips_options.mips_cpu_id);
 
 	switch (model) {
 	default:

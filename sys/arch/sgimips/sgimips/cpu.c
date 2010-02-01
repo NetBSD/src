@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.21.36.1 2010/01/13 21:16:14 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.21.36.2 2010/02/01 04:18:32 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21.36.1 2010/01/13 21:16:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21.36.2 2010/02/01 04:18:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,7 +59,7 @@ void		cpu_intr(u_int32_t, u_int32_t, vaddr_t, u_int32_t);
 void *cpu_intr_establish(int, int, int (*func)(void *), void *);
 void		mips1_fpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 
-extern void	MachFPInterrupt(u_int32_t, u_int32_t, u_int32_t, struct frame *);
+void	MachFPInterrupt(u_int32_t, u_int32_t, u_int32_t, struct trapframe *);
 
 static struct evcnt mips_int0_evcnt =
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 0");
@@ -186,7 +186,7 @@ mips1_fpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 		panic("kernel used FPU: PC 0x%08x, CR 0x%08x, SR 0x%08x",
 		    pc, cause, status);
 
-#if !defined(NOFPU) && !defined(SOFTFLOAT)
-	MachFPInterrupt(status, cause, pc, curlwp->l_md.md_regs);
+#if !defined(NOFPU) && !defined(FPEMUL)
+	MachFPInterrupt(status, cause, pc, curlwp->l_md.md_utf);
 #endif
 }
