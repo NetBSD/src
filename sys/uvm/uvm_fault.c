@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.142 2010/02/01 08:19:17 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.143 2010/02/01 08:23:13 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.142 2010/02/01 08:19:17 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.143 2010/02/01 08:23:13 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -763,23 +763,21 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 
 	error = ERESTART;
 	while (error == ERESTART) {
+		anons = anons_store;
+		pages = pages_store;
 
-	anons = anons_store;
-	pages = pages_store;
+		error = uvm_fault_check(&ufi, &flt, &anons, &pages);
+		if (error != 0)
+			continue;
 
-	error = uvm_fault_check(&ufi, &flt, &anons, &pages);
-	if (error != 0)
-		continue;
+		error = uvm_fault_upper_lookup(&ufi, &flt, anons, pages);
+		if (error != 0)
+			continue;
 
-	error = uvm_fault_upper_lookup(&ufi, &flt, anons, pages);
-	if (error != 0)
-		continue;
-
-	if (flt.shadowed == true)
-		error = uvm_fault_upper(&ufi, &flt, anons, pages);
-	else
-		error = uvm_fault_lower(&ufi, &flt, anons, pages);
-
+		if (flt.shadowed == true)
+			error = uvm_fault_upper(&ufi, &flt, anons, pages);
+		else
+			error = uvm_fault_lower(&ufi, &flt, anons, pages);
 	}
 
 	if (flt.anon_spare != NULL) {
@@ -1127,20 +1125,20 @@ uvm_fault_lower_special(
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 	int error;
 
-		mutex_enter(&uobj->vmobjlock);
-		/* locked: maps(read), amap (if there), uobj */
-		error = uobj->pgops->pgo_fault(ufi, flt->startva, pages, flt->npages,
-		    flt->centeridx, flt->access_type, PGO_LOCKED|PGO_SYNCIO);
+	mutex_enter(&uobj->vmobjlock);
+	/* locked: maps(read), amap (if there), uobj */
+	error = uobj->pgops->pgo_fault(ufi, flt->startva, pages, flt->npages,
+	    flt->centeridx, flt->access_type, PGO_LOCKED|PGO_SYNCIO);
 
-		/* locked: nothing, pgo_fault has unlocked everything */
+	/* locked: nothing, pgo_fault has unlocked everything */
 
-		if (error == ERESTART)
-			error = ERESTART;		/* try again! */
-		/*
-		 * object fault routine responsible for pmap_update().
-		 */
+	if (error == ERESTART)
+		error = ERESTART;		/* try again! */
+	/*
+	 * object fault routine responsible for pmap_update().
+	 */
 
-		return error;
+	return error;
 }
 
 static int
@@ -1184,10 +1182,10 @@ uvm_fault_lower_generic_lookup(
 
 	uvmexp.fltlget++;
 	gotpages = flt->npages;
-	(void) uobj->pgops->pgo_get(uobj, ufi->entry->offset + flt->startva - ufi->entry->start,
-			pages, &gotpages, flt->centeridx,
-			flt->access_type & MASK(ufi->entry),
-			ufi->entry->advice, PGO_LOCKED);
+	(void) uobj->pgops->pgo_get(uobj,
+	    ufi->entry->offset + flt->startva - ufi->entry->start,
+	    pages, &gotpages, flt->centeridx,
+	    flt->access_type & MASK(ufi->entry), ufi->entry->advice, PGO_LOCKED);
 
 	/*
 	 * check for pages to map, if we got any
@@ -1199,8 +1197,7 @@ uvm_fault_lower_generic_lookup(
 	}
 
 	currva = flt->startva;
-	for (lcv = 0; lcv < flt->npages;
-	     lcv++, currva += PAGE_SIZE) {
+	for (lcv = 0; lcv < flt->npages; lcv++, currva += PAGE_SIZE) {
 		struct vm_page *curpg;
 		bool readonly;
 
@@ -1211,11 +1208,9 @@ uvm_fault_lower_generic_lookup(
 		KASSERT(curpg->uobject == uobj);
 
 		/*
-		 * if center page is resident and not
-		 * PG_BUSY|PG_RELEASED then pgo_get
-		 * made it PG_BUSY for us and gave
-		 * us a handle to it.   remember this
-		 * page as "uobjpage." (for later use).
+		 * if center page is resident and not PG_BUSY|PG_RELEASED
+		 * then pgo_get made it PG_BUSY for us and gave us a handle
+		 * to it.  remember this page as "uobjpage." (for later use).
 		 */
 
 		if (lcv == flt->centeridx) {
@@ -1226,10 +1221,9 @@ uvm_fault_lower_generic_lookup(
 		}
 
 		/*
-		 * calling pgo_get with PGO_LOCKED returns us
-		 * pages which are neither busy nor released,
-		 * so we don't need to check for this.
-		 * we can just directly enter the pages.
+		 * calling pgo_get with PGO_LOCKED returns us pages which
+		 * are neither busy nor released, so we don't need to check
+		 * for this.  we can just directly enter the pages.
 		 */
 
 		mutex_enter(&uvm_pageqlock);
@@ -1241,9 +1235,8 @@ uvm_fault_lower_generic_lookup(
 		uvmexp.fltnomap++;
 
 		/*
-		 * Since this page isn't the page that's
-		 * actually faulting, ignore pmap_enter()
-		 * failures; it's not critical that we
+		 * Since this page isn't the page that's actually faulting,
+		 * ignore pmap_enter() failures; it's not critical that we
 		 * enter these right now.
 		 */
 		KASSERT((curpg->flags & PG_PAGEOUT) == 0);
@@ -1256,16 +1249,13 @@ uvm_fault_lower_generic_lookup(
 
 		(void) pmap_enter(ufi->orig_map->pmap, currva,
 		    VM_PAGE_TO_PHYS(curpg),
-		    readonly ?
-		    flt->enter_prot & ~VM_PROT_WRITE :
+		    readonly ?  flt->enter_prot & ~VM_PROT_WRITE :
 		    flt->enter_prot & MASK(ufi->entry),
-		    PMAP_CANFAIL |
-		     (flt->wired ? PMAP_WIRED : 0));
+		    PMAP_CANFAIL | (flt->wired ? PMAP_WIRED : 0));
 
 		/*
-		 * NOTE: page can't be PG_WANTED or PG_RELEASED
-		 * because we've held the lock the whole time
-		 * we've had the handle.
+		 * NOTE: page can't be PG_WANTED or PG_RELEASED because we've
+		 * held the lock the whole time we've had the handle.
 		 */
 		KASSERT((curpg->flags & PG_WANTED) == 0);
 		KASSERT((curpg->flags & PG_RELEASED) == 0);
