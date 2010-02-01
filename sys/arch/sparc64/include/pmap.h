@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.45 2009/11/30 01:45:04 mrg Exp $	*/
+/*	$NetBSD: pmap.h,v 1.46 2010/02/01 07:01:41 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -208,7 +208,8 @@ void		pmap_kprotect(vaddr_t, vm_prot_t);
 /* Assembly routines to flush TLB mappings */
 void sp_tlb_flush_pte(vaddr_t, int);
 void sp_tlb_flush_ctx(int);
-void sp_tlb_flush_all(void);
+void sp_tlb_flush_all_us(void);
+void sp_tlb_flush_all_usiii(void);
 
 #ifdef MULTIPROCESSOR
 void smp_tlb_flush_pte(vaddr_t, pmap_t);
