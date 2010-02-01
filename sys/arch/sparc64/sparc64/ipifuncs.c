@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.26 2010/01/15 23:57:07 nakayama Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.27 2010/02/01 02:42:33 mrg Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.26 2010/01/15 23:57:07 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.27 2010/02/01 02:42:33 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -67,21 +67,26 @@ static void	sparc64_ipi_error(const char *, sparc64_cpuset_t, sparc64_cpuset_t);
 void	sparc64_ipi_halt(void *);
 void	sparc64_ipi_pause(void *);
 void	sparc64_ipi_flush_pte(void *);
-void	sparc64_ipi_flush_ctx(void *);
-void	sparc64_ipi_flush_all(void *);
 
 /*
  * Process cpu stop-self event.
  */
-int
+void
 sparc64_ipi_halt_thiscpu(void *arg)
 {
+	extern void prom_printf(const char *fmt, ...);
 
 	printf("cpu%d: shutting down\n", cpu_number());
 	CPUSET_ADD(cpus_halted, cpu_number());
-	prom_stopself();
-
-	return(1);
+	if (((getver() & VER_IMPL) >> VER_IMPL_SHIFT) >= IMPL_CHEETAH) {
+		/*
+		 * prom_selfstop() doesn't seem to work on newer machines.
+		 */
+		spl0();
+		while (1)
+			/* nothing */;
+	} else
+		prom_stopself();
 }
 
 void
@@ -111,7 +116,7 @@ sparc64_do_pause(void)
 /*
  * Pause cpu.  This is called from locore.s after setting up a trapframe.
  */
-int
+void
 sparc64_ipi_pause_thiscpu(void *arg)
 {
 	int s;
@@ -134,7 +139,6 @@ sparc64_ipi_pause_thiscpu(void *arg)
 #endif
 
 	intr_restore(s);
-	return (1);
 }
 
 /*
