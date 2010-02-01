@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.146 2010/02/01 10:22:40 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.147 2010/02/01 11:58:39 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.146 2010/02/01 10:22:40 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.147 2010/02/01 11:58:39 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1277,9 +1277,11 @@ uvm_fault_lower_generic1(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_page **pages)
 {
+#ifdef DIAGNOSTIC
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 	struct vm_page *uobjpage = pages[flt->centeridx];
+#endif
 
 	/* locked: maps(read), amap(if there), uobj(if !null), uobjpage(if !null) */
 	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
