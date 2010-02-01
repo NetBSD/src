@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.10 2010/01/20 20:40:45 cyber Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.11 2010/02/01 04:16:19 matt Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -29,6 +29,7 @@
 #endif
 
 #include <mips/cpuregs.h>
+#include <mips/reg.h>
 
 struct tlbmask;
 
@@ -444,51 +445,56 @@ void mips_machdep_cache_config(void);
  * trapframe argument passed to trap()
  */
 
-#define TF_AST		0
-#define TF_V0		1
-#define TF_V1		2
-#define TF_A0		3
-#define TF_A1		4
-#define TF_A2		5
-#define TF_A3		6
-#define TF_T0		7
-#define TF_T1		8
-#define TF_T2		9
-#define TF_T3		10
+#if 0
+#define TF_AST		0		/* really zero */
+#define TF_V0		_R_V0
+#define TF_V1		_R_V1
+#define TF_A0		_R_A0
+#define TF_A1		_R_A1
+#define TF_A2		_R_A2
+#define TF_A3		_R_A3
+#define TF_T0		_R_T0
+#define TF_T1		_R_T1
+#define TF_T2		_R_T2
+#define TF_T3		_R_T3
 
 #if defined(__mips_n32) || defined(__mips_n64)
-#define TF_A4		11
-#define TF_A5		12
-#define TF_A6		13
-#define TF_A7		14
+#define TF_A4		_R_A4
+#define TF_A5		_R_A5
+#define TF_A6		_R_A6
+#define TF_A7		_R_A7
 #else
-#define TF_T4		11
-#define TF_T5		12
-#define TF_T6		13
-#define TF_T7		14
+#define TF_T4		_R_T4
+#define TF_T5		_R_T5
+#define TF_T6		_R_T6
+#define TF_T7		_R_T7
 #endif /* __mips_n32 || __mips_n64 */
 
-#define TF_TA0		11
-#define TF_TA1		12
-#define TF_TA2		13
-#define TF_TA3		14
+#define TF_TA0		_R_TA0
+#define TF_TA1		_R_TA1
+#define TF_TA2		_R_TA2
+#define TF_TA3		_R_TA3
 
-#define TF_T8		15
-#define TF_T9		16
+#define TF_T8		_R_T8
+#define TF_T9		_R_T9
 
-#define TF_RA		17
-#define TF_SR		18
-#define TF_MULLO	19
-#define TF_MULHI	20
-#define TF_EPC		21		/* may be changed by trap() call */
+#define TF_RA		_R_RA
+#define TF_SR		_R_SR
+#define TF_MULLO	_R_MULLO
+#define TF_MULHI	_R_MULLO
+#define TF_EPC		_R_PC		/* may be changed by trap() call */
 
-#define TF_NREGS	22
+#define	TF_NREGS	(sizeof(struct reg) / sizeof(mips_reg_t))
+#endif
 
 struct trapframe {
-	mips_reg_t tf_regs[TF_NREGS];
+	struct reg tf_registers;
+#define	tf_regs	tf_registers.r_regs
 	uint32_t   tf_ppl;		/* previous priority level */
 	mips_reg_t tf_pad;		/* for 8 byte aligned */
 };
+
+CTASSERT(sizeof(struct trapframe) % (4*sizeof(mips_reg_t)) == 0);
 
 /*
  * Stack frame for kernel traps. four args passed in registers.
@@ -500,7 +506,7 @@ struct kernframe {
 #if defined(__mips_o32) || defined(__mips_o64)
 	register_t cf_args[4 + 1];
 #if defined(__mips_o32)
-	register_t cf_pad;		/* (for 8 word alignment) */
+	register_t cf_pad;		/* (for 8 byte alignment) */
 #endif
 #endif
 #if defined(__mips_n32) || defined(__mips_n64)
@@ -510,5 +516,8 @@ struct kernframe {
 	register_t cf_ra;
 	struct trapframe cf_frame;
 };
+
+CTASSERT(sizeof(struct kernframe) % (2*sizeof(mips_reg_t)) == 0);
+
 #endif	/* _KERNEL */
 #endif	/* _MIPS_LOCORE_H */

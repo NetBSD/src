@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.8 2010/01/30 23:49:31 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.9 2010/02/01 04:16:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.8 2010/01/30 23:49:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.9 2010/02/01 04:16:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ paddr_t kvtophys(vaddr_t);	/* XXX */
 
 /*
  * Finish a fork operation, with lwp l2 nearly set up.
- * Copy and update the pcb and trap frame, making the child ready to run.
+ * Copy and update the pcb and trapframe, making the child ready to run.
  *
  * Rig the child's kernel stack so that it will start out in
  * lwp_trampoline() and call child_return() with l2 as an
@@ -128,7 +128,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
 	struct pcb *pcb;
-	struct frame *f;
+	struct trapframe *tf;
 	pt_entry_t *pte;
 	int i, x;
 
@@ -152,16 +152,16 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * will be to right address, with correct registers.
 	 */
 	memcpy(&l2->l_addr->u_pcb, &l1->l_addr->u_pcb, sizeof(struct pcb));
-	f = (struct frame *)((char *)l2->l_addr + USPACE) - 1;
-	*f = *l1->l_md.md_regs;
+	tf = (struct trapframe *)((char *)l2->l_addr + USPACE) - 1;
+	*tf = *l1->l_md.md_utf;
 
 	/*
 	 * If specified, give the child a different stack.
 	 */
 	if (stack != NULL)
-		f->f_regs[_R_SP] = (intptr_t)stack + stacksize;
+		tf->tf_regs[_R_SP] = (intptr_t)stack + stacksize;
 
-	l2->l_md.md_regs = f;
+	l2->l_md.md_utf = tf;
 	l2->l_md.md_flags = l1->l_md.md_flags & MDP_FPUSED;
 	x = (MIPS_HAS_R4K_MMU) ?
 	    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) :
@@ -174,7 +174,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb->pcb_context.val[_L_S0] = (intptr_t)func;			/* S0 */
 	pcb->pcb_context.val[_L_S1] = (intptr_t)arg;			/* S1 */
 	pcb->pcb_context.val[MIPS_CURLWP_LABEL] = (intptr_t)l2;		/* T8 */
-	pcb->pcb_context.val[_L_SP] = (intptr_t)f;			/* SP */
+	pcb->pcb_context.val[_L_SP] = (intptr_t)tf;			/* SP */
 	pcb->pcb_context.val[_L_RA] = (intptr_t)lwp_trampoline;		/* RA */
 #ifdef _LP64
 	KASSERT(pcb->pcb_context.val[_L_SR] & MIPS_SR_KX);
@@ -192,14 +192,14 @@ void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
-	struct frame *f = l->l_md.md_regs;
+	struct trapframe *tf = l->l_md.md_utf;
 
-	KASSERT(f == (struct frame *)((char *)l->l_addr + USPACE) - 1);
+	KASSERT(tf == (struct trapframe *)((char *)l->l_addr + USPACE) - 1);
 
 	pcb->pcb_context.val[_L_S0] = (intptr_t)func;			/* S0 */
 	pcb->pcb_context.val[_L_S1] = (intptr_t)arg;			/* S1 */
 	pcb->pcb_context.val[MIPS_CURLWP_LABEL] = (intptr_t)l;		/* T8 */
-	pcb->pcb_context.val[_L_SP] = (intptr_t)f;			/* SP */
+	pcb->pcb_context.val[_L_SP] = (intptr_t)tf;			/* SP */
 	pcb->pcb_context.val[_L_RA] = (intptr_t)setfunc_trampoline;	/* RA */
 #ifdef _LP64
 	KASSERT(pcb->pcb_context.val[_L_SR] & MIPS_SR_KX);
@@ -259,7 +259,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	int error;
 	struct coreseg cseg;
 	struct cpustate {
-		struct frame frame;
+		struct trapframe frame;
 		struct fpreg fpregs;
 	} cpustate;
 
@@ -274,7 +274,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 
 	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
 		savefpregs(l);
-	cpustate.frame = *l->l_md.md_regs;
+	cpustate.frame = *l->l_md.md_utf;
 	cpustate.fpregs = l->l_addr->u_pcb.pcb_fpregs;
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
