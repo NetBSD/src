@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.29 2010/01/20 22:15:27 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.30 2010/02/01 04:16:19 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.29 2010/01/20 22:15:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.30 2010/02/01 04:16:19 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -1214,21 +1214,21 @@ cpu_identify(device_t dev)
 void
 setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
-	struct frame *f = l->l_md.md_regs;
+	struct trapframe *tf = l->l_md.md_utf;
 
-	memset(f, 0, sizeof(struct frame));
-	f->f_regs[_R_SP] = (int)stack;
-	f->f_regs[_R_PC] = (int)pack->ep_entry & ~3;
-	f->f_regs[_R_T9] = (int)pack->ep_entry & ~3; /* abicall requirement */
-	f->f_regs[_R_SR] = PSL_USERSET;
+	memset(tf, 0, sizeof(struct trapframe));
+	tf->tf_regs[_R_SP] = (int)stack;
+	tf->tf_regs[_R_PC] = (int)pack->ep_entry & ~3;
+	tf->tf_regs[_R_T9] = (int)pack->ep_entry & ~3; /* abicall requirement */
+	tf->tf_regs[_R_SR] = PSL_USERSET;
 #if !defined(__mips_o32)
 	/*
 	 * allow 64bit ops in userland for non-O32 ABIs
 	 */
 	if (l->l_proc->p_md.md_abi != _MIPS_BSD_API_O32)
-		f->f_regs[_R_SR] |= MIPS_SR_UX;
+		tf->tf_regs[_R_SR] |= MIPS_SR_UX;
 	if (_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi))
-		f->f_regs[_R_SR] |= MIPS3_SR_FR;
+		tf->tf_regs[_R_SR] |= MIPS3_SR_FR;
 #endif
 	/*
 	 * Set up arguments for _start():
@@ -1239,10 +1239,10 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	 *	  vectors.  They are fixed up by ld.elf_so.
 	 *	- ps_strings is a NetBSD extension.
 	 */
-	f->f_regs[_R_A0] = (intptr_t)stack;
-	f->f_regs[_R_A1] = 0;
-	f->f_regs[_R_A2] = 0;
-	f->f_regs[_R_A3] = (intptr_t)l->l_proc->p_psstr;
+	tf->tf_regs[_R_A0] = (intptr_t)stack;
+	tf->tf_regs[_R_A1] = 0;
+	tf->tf_regs[_R_A2] = 0;
+	tf->tf_regs[_R_A3] = (intptr_t)l->l_proc->p_psstr;
 
 	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
 		fpcurlwp = &lwp0;
@@ -1319,7 +1319,9 @@ u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int	dumpsize = 0;		/* pages */
 long	dumplo = 0;		/* blocks */
 
+#if 0
 struct user dumppcb;		/* Actually, struct pcb would do. */
+#endif
 
 /*
  * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
@@ -1474,8 +1476,10 @@ dumpsys(void)
 	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int error;
 
+#if 0
 	/* Save registers. */
 	savectx(&dumppcb);
+#endif
 
 	if (dumpdev == NODEV)
 		return;
@@ -1618,9 +1622,9 @@ mips_init_lwp0_uarea(void)
 {
 	vaddr_t v = uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	lwp0.l_md.md_utf = (struct trapframe *)(v + USPACE) - 1;
 #ifdef _LP64
-	lwp0.l_md.md_regs->f_regs[_R_SR] = MIPS_SR_KX;
+	lwp0.l_md.md_utf->tf_regs[_R_SR] = MIPS_SR_KX;
 #endif
 	lwp0.l_addr->u_pcb.pcb_context.val[_L_SR] =
 #ifdef _LP64
@@ -1792,20 +1796,20 @@ void
 savefpregs(struct lwp *l)
 {
 #ifndef NOFPU
-	struct frame * const f = l->l_md.md_regs;
+	struct trapframe * const tf = l->l_md.md_utf;
 	mips_fpreg_t * const fp = l->l_addr->u_pcb.pcb_fpregs.r_regs;
 	uint32_t status, fpcsr;
 	
 	/*
 	 * Don't do anything if the FPU is already off.
 	 */
-	if ((f->f_regs[_R_SR] & MIPS_SR_COP_1_BIT) == 0)
+	if ((tf->tf_regs[_R_SR] & MIPS_SR_COP_1_BIT) == 0)
 		return;
 
 	/*
 	 * this process yielded FPA.
 	 */
-	KASSERT(f->f_regs[_R_SR] & MIPS_SR_COP_1_BIT);	/* it should be on */
+	KASSERT(tf->tf_regs[_R_SR] & MIPS_SR_COP_1_BIT);	/* it should be on */
 
 	/*
 	 * turnoff interrupts enabling CP1 to read FPCSR register.
@@ -1821,18 +1825,18 @@ savefpregs(struct lwp *l)
 		".set reorder"					"\n\t"
 		".set at" 
 		: "=&r" (status), "=r"(fpcsr)
-		: "r"(f->f_regs[_R_SR] & (MIPS_SR_COP_1_BIT|MIPS3_SR_FR|MIPS_SR_KX)));
+		: "r"(tf->tf_regs[_R_SR] & (MIPS_SR_COP_1_BIT|MIPS3_SR_FR|MIPS_SR_KX)));
 
 	/*
 	 * Make sure we don't reenable FP when we return to userspace.
 	 */
-	f->f_regs[_R_SR] ^= MIPS_SR_COP_1_BIT;
+	tf->tf_regs[_R_SR] ^= MIPS_SR_COP_1_BIT;
 
 	/*
 	 * save FPCSR and FP register values.
 	 */
 #if !defined(__mips_o32)
-	if (f->f_regs[_R_SR] & MIPS3_SR_FR) {
+	if (tf->tf_regs[_R_SR] & MIPS3_SR_FR) {
 		KASSERT(_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi));
 		fp[32] = fpcsr;
 		__asm volatile (
@@ -1923,7 +1927,7 @@ void
 loadfpregs(struct lwp *l)
 {
 #ifndef NOFPU
-	struct frame * const f = l->l_md.md_regs;
+	struct trapframe * const tf = l->l_md.md_utf;
 	mips_fpreg_t * const fp = l->l_addr->u_pcb.pcb_fpregs.r_regs;
 	uint32_t status;
 	uint32_t fpcsr;
@@ -1932,7 +1936,7 @@ loadfpregs(struct lwp *l)
 	 * Got turned, maybe due to savefpregs.
 	 */
 	if (fpcurlwp == l) {
-		f->f_regs[_R_SR] |= MIPS_SR_COP_1_BIT;
+		tf->tf_regs[_R_SR] |= MIPS_SR_COP_1_BIT;
 		return;
 	} else {
 		savefpregs(fpcurlwp);
@@ -1942,7 +1946,7 @@ loadfpregs(struct lwp *l)
 	/*
 	 * Enable the FP when this lwp return to userspace.
 	 */
-	f->f_regs[_R_SR] |= MIPS_SR_COP_1_BIT;
+	tf->tf_regs[_R_SR] |= MIPS_SR_COP_1_BIT;
 
 	/*
 	 * turnoff interrupts enabling CP1 to load FP registers.
@@ -1956,13 +1960,13 @@ loadfpregs(struct lwp *l)
 		".set reorder"					"\n\t"
 		".set at"
 	    : "=&r"(status)
-	    : "r"(f->f_regs[_R_SR] & (MIPS_SR_COP_1_BIT|MIPS3_SR_FR|MIPS_SR_KX)));
+	    : "r"(tf->tf_regs[_R_SR] & (MIPS_SR_COP_1_BIT|MIPS3_SR_FR|MIPS_SR_KX)));
 
 	/*
 	 * load FP registers and establish processes' FP context.
 	 */
 #if !defined(__mips_o32)
-	if (f->f_regs[_R_SR] & MIPS3_SR_FR) {
+	if (tf->tf_regs[_R_SR] & MIPS3_SR_FR) {
 		KASSERT(_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi));
 		__asm volatile (
 			".set noreorder			;"
@@ -2113,7 +2117,7 @@ void
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
     void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
-	struct frame *f = l->l_md.md_regs;
+	struct trapframe *tf = l->l_md.md_utf;
 	struct saframe frame;
 #ifdef COMPAT_NETBSD32
 	struct saframe32 frame32;
@@ -2156,33 +2160,33 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 		/* NOTREACHED */
 	}
 
-	f->f_regs[_R_PC] = (intptr_t)upcall;
-	f->f_regs[_R_SP] = (intptr_t)usf;
-	f->f_regs[_R_A0] = type;
-	f->f_regs[_R_A1] = (intptr_t)sas;
-	f->f_regs[_R_A2] = nevents;
-	f->f_regs[_R_A3] = ninterrupted;
-	f->f_regs[_R_S8] = 0;
-	f->f_regs[_R_RA] = 0;
-	f->f_regs[_R_T9] = (intptr_t)upcall;  /* t9=Upcall function*/
+	tf->tf_regs[_R_PC] = (intptr_t)upcall;
+	tf->tf_regs[_R_SP] = (intptr_t)usf;
+	tf->tf_regs[_R_A0] = type;
+	tf->tf_regs[_R_A1] = (intptr_t)sas;
+	tf->tf_regs[_R_A2] = nevents;
+	tf->tf_regs[_R_A3] = ninterrupted;
+	tf->tf_regs[_R_S8] = 0;
+	tf->tf_regs[_R_RA] = 0;
+	tf->tf_regs[_R_T9] = (intptr_t)upcall;  /* t9=Upcall function*/
 }
 
 
 void
 cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
-	const struct frame *f = l->l_md.md_regs;
+	const struct trapframe *tf = l->l_md.md_utf;
 	__greg_t *gr = mcp->__gregs;
 	__greg_t ras_pc;
 
 	/* Save register context. Dont copy R0 - it is always 0 */
-	memcpy(&gr[_REG_AT], &f->f_regs[_R_AST], sizeof(mips_reg_t) * 31);
+	memcpy(&gr[_REG_AT], &tf->tf_regs[_R_AST], sizeof(mips_reg_t) * 31);
 
-	gr[_REG_MDLO]  = f->f_regs[_R_MULLO];
-	gr[_REG_MDHI]  = f->f_regs[_R_MULHI];
-	gr[_REG_CAUSE] = f->f_regs[_R_CAUSE];
-	gr[_REG_EPC]   = f->f_regs[_R_PC];
-	gr[_REG_SR]    = f->f_regs[_R_SR];
+	gr[_REG_MDLO]  = tf->tf_regs[_R_MULLO];
+	gr[_REG_MDHI]  = tf->tf_regs[_R_MULHI];
+	gr[_REG_CAUSE] = tf->tf_regs[_R_CAUSE];
+	gr[_REG_EPC]   = tf->tf_regs[_R_PC];
+	gr[_REG_SR]    = tf->tf_regs[_R_SR];
 
 	if ((ras_pc = (intptr_t)ras_lookup(l->l_proc,
 	    (void *) (intptr_t)gr[_REG_EPC])) != -1)
@@ -2221,7 +2225,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 int
 cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
-	struct frame *f = l->l_md.md_regs;
+	struct trapframe *tf = l->l_md.md_utf;
 	struct proc *p = l->l_proc;
 	const __greg_t *gr = mcp->__gregs;
 
@@ -2229,13 +2233,13 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	if (flags & _UC_CPU) {
 		/* Save register context. */
 		/* XXX:  Do we validate the addresses?? */
-		memcpy(&f->f_regs[_R_AST], &gr[_REG_AT],
+		memcpy(&tf->tf_regs[_R_AST], &gr[_REG_AT],
 		       sizeof(mips_reg_t) * 31);
 
-		f->f_regs[_R_MULLO] = gr[_REG_MDLO];
-		f->f_regs[_R_MULHI] = gr[_REG_MDHI];
-		f->f_regs[_R_CAUSE] = gr[_REG_CAUSE];
-		f->f_regs[_R_PC]    = gr[_REG_EPC];
+		tf->tf_regs[_R_MULLO] = gr[_REG_MDLO];
+		tf->tf_regs[_R_MULHI] = gr[_REG_MDHI];
+		tf->tf_regs[_R_CAUSE] = gr[_REG_CAUSE];
+		tf->tf_regs[_R_PC]    = gr[_REG_EPC];
 		/* Do not restore SR. */
 	}
 
@@ -2243,7 +2247,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	if (flags & _UC_FPU) {
 		size_t fplen;
 		/* Disable the FPU to fault in FP registers. */
-		f->f_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
+		tf->tf_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
 		fpcurlwp = &lwp0;
 
 #if !defined(__mips_o32)

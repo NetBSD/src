@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.29.62.2 2009/08/23 03:38:19 matt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.29.62.3 2010/02/01 04:16:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.29.62.2 2009/08/23 03:38:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.29.62.3 2010/02/01 04:16:19 matt Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -108,25 +108,23 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.29.62.2 2009/08/23 03:38:19 ma
 #include <mips/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
 
-CTASSERT(sizeof(struct reg) == sizeof(((struct frame *)0)->f_regs));
-
 int
 process_read_regs(struct lwp *l, struct reg *regs)
 {
 
-	memcpy(regs, l->l_md.md_regs->f_regs, sizeof(struct reg));
+	*regs = l->l_md.md_utf->tf_registers;
 	return 0;
 }
 
 int
 process_write_regs(struct lwp *l, const struct reg *regs)
 {
-	struct frame *f = l->l_md.md_regs;
+	struct trapframe * const tf = l->l_md.md_utf;
 	mips_reg_t sr;
 
-	sr = f->f_regs[_R_SR];
-	memcpy(l->l_md.md_regs, regs, sizeof(struct reg));
-	f->f_regs[_R_SR] = sr;
+	sr = tf->tf_regs[_R_SR];
+	tf->tf_registers = *regs;
+	tf->tf_regs[_R_SR] = sr;
 	return 0;
 }
 
@@ -181,6 +179,6 @@ int
 process_set_pc(struct lwp *l, void *addr)
 {
 
-	((struct frame *)l->l_md.md_regs)->f_regs[_R_PC] = (intptr_t)addr;
+	l->l_md.md_utf->tf_regs[_R_PC] = (intptr_t)addr;
 	return 0;
 }

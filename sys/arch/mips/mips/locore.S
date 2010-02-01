@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167.38.7 2010/01/30 23:49:31 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.167.38.8 2010/02/01 04:16:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -144,7 +144,7 @@ _C_LABEL(kernel_text):
 
 	PTR_L	sp, L_ADDR(MIPS_CURLWP)		# switch to lwp0 stack
 	nop
-	PTR_ADDU sp, USPACE - FRAME_SIZ - CALLFRAME_SIZ
+	PTR_ADDU sp, USPACE - TF_SIZ - CALLFRAME_SIZ
 	jal	_C_LABEL(main)			# main(void)
 	nop
 	PANIC("main() returned")		# main never returns
@@ -210,17 +210,17 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	PTR_L	t1, L_PROC(MIPS_CURLWP)
 	PTR_L	a0, L_ADDR(MIPS_CURLWP)
 	PTR_L	v1, P_RASLIST(t1)
-	PTR_ADDU t0, a0, USPACE - FRAME_SIZ
+	PTR_ADDU t0, a0, USPACE - TF_SIZ
 	beq	v1, zero, 1f
 	nop
 	move	a0, t1
 	jal	_C_LABEL(ras_lookup)
-	PTR_L	a1, FRAME_EPC(t0)
+	PTR_L	a1, TF_REG_EPC(t0)
 	PTR_L	a0, L_ADDR(MIPS_CURLWP)
 	li	v1, -1
 	beq	v1, v0, 1f
-	PTR_ADDU t0, a0, USPACE - FRAME_SIZ
-	PTR_S	v0, FRAME_EPC(t0)
+	PTR_ADDU t0, a0, USPACE - TF_SIZ
+	PTR_S	v0, TF_REG_EPC(t0)
 1:
 	/* New context is now active */
 #ifdef IPL_ICU_MASK
@@ -710,7 +710,7 @@ XNESTED(MachFPTrap)
 	and		a1, a1, t0
 	ori		a1, a1, T_RES_INST << MIPS_CR_EXC_CODE_SHIFT
 	REG_PROLOGUE
-	REG_S		a1, FRAME_CAUSE(a3)
+	REG_S		a1, TF_REG_CAUSE(a3)
 	REG_EPILOGUE
 
 	move		a1, a0				# code = instruction
@@ -726,7 +726,7 @@ XNESTED(MachFPTrap)
  */
 3:
 	REG_PROLOGUE
-	REG_S		a1, FRAME_CAUSE(a3)
+	REG_S		a1, TF_REG_CAUSE(a3)
 	REG_EPILOGUE
 
 	and		a0, t0, ~MIPS_FPU_EXCEPTION_BITS

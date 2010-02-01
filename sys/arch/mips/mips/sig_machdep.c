@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.16.14.2 2009/08/21 17:40:22 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.16.14.3 2010/02/01 04:16:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16.14.2 2009/08/21 17:40:22 matt Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16.14.3 2010/02/01 04:16:20 matt Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -55,7 +55,7 @@ void *
 getframe(struct lwp *l, int sig, int *onstack)
 {
 	struct proc *p = l->l_proc;
-	struct frame *fp = l->l_md.md_regs;
+	struct trapframe *tf = l->l_md.md_utf;
  
 	/* Do we need to jump onto the signal stack? */
 	*onstack = (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
@@ -63,7 +63,7 @@ getframe(struct lwp *l, int sig, int *onstack)
 	if (*onstack)
 		return (char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size;
 	else
-		return (void *)(intptr_t)fp->f_regs[_R_SP];
+		return (void *)(intptr_t)tf->tf_regs[_R_SP];
 }		
 
 struct sigframe_siginfo {
@@ -80,15 +80,14 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
+	struct trapframe *tf = l->l_md.md_utf;
 	int onstack, error;
 	int sig = ksi->ksi_signo;
 	struct sigframe_siginfo *fp = getframe(l, sig, &onstack);
-	struct frame *tf;
 	ucontext_t uc;
 	size_t ucsz;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	tf = l->l_md.md_regs;
 	fp--;
 
         /* Build stack frame for signal trampoline. */
@@ -132,14 +131,14 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * handler.  The return address will be set up to point
 	 * to the signal trampoline to bounce us back.
 	 */
-	tf->f_regs[_R_A0] = sig;
-	tf->f_regs[_R_A1] = (intptr_t)&fp->sf_si;
-	tf->f_regs[_R_A2] = (intptr_t)&fp->sf_uc;
+	tf->tf_regs[_R_A0] = sig;
+	tf->tf_regs[_R_A1] = (intptr_t)&fp->sf_si;
+	tf->tf_regs[_R_A2] = (intptr_t)&fp->sf_uc;
 
-	tf->f_regs[_R_PC] = (intptr_t)catcher;
-	tf->f_regs[_R_T9] = (intptr_t)catcher;
-	tf->f_regs[_R_SP] = (intptr_t)fp;
-	tf->f_regs[_R_RA] = (intptr_t)ps->sa_sigdesc[sig].sd_tramp;
+	tf->tf_regs[_R_PC] = (intptr_t)catcher;
+	tf->tf_regs[_R_T9] = (intptr_t)catcher;
+	tf->tf_regs[_R_SP] = (intptr_t)fp;
+	tf->tf_regs[_R_RA] = (intptr_t)ps->sa_sigdesc[sig].sd_tramp;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)

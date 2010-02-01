@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.12 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.12.16.1 2010/02/01 04:16:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.12 2008/04/28 20:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.12.16.1 2010/02/01 04:16:19 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -198,44 +198,42 @@ kgdb_getregs(regs, gdb_regs)
 	db_regs_t *regs;
 	kgdb_reg_t *gdb_regs;
 {
-	struct frame *f = (struct frame *)regs;
-
 	memset(gdb_regs, 0, KGDB_NUMREGS * sizeof(kgdb_reg_t));
-	gdb_regs[ 1] = f->f_regs[_R_AST];	/* AT */
-	gdb_regs[ 2] = f->f_regs[_R_V0];	/* V0 */
-	gdb_regs[ 3] = f->f_regs[_R_V1];	/* V1 */
-	gdb_regs[ 4] = f->f_regs[_R_A0];	/* A0 */
-	gdb_regs[ 5] = f->f_regs[_R_A1];	/* A1 */
-	gdb_regs[ 6] = f->f_regs[_R_A2];	/* A2 */
-	gdb_regs[ 7] = f->f_regs[_R_A3];	/* A3 */
-	gdb_regs[ 8] = f->f_regs[_R_T0];	/* T0 */
-	gdb_regs[ 9] = f->f_regs[_R_T1];	/* T1 */
-	gdb_regs[10] = f->f_regs[_R_T2];	/* T2 */
-	gdb_regs[11] = f->f_regs[_R_T3];	/* T3 */
-	gdb_regs[12] = f->f_regs[_R_T4];	/* T4 */
-	gdb_regs[13] = f->f_regs[_R_T5];	/* T5 */
-	gdb_regs[14] = f->f_regs[_R_T6];	/* T6 */
-	gdb_regs[15] = f->f_regs[_R_T7];	/* T7 */
-	gdb_regs[16] = f->f_regs[_R_S0];	/* S0 */
-	gdb_regs[17] = f->f_regs[_R_S1];	/* S1 */
-	gdb_regs[18] = f->f_regs[_R_S2];	/* S2 */
-	gdb_regs[19] = f->f_regs[_R_S3];	/* S3 */
-	gdb_regs[20] = f->f_regs[_R_S4];	/* S4 */
-	gdb_regs[21] = f->f_regs[_R_S5];	/* S5 */
-	gdb_regs[22] = f->f_regs[_R_S6];	/* S6 */
-	gdb_regs[23] = f->f_regs[_R_S7];	/* S7 */
-	gdb_regs[24] = f->f_regs[_R_T8];	/* T8 */
-	gdb_regs[25] = f->f_regs[_R_T9];	/* T9 */
-	gdb_regs[28] = f->f_regs[_R_GP];	/* GP */
-	gdb_regs[29] = f->f_regs[_R_SP];	/* SP */
-	gdb_regs[30] = f->f_regs[_R_S8];	/* S8 */
-	gdb_regs[31] = f->f_regs[_R_RA];	/* RA */
-	gdb_regs[32] = f->f_regs[_R_SR];	/* SR */
-	gdb_regs[33] = f->f_regs[_R_MULLO];	/* MULLO */
-	gdb_regs[34] = f->f_regs[_R_MULHI];	/* MULHI */
+	gdb_regs[ 1] = regs->r_regs[_R_AST];	/* AT */
+	gdb_regs[ 2] = regs->r_regs[_R_V0];	/* V0 */
+	gdb_regs[ 3] = regs->r_regs[_R_V1];	/* V1 */
+	gdb_regs[ 4] = regs->r_regs[_R_A0];	/* A0 */
+	gdb_regs[ 5] = regs->r_regs[_R_A1];	/* A1 */
+	gdb_regs[ 6] = regs->r_regs[_R_A2];	/* A2 */
+	gdb_regs[ 7] = regs->r_regs[_R_A3];	/* A3 */
+	gdb_regs[ 8] = regs->r_regs[_R_T0];	/* T0 */
+	gdb_regs[ 9] = regs->r_regs[_R_T1];	/* T1 */
+	gdb_regs[10] = regs->r_regs[_R_T2];	/* T2 */
+	gdb_regs[11] = regs->r_regs[_R_T3];	/* T3 */
+	gdb_regs[12] = regs->r_regs[_R_T4];	/* T4 */
+	gdb_regs[13] = regs->r_regs[_R_T5];	/* T5 */
+	gdb_regs[14] = regs->r_regs[_R_T6];	/* T6 */
+	gdb_regs[15] = regs->r_regs[_R_T7];	/* T7 */
+	gdb_regs[16] = regs->r_regs[_R_S0];	/* S0 */
+	gdb_regs[17] = regs->r_regs[_R_S1];	/* S1 */
+	gdb_regs[18] = regs->r_regs[_R_S2];	/* S2 */
+	gdb_regs[19] = regs->r_regs[_R_S3];	/* S3 */
+	gdb_regs[20] = regs->r_regs[_R_S4];	/* S4 */
+	gdb_regs[21] = regs->r_regs[_R_S5];	/* S5 */
+	gdb_regs[22] = regs->r_regs[_R_S6];	/* S6 */
+	gdb_regs[23] = regs->r_regs[_R_S7];	/* S7 */
+	gdb_regs[24] = regs->r_regs[_R_T8];	/* T8 */
+	gdb_regs[25] = regs->r_regs[_R_T9];	/* T9 */
+	gdb_regs[28] = regs->r_regs[_R_GP];	/* GP */
+	gdb_regs[29] = regs->r_regs[_R_SP];	/* SP */
+	gdb_regs[30] = regs->r_regs[_R_S8];	/* S8 */
+	gdb_regs[31] = regs->r_regs[_R_RA];	/* RA */
+	gdb_regs[32] = regs->r_regs[_R_SR];	/* SR */
+	gdb_regs[33] = regs->r_regs[_R_MULLO];	/* MULLO */
+	gdb_regs[34] = regs->r_regs[_R_MULHI];	/* MULHI */
 	gdb_regs[35] = kgdb_vaddr;		/* BAD VADDR */
 	gdb_regs[36] = kgdb_cause;		/* CAUSE */
-	gdb_regs[37] = f->f_regs[_R_PC];	/* PC */
+	gdb_regs[37] = regs->r_regs[_R_PC];	/* PC */
 }
 
 /*
@@ -246,9 +244,7 @@ kgdb_setregs(regs, gdb_regs)
 	db_regs_t *regs;
 	kgdb_reg_t *gdb_regs;
 {
-	struct frame *f = (struct frame *)regs;
-	
-	f->f_regs[_R_PC] = gdb_regs[37];   /* PC */
+	regs->r_regs[_R_PC] = gdb_regs[37];   /* PC */
 }	
 
 /*
