@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.48 2009/12/05 08:00:18 nakayama Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.49 2010/02/01 06:26:15 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -362,6 +362,7 @@
 #define	DEMAP_CTX_NUCLEUS		((0x06)<<4)	/* Demap all of kernel CTXT */
 #define	DEMAP_CTX_PRIMARY		((0x04)<<4)	/* Demap all of primary CTXT */
 #define	DEMAP_CTX_SECONDARY		((0x05)<<4)	/* Demap all of secondary CTXT */
+#define	DEMAP_ALL			((0x08)<<4)	/* Demap all non-locked TLB entries [USIII] */
 
 /*
  * Interrupt registers.  This really gets hairy.
