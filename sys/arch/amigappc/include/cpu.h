@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 2009/07/21 09:49:15 phx Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17 2010/02/02 19:16:57 phx Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -57,6 +57,11 @@ int     is_a4000 (void);
  * Prototypes from machdep.c
  */
 int dma_cachectl(void *, int);
+
+/*
+ * Prototypes from powerpc/powerpc/trap.c
+ */
+int badaddr_read(void *, size_t, int *);
 #endif
 
 #include <powerpc/cpu.h>
