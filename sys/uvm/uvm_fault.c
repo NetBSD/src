@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.152 2010/02/02 05:58:16 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.153 2010/02/02 06:06:02 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.152 2010/02/02 05:58:16 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.153 2010/02/02 06:06:02 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1462,11 +1462,6 @@ uvm_fault_upper(
 }
 
 static int
-uvm_fault_upper_loan_break(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_anon *anon, struct uvm_object **ruobj);
-
-static int
 uvm_fault_upper_loan(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_anon *anon, struct uvm_object **ruobj)
@@ -1499,7 +1494,7 @@ uvm_fault_upper_loan(
 
 		/* >1 case is already ok */
 		if (anon->an_ref == 1) {
-			error = uvm_fault_upper_loan_break(ufi, flt, anon, ruobj);
+			error = uvm_loanbreak_anon(anon, ruobj);
 			if (error != 0) {
 				uvmfault_unlockall(ufi, amap, *ruobj, anon);
 				uvm_wait("flt_noram2");
@@ -1508,67 +1503,6 @@ uvm_fault_upper_loan(
 		}
 	}
 	return error;
-}
-
-/* XXXUEBS consider to move this elsewhere */
-static int
-uvm_fault_upper_loan_break(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_anon *anon, struct uvm_object **ruobj)
-{
-	struct vm_page *pg;
-
-	/* get new un-owned replacement page */
-	pg = uvm_pagealloc(NULL, 0, NULL, 0);
-	if (pg == NULL) {
-		return ENOMEM;
-	}
-
-	/*
-	 * copy data, kill loan, and drop uobj lock
-	 * (if any)
-	 */
-	/* copy old -> new */
-	uvm_pagecopy(anon->an_page, pg);
-
-	/* force reload */
-	pmap_page_protect(anon->an_page, VM_PROT_NONE);
-	mutex_enter(&uvm_pageqlock);	  /* KILL loan */
-
-	anon->an_page->uanon = NULL;
-	/* in case we owned */
-	anon->an_page->pqflags &= ~PQ_ANON;
-
-	if (*ruobj) {
-		/* if we were receiver of loan */
-		anon->an_page->loan_count--;
-	} else {
-		/*
-		 * we were the lender (A->K); need
-		 * to remove the page from pageq's.
-		 */
-		uvm_pagedequeue(anon->an_page);
-	}
-
-	if (*ruobj) {
-		mutex_exit(&(*ruobj)->vmobjlock);
-		*ruobj = NULL;
-	}
-
-	/* install new page in anon */
-	anon->an_page = pg;
-	pg->uanon = anon;
-	pg->pqflags |= PQ_ANON;
-
-	uvm_pageactivate(pg);
-	mutex_exit(&uvm_pageqlock);
-
-	pg->flags &= ~(PG_BUSY|PG_FAKE);
-	UVM_PAGE_OWN(pg, NULL);
-
-	/* done! */
-
-	return 0;
 }
 
 static int
