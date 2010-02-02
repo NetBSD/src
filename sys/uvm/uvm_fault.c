@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.155 2010/02/02 17:40:43 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.156 2010/02/02 18:49:23 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.155 2010/02/02 17:40:43 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.156 2010/02/02 18:49:23 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -725,10 +725,10 @@ static int uvm_fault_upper(
     struct vm_anon **);
 static int uvm_fault_lower_generic1(
     struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct vm_page *);
+    struct uvm_object *, struct vm_page *);
 static int uvm_fault_lower_generic2(
     struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct vm_page *);
+    struct uvm_object *, struct vm_page *);
 
 int
 uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
@@ -1206,7 +1206,7 @@ uvm_fault_lower_generic(
 	} else {
 		uvm_fault_lower_generic_lookup(ufi, flt, pages);
 	}
-	return uvm_fault_lower_generic1(ufi, flt, pages[flt->centeridx]);
+	return uvm_fault_lower_generic1(ufi, flt, uobj, pages[flt->centeridx]);
 }
 
 static int
@@ -1322,11 +1322,10 @@ uvm_fault_lower_generic_lookup_neighbor(
 static int
 uvm_fault_lower_generic1(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_page *uobjpage)
+	struct uvm_object *uobj, struct vm_page *uobjpage)
 {
 #ifdef DIAGNOSTIC
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
-	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 #endif
 
 	/* locked: maps(read), amap(if there), uobj(if !null), uobjpage(if !null) */
@@ -1353,7 +1352,7 @@ uvm_fault_lower_generic1(
 	 * redirect case 2: if we are not shadowed, go to case 2.
 	 */
 
-	return uvm_fault_lower_generic2(ufi, flt, uobjpage);
+	return uvm_fault_lower_generic2(ufi, flt, uobj, uobjpage);
 }
 
 static int
@@ -1685,19 +1684,19 @@ uvm_fault_upper_done(
 static int
 uvm_fault_lower_generic_io(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_page **ruobjpage);
+	struct uvm_object **ruobj, struct vm_page **ruobjpage);
 static int
 uvm_fault_lower_generic3(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_page *uobjpage, bool promote);
+	struct uvm_object *uobj, struct vm_page *uobjpage, bool promote);
 static int
 uvm_fault_lower_generic_direct(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_page *uobjpage);
+	struct uvm_object *uobj, struct vm_page *uobjpage);
 static int
 uvm_fault_lower_generic_promote(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_page *uobjpage);
+	struct uvm_object *uobj, struct vm_page *uobjpage);
 static int
 uvm_fault_lower_generic_enter(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
@@ -1712,12 +1711,11 @@ uvm_fault_lower_generic_done(
 static int
 uvm_fault_lower_generic2(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_page *uobjpage)
+	struct uvm_object *uobj, struct vm_page *uobjpage)
 {
 #ifdef DIAGNOSTIC
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
 #endif
-	struct uvm_object * const uobj = ufi->entry->object.uvm_obj;
 	bool promote;
 	int error;
 
@@ -1763,20 +1761,20 @@ uvm_fault_lower_generic2(
 		/* update rusage counters */
 		curlwp->l_ru.ru_minflt++;
 	} else {
-		error = uvm_fault_lower_generic_io(ufi, flt, &uobjpage);
+		error = uvm_fault_lower_generic_io(ufi, flt, &uobj, &uobjpage);
 		if (error != 0)
 			return error;
 	}
-	return uvm_fault_lower_generic3(ufi, flt, uobjpage, promote);
+	return uvm_fault_lower_generic3(ufi, flt, uobj, uobjpage, promote);
 }
 
 static int
 uvm_fault_lower_generic_io(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_page **ruobjpage)
+	struct uvm_object **ruobj, struct vm_page **ruobjpage)
 {
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
-	struct uvm_object * const uobj = ufi->entry->object.uvm_obj;
+	struct uvm_object *uobj = *ruobj;
 	struct vm_page *uobjpage;
 	bool locked;
 	int gotpages;
@@ -1838,7 +1836,10 @@ uvm_fault_lower_generic_io(
 	locked = uvmfault_relock(ufi);
 	if (locked && amap)
 		amap_lock(amap);
-	KASSERT(uobj == uobjpage->uobject);
+
+	/* might be changed */
+	uobj = uobjpage->uobject;
+
 	mutex_enter(&uobj->vmobjlock);
 
 	/* locked(locked): maps(read), amap(if !null), uobj, uobjpage */
@@ -1888,6 +1889,7 @@ uvm_fault_lower_generic_io(
 
 	/* locked: maps(read), amap(if !null), uobj, uobjpage */
 
+	*ruobj = uobj;
 	*ruobjpage = uobjpage;
 	return 0;
 }
@@ -1895,11 +1897,10 @@ uvm_fault_lower_generic_io(
 int
 uvm_fault_lower_generic3(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_page *uobjpage, bool promote)
+	struct uvm_object *uobj, struct vm_page *uobjpage, bool promote)
 {
 #ifdef DIAGNOSTIC
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
-	struct uvm_object * const uobj = ufi->entry->object.uvm_obj;
 #endif
 	int error;
 
@@ -1924,9 +1925,9 @@ uvm_fault_lower_generic3(
 	    (uobjpage->flags & PG_CLEAN) != 0);
 
 	if (promote == false) {
-		error = uvm_fault_lower_generic_direct(ufi, flt, uobjpage);
+		error = uvm_fault_lower_generic_direct(ufi, flt, uobj, uobjpage);
 	} else {
-		error = uvm_fault_lower_generic_promote(ufi, flt, uobjpage);
+		error = uvm_fault_lower_generic_promote(ufi, flt, uobj, uobjpage);
 	}
 	return error;
 }
@@ -1934,14 +1935,13 @@ uvm_fault_lower_generic3(
 static int
 uvm_fault_lower_generic_direct_loan(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_page **rpg, struct vm_page **ruobjpage);
+	struct uvm_object *uobj, struct vm_page **rpg, struct vm_page **ruobjpage);
 
 int
 uvm_fault_lower_generic_direct(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_page *uobjpage)
+	struct uvm_object *uobj, struct vm_page *uobjpage)
 {
-	struct uvm_object * const uobj = ufi->entry->object.uvm_obj;
 	struct vm_page *pg;
 
 	/*
@@ -1967,7 +1967,7 @@ uvm_fault_lower_generic_direct(
 	 */
 
 	if (uobjpage->loan_count) {
-		uvm_fault_lower_generic_direct_loan(ufi, flt, &pg, &uobjpage);
+		uvm_fault_lower_generic_direct_loan(ufi, flt, uobj, &pg, &uobjpage);
 	}
 	KASSERT(pg == uobjpage);
 
@@ -1977,10 +1977,9 @@ uvm_fault_lower_generic_direct(
 static int
 uvm_fault_lower_generic_direct_loan(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_page **rpg, struct vm_page **ruobjpage)
+	struct uvm_object *uobj, struct vm_page **rpg, struct vm_page **ruobjpage)
 {
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
-	struct uvm_object * const uobj = ufi->entry->object.uvm_obj;
 	struct vm_page *pg;
 	struct vm_page *uobjpage = *ruobjpage;
 
@@ -2020,10 +2019,9 @@ uvm_fault_lower_generic_direct_loan(
 int
 uvm_fault_lower_generic_promote(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_page *uobjpage)
+	struct uvm_object *uobj, struct vm_page *uobjpage)
 {
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
-	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 	struct vm_anon *anon;
 	struct vm_page *pg;
 	int error;
