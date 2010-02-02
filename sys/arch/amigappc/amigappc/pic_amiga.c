@@ -1,7 +1,7 @@
-/* $NetBSD: pic_amiga.c,v 1.1 2009/07/21 09:49:15 phx Exp $ */
+/* $NetBSD: pic_amiga.c,v 1.2 2010/02/02 19:15:33 phx Exp $ */
 
 /*-
- * Copyright (c) 2008,2009 Frank Wille.
+ * Copyright (c) 2008,2009,2010 Frank Wille.
  * All rights reserved.
  *
  * Written by Frank Wille for The NetBSD Project.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_amiga.c,v 1.1 2009/07/21 09:49:15 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_amiga.c,v 1.2 2010/02/02 19:15:33 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -47,11 +47,16 @@ static int amiga_get_irq(struct pic_ops *, int);
 static void amiga_ack_irq(struct pic_ops *, int);
 struct pic_ops *setup_amiga_intr(void); 
 
-#define NIRQ 15
+/*
+ * Number of amigappc hardware interrupts, based on 68000 IPL mask.
+ * In reality 6, because level 0 means no interrupt and level 7 (NMI)
+ * should not happen.
+ */
+#define MAXIPL 7
 
 struct amiga_ops {
 	struct pic_ops pic;
-	int prev_level[NIRQ];
+	int disablemask;
 };
 
 struct pic_ops *
@@ -64,7 +69,7 @@ setup_amiga_intr(void)
 	KASSERT(amipic != NULL);
 	pic = &amipic->pic;
 
-	pic->pic_numintrs = NIRQ;
+	pic->pic_numintrs = MAXIPL;
 	pic->pic_cookie = (void *)NULL;
 	pic->pic_enable_irq = amiga_enable_irq;
 	pic->pic_reenable_irq = amiga_enable_irq;
@@ -73,66 +78,78 @@ setup_amiga_intr(void)
 	pic->pic_ack_irq = amiga_ack_irq;
 	pic->pic_establish_irq = dummy_pic_establish_intr;
 	strcpy(pic->pic_name, "amiga");
-	memset(amipic->prev_level, 0, NIRQ * sizeof(int));
+
+	/* Set PPC IPL to 7, disabling all interrupts */
+	amipic->disablemask = (1 << MAXIPL) - 1;
+	P5write(P5_IPL_EMU, P5_DISABLE_INT | 7);
+
 	pic_add(pic);
 
 	return pic;
 }
 
 static void
-amiga_enable_irq(struct pic_ops *pic, int irq, int type)
+amiga_enable_irq(struct pic_ops *pic, int ipl, int type)
 {
+	struct amiga_ops *amipic = (struct amiga_ops *)pic;
+	int iplmask, dmask, newipl;
 
-	custom.intena = INTF_SETCLR | (1 << irq);
+	iplmask = 1 << ipl;
+	dmask = amipic->disablemask;
+
+	if ((dmask & iplmask)) {
+
+		dmask &= ~iplmask;
+		amipic->disablemask = dmask;
+		if (!(dmask & ~(iplmask - 1))) {
+
+			/* Lower the emulated PPC IPL to the next highest */
+			newipl = 31 - cntlzw(dmask);
+			P5write(P5_IPL_EMU, P5_SET_CLEAR | P5_DISABLE_INT |
+			    (newipl ^ P5_IPL_MASK));
+			P5write(P5_IPL_EMU, P5_DISABLE_INT | newipl);
+		}
+	}
 }
 
 static void
-amiga_disable_irq(struct pic_ops *pic, int irq)
+amiga_disable_irq(struct pic_ops *pic, int ipl)
 {
+	struct amiga_ops *amipic = (struct amiga_ops *)pic;
+	int iplmask, dmask;
 
-	custom.intena = 1 << irq;
+	iplmask = 1 << ipl;
+	dmask = amipic->disablemask;
+
+	if (!(dmask & iplmask)) {
+
+		if (!(dmask & ~(iplmask - 1))) {
+
+			/* Raise the emulated PPC IPL to the new ipl */
+			P5write(P5_IPL_EMU, P5_SET_CLEAR | P5_DISABLE_INT |
+			    (ipl ^ P5_IPL_MASK));
+			P5write(P5_IPL_EMU, P5_DISABLE_INT | ipl);
+		}
+		amipic->disablemask |= iplmask;
+	}
 }
 
 static int
 amiga_get_irq(struct pic_ops *pic, int mode)
 {
-	struct amiga_ops *amipic = (struct amiga_ops *)pic;
-	int ipl, levels;
-	uint32_t mask;
+	unsigned char ipl;
 
-	/* Compute the interrupt's 68k IPL - the bits are active low */
-	P5read(P5_IPL_EMU, levels);
-	ipl = ~(levels >> 3) & 7;
-
-	/* Store previous PPC IPL to restore on acknowledge */
-	if (amipic->prev_level[ipl] != 0)
+	if (mode == PIC_GET_RECHECK)
 		return 255;
-	amipic->prev_level[ipl] = ~levels & 7;
 
-	mask = (uint32_t)custom.intreqr & 0x7fff;
-	if (mask == 0)
-		return 255;  /* no interrupt pending - spurious interrupt? */
+	/* Get the interrupt's 68k IPL - the bits are active low */
+	P5read(P5_IPL_EMU, ipl);
+	ipl = ~(ipl >> 3) & P5_IPL_MASK;
 
-	/* Raise the emulated PPC IPL to the interrupt's IPL (active low) */
-	P5write(P5_IPL_EMU, P5_SET_CLEAR | P5_DISABLE_INT | (ipl ^ 7));
-	P5write(P5_IPL_EMU, P5_DISABLE_INT | ipl);
-
-	return 31 - __builtin_clz(mask);
+	return ipl == 0 ? 255 : ipl;
 }
 
 static void
-amiga_ack_irq(struct pic_ops *pic, int irq)
+amiga_ack_irq(struct pic_ops *pic, int ipl)
 {
-	struct amiga_ops *amipic = (struct amiga_ops *)pic;
-	int ipl;
-
-	ipl = amipic->prev_level[irq];
-	amipic->prev_level[irq] = 0;
-
-	/* Acknowledge the interrupt request */
-	custom.intreq = (unsigned short)(1 << irq);
-
-	/* Lower the emulated PPC IPL to the state before handling this irq */
-	P5write(P5_IPL_EMU, P5_SET_CLEAR | P5_DISABLE_INT | (ipl ^ 7));
-	P5write(P5_IPL_EMU, P5_DISABLE_INT | ipl);
 }
