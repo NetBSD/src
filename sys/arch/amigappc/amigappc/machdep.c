@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.39 2009/07/21 09:49:15 phx Exp $ */
+/* $NetBSD: machdep.c,v 1.40 2010/02/02 19:15:33 phx Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39 2009/07/21 09:49:15 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2010/02/02 19:15:33 phx Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -65,9 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39 2009/07/21 09:49:15 phx Exp $");
 #include "fd.h"
 #include "ser.h"
 
-/* prototypes */
-void show_me_regs(void);
-
 extern void setup_amiga_intr(void);
 #if NSER > 0
 extern void ser_outintr(void);
@@ -76,9 +73,6 @@ extern void serintr(void);
 #if NFD > 0
 extern void fdintr(int);
 #endif
-
-/* PIC interrupt handler type */
-typedef int (*ih_t)(void *);
 
 /*
  * patched by some devices at attach time (currently, only the coms)
@@ -112,12 +106,11 @@ add_isr(struct isr *isr)
 		p = &q->isr_forw;
 	isr->isr_forw = NULL;
 	*p = isr;
-#if 0 /* XXX always enabled */
+
 	/* enable interrupt */
 	custom.intena = isr->isr_ipl == 2 ?
 	    INTF_SETCLR | INTF_PORTS :
 	    INTF_SETCLR | INTF_EXTER;
-#endif
 }
 
 void
@@ -133,21 +126,22 @@ remove_isr(struct isr *isr)
 		*p = q->isr_forw;
 	else
 		panic("remove_isr: handler not registered");
-#if 0 /* XXX always enabled, why disable? */
+
 	/* disable interrupt if no more handlers */
 	p = isr->isr_ipl == 6 ? &isr_exter : &isr_ports;
 	if (*p == NULL) {
 		custom.intena = isr->isr_ipl == 6 ?
 		    INTF_EXTER : INTF_PORTS;
 	}
-#endif
 }
 
-static void
-ports_intr(struct isr **p)
+static int
+ports_intr(void *arg)
 {
+	struct isr **p;
 	struct isr *q;
 
+	p = (struct isr **)arg;
 	while ((q = *p) != NULL) {
 		if ((q->isr_intr)(q->isr_arg))
 			break;
@@ -155,22 +149,110 @@ ports_intr(struct isr **p)
 	}
 	if (q == NULL)
 		ciaa_intr();  /* ciaa handles keyboard and parallel port */
+
+	custom.intreq = INTF_PORTS;
+	return 0;
 }
 
-static void
-exter_intr(struct isr **p)
+static int
+exter_intr(void *arg)
 {
+	struct isr **p;
 	struct isr *q;
 
+	p = (struct isr **)arg;
 	while ((q = *p) != NULL) {
 		if ((q->isr_intr)(q->isr_arg))
 			break;
 		p = &q->isr_forw;
 	}
-	/*
-	 * XXX ciab_intr() is not needed, neither the timers nor the
-	 * floppy disk FGL interrupt
-	 */
+	if (q == NULL)
+		ciab_intr();  /* clear ciab icr */
+
+	custom.intreq = INTF_EXTER;
+	return 0;
+}
+
+static int
+lev1_intr(void *arg)
+{
+	unsigned short ireq;
+
+	ireq = custom.intreqr;
+	if (ireq & INTF_TBE) {
+#if NSER > 0
+		ser_outintr();
+#else
+		custom.intreq = INTF_TBE;
+#endif
+	}
+	if (ireq & INTF_DSKBLK) {
+#if NFD > 0
+		fdintr(0);
+#endif
+		custom.intreq = INTF_DSKBLK;
+	}
+	if (ireq & INTF_SOFTINT) {
+#ifdef DEBUG
+		printf("intrhand: SOFTINT ignored\n");
+#endif
+		custom.intreq = INTF_SOFTINT;
+	}
+	return 0;
+}
+
+static int
+lev3_intr(void *arg)
+{
+	unsigned short ireq;
+
+	ireq = custom.intreqr;
+	if (ireq & INTF_BLIT)
+		blitter_handler();
+	if (ireq & INTF_COPER)
+		copper_handler();
+	if (ireq & INTF_VERTB)
+		vbl_handler();
+	return 0;
+}
+
+static int
+lev4_intr(void *arg)
+{
+
+	audio_handler();
+	return 0;
+}
+
+static int
+lev5_intr(void *arg)
+{
+	unsigned short ireq;
+
+	ireq = custom.intreqr;
+	if (ireq & INTF_RBF)
+		serintr();
+	if (ireq & INTF_DSKSYNC)
+		custom.intreq = INTF_DSKSYNC;
+	return 0;
+}
+
+static void
+amigappc_install_handlers(void)
+{
+
+	/* handlers for all 6 Amiga interrupt levels */
+	intr_establish(1, IST_LEVEL, IPL_BIO, lev1_intr, NULL);
+
+	intr_establish(2, IST_LEVEL, IPL_BIO, ports_intr, &isr_ports);
+
+	intr_establish(3, IST_LEVEL, IPL_TTY, lev3_intr, NULL);
+
+	intr_establish(4, IST_LEVEL, IPL_AUDIO, lev4_intr, NULL);
+
+	intr_establish(5, IST_LEVEL, IPL_SERIAL, lev5_intr, NULL);
+
+	intr_establish(6, IST_LEVEL, IPL_SERIAL, exter_intr, &isr_exter);
 }
 
 static void
@@ -305,42 +387,6 @@ amigappc_reboot(void)
 }
 
 static void
-amigappc_install_handlers(void)
-{
-
-#if NSER > 0
-	intr_establish(INTB_TBE, IST_LEVEL, IPL_SOFTCLOCK, (ih_t)ser_outintr, NULL);
-	intr_establish(INTB_RBF, IST_LEVEL, IPL_SERIAL, (ih_t)serintr, NULL);
-#endif
-
-#if NFD > 0
-	intr_establish(INTB_DSKBLK, IST_LEVEL, IPL_SOFTCLOCK, (ih_t)fdintr, 0);
-#endif
-
-	intr_establish(INTB_PORTS, IST_LEVEL, IPL_SOFTCLOCK, (ih_t)ports_intr,
-	    &isr_ports);
-
-	intr_establish(INTB_BLIT, IST_LEVEL, IPL_BIO, (ih_t)blitter_handler,
-	    NULL);
-	intr_establish(INTB_COPER, IST_LEVEL, IPL_BIO, (ih_t)copper_handler,
-	    NULL);
-	intr_establish(INTB_VERTB, IST_LEVEL, IPL_BIO, (ih_t)vbl_handler,
-	    NULL);
-
-	intr_establish(INTB_AUD0, IST_LEVEL, IPL_VM, (ih_t)audio_handler,
-	    NULL);
-	intr_establish(INTB_AUD1, IST_LEVEL, IPL_VM, (ih_t)audio_handler,
-	    NULL);
-	intr_establish(INTB_AUD2, IST_LEVEL, IPL_VM, (ih_t)audio_handler,
-	    NULL);
-	intr_establish(INTB_AUD3, IST_LEVEL, IPL_VM, (ih_t)audio_handler,
-	    NULL);
-
-	intr_establish(INTB_EXTER, IST_LEVEL, IPL_CLOCK, (ih_t)exter_intr,
-	    &isr_exter);
-}
-
-static void
 amigappc_bat_add(paddr_t pa, register_t len, register_t prot)
 {
 	static int ni = 0, nd = 0;
@@ -463,75 +509,6 @@ amigappc_batinit(paddr_t pa, ...)
 	}
 	va_end(ap);
 }
-
-#if 0
-/*
- * customized oea_startup(), supports up to 64k msgbuf at 0xfff70000
- */
-static void
-amigappc_startup(const char *model)
-{
-	uintptr_t sz;
-	void *v;
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-
-	KASSERT(curcpu() != NULL);
-	KASSERT(lwp0.l_cpu != NULL);
-	KASSERT(curcpu()->ci_intstk != 0);
-	KASSERT(curcpu()->ci_intrdepth == -1);
-
-        sz = round_page(MSGBUFSIZE);
-	v = (void *)0xfff70000;
-	initmsgbuf(v, sz);
-
-	printf("%s%s", copyright, version);
-	if (model != NULL)
-		printf("Model: %s\n", model);
-	cpu_identify(NULL, 0);
-
-	format_bytes(pbuf, sizeof(pbuf), ctob((u_int)physmem));
-	printf("total memory = %s\n", pbuf);
-
-	/*
-	 * Allocate away the pages that map to 0xDEA[CDE]xxxx.  Do this after
-	 * the bufpages are allocated in case they overlap since it's not
-	 * fatal if we can't allocate these.
-	 */
-	if (KERNEL_SR == 13 || KERNEL2_SR == 14) {
-		int error;
-		minaddr = 0xDEAC0000;
-		error = uvm_map(kernel_map, &minaddr, 0x30000,
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,  
-				UVM_ADV_NORMAL, UVM_FLAG_FIXED));
-		if (error != 0 || minaddr != 0xDEAC0000)
-			printf("oea_startup: failed to allocate DEAD "
-			    "ZONE: error=%d\n", error);
-	}
- 
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, 0, FALSE, NULL);
-
-#ifndef PMAP_MAP_POOLPAGE
-	/*
-	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use direct-mapped
-	 * pool pages.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    mclbytes*nmbclusters, VM_MAP_INTRSAFE, FALSE, NULL);
-#endif
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
-}
-#endif
 
 void
 initppc(u_int startkernel, u_int endkernel)
@@ -751,68 +728,4 @@ dma_cachectl(void *addr, int len)
 
 #endif
 	return 0;
-}
-
-/* show PPC registers */
-void show_me_regs(void)
-{
-	register u_long	scr0, scr1, scr2, scr3;
-
-	__asm volatile ("mfmsr %0" : "=r"(scr0) :);
-	printf("MSR %08lx\n", scr0);
-
-	__asm volatile ("mfspr %0,1; mfspr %1,8; mfspr %2,9; mfspr %3,18"
-		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
-	printf("XER   %08lx\tLR    %08lx\tCTR   %08lx\tDSISR %08lx\n",
-		scr0, scr1, scr2, scr3);
-
-	__asm volatile ("mfspr %0,19; mfspr %1,22; mfspr %2,25; mfspr %3,26"
-		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
-	printf("DAR   %08lx\tDEC   %08lx\tSDR1  %08lx\tSRR0  %08lx\n",
-		scr0, scr1, scr2, scr3);
-
-	__asm volatile ("mfspr %0,27; mfspr %1,268; mfspr %2,269; mfspr %3,272"
-		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
-	printf("SRR1  %08lx\tTBL   %08lx\tTBU   %08lx\tSPRG0 %08lx\n",
-		scr0, scr1, scr2, scr3);
-
-	__asm volatile ("mfspr %0,273; mfspr %1,274; mfspr %2,275; mfspr %3,282"
-		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
-	printf("SPRG1 %08lx\tSPRG2 %08lx\tSPRG3 %08lx\tEAR   %08lx\n",
-		scr0, scr1, scr2, scr3);
-
-	__asm volatile ("mfspr %0,528; mfspr %1,529; mfspr %2,530; mfspr %3,531"
-		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
-	printf("IBAT0U%08lx\tIBAT0L%08lx\tIBAT1U%08lx\tIBAT1L%08lx\n",
-		scr0, scr1, scr2, scr3);
-
-	__asm volatile ("mfspr %0,532; mfspr %1,533; mfspr %2,534; mfspr %3,535" 
-		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
-	printf("IBAT2U%08lx\tIBAT2L%08lx\tIBAT3U%08lx\tIBAT3L%08lx\n",
-		scr0, scr1, scr2, scr3);
-
-	__asm volatile ("mfspr %0,536; mfspr %1,537; mfspr %2,538; mfspr %3,539"
-		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
-	printf("DBAT0U%08lx\tDBAT0L%08lx\tDBAT1U%08lx\tDBAT1L%08lx\n",
-		scr0, scr1, scr2, scr3);
-
-	__asm volatile ("mfspr %0,540; mfspr %1,541; mfspr %2,542; mfspr %3,543"
-		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
-	printf("DBAT2U%08lx\tDBAT2L%08lx\tDBAT3U%08lx\tDBAT3L%08lx\n",
-		scr0, scr1, scr2, scr3);
-
-	__asm volatile ("mfspr %0,1008; mfspr %1,1009; mfspr %2,1010; mfspr %3,1013"
-		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
-	printf("HID0  %08lx\tHID1  %08lx\tIABR  %08lx\tDABR  %08lx\n",
-		scr0, scr1, scr2, scr3);
-
-	__asm volatile ("mfspr %0,953; mfspr %1,954; mfspr %2,957; mfspr %3,958"
-		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
-	printf("PCM1  %08lx\tPCM2  %08lx\tPCM3  %08lx\tPCM4  %08lx\n",
-		scr0, scr1, scr2, scr3);
-
-	__asm volatile ("mfspr %0,952; mfspr %1,956; mfspr %2,959; mfspr %3,955"
-		: "=r"(scr0),"=r"(scr1),"=r"(scr2),"=r"(scr3) :);
-	printf("MMCR0 %08lx\tMMCR1 %08lx\tSDA   %08lx\tSIA   %08lx\n",
-		scr0, scr1, scr2, scr3);
 }
