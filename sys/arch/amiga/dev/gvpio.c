@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpio.c,v 1.17 2009/11/09 15:35:27 is Exp $ */
+/*	$NetBSD: gvpio.c,v 1.18 2010/02/02 19:03:31 phx Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.17 2009/11/09 15:35:27 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.18 2010/02/02 19:03:31 phx Exp $");
 
 /*
  * GVP I/O Extender
@@ -102,7 +102,9 @@ gvpioattach(struct device *parent, struct device *self, void *auxp)
 	struct gvpbus_args *gap;
 	struct supio_attach_args supa;
 	volatile void *gbase;
+#ifdef __m68k__
 	u_int16_t needpsl;
+#endif
 
 	giosc = (struct gvpio_softc *)self;
 	gap = auxp;
@@ -134,6 +136,7 @@ gvpioattach(struct device *parent, struct device *self, void *auxp)
 		++giosd;
 	}
 	if (giosc->sc_comhdls.lh_first) {
+#ifdef __m68k__
 		/* XXX this should be really in the interrupt stuff */
 		needpsl = PSL_S|PSL_IPL6;
 		if (ipl2spl_table[IPL_SERIAL] < needpsl) {
@@ -143,6 +146,7 @@ gvpioattach(struct device *parent, struct device *self, void *auxp)
 			    needpsl);
 			ipl2spl_table[IPL_SERIAL] = needpsl;
 		}
+#endif
 		giosc->sc_comisr.isr_intr = gvp_com_intr;
 		giosc->sc_comisr.isr_arg = giosc;
 		giosc->sc_comisr.isr_ipl = 6;
