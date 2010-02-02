@@ -1,4 +1,4 @@
-#	$NetBSD: files.amigappc,v 1.20 2009/07/21 09:49:15 phx Exp $
+#	$NetBSD: files.amigappc,v 1.21 2010/02/02 12:47:51 phx Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -54,7 +54,7 @@ file	arch/amiga/amiga/amiga_bus_simple_4.c
 define	amibus_ww
 file	arch/amiga/amiga/amiga_bus_simple_2word.c
 
-define amibus_wb
+define	amibus_wb
 file	arch/amiga/amiga/amiga_bus_simple_1word.c
 
 define	amibus_b16
@@ -429,4 +429,4 @@ file	arch/amiga/dev/wdc_buddha.c	wdc_buddha
 # OSS audio driver compatibility
 #include "compat/ossaudio/files.ossaudio"
 
-include "arch/amiga/conf/majors.amiga"
+include "arch/amigappc/conf/majors.amigappc"
