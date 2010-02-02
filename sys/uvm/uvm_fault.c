@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.153 2010/02/02 06:06:02 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.154 2010/02/02 06:52:59 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.153 2010/02/02 06:06:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.154 2010/02/02 06:52:59 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1099,8 +1099,7 @@ uvm_fault_upper_lookup_neighbor(
 	    VM_PAGE_TO_PHYS(anon->an_page),
 	    (anon->an_ref > 1) ? (flt->enter_prot & ~VM_PROT_WRITE) :
 	    flt->enter_prot,
-	    PMAP_CANFAIL |
-	     (VM_MAPENT_ISWIRED(ufi->entry) ? PMAP_WIRED : 0));
+	    PMAP_CANFAIL | (flt->wire_mapping ? PMAP_WIRED : 0));
 
 uvm_fault_upper_lookup_enter_done:
 	pmap_update(ufi->orig_map->pmap);
