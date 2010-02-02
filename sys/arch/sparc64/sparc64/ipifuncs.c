@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.29 2010/02/01 07:01:40 mrg Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.30 2010/02/02 04:28:56 mrg Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.29 2010/02/01 07:01:40 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.30 2010/02/02 04:28:56 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -360,8 +360,12 @@ smp_tlb_flush_pte(vaddr_t va, pmap_t pm)
 	/* Flush our own TLB */
 	ctx = pm->pm_ctx[cpu_number()];
 	KASSERT(ctx >= 0);
-	if (kpm || ctx > 0)
-		sp_tlb_flush_pte(va, ctx);
+	if (kpm || ctx > 0) {
+		if (CPU_IS_USIII_UP())
+			sp_tlb_flush_pte_usiii(va, ctx);
+		else
+			sp_tlb_flush_pte_us(va, ctx);
+	}
 
 	CPUSET_ASSIGN(cpuset, cpus_active);
 	CPUSET_DEL(cpuset, cpu_number());
