@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.120 2009/12/02 07:55:53 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.121 2010/02/02 04:28:56 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.120 2009/12/02 07:55:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.121 2010/02/02 04:28:56 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -959,7 +959,10 @@ db_setpcb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 				ctx = pmap_ctx(p->p_vmspace->vm_map.pmap);
 			}
 			if (ctx > 0) {
-				switchtoctx(ctx);
+				if (CPU_IS_USIII_UP())
+					switchtoctx_usiii(ctx);
+				else
+					switchtoctx_us(ctx);
 				return;
 			}
 			db_printf("could not activate pmap for PID %ld.\n",
