@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.108 2009/11/12 20:11:35 dyoung Exp $	*/
+/*	$NetBSD: uhub.c,v 1.109 2010/02/02 23:18:49 pooka Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.108 2009/11/12 20:11:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.109 2010/02/02 23:18:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,10 +105,23 @@ CFATTACH_DECL3_NEW(uhub, sizeof(struct uhub_softc), uhub_match,
 CFATTACH_DECL2_NEW(uroothub, sizeof(struct uhub_softc), uhub_match,
     uhub_attach, uhub_detach, NULL, uhub_rescan, uhub_childdet);
 
+/*
+ * Setting this to 1 makes sure than an uhub attaches even at higher
+ * priority than ugen when ugen_override is set to 1.  This allows to
+ * probe the whole USB bus and attach functions with ugen.
+ */
+int uhub_ubermatch = 0;
+
 int
 uhub_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
+	int matchvalue;
+
+	if (uhub_ubermatch)
+		matchvalue = UMATCH_HIGHEST+1;
+	else
+		matchvalue = UMATCH_DEVCLASS_DEVSUBCLASS;
 
 	DPRINTFN(5,("uhub_match, uaa=%p\n", uaa));
 	/*
@@ -116,7 +129,7 @@ uhub_match(device_t parent, cfdata_t match, void *aux)
 	 * so we just ignore the subclass.
 	 */
 	if (uaa->class == UDCLASS_HUB)
-		return (UMATCH_DEVCLASS_DEVSUBCLASS);
+		return (matchvalue);
 	return (UMATCH_NONE);
 }
 
