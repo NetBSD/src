@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.128 2010/01/28 22:36:19 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.129 2010/02/02 16:18:29 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.128 2010/01/28 22:36:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.129 2010/02/02 16:18:29 drochner Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -311,9 +311,11 @@ wsscreen_detach(struct wsscreen *scr)
 		tty_detach(scr->scr_tty);
 		ttyfree(scr->scr_tty);
 	}
-	if (WSSCREEN_HAS_EMULATOR(scr))
+	if (WSSCREEN_HAS_EMULATOR(scr)) {
 		(*scr->scr_dconf->wsemul->detach)(scr->scr_dconf->wsemulcookie,
 						  &ccol, &crow);
+		wsemul_drop(scr->scr_dconf->wsemul);
+	}
 	free(scr->scr_dconf, M_DEVBUF);
 	free(scr, M_DEVBUF);
 }
