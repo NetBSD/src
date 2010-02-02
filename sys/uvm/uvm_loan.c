@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.75 2010/02/02 06:06:02 uebayasi Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.76 2010/02/02 17:40:43 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.75 2010/02/02 06:06:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.76 2010/02/02 17:40:43 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1184,7 +1184,7 @@ uvm_loanbreak(struct vm_page *uobjpage)
 }
 
 int
-uvm_loanbreak_anon(struct vm_anon *anon, struct uvm_object **ruobj)
+uvm_loanbreak_anon(struct vm_anon *anon, struct uvm_object *uobj)
 {
 	struct vm_page *pg;
 
@@ -1209,7 +1209,7 @@ uvm_loanbreak_anon(struct vm_anon *anon, struct uvm_object **ruobj)
 	/* in case we owned */
 	anon->an_page->pqflags &= ~PQ_ANON;
 
-	if (*ruobj) {
+	if (uobj) {
 		/* if we were receiver of loan */
 		anon->an_page->loan_count--;
 	} else {
@@ -1220,9 +1220,8 @@ uvm_loanbreak_anon(struct vm_anon *anon, struct uvm_object **ruobj)
 		uvm_pagedequeue(anon->an_page);
 	}
 
-	if (*ruobj) {
-		mutex_exit(&(*ruobj)->vmobjlock);
-		*ruobj = NULL;
+	if (uobj) {
+		mutex_exit(&uobj->vmobjlock);
 	}
 
 	/* install new page in anon */
