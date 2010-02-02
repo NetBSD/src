@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.151 2010/02/02 04:35:35 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.152 2010/02/02 05:58:16 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.151 2010/02/02 04:35:35 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.152 2010/02/02 05:58:16 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1074,37 +1074,37 @@ uvm_fault_upper_lookup_neighbor(
 	vaddr_t currva, struct vm_anon *anon)
 {
 
-		mutex_enter(&anon->an_lock);
+	mutex_enter(&anon->an_lock);
 
-		/* ignore loaned and busy pages */
-		if (anon->an_page == NULL || anon->an_page->loan_count != 0 ||
-		    (anon->an_page->flags & PG_BUSY) != 0)
-			goto uvm_fault_upper_lookup_enter_done;
+	/* ignore loaned and busy pages */
+	if (anon->an_page == NULL || anon->an_page->loan_count != 0 ||
+	    (anon->an_page->flags & PG_BUSY) != 0)
+		goto uvm_fault_upper_lookup_enter_done;
 
-		mutex_enter(&uvm_pageqlock);
-		uvm_pageenqueue(anon->an_page);
-		mutex_exit(&uvm_pageqlock);
-		UVMHIST_LOG(maphist,
-		    "  MAPPING: n anon: pm=0x%x, va=0x%x, pg=0x%x",
-		    ufi->orig_map->pmap, currva, anon->an_page, 0);
-		uvmexp.fltnamap++;
+	mutex_enter(&uvm_pageqlock);
+	uvm_pageenqueue(anon->an_page);
+	mutex_exit(&uvm_pageqlock);
+	UVMHIST_LOG(maphist,
+	    "  MAPPING: n anon: pm=0x%x, va=0x%x, pg=0x%x",
+	    ufi->orig_map->pmap, currva, anon->an_page, 0);
+	uvmexp.fltnamap++;
 
-		/*
-		 * Since this isn't the page that's actually faulting,
-		 * ignore pmap_enter() failures; it's not critical
-		 * that we enter these right now.
-		 */
+	/*
+	 * Since this isn't the page that's actually faulting,
+	 * ignore pmap_enter() failures; it's not critical
+	 * that we enter these right now.
+	 */
 
-		(void) pmap_enter(ufi->orig_map->pmap, currva,
-		    VM_PAGE_TO_PHYS(anon->an_page),
-		    (anon->an_ref > 1) ? (flt->enter_prot & ~VM_PROT_WRITE) :
-		    flt->enter_prot,
-		    PMAP_CANFAIL |
-		     (VM_MAPENT_ISWIRED(ufi->entry) ? PMAP_WIRED : 0));
+	(void) pmap_enter(ufi->orig_map->pmap, currva,
+	    VM_PAGE_TO_PHYS(anon->an_page),
+	    (anon->an_ref > 1) ? (flt->enter_prot & ~VM_PROT_WRITE) :
+	    flt->enter_prot,
+	    PMAP_CANFAIL |
+	     (VM_MAPENT_ISWIRED(ufi->entry) ? PMAP_WIRED : 0));
 
 uvm_fault_upper_lookup_enter_done:
-		pmap_update(ufi->orig_map->pmap);
-		mutex_exit(&anon->an_lock);
+	pmap_update(ufi->orig_map->pmap);
+	mutex_exit(&anon->an_lock);
 }
 
 static inline void
@@ -1274,50 +1274,50 @@ uvm_fault_lower_generic_lookup_neighbor(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	vaddr_t currva, struct vm_page *curpg)
 {
-		bool readonly;
+	bool readonly;
 
-		/*
-		 * calling pgo_get with PGO_LOCKED returns us pages which
-		 * are neither busy nor released, so we don't need to check
-		 * for this.  we can just directly enter the pages.
-		 */
+	/*
+	 * calling pgo_get with PGO_LOCKED returns us pages which
+	 * are neither busy nor released, so we don't need to check
+	 * for this.  we can just directly enter the pages.
+	 */
 
-		mutex_enter(&uvm_pageqlock);
-		uvm_pageenqueue(curpg);
-		mutex_exit(&uvm_pageqlock);
-		UVMHIST_LOG(maphist,
-		  "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
-		  ufi->orig_map->pmap, currva, curpg, 0);
-		uvmexp.fltnomap++;
+	mutex_enter(&uvm_pageqlock);
+	uvm_pageenqueue(curpg);
+	mutex_exit(&uvm_pageqlock);
+	UVMHIST_LOG(maphist,
+	  "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
+	  ufi->orig_map->pmap, currva, curpg, 0);
+	uvmexp.fltnomap++;
 
-		/*
-		 * Since this page isn't the page that's actually faulting,
-		 * ignore pmap_enter() failures; it's not critical that we
-		 * enter these right now.
-		 */
-		KASSERT((curpg->flags & PG_PAGEOUT) == 0);
-		KASSERT((curpg->flags & PG_RELEASED) == 0);
-		KASSERT(!UVM_OBJ_IS_CLEAN(curpg->uobject) ||
-		    (curpg->flags & PG_CLEAN) != 0);
-		readonly = (curpg->flags & PG_RDONLY)
-		    || (curpg->loan_count > 0)
-		    || UVM_OBJ_NEEDS_WRITEFAULT(curpg->uobject);
+	/*
+	 * Since this page isn't the page that's actually faulting,
+	 * ignore pmap_enter() failures; it's not critical that we
+	 * enter these right now.
+	 */
+	KASSERT((curpg->flags & PG_PAGEOUT) == 0);
+	KASSERT((curpg->flags & PG_RELEASED) == 0);
+	KASSERT(!UVM_OBJ_IS_CLEAN(curpg->uobject) ||
+	    (curpg->flags & PG_CLEAN) != 0);
+	readonly = (curpg->flags & PG_RDONLY)
+	    || (curpg->loan_count > 0)
+	    || UVM_OBJ_NEEDS_WRITEFAULT(curpg->uobject);
 
-		(void) pmap_enter(ufi->orig_map->pmap, currva,
-		    VM_PAGE_TO_PHYS(curpg),
-		    readonly ?  flt->enter_prot & ~VM_PROT_WRITE :
-		    flt->enter_prot & MASK(ufi->entry),
-		    PMAP_CANFAIL | (flt->wire_mapping ? PMAP_WIRED : 0));
+	(void) pmap_enter(ufi->orig_map->pmap, currva,
+	    VM_PAGE_TO_PHYS(curpg),
+	    readonly ?  flt->enter_prot & ~VM_PROT_WRITE :
+	    flt->enter_prot & MASK(ufi->entry),
+	    PMAP_CANFAIL | (flt->wire_mapping ? PMAP_WIRED : 0));
 
-		/*
-		 * NOTE: page can't be PG_WANTED or PG_RELEASED because we've
-		 * held the lock the whole time we've had the handle.
-		 */
-		KASSERT((curpg->flags & PG_WANTED) == 0);
-		KASSERT((curpg->flags & PG_RELEASED) == 0);
+	/*
+	 * NOTE: page can't be PG_WANTED or PG_RELEASED because we've
+	 * held the lock the whole time we've had the handle.
+	 */
+	KASSERT((curpg->flags & PG_WANTED) == 0);
+	KASSERT((curpg->flags & PG_RELEASED) == 0);
 
-		curpg->flags &= ~(PG_BUSY);
-		UVM_PAGE_OWN(curpg, NULL);
+	curpg->flags &= ~(PG_BUSY);
+	UVM_PAGE_OWN(curpg, NULL);
 }
 
 static int
@@ -1516,59 +1516,59 @@ uvm_fault_upper_loan_break(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_anon *anon, struct uvm_object **ruobj)
 {
-			struct vm_page *pg;
+	struct vm_page *pg;
 
-			/* get new un-owned replacement page */
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL) {
-				return ENOMEM;
-			}
+	/* get new un-owned replacement page */
+	pg = uvm_pagealloc(NULL, 0, NULL, 0);
+	if (pg == NULL) {
+		return ENOMEM;
+	}
 
-			/*
-			 * copy data, kill loan, and drop uobj lock
-			 * (if any)
-			 */
-			/* copy old -> new */
-			uvm_pagecopy(anon->an_page, pg);
+	/*
+	 * copy data, kill loan, and drop uobj lock
+	 * (if any)
+	 */
+	/* copy old -> new */
+	uvm_pagecopy(anon->an_page, pg);
 
-			/* force reload */
-			pmap_page_protect(anon->an_page, VM_PROT_NONE);
-			mutex_enter(&uvm_pageqlock);	  /* KILL loan */
+	/* force reload */
+	pmap_page_protect(anon->an_page, VM_PROT_NONE);
+	mutex_enter(&uvm_pageqlock);	  /* KILL loan */
 
-			anon->an_page->uanon = NULL;
-			/* in case we owned */
-			anon->an_page->pqflags &= ~PQ_ANON;
+	anon->an_page->uanon = NULL;
+	/* in case we owned */
+	anon->an_page->pqflags &= ~PQ_ANON;
 
-			if (*ruobj) {
-				/* if we were receiver of loan */
-				anon->an_page->loan_count--;
-			} else {
-				/*
-				 * we were the lender (A->K); need
-				 * to remove the page from pageq's.
-				 */
-				uvm_pagedequeue(anon->an_page);
-			}
+	if (*ruobj) {
+		/* if we were receiver of loan */
+		anon->an_page->loan_count--;
+	} else {
+		/*
+		 * we were the lender (A->K); need
+		 * to remove the page from pageq's.
+		 */
+		uvm_pagedequeue(anon->an_page);
+	}
 
-			if (*ruobj) {
-				mutex_exit(&(*ruobj)->vmobjlock);
-				*ruobj = NULL;
-			}
+	if (*ruobj) {
+		mutex_exit(&(*ruobj)->vmobjlock);
+		*ruobj = NULL;
+	}
 
-			/* install new page in anon */
-			anon->an_page = pg;
-			pg->uanon = anon;
-			pg->pqflags |= PQ_ANON;
+	/* install new page in anon */
+	anon->an_page = pg;
+	pg->uanon = anon;
+	pg->pqflags |= PQ_ANON;
 
-			uvm_pageactivate(pg);
-			mutex_exit(&uvm_pageqlock);
+	uvm_pageactivate(pg);
+	mutex_exit(&uvm_pageqlock);
 
-			pg->flags &= ~(PG_BUSY|PG_FAKE);
-			UVM_PAGE_OWN(pg, NULL);
+	pg->flags &= ~(PG_BUSY|PG_FAKE);
+	UVM_PAGE_OWN(pg, NULL);
 
-			/* done! */
+	/* done! */
 
-			return 0;
+	return 0;
 }
 
 static int
@@ -2043,44 +2043,42 @@ uvm_fault_lower_generic_direct_loan(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_page **rpg, struct vm_page **ruobjpage)
 {
-		struct vm_amap * const amap = ufi->entry->aref.ar_amap;
-		struct uvm_object * const uobj = ufi->entry->object.uvm_obj;
-		struct vm_page *pg;
-		struct vm_page *uobjpage = *ruobjpage;
+	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
+	struct uvm_object * const uobj = ufi->entry->object.uvm_obj;
+	struct vm_page *pg;
+	struct vm_page *uobjpage = *ruobjpage;
 
-		if (!flt->cow_now) {
-			/* read fault: cap the protection at readonly */
-			/* cap! */
-			flt->enter_prot = flt->enter_prot & ~VM_PROT_WRITE;
-		} else {
-			/* write fault: must break the loan here */
+	if (!flt->cow_now) {
+		/* read fault: cap the protection at readonly */
+		/* cap! */
+		flt->enter_prot = flt->enter_prot & ~VM_PROT_WRITE;
+	} else {
+		/* write fault: must break the loan here */
 
-			pg = uvm_loanbreak(uobjpage);
-			if (pg == NULL) {
+		pg = uvm_loanbreak(uobjpage);
+		if (pg == NULL) {
 
-				/*
-				 * drop ownership of page, it can't
-				 * be released
-				 */
+			/*
+			 * drop ownership of page, it can't be released
+			 */
 
-				if (uobjpage->flags & PG_WANTED)
-					wakeup(uobjpage);
-				uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
-				UVM_PAGE_OWN(uobjpage, NULL);
+			if (uobjpage->flags & PG_WANTED)
+				wakeup(uobjpage);
+			uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
+			UVM_PAGE_OWN(uobjpage, NULL);
 
-				uvmfault_unlockall(ufi, amap, uobj,
-				  NULL);
-				UVMHIST_LOG(maphist,
-				  "  out of RAM breaking loan, waiting",
-				  0,0,0,0);
-				uvmexp.fltnoram++;
-				uvm_wait("flt_noram4");
-				return ERESTART;
-			}
-			*rpg = pg;
-			*ruobjpage = pg;
+			uvmfault_unlockall(ufi, amap, uobj, NULL);
+			UVMHIST_LOG(maphist,
+			  "  out of RAM breaking loan, waiting",
+			  0,0,0,0);
+			uvmexp.fltnoram++;
+			uvm_wait("flt_noram4");
+			return ERESTART;
 		}
-		return 0;
+		*rpg = pg;
+		*ruobjpage = pg;
+	}
+	return 0;
 }
 
 int
