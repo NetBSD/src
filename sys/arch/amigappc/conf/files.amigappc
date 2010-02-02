@@ -1,4 +1,4 @@
-#	$NetBSD: files.amigappc,v 1.21 2010/02/02 12:47:51 phx Exp $
+#	$NetBSD: files.amigappc,v 1.22 2010/02/02 19:07:05 phx Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -266,6 +266,11 @@ define	supio {port = -1}
 device	hyper: supio
 attach	hyper at zbus
 file	arch/amiga/dev/hyper.c		hyper
+
+# IOBlix
+device	iobl: supio, amibus_b16
+attach	iobl at zbus with iobl_zbus
+file	arch/amiga/dev/ioblix_zbus.c	iobl_zbus
 
 attach	com at supio with com_supio
 file	arch/amiga/dev/com_supio.c	com_supio
