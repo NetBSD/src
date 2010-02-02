@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.45 2009/12/31 22:49:16 mlelstv Exp $	*/
+/*	$NetBSD: localtime.c,v 1.46 2010/02/02 19:04:37 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.9";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.45 2009/12/31 22:49:16 mlelstv Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.46 2010/02/02 19:04:37 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -708,17 +708,23 @@ const int		max;
 	register char	c;
 	register int	num;
 
-	if (strp == NULL || !is_digit(c = *strp))
+	if (strp == NULL || !is_digit(c = *strp)) {
+		errno = EINVAL;
 		return NULL;
+	}
 	num = 0;
 	do {
 		num = num * 10 + (c - '0');
-		if (num > max)
+		if (num > max) {
+			errno = EOVERFLOW;
 			return NULL;	/* illegal value */
+		}
 		c = *++strp;
 	} while (is_digit(c));
-	if (num < min)
+	if (num < min) {
+		errno = EINVAL;
 		return NULL;		/* illegal value */
+	}
 	*nump = num;
 	return strp;
 }
@@ -1343,8 +1349,10 @@ struct tm * const	tmp;
 				newt += seconds;
 			else	newt -= seconds;
 			if (newt < sp->ats[0] ||
-				newt > sp->ats[sp->timecnt - 1])
+				newt > sp->ats[sp->timecnt - 1]) {
+					errno = EOVERFLOW;
 					return NULL;	/* "cannot happen" */
+			}
 			result = localsub(&newt, offset, tmp);
 			if (result == tmp) {
 				register time_t	newy;
@@ -1354,8 +1362,10 @@ struct tm * const	tmp;
 					newy -= (time_t)icycles * YEARSPERREPEAT;
 				else	newy += (time_t)icycles * YEARSPERREPEAT;
 				tmp->tm_year = (int)newy;
-				if (tmp->tm_year != newy)
+				if (tmp->tm_year != newy) {
+					errno = EOVERFLOW;
 					return NULL;
+				}
 			}
 			return result;
 	}
@@ -1579,13 +1589,17 @@ register struct tm * const		tmp;
 
 		tdelta = tdays / DAYSPERLYEAR;
 		idelta = (int) tdelta;
-		if (tdelta - idelta >= 1 || idelta - tdelta >= 1)
+		if (tdelta - idelta >= 1 || idelta - tdelta >= 1) {
+			errno = EOVERFLOW;
 			return NULL;
+		}
 		if (idelta == 0)
 			idelta = (tdays < 0) ? -1 : 1;
 		newy = y;
-		if (increment_overflow(&newy, idelta))
+		if (increment_overflow(&newy, idelta)) {
+			errno = EOVERFLOW;
 			return NULL;
+		}
 		leapdays = leaps_thru_end_of(newy - 1) -
 			leaps_thru_end_of(y - 1);
 		tdays -= ((time_t) newy - y) * DAYSPERNYEAR;
@@ -1613,18 +1627,24 @@ register struct tm * const		tmp;
 		++idays;
 	}
 	while (idays < 0) {
-		if (increment_overflow(&y, -1))
+		if (increment_overflow(&y, -1)) {
+			errno = EOVERFLOW;
 			return NULL;
+		}
 		idays += year_lengths[isleap(y)];
 	}
 	while (idays >= year_lengths[isleap(y)]) {
 		idays -= year_lengths[isleap(y)];
-		if (increment_overflow(&y, 1))
+		if (increment_overflow(&y, 1)) {
+			errno = EOVERFLOW;
 			return NULL;
+		}
 	}
 	tmp->tm_year = y;
-	if (increment_overflow(&tmp->tm_year, -TM_YEAR_BASE))
+	if (increment_overflow(&tmp->tm_year, -TM_YEAR_BASE)) {
+		errno = EOVERFLOW;
 		return NULL;
+	}
 	tmp->tm_yday = idays;
 	/*
 	** The "extra" mods below avoid overflow problems.
@@ -1667,7 +1687,10 @@ const time_t * const	timep;
 **	to local time in the form of a string. It is equivalent to
 **		asctime(localtime(timer))
 */
-	return asctime(localtime(timep));
+	struct tm *rtm = localtime(timep);
+	if (rtm == NULL)
+		return NULL;
+	return asctime(rtm);
 }
 
 char *
@@ -1675,9 +1698,12 @@ ctime_r(timep, buf)
 const time_t * const	timep;
 char *			buf;
 {
-	struct tm	mytm;
+	struct tm	mytm, *rtm;
 
-	return asctime_r(localtime_r(timep, &mytm), buf);
+	rtm = localtime_r(timep, &mytm);
+	if (rtm == NULL)
+		return NULL;
+	return asctime_r(rtm, buf);
 }
 
 /*
