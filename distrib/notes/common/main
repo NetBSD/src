@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.455 2010/01/07 22:43:00 gls Exp $
+.\"	$NetBSD: main,v 1.456 2010/02/02 19:42:32 yhardy Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1188,6 +1188,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Adam Hamsik Ta Mt haad@NetBSD.org
 .It Ta Juergen Hannken-Illjes Ta Mt hannken@NetBSD.org
 .It Ta Charles M. Hannum Ta Mt mycroft@NetBSD.org
+.It Ta Yorick Hardy Ta Mt yhardy@NetBSD.org
 .It Ta Ben Harris Ta Mt bjh21@NetBSD.org
 .It Ta Ross Harvey Ta Mt ross@NetBSD.org
 .It Ta Eric Haszlakiewicz Ta Mt erh@NetBSD.org
