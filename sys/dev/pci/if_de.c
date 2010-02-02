@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.135 2010/01/19 22:07:00 pooka Exp $	*/
+/*	$NetBSD: if_de.c,v 1.136 2010/02/02 14:57:45 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.135 2010/01/19 22:07:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.136 2010/02/02 14:57:45 wiz Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -3760,7 +3760,7 @@ tulip_rx_intr(
 #if defined(__NetBSD__)
 		(*ifp->if_input)(ifp, ms);
 #else
-		m_adj(ms, sizeof(struct ether_header);
+		m_adj(ms, sizeof(struct ether_header));
 		ether_input(ifp, &eh, ms);
 #endif /* __NetBSD__ */
 #else
@@ -3774,7 +3774,7 @@ tulip_rx_intr(
 #if defined(__NetBSD__)
 		(*ifp->if_input)(ifp, m0);
 #else
-		m_adj(m0, sizeof(struct ether_header);
+		m_adj(m0, sizeof(struct ether_header));
 		ether_input(ifp, &eh, m0);
 #endif /* __NetBSD__ */
 		m0 = ms;
