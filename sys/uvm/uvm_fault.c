@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.150 2010/02/02 01:54:48 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.151 2010/02/02 04:35:35 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.150 2010/02/02 01:54:48 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.151 2010/02/02 04:35:35 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1002,6 +1002,15 @@ uvm_fault_check(
 	return 0;
 }
 
+static inline void
+uvm_fault_upper_lookup1(
+	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
+	bool shadowed);
+static void
+uvm_fault_upper_lookup_neighbor(
+	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
+	vaddr_t currva, struct vm_anon *anon);
+
 static int
 uvm_fault_upper_lookup(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
@@ -1024,8 +1033,6 @@ uvm_fault_upper_lookup(
 	currva = flt->startva;
 	shadowed = false;
 	for (lcv = 0 ; lcv < flt->npages ; lcv++, currva += PAGE_SIZE) {
-		struct vm_anon *anon;
-
 		/*
 		 * dont play with VAs that are already mapped
 		 * except for center)
@@ -1051,9 +1058,22 @@ uvm_fault_upper_lookup(
 		pages[lcv] = PGO_DONTCARE;
 		if (lcv == flt->centeridx) {		/* save center for later! */
 			shadowed = true;
-			continue;
+		} else {
+			uvm_fault_upper_lookup_neighbor(ufi, flt, currva, anons[lcv]);
 		}
-		anon = anons[lcv];
+	}
+
+	uvm_fault_upper_lookup1(ufi, flt, shadowed);
+
+	return 0;
+}
+
+static void
+uvm_fault_upper_lookup_neighbor(
+	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
+	vaddr_t currva, struct vm_anon *anon)
+{
+
 		mutex_enter(&anon->an_lock);
 
 		/* ignore loaned and busy pages */
@@ -1085,7 +1105,19 @@ uvm_fault_upper_lookup(
 uvm_fault_upper_lookup_enter_done:
 		pmap_update(ufi->orig_map->pmap);
 		mutex_exit(&anon->an_lock);
-	}
+}
+
+static inline void
+uvm_fault_upper_lookup1(
+	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
+	bool shadowed)
+{
+#ifdef DIAGNOSTIC
+	struct vm_amap *amap = ufi->entry->aref.ar_amap;
+#endif
+#ifdef UVMHIST
+	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
+#endif
 
 	/* locked: maps(read), amap(if there) */
 	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
@@ -1100,8 +1132,6 @@ uvm_fault_upper_lookup_enter_done:
 	 * XXX Actually, that is bad; pmap_enter() should just fail in that
 	 * XXX case.  --thorpej
 	 */
-
-	return 0;
 }
 
 static int
@@ -1151,6 +1181,10 @@ uvm_fault_lower_special(
 
 	return error;
 }
+
+static void uvm_fault_lower_generic_lookup_neighbor(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    vaddr_t, struct vm_page *);
 
 static int
 uvm_fault_lower_generic(
@@ -1210,7 +1244,6 @@ uvm_fault_lower_generic_lookup(
 	currva = flt->startva;
 	for (lcv = 0; lcv < flt->npages; lcv++, currva += PAGE_SIZE) {
 		struct vm_page *curpg;
-		bool readonly;
 
 		curpg = pages[lcv];
 		if (curpg == NULL || curpg == PGO_DONTCARE) {
@@ -1228,8 +1261,20 @@ uvm_fault_lower_generic_lookup(
 			UVMHIST_LOG(maphist, "  got uobjpage "
 			    "(0x%x) with locked get",
 			    curpg, 0,0,0);
-			continue;
-		}
+		} else
+			uvm_fault_lower_generic_lookup_neighbor(ufi, flt,
+			    currva, curpg);
+	}
+	pmap_update(ufi->orig_map->pmap);
+	return 0;
+}
+
+static void
+uvm_fault_lower_generic_lookup_neighbor(
+	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
+	vaddr_t currva, struct vm_page *curpg)
+{
+		bool readonly;
 
 		/*
 		 * calling pgo_get with PGO_LOCKED returns us pages which
@@ -1273,9 +1318,6 @@ uvm_fault_lower_generic_lookup(
 
 		curpg->flags &= ~(PG_BUSY);
 		UVM_PAGE_OWN(curpg, NULL);
-	}
-	pmap_update(ufi->orig_map->pmap);
-	return 0;
 }
 
 static int
@@ -1420,12 +1462,17 @@ uvm_fault_upper(
 }
 
 static int
+uvm_fault_upper_loan_break(
+	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
+	struct vm_anon *anon, struct uvm_object **ruobj);
+
+static int
 uvm_fault_upper_loan(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_anon *anon, struct uvm_object **ruobj)
 {
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
-	struct uvm_object *uobj = *ruobj;
+	int error = 0;
 
 	if (!flt->cow_now) {
 
@@ -1452,14 +1499,29 @@ uvm_fault_upper_loan(
 
 		/* >1 case is already ok */
 		if (anon->an_ref == 1) {
+			error = uvm_fault_upper_loan_break(ufi, flt, anon, ruobj);
+			if (error != 0) {
+				uvmfault_unlockall(ufi, amap, *ruobj, anon);
+				uvm_wait("flt_noram2");
+				return ERESTART;
+			}
+		}
+	}
+	return error;
+}
+
+/* XXXUEBS consider to move this elsewhere */
+static int
+uvm_fault_upper_loan_break(
+	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
+	struct vm_anon *anon, struct uvm_object **ruobj)
+{
 			struct vm_page *pg;
 
 			/* get new un-owned replacement page */
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
 			if (pg == NULL) {
-				uvmfault_unlockall(ufi, amap, uobj, anon);
-				uvm_wait("flt_noram2");
-				return ERESTART;
+				return ENOMEM;
 			}
 
 			/*
@@ -1477,7 +1539,7 @@ uvm_fault_upper_loan(
 			/* in case we owned */
 			anon->an_page->pqflags &= ~PQ_ANON;
 
-			if (uobj) {
+			if (*ruobj) {
 				/* if we were receiver of loan */
 				anon->an_page->loan_count--;
 			} else {
@@ -1488,8 +1550,8 @@ uvm_fault_upper_loan(
 				uvm_pagedequeue(anon->an_page);
 			}
 
-			if (uobj) {
-				mutex_exit(&uobj->vmobjlock);
+			if (*ruobj) {
+				mutex_exit(&(*ruobj)->vmobjlock);
 				*ruobj = NULL;
 			}
 
@@ -1505,10 +1567,8 @@ uvm_fault_upper_loan(
 			UVM_PAGE_OWN(pg, NULL);
 
 			/* done! */
-		}     /* ref == 1 */
-	}       /* write fault */
 
-	return 0;
+			return 0;
 }
 
 static int
@@ -1691,7 +1751,7 @@ uvm_fault_lower_generic_io(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_page **ruobjpage);
 static int
-uvm_fault_lower_generic_uobjpage(
+uvm_fault_lower_generic3(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_page *uobjpage, bool promote);
 static int
@@ -1771,7 +1831,7 @@ uvm_fault_lower_generic2(
 		if (error != 0)
 			return error;
 	}
-	return uvm_fault_lower_generic_uobjpage(ufi, flt, uobjpage, promote);
+	return uvm_fault_lower_generic3(ufi, flt, uobjpage, promote);
 }
 
 static int
@@ -1897,7 +1957,7 @@ uvm_fault_lower_generic_io(
 }
 
 int
-uvm_fault_lower_generic_uobjpage(
+uvm_fault_lower_generic3(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_page *uobjpage, bool promote)
 {
@@ -1935,12 +1995,16 @@ uvm_fault_lower_generic_uobjpage(
 	return error;
 }
 
+static int
+uvm_fault_lower_generic_direct_loan(
+	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
+	struct vm_page **rpg, struct vm_page **ruobjpage);
+
 int
 uvm_fault_lower_generic_direct(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_page *uobjpage)
 {
-	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
 	struct uvm_object * const uobj = ufi->entry->object.uvm_obj;
 	struct vm_page *pg;
 
@@ -1967,6 +2031,23 @@ uvm_fault_lower_generic_direct(
 	 */
 
 	if (uobjpage->loan_count) {
+		uvm_fault_lower_generic_direct_loan(ufi, flt, &pg, &uobjpage);
+	}
+	KASSERT(pg == uobjpage);
+
+	return uvm_fault_lower_generic_enter(ufi, flt, uobj, NULL, pg, uobjpage);
+}
+
+static int
+uvm_fault_lower_generic_direct_loan(
+	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
+	struct vm_page **rpg, struct vm_page **ruobjpage)
+{
+		struct vm_amap * const amap = ufi->entry->aref.ar_amap;
+		struct uvm_object * const uobj = ufi->entry->object.uvm_obj;
+		struct vm_page *pg;
+		struct vm_page *uobjpage = *ruobjpage;
+
 		if (!flt->cow_now) {
 			/* read fault: cap the protection at readonly */
 			/* cap! */
@@ -1996,11 +2077,10 @@ uvm_fault_lower_generic_direct(
 				uvm_wait("flt_noram4");
 				return ERESTART;
 			}
-			uobjpage = pg;
+			*rpg = pg;
+			*ruobjpage = pg;
 		}
-	}
-
-	return uvm_fault_lower_generic_enter(ufi, flt, uobj, NULL, pg, uobjpage);
+		return 0;
 }
 
 int
