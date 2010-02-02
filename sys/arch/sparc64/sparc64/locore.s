@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.308 2010/02/01 07:01:40 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.309 2010/02/02 03:07:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -195,6 +195,12 @@
 /* Give this real authority: reset the machine */
 #define NOTREACHED	sir
 
+#ifdef SPITFIRE
+#define ASI_DCACHE_TAG_OR_INV	ASI_DCACHE_TAG
+#else
+#define ASI_DCACHE_TAG_OR_INV	ASI_DCACHE_INVALIDATE
+#endif
+
 /*
  * This macro will clear out a cache line before an explicit
  * access to that location.  It's mostly used to make certain
@@ -206,11 +212,11 @@
 #ifdef DCACHE_BUG
 #define DLFLUSH(a,t) \
 	andn	a, 0x1f, t; \
-	stxa	%g0, [ t ] ASI_DCACHE_TAG; \
+	stxa	%g0, [ t ] ASI_DCACHE_TAG_OR_INV; \
 	membar	#Sync
 /* The following can be used if the pointer is 16-byte aligned */
 #define DLFLUSH2(t) \
-	stxa	%g0, [ t ] ASI_DCACHE_TAG; \
+	stxa	%g0, [ t ] ASI_DCACHE_TAG_OR_INV; \
 	membar	#Sync
 #else
 #define DLFLUSH(a,t)
@@ -2364,11 +2370,7 @@ winfixsave:
 1:
 #if 1
 	/* Now we need to blast away the D$ to make sure we're in sync */
-#ifdef SPITFIRE
-	stxa	%g0, [%g7] ASI_DCACHE_TAG
-#else
-	stxa	%g0, [%g7] ASI_DCACHE_INVALIDATE
-#endif
+	stxa	%g0, [%g7] ASI_DCACHE_TAG_OR_INV
 	brnz,pt	%g7, 1b
 	 dec	8, %g7
 #endif
@@ -5386,11 +5388,7 @@ ENTRY(blast_dcache)
 	andn	%o3, PSTATE_IE, %o4			! Turn off PSTATE_IE bit
 	wrpr	%o4, 0, %pstate
 1:
-#ifdef SPITFIRE
-	stxa	%g0, [%o1] ASI_DCACHE_TAG
-#else
-	stxa	%g0, [%o1] ASI_DCACHE_INVALIDATE
-#endif
+	stxa	%g0, [%o1] ASI_DCACHE_TAG_OR_INV
 	brnz,pt	%o1, 1b
 	 dec	32, %o1
 	sethi	%hi(KERNBASE), %o2
@@ -5463,11 +5461,7 @@ ENTRY(dcache_flush_page)
 	bne,pt	%xcc, 1b
 	 membar	#LoadStore
 
-#ifdef SPITFIRE
-	stxa	%g0, [%o0] ASI_DCACHE_TAG
-#else
-	stxa	%g0, [%o0] ASI_DCACHE_INVALIDATE
-#endif
+	stxa	%g0, [%o0] ASI_DCACHE_TAG_OR_INV
 	ba,pt	%icc, 1b
 	 membar	#StoreLoad
 2:
@@ -5515,38 +5509,30 @@ ENTRY(cache_flush_phys)
 	clr	%o4
 1:
 	ldxa	[%o4] ASI_DCACHE_TAG, %o3
-#ifdef SPITFIRE
-	ldda	[%o4] ASI_ICACHE_TAG, %g0	! Tag goes in %g1 -- not on cheetah
-#endif
 	sllx	%o3, 40-29, %o3	! Shift D$ tag into place
 	and	%o3, %o2, %o3	! Mask out trash
-#ifdef SPITFIRE
+
 	cmp	%o0, %o3
 	blt,pt	%xcc, 2f	! Too low
-	 sllx	%g1, 40-35, %g1	! Shift I$ tag into place
-	cmp	%o1, %o3
+	 cmp	%o1, %o3
 	bgt,pt	%xcc, 2f	! Too high
 	 nop
 
 	membar	#LoadStore
-	stxa	%g0, [%o4] ASI_DCACHE_TAG ! Just right
+	stxa	%g0, [%o4] ASI_DCACHE_TAG_OR_INV ! Just right
 2:
-	and	%g1, %o2, %g1	! Mask out trash
+#ifdef SPITFIRE
+	ldda	[%o4] ASI_ICACHE_TAG, %g0	! Tag goes in %g1
+	sllx	%g1, 40-35, %g1			! Shift I$ tag into place
+	and	%g1, %o2, %g1			! Mask out trash
 	cmp	%o0, %g1
 	blt,pt	%xcc, 3f
 	 cmp	%o1, %g1
 	bgt,pt	%xcc, 3f
 	 nop
 	stxa	%g0, [%o4] ASI_ICACHE_TAG
-#else
-	cmp	%o0, %o3
-	blt,pt	%xcc, 3f
-	 cmp	%o1, %o3
-	bgt,pt	%xcc, 3f
-	 nop
-	stxa	%g0, [%o4] ASI_DCACHE_INVALIDATE ! Just right
-#endif
 3:
+#endif
 	membar	#StoreLoad
 	dec	32, %o5
 	brgz,pt	%o5, 1b
