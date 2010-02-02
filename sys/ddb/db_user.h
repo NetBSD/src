@@ -1,4 +1,4 @@
-/*	$NetBSD: db_user.h,v 1.1 2009/03/07 22:02:17 ad Exp $	*/
+/*	$NetBSD: db_user.h,v 1.2 2010/02/02 09:04:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
