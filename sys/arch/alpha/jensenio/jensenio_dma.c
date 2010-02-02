@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_dma.c,v 1.2 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: jensenio_dma.c,v 1.3 2010/02/02 20:40:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_dma.c,v 1.2 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_dma.c,v 1.3 2010/02/02 20:40:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ jensenio_dma_init(struct jensenio_config *jcp)
 }
 
 /*
- * Return the bus dma tag to be used fo rthe specified bus type.
+ * Return the bus dma tag to be used for the specified bus type.
  * INTERNAL USE ONLY!
  */
 bus_dma_tag_t
