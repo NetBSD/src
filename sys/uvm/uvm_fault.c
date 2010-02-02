@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.154 2010/02/02 06:52:59 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.155 2010/02/02 17:40:43 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.154 2010/02/02 06:52:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.155 2010/02/02 17:40:43 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1493,12 +1493,15 @@ uvm_fault_upper_loan(
 
 		/* >1 case is already ok */
 		if (anon->an_ref == 1) {
-			error = uvm_loanbreak_anon(anon, ruobj);
+			error = uvm_loanbreak_anon(anon, *ruobj);
 			if (error != 0) {
 				uvmfault_unlockall(ufi, amap, *ruobj, anon);
 				uvm_wait("flt_noram2");
 				return ERESTART;
 			}
+			/* if we were a loan reciever uobj is gone */
+			if (*ruobj)
+				*ruobj = NULL;
 		}
 	}
 	return error;
