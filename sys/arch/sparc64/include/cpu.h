@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.87 2009/10/21 21:12:03 rmind Exp $ */
+/*	$NetBSD: cpu.h,v 1.88 2010/02/02 04:28:55 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -339,7 +339,8 @@ int	probeset(paddr_t, int, int, uint64_t);
 struct pcb;
 void	snapshot(struct pcb *);
 struct frame *getfp(void);
-void	switchtoctx(int);
+void	switchtoctx_us(int);
+void	switchtoctx_usiii(int);
 void	next_tick(long);
 /* trap.c */
 void	kill_user_windows(struct lwp *);

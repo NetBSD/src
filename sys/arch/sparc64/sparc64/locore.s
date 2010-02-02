@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.309 2010/02/02 03:07:06 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.310 2010/02/02 04:28:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3628,7 +3628,7 @@ ENTRY(sparc64_ipi_flush_pte_usiii)
 #endif
 	andn	%g2, 0xfff, %g2			! drop unused va bits
 	mov	CTX_PRIMARY, %g5
-	ldxa	[%g5] ASI_DMMU, %g6		! Save secondary context
+	ldxa	[%g5] ASI_DMMU, %g6		! Save primary context
 	sethi	%hi(KERNBASE), %g7
 	membar	#LoadStore
 	stxa	%g3, [%g5] ASI_DMMU		! Insert context to demap
@@ -5164,14 +5164,15 @@ ENTRY(openfirmware_exit)
 	NOTREACHED
 
 /*
- * sp_tlb_flush_pte(vaddr_t va, int ctx)
+ * sp_tlb_flush_pte_us(vaddr_t va, int ctx)
+ * sp_tlb_flush_pte_usiii(vaddr_t va, int ctx)
  *
  * Flush tte from both IMMU and DMMU.
  *
  * This uses %o0-%o5
  */
 	.align 8
-ENTRY(sp_tlb_flush_pte)
+ENTRY(sp_tlb_flush_pte_us)
 #ifdef DEBUG
 	set	pmapdebug, %o3
 	lduw	[%o3], %o3
@@ -5189,12 +5190,11 @@ ENTRY(sp_tlb_flush_pte)
 	restore
 	.data
 1:
-	.asciz	"sp_tlb_flush_pte:	demap ctx=%x va=%08x res=%x\r\n"
+	.asciz	"sp_tlb_flush_pte_us:	demap ctx=%x va=%08x res=%x\r\n"
 	_ALIGN
 	.text
 2:
 #endif
-#ifdef	SPITFIRE
 #ifdef MULTIPROCESSOR
 	rdpr	%pstate, %o3
 	andn	%o3, PSTATE_IE, %o4			! disable interrupts
@@ -5225,8 +5225,30 @@ ENTRY(sp_tlb_flush_pte)
 #else
 	 nop
 #endif
-#else
 
+ENTRY(sp_tlb_flush_pte_usiii)
+#ifdef DEBUG
+	set	pmapdebug, %o3
+	lduw	[%o3], %o3
+!	movrz	%o1, -1, %o3				! Print on either pmapdebug & PDB_DEMAP or ctx == 0
+	btst	0x0020, %o3
+	bz,pt	%icc, 2f
+	 nop
+	save	%sp, -CC64FSZ, %sp
+	set	1f, %o0
+	mov	%i1, %o1
+	andn	%i0, 0xfff, %o3
+	or	%o3, 0x010, %o3
+	call	_C_LABEL(printf)
+	 mov	%i0, %o2
+	restore
+	.data
+1:
+	.asciz	"sp_tlb_flush_pte_usiii:	demap ctx=%x va=%08x res=%x\r\n"
+	_ALIGN
+	.text
+2:
+#endif
 	! %o0 = VA [in]
 	! %o1 = ctx value [in] / KERNBASE
 	! %o2 = CTX_PRIMARY
@@ -5269,7 +5291,6 @@ ENTRY(sp_tlb_flush_pte)
 1:	
 	retl
 	 wrpr	%o4, %pstate				! restore interrupts
-#endif
 
 
 /*
@@ -9693,24 +9714,38 @@ ENTRY(restoretstate)
 	/*
 	 * Switch to context in abs(%o0)
 	 */
-ENTRY(switchtoctx)
-#ifdef SPITFIRE
+ENTRY(switchtoctx_us)
 	set	DEMAP_CTX_SECONDARY, %o3
 	stxa	%o3, [%o3] ASI_DMMU_DEMAP
 	mov	CTX_SECONDARY, %o4
 	stxa	%o3, [%o3] ASI_IMMU_DEMAP
 	membar	#Sync
-	stxa	%o0, [%o4] ASI_DMMU		! Maybe we should invali
+	stxa	%o0, [%o4] ASI_DMMU		! Maybe we should invalid
 	sethi	%hi(KERNBASE), %o2
 	membar	#Sync
 	flush	%o2
 	retl
 	 nop
-#else
-	/* UNIMPLEMENTED */
+
+ENTRY(switchtoctx_usiii)
+	mov	CTX_SECONDARY, %o4
+	ldxa	[%o4] ASI_DMMU, %o2		! Load secondary context
+	mov	CTX_PRIMARY, %o5
+	ldxa	[%o5] ASI_DMMU, %o1		! Save primary context
+	membar	#LoadStore
+	stxa	%o2, [%o5] ASI_DMMU		! Insert secondary for demap
+	membar	#Sync
+	set	DEMAP_CTX_PRIMARY, %o3
+	stxa	%o3, [%o3] ASI_DMMU_DEMAP
+	membar	#Sync
+	stxa	%o0, [%o4] ASI_DMMU		! Maybe we should invalid
+	membar	#Sync
+	stxa	%o1, [%o5] ASI_DMMU		! Restore primary context
+	sethi	%hi(KERNBASE), %o2
+	membar	#Sync
+	flush	%o2
 	retl
 	 nop
-#endif
 
 #ifndef _LP64
 	/*

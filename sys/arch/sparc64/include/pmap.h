@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.46 2010/02/01 07:01:41 mrg Exp $	*/
+/*	$NetBSD: pmap.h,v 1.47 2010/02/02 04:28:56 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -206,8 +206,8 @@ void		pmap_kprotect(vaddr_t, vm_prot_t);
 
 /* SPARC64 specific */
 /* Assembly routines to flush TLB mappings */
-void sp_tlb_flush_pte(vaddr_t, int);
-void sp_tlb_flush_ctx(int);
+void sp_tlb_flush_pte_us(vaddr_t, int);
+void sp_tlb_flush_pte_usiii(vaddr_t, int);
 void sp_tlb_flush_all_us(void);
 void sp_tlb_flush_all_usiii(void);
 
@@ -215,7 +215,14 @@ void sp_tlb_flush_all_usiii(void);
 void smp_tlb_flush_pte(vaddr_t, pmap_t);
 #define	tlb_flush_pte(va,pm)	smp_tlb_flush_pte(va, pm)
 #else
-#define	tlb_flush_pte(va,pm)	sp_tlb_flush_pte(va, (pm)->pm_ctx)
+static __inline__ void
+tlb_flush_pte(vaddr_t va, pmap_t pm)
+{
+	if (CPU_IS_USIII_UP())
+		sp_tlb_flush_pte_usiii(va, pm->pm_ctx);
+	else
+		sp_tlb_flush_pte_usiii(va, pm->pm_ctx);
+}
 #endif
 
 /* Installed physical memory, as discovered during bootstrap. */

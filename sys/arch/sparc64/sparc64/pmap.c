@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.248 2010/02/01 07:01:40 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.249 2010/02/02 04:28:56 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.248 2010/02/01 07:01:40 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.249 2010/02/02 04:28:56 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1852,8 +1852,12 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 #ifdef MULTIPROCESSOR
 		if (wasmapped && pmap_is_on_mmu(pm))
 			tlb_flush_pte(va, pm);
-		else
-			sp_tlb_flush_pte(va, pmap_ctx(pm));
+		else {
+			if (CPU_IS_USIII_UP())
+				sp_tlb_flush_pte_usiii(va, pmap_ctx(pm));
+			else
+				sp_tlb_flush_pte_us(va, pmap_ctx(pm));
+		}
 #else
 		tlb_flush_pte(va, pm);
 #endif
