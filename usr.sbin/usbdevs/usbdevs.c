@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.25 2008/04/28 20:24:17 martin Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.26 2010/02/02 16:25:30 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@
 #include <unistd.h>
 #include <err.h>
 #include <errno.h>
+#include <locale.h>
+#include <langinfo.h>
+#include <iconv.h>
 #include <dev/usb/usb.h>
 
 #define USBDEV "/dev/usb"
@@ -61,6 +64,34 @@ usage()
 
 char done[USB_MAX_DEVICES];
 int indent;
+#define MAXLEN USB_MAX_ENCODED_STRING_LEN /* assume can't grow over UTF-8 */
+char vendor[MAXLEN], product[MAXLEN], serial[MAXLEN];
+
+static void
+u2t(const char *utf8str, char *termstr)
+{
+	static iconv_t ic;
+	static int iconv_inited = 0;
+	size_t insz, outsz, icres;
+
+	if (!iconv_inited) {
+		setlocale(LC_ALL, "");
+		ic = iconv_open(nl_langinfo(CODESET), "UTF-8");
+		if (ic == (iconv_t)-1)
+			ic = iconv_open("ASCII", "UTF-8"); /* g.c.d. */
+		iconv_inited = 1;
+	}
+	if (ic != (iconv_t)-1) {
+		insz = strlen(utf8str);
+		outsz = MAXLEN - 1;
+		icres = iconv(ic, &utf8str, &insz, &termstr, &outsz);
+		if (icres != (size_t)-1) {
+			*termstr = '\0';
+			return;
+		}
+	}
+	strcpy(termstr, "(invalid)");
+}
 
 void
 usbdev(int f, int a, int rec)
@@ -93,14 +124,17 @@ usbdev(int f, int a, int rec)
 		else
 			printf("unconfigured, ");
 	}
+	u2t(di.udi_product, product);
+	u2t(di.udi_vendor, vendor);
+	u2t(di.udi_serial, serial);
 	if (verbose) {
 		printf("%s(0x%04x), %s(0x%04x), rev %s",
-		       di.udi_product, di.udi_productNo,
-		       di.udi_vendor, di.udi_vendorNo, di.udi_release);
+		       product, di.udi_productNo,
+		       vendor, di.udi_vendorNo, di.udi_release);
 		if (di.udi_serial[0])
-			printf(", serial %s", di.udi_serial);
+			printf(", serial %s", serial);
 	} else
-		printf("%s, %s", di.udi_product, di.udi_vendor);
+		printf("%s, %s", product, vendor);
 	printf("\n");
 	if (showdevs) {
 		for (i = 0; i < USB_MAX_DEVNAMES; i++)
