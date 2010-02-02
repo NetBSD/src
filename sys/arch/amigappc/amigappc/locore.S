@@ -1,4 +1,4 @@
-/*      $NetBSD: locore.S,v 1.17 2009/11/26 00:19:12 matt Exp $   */
+/*      $NetBSD: locore.S,v 1.18 2010/02/02 20:56:13 phx Exp $   */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -74,6 +74,8 @@ GLOBAL(endsym)
 	.long	0			/* end symbol table */
 GLOBAL(oeacpufeat)
 	.long	0			/* cpu features */
+GLOBAL(eclockfreq)
+	.long	0			/* needed by the aucc driver only */
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
