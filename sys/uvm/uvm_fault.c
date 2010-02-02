@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.149 2010/02/01 16:12:36 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.150 2010/02/02 01:54:48 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.149 2010/02/01 16:12:36 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.150 2010/02/02 01:54:48 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -695,15 +695,15 @@ done:
 struct uvm_faultctx {
 	vm_prot_t access_type;
 	vm_prot_t enter_prot;
+	vaddr_t startva;
+	int npages;
+	int centeridx;
+	struct vm_anon *anon_spare;
 	bool wire_mapping;
 	bool narrow;
 	bool wire_paging;
 	bool maxprot;
 	bool cow_now;
-	int npages;
-	int centeridx;
-	vaddr_t startva;
-	struct vm_anon *anon_spare;
 };
 
 static int uvm_fault_check(
