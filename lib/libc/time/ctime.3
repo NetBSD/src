@@ -1,5 +1,5 @@
-.\"	$NetBSD: ctime.3,v 1.29 2010/01/08 17:16:56 joerg Exp $
-.Dd March 31, 2001
+.\"	$NetBSD: ctime.3,v 1.30 2010/02/02 19:04:37 christos Exp $
+.Dd February 2, 2010
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -154,7 +154,8 @@ and
 are determined.
 .Fn mktime
 returns the specified calendar time; if the calendar time cannot be
-represented, it returns -1.
+represented, it returns 
+.Va "(time_t)-1" .
 .Pp
 .Fn difftime
 returns the difference between two calendar times,
@@ -195,6 +196,60 @@ is non-zero if summer time is in effect.
 is the offset (in seconds) of the time represented
 from UTC, with positive values indicating east
 of the Prime Meridian.
+.Sh RETURN VALUES
+On success the
+.Nm asctime 
+and
+.Nm ctime
+functions return a pointer to a static character buffer, and the
+.Nm asctime_r 
+and
+.Nm ctime_r
+function return a pointer to the user-supplied buffer.
+On failure they all return
+.Dv NULL
+and no errors are defined for them.
+On success the
+.Nm gmtime ,
+and
+.Nm localtime
+functions return a pointer to a statically allocated
+.Va "struct tm"
+whereas the
+.Nm gmtime_r 
+and
+.Nm localtime_r
+functions return a pointer to the user-supplied
+.Va "struct tm" .
+On failure they all return
+.Dv NULL
+and the global variable
+.Va errno
+is set to indicate the error.
+The
+.Nm mktime
+function returns the specified time since the Epoch as a
+.Va time_t
+type value. If the time cannot be represented, then
+.Nm mktime
+returns
+.Va "(time_t)-1"
+setting the global variable
+.Va errno
+to indicate the error.
+.Sh ERRORS
+The
+.Nm gmtime_r ,
+.Nm localtime_r ,
+.Nm gmtime ,
+.Nm localtime ,
+and
+.Nm mktime
+will fail when:
+.Bl -tag -width Er
+.It Bq Er EOVERFLOW
+The result cannot be represented.
+.El
 .Sh FILES
 .Bl -tag -width /usr/share/zoneinfo/posixrules -compact
 .It Pa /etc/localtime
