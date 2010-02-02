@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.129 2010/02/02 16:18:29 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.130 2010/02/02 16:54:40 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.129 2010/02/02 16:18:29 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.130 2010/02/02 16:54:40 drochner Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.129 2010/02/02 16:18:29 drochner Exp
 #include <dev/wscons/wsemulvar.h>
 #include <dev/wscons/wscons_callbacks.h>
 #include <dev/cons.h>
+
+#include "locators.h"
 
 struct wsscreen_internal {
 	const struct wsdisplay_emulops *emulops;
@@ -524,13 +526,13 @@ wsdisplay_emul_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct wsemuldisplaydev_attach_args *ap = aux;
 
-	if (match->wsemuldisplaydevcf_console !=
-	    WSEMULDISPLAYDEVCF_CONSOLE_UNK) {
+	if (match->cf_loc[WSEMULDISPLAYDEVCF_CONSOLE] !=
+	    WSEMULDISPLAYDEVCF_CONSOLE_DEFAULT) {
 		/*
 		 * If console-ness of device specified, either match
 		 * exactly (at high priority), or fail.
 		 */
-		if (match->wsemuldisplaydevcf_console != 0 &&
+		if (match->cf_loc[WSEMULDISPLAYDEVCF_CONSOLE] != 0 &&
 		    ap->console != 0)
 			return (10);
 		else
@@ -554,8 +556,8 @@ wsdisplay_emul_attach(device_t parent, device_t self, void *aux)
 		ap->console = 0;
 
 	wsdisplay_common_attach(sc, ap->console,
-	     device_cfdata(self)->wsemuldisplaydevcf_kbdmux, ap->scrdata,
-	     ap->accessops, ap->accesscookie);
+	     device_cfdata(self)->cf_loc[WSEMULDISPLAYDEVCF_KBDMUX],
+	     ap->scrdata, ap->accessops, ap->accesscookie);
 
 	if (ap->console) {
 		int maj;
@@ -605,7 +607,7 @@ wsdisplay_noemul_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	wsdisplay_common_attach(sc, 0,
-	    device_cfdata(self)->wsemuldisplaydevcf_kbdmux, NULL,
+	    device_cfdata(self)->cf_loc[WSDISPLAYDEVCF_KBDMUX], NULL,
 	    ap->accessops, ap->accesscookie);
 }
 
