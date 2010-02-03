@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: genhash,v 1.1 2010/02/03 15:16:32 roy Exp $
+# $NetBSD: genhash,v 1.2 2010/02/03 18:49:23 snj Exp $
 
 # Copyright (c) 2009 The NetBSD Foundation, Inc.
 #
@@ -29,7 +29,7 @@
 
 # Generate string and hash tables for our terminfo strings in term.h
 # We don't expose the hash or tables directly, but instead via functions.
-# This allows use to freely change how we hash or store our string tables
+# This allows us to freely change how we hash or store our string tables
 # in the future.
 
 : ${TOOL_AWK:=awk}
@@ -88,7 +88,7 @@ cat <<EOF
  * Automatically generated from term.h */
 
 #include <sys/cdefs.h>
-__RCSID("\$NetBSD: genhash,v 1.1 2010/02/03 15:16:32 roy Exp $");
+__RCSID("\$NetBSD: genhash,v 1.2 2010/02/03 18:49:23 snj Exp $");
 
 #include <sys/types.h>
 
