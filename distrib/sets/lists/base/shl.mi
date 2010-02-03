@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.517 2010/01/31 03:09:26 pooka Exp $
+# $NetBSD: shl.mi,v 1.518 2010/02/03 06:25:54 tls Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -22,6 +22,7 @@
 ./lib/libgcc_s.so.1.0				base-sys-shlib		gcc
 ./lib/libipsec.so.3.0				base-net-shlib		dynamicroot
 ./lib/libkvm.so.6.0				base-sys-shlib		dynamicroot
+./lib/liblzf.so.0.0				base-sys-shlib		dynamicroot
 ./lib/libm.so.0.8				base-sys-shlib		dynamicroot
 ./lib/libprop.so.1.1				base-sys-shlib		dynamicroot
 ./lib/libradius.so.4.0				base-sys-shlib		dynamicroot
@@ -98,6 +99,7 @@
 ./usr/lib/libldap.so.4.0			base-ldap-shlib		ldap
 ./usr/lib/libldap_r.so.4.0			base-ldap-shlib		ldap
 ./usr/lib/liblwres.so.5.1			base-bind-shlib
+./usr/lib/liblzf.so.0.0				base-sys-shlib
 ./usr/lib/libm.so.0.8				base-sys-shlib
 ./usr/lib/libmagic.so.3.0			base-sys-shlib
 ./usr/lib/libmenu.so.6.0			base-sys-shlib
