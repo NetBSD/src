@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.30 2009/03/13 20:44:59 cube Exp $	*/
+/*	$NetBSD: defs.h,v 1.31 2010/02/03 21:00:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -387,6 +387,7 @@ const char *machine;		/* machine type, e.g., "sparc" or "sun3" */
 const char *machinearch;	/* machine arch, e.g., "sparc" or "m68k" */
 struct	nvlist *machinesubarches;
 				/* machine subarches, e.g., "sun68k" or "hpc" */
+const char *ioconfname;		/* ioconf name, mutually exclusive to machine */
 const char *srcdir;		/* path to source directory (rel. to build) */
 const char *builddir;		/* path to build directory */
 const char *defbuilddir;	/* default build directory */
@@ -523,6 +524,7 @@ int	mkdevsw(void);
 /* mkheaders.c */
 int	mkheaders(void);
 int	moveifchanged(const char *, const char *);
+int	emitlocs(void);
 
 /* mkioconf.c */
 int	mkioconf(void);
