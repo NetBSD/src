@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpusbhc.c,v 1.12 2010/01/10 22:13:18 pooka Exp $	*/
+/*	$NetBSD: rumpusbhc.c,v 1.13 2010/02/03 18:14:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.12 2010/01/10 22:13:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.13 2010/02/03 18:14:56 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -501,6 +501,7 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 	case C(UR_GET_STATUS, UT_READ_CLASS_DEVICE):
 	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
 	case C(UR_GET_DESCRIPTOR, UT_READ_INTERFACE):
+	case C(0x00, UT_WRITE_CLASS_INTERFACE):
 	case C(0xff, UT_WRITE_CLASS_INTERFACE):
 	case C(0x20, UT_WRITE_CLASS_INTERFACE):
 	case C(0x22, UT_WRITE_CLASS_INTERFACE):
