@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1.6.2 2009/10/18 16:01:51 bouyer Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.1.6.3 2010/02/03 00:38:21 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.1.6.2 2009/10/18 16:01:51 bouyer Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.1.6.3 2010/02/03 00:38:21 snj Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -43,7 +43,6 @@ char   *BuildInfo = NULL;
 char   *SizePkg = NULL;
 char   *SizeAll = NULL;
 char   *Preserve = NULL;
-char   *SrcDir = NULL;
 char   *DefaultOwner = NULL;
 char   *DefaultGroup = NULL;
 char   *realprefix = NULL;
@@ -61,7 +60,7 @@ usage(void)
 	    "usage: pkg_create [-ElOUVv] [-B build-info-file] [-b build-version-file]\n"
             "                  [-C cpkgs] [-D displayfile] [-F compression] \n"
 	    "                  [-I realprefix] [-i iscript]\n"
-            "                  [-K pkg_dbdir] [-k dscript] [-L SrcDir]\n"
+            "                  [-K pkg_dbdir] [-k dscript]\n"
             "                  [-n preserve-file] [-P dpkgs] [-p prefix] [-r rscript]\n"
             "                  [-S size-all-file] [-s size-pkg-file]\n"
 	    "                  [-T buildpkgs] [-u owner] [-g group]\n"
@@ -135,7 +134,7 @@ main(int argc, char **argv)
 			break;
 
 		case 'K':
-			_pkgdb_setPKGDB_DIR(optarg);
+			pkgdb_set_dir(optarg, 3);
 			break;
 
 		case 'k':
@@ -147,7 +146,7 @@ main(int argc, char **argv)
 			break;
 
 		case 'L':
-			SrcDir = optarg;
+			warnx("Obsolete -L option ignored");
 			break;
 
 		case 'u':
@@ -194,6 +193,8 @@ main(int argc, char **argv)
 
 	argc -= optind;
 	argv += optind;
+
+	pkg_install_config();
 
 	if (argc == 0) {
 		warnx("missing package name");

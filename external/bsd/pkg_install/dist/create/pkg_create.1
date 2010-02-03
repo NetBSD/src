@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.1.1.1.6.1 2009/05/30 16:40:32 snj Exp $
+.\" $NetBSD: pkg_create.1,v 1.1.1.1.6.2 2010/02/03 00:38:21 snj Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -24,7 +24,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd May 13, 2009
+.Dd January 20, 2010
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -62,9 +62,6 @@
 .Ek
 .Bk -words
 .Op Fl k Ar dscript
-.Ek
-.Bk -words
-.Op Fl L Ar SrcDir
 .Ek
 .Bk -words
 .Op Fl n Ar preserve-file
@@ -196,14 +193,10 @@ to be the install procedure for the package.
 This can be any executable program (or shell script).
 It will be invoked automatically when the package is later installed.
 .It Fl K Ar pkg_dbdir
-Set
-.Ar pkg_dbdir
-as the package database directory.
-If this option isn't specified, then the package database directory is
-taken from the value of the environment variable
-.Ev PKG_DBDIR
-if it's set, otherwise it defaults to
-.Pa /var/db/pkg .
+Override the value of the
+.Dv PKG_DBDIR
+configuration option with the value
+.Ar pkg_dbdir .
 .It Fl k Ar dscript
 Set
 .Ar dscript
@@ -211,9 +204,6 @@ to be the de-install procedure for the package.
 This can be any executable program (or shell script).
 It will be invoked automatically
 when the package is later (if ever) de-installed.
-.It Fl L Ar SrcDir
-This sets the package's @src directive; see below for a description
-of what this does.
 .It Fl l
 Check that any symbolic links which are to be placed in the package are
 relative to the current prefix.
@@ -333,11 +323,10 @@ Note:
 .Cm @cd
 is also an alias for this command.
 .It Cm @src Ar directory
-Set the internal directory pointer for _creation only_ to
-.Ar directory .
-That is to say that it overrides
+This command is supported for compatibility only.
+It was formerly used to override
 .Cm @cwd
-for package creation but not extraction.
+during package creation.
 .It Cm @exec Ar command
 Execute
 .Ar command
@@ -486,12 +475,16 @@ Declare a conflict with the
 package, as the two packages contain references to the same files,
 and so cannot co-exist on the same system.
 .El
+.Sh ENVIRONMENT
+See
+.Xr pkg_install.conf 5
+for options, that can also be specified using the environment.
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
 .Xr pkg_admin 1 ,
 .Xr pkg_delete 1 ,
 .Xr pkg_info 1 ,
-.Xr sysconf 3 ,
+.Xr pkg_install.conf 5
 .Xr pkgsrc 7
 .Sh HISTORY
 The

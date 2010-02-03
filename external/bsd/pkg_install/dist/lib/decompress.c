@@ -1,4 +1,4 @@
-/*	$NetBSD: decompress.c,v 1.1.1.1.6.2 2009/10/18 16:01:51 bouyer Exp $	*/
+/*	$NetBSD: decompress.c,v 1.1.1.1.6.3 2010/02/03 00:38:22 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: decompress.c,v 1.1.1.1.6.2 2009/10/18 16:01:51 bouyer Exp $");
+__RCSID("$NetBSD: decompress.c,v 1.1.1.1.6.3 2010/02/03 00:38:22 snj Exp $");
 
 #ifdef BOOTSTRAP
 #include "lib.h"

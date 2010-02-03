@@ -1,4 +1,4 @@
-/*	$NetBSD: parse-config.c,v 1.1.1.4.4.3 2009/10/18 16:01:51 bouyer Exp $	*/
+/*	$NetBSD: parse-config.c,v 1.1.1.4.4.4 2010/02/03 00:38:22 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: parse-config.c,v 1.1.1.4.4.3 2009/10/18 16:01:51 bouyer Exp $");
+__RCSID("$NetBSD: parse-config.c,v 1.1.1.4.4.4 2010/02/03 00:38:22 snj Exp $");
 
 /*-
  * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -46,7 +46,14 @@ __RCSID("$NetBSD: parse-config.c,v 1.1.1.4.4.3 2009/10/18 16:01:51 bouyer Exp $"
 #include <string.h>
 #endif
 
+#ifndef BOOTSTRAP
+#include <fetch.h>
+#endif
+
 #include "lib.h"
+
+static int cache_connections = 16;
+static int cache_connections_host = 4;
 
 const char     *config_file = SYSCONFDIR"/pkg_install.conf";
 
@@ -54,11 +61,16 @@ char fetch_flags[10] = ""; /* Workaround Mac OS X linker issues with BSS */
 static const char *active_ftp;
 static const char *verbose_netio;
 static const char *ignore_proxy;
+const char *cache_index = "yes";
 const char *cert_chain_file;
 const char *certs_packages;
 const char *certs_pkg_vulnerabilities;
 const char *check_vulnerabilities;
+static const char *config_cache_connections;
+static const char *config_cache_connections_host;
+const char *config_pkg_dbdir;
 const char *config_pkg_path;
+const char *config_pkg_refcount_dbdir;
 const char *do_license_check;
 const char *verified_installation;
 const char *gpg_cmd;
@@ -79,6 +91,9 @@ static struct config_variable {
 } config_variables[] = {
 	{ "ACCEPTABLE_LICENSES", &acceptable_licenses },
 	{ "ACTIVE_FTP", &active_ftp },
+	{ "CACHE_INDEX", &cache_index },
+	{ "CACHE_CONNECTIONS", &config_cache_connections },
+	{ "CACHE_CONNECTIONS_HOST", &config_cache_connections_host },
 	{ "CERTIFICATE_ANCHOR_PKGS", &certs_packages },
 	{ "CERTIFICATE_ANCHOR_PKGVULN", &certs_pkg_vulnerabilities },
 	{ "CERTIFICATE_CHAIN", &cert_chain_file },
@@ -92,11 +107,14 @@ static struct config_variable {
 	{ "GPG_SIGN_AS", &gpg_sign_as },
 	{ "IGNORE_PROXY", &ignore_proxy },
 	{ "IGNORE_URL", &ignore_advisories },
+	{ "PKG_DBDIR", &config_pkg_dbdir },
 	{ "PKG_PATH", &config_pkg_path },
+	{ "PKG_REFCOUNT_DBDIR", &config_pkg_refcount_dbdir },
 	{ "PKGVULNDIR", &pkg_vulnerabilities_dir },
 	{ "PKGVULNURL", &pkg_vulnerabilities_url },
 	{ "VERBOSE_NETIO", &verbose_netio },
 	{ "VERIFIED_INSTALLATION", &verified_installation },
+	{ NULL, NULL }, /* For use by pkg_install_show_variable */
 	{ NULL, NULL }
 };
 
@@ -152,11 +170,25 @@ parse_pkg_install_conf(void)
 void
 pkg_install_config(void)
 {
+	int do_cache_index;
 	char *value;
+
 	parse_pkg_install_conf();
 
+	if ((value = getenv("PKG_DBDIR")) != NULL)
+		pkgdb_set_dir(value, 2);
+	else if (config_pkg_dbdir != NULL)
+		pkgdb_set_dir(config_pkg_dbdir, 1);
+	config_pkg_dbdir = xstrdup(pkgdb_get_dir());
+
+	if ((value = getenv("PKG_REFCOUNT_DBDIR")) != NULL)
+		config_pkg_refcount_dbdir = value;
+	else if (config_pkg_refcount_dbdir == NULL)
+		config_pkg_refcount_dbdir = xasprintf("%s.refcount", 
+		    pkgdb_get_dir());
+
 	if (pkg_vulnerabilities_dir == NULL)
-		pkg_vulnerabilities_dir = _pkgdb_getPKGDB_DIR();
+		pkg_vulnerabilities_dir = pkgdb_get_dir();
 	pkg_vulnerabilities_file = xasprintf("%s/pkg-vulnerabilities",
 	    pkg_vulnerabilities_dir);
 	if (pkg_vulnerabilities_url == NULL) {
@@ -175,7 +207,41 @@ pkg_install_config(void)
 	if ((value = getenv("PKG_PATH")) != NULL)
 		config_pkg_path = value;
 
-	snprintf(fetch_flags, sizeof(fetch_flags), "%s%s%s",
+	if (strcasecmp(cache_index, "yes") == 0)
+		do_cache_index = 1;
+	else {
+		if (strcasecmp(cache_index, "no"))
+			warnx("Invalid value for configuration option "
+			    "CACHE_INDEX");
+		do_cache_index = 0;
+	}
+
+	if (config_cache_connections && *config_cache_connections) {
+		long v = strtol(config_cache_connections, &value, 10);
+		if (*value == '\0') {
+			if (v >= INT_MAX || v < 0)
+				v = -1;
+			cache_connections = v;
+		}
+	}
+	config_cache_connections = xasprintf("%d", cache_connections);
+
+	if (config_cache_connections_host) {
+		long v = strtol(config_cache_connections_host, &value, 10);
+		if (*value == '\0') {
+			if (v >= INT_MAX || v < 0)
+				v = -1;
+			cache_connections_host = v;
+		}
+	}
+	config_cache_connections_host = xasprintf("%d", cache_connections_host);
+
+#ifndef BOOTSTRAP
+	fetchConnectionCacheInit(cache_connections, cache_connections_host);
+#endif
+
+	snprintf(fetch_flags, sizeof(fetch_flags), "%s%s%s%s",
+	    (do_cache_index) ? "c" : "",
 	    (verbose_netio && *verbose_netio) ? "v" : "",
 	    (active_ftp && *active_ftp) ? "a" : "",
 	    (ignore_proxy && *ignore_proxy) ? "d" : "");
@@ -185,11 +251,19 @@ void
 pkg_install_show_variable(const char *var_name)
 {
 	struct config_variable *var;
+	const char *tmp_value = NULL;
 
 	for (var = config_variables; var->name != NULL; ++var) {
-		if (strcmp(var->name, var_name) != 0)
-			continue;
-		if (*var->var != NULL)
-			puts(*var->var);
+		if (strcmp(var->name, var_name) == 0)
+			break;
 	}
+	if (var->name == NULL) {
+		var->name = var_name;
+		var->var = &tmp_value;
+	}
+
+	pkg_install_config();
+
+	if (*var->var != NULL)
+		puts(*var->var);
 }

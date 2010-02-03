@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1.6.2 2009/10/18 16:01:50 bouyer Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.1.6.3 2010/02/03 00:38:21 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.1.6.2 2009/10/18 16:01:50 bouyer Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.1.6.3 2010/02/03 00:38:21 snj Exp $");
 
 /*
  *
@@ -39,9 +39,8 @@ __RCSID("$NetBSD: main.c,v 1.1.1.1.6.2 2009/10/18 16:01:50 bouyer Exp $");
 #include "lib.h"
 #include "add.h"
 
-static char Options[] = "AIK:LP:RVW:fhm:np:t:uvw:";
+static char Options[] = "AIK:LP:RVW:fhm:np:t:Uuvw:";
 
-const char *PlainPkgdb = NULL;
 char   *Destdir = NULL;
 char   *OverrideMachine = NULL;
 char   *Prefix = NULL;
@@ -55,6 +54,7 @@ Boolean ForceDepends = FALSE;
 
 int	LicenseCheck = 0;
 int     Replace = 0;
+int	ReplaceSame = 0;
 
 static void
 usage(void)
@@ -72,7 +72,6 @@ main(int argc, char **argv)
 {
 	int     ch, error=0;
 	lpkg_head_t pkgs;
-	const char *pkgdb = NULL;
 
 	setprogname(argv[0]);
 	while ((ch = getopt(argc, argv, Options)) != -1) {
@@ -98,7 +97,7 @@ main(int argc, char **argv)
 			break;
 
 		case 'K':
-			pkgdb = optarg;
+			pkgdb_set_dir(optarg, 3);
 			break;
 
 		case 'L':
@@ -120,6 +119,12 @@ main(int argc, char **argv)
 
 		case 'p':
 			Prefix = optarg;
+			break;
+
+		case 'U':
+			ReplaceSame = 1;
+			if (!Replace)
+				Replace = 1;
 			break;
 
 		case 'u':
@@ -154,18 +159,13 @@ main(int argc, char **argv)
 
 	pkg_install_config();
 
-	if (pkgdb == NULL)
-		pkgdb = _pkgdb_getPKGDB_DIR();
-	PlainPkgdb = xstrdup(pkgdb);
-
 	if (Destdir != NULL) {
 		char *pkgdbdir;
 
-		pkgdbdir = xasprintf("%s/%s", Destdir, pkgdb);
-		_pkgdb_setPKGDB_DIR(pkgdbdir);
+		pkgdbdir = xasprintf("%s/%s", Destdir, config_pkg_dbdir);
+		pkgdb_set_dir(pkgdbdir, 4);
 		free(pkgdbdir);
-	} else
-		_pkgdb_setPKGDB_DIR(pkgdb);
+	}
 
 	process_pkg_path();
 	TAILQ_INIT(&pkgs);
