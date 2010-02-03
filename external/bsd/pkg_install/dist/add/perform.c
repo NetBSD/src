@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.13 2010/01/30 21:33:16 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.14 2010/02/03 14:23:39 joerg Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.13 2010/01/30 21:33:16 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.14 2010/02/03 14:23:39 joerg Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: perform.c,v 1.1.1.13 2010/01/30 21:33:16 joerg Exp $");
 
 #include "lib.h"
 #include "add.h"
+#include "version.h"
 
 struct pkg_meta {
 	char *meta_contents;
@@ -500,6 +501,9 @@ read_buildinfo(struct pkg_task *pkg)
 			    eol);
 		else if (strncmp(data, "LICENSE=", 8) == 0)
 			pkg->buildinfo[BI_LICENSE] = dup_value(data, eol);
+		else if (strncmp(data, "PKGTOOLS_VERSION=", 17) == 0)
+			pkg->buildinfo[BI_PKGTOOLS_VERSION] = dup_value(data,
+			    eol);
 	}
 	if (pkg->buildinfo[BI_OPSYS] == NULL ||
 	    pkg->buildinfo[BI_OS_VERSION] == NULL ||
@@ -875,6 +879,32 @@ check_platform(struct pkg_task *pkg)
 		    host_uname.release);
 		if (!Force && fatal)
 			return -1;
+	}
+	return 0;
+}
+
+static int
+check_pkgtools_version(struct pkg_task *pkg)
+{
+	const char *val = pkg->buildinfo[BI_PKGTOOLS_VERSION];
+	int version;
+
+	if (val == NULL) {
+		warnx("Warning: package `%s' lacks pkg_install version data",
+		    pkg->pkgname);
+		return 0;
+	}
+
+	if (strlen(val) != 8 || strspn(val, "0123456789") != 8) {
+		warnx("Warning: package `%s' contains an invalid pkg_install version",
+		    pkg->pkgname);
+		return Force ? 0 : -1;
+	}
+	version = atoi(val);
+	if (version > PKGTOOLS_VERSION) {
+		warnx("%s: package `%s' was built with a newer pkg_install version",
+		    Force ? "Warning" : "Error", pkg->pkgname);
+		return Force ? 0 : -1;
 	}
 	return 0;
 }
@@ -1334,6 +1364,9 @@ pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 		goto clean_memory;
 
 	if (read_buildinfo(pkg))
+		goto clean_memory;
+
+	if (check_pkgtools_version(pkg))
 		goto clean_memory;
 
 	if (check_vulnerable(pkg))
