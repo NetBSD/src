@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.156 2010/02/02 18:49:23 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.157 2010/02/03 07:48:18 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.156 2010/02/02 18:49:23 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.157 2010/02/03 07:48:18 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1873,6 +1873,7 @@ uvm_fault_lower_generic_io(
 		if (uobjpage->flags & PG_RELEASED) {
 			uvmexp.fltpgrele++;
 			uvm_pagefree(uobjpage);
+			mutex_exit(&uobj->vmobjlock);
 			return ERESTART;
 		}
 		uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
