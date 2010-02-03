@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.1.1.1.6.3 2010/02/03 00:38:21 snj Exp $
+.\" $NetBSD: pkg_delete.1.in,v 1.1.1.1.2.2 2010/02/03 00:38:21 snj Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -71,7 +71,7 @@ You are advised to verify the competence and identity of those who
 provide installable package files.
 For extra protection, examine all the package control files in the
 package record directory
-.Pa \*[Lt]PKG_DBDIR\*[Gt]/\*[Lt]pkg-name\*[Gt]/ ) .
+.Pa ( @pkgdbdir@/\*[Lt]pkg-name\*[Gt]/ ) .
 Pay particular
 attention to any
 .Pa +INSTALL
@@ -131,10 +131,12 @@ See also the
 .Fl k
 option.
 .It Fl K Ar pkg_dbdir
-Override the value of the
-.Dv PKG_DBDIR
-configuration option with the value
-.Ar pkg_dbdir .
+Set
+.Ar pkg_dbdir
+as the package database directory.
+See the
+.Sx ENVIRONMENT
+section below for details on how the default value is calculated.
 .It Fl k
 Silently skip all packages that are marked as
 .Cm preserved .
@@ -178,8 +180,12 @@ Turn on verbose output.
 .Nm
 does pretty much what it says.
 It examines installed package records in
-.Pa \*[Lt]PKG_DBDIR\*[Gt]/\*[Lt]pkg-name\*[Gt] ,
-deletes the package contents, and finally removes the package records.
+.Pa @pkgdbdir@/\*[Lt]pkg-name\*[Gt] ,
+deletes the package contents, and finally removes the package records
+(if an alternate package database directory is specified, then it
+overrides the
+.Pa @pkgdbdir@
+path shown above).
 .Pp
 If a package is required by other installed packages,
 .Nm
@@ -269,15 +275,29 @@ flag was given to
 will be set to
 .Ar destdir .
 .Sh ENVIRONMENT
-See
+.Bl -tag -width PKG_DBDIR
+.It Ev PKG_DBDIR
+If the
+.Fl K
+flag isn't given, then the value of the
+.Ev PKG_DBDIR
+variable overrides the
 .Xr pkg_install.conf 5
-for options, that can also be specified using the environment.
+variable of the same name.
+If all of this fails to locate a value, then it typically defaults to
+.Pa @pkgdbdir@ .
+.It Ev PKG_REFCOUNT_DBDIR
+Location of the package reference counts database directory.
+The default location is the path to the package database directory with
+.Dq .refcount
+appended to the path, e.g.
+.Pa @pkgdbdir@.refcount .
+.El
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
 .Xr pkg_admin 1 ,
 .Xr pkg_create 1 ,
 .Xr pkg_info 1 ,
-.Xr pkg_install.conf 5
 .Xr pkgsrc 7
 .Sh AUTHORS
 .Bl -tag -width indent -compact

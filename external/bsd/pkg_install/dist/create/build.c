@@ -1,4 +1,4 @@
-/*	$NetBSD: build.c,v 1.1.1.1.6.2 2009/10/18 16:01:51 bouyer Exp $	*/
+/*	$NetBSD: build.c,v 1.1.1.1.6.3 2010/02/03 00:38:21 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: build.c,v 1.1.1.1.6.2 2009/10/18 16:01:51 bouyer Exp $");
+__RCSID("$NetBSD: build.c,v 1.1.1.1.6.3 2010/02/03 00:38:21 snj Exp $");
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -298,13 +298,7 @@ make_dist(const char *pkg, const char *suffix, const package_t *plist)
 	for (p = plist->head; p; p = p->next) {
 		if (p->type == PLIST_FILE) {
 			write_normal_file(p->name, archive, resolver, owner, group);
-		} else if (p->type == PLIST_CWD || p->type == PLIST_SRC) {
-			
-			/* XXX let PLIST_SRC override PLIST_CWD */
-			if (p->type == PLIST_CWD && p->next != NULL &&
-			    p->next->type == PLIST_SRC) {
-				continue;
-			}
+		} else if (p->type == PLIST_CWD) {
 			chdir(p->name);
 		} else if (p->type == PLIST_IGNORE) {
 			p = p->next;

@@ -1,4 +1,4 @@
-/* $NetBSD: xwrapper.c,v 1.1.1.1.6.2 2009/05/30 16:40:33 snj Exp $ */
+/* $NetBSD: xwrapper.c,v 1.1.1.1.6.3 2010/02/03 00:38:23 snj Exp $ */
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -36,7 +36,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: xwrapper.c,v 1.1.1.1.6.2 2009/05/30 16:40:33 snj Exp $");
+__RCSID("$NetBSD: xwrapper.c,v 1.1.1.1.6.3 2010/02/03 00:38:23 snj Exp $");
 
 #if HAVE_ERR_H
 #include <err.h>
