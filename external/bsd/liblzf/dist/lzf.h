@@ -37,6 +37,8 @@
 #ifndef LZF_H
 #define LZF_H
 
+#include "lzfP.h"
+
 /***********************************************************************
 **
 **	lzf -- an extremely fast/free compression/decompression-method
@@ -75,8 +77,9 @@
  */
 unsigned int 
 lzf_compress (const void *const in_data,  unsigned int in_len,
-              void             *out_data, unsigned int out_len);
-
+              void             *out_data, unsigned int out_len,
+	      LZF_STATE htab);
+	 
 /*
  * Decompress data compressed with some version of the lzf_compress
  * function and stored at location in_data and length in_len. The result
