@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.16 2009/05/13 18:54:34 cube Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.17 2010/02/03 21:00:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,6 @@
 #include <crc_extern.h>
 
 static int emitcnt(struct nvlist *);
-static int emitlocs(void);
 static int emitopts(void);
 static int emitioconfh(void);
 static int emittime(void);
@@ -350,7 +349,7 @@ locators_print(const char *name, void *value, void *arg)
  * locators in the configuration.  Do this by enumerating the attribute
  * hash table and emitting all the locators for each attribute.
  */
-static int
+int
 emitlocs(void)
 {
 	const char *tfname;
