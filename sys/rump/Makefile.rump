@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.46 2010/01/31 00:38:36 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.47 2010/02/03 21:11:24 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -100,6 +100,20 @@ __archivebuild: .USE
 .if !defined(RUMP_SYMREN)
 	${AR} ${_ARRANFL} ${.TARGET}
 .endif
-	
+
+# If IOCONFIG is defined, autocreate ioconf.c and locators.h.
+# This is useful mainly for devices.
+.if !empty(IOCONFIG)
+ioconf.c: ${IOCONFIG}
+	${TOOL_CONFIG} -b ${.OBJDIR} -s ${RUMPTOP}/.. ${IOCONFIG} 
+	# config doesn't change the files if they're unchanged.  however,
+	# here we want to satisfy our make dependency, so force a
+	# timestamp update
+	touch ioconf.c locators.h
+
+CLEANFILES+= ioconf.c locators.h
+DPSRCS+= ioconf.c locators.h
+.endif
+
 .-include "${NETBSDSRCDIR}/sys/arch/${MACHINE_CPU}/include/Makefile.inc"
 .-include "${NETBSDSRCDIR}/sys/arch/${MACHINE}/include/Makefile.inc"
