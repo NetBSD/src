@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/01/20 11:45:55 plunky Exp $
+#	$NetBSD: Makefile,v 1.5 2010/02/03 22:03:56 plunky Exp $
 
 .include <bsd.init.mk>
 
@@ -10,7 +10,11 @@ PROG=	cpp
 SRCS=	cpy.y
 SRCS+=	cpp.c token.c
 
-MAN=	cpp.1
+# avoid conflicts with the GCC cpp.1 page
+MAN=	pcpp.1
+
+pcpp.1:	cpp.1
+	cp ${.ALLSRC} ${.TARGET}
 
 CPPFLAGS+=	-DCPP_DEBUG
 CPPFLAGS+=	-I${.OBJDIR}
@@ -26,6 +30,6 @@ DPSRCS=		y.tab.h
 y.tab.h:	cpy.h
 	${HOST_LN} -f ${.ALLSRC} ${.TARGET}
 
-CLEANFILES+=	y.tab.h
+CLEANFILES+=	pcpp.1 y.tab.h
 
 .include <bsd.prog.mk>
