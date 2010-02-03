@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.4 2010/02/03 15:36:36 msaitoh Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.5 2010/02/03 15:37:51 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -74,7 +74,7 @@
 	do {								\
 		(x).bge_addr_lo = ((uint64_t) (y) & 0xffffffff);	\
 		if (sizeof (bus_addr_t) == 8)				\
-			(x).bge_addr_hi = ((u_int64_t) (y) >> 32);	\
+			(x).bge_addr_hi = ((uint64_t) (y) >> 32);	\
 		else							\
 			(x).bge_addr_hi = 0;				\
 	} while(0)
@@ -121,8 +121,8 @@
 #define BGE_RSLOTS	256
 
 #define BGE_JRAWLEN (BGE_JUMBO_FRAMELEN + ETHER_ALIGN)
-#define BGE_JLEN (BGE_JRAWLEN + (sizeof(u_int64_t) - \
-	(BGE_JRAWLEN % sizeof(u_int64_t))))
+#define BGE_JLEN (BGE_JRAWLEN + (sizeof(uint64_t) - \
+	(BGE_JRAWLEN % sizeof(uint64_t))))
 #define BGE_JPAGESZ PAGE_SIZE
 #define BGE_RESID (BGE_JPAGESZ - (BGE_JLEN * BGE_JSLOTS) % BGE_JPAGESZ)
 #define BGE_JMEM ((BGE_JLEN * BGE_JSLOTS) + BGE_RESID)
@@ -194,8 +194,8 @@ struct bge_chain_data {
 	 (mtod((m), char *) - (char *)(sc)->bge_cdata.bge_jumbo_buf))
 
 struct bge_type {
-	u_int16_t		bge_vid;
-	u_int16_t		bge_did;
+	uint16_t		bge_vid;
+	uint16_t		bge_did;
 	char			*bge_name;
 };
 
@@ -223,7 +223,7 @@ struct txdmamap_pool_entry {
 
 struct bge_softc {
 	device_t		bge_dev;
-	struct ethercom		ethercom;		/* interface info */
+	struct ethercom		ethercom;	/* interface info */
 	bus_space_handle_t	bge_bhandle;
 	bus_space_tag_t		bge_btag;
 	void			*bge_intrhand;
@@ -232,31 +232,31 @@ struct bge_softc {
 
 	struct mii_data		bge_mii;
 	struct ifmedia		bge_ifmedia;	/* media info */
-	u_int32_t		bge_return_ring_cnt;
-	u_int32_t		bge_tx_prodidx;
+	uint32_t		bge_return_ring_cnt;
+	uint32_t		bge_tx_prodidx;
 	bus_dma_tag_t		bge_dmatag;
 	uint32_t		bge_pcixcap;
 	uint32_t		bge_pciecap;
-	u_int32_t		bge_chipid;
-	u_int32_t		bge_local_ctrl_reg;
+	uint32_t		bge_chipid;
+	uint32_t		bge_local_ctrl_reg;
 	uint8_t			bge_asf_mode;
 	uint8_t			bge_asf_count;
 	struct bge_ring_data	*bge_rdata;	/* rings */
 	struct bge_chain_data	bge_cdata;	/* mbufs */
 	bus_dmamap_t		bge_ring_map;
-	u_int16_t		bge_tx_saved_considx;
-	u_int16_t		bge_rx_saved_considx;
-	u_int16_t		bge_ev_saved_considx;
-	u_int16_t		bge_std;	/* current std ring head */
-	u_int16_t		bge_jumbo;	/* current jumo ring head */
+	uint16_t		bge_tx_saved_considx;
+	uint16_t		bge_rx_saved_considx;
+	uint16_t		bge_ev_saved_considx;
+	uint16_t		bge_std;	/* current std ring head */
+	uint16_t		bge_jumbo;	/* current jumo ring head */
 	SLIST_HEAD(__bge_jfreehead, bge_jpool_entry)	bge_jfree_listhead;
 	SLIST_HEAD(__bge_jinusehead, bge_jpool_entry)	bge_jinuse_listhead;
-	u_int32_t		bge_stat_ticks;
-	u_int32_t		bge_rx_coal_ticks;
-	u_int32_t		bge_tx_coal_ticks;
-	u_int32_t		bge_rx_max_coal_bds;
-	u_int32_t		bge_tx_max_coal_bds;
-	u_int32_t		bge_tx_buf_ratio;
+	uint32_t		bge_stat_ticks;
+	uint32_t		bge_rx_coal_ticks;
+	uint32_t		bge_tx_coal_ticks;
+	uint32_t		bge_rx_max_coal_bds;
+	uint32_t		bge_tx_max_coal_bds;
+	uint32_t		bge_tx_buf_ratio;
 	uint32_t		bge_sts;
 #define BGE_STS_LINK		0x00000001	/* MAC link status */
 #define BGE_STS_LINK_EVT	0x00000002	/* pending link event */
