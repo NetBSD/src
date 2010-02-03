@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev.c,v 1.13 2010/01/31 03:07:00 pooka Exp $	*/
+/*	$NetBSD: rump_dev.c,v 1.14 2010/02/03 21:35:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.13 2010/01/31 03:07:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.14 2010/02/03 21:35:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,7 +41,6 @@ __weak_alias(rump_dev_dm_init,nocomponent);
 __weak_alias(rump_dev_raidframe_init,nocomponent);
 __weak_alias(rump_dev_netsmb_init,nocomponent);
 __weak_alias(rump_dev_rnd_init,nocomponent);
-__weak_alias(rump_dev_rumpusbhc_init,nocomponent);
 __weak_alias(rump_dev_sysmon_init,nocomponent);
 
 __weak_alias(rump_device_configuration,nocomponent);
@@ -66,7 +65,6 @@ rump_dev_init(void)
 	rump_dev_raidframe_init();
 	rump_dev_netsmb_init();
 	rump_dev_rnd_init();
-	rump_dev_rumpusbhc_init();
 	rump_dev_sysmon_init();
 
 	rump_pdev_finalize();
@@ -75,9 +73,11 @@ rump_dev_init(void)
 	rump_wscons_configuration();
 
 	cold = 0;
-	if (config_rootfound("mainbus", NULL) == NULL)
-		panic("no mainbus");
+	if (rump_device_configuration != nocomponent) {
+		if (config_rootfound("mainbus", NULL) == NULL)
+			panic("no mainbus");
 
+	}
 	config_finalize();
 
 	KERNEL_UNLOCK_LAST(curlwp);
