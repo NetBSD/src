@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.h,v 1.1.1.2.4.1 2009/05/30 16:01:24 snj Exp $	*/
+/*	$NetBSD: fetch.h,v 1.1.1.2.4.2 2010/02/03 00:25:23 snj Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * All rights reserved.
@@ -153,9 +153,14 @@ void		 fetchFreeURL(struct url *);
 
 /* URL listening */
 void		 fetchInitURLList(struct url_list *);
+int		 fetchAppendURLList(struct url_list *, const struct url_list *);
 void		 fetchFreeURLList(struct url_list *);
 char		*fetchUnquotePath(struct url *);
 char		*fetchUnquoteFilename(struct url *);
+
+/* Connection caching */
+void		 fetchConnectionCacheInit(int, int);
+void		 fetchConnectionCacheClose(void);
 
 /* Authentication */
 typedef int (*auth_t)(struct url *);
