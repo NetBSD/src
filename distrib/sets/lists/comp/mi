@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1380 2010/01/31 03:09:26 pooka Exp $
+#	$NetBSD: mi,v 1.1381 2010/02/03 06:25:55 tls Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1389,6 +1389,8 @@
 ./usr/include/locale.h				comp-c-include
 ./usr/include/login_cap.h			comp-c-include
 ./usr/include/lwp.h				comp-c-include
+./usr/include/lzf.h				comp-c-include
+./usr/include/lzfP.h				comp-c-include
 ./usr/include/magic.h				comp-c-include
 ./usr/include/malloc.h				comp-c-include
 ./usr/include/math.h				comp-c-include
@@ -2476,6 +2478,9 @@
 ./usr/lib/liblwres.a				comp-bind-lib
 ./usr/lib/liblwres_g.a				-unknown-		debuglib
 ./usr/lib/liblwres_p.a				comp-bind-proflib	profile
+./usr/lib/liblzf.a				comp-c-lib
+./usr/lib/liblzf_g.a				-unknown-		debuglib
+./usr/lib/liblzf_p.a				comp-c-proflib		profile
 ./usr/lib/libm.a				comp-c-lib
 ./usr/lib/libm_g.a				-unknown-		debuglib
 ./usr/lib/libm_p.a				comp-c-proflib		profile
@@ -3674,6 +3679,7 @@
 ./usr/libdata/lint/llib-lldap.ln		comp-ldap-lintlib	lint,ldap
 ./usr/libdata/lint/llib-lldap_r.ln		comp-ldap-lintlib	lint,ldap
 ./usr/libdata/lint/llib-llwres.ln		comp-bind-lintlib	lint
+./usr/libdata/lint/llib-llzf.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmagic.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmenu.ln		comp-c-lintlib		lint

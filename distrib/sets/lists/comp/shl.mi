@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.100 2010/01/31 03:09:27 pooka Exp $
+# $NetBSD: shl.mi,v 1.101 2010/02/03 06:25:55 tls Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -60,6 +60,7 @@
 ./usr/lib/libldap_pic.a				comp-ldap-piclib	ldap
 ./usr/lib/libldap_r_pic.a			comp-ldap-piclib	ldap
 ./usr/lib/liblwres_pic.a			comp-bind-piclib
+./usr/lib/liblzf_pic.a				comp-c-piclib
 ./usr/lib/libm_pic.a				comp-c-piclib
 ./usr/lib/libmagic_pic.a			comp-c-piclib
 ./usr/lib/libmenu_pic.a				comp-c-piclib
