@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.1015 2010/01/30 20:50:19 jakllsch Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1016 2010/02/03 19:28:07 macallan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -995,6 +995,7 @@
 #define	PCI_PRODUCT_APPLE_BANDIT2	0x0008		/* Bandit Host-PCI Bridge */
 #define	PCI_PRODUCT_APPLE_HEATHROW	0x0010		/* Heathrow I/O Controller */
 #define	PCI_PRODUCT_APPLE_PADDINGTON	0x0017		/* Paddington I/O Controller */
+#define	PCI_PRODUCT_APPLE_PBG3_FW	0x0018		/* PowerBook G3 Firewire */
 #define	PCI_PRODUCT_APPLE_KEYLARGO_USB	0x0019		/* KeyLargo USB Controller */
 #define	PCI_PRODUCT_APPLE_UNINORTH1	0x001e		/* UniNorth Host-PCI Bridge */
 #define	PCI_PRODUCT_APPLE_UNINORTH2	0x001f		/* UniNorth Host-PCI Bridge */
