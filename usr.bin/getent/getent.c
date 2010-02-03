@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.16 2009/04/12 10:27:08 lukem Exp $	*/
+/*	$NetBSD: getent.c,v 1.17 2010/02/03 18:11:18 roy Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.16 2009/04/12 10:27:08 lukem Exp $");
+__RCSID("$NetBSD: getent.c,v 1.17 2010/02/03 18:11:18 roy Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -80,7 +80,6 @@ static int	protocols(int, char *[]);
 static int	rpc(int, char *[]);
 static int	services(int, char *[]);
 static int	shells(int, char *[]);
-static int	termcap(int, char *[]);
 
 enum {
 	RV_OK		= 0,
@@ -106,7 +105,6 @@ static struct getentdb {
 	{	"rpc",		rpc,		},
 	{	"services",	services,	},
 	{	"shells",	shells,		},
-	{	"termcap",	termcap,	},
 
 	{	NULL,		NULL,		},
 };
@@ -682,15 +680,6 @@ disktab(int argc, char *argv[])
 	return handlecap(_PATH_DISKTAB, argc, argv);
 }
 
-		/*
-		 * termcap
-		 */
-
-static int
-termcap(int argc, char *argv[])
-{
-	return handlecap(_PATH_TERMCAP, argc, argv);
-}
 		/*
 		 * protocols
 		 */

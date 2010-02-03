@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.35 2009/12/22 14:24:37 pooka Exp $	*/
+/*	$NetBSD: paths.h,v 1.36 2010/02/03 18:11:18 roy Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -91,7 +91,6 @@
 #define	_PATH_SOUND	"/dev/sound"
 #define	_PATH_SOUND0	"/dev/sound0"
 #define	_PATH_SYSMON	"/dev/sysmon"
-#define	_PATH_TERMCAP	"/usr/share/misc/termcap"
 #define	_PATH_TTY	"/dev/tty"
 #define	_PATH_UNIX	"/netbsd"
 #define	_PATH_URANDOM	"/dev/urandom"
