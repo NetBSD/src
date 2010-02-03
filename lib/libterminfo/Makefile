@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/02/03 15:16:32 roy Exp $
+#	$NetBSD: Makefile,v 1.2 2010/02/03 16:13:14 roy Exp $
 
 USE_SHLIBDIR=	yes
 
@@ -16,12 +16,12 @@ CPPFLAGS+=	-I${LIBTIDIR}
 # Generate our string and hash tables
 hash.c: genhash term.h
 		@echo "Generating terminfo hash"
-		cd ${LIBTIDIR}; ./genhash >${.OBJDIR}/$@
+		cd ${LIBTIDIR} && ${HOST_SH} ./genhash >${.OBJDIR}/$@
 
 # Update our man page with terminfo long names, short names and termcaps
 terminfo.5: genman terminfo.5.in term.h termcap.c
 		@echo "Generating terminfo man pages"
-		cd ${LIBTIDIR}; ./genman >${.OBJDIR}/$@
+		cd ${LIBTIDIR} && ${HOST_SH} ./genman >${.OBJDIR}/$@
 
 MAN=		terminfo.3 terminfo.5
 CLEANFILES+=	terminfo.5 hash.c
@@ -47,7 +47,7 @@ MLINKS+=	termcap.3 tgetent.3 termcap.3 tgetflag.3 termcap.3 tgetnum.3 \
 # Generate our string and hash tables
 termcap_hash.c:	genthash termcap_map.c
 		@echo "Generating termcap hash"
-		cd ${LIBTIDIR}; ./genthash >${.OBJDIR}/$@
+		cd ${LIBTIDIR} && ${HOST_SH} ./genthash >${.OBJDIR}/$@
 
 # Depend on our hash table
 termcap.c:	termcap_hash.c
