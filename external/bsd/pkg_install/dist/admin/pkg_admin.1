@@ -1,6 +1,6 @@
-.\"	$NetBSD: pkg_admin.1,v 1.1.1.1.6.3 2009/10/18 16:01:50 bouyer Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.1.1.1.6.4 2010/02/03 00:38:21 snj Exp $
 .\"
-.\" Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 16, 2009
+.Dd January 22, 2010
 .Dt PKG_ADMIN 1
 .Os
 .Sh NAME
@@ -72,14 +72,10 @@ as the path to the directory in which to find matching package names for
 and
 .Cm lsbest .
 .It Fl K Ar pkg_dbdir
-Set
-.Ar pkg_dbdir
-as the package database directory.
-If this option isn't specified, then the package database directory is
-taken from the value of the environment variable
-.Ev PKG_DBDIR
-if it's set, otherwise it defaults to
-.Pa /var/db/pkg .
+Override the value of the
+.Dv PKG_DBDIR
+configuration option with the value
+.Ar pkg_dbdir .
 .It Fl q
 Perform checks in a quiet manner.
 In normal operation,
@@ -207,7 +203,7 @@ is given, the fetch is conditional and the file transfer is only done if
 the remote version is newer than the one in pkgdb.
 .It Cm findbest Ar pattern ...
 Search the entries of
-.Ev PKG_PATH
+.Dv PKG_PATH
 for packages matching
 .Ar pattern .
 Print the URL of the best matching package to stdout for each pattern.
@@ -256,23 +252,9 @@ matches
 .Ar pattern ,
 otherwise returns false.
 .It Cm rebuild
-Rebuild the package database mapping from scratch, scanning
-subdirectories in
-.Pa /var/db/pkg
-for
-.Pa +CONTENTS
-files, parsing them and writing the resulting absolute pathnames
-together with the package they belong to into the package database.
-.Pp
-This option is intended to be used for upgrading from non-pkgdb-pkg_*
-tools to pkgdb-pkg_* tools, further manipulation of the pkgdb will be
-done by
-.Xr pkg_add 1 ,
-.Xr pkg_delete 1 ,
-and
-.Xr pkg_create 1 .
-.Pp
-Needs to be run as root.
+Rebuild the package database mapping from scratch.
+This option is only intended for recovery after system crashes
+during package installation and removal.
 .It Cm rebuild-tree
 Rebuild the +REQUIRED_BY files from scratch by reresolving all dependencies.
 .Pp
@@ -308,30 +290,9 @@ as output file.
 Remove an installation variable.
 .El
 .Sh ENVIRONMENT
-.Bl -tag -width indent -compact
-.It Ev PKG_DBDIR
-If the
-.Fl K
-flag isn't given, then
-.Ev PKG_DBDIR
-is the location of the package database directory.
-The default package database directory is
-.Pa /var/db/pkg .
-.El
-.Sh CONFIGURATION VARIABLES
-The following variables change the behavior of
-.Nm
-and are described in
-.Xr pkg_install.conf 5 :
-.Bl -tag -width CERTIFICATE_ANCHOR_PKGS
-.It Ev CERTIFICATE_ANCHOR_PKGS
-.It Ev CERTIFICATE_ANCHOR_PKGVULN
-.It Ev CERTIFICATE_CHAIN
-.It Ev GPG
-.It Ev PKGVULNDIR
-.It Ev PKGVULNURL
-.It Ev IGNORE_URL
-.El
+See
+.Xr pkg_install.conf 5
+for options, that can also be specified using the environment.
 .Sh FILES
 .Bl -tag -width /var/db/pkg/pkgdb.byfile.db -compact
 .It Pa /var/db/pkg/pkgdb.byfile.db

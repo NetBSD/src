@@ -1,4 +1,4 @@
-/*	$NetBSD: pl.c,v 1.1.1.1.6.1 2009/05/30 16:40:32 snj Exp $	*/
+/*	$NetBSD: pl.c,v 1.1.1.1.6.2 2010/02/03 00:38:21 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pl.c,v 1.1.1.1.6.1 2009/05/30 16:40:32 snj Exp $");
+__RCSID("$NetBSD: pl.c,v 1.1.1.1.6.2 2010/02/03 00:38:21 snj Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -86,7 +86,6 @@ check_list(package_t *pkg, const char *PkgName)
 	char    target[MaxPathSize + SymlinkHeaderLen];
 	char    name[MaxPathSize];
 	char   *cwd = NULL;
-	char   *srcdir = NULL;
 	char   *pkgname = NULL;
 	int	cc;
 
@@ -104,9 +103,6 @@ check_list(package_t *pkg, const char *PkgName)
 			break;
 		case PLIST_IGNORE:
 			p = p->next;
-			break;
-		case PLIST_SRC:
-			srcdir = p->name;
 			break;
 		case PLIST_PKGDIR:
 			if (cwd == NULL)
