@@ -34,7 +34,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkg_delete.c,v 1.1.1.6 2010/01/30 21:33:35 joerg Exp $");
+__RCSID("$NetBSD: pkg_delete.c,v 1.1.1.7 2010/02/03 14:23:46 joerg Exp $");
 
 #if HAVE_ERR_H
 #include <err.h>
@@ -683,6 +683,7 @@ remove_pkg(const char *pkg)
 	fname = pkgdb_pkg_dir(pkg);
 	setenv(PKG_METADATA_DIR_VNAME, fname, 1);
 	free(fname);
+	setenv(PKG_PREFIX_VNAME, p->name, 1);
 
 	if (!no_deinstall && !unregister_only) {
 		if (run_deinstall_script(pkg, 0) && !Force)
