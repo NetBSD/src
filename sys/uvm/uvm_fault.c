@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.157 2010/02/03 07:48:18 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.158 2010/02/03 12:40:39 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.157 2010/02/03 07:48:18 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.158 2010/02/03 12:40:39 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1775,7 +1775,7 @@ uvm_fault_lower_generic_io(
 {
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
 	struct uvm_object *uobj = *ruobj;
-	struct vm_page *uobjpage;
+	struct vm_page *pg;
 	bool locked;
 	int gotpages;
 	int error;
@@ -1791,11 +1791,11 @@ uvm_fault_lower_generic_io(
 	uvmexp.fltget++;
 	gotpages = 1;
 	uoff = (ufi->orig_rvaddr - ufi->entry->start) + ufi->entry->offset;
-	error = uobj->pgops->pgo_get(uobj, uoff, &uobjpage, &gotpages,
+	error = uobj->pgops->pgo_get(uobj, uoff, &pg, &gotpages,
 	    0, flt->access_type & MASK(ufi->entry), ufi->entry->advice,
 	    PGO_SYNCIO);
-	/* locked: uobjpage(if no error) */
-	KASSERT(error != 0 || (uobjpage->flags & PG_BUSY) != 0);
+	/* locked: pg(if no error) */
+	KASSERT(error != 0 || (pg->flags & PG_BUSY) != 0);
 
 	/*
 	 * recover from I/O
@@ -1822,10 +1822,10 @@ uvm_fault_lower_generic_io(
 		return error;
 	}
 
-	/* locked: uobjpage */
+	/* locked: pg */
 
 	mutex_enter(&uvm_pageqlock);
-	uvm_pageactivate(uobjpage);
+	uvm_pageactivate(pg);
 	mutex_exit(&uvm_pageqlock);
 
 	/*
@@ -1838,12 +1838,12 @@ uvm_fault_lower_generic_io(
 		amap_lock(amap);
 
 	/* might be changed */
-	uobj = uobjpage->uobject;
+	uobj = pg->uobject;
 
 	mutex_enter(&uobj->vmobjlock);
 
-	/* locked(locked): maps(read), amap(if !null), uobj, uobjpage */
-	/* locked(!locked): uobj, uobjpage */
+	/* locked(locked): maps(read), amap(if !null), uobj, pg */
+	/* locked(!locked): uobj, pg */
 
 	/*
 	 * verify that the page has not be released and re-verify
@@ -1851,9 +1851,8 @@ uvm_fault_lower_generic_io(
 	 * we unlock and clean up.
 	 */
 
-	if ((uobjpage->flags & PG_RELEASED) != 0 ||
-	    (locked && amap &&
-	    amap_lookup(&ufi->entry->aref,
+	if ((pg->flags & PG_RELEASED) != 0 ||
+	    (locked && amap && amap_lookup(&ufi->entry->aref,
 	      ufi->orig_rvaddr - ufi->entry->start))) {
 		if (locked)
 			uvmfault_unlockall(ufi, amap, NULL, NULL);
@@ -1868,30 +1867,31 @@ uvm_fault_lower_generic_io(
 		UVMHIST_LOG(maphist,
 		    "  wasn't able to relock after fault: retry",
 		    0,0,0,0);
-		if (uobjpage->flags & PG_WANTED)
-			wakeup(uobjpage);
-		if (uobjpage->flags & PG_RELEASED) {
+		if (pg->flags & PG_WANTED) {
+			wakeup(pg);
+		}
+		if (pg->flags & PG_RELEASED) {
 			uvmexp.fltpgrele++;
-			uvm_pagefree(uobjpage);
+			uvm_pagefree(pg);
 			mutex_exit(&uobj->vmobjlock);
 			return ERESTART;
 		}
-		uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
-		UVM_PAGE_OWN(uobjpage, NULL);
+		pg->flags &= ~(PG_BUSY|PG_WANTED);
+		UVM_PAGE_OWN(pg, NULL);
 		mutex_exit(&uobj->vmobjlock);
 		return ERESTART;
 	}
 
 	/*
-	 * we have the data in uobjpage which is busy and
+	 * we have the data in pg which is busy and
 	 * not released.  we are holding object lock (so the page
 	 * can't be released on us).
 	 */
 
-	/* locked: maps(read), amap(if !null), uobj, uobjpage */
+	/* locked: maps(read), amap(if !null), uobj, pg */
 
 	*ruobj = uobj;
-	*ruobjpage = uobjpage;
+	*ruobjpage = pg;
 	return 0;
 }
 
