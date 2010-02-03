@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.147 2010/01/05 13:22:41 mbalmer Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.148 2010/02/03 13:48:53 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.147 2010/01/05 13:22:41 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.148 2010/02/03 13:48:53 wiz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -673,7 +673,7 @@ linux_sys_modify_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap,
 		return linux_write_ldt(l, (const void *)uap, 1);
 	case 2:
 #ifdef notyet
-		return (linux_read_default_ldt(l, (const void *)uap, retval);
+		return linux_read_default_ldt(l, (const void *)uap, retval);
 #else
 		return (ENOSYS);
 #endif
