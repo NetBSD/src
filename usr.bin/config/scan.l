@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.13 2009/10/28 02:42:20 christos Exp $	*/
+/*	$NetBSD: scan.l,v 1.14 2010/02/03 21:00:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -145,6 +145,7 @@ file		return XFILE;
 file-system	return FILE_SYSTEM;
 flags		return FLAGS;
 ident		return IDENT;
+ioconf		return IOCONF;
 machine		return XMACHINE;
 major		return MAJOR;
 makeoptions	return MAKEOPTIONS;
