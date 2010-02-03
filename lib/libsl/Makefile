@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2007/05/28 12:06:21 tls Exp $
+# $NetBSD: Makefile,v 1.9 2010/02/03 15:34:43 roy Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -12,7 +12,7 @@ DIST=		${NETBSDSRCDIR}/crypto/dist
 LIB=		sl
 
 LIBDPLIBS+=	edit ${.CURDIR}/../libedit \
-		termcap ${.CURDIR}/../libterm
+		terminfo ${.CURDIR}/../libterminfo
 
 SRCS=		sl.c
 INCS=		sl.h

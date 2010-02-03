@@ -1,4 +1,4 @@
-/*	$NetBSD: tput.c,v 1.19 2008/07/21 14:19:27 lukem Exp $	*/
+/*	$NetBSD: tput.c,v 1.20 2010/02/03 15:34:46 roy Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: tput.c,v 1.19 2008/07/21 14:19:27 lukem Exp $");
+__RCSID("$NetBSD: tput.c,v 1.20 2010/02/03 15:34:46 roy Exp $");
 #endif /* not lint */
 
 #include <termios.h>
@@ -48,21 +48,21 @@ __RCSID("$NetBSD: tput.c,v 1.19 2008/07/21 14:19:27 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <term.h>
 #include <termcap.h>
 #include <unistd.h>
 
 static int    outc(int);
 static void   prlongname(char *);
-static void   setospeed(void);
 static void   usage(void) __dead;
-static char **process(const char *, char *, char **);
+static char **process(const char *, const char *, char **);
 
 int
 main(int argc, char **argv)
 {
 	int ch, exitval, n;
-	char *cptr, *term, buf[1024], tbuf[1024];
-	const char *p;
+	char *term, tbuf[1024];
+	const char *p, *s;
 
 	term = NULL;
 	while ((ch = getopt(argc, argv, "T:")) != -1)
@@ -80,18 +80,20 @@ main(int argc, char **argv)
 	if (!term && !(term = getenv("TERM")))
 		errx(2, "No terminal type specified and no TERM "
 		    "variable set in the environment.");
-	if (tgetent(tbuf, term) != 1)
-		err(2, "tgetent failure");
-	setospeed();
+	setupterm(term, 0, NULL);
 	for (exitval = 0; (p = *argv) != NULL; ++argv) {
 		switch (*p) {
 		case 'c':
 			if (!strcmp(p, "clear"))
-				p = "cl";
+				p = "clear";
 			break;
 		case 'i':
-			if (!strcmp(p, "init"))
-				p = "is";
+			if (!strcmp(p, "init")) {
+				s = tigetstr("is1");
+				if (s != NULL)
+					tputs(s, 0, outc);
+				p = "is2";
+			}
 			break;
 		case 'l':
 			if (!strcmp(p, "longname")) {
@@ -100,17 +102,27 @@ main(int argc, char **argv)
 			}
 			break;
 		case 'r':
-			if (!strcmp(p, "reset"))
-				p = "rs";
+			if (!strcmp(p, "reset")) {
+				s = tigetstr("rs1");
+				if (s != NULL)
+					tputs(s, 0, outc);
+				p = "rs2";
+			}
 			break;
 		}
-		cptr = buf;
-		if (tgetstr(p, &cptr))
-			argv = process(p, buf, argv);
-		else if ((n = tgetnum(p)) != -1)
+		if (((s = tigetstr(p)) != NULL && s != (char *)-1) ||
+		    ((s = tgetstr(p, NULL)) != NULL))
+			argv = process(p, s, argv);
+		else if ((((n = tigetnum(p)) != -1 && n != -2 )||
+			   (n = tgetnum(p)) != -1))
 			(void)printf("%d\n", n);
-		else
-			exitval = !tgetflag(p);
+		else {
+			exitval = tigetflag(p);
+			if (exitval == -1)
+				exitval = !tgetflag(p);
+			else
+				exitval = !exitval;
+		}
 
 		if (argv == NULL)
 			break;
@@ -134,91 +146,94 @@ prlongname(char *buf)
 }
 
 static char **
-process(const char *cap, char *str, char **argv)
+process(const char *cap, const char *str, char **argv)
 {
 	static const char errfew[] =
 	    "Not enough arguments (%d) for capability `%s'";
-	static const char errmany[] =
-	    "Too many arguments (%d) for capability `%s'";
 	static const char erresc[] =
 	    "Unknown %% escape `%c' for capability `%s'";
-	char *cp;
-	int arg_need, arg_rows, arg_cols;
+	char c, l;
+	const char *p;
+	int arg_need, p1, p2, p3, p4, p5, p6, p7, p8, p9;
 
 	/* Count how many values we need for this capability. */
-	for (cp = str, arg_need = 0; *cp != '\0'; cp++)
-		if (*cp == '%')
-			    switch (*++cp) {
-			    case 'd':
-			    case '2':
-			    case '3':
-			    case '.':
-			    case '+':
-				    arg_need++;
-				    break;
-			    case '%':
-			    case '>':
-			    case 'i':
-			    case 'r':
-			    case 'n':
-			    case 'B':
-			    case 'D':
-				    break;
-			    default:
-				/*
-				 * hpux has lot's of them, but we complain
-				 */
-				 errx(2, erresc, *cp, cap);
-			    }
+	arg_need = 0;
+	p = str;
+	while ((c = *p++) != '\0') {
+		if (c != '%')
+			continue;
+		c = *p++;
+		if (c == '\0')
+			break;
+		if (c != 'p')
+			continue;
+		c = *p++;
+		if (c < '1' || c > '9')
+			errx(2, erresc, c, cap);
+		l = c - '0';
+		if (l > arg_need)
+			arg_need = l;
+	}
+	
+#define NEXT_ARG							      \
+	{								      \
+		if (*++argv == NULL || *argv[0] == '\0')		      \
+			errx(2, errfew, 1, cap);			      \
+	}
+
+	if (arg_need > 0) {
+		NEXT_ARG;
+		p1 = atoi(*argv);
+	} else
+		p1 = 0;
+	if (arg_need > 1) {
+		NEXT_ARG;
+		p2 = atoi(*argv);
+	} else
+		p2 = 0;
+	if (arg_need > 2) {
+		NEXT_ARG;
+		p3 = atoi(*argv);
+	} else
+		p3 = 0;
+	if (arg_need > 3) {
+		NEXT_ARG;
+		p4 = atoi(*argv);
+	} else
+		p4 = 0;
+	if (arg_need > 4) {
+		NEXT_ARG;
+		p5 = atoi(*argv);
+	} else
+		p5 = 0;
+	if (arg_need > 5) {
+		NEXT_ARG;
+		p6 = atoi(*argv);
+	} else
+		p6 = 0;
+	if (arg_need > 6) {
+		NEXT_ARG;
+		p7 = atoi(*argv);
+	} else
+		p7 = 0;
+	if (arg_need > 7) {
+		NEXT_ARG;
+		p8 = atoi(*argv);
+	} else
+		p8 = 0;
+	if (arg_need > 8) {
+		NEXT_ARG;
+		p9 = atoi(*argv);
+	} else
+		p9 = 0;
 
 	/* And print them. */
-	switch (arg_need) {
-	case 0:
-		(void)tputs(str, 1, outc);
-		break;
-	case 1:
-		arg_cols = 0;
-
-		if (*++argv == NULL || *argv[0] == '\0')
-			errx(2, errfew, 1, cap);
-		arg_rows = atoi(*argv);
-
-		(void)tputs(tgoto(str, arg_cols, arg_rows), 1, outc);
-		break;
-	case 2:
-		if (*++argv == NULL || *argv[0] == '\0')
-			errx(2, errfew, 2, cap);
-		arg_rows = atoi(*argv);
-
-		if (*++argv == NULL || *argv[0] == '\0')
-			errx(2, errfew, 2, cap);
-		arg_cols = atoi(*argv);
-
-		(void)tputs(tgoto(str, arg_cols, arg_rows), arg_rows, outc);
-		break;
-
-	default:
-		errx(2, errmany, arg_need, cap);
-	}
+	(void)tputs(tparm(str, p1, p2, p3, p4, p5, p6, p7, p8, p9), 0, outc);
 	return argv;
 }
 
-static void
-setospeed(void)
-{
-#undef ospeed
-	extern short ospeed;
-	struct termios t;
-
-	if (tcgetattr(STDOUT_FILENO, &t) != -1)
-		ospeed = 0;
-	else
-		ospeed = cfgetospeed(&t);
-}
-
 static int
-outc(c)
-	int c;
+outc(int c)
 {
 	return putchar(c);
 }

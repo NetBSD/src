@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.40 2008/12/05 18:51:16 cube Exp $
+#	$NetBSD: bsd.files.mk,v 1.41 2010/02/03 15:34:44 roy Exp $
 
 .if !defined(_BSD_FILES_MK_)
 _BSD_FILES_MK_=1
@@ -41,7 +41,7 @@ __fileinstall: .USE
 _FDIR:=		${FILESDIR_${F}:U${FILESDIR}}		# dir override
 _FNAME:=	${FILESNAME_${F}:U${FILESNAME:U${F:T}}}	# name override
 _F:=		${DESTDIR}${_FDIR}/${_FNAME}		# installed path
-_FDOBUILD:=	${FILESBUILD_${F}:Uno}
+_FDOBUILD:=	${FILESBUILD_${F}:U${FILESBUILD:Uno}}
 
 .if ${MKUPDATE} == "no"
 ${_F}!		${F} __fileinstall			# install rule
@@ -74,7 +74,7 @@ configinstall:	configfilesinstall
 _FDIR:=		${FILESDIR_${F}:U${FILESDIR}}		# dir override
 _FNAME:=	${FILESNAME_${F}:U${FILESNAME:U${F:T}}}	# name override
 _F:=		${DESTDIR}${_FDIR}/${_FNAME}		# installed path
-_FDOBUILD:=	${FILESBUILD_${F}:Uno}
+_FDOBUILD:=	${FILESBUILD_${F}:U${FILESBUILD:Uno}}
 
 .if ${MKUPDATE} == "no"
 ${_F}!		${F} __fileinstall	# install rule

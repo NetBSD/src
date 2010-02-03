@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2002/09/19 03:09:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.26 2010/02/03 15:34:39 roy Exp $
 
 .include <bsd.own.mk>
 
@@ -9,8 +9,8 @@ SRCS=		bc.y execute.c global.c load.c main.c \
 		number.c scan.l storage.c util.c
 CPPFLAGS+=	-D_POSIX_SOURCE -funsigned-char -I. -I${.CURDIR} -I${DIST}/bc/bc -I${DIST}/bc/h
 LFLAGS+=	-I8
-LDADD+=		-ll -ledit -ltermcap
-DPADD+=		${LIBL} ${LIBEDIT} ${LIBTERMCAP}
+LDADD+=		-ll -ledit -lterminfo
+DPADD+=		${LIBL} ${LIBEDIT} ${LIBTERMINFO}
 YHEADER=1
 
 TEXINFO=	bc.texi

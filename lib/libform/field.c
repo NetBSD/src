@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.24 2006/02/07 20:07:42 wiz Exp $	*/
+/*	$NetBSD: field.c,v 1.25 2010/02/03 15:34:43 roy Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: field.c,v 1.24 2006/02/07 20:07:42 wiz Exp $");
+__RCSID("$NetBSD: field.c,v 1.25 2010/02/03 15:34:43 roy Exp $");
 
 #include <stdlib.h>
 #include <strings.h>
@@ -325,20 +325,20 @@ field_buffer_init(FIELD *field, int buffer, unsigned int len)
 		field->cursor_xpos = 0;
 		field->cursor_ypos = 0;
 		field->row_count = 1; /* must be at least one row  XXX need to shift old rows (if any) to free list??? */
-		field->lines->length = len;
-		if ((newp = realloc(field->lines->string,
+		field->alines->length = len;
+		if ((newp = realloc(field->alines->string,
 				    (size_t) len + 1)) == NULL)
 			return E_SYSTEM_ERROR;
-		field->lines->string = newp;
-		field->lines->allocated = len + 1;
-		strlcpy(field->lines->string, field->buffers[buffer].string,
+		field->alines->string = newp;
+		field->alines->allocated = len + 1;
+		strlcpy(field->alines->string, field->buffers[buffer].string,
 			(size_t) len + 1);
-		field->lines->expanded =
-			_formi_tab_expanded_length(field->lines->string,
-						   0, field->lines->length);
+		field->alines->expanded =
+			_formi_tab_expanded_length(field->alines->string,
+						   0, field->alines->length);
 
-		field->start_line = field->lines;
-		field->cur_line = field->lines;
+		field->start_line = field->alines;
+		field->cur_line = field->alines;
 		
 		  /* we have to hope the wrap works - if it does not then the
 		     buffer is pretty much borked */
@@ -351,7 +351,7 @@ field_buffer_init(FIELD *field, int buffer, unsigned int len)
 		   * multiline case is handled when the wrap is done.
 		   */
 		if (field->row_count == 1)
-			_formi_calculate_tabs(field->lines);
+			_formi_calculate_tabs(field->alines);
 
 		  /* redraw the field to reflect the new contents. If the field
 		   * is attached....
@@ -438,7 +438,7 @@ set_field_buffer(FIELD *field, int buffer, char *value)
 	else
 		fprintf(dbg, "(null), len = 0\n");
 	fprintf(dbg, "set_field_buffer: entry: lines.len = %d\n",
-		field->lines[0].length);
+		field->alines[0].length);
 #endif
 	
 	if ((field->buffers[buffer].string =
@@ -457,7 +457,7 @@ set_field_buffer(FIELD *field, int buffer, char *value)
 	fprintf(dbg, "set_field_buffer: exit: string = %s, len = %d\n",
 		field->buffers[buffer].string, field->buffers[buffer].length);
 	fprintf(dbg, "set_field_buffer: exit: lines.len = %d\n",
-		field->lines[0].length);
+		field->alines[0].length);
 #endif
 
 	return status;
@@ -509,7 +509,7 @@ field_buffer(FIELD *field, int buffer)
 			   * newline on last row.
 			   */
 			p = reformat;
-			linep = field->lines;
+			linep = field->alines;
 			
 			do
 			{
@@ -825,23 +825,23 @@ new_field(int rows, int cols, int frow, int fcol, int nrows, int nbuf)
 		new->buffers[i].allocated = 1;
 	}
 
-	if ((new->lines = (_FORMI_FIELD_LINES *)
+	if ((new->alines = (_FORMI_FIELD_LINES *)
 	     malloc(sizeof(struct _formi_field_lines))) == NULL) {
 		free(new->buffers);
 		free(new);
 		return NULL;
 	}
 
-	new->lines->prev = NULL;
-	new->lines->next = NULL;
-	new->lines->allocated = 0;
-	new->lines->length = 0;
-	new->lines->expanded = 0;
-	new->lines->string = NULL;
-	new->lines->hard_ret = FALSE;
-	new->lines->tabs = NULL;
-	new->start_line = new->lines;
-	new->cur_line = new->lines;
+	new->alines->prev = NULL;
+	new->alines->next = NULL;
+	new->alines->allocated = 0;
+	new->alines->length = 0;
+	new->alines->expanded = 0;
+	new->alines->string = NULL;
+	new->alines->hard_ret = FALSE;
+	new->alines->tabs = NULL;
+	new->start_line = new->alines;
+	new->cur_line = new->alines;
 	
 	return new;
 }
@@ -926,8 +926,8 @@ free_field(FIELD *field)
 		free(field->buffers);
 		  /* free the tab structures */
 		for (i = 0; i < field->row_count - 1; i++) {
-			if (field->lines[i].tabs != NULL) {
-				ts = field->lines[i].tabs;
+			if (field->alines[i].tabs != NULL) {
+				ts = field->alines[i].tabs;
 				while (ts != NULL) {
 					nts = ts->fwd;
 					free(ts);

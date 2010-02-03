@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2009/04/22 15:23:03 lukem Exp $
+# $NetBSD: Makefile,v 1.5 2010/02/03 15:34:46 roy Exp $
 
 WARNS?=	2	# XXX -Wextra -Wsign-compare
 NOLINT= # defined
@@ -34,10 +34,10 @@ VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 
 LDADD+=	-lkadm5srv -lhdb -lkrb5 -lhx509 -lcrypto \
 	-lasn1 -lsl -lcom_err -L${VERS} -lvers \
-	-lroken -lcrypt -ledit -ltermcap
+	-lroken -lcrypt -ledit -lterminfo
 DPADD+=	${LIBKADM5SRV} ${LIBHDB} ${LIBKRB5} ${LIBHX509} ${LIBCRYPTO} \
 	${LIBASN1} ${LIBSL} ${LIBCOM_ERR} ${VERS}/libvers.a \
-	${LIBROKEN} ${LIBCRYPT} ${LIBEDIT} ${LIBTERMCAP}
+	${LIBROKEN} ${LIBCRYPT} ${LIBEDIT} ${LIBTERMINFO}
 
 MAN=	iprop-log.8
 

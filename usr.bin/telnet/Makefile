@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2009/04/14 22:15:27 lukem Exp $
+#	$NetBSD: Makefile,v 1.44 2010/02/03 15:34:46 roy Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -45,8 +45,8 @@ PROG=	telnet
 CPPFLAGS+=-DTERMCAP -DKLUDGELINEMODE -DUSE_TERMIO -DENV_HACK
 CPPFLAGS+=-I${.CURDIR}
 
-LDADD+= -ltermcap ${LIBTELNETDIR}/libtelnet.a
-DPADD+=	${LIBTERMCAP} ${LIBTELNETDIR}/libtelnet.a
+LDADD+= -lterminfo ${LIBTELNETDIR}/libtelnet.a
+DPADD+=	${LIBTERMINFO} ${LIBTELNETDIR}/libtelnet.a
 
 SRCS=	authenc.c commands.c main.c network.c ring.c sys_bsd.c telnet.c \
 	terminal.c tn3270.c utilities.c

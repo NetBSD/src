@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.518 2010/02/03 06:25:54 tls Exp $
+# $NetBSD: shl.mi,v 1.519 2010/02/03 15:34:37 roy Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -27,6 +27,7 @@
 ./lib/libprop.so.1.1				base-sys-shlib		dynamicroot
 ./lib/libradius.so.4.0				base-sys-shlib		dynamicroot
 ./lib/libtermcap.so.0.6				base-sys-shlib		dynamicroot
+./lib/libterminfo.so.1.0			base-sys-shlib		dynamicroot
 ./lib/libtermlib.so.0.6				base-sys-shlib		dynamicroot
 ./lib/libutil.so.7.17				base-sys-shlib		dynamicroot
 ./lib/libz.so.1.0				base-sys-shlib		dynamicroot
@@ -169,6 +170,7 @@
 ./usr/lib/libstdc++.so.5.0			base-sys-shlib		gcc=3,cxx
 ./usr/lib/libstdc++.so.7.0			base-sys-shlib		gcc=4,cxx
 ./usr/lib/libtermcap.so.0.6			base-sys-shlib
+./usr/lib/libterminfo.so.1.0			base-sys-shlib
 ./usr/lib/libtermlib.so.0.6			base-sys-shlib
 ./usr/lib/libukfs.so.1.0			base-sys-shlib
 ./usr/lib/libumem.so.0.0			base-zfs-shlib		zfs,dynamicroot

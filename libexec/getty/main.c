@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.57 2009/07/04 13:24:09 mbalmer Exp $	*/
+/*	$NetBSD: main.c,v 1.58 2010/02/03 15:34:43 roy Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.57 2009/07/04 13:24:09 mbalmer Exp $");
+__RCSID("$NetBSD: main.c,v 1.58 2010/02/03 15:34:43 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: main.c,v 1.57 2009/07/04 13:24:09 mbalmer Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
-#include <termcap.h>
+#include <term.h>
 #include <time.h>
 #include <ttyent.h>
 #include <unistd.h>
@@ -710,8 +710,7 @@ static void
 clearscreen(void)
 {
 	struct ttyent *typ;
-	struct tinfo *tinfo;
-	char *cs;
+	int err;
 
 	if (rawttyn == NULL)
 		return;
@@ -722,12 +721,12 @@ clearscreen(void)
 	    (typ->ty_type[0] == 0))
 		return;
 
-	if (t_getent(&tinfo, typ->ty_type) <= 0)
+	if (setupterm(typ->ty_type, 0, &err) == ERR)
 		return;
 
-	cs = t_agetstr(tinfo, "cl");
-	if (cs == NULL)
-		return;
+	if (clear_screen)
+		putpad(clear_screen);
 
-	putpad(cs);
+	del_curterm(cur_term);
+	cur_term = NULL;
 }

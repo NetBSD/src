@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.tty.c,v 1.14 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.tty.c,v 1.15 2010/02/03 15:34:39 roy Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char     sccsid[] = "@(#)hack.tty.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: hack.tty.c,v 1.14 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.tty.c,v 1.15 2010/02/03 15:34:39 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -152,8 +152,8 @@ gettty(void)
 void
 settty(const char *s)
 {
-	clear_screen();
-	end_screen();
+	clearscreen();
+	endscreen();
 	if (s)
 		printf("%s", s);
 	(void) fflush(stdout);
@@ -193,7 +193,7 @@ setftty(void)
 	if (change) {
 		setctty();
 	}
-	start_screen();
+	startscreen();
 }
 
 
@@ -242,7 +242,7 @@ getlin(char *bufp)
 				bufp--;
 				putstr("\b \b");	/* putsym converts \b */
 			} else
-				bell();
+				sound_bell();
 		} else if (c == '\n') {
 			*bufp = 0;
 			return;
@@ -263,7 +263,7 @@ getlin(char *bufp)
 				putstr("\b \b");
 			}
 		} else
-			bell();
+			sound_bell();
 	}
 }
 
@@ -305,7 +305,7 @@ xwaitforspace(const char *s)
 				morc = c;
 				break;
 			}
-			bell();
+			sound_bell();
 		}
 	}
 }

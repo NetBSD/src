@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.98 2009/07/22 16:57:14 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.99 2010/02/03 15:34:40 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -46,7 +46,6 @@
 
 #include <stdio.h>
 #include <stdbool.h>
-#include <termcap.h>
 
 /*
  * attr_t must be the same size as wchar_t (see <wchar.h>) to avoid padding
@@ -93,7 +92,6 @@ typedef chtype cchar_t;
 /* Old-style terminal modes access. */
 #define crmode()        cbreak()
 #define nocrmode()      nocbreak()
-#define ospeed          baudrate()
 #endif /* _CURSES_PRIVATE */
 
 
@@ -409,8 +407,10 @@ extern int	 COLOR_PAIRS;		/* Max color pairs on the screen. */
 
 extern int	 ESCDELAY;		/* Delay between keys in esc seq's. */
 
+#ifndef OK
 #define	ERR	(-1)			/* Error return. */
 #define	OK	(0)			/* Success return. */
+#endif
 
 /*
  * The following have, traditionally, been macros but X/Open say they

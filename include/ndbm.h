@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbm.h,v 1.14 2005/09/13 01:44:32 christos Exp $	*/
+/*	$NetBSD: ndbm.h,v 1.15 2010/02/03 15:34:40 roy Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,6 +39,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
+#include <stdint.h>
 #include <db.h>
 
 #if defined(_NETBSD_SOURCE)

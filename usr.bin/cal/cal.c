@@ -1,4 +1,4 @@
-/*	$NetBSD: cal.c,v 1.25 2009/04/11 11:26:34 lukem Exp $	*/
+/*	$NetBSD: cal.c,v 1.26 2010/02/03 15:34:45 roy Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cal.c,v 1.25 2009/04/11 11:26:34 lukem Exp $");
+__RCSID("$NetBSD: cal.c,v 1.26 2010/02/03 15:34:45 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: cal.c,v 1.25 2009/04/11 11:26:34 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termcap.h>
+#include <term.h>
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
@@ -198,7 +198,7 @@ struct reform {
 int julian;
 int dow;
 int hilite;
-char *md, *me;
+const char *md, *me;
 
 void	init_hilite(void);
 int	getnum(const char *);
@@ -599,7 +599,8 @@ ascii_day(char *p, int day)
 
 	rc = 0;
 	if (b != NULL) {
-		char *t, h[64];
+		const char *t;
+		char h[64];
 		int l;
 
 		l = p - b;
@@ -885,10 +886,8 @@ error:
 void
 init_hilite(void)
 {
-	static char control[128];
-	char cap[1024];
 	const char *term;
-	char *tc;
+	int errret;
 
 	hilite++;
 
@@ -898,14 +897,14 @@ init_hilite(void)
 	term = getenv("TERM");
 	if (term == NULL)
 		term = "dumb";
-	if (tgetent(&cap[0], term) != 1)
+	if (setupterm(term, fileno(stdout), &errret) != 0 && errret != 1)
 		return;
 
-	tc = &control[0];
-	if ((md = tgetstr(hilite > 1 ? "mr" : "md", &tc)))
-		*tc++ = '\0';
-	if ((me = tgetstr("me", &tc)))
-		*tc++ = '\0';
+	if (hilite > 1)
+		md = enter_reverse_mode;
+	else
+		md = enter_bold_mode;
+	me = exit_attribute_mode;
 	if (me == NULL || md == NULL)
 		md = me = NULL;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cl.h,v 1.1.1.2 2008/05/18 14:29:36 aymeric Exp $ */
+/*	$NetBSD: cl.h,v 1.2 2010/02/03 15:34:37 roy Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -24,6 +24,8 @@
 #include <ncurses.h>
 #else /* } { */
 #include <curses.h>
+#include <term.h>
+#include <termcap.h>
 #endif /* } */
 #endif
 #endif

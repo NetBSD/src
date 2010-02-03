@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.16 2004/11/24 11:57:09 blymn Exp $	*/
+/*	$NetBSD: driver.c,v 1.17 2010/02/03 15:34:43 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: driver.c,v 1.16 2004/11/24 11:57:09 blymn Exp $");
+__RCSID("$NetBSD: driver.c,v 1.17 2010/02/03 15:34:43 roy Exp $");
 
 #include <ctype.h>
 #include "form.h"
@@ -442,8 +442,8 @@ form_driver(FORM *form, int c)
 		  /* if we have no error, reset the various offsets */
 		fieldp = form->fields[form->cur_field];
 		fieldp->start_char = 0;
-		fieldp->start_line = fieldp->lines;
-		fieldp->cur_line = fieldp->lines;
+		fieldp->start_line = fieldp->alines;
+		fieldp->cur_line = fieldp->alines;
 		fieldp->row_xpos = 0;
 		fieldp->cursor_ypos = 0;
 		_formi_init_field_xpos(fieldp);

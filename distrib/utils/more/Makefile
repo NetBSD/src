@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2009/01/24 13:58:21 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.15 2010/02/03 15:34:38 roy Exp $
 #
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
@@ -11,8 +11,8 @@ SRCS=		ch.c command.c decode.c help.c input.c line.c linenum.c main.c \
 		ttyin.c
 
 CPPFLAGS+=	-I${.CURDIR}
-DPADD=		${LIBTERMCAP}
-LDADD=		-ltermcap
+DPADD=		${LIBTERMLIB}
+LDADD=		-ltermlib
 
 beforeinstall:
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \

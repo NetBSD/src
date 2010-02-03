@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.c,v 1.23 2009/07/22 16:57:14 roy Exp $	*/
+/*	$NetBSD: curses.c,v 1.24 2010/02/03 15:34:40 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)curses.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: curses.c,v 1.23 2009/07/22 16:57:14 roy Exp $");
+__RCSID("$NetBSD: curses.c,v 1.24 2010/02/03 15:34:40 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -51,37 +51,7 @@ int	__noqch = 0;
 					 * insert/delete line capabilities
 					 * for quick change on refresh.
 					 */
-
-char	PC;
-char	__tc_am, __tc_bs, __tc_cc, __tc_da, __tc_eo,
-	__tc_hc, __tc_hl, __tc_in, __tc_mi, __tc_ms,
-	__tc_nc, __tc_ns, __tc_os, __tc_ul, __tc_ut,
-	__tc_xb, __tc_xn, __tc_xt, __tc_xs, __tc_xx;
 char	__CA;
-int	__tc_pa, __tc_Co, __tc_NC;
-char	*__tc_ac, *__tc_AB, *__tc_ae, *__tc_AF, *__tc_AL,
-	*__tc_al, *__tc_as, *__tc_bc, *__tc_bl, *__tc_bt,
-	*__tc_cd, *__tc_ce, *__tc_cl, *__tc_cm, *__tc_cr,
-	*__tc_cs, *__tc_dc, *__tc_DL, *__tc_dl, *__tc_dm,
-	*__tc_DO, *__tc_do, *__tc_eA, *__tc_ed, *__tc_ei,
-	*__tc_ho, *__tc_Ic, *__tc_ic, *__tc_im, *__tc_Ip,
-	*__tc_ip, *__tc_k0, *__tc_k1, *__tc_k2, *__tc_k3,
-	*__tc_k4, *__tc_k5, *__tc_k6, *__tc_k7, *__tc_k8,
-	*__tc_k9, *__tc_kd, *__tc_ke, *__tc_kh, *__tc_kl,
-	*__tc_kr, *__tc_ks, *__tc_ku, *__tc_LE, *__tc_ll,
-	*__tc_ma, *__tc_mb, *__tc_md, *__tc_me, *__tc_mh,
-	*__tc_mk, *__tc_mm, *__tc_mo, *__tc_mp, *__tc_mr,
-	*__tc_nd, *__tc_nl, *__tc_oc, *__tc_op,
-	*__tc_rc, *__tc_RI, *__tc_Sb, *__tc_sc, *__tc_se,
-	*__tc_SF, *__tc_Sf, *__tc_sf, *__tc_so, *__tc_sp,
-	*__tc_SR, *__tc_sr, *__tc_ta, *__tc_te, *__tc_ti,
-	*__tc_uc, *__tc_ue, *__tc_UP, *__tc_up, *__tc_us,
-	*__tc_vb, *__tc_ve, *__tc_vi, *__tc_vs;
-
-#ifdef HAVE_WCHAR
-char *__tc_Xh, *__tc_Xl, *__tc_Xo, *__tc_Xr, *__tc_Xt,
-	*__tc_Xv;
-#endif /* HAVE_WCHAR */
 
 /*
  * Public.

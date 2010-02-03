@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.termcap.c,v 1.18 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.terminfo.c,v 1.1 2010/02/03 15:34:38 roy Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,182 +63,50 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.termcap.c,v 1.18 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.terminfo.c,v 1.1 2010/02/03 15:34:38 roy Exp $");
 #endif				/* not lint */
 
 #include <string.h>
 #include <termios.h>
-#include <termcap.h>
+#include <term.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include "hack.h"
 #include "extern.h"
 #include "def.flag.h"		/* for flags.nonull */
 
-static struct tinfo *info;
-static const char    *HO, *CL, *CE, *CM, *ND, *XD, *BC_BS, *SO, *SE, *TI, *TE;
-static const char    *VS, *VE;
-static int      SG;
 char           *CD;		/* tested in pri.c: docorner() */
 int             CO, LI;		/* used in pri.c and whatis.c */
-
-static void nocmov(int, int);
-static void cmov(int, int);
-static int xputc(int);
-static void xputs(const char *);
 
 void
 startup(void)
 {
-	char           *term;
-	
-	/* UP, BC, PC already set */
- 	if (!(term = getenv("TERM")))
-		error("Can't get TERM.");
-	if (!strncmp(term, "5620", 4))
-		flags.nonull = 1;	/* this should be a termcap flag */
-	if (t_getent(&info, term) < 1)
-		error("Unknown terminal type: %s.", term);
-	BC_BS = t_agetstr(info, "bc");
-	if (!BC_BS) {
-		if (!t_getflag(info, "bs"))
-			error("Terminal must backspace.");
-		BC_BS = "\b";
-	}
-	HO = t_agetstr(info, "ho");
-	CO = t_getnum(info, "co");
-	LI = t_getnum(info, "li");
+
+	/* Will exit if no suitable term found */
+	setupterm(NULL, 0, NULL);
+	CO = columns;
+	LI = lines;
 	if (CO < COLNO || LI < ROWNO + 2)
 		setclipped();
-	if (!(CL = t_agetstr(info, "cl")))
-		error("Hack needs CL.");
-	ND = t_agetstr(info, "nd");
-	if (t_getflag(info, "os"))
-		error("Hack can't have OS.");
-	CE = t_agetstr(info, "ce");
-	/*
-	 * It seems that xd is no longer supported, and we should use a
-	 * linefeed instead; unfortunately this requires resetting CRMOD, and
-	 * many output routines will have to be modified slightly. Let's
-	 * leave that till the next release.
-	 */
-	XD = t_agetstr(info, "xd");
-	/* not: 		XD = t_agetstr(info, "do"); */
-	if (!(CM = t_agetstr(info, "cm"))) {
-		if (!UP && !HO)
-			error("Hack needs CM or UP or HO.");
-		printf("Playing hack on terminals without cm is suspect...\n");
+	if (clear_screen == NULL)
+		error("Hack needs clear_screen.");
+	if (over_strike)
+		error("Hack can't have over_strike.");
+	if (cursor_address == NULL) {
+		printf("Playing hack without cursor_address is suspect...");
 		getret();
 	}
-	SO = t_agetstr(info, "so");
-	SE = t_agetstr(info, "se");
-	SG = t_getnum(info, "sg");	/* -1: not fnd; else # of spaces left by so */
-	if (!SO || !SE || (SG > 0))
-		SO = SE = 0;
-	CD = t_agetstr(info, "cd");
-	set_whole_screen();	/* uses LI and CD */
+	set_whole_screen();
 }
 
 void
-start_screen(void)
+startscreen(void)
 {
-	xputs(TI);
-	xputs(VS);
 }
 
 void
-end_screen(void)
+endscreen(void)
 {
-	xputs(VE);
-	xputs(TE);
-}
-
-/*
- * Cursor movements
- *
- * x,y not xchar: perhaps xchar is unsigned and
- * curx-x would be unsigned as well
- */
-void
-curs(int x, int y)
-{
-
-	if (y == cury && x == curx)
-		return;
-	if (!ND && (curx != x || x <= 3)) {	/* Extremely primitive */
-		cmov(x, y);	/* bunker!wtm */
-		return;
-	}
-	if (abs(cury - y) <= 3 && abs(curx - x) <= 3)
-		nocmov(x, y);
-	else if ((x <= 3 && abs(cury - y) <= 3) || (!CM && x < abs(curx - x))) {
-		(void) putchar('\r');
-		curx = 1;
-		nocmov(x, y);
-	} else if (!CM) {
-		nocmov(x, y);
-	} else
-		cmov(x, y);
-}
-
-static void
-nocmov(int x, int y)
-{
-	if (cury > y) {
-		if (UP) {
-			while (cury > y) {	/* Go up. */
-				xputs(UP);
-				cury--;
-			}
-		} else if (CM) {
-			cmov(x, y);
-		} else if (HO) {
-			home();
-			curs(x, y);
-		}		/* else impossible("..."); */
-	} else if (cury < y) {
-		if (XD) {
-			while (cury < y) {
-				xputs(XD);
-				cury++;
-			}
-		} else if (CM) {
-			cmov(x, y);
-		} else {
-			while (cury < y) {
-				xputc('\n');
-				curx = 1;
-				cury++;
-			}
-		}
-	}
-	if (curx < x) {		/* Go to the right. */
-		if (!ND)
-			cmov(x, y);
-		else		/* bah */
-			/* should instead print what is there already */
-			while (curx < x) {
-				xputs(ND);
-				curx++;
-			}
-	} else if (curx > x) {
-		while (curx > x) {	/* Go to the left. */
-			xputs(BC_BS);
-			curx--;
-		}
-	}
-}
-
-static void
-cmov(int x, int y)
-{
-	char buf[256];
-
-	if (t_goto(info, CM, x - 1, y - 1, buf, 255) >= 0) {
-		xputs(buf);
-		cury = y;
-		curx = x;
-	}
 }
 
 static int
@@ -253,11 +121,102 @@ xputs(const char *s)
 	tputs(s, 1, xputc);
 }
 
+static void
+cmov(int x, int y)
+{
+	char *p; 
+
+	p = vtparm(cursor_address, y - 1, x - 1);
+	if (p) {
+		xputs(p);
+		cury = y;
+		curx = x;
+	}
+}
+
+static void
+nocmov(int x, int y)
+{
+	if (cury > y) {
+		if (cursor_up) {
+			while (cury > y) {	/* Go up. */
+				xputs(cursor_up);
+				cury--;
+			}
+		} else if (cursor_address) {
+			cmov(x, y);
+		} else if (cursor_home) {
+			home();
+			curs(x, y);
+		}		/* else impossible("..."); */
+	} else if (cury < y) {
+		if (cursor_address) {
+			cmov(x, y);
+#if 0
+		} else if (XD) {
+			while (cury < y) {
+				xputs(XD);
+				cury++;
+			}
+#endif
+		} else {
+			while (cury < y) {
+				xputc('\n');
+				curx = 1;
+				cury++;
+			}
+		}
+	}
+	if (curx < x) {		/* Go to the right. */
+		if (!cursor_right)
+			cmov(x, y);
+		else		/* bah */
+			/* should instead print what is there already */
+			while (curx < x) {
+				xputs(cursor_right);
+				curx++;
+			}
+	} else if (curx > x) {
+		while (curx > x)
+			backsp();
+	}
+}
+
+/*
+ * Cursor movements
+ *
+ * x,y not xchar: perhaps xchar is unsigned and
+ * curx-x would be unsigned as well
+ */
+void
+curs(int x, int y)
+{
+
+	if (y == cury && x == curx)
+		return;
+	if (!cursor_right && (curx != x || x <= 3)) { /* Extremely primitive */
+		cmov(x, y);	/* bunker!wtm */
+		return;
+	}
+	if (abs(cury - y) <= 3 && abs(curx - x) <= 3)
+		nocmov(x, y);
+	else if ((x <= 3 && abs(cury - y) <= 3) ||
+	    (!cursor_address && x < abs(curx - x)))
+	{
+		(void) putchar('\r');
+		curx = 1;
+		nocmov(x, y);
+	} else if (!cursor_address) {
+		nocmov(x, y);
+	} else
+		cmov(x, y);
+}
+
 void
 cl_end(void)
 {
-	if (CE)
-		xputs(CE);
+	if (clr_eol)
+		xputs(clr_eol);
 	else {			/* no-CE fix - free after Harold Rynes */
 		/*
 		 * this looks terrible, especially on a slow terminal but is
@@ -274,21 +233,21 @@ cl_end(void)
 }
 
 void
-clear_screen(void)
+clearscreen(void)
 {
-	xputs(CL);
+	xputs(clear_screen);
 	curx = cury = 1;
 }
 
 void
 home(void)
 {
-	char buf[256];
+	char *out;
 	
-	if (HO)
-		xputs(HO);
-	else if ((CM) && (t_goto(info, CM, 0, 0, buf, 255) >= 0))
-		xputs(buf);
+	if (cursor_home)
+		xputs(cursor_home);
+	else if ((cursor_address) && (out = vtparm(cursor_address, 0, 0)))
+		xputs(out);
 	else
 		curs(1, 1);	/* using UP ... */
 	curx = cury = 1;
@@ -297,26 +256,29 @@ home(void)
 void
 standoutbeg(void)
 {
-	if (SO)
-		xputs(SO);
+	if (enter_standout_mode && exit_standout_mode && !magic_cookie_glitch)
+		xputs(enter_standout_mode);
 }
 
 void
 standoutend(void)
 {
-	if (SE)
-		xputs(SE);
+	if (exit_standout_mode && enter_standout_mode && !magic_cookie_glitch)
+		xputs(exit_standout_mode);
 }
 
 void
 backsp(void)
 {
-	xputs(BC_BS);
+	if (cursor_left)
+		xputs(cursor_left);
+	else
+		(void) putchar('\b');
 	curx--;
 }
 
 void
-bell(void)
+sound_bell(void)
 {
 	(void) putchar('\007');	/* curx does not change */
 	(void) fflush(stdout);
@@ -336,8 +298,8 @@ cl_eos(void)
 {				/* free after Robert Viduya *//* must only be
 				 * called with curx = 1 */
 
-	if (CD)
-		xputs(CD);
+	if (clr_eos)
+		xputs(clr_eos);
 	else {
 		int             cx = curx, cy = cury;
 		while (cury <= LI - 2) {

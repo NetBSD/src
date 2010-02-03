@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2002/05/30 03:22:58 simonb Exp $
+#	$NetBSD: Makefile,v 1.10 2010/02/03 15:34:46 roy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	window
@@ -16,7 +16,7 @@ SRCS=	char.c cmd.c cmd1.c cmd2.c cmd3.c cmd4.c cmd5.c cmd6.c cmd7.c \
 	wwterminfo.c wwtty.c wwunframe.c wwupdate.c wwwrite.c xx.c xxflush.c \
 	compress.c
 MAN=	window.1
-DPADD=	${LIBTERMCAP} ${LIBUTIL}
-LDADD=	-ltermcap -lutil
+DPADD=	${LIBTERMINFO} ${LIBUTIL}
+LDADD=	-lterminfo -lutil
 
 .include <bsd.prog.mk>

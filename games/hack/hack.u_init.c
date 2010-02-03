@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.u_init.c,v 1.11 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.u_init.c,v 1.12 2010/02/03 15:34:39 roy Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.u_init.c,v 1.11 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.u_init.c,v 1.12 2010/02/03 15:34:39 roy Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -184,7 +184,7 @@ u_init(void)
 	printf("\nAre you an experienced player? [ny] ");
 
 	while (!strchr("ynYN \n\004", (exper = readchar())))
-		bell();
+		sound_bell();
 	if (exper == '\004')	/* Give him an opportunity to get out */
 		end_of_input();
 	printf("%c\n", exper);	/* echo */
@@ -218,7 +218,7 @@ u_init(void)
 		if (pc == '\004')	/* Give him the opportunity to get
 					 * out */
 			end_of_input();
-		bell();
+		sound_bell();
 	}
 	if (pc == '\n')
 		pc = 0;

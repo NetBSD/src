@@ -1,4 +1,4 @@
-/*	$NetBSD: form.h,v 1.19 2004/11/24 11:57:09 blymn Exp $	*/
+/*	$NetBSD: form.h,v 1.20 2010/02/03 15:34:43 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -233,7 +233,7 @@ struct _form_field {
 	FIELDTYPE *type; /* type struct for the field */
 	CIRCLEQ_ENTRY(_form_field) glue; /* circle queue glue for sorting fields */
 	char *args; /* args for field type. */
-	_FORMI_FIELD_LINES *lines; /* array of the starts and ends of lines */
+	_FORMI_FIELD_LINES *alines; /* array of the starts and ends of lines */
 	_FORMI_FIELD_LINES *free; /* list of lines available for reuse */
 	FORM_STR *buffers; /* array of buffers for the field */
 };

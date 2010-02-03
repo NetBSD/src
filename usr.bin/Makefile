@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.184 2010/01/16 15:34:23 roy Exp $
+#	$NetBSD: Makefile,v 1.185 2010/02/03 15:34:45 roy Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -12,7 +12,7 @@ SUBDIR= apply apropos asa at audio awk \
 	eject elf2aout elf2ecoff env error expand extattr \
 	false fdformat fgen find finger fmt fold fpr from \
 	fsplit fstat ftp gcore genassym gencat getconf getent getopt gprof \
-	gzip head hexdump iconv id indent innetgr ipcrm ipcs join jot \
+	gzip head hexdump iconv id indent infocmp innetgr ipcrm ipcs join jot \
 	kdump ktrace ktruss lam last lastcomm ldd leave less \
 	locale locate lock logger login logname look lorder m4 \
 	machine mail make man menuc mesg midiplay mixerctl mkcsmapper \
@@ -23,7 +23,7 @@ SUBDIR= apply apropos asa at audio awk \
 	renice rev revoke rfcomm_sppd rlogin rpcgen rpcinfo rs rsh rup \
 	ruptime rusers rwall rwho script sdiff sdpquery sed seq shar shlock \
 	showmount shuffle sockstat soelim sort spell split stat su systat \
-	tabs tail talk tcopy tee telnet tftp time tip touch tput \
+	tabs tail talk tcopy tee telnet tftp tic time tip touch tput \
 	tr true tset tsort tty ul uname unexpand unifdef \
 	uniq units unvis unzip usbhidaction usbhidctl users utoppya \
 	uudecode uuencode uuidgen vacation vgrind vis vmstat vndcompress w \

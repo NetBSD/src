@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.53 2009/06/25 17:40:07 agc Exp $
+.\" $NetBSD: mdoc.local,v 1.54 2010/02/03 15:34:39 roy Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,3 +81,4 @@
 .ds doc-str-Lb-librefuse        File System in Userspace Convenience Library (librefuse, \-lrefuse)
 .ds doc-str-Lb-libssp           Buffer Overflow Protection Library (libssp, \-lssp)
 .ds doc-str-Lb-libfetch		File Transfer Library for URLs (libfetch, \-lfetch)
+.ds doc-str-Lb-libterminfo      Terminal Information Library (libterminfo, \-lterminfo)

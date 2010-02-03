@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.37 2009/07/22 16:57:15 roy Exp $	*/
+/*	$NetBSD: tstp.c,v 1.38 2010/02/03 15:34:40 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.37 2009/07/22 16:57:15 roy Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.38 2010/02/03 15:34:40 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -231,13 +231,13 @@ __stopwin(void)
 		    (int) curscr->maxy - 1, 0, 0);
 	}
 
-	if (__tc_mo != NULL)
-		(void) tputs(__tc_mo, 0, __cputchar);
+	if (meta_off != NULL)
+		(void) tputs(meta_off, 0, __cputchar);
 
 	if ((curscr != NULL) && (curscr->flags & __KEYPAD))
-		(void) tputs(__tc_ke, 0, __cputchar);
-	(void) tputs(__tc_ve, 0, __cputchar);
-	(void) tputs(__tc_te, 0, __cputchar);
+		(void) tputs(keypad_local, 0, __cputchar);
+	(void) tputs(cursor_normal, 0, __cputchar);
+	(void) tputs(exit_ca_mode, 0, __cputchar);
 	(void) fflush(_cursesi_screen->outfd);
 	(void) setvbuf(_cursesi_screen->outfd, NULL, _IOLBF, (size_t) 0);
 

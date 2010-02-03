@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2006/01/12 17:53:03 garbled Exp $
+#	$NetBSD: Makefile,v 1.10 2010/02/03 15:34:47 roy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	lpc
@@ -7,7 +7,7 @@ SRCS=	lpc.c cmds.c cmdtab.c
 BINGRP=	daemon
 BINMODE=2555
 
-LDADD+= -ledit -ltermcap
-DPADD+= ${LIBEDIT} ${LIBTERMCAP}
+LDADD+= -ledit -lterminfo
+DPADD+= ${LIBEDIT} ${LIBTERMINFO}
 
 .include <bsd.prog.mk>

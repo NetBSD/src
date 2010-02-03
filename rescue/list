@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.36 2009/12/05 20:11:02 pooka Exp $
+#	$NetBSD: list,v 1.37 2010/02/03 15:34:44 roy Exp $
 
 SRCDIRS	bin
 
@@ -149,4 +149,4 @@ PROG	lfs_cleanerd
 
 
 LIBS	liboverride.o
-LIBS	-lbz2 -lcrypt -ledit -lipsec -lkvm -ll -lm -lrmt -lcurses -ltermcap -lutil -lz -levent -lprop
+LIBS	-lbz2 -lcrypt -ledit -lipsec -lkvm -ll -lm -lrmt -lcurses -lterminfo -lutil -lz -levent -lprop

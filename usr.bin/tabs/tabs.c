@@ -1,4 +1,4 @@
-/* $NetBSD: tabs.c,v 1.2 2009/01/18 07:08:30 lukem Exp $ */
+/* $NetBSD: tabs.c,v 1.3 2010/02/03 15:34:46 roy Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2008 \
 The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: tabs.c,v 1.2 2009/01/18 07:08:30 lukem Exp $");
+__RCSID("$NetBSD: tabs.c,v 1.3 2010/02/03 15:34:46 roy Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: tabs.c,v 1.2 2009/01/18 07:08:30 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termcap.h>
+#include <term.h>
 #include <unistd.h>
 
 #define NSTOPS 20
@@ -67,8 +67,6 @@ static const struct tabspec tabspecs[] = {
 };
 static const size_t ntabspecs = sizeof(tabspecs) / sizeof(tabspecs[0]);
 
-static char tbuf[2048];
-
 static void
 usage(void)
 {
@@ -83,8 +81,8 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	char *term, *arg, *tbp, *token, *end, *tabs = NULL, *p;
-	const char *cr, *ct, *st, *ML, *spec = NULL;
+	char *term, *arg, *token, *end, *tabs = NULL, *p;
+	const char *cr, *spec = NULL;
 	int i, n, inc = 8, stops[NSTOPS], nstops, last, cols, margin = 0;
 	size_t j;
 	struct winsize ws;
@@ -172,41 +170,33 @@ main(int argc, char **argv)
 
 	if (term == NULL)
 		errx(EXIT_FAILURE, "no value for $TERM and -T not given");
-	switch (tgetent(tbuf, term)) {
-	case -1:
-		err(EXIT_FAILURE, "termcap database");
-	case 0:
-		errx(EXIT_FAILURE, "%s: no termcap entry", term);
-	}
-	tbp = tbuf;
-	cr = tgetstr("cr", &tbp);
+	if (setupterm(term, STDOUT_FILENO, NULL) != 0)
+		err(EXIT_FAILURE, "setupterm:");
+	cr = carriage_return;
 	if (cr == NULL)
 		cr = "\r";
-	ct = tgetstr("ct", &tbp);
-	if (ct == NULL)
+	if (clear_all_tabs == NULL)
 		errx(EXIT_FAILURE, "terminal cannot clear tabs");
-	st = tgetstr("st", &tbp);
-	if (st == NULL)
+	if (set_tab == NULL)
 		errx(EXIT_FAILURE, "terminal cannot set tabs");
-	ML = tgetstr("ML", &tbp);
 
 	/* Clear existing tabs */
-	tputs(cr, 1, putchar);
-	tputs(ct, 1, putchar);
-	tputs(cr, 1, putchar);
+	putp(cr);
+	putp(clear_all_tabs);
+	putp(cr);
 
-	if (ML != NULL) {
+	if (set_lr_margin != NULL) {
 		printf("%*s", margin, "");
-		tputs(ML, 1, putchar);
+		putp(set_lr_margin);
 	} else if (margin != 0)
 		warnx("terminal cannot set left margin");
 
 	if (nstops >= 0) {
 		printf("%*s", stops[0] - 1, "");
-		tputs(st, 1, putchar);
+		putp(set_tab);
 		for (i = 1; i < nstops; i++) {
 			printf("%*s", stops[i] - stops[i - 1], "");
-			tputs(st, 1, putchar);
+			putp(set_tab);
 		}
 	} else if (inc > 0) {
 		cols = 0;
@@ -221,7 +211,7 @@ main(int argc, char **argv)
 			if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0)
 				cols = ws.ws_col;
 			else {
-				cols = tgetnum("co");
+				cols = tigetnum("cols");
 				if (cols == 0) {
 					cols = 80;
 					warnx("terminal does not specify number"
@@ -232,10 +222,10 @@ main(int argc, char **argv)
 		}
 		for (i = 0; i < cols / inc; i++) {
 			printf("%*s", inc, "");
-			tputs(st, 1, putchar);
+			putp(set_tab);
 		}
 	}
-	tputs(cr, 1, putchar);
+	putp(cr);
 
 	exit(EXIT_SUCCESS);
 	/* NOTREACHED */

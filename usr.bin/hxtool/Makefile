@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2009/04/14 22:15:21 lukem Exp $
+# $NetBSD: Makefile,v 1.4 2010/02/03 15:34:45 roy Exp $
 
 WARNS?=	1	# XXX -Wextra -Wshadow
 
@@ -31,10 +31,10 @@ VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 
 LDADD+=	-lhx509 -lcrypto -lasn1 -lcom_err \
 	-L${VERS} -lvers -lroken -lsl -lcrypt -lutil \
-	-ledit -ltermcap
+	-ledit -lterminfo
 DPADD+=	${LIBHX509} ${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} \
 	${VERS}/libvers.a ${LIBROKEN} ${LIBSL} ${LIBCRYPT} ${LIBUTIL} \
-	${LIBEDIT} ${LIBTERMCAP}
+	${LIBEDIT} ${LIBTERMINFO}
 
 .include <bsd.prog.mk>
 

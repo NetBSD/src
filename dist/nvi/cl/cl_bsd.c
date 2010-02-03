@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_bsd.c,v 1.3 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: cl_bsd.c,v 1.4 2010/02/03 15:34:37 roy Exp $ */
 
 /*-
  * Copyright (c) 1995, 1996
@@ -30,9 +30,11 @@ static const char sccsid[] = "Id: cl_bsd.c,v 8.32 2000/12/01 13:56:17 skimo Exp 
 #include "../vi/vi.h"
 #include "cl.h"
 
+#ifndef HAVE_CURSES_SETUPTERM
 static char	*ke;				/* Keypad on. */
 static char	*ks;				/* Keypad off. */
 static char	*vb;				/* Visible bell string. */
+#endif
 
 /*
  * HP's support the entire System V curses package except for the tigetstr
@@ -345,3 +347,4 @@ tigetnum(name)
 	return ((val = tgetnum(name)) == -1 ? -2 : val);
 }
 #endif /* !HAVE_CURSES_TIGETSTR */
+

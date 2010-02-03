@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.cmd.c,v 1.10 2009/08/12 07:28:40 dholland Exp $	*/
+/*	$NetBSD: hack.cmd.c,v 1.11 2010/02/03 15:34:38 roy Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.cmd.c,v 1.10 2009/08/12 07:28:40 dholland Exp $");
+__RCSID("$NetBSD: hack.cmd.c,v 1.11 2010/02/03 15:34:38 roy Exp $");
 #endif				/* not lint */
 
 #include	"hack.h"
@@ -159,7 +159,7 @@ rhack(const char *cmd)
 	}
 	if (!*cmd || (*cmd & 0377) == 0377 ||
 	    (flags.no_rest_on_space && *cmd == ' ')) {
-		bell();
+		sound_bell();
 		flags.move = 0;
 		return;		/* probably we just had an interrupt */
 	}
