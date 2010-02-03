@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.179 2010/02/01 05:38:36 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.180 2010/02/03 15:36:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.179 2010/02/01 05:38:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180 2010/02/03 15:36:36 msaitoh Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -753,7 +753,7 @@ bge_set_max_readrq(struct bge_softc *sc)
 
 	dev = sc->bge_dev;
 
-	val = pci_conf_read(sc->sc_pc, sc->sc_pcitag, sc->bge_expcap
+	val = pci_conf_read(sc->sc_pc, sc->sc_pcitag, sc->bge_pciecap
 	    + PCI_PCIE_DCSR);
 	if ((val & PCI_PCIE_DCSR_MAX_READ_REQ) !=
 	    BGE_PCIE_DEVCTL_MAX_READRQ_4096) {
@@ -761,7 +761,7 @@ bge_set_max_readrq(struct bge_softc *sc)
 			    val);
 		val &= ~PCI_PCIE_DCSR_MAX_READ_REQ;
 		val |= BGE_PCIE_DEVCTL_MAX_READRQ_4096;
-		pci_conf_write(sc->sc_pc, sc->sc_pcitag, sc->bge_expcap
+		pci_conf_write(sc->sc_pc, sc->sc_pcitag, sc->bge_pciecap
 		    + PCI_PCIE_DCSR, val);
 			printf("-> 0x%04x\n", val);
 	}
@@ -1720,6 +1720,48 @@ bge_stop_fw(struct bge_softc *sc)
 	}
 }
 
+static int
+bge_poll_fw(struct bge_softc *sc)
+{
+	uint32_t val;
+	int i;
+
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
+		for (i = 0; i < BGE_TIMEOUT; i++) {
+			val = CSR_READ_4(sc, BGE_VCPU_STATUS);
+			if (val & BGE_VCPU_STATUS_INIT_DONE)
+				break;
+			DELAY(100);
+		}
+		if (i >= BGE_TIMEOUT) {
+			aprint_error_dev(sc->bge_dev, "reset timed out\n");
+			return -1;
+		}
+	} else if ((sc->bge_flags & BGE_NO_EEPROM) == 0) {
+		/*
+		 * Poll the value location we just wrote until
+		 * we see the 1's complement of the magic number.
+		 * This indicates that the firmware initialization
+		 * is complete.
+		 * XXX 1000ms for Flash and 10000ms for SEEPROM.
+		 */
+		for (i = 0; i < BGE_TIMEOUT; i++) {
+			val = bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM);
+			if (val == ~BGE_MAGIC_NUMBER)
+				break;
+			DELAY(10);
+		}
+
+		if (i >= BGE_TIMEOUT) {
+			aprint_error_dev(sc->bge_dev,
+			    "firmware handshake timed out, val = %x\n", val);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
 /*
  * Do endian, PCI and DMA initialization. Also check the on-board ROM
  * self-test results.
@@ -1894,7 +1936,7 @@ bge_blockinit(struct bge_softc *sc)
 
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MEMWIN_BASEADDR, 0);
 
-	/* Configure mbuf memory pool */
+	/* Step 33: Configure mbuf memory pool */
 	if (BGE_IS_5700_FAMILY(sc)) {
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_BASEADDR,
 		    BGE_BUFFPOOL_1);
@@ -1910,7 +1952,7 @@ bge_blockinit(struct bge_softc *sc)
 		CSR_WRITE_4(sc, BGE_BMAN_DMA_DESCPOOL_LEN, 0x2000);
 	}
 
-	/* Configure mbuf pool watermarks */
+	/* Step 35: Configure mbuf pool watermarks */
 #ifdef ORIG_WPAUL_VALUES
 	CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 24);
 	CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 24);
@@ -1939,15 +1981,15 @@ bge_blockinit(struct bge_softc *sc)
 	}
 #endif
 
-	/* Configure DMA resource watermarks */
+	/* Step 36: Configure DMA resource watermarks */
 	CSR_WRITE_4(sc, BGE_BMAN_DMA_DESCPOOL_LOWAT, 5);
 	CSR_WRITE_4(sc, BGE_BMAN_DMA_DESCPOOL_HIWAT, 10);
 
-	/* Enable buffer manager */
+	/* Step 38: Enable buffer manager */
 	CSR_WRITE_4(sc, BGE_BMAN_MODE,
 	    BGE_BMANMODE_ENABLE | BGE_BMANMODE_LOMBUF_ATTN);
 
-	/* Poll for buffer manager start indication */
+	/* Step 39: Poll for buffer manager start indication */
 	for (i = 0; i < BGE_TIMEOUT * 2; i++) {
 		if (CSR_READ_4(sc, BGE_BMAN_MODE) & BGE_BMANMODE_ENABLE)
 			break;
@@ -1960,7 +2002,7 @@ bge_blockinit(struct bge_softc *sc)
 		return ENXIO;
 	}
 
-	/* Enable flow-through queues */
+	/* Step 40: Enable flow-through queues */
 	CSR_WRITE_4(sc, BGE_FTQ_RESET, 0xFFFFFFFF);
 	CSR_WRITE_4(sc, BGE_FTQ_RESET, 0);
 
@@ -1977,7 +2019,7 @@ bge_blockinit(struct bge_softc *sc)
 		return ENXIO;
 	}
 
-	/* Initialize the standard RX ring control block */
+	/* Step 41: Initialize the standard RX ring control block */
 	rcb = &sc->bge_rdata->bge_info.bge_std_rx_rcb;
 	BGE_HOSTADDR(rcb->bge_hostaddr, BGE_RING_DMA_ADDR(sc, bge_rx_std_ring));
 	if (BGE_IS_5705_PLUS(sc))
@@ -1992,7 +2034,7 @@ bge_blockinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_RX_STD_RCB_NICADDR, rcb->bge_nicaddr);
 
 	/*
-	 * Initialize the jumbo RX ring control block
+	 * Step 42: Initialize the jumbo RX ring control block
 	 * We set the 'ring disabled' bit in the flags
 	 * field until we're actually ready to start
 	 * using this ring (i.e. once we set the MTU
@@ -2565,7 +2607,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_PCIEXPRESS,
-	        &sc->bge_expcap, NULL) != 0) {
+	        &sc->bge_pciecap, NULL) != 0) {
 		/* PCIe */
 		sc->bge_flags |= BGE_PCIE;
 		bge_set_max_readrq(sc);
@@ -2573,6 +2615,10 @@ bge_attach(device_t parent, device_t self, void *aux)
 		BGE_PCISTATE_PCI_BUSMODE) == 0) {
 		/* PCI-X */
 		sc->bge_flags |= BGE_PCIX;
+		if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIX,
+			&sc->bge_pcixcap, NULL) == 0)
+			aprint_error_dev(sc->bge_dev,
+			    "unable to find PCIX capability\n");
 	}
 
 	/* chipid */
@@ -2713,7 +2759,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * SEEPROM check.
 	 * First check if firmware knows we do not have SEEPROM.
 	 */
-	 if (prop_dictionary_get_bool(device_properties(self),
+	if (prop_dictionary_get_bool(device_properties(self),
 	     "without-seeprom", &no_seeprom) && no_seeprom)
 	 	sc->bge_flags |= BGE_NO_EEPROM;
 
@@ -2732,7 +2778,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 		    & BGE_HWCFG_ASF) {
 			sc->bge_asf_mode |= ASF_ENABLE;
 			sc->bge_asf_mode |= ASF_STACKUP;
-			if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750) {
+			if (BGE_IS_5750_OR_BEYOND(sc)) {
 				sc->bge_asf_mode |= ASF_NEW_HANDSHAKE;
 			}
 		}
@@ -3018,8 +3064,11 @@ bge_release_resources(struct bge_softc *sc)
 static int
 bge_reset(struct bge_softc *sc)
 {
-	uint32_t cachesize, command, pcistate, new_pcistate;
-	pcireg_t devctl;
+	uint32_t cachesize, command, pcistate, marbmode;
+#if 0
+	uint32_t new_pcistate;
+#endif
+	pcireg_t devctl, reg;
 	int i, val;
 	void (*write_op)(struct bge_softc *, int, int);
 
@@ -3037,22 +3086,30 @@ bge_reset(struct bge_softc *sc)
 	command = pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CMD);
 	pcistate = pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_PCISTATE);
 
+	/* Step 5a: Enable memory arbiter. */
+	marbmode = 0;
+	if (BGE_IS_5714_FAMILY(sc))
+		marbmode = CSR_READ_4(sc, BGE_MARB_MODE);
+	CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | marbmode);
+
+	/* Step 5b-5d: */
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL,
 	    BGE_PCIMISCCTL_INDIRECT_ACCESS | BGE_PCIMISCCTL_MASK_PCI_INTR |
 	    BGE_HIF_SWAP_OPTIONS | BGE_PCIMISCCTL_PCISTATE_RW);
 
-	/* Disable fastboot on controllers that support it. */
+	/* XXX ???: Disable fastboot on controllers that support it. */
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752 ||
 	    BGE_IS_5755_PLUS(sc))
 		CSR_WRITE_4(sc, BGE_FASTBOOT_PC, 0);
 
 	/*
-	 * Write the magic number to SRAM at offset 0xB50.
+	 * Step 6: Write the magic number to SRAM at offset 0xB50.
 	 * When firmware finishes its initialization it will
 	 * write ~BGE_MAGIC_NUMBER to the same location.
 	 */
 	bge_writemem_ind(sc, BGE_SOFTWARE_GENCOMM, BGE_MAGIC_NUMBER);
 
+	/* Step 7: */
 	val = BGE_MISCCFG_RESET_CORE_CLOCKS | (65<<1);
 	/*
 	 * XXX: from FreeBSD/Linux; no documentation
@@ -3071,16 +3128,6 @@ bge_reset(struct bge_softc *sc)
 		}
 	}
 
-	/*
-	 * Set GPHY Power Down Override to leave GPHY
-	 * powered up in D0 uninitialized.
-	 */
-	if (BGE_IS_5705_PLUS(sc))
-		val |= BGE_MISCCFG_KEEP_GPHY_POWER;
-
-	/* Issue global reset */
-	write_op(sc, BGE_MISC_CFG, val);
-
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
 		i = CSR_READ_4(sc, BGE_VCPU_STATUS);
 		CSR_WRITE_4(sc, BGE_VCPU_STATUS,
@@ -3090,15 +3137,47 @@ bge_reset(struct bge_softc *sc)
 		    i & ~BGE_VCPU_EXT_CTRL_HALT_CPU);
 	}
 
-	DELAY(1000);
-
 	/*
-	 * XXX: from FreeBSD/Linux; no documentation
+	 * Set GPHY Power Down Override to leave GPHY
+	 * powered up in D0 uninitialized.
 	 */
+	if (BGE_IS_5705_PLUS(sc))
+		val |= BGE_MISCCFG_KEEP_GPHY_POWER;
+
+	/* XXX 5721, 5751 and 5752 */
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750)
+		val |= BGE_MISCCFG_GRC_RESET_DISABLE;
+
+	/* Issue global reset */
+	write_op(sc, BGE_MISC_CFG, val);
+
+	/* Step 8: wait for complete */
+	if (sc->bge_flags & BGE_PCIE)
+		delay(100*1000); /* too big */
+	else
+		delay(100);
+
+	/* From Linux: dummy read to flush PCI posted writes */
+	reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CMD);
+
+	/* Step 9-10: Reset some of the PCI state that got zapped by reset */
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL,
+	    BGE_PCIMISCCTL_INDIRECT_ACCESS | BGE_PCIMISCCTL_MASK_PCI_INTR |
+	    BGE_HIF_SWAP_OPTIONS | BGE_PCIMISCCTL_PCISTATE_RW
+		| BGE_PCIMISCCTL_CLOCKCTL_RW);
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CMD, command);
+	write_op(sc, BGE_MISC_CFG, (65 << 1));
+
+	/* Step 11: disable PCI-X Relaxed Ordering. */
+	if (sc->bge_flags & BGE_PCIX) {
+		reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, sc->bge_pcixcap
+		    + PCI_PCIX_CMD);
+		pci_conf_write(sc->sc_pc, sc->sc_pcitag, sc->bge_pcixcap
+		    + PCI_PCIX_CMD, reg & ~PCI_PCIX_CMD_RELAXED_ORDER);
+	}
+
 	if (sc->bge_flags & BGE_PCIE) {
 		if (sc->bge_chipid == BGE_CHIPID_BCM5750_A0) {
-			pcireg_t reg;
-
 			DELAY(500000);
 			/* XXX: Magic Numbers */
 			reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
@@ -3108,7 +3187,7 @@ bge_reset(struct bge_softc *sc)
 			    reg | (1 << 15));
 		}
 		devctl = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
-		    sc->bge_expcap + PCI_PCIE_DCSR);
+		    sc->bge_pciecap + PCI_PCIE_DCSR);
 		/* Clear enable no snoop and disable relaxed ordering. */
 		devctl &= ~(0x0010 | PCI_PCIE_DCSR_ENA_NO_SNOOP);
 		/* Set PCIE max payload size to 128. */
@@ -3117,56 +3196,41 @@ bge_reset(struct bge_softc *sc)
 		devctl |= PCI_PCIE_DCSR_URD | PCI_PCIE_DCSR_FED
 		    | PCI_PCIE_DCSR_NFED | PCI_PCIE_DCSR_CED;
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag,
-		    sc->bge_expcap + PCI_PCIE_DCSR, devctl);
+		    sc->bge_pciecap + PCI_PCIE_DCSR, devctl);
 	}
 
-	/* Reset some of the PCI state that got zapped by reset */
-	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL,
-	    BGE_PCIMISCCTL_INDIRECT_ACCESS | BGE_PCIMISCCTL_MASK_PCI_INTR |
-	    BGE_HIF_SWAP_OPTIONS | BGE_PCIMISCCTL_PCISTATE_RW);
+	/* Step 12: Enable memory arbiter. */
+	marbmode = 0;
+	if (BGE_IS_5714_FAMILY(sc))
+		marbmode = CSR_READ_4(sc, BGE_MARB_MODE);
+	CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | marbmode);
+
+	/* Step 17: Poll until the firmware iitializeation is complete */
+	bge_poll_fw(sc);
+
+	/* XXX 5721, 5751 and 5752 */
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750) {
+		/* Step 19: */
+		BGE_SETBIT(sc, BGE_TLP_CONTROL_REG, 1 << 29 | 1 << 25);
+		/* Step 20: */
+		BGE_SETBIT(sc, BGE_TLP_CONTROL_REG, BGE_TLP_DATA_FIFO_PROTECT);
+	}
+
+	/*
+	 * Step 18: wirte mac mode
+	 * XXX Write 0x0c for 5703S and 5704S
+	 */
+	CSR_WRITE_4(sc, BGE_MAC_MODE, 0);
+
+
+	/* Step 21: 5822 B0 errata */
+	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5704_BX)
+		BGE_SETBIT(sc, 0x66, 1 << 13 | 1 << 12 | 1 << 10);
+
+	/* Step 23: restore cache line size */
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CACHESZ, cachesize);
-	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CMD, command);
-	write_op(sc, BGE_MISC_CFG, (65 << 1));
 
-	/* Enable memory arbiter. */
-	{
-		uint32_t marbmode = 0;
-		if (BGE_IS_5714_FAMILY(sc)) {
-			marbmode = CSR_READ_4(sc, BGE_MARB_MODE);
-		}
-		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | marbmode);
-	}
-
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
-		for (i = 0; i < BGE_TIMEOUT; i++) {
-			val = CSR_READ_4(sc, BGE_VCPU_STATUS);
-			if (val & BGE_VCPU_STATUS_INIT_DONE)
-				break;
-			DELAY(100);
-		}
-		if (i == BGE_TIMEOUT) {
-			aprint_error_dev(sc->bge_dev, "reset timed out\n");
-			return 1;
-		}
-	} else {
-		/*
-		 * Poll the value location we just wrote until
-		 * we see the 1's complement of the magic number.
-		 * This indicates that the firmware initialization
-		 * is complete.
-		 */
-		for (i = 0; i < BGE_TIMEOUT; i++) {
-			val = bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM);
-			if (val == ~BGE_MAGIC_NUMBER)
-				break;
-			DELAY(10);
-		}
-
-		if (i >= BGE_TIMEOUT && (!(sc->bge_flags & BGE_NO_EEPROM)))
-			aprint_error_dev(sc->bge_dev,
-			    "firmware handshake timed out, val = %x\n", val);
-	}
-
+#if 0
 	/*
 	 * XXX Wait for the value of the PCISTATE register to
 	 * return to its original pre-reset state. This is a
@@ -3187,27 +3251,14 @@ bge_reset(struct bge_softc *sc)
 	    (pcistate & ~BGE_PCISTATE_RESERVED)) {
 		aprint_error_dev(sc->bge_dev, "pcistate failed to revert\n");
 	}
-
-#if 0
-	/* Enable memory arbiter. */
-	/* XXX why do this twice? */
-	{
-		uint32_t marbmode = 0;
-		if (BGE_IS_5714_FAMILY(sc)) {
-			marbmode = CSR_READ_4(sc, BGE_MARB_MODE);
-		}
-		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | marbmode);
-	}
 #endif
 
-	/* Fix up byte swapping */
+	/* Step 28: Fix up byte swapping */
 	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS);
 
 	/* Tell the ASF firmware we are up */
 	if (sc->bge_asf_mode & ASF_STACKUP)
 		BGE_SETBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
-
-	CSR_WRITE_4(sc, BGE_MAC_MODE, 0);
 
 	/*
 	 * The 5704 in TBI mode apparently needs some special
@@ -3562,7 +3613,7 @@ bge_asf_driver_up(struct bge_softc *sc)
 		if (sc->bge_asf_count)
 			sc->bge_asf_count --;
 		else {
-			sc->bge_asf_count = 5;
+			sc->bge_asf_count = 2;
 			bge_writemem_ind(sc, BGE_SOFTWARE_GENCOMM_FW,
 			    BGE_FW_DRV_ALIVE);
 			bge_writemem_ind(sc, BGE_SOFTWARE_GENNCOMM_FW_LEN, 4);
@@ -4538,12 +4589,10 @@ bge_stop_block(struct bge_softc *sc, bus_addr_t reg, uint32_t bit)
 
 	BGE_CLRBIT(sc, reg, bit);
 
-	for (i = 0; i < BGE_TIMEOUT; i++) {
+	for (i = 0; i < 1000; i++) {
 		if ((CSR_READ_4(sc, reg) & bit) == 0)
 			return;
 		delay(100);
-		if (sc->bge_flags & BGE_PCIE)
-		  DELAY(1000);
 	}
 
 	/*
