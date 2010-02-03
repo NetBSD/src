@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.15 2010/02/03 21:00:49 pooka Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.16 2010/02/03 21:32:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,6 +89,13 @@ mkioconf(void)
 		return (1);
 	}
 
+	emithdr(fp);
+	emitcfdrivers(fp);
+	emitexterns(fp);
+	emitloc(fp);
+	emitparents(fp);
+	emitcfdata(fp);
+
 	if (ioconfname == NULL) {
 		emitcfattachinit(fp);
 		emitroots(fp);
@@ -96,12 +103,6 @@ mkioconf(void)
 		if (!do_devsw)
 			emitname2blk(fp);
 	}
-	emithdr(fp);
-	emitcfdrivers(fp);
-	emitexterns(fp);
-	emitloc(fp);
-	emitparents(fp);
-	emitcfdata(fp);
 
 	fflush(fp);
 	if (ferror(fp)) {
