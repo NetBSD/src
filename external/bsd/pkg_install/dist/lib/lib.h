@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.1.1.11 2010/02/03 14:23:51 joerg Exp $ */
+/* $NetBSD: lib.h,v 1.2 2010/02/03 19:27:01 joerg Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -184,8 +184,8 @@ typedef enum bi_ent_t {
 	BI_IGNORE_RECOMMENDED,	/*  3 */
 	BI_USE_ABI_DEPENDS,	/*  4 */
 	BI_LICENSE,		/*  5 */
-	BI_ENUM_COUNT,		/*  6 */
-	BI_PKGTOOLS_VERSION	/*  7 */
+	BI_PKGTOOLS_VERSION,	/*  6 */
+	BI_ENUM_COUNT		/*  7 */
 }	bi_ent_t;
 
 /* Types */
