@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.36 2009/03/13 20:44:59 cube Exp $	*/
+/*	$NetBSD: main.c,v 1.37 2010/02/03 21:00:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -212,15 +212,17 @@ main(int argc, char **argv)
 		}
 	}
 
+	if (optind != 1) {
+		if (xflag)
+			errx(EXIT_FAILURE, "-x must be used alone");
+	}
+
 	argc -= optind;
 	argv += optind;
 	if (argc > 1) {
 		usage();
 	}
 
-	if (xflag && (builddir != NULL || srcdir != NULL || Pflag || pflag ||
-	    vflag || Lflag))
-		errx(EXIT_FAILURE, "-x must be used alone");
 	if (Lflag && (builddir != NULL || Pflag || pflag))
 		errx(EXIT_FAILURE, "-L can only be used with -s and -v");
 
@@ -347,13 +349,24 @@ main(int argc, char **argv)
 		firstfile(cname);
 	}
 
+	 /*
+	  * Log config file.  We don't know until yyparse() if we're
+	  * going to need config_file.h (i.e. if we're doing ioconf-only
+	  * or not).  Just start creating the file, and when we know
+	  * later, we'll just keep or discard our work here.
+	  */
+	logconfig_start();
+
 	/*
 	 * Parse config file (including machine definitions).
 	 */
-	logconfig_start();
 	if (yyparse())
 		stop();
-	logconfig_end();
+
+	if (ioconfname && cfg)
+		fclose(cfg);
+	else
+		logconfig_end();
 
 	if (removeit)
 		unlink(cname);
@@ -368,6 +381,16 @@ main(int argc, char **argv)
 	 */
 	if (fixdevis())
 		stop();
+
+	/*
+	 * If working on an ioconf-only config, process here and exit
+	 */
+	if (ioconfname) {
+		pack();
+		mkioconf();
+		emitlocs();
+		return 0;
+	}
 
 	/*
 	 * Deal with option dependencies.

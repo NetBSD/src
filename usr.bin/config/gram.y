@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.19 2009/03/13 18:24:41 cube Exp $	*/
+/*	$NetBSD: gram.y,v 1.20 2010/02/03 21:00:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@ static	int	adepth;
 #define	fx_or(e1, e2)	new0(NULL, NULL, e1, FX_OR, e2)
 
 static	void	cleanup(void);
-static	void	setmachine(const char *, const char *, struct nvlist *);
+static	void	setmachine(const char *, const char *, struct nvlist *, int);
 static	void	check_maxpart(void);
 
 static	void	app(struct nvlist *, struct nvlist *);
@@ -107,7 +107,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %token	DEVICE DEVCLASS DUMPS DEVICE_MAJOR
 %token	ENDFILE
 %token	XFILE FILE_SYSTEM FLAGS
-%token	IDENT
+%token	IDENT IOCONF
 %token	XMACHINE MAJOR MAKEOPTIONS MAXUSERS MAXPARTITIONS MINOR
 %token	NEEDS_COUNT NEEDS_FLAG NO
 %token	XOBJECT OBSOLETE ON OPTIONS
@@ -186,9 +186,10 @@ topthing:
 	'\n';
 
 machine_spec:
-	XMACHINE WORD '\n'		{ setmachine($2,NULL,NULL); } |
-	XMACHINE WORD WORD subarches_opt '\n'	{ setmachine($2,$3,$4); } |
-	error { stop("cannot proceed without machine specifier"); };
+	XMACHINE WORD '\n'		{ setmachine($2,NULL,NULL,0); } |
+	XMACHINE WORD WORD subarches_opt '\n'	{ setmachine($2,$3,$4,0); } |
+	IOCONF WORD '\n'		{ setmachine($2,NULL,NULL,1); } |
+	error { stop("cannot proceed without machine or ioconf specifier"); };
 
 subarches_opt:
 	subarches			|
@@ -618,10 +619,19 @@ cleanup(void)
 }
 
 static void
-setmachine(const char *mch, const char *mcharch, struct nvlist *mchsubarches)
+setmachine(const char *mch, const char *mcharch, struct nvlist *mchsubarches,
+	int isioconf)
 {
 	char buf[MAXPATHLEN];
 	struct nvlist *nv;
+
+	if (isioconf) {
+		fprintf(stderr, "warning: ioconf is an experimental feature\n");
+		if (include(_PATH_DEVNULL, ENDDEFS, 0, 0) != 0)
+			exit(1);
+		ioconfname = mch;
+		return;
+	}
 
 	machine = mch;
 	machinearch = mcharch;
@@ -643,8 +653,7 @@ setmachine(const char *mch, const char *mcharch, struct nvlist *mchsubarches)
 	 * Set up the file inclusion stack.  This empty include tells
 	 * the parser there are no more device definitions coming.
 	 */
-	strlcpy(buf, _PATH_DEVNULL, sizeof(buf));
-	if (include(buf, ENDDEFS, 0, 0) != 0)
+	if (include(_PATH_DEVNULL, ENDDEFS, 0, 0) != 0)
 		exit(1);
 
 	/* Include arch/${MACHINE}/conf/files.${MACHINE} */
@@ -684,7 +693,7 @@ static void
 check_maxpart(void)
 {
 
-	if (maxpartitions <= 0) {
+	if (maxpartitions <= 0 && ioconfname == NULL) {
 		stop("cannot proceed without maxpartitions specifier");
 	}
 }
