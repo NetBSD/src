@@ -1,4 +1,4 @@
-/*	$NetBSD: bell.c,v 1.7 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: bell.c,v 1.8 2010/02/03 15:34:40 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bell.c,v 1.7 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: bell.c,v 1.8 2010/02/03 15:34:40 roy Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -44,16 +44,16 @@ __RCSID("$NetBSD: bell.c,v 1.7 2008/04/28 20:23:01 martin Exp $");
 int
 beep(void)
 {
-	if (__tc_bl != NULL) {
+	if (bell != NULL) {
 #ifdef DEBUG
 		__CTRACE(__CTRACE_MISC, "beep: bl\n");
 #endif
-		tputs(__tc_bl, 0, __cputchar);
-	} else if (__tc_vb != NULL) {
+		tputs(bell, 0, __cputchar);
+	} else if (flash_screen != NULL) {
 #ifdef DEBUG
 		__CTRACE(__CTRACE_MISC, "beep: vb\n");
 #endif
-		tputs(__tc_vb, 0, __cputchar);
+		tputs(flash_screen, 0, __cputchar);
 	}
 	return (1);
 }
@@ -65,16 +65,16 @@ beep(void)
 int
 flash(void)
 {
-	if (__tc_vb != NULL) {
+	if (flash_screen != NULL) {
 #ifdef DEBUG
 		__CTRACE(__CTRACE_MISC, "flash: vb\n");
 #endif
-		tputs(__tc_vb, 0, __cputchar);
-	} else if (__tc_bl != NULL) {
+		tputs(flash_screen, 0, __cputchar);
+	} else if (bell != NULL) {
 #ifdef DEBUG
 		__CTRACE(__CTRACE_MISC, "flash: bl\n");
 #endif
-		tputs(__tc_bl, 0, __cputchar);
+		tputs(bell, 0, __cputchar);
 	}
 	return (1);
 }

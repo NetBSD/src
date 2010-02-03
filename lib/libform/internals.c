@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.32 2006/04/09 00:44:40 christos Exp $	*/
+/*	$NetBSD: internals.c,v 1.33 2010/02/03 15:34:43 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: internals.c,v 1.32 2006/04/09 00:44:40 christos Exp $");
+__RCSID("$NetBSD: internals.c,v 1.33 2010/02/03 15:34:43 roy Exp $");
 
 #include <limits.h>
 #include <ctype.h>
@@ -139,14 +139,14 @@ adjust_ypos(FIELD *field, _FORMI_FIELD_LINES *line)
 	_FORMI_FIELD_LINES *rs;
 	
 	ypos = 0;
-	rs = field->lines;
+	rs = field->alines;
 	while (rs != line) {
 		rs = rs->next;
 		ypos++;
 	}
 
 	field->cursor_ypos = ypos;
-	field->start_line = field->lines;
+	field->start_line = field->alines;
 	if (ypos > (field->rows - 1)) {
 		  /*
 		   * cur_line off the end of the field,
@@ -178,11 +178,11 @@ add_to_free(FIELD *field, _FORMI_FIELD_LINES *line)
 
 	if (line->prev == NULL) {
 		/* handle top of list */
-		field->lines = line->next;
-		field->lines->prev = NULL;
+		field->alines = line->next;
+		field->alines->prev = NULL;
 
 		if (field->cur_line == saved)
-			field->cur_line = field->lines;
+			field->cur_line = field->alines;
 		if (field->start_line == saved)
 			field->start_line = saved;
 	} else if (line->next == NULL) {
@@ -351,13 +351,13 @@ check_field_size(FIELD *field)
 			return TRUE;
 
 		if (field->rows == 1) {
-			return (field->lines->length < field->max);
+			return (field->alines->length < field->max);
 		} else {
 			return (field->row_count <= field->max);
 		}
 	} else {
 		if ((field->rows + field->nrows) == 1) {
-			return (field->lines->length <= field->cols);
+			return (field->alines->length <= field->cols);
 		} else {
 			return (field->row_count <= (field->rows
 						     + field->nrows));
@@ -672,7 +672,7 @@ _formi_wrap_field(FIELD *field, _FORMI_FIELD_LINES *loc)
 
 	  restore_and_exit:
 		if (saved_row->prev == NULL) {
-			field->lines = row_backup;
+			field->alines = row_backup;
 		} else {
 			saved_row->prev->next = row_backup;
 			row_backup->prev = saved_row->prev;
@@ -1839,7 +1839,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	if (((field->opts & O_BLANK) == O_BLANK) &&
 	    (field->buf0_status == FALSE) &&
 	    ((field->row_xpos + field->start_char) == 0)) {
-		row = field->lines;
+		row = field->alines;
 		if (row->next != NULL) {
 			  /* shift all but one line structs to free list */
 			temp = row->next;
@@ -2814,7 +2814,7 @@ _formi_manipulate_field(FORM *form, int c)
 					cur->row_xpos = row->length - 1;
 				}
 
-				cur->start_line = cur->lines;
+				cur->start_line = cur->alines;
 				rs = cur->start_line;
 				cur->cursor_ypos = 0;
 				while (rs != row) {
@@ -2897,9 +2897,9 @@ _formi_manipulate_field(FORM *form, int c)
 		break;
 		
 	case REQ_CLR_FIELD:
-		row = cur->lines->next;
-		cur->cur_line = cur->lines;
-		cur->start_line = cur->lines;
+		row = cur->alines->next;
+		cur->cur_line = cur->alines;
+		cur->start_line = cur->alines;
 		
 		while (row != NULL) {
 			rs = row->next;
@@ -2907,9 +2907,9 @@ _formi_manipulate_field(FORM *form, int c)
 			row = rs;
 		}
 
-		cur->lines->string[0] = '\0';
-		cur->lines->length = 0;
-		cur->lines->expanded = 0;
+		cur->alines->string[0] = '\0';
+		cur->alines->length = 0;
+		cur->alines->expanded = 0;
 		cur->row_count = 1;
 		cur->cursor_ypos = 0;
 		cur->row_xpos = 0;
@@ -3502,17 +3502,17 @@ tab_fit_window(FIELD *field, unsigned int pos, unsigned int window)
 	_formi_tab_t *ts;
 	
 	  /* first find the last tab */
-	ts = field->lines->tabs;
+	ts = field->alines->tabs;
 
 	  /*
 	   * unless there are no tabs - just return the window size,
 	   * if there is enough room, otherwise 0.
 	   */
 	if (ts == NULL) {
-		if (field->lines->length < window)
+		if (field->alines->length < window)
 			return 0;
 		else
-			return field->lines->length - window + 1;
+			return field->alines->length - window + 1;
 	}
 		
 	while ((ts->fwd != NULL) && (ts->fwd->in_use == TRUE))
@@ -3527,7 +3527,7 @@ tab_fit_window(FIELD *field, unsigned int pos, unsigned int window)
 	
 	scroll_amt = 0;
 	for (i = pos; i >= 0; i--) {
-		if (field->lines->string[i] == '\t') {
+		if (field->alines->string[i] == '\t') {
 			assert((ts != NULL) && (ts->in_use == TRUE));
 			if (ts->pos == i) {
 				if ((scroll_amt + ts->size) > window) {
@@ -3601,10 +3601,10 @@ _formi_sync_buffer(FIELD *field)
 	char *nstr, *tmp;
 	unsigned length;
 
-	if (field->lines == NULL)
+	if (field->alines == NULL)
 		return E_BAD_ARGUMENT;
 
-	if (field->lines->string == NULL)
+	if (field->alines->string == NULL)
 		return E_BAD_ARGUMENT;
 
 	  /*
@@ -3615,7 +3615,7 @@ _formi_sync_buffer(FIELD *field)
 		return E_SYSTEM_ERROR;
 	nstr[0] = '\0';
 	
-	line = field->lines;
+	line = field->alines;
 	length = 1; /* allow for terminating null */
 	
 	while (line != NULL) {

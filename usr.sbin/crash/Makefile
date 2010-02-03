@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2009/06/04 12:19:35 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2010/02/03 15:34:46 roy Exp $
 
 PROG=	crash
 MAN=	crash.8
 RUMPKERNEL=	yes	# XXX: Avoid -mcmodel=kernel
 
-LDADD+=	-lkvm -ledit -ltermcap
-DPADD+=	${LIBKVM} ${LIBEDIT} ${LIBTERMCAP}
+LDADD+=	-lkvm -ledit -lterminfo
+DPADD+=	${LIBKVM} ${LIBEDIT} ${LIBTERMINFO}
 
 # some ddb kernel components need limited modifications.  for now,
 # punt if not noted as implemented here.

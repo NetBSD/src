@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2009/12/31 15:58:26 christos Exp $
+#	$NetBSD: Makefile,v 1.41 2010/02/03 15:34:43 roy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -7,7 +7,7 @@ WIDECHAR ?= yes
 WARNS=	4
 LIB=	edit
 
-LIBDPLIBS+=     termcap ${.CURDIR}/../libterm
+LIBDPLIBS+=     terminfo ${.CURDIR}/../libterminfo
 
 OSRCS=	chared.c common.c el.c emacs.c fcns.c filecomplete.c help.c \
 	hist.c key.c map.c chartype.c \
@@ -116,7 +116,7 @@ tc1.o:	${LIBEDITDIR}/TEST/tc1.c
 	
 tc1:	libedit.a tc1.o 
 	${_MKTARGET_LINK}
-	${CC} ${LDFLAGS} ${.ALLSRC} -o ${.TARGET} libedit.a ${LDADD} -ltermcap
+	${CC} ${LDFLAGS} ${.ALLSRC} -o ${.TARGET} libedit.a ${LDADD} -ltermlib
 
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>

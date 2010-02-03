@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.pri.c,v 1.12 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.pri.c,v 1.13 2010/02/03 15:34:38 roy Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.pri.c,v 1.12 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.pri.c,v 1.13 2010/02/03 15:34:38 roy Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -796,7 +796,7 @@ cls(void)
 		more();
 	flags.toplin = 0;
 
-	clear_screen();
+	clearscreen();
 
 	flags.botlx = 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.41 2009/11/01 22:11:27 dsl Exp $	*/
+/*	$NetBSD: tty.c,v 1.42 2010/02/03 15:34:40 roy Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.41 2009/11/01 22:11:27 dsl Exp $");
+__RCSID("$NetBSD: tty.c,v 1.42 2010/02/03 15:34:40 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -565,13 +565,13 @@ __startwin(SCREEN *screen)
 	}
 	(void) setvbuf(screen->outfd, screen->stdbuf, _IOFBF, screen->len);
 
-	t_puts(screen->cursesi_genbuf, __tc_ti, 0, __cputchar_args,
-	       (void *) screen->outfd);
-	t_puts(screen->cursesi_genbuf, __tc_vs, 0, __cputchar_args,
-	       (void *) screen->outfd);
+	ti_puts(screen->term, t_enter_ca_mode(screen->term), 0,
+		__cputchar_args, (void *) screen->outfd);
+	ti_puts(screen->term, t_cursor_normal(screen->term), 0,
+	    __cputchar_args, (void *) screen->outfd);
 	if (screen->curscr->flags & __KEYPAD)
-		t_puts(screen->cursesi_genbuf, __tc_ks, 0, __cputchar_args,
-		       (void *) screen->outfd);
+		ti_puts(screen->term, t_keypad_xmit(screen->term), 0,
+		    __cputchar_args, (void *) screen->outfd);
 	screen->endwin = 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.main.c,v 1.14 2009/08/12 07:28:40 dholland Exp $	*/
+/*	$NetBSD: hack.main.c,v 1.15 2010/02/03 15:34:38 roy Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.main.c,v 1.14 2009/08/12 07:28:40 dholland Exp $");
+__RCSID("$NetBSD: hack.main.c,v 1.15 2010/02/03 15:34:38 roy Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -184,7 +184,7 @@ main(int argc, char *argv[])
 	cls();
 	u.uhp = 1;		/* prevent RIP on early quits */
 	u.ux = FAR;		/* prevent nscr() */
-	(void) signal(SIGHUP, hangup);
+	(void) signal(SIGHUP, hang_up);
 
 	/*
 	 * Find the creation date of this game,

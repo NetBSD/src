@@ -1,4 +1,4 @@
-/*	$NetBSD: set.c,v 1.12 2009/04/14 05:45:23 lukem Exp $	*/
+/*	$NetBSD: set.c,v 1.13 2010/02/03 15:34:46 roy Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.2 (Berkeley) 2/28/94";
 #endif
-__RCSID("$NetBSD: set.c,v 1.12 2009/04/14 05:45:23 lukem Exp $");
+__RCSID("$NetBSD: set.c,v 1.13 2010/02/03 15:34:46 roy Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
-#include <termcap.h>
+#include <term.h>
 #include <termios.h>
 #include <unistd.h>
 #include "extern.h"
@@ -155,28 +155,18 @@ reset_mode()
 void
 set_control_chars(int erasechar, int intrchar, int killchar)
 {
-	char *bp, *p, bs_char, buf[1024];
-
-	bp = buf;
-	p = tgetstr("kb", &bp);
-	if (p == NULL || p[1] != '\0')
-		p = tgetstr("bc", &bp);
-	if (p != NULL && p[1] == '\0')
-		bs_char = p[0];
-	else if (tgetflag("bs"))
-		bs_char = CTRL('h');
-	else
-		bs_char = 0;
-
-	if (erasechar == 0 && !tgetflag("os") && mode.c_cc[VERASE] != CERASE) {
-		if (tgetflag("bs") || bs_char != 0)
-			erasechar = -1;
+	
+	if (mode.c_cc[VERASE] == 0 || erasechar != 0) {
+		if (erasechar == 0) {
+			if (over_strike &&
+			    key_backspace != NULL &&
+			    key_backspace[1] == '\0')
+				mode.c_cc[VERASE] = key_backspace[1];
+			else
+				mode.c_cc[VERASE] = CERASE;
+		} else
+			mode.c_cc[VERASE] = erasechar;
 	}
-	if (erasechar < 0)
-		erasechar = (bs_char != 0) ? bs_char : CTRL('h');
-
-	if (mode.c_cc[VERASE] == 0 || erasechar != 0)
-		mode.c_cc[VERASE] = erasechar ? erasechar : CERASE;
 
 	if (mode.c_cc[VINTR] == 0 || intrchar != 0)
 		 mode.c_cc[VINTR] = intrchar ? intrchar : CINTR;
@@ -194,27 +184,6 @@ set_control_chars(int erasechar, int intrchar, int killchar)
 void
 set_conversions(int usingupper)
 {
-	if (tgetflag("UC") || usingupper) {
-#ifdef IUCLC
-		mode.c_iflag |= IUCLC;
-		mode.c_oflag |= OLCUC;
-#endif
-	} else if (tgetflag("LC")) {
-#ifdef IUCLC
-		mode.c_iflag &= ~IUCLC;
-		mode.c_oflag &= ~OLCUC;
-#endif
-	}
-	mode.c_iflag &= ~(PARMRK | INPCK);
-	mode.c_lflag |= ICANON;
-	if (tgetflag("EP")) {
-		mode.c_cflag |= PARENB;
-		mode.c_cflag &= ~PARODD;
-	}
-	if (tgetflag("OP")) {
-		mode.c_cflag |= PARENB;
-		mode.c_cflag |= PARODD;
-	}
 
 #ifdef ONLCR
 	mode.c_oflag |= ONLCR;
@@ -222,15 +191,13 @@ set_conversions(int usingupper)
 	mode.c_iflag |= ICRNL;
 	mode.c_lflag |= ECHO;
 	mode.c_oflag |= OXTABS;
-	if (tgetflag("NL")) {			/* Newline, not linefeed. */
+	if (newline != NULL && newline[0] == '\n' && !newline[1]) {			/* Newline, not linefeed. */
 #ifdef ONLCR
 		mode.c_oflag &= ~ONLCR;
 #endif
 		mode.c_iflag &= ~ICRNL;
 	}
-	if (tgetflag("HD"))			/* Half duplex. */
-		mode.c_lflag &= ~ECHO;
-	if (tgetflag("pt"))			/* Print tabs. */
+	if (tab)	/* Print tabs. */
 		mode.c_oflag &= ~OXTABS;
 	mode.c_lflag |= (ECHOE | ECHOK);
 }
@@ -239,12 +206,8 @@ set_conversions(int usingupper)
 void
 set_init()
 {
-	char *bp, buf[1024];
+	const char *bp;
 	int settle;
-
-	bp = buf;
-	if (tgetstr("pc", &bp) != 0)		/* Get/set pad character. */
-		PC = buf[0];
 
 #ifdef TAB3
 	if (oldmode.c_oflag & (TAB3 | ONLCR | OCRNL | ONLRET)) {
@@ -255,14 +218,16 @@ set_init()
 	settle = set_tabs();
 
 	if (isreset) {
-		bp = buf;
-		if (tgetstr("rs", &bp) != 0 || tgetstr("is", &bp) != 0) {
-			tputs(buf, 0, outc);
+		if (reset_1string) {
+			tputs(reset_1string, 0, outc);
 			settle = 1;
 		}
-		bp = buf;
-		if (tgetstr("rf", &bp) != 0 || tgetstr("if", &bp) != 0) {
-			tset_cat(buf);
+		if (reset_2string) {
+			tputs(reset_2string, 0, outc);
+			settle = 1;
+		}
+		if ((bp = reset_file) || (bp = init_file)) {
+			tputs(bp, 0, outc);
 			settle = 1;
 		}
 	}
@@ -284,32 +249,21 @@ int
 set_tabs()
 {
 	int c;
-	char *capsp, *clear_tabs;
-	char *set_column, *set_tab;
-	const char *tg_out;
-	char caps[1024];
-
-	capsp = caps;
-	set_tab = tgetstr("st", &capsp);
-
-	if (set_tab && (clear_tabs = tgetstr("ct", &capsp))) {
-		(void)putc('\r', stderr);	/* Force to left margin. */
-		tputs(clear_tabs, 0, outc);
-	}
-
-	set_column = tgetstr("ch", &capsp);
+	char *out;
 
 	if (set_tab) {
-		for (c = 8; c < columns; c += 8) {
-			/*
-			 * Get to the right column.  "OOPS" is returned by
-			 * tgoto() if it can't do the job.  (*snarl*)
-			 */
-			tg_out = "OOPS";
-			if (set_column)
-				tg_out = tgoto(set_column, 0, c);
-			if (*tg_out != 'O')
-				tputs(tg_out, 1, outc);
+		if (clear_all_tabs) {
+			(void)putc('\r', stderr);   /* Force to left margin. */
+			tputs(clear_all_tabs, 0, outc);
+		}
+		
+		for (c = 8; c < ncolumns; c += 8) {
+			if (column_address)
+				out = vtparm(column_address, c);
+			else
+				out = NULL;
+			if (out)
+				tputs(out, 1, outc);
 			else
 				(void)fprintf(stderr, "%s", "        ");
 			/* Set the tab. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ul.c,v 1.14 2009/04/14 05:46:25 lukem Exp $	*/
+/*	$NetBSD: ul.c,v 1.15 2010/02/03 15:34:46 roy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,13 +39,13 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)ul.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ul.c,v 1.14 2009/04/14 05:46:25 lukem Exp $");
+__RCSID("$NetBSD: ul.c,v 1.15 2010/02/03 15:34:46 roy Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termcap.h>
+#include <term.h>
 #include <unistd.h>
 
 #define	IESC	'\033'
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: ul.c,v 1.14 2009/04/14 05:46:25 lukem Exp $");
 #define	BOLD	020	/* Bold */
 
 struct tinfo *info;
-int	must_use_uc, must_overstrike;
+int	must_overstrike;
 const char *CURS_UP, *CURS_RIGHT, *CURS_LEFT,
 	*ENTER_STANDOUT, *EXIT_STANDOUT, *ENTER_UNDERLINE, *EXIT_UNDERLINE,
 	*ENTER_DIM, *ENTER_BOLD, *ENTER_REVERSE, *UNDER_CHAR, *EXIT_ATTRIBUTES;
@@ -127,29 +127,10 @@ main(argc, argv)
 			exit(1);
 		}
 
-	switch(t_getent(&info, termtype)) {
-
-	case 1:
-		break;
-
-	default:
-		fprintf(stderr,"trouble reading termcap");
-		/* fall through to ... */
-
-	case 0:
-		/* No such terminal type - assume dumb */
-		if (t_setinfo(&info, "dumb:os:col#80:cr=^M:sf=^J:am:") < 0) {
-			fprintf(stderr, "t_setinfo failed, cannot continue\n");
-			exit(1);
-		}
-		
-		break;
-	}
-	initcap();
-	if (    (t_getflag(info, "os") && ENTER_BOLD==NULL ) ||
-		(t_getflag(info, "ul") && ENTER_UNDERLINE==NULL
-		 && UNDER_CHAR==NULL))
-			must_overstrike = 1;
+	setupterm(termtype, 0, NULL);
+	if ((over_strike && enter_bold_mode == NULL) ||
+	    (transparent_underline && enter_underline_mode == NULL &&
+	     underline_char == NULL))
 	initbuf();
 	if (optind == argc)
 		filter(stdin);
@@ -296,7 +277,7 @@ flushln()
 		}
 		if (obuf[i].c_char == '\0') {
 			if (upln) {
-				PRINT(CURS_RIGHT);
+				PRINT(cursor_right);
 			}
 			else {
 				outc(' ');
@@ -411,59 +392,9 @@ reverse()
 {
 	upln++;
 	fwd();
-	PRINT(CURS_UP);
-	PRINT(CURS_UP);
+	PRINT(cursor_up);
+	PRINT(cursor_up);
 	upln++;
-}
-
-void
-initcap()
-{
-	/* This nonsense attempts to work with both old and new termcap */
-	CURS_UP =		t_agetstr(info, "up");
-	CURS_RIGHT =		t_agetstr(info, "ri");
-	if (CURS_RIGHT == NULL)
-		CURS_RIGHT =	t_agetstr(info, "nd");
-	CURS_LEFT =		t_agetstr(info, "le");
-	if (CURS_LEFT == NULL)
-		CURS_LEFT =	t_agetstr(info, "bc");
-	if (CURS_LEFT == NULL && t_getflag(info, "bs"))
-		CURS_LEFT =	"\b";
-
-	ENTER_STANDOUT =	t_agetstr(info, "so");
-	EXIT_STANDOUT =		t_agetstr(info, "se");
-	ENTER_UNDERLINE =	t_agetstr(info, "us");
-	EXIT_UNDERLINE =	t_agetstr(info, "ue");
-	ENTER_DIM =		t_agetstr(info, "mh");
-	ENTER_BOLD =		t_agetstr(info, "md");
-	ENTER_REVERSE =		t_agetstr(info, "mr");
-	EXIT_ATTRIBUTES =	t_agetstr(info, "me");
-
-	if (!ENTER_BOLD && ENTER_REVERSE)
-		ENTER_BOLD = ENTER_REVERSE;
-	if (!ENTER_BOLD && ENTER_STANDOUT)
-		ENTER_BOLD = ENTER_STANDOUT;
-	if (!ENTER_UNDERLINE && ENTER_STANDOUT) {
-		ENTER_UNDERLINE = ENTER_STANDOUT;
-		EXIT_UNDERLINE = EXIT_STANDOUT;
-	}
-	if (!ENTER_DIM && ENTER_STANDOUT)
-		ENTER_DIM = ENTER_STANDOUT;
-	if (!ENTER_REVERSE && ENTER_STANDOUT)
-		ENTER_REVERSE = ENTER_STANDOUT;
-	if (!EXIT_ATTRIBUTES && EXIT_STANDOUT)
-		EXIT_ATTRIBUTES = EXIT_STANDOUT;
-	
-	/*
-	 * Note that we use REVERSE for the alternate character set,
-	 * not the as/ae capabilities.  This is because we are modelling
-	 * the model 37 teletype (since that's what nroff outputs) and
-	 * the typical as/ae is more of a graphics set, not the greek
-	 * letters the 37 has.
-	 */
-
-	UNDER_CHAR =		t_agetstr(info, "uc");
-	must_use_uc = (UNDER_CHAR && !ENTER_UNDERLINE);
 }
 
 int
@@ -480,9 +411,12 @@ outc(c)
 	int c;
 {
 	putchar(c);
-	if (must_use_uc && (curmode&UNDERL)) {
-		PRINT(CURS_LEFT);
-		PRINT(UNDER_CHAR);
+	if (underline_char && !enter_underline_mode && (curmode & UNDERL)) {
+		if (cursor_left)
+			PRINT(cursor_left);
+		else
+			putchar('\b');
+		PRINT(underline_char);
 	}
 }
 
@@ -499,40 +433,58 @@ setulmode(newmode)
 			case NORMAL:
 				break;
 			case UNDERL:
-				PRINT(EXIT_UNDERLINE);
+				if (enter_underline_mode)
+					PRINT(exit_underline_mode);
+				else
+					PRINT(exit_standout_mode);
 				break;
 			default:
 				/* This includes standout */
-				PRINT(EXIT_ATTRIBUTES);
+				if (exit_attribute_mode)
+					PRINT(exit_attribute_mode);
+				else
+					PRINT(exit_standout_mode);
 				break;
 			}
 			break;
 		case ALTSET:
-			PRINT(ENTER_REVERSE);
+			if (enter_reverse_mode)
+				PRINT(enter_reverse_mode);
+			else
+				PRINT(enter_standout_mode);
 			break;
 		case SUPERSC:
 			/*
 			 * This only works on a few terminals.
 			 * It should be fixed.
 			 */
-			PRINT(ENTER_UNDERLINE);
-			PRINT(ENTER_DIM);
+			PRINT(enter_underline_mode);
+			PRINT(enter_dim_mode);
 			break;
 		case SUBSC:
-			PRINT(ENTER_DIM);
+			if (enter_dim_mode)
+				PRINT(enter_dim_mode);
+			else
+				PRINT(enter_standout_mode);
 			break;
 		case UNDERL:
-			PRINT(ENTER_UNDERLINE);
+			if (enter_underline_mode)
+				PRINT(enter_underline_mode);
+			else
+				PRINT(enter_standout_mode);
 			break;
 		case BOLD:
-			PRINT(ENTER_BOLD);
+			if (enter_bold_mode)
+				PRINT(enter_bold_mode);
+			else
+				PRINT(enter_reverse_mode);
 			break;
 		default:
 			/*
 			 * We should have some provision here for multiple modes
 			 * on at once.  This will have to come later.
 			 */
-			PRINT(ENTER_STANDOUT);
+			PRINT(enter_standout_mode);
 			break;
 		}
 	}

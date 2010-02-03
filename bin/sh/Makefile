@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.89 2009/12/14 05:13:38 christos Exp $
+#	$NetBSD: Makefile,v 1.90 2010/02/03 15:34:37 roy Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -15,8 +15,8 @@ SRCS=	${SHSRCS} ${GENSRCS}
 
 DPSRCS+=${GENHDRS}
 
-LDADD+=	-ll -ledit -ltermcap
-DPADD+=	${LIBL} ${LIBEDIT} ${LIBTERMCAP}
+LDADD+=	-ll -ledit
+DPADD+=	${LIBL} ${LIBEDIT}
 
 LFLAGS=	-8	# 8-bit lex scanner for arithmetic
 

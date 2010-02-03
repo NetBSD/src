@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.12 2009/08/12 07:28:40 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.13 2010/02/03 15:34:38 roy Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ void done1(int);
 void done_in_by(struct monst *);
 void done(const char *);
 void clearlocks(void);
-void hangup(int) __attribute__((__noreturn__));
+void hang_up(int) __attribute__((__noreturn__));
 char *eos(char *);
 void charcat(char *, int);
 void prscore(int, char **);
@@ -400,16 +400,16 @@ void relobj(struct monst *, int);
 
 /* hack.termcap.c */
 void startup(void);
-void start_screen(void);
-void end_screen(void);
+void startscreen(void);
+void endscreen(void);
 void curs(int, int);
 void cl_end(void);
-void clear_screen(void);
+void clearscreen(void);
 void home(void);
 void standoutbeg(void);
 void standoutend(void);
 void backsp(void);
-void bell(void);
+void sound_bell(void);
 void delay_output(void);
 void cl_eos(void);
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2007/05/28 12:06:21 tls Exp $
+# $NetBSD: Makefile,v 1.8 2010/02/03 15:34:43 roy Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -14,7 +14,7 @@ WARNS?=		1
 LIB=		ss
 
 LIBDPLIBS+=	edit ${.CURDIR}/../libedit \
-		termcap ${.CURDIR}/../libterm \
+		terminfo ${.CURDIR}/../libterminfo \
 		com_err	${.CURDIR}/../libcom_err
 
 SRCS=		sl.c ss.c

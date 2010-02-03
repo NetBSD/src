@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1185 2010/01/16 15:34:23 roy Exp $
+# $NetBSD: mi,v 1.1186 2010/02/03 15:34:38 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -196,6 +196,7 @@
 ./usr/share/man/cat1/ident.0			man-util-catman		.cat
 ./usr/share/man/cat1/indent.0			man-c-catman		.cat
 ./usr/share/man/cat1/info.0			man-texinfo-catman	.cat
+./usr/share/man/cat1/infocmp.0			man-util-catman		.cat
 ./usr/share/man/cat1/infokey.0			man-texinfo-catman	.cat
 ./usr/share/man/cat1/innetgr.0			man-nis-catman		.cat
 ./usr/share/man/cat1/install-info.0		man-texinfo-catman	.cat
@@ -492,6 +493,7 @@
 ./usr/share/man/cat1/texi2dvi.0			man-texinfo-catman	.cat
 ./usr/share/man/cat1/texindex.0			man-texinfo-catman	.cat
 ./usr/share/man/cat1/tftp.0			man-netutil-catman	.cat
+./usr/share/man/cat1/tic.0			man-util-catman		.cat
 ./usr/share/man/cat1/time.0			man-util-catman		.cat
 ./usr/share/man/cat1/tip.0			man-util-catman		.cat
 ./usr/share/man/cat1/tn3270.0			man-obsolete		obsolete
@@ -1870,7 +1872,8 @@
 ./usr/share/man/cat5/sysctl.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/syslog.conf.0		man-sysutil-catman	.cat
 ./usr/share/man/cat5/targets.0			man-iscsi-catman	iscsi,.cat
-./usr/share/man/cat5/termcap.0			man-sys-catman		.cat
+./usr/share/man/cat5/termcap.0			man-obsolete		obsolete
+./usr/share/man/cat5/terminfo.0			man-sys-catman		.cat
 ./usr/share/man/cat5/texinfo.0			man-texinfo-catman	.cat
 ./usr/share/man/cat5/transport.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/ttyaction.0		man-sys-catman		.cat
@@ -2897,6 +2900,7 @@
 ./usr/share/man/html1/ident.html		man-util-htmlman	html
 ./usr/share/man/html1/indent.html		man-c-htmlman		html
 ./usr/share/man/html1/info.html			man-texinfo-htmlman	html
+./usr/share/man/html1/infocmp.html		man-util-htmlman	html
 ./usr/share/man/html1/infokey.html		man-texinfo-htmlman	html
 ./usr/share/man/html1/innetgr.html		man-nis-htmlman		html
 ./usr/share/man/html1/install-info.html		man-texinfo-htmlman	html
@@ -3185,6 +3189,7 @@
 ./usr/share/man/html1/texi2dvi.html		man-texinfo-htmlman	html
 ./usr/share/man/html1/texindex.html		man-texinfo-htmlman	html
 ./usr/share/man/html1/tftp.html			man-netutil-htmlman	html
+./usr/share/man/html1/tic.html			man-util-htmlman	html
 ./usr/share/man/html1/time.html			man-util-htmlman	html
 ./usr/share/man/html1/tip.html			man-util-htmlman	html
 ./usr/share/man/html1/tn3270.html		man-obsolete		obsolete
@@ -4408,7 +4413,8 @@
 ./usr/share/man/html5/sysctl.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/syslog.conf.html		man-sysutil-htmlman	html
 ./usr/share/man/html5/targets.html		man-iscsi-htmlman	iscsi,html
-./usr/share/man/html5/termcap.html		man-sys-htmlman		html
+./usr/share/man/html5/termcap.html		man-obsolete		obsolete
+./usr/share/man/html5/terminfo.html		man-sys-htmlman		html
 ./usr/share/man/html5/texinfo.html		man-texinfo-htmlman	html
 ./usr/share/man/html5/transport.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/ttyaction.html		man-sys-htmlman		html
@@ -5242,6 +5248,7 @@
 ./usr/share/man/man1/ident.1			man-util-man		.man
 ./usr/share/man/man1/indent.1			man-c-man		.man
 ./usr/share/man/man1/info.1			man-texinfo-man		.man
+./usr/share/man/man1/infocmp.1			man-util-man		.man
 ./usr/share/man/man1/infokey.1			man-texinfo-man		.man
 ./usr/share/man/man1/innetgr.1			man-nis-man		.man
 ./usr/share/man/man1/install-info.1		man-texinfo-man		.man
@@ -5539,6 +5546,7 @@
 ./usr/share/man/man1/texindex.1			man-texinfo-man		.man
 ./usr/share/man/man1/tftp.1			man-netutil-man		.man
 ./usr/share/man/man1/time.1			man-util-man		.man
+./usr/share/man/man1/tic.1			man-util-man		.man
 ./usr/share/man/man1/tip.1			man-util-man		.man
 ./usr/share/man/man1/tn3270.1			man-obsolete		obsolete
 ./usr/share/man/man1/top.1			man-util-man		.man
@@ -6916,7 +6924,8 @@
 ./usr/share/man/man5/sysctl.conf.5		man-sys-man		.man
 ./usr/share/man/man5/syslog.conf.5		man-sysutil-man		.man
 ./usr/share/man/man5/targets.5			man-iscsi-man		iscsi,.man
-./usr/share/man/man5/termcap.5			man-sys-man		.man
+./usr/share/man/man5/termcap.5			man-obsolete		obsolete
+./usr/share/man/man5/terminfo.5			man-sys-man		.man
 ./usr/share/man/man5/texinfo.5			man-texinfo-man		.man
 ./usr/share/man/man5/transport.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/ttyaction.5		man-sys-man		.man

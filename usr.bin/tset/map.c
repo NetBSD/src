@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.11 2006/04/30 23:54:40 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.12 2010/02/03 15:34:46 roy Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: map.c,v 1.11 2006/04/30 23:54:40 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.12 2010/02/03 15:34:46 roy Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: map.c,v 1.11 2006/04/30 23:54:40 christos Exp $");
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <term.h>
 #include <termios.h>
 #include "extern.h"
 

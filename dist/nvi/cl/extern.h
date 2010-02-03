@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: extern.h,v 1.3 2010/02/03 15:34:37 roy Exp $ */
 
 /* Do not edit: automatically built by build/distrib. */
 #ifndef HAVE_CURSES_WADDNSTR
@@ -22,12 +22,8 @@ void *newterm __P((const char *, FILE *, FILE *));
 #ifndef HAVE_CURSES_SETUPTERM
 void setupterm __P((char *, int, int *));
 #endif
-#ifdef HAVE_CURSES_TIGETSTR
-char *tigetstr();
-#else
-char *tigetstr __P((const char *));
-#endif
 #ifndef HAVE_CURSES_TIGETSTR
+char *tigetstr __P((const char *));
 int tigetnum __P((const char *));
 #endif
 int cl_waddstr __P((SCR *, const CHAR_T *, size_t));

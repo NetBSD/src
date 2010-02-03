@@ -42,10 +42,10 @@
 #define HAVE_CURSES_NEWTERM 1
 
 /* Define if you have the curses(3) setupterm function. */
-/* #undef HAVE_CURSES_SETUPTERM */
+#define HAVE_CURSES_SETUPTERM 1
 
 /* Define if you have the curses(3) tigetstr/tigetnum functions. */
-/* #undef HAVE_CURSES_TIGETSTR */
+#define HAVE_CURSES_TIGETSTR 1
 
 /* Define if you have the DB __hash_open call in the C library. */
 /* #undef HAVE_DB_HASH_OPEN */

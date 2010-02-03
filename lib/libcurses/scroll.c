@@ -1,4 +1,4 @@
-/*	$NetBSD: scroll.c,v 1.21 2009/07/28 18:38:43 christos Exp $	*/
+/*	$NetBSD: scroll.c,v 1.22 2010/02/03 15:34:40 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)scroll.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: scroll.c,v 1.21 2009/07/28 18:38:43 christos Exp $");
+__RCSID("$NetBSD: scroll.c,v 1.22 2010/02/03 15:34:40 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -138,7 +138,7 @@ wsetscrreg(WINDOW *win, int top, int bottom)
 bool
 has_ic(void)
 {
-	if (__tc_ic !=NULL && __tc_dc != NULL)
+	if (insert_character != NULL && delete_character != NULL)
 		return (TRUE);
 	else
 		return (FALSE);
@@ -151,7 +151,7 @@ has_ic(void)
 bool
 has_il(void)
 {
-	if (__tc_al !=NULL && __tc_dl != NULL)
+	if (insert_line !=NULL && delete_line != NULL)
 		return (TRUE);
 	else
 		return (FALSE);

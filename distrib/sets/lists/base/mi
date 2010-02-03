@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.855 2010/01/18 16:57:39 ahoka Exp $
+# $NetBSD: mi,v 1.856 2010/02/03 15:34:37 roy Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -423,6 +423,7 @@
 ./usr/bin/ident					base-util-bin
 ./usr/bin/indent				base-c-bin
 ./usr/bin/info					base-texinfo-bin
+./usr/bin/infocmp				base-util-bin
 ./usr/bin/innetgr				base-nis-bin
 ./usr/bin/install				base-util-bin
 ./usr/bin/install-info				base-texinfo-bin
@@ -608,6 +609,7 @@
 ./usr/bin/tee					base-util-bin
 ./usr/bin/telnet				base-netutil-bin
 ./usr/bin/tftp					base-netutil-bin
+./usr/bin/tic					base-util-bin
 ./usr/bin/time					base-util-bin
 ./usr/bin/tip					base-util-bin
 ./usr/bin/tn3270				base-obsolete		obsolete
@@ -3555,8 +3557,10 @@
 ./usr/share/misc/map3270			base-obsolete		obsolete
 ./usr/share/misc/more.help			base-obsolete		obsolete
 ./usr/share/misc/nslookup.help			base-obsolete		obsolete
-./usr/share/misc/termcap			base-termcap-share	share
-./usr/share/misc/termcap.db			base-termcap-share	share
+./usr/share/misc/termcap			base-obsolete		obsolete
+./usr/share/misc/termcap.db			base-obsolete		obsolete
+./usr/share/misc/terminfo			base-terminfo-share	share
+./usr/share/misc/terminfo.db			base-terminfo-share	share
 ./usr/share/misc/units.lib			base-reference-share	share
 ./usr/share/misc/usb_hid_usages			base-reference-share	share
 ./usr/share/misc/vgrindefs.db			base-groff-share	share

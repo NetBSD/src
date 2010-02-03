@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.63 2010/01/26 15:08:52 wiz Exp $
+# $NetBSD: md.amd64,v 1.64 2010/02/03 15:34:37 roy Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -665,6 +665,10 @@
 ./usr/lib/i386/libtermcap.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libtermcap_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libtermcap_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libterminfo.a			comp-c-lib		compat
+./usr/lib/i386/libterminfo.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/libterminfo_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libterminfo_pic.a		comp-c-piclib		compat,pic
 ./usr/lib/i386/libtermlib.a			comp-c-lib		compat
 ./usr/lib/i386/libtermlib.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libtermlib_p.a			comp-c-proflib		compat,profile

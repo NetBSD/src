@@ -1,4 +1,4 @@
-/*   $NetBSD: keymap.h,v 1.2 2007/05/28 15:01:56 blymn Exp $ */
+/*   $NetBSD: keymap.h,v 1.3 2010/02/03 15:34:40 roy Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: keymap.h,v 1.2 2007/05/28 15:01:56 blymn Exp $");
+__RCSID("$NetBSD: keymap.h,v 1.3 2010/02/03 15:34:40 roy Exp $");
 #endif                          /* not lint */
 
 /* keymap related stuff */
@@ -109,7 +109,7 @@ struct keymap {
 
 /* The termcap data we are interested in and the symbols they map to */
 struct tcdata {
-	const char	*name;	/* name of termcap entry */
+	int code;		/* code of the terminfo entry */
 	wchar_t	symbol;		/* the symbol associated with it */
 };
 

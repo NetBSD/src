@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.50 2010/01/13 07:52:38 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.51 2010/02/03 15:34:38 roy Exp $
 #
 # Makefile for sysinst
 
@@ -32,8 +32,8 @@ MENUS_MD?=	menus.md.${SYSINSTLANG}
 
 _MKSHTARGET_CREATE?=	${_MKSHMSG_CREATE} ${.CURDIR:T}/${.TARGET}
 
-DPADD=		${LIBCURSES} ${LIBTERMCAP} ${LIBUTIL}
-LDADD=		-lcurses -ltermcap -lutil
+DPADD=		${LIBCURSES} ${LIBTERMLIB} ${LIBUTIL}
+LDADD=		-lcurses -ltermlib -lutil
 
 UNIF_AWK=	${.CURDIR}/../../unif.awk
 MSG_XLAT_SH=	${.CURDIR}/../../msg_xlat.sh
