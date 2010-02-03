@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.52 2010/01/14 12:01:58 wiz Exp $
+# $NetBSD: md.sparc64,v 1.53 2010/02/03 15:34:37 roy Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -563,6 +563,10 @@
 ./usr/lib/sparc/libtermcap.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libtermcap_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libtermcap_pic.a		comp-c-piclib		compat,pic
+./usr/lib/sparc/libterminfo.a			comp-c-lib		compat
+./usr/lib/sparc/libterminfo.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libterminfo_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libterminfo_pic.a		comp-c-piclib		compat,pic
 ./usr/lib/sparc/libtermlib.a			comp-c-lib		compat
 ./usr/lib/sparc/libtermlib.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libtermlib_p.a			comp-c-proflib		compat,profile

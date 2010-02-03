@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 1999/09/04 17:07:22 perry Exp $
+#	$NetBSD: Makefile,v 1.2 2010/02/03 15:34:45 roy Exp $
 
 PROG=	qsubst
-DPADD+=	$(LIBTERMCAP}
-LDADD+=	-ltermcap
+DPADD+=	${LIBTERMINFO}
+LDADD+=	-lterminfo
 
 .include <bsd.prog.mk>

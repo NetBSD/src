@@ -1,4 +1,4 @@
-.\"	$NetBSD: ul.1,v 1.9 2003/08/07 11:16:52 agc Exp $
+.\"	$NetBSD: ul.1,v 1.10 2010/02/03 15:34:46 roy Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ul.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 6, 1993
+.Dd September 29, 2009
 .Dt UL 1
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@ which indicates underlining for the terminal in use, as specified
 by the environment variable
 .Ev TERM .
 The file
-.Pa /usr/share/misc/termcap
+.Pa /usr/share/misc/terminfo
 is read to determine the appropriate sequences for underlining.
 If the terminal is incapable of underlining, but is capable of
 a standout mode then that is used instead.

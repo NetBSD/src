@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2001/12/12 01:49:39 tv Exp $
+#	$NetBSD: Makefile,v 1.6 2010/02/03 15:34:44 roy Exp $
 
 PROG=	edahdi
 NOMAN=	# defined
-DPADD=	${LIBTERMCAP}
-LDADD=	-ltermcap
+DPADD=	${LIBTERMLIB}
+LDADD=	-ltermlib
 BINDIR=	/sbin
 
 CFLAGS+=-Wall

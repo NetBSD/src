@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/09/02 08:38:35 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2010/02/03 15:34:39 roy Exp $
 
 .include <bsd.own.mk>
 
@@ -12,8 +12,8 @@ COMMONDIR!=cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${IDIST}/info -I${COMMONDIR} \
 		-DDEFAULT_INFOPATH=\"/usr/pkg/info:/usr/X11R6/info:/usr/X11/info:/usr/local/info:/usr/share/info:/usr/info\"
-LDADD+=		-ltermcap
-DPADD+=		${LIBTERMCAP}
+LDADD+=		-lterminfo
+DPADD+=		${LIBTERMINFO}
 
 .include <bsd.prog.mk>
 

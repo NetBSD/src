@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2009/10/29 14:39:23 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2010/02/03 15:34:46 roy Exp $
 
 PROG	=	isdnd
 SRCS	=	rc_parse.y rc_scan.l main.c rc_config.c log.c curses.c	\
@@ -22,7 +22,7 @@ YHEADER=1
 .if !defined(I4B_WITHOUT_CURSES)
 CPPFLAGS+=	-DUSE_CURSES
 LDADD   +=      -lcurses
-LDADD   += 	-ltermlib
+LDADD   += 	-lterminfo
 .endif
 
 .if defined(I4B_EXTERNAL_MONITOR)

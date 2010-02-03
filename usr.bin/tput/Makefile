@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.9 2009/04/14 22:15:27 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2010/02/03 15:34:46 roy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	tput
-DPADD=	${LIBTERMCAP}
-LDADD=	-ltermcap
+DPADD=	${LIBTERMINFO}
+LDADD=	-lterminfo
 MLINKS=	tput.1 clear.1
 SCRIPTS=clear.sh
 

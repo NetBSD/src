@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.45 2009/07/22 16:57:15 roy Exp $	*/
+/*	$NetBSD: setterm.c,v 1.46 2010/02/03 15:34:40 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.45 2009/07/22 16:57:15 roy Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.46 2010/02/03 15:34:40 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,73 +48,8 @@ __RCSID("$NetBSD: setterm.c,v 1.45 2009/07/22 16:57:15 roy Exp $");
 #include "curses.h"
 #include "curses_private.h"
 
-static int zap(SCREEN *screen);
-
-static int does_esc_m(char *cap);
-static int does_ctrl_o(char *cap);
-
-static char	*sflags[] = {
-/*	      am        bs        cc        da        eo */
-	 &__tc_am, &__tc_bs, &__tc_cc, &__tc_da, &__tc_eo,
-/*	      hc        hl        in        mi        ms */
-	&__tc_hc, &__tc_hl, &__tc_in, &__tc_mi, &__tc_ms,
-/*	      nc        ns        os        ul        ut */
-	&__tc_nc, &__tc_ns, &__tc_os, &__tc_ul, &__tc_ut,
-/*	      xb        xn        xt        xs        xx */
-	&__tc_xb, &__tc_xn, &__tc_xt, &__tc_xs, &__tc_xx
-};
-
-static int	*svals[] = {
-/*	      pa        Co        NC */
-	&__tc_pa, &__tc_Co, &__tc_NC
-};
-
-static char	*_PC,
-	**sstrs[] = {
-	/*	      AB        ac        ae        AF        AL */
-		&__tc_AB, &__tc_ac, &__tc_ae, &__tc_AF, &__tc_AL,
-	/*	      al        as        bc        bl        bt */
-		&__tc_al, &__tc_as, &__tc_bc, &__tc_bl, &__tc_bt,
-	/*	      cd        ce        cl        cm        cr */
-		&__tc_cd, &__tc_ce, &__tc_cl, &__tc_cm, &__tc_cr,
-	/*	      cs        dc        DL        dl        dm */
-		&__tc_cs, &__tc_dc, &__tc_DL, &__tc_dl, &__tc_dm,
-	/*	      DO        do        eA        ed        ei */
-		&__tc_DO, &__tc_do, &__tc_eA, &__tc_ed, &__tc_ei,
-	/*	      ho        Ic        ic        im        Ip */
-		&__tc_ho, &__tc_Ic, &__tc_ic, &__tc_im, &__tc_Ip,
-	/*	      ip        k0        k1        k2        k3 */
-		&__tc_ip, &__tc_k0, &__tc_k1, &__tc_k2, &__tc_k3,
-	/*	      k4        k5        k6        k7        k8 */
-		&__tc_k4, &__tc_k5, &__tc_k6, &__tc_k7, &__tc_k8,
-	/*	      k9        kd        ke        kh        kl */
-		&__tc_k9, &__tc_kd, &__tc_ke, &__tc_kh, &__tc_kl,
-	/*	      kr        ks        ku        LE        ll */
-		&__tc_kr, &__tc_ks, &__tc_ku, &__tc_LE, &__tc_ll,
-	/*	      ma        mb        md        me        mh */
-		&__tc_ma, &__tc_mb, &__tc_md, &__tc_me, &__tc_mh,
-	/*	      mk        mm        mo        mp        mr */
-		&__tc_mk, &__tc_mm, &__tc_mo, &__tc_mp, &__tc_mr,
-	/*	      nd        nl        oc        op    pc     */
-		&__tc_nd, &__tc_nl, &__tc_oc, &__tc_op, &_PC,
-	/*	      rc        RI        sc        Sb        se */
-		&__tc_rc, &__tc_RI, &__tc_Sb, &__tc_sc, &__tc_se,
-	/*	      SF        Sf        sf        so        sp */
-		&__tc_SF, &__tc_Sf, &__tc_sf, &__tc_so, &__tc_sp,
-	/*	      SR        sr        ta        te        ti */
-		&__tc_SR, &__tc_sr, &__tc_ta, &__tc_te, &__tc_ti,
-	/*	      uc        ue        UP        up        us */
-		&__tc_uc, &__tc_ue, &__tc_UP, &__tc_up, &__tc_us,
-#ifndef HAVE_WCHAR
-	/*	      vb        ve        vi        vs           */
-		&__tc_vb, &__tc_ve, &__tc_vi, &__tc_vs
-#else
-	/*	      vb        ve        vi        vs        Xh */
-		&__tc_vb, &__tc_ve, &__tc_vi, &__tc_vs, &__tc_Xh,
-	/*	      Xl        Xo        Xr        Xt        Xv */
-		&__tc_Xl, &__tc_Xo, &__tc_Xr, &__tc_Xt, &__tc_Xv
-#endif /* HAVE_WCHAR */
-	};
+static int does_esc_m(const char *cap);
+static int does_ctrl_o(const char *cap);
 
 attr_t	 __mask_op, __mask_me, __mask_ue, __mask_se;
 
@@ -127,16 +62,21 @@ setterm(char *type)
 int
 _cursesi_setterm(char *type, SCREEN *screen)
 {
-	int unknown;
+	int unknown, r;
 	struct winsize win;
 	char *p;
-	char cm_buff[64];
 
 	if (type[0] == '\0')
 		type = "xx";
 	unknown = 0;
-	if (t_getent(&screen->cursesi_genbuf, type) != 1) {
+	(void)ti_setupterm(&screen->term, type, fileno(screen->outfd), &r);
+	if (screen->term == NULL) {
 		unknown++;
+		(void)ti_setupterm(&screen->term, "dumb",
+		    fileno(screen->outfd), &r);
+		/* No dumb term? We can't continue */
+		if (screen->term == NULL)
+			return ERR;
 	}
 #ifdef DEBUG
 	__CTRACE(__CTRACE_INIT, "setterm: tty = %s\n", type);
@@ -152,8 +92,8 @@ _cursesi_setterm(char *type, SCREEN *screen)
 			screen->LINES = -1;
 			screen->COLS = -1;
 		} else {
-			screen->LINES = t_getnum(screen->cursesi_genbuf, "li");
-			screen->COLS = t_getnum(screen->cursesi_genbuf, "co");
+			screen->LINES = t_lines(screen->term);
+			screen->COLS = t_columns(screen->term);
 		}
 		
 	}
@@ -165,7 +105,6 @@ _cursesi_setterm(char *type, SCREEN *screen)
 		screen->COLS = (int) strtol(p, NULL, 0);
 	if ((p = getenv("ESCDELAY")) != NULL)
 		ESCDELAY = (int) strtol(p, NULL, 0);
-
 
 	/*
 	 * Want cols > 4, otherwise things will fail.
@@ -180,54 +119,34 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	__CTRACE(__CTRACE_INIT, "setterm: LINES = %d, COLS = %d\n",
 	    LINES, COLS);
 #endif
-	if (!unknown) {
-		if (zap(screen) == ERR) /* Get terminal description.*/
-			return ERR;
-	}
-
-	/* If we can't tab, we can't backtab, either. */
-	if (!screen->GT)
-		screen->tc_bt = NULL;
-
-	/*
-	 * Test for cursor motion capability.
-	 *
-	 */
-	if (t_goto(NULL, screen->tc_cm, 0, 0, cm_buff, sizeof(cm_buff) - 1) < 0) {
-		screen->CA = 0;
-		screen->tc_cm = 0;
-	} else
-		screen->CA = 1;
 
 	/*
 	 * set the pad char, only take the first char of the pc capability
 	 * as this is all we can use.
 	 */
-	screen->padchar = screen->tc_pc ? screen->tc_pc[0] : 0; 
+	screen->padchar = t_pad_char(screen->term) ?
+	    t_pad_char(screen->term)[0] : 0; 
 
 	/* Get full name of terminal */
 	if (unknown) {
 		strcpy(screen->ttytype, "dumb");
-	} else {
-		char *tcptr;
-		size_t limit = 0;
-		if (t_getterm(screen->cursesi_genbuf, 0, &limit))
-			return ERR;
-		if ((tcptr = malloc(limit + 1)) == NULL)
-			return ERR;
-		if (t_getterm(screen->cursesi_genbuf, &tcptr, 0) < 0)
- 			return ERR;
-		__longname(tcptr, screen->ttytype);
-		free(tcptr);
+		return ERR;
 	}
+	strlcpy(screen->ttytype, screen->term->desc,
+		sizeof(screen->ttytype));
 
 	/* If no scrolling commands, no quick change. */
 	screen->noqch =
-  	    (screen->tc_cs == NULL || screen->tc_ho == NULL ||
-	    (screen->tc_SF == NULL && screen->tc_sf == NULL) ||
-	     (screen->tc_SR == NULL && screen->tc_sr == NULL)) &&
-	    ((screen->tc_AL == NULL && screen->tc_al == NULL) ||
-	     (screen->tc_DL == NULL && screen->tc_dl == NULL));
+  	    (t_change_scroll_region(screen->term) == NULL ||
+		t_cursor_home(screen->term) == NULL ||
+		(t_parm_index(screen->term) == NULL &&
+		    t_scroll_forward(screen->term) == NULL) ||
+		(t_parm_rindex(screen->term) == NULL &&
+		    t_scroll_reverse(screen->term) == NULL)) &&
+	    ((t_parm_insert_line(screen->term) == NULL &&
+		t_insert_line(screen->term) == NULL) ||
+		(t_parm_delete_line(screen->term) == NULL &&
+		    t_delete_line(screen->term) == NULL));
 
 	/*
 	 * Precalculate conflict info for color/attribute end commands.
@@ -237,19 +156,22 @@ _cursesi_setterm(char *type, SCREEN *screen)
 #else
 	screen->mask_op = WA_ATTRIBUTES & ~__COLOR;
 #endif /* HAVE_WCHAR */
-	if (screen->tc_op != NULL) {
-		if (does_esc_m(screen->tc_op))
+	if (t_orig_pair(screen->term) != NULL) {
+		if (does_esc_m(t_orig_pair(screen->term)))
 			screen->mask_op &=
 			    ~(__STANDOUT | __UNDERSCORE | __TERMATTR);
 		else {
-			if (screen->tc_se != NULL &&
-			    !strcmp(screen->tc_op, screen->tc_se))
+			if (t_exit_standout_mode(screen->term) != NULL &&
+			    !strcmp(t_orig_pair(screen->term),
+				t_exit_standout_mode(screen->term)))
 				screen->mask_op &= ~__STANDOUT;
-			if (screen->tc_ue != NULL &&
-			    !strcmp(screen->tc_op, screen->tc_ue))
+			if (t_exit_underline_mode(screen->term) != NULL &&
+			    !strcmp(t_orig_pair(screen->term),
+				t_exit_underline_mode(screen->term)))
 				screen->mask_op &= ~__UNDERSCORE;
-			if (screen->tc_me != NULL &&
-			    !strcmp(screen->tc_op, screen->tc_me))
+			if (t_exit_attribute_mode(screen->term) != NULL &&
+			    !strcmp(t_orig_pair(screen->term),
+				t_exit_attribute_mode(screen->term)))
 				screen->mask_op &= ~__TERMATTR;
 		}
 	}
@@ -257,7 +179,8 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	 * Assume that "me" turns off all attributes apart from ACS.
 	 * It might turn off ACS, so check for that.
 	 */
-	if (screen->tc_me != NULL && does_ctrl_o(screen->tc_me))
+	if (t_exit_attribute_mode(screen->term) != NULL &&
+	    does_ctrl_o(t_exit_attribute_mode(screen->term)))
 		screen->mask_me = 0;
 	else
 		screen->mask_me = __ALTCHARSET;
@@ -268,19 +191,22 @@ _cursesi_setterm(char *type, SCREEN *screen)
 #else
 	screen->mask_ue = WA_ATTRIBUTES & ~__UNDERSCORE;
 #endif /* HAVE_WCHAR */
-	if (screen->tc_ue != NULL) {
-		if (does_esc_m(screen->tc_ue))
+	if (t_exit_underline_mode(screen->term) != NULL) {
+		if (does_esc_m(t_exit_underline_mode(screen->term)))
 			screen->mask_ue &=
 			    ~(__STANDOUT | __TERMATTR | __COLOR);
 		else {
-			if (screen->tc_se != NULL &&
-			    !strcmp(screen->tc_ue, screen->tc_se))
+			if (t_exit_standout_mode(screen->term) != NULL &&
+			    !strcmp(t_exit_underline_mode(screen->term),
+				t_exit_standout_mode(screen->term)))
 				screen->mask_ue &= ~__STANDOUT;
-			if (screen->tc_me != NULL &&
-			    !strcmp(screen->tc_ue, screen->tc_me))
+			if (t_exit_attribute_mode(screen->term) != NULL &&
+			    !strcmp(t_exit_underline_mode(screen->term),
+				t_exit_attribute_mode(screen->term)))
 				screen->mask_ue &= ~__TERMATTR;
-			if (screen->tc_op != NULL &&
-			    !strcmp(screen->tc_ue, screen->tc_op))
+			if (t_orig_pair(screen->term) != NULL &&
+			    !strcmp(t_exit_underline_mode(screen->term),
+				t_orig_pair(screen->term)))
 				screen->mask_ue &= ~__COLOR;
 		}
 	}
@@ -289,19 +215,22 @@ _cursesi_setterm(char *type, SCREEN *screen)
 #else
 	screen->mask_se = WA_ATTRIBUTES & ~__STANDOUT;
 #endif /* HAVE_WCHAR */
-	if (screen->tc_se != NULL) {
-		if (does_esc_m(screen->tc_se))
+	if (t_exit_standout_mode(screen->term) != NULL) {
+		if (does_esc_m(t_exit_standout_mode(screen->term)))
 			screen->mask_se &=
 			    ~(__UNDERSCORE | __TERMATTR | __COLOR);
 		else {
-			if (screen->tc_ue != NULL &&
-			    !strcmp(screen->tc_se, screen->tc_ue))
+			if (t_exit_underline_mode(screen->term) != NULL &&
+			    !strcmp(t_exit_standout_mode(screen->term),
+				t_exit_underline_mode(screen->term)))
 				screen->mask_se &= ~__UNDERSCORE;
-			if (screen->tc_me != NULL &&
-			    !strcmp(screen->tc_se, screen->tc_me))
+			if (t_exit_attribute_mode(screen->term) != NULL &&
+			    !strcmp(t_exit_standout_mode(screen->term),
+				t_exit_attribute_mode(screen->term)))
 				screen->mask_se &= ~__TERMATTR;
-			if (screen->tc_op != NULL &&
-			    !strcmp(screen->tc_se, screen->tc_op))
+			if (t_orig_pair(screen->term) != NULL &&
+			    !strcmp(t_exit_standout_mode(screen->term),
+				t_orig_pair(screen->term)))
 				screen->mask_se &= ~__COLOR;
 		}
 	}
@@ -317,136 +246,18 @@ _cursesi_setterm(char *type, SCREEN *screen)
 void
 _cursesi_resetterm(SCREEN *screen)
 {
-	char ***sp, **scr_sp;
-	int  **vp, *scr_vp, i;
-	char **fp, *scr_fp;
 
 	LINES = screen->LINES;
 	COLS = screen->COLS;
-
-	  /* reset terminal capabilities */
-	fp = sflags;
-	scr_fp = &screen->tc_am;
-	for (i = 0; i < screen->flag_count; i++)
-		*(*fp++) = *scr_fp++;
-
-	vp = svals;
-	scr_vp = &screen->tc_pa;
-	for (i = 0; i < screen->int_count; i++)
-		*(*vp++) = *scr_vp++;
-
-	sp = sstrs;
-	scr_sp = &screen->tc_AB;
-	for (i = 0; i < screen->str_count; i++)
-		*(*sp++) = *scr_sp++;
-		
 	__GT = screen->GT;
-	__CA = screen->CA;
-
-	PC = screen->padchar;
 
 	__noqch = screen->noqch;
 	__mask_op = screen->mask_op;
 	__mask_me = screen->mask_me;
 	__mask_ue = screen->mask_ue;
 	__mask_se = screen->mask_se;
-}
 
-/*
- * zap --
- *	Gets all the terminal flags from the termcap database.
- */
-static int
-zap(SCREEN *screen)
-{
-	const char *nampstr, *namp;
-        char **sp;
-	int  *vp;
-	char *fp;
-	char tmp[3];
-#ifdef DEBUG
-	char	*cp;
-#endif
-	tmp[2] = '\0';
-
-	namp = "ambsccdaeohchlinmimsncnsosulutxbxnxtxsxx";
-	fp = &screen->tc_am;
-	screen->flag_count = 0;
-	do {
-		*tmp = *namp;
-		*(tmp + 1) = *(namp + 1);
-		*fp++ = t_getflag(screen->cursesi_genbuf, tmp);
-#ifdef DEBUG
-		__CTRACE(__CTRACE_INIT, "%2.2s = %s\n", namp,
-		    fp[-1] ? "TRUE" : "FALSE");
-#endif
-		namp += 2;
-		screen->flag_count++;
-	} while (*namp);
-	namp = "paCoNC";
-	vp = &screen->tc_pa;
-	screen->int_count = 0;
-	do {
-		*tmp = *namp;
-		*(tmp + 1) = *(namp + 1);
-		*vp++ = t_getnum(screen->cursesi_genbuf, tmp);
-#ifdef DEBUG
-		__CTRACE(__CTRACE_INIT, "%2.2s = %d\n", namp, vp[-1]);
-#endif
-		namp += 2;
-		screen->int_count++;
-	} while (*namp);
-
-#ifndef HAVE_WCHAR
-	nampstr = "ABacaeAFALalasbcblbtcdceclcmcrcsdcDLdldmDOdoeAedeihoIcicimIpipk0k1k2k3k4k5k6k7k8k9kdkekhklkrkskuLEllmambmdmemhmkmmmompmrndnlocoppcrcRISbscseSFSfsfsospSRsrtatetiucueUPupusvbvevivs";
-#else
-	nampstr = "ABacaeAFALalasbcblbtcdceclcmcrcsdcDLdldmDOdoeAedeihoIcicimIpipk0k1k2k3k4k5k6k7k8k9kdkekhklkrkskuLEllmambmdmemhmkmmmompmrndnlocoppcrcRISbscseSFSfsfsospSRsrtatetiucueUPupusvbvevivsXhXlXoXrXtXv";
-#endif /* HAVE_WCHAR */
-
-	namp = nampstr;
-	sp = &screen->tc_AB;
-	screen->str_count = 0;
-	do {
-		*tmp = *namp;
-		*(tmp + 1) = *(namp + 1);
-		*sp++ = t_agetstr(screen->cursesi_genbuf, tmp);
-#ifdef DEBUG
-		if (sp[-1] == NULL) 
-			__CTRACE(__CTRACE_INIT, "%2.2s = NULL\n", namp);
-		else {
-			__CTRACE(__CTRACE_INIT, "%2.2s = \"", namp);
-			for (cp = sp[-1]; *cp; cp++)
-				__CTRACE(__CTRACE_INIT, "%s", unctrl(*cp));
-			__CTRACE(__CTRACE_INIT, "\"\n");
-		}
-#endif
-		namp += 2;
-		screen->str_count++;
-	} while (*namp);
-	if (screen->tc_xs)
-		screen->tc_so = screen->tc_se = NULL;
-	else {
-		if (t_getnum(screen->cursesi_genbuf, "sg") > 0)
-			screen->tc_so = NULL;
-		if (t_getnum(screen->cursesi_genbuf, "ug") > 0)
-			screen->tc_us = NULL;
-		if (!screen->tc_so && screen->tc_us) {
-			screen->tc_so = screen->tc_us;
-			screen->tc_se = screen->tc_ue;
-		}
-	}
-
-	return OK;
-}
-
-/*
- * getcap --
- *	Return a capability from termcap.
- */
-char	*
-getcap(char *name)
-{
-	return (t_agetstr(_cursesi_screen->cursesi_genbuf, name));
+	set_curterm(screen->term);
 }
 
 /*
@@ -457,13 +268,13 @@ getcap(char *name)
  * may contain multiple, ';' separated sequence parts.
  */
 static int
-does_esc_m(char *cap)
+does_esc_m(const char *cap)
 {
 #define WAITING 0
 #define PARSING 1
 #define NUMBER 2
 #define FOUND 4
-	char *capptr;
+	const char *capptr;
 	int seq;
 
 #ifdef DEBUG
@@ -530,9 +341,9 @@ does_esc_m(char *cap)
  * unsets acs (i.e. it contains the character '\017').
  */
 static int
-does_ctrl_o(char *cap)
+does_ctrl_o(const char *cap)
 {
-	char *capptr = cap;
+	const char *capptr = cap;
 
 #ifdef DEBUG
 	__CTRACE(__CTRACE_INIT, "does_ctrl_o: Looping on %s\n", capptr);

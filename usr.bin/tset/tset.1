@@ -1,4 +1,4 @@
-.\"	$NetBSD: tset.1,v 1.16 2009/03/10 01:53:30 joerg Exp $
+.\"	$NetBSD: tset.1,v 1.17 2010/02/03 15:34:46 roy Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)tset.1	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd Septmeber 29, 2009
 .Dt TSET 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd terminal initialization
 .Sh SYNOPSIS
 .Nm
-.Op Fl EIQrSs
+.Op Fl IQrs
 .Op Fl
 .Op Fl e Ar ch
 .Op Fl i Ar ch
@@ -47,7 +47,7 @@
 .Op Ar terminal
 .Pp
 .Nm reset
-.Op Fl EIQrSs
+.Op Fl IQrs
 .Op Fl
 .Op Fl e Ar ch
 .Op Fl i Ar ch
@@ -88,10 +88,10 @@ An empty response confirms the type, or, another type can be entered to
 specify a new type.
 Once the terminal type has been determined, the termcap entry for the terminal
 is retrieved.
-If no termcap entry is found for the type, the user is prompted for another
+If no terminfo entry is found for the type, the user is prompted for another
 terminal type.
 .Pp
-Once the termcap entry is retrieved, the window size, backspace, interrupt
+Once the terminfo entry is retrieved, the window size, backspace, interrupt
 and line kill characters (among many other things) are set and the terminal
 and tab initialization strings are sent to the standard error output.
 Finally, if the erase, interrupt and line kill characters have changed,
@@ -116,13 +116,6 @@ The options are as follows:
 .It Fl
 The terminal type is displayed to the standard output, and the terminal is
 not initialized in any way.
-.It Fl E
-Emit the extended termcap entry.
-By default the termcap entry is
-truncated to 1024 bytes, this flag specifies the untruncated termcap
-entry is to be output.
-Using this flag may cause problems with some
-shells.
 .It Fl e
 Set the erase character to
 .Ar ch .
@@ -141,14 +134,9 @@ See below for more information.
 Don't display any values for the erase, interrupt and line kill characters.
 .It Fl r
 Print the terminal type to the standard error output.
-.It Fl S
-Print the terminal type and the termcap entry to the standard output.
-See the section below on setting the environment for details.
 .It Fl s
-Print the sequence of shell commands to initialize the environment variables
+Print the sequence of shell commands to initialize the environment variable
 .Ev TERM
-and
-.Ev TERMCAP
 to the standard output.
 See the section below on setting the environment for details.
 .El
@@ -168,21 +156,9 @@ or
 It is often desirable to enter the terminal type and information about
 the terminal's capabilities into the shell's environment.
 This is done using the
-.Fl S
-and
 .Fl s
-options.
+option.
 .Pp
-When the
-.Fl S
-option is specified, the terminal type and the termcap entry are written
-to the standard output, separated by a space and without a terminating
-newline.
-This can be assigned to an array by
-.Xr csh 1
-and
-.Xr ksh 1
-users and then used like any other shell array.
 .Pp
 When the
 .Fl s
@@ -223,7 +199,6 @@ file have an equivalent effect:
 set noglob
 set term=(`tset -S options ...`)
 setenv TERM $term[1]
-setenv TERMCAP "$term[2]"
 unset term
 unset noglob
 .Ed
@@ -340,10 +315,10 @@ and
 .Ev TERM
 environment variables.
 .Sh FILES
-.Bl -tag -width /usr/share/misc/termcap -compact
+.Bl -tag -width /usr/share/misc/terminfo -compact
 .It Pa /etc/ttys
 system port name to terminal type mapping database
-.It Pa /usr/share/misc/termcap
+.It Pa /usr/share/misc/terminfo
 terminal capability database
 .El
 .Sh SEE ALSO
@@ -351,7 +326,7 @@ terminal capability database
 .Xr sh 1 ,
 .Xr stty 1 ,
 .Xr tty 4 ,
-.Xr termcap 5 ,
+.Xr terminfo 5 ,
 .Xr ttys 5 ,
 .Xr environ 7
 .Sh HISTORY
@@ -410,6 +385,18 @@ option and the
 argument in some historic implementations of
 .Nm
 has been removed.
+.Pp
+The
+.Fl E 
+and
+.Fl S
+options have been removed as they only make sense for termcap and
+.Nm
+now uses terminfo.
+As such, the
+.Ev TERMCAP
+entry has been removed from
+.Fl s .
 .Pp
 Finally, the
 .Nm

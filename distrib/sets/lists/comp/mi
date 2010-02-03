@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1381 2010/02/03 06:25:55 tls Exp $
+#	$NetBSD: mi,v 1.1382 2010/02/03 15:34:37 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2153,6 +2153,7 @@
 ./usr/include/tar.h				comp-c-include
 ./usr/include/tcpd.h				comp-c-include
 ./usr/include/termcap.h				comp-c-include
+./usr/include/term.h				comp-c-include
 ./usr/include/termios.h				comp-c-include
 ./usr/include/threadlib.h			comp-obsolete		obsolete
 ./usr/include/time.h				comp-c-include
@@ -2698,8 +2699,11 @@
 ./usr/lib/libtelnet_p.a				comp-obsolete		obsolete
 ./usr/lib/libtelnet_pic.a			comp-obsolete		obsolete
 ./usr/lib/libtermcap.a				comp-c-lib
-./usr/lib/libtermcap_g.a			-unknown-		debuglib
+./usr/lib/libtermcap_g.a			comp-obsolete		obsolete
 ./usr/lib/libtermcap_p.a			comp-c-proflib		profile
+./usr/lib/libterminfo.a				comp-c-lib
+./usr/lib/libterminfo_p.a			comp-c-proflib		profile
+./usr/lib/libterminfo_g.a			comp-c-proflib		profile
 ./usr/lib/libtermlib.a				comp-c-lib
 ./usr/lib/libtermlib_p.a			comp-c-proflib		profile
 ./usr/lib/libukfs.a				comp-c-lib
@@ -3712,7 +3716,8 @@
 ./usr/libdata/lint/llib-lssp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lstdc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ltelnet.ln		comp-obsolete		obsolete
-./usr/libdata/lint/llib-ltermcap.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-ltermcap.ln		comp-obsolete		obsolete
+./usr/libdata/lint/llib-lterminfo.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lukfs.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lusb.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lusbhid.ln		comp-c-lintlib		lint
@@ -5320,6 +5325,7 @@
 ./usr/share/man/cat3/dehumanize_number.0	comp-c-catman		.cat
 ./usr/share/man/cat3/delay_output.0		comp-c-catman		.cat
 ./usr/share/man/cat3/delch.0			comp-c-catman		.cat
+./usr/share/man/cat3/del_curterm.0		comp-c-catman		.cat
 ./usr/share/man/cat3/deleteln.0			comp-c-catman		.cat
 ./usr/share/man/cat3/delscreen.0		comp-c-catman		.cat
 ./usr/share/man/cat3/delwin.0			comp-c-catman		.cat
@@ -7448,6 +7454,7 @@
 ./usr/share/man/cat3/putchar.0			comp-c-catman		.cat
 ./usr/share/man/cat3/putchar_unlocked.0		comp-c-catman		.cat
 ./usr/share/man/cat3/putenv.0			comp-c-catman		.cat
+./usr/share/man/cat3/putp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/puts.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pututxline.0		comp-c-catman		.cat
 ./usr/share/man/cat3/putw.0			comp-c-catman		.cat
@@ -7679,6 +7686,7 @@
 ./usr/share/man/cat3/sem_unlink.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sem_wait.0			comp-c-catman		.cat
 ./usr/share/man/cat3/set_com_err_hook.0		comp-krb5-catman	kerberos,.cat
+./usr/share/man/cat3/set_curterm.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_current_field.0	comp-c-catman		.cat
 ./usr/share/man/cat3/set_field_back.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_field_buffer.0		comp-c-catman		.cat
@@ -7746,6 +7754,7 @@
 ./usr/share/man/cat3/setterm.0			comp-c-catman		.cat
 ./usr/share/man/cat3/setttyent.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setttyentpath.0		comp-c-catman		.cat
+./usr/share/man/cat3/setupterm.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setusercontext.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setusershell.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setutxent.0		comp-c-catman		.cat
@@ -7958,14 +7967,16 @@
 ./usr/share/man/cat3/syslog_r.0			comp-c-catman		.cat
 ./usr/share/man/cat3/syslog_ss.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/system.0			comp-c-catman		.cat
-./usr/share/man/cat3/t_freent.0			comp-c-catman		.cat
-./usr/share/man/cat3/t_getent.0			comp-c-catman		.cat
-./usr/share/man/cat3/t_getflag.0		comp-c-catman		.cat
-./usr/share/man/cat3/t_getnum.0			comp-c-catman		.cat
-./usr/share/man/cat3/t_getstr.0			comp-c-catman		.cat
-./usr/share/man/cat3/t_goto.0			comp-c-catman		.cat
-./usr/share/man/cat3/t_puts.0			comp-c-catman		.cat
-./usr/share/man/cat3/t_putws.0			comp-c-catman		.cat
+./usr/share/man/cat3/t_freent.0			comp-obsolete		obsolete
+./usr/share/man/cat3/t_getent.0			comp-obsolete		obsolete
+./usr/share/man/cat3/t_getflag.0		comp-obsolete		obsolete
+./usr/share/man/cat3/t_getnum.0			comp-obsolete		obsolete
+./usr/share/man/cat3/t_getstr.0			comp-obsolete		obsolete
+./usr/share/man/cat3/t_goto.0			comp-obsolete		obsolete
+./usr/share/man/cat3/t_parm.0			comp-c-catman		.cat
+./usr/share/man/cat3/t_vparm.0			comp-c-catman		.cat
+./usr/share/man/cat3/t_puts.0			comp-obsolete		obsolete
+./usr/share/man/cat3/t_putws.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/tailq_empty.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/tailq_entry.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/tailq_first.0		comp-obsolete		obsolete
@@ -7995,6 +8006,7 @@
 ./usr/share/man/cat3/telldir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tempnam.0			comp-c-catman		.cat
 ./usr/share/man/cat3/termcap.0			comp-c-catman		.cat
+./usr/share/man/cat3/terminfo.0			comp-c-catman		.cat
 ./usr/share/man/cat3/textdomain.0		comp-c-catman		.cat
 ./usr/share/man/cat3/tfind.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tgetent.0			comp-c-catman		.cat
@@ -8003,6 +8015,15 @@
 ./usr/share/man/cat3/tgetstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tgoto.0			comp-c-catman		.cat
 ./usr/share/man/cat3/threads.0			comp-obsolete		obsolete
+./usr/share/man/cat3/ti_getflag.0		comp-c-catman		.cat
+./usr/share/man/cat3/ti_getnum.0		comp-c-catman		.cat
+./usr/share/man/cat3/ti_getstr.0		comp-c-catman		.cat
+./usr/share/man/cat3/ti_putp.0			comp-c-catman		.cat
+./usr/share/man/cat3/ti_puts.0			comp-c-catman		.cat
+./usr/share/man/cat3/ti_setupterm.0		comp-c-catman		.cat
+./usr/share/man/cat3/tigetflag.0		comp-c-catman		.cat
+./usr/share/man/cat3/tigetnum.0			comp-c-catman		.cat
+./usr/share/man/cat3/tigetstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/time.0			comp-c-catman		.cat
 ./usr/share/man/cat3/time2posix.0		comp-c-catman		.cat
 ./usr/share/man/cat3/timegm.0			comp-c-catman		.cat
@@ -8032,6 +8053,7 @@
 ./usr/share/man/cat3/towctrans.0		comp-c-catman		.cat
 ./usr/share/man/cat3/towlower.0			comp-c-catman		.cat
 ./usr/share/man/cat3/towupper.0			comp-c-catman		.cat
+./usr/share/man/cat3/tparm.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tputs.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tree.0			comp-c-catman		.cat
 ./usr/share/man/cat3/trunc.0			comp-c-catman		.cat
@@ -11006,6 +11028,7 @@
 ./usr/share/man/html3/delay_output.html		comp-c-htmlman		html
 ./usr/share/man/html3/delch.html		comp-c-htmlman		html
 ./usr/share/man/html3/deleteln.html		comp-c-htmlman		html
+./usr/share/man/html3/del_curterm.html		comp-c-htmlman		html
 ./usr/share/man/html3/delscreen.html		comp-c-htmlman		html
 ./usr/share/man/html3/delwin.html		comp-c-htmlman		html
 ./usr/share/man/html3/derwin.html		comp-c-htmlman		html
@@ -13086,6 +13109,7 @@
 ./usr/share/man/html3/putchar.html		comp-c-htmlman		html
 ./usr/share/man/html3/putchar_unlocked.html	comp-c-htmlman		html
 ./usr/share/man/html3/putenv.html		comp-c-htmlman		html
+./usr/share/man/html3/putp.html			comp-c-htmlman		html
 ./usr/share/man/html3/puts.html			comp-c-htmlman		html
 ./usr/share/man/html3/pututxline.html		comp-c-htmlman		html
 ./usr/share/man/html3/putw.html			comp-c-htmlman		html
@@ -13313,6 +13337,7 @@
 ./usr/share/man/html3/sem_wait.html		comp-c-htmlman		html
 ./usr/share/man/html3/set_com_err_hook.html	comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/set_current_field.html	comp-c-htmlman		html
+./usr/share/man/html3/set_curterm.html		comp-c-htmlman		html
 ./usr/share/man/html3/set_field_back.html	comp-c-htmlman		html
 ./usr/share/man/html3/set_field_buffer.html	comp-c-htmlman		html
 ./usr/share/man/html3/set_field_fore.html	comp-c-htmlman		html
@@ -13375,6 +13400,7 @@
 ./usr/share/man/html3/setterm.html		comp-c-htmlman		html
 ./usr/share/man/html3/setttyent.html		comp-c-htmlman		html
 ./usr/share/man/html3/setttyentpath.html	comp-c-htmlman		html
+./usr/share/man/html3/setupterm.html		comp-c-htmlman		html
 ./usr/share/man/html3/setusercontext.html	comp-c-htmlman		html
 ./usr/share/man/html3/setusershell.html		comp-c-htmlman		html
 ./usr/share/man/html3/setutxent.html		comp-c-htmlman		html
@@ -13572,14 +13598,16 @@
 ./usr/share/man/html3/syslog.html		comp-c-htmlman		html
 ./usr/share/man/html3/syslog_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/system.html		comp-c-htmlman		html
-./usr/share/man/html3/t_freent.html		comp-c-htmlman		html
-./usr/share/man/html3/t_getent.html		comp-c-htmlman		html
-./usr/share/man/html3/t_getflag.html		comp-c-htmlman		html
-./usr/share/man/html3/t_getnum.html		comp-c-htmlman		html
-./usr/share/man/html3/t_getstr.html		comp-c-htmlman		html
-./usr/share/man/html3/t_goto.html		comp-c-htmlman		html
-./usr/share/man/html3/t_puts.html		comp-c-htmlman		html
-./usr/share/man/html3/t_putws.html		comp-c-htmlman		html
+./usr/share/man/html3/t_freent.html		comp-obsolete		obsolete
+./usr/share/man/html3/t_getent.html		comp-obsolete		obsolete
+./usr/share/man/html3/t_getflag.html		comp-obsolete		obsolete
+./usr/share/man/html3/t_getnum.html		comp-obsolete		obsolete
+./usr/share/man/html3/t_getstr.html		comp-obsolete		obsolete
+./usr/share/man/html3/t_goto.html		comp-obsolete		obsolete
+./usr/share/man/html3/t_parm.html		comp-c-htmlman		html
+./usr/share/man/html3/t_vparm.html		comp-c-htmlman		html
+./usr/share/man/html3/t_puts.html		comp-obsolete		obsolete
+./usr/share/man/html3/t_putws.html		comp-obsolete		obsolete
 ./usr/share/man/html3/tan.html			comp-c-htmlman		html
 ./usr/share/man/html3/tanf.html			comp-c-htmlman		html
 ./usr/share/man/html3/tanh.html			comp-c-htmlman		html
@@ -13597,6 +13625,7 @@
 ./usr/share/man/html3/telldir.html		comp-c-htmlman		html
 ./usr/share/man/html3/tempnam.html		comp-c-htmlman		html
 ./usr/share/man/html3/termcap.html		comp-c-htmlman		html
+./usr/share/man/html3/terminfo.html		comp-c-htmlman		html
 ./usr/share/man/html3/textdomain.html		comp-c-htmlman		html
 ./usr/share/man/html3/tfind.html		comp-c-htmlman		html
 ./usr/share/man/html3/tgetent.html		comp-c-htmlman		html
@@ -13604,6 +13633,15 @@
 ./usr/share/man/html3/tgetnum.html		comp-c-htmlman		html
 ./usr/share/man/html3/tgetstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/tgoto.html		comp-c-htmlman		html
+./usr/share/man/html3/ti_getflag.html		comp-c-htmlman		html
+./usr/share/man/html3/ti_getnum.html		comp-c-htmlman		html
+./usr/share/man/html3/ti_getstr.html		comp-c-htmlman		html
+./usr/share/man/html3/ti_putp.html		comp-c-htmlman		html
+./usr/share/man/html3/ti_puts.html		comp-c-htmlman		html
+./usr/share/man/html3/ti_setupterm.html		comp-c-htmlman		html
+./usr/share/man/html3/tigetflag.html		comp-c-htmlman		html
+./usr/share/man/html3/tigetnum.html		comp-c-htmlman		html
+./usr/share/man/html3/tigetstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/time.html			comp-c-htmlman		html
 ./usr/share/man/html3/time2posix.html		comp-c-htmlman		html
 ./usr/share/man/html3/timegm.html		comp-c-htmlman		html
@@ -13633,6 +13671,7 @@
 ./usr/share/man/html3/towctrans.html		comp-c-htmlman		html
 ./usr/share/man/html3/towlower.html		comp-c-htmlman		html
 ./usr/share/man/html3/towupper.html		comp-c-htmlman		html
+./usr/share/man/html3/tparm.html		comp-c-catman		html
 ./usr/share/man/html3/tputs.html		comp-c-htmlman		html
 ./usr/share/man/html3/tree.html			comp-c-htmlman		html
 ./usr/share/man/html3/trunc.html		comp-c-htmlman		html
@@ -16594,6 +16633,7 @@
 ./usr/share/man/man3/def_prog_mode.3		comp-c-man		.man
 ./usr/share/man/man3/def_shell_mode.3		comp-c-man		.man
 ./usr/share/man/man3/dehumanize_number.3	comp-c-man		.man
+./usr/share/man/man3/del_curterm.3		comp-c-man		.man
 ./usr/share/man/man3/delay_output.3		comp-c-man		.man
 ./usr/share/man/man3/delch.3			comp-c-man		.man
 ./usr/share/man/man3/deleteln.3			comp-c-man		.man
@@ -18724,6 +18764,7 @@
 ./usr/share/man/man3/putchar.3			comp-c-man		.man
 ./usr/share/man/man3/putchar_unlocked.3		comp-c-man		.man
 ./usr/share/man/man3/putenv.3			comp-c-man		.man
+./usr/share/man/man3/putp.3			comp-c-man		.man
 ./usr/share/man/man3/puts.3			comp-c-man		.man
 ./usr/share/man/man3/pututxline.3		comp-c-man		.man
 ./usr/share/man/man3/putw.3			comp-c-man		.man
@@ -18956,6 +18997,7 @@
 ./usr/share/man/man3/sem_wait.3			comp-c-man		.man
 ./usr/share/man/man3/set_com_err_hook.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/set_current_field.3	comp-c-man		.man
+./usr/share/man/man3/set_curterm.3		comp-c-man		.man
 ./usr/share/man/man3/set_field_back.3		comp-c-man		.man
 ./usr/share/man/man3/set_field_buffer.3		comp-c-man		.man
 ./usr/share/man/man3/set_field_fore.3		comp-c-man		.man
@@ -19018,6 +19060,7 @@
 ./usr/share/man/man3/setterm.3			comp-c-man		.man
 ./usr/share/man/man3/setttyent.3		comp-c-man		.man
 ./usr/share/man/man3/setttyentpath.3		comp-c-man		.man
+./usr/share/man/man3/setupterm.3		comp-c-man		.man
 ./usr/share/man/man3/setusercontext.3		comp-c-man		.man
 ./usr/share/man/man3/setusershell.3		comp-c-man		.man
 ./usr/share/man/man3/setutxent.3		comp-c-man		.man
@@ -19230,14 +19273,16 @@
 ./usr/share/man/man3/syslog_r.3			comp-c-man		.man
 ./usr/share/man/man3/syslog_ss.3		comp-obsolete		obsolete
 ./usr/share/man/man3/system.3			comp-c-man		.man
-./usr/share/man/man3/t_freent.3			comp-c-man		.man
-./usr/share/man/man3/t_getent.3			comp-c-man		.man
-./usr/share/man/man3/t_getflag.3		comp-c-man		.man
-./usr/share/man/man3/t_getnum.3			comp-c-man		.man
-./usr/share/man/man3/t_getstr.3			comp-c-man		.man
-./usr/share/man/man3/t_goto.3			comp-c-man		.man
-./usr/share/man/man3/t_puts.3			comp-c-man		.man
-./usr/share/man/man3/t_putws.3			comp-c-man		.man
+./usr/share/man/man3/t_freent.3			comp-obsolete		obsolete
+./usr/share/man/man3/t_getent.3			comp-obsolete		obsolete
+./usr/share/man/man3/t_getflag.3		comp-obsolete		obsolete
+./usr/share/man/man3/t_getnum.3			comp-obsolete		obsolete
+./usr/share/man/man3/t_getstr.3			comp-obsolete		obsolete
+./usr/share/man/man3/t_goto.3			comp-obsolete		obsolete
+./usr/share/man/man3/t_parm.3			comp-c-man		.man
+./usr/share/man/man3/t_vparm.3			comp-c-man		.man
+./usr/share/man/man3/t_puts.3			comp-obsolete		obsolete
+./usr/share/man/man3/t_putws.3			comp-obsolete		obsolete
 ./usr/share/man/man3/tailq_empty.3		comp-obsolete		obsolete
 ./usr/share/man/man3/tailq_entry.3		comp-obsolete		obsolete
 ./usr/share/man/man3/tailq_first.3		comp-obsolete		obsolete
@@ -19267,6 +19312,7 @@
 ./usr/share/man/man3/telldir.3			comp-c-man		.man
 ./usr/share/man/man3/tempnam.3			comp-c-man		.man
 ./usr/share/man/man3/termcap.3			comp-c-man		.man
+./usr/share/man/man3/terminfo.3			comp-c-man		.man
 ./usr/share/man/man3/textdomain.3		comp-c-man		.man
 ./usr/share/man/man3/tfind.3			comp-c-man		.man
 ./usr/share/man/man3/tgetent.3			comp-c-man		.man
@@ -19275,6 +19321,15 @@
 ./usr/share/man/man3/tgetstr.3			comp-c-man		.man
 ./usr/share/man/man3/tgoto.3			comp-c-man		.man
 ./usr/share/man/man3/threads.3			comp-obsolete		obsolete
+./usr/share/man/man3/ti_getflag.3		comp-c-man		.man
+./usr/share/man/man3/ti_getnum.3		comp-c-man		.man
+./usr/share/man/man3/ti_getstr.3		comp-c-man		.man
+./usr/share/man/man3/ti_putp.3			comp-c-man		.man
+./usr/share/man/man3/ti_puts.3			comp-c-man		.man
+./usr/share/man/man3/ti_setupterm.3		comp-c-man		.man
+./usr/share/man/man3/tigetflag.3		comp-c-man		.man
+./usr/share/man/man3/tigetnum.3			comp-c-man		.man
+./usr/share/man/man3/tigetstr.3			comp-c-man		.man
 ./usr/share/man/man3/time.3			comp-c-man		.man
 ./usr/share/man/man3/time2posix.3		comp-c-man		.man
 ./usr/share/man/man3/timegm.3			comp-c-man		.man
@@ -19304,6 +19359,7 @@
 ./usr/share/man/man3/towctrans.3		comp-c-man		.man
 ./usr/share/man/man3/towlower.3			comp-c-man		.man
 ./usr/share/man/man3/towupper.3			comp-c-man		.man
+./usr/share/man/man3/tparm.3			comp-c-man		.man
 ./usr/share/man/man3/tputs.3			comp-c-man		.man
 ./usr/share/man/man3/tree.3			comp-c-man		.man
 ./usr/share/man/man3/trunc.3			comp-c-man		.man

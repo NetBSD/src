@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2007/02/19 18:26:22 chs Exp $
+#	$NetBSD: Makefile,v 1.4 2010/02/03 15:34:39 roy Exp $
 
 .include "../Makefile.inc"
 
@@ -58,13 +58,13 @@ DPADD+=		${SIMOBJ}/libsim.a
 LDADD+= -L${LIBOPCODESDIR} -lopcodes \
 	-L${LIBBFDDIR} -lbfd \
 	${LIBEDIT} \
-	-ltermcap \
+	-lterminfo \
 	-L${LIBIBERTYDIR} -liberty
 
 DPADD+=	${LIBOPCODESDIR}/libopcodes.a \
 	${LIBBFDDIR}/libbfd.a \
 	${LIBEDIT} \
-	${LIBTERMCAP} \
+	${LIBTERMINFO} \
 	${LIBIBERTYDIR}/libiberty.a
 
 LDADD+=		-lcurses -lintl -lm -lkvm

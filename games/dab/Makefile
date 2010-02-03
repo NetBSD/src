@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.6 2008/01/28 07:03:59 dholland Exp $
+#	$NetBSD: Makefile,v 1.7 2010/02/03 15:34:38 roy Exp $
 
-DPADD+=${LIBCURSES} ${LIBTERMCAP} ${LIBM}
-LDADD+=-lcurses -ltermcap -lm
+DPADD+=${LIBCURSES} ${LIBTERMINFO} ${LIBM}
+LDADD+=-lcurses -lterminfo -lm
 
 PROG_CXX=dab
 MAN=dab.6

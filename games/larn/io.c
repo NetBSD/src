@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.24 2009/08/12 08:04:05 dholland Exp $	*/
+/*	$NetBSD: io.c,v 1.25 2010/02/03 15:34:39 roy Exp $	*/
 
 /*
  * io.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -62,7 +62,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.24 2009/08/12 08:04:05 dholland Exp $");
+__RCSID("$NetBSD: io.c,v 1.25 2010/02/03 15:34:39 roy Exp $");
 #endif /* not lint */
 
 #include "header.h"
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: io.c,v 1.24 2009/08/12 08:04:05 dholland Exp $");
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <termcap.h>
+#include <term.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <ctype.h>
@@ -650,63 +650,32 @@ cursors()
  * obvious meanings.
  */
 
-static struct tinfo *info;
-static char *CM, *CE, *CD, *CL, *SO, *SE, *AL, *DL;	/* Termcap capabilities */
-static char    *outbuf = 0;	/* translated output buffer */
-
+static char    *outbuf = 0;     /* translated output buffer */
 /*
  * init_term()		Terminal initialization -- setup termcap info
  */
 void
 init_term()
 {
-	char           *term;
-
-	switch (t_getent(&info, term = getenv("TERM"))) {
-	case -1:
-		write(2, "Cannot open termcap file.\n", 26);
-		exit(1);
-	case 0:
-		write(2, "Cannot find entry of ", 21);
-		write(2, term, strlen(term));
-		write(2, " in termcap\n", 12);
-		exit(1);
-	};
-
-	CM = t_agetstr(info, "cm");	/* Cursor motion */
-	CE = t_agetstr(info, "ce");	/* Clear to eoln */
-	CL = t_agetstr(info, "cl");	/* Clear screen */
-
-	/* OPTIONAL */
-	AL = t_agetstr(info, "al");	/* Insert line */
-	DL = t_agetstr(info, "dl");	/* Delete line */
-	SO = t_agetstr(info, "so");	/* Begin standout mode */
-	SE = t_agetstr(info, "se");	/* End standout mode */
-	CD = t_agetstr(info, "cd");	/* Clear to end of display */
-
-	if (!CM) {		/* can't find cursor motion entry */
-		write(2, "Sorry, for a ", 13);
-		write(2, term, strlen(term));
-		write(2, ", I can't find the cursor motion entry in termcap\n", 50);
+	setupterm(NULL, 0, NULL); /* will exit if invalid term */
+	if (!cursor_address) {
+		fprintf(stderr, "term does not have cursor_address.\n");
 		exit(1);
 	}
-	if (!CE) {		/* can't find clear to end of line entry */
-		write(2, "Sorry, for a ", 13);
-		write(2, term, strlen(term));
-		write(2, ", I can't find the clear to end of line entry in termcap\n", 57);
+	if (!clr_eol) {
+		fprintf(stderr, "term does not have clr_eol.\n");
 		exit(1);
 	}
-	if (!CL) {		/* can't find clear entire screen entry */
-		write(2, "Sorry, for a ", 13);
-		write(2, term, strlen(term));
-		write(2, ", I can't find the clear entire screen entry in termcap\n", 56);
+	if (!clear_screen) {
+		fprintf(stderr, "term does not have clear_screen.\n");
 		exit(1);
 	}
-	if ((outbuf = malloc(BUFBIG + 16)) == 0) {	/* get memory for
+	if ((outbuf = malloc(BUFBIG + 16)) == 0) {      /* get memory for
 							 * decoded output buffer */
-		write(2, "Error malloc'ing memory for decoded output buffer\n", 50);
-		died(-285);	/* malloc() failure */
+	    fprintf(stderr, "Error malloc'ing memory for decoded output buffer\n");
+	    died(-285);     /* malloc() failure */
 	}
+
 }
 #endif	/* VT100 */
 
@@ -761,7 +730,7 @@ cl_dn(x, y)
 #else	/* VT100 */
 	int    i;
 	cursor(1, y);
-	if (!CD) {
+	if (!clr_eos) {
 		*lpnt++ = CL_LINE;
 		for (i = y; i <= 24; i++) {
 			*lpnt++ = CL_LINE;
@@ -820,7 +789,6 @@ lflush()
 	u_char  *str;
 	static int      curx = 0;
 	static int      cury = 0;
-	char tgoto_buf[256];
 
 	if ((lpoint = lpnt - lpbuf) > 0) {
 #ifdef EXTRA
@@ -840,77 +808,69 @@ lflush()
 			} else
 				switch (*str) {
 				case CLEAR:
-					tputs(CL, 0, ttputch);
+					tputs(clear_screen, 0, ttputch);
 					curx = cury = 0;
 					break;
 
 				case CL_LINE:
-					tputs(CE, 0, ttputch);
+					tputs(clr_eol, 0, ttputch);
 					break;
 
 				case CL_DOWN:
-					tputs(CD, 0, ttputch);
+					tputs(clr_eos, 0, ttputch);
 					break;
 
 				case ST_START:
-					tputs(SO, 0, ttputch);
+					tputs(enter_standout_mode, 0, ttputch);
 					break;
 
 				case ST_END:
-					tputs(SE, 0, ttputch);
+					tputs(exit_standout_mode, 0, ttputch);
 					break;
 
 				case CURSOR:
 					curx = *++str - 1;
 					cury = *++str - 1;
-					if (t_goto(info, CM, curx, cury,
-						   tgoto_buf, 255) == 0)
-						tputs(tgoto_buf, 0, ttputch);
+					tputs(vtparm(cursor_address,
+						    cury, curx), 0, ttputch);
 					break;
 
 				case '\n':
 					if ((cury == 23) && enable_scroll) {
-						if (!DL || !AL) {	/* wraparound or scroll? */
+						if (!delete_line ||
+						    !insert_line)
+						{	/* wraparound or scroll? */
 							if (++scrline > 23)
 								scrline = 19;
 
 							if (++scrline > 23)
 								scrline = 19;
-							if (t_goto(info, CM, 0,
-								   scrline,
-								   tgoto_buf,
-								   255) == 0)
-								tputs(tgoto_buf,
-								      0,
-								      ttputch);
-							tputs(CE, 0, ttputch);
+							tputs(vtparm(
+							    cursor_address,
+							    scrline, 0),
+							    0, ttputch);
+							tputs(clr_eol, 0,
+							    ttputch);
 
 							if (--scrline < 19)
 								scrline = 23;
-							if (t_goto(info, CM, 0,
-								   scrline,
-								   tgoto_buf,
-								   255) == 0)
-								tputs(tgoto_buf,
-								      0,
-								      ttputch);
-							tputs(CE, 0, ttputch);
+							tputs(vtparm(
+							    cursor_address,
+							    scrline, 0),
+							    0, ttputch);
+							tputs(clr_eol, 0,
+							    ttputch);
 						} else {
-							if (t_goto(info, CM, 0,
-								   19,
-								   tgoto_buf,
-								   255) == 0)
-								tputs(tgoto_buf,
-								      0,
-								      ttputch);
-							tputs(DL, 0, ttputch);
-							if (t_goto(info, CM, 0,
-								   23,
-								   tgoto_buf,
-								   255) == 0)
-								tputs(tgoto_buf,
-								      0,
-								      ttputch);
+							tputs(vtparm(
+							    cursor_address,
+							    19, 0),
+							    0, ttputch);
+							tputs(delete_line, 0,
+							    ttputch);
+							tputs(vtparm(
+							    cursor_address,
+							    23, 0),
+							    0, ttputch);
 							/*
 							 * tputs (AL, 0,
 							 * ttputch);
