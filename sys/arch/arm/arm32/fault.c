@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.74 2010/01/05 13:14:55 mbalmer Exp $	*/
+/*	$NetBSD: fault.c,v 1.75 2010/02/03 13:51:00 wiz Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
 #include "opt_sa.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.74 2010/01/05 13:14:55 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.75 2010/02/03 13:51:00 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -740,8 +740,8 @@ prefetch_abort_fixup(trapframe_t *tf)
 #ifdef THUMB_CODE
 	if (tf->tf_spsr & PSR_T_bit) {
 		printf("pc = 0x%08x, opcode 0x%04x, 0x%04x, insn = ",
-		    tf->tf_pc, *((u_int16 *)(tf->tf_pc & ~1),
-		    *((u_int16 *)((tf->tf_pc + 2) & ~1));
+		    tf->tf_pc, *((u_int16 *)(tf->tf_pc & ~1)),
+		    *((u_int16 *)((tf->tf_pc + 2) & ~1)));
 	}
 	else
 #endif
