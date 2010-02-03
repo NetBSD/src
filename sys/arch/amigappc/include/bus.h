@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6 2009/10/20 19:10:10 snj Exp $	*/
+/*	$NetBSD: bus.h,v 1.7 2010/02/03 13:56:53 phx Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -246,6 +246,9 @@ struct amiga_bus_space_methods {
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
 #define __BUS_SPACE_HAS_STREAM_METHODS
+
+/* Instruction for enforcing reorder protection. */
+#define amiga_bus_reorder_protect() __asm volatile ("eieio")
 
 extern const struct amiga_bus_space_methods amiga_bus_stride_1;
 extern const struct amiga_bus_space_methods amiga_bus_stride_2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: busfuncs.c,v 1.10 2009/03/14 21:04:03 dsl Exp $	*/
+/*	$NetBSD: busfuncs.c,v 1.11 2010/02/03 13:56:53 phx Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: busfuncs.c,v 1.10 2009/03/14 21:04:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: busfuncs.c,v 1.11 2010/02/03 13:56:53 phx Exp $");
 
 /*
  * Amiga bus access methods for data widths > 1
@@ -118,7 +118,11 @@ u_int16_t
 amiga_contiguous_read_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 	/* ARGSUSED */
-	return (* (u_int16_t *) (h + o)); /* only used if t->stride == 0 */
+	u_int16_t x;
+
+	x  = * (u_int16_t *) (h + o); /* only used if t->stride == 0 */
+	amiga_bus_reorder_protect();
+	return x;
 }
 
 void
@@ -126,6 +130,7 @@ amiga_contiguous_write_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, 
 {
 	/* ARGSUSED */
 	* (u_int16_t *) (h + o) = v;
+	amiga_bus_reorder_protect();
 }
 
 void
@@ -136,6 +141,7 @@ amiga_contiguous_read_multi_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_
 
 	while (s-- > 0) {
 		*p++ =  *q;
+		amiga_bus_reorder_protect();
 	}
 }
 
@@ -147,6 +153,7 @@ amiga_contiguous_write_multi_2(bus_space_tag_t t, bus_space_handle_t h, bus_size
 
 	while (s-- > 0) {
 		*q = *p++;
+		amiga_bus_reorder_protect();
 	}
 }
 
@@ -158,6 +165,7 @@ amiga_contiguous_read_region_2(bus_space_tag_t t, bus_space_handle_t h, bus_size
 
 	while (s-- > 0) {
 		*p++ =  *q++;
+		amiga_bus_reorder_protect();
 	}
 }
 
@@ -169,6 +177,7 @@ amiga_contiguous_write_region_2(bus_space_tag_t t, bus_space_handle_t h, bus_siz
 
 	while (s-- > 0) {
 		*q++ = *p++;
+		amiga_bus_reorder_protect();
 	}
 }
 
@@ -180,6 +189,7 @@ amiga_contiguous_set_region_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_
 
 	while (s-- > 0) {
 		*q++ = v;
+		amiga_bus_reorder_protect();
 	}
 }
 
@@ -192,6 +202,7 @@ amiga_contiguous_copy_region_2(bus_space_tag_t t, bus_space_handle_t srch, bus_s
 
 	while (s-- > 0) {
 		*q++ = *p++;
+		amiga_bus_reorder_protect();
 	}
 }
 
@@ -205,12 +216,14 @@ u_int16_t
 amiga_interleaved_read_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 	volatile u_int8_t *q;
+	u_int16_t x;
 	int step;
 
 	step = 1 << t->stride;
 	q = (volatile u_int8_t *)(h + (o << t->stride));
-
-	return ((*q) << 8) | *(q + step);
+	x = ((*q) << 8) | *(q + step);
+	amiga_bus_reorder_protect();
+	return x;
 }
 
 void
@@ -224,6 +237,7 @@ amiga_interleaved_write_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 
 	*q = v >> 8;
 	*(q+step) = v;
+	amiga_bus_reorder_protect();
 }
 
 void
@@ -237,6 +251,7 @@ amiga_interleaved_read_multi_2(bus_space_tag_t t, bus_space_handle_t h, bus_size
 
 	while (s-- > 0) {
 		*p++ =  ((*q)<<8) | *(q+step);
+		amiga_bus_reorder_protect();
 	}
 }
 
@@ -254,6 +269,7 @@ amiga_interleaved_write_multi_2(bus_space_tag_t t, bus_space_handle_t h, bus_siz
 		v = *p++;
 		*q 		= v>>8;
 		*(q + step)	= v;
+		amiga_bus_reorder_protect();
 	}
 }
 
@@ -271,6 +287,7 @@ amiga_interleaved_read_region_2(bus_space_tag_t t, bus_space_handle_t h, bus_siz
 		v = (*q) << 8;
 		q += step;
 		v |= *q;
+		amiga_bus_reorder_protect();
 		q += step;
 		*p++ =  v;
 	}
@@ -291,6 +308,7 @@ amiga_interleaved_write_region_2(bus_space_tag_t t, bus_space_handle_t h, bus_si
 		*q = v >> 8;
 		q += step;
 		*q = v;
+		amiga_bus_reorder_protect();
 		q += step;
 	}
 }
@@ -305,6 +323,7 @@ amiga_interleaved_set_region_2(bus_space_tag_t t, bus_space_handle_t h, bus_size
 
 	while (s-- > 0) {
 		*q = v;
+		amiga_bus_reorder_protect();
 		q += step;
 	}
 }
@@ -320,6 +339,7 @@ amiga_interleaved_copy_region_2(bus_space_tag_t t, bus_space_handle_t srch, bus_
 
 	while (s-- > 0) {
 		*q = *p;
+		amiga_bus_reorder_protect();
 		p += step;
 		q += step;
 	}
@@ -334,7 +354,11 @@ u_int16_t
 amiga_interleaved_wordaccess_read_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 	/* ARGSUSED */
-	return (* (u_int16_t *) (h + (o << t->stride)));
+	u_int16_t x;
+
+	x = * (u_int16_t *) (h + (o << t->stride));
+	amiga_bus_reorder_protect();
+	return x;
 }
 
 void
@@ -342,6 +366,7 @@ amiga_interleaved_wordaccess_write_2(bus_space_tag_t t, bus_space_handle_t h, bu
 {
 	/* ARGSUSED */
 	* (u_int16_t *) (h + (o << t->stride)) = v;
+	amiga_bus_reorder_protect();
 }
 
 void
@@ -354,6 +379,7 @@ amiga_interleaved_wordaccess_read_multi_2(bus_space_tag_t t, bus_space_handle_t 
 
 	while (s-- > 0) {
 		*p++ =  *q;
+		amiga_bus_reorder_protect();
 	}
 }
 
@@ -367,6 +393,7 @@ amiga_interleaved_wordaccess_write_multi_2(bus_space_tag_t t, bus_space_handle_t
 
 	while (s-- > 0) {
 		*q = *p++;
+		amiga_bus_reorder_protect();
 	}
 }
 
@@ -382,6 +409,7 @@ amiga_interleaved_wordaccess_read_region_2(bus_space_tag_t t, bus_space_handle_t
 
 	while (s-- > 0) {
 		*p++ =  *q;
+		amiga_bus_reorder_protect();
 		q += step;
 	}
 }
@@ -398,6 +426,7 @@ amiga_interleaved_wordaccess_write_region_2(bus_space_tag_t t, bus_space_handle_
 
 	while (s-- > 0) {
 		*q = *p++;
+		amiga_bus_reorder_protect();
 		q += step;
 	}
 }
@@ -414,6 +443,7 @@ amiga_interleaved_wordaccess_set_region_2(bus_space_tag_t t, bus_space_handle_t 
 
 	while (s-- > 0) {
 		*q = v;
+		amiga_bus_reorder_protect();
 		q += step;
 	}
 }
@@ -432,8 +462,8 @@ amiga_interleaved_wordaccess_copy_region_2(bus_space_tag_t t, bus_space_handle_t
 
 	while (s-- > 0) {
 		*q = *p;
+		amiga_bus_reorder_protect();
 		q += step;
 		p += step;
 	}
 }
-

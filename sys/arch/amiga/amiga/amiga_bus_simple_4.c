@@ -1,4 +1,4 @@
-/* $NetBSD: amiga_bus_simple_4.c,v 1.5 2008/04/28 20:23:12 martin Exp $ */
+/* $NetBSD: amiga_bus_simple_4.c,v 1.6 2010/02/03 13:56:53 phx Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: amiga_bus_simple_4.c,v 1.5 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: amiga_bus_simple_4.c,v 1.6 2010/02/03 13:56:53 phx Exp $");
 
 #define AMIGA_SIMPLE_BUS_STRIDE 4		/* 1 byte per long */
 #define AMIGA_SIMPLE_BUS_WORD_METHODS
@@ -57,6 +57,7 @@ oabs(bsrm2_swap_)(bus_space_handle_t handle, bus_size_t offset,
 
 	while (count > 0) {
 		*pointer++ = bswap16(*p);
+		amiga_bus_reorder_protect();
 		--count;
 	}
 }
@@ -71,6 +72,7 @@ oabs(bswm2_swap_)(bus_space_handle_t handle, bus_size_t offset,
 
 	while (count > 0) {
 		*p = bswap16(*pointer);
+		amiga_bus_reorder_protect();
 		++pointer;
 		--count;
 	}
