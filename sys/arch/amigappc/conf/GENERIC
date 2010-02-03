@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.2 2009/12/05 20:11:03 pooka Exp $
+# $NetBSD: GENERIC,v 1.3 2010/02/03 14:03:47 phx Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.2 $"
+#ident          "GENERIC-$Revision: 1.3 $"
 
 maxusers	8
 
@@ -64,16 +64,16 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 #
 # Diagnostic/debugging support options
 #
-options 	DIAGNOSTIC	# Extra kernel sanity checks
-options 	DEBUG		# Enable misc. kernel debugging code
-options		DEBUG_KERNEL_START
+#options 	DIAGNOSTIC	# Extra kernel sanity checks
+#options 	DEBUG		# Enable misc. kernel debugging code
+#options 	DEBUG_KERNEL_START
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
-options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# Enable history editing in DDB
-options 	SCSIDEBUG	# Add SCSI debugging statements
+#options 	SCSIDEBUG	# Add SCSI debugging statements
 #options 	SERCONSOLE	# console via Amiga serial port
-makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions	DEBUG="-g"	# compile full symbol table
 
 #
 # Compatibility option
@@ -91,7 +91,7 @@ options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
-options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+#options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_LINUX	# Linux binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
@@ -100,20 +100,20 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 # File systems
 #
 file-system 	FFS		# UFS
-#file-system 	EXT2FS		# second extended file system (linux)
-#file-system 	LFS		# log-structured file system
-#file-system 	MFS		# memory file system
-#file-system 	NFS		# Network file System client
-#file-system 	CD9660		# ISO 9660 + Rock Ridge file system
-#file-system 	MSDOSFS		# MS-DOS file system
+file-system 	EXT2FS		# second extended file system (linux)
+file-system 	LFS		# log-structured file system
+file-system 	MFS		# memory file system
+file-system 	NFS		# Network file System client
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	MSDOSFS		# MS-DOS file system
 file-system 	ADOSFS		# AmigaDOS file system
 file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
-#file-system 	NULLFS		# loopback file system
-#file-system 	OVERLAY		# overlay file system
+file-system 	NULLFS		# loopback file system
+file-system 	OVERLAY		# overlay file system
 file-system 	PROCFS		# /proc
-#file-system 	UMAPFS		# NULLFS + uid and gid remapping
-#file-system 	UNION		# union file system
+file-system 	UMAPFS		# NULLFS + uid and gid remapping
+file-system 	UNION		# union file system
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
@@ -123,33 +123,29 @@ file-system	TMPFS		# Efficient memory file-system
 #options 	FFS_EI		# FFS Endian Independant support
 options 	WAPBL		# File system journaling support - Experimental
 
-#options 	QUOTA		# User and group quotas in FFS
+options 	QUOTA		# User and group quotas in FFS
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-#options 	NFSSERVER	# Network File System server side code
+options 	NFSSERVER	# Network File System server side code
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
 #
 # Networking options
 #
+#options 	GATEWAY		# Packet forwarding
 options 	INET		# IP networking support (Required)
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
-#options 	GATEWAY		# Packet forwarding
-#options 	DIRECTED_BROADCAST	# Broadcast across subnets
-
 #options 	MROUTING	# Multicast routing
+#options 	DIRECTED_BROADCAST	# Broadcast across subnets
 #options 	PIM		# Protocol Independent Multicast
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk networking protocols
-#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
-
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -157,6 +153,7 @@ options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
 #options 	ALTQ_BLUE	# Stochastic Fair Blue
@@ -174,20 +171,20 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 #
 # Amiga specific options
 #
-#options 	RETINACONSOLE	# enable code to allow retina to be console
-#options 	ULOWELLCONSOLE	# enable code to allow a2410 to be console
-#options 	CL5426CONSOLE	# Cirrus console
-#options 	CV64CONSOLE	# CyberVision console
-#options 	TSENGCONSOLE	# Tseng console
-#options 	CV3DCONSOLE	# CyberVision 64/3D console
+options 	RETINACONSOLE	# enable code to allow retina to be console
+options 	ULOWELLCONSOLE	# enable code to allow a2410 to be console
+options 	CL5426CONSOLE	# Cirrus console
+options 	CV64CONSOLE	# CyberVision console
+options 	TSENGCONSOLE	# Tseng console
+options 	CV3DCONSOLE	# CyberVision 64/3D console
 
 options 	GRF_ECS		# Enhanced Chip Set
 options 	GRF_NTSC	# NTSC
 options 	GRF_PAL		# PAL
-#options 	GRF_A2024	# Support for the A2024
-#options 	GRF_AGA		# AGA Chip Set
-#options 	GRF_AGA_VGA	# AGA VGAONLY timing
-#options 	GRF_SUPER72	# AGA Super-72
+options 	GRF_A2024	# Support for the A2024
+options 	GRF_AGA		# AGA Chip Set
+options 	GRF_AGA_VGA	# AGA VGAONLY timing
+options 	GRF_SUPER72	# AGA Super-72
 #options 	KFONT_8X11	# 8x11 font
 
 # select a font for the console according to the character set and keymap
@@ -226,8 +223,8 @@ ms*		at mainbus0		# Amiga mice
 fdc0		at mainbus0		# Amiga FDC
 fd*		at fdc0 unit ?		# floppy disks on the later
 a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
-#aucc*		at mainbus0		# Amiga CC audio
-#audio*		at aucc?
+aucc*		at mainbus0		# Amiga CC audio
+audio*		at aucc?
 
 # wscons aware interface to amiga custom chips.
 # If you enable it enable also wskbd.
@@ -249,149 +246,149 @@ a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
 # Graphics devices
 #
 grfcc0		at mainbus0		# custom chips
-#grfrt0		at zbus0		# retina II
-#grfrh0		at zbus0		# retina III
-#grfcl*		at zbus0		# Picasso II/Piccolo/Spectrum
-#grful0		at zbus0		# A2410
-#grfcv0		at zbus0		# CyberVision 64
-#grfet*		at zbus0		# Tseng (oMniBus, Domino, Merlin)
-#grfcv3d0	at zbus0		# CyberVision 64/3D
+grfrt0		at zbus0		# retina II
+grfrh0		at zbus0		# retina III
+grfcl*		at zbus0		# Picasso II/Piccolo/Spectrum
+grful0		at zbus0		# A2410
+grfcv0		at zbus0		# CyberVision 64
+grfet*		at zbus0		# Tseng (oMniBus, Domino, Merlin)
+grfcv3d0	at zbus0		# CyberVision 64/3D
 
 grf0		at grfcc0
-#grf1		at grfrt0
-#grf2		at grfrh0
-#grf3		at grfcl?
-#grf4		at grful0
-#grf5		at grfcv0
-#grf6		at grfet?
-#grf7		at grfcv3d0
+grf1		at grfrt0
+grf2		at grfrh0
+grf3		at grfcl?
+grf4		at grful0
+grf5		at grfcv0
+grf6		at grfet?
+grf7		at grfcv3d0
 ite0		at grf0			# terminal emulators for grfs
-#ite1		at grf1			# terminal emulators for grfs
-#ite2		at grf2			# terminal emulators for grfs
-#ite3		at grf3			# terminal emulators for grfs
-#ite4		at grf4			# terminal emulators for grfs
-#ite5		at grf5			# terminal emulators for grfs
-#ite6		at grf6			# terminal emulators for grfs
-#ite7		at grf7			# terminal emulators for grfs
+ite1		at grf1			# terminal emulators for grfs
+ite2		at grf2			# terminal emulators for grfs
+ite3		at grf3			# terminal emulators for grfs
+ite4		at grf4			# terminal emulators for grfs
+ite5		at grf5			# terminal emulators for grfs
+ite6		at grf6			# terminal emulators for grfs
+ite7		at grf7			# terminal emulators for grfs
 
 #
 # Zorro-II, Zorro-III devices (sans graphics)
 #
-#repulse*	at zbus0		# ALiENDESiGN Repulse
-#audio*		at repulse?
+repulse*	at zbus0		# ALiENDESiGN Repulse
+audio*		at repulse?
 
-#toccata*	at zbus0		# MacroSystem GmbH Toccata
-#audio*		at toccata?
+toccata*	at zbus0		# MacroSystem GmbH Toccata
+audio*		at toccata?
 
 # Ethernet cards:
-#le*		at zbus0		# A2065, Ameristar, Ariadne
-#ne*		at zbus0		# AriadneII, X-surf
-#ed*		at zbus0		# Hydra, ASDG LanRover
-#es*		at zbus0		# CEI A4066 EthernetPLUS
-#qn*		at zbus0		# Quicknet
+le*		at zbus0		# A2065, Ameristar, Ariadne
+ne*		at zbus0		# AriadneII, X-surf
+ed*		at zbus0		# Hydra, ASDG LanRover
+es*		at zbus0		# CEI A4066 EthernetPLUS
+qn*		at zbus0		# Quicknet
 
 # Arcnet
-#bah*		at zbus0		# C=/Ameristar A2060 / 560
+bah*		at zbus0		# C=/Ameristar A2060 / 560
 
 # Greater Valley Product Bus
-#gvpbus* 	at zbus0
+gvpbus* 	at zbus0
 
 # scsi stuff, all possible
-#gtsc0		at gvpbus?		# GVP series II scsi
-#scsibus*	at gtsc0
+gtsc0		at gvpbus?		# GVP series II scsi
+scsibus*	at gtsc0
 ahsc0		at mainbus0		# A3000 scsi
 scsibus*	at ahsc0
-#atzsc0		at zbus0		# A2091 scsi
-#scsibus*	at atzsc0
-#wstsc0		at zbus0		# Wordsync II scsi
-#scsibus*	at wstsc0
-#ivsc0		at zbus0		# IVS scsi
-#scsibus*	at ivsc0
-#mlhsc0		at zbus0		# Hacker scsi
-#scsibus*	at mlhsc0
-#otgsc0		at zbus0		# 12 gauge scsi
-#scsibus*	at otgsc0
-#zssc0		at zbus0		# Zeus scsi
-#scsibus*	at zssc0
-#mgnsc0		at zbus0		# Magnum scsi
-#scsibus*	at mgnsc0
-#wesc0		at zbus0		# Warp Engine scsi
-#scsibus*	at wesc0
-#afsc0		at zbus0		# A4091 scsi
-#scsibus*	at afsc0
-#aftsc0		at mainbus0		# A4000T scsi
-#scsibus*	at aftsc0
-#flsc0		at zbus0		# FastlaneZ3 scsi
-#scsibus*	at flsc0
-#bzsc0		at zbus0		# Blizzard 1230 I,II scsi
-#scsibus*	at bzsc0
-#bzivsc0 	at zbus0		# Blizzard 12x0 IV scsi
-#scsibus*	at bzivsc0
-#bztzsc0 	at zbus0		# Blizzard 2060 scsi
-#scsibus*	at bztzsc0
-#cbsc0		at zbus0		# CyberSCSI I
-#scsibus*	at cbsc0
-#cbiisc0 	at zbus0		# CyberSCSI II
-#scsibus*	at cbiisc0
-#cbiiisc0 	at zbus0		# Cyberstorm mk.III/Cyberstorm PPC SCSI
-#scsibus*	at cbiiisc0
-#empsc0		at zbus0		# Emplant scsi
-#scsibus*	at empsc0
+atzsc0		at zbus0		# A2091 scsi
+scsibus*	at atzsc0
+wstsc0		at zbus0		# Wordsync II scsi
+scsibus*	at wstsc0
+ivsc0		at zbus0		# IVS scsi
+scsibus*	at ivsc0
+mlhsc0		at zbus0		# Hacker scsi
+scsibus*	at mlhsc0
+otgsc0		at zbus0		# 12 gauge scsi
+scsibus*	at otgsc0
+zssc0		at zbus0		# Zeus scsi
+scsibus*	at zssc0
+mgnsc0		at zbus0		# Magnum scsi
+scsibus*	at mgnsc0
+wesc0		at zbus0		# Warp Engine scsi
+scsibus*	at wesc0
+afsc0		at zbus0		# A4091 scsi
+scsibus*	at afsc0
+aftsc0		at mainbus0		# A4000T scsi
+scsibus*	at aftsc0
+flsc0		at zbus0		# FastlaneZ3 scsi
+scsibus*	at flsc0
+bzsc0		at zbus0		# Blizzard 1230 I,II scsi
+scsibus*	at bzsc0
+bzivsc0 	at zbus0		# Blizzard 12x0 IV scsi
+scsibus*	at bzivsc0
+bztzsc0 	at zbus0		# Blizzard 2060 scsi
+scsibus*	at bztzsc0
+cbsc0		at zbus0		# CyberSCSI I
+scsibus*	at cbsc0
+cbiisc0 	at zbus0		# CyberSCSI II
+scsibus*	at cbiisc0
+cbiiisc0 	at zbus0		# Cyberstorm mk.III/Cyberstorm PPC SCSI
+scsibus*	at cbiiisc0
+empsc0		at zbus0		# Emplant scsi
+scsibus*	at empsc0
 
-#wdc0		at mainbus0		# A4000 & A1200 IDE bus
-#wdc*		at zbus0		# Buddha / Catweasel
+wdc0		at mainbus0		# A4000 & A1200 IDE bus
+wdc*		at zbus0		# Buddha / Catweasel
 
-#atabus* 	at wdc? channel ?	# ATA bus
-#wd*		at atabus? drive ?	#  + drives
-#atapibus*	at atabus?		# ATAPI bus
-#cd*		at atapibus? drive ?	# ATAPI CD-ROM drives
-#sd*		at atapibus? drive ?	# ATAPI disk drives
+atabus* 	at wdc? channel ?	# ATA bus
+wd*		at atabus? drive ?	#  + drives
+atapibus*	at atabus?		# ATAPI bus
+cd*		at atapibus? drive ?	# ATAPI CD-ROM drives
+sd*		at atapibus? drive ?	# ATAPI disk drives
 
-#pccard0	at mainbus0
-#pcmcia*	at pccard0
-#com*		at pcmcia? function ?	# Modems and serial cards
-#pcmcom*	at pcmcia? function ?	# PCMCIA multi-port serial cards
-#aic*		at pcmcia? function ?	# Adaptec APA-1460 SCSI
-#wdc*		at pcmcia? function ?
-#awi*		at pcmcia? function ?	# BayStack 650 (802.11FH)
-#ep*		at pcmcia? function ?	# 3Com 3c589 and 3c562 Ethernet
-#mbe*		at pcmcia? function ?	# MB8696x based Ethernet
-#ne*		at pcmcia? function ?	# NE2000-compatible Ethernet
-#sm*		at pcmcia? function ?	# Megahertz Ethernet
-#mhzc*		at pcmcia? function ?	# Megahertz Ethernet/Modem combo cards
-#com*		at mhzc?
-#sm*		at mhzc?
+pccard0 	at mainbus0
+pcmcia* 	at pccard0
+com*		at pcmcia? function ?	# Modems and serial cards
+pcmcom* 	at pcmcia? function ?	# PCMCIA multi-port serial cards
+aic*		at pcmcia? function ?	# Adaptec APA-1460 SCSI
+wdc*		at pcmcia? function ?
+awi*		at pcmcia? function ?	# BayStack 650 (802.11FH)
+ep*		at pcmcia? function ?	# 3Com 3c589 and 3c562 Ethernet
+mbe*		at pcmcia? function ?	# MB8696x based Ethernet
+ne*		at pcmcia? function ?	# NE2000-compatible Ethernet
+sm*		at pcmcia? function ?	# Megahertz Ethernet
+mhzc*		at pcmcia? function ?	# Megahertz Ethernet/Modem combo cards
+com*		at mhzc?
+sm*		at mhzc?
 
 # each hard drive from low target to high
 # will configure to the next available sd unit number
 sd*		at scsibus? target ? lun ?	# scsi disks
-#st*		at scsibus? target ? lun ?	# scsi tapes
+st*		at scsibus? target ? lun ?	# scsi tapes
 cd*		at scsibus? target ? lun ?	# scsi cds
-#ch*		at scsibus? target ? lun ?	# scsi autochangers
-#ss*		at scsibus? target ? lun ?	# scsi scanner
+ch*		at scsibus? target ? lun ?	# scsi autochangers
+ss*		at scsibus? target ? lun ?	# scsi scanner
 uk*		at scsibus? target ? lun ?	# scsi unknown
 
-#msc0		at zbus0		# A2232 MSC multiport serial.
-#mfc0		at zbus0		# MultiFaceCard I/O board
-#mfcs0		at mfc0 unit 0		# MFC serial
-#mfcs1		at mfc0 unit 1		# MFC serial
+msc0		at zbus0		# A2232 MSC multiport serial.
+mfc0		at zbus0		# MultiFaceCard I/O board
+mfcs0		at mfc0 unit 0		# MFC serial
+mfcs1		at mfc0 unit 1		# MFC serial
 #mfcp0		at mfc0 unit 0		# MFC parallel [not available yet]
 #mfc1		at zbus0		# MultiFaceCard 2nd I/O board
 #mfcs2		at mfc1 unit 0
 #mfcs3		at mfc1 unit 1
 #mfcp1		at mfc1 unit 0
 
-#hyper*		at zbus?		# zbus HyperCom3/3+/4/4+
+hyper*		at zbus?		# zbus HyperCom3/3+/4/4+
 #hyper*		at mainbus0		# not yet: HyperCom1 + HyperCom3
-#com*		at hyper? port ?	# Hypercom3/4 serial ports
-#lpt*		at hyper? port ?	# Hypercom3+/4+ parallel port
+com*		at hyper? port ?	# Hypercom3/4 serial ports
+lpt*		at hyper? port ?	# Hypercom3+/4+ parallel port
 
 #options 	IOBZCLOCK=22118400 	# default, uncomment the next line
 #options 	IOBZCLOCK=24000000	# if needed.
 
-#iobl*		at zbus?		# zbus IOBlix
-#com*		at iobl? port ?		# IOBlix serial ports
-#lpt*		at iobl? port ?		# IOBlix parallel ports
+iobl*		at zbus?		# zbus IOBlix
+com*		at iobl? port ?		# IOBlix serial ports
+lpt*		at iobl? port ?		# IOBlix parallel ports
 
 
 #
