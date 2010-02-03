@@ -1,30 +1,18 @@
-#	$NetBSD: Makefile,v 1.2 2010/02/03 16:13:14 roy Exp $
+#	$NetBSD: Makefile,v 1.3 2010/02/03 20:56:54 roy Exp $
 
 USE_SHLIBDIR=	yes
 
 LIB=		terminfo
 WARNS=		4
 
+CPPFLAGS+=	-I${.CURDIR}
+
 SRCS=		term.c ti.c setupterm.c curterm.c tparm.c tputs.c
 SRCS+=		hash.c
 INCS=		term.h
 INCSDIR=	/usr/include
 
-LIBTIDIR?=	${.CURDIR}
-CPPFLAGS+=	-I${LIBTIDIR}
-
-# Generate our string and hash tables
-hash.c: genhash term.h
-		@echo "Generating terminfo hash"
-		cd ${LIBTIDIR} && ${HOST_SH} ./genhash >${.OBJDIR}/$@
-
-# Update our man page with terminfo long names, short names and termcaps
-terminfo.5: genman terminfo.5.in term.h termcap.c
-		@echo "Generating terminfo man pages"
-		cd ${LIBTIDIR} && ${HOST_SH} ./genman >${.OBJDIR}/$@
-
 MAN=		terminfo.3 terminfo.5
-CLEANFILES+=	terminfo.5 hash.c
 MLINKS=		terminfo.3 setupterm.3 \
 		terminfo.3 set_curterm.3 terminfo.3 del_curterm.3 \
 		terminfo.3 tigetnum.3 terminfo.3 tigetflag.3 \
@@ -38,19 +26,23 @@ MLINKS=		terminfo.3 setupterm.3 \
 # Build in termcap emulation
 SRCS+=		termcap.c
 INCS+=		termcap.h
-CPPFLAGS+=	-I${.OBJDIR}
 MAN+=		termcap.3
-CLEANFILES+=	_termcap.c termcap_hash.c
 MLINKS+=	termcap.3 tgetent.3 termcap.3 tgetflag.3 termcap.3 tgetnum.3 \
 		termcap.3 tgetstr.3 termcap.3 tgoto.3
 
 # Generate our string and hash tables
-termcap_hash.c:	genthash termcap_map.c
+hash:
+		@echo "Generating terminfo hash"
+		cd ${.CURDIR} && ${HOST_SH} ./genhash >hash.c
 		@echo "Generating termcap hash"
-		cd ${LIBTIDIR} && ${HOST_SH} ./genthash >${.OBJDIR}/$@
+		cd ${.CURDIR} && ${HOST_SH} ./genthash >termcap_hash.c
 
-# Depend on our hash table
-termcap.c:	termcap_hash.c
+# Generate our man pages
+man:
+		@echo "Generating terminfo man pages"
+		cd ${.CURDIR} && ${HOST_SH} ./genman >terminfo.5
+
+gen: hash man
 
 .include <bsd.own.mk>
 .include <bsd.shlib.mk>
