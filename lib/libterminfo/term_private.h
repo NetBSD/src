@@ -1,4 +1,4 @@
-/* $NetBSD: term_private.h,v 1.1 2010/02/03 15:16:32 roy Exp $ */
+/* $NetBSD: term_private.h,v 1.2 2010/02/03 18:49:23 snj Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * All strings are prefixed by length, including the null terminator.
  * The largest string length we can handle is 65535 bytes,
  * including the null terminator.
- * The largest capabaility block we can handle is 65535 bytes.
+ * The largest capability block we can handle is 65535 bytes.
  * This means that we exceed the current terminfo defined limits.
  * The header is version (char), name.
  * version 0 is an alias, and the name refers to the real terminfo.

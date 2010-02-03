@@ -1,4 +1,4 @@
-.\"	$NetBSD: terminfo.5.in,v 1.2 2010/02/03 15:47:17 wiz Exp $
+.\"	$NetBSD: terminfo.5.in,v 1.3 2010/02/03 18:49:23 snj Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,7 +48,7 @@ to be of any use.
 .Pp
 Entries in
 .Nm
-consist of a number of comma seperated fields.
+consist of a number of comma separated fields.
 White space after each comma is ignored.
 Embedded commas must be escaped by using a backslash.
 Lines beginning with # in the first column are treated as comments.
@@ -56,10 +56,10 @@ Blank lines are ignored.
 .Pp
 The header line must begin in column one and end with a comma.
 Inside the header line are terminal name and aliases,
-seperated by vertical bars, the last one being the long
+separated by vertical bars, the last one being the long
 description of the terminal.
 .Pp
-Capability lines then follow, starting on column two and end with a comma.
+Capability lines then follow, starting on column two and ending with a comma.
 Each capability is listed by its name, followed by its value if applicable.
 Booleans have no values, numeric values are prefixed by # and
 strings are prefixed by =.
@@ -92,13 +92,13 @@ If you need to encode a
 character, it should be escaped as
 .Sy \e200 .
 .Pp
-A delay in milliseconds my appear anywhere in a string capability,
-prefixed with a dollar and enclosed by angled brackets, such as
+A delay in milliseconds may appear anywhere in a string capability,
+prefixed with a dollar sign and enclosed by angled brackets, such as
 .Sy $<5> .
 .Ss String Parameters
-String capabilities sometimes requires parameters.
+String capabilities sometimes require parameters.
 Normally this just involves replacing the parameter with a supplied
-variable, however there are cases where the variable need to be manipulated
+variable; however, there are cases where the variable needs to be manipulated
 or used in conditional expressions.
 A stack is also provided for simple pop and push operations.
 .Pp
@@ -126,7 +126,7 @@ push the dynamic variable [A-Z].
 .Pp
 Static variables persist over
 .Fn tparm
-where-as dyanmic variables do not.
+whereas dynamic variables do not.
 .It Sy %'c'
 char constant c.
 .It Sy %{nn}
@@ -142,7 +142,7 @@ unary operations: pop two parameters and push the result.
 .It Sy %i
 add 1 to parameters 1 and 2.
 .It Sy %? Va expr Sy %t Ic then Sy %e Ic else Sy %;
-If expr equates to zero then contol passes to the optional else part.
+If expr equates to zero then control passes to the optional else part.
 .El
 .Ss Boolean Capabilities
 .Bl -column "enter_near_quality_letter" "setcolor" "TC"
@@ -218,7 +218,7 @@ complies with the
 .St -xcurses4.2
 standard.
 .Pp
-Extentions to the standard are noted in
+Extensions to the standard are noted in
 .Xr tic 1 .
 .Sh AUTHORS
 .An Roy Marples Aq roy@NetBSD.org

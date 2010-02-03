@@ -1,4 +1,4 @@
-.\"	$NetBSD: termcap.3,v 1.2 2010/02/03 15:49:42 wiz Exp $
+.\"	$NetBSD: termcap.3,v 1.3 2010/02/03 18:49:23 snj Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,9 +42,9 @@
 .Lb libtermcap
 .Sh SYNOPSIS
 .In termcap.h
-.Vt char PC;
-.Vt char *BC;
-.Vt char *UP;
+.Vt char PC ;
+.Vt char *BC ;
+.Vt char *UP ;
 .Ft int
 .Fn tgetent "char *bp" "const char *name"
 .Ft int
@@ -56,8 +56,8 @@
 .Ft char *
 .Fn tgoto "const char *cm" "int destcol" "int destline"
 .Sh DESCRIPTION
-These functions extract and use capabilities from a terminal capability data
-base.
+These functions extract and use capabilities from a terminal capability
+database.
 They exist as wrappers around equivalent
 .Xr terminfo 3
 functions, which new code should use.
@@ -82,7 +82,7 @@ The
 function returns -1 if none of the
 .Nm terminfo
 data base files could be opened,
-0 if the terminal name given does not match an entry
+0 if the terminal name given does not match an entry,
 and 1 if all goes well.
 The
 .Fa bp
@@ -117,7 +117,7 @@ argument is unused.
 .Pp
 The
 .Fn tgoto
-fucntion returns a cursor addressing string decoded from
+function returns a cursor addressing string decoded from
 .Fa cm
 to go to column
 .Fa destcol
