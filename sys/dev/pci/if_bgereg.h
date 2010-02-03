@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.55 2010/01/28 03:09:13 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.56 2010/02/03 15:36:36 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1848,6 +1848,7 @@
 #define BGE_MISCCFG_BOARD_ID_MASK	0x0001e000
 #define BGE_MISCCFG_EPHY_IDDQ		0x00200000
 #define BGE_MISCCFG_KEEP_GPHY_POWER	0x04000000
+#define BGE_MISCCFG_GRC_RESET_DISABLE	0x20000000
 
 #define BGE_32BITTIME_66MHZ		(0x41 << 1)
 
