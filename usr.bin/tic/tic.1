@@ -1,4 +1,4 @@
-.\"	$NetBSD: tic.1,v 1.1 2010/02/03 15:16:32 roy Exp $
+.\"	$NetBSD: tic.1,v 1.2 2010/02/03 15:51:09 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,11 +59,9 @@ retains commented out capabilities as non standard.
 Only check for errors, don't write the final database.
 .It Fl o Ar file
 Write the database to
-.Ar file
-.Ns .db
+.Ar file Ns .db
 instead of
-.Ar source
-.Ns .db.
+.Ar source Ns .db .
 .It Fl s
 Display the number of terminal descritions written to the database.
 .It Fl x
@@ -84,9 +82,7 @@ capability from
 .Sy use Ns d
 terminals.
 .Sh EXIT STATUS
-The
-.Nm
-utility exits 0 on success, and >0 if an error occurs.
+.Ex -std tic
 .Sh EXAMPLES
 To maintain your private terminfo definitions, if the system supplied
 ones do not support your terminal:
