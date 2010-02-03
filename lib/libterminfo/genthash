@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: genthash,v 1.1 2010/02/03 15:16:32 roy Exp $
+# $NetBSD: genthash,v 1.2 2010/02/03 20:56:54 roy Exp $
 
 # Copyright (c) 2009 The NetBSD Foundation, Inc.
 #
@@ -40,7 +40,7 @@ cat <<EOF
  * Automatically generated from termcap.c */
 
 #include <sys/cdefs.h>
-__RCSID("\$NetBSD: genthash,v 1.1 2010/02/03 15:16:32 roy Exp $");
+__RCSID("\$NetBSD: genthash,v 1.2 2010/02/03 20:56:54 roy Exp $");
 
 #include <sys/types.h>
 
