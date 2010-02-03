@@ -1,4 +1,4 @@
-.\"	$NetBSD: terminfo.3,v 1.1 2010/02/03 15:16:32 roy Exp $
+.\"	$NetBSD: terminfo.3,v 1.2 2010/02/03 15:47:13 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -102,7 +102,8 @@ function extracts the entry for terminal
 and then calls
 .Fn set_curterm
 to set
-.Va cur_term to it.
+.Va cur_term
+to it.
 If
 .Fa name
 is
@@ -140,7 +141,7 @@ is returned.
 The
 .Fn del_curterm
 function frees space pointed to by
-.Va oterm.
+.Va oterm .
 .Pp
 The
 .Fn tigetflag
@@ -192,7 +193,6 @@ The output from
 .Fn putp
 always goes to stdout.
 .Ss NetBSD Extensions To Terminfo
-.Pp
 The
 .Fn vtparm
 function allows variadic parameters instead of 9 fixed longs.
