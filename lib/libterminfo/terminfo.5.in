@@ -1,4 +1,4 @@
-.\"	$NetBSD: terminfo.5.in,v 1.1 2010/02/03 15:16:32 roy Exp $
+.\"	$NetBSD: terminfo.5.in,v 1.2 2010/02/03 15:47:17 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -209,8 +209,8 @@ Database of terminal descriptions.
 .El
 .Sh SEE ALSO
 .Xr infocmp 1 ,
-.Xr tput 1 ,
 .Xr tic 1 ,
+.Xr tput 1 ,
 .Xr curses 3
 .Sh STANDARDS
 .Nm
