@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1382 2010/02/03 15:34:37 roy Exp $
+#	$NetBSD: mi,v 1.1383 2010/02/03 23:13:28 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2703,7 +2703,7 @@
 ./usr/lib/libtermcap_p.a			comp-c-proflib		profile
 ./usr/lib/libterminfo.a				comp-c-lib
 ./usr/lib/libterminfo_p.a			comp-c-proflib		profile
-./usr/lib/libterminfo_g.a			comp-c-proflib		profile
+./usr/lib/libterminfo_g.a			comp-c-proflib		profile,debuglib
 ./usr/lib/libtermlib.a				comp-c-lib
 ./usr/lib/libtermlib_p.a			comp-c-proflib		profile
 ./usr/lib/libukfs.a				comp-c-lib
