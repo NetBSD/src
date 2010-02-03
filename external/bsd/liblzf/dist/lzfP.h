@@ -106,7 +106,7 @@
  * NOTE: this breaks the prototype in lzf.h.
  */
 #ifndef LZF_STATE_ARG
-# define LZF_STATE_ARG 0
+# define LZF_STATE_ARG 1
 #endif
 
 /*
