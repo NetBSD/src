@@ -1,5 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/24 05:47:05 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.2 2010/02/03 22:07:50 plunky Exp $
 
-SUBDIR=		pcc
+.include <bsd.own.mk>
+
+.if (${MKPCCCMDS} != "no")
+SUBDIR+=	pcc
+.endif
 
 .include <bsd.subdir.mk>
