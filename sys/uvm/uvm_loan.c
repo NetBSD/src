@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.76 2010/02/02 17:40:43 uebayasi Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.77 2010/02/03 14:02:49 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.76 2010/02/02 17:40:43 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.77 2010/02/03 14:02:49 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -638,7 +638,10 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 	 * XXXCDC: duplicate code with uvm_fault().
 	 */
 
+	/* locked: maps(read), amap(if there) */
 	mutex_enter(&uobj->vmobjlock);
+	/* locked: maps(read), amap(if there), uobj */
+
 	if (uobj->pgops->pgo_get) {	/* try locked pgo_get */
 		npages = 1;
 		pg = NULL;
@@ -1188,6 +1191,9 @@ uvm_loanbreak_anon(struct vm_anon *anon, struct uvm_object *uobj)
 {
 	struct vm_page *pg;
 
+	KASSERT(mutex_owned(&anon->an_lock));
+	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
+
 	/* get new un-owned replacement page */
 	pg = uvm_pagealloc(NULL, 0, NULL, 0);
 	if (pg == NULL) {
@@ -1195,8 +1201,7 @@ uvm_loanbreak_anon(struct vm_anon *anon, struct uvm_object *uobj)
 	}
 
 	/*
-	 * copy data, kill loan, and drop uobj lock
-	 * (if any)
+	 * copy data, kill loan, and drop uobj lock (if any)
 	 */
 	/* copy old -> new */
 	uvm_pagecopy(anon->an_page, pg);
@@ -1214,8 +1219,8 @@ uvm_loanbreak_anon(struct vm_anon *anon, struct uvm_object *uobj)
 		anon->an_page->loan_count--;
 	} else {
 		/*
-		 * we were the lender (A->K); need
-		 * to remove the page from pageq's.
+		 * we were the lender (A->K); need to remove the page from
+		 * pageq's.
 		 */
 		uvm_pagedequeue(anon->an_page);
 	}
