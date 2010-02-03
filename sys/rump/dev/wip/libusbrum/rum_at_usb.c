@@ -1,4 +1,4 @@
-/*	$NetBSD: rum_at_usb.c,v 1.1 2009/10/04 10:43:03 pooka Exp $	*/
+/*	$NetBSD: rum_at_usb.c,v 1.2 2010/02/03 21:18:38 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -10,6 +10,9 @@
  * rum @ usb
  *
  * handwritten device configuration.... 'nuf said
+ *
+ * I could convert this to use the new ioconf keyword in config,
+ * except I don't have the hardware for testing anymore ...
  */
 
 static const struct cfiattrdata uroothub_iattrdata = {
