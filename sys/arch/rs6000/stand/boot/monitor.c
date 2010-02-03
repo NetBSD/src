@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.2 2008/04/28 20:23:34 martin Exp $	*/
+/*	$NetBSD: monitor.c,v 1.3 2010/02/03 13:48:17 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ void db_cmd_mt(int, char **);
 void db_cmd_put(int, char **);
 void db_cmd_help(int, char **);
 
-unsigned int mfmsr((void);
+unsigned int mfmsr(void);
 void mtmsr(unsigned int);
 
 int db_atob(char *);
