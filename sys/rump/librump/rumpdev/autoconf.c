@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2009/10/03 19:06:35 pooka Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2010/02/03 21:35:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2009/10/03 19:06:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2010/02/03 21:35:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,36 +41,22 @@ struct mainbus_softc {
 	int mb_nada;
 };
 
-static const struct cfiattrdata mainbus_iattrdata = {
-        "mainbus", 0, {
-		{ NULL, NULL, 0 },
-	}
+/*
+ * Initial lists.  Should ingrate with config better.
+ */
+const struct cfattachinit cfattachinit[] = {
+	{ NULL, NULL },
 };
-static const struct cfiattrdata * const mainbus_attrs[] = {
-	&mainbus_iattrdata,
-	NULL,
+struct cfdata cfdata[] = {
+	{ "mainbus", "mainbus", 0, FSTATE_NOTFOUND, NULL, 0, NULL},
+	{ NULL, NULL, 0, FSTATE_NOTFOUND, NULL, 0, NULL},
 };
-
-CFDRIVER_DECL(mainbus, DV_DULL, mainbus_attrs);
-CFATTACH_DECL_NEW(mainbus, sizeof(struct mainbus_softc),
-	mainbus_match, mainbus_attach, NULL, NULL);
-
 struct cfdriver * const cfdriver_list_initial[] = {
-	&mainbus_cd,
 	NULL
 };
 
-static struct cfattach * const mainbus_cfattachinit[] = {
-	&mainbus_ca, NULL
-};
-const struct cfattachinit cfattachinit[] = {
-	{ "mainbus", mainbus_cfattachinit },
-	{ NULL, NULL },
-};
-
-struct cfdata cfdata[] = {
-	{ "mainbus", "mainbus", 0, FSTATE_NOTFOUND, NULL, 0, NULL},
-};
+CFATTACH_DECL_NEW(mainbus, sizeof(struct mainbus_softc),
+	mainbus_match, mainbus_attach, NULL, NULL);
 
 const short cfroots[] = {
 	0, /* mainbus */
