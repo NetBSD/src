@@ -1,0 +1,38 @@
+#	$NetBSD: UMASS.ioconf,v 1.1 2010/02/03 21:18:38 pooka Exp $
+#
+
+ioconf umass
+
+include "conf/files"
+include "dev/usb/files.usb"
+include "dev/scsipi/files.scsipi"
+
+device mainbus { }
+attach mainbus at root
+device rumpusbhc: usbus, usbroothub
+attach rumpusbhc at mainbus
+
+# ugen0 - ugen3
+mainbus0 at root
+rumpusbhc0 at mainbus0
+rumpusbhc1 at mainbus0
+rumpusbhc2 at mainbus0
+rumpusbhc3 at mainbus0
+
+# USB bus support
+usb*    at rumpusbhc?
+
+# USB ROOT Hub
+#
+# Do *NOT* configure uhub @ uhub.
+# That is not compatible with ugen.
+#
+uhub*   at usb?
+
+# USB Mass Storage
+umass*	at uhub? port ? configuration ? interface ?
+scsibus* at scsi?
+sd*	at scsibus? target ? lun ?
+
+atapibus* at atapi?
+sd*	at atapibus? drive ?

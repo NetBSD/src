@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpusbhc.c,v 1.13 2010/02/03 18:14:56 pooka Exp $	*/
+/*	$NetBSD: rumpusbhc.c,v 1.14 2010/02/03 21:18:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.13 2010/02/03 18:14:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.14 2010/02/03 21:18:38 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -100,43 +100,17 @@ struct rumpusbhc_softc {
 	int sc_conf;
 };
 
-static const struct cfiattrdata usb_iattrdata = {
-        "usbus", 0, {
-		{ NULL, NULL, 0 },
-	}
-};
-static const struct cfiattrdata *const rumpusbhc_attrs[] = {
-	&usb_iattrdata,
-	NULL,
-};
-
 static int	rumpusbhc_probe(struct device *, struct cfdata *, void *);
 static void	rumpusbhc_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL_NEW(rumpusbhc, sizeof(struct rumpusbhc_softc),
 	rumpusbhc_probe, rumpusbhc_attach, NULL, NULL);
-CFDRIVER_DECL(rumpusbhc, DV_DULL, rumpusbhc_attrs);
-
-struct cfparent rumpusbhcpar = {
-	"mainbus",
-	"mainbus",
-	DVUNIT_ANY
-};
 
 struct rusb_xfer {
 	struct usbd_xfer rusb_xfer;
 	int rusb_status; /* now this is a cheap trick */
 };
 #define RUSB(x) ((struct rusb_xfer *)x)
-
-/* probe ugen0 through ugen3 */
-struct cfdata rumpusbhc_cfdata[] = {
-	{ "rumpusbhc", "rumpusbhc", 0, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
-	{ "rumpusbhc", "rumpusbhc", 1, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
-	{ "rumpusbhc", "rumpusbhc", 2, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
-	{ "rumpusbhc", "rumpusbhc", 3, FSTATE_NOTFOUND, NULL, 0, &rumpusbhcpar},
-	{ NULL,		NULL,	    0, 0,		NULL, 0, NULL         },
-};
 
 #define UGENDEV_BASESTR "/dev/ugen"
 #define UGENDEV_BUFSIZE 32
@@ -965,22 +939,6 @@ static const struct usbd_bus_methods rumpusbhc_bus_methods = {
 	.allocx = 	rumpusbhc_allocx,
 	.freex =	rumpusbhc_freex,
 };
-
-void
-rump_dev_rumpusbhc_init()
-{
-	int error;
-
-	error = config_cfdriver_attach(&rumpusbhc_cd);
-	if (error)
-		panic("rumpusbhc cfdriver attach failed: %d", error);
-	error = config_cfattach_attach("rumpusbhc", &rumpusbhc_ca);
-	if (error)
-		panic("rumpusbhc cfattach attach failed: %d", error);
-	error = config_cfdata_attach(rumpusbhc_cfdata, 0);
-	if (error)
-		panic("rumpusbhc cfdata attach failed: %d", error);
-}
 
 static int
 rumpusbhc_probe(struct device *parent, struct cfdata *match, void *aux)

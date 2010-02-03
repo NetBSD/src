@@ -1,1 +1,3 @@
-/*	$NetBSD: atapibus.h,v 1.1 2009/10/01 21:46:30 pooka Exp $	*/
+/*	$NetBSD: atapibus.h,v 1.2 2010/02/03 21:18:38 pooka Exp $	*/
+
+#define NATAPIBUS 1
