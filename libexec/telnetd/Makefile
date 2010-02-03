@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2009/03/16 02:24:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.46 2010/02/03 15:34:43 roy Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
 
 WARNS?=	2		# XXX: const issues in sys_term.c
@@ -12,8 +12,8 @@ CPPFLAGS+=-DLINEMODE -DKLUDGELINEMODE -DDIAGNOSTICS
 CPPFLAGS+=-DOLD_ENVIRON -DENV_HACK -DSECURELOGIN -DSUPPORT_UTMP -DSUPPORT_UTMPX
 SRCS=	authenc.c global.c slc.c state.c sys_term.c telnetd.c \
 	termstat.c utility.c
-DPADD=	${LIBTELNETDIR}/libtelnet.a ${LIBTERMCAP} ${LIBUTIL}
-LDADD+=	${LIBTELNETDIR}/libtelnet.a -ltermcap -lutil
+DPADD=	${LIBTELNETDIR}/libtelnet.a ${LIBTERMINFO} ${LIBUTIL}
+LDADD+=	${LIBTELNETDIR}/libtelnet.a -lterminfo -lutil
 
 CPPFLAGS+=-I${NETBSDSRCDIR}/lib
 CPPFLAGS+=-I${.CURDIR}

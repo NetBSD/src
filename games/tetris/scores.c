@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.18 2009/09/08 13:38:01 dholland Exp $	*/
+/*	$NetBSD: scores.c,v 1.19 2010/02/03 15:34:39 roy Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
-#include <termcap.h>
+#include <term.h>
 #include <unistd.h>
 
 #include "pathnames.h"
@@ -861,7 +861,7 @@ showscores(int level)
 	 * the high scores; we do not need to check for printing in highlight
 	 * mode.  If SOstr is null, we can't do highlighting anyway.
 	 */
-	me = level && SOstr ? thisuser() : NULL;
+	me = level && enter_standout_mode ? thisuser() : NULL;
 
 	/*
 	 * Set times to 0 except for high score on each level.
@@ -939,12 +939,12 @@ printem(int level, int offset, struct highscore *hs, int n, const char *me)
 			    sp->hs_level == level &&
 			    sp->hs_score == score &&
 			    strcmp(sp->hs_name, me) == 0) {
-				putpad(SOstr);
+				putpad(enter_standout_mode);
 				highlight = 1;
 			}
 			(void)printf("%s", buf);
 			if (highlight) {
-				putpad(SEstr);
+				putpad(exit_standout_mode);
 				highlight = 0;
 			}
 

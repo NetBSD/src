@@ -1,4 +1,4 @@
-/*	$NetBSD: acs.c,v 1.16 2008/07/04 16:24:45 tnozaki Exp $	*/
+/*	$NetBSD: acs.c,v 1.17 2010/02/03 15:34:40 roy Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: acs.c,v 1.16 2008/07/04 16:24:45 tnozaki Exp $");
+__RCSID("$NetBSD: acs.c,v 1.17 2010/02/03 15:34:40 roy Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -55,7 +55,7 @@ void
 __init_acs(SCREEN *screen)
 {
 	int		count;
-	char		*aofac;	/* Address of 'ac' */
+	const char	*aofac;	/* Address of 'ac' */
 	unsigned char	acs, term;
 
 	/* Default value '+' for all ACS characters */
@@ -97,10 +97,10 @@ __init_acs(SCREEN *screen)
 	ACS_NEQUAL = '!';
 	ACS_STERLING = 'f';
 
-	if (screen->tc_ac == NULL)
+	if (t_acs_chars(screen->term) == NULL)
 		goto out;
 
-	aofac = screen->tc_ac;
+	aofac = t_acs_chars(screen->term);
 
 	while (*aofac != '\0') {
 		if ((acs = *aofac) == '\0')
@@ -118,8 +118,8 @@ __init_acs(SCREEN *screen)
 #endif
 	}
 
-	if (screen->tc_eA != NULL)
-		t_puts(screen->cursesi_genbuf, screen->tc_eA, 0,
+	if (t_ena_acs(screen->term) != NULL)
+		ti_puts(screen->term, t_ena_acs(screen->term), 0,
 		    __cputchar_args, screen->outfd);
 
 out:
@@ -146,7 +146,7 @@ void
 __init_wacs(SCREEN *screen)
 {
 	int		count;
-	char		*aofac;	/* Address of 'ac' */
+	const char	*aofac;	/* Address of 'ac' */
 	unsigned char	acs, term;
 	char	*lstr;
 
@@ -226,7 +226,7 @@ __init_wacs(SCREEN *screen)
 		WACS_STERLING	 = 0x00A3;
 	}
 
-	if (screen->tc_ac == NULL) {
+	if (t_acs_chars(screen->term) == NULL) {
 #ifdef DEBUG
 		__CTRACE(__CTRACE_INIT,
 		    "__init_wacs: no alternative characters\n" );
@@ -234,7 +234,7 @@ __init_wacs(SCREEN *screen)
 		goto out;
 	}
 
-	aofac = screen->tc_ac;
+	aofac = t_acs_chars(screen->term);
 
 	while (*aofac != '\0') {
 		if ((acs = *aofac) == '\0')
@@ -254,8 +254,8 @@ __init_wacs(SCREEN *screen)
 #endif
 	}
 
-	if (screen->tc_eA != NULL)
-		t_puts(screen->cursesi_genbuf, screen->tc_eA, 0,
+	if (t_ena_acs(screen->term) != NULL)
+		ti_puts(screen->term, t_ena_acs(screen->term), 0,
 			   __cputchar_args, screen->outfd);
 
 out:
