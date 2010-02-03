@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.47 2010/02/03 21:11:24 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.48 2010/02/03 21:15:39 pooka Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -110,6 +110,8 @@ ioconf.c: ${IOCONFIG}
 	# here we want to satisfy our make dependency, so force a
 	# timestamp update
 	touch ioconf.c locators.h
+
+locators.h: ioconf.c
 
 CLEANFILES+= ioconf.c locators.h
 DPSRCS+= ioconf.c locators.h
