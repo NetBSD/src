@@ -1,7 +1,7 @@
 .\"DO NOT EDIT
 .\"Automatically generated from termcap.5.in
 .\"
-.\"	$NetBSD: terminfo.5,v 1.2 2010/02/03 21:02:39 snj Exp $
+.\"	$NetBSD: terminfo.5,v 1.3 2010/02/04 09:45:30 roy Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,7 +54,9 @@ Entries in
 consist of a number of comma separated fields.
 White space after each comma is ignored.
 Embedded commas must be escaped by using a backslash.
-Lines beginning with # in the first column are treated as comments.
+Lines beginning with
+.Sq #
+in the first column are treated as comments.
 Blank lines are ignored.
 .Pp
 The header line must begin in column one and end with a comma.
@@ -64,8 +66,10 @@ description of the terminal.
 .Pp
 Capability lines then follow, starting on column two and ending with a comma.
 Each capability is listed by its name, followed by its value if applicable.
-Booleans have no values, numeric values are prefixed by # and
-strings are prefixed by =.
+Booleans have no values, numeric values are prefixed by
+.Sq #
+and strings are prefixed by
+.Sq = .
 Numbers can range from 0 to 32767 and string values can be up to 1000
 characters long.
 This implementation supports strings upto 32767 characters long, including the
@@ -97,7 +101,7 @@ character, it should be escaped as
 .Pp
 A delay in milliseconds may appear anywhere in a string capability,
 prefixed with a dollar sign and enclosed by angled brackets, such as
-.Sy $<5> .
+.Sy $\*[Lt]5\*[Gt] .
 .Ss String Parameters
 String capabilities sometimes require parameters.
 Normally this just involves replacing the parameter with a supplied
@@ -110,8 +114,13 @@ The below % encodings have the following meanings:
 .It Sy %%
 outputs %
 .It Sy %[[:]flags][width[.precision]][doxXs]
-flags are [-+# ].
-Prefix with : to avoid interpreting %- as an operator.
+flags are
+.Dq [-+#] .
+Prefix with
+.Sq \&:
+to avoid interpreting
+.Dq %-
+as an operator.
 .It Sy %c
 pop a parameter and print the character representation of it.
 .It Sy %s
@@ -629,29 +638,31 @@ vt100\||dec vt100 (w/advanced video),
 am, xenl, msgr, mc5i, xon,
 cols#80, it#8, lines#24, vt#3,
 acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~, bel=^G,
-cr=^M, csr=\eE[%i%p1%d;%p2%dr, tbc=\eE[3g, clear=\eE[H\eE[J$<50>,
-el1=\eE[1K$<3>, el=\eE[K$<3>, ed=\eE[J$<50>,
-cup=\eE[%i%p1%d;%p2%dH$<5>, cud1=^J, home=\eE[H, cub1=^H,
-cuf1=\eE[C$<2>, cuu1=\eE[A$<2>, enacs=\eE(B\eE)0, smacs=^N,
-smam=\eE[?7h, blink=\eE[5m$<2>, bold=\eE[1m$<2>, rev=\eE[7m$<2>,
-smso=\eE[7m$<2>, smul=\eE[4m$<2>, rmacs=^O, rmam=\eE[?7l,
-sgr0=\eE[m017$<2>, rmso=\eE[m$<2>, rmul=\eE[m$<2>, ka1=\eEOq,
+cr=^M, csr=\eE[%i%p1%d;%p2%dr, tbc=\eE[3g, clear=\eE[H\eE[J$\*[Lt]50\*[Gt],
+el1=\eE[1K$\*[Lt]3\*[Gt], el=\eE[K$\*[Lt]3\*[Gt], ed=\eE[J$\*[Lt]50\*[Gt],
+cup=\eE[%i%p1%d;%p2%dH$\*[Lt]5\*[Gt], cud1=^J, home=\eE[H, cub1=^H,
+cuf1=\eE[C$\*[Lt]2\*[Gt], cuu1=\eE[A$\*[Lt]2\*[Gt], enacs=\eE(B\eE)0, smacs=^N,
+smam=\eE[?7h, blink=\eE[5m$\*[Lt]2\*[Gt], bold=\eE[1m$\*[Lt]2\*[Gt], rev=\eE[7m$\*[Lt]2\*[Gt],
+smso=\eE[7m$\*[Lt]2\*[Gt], smul=\eE[4m$\*[Lt]2\*[Gt], rmacs=^O, rmam=\eE[?7l,
+sgr0=\eE[m017$\*[Lt]2\*[Gt], rmso=\eE[m$\*[Lt]2\*[Gt], rmul=\eE[m$\*[Lt]2\*[Gt], ka1=\eEOq,
 ka3=\eEOs, kb2=\eEOr, kbs=^H, kc1=\eEOp, kc3=\eEOn, kcud1=\eEOB,
 kent=\eEOM, kf0=\eEOy, kf1=\eEOP, kf2=\eEOQ, kf3=\eEOR, kf4=\eEOS,
 kf5=\eEOt, kf6=\eEOu, kf7=\eEOv, kf8=\eEOl, kf9=\eEOw, kf10=\eEOx,
-kcub1=\eEOD, kcuf1=\eEOC, kcuu1=\eEOA, rmkx=\eE[?1l\eE>,
+kcub1=\eEOD, kcuf1=\eEOC, kcuu1=\eEOA, rmkx=\eE[?1l\eE\*[Gt],
 smkx=\eE[?1h\eE=, lf1=pf1, lf2=pf2, lf3=pf3, lf4=pf4,
 cud=\eE[%p1%dB, cub=\eE[%p1%dD, cuf=\eE[%p1%dC, cuu=\eE[%p1%dA,
 mc0=\eE[0i, mc4=\eE[4i, mc5=\eE[5i,
-rs2=\eE>\eE[?3l\eE[?4l\eE[?5l\eE[?7h\eE[?8h, rc=\eE8, sc=\eE7,
-ind=^J, ri=\eEM$<5>,
-sgr=\eE[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;m%?%p9%t016%e017%;$<2>,
+rs2=\eE\*[Gt]\eE[?3l\eE[?4l\eE[?5l\eE[?7h\eE[?8h, rc=\eE8, sc=\eE7,
+ind=^J, ri=\eEM$\*[Lt]5\*[Gt],
+sgr=\eE[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;m%?%p9%t016%e017%;$\*[Lt]2\*[Gt],
 hts=\eEH, ht=^I,
 .Ed
 .Ss Fetching Compiled Descriptions
 If the environment variable
 .Ev TERMINFO
-is available, .db is appended to it and only this database is used.
+is available,
+.Pa .db
+is appended to it and only this database is used.
 Otherwise
 .Nm
 will first look for
