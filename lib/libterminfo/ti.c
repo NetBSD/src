@@ -1,4 +1,4 @@
-/* $NetBSD: ti.c,v 1.1 2010/02/03 15:16:32 roy Exp $ */
+/* $NetBSD: ti.c,v 1.2 2010/02/04 09:46:26 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,9 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ti.c,v 1.1 2010/02/03 15:16:32 roy Exp $");
-
-#include <sys/types.h>
+__RCSID("$NetBSD: ti.c,v 1.2 2010/02/04 09:46:26 roy Exp $");
 
 #include <assert.h>
 #include <string.h>
