@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.35 2010/01/14 18:56:02 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.36 2010/02/04 09:13:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -642,13 +642,21 @@ struct livengood_tcpip_ctxdesc {
 #define	RXCSUM_TUOFL	(1U << 9)	/* TCP/UDP checksum offload */
 #define	RXCSUM_IPV6OFL	(1U << 10)	/* IPv6 checksum offload */
 
-#define	WMREG_RXERRC	0x400C	/* receive error Count - R/clr */
+#define	WMREG_CRCERRS	0x4000	/* CRC Error Count */
+#define	WMREG_ALGNERRC	0x4004	/* Alignment Error Count */
+#define	WMREG_SYMERRC	0x4008	/* Symbol Error Count */
+#define	WMREG_RXERRC	0x400c	/* receive error Count - R/clr */
+#define	WMREG_MPC	0x4010	/* Missed Packets Count - R/clr */
 #define	WMREG_COLC	0x4028	/* collision Count - R/clr */
+#define	WMREG_SEC	0x4038	/* Sequence Error Count */
+#define	WMREG_CEXTERR	0x403c	/* Carrier Extension Error Count */
+#define	WMREG_RLEC	0x4040	/* Receive Length Error Count */
 #define	WMREG_XONRXC	0x4048	/* XON Rx Count - R/clr */
 #define	WMREG_XONTXC	0x404c	/* XON Tx Count - R/clr */
 #define	WMREG_XOFFRXC	0x4050	/* XOFF Rx Count - R/clr */
 #define	WMREG_XOFFTXC	0x4054	/* XOFF Tx Count - R/clr */
 #define	WMREG_FCRUC	0x4058	/* Flow Control Rx Unsupported Count - R/clr */
+#define WMREG_RNBC	0x40a0	/* Receive No Buffers Count */
 
 #define	WMREG_KUMCTRLSTA 0x0034	/* MAC-PHY interface - RW */
 #define	KUMCTRLSTA_MASK			0x0000FFFF
