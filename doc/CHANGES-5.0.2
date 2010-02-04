@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.2,v 1.1.2.51 2010/01/30 21:25:14 snj Exp $
+# $NetBSD: CHANGES-5.0.2,v 1.1.2.52 2010/02/04 19:50:20 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.1 release to the NetBSD 5.0.2
 release:
@@ -1127,12 +1127,6 @@ xsrc/xfree/xc/extras/expat/lib/xmlparse.c	1.2
 	Add patch from upstream CVS to fix CVE-2009-3560 (possible DOS due to
 	crash on bad input).
 	[tron, ticket #1284]
-
-sys/dev/ic/mfi.c				1.31
-
-	bio(4) is MP-safe but mfi(4) is not. So get the kernel_lock at
-	mfi_ioctl() entry and release it on exit.
-	[bouyer, #ticket 1257]
 
 sys/dev/cgd.c					1.69
 sys/dev/ata/wd.c				1.383 via patch
