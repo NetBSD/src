@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.193 2010/02/03 00:51:12 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.194 2010/02/04 06:49:53 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16654,4 +16654,19 @@ external/bsd/pkg_install/dist/x509/pkgsrc.sh	pkg_install-20100130
 	- synced license list
 	- use connection cache from libfetch
 	[joerg, ticket #1295]
+
+external/bsd/pkg_install/dist/add/perform.c		patch
+external/bsd/pkg_install/dist/bpm/bpm.1			patch
+external/bsd/pkg_install/dist/bpm/bpm.sh.in		patch
+external/bsd/pkg_install/dist/delete/pkg_delete.c	patch
+external/bsd/pkg_install/dist/lib/defs.h		patch
+external/bsd/pkg_install/dist/lib/lib.h			patch
+external/bsd/pkg_install/dist/lib/version.c		patch
+external/bsd/pkg_install/dist/lib/version.h		patch
+
+	Update pkg_install to 20100204.
+	- Restore PKG_PREFIX in pkg_delete (PR 42731)
+	- Ensure that the current pkg_install version is at least as new
+	  as the version used to build the package
+	[joerg, ticket #1298]
 
