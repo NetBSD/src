@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.856 2010/02/03 15:34:37 roy Exp $
+# $NetBSD: mi,v 1.857 2010/02/04 14:04:59 roy Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3542,7 +3542,7 @@
 ./usr/share/man/man9/x68k			base-man-share
 ./usr/share/man/whatis.db			base-man-share		man
 ./usr/share/me					base-groff-share
-./usr/share/misc				base-termcap-share
+./usr/share/misc				base-terminfo-share
 ./usr/share/misc/acronyms			base-reference-share	share
 ./usr/share/misc/acronyms.comp			base-reference-share	share
 ./usr/share/misc/ascii				base-reference-share	share
@@ -3557,8 +3557,6 @@
 ./usr/share/misc/map3270			base-obsolete		obsolete
 ./usr/share/misc/more.help			base-obsolete		obsolete
 ./usr/share/misc/nslookup.help			base-obsolete		obsolete
-./usr/share/misc/termcap			base-obsolete		obsolete
-./usr/share/misc/termcap.db			base-obsolete		obsolete
 ./usr/share/misc/terminfo			base-terminfo-share	share
 ./usr/share/misc/terminfo.db			base-terminfo-share	share
 ./usr/share/misc/units.lib			base-reference-share	share
