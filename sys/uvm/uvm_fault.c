@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.159 2010/02/04 03:19:08 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.160 2010/02/04 03:32:21 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.159 2010/02/04 03:19:08 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.160 2010/02/04 03:32:21 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -706,7 +706,7 @@ struct uvm_faultctx {
 	bool cow_now;
 };
 
-static int uvm_fault_check(
+static inline int uvm_fault_check(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct vm_anon ***, struct vm_page ***);
 
@@ -716,28 +716,23 @@ static int uvm_fault_upper(
 static inline int uvm_fault_upper_lookup(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct vm_anon **, struct vm_page **);
-static inline void uvm_fault_upper_lookup1(
-    struct uvm_faultinfo *, struct uvm_faultctx *, bool);
-static void uvm_fault_upper_lookup_neighbor(
+static inline void uvm_fault_upper_lookup_neighbor(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     vaddr_t, struct vm_anon *);
-static int uvm_fault_upper_loan(
+static inline int uvm_fault_upper_loan(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct vm_anon *, struct uvm_object **);
-static int uvm_fault_upper1(
+static inline int uvm_fault_upper_promote(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct uvm_object *, struct vm_anon *);
-static int uvm_fault_upper_promote(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct uvm_object *, struct vm_anon *);
-static int uvm_fault_upper_direct(
+static inline int uvm_fault_upper_direct(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct uvm_object *, struct vm_anon *);
 static int uvm_fault_upper_enter(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct uvm_object *, struct vm_anon *,
     struct vm_page *, struct vm_anon *);
-static int uvm_fault_upper_done(
+static inline int uvm_fault_upper_done(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct uvm_object *, struct vm_anon *,
     struct vm_page *, struct vm_anon *);
@@ -745,41 +740,35 @@ static int uvm_fault_upper_done(
 static int uvm_fault_lower(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct vm_page **);
-static int uvm_fault_lower_special(
+static inline int uvm_fault_lower_special(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct vm_page **);
-static int uvm_fault_lower_generic_lookup(
+static inline int uvm_fault_lower_generic_lookup(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct vm_page **);
-static void uvm_fault_lower_generic_lookup_neighbor(
+static inline void uvm_fault_lower_generic_lookup_neighbor(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     vaddr_t, struct vm_page *);
-static int uvm_fault_lower_generic(
+static inline int uvm_fault_lower_generic(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct vm_page **);
-static int uvm_fault_lower_generic1(
+static inline int uvm_fault_lower_generic1(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct uvm_object *, struct vm_page *);
-static int uvm_fault_lower_generic2(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct uvm_object *, struct vm_page *);
-static int uvm_fault_lower_generic3(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct uvm_object *, struct vm_page *, bool);
-static int uvm_fault_lower_generic_io(
+static inline int uvm_fault_lower_generic_io(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct uvm_object **, struct vm_page **);
-static int uvm_fault_lower_generic_direct(
+static inline int uvm_fault_lower_generic_direct(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct uvm_object *, struct vm_page *);
-static int uvm_fault_lower_generic_promote(
+static inline int uvm_fault_lower_generic_promote(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct uvm_object *, struct vm_page *);
 static int uvm_fault_lower_generic_enter(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct uvm_object *,
     struct vm_anon *, struct vm_page *, struct vm_page *);
-static int uvm_fault_lower_generic_done(
+static inline int uvm_fault_lower_generic_done(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct uvm_object *,
     struct vm_anon *, struct vm_page *);
@@ -1108,7 +1097,19 @@ uvm_fault_upper_lookup(
 		}
 	}
 
-	uvm_fault_upper_lookup1(ufi, flt, shadowed);
+	/* locked: maps(read), amap(if there) */
+	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
+	/* (shadowed == true) if there is an anon at the faulting address */
+	UVMHIST_LOG(maphist, "  shadowed=%d, will_get=%d", shadowed,
+	    (uobj && shadowed != false),0,0);
+
+	/*
+	 * note that if we are really short of RAM we could sleep in the above
+	 * call to pmap_enter with everything locked.   bad?
+	 *
+	 * XXX Actually, that is bad; pmap_enter() should just fail in that
+	 * XXX case.  --thorpej
+	 */
 
 	return 0;
 }
@@ -1149,33 +1150,6 @@ uvm_fault_upper_lookup_neighbor(
 uvm_fault_upper_lookup_enter_done:
 	pmap_update(ufi->orig_map->pmap);
 	mutex_exit(&anon->an_lock);
-}
-
-static inline void
-uvm_fault_upper_lookup1(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	bool shadowed)
-{
-#ifdef DIAGNOSTIC
-	struct vm_amap *amap = ufi->entry->aref.ar_amap;
-#endif
-#ifdef UVMHIST
-	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
-#endif
-
-	/* locked: maps(read), amap(if there) */
-	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
-	/* (shadowed == true) if there is an anon at the faulting address */
-	UVMHIST_LOG(maphist, "  shadowed=%d, will_get=%d", shadowed,
-	    (uobj && shadowed != false),0,0);
-
-	/*
-	 * note that if we are really short of RAM we could sleep in the above
-	 * call to pmap_enter with everything locked.   bad?
-	 *
-	 * XXX Actually, that is bad; pmap_enter() should just fail in that
-	 * XXX case.  --thorpej
-	 */
 }
 
 static int
@@ -1231,7 +1205,9 @@ uvm_fault_lower_generic(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_page **pages)
 {
+	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
+	struct vm_page *uobjpage;
 
 	/*
 	 * now, if the desired page is not shadowed by the amap and we have
@@ -1243,11 +1219,37 @@ uvm_fault_lower_generic(
 
 	if (uobj == NULL) {
 		/* zero fill; don't care neighbor pages */
-		pages[flt->centeridx] = NULL;
+		uobjpage = NULL;
 	} else {
 		uvm_fault_lower_generic_lookup(ufi, flt, pages);
+		uobjpage = pages[flt->centeridx];
 	}
-	return uvm_fault_lower_generic1(ufi, flt, uobj, pages[flt->centeridx]);
+
+	/* locked: maps(read), amap(if there), uobj(if !null), uobjpage(if !null) */
+	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
+	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
+	KASSERT(uobjpage == NULL || (uobjpage->flags & PG_BUSY) != 0);
+
+	/*
+	 * note that at this point we are done with any front or back pages.
+	 * we are now going to focus on the center page (i.e. the one we've
+	 * faulted on).  if we have faulted on the upper (anon) layer
+	 * [i.e. case 1], then the anon we want is anons[centeridx] (we have
+	 * not touched it yet).  if we have faulted on the bottom (uobj)
+	 * layer [i.e. case 2] and the page was both present and available,
+	 * then we've got a pointer to it as "uobjpage" and we've already
+	 * made it BUSY.
+	 */
+
+	/*
+	 * there are four possible cases we must address: 1A, 1B, 2A, and 2B
+	 */
+
+	/*
+	 * redirect case 2: if we are not shadowed, go to case 2.
+	 */
+
+	return uvm_fault_lower_generic1(ufi, flt, uobj, uobjpage);
 }
 
 static int
@@ -1361,42 +1363,6 @@ uvm_fault_lower_generic_lookup_neighbor(
 }
 
 static int
-uvm_fault_lower_generic1(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct uvm_object *uobj, struct vm_page *uobjpage)
-{
-#ifdef DIAGNOSTIC
-	struct vm_amap *amap = ufi->entry->aref.ar_amap;
-#endif
-
-	/* locked: maps(read), amap(if there), uobj(if !null), uobjpage(if !null) */
-	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
-	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
-	KASSERT(uobjpage == NULL || (uobjpage->flags & PG_BUSY) != 0);
-
-	/*
-	 * note that at this point we are done with any front or back pages.
-	 * we are now going to focus on the center page (i.e. the one we've
-	 * faulted on).  if we have faulted on the upper (anon) layer
-	 * [i.e. case 1], then the anon we want is anons[centeridx] (we have
-	 * not touched it yet).  if we have faulted on the bottom (uobj)
-	 * layer [i.e. case 2] and the page was both present and available,
-	 * then we've got a pointer to it as "uobjpage" and we've already
-	 * made it BUSY.
-	 */
-
-	/*
-	 * there are four possible cases we must address: 1A, 1B, 2A, and 2B
-	 */
-
-	/*
-	 * redirect case 2: if we are not shadowed, go to case 2.
-	 */
-
-	return uvm_fault_lower_generic2(ufi, flt, uobj, uobjpage);
-}
-
-static int
 uvm_fault_upper(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_anon **anons)
@@ -1470,7 +1436,26 @@ uvm_fault_upper(
 		if (error != 0)
 			return error;
 	}
-	return uvm_fault_upper1(ufi, flt, uobj, anon);
+
+	/*
+	 * if we are case 1B then we will need to allocate a new blank
+	 * anon to transfer the data into.   note that we have a lock
+	 * on anon, so no one can busy or release the page until we are done.
+	 * also note that the ref count can't drop to zero here because
+	 * it is > 1 and we are only dropping one ref.
+	 *
+	 * in the (hopefully very rare) case that we are out of RAM we
+	 * will unlock, wait for more RAM, and refault.
+	 *
+	 * if we are out of anon VM we kill the process (XXX: could wait?).
+	 */
+
+	if (flt->cow_now && anon->an_ref > 1) {
+		error = uvm_fault_upper_promote(ufi, flt, uobj, anon);
+	} else {
+		error = uvm_fault_upper_direct(ufi, flt, uobj, anon);
+	}
+	return error;
 }
 
 static int
@@ -1516,34 +1501,6 @@ uvm_fault_upper_loan(
 			if (*ruobj)
 				*ruobj = NULL;
 		}
-	}
-	return error;
-}
-
-static int
-uvm_fault_upper1(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct uvm_object *uobj, struct vm_anon *anon)
-{
-	int error;
-
-	/*
-	 * if we are case 1B then we will need to allocate a new blank
-	 * anon to transfer the data into.   note that we have a lock
-	 * on anon, so no one can busy or release the page until we are done.
-	 * also note that the ref count can't drop to zero here because
-	 * it is > 1 and we are only dropping one ref.
-	 *
-	 * in the (hopefully very rare) case that we are out of RAM we
-	 * will unlock, wait for more RAM, and refault.
-	 *
-	 * if we are out of anon VM we kill the process (XXX: could wait?).
-	 */
-
-	if (flt->cow_now && anon->an_ref > 1) {
-		error = uvm_fault_upper_promote(ufi, flt, uobj, anon);
-	} else {
-		error = uvm_fault_upper_direct(ufi, flt, uobj, anon);
 	}
 	return error;
 }
@@ -1696,7 +1653,7 @@ uvm_fault_upper_done(
 }
 
 static int
-uvm_fault_lower_generic2(
+uvm_fault_lower_generic1(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct uvm_object *uobj, struct vm_page *uobjpage)
 {
@@ -1752,7 +1709,33 @@ uvm_fault_lower_generic2(
 		if (error != 0)
 			return error;
 	}
-	return uvm_fault_lower_generic3(ufi, flt, uobj, uobjpage, promote);
+
+	/*
+	 * locked:
+	 * maps(read), amap(if !null), uobj(if !null), uobjpage(if uobj)
+	 */
+	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
+	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
+	KASSERT(uobj == NULL || (uobjpage->flags & PG_BUSY) != 0);
+
+	/*
+	 * notes:
+	 *  - at this point uobjpage can not be NULL
+	 *  - at this point uobjpage can not be PG_RELEASED (since we checked
+	 *  for it above)
+	 *  - at this point uobjpage could be PG_WANTED (handle later)
+	 */
+
+	KASSERT(uobj == NULL || uobj == uobjpage->uobject);
+	KASSERT(uobj == NULL || !UVM_OBJ_IS_CLEAN(uobjpage->uobject) ||
+	    (uobjpage->flags & PG_CLEAN) != 0);
+
+	if (promote == false) {
+		error = uvm_fault_lower_generic_direct(ufi, flt, uobj, uobjpage);
+	} else {
+		error = uvm_fault_lower_generic_promote(ufi, flt, uobj, uobjpage);
+	}
+	return error;
 }
 
 static int
@@ -1880,44 +1863,6 @@ uvm_fault_lower_generic_io(
 	*ruobj = uobj;
 	*ruobjpage = pg;
 	return 0;
-}
-
-int
-uvm_fault_lower_generic3(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct uvm_object *uobj, struct vm_page *uobjpage, bool promote)
-{
-#ifdef DIAGNOSTIC
-	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
-#endif
-	int error;
-
-	/*
-	 * locked:
-	 * maps(read), amap(if !null), uobj(if !null), uobjpage(if uobj)
-	 */
-	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
-	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
-	KASSERT(uobj == NULL || (uobjpage->flags & PG_BUSY) != 0);
-
-	/*
-	 * notes:
-	 *  - at this point uobjpage can not be NULL
-	 *  - at this point uobjpage can not be PG_RELEASED (since we checked
-	 *  for it above)
-	 *  - at this point uobjpage could be PG_WANTED (handle later)
-	 */
-
-	KASSERT(uobj == NULL || uobj == uobjpage->uobject);
-	KASSERT(uobj == NULL || !UVM_OBJ_IS_CLEAN(uobjpage->uobject) ||
-	    (uobjpage->flags & PG_CLEAN) != 0);
-
-	if (promote == false) {
-		error = uvm_fault_lower_generic_direct(ufi, flt, uobj, uobjpage);
-	} else {
-		error = uvm_fault_lower_generic_promote(ufi, flt, uobj, uobjpage);
-	}
-	return error;
 }
 
 static int
