@@ -1,32 +1,11 @@
-#	$NetBSD: UKBD.ioconf,v 1.1 2010/02/03 21:18:38 pooka Exp $
+#	$NetBSD: UKBD.ioconf,v 1.2 2010/02/04 00:37:08 pooka Exp $
 #
 
 ioconf ukbd
 
 include "conf/files"
 include "dev/usb/files.usb"
-
-device mainbus { }
-attach mainbus at root
-device rumpusbhc: usbus, usbroothub
-attach rumpusbhc at mainbus
-
-# ugen0 - ugen3
-mainbus0 at root
-rumpusbhc0 at mainbus0
-rumpusbhc1 at mainbus0
-rumpusbhc2 at mainbus0
-rumpusbhc3 at mainbus0
-
-# USB bus support
-usb*    at rumpusbhc?
-
-# USB ROOT Hub
-#
-# Do *NOT* configure uhub @ uhub.
-# That is not compatible with ugen.
-#
-uhub*   at usb?
+include "rump/dev/wip/files.rump"
 
 # USB HID device
 uhidev* at uhub? port ? configuration ? interface ?
