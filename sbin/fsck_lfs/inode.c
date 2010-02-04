@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.40 2008/10/09 16:56:23 christos Exp $	 */
+/* $NetBSD: inode.c,v 1.41 2010/02/04 23:55:43 christos Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -520,9 +520,7 @@ void
 pinode(ino_t ino)
 {
 	struct ufs1_dinode *dp;
-	char *p;
 	struct passwd *pw;
-	time_t t;
 
 	printf(" I=%llu ", (unsigned long long)ino);
 	if (ino < ROOTINO || ino >= maxino)
@@ -540,9 +538,7 @@ pinode(ino_t ino)
 		if (preen)
 			printf("%s: ", cdevname());
 		printf("SIZE=%llu ", (unsigned long long) dp->di_size);
-		t = dp->di_mtime;
-		p = ctime(&t);
-		printf("MTIME=%12.12s %4.4s ", &p[4], &p[20]);
+		printf("MTIME=%s ", print_mtime(dp->di_mtime));
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.30 2009/10/19 18:41:08 bouyer Exp $	*/
+/*	$NetBSD: inode.c,v 1.31 2010/02/04 23:55:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.30 2009/10/19 18:41:08 bouyer Exp $");
+__RCSID("$NetBSD: inode.c,v 1.31 2010/02/04 23:55:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -612,9 +612,7 @@ void
 pinode(ino_t ino)
 {
 	struct ext2fs_dinode *dp;
-	char *p;
 	struct passwd *pw;
-	time_t t;
 	uid_t uid;
 
 	printf(" I=%llu ", (unsigned long long)ino);
@@ -635,9 +633,7 @@ pinode(ino_t ino)
 	if (preen)
 		printf("%s: ", cdevname());
 	printf("SIZE=%llu ", (long long)inosize(dp));
-	t = fs2h32(dp->e2di_mtime);
-	p = ctime(&t);
-	printf("MTIME=%12.12s %4.4s ", &p[4], &p[20]);
+	printf("MTIME=%s ", print_mtime(fs2h32(dp->e2di_mtime)));
 }
 
 void

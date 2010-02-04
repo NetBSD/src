@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.18 2008/03/16 23:17:55 lukem Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.19 2010/02/04 23:55:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsutil.c,v 1.18 2008/03/16 23:17:55 lukem Exp $");
+__RCSID("$NetBSD: fsutil.c,v 1.19 2010/02/04 23:55:42 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -243,4 +243,16 @@ retry:
 	 * let the user decide whether to use it.
 	 */
 	return (origname);
+}
+
+const char *
+print_mtime(time_t t)
+{
+	static char b[128];
+	char *p = ctime(&t);
+	if (p != NULL)
+		(void)snprintf(b, sizeof(b), "%12.12s %4.4s ", &p[4], &p[20]);
+	else
+		(void)snprintf(b, sizeof(b), "%lld ", (long long)t);
+	return b;
 }
