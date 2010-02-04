@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.196 2010/02/04 09:13:23 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.197 2010/02/04 10:20:54 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.196 2010/02/04 09:13:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.197 2010/02/04 10:20:54 msaitoh Exp $");
 
 #include "rnd.h"
 
@@ -2595,7 +2595,6 @@ wm_intr(void *arg)
 		}
 
 		if (icr & ICR_RXO) {
-			ifp->if_ierrors++;
 #if defined(WM_DEBUG)
 			log(LOG_WARNING, "%s: Receive overrun\n",
 			    device_xname(sc->sc_dev));
