@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.128 2009/09/16 15:23:05 pooka Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.129 2010/02/04 21:48:35 joerg Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,8 +62,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.128 2009/09/16 15:23:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.129 2010/02/04 21:48:35 joerg Exp $");
 
+#include "opt_gateway.h"
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #include "opt_ipsec.h"
