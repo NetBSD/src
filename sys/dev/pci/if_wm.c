@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.195 2010/01/22 08:56:06 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.196 2010/02/04 09:13:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.195 2010/01/22 08:56:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.196 2010/02/04 09:13:23 msaitoh Exp $");
 
 #include "rnd.h"
 
@@ -2830,7 +2830,6 @@ wm_rxintr(struct wm_softc *sc)
 		 */
 		if (errors &
 		     (WRX_ER_CE|WRX_ER_SE|WRX_ER_SEQ|WRX_ER_CXE|WRX_ER_RXE)) {
-			ifp->if_ierrors++;
 			if (errors & WRX_ER_SE)
 				log(LOG_WARNING, "%s: symbol error\n",
 				    device_xname(sc->sc_dev));
@@ -3083,7 +3082,15 @@ wm_tick(void *arg)
 	}
 
 	ifp->if_collisions += CSR_READ(sc, WMREG_COLC);
-	ifp->if_ierrors += CSR_READ(sc, WMREG_RXERRC);
+	ifp->if_ierrors += 0ULL + /* ensure quad_t */
+	    + CSR_READ(sc, WMREG_CRCERRS)
+	    + CSR_READ(sc, WMREG_ALGNERRC)
+	    + CSR_READ(sc, WMREG_SYMERRC)
+	    + CSR_READ(sc, WMREG_RXERRC)
+	    + CSR_READ(sc, WMREG_SEC)
+	    + CSR_READ(sc, WMREG_CEXTERR)
+	    + CSR_READ(sc, WMREG_RLEC);
+	ifp->if_iqdrops += CSR_READ(sc, WMREG_MPC) + CSR_READ(sc, WMREG_RNBC);
 
 	if (sc->sc_flags & WM_F_HAS_MII)
 		mii_tick(&sc->sc_mii);
