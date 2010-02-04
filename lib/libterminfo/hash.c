@@ -1,9 +1,13 @@
-/* $NetBSD: hash.c,v 1.2 2010/02/04 09:46:26 roy Exp $ */
+/* $NetBSD: hash.c,v 1.3 2010/02/04 12:25:08 roy Exp $ */
 /* DO NOT EDIT
  * Automatically generated from term.h */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash.c,v 1.2 2010/02/04 09:46:26 roy Exp $");
+__RCSID("$NetBSD: hash.c,v 1.3 2010/02/04 12:25:08 roy Exp $");
 
 #include <stdint.h>
 #include <stdlib.h>
