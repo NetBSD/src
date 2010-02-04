@@ -1,4 +1,4 @@
-.\"	$NetBSD: terminfo.3,v 1.3 2010/02/03 18:49:23 snj Exp $
+.\"	$NetBSD: terminfo.3,v 1.4 2010/02/04 09:12:56 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -109,10 +109,10 @@ If
 is
 .Dv NULL
 then it is replaced by the environment variable
-.Va TERM .
+.Ev TERM .
 The
 .Fn setupterm
-function returns 0 on success and -1 on error.
+function returns 0 on success and \-1 on error.
 .Va errret
 is set to \-1 if the
 .Nm terminfo
@@ -169,7 +169,11 @@ with the parameters
 .Va p9
 applied.
 Some capabilities require string parameters and only platforms that can fit
-a char * pointer inside a long can use them.
+a
+.Vt char *
+pointer inside a
+.Vt long
+can use them.
 The string encoding and parameter application is described in
 .Xr terminfo 5 .
 .Pp
@@ -197,8 +201,10 @@ The
 .Fn vtparm
 function allows variadic parameters instead of 9 fixed longs.
 Numeric parameters must be longs.
-String parameters can be used even if the platform cannot fit a char * into
-a long.
+String parameters can be used even if the platform cannot fit a
+.Vt char *
+into a
+.Vt long .
 .Pp
 The
 .Fn ti_*
