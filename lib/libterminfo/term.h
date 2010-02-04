@@ -1,4 +1,4 @@
-/* $NetBSD: term.h,v 1.1 2010/02/03 15:16:32 roy Exp $ */
+/* $NetBSD: term.h,v 1.2 2010/02/04 09:46:26 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,8 +29,6 @@
 
 #ifndef _TERM_H_
 #define	_TERM_H_
-
-#include <sys/types.h>
 
 #ifndef ERR
 #define	ERR	(-1)	/* Error return */
