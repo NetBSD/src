@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.77 2010/01/30 02:46:52 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.78 2010/02/04 18:06:53 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.77 2010/01/30 02:46:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.78 2010/02/04 18:06:53 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -888,7 +888,8 @@ sme_acadapter_check(void)
 		if (edata->units == ENVSYS_INDICATOR) {
 			sensor = true;
 			/* refresh current sensor */
-			(*sme->sme_refresh)(sme, edata);
+			if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0)
+				(*sme->sme_refresh)(sme, edata);
 			if (edata->value_cur)
 				return false;
 		}
