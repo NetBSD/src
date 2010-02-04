@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.20 2009/10/19 18:41:08 bouyer Exp $	*/
+/*	$NetBSD: pass1.c,v 1.21 2010/02/04 23:55:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.20 2009/10/19 18:41:08 bouyer Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.21 2010/02/04 23:55:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,10 +201,9 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	}
 	lastino = inumber;
 	if (dp->e2di_dtime != 0) {
-		time_t t = fs2h32(dp->e2di_dtime);
-		char *p = ctime(&t);
-		pwarn("INODE I=%llu HAS DTIME=%12.12s %4.4s",
-		    (unsigned long long)inumber, &p[4], &p[20]);
+		pwarn("INODE I=%llu HAS DTIME=%s",
+		    (unsigned long long)inumber,
+		    print_mtime(fs2h32(dp->e2di_dtime)));
 		if (preen) {
 			printf(" (CORRECTED)\n");
 		}

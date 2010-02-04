@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.h,v 1.14 2009/10/21 01:07:46 snj Exp $	*/
+/*	$NetBSD: fsutil.h,v 1.15 2010/02/04 23:55:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -44,6 +44,7 @@ const char *blockcheck(const char *);
 const char *cdevname(void);
 void setcdevname(const char *, int);
 int  hotroot(void);
+const char *print_mtime(time_t);
 
 #define CHECK_PREEN	1
 #define	CHECK_VERBOSE	2
