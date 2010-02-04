@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.67 2009/11/11 22:19:22 joerg Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.68 2010/02/04 21:48:35 joerg Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,8 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.67 2009/11/11 22:19:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.68 2010/02/04 21:48:35 joerg Exp $");
 
+#include "opt_gateway.h"
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
 
