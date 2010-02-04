@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.207 2009/12/26 11:00:46 mbalmer Exp $
+$NetBSD: UPDATING,v 1.208 2010/02/04 22:25:21 roy Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,13 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20100204:
+	The termcap database has been removed from the sources,
+	but has not been marked obsolete so it is not removed
+	from the system when upgrading.
+	As such, you will need to remove them from your object
+	and destination directories.
 
 20091101:
         After updating, it may be necessary to make the 'cleandir'
