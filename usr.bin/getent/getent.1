@@ -1,4 +1,4 @@
-.\"	$NetBSD: getent.1,v 1.20 2010/02/03 18:11:18 roy Exp $
+.\"	$NetBSD: getent.1,v 1.21 2010/02/04 09:48:35 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,17 +93,18 @@ supports enumeration, all entries for
 .Ar database
 will be retrieved using the appropriate enumeration function and printed.
 .Pp
-For 
+For
 .Xr cgetcap 3
-style databases (
-.Sy disktab ,
-.Sy printcap)
+style databases
+.Sy ( disktab ,
+.Sy printcap )
 specifying a key, lists the entry for that key, and specifying more arguments
 after the key are used as fields in that key, and only the values of the keys
 are returned.
 For boolean keys
 .Dv true
-is returned if the key is found. If a key is not found, then
+is returned if the key is found.
+If a key is not found, then
 .Dv false
 is always
 returned.
@@ -125,8 +126,8 @@ or 3 if there is no support for enumeration on
 .Xr networks 5 ,
 .Xr nsswitch.conf 5 ,
 .Xr passwd 5 ,
-.Xr protocols 5 ,
 .Xr printcap 5 ,
+.Xr protocols 5 ,
 .Xr rpc 5 ,
 .Xr services 5 ,
 .Xr shells 5
