@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.79 2010/01/19 22:08:00 pooka Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.80 2010/02/04 21:48:11 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,8 +96,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.79 2010/01/19 22:08:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.80 2010/02/04 21:48:11 joerg Exp $");
 
+#include "opt_gateway.h"
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_iso.h"
