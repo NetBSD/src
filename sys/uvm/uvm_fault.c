@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.158 2010/02/03 12:40:39 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.159 2010/02/04 03:19:08 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.158 2010/02/03 12:40:39 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.159 2010/02/04 03:19:08 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -709,26 +709,80 @@ struct uvm_faultctx {
 static int uvm_fault_check(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct vm_anon ***, struct vm_page ***);
-typedef int uvm_fault_upper_subfunc_t(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct vm_anon **, struct vm_page **);
-static uvm_fault_upper_subfunc_t uvm_fault_upper_lookup;
-typedef int uvm_fault_lower_subfunc_t(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct vm_page **);
-static uvm_fault_lower_subfunc_t uvm_fault_lower;
-static uvm_fault_lower_subfunc_t uvm_fault_lower_special;
-static uvm_fault_lower_subfunc_t uvm_fault_lower_generic_lookup;
-static uvm_fault_lower_subfunc_t uvm_fault_lower_generic;
+
 static int uvm_fault_upper(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct vm_anon **);
+static inline int uvm_fault_upper_lookup(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct vm_anon **, struct vm_page **);
+static inline void uvm_fault_upper_lookup1(
+    struct uvm_faultinfo *, struct uvm_faultctx *, bool);
+static void uvm_fault_upper_lookup_neighbor(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    vaddr_t, struct vm_anon *);
+static int uvm_fault_upper_loan(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct vm_anon *, struct uvm_object **);
+static int uvm_fault_upper1(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct uvm_object *, struct vm_anon *);
+static int uvm_fault_upper_promote(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct uvm_object *, struct vm_anon *);
+static int uvm_fault_upper_direct(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct uvm_object *, struct vm_anon *);
+static int uvm_fault_upper_enter(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct uvm_object *, struct vm_anon *,
+    struct vm_page *, struct vm_anon *);
+static int uvm_fault_upper_done(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct uvm_object *, struct vm_anon *,
+    struct vm_page *, struct vm_anon *);
+
+static int uvm_fault_lower(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct vm_page **);
+static int uvm_fault_lower_special(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct vm_page **);
+static int uvm_fault_lower_generic_lookup(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct vm_page **);
+static void uvm_fault_lower_generic_lookup_neighbor(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    vaddr_t, struct vm_page *);
+static int uvm_fault_lower_generic(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct vm_page **);
 static int uvm_fault_lower_generic1(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct uvm_object *, struct vm_page *);
 static int uvm_fault_lower_generic2(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct uvm_object *, struct vm_page *);
+static int uvm_fault_lower_generic3(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct uvm_object *, struct vm_page *, bool);
+static int uvm_fault_lower_generic_io(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct uvm_object **, struct vm_page **);
+static int uvm_fault_lower_generic_direct(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct uvm_object *, struct vm_page *);
+static int uvm_fault_lower_generic_promote(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct uvm_object *, struct vm_page *);
+static int uvm_fault_lower_generic_enter(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct uvm_object *,
+    struct vm_anon *, struct vm_page *, struct vm_page *);
+static int uvm_fault_lower_generic_done(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct uvm_object *,
+    struct vm_anon *, struct vm_page *);
 
 int
 uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
@@ -1002,15 +1056,6 @@ uvm_fault_check(
 	return 0;
 }
 
-static inline void
-uvm_fault_upper_lookup1(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	bool shadowed);
-static void
-uvm_fault_upper_lookup_neighbor(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	vaddr_t currva, struct vm_anon *anon);
-
 static int
 uvm_fault_upper_lookup(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
@@ -1181,10 +1226,6 @@ uvm_fault_lower_special(
 	return error;
 }
 
-static void uvm_fault_lower_generic_lookup_neighbor(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    vaddr_t, struct vm_page *);
-
 static int
 uvm_fault_lower_generic(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
@@ -1354,33 +1395,6 @@ uvm_fault_lower_generic1(
 
 	return uvm_fault_lower_generic2(ufi, flt, uobj, uobjpage);
 }
-
-static int
-uvm_fault_upper_loan(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_anon *anon, struct uvm_object **ruobj);
-static int
-uvm_fault_upper1(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct uvm_object *uobj, struct vm_anon *anon);
-static int
-uvm_fault_upper_promote(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct uvm_object *uobj, struct vm_anon *anon);
-static int
-uvm_fault_upper_direct(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct uvm_object *uobj, struct vm_anon *anon);
-static int
-uvm_fault_upper_enter(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct uvm_object *uobj, struct vm_anon *anon,
-	struct vm_page *pg, struct vm_anon *oanon);
-static int
-uvm_fault_upper_done(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct uvm_object *uobj, struct vm_anon *anon,
-	struct vm_page *pg, struct vm_anon *oanon);
 
 static int
 uvm_fault_upper(
@@ -1680,33 +1694,6 @@ uvm_fault_upper_done(
 	pmap_update(ufi->orig_map->pmap);
 	return 0;
 }
-
-static int
-uvm_fault_lower_generic_io(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct uvm_object **ruobj, struct vm_page **ruobjpage);
-static int
-uvm_fault_lower_generic3(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct uvm_object *uobj, struct vm_page *uobjpage, bool promote);
-static int
-uvm_fault_lower_generic_direct(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct uvm_object *uobj, struct vm_page *uobjpage);
-static int
-uvm_fault_lower_generic_promote(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct uvm_object *uobj, struct vm_page *uobjpage);
-static int
-uvm_fault_lower_generic_enter(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct uvm_object *uobj,
-	struct vm_anon *anon, struct vm_page *pg, struct vm_page *uobjpage);
-static int
-uvm_fault_lower_generic_done(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct uvm_object *uobj,
-	struct vm_anon *anon, struct vm_page *pg);
 
 static int
 uvm_fault_lower_generic2(
