@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.160 2010/02/04 03:32:21 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.161 2010/02/04 05:48:26 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.160 2010/02/04 03:32:21 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.161 2010/02/04 05:48:26 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -718,7 +718,7 @@ static inline int uvm_fault_upper_lookup(
     struct vm_anon **, struct vm_page **);
 static inline void uvm_fault_upper_lookup_neighbor(
     struct uvm_faultinfo *, struct uvm_faultctx *,
-    vaddr_t, struct vm_anon *);
+    vaddr_t, struct vm_page *, bool);
 static inline int uvm_fault_upper_loan(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct vm_anon *, struct uvm_object **);
@@ -748,7 +748,7 @@ static inline int uvm_fault_lower_generic_lookup(
     struct vm_page **);
 static inline void uvm_fault_lower_generic_lookup_neighbor(
     struct uvm_faultinfo *, struct uvm_faultctx *,
-    vaddr_t, struct vm_page *);
+    vaddr_t, struct vm_page *, bool);
 static inline int uvm_fault_lower_generic(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct vm_page **);
@@ -761,6 +761,9 @@ static inline int uvm_fault_lower_generic_io(
 static inline int uvm_fault_lower_generic_direct(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct uvm_object *, struct vm_page *);
+static inline int uvm_fault_lower_generic_direct_loan(
+    struct uvm_faultinfo *, struct uvm_faultctx *,
+    struct uvm_object *, struct vm_page **, struct vm_page **);
 static inline int uvm_fault_lower_generic_promote(
     struct uvm_faultinfo *, struct uvm_faultctx *,
     struct uvm_object *, struct vm_page *);
@@ -1093,7 +1096,12 @@ uvm_fault_upper_lookup(
 		if (lcv == flt->centeridx) {		/* save center for later! */
 			shadowed = true;
 		} else {
-			uvm_fault_upper_lookup_neighbor(ufi, flt, currva, anons[lcv]);
+			struct vm_anon *anon = anons[lcv];
+
+			mutex_enter(&anon->an_lock);
+			uvm_fault_upper_lookup_neighbor(ufi, flt, currva,
+			    anon->an_page, anon->an_ref > 1);
+			mutex_exit(&anon->an_lock);
 		}
 	}
 
@@ -1117,39 +1125,36 @@ uvm_fault_upper_lookup(
 static void
 uvm_fault_upper_lookup_neighbor(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	vaddr_t currva, struct vm_anon *anon)
+	vaddr_t currva, struct vm_page *pg, bool readonly)
 {
 
-	mutex_enter(&anon->an_lock);
-
 	/* ignore loaned and busy pages */
-	if (anon->an_page == NULL || anon->an_page->loan_count != 0 ||
-	    (anon->an_page->flags & PG_BUSY) != 0)
+	if (pg == NULL || pg->loan_count != 0 ||
+	    (pg->flags & PG_BUSY) != 0)
 		goto uvm_fault_upper_lookup_enter_done;
 
 	mutex_enter(&uvm_pageqlock);
-	uvm_pageenqueue(anon->an_page);
+	uvm_pageenqueue(pg);
 	mutex_exit(&uvm_pageqlock);
 	UVMHIST_LOG(maphist,
 	    "  MAPPING: n anon: pm=0x%x, va=0x%x, pg=0x%x",
-	    ufi->orig_map->pmap, currva, anon->an_page, 0);
+	    ufi->orig_map->pmap, currva, pg, 0);
 	uvmexp.fltnamap++;
 
 	/*
-	 * Since this isn't the page that's actually faulting,
-	 * ignore pmap_enter() failures; it's not critical
-	 * that we enter these right now.
+	 * Since this page isn't the page that's actually faulting,
+	 * ignore pmap_enter() failures; it's not critical that we
+	 * enter these right now.
 	 */
 
 	(void) pmap_enter(ufi->orig_map->pmap, currva,
-	    VM_PAGE_TO_PHYS(anon->an_page),
-	    (anon->an_ref > 1) ? (flt->enter_prot & ~VM_PROT_WRITE) :
+	    VM_PAGE_TO_PHYS(pg),
+	    readonly ? (flt->enter_prot & ~VM_PROT_WRITE) :
 	    flt->enter_prot,
 	    PMAP_CANFAIL | (flt->wire_mapping ? PMAP_WIRED : 0));
 
 uvm_fault_upper_lookup_enter_done:
 	pmap_update(ufi->orig_map->pmap);
-	mutex_exit(&anon->an_lock);
 }
 
 static int
@@ -1303,9 +1308,14 @@ uvm_fault_lower_generic_lookup(
 			UVMHIST_LOG(maphist, "  got uobjpage "
 			    "(0x%x) with locked get",
 			    curpg, 0,0,0);
-		} else
+		} else {
+			bool readonly = (curpg->flags & PG_RDONLY)
+			    || (curpg->loan_count > 0)
+			    || UVM_OBJ_NEEDS_WRITEFAULT(curpg->uobject);
+
 			uvm_fault_lower_generic_lookup_neighbor(ufi, flt,
-			    currva, curpg);
+			    currva, curpg, readonly);
+		}
 	}
 	pmap_update(ufi->orig_map->pmap);
 	return 0;
@@ -1314,9 +1324,8 @@ uvm_fault_lower_generic_lookup(
 static void
 uvm_fault_lower_generic_lookup_neighbor(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	vaddr_t currva, struct vm_page *curpg)
+	vaddr_t currva, struct vm_page *pg, bool readonly)
 {
-	bool readonly;
 
 	/*
 	 * calling pgo_get with PGO_LOCKED returns us pages which
@@ -1325,11 +1334,11 @@ uvm_fault_lower_generic_lookup_neighbor(
 	 */
 
 	mutex_enter(&uvm_pageqlock);
-	uvm_pageenqueue(curpg);
+	uvm_pageenqueue(pg);
 	mutex_exit(&uvm_pageqlock);
 	UVMHIST_LOG(maphist,
-	  "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
-	  ufi->orig_map->pmap, currva, curpg, 0);
+	    "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
+	    ufi->orig_map->pmap, currva, pg, 0);
 	uvmexp.fltnomap++;
 
 	/*
@@ -1337,17 +1346,14 @@ uvm_fault_lower_generic_lookup_neighbor(
 	 * ignore pmap_enter() failures; it's not critical that we
 	 * enter these right now.
 	 */
-	KASSERT((curpg->flags & PG_PAGEOUT) == 0);
-	KASSERT((curpg->flags & PG_RELEASED) == 0);
-	KASSERT(!UVM_OBJ_IS_CLEAN(curpg->uobject) ||
-	    (curpg->flags & PG_CLEAN) != 0);
-	readonly = (curpg->flags & PG_RDONLY)
-	    || (curpg->loan_count > 0)
-	    || UVM_OBJ_NEEDS_WRITEFAULT(curpg->uobject);
+	KASSERT((pg->flags & PG_PAGEOUT) == 0);
+	KASSERT((pg->flags & PG_RELEASED) == 0);
+	KASSERT(!UVM_OBJ_IS_CLEAN(pg->uobject) ||
+	    (pg->flags & PG_CLEAN) != 0);
 
 	(void) pmap_enter(ufi->orig_map->pmap, currva,
-	    VM_PAGE_TO_PHYS(curpg),
-	    readonly ?  flt->enter_prot & ~VM_PROT_WRITE :
+	    VM_PAGE_TO_PHYS(pg),
+	    readonly ? (flt->enter_prot & ~VM_PROT_WRITE) :
 	    flt->enter_prot & MASK(ufi->entry),
 	    PMAP_CANFAIL | (flt->wire_mapping ? PMAP_WIRED : 0));
 
@@ -1355,11 +1361,11 @@ uvm_fault_lower_generic_lookup_neighbor(
 	 * NOTE: page can't be PG_WANTED or PG_RELEASED because we've
 	 * held the lock the whole time we've had the handle.
 	 */
-	KASSERT((curpg->flags & PG_WANTED) == 0);
-	KASSERT((curpg->flags & PG_RELEASED) == 0);
+	KASSERT((pg->flags & PG_WANTED) == 0);
+	KASSERT((pg->flags & PG_RELEASED) == 0);
 
-	curpg->flags &= ~(PG_BUSY);
-	UVM_PAGE_OWN(curpg, NULL);
+	pg->flags &= ~(PG_BUSY);
+	UVM_PAGE_OWN(pg, NULL);
 }
 
 static int
@@ -1864,11 +1870,6 @@ uvm_fault_lower_generic_io(
 	*ruobjpage = pg;
 	return 0;
 }
-
-static int
-uvm_fault_lower_generic_direct_loan(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct uvm_object *uobj, struct vm_page **rpg, struct vm_page **ruobjpage);
 
 int
 uvm_fault_lower_generic_direct(
