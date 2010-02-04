@@ -1,0 +1,15 @@
+#!/bin/sh
+#	$NetBSD: mkterminfo,v 1.1 2010/02/04 21:01:16 roy Exp $
+
+# Build a minimal set of terminfo definitons from our ttys
+
+TARGET=dot.terminfo
+
+echo "#	\$NetBSD\$" > ${TARGET}
+echo >> ${TARGET}
+for t in $(find .. -name ttys -exec awk '/^tty/ { print $4 }' {} \; | sort -u) \
+	ansi dumb xterm
+do
+	infocmp -x $t
+	echo
+done | sed '/^#/ d' >> ${TARGET}
