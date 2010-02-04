@@ -1,4 +1,4 @@
-/*	$NetBSD: mi_vector_hash.c,v 1.1 2009/07/20 17:03:37 joerg Exp $	*/
+/*	$NetBSD: mi_vector_hash.c,v 1.2 2010/02/04 10:27:08 roy Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,8 +38,12 @@
  * if the key is aligned correctly.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mi_vector_hash.c,v 1.1 2009/07/20 17:03:37 joerg Exp $");
+__RCSID("$NetBSD: mi_vector_hash.c,v 1.2 2010/02/04 10:27:08 roy Exp $");
 
 #include <sys/endian.h>
 #include <stdint.h>
