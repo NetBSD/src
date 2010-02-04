@@ -1,4 +1,4 @@
-.\"	$NetBSD: termcap.3,v 1.3 2010/02/03 18:49:23 snj Exp $
+.\"	$NetBSD: termcap.3,v 1.4 2010/02/04 09:12:55 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,7 +79,7 @@ Only
 is actually used internally.
 The
 .Fn tgetent
-function returns -1 if none of the
+function returns \-1 if none of the
 .Nm terminfo
 data base files could be opened,
 0 if the terminal name given does not match an entry,
@@ -92,7 +92,7 @@ The
 .Fn tgetnum
 function gets the numeric value of the capability
 .Fa id ,
-returning -1 if it is not given for the terminal.
+returning \-1 if it is not given for the terminal.
 The
 .Fn tgetflag
 function returns 1 if the specified capability is present in the terminal's
@@ -110,7 +110,9 @@ as such it should only be processed by
 .Fn tgoto .
 The
 .Fn tgetstr
-function returns NULL if the capability was not found.
+function returns
+.Dv NULL
+if the capability was not found.
 The
 .Fa area
 argument is unused.
