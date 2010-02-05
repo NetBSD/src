@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.3 2010/02/05 14:40:07 he Exp $ */
+/* $NetBSD: tic.c,v 1.4 2010/02/05 16:36:09 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.3 2010/02/05 14:40:07 he Exp $");
+__RCSID("$NetBSD: tic.c,v 1.4 2010/02/05 16:36:09 roy Exp $");
 
 #include <sys/types.h>
 
@@ -886,20 +886,19 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "aco:sx")) != -1)
 	    switch (ch) {
 	    case 'a':
-		    aflag++;
-		    xflag++;
+		    aflag = 1;
 		    break;
 	    case 'c':
-		    cflag++;
+		    cflag = 1;
 		    break;
 	    case 'o':
 		    ofile = optarg;
 		    break;
 	    case 's':
-		    sflag++;
+		    sflag = 1;
 		    break;
 	    case 'x':
-		    xflag++;
+		    xflag = 1;
 		    break;
 	    case '?': /* FALLTHROUGH */
 	    default:
