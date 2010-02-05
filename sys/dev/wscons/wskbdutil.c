@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdutil.c,v 1.17 2010/01/28 22:36:19 drochner Exp $	*/
+/*	$NetBSD: wskbdutil.c,v 1.18 2010/02/05 18:26:38 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdutil.c,v 1.17 2010/01/28 22:36:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdutil.c,v 1.18 2010/02/05 18:26:38 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -255,10 +255,20 @@ static struct compose_tab_s {
 	{ { KS_dead_diaeresis,		KS_e },			KS_ediaeresis },
 	{ { KS_dead_diaeresis,		KS_o },			KS_odiaeresis },
 	{ { KS_dead_diaeresis,		KS_u },			KS_udiaeresis },
+	{ { KS_dead_dotaccent,		KS_Z },			KS_Zabovedot },
+	{ { KS_dead_dotaccent,		KS_z },			KS_zabovedot },
+	{ { KS_dead_hungarumlaut,	KS_O },			KS_Odoubleacute },
+	{ { KS_dead_hungarumlaut,	KS_U },			KS_Udoubleacute },
+	{ { KS_dead_hungarumlaut,	KS_o },			KS_odoubleacute },
+	{ { KS_dead_hungarumlaut,	KS_u },			KS_udoubleacute },
 	{ { KS_dead_ogonek,		KS_A },			KS_Aogonek },
 	{ { KS_dead_ogonek,		KS_a },			KS_aogonek },
 	{ { KS_dead_ogonek,		KS_E },			KS_Eogonek },
-	{ { KS_dead_ogonek,		KS_e },			KS_eogonek }
+	{ { KS_dead_ogonek,		KS_e },			KS_eogonek },
+	{ { KS_dead_abovering,		KS_U },			KS_Uabovering },
+	{ { KS_dead_abovering,		KS_u },			KS_uabovering },
+	{ { KS_dead_slash,		KS_L },			KS_Lstroke },
+	{ { KS_dead_slash,		KS_l },			KS_lstroke }
 };
 
 #define COMPOSE_SIZE	sizeof(compose_tab)/sizeof(compose_tab[0])
