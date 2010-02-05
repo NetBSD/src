@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.35 2009/09/20 23:19:51 abs Exp $
+#	$NetBSD: list,v 1.36 2010/02/05 10:01:17 roy Exp $
 
 SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin
 
@@ -59,7 +59,7 @@ ARGVLN	sh -sh
 
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 
-LIBS	-ledit -lbz2 -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm -lz -lprop
+LIBS	-ledit -lbz2 -lutil -lcurses -lterminfo -lrmt -lcrypt -ll -lm -lz -lprop
 
 # we need the boot blocks /usr/mdec
 COPY	${DESTDIR}/usr/mdec/boot		usr/mdec/boot
@@ -78,7 +78,7 @@ MTREE	./etc/pwd.db	type=file uname=root gname=wheel mode=0644
 MTREE	./etc/spwd.db	type=file uname=root gname=wheel mode=0600
 
 # and the common installation tools
-COPY	${DISTRIBDIR}/common/termcap	usr/share/misc/termcap
+COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 COPY	${DISTRIBDIR}/utils/script-installer/dot.commonutils .commonutils
 COPY	${DISTRIBDIR}/utils/script-installer/dot.instutils   .instutils
 

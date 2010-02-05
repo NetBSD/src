@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.14 2009/09/20 23:19:54 abs Exp $
+#	$NetBSD: list,v 1.15 2010/02/05 10:01:19 roy Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
 
@@ -59,7 +59,7 @@ SPECIAL	ping		srcdir	distrib/utils/x_ping
 # we have not switched to MI usr.sbin/installboot yet.
 SPECIAL	installboot	srcdir	sys/arch/${MACHINE}/stand/installboot
 
-LIBS	libhack.o -ledit -lbz2 -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm -lz -lprop
+LIBS	libhack.o -ledit -lbz2 -lutil -lcurses -lterminfo -lrmt -lcrypt -ll -lm -lz -lprop
 
 # we need the boot blocks /usr/mdec
 COPY	${DESTDIR}/usr/mdec/boot	usr/mdec/boot
@@ -73,7 +73,7 @@ COPY	${DISTRIBDIR}/common/protocols		etc/protocols
 COPY	${DISTRIBDIR}/common/services		etc/services
 
 # and the common installation tools
-COPY	${DISTRIBDIR}/common/termcap		usr/share/misc/termcap
+COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 COPY	${DISTRIBDIR}/utils/script-installer/dot.commonutils	.commonutils
 COPY	${DISTRIBDIR}/utils/script-installer/dot.instutils	.instutils
 

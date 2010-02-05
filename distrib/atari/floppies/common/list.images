@@ -1,7 +1,7 @@
-#	$NetBSD: list.images,v 1.6 2009/09/20 23:19:51 abs Exp $
+#	$NetBSD: list.images,v 1.7 2010/02/05 10:01:17 roy Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/atari/stand
-LIBS	libhack.o -lprop -lrmt -ledit -lz -lbz2 -lutil -lcurses -ltermcap -lcrypt -lkvm -ll -lm
+LIBS	libhack.o -lprop -lrmt -ledit -lz -lbz2 -lutil -lcurses -lterminfo -lcrypt -lkvm -ll -lm
 
 # init invokes the shell as -sh
 ARGVLN	sh -sh
@@ -10,8 +10,8 @@ ARGVLN	sh -sh
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 
-# the termcap file
-COPY	${DISTRIBDIR}/common/termcap		usr/share/misc/termcap
+# the terminfo database
+COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 
 COPY	${CURDIR}/../common/dot.profile 	.profile
 COPY	${CURDIR}/../common/mount_gemdos	sbin/mount_gemdos	555

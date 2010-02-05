@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.11 2010/01/02 06:46:09 tsutsui Exp $
+#	$NetBSD: list,v 1.12 2010/02/05 10:01:21 roy Exp $
 
 # Vax extras
 PROG	sbin/disklabel
@@ -26,8 +26,8 @@ SYMLINK	/tmp	var/tmp
 # we need the contents of /usr/mdec
 COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
 
-# and the termcap file
-COPY	${DISTRIBDIR}/common/termcap	usr/share/misc/termcap
+# and the terminfo database
+COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 
 # copy the kernel
 COPY	${KERNOBJDIR}/GENERIC/netbsd	netbsd

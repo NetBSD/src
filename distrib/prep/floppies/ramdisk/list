@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.16 2009/09/20 23:19:55 abs Exp $
+#	$NetBSD: list,v 1.17 2010/02/05 10:01:20 roy Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
 
@@ -62,10 +62,10 @@ SPECIAL	route		srcdir	distrib/utils/x_route
 SPECIAL	ed		srcdir	distrib/utils/x_ed
 SPECIAL	umount		srcdir	distrib/utils/x_umount
 
-LIBS	libhack.o -ledit -lutil -lcurses -ltermcap -lcrypt -ll -lm -lz -lprop
+LIBS	libhack.o -ledit -lutil -lcurses -lterminfo -lcrypt -ll -lm -lz -lprop
 
-# and the termcap file
-COPY	${DISTRIBDIR}/common/termcap		usr/share/misc/termcap
+# and the terminfo database
+COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 
 # various files that we need in /etc for the install
 COPY	${NETBSDSRCDIR}/etc/group		etc/group

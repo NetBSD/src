@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.22 2009/09/20 23:19:56 abs Exp $
+# $NetBSD: list,v 1.23 2010/02/05 10:01:21 roy Exp $
 #
 
 COPY	${KERNEL3}			netbsd.sun3
@@ -40,7 +40,7 @@ COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local	555
 
 # copy the miniroot installation tools
 COPY	${CURDIR}/profile		.profile
-COPY	${DISTRIBDIR}/common/termcap	usr/share/misc/termcap
+COPY	${DESTDIR}/rescue/terminfo.db	usr/share/misc/terminfo.db
 
 COPY	${CURDIR}/install.md		install.md
 COPY	${OBJDIR}/install.sub		install.sub
@@ -148,4 +148,4 @@ SPECIAL	route		srcdir	distrib/utils/x_route
 ARGVLN	sh -sh
 
 LIBS	libhack.o
-LIBS	-lrmt -ledit -lutil -lcurses -ltermcap -lcrypt -ll -lm -lkvm -lbz2 -lz -lprop
+LIBS	-lrmt -ledit -lutil -lcurses -lterminfo -lcrypt -ll -lm -lkvm -lbz2 -lz -lprop

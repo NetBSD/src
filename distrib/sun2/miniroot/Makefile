@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2009/10/09 15:56:25 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.32 2010/02/05 10:01:21 roy Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -32,7 +32,7 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${DISTRIBDIR}/common/protocols \
 		${DESTDIR}/etc/pwd.db \
 		${DISTRIBDIR}/common/services \
-		${DISTRIBDIR}/common/termcap \
+		${DESTDIR}/rescue/terminfo.db \
 		${DESTDIR}/etc/spwd.db \
 		${DESTDIR}/usr/mdec/bootxx ${DESTDIR}/usr/mdec/bootyy \
 		${DESTDIR}/usr/mdec/netboot ${DESTDIR}/usr/mdec/tapeboot \

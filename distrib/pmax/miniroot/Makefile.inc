@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2009/12/14 01:12:06 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2010/02/05 10:01:20 roy Exp $
 
 .if ${MACHINE_ARCH} == "mips64el"
 SFX=		64
@@ -13,7 +13,8 @@ MAKEDEVTARGETS=	all
 LISTS=		${.CURDIR}/list ${ARCHDIR}/list${SFX}
 LISTS+=		${DISTRIBDIR}/common/list.sysinst
 MTREECONF+=	${.CURDIR}/mtree.usr.install
-IMAGEDEPENDS+=	${ARCHDIR}/dot.profile ${DISTRIBDIR}/common/termcap \
+IMAGEDEPENDS+=	${ARCHDIR}/dot.profile \
+		${DESTDIR}/rescue/terminfo.db \
 		${DESTDIR}/.profile ${DESTDIR}/boot.pmax \
 		${DESTDIR}/etc/disktab \
 		${KERNOBJDIR}/GENERIC${SFX}/netbsd

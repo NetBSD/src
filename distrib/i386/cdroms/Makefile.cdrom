@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.14 2009/09/30 00:32:08 ahoka Exp $
+# $NetBSD: Makefile.cdrom,v 1.15 2010/02/05 10:01:19 roy Exp $
 
 .include <bsd.own.mk>
 
@@ -34,7 +34,7 @@ CDRUNTIME+=	./usr/lib/libc.so*
 CDRUNTIME+=	./usr/lib/libcurses.so*
 CDRUNTIME+=	./usr/lib/libedit.so*
 CDRUNTIME+=	./usr/lib/libkvm.so*
-CDRUNTIME+=	./usr/lib/libtermcap.so*
+CDRUNTIME+=	./usr/lib/libterminfo.so*
 CDRUNTIME+=	./usr/lib/libutil.so*
 CDRUNTIME+=	./usr/lib/libz.so*
 CDRUNTIME+=	./usr/libexec/ld.elf_so
@@ -43,7 +43,7 @@ CDRUNTIME+=	./usr/sbin/chown
 CDRUNTIME+=	./usr/sbin/chroot
 CDRUNTIME+=	./usr/sbin/installboot
 CDRUNTIME+=	./usr/sbin/wiconfig
-CDRUNTIME+=	./usr/share/misc/termcap
+CDRUNTIME+=	./usr/share/misc/terminfo.db
 
 image_md_pre:
 	${MKDIR} cdrom/etc

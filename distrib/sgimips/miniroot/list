@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.8 2010/01/02 06:46:09 tsutsui Exp $
+#	$NetBSD: list,v 1.9 2010/02/05 10:01:20 roy Exp $
 
 # extras in bin
 PROG	bin/csh
@@ -33,8 +33,8 @@ COPY	${DESTDIR}/usr/mdec/aoutboot	usr/mdec/aoutboot
 COPY	${DESTDIR}/usr/mdec/ip2xboot	usr/mdec/ip2xboot
 COPY	${DESTDIR}/usr/mdec/ip3xboot	usr/mdec/ip3xboot
 
-# a subset termcap file
-COPY	${DISTRIBDIR}/common/termcap		usr/share/misc/termcap
+# a subset terminfo database
+COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 
 # copy the kernel(s)
 COPY	${KERNOBJDIR}/GENERIC/netbsd	netbsd

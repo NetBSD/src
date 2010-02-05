@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.15 2009/09/20 23:19:56 abs Exp $
+#	$NetBSD: list,v 1.16 2010/02/05 10:01:21 roy Exp $
 
 SRCDIRS	bin sbin libexec usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
@@ -75,7 +75,7 @@ SPECIAL	pppd		srcdir	usr.sbin/pppd/pppd
 SPECIAL	route		srcdir	distrib/utils/x_route
 
 LIBS	libhack.o
-LIBS	-ledit -lutil -lcurses -ltermcap -lrmt -lbz2 -lcrypt -ll -lm -lpcap -lz -lprop
+LIBS	-ledit -lutil -lcurses -lterminfo -lrmt -lbz2 -lcrypt -ll -lm -lpcap -lz -lprop
 
 # various files that we need in /etc for the install
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
@@ -91,7 +91,7 @@ COPY	${DESTDIR}/usr/mdec/ofwboot		ofwboot
 COPY	${DESTDIR}/usr/mdec/ofwboot		usr/mdec/ofwboot
 
 # and the common installation tools
-COPY	${DISTRIBDIR}/common/termcap		usr/share/misc/termcap
+COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 
 # and the installation tools
 COPY	${INSTFSDIR}/dot.profile		.profile
