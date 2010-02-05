@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.93 2010/01/31 22:53:56 martin Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.94 2010/02/05 17:44:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.93 2010/01/31 22:53:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.94 2010/02/05 17:44:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -987,7 +987,8 @@ sme_initial_refresh(void *arg)
 	mutex_enter(&sme->sme_mtx);
 	sysmon_envsys_acquire(sme, true);
 	TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head)
-		(*sme->sme_refresh)(sme, edata);
+		if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0)
+			(*sme->sme_refresh)(sme, edata);
 	sysmon_envsys_release(sme, true);
 	mutex_exit(&sme->sme_mtx);
 }
