@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.162 2010/02/05 00:55:31 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.163 2010/02/05 02:27:15 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.162 2010/02/05 00:55:31 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.163 2010/02/05 02:27:15 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -193,7 +193,7 @@ uvmfault_anonflush(struct vm_anon **anons, int n)
 	int lcv;
 	struct vm_page *pg;
 
-	for (lcv = 0 ; lcv < n ; lcv++) {
+	for (lcv = 0; lcv < n; lcv++) {
 		if (anons[lcv] == NULL)
 			continue;
 		mutex_enter(&anons[lcv]->an_lock);
@@ -706,75 +706,77 @@ struct uvm_faultctx {
 	bool cow_now;
 };
 
-static inline int uvm_fault_check(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct vm_anon ***, struct vm_page ***);
+static inline int	uvm_fault_check(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    struct vm_anon ***, struct vm_page ***);
 
-static int uvm_fault_upper(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct vm_anon **);
-static inline int uvm_fault_upper_lookup(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct vm_anon **, struct vm_page **);
-static inline void uvm_fault_upper_lookup_neighbor(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    vaddr_t, struct vm_page *, bool);
-static inline int uvm_fault_upper_loan(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct vm_anon *, struct uvm_object **);
-static inline int uvm_fault_upper_promote(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct uvm_object *, struct vm_anon *);
-static inline int uvm_fault_upper_direct(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct uvm_object *, struct vm_anon *);
-static int uvm_fault_upper_enter(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct uvm_object *, struct vm_anon *,
-    struct vm_page *, struct vm_anon *);
-static inline int uvm_fault_upper_done(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct uvm_object *, struct vm_anon *,
-    struct vm_page *, struct vm_anon *);
+static int		uvm_fault_upper(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    struct vm_anon **);
+static inline int	uvm_fault_upper_lookup(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    struct vm_anon **, struct vm_page **);
+static inline void	uvm_fault_upper_neighbor(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    vaddr_t, struct vm_page *, bool);
+static inline int	uvm_fault_upper_loan(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    struct vm_anon *, struct uvm_object **);
+static inline int	uvm_fault_upper_promote(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    struct uvm_object *, struct vm_anon *);
+static inline int	uvm_fault_upper_direct(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    struct uvm_object *, struct vm_anon *);
+static int		uvm_fault_upper_enter(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    struct uvm_object *, struct vm_anon *,
+			    struct vm_page *, struct vm_anon *);
+static inline int	uvm_fault_upper_done(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    struct uvm_object *, struct vm_anon *,
+			    struct vm_page *, struct vm_anon *);
 
-static int uvm_fault_lower(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct vm_page **);
-static inline int uvm_fault_lower_special(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct vm_page **);
-static inline int uvm_fault_lower_generic_lookup(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct vm_page **);
-static inline void uvm_fault_lower_generic_lookup_neighbor(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    vaddr_t, struct vm_page *, bool);
-static inline int uvm_fault_lower_generic(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct vm_page **);
-static inline int uvm_fault_lower_generic1(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct uvm_object *, struct vm_page *);
-static inline int uvm_fault_lower_generic_io(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct uvm_object **, struct vm_page **);
-static inline int uvm_fault_lower_generic_direct(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct uvm_object *, struct vm_page *);
-static inline int uvm_fault_lower_generic_direct_loan(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct uvm_object *, struct vm_page **, struct vm_page **);
-static inline int uvm_fault_lower_generic_promote(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct uvm_object *, struct vm_page *);
-static int uvm_fault_lower_generic_enter(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct uvm_object *,
-    struct vm_anon *, struct vm_page *, struct vm_page *);
-static inline int uvm_fault_lower_generic_done(
-    struct uvm_faultinfo *, struct uvm_faultctx *,
-    struct uvm_object *,
-    struct vm_anon *, struct vm_page *);
+static int		uvm_fault_lower(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    struct vm_page **);
+static inline int	uvm_fault_lower_special(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    struct vm_page **);
+static inline		int uvm_fault_lower_lookup(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    struct vm_page **);
+static inline void	uvm_fault_lower_neighbor(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    vaddr_t, struct vm_page *, bool);
+static inline int	uvm_fault_lower_generic(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    struct vm_page **);
+static inline int	uvm_fault_lower1(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    struct uvm_object *, struct vm_page *);
+static inline int	uvm_fault_lower_io(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    struct uvm_object **, struct vm_page **);
+static inline int	uvm_fault_lower_direct(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    struct uvm_object *, struct vm_page *);
+static inline int	uvm_fault_lower_direct_loan(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    struct uvm_object *, struct vm_page **,
+			    struct vm_page **);
+static inline int	uvm_fault_lower_promote(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    struct uvm_object *, struct vm_page *);
+static int		uvm_fault_lower_enter(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    struct uvm_object *,
+			    struct vm_anon *, struct vm_page *,
+			    struct vm_page *);
+static inline int	uvm_fault_lower_done(
+			    struct uvm_faultinfo *, struct uvm_faultctx *,
+			    struct uvm_object *,
+			    struct vm_anon *, struct vm_page *);
 
 int
 uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
@@ -1069,7 +1071,7 @@ uvm_fault_upper_lookup(
 
 	currva = flt->startva;
 	shadowed = false;
-	for (lcv = 0 ; lcv < flt->npages ; lcv++, currva += PAGE_SIZE) {
+	for (lcv = 0; lcv < flt->npages; lcv++, currva += PAGE_SIZE) {
 		/*
 		 * dont play with VAs that are already mapped
 		 * except for center)
@@ -1099,7 +1101,7 @@ uvm_fault_upper_lookup(
 			struct vm_anon *anon = anons[lcv];
 
 			mutex_enter(&anon->an_lock);
-			uvm_fault_upper_lookup_neighbor(ufi, flt, currva,
+			uvm_fault_upper_neighbor(ufi, flt, currva,
 			    anon->an_page, anon->an_ref > 1);
 			mutex_exit(&anon->an_lock);
 		}
@@ -1123,7 +1125,7 @@ uvm_fault_upper_lookup(
 }
 
 static void
-uvm_fault_upper_lookup_neighbor(
+uvm_fault_upper_neighbor(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	vaddr_t currva, struct vm_page *pg, bool readonly)
 {
@@ -1228,7 +1230,7 @@ uvm_fault_lower_generic(
 		/* zero fill; don't care neighbor pages */
 		uobjpage = NULL;
 	} else {
-		uvm_fault_lower_generic_lookup(ufi, flt, pages);
+		uvm_fault_lower_lookup(ufi, flt, pages);
 		uobjpage = pages[flt->centeridx];
 	}
 
@@ -1256,11 +1258,11 @@ uvm_fault_lower_generic(
 	 * redirect case 2: if we are not shadowed, go to case 2.
 	 */
 
-	return uvm_fault_lower_generic1(ufi, flt, uobj, uobjpage);
+	return uvm_fault_lower1(ufi, flt, uobj, uobjpage);
 }
 
 static int
-uvm_fault_lower_generic_lookup(
+uvm_fault_lower_lookup(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_page **pages)
 {
@@ -1315,7 +1317,7 @@ uvm_fault_lower_generic_lookup(
 			    || (curpg->loan_count > 0)
 			    || UVM_OBJ_NEEDS_WRITEFAULT(curpg->uobject);
 
-			uvm_fault_lower_generic_lookup_neighbor(ufi, flt,
+			uvm_fault_lower_neighbor(ufi, flt,
 			    currva, curpg, readonly);
 		}
 	}
@@ -1324,7 +1326,7 @@ uvm_fault_lower_generic_lookup(
 }
 
 static void
-uvm_fault_lower_generic_lookup_neighbor(
+uvm_fault_lower_neighbor(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	vaddr_t currva, struct vm_page *pg, bool readonly)
 {
@@ -1661,7 +1663,7 @@ uvm_fault_upper_done(
 }
 
 static int
-uvm_fault_lower_generic1(
+uvm_fault_lower1(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct uvm_object *uobj, struct vm_page *uobjpage)
 {
@@ -1713,7 +1715,7 @@ uvm_fault_lower_generic1(
 		/* update rusage counters */
 		curlwp->l_ru.ru_minflt++;
 	} else {
-		error = uvm_fault_lower_generic_io(ufi, flt, &uobj, &uobjpage);
+		error = uvm_fault_lower_io(ufi, flt, &uobj, &uobjpage);
 		if (error != 0)
 			return error;
 	}
@@ -1739,15 +1741,15 @@ uvm_fault_lower_generic1(
 	    (uobjpage->flags & PG_CLEAN) != 0);
 
 	if (promote == false) {
-		error = uvm_fault_lower_generic_direct(ufi, flt, uobj, uobjpage);
+		error = uvm_fault_lower_direct(ufi, flt, uobj, uobjpage);
 	} else {
-		error = uvm_fault_lower_generic_promote(ufi, flt, uobj, uobjpage);
+		error = uvm_fault_lower_promote(ufi, flt, uobj, uobjpage);
 	}
 	return error;
 }
 
 static int
-uvm_fault_lower_generic_io(
+uvm_fault_lower_io(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct uvm_object **ruobj, struct vm_page **ruobjpage)
 {
@@ -1874,7 +1876,7 @@ uvm_fault_lower_generic_io(
 }
 
 int
-uvm_fault_lower_generic_direct(
+uvm_fault_lower_direct(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct uvm_object *uobj, struct vm_page *uobjpage)
 {
@@ -1903,15 +1905,15 @@ uvm_fault_lower_generic_direct(
 	 */
 
 	if (uobjpage->loan_count) {
-		uvm_fault_lower_generic_direct_loan(ufi, flt, uobj, &pg, &uobjpage);
+		uvm_fault_lower_direct_loan(ufi, flt, uobj, &pg, &uobjpage);
 	}
 	KASSERT(pg == uobjpage);
 
-	return uvm_fault_lower_generic_enter(ufi, flt, uobj, NULL, pg, uobjpage);
+	return uvm_fault_lower_enter(ufi, flt, uobj, NULL, pg, uobjpage);
 }
 
 static int
-uvm_fault_lower_generic_direct_loan(
+uvm_fault_lower_direct_loan(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct uvm_object *uobj, struct vm_page **rpg, struct vm_page **ruobjpage)
 {
@@ -1953,7 +1955,7 @@ uvm_fault_lower_generic_direct_loan(
 }
 
 int
-uvm_fault_lower_generic_promote(
+uvm_fault_lower_promote(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct uvm_object *uobj, struct vm_page *uobjpage)
 {
@@ -2032,11 +2034,11 @@ uvm_fault_lower_generic_promote(
 		    anon, pg, 0, 0);
 	}
 
-	return uvm_fault_lower_generic_enter(ufi, flt, uobj, anon, pg, uobjpage);
+	return uvm_fault_lower_enter(ufi, flt, uobj, anon, pg, uobjpage);
 }
 
 int
-uvm_fault_lower_generic_enter(
+uvm_fault_lower_enter(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct uvm_object *uobj,
 	struct vm_anon *anon, struct vm_page *pg, struct vm_page *uobjpage)
@@ -2103,11 +2105,11 @@ uvm_fault_lower_generic_enter(
 		return ERESTART;
 	}
 
-	return uvm_fault_lower_generic_done(ufi, flt, uobj, anon, pg);
+	return uvm_fault_lower_done(ufi, flt, uobj, anon, pg);
 }
 
 int
-uvm_fault_lower_generic_done(
+uvm_fault_lower_done(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct uvm_object *uobj, struct vm_anon *anon, struct vm_page *pg)
 {
@@ -2181,7 +2183,7 @@ uvm_fault_wire(struct vm_map *map, vaddr_t start, vaddr_t end,
 		return EFAULT;
 	}
 
-	for (va = start ; va < end ; va += PAGE_SIZE) {
+	for (va = start; va < end; va += PAGE_SIZE) {
 		error = uvm_fault_internal(map, va, access_type,
 				(maxprot ? UVM_FAULT_MAXPROT : 0) | UVM_FAULT_WIRE);
 		if (error) {
