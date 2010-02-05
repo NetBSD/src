@@ -1,4 +1,4 @@
-/* $NetBSD: term_private.h,v 1.2 2010/02/03 18:49:23 snj Exp $ */
+/* $NetBSD: term_private.h,v 1.3 2010/02/05 12:31:56 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -99,6 +99,8 @@ typedef struct terminal {
 	size_t _bufpos;
 	/* A-Z static variables for tparm  */
 	long _snums[26];
+	/* aliases of the terminal, | separated */
+	char *_alias;
 } TERMINAL;
 
 extern const char *	_ti_database;
