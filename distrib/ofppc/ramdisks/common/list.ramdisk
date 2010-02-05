@@ -1,4 +1,4 @@
-#	$NetBSD: list.ramdisk,v 1.6 2009/09/20 23:19:54 abs Exp $
+#	$NetBSD: list.ramdisk,v 1.7 2010/02/05 10:01:20 roy Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin libexec
 
@@ -21,7 +21,7 @@ COPY	${DESTDIR}/usr/mdec/netbsd.chrp		usr/mdec/netbsd.chrp
 COPY	${DESTDIR}/usr/mdec/mkbootinfo		usr/mdec/mkbootinfo	755
 
 # and the common installation tools
-COPY	${DISTRIBDIR}/common/termcap		usr/share/misc/termcap
+COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 
 # and the boot script
 COPY	${CURDIR}/../common/dot.profile		.profile

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2009/09/20 23:19:51 abs Exp $
+#	$NetBSD: Makefile,v 1.29 2010/02/05 10:01:17 roy Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -17,7 +17,7 @@ MAKEDEVTARGETS=	minimal
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		dot.profile install.sh upgrade.sh \
 		${DESTDIR}/usr/mdec/boot ${DESTDIR}/usr/mdec/bootxx_ffs \
-		${DISTRIBDIR}/common/termcap \
+		${DESTDIR}/rescue/terminfo.db \
 		${DISTRIBDIR}/utils/script-installer/dot.commonutils \
 		${DISTRIBDIR}/utils/script-installer/dot.instutils \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \

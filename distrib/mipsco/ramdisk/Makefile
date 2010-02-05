@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2009/09/24 21:04:46 he Exp $
+#	$NetBSD: Makefile,v 1.19 2010/02/05 10:01:19 roy Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -18,7 +18,8 @@ MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be
 MAKEDEVTARGETS=	minimal
 IMAGEDEPENDS=	${CRUNCHBIN} \
-		dot.profile ${DISTRIBDIR}/common/termcap \
+		dot.profile \
+		${DESTDIR}/rescue/terminfo.db \
 		${DESTDIR}/usr/mdec/installboot \
 		${DESTDIR}/usr/mdec/boot ${DESTDIR}/usr/mdec/bootxx_ffs \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
