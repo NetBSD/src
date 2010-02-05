@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.43.36.12 2010/01/30 23:49:31 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.43.36.13 2010/02/05 07:36:51 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -131,6 +131,7 @@ typedef	volatile int		__cpu_simple_lock_t;
 
 #define	__SWAP_BROKEN
 
+#define	__HAVE_FAST_SOFTINTS
 #define	__HAVE_AST_PERPROC
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_PROCESS_XFPREGS
