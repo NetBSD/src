@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.249 2010/02/02 04:28:56 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.250 2010/02/05 12:04:10 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.249 2010/02/02 04:28:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.250 2010/02/05 12:04:10 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -354,6 +354,7 @@ static void pmap_free_page(paddr_t pa);
  * Global pmap lock.
  */
 static kmutex_t pmap_lock;
+static bool lock_available = false;
 
 /*
  * Support for big page sizes.  This maps the page size to the
@@ -1270,6 +1271,7 @@ pmap_init(void)
 	vm_num_phys = avail_end - avail_start;
 
 	mutex_init(&pmap_lock, MUTEX_DEFAULT, IPL_NONE);
+	lock_available = true;
 }
 
 /*
@@ -1310,7 +1312,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		       (void *)KERNEND, (void *)maxkvaddr);
 		return (kbreak);
 	}
-	mutex_enter(&pmap_lock);
+	if (__predict_true(lock_available)) mutex_enter(&pmap_lock);
 	DPRINTF(PDB_GROW, ("pmap_growkernel(%lx...%lx)\n", kbreak, maxkvaddr));
 	/* Align with the start of a page table */
 	for (kbreak &= (-1 << PDSHIFT); kbreak < maxkvaddr;
@@ -1328,7 +1330,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			ENTER_STAT(ptpneeded);
 		}
 	}
-	mutex_exit(&pmap_lock);
+	if (__predict_true(lock_available)) mutex_exit(&pmap_lock);
 	return (kbreak);
 }
 
