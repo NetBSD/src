@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.33 2009/11/04 13:29:45 pooka Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.34 2010/02/05 06:43:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.33 2009/11/04 13:29:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.34 2010/02/05 06:43:16 skrll Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -103,10 +103,10 @@ do {									\
 
 #endif	/* DIAGNOSTIC */
 
-#define	RW_SETDEBUG(rw, on)		((rw)->rw_owner |= (on) ? RW_DEBUG : 0)
-#define	RW_DEBUG_P(rw)			(((rw)->rw_owner & RW_DEBUG) != 0)
+#define	RW_SETDEBUG(rw, on)		((rw)->rw_owner |= (on) ? 0 : RW_NODEBUG)
+#define	RW_DEBUG_P(rw)			(((rw)->rw_owner & RW_NODEBUG) == 0)
 #if defined(LOCKDEBUG)
-#define	RW_INHERITDEBUG(new, old)	(new) |= (old) & RW_DEBUG
+#define	RW_INHERITDEBUG(new, old)	(new) |= (old) & RW_NODEBUG
 #else /* defined(LOCKDEBUG) */
 #define	RW_INHERITDEBUG(new, old)	/* nothing */
 #endif /* defined(LOCKDEBUG) */
@@ -218,7 +218,7 @@ void
 rw_destroy(krwlock_t *rw)
 {
 
-	RW_ASSERT(rw, (rw->rw_owner & ~RW_DEBUG) == 0);
+	RW_ASSERT(rw, (rw->rw_owner & ~RW_NODEBUG) == 0);
 	LOCKDEBUG_FREE(RW_DEBUG_P(rw), rw);
 }
 
