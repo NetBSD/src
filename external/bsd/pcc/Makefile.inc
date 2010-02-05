@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2010/02/05 08:52:25 plunky Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2010/02/05 08:58:47 plunky Exp $
 
 PCC_DIR:=${.PARSEDIR}
 PCC_DIST=${PCC_DIR}/dist/pcc
@@ -6,14 +6,14 @@ PCC_LIBS=${PCC_DIR}/dist/pcc-libs
 
 TARGOS = netbsd
 
-.if ${MACHINE_ARCH} == "i386"
-TARGMACH = i386
-.elif ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
+.if ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
 TARGMACH = mips
-.elif ${MACHINE_ARCH} == "vax"
-TARGMACH = vax
 .else
-ERROR!= echo "ERROR: ${MACHINE_ARCH} not yet supported - write code!" >&2;echo
+TARGMACH = ${MACHINE_ARCH}
+.endif
+
+.if !exists(${PCC_DIST}/arch/${TARGMACH})
+ERROR!= echo "ERROR: ${TARGMACH} not yet supported - write code!" >&2;echo
 .endif
 
 VERSSTR = PACKAGE_STRING " [" PACKAGE_CHECKOUT "] for ${HOST_OSTYPE}"
