@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.51 2008/04/04 12:36:06 tsutsui Exp $	*/
+/*	$NetBSD: vr.c,v 1.51.22.1 2010/02/05 07:39:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.51 2008/04/04 12:36:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.51.22.1 2010/02/05 07:39:53 matt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -560,16 +560,10 @@ VR_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 	ci->ci_idepth--;
 
 #ifdef __HAVE_FAST_SOFTINTS
-	if (ipending & MIPS_SOFT_INT_MASK_1) {
-		_splset(MIPS_INT_MASK_1|MIPS_INT_MASK_0|MIPS_SR_INT_IE);
-		softintr(MIPS_SOFT_INT_MASK_1);
-	}
-
-	if (ipending & MIPS_SOFT_INT_MASK_0) {
-		_splset(MIPS_SOFT_INT_MASK_1|MIPS_INT_MASK_1|MIPS_INT_MASK_0|
-		    MIPS_SR_INT_IE);
-		softintr(MIPS_SOFT_INT_MASK_0);
-	}
+	ipending &= MIPS_SOFT_INT_MASK;
+	if (ipending == 0)
+		return;
+	softint_process(ipending);
 #endif
 }
 

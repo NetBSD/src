@@ -1,4 +1,4 @@
-#	$NetBSD: files.malta,v 1.15.28.2 2010/01/13 01:53:18 matt Exp $
+#	$NetBSD: files.malta,v 1.15.28.3 2010/02/05 07:39:52 matt Exp $
 
 file	arch/evbmips/malta/malta_bus_io.c
 file	arch/evbmips/malta/malta_bus_mem.c
@@ -16,7 +16,6 @@ file	arch/evbmips/evbmips/yamon.c			# XXX should be in arch/mips/yamon ?
 
 file	arch/mips/mips/mips3_clock.c
 file	arch/mips/mips/mips3_clockintr.c
-file	arch/mips/mips/softintr.c
 
 # The autoconfiguration root.
 device	mainbus { [addr = -1] }

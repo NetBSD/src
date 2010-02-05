@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.62 2008/02/20 21:43:33 drochner Exp $
+#	$NetBSD: files.arc,v 1.62.28.1 2010/02/05 07:39:52 matt Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -79,7 +79,6 @@ file	arch/arc/arc/wired_map_machdep.c
 file	arch/arc/arc/arcbios.c
 
 file	arch/mips/mips/mips3_clock.c
-file	arch/mips/mips/softintr.c
 
 ##
 ##	Machine-independent ATAPI drivers
