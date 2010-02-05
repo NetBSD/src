@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.3 2010/02/05 12:31:56 roy Exp $ */
+/* $NetBSD: term.c,v 1.4 2010/02/05 19:21:02 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.3 2010/02/05 12:31:56 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.4 2010/02/05 19:21:02 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -44,7 +44,8 @@ __RCSID("$NetBSD: term.c,v 1.3 2010/02/05 12:31:56 roy Exp $");
 #include <term_private.h>
 #include <term.h>
 
-#define TERMINFO_DIRS "/usr/share/misc/terminfo:/etc/terminfo:/rescue/terminfo"
+#define TERMINFO_DIRS		"/usr/share/misc/terminfo"
+#define TERMINFO_RESCUE		"/rescue/terminfo"
 
 static char database[PATH_MAX];
 static char pathbuf[PATH_MAX];
@@ -283,6 +284,7 @@ _ti_getterm(TERMINAL *term, const char *name, int flags)
 	_DIAGASSERT(term != NULL);
 	_DIAGASSERT(name != NULL);
 
+	database[0] = '\0';
 	_ti_database = NULL;
 	e = getenv("TERMINFO");
 	if (e != NULL)
@@ -295,8 +297,18 @@ _ti_getterm(TERMINAL *term, const char *name, int flags)
 		if (r == 1)
 			return 1;
 	}
-	
-	return _ti_dbgettermp(term, TERMINFO_DIRS, name, flags);
+
+	r = _ti_dbgettermp(term, TERMINFO_DIRS, name, flags);
+	if (r == 1)
+		return 1;
+
+	/* If we don't find the term in the rescue db and there is
+	 * no error, then report the last database accessed. */
+	strlcpy(h, database, sizeof(h));
+	r = _ti_dbgetterm(term, TERMINFO_RESCUE, name, flags);
+	if (r == 0 && h[0] != '\0')
+		strlcpy(database, h, sizeof(h));
+	return r;
 }
 
 void
