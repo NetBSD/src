@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.4 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.4.18.1 2010/02/05 07:39:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.4 2008/04/28 20:23:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.4.18.1 2010/02/05 07:39:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/intr.h>
@@ -77,10 +77,9 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	ci->ci_idepth--;
 
 #ifdef __HAVE_FAST_SOFTINTS
-	ipending &= (MIPS_SOFT_INT_MASK_1 | MIPS_SOFT_INT_MASK_0);
+	ipending &= MIPS_SOFT_INT_MASK;
 	if (ipending == 0)
 		return;
-	_clrsoftintr(ipending);
-	softintr_dispatch(ipending);
+	softint_process(ipending);
 #endif
 }

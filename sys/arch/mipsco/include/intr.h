@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16 2007/12/03 15:33:56 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.16.36.1 2010/02/05 07:39:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -56,19 +56,6 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <mips/locore.h>
-
-/*
- * software simulated interrupt
- */
-#define setsoft(x)	do {			\
-	extern u_int ssir;			\
-	int _s;					\
-						\
-	_s = splhigh();				\
-	ssir |= 1 << (x);			\
-	_setsoftintr(MIPS_SOFT_INT_MASK_1);	\
-	splx(_s);				\
-} while (0)
 
 /*
  * nesting interrupt masks.

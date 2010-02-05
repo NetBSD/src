@@ -1,4 +1,4 @@
-#	$NetBSD: files.rmixl,v 1.1.2.4 2010/01/16 23:49:32 cliff Exp $
+#	$NetBSD: files.rmixl,v 1.1.2.5 2010/02/05 07:39:52 matt Exp $
 
 file	arch/evbmips/rmixl/autoconf.c
 file	arch/evbmips/rmixl/machdep.c
@@ -9,7 +9,6 @@ file	arch/evbmips/evbmips/interrupt.c
 
 file	arch/mips/mips/mips3_clock.c
 file	arch/mips/mips/mips3_clockintr.c
-file	arch/mips/mips/softintr.c
 
 # The autoconfiguration root.
 device	mainbus { [node = -1] }

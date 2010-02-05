@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.33 2008/05/28 14:05:14 tsutsui Exp $
+#	$NetBSD: files.cobalt,v 1.33.16.1 2010/02/05 07:39:52 matt Exp $
 
 maxpartitions 16
 
@@ -45,8 +45,6 @@ file arch/cobalt/cobalt/console.c
 file arch/cobalt/cobalt/disksubr.c
 file arch/cobalt/cobalt/interrupt.c
 file arch/cobalt/cobalt/machdep.c
-
-file arch/mips/mips/softintr.c
 
 file dev/md_root.c			memory_disk_hooks
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.158 2008/08/10 15:31:21 tls Exp $
+# $NetBSD: GENERIC,v 1.158.8.1 2010/02/05 07:39:53 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.158 $"
+#ident		"GENERIC-$Revision: 1.158.8.1 $"
 
 maxusers	64
 
@@ -42,6 +42,7 @@ options 	DEC_3MAXPLUS	# DECstation 5000/240 (kn03), 5000/260 (kn05)
 #options 	DEC_5500	# DECsystem 5500 (kn220)
 #options 	DEC_5800	# DECsystem 58x0 (kn5800)
 
+makeoptions	DEBUG="-g"
 # Standard system options
 options 	DDB			# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
