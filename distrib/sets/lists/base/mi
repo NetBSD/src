@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.857 2010/02/04 14:04:59 roy Exp $
+# $NetBSD: mi,v 1.858 2010/02/05 19:08:25 plunky Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -872,7 +872,6 @@
 ./usr/libexec/atrun				base-cron-bin
 ./usr/libexec/ching				base-games-usr
 ./usr/libexec/comsat				base-mail-bin
-./usr/libexec/cpp				base-obsolete		obsolete
 ./usr/libexec/cpp0				base-obsolete		obsolete
 ./usr/libexec/dnskeygen				base-obsolete		obsolete
 ./usr/libexec/fingerd				base-netutil-bin

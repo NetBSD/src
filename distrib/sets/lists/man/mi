@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1186 2010/02/03 15:34:38 roy Exp $
+# $NetBSD: mi,v 1.1187 2010/02/05 19:08:26 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -86,6 +86,7 @@
 ./usr/share/man/cat1/calendar.0			man-util-catman		.cat
 ./usr/share/man/cat1/cap_mkdb.0			man-util-catman		.cat
 ./usr/share/man/cat1/cat.0			man-util-catman		.cat
+./usr/share/man/cat1/ccom.0			man-util-catman		pcccmds,.cat
 ./usr/share/man/cat1/cd.0			man-util-catman		.cat
 ./usr/share/man/cat1/cdplay.0			man-audio-catman	.cat
 ./usr/share/man/cat1/chflags.0			man-util-catman		.cat
@@ -368,6 +369,8 @@
 ./usr/share/man/cat1/pawd.0			man-amd-catman		.cat
 ./usr/share/man/cat1/pax.0			man-util-catman		.cat
 ./usr/share/man/cat1/paxctl.0			man-obsolete		obsolete
+./usr/share/man/cat1/pcc.0			man-util-catman		pcccmds,.cat
+./usr/share/man/cat1/pcpp.0			man-util-catman		pcccmds,.cat
 ./usr/share/man/cat1/pgrep.0			man-util-catman		.cat
 ./usr/share/man/cat1/pim6stat.0			man-obsolete		obsolete
 ./usr/share/man/cat1/pkg_add.0			man-pkgutil-catman	.cat
@@ -2804,6 +2807,7 @@
 ./usr/share/man/html1/calendar.html		man-util-htmlman	html
 ./usr/share/man/html1/cap_mkdb.html		man-util-htmlman	html
 ./usr/share/man/html1/cat.html			man-util-htmlman	html
+./usr/share/man/html1/ccom.html			man-util-htmlman	pcccmds,html
 ./usr/share/man/html1/cd.html			man-util-htmlman	html
 ./usr/share/man/html1/cdplay.html		man-audio-htmlman	html
 ./usr/share/man/html1/chflags.html		man-util-htmlman	html
@@ -3069,6 +3073,8 @@
 ./usr/share/man/html1/pathchk.html		man-util-htmlman	html
 ./usr/share/man/html1/pawd.html			man-amd-htmlman		html
 ./usr/share/man/html1/pax.html			man-util-htmlman	html
+./usr/share/man/html1/pcc.html			man-util-htmlman	pcccmds,html
+./usr/share/man/html1/pcpp.html			man-util-htmlman	pcccmds,html
 ./usr/share/man/html1/pgrep.html		man-util-htmlman	html
 ./usr/share/man/html1/pkg_add.html		man-pkgutil-htmlman	html
 ./usr/share/man/html1/pkg_admin.html		man-pkgutil-htmlman	html
@@ -5138,6 +5144,7 @@
 ./usr/share/man/man1/calendar.1			man-util-man		.man
 ./usr/share/man/man1/cap_mkdb.1			man-util-man		.man
 ./usr/share/man/man1/cat.1			man-util-man		.man
+./usr/share/man/man1/ccom.1			man-util-man		pcccmds,.man
 ./usr/share/man/man1/cd.1			man-util-man		.man
 ./usr/share/man/man1/cdplay.1			man-audio-man		.man
 ./usr/share/man/man1/chflags.1			man-util-man		.man
@@ -5420,6 +5427,8 @@
 ./usr/share/man/man1/pawd.1			man-amd-man		.man
 ./usr/share/man/man1/pax.1			man-util-man		.man
 ./usr/share/man/man1/paxctl.1			man-obsolete		obsolete
+./usr/share/man/man1/pcc.1			man-util-man		pcccmds,.man
+./usr/share/man/man1/pcpp.1			man-util-man		pcccmds,.man
 ./usr/share/man/man1/pgrep.1			man-util-man		.man
 ./usr/share/man/man1/pim6stat.1			man-obsolete		obsolete
 ./usr/share/man/man1/pkg_add.1			man-pkgutil-man		.man
