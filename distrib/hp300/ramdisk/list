@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.21 2009/09/20 23:19:53 abs Exp $
+#	$NetBSD: list,v 1.22 2010/02/05 10:01:18 roy Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -52,7 +52,7 @@ SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
 SPECIAL	umount		srcdir	distrib/utils/x_umount
 
-LIBS	libhack.o -lbz2 -lutil -lcurses -ltermcap -lcrypt -ll -lm -lz -lprop
+LIBS	libhack.o -lbz2 -lutil -lcurses -lterminfo -lcrypt -ll -lm -lz -lprop
 
 COPY	${DESTDIR}/usr/mdec/uboot.lif	usr/mdec/uboot.lif
 COPY	${DESTDIR}/usr/mdec/installboot	usr/mdec/installboot	555
@@ -65,7 +65,7 @@ COPY	${DISTRIBDIR}/common/protocols		etc/protocols
 COPY	${DISTRIBDIR}/common/services		etc/services
 
 # and the common installation tools
-COPY	${DISTRIBDIR}/common/termcap		usr/share/misc/termcap
+COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 
 # and the boot script
 COPY	${CURDIR}/dot.profile		.profile
