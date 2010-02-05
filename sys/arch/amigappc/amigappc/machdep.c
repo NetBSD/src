@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.40 2010/02/02 19:15:33 phx Exp $ */
+/* $NetBSD: machdep.c,v 1.41 2010/02/05 12:05:25 phx Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2010/02/02 19:15:33 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2010/02/05 12:05:25 phx Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -682,8 +682,11 @@ cpu_reboot(int howto, char *what)
 	splhigh();
 
 	/* Do dump if requested */
-	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP) {
 		oea_dumpsys();
+		/* XXX dumpsys doesn't work, so give a chance to debug */
+		Debugger();
+	}
 
 halt_sys:
 	doshutdownhooks();
@@ -707,25 +710,30 @@ halt_sys:
 
 /*
  * Try to emulate the functionality from m68k/m68k/sys_machdep.c
- * used by several amiga drivers.
+ * used by several amiga scsi drivers.
  */
 int
 dma_cachectl(void *addr, int len)
 {
-#if 0 /* XXX */
 	paddr_t pa, end;
-	int inc = curcpu()->ci_ci.dcache_line_size;
+	int inc;
+
+	if (addr == NULL || len == 0)
+		return 0;
 
 	pa = kvtop(addr);
+	inc = curcpu()->ci_ci.dcache_line_size;
+
 	for (end = pa + len; pa < end; pa += inc)
 		__asm volatile("dcbf 0,%0" :: "r"(pa));
 	__asm volatile("sync");
 
+#if 0 /* XXX not needed, we don't have instructions in DMA buffers */
 	pa = kvtop(addr);
 	for (end = pa + len; pa < end; pa += inc)
 		__asm volatile("icbi 0,%0" :: "r"(pa));
 	__asm volatile("isync");
-
 #endif
+
 	return 0;
 }
