@@ -1,4 +1,4 @@
-#	$NetBSD: dot.terminfo,v 1.1 2010/02/04 21:01:16 roy Exp $
+#	$NetBSD: terminfo,v 1.1 2010/02/05 09:44:23 roy Exp $
 
 pc3|BSD/OS on the PC Console,
 	am, bs, eo, km, xon,
