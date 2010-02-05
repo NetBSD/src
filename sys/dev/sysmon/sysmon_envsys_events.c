@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.78 2010/02/04 18:06:53 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.79 2010/02/05 19:22:25 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.78 2010/02/04 18:06:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.79 2010/02/05 19:22:25 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -178,7 +178,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 			return ENOMEM;
 
 		DPRINTF(("%s: dev %s sensor %s: new event\n",
-		    __func__, sme->sme_name, edata->des));
+		    __func__, sme->sme_name, edata->desc));
 
 		see->see_type = crittype;
 		see->see_sme = sme;
