@@ -190,7 +190,7 @@
 /* #define VERSSTR "pcc 0.9.9 for i386-pc-netbsdelf, greg@sparky Wed Aug 13 22:19:18 EST 2008" */
 
 /* PCC checkout date */
-#define PACKAGE_CHECKOUT " [20090902] "
+#define PACKAGE_CHECKOUT "20090902"
 
 /* Size of wide character type */
 #define WCHAR_SIZE 4
