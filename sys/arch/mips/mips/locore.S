@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167.38.8 2010/02/01 04:16:19 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.167.38.9 2010/02/05 07:36:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -201,10 +201,14 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
  * Switch to new context.
  */
 	PTR_L	t2, _C_LABEL(mips_locoresw) + MIPSX_CPU_SWITCH_RESUME
-	move	a0, MIPS_CURLWP
 	jal	ra, t2
-	nop
+	 move	a0, MIPS_CURLWP
+#ifdef MULTIPROCESSOR
+	PTR_L	t2, L_CPU(MIPS_CURLWP)
+	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(t2)
+#else
 	PTR_S	MIPS_CURLWP, CPUVAR(CURLWP)
+#endif
 
 	/* Check for restartable atomic sequences (RAS) */
 	PTR_L	t1, L_PROC(MIPS_CURLWP)
@@ -257,6 +261,96 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	j	ra
 	nop
 END(cpu_switchto)
+
+/*
+ * void softint_fast_dispatch(struct lwp *l, int s, void *new_sp);
+ *
+ * called at IPL_HIGH
+ *
+ */
+softint_cleanup:
+	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	INT_L	t1, CPU_INFO_MTX_COUNT(t0)
+	addi	t1, t1, 1
+	INT_S	t1, CPU_INFO_MTX_COUNT(t0)
+	REG_L	ra, CALLFRAME_RA(sp)
+	PTR_S	zero, L_CTXSWITCH(MIPS_CURLWP)
+	j	ra
+	 PTR_ADDU sp, CALLFRAME_SIZ
+/*
+ * Arguments:
+ *	a0	the LWP to switch to
+ *	a1	IPL to execute at
+ *	a2	the new stack.
+ */
+NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
+	PTR_SUBU sp, CALLFRAME_SIZ
+	REG_S	ra, CALLFRAME_RA(sp)		# save return address
+	.mask	0x80000000, -4
+	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# t0 = curlwp->l_addr
+	/*
+	 * Save our state in case softint_dispatch blocks and get switched back
+	 * to.
+ 	 */
+	mfc0	t1, MIPS_COP_0_STATUS
+	PTR_LA	t2, softint_cleanup		# if softint blocks, return here
+	REG_PROLOGUE
+	REG_S	s0, U_PCB_CONTEXT+SF_REG_S0(t0)
+	REG_S	s1, U_PCB_CONTEXT+SF_REG_S1(t0)
+	REG_S	s2, U_PCB_CONTEXT+SF_REG_S2(t0)
+	REG_S	s3, U_PCB_CONTEXT+SF_REG_S3(t0)
+	REG_S	s4, U_PCB_CONTEXT+SF_REG_S4(t0)
+	REG_S	s5, U_PCB_CONTEXT+SF_REG_S5(t0)
+	REG_S	s6, U_PCB_CONTEXT+SF_REG_S6(t0)
+	REG_S	s7, U_PCB_CONTEXT+SF_REG_S7(t0)
+	#REG_S	t8, U_PCB_CONTEXT+SF_REG_T8(t0) # MIPS_CURLWP
+	REG_S	sp, U_PCB_CONTEXT+SF_REG_SP(t0)
+	REG_S	s8, U_PCB_CONTEXT+SF_REG_S8(t0)
+	REG_S	t2, U_PCB_CONTEXT+SF_REG_RA(t0)
+	REG_S	t1, U_PCB_CONTEXT+SF_REG_SR(t0)
+#if defined(__mips_n32) || defined(__mips_n64)
+	REG_S	gp, U_PCB_CONTEXT+SF_REG_GP(t0)
+#endif
+#ifdef IPL_ICU_MASK
+	INT_L	t1, _C_LABEL(md_imask)
+	INT_S	t1, U_PCB_PPL(a2)
+#endif
+	REG_EPILOGUE
+	/*
+	 * Switch to a fast softint thread.  We don't care about its existing
+	 * state and we use a private KSEG0/XKPHYS mapped stack so don't have
+	 * to do TLB manipulation.
+	 */
+	move	s0, MIPS_CURLWP
+	PTR_L	s1, L_CPU(MIPS_CURLWP)			# get curcpu()
+	move	MIPS_CURLWP, a0				# switch to softint lwp
+	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(s1)	#    ...
+	move	s2, sp					# remember sp
+	move	s3, t0					# remember curpcb
+
+	PTR_L	t2, L_ADDR(MIPS_CURLWP)
+	move	a0, s0					# wants the pinned lwp
+	jal	_C_LABEL(softint_dispatch)
+	 PTR_ADDU sp, t2, USPACE - TF_SIZ - CALLFRAME_SIZ
+
+	move	sp, s2					# restore stack
+	move	MIPS_CURLWP, s0				# restore curlwp
+	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(s1)	#    ....
+
+	REG_PROLOGUE
+	REG_L	s0, U_PCB_CONTEXT+SF_REG_S0(s3)		# restore the saved
+	REG_L	s1, U_PCB_CONTEXT+SF_REG_S1(s3)		#    registers that we
+	REG_L	s2, U_PCB_CONTEXT+SF_REG_S2(s3)		#    used
+	REG_L	s3, U_PCB_CONTEXT+SF_REG_S3(s3)
+	REG_EPILOGUE
+
+	/*
+	 * Almost everything (all except sp) is restored so we ca retrn.
+	 */
+	REG_L	ra, CALLFRAME_RA(sp)
+	j	ra
+	 PTR_ADDU sp, CALLFRAME_SIZ
+END(softint_fast_dispatch)
 
 /*
  * savectx(struct user *up)

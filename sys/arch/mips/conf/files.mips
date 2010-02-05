@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.58.24.6 2010/01/29 00:16:58 matt Exp $
+#	$NetBSD: files.mips,v 1.58.24.7 2010/02/05 07:36:51 matt Exp $
 #
 
 defflag	opt_cputype.h		NOFPU FPEMUL
@@ -39,6 +39,7 @@ file	arch/mips/mips/pmap_tlb.c
 file	arch/mips/mips/trap.c			# trap handlers
 file	arch/mips/mips/syscall.c		# syscall entries
 file	arch/mips/mips/mips_machdep.c
+file	arch/mips/mips/mips_softint.c
 file	arch/mips/mips/sig_machdep.c		# signal delivery
 file	arch/mips/mips/sys_machdep.c
 file	arch/mips/mips/vm_machdep.c

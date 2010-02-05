@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.9 2010/02/01 04:16:20 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.10 2010/02/05 07:36:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.9 2010/02/01 04:16:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.10 2010/02/05 07:36:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,103 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 #ifdef IPL_ICU_MASK
 	pcb->pcb_ppl = 0;	/* machine depenedend interrupt mask */
 #endif
-}	
+}
+
+static struct evcnt uarea_remapped = 
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "uarea", "remapped");
+static struct evcnt uarea_reallocated = 
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "uarea", "reallocated");
+EVCNT_ATTACH_STATIC(uarea_remapped);
+EVCNT_ATTACH_STATIC(uarea_reallocated);
+
+void
+cpu_uarea_remap(struct lwp *l)
+{
+	bool uarea_ok;
+	vaddr_t va;
+	paddr_t pa;
+
+	/*
+	 * Grab the starting physical address of the uarea.
+	 */
+	va = (vaddr_t)l->l_addr;
+	if (!pmap_extract(pmap_kernel(), va, &pa))
+		panic("%s: pmap_extract(%#"PRIxVADDR") failed", __func__, va);
+
+	/*
+	 * Check to see if the existing uarea is physically contiguous.
+	 */
+	uarea_ok = true;
+	for (vaddr_t i = PAGE_SIZE; uarea_ok && i < USPACE; i += PAGE_SIZE) {
+		paddr_t pa0;
+		if (!pmap_extract(pmap_kernel(), va + i, &pa0))
+			panic("%s: pmap_extract(%#"PRIxVADDR") failed",
+			    __func__, va+1);
+		uarea_ok = (pa0 - pa == i);
+	}
+
+#ifndef _LP64
+	/*
+	 * If this is a 32bit kernel, it needs to be mappedable via KSEG0
+	 */
+	uarea_ok = uarea_ok && (pa + USPACE - 1 <= MIPS_PHYS_MASK);
+#endif
+	printf("ctx=%#"PRIxVADDR" utf=%p\n", 
+	    (vaddr_t)l->l_addr->u_pcb.pcb_context.val[_L_SP],
+	    l->l_md.md_utf);
+	KASSERT((vaddr_t)l->l_addr->u_pcb.pcb_context.val[_L_SP] == (vaddr_t)l->l_md.md_utf);
+	vaddr_t sp = l->l_addr->u_pcb.pcb_context.val[_L_SP] - (vaddr_t)l->l_addr;
+
+	if (!uarea_ok) {
+		struct pglist pglist;
+#ifdef _LP64
+		const paddr_t high = mips_avail_end;
+#else
+		const paddr_t high = MIPS_KSEG1_START - MIPS_KSEG0_START;
+#endif
+		int error;
+
+		/*
+		 * Allocate a new physically contiguou uarea which can be
+		 * direct-mapped.
+		 */
+		error = uvm_pglistalloc(USPACE, mips_avail_start, high,
+		    USPACE_ALIGN, 0, &pglist, 1, 1);
+		if (error)
+			panic("softint_init_md: uvm_pglistalloc failed: %d",
+			    error);
+
+		/*
+		 * Get the physical address from the first page.
+		 */
+		pa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&pglist));
+	}
+
+	/*
+	 * Now set the new uarea (if it's different). If l->l_addr was already
+	 * direct mapped address then routine really change anything but that's
+	 * not probably so don't micro optimize for it.
+	 */
+#ifdef _LP64
+	va = MIPS_PHYS_TO_XKPHYS_CACHED(pa);
+#else
+	va = MIPS_PHYS_TO_KSEG0(pa);
+#endif
+	if (!uarea_ok) {
+		((struct trapframe *)(va + USPACE))[-1] = *l->l_md.md_utf;
+		*(struct pcb *)va = l->l_addr->u_pcb;
+		/*
+		 * Discard the old uarea.
+		 */
+		uvm_uarea_free(USER_TO_UAREA(l->l_addr), curcpu());
+		uarea_reallocated.ev_count++;
+	}
+
+	l->l_addr = (struct user *)va;
+	l->l_addr->u_pcb.pcb_context.val[_L_SP] = sp + va;
+	l->l_md.md_utf = (struct trapframe *)((char *)l->l_addr + USPACE) - 1;
+	uarea_remapped.ev_count++;
+}
 
 /*
  * Finish a swapin operation.

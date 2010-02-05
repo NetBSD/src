@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.17 2010/02/01 04:16:18 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.18 2010/02/05 07:36:51 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -138,6 +138,8 @@ struct cpu_info {
 	vaddr_t ci_ebase;		/* VA of exception base */
 	paddr_t ci_ebase_pa;		/* PA of exception base */
 	u_long ci_cctr_freq;		/* cycle counter frequency */
+	struct lwp *ci_softlwps[SOFTINT_COUNT];
+#define	ci_softints	ci_data.cpu_softints
 	/*
 	 * Per-cpu pmap information
 	 */
@@ -562,6 +564,9 @@ void	cpu_boot_secondary_processors(void);
 /* locore*.S */
 int	badaddr(void *, size_t);
 int	badaddr64(uint64_t, size_t);
+
+/* vm_machdep.c */
+void	cpu_uarea_remap(struct lwp *);
 
 #endif /* ! _LOCORE */
 #endif /* _KERNEL */

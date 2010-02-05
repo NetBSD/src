@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.74.28.13 2010/01/20 06:58:35 matt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.74.28.14 2010/02/05 07:36:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -294,6 +294,8 @@
 #define	MIPS_HARD_INT_MASK	0xfc00
 #define	MIPS_SOFT_INT_MASK_1	0x0200
 #define	MIPS_SOFT_INT_MASK_0	0x0100
+#define	MIPS_SOFT_INT_MASK	0x0300
+#define	MIPS_INT_MASK_SHIFT	8
 
 /*
  * mips3 CPUs have on-chip timer at INT_MASK_5.  Each platform can

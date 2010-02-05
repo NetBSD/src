@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.23.78.4 2009/09/12 17:17:05 matt Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.23.78.5 2010/02/05 07:36:51 matt Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -41,6 +41,7 @@
 
 #define	UPAGES		2		/* pages of u-area */
 #define	USPACE		(UPAGES*NBPG)	/* size of u-area in bytes */
+#define	USPACE_ALIGN	USPACE		/* make sure it starts on a even VA */
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	NBPG		/* default message buffer size */
