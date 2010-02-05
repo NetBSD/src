@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2010/02/05 08:58:47 plunky Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2010/02/05 17:18:31 plunky Exp $
 
 PCC_DIR:=${.PARSEDIR}
 PCC_DIST=${PCC_DIR}/dist/pcc
@@ -16,7 +16,7 @@ TARGMACH = ${MACHINE_ARCH}
 ERROR!= echo "ERROR: ${TARGMACH} not yet supported - write code!" >&2;echo
 .endif
 
-VERSSTR = PACKAGE_STRING " [" PACKAGE_CHECKOUT "] for ${HOST_OSTYPE}"
+VERSSTR = PACKAGE_STRING " for ${TARGOS}-${TARGMACH}"
 
 libexecdir = /usr/libexec
 includedir = /usr/include

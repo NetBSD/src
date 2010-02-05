@@ -137,7 +137,7 @@
 #define PACKAGE_NAME "pcc"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "pcc 0.9.9"
+#define PACKAGE_STRING "pcc 0.9.9 [20090902]"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "pcc"
@@ -188,9 +188,6 @@
 
 /* Version string */
 /* #define VERSSTR "pcc 0.9.9 for i386-pc-netbsdelf, greg@sparky Wed Aug 13 22:19:18 EST 2008" */
-
-/* PCC checkout date */
-#define PACKAGE_CHECKOUT "20090902"
 
 /* Size of wide character type */
 #define WCHAR_SIZE 4
