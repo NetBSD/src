@@ -1,4 +1,4 @@
-.\"	$NetBSD: security.conf.5,v 1.35 2010/01/20 07:33:25 wiz Exp $
+.\"	$NetBSD: security.conf.5,v 1.36 2010/02/05 16:32:20 jmmv Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 19, 2010
+.Dd February 5, 2010
 .Dt SECURITY.CONF 5
 .Os
 .Sh NAME
@@ -253,11 +253,16 @@ Defaults to
 .Dq -u ,
 for unified-format context-diffs.
 .It Sy pkgdb_dir
-Change the pkg database directory from
-.Pa /var/db/pkg
-when
-.Sy check_pkgs
-is enabled.
+.Em DEPRECATED .
+Please set
+.Sq PKGDB_DIR
+in
+.Xr pkg_install.conf 5
+instead.
+.Pp
+If defined, points to the location of the packages database.
+Defaults to
+.Pa /var/db/pkg .
 .It Sy backup_uses_rcs
 Use
 .Xr rcs 1
