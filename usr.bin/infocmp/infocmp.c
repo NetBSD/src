@@ -1,4 +1,4 @@
-/* $NetBSD: infocmp.c,v 1.2 2010/02/05 10:10:04 roy Exp $ */
+/* $NetBSD: infocmp.c,v 1.3 2010/02/05 12:31:56 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: infocmp.c,v 1.2 2010/02/05 10:10:04 roy Exp $");
+__RCSID("$NetBSD: infocmp.c,v 1.3 2010/02/05 12:31:56 roy Exp $");
 
 #include <sys/ioctl.h>
 
@@ -721,6 +721,8 @@ main(int argc, char **argv)
 		if (uflag == 0)
 			printf("# Reconstructed from %s.db\n", _ti_database);
 		printf("%s", t->name);
+		if (t->_alias != NULL && *t->_alias != '\0')
+			printf("|%s", t->_alias);
 		if (t->desc != NULL && *t->desc != '\0')
 			printf("|%s", t->desc);
 		printf(",\n");
@@ -750,7 +752,7 @@ main(int argc, char **argv)
 		}
 		return EXIT_SUCCESS;
 	}
-		
+
 	if (Barg == NULL)
 		unsetenv("TERMINFO");
 	else

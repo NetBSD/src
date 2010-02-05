@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.2 2010/02/05 09:42:21 roy Exp $ */
+/* $NetBSD: term.c,v 1.3 2010/02/05 12:31:56 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.2 2010/02/05 09:42:21 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.3 2010/02/05 12:31:56 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -53,12 +53,14 @@ const char *_ti_database;
 static int
 _ti_readterm(TERMINAL *term, char *cap, size_t caplen, int flags)
 {
+	uint8_t ver;
 	uint16_t ind, num;
 	size_t len;
 	TERMUSERDEF *ud;
 
-	/* Only read version 1 structures */
-	if (*cap++ != 1) {
+	ver = *cap++;
+	/* Only read version 1 and 2 structures */
+	if (ver != 1 && ver != 2) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -83,6 +85,18 @@ _ti_readterm(TERMINAL *term, char *cap, size_t caplen, int flags)
 	cap += sizeof(uint16_t);
 	term->name = cap;
 	cap += len;
+	if (ver == 1)
+		term->_alias = NULL;
+	else {
+		len = le16dec(cap);
+		cap += sizeof(uint16_t);
+		if (len == 0)
+			term->_alias = NULL;
+		else {
+			term->_alias = cap;
+			cap += len;
+		}
+	}
 	len = le16dec(cap);
 	cap += sizeof(uint16_t);
 	term->desc = cap;
