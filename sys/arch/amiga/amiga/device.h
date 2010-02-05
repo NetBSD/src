@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.11 2008/06/11 12:59:10 tsutsui Exp $	*/
+/*	$NetBSD: device.h,v 1.12 2010/02/05 12:13:36 phx Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -48,5 +48,23 @@ extern int amiga_realconfig;
 
 
 #define getsoftc(cdnam, unit)	device_lookup_private(&(cdnam), (unit))
+
+/*
+ * Reorder protection when accessing device registers.
+ */
+#if defined(__m68k__)
+#define amiga_membarrier()
+#elif defined(__powerpc__)
+#define amiga_membarrier() __asm volatile ("eieio")
+#endif
+
+/*
+ * Finish all bus operations and flush pipelines.
+ */
+#if defined(__m68k__)
+#define amiga_cpu_sync() __asm volatile ("nop")
+#elif defined(__powerpc__)
+#define amiga_cpu_sync() __asm volatile ("sync; isync")
+#endif
 
 #endif /* _AMIGA_DEVICE_H_ */

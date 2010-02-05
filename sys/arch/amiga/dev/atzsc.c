@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.39 2009/10/16 09:36:35 phx Exp $ */
+/*	$NetBSD: atzsc.c,v 1.40 2010/02/05 12:13:36 phx Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atzsc.c,v 1.39 2009/10/16 09:36:35 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atzsc.c,v 1.40 2010/02/05 12:13:36 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ CFATTACH_DECL(atzsc, sizeof(struct sbic_softc),
     atzscmatch, atzscattach, NULL, NULL);
 
 /*
- * if we are an A3000 we are here.
+ * if we are a A2091 SCSI
  */
 int
 atzscmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
@@ -142,7 +142,9 @@ atzscattach(struct device *pdp, struct device *dp, void *auxp)
 	 * disable ints and reset bank register
 	 */
 	rp->CNTR = CNTR_PDMD;
+	amiga_membarrier();
 	rp->DAWR = DAWR_ATZSC;
+	amiga_membarrier();
 	sc->sc_enintr = atzsc_enintr;
 	sc->sc_dmago = atzsc_dmago;
 	sc->sc_dmanext = atzsc_dmanext;
@@ -219,12 +221,14 @@ atzsc_enintr(struct sbic_softc *dev)
 
 	dev->sc_flags |= SBICF_INTR;
 	sdp->CNTR = CNTR_PDMD | CNTR_INTEN;
+	amiga_membarrier();
 }
 
 int
 atzsc_dmago(struct sbic_softc *dev, char *addr, int count, int flags)
 {
 	volatile struct sdmac *sdp;
+	vu_short istr;
 
 	sdp = dev->sc_cregs;
 	/*
@@ -240,8 +244,11 @@ atzsc_dmago(struct sbic_softc *dev, char *addr, int count, int flags)
 
 	dev->sc_flags |= SBICF_INTR;
 	sdp->CNTR = dev->sc_dmacmd;
+	amiga_membarrier();
 	sdp->ACR = (u_int) dev->sc_cur->dc_addr;
+	amiga_membarrier();
 	sdp->ST_DMA = 1;
+	amiga_membarrier();
 
 	return(dev->sc_tcnt);
 }
@@ -251,6 +258,7 @@ atzsc_dmastop(struct sbic_softc *dev)
 {
 	volatile struct sdmac *sdp;
 	int s;
+	vu_short istr;
 
 	sdp = dev->sc_cregs;
 
@@ -266,14 +274,19 @@ atzsc_dmastop(struct sbic_softc *dev)
 			 * and reading from peripheral
 			 */
 			sdp->FLUSH = 1;
-			while ((sdp->ISTR & ISTR_FE_FLG) == 0)
-				;
+			amiga_membarrier();
+			do {
+				istr = sdp->ISTR;
+				amiga_membarrier();
+			} while ((istr & ISTR_FE_FLG) == 0);
 		}
 		/*
 		 * clear possible interrupt and stop DMA
 		 */
 		sdp->CINT = 1;
+		amiga_membarrier();
 		sdp->SP_DMA = 1;
+		amiga_membarrier();
 		dev->sc_dmacmd = 0;
 		splx(s);
 	}
@@ -307,6 +320,7 @@ atzsc_dmaintr(void *arg)
 		found++;
 
 		sdp->CINT = 1;	/* clear possible interrupt */
+		amiga_membarrier();
 
 		/*
 		 * check for SCSI ints in the same go and
@@ -324,6 +338,7 @@ int
 atzsc_dmanext(struct sbic_softc *dev)
 {
 	volatile struct sdmac *sdp;
+	vu_short istr;
 
 	sdp = dev->sc_cregs;
 
@@ -339,17 +354,25 @@ atzsc_dmanext(struct sbic_softc *dev)
 		   * and reading from peripheral
 		   */
 		sdp->FLUSH = 1;
-		while ((sdp->ISTR & ISTR_FE_FLG) == 0)
-			;
+		amiga_membarrier();
+		do {
+			istr = sdp->ISTR;
+			amiga_membarrier();
+		} while ((istr & ISTR_FE_FLG) == 0);
 	}
 	/*
 	 * clear possible interrupt and stop DMA
 	 */
 	sdp->CINT = 1;	/* clear possible interrupt */
+	amiga_membarrier();
 	sdp->SP_DMA = 1;	/* stop DMA */
+	amiga_membarrier();
 	sdp->CNTR = dev->sc_dmacmd;
+	amiga_membarrier();
 	sdp->ACR = (u_int)dev->sc_cur->dc_addr;
+	amiga_membarrier();
 	sdp->ST_DMA = 1;
+	amiga_membarrier();
 
 	dev->sc_tcnt = dev->sc_cur->dc_count << 1;
 	return(dev->sc_tcnt);

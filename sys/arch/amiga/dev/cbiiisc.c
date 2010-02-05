@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiiisc.c,v 1.17 2009/01/09 19:37:37 mhitch Exp $ */
+/*	$NetBSD: cbiiisc.c,v 1.18 2010/02/05 12:13:36 phx Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.17 2009/01/09 19:37:37 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.18 2010/02/05 12:13:36 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,6 +179,7 @@ cbiiisc_dmaintr(void *arg)
 	if (sc->sc_flags & SIOP_INTSOFF)
 		return (0);	/* interrupts are not active */
 	rp = sc->sc_siopp;
+	amiga_membarrier();
 	istat = rp->siop_istat;
 	if ((istat & (SIOP_ISTAT_SIP | SIOP_ISTAT_DIP)) == 0)
 		return(0);
@@ -189,6 +190,7 @@ cbiiisc_dmaintr(void *arg)
 	sc->sc_sist = rp->siop_sist;
 	sc->sc_istat = istat;
 	sc->sc_dstat = rp->siop_dstat;
+	amiga_membarrier();
 	siopngintr(sc);
 	return(1);
 }

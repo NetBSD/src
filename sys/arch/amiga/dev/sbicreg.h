@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicreg.h,v 1.7 2006/05/14 21:55:09 elad Exp $	*/
+/*	$NetBSD: sbicreg.h,v 1.8 2010/02/05 12:13:36 phx Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -314,12 +314,16 @@ typedef sbic_regmap_t *sbic_regmap_p;
 
 #define	sbic_read_reg(regs,regno,val) do { \
 		*((regs).sbic_address_p) = (regno);	\
+		amiga_membarrier(); \
 		(val) = *((regs).sbic_value_p);	\
+		amiga_membarrier(); \
 	} while (0)
 
 #define	sbic_write_reg(regs,regno,val)	do { \
 		*((regs).sbic_address_p) = (regno);	\
+		amiga_membarrier(); \
 		*((regs).sbic_value_p) = (val);	\
+		amiga_membarrier(); \
 	} while (0)
 
 #define SET_SBIC_myid(regs,val)         sbic_write_reg(regs,SBIC_myid,val)

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.50 2010/01/31 19:56:19 phx Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.51 2010/02/05 12:13:36 phx Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.50 2010/01/31 19:56:19 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.51 2010/02/05 12:13:36 phx Exp $");
 
 #include "grfcv.h"
 #if NGRFCV > 0
@@ -336,7 +336,7 @@ cvintr(void *arg)
 
 		/* Restore the old CR index */
 		vgaw(ba, CRT_ADDRESS, cridx);
-		cpu_sync();
+		amiga_cpu_sync();
 #endif  /* !CV_NO_HARDWARE_CURSOR */
 		return (1);
 	}
@@ -358,7 +358,7 @@ cv_has_4mb(volatile void *fb)
 	testfbw = (volatile unsigned long *)fb;
 	testfbr = (volatile unsigned long *)((volatile char*)fb + 0x02000000);
 	*testfbw = 0x87654321;
-	cpu_sync();
+	amiga_cpu_sync();
 	if (*testfbr != 0x87654321)
 		return (0);
 
@@ -366,15 +366,15 @@ cv_has_4mb(volatile void *fb)
 	testfbw = (volatile unsigned long *)((volatile char*)fb + 0x00200000);
 	testfbr = (volatile unsigned long *)((volatile char*)fb + 0x02200000);
 	*testfbw = 0x87654321;
-	cpu_sync();
+	amiga_cpu_sync();
 	if (*testfbr != 0x87654321)
 		return (0);
 	*testfbw = 0xAAAAAAAA;
-	cpu_sync();
+	amiga_cpu_sync();
 	if (*testfbr != 0xAAAAAAAA)
 		return (0);
 	*testfbw = 0x55555555;
-	cpu_sync();
+	amiga_cpu_sync();
 	if (*testfbr != 0x55555555)
 		return (0);
 	return (1);
@@ -1850,7 +1850,7 @@ cv_setup_hwc(struct grf_softc *gp)
 	/* reset colour stack */
 #if !defined(__m68k__)
 	test = RCrt(ba, CRT_ID_HWGC_MODE);
-	cpu_sync();
+	amiga_cpu_sync();
 #else
 	/* do it in assembler, the above does't seem to work */
 	__asm volatile ("moveb #0x45, %1@(0x3d4); \
@@ -1865,7 +1865,7 @@ cv_setup_hwc(struct grf_softc *gp)
 
 #if !defined(__m68k__)
 	test = RCrt(ba, CRT_ID_HWGC_MODE);
-	cpu_sync();
+	amiga_cpu_sync();
 #else
 	/* do it in assembler, the above does't seem to work */
 	__asm volatile ("moveb #0x45, %1@(0x3d4); \
@@ -2107,7 +2107,7 @@ cv_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 
 		/* reset colour stack */
 		test = RCrt(ba, CRT_ID_HWGC_MODE);
-		cpu_sync();
+		amiga_cpu_sync();
 		switch (depth) {
 		    case 8:
 		    case 15:
@@ -2126,7 +2126,7 @@ cv_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 		}
 
 		test = RCrt(ba, CRT_ID_HWGC_MODE);
-		cpu_sync();
+		amiga_cpu_sync();
 		switch (depth) {
 		    case 8:
 			WCrt (ba, CRT_ID_HWGC_BG_STACK, 1);
