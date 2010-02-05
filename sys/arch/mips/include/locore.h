@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.11 2010/02/01 04:16:19 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.12 2010/02/05 07:36:51 matt Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -43,8 +43,10 @@ int _spllower(int);
 int _splset(int);
 int _splget(void); 
 void _splnone(void);
-void _setsoftintr(int);
-void _clrsoftintr(int);
+void _setsoftintr(uint32_t);
+void _clrsoftintr(uint32_t);
+void softint_process(uint32_t);
+void softint_fast_dispatch(struct lwp *, int);
 
 #ifdef MIPS1
 void	mips1_tlb_set_asid(uint32_t);
