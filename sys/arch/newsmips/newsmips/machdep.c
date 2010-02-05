@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98.10.3 2010/02/01 04:18:31 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98.10.4 2010/02/05 07:39:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.10.3 2010/02/01 04:18:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.10.4 2010/02/05 07:39:53 matt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -611,10 +611,9 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 
 #ifdef __HAVE_FAST_SOFTINTS
 	/* software interrupts */
-	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
+	ipending &= MIPS_SOFT_INT_MASK;
 	if (ipending == 0)
 		return;
-	_clrsoftintr(ipending);
-	softintr_dispatch(ipending);
+	softint_process(ipending);
 #endif
 }

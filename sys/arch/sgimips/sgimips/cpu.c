@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.21.36.2 2010/02/01 04:18:32 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.21.36.3 2010/02/05 07:39:54 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21.36.2 2010/02/01 04:18:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21.36.3 2010/02/05 07:39:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -162,11 +162,10 @@ cpu_intr(u_int32_t status, u_int32_t cause, vaddr_t pc, u_int32_t ipending)
 
 #ifdef __HAVE_FAST_SOFTINTS
 	/* software interrupt */
-	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
+	ipending &= MIPS_SOFT_INT_MASK;
 	if (ipending == 0)
 		return;
-	_clrsoftintr(ipending);
-	softintr_dispatch(ipending);
+	softint_process(ipending);
 #endif
 }
 

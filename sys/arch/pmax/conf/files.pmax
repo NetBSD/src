@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.111 2008/02/20 21:43:35 drochner Exp $
+#	$NetBSD: files.pmax,v 1.111.28.1 2010/02/05 07:39:53 matt Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -121,8 +121,6 @@ file	arch/pmax/pmax/promcall.c
 file	arch/pmax/pmax/sysconf.c
 file	arch/pmax/stand/common/callvec.c
 file	dev/cons.c
-
-file arch/mips/mips/softintr.c
 
 #
 # Workstation console devices
