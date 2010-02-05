@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.75 2010/01/27 16:22:41 jmmv Exp $
+#	$NetBSD: daily,v 1.76 2010/02/05 16:29:02 jmmv Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -28,6 +28,12 @@ fi
 
 if [ -z "$MAILTO" -o "$USER" != "root" ]; then
 	MAILTO=root
+fi
+
+if [ -n "${pkgdb_dir}" ]; then
+    echo "WARNING: Setting pkgdb_dir in daily.conf(5) is deprecated"
+    echo "WARNING: Please define PKG_DBDIR in pkg_install.conf(5) instead"
+    _compat_K_flag="-K ${pkgdb_dir}"
 fi
 
 echo ""
@@ -242,13 +248,11 @@ if checkyesno run_rdist && [ -f /etc/Distfile ]; then
 	fi
 fi
 
-: ${pkgdb_dir:=/var/db/pkg}
-
-if pkg_info -K ${pkgdb_dir} -q -E '*'; then
+if pkg_info ${_compat_K_flag} -q -E '*'; then
 	echo ""
 	echo "Fetching package vulnerabilities database:"
 	if checkyesno fetch_pkg_vulnerabilities; then
-		( umask 022 && pkg_admin -K ${pkgdb_dir} \
+		( umask 022 && pkg_admin ${_compat_K_flag} \
 		    fetch-pkg-vulnerabilities -u )
 	else
 		echo "fetch_pkg_vulnerabilities is set to NO in daily.conf(5)."

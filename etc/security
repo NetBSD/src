@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.107 2010/01/19 22:08:11 jmmv Exp $
+#	$NetBSD: security,v 1.108 2010/02/05 16:29:02 jmmv Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -25,7 +25,6 @@ fi
 # Set reasonable defaults (if they're not set in security.conf)
 #
 backup_dir=${backup_dir:-/var/backups}
-pkgdb_dir=${pkgdb_dir:-/var/db/pkg} # TODO Inherit from daily.conf.
 max_loginlen=${max_loginlen:-8}
 max_grouplen=${max_grouplen:-8}
 pkg_info=${pkg_info:-/usr/sbin/pkg_info}
@@ -62,6 +61,16 @@ LVM_LABELS=lvm.$$
 PKGS=pkgs.$$
 CHANGEFILES=changefiles.$$
 SPECIALSPEC=specialspec.$$
+
+if [ -n "${pkgdb_dir}" ]; then
+    echo "WARNING: Setting pkgdb_dir in security.conf(5) is deprecated"
+    echo "WARNING: Please define PKG_DBDIR in pkg_install.conf(5) instead"
+    _compat_K_flag="-K ${pkgdb_dir}"
+fi
+
+have_pkgs() {
+	$pkg_info ${_compat_K_flag} -q -E '*'
+}
 
 # migrate_file old new
 #	Determine if the "${old}" path name needs to be migrated to the
@@ -910,10 +919,12 @@ fi
 
 # Check for changes in the list of installed pkgs
 #
-if checkyesno check_pkgs && [ -d $pkgdb_dir ]; then
+if checkyesno check_pkgs && have_pkgs; then
 	pkgs=$work_dir/pkgs
 	migrate_file "$backup_dir/pkgs" "$pkgs"
-	(	cd $pkgdb_dir
+	pkg_dbdir=$(pkg_admin config-var PKG_DBDIR)
+	: ${pkg_dbdir:=/var/db/pkg}
+	(	cd $pkg_dbdir
 		$pkg_info | sort
 		echo ""
 		find . \( -name +REQUIRED_BY -o -name +CONTENTS \) -print0 |
@@ -992,9 +1003,9 @@ if [ -n "$CHANGELIST" ]; then
 	done
 fi
 
-if pkg_info -K ${pkgdb_dir} -q -E '*'; then
+if have_pkgs; then
 	if checkyesno check_pkg_vulnerabilities; then
-		pkg_admin -K ${pkgdb_dir} audit >${OUTPUT} 2>&1
+		pkg_admin ${_compat_K_flag} audit >${OUTPUT} 2>&1
 		if [ -s ${OUTPUT} ]; then
 			printf "\nInstalled vulnerable packages:\n"
 			cat ${OUTPUT}
@@ -1002,7 +1013,7 @@ if pkg_info -K ${pkgdb_dir} -q -E '*'; then
 	fi
 
 	if checkyesno check_pkg_signatures; then
-		pkg_admin -K ${pkgdb_dir} check >${OUTPUT} 2>&1
+		pkg_admin ${_compat_K_flag} check >${OUTPUT} 2>&1
 		if [ $? -ne 0 ]; then
 			printf "\nFiles with invalid signatures:\n"
 			cat ${OUTPUT}
