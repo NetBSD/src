@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2009/08/22 06:52:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.25 2010/02/05 09:44:23 roy Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -53,7 +53,7 @@ ${LIBOVERRIDE}: ${OVERRIDEOBJS}
 	${_MKTARGET_LINK}
 	${LD} -r -o $@ ${OVERRIDEOBJS}
 
-CLEANFILES+=	${OVERRIDEOBJS} ${LIBOVERRIDE}
+CLEANFILES+=	${OVERRIDEOBJS} ${LIBOVERRIDE} terminfo.db
 
 ${CRUNCHBIN}:	${LIBOVERRIDE}
 
@@ -65,7 +65,11 @@ CLEANFILES+=	rescue.unstripped
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
 
-realall: ${CRUNCHBIN}
+realall: ${CRUNCHBIN} terminfo.db
+
+terminfo.db: terminfo
+	${_MKTARGET_CREATE}
+	${TOOL_TIC} -x -o "${.OBJDIR}/terminfo" "${.CURDIR}/terminfo" 
 
 install: ${CRUNCHBIN}
 # XXX this MKMSG doesn't line up

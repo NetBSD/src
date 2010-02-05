@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.37 2010/02/03 15:34:44 roy Exp $
+#	$NetBSD: list,v 1.38 2010/02/05 09:44:23 roy Exp $
 
 SRCDIRS	bin
 
@@ -147,6 +147,7 @@ SRCDIRS	libexec
 
 PROG	lfs_cleanerd
 
+COPY	terminfo.db	terminfo.db
 
 LIBS	liboverride.o
 LIBS	-lbz2 -lcrypt -ledit -lipsec -lkvm -ll -lm -lrmt -lcurses -lterminfo -lutil -lz -levent -lprop

@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.30 2010/01/14 10:04:19 wiz Exp $
+# $NetBSD: rescue.mi,v 1.31 2010/02/05 09:44:23 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -143,6 +143,7 @@
 ./rescue/sysctl					base-rescue-root
 ./rescue/systrace				base-obsolete		obsolete
 ./rescue/tar					base-rescue-root
+./rescue/terminfo.db				base-rescue-root
 ./rescue/test					base-rescue-root
 ./rescue/tetris					base-rescue-root
 ./rescue/ttyflags				base-rescue-root

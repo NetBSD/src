@@ -1,9 +1,9 @@
 #!/bin/sh
-#	$NetBSD: mkterminfo,v 1.1 2010/02/04 21:01:16 roy Exp $
+#	$NetBSD: mkterminfo,v 1.1 2010/02/05 09:44:23 roy Exp $
 
 # Build a minimal set of terminfo definitons from our ttys
 
-TARGET=dot.terminfo
+TARGET=terminfo
 
 echo "#	\$NetBSD\$" > ${TARGET}
 echo >> ${TARGET}
