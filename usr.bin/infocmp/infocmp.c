@@ -1,4 +1,4 @@
-/* $NetBSD: infocmp.c,v 1.3 2010/02/05 12:31:56 roy Exp $ */
+/* $NetBSD: infocmp.c,v 1.4 2010/02/05 16:43:46 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: infocmp.c,v 1.3 2010/02/05 12:31:56 roy Exp $");
+__RCSID("$NetBSD: infocmp.c,v 1.4 2010/02/05 16:43:46 roy Exp $");
 
 #include <sys/ioctl.h>
 
@@ -52,7 +52,7 @@ typedef struct tient {
 } TIENT;
 
 static size_t cols;
-static int aflag, cflag, nflag, qflag, xflag, raw;
+static int aflag, cflag, nflag, qflag, xflag;
 
 static size_t
 outstr(FILE *f, const char *str)
@@ -232,40 +232,35 @@ load_ents(TIENT *ents, TERMINAL *t, char type)
 	}
 	
 	n = 0;
-	if (xflag < 2) {
-		for (i = 0; i <= max; i++) {
-			switch (type) {
-			case 'f':
-				if (t->flags[i] == 1 ||
-				    (raw != 0 &&
-					t->flags[i] == CANCELLED_BOOLEAN))
-				{
-					ents[n].id = _ti_flagid(i);
-					ents[n].type = 'f';
-					ents[n++].flag = t->flags[i];
-				}
-				break;
-			case 'n':
-				if (VALID_NUMERIC(t->nums[i]) ||
-				    (raw != 0 &&
-					t->nums[i] == CANCELLED_NUMERIC))
-				{
-					ents[n].id = _ti_numid(i);
-					ents[n].type = 'n';
-					ents[n++].num = t->nums[i];
-				}
-				break;
-			default:
-				if (VALID_STRING(t->strs[i]) ||
-				    (raw != 0 &&
-					t->strs[i] == CANCELLED_STRING))
-				{
-					ents[n].id = _ti_strid(i);
-					ents[n].type = 's';
-					ents[n++].str = t->strs[i];
-				}
-				break;
+	for (i = 0; i <= max; i++) {
+		switch (type) {
+		case 'f':
+			if (t->flags[i] == 1 ||
+			    (aflag && t->flags[i] == CANCELLED_BOOLEAN))
+			{
+				ents[n].id = _ti_flagid(i);
+				ents[n].type = 'f';
+				ents[n++].flag = t->flags[i];
 			}
+			break;
+		case 'n':
+			if (VALID_NUMERIC(t->nums[i]) ||
+			    (aflag && t->nums[i] == CANCELLED_NUMERIC))
+			{
+				ents[n].id = _ti_numid(i);
+				ents[n].type = 'n';
+				ents[n++].num = t->nums[i];
+			}
+			break;
+		default:
+			if (VALID_STRING(t->strs[i]) ||
+			    (aflag && t->strs[i] == CANCELLED_STRING))
+			{
+				ents[n].id = _ti_strid(i);
+				ents[n].type = 's';
+				ents[n++].str = t->strs[i];
+			}
+			break;
 		}
 	}
 	
@@ -275,17 +270,17 @@ load_ents(TIENT *ents, TERMINAL *t, char type)
 			if (ud->type == type) {
 				switch (type) {
 				case 'f':
-					if (raw == 0 &&
+					if (!aflag &&
 					    !VALID_BOOLEAN(ud->flag))
 						continue;
 					break;
 				case 'n':
-					if (raw == 0 &&
+					if (!aflag &&
 					    !VALID_NUMERIC(ud->num))
 						continue;
 					break;
 				case 's':
-					if (raw == 0 &&
+					if (!aflag &&
 					    !VALID_STRING(ud->str))
 						continue;
 					break;
@@ -674,26 +669,26 @@ main(int argc, char **argv)
 			Barg = optarg;
 			break;
 		case 'a':
-			aflag++;
-			xflag++;
+			aflag = 1;
 			break;
 		case 'c':
-			cflag++;
+			cflag = 1;
 			break;
 		case 'n':
-			nflag++;
+			nflag = 1;
 			break;
 		case 'q':
-			qflag++;
+			qflag = 1;
 			break;
 		case 'u':
-			uflag++;
+			uflag = 1;
+			aflag = 1;
 			break;
 		case 'w':
 			cols = strtoul(optarg, NULL, 10);
 			break;
 		case 'x':
-			xflag++;
+			xflag = 1;
 			break;
 		case '?':
 		default:
@@ -706,7 +701,7 @@ main(int argc, char **argv)
 	cols--;
 
 	if (optind + 1 < argc)
-		raw = 1;
+		aflag = 1;
 
 	if (optind < argc)
 		term = argv[optind++];
