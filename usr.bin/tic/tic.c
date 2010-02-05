@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.2 2010/02/05 12:31:56 roy Exp $ */
+/* $NetBSD: tic.c,v 1.3 2010/02/05 14:40:07 he Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.2 2010/02/05 12:31:56 roy Exp $");
+__RCSID("$NetBSD: tic.c,v 1.3 2010/02/05 14:40:07 he Exp $");
 
 #include <sys/types.h>
 
@@ -471,7 +471,8 @@ encode_string(const char *term, const char *cap, TBUF *tbuf, const char *str)
 static int
 process_entry(TBUF *buf)
 {
-	char *cap, *capstart, *p, *e, *name, *desc, *alias, flag;
+	char *cap, *capstart, *p, *e, *name, *desc, *alias;
+	signed char flag;
 	long num;
 	int slash;
 	ssize_t ind;
