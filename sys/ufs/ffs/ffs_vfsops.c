@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.256 2010/01/31 10:54:10 mlelstv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.257 2010/02/05 20:03:36 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.256 2010/01/31 10:54:10 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.257 2010/02/05 20:03:36 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1931,7 +1931,7 @@ ffs_sbupdate(struct ufsmount *mp, int waitfor)
 	u_int32_t saveflag;
 
 	error = ffs_getblk(mp->um_devvp,
-	    fs->fs_sblockloc >> (fs->fs_fshift - fs->fs_fsbtodb), FFS_NOBLK,
+	    fs->fs_sblockloc / DEV_BSIZE, FFS_NOBLK,
 	    fs->fs_sbsize, false, &bp);
 	if (error)
 		return error;
