@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2010/02/05 17:18:31 plunky Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2010/02/05 18:41:25 plunky Exp $
 
 PCC_DIR:=${.PARSEDIR}
 PCC_DIST=${PCC_DIR}/dist/pcc
@@ -8,6 +8,8 @@ TARGOS = netbsd
 
 .if ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
 TARGMACH = mips
+.elif ${MACHINE_ARCH} == "x86_64"
+TARGMACH = amd64
 .else
 TARGMACH = ${MACHINE_ARCH}
 .endif
