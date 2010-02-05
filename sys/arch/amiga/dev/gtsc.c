@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.38 2008/06/13 08:13:37 cegger Exp $ */
+/*	$NetBSD: gtsc.c,v 1.39 2010/02/05 12:13:36 phx Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtsc.c,v 1.38 2008/06/13 08:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtsc.c,v 1.39 2010/02/05 12:13:36 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,8 +142,11 @@ gtscattach(struct device *pdp, struct device *dp, void *auxp)
 	 * disable ints and reset bank register
 	 */
 	rp->CNTR = 0;
-	if ((gap->flags & GVP_NOBANK) == 0)
+	amiga_membarrier();
+	if ((gap->flags & GVP_NOBANK) == 0) {
 		rp->bank = 0;
+		amiga_membarrier();
+	}
 
 	sc->sc_dmago =  gtsc_dmago;
 	sc->sc_enintr = gtsc_enintr;
@@ -196,6 +199,7 @@ gtscattach(struct device *pdp, struct device *dp, void *auxp)
 
 	sc->sc_sbic.sbic_asr_p = (volatile unsigned char *)rp + 0x61;
 	sc->sc_sbic.sbic_value_p = (volatile unsigned char *)rp + 0x63;
+	amiga_membarrier();
 
 	sc->sc_clkfreq = gtsc_clock_override ? gtsc_clock_override :
 	    ((gap->flags & GVP_14MHZ) ? 143 : 72);
@@ -245,6 +249,7 @@ gtsc_enintr(struct sbic_softc *dev)
 
 	dev->sc_flags |= SBICF_INTR;
 	sdp->CNTR = GVP_CNTR_INTEN;
+	amiga_membarrier();
 }
 
 int
@@ -266,6 +271,7 @@ gtsc_dmago(struct sbic_softc *dev, char *addr, int count, int flags)
 #endif
 	dev->sc_flags |= SBICF_INTR;
 	sdp->CNTR = dev->sc_dmacmd;
+	amiga_membarrier();
 	if((u_int)dev->sc_cur->dc_addr & dev->sc_dmamask) {
 #if 1
 		printf("gtsc_dmago: pa %p->%lx dmacmd %x",
@@ -276,10 +282,14 @@ gtsc_dmago(struct sbic_softc *dev, char *addr, int count, int flags)
 		sdp->ACR = 0x00f80000;	/***********************************/
 	} else
 		sdp->ACR = (u_int) dev->sc_cur->dc_addr;
-	if (dev->gtsc_bankmask)
+	amiga_membarrier();
+	if (dev->gtsc_bankmask) {
 		sdp->bank =
 		    dev->gtsc_bankmask & (((u_int)dev->sc_cur->dc_addr) >> 18);
+		amiga_membarrier();
+	}
 	sdp->ST_DMA = 1;
+	amiga_membarrier();
 
 	/*
 	 * restrict transfer count to maximum
@@ -311,7 +321,9 @@ gtsc_dmastop(struct sbic_softc *dev)
 		 */
 		s = splbio();
 		sdp->CNTR &= ~GVP_CNTR_INT_P;
+		amiga_membarrier();
 		sdp->SP_DMA = 1;
+		amiga_membarrier();
 		dev->sc_dmacmd = 0;
 		splx(s);
 	}
@@ -326,6 +338,7 @@ gtsc_dmaintr(void *arg)
 
 	sdp = dev->sc_cregs;
 	stat = sdp->CNTR;
+	amiga_membarrier();
 	if ((stat & GVP_CNTR_INT_P) == 0)
 		return (0);
 #ifdef DEBUG
@@ -356,14 +369,21 @@ gtsc_dmanext(struct sbic_softc *dev)
 	 * clear possible interrupt and stop DMA
 	 */
 	sdp->CNTR &= ~GVP_CNTR_INT_P;
+	amiga_membarrier();
 	sdp->SP_DMA = 1;
+	amiga_membarrier();
 
 	sdp->CNTR = dev->sc_dmacmd;
+	amiga_membarrier();
 	sdp->ACR = (u_int) dev->sc_cur->dc_addr;
-	if (dev->gtsc_bankmask)
+	amiga_membarrier();
+	if (dev->gtsc_bankmask) {
 		sdp->bank =
 		    dev->gtsc_bankmask & ((u_int)dev->sc_cur->dc_addr >> 18);
+		amiga_membarrier();
+	}
 	sdp->ST_DMA = 1;
+	amiga_membarrier();
 
 	dev->sc_tcnt = dev->sc_cur->dc_count << 1;
 	if (dev->sc_tcnt > gtsc_maxdma)
