@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.10 2010/02/05 07:36:50 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.11 2010/02/05 17:16:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.10 2010/02/05 07:36:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.11 2010/02/05 17:16:05 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * Copy l1 trapframe atop on l2 stack space, so return to user mode
 	 * will be to right address, with correct registers.
 	 */
-	memcpy(&l2->l_addr->u_pcb, &l1->l_addr->u_pcb, sizeof(struct pcb));
+	l2->l_addr->u_pcb = l1->l_addr->u_pcb;
 	tf = (struct trapframe *)((char *)l2->l_addr + USPACE) - 1;
 	*tf = *l1->l_md.md_utf;
 
@@ -248,11 +248,7 @@ cpu_uarea_remap(struct lwp *l)
 	 */
 	uarea_ok = uarea_ok && (pa + USPACE - 1 <= MIPS_PHYS_MASK);
 #endif
-	printf("ctx=%#"PRIxVADDR" utf=%p\n", 
-	    (vaddr_t)l->l_addr->u_pcb.pcb_context.val[_L_SP],
-	    l->l_md.md_utf);
 	KASSERT((vaddr_t)l->l_addr->u_pcb.pcb_context.val[_L_SP] == (vaddr_t)l->l_md.md_utf);
-	vaddr_t sp = l->l_addr->u_pcb.pcb_context.val[_L_SP] - (vaddr_t)l->l_addr;
 
 	if (!uarea_ok) {
 		struct pglist pglist;
@@ -290,8 +286,11 @@ cpu_uarea_remap(struct lwp *l)
 	va = MIPS_PHYS_TO_KSEG0(pa);
 #endif
 	if (!uarea_ok) {
+		/*
+		 * Copy the trapframe and pcb from the old uarea to the new.
+		 */
 		((struct trapframe *)(va + USPACE))[-1] = *l->l_md.md_utf;
-		*(struct pcb *)va = l->l_addr->u_pcb;
+		((struct user *)va)->u_pcb = l->l_addr->u_pcb;
 		/*
 		 * Discard the old uarea.
 		 */
@@ -300,8 +299,8 @@ cpu_uarea_remap(struct lwp *l)
 	}
 
 	l->l_addr = (struct user *)va;
-	l->l_addr->u_pcb.pcb_context.val[_L_SP] = sp + va;
-	l->l_md.md_utf = (struct trapframe *)((char *)l->l_addr + USPACE) - 1;
+	l->l_md.md_utf = (struct trapframe *)(va + USPACE) - 1;
+	l->l_addr->u_pcb.pcb_context.val[_L_SP] = (vaddr_t)l->l_md.md_utf;
 	uarea_remapped.ev_count++;
 }
 
