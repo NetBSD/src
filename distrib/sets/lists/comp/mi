@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1383 2010/02/03 23:13:28 pooka Exp $
+#	$NetBSD: mi,v 1.1384 2010/02/05 12:46:33 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3000,6 +3000,7 @@
 ./usr/libdata/debug/usr/bin/indent.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/indxbib.debug	comp-groff-debug	debug
 ./usr/libdata/debug/usr/bin/info.debug		comp-texinfo-debug	debug
+./usr/libdata/debug/usr/bin/infocmp.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/infokey.debug	comp-texinfo-debug	debug
 ./usr/libdata/debug/usr/bin/innetgr.debug	comp-nis-debug		debug
 ./usr/libdata/debug/usr/bin/install-info.debug	comp-texinfo-debug	debug
@@ -3187,6 +3188,7 @@
 ./usr/libdata/debug/usr/bin/texindex.debug	comp-texinfo-debug	debug
 ./usr/libdata/debug/usr/bin/tfmtodit.debug	comp-groff-debug	debug
 ./usr/libdata/debug/usr/bin/tftp.debug		comp-netutil-debug	debug
+./usr/libdata/debug/usr/bin/tic.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/time.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tip.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tn3270.debug	comp-obsolete		obsolete
