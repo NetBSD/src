@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.65 2009/10/26 19:16:54 cegger Exp $ */
+/*	$NetBSD: sbic.c,v 1.66 2010/02/05 12:13:36 phx Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.65 2009/10/26 19:16:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.66 2010/02/05 12:13:36 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1746,6 +1746,9 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 		if (((u_int)addr & 0xF) || (((u_int)addr + count) & 0xF))
 			dev->sc_flags |= SBICF_DCFLUSH;
 	}
+#endif
+#ifdef __powerpc__
+	dma_cachectl(addr, count);
 #endif
 
 	/*
