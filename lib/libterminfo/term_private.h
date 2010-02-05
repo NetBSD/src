@@ -1,4 +1,4 @@
-/* $NetBSD: term_private.h,v 1.3 2010/02/05 12:31:56 roy Exp $ */
+/* $NetBSD: term_private.h,v 1.4 2010/02/05 14:39:07 he Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ typedef struct terminal {
 	/* We need to expose these so that the macros work */
 	char *name;
 	char *desc;
-	char *flags;
+	signed char *flags;
 	short *nums;
 	const char **strs;
 	/* Storage area for terminfo data */
