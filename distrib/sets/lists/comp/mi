@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1384 2010/02/05 12:46:33 njoly Exp $
+#	$NetBSD: mi,v 1.1385 2010/02/05 19:08:26 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -61,6 +61,7 @@
 ./usr/bin/nm					comp-util-bin		binutils
 ./usr/bin/objcopy				comp-util-bin		binutils
 ./usr/bin/objdump				comp-util-bin		binutils
+./usr/bin/pcc					comp-c-bin		pcccmds
 ./usr/bin/protoize				comp-c-bin		gcccmds
 ./usr/bin/ranlib				comp-util-bin		binutils
 ./usr/bin/rcs2log				comp-cvs-bin		cvs
@@ -2519,6 +2520,9 @@
 ./usr/lib/libpcap.a				comp-c-lib
 ./usr/lib/libpcap_g.a				-unknown-		debuglib
 ./usr/lib/libpcap_p.a				comp-c-proflib		profile
+./usr/lib/libpcc.a				comp-c-lib		pcc
+./usr/lib/libpcc_g.a				-unknown-		pcc,debuglib
+./usr/lib/libpcc_p.a				comp-c-proflib		pcc,profile
 ./usr/lib/libpci.a				comp-c-lib
 ./usr/lib/libpci_g.a				-unknown-		debuglib
 ./usr/lib/libpci_p.a				comp-c-proflib		profile
@@ -3109,6 +3113,7 @@
 ./usr/libdata/debug/usr/bin/pathchk.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/pawd.debug		comp-amd-debug		debug
 ./usr/libdata/debug/usr/bin/paxctl.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/bin/pcc.debug		comp-c-debug		pcccmds,debug
 ./usr/libdata/debug/usr/bin/pfbtops.debug	comp-groff-debug	debug
 ./usr/libdata/debug/usr/bin/pic.debug		comp-groff-debug	debug
 ./usr/libdata/debug/usr/bin/pkill.debug		comp-util-debug		debug
@@ -3303,9 +3308,11 @@
 ./usr/libdata/debug/usr/libexec/cc1.debug	comp-c-debug		gcccmds,debug
 ./usr/libdata/debug/usr/libexec/cc1obj.debug	comp-objc-debug		gcccmds,debug
 ./usr/libdata/debug/usr/libexec/cc1plus.debug	comp-cxx-debug		gcccmds,debug
+./usr/libdata/debug/usr/libexec/ccom.debug	comp-c-debug		pcccmds,debug
 ./usr/libdata/debug/usr/libexec/ching/castching.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/libexec/ching/printching.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/libexec/comsat.debug	comp-mail-debug		debug
+./usr/libdata/debug/usr/libexec/cpp.debug	comp-c-debug		pcccmds,debug
 ./usr/libdata/debug/usr/libexec/f771.debug	comp-fortran-debug	gcc=3,gcccmds,debug
 ./usr/libdata/debug/usr/libexec/f771.debug	comp-obsolete		gcc=4,obsolete
 ./usr/libdata/debug/usr/libexec/fingerd.debug	comp-netutil-debug	debug
@@ -3697,6 +3704,7 @@
 ./usr/libdata/lint/llib-lp2k.ln			comp-puffs-lintlib	lint
 ./usr/libdata/lint/llib-lpam.ln			comp-c-lintlib		lint,pam
 ./usr/libdata/lint/llib-lpcap.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lpcc.ln			comp-c-lintlib		lint,pcc
 ./usr/libdata/lint/llib-lpci.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lposix.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lprop.ln		comp-c-lintlib		lint
@@ -3730,7 +3738,9 @@
 ./usr/libexec/cc1				comp-c-bin		gcccmds
 ./usr/libexec/cc1obj				comp-objc-bin		gcccmds
 ./usr/libexec/cc1plus				comp-cxx-bin		gcccmds
+./usr/libexec/ccom				comp-c-bin		pcccmds
 ./usr/libexec/collect2				comp-obsolete		obsolete
+./usr/libexec/cpp				comp-c-bin		pcccmds
 ./usr/libexec/f771				comp-fortran-bin	gcc=3,gcccmds
 ./usr/libexec/f771				comp-obsolete		gcc=4,obsolete
 ./usr/libexec/lint1				comp-c-bin
