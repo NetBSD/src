@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.rumpnet,v 1.5 2009/02/28 15:28:45 pooka Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.6 2010/02/05 22:01:38 pooka Exp $
 #
 
-RUMPNETLIST=	sockin shmif virtif net netinet local
+RUMPNETLIST=	net net80211 netinet local sockin shmif virtif
 
 .for var in ${RUMPNETLIST}
 RUMPNETLIBS+=lib${var}
