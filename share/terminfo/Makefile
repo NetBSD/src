@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/02/03 15:16:32 roy Exp $
+#	$NetBSD: Makefile,v 1.2 2010/02/05 16:34:04 roy Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/8/93
 
 CLEANFILES= terminfo.db
@@ -8,6 +8,6 @@ FILESDIR=${BINDIR}/misc
 
 terminfo.db: terminfo
 	${_MKTARGET_CREATE}
-	${TOOL_TIC} -x -o "${.OBJDIR}/terminfo" "${.CURDIR}/terminfo" 
+	${TOOL_TIC} -ax -o "${.OBJDIR}/terminfo" "${.CURDIR}/terminfo" 
 
 .include <bsd.prog.mk>
