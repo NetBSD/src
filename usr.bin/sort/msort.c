@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.29 2009/11/06 18:34:22 joerg Exp $	*/
+/*	$NetBSD: msort.c,v 1.30 2010/02/05 21:58:42 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #include "sort.h"
 #include "fsort.h"
 
-__RCSID("$NetBSD: msort.c,v 1.29 2009/11/06 18:34:22 joerg Exp $");
+__RCSID("$NetBSD: msort.c,v 1.30 2010/02/05 21:58:42 enami Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -206,7 +206,7 @@ merge_sort_fstack(FILE *outfp, put_func_t put, struct field *ftbl)
 	for (nfiles = i = 0; i < fstack_count; i++) {
 		cfile = &fstack[i];
 		if (cfile->rec == NULL) {
-			cfile->rec = emalloc(DEFLLEN);
+			cfile->rec = allocrec(NULL, DEFLLEN);
 			cfile->end = (u_char *)cfile->rec + DEFLLEN;
 		}
 		rewind(cfile->fp);
@@ -219,7 +219,7 @@ merge_sort_fstack(FILE *outfp, put_func_t put, struct field *ftbl)
 			if (c == BUFFEND) {
 				/* Double buffer size */
 				sz = (cfile->end - (u_char *)cfile->rec) * 2;
-				cfile->rec = erealloc(cfile->rec, sz);
+				cfile->rec = allocrec(cfile->rec, sz);
 				cfile->end = (u_char *)cfile->rec + sz;
 				continue;
 			}
@@ -245,7 +245,7 @@ merge_sort_fstack(FILE *outfp, put_func_t put, struct field *ftbl)
 	 * output file - maintaining one record from each file in the sorted
 	 * list.
 	 */
-	new_rec = emalloc(DEFLLEN);
+	new_rec = allocrec(NULL, DEFLLEN);
 	new_end = (u_char *)new_rec + DEFLLEN;
 	for (;;) {
 		cfile = flist[0];
@@ -263,7 +263,7 @@ merge_sort_fstack(FILE *outfp, put_func_t put, struct field *ftbl)
 		if (c == BUFFEND) {
 			/* Buffer not large enough - double in size */
 			sz = (new_end - (u_char *)new_rec) * 2;
-			new_rec = erealloc(new_rec, sz);
+			new_rec = allocrec(new_rec, sz);
 			new_end = (u_char *)new_rec +sz;
 			continue;
 		}
