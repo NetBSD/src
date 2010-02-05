@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.1 2010/02/03 15:16:32 roy Exp $ */
+/* $NetBSD: term.c,v 1.2 2010/02/05 09:42:21 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.1 2010/02/03 15:16:32 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.2 2010/02/05 09:42:21 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: term.c,v 1.1 2010/02/03 15:16:32 roy Exp $");
 #include <term_private.h>
 #include <term.h>
 
-#define TERMINFO_DIRS	"/usr/share/misc/terminfo:/etc/terminfo:"
+#define TERMINFO_DIRS "/usr/share/misc/terminfo:/etc/terminfo:/rescue/terminfo"
 
 static char database[PATH_MAX];
 static char pathbuf[PATH_MAX];
