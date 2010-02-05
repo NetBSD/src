@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.1 2010/02/03 15:16:32 roy Exp $ */
+/* $NetBSD: tic.c,v 1.2 2010/02/05 12:31:56 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.1 2010/02/03 15:16:32 roy Exp $");
+__RCSID("$NetBSD: tic.c,v 1.2 2010/02/05 12:31:56 roy Exp $");
 
 #include <sys/types.h>
 
@@ -61,6 +61,7 @@ typedef struct tbuf {
 
 typedef struct tic {
 	char *name;
+	char *alias;
 	char *desc;
 	TBUF flags;
 	TBUF nums;
@@ -239,7 +240,7 @@ store_extra(TIC *tic, int wrn, char *id, char type, char flag, short num,
 static int
 save_term(DBM *db, TERM *term)
 {
-	size_t buflen, len, dlen;
+	size_t buflen, len, alen, dlen;
 	char *cap;
 	datum key, value;
 	TIC *tic;
@@ -247,12 +248,17 @@ save_term(DBM *db, TERM *term)
 	scratch.bufpos = 0;
 	tic = &term->tic;
 	len = strlen(tic->name) + 1;
+	if (tic->alias == NULL)
+		alen = 0;
+	else
+		alen = strlen(tic->alias) + 1;
 	if (tic->desc == NULL)
 		dlen = 0;
 	else
 		dlen = strlen(tic->desc) + 1;
 	buflen = sizeof(char) +
 	    sizeof(uint16_t) + len +
+	    //sizeof(uint16_t) + alen +
 	    sizeof(uint16_t) + dlen +
 	    (sizeof(uint16_t) * 2) + tic->flags.bufpos +
 	    (sizeof(uint16_t) * 2) + tic->nums.bufpos +
@@ -263,12 +269,18 @@ save_term(DBM *db, TERM *term)
 	if (term->type == 'a')
 		*cap++ = 0;
 	else
-		*cap++ = 1; /* version */
+		*cap++ = 2; /* version */
 	le16enc(cap, len);
 	cap += sizeof(uint16_t);
 	memcpy(cap, tic->name, len);
 	cap += len;
 	if (term->type != 'a') {
+		le16enc(cap, alen);
+		cap += sizeof(uint16_t);
+		if (tic->alias != NULL) {
+			memcpy(cap, tic->alias, alen);
+			cap += alen;
+		}
 		le16enc(cap, dlen);
 		cap += sizeof(uint16_t);
 		if (tic->desc != NULL) {
@@ -506,6 +518,11 @@ process_entry(TBUF *buf)
 	tic->name = strdup(name);
 	if (tic->name == NULL)
 		err(1, "malloc");
+	if (alias != NULL) {
+		tic->alias = strdup(alias);
+		if (tic->alias == NULL)
+			err(1, "malloc");
+	}
 	if (desc != NULL) {
 		tic->desc = strdup(desc);
 		if (tic->desc == NULL)
