@@ -1,4 +1,4 @@
-/* $NetBSD: infocmp.c,v 1.1 2010/02/03 15:16:33 roy Exp $ */
+/* $NetBSD: infocmp.c,v 1.2 2010/02/05 10:10:04 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: infocmp.c,v 1.1 2010/02/03 15:16:33 roy Exp $");
+__RCSID("$NetBSD: infocmp.c,v 1.2 2010/02/05 10:10:04 roy Exp $");
 
 #include <sys/ioctl.h>
 
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: infocmp.c,v 1.1 2010/02/03 15:16:33 roy Exp $");
 typedef struct tient {
 	char type;
 	const char *id;
-	char flag;
+	signed char flag;
 	short num;
 	const char *str;
 } TIENT;
