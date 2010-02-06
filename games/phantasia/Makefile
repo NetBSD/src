@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2004/02/08 22:14:27 lukem Exp $
+#	$NetBSD: Makefile,v 1.34 2010/02/06 23:45:25 he Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -6,8 +6,8 @@
 PROG=	phantasia
 SRCS=	fight.c gamesupport.c interplayer.c io.c main.c misc.c phantglobs.c
 
-DPADD=	${LIBM} ${LIBCURSES}
-LDADD=	-lm -lcurses
+DPADD=	${LIBM} ${LIBCURSES} ${LIBTERMINFO}
+LDADD=	-lm -lcurses -lterminfo
 HIDEGAME=hidegame
 SETGIDGAME=yes
 USETBL=
