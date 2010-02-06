@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.32 2008/10/01 02:44:14 uebayasi Exp $	*/
+/*	$NetBSD: intr.h,v 1.32.12.1 2010/02/06 02:57:43 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -93,8 +93,6 @@ struct cobalt_intrhand {
 #define	COBALT_COOKIE_TYPE_CPU	0x1
 #define	COBALT_COOKIE_TYPE_ICU	0x2
 };
-
-#include <mips/softintr.h>
 
 void intr_init(void);
 void *cpu_intr_establish(int, int, int (*)(void *), void *);
