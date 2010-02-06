@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.19.16.1 2010/01/20 09:04:33 matt Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.19.16.2 2010/02/06 02:59:04 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.19.16.1 2010/01/20 09:04:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.19.16.2 2010/02/06 02:59:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -82,16 +82,6 @@ const uint32_t ipl_sr_bits[_IPL_N] = {
 	    MIPS_INT_MASK_5,
 };
 
-/*
- * This is a mask of bits to clear in the SR when we go to a
- * given software interrupt priority level.
- * Hardware ipls are port/board specific.
- */
-const uint32_t mips_ipl_si_to_sr[2] = {
-	MIPS_SOFT_INT_MASK_0,
-	MIPS_SOFT_INT_MASK_1, /* XXX is this right with the new softints? */
-};
-
 struct malta_cpuintr {
 	LIST_HEAD(, evbmips_intrhand) cintr_list;
 	struct evcnt cintr_count;
@@ -99,7 +89,7 @@ struct malta_cpuintr {
 #define	NINTRS		5	/* MIPS INT0 - INT4 */
 
 struct malta_cpuintr malta_cpuintrs[NINTRS];
-const char *malta_cpuintrnames[NINTRS] = {
+const char * const malta_cpuintrnames[NINTRS] = {
 	"int 0 (piix4)",
 	"int 1 (smi)",
 	"int 2 (uart)",
