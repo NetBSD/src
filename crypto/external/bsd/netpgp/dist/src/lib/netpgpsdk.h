@@ -41,6 +41,8 @@ typedef struct __ops_validation_t {
 	__ops_sig_info_t	*invalid_sigs;
 	unsigned int		 unknownc;
 	__ops_sig_info_t	*unknown_sigs;
+	time_t			 birthtime;
+	time_t			 duration;
 } __ops_validation_t;
 
 void            __ops_validate_result_free(__ops_validation_t *);

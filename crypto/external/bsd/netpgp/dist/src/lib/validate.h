@@ -96,6 +96,11 @@ void __ops_keydata_reader_set(__ops_stream_t *, const __ops_key_t *);
 
 __ops_cb_ret_t __ops_validate_key_cb(const __ops_packet_t *, __ops_cbdata_t *);
 
+unsigned check_binary_sig(const unsigned char *,
+		const unsigned,
+		const __ops_sig_t *,
+		const __ops_pubkey_t *);
+
 unsigned   __ops_validate_file(__ops_io_t *,
 			__ops_validation_t *,
 			const char *,

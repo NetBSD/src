@@ -1,8 +1,12 @@
 To Do
 =====
+calc v4_hashlen
+unarmoured static in packet-print.c and skipping in crypto.c
+display expiry properly
+netpgpagent
 convert to and from ascii armored sigs
 gpgme compat lib
---list-sigs
+--list-sigs - these come out in __ops_check_subkey_sig()
 make netpgpkeys work - add, import, commit, update, sign, passphrase
 return userids from successful verify, and then print id out if required
 is get_passphrase_cb needed?
@@ -75,6 +79,9 @@ don't complain if no .gnupg dir (even when using --homedir)
 make it work with ssh host keys
 regex matching for names and signatures
 in memory encryption and decryption
-netpgpagent
 ssss
 make netpgp work from stdin/to stdout
+signature duration and expiry
+multisign
+settable from time
+unarmoured static in packet-print.c and skipping in crypto.c
