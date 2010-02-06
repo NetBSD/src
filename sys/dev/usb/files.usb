@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.94 2010/01/07 00:15:20 martin Exp $
+#	$NetBSD: files.usb,v 1.95 2010/02/06 11:17:17 tonio Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -186,6 +186,10 @@ device	udsbr: radiodev
 attach	udsbr at usbdevif
 file	dev/usb/udsbr.c			udsbr
 
+# TEMPerHUM HID
+device	uthum: hid
+attach	uthum at uhidbus
+file	dev/usb/uthum.c			uthum
 
 # Ethernet adapters
 # ADMtek AN986 Pegasus
