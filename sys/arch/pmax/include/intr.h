@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.32 2008/01/04 21:54:05 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.32.28.1 2010/02/06 02:57:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -127,8 +127,6 @@ struct pmax_intrhand {
 	int (*ih_func)(void *);
 	void *ih_arg;
 };
-
-#include <mips/softintr.h>
 
 extern struct evcnt pmax_clock_evcnt;
 extern struct evcnt pmax_fpu_evcnt;

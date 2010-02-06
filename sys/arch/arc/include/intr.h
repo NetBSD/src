@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22 2008/04/28 20:23:13 martin Exp $	*/
+/*	$NetBSD: intr.h,v 1.22.18.1 2010/02/06 02:57:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,8 +85,6 @@ splraiseipl(ipl_cookie_t icookie)
 }
 
 #include <sys/spl.h>
-
-#include <mips/softintr.h>
 
 struct clockframe;
 void arc_set_intr(uint32_t, uint32_t (*)(uint32_t, struct clockframe *), int);

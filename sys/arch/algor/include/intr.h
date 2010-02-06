@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2008/04/28 20:23:10 martin Exp $	*/
+/*	$NetBSD: intr.h,v 1.13.18.1 2010/02/06 02:57:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -95,8 +95,6 @@ struct algor_intrhand {
 	int ih_irq;		/* mostly for ISA */
 	const void *ih_irqmap;
 };
-
-#include <mips/softintr.h>
 
 extern struct evcnt mips_int5_evcnt;
 
