@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.232 2010/02/06 20:12:32 pgoyette Exp $
+# $NetBSD: ALL,v 1.233 2010/02/06 21:27:51 pgoyette Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.232 $"
+#ident 		"ALL-$Revision: 1.233 $"
 
 maxusers	64		# estimated number of users
 
@@ -366,7 +366,10 @@ acpidalb*	at acpi?		# ACPI Direct Application Launch Button
 acpiec* 	at acpi?		# ACPI Embedded Controller (late binding)
 acpiecdt* 	at acpi?		# ACPI Embedded Controller (early binding)
 acpilid* 	at acpi?		# ACPI Lid Switch
-#acpismbus*	at acpi?		# ACPI SMBus CMI (experimental)
+# XXX Do not enable this in a real kernel unless you also disable any
+# XXX "native" i2c controller.  Otherwise you'll have two accessors to
+# XXX the same bus, and bad things (tm) will happen!
+acpismbus*	at acpi?		# ACPI SMBus CMI (experimental)
 acpitz* 	at acpi?		# ACPI Thermal Zone
 acpiwmi*	at acpi?		# ACPI WMI Mapper
 
