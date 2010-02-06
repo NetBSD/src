@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41.28.10 2010/01/26 21:19:25 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.28.11 2010/02/06 05:28:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -259,6 +259,11 @@ do {									\
 #define	VM_NFREELIST		16	/* 16 distinct memory segments */
 #define VM_FREELIST_DEFAULT	0
 #define VM_FREELIST_MAX		1
+#endif
+
+#ifdef _KERNEL
+#define	UVM_KM_VMFREELIST	mips_poolpage_vmfreelist
+extern int mips_poolpage_vmfreelist;
 #endif
 
 #endif /* ! _MIPS_VMPARAM_H_ */
