@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.14 2010/01/26 22:49:58 snj Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.15 2010/02/06 06:02:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.14 2010/01/26 22:49:58 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.15 2010/02/06 06:02:29 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -263,6 +263,15 @@ vaddr_t mips_virtual_end;	/* VA of last avail page (end of kernel AS) */
 
 pt_entry_t	*Sysmap;		/* kernel pte table */
 unsigned int	Sysmapsize;		/* number of pte's in Sysmap */
+
+#ifdef PMAP_POOLPAGE_DEBUG
+struct poolpage_info {
+	vaddr_t base;
+	vaddr_t size;
+	vaddr_t hint;
+	pt_entry_t *sysmap;
+} poolpage;
+#endif
 
 /*
  * The pools from which pmap structures and sub-structures are allocated.
@@ -463,6 +472,10 @@ pmap_bootstrap(void)
 #ifdef KSEG2IOBUFSIZE
 	Sysmapsize += (KSEG2IOBUFSIZE >> PGSHIFT);
 #endif
+#ifdef PMAP_POOLPAGE_DEBUG
+	poolpage.size = nkmempages + MCLBYTES * nmbclusters;
+	Sysmapsize += poolpage.size;
+#endif
 	/* XXX: else runs out of space on 256MB sbmips!! */
 	Sysmapsize += 20000;
 
@@ -472,8 +485,8 @@ pmap_bootstrap(void)
 	 * for us.  Must do this before uvm_pageboot_alloc()
 	 * can be called.
 	 */
-	mips_avail_start = ptoa(vm_physmem[0].start);
-	mips_avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
+	mips_avail_start = vm_physmem[0].start << PGSHIFT;
+	mips_avail_end = vm_physmem[vm_nphysseg - 1].end << PGSHIFT;
 	mips_virtual_end = VM_MIN_KERNEL_ADDRESS + Sysmapsize * NBPG;
 #ifndef _LP64
 	if (mips_virtual_end > VM_MAX_KERNEL_ADDRESS) {
@@ -490,6 +503,11 @@ pmap_bootstrap(void)
 	Sysmap = (pt_entry_t *)
 	    uvm_pageboot_alloc(sizeof(pt_entry_t) * Sysmapsize);
 
+#ifdef PMAP_POOLPAGE_DEBUG
+	mips_virtual_end -= poolpage.limit;
+	poolpage.base = mips_virtual_end;
+	poolpage.sysmap += Sysmap + atop(poolpage.size);
+#endif
 	/*
 	 * Initialize the pools.
 	 */
@@ -654,8 +672,10 @@ pmap_init(void)
 	if (mips_avail_end > MIPS_KSEG1_START - MIPS_KSEG0_START) {
 		curcpu()->ci_pmap_dstbase = uvm_km_alloc(kernel_map,
 		    uvmexp.ncolors * PAGE_SIZE, 0, UVM_KMF_VAONLY);
+		KASSERT(curcpu()->ci_pmap_dstbase);
 		curcpu()->ci_pmap_srcbase = uvm_km_alloc(kernel_map,
 		    uvmexp.ncolors * PAGE_SIZE, 0, UVM_KMF_VAONLY);
+		KASSERT(curcpu()->ci_pmap_srcbase);
 	}
 #endif
 	
@@ -2178,6 +2198,35 @@ mips_pmap_map_poolpage(paddr_t pa)
 {
 	vaddr_t va;
 
+	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
+	KASSERT(pg);
+	pmap_set_page_attributes(pg, PG_MD_POOLPAGE);
+
+#ifdef PMAP_POOLPAGE_DEBUG
+	KASSERT((poolpage.hint & MIPS_CACHE_ALIAS_MASK) == 0);
+	vaddr_t va_offset = poolpage.hint + mips_cache_indexof(pa);
+	pt_entry_t *pte = poolpage.sysmap + atop(va_offset);
+	const size_t va_inc = MIPS_CACHE_ALIAS_MASK + PAGE_SIZE;
+	const size_t pte_inc = atop(va_inc);
+
+	for (; va_offset < poolpage.size;
+	     va_offset += va_inc, pte += pte_inc) {
+		if (!mips_pg_v(pte->pt_entry))
+			break;
+	}
+	if (va_offset >= poolpage.size) {
+		for (va_offset -= poolpage.size, pte -= atop(poolpage.size);
+		     va_offset < poolpage.hint;
+		     va_offset += va_inc, pte += pte_inc) {
+			if (!mips_pg_v(pte->pt_entry))
+				break;
+		}
+	}
+	KASSERT(!mips_pg_v(pte->pt_entry));
+	va = poolpage.base + va_offset;
+	poolpage.hint = roundup2(va_offset + 1, va_inc);
+	pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PORT_WRITE);
+#else
 #ifdef _LP64
 	KASSERT(mips_options.mips3_xkphys_cached);
 	va = MIPS_PHYS_TO_XKPHYS_CACHED(pa);
@@ -2188,10 +2237,8 @@ mips_pmap_map_poolpage(paddr_t pa)
 
 	va = MIPS_PHYS_TO_KSEG0(pa);
 #endif
-	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
-	KASSERT(pg);
-	pmap_set_page_attributes(pg, PG_MD_POOLPAGE);
-#if defined(MIPS3_PLUS)
+#endif
+#if !defined(_LP64) || defined(PMAP_POOLPAGE_DEBUG)
 	if (MIPS_CACHE_VIRTUAL_ALIAS) {
 		/*
 		 * If this page was last mapped with an address that might
@@ -2211,8 +2258,10 @@ paddr_t
 mips_pmap_unmap_poolpage(vaddr_t va)
 {
 	paddr_t pa;
-
-#ifdef _LP64
+#ifdef PMAP_POOLPAGE_DEBUG
+	KASSERT(poolpage.start <= va && va < poolpage.start + poolpage.size);
+	pa = mips_tlbpfn_to_paddr(kvtopte(va)->pt_entry);
+#elif defined(_LP64)
 	KASSERT(MIPS_XKPHYS_P(va));
 	pa = MIPS_XKPHYS_TO_PHYS(va);
 #else
@@ -2220,11 +2269,18 @@ mips_pmap_unmap_poolpage(vaddr_t va)
 	pa = MIPS_KSEG0_TO_PHYS(va);
 #endif
 	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
+	KASSERT(pg);
 	pmap_clear_page_attributes(pg, PG_MD_POOLPAGE);
 #if defined(MIPS3_PLUS)
 	if (MIPS_CACHE_VIRTUAL_ALIAS) {
+		/*
+		 * We've unmapped a poolpage.  Its contents are irrelavent.
+		 */
 		mips_dcache_inv_range(va, PAGE_SIZE);
 	}
+#endif
+#ifdef PMAP_POOLPAGE_DEBUG
+	pmap_kremove(va, PAGE_SIZE);
 #endif
 	return pa;
 }
