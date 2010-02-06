@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.5.2.3 2010/02/06 05:52:39 snj Exp $
+.\"	$NetBSD: main,v 1.425.2.5.2.4 2010/02/06 15:44:38 snj Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -588,7 +588,7 @@ the register.
 .bullet)
 .
 .It
-amd64: Build kernel modules with -mno-red-zone like kernel is built.
+amd64: Build kernel modules with -mno-red-zone to ensure kernel compatibility.
 .It
 i386: Fix a panic while booting with an ACPI kernel on 790GX boards.
 PR 39671.
@@ -925,10 +925,10 @@ went into the
 5.0 release.
 The complete list of changes can be found in the
 CHANGES:
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.0/CHANGES
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.0/CHANGES
 and
 CHANGES-5.0:
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.0/CHANGES-5.0
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.0/CHANGES-5.0
 files in the top level directory of the NetBSD 5.0 release tree.
 .Pp
 Some highlights include:
