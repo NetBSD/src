@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.12 2010/01/06 05:55:01 mrg Exp $	*/
+/*	$NetBSD: schizo.c,v 1.13 2010/02/06 00:23:30 mrg Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -72,7 +72,6 @@ static	int	schizo_print(void *aux, const char *p);
 CFATTACH_DECL(schizo, sizeof(struct schizo_softc),
     schizo_match, schizo_attach, NULL, NULL);
 
-void schizo_init(struct schizo_softc *);
 void schizo_init_iommu(struct schizo_softc *, struct schizo_pbm *);
 
 void schizo_set_intr(struct schizo_softc *, struct schizo_pbm *, int,
@@ -136,7 +135,10 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct schizo_softc *sc = (struct schizo_softc *)self;
 	struct mainbus_attach_args *ma = aux;
-	uint64_t eccctrl;
+	struct schizo_pbm *pbm;
+	struct pcibus_attach_args pba;
+	uint64_t reg, eccctrl;
+	int *busranges = NULL, nranges;
 	char *str;
 
 	printf(": addr %lx", ma->ma_reg[0].ur_paddr);
@@ -147,10 +149,8 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = ma->ma_node;
 	sc->sc_dmat = ma->ma_dmatag;
 	sc->sc_bustag = ma->ma_bustag;
-	sc->sc_ctrl = ma->ma_reg[1].ur_paddr - 0x10000UL;
-	sc->sc_reg0 = ma->ma_reg[0];
 
-	if (bus_space_map(sc->sc_bustag, sc->sc_ctrl,
+	if (bus_space_map(sc->sc_bustag, ma->ma_reg[1].ur_paddr - 0x10000UL,
 	    sizeof(struct schizo_regs), 0,
 	    &sc->sc_ctrlh)) {
 		printf(": failed to map registers\n");
@@ -166,17 +166,6 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 		   SCZ_ECCCTRL_CE_INTEN;
 	schizo_write(sc, SCZ_ECCCTRL, eccctrl);
 
-	schizo_init(sc);
-}
-
-void
-schizo_init(struct schizo_softc *sc)
-{
-	struct schizo_pbm *pbm;
-	struct pcibus_attach_args pba;
-	int *busranges = NULL, nranges;
-	u_int64_t /*match,*/ reg;
-
 	pbm = malloc(sizeof(*pbm), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (pbm == NULL)
 		panic("schizo: can't alloc schizo pbm");
@@ -184,10 +173,20 @@ schizo_init(struct schizo_softc *sc)
 	pbm->sp_sc = sc;
 	pbm->sp_regt = sc->sc_bustag;
 
-	if ((sc->sc_reg0.ur_paddr & 0x00700000) == 0x00600000)
+	if ((ma->ma_reg[0].ur_paddr & 0x00700000) == 0x00600000)
 		pbm->sp_bus_a = 1;
 	else
 		pbm->sp_bus_a = 0;
+
+	/*
+	 * Map interrupt registers
+	 */
+	if (bus_space_map(sc->sc_bustag, ma->ma_reg[0].ur_paddr,
+			  ma->ma_reg[0].ur_len,
+			  BUS_SPACE_MAP_LINEAR, &pbm->sp_intrh)) {
+		printf(": failed to interrupt map registers\n");
+		return;
+	}
 
 	if (prom_getprop(sc->sc_node, "ranges", sizeof(struct schizo_range),
 	    &pbm->sp_nrange, (void **)&pbm->sp_range))
@@ -382,6 +381,9 @@ schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 	vaddr_t va;
 	char *name;
 
+	if (prom_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
+	}
+
 	va = (vaddr_t)pbm->sp_flush[0x40];
 
 	/* punch in our copies */
@@ -483,6 +485,7 @@ schizo_set_intr(struct schizo_softc *sc, struct schizo_pbm *pbm, int ipl,
 {
 	struct intrhand *ih;
 	u_int64_t mapoff, clroff;
+	uintptr_t intrregs;
 
 	DPRINTF(SDB_INTR, ("%s: ino %x ign %x fn %p arg %p", __func__,
 	    ino, sc->sc_ign, handler, arg));
@@ -498,8 +501,9 @@ schizo_set_intr(struct schizo_softc *sc, struct schizo_pbm *pbm, int ipl,
 	if (ih == NULL)
 		return;
 	ih->ih_arg = arg;
-	ih->ih_map = (uint64_t *)((char *)sc->sc_reg0.ur_paddr + mapoff);
-	ih->ih_clr = (uint64_t *)((char *)sc->sc_reg0.ur_paddr + clroff);
+	intrregs = (uintptr_t)bus_space_vaddr(pbm->sp_regt, pbm->sp_intrh);
+	ih->ih_map = (uint64_t *)(intrregs + mapoff);
+	ih->ih_clr = (uint64_t *)(intrregs + clroff);
 	ih->ih_fun = handler;
 	ih->ih_pil = (1<<ipl);
 	ih->ih_number = INTVEC(schizo_pbm_read(pbm, mapoff));
@@ -708,9 +712,9 @@ schizo_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	int (*handler)(void *), void *arg, void (*fastvec)(void) /* ignored */)
 {
 	struct schizo_pbm *pbm = t->cookie;
-	struct schizo_softc *sc = pbm->sp_sc;
 	struct intrhand *ih = NULL;
 	uint64_t mapoff, clroff;
+	uintptr_t intrregs;
 	volatile uint64_t *intrmapptr = NULL, *intrclrptr = NULL;
 	int ino;
 	long vec;
@@ -738,11 +742,12 @@ schizo_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	DPRINTF(SDB_INTR, ("%s: intr %x: %p mapoff %lx clroff %lx\n",
 	    __func__, ino, intrlev[ino], mapoff, clroff));
 
-	intrmapptr = (uint64_t *)((char *)sc->sc_reg0.ur_paddr + mapoff);
-	intrclrptr = (uint64_t *)((char *)sc->sc_reg0.ur_paddr + clroff);
+	intrregs = (uintptr_t)bus_space_vaddr(pbm->sp_regt, pbm->sp_intrh);
+	intrmapptr = (uint64_t *)(intrregs + mapoff);
+	intrclrptr = (uint64_t *)(intrregs + clroff);
 
 	if (INTIGN(vec) == 0)
-		ino |= schizo_pbm_read(pbm, mapoff) & INTMAP_IGN;
+		ino |= schizo_pbm_readintr(pbm, mapoff) & INTMAP_IGN;
 	else
 		ino |= vec & INTMAP_IGN;
 
@@ -769,22 +774,22 @@ schizo_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	if (intrmapptr) {
 		u_int64_t imap;
 
-		imap = schizo_pbm_read(pbm, mapoff);
+		imap = schizo_pbm_readintr(pbm, mapoff);
 		DPRINTF(SDB_INTR, ("; read intrmap = %016qx",
 			(unsigned long long)imap));
 		imap |= INTMAP_V;
 		DPRINTF(SDB_INTR, ("; addr of intrmapptr = %p", intrmapptr));
 		DPRINTF(SDB_INTR, ("; writing intrmap = %016qx\n",
 			(unsigned long long)imap));
-		schizo_pbm_write(pbm, mapoff, imap);
-		imap = schizo_pbm_read(pbm, mapoff);
+		schizo_pbm_writeintr(pbm, mapoff, imap);
+		imap = schizo_pbm_readintr(pbm, mapoff);
 		DPRINTF(SDB_INTR, ("; reread intrmap = %016qx",
 			(unsigned long long)imap));
 		ih->ih_number |= imap & INTMAP_INR;
 	}
  	if (intrclrptr) {
  		/* set state to IDLE */
-		schizo_pbm_write(pbm, clroff, 0);
+		schizo_pbm_writeintr(pbm, clroff, 0);
  	}
 
 	return (ih);
