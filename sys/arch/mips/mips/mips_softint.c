@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.1.2.2 2010/02/06 00:39:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.1.2.3 2010/02/06 14:41:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -102,6 +102,7 @@ softint_trigger(uintptr_t si)
 		ci->ci_softints ^= SOFTINT_##level##_MASK; \
 		softint_fast_dispatch(ci->ci_softlwps[SOFTINT_##level], \
 		    IPL_SOFT##level); \
+		KASSERT(ci->ci_softlwps[SOFTINT_##level]->l_ctxswtch == 0); \
 		continue; \
 	}
 
@@ -114,6 +115,7 @@ softint_process(uint32_t ipending)
 
 	KASSERT((ipending & MIPS_SOFT_INT_MASK) != 0);
 	KASSERT((ipending & ~MIPS_SOFT_INT_MASK) == 0);
+	KASSERT(ci->ci_mtx_count == 0);
 
 	if (ipending & MIPS_SOFT_INT_MASK_0) {
 		/*
@@ -138,6 +140,8 @@ softint_process(uint32_t ipending)
 		DOSOFTINT(BIO);
 		DOSOFTINT(CLOCK);
 	}
+
+	KASSERT(ci->ci_mtx_count == 0);
 
 	_clrsoftintr(ipending);
 	splx(s);
