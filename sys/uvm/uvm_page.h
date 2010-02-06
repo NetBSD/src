@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.57 2009/08/18 18:06:54 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.58 2010/02/06 02:56:17 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -310,23 +310,49 @@ static int vm_physseg_find(paddr_t, int *);
  * when VM_PHYSSEG_MAX is 1, we can simplify these functions
  */
 
+#if VM_PHYSSEG_MAX == 1
+static __inline int vm_physseg_find_contig(struct vm_physseg *, int, paddr_t, int *);
+#elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
+static __inline int vm_physseg_find_bsearch(struct vm_physseg *, int, paddr_t, int *);
+#else
+static __inline int vm_physseg_find_linear(struct vm_physseg *, int, paddr_t, int *);
+#endif
+
 /*
  * vm_physseg_find: find vm_physseg structure that belongs to a PA
  */
 static __inline int
 vm_physseg_find(paddr_t pframe, int *offp)
 {
+
 #if VM_PHYSSEG_MAX == 1
+	return vm_physseg_find_contig(vm_physmem, vm_nphysseg, pframe, offp);
+#elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
+	return vm_physseg_find_bsearch(vm_physmem, vm_nphysseg, pframe, offp);
+#else
+	return vm_physseg_find_linear(vm_physmem, vm_nphysseg, pframe, offp);
+#endif
+}
+
+#if VM_PHYSSEG_MAX == 1
+static __inline int
+vm_physseg_find_contig(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *offp)
+{
 
 	/* 'contig' case */
-	if (pframe >= vm_physmem[0].start && pframe < vm_physmem[0].end) {
+	if (pframe >= segs[0].start && pframe < segs[0].end) {
 		if (offp)
-			*offp = pframe - vm_physmem[0].start;
+			*offp = pframe - segs[0].start;
 		return(0);
 	}
 	return(-1);
+}
 
 #elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
+
+static __inline int
+vm_physseg_find_bsearch(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *offp)
+{
 	/* binary search for it */
 	u_int	start, len, try;
 
@@ -343,15 +369,15 @@ vm_physseg_find(paddr_t pframe, int *offp)
 	 * for any value of len we may have
 	 */
 
-	for (start = 0, len = vm_nphysseg ; len != 0 ; len = len / 2) {
+	for (start = 0, len = nsegs ; len != 0 ; len = len / 2) {
 		try = start + (len / 2);	/* try in the middle */
 
 		/* start past our try? */
-		if (pframe >= vm_physmem[try].start) {
+		if (pframe >= segs[try].start) {
 			/* was try correct? */
-			if (pframe < vm_physmem[try].end) {
+			if (pframe < segs[try].end) {
 				if (offp)
-					*offp = pframe - vm_physmem[try].start;
+					*offp = pframe - segs[try].start;
 				return(try);            /* got it */
 			}
 			start = try + 1;	/* next time, start here */
@@ -364,23 +390,27 @@ vm_physseg_find(paddr_t pframe, int *offp)
 		}
 	}
 	return(-1);
+}
 
 #else
+
+static __inline int
+vm_physseg_find_linear(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *offp)
+{
 	/* linear search for it */
 	int	lcv;
 
-	for (lcv = 0; lcv < vm_nphysseg; lcv++) {
-		if (pframe >= vm_physmem[lcv].start &&
-		    pframe < vm_physmem[lcv].end) {
+	for (lcv = 0; lcv < nsegs; lcv++) {
+		if (pframe >= segs[lcv].start &&
+		    pframe < segs[lcv].end) {
 			if (offp)
-				*offp = pframe - vm_physmem[lcv].start;
+				*offp = pframe - segs[lcv].start;
 			return(lcv);		   /* got it */
 		}
 	}
 	return(-1);
-
-#endif
 }
+#endif
 
 
 /*
