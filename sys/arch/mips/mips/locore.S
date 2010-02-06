@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167.38.11 2010/02/06 02:56:23 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.167.38.12 2010/02/06 14:43:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -264,7 +264,7 @@ END(cpu_switchto)
 
 #ifdef __HAVE_FAST_SOFTINTS
 /*
- * void softint_fast_dispatch(struct lwp *l, int s, void *new_sp);
+ * void softint_fast_dispatch(struct lwp *l, int s);
  *
  * called at IPL_HIGH
  *
@@ -275,17 +275,18 @@ softint_cleanup:
 	INT_ADDU t1, 1
 	INT_S	t1, CPU_INFO_MTX_COUNT(t0)
 	REG_L	ra, CALLFRAME_RA(sp)
-	PTR_S	zero, L_CTXSWITCH(MIPS_CURLWP)
+	REG_L	v0, CALLFRAME_S0(sp)		# get softint lwp
+	PTR_S	zero, L_CTXSWITCH(v0)		# clear l_ctxswtch
 	j	ra
 	 PTR_ADDU sp, CALLFRAME_SIZ
 /*
  * Arguments:
  *	a0	the LWP to switch to
  *	a1	IPL to execute at
- *	a2	the new stack.
  */
 NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 	PTR_SUBU sp, CALLFRAME_SIZ
+	REG_S	a0, CALLFRAME_S0(sp)		# save softint lwp
 	REG_S	ra, CALLFRAME_RA(sp)		# save return address
 	.mask	0x80000000, -4
 	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# t0 = curlwp->l_addr
@@ -436,139 +437,6 @@ LEAF(longjmp)
 	li	v0, 1
 END(longjmp)
 #endif
-
-
-/*
- * MIPS processor interrupt control
- *
- * Used as building blocks for spl(9) kernel interface.
- */
-LEAF(_splraise)
-XLEAF(_splraise_noprof)				# does not get mcount hooks
-	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
-	and	a0, a0, MIPS_INT_MASK		# extract INT bits
-	nor	a0, zero, a0			# bitwise inverse of A0
-	and	a0, a0, v0			# disable retaining other bits
-	DYNAMIC_STATUS_MASK(a0,t0)		# machine dependent masking
-	mtc0	a0, MIPS_COP_0_STATUS		# store back
-	COP0_SYNC
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	j	ra
-	nop
-END(_splraise)
-
-LEAF(_spllower)
-	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
-	li	v1, ~MIPS_INT_MASK
-	and	v1, v0, v1			# turn off INT bit
-	nor	a0, zero, a0			# bitwise inverse of A0
-	and	a0, a0, MIPS_INT_MASK		# extract INT bits
-	or	a0, a0, v1			# disable making other bits on
-	DYNAMIC_STATUS_MASK(a0,t0)		# machine dependent masking
-	mtc0	a0, MIPS_COP_0_STATUS		# store back
-	COP0_SYNC
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	j	ra
-	nop
-END(_spllower)
-
-LEAF(_splrestore)
-	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
-	and	a0, a0, MIPS_INT_MASK
-	li	v1, ~MIPS_INT_MASK
-	and	v1, v1, v0			# turn off every INT bit
-	or	v1, v1, a0			# set old INT bits
-	DYNAMIC_STATUS_MASK(v1,t0)		# machine dependent masking
-	mtc0	v1, MIPS_COP_0_STATUS		# store back
-	COP0_SYNC
-	and	v0, v0, MIPS_INT_MASK
-	j	ra
-	nop
-END(_splrestore)
-
-LEAF(_splset)
-XLEAF(_splset_noprof)				# does not get mcount hooks
-	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
-	and	a0, a0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	li	v1, ~(MIPS_INT_MASK | MIPS_SR_INT_IE)
-	and	v1, v1, v0			# turn off every INT bit
-	or	v1, v1, a0			# set old INT bits
-	DYNAMIC_STATUS_MASK(v1,t0)		# machine dependent masking
-	mtc0	v1, MIPS_COP_0_STATUS		# store back
-	COP0_SYNC
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	j	ra
-	nop
-END(_splset)
-
-LEAF(_splget)
-	mfc0	v0, MIPS_COP_0_STATUS		# fetch status register
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	j	ra
-	nop
-END(_splget)
-
-LEAF(_setsoftintr)
-	mfc0	v1, MIPS_COP_0_STATUS		# save status register
-#if 0
-	li	a3, ~MIPS_SR_INT_IE
-	and	a3, v1
-	mtc0	a3, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
-#else
-	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
-#endif
-	COP0_SYNC
-	nop
-	nop
-	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
-	nop
-	or	v0, v0, a0			# set soft intr. bits
-	mtc0	v0, MIPS_COP_0_CAUSE		# store back
-	COP0_SYNC
-	mtc0	v1, MIPS_COP_0_STATUS		# enable interrupts
-	COP0_SYNC
-	j	ra
-	nop
-END(_setsoftintr)
-
-LEAF(_clrsoftintr)
-	mfc0	v1, MIPS_COP_0_STATUS		# save status register
-#if 0
-	li	a3, ~MIPS_SR_INT_IE
-	and	a3, v1
-	mtc0	a3, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
-#else
-	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
-#endif
-	COP0_SYNC
-	nop
-	nop
-	mfc0	v0, MIPS_COP_0_CAUSE		# fetch cause register
-	nor	a0, zero, a0			# bitwise inverse of A0
-	and	v0, v0, a0			# clear soft intr. bits
-	mtc0	v0, MIPS_COP_0_CAUSE		# store back
-	COP0_SYNC
-	mtc0	v1, MIPS_COP_0_STATUS		# enable interrupts
-	COP0_SYNC
-	j	ra
-	nop
-END(_clrsoftintr)
-
-LEAF(_splnone)
-	mtc0	zero, MIPS_COP_0_CAUSE		# clear SOFT_INT bits
-	COP0_SYNC
-#ifdef _LP64
-	li	v0, (MIPS_INT_MASK | MIPS_SR_INT_IE | MIPS_SR_KX)
-#else
-	li	v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-#endif
-	DYNAMIC_STATUS_MASK(v0,t0)		# machine dependent masking
-	mtc0	v0, MIPS_COP_0_STATUS		# enable all sources
-	COP0_SYNC
-	nop
-	j	ra
-	nop
-END(_splnone)
 
 /*
  * u_int32_t mips_cp0_cause_read(void)
