@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.25 2009/12/22 06:03:25 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.26 2010/02/06 02:24:33 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -88,62 +88,6 @@ __RCSID("$NetBSD: validate.c,v 1.25 2009/12/22 06:03:25 agc Exp $");
 #include <fcntl.h>
 #endif
 
-
-/* Does the signed hash match the given hash? */
-static unsigned
-check_binary_sig(const unsigned char *data,
-		const unsigned len,
-		const __ops_sig_t *sig,
-		const __ops_pubkey_t *signer)
-{
-	unsigned char   hashout[OPS_MAX_HASH_SIZE];
-	unsigned char   trailer[6];
-	unsigned int    hashedlen;
-	__ops_hash_t	hash;
-	unsigned	n;
-
-	__OPS_USED(signer);
-	__ops_hash_any(&hash, sig->info.hash_alg);
-	if (!hash.init(&hash)) {
-		(void) fprintf(stderr, "check_binary_sig: bad hash init\n");
-		return 0;
-	}
-	hash.add(&hash, data, len);
-	switch (sig->info.version) {
-	case OPS_V3:
-		trailer[0] = sig->info.type;
-		trailer[1] = (unsigned)(sig->info.birthtime) >> 24;
-		trailer[2] = (unsigned)(sig->info.birthtime) >> 16;
-		trailer[3] = (unsigned)(sig->info.birthtime) >> 8;
-		trailer[4] = (unsigned char)(sig->info.birthtime);
-		hash.add(&hash, trailer, 5);
-		break;
-
-	case OPS_V4:
-		hash.add(&hash, sig->info.v4_hashed, sig->info.v4_hashlen);
-		trailer[0] = 0x04;	/* version */
-		trailer[1] = 0xFF;
-		hashedlen = sig->info.v4_hashlen;
-		trailer[2] = hashedlen >> 24;
-		trailer[3] = hashedlen >> 16;
-		trailer[4] = hashedlen >> 8;
-		trailer[5] = hashedlen;
-		hash.add(&hash, trailer, 6);
-		break;
-
-	default:
-		(void) fprintf(stderr, "Invalid signature version %d\n",
-				sig->info.version);
-		return 0;
-	}
-
-	n = hash.finish(&hash, hashout);
-	if (__ops_get_debug_level(__FILE__)) {
-		printf("check_binary_sig: hash length %" PRIsize "u\n",
-			hash.size);
-	}
-	return __ops_check_sig(hashout, n, sig, signer);
-}
 
 static int 
 keydata_reader(void *dest, size_t length, __ops_error_t **errors,
@@ -210,15 +154,87 @@ add_sig_to_list(const __ops_sig_info_t *sig, __ops_sig_info_t **sigs,
 		newsigs = realloc(*sigs,
 				(*count + 1) * sizeof(__ops_sig_info_t));
 	}
-	if (newsigs != NULL) {
-		*sigs = newsigs;
-		copy_sig_info(&(*sigs)[*count], sig);
-		*count += 1;
-		return 1;
+	if (newsigs == NULL) {
+		(void) fprintf(stderr, "add_sig_to_list: alloc failure\n");
+		return 0;
 	}
-	return 0;
+	*sigs = newsigs;
+	copy_sig_info(&(*sigs)[*count], sig);
+	*count += 1;
+	return 1;
 }
 
+/*
+The hash value is calculated by the following method:
++ hash the data using the given digest algorithm
++ hash the hash value onto the end
++ hash the trailer - 6 bytes
+  [OPS_V4][0xff][len >> 24][len >> 16][len >> 8][len & 0xff]
+to give the final hash value that is checked against the one in the signature
+*/
+
+/* Does the signed hash match the given hash? */
+unsigned
+check_binary_sig(const unsigned char *data,
+		const unsigned len,
+		const __ops_sig_t *sig,
+		const __ops_pubkey_t *signer)
+{
+	unsigned char   hashout[OPS_MAX_HASH_SIZE];
+	unsigned char   trailer[6];
+	unsigned int    hashedlen;
+	__ops_hash_t	hash;
+	unsigned	n;
+
+	__ops_hash_any(&hash, sig->info.hash_alg);
+	if (!hash.init(&hash)) {
+		(void) fprintf(stderr, "check_binary_sig: bad hash init\n");
+		return 0;
+	}
+	hash.add(&hash, data, len);
+	switch (sig->info.version) {
+	case OPS_V3:
+		trailer[0] = sig->info.type;
+		trailer[1] = (unsigned)(sig->info.birthtime) >> 24;
+		trailer[2] = (unsigned)(sig->info.birthtime) >> 16;
+		trailer[3] = (unsigned)(sig->info.birthtime) >> 8;
+		trailer[4] = (unsigned char)(sig->info.birthtime);
+		hash.add(&hash, trailer, 5);
+		break;
+
+	case OPS_V4:
+		if (__ops_get_debug_level(__FILE__)) {
+			(void) fprintf(stderr, "v4_hashlen %u\n",
+					sig->info.v4_hashlen);
+			hexdump(stderr, sig->info.v4_hashed,
+					sig->info.v4_hashlen, " ");
+			(void) fprintf(stderr, "\n");
+		}
+		hash.add(&hash, sig->info.v4_hashed, sig->info.v4_hashlen);
+		trailer[0] = 0x04;	/* version */
+		trailer[1] = 0xFF;
+		hashedlen = sig->info.v4_hashlen;
+		trailer[2] = hashedlen >> 24;
+		trailer[3] = hashedlen >> 16;
+		trailer[4] = hashedlen >> 8;
+		trailer[5] = hashedlen;
+		hash.add(&hash, trailer, 6);
+		break;
+
+	default:
+		(void) fprintf(stderr, "Invalid signature version %d\n",
+				sig->info.version);
+		return 0;
+	}
+
+	n = hash.finish(&hash, hashout);
+	if (__ops_get_debug_level(__FILE__)) {
+		printf("check_binary_sig: hash length %" PRIsize "u\n",
+			hash.size);
+		hexdump(stdout, hashout, n, "");
+	}
+	return __ops_check_sig(hashout, n, sig, signer);
+}
 
 __ops_cb_ret_t
 __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
@@ -331,7 +347,7 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 				__ops_get_pubkey(signer),
 				key->reader->key->packets[
 					key->reader->packet].raw);
-			/* XXX - agc - put subkey logic here? */
+			/* XXX - agc - put subkey logic here */
 			break;
 
 		case OPS_SIG_DIRECT:
@@ -387,6 +403,15 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		if (key->getpassphrase) {
 			return key->getpassphrase(pkt, cbinfo);
 		}
+		break;
+
+	case OPS_PTAG_CT_TRUST:
+		/* 1 byte for level (depth), 1 byte for trust amount */
+		printf("trust dump\n");
+		printf("Got trust\n");
+		//hexdump(stdout, (const unsigned char *)content->trust.data, 10, " ");
+		//hexdump(stdout, (const unsigned char *)&content->ss_trust, 2, " ");
+		//printf("Trust level %d, amount %d\n", key->trust.level, key->trust.amount);
 		break;
 
 	default:
@@ -450,8 +475,7 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 			(void) fprintf(io->outs, "\n*** hashed data:\n");
 			hexdump(io->outs, content->sig.info.v4_hashed,
 					content->sig.info.v4_hashlen, " ");
-			(void) fprintf(io->outs, "\n");
-			(void) fprintf(io->outs, "type=%02x signer_id=",
+			(void) fprintf(io->outs, "\ntype=%02x signer_id=",
 					content->sig.info.type);
 			hexdump(io->outs, content->sig.info.signer_id,
 				sizeof(content->sig.info.signer_id), "");
@@ -471,6 +495,12 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 			}
 			break;
 		}
+		if (content->sig.info.birthtime_set) {
+			data->result->birthtime = content->sig.info.birthtime;
+		}
+		if (content->sig.info.duration_set) {
+			data->result->duration = content->sig.info.duration;
+		}
 		switch (content->sig.info.type) {
 		case OPS_SIG_BINARY:
 		case OPS_SIG_TEXT:
@@ -483,6 +513,10 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 					data->detachname);
 				data->mem = __ops_memory_new();
 				__ops_mem_readfile(data->mem, data->detachname);
+			}
+			if (__ops_get_debug_level(__FILE__)) {
+				(void) fprintf(stderr, "about to check_binary_sig, dump of sig:\n");
+				hexdump(stderr, (const unsigned char *)&content->sig, sizeof(content->sig), "");
 			}
 			valid = check_binary_sig(__ops_mem_data(data->mem),
 					__ops_mem_len(data->mem),
@@ -556,6 +590,33 @@ __ops_keydata_reader_set(__ops_stream_t *stream, const __ops_key_t *key)
 	}
 }
 
+static char *
+fmtsecs(int64_t n, char *buf, size_t size)
+{
+	if (n > 365 * 24 * 60 * 60) {
+		(void) snprintf(buf, size, "%lld years", n / (365 * 24 * 60 * 60));
+		return buf;
+	}
+	if (n > 30 * 24 * 60 * 60) {
+		(void) snprintf(buf, size, "%lld months", n / (30 * 24 * 60 * 60));
+		return buf;
+	}
+	if (n > 24 * 60 * 60) {
+		(void) snprintf(buf, size, "%lld days", n / (24 * 60 * 60));
+		return buf;
+	}
+	if (n > 60 * 60) {
+		(void) snprintf(buf, size, "%lld hours", n / (60 * 60));
+		return buf;
+	}
+	if (n > 60) {
+		(void) snprintf(buf, size, "%lld minutes", n / 60);
+		return buf;
+	}
+	(void) snprintf(buf, size, "%lld seconds", n);
+	return buf;
+}
+
 /**
  * \ingroup HighLevel_Verify
  * \brief Indicicates whether any errors were found
@@ -564,8 +625,30 @@ __ops_keydata_reader_set(__ops_stream_t *stream, const __ops_key_t *key)
  	or no valid signatures; else 1
  */
 static unsigned 
-validate_result_status(__ops_validation_t *val)
+validate_result_status(FILE *errs, __ops_validation_t *val)
 {
+	time_t	now;
+	time_t	t;
+	char	buf[128];
+
+	now = time(NULL);
+	if (now < val->birthtime) {
+		/* signature is not valid yet! */
+		(void) fprintf(errs,
+			"signature not valid until %.24s (%s)\n",
+			ctime(&val->birthtime),
+			fmtsecs((int64_t)(val->birthtime - now), buf, sizeof(buf)));
+		return 0;
+	}
+	if (val->duration != 0 && now > val->birthtime + val->duration) {
+		/* signature has expired */
+		t = val->duration + val->birthtime;
+		(void) fprintf(errs,
+			"signature not valid after %.24s (%s ago)\n",
+			ctime(&t),
+			fmtsecs((int64_t)(now - t), buf, sizeof(buf)));
+		return 0;
+	}
 	return val->validc && !val->invalidc && !val->unknownc;
 }
 
@@ -643,7 +726,7 @@ __ops_validate_all_sigs(__ops_validation_t *result,
 		__ops_validate_key_sigs(result, &ring->keys[n], ring,
 				cb_get_passphrase);
 	}
-	return validate_result_status(result);
+	return validate_result_status(stderr, result);
 }
 
 /**
@@ -758,7 +841,7 @@ __ops_validate_file(__ops_io_t *io,
 	}
 	__ops_teardown_file_read(parse, infd);
 
-	ret = validate_result_status(result);
+	ret = validate_result_status(io->errs, result);
 
 	/* this is triggered only for --cat output */
 	if (outfile) {
@@ -773,7 +856,7 @@ __ops_validate_file(__ops_io_t *io,
 			* write the file, so send back a bad return
 			* code */
 			ret = 0;
-		} else if (validate_result_status(result)) {
+		} else if (validate_result_status(io->errs, result)) {
 			unsigned	 len;
 			char		*cp;
 			int		 i;
@@ -856,5 +939,5 @@ __ops_validate_mem(__ops_io_t *io,
 		__ops_memory_free(validation.mem);
 	}
 
-	return validate_result_status(result);
+	return validate_result_status(io->errs, result);
 }

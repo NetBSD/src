@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.36 2009/12/22 06:55:03 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.37 2010/02/06 02:24:33 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -82,6 +82,7 @@ __RCSID("$NetBSD: netpgp.c,v 1.36 2009/12/22 06:55:03 agc Exp $");
 #include "netpgpdefs.h"
 #include "crypto.h"
 #include "ops-ssh.h"
+#include "defs.h"
 
 /* read any gpg config file */
 static int
@@ -105,10 +106,12 @@ conffile(netpgp_t *netpgp, char *homedir, char *userid, size_t length)
 			(void) memcpy(userid, &buf[(int)matchv[1].rm_so],
 				MIN((unsigned)(matchv[1].rm_eo -
 						matchv[1].rm_so), length));
-			(void) fprintf(stderr,
+			if (netpgp->passfp == NULL) {
+				(void) fprintf(stderr,
 				"netpgp: default key set to \"%.*s\"\n",
 				(int)(matchv[1].rm_eo - matchv[1].rm_so),
 				&buf[(int)matchv[1].rm_so]);
+			}
 		}
 	}
 	(void) fclose(fp);
@@ -140,13 +143,20 @@ resultp(__ops_io_t *io,
 	const __ops_key_t	*pubkey;
 	unsigned		 from;
 	unsigned		 i;
+	time_t			 t;
 	char			 id[MAX_ID_LENGTH + 1];
 
 	for (i = 0; i < res->validc; i++) {
 		(void) fprintf(io->res,
-			"Good signature for %s made %susing %s key %s\n",
+			"Good signature for %s made %s",
 			(f) ? f : "<stdin>",
-			ctime(&res->valid_sigs[i].birthtime),
+			ctime(&res->valid_sigs[i].birthtime));
+		if (res->duration > 0) {
+			t = res->birthtime + res->duration;
+			(void) fprintf(io->res, "Valid until %s", ctime(&t));
+		}
+		(void) fprintf(io->res,
+			"using %s key %s\n",
 			__ops_show_pka(res->valid_sigs[i].key_alg),
 			userid_to_id(res->valid_sigs[i].signer_id, id));
 		from = 0;
@@ -256,7 +266,11 @@ readsshkeys(netpgp_t *netpgp, char *homedir)
 				filename);
 		return 0;
 	}
-	netpgp->pubring = pubring;
+	if (netpgp->pubring == NULL) {
+		netpgp->pubring = pubring;
+	} else {
+		__ops_append_keyring(netpgp->pubring, pubring);
+	}
 	netpgp_setvar(netpgp, "sshpubfile", filename);
 	/* try to take the ".pub" off the end */
 	if (filename == f) {
@@ -282,18 +296,71 @@ readsshkeys(netpgp_t *netpgp, char *homedir)
 
 /* set ssh uid to first one in ring */
 static void
-set_ssh_userid(__ops_keyring_t *pubring, char *id, size_t len)
+set_ssh_userid(__ops_keyring_t *pubring, char *id, size_t len, int last)
 {
 	unsigned char	*src;
 	int		 i;
 	int		 n;
 
 	(void) memset(id, 0x0, len);
-	src = pubring->keys[0].key_id;
+	src = pubring->keys[(last) ? pubring->keyc - 1 : 0].key_id;
 	for (i = 0, n = 0 ; i < OPS_KEY_ID_SIZE ; i += 2) {
 		n += snprintf(&id[n], len - n, "%02x%02x", src[i], src[i + 1]);
 	}
 	id[n] = 0x0;
+}
+
+/* get expiration in seconds */
+static uint64_t
+get_duration(char *s)
+{
+	struct tm	 tm;
+	uint64_t	 now;
+	char		*mult;
+
+	if (s == NULL) {
+		return 0;
+	}
+	now = strtoull(s, NULL, 10);
+	if ((mult = strchr("hdwmy", s[strlen(s) - 1])) != NULL) {
+		switch(*mult) {
+		case 'h':
+			return now * 60 * 60;
+		case 'd':
+			return now * 60 * 60 * 24;
+		case 'w':
+			return now * 60 * 60 * 24 * 7;
+		case 'm':
+			return now * 60 * 60 * 24 * 31;
+		case 'y':
+			return now * 60 * 60 * 24 * 365;
+		}
+	}
+	if (strptime(s, "%Y-%m-%d", &tm) != NULL) {
+		return mktime(&tm);
+	}
+	if (strptime(s, "%Y/%m/%d", &tm) != NULL) {
+		return mktime(&tm);
+	}
+	return (uint64_t)strtoll(s, NULL, 10);
+}
+
+/* get birthtime in seconds */
+static int64_t
+get_birthtime(char *s)
+{
+	struct tm	 tm;
+
+	if (s == NULL) {
+		return time(NULL);
+	}
+	if (strptime(s, "%Y-%m-%d", &tm) != NULL) {
+		return mktime(&tm);
+	}
+	if (strptime(s, "%Y/%m/%d", &tm) != NULL) {
+		return mktime(&tm);
+	}
+	return (uint64_t)strtoll(s, NULL, 10);
 }
 
 /***************************************************************************/
@@ -312,6 +379,7 @@ netpgp_init(netpgp_t *netpgp)
 	char		*passfd;
 	char		*results;
 	int		 coredumps;
+	int		 last;
 
 #ifdef HAVE_SYS_RESOURCE_H
 	struct rlimit	limit;
@@ -350,6 +418,12 @@ netpgp_init(netpgp_t *netpgp)
 		return 0;
 	}
 	netpgp->io = io;
+	if ((passfd = netpgp_getvar(netpgp, "pass-fd")) != NULL &&
+	    (netpgp->passfp = fdopen(atoi(passfd), "r")) == NULL) {
+		(void) fprintf(io->errs, "Can't open fd %s for reading\n",
+			passfd);
+		return 0;
+	}
 	if (coredumps) {
 		(void) fprintf(io->errs,
 			"netpgp: warning: core dumps enabled\n");
@@ -387,12 +461,13 @@ netpgp_init(netpgp_t *netpgp)
 			return 0;
 		}
 	} else {
+		last = (netpgp->pubring != NULL);
 		if (!readsshkeys(netpgp, homedir)) {
 			(void) fprintf(io->errs, "Can't read ssh pub key\n");
 			return 0;
 		}
 		if ((userid = netpgp_getvar(netpgp, "userid")) == NULL) {
-			set_ssh_userid(netpgp->pubring, id, sizeof(id));
+			set_ssh_userid(netpgp->pubring, id, sizeof(id), last);
 			netpgp_setvar(netpgp, "userid", userid = id);
 		}
 		if (userid == NULL) {
@@ -404,12 +479,6 @@ netpgp_init(netpgp_t *netpgp)
 		} else {
 			(void) netpgp_setvar(netpgp, "userid", userid);
 		}
-	}
-	if ((passfd = netpgp_getvar(netpgp, "pass-fd")) != NULL &&
-	    (netpgp->passfp = fdopen(atoi(passfd), "r")) == NULL) {
-		(void) fprintf(io->errs, "Can't open fd %s for reading\n",
-			passfd);
-		return 0;
 	}
 	return 1;
 }
@@ -451,30 +520,86 @@ netpgp_list_keys(netpgp_t *netpgp)
 	return __ops_keyring_list(netpgp->io, netpgp->pubring);
 }
 
+DEFINE_ARRAY(strings_t, char *);
+
+#ifndef HKP_VERSION
+#define HKP_VERSION	1
+#endif
+
 /* find and list some keys in a keyring */
 int
-netpgp_match_list_keys(netpgp_t *netpgp, char *name)
+netpgp_match_keys(netpgp_t *netpgp, char *name, const char *fmt, void *vp)
 {
 	const __ops_key_t	*key;
-	unsigned		 found;
 	unsigned		 k;
-	char			*data;
+	strings_t		 pubs;
+	FILE			*fp = (FILE *)vp;
 
-	found = k = 0;
+	(void) memset(&pubs, 0x0, sizeof(pubs));
+	k = 0;
 	do {
 		key = __ops_getnextkeybyname(netpgp->io, netpgp->pubring,
 						name, &k);
 		if (key != NULL) {
-			__ops_sprint_keydata(key, &data, "pub",
+			ALLOC(char *, pubs.v, pubs.size, pubs.c, 10, 10,
+					"netpgp_match_keys", return 0);
+			if (strcmp(fmt, "mr") == 0) {
+				__ops_hkp_sprint_keydata(
+						key, &pubs.v[pubs.c],
 						&key->key.pubkey);
-			printf("%s\n", data);
-			free(data);
-			found += 1;
+			} else {
+				__ops_sprint_keydata(
+						key, &pubs.v[pubs.c],
+						"pub",
+						&key->key.pubkey);
+			}
+			pubs.c += 1;
 			k += 1;
 		}
 	} while (key != NULL);
-	printf("Found %u key%s\n", found, (found == 1) ? "" : "s");
-	return (found > 0);
+	if (strcmp(fmt, "mr") == 0) {
+		(void) fprintf(fp, "info:%d:%d\n", HKP_VERSION, pubs.c);
+	} else {
+		(void) fprintf(fp, "%d keys found\n", pubs.c);
+	}
+	for (k = 0 ; k < pubs.c ; k++) {
+		(void) fprintf(fp, "%s", pubs.v[k]);
+		free(pubs.v[k]);
+	}
+	free(pubs.v);
+	return pubs.c;
+}
+
+/* find and list some public keys in a keyring */
+int
+netpgp_match_pubkeys(netpgp_t *netpgp, char *name, void *vp)
+{
+	const __ops_key_t	*key;
+	unsigned		 k;
+	strings_t		 pubs;
+	FILE			*fp = (FILE *)vp;
+
+	(void) memset(&pubs, 0x0, sizeof(pubs));
+	do {
+		key = __ops_getnextkeybyname(netpgp->io, netpgp->pubring,
+						name, &k);
+		if (key != NULL) {
+			char	out[1024 * 64];
+
+			ALLOC(char *, pubs.v, pubs.size, pubs.c, 10, 10,
+					"netpgp_match_pubkeys", return 0);
+			(void) __ops_sprint_pubkey(key, out, sizeof(out));
+			pubs.v[pubs.c++] = strdup(out);
+			k += 1;
+		}
+	} while (key != NULL);
+	(void) fprintf(fp, "info:%d:%d\n", HKP_VERSION, pubs.c);
+	for (k = 0 ; k < pubs.c ; k++) {
+		(void) fprintf(fp, "%s", pubs.v[k]);
+		free(pubs.v[k]);
+	}
+	free(pubs.v);
+	return pubs.c;
 }
 
 /* find a key in a keyring */
@@ -501,8 +626,8 @@ netpgp_get_key(netpgp_t *netpgp, const char *id)
 
 	io = netpgp->io;
 	if (id == NULL) {
-		(void) fprintf(io->errs, "NULL id to search for\n");
-		return NULL;
+		/* just get the default userid */
+		id = netpgp_getvar(netpgp, "userid");
 	}
 	key = __ops_getkeybyname(netpgp->io, netpgp->pubring, id);
 	if (key == NULL) {
@@ -713,11 +838,13 @@ netpgp_sign_file(netpgp_t *netpgp,
 	}
 	ret = 1;
 	do {
-		/* print out the user id */
-		__ops_print_keydata(io, keypair, "pub", &keypair->key.pubkey);
+		if (netpgp->passfp == NULL) {
+			/* print out the user id */
+			__ops_print_keydata(io, keypair, "pub", &keypair->key.pubkey);
+		}
 		if (netpgp_getvar(netpgp, "ssh keys") == NULL) {
 			/* now decrypt key */
-			seckey = __ops_decrypt_seckey(keypair);
+			seckey = __ops_decrypt_seckey(keypair, netpgp->passfp);
 			if (seckey == NULL) {
 				(void) fprintf(io->errs, "Bad passphrase\n");
 			}
@@ -731,9 +858,13 @@ netpgp_sign_file(netpgp_t *netpgp,
 	/* sign file */
 	hashalg = netpgp_getvar(netpgp, "hash");
 	if (detached) {
-		ret = __ops_sign_detached(io, f, out, seckey, hashalg);
+		ret = __ops_sign_detached(io, f, out, seckey, hashalg,
+				get_birthtime(netpgp_getvar(netpgp, "birthtime")),
+				get_duration(netpgp_getvar(netpgp, "duration")));
 	} else {
 		ret = __ops_sign_file(io, f, out, seckey, hashalg,
+				get_birthtime(netpgp_getvar(netpgp, "birthtime")),
+				get_duration(netpgp_getvar(netpgp, "duration")),
 				(unsigned)armored, (unsigned)cleartext,
 				overwrite);
 	}
@@ -764,6 +895,9 @@ netpgp_verify_file(netpgp_t *netpgp, const char *in, const char *out, int armore
 		(void) fprintf(io->errs,
 		"\"%s\": No signatures found - is this a signed file?\n",
 			in);
+	} else if (result.invalidc == 0 && result.unknownc == 0) {
+		(void) fprintf(io->errs,
+			"\"%s\": file verification failure: invalid signature time\n", in);
 	} else {
 		(void) fprintf(io->errs,
 "\"%s\": verification failure: %u invalid signatures, %u unknown signatures\n",
@@ -808,18 +942,23 @@ netpgp_sign_memory(netpgp_t *netpgp,
 	}
 	ret = 1;
 	do {
-		/* print out the user id */
-		__ops_print_keydata(io, keypair, "pub", &keypair->key.pubkey);
+		if (netpgp->passfp == NULL) {
+			/* print out the user id */
+			__ops_print_keydata(io, keypair, "pub", &keypair->key.pubkey);
+		}
 		/* now decrypt key */
-		seckey = __ops_decrypt_seckey(keypair);
+		seckey = __ops_decrypt_seckey(keypair, netpgp->passfp);
 		if (seckey == NULL) {
 			(void) fprintf(io->errs, "Bad passphrase\n");
 		}
 	} while (seckey == NULL);
 	/* sign file */
+	(void) memset(out, 0x0, outsize);
 	hashalg = netpgp_getvar(netpgp, "hash");
-	signedmem = __ops_sign_buf(io, mem, size, seckey, hashalg,
-						armored, cleartext);
+	signedmem = __ops_sign_buf(io, mem, size, seckey,
+				get_birthtime(netpgp_getvar(netpgp, "birthtime")),
+				get_duration(netpgp_getvar(netpgp, "duration")),
+				hashalg, armored, cleartext);
 	if (signedmem) {
 		size_t	m;
 
@@ -873,6 +1012,9 @@ netpgp_verify_memory(netpgp_t *netpgp, const void *in, const size_t size,
 	if (result.validc + result.invalidc + result.unknownc == 0) {
 		(void) fprintf(io->errs,
 		"No signatures found - is this memory signed?\n");
+	} else if (result.invalidc == 0 && result.unknownc == 0) {
+		(void) fprintf(io->errs,
+			"memory verification failure: invalid signature time\n");
 	} else {
 		(void) fprintf(io->errs,
 "memory verification failure: %u invalid signatures, %u unknown signatures\n",
@@ -984,6 +1126,7 @@ netpgp_list_packets(netpgp_t *netpgp, char *f, int armour, char *pubringname)
 {
 	__ops_keyring_t	*keyring;
 	const unsigned	 noarmor = 0;
+	struct stat	 st;
 	__ops_io_t	*io;
 	char		 ringname[MAXPATHLEN];
 	char		*homedir;
@@ -992,6 +1135,10 @@ netpgp_list_packets(netpgp_t *netpgp, char *f, int armour, char *pubringname)
 	io = netpgp->io;
 	if (f == NULL) {
 		(void) fprintf(io->errs, "No file containing packets\n");
+		return 0;
+	}
+	if (stat(f, &st) < 0) {
+		(void) fprintf(io->errs, "No such file '%s'\n", f);
 		return 0;
 	}
 	homedir = netpgp_getvar(netpgp, "homedir");
@@ -1103,3 +1250,66 @@ netpgp_set_homedir(netpgp_t *netpgp, char *home, const char *subdir, const int q
 	return 1;
 }
 
+/* validate all sigs in the pub keyring */
+int
+netpgp_validate_sigs(netpgp_t *netpgp)
+{
+	__ops_validation_t	result;
+
+	return (int)__ops_validate_all_sigs(&result, netpgp->pubring, NULL);
+}
+
+#if 0
+#include "sshkey.h"
+
+int
+netpgp_pgpkey_to_sshkey(netpgp_t *netpgp, char *name, SSHKey *sshkey)
+{
+	const __ops_key_t	*pgpkey;
+	unsigned		 k;
+
+	k = 0;
+	pgpkey = __ops_getnextkeybyname(netpgp->io, netpgp->pubring, name, &k);
+	if (pgpkey == NULL) {
+		pgpkey = __ops_getkeybyname(io, netpgp->pubring, userid);
+	}
+	if (pgpkey == NULL) {
+		(void) fprintf(stderr, "No key matching '%s'\n", name);
+		return 0;
+	}
+	switch(pgpkey->key.pubkey.alg) {
+	case OPS_PKA_RSA:
+		sshkey->type = KEY_RSA;
+		sshkey->rsa = calloc(1, sizeof(*sshkey->rsa);
+		if (sshkey->rsa == NULL) {
+			(void) fprintf(stderr, "RSA memory problems\n");
+			return 0;
+		}
+		sshkey->rsa->n = pgpkey->key.pubkey.key.rsa.n;
+		sshkey->rsa->e = pgpkey->key.pubkey.key.rsa.e;
+		sshkey->rsa->d = pgpkey->key.seckey.key.rsa.d;
+		sshkey->rsa->p = pgpkey->key.seckey.key.rsa.p;
+		sshkey->rsa->q = pgpkey->key.seckey.key.rsa.q;
+		sshkey->rsa->iqmp = pgpkey->key.seckey.key.rsa.u;
+		break;
+	case OPS_PKA_DSA:
+		sshkey->type = KEY_DSA;
+		sshkey->dsa = calloc(1, sizeof(*sshkey->dsa);
+		if (sshkey->dsa == NULL) {
+			(void) fprintf(stderr, "DSA memory problems\n");
+			return 0;
+		}
+		sshkey->rsa->n = pgpkey->key.pubkey.key.rsa.n;
+		key->dsa->p = pgpkey->key.pubkey.key.dsa.p;
+		key->dsa->q = pgpkey->key.pubkey.key.dsa.q;
+		key->dsa->g = pgpkey->key.pubkey.key.dsa.g;
+		key->dsa->pub_key = pgpkey->key.pubkey.key.dsa.y;
+		key->dsa->priv_key = pgpkey->key.seckey.key.dsa.x;
+		break;
+	default:
+		(void) fprintf(stderr, "weird type\n");
+		return 0;
+	}
+	return 1;
+}
+#endif

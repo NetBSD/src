@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.23 2009/12/14 23:29:57 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.24 2010/02/06 02:24:33 agc Exp $");
 #endif
 
 #include <string.h>
@@ -78,12 +78,10 @@ __RCSID("$NetBSD: packet-print.c,v 1.23 2009/12/14 23:29:57 agc Exp $");
 #include "packet.h"
 #include "netpgpdigest.h"
 
-static int      indent = 0;
-
 /* static functions */
 
 static void 
-print_indent(void)
+print_indent(int indent)
 {
 	int             i;
 
@@ -93,18 +91,18 @@ print_indent(void)
 }
 
 static void 
-print_name(const char *name)
+print_name(int indent, const char *name)
 {
-	print_indent();
+	print_indent(indent);
 	if (name) {
 		printf("%s: ", name);
 	}
 }
 
 static void 
-print_hexdump(const char *name, const unsigned char *data, unsigned int len)
+print_hexdump(int indent, const char *name, const unsigned char *data, unsigned int len)
 {
-	print_name(name);
+	print_name(indent, name);
 
 	printf("len=%u, data=0x", len);
 	hexdump(stdout, data, len, "");
@@ -112,9 +110,9 @@ print_hexdump(const char *name, const unsigned char *data, unsigned int len)
 }
 
 static void 
-hexdump_data(const char *name, const unsigned char *data, unsigned len)
+hexdump_data(int indent, const char *name, const unsigned char *data, unsigned len)
 {
-	print_name(name);
+	print_name(indent, name);
 
 	printf("0x");
 	hexdump(stdout, data, len, "");
@@ -122,9 +120,9 @@ hexdump_data(const char *name, const unsigned char *data, unsigned len)
 }
 
 static void 
-print_uint(const char *name, unsigned int val)
+print_uint(int indent, const char *name, unsigned int val)
 {
-	print_name(name);
+	print_name(indent, name);
 	printf("%u\n", val);
 }
 
@@ -135,38 +133,38 @@ showtime(const char *name, time_t t)
 }
 
 static void 
-print_time(const char *name, time_t t)
+print_time(int indent, const char *name, time_t t)
 {
-	print_indent();
+	print_indent(indent);
 	printf("%s: ", name);
 	showtime("time", t);
 	printf("\n");
 }
 
 static void 
-print_string_and_value(const char *name, const char *str, unsigned char value)
+print_string_and_value(int indent, const char *name, const char *str, unsigned char value)
 {
-	print_name(name);
+	print_name(indent, name);
 	printf("%s (0x%x)\n", str, value);
 }
 
 static void 
-print_tagname(const char *str)
+print_tagname(int indent, const char *str)
 {
-	print_indent();
+	print_indent(indent);
 	printf("%s packet\n", str);
 }
 
 static void 
-print_data(const char *name, const __ops_data_t *data)
+print_data(int indent, const char *name, const __ops_data_t *data)
 {
-	print_hexdump(name, data->contents, data->len);
+	print_hexdump(indent, name, data->contents, data->len);
 }
 
 static void 
-print_bn(const char *name, const BIGNUM *bn)
+print_bn(int indent, const char *name, const BIGNUM *bn)
 {
-	print_indent();
+	print_indent(indent);
 	printf("%s=", name);
 	if (bn) {
 		BN_print_fp(stdout, bn);
@@ -214,26 +212,26 @@ print_escaped(const unsigned char *data, size_t length)
 }
 
 static void 
-print_string(const char *name, const char *str)
+print_string(int indent, const char *name, const char *str)
 {
-	print_name(name);
+	print_name(indent, name);
 	print_escaped((const unsigned char *) str, strlen(str));
 	putchar('\n');
 }
 
 static void 
-print_utf8_string(const char *name, const unsigned char *str)
+print_utf8_string(int indent, const char *name, const unsigned char *str)
 {
 	/* \todo Do this better for non-English character sets */
-	print_string(name, (const char *) str);
+	print_string(indent, name, (const char *) str);
 }
 
 static void 
-print_duration(const char *name, time_t t)
+print_duration(int indent, const char *name, time_t t)
 {
 	int             mins, hours, days, years;
 
-	print_indent();
+	print_indent(indent);
 	printf("%s: ", name);
 	printf("duration %" PRItime "d seconds", (long long) t);
 
@@ -254,21 +252,21 @@ print_duration(const char *name, time_t t)
 }
 
 static void 
-print_boolean(const char *name, unsigned char boolval)
+print_boolean(int indent, const char *name, unsigned char boolval)
 {
-	print_name(name);
+	print_name(indent, name);
 	printf("%s\n", (boolval) ? "Yes" : "No");
 }
 
 static void 
-print_text_breakdown(__ops_text_t *text)
+print_text_breakdown(int indent, __ops_text_t *text)
 {
 	const char     *prefix = ".. ";
 	unsigned        i;
 
 	/* these were recognised */
 	for (i = 0; i < text->known.used; i++) {
-		print_indent();
+		print_indent(indent);
 		printf("%s", prefix);
 		printf("%s\n", text->known.strings[i]);
 	}
@@ -279,11 +277,11 @@ print_text_breakdown(__ops_text_t *text)
 	 */
 	if (text->unknown.used) {
 		printf("\n");
-		print_indent();
+		print_indent(indent);
 		printf("Not Recognised: ");
 	}
 	for (i = 0; i < text->unknown.used; i++) {
-		print_indent();
+		print_indent(indent);
 		printf("%s", prefix);
 		printf("%s\n", text->unknown.strings[i]);
 	}
@@ -300,20 +298,20 @@ print_headers(const __ops_headers_t *h)
 }
 
 static void 
-print_block(const char *name, const unsigned char *str, size_t length)
+print_block(int indent, const char *name, const unsigned char *str, size_t length)
 {
 	int             o = length;
 
-	print_indent();
+	print_indent(indent);
 	printf(">>>>> %s >>>>>\n", name);
 
-	print_indent();
+	print_indent(indent);
 	for (; length > 0; --length) {
 		if (*str >= 0x20 && *str < 0x7f && *str != '%') {
 			putchar(*str);
 		} else if (*str == '\n') {
 			putchar(*str);
-			print_indent();
+			print_indent(indent);
 		} else {
 			printf("%%%02x", *str);
 		}
@@ -321,10 +319,10 @@ print_block(const char *name, const unsigned char *str, size_t length)
 	}
 	if (o && str[-1] != '\n') {
 		putchar('\n');
-		print_indent();
+		print_indent(indent);
 		fputs("[no newline]", stdout);
 	} else {
-		print_indent();
+		print_indent(indent);
 	}
 	printf("<<<<< %s <<<<<\n", name);
 }
@@ -414,6 +412,31 @@ __ops_sprint_keydata(const __ops_key_t *key, char **buf, const char *header,
 		uidbuf);
 }
 
+int
+__ops_hkp_sprint_keydata(const __ops_key_t *key, char **buf,
+		const __ops_pubkey_t *pubkey)
+{
+	unsigned	 i;
+	char		 uidbuf[KB(128)];
+	char		 fp[(OPS_FINGERPRINT_SIZE * 3) + 1];
+	int		 n;
+
+	for (i = 0, n = 0; i < key->uidc; i++) {
+		n += snprintf(&uidbuf[n], sizeof(uidbuf) - n,
+			"uid:%s:%lld:%lld:\n",
+			key->uids[i].userid,
+			(long long)pubkey->birthtime,
+			(long long)0);
+	}
+	return __ops_asprintf(buf, "pub:%s:%d:%d:%lld:%lld\n%s",
+		strhexdump(fp, key->fingerprint.fingerprint, OPS_FINGERPRINT_SIZE, ""),
+		pubkey->alg,
+		numkeybits(pubkey),
+		(long long)pubkey->birthtime,
+		(long long)0,
+		uidbuf);
+}
+
 /* print the key data for a pub or sec key */
 void
 __ops_print_keydata(__ops_io_t *io, const __ops_key_t *key, const char *header,
@@ -435,33 +458,33 @@ void
 __ops_print_pubkey(const __ops_pubkey_t *pubkey)
 {
 	printf("------- PUBLIC KEY ------\n");
-	print_uint("Version", (unsigned)pubkey->version);
-	print_time("Creation Time", pubkey->birthtime);
+	print_uint(0, "Version", (unsigned)pubkey->version);
+	print_time(0, "Creation Time", pubkey->birthtime);
 	if (pubkey->version == OPS_V3) {
-		print_uint("Days Valid", pubkey->days_valid);
+		print_uint(0, "Days Valid", pubkey->days_valid);
 	}
-	print_string_and_value("Algorithm", __ops_show_pka(pubkey->alg),
+	print_string_and_value(0, "Algorithm", __ops_show_pka(pubkey->alg),
 			       pubkey->alg);
 	switch (pubkey->alg) {
 	case OPS_PKA_DSA:
-		print_bn("p", pubkey->key.dsa.p);
-		print_bn("q", pubkey->key.dsa.q);
-		print_bn("g", pubkey->key.dsa.g);
-		print_bn("y", pubkey->key.dsa.y);
+		print_bn(0, "p", pubkey->key.dsa.p);
+		print_bn(0, "q", pubkey->key.dsa.q);
+		print_bn(0, "g", pubkey->key.dsa.g);
+		print_bn(0, "y", pubkey->key.dsa.y);
 		break;
 
 	case OPS_PKA_RSA:
 	case OPS_PKA_RSA_ENCRYPT_ONLY:
 	case OPS_PKA_RSA_SIGN_ONLY:
-		print_bn("n", pubkey->key.rsa.n);
-		print_bn("e", pubkey->key.rsa.e);
+		print_bn(0, "n", pubkey->key.rsa.n);
+		print_bn(0, "e", pubkey->key.rsa.e);
 		break;
 
 	case OPS_PKA_ELGAMAL:
 	case OPS_PKA_ELGAMAL_ENCRYPT_OR_SIGN:
-		print_bn("p", pubkey->key.elgamal.p);
-		print_bn("g", pubkey->key.elgamal.g);
-		print_bn("y", pubkey->key.elgamal.y);
+		print_bn(0, "p", pubkey->key.elgamal.p);
+		print_bn(0, "g", pubkey->key.elgamal.g);
+		print_bn(0, "y", pubkey->key.elgamal.y);
 		break;
 
 	default:
@@ -470,6 +493,50 @@ __ops_print_pubkey(const __ops_pubkey_t *pubkey)
 	}
 
 	printf("------- end of PUBLIC KEY ------\n");
+}
+
+int
+__ops_sprint_pubkey(const __ops_key_t *key, char *out, size_t outsize)
+{
+	char	fp[(OPS_FINGERPRINT_SIZE * 3) + 1];
+	int	cc;
+
+	cc = snprintf(out, outsize, "key:%s:%d:%lld:%lld:%d:\n",
+		strhexdump(fp, key->fingerprint.fingerprint, OPS_FINGERPRINT_SIZE, ""),
+		key->key.pubkey.version,
+		(long long)key->key.pubkey.birthtime,
+		(long long)key->key.pubkey.days_valid,
+		key->key.pubkey.alg);
+	switch (key->key.pubkey.alg) {
+	case OPS_PKA_DSA:
+		cc += snprintf(&out[cc], outsize - cc,
+			"pubkey:p=%s:q=%s:g=%s:y=%s\n",
+			BN_bn2hex(key->key.pubkey.key.dsa.p),
+			BN_bn2hex(key->key.pubkey.key.dsa.q),
+			BN_bn2hex(key->key.pubkey.key.dsa.g),
+			BN_bn2hex(key->key.pubkey.key.dsa.y));
+		break;
+	case OPS_PKA_RSA:
+	case OPS_PKA_RSA_ENCRYPT_ONLY:
+	case OPS_PKA_RSA_SIGN_ONLY:
+		cc += snprintf(&out[cc], outsize - cc,
+			"pubkey:n=%s:e=%s\n",
+			BN_bn2hex(key->key.pubkey.key.rsa.n),
+			BN_bn2hex(key->key.pubkey.key.rsa.e));
+		break;
+	case OPS_PKA_ELGAMAL:
+	case OPS_PKA_ELGAMAL_ENCRYPT_OR_SIGN:
+		cc += snprintf(&out[cc], outsize - cc,
+			"pubkey:p=%s:g=%s:y=%s\n",
+			BN_bn2hex(key->key.pubkey.key.elgamal.p),
+			BN_bn2hex(key->key.pubkey.key.elgamal.g),
+			BN_bn2hex(key->key.pubkey.key.elgamal.y));
+		break;
+	default:
+		(void) fprintf(stderr,
+			"__ops_print_pubkey: Unusual algorithm\n");
+	}
+	return cc;
 }
 
 /**
@@ -482,7 +549,7 @@ __ops_print_seckey_verbose(const __ops_content_tag_t type,
 				const __ops_seckey_t *seckey)
 {
 	printf("------- SECRET KEY or ENCRYPTED SECRET KEY ------\n");
-	print_tagname((type == OPS_PTAG_CT_SECRET_KEY) ?
+	print_tagname(0, (type == OPS_PTAG_CT_SECRET_KEY) ?
 			"SECRET_KEY" :
 			"ENCRYPTED_SECRET_KEY");
 	/* __ops_print_pubkey(key); */
@@ -494,13 +561,13 @@ __ops_print_seckey_verbose(const __ops_content_tag_t type,
 		printf("Hash algorithm: %d (%s)\n", seckey->hash_alg,
 		       __ops_show_hash_alg((unsigned char)seckey->hash_alg));
 		if (seckey->s2k_specifier != OPS_S2KS_SIMPLE) {
-			print_hexdump("Salt", seckey->salt,
+			print_hexdump(0, "Salt", seckey->salt,
 					sizeof(seckey->salt));
 		}
 		if (seckey->s2k_specifier == OPS_S2KS_ITERATED_AND_SALTED) {
 			printf("Octet count: %u\n", seckey->octetc);
 		}
-		print_hexdump("IV", seckey->iv, __ops_block_size(seckey->alg));
+		print_hexdump(0, "IV", seckey->iv, __ops_block_size(seckey->alg));
 	}
 	/* no more set if encrypted */
 	if (type == OPS_PTAG_CT_ENCRYPTED_SECRET_KEY) {
@@ -508,14 +575,14 @@ __ops_print_seckey_verbose(const __ops_content_tag_t type,
 	}
 	switch (seckey->pubkey.alg) {
 	case OPS_PKA_RSA:
-		print_bn("d", seckey->key.rsa.d);
-		print_bn("p", seckey->key.rsa.p);
-		print_bn("q", seckey->key.rsa.q);
-		print_bn("u", seckey->key.rsa.u);
+		print_bn(0, "d", seckey->key.rsa.d);
+		print_bn(0, "p", seckey->key.rsa.p);
+		print_bn(0, "q", seckey->key.rsa.q);
+		print_bn(0, "u", seckey->key.rsa.u);
 		break;
 
 	case OPS_PKA_DSA:
-		print_bn("x", seckey->key.dsa.x);
+		print_bn(0, "x", seckey->key.dsa.x);
 		break;
 
 	default:
@@ -523,7 +590,7 @@ __ops_print_seckey_verbose(const __ops_content_tag_t type,
 			"__ops_print_seckey_verbose: unusual algorithm\n");
 	}
 	if (seckey->s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED) {
-		print_hexdump("Checkhash", seckey->checkhash,
+		print_hexdump(0, "Checkhash", seckey->checkhash,
 				OPS_CHECKHASH_SIZE);
 	} else {
 		printf("Checksum: %04x\n", seckey->checksum);
@@ -541,21 +608,21 @@ static void
 __ops_print_pk_sesskey(__ops_content_tag_t tag,
 			 const __ops_pk_sesskey_t * key)
 {
-	print_tagname((tag == OPS_PTAG_CT_PK_SESSION_KEY) ?
+	print_tagname(0, (tag == OPS_PTAG_CT_PK_SESSION_KEY) ?
 		"PUBLIC KEY SESSION KEY" :
 		"ENCRYPTED PUBLIC KEY SESSION KEY");
 	printf("Version: %d\n", key->version);
-	print_hexdump("Key ID", key->key_id, sizeof(key->key_id));
+	print_hexdump(0, "Key ID", key->key_id, sizeof(key->key_id));
 	printf("Algorithm: %d (%s)\n", key->alg,
 	       __ops_show_pka(key->alg));
 	switch (key->alg) {
 	case OPS_PKA_RSA:
-		print_bn("encrypted_m", key->params.rsa.encrypted_m);
+		print_bn(0, "encrypted_m", key->params.rsa.encrypted_m);
 		break;
 
 	case OPS_PKA_ELGAMAL:
-		print_bn("g_to_k", key->params.elgamal.g_to_k);
-		print_bn("encrypted_m", key->params.elgamal.encrypted_m);
+		print_bn(0, "g_to_k", key->params.elgamal.g_to_k);
+		print_bn(0, "encrypted_m", key->params.elgamal.encrypted_m);
 		break;
 
 	default:
@@ -565,25 +632,25 @@ __ops_print_pk_sesskey(__ops_content_tag_t tag,
 	if (tag == OPS_PTAG_CT_PK_SESSION_KEY) {
 		printf("Symmetric algorithm: %d (%s)\n", key->symm_alg,
 		       __ops_show_symm_alg(key->symm_alg));
-		print_hexdump("Key", key->key, __ops_key_size(key->symm_alg));
+		print_hexdump(0, "Key", key->key, __ops_key_size(key->symm_alg));
 		printf("Checksum: %04x\n", key->checksum);
 	}
 }
 
 static void 
-start_subpacket(int type)
+start_subpacket(int *indent, int type)
 {
-	indent++;
-	print_indent();
+	*indent += 1;
+	print_indent(*indent);
 	printf("-- %s (type 0x%02x)\n",
 	       __ops_show_ss_type((__ops_ss_type_t)type),
 	       type - OPS_PTAG_SIG_SUBPKT_BASE);
 }
 
 static void 
-end_subpacket(void)
+end_subpacket(int *indent)
 {
-	indent--;
+	*indent -= 1;
 }
 
 /**
@@ -597,7 +664,9 @@ __ops_print_packet(const __ops_packet_t *pkt)
 	static unsigned		 unarmoured;
 	__ops_text_t		*text;
 	const char		*str;
+	int			 indent;
 
+	indent = 0;
 	if (unarmoured && pkt->tag != OPS_PTAG_CT_UNARMOURED_TEXT) {
 		unarmoured = 0;
 		puts("UNARMOURED TEXT ends");
@@ -629,28 +698,28 @@ __ops_print_packet(const __ops_packet_t *pkt)
 			printf("\n*** NEXT KEY ***\n");
 		}
 		printf("\n");
-		print_indent();
+		print_indent(indent);
 		printf("==== ptag new_format=%u type=%u length_type=%d"
 		       " length=0x%x (%u) position=0x%x (%u)\n",
 		       content->ptag.new_format,
 		       content->ptag.type, content->ptag.length_type,
 		       content->ptag.length, content->ptag.length,
 		       content->ptag.position, content->ptag.position);
-		print_tagname(__ops_show_packet_tag((__ops_packet_tag_t)content->ptag.type));
+		print_tagname(indent, __ops_show_packet_tag((__ops_packet_tag_t)content->ptag.type));
 		break;
 
 	case OPS_PTAG_CT_SE_DATA_HEADER:
-		print_tagname("SYMMETRIC ENCRYPTED DATA");
+		print_tagname(indent, "SYMMETRIC ENCRYPTED DATA");
 		break;
 
 	case OPS_PTAG_CT_SE_IP_DATA_HEADER:
-		print_tagname(
+		print_tagname(indent, 
 			"SYMMETRIC ENCRYPTED INTEGRITY PROTECTED DATA HEADER");
 		printf("Version: %d\n", content->se_ip_data_header.version);
 		break;
 
 	case OPS_PTAG_CT_SE_IP_DATA_BODY:
-		print_tagname(
+		print_tagname(indent, 
 			"SYMMETRIC ENCRYPTED INTEGRITY PROTECTED DATA BODY");
 		printf("  data body length=%u\n",
 		       content->se_data_body.length);
@@ -662,67 +731,71 @@ __ops_print_packet(const __ops_packet_t *pkt)
 
 	case OPS_PTAG_CT_PUBLIC_KEY:
 	case OPS_PTAG_CT_PUBLIC_SUBKEY:
-		print_tagname((pkt->tag == OPS_PTAG_CT_PUBLIC_KEY) ?
+		print_tagname(indent, (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY) ?
 			"PUBLIC KEY" :
 			"PUBLIC SUBKEY");
 		__ops_print_pubkey(&content->pubkey);
 		break;
 
 	case OPS_PTAG_CT_TRUST:
-		print_tagname("TRUST");
-		print_data("Trust", &content->trust.data);
+		print_tagname(indent, "TRUST");
+		print_data(indent, "Trust", &content->trust.data);
 		break;
 
 	case OPS_PTAG_CT_USER_ID:
-		print_tagname("USER ID");
-		print_utf8_string("userid", content->userid.userid);
+		print_tagname(indent, "USER ID");
+		print_utf8_string(indent, "userid", content->userid.userid);
 		break;
 
 	case OPS_PTAG_CT_SIGNATURE:
-		print_tagname("SIGNATURE");
-		print_indent();
-		print_uint("Signature Version",
+		print_tagname(indent, "SIGNATURE");
+		print_indent(indent);
+		print_uint(indent, "Signature Version",
 				   (unsigned)content->sig.info.version);
 		if (content->sig.info.birthtime_set) {
-			print_time("Signature Creation Time",
+			print_time(indent, "Signature Creation Time",
 				   content->sig.info.birthtime);
 		}
+		if (content->sig.info.duration_set) {
+			print_uint(indent, "Signature Duration",
+				   (unsigned)content->sig.info.duration);
+		}
 
-		print_string_and_value("Signature Type",
+		print_string_and_value(indent, "Signature Type",
 			    __ops_show_sig_type(content->sig.info.type),
 				       content->sig.info.type);
 
 		if (content->sig.info.signer_id_set) {
-			hexdump_data("Signer ID",
+			hexdump_data(indent, "Signer ID",
 					   content->sig.info.signer_id,
 				  sizeof(content->sig.info.signer_id));
 		}
 
-		print_string_and_value("Public Key Algorithm",
+		print_string_and_value(indent, "Public Key Algorithm",
 			__ops_show_pka(content->sig.info.key_alg),
 				     content->sig.info.key_alg);
-		print_string_and_value("Hash Algorithm",
+		print_string_and_value(indent, "Hash Algorithm",
 			__ops_show_hash_alg((unsigned char)
 				content->sig.info.hash_alg),
 			(unsigned char)content->sig.info.hash_alg);
-		print_uint("Hashed data len",
+		print_uint(indent, "Hashed data len",
 			content->sig.info.v4_hashlen);
-		print_indent();
-		hexdump_data("hash2", &content->sig.hash2[0], 2);
+		print_indent(indent);
+		hexdump_data(indent, "hash2", &content->sig.hash2[0], 2);
 		switch (content->sig.info.key_alg) {
 		case OPS_PKA_RSA:
 		case OPS_PKA_RSA_SIGN_ONLY:
-			print_bn("sig", content->sig.info.sig.rsa.sig);
+			print_bn(indent, "sig", content->sig.info.sig.rsa.sig);
 			break;
 
 		case OPS_PKA_DSA:
-			print_bn("r", content->sig.info.sig.dsa.r);
-			print_bn("s", content->sig.info.sig.dsa.s);
+			print_bn(indent, "r", content->sig.info.sig.dsa.r);
+			print_bn(indent, "s", content->sig.info.sig.dsa.s);
 			break;
 
 		case OPS_PKA_ELGAMAL_ENCRYPT_OR_SIGN:
-			print_bn("r", content->sig.info.sig.elgamal.r);
-			print_bn("s", content->sig.info.sig.elgamal.s);
+			print_bn(indent, "r", content->sig.info.sig.elgamal.r);
+			print_bn(indent, "s", content->sig.info.sig.elgamal.s);
 			break;
 
 		default:
@@ -737,33 +810,33 @@ __ops_print_packet(const __ops_packet_t *pkt)
 		break;
 
 	case OPS_PTAG_CT_COMPRESSED:
-		print_tagname("COMPRESSED");
-		print_uint("Compressed Data Type",
+		print_tagname(indent, "COMPRESSED");
+		print_uint(indent, "Compressed Data Type",
 			(unsigned)content->compressed.type);
 		break;
 
 	case OPS_PTAG_CT_1_PASS_SIG:
-		print_tagname("ONE PASS SIGNATURE");
+		print_tagname(indent, "ONE PASS SIGNATURE");
 
-		print_uint("Version", (unsigned)content->one_pass_sig.version);
-		print_string_and_value("Signature Type",
+		print_uint(indent, "Version", (unsigned)content->one_pass_sig.version);
+		print_string_and_value(indent, "Signature Type",
 		    __ops_show_sig_type(content->one_pass_sig.sig_type),
 				       content->one_pass_sig.sig_type);
-		print_string_and_value("Hash Algorithm",
+		print_string_and_value(indent, "Hash Algorithm",
 			__ops_show_hash_alg((unsigned char)content->one_pass_sig.hash_alg),
 			(unsigned char)content->one_pass_sig.hash_alg);
-		print_string_and_value("Public Key Algorithm",
+		print_string_and_value(indent, "Public Key Algorithm",
 			__ops_show_pka(content->one_pass_sig.key_alg),
 			content->one_pass_sig.key_alg);
-		hexdump_data("Signer ID",
+		hexdump_data(indent, "Signer ID",
 				   content->one_pass_sig.keyid,
 				   sizeof(content->one_pass_sig.keyid));
-		print_uint("Nested", content->one_pass_sig.nested);
+		print_uint(indent, "Nested", content->one_pass_sig.nested);
 		break;
 
 	case OPS_PTAG_CT_USER_ATTR:
-		print_tagname("USER ATTRIBUTE");
-		print_hexdump("User Attribute",
+		print_tagname(indent, "USER ATTRIBUTE");
+		print_hexdump(indent, "User Attribute",
 			      content->userattr.data.contents,
 			      content->userattr.data.len);
 		break;
@@ -773,50 +846,50 @@ __ops_print_packet(const __ops_packet_t *pkt)
 			(void) fprintf(stderr, "contents are critical\n");
 			return 0;
 		}
-		start_subpacket(pkt->tag);
-		print_uint("Raw Signature Subpacket: tag",
+		start_subpacket(&indent, pkt->tag);
+		print_uint(indent, "Raw Signature Subpacket: tag",
 			(unsigned)(content->ss_raw.tag -
 		   	(unsigned)OPS_PTAG_SIG_SUBPKT_BASE));
-		print_hexdump("Raw Data",
+		print_hexdump(indent, "Raw Data",
 			      content->ss_raw.raw,
 			      content->ss_raw.length);
 		break;
 
 	case OPS_PTAG_SS_CREATION_TIME:
-		start_subpacket(pkt->tag);
-		print_time("Signature Creation Time", content->ss_time.time);
-		end_subpacket();
+		start_subpacket(&indent, pkt->tag);
+		print_time(indent, "Signature Creation Time", content->ss_time.time);
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_EXPIRATION_TIME:
-		start_subpacket(pkt->tag);
-		print_duration("Signature Expiration Time",
+		start_subpacket(&indent, pkt->tag);
+		print_duration(indent, "Signature Expiration Time",
 			content->ss_time.time);
-		end_subpacket();
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_KEY_EXPIRY:
-		start_subpacket(pkt->tag);
-		print_duration("Key Expiration Time", content->ss_time.time);
-		end_subpacket();
+		start_subpacket(&indent, pkt->tag);
+		print_duration(indent, "Key Expiration Time", content->ss_time.time);
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_TRUST:
-		start_subpacket(pkt->tag);
-		print_string("Trust Signature", "");
-		print_uint("Level", (unsigned)content->ss_trust.level);
-		print_uint("Amount", (unsigned)content->ss_trust.amount);
-		end_subpacket();
+		start_subpacket(&indent, pkt->tag);
+		print_string(indent, "Trust Signature", "");
+		print_uint(indent, "Level", (unsigned)content->ss_trust.level);
+		print_uint(indent, "Amount", (unsigned)content->ss_trust.amount);
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_REVOCABLE:
-		start_subpacket(pkt->tag);
-		print_boolean("Revocable", content->ss_revocable.revocable);
-		end_subpacket();
+		start_subpacket(&indent, pkt->tag);
+		print_boolean(indent, "Revocable", content->ss_revocable.revocable);
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_REVOCATION_KEY:
-		start_subpacket(pkt->tag);
+		start_subpacket(&indent, pkt->tag);
 		/* not yet tested */
 		printf("  revocation key: class=0x%x",
 		       content->ss_revocation_key.class);
@@ -828,143 +901,143 @@ __ops_print_packet(const __ops_packet_t *pkt)
 		hexdump(stdout, content->ss_revocation_key.fingerprint,
 				OPS_FINGERPRINT_SIZE, "");
 		printf("\n");
-		end_subpacket();
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_ISSUER_KEY_ID:
-		start_subpacket(pkt->tag);
-		print_hexdump("Issuer Key Id",
+		start_subpacket(&indent, pkt->tag);
+		print_hexdump(indent, "Issuer Key Id",
 			      &content->ss_issuer.key_id[0],
 			      sizeof(content->ss_issuer.key_id));
-		end_subpacket();
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_PREFERRED_SKA:
-		start_subpacket(pkt->tag);
-		print_data("Preferred Symmetric Algorithms",
+		start_subpacket(&indent, pkt->tag);
+		print_data(indent, "Preferred Symmetric Algorithms",
 			   &content->ss_skapref.data);
 
 		text = __ops_showall_ss_skapref(content->ss_skapref);
-		print_text_breakdown(text);
+		print_text_breakdown(indent, text);
 		__ops_text_free(text);
 
-		end_subpacket();
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_PRIMARY_USER_ID:
-		start_subpacket(pkt->tag);
-		print_boolean("Primary User ID",
+		start_subpacket(&indent, pkt->tag);
+		print_boolean(indent, "Primary User ID",
 			      content->ss_primary_userid.primary_userid);
-		end_subpacket();
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_PREFERRED_HASH:
-		start_subpacket(pkt->tag);
-		print_data("Preferred Hash Algorithms",
+		start_subpacket(&indent, pkt->tag);
+		print_data(indent, "Preferred Hash Algorithms",
 			   &content->ss_hashpref.data);
 
 		text = __ops_showall_ss_hashpref(content->ss_hashpref);
-		print_text_breakdown(text);
+		print_text_breakdown(indent, text);
 		__ops_text_free(text);
-		end_subpacket();
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_PREF_COMPRESS:
-		start_subpacket(pkt->tag);
-		print_data("Preferred Compression Algorithms",
+		start_subpacket(&indent, pkt->tag);
+		print_data(indent, "Preferred Compression Algorithms",
 			   &content->ss_zpref.data);
 
 		text = __ops_showall_ss_zpref(content->ss_zpref);
-		print_text_breakdown(text);
+		print_text_breakdown(indent, text);
 		__ops_text_free(text);
-		end_subpacket();
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_KEY_FLAGS:
-		start_subpacket(pkt->tag);
-		print_data("Key Flags", &content->ss_key_flags.data);
+		start_subpacket(&indent, pkt->tag);
+		print_data(indent, "Key Flags", &content->ss_key_flags.data);
 
 		text = __ops_showall_ss_key_flags(content->ss_key_flags);
-		print_text_breakdown(text);
+		print_text_breakdown(indent, text);
 		__ops_text_free(text);
 
-		end_subpacket();
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_KEYSERV_PREFS:
-		start_subpacket(pkt->tag);
-		print_data("Key Server Preferences",
+		start_subpacket(&indent, pkt->tag);
+		print_data(indent, "Key Server Preferences",
 			   &content->ss_key_server_prefs.data);
 
 		text = __ops_show_keyserv_prefs(content->ss_key_server_prefs);
-		print_text_breakdown(text);
+		print_text_breakdown(indent, text);
 		__ops_text_free(text);
 
-		end_subpacket();
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_FEATURES:
-		start_subpacket(pkt->tag);
-		print_data("Features",
+		start_subpacket(&indent, pkt->tag);
+		print_data(indent, "Features",
 			   &content->ss_features.data);
 
 		text = __ops_showall_ss_features(content->ss_features);
-		print_text_breakdown(text);
+		print_text_breakdown(indent, text);
 		__ops_text_free(text);
 
-		end_subpacket();
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_NOTATION_DATA:
-		start_subpacket(pkt->tag);
-		print_indent();
+		start_subpacket(&indent, pkt->tag);
+		print_indent(indent);
 		printf("Notation Data:\n");
 
 		indent++;
-		print_data("Flags", &content->ss_notation.flags);
+		print_data(indent, "Flags", &content->ss_notation.flags);
 		text = __ops_showall_notation(content->ss_notation);
-		print_text_breakdown(text);
+		print_text_breakdown(indent, text);
 		__ops_text_free(text);
 
-		print_data("Name", &content->ss_notation.name);
+		print_data(indent, "Name", &content->ss_notation.name);
 
-		print_data("Value", &content->ss_notation.value);
+		print_data(indent, "Value", &content->ss_notation.value);
 
 		indent--;
-		end_subpacket();
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_REGEXP:
-		start_subpacket(pkt->tag);
-		print_hexdump("Regular Expression",
+		start_subpacket(&indent, pkt->tag);
+		print_hexdump(indent, "Regular Expression",
 			      (unsigned char *) content->ss_regexp.regexp,
 			      strlen(content->ss_regexp.regexp));
-		print_string(NULL, content->ss_regexp.regexp);
-		end_subpacket();
+		print_string(indent, NULL, content->ss_regexp.regexp);
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_POLICY_URI:
-		start_subpacket(pkt->tag);
-		print_string("Policy URL", content->ss_policy.url);
-		end_subpacket();
+		start_subpacket(&indent, pkt->tag);
+		print_string(indent, "Policy URL", content->ss_policy.url);
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_SIGNERS_USER_ID:
-		start_subpacket(pkt->tag);
-		print_utf8_string("Signer's User ID",
+		start_subpacket(&indent, pkt->tag);
+		print_utf8_string(indent, "Signer's User ID",
 			content->ss_signer.userid);
-		end_subpacket();
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_PREF_KEYSERV:
-		start_subpacket(pkt->tag);
-		print_string("Preferred Key Server", content->ss_keyserv.name);
-		end_subpacket();
+		start_subpacket(&indent, pkt->tag);
+		print_string(indent, "Preferred Key Server", content->ss_keyserv.name);
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_EMBEDDED_SIGNATURE:
-		start_subpacket(pkt->tag);
-		end_subpacket();/* \todo print out contents? */
+		start_subpacket(&indent, pkt->tag);
+		end_subpacket(&indent);/* \todo print out contents? */
 		break;
 
 	case OPS_PTAG_SS_USERDEFINED00:
@@ -978,33 +1051,33 @@ __ops_print_packet(const __ops_packet_t *pkt)
 	case OPS_PTAG_SS_USERDEFINED08:
 	case OPS_PTAG_SS_USERDEFINED09:
 	case OPS_PTAG_SS_USERDEFINED10:
-		start_subpacket(pkt->tag);
-		print_hexdump("Internal or user-defined",
+		start_subpacket(&indent, pkt->tag);
+		print_hexdump(indent, "Internal or user-defined",
 			      content->ss_userdef.data.contents,
 			      content->ss_userdef.data.len);
-		end_subpacket();
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_RESERVED:
-		start_subpacket(pkt->tag);
-		print_hexdump("Reserved",
+		start_subpacket(&indent, pkt->tag);
+		print_hexdump(indent, "Reserved",
 			      content->ss_userdef.data.contents,
 			      content->ss_userdef.data.len);
-		end_subpacket();
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_SS_REVOCATION_REASON:
-		start_subpacket(pkt->tag);
-		print_hexdump("Revocation Reason",
+		start_subpacket(&indent, pkt->tag);
+		print_hexdump(indent, "Revocation Reason",
 			      &content->ss_revocation.code,
 			      1);
 		str = __ops_show_ss_rr_code(content->ss_revocation.code);
-		print_string(NULL, str);
-		end_subpacket();
+		print_string(indent, NULL, str);
+		end_subpacket(&indent);
 		break;
 
 	case OPS_PTAG_CT_LITDATA_HEADER:
-		print_tagname("LITERAL DATA HEADER");
+		print_tagname(indent, "LITERAL DATA HEADER");
 		printf("  literal data header format=%c filename='%s'\n",
 		       content->litdata_header.format,
 		       content->litdata_header.filename);
@@ -1014,7 +1087,7 @@ __ops_print_packet(const __ops_packet_t *pkt)
 		break;
 
 	case OPS_PTAG_CT_LITDATA_BODY:
-		print_tagname("LITERAL DATA BODY");
+		print_tagname(indent, "LITERAL DATA BODY");
 		printf("  literal data body length=%u\n",
 		       content->litdata_body.length);
 		printf("    data=");
@@ -1024,48 +1097,54 @@ __ops_print_packet(const __ops_packet_t *pkt)
 		break;
 
 	case OPS_PTAG_CT_SIGNATURE_HEADER:
-		print_tagname("SIGNATURE");
-		print_indent();
-		print_uint("Signature Version",
+		print_tagname(indent, "SIGNATURE");
+		print_indent(indent);
+		print_uint(indent, "Signature Version",
 				   (unsigned)content->sig.info.version);
 		if (content->sig.info.birthtime_set) {
-			print_time("Signature Creation Time",
+			print_time(indent, "Signature Creation Time",
 				content->sig.info.birthtime);
 		}
-		print_string_and_value("Signature Type",
+		if (content->sig.info.duration_set) {
+			print_uint(indent, "Signature Duration",
+				   (unsigned)content->sig.info.duration);
+		}
+		print_string_and_value(indent, "Signature Type",
 			    __ops_show_sig_type(content->sig.info.type),
 				       content->sig.info.type);
 		if (content->sig.info.signer_id_set) {
-			hexdump_data("Signer ID",
+			hexdump_data(indent, "Signer ID",
 				content->sig.info.signer_id,
 				sizeof(content->sig.info.signer_id));
 		}
-		print_string_and_value("Public Key Algorithm",
+		print_string_and_value(indent, "Public Key Algorithm",
 			__ops_show_pka(content->sig.info.key_alg),
 				     content->sig.info.key_alg);
-		print_string_and_value("Hash Algorithm",
+		print_string_and_value(indent, "Hash Algorithm",
 			__ops_show_hash_alg((unsigned char)content->sig.info.hash_alg),
 			(unsigned char)content->sig.info.hash_alg);
+		print_uint(indent, "Hashed data len",
+			content->sig.info.v4_hashlen);
 
 		break;
 
 	case OPS_PTAG_CT_SIGNATURE_FOOTER:
-		print_indent();
-		hexdump_data("hash2", &content->sig.hash2[0], 2);
+		print_indent(indent);
+		hexdump_data(indent, "hash2", &content->sig.hash2[0], 2);
 
 		switch (content->sig.info.key_alg) {
 		case OPS_PKA_RSA:
-			print_bn("sig", content->sig.info.sig.rsa.sig);
+			print_bn(indent, "sig", content->sig.info.sig.rsa.sig);
 			break;
 
 		case OPS_PKA_DSA:
-			print_bn("r", content->sig.info.sig.dsa.r);
-			print_bn("s", content->sig.info.sig.dsa.s);
+			print_bn(indent, "r", content->sig.info.sig.dsa.r);
+			print_bn(indent, "s", content->sig.info.sig.dsa.s);
 			break;
 
 		case OPS_PKA_ELGAMAL_ENCRYPT_OR_SIGN:
-			print_bn("r", content->sig.info.sig.elgamal.r);
-			print_bn("s", content->sig.info.sig.elgamal.s);
+			print_bn(indent, "r", content->sig.info.sig.elgamal.r);
+			print_bn(indent, "s", content->sig.info.sig.elgamal.s);
 			break;
 
 		case OPS_PKA_PRIVATE00:
@@ -1079,7 +1158,7 @@ __ops_print_packet(const __ops_packet_t *pkt)
 		case OPS_PKA_PRIVATE08:
 		case OPS_PKA_PRIVATE09:
 		case OPS_PKA_PRIVATE10:
-			print_data("Private/Experimental",
+			print_data(indent, "Private/Experimental",
 			   &content->sig.info.sig.unknown.data);
 			break;
 
@@ -1091,37 +1170,37 @@ __ops_print_packet(const __ops_packet_t *pkt)
 		break;
 
 	case OPS_GET_PASSPHRASE:
-		print_tagname("OPS_GET_PASSPHRASE");
+		print_tagname(indent, "OPS_GET_PASSPHRASE");
 		break;
 
 	case OPS_PTAG_CT_SECRET_KEY:
-		print_tagname("OPS_PTAG_CT_SECRET_KEY");
+		print_tagname(indent, "OPS_PTAG_CT_SECRET_KEY");
 		__ops_print_seckey_verbose(pkt->tag, &content->seckey);
 		break;
 
 	case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY:
-		print_tagname("OPS_PTAG_CT_ENCRYPTED_SECRET_KEY");
+		print_tagname(indent, "OPS_PTAG_CT_ENCRYPTED_SECRET_KEY");
 		__ops_print_seckey_verbose(pkt->tag, &content->seckey);
 		break;
 
 	case OPS_PTAG_CT_ARMOUR_HEADER:
-		print_tagname("ARMOUR HEADER");
-		print_string("type", content->armour_header.type);
+		print_tagname(indent, "ARMOUR HEADER");
+		print_string(indent, "type", content->armour_header.type);
 		break;
 
 	case OPS_PTAG_CT_SIGNED_CLEARTEXT_HEADER:
-		print_tagname("SIGNED CLEARTEXT HEADER");
+		print_tagname(indent, "SIGNED CLEARTEXT HEADER");
 		print_headers(&content->cleartext_head.headers);
 		break;
 
 	case OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY:
-		print_tagname("SIGNED CLEARTEXT BODY");
-		print_block("signed cleartext", content->cleartext_body.data,
+		print_tagname(indent, "SIGNED CLEARTEXT BODY");
+		print_block(indent, "signed cleartext", content->cleartext_body.data,
 			    content->cleartext_body.length);
 		break;
 
 	case OPS_PTAG_CT_SIGNED_CLEARTEXT_TRAILER:
-		print_tagname("SIGNED CLEARTEXT TRAILER");
+		print_tagname(indent, "SIGNED CLEARTEXT TRAILER");
 		printf("hash algorithm: %d\n",
 		       content->cleartext_trailer.hash->alg);
 		printf("\n");
@@ -1129,7 +1208,7 @@ __ops_print_packet(const __ops_packet_t *pkt)
 
 	case OPS_PTAG_CT_UNARMOURED_TEXT:
 		if (!unarmoured) {
-			print_tagname("UNARMOURED TEXT");
+			print_tagname(indent, "UNARMOURED TEXT");
 			unarmoured = 1;
 		}
 		putchar('[');
@@ -1139,8 +1218,8 @@ __ops_print_packet(const __ops_packet_t *pkt)
 		break;
 
 	case OPS_PTAG_CT_ARMOUR_TRAILER:
-		print_tagname("ARMOUR TRAILER");
-		print_string("type", content->armour_header.type);
+		print_tagname(indent, "ARMOUR TRAILER");
+		print_string(indent, "type", content->armour_header.type);
 		break;
 
 	case OPS_PTAG_CT_PK_SESSION_KEY:
@@ -1154,7 +1233,7 @@ __ops_print_packet(const __ops_packet_t *pkt)
 		break;
 
 	default:
-		print_tagname("UNKNOWN PACKET TYPE");
+		print_tagname(indent, "UNKNOWN PACKET TYPE");
 		fprintf(stderr, "__ops_print_packet: unknown tag=%d (0x%x)\n",
 			pkt->tag, pkt->tag);
 		exit(EXIT_FAILURE);

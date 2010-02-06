@@ -633,17 +633,17 @@ typedef struct {
 	__ops_version_t   version;/* signature version number */
 	__ops_sig_type_t  type;	/* signature type value */
 	time_t          birthtime;	/* creation time of the signature */
+	time_t          duration;	/* number of seconds it's valid for */
 	unsigned char   signer_id[OPS_KEY_ID_SIZE];	/* Eight-octet key ID
 							 * of signer */
-	__ops_pubkey_alg_t key_alg;	/* public key
-							 * algorithm number */
-	__ops_hash_alg_t hash_alg;	/* hashing algorithm
-						 * number */
+	__ops_pubkey_alg_t key_alg;	/* public key algorithm number */
+	__ops_hash_alg_t hash_alg;	/* hashing algorithm number */
 	__ops_sig_union_t sig;	/* signature params */
 	size_t          v4_hashlen;
 	unsigned char  *v4_hashed;
 	unsigned   birthtime_set:1;
 	unsigned   signer_id_set:1;
+	unsigned   duration_set:1;
 } __ops_sig_info_t;
 
 /** Struct used when parsing a signature */

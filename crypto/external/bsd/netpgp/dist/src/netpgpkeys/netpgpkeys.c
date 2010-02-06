@@ -148,7 +148,7 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 
 	switch (p->cmd) {
 	case LIST_KEYS:
-		return (f == NULL) ? netpgp_list_keys(netpgp) : netpgp_match_list_keys(netpgp, f);
+		return (f == NULL) ? netpgp_list_keys(netpgp) : netpgp_match_keys(netpgp, f, "human", stdout);
 	case FIND_KEY:
 		return netpgp_find_key(netpgp, netpgp_getvar(netpgp, "userid"));
 	case EXPORT_KEY:
@@ -177,6 +177,7 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 int
 main(int argc, char **argv)
 {
+	struct stat	st;
 	netpgp_t	netpgp;
 	prog_t          p;
 	int             optindex;
@@ -294,8 +295,12 @@ main(int argc, char **argv)
 	}
 	/* initialise, and read keys from file */
 	if (!netpgp_init(&netpgp)) {
-		printf("can't initialise\n");
-		exit(EXIT_ERROR);
+		if (stat(netpgp_getvar(&netpgp, "homedir"), &st) < 0 &&
+		    mkdir("homedir", 0700) < 0) {
+			(void) fprintf(stderr, "can't create home directory '%s'\n",
+				netpgp_getvar(&netpgp, "homedir"));
+			exit(EXIT_ERROR);
+		}
 	}
 	/* now do the required action for each of the command line args */
 	ret = EXIT_SUCCESS;

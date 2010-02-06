@@ -88,7 +88,7 @@ const __ops_pubkey_t *__ops_get_pubkey(const __ops_key_t *);
 unsigned   __ops_is_key_secret(const __ops_key_t *);
 const __ops_seckey_t *__ops_get_seckey(const __ops_key_t *);
 __ops_seckey_t *__ops_get_writable_seckey(__ops_key_t *);
-__ops_seckey_t *__ops_decrypt_seckey(const __ops_key_t *);
+__ops_seckey_t *__ops_decrypt_seckey(const __ops_key_t *, void *);
 
 unsigned   __ops_keyring_fileread(__ops_keyring_t *, const unsigned,
 					const char *);
@@ -117,11 +117,16 @@ void __ops_keydata_init(__ops_key_t *, const __ops_content_tag_t);
 
 int __ops_parse_and_accumulate(__ops_keyring_t *, __ops_stream_t *);
 
+void __ops_pkeyid(FILE *, const unsigned char *, size_t);
+
 int __ops_sprint_keydata(const __ops_key_t *, char **, const char *,
+			const __ops_pubkey_t *);
+int __ops_hkp_sprint_keydata(const __ops_key_t *, char **,
 			const __ops_pubkey_t *);
 void __ops_print_keydata(__ops_io_t *, const __ops_key_t *,
 			const char *, const __ops_pubkey_t *);
 void __ops_print_pubkey(const __ops_pubkey_t *);
+int __ops_sprint_pubkey(const __ops_key_t *, char *, size_t);
 
 int __ops_list_packets(__ops_io_t *,
 			char *,
@@ -134,5 +139,7 @@ int __ops_export_key(const __ops_key_t *, unsigned char *);
 
 int __ops_add_to_pubring(__ops_keyring_t *, const __ops_pubkey_t *);
 int __ops_add_to_secring(__ops_keyring_t *, const __ops_seckey_t *);
+
+int __ops_append_keyring(__ops_keyring_t *, __ops_keyring_t *);
 
 #endif /* KEYRING_H_ */

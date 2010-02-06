@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgpkeys.1,v 1.4 2009/12/05 10:05:54 wiz Exp $
+.\" $NetBSD: netpgpkeys.1,v 1.5 2010/02/06 02:24:34 agc Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -276,6 +276,15 @@ The
 utility will return 0 for success,
 1 if the file's signature does not match what was expected,
 or 2 if any other error occurs.
+.Sh EXAMPLE
+.Bd -literal
+% netpgpkeys --ssh-keys --sshkeyfile=/etc/ssh/ssh_host_rsa_key.pub --list-keys
+1 key
+pub 1024/RSA (Encrypt or Sign) 040180871e00404a 2008-08-11
+Key fingerprint: c4aa b385 4796 e6ce 606c f0c2 0401 8087 1e00 404a 
+uid              netbsd-vm1.crowthorne.alistaircrooks.co.uk (/etc/ssh/ssh_host_rsa_key.pub) \*[Lt]root@netbsd-vm1.crowthorne.alistaircrooks.co.uk\*[Gt]
+%
+.Ed
 .Sh SEE ALSO
 .Xr netpgp 1 ,
 .Xr ssh 1 ,

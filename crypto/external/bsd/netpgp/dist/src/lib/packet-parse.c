@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.27 2009/11/20 07:17:07 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.28 2010/02/06 02:24:33 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -1648,8 +1648,9 @@ parse_v3_sig(__ops_region_t *region,
  * \ingroup Core_ReadPackets
  * \brief Parse one signature sub-packet.
  *
- * Version 4 signatures can have an arbitrary amount of (hashed and unhashed) subpackets.  Subpackets are used to hold
- * optional attributes of subpackets.
+ * Version 4 signatures can have an arbitrary amount of (hashed and
+ * unhashed) subpackets.  Subpackets are used to hold optional
+ * attributes of subpackets.
  *
  * This function parses one such signature subpacket.
  *
@@ -1719,6 +1720,10 @@ parse_one_sig_subpacket(__ops_sig_t *sig,
 		if (pkt.tag == OPS_PTAG_SS_CREATION_TIME) {
 			sig->info.birthtime = pkt.u.ss_time.time;
 			sig->info.birthtime_set = 1;
+		}
+		if (pkt.tag == OPS_PTAG_SS_EXPIRATION_TIME) {
+			sig->info.duration = pkt.u.ss_time.time;
+			sig->info.duration_set = 1;
 		}
 		break;
 
@@ -2014,7 +2019,6 @@ parse_v4_sig(__ops_region_t *region, __ops_stream_t *stream)
 	unsigned char   c = 0x0;
 	__ops_packet_t pkt;
 
-	/* debug=1; */
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "\nparse_v4_sig\n");
 	}
@@ -2047,7 +2051,7 @@ parse_v4_sig(__ops_region_t *region, __ops_stream_t *stream)
 		return 0;
 	}
 	pkt.u.sig.info.key_alg = (__ops_pubkey_alg_t)c;
-	/* XXX: check algorithm */
+	/* XXX: check key algorithm */
 	if (__ops_get_debug_level(__FILE__)) {
 		(void) fprintf(stderr, "key_alg=%d (%s)\n",
 			pkt.u.sig.info.key_alg,
@@ -2057,7 +2061,7 @@ parse_v4_sig(__ops_region_t *region, __ops_stream_t *stream)
 		return 0;
 	}
 	pkt.u.sig.info.hash_alg = (__ops_hash_alg_t)c;
-	/* XXX: check algorithm */
+	/* XXX: check hash algorithm */
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "hash_alg=%d %s\n",
 			pkt.u.sig.info.hash_alg,
@@ -2071,6 +2075,9 @@ parse_v4_sig(__ops_region_t *region, __ops_stream_t *stream)
 
 	pkt.u.sig.info.v4_hashlen = stream->readinfo.alength
 					- pkt.u.sig.v4_hashstart;
+	if (__ops_get_debug_level(__FILE__)) {
+		fprintf(stderr, "v4_hashlen=%d\n", pkt.u.sig.info.v4_hashlen);
+	}
 
 	/* copy hashed subpackets */
 	if (pkt.u.sig.info.v4_hashed) {
@@ -2103,6 +2110,10 @@ parse_v4_sig(__ops_region_t *region, __ops_stream_t *stream)
 	case OPS_PKA_RSA:
 		if (!limread_mpi(&pkt.u.sig.info.sig.rsa.sig, region, stream)) {
 			return 0;
+		}
+		if (__ops_get_debug_level(__FILE__)) {
+			(void) fprintf(stderr, "parse_v4_sig: RSA: sig is\n");
+			BN_print_fp(stderr, pkt.u.sig.info.sig.rsa.sig);
 		}
 		break;
 

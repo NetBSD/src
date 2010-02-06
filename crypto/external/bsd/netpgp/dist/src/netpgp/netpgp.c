@@ -1,3 +1,5 @@
+/* $NetBSD: netpgp.c,v 1.11 2010/02/06 02:24:34 agc Exp $ */
+
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,19 +35,18 @@
 #include <sys/stat.h>
 
 #include <getopt.h>
+#include <netpgp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include <netpgp.h>
-
 /*
- * Similraily, SHA1 is now looking as though it should not be used.
- * Let's pre-empt this by specifying SHA256 - gpg interoperates just
- * fine with SHA256 - agc, 20090522
+ * SHA1 is now looking as though it should not be used.  Let's
+ * pre-empt this by specifying SHA256 - gpg interoperates just fine
+ * with SHA256 - agc, 20090522
  */
-#define DEFAULT_HASH_ALG	"SHA256"
+#define DEFAULT_HASH_ALG "SHA256"
 
 static const char *usage =
 	" --help OR\n"
@@ -75,6 +76,7 @@ enum optdefs {
 	VERIFY,
 	VERIFY_CAT,
 	LIST_PACKETS,
+	SHOW_KEYS,
 	VERSION_CMD,
 	HELP_CMD,
 
@@ -93,10 +95,11 @@ enum optdefs {
 	PASSWDFD,
 	SSHKEYFILE,
 	MAX_MEM_ALLOC,
+	DURATION,
+	BIRTHTIME,
 
 	/* debug */
 	OPS_DEBUG
-
 };
 
 #define EXIT_ERROR	2
@@ -119,6 +122,8 @@ static struct option options[] = {
 	{"help",	no_argument,		NULL,	HELP_CMD},
 	{"version",	no_argument,		NULL,	VERSION_CMD},
 	{"debug",	required_argument, 	NULL,	OPS_DEBUG},
+	{"show-keys",	no_argument, 		NULL,	SHOW_KEYS},
+	{"showkeys",	no_argument, 		NULL,	SHOW_KEYS},
 	/* options */
 	{"ssh-keys",	no_argument, 		NULL,	SSHKEYS},
 	{"sshkeyfile",	required_argument, 	NULL,	SSHKEYFILE},
@@ -141,6 +146,12 @@ static struct option options[] = {
 	{"maxmemalloc",	required_argument, 	NULL,	MAX_MEM_ALLOC},
 	{"max-mem",	required_argument, 	NULL,	MAX_MEM_ALLOC},
 	{"max-alloc",	required_argument, 	NULL,	MAX_MEM_ALLOC},
+	{"from",	required_argument, 	NULL,	BIRTHTIME},
+	{"birth",	required_argument, 	NULL,	BIRTHTIME},
+	{"birthtime",	required_argument, 	NULL,	BIRTHTIME},
+	{"creation",	required_argument, 	NULL,	BIRTHTIME},
+	{"duration",	required_argument, 	NULL,	DURATION},
+	{"expiry",	required_argument, 	NULL,	DURATION},
 	{ NULL,		0,			NULL,	0},
 };
 
@@ -168,17 +179,6 @@ print_usage(const char *usagemsg, char *progname)
 		progname, progname, usagemsg);
 }
 
-/* check the file is not NULL */
-static int
-nonnull(char *f, char *progname)
-{
-	if (f == NULL) {
-		(void) fprintf(stderr, "%s: No filename provided\n", progname);
-		return 0;
-	}
-	return 1;
-}
-
 /* read all of stdin into memory */
 static int
 stdin_to_mem(netpgp_t *netpgp, char **temp, char **out, unsigned *maxsize)
@@ -193,6 +193,7 @@ stdin_to_mem(netpgp_t *netpgp, char **temp, char **out, unsigned *maxsize)
 	size = 0;
 	*temp = NULL;
 	while ((n = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
+		/* round up the allocation */
 		newsize = size + ((n / BUFSIZ) + 1) * BUFSIZ;
 		if (newsize > *maxsize) {
 			(void) fprintf(stderr, "bounds check\n");
@@ -216,7 +217,7 @@ stdin_to_mem(netpgp_t *netpgp, char **temp, char **out, unsigned *maxsize)
 
 /* output the text to stdout */
 static int
-showoutput(char *out, int size, const char *header)
+show_output(char *out, int size, const char *header)
 {
 	int	cc;
 	int	n;
@@ -255,7 +256,7 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 			ret = netpgp_encrypt_memory(netpgp,
 					netpgp_getvar(netpgp, "userid"),
 					in, cc, out, maxsize, p->armour);
-			ret = showoutput(out, ret, "Bad memory encryption");
+			ret = show_output(out, ret, "Bad memory encryption");
 			free(in);
 			free(out);
 			return ret;
@@ -269,7 +270,7 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 			cc = stdin_to_mem(netpgp, &in, &out, &maxsize);
 			ret = netpgp_decrypt_memory(netpgp, in, cc, out,
 					maxsize, 0);
-			ret = showoutput(out, ret, "Bad memory decryption");
+			ret = show_output(out, ret, "Bad memory decryption");
 			free(in);
 			free(out);
 			return ret;
@@ -285,7 +286,7 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 					maxsize, p->armour,
 					(p->cmd == CLEARSIGN) ? cleartext :
 								!cleartext);
-			ret = showoutput(out, ret, "Bad memory signature");
+			ret = show_output(out, ret, "Bad memory signature");
 			free(in);
 			free(out);
 			return ret;
@@ -305,7 +306,7 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 					(p->cmd == VERIFY_CAT) ? out : NULL,
 					(p->cmd == VERIFY_CAT) ? maxsize : 0,
 					p->armour);
-			ret = showoutput(out, ret, "Bad memory verification");
+			ret = show_output(out, ret, "Bad memory verification");
 			free(in);
 			free(out);
 			return ret;
@@ -315,8 +316,14 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 					(p->output) ? p->output : "-",
 				p->armour);
 	case LIST_PACKETS:
-		return nonnull(f, p->progname) &&
-			netpgp_list_packets(netpgp, f, p->armour, NULL);
+		if (f == NULL) {
+			(void) fprintf(stderr, "%s: No filename provided\n",
+				p->progname);
+			return 0;
+		}
+		return netpgp_list_packets(netpgp, f, p->armour, NULL);
+	case SHOW_KEYS:
+		return netpgp_validate_sigs(netpgp);
 	case HELP_CMD:
 	default:
 		print_usage(usage, p->progname);
@@ -367,6 +374,7 @@ main(int argc, char **argv)
 		case VERIFY:
 		case VERIFY_CAT:
 		case LIST_PACKETS:
+		case SHOW_KEYS:
 		case HELP_CMD:
 			p.cmd = options[optindex].val;
 			break;
@@ -453,6 +461,12 @@ main(int argc, char **argv)
 			break;
 		case MAX_MEM_ALLOC:
 			netpgp_setvar(&netpgp, "max mem alloc", optarg);
+			break;
+		case DURATION:
+			netpgp_setvar(&netpgp, "duration", optarg);
+			break;
+		case BIRTHTIME:
+			netpgp_setvar(&netpgp, "birthtime", optarg);
 			break;
 		case OPS_DEBUG:
 			netpgp_set_debug(optarg);

@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.24 2009/12/22 06:03:25 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.25 2010/02/06 02:24:33 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -126,6 +126,13 @@ __ops_create_sig_delete(__ops_create_sig_t *sig)
 	sig->output = NULL;
 	free(sig);
 }
+
+#if 0
+void
+__ops_dump_sig(__ops_sig_t *sig)
+{
+}
+#endif
 
 static unsigned char prefix_md5[] = {
 	0x30, 0x20, 0x30, 0x0C, 0x06, 0x08, 0x2A, 0x86, 0x48, 0x86,
@@ -559,12 +566,13 @@ __ops_check_subkey_sig(const __ops_pubkey_t *key,
 			   const __ops_pubkey_t *signer,
 			   const unsigned char *raw_packet)
 {
-	__ops_hash_t      hash;
+	__ops_hash_t	hash;
+	unsigned	ret;
 
 	init_key_sig(&hash, sig, key);
 	hash_add_key(&hash, subkey);
-
-	return finalise_sig(&hash, sig, signer, raw_packet);
+	ret = finalise_sig(&hash, sig, signer, raw_packet);
+	return ret;
 }
 
 /**
@@ -584,10 +592,12 @@ __ops_check_direct_sig(const __ops_pubkey_t *key,
 			   const __ops_pubkey_t *signer,
 			   const unsigned char *raw_packet)
 {
-	__ops_hash_t      hash;
+	__ops_hash_t	hash;
+	unsigned	ret;
 
 	init_key_sig(&hash, sig, key);
-	return finalise_sig(&hash, sig, signer, raw_packet);
+	ret = finalise_sig(&hash, sig, signer, raw_packet);
+	return ret;
 }
 
 /**
@@ -867,6 +877,21 @@ __ops_add_birthtime(__ops_create_sig_t *sig, time_t when)
 }
 
 /**
+ * __ops_add_expiry() adds an expiration amount (duration) to the signature.
+ *
+ */
+unsigned 
+__ops_add_expiration(__ops_create_sig_t *sig, time_t duration)
+{
+	uint32_t	d;
+
+	d = (uint32_t)duration;
+	return __ops_write_ss_header(sig->output, 5,
+					OPS_PTAG_SS_EXPIRATION_TIME) &&
+		__ops_write_scalar(sig->output, (unsigned)d, 4);
+}
+
+/**
  * \ingroup Core_Signature
  *
  * Adds issuer's key ID to the signature
@@ -959,6 +984,8 @@ __ops_sign_file(__ops_io_t *io,
 		const char *outname,
 		const __ops_seckey_t *seckey,
 		const char *hashname,
+		const int64_t from,
+		const uint64_t duration,
 		const unsigned armored,
 		const unsigned cleartext,
 		const unsigned overwrite)
@@ -1025,7 +1052,8 @@ __ops_sign_file(__ops_io_t *io,
 		/* - creation time */
 		/* - key id */
 		ret = __ops_writer_use_armored_sig(output) &&
-				__ops_add_birthtime(sig, time(NULL));
+				__ops_add_birthtime(sig, (long long)from) &&
+				__ops_add_expiration(sig, (long long)duration);
 		if (ret == 0) {
 			__ops_teardown_file_write(output, fd_out);
 			return 0;
@@ -1068,7 +1096,8 @@ __ops_sign_file(__ops_io_t *io,
 		}
 
 		/* add creation time to signature */
-		__ops_add_birthtime(sig, time(NULL));
+		__ops_add_birthtime(sig, (long long)from);
+		__ops_add_expiration(sig, (long long)duration);
 		/* add key id to signature */
 		__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey);
 		__ops_add_issuer_keyid(sig, keyid);
@@ -1104,6 +1133,8 @@ __ops_sign_buf(__ops_io_t *io,
 		const void *input,
 		const size_t insize,
 		const __ops_seckey_t *seckey,
+		const int64_t from,
+		const uint64_t duration,
 		const char *hashname,
 		const unsigned armored,
 		const unsigned cleartext)
@@ -1159,7 +1190,8 @@ __ops_sign_buf(__ops_io_t *io,
 		ret = __ops_writer_push_clearsigned(output, sig) &&
 			__ops_write(output, input, insize) &&
 			__ops_writer_use_armored_sig(output) &&
-			__ops_add_birthtime(sig, time(NULL));
+			__ops_add_birthtime(sig, from) &&
+			__ops_add_expiration(sig, (long long)duration);
 		if (ret == 0) {
 			return NULL;
 		}
@@ -1189,7 +1221,8 @@ __ops_sign_buf(__ops_io_t *io,
 		}
 
 		/* add creation time to signature */
-		__ops_add_birthtime(sig, time(NULL));
+		__ops_add_birthtime(sig, from);
+		__ops_add_expiration(sig, (long long)duration);
 		/* add key id to signature */
 		__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey);
 		__ops_add_issuer_keyid(sig, keyid);
@@ -1211,14 +1244,15 @@ __ops_sign_detached(__ops_io_t *io,
 			const char *f,
 			char *sigfile,
 			__ops_seckey_t *seckey,
-			const char *hash)
+			const char *hash,
+			const int64_t from,
+			const uint64_t duration)
 {
 	__ops_create_sig_t	*sig;
 	__ops_hash_alg_t	 alg;
 	__ops_output_t		*output;
 	__ops_memory_t		*mem;
 	unsigned char	 	 keyid[OPS_KEY_ID_SIZE];
-	time_t			 t;
 	char			 fname[MAXPATHLEN];
 	int			 fd;
 
@@ -1242,8 +1276,8 @@ __ops_sign_detached(__ops_io_t *io,
 	__ops_memory_free(mem);
 
 	/* calculate the signature */
-	t = time(NULL);
-	__ops_add_birthtime(sig, t);
+	__ops_add_birthtime(sig, from);
+	__ops_add_expiration(sig, (long long)duration);
 	__ops_keyid(keyid, sizeof(keyid), &seckey->pubkey);
 	__ops_add_issuer_keyid(sig, keyid);
 	__ops_end_hashed_subpkts(sig);
