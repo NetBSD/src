@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.65 2010/01/31 11:26:20 jruoho Exp $
+#	$NetBSD: files.acpi,v 1.66 2010/02/06 20:10:18 pgoyette Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -155,3 +155,8 @@ file	dev/acpi/wb_acpi.c		wb_acpi
 device	acpiwmi: acpiwmibus
 attach	acpiwmi at acpinodebus
 file	dev/acpi/wmi_acpi.c		acpiwmi
+
+# ACPI SMBus controller
+device	acpismbus: i2cbus
+attach	acpismbus at acpinodebus
+file	dev/acpi/smbus_acpi.c		acpismbus
