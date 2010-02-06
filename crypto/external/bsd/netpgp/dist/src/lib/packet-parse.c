@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.28 2010/02/06 02:24:33 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.29 2010/02/06 10:50:52 dsl Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -2076,7 +2076,7 @@ parse_v4_sig(__ops_region_t *region, __ops_stream_t *stream)
 	pkt.u.sig.info.v4_hashlen = stream->readinfo.alength
 					- pkt.u.sig.v4_hashstart;
 	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "v4_hashlen=%d\n", pkt.u.sig.info.v4_hashlen);
+		fprintf(stderr, "v4_hashlen=%zd\n", pkt.u.sig.info.v4_hashlen);
 	}
 
 	/* copy hashed subpackets */

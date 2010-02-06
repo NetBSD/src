@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.26 2010/02/06 02:24:33 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.27 2010/02/06 10:50:52 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -204,7 +204,7 @@ check_binary_sig(const unsigned char *data,
 
 	case OPS_V4:
 		if (__ops_get_debug_level(__FILE__)) {
-			(void) fprintf(stderr, "v4_hashlen %u\n",
+			(void) fprintf(stderr, "v4_hashlen %zu\n",
 					sig->info.v4_hashlen);
 			hexdump(stderr, sig->info.v4_hashed,
 					sig->info.v4_hashlen, " ");
@@ -594,26 +594,26 @@ static char *
 fmtsecs(int64_t n, char *buf, size_t size)
 {
 	if (n > 365 * 24 * 60 * 60) {
-		(void) snprintf(buf, size, "%lld years", n / (365 * 24 * 60 * 60));
+		(void) snprintf(buf, size, "%" PRId64 " years", n / (365 * 24 * 60 * 60));
 		return buf;
 	}
 	if (n > 30 * 24 * 60 * 60) {
-		(void) snprintf(buf, size, "%lld months", n / (30 * 24 * 60 * 60));
+		(void) snprintf(buf, size, "%" PRId64 " months", n / (30 * 24 * 60 * 60));
 		return buf;
 	}
 	if (n > 24 * 60 * 60) {
-		(void) snprintf(buf, size, "%lld days", n / (24 * 60 * 60));
+		(void) snprintf(buf, size, "%" PRId64 " days", n / (24 * 60 * 60));
 		return buf;
 	}
 	if (n > 60 * 60) {
-		(void) snprintf(buf, size, "%lld hours", n / (60 * 60));
+		(void) snprintf(buf, size, "%" PRId64 " hours", n / (60 * 60));
 		return buf;
 	}
 	if (n > 60) {
-		(void) snprintf(buf, size, "%lld minutes", n / 60);
+		(void) snprintf(buf, size, "%" PRId64 " minutes", n / 60);
 		return buf;
 	}
-	(void) snprintf(buf, size, "%lld seconds", n);
+	(void) snprintf(buf, size, "%" PRId64 " seconds", n);
 	return buf;
 }
 
