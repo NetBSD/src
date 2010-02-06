@@ -1,4 +1,4 @@
-/*	$NetBSD: schizovar.h,v 1.3 2008/12/13 08:07:23 mrg Exp $	*/
+/*	$NetBSD: schizovar.h,v 1.4 2010/02/06 00:23:30 mrg Exp $	*/
 /*	$OpenBSD: schizovar.h,v 1.10 2007/01/14 16:19:49 kettenis Exp $	*/
 
 /*
@@ -40,6 +40,7 @@ struct schizo_pbm {
 	bus_space_tag_t		sp_iot;
 	bus_space_tag_t		sp_regt;
 	bus_space_handle_t	sp_regh;
+	bus_space_handle_t	sp_intrh;
 	bus_space_tag_t		sp_cfgt;
 	bus_space_handle_t	sp_cfgh;
 	bus_dma_tag_t		sp_dmat;
@@ -57,10 +58,8 @@ struct schizo_softc {
 	int sc_ign;
 	bus_dma_tag_t sc_dmat;
 	bus_space_tag_t sc_bustag;
-	bus_addr_t sc_ctrl;
 	bus_space_handle_t sc_ctrlh;
 	bus_space_handle_t sc_confh;
-	struct upa_reg sc_reg0;
 
 	int sc_busa;
 	int sc_tomatillo;
@@ -74,6 +73,10 @@ struct schizo_softc {
     bus_space_read_8((pbm)->sp_regt, (pbm)->sp_regh, (r))
 #define	schizo_pbm_write(pbm,r,v) \
     bus_space_write_8((pbm)->sp_regt, (pbm)->sp_regh, (r), (v))
+#define	schizo_pbm_readintr(pbm,r) \
+    bus_space_read_8((pbm)->sp_regt, (pbm)->sp_intrh, (r))
+#define	schizo_pbm_writeintr(pbm,r,v) \
+    bus_space_write_8((pbm)->sp_regt, (pbm)->sp_intrh, (r), (v))
 #define	schizo_cfg_read(pbm,r) \
     bus_space_read_4((pbm)->sp_cfgt, (pbm)->sp_cfgh, (r))
 #define	schizo_cfg_write(pbm,r,v) \
