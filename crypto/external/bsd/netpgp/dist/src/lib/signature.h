@@ -99,6 +99,7 @@ unsigned   __ops_end_hashed_subpkts(__ops_create_sig_t *);
 unsigned __ops_write_sig(__ops_output_t *, __ops_create_sig_t *,
 			const __ops_pubkey_t *, const __ops_seckey_t *);
 unsigned   __ops_add_birthtime(__ops_create_sig_t *, time_t);
+unsigned __ops_add_expiration(__ops_create_sig_t *, time_t);
 unsigned __ops_add_issuer_keyid(__ops_create_sig_t *,
 			const unsigned char *);
 void __ops_add_primary_userid(__ops_create_sig_t *, unsigned);
@@ -109,6 +110,8 @@ unsigned   __ops_sign_file(__ops_io_t *,
 			const char *,
 			const __ops_seckey_t *,
 			const char *,
+			const int64_t,
+			const uint64_t,
 			const unsigned,
 			const unsigned,
 			const unsigned);
@@ -117,7 +120,9 @@ int __ops_sign_detached(__ops_io_t *,
 			const char *,
 			char *,
 			__ops_seckey_t *,
-			const char *);
+			const char *,
+			const int64_t,
+			const uint64_t);
 
 /* armoured stuff */
 unsigned __ops_crc24(unsigned, unsigned char);
@@ -147,6 +152,8 @@ __ops_memory_t   *__ops_sign_buf(__ops_io_t *,
 				const void *,
 				const size_t,
 				const __ops_seckey_t *,
+				const int64_t,
+				const uint64_t,
 				const char *,
 				const unsigned,
 				const unsigned);

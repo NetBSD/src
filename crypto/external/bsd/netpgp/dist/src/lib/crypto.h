@@ -216,7 +216,7 @@ DSA_SIG *__ops_dsa_sign(unsigned char *, unsigned,
 				const __ops_dsa_seckey_t *,
 				const __ops_dsa_pubkey_t *);
 
-int openssl_read_pem_seckey(const char *, __ops_key_t *, const char *);
+int openssl_read_pem_seckey(const char *, __ops_key_t *, const char *, int);
 
 /** __ops_reader_t */
 struct __ops_reader_t {
