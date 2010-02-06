@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.25 2007/12/03 15:34:17 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.25.36.1 2010/02/06 02:57:44 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -110,9 +110,6 @@ splraiseipl(ipl_cookie_t icookie)
 
 	return _splraise(icookie._spl);
 }
-
-#include <mips/softintr.h>
-
 #endif /* _LOCORE */
 #endif /* !_KERNEL */
 

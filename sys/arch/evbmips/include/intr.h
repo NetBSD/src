@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16.18.1 2009/09/25 22:21:42 cliff Exp $	*/
+/*	$NetBSD: intr.h,v 1.16.18.2 2010/02/06 02:57:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -98,8 +98,6 @@ struct evbmips_intrhand {
 	int ih_irq;
 	int ih_ipl;
 };
-
-#include <mips/softintr.h>
 
 void	evbmips_intr_init(void);
 void	intr_init(void);
