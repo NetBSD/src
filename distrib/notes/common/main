@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.5.2.2 2009/10/04 11:50:26 bouyer Exp $
+.\"	$NetBSD: main,v 1.425.2.5.2.3 2010/02/06 05:52:39 snj Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd July 29, 2009
+.Dd February 6, 2010
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -452,18 +452,272 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between The NetBSD 5.0 and 5.0.1 Releases
+.Ss Changes Between The NetBSD 5.0.1 and 5.0.2 Releases
 .Pp
 The
 .Nx
 \*V
-release is the first security/critical update of the
+release is the second critical/security update of the
 .Nx
 5.0 release branch.
-This represents a selected subset of fixes deemed critical in nature for
+This represents a selected subset of fixes deemed critical for
 stability or security reasons.
 .Pp
-Please note that all fixes in security/critical updates (i.e., NetBSD 5.0.1,
+Please note that all fixes in critical/security updates (i.e., NetBSD 5.0.1,
+5.0.2, etc.) are cumulative, so the latest update contains all such fixes
+since the corresponding minor release.
+These fixes will also appear in future minor releases (i.e., NetBSD 5.1, 5.2,
+etc.), together with other less-critical fixes and feature enhancements.
+.Pp
+The complete list of changes can be found in the
+CHANGES-5.0.2:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.0.2/CHANGES-5.0.2
+file in the top level directory of the NetBSD 5.0.2 release tree.
+An abbreviated list is as follows:
+.Ss2 Security Advisory Fixes
+.(bullet
+NetBSD-SA2010-002 (OpenSSL TLS renegotiation man in the middle vulnerability):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-002.txt.asc
+.It
+NetBSD-SA2010-003 (azalia(4)/hdaudio(4) negative mixer index panic):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-003.txt.asc
+.bullet)
+.
+.Pp
+Advisories prior to NetBSD-SA2010-002 do not affect
+.Nx
+5.0.1:
+.Lk http://www.NetBSD.org/support/security/patches-5.0.1.html
+.Ss3 Other Security Fixes
+.(bullet
+openssl: Fix CVE-2009-4355.
+.It
+Update BIND server and tools to 9.5.2-P2, fixing CVE-2009-0025,
+CVE-2009-4022, and CVE-2010-0097.
+.It
+.Xr ntpd 8 :
+Fix CVE-2009-3563.
+.It
+expat: Fix SA36425 and CVE-2009-3560.
+.It
+.Xr fts 3 :
+Avoid possible integer overflow on really deep dirs, and subsequent
+collateral damage.
+Received from OpenBSD via US-CERT as VU #590371.
+.It
+Fix a couple issues with POSIX message queues:
+.(bullet
+An invalid signal number passed to mq_notify() could crash the kernel on
+delivery -- add a boundary check.
+.It
+A user could set mq_maxmsg (the maximal number of messages in a queue) to a
+huge value on mq_open(O_CREAT) and later use up all kernel memory by
+mq_send() -- add a sysctl'able limit which defaults to 16*mq_def_maxmsg.
+.bullet)
+.
+.It
+.Xr arc4random 3 :
+Keep arc4_i and arc4_j synchronised after a rekeying.
+This prevents accidentally ending up in a short ARC4 cycle.
+.bullet)
+.
+.Ss2 Kernel
+.(bullet
+Fix a UFS quota crash.
+.It
+Fix a case where
+.Xr setpriority 2
+returned EACCES instead of EPERM.
+PR 41489.
+.It
+Fix panic when calling ioctl(RNDADDDATA) on
+.Pa /dev/random .
+.It
+Fix a memory leak that could occur when using
+.Xr clone 2 .
+.It
+Fix an issue where a softint could fire on the wrong CPU.
+.It
+.Xr sigtimedwait 2 :
+Fix a memory leak.
+PR 40750.
+.bullet)
+.
+.Ss2 Networking
+.(bullet
+IPv6: Clear cksum flags before any further processing, like ip_forward does.
+Many drivers set the UDP/TCP v4 flags even for v6 traffic and if the packet
+is encapsulated with gif, the IPv6 header would get corrupted by ip_output.
+.It
+IPsec: Add a missing splx() call.
+PR 41701.
+.It
+.Xr ifconfig 8 :
+Fix the -vlanif and -carpdev keywords.
+.It
+Update
+.Xr dhcpcd 8
+to 4.0.14.
+.bullet)
+.
+.Ss2 Drivers
+.(bullet
+.Xr twa 4 :
+Disable completely bogus DIAGNOSTIC check.
+.It
+.Xr mfi 4 :
+Fix a couple crashes.
+.It
+.Xr pad 4 :
+Catch up to
+.Xr audio 4
+device_t/softc split.
+.bullet)
+.
+.Ss2 Platform specific
+.(bullet
+x86 (amd64 and i386):
+.Xr ichlpcib 4 :
+Fix watchdog code:
+.(bullet
+The timer bound constants are in tick, so convert period to tick before
+checking it against the bounds.
+.It
+For ICH5 or older, fix code that would have always written a 0 period to
+the register.
+.bullet)
+.
+.It
+amd64: Build kernel modules with -mno-red-zone like kernel is built.
+.It
+i386: Fix a panic while booting with an ACPI kernel on 790GX boards.
+PR 39671.
+.It
+alpha: Fix some SMP issues.
+PRs 41106, 38335, and 42174.
+.It
+hpcmips: Fix booting from PCMCIA on some slower machines.
+PRs 41791 and 41164.
+.It
+macppc: pbms(4): Fix crash on attach, and fix aspect ratio of the trackpad
+on the geyser2 model.
+.It
+sparc64: Improve disk I/O performance under heavy load.
+.It
+vax: mfpr now works nicely on 4000/90.
+.bullet)
+.
+.Ss2 Miscellaneous
+.(bullet
+libevent: Add -fno-strict-aliasing to work around problems with GCC 4 and
+strict-aliasing.
+.It
+Update pkg_install to 20091008.
+.(bullet
+.Xr pkg_add 1 :
+add support for checking license conditions before installation
+.It
+.Xr pkg_delete 1 :
+add -k option to skip over preserved packages.
+.It
+WARNS=4 clean; fix some potential uses of uninitialized variables
+.It
+Add a new command for
+.Xr pkg_admin 1 :
+findbest.
+It takes one or more patterns and searches for the best match in PKG_PATH,
+just like
+.Xr pkg_add 1
+would.
+It prints the URLs of the best match for each pattern to stdout.
+.It
+Rewrite the config file parser to read the file only once.
+.It
+Fix a bug in pkg_add's -P handling.
+For dependencies the pkgdb path was computed incorrectly and included
+destdir more than once.
+.It
+Fix the ACTIVE_FTP option to actually set the "a" flag and not the old
+"p" flag.
+.It
+Restore "pkg_add -f" functionality for missing dependencies.
+PR 42001.
+.It
+"pkg_admin rebuild" should count packages correctly; also count @pkgdir.
+.It
+Fix gpg-sign-package syntax in
+.Xr pkg_admin 1 .
+.It
+Change default URL for pkg-vulnerabilities to use HTTP.
+.It
+Don't dereference a null pointer for "pkg_admin add"
+.
+.bullet)
+.
+.It
+Fix unaligned access in
+.Xr sha2 3 .
+PR 42273.
+.It
+.Xr newsyslog 8 :
+Reset ziptype on each line.
+Fixes a bug where log files were always compressed if they were listed
+after a line with the Z or J flag.
+.It
+.Xr ld.elf_so 1 :
+Restore backwards compatibility for binaries referencing the main Obj_Entry.
+.It
+.Xr dkctl 8 :
+Print the device name on addwedge when the addition was successful.
+.It
+.Xr vfwprintf 3 :
+If the current locale doesn't define the 'thousands' grouping info then use
+sane defaults (',' every 3 digits).
+Fixes PR 40714.
+.It
+.Xr fsck_ext2fs 8 :
+Ignore the "-P" option as intended.
+PR 41490.
+.It
+.Xr vi 1 :
+Fix an issue where the pattern /\$/ doesn't match a dollar sign.
+PR 41781.
+.It
+.Xr printf 1 :
+Avoid segv on "printf '%*********s' 666".
+.It
+.Xr newfs_msdos 8 :
+Make fs size detection get proper size rather than disk size.
+Without this, newfs_msdos assumes the target fs size is whole disk size,
+so newfs_msdos will fail or create wrong fs.
+.It
+Prevent
+.Xr makefs 8
+from creating invalid ISO format on rockridge support which causes fatal
+errors in ARC BIOS firmware on MIPS Magnum R4000.
+PR 42410.
+.It
+Renamed a number of internal getline() functions to get_line() so as to
+compile under -current.
+.It
+Various documentation fixes.
+.It
+Update and add some TNF ssh keys to
+.Pa /etc/ssh/ssh_known_hosts .
+.bullet)
+.
+.Ss Changes Between The NetBSD 5.0 and 5.0.1 Releases
+.Pp
+The
+.Nx
+5.0.1
+release is the first critical/security update of the
+.Nx
+5.0 release branch.
+This represents a selected subset of fixes deemed critical for
+stability or security reasons.
+.Pp
+Please note that all fixes in critical/security updates (i.e., NetBSD 5.0.1,
 5.0.2, etc.) are cumulative, so the latest update contains all such fixes
 since the corresponding minor release.
 These fixes will also appear in future minor releases (i.e., NetBSD 5.1, 5.2,
