@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.18 2010/02/05 06:43:17 skrll Exp $	*/
+/*	$NetBSD: mutex.h,v 1.19 2010/02/06 04:50:19 cube Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -160,7 +160,7 @@ typedef struct kmutex kmutex_t;
 
 #define	MUTEX_BIT_SPIN			0x01
 #define	MUTEX_BIT_WAITERS		0x02
-#define	MUTEX_BIT_NODEBUG		0x04
+#define	MUTEX_BIT_DEBUG			0x04
 
 #define	MUTEX_SPIN_IPL(mtx)		((mtx)->mtx_ipl)
 #define	MUTEX_SPIN_OLDSPL(ci)		((ci)->ci_mtx_oldspl)
