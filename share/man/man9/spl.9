@@ -1,4 +1,4 @@
-.\"	$NetBSD: spl.9,v 1.36 2009/11/17 19:34:29 wiz Exp $
+.\"	$NetBSD: spl.9,v 1.37 2010/02/06 22:32:08 dyoung Exp $
 .\"
 .\" Copyright (c) 2000, 2001 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Michael Long.
@@ -32,8 +32,6 @@
 .Os
 .Sh NAME
 .Nm spl ,
-.Nm spllower ,
-.Nm splraise ,
 .Nm spl0 ,
 .Nm splhigh ,
 .Nm splvm ,
@@ -46,10 +44,6 @@
 .Nd modify system interrupt priority level
 .Sh SYNOPSIS
 .In sys/intr.h
-.Ft void
-.Fn spllower "int s"
-.Ft int
-.Fn splraise "int s"
 .Ft void
 .Fn spl0 void
 .Ft int
@@ -213,34 +207,6 @@ function restores the system priority level to the one encoded in
 which must be a value previously returned by one of the other
 .Nm
 functions.
-.Pp
-The
-.Fn spllower
-function sets the system priority level to the one encoded in
-.Fa s ,
-if
-.Fa s
-is lower than the current level.
-Otherwise, it does not change the level.
-Use
-.Fn splx
-instead
-of
-.Fn spllower ,
-except in extraordinary circumstances.
-.Pp
-The
-.Fn splraise
-function sets the system priority level to the one encoded in
-.Fa s ,
-if
-.Fa s
-is greater than the current level, and returns the previous level.
-Otherwise, it does not change the level, and it returns the current level.
-Except in extraordinary circumstances,
-do not use
-.Fn splraise .
-Use one of the priority-raising functions above, instead.
 .Sh SEE ALSO
 .Xr condvar 9 ,
 .Xr mutex 9 ,
