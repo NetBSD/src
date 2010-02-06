@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.31 2010/02/01 06:52:59 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.32 2010/02/06 04:55:01 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.31 2010/02/01 06:52:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.32 2010/02/06 04:55:01 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -1593,6 +1593,15 @@ mips_init_msgbuf(void)
 	struct vm_physseg *vps;
 
 	vps = &vm_physmem[vm_nphysseg - 1];
+#ifndef _LP64
+	/*
+	 * Fist the physical segment that can be mapped to KSEG0
+	 */
+	for (; vps >= vm_physmem; vps--) {
+		if (vps->avail_start + atop(sz) <= atop(MIPS_PHYS_MASK))
+			break;
+	}
+#endif
 
 	/* shrink so that it'll fit in the last segment */
 	if ((vps->avail_end - vps->avail_start) < atop(sz))
@@ -1607,9 +1616,12 @@ mips_init_msgbuf(void)
 #endif
 	initmsgbuf(msgbufaddr, sz);
 
-	/* Remove the last segment if it now has no pages. */
-	if (vps->start == vps->end)
+	/* Remove the [last] segment if it now has no pages. */
+	if (vps->start == vps->end) {
+		for (; vps != &vm_physmem[vm_nphysseg - 1]; vps++)
+			vps[0] = vps[1];
 		vm_nphysseg--;
+	}
 
 	/* warn if the message buffer had to be shrunk */
 	if (sz != reqsz)
