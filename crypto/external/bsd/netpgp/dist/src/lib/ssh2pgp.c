@@ -230,7 +230,7 @@ __ops_ssh2pubkey(__ops_io_t *io, const char *f, __ops_key_t *key)
 
 	(void) memset(&bg, 0x0, sizeof(bg));
 	if (!bufgap_open(&bg, f)) {
-		(void) fprintf(stderr, "can't open '%s'\n", f);
+		(void) fprintf(stderr, "__ops_ssh2pubkey: can't open '%s'\n", f);
 		return 0;
 	}
 	(void)stat(f, &st);
@@ -354,7 +354,7 @@ __ops_ssh2seckey(__ops_io_t *io, const char *f, __ops_key_t *key, __ops_pubkey_t
 	unsigned int    i = 0;
 
 	/* XXX - check for rsa/dsa */
-	if (!openssl_read_pem_seckey(f, key, "ssh-rsa")) {
+	if (!openssl_read_pem_seckey(f, key, "ssh-rsa", 0)) {
 		return 0;
 	}
 	if (__ops_get_debug_level(__FILE__)) {

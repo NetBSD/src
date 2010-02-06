@@ -73,7 +73,6 @@ int netpgp_set_homedir(netpgp_t *, char *, const char *, const int);
 
 /* key management */
 int netpgp_list_keys(netpgp_t *);
-int netpgp_match_list_keys(netpgp_t *, char *);
 int netpgp_find_key(netpgp_t *, char *);
 char *netpgp_get_key(netpgp_t *, const char *);
 int netpgp_export_key(netpgp_t *, char *);
@@ -91,6 +90,12 @@ int netpgp_sign_memory(netpgp_t *, const char *, char *, size_t, char *, size_t,
 int netpgp_verify_memory(netpgp_t *, const void *, const size_t, void *, size_t, const int);
 int netpgp_encrypt_memory(netpgp_t *, const char *, void *, const size_t, char *, size_t, int);
 int netpgp_decrypt_memory(netpgp_t *, const void *, const size_t, char *, size_t, const int);
+
+/* match and hkp-related functions */
+int netpgp_match_keys(netpgp_t *, char *, const char *, void *);
+int netpgp_match_pubkeys(netpgp_t *, char *, void *);
+
+int netpgp_validate_sigs(netpgp_t *);
 
 __END_DECLS
 

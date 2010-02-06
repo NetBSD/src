@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: openssl_crypto.c,v 1.18 2009/12/05 07:08:19 agc Exp $");
+__RCSID("$NetBSD: openssl_crypto.c,v 1.19 2010/02/06 02:24:33 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_DSA_H
@@ -948,7 +948,7 @@ __ops_dsa_sign(unsigned char *hashbuf,
 }
 
 int
-openssl_read_pem_seckey(const char *f, __ops_key_t *key, const char *type)
+openssl_read_pem_seckey(const char *f, __ops_key_t *key, const char *type, int verbose)
 {
 	FILE	*fp;
 	DSA	*dsa;
@@ -956,7 +956,9 @@ openssl_read_pem_seckey(const char *f, __ops_key_t *key, const char *type)
 	int	 ok;
 
 	if ((fp = fopen(f, "r")) == NULL) {
-		(void) fprintf(stderr, "can't open '%s'\n", f);
+		if (verbose) {
+			(void) fprintf(stderr, "can't open '%s'\n", f);
+		}
 		return 0;
 	}
 	ok = 1;

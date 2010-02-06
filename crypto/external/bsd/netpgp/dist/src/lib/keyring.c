@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.26 2009/12/14 23:29:56 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.27 2010/02/06 02:24:33 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -219,6 +219,7 @@ __ops_forget(void *vp, unsigned size)
 }
 
 typedef struct {
+	FILE			*passfp;
 	const __ops_key_t	*key;
 	char			*passphrase;
 	__ops_seckey_t		*seckey;
@@ -242,8 +243,9 @@ decrypt_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		break;
 
 	case OPS_GET_PASSPHRASE:
-		(void) __ops_getpassphrase(NULL, pass, sizeof(pass));
+		(void) __ops_getpassphrase(decrypt->passfp, pass, sizeof(pass));
 		*content->skey_passphrase.passphrase = strdup(pass);
+		__ops_forget(pass, sizeof(pass));
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PARSER_ERRCODE:
@@ -297,7 +299,7 @@ decrypt_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 \return secret key
 */
 __ops_seckey_t *
-__ops_decrypt_seckey(const __ops_key_t *key)
+__ops_decrypt_seckey(const __ops_key_t *key, void *passfp)
 {
 	__ops_stream_t	*stream;
 	const int	 printerrors = 1;
@@ -305,6 +307,7 @@ __ops_decrypt_seckey(const __ops_key_t *key)
 
 	(void) memset(&decrypt, 0x0, sizeof(decrypt));
 	decrypt.key = key;
+	decrypt.passfp = passfp;
 	stream = __ops_new(sizeof(*stream));
 	__ops_keydata_reader_set(stream, key);
 	__ops_set_callback(stream, decrypt_cb, &decrypt);
@@ -749,6 +752,17 @@ __ops_keyring_free(__ops_keyring_t *keyring)
 	keyring->keyc = keyring->keyvsize = 0;
 }
 
+/* simple function to print out a binary keyid */
+void
+__ops_pkeyid(FILE *fp, const unsigned char *keyid, size_t size)
+{
+	size_t	i;
+
+	for (i = 0 ; i < size ; i++) {
+		(void) fprintf(fp, "%02x", keyid[i]);
+	}
+}
+
 /**
    \ingroup HighLevel_KeyringFind
 
@@ -769,18 +783,12 @@ __ops_getkeybyid(__ops_io_t *io, const __ops_keyring_t *keyring,
 {
 	for ( ; keyring && *from < keyring->keyc; *from += 1) {
 		if (__ops_get_debug_level(__FILE__)) {
-			int	i;
-
 			(void) fprintf(io->errs,
 				"__ops_getkeybyid: keyring keyid ");
-			for (i = 0 ; i < OPS_KEY_ID_SIZE ; i++) {
-				(void) fprintf(io->errs, "%02x",
-					keyring->keys[*from].key_id[i]);
-			}
+			__ops_pkeyid(io->errs, keyring->keys[*from].key_id,
+				OPS_KEY_ID_SIZE);
 			(void) fprintf(io->errs, ", keyid ");
-			for (i = 0 ; i < OPS_KEY_ID_SIZE ; i++) {
-				(void) fprintf(io->errs, "%02x", keyid[i]);
-			}
+			__ops_pkeyid(io->errs, keyid, OPS_KEY_ID_SIZE);
 			(void) fprintf(io->errs, "\n");
 		}
 		if (memcmp(keyring->keys[*from].key_id, keyid,
@@ -1007,5 +1015,20 @@ __ops_add_to_secring(__ops_keyring_t *keyring, const __ops_seckey_t *seckey)
 	__ops_fingerprint(&key->fingerprint, pubkey);
 	key->type = OPS_PTAG_CT_SECRET_KEY;
 	key->key.seckey = *seckey;
+	return 1;
+}
+
+/* append one keyring to another */
+int
+__ops_append_keyring(__ops_keyring_t *keyring, __ops_keyring_t *newring)
+{
+	unsigned	i;
+
+	for (i = 0 ; i < newring->keyc ; i++) {
+		EXPAND_ARRAY(keyring, key);
+		(void) memcpy(&keyring->keys[keyring->keyc], &newring->keys[i],
+				sizeof(newring->keys[i]));
+		keyring->keyc += 1;
+	}
 	return 1;
 }
