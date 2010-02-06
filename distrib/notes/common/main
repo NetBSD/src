@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.5.2.4 2010/02/06 15:44:38 snj Exp $
+.\"	$NetBSD: main,v 1.425.2.5.2.5 2010/02/06 15:56:01 snj Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -2501,11 +2501,11 @@ The TPCONS option in netiso.
 .
 .Ss2 "Known Problems"
 .Pp
-Using block device nodes directly for I/O may cause a kernel
+Using block device nodes (e.g., wd0a) directly for I/O may cause a kernel
 crash when the file system containing
 .Pa /dev
 is FFS and is mounted with -o log.
-Workaround: use raw disk devices, or remount the file system
+Workaround: use raw disk devices (e.g., rwd0a), or remount the file system
 without -o log.
 .Pp
 Occassionally, gdb may cause a process that is being debugged to hang
