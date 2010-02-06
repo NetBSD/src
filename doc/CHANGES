@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1353 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1354 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -539,3 +539,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-5.1.5. [roy 20100131]
 	terminfo(3): Import my terminfo implementation to replace termcap.
 		roy [20100203]
+	acpismbus(4): Add my experimental ACPI SMBus Control Method
+		Interface driver. [pgoyette 20100206]
