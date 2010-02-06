@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.9 2010/02/06 02:59:04 matt Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.10 2010/02/06 03:10:14 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.9 2010/02/06 02:59:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.10 2010/02/06 03:10:14 cliff Exp $");
 
 #include "opt_ddb.h"
 
@@ -583,7 +583,7 @@ rmixl_intr_establish(int irq, int ipl, rmixl_intr_trigger_t trigger,
 	 */
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
-		return NULL;
+		goto out;
 
 	ih->ih_func = func;
 	ih->ih_arg = arg;
@@ -606,6 +606,7 @@ rmixl_intr_establish(int irq, int ipl, rmixl_intr_trigger_t trigger,
 	 */
 	rmixl_intr_irt_establish(irq, ipl, trigger, polarity, vec);
 
+ out:
 	splx(s);
 
 	return ih;
@@ -672,7 +673,9 @@ evbmips_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 
 		ivp = &rmixl_intrvec[vec];
 
-		eirr = 1ULL << vec;
+		asm volatile("dmfc0 %0, $9, 6;" : "=r"(eirr));
+		eirr &= 3;
+		eirr |= 1ULL << vec;
 		asm volatile("dmtc0 %0, $9, 6;" :: "r"(eirr));
 
 #ifdef IOINTR_DEBUG
