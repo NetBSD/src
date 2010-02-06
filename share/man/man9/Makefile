@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.313 2010/01/26 14:00:38 jruoho Exp $
+#       $NetBSD: Makefile,v 1.314 2010/02/06 22:32:08 dyoung Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -628,8 +628,7 @@ MLINKS+=softintr.9 softintr_establish.9 softintr.9 softintr_disestablish.9 \
 	softintr.9 softint_schedule.9
 MLINKS+=spl.9 spl0.9 spl.9 splbio.9 spl.9 splclock.9 spl.9 splhigh.9 \
 	spl.9 splimp.9 \
-	spl.9 spllower.9 spl.9 spllowersoftclock.9 spl.9 splnet.9 \
-	spl.9 splraise.9 \
+	spl.9 spllowersoftclock.9 spl.9 splnet.9 \
 	spl.9 splsched.9 spl.9 splserial.9 \
 	spl.9 splsoftclock.9 spl.9 splsoftnet.9 spl.9 splsoftserial.9 \
 	spl.9 splstatclock.9 spl.9 spltty.9 spl.9 splvm.9 spl.9 splx.9 \
