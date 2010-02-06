@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167.38.9 2010/02/05 07:36:50 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.167.38.10 2010/02/06 00:39:46 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -262,6 +262,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	nop
 END(cpu_switchto)
 
+#ifdef __HAVE_FAST_SOFTINTS
 /*
  * void softint_fast_dispatch(struct lwp *l, int s, void *new_sp);
  *
@@ -271,7 +272,7 @@ END(cpu_switchto)
 softint_cleanup:
 	PTR_L	t0, L_CPU(MIPS_CURLWP)
 	INT_L	t1, CPU_INFO_MTX_COUNT(t0)
-	addi	t1, t1, 1
+	INT_ADDU t1, 1
 	INT_S	t1, CPU_INFO_MTX_COUNT(t0)
 	REG_L	ra, CALLFRAME_RA(sp)
 	PTR_S	zero, L_CTXSWITCH(MIPS_CURLWP)
@@ -351,6 +352,7 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 	j	ra
 	 PTR_ADDU sp, CALLFRAME_SIZ
 END(softint_fast_dispatch)
+#endif /* __HAVE_FAST_SOFTINTS */
 
 /*
  * savectx(struct user *up)

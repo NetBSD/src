@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.1.2.1 2010/02/05 07:36:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.1.2.2 2010/02/06 00:39:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.1.2.1 2010/02/05 07:36:50 matt Ex
 #include <uvm/uvm_extern.h>
 
 #include <mips/locore.h>
+
+#ifdef __HAVE_FAST_SOFTINTS
 
 #define	SOFTINT_BIO_MASK	(1 << SOFTINT_BIO)
 #define	SOFTINT_CLOCK_MASK	(1 << SOFTINT_CLOCK)
@@ -140,3 +142,5 @@ softint_process(uint32_t ipending)
 	_clrsoftintr(ipending);
 	splx(s);
 }
+
+#endif /* __HAVE_FAST_SOFTINTS */
