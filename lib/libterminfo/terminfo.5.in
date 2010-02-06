@@ -1,4 +1,4 @@
-.\"	$NetBSD: terminfo.5.in,v 1.6 2010/02/05 09:42:21 roy Exp $
+.\"	$NetBSD: terminfo.5.in,v 1.7 2010/02/06 07:12:25 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -205,18 +205,14 @@ will first look for
 .Pa $HOME/.terminfo.db ,
 followed by
 .Pa /usr/share/misc/terminfo.db ,
-followed by
-.Pa /rescue/terminfo.db
 and
-.Pa /etc/terminfo.db .
+.Pa /rescue/terminfo.db .
 .Sh FILES
 .Bl -tag -width /usr/share/misc/terminfo.db -compact
 .It Pa $HOME/.terminfo.db
 Database of terminal descriptions for personal use.
-.It Pa /etc/terminfo.db
-Database of terminal descriptions for use during boot or single user.
 .It Pa /rescue/terminfo.db
-Database of terminal descriptions for use when rescuing the system.
+Small database of terminal descriptions for use when rescuing the system.
 .It Pa /usr/share/misc/terminfo
 File containing terminal descriptions.
 .It Pa /usr/share/misc/terminfo.db
