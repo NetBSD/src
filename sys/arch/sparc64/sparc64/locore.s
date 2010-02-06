@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.310 2010/02/02 04:28:56 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.311 2010/02/06 00:23:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -55,8 +55,8 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  */
 
-#ifndef SCHIZO_BUS_SPACE_BROKEN /* Need phys access for USIII so far */
-#define	SPITFIRE		/* Cheetah (USIII) */
+#ifndef CHEETAH
+#define	SPITFIRE
 #endif
 #undef	PARANOID		/* Extremely expensive consistency checks */
 #undef	NO_VCACHE		/* Map w/D$ disabled */
@@ -3946,11 +3946,7 @@ sparc_intr_retry:
 
 	brz,pn	%l1, 0f
 	 add	%l5, %o0, %l5
-#ifdef SCHIZO_BUS_SPACE_BROKEN 
-	stxa	%g0, [%l1] ASI_PHYS_NON_CACHED		! Clear intr source
-#else
 	stx	%g0, [%l1]		! Clear intr source
-#endif
 	membar	#Sync			! Should not be needed
 0:
 	cmp	%l7, -1
