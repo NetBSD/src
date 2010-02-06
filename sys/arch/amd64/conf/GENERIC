@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.263 2010/01/31 12:20:22 jruoho Exp $
+# $NetBSD: GENERIC,v 1.264 2010/02/06 20:12:32 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.263 $"
+#ident 		"GENERIC-$Revision: 1.264 $"
 
 maxusers	64		# estimated number of users
 
@@ -277,6 +277,7 @@ acpidalb*	at acpi?		# Direct Application Launch Button
 acpiec* 	at acpi?		# ACPI Embedded Controller (late binding)
 acpiecdt* 	at acpi?		# ACPI Embedded Controller (early binding)
 acpilid* 	at acpi?		# ACPI Lid Switch
+#acpismbus*	at acpi?		# ACPI SMBus CMI (experimental)
 acpitz* 	at acpi?		# ACPI Thermal Zone
 acpiwmi*	at acpi?		# ACPI WMI Mapper
 
