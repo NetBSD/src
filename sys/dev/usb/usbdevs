@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.541 2010/01/18 20:54:22 martin Exp $
+$NetBSD: usbdevs,v 1.542 2010/02/06 10:11:55 tonio Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -432,6 +432,7 @@ vendor USI		0x10ab	USI
 vendor PLX		0x10b5	PLX
 vendor ASANTE		0x10bd	Asante
 vendor SILABS		0x10c4	Silicon Labs
+vendor TENX		0x1130	Ten X Technology, Inc.
 vendor JRC		0x1145	Japan Radio Company
 vendor SPHAIRON		0x114b	Sphairon Access Systems GmbH
 vendor DELORME		0x1163	DeLorme
@@ -2315,6 +2316,10 @@ product TEKRAM ZD1211_2		0x6630	ZD1211
 
 /* Telex Communications products */
 product TELEX MIC1		0x0001	Enhanced USB Microphone
+
+/* Ten X Technology, Inc. */
+product TENX MISSILE		0x0202	Missile Launcher
+product TENX TEMPER		0x660c	TEMPer sensor
 
 /* Texas Intel products */
 product TI UTUSB41		0x1446	UT-USB41 hub
