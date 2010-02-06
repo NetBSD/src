@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.29 2009/11/25 14:43:31 pooka Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.30 2010/02/06 12:10:59 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.29 2009/11/25 14:43:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.30 2010/02/06 12:10:59 uebayasi Exp $");
 
 #include <sys/param.h>
 
@@ -205,9 +205,9 @@ static int wapbl_write_inodes(struct wapbl *wl, off_t *offp);
 
 static int wapbl_replay_process(struct wapbl_replay *wr, off_t, off_t);
 
-static __inline size_t wapbl_space_free(size_t avail, off_t head,
+static inline size_t wapbl_space_free(size_t avail, off_t head,
 	off_t tail);
-static __inline size_t wapbl_space_used(size_t avail, off_t head,
+static inline size_t wapbl_space_used(size_t avail, off_t head,
 	off_t tail);
 
 #ifdef _KERNEL
@@ -226,7 +226,7 @@ static void wapbl_inodetrk_free(struct wapbl *wl);
 static struct wapbl_ino *wapbl_inodetrk_get(struct wapbl *wl, ino_t ino);
 
 static size_t wapbl_transaction_len(struct wapbl *wl);
-static __inline size_t wapbl_transaction_inodes_len(struct wapbl *wl);
+static inline size_t wapbl_transaction_inodes_len(struct wapbl *wl);
 
 #if 0
 int wapbl_replay_verify(struct wapbl_replay *, struct vnode *);
@@ -958,7 +958,7 @@ wapbl_resize_buf(struct wapbl *wl, struct buf *bp, long oldsz, long oldcnt)
 /* Some utility inlines */
 
 /* This is used to advance the pointer at old to new value at old+delta */
-static __inline off_t
+static inline off_t
 wapbl_advance(size_t size, size_t off, off_t old, size_t delta)
 {
 	off_t new;
@@ -986,7 +986,7 @@ wapbl_advance(size_t size, size_t off, off_t old, size_t delta)
 	return new;
 }
 
-static __inline size_t
+static inline size_t
 wapbl_space_used(size_t avail, off_t head, off_t tail)
 {
 
@@ -997,14 +997,14 @@ wapbl_space_used(size_t avail, off_t head, off_t tail)
 	return ((head + (avail - 1) - tail) % avail) + 1;
 }
 
-static __inline size_t
+static inline size_t
 wapbl_space_free(size_t avail, off_t head, off_t tail)
 {
 
 	return avail - wapbl_space_used(avail, head, tail);
 }
 
-static __inline void
+static inline void
 wapbl_advance_head(size_t size, size_t off, size_t delta, off_t *headp,
 		   off_t *tailp)
 {
@@ -1019,7 +1019,7 @@ wapbl_advance_head(size_t size, size_t off, size_t delta, off_t *headp,
 	*tailp = tail;
 }
 
-static __inline void
+static inline void
 wapbl_advance_tail(size_t size, size_t off, size_t delta, off_t *headp,
 		   off_t *tailp)
 {
@@ -1774,7 +1774,7 @@ wapbl_unregister_inode(struct wapbl *wl, ino_t ino, mode_t mode)
 
 /****************************************************************/
 
-static __inline size_t
+static inline size_t
 wapbl_transaction_inodes_len(struct wapbl *wl)
 {
 	int blocklen = 1<<wl->wl_log_dev_bshift;

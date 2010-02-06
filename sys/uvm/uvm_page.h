@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.58 2010/02/06 02:56:17 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59 2010/02/06 12:10:59 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -311,17 +311,17 @@ static int vm_physseg_find(paddr_t, int *);
  */
 
 #if VM_PHYSSEG_MAX == 1
-static __inline int vm_physseg_find_contig(struct vm_physseg *, int, paddr_t, int *);
+static inline int vm_physseg_find_contig(struct vm_physseg *, int, paddr_t, int *);
 #elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
-static __inline int vm_physseg_find_bsearch(struct vm_physseg *, int, paddr_t, int *);
+static inline int vm_physseg_find_bsearch(struct vm_physseg *, int, paddr_t, int *);
 #else
-static __inline int vm_physseg_find_linear(struct vm_physseg *, int, paddr_t, int *);
+static inline int vm_physseg_find_linear(struct vm_physseg *, int, paddr_t, int *);
 #endif
 
 /*
  * vm_physseg_find: find vm_physseg structure that belongs to a PA
  */
-static __inline int
+static inline int
 vm_physseg_find(paddr_t pframe, int *offp)
 {
 
@@ -335,7 +335,7 @@ vm_physseg_find(paddr_t pframe, int *offp)
 }
 
 #if VM_PHYSSEG_MAX == 1
-static __inline int
+static inline int
 vm_physseg_find_contig(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *offp)
 {
 
@@ -350,7 +350,7 @@ vm_physseg_find_contig(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *
 
 #elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
 
-static __inline int
+static inline int
 vm_physseg_find_bsearch(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *offp)
 {
 	/* binary search for it */
@@ -394,7 +394,7 @@ vm_physseg_find_bsearch(struct vm_physseg *segs, int nsegs, paddr_t pframe, int 
 
 #else
 
-static __inline int
+static inline int
 vm_physseg_find_linear(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *offp)
 {
 	/* linear search for it */
@@ -417,7 +417,7 @@ vm_physseg_find_linear(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *
  * PHYS_TO_VM_PAGE: find vm_page for a PA.   used by MI code to get vm_pages
  * back from an I/O mapping (ugh!).   used in some MD code as well.
  */
-static __inline struct vm_page *
+static inline struct vm_page *
 PHYS_TO_VM_PAGE(paddr_t pa)
 {
 	paddr_t pf = atop(pa);
