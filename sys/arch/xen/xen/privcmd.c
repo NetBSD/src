@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.40 2010/01/23 18:26:37 bouyer Exp $ */
+/* $NetBSD: privcmd.c,v 1.41 2010/02/06 03:06:42 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.40 2010/01/23 18:26:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.41 2010/02/06 03:06:42 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -513,7 +513,7 @@ privpgop_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
 			    uobj, NULL);
 			pmap_update(ufi->orig_map->pmap);
-			uvm_wait("udv_fault");
+			uvm_wait("privpgop_fault");
 			return (ERESTART);
 		}
 		if (error) {
