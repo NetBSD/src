@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.8 2010/01/29 00:24:14 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.9 2010/02/06 02:59:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.8 2010/01/29 00:24:14 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.9 2010/02/06 02:59:04 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -137,7 +137,7 @@ const uint32_t ipl_sr_bits[_IPL_N] = {
  * - use for XLS1xx, XLS2xx, XLS4xx-Lite
  */
 #define	NIRQS	32
-static const char *rmixl_irqnames_xls1xx[NIRQS] = {
+static const char * const rmixl_irqnames_xls1xx[NIRQS] = {
 	"int 0 (watchdog)",	/*  0 */
 	"int 1 (timer0)",	/*  1 */
 	"int 2 (timer1)",	/*  2 */
@@ -176,7 +176,7 @@ static const char *rmixl_irqnames_xls1xx[NIRQS] = {
  * rmixl_irqnames_xls4xx:
  * - use for XLS4xx, XLS6xx
  */
-static const char *rmixl_irqnames_xls4xx[NIRQS] = {
+static const char * const rmixl_irqnames_xls4xx[NIRQS] = {
 	"int 0 (watchdog)",	/*  0 */
 	"int 1 (timer0)",	/*  1 */
 	"int 2 (timer1)",	/*  2 */
@@ -215,7 +215,7 @@ static const char *rmixl_irqnames_xls4xx[NIRQS] = {
  * rmixl_irqnames_generic:
  * - use for unknown cpu implementation
  */
-static const char *rmixl_irqnames_generic[NIRQS] = {
+static const char * const rmixl_irqnames_generic[NIRQS] = {
 	"int 0",	/*  0 */
 	"int 1",	/*  1 */
 	"int 2",	/*  2 */
