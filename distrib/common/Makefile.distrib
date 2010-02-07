@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.distrib,v 1.7 2006/06/27 12:34:54 christos Exp $
+#	$NetBSD: Makefile.distrib,v 1.8 2010/02/07 18:50:49 snj Exp $
 #
 # Makefile snippet to setup various make variables variables used in distrib/:
 #
 # Variables defined:
 #	DISTRIBDIR	Top level of distrib
-#	DISTRIBREV	NetBSD version without dots, as in "15ZD"
-#	DISTRIBVER	NetBSD version with dots, as in "1.5ZD"
+#	DISTRIBREV	NetBSD version without dots, as in "59924"
+#	DISTRIBVER	NetBSD version with dots, as in "5.99.24"
 #	DISTRIBVERDEP	Files to depend on for version/revision vars above
 #
 # Commands defined:
