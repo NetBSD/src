@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.40 2010/02/05 12:13:36 phx Exp $ */
+/*	$NetBSD: atzsc.c,v 1.41 2010/02/07 12:52:04 he Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atzsc.c,v 1.40 2010/02/05 12:13:36 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atzsc.c,v 1.41 2010/02/07 12:52:04 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,7 +228,6 @@ int
 atzsc_dmago(struct sbic_softc *dev, char *addr, int count, int flags)
 {
 	volatile struct sdmac *sdp;
-	vu_short istr;
 
 	sdp = dev->sc_cregs;
 	/*
