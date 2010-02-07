@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.20 2009/12/14 00:52:38 matt Exp $	*/
+/*	$NetBSD: kloader.c,v 1.21 2010/02/07 03:24:15 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.20 2009/12/14 00:52:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.21 2010/02/07 03:24:15 uebayasi Exp $");
 
 #include "debug_kloader.h"
 
@@ -72,7 +72,7 @@ int	kloader_debug = 1;
 
 struct kloader {
 	struct pglist pg_head;
-	struct vm_page *cur_pg;
+	struct vm_page *cur_pg;		/* XXX use bus_dma(9) */
 	struct kloader_page_tag *cur_tag;
 	struct vnode *vp;
 	struct kloader_page_tag *tagstart;
@@ -159,7 +159,7 @@ kloader_reboot(void)
 		(*kloader.ops->reset)();
 	}
 	while (/*CONSTCOND*/1)
-		;
+		continue;
 	/* NOTREACHED */
 }
 
@@ -227,13 +227,12 @@ kloader_load(void)
 		goto err;
 	}
 	DPRINTF("reading 0x%x bytes of .shstrtab at 0x%x\n",
-		sh[eh.e_shstrndx].sh_size, sh[eh.e_shstrndx].sh_offset);
+	    sh[eh.e_shstrndx].sh_size, sh[eh.e_shstrndx].sh_offset);
 	kloader_read(sh[eh.e_shstrndx].sh_offset, sh[eh.e_shstrndx].sh_size,
-		     shstrtab);
+	    shstrtab);
 
 	/* save entry point, code to construct symbol table overwrites it */
 	entry = eh.e_entry;
-
 
 	/*
 	 * Calculate memory size
@@ -244,7 +243,7 @@ kloader_load(void)
 	for (i = 0; i < eh.e_phnum; i++) {
 		if (ph[i].p_type == PT_LOAD) {
 			DPRINTF("segment %d size = file 0x%x memory 0x%x\n",
-				i, ph[i].p_filesz, ph[i].p_memsz);
+			    i, ph[i].p_filesz, ph[i].p_memsz);
 #ifdef KLOADER_ZERO_BSS
 			sz += round_page(ph[i].p_memsz);
 #else
@@ -260,13 +259,13 @@ kloader_load(void)
 	/* symbols/strings sections */
 	symndx = strndx = -1;
 	for (i = 0; i < eh.e_shnum; i++) {
-	    if (strcmp(shstrtab + sh[i].sh_name, ".symtab") == 0)
-		    symndx = i;
-	    else if (strcmp(shstrtab + sh[i].sh_name, ".strtab") == 0)
-		    strndx = i;
-	    else if (i != eh.e_shstrndx)
-		    /* while here, mark all other sections as unused */
-		    sh[i].sh_type = SHT_NULL;
+		if (strcmp(shstrtab + sh[i].sh_name, ".symtab") == 0)
+			symndx = i;
+		else if (strcmp(shstrtab + sh[i].sh_name, ".strtab") == 0)
+			strndx = i;
+		else if (i != eh.e_shstrndx)
+			/* while here, mark all other sections as unused */
+			sh[i].sh_type = SHT_NULL;
 	}
 
 	if (symndx < 0 || strndx < 0) {
@@ -277,10 +276,10 @@ kloader_load(void)
 		ksymsz = SELFMAG; /* just a bad magic */
 	} else {
 		ksymsz = sizeof(Elf_Ehdr)
-			+ eh.e_shentsize * eh.e_shnum
-			+ shstrsz		/* rounded to 4 bytes */
-			+ sh[symndx].sh_size
-			+ sh[strndx].sh_size;
+		    + eh.e_shentsize * eh.e_shnum
+		    + shstrsz		/* rounded to 4 bytes */
+		    + sh[symndx].sh_size
+		    + sh[strndx].sh_size;
 		DPRINTF("ksyms size = 0x%zx\n", ksymsz);
 	}
 	sz += ROUND4(ksymsz);
@@ -292,7 +291,6 @@ kloader_load(void)
 	if (kloader_alloc_memory(sz) != 0)
 		goto err;
 
-
 	/*
 	 * Copy new kernel in.
 	 */
@@ -303,7 +301,6 @@ kloader_load(void)
 			kv = p->p_vaddr + ROUND4(p->p_memsz);
 		}
 	}
-
 
 	/*
 	 * Construct symbol table for ksyms.
@@ -365,8 +362,7 @@ kloader_load(void)
 	 */
 
 	/* get a private copy of current bootinfo to vivisect */
-	memcpy(&nbi, kloader.bootinfo,
-	       sizeof(struct kloader_bootinfo));
+	memcpy(&nbi, kloader.bootinfo, sizeof(struct kloader_bootinfo));
 
 	/* new kernel entry point */
 	nbi.entry = entry;
@@ -376,7 +372,7 @@ kloader_load(void)
 
 	/* where args *will* be after boot code copied them */
 	newbuf = (char *)(void *)kv
-		+ offsetof(struct kloader_bootinfo, _argbuf);
+	    + offsetof(struct kloader_bootinfo, _argbuf);
 
 	DPRINTF("argv: old %p -> new %p\n", oldbuf, newbuf);
 
@@ -389,7 +385,7 @@ kloader_load(void)
 	for (i = 0; i < kloader.bootinfo->argc; ++i) {
 		DPRINTFN(1, " [%d]: %p -> ", i, kloader.bootinfo->argv[i]);
 		ap[i] = newbuf +
-			(kloader.bootinfo->argv[i] - oldbuf);
+		    (kloader.bootinfo->argv[i] - oldbuf);
 		_DPRINTFN(1, "%p\n", ap[i]);
 	}
 
@@ -412,7 +408,7 @@ kloader_load(void)
 	kloader.loader_sp = (vaddr_t)kloader.loader + PAGE_SIZE;
 
 	DPRINTF("[loader] addr=%p sp=%p [kernel] entry=%p\n",
-		kloader.loader, (void *)kloader.loader_sp, (void *)nbi.entry);
+	    kloader.loader, (void *)kloader.loader_sp, (void *)nbi.entry);
 
 	return (0);
  err:
@@ -437,7 +433,7 @@ kloader_alloc_memory(size_t sz)
 	    + 1;					/* 2nd loader */
 
 	error = uvm_pglistalloc(n * PAGE_SIZE, avail_start, avail_end,
-				PAGE_SIZE, 0, &kloader.pg_head, n, 0);
+	    PAGE_SIZE, 0, &kloader.pg_head, n, 0);
 	if (error) {
 		PRINTF("can't allocate memory.\n");
 		return (1);
@@ -574,7 +570,7 @@ kloader_load_segment(Elf_Phdr *p)
 {
 
 	DPRINTF("memory 0x%08x 0x%x <- file 0x%x 0x%x\n",
-		p->p_vaddr, p->p_memsz, p->p_offset, p->p_filesz);
+	    p->p_vaddr, p->p_memsz, p->p_offset, p->p_filesz);
 
 	kloader_from_file(p->p_vaddr, p->p_offset, p->p_filesz);
 #ifdef KLOADER_ZERO_BSS
