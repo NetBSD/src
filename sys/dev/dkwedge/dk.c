@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.54 2010/01/25 14:51:03 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.55 2010/02/07 16:04:31 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.54 2010/01/25 14:51:03 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.55 2010/02/07 16:04:31 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1369,7 +1369,7 @@ dksize(dev_t dev)
 		return (-1);
 	
 	if (sc->sc_state != DKW_STATE_RUNNING)
-		return (ENXIO);
+		return (-1);
 
 	mutex_enter(&sc->sc_dk.dk_openlock);
 	mutex_enter(&sc->sc_parent->dk_rawlock);
@@ -1403,7 +1403,7 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	int rv = 0;
 
 	if (sc == NULL)
-		return (-1);
+		return (ENXIO);
 	
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
