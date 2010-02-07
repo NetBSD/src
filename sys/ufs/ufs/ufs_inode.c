@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.78 2009/02/22 20:28:07 ad Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.79 2010/02/07 17:12:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.78 2009/02/22 20:28:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.79 2010/02/07 17:12:40 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -317,11 +317,11 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	GOP_SIZE(vp, off + len, &eob, 0);
 	mutex_enter(&uobj->vmobjlock);
 	for (i = 0; i < npages; i++) {
-		if (error) {
-			pgs[i]->flags |= PG_RELEASED;
-		} else if (off <= pagestart + (i << PAGE_SHIFT) &&
+		if (off <= pagestart + (i << PAGE_SHIFT) &&
 		    pagestart + ((i + 1) << PAGE_SHIFT) <= eob) {
 			pgs[i]->flags &= ~PG_RDONLY;
+		} else if (error) {
+			pgs[i]->flags |= PG_RELEASED;
 		}
 	}
 	if (error) {

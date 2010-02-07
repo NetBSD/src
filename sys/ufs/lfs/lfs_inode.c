@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.120 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.121 2010/02/07 17:12:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.120 2008/04/28 20:24:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.121 2010/02/07 17:12:40 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -226,8 +226,11 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	/*
 	 * Just return and not update modification times.
 	 */
-	if (oip->i_size == length)
+	if (oip->i_size == length) {
+		/* still do a uvm_vnp_setsize() as writesize may be larger */
+		uvm_vnp_setsize(ovp, length);
 		return (0);
+	}
 
 	if (ovp->v_type == VLNK &&
 	    (oip->i_size < ump->um_maxsymlinklen ||
