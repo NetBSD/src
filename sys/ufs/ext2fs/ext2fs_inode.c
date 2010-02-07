@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.70 2009/10/19 18:41:17 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.71 2010/02/07 17:12:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.70 2009/10/19 18:41:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.71 2010/02/07 17:12:40 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,6 +272,8 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 		return (ext2fs_update(ovp, NULL, NULL, 0));
 	}
 	if (ext2fs_size(oip) == length) {
+		/* still do a uvm_vnp_setsize() as writesize may be larger */
+		uvm_vnp_setsize(ovp, length);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (ext2fs_update(ovp, NULL, NULL, 0));
 	}
