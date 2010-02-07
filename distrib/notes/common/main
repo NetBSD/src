@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.456 2010/02/02 19:42:32 yhardy Exp $
+.\"	$NetBSD: main,v 1.457 2010/02/07 19:43:11 snj Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -469,10 +469,10 @@ went into the
 \*V release.
 The complete list of changes can be found in the
 CHANGES:
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.0/CHANGES
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.0/CHANGES
 and
 CHANGES-6.0:
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.0/CHANGES-6.0
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.0/CHANGES-6.0
 files in the top level directory of the NetBSD 6.0 release tree.
 .Pp
 .\" fill in with changes.mdoc
