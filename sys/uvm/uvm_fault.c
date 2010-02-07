@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.163 2010/02/05 02:27:15 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.164 2010/02/07 23:25:07 mlelstv Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.163 2010/02/05 02:27:15 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.164 2010/02/07 23:25:07 mlelstv Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -848,13 +848,14 @@ uvm_fault_check(
 	struct uvm_object *uobj;
 	vm_prot_t check_prot;
 	int nback, nforw;
+	UVMHIST_FUNC("uvm_fault_check"); UVMHIST_CALLED(maphist);
 
 	/*
 	 * lookup and lock the maps
 	 */
 
 	if (uvmfault_lookup(ufi, false) == false) {
-		UVMHIST_LOG(maphist, "<- no mapping @ 0x%x", vaddr, 0,0,0);
+		UVMHIST_LOG(maphist, "<- no mapping @ 0x%x", ufi->orig_rvaddr, 0,0,0);
 		return EFAULT;
 	}
 	/* locked: maps(read) */
@@ -1059,6 +1060,7 @@ uvm_fault_upper_lookup(
 	int lcv;
 	vaddr_t currva;
 	bool shadowed;
+	UVMHIST_FUNC("uvm_fault_upper_lookup"); UVMHIST_CALLED(maphist);
 
 	/* locked: maps(read), amap(if there) */
 	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
@@ -1111,7 +1113,7 @@ uvm_fault_upper_lookup(
 	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
 	/* (shadowed == true) if there is an anon at the faulting address */
 	UVMHIST_LOG(maphist, "  shadowed=%d, will_get=%d", shadowed,
-	    (uobj && shadowed != false),0,0);
+	    (ufi->entry->object.uvm_obj && shadowed != false),0,0);
 
 	/*
 	 * note that if we are really short of RAM we could sleep in the above
@@ -1129,6 +1131,7 @@ uvm_fault_upper_neighbor(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	vaddr_t currva, struct vm_page *pg, bool readonly)
 {
+	UVMHIST_FUNC("uvm_fault_upper_neighbor"); UVMHIST_CALLED(maphist);
 
 	/* ignore loaned and busy pages */
 	if (pg == NULL || pg->loan_count != 0 ||
@@ -1269,6 +1272,7 @@ uvm_fault_lower_lookup(
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 	int lcv, gotpages;
 	vaddr_t currva;
+	UVMHIST_FUNC("uvm_fault_lower_lookup"); UVMHIST_CALLED(maphist);
 
 	mutex_enter(&uobj->vmobjlock);
 	/* locked (!shadowed): maps(read), amap (if there), uobj */
@@ -1330,6 +1334,7 @@ uvm_fault_lower_neighbor(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	vaddr_t currva, struct vm_page *pg, bool readonly)
 {
+	UVMHIST_FUNC("uvm_fault_lower_neighor"); UVMHIST_CALLED(maphist);
 
 	/*
 	 * calling pgo_get with PGO_LOCKED returns us pages which
@@ -1381,6 +1386,7 @@ uvm_fault_upper(
 	struct vm_anon * const anon = anons[flt->centeridx];
 	struct uvm_object *uobj;
 	int error;
+	UVMHIST_FUNC("uvm_fault_upper"); UVMHIST_CALLED(maphist);
 
 	/* locked: maps(read), amap */
 	KASSERT(mutex_owned(&amap->am_l));
@@ -1523,6 +1529,7 @@ uvm_fault_upper_promote(
 	struct vm_anon * const oanon = anon;
 	struct vm_page *pg;
 	int error;
+	UVMHIST_FUNC("uvm_fault_upper_promote"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "  case 1B: COW fault",0,0,0,0);
 	uvmexp.flt_acow++;
@@ -1580,6 +1587,7 @@ uvm_fault_upper_enter(
 	struct vm_anon *oanon)
 {
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
+	UVMHIST_FUNC("uvm_fault_upper_enter"); UVMHIST_CALLED(maphist);
 
 	/* locked: maps(read), amap, oanon, anon (if different from oanon) */
 	KASSERT(mutex_owned(&amap->am_l));
@@ -1672,6 +1680,7 @@ uvm_fault_lower1(
 #endif
 	bool promote;
 	int error;
+	UVMHIST_FUNC("uvm_fault_lower1"); UVMHIST_CALLED(maphist);
 
 	/*
 	 * handle case 2: faulting on backing object or zero fill
@@ -1760,6 +1769,7 @@ uvm_fault_lower_io(
 	int gotpages;
 	int error;
 	voff_t uoff;
+	UVMHIST_FUNC("uvm_fault_lower_io"); UVMHIST_CALLED(maphist);
 
 	/* update rusage counters */
 	curlwp->l_ru.ru_majflt++;
@@ -1775,7 +1785,12 @@ uvm_fault_lower_io(
 	    0, flt->access_type & MASK(ufi->entry), ufi->entry->advice,
 	    PGO_SYNCIO);
 	/* locked: pg(if no error) */
+#if 0
 	KASSERT(error != 0 || (pg->flags & PG_BUSY) != 0);
+#else
+	if (error == 0)
+		KASSERT((pg->flags & PG_BUSY) != 0);
+#endif
 
 	/*
 	 * recover from I/O
@@ -1920,6 +1935,7 @@ uvm_fault_lower_direct_loan(
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
 	struct vm_page *pg;
 	struct vm_page *uobjpage = *ruobjpage;
+	UVMHIST_FUNC("uvm_fault_lower_direct_loan"); UVMHIST_CALLED(maphist);
 
 	if (!flt->cow_now) {
 		/* read fault: cap the protection at readonly */
@@ -1963,6 +1979,7 @@ uvm_fault_lower_promote(
 	struct vm_anon *anon;
 	struct vm_page *pg;
 	int error;
+	UVMHIST_FUNC("uvm_fault_lower_promote"); UVMHIST_CALLED(maphist);
 
 	/*
 	 * if we are going to promote the data to an anon we
@@ -2045,6 +2062,7 @@ uvm_fault_lower_enter(
 {
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
 	int error;
+	UVMHIST_FUNC("uvm_fault_lower_enter"); UVMHIST_CALLED(maphist);
 
 	/*
 	 * locked:
@@ -2065,8 +2083,8 @@ uvm_fault_lower_enter(
 	 */
 
 	UVMHIST_LOG(maphist,
-	    "  MAPPING: case2: pm=0x%x, va=0x%x, pg=0x%x, promote=%d",
-	    ufi->orig_map->pmap, ufi->orig_rvaddr, pg, promote);
+	    "  MAPPING: case2: pm=0x%x, va=0x%x, pg=0x%x, promote=XXX",
+	    ufi->orig_map->pmap, ufi->orig_rvaddr, pg, 0);
 	KASSERT((flt->access_type & VM_PROT_WRITE) == 0 ||
 		(pg->flags & PG_RDONLY) == 0);
 	if (pmap_enter(ufi->orig_map->pmap, ufi->orig_rvaddr, VM_PAGE_TO_PHYS(pg),
@@ -2114,6 +2132,7 @@ uvm_fault_lower_done(
 	struct uvm_object *uobj, struct vm_anon *anon, struct vm_page *pg)
 {
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
+	UVMHIST_FUNC("uvm_fault_lower_done"); UVMHIST_CALLED(maphist);
 
 	mutex_enter(&uvm_pageqlock);
 	if (flt->wire_paging) {
