@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.33 2009/05/12 08:22:59 cegger Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.34 2010/02/07 20:55:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.33 2009/05/12 08:22:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.34 2010/02/07 20:55:46 pgoyette Exp $");
 
 #include "opt_amdpm.h"
 
@@ -155,6 +155,7 @@ amdpm_attach(device_t parent, device_t self, void *aux)
 
 	/* try to attach devices on the smbus */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC8111_ACPI ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC768_PMC ||
 	    sc->sc_nforce) {
 		amdpm_smbus_attach(sc);
 	}
