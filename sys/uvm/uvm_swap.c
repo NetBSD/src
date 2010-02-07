@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.148 2010/02/02 15:00:34 wiz Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.149 2010/02/07 15:51:28 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.148 2010/02/02 15:00:34 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.149 2010/02/07 15:51:28 mlelstv Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -872,11 +872,7 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 		if ((error = VOP_GETATTR(vp, &va, l->l_cred)))
 			goto bad;
 		nblocks = (int)btodb(va.va_size);
-		if ((error =
-		     VFS_STATVFS(vp->v_mount, &vp->v_mount->mnt_stat)) != 0)
-			goto bad;
-
-		sdp->swd_bsize = vp->v_mount->mnt_stat.f_iosize;
+		sdp->swd_bsize = 1 << vp->v_mount->mnt_fs_bshift;
 		/*
 		 * limit the max # of outstanding I/O requests we issue
 		 * at any one time.   take it easy on NFS servers.
