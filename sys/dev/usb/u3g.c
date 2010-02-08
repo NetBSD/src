@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.9 2010/01/07 00:15:20 martin Exp $	*/
+/*	$NetBSD: u3g.c,v 1.10 2010/02/08 20:45:43 snj Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.9 2010/01/07 00:15:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.10 2010/02/08 20:45:43 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,6 +186,7 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_GTMAXHSUPA },
 	/* OEM: Qualcomm, Inc. */
 	{ USB_VENDOR_QUALCOMMINC, USB_PRODUCT_QUALCOMMINC_CDMA_MSM },
+	{ USB_VENDOR_QUALCOMMINC, USB_PRODUCT_QUALCOMMINC_ZTE_MF626 },
 	/* OEM: Huawei */
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_MOBILE },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E220 },
