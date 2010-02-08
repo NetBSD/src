@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.50 2010/02/08 21:42:01 pgoyette Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.51 2010/02/08 23:10:35 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.50 2010/02/08 21:42:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.51 2010/02/08 23:10:35 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1845,6 +1845,7 @@ wb_match(struct lm_softc *sc)
 	case WB_CHIPID_W83627THF:
 		model = "W83627THF";
 		lm_setup_sensors(sc, w83637hf_sensors);
+		wb_temp_diode_type(sc, cf_flags);
 		break;
 	case WB_CHIPID_W83627EHF_A:
 		model = "W83627EHF-A";
@@ -1853,10 +1854,12 @@ wb_match(struct lm_softc *sc)
 	case WB_CHIPID_W83627EHF:
 		model = "W83627EHF";
 		lm_setup_sensors(sc, w83627ehf_sensors);
+		wb_temp_diode_type(sc, cf_flags);
 		break;
 	case WB_CHIPID_W83627DHG:
 		model = "W83627DHG";
 		lm_setup_sensors(sc, w83627dhg_sensors);
+		wb_temp_diode_type(sc, cf_flags);
 		break;
 	case WB_CHIPID_W83637HF:
 		model = "W83637HF";
@@ -1865,10 +1868,12 @@ wb_match(struct lm_softc *sc)
 			sc->vrm9 = 1;
 		lm_generic_banksel(sc, banksel);
 		lm_setup_sensors(sc, w83637hf_sensors);
+		wb_temp_diode_type(sc, cf_flags);
 		break;
 	case WB_CHIPID_W83697HF:
 		model = "W83697HF";
 		lm_setup_sensors(sc, w83697hf_sensors);
+		wb_temp_diode_type(sc, cf_flags);
 		break;
 	case WB_CHIPID_W83781D:
 	case WB_CHIPID_W83781D_2:
@@ -1878,14 +1883,17 @@ wb_match(struct lm_softc *sc)
 	case WB_CHIPID_W83782D:
 		model = "W83782D";
 		lm_setup_sensors(sc, w83782d_sensors);
+		wb_temp_diode_type(sc, cf_flags);
 		break;
 	case WB_CHIPID_W83783S:
 		model = "W83783S";
 		lm_setup_sensors(sc, w83783s_sensors);
+		wb_temp_diode_type(sc, cf_flags);
 		break;
 	case WB_CHIPID_W83791D:
 		model = "W83791D";
 		lm_setup_sensors(sc, w83791d_sensors);
+		wb_temp_diode_type(sc, cf_flags);
 		break;
 	case WB_CHIPID_W83791SD:
 		model = "W83791SD";
