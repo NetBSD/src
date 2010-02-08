@@ -1,4 +1,4 @@
-.\"	$NetBSD: lm.4,v 1.26 2008/10/13 12:22:06 pgoyette Exp $
+.\"	$NetBSD: lm.4,v 1.27 2010/02/08 21:42:41 pgoyette Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,19 +27,19 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 13, 2008
+.Dd February 8, 2010
 .Dt LM 4
 .Os
 .Sh NAME
 .Nm lm
 .Nd National Semiconductor LM78, LM79 and compatible hardware monitors
 .Sh SYNOPSIS
-.Cd "lm0 at isa? port 0x280"
-.Cd "lm1 at isa? port 0x290"
-.Cd "lm2 at isa? port 0x310"
-.Cd "lm3 at isa? port 0xa00"
-.Cd "lm0 at pnpbios0 index ?"
-.Cd "lm0 at iic? addr 0x2e"
+.Cd "lm0 at isa? port 0x280 flags 0x00"
+.Cd "lm1 at isa? port 0x290 flags 0x00"
+.Cd "lm2 at isa? port 0x310 flags 0x00"
+.Cd "lm3 at isa? port 0xa00 flags 0x00"
+.Cd "lm0 at pnpbios0 index ? flags 0x00"
+.Cd "lm0 at iic? addr 0x2e flags 0x00"
 .Sh DESCRIPTION
 The
 .Nm
@@ -85,7 +85,7 @@ and
 .Em LM81 .
 .It
 .Tn Winbond
-.Em W83627HF ,
+.Em W83627HF* ,
 .Em W83627THF ,
 .Em W83627EHF ,
 .Em W83627DHG ,
@@ -101,6 +101,16 @@ and
 .It
 .Tn ASUS
 .Em AS99127F .
+.El
+For certain Winbond chips (identified with a * above), the 
+.Em flags
+configuration option can be specified to select the type of temperature
+sensor:
+.Bl -column "flags" "Sensor Type" -offset indent
+.It Sy "flags" Ta Sy "Sensor Type"
+.It Li "1" Ta "Pentium-II diode"
+.It Li "2" Ta "2N3904 Bipolar"
+.It Li "4" Ta "Thermistor diode"
 .El
 .Sh SEE ALSO
 .Xr envsys 4 ,
