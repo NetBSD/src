@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.48 2010/02/06 04:50:19 cube Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.49 2010/02/08 09:54:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.48 2010/02/06 04:50:19 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.49 2010/02/08 09:54:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -156,16 +156,16 @@ do {									\
 	(((int)(mtx)->mtx_owner & MUTEX_BIT_WAITERS) != 0)
 
 #define	MUTEX_INITIALIZE_ADAPTIVE(mtx, dodebug)				\
+	if (!dodebug)							\
+		(mtx)->mtx_owner |= MUTEX_BIT_NODEBUG;			\
 do {									\
-	if (dodebug)							\
-		(mtx)->mtx_owner |= MUTEX_BIT_DEBUG;			\
 } while (/* CONSTCOND */ 0);
 
 #define	MUTEX_INITIALIZE_SPIN(mtx, dodebug, ipl)			\
 do {									\
 	(mtx)->mtx_owner = MUTEX_BIT_SPIN;				\
-	if (dodebug)							\
-		(mtx)->mtx_owner |= MUTEX_BIT_DEBUG;			\
+	if (!dodebug)							\
+		(mtx)->mtx_owner |= MUTEX_BIT_NODEBUG;			\
 	(mtx)->mtx_ipl = makeiplcookie((ipl));				\
 	__cpu_simple_lock_init(&(mtx)->mtx_lock);			\
 } while (/* CONSTCOND */ 0)
@@ -180,10 +180,10 @@ do {									\
 #define	MUTEX_ADAPTIVE_P(mtx)		\
     (((mtx)->mtx_owner & MUTEX_BIT_SPIN) == 0)
 
-#define	MUTEX_DEBUG_P(mtx)	(((mtx)->mtx_owner & MUTEX_BIT_DEBUG) != 0)
+#define	MUTEX_DEBUG_P(mtx)	(((mtx)->mtx_owner & MUTEX_BIT_NODEBUG) == 0)
 #if defined(LOCKDEBUG)
-#define	MUTEX_OWNED(owner)		(((owner) & ~MUTEX_BIT_DEBUG) != 0)
-#define	MUTEX_INHERITDEBUG(new, old)	(new) |= (old) & MUTEX_BIT_DEBUG
+#define	MUTEX_OWNED(owner)		(((owner) & ~MUTEX_BIT_NODEBUG) != 0)
+#define	MUTEX_INHERITDEBUG(new, old)	(new) |= (old) & MUTEX_BIT_NODEBUG
 #else /* defined(LOCKDEBUG) */
 #define	MUTEX_OWNED(owner)		((owner) != 0)
 #define	MUTEX_INHERITDEBUG(new, old)	/* nothing */
