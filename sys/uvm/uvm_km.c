@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.104 2009/11/07 07:27:49 cegger Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.105 2010/02/08 19:02:33 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -91,7 +91,6 @@
  * the vm system has several standard kernel submaps, including:
  *   kmem_map => contains only wired kernel memory for the kernel
  *		malloc.
- *   mb_map => memory for large mbufs,
  *   pager_map => used to map "buf" structures into kernel space
  *   exec_map => used during exec to handle exec args
  *   etc...
@@ -128,7 +127,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.104 2009/11/07 07:27:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.105 2010/02/08 19:02:33 joerg Exp $");
 
 #include "opt_uvmhist.h"
 

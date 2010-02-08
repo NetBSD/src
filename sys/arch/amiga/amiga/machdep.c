@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.224 2009/12/10 14:13:49 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.225 2010/02/08 19:02:26 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.224 2009/12/10 14:13:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.225 2010/02/08 19:02:26 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,6 @@ void fdintr(int);
 
 volatile unsigned int interrupt_depth = 0;
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 void *	msgbufaddr;
@@ -290,13 +289,6 @@ cpu_startup(void)
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
-
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
-				 false, NULL);
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;

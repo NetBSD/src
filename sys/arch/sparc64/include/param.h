@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.43 2008/08/26 11:37:56 rjs Exp $ */
+/*	$NetBSD: param.h,v 1.44 2010/02/08 19:02:32 joerg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -207,18 +207,6 @@ extern int nbpg, pgofset, pgshift;
 #endif	/* MCLSHIFT */
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-
-#ifndef NMBCLUSTERS
-#if defined(_KERNEL_OPT)
-#include "opt_gateway.h"
-#endif
-
-#ifdef GATEWAY
-#define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
-#else
-#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
-#endif
-#endif
 
 #define MSGBUFSIZE	NBPG
 

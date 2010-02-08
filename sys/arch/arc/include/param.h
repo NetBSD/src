@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.25 2009/08/13 05:15:08 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.26 2010/02/08 19:02:26 joerg Exp $	*/
 /*      $OpenBSD: param.h,v 1.9 1997/04/30 09:54:15 niklas Exp $ */
 
 /*
@@ -131,18 +131,6 @@
 #endif	/* MCLSHIFT */
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-
-#ifndef NMBCLUSTERS
-#if defined(_KERNEL_OPT)
-#include "opt_gateway.h"
-#endif
-
-#ifdef GATEWAY
-#define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
-#else
-#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
-#endif
-#endif
 
 /* bytes to disk blocks */
 #define	btodb(x)	((x) >> DEV_BSHIFT)
