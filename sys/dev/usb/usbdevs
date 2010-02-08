@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.542 2010/02/06 10:11:55 tonio Exp $
+$NetBSD: usbdevs,v 1.543 2010/02/08 20:43:00 snj Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1948,6 +1948,7 @@ product QUALCOMM MSM_HSDPA	0x6613	HSDPA MSM
 product QUALCOMM2 RWT_FCT       0x3100  RWT FCT-CDMA 2000 1xRTT modem
 product QUALCOMM2 CDMA_MSM	0x3196	CDMA Technologies MSM modem
 product QUALCOMMINC CDMA_MSM	0x0001	CDMA Technologies MSM modem
+product QUALCOMMINC ZTE_MF626	0x0031	CDMA Technologies MSM modem
 product QUALCOMMINC ZTE_STOR	0x2000  USB ZTE Storage
 product QUALCOMMINC AC8700	0xfffe	CDMA 1xEVDO USB modem
 
