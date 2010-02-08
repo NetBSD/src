@@ -1,4 +1,4 @@
-.\"	$NetBSD: lm.4,v 1.28 2010/02/08 21:47:20 wiz Exp $
+.\"	$NetBSD: lm.4,v 1.29 2010/02/08 23:10:35 pgoyette Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -86,15 +86,15 @@ and
 .It
 .Tn Winbond
 .Em W83627HF* ,
-.Em W83627THF ,
-.Em W83627EHF ,
-.Em W83627DHG ,
-.Em W83637HF ,
-.Em W83697HF ,
+.Em W83627THF* ,
+.Em W83627EHF* ,
+.Em W83627DHG* ,
+.Em W83637HF* ,
+.Em W83697HF* ,
 .Em W83781D ,
-.Em W83782D ,
-.Em W83783S ,
-.Em W83791D ,
+.Em W83782D* ,
+.Em W83783S* ,
+.Em W83791D* ,
 .Em W83791SD
 and
 .Em W83792D .
@@ -102,7 +102,7 @@ and
 .Tn ASUS
 .Em AS99127F .
 .El
-For certain Winbond chips (identified with a * above), the
+For most of the Winbond chips (identified with a * above), the
 .Em flags
 configuration option can be specified to select the type of temperature
 sensor:
