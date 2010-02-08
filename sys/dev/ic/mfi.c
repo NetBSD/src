@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.31 2010/01/19 20:54:32 bouyer Exp $ */
+/* $NetBSD: mfi.c,v 1.32 2010/02/08 23:54:33 msaitoh Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.31 2010/01/19 20:54:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.32 2010/02/08 23:54:33 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -1990,6 +1990,7 @@ mfi_create_sensors(struct mfi_softc *sc)
 {
 	int i;
 	int nsensors = sc->sc_ld_cnt;
+	int rv;
 
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sensor = malloc(sizeof(envsys_data_t) * nsensors,
@@ -2017,9 +2018,10 @@ mfi_create_sensors(struct mfi_softc *sc)
 	sc->sc_sme->sme_name = DEVNAME(sc);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = mfi_sensor_refresh;
-	if (sysmon_envsys_register(sc->sc_sme)) {
-		aprint_error("%s: unable to register with sysmon\n",
-		    DEVNAME(sc));
+	rv = sysmon_envsys_register(sc->sc_sme);
+	if (rv != 0) {
+		aprint_error("%s: unable to register with sysmon (rv = %d)\n",
+		    DEVNAME(sc), rv);
 		goto out;
 	}
 	return 0;
@@ -2027,6 +2029,7 @@ mfi_create_sensors(struct mfi_softc *sc)
 out:
 	free(sc->sc_sensor, M_DEVBUF);
 	sysmon_envsys_destroy(sc->sc_sme);
+	sc->sc_sme = NULL;
 	return EINVAL;
 }
 
