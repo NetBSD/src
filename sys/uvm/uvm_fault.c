@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.164 2010/02/07 23:25:07 mlelstv Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.165 2010/02/08 00:01:39 mlelstv Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.164 2010/02/07 23:25:07 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.165 2010/02/08 00:01:39 mlelstv Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1785,12 +1785,6 @@ uvm_fault_lower_io(
 	    0, flt->access_type & MASK(ufi->entry), ufi->entry->advice,
 	    PGO_SYNCIO);
 	/* locked: pg(if no error) */
-#if 0
-	KASSERT(error != 0 || (pg->flags & PG_BUSY) != 0);
-#else
-	if (error == 0)
-		KASSERT((pg->flags & PG_BUSY) != 0);
-#endif
 
 	/*
 	 * recover from I/O
@@ -1818,6 +1812,8 @@ uvm_fault_lower_io(
 	}
 
 	/* locked: pg */
+
+	KASSERT((pg->flags & PG_BUSY) != 0);
 
 	mutex_enter(&uvm_pageqlock);
 	uvm_pageactivate(pg);
