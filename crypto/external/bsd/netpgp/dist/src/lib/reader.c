@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.28 2010/02/06 02:24:33 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.29 2010/02/08 17:19:12 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1032,6 +1032,7 @@ armoured_data_reader(void *dest_, size_t length, __ops_error_t **errors,
 	unsigned char	*dest = dest_;
 	dearmour_t	*dearmour;
 	unsigned	 first;
+	char		 buf[1024];
 	int		 saved;
 	int              ret;
 
@@ -1049,7 +1050,6 @@ armoured_data_reader(void *dest_, size_t length, __ops_error_t **errors,
 	while (length > 0) {
 		unsigned        count;
 		unsigned        n;
-		char            buf[1024];
 		int             c;
 
 		flush(dearmour, cbinfo);
@@ -1161,8 +1161,6 @@ got_minus:
 					return ret;
 				}
 			} else {
-				/* XXX Flexelint -  Assigning address of auto variable 'buf' to outer
-				    scope symbol 'content'*/
 				content.u.armour_header.type = buf;
 				content.u.armour_header.headers =
 						dearmour->headers;
@@ -2130,7 +2128,7 @@ litdata_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("litdata_cb: ");
-		__ops_print_packet(pkt);
+		__ops_print_packet(&cbinfo->printstate, pkt);
 	}
 	/* Read data from packet into static buffer */
 	switch (pkt->tag) {
@@ -2167,7 +2165,7 @@ pk_sesskey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 
 	io = cbinfo->io;
 	if (__ops_get_debug_level(__FILE__)) {
-		__ops_print_packet(pkt);
+		__ops_print_packet(&cbinfo->printstate, pkt);
 	}
 	/* Read data from packet into static buffer */
 	switch (pkt->tag) {
@@ -2221,7 +2219,7 @@ get_seckey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 
 	io = cbinfo->io;
 	if (__ops_get_debug_level(__FILE__)) {
-		__ops_print_packet(pkt);
+		__ops_print_packet(&cbinfo->printstate, pkt);
 	}
 	switch (pkt->tag) {
 	case OPS_GET_SECKEY:
@@ -2269,7 +2267,7 @@ get_passphrase_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 
 	io = cbinfo->io;
 	if (__ops_get_debug_level(__FILE__)) {
-		__ops_print_packet(pkt);
+		__ops_print_packet(&cbinfo->printstate, pkt);
 	}
 	if (cbinfo->cryptinfo.keydata == NULL) {
 		(void) fprintf(io->errs, "get_passphrase_cb: NULL keydata\n");

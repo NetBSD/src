@@ -253,6 +253,7 @@ struct __ops_cbdata_t {
 	__ops_io_t		*io;		/* error/output messages */
 	void			*passfp;	/* fp for passphrase input */
 	__ops_cryptinfo_t	 cryptinfo;	/* used when decrypting */
+	__ops_printstate_t	 printstate;	/* used to keep state when printing */
 };
 
 /** __ops_hashtype_t */

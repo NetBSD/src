@@ -63,6 +63,13 @@
 #include "types.h"
 #include "errors.h"
 
+/* structure to keep track of printing state variables */
+typedef struct __ops_printstate_t {
+	unsigned	unarmoured;
+	unsigned	skipping;
+	int		indent;
+} __ops_printstate_t;
+
 /** General-use structure for variable-length data
  */
 
@@ -1064,7 +1071,7 @@ void __ops_parser_content_free(__ops_packet_t *);
 void __ops_seckey_free(__ops_seckey_t *);
 void __ops_pk_sesskey_free(__ops_pk_sesskey_t *);
 
-int __ops_print_packet(const __ops_packet_t *);
+int __ops_print_packet(__ops_printstate_t *, const __ops_packet_t *);
 
 #define DYNARRAY(type, arr)	\
 	unsigned arr##c; unsigned arr##vsize; type *arr##s
