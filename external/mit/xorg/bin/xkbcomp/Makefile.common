@@ -1,3 +1,0 @@
-#	$NetBSD: Makefile.common,v 1.2 2009/10/01 02:27:59 mrg Exp $
-
-XKBCOMPDIR=	${X11LIBDIR}/xkb

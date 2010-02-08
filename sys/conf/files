@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.974 2010/01/31 15:10:11 pooka Exp $
+#	$NetBSD: files,v 1.974.2.1 2010/02/08 05:01:09 uebayasi Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -115,6 +115,9 @@ defflag	opt_gre.h		GRE_DEBUG
 # Write Ahead Physical Block Logging
 defflag opt_wapbl.h		WAPBL WAPBL_DEBUG
 defparam opt_wapbl.h		WAPBL_DEBUG_PRINT
+
+# eXecute In Place
+defflag opt_xip.h		XIP
 
 # compatibility options
 #

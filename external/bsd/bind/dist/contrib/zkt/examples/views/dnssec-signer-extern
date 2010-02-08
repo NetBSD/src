@@ -1,7 +1,0 @@
-#!/bin/sh
-#
-#	Shell script to start the dnssec-signer
-#	command out of the view directory
-#
-
-ZKT_CONFFILE=`pwd`/dnssec.conf ../../dnssec-signer -V extern "$@"

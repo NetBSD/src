@@ -1,4 +1,0 @@
-# $NetBSD: md.alpha,v 1.4 2009/04/27 14:22:40 njoly Exp $
-./usr/libdata/debug/usr/X11R6/bin/XalphaNetBSD.debug	-unknown-	debug,x11
-./usr/libdata/debug/usr/X11R6/bin/XdecNetBSD.debug	-unknown-	debug,x11
-./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	debug,x11
