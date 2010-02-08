@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59 2010/02/06 12:10:59 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.1 2010/02/08 05:41:43 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -236,7 +236,7 @@ struct vm_physseg {
 	paddr_t	avail_end;		/* (PF# of last free page in segment) +1  */
 	int	free_list;		/* which free list they belong on */
 	struct	vm_page *pgs;		/* vm_page structures (from start) */
-	struct	vm_page *lastpg;	/* vm_page structure for end */
+	struct	vm_page *endpg;		/* vm_page structure for end */
 #ifdef __HAVE_PMAP_PHYSSEG
 	struct	pmap_physseg pmseg;	/* pmap specific (MD) data */
 #endif
