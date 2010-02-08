@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.165 2010/02/08 00:01:39 mlelstv Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.166 2010/02/08 00:02:50 mlelstv Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.165 2010/02/08 00:01:39 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166 2010/02/08 00:02:50 mlelstv Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1780,6 +1780,7 @@ uvm_fault_lower_io(
 
 	uvmexp.fltget++;
 	gotpages = 1;
+	pg = NULL;
 	uoff = (ufi->orig_rvaddr - ufi->entry->start) + ufi->entry->offset;
 	error = uobj->pgops->pgo_get(uobj, uoff, &pg, &gotpages,
 	    0, flt->access_type & MASK(ufi->entry), ufi->entry->advice,
