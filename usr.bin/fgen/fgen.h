@@ -1,4 +1,4 @@
-/*	$NetBSD: fgen.h,v 1.8 2009/10/19 18:12:37 snj Exp $	*/
+/*	$NetBSD: fgen.h,v 1.9 2010/02/08 20:14:55 eeh Exp $	*/
 /*
  * fgen.h -- stuff for the fcode tokenizer.
  *
@@ -38,8 +38,8 @@ struct tok {
 #define TOKEN struct tok
 #define YY_DECL TOKEN* yylex(void)
 
-#define FCODE	0xF00DBABE
-#define MACRO	0xFEEDBABE
+#define FCODE	0x000FC0DE
+#define MACRO	0x0000F00D
 
 /* Defined fcode and string. */
 struct fcode {
@@ -82,12 +82,12 @@ enum toktypes {
 	TOK_PSTRING, 
 	TOK_TOKENIZE,
 	TOK_COMMENT, 
-	TOK_ENDCOMMENT,
 	TOK_COLON, 
 	TOK_SEMICOLON, 
 	TOK_TOSTRING,
 	
 	/* These are special */
+	TOK_ABORT_S,
 	TOK_AGAIN,
 	TOK_ALIAS,
 	TOK_GETTOKEN,
@@ -101,9 +101,12 @@ enum toktypes {
 	TOK_DEFER,
 	TOK_DO,
 	TOK_ELSE,
+	TOK_END0,
 	TOK_ENDCASE,
 	TOK_ENDOF,
 	TOK_EXTERNAL,
+	TOK_FCODE_VERSION2,
+	TOK_FCODE_END,
 	TOK_FIELD,
 	TOK_HEADERLESS,
 	TOK_HEADERS,
@@ -111,14 +114,16 @@ enum toktypes {
 	TOK_LEAVE,
 	TOK_LOOP,
 	TOK_OF,
+	TOK_OFFSET16,
 	TOK_REPEAT,
+	TOK_STARTX,
 	TOK_THEN,
 	TOK_TO,
 	TOK_UNTIL,
 	TOK_VALUE,
 	TOK_VARIABLE,
+	TOK_VERSION1,
 	TOK_WHILE,
-	TOK_OFFSET16,
 
 	/* Tokenizer directives */
 	TOK_BEGTOK,
