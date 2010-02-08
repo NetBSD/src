@@ -1,9 +1,8 @@
 To Do
 =====
-calc v4_hashlen
-unarmoured static in packet-print.c and skipping in crypto.c
-display expiry properly
-netpgpagent
+agent
+agentctl
+trust subpackets
 convert to and from ascii armored sigs
 gpgme compat lib
 --list-sigs - these come out in __ops_check_subkey_sig()
@@ -85,3 +84,6 @@ signature duration and expiry
 multisign
 settable from time
 unarmoured static in packet-print.c and skipping in crypto.c
+display expiry properly
+unarmoured static in packet-print.c and skipping in crypto.c
+duration -> expiry

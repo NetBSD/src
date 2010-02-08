@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.27 2010/02/06 10:50:52 dsl Exp $");
+__RCSID("$NetBSD: validate.c,v 1.28 2010/02/08 17:19:12 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -516,7 +516,8 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 			}
 			if (__ops_get_debug_level(__FILE__)) {
 				(void) fprintf(stderr, "about to check_binary_sig, dump of sig:\n");
-				hexdump(stderr, (const unsigned char *)&content->sig, sizeof(content->sig), "");
+				hexdump(stderr, (const unsigned char *)(const void *)&content->sig,
+					sizeof(content->sig), "");
 			}
 			valid = check_binary_sig(__ops_mem_data(data->mem),
 					__ops_mem_len(data->mem),
@@ -625,7 +626,7 @@ fmtsecs(int64_t n, char *buf, size_t size)
  	or no valid signatures; else 1
  */
 static unsigned 
-validate_result_status(FILE *errs, __ops_validation_t *val)
+validate_result_status(FILE *errs, const char *f, __ops_validation_t *val)
 {
 	time_t	now;
 	time_t	t;
@@ -634,6 +635,11 @@ validate_result_status(FILE *errs, __ops_validation_t *val)
 	now = time(NULL);
 	if (now < val->birthtime) {
 		/* signature is not valid yet! */
+		if (f) {
+			(void) fprintf(errs, "\"%s\": ", f);
+		} else {
+			(void) fprintf(errs, "memory ");
+		}
 		(void) fprintf(errs,
 			"signature not valid until %.24s (%s)\n",
 			ctime(&val->birthtime),
@@ -643,6 +649,11 @@ validate_result_status(FILE *errs, __ops_validation_t *val)
 	if (val->duration != 0 && now > val->birthtime + val->duration) {
 		/* signature has expired */
 		t = val->duration + val->birthtime;
+		if (f) {
+			(void) fprintf(errs, "\"%s\": ", f);
+		} else {
+			(void) fprintf(errs, "memory ");
+		}
 		(void) fprintf(errs,
 			"signature not valid after %.24s (%s ago)\n",
 			ctime(&t),
@@ -726,7 +737,7 @@ __ops_validate_all_sigs(__ops_validation_t *result,
 		__ops_validate_key_sigs(result, &ring->keys[n], ring,
 				cb_get_passphrase);
 	}
-	return validate_result_status(stderr, result);
+	return validate_result_status(stderr, "keyring", result);
 }
 
 /**
@@ -841,7 +852,7 @@ __ops_validate_file(__ops_io_t *io,
 	}
 	__ops_teardown_file_read(parse, infd);
 
-	ret = validate_result_status(io->errs, result);
+	ret = validate_result_status(io->errs, infile, result);
 
 	/* this is triggered only for --cat output */
 	if (outfile) {
@@ -856,7 +867,7 @@ __ops_validate_file(__ops_io_t *io,
 			* write the file, so send back a bad return
 			* code */
 			ret = 0;
-		} else if (validate_result_status(io->errs, result)) {
+		} else if (validate_result_status(io->errs, infile, result)) {
 			unsigned	 len;
 			char		*cp;
 			int		 i;
@@ -939,5 +950,5 @@ __ops_validate_mem(__ops_io_t *io,
 		__ops_memory_free(validation.mem);
 	}
 
-	return validate_result_status(io->errs, result);
+	return validate_result_status(io->errs, NULL, result);
 }
