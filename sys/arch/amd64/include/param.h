@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12 2009/11/11 23:59:36 haad Exp $	*/
+/*	$NetBSD: param.h,v 1.13 2010/02/08 19:02:26 joerg Exp $	*/
 
 #ifdef __x86_64__
 
@@ -85,18 +85,6 @@
 #endif	/* MCLSHIFT */
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-
-#ifndef NMBCLUSTERS
-#if defined(_KERNEL_OPT)
-#include "opt_gateway.h"
-#endif
-
-#ifdef GATEWAY
-#define	NMBCLUSTERS	4096		/* map size, max cluster allocation */
-#else
-#define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
-#endif
-#endif
 
 #ifndef NFS_RSIZE
 #define NFS_RSIZE       32768

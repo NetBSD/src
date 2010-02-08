@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77 2009/12/10 14:13:49 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78 2010/02/08 19:02:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2009/12/10 14:13:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78 2010/02/08 19:02:29 joerg Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -261,7 +261,6 @@ struct cpu_info cpu_info_store = {
 #endif
 };
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 void delay_init(void);
@@ -886,9 +885,6 @@ cpu_startup(void)
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, false, NULL);
-
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 #ifdef PMAPDEBUG
 	pmapdebug = opmapdebug;

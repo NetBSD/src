@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2009/11/27 03:23:08 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 2010/02/08 19:02:28 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2009/11/27 03:23:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2010/02/08 19:02:28 joerg Exp $");
 
 #include "opt_explora.h"
 #include "opt_modular.h"
@@ -76,7 +76,6 @@ static const unsigned int cpuspeed = 66000000;
 
 prop_dictionary_t board_properties;
 struct vm_map *phys_map = NULL;
-struct vm_map *mb_map = NULL;
 char msgbuf[MSGBUFSIZE];
 paddr_t msgbuf_paddr;
 

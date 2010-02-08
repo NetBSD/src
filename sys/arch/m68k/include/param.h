@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.16 2009/12/11 17:53:22 tsutsui Exp $	*/
+/*	$NetBSD: param.h,v 1.17 2010/02/08 19:02:30 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -140,18 +140,6 @@
 #endif	/* MCLSHIFT */
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-
-#ifndef NMBCLUSTERS
-#if defined(_KERNEL_OPT)
-#include "opt_gateway.h"
-#endif
-
-#ifdef GATEWAY
-# define	NMBCLUSTERS	512	/* map size, max cluster allocation */
-#else
-# define	NMBCLUSTERS	256	/* map size, max cluster allocation */
-#endif
-#endif
 
 /*
  * Mach-derived conversion macros

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.238 2009/12/14 00:46:11 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.239 2010/02/08 19:02:31 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.238 2009/12/14 00:46:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.239 2010/02/08 19:02:31 joerg Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -132,7 +132,6 @@ unsigned int ssir;			/* simulated interrupt register */
 struct cpu_info cpu_info_store;
 
 /* maps for VM objects */
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int		systype;		/* mother board type */

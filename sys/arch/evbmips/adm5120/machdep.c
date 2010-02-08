@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.15 2010/01/22 08:56:05 martin Exp $ */
+/* $NetBSD: machdep.c,v 1.16 2010/02/08 19:02:27 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2010/01/22 08:56:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2010/02/08 19:02:27 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -164,7 +164,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2010/01/22 08:56:05 martin Exp $");
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int maxmem;			/* max memory per process */

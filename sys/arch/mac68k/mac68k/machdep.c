@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.334 2009/12/10 14:13:50 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.335 2010/02/08 19:02:30 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.334 2009/12/10 14:13:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.335 2010/02/08 19:02:30 joerg Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -218,7 +218,6 @@ struct mac68k_video mac68k_video;
 int	(*mac68k_bell_callback)(void *, int, int, int);
 void *	mac68k_bell_cookie;
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int	maxmem;			/* max memory per process */
@@ -448,12 +447,6 @@ cpu_startup(void)
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, false, NULL);
-
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);

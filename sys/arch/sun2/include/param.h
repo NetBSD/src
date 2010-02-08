@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.11 2009/12/11 13:56:15 tsutsui Exp $	*/
+/*	$NetBSD: param.h,v 1.12 2010/02/08 19:02:32 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -106,11 +106,9 @@
 #define	MAXPHYS		0xe000
 
 /*
- * XXX fredette - we force a small number of mbuf clusters and cluster
- * size to help me debug this on my low-memory machine.  These should
- * go away at some point.
+ * XXX fredette - we force a small cluster size to help me debug
+ * this on my low-memory machine.  These should go away at some point.
  */
-#define	NMBCLUSTERS	64	/* map size, max cluster allocation */
 #define MCLSHIFT	10
 
 /*

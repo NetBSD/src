@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.178 2009/11/21 04:45:39 rmind Exp $	 */
+/* $NetBSD: machdep.c,v 1.179 2010/02/08 19:02:32 joerg Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.178 2009/11/21 04:45:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179 2010/02/08 19:02:32 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -163,7 +163,6 @@ static long iomap_ex_storage[EXTENT_FIXED_STORAGE_SIZE(32) / sizeof(long)];
 static struct extent *iomap_ex;
 static int iomap_ex_malloc_safe;
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 #ifdef DEBUG

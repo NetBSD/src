@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.66 2006/08/28 13:43:35 yamt Exp $ */
+/*	$NetBSD: param.h,v 1.67 2010/02/08 19:02:31 joerg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -124,18 +124,6 @@ extern int nbpg, pgofset, pgshift;
 #endif	/* MCLSHIFT */
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-
-#ifndef NMBCLUSTERS
-#if defined(_KERNEL_OPT)
-#include "opt_gateway.h"
-#endif
-
-#ifdef GATEWAY
-#define	NMBCLUSTERS	512		/* map size, max cluster allocation */
-#else
-#define	NMBCLUSTERS	256		/* map size, max cluster allocation */
-#endif
-#endif
 
 /*
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized

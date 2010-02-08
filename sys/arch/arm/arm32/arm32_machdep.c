@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.72 2010/01/18 23:04:30 jmmv Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.73 2010/02/08 19:02:26 joerg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.72 2010/01/18 23:04:30 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.73 2010/02/08 19:02:26 joerg Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.72 2010/01/18 23:04:30 jmmv Exp 
 
 #include "md.h"
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 #if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_ROOT_SIZE)
@@ -243,13 +242,6 @@ cpu_startup(void)
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
-
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
-				 false, NULL);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);

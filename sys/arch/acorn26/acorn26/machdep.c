@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.32 2009/11/21 20:32:17 rmind Exp $ */
+/* $NetBSD: machdep.c,v 1.33 2010/02/08 19:02:25 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2009/11/21 20:32:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2010/02/08 19:02:25 joerg Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2009/11/21 20:32:17 rmind Exp $");
 char cpu_model[] = "Archimedes";
 
 struct vm_map *phys_map = NULL;
-struct vm_map *mb_map = NULL; /* and ever more shall be so */
 
 int waittime = -1;
 

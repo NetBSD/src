@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 2009/11/27 03:23:08 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44 2010/02/08 19:02:28 joerg Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2009/11/27 03:23:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2010/02/08 19:02:28 joerg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -120,7 +120,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2009/11/27 03:23:08 rmind Exp $");
 /*
  * Global variables used here and there
  */
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 /*

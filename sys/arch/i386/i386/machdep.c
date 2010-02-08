@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.681 2009/12/10 14:13:50 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.682 2010/02/08 19:02:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.681 2009/12/10 14:13:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.682 2010/02/08 19:02:29 joerg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -268,7 +268,6 @@ vaddr_t	idt_vaddr;
 paddr_t	idt_paddr;
 vaddr_t	pentium_idt_vaddr;
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
@@ -492,12 +491,6 @@ cpu_startup(void)
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
-
-	/*
-	 * Allocate mbuf cluster submap.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 	/* Say hello. */
 	banner();
