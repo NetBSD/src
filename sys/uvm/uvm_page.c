@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153 2010/01/27 03:56:33 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.1 2010/02/08 05:41:43 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153 2010/01/27 03:56:33 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.1 2010/02/08 05:41:43 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -436,7 +436,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 		vm_physmem[lcv].pgs = pagearray;
 		pagearray += n;
 		pagecount -= n;
-		vm_physmem[lcv].lastpg = vm_physmem[lcv].pgs + (n - 1);
+		vm_physmem[lcv].end = vm_physmem[lcv].pgs + n;
 
 		/* init and free vm_pages (we've already zeroed them) */
 		paddr = ptoa(vm_physmem[lcv].start);
@@ -855,7 +855,7 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 		ps->pgs = NULL;
 	} else {
 		ps->pgs = pgs;
-		ps->lastpg = pgs + npages - 1;
+		ps->endpg = pgs + npages;
 	}
 	ps->free_list = free_list;
 	vm_nphysseg++;
@@ -1980,7 +1980,7 @@ uvm_page_printall(void (*pr)(const char *, ...))
 #endif
 	    "\n", "PAGE", "FLAG", "PQ", "UOBJECT", "UANON");
 	for (i = 0; i < vm_nphysseg; i++) {
-		for (pg = vm_physmem[i].pgs; pg <= vm_physmem[i].lastpg; pg++) {
+		for (pg = vm_physmem[i].pgs; pg < vm_physmem[i].lastpg; pg++) {
 			(*pr)("%18p %04x %04x %18p %18p",
 			    pg, pg->flags, pg->pqflags, pg->uobject,
 			    pg->uanon);
