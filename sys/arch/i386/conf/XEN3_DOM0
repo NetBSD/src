@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.27 2010/01/07 18:49:30 tnn Exp $
+#	$NetBSD: XEN3_DOM0,v 1.28 2010/02/08 21:45:32 pgoyette Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -282,7 +282,8 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #dbcool* at iic? addr 0x2E		# Tyan S2882-D
 
 # LM7[89] and compatible hardware monitors
-#lm0	at isa?	port 0x290		# other common: 0x280, 0x310, 0xc00
+# Use flags to select temp sensor type (see lm(4) man page for details)
+#lm0	at isa?	port 0x290 flags 0x0	# other common: 0x280, 0x310, 0xc00
 
 # VIA VT82C686A/VT8231 Hardware Monitor and Power Management TImer
 #viaenv* 	at pci? dev ? function ?

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.264 2010/02/06 20:12:32 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.265 2010/02/08 21:45:32 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.264 $"
+#ident 		"GENERIC-$Revision: 1.265 $"
 
 maxusers	64		# estimated number of users
 
@@ -422,7 +422,8 @@ lpt1	at isa? port 0x278
 amdtemp* at pci? dev ? function ?	# AMD CPU Temperature sensors
 
 # LM7[89] and compatible hardware monitors
-#lm0	at isa?	port 0x290		# other common ports: 0x280, 0x310
+# Use flags to select temp sensor type (see lm(4) man page for details)
+#lm0	at isa?	port 0x290 flags 0x0	# other common ports: 0x280, 0x310
 
 # SMSC LPC47B397 hardware monitor functions
 #smsc0   at isa? port 0x02e
