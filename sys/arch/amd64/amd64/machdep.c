@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.141 2009/12/31 01:11:28 jym Exp $	*/
+/*	$NetBSD: machdep.c,v 1.142 2010/02/08 19:02:26 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141 2009/12/31 01:11:28 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142 2010/02/08 19:02:26 joerg Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -256,7 +256,6 @@ static struct vm_map_kernel module_map_store;
 extern struct vm_map *module_map;
 vaddr_t kern_end;
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
@@ -340,12 +339,6 @@ cpu_startup(void)
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
-
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 	uvm_map_setup_kernel(&module_map_store, module_start, module_end, 0);
 	module_map_store.vmk_map.pmap = pmap_kernel();

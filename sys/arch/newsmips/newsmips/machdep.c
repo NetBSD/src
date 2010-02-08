@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.107 2009/12/17 05:29:56 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.108 2010/02/08 19:02:30 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.107 2009/12/17 05:29:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2010/02/08 19:02:30 joerg Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -144,7 +144,6 @@ struct cpu_info cpu_info_store;
 
 /* maps for VM objects */
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 char *bootinfo = NULL;		/* pointer to bootinfo structure */

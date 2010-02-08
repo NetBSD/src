@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.325 2009/12/10 14:13:48 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.326 2010/02/08 19:02:25 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.325 2009/12/10 14:13:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.326 2010/02/08 19:02:25 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.325 2009/12/10 14:13:48 matt Exp $");
 
 #include "ksyms.h"
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 void *msgbufaddr;

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.39 2009/01/12 17:24:21 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.40 2010/02/08 19:02:28 joerg Exp $
 #
 # INSTALL machine description file
 #
@@ -14,7 +14,6 @@ makeoptions 	COPTS="-Os"
 options 	NVNODE=50
 options 	NBUF=16
 options 	BUFPAGES=16
-options 	NMBCLUSTERS=64
 options 	NFS_V2_ONLY
 options 	NFS_DEFAULT_NIOTHREADS=1
 options 	USERCONF		# userconf(4) support
@@ -95,7 +94,7 @@ options 	INET		# Internet protocols
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
-#options 	GATEWAY		# IP forwarding + larger mb_map
+#options 	GATEWAY		# IP forwarding
 #options 	MROUTING	# Multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	PFIL_HOOKS	# packet filter hooks

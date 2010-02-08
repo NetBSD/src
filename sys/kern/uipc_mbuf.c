@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.132 2009/04/05 16:31:21 bouyer Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.133 2010/02/08 19:02:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,9 +62,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.132 2009/04/05 16:31:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.133 2010/02/08 19:02:33 joerg Exp $");
 
 #include "opt_mbuftrace.h"
+#include "opt_nmbclusters.h"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
@@ -122,7 +123,7 @@ static int m_copyback0(struct mbuf **, int, int, const void *, int, int);
 #define	M_COPYBACK0_EXTEND	0x0008	/* extend chain */
 
 static const char mclpool_warnmsg[] =
-    "WARNING: mclpool limit reached; increase NMBCLUSTERS";
+    "WARNING: mclpool limit reached; increase kern.mbuf.nmbclusters";
 
 MALLOC_DEFINE(M_MBUF, "mbuf", "mbuf");
 
@@ -157,6 +158,28 @@ do {									\
 	MCLREFDEBUGN((n), __FILE__, __LINE__);				\
 } while (/* CONSTCOND */ 0)
 
+static int
+nmbclusters_limit(void)
+{
+#ifdef PMAP_MAP_POOLPAGE
+	/* direct mapping, doesn't use space in kmem_map */
+	vsize_t max_size = physmem / 4;
+#else
+	vsize_t max_size = MIN(physmem / 4, nkmempages / 2);
+#endif
+
+	max_size = max_size * PAGE_SIZE / MCLBYTES;
+#ifdef NMBCLUSTERS_MAX
+	max_size = MIN(max_size, NMBCLUSTERS_MAX);
+#endif
+
+#ifdef NMBCLUSTERS
+	return MIN(max_size, NMBCLUSTERS);
+#else
+	return max_size;
+#endif
+}
+
 /*
  * Initialize the mbuf allocator.
  */
@@ -169,7 +192,7 @@ mbinit(void)
 
 	sysctl_kern_mbuf_setup();
 
-	mclpool_allocator.pa_backingmap = mb_map;
+	mclpool_allocator.pa_backingmap = kmem_map;
 
 	mb_cache = pool_cache_init(msize, 0, 0, 0, "mbpl",
 	    NULL, IPL_VM, mb_ctor, NULL, NULL);
@@ -181,6 +204,17 @@ mbinit(void)
 
 	pool_cache_set_drain_hook(mb_cache, m_reclaim, NULL);
 	pool_cache_set_drain_hook(mcl_cache, m_reclaim, NULL);
+
+	/*
+	 * Set an arbitrary default limit on the number of mbuf clusters.
+	 */
+#ifdef NMBCLUSTERS
+	nmbclusters = nmbclusters_limit();
+#else
+	nmbclusters = MAX(1024,
+	    (vsize_t)physmem * PAGE_SIZE / MCLBYTES / 16);
+	nmbclusters = MIN(nmbclusters, nmbclusters_limit());
+#endif
 
 	/*
 	 * Set the hard limit on the mclpool to the number of
@@ -215,8 +249,8 @@ mbinit(void)
 }
 
 /*
- * sysctl helper routine for the kern.mbuf subtree.  nmbclusters may
- * or may not be writable, and mblowat and mcllowat need range
+ * sysctl helper routine for the kern.mbuf subtree.
+ * nmbclusters, mblowat and mcllowat need range
  * checking and pool tweaking after being reset.
  */
 static int
@@ -229,11 +263,6 @@ sysctl_kern_mbuf(SYSCTLFN_ARGS)
 	node.sysctl_data = &newval;
 	switch (rnode->sysctl_num) {
 	case MBUF_NMBCLUSTERS:
-		if (mb_map != NULL) {
-			node.sysctl_flags &= ~CTLFLAG_READWRITE;
-			node.sysctl_flags |= CTLFLAG_READONLY;
-		}
-		/* FALLTHROUGH */
 	case MBUF_MBLOWAT:
 	case MBUF_MCLLOWAT:
 		newval = *(int*)rnode->sysctl_data;
@@ -251,6 +280,8 @@ sysctl_kern_mbuf(SYSCTLFN_ARGS)
 	switch (node.sysctl_num) {
 	case MBUF_NMBCLUSTERS:
 		if (newval < nmbclusters)
+			return (EINVAL);
+		if (newval > nmbclusters_limit())
 			return (EINVAL);
 		nmbclusters = newval;
 		pool_cache_sethardlimit(mcl_cache, nmbclusters,
@@ -433,14 +464,14 @@ mclpool_alloc(struct pool *pp, int flags)
 {
 	bool waitok = (flags & PR_WAITOK) ? true : false;
 
-	return ((void *)uvm_km_alloc_poolpage(mb_map, waitok));
+	return ((void *)uvm_km_alloc_poolpage(kmem_map, waitok));
 }
 
 static void
 mclpool_release(struct pool *pp, void *v)
 {
 
-	uvm_km_free_poolpage(mb_map, (vaddr_t)v);
+	uvm_km_free_poolpage(kmem_map, (vaddr_t)v);
 }
 
 /*ARGSUSED*/

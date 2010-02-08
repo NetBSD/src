@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS200,v 1.25 2009/12/24 09:29:36 kiyohara Exp $
+#	$NetBSD: OPENBLOCKS200,v 1.26 2010/02/08 19:02:28 joerg Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -111,7 +111,6 @@ options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
-options 	NMBCLUSTERS=1024
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.128 2010/01/03 03:53:34 dholland Exp $
+#	$NetBSD: INSTALL_TINY,v 1.129 2010/02/08 19:02:29 joerg Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -140,7 +140,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	NVNODE=50
 options 	NBUF=20
 options 	BUFPAGES=20
-options 	NMBCLUSTERS=64
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?

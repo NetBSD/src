@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2009/11/27 03:23:08 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2010/02/08 19:02:27 joerg Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2009/11/27 03:23:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2010/02/08 19:02:27 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -168,7 +168,6 @@ extern char cpu_model[];
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int	netboot;		/* Are we netbooting? */
