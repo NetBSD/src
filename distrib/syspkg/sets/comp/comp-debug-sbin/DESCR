@@ -1,6 +1,0 @@
-This package contains kgmon, a kernel debugging utility. kgmon is a tool
-used when profiling the operating system. When no arguments are supplied,
-kgmon indicates the state of operating system profiling as running, off,
-or not configured. (see config(8)) If the -p flag is specified, kgmon
-extracts profile data from the operating system and produces a gmon.out
-file suitable for later analysis by gprof(1).

@@ -1,9 +1,0 @@
-4: Unexpected token `foo'; expected start of test case
-5: Unexpected token `<<NEWLINE>>'; expected `:'
-6: Unexpected token `<<NEWLINE>>'; expected test case name
-8: Unexpected token `bar'; expected end of test case
-10: Unexpected token `<<NEWLINE>>'; expected `:'
-12: Unexpected token `<<NEWLINE>>'; expected test case name
-14: Test case name used in terminator does not match opening
-16: Unexpected token `<<NEWLINE>>'; expected `,'
-18: Unexpected token `<<NEWLINE>>'; expected passed, failed or skipped

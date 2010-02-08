@@ -1,4 +1,4 @@
-# $NetBSD: std,v 1.13 2009/10/21 21:12:05 rmind Exp $
+# $NetBSD: std,v 1.13.2.1 2010/02/08 05:01:09 uebayasi Exp $
 #
 # standard MI 'options'
 #
@@ -27,3 +27,5 @@ options	secmodel_bsd44	# Traditional 4.4BSD security model
 options	SCHED_4BSD
 
 pseudo-device	cpuctl
+
+options XIP

@@ -1,8 +1,0 @@
-$ORIGIN .
-sub.example.net		7200	IN DNSKEY 257 3 7 (
-					AwEAAcVJgMf71y0M2KfrhiAKIHkhS8MlgmKb
-					jkaBY56zZRAQMwHJyMODZcIgBQvPkxGw/1Yr
-					/5v3ZbOwVCj7zeYfve+tRsXXBEYTvo7POLE9
-					H0iMf69vq7Qxh82/q+LpBH1818iDhBn6q0f7
-					ww4Flo7B3u5zJf6FHul8JPx5UPSENnx3
-					) ; key id = 48516
