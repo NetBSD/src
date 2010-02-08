@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.963 2010/02/06 20:12:32 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.964 2010/02/08 21:45:31 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.963 $"
+#ident 		"GENERIC-$Revision: 1.964 $"
 
 maxusers	64		# estimated number of users
 
@@ -652,7 +652,8 @@ iic*	at piixpm?			# SMBus on PIIX4
 #itesio0 	at isa? port 0x2e
 
 # LM7[89] and compatible hardware monitors
-#lm0	at isa?	port 0x290		# other common: 0x280, 0x310
+# Use flags to select temp sensor type (see lm(4) man page for details)
+#lm0	at isa?	port 0x290 flags 0x0	# other common: 0x280, 0x310
 
 # SMSC LPC47B397 hardware monitor functions
 #smsc0	at isa? port 0x02e
