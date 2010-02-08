@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.33 2009/10/29 14:49:03 christos Exp $	*/
+/*	$NetBSD: fgen.l,v 1.34 2010/02/08 20:14:55 eeh Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -42,16 +42,15 @@
 #endif
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: fgen.l,v 1.33 2009/10/29 14:49:03 christos Exp $");
+__RCSID("$NetBSD: fgen.l,v 1.34 2010/02/08 20:14:55 eeh Exp $");
 #endif
 
 %}
 
-%option yylineno noinput
+%option yylineno
 
-decimal	[0-9.]
-hex	[0-9A-Fa-f.]
-octal	[0-7.]
+hex	[0-9A-Fa-f]
+hexdot	[0-9A-Fa-f.]
 white	[ \t\n\r\f]
 tail	{white}
 
@@ -90,6 +89,7 @@ char *myname = NULL;
 int offsetsize = 8;
 int defining = 0;
 int tokenizer = 0;
+int need_end0 = 1;
 
 #define PSTKSIZ		1024
 Cell parse_stack[PSTKSIZ];
@@ -101,7 +101,8 @@ YY_DECL;
 
 int debug = 0;
 #define ASSERT if (debug) assert
-#define STATE(y, x)	do { if (debug) printf( "%ld State %s: token `%s'\n", outpos, x, y); } while (0)
+#define STATE(y, x)	do { if (debug) printf( "%lx State %s: token `%s'\n", outpos, x, y); } while (0)
+int mark_fload = 0;
 
 %}
 
@@ -125,7 +126,7 @@ int debug = 0;
 
 \\[^\n]*\n		/* end of line comment -- keep looping */ { STATE(yytext, "EOL comment"); }
 
--?{hex}+		{ ltoken.type = TOK_NUMBER; ltoken.text = yytext;
+-?{hex}{hexdot}*	{ ltoken.type = TOK_NUMBER; ltoken.text = yytext;
 					return &ltoken; }
 
 \'.\'		{ ltoken.type = TOK_C_LIT; ltoken.text = yytext; return &ltoken; }
@@ -139,10 +140,10 @@ int debug = 0;
 \.\"{white}*(\\\"|[^"])*\"	{ ltoken.type = TOK_PSTRING; ltoken.text = yytext; 
 				return &ltoken; }
 
-"("		{ ltoken.type = TOK_COMMENT; ltoken.text = yytext;
-				return &ltoken; }
+[aA][bB][oO][rR][tT]\"{white}*(\\\"|[^"])*\" { ltoken.type = TOK_ABORT_S; 
+				ltoken.text = yytext;  return &ltoken; }
 
-")"		{ ltoken.type = TOK_ENDCOMMENT; ltoken.text = yytext;
+"("		{ ltoken.type = TOK_COMMENT; ltoken.text = yytext;
 				return &ltoken; }
 
 ":"		{ ltoken.type = TOK_COLON; ltoken.text = yytext;
@@ -199,6 +200,9 @@ int debug = 0;
 [eE][lL][sS][eE]	{ ltoken.type = TOK_ELSE; ltoken.text = yytext;
 				return &ltoken; }
 
+[eE][nN][dD]0	{ ltoken.type = TOK_END0; ltoken.text = yytext;
+				return &ltoken; }
+
 [eE][nN][dD][cC][aA][sS][eE]	{ ltoken.type = TOK_ENDCASE; ltoken.text = yytext;
 				return &ltoken; }
 
@@ -206,6 +210,13 @@ int debug = 0;
 				return &ltoken; }
 
 [eE][xX][tT][eE][rR][nN][aA][lL]	{ ltoken.type = TOK_EXTERNAL; ltoken.text = yytext;
+				return &ltoken; }
+
+[fF][cC][oO][dD][eE]-[vV][eE][rR][sS][iI][oO][nN]2	{ 
+			ltoken.type = TOK_FCODE_VERSION2; ltoken.text = yytext;
+				return &ltoken; }
+
+[fF][cC][oO][dD][eE]-[eE][nN][dD]	{ ltoken.type = TOK_FCODE_END; ltoken.text = yytext;
 				return &ltoken; }
 
 [fF][iI][eE][lL][dD]	{ ltoken.type = TOK_FIELD; ltoken.text = yytext;
@@ -241,9 +252,15 @@ int debug = 0;
 [oO][fF]		{ ltoken.type = TOK_OF; ltoken.text = yytext;
 				return &ltoken; }
 
+[oO][fF][fF][sS][eE][tT]16	{ ltoken.type = TOK_OFFSET16; ltoken.text = yytext;
+				return &ltoken; }
+
 [rR][eE][pP][eE][aA][tT]	{ ltoken.type = TOK_REPEAT; ltoken.text = yytext;
 				return &ltoken; }
 
+[sS][tT][aA][rR][tT][0124]	{ ltoken.type = TOK_STARTX; ltoken.text = yytext;
+				return &ltoken; }
+ 
 [tT][hH][eE][nN]	{ ltoken.type = TOK_THEN; ltoken.text = yytext;
 				return &ltoken; }
 
@@ -259,10 +276,10 @@ int debug = 0;
 [vV][aA][rR][iI][aA][bB][lL][eE]	{ ltoken.type = TOK_VARIABLE; ltoken.text = yytext;
 				return &ltoken; }
 
-[wW][hH][iI][lL][eE]	{ ltoken.type = TOK_WHILE; ltoken.text = yytext;
+[vV][eE][rR][sS][iI][oO][nN]1	{ ltoken.type = TOK_VERSION1; ltoken.text = yytext;
 				return &ltoken; }
 
-offset16		{ ltoken.type = TOK_OFFSET16; ltoken.text = yytext;
+[wW][hH][iI][lL][eE]	{ ltoken.type = TOK_WHILE; ltoken.text = yytext;
 				return &ltoken; }
 
 tokenizer\[	{ ltoken.type = TOK_BEGTOK; ltoken.text = yytext;
@@ -274,7 +291,7 @@ emit-byte		{ ltoken.type = TOK_EMIT_BYTE; ltoken.text = yytext;
 \]tokenizer	{ ltoken.type = TOK_ENDTOK; ltoken.text = yytext;
 				return &ltoken; }
 
-fload		{ ltoken.type = TOK_FLOAD; ltoken.text = yytext;
+[fF][lL][oO][aA][dD]	{ ltoken.type = TOK_FLOAD; ltoken.text = yytext;
 				return &ltoken; }
 
 
@@ -297,6 +314,7 @@ void usage(const char *);
 void tokenize(YY_BUFFER_STATE);
 int emit(const char *);
 int spit(long);
+int offspit(long);
 void sspit(const char *);
 int apply_macros(YY_BUFFER_STATE, const char *);
 int main(int argc, char *argv[]);
@@ -501,7 +519,7 @@ struct fcode fcodes[] = {
 		{ "c,",				0x00d0, 0, NULL, NULL },
 		{ "w,",				0x00d1, 0, NULL, NULL },
 		{ "l,",				0x00d2, 0, NULL, NULL },
-		{ "'",				0x00d3, 0, NULL, NULL },
+		{ ",",				0x00d3, 0, NULL, NULL },
 		{ "um*",			0x00d4, 0, NULL, NULL },
 		{ "um/mod",			0x00d5, 0, NULL, NULL },
 		{ "d+",				0x00d8, 0, NULL, NULL },
@@ -549,7 +567,7 @@ struct fcode fcodes[] = {
 		{ "mask",			0x0124, 0, NULL, NULL },
 		{ "get-msecs",			0x0125, 0, NULL, NULL },
 		{ "ms",				0x0126, 0, NULL, NULL },
-		{ "find-device",		0x0127, 0, NULL, NULL },
+		{ "finish-device",		0x0127, 0, NULL, NULL },
 		{ "decode-phys",		0x0128, 0, NULL, NULL },
 		{ "map-low",			0x0130, 0, NULL, NULL },
 		{ "sbus-intr>cpu",		0x0131, 0, NULL, NULL },
@@ -699,15 +717,15 @@ struct macro macros[] = {
 	{ "blank",	"bl fill", 0, NULL, NULL },
 	{ "/c*",	"chars", 0, NULL, NULL },
 	{ "ca1+",	"char+", 0, NULL, NULL },
-	{ "carret",	"b(lit) 00 00 00 0x0d", 0, NULL, NULL },
-	{ ".d",		"base @ swap 0x0a base ! . base !", 0, NULL, NULL },
+	{ "carret",	"b(lit) 00 00 00 h# 0d", 0, NULL, NULL },
+	{ ".d",		"base @ swap d# 0a base ! . base !", 0, NULL, NULL },
 	{ "decode-bytes", ">r over r@ + swap r@ - rot r>", 0, NULL, NULL },
 	{ "3drop",	"drop 2drop", 0, NULL, NULL },
 	{ "3dup",	"2 pick 2 pick 2 pick", 0, NULL, NULL },
 	{ "erase",	"0 fill", 0, NULL, NULL },
 	{ "false",	"0", 0, NULL, NULL },
-	{ ".h",		"base @ swap 0x10 base ! . base !", 0, NULL, NULL },
-	{ "linefeed",	"b(lit) 00 00 00 0x0a", 0, NULL, NULL },
+	{ ".h",		"base @ swap d# 10 base ! . base !", 0, NULL, NULL },
+	{ "linefeed",	"b(lit) 00 00 00 d# 0a", 0, NULL, NULL },
 	{ "/n*",	"cells", 0, NULL, NULL },
 	{ "na1+",	"cell+", 0, NULL, NULL },
 	{ "not",	"invert", 0, NULL, NULL },
@@ -767,6 +785,8 @@ cvt(const char *s, char **e, int base)
 void
 push(Cell val)
 {
+	if (debug > 1)
+		printf("push %lx\n", (long)val);
 	parse_stack[parse_stack_ptr++] = val;
 	if (parse_stack_ptr >= PSTKSIZ) {
 		(void)printf( "Parse stack overflow\n");
@@ -778,6 +798,8 @@ Cell
 pop(void)
 {
 	ASSERT(parse_stack_ptr);
+	if (debug > 1)
+		printf("pop %lx\n", (long)parse_stack[parse_stack_ptr-1]);
 	return parse_stack[--parse_stack_ptr];
 }
 
@@ -795,21 +817,23 @@ fadd(struct fcode *dict, struct fcode *new)
 {
 	int res = strcmp(dict->name, new->name);
 
-#ifdef DEBUG
 	new->type = FCODE;
 	ASSERT(dict->type == FCODE);
-#endif
-	/* Don't allow duplicate entries. */
-	if (!res) return (0);
+	if (!res) {
+		/* 
+		 * Duplicate entry.  Give the old name the new FCode
+		 * number. 
+		 */
+		dict->num = new->num;
+		return (0);
+	}
 	if (res < 0) {
 		if (dict->l)
 			return fadd(dict->l, new);
 		else {
-#ifdef DEBUG
-			if (debug > 1)
+			if (debug > 5)
 				(void)printf( "fadd: new FCode `%s' is %lx\n", 
 					      new->name, new->num);
-#endif
 			new->l = new->r = NULL;
 			dict->l = new;
 		}
@@ -817,11 +841,9 @@ fadd(struct fcode *dict, struct fcode *new)
 		if (dict->r)
 			return fadd(dict->r, new);
 		else {
-#ifdef DEBUG
-			if (debug > 1)
+			if (debug > 5)
 				(void)printf( "fadd: new FCode `%s' is %lx\n", 
 					      new->name, new->num);
-#endif
 			new->l = new->r = NULL;
 			dict->r = new;
 		}
@@ -839,12 +861,10 @@ flookup(struct fcode *dict, const char *str)
 	if (!dict) return (dict);
 
 	res = strcmp(dict->name, str);
-#ifdef DEBUG
 	ASSERT(dict->type == FCODE);
-	if (debug > 2)
+	if (debug > 5)
 		(void)printf( "flookup: `%s' and `%s' %s match\n", 
 			      str, dict->name, res?"don't":"do");
-#endif
 	if (!res) return (dict);
 	if (res < 0)
 		return (flookup(dict->l, str));
@@ -861,23 +881,23 @@ aadd(struct macro *dict, struct macro *new)
 {
 	int res = strcmp(dict->name, new->name);
 
-#ifdef DEBUG
 	new->type = MACRO;
 	ASSERT(dict->type == MACRO);
-#endif
-	/* Don't allow duplicate entries. */
-	if (!res) return (0);
+	if (!res) {
+		/* Duplicate name.  Replace the old macro */
+		dict->equiv = new->equiv;
+		/* We can't free the old equiv since it may be static data. */
+		return (0);
+	}
 	if (res < 0) {
 		if (dict->l)
 			return aadd(dict->l, new);
 		else {
 			new->l = new->r = NULL;
 			dict->l = new;
-#ifdef DEBUG
-			if (debug > 1)
+			if (debug > 5)
 				(void)printf( "aadd: new alias `%s' to `%s'\n", 
 					      new->name, new->equiv);
-#endif
 		}
 	} else {
 		if (dict->r)
@@ -885,11 +905,9 @@ aadd(struct macro *dict, struct macro *new)
 		else {
 			new->l = new->r = NULL;
 			dict->r = new;
-#ifdef DEBUG
-			if (debug > 1)
+			if (debug > 5)
 				(void)printf( "aadd: new alias `%s' to `%s'\n", 
 					      new->name, new->equiv);
-#endif
 		}
 	}
 	return (1);
@@ -904,9 +922,7 @@ alookup(struct macro *dict, const char *str)
 	int res;
 	if (!dict) return (dict);
 
-#ifdef DEBUG
 	ASSERT(dict->type == MACRO);
-#endif
 	res = strcmp(dict->name, str);
 	if (!res) return (dict);
 	if (res < 0)
@@ -929,29 +945,23 @@ initdic(void)
 	ASSERT(dictionary == NULL);
 	code->l = code->r = NULL;
 	dictionary = code;
-#ifdef DEBUG
 	code->type = FCODE;
-#endif
 
 	while ((++code)->name) {
 		if(!fadd(dictionary, code)) {
 			printf("init: duplicate dictionary entry %s\n", 
 			       code->name);
-			abort();
 		}
 	}
 
 	ASSERT(aliases == NULL);
 	aliases = alias;
 	alias->l = alias->r = NULL;
-#ifdef DEBUG
 	alias->type = MACRO;
-#endif
 	while ((++alias)->name) {
 		if(!aadd(aliases, alias)) {
 			printf("init: duplicate macro entry %s\n", 
 			       alias->name);
-			abort();
 		}
 	}
 
@@ -965,6 +975,9 @@ apply_macros(YY_BUFFER_STATE yinput, const char *str)
 	if (xform) {
 		YY_BUFFER_STATE newbuf;
 
+		if (debug > 1) 
+			printf("Expanding %s to %s\n", str, xform->equiv);
+
 		newbuf = yy_scan_string(xform->equiv);
 		yy_switch_to_buffer(newbuf);
 		tokenize(newbuf);
@@ -977,7 +990,7 @@ apply_macros(YY_BUFFER_STATE yinput, const char *str)
 void
 usage(const char *me)
 {
-	(void)fprintf(stderr, "%s: [-d level] [-o outfile] infile\n", me);
+	(void)fprintf(stderr, "%s: [-d level] [-o outfile] <infile>\n", me);
 	exit(1);
 }
 
@@ -998,6 +1011,7 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "d:o:")) != -1)
 		switch(ch) {
 		case 'd':
+			mark_fload = 1;
 			debug = atol(optarg);
 			break;
 		case 'o':
@@ -1036,14 +1050,14 @@ main(int argc, char *argv[])
 	tokenize(inbuf);
 	yy_delete_buffer(inbuf);
 	fclose(inf);
-	emit("end0");
+	if (need_end0) emit("end0");
 
 	/* Now calculate length and checksum and stick them in the header */
 	fheader->format = 0x08;
 	fheader->length = htonl(outpos);
 	fheader->checksum = 0;
 	for (i = sizeof(*fheader); i<outpos; i++)
-		fheader->checksum += outbuf[i];
+		fheader->checksum += (unsigned char)outbuf[i];
 	fheader->checksum = htons(fheader->checksum);
 
 	if ((outf = open(outfile, O_WRONLY|O_CREAT|O_TRUNC, 0666)) == -1)
@@ -1164,6 +1178,44 @@ tokenize(YY_BUFFER_STATE yinput)
 			emit("type");
 		}
 		break;
+		case TOK_ABORT_S:
+			STATE(token->text, "TOK_PSTRING:");
+		{
+			int len;
+			Cell value = -2;
+			char *p = token->text;
+
+			while (*p++ != ' '); /* Skip to the string */
+
+			len = strlen(p);
+			if (len > 255)
+				ERR_TOOLONG;
+
+			if (p[len-1] == '"') {
+				p[len-1] = 0;
+			}
+			emit("b?branch");
+			push(outpos);
+			offspit(0);
+			emit("b(\")");
+			sspit(p);
+			emit("type");
+			emit("cr");
+			emit("b(lit)");
+			spit((value>>24)&0x0ff);
+			spit((value>>16)&0x0ff);
+			spit((value>>8)&0x0ff);
+			spit(value&0x0ff);
+			emit("throw");
+			emit("b(>resolve)");
+			pos = outpos;
+			outpos = pop();
+			off = pos - outpos;
+			offspit(off);
+			outpos = pos;
+		}
+		break;
+
 		case TOK_TOKENIZE:
 			STATE(token->text, "TOK_TOKENIZE");
 			/* The next pass should tokenize the FCODE number */
@@ -1171,13 +1223,10 @@ tokenize(YY_BUFFER_STATE yinput)
 			break;
 		case TOK_COMMENT: 
 			STATE(token->text, "TOK_COMMENT:");
-			while (((token = yylex()) != NULL) && token->type != TOK_ENDCOMMENT)
-				;
-			break;
-		case TOK_ENDCOMMENT:
-			STATE(token->text, "TOK_ENDCOMMENT");
-			token_err(yylineno, infile, NULL,
-			    "ENDCOMMENT encountered outside comment");
+			do {
+				off = input();
+			} while ((off != ')') && (off != '\n') && 
+				(off != EOF));
 			break;
 		case TOK_COLON: 
 			STATE(token->text, "TOK_COLON:");
@@ -1191,13 +1240,16 @@ tokenize(YY_BUFFER_STATE yinput)
 			fcode = malloc(sizeof(*fcode));
 			fcode->num = nextfcode++;
 			fcode->name = strdup(token->text);
-			if (!fadd(dictionary, fcode))
-				token_err(yylineno, infile, NULL,
-				    "Duplicate definition: `%s'\n", fcode->name);
-#ifdef DEBUG
+			if (!fadd(dictionary, fcode)) {
+				/* Duplicate definition.  Free the memory. */
+				if (debug)
+					(void)printf("%s: duplicate FCode\n",
+						token->text);
+				free(__UNCONST(fcode->name));
+				free(fcode);
+			}
 			if (debug)
 				(void)printf("Adding %s to dictionary\n", token->text);		
-#endif
 			if (state == 0)
 				emit("new-token");
 			else {
@@ -1230,11 +1282,8 @@ tokenize(YY_BUFFER_STATE yinput)
 			STATE(token->text, "TOK_AGAIN");
 			emit("bbranch");
 			pos = pop();
-			pos -= outpos;
-			if (offsetsize == 16) {
-				spit((pos>>8)&0xff);
-			}
-			spit(pos&0xff);
+			pos = pos - outpos;
+			offspit(pos);
 			break;
 		case TOK_ALIAS:
 			STATE(token->text, "TOK_ALIAS");
@@ -1254,16 +1303,13 @@ tokenize(YY_BUFFER_STATE yinput)
 			alias->name = strdup(token->text);
 			token = yylex();
 			if (token == NULL) {
-				free(__UNCONST(alias->name));
-				free(alias);
 				(void)printf( "EOF in alias definition\n");
 				return;
 			}			
 			alias->equiv = strdup(token->text);
 			if (!aadd(aliases, alias)) {
-				(void)printf( "ERROR: Duplicate alias %s\n",
-					      alias->name);
-				exit(1);
+				free(__UNCONST(alias->name));
+				free(alias);
 			}
 		}
 		break;
@@ -1406,6 +1452,10 @@ tokenize(YY_BUFFER_STATE yinput)
 			STATE(token->text, "TOK_DECIMAL");
 			if (token->text[1] != '#') {
 				if (defining) {
+					emit("b(lit)");
+					spit(0);
+					spit(0);
+					spit(0);
 					spit(10);
 					emit("base");
 					emit("!");
@@ -1504,11 +1554,14 @@ tokenize(YY_BUFFER_STATE yinput)
 			else
 				emit("b(do)");
 			push(outpos);
-			if (offsetsize == 16) {
-				spit(0);
-			}
-			spit(0);	/* Place holder for later */
+			offspit(0);	/* Place holder for later */
 			push(outpos);
+			break;
+		case TOK_END0:
+			STATE(token->text, "TOK_END0");
+			emit("end0");
+			/* Remember we already generated end0 */
+			need_end0 = 0;
 			break;
 		case TOK_ELSE:
 			STATE(token->text, "TOK_ELSE");
@@ -1517,46 +1570,47 @@ tokenize(YY_BUFFER_STATE yinput)
 			emit("bbranch");
 			/* Save where we are now. */
 			push(outpos);
-			if (offsetsize == 16) {
-				spit(0);	/* Place holder for later */
-			}
-			spit(0);	/* Place holder for later */
+			offspit(0);	/* Place holder for later */
 			emit("b(>resolve)");
 			/* Rewind and patch the if branch */
 			pos = outpos;
 			outpos = off;
 			off = pos - off;
-			if (offsetsize == 16) {
-				spit(0);	/* Place holder for later */
-			}
-			spit(0);	/* Place holder for later */
+			offspit(off);	/* Place holder for later */
 			/* revert to the end */
 			outpos = pos;
 			break;
 		case TOK_ENDCASE: 
 			STATE(token->text, "TOK_ENDCASE:");
+			emit("b(endcase)");
 			pos = outpos; /* Remember where we need to branch to */
 
 			/* Thread our way backwards and install proper offsets */
 			off = pop();
 			while (off) {
-				int tmp;
+				int disp;
+				int next;
 
 				/* Move to this offset */
 				outpos = off;
 				/* Load next offset to process */
-				tmp = outbuf[outpos];
+				disp = (signed char)(outbuf[outpos]);
+				if (offsetsize == 16) {
+					disp = (disp << 8) | 
+						(unsigned char)outbuf[outpos+1];
+				}
+				next = outpos + disp;
+				if (debug > 3)
+					printf("Next endof: %x at %x\n", 
+						disp, next);
 
 				/* process this offset */
 				off = pos - outpos;
-				if (offsetsize == 16) {
-					spit((off>>8)&0xff);
-				}
-				spit(off&0xff);
-				off = tmp;
+				offspit(off);
+				if ((off = disp))
+					off = next;
 			}
 			outpos = pos;
-			emit("b(endcase)");
 			break;
 		case TOK_ENDOF:
 			STATE(token->text, "TOK_ENDOF");
@@ -1568,18 +1622,17 @@ tokenize(YY_BUFFER_STATE yinput)
 			 */
 			pos = pop();	/* get position of prev link. */
 			push(outpos);	/* save position of this link. */
-			spit(pos);	/* save potision of prev link. */
-			if (offsetsize == 16) {
-				spit(0);
-			}
+			if (pos)
+				/* save potision of prev link. */
+				offspit(pos - outpos);
+			else
+				/* This is the first statement */
+				offspit(0);
 			pos = outpos;
 			/* Now point the offset from b(of) here. */
 			outpos = off;
-			off = outpos - off;
-			if (offsetsize == 16) {
-				spit((off>>8)&0xff);
-			}
-			spit(off&0xff);
+			off = pos - off;
+			offspit(off);
 			/* Restore position */
 			outpos = pos;
 			break;
@@ -1587,6 +1640,24 @@ tokenize(YY_BUFFER_STATE yinput)
 			STATE(token->text, "TOK_EXTERNAL");
 			state = TOK_EXTERNAL;
 			break;
+		case TOK_FCODE_VERSION2:
+			/* This is actually a tokenizer directive. */
+			STATE(token->text, "TOK_FCODE_VERSION2");
+			offsetsize = 16;
+			pos = outpos;
+			outpos = 0;
+			emit("start1");
+			outpos = pos;
+			break;
+		case TOK_FCODE_END:
+			/* 
+			 * Another tokenizer directive.
+			 *
+			 * This should generate end0 and finish filling in
+			 * the FCode header.  But that's all done in main().
+			 */
+			STATE(token->text, "TOK_FCODE_END");
+			return;
 		case TOK_FIELD:
 			STATE(token->text, "TOK_FIELD");
 	
@@ -1620,6 +1691,10 @@ tokenize(YY_BUFFER_STATE yinput)
 			STATE(token->text, "TOK_HEX");
 			if (token->text[1] != '#') {
 				if (defining) {
+					emit("b(lit)");
+					spit(0);
+					spit(0);
+					spit(0);
 					spit(16);
 					emit("base");
 					emit("!");
@@ -1668,11 +1743,6 @@ tokenize(YY_BUFFER_STATE yinput)
 			STATE(token->text, "TOK_HEADERS");
 			state = TOK_HEADERS;
 			break;
-		case TOK_OFFSET16:
-			STATE(token->text, "TOK_OFFSET16");
-			offsetsize = 16;
-			emit("offset16");
-			break;
 		case TOK_IF:
 			STATE(token->text, "TOK_IF");
 			/*
@@ -1680,10 +1750,7 @@ tokenize(YY_BUFFER_STATE yinput)
 			 */
 			emit("b?branch");
 			push(outpos);
-			if (offsetsize == 16) {
-				spit(0);	/* Place holder for later */
-			}
-			spit(0);	/* Place holder for later */
+			offspit(0);	/* Place holder for later */
 			break;
 		case TOK_LEAVE:
 			STATE(token->text, "TOK_LEAVE");
@@ -1699,18 +1766,12 @@ tokenize(YY_BUFFER_STATE yinput)
 			/* First do backwards branch of loop */
 			pos = pop();
 			off = pos - outpos;
-			if (offsetsize == 16) {
-				spit((off>>8)&0xff);
-			}
-			spit(off&0xff);
+			offspit(off);
 			/* Now do forward branch of do */
 			pos = outpos;
 			outpos = pop();
 			off = pos - outpos;
-			if (offsetsize == 16) {
-				spit((off>>8)&0xff);
-			}
-			spit(off&0xff);
+			spit(off);
 			/* Restore output position */
 			outpos = pos;
 			break;
@@ -1775,10 +1836,12 @@ tokenize(YY_BUFFER_STATE yinput)
 			 */
 			emit("b(of)");
 			push(outpos);
-			if (offsetsize == 16) {
-				spit(0);
-			}
-			spit(0);	/* Place holder for later */
+			offspit(0);	/* Place holder for later */
+			break;
+		case TOK_OFFSET16:
+			STATE(token->text, "TOK_OFFSET16");
+			offsetsize = 16;
+			emit("offset16");
 			break;
 		case TOK_REPEAT:
 			STATE(token->text, "TOK_REPEAT");
@@ -1787,21 +1850,24 @@ tokenize(YY_BUFFER_STATE yinput)
 			off = pop();
 			/* First the offset for the branch back to the begin */
 			off -= outpos;
-			if (offsetsize == 16) {
-				spit((off>>8)&0xff);
-			}
-			spit(off&0xff);
+			offspit(off);
 			emit("b(>resolve)");
 			/* Now point the offset of the while here. */
 			off = outpos;
 			outpos = pos;
 			pos = off - pos;
-			if (offsetsize == 16) {
-				spit((pos>>8)&0xff);
-			}
-			spit(pos&0xff);
+			offspit(pos);
 			/* Return to the end of the output */
 			outpos = off;
+			break;
+		case TOK_STARTX:
+			/* Put a "startX" at addr 0. */
+			STATE(token->text, "TOK_FCODE_VERSION2");
+			offsetsize = 16;
+			pos = outpos;
+			outpos = 0;
+			emit(token->text);
+			outpos = pos;
 			break;
 		case TOK_THEN:
 			STATE(token->text, "TOK_THEN");
@@ -1809,10 +1875,7 @@ tokenize(YY_BUFFER_STATE yinput)
 			pos = outpos;
 			outpos = pop();
 			off = pos - outpos;
-			if (offsetsize == 16) {
-				spit((off>>8)&0xff);
-			}
-			spit(off&0xff);
+			offspit(off);
 			outpos = pos;
 			break;
 		case TOK_TO:
@@ -1825,10 +1888,7 @@ tokenize(YY_BUFFER_STATE yinput)
 			emit("b?branch");
 			pos = pop();
 			pos -= outpos;
-			if (offsetsize == 16) {
-				spit((pos>>8)&0xff);
-			}
-			spit(pos&0xff);
+			offspit(pos);
 			break;
 		case TOK_VALUE:
 			STATE(token->text, "TOK_VALUE");
@@ -1886,14 +1946,20 @@ tokenize(YY_BUFFER_STATE yinput)
 			spit(fcode->num);
 			emit("b(variable)");
 			break;
+		case TOK_VERSION1:
+			/* This is actually a tokenizer directive. */
+			STATE(token->text, "TOK_FCODE_VERSION1");
+			offsetsize = 8;
+			pos = outpos;
+			outpos = 0;
+			emit("version1");
+			outpos = pos;
+			break;
 		case TOK_WHILE:
 			STATE(token->text, "TOK_WHILE");
 			emit("b?branch");
 			push(outpos);
-			if (offsetsize == 16) {
-				spit(0);
-			}
-			spit(0);
+			offspit(0);
 			break;
 
 			/* Tokenizer directives */
@@ -1910,26 +1976,63 @@ tokenize(YY_BUFFER_STATE yinput)
 			tokenizer = 0;
 			break;
 		case TOK_FLOAD:
-			STATE(token->text, "TOK_FLOAD");
-			/* Parse a different file for a while */
-			token = yylex();
-			if ((inf = fopen(token->text, "r")) == NULL) {
-				(void)printf("%s: Could not open %s: %s\n",
-					      myname, token->text, strerror(errno));
-				break;
-			}
-			inbuf = yy_create_buffer(inf, YY_BUF_SIZE);
-			yy_switch_to_buffer(inbuf);
 			{
 				char *oldinfile = infile;
 
-				infile = token->text;
+				STATE(token->text, "TOK_FLOAD");
+				/* Parse a different file for a while */
+				token = yylex();
+				if ((inf = fopen(token->text, "r")) == NULL) {
+					(void)printf("%s: Could not "
+						"open %s: %s\n",
+						myname, token->text,
+						strerror(errno));
+					break;
+				}
+				infile = strdup(token->text);
+				if (mark_fload) {
+					/* 
+					 * Insert commands to print out the
+					 * filename into the instruction
+					 * stream
+					 */
+					emit("b(\")");
+					sspit("fload-ing ");
+					emit("type");
+					emit("b(\")");
+					sspit(infile);
+					emit("type");
+					emit("cr");
+					emit(".s");
+				}
+				inbuf = yy_create_buffer(inf, YY_BUF_SIZE);
+				yy_switch_to_buffer(inbuf);
+
+				printf("======= fload file %s\n", infile);
 				tokenize(inbuf);
+				printf("======= done file %s\n", infile);
+				yy_switch_to_buffer(yinput);
+				yy_delete_buffer(inbuf);
+				fclose(inf);
+				if (mark_fload) {
+					/* 
+					 * Insert commands to print out the
+					 * filename into the instruction
+					 * stream
+					 */
+					emit("b(\")");
+					sspit("fload-ed ");
+					emit("type");
+					emit("b(\")");
+					sspit(infile);
+					emit("type");
+					emit("cr");
+					emit(".s");
+					emit("cr");
+				}
+				free(infile);
 				infile = oldinfile;
 			}
-			yy_switch_to_buffer(yinput);
-			yy_delete_buffer(inbuf);
-			fclose(inf);
 			break;
 		case TOK_OTHER:
 			STATE(token->text, "TOK_OTHER");
@@ -1947,8 +2050,12 @@ tokenize(YY_BUFFER_STATE yinput)
 				emit("drop");
 				emit("execute");
 #else
-				(void)printf( "%s: undefined token `%s'\n",
-					      myname, token->text);
+				printf("%s:%d: undefined token %s\n",
+					infile, yylineno, yytext);
+				exit(1);
+				token_err(yylineno, infile, yytext,
+					"%s: undefined token `%s'\n",
+					myname, token->text);
 				fflush(stderr);
 				exit(1);
 #endif
@@ -1992,14 +2099,12 @@ emit(const char *str)
 	struct fcode *code;
 	if ((code = flookup( dictionary, str)))
 		spit(code->num);
-#ifdef DEBUG
 	if (debug > 1) {
 		if (code)
 			(void)printf( "emitting `%s'\n", code->name);
 		else
 			(void)printf( "emit: not found `%s'\n", str);
 	}
-#endif
 	return (code == NULL);
 }
 
@@ -2024,7 +2129,7 @@ spit(long n)
 			exit(1);
 		}
 	}
-	if (debug > 1) printf("spitting %2.2x\n", (unsigned char)n);
+	if (debug > 3) printf("%lx: spitting %2.2x\n", outpos, (unsigned char)n);
 	outbuf[outpos++] = n;
 	return (count);
 }
@@ -2041,13 +2146,40 @@ sspit(const char *s)
 		(void)printf( "string length %d too long\n", len);
 		return;
 	}
-#ifdef DEBUG
-	if (debug > 1)
+	if (debug > 2)
 		(void)printf( "sspit: len %d str `%s'\n", len, s);
-#endif
 	spit(len);
-	while (*s)
+	while (len--)
 		spit(*s++);
+}
+
+/*
+ * Spit out an offset.  Offsets can be 8 or 16 bits.
+ * Bail if the value overflows.  This is a little complicated since
+ * offsets can be negative numbers.
+ */
+int
+offspit(long n)
+{
+
+	if (offsetsize == 16) {
+		volatile int16_t off16 = n;
+
+		if (n != off16)
+			token_err(yylineno, infile, NULL,
+				"Offset16 offset overflow: %lx != %x\n",
+				n, off16);
+		spit((n>>8) & 0xff);
+		return spit(n & 0xff);
+	} else {
+		volatile int8_t off8 = n;
+
+		if (n != off8)
+			token_err(yylineno, infile, NULL,
+				"Offset8 offset overflow: %lx != %x\n",
+				n, off8);
+		return spit(n & 0x0ffL);
+	}
 }
 
 int 
