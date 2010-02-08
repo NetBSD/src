@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.49 2008/10/13 12:44:46 pgoyette Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.50 2010/02/08 21:42:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.49 2008/10/13 12:44:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.50 2010/02/08 21:42:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.49 2008/10/13 12:44:46 pgoyette Exp $")
 static int lm_match(struct lm_softc *);
 static int wb_match(struct lm_softc *);
 static int def_match(struct lm_softc *);
+static void wb_temp_diode_type(struct lm_softc *, int);
 
 static void lm_refresh(void *);
 
@@ -1762,11 +1763,59 @@ def_match(struct lm_softc *sc)
 	return 1;
 }
 
+static void
+wb_temp_diode_type(struct lm_softc *sc, int diode_type)
+{
+	int regval, banksel;
+
+	banksel = (*sc->lm_readreg)(sc, WB_BANKSEL);
+	switch (diode_type) {
+	    case 1:	/* Switch to Pentium-II diode mode */
+		lm_generic_banksel(sc, WB_BANKSEL_B0);
+		regval = (*sc->lm_readreg)(sc, WB_BANK0_VBAT);
+		regval |= 0x0e;
+		(*sc->lm_writereg)(sc, WB_BANK0_VBAT, regval);
+		regval = (*sc->lm_readreg)(sc, WB_BANK0_RESVD1);
+		regval |= 0x70;
+		(*sc->lm_writereg)(sc, WB_BANK0_RESVD1, 0x0);
+		lm_generic_banksel(sc, banksel);
+		aprint_verbose_dev(sc->sc_dev, "Pentium-II diode temp sensors\n");
+		break;
+	    case 2:	/* Switch to 2N3904 mode */
+		lm_generic_banksel(sc, WB_BANKSEL_B0);
+		regval = (*sc->lm_readreg)(sc, WB_BANK0_VBAT);
+		regval |= 0xe;
+		(*sc->lm_writereg)(sc, WB_BANK0_VBAT, regval);
+		regval = (*sc->lm_readreg)(sc, WB_BANK0_RESVD1);
+		regval &= ~0x70;
+		(*sc->lm_writereg)(sc, WB_BANK0_RESVD1, 0x0);
+		lm_generic_banksel(sc, banksel);
+		aprint_verbose_dev(sc->sc_dev, "2N3904 bipolar temp sensors\n");
+		break;
+	    case 4:	/* Switch to generic thermistor mode */
+		lm_generic_banksel(sc, WB_BANKSEL_B0);
+		regval = (*sc->lm_readreg)(sc, WB_BANK0_VBAT);
+		regval |= 0xe;
+		(*sc->lm_writereg)(sc, WB_BANK0_VBAT, regval);
+		lm_generic_banksel(sc, banksel);
+		aprint_verbose_dev(sc->sc_dev, "Thermistor temp sensors\n");
+		break;
+	    case 0:	/* Unspecified - use default */
+		aprint_verbose_dev(sc->sc_dev, "Using default temp sensors\n");
+		break;
+	    default:
+		aprint_error_dev(sc->sc_dev,
+				 "Ignoring invalid temp sensor mode %d\n",
+				 diode_type);
+		break;
+	}
+}
+
 static int
 wb_match(struct lm_softc *sc)
 {
 	const char *model = NULL;
-	int banksel, vendid, devid;
+	int banksel, vendid, devid, cf_flags;
 
 	aprint_normal("\n");
 	/* Read vendor ID */
@@ -1784,12 +1833,14 @@ wb_match(struct lm_softc *sc)
 	devid = (*sc->lm_readreg)(sc, LMD_CHIPID);
 	sc->chipid = (*sc->lm_readreg)(sc, WB_BANK0_CHIPID);
 	lm_generic_banksel(sc, banksel);
+	cf_flags = device_cfdata(sc->sc_dev)->cf_flags;;
 	DPRINTF(("%s: winbond chip id 0x%x\n", __func__, sc->chipid));
 
 	switch(sc->chipid) {
 	case WB_CHIPID_W83627HF:
 		model = "W83627HF";
 		lm_setup_sensors(sc, w83627hf_sensors);
+		wb_temp_diode_type(sc, cf_flags);
 		break;
 	case WB_CHIPID_W83627THF:
 		model = "W83627THF";
