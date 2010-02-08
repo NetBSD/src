@@ -1,6 +1,0 @@
-#!/bin/sh
-chat -t 100 -v ''	'ATZ' \
-      'OK'		'AT+CGDCONT=1,"IP","ISP.CINGULAR"' \
-      'OK' 		'ATDT*99***1#' \
-      TIMEOUT		120 \
-      'CONNECT'   	'\c'

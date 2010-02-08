@@ -1,7 +1,0 @@
-#!/bin/sh
-#
-#	Shell script to start the dnssec-zkt command
-#	out of the view directory
-#
-
-ZKT_CONFFILE=`pwd`/dnssec.conf ../../dnssec-zkt --view intern "$@"
