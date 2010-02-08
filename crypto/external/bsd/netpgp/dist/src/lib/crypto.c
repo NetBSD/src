@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.18 2009/12/22 06:03:24 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.19 2010/02/08 17:19:12 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -219,22 +219,21 @@ static __ops_cb_ret_t
 write_parsed_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	const __ops_contents_t	*content = &pkt->u;
-	static unsigned		 skipping;	/* XXX - put skipping into pkt? */
 
 	if (__ops_get_debug_level(__FILE__)) {
 		printf("write_parsed_cb: ");
-		__ops_print_packet(pkt);
+		__ops_print_packet(&cbinfo->printstate, pkt);
 	}
-	if (pkt->tag != OPS_PTAG_CT_UNARMOURED_TEXT && skipping) {
+	if (pkt->tag != OPS_PTAG_CT_UNARMOURED_TEXT && cbinfo->printstate.skipping) {
 		puts("...end of skip");
-		skipping = 0;
+		cbinfo->printstate.skipping = 0;
 	}
 	switch (pkt->tag) {
 	case OPS_PTAG_CT_UNARMOURED_TEXT:
 		printf("OPS_PTAG_CT_UNARMOURED_TEXT\n");
-		if (!skipping) {
+		if (!cbinfo->printstate.skipping) {
 			puts("Skipping...");
-			skipping = 1;
+			cbinfo->printstate.skipping = 1;
 		}
 		fwrite(content->unarmoured_text.data, 1,
 		       content->unarmoured_text.length, stdout);
