@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.250 2009/12/07 11:28:37 nakayama Exp $ */
+/*	$NetBSD: machdep.c,v 1.251 2010/02/08 19:02:32 joerg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.250 2009/12/07 11:28:37 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.251 2010/02/08 19:02:32 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -146,7 +146,6 @@ int sigpid = 0;
 #endif
 #endif
 
-struct vm_map *mb_map = NULL;
 extern vaddr_t avail_end;
 
 int	physmem;
@@ -181,7 +180,6 @@ cpu_startup(void)
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
 #endif
-	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 
 #ifdef DEBUG
@@ -195,14 +193,6 @@ cpu_startup(void)
 	/*identifycpu();*/
 	format_bytes(pbuf, sizeof(pbuf), ctob((uint64_t)physmem));
 	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-        mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;

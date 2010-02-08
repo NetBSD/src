@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.108 2009/12/18 23:22:28 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.109 2010/02/08 19:02:27 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2009/12/18 23:22:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2010/02/08 19:02:27 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -97,7 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2009/12/18 23:22:28 matt Exp $");
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int	physmem;		/* Total physical memory */

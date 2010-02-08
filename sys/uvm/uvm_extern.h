@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.161 2009/11/21 17:45:02 rmind Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.162 2010/02/08 19:02:33 joerg Exp $	*/
 
 /*
  *
@@ -551,7 +551,6 @@ void	uvm_reclaim_hook_del(struct uvm_reclaim_hook *);
  */
 extern struct vm_map *kernel_map;
 extern struct vm_map *kmem_map;
-extern struct vm_map *mb_map;
 extern struct vm_map *phys_map;
 
 /*

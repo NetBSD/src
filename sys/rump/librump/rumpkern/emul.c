@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.121 2010/01/31 15:12:42 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.122 2010/02/08 19:02:33 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.121 2010/01/31 15:12:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.122 2010/02/08 19:02:33 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -73,7 +73,6 @@ int doing_shutdown;
 const int schedppq = 1;
 int hardclock_ticks;
 bool mp_online = false;
-struct vm_map *mb_map;
 struct timeval boottime;
 struct emul emul_netbsd;
 int cold = 1;

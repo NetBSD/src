@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.301 2010/01/26 03:06:01 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.302 2010/02/08 19:02:31 joerg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.301 2010/01/26 03:06:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.302 2010/02/08 19:02:31 joerg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -135,7 +135,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.301 2010/01/26 03:06:01 mrg Exp $");
 #include <sparc/dev/power.h>
 #endif
 
-struct vm_map *mb_map = NULL;
 extern paddr_t avail_end;
 
 int	physmem;
@@ -168,7 +167,6 @@ cpu_startup(void)
 	int opmapdebug = pmapdebug;
 #endif
 	struct pcb *pcb;
-	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	paddr_t pa;
 	char pbuf[9];
@@ -313,7 +311,6 @@ cpu_startup(void)
 #endif
 	}
 
-	minaddr = 0;
 	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		/*
 		 * Allocate DMA map for 24-bit devices (le, ie)
@@ -325,12 +322,6 @@ cpu_startup(void)
 		if (dvmamap24 == NULL)
 			panic("unable to allocate DVMA map");
 	}
-
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-        mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;

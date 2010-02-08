@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.132 2009/12/16 23:19:07 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.133 2010/02/08 19:02:31 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.132 2009/12/16 23:19:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.133 2010/02/08 19:02:31 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -116,7 +116,6 @@ struct sgimips_intrhand intrtab[NINTR];
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int mach_type = 0;	/* IPxx type */

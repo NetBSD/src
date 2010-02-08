@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2009/12/14 00:46:03 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2010/02/08 19:02:28 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2009/12/14 00:46:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2010/02/08 19:02:28 joerg Exp $");
 
 #include "opt_ddb.h"
 
@@ -73,7 +73,6 @@ vsize_t kseg2iobufsize;		/* to reserve PTEs for KSEG2 I/O space */
 struct cpu_info cpu_info_store;
 
 /* maps for VM objects */
-struct vm_map *mb_map;
 struct vm_map *phys_map;
 
 /* referenced by mips_machdep.c:cpu_dump() */

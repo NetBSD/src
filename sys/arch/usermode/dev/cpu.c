@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.6 2009/11/27 03:23:14 rmind Exp $ */
+/* $NetBSD: cpu.c,v 1.7 2010/02/08 19:02:32 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.6 2009/11/27 03:23:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7 2010/02/08 19:02:32 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -307,17 +307,11 @@ cpu_initclocks(void)
 void
 cpu_startup(void)
 {
-	extern struct vm_map *mb_map;
-	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 
 	printf("%s%s", copyright, version);
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);

@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_DFC,v 1.8 2009/12/24 09:26:43 kiyohara Exp $
+#	$NetBSD: VIRTEX_DFC,v 1.9 2010/02/08 19:02:28 joerg Exp $
 #
 # VIRTEX_DFC
 #
@@ -126,7 +126,6 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
-options 	NMBCLUSTERS=4096
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!

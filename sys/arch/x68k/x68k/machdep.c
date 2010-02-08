@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.164 2009/12/10 14:13:53 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165 2010/02/08 19:02:32 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.164 2009/12/10 14:13:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165 2010/02/08 19:02:32 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -151,7 +151,6 @@ char	machine[] = MACHINE;	/* from <machine/param.h> */
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 extern paddr_t avail_start, avail_end;
@@ -296,13 +295,6 @@ cpu_startup(void)
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
-
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
-				 false, NULL);
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;

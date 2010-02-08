@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 2009/12/14 00:45:59 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 2010/02/08 19:02:25 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2009/12/14 00:45:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2010/02/08 19:02:25 joerg Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -187,7 +187,6 @@ struct p6032_config p6032_configuration;
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int	physmem;		/* # pages of physical memory */

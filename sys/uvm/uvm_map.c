@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.286 2009/12/15 06:15:11 matt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.287 2010/02/08 19:02:33 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.286 2009/12/15 06:15:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.287 2010/02/08 19:02:33 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2332,7 +2332,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			 * if the map is non-pageable, any pages mapped there
 			 * must be wired and entered with pmap_kenter_pa(),
 			 * and we should free any such pages immediately.
-			 * this is mostly used for kmem_map and mb_map.
+			 * this is mostly used for kmem_map.
 			 */
 
 			if ((entry->flags & UVM_MAP_KMAPENT) == 0) {

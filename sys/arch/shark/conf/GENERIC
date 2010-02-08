@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.87 2010/01/18 23:40:06 jmmv Exp $
+#	$NetBSD: GENERIC,v 1.88 2010/02/08 19:02:31 joerg Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.87 $"
+#ident		"GENERIC-$Revision: 1.88 $"
 
 # estimated number of users
 maxusers	32
@@ -17,7 +17,6 @@ maxusers	32
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	HZ=64
 #options 	NTP		# NTP phase/frequency locked loop
-options 	NMBCLUSTERS=1024 # XXX, temporarily required
 #options 	BOOT_QUIETLY	# twiddle instead of normal boot msg output
 
 # CPU options

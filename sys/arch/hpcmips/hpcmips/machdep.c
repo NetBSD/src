@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.108 2010/01/21 01:23:14 pooka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.109 2010/02/08 19:02:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2010/01/21 01:23:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2010/02/08 19:02:29 joerg Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -219,7 +219,6 @@ static char kernel_path[] = KLOADER_KERNEL_PATH;
 #endif /* KLOADER */
 
 /* maps for VM objects */
-struct vm_map *mb_map;
 struct vm_map *phys_map;
 
 /* physical memory */

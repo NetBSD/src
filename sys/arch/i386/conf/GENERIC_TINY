@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.122 2010/01/03 03:53:34 dholland Exp $
+#	$NetBSD: GENERIC_TINY,v 1.123 2010/02/08 19:02:29 joerg Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -42,9 +42,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	SYSVSEM		# System V-like semaphores
 #options 	SYSVSHM		# System V-like memory sharing
 #options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
-
-options 	NMBCLUSTERS=256
-
 
 #options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

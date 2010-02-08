@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.26 2009/12/14 00:46:05 matt Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.27 2010/02/08 19:02:30 joerg Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -124,15 +124,4 @@
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 
-#ifndef NMBCLUSTERS
-#if defined(_KERNEL_OPT)
-#include "opt_gateway.h"
-#endif
-
-#ifdef GATEWAY
-#define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
-#else
-#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
-#endif
-#endif
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.15 2009/12/11 18:57:44 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.16 2010/02/08 19:02:29 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -138,7 +138,6 @@
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0x40000000-PAGE_SIZE*NPTEPG))
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 /* # of kernel PT pages (initial only, can grow dynamically) */

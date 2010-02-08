@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 2009/12/10 14:13:52 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65 2010/02/08 19:02:32 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -153,7 +153,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2009/12/10 14:13:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2010/02/08 19:02:32 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -234,7 +234,6 @@ extern u_int bufpages;
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int	physmem;
@@ -344,13 +343,6 @@ cpu_startup(void)
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
-
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
-				 false, NULL);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
