@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1355 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1356 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -543,3 +543,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		Interface driver. [pgoyette 20100206]
 	uthum(4): Add a driver for TEMPer and TEMPerHUM usb thermometers.
 		Adapted from OpenBSD [tonio 20100206]
+	network: Derive the mbuf cluster (NMBCLUSTERS) at boot time from
+		the available memory.  The default can be raised by changing
+		kern.mbuf.nmbclusters. [joerg 20100208]
