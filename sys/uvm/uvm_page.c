@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.2 2010/02/08 05:53:05 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.3 2010/02/08 06:14:57 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.2 2010/02/08 05:53:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.3 2010/02/08 06:14:57 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -869,34 +869,42 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
  * vm_physseg_find: find vm_physseg structure that belongs to a PA
  */
 
+#define	VM_PHYSSEG_OP_PF	1
+#define	VM_PHYSSEG_OP_PG	2
+
 #if VM_PHYSSEG_MAX == 1
-static inline int vm_physseg_find_contig(struct vm_physseg *, int, paddr_t, int *);
+#define	VM_PHYSSEG_FIND	vm_physseg_find_contig
 #elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
-static inline int vm_physseg_find_bsearch(struct vm_physseg *, int, paddr_t, int *);
+#define	VM_PHYSSEG_FIND	vm_physseg_find_bsearch
 #else
-static inline int vm_physseg_find_linear(struct vm_physseg *, int, paddr_t, int *);
+#define	VM_PHYSSEG_FIND	vm_physseg_find_linear
 #endif
+
+static inline int VM_PHYSSEG_FIND(struct vm_physseg *, int, int,
+    paddr_t, struct vm_page *, int *);
+static inline bool vm_physseg_within_p(struct vm_physseg *, int, paddr_t,
+    struct vm_page *);
+static inline bool vm_physseg_ge_p(struct vm_physseg *, int, paddr_t,
+    struct vm_page *);
+static inline bool vm_physseg_lt_p(struct vm_physseg *, int, paddr_t,
+    struct vm_page *);
 
 int
 vm_physseg_find(paddr_t pframe, int *offp)
 {
 
-#if VM_PHYSSEG_MAX == 1
-	return vm_physseg_find_contig(vm_physmem, vm_nphysseg, pframe, offp);
-#elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
-	return vm_physseg_find_bsearch(vm_physmem, vm_nphysseg, pframe, offp);
-#else
-	return vm_physseg_find_linear(vm_physmem, vm_nphysseg, pframe, offp);
-#endif
+	return VM_PHYSSEG_FIND(vm_physmem, vm_nphysseg, VM_PHYSSEG_OP_PF,
+	    pframe, NULL, offp);
 }
 
 #if VM_PHYSSEG_MAX == 1
 static inline int
-vm_physseg_find_contig(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *offp)
+vm_physseg_find_contig(struct vm_physseg *segs, int nsegs, int op,
+    paddr_t pframe, struct vm_page *pg, int *offp)
 {
 
 	/* 'contig' case */
-	if (pframe >= segs[0].start && pframe < segs[0].end) {
+	if (vm_physseg_within_p(&segs[0], op, pframe, pg)) {
 		if (offp)
 			*offp = pframe - segs[0].start;
 		return(0);
@@ -907,7 +915,8 @@ vm_physseg_find_contig(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *
 #elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
 
 static inline int
-vm_physseg_find_bsearch(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *offp)
+vm_physseg_find_bsearch(struct vm_physseg *segs, int nsegs, int op,
+    paddr_t pframe, struct vm_page *pg, int *offp)
 {
 	/* binary search for it */
 	u_int	start, len, try;
@@ -929,9 +938,9 @@ vm_physseg_find_bsearch(struct vm_physseg *segs, int nsegs, paddr_t pframe, int 
 		try = start + (len / 2);	/* try in the middle */
 
 		/* start past our try? */
-		if (pframe >= segs[try].start) {
+		if (vm_physseg_ge_p(&segs[try], op, pframe, pg)) {
 			/* was try correct? */
-			if (pframe < segs[try].end) {
+			if (vm_physseg_lt_p(&segs[try], op, pframe, pg)) {
 				if (offp)
 					*offp = pframe - segs[try].start;
 				return(try);            /* got it */
@@ -951,14 +960,14 @@ vm_physseg_find_bsearch(struct vm_physseg *segs, int nsegs, paddr_t pframe, int 
 #else
 
 static inline int
-vm_physseg_find_linear(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *offp)
+vm_physseg_find_linear(struct vm_physseg *segs, int nsegs, int op,
+    paddr_t pframe, struct vm_page *pg, int *offp)
 {
 	/* linear search for it */
 	int	lcv;
 
 	for (lcv = 0; lcv < nsegs; lcv++) {
-		if (pframe >= segs[lcv].start &&
-		    pframe < segs[lcv].end) {
+		if (vm_physseg_within_p(&segs[lcv], op, pframe, pg)) {
 			if (offp)
 				*offp = pframe - segs[lcv].start;
 			return(lcv);		   /* got it */
@@ -967,6 +976,46 @@ vm_physseg_find_linear(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *
 	return(-1);
 }
 #endif
+
+static inline bool
+vm_physseg_within_p(struct vm_physseg *seg, int op, paddr_t pframe,
+    struct vm_page *pg)
+{
+
+	return vm_physseg_ge_p(seg, op, pframe, pg) &&
+	    vm_physseg_lt_p(seg, op, pframe, pg);
+}
+
+static inline bool
+vm_physseg_ge_p(struct vm_physseg *seg, int op, paddr_t pframe,
+    struct vm_page *pg)
+{
+
+	switch (op) {
+	case VM_PHYSSEG_OP_PF:
+		return pframe >= seg->start;
+	case VM_PHYSSEG_OP_PG:
+		return pg >= seg->pgs;
+	default:
+		return false;
+	}
+}
+
+static inline bool
+vm_physseg_lt_p(struct vm_physseg *seg, int op, paddr_t pframe,
+    struct vm_page *pg)
+{
+
+	switch (op) {
+	case VM_PHYSSEG_OP_PF:
+		return pframe < seg->end;
+	case VM_PHYSSEG_OP_PG:
+		return pg < seg->endpg;
+	default:
+		return false;
+	}
+}
+
 
 /*
  * PHYS_TO_VM_PAGE: find vm_page for a PA.   used by MI code to get vm_pages
