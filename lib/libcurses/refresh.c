@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.72 2010/02/03 15:34:40 roy Exp $	*/
+/*	$NetBSD: refresh.c,v 1.73 2010/02/08 20:45:22 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.72 2010/02/03 15:34:40 roy Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.73 2010/02/08 20:45:22 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1585,7 +1585,7 @@ scrolln(starts, startw, curs, bot, top)
 				for (i = 0; i < n; i++)
 					tputs(scroll_forward, 0, __cputchar);
 			tputs(vtparm(change_scroll_region,
-			    0, (int) __virtscr->maxy), 0, __cputchar);
+			    0, (int) __virtscr->maxy - 1), 0, __cputchar);
 			__mvcur(bot, 0, 0, 0, 1);
 			tputs(cursor_home, 0, __cputchar);
 			__mvcur(0, 0, oy, ox, 1);
@@ -1654,7 +1654,7 @@ scrolln(starts, startw, curs, bot, top)
 				for (i = n; i < 0; i++)
 					tputs(scroll_reverse, 0, __cputchar);
 			tputs(vtparm(change_scroll_region,
-			    0, (int) __virtscr->maxy), 0, __cputchar);
+			    0, (int) __virtscr->maxy - 1), 0, __cputchar);
 			__mvcur(top, 0, 0, 0, 1);
 			tputs(cursor_home, 0, __cputchar);
 			__mvcur(0, 0, oy, ox, 1);
