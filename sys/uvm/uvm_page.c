@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.6 2010/02/09 08:43:33 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.7 2010/02/09 09:07:34 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,11 +71,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.6 2010/02/09 08:43:33 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.7 2010/02/09 09:07:34 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
+#include "opt_xip.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,9 +99,14 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.6 2010/02/09 08:43:33 uebayasi 
 /*
  * physical memory config is stored in vm_physmem.
  */
+/* XXXUEBS make these array of pointers */
 
 struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];	/* XXXCDC: uvm.physmem */
 int vm_nphysmem = 0;				/* XXXCDC: uvm.nphysmem */
+#ifdef XIP
+struct vm_physseg vm_physdev[VM_PHYSSEG_MAX];	/* XXXCDC: uvm.physdev */
+int vm_nphysdev = 0;				/* XXXCDC: uvm.nphysdev */
+#endif
 
 /*
  * Some supported CPUs in a given architecture don't support all
@@ -895,6 +901,16 @@ vm_physseg_find(paddr_t pframe, int *offp)
 	    pframe, NULL, offp);
 }
 
+#ifdef XIP
+int
+vm_physseg_find_device(paddr_t pframe, int *offp)
+{
+
+	return VM_PHYSSEG_FIND(vm_physdev, vm_nphysdev, VM_PHYSSEG_OP_PF,
+	    pframe, NULL, offp);
+}
+#endif
+
 #if VM_PHYSSEG_MAX == 1
 static inline int
 vm_physseg_find_contig(struct vm_physseg *segs, int nsegs, int op,
@@ -1029,6 +1045,23 @@ uvm_phys_to_vm_page(paddr_t pa)
 		return(&vm_physmem[psi].pgs[off]);
 	return(NULL);
 }
+
+#if 0
+#ifdef XIP
+struct vm_page *
+uvm_phys_to_vm_page_device(paddr_t pa)
+{
+	paddr_t pf = atop(pa);
+	int	off;
+	int	psi;
+
+	psi = vm_physseg_find_device(pf, &off);
+	if (psi != -1)
+		return(&vm_physdev[psi].pgs[off]);
+	return(NULL);
+}
+#endif
+#endif
 
 paddr_t
 uvm_vm_page_to_phys(const struct vm_page *pg)
@@ -2036,7 +2069,11 @@ bool
 uvm_pageismanaged(paddr_t pa)
 {
 
-	return (vm_physseg_find(atop(pa), NULL) != -1);
+	return
+#ifdef XIP
+	    (vm_physseg_find_device(atop(pa), NULL) != -1) ||
+#endif
+	    (vm_physseg_find(atop(pa), NULL) != -1);
 }
 
 /*
