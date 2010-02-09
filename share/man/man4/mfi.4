@@ -1,4 +1,4 @@
-.\"	$NetBSD: mfi.4,v 1.8 2009/05/04 19:18:49 wiz Exp $
+.\"	$NetBSD: mfi.4,v 1.9 2010/02/09 00:21:27 msaitoh Exp $
 .\"	$OpenBSD: mfi.4,v 1.7 2006/09/01 09:58:09 jmc Exp $
 .\"
 .\" Written by Marco Peereboom <marco@peereboom.us>
@@ -55,12 +55,14 @@ MegaRAID SAS 8308ELP,
 MegaRAID SAS 8344ELP,
 MegaRAID SAS 8408E,
 MegaRAID SAS 8480E,
+MegaRAID SAS 8708ELP,
 MegaRAID SAS 8888ELP,
-MegaRAID SAS 8880EM2
+MegaRAID SAS 8880EM2,
+MegaRAID SAS 9260-8i
 .El
 .Pp
-These controllers support RAID 0, RAID 1, RAID 5, RAID 10, and RAID 50
-using either SAS or SATA II drives.
+These controllers support RAID 0, RAID 1, RAID 5, RAID 6, RAID 10, RAID 50 and
+RAID 60 using either SAS or SATA II drives.
 .Pp
 Although the controllers are actual RAID controllers,
 the driver makes them look just like SCSI controllers.
