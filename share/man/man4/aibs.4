@@ -1,4 +1,4 @@
-.\"	$NetBSD: aibs.4,v 1.1 2010/02/09 03:19:50 cnst Exp $
+.\"	$NetBSD: aibs.4,v 1.2 2010/02/09 05:37:25 cnst Exp $
 .\"	$OpenBSD: aibs.4,v 1.4 2009/07/30 06:30:45 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Constantine A. Murenin <cnst+netbsd@bugmail.mojo.ru>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd December 30, 2009
+.Dd February 8, 2010
 .Dt AIBS 4
 .Os
 .Sh NAME
@@ -100,26 +100,15 @@ and can be monitored with
 For example, on an ASUS V3-P5G965 barebone:
 .Bd -literal -offset indent
 $ envstat -d aibs0
-                      Current  CritMax  CritMin  CritCap     Unit
-    Vcore Voltage:      1.152    1.600    0.850                 V
-     +3.3 Voltage:      3.312    3.630    2.970                 V
-       +5 Voltage:      5.017    5.500    4.500                 V
-      +12 Voltage:     12.302   13.800   10.200                 V
-  CPU Temperature:     24.000   95.000                       degC
-   MB Temperature:     57.000   95.000                       degC
-    CPU FAN Speed:        865                                 RPM
-CHASSIS FAN Speed:          0                                 RPM
-.Pp
-$ envstat -W -d aibs0
-                      Current  WarnMax  WarnMin  WarnCap     Unit
-    Vcore Voltage:      1.152                                   V
-     +3.3 Voltage:      3.312                                   V
-       +5 Voltage:      5.017                                   V
-      +12 Voltage:     12.302                                   V
-  CPU Temperature:     24.000   80.000                       degC
-   MB Temperature:     57.000   60.000                       degC
-    CPU FAN Speed:        865     7200      600               RPM
-CHASSIS FAN Speed:          0     7200      700               RPM
+                     Current  CritMax  WarnMax  WarnMin  CritMin Unit
+    Vcore Voltage:     1.152    1.600                      0.850    V
+     +3.3 Voltage:     3.312    3.630                      2.970    V
+       +5 Voltage:     5.017    5.500                      4.500    V
+      +12 Voltage:    12.302   13.800                     10.200    V
+  CPU Temperature:    27.000   95.000   80.000                   degC
+   MB Temperature:    58.000   95.000   60.000                   degC
+    CPU FAN Speed:       878              7200      600           RPM
+CHASSIS FAN Speed:         0              7200      700           RPM
 .Ed
 .Pp
 Generally, sensors provided by the
@@ -230,6 +219,7 @@ and
 .Nx
 by
 .An Constantine A. Murenin Aq http://cnst.su/ ,
+Raouf Boutaba Research Group,
 David R. Cheriton School of Computer Science,
 University of Waterloo.
 .Pp
