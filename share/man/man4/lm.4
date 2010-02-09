@@ -1,4 +1,4 @@
-.\"	$NetBSD: lm.4,v 1.29 2010/02/08 23:10:35 pgoyette Exp $
+.\"	$NetBSD: lm.4,v 1.30 2010/02/09 14:10:08 pgoyette Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -108,6 +108,7 @@ configuration option can be specified to select the type of temperature
 sensor:
 .Bl -column "flags" "Sensor Type" -offset indent
 .It Sy "flags" Ta Sy "Sensor Type"
+.It Li "0" Ta "Thermistor diode (Power-On default)"
 .It Li "1" Ta "Pentium-II diode"
 .It Li "2" Ta "2N3904 Bipolar"
 .It Li "4" Ta "Thermistor diode"
