@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.103 2008/10/26 06:57:30 mrg Exp $	*/
+/*	$NetBSD: pmap.h,v 1.104 2010/02/09 22:51:13 jym Exp $	*/
 
 /*
  *
@@ -192,7 +192,7 @@
  * last entry of the L3 PD, which makes it hard to use one L3 page per pmap
  * switch %cr3 to switch pmaps. So we use one static L3 page which is
  * always loaded in %cr3, and we use it as 2 virtual PD pointers: one for
- * kenrel space (L3[3], always loaded), and one for user space (in fact the
+ * kernel space (L3[3], always loaded), and one for user space (in fact the
  * first 3 entries of the L3 PD), and we claim the VM has only a 2-level
  * PTP (with the L2 index extended by 2 bytes).
  * PTE_BASE and APTE_BASE will need 4 entries in the L2 page table.
