@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.7 2010/02/09 09:07:34 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.8 2010/02/09 13:06:16 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.7 2010/02/09 09:07:34 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.8 2010/02/09 13:06:16 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1033,6 +1033,36 @@ vm_physseg_lt_p(struct vm_physseg *seg, int op, paddr_t pframe,
  * PHYS_TO_VM_PAGE: find vm_page for a PA.   used by MI code to get vm_pages
  * back from an I/O mapping (ugh!).   used in some MD code as well.
  */
+
+#ifdef XIP
+#define	VM_PAGE_DEVICE_MAGIC		0x2
+#define	VM_PAGE_DEVICE_MAGIC_MASK	0x3
+#define	VM_PAGE_DEVICE_MAGIC_SHIFT	2
+
+static inline struct vm_page *
+VM_PAGE_DEVICE_PA_TO_PG(paddr_t pa)
+{
+	paddr_t pf = pa >> PAGE_SHIFT;
+	uintptr_t cookie = pf << VM_PAGE_DEVICE_MAGIC_SHIFT;
+	return (void *)(cookie | VM_PAGE_DEVICE_MAGIC);
+}
+
+static inline paddr_t
+VM_PAGE_DEVICE_PG_TO_PA(const struct vm_page *pg)
+{
+	uintptr_t cookie = (uintptr_t)pg & ~VM_PAGE_DEVICE_MAGIC_MASK;
+	paddr_t pf = cookie >> VM_PAGE_DEVICE_MAGIC_SHIFT;
+	return pf << PAGE_SHIFT;
+}
+
+bool
+uvm_pageisdevice_p(const struct vm_page *pg)
+{
+
+	return ((uintptr_t)pg & VM_PAGE_DEVICE_MAGIC_MASK) == VM_PAGE_DEVICE_MAGIC;
+}
+#endif
+
 struct vm_page *
 uvm_phys_to_vm_page(paddr_t pa)
 {
@@ -1040,28 +1070,16 @@ uvm_phys_to_vm_page(paddr_t pa)
 	int	off;
 	int	psi;
 
+#ifdef XIP
+	psi = vm_physseg_find_device(pf, &off);
+	if (psi != -1)
+		return(VM_PAGE_DEVICE_PA_TO_PG(pa));
+#endif
 	psi = vm_physseg_find(pf, &off);
 	if (psi != -1)
 		return(&vm_physmem[psi].pgs[off]);
 	return(NULL);
 }
-
-#if 0
-#ifdef XIP
-struct vm_page *
-uvm_phys_to_vm_page_device(paddr_t pa)
-{
-	paddr_t pf = atop(pa);
-	int	off;
-	int	psi;
-
-	psi = vm_physseg_find_device(pf, &off);
-	if (psi != -1)
-		return(&vm_physdev[psi].pgs[off]);
-	return(NULL);
-}
-#endif
-#endif
 
 paddr_t
 uvm_vm_page_to_phys(const struct vm_page *pg)
@@ -1069,6 +1087,11 @@ uvm_vm_page_to_phys(const struct vm_page *pg)
 	const struct vm_physseg *seg;
 	int psi;
 
+#ifdef XIP
+	if (uvm_pageisdevice_p(pg)) {
+		return VM_PAGE_DEVICE_PG_TO_PA(pg);
+	}
+#endif
 	psi = VM_PHYSSEG_FIND(vm_physmem, vm_nphysmem, VM_PHYSSEG_OP_PG, 0, pg, NULL);
 	KASSERT(psi != -1);
 	seg = &vm_physmem[psi];
