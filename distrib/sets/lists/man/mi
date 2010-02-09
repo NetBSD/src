@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1189 2010/02/06 20:15:54 pgoyette Exp $
+# $NetBSD: mi,v 1.1190 2010/02/09 03:19:50 cnst Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -651,6 +651,7 @@
 ./usr/share/man/cat4/ahd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ai.0			man-sys-catman		.cat
 ./usr/share/man/cat4/aiboost.0			man-sys-catman		.cat
+./usr/share/man/cat4/aibs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/aic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/akbd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ale.0			man-sys-catman		.cat
@@ -3332,6 +3333,7 @@
 ./usr/share/man/html4/ahd.html			man-sys-htmlman		html
 ./usr/share/man/html4/ai.html			man-sys-htmlman		html
 ./usr/share/man/html4/aiboost.html		man-sys-htmlman		html
+./usr/share/man/html4/aibs.html			man-sys-htmlman		html
 ./usr/share/man/html4/aic.html			man-sys-htmlman		html
 ./usr/share/man/html4/akbd.html			man-sys-htmlman		html
 ./usr/share/man/html4/ale.html			man-sys-htmlman		html
@@ -5713,6 +5715,7 @@
 ./usr/share/man/man4/ahd.4			man-sys-man		.man
 ./usr/share/man/man4/ai.4			man-sys-man		.man
 ./usr/share/man/man4/aiboost.4			man-sys-man		.man
+./usr/share/man/man4/aibs.4			man-sys-man		.man
 ./usr/share/man/man4/aic.4			man-sys-man		.man
 ./usr/share/man/man4/akbd.4			man-sys-man		.man
 ./usr/share/man/man4/ale.4			man-sys-man		.man
