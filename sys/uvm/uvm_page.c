@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.3 2010/02/08 06:14:57 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.4 2010/02/09 07:42:26 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.3 2010/02/08 06:14:57 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.4 2010/02/09 07:42:26 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -441,7 +441,6 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 		/* init and free vm_pages (we've already zeroed them) */
 		paddr = ptoa(vm_physmem[lcv].start);
 		for (i = 0 ; i < n ; i++, paddr += PAGE_SIZE) {
-			vm_physmem[lcv].pgs[i].phys_addr = paddr;
 #ifdef __HAVE_VM_PAGE_MD
 			VM_MDPAGE_INIT(&vm_physmem[lcv].pgs[i]);
 #endif
@@ -791,11 +790,10 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 			printf("\tignoring 0x%lx -> 0x%lx\n", start, end);
 			return;
 		}
-		/* zero data, init phys_addr and free_list, and free pages */
+		/* zero data, init free_list, and free pages */
 		memset(pgs, 0, sizeof(struct vm_page) * npages);
 		for (lcv = 0, paddr = ptoa(start) ;
 				 lcv < npages ; lcv++, paddr += PAGE_SIZE) {
-			pgs[lcv].phys_addr = paddr;
 			pgs[lcv].free_list = free_list;
 			if (atop(paddr) >= avail_start &&
 			    atop(paddr) <= avail_end)
@@ -874,14 +872,18 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 
 #if VM_PHYSSEG_MAX == 1
 #define	VM_PHYSSEG_FIND	vm_physseg_find_contig
+#define	VM_PHYSSEG_FIND_BY_PG	vm_physseg_find_by_pg_contig
 #elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
 #define	VM_PHYSSEG_FIND	vm_physseg_find_bsearch
+#define	VM_PHYSSEG_FIND_BY_PG	vm_physseg_find_by_pg_bsearch
 #else
 #define	VM_PHYSSEG_FIND	vm_physseg_find_linear
+#define	VM_PHYSSEG_FIND_BY_PG	vm_physseg_find_by_pg_linear
 #endif
 
 static inline int VM_PHYSSEG_FIND(struct vm_physseg *, int, int,
     paddr_t, struct vm_page *, int *);
+static inline struct vm_physseg *VM_PHYSSEG_FIND_BY_PG(const struct vm_page *);
 static inline bool vm_physseg_within_p(struct vm_physseg *, int, paddr_t,
     struct vm_page *);
 static inline bool vm_physseg_ge_p(struct vm_physseg *, int, paddr_t,
@@ -1033,6 +1035,96 @@ uvm_phys_to_vm_page(paddr_t pa)
 		return(&vm_physmem[psi].pgs[off]);
 	return(NULL);
 }
+
+paddr_t
+uvm_vm_page_to_phys(const struct vm_page *pg)
+{
+	struct vm_physseg *seg;
+
+	seg = VM_PHYSSEG_FIND_BY_PG(pg);
+	return (seg->start + pg - seg->pgs) * PAGE_SIZE;
+}
+
+#if VM_PHYSSEG_MAX == 1
+static inline struct vm_physseg *
+vm_physseg_find_by_pg_contig(const struct vm_page *pg)
+{
+	struct vm_physseg *seg;
+
+	/* 'contig' case */
+	if (pg >= vm_physmem[0].pgs && pg < vm_physmem[0].endpg) {
+		seg = &vm_physmem[0];
+		return seg;
+	}
+	return(-1);
+}
+
+#elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
+
+static inline struct vm_physseg *
+vm_physseg_find_by_pg_contig(const struct vm_page *pg)
+{
+	struct vm_physseg *seg;
+
+	/* binary search for it */
+	u_int	start, len, try;
+
+	/*
+	 * if try is too large (thus target is less than try) we reduce
+	 * the length to trunc(len/2) [i.e. everything smaller than "try"]
+	 *
+	 * if the try is too small (thus target is greater than try) then
+	 * we set the new start to be (try + 1).   this means we need to
+	 * reduce the length to (round(len/2) - 1).
+	 *
+	 * note "adjust" below which takes advantage of the fact that
+	 *  (round(len/2) - 1) == trunc((len - 1) / 2)
+	 * for any value of len we may have
+	 */
+
+	for (start = 0, len = vm_nphysseg ; len != 0 ; len = len / 2) {
+		try = start + (len / 2);	/* try in the middle */
+
+		/* start past our try? */
+		if (pg >= vm_physmem[try].pgs[0]) {
+			/* was try correct? */
+			if (pg < vm_physmem[try].endpg) {
+				seg = &vm_physmem[try];
+				return seg;
+			}
+			start = try + 1;	/* next time, start here */
+			len--;			/* "adjust" */
+		} else {
+			/*
+			 * pframe before try, just reduce length of
+			 * region, done in "for" loop
+			 */
+		}
+	}
+	panic("invalid pg=%p\n", pg);
+}
+
+#else
+
+static inline struct vm_physseg *
+vm_physseg_find_by_pg_linear(const struct vm_page *pg)
+{
+	struct vm_physseg *seg;
+
+	/* linear search for it */
+	int	lcv;
+
+	for (lcv = 0; lcv < vm_nphysseg; lcv++) {
+		if (pg >= vm_physmem[lcv].pgs &&
+		    pg < vm_physmem[lcv].endpg) {
+			seg = &vm_physmem[lcv];
+			return seg;
+		}
+	}
+	panic("invalid pg=%p\n", pg);
+}
+
+#endif
 
 /*
  * uvm_page_recolor: Recolor the pages if the new bucket count is
