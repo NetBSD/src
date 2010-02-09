@@ -10175,7 +10175,7 @@ Increase or or decrease the point size by @var{n}@tie{}scaled points;
 @cindex strings
 
 @code{gtroff} has string variables, which are entirely for user
-convenience (i.e.@: there are no built-in strings exept @code{.T}, but
+convenience (i.e.@: there are no built-in strings except @code{.T}, but
 even this is a read-write string variable).
 
 @DefreqList {ds, name [@Var{string}]}
