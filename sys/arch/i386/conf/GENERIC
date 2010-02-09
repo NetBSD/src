@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.965 2010/02/09 03:19:50 cnst Exp $
+# $NetBSD: GENERIC,v 1.966 2010/02/09 22:38:32 tonio Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.965 $"
+#ident 		"GENERIC-$Revision: 1.966 $"
 
 maxusers	64		# estimated number of users
 
@@ -1117,6 +1117,9 @@ wsmouse* at uep? mux 0
 # USB Keyboards
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
+
+# USB TERMPer and TEMPerHUM
+uthum*	at uhidev? reportid ?
 
 # USB serial adapter
 ucycom* at uhidev? reportid ?
