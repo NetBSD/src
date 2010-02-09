@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.38 2010/01/09 22:54:00 cegger Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.39 2010/02/09 23:52:13 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.38 2010/01/09 22:54:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.39 2010/02/09 23:52:13 jym Exp $");
 
 #include "opt_modular.h"
 
@@ -532,7 +532,7 @@ initx86_parse_memmap(struct btinfo_memmap *bim, struct extent *iomem_ex)
 		 *   Avoid Compatibility Holes.
 		 * XXX  Holes within memory space that allow access
 		 * XXX to be directed to the PC-compatible frame buffer
-		 * XXX (0xa0000-0xbffff),to adapter ROM space
+		 * XXX (0xa0000-0xbffff), to adapter ROM space
 		 * XXX (0xc0000-0xdffff), and to system BIOS space
 		 * XXX (0xe0000-0xfffff).
 		 * XXX  Some laptop(for example,Toshiba Satellite2550X)
