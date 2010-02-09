@@ -1,4 +1,4 @@
-/* $NetBSD: mfireg.h,v 1.3 2008/02/25 10:46:02 xtraeme Exp $ */
+/* $NetBSD: mfireg.h,v 1.4 2010/02/09 00:05:18 msaitoh Exp $ */
 /* $OpenBSD: mfireg.h,v 1.24 2006/06/19 19:05:45 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -25,6 +25,7 @@
 #define MFI_SENSE_SIZE				128
 #define MFI_OSTS_INTR_VALID			0x00000002 /* valid interrupt */
 #define MFI_OSTS_PPC_INTR_VALID			0x80000000
+#define MFI_OSTS_GEN2_INTR_VALID		(0x00000001 | 0x00000004)
 #define MFI_INVALID_CTX				0xffffffff
 #define MFI_ENABLE_INTR				0x01
 #define MFI_MAXFER				MAXPHYS	/* XXX bogus */
