@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1021 2010/02/09 04:40:21 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1022 2010/02/09 23:13:09 hubertf Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -538,6 +538,7 @@ vendor NVIDIA_SGS	0x12d2	Nvidia & SGS-Thomson Microelectronics
 vendor RAINBOW		0x12de	Rainbow Technologies
 vendor DATUM		0x12e2	Datum Inc. Bancomm-Timing Division
 vendor AUREAL		0x12eb	Aureal Semiconductor
+vendor JUNIPER		0x1304	Juniper Networks
 vendor ADMTEK		0x1317	ADMtek
 vendor PACKETENGINES	0x1318	Packet Engines
 vendor FORTEMEDIA	0x1319	Forte Media
@@ -2855,6 +2856,9 @@ product JNI JNIC1560	0x1560	JNIC-1560 Dual Fibre-Channel Adapter
 product JNI FCI1063	0x4643	FCI-1063 Fibre-Channel Adapter
 product JNI FCX26562	0x6562	FCX2-6562 Dual Fibre-Channel Adapter
 product JNI FCX6562	0x656a	FCX-6562 Fibre-Channel Adapter
+
+/* Juniper Networks products */
+product JUNIPER XCLK0	0x0030	Experimental Clock Version 0
 
 /* KTI products - XXX better descriptions */
 product KTI NE2KETHER	0x3000	Ethernet
