@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/02/03 20:56:54 roy Exp $
+#	$NetBSD: Makefile,v 1.4 2010/02/09 22:16:12 roy Exp $
 
 USE_SHLIBDIR=	yes
 
@@ -38,9 +38,11 @@ hash:
 		cd ${.CURDIR} && ${HOST_SH} ./genthash >termcap_hash.c
 
 # Generate our man pages
-man:
+terminfo.5: terminfo.5.in term.h termcap_map.c
 		@echo "Generating terminfo man pages"
-		cd ${.CURDIR} && ${HOST_SH} ./genman >terminfo.5
+		cd ${.CURDIR} && ${HOST_SH} ./genman >${.OBJDIR}/$@
+
+man: terminfo.5
 
 gen: hash man
 
