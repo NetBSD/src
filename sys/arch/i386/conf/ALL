@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.235 2010/02/09 03:19:50 cnst Exp $
+# $NetBSD: ALL,v 1.236 2010/02/09 22:38:32 tonio Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.235 $"
+#ident 		"ALL-$Revision: 1.236 $"
 
 maxusers	64		# estimated number of users
 
@@ -1170,6 +1170,9 @@ wsmouse* at uep? mux 0
 # USB Keyboards
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
+
+# USB TERMPer and TEMPerHUM
+uthum*	at uhidev? reportid ?
 
 # USB serial adapter
 ucycom* at uhidev? reportid ?
