@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1018 2010/02/09 04:40:52 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1019 2010/02/09 23:14:19 hubertf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1021 2010/02/09 04:40:21 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1022 2010/02/09 23:13:09 hubertf Exp
  */
 
 /*
@@ -545,6 +545,7 @@
 #define	PCI_VENDOR_RAINBOW	0x12de		/* Rainbow Technologies */
 #define	PCI_VENDOR_DATUM	0x12e2		/* Datum Inc. Bancomm-Timing Division */
 #define	PCI_VENDOR_AUREAL	0x12eb		/* Aureal Semiconductor */
+#define	PCI_VENDOR_JUNIPER	0x1304		/* Juniper Networks */
 #define	PCI_VENDOR_ADMTEK	0x1317		/* ADMtek */
 #define	PCI_VENDOR_PACKETENGINES	0x1318		/* Packet Engines */
 #define	PCI_VENDOR_FORTEMEDIA	0x1319		/* Forte Media */
@@ -2862,6 +2863,9 @@
 #define	PCI_PRODUCT_JNI_FCI1063	0x4643		/* FCI-1063 Fibre-Channel Adapter */
 #define	PCI_PRODUCT_JNI_FCX26562	0x6562		/* FCX2-6562 Dual Fibre-Channel Adapter */
 #define	PCI_PRODUCT_JNI_FCX6562	0x656a		/* FCX-6562 Fibre-Channel Adapter */
+
+/* Juniper Networks products */
+#define	PCI_PRODUCT_JUNIPER_XCLK0	0x0030		/* Experimental Clock Version 0 */
 
 /* KTI products - XXX better descriptions */
 #define	PCI_PRODUCT_KTI_NE2KETHER	0x3000		/* Ethernet */
