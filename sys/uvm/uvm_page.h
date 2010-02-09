@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59.2.3 2010/02/09 07:42:26 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.4 2010/02/09 08:43:33 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -254,7 +254,9 @@ extern bool vm_page_zero_enable;
  */
 
 extern struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];
-extern int vm_nphysseg;
+extern int vm_nphysmem;
+
+#define	vm_nphysseg	vm_nphysmem	/* XXX backward compat */
 
 /*
  * prototypes: the following prototypes define the interface to pages
