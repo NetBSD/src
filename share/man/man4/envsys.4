@@ -1,4 +1,4 @@
-.\"	$NetBSD: envsys.4,v 1.45 2009/12/19 00:15:28 snj Exp $
+.\"	$NetBSD: envsys.4,v 1.46 2010/02/09 07:32:09 cnst Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -353,7 +353,7 @@ The following example shows how to change the description
 of
 .Ql sensor0
 in the
-.Ql aiboost0
+.Ql aibs0
 device with the
 .Dv ENVSYS_SETDICTIONARY
 .Xr ioctl 2 :
@@ -364,26 +364,26 @@ main(void)
 	prop_dictionary_t global_dict, sensor_dict;
 	prop_array_t array;
 	prop_object_t obj;
-	int fd;
+	int fd, error;
 
 	global_dict = prop_dictionary_create();
 	sensor_dict = prop_dictionary_create();
 	array = prop_array_create();
 
-	if (!prop_dictionary_set(global_dict, "aiboost0", array))
+	if (!prop_dictionary_set(global_dict, "aibs0", array))
 		err(EINVAL, "prop_dictionary_set global");
 
 	obj = prop_string_create_cstring_nocopy("sensor0");
 	if (obj == NULL ||
-	    !prop_dictionary_set(dict, "index", obj))
+	    !prop_dictionary_set(sensor_dict, "index", obj))
 		err(EINVAL, "sensor index");
 
 	prop_object_release(obj);
 
 	/* new description */
-	obj = prop_string_create_cstring_nocopy("CPU temp");
+	obj = prop_string_create_cstring_nocopy("CPU core voltage");
 	if (obj == NULL ||
-	    !prop_dictionary_set(dict, "description", obj))
+	    !prop_dictionary_set(sensor_dict, "description", obj))
 		err(EINVAL, "new description");
 
 	prop_object_release(obj);
@@ -392,7 +392,7 @@ main(void)
 		err(EINVAL, "prop_array_add");
 
 	if ((fd = open(_DEV_SYSMON, O_RDWR)) == \-1)
-		err(EXIT_FAILURE, "open")
+		err(EXIT_FAILURE, "open");
 
 	/* we are done, send the dictionary */
 	error = prop_dictionary_send_ioctl(global_dict,
