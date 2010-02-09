@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.73 2010/01/30 02:56:39 pgoyette Exp $ */
+/* $NetBSD: envstat.c,v 1.74 2010/02/09 05:32:51 cnst Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.73 2010/01/30 02:56:39 pgoyette Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.74 2010/02/09 05:32:51 cnst Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -843,7 +843,7 @@ do {								\
 				PRINTTEMP(sensor->critmax_value);
 				PRINTTEMP(sensor->warnmax_value);
 				PRINTTEMP(sensor->warnmin_value);
-				PRINTTEMP(sensor->warnmax_value);
+				PRINTTEMP(sensor->critmin_value);
 			}
 			(void)printf("%*s", (int)ilen - 4, stype);
 #undef PRINTTEMP
