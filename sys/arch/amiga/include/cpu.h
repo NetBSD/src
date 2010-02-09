@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.74 2009/11/23 00:11:43 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.75 2010/02/09 18:13:10 phx Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -236,5 +236,15 @@ void	bootsync(void);
 void	pmap_bootstrap(vm_offset_t, vm_offset_t);
 
 #endif /* _KERNEL */
+
+/*
+ * Reorder protection when accessing device registers.
+ */
+#define amiga_membarrier()
+
+/*
+ * Finish all bus operations and flush pipelines.
+ */
+#define amiga_cpu_sync() __asm volatile ("nop")
 
 #endif /* !_MACHINE_CPU_H_ */
