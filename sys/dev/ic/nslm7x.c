@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.52 2010/02/09 13:59:01 pgoyette Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.53 2010/02/09 23:04:15 njoly Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.52 2010/02/09 13:59:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.53 2010/02/09 23:04:15 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1833,7 +1833,7 @@ wb_match(struct lm_softc *sc)
 	devid = (*sc->lm_readreg)(sc, LMD_CHIPID);
 	sc->chipid = (*sc->lm_readreg)(sc, WB_BANK0_CHIPID);
 	lm_generic_banksel(sc, banksel);
-	cf_flags = device_cfdata(sc->sc_dev)->cf_flags;;
+	cf_flags = device_cfdata(sc->sc_dev)->cf_flags;
 	DPRINTF(("%s: winbond chip id 0x%x\n", __func__, sc->chipid));
 
 	switch(sc->chipid) {
