@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_at_scsibus_at_umass.c,v 1.7 2010/02/03 21:18:38 pooka Exp $	*/
+/*	$NetBSD: sd_at_scsibus_at_umass.c,v 1.8 2010/02/09 19:02:19 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -23,7 +23,7 @@ rump_device_configuration(void)
 {
 	extern struct cfattach rumpusbhc_ca;
 	extern struct cfattach usb_ca, uhub_ca, uroothub_ca, umass_ca;
-	extern struct cfattach scsibus_ca, atapibus_ca, sd_ca;
+	extern struct cfattach scsibus_ca, atapibus_ca, sd_ca, cd_ca;
 	extern struct bdevsw sd_bdevsw;
 	extern struct cdevsw sd_cdevsw;
 	devmajor_t bmaj, cmaj;
@@ -53,6 +53,9 @@ rump_device_configuration(void)
 
 	FLAWLESSCALL(config_cfdriver_attach(&sd_cd));
 	FLAWLESSCALL(config_cfattach_attach("sd", &sd_ca));
+
+	FLAWLESSCALL(config_cfdriver_attach(&cd_cd));
+	FLAWLESSCALL(config_cfattach_attach("cd", &cd_ca));
 
 	FLAWLESSCALL(config_cfattach_attach("uhub", &uroothub_ca));
 
