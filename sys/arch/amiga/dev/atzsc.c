@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.41 2010/02/07 12:52:04 he Exp $ */
+/*	$NetBSD: atzsc.c,v 1.42 2010/02/09 18:13:10 phx Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -66,13 +66,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atzsc.c,v 1.41 2010/02/07 12:52:04 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atzsc.c,v 1.42 2010/02/09 18:13:10 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/intr.h>
+#include <machine/cpu.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
