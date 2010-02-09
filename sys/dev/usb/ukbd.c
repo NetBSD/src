@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.106 2010/01/11 00:18:26 pooka Exp $        */
+/*      $NetBSD: ukbd.c,v 1.107 2010/02/09 16:01:17 sborrill Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.106 2010/01/11 00:18:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.107 2010/02/09 16:01:17 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,8 +100,10 @@ struct ukbd_data {
  *
  * See http://www.microsoft.com/whdc/archive/scancode.mspx
  *
- * Note: a real pckbd(4) has more complexity in it's
+ * Note: a real pckbd(4) has more complexity in its
  * protocol for some keys than this translation implements.
+ * For example, some keys generate Fake ShiftL events (e0 2a)
+ * before the actual key sequence.
  */
 Static const u_int8_t ukbd_trtab[256] = {
       NN,   NN,   NN,   NN, 0x1e, 0x30, 0x2e, 0x20, /* 00 - 07 */
