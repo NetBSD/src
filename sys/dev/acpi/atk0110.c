@@ -1,4 +1,4 @@
-/*	$NetBSD: atk0110.c,v 1.2 2010/02/09 03:26:44 cnst Exp $	*/
+/*	$NetBSD: atk0110.c,v 1.3 2010/02/09 03:32:57 cnst Exp $	*/
 /*	$OpenBSD: atk0110.c,v 1.1 2009/07/23 01:38:16 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.2 2010/02/09 03:26:44 cnst Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.3 2010/02/09 03:32:57 cnst Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ aibs_attach_sif(device_t self, enum envsys_units st)
 #ifdef AIBS_MORE_SENSORS
 		n = bp->Package.Count - 1;
 #endif
-		aprint_error_dev(self, "%s: misformed package: %i/%i"
+		aprint_error_dev(self, "%s: malformed package: %i/%i"
 		    ", assume %i\n", name, on, bp->Package.Count - 1, n);
 	}
 	if (n < 1) {
@@ -296,7 +296,6 @@ aibs_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	const char		*name;
 	struct aibs_sensor	*as;
 	ACPI_INTEGER		v;
-	ACPI_INTEGER		l, h;
 
 	switch (st) {
 	case ENVSYS_STEMP:
@@ -318,9 +317,6 @@ aibs_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		return;
 	for (i = 0; as[i].s.sensor != s->sensor; i++)
 		;
-	l = as[i].l;
-	h = as[i].h;
-
 	p.Type = ACPI_TYPE_INTEGER;
 	p.Integer.Value = as[i].i;
 	mp.Count = 1;
@@ -346,48 +342,22 @@ aibs_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		if (v == 0) {
 			s->state = ENVSYS_SINVALID;
 			s->flags |= ENVSYS_FMONNOTSUPP;
-		} else {
-			if (v > h)
-				s->state = ENVSYS_SCRITOVER;
-			else if (v > l)
-				s->state = ENVSYS_SWARNOVER;
-			else
-				s->state = ENVSYS_SVALID;
-			s->flags &= ~ENVSYS_FMONNOTSUPP;
+			return;
 		}
 		break;
 	case ENVSYS_SFANRPM:
 		s->value_cur = v;
-		/* some boards have strange limits for fans */
-		if (l == 0) {
-			if (v < h)
-				s->state = ENVSYS_SWARNUNDER;
-			else
-				s->state = ENVSYS_SVALID;
-		} else {
-			if (l > v)
-				s->state = ENVSYS_SWARNUNDER;
-			else if (v > h)
-				s->state = ENVSYS_SWARNOVER;
-			else
-				s->state = ENVSYS_SVALID;
-		}
-		s->flags &= ~ENVSYS_FMONNOTSUPP;
 		break;
 	case ENVSYS_SVOLTS_DC:
 		s->value_cur = v * 1000;
-		if (l > v)
-			s->state = ENVSYS_SCRITUNDER;
-		else if (v > h)
-			s->state = ENVSYS_SCRITOVER;
-		else
-			s->state = ENVSYS_SVALID;
-		s->flags &= ~ENVSYS_FMONNOTSUPP;
 		break;
 	default:
 		/* NOTREACHED */
 		break;
 	}
+	if (s->state == 0 || s->state == ENVSYS_SINVALID)
+		s->state = ENVSYS_SVALID;
+	s->flags &= ~ENVSYS_FMONNOTSUPP;
 }
 
 #ifdef AIBS_MONLIMITS
