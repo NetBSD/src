@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59.2.5 2010/02/09 09:07:34 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.6 2010/02/09 13:06:17 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -291,15 +291,20 @@ void uvm_pagewake(struct vm_page *);
 void uvm_pagewire(struct vm_page *);
 void uvm_pagezero(struct vm_page *);
 bool uvm_pageismanaged(paddr_t);
+#ifdef XIP
+bool uvm_pageisdevice_p(const struct vm_page *);
+#endif
 
 int uvm_page_lookup_freelist(struct vm_page *);
 
 int vm_physseg_find(paddr_t, int *);
-#ifdef XIP
-int vm_physseg_find_device(paddr_t, int *);
-#endif
 struct vm_page *uvm_phys_to_vm_page(paddr_t);
 paddr_t uvm_vm_page_to_phys(const struct vm_page *);
+#ifdef XIP
+int vm_physseg_find_device(paddr_t, int *);
+struct vm_page *uvm_phys_to_vm_page_device(paddr_t);
+paddr_t uvm_vm_page_to_phys_device(const struct vm_page *);
+#endif
 
 /*
  * macros
