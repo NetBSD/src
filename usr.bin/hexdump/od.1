@@ -1,4 +1,4 @@
-.\"  $NetBSD: od.1,v 1.23 2008/09/03 16:32:57 drochner Exp $
+.\"  $NetBSD: od.1,v 1.24 2010/02/09 14:06:37 drochner Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,26 +56,6 @@
 .Oc
 .Ar file ...
 .Sh DESCRIPTION
-.Nm
-has been deprecated in favor of
-.Xr hexdump 1 .
-.Pp
-.Xr hexdump 1 ,
-if called as
-.Nm ,
-provides compatibility for the options described below.
-It does not provide compatibility for the
-.Fl s
-option (see
-.Xr strings 1 )
-or the
-.Fl P ,
-.Fl p ,
-or
-.Fl w
-options, nor is compatibility provided for the ``label'' component
-of the offset syntax.
-.Pp
 The options are as follows:
 .Bl -tag -width Fl
 .It Fl A Ar base
