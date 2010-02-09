@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.8 2010/02/09 13:06:16 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.9 2010/02/09 14:12:00 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.8 2010/02/09 13:06:16 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.9 2010/02/09 14:12:00 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1035,12 +1035,13 @@ vm_physseg_lt_p(struct vm_physseg *seg, int op, paddr_t pframe,
  */
 
 #ifdef XIP
+/* Assume struct vm_page * is aligned to 4 bytes. */
 #define	VM_PAGE_DEVICE_MAGIC		0x2
 #define	VM_PAGE_DEVICE_MAGIC_MASK	0x3
 #define	VM_PAGE_DEVICE_MAGIC_SHIFT	2
 
 static inline struct vm_page *
-VM_PAGE_DEVICE_PA_TO_PG(paddr_t pa)
+PHYS_TO_VM_PAGE_DEVICE(paddr_t pa)
 {
 	paddr_t pf = pa >> PAGE_SHIFT;
 	uintptr_t cookie = pf << VM_PAGE_DEVICE_MAGIC_SHIFT;
@@ -1048,7 +1049,7 @@ VM_PAGE_DEVICE_PA_TO_PG(paddr_t pa)
 }
 
 static inline paddr_t
-VM_PAGE_DEVICE_PG_TO_PA(const struct vm_page *pg)
+VM_PAGE_DEVICE_TO_PHYS(const struct vm_page *pg)
 {
 	uintptr_t cookie = (uintptr_t)pg & ~VM_PAGE_DEVICE_MAGIC_MASK;
 	paddr_t pf = cookie >> VM_PAGE_DEVICE_MAGIC_SHIFT;
@@ -1073,7 +1074,7 @@ uvm_phys_to_vm_page(paddr_t pa)
 #ifdef XIP
 	psi = vm_physseg_find_device(pf, &off);
 	if (psi != -1)
-		return(VM_PAGE_DEVICE_PA_TO_PG(pa));
+		return(PHYS_TO_VM_PAGE_DEVICE(pa));
 #endif
 	psi = vm_physseg_find(pf, &off);
 	if (psi != -1)
@@ -1089,7 +1090,7 @@ uvm_vm_page_to_phys(const struct vm_page *pg)
 
 #ifdef XIP
 	if (uvm_pageisdevice_p(pg)) {
-		return VM_PAGE_DEVICE_PG_TO_PA(pg);
+		return VM_PAGE_DEVICE_TO_PHYS(pg);
 	}
 #endif
 	psi = VM_PHYSSEG_FIND(vm_physmem, vm_nphysmem, VM_PHYSSEG_OP_PG, 0, pg, NULL);
