@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.51 2010/02/08 23:10:35 pgoyette Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.52 2010/02/09 13:59:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.51 2010/02/08 23:10:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.52 2010/02/09 13:59:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1795,7 +1795,7 @@ wb_temp_diode_type(struct lm_softc *sc, int diode_type)
 	    case 4:	/* Switch to generic thermistor mode */
 		lm_generic_banksel(sc, WB_BANKSEL_B0);
 		regval = (*sc->lm_readreg)(sc, WB_BANK0_VBAT);
-		regval |= 0xe;
+		regval &= ~0xe;
 		(*sc->lm_writereg)(sc, WB_BANK0_VBAT, regval);
 		lm_generic_banksel(sc, banksel);
 		aprint_verbose_dev(sc->sc_dev, "Thermistor temp sensors\n");
