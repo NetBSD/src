@@ -1,4 +1,4 @@
-/*	$NetBSD: atk0110.c,v 1.1 2010/02/09 03:19:51 cnst Exp $	*/
+/*	$NetBSD: atk0110.c,v 1.2 2010/02/09 03:26:44 cnst Exp $	*/
 /*	$OpenBSD: atk0110.c,v 1.1 2009/07/23 01:38:16 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.1 2010/02/09 03:19:51 cnst Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.2 2010/02/09 03:26:44 cnst Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,9 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.1 2010/02/09 03:19:51 cnst Exp $");
 
 struct aibs_sensor {
 	envsys_data_t	s;
-	int64_t		i;
-	int64_t		l;
-	int64_t		h;
+	ACPI_INTEGER	i;
+	ACPI_INTEGER	l;
+	ACPI_INTEGER	h;
 };
 
 struct aibs_softc {
@@ -252,11 +252,14 @@ aibs_attach_sif(device_t self, enum envsys_units st)
 		as[i].s.monitor = true;
 #endif
 		aprint_verbose_dev(self, "%c%i: "
-		    "0x%08llx %20s %5lli / %5lli  0x%llx\n",
+		    "0x%08"PRIx64" %20s %5"PRIi64" / %5"PRIi64"  "
+		    "0x%"PRIx64"\n",
 		    name[0], i,
-		    as[i].i, as[i].s.desc, as[i].l, as[i].h,
+		    as[i].i, as[i].s.desc, (int64_t)as[i].l, (int64_t)as[i].h,
 		    oi[4].Integer.Value);
-		sysmon_envsys_sensor_attach(sc->sc_sme, &as[i].s);
+		if (sysmon_envsys_sensor_attach(sc->sc_sme, &as[i].s))
+			aprint_error_dev(self, "%c%i: unable to attach\n",
+			    name[0], i);
 	}
 
 	AcpiOsFree(b.Pointer);
@@ -292,8 +295,8 @@ aibs_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	int			i;
 	const char		*name;
 	struct aibs_sensor	*as;
-	int64_t			v;
-	int64_t			l, h;
+	ACPI_INTEGER		v;
+	ACPI_INTEGER		l, h;
 
 	switch (st) {
 	case ENVSYS_STEMP:
@@ -398,7 +401,7 @@ aibs_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	enum envsys_units	st = s->units;
 	int			i;
 	struct aibs_sensor	*as;
-	int64_t			l, h;
+	ACPI_INTEGER		l, h;
 
 	switch (st) {
 	case ENVSYS_STEMP:
