@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.38 2010/02/06 20:11:33 pgoyette Exp $
+.\" $NetBSD: acpi.4,v 1.39 2010/02/09 03:19:50 cnst Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,6 +42,7 @@
 .Cd "acpismbus* at acpi?"
 .Cd "acpitz*   at acpi?"
 .Cd "aiboost*  at acpi?"
+.Cd "aibs*     at acpi?"
 .Cd "asus*     at acpi?"
 .Cd "attimer*  at acpi?"
 .Cd "com*      at acpi?"
@@ -201,6 +202,8 @@ SMBus via Control Method Interface.
 thermal zones.
 .It aiboost
 ASUS AI Booster Hardware monitor.
+.It aibs
+ASUSTeK AI Booster ACPI ATK0110 voltage, temperature and fan sensor.
 .It asus
 ASUS laptop hotkeys.
 .It attimer
@@ -392,6 +395,7 @@ variable is always specified with the prefix
 .Xr acpismbus 4 ,
 .Xr acpitz 4 ,
 .Xr aiboost 4 ,
+.Xr aibs 4 ,
 .Xr apm 4 ,
 .Xr attimer 4 ,
 .Xr com 4 ,

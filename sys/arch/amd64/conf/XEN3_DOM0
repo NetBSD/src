@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.48 2009/12/17 23:53:24 jym Exp $
+# $NetBSD: XEN3_DOM0,v 1.49 2010/02/09 03:19:50 cnst Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -225,6 +225,7 @@ acpiec* 	at acpi?		# ACPI Embedded Controller
 acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz*		at acpi?		# ACPI Thermal Zone
 aiboost*	at acpi?		# ASUS AI Booster Hardware monitor
+aibs*		at acpi?		# ASUSTeK AI Booster hardware monitor
 hpqlb*		at acpi?		# HP Quick Launch Buttons
 pckbc*		at acpi?		# PC keyboard controller
 pcppi*		at acpi?		# AT-style speaker sound
