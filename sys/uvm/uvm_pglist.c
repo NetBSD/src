@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.45 2009/03/10 03:27:24 nonaka Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.45.2.1 2010/02/09 08:43:33 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.45 2009/03/10 03:27:24 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.45.2.1 2010/02/09 08:43:33 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,9 +246,9 @@ uvm_pglistalloc_contig(int num, paddr_t low, paddr_t high, paddr_t alignment,
 
 	for (fl = 0; fl < VM_NFREELIST; fl++) {
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST)
-		for (psi = vm_nphysseg - 1 ; psi >= 0 ; psi--)
+		for (psi = vm_nphysmem - 1 ; psi >= 0 ; psi--)
 #else
-		for (psi = 0 ; psi < vm_nphysseg ; psi++)
+		for (psi = 0 ; psi < vm_nphysmem ; psi++)
 #endif
 		{
 			ps = &vm_physmem[psi];
@@ -345,9 +345,9 @@ again:
 
 	for (fl = 0; fl < VM_NFREELIST; fl++) {
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST)
-		for (psi = vm_nphysseg - 1 ; psi >= 0 ; psi--)
+		for (psi = vm_nphysmem - 1 ; psi >= 0 ; psi--)
 #else
-		for (psi = 0 ; psi < vm_nphysseg ; psi++)
+		for (psi = 0 ; psi < vm_nphysmem ; psi++)
 #endif
 		{
 			ps = &vm_physmem[psi];
