@@ -1,4 +1,4 @@
-/*	$NetBSD: hexdump.c,v 1.14 2008/07/21 14:19:23 lukem Exp $	*/
+/*	$NetBSD: hexdump.c,v 1.15 2010/02/09 14:06:37 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)hexdump.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hexdump.c,v 1.14 2008/07/21 14:19:23 lukem Exp $");
+__RCSID("$NetBSD: hexdump.c,v 1.15 2010/02/09 14:06:37 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ main(int argc, char *argv[])
 	if (!(p = strrchr(argv[0], 'o')) || strcmp(p, "od"))
 		newsyntax(argc, &argv);
 	else
-		oldsyntax(argc, &argv);
+		odsyntax(argc, &argv);
 
 	/* figure out the data block size */
 	for (blocksize = 0, tfs = fshead; tfs; tfs = tfs->nextfs) {
