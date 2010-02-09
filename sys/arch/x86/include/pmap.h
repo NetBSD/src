@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.28 2009/11/11 17:08:16 cegger Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29 2010/02/09 22:51:13 jym Exp $	*/
 
 /*
  *
@@ -106,7 +106,7 @@
 
 #define ptp_va2o(va, lvl)	(pl_i(va, (lvl)+1) * PAGE_SIZE)
 
-/* size of a PDP: usually one page, exept for PAE */
+/* size of a PDP: usually one page, except for PAE */
 #ifdef PAE
 #define PDP_SIZE 4
 #else
