@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.67 2010/02/09 23:47:10 jym Exp $	*/
+/*	$NetBSD: cpu.c,v 1.68 2010/02/09 23:52:13 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.67 2010/02/09 23:47:10 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.68 2010/02/09 23:52:13 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -606,9 +606,9 @@ cpu_start_secondary(struct cpu_info *ci)
 #endif
 	} else {
 		/*
-		 * Synchronize time stamp counters.  Invalidate cache and do twice
-		 * to try and minimize possible cache effects.  Disable interrupts
-		 * to try and rule out any external interference.
+		 * Synchronize time stamp counters. Invalidate cache and do
+		 * twice to try and minimize possible cache effects. Disable
+		 * interrupts to try and rule out any external interference.
 		 */
 		psl = x86_read_psl();
 		x86_disable_intr();
