@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.100 2010/01/31 00:43:37 hubertf Exp $	*/
+/*	$NetBSD: pmap.c,v 1.101 2010/02/09 22:51:14 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100 2010/01/31 00:43:37 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.101 2010/02/09 22:51:14 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -406,7 +406,7 @@ paddr_t avail_end;	/* PA of last available physical page */
 
 #ifdef XEN
 #ifdef __x86_64__
-/* Dummy PGD for user cr3, used between pmap_deacivate() and pmap_activate() */
+/* Dummy PGD for user cr3, used between pmap_deactivate() and pmap_activate() */
 static paddr_t xen_dummy_user_pgd;
 /* Currently active user PGD (can't use rcr3()) */
 static paddr_t xen_current_user_pgd = 0;
