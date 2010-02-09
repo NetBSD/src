@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.151 2010/01/15 20:39:46 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.152 2010/02/09 16:53:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.151 2010/01/15 20:39:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.152 2010/02/09 16:53:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -502,6 +502,8 @@ rump_lwp_free(struct lwp *l)
 
 	KASSERT(l->l_flag & LW_WEXIT);
 	KASSERT(l->l_mutex == NULL);
+	if (l->l_name)
+		kmem_free(l->l_name, MAXCOMLEN);
 	kmem_free(l, sizeof(*l));
 }
 

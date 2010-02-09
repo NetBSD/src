@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.7 2010/01/27 20:16:16 pooka Exp $	*/
+/*	$NetBSD: threads.c,v 1.8 2010/02/09 16:53:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.7 2010/01/27 20:16:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.8 2010/02/09 16:53:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -144,6 +144,11 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 		l->l_pflag |= LP_BOUND;
 		l->l_cpu = ci;
 	}
+	if (thrname) {
+		l->l_name = kmem_alloc(MAXCOMLEN, KM_SLEEP);
+		strlcpy(l->l_name, thrname, MAXCOMLEN);
+	}
+		
 	rv = rumpuser_thread_create(threadbouncer, k, thrname);
 	if (rv)
 		return rv;
