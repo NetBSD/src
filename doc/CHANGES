@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1356 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1357 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -538,7 +538,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		linkage is now always the same.  [pooka 20100119]
 	dhcpcd(8): Import dhcpcd-5.1.5. [roy 20100131]
 	terminfo(3): Import my terminfo implementation to replace termcap.
-		roy [20100203]
+		[roy 20100203]
 	acpismbus(4): Add my experimental ACPI SMBus Control Method
 		Interface driver. [pgoyette 20100206]
 	uthum(4): Add a driver for TEMPer and TEMPerHUM usb thermometers.
@@ -546,3 +546,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	network: Derive the mbuf cluster (NMBCLUSTERS) at boot time from
 		the available memory.  The default can be raised by changing
 		kern.mbuf.nmbclusters. [joerg 20100208]
+	mfi(4): Add support for LSI's newer (GEN2) RAID controller from
+		OpenBSD. [msaitoh 20100209]
