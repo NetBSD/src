@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.16 2009/03/29 01:02:50 mrg Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.17 2010/02/09 16:46:07 njoly Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.16 2009/03/29 01:02:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.17 2010/02/09 16:46:07 njoly Exp $");
 
 #ifdef __amd64__
 #define ELFSIZE 64
@@ -152,7 +152,7 @@ ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
 	eh = (Elf_Ehdr *)pack->ep_hdr;
 
 	/*
-	 * We forgot this, so we ned to reload it now. XXX keep track of it?
+	 * We forgot this, so we need to reload it now. XXX keep track of it?
 	 */
 	if (ap == NULL) {
 		phsize = eh->e_phnum * sizeof(Elf_Phdr);
