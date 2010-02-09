@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.51 2009/09/03 09:29:07 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.52 2010/02/09 23:05:16 wiz Exp $	*/
 
-/* $Id: pfkey.c,v 1.51 2009/09/03 09:29:07 tteras Exp $ */
+/* $Id: pfkey.c,v 1.52 2010/02/09 23:05:16 wiz Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -3554,7 +3554,7 @@ pk_recvmigrate(mhp)
 #endif
 
 /*
- * send error against acquire message to kenrel.
+ * send error against acquire message to kernel.
  */
 int
 pk_sendeacquire(iph2)

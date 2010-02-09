@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.19 2009/07/08 12:23:09 tsutsui Exp $	*/
+/*	$NetBSD: intr.c,v 1.20 2010/02/09 23:05:16 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.19 2009/07/08 12:23:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20 2010/02/09 23:05:16 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 			/*
 			 * Normally, all settable vectors are already
 			 * re-routed to the intr_glue() function. The
-			 * marvelous exeption to these are the HBL/VBL
+			 * marvelous exception to these are the HBL/VBL
 			 * interrupts. They happen *very* often and
 			 * can't be turned off on the Falcon. So they
 			 * are normally vectored to an 'rte' instruction.
