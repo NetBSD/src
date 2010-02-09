@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.311 2010/02/06 00:23:30 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.312 2010/02/09 23:05:16 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -693,7 +693,7 @@ _C_LABEL(trapbase):
 	UTRAP(0x004)		! 004 = SIR -- ROM should get this
 	UTRAP(0x005)		! 005 = RED state exception
 	UTRAP(0x006); UTRAP(0x007)
-	VTRAP(T_INST_EXCEPT, textfault)	! 008 = instr. access exept
+	VTRAP(T_INST_EXCEPT, textfault)	! 008 = instr. access except
 	VTRAP(T_TEXTFAULT, textfault)	! 009 = instr access MMU miss
 	VTRAP(T_INST_ERROR, textfault)	! 00a = instr. access err
 	UTRAP(0x00b); UTRAP(0x00c); UTRAP(0x00d); UTRAP(0x00e); UTRAP(0x00f)
@@ -948,7 +948,7 @@ trapbase_priv:
 	UTRAP(0x005)			! 005 = RED state exception
 	UTRAP(0x006); UTRAP(0x007)
 ktextfault:
-	VTRAP(T_INST_EXCEPT, textfault)	! 008 = instr. access exept
+	VTRAP(T_INST_EXCEPT, textfault)	! 008 = instr. access except
 	VTRAP(T_TEXTFAULT, textfault)	! 009 = instr access MMU miss -- no MMU
 	VTRAP(T_INST_ERROR, textfault)	! 00a = instr. access err
 	UTRAP(0x00b); UTRAP(0x00c); UTRAP(0x00d); UTRAP(0x00e); UTRAP(0x00f)
