@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.19 2009/11/27 03:23:10 rmind Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.20 2010/02/09 23:09:47 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.19 2009/11/27 03:23:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.20 2010/02/09 23:09:47 jym Exp $");
 	
 #include "opt_mpbios.h"		/* for MPDEBUG */
 		
@@ -125,8 +125,8 @@ _C_LABEL(cpu_spinup_trampoline):
 	movw    %ax, %es
 	movw    %ax, %ss
 	data32 addr32 lgdt    (gdt_desc)      # load flat descriptor table
-	movl    %cr0, %eax       # get cr0
-	orl     $0x1, %eax      # enable protected mode
+	movl    %cr0, %eax      # get cr0
+	orl     $CR0_PE, %eax   # enable protected mode
 	movl    %eax, %cr0      # doit
 	ljmpl    $0x8, $mp_startup
 
