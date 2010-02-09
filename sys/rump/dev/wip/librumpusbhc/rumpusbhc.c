@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpusbhc.c,v 1.14 2010/02/03 21:18:38 pooka Exp $	*/
+/*	$NetBSD: rumpusbhc.c,v 1.15 2010/02/09 18:27:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.14 2010/02/03 21:18:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.15 2010/02/09 18:27:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -365,7 +365,7 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 	int len, totlen;
 	int value;
 	int err = 0;
-	int ru_error;
+	int ru_error, mightfail = 0;
 
 	len = totlen = UGETW(req->wLength);
 	if (len)
@@ -462,9 +462,20 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 		}
 
 	/*
+	 * This request might fail unknown reasons.  "EIO" doesn't
+	 * give much help, and debugging the host ugen would be
+	 * necessary.  However, since it doesn't seem to really
+	 * affect anything, just let it fail for now.
+	 */
+	case C(0x00, UT_WRITE_CLASS_INTERFACE):
+		mightfail = 1;
+		/*FALLTHROUGH*/
+
+	/*
 	 * XXX: don't wildcard these yet.  I want to better figure
 	 * out what to trap here.  This is kinda silly, though ...
 	 */
+
 	case C(0x01, UT_WRITE_VENDOR_DEVICE):
 	case C(0x06, UT_WRITE_VENDOR_DEVICE):
 	case C(0x07, UT_READ_VENDOR_DEVICE):
@@ -475,7 +486,6 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 	case C(UR_GET_STATUS, UT_READ_CLASS_DEVICE):
 	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
 	case C(UR_GET_DESCRIPTOR, UT_READ_INTERFACE):
-	case C(0x00, UT_WRITE_CLASS_INTERFACE):
 	case C(0xff, UT_WRITE_CLASS_INTERFACE):
 	case C(0x20, UT_WRITE_CLASS_INTERFACE):
 	case C(0x22, UT_WRITE_CLASS_INTERFACE):
@@ -491,7 +501,10 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 		ucr.ucr_data = buf;
 		if (rumpuser_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
 		    USB_DO_REQUEST, &ucr, &ru_error) == -1) {
-			panic("request failed");
+			if (!mightfail)
+				panic("request failed: %d", ru_error);
+			else
+				err = ru_error;
 		}
 		}
 		break;
@@ -715,17 +728,10 @@ static void
 doxfer_kth(void *arg)
 {
 	usbd_xfer_handle xfer = arg;
-	usb_endpoint_descriptor_t *ed = xfer->pipe->endpoint->edesc;
-	bool repeat;
-
-	if ((ed->bmAttributes & UE_XFERTYPE) == UE_INTERRUPT)
-		repeat = true;
-	else
-		repeat = false;
 
 	do {
 		rumpusb_device_bulk_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
-	} while (repeat);
+	} while (!SIMPLEQ_EMPTY(&xfer->pipe->queue));
 	kthread_exit(0);
 }
 
