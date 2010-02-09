@@ -1,4 +1,4 @@
-/*	$NetBSD: rtas.c,v 1.8 2008/04/08 02:33:03 garbled Exp $ */
+/*	$NetBSD: rtas.c,v 1.8.24.1 2010/02/09 07:42:26 uebayasi Exp $ */
 
 /*
  * CHRP RTAS support routines
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.8 2008/04/08 02:33:03 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.8.24.1 2010/02/09 07:42:26 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ rtas_attach(struct device *parent, struct device *self, void *aux)
 	    &pglist, 1, 0))
 		goto fail;
 
-	sc->ra_base_pa = TAILQ_FIRST(&pglist)->phys_addr;
+	sc->ra_base_pa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&pglist));
 
 	ih = OF_open("/rtas");
 	if (ih == -1)

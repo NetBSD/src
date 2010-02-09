@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59.2.2 2010/02/08 05:53:05 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.3 2010/02/09 07:42:26 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -142,7 +142,6 @@ struct vm_page {
 						 * to modify: [O _and_ P] */
 	uint16_t		wire_count;	/* wired down map refs [P] */
 	uint16_t		pqflags;	/* page queue flags [P] */
-	paddr_t			phys_addr;	/* physical address of page */
 
 #ifdef __HAVE_VM_PAGE_MD
 	struct vm_page_md	mdpage;		/* pmap-specific data */
@@ -291,6 +290,7 @@ int uvm_page_lookup_freelist(struct vm_page *);
 
 int vm_physseg_find(paddr_t, int *);
 struct vm_page *uvm_phys_to_vm_page(paddr_t);
+paddr_t uvm_vm_page_to_phys(const struct vm_page *);
 
 /*
  * macros
@@ -298,7 +298,7 @@ struct vm_page *uvm_phys_to_vm_page(paddr_t);
 
 #define UVM_PAGE_TREE_PENALTY	4	/* XXX: a guess */
 
-#define VM_PAGE_TO_PHYS(entry)	((entry)->phys_addr)
+#define VM_PAGE_TO_PHYS(entry)	uvm_vm_page_to_phys(entry)
 
 /*
  * Compute the page color bucket for a given page.
