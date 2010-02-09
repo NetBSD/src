@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.66 2010/02/06 20:10:18 pgoyette Exp $
+#	$NetBSD: files.acpi,v 1.67 2010/02/09 03:19:51 cnst Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -155,6 +155,11 @@ file	dev/acpi/wb_acpi.c		wb_acpi
 device	acpiwmi: acpiwmibus
 attach	acpiwmi at acpinodebus
 file	dev/acpi/wmi_acpi.c		acpiwmi
+
+# ASUSTeK AI Booster ATK0110
+device	aibs: sysmon_envsys
+attach	aibs at acpinodebus
+file	dev/acpi/atk0110.c		aibs
 
 # ACPI SMBus controller
 device	acpismbus: i2cbus
