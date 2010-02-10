@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt_at_usb.c,v 1.1 2009/12/15 15:52:30 pooka Exp $	*/
+/*	$NetBSD: ulpt_at_usb.c,v 1.2 2010/02/10 02:26:23 pooka Exp $	*/
 
 /*
  * MACHINE GENERATED: DO NOT EDIT
@@ -347,15 +347,10 @@ CFDRIVER_DECL(uhub, DV_DULL, uhub_attrs);
 
 CFDRIVER_DECL(ulpt, DV_DULL, NULL);
 
-static const struct cfiattrdata * const rumpusbhc_attrs[] = { &usbuscf_iattrdata, NULL };
-CFDRIVER_DECL(rumpusbhc, DV_DULL, rumpusbhc_attrs);
-
-
 
 extern struct cfattach usb_ca;
 extern struct cfattach uroothub_ca;
 extern struct cfattach ulpt_ca;
-extern struct cfattach rumpusbhc_ca;
 
 /* locators */
 static int loc[6] = {
