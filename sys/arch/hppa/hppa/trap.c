@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.72 2010/02/10 17:00:45 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.73 2010/02/10 20:49:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.72 2010/02/10 17:00:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.73 2010/02/10 20:49:58 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -501,10 +501,11 @@ trap(int type, struct trapframe *frame)
 	ksiginfo_t ksi;
 	u_int opcode, onfault;
 	int ret;
-	const char *tts;
+	const char *tts = "reserved";
 	int trapnum;
 #ifdef DIAGNOSTIC
 	extern int emergency_stack_start, emergency_stack_end;
+
 	int oldcpl = cpl;
 #endif
 
@@ -526,8 +527,6 @@ trap(int type, struct trapframe *frame)
 	p = l->l_proc;
 	if ((type & T_USER) != 0)
 		LWP_CACHE_CREDS(l, p);
-
-	tts = (trapnum > trap_types) ? "reserved" : trap_type[trapnum];
 
 #ifdef DIAGNOSTIC
 	/*
@@ -569,6 +568,9 @@ trap(int type, struct trapframe *frame)
 	if (frame->tf_flags & TFF_LAST)
 		l->l_md.md_regs = frame;
 
+	if (trapnum <= trap_types)
+		tts = trap_type[trapnum];
+
 #ifdef TRAPDEBUG
 	if (trapnum != T_INTERRUPT && trapnum != T_IBREAK)
 		printf("trap: %d, %s for %x:%x at %x:%x, fp=%p, rp=%x\n",
@@ -587,6 +589,7 @@ trap(int type, struct trapframe *frame)
 		}
 	}
 #endif
+
 	pcb = lwp_getpcb(l);
 
 	/* If this is a trap, not an interrupt, reenable interrupts. */
