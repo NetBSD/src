@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211.2.4 2010/02/10 13:58:08 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211.2.5 2010/02/10 14:18:30 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.4 2010/02/10 13:58:08 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.5 2010/02/10 14:18:30 uebayasi Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -2824,14 +2824,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		opg = NULL;
 
 	if (pg) {
-		struct vm_page_md *md;
-
-#ifdef DEVICE_PAGE
-		if (uvm_pageisdevice_p(pg))
-			md = vm_page_device_mdpage_lookup(pg);
-		else
-#endif
-		md = &pg->mdpage;
+		struct vm_page_md *md = VM_PAGE_TO_MD(pg);
 
 		/*
 		 * This is to be a managed mapping.
@@ -2897,15 +2890,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			 * of an existing mapping.
 			 */
 			if (opg) {
-				struct vm_page_md *omd;
+				struct vm_page_md *omd = VM_PAGE_TO_MD(opg);
 				paddr_t opa;
 
-#ifdef DEVICE_PAGE
-				if (uvm_pageisdevice_p(opg))
-					omd = vm_page_device_mdpage_lookup(opg);
-				else
-#endif
-				omd = &opg->mdpage;
 				opa = VM_PAGE_TO_PHYS(opg);
 
 				/*
