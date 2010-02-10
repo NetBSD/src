@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.71 2010/01/17 08:50:04 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.72 2010/02/10 17:00:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.71 2010/01/17 08:50:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.72 2010/02/10 17:00:45 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -161,7 +161,7 @@ const char *trap_type[] = {
 	"data protection",
 	"unaligned data ref",
 };
-int trap_types = sizeof(trap_type)/sizeof(trap_type[0]);
+int trap_types = __arraycount(trap_type);
 
 uint8_t fpopmap[] = {
 	0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00,
