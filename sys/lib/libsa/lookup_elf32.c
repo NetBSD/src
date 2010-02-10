@@ -1,4 +1,4 @@
-/* $NetBSD: lookup_elf32.c,v 1.1 2010/02/10 21:54:47 martin Exp $ */
+/* $NetBSD: lookup_elf32.c,v 1.2 2010/02/10 23:33:56 martin Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	ELFSIZE	32
 #endif
 
-#include <string.h>
+#include <lib/libkern/libkern.h>
 #include <sys/param.h>
 #include <sys/exec_elf.h>
 
