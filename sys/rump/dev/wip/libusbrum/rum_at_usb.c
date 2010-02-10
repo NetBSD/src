@@ -1,4 +1,4 @@
-/*	$NetBSD: rum_at_usb.c,v 1.2 2010/02/03 21:18:38 pooka Exp $	*/
+/*	$NetBSD: rum_at_usb.c,v 1.3 2010/02/10 02:26:24 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -45,14 +45,14 @@ CFDRIVER_DECL(uhub, DV_DULL, uhub_attrs);
 
 CFDRIVER_DECL(rum, DV_IFNET, NULL);
 
-struct cfparent rumpusbhc_pspec = {
+struct cfparent ugenhc_pspec = {
 	"usbus",
-	"rumpusbhc",
+	"ugenhc",
 	DVUNIT_ANY
 };
 
 struct cfdata usb_cfdata[] = {
-	{ "usb", "usb", 0, FSTATE_STAR, NULL, 0, &rumpusbhc_pspec },
+	{ "usb", "usb", 0, FSTATE_STAR, NULL, 0, &ugenhc_pspec },
 };
 
 struct cfparent usb_pspec = {
