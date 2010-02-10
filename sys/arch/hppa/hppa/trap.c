@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.73 2010/02/10 20:49:58 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.74 2010/02/10 20:51:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.73 2010/02/10 20:49:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74 2010/02/10 20:51:23 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -1244,22 +1244,20 @@ out:
 		break;
 	case ERESTART:
 		/*
-		 * Now we have to wind back the instruction
-		 * offset queue to the point where the system
-		 * call will be made again.  This is inherently
-		 * tied to the SYSCALL macro.
+		 * Now we have to wind back the instruction offset queue to the
+		 * point where the system call will be made again.  This is
+		 * inherently tied to the SYSCALL macro.
 		 *
-		 * Currently, the part of the SYSCALL macro
-		 * that we want to rerun reads as:
+		 * Currently, the part of the SYSCALL macro that we want to re-
+		 * run reads as:
 		 *
 		 *	ldil	L%SYSCALLGATE, r1
 		 *	ble	4(sr7, r1)
 		 *	ldi	__CONCAT(SYS_,x), t1
 		 *	comb,<>	%r0, %t1, __cerror
 		 *
-		 * And our offset queue head points to the
-		 * comb instruction.  So we need to
-		 * subtract twelve to reach the ldil.
+		 * And our offset queue head points to the comb instruction.
+		 * So we need to subtract twelve to reach the ldil.
 		 */
 		frame->tf_iioq_head -= 12;
 		frame->tf_iioq_tail = frame->tf_iioq_head + 4;
