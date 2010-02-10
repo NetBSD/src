@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.12 2010/02/03 15:34:46 roy Exp $	*/
+/*	$NetBSD: extern.h,v 1.13 2010/02/10 10:33:45 roy Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@ extern struct termios mode, oldmode;
 extern int ncolumns, isreset, nlines;
 
 void	 add_mapping __P((const char *, char *));
-void	 tset_cat __P((char *));
+void	 tset_cat __P((const char *));
 const	 char *get_terminfo_entry __P((const char *));
 const	 char *mapped __P((const char *));
 int	 outc __P((int));
