@@ -1,6 +1,6 @@
-/*	$NetBSD: mongoose.c,v 1.18 2010/01/17 08:33:54 skrll Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.19 2010/02/10 20:32:34 skrll Exp $	*/
 
-/*	$OpenBSD: mongoose.c,v 1.7 2000/08/15 19:42:56 mickey Exp $	*/
+/*	$OpenBSD: mongoose.c,v 1.19 2010/01/01 20:28:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.18 2010/01/17 08:33:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.19 2010/02/10 20:32:34 skrll Exp $");
 
 #define MONGOOSE_DEBUG 9
 
@@ -614,7 +614,7 @@ mgattach(device_t parent, device_t self, void *aux)
 		aprint_error(": can't map control registers\n");
 		bus_space_unmap(ca->ca_iot, (bus_space_handle_t)sc->sc_regs,
 		    sizeof(struct mongoose_regs));
-		return;		
+		return;
 	}
 	sc->sc_ctrl = (struct mongoose_ctrl *)ioh;
 
