@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1357 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1358 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -548,3 +548,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		kern.mbuf.nmbclusters. [joerg 20100208]
 	mfi(4): Add support for LSI's newer (GEN2) RAID controller from
 		OpenBSD. [msaitoh 20100209]
+	aibs(4): New driver for ASUSTeK AI Booster (ACPI ASOC ATK0110)
+		hardware monitor with limit support.	[cnst 20100209]
