@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_at_scsibus_at_umass.c,v 1.8 2010/02/09 19:02:19 pooka Exp $	*/
+/*	$NetBSD: sd_at_scsibus_at_umass.c,v 1.9 2010/02/10 02:08:34 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -24,8 +24,8 @@ rump_device_configuration(void)
 	extern struct cfattach rumpusbhc_ca;
 	extern struct cfattach usb_ca, uhub_ca, uroothub_ca, umass_ca;
 	extern struct cfattach scsibus_ca, atapibus_ca, sd_ca, cd_ca;
-	extern struct bdevsw sd_bdevsw;
-	extern struct cdevsw sd_cdevsw;
+	extern struct bdevsw sd_bdevsw, cd_bdevsw;
+	extern struct cdevsw sd_cdevsw, cd_cdevsw;
 	devmajor_t bmaj, cmaj;
 
 	FLAWLESSCALL(config_cfdata_attach(cfdata_umass, 0));
@@ -65,5 +65,13 @@ rump_device_configuration(void)
 	FLAWLESSCALL(rump_vfs_makedevnodes(S_IFBLK, "/dev/sd0", 'a',
 	    bmaj, 0, 8));
 	FLAWLESSCALL(rump_vfs_makedevnodes(S_IFCHR, "/dev/rsd0", 'a',
+	    cmaj, 0, 8));
+
+	bmaj = cmaj = -1;
+	FLAWLESSCALL(devsw_attach("cd", &cd_bdevsw, &bmaj, &cd_cdevsw, &cmaj));
+
+	FLAWLESSCALL(rump_vfs_makedevnodes(S_IFBLK, "/dev/cd0", 'a',
+	    bmaj, 0, 8));
+	FLAWLESSCALL(rump_vfs_makedevnodes(S_IFCHR, "/dev/rcd0", 'a',
 	    cmaj, 0, 8));
 }
