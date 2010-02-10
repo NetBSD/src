@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_chars.c,v 1.13 2007/10/19 11:59:58 ad Exp $ */
+/* $NetBSD: pcdisplay_chars.c,v 1.14 2010/02/10 19:45:30 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_chars.c,v 1.13 2007/10/19 11:59:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_chars.c,v 1.14 2010/02/10 19:45:30 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,6 +265,7 @@ static const struct {
 	int quality;
 } replacements[] = {
 	{0x00af, 0x2d, 3}, /* MACRON -> - */
+	{0x2013, 0x2d, 3}, /* EN DASH -> - */
 	{0x221f, 0xc0, 3}, /* RIGHT ANGLE -> light up and right */
 	{0x222a, 0x55, 3}, /* UNION -> U */
 	{0x223c, 0x7e, 3}, /* TILDE OPERATOR -> ~ */
@@ -325,6 +326,30 @@ static const struct {
 	{0x00e3, 0x61, 1}, /* LATIN SMALL LETTER A WITH TILDE -> a */
 	{0x00f5, 0x6f, 1}, /* LATIN SMALL LETTER O WITH TILDE -> o */
 	{0x00fd, 0x79, 1}, /* LATIN SMALL LETTER Y WITH ACUTE -> y */
+	{0x010c, 0x43, 1}, /* LATIN CAPITAL LETTER C WITH CARON -> C */
+	{0x010d, 0x63, 1}, /* LATIN SMALL LETTER C WITH CARON -> c */
+	{0x011a, 0x45, 1}, /* LATIN CAPITAL LETTER A WITH CARON -> A */
+	{0x011b, 0x65, 1}, /* LATIN SMALL LETTER A WITH CARON -> a */
+	{0x013d, 0x4c, 1}, /* LATIN CAPITAL LETTER L WITH CARON -> L */
+	{0x013e, 0x6c, 1}, /* LATIN SMALL LETTER L WITH CARON -> l */
+	{0x0147, 0x4e, 1}, /* LATIN CAPITAL LETTER N WITH CARON -> N */
+	{0x0148, 0x6e, 1}, /* LATIN SMALL LETTER N WITH CARON -> n */
+	{0x0150, 0x99, 1}, /* LATIN CAPITAL LETTER O WITH DOUBLE ACUTE */
+	{0x0151, 0x94, 1}, /* LATIN SMALL LETTER O WITH DOUBLE ACUTE */
+	{0x0158, 0x52, 1}, /* LATIN CAPITAL LETTER R WITH CARON -> R */
+	{0x0159, 0x72, 1}, /* LATIN SMALL LETTER R WITH CARON -> r */
+	{0x0160, 0x53, 1}, /* LATIN CAPITAL LETTER S WITH CARON -> S */
+	{0x0161, 0x73, 1}, /* LATIN SMALLLETTER S WITH CARON -> s */
+	{0x0164, 0x54, 1}, /* LATIN CAPITAL LETTER T WITH CARON -> T */
+	{0x0165, 0x74, 1}, /* LATIN SMALL LETTER T WITH CARON -> t */
+	{0x016c, 0x55, 1}, /* LATIN CAPITAL LETTER U WITH BREVE -> U */
+	{0x016d, 0x75, 1}, /* LATIN SMALL LETTER U WITH BREVE -> u */
+	{0x016e, 0x55, 1}, /* LATIN CAPITAL LETTER U WITH RING ABOVE -> U */
+	{0x016f, 0x75, 1}, /* LATIN SMALL LETTER U WITH RING ABOVE -> u */
+	{0x0170, 0x9a, 1}, /* LATIN CAPITAL LETTER U WITH DOUBLE ACUTE */
+	{0x0171, 0x81, 1}, /* LATIN SMALL LETTER U WITH DOUBLE ACUTE */
+	{0x017d, 0x5a, 1}, /* LATIN CAPITAL LETTER Z WITH CARON -> Z */
+	{0x017e, 0x7a, 1}, /* LATIN SMALL LETTER Z WITH CARON -> z */
 };
 
 int
