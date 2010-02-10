@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.26 2008/11/19 06:24:04 matt Exp $	*/
+/*	$NetBSD: mem.c,v 1.26.6.1 2010/02/10 14:20:23 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -76,7 +76,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26 2008/11/19 06:24:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26.6.1 2010/02/10 14:20:23 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -144,7 +144,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			{
 				struct vm_page *pg;
 				pg = PHYS_TO_VM_PAGE(trunc_page(v));
-				if (pg != NULL && pmap_is_page_colored_p(pg))
+				if (pg != NULL && pmap_is_page_colored_p(&pg->mdpage))
 					o = pg->mdpage.pvh_attrs;
 				else
 					o = v;

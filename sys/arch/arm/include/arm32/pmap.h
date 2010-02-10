@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.94 2009/12/27 05:14:56 uebayasi Exp $	*/
+/*	$NetBSD: pmap.h,v 1.94.2.1 2010/02/10 14:20:23 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -272,8 +272,8 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 	(((pg)->mdpage.pvh_attrs & PVF_MOD) != 0)
 #define	pmap_is_referenced(pg)	\
 	(((pg)->mdpage.pvh_attrs & PVF_REF) != 0)
-#define	pmap_is_page_colored_p(pg)	\
-	(((pg)->mdpage.pvh_attrs & PVF_COLORED) != 0)
+#define	pmap_is_page_colored_p(md)	\
+	(((md)->pvh_attrs & PVF_COLORED) != 0)
 
 #define	pmap_copy(dp, sp, da, l, sa)	/* nothing */
 
