@@ -1,4 +1,4 @@
-/*	$NetBSD: set.c,v 1.13 2010/02/03 15:34:46 roy Exp $	*/
+/*	$NetBSD: set.c,v 1.14 2010/02/10 10:34:59 roy Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -30,13 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)set.c	8.2 (Berkeley) 2/28/94";
-#endif
-__RCSID("$NetBSD: set.c,v 1.13 2010/02/03 15:34:46 roy Exp $");
-#endif /* not lint */
+__RCSID("$NetBSD: set.c,v 1.14 2010/02/10 10:34:59 roy Exp $");
 
+#include <err.h>
 #include <stdio.h>
 #include <term.h>
 #include <termios.h>
@@ -202,6 +198,7 @@ set_conversions(int usingupper)
 	mode.c_lflag |= (ECHOE | ECHOK);
 }
 
+#
 /* Output startup string. */
 void
 set_init()
@@ -227,7 +224,7 @@ set_init()
 			settle = 1;
 		}
 		if ((bp = reset_file) || (bp = init_file)) {
-			tputs(bp, 0, outc);
+			tset_cat(bp);
 			settle = 1;
 		}
 	}
