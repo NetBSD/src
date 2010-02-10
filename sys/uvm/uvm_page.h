@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59.2.6 2010/02/09 13:06:17 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.7 2010/02/10 02:12:39 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -291,8 +291,10 @@ void uvm_pagewake(struct vm_page *);
 void uvm_pagewire(struct vm_page *);
 void uvm_pagezero(struct vm_page *);
 bool uvm_pageismanaged(paddr_t);
-#ifdef XIP
+#ifdef DEVICE_PAGE
 bool uvm_pageisdevice_p(const struct vm_page *);
+#else
+#define	uvm_pageisdevice_p	false
 #endif
 
 int uvm_page_lookup_freelist(struct vm_page *);
