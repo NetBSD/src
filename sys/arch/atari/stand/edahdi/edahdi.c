@@ -1,4 +1,4 @@
-/*	$NetBSD: edahdi.c,v 1.9 2009/03/18 10:22:25 cegger Exp $	*/
+/*	$NetBSD: edahdi.c,v 1.10 2010/02/10 14:48:26 roy Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman, Waldi Ravens.
@@ -47,7 +47,7 @@
 
 #include <fcntl.h>
 #include <stdlib.h>
-#include <curses.h>
+#include <term.h>
 #include <termios.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -94,11 +94,6 @@ typedef struct {
 #define	T_NUMBER	5
 #define	T_EOF		6
 
-/*
- * Terminal capability strings (Ok, 1 to start with ;-) )
- */
-char	*Clr_screen = "";
-
 void	ahdi_cksum(void *);
 u_int	ahdi_getparts(int, ptable_t *, u_int, u_int);
 int	bsd_label(int, u_int);
@@ -107,7 +102,6 @@ int	edit_parts(int, ptable_t *);
 void   *disk_read(int, u_int, u_int);
 void	disk_write(int, u_int, u_int, void  *);
 char   *get_id(void);
-void	get_termcap(void);
 int	lex(int *);
 int	show_parts(ptable_t *, int);
 void	update_disk(ptable_t *, int, int);
@@ -143,7 +137,7 @@ main(int argc, char *argv[])
 		return (2);
 	}
 
-	get_termcap();
+	setupterm(NULL, STDOUT_FILENO, NULL);
 
 	ptable.nparts = 0;
 	ptable.parts  = NULL;
@@ -165,7 +159,8 @@ edit_parts(int fd, ptable_t *ptable)
 
 	for (;;) {
 		error = NULL;
-		tputs(Clr_screen, 1, putchar);
+		if (clear_screen)
+			tputs(clear_screen, 1, putchar);
 		show_parts(ptable, scr_base);
 
 		printf("\n\n");
@@ -531,23 +526,4 @@ disk_write(fd, start, count, buf)
 		err(1, "Seek error");
 	if (write(fd, buf, size) != size)
 		err(1, "Write error");
-}
-
-void
-get_termcap(void)
-{
-	char	*term, tbuf[1024], buf[1024], *p;
-
-	if ((term = getenv("TERM")) == NULL)
-		warnx("No TERM environment variable!");
-	else {
-		if (tgetent(tbuf, term) != 1)
-			errx(1, "Tgetent failure.");
-		p = buf;
-		if (tgetstr("cl", &p)) {
-			if ((Clr_screen = malloc(strlen(buf) + 1)) == NULL)
-				errx(1, "Malloc failure.");
-			strcpy(Clr_screen, buf);
-		}
-	}
 }
