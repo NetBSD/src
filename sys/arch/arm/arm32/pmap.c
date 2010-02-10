@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211 2010/01/02 07:53:29 he Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211.2.1 2010/02/10 12:53:26 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211 2010/01/02 07:53:29 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.1 2010/02/10 12:53:26 uebayasi Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -638,7 +638,7 @@ static bool		pmap_is_current(pmap_t);
 static bool		pmap_is_cached(pmap_t);
 static void		pmap_enter_pv(struct vm_page *, struct pv_entry *,
 			    pmap_t, vaddr_t, u_int);
-static struct pv_entry *pmap_find_pv(struct vm_page *, pmap_t, vaddr_t);
+static struct pv_entry *pmap_find_pv(struct vm_page_md *, pmap_t, vaddr_t);
 static struct pv_entry *pmap_remove_pv(struct vm_page *, pmap_t, vaddr_t);
 static u_int		pmap_modify_pv(struct vm_page *, pmap_t, vaddr_t,
 			    u_int, u_int);
@@ -667,7 +667,7 @@ static void		pmap_clearbit(struct vm_page *, u_int);
 static int		pmap_clean_page(struct pv_entry *, bool);
 #endif
 #ifdef PMAP_CACHE_VIPT
-static void		pmap_syncicache_page(struct vm_page *);
+static void		pmap_syncicache_page(struct vm_page_md *, paddr_t);
 enum pmap_flush_op {
 	PMAP_FLUSH_PRIMARY,
 	PMAP_FLUSH_SECONDARY,
@@ -916,7 +916,7 @@ pmap_enter_pv(struct vm_page *pg, struct pv_entry *pv, pmap_t pm,
 	 */
 	if (PV_IS_EXEC_P(flags)) {
 		if (!PV_IS_EXEC_P(pg->mdpage.pvh_attrs)) {
-			pmap_syncicache_page(pg);
+			pmap_syncicache_page(&pg->mdpage, VM_PAGE_TO_PHYS(pg));
 			PMAPCOUNT(exec_synced_map);
 		}
 		PMAPCOUNT(exec_mappings);
@@ -937,11 +937,11 @@ pmap_enter_pv(struct vm_page *pg, struct pv_entry *pv, pmap_t pm,
  * => caller should hold lock on vm_page
  */
 static inline struct pv_entry *
-pmap_find_pv(struct vm_page *pg, pmap_t pm, vaddr_t va)
+pmap_find_pv(struct vm_page_md *md, pmap_t pm, vaddr_t va)
 {
 	struct pv_entry *pv;
 
-	SLIST_FOREACH(pv, &pg->mdpage.pvh_list, pv_link) {
+	SLIST_FOREACH(pv, &md->pvh_list, pv_link) {
 		if (pm == pv->pv_pmap && va == pv->pv_va)
 			break;
 	}
@@ -1005,7 +1005,7 @@ pmap_remove_pv(struct vm_page *pg, pmap_t pm, vaddr_t va)
 					pg->mdpage.pvh_attrs &= ~PVF_EXEC;
 					PMAPCOUNT(exec_discarded_unmap);
 				} else {
-					pmap_syncicache_page(pg);
+					pmap_syncicache_page(&pg->mdpage, VM_PAGE_TO_PHYS(pg));
 					PMAPCOUNT(exec_synced_unmap);
 				}
 			}
@@ -1060,7 +1060,7 @@ pmap_modify_pv(struct vm_page *pg, pmap_t pm, vaddr_t va,
 	KASSERT((clr_mask & PVF_KENTRY) == 0);
 	KASSERT((set_mask & PVF_KENTRY) == 0);
 
-	if ((npv = pmap_find_pv(pg, pm, va)) == NULL)
+	if ((npv = pmap_find_pv(&pg->mdpage, pm, va)) == NULL)
 		return (0);
 
 	NPDEBUG(PDB_PVDUMP,
@@ -1120,7 +1120,7 @@ pmap_modify_pv(struct vm_page *pg, pmap_t pm, vaddr_t va,
 	if ((PV_IS_EXEC_P(flags) && !PV_IS_EXEC_P(pg->mdpage.pvh_attrs))
 	    || (PV_IS_EXEC_P(pg->mdpage.pvh_attrs)
 		|| (!(flags & PVF_WRITE) && (oflags & PVF_WRITE)))) {
-		pmap_syncicache_page(pg);
+		pmap_syncicache_page(&pg->mdpage, VM_PAGE_TO_PHYS(pg));
 		PMAPCOUNT(exec_synced_remap);
 	}
 	KASSERT((pg->mdpage.pvh_attrs & PVF_DMOD) == 0 || (pg->mdpage.pvh_attrs & (PVF_DIRTY|PVF_NC)));
@@ -2315,7 +2315,7 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 	 * If we need to sync the I-cache and we haven't done it yet, do it.
 	 */
 	if (need_syncicache && !did_syncicache) {
-		pmap_syncicache_page(pg);
+		pmap_syncicache_page(&pg->mdpage, VM_PAGE_TO_PHYS(pg));
 		PMAPCOUNT(exec_synced_clearbit);
 	}
 	/*
@@ -2427,26 +2427,26 @@ pmap_clean_page(struct pv_entry *pv, bool is_src)
  * right cache alias to make sure we flush the right stuff.
  */
 void
-pmap_syncicache_page(struct vm_page *pg)
+pmap_syncicache_page(struct vm_page_md *md, paddr_t pa)
 {
-	const vsize_t va_offset = pg->mdpage.pvh_attrs & arm_cache_prefer_mask;
+	const vsize_t va_offset = md->pvh_attrs & arm_cache_prefer_mask;
 	pt_entry_t * const ptep = &cdst_pte[va_offset >> PGSHIFT];
 
-	NPDEBUG(PDB_EXEC, printf("pmap_syncicache_page: pg=%p (attrs=%#x)\n",
-	    pg, pg->mdpage.pvh_attrs));
+	NPDEBUG(PDB_EXEC, printf("pmap_syncicache_page: md=%p (attrs=%#x)\n",
+	    md, md->pvh_attrs));
 	/*
 	 * No need to clean the page if it's non-cached.
 	 */
-	if (pg->mdpage.pvh_attrs & PVF_NC)
+	if (md->pvh_attrs & PVF_NC)
 		return;
-	KASSERT(arm_cache_prefer_mask == 0 || pg->mdpage.pvh_attrs & PVF_COLORED);
+	KASSERT(arm_cache_prefer_mask == 0 || md->pvh_attrs & PVF_COLORED);
 
 	pmap_tlb_flushID_SE(pmap_kernel(), cdstp + va_offset);
 	/*
 	 * Set up a PTE with the right coloring to flush existing cache lines.
 	 */
 	*ptep = L2_S_PROTO |
-	    VM_PAGE_TO_PHYS(pg)
+	    pa
 	    | L2_S_PROT(PTE_KERNEL, VM_PROT_READ|VM_PROT_WRITE)
 	    | pte_l2_s_cache_mode;
 	PTE_SYNC(ptep);
@@ -2462,7 +2462,7 @@ pmap_syncicache_page(struct vm_page *pg)
 	PTE_SYNC(ptep);
 	pmap_tlb_flushID_SE(pmap_kernel(), cdstp + va_offset);
 
-	pg->mdpage.pvh_attrs |= PVF_EXEC;
+	md->pvh_attrs |= PVF_EXEC;
 	PMAPCOUNT(exec_synced);
 }
 
@@ -3294,7 +3294,7 @@ pmap_kremove_pg(struct vm_page *pg, vaddr_t va)
 			pg->mdpage.pvh_attrs &= ~PVF_EXEC;
 			PMAPCOUNT(exec_discarded_kremove);
 		} else {
-			pmap_syncicache_page(pg);
+			pmap_syncicache_page(&pg->mdpage, VM_PAGE_TO_PHYS(pg));
 			PMAPCOUNT(exec_synced_kremove);
 		}
 	}
@@ -3858,7 +3858,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		/* Get the current flags for this page. */
 		simple_lock(&pg->mdpage.pvh_slock);
 
-		pv = pmap_find_pv(pg, pm, va);
+		pv = pmap_find_pv(&pg->mdpage, pm, va);
 		if (pv == NULL) {
 	    		simple_unlock(&pg->mdpage.pvh_slock);
 			goto out;
@@ -3917,7 +3917,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		/* Get the current flags for this page. */
 		simple_lock(&pg->mdpage.pvh_slock);
 
-		pv = pmap_find_pv(pg, pm, va);
+		pv = pmap_find_pv(&pg->mdpage, pm, va);
 		if (pv == NULL) {
 	    		simple_unlock(&pg->mdpage.pvh_slock);
 			goto out;
