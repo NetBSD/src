@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211.2.2 2010/02/10 13:23:57 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211.2.3 2010/02/10 13:26:22 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.2 2010/02/10 13:23:57 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.3 2010/02/10 13:26:22 uebayasi Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -636,7 +636,7 @@ static void		pmap_alloc_specials(vaddr_t *, int, vaddr_t *,
 			    pt_entry_t **);
 static bool		pmap_is_current(pmap_t);
 static bool		pmap_is_cached(pmap_t);
-static void		pmap_enter_pv(struct vm_page *, struct pv_entry *,
+static void		pmap_enter_pv(struct vm_page_md *, paddr_t, struct pv_entry *,
 			    pmap_t, vaddr_t, u_int);
 static struct pv_entry *pmap_find_pv(struct vm_page_md *, pmap_t, vaddr_t);
 static struct pv_entry *pmap_remove_pv(struct vm_page_md *, paddr_t, pmap_t, vaddr_t);
@@ -859,20 +859,20 @@ do {					\
  * => caller should not adjust pmap's wire_count
  */
 static void
-pmap_enter_pv(struct vm_page *pg, struct pv_entry *pv, pmap_t pm,
+pmap_enter_pv(struct vm_page_md *md, paddr_t pa, struct pv_entry *pv, pmap_t pm,
     vaddr_t va, u_int flags)
 {
 	struct pv_entry **pvp;
 
 	NPDEBUG(PDB_PVDUMP,
-	    printf("pmap_enter_pv: pm %p, pg %p, flags 0x%x\n", pm, pg, flags));
+	    printf("pmap_enter_pv: pm %p, md %p, flags 0x%x\n", pm, md, flags));
 
 	pv->pv_pmap = pm;
 	pv->pv_va = va;
 	pv->pv_flags = flags;
 
-	simple_lock(&pg->mdpage.pvh_slock);	/* lock vm_page */
-	pvp = &SLIST_FIRST(&pg->mdpage.pvh_list);
+	simple_lock(&md->pvh_slock);	/* lock vm_page */
+	pvp = &SLIST_FIRST(&md->pvh_list);
 #ifdef PMAP_CACHE_VIPT
 	/*
 	 * Insert unmanaged entries, writeable first, at the head of
@@ -888,25 +888,25 @@ pmap_enter_pv(struct vm_page *pg, struct pv_entry *pv, pmap_t pm,
 #endif
 	SLIST_NEXT(pv, pv_link) = *pvp;		/* add to ... */
 	*pvp = pv;				/* ... locked list */
-	pg->mdpage.pvh_attrs |= flags & (PVF_REF | PVF_MOD);
+	md->pvh_attrs |= flags & (PVF_REF | PVF_MOD);
 #ifdef PMAP_CACHE_VIPT
 	if ((pv->pv_flags & PVF_KWRITE) == PVF_KWRITE)
-		pg->mdpage.pvh_attrs |= PVF_KMOD;
-	if ((pg->mdpage.pvh_attrs & (PVF_DMOD|PVF_NC)) != PVF_NC)
-		pg->mdpage.pvh_attrs |= PVF_DIRTY;
-	KASSERT((pg->mdpage.pvh_attrs & PVF_DMOD) == 0 || (pg->mdpage.pvh_attrs & (PVF_DIRTY|PVF_NC)));
+		md->pvh_attrs |= PVF_KMOD;
+	if ((md->pvh_attrs & (PVF_DMOD|PVF_NC)) != PVF_NC)
+		md->pvh_attrs |= PVF_DIRTY;
+	KASSERT((md->pvh_attrs & PVF_DMOD) == 0 || (md->pvh_attrs & (PVF_DIRTY|PVF_NC)));
 #endif
 	if (pm == pmap_kernel()) {
 		PMAPCOUNT(kernel_mappings);
 		if (flags & PVF_WRITE)
-			pg->mdpage.krw_mappings++;
+			md->krw_mappings++;
 		else
-			pg->mdpage.kro_mappings++;
+			md->kro_mappings++;
 	} else {
 		if (flags & PVF_WRITE)
-			pg->mdpage.urw_mappings++;
+			md->urw_mappings++;
 		else
-			pg->mdpage.uro_mappings++;
+			md->uro_mappings++;
 	}
 
 #ifdef PMAP_CACHE_VIPT
@@ -915,8 +915,8 @@ pmap_enter_pv(struct vm_page *pg, struct pv_entry *pv, pmap_t pm,
 	 * for this page, make sure to sync the I-cache.
 	 */
 	if (PV_IS_EXEC_P(flags)) {
-		if (!PV_IS_EXEC_P(pg->mdpage.pvh_attrs)) {
-			pmap_syncicache_page(&pg->mdpage, VM_PAGE_TO_PHYS(pg));
+		if (!PV_IS_EXEC_P(md->pvh_attrs)) {
+			pmap_syncicache_page(md, pa);
 			PMAPCOUNT(exec_synced_map);
 		}
 		PMAPCOUNT(exec_mappings);
@@ -924,7 +924,7 @@ pmap_enter_pv(struct vm_page *pg, struct pv_entry *pv, pmap_t pm,
 #endif
 
 	PMAPCOUNT(mappings);
-	simple_unlock(&pg->mdpage.pvh_slock);	/* unlock, done! */
+	simple_unlock(&md->pvh_slock);	/* unlock, done! */
 
 	if (pv->pv_flags & PVF_WIRED)
 		++pm->pm_stats.wired_count;
@@ -2933,7 +2933,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				return (ENOMEM);
 			}
 
-			pmap_enter_pv(pg, pv, pm, va, nflags);
+			pmap_enter_pv(&pg->mdpage, VM_PAGE_TO_PHYS(pg), pv, pm, va, nflags);
 		}
 	} else {
 		/*
@@ -3405,7 +3405,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				pv = pool_get(&pmap_pv_pool, PR_NOWAIT);
 				KASSERT(pv != NULL);
 			}
-			pmap_enter_pv(pg, pv, pmap_kernel(), va,
+			pmap_enter_pv(&pg->mdpage, VM_PAGE_TO_PHYS(pg), pv, pmap_kernel(), va,
 			    PVF_WIRED | PVF_KENTRY
 			    | (prot & VM_PROT_WRITE ? PVF_WRITE : 0));
 			if ((prot & VM_PROT_WRITE)
