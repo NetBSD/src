@@ -1,20 +1,20 @@
-#	$NetBSD: files.rump,v 1.1 2010/02/04 00:37:08 pooka Exp $
+#	$NetBSD: files.rump,v 1.2 2010/02/10 02:26:23 pooka Exp $
 #
 
 device mainbus { }
 attach mainbus at root
-device rumpusbhc: usbus, usbroothub
-attach rumpusbhc at mainbus
+device ugenhc: usbus, usbroothub
+attach ugenhc at mainbus
 
 # ugen0 - ugen3
 mainbus0 at root
-rumpusbhc0 at mainbus0
-rumpusbhc1 at mainbus0
-rumpusbhc2 at mainbus0
-rumpusbhc3 at mainbus0
+ugenhc0 at mainbus0
+ugenhc1 at mainbus0
+ugenhc2 at mainbus0
+ugenhc3 at mainbus0
 
 # USB bus support
-usb*    at rumpusbhc?
+usb*    at ugenhc?
 
 # USB ROOT Hub
 #
