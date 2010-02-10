@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.101 2010/02/09 22:51:14 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.102 2010/02/10 00:39:30 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.101 2010/02/09 22:51:14 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102 2010/02/10 00:39:30 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2217,7 +2217,8 @@ pmap_create(void)
 		pmap->pm_ptphint[i] = NULL;
 	}
 	pmap->pm_stats.wired_count = 0;
-	pmap->pm_stats.resident_count = 1;	/* count the PDP allocd below */
+	/* count the PDP allocd below */
+	pmap->pm_stats.resident_count = PDP_SIZE;
 #if !defined(__x86_64__)
 	pmap->pm_hiexec = 0;
 #endif /* !defined(__x86_64__) */
