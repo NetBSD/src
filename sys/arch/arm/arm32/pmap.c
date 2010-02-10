@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211.2.6 2010/02/10 15:37:48 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211.2.7 2010/02/10 15:48:28 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.6 2010/02/10 15:37:48 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.7 2010/02/10 15:48:28 uebayasi Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -2569,6 +2569,7 @@ static void
 pmap_page_remove(struct vm_page *pg)
 {
 	struct vm_page_md *md = VM_PAGE_TO_MD(pg);
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct l2_bucket *l2b;
 	struct pv_entry *pv, *npv, **pvp;
 	pmap_t pm;
@@ -2578,7 +2579,7 @@ pmap_page_remove(struct vm_page *pg)
 
 	NPDEBUG(PDB_FOLLOW,
 	    printf("pmap_page_remove: pg %p (0x%08lx)\n", pg,
-	    VM_PAGE_TO_PHYS(pg)));
+	    pa));
 
 	PMAP_HEAD_TO_MAP_LOCK();
 	simple_lock(&md->pvh_slock);
@@ -2681,7 +2682,7 @@ pmap_page_remove(struct vm_page *pg)
 		if (pv == NULL) {
 			*pvp = NULL;
 			if (!SLIST_EMPTY(&md->pvh_list))
-				pmap_vac_me_harder(md, VM_PAGE_TO_PHYS(pg), pm, 0);
+				pmap_vac_me_harder(md, pa, pm, 0);
 		}
 		pmap_release_pmap_lock(pm);
 	}
@@ -3471,8 +3472,8 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		while (va < next_bucket) {
 			opte = *ptep;
 			opg = PHYS_TO_VM_PAGE(l2pte_pa(opte));
-			struct vm_page_md *omd = VM_PAGE_TO_MD(opg);
 			if (opg) {
+				struct vm_page_md *omd = VM_PAGE_TO_MD(opg);
 				if (omd->pvh_attrs & PVF_KMPAGE) {
 					simple_lock(&omd->pvh_slock);
 					KASSERT(omd->urw_mappings == 0);
@@ -3640,8 +3641,8 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 				*ptep = pte;
 				PTE_SYNC(ptep);
 
-				struct vm_page_md *md = VM_PAGE_TO_MD(pg);
 				if (pg != NULL) {
+					struct vm_page_md *md = VM_PAGE_TO_MD(pg);
 					simple_lock(&md->pvh_slock);
 					f = pmap_modify_pv(md, VM_PAGE_TO_PHYS(pg), pm, sva,
 					    clr_mask, 0);
