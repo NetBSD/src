@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.75 2010/02/10 20:52:35 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.76 2010/02/10 20:54:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.75 2010/02/10 20:52:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.76 2010/02/10 20:54:46 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -505,7 +505,6 @@ trap(int type, struct trapframe *frame)
 	int trapnum;
 #ifdef DIAGNOSTIC
 	extern int emergency_stack_start, emergency_stack_end;
-
 	int oldcpl = cpl;
 #endif
 
