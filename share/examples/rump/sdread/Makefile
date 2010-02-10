@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2009/10/14 23:51:52 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2010/02/10 02:31:00 pooka Exp $
 #
 
 PROG=	sdread
 
 LDADD+=	-lrumpfs_ffs -lrumpfs_msdos -lrumpvfs
-LDADD+=	-lrumpdev_disk -lrumpdev_usb -lrumpdev_usbhc -lrumpdev_umass -lrumpdev
+LDADD+=	-lrumpdev_disk -lrumpdev_usb -lrumpdev_ugenhc -lrumpdev_umass -lrumpdev
 LDADD+=	-lrump
 LDADD+=	-lrumpuser -lpthread
 
