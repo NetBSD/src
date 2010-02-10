@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbd_at_usb.c,v 1.2 2010/02/03 21:18:38 pooka Exp $	*/
+/*	$NetBSD: ukbd_at_usb.c,v 1.3 2010/02/10 02:26:23 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -28,8 +28,8 @@ rump_device_configuration(void)
 	FLAWLESSCALL(config_cfdriver_attach(&mainbus_cd));
 	FLAWLESSCALL(config_cfattach_attach("mainbus", &mainbus_ca));
 
-	FLAWLESSCALL(config_cfdriver_attach(&rumpusbhc_cd));
-	FLAWLESSCALL(config_cfattach_attach("rumpusbhc", &rumpusbhc_ca));
+	FLAWLESSCALL(config_cfdriver_attach(&ugenhc_cd));
+	FLAWLESSCALL(config_cfattach_attach("ugenhc", &ugenhc_ca));
 
 	FLAWLESSCALL(config_cfdriver_attach(&usb_cd));
 	FLAWLESSCALL(config_cfattach_attach("usb", &usb_ca));

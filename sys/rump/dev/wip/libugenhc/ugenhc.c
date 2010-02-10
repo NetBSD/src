@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpusbhc.c,v 1.15 2010/02/09 18:27:17 pooka Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.1 2010/02/10 02:26:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.15 2010/02/09 18:27:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.1 2010/02/10 02:26:23 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: rumpusbhc.c,v 1.15 2010/02/09 18:27:17 pooka Exp $")
 #define UGEN_NEPTS 16
 #define UGEN_EPT_CTRL 0 /* ugenx.00 is the control endpoint */
 
-struct rumpusbhc_softc {
+struct ugenhc_softc {
 	struct usbd_bus sc_bus;
 	int sc_devnum;
 
@@ -100,11 +100,11 @@ struct rumpusbhc_softc {
 	int sc_conf;
 };
 
-static int	rumpusbhc_probe(struct device *, struct cfdata *, void *);
-static void	rumpusbhc_attach(struct device *, struct device *, void *);
+static int	ugenhc_probe(struct device *, struct cfdata *, void *);
+static void	ugenhc_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL_NEW(rumpusbhc, sizeof(struct rumpusbhc_softc),
-	rumpusbhc_probe, rumpusbhc_attach, NULL, NULL);
+CFATTACH_DECL_NEW(ugenhc, sizeof(struct ugenhc_softc),
+	ugenhc_probe, ugenhc_attach, NULL, NULL);
 
 struct rusb_xfer {
 	struct usbd_xfer rusb_xfer;
@@ -174,7 +174,7 @@ static usbd_status
 rumpusb_root_ctrl_start(usbd_xfer_handle xfer)
 {
 	usb_device_request_t *req = &xfer->request;
-	struct rumpusbhc_softc *sc = xfer->pipe->device->bus->hci_private;
+	struct ugenhc_softc *sc = xfer->pipe->device->bus->hci_private;
 	int len, totlen, value, curlen, err;
 	uint8_t *buf = NULL;
 
@@ -360,7 +360,7 @@ static usbd_status
 rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 {
 	usb_device_request_t *req = &xfer->request;
-	struct rumpusbhc_softc *sc = xfer->pipe->device->bus->hci_private;
+	struct ugenhc_softc *sc = xfer->pipe->device->bus->hci_private;
 	uint8_t *buf = NULL;
 	int len, totlen;
 	int value;
@@ -408,7 +408,7 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 
 			if (rumpuser_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
 			    USB_GET_DEVICEINFO, &udi, &ru_error) == -1) {
-				printf("rumpusbhc: get dev info failed: %d\n",
+				printf("ugenhc: get dev info failed: %d\n",
 				    ru_error);
 				err = USBD_IOERROR;
 				goto ret;
@@ -453,7 +453,7 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 		uai.uai_alt_no = value;
 		if (rumpuser_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
 		    USB_SET_ALTINTERFACE, &uai, &ru_error) == -1) {
-			printf("rumpusbhc: set alt interface failed: %d\n",
+			printf("ugenhc: set alt interface failed: %d\n",
 			    ru_error);
 			err = USBD_IOERROR;
 			goto ret;
@@ -652,7 +652,7 @@ static const struct usbd_pipe_methods rumpusb_root_intr_methods = {
 static usbd_status
 rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 {
-	struct rumpusbhc_softc *sc = xfer->pipe->device->bus->hci_private;
+	struct ugenhc_softc *sc = xfer->pipe->device->bus->hci_private;
 	ssize_t n;
 	ssize_t done;
 	bool isread;
@@ -815,10 +815,10 @@ static const struct usbd_pipe_methods rumpusb_device_intr_methods = {
 };
 
 static usbd_status
-rumpusbhc_open(struct usbd_pipe *pipe)
+ugenhc_open(struct usbd_pipe *pipe)
 {
 	usbd_device_handle dev = pipe->device;
-	struct rumpusbhc_softc *sc = dev->bus->hci_private;
+	struct ugenhc_softc *sc = dev->bus->hci_private;
 	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
 	u_int8_t addr = dev->address;
 	u_int8_t xfertype = ed->bmAttributes & UE_XFERTYPE;
@@ -889,33 +889,33 @@ rumpusbhc_open(struct usbd_pipe *pipe)
 }
 
 static void
-rumpusbhc_softint(void *arg)
+ugenhc_softint(void *arg)
 {
 
 }
 
 static void
-rumpusbhc_poll(struct usbd_bus *ubus)
+ugenhc_poll(struct usbd_bus *ubus)
 {
 
 }
 
 static usbd_status
-rumpusbhc_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
+ugenhc_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
 {
-	struct rumpusbhc_softc *sc = bus->hci_private;
+	struct ugenhc_softc *sc = bus->hci_private;
 
 	return usb_allocmem(&sc->sc_bus, size, 0, dma);
 }
 
 static void
-rumpusbhc_freem(struct usbd_bus *ubus, usb_dma_t *udma)
+ugenhc_freem(struct usbd_bus *ubus, usb_dma_t *udma)
 {
 
 }
 
 static struct usbd_xfer *
-rumpusbhc_allocx(struct usbd_bus *bus)
+ugenhc_allocx(struct usbd_bus *bus)
 {
 	usbd_xfer_handle xfer;
 
@@ -926,28 +926,28 @@ rumpusbhc_allocx(struct usbd_bus *bus)
 }
 
 static void
-rumpusbhc_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
+ugenhc_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 {
 
 	kmem_free(xfer, sizeof(struct usbd_xfer));
 }
 
-struct rumpusbhc_pipe {
+struct ugenhc_pipe {
 	struct usbd_pipe pipe;
 };
 
-static const struct usbd_bus_methods rumpusbhc_bus_methods = {
-	.open_pipe =	rumpusbhc_open,
-	.soft_intr =	rumpusbhc_softint,
-	.do_poll =	rumpusbhc_poll,
-	.allocm = 	rumpusbhc_allocm,
-	.freem = 	rumpusbhc_freem,
-	.allocx = 	rumpusbhc_allocx,
-	.freex =	rumpusbhc_freex,
+static const struct usbd_bus_methods ugenhc_bus_methods = {
+	.open_pipe =	ugenhc_open,
+	.soft_intr =	ugenhc_softint,
+	.do_poll =	ugenhc_poll,
+	.allocm = 	ugenhc_allocm,
+	.freem = 	ugenhc_freem,
+	.allocx = 	ugenhc_allocx,
+	.freex =	ugenhc_freex,
 };
 
 static int
-rumpusbhc_probe(struct device *parent, struct cfdata *match, void *aux)
+ugenhc_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	char buf[UGENDEV_BUFSIZE];
 	int fd, error;
@@ -962,10 +962,10 @@ rumpusbhc_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-rumpusbhc_attach(struct device *parent, struct device *self, void *aux)
+ugenhc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *maa = aux;
-	struct rumpusbhc_softc *sc = device_private(self);
+	struct ugenhc_softc *sc = device_private(self);
 	char buf[UGENDEV_BUFSIZE];
 	int error;
 
@@ -976,15 +976,15 @@ rumpusbhc_attach(struct device *parent, struct device *self, void *aux)
 	memset(&sc->sc_fdmodes, -1, sizeof(sc->sc_fdmodes));
 
 	sc->sc_bus.usbrev = USBREV_2_0;
-	sc->sc_bus.methods = &rumpusbhc_bus_methods;
+	sc->sc_bus.methods = &ugenhc_bus_methods;
 	sc->sc_bus.hci_private = sc;
-	sc->sc_bus.pipe_size = sizeof(struct rumpusbhc_pipe);
+	sc->sc_bus.pipe_size = sizeof(struct ugenhc_pipe);
 	sc->sc_devnum = maa->maa_unit;
 
 	makeugendevstr(sc->sc_devnum, 0, buf);
 	sc->sc_ugenfd[UGEN_EPT_CTRL] = rumpuser_open(buf, O_RDWR, &error);
 	if (error)
-		panic("rumpusbhc_attach: failed to open ctrl ept %s\n", buf);
+		panic("ugenhc_attach: failed to open ctrl ept %s\n", buf);
 
 	config_found(self, &sc->sc_bus, usbctlprint);
 

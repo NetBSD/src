@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.1 2010/01/11 02:12:51 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.2 2010/02/10 02:26:24 pooka Exp $	*/
 
 /*
  * MACHINE GENERATED: DO NOT EDIT
@@ -380,9 +380,6 @@ CFDRIVER_DECL(ums, DV_DULL, ums_attrs);
 static const struct cfiattrdata * const mainbus_attrs[] = { &mainbuscf_iattrdata, NULL };
 CFDRIVER_DECL(mainbus, DV_DULL, mainbus_attrs);
 
-static const struct cfiattrdata * const rumpusbhc_attrs[] = { &usbuscf_iattrdata, NULL };
-CFDRIVER_DECL(rumpusbhc, DV_DULL, rumpusbhc_attrs);
-
 
 
 extern struct cfattach wskbd_ca;
@@ -395,7 +392,6 @@ extern struct cfattach uhid_ca;
 extern struct cfattach ukbd_ca;
 extern struct cfattach ums_ca;
 extern struct cfattach mainbus_ca;
-extern struct cfattach rumpusbhc_ca;
 
 /* locators */
 static int loc[18] = {
