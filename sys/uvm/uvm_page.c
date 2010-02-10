@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.9 2010/02/09 14:12:00 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.10 2010/02/10 02:12:39 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,11 +71,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.9 2010/02/09 14:12:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.10 2010/02/10 02:12:39 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
+#include "opt_device_page.h"
 #include "opt_xip.h"
 
 #include <sys/param.h>
@@ -103,7 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.9 2010/02/09 14:12:00 uebayasi 
 
 struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];	/* XXXCDC: uvm.physmem */
 int vm_nphysmem = 0;				/* XXXCDC: uvm.nphysmem */
-#ifdef XIP
+#ifdef DEVICE_PAGE
 struct vm_physseg vm_physdev[VM_PHYSSEG_MAX];	/* XXXCDC: uvm.physdev */
 int vm_nphysdev = 0;				/* XXXCDC: uvm.nphysdev */
 #endif
@@ -901,7 +902,7 @@ vm_physseg_find(paddr_t pframe, int *offp)
 	    pframe, NULL, offp);
 }
 
-#ifdef XIP
+#ifdef DEVICE_PAGE
 int
 vm_physseg_find_device(paddr_t pframe, int *offp)
 {
@@ -1029,12 +1030,22 @@ vm_physseg_lt_p(struct vm_physseg *seg, int op, paddr_t pframe,
 }
 
 
+#ifdef DEVICE_PAGE
 /*
- * PHYS_TO_VM_PAGE: find vm_page for a PA.   used by MI code to get vm_pages
- * back from an I/O mapping (ugh!).   used in some MD code as well.
+ * Device pages don't have struct vm_page objects for various reasons:
+ *
+ * - Device pages are volatile; not paging involved.  Which means we have
+ *   much less state information to keep for each page.
+ *
+ * - Volatile, directly memory-mappable devices (framebuffers, audio devices,
+ *   etc.) only need physical address and attribute (protection and some
+ *   accelaration specific to physical bus) common to all the pages.
+ *   Allocating vm_page objects to keep such informations is wasteful.
+ *
+ * - Per-page MD information is only used for XIP vnodes' copy-on-write from
+ *   a device page to anon.
  */
 
-#ifdef XIP
 /* Assume struct vm_page * is aligned to 4 bytes. */
 #define	VM_PAGE_DEVICE_MAGIC		0x2
 #define	VM_PAGE_DEVICE_MAGIC_MASK	0x3
@@ -1064,6 +1075,12 @@ uvm_pageisdevice_p(const struct vm_page *pg)
 }
 #endif
 
+
+/*
+ * PHYS_TO_VM_PAGE: find vm_page for a PA.   used by MI code to get vm_pages
+ * back from an I/O mapping (ugh!).   used in some MD code as well.
+ */
+
 struct vm_page *
 uvm_phys_to_vm_page(paddr_t pa)
 {
@@ -1071,7 +1088,7 @@ uvm_phys_to_vm_page(paddr_t pa)
 	int	off;
 	int	psi;
 
-#ifdef XIP
+#ifdef DEVICE_PAGE
 	psi = vm_physseg_find_device(pf, &off);
 	if (psi != -1)
 		return(PHYS_TO_VM_PAGE_DEVICE(pa));
@@ -1088,7 +1105,7 @@ uvm_vm_page_to_phys(const struct vm_page *pg)
 	const struct vm_physseg *seg;
 	int psi;
 
-#ifdef XIP
+#ifdef DEVICE_PAGE
 	if (uvm_pageisdevice_p(pg)) {
 		return VM_PAGE_DEVICE_TO_PHYS(pg);
 	}
@@ -1098,6 +1115,132 @@ uvm_vm_page_to_phys(const struct vm_page *pg)
 	seg = &vm_physmem[psi];
 	return (seg->start + pg - seg->pgs) * PAGE_SIZE;
 }
+
+
+#ifdef XIP
+/*
+ * Device page's mdpage lookup.
+ *
+ * - Hashing code is based on sys/arch/x86/x86/pmap.c.
+ *
+ * - 
+ * XXX Consider to allocate slots on-demand.
+ */
+
+void vm_page_device_mdpage_insert(struct vm_page *);
+void vm_page_device_mdpage_remove(struct vm_page *);
+struct vm_page_md *vm_page_device_mdpage_lookup(struct vm_page *);
+
+struct vm_page_device_mdpage_entry {
+	struct vm_page_md mde_mdpage;
+	SLIST_ENTRY(vm_page_device_mdpage_entry) mde_hash;
+	paddr_t mde_pf;
+};
+
+/*
+ * These can be optimized depending on the size of XIP'ed executables' .data
+ * segments.  If page size is 4K and .data is 1M, .data spans across 256
+ * pages.  Considering these pages' physical addresses are continuous, linear
+ * hash should suffice.
+ */
+#define	MDPG_HASH_SIZE		256	/* XXX */
+#define	MDPG_HASH_LOCK_CNT	4	/* XXX */
+
+struct vm_page_device_mdpage {
+	kmutex_t locks[MDPG_HASH_LOCK_CNT];
+	struct vm_page_device_mdpage_head {
+		SLIST_HEAD(, vm_page_device_mdpage_entry) list;
+	} heads[MDPG_HASH_SIZE];
+};
+
+/* Global for now.  Consider to make this per-vm_physseg. */
+struct vm_page_device_mdpage vm_page_device_mdpage;
+
+static u_int
+vm_page_device_mdpage_hash(struct vm_page *pg)
+{
+
+	return VM_PAGE_DEVICE_TO_PHYS(pg);
+}
+
+static struct vm_page_device_mdpage_head *
+vm_page_device_mdpage_head(u_int hash)
+{
+
+	return &vm_page_device_mdpage.heads[hash % MDPG_HASH_SIZE];
+}
+
+static kmutex_t *
+vm_page_device_mdpage_lock(u_int hash)
+{
+
+	return &vm_page_device_mdpage.locks[hash % MDPG_HASH_LOCK_CNT];
+}
+
+void
+vm_page_device_mdpage_insert(struct vm_page *pg)
+{
+	paddr_t pf = VM_PAGE_DEVICE_TO_PHYS(pg);
+	u_int hash = vm_page_device_mdpage_hash(pg);
+	kmutex_t *lock = vm_page_device_mdpage_lock(hash);
+	struct vm_page_device_mdpage_head *head = vm_page_device_mdpage_head(hash);
+
+	struct vm_page_device_mdpage_entry *mde = kmem_zalloc(sizeof(*mde), KM_SLEEP);
+	mde->mde_pf = pf;
+
+	mutex_spin_enter(lock);
+	SLIST_INSERT_HEAD(&head->list, mde, mde_hash);
+	mutex_spin_exit(lock);
+}
+
+void
+vm_page_device_mdpage_remove(struct vm_page *pg)
+{
+	paddr_t pf = VM_PAGE_DEVICE_TO_PHYS(pg);
+	u_int hash = vm_page_device_mdpage_hash(pg);
+	kmutex_t *lock = vm_page_device_mdpage_lock(hash);
+	struct vm_page_device_mdpage_head *head = vm_page_device_mdpage_head(hash);
+
+	struct vm_page_device_mdpage_entry *mde;
+	struct vm_page_device_mdpage_entry *prev = NULL;
+
+	mutex_spin_enter(lock);
+	SLIST_FOREACH(mde, &head->list, mde_hash) {
+		if (mde->mde_pf == pf) {
+			if (prev != NULL) {
+				SLIST_REMOVE_AFTER(prev, mde_hash);
+			} else {
+				SLIST_REMOVE_HEAD(&head->list, mde_hash);
+			}
+			break;
+		}
+		prev = mde;
+	}
+	mutex_spin_exit(lock);
+	KASSERT(mde != NULL);
+	kmem_free(mde, sizeof(*mde));
+}
+
+struct vm_page_md *
+vm_page_device_mdpage_lookup(struct vm_page *pg)
+{
+	paddr_t pf = VM_PAGE_DEVICE_TO_PHYS(pg);
+	u_int hash = vm_page_device_mdpage_hash(pg);
+	kmutex_t *lock = vm_page_device_mdpage_lock(hash);
+	struct vm_page_device_mdpage_head *head = vm_page_device_mdpage_head(hash);
+
+	struct vm_page_device_mdpage_entry *mde;
+
+	mutex_spin_enter(lock);
+	SLIST_FOREACH(mde, &head->list, mde_hash)
+		if (mde->mde_pf == pf)
+			break;
+	mutex_spin_exit(lock);
+	KASSERT(mde != NULL);
+	return &mde->mde_mdpage;
+}
+#endif
+
 
 /*
  * uvm_page_recolor: Recolor the pages if the new bucket count is
@@ -2094,7 +2237,7 @@ uvm_pageismanaged(paddr_t pa)
 {
 
 	return
-#ifdef XIP
+#ifdef DEVICE_PAGE
 	    (vm_physseg_find_device(atop(pa), NULL) != -1) ||
 #endif
 	    (vm_physseg_find(atop(pa), NULL) != -1);
