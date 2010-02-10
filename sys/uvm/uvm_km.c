@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.104 2009/11/07 07:27:49 cegger Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.104.2.1 2010/02/10 08:12:02 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -128,15 +128,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.104 2009/11/07 07:27:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.104.2.1 2010/02/10 08:12:02 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
+#include "opt_xip.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
+#include <sys/once.h>
 
 #include <uvm/uvm.h>
 
@@ -793,3 +795,50 @@ uvm_km_free_poolpage(struct vm_map *map, vaddr_t addr)
 	uvm_km_free(map, addr, PAGE_SIZE, UVM_KMF_WIRED);
 #endif /* PMAP_UNMAP_POOLPAGE */
 }
+
+#ifdef XIP
+/*
+ * uvm_pageofzero_xip: return a read-only page filled with zeroes.
+ *
+ * XXXUEBS Need better names.
+ */
+
+static void *uvm_pageofzero_xip_vaddr;
+static paddr_t uvm_pageofzero_xip_paddr;
+static int uvm_pageofzero_xip_init(void);
+
+void *
+uvm_pageofzero_xip(void)
+{
+	static ONCE_DECL(uvm_pageofzero_xip_inited);
+
+	RUN_ONCE(&uvm_pageofzero_xip_inited, uvm_pageofzero_xip_init);
+	return uvm_pageofzero_xip_vaddr;
+}
+
+paddr_t
+uvm_pageofzero_xip_phys_addr(void)
+{
+	static ONCE_DECL(uvm_pageofzero_xip_inited);
+
+	RUN_ONCE(&uvm_pageofzero_xip_inited, uvm_pageofzero_xip_init);
+	return uvm_pageofzero_xip_paddr;
+}
+
+static int
+uvm_pageofzero_xip_init(void)
+{
+	bool rv;
+
+	ASSERT_SLEEPABLE();
+
+	uvm_pageofzero_xip_vaddr = (void *)uvm_km_alloc_poolpage(kernel_map, true);
+	KASSERT(uvm_pageofzero_xip_vaddr != NULL);
+
+	rv = pmap_extract(pmap_kernel(), (vaddr_t)uvm_pageofzero_xip_vaddr,
+	    &uvm_pageofzero_xip_paddr);
+	KASSERT(rv == true && uvm_pageofzero_xip_paddr != 0);
+
+	return 0;
+}
+#endif

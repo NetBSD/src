@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.h,v 1.18 2008/12/01 10:54:57 ad Exp $	*/
+/*	$NetBSD: uvm_km.h,v 1.18.6.1 2010/02/10 08:12:02 uebayasi Exp $	*/
 
 /*
  *
@@ -56,6 +56,11 @@ void uvm_km_check_empty(struct vm_map *, vaddr_t, vaddr_t);
 #define	uvm_km_check_empty(a, b, c)	/* nothing */
 #endif /* defined(DEBUG) */
 void uvm_km_va_drain(struct vm_map *, uvm_flag_t);
+
+#ifdef XIP
+void *uvm_pageofzero_xip(void);
+paddr_t uvm_pageofzero_xip_phys_addr(void);
+#endif
 
 #endif /* _KERNEL */
 
