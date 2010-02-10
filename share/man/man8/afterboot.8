@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.43 2010/01/20 22:24:18 jmmv Exp $
+.\"	$NetBSD: afterboot.8,v 1.44 2010/02/10 03:38:22 snj Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -113,11 +113,12 @@ Login as
 .Dq Ic root .
 You can do so on the console, or over the network using
 .Xr ssh 1 .
-If you have enabled the ssh daemon and wish to allow root logins over
-the network, edit the
+If you have enabled the SSH daemon (see
+.Xr sshd 8 )
+and wish to allow root logins over the network, edit the
 .Pa /etc/ssh/sshd_config
 file and set
-.Cm PermitRootLogin
+.Dq PermitRootLogin
 to
 .Dq yes
 (see
@@ -353,16 +354,16 @@ is required) to
 .Dl net.inet6.ip6.forwarding=1
 .Pp
 As an alternative, compile a new kernel with the
-.Cm GATEWAY
+.Dq GATEWAY
 option.
 Packets are not forwarded by default, due to RFC requirements.
-.Ss Secure Shell (ssh)
+.Ss Secure Shell (SSH)
 By default, all services are disabled in a fresh
 .Nx
-installation, and ssh is no exception.
+installation, and SSH is no exception.
 You may wish to enable it so you can remotely control your system.
 Set
-.Dq Va sshd=yes
+.Dq Va sshd=YES
 in
 .Pa /etc/rc.conf
 and then starting the server with the command
@@ -393,7 +394,9 @@ mechanism.
 .Pp
 If using a caching name server add the line "nameserver 127.0.0.1" first.
 To get a local caching name server to run
-you will need to set "named=yes" in
+you will need to set
+.Dq named=YES
+in
 .Pa /etc/rc.conf
 and create the
 .Pa named.conf
@@ -558,8 +561,8 @@ make sure that
 .Pa /etc/rc.conf
 contains the following:
 .Pp
-.Dl ntpdate=yes
-.Dl ntpd=yes
+.Dl ntpdate=YES
+.Dl ntpd=YES
 .Pp
 See
 .Xr date 1 ,
@@ -658,16 +661,14 @@ directly, edit only
 See
 .Xr rc.conf 5
 for further information.
-.Pp
+.Ss X Display Manager
 If you've installed X, you may want to turn on
 .Xr xdm 1 ,
 the X Display Manager.
-To do this, set the variable
-.Dq xdm
-to yes in
-.Pa /etc/rc.conf ,
-i.e.:
-.Dq xdm=yes
+To do this, set
+.Dq xdm=YES
+in
+.Pa /etc/rc.conf .
 .Ss Printers
 Edit
 .Pa /etc/printcap
@@ -730,7 +731,8 @@ and
 as needed.
 You will have to make sure
 .Pa /etc/rc.conf
-has "dhcpd=yes"
+has
+.Dq dhcpd=YES
 or run
 .Xr dhcpd 8
 manually.
@@ -742,15 +744,16 @@ server, edit
 as needed.
 You will have to turn it on in
 .Pa /etc/rc.conf
-by adding "bootparamd=yes".
+by adding
+.Dq bootparamd=YES .
 .Ss NFS server
 If this is an NFS server, make sure
 .Pa /etc/rc.conf
 has:
 .Bd -literal -offset indent
-nfs_server=yes
-mountd=yes
-rpcbind=yes
+nfs_server=YES
+mountd=YES
+rpcbind=YES
 .Ed
 .Pp
 Edit
