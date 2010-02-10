@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_chars.c,v 1.12 2009/02/18 04:17:44 snj Exp $ */
+/* $NetBSD: wsemul_vt100_chars.c,v 1.13 2010/02/10 19:39:39 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_chars.c,v 1.12 2009/02/18 04:17:44 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_chars.c,v 1.13 2010/02/10 19:39:39 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,15 +80,16 @@ void
 vt100_initchartables(struct wsemul_vt100_emuldata *edp)
 {
 	int i;
+	struct vt100base_data *vd = &edp->bd;
 
 	for (i = 0; i < 128; i++)
-		(*edp->emulops->mapchar)(edp->emulcookie, 128 + i,
+		(*vd->emulops->mapchar)(vd->emulcookie, 128 + i,
 					 &edp->isolatin1tab[i]);
 	for (i = 0; i < 128; i++)
-		(*edp->emulops->mapchar)(edp->emulcookie, decspcgr2uni[i],
+		(*vd->emulops->mapchar)(vd->emulcookie, decspcgr2uni[i],
 					 &edp->decgraphtab[i]);
 	for (i = 0; i < 128; i++)
-		(*edp->emulops->mapchar)(edp->emulcookie, dectech2uni[i],
+		(*vd->emulops->mapchar)(vd->emulcookie, dectech2uni[i],
 					 &edp->dectechtab[i]);
 	vt100_setnrc(edp, 0);
 }
@@ -142,12 +143,13 @@ void
 vt100_setnrc(struct wsemul_vt100_emuldata *edp, int nrc)
 {
 	int i;
+	struct vt100base_data *vd = &edp->bd;
 
 	KASSERT(nrc < sizeof(nrctable) / sizeof(nrctable[0]));
 
 	for (i = 0; i < 128; i++)
-		(*edp->emulops->mapchar)(edp->emulcookie, i, &edp->nrctab[i]);
+		(*vd->emulops->mapchar)(vd->emulcookie, i, &edp->nrctab[i]);
 	for (i = 0; i < 12; i++)
-		(*edp->emulops->mapchar)(edp->emulcookie, nrctable[nrc].c[i],
+		(*vd->emulops->mapchar)(vd->emulcookie, nrctable[nrc].c[i],
 					 &edp->nrctab[nrcovlpos[i]]);
 }
