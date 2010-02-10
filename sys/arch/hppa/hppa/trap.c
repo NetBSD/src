@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74 2010/02/10 20:51:23 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.75 2010/02/10 20:52:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74 2010/02/10 20:51:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.75 2010/02/10 20:52:35 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -573,8 +573,8 @@ trap(int type, struct trapframe *frame)
 
 #ifdef TRAPDEBUG
 	if (trapnum != T_INTERRUPT && trapnum != T_IBREAK)
-		printf("trap: %d, %s for %x:%x at %x:%x, fp=%p, rp=%x\n",
-		    type, tts, space, (u_int)va, frame->tf_iisq_head,
+		printf("trap: %d, %s for %x:%lx at %x:%x, fp=%p, rp=%x\n",
+		    type, tts, space, va, frame->tf_iisq_head,
 		    frame->tf_iioq_head, frame, frame->tf_rp);
 	else if (trapnum == T_IBREAK)
 		printf("trap: break instruction %x:%x at %x:%x, fp=%p\n",
