@@ -1,4 +1,4 @@
-#	$NetBSD: list.images,v 1.7 2010/02/05 10:01:17 roy Exp $
+#	$NetBSD: list.images,v 1.8 2010/02/11 09:06:47 roy Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/atari/stand
 LIBS	libhack.o -lprop -lrmt -ledit -lz -lbz2 -lutil -lcurses -lterminfo -lcrypt -lkvm -ll -lm
@@ -9,9 +9,6 @@ ARGVLN	sh -sh
 # files that we need in /etc for the install
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
-
-# the terminfo database
-COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 
 COPY	${CURDIR}/../common/dot.profile 	.profile
 COPY	${CURDIR}/../common/mount_gemdos	sbin/mount_gemdos	555

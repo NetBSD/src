@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.16 2010/02/05 10:01:21 roy Exp $
+#	$NetBSD: list,v 1.17 2010/02/11 09:06:50 roy Exp $
 
 SRCDIRS	bin sbin libexec usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
@@ -89,9 +89,6 @@ COPY	${DESTDIR}/usr/mdec/binstall		usr/mdec/binstall	555
 COPY	${DESTDIR}/usr/mdec/bootblk		usr/mdec/bootblk
 COPY	${DESTDIR}/usr/mdec/ofwboot		ofwboot
 COPY	${DESTDIR}/usr/mdec/ofwboot		usr/mdec/ofwboot
-
-# and the common installation tools
-COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 
 # and the installation tools
 COPY	${INSTFSDIR}/dot.profile		.profile

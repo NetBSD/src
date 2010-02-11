@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.21 2010/02/05 10:01:20 roy Exp $
+#	$NetBSD: list,v 1.22 2010/02/11 09:06:49 roy Exp $
 
 # extras in bin
 PROG	bin/csh
@@ -31,9 +31,6 @@ SYMLINK	/tmp	var/tmp
 COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
 # and /boot.pmax
 COPY	${DESTDIR}/boot.pmax	boot.pmax
-
-# a subset terminfo database
-COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 
 # copy the kernel(s)
 COPY	${KERNOBJDIR}/GENERIC/netbsd		netbsd

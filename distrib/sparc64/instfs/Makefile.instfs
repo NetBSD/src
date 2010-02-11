@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.instfs,v 1.11 2010/02/05 10:01:21 roy Exp $
+#	$NetBSD: Makefile.instfs,v 1.12 2010/02/11 09:06:50 roy Exp $
 
 INSTFSDIR=	${.CURDIR}/../instfs
 
@@ -15,7 +15,6 @@ MAKEDEVTARGETS=	ramdisk bpf
 PARSELISTENV=	INSTFSDIR=${INSTFSDIR:Q}
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		${INSTFSDIR}/dot.profile \
-		${DESTDIR}/rescue/terminfo.db \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols \
 		${DISTRIBDIR}/common/services

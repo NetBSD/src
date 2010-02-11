@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.22 2010/02/05 10:01:18 roy Exp $
+#	$NetBSD: list,v 1.23 2010/02/11 09:06:48 roy Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -63,9 +63,6 @@ COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
 COPY	${DISTRIBDIR}/common/protocols		etc/protocols
 COPY	${DISTRIBDIR}/common/services		etc/services
-
-# and the common installation tools
-COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 
 # and the boot script
 COPY	${CURDIR}/dot.profile		.profile

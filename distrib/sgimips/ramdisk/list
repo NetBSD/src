@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.16 2010/02/05 10:01:20 roy Exp $
+#	$NetBSD: list,v 1.17 2010/02/11 09:06:50 roy Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/sgimips/stand
 
@@ -69,9 +69,6 @@ COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
 COPY	${DISTRIBDIR}/common/protocols		etc/protocols
 COPY	${DISTRIBDIR}/common/services		etc/services
-
-# and the common installation tools
-COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 
 # and the shell startup files
 COPY	${CURDIR}/dot.profile			.profile
