@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.616 2010/02/03 15:34:44 roy Exp $
+#	$NetBSD: bsd.own.mk,v 1.617 2010/02/11 00:20:50 macallan Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -940,8 +940,8 @@ X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
 .for _v in \
 	ag10e apm ark ast ati chips cirrus crime cyrix glint i128 i740 igs \
 	imstt intel mach64 mga neomagic newport nsc nv nvxbox pnozz r128 \
-	radeonhd rendition s3 s3virge savage siliconmotion sis sunffb suncg6 \
-	sunleo suntcx tdfx tga trident tseng vesa vga via vmware wsfb
+	radeonhd rendition s3 s3virge savage siliconmotion sis suncg14 suncg6 \
+	sunffb sunleo suntcx tdfx tga trident tseng vesa vga via vmware wsfb
 	
 X11SRCDIR.xf86-video-${_v}?=	${X11SRCDIRMIT}/xf86-video-${_v}/dist
 .endfor
