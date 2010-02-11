@@ -1,4 +1,4 @@
-/* $NetBSD: infocmp.c,v 1.4 2010/02/05 16:43:46 roy Exp $ */
+/* $NetBSD: infocmp.c,v 1.5 2010/02/11 08:46:18 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: infocmp.c,v 1.4 2010/02/05 16:43:46 roy Exp $");
+__RCSID("$NetBSD: infocmp.c,v 1.5 2010/02/11 08:46:18 roy Exp $");
 
 #include <sys/ioctl.h>
 
@@ -713,8 +713,13 @@ main(int argc, char **argv)
 		use_terms(t, argc - optind, argv + optind);
 
 	if ((optind + 1 != argc && nflag == 0) || uflag != 0) {
-		if (uflag == 0)
-			printf("# Reconstructed from %s.db\n", _ti_database);
+		if (uflag == 0) {
+			printf("# Reconstructed from ");
+			if (_ti_database == NULL)
+				printf("internal database\n");
+			else
+				printf("%s.db\n", _ti_database);
+		}
 		printf("%s", t->name);
 		if (t->_alias != NULL && *t->_alias != '\0')
 			printf("|%s", t->_alias);
