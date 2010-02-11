@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.23 2010/02/05 10:01:17 roy Exp $
+#	$NetBSD: list,v 1.24 2010/02/11 09:06:47 roy Exp $
 
 # Amiga extra's
 PROG	sbin/disklabel
@@ -20,9 +20,6 @@ SYMLINK	/tmp	var/tmp
 SYMLINK	/tmp/fstab.shadow		etc/fstab
 SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
 SYMLINK	/tmp/hosts			etc/hosts
-
-# and the terminfo database
-COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 
 # and the installation scripts
 COPY	${ARCHDIR}/install.md		install.md

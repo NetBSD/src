@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2010/02/05 10:01:20 roy Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2010/02/11 09:06:49 roy Exp $
 
 .if ${MACHINE_ARCH} == "mips64el"
 SFX=		64
@@ -14,7 +14,6 @@ LISTS=		${.CURDIR}/list ${ARCHDIR}/list${SFX}
 LISTS+=		${DISTRIBDIR}/common/list.sysinst
 MTREECONF+=	${.CURDIR}/mtree.usr.install
 IMAGEDEPENDS+=	${ARCHDIR}/dot.profile \
-		${DESTDIR}/rescue/terminfo.db \
 		${DESTDIR}/.profile ${DESTDIR}/boot.pmax \
 		${DESTDIR}/etc/disktab \
 		${KERNOBJDIR}/GENERIC${SFX}/netbsd

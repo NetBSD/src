@@ -1,4 +1,4 @@
-#	$NetBSD: list64,v 1.3 2010/02/05 10:01:20 roy Exp $
+#	$NetBSD: list64,v 1.4 2010/02/11 09:06:49 roy Exp $
 
 # extras in bin
 PROG	bin/csh
@@ -34,9 +34,6 @@ COPY	${DESTDIR}/boot.pmax	boot.pmax
 
 # the zoneinfo (dont use)
 #COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
-
-# a subset terminfo database
-COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 
 # copy the kernel(s)
 COPY	${KERNOBJDIR}/GENERIC64/netbsd		netbsd

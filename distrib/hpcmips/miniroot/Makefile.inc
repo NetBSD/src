@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2010/02/05 10:01:18 roy Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2010/02/11 09:06:48 roy Exp $
 
 DBG=		-Os
 
@@ -9,7 +9,6 @@ MAKEDEVTARGETS=	all
 LISTS+=		${DISTRIBDIR}/common/list.sysinst
 MTREECONF+=	${.CURDIR}/mtree.usr.install
 IMAGEDEPENDS+=	${ARCHDIR}/dot.profile \
-		${DESTDIR}/rescue/terminfo.db \
 		${DESTDIR}/.profile
 SMALLPROG_INET6=1
 
