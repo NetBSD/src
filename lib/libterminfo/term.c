@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.5 2010/02/11 00:27:09 roy Exp $ */
+/* $NetBSD: term.c,v 1.6 2010/02/11 09:42:03 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.5 2010/02/11 00:27:09 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.6 2010/02/11 09:42:03 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -112,8 +112,12 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 	}
 	len = le16dec(cap);
 	cap += sizeof(uint16_t);
-	term->desc = cap;
-	cap += len;
+	if (len == 0)
+		term->desc = NULL;
+	else {
+		term->desc = cap;
+		cap += len;
+	}
 
 	num = le16dec(cap);
 	cap += sizeof(uint16_t);
