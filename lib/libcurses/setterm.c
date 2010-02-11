@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.46 2010/02/03 15:34:40 roy Exp $	*/
+/*	$NetBSD: setterm.c,v 1.47 2010/02/11 11:45:47 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.46 2010/02/03 15:34:40 roy Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.47 2010/02/11 11:45:47 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,8 +132,11 @@ _cursesi_setterm(char *type, SCREEN *screen)
 		strcpy(screen->ttytype, "dumb");
 		return ERR;
 	}
-	strlcpy(screen->ttytype, screen->term->desc,
-		sizeof(screen->ttytype));
+	if (screen->term->desc == NULL)
+		screen->ttytype[0] = '\0';
+	else
+		strlcpy(screen->ttytype, screen->term->desc,
+		    sizeof(screen->ttytype));
 
 	/* If no scrolling commands, no quick change. */
 	screen->noqch =
