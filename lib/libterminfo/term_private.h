@@ -1,7 +1,7 @@
-/* $NetBSD: term_private.h,v 1.4 2010/02/05 14:39:07 he Exp $ */
+/* $NetBSD: term_private.h,v 1.5 2010/02/11 00:27:09 roy Exp $ */
 
 /*
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -82,13 +82,14 @@ typedef struct termextra {
 typedef struct terminal {
 	int fildes;
 	/* We need to expose these so that the macros work */
-	char *name;
-	char *desc;
+	const char *name;
+	const char *desc;
 	signed char *flags;
 	short *nums;
 	const char **strs;
 	/* Storage area for terminfo data */
 	char *_area;
+	size_t _arealen;
 	size_t _nuserdefs;
 	TERMUSERDEF *_userdefs;
 	/* So we don't rely on the global ospeed */
@@ -100,7 +101,7 @@ typedef struct terminal {
 	/* A-Z static variables for tparm  */
 	long _snums[26];
 	/* aliases of the terminal, | separated */
-	char *_alias;
+	const char *_alias;
 } TERMINAL;
 
 extern const char *	_ti_database;
