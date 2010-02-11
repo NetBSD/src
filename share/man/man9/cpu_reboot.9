@@ -1,4 +1,4 @@
-.\" $NetBSD: cpu_reboot.9,v 1.17 2009/09/04 23:29:03 apb Exp $
+.\" $NetBSD: cpu_reboot.9,v 1.18 2010/02/11 18:22:26 dyoung Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd September 4, 2009
+.Dd February 11, 2010
 .Dt CPU_REBOOT 9
 .Os
 .Sh NAME
@@ -86,7 +86,7 @@ but
 is not), saves a system crash dump.
 .It
 Runs any shutdown hooks by calling
-.Xr doshutdownhooks 9 .
+.Xr pmf_system_shutdown 9 .
 .It
 Prints a message indicating that the system is about to be halted
 or rebooted.
@@ -102,7 +102,7 @@ Otherwise, reboots the system.
 If the system has not finished autoconfiguration,
 .Fn cpu_reboot
 runs any shutdown hooks by calling
-.Xr doshutdownhooks 9 ,
+.Xr pmf_system_shutdown 9 ,
 prints a message, and halts the system.
 .Pp
 If
@@ -114,7 +114,7 @@ then the parameter
 is passed to the system boot loader on some ports.
 .Sh SEE ALSO
 .Xr boothowto 9 ,
-.Xr doshutdownhooks 9 ,
 .Xr dumpsys 9 ,
+.Xr pmf_system_shutdown 9 ,
 .Xr resettodr 9 ,
 .Xr vfs_shutdown 9
