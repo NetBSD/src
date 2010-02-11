@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.6 2010/02/11 09:42:03 roy Exp $ */
+/* $NetBSD: term.c,v 1.7 2010/02/11 13:11:47 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.6 2010/02/11 09:42:03 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.7 2010/02/11 13:11:47 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -91,7 +91,7 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 	term->_area = malloc(term->_arealen);
 	if (term->_area == NULL)
 		goto err;
- 	memcpy(term->_area, cap, term->_arealen);
+	memcpy(term->_area, cap, term->_arealen);
 
 	cap = term->_area;
 	len = le16dec(cap);
@@ -296,7 +296,8 @@ _ti_getterm(TERMINAL *term, const char *name, int flags)
 {
 	int r;
 	char *e, h[PATH_MAX];
-	const char **p;
+	size_t i;
+	const struct compiled_term *t;
 
 	_DIAGASSERT(term != NULL);
 	_DIAGASSERT(name != NULL);
@@ -320,11 +321,13 @@ _ti_getterm(TERMINAL *term, const char *name, int flags)
 	if (r == 1)
 		return 1;
 
-	for (p = rescue_terms; *p != NULL; p++, p++)
-		if (strcmp(name, *p) == 0) {
-			r = _ti_readterm(term, *(p + 1), 4096, flags);
+	for (i = 0; i < __arraycount(compiled_terms); i++) {
+		t = &compiled_terms[i];
+		if (strcmp(name, t->name) == 0) {
+			r = _ti_readterm(term, t->cap, t->caplen, flags);
 			break;
 		}
+	}
 
 	return r;
 }
@@ -334,7 +337,7 @@ _ti_freeterm(TERMINAL *term)
 {
 
 	_DIAGASSERT(term != NULL);
-	
+
 	free(term->_area);
 	term->_area = NULL;
 	free(term->strs);
