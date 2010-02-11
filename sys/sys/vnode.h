@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.213 2010/01/27 15:34:08 uebayasi Exp $	*/
+/*	$NetBSD: vnode.h,v 1.214 2010/02/11 23:16:35 haad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -601,6 +601,7 @@ void	vprint(const char *, struct vnode *);
 void 	vput(struct vnode *);
 int	vrecycle(struct vnode *, kmutex_t *, struct lwp *);
 void 	vrele(struct vnode *);
+void 	vrele_async(struct vnode *);
 int	vtruncbuf(struct vnode *, daddr_t, bool, int);
 void	vwakeup(struct buf *);
 void	vwait(struct vnode *, int);
@@ -609,6 +610,7 @@ void	vrevoke(struct vnode *);
 void	vrelel(struct vnode *, int);
 #define VRELEL_NOINACTIVE	0x01
 #define VRELEL_ONHEAD 		0x02
+#define VRELEL_ASYNC_RELE	0x03
 struct vnode *
 	vnalloc(struct mount *);
 void	vnfree(struct vnode *);
