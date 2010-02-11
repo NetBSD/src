@@ -1,4 +1,4 @@
-/*	$NetBSD: atk0110.c,v 1.3 2010/02/09 03:32:57 cnst Exp $	*/
+/*	$NetBSD: atk0110.c,v 1.4 2010/02/11 06:54:57 cnst Exp $	*/
 /*	$OpenBSD: atk0110.c,v 1.1 2009/07/23 01:38:16 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.3 2010/02/09 03:32:57 cnst Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.4 2010/02/11 06:54:57 cnst Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.3 2010/02/09 03:32:57 cnst Exp $");
  */
 
 #define AIBS_MORE_SENSORS
-#define AIBS_MONLIMITS
 
 struct aibs_sensor {
 	envsys_data_t	s;
@@ -66,10 +65,8 @@ static int aibs_match(device_t, cfdata_t, void *);
 static void aibs_attach(device_t, device_t, void *);
 static int aibs_detach(device_t, int);
 static void aibs_refresh(struct sysmon_envsys *, envsys_data_t *);
-#ifdef AIBS_MONLIMITS
 static void aibs_get_limits(struct sysmon_envsys *, envsys_data_t *,
     sysmon_envsys_lim_t *);
-#endif
 
 static void aibs_attach_sif(device_t, enum envsys_units);
 
@@ -109,9 +106,7 @@ aibs_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sme->sme_name = device_xname(self);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = aibs_refresh;
-#ifdef AIBS_MONLIMITS
 	sc->sc_sme->sme_get_limits = aibs_get_limits;
-#endif
 
 	aibs_attach_sif(self, ENVSYS_SVOLTS_DC);
 	aibs_attach_sif(self, ENVSYS_STEMP);
@@ -247,10 +242,8 @@ aibs_attach_sif(device_t self, enum envsys_units st)
 		as[i].l = oi[2].Integer.Value;
 		as[i].h = oi[3].Integer.Value;
 		as[i].s.units = st;
-#ifdef AIBS_MONLIMITS
 		as[i].s.flags |= ENVSYS_FMONLIMITS;
 		as[i].s.monitor = true;
-#endif
 		aprint_verbose_dev(self, "%c%i: "
 		    "0x%08"PRIx64" %20s %5"PRIi64" / %5"PRIi64"  "
 		    "0x%"PRIx64"\n",
@@ -360,7 +353,6 @@ aibs_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	s->flags &= ~ENVSYS_FMONNOTSUPP;
 }
 
-#ifdef AIBS_MONLIMITS
 static void
 aibs_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
     sysmon_envsys_lim_t *limits)
@@ -420,4 +412,3 @@ aibs_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 		break;
 	}
 }
-#endif /* AIBS_MONLIMITS */
