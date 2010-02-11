@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.35 2009/12/23 17:17:59 stacktic Exp $	*/
+/*	$NetBSD: rump.h,v 1.36 2010/02/11 01:13:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -145,5 +145,14 @@ _END_DECLS
 #define pwrite(a,b,c,d) rump_sys_pwrite(a,b,c,d)
 #define pwritev(a,b,c,d) rump_sys_pwritev(a,b,c,d)
 #endif /* RUMP_SYS_READWRITE */
+
+#ifdef RUMP_SYS_FILEOPS
+#define mkdir(a,b) rump_sys_mkdir(a,b)
+#define rmdir(a) rump_sys_rmdir(a)
+#define link(a,b) rump_sys_link(a,b)
+#define symlink(a,b) rump_sys_symlink(a,b)
+#define unlink(a) rump_sys_unlink(a)
+#define readlink(a,b,c) rump_sys_readlink(a,b,c)
+#endif /* RUMP_SYS_FILEOPS */
 
 #endif /* _RUMP_RUMP_H_ */
