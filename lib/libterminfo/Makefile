@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2010/02/11 14:44:44 roy Exp $
+#	$NetBSD: Makefile,v 1.8 2010/02/11 14:49:56 roy Exp $
 
 USE_SHLIBDIR=	yes
 
@@ -16,7 +16,7 @@ INCSDIR=	/usr/include
 
 rescue.c:
 		${TOOL_TIC} -Sx ${NETBSDSRCDIR}/share/terminfo/terminfo \
-		    ansi dumb vt100 vt220 wsvt25 >$@
+		    ansi dumb vt100 vt220 wsvt25 xterm >$@
 
 term.c: rescue.c
 
