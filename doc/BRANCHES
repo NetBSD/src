@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.286 2010/02/08 03:36:16 uebayasi Exp $
+#	$NetBSD: BRANCHES,v 1.287 2010/02/11 05:29:01 uebayasi Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -1304,7 +1304,8 @@ Start Date:	8 February 2010
 End Date:	
 Base Tag:	uebayasi-xip-base
 Maintainer:	Masao Uebayashi <uebayasi@NetBSD.org>
-Scope:		kernel
+Scope:		src/include src/sbin/mount src/sbin/mount_ffs
+		src/sys
 Notes:		Goals:
 		- Clean up oddities in fault handler
 		- Add a notion of device page
