@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.104 2010/02/05 22:07:14 pooka Exp $
+# $NetBSD: shl.mi,v 1.105 2010/02/11 02:29:24 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -98,6 +98,12 @@
 ./usr/lib/librumpdev_raidframe_pic.a		comp-c-piclib
 ./usr/lib/librumpdev_rnd_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_sysmon_pic.a		comp-c-piclib
+./usr/lib/librumpdev_ucom_pic.a			comp-c-piclib
+./usr/lib/librumpdev_ugenhc_pic.a		comp-c-piclib
+./usr/lib/librumpdev_ulpt_pic.a			comp-c-piclib
+./usr/lib/librumpdev_umass_pic.a		comp-c-piclib
+./usr/lib/librumpdev_usb_pic.a			comp-c-piclib
+./usr/lib/librumpdev_wscons_pic.a		comp-c-piclib
 ./usr/lib/librumpfs_cd9660_pic.a		comp-c-piclib
 ./usr/lib/librumpfs_efs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_ext2fs_pic.a		comp-c-piclib
