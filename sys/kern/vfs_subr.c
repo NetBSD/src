@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.397 2010/01/15 19:28:26 bouyer Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.398 2010/02/11 23:16:35 haad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.397 2010/01/15 19:28:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.398 2010/02/11 23:16:35 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1424,8 +1424,12 @@ vrelel(vnode_t *vp, int flags)
 		/*
 		 * XXX This ugly block can be largely eliminated if
 		 * locking is pushed down into the file systems.
+		 *
+		 * Defer vnode release to vrele_thread if caller
+		 * requests it explicitly.
 		 */
-		if (curlwp == uvm.pagedaemon_lwp) {
+		if ((curlwp == uvm.pagedaemon_lwp) ||
+		    (flags & VRELEL_ASYNC_RELE) != 0) {
 			/* The pagedaemon can't wait around; defer. */
 			defer = true;
 		} else if (curlwp == vrele_lwp) {
@@ -1597,6 +1601,23 @@ vrele(vnode_t *vp)
 	}
 	mutex_enter(&vp->v_interlock);
 	vrelel(vp, 0);
+}
+
+/*
+ * Asynchronous vnode release, vnode is released in different context.
+ */
+void
+vrele_async(vnode_t *vp)
+{
+
+	KASSERT((vp->v_iflag & VI_MARKER) == 0);
+
+	if ((vp->v_iflag & VI_INACTNOW) == 0 && vtryrele(vp)) {
+		return;
+	}
+	
+	mutex_enter(&vp->v_interlock);
+	vrelel(vp, VRELEL_ASYNC_RELE);
 }
 
 static void
