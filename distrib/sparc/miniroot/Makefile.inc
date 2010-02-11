@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2010/02/05 10:01:20 roy Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2010/02/11 09:06:50 roy Exp $
 
 IMAGESIZE=	8192k
 DBG=		-Os
@@ -7,7 +7,6 @@ IMAGEENDIAN=	be
 MAKEDEVTARGETS=	all
 LISTS+=		${DISTRIBDIR}/common/list.sysinst
 IMAGEDEPENDS+=	${ARCHDIR}/../install.md ${ARCHDIR}/dot.profile \
-		${DESTDIR}/rescue/terminfo.db \
 		${DESTDIR}/usr/mdec/boot \
 		${KERNOBJDIR}/GENERIC/netbsd
 

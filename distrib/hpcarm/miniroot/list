@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.6 2010/02/05 10:01:18 roy Exp $
+#	$NetBSD: list,v 1.7 2010/02/11 09:06:48 roy Exp $
 
 # extras in bin
 PROG	bin/csh
@@ -25,9 +25,6 @@ SPECIAL	vi		srcdir usr.bin/nvi/build
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp
-
-# terminfo database
-COPY	${DESTDIR}/rescue/terminfo.db	usr/share/misc/terminfo.db
 
 # and the installation tools
 COPY	${ARCHDIR}/dot.profile		.profile

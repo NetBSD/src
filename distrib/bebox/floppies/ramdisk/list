@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.17 2010/02/05 10:01:17 roy Exp $
+#	$NetBSD: list,v 1.18 2010/02/11 09:06:47 roy Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -68,7 +68,6 @@ SPECIAL	pwd_mkdb -p -d ./ etc/master.passwd
 # and the common installation tools
 # COPY	${CURDIR}/../../../utils/script-installer/dot.commonutils  .commonutils
 #COPY	${CURDIR}/../../../utils/script-installer/dot.instutils	   .instutils
-COPY	${DESTDIR}/rescue/terminfo.db	usr/share/misc/terminfo.db
 
 # and the installation tools
 COPY	${CURDIR}/dot.profile		.profile

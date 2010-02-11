@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.19 2010/02/05 10:01:21 roy Exp $
+# $NetBSD: Makefile.inc,v 1.20 2010/02/11 09:06:51 roy Exp $
 
 IMAGESIZE=	7m
 MAKEFS_FLAGS=	-o density=4k
@@ -8,8 +8,7 @@ LISTS+=		${DISTRIBDIR}/common/list.sysinst
 IMAGEDEPENDS+=	${ARCHDIR}/../install.md \
 		${ARCHDIR}/dot.profile \
 		${DESTDIR}/usr/mdec/boot \
-		${KERNOBJDIR}/GENERIC/netbsd \
-		${DESTDIR}/rescue/terminfo.db
+		${KERNOBJDIR}/GENERIC/netbsd
 
 IMAGEPOSTBUILD=	${TOOL_INSTALLBOOT} -v -m ${MACHINE} ${IMAGE} \
 		    ${DESTDIR}/usr/mdec/xxboot

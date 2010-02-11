@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.18 2010/02/05 10:01:17 roy Exp $
+#	$NetBSD: list,v 1.19 2010/02/11 09:06:47 roy Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -76,4 +76,3 @@ COPY	${DESTDIR}/etc/spwd.db				etc
 
 # and the common installation tools
 COPY	${TOPDIR}/inst-common/dot.commonutils	.commonutils
-COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db

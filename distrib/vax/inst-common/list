@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.13 2010/02/05 10:01:21 roy Exp $
+#	$NetBSD: list,v 1.14 2010/02/11 09:06:51 roy Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -61,9 +61,6 @@ COPY	${DISTRIBDIR}/common/protocols		etc
 COPY	${DESTDIR}/etc/pwd.db			etc
 COPY	${DISTRIBDIR}/common/services		etc
 COPY	${DESTDIR}/etc/spwd.db			etc
-
-# and the common installation tools
-COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 
 SPECIAL	strip /sys/arch/vax/compile/MINIROOT/netbsd
 COPY	/sys/arch/vax/compile/MINIROOT/netbsd	.
