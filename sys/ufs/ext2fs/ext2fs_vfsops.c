@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.155 2010/01/31 10:37:57 mlelstv Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.156 2010/02/11 19:50:34 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.155 2010/01/31 10:37:57 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.156 2010/02/11 19:50:34 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -522,8 +522,6 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	struct m_ext2fs *fs;
 	struct ext2fs *newfs;
 	int i, error;
-	uint64_t numsecs;
-	unsigned secsize;
 	void *cp;
 	struct ufsmount *ump;
 
@@ -543,11 +541,6 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	/*
 	 * Step 2: re-read superblock from disk.
 	 */
-	error = getdisksize(devvp, &numsecs, &secsize);
-	if (error) {
-		brelse(bp, 0);
-		return (error);
-	}
 	error = bread(devvp, SBLOCK, SBSIZE, NOCRED, 0, &bp);
 	if (error) {
 		brelse(bp, 0);
@@ -669,8 +662,6 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	struct m_ext2fs *m_fs;
 	dev_t dev;
 	int error, i, ronly;
-	uint64_t numsecs;
-	unsigned secsize;
 	kauth_cred_t cred;
 	struct proc *p;
 
@@ -686,9 +677,6 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	error = getdisksize(devvp, &numsecs, &secsize);
-	if (error)
-		return (error);
 
 	bp = NULL;
 	ump = NULL;
