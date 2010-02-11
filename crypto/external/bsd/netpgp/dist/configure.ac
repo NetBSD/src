@@ -1,10 +1,10 @@
-# $NetBSD: configure.ac,v 1.22 2010/02/08 17:19:12 agc Exp $
+# $NetBSD: configure.ac,v 1.23 2010/02/11 17:46:09 agc Exp $
 #
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT([netpgp],[20100208],[Alistair Crooks <agc@netbsd.org> c0596823])
+AC_INIT([netpgp],[20100211],[Alistair Crooks <agc@netbsd.org> c0596823])
 AC_PREREQ(2.63)
-AC_REVISION([$Revision: 1.22 $])
+AC_REVISION([$Revision: 1.23 $])
 
 AS_SHELL_SANITIZE
 
