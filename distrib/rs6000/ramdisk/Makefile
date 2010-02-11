@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/02/05 10:01:20 roy Exp $
+#	$NetBSD: Makefile,v 1.6 2010/02/11 09:06:50 roy Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -22,8 +22,7 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig \
 		${DISTRIBDIR}/common/protocols \
-		${DISTRIBDIR}/common/services \
-		${DESTDIR}/rescue/terminfo.db
+		${DISTRIBDIR}/common/services
 
 SMALLPROG_INET6=1
 

@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.8 2010/02/05 10:01:17 roy Exp $
+#	$NetBSD: list,v 1.9 2010/02/11 09:06:47 roy Exp $
 
 SRCDIRS usr.bin/less
 SRCDIRS	bin sbin usr.bin usr.sbin
@@ -82,9 +82,6 @@ COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
 COPY	${DISTRIBDIR}/common/protocols		etc/protocols
 COPY	${DISTRIBDIR}/common/services		etc/services
 COPY	${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script sbin/dhclient-script 555
-
-# and the common installation tools
-COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 
 # and the boot script
 COPY	${CURDIR}/dot.profile		.profile

@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.14 2010/02/05 10:01:21 roy Exp $
+# $NetBSD: list,v 1.15 2010/02/11 09:06:50 roy Exp $
 #
 
 # The PROM provides a default kernel name of "vmunix"
@@ -41,7 +41,6 @@ COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local	555
 
 # copy the miniroot installation tools
 COPY	${CURDIR}/profile		.profile
-COPY	${DESTDIR}/rescue/terminfo.db	usr/share/misc/terminfo.db
 
 COPY	${CURDIR}/install.md		install.md
 COPY	${OBJDIR}/install.sub		install.sub

@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.36 2010/02/05 10:01:17 roy Exp $
+#	$NetBSD: list,v 1.37 2010/02/11 09:06:47 roy Exp $
 
 SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin
 
@@ -78,7 +78,6 @@ MTREE	./etc/pwd.db	type=file uname=root gname=wheel mode=0644
 MTREE	./etc/spwd.db	type=file uname=root gname=wheel mode=0600
 
 # and the common installation tools
-COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 COPY	${DISTRIBDIR}/utils/script-installer/dot.commonutils .commonutils
 COPY	${DISTRIBDIR}/utils/script-installer/dot.instutils   .instutils
 

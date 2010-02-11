@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2010/02/05 10:01:17 roy Exp $
+#	$NetBSD: Makefile,v 1.20 2010/02/11 09:06:47 roy Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -18,8 +18,7 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		dot.profile \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols \
-		${DISTRIBDIR}/common/services \
-		${DESTDIR}/rescue/terminfo.db
+		${DISTRIBDIR}/common/services
 
 .if ${USE_INET6} != "no"
 LISTS+=		${DISTRIBDIR}/common/list.inet6

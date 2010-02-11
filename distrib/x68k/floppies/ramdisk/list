@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.27 2010/02/05 10:01:21 roy Exp $
+#	$NetBSD: list,v 1.28 2010/02/11 09:06:51 roy Exp $
 
 SRCDIRS bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/x68k/stand
 
@@ -79,9 +79,6 @@ LINK	usr/mdec/xxboot_ufs		usr/mdec/sdboot_ufs
 LINK	usr/mdec/xxboot_ufs		usr/mdec/fdboot_ufs
 COPY	${DESTDIR}/usr/mdec/boot	usr/mdec/boot
 COPY	${DESTDIR}/usr/mdec/mboot	usr/mdec/mboot
-
-# and the common installation tools
-COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 
 # and the installation tools
 COPY	${CURDIR}/dot.profile		.profile

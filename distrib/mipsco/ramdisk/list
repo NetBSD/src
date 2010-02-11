@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.15 2010/02/05 10:01:19 roy Exp $
+#	$NetBSD: list,v 1.16 2010/02/11 09:06:49 roy Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
 
@@ -73,7 +73,6 @@ COPY	${DISTRIBDIR}/common/protocols		etc/protocols
 COPY	${DISTRIBDIR}/common/services		etc/services
 
 # and the common installation tools
-COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 COPY	${DISTRIBDIR}/utils/script-installer/dot.commonutils	.commonutils
 COPY	${DISTRIBDIR}/utils/script-installer/dot.instutils	.instutils
 

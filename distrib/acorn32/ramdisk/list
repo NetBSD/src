@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.22 2010/02/05 10:01:16 roy Exp $
+#	$NetBSD: list,v 1.23 2010/02/11 09:06:47 roy Exp $
 
 SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
@@ -67,9 +67,6 @@ COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
 COPY	${DISTRIBDIR}/common/protocols	etc/protocols
 COPY	${DISTRIBDIR}/common/services		etc/services
-
-# and the common installation tools
-COPY	${DESTDIR}/rescue/terminfo.db		usr/share/misc/terminfo.db
 
 #COPY	${CURDIR}/inst.sh			usr/local/sbin/inst	555
 
