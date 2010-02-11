@@ -1,4 +1,4 @@
-.\"	$NetBSD: terminfo.5.in,v 1.9 2010/02/11 14:36:09 roy Exp $
+.\"	$NetBSD: terminfo.5.in,v 1.10 2010/02/11 16:28:06 wiz Exp $
 .\"
 .\" Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -88,7 +88,7 @@ maps to a control-X for any appropriate X, and the sequences
 .Sy \eb
 and
 .Sy \ef
-map to linefeed, return, tab, backspace and formfeed respectively.
+map to linefeed, return, tab, backspace, and formfeed respectively.
 Any character can be escaped in octal, such as
 .Sy \e072 .
 If you need to encode a
@@ -215,7 +215,7 @@ unless
 is available.
 If a matching description is not found then a small embedded database is
 searched, which currently holds descriptions for ansi, dumb, vt100, vt220,
-wsvt25 and xterm.
+wsvt25, and xterm.
 .Sh FILES
 .Bl -tag -width /usr/share/misc/terminfo.db -compact
 .It Pa $HOME/.terminfo.db
