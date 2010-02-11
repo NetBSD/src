@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.257 2010/02/05 20:03:36 mlelstv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.257.2.1 2010/02/11 05:22:38 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,12 +61,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.257 2010/02/05 20:03:36 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.257.2.1 2010/02/11 05:22:38 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
 #include "opt_quota.h"
 #include "opt_wapbl.h"
+#include "opt_xip.h"
 #endif
 
 #include <sys/param.h>
@@ -1173,6 +1174,15 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_iflag |= IMNT_MPSAFE;
+#ifdef XIP
+	paddr_t phys_addr = 0;
+	if ((VOP_IOCTL(devvp, DIOCGPHYSADDR, &phys_addr, FREAD,
+	    cred) == 0) &&
+	    phys_addr != 0) {
+		mp->mnt_iflag |= IMNT_XIP;
+		mp->mnt_phys_addr = phys_addr;
+	}
+#endif
 #ifdef FFS_EI
 	if (needswap)
 		ump->um_flags |= UFS_NEEDSWAP;
@@ -1747,6 +1757,12 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	}
 
 	vp->v_vflag |= VV_LOCKSWORK;
+
+#ifdef XIP
+	if ((vp->v_mount->mnt_iflag & IMNT_XIP) != 0) {
+		vp->v_vflag |= VV_XIP;
+	}
+#endif
 
 	/*
 	 * XXX MFS ends up here, too, to allocate an inode.  Should we
