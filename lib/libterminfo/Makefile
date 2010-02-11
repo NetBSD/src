@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/02/11 00:27:09 roy Exp $
+#	$NetBSD: Makefile,v 1.6 2010/02/11 13:11:47 roy Exp $
 
 USE_SHLIBDIR=	yes
 
@@ -12,15 +12,11 @@ SRCS+=		hash.c
 INCS=		term.h
 INCSDIR=	/usr/include
 
-.include <bsd.own.mk>
+.PHONY:	rescue.c
 
-rescue.c: ${NETBSDSRCDIR}/share/terminfo/terminfo
-		@echo "static const char *rescue_terms[] = {" >$@
-		${TOOL_TIC} -Sx ${NETBSDSRCDIR}/share/terminfo/terminfo \
-		    ansi dumb vt100 vt220 wsvt25 >>$@
-		@echo "	NULL," >>$@
-		@echo "	NULL" >>$@
-		@echo "};" >>$@
+rescue.c:
+		tic -Sx ${NETBSDSRCDIR}/share/terminfo/terminfo \
+		    ansi dumb vt100 vt220 wsvt25 >$@
 
 term.c: rescue.c
 
@@ -58,6 +54,7 @@ man: terminfo.5
 
 gen: hash man
 
+.include <bsd.own.mk>
 .include <bsd.shlib.mk>
 
 .if ${MKLINKLIB} != "no"
