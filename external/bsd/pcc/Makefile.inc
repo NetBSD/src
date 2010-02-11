@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2010/02/11 14:18:45 plunky Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2010/02/11 14:22:30 plunky Exp $
 
 PCC_DIR:=${.PARSEDIR}
 PCC_DIST=${PCC_DIR}/dist/pcc
@@ -28,7 +28,7 @@ CPPFLAGS+=	-DLIBEXECDIR=\"${libexecdir}/\"
 CPPFLAGS+=	-DINCLUDEDIR=\"${includedir}/\"
 CPPFLAGS+=	-Dos_${TARGOS}
 CPPFLAGS+=	-Dmach_${TARGMACH}
-CPPFLAGS+=	-I${PCC_DIR}
+CPPFLAGS+=	-I${PCC_DIR}/include
 
 .include <bsd.endian.mk>
 
