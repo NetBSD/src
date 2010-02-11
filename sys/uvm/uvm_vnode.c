@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.93 2010/01/08 11:35:12 pooka Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.93.2.1 2010/02/11 06:26:47 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.93 2010/01/08 11:35:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.93.2.1 2010/02/11 06:26:47 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -177,11 +177,18 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
 
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x", vp, (int)offset, 0,0);
 
+#ifdef XIP
+	if ((vp->v_flag & VV_XIP) != 0)
+		goto uvn_get_ra_done;
+#endif
 	if ((access_type & VM_PROT_WRITE) == 0 && (flags & PGO_LOCKED) == 0) {
 		vn_ra_allocctx(vp);
 		uvm_ra_request(vp->v_ractx, advice, uobj, offset,
 		    *npagesp << PAGE_SHIFT);
 	}
+#ifdef XIP
+uvn_get_ra_done:
+#endif
 
 	error = VOP_GETPAGES(vp, offset, pps, npagesp, centeridx,
 			     access_type, advice, flags);
