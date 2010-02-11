@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2010/02/11 14:22:30 plunky Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2010/02/11 14:36:32 plunky Exp $
 
 PCC_DIR:=${.PARSEDIR}
 PCC_DIST=${PCC_DIR}/dist/pcc
@@ -45,6 +45,5 @@ CPPFLAGS+=	-DTARGET_BIG_ENDIAN
 ERROR!= echo "ERROR: Unknown TARGET_ENDIANNESS" >&2;echo
 .endif
 
-.if exists(${.CURDIR}/../../../Makefile.inc)
-.include "${.CURDIR}/../../../Makefile.inc"
-.endif
+# top-level Makefile.inc
+.include "../../../Makefile.inc"
