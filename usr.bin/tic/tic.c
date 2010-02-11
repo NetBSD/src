@@ -1,7 +1,7 @@
-/* $NetBSD: tic.c,v 1.4 2010/02/05 16:36:09 roy Exp $ */
+/* $NetBSD: tic.c,v 1.5 2010/02/11 00:24:46 roy Exp $ */
 
 /*
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.4 2010/02/05 16:36:09 roy Exp $");
+__RCSID("$NetBSD: tic.c,v 1.5 2010/02/11 00:24:46 roy Exp $");
 
 #include <sys/types.h>
 
@@ -237,12 +237,11 @@ store_extra(TIC *tic, int wrn, char *id, char type, char flag, short num,
 	return 1;
 }
 
-static int
-save_term(DBM *db, TERM *term)
+static TBUF *
+flatten_term(TERM *term)
 {
 	size_t buflen, len, alen, dlen;
 	char *cap;
-	datum key, value;
 	TIC *tic;
 
 	scratch.bufpos = 0;
@@ -258,7 +257,7 @@ save_term(DBM *db, TERM *term)
 		dlen = strlen(tic->desc) + 1;
 	buflen = sizeof(char) +
 	    sizeof(uint16_t) + len +
-	    //sizeof(uint16_t) + alen +
+	    sizeof(uint16_t) + alen +
 	    sizeof(uint16_t) + dlen +
 	    (sizeof(uint16_t) * 2) + tic->flags.bufpos +
 	    (sizeof(uint16_t) * 2) + tic->nums.bufpos +
@@ -336,11 +335,25 @@ save_term(DBM *db, TERM *term)
 			cap += tic->extras.bufpos;
 		}
 	}
+	scratch.bufpos = cap - scratch.buf;
+
+	return &scratch;
+}
+
+static int
+save_term(DBM *db, TERM *term)
+{
+	TBUF *buf;
+	datum key, value;
+
+	buf = flatten_term(term);
+	if (buf == NULL)
+		return -1;
 
 	key.dptr = term->name;
 	key.dsize = strlen(term->name);
 	value.dptr = scratch.buf;
-	value.dsize = cap - scratch.buf;
+	value.dsize = scratch.bufpos;
 	if (dbm_store(db, key, value, DBM_REPLACE) == -1)
 		err(1, "dbm_store");
 	return 0;
@@ -870,10 +883,56 @@ merge_use(void)
 	return merged;
 }
 
+static int
+print_dump(int argc, char **argv)
+{
+	TERM *term;
+	TBUF *buf;
+	int i, n;
+	size_t j, col;
+
+	n = 0;
+
+	for (i = 0; i < argc; i++) {
+		term = find_term(argv[i]);
+		if (term == NULL) {
+			warnx("%s: no description for terminal", argv[i]);
+			continue;
+		}
+		if (term->type == 'a') {
+			warnx("%s: cannot dump alias", argv[i]);
+			continue;
+		}
+		buf = flatten_term(term);
+		if (buf == NULL)
+			continue;
+
+		printf("\t\"%s\",\n", argv[i]);
+		n++;
+		for (j = 0, col = 0; j < buf->bufpos; j++) {
+			if (col == 0) {
+				printf("\t\"");
+				col = 8;
+			}
+			
+			col += printf("\\%03o", (uint8_t)buf->buf[j]);
+			if (col > 75) {
+				printf("\"%s\n",
+				    j + 1 == buf->bufpos ? "," : "");
+				col = 0;
+			}
+		}
+		if (col != 0)
+		    printf("\",\n");
+	}
+
+	return n;
+}
+
 int
 main(int argc, char **argv)
 {
-	int ch, cflag, sflag;
+	int ch, Sflag, cflag, sflag;
 	char *source, *p, *buf, *ofile;
 	FILE *f;
 	DBM *db;
@@ -883,8 +942,11 @@ main(int argc, char **argv)
 
 	cflag = sflag = 0;
 	ofile = NULL;
-	while ((ch = getopt(argc, argv, "aco:sx")) != -1)
+	while ((ch = getopt(argc, argv, "Saco:sx")) != -1)
 	    switch (ch) {
+	    case 'S':
+		    Sflag = 1;
+		    break;
 	    case 'a':
 		    aflag = 1;
 		    break;
@@ -902,7 +964,7 @@ main(int argc, char **argv)
 		    break;
 	    case '?': /* FALLTHROUGH */
 	    default:
-		    fprintf(stderr, "usage: %s [-acsx] [-o file] source\n",
+		    fprintf(stderr, "usage: %s [-Sacsx] [-o file] source\n",
 			getprogname());
 		    return EXIT_FAILURE;
 	    }
@@ -913,7 +975,7 @@ main(int argc, char **argv)
 	f = fopen(source, "r");
 	if (f == NULL)
 		err(1, "fopen: %s", source);
-	if (cflag == 0) {
+	if (cflag == 0 && Sflag == 0) {
 		if (ofile == NULL)
 			ofile = source;
 		len = strlen(ofile) + 9;
@@ -963,6 +1025,11 @@ main(int argc, char **argv)
 	/* Merge use entries until we have merged all we can */
 	while (merge_use() != 0)
 		;
+
+	if (Sflag != 0) {
+		print_dump(argc - optind, argv + optind);
+		return error_exit;
+	}
 
 	if (cflag != 0)
 		return error_exit;
