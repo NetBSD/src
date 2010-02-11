@@ -1,4 +1,4 @@
-/* $NetBSD: infocmp.c,v 1.5 2010/02/11 08:46:18 roy Exp $ */
+/* $NetBSD: infocmp.c,v 1.6 2010/02/11 14:38:43 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: infocmp.c,v 1.5 2010/02/11 08:46:18 roy Exp $");
+__RCSID("$NetBSD: infocmp.c,v 1.6 2010/02/11 14:38:43 roy Exp $");
 
 #include <sys/ioctl.h>
 
@@ -438,9 +438,13 @@ load_term(const char *name)
 		name = getenv("TERM");
 	if (name == NULL)
 		name = "dumb";
-	if (_ti_getterm(t, name, 1) != 1) /* load the raw data */
+	if (_ti_getterm(t, name, 1) == 1)
+		return t;
+
+	if (_ti_database == NULL)
+		errx(1, "no terminal definition found in internal database");
+	else
 		errx(1, "no terminal definition found in %s.db", _ti_database);
-	return t;
 }
 
 static void
