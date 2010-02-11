@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1359 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1360 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -538,7 +538,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		linkage is now always the same.  [pooka 20100119]
 	dhcpcd(8): Import dhcpcd-5.1.5. [roy 20100131]
 	amigappc: A CSPPC system with ahsc(4) or cbiiisc(4) boots into
-		multiuser for the first time.
+		multiuser for the first time. [phx 20100202]
 	terminfo(3): Import my terminfo implementation to replace termcap.
 		[roy 20100203]
 	acpismbus(4): Add my experimental ACPI SMBus Control Method
