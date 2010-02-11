@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.34 2010/02/10 22:25:08 skrll Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.35 2010/02/11 10:07:14 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.34 2010/02/10 22:25:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.35 2010/02/11 10:07:14 drochner Exp $");
 
 #include "opt_wsmsgattrs.h"
 
@@ -1009,6 +1009,7 @@ static void
 wsemul_vt100_getmsgattrs(void *cookie, struct wsdisplay_msgattrs *ma)
 {
 	struct wsemul_vt100_emuldata *edp = cookie;
+	struct vt100base_data *vd = &edp->bd;
 
 	*ma = vd->msgattrs;
 }
@@ -1020,6 +1021,7 @@ wsemul_vt100_setmsgattrs(void *cookie, const struct wsscreen_descr *type,
 	int error;
 	long tmp;
 	struct wsemul_vt100_emuldata *edp = cookie;
+	struct vt100base_data *vd = &edp->bd;
 
 	vd->msgattrs = *ma;
 	if (type->capabilities & WSSCREEN_WSCOLORS) {
