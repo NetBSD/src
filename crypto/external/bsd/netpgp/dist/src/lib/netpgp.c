@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.37 2010/02/06 02:24:33 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.38 2010/02/11 17:46:09 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -389,7 +389,7 @@ netpgp_init(netpgp_t *netpgp)
 		(void) memset(&limit, 0x0, sizeof(limit));
 		if (setrlimit(RLIMIT_CORE, &limit) != 0) {
 			(void) fprintf(stderr,
-			"netpgp_init: warning - can't turn off core dumps\n");
+			"netpgp: warning - can't turn off core dumps\n");
 			coredumps = 1;
 		}
 	}
@@ -814,6 +814,7 @@ netpgp_sign_file(netpgp_t *netpgp,
 		int detached)
 {
 	const __ops_key_t	*keypair;
+	const __ops_key_t	*pubkey;
 	__ops_seckey_t		*seckey;
 	const unsigned		 overwrite = 1;
 	__ops_io_t		*io;
@@ -832,7 +833,7 @@ netpgp_sign_file(netpgp_t *netpgp,
 	/* get key with which to sign */
 	keypair = __ops_getkeybyname(io, netpgp->secring, userid);
 	if (keypair == NULL) {
-		(void) fprintf(io->errs, "Userid '%s' not found in keyring\n",
+		(void) fprintf(io->errs, "Userid '%s' not found in secring\n",
 				userid);
 		return 0;
 	}
@@ -840,7 +841,15 @@ netpgp_sign_file(netpgp_t *netpgp,
 	do {
 		if (netpgp->passfp == NULL) {
 			/* print out the user id */
-			__ops_print_keydata(io, keypair, "pub", &keypair->key.pubkey);
+			pubkey = __ops_getkeybyname(io, netpgp->pubring, userid);
+			if (pubkey == NULL) {
+				(void) fprintf(io->errs,
+					"netpgp: warning - using pubkey from secring\n");
+				__ops_print_keydata(io, keypair, "pub",
+					&keypair->key.seckey.pubkey);
+			} else {
+				__ops_print_keydata(io, pubkey, "pub", &pubkey->key.pubkey);
+			}
 		}
 		if (netpgp_getvar(netpgp, "ssh keys") == NULL) {
 			/* now decrypt key */
@@ -918,6 +927,7 @@ netpgp_sign_memory(netpgp_t *netpgp,
 		const unsigned cleartext)
 {
 	const __ops_key_t	*keypair;
+	const __ops_key_t	*pubkey;
 	__ops_seckey_t		*seckey;
 	__ops_memory_t		*signedmem;
 	__ops_io_t		*io;
@@ -944,7 +954,15 @@ netpgp_sign_memory(netpgp_t *netpgp,
 	do {
 		if (netpgp->passfp == NULL) {
 			/* print out the user id */
-			__ops_print_keydata(io, keypair, "pub", &keypair->key.pubkey);
+			pubkey = __ops_getkeybyname(io, netpgp->pubring, userid);
+			if (pubkey == NULL) {
+				(void) fprintf(io->errs,
+					"netpgp: warning - using pubkey from secring\n");
+				__ops_print_keydata(io, keypair, "pub",
+					&keypair->key.seckey.pubkey);
+			} else {
+				__ops_print_keydata(io, pubkey, "pub", &pubkey->key.pubkey);
+			}
 		}
 		/* now decrypt key */
 		seckey = __ops_decrypt_seckey(keypair, netpgp->passfp);
