@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem.9,v 1.4 2010/01/23 00:54:43 rmind Exp $
+.\"	$NetBSD: kmem.9,v 1.5 2010/02/11 23:13:46 haad Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -45,6 +45,9 @@
 .Ft void
 .Fn kmem_free \
 "void *p" "size_t size"
+.Ft char *
+.Fn kmem_asprintf \
+"const char *fmt" "..."
 .\" ------------------------------------------------------------
 .Pp
 .Cd "options DEBUG"
@@ -92,6 +95,16 @@ is the equivalent of
 .Fn kmem_alloc ,
 except that it initializes the memory to zero.
 .Pp
+.\" ------------------------------------------------------------
+.Fn kmem_asprintf
+functions as the well known
+.Fn asprintf
+function, but allocates memory using
+.Fn kmem_alloc .
+This routine can sleep during allocation.
+The size of the allocated area is the length of the returned character string, plus one (for the NUL terminator).
+This must be taken into consideration when freeing the returned area with
+.Fn kmem_free .
 .\" ------------------------------------------------------------
 .Fn kmem_free
 frees kernel wired memory allocated by
