@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36 2010/01/30 12:06:20 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.1 2010/02/11 06:23:04 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36 2010/01/30 12:06:20 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.1 2010/02/11 06:23:04 uebayasi Exp $");
+
+#include "opt_xip.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36 2010/01/30 12:06:20 uebayasi Exp $
 #include <uvm/uvm.h>
 #include <uvm/uvm_pager.h>
 
+static int genfs_do_getpages(void *);
+static int genfs_do_getpages_xip(void *);
 static int genfs_do_directio(struct vmspace *, vaddr_t, size_t, struct vnode *,
     off_t, enum uio_rw);
 static void genfs_dio_iodone(struct buf *);
@@ -93,6 +97,29 @@ genfs_rel_pages(struct vm_page **pgs, int npages)
 
 int
 genfs_getpages(void *v)
+{
+	struct vop_getpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offset;
+		struct vm_page **a_m;
+		int *a_count;
+		int a_centeridx;
+		vm_prot_t a_access_type;
+		int a_advice;
+		int a_flags;
+	} */ * const ap = v;
+	struct vnode * const vp = ap->a_vp;
+
+#ifdef XIP
+	if ((vp->v_vflag & VV_XIP) != 0)
+		return genfs_do_getpages_xip(v);
+	else
+#endif
+		return genfs_do_getpages(v);
+}
+
+static int
+genfs_do_getpages(void *v)
 {
 	struct vop_getpages_args /* {
 		struct vnode *a_vp;
@@ -710,6 +737,102 @@ out_err:
 		fstrans_done(vp->v_mount);
 	return (error);
 }
+
+#ifdef XIP
+static int
+genfs_do_getpages_xip(void *v)
+{
+	struct vop_getpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offset;
+		struct vm_page **a_m;
+		int *a_count;
+		int a_centeridx;
+		vm_prot_t a_access_type;
+		int a_advice;
+		int a_flags;
+	} */ * const ap = v;
+
+	struct vnode * const vp = ap->a_vp;
+	int *npagesp = ap->a_count;
+	const off_t offset = ap->a_offset;
+	struct vm_page **pps = ap->a_m;
+	struct uvm_object * const uobj = &vp->v_uobj;
+	const int flags = ap->a_flags;
+
+	int error;
+	off_t eof, sbkoff, ebkoff, off;
+	int npages;
+	int fs_bshift, fs_bsize, dev_bshift, dev_bsize;
+	int i;
+	paddr_t phys_addr;
+
+	KASSERT((vp->v_vflag & VV_XIP) != 0);
+
+	UVMHIST_LOG(ubchist, "xip!", 0, 0, 0, 0);
+
+	/* XXXUEBS should we care about PGO_LOCKED? */
+
+	GOP_SIZE(vp, vp->v_size, &eof, GOP_SIZE_MEM);
+	npages = MIN(*npagesp, round_page(eof - offset) >> PAGE_SHIFT);
+
+	fs_bshift = vp->v_mount->mnt_fs_bshift;
+	fs_bsize = 1 << fs_bshift;
+	dev_bshift = vp->v_mount->mnt_dev_bshift;
+	dev_bsize = 1 << dev_bshift;
+
+	sbkoff = offset & ~(fs_bsize - 1);
+	ebkoff = ((offset + PAGE_SIZE * npages) + (fs_bsize - 1)) & ~(fs_bsize - 1);
+
+	UVMHIST_LOG(ubchist, "xip npages=%d sbkoff=%lx ebkoff=%lx", npages, (long)sbkoff, (long)ebkoff, 0);
+
+	/* XXX optimize */
+	off = offset;
+	i = 0;
+	while (i < npages) {
+		daddr_t lbn, blkno;
+		int run;
+		struct vnode *devvp;
+
+		lbn = (off & ~(fs_bsize - 1)) >> fs_bshift;
+
+		error = VOP_BMAP(vp, lbn, &devvp, &blkno, &run);
+		KASSERT(error == 0);
+		UVMHIST_LOG(ubchist, "xip VOP_BMAP: lbn=%ld blkno=%ld run=%d", (long)lbn, (long)blkno, run, 0);
+
+		if (blkno < 0) {
+			/* unallocated page is redirected to read-only zero-filled page */
+			phys_addr = uvm_pageofzero_xip_phys_addr();
+		} else {
+			phys_addr = vp->v_mount->mnt_phys_addr +
+			    (blkno << dev_bshift) +
+			    (off - (lbn << fs_bshift));
+		}
+
+		pps[i] = PHYS_TO_VM_PAGE(phys_addr);
+
+		UVMHIST_LOG(ubchist, "xip pgs %d => phys_addr=0x%lx (%p)",
+			i,
+			(long)phys_addr,
+			pps[i],
+			0);
+		printf("xip pgs %d => phys_addr=0x%lx (%p)\n",
+			i,
+			(long)phys_addr,
+			pps[i]);
+
+		off += PAGE_SIZE;
+		i++;
+	}
+
+	*npagesp = i;
+
+	if ((flags & PGO_LOCKED) == 0)
+		mutex_exit(&uobj->vmobjlock);
+
+	return 0;
+}
+#endif
 
 /*
  * generic VM putpages routine.
