@@ -1,4 +1,4 @@
-/* $NetBSD: curterm.c,v 1.2 2010/02/11 00:27:09 roy Exp $ */
+/* $NetBSD: curterm.c,v 1.3 2010/02/11 09:34:12 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: curterm.c,v 1.2 2010/02/11 00:27:09 roy Exp $");
+__RCSID("$NetBSD: curterm.c,v 1.3 2010/02/11 09:34:12 roy Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -71,7 +71,6 @@ set_curterm(TERMINAL *nterm)
 	oterm = cur_term;
 	cur_term = nterm;
 
-	printf ("%s\n", nterm->name);
 	ospeed = 0;
 	if (cur_term == NULL)
 		PC = '\0';
