@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.32 2010/01/31 11:54:32 skrll Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.33 2010/02/11 23:13:46 haad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.32 2010/01/31 11:54:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.33 2010/02/11 23:13:46 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -78,6 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.32 2010/01/31 11:54:32 skrll Exp $")
 #include <uvm/uvm_kmguard.h>
 
 #include <lib/libkern/libkern.h>
+
+#include <machine/stdarg.h>
 
 #define	KMEM_QUANTUM_SIZE	(ALIGNBYTES + 1)
 #define	KMEM_QCACHE_MAX		(KMEM_QUANTUM_SIZE * 32)
@@ -456,3 +458,28 @@ kmem_size_check(const void *p, size_t sz)
 	}
 }
 #endif	/* defined(KMEM_SIZE) */
+
+/*
+ * Used to dynamically allocate string with kmem accordingly to format.
+ */
+char *
+kmem_asprintf(const char *fmt, ...)
+{
+	int size, str_len;
+	va_list va;
+	char *str;
+	char buf[1];
+	
+	va_start(va, fmt);
+	str_len = vsnprintf(buf, sizeof(buf), fmt, va) + 1;
+	va_end(va);
+
+	str = kmem_alloc(str_len, KM_SLEEP);
+
+	if ((size = vsnprintf(str, str_len, fmt, va)) == -1) {
+		kmem_free(str, str_len);
+		return NULL;
+	}
+
+	return str;
+}
