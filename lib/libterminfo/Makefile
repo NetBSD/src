@@ -1,16 +1,28 @@
-#	$NetBSD: Makefile,v 1.4 2010/02/09 22:16:12 roy Exp $
+#	$NetBSD: Makefile,v 1.5 2010/02/11 00:27:09 roy Exp $
 
 USE_SHLIBDIR=	yes
 
 LIB=		terminfo
 WARNS=		4
 
-CPPFLAGS+=	-I${.CURDIR}
+CPPFLAGS+=	-I${.CURDIR} -I${.OBJDIR}
 
 SRCS=		term.c ti.c setupterm.c curterm.c tparm.c tputs.c
 SRCS+=		hash.c
 INCS=		term.h
 INCSDIR=	/usr/include
+
+.include <bsd.own.mk>
+
+rescue.c: ${NETBSDSRCDIR}/share/terminfo/terminfo
+		@echo "static const char *rescue_terms[] = {" >$@
+		${TOOL_TIC} -Sx ${NETBSDSRCDIR}/share/terminfo/terminfo \
+		    ansi dumb vt100 vt220 wsvt25 >>$@
+		@echo "	NULL," >>$@
+		@echo "	NULL" >>$@
+		@echo "};" >>$@
+
+term.c: rescue.c
 
 MAN=		terminfo.3 terminfo.5
 MLINKS=		terminfo.3 setupterm.3 \
@@ -46,7 +58,6 @@ man: terminfo.5
 
 gen: hash man
 
-.include <bsd.own.mk>
 .include <bsd.shlib.mk>
 
 .if ${MKLINKLIB} != "no"

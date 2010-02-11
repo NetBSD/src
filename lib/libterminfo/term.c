@@ -1,7 +1,7 @@
-/* $NetBSD: term.c,v 1.4 2010/02/05 19:21:02 roy Exp $ */
+/* $NetBSD: term.c,v 1.5 2010/02/11 00:27:09 roy Exp $ */
 
 /*
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.4 2010/02/05 19:21:02 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.5 2010/02/11 00:27:09 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -45,14 +45,25 @@ __RCSID("$NetBSD: term.c,v 1.4 2010/02/05 19:21:02 roy Exp $");
 #include <term.h>
 
 #define TERMINFO_DIRS		"/usr/share/misc/terminfo"
-#define TERMINFO_RESCUE		"/rescue/terminfo"
 
 static char database[PATH_MAX];
 static char pathbuf[PATH_MAX];
 const char *_ti_database;
 
+/* rescue.c is generated from /usr/src/share/terminfo/terminfo
+ * at build time as an array of strings.
+ * static const char *rescue_terms[] = {
+ *	"ansi",
+ *	"\002\005\000\141\156\163\151\000\000\000\043\000\141\156\163\151\057",
+ *	NULL,
+ *	NULL
+ * };
+ */
+ 
+#include "rescue.c"
+
 static int
-_ti_readterm(TERMINAL *term, char *cap, size_t caplen, int flags)
+_ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 {
 	uint8_t ver;
 	uint16_t ind, num;
@@ -76,10 +87,11 @@ _ti_readterm(TERMINAL *term, char *cap, size_t caplen, int flags)
 	term->strs = calloc(TISTRMAX + 1, sizeof(char *));
 	if (term->strs == NULL)
 		goto err;
-	term->_area = malloc(caplen);
+	term->_arealen = caplen;
+	term->_area = malloc(term->_arealen);
 	if (term->_area == NULL)
 		goto err;
- 	memcpy(term->_area, cap, caplen);
+ 	memcpy(term->_area, cap, term->_arealen);
 
 	cap = term->_area;
 	len = le16dec(cap);
@@ -280,12 +292,14 @@ _ti_getterm(TERMINAL *term, const char *name, int flags)
 {
 	int r;
 	char *e, h[PATH_MAX];
+	const char **p;
 
 	_DIAGASSERT(term != NULL);
 	_DIAGASSERT(name != NULL);
 
 	database[0] = '\0';
 	_ti_database = NULL;
+
 	e = getenv("TERMINFO");
 	if (e != NULL)
 		return _ti_dbgetterm(term, e, name, flags);
@@ -302,12 +316,12 @@ _ti_getterm(TERMINAL *term, const char *name, int flags)
 	if (r == 1)
 		return 1;
 
-	/* If we don't find the term in the rescue db and there is
-	 * no error, then report the last database accessed. */
-	strlcpy(h, database, sizeof(h));
-	r = _ti_dbgetterm(term, TERMINFO_RESCUE, name, flags);
-	if (r == 0 && h[0] != '\0')
-		strlcpy(database, h, sizeof(h));
+	for (p = rescue_terms; *p != NULL; p++, p++)
+		if (strcmp(name, *p) == 0) {
+			r = _ti_readterm(term, *(p + 1), 4096, flags);
+			break;
+		}
+
 	return r;
 }
 
