@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.5 2010/02/11 00:24:46 roy Exp $ */
+/* $NetBSD: tic.c,v 1.6 2010/02/11 13:09:57 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.5 2010/02/11 00:24:46 roy Exp $");
+__RCSID("$NetBSD: tic.c,v 1.6 2010/02/11 13:09:57 roy Exp $");
 
 #include <sys/types.h>
 
@@ -81,7 +81,7 @@ typedef struct term {
 static TERM *terms;
 
 static int error_exit;
-static int aflag, xflag;
+static int Sflag, aflag, xflag;
 static char *dbname;
 
 static TBUF scratch;
@@ -198,7 +198,7 @@ store_extra(TIC *tic, int wrn, char *id, char type, char flag, short num,
 	if (strcmp(id, "use") != 0) {
 		if (find_extra(&tic->extras, id) != NULL)
 			return 0;
-		if (xflag == 0) {
+		if (!xflag) {
 			if (wrn != 0)
 				dowarn("%s: %s: unknown capability",
 				    tic->name, id);
@@ -247,11 +247,11 @@ flatten_term(TERM *term)
 	scratch.bufpos = 0;
 	tic = &term->tic;
 	len = strlen(tic->name) + 1;
-	if (tic->alias == NULL)
+	if (tic->alias == NULL || Sflag)
 		alen = 0;
 	else
 		alen = strlen(tic->alias) + 1;
-	if (tic->desc == NULL)
+	if (tic->desc == NULL || Sflag)
 		dlen = 0;
 	else
 		dlen = strlen(tic->desc) + 1;
@@ -276,13 +276,13 @@ flatten_term(TERM *term)
 	if (term->type != 'a') {
 		le16enc(cap, alen);
 		cap += sizeof(uint16_t);
-		if (tic->alias != NULL) {
+		if (tic->alias != NULL && !Sflag) {
 			memcpy(cap, tic->alias, alen);
 			cap += alen;
 		}
 		le16enc(cap, dlen);
 		cap += sizeof(uint16_t);
-		if (tic->desc != NULL) {
+		if (tic->desc != NULL && !Sflag) {
 			memcpy(cap, tic->desc, dlen);
 			cap += dlen;
 		}
@@ -563,12 +563,12 @@ process_entry(TBUF *buf)
 		*cap++ = '\0';
 
 		/* Skip commented caps */
-		if (aflag == 0 && capstart[0] == '.')
+		if (!aflag && capstart[0] == '.')
 			continue;
 
 		/* Obsolete entries */
 		if (capstart[0] == 'O' && capstart[1] == 'T') {
-			if (xflag == 0)
+			if (!xflag)
 				continue;
 			capstart += 2;
 		}
@@ -891,8 +891,15 @@ print_dump(int argc, char **argv)
 	int i, n;
 	size_t j, col;
 
-	n = 0;
+	printf("struct compiled_term {\n");
+	printf("\tconst char *name;\n");
+	printf("\tconst char *cap;\n");
+	printf("\tsize_t caplen;\n");
+	printf("};\n\n");
 
+	printf("const struct compiled_term compiled_terms[] = {\n");
+
+	n = 0;
 	for (i = 0; i < argc; i++) {
 		term = find_term(argv[i]);
 		if (term == NULL) {
@@ -907,12 +914,13 @@ print_dump(int argc, char **argv)
 		if (buf == NULL)
 			continue;
 
-		printf("\t\"%s\",\n", argv[i]);
+		printf("\t{\n");
+		printf("\t\t\"%s\",\n", argv[i]);
 		n++;
 		for (j = 0, col = 0; j < buf->bufpos; j++) {
 			if (col == 0) {
-				printf("\t\"");
-				col = 8;
+				printf("\t\t\"");
+				col = 16;
 			}
 			
 			col += printf("\\%03o", (uint8_t)buf->buf[j]);
@@ -923,8 +931,14 @@ print_dump(int argc, char **argv)
 			}
 		}
 		if (col != 0)
-		    printf("\",\n");
+			printf("\",\n");
+		printf("\t\t%zu\n", buf->bufpos);
+		printf("\t}");
+		if (i + 1 < argc)
+			printf(",");
+		printf("\n");
 	}
+	printf("};\n");
 
 	return n;
 }
@@ -932,7 +946,7 @@ print_dump(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-	int ch, Sflag, cflag, sflag;
+	int ch, cflag, sflag;
 	char *source, *p, *buf, *ofile;
 	FILE *f;
 	DBM *db;
@@ -964,7 +978,7 @@ main(int argc, char **argv)
 		    break;
 	    case '?': /* FALLTHROUGH */
 	    default:
-		    fprintf(stderr, "usage: %s [-Sacsx] [-o file] source\n",
+		    fprintf(stderr, "usage: %s [-acSsx] [-o file] source\n",
 			getprogname());
 		    return EXIT_FAILURE;
 	    }
@@ -975,7 +989,7 @@ main(int argc, char **argv)
 	f = fopen(source, "r");
 	if (f == NULL)
 		err(1, "fopen: %s", source);
-	if (cflag == 0 && Sflag == 0) {
+	if (!cflag && !Sflag) {
 		if (ofile == NULL)
 			ofile = source;
 		len = strlen(ofile) + 9;
@@ -1026,12 +1040,12 @@ main(int argc, char **argv)
 	while (merge_use() != 0)
 		;
 
-	if (Sflag != 0) {
+	if (Sflag) {
 		print_dump(argc - optind, argv + optind);
 		return error_exit;
 	}
 
-	if (cflag != 0)
+	if (cflag)
 		return error_exit;
 	
 	/* Save the terms */
