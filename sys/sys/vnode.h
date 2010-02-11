@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.213 2010/01/27 15:34:08 uebayasi Exp $	*/
+/*	$NetBSD: vnode.h,v 1.213.2.1 2010/02/11 05:20:28 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -216,6 +216,7 @@ typedef struct vnode vnode_t;
 #define	VV_MAPPED	0x00000008	/* vnode might have user mappings */
 #define	VV_MPSAFE	0x00000010	/* file system code is MP safe */
 #define	VV_LOCKSWORK	0x00000020	/* FS supports locking discipline */
+#define	VV_XIP		0x00000040	/* device supports XIP */
 
 /*
  * The second set are locked by vp->v_interlock.
