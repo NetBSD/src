@@ -1,4 +1,4 @@
-/* $NetBSD: setupterm.c,v 1.1 2010/02/03 15:16:32 roy Exp $ */
+/* $NetBSD: setupterm.c,v 1.2 2010/02/11 00:27:09 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: setupterm.c,v 1.1 2010/02/03 15:16:32 roy Exp $");
+__RCSID("$NetBSD: setupterm.c,v 1.2 2010/02/11 00:27:09 roy Exp $");
 
 #include <assert.h>
 #include <err.h>
@@ -69,8 +69,10 @@ ti_setupterm(TERMINAL **nterm, const char *term, int fildes, int *errret)
 
        	if (term == NULL)
 		term = getenv("TERM");
-	if (term == NULL || *term == '\0')
-		reterr(-1, "TERM environment variable not set");
+	if (term == NULL || *term == '\0') {
+		*nterm = NULL;
+		reterr(0, "TERM environment variable not set");
+	}
 	if (fildes == STDOUT_FILENO && !isatty(fildes))
 		fildes = STDERR_FILENO;
 	
