@@ -1,4 +1,4 @@
-.\"	$NetBSD: tic.1,v 1.5 2010/02/11 00:24:46 roy Exp $
+.\"	$NetBSD: tic.1,v 1.6 2010/02/11 07:00:46 wiz Exp $
 .\"
 .\" Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Nd terminfo compiler
 .Sh SYNOPSIS
 .Nm tic
-.Op Fl Sacsx
+.Op Fl acSsx
 .Op Fl o Ar file
 .Ar source
 .Op Ar term1 term2 ...
@@ -49,11 +49,6 @@ The created database path name is the same as the source but with .db appended.
 .Pp
 The following options are available:
 .Bl -tag -width Fl
-.It Fl S
-For
-.Ar term1 , term2 , ...
-output the terminal name followed by the compiled
-description as strings.
 .It Fl a
 Do not discard commented out capabilities.
 .It Fl c
@@ -63,6 +58,11 @@ Write the database to
 .Ar file Ns .db
 instead of
 .Ar source Ns .db .
+.It Fl S
+For
+.Ar term1 , term2 , ...
+output the terminal name followed by the compiled
+description as strings.
 .It Fl s
 Display the number of terminal descritions written to the database.
 .It Fl x
