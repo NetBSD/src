@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1388 2010/02/11 02:29:23 pooka Exp $
+#	$NetBSD: mi,v 1.1389 2010/02/11 23:28:53 haad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8999,6 +8999,7 @@
 ./usr/share/man/cat9/kmem_alloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_free.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_zalloc.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kmem_asprintf.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/knote.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kpause.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kpreempt.0			comp-sys-catman		.cat
@@ -9652,6 +9653,7 @@
 ./usr/share/man/cat9/vrecycle.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vref.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vrele.0			comp-sys-catman		.cat
+./usr/share/man/cat9/vrele_async.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vslock.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/vsnprintf.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vsprintf.0			comp-sys-catman		.cat
@@ -14574,6 +14576,7 @@
 ./usr/share/man/html9/kmem_alloc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_free.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_zalloc.html		comp-sys-htmlman	html
+./usr/share/man/html9/kmem_asprintf.html	comp-sys-htmlman	html
 ./usr/share/man/html9/knote.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kpause.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kpreempt.html		comp-sys-htmlman	html
@@ -15179,6 +15182,7 @@
 ./usr/share/man/html9/vrecycle.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vref.html			comp-sys-htmlman	html
 ./usr/share/man/html9/vrele.html		comp-sys-htmlman	html
+./usr/share/man/html9/vrele_async.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vsnprintf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vsprintf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vtruncbuf.html		comp-sys-htmlman	html
@@ -20308,6 +20312,7 @@
 ./usr/share/man/man9/kmem_alloc.9		comp-sys-man		.man
 ./usr/share/man/man9/kmem_free.9		comp-sys-man		.man
 ./usr/share/man/man9/kmem_zalloc.9		comp-sys-man		.man
+./usr/share/man/man9/kmem_asprintf.9		comp-sys-man		.man
 ./usr/share/man/man9/knote.9			comp-sys-man		.man
 ./usr/share/man/man9/kpause.9			comp-sys-man		.man
 ./usr/share/man/man9/kpreempt.9			comp-sys-man		.man
@@ -20961,6 +20966,7 @@
 ./usr/share/man/man9/vrecycle.9			comp-sys-man		.man
 ./usr/share/man/man9/vref.9			comp-sys-man		.man
 ./usr/share/man/man9/vrele.9			comp-sys-man		.man
+./usr/share/man/man9/vrele_async.9		comp-sys-man		.man
 ./usr/share/man/man9/vslock.9			comp-obsolete		obsolete
 ./usr/share/man/man9/vsnprintf.9		comp-sys-man		.man
 ./usr/share/man/man9/vsprintf.9			comp-sys-man		.man
