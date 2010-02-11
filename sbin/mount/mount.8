@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount.8,v 1.69 2009/10/03 07:38:22 wiz Exp $
+.\"	$NetBSD: mount.8,v 1.69.2.1 2010/02/11 05:36:16 uebayasi Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -299,6 +299,8 @@ file system.
 The same as
 .Fl u ;
 indicate that the status of an already mounted file system should be changed.
+.It Cm xip
+Enable eXecute-In-Place if the block device supports it.
 .El
 .Pp
 Any additional options specific to a given file system type (see the
