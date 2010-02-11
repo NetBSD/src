@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1387 2010/02/06 22:32:07 dyoung Exp $
+#	$NetBSD: mi,v 1.1388 2010/02/11 02:29:23 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2594,6 +2594,24 @@
 ./usr/lib/librumpdev_sysmon.a			comp-c-lib
 ./usr/lib/librumpdev_sysmon_g.a			-unknown-		debuglib
 ./usr/lib/librumpdev_sysmon_p.a			comp-c-proflib		profile
+./usr/lib/librumpdev_ucom.a			comp-c-lib
+./usr/lib/librumpdev_ucom_g.a			-unknown-		debuglib
+./usr/lib/librumpdev_ucom_p.a			comp-c-proflib		profile
+./usr/lib/librumpdev_ugenhc.a			comp-c-lib
+./usr/lib/librumpdev_ugenhc_g.a			-unknown-		debuglib
+./usr/lib/librumpdev_ugenhc_p.a			comp-c-proflib		profile
+./usr/lib/librumpdev_ulpt.a			comp-c-lib
+./usr/lib/librumpdev_ulpt_g.a			-unknown-		debuglib
+./usr/lib/librumpdev_ulpt_p.a			comp-c-proflib		profile
+./usr/lib/librumpdev_umass.a			comp-c-lib
+./usr/lib/librumpdev_umass_g.a			-unknown-		debuglib
+./usr/lib/librumpdev_umass_p.a			comp-c-proflib		profile
+./usr/lib/librumpdev_usb.a			comp-c-lib
+./usr/lib/librumpdev_usb_g.a			-unknown-		debuglib
+./usr/lib/librumpdev_usb_p.a			comp-c-proflib		profile
+./usr/lib/librumpdev_wscons.a			comp-c-lib
+./usr/lib/librumpdev_wscons_g.a			-unknown-		debuglib
+./usr/lib/librumpdev_wscons_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_cd9660.a			comp-c-lib
 ./usr/lib/librumpfs_cd9660_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_cd9660_p.a			comp-c-proflib		profile
