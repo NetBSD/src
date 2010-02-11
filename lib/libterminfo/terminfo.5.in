@@ -1,4 +1,4 @@
-.\"	$NetBSD: terminfo.5.in,v 1.8 2010/02/11 00:22:41 roy Exp $
+.\"	$NetBSD: terminfo.5.in,v 1.9 2010/02/11 14:36:09 roy Exp $
 .\"
 .\" Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 5, 2010
+.Dd February 11, 2010
 .Dt TERMINFO 5
 .Os
 .Sh NAME
@@ -194,25 +194,32 @@ sgr=\eE[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;m%?%p9%t016%e017%
 hts=\eEH, ht=^I,
 .Ed
 .Ss Fetching Compiled Descriptions
+This implementation uses hashed databases managed by
+.Xr ndbm 3
+instead of directories.
+To maintain compatability with other implementations,
+.Pa .db
+is appended to each file checked.
+.Pp
 If the environment variable
 .Ev TERMINFO
-is available,
-.Pa .db
-is appended to it and only this database is used.
+is available then only this file is searched.
 Otherwise
 .Nm
 will first look for
-.Pa $HOME/.terminfo.db ,
+.Pa $HOME/.terminfo ,
 followed by
-.Pa /usr/share/misc/terminfo.db ,
-and
-.Pa /rescue/terminfo.db .
+.Pa /usr/share/misc/terminfo
+unless
+.Ev TERMINFO_DIRS
+is available.
+If a matching description is not found then a small embedded database is
+searched, which currently holds descriptions for ansi, dumb, vt100, vt220,
+wsvt25 and xterm.
 .Sh FILES
 .Bl -tag -width /usr/share/misc/terminfo.db -compact
 .It Pa $HOME/.terminfo.db
 Database of terminal descriptions for personal use.
-.It Pa /rescue/terminfo.db
-Small database of terminal descriptions for use when rescuing the system.
 .It Pa /usr/share/misc/terminfo
 File containing terminal descriptions.
 .It Pa /usr/share/misc/terminfo.db
@@ -222,7 +229,8 @@ Database of terminal descriptions.
 .Xr infocmp 1 ,
 .Xr tic 1 ,
 .Xr tput 1 ,
-.Xr curses 3
+.Xr curses 3 ,
+.Xr ndbm 3
 .Sh STANDARDS
 .Nm
 complies with the

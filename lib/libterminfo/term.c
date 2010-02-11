@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.7 2010/02/11 13:11:47 roy Exp $ */
+/* $NetBSD: term.c,v 1.8 2010/02/11 14:36:09 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.7 2010/02/11 13:11:47 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.8 2010/02/11 14:36:09 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: term.c,v 1.7 2010/02/11 13:11:47 roy Exp $");
 #include <term_private.h>
 #include <term.h>
 
-#define TERMINFO_DIRS		"/usr/share/misc/terminfo"
+#define _PATH_TERMINFO		"/usr/share/misc/terminfo"
 
 static char database[PATH_MAX];
 static char pathbuf[PATH_MAX];
@@ -291,13 +291,11 @@ _ti_dbgettermp(TERMINAL *term, const char *path, const char *name, int flags)
 	return e;
 }
 
-int
-_ti_getterm(TERMINAL *term, const char *name, int flags)
+static int
+_ti_findterm(TERMINAL *term, const char *name, int flags)
 {
 	int r;
 	char *e, h[PATH_MAX];
-	size_t i;
-	const struct compiled_term *t;
 
 	_DIAGASSERT(term != NULL);
 	_DIAGASSERT(name != NULL);
@@ -305,19 +303,34 @@ _ti_getterm(TERMINAL *term, const char *name, int flags)
 	database[0] = '\0';
 	_ti_database = NULL;
 
-	e = getenv("TERMINFO");
-	if (e != NULL)
-		return _ti_dbgetterm(term, e, name, flags);
-
-	e = getenv("HOME");
-	if (e != NULL) {
-		snprintf(h, sizeof(h), "%s/.terminfo", e);
-		r = _ti_dbgetterm(term, h, name, flags);
-		if (r == 1)
-			return 1;
+	if ((e = getenv("TERMINFO")) != NULL) {
+		if (e[0] == '/')
+			return _ti_dbgetterm(term, e, name, flags);
 	}
 
-	r = _ti_dbgettermp(term, TERMINFO_DIRS, name, flags);
+	if ((e = getenv("TERMINFO_DIRS")) != NULL)
+		return _ti_dbgettermp(term, e, name, flags);
+
+	r = 0;
+	if ((e = getenv("HOME")) != NULL) {
+		snprintf(h, sizeof(h), "%s/.terminfo", e);
+		r = _ti_dbgetterm(term, h, name, flags);
+	}
+	if (r != 1)
+		r = _ti_dbgettermp(term, _PATH_TERMINFO, name, flags);
+
+	return r;
+
+}
+
+int
+_ti_getterm(TERMINAL *term, const char *name, int flags)
+{
+	int r;
+	size_t i;
+	const struct compiled_term *t;
+
+	r = _ti_findterm(term, name, flags);
 	if (r == 1)
 		return 1;
 
@@ -331,7 +344,7 @@ _ti_getterm(TERMINAL *term, const char *name, int flags)
 
 	return r;
 }
-
+	
 void
 _ti_freeterm(TERMINAL *term)
 {
