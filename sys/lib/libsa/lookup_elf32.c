@@ -1,4 +1,4 @@
-/* $NetBSD: lookup_elf32.c,v 1.2 2010/02/10 23:33:56 martin Exp $ */
+/* $NetBSD: lookup_elf32.c,v 1.3 2010/02/11 21:28:16 martin Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 
 #if ((ELFSIZE == 32) && defined(BOOT_ELF32)) || \
     ((ELFSIZE == 64) && defined(BOOT_ELF64))
+
+void * ELFNAMEEND(lookup_symbol)(const char *, void *, void *);
 
 void *
 ELFNAMEEND(lookup_symbol)(const char *symname, void *sstab, void *estab)
