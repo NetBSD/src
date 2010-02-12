@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.7 2009/08/18 19:16:09 thorpej Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.7.2.1 2010/02/12 13:39:26 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.7 2009/08/18 19:16:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.7.2.1 2010/02/12 13:39:26 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -84,6 +84,9 @@ uobj_wirepages(struct uvm_object *uobj, off_t start, off_t end)
 
 		mutex_enter(&uobj->vmobjlock);
 		for (i = 0; i < npages; i++) {
+
+			if (uvm_pageisdevice_p(pgs[i]))
+				continue;
 
 			KASSERT(pgs[i] != NULL);
 			KASSERT(!(pgs[i]->flags & PG_RELEASED));
