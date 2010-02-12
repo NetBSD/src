@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.21 2009/10/07 16:19:51 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.22 2010/02/12 03:38:48 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1012,11 +1012,14 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 	if ((sesskey = calloc(1, sizeof(*sesskey))) == NULL) {
 		(void) fprintf(stderr,
 			"__ops_create_pk_sesskey: can't allocate\n");
+		free(encoded_m_buf);
 		return NULL;
 	}
 	if (key->type != OPS_PTAG_CT_PUBLIC_KEY) {
 		(void) fprintf(stderr,
 			"__ops_create_pk_sesskey: bad type\n");
+		free(encoded_m_buf);
+		free(sesskey);
 		return NULL;
 	}
 	sesskey->version = OPS_PKSK_V3;
@@ -1035,6 +1038,8 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 	if (key->key.pubkey.alg != OPS_PKA_RSA) {
 		(void) fprintf(stderr,
 			"__ops_create_pk_sesskey: bad pubkey algorithm\n");
+		free(encoded_m_buf);
+		free(sesskey);
 		return NULL;
 	}
 	sesskey->alg = key->key.pubkey.alg;
@@ -1056,6 +1061,7 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 	}
 	if (create_unencoded_m_buf(sesskey, &unencoded_m_buf[0]) == 0) {
 		free(encoded_m_buf);
+		free(sesskey);
 		return NULL;
 	}
 	if (__ops_get_debug_level(__FILE__)) {
@@ -1074,6 +1080,7 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 	if (!__ops_rsa_encrypt_mpi(encoded_m_buf, sz_encoded_m_buf, pubkey,
 			&sesskey->params)) {
 		free(encoded_m_buf);
+		free(sesskey);
 		return NULL;
 	}
 	free(encoded_m_buf);
@@ -1226,6 +1233,7 @@ __ops_filewrite(const char *filename, const char *buf,
 		return 0;
 	}
 	if (write(fd, buf, len) != (int)len) {
+		(void) close(fd);
 		return 0;
 	}
 
