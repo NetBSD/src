@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.166.2.2 2010/02/12 16:06:50 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.166.2.3 2010/02/12 16:09:56 uebayasi Exp $	*/
 
 /*
  *
@@ -39,9 +39,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.2 2010/02/12 16:06:50 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.3 2010/02/12 16:09:56 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
+#include "opt_xip.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -573,7 +574,8 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 
 	KASSERT(amap != NULL);
 	KASSERT(uobjpage != NULL);
-	KASSERT(uobjpage == PGO_DONTCARE || (uobjpage->flags & PG_BUSY) != 0);
+	KASSERT(uobjpage == PGO_DONTCARE || uvm_pageisdevice_p(uobjpage) ||
+	    (uobjpage->flags & PG_BUSY) != 0);
 	KASSERT(mutex_owned(&amap->am_l));
 	KASSERT(oanon == NULL || mutex_owned(&oanon->an_lock));
 	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
@@ -1235,7 +1237,8 @@ uvm_fault_lower_generic(
 	/* locked: maps(read), amap(if there), uobj(if !null), uobjpage(if !null) */
 	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
 	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
-	KASSERT(uobjpage == NULL || (uobjpage->flags & PG_BUSY) != 0);
+	KASSERT(uobjpage == NULL || uvm_pageisdevice_p(uobjpage) ||
+	    (uobjpage->flags & PG_BUSY) != 0);
 
 	/*
 	 * note that at this point we are done with any front or back pages.
@@ -1299,7 +1302,7 @@ uvm_fault_lower_lookup(
 		if (curpg == NULL || curpg == PGO_DONTCARE) {
 			continue;
 		}
-		KASSERT(curpg->uobject == uobj);
+		KASSERT(uvm_pageisdevice_p(curpg) || curpg->uobject == uobj);
 
 		/*
 		 * if center page is resident and not PG_BUSY|PG_RELEASED
@@ -1312,7 +1315,8 @@ uvm_fault_lower_lookup(
 			    "(0x%x) with locked get",
 			    curpg, 0,0,0);
 		} else {
-			bool readonly = (curpg->flags & PG_RDONLY)
+			bool readonly = uvm_pageisdevice_p(curpg)
+			    || (curpg->flags & PG_RDONLY)
 			    || (curpg->loan_count > 0)
 			    || UVM_OBJ_NEEDS_WRITEFAULT(curpg->uobject);
 
@@ -1330,6 +1334,9 @@ uvm_fault_lower_neighbor(
 	vaddr_t currva, struct vm_page *pg, bool readonly)
 {
 	UVMHIST_FUNC("uvm_fault_lower_neighor"); UVMHIST_CALLED(maphist);
+
+	if (uvm_pageisdevice_p(pg))
+		goto uvm_fault_lower_neighbor_enter;
 
 	/*
 	 * calling pgo_get with PGO_LOCKED returns us pages which
@@ -1355,11 +1362,15 @@ uvm_fault_lower_neighbor(
 	KASSERT(!UVM_OBJ_IS_CLEAN(pg->uobject) ||
 	    (pg->flags & PG_CLEAN) != 0);
 
+uvm_fault_lower_neighbor_enter:
 	(void) pmap_enter(ufi->orig_map->pmap, currva,
 	    VM_PAGE_TO_PHYS(pg),
 	    readonly ? (flt->enter_prot & ~VM_PROT_WRITE) :
 	    flt->enter_prot & MASK(ufi->entry),
 	    PMAP_CANFAIL | (flt->wire_mapping ? PMAP_WIRED : 0));
+
+	if (uvm_pageisdevice_p(pg))
+		goto uvm_fault_lower_neighbor_done;
 
 	/*
 	 * NOTE: page can't be PG_WANTED or PG_RELEASED because we've
@@ -1370,6 +1381,9 @@ uvm_fault_lower_neighbor(
 
 	pg->flags &= ~(PG_BUSY);
 	UVM_PAGE_OWN(pg, NULL);
+
+uvm_fault_lower_neighbor_done:
+	;
 }
 
 static int
@@ -1687,7 +1701,8 @@ uvm_fault_lower1(
 	 */
 	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
 	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
-	KASSERT(uobjpage == NULL || (uobjpage->flags & PG_BUSY) != 0);
+	KASSERT(uobjpage == NULL || uvm_pageisdevice_p(uobjpage) ||
+	    (uobjpage->flags & PG_BUSY) != 0);
 
 	/*
 	 * note that uobjpage can not be PGO_DONTCARE at this point.  we now
@@ -1730,7 +1745,8 @@ uvm_fault_lower1(
 	 */
 	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
 	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
-	KASSERT(uobj == NULL || (uobjpage->flags & PG_BUSY) != 0);
+	KASSERT(uobj == NULL || uvm_pageisdevice_p(uobjpage) ||
+	    (uobjpage->flags & PG_BUSY) != 0);
 
 	/*
 	 * notes:
@@ -1740,8 +1756,10 @@ uvm_fault_lower1(
 	 *  - at this point uobjpage could be PG_WANTED (handle later)
 	 */
 
-	KASSERT(uobj == NULL || uobj == uobjpage->uobject);
-	KASSERT(uobj == NULL || !UVM_OBJ_IS_CLEAN(uobjpage->uobject) ||
+	KASSERT(uvm_pageisdevice_p(uobjpage) || uobj == NULL ||
+	    uobj == uobjpage->uobject);
+	KASSERT(uvm_pageisdevice_p(uobjpage) || uobj == NULL ||
+	    !UVM_OBJ_IS_CLEAN(uobjpage->uobject) ||
 	    (uobjpage->flags & PG_CLEAN) != 0);
 
 	if (promote == false) {
@@ -1897,12 +1915,15 @@ uvm_fault_lower_direct(
 	 *
 	 * set "pg" to the page we want to map in (uobjpage, usually)
 	 */
+	pg = uobjpage;		/* map in the actual object */
+
+	if (uvm_pageisdevice_p(uobjpage))
+		goto uvm_fault_lower_direct_done;
 
 	uvmexp.flt_obj++;
 	if (UVM_ET_ISCOPYONWRITE(ufi->entry) ||
 	    UVM_OBJ_NEEDS_WRITEFAULT(uobjpage->uobject))
 		flt->enter_prot &= ~VM_PROT_WRITE;
-	pg = uobjpage;		/* map in the actual object */
 
 	KASSERT(uobjpage != PGO_DONTCARE);
 
@@ -1916,6 +1937,7 @@ uvm_fault_lower_direct(
 	}
 	KASSERT(pg == uobjpage);
 
+uvm_fault_lower_direct_done:
 	return uvm_fault_lower_enter(ufi, flt, uobj, NULL, pg, uobjpage);
 }
 
@@ -2065,9 +2087,10 @@ uvm_fault_lower_enter(
 	 */
 	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
 	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
-	KASSERT(uobj == NULL || (uobjpage->flags & PG_BUSY) != 0);
+	KASSERT(uobj == NULL || uvm_pageisdevice_p(uobjpage) ||
+	    (uobjpage->flags & PG_BUSY) != 0);
 	KASSERT(anon == NULL || mutex_owned(&anon->an_lock));
-	KASSERT((pg->flags & PG_BUSY) != 0);
+	KASSERT(uvm_pageisdevice_p(pg) || (pg->flags & PG_BUSY) != 0);
 
 	/*
 	 * all resources are present.   we can now map it in and free our
@@ -2078,10 +2101,15 @@ uvm_fault_lower_enter(
 	    "  MAPPING: case2: pm=0x%x, va=0x%x, pg=0x%x, promote=XXX",
 	    ufi->orig_map->pmap, ufi->orig_rvaddr, pg, 0);
 	KASSERT((flt->access_type & VM_PROT_WRITE) == 0 ||
-		(pg->flags & PG_RDONLY) == 0);
-	if (pmap_enter(ufi->orig_map->pmap, ufi->orig_rvaddr, VM_PAGE_TO_PHYS(pg),
-	    pg->flags & PG_RDONLY ? flt->enter_prot & ~VM_PROT_WRITE : flt->enter_prot,
+		uvm_pageisdevice_p(pg) || (pg->flags & PG_RDONLY) == 0);
+	if (pmap_enter(ufi->orig_map->pmap, ufi->orig_rvaddr,
+	    VM_PAGE_TO_PHYS(pg),
+	    (uvm_pageisdevice_p(pg) || pg->flags & PG_RDONLY) ?
+	    (flt->enter_prot & ~VM_PROT_WRITE) : flt->enter_prot,
 	    flt->access_type | PMAP_CANFAIL | (flt->wire_mapping ? PMAP_WIRED : 0)) != 0) {
+
+		if (uvm_pageisdevice_p(pg))
+			goto uvm_fault_lower_enter_error_done;
 
 		/*
 		 * No need to undo what we did; we can simply think of
@@ -2102,6 +2130,8 @@ uvm_fault_lower_enter(
 
 		pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL);
+
+uvm_fault_lower_enter_error_done:
 		uvmfault_unlockall(ufi, amap, uobj, anon);
 		if (!uvm_reclaimable()) {
 			UVMHIST_LOG(maphist,
@@ -2125,6 +2155,9 @@ uvm_fault_lower_done(
 {
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
 	UVMHIST_FUNC("uvm_fault_lower_done"); UVMHIST_CALLED(maphist);
+
+	if (uvm_pageisdevice_p(pg))
+		goto uvm_fault_lower_done_done;
 
 	mutex_enter(&uvm_pageqlock);
 	if (flt->wire_paging) {
@@ -2157,6 +2190,8 @@ uvm_fault_lower_done(
 
 	pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
 	UVM_PAGE_OWN(pg, NULL);
+
+uvm_fault_lower_done_done:
 	uvmfault_unlockall(ufi, amap, uobj, anon);
 	pmap_update(ufi->orig_map->pmap);
 	UVMHIST_LOG(maphist, "<- done (SUCCESS!)",0,0,0,0);
