@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.29 2010/02/03 15:34:40 roy Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.30 2010/02/12 10:06:15 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.29 2010/02/03 15:34:40 roy Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.30 2010/02/12 10:06:15 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -112,8 +112,8 @@ fgoto(in_refresh)
 					else
 						__cputchar('\r');
 				}
-				if (scroll_forward)
-					tputs(scroll_forward, 0, __cputchar);
+				if (cursor_down)
+					tputs(cursor_down, 0, __cputchar);
 				else
 					__cputchar('\n');
 				l--;
@@ -152,8 +152,8 @@ fgoto(in_refresh)
 			 * linefeed to scroll since down arrow won't go past
 			 * memory end. I turned this off after recieving Paul
 			 * Eggert's Superbee description which wins better. */
-			if (scroll_forward /* && !__tc_xb */ && __pfast)
-				tputs(scroll_forward, 0, __cputchar);
+			if (cursor_down /* && !__tc_xb */ && __pfast)
+				tputs(cursor_down, 0, __cputchar);
 			else
 				__cputchar('\n');
 			l--;
@@ -327,8 +327,8 @@ plod(cnt, in_refresh)
 		else
 			plodput('\r');
 		if (!carriage_return) {
-			if (scroll_forward)
-				tputs(scroll_forward, 0, plodput);
+			if (cursor_down)
+				tputs(cursor_down, 0, plodput);
 			else
 				plodput('\n');
 			outline++;
@@ -337,8 +337,8 @@ plod(cnt, in_refresh)
 	}
 dontcr:while (outline < destline) {
 		outline++;
-		if (scroll_forward)
-			tputs(scroll_forward, 0, plodput);
+		if (cursor_down)
+			tputs(cursor_down, 0, plodput);
 		else
 			plodput('\n');
 		if (plodcnt < 0)
