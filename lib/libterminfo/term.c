@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.8 2010/02/11 14:36:09 roy Exp $ */
+/* $NetBSD: term.c,v 1.9 2010/02/12 12:18:33 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.8 2010/02/11 14:36:09 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.9 2010/02/12 12:18:33 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -50,17 +50,8 @@ static char database[PATH_MAX];
 static char pathbuf[PATH_MAX];
 const char *_ti_database;
 
-/* rescue.c is generated from /usr/src/share/terminfo/terminfo
- * at build time as an array of strings.
- * static const char *rescue_terms[] = {
- *	"ansi",
- *	"\002\005\000\141\156\163\151\000\000\000\043\000\141\156\163\151\057",
- *	NULL,
- *	NULL
- * };
- */
- 
-#include "rescue.c"
+/* Include a generated list of pre-compiled terminfo descriptions. */
+#include "compiled_terms.c"
 
 static int
 _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
