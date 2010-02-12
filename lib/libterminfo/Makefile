@@ -1,24 +1,16 @@
-#	$NetBSD: Makefile,v 1.8 2010/02/11 14:49:56 roy Exp $
+#	$NetBSD: Makefile,v 1.9 2010/02/12 12:18:33 roy Exp $
 
 USE_SHLIBDIR=	yes
 
 LIB=		terminfo
 WARNS=		4
 
-CPPFLAGS+=	-I${.CURDIR} -I${.OBJDIR}
+CPPFLAGS+=	-I${.CURDIR}
 
 SRCS=		term.c ti.c setupterm.c curterm.c tparm.c tputs.c
 SRCS+=		hash.c
 INCS=		term.h
 INCSDIR=	/usr/include
-
-.PHONY:	rescue.c
-
-rescue.c:
-		${TOOL_TIC} -Sx ${NETBSDSRCDIR}/share/terminfo/terminfo \
-		    ansi dumb vt100 vt220 wsvt25 xterm >$@
-
-term.c: rescue.c
 
 MAN=		terminfo.3 terminfo.5
 MLINKS=		terminfo.3 setupterm.3 \
@@ -50,9 +42,14 @@ terminfo.5: terminfo.5.in term.h termcap_map.c
 		@echo "Generating terminfo man pages"
 		cd ${.CURDIR} && ${HOST_SH} ./genman >${.OBJDIR}/$@
 
+# Allow terminfo descriptions to be compiled into libterminfo
+compiled_terms:
+		@echo "Generating compiled terminfo descriptions"
+		cd ${.CURDIR} && ${HOST_SH} ./genterms >compiled_terms.c
+
 man: terminfo.5
 
-gen: hash man
+gen: hash compiled_terms man
 
 .include <bsd.own.mk>
 .include <bsd.shlib.mk>
