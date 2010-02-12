@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem.9,v 1.5 2010/02/11 23:13:46 haad Exp $
+.\"	$NetBSD: kmem.9,v 1.6 2010/02/12 01:04:05 dyoung Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -105,6 +105,7 @@ This routine can sleep during allocation.
 The size of the allocated area is the length of the returned character string, plus one (for the NUL terminator).
 This must be taken into consideration when freeing the returned area with
 .Fn kmem_free .
+.Pp
 .\" ------------------------------------------------------------
 .Fn kmem_free
 frees kernel wired memory allocated by
