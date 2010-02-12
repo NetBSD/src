@@ -1,0 +1,155 @@
+/*	$Id: flash.c,v 1.1.2.1 2010/02/12 01:36:02 uebayasi Exp $	*/
+
+/*-
+ * Copyright (c) 2010 Tsubai Masanari.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <sys/param.h>
+#include <sys/bus.h>
+#include <sys/conf.h>
+#include <sys/ioctl.h>
+#include <sys/kmem.h>
+#include <sys/buf.h>
+#include <sys/bufq.h>
+#include <sys/disklabel.h>
+
+#include <dev/flash/flashvar.h>
+
+static dev_type_open(flash_open);
+static dev_type_close(flash_close);
+static dev_type_strategy(flash_strategy);
+static dev_type_size(flash_size);
+
+struct bdevsw flash_bdevsw = {
+	flash_open, flash_close, flash_strategy, flash_ioctl,
+	nodump, flash_size, D_DISK
+};
+
+struct cdevsw flash_cdevsw = {
+	nullopen, nullclose, nullread, nowrite, flash_ioctl,
+	nostop, notty, nopoll, flash_mmap, nokqfilter
+};
+
+static int
+flash_open(dev_t dev, int flags, int fmt, struct lwp *l)
+{
+	struct flash_softc *sc = device_lookup_private(&flash_cd, minor(dev));
+
+	if (sc == NULL)
+		return ENXIO;
+
+	return 0;
+}
+
+static int
+flash_close(dev_t dev, int flags, int fmt, struct lwp *l)
+{
+	return 0;
+}
+
+int
+flash_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
+{
+	struct flash_softc *sc = device_lookup_private(&flash_cd, minor(dev));
+	struct flash_program *fp;
+
+	if (sc == NULL)
+		return -1;
+
+	return EPASSTHROUGH;
+}
+
+int
+flash_map(struct flash_softc *sc, u_long addr)
+{
+
+	addr *= sc->sc_wordsize;
+	if (bus_space_map(sc->sc_iot, sc->sc_addr + addr, sc->sc_wordsize, 0,
+	    &sc->sc_ioh))
+		return EFAULT;
+	return 0;
+}
+
+void
+flash_unmap(struct flash_softc *sc)
+{
+
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_wordsize);
+}
+
+static void
+flash_strategy(struct buf *bp)
+{
+	struct flash_softc *sc;
+	bus_space_handle_t ioh;
+	vaddr_t addr;
+	size_t off, count;
+
+	sc = device_lookup_private(&flash_cd, DISKUNIT(bp->b_dev));
+
+	off = bp->b_blkno << DEV_BSHIFT;
+
+	/* XXX is b_bcount==0 legal? */
+
+	if (off >= sc->sc_size) {
+		if (bp->b_flags & B_READ)
+			/* XXX why not error? */
+			goto done;
+		bp->b_error = EIO;
+		goto done;
+	}
+
+	if (bp->b_bcount <= (sc->sc_size - off))
+		count = bp->b_bcount;
+	else
+		count = sc->sc_size - off;
+
+	addr = sc->sc_addr + off;
+
+	if (bus_space_map(sc->sc_iot, sc->sc_addr + off, count, 0, &ioh))
+		panic("%s: couldn't map memory", __func__);
+	if (bp->b_flags & B_READ)
+		bus_space_read_region_1(sc->sc_iot, ioh, 0, bp->b_data, count);
+	else
+		panic("%s: block write is not supported yet", __func__);
+	bus_space_unmap(sc->sc_iot, ioh, count);
+
+	bp->b_resid = bp->b_bcount - count;
+
+ done:
+	biodone(bp);
+}
+
+static int
+flash_size(dev_t dev)
+{
+	struct flash_softc *sc;
+
+	sc = device_lookup_private(&flash_cd, DISKUNIT(dev));
+	if (sc == NULL)
+		return 0;
+
+	return sc->sc_size >> DEV_BSHIFT;
+}
