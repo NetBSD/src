@@ -1,4 +1,4 @@
-/* $NetBSD: tputs.c,v 1.1 2010/02/03 15:16:32 roy Exp $ */
+/* $NetBSD: tputs.c,v 1.2 2010/02/12 10:36:07 martin Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tputs.c,v 1.1 2010/02/03 15:16:32 roy Exp $");
+__RCSID("$NetBSD: tputs.c,v 1.2 2010/02/12 10:36:07 martin Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -37,6 +37,11 @@ __RCSID("$NetBSD: tputs.c,v 1.1 2010/02/03 15:16:32 roy Exp $");
 #include <term_private.h>
 #include <term.h>
 
+/*
+ * The following array gives the number of tens of milliseconds per
+ * character for each speed as returned by gtty.  Thus since 300
+ * baud returns a 7, there are 33.3 milliseconds per char at 300 baud.
+ */
 static const short tmspc10[] = {
 	0, 2000, 1333, 909, 743, 666, 500, 333, 166, 83, 55, 41, 20, 10, 5
 };
@@ -78,7 +83,7 @@ _ti_outputdelay(int delay, short os, char pc,
 {
 	int mspc10;
 
-	if (delay < 1 || os < 1 || (size_t)os >= sizeof(tmspc10))
+	if (delay < 1 || os < 1 || (size_t)os >= __arraycount(tmspc10))
 		return;
 	
 	mspc10 = tmspc10[os];
