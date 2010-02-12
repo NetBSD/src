@@ -1,4 +1,4 @@
-#	$NetBSD: UMASS.ioconf,v 1.1 2010/02/11 02:22:09 pooka Exp $
+#	$NetBSD: UMASS.ioconf,v 1.2 2010/02/12 04:20:51 pooka Exp $
 #
 
 #
@@ -13,7 +13,7 @@ ioconf umass
 include "conf/files"
 include "dev/usb/files.usb"
 include "dev/scsipi/files.scsipi"
-include "rump/dev/wip/files.rump"
+include "rump/dev/files.rump"
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
@@ -21,11 +21,9 @@ umass*	at uhub? port ? configuration ? interface ?
 # SCSI support
 scsibus* at scsi?
 sd*	at scsibus? target ? lun ?
+cd*	at scsibus? target ? lun ? 
 
 # ATAPI support
 atapibus* at atapi?
-sd*	at atapibus? drive ? flags 0x0000
-
-# cd drives (untested!)
-cd*	at scsibus? target ? lun ?
+sd*	at atapibus? drive ? flags 0x0000 
 cd*	at atapibus? drive ? flags 0x0000
