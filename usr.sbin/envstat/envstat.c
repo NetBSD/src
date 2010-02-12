@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.75 2010/02/12 05:02:40 cnst Exp $ */
+/* $NetBSD: envstat.c,v 1.76 2010/02/12 14:26:27 njoly Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.75 2010/02/12 05:02:40 cnst Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.76 2010/02/12 14:26:27 njoly Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -436,8 +436,6 @@ parse_dictionary(int fd)
 		}
 		rval = check_sensors(str);
 		free(str);
-		if (rval)
-			free(str);
 	}
 	if ((flags & ENVSYS_LFLAG) == 0 && (flags & ENVSYS_DFLAG) == 0)
 		print_sensors();
