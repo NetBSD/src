@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2008/06/23 10:22:40 ad Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2010/02/12 22:34:38 dyoung Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -31,6 +31,11 @@ MLINKS+=atomic_add.3 atomic_add_32.3 \
 	atomic_cas.3 atomic_cas_ulong.3 \
 	atomic_cas.3 atomic_cas_ptr.3 \
 	atomic_cas.3 atomic_cas_64.3 \
+	atomic_cas.3 atomic_cas_32_ni.3 \
+	atomic_cas.3 atomic_cas_uint_ni.3 \
+	atomic_cas.3 atomic_cas_ulong_ni.3 \
+	atomic_cas.3 atomic_cas_ptr_ni.3 \
+	atomic_cas.3 atomic_cas_64_ni.3 \
 	atomic_dec.3 atomic_dec_32.3 \
 	atomic_dec.3 atomic_dec_uint.3 \
 	atomic_dec.3 atomic_dec_ulong.3 \

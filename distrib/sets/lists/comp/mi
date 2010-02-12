@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1390 2010/02/12 00:45:37 dyoung Exp $
+#	$NetBSD: mi,v 1.1391 2010/02/12 22:34:38 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4939,6 +4939,11 @@
 ./usr/share/man/cat3/atomic_cas_ptr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_cas_uint.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_cas_ulong.0		comp-c-catman		.cat
+./usr/share/man/cat3/atomic_cas_32_ni.0		comp-c-catman		.cat
+./usr/share/man/cat3/atomic_cas_64_ni.0		comp-c-catman		.cat
+./usr/share/man/cat3/atomic_cas_ptr_ni.0	comp-c-catman		.cat
+./usr/share/man/cat3/atomic_cas_uint_ni.0	comp-c-catman		.cat
+./usr/share/man/cat3/atomic_cas_ulong_ni.0	comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_dec.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_dec_32.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_dec_32_nv.0		comp-c-catman		.cat
@@ -10701,6 +10706,11 @@
 ./usr/share/man/html3/atomic_cas_ptr.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_cas_uint.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_cas_ulong.html	comp-c-htmlman		html
+./usr/share/man/html3/atomic_cas_32_ni.html	comp-c-htmlman		html
+./usr/share/man/html3/atomic_cas_64_ni.html	comp-c-htmlman		html
+./usr/share/man/html3/atomic_cas_ptr_ni.html	comp-c-htmlman		html
+./usr/share/man/html3/atomic_cas_uint_ni.html	comp-c-htmlman		html
+./usr/share/man/html3/atomic_cas_ulong_ni.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_dec.html		comp-c-htmlman		html
 ./usr/share/man/html3/atomic_dec_32.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_dec_32_nv.html	comp-c-htmlman		html
@@ -16263,6 +16273,11 @@
 ./usr/share/man/man3/atomic_cas_ptr.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_cas_uint.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_cas_ulong.3		comp-c-man		.man
+./usr/share/man/man3/atomic_cas_32_ni.3		comp-c-man		.man
+./usr/share/man/man3/atomic_cas_64_ni.3		comp-c-man		.man
+./usr/share/man/man3/atomic_cas_ptr_ni.3	comp-c-man		.man
+./usr/share/man/man3/atomic_cas_uint_ni.3	comp-c-man		.man
+./usr/share/man/man3/atomic_cas_ulong_ni.3	comp-c-man		.man
 ./usr/share/man/man3/atomic_dec.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_dec_32.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_dec_32_nv.3		comp-c-man		.man
