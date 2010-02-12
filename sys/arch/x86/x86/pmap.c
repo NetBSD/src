@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.102 2010/02/10 00:39:30 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.103 2010/02/12 01:55:45 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102 2010/02/10 00:39:30 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 2010/02/12 01:55:45 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -855,7 +855,6 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 			xpq_queue_invlpg(
 			    (vaddr_t)&pmap->pm_pdir[PDIR_SLOT_PTE + i]);
 		}
-		xpq_flush_queue();
 		if (pmap_valid_entry(opde))
 			pmap_apte_flush(ourpmap);
 		splx(s);
@@ -2132,7 +2131,6 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	(void)pmap_extract(pmap_kernel(), object, &pdirpa);
 	xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
 #endif
-	xpq_flush_queue();
 	splx(s);
 #endif /* XEN */
 
@@ -2166,7 +2164,6 @@ pmap_pdp_dtor(void *arg, void *v)
 		xpq_queue_pte_update(xpmap_ptetomach(pte), *pte | PG_RW);
 		xpq_queue_invlpg((vaddr_t)object);
 	}
-	xpq_flush_queue();
 	splx(s);
 #endif  /* XEN */
 }
@@ -2743,7 +2740,6 @@ pmap_load(void)
 			if ((new_pgd[i] & PG_V) || (old_pgd[i] & PG_V))
 				xpq_queue_pte_update(addr, new_pgd[i]);
 		}
-		xpq_flush_queue(); /* XXXtlb */
 		tlbflush();
 		xen_set_user_pgd(pmap_pdirpa(pmap, 0));
 		xen_current_user_pgd = pmap_pdirpa(pmap, 0);
@@ -2784,7 +2780,6 @@ pmap_load(void)
 		    xpmap_ptom(pmap->pm_pdirpa[i]) | PG_V);
 	}
 	tlbflush();
-	xpq_flush_queue();
 	splx(s);
 	}
 #else /* PAE */
