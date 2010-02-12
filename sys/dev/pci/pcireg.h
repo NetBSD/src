@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.63 2010/02/01 05:38:36 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.64 2010/02/12 04:01:07 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -584,7 +584,14 @@ typedef u_int8_t pci_revision_t;
 #define PCI_PCIE_SLCSR_MS	0x00200000
 #define PCI_PCIE_SLCSR_PDS	0x00400000
 #define PCI_PCIE_SLCSR_LACS	0x01000000
-#define PCI_PCIE_RCSR		0x1c
+#define PCI_PCIE_RCR		0x1c
+#define PCI_PCIE_RSR		0x20
+#define PCI_PCIE_DCAP2		0x24
+#define PCI_PCIE_DCSR2		0x28
+#define PCI_PCIE_LCAP2		0x2c
+#define PCI_PCIE_LCSR2		0x30
+#define PCI_PCIE_SLCAP2		0x34
+#define PCI_PCIE_SLCSR2		0x38
 
 /*
  * Interrupt Configuration Register; contains interrupt pin and line.
