@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.74 2010/02/09 05:32:51 cnst Exp $ */
+/* $NetBSD: envstat.c,v 1.75 2010/02/12 05:02:40 cnst Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.74 2010/02/09 05:32:51 cnst Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.75 2010/02/12 05:02:40 cnst Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -749,9 +749,14 @@ print_sensors(void)
 
 	if (!sensors || (!header_passes && sensors) ||
 	    (header_passes == 10 && sensors)) {
-		(void)printf("%s%*s  %9s %8s %8s %8s %8s %4s\n",
-		    mydevname ? "" : "  ", (int)maxlen,
-		    "", a, b, c, d, e, units);
+		if (statistics)
+			(void)printf("%s%*s  %9s %8s %8s %8s %6s\n",
+			    mydevname ? "" : "  ", (int)maxlen,
+			    "", a, b, c, d, units);
+		else
+			(void)printf("%s%*s  %9s %8s %8s %8s %8s %4s\n",
+			    mydevname ? "" : "  ", (int)maxlen,
+			    "", a, b, c, d, e, units);
 		if (sensors && header_passes == 10)
 			header_passes = 0;
 	}
@@ -838,7 +843,7 @@ do {								\
 				PRINTTEMP(stats->max);
 				PRINTTEMP(stats->min);
 				PRINTTEMP(stats->avg);
-				ilen += 9;
+				ilen += 2;
 			} else {
 				PRINTTEMP(sensor->critmax_value);
 				PRINTTEMP(sensor->warnmax_value);
@@ -859,7 +864,7 @@ do {								\
 				/* show statistics if flag set */
 				(void)printf("%8u %8u %8u ",
 				    stats->max, stats->min, stats->avg);
-				ilen += 9;
+				ilen += 2;
 			} else {
 				if (sensor->critmax_value) {
 					(void)printf("%*u ", (int)ilen,
@@ -974,7 +979,7 @@ do {									\
 				    stats->max / 1000000.0,
 				    stats->min / 1000000.0,
 				    stats->avg / 1000000.0);
-				ilen += 9;
+				ilen += 2;
 			}
 
 			(void)printf("%*s", (int)ilen - 4, stype);
