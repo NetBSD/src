@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.29 2010/02/08 17:19:12 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.30 2010/02/12 03:38:48 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -2173,14 +2173,14 @@ pk_sesskey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		if (__ops_get_debug_level(__FILE__)) {
 			printf("OPS_PTAG_CT_PK_SESSION_KEY\n");
 		}
-		if (!cbinfo->cryptinfo.keyring) {
+		if (!cbinfo->cryptinfo.secring) {
 			(void) fprintf(io->errs,
 				"pk_sesskey_cb: bad keyring\n");
 			return (__ops_cb_ret_t)0;
 		}
 		from = 0;
 		cbinfo->cryptinfo.keydata =
-			__ops_getkeybyid(io, cbinfo->cryptinfo.keyring,
+			__ops_getkeybyid(io, cbinfo->cryptinfo.secring,
 				content->pk_sesskey.key_id, &from);
 		if (!cbinfo->cryptinfo.keydata) {
 			break;
@@ -2213,6 +2213,7 @@ get_seckey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	const __ops_contents_t	*content = &pkt->u;
 	const __ops_seckey_t	*secret;
+	const __ops_key_t	*pubkey;
 	const __ops_key_t	*keypair;
 	unsigned		 from;
 	__ops_io_t		*io;
@@ -2223,22 +2224,27 @@ get_seckey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	}
 	switch (pkt->tag) {
 	case OPS_GET_SECKEY:
+		/* print key from pubring */
+		from = 0;
+		pubkey = __ops_getkeybyid(io, cbinfo->cryptinfo.pubring,
+				content->get_seckey.pk_sesskey->key_id,
+				&from);
+		/* validate key from secring */
 		from = 0;
 		cbinfo->cryptinfo.keydata =
-			__ops_getkeybyid(io, cbinfo->cryptinfo.keyring,
+			__ops_getkeybyid(io, cbinfo->cryptinfo.secring,
 				content->get_seckey.pk_sesskey->key_id,
 				&from);
 		if (!cbinfo->cryptinfo.keydata ||
 		    !__ops_is_key_secret(cbinfo->cryptinfo.keydata)) {
 			return (__ops_cb_ret_t)0;
 		}
-
 		keypair = cbinfo->cryptinfo.keydata;
 		do {
 			/* print out the user id */
-			__ops_print_keydata(io, keypair, "pub", &keypair->key.pubkey);
+			__ops_print_keydata(io, pubkey, "pub", &pubkey->key.pubkey);
 			/* now decrypt key */
-			secret = __ops_decrypt_seckey(keypair, NULL); /* XXX - agc */
+			secret = __ops_decrypt_seckey(keypair, cbinfo->passfp);
 			if (secret == NULL) {
 				(void) fprintf(io->errs, "Bad passphrase\n");
 			}

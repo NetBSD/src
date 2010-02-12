@@ -187,6 +187,7 @@ unsigned   __ops_decrypt_file(__ops_io_t *,
 			const char *,
 			const char *,
 			__ops_keyring_t *,
+			__ops_keyring_t *,
 			const unsigned,
 			const unsigned,
 			void *,
@@ -202,6 +203,7 @@ __ops_memory_t *
 __ops_decrypt_buf(__ops_io_t *,
 			const void *,
 			const size_t,
+			__ops_keyring_t *,
 			__ops_keyring_t *,
 			const unsigned,
 			void *,
@@ -238,9 +240,10 @@ struct __ops_reader_t {
 */
 struct __ops_cryptinfo_t {
 	char			*passphrase;
-	__ops_keyring_t		*keyring;
+	__ops_keyring_t		*secring;
 	const __ops_key_t	*keydata;
 	__ops_cbfunc_t		*getpassphrase;
+	__ops_keyring_t		*pubring;
 };
 
 /** __ops_cbdata_t */

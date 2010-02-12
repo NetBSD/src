@@ -87,3 +87,5 @@ unarmoured static in packet-print.c and skipping in crypto.c
 display expiry properly
 unarmoured static in packet-print.c and skipping in crypto.c
 duration -> expiry
+print signing key info properly when prompting for passphrase
+print decryption key info properly when prompting for passphrase

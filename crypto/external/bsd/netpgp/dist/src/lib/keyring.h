@@ -132,6 +132,7 @@ int __ops_list_packets(__ops_io_t *,
 			char *,
 			unsigned,
 			__ops_keyring_t *,
+			__ops_keyring_t *,
 			void *,
 			__ops_cbfunc_t *);
 

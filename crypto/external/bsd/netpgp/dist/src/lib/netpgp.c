@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.38 2010/02/11 17:46:09 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.39 2010/02/12 03:38:48 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -415,6 +415,7 @@ netpgp_init(netpgp_t *netpgp)
 	} else if ((io->res = fopen(results, "w")) == NULL) {
 		(void) fprintf(io->errs, "Can't open results %s for writing\n",
 			results);
+		free(io);
 		return 0;
 	}
 	netpgp->io = io;
@@ -799,6 +800,7 @@ netpgp_decrypt_file(netpgp_t *netpgp, const char *f, char *out, int armored)
 	}
 	(void) fclose(fp);
 	return __ops_decrypt_file(netpgp->io, f, out, netpgp->secring,
+				netpgp->pubring,
 				(unsigned)realarmour, overwrite,
 				netpgp->passfp, get_passphrase_cb);
 }
@@ -1107,6 +1109,7 @@ netpgp_decrypt_memory(netpgp_t *netpgp, const void *input, const size_t insize,
 	}
 	realarmour = (strncmp(input, ARMOR_HEAD, sizeof(ARMOR_HEAD) - 1) == 0);
 	mem = __ops_decrypt_buf(netpgp->io, input, insize, netpgp->secring,
+				netpgp->pubring,
 				realarmour, netpgp->passfp,
 				get_passphrase_cb);
 	m = MIN(__ops_mem_len(mem), outsize);
@@ -1177,7 +1180,9 @@ netpgp_list_packets(netpgp_t *netpgp, char *f, int armour, char *pubringname)
 	}
 	netpgp->pubring = keyring;
 	netpgp_setvar(netpgp, "pubring", pubringname);
-	ret = __ops_list_packets(io, f, (unsigned)armour, keyring,
+	ret = __ops_list_packets(io, f, (unsigned)armour,
+					netpgp->secring,
+					netpgp->pubring,
 					netpgp->passfp,
 					get_passphrase_cb);
 	free(keyring);
