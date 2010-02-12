@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.25 2010/02/08 17:19:12 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.26 2010/02/12 03:38:48 agc Exp $");
 #endif
 
 #include <string.h>
@@ -1256,7 +1256,8 @@ int
 __ops_list_packets(__ops_io_t *io,
 			char *filename,
 			unsigned armour,
-			__ops_keyring_t *keyring,
+			__ops_keyring_t *secring,
+			__ops_keyring_t *pubring,
 			void *passfp,
 			__ops_cbfunc_t *cb_get_passphrase)
 {
@@ -1268,7 +1269,8 @@ __ops_list_packets(__ops_io_t *io,
 	fd = __ops_setup_file_read(io, &stream, filename, NULL, cb_list_packets,
 				accumulate);
 	__ops_parse_options(stream, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
-	stream->cryptinfo.keyring = keyring;
+	stream->cryptinfo.secring = secring;
+	stream->cryptinfo.pubring = pubring;
 	stream->cbinfo.passfp = passfp;
 	stream->cryptinfo.getpassphrase = cb_get_passphrase;
 	if (armour) {

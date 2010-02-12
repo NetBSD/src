@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.19 2010/02/08 17:19:12 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.20 2010/02/12 03:38:48 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -381,7 +381,8 @@ unsigned
 __ops_decrypt_file(__ops_io_t *io,
 			const char *infile,
 			const char *outfile,
-			__ops_keyring_t *keyring,
+			__ops_keyring_t *secring,
+			__ops_keyring_t *pubring,
 			const unsigned use_armour,
 			const unsigned allow_overwrite,
 			void *passfp,
@@ -443,9 +444,10 @@ __ops_decrypt_file(__ops_io_t *io,
 	/* setup for writing decrypted contents to given output file */
 
 	/* setup keyring and passphrase callback */
-	parse->cbinfo.cryptinfo.keyring = keyring;
+	parse->cbinfo.cryptinfo.secring = secring;
 	parse->cbinfo.passfp = passfp;
 	parse->cbinfo.cryptinfo.getpassphrase = getpassfunc;
+	parse->cbinfo.cryptinfo.pubring = pubring;
 
 	/* Set up armour/passphrase options */
 	if (use_armour) {
@@ -475,7 +477,8 @@ __ops_memory_t *
 __ops_decrypt_buf(__ops_io_t *io,
 			const void *input,
 			const size_t insize,
-			__ops_keyring_t *keyring,
+			__ops_keyring_t *secring,
+			__ops_keyring_t *pubring,
 			const unsigned use_armour,
 			void *passfp,
 			__ops_cbfunc_t *getpassfunc)
@@ -504,7 +507,8 @@ __ops_decrypt_buf(__ops_io_t *io,
 	__ops_setup_memory_write(&parse->cbinfo.output, &outmem, insize);
 
 	/* setup keyring and passphrase callback */
-	parse->cbinfo.cryptinfo.keyring = keyring;
+	parse->cbinfo.cryptinfo.secring = secring;
+	parse->cbinfo.cryptinfo.pubring = pubring;
 	parse->cbinfo.passfp = passfp;
 	parse->cbinfo.cryptinfo.getpassphrase = getpassfunc;
 

@@ -55,7 +55,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: verify.c,v 1.2 2009/06/11 17:05:18 agc Exp $");
+__RCSID("$NetBSD: verify.c,v 1.3 2010/02/12 03:38:48 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -161,12 +161,11 @@ __RCSID("$NetBSD: verify.c,v 1.2 2009/06/11 17:05:18 agc Exp $");
 #undef USE_SHA384
 
 /* development versions have .99 suffix */
-#define NETPGP_BASE_VERSION	"1.99.9"
+#define NETPGP_BASE_VERSION	"1.99.19"
 
 #define NETPGP_VERSION_CAT(a, b)	"NetPGP portable " a "/[" b "]"
 #define NETPGP_VERSION_STRING \
 	NETPGP_VERSION_CAT(NETPGP_BASE_VERSION, NETPGP_AUTOCONF_VERSION)
-
 
 /* SHA1 Hash Size */
 #define OPS_SHA1_HASH_SIZE 	SHA_DIGEST_LENGTH
@@ -9819,6 +9818,7 @@ __ops_validate_file(__ops_io_t *io,
 	infd = __ops_setup_file_read(io, &parse, infile, &validation,
 				validate_data_cb, 1);
 	if (infd < 0) {
+		free(detachname);
 		return 0;
 	}
 
