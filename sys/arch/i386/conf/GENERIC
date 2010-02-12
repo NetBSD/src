@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.967 2010/02/10 19:54:36 tonio Exp $
+# $NetBSD: GENERIC,v 1.968 2010/02/12 15:51:16 hubertf Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.967 $"
+#ident 		"GENERIC-$Revision: 1.968 $"
 
 maxusers	64		# estimated number of users
 
@@ -1507,6 +1507,7 @@ pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#options	PPPOE_SERVER            # Enable PPPoE server via link0
 pseudo-device	sl			# Serial Line IP
 pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	irframetty		# IrDA frame line discipline
