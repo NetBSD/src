@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.16 2010/01/23 22:32:42 cegger Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.17 2010/02/12 01:55:46 jym Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.16 2010/01/23 22:32:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.17 2010/02/12 01:55:46 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,6 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	}
 	/* Flush updates through and flush the TLB */
 	xpq_queue_tlb_flush();
-	xpq_flush_queue();
 	splx(s);
 	return 0;
 
@@ -185,7 +184,6 @@ failed:
 	}
 	/* Flush updates through and flush the TLB */
 	xpq_queue_tlb_flush();
-	xpq_flush_queue();
 	splx(s);
 	return error;
 }
