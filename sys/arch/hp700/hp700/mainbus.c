@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.60 2010/02/12 22:31:05 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.61 2010/02/12 22:34:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.60 2010/02/12 22:31:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.61 2010/02/12 22:34:39 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -939,7 +939,7 @@ mbus_dmamap_load(void *v, bus_dmamap_t map, void *buf, bus_size_t buflen,
 }
 
 /*
- * Like _bus_dmamap_load(), but for mbufs.
+ * Like bus_dmamap_load(), but for mbufs.
  */
 int
 mbus_dmamap_load_mbuf(void *v, bus_dmamap_t map, struct mbuf *m0,
@@ -981,7 +981,7 @@ mbus_dmamap_load_mbuf(void *v, bus_dmamap_t map, struct mbuf *m0,
 }
 
 /*
- * Like _bus_dmamap_load(), but for uios.
+ * Like bus_dmamap_load(), but for uios.
  */
 int
 mbus_dmamap_load_uio(void *v, bus_dmamap_t map, struct uio *uio,
