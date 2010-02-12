@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.92 2010/02/08 08:49:57 skrll Exp $
+# $NetBSD: GENERIC,v 1.93 2010/02/12 22:19:23 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.92 $"
+#ident 		"GENERIC-$Revision: 1.93 $"
 
 maxusers	32		# estimated number of users
 
@@ -281,7 +281,7 @@ eisa*	at mongoose?
 #eisa*	at weisa?
 
 # ISA bus support
-# Beware: Most ISA MI drivers are not endianes clean!
+# Beware: Most ISA MI drivers are not endianness clean!
 #isa*	at mongoose?
 #isa*	at weisa?
 
