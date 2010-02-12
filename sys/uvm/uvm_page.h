@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59.2.11 2010/02/12 04:33:05 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.12 2010/02/12 13:40:00 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -294,7 +294,7 @@ bool uvm_pageismanaged(paddr_t);
 #ifdef DEVICE_PAGE
 bool uvm_pageisdevice_p(const struct vm_page *);
 #else
-#define	uvm_pageisdevice_p	false
+#define	uvm_pageisdevice_p(x)	false
 #endif
 
 int uvm_page_lookup_freelist(struct vm_page *);
