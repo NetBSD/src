@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.68 2009/11/07 07:27:49 cegger Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.68.2.1 2010/02/12 13:38:41 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,10 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68 2009/11/07 07:27:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.1 2010/02/12 13:38:41 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
+#include "opt_xip.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,7 +336,13 @@ again:
 			continue;
 		}
 
-		uobj = pg->uobject;
+		if (uvm_pageisdevice_p(pg)) {
+			UVMHIST_LOG(ubchist, "pg is device", i, 0,0,0);
+			goto ubc_fault_enter;
+		}
+
+		KASSERT(uobj == pg->uobject);
+			
 		mutex_enter(&uobj->vmobjlock);
 		if (pg->flags & PG_WANTED) {
 			wakeup(pg);
@@ -371,26 +378,37 @@ again:
 			}
 		}
 
+ubc_fault_enter:
 		/*
 		 * note that a page whose backing store is partially allocated
 		 * is marked as PG_RDONLY.
 		 */
 
-		rdonly = ((access_type & VM_PROT_WRITE) == 0 &&
-		    (pg->flags & PG_RDONLY) != 0) ||
+		/* XXXUEBS device pages are always read-only for now */
+		rdonly = uvm_pageisdevice_p(pg) ||
+		    ((access_type & VM_PROT_WRITE) == 0 &&
+		     (pg->flags & PG_RDONLY) != 0) ||
 		    UVM_OBJ_NEEDS_WRITEFAULT(uobj);
-		KASSERT((pg->flags & PG_RDONLY) == 0 ||
+		KASSERT(uvm_pageisdevice_p(pg) ||
+		    (pg->flags & PG_RDONLY) == 0 ||
 		    (access_type & VM_PROT_WRITE) == 0 ||
 		    pg->offset < umap->writeoff ||
 		    pg->offset + PAGE_SIZE > umap->writeoff + umap->writelen);
 		mask = rdonly ? ~VM_PROT_WRITE : VM_PROT_ALL;
+
 		error = pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
 		    prot & mask, PMAP_CANFAIL | (access_type & mask));
+
+		if (uvm_pageisdevice_p(pg))
+			goto ubc_fault_done;
+
 		mutex_enter(&uvm_pageqlock);
 		uvm_pageactivate(pg);
 		mutex_exit(&uvm_pageqlock);
 		pg->flags &= ~(PG_BUSY|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL);
+
+ubc_fault_done:
 		mutex_exit(&uobj->vmobjlock);
 		if (error) {
 			UVMHIST_LOG(ubchist, "pmap_enter fail %d",
@@ -532,6 +550,9 @@ again_faultbusy:
 		for (i = 0; i < npages; i++) {
 			struct vm_page *pg = pgs[i];
 
+			if (uvm_pageisdevice_p(pg))
+				goto uvm_alloc_enter;
+
 			KASSERT(pg->uobject == uobj);
 			if (pg->loan_count != 0) {
 				mutex_enter(&uobj->vmobjlock);
@@ -550,6 +571,8 @@ again_faultbusy:
 				}
 				pgs[i] = pg;
 			}
+
+uvm_alloc_enter:
 			pmap_kenter_pa(va + slot_offset + (i << PAGE_SHIFT),
 			    VM_PAGE_TO_PHYS(pg),
 			    VM_PROT_READ | VM_PROT_WRITE, 0);
