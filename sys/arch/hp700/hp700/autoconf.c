@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 2009/12/18 15:49:48 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.32 2010/02/12 16:57:21 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31 2009/12/18 15:49:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.32 2010/02/12 16:57:21 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -348,7 +348,7 @@ device_register(device_t dev, void *aux)
 		boot_device = dev;
 	/*
 	 * If the boot device is a PCI device the HPA is the address where the
-	 * firmware has maped the PCI memory of the PCI device. This is quite
+	 * firmware has mapped the PCI memory of the PCI device. This is quite
 	 * device dependent, so we compare the DP. It encodes the bus routing
 	 * information to the PCI bus bridge in the DP head and the PCI device
 	 * and PCI function in the last two DP components. So we compare the
