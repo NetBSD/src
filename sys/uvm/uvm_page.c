@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.11 2010/02/10 14:18:31 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.12 2010/02/12 04:33:05 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.11 2010/02/10 14:18:31 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.12 2010/02/12 04:33:05 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1047,6 +1047,7 @@ vm_physseg_lt_p(struct vm_physseg *seg, int op, paddr_t pframe,
  */
 
 /* Assume struct vm_page * is aligned to 4 bytes. */
+/* XXXUEBS Consider to improve this. */
 #define	VM_PAGE_DEVICE_MAGIC		0x2
 #define	VM_PAGE_DEVICE_MAGIC_MASK	0x3
 #define	VM_PAGE_DEVICE_MAGIC_SHIFT	2
@@ -1117,13 +1118,15 @@ uvm_vm_page_to_phys(const struct vm_page *pg)
 }
 
 
+#ifdef __HAVE_VM_PAGE_MD
 #ifdef XIP
 /*
  * Device page's mdpage lookup.
  *
+ * - Needed when promoting an XIP vnode page and invalidating its old mapping.
+ *
  * - Hashing code is based on sys/arch/x86/x86/pmap.c.
  *
- * - 
  * XXX Consider to allocate slots on-demand.
  */
 
@@ -1235,6 +1238,7 @@ vm_page_device_mdpage_lookup(struct vm_page *pg)
 	KASSERT(mde != NULL);
 	return &mde->mde_mdpage;
 }
+#endif
 #endif
 
 
