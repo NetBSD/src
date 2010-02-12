@@ -26,7 +26,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @(#) $Header: /cvsroot/src/dist/libpcap/Attic/pf.h,v 1.1.1.1 2006/02/27 15:45:49 drochner Exp $ (LBL)
+ * @(#) $Header: /cvsroot/src/dist/libpcap/Attic/pf.h,v 1.2 2010/02/12 21:16:56 drochner Exp $ (LBL)
  */
 
 /*	from $OpenBSD: pfvar.h,v 1.170 2003/08/22 21:50:34 david Exp $ */
@@ -71,6 +71,10 @@ struct pfloghdr {
 	char		ruleset[PF_RULESET_NAME_SIZE];
 	u_int32_t	rulenr;
 	u_int32_t	subrulenr;
+	u_int32_t	uid;
+	int32_t		pid;
+	u_int32_t	rule_uid;
+	int32_t		rule_pid;
 	u_int8_t	dir;
 	u_int8_t	pad[3];
 };
