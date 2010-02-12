@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.32 2010/02/12 16:57:21 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.33 2010/02/12 16:57:52 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.32 2010/02/12 16:57:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.33 2010/02/12 16:57:52 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -360,7 +360,7 @@ device_register(device_t dev, void *aux)
 	 * on a match. In case of a SCSI boot device we have to do the same
 	 * check when SCSI devices are attached like on GSC SCSI controllers.
 	 */
-	if (device_is_a(dev, "dino")) {
+	if (device_is_a(dev, "dino") || device_is_a(dev, "elroy")) {
 		struct confargs *ca = (struct confargs *)aux;
 		int i, n;
 
