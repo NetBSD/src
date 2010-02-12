@@ -1,4 +1,4 @@
-/* $NetBSD: termcap_map.c,v 1.1 2010/02/03 15:16:32 roy Exp $ */
+/* $NetBSD: termcap_map.c,v 1.2 2010/02/12 10:18:56 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap_map.c,v 1.1 2010/02/03 15:16:32 roy Exp $");
+__RCSID("$NetBSD: termcap_map.c,v 1.2 2010/02/12 10:18:56 roy Exp $");
 
 typedef struct termcap_entry {
 	const char id[3];
@@ -508,8 +508,4 @@ static const TENTRY _ti_cap_strids[] = {
 	{ "@7", TICODE_kend },
 	{ "@8", TICODE_kent },
 	{ "@9", TICODE_kext },
-
-	/* Obsolete, even for termcap */
-	{ "bc", TICODE_cub1 },
-	{ "nl", TICODE_ind }
 };
