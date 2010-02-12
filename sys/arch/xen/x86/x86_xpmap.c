@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.17 2009/10/23 02:32:34 snj Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.18 2010/02/12 01:55:45 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.17 2009/10/23 02:32:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.18 2010/02/12 01:55:45 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -153,7 +153,6 @@ xen_set_ldt(vaddr_t base, uint32_t entries)
 	}
 	s = splvm();
 	xpq_queue_set_ldt(base, entries);
-	xpq_flush_queue();
 	splx(s);
 }
 
