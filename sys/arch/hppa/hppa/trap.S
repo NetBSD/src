@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.38 2010/01/17 08:48:50 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.39 2010/02/13 10:38:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ emergency_stack_end:
 	.export	gateway_page, entry
 gateway_page:
 	nop				/* @ 0.C0000000 (Nothing)  */
-	gate,n	bsd_syscall,%r0	/* @ 0.C0000004 (HPUX/BSD) */
+	gate,n	bsd_syscall,%r0		/* @ 0.C0000004 (HPUX/BSD) */
 #ifdef COMPAT_OSF1
 	bl,n	osf_syscall,%r0
 	bl,n	osf_syscall,%r0
