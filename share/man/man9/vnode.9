@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.45 2010/02/11 23:16:35 haad Exp $
+.\"     $NetBSD: vnode.9,v 1.46 2010/02/13 07:48:01 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 8, 2010
+.Dd February 11, 2010
 .Dt VNODE 9
 .Os
 .Sh NAME
@@ -534,9 +534,10 @@ If both
 and
 .Em v_holdcnt
 are zero, the vnode is placed on the freelist.
-.It Fn vget "vp" "lockflags"
 .It Fn vrele_async "vp"
-Will asychronously release vnode in different context than caller, sometime in future. 
+Will asychronously release the vnode in different context than the caller,
+sometime after the call.
+.It Fn vget "vp" "lockflags"
 Reclaim vnode
 .Fa vp
 from the freelist, increment its reference count and lock it.
