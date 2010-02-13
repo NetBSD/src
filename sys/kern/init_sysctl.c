@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.172 2010/01/13 01:53:38 pooka Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.173 2010/02/13 11:22:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.172 2010/01/13 01:53:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.173 2010/02/13 11:22:21 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -2344,6 +2344,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
  			LIST_REMOVE(marker, p_list);
 		} else {
 			rw_exit(&p->p_reflock);
+			next = LIST_NEXT(p, p_list);
 		}
 	}
 	mutex_exit(proc_lock);
