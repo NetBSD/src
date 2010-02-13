@@ -1,4 +1,4 @@
-# $NetBSD: SCHIZO,v 1.5 2010/02/06 00:23:30 mrg Exp $
+# $NetBSD: SCHIZO,v 1.6 2010/02/13 22:24:09 mrg Exp $
 #
 # GENERIC with schizo support enabled, with the annoying schizo interupt
 # option
@@ -7,7 +7,7 @@
 include 	"arch/sparc64/conf/GENERIC.MP"
 #include 	"arch/sparc64/conf/GENERIC"
 
-#ident		"SCHIZO.$Revision: 1.5 $"
+#ident		"SCHIZO.$Revision: 1.6 $"
 
 options 	CHEETAH
 
@@ -18,21 +18,8 @@ options 	LOCKDEBUG
 options 	DB_MAX_WIDTH=160
 options 	DDB_ONPANIC=2   # print stack trace
 
-upa*   at mainbus?
-ffb* at upa?
-
-schizo*	at mainbus?
-pci* at schizo?
-
 # this crashes when attaching.
-no machfb
-
-bge* at pci? dev ? function ?
-
-fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
-ieee1394if* at fwohci?
-fwip*	at ieee1394if?			# IP over IEEE1394
-sbp*	at ieee1394if? euihi ? euilo ?
+#no machfb
 
 # this matches when it isn't present. ugh.
 no admtemp
