@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.79 2010/02/05 19:22:25 jruoho Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.80 2010/02/13 19:34:14 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.79 2010/02/05 19:22:25 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.80 2010/02/13 19:34:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -696,7 +696,7 @@ sme_events_worker(struct work *wk, void *arg)
 	case PENVSYS_EVENT_LIMITS:
 	case PENVSYS_EVENT_CAPACITY:
 #define	__EXCEED_LIM(valid, lim, rel) \
-		((edata->limits.sel_flags & (valid)) && \
+		((edata->upropset & (valid)) && \
 		 (edata->value_cur rel (edata->limits.lim)))
 
 		if ((edata->limits.sel_flags & PROP_DRIVER_LIMITS) == 0) {
