@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.37 2010/02/03 21:00:49 pooka Exp $	*/
+/*	$NetBSD: main.c,v 1.38 2010/02/13 22:57:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -212,9 +212,8 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (optind != 1) {
-		if (xflag)
-			errx(EXIT_FAILURE, "-x must be used alone");
+	if (xflag && optind != 2) {
+		errx(EXIT_FAILURE, "-x must be used alone");
 	}
 
 	argc -= optind;
