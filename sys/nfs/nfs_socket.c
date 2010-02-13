@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.185 2010/01/19 13:39:04 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.186 2010/02/13 11:17:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.185 2010/01/19 13:39:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.186 2010/02/13 11:17:30 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "fs_nfs.h"
@@ -2157,9 +2157,11 @@ nfs_msg(struct lwp *l, const char *server, const char *msg)
 {
 	tpr_t tpr;
 
+#if 0 /* XXX nfs_timer can't block on proc_lock */
 	if (l)
 		tpr = tprintf_open(l->l_proc);
 	else
+#endif
 		tpr = NULL;
 	tprintf(tpr, "nfs server %s: %s\n", server, msg);
 	tprintf_close(tpr);
