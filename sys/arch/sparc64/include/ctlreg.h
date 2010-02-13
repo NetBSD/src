@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.49 2010/02/01 06:26:15 mrg Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.50 2010/02/13 08:46:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -363,6 +363,17 @@
 #define	DEMAP_CTX_PRIMARY		((0x04)<<4)	/* Demap all of primary CTXT */
 #define	DEMAP_CTX_SECONDARY		((0x05)<<4)	/* Demap all of secondary CTXT */
 #define	DEMAP_ALL			((0x08)<<4)	/* Demap all non-locked TLB entries [USIII] */
+
+/*
+ * These define the sizes of the TLB in various CPUs.
+ * They're mostly not necessary except for diagnostic code.
+ */
+#define TLB_SIZE_SPITFIRE		64
+#define TLB_SIZE_CHEETAH_I16		16
+#define TLB_SIZE_CHEETAH_I128		128
+#define TLB_SIZE_CHEETAH_D16		16
+#define TLB_SIZE_CHEETAH_D512_0		512
+#define TLB_SIZE_CHEETAH_D512_1		512
 
 /*
  * Interrupt registers.  This really gets hairy.
