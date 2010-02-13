@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.53 2010/02/09 23:04:15 njoly Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.54 2010/02/13 04:09:36 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.53 2010/02/09 23:04:15 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.54 2010/02/13 04:09:36 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2064,6 +2064,7 @@ wb_w83637hf_refresh_vcore(struct lm_softc *sc, int n)
 		sc->sensors[n].value_cur = (data * 4880) + 700000;
 	else
 		sc->sensors[n].value_cur = (data * 16000);
+	sc->sensors[n].state = ENVSYS_SVALID;
 	DPRINTF(("%s: volt[%d] data=0x%x value_cur=%d\n",
 	   __func__, n, data, sc->sensors[n].value_cur));
 }
@@ -2083,6 +2084,7 @@ wb_refresh_nvolt(struct lm_softc *sc, int n)
 
 	sc->sensors[n].value_cur /= 10;
 	sc->sensors[n].value_cur += WB_VREF * 1000;
+	sc->sensors[n].state = ENVSYS_SVALID;
 	DPRINTF(("%s: volt[%d] data=0x%x value_cur=%d\n",
 	     __func__, n , data, sc->sensors[n].value_cur));
 }
@@ -2102,6 +2104,7 @@ wb_w83627ehf_refresh_nvolt(struct lm_softc *sc, int n)
 
 	sc->sensors[n].value_cur /= 10;
 	sc->sensors[n].value_cur += WB_W83627EHF_VREF * 1000;
+	sc->sensors[n].state = ENVSYS_SVALID;
 	DPRINTF(("%s: volt[%d] data=0x%x value_cur=%d\n",
 	    __func__, n , data, sc->sensors[n].value_cur));
 }
