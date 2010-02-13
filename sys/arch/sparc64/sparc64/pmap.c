@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.250 2010/02/05 12:04:10 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.251 2010/02/13 08:56:29 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.250 2010/02/05 12:04:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.251 2010/02/13 08:56:29 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1306,13 +1306,16 @@ pmap_growkernel(vaddr_t maxkvaddr)
 {
 	struct pmap *pm = pmap_kernel();
 	paddr_t pa;
+	bool took_lock;
 
 	if (maxkvaddr >= KERNEND) {
 		printf("WARNING: cannot extend kernel pmap beyond %p to %p\n",
 		       (void *)KERNEND, (void *)maxkvaddr);
 		return (kbreak);
 	}
-	if (__predict_true(lock_available)) mutex_enter(&pmap_lock);
+	took_lock = lock_available;
+	if (__predict_true(took_lock))
+		mutex_enter(&pmap_lock);
 	DPRINTF(PDB_GROW, ("pmap_growkernel(%lx...%lx)\n", kbreak, maxkvaddr));
 	/* Align with the start of a page table */
 	for (kbreak &= (-1 << PDSHIFT); kbreak < maxkvaddr;
@@ -1330,7 +1333,8 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			ENTER_STAT(ptpneeded);
 		}
 	}
-	if (__predict_true(lock_available)) mutex_exit(&pmap_lock);
+	if (__predict_true(took_lock))
+		mutex_exit(&pmap_lock);
 	return (kbreak);
 }
 
