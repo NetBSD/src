@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 2010/02/09 17:33:31 pooka Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 2010/02/13 03:19:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -50,6 +50,9 @@ typedef struct {
 } bus_dma_segment_t;
 
 typedef struct {
+	bus_size_t dm_maxsegsz;
+	bus_size_t dm_mapsize;
+	int dm_nsegs;
 	bus_dma_segment_t dm_segs[1];
 } *bus_dmamap_t;
 
