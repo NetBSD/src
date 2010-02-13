@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.312 2010/02/09 23:05:16 wiz Exp $	*/
+/*	$NetBSD: locore.s,v 1.313 2010/02/13 22:29:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -463,24 +463,8 @@ romtba:	POINTER	0
  */
 	/* regular vectored traps */
 
-#if KTR_COMPILE & KTR_TRAP
-#if 0
-#define TRACEWIN	wrpr %g0, PSTATE_KERN|PSTATE_IG, %pstate;\
-			sethi %hi(9f), %g1; ba,pt %icc,ktr_trap_gen; or %g1, %lo(9f), %g1; 9:
-#else
-#define TRACEWIN
-#endif
-#define TRACEFLT 	sethi %hi(1f), %g1; ba,pt %icc,ktr_trap_gen;\
-			or %g1, %lo(1f), %g1; 1:
-#define	VTRAP(type, label) \
-	sethi %hi(label), %g1; ba,pt %icc,ktr_trap_gen;\
-	or %g1, %lo(label), %g1; NOTREACHED; TA8
-#else	
-#define TRACEWIN
-#define TRACEFLT
 #define	VTRAP(type, label) \
 	ba,a,pt	%icc,label; nop; NOTREACHED; TA8
-#endif
 
 	/* hardware interrupts (can be linked or made `fast') */
 #define	HARDINT4U(lev) \
@@ -536,7 +520,6 @@ romtba:	POINTER	0
 
 	/* spill a 64-bit register window */
 #define SPILL64(label,as) \
-	TRACEWIN; \
 label:	\
 	wr	%g0, as, %asi; \
 	stxa	%l0, [%sp+BIAS+0x00]%asi; \
@@ -565,7 +548,6 @@ label:	\
 
 	/* spill a 32-bit register window */
 #define SPILL32(label,as) \
-	TRACEWIN; \
 label:	\
 	wr	%g0, as, %asi; \
 	srl	%sp, 0, %sp; /* fixup 32-bit pointers */ \
@@ -595,7 +577,6 @@ label:	\
 
 	/* Spill either 32-bit or 64-bit register window. */
 #define SPILLBOTH(label64,label32,as) \
-	TRACEWIN; \
 	andcc	%sp, 1, %g0; \
 	bnz,pt	%xcc, label64+4;	/* Is it a v9 or v8 stack? */ \
 	 wr	%g0, as, %asi; \
@@ -606,7 +587,6 @@ label:	\
 
 	/* fill a 64-bit register window */
 #define FILL64(label,as) \
-	TRACEWIN; \
 label: \
 	wr	%g0, as, %asi; \
 	ldxa	[%sp+BIAS+0x00]%asi, %l0; \
@@ -635,7 +615,6 @@ label: \
 
 	/* fill a 32-bit register window */
 #define FILL32(label,as) \
-	TRACEWIN; \
 label:	\
 	wr	%g0, as, %asi; \
 	srl	%sp, 0, %sp; /* fixup 32-bit pointers */ \
@@ -665,7 +644,6 @@ label:	\
 
 	/* fill either 32-bit or 64-bit register window. */
 #define FILLBOTH(label64,label32,as) \
-	TRACEWIN; \
 	andcc	%sp, 1, %i0; \
 	bnz	(label64)+4; /* See if it's a v9 stack or v8 */ \
 	 wr	%g0, as, %asi; \
@@ -708,7 +686,6 @@ _C_LABEL(trapbase):
 	TRAP(T_FP_IEEE_754)		! 021 = ieee 754 exception
 	TRAP(T_FP_OTHER)		! 022 = other fp exception
 	TRAP(T_TAGOF)			! 023 = tag overflow
-	TRACEWIN			! DEBUG -- 4 insns
 	rdpr %cleanwin, %o7		! 024-027 = clean window trap
 	inc %o7				!	This handler is in-lined and cannot fault
 #ifdef DEBUG
@@ -788,7 +765,6 @@ _C_LABEL(trapbase):
 	TRAP(T_VA_WATCHPT)		! 062 = virtual address data watchpoint
 	UTRAP(T_ECCERR)			! We'll implement this one later
 ufast_IMMU_miss:			! 064 = fast instr access MMU miss
-	TRACEFLT			! DEBUG
 	ldxa	[%g0] ASI_IMMU_8KPTR, %g2 ! Load IMMU 8K TSB pointer
 #ifdef NO_TSB
 	ba,a	%icc, instr_miss
@@ -806,7 +782,6 @@ ufast_IMMU_miss:			! 064 = fast instr access MMU miss
 	sir
 	TA32
 ufast_DMMU_miss:			! 068 = fast data access MMU miss
-	TRACEFLT			! DEBUG
 	ldxa	[%g0] ASI_DMMU_8KPTR, %g2! Load DMMU 8K TSB pointer
 
 #ifdef NO_TSB
@@ -831,7 +806,6 @@ ufast_DMMU_miss:			! 068 = fast data access MMU miss
 	sir
 	TA32
 ufast_DMMU_protection:			! 06c = fast data access MMU protection
-	TRACEFLT			! DEBUG -- we're perilously close to 32 insns
 #ifdef TRAPSTATS
 	sethi	%hi(_C_LABEL(udprot)), %g1
 	lduw	[%g1+%lo(_C_LABEL(udprot))], %g2
@@ -963,7 +937,6 @@ ktextfault:
 	TRAP(T_FP_IEEE_754)		! 021 = ieee 754 exception
 	TRAP(T_FP_OTHER)		! 022 = other fp exception
 	TRAP(T_TAGOF)			! 023 = tag overflow
-	TRACEWIN			! DEBUG
 	clr	%l0
 #ifdef DEBUG
 	set	0xbadbeef, %l0		! DEBUG
@@ -1029,7 +1002,6 @@ kdatafault:
 	TRAP(T_VA_WATCHPT)		! 062 = virtual address data watchpoint
 	UTRAP(T_ECCERR)			! We'll implement this one later
 kfast_IMMU_miss:			! 064 = fast instr access MMU miss
-	TRACEFLT			! DEBUG
 	ldxa	[%g0] ASI_IMMU_8KPTR, %g2 ! Load IMMU 8K TSB pointer
 #ifdef NO_TSB
 	ba,a	%icc, instr_miss
@@ -1047,7 +1019,6 @@ kfast_IMMU_miss:			! 064 = fast instr access MMU miss
 	sir
 	TA32
 kfast_DMMU_miss:			! 068 = fast data access MMU miss
-	TRACEFLT			! DEBUG
 	ldxa	[%g0] ASI_DMMU_8KPTR, %g2! Load DMMU 8K TSB pointer
 #ifdef NO_TSB
 	ba,a	%icc, data_miss
@@ -1071,7 +1042,6 @@ kfast_DMMU_miss:			! 068 = fast data access MMU miss
 	sir
 	TA32
 kfast_DMMU_protection:			! 06c = fast data access MMU protection
-	TRACEFLT			! DEBUG
 #ifdef TRAPSTATS
 	sethi	%hi(_C_LABEL(kdprot)), %g1
 	lduw	[%g1+%lo(_C_LABEL(kdprot))], %g2
@@ -1274,25 +1244,6 @@ _C_LABEL(trap_trace):
 	.space	TRACESIZ
 _C_LABEL(trap_trace_end):
 	.space	0x20		! safety margin
-
-#if KTR_COMPILE
-	.text
-ktr_trap_gen:
-	CATR(KTR_TRAP, "TRAP: tl=%d tt=%p tstate=%p tpc=%p sp=%p",
-		 %g2, %g3, %g4, 10, 11, 12)
-	rdpr	%tl, %g3
-	stx	%g3, [%g2 + KTR_PARM1]
-	rdpr	%tt, %g3
-	stx	%g3, [%g2 + KTR_PARM2]
-	rdpr	%tstate, %g3
-	stx	%g3, [%g2 + KTR_PARM3]
-	rdpr	%tpc, %g3
-	stx	%g3, [%g2 + KTR_PARM4]
-	stx	%sp, [%g2 + KTR_PARM5]
-12:
-	jmp	%g1			! return to processing the trap
-	 nop
-#endif
 
 
 /*
@@ -1823,10 +1774,6 @@ data_miss:
 	lduw	[%g3], %g4
 	inc	%g4
 	stw	%g4, [%g3]
-#endif
-#if 0 & KTR_COMPILE & KTR_TRAP
-	CATR(KTR_TRAP, "data_miss:", %g3, %g4, %g5, 10, 11, 12)
-12:
 #endif
 	mov	TLB_TAG_ACCESS, %g3			! Get real fault page
 	sethi	%hi(0x1fff), %g6			! 8K context mask
@@ -3407,16 +3354,6 @@ interrupt_vector:
 	ldxa	[%g7] ASI_IRDR, %g7	! Get interrupt number
 	membar	#Sync
 
-#if KTR_COMPILE & KTR_INTR
-	CATR(KTR_TRAP, "interrupt_vector: tl %d ASI_IRSR %p ASI_IRDR %p",
-		 %g3, %g5, %g6, 10, 11, 12)
-	rdpr	%tl, %g5
-	stx	%g5, [%g3 + KTR_PARM1]
-	stx	%g1, [%g3 + KTR_PARM2]
-	stx	%g7, [%g3 + KTR_PARM3]
-12:
-#endif
-
 	btst	IRSR_BUSY, %g1
 	bz,pn	%icc, 3f		! spurious interrupt
 #ifdef MULTIPROCESSOR
@@ -3498,17 +3435,6 @@ setup_sparcintr:
 	wr	%g6, 0, SET_SOFTINT	! Invoke a softint
 
 ret_from_intr_vector:
-#if KTR_COMPILE & KTR_INTR
-	CATR(KTR_TRAP, "ret_from_intr_vector: tl %d, tstate %p, tpc %p",
-		 %g3, %g4, %g5, 10, 11, 12)
-	rdpr	%tl, %g5
-	stx	%g5, [%g3 + KTR_PARM1]
-	rdpr	%tstate, %g5
-	stx	%g5, [%g3 + KTR_PARM2]
-	rdpr	%tpc, %g5
-	stx	%g5, [%g3 + KTR_PARM3]
-12:
-#endif
 	retry
 	NOTREACHED
 
@@ -3585,11 +3511,6 @@ sparc64_ipi_pause_trap_point:
  *	%g3 = int ctx
  */
 ENTRY(sparc64_ipi_flush_pte_us)
-#if  KTR_COMPILE & KTR_PMAP
-	CATR(KTR_TRAP, "sparc64_ipi_flush_pte_us:",
-		 %g1, %g3, %g4, 10, 11, 12)
-12:
-#endif
 	srlx	%g2, PG_SHIFT4U, %g2		! drop unused va bits
 	mov	CTX_SECONDARY, %g5
 	sllx	%g2, PG_SHIFT4U, %g2
@@ -4049,19 +3970,6 @@ return_from_trap:
 	ldx	[%sp + CC64FSZ + STKB + TF_NPC], %g3
 	orcc	%g2, %g3, %g0
 	tz	%icc, 1
-#endif
-
-#if KTR_COMPILE & KTR_TRAP
-	CATR(KTR_TRAP, "rft: sp=%p pc=%p npc=%p tstate=%p",
-		 %g2, %g3, %g4, 10, 11, 12)
-	stx	%i6, [%g2 + KTR_PARM1]
-	ldx	[%sp + CC64FSZ + STKB + TF_PC], %g3
-	stx	%g3, [%g2 + KTR_PARM2]
-	ldx	[%sp + CC64FSZ + STKB + TF_NPC], %g3
-	stx	%g3, [%g2 + KTR_PARM3]
-	ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g3
-	stx	%g3, [%g2 + KTR_PARM4]
-12:
 #endif
 
 	!!
