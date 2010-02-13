@@ -53,6 +53,10 @@
 #ifndef SIGNATURE_H_
 #define SIGNATURE_H_
 
+#include <sys/types.h>
+
+#include <inttypes.h>
+
 #include "packet.h"
 #include "create.h"
 #include "memory.h"
