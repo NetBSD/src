@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.137 2010/02/13 02:09:41 martin Exp $	*/
+/*	$NetBSD: umass.c,v 1.138 2010/02/13 02:16:51 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.137 2010/02/13 02:09:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.138 2010/02/13 02:16:51 martin Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -1180,7 +1180,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 		residue = UGETDW(sc->csw.dCSWDataResidue);
 		if (residue < sc->transfer_datalen - sc->transfer_actlen)
-		    residue = sc->transfer_datalen - sc->transfer_actlen;
+			residue = sc->transfer_datalen - sc->transfer_actlen;
 
 		/* Translate weird command-status signatures. */
 		if ((sc->sc_quirks & UMASS_QUIRK_WRONG_CSWSIG) &&
