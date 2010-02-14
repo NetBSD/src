@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.99 2008/07/31 05:38:06 simonb Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.99.4.1 2010/02/14 13:55:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.99 2008/07/31 05:38:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.99.4.1 2010/02/14 13:55:29 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -1256,7 +1256,7 @@ ufs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 int
 ufs_checkpath(struct inode *source, struct inode *target, kauth_cred_t cred)
 {
-	struct vnode *vp = ITOV(target);
+	struct vnode *nextvp, *vp;
 	int error, rootino, namlen;
 	struct dirtemplate dirbuf;
 	const int needswap = UFS_MPNEEDSWAP(target->i_ump);
@@ -1304,13 +1304,15 @@ ufs_checkpath(struct inode *source, struct inode *target, kauth_cred_t cred)
 		}
 		if (ufs_rw32(dirbuf.dotdot_ino, needswap) == rootino)
 			break;
-		vput(vp);
+		VOP_UNLOCK(vp, 0);
 		error = VFS_VGET(vp->v_mount,
-		    ufs_rw32(dirbuf.dotdot_ino, needswap), &vp);
+		    ufs_rw32(dirbuf.dotdot_ino, needswap), &nextvp);
+		vrele(vp);
 		if (error) {
 			vp = NULL;
 			break;
 		}
+		vp = nextvp;
 	}
 
 out:
