@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.81 2010/02/14 16:22:09 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.82 2010/02/14 23:06:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.81 2010/02/14 16:22:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.82 2010/02/14 23:06:02 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.81 2010/02/14 16:22:09 pg
 #include <sys/callout.h>
 
 /* #define ENVSYS_DEBUG */
+/* #define ENVSYS_OBJECTS_DEBUG */
 
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_envsysvar.h>
@@ -83,7 +84,7 @@ static bool sme_acadapter_check(void);
 int
 sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		   struct sysmon_envsys *sme, sysmon_envsys_lim_t *lims,
-		   int crittype, int powertype)
+		   uint32_t props, int crittype, int powertype)
 {
 	sme_event_t *see = NULL, *osee = NULL;
 	prop_object_t obj;
@@ -104,14 +105,14 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	 * flag is not set and the units is not ENVSYS_INDICATOR.
 	 */
 
-	DPRINTF(("%s: units %d lim-flags 0x%04x edata-flags 0x%04x\n",
-		__func__, edata->units, lims->sel_flags, edata->flags));
+	DPRINTF(("%s: units %d props 0x%04x edata-flags 0x%04x\n",
+		__func__, edata->units, props, edata->flags));
 
-	if ((lims->sel_flags & PROP_VAL_LIMITS) &&
+	if ((props & PROP_VAL_LIMITS) &&
 	    ((edata->flags & ENVSYS_FPERCENT) ||
 	     (edata->units == ENVSYS_INDICATOR)))
 		return ENOTSUP;
-	if ((lims->sel_flags & PROP_CAP_LIMITS) &&
+	if ((props & PROP_CAP_LIMITS) &&
 	    !(edata->flags & ENVSYS_FPERCENT))
 		return ENOTSUP;
 
@@ -136,35 +137,33 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		    __func__, sme->sme_name, edata->desc, crittype));
 
 		see = osee;
-		if (lims->sel_flags & PROP_CRITMAX) {
+		if (props & PROP_CRITMAX) {
 			if (lims->sel_critmax == edata->limits.sel_critmax) {
 				DPRINTF(("%s: type=%d (critmax exists)\n",
 				    __func__, crittype));
 				error = EEXIST;
-				lims->sel_flags &= ~PROP_CRITMAX;
+				props &= ~PROP_CRITMAX;
 			}
 		}
-		if (lims->sel_flags & PROP_WARNMAX) {
+		if (props & PROP_WARNMAX) {
 			if (lims->sel_warnmax == edata->limits.sel_warnmax) {
 				DPRINTF(("%s: warnmax exists\n", __func__));
 				error = EEXIST;
-				lims->sel_flags &= ~PROP_WARNMAX;
+				props &= ~PROP_WARNMAX;
 			}
 		}
-		if (lims->sel_flags & (PROP_WARNMIN | PROP_BATTWARN)) {
+		if (props & (PROP_WARNMIN | PROP_BATTWARN)) {
 			if (lims->sel_warnmin == edata->limits.sel_warnmin) {
 				DPRINTF(("%s: warnmin exists\n", __func__));
 				error = EEXIST;
-				lims->sel_flags &=
-					~(PROP_WARNMIN | PROP_BATTWARN);
+				props &= ~(PROP_WARNMIN | PROP_BATTWARN);
 			}
 		}
-		if (lims->sel_flags & (PROP_CRITMIN | PROP_BATTCAP)) {
+		if (props & (PROP_CRITMIN | PROP_BATTCAP)) {
 			if (lims->sel_critmin == edata->limits.sel_critmin) {
 				DPRINTF(("%s: critmin exists\n", __func__));
 				error = EEXIST;
-				lims->sel_flags &=
-					~(PROP_CRITMIN | PROP_BATTCAP);
+				props &= ~(PROP_CRITMIN | PROP_BATTCAP);
 			}
 		}
 		break;
@@ -219,7 +218,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	/*
 	 * Limit operation requested.
 	 */
-	if (lims->sel_flags & PROP_CRITMAX) {
+	if (props & PROP_CRITMAX) {
 		objkey = "critical-max";
 		obj = prop_dictionary_get(sdict, objkey);
 		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
@@ -239,7 +238,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		edata->upropset |= PROP_CRITMAX;
 	}
 
-	if (lims->sel_flags & PROP_WARNMAX) {
+	if (props & PROP_WARNMAX) {
 		objkey = "warning-max";
 		obj = prop_dictionary_get(sdict, objkey);
 		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
@@ -259,7 +258,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		edata->upropset |= PROP_WARNMAX;
 	}
 
-	if (lims->sel_flags & PROP_WARNMIN) {
+	if (props & PROP_WARNMIN) {
 		objkey = "warning-min";
 		obj = prop_dictionary_get(sdict, objkey);
 		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
@@ -279,7 +278,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		edata->upropset |= PROP_WARNMIN;
 	}
 
-	if (lims->sel_flags & PROP_CRITMIN) {
+	if (props & PROP_CRITMIN) {
 		objkey = "critical-min";
 		obj = prop_dictionary_get(sdict, objkey);
 		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
@@ -299,7 +298,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		edata->upropset |= PROP_CRITMIN;
 	}
 
-	if (lims->sel_flags & PROP_BATTWARN) {
+	if (props & PROP_BATTWARN) {
 		objkey = "warning-capacity";
 		obj = prop_dictionary_get(sdict, objkey);
 		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
@@ -319,7 +318,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		edata->upropset |= PROP_BATTWARN;
 	}
 
-	if (lims->sel_flags & PROP_BATTCAP) {
+	if (props & PROP_BATTCAP) {
 		objkey = "critical-capacity";
 		obj = prop_dictionary_get(sdict, objkey);
 		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
@@ -339,7 +338,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		edata->upropset |= PROP_BATTCAP;
 	}
 
-	if (lims->sel_flags & PROP_DRIVER_LIMITS)
+	if (props & PROP_DRIVER_LIMITS)
 		edata->upropset |= PROP_DRIVER_LIMITS;
 	else
 		edata->upropset &= ~PROP_DRIVER_LIMITS;
@@ -361,10 +360,9 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	 * If driver requested notification, advise it of new
 	 * limit values
 	 */
-	if (sme->sme_set_limits) {
-		edata->limits.sel_flags = edata->upropset & PROP_LIMITS;
-		(*sme->sme_set_limits)(sme, edata, &(edata->limits));
-	}
+	if (sme->sme_set_limits)
+		(*sme->sme_set_limits)(sme, edata, &(edata->limits),
+					&(edata->upropset));
 
 out:
 	if ((error == 0 || error == EEXIST) && osee == NULL)
@@ -483,6 +481,7 @@ sme_event_drvadd(void *arg)
 {
 	sme_event_drv_t *sed_t = arg;
 	sysmon_envsys_lim_t lims;
+	uint32_t props;
 	int error = 0;
 
 	KASSERT(sed_t != NULL);
@@ -495,7 +494,7 @@ do {									\
 		error = sme_event_register(sed_t->sed_sdict,		\
 				      sed_t->sed_edata,			\
 				      sed_t->sed_sme,			\
-				      &lims,				\
+				      &lims, props,			\
 				      (b),				\
 				      sed_t->sed_powertype);		\
 		if (error && error != EEXIST)				\
@@ -517,18 +516,18 @@ do {									\
 	 * values, call it and use those returned values as initial
 	 * limits for event monitoring.
 	 */
-	lims.sel_flags = 0;
+	props = 0;
 	if (sed_t->sed_edata->flags & ENVSYS_FMONLIMITS)
 		if (sed_t->sed_sme->sme_get_limits)
 			(*sed_t->sed_sme->sme_get_limits)(sed_t->sed_sme,
 							  sed_t->sed_edata,
-							  &lims);
+							  &lims, &props);
 	/*
 	 * If no values returned, don't create the event monitor at
 	 * this time.  We'll get another chance later when the user
 	 * provides us with limits.
 	 */
-	if (lims.sel_flags == 0)
+	if (props == 0)
 		sed_t->sed_edata->flags &= ~ENVSYS_FMONLIMITS;
 
 	/*
@@ -536,7 +535,7 @@ do {									\
 	 * limit values, we must monitor all limits ourselves
 	 */
 	else if (sed_t->sed_sme->sme_set_limits == NULL)
-		lims.sel_flags &= ~PROP_DRIVER_LIMITS;
+		props &= ~PROP_DRIVER_LIMITS;
 
 	/* Register the events that were specified */
 
@@ -677,9 +676,9 @@ sme_events_worker(struct work *wk, void *arg)
 	}
 
 	DPRINTFOBJ(("%s: (%s) desc=%s sensor=%d type=%d state=%d units=%d "
-	    "value_cur=%d\n", __func__, sme->sme_name, edata->desc,
+	    "value_cur=%d upropset=%d\n", __func__, sme->sme_name, edata->desc,
 	    edata->sensor, see->see_type, edata->state, edata->units,
-	    edata->value_cur));
+	    edata->value_cur, edata->upropset));
 
 	/* skip the event if current sensor is in invalid state */
 	if (edata->state == ENVSYS_SINVALID)
