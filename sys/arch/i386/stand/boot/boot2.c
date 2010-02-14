@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.38.4.1 2009/10/18 16:41:28 bouyer Exp $	*/
+/*	$NetBSD: boot2.c,v 1.38.4.2 2010/02/14 14:01:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -664,11 +664,23 @@ boot2(int biosdev, u_int biossector)
 #else
 		c = awaitkey((bootconf.timeout < 0) ? 0 : bootconf.timeout, 1);
 #endif
-		if ((c != '\r') && (c != '\n') && (c != '\0') &&
-		    ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0
-		     || check_password(boot_params.bp_password))) {
-			printf("type \"?\" or \"help\" for help.\n");
+		if ((c != '\r') && (c != '\n') && (c != '\0')) {
+		    if ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0) {
+			/* do NOT ask for password */
 			bootmenu(); /* does not return */
+		    } else {
+			/* DO ask for password */
+			if (check_password(boot_params.bp_password)) {
+			    /* password ok */
+			    printf("type \"?\" or \"help\" for help.\n");
+			    bootmenu(); /* does not return */
+			} else {
+			    /* bad password */
+			    printf("Wrong password.\n");
+			    currname = 0;
+			    continue;
+			}
+		    }
 		}
 
 		/*
