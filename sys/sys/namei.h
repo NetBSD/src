@@ -1,10 +1,10 @@
-/*	$NetBSD: namei.h,v 1.60.14.2 2008/12/10 21:28:50 snj Exp $	*/
+/*	$NetBSD: namei.h,v 1.60.14.3 2010/02/14 13:30:04 bouyer Exp $	*/
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei)
  *   by:   NetBSD: gennameih.awk,v 1.2 2008/04/30 13:11:00 martin Exp 
- *   from: NetBSD: namei.src,v 1.8.14.1 2008/12/10 21:26:56 snj Exp 
+ *   from: NetBSD: namei.src,v 1.8.14.2 2010/02/14 13:27:45 bouyer Exp 
  */
 
 /*
@@ -143,7 +143,8 @@ struct nameidata {
 #define	DOWHITEOUT	0x0040000	/* do whiteouts */
 #define	REQUIREDIR	0x0080000	/* must be a directory */
 #define	CREATEDIR	0x0200000	/* trailing slashes are ok */
-#define	PARAMASK	0x02fff00	/* mask of parameter descriptors */
+#define	INRENAME	0x0400000	/* operation is a part of ``rename'' */
+#define	PARAMASK	0x06fff00	/* mask of parameter descriptors */
 
 /*
  * Initialization of an nameidata structure.
@@ -271,6 +272,7 @@ extern struct nchstats nchstats;
 #define NAMEI_DOWHITEOUT	0x0040000
 #define NAMEI_REQUIREDIR	0x0080000
 #define NAMEI_CREATEDIR	0x0200000
-#define NAMEI_PARAMASK	0x02fff00
+#define NAMEI_INRENAME	0x0400000
+#define NAMEI_PARAMASK	0x06fff00
 
 #endif /* !_SYS_NAMEI_H_ */
