@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.57 2010/02/01 09:45:04 jruoho Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.58 2010/02/14 23:06:58 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.57 2010/02/01 09:45:04 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.58 2010/02/14 23:06:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ static int	acpitz_get_integer(device_t, const char *, UINT32 *);
 static void	acpitz_tick(void *);
 static void	acpitz_init_envsys(device_t);
 static void	acpitz_get_limits(struct sysmon_envsys *, envsys_data_t *,
-				  sysmon_envsys_lim_t *);
+				  sysmon_envsys_lim_t *, uint32_t *);
 static int	acpitz_get_fanspeed(device_t, UINT32 *, UINT32 *, UINT32 *);
 #ifdef notyet
 static ACPI_STATUS
@@ -712,40 +712,40 @@ out:
 
 static void
 acpitz_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
-		  sysmon_envsys_lim_t *limits)
+		  sysmon_envsys_lim_t *limits, uint32_t *props)
 {
 	struct acpitz_softc *sc = sme->sme_cookie;
 	int i;
 
 	switch (edata->units) {
 	case ENVSYS_STEMP:
-		limits->sel_flags = 0;
+		*props = 0;
 		if (sc->sc_zone.hot != ATZ_TMP_INVALID) {
-			limits->sel_flags |= PROP_CRITMAX;
+			*props |= PROP_CRITMAX;
 			limits->sel_critmax = ATZ2UKELVIN(sc->sc_zone.hot);
 		} else if (sc->sc_zone.crt != ATZ_TMP_INVALID) {
-			limits->sel_flags |= PROP_CRITMAX;
+			*props |= PROP_CRITMAX;
 			limits->sel_critmax = ATZ2UKELVIN(sc->sc_zone.crt);
 		}
 		for (i = 0; i < ATZ_NLEVELS; i++) {
 			if (sc->sc_zone.ac[i] != ATZ_TMP_INVALID) {
 				limits->sel_warnmax =
 				    ATZ2UKELVIN(sc->sc_zone.ac[i]);
-				limits->sel_flags |= PROP_WARNMAX;
+				*props |= PROP_WARNMAX;
 				break;
 			}
 		}
 		break;
 
 	case ENVSYS_SFANRPM:
-		limits->sel_flags = 0;
+		*props = 0;
 		if (sc->sc_zone.fanmin != ATZ_TMP_INVALID) {
-			limits->sel_flags |= PROP_WARNMIN;
+			*props |= PROP_WARNMIN;
 			limits->sel_warnmin = sc->sc_zone.fanmin;
 			sc->sc_fan_sensor.flags |= ENVSYS_FVALID_MIN;
 		}
 		if (sc->sc_zone.fanmax != ATZ_TMP_INVALID) {
-			limits->sel_flags |= PROP_WARNMAX;
+			*props |= PROP_WARNMAX;
 			limits->sel_warnmax = sc->sc_zone.fanmax;
 			sc->sc_fan_sensor.flags |= ENVSYS_FVALID_MAX;
 		}
