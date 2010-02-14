@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.82 2010/02/14 23:06:02 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.83 2010/02/14 23:30:52 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.82 2010/02/14 23:06:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.83 2010/02/14 23:30:52 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -218,125 +218,38 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	/*
 	 * Limit operation requested.
 	 */
-	if (props & PROP_CRITMAX) {
-		objkey = "critical-max";
-		obj = prop_dictionary_get(sdict, objkey);
-		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
-			DPRINTF(("%s: (%s) %s object not TYPE_NUMBER\n",
-			    __func__, sme->sme_name, objkey));
-			error = ENOTSUP;
-		} else {
-			edata->limits.sel_critmax = lims->sel_critmax;
-			error = sme_sensor_upint32(sdict, objkey,
-						   lims->sel_critmax);
-			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "
-			    "(%s updated)\n", __func__, sme->sme_name,
-			    edata->desc, crittype, objkey));
-		}
-		if (error && error != EEXIST)
-			goto out;
-		edata->upropset |= PROP_CRITMAX;
+#define	LIMIT_OP(k, l, p)						\
+	if (props & p) {						\
+		objkey = k;						\
+		obj = prop_dictionary_get(sdict, objkey);		\
+		if (obj != NULL &&					\
+		    prop_object_type(obj) != PROP_TYPE_NUMBER) {	\
+			DPRINTF(("%s: (%s) %s object no TYPE_NUMBER\n",	\
+			    __func__, sme->sme_name, objkey));		\
+			error = ENOTSUP;				\
+		} else {						\
+			edata->limits.l = lims->l;			\
+			error = sme_sensor_upint32(sdict, objkey,lims->l); \
+			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "	\
+			    "(%s updated)\n", __func__, sme->sme_name,	\
+			    edata->desc, crittype, objkey));		\
+		}							\
+		if (error && error != EEXIST)				\
+			goto out;					\
+		edata->upropset |= p;					\
 	}
 
-	if (props & PROP_WARNMAX) {
-		objkey = "warning-max";
-		obj = prop_dictionary_get(sdict, objkey);
-		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
-			DPRINTF(("%s: (%s) %s object not TYPE_NUMBER\n",
-			    __func__, sme->sme_name, objkey));
-			error = ENOTSUP;
-		} else {
-			edata->limits.sel_warnmax = lims->sel_warnmax;
-			error = sme_sensor_upint32(sdict, objkey,
-						   lims->sel_warnmax);
-			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "
-			    "(%s updated)\n", __func__, sme->sme_name,
-			    edata->desc, crittype, objkey));
-		}
-		if (error && error != EEXIST)
-			goto out;
-		edata->upropset |= PROP_WARNMAX;
-	}
+	/* Value-based limits */
+	LIMIT_OP("critical-max", sel_critmax, PROP_CRITMAX);
+	LIMIT_OP("warning-max",  sel_warnmax, PROP_WARNMAX);
+	LIMIT_OP("warning-min",  sel_warnmin, PROP_WARNMIN);
+	LIMIT_OP("critical-min", sel_critmin, PROP_CRITMIN);
 
-	if (props & PROP_WARNMIN) {
-		objkey = "warning-min";
-		obj = prop_dictionary_get(sdict, objkey);
-		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
-			DPRINTF(("%s: (%s) %s object not TYPE_NUMBER\n",
-			    __func__, sme->sme_name, objkey));
-			error = ENOTSUP;
-		} else {
-			edata->limits.sel_warnmin = lims->sel_warnmin;
-			error = sme_sensor_upint32(sdict, objkey,
-						   lims->sel_warnmin);
-			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "
-			    "(%s updated)\n", __func__, sme->sme_name,
-			    edata->desc, crittype, objkey));
-		}
-		if (error && error != EEXIST)
-			goto out;
-		edata->upropset |= PROP_WARNMIN;
-	}
+	/* %Capacity-based limits */
+	LIMIT_OP("warning-capacity",  sel_warnmin,  PROP_BATTWARN);
+	LIMIT_OP("critical-capacity", sel_critmin,  PROP_BATTCAP);
 
-	if (props & PROP_CRITMIN) {
-		objkey = "critical-min";
-		obj = prop_dictionary_get(sdict, objkey);
-		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
-			DPRINTF(("%s: (%s) %s object not TYPE_NUMBER\n",
-			    __func__, sme->sme_name, objkey));
-			error = ENOTSUP;
-		} else {
-			edata->limits.sel_critmin = lims->sel_critmin;
-			error = sme_sensor_upint32(sdict, objkey,
-						   lims->sel_critmin);
-			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "
-			    "(%s updated)\n", __func__, sme->sme_name,
-			    edata->desc, crittype, objkey));
-		}
-		if (error && error != EEXIST)
-			goto out;
-		edata->upropset |= PROP_CRITMIN;
-	}
-
-	if (props & PROP_BATTWARN) {
-		objkey = "warning-capacity";
-		obj = prop_dictionary_get(sdict, objkey);
-		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
-			DPRINTF(("%s: (%s) %s object not TYPE_NUMBER\n",
-			    __func__, sme->sme_name, objkey));
-			error = ENOTSUP;
-		} else {
-			edata->limits.sel_warnmin = lims->sel_warnmin;
-			error = sme_sensor_upint32(sdict, objkey,
-						   lims->sel_warnmin);
-			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "
-			    "(%s updated)\n", __func__, sme->sme_name,
-			    edata->desc, crittype, objkey));
-		}
-		if (error && error != EEXIST)
-			goto out;
-		edata->upropset |= PROP_BATTWARN;
-	}
-
-	if (props & PROP_BATTCAP) {
-		objkey = "critical-capacity";
-		obj = prop_dictionary_get(sdict, objkey);
-		if (obj && prop_object_type(obj) != PROP_TYPE_NUMBER) {
-			DPRINTF(("%s: (%s) %s object not TYPE_NUMBER\n",
-			    __func__, sme->sme_name, objkey));
-			error = ENOTSUP;
-		} else {
-			edata->limits.sel_critmin = lims->sel_critmin;
-			error = sme_sensor_upint32(sdict, objkey,
-						   lims->sel_critmin);
-			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "
-			    "(%s updated)\n", __func__, sme->sme_name,
-			    edata->desc, crittype, objkey));
-		}
-		if (error && error != EEXIST)
-			goto out;
-		edata->upropset |= PROP_BATTCAP;
-	}
+#undef LIMIT_OP
 
 	if (props & PROP_DRIVER_LIMITS)
 		edata->upropset |= PROP_DRIVER_LIMITS;
@@ -734,6 +647,11 @@ sme_events_worker(struct work *wk, void *arg)
 			sysmon_penvsys_event(&see->see_pes, sse[i].event);
 
 		see->see_evsent = edata->state;
+		DPRINTFOBJ(("%s: (%s) desc=%s sensor=%d state=%d send_ev=%d\n",
+		    __func__, sme->sme_name, edata->desc, edata->sensor,
+		    edata->state,
+		    (edata->state == ENVSYS_SVALID) ? PENVSYS_EVENT_NORMAL :
+			sse[i].event));
 
 		break;
 
