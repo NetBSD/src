@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.95 2009/12/10 14:13:50 matt Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.96 2010/02/14 11:09:54 drochner Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.95 2009/12/10 14:13:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.96 2010/02/14 11:09:54 drochner Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -119,7 +119,7 @@ svr4_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __SVR4_NPXCW__;
 	else
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __SVR4_NPXCW__;
-	tf->tf_cs = GSEL(LUCODEBIG_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);
 }
 
 void *
