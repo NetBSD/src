@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.28 2010/01/27 04:36:34 pgoyette Exp $ */
+/* $NetBSD: envsys.h,v 1.29 2010/02/14 23:06:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -51,8 +51,6 @@
  * Thresholds/limits that are being monitored
  */
 struct sysmon_envsys_lim {
-	int32_t		sel_flags;	/* Which limits are valid during
-					 * get_limits()/set_limits calls */
 	int32_t		sel_critmax;
 	int32_t		sel_warnmax;
 	int32_t		sel_warnmin;
