@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.163 2008/07/27 20:12:47 dsl Exp $	*/
+/*	$NetBSD: key.c,v 1.163.4.1 2010/02/14 13:35:44 bouyer Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.163 2008/07/27 20:12:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.163.4.1 2010/02/14 13:35:44 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -8095,7 +8095,7 @@ key_do_init(void)
 	/* initialize key statistics */
 	keystat.getspi_count = 1;
 
-	printf("IPsec: Initialized Security Association Processing.\n");
+	aprint_verbose("IPsec: Initialized Security Association Processing.\n");
 
 	return (0);
 }
