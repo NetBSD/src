@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.1 2010/02/13 08:17:17 snj Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.2 2010/02/14 14:05:07 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -9,3 +9,7 @@ sys/sys/param.h					patched by hand
 	Welcome to 5.0.2_PATCH.
 	[snj]
 
+distrib/pmax/instkernel/Makefile		patch
+
+	Bump the size of the pmax instkernel ramdisk to 2200k.
+	[snj, ticket #1305]
