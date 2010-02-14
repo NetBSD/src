@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.94 2010/02/05 17:44:27 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.95 2010/02/14 23:06:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.94 2010/02/05 17:44:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.95 2010/02/14 23:06:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1720,6 +1720,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 	envsys_data_t *edata;
 	prop_dictionary_t dict, tdict = NULL;
 	prop_object_t obj, obj1, obj2, tobj = NULL;
+	uint32_t props;
 	uint64_t refresh_timo = 0;
 	sysmon_envsys_lim_t lims;
 	int i, error = 0;
@@ -1785,7 +1786,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		if (!prop_string_equals(obj1, obj))
 			continue;
 
-		lims.sel_flags = 0;
+		props = 0;
 
 		/*
 		 * Check if a new description operation was
@@ -1860,7 +1861,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
 			lims.sel_critmin = prop_number_integer_value(obj2);
-			lims.sel_flags |= PROP_BATTCAP;
+			props |= PROP_BATTCAP;
 		}
 
 		/* 
@@ -1870,7 +1871,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
 			lims.sel_warnmin = prop_number_integer_value(obj2);
-			lims.sel_flags |= PROP_BATTWARN;
+			props |= PROP_BATTWARN;
 		}
 
 		/* 
@@ -1880,7 +1881,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
 			lims.sel_critmax = prop_number_integer_value(obj2);
-			lims.sel_flags |= PROP_CRITMAX;
+			props |= PROP_CRITMAX;
 		}
 
 		/* 
@@ -1890,7 +1891,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
 			lims.sel_warnmax = prop_number_integer_value(obj2);
-			lims.sel_flags |= PROP_WARNMAX;
+			props |= PROP_WARNMAX;
 		}
 
 		/* 
@@ -1900,7 +1901,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
 			lims.sel_critmin = prop_number_integer_value(obj2);
-			lims.sel_flags |= PROP_CRITMIN;
+			props |= PROP_CRITMIN;
 		}
 
 		/* 
@@ -1910,27 +1911,24 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
 			lims.sel_warnmin = prop_number_integer_value(obj2);
-			lims.sel_flags |= PROP_WARNMIN;
+			props |= PROP_WARNMIN;
 		}
 
-		if (lims.sel_flags) {
+		if (props) {
 			if (edata->flags & ENVSYS_FMONNOTSUPP) {
 				error = ENOTSUP;
 				goto out;
 			}
 			error = sme_event_register(dict, edata, sme, &lims,
-					      (edata->flags & ENVSYS_FPERCENT)?
+					props,
+					(edata->flags & ENVSYS_FPERCENT)?
 						PENVSYS_EVENT_CAPACITY:
 						PENVSYS_EVENT_LIMITS,
-					      sdt[i].crittype);
+					sdt[i].crittype);
 			if (error == EEXIST)
 				error = 0;
 			if (error) 
 				goto out;
-
-			mutex_enter(&sme->sme_mtx);
-			edata->upropset |= lims.sel_flags;
-			mutex_exit(&sme->sme_mtx);
 		}
 
 		/*

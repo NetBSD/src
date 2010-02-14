@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.30 2010/01/31 21:36:38 martin Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.31 2010/02/14 23:06:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -90,9 +90,9 @@ struct sysmon_envsys {
 	 * with device
 	 */
 	void (*sme_set_limits)(struct sysmon_envsys *, envsys_data_t *,
-			       sysmon_envsys_lim_t *);
+			       sysmon_envsys_lim_t *, uint32_t *);
 	void (*sme_get_limits)(struct sysmon_envsys *, envsys_data_t *,
-			       sysmon_envsys_lim_t *);
+			       sysmon_envsys_lim_t *, uint32_t *);
 
 	struct workqueue *sme_wq;	/* the workqueue for the events */
 	struct callout sme_callout;	/* for the events */
