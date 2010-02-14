@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74.4.1 2009/04/04 17:39:09 snj Exp $	*/
+/*	$NetBSD: pmap.c,v 1.74.4.2 2010/02/14 13:35:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.4.1 2009/04/04 17:39:09 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.4.2 2010/02/14 13:35:44 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1323,7 +1323,7 @@ pmap_bootstrap(vaddr_t kva_start)
 			tlbflush();
 		}
 #if defined(DEBUG)
-		printf("kernel text is mapped with "
+		aprint_normal("kernel text is mapped with "
 		    "%lu large pages and %lu normal pages\n",
 		    (unsigned long)howmany(kva - KERNBASE, NBPD_L2),
 		    (unsigned long)howmany((vaddr_t)&__data_start - kva,
