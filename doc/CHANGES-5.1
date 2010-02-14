@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.195 2010/02/14 13:42:53 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.196 2010/02/14 14:05:54 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16719,4 +16719,40 @@ sys/arch/sparc64/dev/sab.c			1.43, 1.44
 	Allow the RSC to be the console on an E250, by checking for
 	RSC-specific properties, and by not changing the port baud rate.
 	[jdc, ticket #1297]
+
+sys/ufs/ufs/ufs_lookup.c			1.102
+
+	Avoid undefined behavior. Code of the form
+
+	   vput(vp);
+	   error = VFS_VGET(vp->v_mount, ...);
+
+	just isn't right. Because of vnode caching this *probably* never bit
+	anyone, except maybe under very heavy load, but still.
+	[dholland, ticket #1300]
+
+sys/arch/hp700/conf/GENERIC			1.92
+
+	Add USERCONF as per all other GENERIC kernels
+	[skrll, ticket #1301]
+
+sys/dev/usb/ukbd.c				1.104, 1.107
+
+	Fix WSKBD_RAW mode ukbd -> pckbd translation for Pause/Break and
+	Print Screen/Sys Req keys so xf86-input-keyboard can figure out
+	what we want.
+	Additionally, fix dead URL, and add a note that this emulation
+	is not completely identical to a real pckbd.
+	[sborrill, ticket #1303]
+
+sys/arch/i386/stand/boot/boot2.c		1.48
+
+	When a password is set for the bootloader, make it actually inform
+	the user that the password is wrong when the password is entered wrong.
+	[hubertf, ticket #1304]
+
+distrib/pmax/instkernel/Makefile		patch
+
+	Bump the size of the pmax instkernel ramdisk to 2200k.
+	[snj, ticket #1305]
 
