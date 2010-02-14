@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.194 2010/02/04 06:49:53 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.195 2010/02/14 13:42:53 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16669,4 +16669,54 @@ external/bsd/pkg_install/dist/lib/version.h		patch
 	- Ensure that the current pkg_install version is at least as new
 	  as the version used to build the package
 	[joerg, ticket #1298]
+
+sys/kern/vfs_syscalls.c				1.401
+sys/nfs/nfs_serv.c				1.149
+sys/sys/namei.src				1.14
+sys/sys/namei.h					regen
+
+	Define namei flag INRENAME and set it if a lookup operation is part
+	of rename.  This helps with building better asserts for rename in
+	the DELETE lookup ... the RENAME lookup is quite obviously a part
+	of rename.
+	[pooka, ticket #1289]
+
+sys/arch/x86/x86/pmap.c				1.100
+sys/arch/x86/x86/x86_autoconf.c			1.49
+sys/dev/pci/agp_via.c				1.18
+sys/kern/cnmagic.c				1.11
+sys/kern/init_main.c				1.415
+sys/kern/kern_ksyms.c				1.53
+sys/netipsec/ipsec.c				1.47
+sys/netipsec/key.c				1.63
+sys/netkey/key.c				1.176
+
+	Replace more printfs with aprint_normal / aprint_verbose
+	Makes "boot -z" go mostly silent for me.
+	[hubertf, ticket #1290]
+
+sys/opencrypto/cryptodev.c			1.52
+
+	Add missing "break" for CRYPTO_CAST_CBC, and some assorted comment
+	fixes.  openssl(1) checks for CAST (and others) on ~every startup.
+	[hubertf, ticket #1291]
+
+sys/kern/kern_malloc.c				1.128
+
+	Let kernel build when MALLOCLOG is defined but DIAGNOSTIC is not.
+	Else, hitmlog() is defined but not used, which triggers a warning.
+	[hubertf, ticket #1292]
+
+share/man/man9/opencrypto.9			1.9
+
+	Document sysctls
+	[hubertf, ticket #1293]
+
+etc/etc.sparc64/MAKEDEV.conf			1.14
+share/man/man4/man4.sparc64/sab.4		1.4
+sys/arch/sparc64/dev/sab.c			1.43, 1.44
+
+	Allow the RSC to be the console on an E250, by checking for
+	RSC-specific properties, and by not changing the port baud rate.
+	[jdc, ticket #1297]
 
