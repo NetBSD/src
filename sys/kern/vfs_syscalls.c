@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.376.4.4 2009/12/21 09:19:16 sborrill Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.376.4.5 2010/02/14 13:27:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.376.4.4 2009/12/21 09:19:16 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.376.4.5 2010/02/14 13:27:45 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -3317,7 +3317,7 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 	uint32_t saveflag;
 	int error;
 
-	NDINIT(&fromnd, DELETE, LOCKPARENT | SAVESTART | TRYEMULROOT,
+	NDINIT(&fromnd, DELETE, LOCKPARENT | SAVESTART | TRYEMULROOT | INRENAME,
 	    seg, from);
 	if ((error = namei(&fromnd)) != 0)
 		return (error);
@@ -3382,7 +3382,7 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 
 	NDINIT(&tond, RENAME,
 	    LOCKPARENT | LOCKLEAF | NOCACHE | SAVESTART | TRYEMULROOT
-	      | (fvp->v_type == VDIR ? CREATEDIR : 0),
+	      | INRENAME | (fvp->v_type == VDIR ? CREATEDIR : 0),
 	    seg, to);
 	if ((error = namei(&tond)) != 0) {
 		VFS_RENAMELOCK_EXIT(fs);
