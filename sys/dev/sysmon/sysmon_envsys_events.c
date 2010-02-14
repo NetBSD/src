@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.80 2010/02/13 19:34:14 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.81 2010/02/14 16:22:09 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.80 2010/02/13 19:34:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.81 2010/02/14 16:22:09 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -699,7 +699,7 @@ sme_events_worker(struct work *wk, void *arg)
 		((edata->upropset & (valid)) && \
 		 (edata->value_cur rel (edata->limits.lim)))
 
-		if ((edata->limits.sel_flags & PROP_DRIVER_LIMITS) == 0) {
+		if ((edata->upropset & PROP_DRIVER_LIMITS) == 0) {
 			if __EXCEED_LIM(PROP_CRITMIN | PROP_BATTCAP,
 					sel_critmin, <)
 				edata->state = ENVSYS_SCRITUNDER;
