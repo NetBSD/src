@@ -1,4 +1,4 @@
-/*	$NetBSD: atk0110.c,v 1.4 2010/02/11 06:54:57 cnst Exp $	*/
+/*	$NetBSD: atk0110.c,v 1.5 2010/02/14 23:06:58 pgoyette Exp $	*/
 /*	$OpenBSD: atk0110.c,v 1.1 2009/07/23 01:38:16 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.4 2010/02/11 06:54:57 cnst Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.5 2010/02/14 23:06:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ static void aibs_attach(device_t, device_t, void *);
 static int aibs_detach(device_t, int);
 static void aibs_refresh(struct sysmon_envsys *, envsys_data_t *);
 static void aibs_get_limits(struct sysmon_envsys *, envsys_data_t *,
-    sysmon_envsys_lim_t *);
+    sysmon_envsys_lim_t *, uint32_t *);
 
 static void aibs_attach_sif(device_t, enum envsys_units);
 
@@ -355,7 +355,7 @@ aibs_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 static void
 aibs_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
-    sysmon_envsys_lim_t *limits)
+    sysmon_envsys_lim_t *limits, uint32_t *props)
 {
 	struct aibs_softc	*sc = sme->sme_cookie;
 	envsys_data_t		*s = edata;
@@ -389,23 +389,23 @@ aibs_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	case ENVSYS_STEMP:
 		li->sel_critmax = h * 100 * 1000 + 273150000;
 		li->sel_warnmax = l * 100 * 1000 + 273150000;
-		li->sel_flags = PROP_CRITMAX | PROP_WARNMAX;
+		*props = PROP_CRITMAX | PROP_WARNMAX;
 		break;
 	case ENVSYS_SFANRPM:
 		/* some boards have strange limits for fans */
 		if (l == 0) {
 			li->sel_warnmin = h;
-			li->sel_flags = PROP_WARNMIN;
+			*props = PROP_WARNMIN;
 		} else {
 			li->sel_warnmin = l;
 			li->sel_warnmax = h;
-			li->sel_flags = PROP_WARNMIN | PROP_WARNMAX;
+			*props = PROP_WARNMIN | PROP_WARNMAX;
 		}
 		break;
 	case ENVSYS_SVOLTS_DC:
 		li->sel_critmin = l * 1000;
 		li->sel_critmax = h * 1000;
-		li->sel_flags = PROP_CRITMIN | PROP_CRITMAX;
+		*props = PROP_CRITMIN | PROP_CRITMAX;
 		break;
 	default:
 		/* NOTREACHED */
