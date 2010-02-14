@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.35 2008/10/14 15:48:44 tsutsui Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.35.4.1 2010/02/14 13:35:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.35 2008/10/14 15:48:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.35.4.1 2010/02/14 13:35:44 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -473,11 +473,11 @@ cpu_rootconf(void)
 
 	if (booted_wedge) {
 		KASSERT(booted_device != NULL);
-		printf("boot device: %s (%s)\n",
+		aprint_normal("boot device: %s (%s)\n",
 		    device_xname(booted_wedge), device_xname(booted_device));
 		setroot(booted_wedge, 0);
 	} else {
-		printf("boot device: %s\n",
+		aprint_normal("boot device: %s\n",
 		    booted_device ? device_xname(booted_device) : "<unknown>");
 		setroot(booted_device, booted_partition);
 	}

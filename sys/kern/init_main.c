@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.371.2.3 2009/04/04 17:39:10 snj Exp $	*/
+/*	$NetBSD: init_main.c,v 1.371.2.4 2010/02/14 13:35:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.371.2.3 2009/04/04 17:39:10 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.371.2.4 2010/02/14 13:35:43 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -826,7 +826,7 @@ start_init(void *arg)
 			*flagsp++ = '\0';
 			i = flagsp - flags;
 #ifdef DEBUG
-			printf("init: copying out flags `%s' %d\n", flags, i);
+			aprint_normal("init: copying out flags `%s' %d\n", flags, i);
 #endif
 			arg1 = STACK_ALLOC(ucp, i);
 			ucp = STACK_MAX(arg1, i);
@@ -838,7 +838,7 @@ start_init(void *arg)
 		 */
 		i = strlen(path) + 1;
 #ifdef DEBUG
-		printf("init: copying out path `%s' %d\n", path, i);
+		aprint_normal("init: copying out path `%s' %d\n", path, i);
 #else
 		if (boothowto & RB_ASKNAME || path != initpaths[0])
 			printf("init: trying %s\n", path);
