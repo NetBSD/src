@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.44.8.3 2009/05/03 17:24:45 snj Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.44.8.4 2010/02/14 13:36:57 bouyer Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.44.8.3 2009/05/03 17:24:45 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.44.8.4 2010/02/14 13:36:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -572,7 +572,6 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 	 * XXX disabled on NetBSD since 1.6O due to a race condition.
 	 * XXX But crypto_dispatch went to splcrypto() itself!  (And
 	 * XXX now takes the crypto_mtx mutex itself).  We do, however,
-	 *
 	 * XXX need to hold the mutex across the call to cv_wait().
 	 * XXX     (should we arrange for crypto_dispatch to return to
 	 * XXX      us with it held?  it seems quite ugly to do so.)
@@ -586,7 +585,7 @@ eagain:
 	/* 
 	 * If the request was going to be completed by the
 	 * ioctl thread then it would have been done by now.
-	 * Remove the F_USER flag it so crypto_done() is not confused
+	 * Remove the F_USER flag so crypto_done() is not confused
 	 * if the crypto device calls it after this point.
 	 */
 	crp->crp_flags &= ~(CRYPTO_F_USER);
@@ -1470,6 +1469,7 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 		break;
 	case CRYPTO_CAST_CBC:
 		txform = &enc_xform_cast5;
+		break;
 	case CRYPTO_SKIPJACK_CBC:
 		txform = &enc_xform_skipjack;
 		break;
