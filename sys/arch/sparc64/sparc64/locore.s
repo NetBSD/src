@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.314 2010/02/15 07:56:51 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.315 2010/02/15 09:56:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -4360,7 +4360,7 @@ _C_LABEL(endtrapcode):
 
 ENTRY_NOPROFILE(dump_dtlb)
 	clr	%o1
-	add	%o1, (64 * 8), %o3
+	add	%o1, (64 * 8), %o3		! XXX TLB_SIZE
 1:
 	ldxa	[%o1] ASI_DMMU_TLB_TAG, %o2
 	membar	#Sync
@@ -4381,7 +4381,7 @@ ENTRY_NOPROFILE(dump_dtlb)
 
 ENTRY_NOPROFILE(dump_itlb)
 	clr	%o1
-	add	%o1, (64 * 8), %o3
+	add	%o1, (64 * 8), %o3		! XXX TLB_SIZE
 1:
 	ldxa	[%o1] ASI_IMMU_TLB_TAG, %o2
 	membar	#Sync
@@ -4404,7 +4404,7 @@ ENTRY_NOPROFILE(dump_itlb)
 ENTRY_NOPROFILE(print_dtlb)
 	save	%sp, -CC64FSZ, %sp
 	clr	%l1
-	add	%l1, (64 * 8), %l3
+	add	%l1, (64 * 8), %l3		! XXX TLB_SIZE
 	clr	%l2
 1:
 	ldxa	[%l1] ASI_DMMU_TLB_TAG, %o2
@@ -4438,7 +4438,7 @@ ENTRY_NOPROFILE(print_dtlb)
 ENTRY_NOPROFILE(print_itlb)
 	save	%sp, -CC64FSZ, %sp
 	clr	%l1
-	add	%l1, (64 * 8), %l3
+	add	%l1, (64 * 8), %l3		! XXX TLB_SIZE
 	clr	%l2
 1:
 	ldxa	[%l1] ASI_IMMU_TLB_TAG, %o2
@@ -4478,7 +4478,7 @@ ENTRY_NOPROFILE(print_itlb)
 ENTRY_NOPROFILE(print_dtlb)
 	save	%sp, -CC64FSZ, %sp
 	clr	%l1
-	add	%l1, (64 * 8), %l3
+	add	%l1, (64 * 8), %l3		! XXX TLB_SIZE
 	clr	%l2
 1:
 	ldxa	[%l1] ASI_DMMU_TLB_TAG, %o2
@@ -4519,7 +4519,7 @@ ENTRY_NOPROFILE(print_dtlb)
 ENTRY_NOPROFILE(print_itlb)
 	save	%sp, -CC64FSZ, %sp
 	clr	%l1
-	add	%l1, (64 * 8), %l3
+	add	%l1, (64 * 8), %l3		! XXX TLB_SIZE
 	clr	%l2
 1:
 	ldxa	[%l1] ASI_IMMU_TLB_TAG, %o2
@@ -5207,7 +5207,7 @@ ENTRY(sp_tlb_flush_all_us)
 	rdpr	%pstate, %o3
 	andn	%o3, PSTATE_IE, %o4			! disable interrupts
 	wrpr	%o4, 0, %pstate
-	set	(63 * 8), %o0				! last TLB entry
+	set	((TLB_SIZE_SPITFIRE-1) * 8), %o0
 	set	CTX_SECONDARY, %o4
 	ldxa	[%o4] ASI_DMMU, %o4			! save secondary context
 	set	CTX_MASK, %o5
@@ -5242,7 +5242,7 @@ ENTRY(sp_tlb_flush_all_us)
  * now do the IMMU
  */
 
-	set	(63 * 8), %o0				! last TLB entry
+	set	((TLB_SIZE_SPITFIRE-1) * 8), %o0
 
 0:
 	ldxa	[%o0] ASI_IMMU_TLB_TAG, %o2		! fetch the TLB tag
