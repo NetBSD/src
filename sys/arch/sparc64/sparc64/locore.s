@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.315 2010/02/15 09:56:33 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.316 2010/02/15 11:46:54 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -9709,13 +9709,13 @@ _C_LABEL(ssym):
 
 	.globl  _C_LABEL(dlflush_start)
 _C_LABEL(dlflush_start):
-	.xword	dlflush1
-	.xword	dlflush2
-	.xword	dlflush3
-	.xword	dlflush4
-	.xword	0
+	POINTER	dlflush1
+	POINTER	dlflush2
+	POINTER	dlflush3
+	POINTER	dlflush4
+	POINTER	0
 
 	.globl  _C_LABEL(nop_on_us_1_start)
 _C_LABEL(nop_on_us_1_start):
-	.xword	nop_on_us_1
-	.xword	0
+	POINTER	nop_on_us_1
+	POINTER	0
