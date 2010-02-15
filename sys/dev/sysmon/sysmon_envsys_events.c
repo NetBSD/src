@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.83 2010/02/14 23:30:52 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.84 2010/02/15 22:32:04 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.83 2010/02/14 23:30:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.84 2010/02/15 22:32:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -63,6 +63,8 @@ static const struct sme_sensor_event sme_sensor_event[] = {
 	{ ENVSYS_BATTERY_CAPACITY_NORMAL,	PENVSYS_EVENT_NORMAL },
 	{ ENVSYS_BATTERY_CAPACITY_WARNING,	PENVSYS_EVENT_BATT_WARN },
 	{ ENVSYS_BATTERY_CAPACITY_CRITICAL,	PENVSYS_EVENT_BATT_CRIT },
+	{ ENVSYS_BATTERY_CAPACITY_HIGH,		PENVSYS_EVENT_BATT_HIGH },
+	{ ENVSYS_BATTERY_CAPACITY_MAX,		PENVSYS_EVENT_BATT_MAX },
 	{ -1, 					-1 }
 };
 
@@ -137,19 +139,19 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		    __func__, sme->sme_name, edata->desc, crittype));
 
 		see = osee;
-		if (props & PROP_CRITMAX) {
+		if (props & (PROP_CRITMAX | PROP_BATTMAX)) {
 			if (lims->sel_critmax == edata->limits.sel_critmax) {
 				DPRINTF(("%s: type=%d (critmax exists)\n",
 				    __func__, crittype));
 				error = EEXIST;
-				props &= ~PROP_CRITMAX;
+				props &= ~(PROP_CRITMAX | PROP_BATTMAX);
 			}
 		}
-		if (props & PROP_WARNMAX) {
+		if (props & (PROP_WARNMAX | PROP_BATTHIGH)) {
 			if (lims->sel_warnmax == edata->limits.sel_warnmax) {
 				DPRINTF(("%s: warnmax exists\n", __func__));
 				error = EEXIST;
-				props &= ~PROP_WARNMAX;
+				props &= ~(PROP_WARNMAX | PROP_BATTHIGH);
 			}
 		}
 		if (props & (PROP_WARNMIN | PROP_BATTWARN)) {
@@ -246,6 +248,8 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	LIMIT_OP("critical-min", sel_critmin, PROP_CRITMIN);
 
 	/* %Capacity-based limits */
+	LIMIT_OP("maximum-capacity",  sel_critmax,  PROP_BATTMAX);
+	LIMIT_OP("high-capacity",     sel_warnmax,  PROP_BATTHIGH);
 	LIMIT_OP("warning-capacity",  sel_warnmin,  PROP_BATTWARN);
 	LIMIT_OP("critical-capacity", sel_critmin,  PROP_BATTCAP);
 
@@ -618,9 +622,11 @@ sme_events_worker(struct work *wk, void *arg)
 			else if __EXCEED_LIM(PROP_WARNMIN | PROP_BATTWARN, 
 					sel_warnmin, <)
 				edata->state = ENVSYS_SWARNUNDER;
-			else if __EXCEED_LIM(PROP_CRITMAX, sel_critmax, >)
+			else if __EXCEED_LIM(PROP_CRITMAX | PROP_BATTMAX,
+					sel_critmax, >)
 				edata->state = ENVSYS_SCRITOVER;
-			else if __EXCEED_LIM(PROP_WARNMAX, sel_warnmax, >)
+			else if __EXCEED_LIM(PROP_WARNMAX | PROP_BATTHIGH,
+					sel_warnmax, >)
 				edata->state = ENVSYS_SWARNOVER;
 			else
 				edata->state = ENVSYS_SVALID;

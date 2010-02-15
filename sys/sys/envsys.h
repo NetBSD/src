@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.29 2010/02/14 23:06:01 pgoyette Exp $ */
+/* $NetBSD: envsys.h,v 1.30 2010/02/15 22:32:04 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -133,6 +133,8 @@ enum envsys_battery_capacity_states {
 	ENVSYS_BATTERY_CAPACITY_NORMAL	= 1,	/* normal cap in battery */
 	ENVSYS_BATTERY_CAPACITY_WARNING,	/* warning cap in battery */
 	ENVSYS_BATTERY_CAPACITY_CRITICAL,	/* critical cap in battery */
+	ENVSYS_BATTERY_CAPACITY_HIGH,		/* high cap in battery */
+	ENVSYS_BATTERY_CAPACITY_MAX,		/* maximum cap in battery */
 	ENVSYS_BATTERY_CAPACITY_LOW		/* low cap in battery */
 };
 
@@ -167,13 +169,16 @@ enum envsys_battery_capacity_states {
 #define	PROP_WARNMIN		0x0008
 #define	PROP_BATTCAP		0x0010
 #define	PROP_BATTWARN		0x0020
-#define	PROP_DESC		0x0040
-#define	PROP_RFACT		0x0080
+#define	PROP_BATTHIGH		0x0040
+#define	PROP_BATTMAX		0x0080
+#define	PROP_DESC		0x0100
+#define	PROP_RFACT		0x0200
 
 #define	PROP_DRIVER_LIMITS	0x8000
-#define	PROP_CAP_LIMITS		(PROP_BATTCAP | PROP_BATTWARN)
-#define	PROP_VAL_LIMITS		(PROP_CRITMAX | PROP_CRITMIN | \
-				 PROP_WARNMAX | PROP_WARNMIN)
+#define	PROP_CAP_LIMITS		(PROP_BATTCAP  | PROP_BATTWARN | \
+				 PROP_BATTHIGH | PROP_BATTMAX)
+#define	PROP_VAL_LIMITS		(PROP_CRITMAX  | PROP_CRITMIN | \
+				 PROP_WARNMAX  | PROP_WARNMIN)
 #define	PROP_LIMITS		(PROP_CAP_LIMITS | PROP_VAL_LIMITS)
 
 /*
