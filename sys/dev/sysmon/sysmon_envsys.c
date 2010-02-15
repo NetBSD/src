@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.95 2010/02/14 23:06:01 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.96 2010/02/15 22:32:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.95 2010/02/14 23:06:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.96 2010/02/15 22:32:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1061,6 +1061,18 @@ sme_remove_userprops(void)
 				    "warning-capacity");
 				ptype = PENVSYS_EVENT_CAPACITY;
 			}
+
+			if (edata->upropset & PROP_BATTHIGH) {
+				prop_dictionary_remove(sdict,
+				    "high-capacity");
+				ptype = PENVSYS_EVENT_CAPACITY;
+			}
+
+			if (edata->upropset & PROP_BATTMAX) {
+				prop_dictionary_remove(sdict,
+				    "maximum-capacity");
+				ptype = PENVSYS_EVENT_CAPACITY;
+			}
 			if (ptype != 0)
 				sme_event_unregister(sme, edata->desc, ptype);
 
@@ -1872,6 +1884,26 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			targetfound = true;
 			lims.sel_warnmin = prop_number_integer_value(obj2);
 			props |= PROP_BATTWARN;
+		}
+
+		/* 
+		 * did the user want to set a high capacity event?
+		 */
+		obj2 = prop_dictionary_get(udict, "high-capacity");
+		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
+			targetfound = true;
+			lims.sel_warnmin = prop_number_integer_value(obj2);
+			props |= PROP_BATTHIGH;
+		}
+
+		/* 
+		 * did the user want to set a maximum capacity event?
+		 */
+		obj2 = prop_dictionary_get(udict, "maximum-capacity");
+		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
+			targetfound = true;
+			lims.sel_warnmin = prop_number_integer_value(obj2);
+			props |= PROP_BATTMAX;
 		}
 
 		/* 
