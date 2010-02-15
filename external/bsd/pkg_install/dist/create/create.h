@@ -1,4 +1,4 @@
-/* $NetBSD: create.h,v 1.1.1.1.10.2 2009/10/18 16:05:26 bouyer Exp $ */
+/* $NetBSD: create.h,v 1.1.1.1.10.3 2010/02/15 01:01:22 snj Exp $ */
 
 /* from FreeBSD Id: create.h,v 1.13 1997/10/08 07:46:19 charnier Exp */
 
@@ -51,7 +51,6 @@ extern char *BuildInfo;
 extern char *SizePkg;
 extern char *SizeAll;
 extern char *Preserve;
-extern char *SrcDir;
 extern char *realprefix;
 extern char *DefaultOwner;
 extern char *DefaultGroup;
