@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.22 2010/02/01 04:16:19 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.23 2010/02/15 07:36:04 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -128,6 +128,7 @@
 #if defined(MIPS3) && !defined(MIPS3_5900)
 #include <mips/cache_r4k.h>
 #endif
+#include <mips/trap.h>
 
 #include <machine/param.h>
 #include <machine/endian.h>
@@ -573,6 +574,17 @@ MIPSX(slowfault):
 NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
+#ifdef PARANOIA
+	PTR_L	k0, L_ADDR(k1)
+	slt	k0, k0, sp		# k0 = L_ADDR(k1) < sp
+1:	beqz	k0, 1b			# loop forever if false
+	 nop
+	PTR_L	k0, L_ADDR(k1)
+	PTR_ADDU k0, USPACE
+	slt	k0, sp, k0		# k0 = sp < L_ADDP(k1) + USPACE
+2:	beqz	k0, 2b			# loop forever if false
+	 nop
+#endif /* PARANOIA
 /*
  * Save the relevant kernel registers onto the stack.
  * We don't need to save s0 - s8, sp and gp because
@@ -628,25 +640,48 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 #if defined(__mips_n32) || defined(__mips_n64)
 	PTR_ADDU a4, sp, TF_BASE		# 5th arg is p. to trapframe
 #endif
-#ifdef IPL_ICU_MASK
-	.set at
-	INT_L	v0, _C_LABEL(md_imask)
-	INT_S	v0, TF_BASE+TF_PPL(sp)
-	nop
-	.set noat
-#endif
-/*
- * Call the trap handler.
- */
+#ifdef PARANOIA
+	/*
+	 * save PPL in trapframe
+	 */
+	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	INT_L	t1, CPU_INFO_CPL(t0)		# get current priority level
+	INT_S	t1, TF_BASE+TF_PPL(sp)		# save priority level
+#endif /* PARANOIA */
+
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	PTR_ADDU v0, sp, KERNFRAME_SIZ
 	REG_S	v0, KERNFRAME_SP(sp)
 #endif
-	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
+
+#ifdef PARANOIA
+	/*
+	 * Verify our existing interrupt level.
+	 */
+	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLCHECK
+	jalr	t9
+	 nop
+#endif /* PARANOIA */
+
+	/*
+	 * We need to find out if this was due to a T_BREAK and if so
+	 * turn off interrupts in addition to clearing the execption level.
+	 */
+	li	v1, 1 << T_BREAK		# make a mask of T_BREAK
+	sll	t0, a1, MIPS_CR_EXC_CODE_SHIFT	# shift exc code to low 5 bits
+	srl	v1, t0				# shift break mask using it
+	and	v1, MIPS_SR_INT_IE		# restrict to IE bit
+	or	v1, MIPS_SR_EXL			# or in EXL bit
+	and	v1, a0				# extract bits from status
+	xor	v0, a0, v1 			# generate new status
+	mtc0	v0, MIPS_COP_0_STATUS		# update.
 	COP0_SYNC
 	nop
 	nop
 	nop
+	/*
+	 * Call the trap handler.
+	 */
 	jal	_C_LABEL(trap)			#
 	REG_S	a3, KERNFRAME_RA(sp)		# for debugging
 
@@ -658,15 +693,7 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	nop					# 3 nop delay
 	nop
 	nop
-#ifdef IPL_ICU_MASK
-	.set at
-	INT_L	a0, TF_BASE+TF_PPL(sp)
-	INT_S	a0, _C_LABEL(md_imask)
-	jal	_C_LABEL(md_imask_update)
-	nop
-	.set noat
-#endif
-	REG_L	a0, TF_BASE+TF_REG_SR(sp)	# ??? why differs ???
+	REG_L	a0, TF_BASE+TF_REG_SR(sp)	# get SR with EXL set
 	REG_L	t0, TF_BASE+TF_REG_MULLO(sp)
 	REG_L	t1, TF_BASE+TF_REG_MULHI(sp)
 	REG_L	k1, TF_BASE+TF_REG_EPC(sp)	# might be changed inside trap
@@ -681,13 +708,29 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	ori	t0, zero, %lo(_C_LABEL(_lock_ras_start))
 	li	t1, -MIPS_LOCK_RAS_SIZE
 	and	t1, t1, k1
-	bne	t1, t0, 1f
+	bne	t1, t0, 3f
 	jal	_C_LABEL(_lock_ras)
 	nop
 #endif
 
-1:	_MTC0	k1, MIPS_COP_0_EXC_PC		# set return address
+3:	_MTC0	k1, MIPS_COP_0_EXC_PC		# set return address
 	COP0_SYNC
+
+#ifdef PARANOIA
+	INT_L	t2, TF_BASE+TF_PPL(sp)		# get saved priority level
+	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	INT_L	t1, CPU_INFO_CPL(t0)		# get current priority level
+11:	bne	t2, t1, 11b			# loop forever if unequal
+	 nop
+
+	/*
+	 * Verify our existing interrupt level.
+	 */
+	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLCHECK
+	jalr	t9
+	 nop
+#endif /* PARANOIA */
+
 	REG_L	AT, TF_BASE+TF_REG_AST(sp)
 	REG_L	v0, TF_BASE+TF_REG_V0(sp)
 	REG_L	v1, TF_BASE+TF_REG_V1(sp)
@@ -707,15 +750,15 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	REG_L	t9, TF_BASE+TF_REG_T9(sp)
 	REG_L	ra, TF_BASE+TF_REG_RA(sp)
 #ifdef DDBnotyet
-	REG_L	s0, TF_BASE+TF_REG_S0(k0)
-	REG_L	s1, TF_BASE+TF_REG_S1(k0)
-	REG_L	s2, TF_BASE+TF_REG_S2(k0)
-	REG_L	s3, TF_BASE+TF_REG_S3(k0)
-	REG_L	s4, TF_BASE+TF_REG_S4(k0)
-	REG_L	s5, TF_BASE+TF_REG_S5(k0)
-	REG_L	s6, TF_BASE+TF_REG_S6(k0)
-	REG_L	s7, TF_BASE+TF_REG_S7(k0)
-	REG_L	s8, TF_BASE+TF_REG_S8(k0)
+	REG_L	s0, TF_BASE+TF_REG_S0(sp)
+	REG_L	s1, TF_BASE+TF_REG_S1(sp)
+	REG_L	s2, TF_BASE+TF_REG_S2(sp)
+	REG_L	s3, TF_BASE+TF_REG_S3(sp)
+	REG_L	s4, TF_BASE+TF_REG_S4(sp)
+	REG_L	s5, TF_BASE+TF_REG_S5(sp)
+	REG_L	s6, TF_BASE+TF_REG_S6(sp)
+	REG_L	s7, TF_BASE+TF_REG_S7(sp)
+	REG_L	s8, TF_BASE+TF_REG_S8(sp)
 #endif
 	PTR_ADDU sp, sp, KERNFRAME_SIZ
 	eret					# return to interrupted point
@@ -739,152 +782,85 @@ NESTED_NOPROFILE(MIPSX(user_gen_exception), CALLFRAME_SIZ, ra)
  */
 	/* K1 already has CURLWP */
 	PTR_L	k0, L_ADDR(k1)
-	PTR_ADDU k0, k0, USPACE - TF_SIZ
-	REG_S	AT, TF_REG_AST(k0)
-	REG_S	v0, TF_REG_V0(k0)
-	REG_S	v1, TF_REG_V1(k0)
+	PTR_ADDU k0, k0, USPACE - TF_SIZ - CALLFRAME_SIZ
+	REG_S	AT, CALLFRAME_SIZ+TF_REG_AST(k0)
+	REG_S	v0, CALLFRAME_SIZ+TF_REG_V0(k0)
+	REG_S	v1, CALLFRAME_SIZ+TF_REG_V1(k0)
 	mflo	v0
-	REG_S	a0, TF_REG_A0(k0)
-	REG_S	a1, TF_REG_A1(k0)
-	REG_S	a2, TF_REG_A2(k0)
-	REG_S	a3, TF_REG_A3(k0)
+	REG_S	a0, CALLFRAME_SIZ+TF_REG_A0(k0)
+	REG_S	a1, CALLFRAME_SIZ+TF_REG_A1(k0)
+	REG_S	a2, CALLFRAME_SIZ+TF_REG_A2(k0)
+	REG_S	a3, CALLFRAME_SIZ+TF_REG_A3(k0)
 	mfhi	v1
-	REG_S	t0, TF_REG_T0(k0)
-	REG_S	t1, TF_REG_T1(k0)
-	REG_S	t2, TF_REG_T2(k0)
-	REG_S	t3, TF_REG_T3(k0)
+	REG_S	t0, CALLFRAME_SIZ+TF_REG_T0(k0)
+	REG_S	t1, CALLFRAME_SIZ+TF_REG_T1(k0)
+	REG_S	t2, CALLFRAME_SIZ+TF_REG_T2(k0)
+	REG_S	t3, CALLFRAME_SIZ+TF_REG_T3(k0)
 	mfc0	a0, MIPS_COP_0_STATUS		# 1st arg is STATUS
-	REG_S	ta0, TF_REG_TA0(k0)
-	REG_S	ta1, TF_REG_TA1(k0)
-	REG_S	ta2, TF_REG_TA2(k0)
-	REG_S	ta3, TF_REG_TA3(k0)
+	REG_S	ta0, CALLFRAME_SIZ+TF_REG_TA0(k0)
+	REG_S	ta1, CALLFRAME_SIZ+TF_REG_TA1(k0)
+	REG_S	ta2, CALLFRAME_SIZ+TF_REG_TA2(k0)
+	REG_S	ta3, CALLFRAME_SIZ+TF_REG_TA3(k0)
 	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
-	REG_S	s0, TF_REG_S0(k0)
-	REG_S	s1, TF_REG_S1(k0)
-	REG_S	s2, TF_REG_S2(k0)
-	REG_S	s3, TF_REG_S3(k0)
+	REG_S	s0, CALLFRAME_SIZ+TF_REG_S0(k0)
+	REG_S	s1, CALLFRAME_SIZ+TF_REG_S1(k0)
+	REG_S	s2, CALLFRAME_SIZ+TF_REG_S2(k0)
+	REG_S	s3, CALLFRAME_SIZ+TF_REG_S3(k0)
 	_MFC0	a2, MIPS_COP_0_BAD_VADDR	# 3rd arg is fault address
-	REG_S	s4, TF_REG_S4(k0)
-	REG_S	s5, TF_REG_S5(k0)
-	REG_S	s6, TF_REG_S6(k0)
-	REG_S	s7, TF_REG_S7(k0)
+	REG_S	s4, CALLFRAME_SIZ+TF_REG_S4(k0)
+	REG_S	s5, CALLFRAME_SIZ+TF_REG_S5(k0)
+	REG_S	s6, CALLFRAME_SIZ+TF_REG_S6(k0)
+	REG_S	s7, CALLFRAME_SIZ+TF_REG_S7(k0)
 	_MFC0	a3, MIPS_COP_0_EXC_PC		# 4th arg is exception PC
-	REG_S	t8, TF_REG_T8(k0)
-	REG_S	t9, TF_REG_T9(k0)
-	REG_S	gp, TF_REG_GP(k0)
-	REG_S	sp, TF_REG_SP(k0)
-	REG_S	s8, TF_REG_S8(k0)
-	REG_S	ra, TF_REG_RA(k0)
-	REG_S	a0, TF_REG_SR(k0)
-	REG_S	v0, TF_REG_MULLO(k0)
-	REG_S	v1, TF_REG_MULHI(k0)
-	REG_S	a3, TF_REG_EPC(k0)
-#ifdef IPL_ICU_MASK
-	.set at
-	INT_L	t0, _C_LABEL(md_imask)
-	INT_S	t0, TF_PPL(k0)
-	.set noat
-#endif
-	PTR_ADDU sp, k0, -CALLFRAME_SIZ		# switch to kernel SP
+	REG_S	t8, CALLFRAME_SIZ+TF_REG_T8(k0)
+	REG_S	t9, CALLFRAME_SIZ+TF_REG_T9(k0)
+	REG_S	gp, CALLFRAME_SIZ+TF_REG_GP(k0)
+	REG_S	sp, CALLFRAME_SIZ+TF_REG_SP(k0)
+	REG_S	s8, CALLFRAME_SIZ+TF_REG_S8(k0)
+	REG_S	ra, CALLFRAME_SIZ+TF_REG_RA(k0)
+	REG_S	a0, CALLFRAME_SIZ+TF_REG_SR(k0)
+	REG_S	v0, CALLFRAME_SIZ+TF_REG_MULLO(k0)
+	REG_S	v1, CALLFRAME_SIZ+TF_REG_MULHI(k0)
+	REG_S	a3, CALLFRAME_SIZ+TF_REG_EPC(k0)
 #ifdef __GP_SUPPORT__
 	PTR_LA	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
-/*
- * Turn off fpu and enter kernel mode
- */
-	.set	at
-	and	t0, a0, ~(MIPS_SR_COP_1_BIT | MIPS_SR_EXL | MIPS_SR_KSU_MASK | MIPS_SR_INT_IE)
-	.set	noat
+	move	sp, k0
+	move	MIPS_CURLWP, k1
+#ifdef NOFPU
+	/*
+	 * enter kernel mode
+	 */
+	and	t0, a0, MIPS_SR_EXL|MIPS_SR_KSU_MASK # bits to clear
+	xor	t0, a0				# clear them.
+#else
+	/*
+	 * Turn off FPU and enter kernel mode
+	 */
+	lui	t0, %hi(~(MIPS_SR_COP_1_BIT|MIPS_SR_EXL|MIPS_SR_KSU_MASK))
+	ori	t0, %lo(~(MIPS_SR_COP_1_BIT|MIPS_SR_EXL|MIPS_SR_KSU_MASK))
+	and	t0, a0
+#endif
 /*
  * Call the trap handler.
  */
-	move	MIPS_CURLWP, k1
 	mtc0	t0, MIPS_COP_0_STATUS
 	COP0_SYNC
+
 	jal	_C_LABEL(trap)
-	REG_S	a3, CALLFRAME_RA(sp)		# for debugging
+	 REG_S	a3, CALLFRAME_RA(sp)		# for debugging
 /*
  * Check pending asynchronous traps.
  */
 	INT_L	t0, L_MD_ASTPENDING(MIPS_CURLWP)
-	beq	t0, zero, 1f
-	nop
+	beq	t0, zero, MIPSX(user_return)
+	 nop
 /*
  * We have pending asynchronous traps; all the state is already saved.
  */
-	jal	_C_LABEL(ast)
-	REG_L	a0, CALLFRAME_SIZ + TF_REG_EPC(sp)
-1:
-/*
- * Restore user registers and return.
- * First disable interrupts and set exception level.
- */
-	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
-	COP0_SYNC
-	nop					# 3 clock delay before
-	nop					# exceptions blocked
-	nop					# for R4X
-	SET_EXCEPTION_LEVEL(v0)			# set exception level
-	COP0_SYNC
-	nop					# 3 nop delay
-	nop
-	nop
-	PTR_ADDU a1, sp, CALLFRAME_SIZ
-#ifdef IPL_ICU_MASK
-	.set at
-	INT_L	t0, TF_PPL(a1)
-	INT_S	t0, _C_LABEL(md_imask)
-	jal	_C_LABEL(md_imask_update)
-	nop
-	PTR_ADDU a1, sp, CALLFRAME_SIZ
-	.set noat
-#endif
- #	REG_L	a0, TF_REG_SR(a1)
-	REG_L	t0, TF_REG_MULLO(a1)
-	REG_L	t1, TF_REG_MULHI(a1)
-	REG_L	v0, TF_REG_EPC(a1)
- #	mtc0	a0, MIPS_COP_0_STATUS		# still exception level
-	mtlo	t0
-	mthi	t1
-	_MTC0	v0, MIPS_COP_0_EXC_PC		# set return address
-	COP0_SYNC
-	move	k1, a1
-	REG_L	AT, TF_REG_AST(k1)
-	REG_L	v0, TF_REG_V0(k1)
-	REG_L	v1, TF_REG_V1(k1)
-	REG_L	a0, TF_REG_A0(k1)
-	REG_L	a1, TF_REG_A1(k1)
-	REG_L	a2, TF_REG_A2(k1)
-	REG_L	a3, TF_REG_A3(k1)
-	REG_L	t0, TF_REG_T0(k1)
-	REG_L	t1, TF_REG_T1(k1)
-	REG_L	t2, TF_REG_T2(k1)
-	REG_L	t3, TF_REG_T3(k1)
-	REG_L	ta0, TF_REG_TA0(k1)
-	REG_L	ta1, TF_REG_TA1(k1)
-	REG_L	ta2, TF_REG_TA2(k1)
-	REG_L	ta3, TF_REG_TA3(k1)
-	REG_L	s0, TF_REG_S0(k1)
-	REG_L	s1, TF_REG_S1(k1)
-	REG_L	s2, TF_REG_S2(k1)
-	REG_L	s3, TF_REG_S3(k1)
-	REG_L	s4, TF_REG_S4(k1)
-	REG_L	s5, TF_REG_S5(k1)
-	REG_L	s6, TF_REG_S6(k1)
-	REG_L	s7, TF_REG_S7(k1)
-	REG_L	t8, TF_REG_T8(k1)
-	REG_L	t9, TF_REG_T9(k1)
-	REG_L	k0, TF_REG_SR(k1)
-	DYNAMIC_STATUS_MASK_TOUSER(k0, ra)	# machine dependent masking
-	REG_L	gp, TF_REG_GP(k1)
-	REG_L	sp, TF_REG_SP(k1)
-	REG_L	s8, TF_REG_S8(k1)
-	REG_L	ra, TF_REG_RA(k1)
-	mtc0	k0, MIPS_COP_0_STATUS		# restore status
-	COP0_SYNC
-	nop
-	nop
-	eret					# return to interrupted point
+	PTR_LA	ra, MIPSX(user_return)
+	j	_C_LABEL(ast)
+	 nop
 	.set	at
 END(MIPSX(user_gen_exception))
 
@@ -901,178 +877,94 @@ NESTED_NOPROFILE(MIPSX(systemcall), CALLFRAME_SIZ, ra)
 	/* k1 already cpulwp */
 	PTR_L	k0, L_ADDR(k1)
 	#nop					# -slip-
-	PTR_ADDU k0, k0, USPACE - TF_SIZ
-	#REG_S	AT, TF_REG_AST(k0)
-	REG_S	v0, TF_REG_V0(k0)		# syscall #
-	REG_S	v1, TF_REG_V1(k0)		# used by syscall()
+	PTR_ADDU k0, k0, USPACE - TF_SIZ - CALLFRAME_SIZ
+	REG_S	AT, CALLFRAME_SIZ+TF_REG_AST(k0)
+	REG_S	v0, CALLFRAME_SIZ+TF_REG_V0(k0)		# syscall #
+	REG_S	v1, CALLFRAME_SIZ+TF_REG_V1(k0)		# used by syscall()
 	mflo	v0
-	REG_S	a0, TF_REG_A0(k0)
-	REG_S	a1, TF_REG_A1(k0)
-	REG_S	a2, TF_REG_A2(k0)
-	REG_S	a3, TF_REG_A3(k0)
+	REG_S	a0, CALLFRAME_SIZ+TF_REG_A0(k0)
+	REG_S	a1, CALLFRAME_SIZ+TF_REG_A1(k0)
+	REG_S	a2, CALLFRAME_SIZ+TF_REG_A2(k0)
+	REG_S	a3, CALLFRAME_SIZ+TF_REG_A3(k0)
 	move	a0, k1				# 1st arg is curlwp
 	mfhi	v1
 	mfc0	a2, MIPS_COP_0_CAUSE		# 3rd arg is CAUSE
-	REG_S	s0, TF_REG_S0(k0)
-	REG_S	s1, TF_REG_S1(k0)
-	REG_S	s2, TF_REG_S2(k0)
-	REG_S	s3, TF_REG_S3(k0)
+	REG_S	s0, CALLFRAME_SIZ+TF_REG_S0(k0)
+	REG_S	s1, CALLFRAME_SIZ+TF_REG_S1(k0)
+	REG_S	s2, CALLFRAME_SIZ+TF_REG_S2(k0)
+	REG_S	s3, CALLFRAME_SIZ+TF_REG_S3(k0)
 	_MFC0	a3, MIPS_COP_0_EXC_PC		# 4th arg is PC
-	REG_S	s4, TF_REG_S4(k0)
-	REG_S	s5, TF_REG_S5(k0)
-	REG_S	s6, TF_REG_S6(k0)
-	REG_S	s7, TF_REG_S7(k0)
-	move	s0, t0				# since the saved registers have
-	move	s1, t1				# been saved we can use them to
-	move	s2, t2				# stash most of temporary regs
-	REG_S	t3, TF_REG_T3(k0)		# syscall saved gp for fork
+	REG_S	s4, CALLFRAME_SIZ+TF_REG_S4(k0)
+	REG_S	s5, CALLFRAME_SIZ+TF_REG_S5(k0)
+	REG_S	s6, CALLFRAME_SIZ+TF_REG_S6(k0)
+	REG_S	s7, CALLFRAME_SIZ+TF_REG_S7(k0)
+	REG_S	t0, CALLFRAME_SIZ+TF_REG_T0(k0)
+	REG_S	t1, CALLFRAME_SIZ+TF_REG_T1(k0)
+	REG_S	t2, CALLFRAME_SIZ+TF_REG_T2(k0)
+	REG_S	t3, CALLFRAME_SIZ+TF_REG_T3(k0)		# syscall saved gp for fork
 	mfc0	a1, MIPS_COP_0_STATUS		# 2nd arg is STATUS
 #if defined(__mips_n32) || defined(__mips_n64)
-	REG_S	a4, TF_REG_A4(k0)
-	REG_S	a5, TF_REG_A5(k0)
-	REG_S	a6, TF_REG_A6(k0)
-	REG_S	a7, TF_REG_A7(k0)
+	REG_S	a4, CALLFRAME_SIZ+TF_REG_A4(k0)
+	REG_S	a5, CALLFRAME_SIZ+TF_REG_A5(k0)
+	REG_S	a6, CALLFRAME_SIZ+TF_REG_A6(k0)
+	REG_S	a7, CALLFRAME_SIZ+TF_REG_A7(k0)
 #else
-	move	s4, ta0
-	move	s5, ta1
-	move	s6, ta2
-	move	s7, ta3
+	REG_S	ta0, CALLFRAME_SIZ+TF_REG_TA0(k0)
+	REG_S	ta1, CALLFRAME_SIZ+TF_REG_TA1(k0)
+	REG_S	ta2, CALLFRAME_SIZ+TF_REG_TA2(k0)
+	REG_S	ta3, CALLFRAME_SIZ+TF_REG_TA3(k0)
 #endif
-	#REG_S	t8, TF_REG_T8(k0)
-	#REG_S	t9, TF_REG_T9(k0)
-	REG_S	gp, TF_REG_GP(k0)
-	REG_S	sp, TF_REG_SP(k0)
-	REG_S	s8, TF_REG_S8(k0)
-	REG_S	ra, TF_REG_RA(k0)
-	REG_S	a1, TF_REG_SR(k0)
-	REG_S	v0, TF_REG_MULLO(k0)
-	REG_S	v1, TF_REG_MULHI(k0)
-	REG_S	a3, TF_REG_EPC(k0)
-#ifdef IPL_ICU_MASK
-	.set at
-	INT_L	t0, _C_LABEL(md_imask)
-	INT_S	t0, TF_PPL(k0)
-	.set noat
-#endif
+	REG_S	t8, CALLFRAME_SIZ+TF_REG_T8(k0)
+	REG_S	t9, CALLFRAME_SIZ+TF_REG_T9(k0)
+	REG_S	gp, CALLFRAME_SIZ+TF_REG_GP(k0)
+	REG_S	sp, CALLFRAME_SIZ+TF_REG_SP(k0)
+	REG_S	s8, CALLFRAME_SIZ+TF_REG_S8(k0)
+	REG_S	ra, CALLFRAME_SIZ+TF_REG_RA(k0)
+	REG_S	a1, CALLFRAME_SIZ+TF_REG_SR(k0)
+	REG_S	v0, CALLFRAME_SIZ+TF_REG_MULLO(k0)
+	REG_S	v1, CALLFRAME_SIZ+TF_REG_MULHI(k0)
+	REG_S	a3, CALLFRAME_SIZ+TF_REG_EPC(k0)
 	PTR_L	t0, L_PROC(a0)			# curlwp->l_proc (used below)
+	move	sp, k0
 	move	MIPS_CURLWP, a0			# set curlwp reg
-	PTR_ADDU sp, k0, -CALLFRAME_SIZ
 #ifdef __GP_SUPPORT__
 	PTR_LA	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
-/*
- * Turn off fpu and enter kernel mode
- */
-	.set	at
-	PTR_L	t1, P_MD_SYSCALL(t0)		# t1 = syscall
-	and	t0, a1, ~(MIPS_SR_COP_1_BIT | MIPS_SR_EXL | MIPS_SR_KSU_MASK)
-	.set	noat
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	move	ra, a3
 	REG_S	ra, CALLFRAME_RA(sp)
 #endif
 /*
- * Call the system call handler.
+ * Turn off fpu and enter kernel mode
  */
+	PTR_L	t9, P_MD_SYSCALL(t0)		# t1 = syscall
+#ifdef NOFPU
+	and	t0, a1, MIPS_SR_EXL|MIPS_SR_KSU_MASK
+	xor	t0, a1
+#else
+	lui	t0, %hi(~(MIPS_SR_COP_1_BIT|MIPS_SR_EXL|MIPS_SR_KSU_MASK))
+	ori	t0, %lo(~(MIPS_SR_COP_1_BIT|MIPS_SR_EXL|MIPS_SR_KSU_MASK))
+	and	t0, a1
+#endif
 	mtc0	t0, MIPS_COP_0_STATUS		# re-enable interrupts
 	COP0_SYNC
-	jal	t1
+/*
+ * Call the system call handler.
+ */
+	jal	t9
 	nop
 /*
  * Check pending asynchronous traps.
  */
 	INT_L	t0, L_MD_ASTPENDING(MIPS_CURLWP)
-	beq	t0, zero, 1f
-	nop
+	beq	t0, zero, MIPSX(user_return)
+	 nop
 /*
  * We have pending asynchronous traps; all the state is already saved.
  */
-	jal	_C_LABEL(ast)
-	PTR_L	a0, CALLFRAME_SIZ + TF_REG_EPC(sp)
-1:
-/*
- * Restore user registers and return.
- * First disable interrupts and set exception level.
- */
-	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
-	COP0_SYNC
-	nop					# 3 op delay
-	nop
-	nop
-
-	SET_EXCEPTION_LEVEL(v0)			# set exception level
-	COP0_SYNC
-	nop					# 3 op delay
-	nop
-	nop
-/*
- * Restore user registers and return.
- */
-	PTR_ADDU a1, sp, CALLFRAME_SIZ
-#ifdef IPL_ICU_MASK
-	.set at
-	INT_L	t0, TF_PPL(a1)
-	INT_S	t0, _C_LABEL(md_imask)
-	jal	_C_LABEL(md_imask_update)
-	nop
-	PTR_ADDU a1, sp, CALLFRAME_SIZ
-	.set noat
-#endif
- #	REG_L	a0, TF_REG_SR(a1)
-	REG_L	t0, TF_REG_MULLO(a1)
-	REG_L	t1, TF_REG_MULHI(a1)
-	REG_L	v0, TF_REG_EPC(a1)		# might be changed in syscall
- #	mtc0	a0, MIPS_COP_0_STATUS		# this should disable interrupts
-	mtlo	t0
-	mthi	t1
-	_MTC0	v0, MIPS_COP_0_EXC_PC		# set return address
-	COP0_SYNC
-	move	k1, a1
-	REG_L	AT, TF_REG_AST(k1)
-	REG_L	v0, TF_REG_V0(k1)
-	REG_L	v1, TF_REG_V1(k1)
-	REG_L	a0, TF_REG_A0(k1)
-	REG_L	a1, TF_REG_A1(k1)
-	REG_L	a2, TF_REG_A2(k1)
-	REG_L	a3, TF_REG_A3(k1)
-	move	t0, s0			# restore the temps
-	move	t1, s1
-	move	t2, s2
-	REG_L	t3, TF_REG_T3(k1)	# restore the syscall saved gp
-#if defined(__mips_n32) || defined(__mips_n64)
-	REG_L	a4, TF_REG_A4(k1)
-	REG_L	a5, TF_REG_A5(k1)
-	REG_L	a6, TF_REG_A6(k1)
-	REG_L	a7, TF_REG_A7(k1)
-#else
-	move	ta0, s4
-	move	ta1, s5
-	move	ta2, s6
-	move	ta3, s7
-#endif
-	REG_L	s0, TF_REG_S0(k1)
-	REG_L	s1, TF_REG_S1(k1)
-	REG_L	s2, TF_REG_S2(k1)
-	REG_L	s3, TF_REG_S3(k1)
-	REG_L	s4, TF_REG_S4(k1)
-	REG_L	s5, TF_REG_S5(k1)
-	REG_L	s6, TF_REG_S6(k1)
-	REG_L	s7, TF_REG_S7(k1)
-	REG_L	t8, TF_REG_T8(k1)
-	REG_L	t9, TF_REG_T9(k1)
-	REG_L	k0, TF_REG_SR(k1)
-	DYNAMIC_STATUS_MASK_TOUSER(k0, ra)	# machine dependent masking
-	REG_L	gp, TF_REG_GP(k1)
-	REG_L	sp, TF_REG_SP(k1)
-	REG_L	s8, TF_REG_S8(k1)
-	REG_L	ra, TF_REG_RA(k1)
-	mtc0	k0, MIPS_COP_0_STATUS
-	COP0_SYNC
-	nop
-	nop
-	nop
-
-	eret					# return to syscall point
+	PTR_LA	ra, MIPSX(user_return)
+	j	_C_LABEL(ast)
+	 nop
 	.set	at
 END(MIPSX(systemcall))
 
@@ -1140,15 +1032,28 @@ END(MIPSX(cache_exception))
 NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
-	/*
-	 * curlwp is in k1
-	 */
-	PTR_SUBU sp, sp, KERNFRAME_SIZ
+#ifdef PARANOIA
+	PTR_L	k0, L_ADDR(k1)
+	slt	k0, k0, sp			# k0 = L_ADDR(k1) < sp
+1:	beqz	k0, 1b				# loop forever if false
+	 nop
+	PTR_L	k0, L_ADDR(k1)
+	PTR_ADDU k0, USPACE
+	slt	k0, sp, k0			# k0 = sp < L_ADDR(k1) + USPACE
+2:	beqz	k0, 2b				# loop forever if false
+	 nop
+	PTR_L	k0, L_CPU(k1)
+	INT_L	k0, CPU_INFO_IDEPTH(k0)		# grab interrupt depth
+	sltu	k0, k0, 3			# must be < 3
+3:	beqz	k0, 3b				# loop forever if false
+	 nop
+#endif
 /*
  * Save the relevant kernel registers onto the stack.
  * We don't need to save s0 - s8, sp and gp because
  * the compiler does it for us.
  */
+	PTR_SUBU sp, sp, KERNFRAME_SIZ
 	REG_S	AT, TF_BASE+TF_REG_AST(sp)
 	REG_S	v0, TF_BASE+TF_REG_V0(sp)
 	REG_S	v1, TF_BASE+TF_REG_V1(sp)
@@ -1158,67 +1063,184 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	REG_S	a1, TF_BASE+TF_REG_A1(sp)
 	REG_S	a2, TF_BASE+TF_REG_A2(sp)
 	REG_S	a3, TF_BASE+TF_REG_A3(sp)
-	mfc0	a0, MIPS_COP_0_STATUS		# 1st arg is STATUS
 	REG_S	t0, TF_BASE+TF_REG_T0(sp)
 	REG_S	t1, TF_BASE+TF_REG_T1(sp)
 	REG_S	t2, TF_BASE+TF_REG_T2(sp)
 	REG_S	t3, TF_BASE+TF_REG_T3(sp)
-	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
 	REG_S	ta0, TF_BASE+TF_REG_TA0(sp)
 	REG_S	ta1, TF_BASE+TF_REG_TA1(sp)
 	REG_S	ta2, TF_BASE+TF_REG_TA2(sp)
 	REG_S	ta3, TF_BASE+TF_REG_TA3(sp)
-	_MFC0	a2, MIPS_COP_0_EXC_PC		# 3rd arg is exception PC
+	REG_S	s0, TF_BASE+TF_REG_S0(sp)	# s0 is used for saved ipl
+	REG_S	s1, TF_BASE+TF_REG_S1(sp)	# s1 is used for initial status
+	mfc0	s1, MIPS_COP_0_STATUS
 	REG_S	t8, TF_BASE+TF_REG_T8(sp)
 	REG_S	t9, TF_BASE+TF_REG_T9(sp)
 	REG_S	ra, TF_BASE+TF_REG_RA(sp)
 	REG_S	a0, TF_BASE+TF_REG_SR(sp)
 	REG_S	v0, TF_BASE+TF_REG_MULLO(sp)
 	REG_S	v1, TF_BASE+TF_REG_MULHI(sp)
-	REG_S	a2, TF_BASE+TF_REG_EPC(sp)
+#if TF_MIPS_CURLWP != TF_REG_T8
         REG_S   MIPS_CURLWP, TF_BASE+TF_PAD(sp) # XXX Atheros HAL
+#endif
 /*
  * Call the interrupt handler.
  */
+	_MFC0	ra, MIPS_COP_0_EXC_PC		# grab exception PC
+	REG_S	ra, TF_BASE+TF_REG_EPC(sp)	# and save it
+
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
-	move	ra, a2
 	REG_S	ra, KERNFRAME_RA(sp)		# for debugging
 #endif
-#ifdef IPL_ICU_MASK
-	.set at
-	INT_L	t0, _C_LABEL(md_imask)
-	INT_S	t0, TF_BASE+TF_PPL(sp)
-	.set noat
-#endif
-	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
-	COP0_SYNC
 	move	MIPS_CURLWP, k1			# XXX Atheros HAL
-	jal	_C_LABEL(cpu_intr)
-	and	a3, a0, a1			# 4th is STATUS & CAUSE
+
+#ifdef PARANOIA
+	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	INT_L	s0, CPU_INFO_CPL(t0)
+	INT_S	s0, TF_BASE+TF_PPL(sp)		# save priority level
+
+	/*
+	 * Verify the current interrupt level
+	 */
+	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLCHECK
+	jalr	t9
+	 nop
+#endif /* PARANOIA */
+
+	/*
+	 * We first need to get to IPL_HIGH so that interrupts are masked.
+	 */
+	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLHIGH
+	jalr	t9
+	 nop
+
+#ifdef PARANOIA
+1:	bne	s0, v0, 1b
+	 nop
+#endif /* PARANOIA */
+
+	sll	s0, v0, 8			# remember previous priority
+						# low 8 bits used for idepth
+
+#ifdef PARANOIA
+	/*
+	 * Interrupts at IPL_HIGH are not allowed.
+	 */
+	li	v1, IPL_HIGH
+	sltu	t0, v0, v1
+2:	beqz	t0, 2b
+	 nop
+#endif /* PARANOIA */
+
+	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	INT_L	t1, CPU_INFO_IDEPTH(t0)		# we need to inc. intr depth
+	or	s0, t1				#   save old interrupt depth
+	INT_ADDU t1, 1
+	INT_S	t1, CPU_INFO_IDEPTH(t0)		#   store new interrupt depth
+
+	/*
+	 * Now we can clear exception level since no interrupts can be delivered
+	 */
+	mfc0	v1, MIPS_COP_0_STATUS
+	and	v0, v1, MIPS_SR_EXL		# grab exception level bit
+	xor	v0, v1				# clear it
+	mtc0	v0, MIPS_COP_0_STATUS		# write new status
+	COP0_SYNC
+
+	/*
+	 * Now hard interrupts can be processed.
+	 */
+	move	a1, ra				# 2nd arg is exception pc
+	move	a2, s1				# 3rd arg is status
+	jal	_C_LABEL(cpu_intr)		# cpu_intr(ppl, pc, status)
+	 srl	a0, s0, 8			# 1st arg is previous pri level
+
+	PTR_L	t2, L_CPU(MIPS_CURLWP)
+	and	t1, s0, 0xff			# get previous interrupt depth
+	INT_S	t1, CPU_INFO_IDEPTH(t2)		# to it previous value
+
+#ifdef PARANOIA
+	mfc0	t0, MIPS_COP_0_STATUS		# verify INT_IE is still set
+	and	t0, MIPS_SR_INT_IE
+3:	beqz	t0, 3b
+	 nop
+#endif /* PARANOIA */
+
+#ifdef __HAVE_FAST_SOFTINTS
+	and	a0, s1, MIPS_SOFT_INT_MASK	# were softints enabled?
+	beqz	a0, 4f				#   nope
+	 nop
+	mfc0	v0, MIPS_COP_0_CAUSE		# grab the pending softints
+	and	a0, v0				# are softints pending
+	beqz	a0, 4f				#   nope
+	 nop
+
+	jal	_C_LABEL(softint_process)	# softint_process(pending)
+	 nop
+4:
+#endif
 /*
  * Restore registers and return from the interrupt.
  */
-	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
+	/*
+	 * Clear interrupt enable
+	 */
+	mfc0	v0, MIPS_COP_0_STATUS		# read it 
+	xor	v0, MIPS_SR_INT_IE		# disable interrutps
+	mtc0	v0, MIPS_COP_0_STATUS		# write it
 	COP0_SYNC
 	nop
 	nop
 	nop
-#ifdef IPL_ICU_MASK
-	.set at
-	INT_L	a0, TF_BASE+TF_PPL(sp)
-	INT_S	a0, _C_LABEL(md_imask)
-	jal	_C_LABEL(md_imask_update)
+
+	or	v0, MIPS_SR_EXL			# set exception mode
+	mtc0	v0, MIPS_COP_0_STATUS		# write it
+	COP0_SYNC
 	nop
-	.set noat
-#endif
+	nop
+	nop
+
+	srl	a0, s0, 8			# get previous priority level
+#ifdef PARANOIA
+	INT_L	t0, TF_BASE+TF_PPL(sp)		# get saved priority level
+9:	bne	t0, a0, 9b			# should still match
+	 nop
+
+	li	t0, IPL_HIGH
+	sltu	v0, a0, t0
+8:	beqz	v0, 8b
+	 nop
+#endif /* PARANOIA */
+
+	/*
+	 * Restore IPL knowing interrupts are disabled
+	 */
+	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLX
+	jalr	t9				# splx(ppl)
+	 nop
+
+#ifdef PARANOIA
+	mfc0	v0, MIPS_COP_0_STATUS
+	or	v0, MIPS_SR_INT_IE
+5:	bne	v0, s1, 5b
+	 nop
+#endif /* PARANOIA */
+
+	/*
+	 * Restore SR
+	 */
+	mtc0	s1, MIPS_COP_0_STATUS
+	COP0_SYNC
+	nop
+	nop
+	nop
+
+#if TF_MIPS_CURLWP != TF_REG_T8
 	REG_L	MIPS_CURLWP, TF_BASE+TF_PAD(sp)	# XXX Atheros HAL
-	REG_L	a0, TF_BASE+TF_REG_SR(sp)	# ??? why differs ???
-	DYNAMIC_STATUS_MASK(a0, t0)		# machine dependent masking
+#endif
 	REG_L	t0, TF_BASE+TF_REG_MULLO(sp)
 	REG_L	t1, TF_BASE+TF_REG_MULHI(sp)
 	REG_L	v0, TF_BASE+TF_REG_EPC(sp)
-	mtc0	a0, MIPS_COP_0_STATUS		# restore the SR, disable intrs
-	COP0_SYNC
 	mtlo	t0
 	mthi	t1
 
@@ -1228,15 +1250,27 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	ori	t0, zero, %lo(_C_LABEL(_lock_ras_start))
 	li	t1, -MIPS_LOCK_RAS_SIZE
 	and	t1, t1, v0
-	bne	t1, t0, 1f
+	bne	t1, t0, 10f
 	move	k1, v0
 	jal	_C_LABEL(_lock_ras)
 	nop
 	mov	v0, k1
 #endif
 
-1:	_MTC0	v0, MIPS_COP_0_EXC_PC		# set return address
+10:	_MTC0	v0, MIPS_COP_0_EXC_PC		# set return address
 	COP0_SYNC
+
+#ifdef PARANOIA
+	INT_L	t2, TF_BASE+TF_PPL(sp)		# get saved priority level
+	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	INT_L	t1, CPU_INFO_CPL(t0)		# get current priority level
+11:	bne	t2, t1, 11b			# loop forever is unequal
+	 nop
+
+	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLCHECK
+	jalr	t9
+	 nop
+#endif /* PARANOIA */
 
 	REG_L	AT, TF_BASE+TF_REG_AST(sp)
 	REG_L	v0, TF_BASE+TF_REG_V0(sp)
@@ -1253,7 +1287,9 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	REG_L	ta1, TF_BASE+TF_REG_TA1(sp)
 	REG_L	ta2, TF_BASE+TF_REG_TA2(sp)
 	REG_L	ta3, TF_BASE+TF_REG_TA3(sp)
-	REG_L	t8, TF_BASE+TF_REG_T8(sp)
+	REG_L	s0, TF_BASE+TF_REG_S0(sp)
+	REG_L	s1, TF_BASE+TF_REG_S1(sp)
+	REG_L	t8, TF_BASE+TF_REG_T8(sp)	# MIPS_CURLWP
 	REG_L	t9, TF_BASE+TF_REG_T9(sp)
 	REG_L	ra, TF_BASE+TF_REG_RA(sp)
 	PTR_ADDU sp, sp, KERNFRAME_SIZ		# restore kernel SP
@@ -1290,192 +1326,163 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
  */
 	/* k1 contains curlwp */
 	PTR_L	k0, L_ADDR(k1)
-	PTR_ADDU k0, k0, USPACE - TF_SIZ
-	REG_S	AT, TF_REG_AST(k0)
-	REG_S	v0, TF_REG_V0(k0)
-	REG_S	v1, TF_REG_V1(k0)
+	PTR_ADDU k0, k0, USPACE - TF_SIZ - CALLFRAME_SIZ
+	REG_S	AT, CALLFRAME_SIZ+TF_REG_AST(k0)	# $1
+	REG_S	v0, CALLFRAME_SIZ+TF_REG_V0(k0)		# $2
+	REG_S	v1, CALLFRAME_SIZ+TF_REG_V1(k0)		# $3
 	mflo	v0
-	REG_S	a0, TF_REG_A0(k0)
-	REG_S	a1, TF_REG_A1(k0)
-	REG_S	a2, TF_REG_A2(k0)
-	REG_S	a3, TF_REG_A3(k0)
+	REG_S	a0, CALLFRAME_SIZ+TF_REG_A0(k0)		# $4
+	REG_S	a1, CALLFRAME_SIZ+TF_REG_A1(k0)		# $5
+	REG_S	a2, CALLFRAME_SIZ+TF_REG_A2(k0)		# $6
+	REG_S	a3, CALLFRAME_SIZ+TF_REG_A3(k0)		# $7
 	mfhi	v1
-	REG_S	t0, TF_REG_T0(k0)
-	REG_S	t1, TF_REG_T1(k0)
-	REG_S	t2, TF_REG_T2(k0)
-	REG_S	t3, TF_REG_T3(k0)
-	mfc0	a0, MIPS_COP_0_STATUS		# 1st arg is STATUS
-	REG_S	ta0, TF_REG_TA0(k0)
-	REG_S	ta1, TF_REG_TA1(k0)
-	REG_S	ta2, TF_REG_TA2(k0)
-	REG_S	ta3, TF_REG_TA3(k0)
-	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
-	REG_S	t8, TF_REG_T8(k0)
-	REG_S	t9, TF_REG_T9(k0)
-	REG_S	gp, TF_REG_GP(k0)
-	REG_S	sp, TF_REG_SP(k0)
-	_MFC0	a2, MIPS_COP_0_EXC_PC		# 3rd arg is PC
-	REG_S	ra, TF_REG_RA(k0)
-	REG_S	a0, TF_REG_SR(k0)
-	REG_S	v0, TF_REG_MULLO(k0)
-	REG_S	v1, TF_REG_MULHI(k0)
-	REG_S	a2, TF_REG_EPC(k0)
-#ifdef IPL_ICU_MASK
-	.set at
-	INT_L	t0, _C_LABEL(md_imask)
-	INT_S	t0, TF_PPL(k0)
-	.set noat
+	REG_S	t0, CALLFRAME_SIZ+TF_REG_T0(k0)		# $12
+	REG_S	t1, CALLFRAME_SIZ+TF_REG_T1(k0)		# $13
+	REG_S	t2, CALLFRAME_SIZ+TF_REG_T2(k0)		# $14
+	REG_S	t3, CALLFRAME_SIZ+TF_REG_T3(k0)		# $15
+	REG_S	ta0, CALLFRAME_SIZ+TF_REG_TA0(k0)	# $8
+	REG_S	ta1, CALLFRAME_SIZ+TF_REG_TA1(k0)	# $9
+	REG_S	ta2, CALLFRAME_SIZ+TF_REG_TA2(k0)	# $10
+	REG_S	ta3, CALLFRAME_SIZ+TF_REG_TA3(k0)	# $11
+	REG_S	s0, CALLFRAME_SIZ+TF_REG_S0(k0)		# $16
+	REG_S	s1, CALLFRAME_SIZ+TF_REG_S1(k0)		# $17
+	mfc0	s1, MIPS_COP_0_STATUS
+	REG_S	t8, CALLFRAME_SIZ+TF_REG_T8(k0)		# $24 MIPS_CURLWP
+	REG_S	t9, CALLFRAME_SIZ+TF_REG_T9(k0)		# $25
+	REG_S	gp, CALLFRAME_SIZ+TF_REG_GP(k0)		# $28
+	REG_S	sp, CALLFRAME_SIZ+TF_REG_SP(k0)		# $29
+	REG_S	ra, CALLFRAME_SIZ+TF_REG_RA(k0)		# $31
+	REG_S	s1, CALLFRAME_SIZ+TF_REG_SR(k0)
+	_MFC0	ra, MIPS_COP_0_EXC_PC
+	REG_S	v0, CALLFRAME_SIZ+TF_REG_MULLO(k0)
+	REG_S	v1, CALLFRAME_SIZ+TF_REG_MULHI(k0)
+	REG_S	ra, CALLFRAME_SIZ+TF_REG_EPC(k0)
+#if TF_MIPS_CURLWP != TF_REG_T8
+	PTR_S	MIPS_CURLWP, CALLFRAME_SIZ+TF_MIPS_CURLWP(k0)# save curlwp reg (t8)
 #endif
-	PTR_ADDU sp, k0, -CALLFRAME_SIZ		# switch to kernel SP
+	move	sp, k0
+	move	MIPS_CURLWP, k1			# set curlwp reg (t8)
+#if defined(DDB) || defined(DEBUG) || defined(KGDB)
+	REG_S	ra, CALLFRAME_RA(sp)
+#endif
 #ifdef __GP_SUPPORT__
 	PTR_LA	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
-	PTR_S	MIPS_CURLWP, TF_MIPS_CURLWP(k0)# save curlwp reg (s7)
-	move	MIPS_CURLWP, k1			# set curlwp reg (s7)
-/*
- * Turn off fpu and enter kernel mode
- */
-	.set	at
-	and	t0, a0, ~(MIPS_SR_COP_1_BIT | MIPS_SR_EXL | MIPS_SR_INT_IE | MIPS_SR_KSU_MASK)
-	.set	noat
-#if defined(DDB) || defined(DEBUG) || defined(KGDB)
-	move	ra, a2
-	REG_S	ra, CALLFRAME_RA(sp)
+
+	/*
+	 * We first need to get to IPL_HIGH so that interrupts are masked.
+	 */
+	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLHIGH
+	jalr	t9				# splhigh()
+	 nop
+	move	s0, v0				# remember previous priority
+
+	/*
+	 * Now we can turn off the FPU, clear exception level, and enter
+	 * kernel mode since no interrupts can be delivered
+	 */
+	mfc0	v1, MIPS_COP_0_STATUS
+#ifdef NOFPU
+	and	v0, v1, MIPS_SR_KSU_MASK|MIPS_SR_EXL
+	xor	v0, v1				# clear the bits
+#else
+	lui	v0, %hi(~(MIPS_SR_COP_1_BIT|MIPS_SR_EXL|MIPS_SR_KSU_MASK))
+	ori	v0, %lo(~(MIPS_SR_COP_1_BIT|MIPS_SR_EXL|MIPS_SR_KSU_MASK))
+	and	v0, v1 
 #endif
-/*
- * Call the interrupt handler.
- */
-	mtc0	t0, MIPS_COP_0_STATUS
+	mtc0	v0, MIPS_COP_0_STATUS		# write new status
 	COP0_SYNC
-	jal	_C_LABEL(cpu_intr)
-	and	a3, a0, a1			# 4th is STATUS & CAUSE
-/*
- * Restore registers and return from the interrupt.
- */
-	nop
-	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
+
+	/*
+	 * Since we interrupted user mode, the new interrupt depth must be 1.
+	 */
+	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	li	t1, 1
+	INT_S	t1, CPU_INFO_IDEPTH(t0)		# store new interrupt depth (1)
+
+	/*
+	 * Now hard interrupts can be processed.
+	 */
+	move	a1, ra				# 2nd arg is exception pc
+	move	a2, s1				# 3rd arg is status
+	jal	_C_LABEL(cpu_intr)		# cpu_intr(ppl, pc, status)
+	 move	a0, s0				# 1st arg is previous pri level
+
+	/*
+	 * Interrupt depth is now back to 0.
+	 */
+	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	INT_S	zero, CPU_INFO_IDEPTH(t0)
+
+#ifdef __HAVE_FAST_SOFTINTS
+	/*
+	 * This an interrupt from user mode so both softints must be enabled.
+	 * No need to check (unless we're being paranoid).
+	 */
+#ifdef PARANOIA
+	and	a0, s1, MIPS_SOFT_INT_MASK	# get softints enabled bits
+	xor	a0, MIPS_SOFT_INT_MASK		# invert them.
+1:	bnez	a0, 1b				# loop forever if disabled
+	 nop
+#endif
+	mfc0	a0, MIPS_COP_0_CAUSE		# grab the pending softints
+	and	a0, MIPS_SOFT_INT_MASK		# are there softints pending
+	beqz	a0, 4f				#   nope
+	 nop
+	jal	_C_LABEL(softint_process)	# softint_process(pending)
+	 nop
+4:
+#endif
+	/*
+	 * Disable interrupts
+	 */
+	mfc0	v1, MIPS_COP_0_STATUS
+	and	v0, v1, MIPS_SR_INT_IE		# clear interrupt enable
+	xor	v0, v1
+	mtc0	v0, MIPS_COP_0_STATUS		# interrupts are disabled
 	COP0_SYNC
-	nop					# 3 nop hazard
 	nop
 	nop
-	SET_EXCEPTION_LEVEL(v0)			# set exception level bit.
-	COP0_SYNC
-	nop					# 3 nop hazard
 	nop
-	nop
-	PTR_ADDU a1, sp, CALLFRAME_SIZ
- #	REG_L	a0, TF_REG_SR(a1)
-	INT_L	v0, L_MD_ASTPENDING(MIPS_CURLWP)# any pending ast?
- #	mtc0	a0, MIPS_COP_0_STATUS		# restore the SR, disable intrs
-	nop
+
+	/*
+	 * Restore IPL knowing interrupts are off
+	 */
+	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLX
+	jalr	t9
+	 move	a0, s0				# fetch previous priority level
+
 /*
  * Check pending asynchronous traps.
  */
-	beq	v0, zero, 1f			# if no, skip ast processing
+	REG_L	s0, CALLFRAME_SIZ+TF_REG_S0(sp)	# restore
+	REG_L	s1, CALLFRAME_SIZ+TF_REG_S1(sp)	# restore
+	INT_L	v0, L_MD_ASTPENDING(MIPS_CURLWP)# any pending ast?
+	beq	v0, zero, MIPSX(user_intr_return) # if no, skip ast processing
 	 nop
 /*
  * We have pending asynchronous traps; save remaining user state in u_pcb.
  */
-	REG_S	s0, TF_REG_S0(a1)
-	REG_S	s1, TF_REG_S1(a1)
-	REG_S	s2, TF_REG_S2(a1)
-	REG_S	s3, TF_REG_S3(a1)
-	REG_S	s4, TF_REG_S4(a1)
-	REG_S	s5, TF_REG_S5(a1)
-	REG_S	s6, TF_REG_S6(a1)
-	REG_S	s7, TF_REG_S7(a1)
-	REG_S	s8, TF_REG_S8(a1)
-	REG_L	a0, TF_REG_EPC(a1)		# argument is interrupted PC
-#ifdef IPL_ICU_MASK
-	jal	_C_LABEL(spllowersofthigh);
-	nop
-#else
-#ifdef _LP64
-	li	t0, MIPS_HARD_INT_MASK | MIPS_SR_INT_IE | MIPS_SR_KX
-#else
-	li	t0, MIPS_HARD_INT_MASK | MIPS_SR_INT_IE
-#endif
+	#REG_S	s0, CALLFRAME_SIZ+TF_REG_S0(sp)	# $16 saved above
+	#REG_S	s1, CALLFRAME_SIZ+TF_REG_S1(sp)	# $17 saved above
+	REG_S	s2, CALLFRAME_SIZ+TF_REG_S2(sp)	# $18
+	REG_S	s3, CALLFRAME_SIZ+TF_REG_S3(sp)	# $19
+	REG_S	s4, CALLFRAME_SIZ+TF_REG_S4(sp)	# $20
+	REG_S	s5, CALLFRAME_SIZ+TF_REG_S5(sp)	# $21
+	REG_S	s6, CALLFRAME_SIZ+TF_REG_S6(sp)	# $22
+	REG_S	s7, CALLFRAME_SIZ+TF_REG_S7(sp)	# $23
+	REG_S	s8, CALLFRAME_SIZ+TF_REG_S8(sp)	# $30
+	mfc0	t0, MIPS_COP_0_STATUS		# 
+	or	t0, MIPS_SR_INT_IE 		# enable interrupts
 	DYNAMIC_STATUS_MASK(t0, t1)		# machine dependent masking
 	mtc0	t0, MIPS_COP_0_STATUS		# enable interrupts (spl0)
 	COP0_SYNC
-#endif
-	jal	_C_LABEL(ast)
-	nop
-/*
- * Restore user registers and return. NOTE: interrupts are enabled.
- */
-	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
-	COP0_SYNC
-	nop					# 3 nop delay
 	nop
 	nop
-	SET_EXCEPTION_LEVEL(v0)			# set exception level bit.
-	COP0_SYNC
-	nop					# 3 nop delay
 	nop
-	nop
-
-	PTR_ADDU a1, sp, CALLFRAME_SIZ
- #	REG_L	a0, TF_REG_SR(a1)
-	REG_L	s0, TF_REG_S0(a1)
-	REG_L	s1, TF_REG_S1(a1)
-	REG_L	s2, TF_REG_S2(a1)
-	REG_L	s3, TF_REG_S3(a1)
-	REG_L	s4, TF_REG_S4(a1)
-	REG_L	s5, TF_REG_S5(a1)
-	REG_L	s6, TF_REG_S6(a1)
-	REG_L	s7, TF_REG_S7(a1)
-	REG_L	s8, TF_REG_S8(a1)
- #	mtc0	a0, MIPS_COP_0_STATUS		# this should disable interrupts
-
-1:
-	PTR_L	MIPS_CURLWP, TF_MIPS_CURLWP(a1)# restore curlwp reg
-	REG_L	t0, TF_REG_MULLO(a1)
-	REG_L	t1, TF_REG_MULHI(a1)
-	REG_L	v0, TF_REG_EPC(a1)
-	mtlo	t0
-	mthi	t1
-	_MTC0	v0, MIPS_COP_0_EXC_PC		# set return address
-	COP0_SYNC
-	nop					# ??? how much delay ???
-	nop
-
-	move	k1, a1
-#ifdef IPL_ICU_MASK
-	.set at
-	INT_L	t0, TF_PPL(k1)
-	INT_S	t0, _C_LABEL(md_imask)
-	jal	_C_LABEL(md_imask_update)
-	nop
-	.set noat
-#endif
-	REG_L	AT, TF_REG_AST(k1)
-	REG_L	v0, TF_REG_V0(k1)
-	REG_L	v1, TF_REG_V1(k1)
-	REG_L	a0, TF_REG_A0(k1)
-	REG_L	a1, TF_REG_A1(k1)
-	REG_L	a2, TF_REG_A2(k1)
-	REG_L	a3, TF_REG_A3(k1)
-	REG_L	t0, TF_REG_T0(k1)
-	REG_L	t1, TF_REG_T1(k1)
-	REG_L	t2, TF_REG_T2(k1)
-	REG_L	t3, TF_REG_T3(k1)
-	REG_L	ta0, TF_REG_TA0(k1)
-	REG_L	ta1, TF_REG_TA1(k1)
-	REG_L	ta2, TF_REG_TA2(k1)
-	REG_L	ta3, TF_REG_TA3(k1)
-	REG_L	t8, TF_REG_T8(k1)
-	REG_L	t9, TF_REG_T9(k1)
-	REG_L	k0, TF_REG_SR(k1)
-	DYNAMIC_STATUS_MASK_TOUSER(k0, ra)	# machine dependent masking
-	REG_L	gp, TF_REG_GP(k1)
-	REG_L	sp, TF_REG_SP(k1)
-	REG_L	ra, TF_REG_RA(k1)
-	mtc0	k0, MIPS_COP_0_STATUS		# restore the SR
-	COP0_SYNC
-	nop					# required for QED 5230
-	nop
-	eret					# return to interrupted point
+	PTR_LA	ra, MIPSX(user_return)
+	j	_C_LABEL(ast)			# ast()
+	 nop
 	.set	at
 END(MIPSX(user_intr))
 
@@ -1537,7 +1544,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	COP0_SYNC
 	and	k0, k0, 4			# check even/odd page
 	nop					# required for QED 5230
-	bne	k0, zero, KernTLBIOdd
+	bne	k0, zero, MIPSX(kern_tlbi_odd)
 	nop
 
 	mfc0	k0, MIPS_COP_0_TLB_INDEX
@@ -1573,7 +1580,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	nop
 	eret
 
-KernTLBIOdd:
+MIPSX(kern_tlbi_odd):
 	mfc0	k0, MIPS_COP_0_TLB_INDEX
 	nop
 	bltz	k0, _C_LABEL(MIPSX(kern_gen_exception))	# assert(TLB Entry exists)
@@ -2053,14 +2060,13 @@ LEAF(MIPSX(lwp_trampoline))
 	PTR_ADDU sp, sp, -CALLFRAME_SIZ
 
 	# Call lwp_startup(), with args from cpu_switchto()/cpu_setfunc()
-	PTR_LA	t0, _C_LABEL(lwp_startup)
 	move	a0, v0
-	jal	ra, t0
-	move	a1, MIPS_CURLWP
+	jal	_C_LABEL(lwp_startup)
+	 move	a1, MIPS_CURLWP
 
 	# Call the routine specified by cpu_setfunc()
-	jal	ra, s0			
-	move	a0, s1
+	jal	s0			
+	 move	a0, s1
 
 	#
 	# Return to user (won't happen if a kernel thread)
@@ -2071,7 +2077,23 @@ LEAF(MIPSX(lwp_trampoline))
 	# saved if EXL=1.
 	#
 	.set	noat
-1:
+MIPSX(user_return):
+	REG_L	s0, CALLFRAME_SIZ+TF_REG_S0(sp)		# $16
+	REG_L	s1, CALLFRAME_SIZ+TF_REG_S1(sp)		# $17
+	REG_L	s2, CALLFRAME_SIZ+TF_REG_S2(sp)		# $18
+	REG_L	s3, CALLFRAME_SIZ+TF_REG_S3(sp)		# $19
+	REG_L	s4, CALLFRAME_SIZ+TF_REG_S4(sp)		# $20
+	REG_L	s5, CALLFRAME_SIZ+TF_REG_S5(sp)		# $21
+	REG_L	s6, CALLFRAME_SIZ+TF_REG_S6(sp)		# $22
+	REG_L	s7, CALLFRAME_SIZ+TF_REG_S7(sp)		# $23
+	REG_L	s8, CALLFRAME_SIZ+TF_REG_S8(sp)		# $30
+MIPSX(user_intr_return):
+#ifdef PARANOIA
+	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	INT_L	t1, CPU_INFO_CPL(t0)			# get curcpu()->ci_cpl
+2:	bnez	t1, 2b
+	 nop
+#endif
 	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
 	nop					# 3 op delay
@@ -2081,56 +2103,37 @@ LEAF(MIPSX(lwp_trampoline))
 	COP0_SYNC
 	nop
 	nop
-	PTR_ADDU a1, sp, CALLFRAME_SIZ
- #	REG_L	a0, TF_REG_SR(a1)
-	REG_L	t0, TF_REG_MULLO(a1)
-	REG_L	t1, TF_REG_MULHI(a1)
-	REG_L	v0, TF_REG_EPC(a1)
+	REG_L	t0, CALLFRAME_SIZ+TF_REG_MULLO(sp)
+	REG_L	t1, CALLFRAME_SIZ+TF_REG_MULHI(sp)
+	REG_L	v0, CALLFRAME_SIZ+TF_REG_EPC(sp)
 	mtlo	t0
 	mthi	t1
 	_MTC0	v0, MIPS_COP_0_EXC_PC
 	COP0_SYNC
 	nop
-	move	k1, a1
-#ifdef IPL_ICU_MASK
-	.set at
-	INT_L	t0, TF_PPL(k1)
-	INT_S	t0, _C_LABEL(md_imask)
-	jal	_C_LABEL(md_imask_update)
-	nop
-	.set noat
-#endif
-	REG_L	AT, TF_REG_AST(k1)
-	REG_L	v0, TF_REG_V0(k1)
-	REG_L	v1, TF_REG_V1(k1)
-	REG_L	a0, TF_REG_A0(k1)
-	REG_L	a1, TF_REG_A1(k1)
-	REG_L	a2, TF_REG_A2(k1)
-	REG_L	a3, TF_REG_A3(k1)
-	REG_L	t0, TF_REG_T0(k1)
-	REG_L	t1, TF_REG_T1(k1)
-	REG_L	t2, TF_REG_T2(k1)
-	REG_L	t3, TF_REG_T3(k1)
-	REG_L	ta0, TF_REG_TA0(k1)
-	REG_L	ta1, TF_REG_TA1(k1)
-	REG_L	ta2, TF_REG_TA2(k1)
-	REG_L	ta3, TF_REG_TA3(k1)
-	REG_L	s0, TF_REG_S0(k1)
-	REG_L	s1, TF_REG_S1(k1)
-	REG_L	s2, TF_REG_S2(k1)
-	REG_L	s3, TF_REG_S3(k1)
-	REG_L	s4, TF_REG_S4(k1)
-	REG_L	s5, TF_REG_S5(k1)
-	REG_L	s6, TF_REG_S6(k1)
-	REG_L	s7, TF_REG_S7(k1)
-	REG_L	t8, TF_REG_T8(k1)
-	REG_L	t9, TF_REG_T9(k1)
-	REG_L	k0, TF_REG_SR(k1)
+	move	k1, sp
+	REG_L	AT, CALLFRAME_SIZ+TF_REG_AST(k1)	# $1
+	REG_L	v0, CALLFRAME_SIZ+TF_REG_V0(k1)		# $2
+	REG_L	v1, CALLFRAME_SIZ+TF_REG_V1(k1)		# $3
+	REG_L	a0, CALLFRAME_SIZ+TF_REG_A0(k1)		# $4
+	REG_L	a1, CALLFRAME_SIZ+TF_REG_A1(k1)		# $5
+	REG_L	a2, CALLFRAME_SIZ+TF_REG_A2(k1)		# $6
+	REG_L	a3, CALLFRAME_SIZ+TF_REG_A3(k1)		# $7
+	REG_L	t0, CALLFRAME_SIZ+TF_REG_T0(k1)		# $12 /  $8
+	REG_L	t1, CALLFRAME_SIZ+TF_REG_T1(k1)		# $13 /  $9
+	REG_L	t2, CALLFRAME_SIZ+TF_REG_T2(k1)		# $14 / $10
+	REG_L	t3, CALLFRAME_SIZ+TF_REG_T3(k1)		# $15 / $11
+	REG_L	ta0, CALLFRAME_SIZ+TF_REG_TA0(k1)	#  $8 / $12
+	REG_L	ta1, CALLFRAME_SIZ+TF_REG_TA1(k1)	#  $9 / $13
+	REG_L	ta2, CALLFRAME_SIZ+TF_REG_TA2(k1)	# $10 / $14
+	REG_L	ta3, CALLFRAME_SIZ+TF_REG_TA3(k1)	# $11 / $15
+	REG_L	t8, CALLFRAME_SIZ+TF_REG_T8(k1)		# $24
+	REG_L	t9, CALLFRAME_SIZ+TF_REG_T9(k1)		# $25
+	REG_L	k0, CALLFRAME_SIZ+TF_REG_SR(k1)		# status register
 	DYNAMIC_STATUS_MASK(k0, sp)		# machine dependent masking
-	REG_L	gp, TF_REG_GP(k1)
-	REG_L	s8, TF_REG_S8(k1)
-	REG_L	ra, TF_REG_RA(k1)
-	REG_L	sp, TF_REG_SP(k1)
+	REG_L	gp, CALLFRAME_SIZ+TF_REG_GP(k1)		# $29
+	REG_L	sp, CALLFRAME_SIZ+TF_REG_SP(k1)		# $29
+	REG_L	ra, CALLFRAME_SIZ+TF_REG_RA(k1)		# $31
 	mtc0	k0, MIPS_COP_0_STATUS
 	COP0_SYNC
 	nop
@@ -2146,12 +2149,10 @@ LEAF(MIPSX(setfunc_trampoline))
 	PTR_ADDU sp, sp, -CALLFRAME_SIZ
 
 	# Call the routine specified by cpu_setfunc()
-	jal	ra, s0			
-	move	a0, s1
-
-	j	1b
-	nop
-
+	# and return directly to user_return
+	PTR_LA	ra, MIPSX(user_return)
+	jr	s0			
+	 move	a0, s1
 END(MIPSX(setfunc_trampoline))
 
 
@@ -2169,25 +2170,25 @@ LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
 	PTR_L	v0, L_ADDR(a0)			# va = l->l_addr
 #if VM_MIN_KERNEL_ADDRESS == MIPS_KSEG2_START
 	li	t0, VM_MIN_KERNEL_ADDRESS	# compute index
-	blt	v0, t0, resume
+	blt	v0, t0, MIPSX(resume)
 	 nop
 #else
 	li	t0, MIPS_KSEG0_START		# above XKSEG?
-	blt	t0, v0, resume
+	blt	t0, v0, MIPSX(resume)
 	 nop
 	li	t0, VM_MIN_KERNEL_ADDRESS>>32	# below XKSEG?
 	dsll32	t0, t0, 0
-	blt	v0, t0, resume
+	blt	v0, t0, MIPSX(resume)
 	 nop
 #endif
 
 	and	t0, v0, MIPS3_PG_ODDPG
-	beq	t0, zero, entry0
+	beq	t0, zero, MIPSX(entry0)
 	 nop
 
 	PANIC("USPACE sat on odd page boundary")
 
-entry0:
+MIPSX(entry0):
 	_MTC0	v0, MIPS_COP_0_TLB_HI		# VPN = va
 	COP0_SYNC
 	nop
@@ -2198,7 +2199,7 @@ entry0:
 	nop
 	mfc0	t0, MIPS_COP_0_TLB_INDEX
 	nop
-	bltz	t0, entry0set
+	bltz	t0, MIPSX(entry0set)
 	sll	t0, t0, PGSHIFT + 1		# PAGE_SHIFT + 1
 	PTR_LA	t0, MIPS_KSEG0_START(t0)
 	_MTC0	t0, MIPS_COP_0_TLB_HI
@@ -2215,7 +2216,7 @@ entry0:
 	nop
 	_MTC0	v0, MIPS_COP_0_TLB_HI		# set VPN again
 	COP0_SYNC
-entry0set:
+MIPSX(entry0set):
 	mtc0	zero, MIPS_COP_0_TLB_INDEX	# TLB entry #0
 	COP0_SYNC
 	or	a1, MIPS3_PG_G
@@ -2231,7 +2232,7 @@ entry0set:
 	nop
 	nop
 
-resume:
+MIPSX(resume):
 #endif /* !ENABLE_MIPS_16KB_PAGE || VMSWAP_UAREA */
 	j	ra
 	nop

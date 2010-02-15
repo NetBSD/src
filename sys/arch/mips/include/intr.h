@@ -1,0 +1,193 @@
+/* $NetBSD: intr.h,v 1.3.96.2 2010/02/15 07:36:03 matt Exp $ */
+/*-
+ * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Matt Thomas <matt@3am-software.com>.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#ifndef _MIPS_INTR_H_
+#define	_MIPS_INTR_H_
+
+/*
+ * This is a common <machine/intr.h> for all MIPS platforms.
+ */
+
+#define	IPL_NONE	0
+#ifdef __HAVE_PREEMPTION
+#define	IPL_PREEMPT	(IPL_NONE+1)
+#else
+#define	IPL_PREEMPT	IPL_NONE
+#endif
+#define	IPL_SOFTCLOCK	(IPL_PREEMPT+1)
+#define	IPL_SOFTBIO	(IPL_SOFTCLOCK)		/* shares SWINT with softclock */
+#define	IPL_SOFTNET	(IPL_SOFTBIO+1)
+#define	IPL_SOFTSERIAL	(IPL_SOFTNET)		/* shares SWINT with softnet */
+#define	IPL_VM		(IPL_SOFTSERIAL+1)
+#define	IPL_SCHED	(IPL_VM+1)
+#define	IPL_HIGH	(IPL_SCHED)
+
+#define	_IPL_N		(IPL_HIGH+1)
+
+#define	IST_UNUSABLE	-1	/* interrupt cannot be used */
+#define	IST_NONE	0	/* none (dummy) */
+#define	IST_PULSE	1	/* pulsed */
+#define	IST_EDGE	2	/* edge-triggered */
+#define	IST_LEVEL	3	/* level-triggered */
+#define	IST_LEVEL_HIGH	4	/* level triggered, active high */
+#define	IST_LEVEL_LOW	5       /* level triggered, active low */
+
+struct splsw {
+	int	(*splsw_splhigh)(void);
+	int	(*splsw_splsched)(void);
+	int	(*splsw_splvm)(void);
+	int	(*splsw_splsoftserial)(void);
+	int	(*splsw_splsoftnet)(void);
+	int	(*splsw_splsoftbio)(void);
+	int	(*splsw_splsoftclock)(void);
+	int	(*splsw_splraise)(int);
+	void	(*splsw_spl0)(void);
+	void	(*splsw_splx)(int);
+	int	(*splsw_splhigh_noprof)(void);
+	void	(*splsw_splx_noprof)(int);
+	void	(*splsw_setsoftintr)(uint32_t);
+	void	(*splsw_clrsoftintr)(uint32_t);
+	int	(*splsw_splintr)(uint32_t *);
+	void	(*splsw_splcheck)(void);
+};
+
+typedef int ipl_t;
+typedef struct {
+        ipl_t _spl;
+} ipl_cookie_t;
+
+#ifdef _KERNEL
+extern	struct splsw	mips_splsw;
+extern	const uint32_t	ipl_sr_bits[_IPL_N];
+
+static inline int
+splhigh(void)
+{
+	return (*mips_splsw.splsw_splhigh)();
+}
+
+static inline int
+splhigh_noprof(void)
+{
+	return (*mips_splsw.splsw_splhigh_noprof)();
+}
+
+static inline int
+splsched(void)
+{
+	return (*mips_splsw.splsw_splsched)();
+}
+
+static inline int
+splvm(void)
+{
+	return (*mips_splsw.splsw_splvm)();
+}
+
+static inline int
+splsoftserial(void)
+{
+	return (*mips_splsw.splsw_splsoftserial)();
+}
+
+static inline int
+splsoftnet(void)
+{
+	return (*mips_splsw.splsw_splsoftnet)();
+}
+
+static inline int
+splsoftbio(void)
+{
+	return (*mips_splsw.splsw_splsoftbio)();
+}
+
+static inline int
+splsoftclock(void)
+{
+	return (*mips_splsw.splsw_splsoftclock)();
+}
+
+static inline void
+spl0(void)
+{
+	(*mips_splsw.splsw_spl0)();
+}
+
+static inline void
+splx(int s)
+{
+	(*mips_splsw.splsw_splx)(s);
+}
+
+static inline void
+splx_noprof(int s)
+{
+	(*mips_splsw.splsw_splx_noprof)(s);
+}
+
+static inline void
+_setsoftintr(uint32_t m)
+{
+	(*mips_splsw.splsw_setsoftintr)(m);
+}
+
+static inline void
+_clrsoftintr(uint32_t m)
+{
+	(*mips_splsw.splsw_clrsoftintr)(m);
+}
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t s)
+{
+	return (ipl_cookie_t){._spl = s};
+}
+
+static inline int
+splraise(int s)
+{
+        return (*mips_splsw.splsw_splraise)(s);
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+	return splraise(icookie._spl);
+}
+
+static inline int
+splintr(uint32_t *p)
+{
+	return (*mips_splsw.splsw_splintr)(p);
+}
+
+#endif /* _KERNEL */
+#endif /* _MIPS_INTR_H_ */

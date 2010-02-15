@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.12 2010/02/05 07:36:51 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.13 2010/02/15 07:36:03 matt Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -38,13 +38,6 @@ void	mips_cp0_cause_write(uint32_t);
 uint32_t mips_cp0_status_read(void);
 void	mips_cp0_status_write(uint32_t);
 
-int _splraise(int);
-int _spllower(int);
-int _splset(int);
-int _splget(void); 
-void _splnone(void);
-void _setsoftintr(uint32_t);
-void _clrsoftintr(uint32_t);
 void softint_process(uint32_t);
 void softint_fast_dispatch(struct lwp *, int);
 

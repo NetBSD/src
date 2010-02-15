@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.32 2010/02/06 04:55:01 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.33 2010/02/15 07:36:04 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.32 2010/02/06 04:55:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.33 2010/02/15 07:36:04 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -205,9 +205,16 @@ static void	mips64_vector_init(void);
 extern const struct locoresw mips64_locoresw;
 #endif
 
+#if defined(PARANOIA)
+void std_splsw_test(void);
+#endif
+
 mips_locore_jumpvec_t mips_locore_jumpvec;
 
 struct locoresw mips_locoresw;
+
+extern const struct splsw std_splsw;
+struct splsw mips_splsw;
 
 struct mips_options mips_options = {
 	.mips_cpu_id = 0xffffffff,
@@ -222,6 +229,7 @@ struct cpu_info cpu_info_store = {
 	    __builtin_constant_p(MIPS_TLB_NUM_PIDS) ? MIPS_TLB_NUM_PIDS : 0,
 	.ci_pmap_asid_next = 1,
 	.ci_pmap_segbase = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
+	.ci_cpl = IPL_HIGH,
 };
 
 struct	user *proc0paddr;
@@ -925,6 +933,14 @@ mips_vector_init(void)
 
 #ifdef __HAVE_MIPS_MACHDEP_CACHE_CONFIG
 	mips_machdep_cache_config();
+#endif
+
+	/*
+	 * Assume standard SPL with COP0 status/cause
+	 */
+	mips_splsw = std_splsw;
+#ifdef PARANOIA
+	std_splsw_test();	/* only works with std_splsw */
 #endif
 
 	/*
@@ -1645,12 +1661,10 @@ mips_init_lwp0_uarea(void)
 	lwp0.l_md.md_utf = (struct trapframe *)(v + USPACE) - 1;
 #ifdef _LP64
 	lwp0.l_md.md_utf->tf_regs[_R_SR] = MIPS_SR_KX;
+	lwp0.l_addr->u_pcb.pcb_context.val[_L_SR] = MIPS_SR_KX | MIPS_SR_INT_IE;
+#else
+	lwp0.l_addr->u_pcb.pcb_context.val[_L_SR] = MIPS_SR_INT_IE;
 #endif
-	lwp0.l_addr->u_pcb.pcb_context.val[_L_SR] =
-#ifdef _LP64
-	    MIPS_SR_KX |
-#endif
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 }
 
 int mips_poolpage_vmfreelist = VM_FREELIST_DEFAULT;
@@ -2302,6 +2316,9 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 
 	aston(ci->ci_data.cpu_onproc);
 	ci->ci_want_resched = 1;
+
+#ifdef __HAVE_PREEMPTION
+#endif
 }
 
 void
@@ -2329,3 +2346,103 @@ cpu_boot_secondary_processors(void)
 	(*mips_locoresw.lsw_boot_secondary_processors)();
 }
 #endif
+
+#ifdef PARANOIA
+void
+std_splsw_test(void)
+{
+	struct cpu_info * const ci = curcpu();
+	uint32_t status = mips_cp0_status_read();
+	uint32_t sr_bits;
+	int s;
+
+	KASSERT((status & MIPS_SR_INT_IE) == 0);
+
+	sr_bits = ipl_sr_bits[IPL_NONE];
+
+	splx(IPL_NONE);
+	status = mips_cp0_status_read() & MIPS_INT_MASK;
+	KASSERT(status == MIPS_INT_MASK);
+	KASSERT(ci->ci_cpl == IPL_NONE);
+
+	s = splsoftclock();
+	status = mips_cp0_status_read() & MIPS_INT_MASK;
+	KASSERT((status ^ ipl_sr_bits[IPL_SOFTCLOCK]) == MIPS_INT_MASK);
+	KASSERT(ci->ci_cpl == IPL_SOFTCLOCK);
+	KASSERT(s == IPL_NONE);
+
+	s = splsoftbio();
+	status = mips_cp0_status_read() & MIPS_INT_MASK;
+	KASSERT((status ^ ipl_sr_bits[IPL_SOFTBIO]) == MIPS_INT_MASK);
+	KASSERT(ci->ci_cpl == IPL_SOFTBIO);
+	KASSERT(s == IPL_SOFTCLOCK);
+
+	s = splsoftnet();
+	status = mips_cp0_status_read() & MIPS_INT_MASK;
+	KASSERT((status ^ ipl_sr_bits[IPL_SOFTNET]) == MIPS_INT_MASK);
+	KASSERT(ci->ci_cpl == IPL_SOFTNET);
+	KASSERT(s == IPL_SOFTBIO);
+
+	s = splsoftserial();
+	status = mips_cp0_status_read() & MIPS_INT_MASK;
+	KASSERT((status ^ ipl_sr_bits[IPL_SOFTSERIAL]) == MIPS_INT_MASK);
+	KASSERT(ci->ci_cpl == IPL_SOFTSERIAL);
+	KASSERT(s == IPL_SOFTNET);
+
+	s = splvm();
+	status = mips_cp0_status_read() & MIPS_INT_MASK;
+	KASSERT((status ^ ipl_sr_bits[IPL_VM]) == MIPS_INT_MASK);
+	KASSERT(ci->ci_cpl == IPL_VM);
+	KASSERT(s == IPL_SOFTSERIAL);
+
+	s = splsched();
+	status = mips_cp0_status_read() & MIPS_INT_MASK;
+	KASSERT((status ^ ipl_sr_bits[IPL_SCHED]) == MIPS_INT_MASK);
+	KASSERT(ci->ci_cpl == IPL_SCHED);
+	KASSERT(s == IPL_VM);
+
+	s = splhigh();
+	status = mips_cp0_status_read() & MIPS_INT_MASK;
+	KASSERT((status ^ ipl_sr_bits[IPL_HIGH]) == MIPS_INT_MASK);
+	KASSERT(ci->ci_cpl == IPL_HIGH);
+	KASSERT(s == IPL_SCHED);
+
+	splx(IPL_NONE);
+	status = mips_cp0_status_read() & MIPS_INT_MASK;
+	KASSERT(status == MIPS_INT_MASK);
+	KASSERT(ci->ci_cpl == IPL_NONE);
+
+	for (int r = IPL_PREEMPT; r <= IPL_HIGH; r++) {
+		/*
+		 * As IPL increases, more intrs may be masked but no intrs
+		 * may become unmasked.
+		 */
+		KASSERT((ipl_sr_bits[r] & sr_bits) == sr_bits);
+		sr_bits |= ipl_sr_bits[r];
+		s = splraise(r);
+		KASSERT(s == IPL_NONE);
+
+		for (int t = r; t <= IPL_HIGH; t++) {
+			int o = splraise(t);
+			status = mips_cp0_status_read() & MIPS_INT_MASK;
+			KASSERT((status ^ ipl_sr_bits[t]) == MIPS_INT_MASK);
+			KASSERT(ci->ci_cpl == t);
+			KASSERT(o == r);
+
+			splx(o);
+			status = mips_cp0_status_read() & MIPS_INT_MASK;
+			KASSERT((status ^ ipl_sr_bits[r]) == MIPS_INT_MASK);
+			KASSERT(ci->ci_cpl == r);
+		}
+
+		splx(s);
+		status = mips_cp0_status_read() & MIPS_INT_MASK;
+		KASSERT((status ^ ipl_sr_bits[s]) == MIPS_INT_MASK);
+		KASSERT(ci->ci_cpl == s);
+	}
+
+	status = mips_cp0_status_read() & MIPS_INT_MASK;
+	KASSERT(status == MIPS_INT_MASK);
+	KASSERT(ci->ci_cpl == IPL_NONE);
+}
+#endif /* PARANOIA */

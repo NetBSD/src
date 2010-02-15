@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.9.18.6 2010/01/26 21:05:26 matt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.9.18.7 2010/02/15 07:36:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ LEAF(_atomic_cas_ulong)
 	bne	t0, a1, 2f
 	 move t1, a2
 	LONG_SC	t1, (a0)
-	beq	t1, zero, 1b
+	beqz	t1, 1b
 	 nop
 	j	ra
 	 move	v0, a1
@@ -105,7 +105,7 @@ LEAF(_atomic_cas_uint)
 	bne	t0, a1, 2f
 	 move	t1, a2
 	INT_SC	t1, (a0)
-	beq	t1, zero, 1b
+	beqz	t1, 1b
 	 nop
 	j	ra
 	 move	v0, a1
@@ -132,7 +132,7 @@ LEAF(ucas_32)
 	.set noat
 	PTR_L	v1, L_ADDR(MIPS_CURLWP)
 	PTR_S	v0, U_PCB_ONFAULT(v1)
-	blt	a0, zero, _C_LABEL(ucaserr)
+	bltz	a0, _C_LABEL(ucaserr)
 	 nop
 	move	v0, zero
 
@@ -167,7 +167,7 @@ LEAF(ucas_64)
 	.set noat
 	PTR_L	v1, L_ADDR(MIPS_CURLWP)
 	PTR_S	v0, U_PCB_ONFAULT(v1)
-	blt	a0, zero, _C_LABEL(ucaserr)
+	bltz	a0, _C_LABEL(ucaserr)
 	 nop
 	move	v0, zero
 
@@ -199,10 +199,10 @@ STRONG_ALIAS(ucas_ulong, ucas_64)
 LEAF(mutex_enter)
 	PTR_LL	t0, MTX_OWNER(a0)
 1:
-	bne	t0, zero, 2f
+	bnez	t0, 2f
 	 move	t2, MIPS_CURLWP
 	PTR_SC	t2, MTX_OWNER(a0)
-	beq	t2, zero, 1b
+	beqz	t2, 1b
 	 PTR_LL	t0, MTX_OWNER(a0)
 	j	ra
 	 BDSYNC
@@ -221,7 +221,7 @@ LEAF(mutex_exit)
 	bne	t0, MIPS_CURLWP, 2f
 	 move	t2, zero
 	PTR_SC	t2, MTX_OWNER(a0)
-	beq	t2, zero, 1b
+	beqz	t2, 1b
 	 PTR_LL	t0, MTX_OWNER(a0)
 	j	ra
 	 nop
@@ -233,42 +233,77 @@ END(mutex_exit)
 /*
  * void	mutex_spin_enter(kmutex_t *mtx);
  */
-LEAF(mutex_spin_enter)
+NESTED(mutex_spin_enter, CALLFRAME_SIZ, ra)
+	move	t0, a0
 	PTR_L	t2, L_CPU(MIPS_CURLWP)
-	li	ta3, -1
-	INT_L	ta2, CPU_INFO_MTX_COUNT(t2)
-	INT_L	t1, MTX_IPL(a0)
-	INT_ADDU ta2, ta2, ta3
-	INT_S	ta2, CPU_INFO_MTX_COUNT(t2)
-	mfc0	v0, MIPS_COP_0_STATUS
-	and	t1, t1, MIPS_INT_MASK
-	nor	t1, zero, t1
-	and	t1, t1, v0
-	DYNAMIC_STATUS_MASK(t1,t0)
-	mtc0	t1, MIPS_COP_0_STATUS
-	COP0_SYNC
-	bne	ta2, ta3, 1f
-	 and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	INT_S	v0, CPU_INFO_MTX_OLDSPL(t2)
+	INT_L	ta1, CPU_INFO_CPL(t2)
+	INT_L	ta0, MTX_IPL(t0)
+
+	/*
+	 * If the current IPL is less the mutex's IPL, we need to raise our
+	 * IPL to the mutex'es 
+	 */
+	sltu	v1, ta1, ta0		# v1 = ta1 < ta0
+	beqz	v1, 1f
+	 nop
+	 
+
+	/*
+	 * We need to raise our IPL.  But it means calling another routine
+	 * but it's written to have little overhead.  call splraise
+	 * (only uses a0-a3 and v0-v1)
+	 */
+	move	t3, ra			# need to save ra
+	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLRAISE
+	jalr	t9
+	 move	a0, ta0
+	move	ra, t3			# move ra back
+#ifdef PARANOIA
+10:	bne	ta1, v0, 10b		# loop forever if v0 != ta1
+	 nop
+#endif /* PARANOIA */
+
+	/*
+	 * If this is the first lock of the mutex, store the previous IPL for
+	 * exit.  Even if an interrupt happens, the mutex count will not change.
+	 */
 1:
-#if defined(FULL)
-	INT_LL	t0, MTX_LOCK(a0)
-	nop
+	INT_L	ta2, CPU_INFO_MTX_COUNT(t2)
+	INT_ADDU ta3, ta2, -1
+	INT_S	ta3, CPU_INFO_MTX_COUNT(t2)
+	bltz	ta2, 2f
+	 nop
+	INT_S	ta1, CPU_INFO_MTX_OLDSPL(t2)
 2:
-	bne	t0, zero, 3f
+#ifdef PARANOIA
+	INT_L	ta1, CPU_INFO_MTX_OLDSPL(t2)
+	INT_L	ta2, CPU_INFO_CPL(t2)	# get updated CPL
+	sltu	v0, ta2, ta0		# v0 = cpl < mtx_ipl
+	sltu	v1, ta2, ta1		# v1 = cpl < oldspl
+	sll	v0, 1
+	or	v0, v1
+12:	bnez	v0, 12b			# loop forever if any are true
+	 nop
+#endif /* PARANOIA */
+#if defined(FULL)
+	INT_LL	t3, MTX_LOCK(t0)
+	nop
+3:
+	bnez	t3, 4f
 	 li	t1, 1
-	INT_SC	t1, MTX_LOCK(a0)
-	beq	t1, zero, 2b
-	 INT_LL	t0, MTX_LOCK(a0)
+	INT_SC	t1, MTX_LOCK(t0)
+	beqz	t1, 3b
+	 INT_LL	t3, MTX_LOCK(t0)
 	j	ra
 	 BDSYNC
-3:
+4:
+	move	a0, t0
 	j	_C_LABEL(mutex_spin_retry)
 	 nop
 #else
 	j	ra
 	 nop
-#endif
+#endif /* FULL */
 END(mutex_spin_enter)
 
 #endif	/* !LOCKDEBUG */
@@ -380,7 +415,7 @@ LEAF_NOPROFILE(mutex_enter)
 	PTR_L	t0, (a0)	/* <- critical section start */
 _mutex_enter_start:
 	nop
-	bne	t0, zero, 1f
+	bnez	t0, 1f
 	 nop			
 	PTR_S	MIPS_CURLWP, (a0)/* <- critical section end */
 	j	ra
@@ -414,32 +449,51 @@ END(mutex_exit)
 /*
  * void	mutex_spin_enter(kmutex_t *mtx);
  */
-LEAF(mutex_spin_enter)
+NESTED(mutex_spin_enter, CALLFRAME_SIZ, ra)
+	move	t0, a0
 	PTR_L	t2, L_CPU(MIPS_CURLWP)
-	li	ta3, -1
-	INT_L	ta2, CPU_INFO_MTX_COUNT(t2)
-	INT_L	t1, MTX_IPL(a0)
-	INT_ADDU ta2, ta3
-	INT_S	ta2, CPU_INFO_MTX_COUNT(t2)
-	mfc0	v0, MIPS_COP_0_STATUS
-	and	t1, t1, MIPS_INT_MASK
-	nor	t1, zero, t1
-	and	t1, t1, v0
-	DYNAMIC_STATUS_MASK(t1,t0)
-	mtc0	t1, MIPS_COP_0_STATUS
-	COP0_SYNC
-	bne	ta2, ta3, 1f
-	 and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	INT_S	v0, CPU_INFO_MTX_OLDSPL(t2)
+	INT_L	a0, MTX_IPL(t0)
+	INT_L	ta1, CPU_INFO_CPL(t2)		# get current cpl
+
+	/*
+	 * If the current IPL is less the mutex's IPL, we need to raise our
+	 * IPL to the mutex'es 
+	 */
+	sltu	a3, ta1, a0			# a3 = ta1 < a0
+	beqz	a3, 1f
+	 nop
+
+	/*
+	 * We need to raise our IPL.
+	 * call splraise (only uses a0-a3, v0-v1, and ra)
+	 */
+	move	t3, ra
+	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLRAISE
+	jalr	t9
+	 nop
+	move	ra, t3
+
+	/*
+	 * If this is the first lock of the mutex, store the previous IPL
+	 * for exit.
+	 */
 1:
+	INT_L	ta2, CPU_INFO_MTX_COUNT(t2)
+	INT_ADDU ta3, ta2, -1
+	INT_S	ta2, CPU_INFO_MTX_COUNT(t2)
+
+	bnez	ta2, 2f
+	 nop
+	INT_S	t1, CPU_INFO_MTX_OLDSPL(t2)
+2:
 #if defined(DIAGNOSTIC)
-	INT_L	t0, MTX_LOCK(a0)
+	INT_L	t3, MTX_LOCK(t0)
 	li	t1, 1
-	bne	t0, zero, 2f
+	bnez	t3, 3f
 	 nop
 	j	ra
-	 INT_S	t1, MTX_LOCK(a0)
-2:
+	 INT_S	t1, MTX_LOCK(t0)
+3:
 	j	_C_LABEL(mutex_spin_retry)
 	 nop
 #else	/* DIAGNOSTIC */
@@ -483,7 +537,7 @@ LEAF_NOPROFILE(_lock_ras)
 	beq	t2, t0, 1f
 	 nop
 #ifndef LOCKDEBUG
-	addiu	t0, _mutex_enter_start - _atomic_cas_start
+	addiu	t0, _mutex_enter_start - _ucas_32_ras_start
 	beq	t2, t0, 1f
 	 nop
 	addiu	t0, _mutex_exit_start - _mutex_enter_start
@@ -504,7 +558,7 @@ LEAF(ucas_32)
 	PTR_L	v1, L_ADDR(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(ucaserr)
 	PTR_S	v0, U_PCB_ONFAULT(v1)
-	blt	a0, zero, _C_LABEL(ucaserr)
+	bltz	a0, _C_LABEL(ucaserr)
 	 nop
 	b	_C_LABEL(_ucas_32_ras)
 	 move	v0, zero
@@ -532,35 +586,61 @@ END(ucaserr)
  * void	mutex_spin_exit(kmutex_t *mtx);
  */
 LEAF(mutex_spin_exit)
+	PTR_L	t2, L_CPU(MIPS_CURLWP)
 #if defined(DIAGNOSTIC)
 	INT_L	t0, MTX_LOCK(a0)
 	SYNC
-	beq	t0, zero, 2f
-	 PTR_L	t1, L_CPU(MIPS_CURLWP)
+	beqz	t0, 2f
+	 nop
 	INT_S	zero, MTX_LOCK(a0)
 #elif defined(MULTIPROCESSOR)
 	SYNC
-	PTR_L	t1, L_CPU(MIPS_CURLWP)
 	INT_S	zero, MTX_LOCK(a0)
-#else
-	PTR_L	t1, L_CPU(MIPS_CURLWP)
-	nop
 #endif
-	INT_L	t0, CPU_INFO_MTX_COUNT(t1)
-	INT_L	a0, CPU_INFO_MTX_OLDSPL(t1)
-	addiu	t0, t0, 1
-	INT_S	t0, CPU_INFO_MTX_COUNT(t1)
-	bne	t0, zero, 1f
-	 mfc0	v0, MIPS_COP_0_STATUS
-	and	a0, a0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	li	v1, ~(MIPS_INT_MASK | MIPS_SR_INT_IE)
-	and	v1, v1, v0
-	or	v1, v1, a0
-	DYNAMIC_STATUS_MASK(v1,t0)
-	mtc0	v1, MIPS_COP_0_STATUS
-	COP0_SYNC
+
+	/*
+	 * We need to grab this before the mutex count is incremented
+	 * because if we get an interrupt, it may see the count as zero
+	 * and overwrite the oldspl value with a bogus value.
+	 */
+#ifdef PARANOIA
+	INT_L	a2, MTX_IPL(a0)
+#endif
+	INT_L	a0, CPU_INFO_MTX_OLDSPL(t2)
+
+	/*
+	 * Increment the mutex count
+	 */
+	INT_L	t0, CPU_INFO_MTX_COUNT(t2)
+	INT_ADDU t0, t0, 1
+	INT_S	t0, CPU_INFO_MTX_COUNT(t2)
+
+	/*
+	 * If the IPL doesn't change, nothing to do
+	 */
+	INT_L	a1, CPU_INFO_CPL(t2)
+
+#ifdef PARANOIA
+	sltu	v0, a1, a2		# v0 = cpl < mtx_ipl
+	sltu	v1, a1, a0		# v1 = cpl < oldspl
+	sll	v0, 1
+	or	v0, v1
+12:	bnez	v0, 12b			# loop forever if either is true
+	 nop
+#endif /* PARANOIA */
+
+	beq	a0, a1, 1f		# if oldspl == cpl
+	 move	t9, ra			#   no reason to drop ipl
+
+	bltz	t0, 1f			# there are still holders
+	 move	t9, ra			# so don't drop IPL
+
+	/*
+	 * Mutex count is zero so we need to restore the old IPL
+	 */
+	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLX
 1:
-	j	ra
+	j	t9
 	 nop
 #if defined(DIAGNOSTIC)
 2:

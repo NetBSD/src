@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.18 2010/02/05 07:36:51 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.19 2010/02/15 07:36:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -44,6 +44,7 @@
  */
 
 #ifdef _KERNEL
+
 #ifndef _LOCORE
 #include <sys/cpu_data.h>
 #include <sys/device.h>
@@ -134,6 +135,7 @@ struct cpu_info {
 	int ci_mtx_count;		/* negative count of held mutexes */
 	int ci_mtx_oldspl;		/* saved SPL value */
 	int ci_idepth;			/* hardware interrupt depth */
+	int ci_cpl;			/* current [interrupt] priority level */
 	device_t ci_dev;		/* owning device */
 	vaddr_t ci_ebase;		/* VA of exception base */
 	paddr_t ci_ebase_pa;		/* PA of exception base */
@@ -224,7 +226,7 @@ register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
 
 #define	curlwp			mips_curlwp
 #define	curcpu()		(curlwp->l_cpu)
-#define	curpcb			((struct pcb *)curlwp->l_addr)
+#define	curpcb			(&curlwp->l_addr->u_pcb)
 #define	fpcurlwp		(curcpu()->ci_fpcurlwp)
 #ifdef MULTIPROCESSOR
 #define	cpu_number()		(curcpu()->ci_cpuid)
@@ -232,6 +234,8 @@ register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
 #define	cpu_number()		(0)
 #endif
 #define	cpu_proc_fork(p1, p2)	((void)((p2)->p_md.md_abi = (p1)->p_md.md_abi))
+
+#include <mips/locore.h>
 
 /* XXX simonb
  * Should the following be in a cpu_info type structure?
@@ -381,16 +385,19 @@ extern struct mips_options mips_options;
  */
 #define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
 
-void cpu_intr(uint32_t, uint32_t, vaddr_t, uint32_t);
+/*
+ * cpu_intr(ppl, pc, status);  (most state needed by clockframe)
+ */
+void cpu_intr(int, vaddr_t, uint32_t);
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
  * machine state in an opaque clockframe.
  */
 struct clockframe {
-	vaddr_t	pc;	/* program counter at time of interrupt */
+	vaddr_t		pc;	/* program counter at time of interrupt */
 	uint32_t	sr;	/* status register at time of interrupt */
-	u_int		ppl;	/* previous priority level at time of interrupt */
+	bool		intr;	/* interrupted a interrupt */
 };
 
 /*
@@ -406,7 +413,7 @@ struct clockframe {
 #define	MIPS3_CLKF_USERMODE(framep)	((framep)->sr & MIPS_SR_KSU_USER)
 
 #define	CLKF_PC(framep)		((framep)->pc)
-#define	CLKF_INTR(framep)	(0)
+#define	CLKF_INTR(framep)	((framep)->intr)
 
 #if defined(MIPS3_PLUS) && !defined(MIPS1)		/* XXX bogus! */
 #define	CLKF_USERMODE(framep)	MIPS3_CLKF_USERMODE(framep)
