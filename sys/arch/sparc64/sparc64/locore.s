@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.316 2010/02/15 11:46:54 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.317 2010/02/15 12:46:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -65,6 +65,7 @@
 #undef	NO_TSB			/* Don't use TSB */
 #define	USE_BLOCK_STORE_LOAD	/* enable block load/store ops */
 #define	BB_ERRATA_1		/* writes to TICK_CMPR may fail */
+#undef	TLB_FLUSH_LOWVA		/* also flush 32-bit entries from the MMU */
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -3501,9 +3502,11 @@ sparc64_ipi_pause_trap_point:
 	stx	r1, [r2 + %lo(CPUINFO_VA+CI_IPIEVC+EVC_SIZE*n)]
 
 /*
- * IPI handler to flush single pte.
  * void sparc64_ipi_flush_pte_us(void *);
  * void sparc64_ipi_flush_pte_usiii(void *);
+ *
+ * IPI handler to flush single pte.  We enter here with %tl already 1
+ * and PSTATE_IE already disabled, so there's no need to do it again.
  *
  * On entry:
  *	%g2 = vaddr_t va
@@ -3521,7 +3524,7 @@ ENTRY(sparc64_ipi_flush_pte_us)
 	or	%g2, DEMAP_PAGE_SECONDARY, %g2	! Demap page from secondary context only
 	stxa	%g2, [%g2] ASI_DMMU_DEMAP	! Do the demap
 	stxa	%g2, [%g2] ASI_IMMU_DEMAP	! to both TLBs
-#ifdef _LP64
+#ifdef TLB_FLUSH_LOWVA
 	srl	%g2, 0, %g2			! and make sure it's both 32- and 64-bit entries
 	stxa	%g2, [%g2] ASI_DMMU_DEMAP	! Do the demap
 	stxa	%g2, [%g2] ASI_IMMU_DEMAP	! Do the demap
@@ -3535,17 +3538,6 @@ ENTRY(sparc64_ipi_flush_pte_us)
 	 nop
 
 ENTRY(sparc64_ipi_flush_pte_usiii)
-#if 0
-	rdpr	%pstate, %g1
-	andn	%g1, PSTATE_IE, %g4
-	wrpr	%g4, %pstate
-
-	rdpr	%tl, %g4
-	brnz	%g4, 1f
-	 add	%g4, 1, %g5
-	wrpr	%g5, %tl
-1:
-#endif
 	andn	%g2, 0xfff, %g2			! drop unused va bits
 	mov	CTX_PRIMARY, %g5
 	ldxa	[%g5] ASI_DMMU, %g6		! Save primary context
@@ -3556,7 +3548,7 @@ ENTRY(sparc64_ipi_flush_pte_usiii)
 	or	%g2, DEMAP_PAGE_PRIMARY, %g2
 	stxa	%g2, [%g2] ASI_DMMU_DEMAP	! Do the demap
 	stxa	%g2, [%g2] ASI_IMMU_DEMAP	! to both TLBs
-#ifdef _LP64
+#ifdef TLB_FLUSH_LOWVA
 	srl	%g2, 0, %g2			! and make sure it's both 32- and 64-bit entries
 	stxa	%g2, [%g2] ASI_DMMU_DEMAP	! Do the demap
 	stxa	%g2, [%g2] ASI_IMMU_DEMAP	! Do the demap
@@ -3568,11 +3560,6 @@ ENTRY(sparc64_ipi_flush_pte_usiii)
 	flush	%g7
 	IPIEVC_INC(IPI_EVCNT_TLB_PTE,%g2,%g3)
 
-#if 0
-	wrpr	%g4, %tl
-	wrpr	%g1, %pstate
-#endif
-	 
 	ba,a	ret_from_intr_vector
 	 nop
 
@@ -5114,7 +5101,7 @@ ENTRY(sp_tlb_flush_pte_us)
 	or	%o0, DEMAP_PAGE_SECONDARY, %o0		! Demap page from secondary context only
 	stxa	%o0, [%o0] ASI_DMMU_DEMAP		! Do the demap
 	stxa	%o0, [%o0] ASI_IMMU_DEMAP		! to both TLBs
-#ifdef _LP64
+#ifdef TLB_FLUSH_LOWVA
 	srl	%o0, 0, %o0				! and make sure it's both 32- and 64-bit entries
 	stxa	%o0, [%o0] ASI_DMMU_DEMAP		! Do the demap
 	stxa	%o0, [%o0] ASI_IMMU_DEMAP		! Do the demap
@@ -5181,13 +5168,14 @@ ENTRY(sp_tlb_flush_pte_usiii)
 	or	%o0, DEMAP_PAGE_PRIMARY, %o0
 	stxa	%o0, [%o0] ASI_DMMU_DEMAP		! Do the demap
 	stxa	%o0, [%o0] ASI_IMMU_DEMAP		! to both TLBs
-#ifdef _LP64
+#ifdef TLB_FLUSH_LOWVA
 	srl	%o0, 0, %o0				! and make sure it's both 32- and 64-bit entries
 	stxa	%o0, [%o0] ASI_DMMU_DEMAP		! Do the demap
 	stxa	%o0, [%o0] ASI_IMMU_DEMAP		! Do the demap
 #endif
 	flush	%o1
 	stxa	%o5, [%o2] ASI_DMMU			! Restore primary context
+	membar	#Sync
 	brnz,pt	%o3, 1f
 	 flush	%o1
 	wrpr	%g0, %o3, %tl				! Return to kernel mode.
