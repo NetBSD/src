@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.10 2010/02/06 03:10:14 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.11 2010/02/15 07:37:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.10 2010/02/06 03:10:14 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.11 2010/02/15 07:37:36 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -105,21 +105,13 @@ int iointr_debug = IOINTR_DEBUG;
  */
 #define _SR_BITS_DFLT	(MIPS_INT_MASK_2|MIPS_INT_MASK_3|MIPS_INT_MASK_4)
 const uint32_t ipl_sr_bits[_IPL_N] = {
-	[IPL_NONE] = _SR_BITS_DFLT,
-	[IPL_SOFTCLOCK] =
-		_SR_BITS_DFLT
-	      | MIPS_SOFT_INT_MASK_0,
-	[IPL_SOFTNET] =
-		_SR_BITS_DFLT
-	      | MIPS_SOFT_INT_MASK_0
-	      | MIPS_SOFT_INT_MASK_1,
-	[IPL_VM] =
-		_SR_BITS_DFLT
-	      | MIPS_SOFT_INT_MASK_0
-	      | MIPS_SOFT_INT_MASK_1
-	      | MIPS_INT_MASK_0,
-	[IPL_SCHED] =
-		MIPS_INT_MASK,
+    [IPL_NONE]		= _SR_BITS_DFLT,
+    [IPL_PREEMPT]	= _SR_BITS_DFLT,
+    [IPL_SOFTCLOCK]	= _SR_BITS_DFLT | MIPS_SOFT_INT_MASK_0,
+    [IPL_SOFTNET]	= _SR_BITS_DFLT | MIPS_SOFT_INT_MASK,
+    [IPL_VM]		= _SR_BITS_DFLT | MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0,
+    [IPL_SCHED]		= MIPS_INT_MASK,
+    [IPL_HIGH]		= MIPS_INT_MASK,
 };
 
 /*
@@ -650,7 +642,7 @@ rmixl_intr_disestablish(void *cookie)
 }
 
 void
-evbmips_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 {
 	struct evbmips_intrhand *ih;
 	struct rmixl_intrvec *ivp;
@@ -659,8 +651,8 @@ evbmips_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 #ifdef IOINTR_DEBUG
 	uint64_t eimr;
 
-	printf("%s: status %#x, cause %#x, pc %#x, ipending %#x\n",
-		__func__, status, cause, pc, ipending); 
+	printf("%s: ipl %d, pc %#x, ipending %#x\n",
+		__func__, ipl, pc, ipending); 
 
 	asm volatile("dmfc0 %0, $9, 6;" : "=r"(eirr));
 	asm volatile("dmfc0 %0, $9, 7;" : "=r"(eimr));
@@ -693,13 +685,7 @@ evbmips_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 				rmixl_irqtab[ih->ih_irq].irq_count.ev_count++;
 			}
 		}
-
-		cause &= ~(MIPS_SOFT_INT_MASK_0 << vec);
 	}
-
-
-	/* Re-enable anything that we have processed. */
-	_splset(MIPS_SR_INT_IE | ((status & ~cause) & MIPS_HARD_INT_MASK));
 }
 
 #ifdef DEBUG

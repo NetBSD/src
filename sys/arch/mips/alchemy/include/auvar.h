@@ -1,4 +1,4 @@
-/* $NetBSD: auvar.h,v 1.9 2007/02/21 22:59:47 thorpej Exp $ */
+/* $NetBSD: auvar.h,v 1.9.64.1 2010/02/15 07:37:36 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -104,7 +104,7 @@ void	*au_intr_establish(int, int, int, int, int (*)(void *), void *);
 void	au_intr_disestablish(void *);
 void	au_intr_enable(int);
 void	au_intr_disable(int);
-void	au_iointr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void	au_iointr(int, vaddr_t, uint32_t);
 
 void	au_cpureg_bus_mem_init(bus_space_tag_t, void *);
 
