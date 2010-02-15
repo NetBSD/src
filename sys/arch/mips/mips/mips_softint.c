@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.1.2.3 2010/02/06 14:41:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.1.2.4 2010/02/15 07:36:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.1.2.3 2010/02/06 14:41:40 matt Ex
 
 #include <uvm/uvm_extern.h>
 
-#include <mips/locore.h>
+#include <machine/intr.h>
 
 #ifdef __HAVE_FAST_SOFTINTS
 
@@ -48,6 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.1.2.3 2010/02/06 14:41:40 matt Ex
 #define	SOFTINT_CLOCK_MASK	(1 << SOFTINT_CLOCK)
 #define	SOFTINT_NET_MASK	(1 << SOFTINT_NET)
 #define	SOFTINT_SERIAL_MASK	(1 << SOFTINT_SERIAL)
+#ifdef __HAVE_PREEMPTION
+#define	SOFTINT_PREEMPT_MASK	(1 << SOFTINT_COUNT)
+#endif
 
 /*
  * This is more complex than usual since we want the fast softint threads
@@ -103,6 +106,7 @@ softint_trigger(uintptr_t si)
 		softint_fast_dispatch(ci->ci_softlwps[SOFTINT_##level], \
 		    IPL_SOFT##level); \
 		KASSERT(ci->ci_softlwps[SOFTINT_##level]->l_ctxswtch == 0); \
+		KASSERTMSG(ci->ci_cpl != IPL_HIGH, ("cpl (%d) != HIGH", ci->ci_cpl)); \
 		continue; \
 	}
 
@@ -111,10 +115,10 @@ softint_process(uint32_t ipending)
 {
 	struct cpu_info * const ci = curcpu();
 	u_int mask;
-	int s;
 
 	KASSERT((ipending & MIPS_SOFT_INT_MASK) != 0);
 	KASSERT((ipending & ~MIPS_SOFT_INT_MASK) == 0);
+	KASSERT(ci->ci_cpl == IPL_HIGH);
 	KASSERT(ci->ci_mtx_count == 0);
 
 	if (ipending & MIPS_SOFT_INT_MASK_0) {
@@ -127,8 +131,6 @@ softint_process(uint32_t ipending)
 		KASSERT(ipending & MIPS_SOFT_INT_MASK_1);
 		mask = SOFTINT_MASK_1;
 	}
-
-	s = splhigh();
 
 	for (;;) {
 		u_int softints = ci->ci_softints & mask;
@@ -144,7 +146,6 @@ softint_process(uint32_t ipending)
 	KASSERT(ci->ci_mtx_count == 0);
 
 	_clrsoftintr(ipending);
-	splx(s);
 }
 
 #endif /* __HAVE_FAST_SOFTINTS */

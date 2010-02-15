@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clockintr.c,v 1.8 2008/08/03 09:14:28 tsutsui Exp $	*/
+/*	$NetBSD: mips3_clockintr.c,v 1.8.12.1 2010/02/15 07:36:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.8 2008/08/03 09:14:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.8.12.1 2010/02/15 07:36:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,8 @@ mips3_clockintr(struct clockframe *cfp)
 {
 	uint32_t new_cnt;
 
+	mips_int5_evcnt.ev_count++;
+
 	next_cp0_clk_intr += curcpu()->ci_cycles_per_hz;
 	mips3_cp0_compare_write(next_cp0_clk_intr);
 
@@ -126,9 +128,11 @@ mips3_clockintr(struct clockframe *cfp)
 		mips_int5_missed_evcnt.ev_count++;
 	}
 
-	hardclock(cfp);
+	/*
+	 * Since hardclock is at the end, we can invoke it by a tailcall.
+	 */
 
-	mips_int5_evcnt.ev_count++;
+	hardclock(cfp);
 
 	/* caller should renable clock interrupts */
 }
@@ -151,7 +155,7 @@ mips3_initclocks(void)
 	 * Now we can enable all interrupts including hardclock(9)
 	 * by CPU INT5.
 	 */
-	_splnone();
+	spl0();
 }
 
 /*

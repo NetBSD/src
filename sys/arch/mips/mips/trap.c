@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.18 2010/02/01 06:52:59 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.19 2010/02/15 07:36:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.18 2010/02/01 06:52:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.19 2010/02/15 07:36:04 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -158,7 +158,7 @@ const char * const trap_type[] = {
 };
 
 void trap(unsigned int, unsigned int, vaddr_t, vaddr_t, struct trapframe *);
-void ast(unsigned int);
+void ast(void);
 
 vaddr_t MachEmulateBranch(struct trapframe *, vaddr_t, unsigned int, int);	/* XXX */
 void MachEmulateInst(uint32_t, uint32_t, vaddr_t, struct trapframe *);	/* XXX */
@@ -204,6 +204,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	vm_prot_t ftype;
 	ksiginfo_t ksi;
 	extern void fswintrberr(void);
+
 	KSI_INIT_TRAP(&ksi);
 
 	uvmexp.traps++;
@@ -211,16 +212,6 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	if (USERMODE(status)) {
 		type |= T_USER;
 		LWP_CACHE_CREDS(l, p);
-	}
-
-	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV)) {
-		if (type != T_BREAK) {
-#ifdef IPL_ICU_MASK
-			spllowersofthigh();
-#else
-			_splset((status & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
-#endif
-		}
 	}
 
 	switch (type) {
@@ -597,9 +588,10 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
  * to make involuntary context switch (preemption).
  */
 void
-ast(unsigned pc)	/* pc is program counter where to continue */
+ast(void)
 {
 	struct lwp *l = curlwp;
+	struct cpu_info *ci = l->l_cpu;
 
 	while (l->l_md.md_astpending) {
 		uvmexp.softs++;
@@ -612,7 +604,7 @@ ast(unsigned pc)	/* pc is program counter where to continue */
 
 		userret(l);
 
-		if (curcpu()->ci_want_resched) {
+		if (ci->ci_want_resched) {
 			/*
 			 * We are being preempted.
 			 */

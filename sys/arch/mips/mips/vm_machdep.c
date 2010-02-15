@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.11 2010/02/05 17:16:05 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.12 2010/02/15 07:36:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.11 2010/02/05 17:16:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.12 2010/02/15 07:36:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,9 +179,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 #ifdef _LP64
 	KASSERT(pcb->pcb_context.val[_L_SR] & MIPS_SR_KX);
 #endif
-#ifdef IPL_ICU_MASK
-	pcb->pcb_ppl = 0;	/* machine dependent interrupt mask */
-#endif
+	KASSERT(pcb->pcb_context.val[_L_SR] & MIPS_SR_INT_IE);
 }
 
 /*
@@ -204,9 +202,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 #ifdef _LP64
 	KASSERT(pcb->pcb_context.val[_L_SR] & MIPS_SR_KX);
 #endif
-#ifdef IPL_ICU_MASK
-	pcb->pcb_ppl = 0;	/* machine depenedend interrupt mask */
-#endif
+	KASSERT(pcb->pcb_context.val[_L_SR] & MIPS_SR_INT_IE);
 }
 
 static struct evcnt uarea_remapped = 

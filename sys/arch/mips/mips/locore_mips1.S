@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.64.26.1.2.7 2010/02/01 04:16:19 matt Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.64.26.1.2.8 2010/02/15 07:36:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -357,9 +357,14 @@ NESTED_NOPROFILE(mips1_user_gen_exception, CALLFRAME_SIZ, ra)
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
-	.set	at
-	and	t0, a0, ~MIPS_SR_COP_1_BIT	# turn off the FPU
-	.set	noat
+#ifndef NOFPU
+	lui	t0, %hi(MIPS_SR_COP_1_BIT)
+	and	t0, a0
+	or	t0, MIPS_SR_INT_IE		# make sure intrs are still on
+#else
+	li	t0, MIPS_SR_INT_IE		# reenable intrs
+#endif
+	xor	t0, a0				# turn off the FPU & ints on
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	move	ra, a3
 	sw	ra, CALLFRAME_RA(sp)
