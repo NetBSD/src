@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.76 2010/02/12 14:26:27 njoly Exp $ */
+/* $NetBSD: envstat.c,v 1.77 2010/02/15 22:37:14 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.76 2010/02/12 14:26:27 njoly Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.77 2010/02/15 22:37:14 pgoyette Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -64,10 +64,8 @@ typedef struct envsys_sensor {
 	int32_t	max_value;
 	int32_t	min_value;
 	int32_t	avg_value;
-	int32_t critcap_value;
 	int32_t	critmin_value;
 	int32_t	critmax_value;
-	int32_t warncap_value;
 	int32_t	warnmin_value;
 	int32_t	warnmax_value;
 	char	desc[ENVSYS_DESCLEN];
@@ -567,6 +565,11 @@ find_sensors(prop_array_t array, const char *dvname, dvprops_t edp)
 		if (obj1)
 			sensor->critmax_value = prop_number_integer_value(obj1);
 
+		/* get maximum capacity value if available */
+		obj1 = prop_dictionary_get(obj, "maximum-capacity");
+		if (obj1)
+			sensor->critmax_value = prop_number_integer_value(obj1);
+
 		/* get critical min value if available */
 		obj1 = prop_dictionary_get(obj, "critical-min");
 		if (obj1)
@@ -575,10 +578,15 @@ find_sensors(prop_array_t array, const char *dvname, dvprops_t edp)
 		/* get critical capacity value if available */
 		obj1 = prop_dictionary_get(obj, "critical-capacity");
 		if (obj1)
-			sensor->critcap_value = prop_number_integer_value(obj1);
+			sensor->critmin_value = prop_number_integer_value(obj1);
 
 		/* get warning max value if available */
 		obj1 = prop_dictionary_get(obj, "warning-max");
+		if (obj1)
+			sensor->warnmax_value = prop_number_integer_value(obj1);
+
+		/* get high capacity value if available */
+		obj1 = prop_dictionary_get(obj, "high-capacity");
 		if (obj1)
 			sensor->warnmax_value = prop_number_integer_value(obj1);
 
@@ -590,7 +598,7 @@ find_sensors(prop_array_t array, const char *dvname, dvprops_t edp)
 		/* get warning capacity value if available */
 		obj1 = prop_dictionary_get(obj, "warning-capacity");
 		if (obj1)
-			sensor->warncap_value = prop_number_integer_value(obj1);
+			sensor->warnmin_value = prop_number_integer_value(obj1);
 
 		/* print sensor names if -l was given */
 		if (flags & ENVSYS_LFLAG) {
@@ -957,9 +965,10 @@ do {									\
 
 
 				if (sensor->percentage) {
-					ilen += 9 + 9;
-					PRINTPCT(warncap_value);
-					PRINTPCT(critcap_value);
+					PRINTPCT(critmax_value);
+					PRINTPCT(warnmax_value);
+					PRINTPCT(warnmin_value);
+					PRINTPCT(critmin_value);
 				} else {
 
 					PRINTVAL(critmax_value);

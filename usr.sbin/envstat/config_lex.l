@@ -1,4 +1,4 @@
-/* 	$NetBSD: config_lex.l,v 1.6 2009/10/29 14:38:37 christos Exp $	*/
+/* 	$NetBSD: config_lex.l,v 1.7 2010/02/15 22:37:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config_lex.l,v 1.6 2009/10/29 14:38:37 christos Exp $");
+__RCSID("$NetBSD: config_lex.l,v 1.7 2010/02/15 22:37:14 pgoyette Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -49,7 +49,7 @@ int yylex(void);
 
 DEVICEPROP	refresh-timeout
 SENSOR		sensor[0-9]+
-SENSORPROP	warning-max|warning-min|warning-capacity|critical-max|critical-min|critical-capacity|rfact|description
+SENSORPROP	warning-max|high-capacity|warning-min|warning-capacity|critical-max|maximum-capacity|critical-min|critical-capacity|rfact|description
 SP_STRING	[(+|\-)\$A-Za-z\.\/_\-0-9 ]*
 STRING		[\$A-Za-z\.\/_\-0-9]*
 

@@ -1,4 +1,4 @@
-/* 	$NetBSD: config.c,v 1.8 2008/08/22 11:27:50 pgoyette Exp $	*/
+/* 	$NetBSD: config.c,v 1.9 2010/02/15 22:37:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config.c,v 1.8 2008/08/22 11:27:50 pgoyette Exp $");
+__RCSID("$NetBSD: config.c,v 1.9 2010/02/15 22:37:14 pgoyette Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -499,6 +499,62 @@ config_devblock_check_sensorprops(prop_dictionary_t ksdict,
 				err(EXIT_FAILURE, "dict_set warncap");
 		} else
 			config_errmsg(PROP_ERR, "warning-capacity", sensor);
+	}
+
+	/*
+	 * high-capacity property set?
+	 */
+	obj = prop_dictionary_get(csdict, "high-capacity");
+	if (obj) {
+		obj2 = prop_dictionary_get(ksdict, "want-percentage");
+		obj3 = prop_dictionary_get(ksdict, "monitoring-supported");
+		if (prop_bool_true(obj2) && prop_bool_true(obj3)) {
+			strval = prop_string_cstring(obj);
+			val = strtod(strval, &endptr);
+			if ((*endptr != '\0') || (val < 0 || val > 100))
+				config_errmsg(VALUE_ERR,
+					      "high-capacity",
+					      sensor);
+			/*
+			 * Convert the value to a valid percentage.
+			 */
+			obj = prop_dictionary_get(ksdict, "max-value");
+			val = (val / 100) * prop_number_integer_value(obj);
+
+			if (!prop_dictionary_set_uint32(csdict,
+						       "high-capacity",
+						       val))
+				err(EXIT_FAILURE, "dict_set highcap");
+		} else
+			config_errmsg(PROP_ERR, "high-capacity", sensor);
+	}
+
+	/*
+	 * maximum-capacity property set?
+	 */
+	obj = prop_dictionary_get(csdict, "maximum-capacity");
+	if (obj) {
+		obj2 = prop_dictionary_get(ksdict, "want-percentage");
+		obj3 = prop_dictionary_get(ksdict, "monitoring-supported");
+		if (prop_bool_true(obj2) && prop_bool_true(obj3)) {
+			strval = prop_string_cstring(obj);
+			val = strtod(strval, &endptr);
+			if ((*endptr != '\0') || (val < 0 || val > 100))
+				config_errmsg(VALUE_ERR,
+					      "maximum-capacity",
+					      sensor);
+			/*
+			 * Convert the value to a valid percentage.
+			 */
+			obj = prop_dictionary_get(ksdict, "max-value");
+			val = (val / 100) * prop_number_integer_value(obj);
+
+			if (!prop_dictionary_set_uint32(csdict,
+						       "maximum-capacity",
+						       val))
+				err(EXIT_FAILURE, "dict_set maxcap");
+		} else
+			config_errmsg(PROP_ERR, "maximum-capacity", sensor);
 	}
 
 	/*
