@@ -1,4 +1,4 @@
-.\" $NetBSD: envsys.conf.5,v 1.12 2009/05/13 23:03:54 wiz Exp $
+.\" $NetBSD: envsys.conf.5,v 1.13 2010/02/15 23:04:11 pgoyette Exp $
 .\"
 .\" -
 .\" Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd April 26, 2008
+.Dd February 15, 2010
 .Dt ENVSYS.CONF 5
 .Os
 .Sh NAME
@@ -156,7 +156,7 @@ For example:
 .Pp
 Only a value between 0 and 100 is allowed.
 When the limit is reached in the sensor, a
-.Em user-capacity
+.Em critical-capacity
 event will be sent to the
 .Xr powerd 8
 daemon (if running) and will execute the block for this event in
@@ -165,7 +165,7 @@ daemon (if running) and will execute the block for this event in
 If this property is set, its value will be shown in the
 .Xr envstat 8
 display output with a column named
-.Ar CritCap .
+.Ar CritMin .
 .It warning-capacity = 20;
 .Pp
 Sets a warning capacity limit property of 20
@@ -190,7 +190,7 @@ For example:
 .Pp
 Only a value between 0 and 100 is allowed.
 When the limit is reached in the sensor, a
-.Em user-warn-capacity
+.Em warning-capacity
 event will be sent to the
 .Xr powerd 8
 daemon (if running) and will execute the block for this event in
@@ -199,10 +199,75 @@ daemon (if running) and will execute the block for this event in
 If this property is set, its value will be shown in the
 .Xr envstat 8
 display output with a column named
-.Ar WarnCap
-when the
-.Fl -W
-option is specified.
+.Ar WarnMin .
+.It high-capacity = 90;
+.Pp
+Sets a high capacity limit property of 90
+percent in a battery sensor.
+Battery sensors are those that report a percentage from the
+.Xr envstat 8
+output.
+.Pp
+It is possible to find out if the sensor accepts this property
+by running
+.Ql envstat -x
+and looking if the
+.Em want-percentage
+object is defined as
+.Em true
+on its dictionary.
+For example:
+.Bd -literal -offset indent
+	\*[Lt]key\*[Gt]want-percentage\*[Lt]/key\*[Gt]
+	\*[Lt]true/\*[Gt]
+.Ed
+.Pp
+Only a value between 0 and 100 is allowed.
+When the limit is reached in the sensor, a
+.Em high-capacity
+event will be sent to the
+.Xr powerd 8
+daemon (if running) and will execute the block for this event in
+.Pa /etc/powerd/scripts/sensor_battery .
+.Pp
+If this property is set, its value will be shown in the
+.Xr envstat 8
+display output with a column named
+.Ar WarnMax .
+.It maximum-capacity = 99;
+.Pp
+Sets a warning capacity limit property of 99
+percent in a battery sensor.
+Battery sensors are those that report a percentage from the
+.Xr envstat 8
+output.
+.Pp
+It is possible to find out if the sensor accepts this property
+by running
+.Ql envstat -x
+and looking if the
+.Em want-percentage
+object is defined as
+.Em true
+on its dictionary.
+For example:
+.Bd -literal -offset indent
+	\*[Lt]key\*[Gt]want-percentage\*[Lt]/key\*[Gt]
+	\*[Lt]true/\*[Gt]
+.Ed
+.Pp
+Only a value between 0 and 100 is allowed.
+When the limit is reached in the sensor, a
+.Em warning-capacity
+event will be sent to the
+.Xr powerd 8
+daemon (if running) and will execute the block for this event in
+.Pa /etc/powerd/scripts/sensor_battery .
+.Pp
+If this property is set, its value will be shown in the
+.Xr envstat 8
+display output with a column named
+.Ar WarnMin .
 .It critical-max = 70C;
 .Pp
 Sets a critical maximum limit property in a sensor.
@@ -212,9 +277,9 @@ keyword at the end; that means that this will only be valid for
 .Em temperature
 sensors and that the value is specified as degrees
 .Em Celsius .
-If degrees Fahrenheit are wanted, just change use the letter
+If degrees Fahrenheit are wanted, just use the letter
 .Em F ,
-like:
+as in:
 .Bd -literal -offset indent
 critical-max = 140F;
 .Ed
@@ -239,7 +304,7 @@ the appropriate
 .Pa /etc/powerd/scripts/sensor_foo
 script (depending on the sensor's type).
 .Pp
-Please note that this property cannot be set in battery sensors
+Please note that this property cannot be set in battery capacity sensors
 (those that have the
 .Em want-percentage
 object in their dictionary).
@@ -253,10 +318,7 @@ properties too.
 If this property is set, its value will be shown in the
 .Xr envstat 8
 display output with a column named
-.Ar CritMax
-unless the
-.Fl W
-option is specified.
+.Ar CritMax .
 .It critical-min = 1.230;
 .Pp
 Sets a critical minimum limit property in a sensor.
@@ -299,7 +361,7 @@ the appropriate
 .Pa /etc/powerd/scripts/sensor_foo
 script (depending on the sensor's type).
 .Pp
-Please note that this property cannot be set in battery sensors
+Please note that this property cannot be set in battery capacity sensors
 (those that have the
 .Em want-percentage
 object in their dictionary).
@@ -310,10 +372,7 @@ property too.
 If this property is set, its value will be shown in the
 .Xr envstat 8
 display output with a column named
-.Ar WarnMax
-if the
-.Fl W
-flag is specified.
+.Ar WarnMax .
 .It warning-min = 1.230;
 .Pp
 Sets a critical minimum limit property in a sensor.
@@ -336,10 +395,7 @@ script (depending on the sensor's type).
 If this property is set, its value will be shown in the
 .Xr envstat 8
 display output with a column named
-.Ar WarnMin
-if the
-.Fl W
-option is specified.
+.Ar WarnMin .
 .It description = string
 .Pp
 Sets a new description in a sensor.
