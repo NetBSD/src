@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.16 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: lock.h,v 1.16.16.1 2010/02/15 03:11:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 static __inline int
 __SIMPLELOCK_LOCKED_P(__cpu_simple_lock_t *__ptr)
 {
-	return *__ptr == __SIMPLELOCK_LOCKED;
+	return *__ptr != __SIMPLELOCK_UNLOCKED;
 }
 
 static __inline int
