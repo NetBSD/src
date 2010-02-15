@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.33.4.3 2009/10/03 23:57:54 snj Exp $
+# $NetBSD: XEN3_DOM0,v 1.33.4.4 2010/02/15 18:04:11 sborrill Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -742,7 +742,7 @@ pseudo-device	swcrypto	# software crypto implementation
 # disk/mass storage pseudo-devices
 pseudo-device	bio			# RAID control device driver
 pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
