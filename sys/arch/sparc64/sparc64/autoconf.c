@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.166 2010/01/21 15:58:32 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.167 2010/02/15 07:56:51 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.166 2010/01/21 15:58:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.167 2010/02/15 07:56:51 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -183,6 +183,7 @@ int autoconf_debug = 0x0;
 #endif
 
 int console_node, console_instance;
+static void patch_kernel(void);
 struct genfb_colormap_callback gfb_cb;
 static void of_set_palette(void *, int, int, int, int);
 static void copyprops(struct device *busdev, int, prop_dictionary_t);
@@ -334,6 +335,65 @@ die_old_boot_loader:
 
 	get_ncpus();
 	pmap_bootstrap(KERNBASE, bi_kend->addr);
+
+	patch_kernel();
+}
+
+/*
+ * Now that we've stopped using the prom mappings, we need to handle any
+ * text fixups.
+ *
+ * For the USIII and newer cpus, convert ASI_DCACHE_TAG into
+ * ASI_DCACHE_INVALIDATE.
+ *
+ * For the older CPUs, we need to convert a branch to a nop in
+ * cache_flush_phys().
+ */
+static void
+patch_kernel(void)
+{
+	paddr_t pa;
+	vaddr_t *pva;
+
+	if (CPU_IS_USIII_UP()) {
+		extern vaddr_t dlflush_start;
+		uint32_t insn, oinsn;
+
+		for (pva = &dlflush_start; *pva; pva++) {
+			oinsn = insn = *(uint32_t *)(*pva);
+			insn &= ~(ASI_DCACHE_TAG << 5);
+			insn |= (ASI_DCACHE_INVALIDATE << 5);
+
+			if (pmap_extract(pmap_kernel(), *pva, &pa)) {
+				sta(pa, ASI_PHYS_CACHED, insn);
+				flush((void *)(*pva));
+#ifdef PATCH_KERNEL_DEBUG
+				printf("patched %p for USIII ASI_DCACHE_INVALIDATE"
+				       ": old insn %08x ew insn %08x\n",
+				    (void *)(intptr_t)*pva, oinsn, insn);
+			} else {
+				printf("could not pmap_extract() to patch %p\n",
+				    (void *)(intptr_t)*pva);
+#endif
+			}
+		}
+	} else {
+		extern vaddr_t nop_on_us_1_start;
+
+		for (pva = &nop_on_us_1_start; *pva; pva++) {
+			if (pmap_extract(pmap_kernel(), *pva, &pa)) {
+				sta(pa, ASI_PHYS_CACHED, 0x01000000);
+				flush((void *)(*pva));
+#ifdef PATCH_KERNEL_DEBUG
+				printf("patched %p for USI/II cache_flush_phys\n",
+				    (void *)(intptr_t)*pva);
+			} else {
+				printf("could not pmap_extract() to patch %p\n",
+				    (void *)(intptr_t)*pva);
+#endif
+			}
+		}
+	}
 }
 
 /*
