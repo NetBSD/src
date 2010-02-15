@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1.1.1.8.2 2009/10/18 16:05:26 bouyer Exp $	*/
+/*	$NetBSD: var.c,v 1.1.1.1.8.3 2010/02/15 01:01:25 snj Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: var.c,v 1.1.1.1.8.2 2009/10/18 16:05:26 bouyer Exp $");
+__RCSID("$NetBSD: var.c,v 1.1.1.1.8.3 2010/02/15 01:01:25 snj Exp $");
 
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>

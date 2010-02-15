@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.1.1.1.8.1 2009/05/30 16:21:37 snj Exp $	*/
+/*	$NetBSD: str.c,v 1.1.1.1.8.2 2010/02/15 01:01:25 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: str.c,v 1.1.1.1.8.1 2009/05/30 16:21:37 snj Exp $");
+__RCSID("$NetBSD: str.c,v 1.1.1.1.8.2 2010/02/15 01:01:25 snj Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance

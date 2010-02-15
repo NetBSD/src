@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.1.1.1.8.2 2009/10/18 16:05:26 bouyer Exp $ */
+/* $NetBSD: lib.h,v 1.1.1.1.8.3 2010/02/15 01:01:24 snj Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -184,7 +184,8 @@ typedef enum bi_ent_t {
 	BI_IGNORE_RECOMMENDED,	/*  3 */
 	BI_USE_ABI_DEPENDS,	/*  4 */
 	BI_LICENSE,		/*  5 */
-	BI_ENUM_COUNT		/*  6 */
+	BI_PKGTOOLS_VERSION,	/*  6 */
+	BI_ENUM_COUNT		/*  7 */
 }	bi_ent_t;
 
 /* Types */
@@ -354,10 +355,18 @@ int	pkgdb_dump(void);
 int     pkgdb_remove(const char *);
 int	pkgdb_remove_pkg(const char *);
 char   *pkgdb_refcount_dir(void);
-char   *_pkgdb_getPKGDB_FILE(char *, unsigned);
-const char *_pkgdb_getPKGDB_DIR(void);
-void	_pkgdb_setPKGDB_DIR(const char *);
-
+char   *pkgdb_get_database(void);
+const char   *pkgdb_get_dir(void);
+/*
+ * Priorities:
+ * 0 builtin default
+ * 1 config file
+ * 2 environment
+ * 3 command line
+ * 4 destdir/views reset
+ */
+void	pkgdb_set_dir(const char *, int);
+char   *pkgdb_pkg_dir(const char *);
 char   *pkgdb_pkg_file(const char *, const char *);
 
 /* List of packages functions */
@@ -426,7 +435,9 @@ extern const char *certs_packages;
 extern const char *certs_pkg_vulnerabilities;
 extern const char *check_vulnerabilities;
 extern const char *config_file;
+extern const char *config_pkg_dbdir;
 extern const char *config_pkg_path;
+extern const char *config_pkg_refcount_dbdir;
 extern const char *do_license_check;
 extern const char *verified_installation;
 extern const char *gpg_cmd;

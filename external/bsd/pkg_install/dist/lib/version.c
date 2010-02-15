@@ -1,4 +1,4 @@
-/*	$NetBSD: version.c,v 1.1.1.1.8.1 2009/05/30 16:21:37 snj Exp $	*/
+/*	$NetBSD: version.c,v 1.1.1.1.8.2 2010/02/15 01:01:25 snj Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: version.c,v 1.1.1.1.8.1 2009/05/30 16:21:37 snj Exp $");
+__RCSID("$NetBSD: version.c,v 1.1.1.1.8.2 2010/02/15 01:01:25 snj Exp $");
 
 /*
  * Copyright (c) 2001 Thomas Klausner.  All rights reserved.
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: version.c,v 1.1.1.1.8.1 2009/05/30 16:21:37 snj Exp $");
 void
 show_version(void)
 {
-	printf("%s\n", PKGTOOLS_VERSION);
+	printf("%d\n", PKGTOOLS_VERSION);
 	exit (0);
 }
 
