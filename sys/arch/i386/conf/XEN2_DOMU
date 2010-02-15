@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOMU,v 1.19.4.1 2008/11/18 01:56:59 snj Exp $
+# $NetBSD: XEN2_DOMU,v 1.19.4.2 2010/02/15 18:04:11 sborrill Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -187,7 +187,7 @@ pseudo-device	swcrypto	# software crypto implementation
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
