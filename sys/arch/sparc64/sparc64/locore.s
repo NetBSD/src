@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.313 2010/02/13 22:29:55 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.314 2010/02/15 07:56:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -55,15 +55,13 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  */
 
-#ifndef CHEETAH
-#define	SPITFIRE
-#endif
 #undef	PARANOID		/* Extremely expensive consistency checks */
 #undef	NO_VCACHE		/* Map w/D$ disabled */
 #undef	TRAPSTATS		/* Count traps */
 #undef	TRAPS_USE_IG		/* Use Interrupt Globals for all traps */
 #define	HWREF			/* Track ref/mod bits in trap handlers */
 #undef	DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
+#undef	SPITFIRE		/* Only used in DLFLUSH* now, see DCACHE_BUG */
 #undef	NO_TSB			/* Don't use TSB */
 #define	USE_BLOCK_STORE_LOAD	/* enable block load/store ops */
 #define	BB_ERRATA_1		/* writes to TICK_CMPR may fail */
@@ -195,12 +193,6 @@
 /* Give this real authority: reset the machine */
 #define NOTREACHED	sir
 
-#ifdef SPITFIRE
-#define ASI_DCACHE_TAG_OR_INV	ASI_DCACHE_TAG
-#else
-#define ASI_DCACHE_TAG_OR_INV	ASI_DCACHE_INVALIDATE
-#endif
-
 /*
  * This macro will clear out a cache line before an explicit
  * access to that location.  It's mostly used to make certain
@@ -209,6 +201,12 @@
  * It uses a register with the address to clear and a temporary
  * which is destroyed.
  */
+#ifdef SPITFIRE
+#define ASI_DCACHE_TAG_OR_INV	ASI_DCACHE_TAG
+#else
+#define ASI_DCACHE_TAG_OR_INV	ASI_DCACHE_INVALIDATE
+#endif
+
 #ifdef DCACHE_BUG
 #define DLFLUSH(a,t) \
 	andn	a, 0x1f, t; \
@@ -2317,7 +2315,8 @@ winfixsave:
 1:
 #if 1
 	/* Now we need to blast away the D$ to make sure we're in sync */
-	stxa	%g0, [%g7] ASI_DCACHE_TAG_OR_INV
+dlflush1:
+	stxa	%g0, [%g7] ASI_DCACHE_TAG
 	brnz,pt	%g7, 1b
 	 dec	8, %g7
 #endif
@@ -5313,7 +5312,8 @@ ENTRY(blast_dcache)
 	andn	%o3, PSTATE_IE, %o4			! Turn off PSTATE_IE bit
 	wrpr	%o4, 0, %pstate
 1:
-	stxa	%g0, [%o1] ASI_DCACHE_TAG_OR_INV
+dlflush2:
+	stxa	%g0, [%o1] ASI_DCACHE_TAG
 	brnz,pt	%o1, 1b
 	 dec	32, %o1
 	sethi	%hi(KERNBASE), %o2
@@ -5386,7 +5386,8 @@ ENTRY(dcache_flush_page)
 	bne,pt	%xcc, 1b
 	 membar	#LoadStore
 
-	stxa	%g0, [%o0] ASI_DCACHE_TAG_OR_INV
+dlflush3:
+	stxa	%g0, [%o0] ASI_DCACHE_TAG
 	ba,pt	%icc, 1b
 	 membar	#StoreLoad
 2:
@@ -5444,9 +5445,13 @@ ENTRY(cache_flush_phys)
 	 nop
 
 	membar	#LoadStore
-	stxa	%g0, [%o4] ASI_DCACHE_TAG_OR_INV ! Just right
+dlflush4:
+	stxa	%g0, [%o4] ASI_DCACHE_TAG ! Just right
+	membar	#Sync
 2:
-#ifdef SPITFIRE
+nop_on_us_1:
+	b	3f
+	 nop					! XXXMRG put something useful here?
 	ldda	[%o4] ASI_ICACHE_TAG, %g0	! Tag goes in %g1
 	sllx	%g1, 40-35, %g1			! Shift I$ tag into place
 	and	%g1, %o2, %g1			! Mask out trash
@@ -5457,7 +5462,6 @@ ENTRY(cache_flush_phys)
 	 nop
 	stxa	%g0, [%o4] ASI_ICACHE_TAG
 3:
-#endif
 	membar	#StoreLoad
 	dec	32, %o5
 	brgz,pt	%o5, 1b
@@ -9702,3 +9706,16 @@ _C_LABEL(ssym):
 	.comm	_C_LABEL(trapdebug), 4
 	.comm	_C_LABEL(pmapdebug), 4
 #endif
+
+	.globl  _C_LABEL(dlflush_start)
+_C_LABEL(dlflush_start):
+	.xword	dlflush1
+	.xword	dlflush2
+	.xword	dlflush3
+	.xword	dlflush4
+	.xword	0
+
+	.globl  _C_LABEL(nop_on_us_1_start)
+_C_LABEL(nop_on_us_1_start):
+	.xword	nop_on_us_1
+	.xword	0
