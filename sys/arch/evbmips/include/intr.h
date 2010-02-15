@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16.18.2 2010/02/06 02:57:43 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.16.18.3 2010/02/15 07:37:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -33,63 +33,9 @@
 #define	_EVBMIPS_INTR_H_
 
 #include <sys/queue.h>
-
-#define	IPL_NONE	0	/* disable only this interrupt */
-#define	IPL_SOFTCLOCK	1	/* software interrupts */
-#define	IPL_SOFTBIO	1	/* software interrupts */
-#define	IPL_SOFTNET	2	/* software interrupts */
-#define	IPL_SOFTSERIAL	2	/* software interrupts */
-#define	IPL_VM		3
-#define	IPL_SCHED	4
-#define	IPL_HIGH	4
-
-#define	_IPL_N		5	/* max IPL + 1 */
-
-#define	_IPL_SI0_FIRST	IPL_SOFTCLOCK
-#define	_IPL_SI0_LAST	IPL_SOFTBIO
-
-#define	_IPL_SI1_FIRST	IPL_SOFTNET
-#define	_IPL_SI1_LAST	IPL_SOFTSERIAL
-
-#define	IST_UNUSABLE	-1	/* interrupt cannot be used */
-#define	IST_NONE	0	/* none (dummy) */
-#define	IST_PULSE	1	/* pulsed */
-#define	IST_EDGE	2	/* edge-triggered */
-#define	IST_LEVEL	3	/* level-triggered */
-#define	IST_LEVEL_HIGH	4	/* level triggered, active high */
-#define	IST_LEVEL_LOW	5       /* level triggered, active low */
+#include <mips/intr.h>
 
 #ifdef	_KERNEL
-
-#include <mips/locore.h>
-
-extern const uint32_t ipl_sr_bits[_IPL_N];
-
-#define	spl0()		(void) _spllower(0)
-#define	splx(s)		(void) _splset(s)
-
-#define	splsoft()	_splraise(ipl_sr_bits[IPL_SOFT])
-
-typedef int ipl_t;
-typedef struct {
-	ipl_t _sr;
-} ipl_cookie_t;
-
-static inline ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._sr = ipl_sr_bits[ipl]};
-}
-
-static inline int
-splraiseipl(ipl_cookie_t icookie)
-{
-
-	return _splraise(icookie._sr);
-}
-
-#include <sys/spl.h>
 
 struct evbmips_intrhand {
 	LIST_ENTRY(evbmips_intrhand) ih_q;
@@ -99,10 +45,11 @@ struct evbmips_intrhand {
 	int ih_ipl;
 };
 
-void	evbmips_intr_init(void);
 void	intr_init(void);
-void	evbmips_iointr(uint32_t, uint32_t, uint32_t, uint32_t);
+void	evbmips_intr_init(void);
+void	evbmips_iointr(int, vaddr_t, uint32_t);
 void	*evbmips_intr_establish(int, int (*)(void *), void *);
 void	evbmips_intr_disestablish(void *);
+
 #endif /* _KERNEL */
 #endif /* ! _EVBMIPS_INTR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.19.16.2 2010/02/06 02:59:04 matt Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.19.16.3 2010/02/15 07:37:36 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.19.16.2 2010/02/06 02:59:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.19.16.3 2010/02/15 07:37:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -65,15 +65,28 @@ __KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.19.16.2 2010/02/06 02:59:04 matt Ex
  */
 const uint32_t ipl_sr_bits[_IPL_N] = {
 	[IPL_NONE] = 0,
+	[IPL_PREEMPT] = 0,
 	[IPL_SOFTCLOCK] =
 	    MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTNET] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
+	    MIPS_SOFT_INT_MASK_0 |
+	    MIPS_SOFT_INT_MASK_1,
 	[IPL_VM] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_SOFT_INT_MASK_0 |
+	    MIPS_SOFT_INT_MASK_1 |
 	    MIPS_INT_MASK_0,
 	[IPL_SCHED] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_SOFT_INT_MASK_0 |
+	    MIPS_SOFT_INT_MASK_1 |
+	    MIPS_INT_MASK_0 |
+	    MIPS_INT_MASK_1 |
+	    MIPS_INT_MASK_2 |
+	    MIPS_INT_MASK_3 |
+	    MIPS_INT_MASK_4 |
+	    MIPS_INT_MASK_5,
+	[IPL_HIGH] =
+	    MIPS_SOFT_INT_MASK_0 |
+	    MIPS_SOFT_INT_MASK_1 |
 	    MIPS_INT_MASK_0 |
 	    MIPS_INT_MASK_1 |
 	    MIPS_INT_MASK_2 |
@@ -249,9 +262,8 @@ evbmips_intr_disestablish(void *arg)
 }
 
 void
-evbmips_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 {
-	struct evbmips_intrhand *ih;
 	
 	/* Check for error interrupts (SMI, GT64120) */
 	if (ipending & (MIPS_INT_MASK_1 | MIPS_INT_MASK_3)) {
@@ -267,15 +279,12 @@ evbmips_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	 * priority.
 	 */
 	if (ipending & MIPS_INT_MASK_0) {
+		struct evbmips_intrhand *ih;
 		/* All interrupts are gated through MIPS HW interrupt 0 */
 		malta_cpuintrs[0].cintr_count.ev_count++;
 		LIST_FOREACH(ih, &malta_cpuintrs[0].cintr_list, ih_q)
 			(*ih->ih_func)(ih->ih_arg);
-		cause &= ~MIPS_INT_MASK_0;
 	}
-
-	/* Re-enable anything that we have processed. */
-	_splset(MIPS_SR_INT_IE | ((status & ~cause) & MIPS_HARD_INT_MASK));
 }
 
 /*

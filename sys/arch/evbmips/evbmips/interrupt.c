@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.11.18.2 2010/02/05 07:39:52 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.11.18.3 2010/02/15 07:37:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.11.18.2 2010/02/05 07:39:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.11.18.3 2010/02/15 07:37:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,38 +50,39 @@ intr_init(void)
 }
 
 void
-cpu_intr(u_int32_t status, u_int32_t cause, vaddr_t pc, u_int32_t ipending)
+cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 {
-	struct clockframe cf;
-	struct cpu_info *ci;
+	struct cpu_info * const ci = curcpu();
+	uint32_t pending;
+	int ipl;
 
-	ci = curcpu();
-	ci->ci_idepth++;
+	KASSERT(ci->ci_cpl == IPL_HIGH);
+
 	uvmexp.intrs++;
 
-	if (ipending & MIPS_INT_MASK_5) {
-		/* call the common MIPS3 clock interrupt handler */ 
-		cf.pc = pc;
-		cf.sr = status;
-		mips3_clockintr(&cf);
+	while (ppl < (ipl = splintr(&pending))) {
+		splx(ipl);	/* lower to interrupt level */
 
-		/* Re-enable clock interrupts. */
-		cause &= ~MIPS_INT_MASK_5;
-		_splset(MIPS_SR_INT_IE |
-		    ((status & ~cause) & MIPS_HARD_INT_MASK));
+		KASSERT(pending != 0);
+
+		if (pending & MIPS_INT_MASK_5) {
+			struct clockframe cf;
+			KASSERT(ipl == IPL_SCHED);
+			/* call the common MIPS3 clock interrupt handler */ 
+			cf.pc = pc;
+			cf.sr = status;
+			cf.intr = (ci->ci_idepth > 1);
+			mips3_clockintr(&cf);
+		}
+
+		if (pending & (MIPS_INT_MASK_0|MIPS_INT_MASK_1|MIPS_INT_MASK_2|
+				MIPS_INT_MASK_3|MIPS_INT_MASK_4)) {
+			KASSERT(ipl == IPL_VM);
+			/* Process I/O and error interrupts. */
+			evbmips_iointr(ipl, pc, pending);
+		}
+		(void)splhigh();	/* disable interrupts */
 	}
 
-	if (ipending & (MIPS_INT_MASK_0|MIPS_INT_MASK_1|MIPS_INT_MASK_2|
-			MIPS_INT_MASK_3|MIPS_INT_MASK_4)) {
-		/* Process I/O and error interrupts. */
-		evbmips_iointr(status, cause, pc, ipending);
-	}
-	ci->ci_idepth--;
-
-#ifdef __HAVE_FAST_SOFTINTS
-	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
-	if (ipending == 0)
-		return;
-	softint_process(ipending);
-#endif
+	KASSERT(ci->ci_cpl == IPL_HIGH);
 }
