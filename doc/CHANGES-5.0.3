@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.2 2010/02/14 14:05:07 bouyer Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.3 2010/02/15 01:20:27 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -13,3 +13,115 @@ distrib/pmax/instkernel/Makefile		patch
 
 	Bump the size of the pmax instkernel ramdisk to 2200k.
 	[snj, ticket #1305]
+
+external/bsd/fetch/dist/libfetch/common.c	patch
+external/bsd/fetch/dist/libfetch/common.h	patch
+external/bsd/fetch/dist/libfetch/errlist.sh	patch
+external/bsd/fetch/dist/libfetch/fetch.3	patch
+external/bsd/fetch/dist/libfetch/fetch.c	patch
+external/bsd/fetch/dist/libfetch/fetch.cat3	patch
+external/bsd/fetch/dist/libfetch/fetch.h	patch
+external/bsd/fetch/dist/libfetch/file.c		patch
+external/bsd/fetch/dist/libfetch/ftp.c		patch
+external/bsd/fetch/dist/libfetch/ftp.errors	patch
+external/bsd/fetch/dist/libfetch/http.c		patch
+external/bsd/fetch/dist/libfetch/http.errors	patch
+
+	Update libfetch to 2.30.
+	libfetch-2.25:
+	- address a number of lint warnings
+	- fix strict-alignment issues for GCC 4.4
+	- fix a bug in the line reading optimisation
+	- do not reuse a FTP connection if there is an active transfer on it
+
+	libfetch-2.26:
+	- Add support to aggressively cache directory listenings, useful for
+	  HTTP
+	- Avoid leaking memory in error cases. From Xavier from Arch Linux.
+
+	libfetch-2.30:
+	- Revamped connection cache, allowing more than one active session
+	- HTTP keep-alive support
+	[joerg, ticket #1294]
+
+external/bsd/pkg_install/dist/add/add.h			patch
+external/bsd/pkg_install/dist/add/main.c		patch
+external/bsd/pkg_install/dist/add/perform.c		patch
+external/bsd/pkg_install/dist/add/pkg_add.1		patch
+external/bsd/pkg_install/dist/admin/audit.c		patch
+external/bsd/pkg_install/dist/admin/check.c		patch
+external/bsd/pkg_install/dist/admin/main.c		patch
+external/bsd/pkg_install/dist/admin/pkg_admin.1		patch
+external/bsd/pkg_install/dist/bpm/bpm.1			patch
+external/bsd/pkg_install/dist/bpm/bpm.sh.in		patch
+external/bsd/pkg_install/dist/create/build.c		patch
+external/bsd/pkg_install/dist/create/create.h		patch
+external/bsd/pkg_install/dist/create/main.c		patch
+external/bsd/pkg_install/dist/create/perform.c		patch
+external/bsd/pkg_install/dist/create/pkg_create.1	patch
+external/bsd/pkg_install/dist/create/pl.c		patch
+external/bsd/pkg_install/dist/delete/pkg_delete.1	patch
+external/bsd/pkg_install/dist/delete/pkg_delete.1.in	patch
+external/bsd/pkg_install/dist/delete/pkg_delete.c	patch
+external/bsd/pkg_install/dist/info/info.h		patch
+external/bsd/pkg_install/dist/info/main.c		patch
+external/bsd/pkg_install/dist/info/perform.c		patch
+external/bsd/pkg_install/dist/info/pkg_info.1		patch
+external/bsd/pkg_install/dist/info/show.c		patch
+external/bsd/pkg_install/dist/lib/automatic.c		patch
+external/bsd/pkg_install/dist/lib/conflicts.c		patch
+external/bsd/pkg_install/dist/lib/decompress.c		patch
+external/bsd/pkg_install/dist/lib/defs.h		patch
+external/bsd/pkg_install/dist/lib/dewey.c		patch
+external/bsd/pkg_install/dist/lib/fexec.c		patch
+external/bsd/pkg_install/dist/lib/file.c		patch
+external/bsd/pkg_install/dist/lib/global.c		patch
+external/bsd/pkg_install/dist/lib/gpgsig.c		patch
+external/bsd/pkg_install/dist/lib/iterate.c		patch
+external/bsd/pkg_install/dist/lib/lib.h			patch
+external/bsd/pkg_install/dist/lib/license.c		patch
+external/bsd/pkg_install/dist/lib/lpkg.c		patch
+external/bsd/pkg_install/dist/lib/opattern.c		patch
+external/bsd/pkg_install/dist/lib/parse-config.c	patch
+external/bsd/pkg_install/dist/lib/pkcs7.c		patch
+external/bsd/pkg_install/dist/lib/pkg_install.conf.5.in	patch
+external/bsd/pkg_install/dist/lib/pkg_io.c		patch
+external/bsd/pkg_install/dist/lib/pkg_signature.c	patch
+external/bsd/pkg_install/dist/lib/pkg_summary.5		patch
+external/bsd/pkg_install/dist/lib/pkgdb.c		patch
+external/bsd/pkg_install/dist/lib/plist.c		patch
+external/bsd/pkg_install/dist/lib/remove.c		patch
+external/bsd/pkg_install/dist/lib/str.c			patch
+external/bsd/pkg_install/dist/lib/var.c			patch
+external/bsd/pkg_install/dist/lib/version.c		patch
+external/bsd/pkg_install/dist/lib/version.h		patch
+external/bsd/pkg_install/dist/lib/vulnerabilities-file.c patch
+external/bsd/pkg_install/dist/lib/xwrapper.c		patch
+external/bsd/pkg_install/dist/x509/pkgsrc.cnf		patch
+external/bsd/pkg_install/dist/x509/pkgsrc.sh		patch
+
+	Update pkg_install to 20100204.
+
+	pkg_install-20091115:
+	Completely ignore @src in pkg_create. Silently ignore the -L option.
+	The combination of -I and -p are used by pkgsrc for the same result.
+
+	Do not overwrite a string with itself using snprintf. This breaks
+	setting the pkgdb directory internally on Linux. Explicitly check
+	if the string is the same and otherwise just use xstrdup.
+
+	Add support to query arbitrary variables with pkg_admin config-var.
+
+	pkg_install-20100130:
+	- pkg_add -U to rplace an installed version
+	- refactored man pages
+	- PKG_DBDIR / PKG_REFCOUNT_DBDIR as pkg_install.conf options
+	- synced license list
+	- use connection cache from libfetch
+
+	pkg_install 20100204:
+	- Restore PKG_PREFIX in pkg_delete (PR 42731)                  
+	- Ensure that the current pkg_install version is at least as new   
+	  as the version used to build the package
+	[joerg, ticket #1298]
+
