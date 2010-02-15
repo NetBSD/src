@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.200 2010/01/31 15:10:12 pooka Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.201 2010/02/15 20:20:34 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.200 2010/01/31 15:10:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.201 2010/02/15 20:20:34 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -537,7 +537,7 @@ config_stdsubmatch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 	const struct cflocdesc *cl;
 	int nlocs, i;
 
-	ci = cfiattr_lookup(cf->cf_pspec->cfp_iattr, parent->dv_cfdriver);
+	ci = cfiattr_lookup(cfdata_ifattr(cf), parent->dv_cfdriver);
 	KASSERT(ci);
 	nlocs = ci->ci_loclen;
 	KASSERT(!nlocs || locs);
@@ -669,7 +669,7 @@ rescan_with_cfdata(const struct cfdata *cf)
 				continue;
 
 			(*d->dv_cfattach->ca_rescan)(d,
-				cf1->cf_pspec->cfp_iattr, cf1->cf_loc);
+				cfdata_ifattr(cf1), cf1->cf_loc);
 		}
 	}
 	deviter_release(&di);
@@ -817,7 +817,7 @@ config_search_loc(cfsubmatch_t fn, device_t parent,
 			 * consider only children which attach to
 			 * that attribute.
 			 */
-			if (ifattr && !STREQ(ifattr, cf->cf_pspec->cfp_iattr))
+			if (ifattr && !STREQ(ifattr, cfdata_ifattr(cf)))
 				continue;
 
 			if (cfparent_match(parent, cf->cf_pspec))
@@ -1220,8 +1220,7 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	dev->dv_flags |= ca->ca_flags;	/* inherit flags from class */
 	if (locs) {
 		KASSERT(parent); /* no locators at root */
-		ia = cfiattr_lookup(cf->cf_pspec->cfp_iattr,
-				    parent->dv_cfdriver);
+		ia = cfiattr_lookup(cfdata_ifattr(cf), parent->dv_cfdriver);
 		dev->dv_locators =
 		    kmem_alloc(sizeof(int [ia->ci_loclen + 1]), KM_SLEEP);
 		*dev->dv_locators++ = sizeof(int [ia->ci_loclen + 1]);
@@ -2585,6 +2584,12 @@ deviter_release(deviter_t *di)
 		--alldevs_nread;
 	/* XXX wake a garbage-collection thread */
 	config_alldevs_unlock(s);
+}
+
+const char *
+cfdata_ifattr(const struct cfdata *cf)
+{
+	return cf->cf_pspec->cfp_iattr;
 }
 
 bool
