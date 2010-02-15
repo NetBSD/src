@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.196 2010/02/14 14:05:54 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.197 2010/02/15 18:04:37 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16755,4 +16755,12 @@ distrib/pmax/instkernel/Makefile		patch
 
 	Bump the size of the pmax instkernel ramdisk to 2200k.
 	[snj, ticket #1305]
+
+sys/arch/i386/conf/XEN2_DOM0			patch
+sys/arch/i386/conf/XEN2_DOMU			patch
+sys/arch/amd64/conf/XEN3_DOM0			patch
+sys/arch/amd64/conf/XEN3_DOM0			patch
+
+	Enable cgd(4) support on all amd64 and i386 XEN kernels.
+	[tron, ticket #1306]
 
