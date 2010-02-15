@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167.38.12 2010/02/06 14:43:15 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.167.38.13 2010/02/15 07:36:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -145,6 +145,20 @@ _C_LABEL(kernel_text):
 	PTR_L	sp, L_ADDR(MIPS_CURLWP)		# switch to lwp0 stack
 	nop
 	PTR_ADDU sp, USPACE - TF_SIZ - CALLFRAME_SIZ
+	/*
+	 * Raise to IPLHIGH
+	 */
+	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLHIGH
+	jalr	t9				# splhigh()
+	 nop
+	/*
+	 * Now enable interrupts (but they are all masked).
+	 */
+	mfc0	v0, MIPS_COP_0_STATUS
+	or	v0, MIPS_SR_INT_IE
+	mfc0	v0, MIPS_COP_0_STATUS
+	COP0_SYNC
+
 	jal	_C_LABEL(main)			# main(void)
 	nop
 	PANIC("main() returned")		# main never returns
@@ -160,13 +174,30 @@ _C_LABEL(verylocore):
  *	a1	the LWP to switch to
  * Returns:
  *	v0	the LWP we have switched from
+ *
+ * called at IPL_SCHED
  */
 NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
-/*
- * Save old context, unless the LWP is exiting.
- */
+#ifdef PARANOIA
+	/*
+	 * Make sure we are at IPL_SCHED
+	 */
+	PTR_L	v0, L_CPU(MIPS_CURLWP)
+	INT_L	v1, CPU_INFO_CPL(v0)
+	li	v0, IPL_SCHED
+10:	bne	v0, v1, 10b
+	 nop
+
+	mfc0	t0, MIPS_COP_0_STATUS
+	and	t0, MIPS_SR_INT_IE
+11:	beqz	t0, 11b
+	 nop
+#endif /* PARANOIA */
+	/*
+	 * Save old context, unless the LWP is exiting.
+	 */
 	beq	a0, zero, 1f
-	nop
+	 nop
 	PTR_L	a2, L_ADDR(a0)			# a2 = l->l_addr
 	mfc0	t0, MIPS_COP_0_STATUS
 	REG_PROLOGUE
@@ -186,29 +217,31 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_S	gp, U_PCB_CONTEXT+SF_REG_GP(a2)
 #endif
-#ifdef IPL_ICU_MASK
-	INT_L	t0, _C_LABEL(md_imask)
-	INT_S	t0, U_PCB_PPL(a2)
-#endif
 	REG_EPILOGUE
 1:
+#ifdef PARANOIA
+	/*
+	 * Verify interrupt configuration matches IPL_SCHED
+	 */
+	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLCHECK
+	jalr	t9
+	 nop
+#endif /* PARANOIA */
+
 	move	s6, a0				# s6 = old lwp
-	move	MIPS_CURLWP, a1			# s7 = new lwp
+	move	MIPS_CURLWP, a1			# t8 = new lwp
 	PTR_SUBU sp, CALLFRAME_SIZ
 	REG_S	ra, CALLFRAME_RA(sp)
 	.mask	0x80000000, -4
 /*
  * Switch to new context.
  */
-	PTR_L	t2, _C_LABEL(mips_locoresw) + MIPSX_CPU_SWITCH_RESUME
-	jal	ra, t2
+	PTR_L	t9, _C_LABEL(mips_locoresw) + MIPSX_CPU_SWITCH_RESUME
+	jalr	t9
 	 move	a0, MIPS_CURLWP
-#ifdef MULTIPROCESSOR
+
 	PTR_L	t2, L_CPU(MIPS_CURLWP)
 	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(t2)
-#else
-	PTR_S	MIPS_CURLWP, CPUVAR(CURLWP)
-#endif
 
 	/* Check for restartable atomic sequences (RAS) */
 	PTR_L	t1, L_PROC(MIPS_CURLWP)
@@ -227,19 +260,16 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	PTR_S	v0, TF_REG_EPC(t0)
 1:
 	/* New context is now active */
-#ifdef IPL_ICU_MASK
-	# restore ICU state
-	PTR_L	a0, L_ADDR(MIPS_CURLWP)
-	INT_L	t0, U_PCB_PPL(a0)
-	INT_S	t0, _C_LABEL(md_imask)
-	jal	_C_LABEL(md_imask_update)
-	nop
-#endif /* IPL_ICU_MASK */
 	PTR_L	a0, L_ADDR(MIPS_CURLWP)
 	move	v0, s6				# Save return value
 	REG_PROLOGUE
 	REG_L	t0, U_PCB_CONTEXT+SF_REG_SR(a0)
-	DYNAMIC_STATUS_MASK(t0,ra)		# machine dependent masking
+#ifdef PARANOIA
+	and	t1, t0, MIPS_SR_INT_IE
+2:	beqz	t1, 2b			# status reg should not differ
+	 nop
+#endif /* PARANOIA */
+	DYNAMIC_STATUS_MASK(t0,ra)
 	REG_L	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
 	REG_L	s0, U_PCB_CONTEXT+SF_REG_S0(a0)
 	REG_L	s1, U_PCB_CONTEXT+SF_REG_S1(a0)
@@ -258,7 +288,15 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	REG_EPILOGUE
 	mtc0	t0, MIPS_COP_0_STATUS
 	COP0_SYNC
+#ifdef PARANOIA
+	/*
+	 * Verify interrupt configuration still matches IPL_SCHED
+	 */
+	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLCHECK
+	j	t9
+#else
 	j	ra
+#endif /* PARANOIA */
 	nop
 END(cpu_switchto)
 
@@ -270,6 +308,12 @@ END(cpu_switchto)
  *
  */
 softint_cleanup:
+#ifdef PARANOIA
+	mfc0	t1, MIPS_COP_0_STATUS
+	and	v0, t1, MIPS_SR_INT_IE
+1:	beqz	v0, 1b
+	 nop
+#endif /* PARANOIA */
 	PTR_L	t0, L_CPU(MIPS_CURLWP)
 	INT_L	t1, CPU_INFO_MTX_COUNT(t0)
 	INT_ADDU t1, 1
@@ -290,11 +334,17 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 	REG_S	ra, CALLFRAME_RA(sp)		# save return address
 	.mask	0x80000000, -4
 	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# t0 = curlwp->l_addr
+
 	/*
 	 * Save our state in case softint_dispatch blocks and get switched back
 	 * to.
  	 */
 	mfc0	t1, MIPS_COP_0_STATUS
+#ifdef PARANOIA
+	and	v0, t1, MIPS_SR_INT_IE		# assert interrupts are on
+1:	beqz	v0, 1b
+	 nop
+#endif /* PARANOIA */
 	PTR_LA	t2, softint_cleanup		# if softint blocks, return here
 	REG_PROLOGUE
 	REG_S	s0, U_PCB_CONTEXT+SF_REG_S0(t0)
@@ -313,11 +363,8 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_S	gp, U_PCB_CONTEXT+SF_REG_GP(t0)
 #endif
-#ifdef IPL_ICU_MASK
-	INT_L	t1, _C_LABEL(md_imask)
-	INT_S	t1, U_PCB_PPL(a2)
-#endif
 	REG_EPILOGUE
+
 	/*
 	 * Switch to a fast softint thread.  We don't care about its existing
 	 * state and we use a private KSEG0/XKPHYS mapped stack so don't have
@@ -359,7 +406,12 @@ END(softint_fast_dispatch)
  * savectx(struct user *up)
  */
 LEAF(savectx)
+#ifdef PARANOIA
 	mfc0	v0, MIPS_COP_0_STATUS
+	and	t0, v0, MIPS_SR_INT_IE
+1:	beqz	t0, 1b
+	 nop
+#endif /* PARANOIA */
 	REG_PROLOGUE
 	REG_S	s0, U_PCB_CONTEXT+SF_REG_S0(a0)
 	REG_S	s1, U_PCB_CONTEXT+SF_REG_S1(a0)
