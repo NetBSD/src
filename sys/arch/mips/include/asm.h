@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.40.38.11 2010/01/16 20:56:33 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.40.38.12 2010/02/15 03:12:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -305,8 +305,8 @@ _C_LABEL(x):
 
 /*
  *  standard callframe {
- *	register_t cf_pad[N];		o32/64 (N=0), n32 (N=1) n64 (N=1)
  *  	register_t cf_args[4];		arg0 - arg3 (only on o32 and o64)
+ *	register_t cf_pad[N];		o32/64 (N=0), n32 (N=1) n64 (N=1)
  *  	register_t cf_gp;		global pointer (only on n32 and n64)
  *  	register_t cf_sp;		frame pointer
  *  	register_t cf_ra;		return address
