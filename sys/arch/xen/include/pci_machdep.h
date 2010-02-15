@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.13 2009/10/19 18:41:10 bouyer Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.14 2010/02/15 23:55:24 dyoung Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -121,7 +121,6 @@ int             pchb_get_bus_number(pci_chipset_tag_t, pcitag_t);
  */
 #define	X86_PCI_INTERRUPT_LINE_NO_CONNECTION	0xff
 
-extern int pci_mode;
 int pci_mode_detect(void);
 int pci_bus_flags(void);
 
