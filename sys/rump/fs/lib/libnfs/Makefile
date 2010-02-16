@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2008/12/29 23:17:42 pooka Exp $
+#	$NetBSD: Makefile,v 1.10 2010/02/16 20:42:46 pooka Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../nfs
@@ -12,7 +12,6 @@ SRCS=	krpc_subr.c nfs_bio.c nfs_boot.c nfs_kq.c nfs_node.c		\
 CPPFLAGS+=	-I${.CURDIR}/../../../net/lib/libnet/opt
 CPPFLAGS+=	-I${.CURDIR}/../../../net/lib/libnetinet/opt
 CPPFLAGS+=	-DNFS -DNFS_BOOT_DHCP -DNFS_BOOT_BOOTPARAM
-CFLAGS+=        -Wno-pointer-sign
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/12/04 22:13:59 haad Exp $
+#	$NetBSD: Makefile,v 1.2 2010/02/16 20:42:45 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/dm
@@ -10,7 +10,6 @@ SRCS=   device-mapper.c dm_dev.c dm_ioctl.c dm_pdev.c dm_table.c dm_target.c \
 
 SRCS+=	component.c
 
-CPPFLAGS+=	-Wno-pointer-sign
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 
 LDADD+=         -lrumpvfs

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2009/05/26 23:43:39 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2010/02/16 20:42:47 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../netinet ${.CURDIR}/../../../../netinet6
@@ -25,7 +25,6 @@ SRCS+=	tcp_input.c tcp_output.c tcp_sack.c tcp_subr.c tcp_timer.c	\
 # UDP
 SRCS+=	udp_usrreq.c
 
-CFLAGS+=	-Wno-pointer-sign
 CPPFLAGS+=	-I${.CURDIR}/opt -I${.CURDIR}/../libnet/opt
 
 # TCP debugging
