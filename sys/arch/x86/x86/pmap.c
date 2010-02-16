@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.103 2010/02/12 01:55:45 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.104 2010/02/16 00:48:17 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 2010/02/12 01:55:45 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.104 2010/02/16 00:48:17 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -590,6 +590,7 @@ static pt_entry_t	 pmap_remove_ptes(struct pmap *, struct vm_page *,
 					  struct pv_entry **);
 
 static void		 pmap_unmap_ptes(struct pmap *, struct pmap *);
+static void		 pmap_unmap_apdp(void);
 static bool		 pmap_get_physpage(vaddr_t, int, paddr_t *);
 static int		 pmap_pdes_invalid(vaddr_t, pd_entry_t * const *,
 					   pd_entry_t *);
@@ -746,6 +747,22 @@ pmap_apte_flush(struct pmap *pmap)
 }
 
 /*
+ * Unmap the content of APDP PDEs
+ */
+static void
+pmap_unmap_apdp(void) {
+	int i;
+
+	for (i = 0; i < PDP_SIZE; i++) {
+		pmap_pte_set(APDP_PDE+i, 0);
+#if defined (XEN) && defined (PAE)
+		/* clear shadow entries too */
+		pmap_pte_set(APDP_PDE_SHADOW+i, 0);
+#endif
+	}
+}
+
+/*
  *	Add a reference to the specified pmap.
  */
 
@@ -833,9 +850,9 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	/* need to load a new alternate pt space into curpmap? */
 	COUNT(apdp_pde_map);
 	opde = *APDP_PDE;
-#ifdef XEN
 	if (!pmap_valid_entry(opde) ||
 	    pmap_pte2pa(opde) != pmap_pdirpa(pmap, 0)) {
+#ifdef XEN
 		int i;
 		s = splvm();
 		/* Make recursive entry usable in user PGD */
@@ -858,17 +875,18 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		if (pmap_valid_entry(opde))
 			pmap_apte_flush(ourpmap);
 		splx(s);
-	}
 #else /* XEN */
-	npde = pmap_pa2pte(pmap_pdirpa(pmap, 0)) | PG_RW | PG_V;
-	if (!pmap_valid_entry(opde) ||
-	    pmap_pte2pa(opde) != pmap_pdirpa(pmap, 0)) {
-		pmap_pte_set(APDP_PDE, npde);
+		int i;
+		for (i = 0; i < PDP_SIZE; i++) {
+			npde = pmap_pa2pte(
+			    pmap_pdirpa(pmap, i * NPDPG)) | PG_RW | PG_V;
+			pmap_pte_set(APDP_PDE+i, npde);
+		}
 		pmap_pte_flush();
 		if (pmap_valid_entry(opde))
 			pmap_apte_flush(ourpmap);
-	}
 #endif /* XEN */
+	}
 	*pmap2 = ourpmap;
 	*ptepp = APTE_BASE;
 	*pdeppp = alternate_pdes;
@@ -913,7 +931,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 		KASSERT(curcpu()->ci_pmap == pmap2);
 #endif
 #if defined(MULTIPROCESSOR)
-		pmap_pte_set(APDP_PDE, 0);
+		pmap_unmap_apdp();
 		pmap_pte_flush();
 		pmap_apte_flush(pmap2);
 #endif
@@ -2301,13 +2319,7 @@ pmap_destroy(struct pmap *pmap)
 	 */
 	if (xpmap_ptom_masked(pmap_pdirpa(pmap, 0)) == (*APDP_PDE & PG_FRAME)) {
 		kpreempt_disable();
-		for (i = 0; i < PDP_SIZE; i++) {
-	        	pmap_pte_set(&APDP_PDE[i], 0);
-#ifdef PAE
-			/* clear shadow entry too */
-	    		pmap_pte_set(&APDP_PDE_SHADOW[i], 0);
-#endif
-		}
+		pmap_unmap_apdp();
 		pmap_pte_flush();
 	        pmap_apte_flush(pmap_kernel());
 	        kpreempt_enable();
@@ -2752,14 +2764,7 @@ pmap_load(void)
 	 * been freed
 	 */
 	if (*APDP_PDE) {
-		int i;
-		for (i = 0; i < PDP_SIZE; i++) {
-			pmap_pte_set(&APDP_PDE[i], 0);
-#ifdef PAE
-			/* clear shadow entry too */
-			pmap_pte_set(&APDP_PDE_SHADOW[i], 0);
-#endif
-		}
+		pmap_unmap_apdp();
 	}
 	/* lldt() does pmap_pte_flush() */
 #else /* XEN */
