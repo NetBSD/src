@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167.38.13 2010/02/15 07:36:03 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.167.38.14 2010/02/16 08:03:14 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -767,7 +767,7 @@ XNESTED(MachFPTrap)
  */
 FPReturn:
 	mfc0		t0, MIPS_COP_0_STATUS
-	REG_S		ra, CALLFRAME_RA(sp)
+	REG_L		ra, CALLFRAME_RA(sp)
 	and		t0, t0, ~MIPS_SR_COP_1_BIT
 	mtc0		t0, MIPS_COP_0_STATUS
 	COP0_SYNC
