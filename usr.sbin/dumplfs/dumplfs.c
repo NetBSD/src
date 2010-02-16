@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.37 2008/07/21 13:36:58 lukem Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.38 2010/02/16 18:57:53 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.37 2008/07/21 13:36:58 lukem Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.38 2010/02/16 18:57:53 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,6 +136,7 @@ main(int argc, char **argv)
 	struct lfs lfs_sb1, lfs_sb2, *lfs_master;
 	daddr_t seg_addr, idaddr, sbdaddr;
 	int ch, do_allsb, do_ientries, do_segentries, fd, segnum;
+	void *sbuf;
 
 	do_allsb = 0;
 	do_ientries = 0;
@@ -178,9 +179,14 @@ main(int argc, char **argv)
 	if ((fd = open(special, O_RDONLY, 0)) < 0)
 		err(1, "%s", special);
 
+	sbuf = malloc(LFS_SBPAD);
+	if (sbuf == NULL)
+		err(1, "malloc");
+
 	if (sbdaddr == 0x0) {
 		/* Read the proto-superblock */
-		get(fd, LFS_LABELPAD, &(lfs_sb1.lfs_dlfs), sizeof(struct dlfs));
+		get(fd, LFS_LABELPAD, sbuf, LFS_SBPAD);
+		memcpy(&(lfs_sb1.lfs_dlfs), sbuf, sizeof(struct dlfs));
 
 		/* If that wasn't the real first sb, get the real first sb */
 		if (lfs_sb1.lfs_version > 1 &&
@@ -194,7 +200,8 @@ main(int argc, char **argv)
 	 	*/
 		get(fd,
 		    fsbtobyte(&lfs_sb1, lfs_sb1.lfs_sboffs[1]),
-		    &(lfs_sb2.lfs_dlfs), sizeof(struct dlfs));
+		    sbuf, LFS_SBPAD);
+		memcpy(&(lfs_sb2.lfs_dlfs), sbuf, sizeof(struct dlfs));
 	
 		lfs_master = &lfs_sb1;
 		if (lfs_sb1.lfs_version > 1) {
@@ -212,10 +219,12 @@ main(int argc, char **argv)
 		}
 	} else {
 		/* Read the first superblock */
-		get(fd, dbtob((off_t)sbdaddr), &(lfs_sb1.lfs_dlfs),
-		    sizeof(struct dlfs));
+		get(fd, dbtob((off_t)sbdaddr), sbuf, LFS_SBPAD);
+		memcpy(&(lfs_sb1.lfs_dlfs), sbuf, sizeof(struct dlfs));
 		lfs_master = &lfs_sb1;
 	}
+
+	free(sbuf);
 
 	/* Compatibility */
 	if (lfs_master->lfs_version == 1) {
