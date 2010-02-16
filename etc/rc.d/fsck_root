@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: fsck_root,v 1.3 2009/07/10 20:02:21 christos Exp $
+# $NetBSD: fsck_root,v 1.4 2010/02/16 02:46:02 mrg Exp $
 #
 
 # PROVIDE: fsck_root
@@ -38,13 +38,14 @@ fsck_root_start()
 				return
 				;;
 			esac
+
+			echo "Starting root file system check:"
+			fsck $fsck_flags /
+			handle_fsck_error "$?"
+			return
 			;;
 		esac
-	done <"${fstab_file}"
-
-	echo "Starting root file system check:"
-	fsck $fsck_flags /
-	handle_fsck_error "$?"
+	done < "${fstab_file}"
 }
 
 load_rc_config $name
