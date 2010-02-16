@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.61 2010/02/12 22:34:39 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.62 2010/02/16 16:56:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.61 2010/02/12 22:34:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.62 2010/02/16 16:56:29 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -113,7 +113,6 @@ static int mb_attached;
 
 /* from machdep.c */
 extern struct extent *hp700_io_extent;
-extern struct extent *dma24_ex;
 
 u_int8_t mbus_r1(void *, bus_space_handle_t, bus_size_t);
 u_int16_t mbus_r2(void *, bus_space_handle_t, bus_size_t);
@@ -1192,33 +1191,8 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 	 * Allocate physical pages from the VM system.
 	 */
 	TAILQ_INIT(mlist);
-	error = uvm_pglistalloc(size, low, high, 0, 0,
-				mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
-
-	/*
-	 * If the allocation failed, and this is a 24-bit
-	 * device, see if we have space left in the 24-bit
-	 * region.
-	 */
-	if (error == ENOMEM && (flags & BUS_DMA_24BIT) && dma24_ex != NULL) {
-		error = extent_alloc(dma24_ex, size, alignment, 0, 0, &pa);
-		if (!error) {
-			free(mlist, M_DEVBUF);
-			/*
-			 * A _ds_mlist value of NULL is the
-			 * signal to mbus_dmamem_map that no
-			 * real mapping needs to be done, and
-			 * it is the signal to mbus_dmamem_free
-			 * that an extent_free is needed.
-			 */
-			*rsegs = 1;
-			segs[0].ds_addr = 0;
-			segs[0].ds_len = size;
-			segs[0]._ds_va = (vaddr_t)pa;
-			segs[0]._ds_mlist = NULL;
-			return (0);
-		}
-	}
+	error = uvm_pglistalloc(size, low, high, 0, 0, mlist, nsegs,
+	    (flags & BUS_DMA_NOWAIT) == 0);
 
 	/* If we don't have the pages. */
 	if (error) {
@@ -1226,15 +1200,10 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 		return (error);
 	}
 
-	/*
-	 * Since, at least as of revision 1.17 of uvm_pglist.c,
-	 * uvm_pglistalloc ignores its nsegs argument, we need
-	 * to check that the pages returned conform to the
-	 * caller's segment requirements.
-	 */
 	pa_next = 0;
 	seg = -1;
-	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq.queue)) {
+
+	TAILQ_FOREACH(m, mlist, pageq.queue) {
 		pa = VM_PAGE_TO_PHYS(m);
 		if (pa != pa_next) {
 			if (++seg >= nsegs) {
@@ -1269,17 +1238,16 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 void
 mbus_dmamem_free(void *v, bus_dma_segment_t *segs, int nsegs)
 {
-
+	struct pglist *mlist;
 	/*
 	 * Return the list of physical pages back to the VM system.
 	 */
-	if (segs[0]._ds_mlist != NULL) {
-		uvm_pglistfree(segs[0]._ds_mlist);
-		free(segs[0]._ds_mlist, M_DEVBUF);
-	} else {
-		extent_free(dma24_ex, segs[0]._ds_va, segs[0].ds_len,
-				EX_NOWAIT);
-	}
+	mlist = segs[0]._ds_mlist;
+	if (mlist == NULL)
+		return;
+	
+	uvm_pglistfree(mlist);
+	free(mlist, M_DEVBUF);
 }
 
 /*
@@ -1299,17 +1267,9 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 
 	size = round_page(size);
 
-	/* 24-bit memory needs no mapping. */
-	if (segs[0]._ds_mlist == NULL) {
-		if (size > segs[0].ds_len)
-			panic("mbus_dmamem_map: size botch");
-		*kvap = (void *)segs[0]._ds_va;
-		return (0);
-	}
-
 	/* Get a chunk of kernel virtual space. */
 	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
-	if (va == 0)
+	if (__predict_false(va == 0))
 		return (ENOMEM);
 
 	/* Stash that in the first segment. */
@@ -1321,7 +1281,9 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 	TAILQ_FOREACH(pg, pglist, pageq.queue) {
 		KASSERT(size != 0);
 		pa = VM_PAGE_TO_PHYS(pg);
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, PMAP_NOCACHE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE,
+		    PMAP_NOCACHE);
+
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
@@ -1337,17 +1299,7 @@ void
 mbus_dmamem_unmap(void *v, void *kva, size_t size)
 {
 
-#ifdef DIAGNOSTIC
-	if ((u_long)kva & PAGE_MASK)
-		panic("mbus_dmamem_unmap");
-#endif
-
-	/*
-	 * XXX fredette - this is gross, but it is needed
-	 * to support the 24-bit DMA address stuff.
-	 */
-	if (dma24_ex != NULL && kva < (void *) (1 << 24))
-		return;
+	KASSERT(((vaddr_t)kva & PAGE_MASK) == 0);
 
 	size = round_page(size);
 	pmap_kremove((vaddr_t)kva, size);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.78 2010/02/08 19:02:29 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.79 2010/02/16 16:56:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78 2010/02/08 19:02:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79 2010/02/16 16:56:29 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -246,13 +246,6 @@ static long hp700_io_extent_store[EXTENT_FIXED_STORAGE_SIZE(64) / sizeof(long)];
 
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;
-
-/*
- * Certain devices need DMA'able memory below the 16MB boundary.
- */
-#define	DMA24_SIZE	(128 * 1024)
-struct extent *dma24_ex;
-long dma24_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store = {
@@ -494,14 +487,6 @@ hppa_init(paddr_t start, void *bi)
 	msgbufaddr = (void *) vstart;
 	vstart += MSGBUFSIZE;
 	vstart = round_page(vstart);
-
-	/* Allocate the 24-bit DMA region. */
-	dma24_ex = extent_create("dma24", vstart, vstart + DMA24_SIZE, M_DEVBUF,
-	    (void *)dma24_ex_storage, sizeof(dma24_ex_storage),
-	    EX_NOCOALESCE|EX_NOWAIT);
-	vstart += DMA24_SIZE;
-	vstart = round_page(vstart);
-
 
 	if (usebtlb) {
 		/* Allocate and initialize the BTLB slots array. */

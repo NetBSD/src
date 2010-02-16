@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.14 2009/04/30 07:01:27 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.15 2010/02/16 16:56:30 skrll Exp $	*/
 
 /*	$OpenBSD: vmparam.h,v 1.33 2006/06/04 17:21:24 miod Exp $	*/
 
@@ -97,8 +97,9 @@
 
 #define	VM_PHYSSEG_NOADD	/* XXX until uvm code is fixed */
 
-#define	VM_NFREELIST		1
+#define	VM_NFREELIST		2
 #define	VM_FREELIST_DEFAULT	0
+#define	VM_FREELIST_ISADMA	1
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 #define __HAVE_VM_PAGE_MD
