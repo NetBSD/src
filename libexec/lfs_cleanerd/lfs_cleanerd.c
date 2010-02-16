@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.22 2009/10/09 16:35:17 pooka Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.23 2010/02/16 23:13:13 mlelstv Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -203,6 +203,7 @@ init_fs(struct clfs *fs, char *fsname)
 	struct statvfs sf;
 	int rootfd;
 	int i;
+	void *sbuf;
 
 	/*
 	 * Get the raw device from the block device.
@@ -233,10 +234,20 @@ init_fs(struct clfs *fs, char *fsname)
 		return -4;
 	kops.ko_close(rootfd);
 
-	/* Load in the superblock */
-	if (kops.ko_pread(fs->clfs_devfd, &(fs->lfs_dlfs), sizeof(struct dlfs),
-		  LFS_LABELPAD) < 0)
+	sbuf = malloc(LFS_SBPAD);
+	if (sbuf == NULL) {
+		syslog(LOG_ERR, "couldn't malloc superblock buffer");
 		return -1;
+	}
+
+	/* Load in the superblock */
+	if (kops.ko_pread(fs->clfs_devfd, sbuf, LFS_SBPAD, LFS_LABELPAD) < 0) {
+		free(sbuf);
+		return -1;
+	}
+
+	memcpy(&(fs->lfs_dlfs), sbuf, sizeof(struct dlfs));
+	free(sbuf);
 
 	/* If this is not a version 2 filesystem, complain and exit */
 	if (fs->lfs_version != 2) {
