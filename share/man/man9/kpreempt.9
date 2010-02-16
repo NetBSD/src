@@ -1,4 +1,4 @@
-.\"	$NetBSD: kpreempt.9,v 1.2 2008/12/21 10:32:56 ad Exp $
+.\"	$NetBSD: kpreempt.9,v 1.3 2010/02/16 19:21:30 rmind Exp $
 .\"
 .\" Copyright (c)2008 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd December 21, 2008
+.Dd February 16, 2010
 .Dt KPREEMPT 9
 .Os
 .\" ------------------------------------------------------------
@@ -52,6 +52,13 @@ These functions are used to control kernel preemption of the calling LWP.
 On architectures where kernel preemption is not supported natively, these
 functions may still be used.
 .Pp
+It should be noted that kernel preemption is also disabled when holding
+the interrupt priority level above IPL_NONE, e.g. using
+.Xr spl 9
+or spinning
+.Xr mutex 9
+calls or holding kernel_lock (indicating that the code is not MT safe).
+.Pp
 .Fn kpreempt_disable
 disables kernel preemption of the calling LWP.
 Note that disabling kernel preemption can prevent LWPs with higher priorities
@@ -70,10 +77,11 @@ can be nested.
 returns
 .Dv true
 if preemption of the calling LWP is disabled.
-It's for diagnostic purpose.
+It is only for diagnostic purpose.
 .\" ------------------------------------------------------------
 .\" .Sh RETURN VALUES
 .\" ------------------------------------------------------------
 .Sh SEE ALSO
 .Xr intro 9 ,
+.Xr mutex 9 ,
 .Xr spl 9
