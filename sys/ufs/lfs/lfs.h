@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.132 2009/11/05 17:16:36 pooka Exp $	*/
+/*	$NetBSD: lfs.h,v 1.133 2010/02/16 23:20:30 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@ typedef struct lfs_res_blk {
 		locked_queue_bytes -= bp->b_bufsize;			\
 		if (locked_queue_count < LFS_WAIT_BUFS &&		\
 		    locked_queue_bytes < LFS_WAIT_BYTES)		\
-			wakeup(&locked_queue_count);			\
+			cv_broadcast(&locked_queue_cv);			\
 		mutex_exit(&lfs_lock);					\
 	}								\
 	(bp)->b_flags &= ~B_LOCKED;					\
@@ -219,7 +219,7 @@ extern u_long bufmem_lowater, bufmem_hiwater; /* XXX */
 #  define LFS_DEBUG_COUNTLOCKED(m) do {					\
 	if (lfs_debug_log_subsys[DLOG_LLIST]) {				\
 		lfs_countlocked(&locked_queue_count, &locked_queue_bytes, (m)); \
-		wakeup(&locked_queue_count);				\
+		cv_broadcast(&locked_queue_cv);				\
 	}								\
 } while (0)
 # else
@@ -858,31 +858,30 @@ struct lfs {
 #define	blkoff(fs, loc)		((int)((loc) & (fs)->lfs_bmask))
 #define fragoff(fs, loc)    /* calculates (loc % fs->lfs_fsize) */ \
     ((int)((loc) & (fs)->lfs_ffmask))
+
+#if defined (_KERNEL)
+#define	fsbtodb(fs, b)		((b) << ((fs)->lfs_ffshift - DEV_BSHIFT))
+#define	dbtofsb(fs, b)		((b) >> ((fs)->lfs_ffshift - DEV_BSHIFT))
+#else
 #define	fsbtodb(fs, b)		((b) << (fs)->lfs_fsbtodb)
 #define	dbtofsb(fs, b)		((b) >> (fs)->lfs_fsbtodb)
-#define fragstodb(fs, b)	((b) << ((fs)->lfs_blktodb - (fs)->lfs_fbshift))
-#define dbtofrags(fs, b)	((b) >> ((fs)->lfs_blktodb - (fs)->lfs_fbshift))
+#endif
+
 #define	lblkno(fs, loc)		((loc) >> (fs)->lfs_bshift)
 #define	lblktosize(fs, blk)	((blk) << (fs)->lfs_bshift)
-/* Same as above, but named like dbtob(), btodb() */
-#define fsbtob(fs, b)		((b) << ((fs)->lfs_bshift - \
-				(fs)->lfs_blktodb + (fs)->lfs_fsbtodb))
-#define btofsb(fs, b)		((b) >> ((fs)->lfs_bshift - \
-				(fs)->lfs_blktodb + (fs)->lfs_fsbtodb))
-#define fsbtofrags(fs, b)	((b) >> ((fs)->lfs_blktodb - (fs)->lfs_fbshift - \
-				(fs)->lfs_fsbtodb))
-#define fragstofsb(fs, b)	((b) << ((fs)->lfs_blktodb - (fs)->lfs_fbshift - \
-				(fs)->lfs_fsbtodb))
-#define btofrags(fs, b)		((b) >> (fs)->lfs_ffshift)
+
+#define fsbtob(fs, b)		((b) << (fs)->lfs_ffshift)
+#define btofsb(fs, b)		((b) >> (fs)->lfs_ffshift)
+
 #define numfrags(fs, loc)	/* calculates (loc / fs->lfs_fsize) */	\
 	((loc) >> (fs)->lfs_ffshift)
 #define blkroundup(fs, size)	/* calculates roundup(size, fs->lfs_bsize) */ \
 	((off_t)(((size) + (fs)->lfs_bmask) & (~(fs)->lfs_bmask)))
 #define fragroundup(fs, size)	/* calculates roundup(size, fs->lfs_fsize) */ \
 	((off_t)(((size) + (fs)->lfs_ffmask) & (~(fs)->lfs_ffmask)))
-#define fragstoblks(fs, frags)	/* calculates (frags / fs->lfs_frag) */	\
+#define fragstoblks(fs, frags)/* calculates (frags / fs->fs_frag) */ \
 	((frags) >> (fs)->lfs_fbshift)
-#define blkstofrags(fs, blks)	/* calculates (blks * fs->lfs_frag) */	\
+#define blkstofrags(fs, blks)	/* calculates (blks * fs->fs_frag) */ \
 	((blks) << (fs)->lfs_fbshift)
 #define fragnum(fs, fsb)	/* calculates (fsb % fs->lfs_frag) */	\
 	((fsb) & ((fs)->lfs_frag - 1))

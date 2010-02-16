@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.282 2010/01/08 11:35:12 pooka Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.283 2010/02/16 23:20:30 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.282 2010/01/08 11:35:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.283 2010/02/16 23:20:30 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -708,9 +708,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	struct ufsmount *ump;
 	struct vnode *vp;
 	struct buf *bp, *abp;
-	struct partinfo dpart;
 	dev_t dev;
-	int error, i, ronly, secsize, fsbsize;
+	int error, i, ronly, fsbsize;
 	kauth_cred_t cred;
 	CLEANERINFO *cip;
 	SEGUSE *sup;
@@ -728,17 +727,13 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred) != 0)
-		secsize = DEV_BSIZE;
-	else
-		secsize = dpart.disklab->d_secsize;
 
 	/* Don't free random space on error. */
 	bp = NULL;
 	abp = NULL;
 	ump = NULL;
 
-	sb_addr = LFS_LABELPAD / secsize;
+	sb_addr = LFS_LABELPAD / DEV_BSIZE;
 	while (1) {
 		/* Read in the superblock. */
 		error = bread(devvp, sb_addr, LFS_SBPAD, cred, 0, &bp);
@@ -762,24 +757,20 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		}
 
 		if (dfs->dlfs_version == 1)
-			fsbsize = secsize;
+			fsbsize = DEV_BSIZE;
 		else {
-			fsbsize = 1 << (dfs->dlfs_bshift - dfs->dlfs_blktodb +
-				dfs->dlfs_fsbtodb);
+			fsbsize = 1 << dfs->dlfs_ffshift;
 			/*
 			 * Could be, if the frag size is large enough, that we
 			 * don't have the "real" primary superblock.  If that's
 			 * the case, get the real one, and try again.
 			 */
-			if (sb_addr != dfs->dlfs_sboffs[0] <<
-				       dfs->dlfs_fsbtodb) {
+			if (sb_addr != (dfs->dlfs_sboffs[0] << (dfs->dlfs_ffshift - DEV_BSHIFT))) {
 				DLOG((DLOG_MOUNT, "lfs_mountfs: sb daddr"
 				      " 0x%llx is not right, trying 0x%llx\n",
 				      (long long)sb_addr,
-				      (long long)(dfs->dlfs_sboffs[0] <<
-						  dfs->dlfs_fsbtodb)));
-				sb_addr = dfs->dlfs_sboffs[0] <<
-					  dfs->dlfs_fsbtodb;
+				      (long long)(dfs->dlfs_sboffs[0] << (dfs->dlfs_ffshift - DEV_BSHIFT))));
+				sb_addr = dfs->dlfs_sboffs[0] << (dfs->dlfs_ffshift - DEV_BSHIFT);
 				brelse(bp, 0);
 				continue;
 			}
@@ -796,7 +787,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if (dfs->dlfs_sboffs[1] &&
 	    dfs->dlfs_sboffs[1] - LFS_LABELPAD / fsbsize > LFS_SBPAD / fsbsize)
 	{
-		error = bread(devvp, dfs->dlfs_sboffs[1] * (fsbsize / secsize),
+		error = bread(devvp, dfs->dlfs_sboffs[1] * (fsbsize / DEV_BSIZE),
 			LFS_SBPAD, cred, 0, &abp);
 		if (error)
 			goto out;
@@ -886,7 +877,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 
 	/* Set up the I/O information */
-	fs->lfs_devbsize = secsize;
+	fs->lfs_devbsize = DEV_BSIZE;
 	fs->lfs_iocount = 0;
 	fs->lfs_diropwait = 0;
 	fs->lfs_activesb = 0;
@@ -927,8 +918,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
 	ump->um_devvp = devvp;
-	ump->um_bptrtodb = fs->lfs_fsbtodb;
-	ump->um_seqinc = fragstofsb(fs, fs->lfs_frag);
+	ump->um_bptrtodb = fs->lfs_ffshift - DEV_BSHIFT;
+	ump->um_seqinc = fs->lfs_frag;
 	ump->um_nindir = fs->lfs_nindir;
 	ump->um_lognindir = ffs(fs->lfs_nindir) - 1;
 	for (i = 0; i < MAXQUOTAS; i++)
@@ -1184,16 +1175,16 @@ lfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	sbp->f_bsize = fs->lfs_bsize;
 	sbp->f_frsize = fs->lfs_fsize;
 	sbp->f_iosize = fs->lfs_bsize;
-	sbp->f_blocks = fsbtofrags(fs, LFS_EST_NONMETA(fs) - VTOI(fs->lfs_ivnode)->i_lfs_effnblks);
+	sbp->f_blocks = LFS_EST_NONMETA(fs) - VTOI(fs->lfs_ivnode)->i_lfs_effnblks;
 
-	sbp->f_bfree = fsbtofrags(fs, LFS_EST_BFREE(fs));
+	sbp->f_bfree = LFS_EST_BFREE(fs);
 	KASSERT(sbp->f_bfree <= fs->lfs_dsize);
 #if 0
 	if (sbp->f_bfree < 0)
 		sbp->f_bfree = 0;
 #endif
 
-	sbp->f_bresvd = fsbtofrags(fs, LFS_EST_RSVD(fs));
+	sbp->f_bresvd = LFS_EST_RSVD(fs);
 	if (sbp->f_bfree > sbp->f_bresvd)
 		sbp->f_bavail = sbp->f_bfree - sbp->f_bresvd;
 	else

@@ -19,4 +19,6 @@ struct kernelops {
 };
 extern const struct kernelops kops;
 
+extern long dev_bsize;
+
 #endif /* _LFS_KERNEL_OPS_H_ */

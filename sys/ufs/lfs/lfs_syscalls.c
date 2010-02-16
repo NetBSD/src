@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.135 2009/09/13 05:17:37 tsutsui Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.136 2010/02/16 23:20:30 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.135 2009/09/13 05:17:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.136 2010/02/16 23:20:30 mlelstv Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -247,7 +247,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 	if (fs->lfs_ronly)
 		return EROFS;
 
-	maxino = (fragstoblks(fs, fsbtofrags(fs, VTOI(fs->lfs_ivnode)->i_ffs1_blocks)) -
+	maxino = (fragstoblks(fs, VTOI(fs->lfs_ivnode)->i_ffs1_blocks) -
 		      fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb;
 
 	cnt = blkcnt;

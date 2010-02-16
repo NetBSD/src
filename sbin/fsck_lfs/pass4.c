@@ -1,4 +1,4 @@
-/* $NetBSD: pass4.c,v 1.16 2006/11/09 19:36:36 christos Exp $	 */
+/* $NetBSD: pass4.c,v 1.17 2010/02/16 23:20:30 mlelstv Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -154,7 +154,7 @@ pass4check(struct inodesc * idesc)
 	int sn;
 
 	sn = dtosn(fs, blkno);
-	for (ndblks = fragstofsb(fs, idesc->id_numfrags); ndblks > 0; blkno++, ndblks--) {
+	for (ndblks = idesc->id_numfrags; ndblks > 0; blkno++, ndblks--) {
 		if (chkrange(blkno, 1)) {
 			res = SKIP;
 		} else if (testbmap(blkno) || preen) {

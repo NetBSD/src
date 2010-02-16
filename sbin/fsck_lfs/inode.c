@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.41 2010/02/04 23:55:43 christos Exp $	 */
+/* $NetBSD: inode.c,v 1.42 2010/02/16 23:20:30 mlelstv Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -242,7 +242,7 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 			return (n);
 	} else
 		func = dirscan;
-	if (chkrange(idesc->id_blkno, fragstofsb(fs, idesc->id_numfrags)))
+	if (chkrange(idesc->id_blkno, idesc->id_numfrags))
 		return (SKIP);
 
 	devvp = fs->lfs_devvp;

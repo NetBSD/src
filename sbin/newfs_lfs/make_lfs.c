@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.15 2009/02/22 23:06:23 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.16 2010/02/16 23:20:30 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.15 2009/02/22 23:06:23 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.16 2010/02/16 23:20:30 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -232,7 +232,7 @@ make_dinode(ino_t ino, struct ufs1_dinode *dip, int nfrags, struct lfs *fs)
 		nfrags = roundup(nfrags, fs->lfs_frag);
 
 	dip->di_nlink = 1;
-	dip->di_blocks = fragstofsb(fs, nfrags);
+	dip->di_blocks = nfrags;
 
 	dip->di_size = (nfrags << fs->lfs_ffshift);
 	dip->di_atime = dip->di_mtime = dip->di_ctime = fs->lfs_tstamp;
@@ -240,7 +240,7 @@ make_dinode(ino_t ino, struct ufs1_dinode *dip, int nfrags, struct lfs *fs)
 	dip->di_inumber = ino;
 	dip->di_gen = 1;
 
-	fsb_per_blk = fragstofsb(fs, blkstofrags(fs, 1));
+	fsb_per_blk = blkstofrags(fs, 1);
 
 	if (NDADDR < nblocks) {
 		/* Count up how many indirect blocks we need, recursively */
@@ -251,7 +251,7 @@ make_dinode(ino_t ino, struct ufs1_dinode *dip, int nfrags, struct lfs *fs)
 			ifibc += bb;
 			--bb;
 		}
-		dip->di_blocks += fragstofsb(fs, blkstofrags(fs, ifibc));
+		dip->di_blocks += blkstofrags(fs, ifibc);
 	}
 
 	/* Assign the block addresses for the ifile */
