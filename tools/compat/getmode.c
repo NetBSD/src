@@ -1,4 +1,4 @@
-/*	$NetBSD: getmode.c,v 1.7 2008/04/28 20:24:12 martin Exp $	*/
+/*	$NetBSD: getmode.c,v 1.7.8.1 2010/02/16 21:26:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 #include "nbtool_config.h"
 #include <stdlib.h>
+#include <unistd.h>
 
 void *
 setmode(const char *str)
