@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1019 2010/02/09 23:14:19 hubertf Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1020 2010/02/16 10:10:26 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1022 2010/02/09 23:13:09 hubertf Exp
+ *	NetBSD: pcidevs,v 1.1023 2010/02/16 10:10:04 msaitoh Exp
  */
 
 /*
@@ -2330,6 +2330,7 @@
 #define	PCI_PRODUCT_INTEL_82801I_IFE_GT	0x10c3		/* 82801I (GT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_IFE_GT	0x10c4		/* i82801H IFE (GT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_IFE_G	0x10c5		/* i82801H IFE (G) LAN Controller */
+#define	PCI_PRODUCT_INTEL_82576_COPPER	0x10c9		/* 82576 1000BaseT Ethernet */
 #define	PCI_PRODUCT_INTEL_82801H_IGP_M_V	0x10cb		/* i82801H IGP (MV) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801J_R_BM_LM	0x10cc		/* i82567LM-2 LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801J_R_BM_LF	0x10cd		/* i82567LF-2 LAN Controller */
@@ -2340,6 +2341,9 @@
 #define	PCI_PRODUCT_INTEL_82801J_D_BM_LF	0x10df		/* i82567LF-3 LAN Controller */
 #define	PCI_PRODUCT_INTEL_82575GB_QUAD_COPPER_PM	0x10e2		/* i82575GB Quad-1000baseT Ethernet (PM) */
 #define	PCI_PRODUCT_INTEL_82801I_BM	0x10e5		/* i82567LM-4 LAN Controller */
+#define	PCI_PRODUCT_INTEL_82576_FIBER	0x10e6		/* 82576 1000BaseX Ethernet */
+#define	PCI_PRODUCT_INTEL_82576_SERDES	0x10e7		/* 82576 gigabit Ethernet (SERDES) */
+#define	PCI_PRODUCT_INTEL_82576_QUAD_COPPER	0x10e8		/* 82576 quad-1000BaseT Ethernet */
 #define	PCI_PRODUCT_INTEL_PCH_M_LM	0x10ea		/* PCH LAN (82577LM) Controller */
 #define	PCI_PRODUCT_INTEL_PCH_M_LC	0x10eb		/* PCH LAN (82577LC) Controller */
 #define	PCI_PRODUCT_INTEL_PCH_D_DM	0x10ef		/* PCH LAN (82578DM) Controller */
@@ -2380,6 +2384,16 @@
 #define	PCI_PRODUCT_INTEL_82870P2_HPLUG	0x1462		/* 82870P2 P64H2 Hot Plug Controller */
 #define	PCI_PRODUCT_INTEL_82801I_82567V_3	0x1501		/* i82567V-3 LAN Controller */
 #define	PCI_PRODUCT_INTEL_82583V	0x150c		/* i82583V 1000baseT Ethernet */
+#define	PCI_PRODUCT_INTEL_82576_NS	0x150a		/* 82576 gigabit Ethernet */
+#define	PCI_PRODUCT_INTEL_82576_SERDES_QUAD	0x150d		/* 82576 quad-gigabit Ethernet (SERDES) */
+#define	PCI_PRODUCT_INTEL_82580_COPPER	0x150e		/* 82580 1000BaseT Ethernet */
+#define	PCI_PRODUCT_INTEL_82580_FIBER	0x150f		/* 82580 1000BaseX Ethernet */
+#define	PCI_PRODUCT_INTEL_82580_SERDES	0x1510		/* 82580 1000BaseT Ethernet (SERDES) */
+#define	PCI_PRODUCT_INTEL_82580_SGMII	0x1511		/* 82580 gigabit Ethernet (SGMII) */
+#define	PCI_PRODUCT_INTEL_82580_COPPER_DUAL	0x1516		/* 82580 dual-1000BaseT Ethernet */
+#define	PCI_PRODUCT_INTEL_82576_NS_SERDES	0x1518		/* 82576 gigabit Ethernet (SERDES) */
+#define	PCI_PRODUCT_INTEL_82580_ER	0x151d		/* 82580 1000BaseT Ethernet */
+#define	PCI_PRODUCT_INTEL_82580_ER_DUAL	0x151e		/* 82580 dual-1000BaseT Ethernet */
 #define	PCI_PRODUCT_INTEL_80960_RP	0x1960		/* ROB-in i960RP Microprocessor */
 #define	PCI_PRODUCT_INTEL_80960RM_2	0x1962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_82840_HB	0x1a21		/* 82840 Host */
