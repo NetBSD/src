@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.1.2.4 2010/02/15 07:36:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.1.2.5 2010/02/16 08:13:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -48,9 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.1.2.4 2010/02/15 07:36:04 matt Ex
 #define	SOFTINT_CLOCK_MASK	(1 << SOFTINT_CLOCK)
 #define	SOFTINT_NET_MASK	(1 << SOFTINT_NET)
 #define	SOFTINT_SERIAL_MASK	(1 << SOFTINT_SERIAL)
-#ifdef __HAVE_PREEMPTION
-#define	SOFTINT_PREEMPT_MASK	(1 << SOFTINT_COUNT)
-#endif
 
 /*
  * This is more complex than usual since we want the fast softint threads

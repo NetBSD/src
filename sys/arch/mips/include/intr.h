@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.3.96.2 2010/02/15 07:36:03 matt Exp $ */
+/* $NetBSD: intr.h,v 1.3.96.3 2010/02/16 08:13:57 matt Exp $ */
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,12 +36,7 @@
  */
 
 #define	IPL_NONE	0
-#ifdef __HAVE_PREEMPTION
-#define	IPL_PREEMPT	(IPL_NONE+1)
-#else
-#define	IPL_PREEMPT	IPL_NONE
-#endif
-#define	IPL_SOFTCLOCK	(IPL_PREEMPT+1)
+#define	IPL_SOFTCLOCK	(IPL_NONE+1)
 #define	IPL_SOFTBIO	(IPL_SOFTCLOCK)		/* shares SWINT with softclock */
 #define	IPL_SOFTNET	(IPL_SOFTBIO+1)
 #define	IPL_SOFTSERIAL	(IPL_SOFTNET)		/* shares SWINT with softnet */
@@ -84,6 +79,11 @@ typedef struct {
 } ipl_cookie_t;
 
 #ifdef _KERNEL
+#ifdef MULTIPROCESSOR
+#define __HAVE_PREEMPTION
+#define SOFTINT_KPREEMPT	(SOFTINT_COUNT+0)
+#endif
+
 extern	struct splsw	mips_splsw;
 extern	const uint32_t	ipl_sr_bits[_IPL_N];
 

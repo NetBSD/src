@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.19 2010/02/15 07:36:03 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.20 2010/02/16 08:13:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -429,44 +429,30 @@ struct clockframe {
 #endif
 
 /*
- * This is used during profiling to integrate system time.  It can safely
- * assume that the process is resident.
+ * Misc prototypes and variable declarations.
  */
-#define	PROC_PC(p)							\
-	(((struct frame *)(p)->p_md.md_regs)->f_regs[37])	/* XXX PC */
+struct lwp;
+struct user;
 
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
 void	cpu_need_resched(struct cpu_info *, int);
+/*
+ * Notify the current lwp (l) that it has a signal pending,
+ * process as soon as possible.
+ */
+void	cpu_signotify(struct lwp *);
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the MIPS, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define	cpu_need_proftick(l)						\
-do {									\
-	(l)->l_pflag |= LP_OWEUPC;					\
-	aston(l);							\
-} while (/*CONSTCOND*/0)
+void	cpu_need_proftick(struct lwp *);
+void	cpu_set_curpri(int);
 
-/*
- * Notify the current lwp (l) that it has a signal pending,
- * process as soon as possible.
- */
-#define	cpu_signotify(l)	aston(l)
-
-#define aston(l)		((l)->l_md.md_astpending = 1)
-
-/*
- * Misc prototypes and variable declarations.
- */
-struct lwp;
-struct user;
-
-extern struct segtab *segbase;		/* current segtab base */
 extern int mips_poolpage_vmfreelist;	/* freelist to allocate poolpages */
 
 /* copy.S */

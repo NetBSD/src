@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.23 2010/02/15 07:36:04 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.24 2010/02/16 08:13:57 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1074,6 +1074,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	REG_S	s0, TF_BASE+TF_REG_S0(sp)	# s0 is used for saved ipl
 	REG_S	s1, TF_BASE+TF_REG_S1(sp)	# s1 is used for initial status
 	mfc0	s1, MIPS_COP_0_STATUS
+	REG_S	s2, TF_BASE+TF_REG_S2(sp)	# s2 is used for cpu_info
 	REG_S	t8, TF_BASE+TF_REG_T8(sp)
 	REG_S	t9, TF_BASE+TF_REG_T9(sp)
 	REG_S	ra, TF_BASE+TF_REG_RA(sp)
@@ -1094,9 +1095,9 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 #endif
 	move	MIPS_CURLWP, k1			# XXX Atheros HAL
 
+	PTR_L	s2, L_CPU(MIPS_CURLWP)
 #ifdef PARANOIA
-	PTR_L	t0, L_CPU(MIPS_CURLWP)
-	INT_L	s0, CPU_INFO_CPL(t0)
+	INT_L	s0, CPU_INFO_CPL(s2)
 	INT_S	s0, TF_BASE+TF_PPL(sp)		# save priority level
 
 	/*
@@ -1132,11 +1133,10 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	 nop
 #endif /* PARANOIA */
 
-	PTR_L	t0, L_CPU(MIPS_CURLWP)
-	INT_L	t1, CPU_INFO_IDEPTH(t0)		# we need to inc. intr depth
+	INT_L	t1, CPU_INFO_IDEPTH(s2)		# we need to inc. intr depth
 	or	s0, t1				#   save old interrupt depth
 	INT_ADDU t1, 1
-	INT_S	t1, CPU_INFO_IDEPTH(t0)		#   store new interrupt depth
+	INT_S	t1, CPU_INFO_IDEPTH(s2)		#   store new interrupt depth
 
 	/*
 	 * Now we can clear exception level since no interrupts can be delivered
@@ -1155,9 +1155,8 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	jal	_C_LABEL(cpu_intr)		# cpu_intr(ppl, pc, status)
 	 srl	a0, s0, 8			# 1st arg is previous pri level
 
-	PTR_L	t2, L_CPU(MIPS_CURLWP)
 	and	t1, s0, 0xff			# get previous interrupt depth
-	INT_S	t1, CPU_INFO_IDEPTH(t2)		# to it previous value
+	INT_S	t1, CPU_INFO_IDEPTH(s2)		# to it previous value
 
 #ifdef PARANOIA
 	mfc0	t0, MIPS_COP_0_STATUS		# verify INT_IE is still set
@@ -1177,8 +1176,22 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 
 	jal	_C_LABEL(softint_process)	# softint_process(pending)
 	 nop
+
+#ifdef __HAVE_PREEMPTION
+	srl	v1, s0, 8			# get saved priority level
+	bnez	v1, 4f				# branch if not at IPL_NONE
+	 nop
+	INT_L	t0, CPU_INFO_SOFTINTS(s2)	# get pending softints
+	and	v0, t0, 1 << SOFTINT_KPREEMPT	# do we need a kernel preempt?
+	beqz	v0, 4f				#   nop
+	 nop
+	xor	t0, v0				# clear preempt bit
+	INT_S	t0, CPU_INFO_SOFTINTS(s2)	# and save it.
+	jal	_C_LABEL(kpreempt)		# kpreempt(pc)
+	 PTR_L	a0, TF_BASE+TF_REG_EPC(sp)
+#endif /* __HAVE_PREEMPTION */
 4:
-#endif
+#endif /* __HAVE_FAST_SOFTINT */
 /*
  * Restore registers and return from the interrupt.
  */
@@ -1262,8 +1275,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 
 #ifdef PARANOIA
 	INT_L	t2, TF_BASE+TF_PPL(sp)		# get saved priority level
-	PTR_L	t0, L_CPU(MIPS_CURLWP)
-	INT_L	t1, CPU_INFO_CPL(t0)		# get current priority level
+	INT_L	t1, CPU_INFO_CPL(s2)		# get current priority level
 11:	bne	t2, t1, 11b			# loop forever is unequal
 	 nop
 
@@ -1289,6 +1301,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	REG_L	ta3, TF_BASE+TF_REG_TA3(sp)
 	REG_L	s0, TF_BASE+TF_REG_S0(sp)
 	REG_L	s1, TF_BASE+TF_REG_S1(sp)
+	REG_L	s2, TF_BASE+TF_REG_S2(sp)
 	REG_L	t8, TF_BASE+TF_REG_T8(sp)	# MIPS_CURLWP
 	REG_L	t9, TF_BASE+TF_REG_T9(sp)
 	REG_L	ra, TF_BASE+TF_REG_RA(sp)
@@ -1337,6 +1350,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	REG_S	a3, CALLFRAME_SIZ+TF_REG_A3(k0)		# $7
 	mfhi	v1
 	REG_S	t0, CALLFRAME_SIZ+TF_REG_T0(k0)		# $12
+	mfc0	t0, MIPS_COP_0_CAUSE
 	REG_S	t1, CALLFRAME_SIZ+TF_REG_T1(k0)		# $13
 	REG_S	t2, CALLFRAME_SIZ+TF_REG_T2(k0)		# $14
 	REG_S	t3, CALLFRAME_SIZ+TF_REG_T3(k0)		# $15
@@ -1357,6 +1371,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	REG_S	v0, CALLFRAME_SIZ+TF_REG_MULLO(k0)
 	REG_S	v1, CALLFRAME_SIZ+TF_REG_MULHI(k0)
 	REG_S	ra, CALLFRAME_SIZ+TF_REG_EPC(k0)
+	REG_S	t0, CALLFRAME_SIZ+TF_REG_CAUSE(k0)
 #if TF_MIPS_CURLWP != TF_REG_T8
 	PTR_S	MIPS_CURLWP, CALLFRAME_SIZ+TF_MIPS_CURLWP(k0)# save curlwp reg (t8)
 #endif

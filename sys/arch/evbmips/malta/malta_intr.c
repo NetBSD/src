@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.19.16.3 2010/02/15 07:37:36 matt Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.19.16.4 2010/02/16 08:13:57 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.19.16.3 2010/02/15 07:37:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.19.16.4 2010/02/16 08:13:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,35 +64,12 @@ __KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.19.16.3 2010/02/15 07:37:36 matt Ex
  * given hardware interrupt priority level.
  */
 const uint32_t ipl_sr_bits[_IPL_N] = {
-	[IPL_NONE] = 0,
-	[IPL_PREEMPT] = 0,
-	[IPL_SOFTCLOCK] =
-	    MIPS_SOFT_INT_MASK_0,
-	[IPL_SOFTNET] =
-	    MIPS_SOFT_INT_MASK_0 |
-	    MIPS_SOFT_INT_MASK_1,
-	[IPL_VM] =
-	    MIPS_SOFT_INT_MASK_0 |
-	    MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0,
-	[IPL_SCHED] =
-	    MIPS_SOFT_INT_MASK_0 |
-	    MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1 |
-	    MIPS_INT_MASK_2 |
-	    MIPS_INT_MASK_3 |
-	    MIPS_INT_MASK_4 |
-	    MIPS_INT_MASK_5,
-	[IPL_HIGH] =
-	    MIPS_SOFT_INT_MASK_0 |
-	    MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1 |
-	    MIPS_INT_MASK_2 |
-	    MIPS_INT_MASK_3 |
-	    MIPS_INT_MASK_4 |
-	    MIPS_INT_MASK_5,
+	[IPL_NONE] =		0,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
+	[IPL_VM] =		MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0,
+	[IPL_SCHED] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
 };
 
 struct malta_cpuintr {

@@ -1,4 +1,4 @@
-/*	$NetBSD: adm5120_intr.c,v 1.3.18.1 2010/02/15 07:37:36 matt Exp $	*/
+/*	$NetBSD: adm5120_intr.c,v 1.3.18.2 2010/02/16 08:13:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm5120_intr.c,v 1.3.18.1 2010/02/15 07:37:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm5120_intr.c,v 1.3.18.2 2010/02/16 08:13:57 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -94,7 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: adm5120_intr.c,v 1.3.18.1 2010/02/15 07:37:36 matt E
  */
 const uint32_t ipl_sr_bits[_IPL_N] = {
     [IPL_NONE]		= 0,
-    [IPL_PREEMPT]	= 0,
     [IPL_SOFTCLOCK]	= MIPS_SOFT_INT_MASK_0,
     [IPL_SOFTBIO]	= MIPS_SOFT_INT_MASK_0,
     [IPL_SOFTNET]	= MIPS_SOFT_INT_MASK,
