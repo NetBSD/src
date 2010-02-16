@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_vfs.c,v 1.2 2010/01/19 22:17:44 pooka Exp $	*/
+/*	$NetBSD: kern_module_vfs.c,v 1.3 2010/02/16 05:47:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.2 2010/01/19 22:17:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.3 2010/02/16 05:47:52 dholland Exp $");
 
 #define _MODULE_INTERNAL
 #include <sys/param.h>
@@ -153,10 +153,11 @@ module_load_plist_vfs(const char *modpath, const bool nochroot,
 	}
 
 	error = vn_stat(nd.ni_vp, &sb);
+	if (error != 0) {
+		goto out1;
+	}
 	if (sb.st_size >= (plistsize - 1)) {	/* leave space for term \0 */
 		error = EFBIG;
-	}
-	if (error != 0) {
 		goto out1;
 	}
 
