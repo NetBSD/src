@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63 2009/12/18 19:20:35 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.64 2010/02/16 16:56:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63 2009/12/18 19:20:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.64 2010/02/16 16:56:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -667,6 +667,39 @@ pmap_pv_remove(struct vm_page *pg, pmap_t pmap, vaddr_t va)
 	return (pv);
 }
 
+#define	FIRST_16M atop(16 * 1024 * 1024)
+
+static void
+pmap_page_physload(paddr_t spa, paddr_t epa)
+{
+
+	if (spa < FIRST_16M && epa <= FIRST_16M) {
+		DPRINTF(PDB_INIT, ("%s: phys segment 0x%05lx 0x%05lx\n",
+		    __func__, spa, epa));
+
+		uvm_page_physload(spa, epa, spa, epa, VM_FREELIST_ISADMA);
+	} else if (spa < FIRST_16M && epa > FIRST_16M) {
+		DPRINTF(PDB_INIT, ("%s: phys segment 0x%05lx 0x%05lx\n",
+		    __func__, spa, FIRST_16M));
+
+		uvm_page_physload(spa, FIRST_16M, spa, FIRST_16M,
+		    VM_FREELIST_ISADMA);
+
+		DPRINTF(PDB_INIT, ("%s: phys segment 0x%05lx 0x%05lx\n",
+		    __func__, FIRST_16M, epa));
+
+		uvm_page_physload(FIRST_16M, epa, FIRST_16M, epa,
+		    VM_FREELIST_DEFAULT);
+	} else {
+		DPRINTF(PDB_INIT, ("%s: phys segment 0x%05lx 0x%05lx\n",
+		    __func__, spa, epa));
+
+		uvm_page_physload(spa, epa, spa, epa, VM_FREELIST_DEFAULT);
+	}
+
+	availphysmem += epa - spa;
+}
+
 /*
  * Bootstrap the system enough to run with virtual memory.
  * Map the kernel's code, data and bss, and allocate the system page table.
@@ -686,7 +719,6 @@ pmap_bootstrap(vaddr_t vstart)
 	extern int resvphysmem;
 	vsize_t btlb_entry_min, btlb_entry_max, btlb_entry_got;
 	paddr_t ksrx, kerx, ksro, kero, ksrw, kerw;
-	paddr_t phys_start, phys_end;
 	extern int usebtlb;
 
 	/* Provided by the linker script */
@@ -973,41 +1005,9 @@ pmap_bootstrap(vaddr_t vstart)
 
 	availphysmem = 0;
 
-	/* The first segment runs from [resvmem..ksrx). */
-	phys_start = resvmem;
-	phys_end = atop(ksrx);
-
-	DPRINTF(PDB_INIT, ("%s: phys segment 0x%05x 0x%05x\n", __func__,
-	    (u_int)phys_start, (u_int)phys_end));
-	if (phys_end > phys_start) {
-		uvm_page_physload(phys_start, phys_end,
-			phys_start, phys_end, VM_FREELIST_DEFAULT);
-		availphysmem += phys_end - phys_start;
-	}
-
-	/* The second segment runs from [kero..ksrw). */
-	phys_start = atop(kero);
-	phys_end = atop(ksrw);
-
-	DPRINTF(PDB_INIT, ("%s: phys segment 0x%05x 0x%05x\n", __func__,
-	    (u_int)phys_start, (u_int)phys_end));
-	if (phys_end > phys_start) {
-		uvm_page_physload(phys_start, phys_end,
-			phys_start, phys_end, VM_FREELIST_DEFAULT);
-		availphysmem += phys_end - phys_start;
-	}
-
-	/* The third segment runs from [kerw..physmem). */
-	phys_start = atop(kerw);
-	phys_end = physmem;
-
-	DPRINTF(PDB_INIT, ("%s: phys segment 0x%05x 0x%05x\n", __func__,
-	    (u_int)phys_start, (u_int)phys_end));
-	if (phys_end > phys_start) {
-		uvm_page_physload(phys_start, phys_end,
-			phys_start, phys_end, VM_FREELIST_DEFAULT);
-		availphysmem += phys_end - phys_start;
-	}
+	pmap_page_physload(resvmem, atop(ksro));	
+	pmap_page_physload(atop(kero), atop(ksrw));	
+	pmap_page_physload(atop(kerw), physmem);	
 
 	mutex_init(&pmaps_lock, MUTEX_DEFAULT, IPL_NONE);
 
