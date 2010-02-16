@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.38 2010/02/16 00:03:47 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.39 2010/02/16 19:29:40 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.38 2010/02/16 00:03:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.39 2010/02/16 19:29:40 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -134,7 +134,6 @@ struct pci_bridge_hook_arg {
 	void (*func)(pci_chipset_tag_t, pcitag_t, void *); 
 	void *arg; 
 }; 
-
 
 __cpu_simple_lock_t pci_conf_lock = __SIMPLELOCK_UNLOCKED;
 
@@ -244,6 +243,59 @@ struct x86_bus_dma_tag pci_bus_dma64_tag = {
 };
 #endif
 
+static uint32_t
+pci_conf_selector(pcitag_t tag, int reg)
+{
+	static const pcitag_t mode2_mask = {
+		.mode2 = {
+			  .enable = 0xff
+			, .forward = 0xff
+		}
+	};
+
+	switch (pci_mode) {
+	case 1:
+		return tag.mode1 | reg;
+	case 2:
+		return tag.mode1 & mode2_mask.mode1;
+	default:
+		panic("%s: mode not configured", __func__);
+	}
+}
+
+static unsigned int
+pci_conf_port(pcitag_t tag, int reg)
+{
+	switch (pci_mode) {
+	case 1:
+		return PCI_MODE1_DATA_REG;
+	case 2:
+		return tag.mode2.port | reg;
+	default:
+		panic("%s: mode not configured", __func__);
+	}
+}
+
+static void
+pci_conf_select(uint32_t addr)
+{
+	pcitag_t tag;
+
+	switch (pci_mode) {
+	case 1:
+		outl(PCI_MODE1_ADDRESS_REG, addr);
+		return;
+	case 2:
+		tag.mode1 = addr;
+		outb(PCI_MODE2_ENABLE_REG, tag.mode2.enable);
+		if (tag.mode2.enable != 0)
+			outb(PCI_MODE2_FORWARD_REG, tag.mode2.forward);
+		return;
+	default:
+		panic("%s: mode not configured", __func__);
+	}
+}
+
 void
 pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
@@ -295,21 +347,21 @@ pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
 	switch (pci_mode) {
 	case 1:
 		if (bus >= 256 || device >= 32 || function >= 8)
-			panic("pci_make_tag: bad request");
+			panic("%s: bad request", __func__);
 
 		tag.mode1 = PCI_MODE1_ENABLE |
 			    (bus << 16) | (device << 11) | (function << 8);
 		return tag;
 	case 2:
 		if (bus >= 256 || device >= 16 || function >= 8)
-			panic("pci_make_tag: bad request");
+			panic("%s: bad request", __func__);
 
 		tag.mode2.port = 0xc000 | (device << 8);
 		tag.mode2.enable = 0xf0 | (function << 1);
 		tag.mode2.forward = bus;
 		return tag;
 	default:
-		panic("pci_make_tag: mode not configured");
+		panic("%s: mode not configured", __func__);
 	}
 }
 
@@ -336,7 +388,7 @@ pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag,
 			*fp = (tag.mode2.enable >> 1) & 0x7;
 		return;
 	default:
-		panic("pci_decompose_tag: mode not configured");
+		panic("%s: mode not configured", __func__);
 	}
 }
 
@@ -357,25 +409,12 @@ pci_conf_read( pci_chipset_tag_t pc, pcitag_t tag,
 	}
 #endif
 
-	switch (pci_mode) {
-	case 1:
-		PCI_CONF_LOCK(s);
-		outl(PCI_MODE1_ADDRESS_REG, tag.mode1 | reg);
-		data = inl(PCI_MODE1_DATA_REG);
-		outl(PCI_MODE1_ADDRESS_REG, 0);
-		PCI_CONF_UNLOCK(s);
-		return data;
-	case 2:
-		PCI_CONF_LOCK(s);
-		outb(PCI_MODE2_ENABLE_REG, tag.mode2.enable);
-		outb(PCI_MODE2_FORWARD_REG, tag.mode2.forward);
-		data = inl(tag.mode2.port | reg);
-		outb(PCI_MODE2_ENABLE_REG, 0);
-		PCI_CONF_UNLOCK(s);
-		return data;
-	default:
-		panic("pci_conf_read: mode not configured");
-	}
+	PCI_CONF_LOCK(s);
+	pci_conf_select(pci_conf_selector(tag, reg));
+	data = inl(pci_conf_port(tag, reg));
+	pci_conf_select(0);
+	PCI_CONF_UNLOCK(s);
+	return data;
 }
 
 void
@@ -394,25 +433,11 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
 	}
 #endif
 
-	switch (pci_mode) {
-	case 1:
-		PCI_CONF_LOCK(s);
-		outl(PCI_MODE1_ADDRESS_REG, tag.mode1 | reg);
-		outl(PCI_MODE1_DATA_REG, data);
-		outl(PCI_MODE1_ADDRESS_REG, 0);
-		PCI_CONF_UNLOCK(s);
-		return;
-	case 2:
-		PCI_CONF_LOCK(s);
-		outb(PCI_MODE2_ENABLE_REG, tag.mode2.enable);
-		outb(PCI_MODE2_FORWARD_REG, tag.mode2.forward);
-		outl(tag.mode2.port | reg, data);
-		outb(PCI_MODE2_ENABLE_REG, 0);
-		PCI_CONF_UNLOCK(s);
-		return;
-	default:
-		panic("pci_conf_write: mode not configured");
-	}
+	PCI_CONF_LOCK(s);
+	pci_conf_select(pci_conf_selector(tag, reg));
+	outl(pci_conf_port(tag, reg), data);
+	pci_conf_select(0);
+	PCI_CONF_UNLOCK(s);
 }
 
 void
