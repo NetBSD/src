@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.36 2010/02/04 09:13:23 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.37 2010/02/16 10:06:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -275,7 +275,7 @@ struct livengood_tcpip_ctxdesc {
 #define	EEPROM_OFF_MACADDR	0x00	/* MAC address offset */
 #define	EEPROM_OFF_CFG1		0x0a	/* config word 1 */
 #define	EEPROM_OFF_CFG2		0x0f	/* config word 2 */
-#define	EEPROM_INIT_3GIO_3	0x1a	/* PCIe Initial Configuration Word 3 */ 
+#define	EEPROM_INIT_3GIO_3	0x1a	/* PCIe Initial Configuration Word 3 */
 #define	EEPROM_OFF_K1_CONFIG	0x1b	/* NVM K1 Config */
 #define	EEPROM_OFF_SWDPIN	0x20	/* SWD Pins (Cordova) */
 

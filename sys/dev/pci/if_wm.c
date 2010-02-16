@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.197 2010/02/04 10:20:54 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.198 2010/02/16 10:06:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.197 2010/02/04 10:20:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.198 2010/02/16 10:06:19 msaitoh Exp $");
 
 #include "rnd.h"
 
@@ -650,7 +650,7 @@ static const struct wm_product {
 	  "Intel i82546EB 1000BASE-T Ethernet",
 	  WM_T_82546,		WMP_F_1000T },
 
-	{ PCI_VENDOR_INTEL,     PCI_PRODUCT_INTEL_82546EB_QUAD,
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546EB_QUAD,
 	  "Intel i82546EB 1000BASE-T Ethernet",
 	  WM_T_82546,		WMP_F_1000T },
 
@@ -1147,8 +1147,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 
 			sc->sc_flags |= WM_F_PCIX;
 			if (pci_get_capability(pa->pa_pc, pa->pa_tag,
-					       PCI_CAP_PCIX,
-					       &sc->sc_pcix_offset, NULL) == 0)
+				PCI_CAP_PCIX, &sc->sc_pcix_offset, NULL) == 0)
 				aprint_error_dev(sc->sc_dev,
 				    "unable to find PCIX capability\n");
 			else if (sc->sc_type != WM_T_82545_3 &&
@@ -1688,7 +1687,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		    IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx;
 	}
 
-	/* 
+	/*
 	 * If we're a i82544 or greater (except i82547), we can do
 	 * TCP segmentation offload.
 	 */
@@ -2508,9 +2507,8 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCINITIFADDR:
 		if (ifa->ifa_addr->sa_family == AF_LINK) {
 			sdl = satosdl(ifp->if_dl->ifa_addr);
-			(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len, 
-					LLADDR(satosdl(ifa->ifa_addr)),
-					ifp->if_addrlen);
+			(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len,
+			    LLADDR(satosdl(ifa->ifa_addr)), ifp->if_addrlen);
 			/* unicast address is first multicast entry */
 			wm_set_filter(sc);
 			error = 0;
@@ -3007,7 +3005,7 @@ wm_linkintr_tbi(struct wm_softc *sc, uint32_t icr)
 			 * NOTE: CTRL will update TFCE and RFCE automatically,
 			 * so we should update sc->sc_ctrl
 			 */
-			
+
 			sc->sc_ctrl = CSR_READ(sc, WMREG_CTRL);
 			sc->sc_tctl &= ~TCTL_COLD(0x3ff);
 			sc->sc_fcrtl &= ~FCRTL_XONE;
@@ -3130,8 +3128,8 @@ wm_reset(struct wm_softc *sc)
 		sc->sc_txfifo_stall = 0;
 		break;
 	case WM_T_82571:
-	case WM_T_82572:		
-	case WM_T_80003:		
+	case WM_T_82572:
+	case WM_T_80003:
 		sc->sc_pba = PBA_32K;
 		break;
 	case WM_T_82573:
@@ -3612,9 +3610,8 @@ wm_init(struct ifnet *ifp)
 
 			/* Bypass RX and TX FIFO's */
 			wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_FIFO_CTRL,
-			    KUMCTRLSTA_FIFO_CTRL_RX_BYPASS | 
-			    KUMCTRLSTA_FIFO_CTRL_TX_BYPASS);
-		
+			    KUMCTRLSTA_FIFO_CTRL_RX_BYPASS
+			    | KUMCTRLSTA_FIFO_CTRL_TX_BYPASS);
 			wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_INB_CTRL,
 			    KUMCTRLSTA_INB_CTRL_DIS_PADDING |
 			    KUMCTRLSTA_INB_CTRL_LINK_TMOUT_DFLT);
@@ -4007,7 +4004,7 @@ wm_acquire_eeprom(struct wm_softc *sc)
 		return 1;
 	}
 
-	if (sc->sc_flags & WM_F_EEPROM_HANDSHAKE)  {
+	if (sc->sc_flags & WM_F_EEPROM_HANDSHAKE) {
 		reg = CSR_READ(sc, WMREG_EECD);
 
 		/* Request EEPROM access. */
@@ -4239,7 +4236,7 @@ wm_read_eeprom_spi(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
  */
 static int
 wm_validate_eeprom_checksum(struct wm_softc *sc)
-{   
+{
 	uint16_t checksum;
 	uint16_t eeprom_data;
 	int i;
@@ -4585,7 +4582,7 @@ do {									\
 
 #undef ADD
 
-	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
 }
 
 /*
@@ -4636,7 +4633,7 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO ||
 	    (sc->sc_mii.mii_media.ifm_media & IFM_FLOW) != 0)
 		sc->sc_txcw |= TXCW_SYM_PAUSE | TXCW_ASYM_PAUSE;
-	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) { 
+	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
 		sc->sc_txcw |= TXCW_ANE;
 	} else {
 		/*
@@ -4658,7 +4655,7 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	i = CSR_READ(sc, WMREG_CTRL) & CTRL_SWDPIN(1);
 	DPRINTF(WM_DEBUG_LINK,("%s: i = 0x%x\n", device_xname(sc->sc_dev),i));
 
-	/* 
+	/*
 	 * On 82544 chips and later, the CTRL_SWDPIN(1) bit will be set if the
 	 * optics detect a signal, 0 if they don't.
 	 */
@@ -5102,7 +5099,6 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 			sc->sc_mii.mii_writereg = wm_gmii_i82543_writereg;
 		}
 		break;
-		
 	}
 	sc->sc_mii.mii_statchg = wm_gmii_statchg;
 
@@ -5143,8 +5139,8 @@ wm_gmii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 	struct wm_softc *sc = ifp->if_softc;
 
 	ether_mediastatus(ifp, ifmr);
-	ifmr->ifm_active = (ifmr->ifm_active & ~IFM_ETH_FMASK) |
-			   sc->sc_flowflags;
+	ifmr->ifm_active = (ifmr->ifm_active & ~IFM_ETH_FMASK)
+	    | sc->sc_flowflags;
 }
 
 /*
@@ -5543,7 +5539,7 @@ wm_access_phy_wakeup_reg_bm(device_t self, int offset, int16_t *val, int rd)
 
 	/* Write page 800 */
 	wm_gmii_i82544_writereg(self, 1, BM_WUC_ADDRESS_OPCODE, regnum);
-	    
+
 	if (rd)
 		*val = wm_gmii_i82544_readreg(self, 1, BM_WUC_DATA_OPCODE);
 	else
@@ -5699,7 +5695,7 @@ wm_gmii_statchg(device_t self)
 		DPRINTF(WM_DEBUG_LINK,
 		    ("%s: LINK: statchg: FDX\n", device_xname(sc->sc_dev)));
 		sc->sc_tctl |= TCTL_COLD(TX_COLLISION_DISTANCE_FDX);
-	} else  {
+	} else {
 		DPRINTF(WM_DEBUG_LINK,
 		    ("%s: LINK: statchg: HDX\n", device_xname(sc->sc_dev)));
 		sc->sc_tctl |= TCTL_COLD(TX_COLLISION_DISTANCE_HDX);
@@ -6504,7 +6500,7 @@ wm_k1_gig_workaround_hv(struct wm_softc *sc, int link)
 
 	if (link) {
 		k1_enable = 0;
-		    
+
 		/* Link stall fix for link up */
 		wm_gmii_hv_writereg(sc->sc_dev, 1, IGP3_KMRN_DIAG, 0x0100);
 	} else {
