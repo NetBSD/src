@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.23 2009/12/17 12:49:22 pooka Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.24 2010/02/16 20:42:47 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -62,7 +62,6 @@ SHLIB_MAJOR=    0
 SHLIB_MINOR=    0
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
-CFLAGS+=	-Wno-pointer-sign
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

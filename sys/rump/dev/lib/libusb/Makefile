@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/02/12 12:07:12 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2010/02/16 20:42:45 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/usb
@@ -14,7 +14,6 @@ SRCS=	dummy.c
 
 #CPPFLAGS+= -DUHUB_DEBUG
 
-CFLAGS+=	-Wno-pointer-sign
 CPPFLAGS+=	-I${.CURDIR}/opt
 
 .include <bsd.lib.mk>

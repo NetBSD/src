@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/02/05 22:01:38 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2010/02/16 20:42:47 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net80211
@@ -11,8 +11,6 @@ SRCS=   ieee80211.c ieee80211_acl.c ieee80211_amrr.c ieee80211_crypto.c	\
 	ieee80211_ioctl.c ieee80211_netbsd.c ieee80211_node.c		\
 	ieee80211_output.c ieee80211_proto.c ieee80211_rssadapt.c	\
 	ieee80211_xauth.c
-
-CFLAGS+=	-Wno-pointer-sign
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
