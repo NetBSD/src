@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.33 2010/02/15 07:36:04 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.34 2010/02/16 08:13:57 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.33 2010/02/15 07:36:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.34 2010/02/16 08:13:57 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -136,10 +136,10 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.33 2010/02/15 07:36
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/cpu.h>
+#include <sys/atomic.h>
 #include <sys/ucontext.h>
 
 #include <mips/kcore.h>
-#include <mips/cpu.h>
 
 #ifdef COMPAT_NETBSD32
 #include <compat/netbsd32/netbsd32.h>
@@ -2310,16 +2310,147 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	return (0);
 }
 
+#ifdef MULTIPROCESSOR
+static void
+mips_send_ipi(struct cpu_info *ci, int ipi)
+{
+	/* do nothing */
+}
+#endif
+
 void
 cpu_need_resched(struct cpu_info *ci, int flags)
 {
+	struct lwp * const l = ci->ci_data.cpu_onproc;
+#ifdef MULTIPROCESSOR
+	struct cpu_info * const cur_ci = curcpu();
+#endif
 
-	aston(ci->ci_data.cpu_onproc);
-	ci->ci_want_resched = 1;
+	KASSERT(kpreempt_disabled());
 
+	ci->ci_want_resched |= flags;
+
+	if (__predict_false((l->l_pflag & LP_INTR) != 0)) {
+		/*
+		 * No point doing anything, it will switch soon.
+		 * Also here to prevent an assertion failure in
+		 * kpreempt() due to preemption being set on a
+		 * soft interrupt LWP.
+		 */
+		return;
+	}
+
+	if (__predict_false(l == ci->ci_data.cpu_idlelwp)) {
+#ifdef MULTIPROCESSOR
+		/*
+		 * If the other CPU is idling, it must be waiting for an
+		 * interrupt.  So give it one.
+		 */
+		if (__predict_false(ci != cur_ci))
+			mips_send_ipi(ci, 0);
+#endif
+		return;
+	}
+
+#ifdef MULTIPROCESSOR
+	atomic_or_uint(&ci->ci_want_resched, flags);
+#else
+	ci->ci_want_resched |= flags;
+#endif
+
+	if (flags & RESCHED_KPREEMPT) {
 #ifdef __HAVE_PREEMPTION
+		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
+		if (ci == cur_ci) {
+			softint_trigger(SOFTINT_KPREEMPT);
+                } else {
+                        mips_send_ipi(ci, 0);
+                }
+#endif
+		return;
+	}
+	l->l_md.md_astpending = 1;		/* force call to ast() */
+#ifdef MULTIPROCESSOR
+	if (ci != cur_ci && (flags & RESCHED_IMMED)) {
+		mips_send_ipi(ci, 0);
+	} 
 #endif
 }
+
+void
+cpu_signotify(struct lwp *l)
+{
+	KASSERT(kpreempt_disabled());
+	KASSERT(lwp_locked(l, NULL));
+	KASSERT(l->l_stat == LSONPROC || l->l_stat == LSRUN);
+
+	l->l_md.md_astpending = 1;		/* force call to ast() */
+}
+
+void
+cpu_need_proftick(struct lwp *l)
+{
+	KASSERT(kpreempt_disabled());
+	KASSERT(l->l_cpu == curcpu());
+
+	l->l_pflag |= LP_OWEUPC;
+	l->l_md.md_astpending = 1;		/* force call to ast() */
+}
+
+void
+cpu_set_curpri(int pri)
+{
+	kpreempt_disable();
+	curcpu()->ci_schedstate.spc_curpriority = pri;
+	kpreempt_enable();
+}
+
+
+#ifdef __HAVE_PREEMPTION
+bool
+cpu_kpreempt_enter(uintptr_t where, int s)
+{
+        KASSERT(kpreempt_disabled());
+
+	if (where == 0) {
+		/*
+		 * We are called from KPREEMPT_ENABLE().  If we are at IPL_NONE,
+		 * of course we can be preempted.  If we aren't, ask for a
+		 * softint so that kern_intr can call kpreempt.
+		 */
+		if (s == IPL_NONE)
+			return true;
+		softint_trigger(SOFTINT_KPREEMPT);
+		return false;
+	}
+
+	/*
+	 * We must be called via kern_intr (which already checks for IPL_NONE
+	 * so of course we call be preempted).
+	 */
+	return true;
+}
+
+void
+cpu_kpreempt_exit(uintptr_t where)
+{
+
+	/* do nothing */
+}
+
+/*
+ * Return true if preemption is disabled for MD reasons.  Must be called
+ * with preemption disabled, and thus is only for diagnostic checks.
+ */
+bool
+cpu_kpreempt_disabled(void)
+{
+	/*
+	 * Any elevated IPL disables preemption.
+	 */
+	return curcpu()->ci_cpl > IPL_NONE;
+}
+#endif /* __HAVE_PREEMPTION */
 
 void
 cpu_idle(void)
@@ -2334,8 +2465,11 @@ cpu_idle(void)
 bool
 cpu_intr_p(void)
 {
-
-	return curcpu()->ci_idepth != 0;
+	bool rv;
+	kpreempt_disable();
+	rv = (curcpu()->ci_idepth != 0);
+	kpreempt_enable();
+	return rv;
 }
 
 #ifdef MULTIPROCESSOR
@@ -2412,7 +2546,7 @@ std_splsw_test(void)
 	KASSERT(status == MIPS_INT_MASK);
 	KASSERT(ci->ci_cpl == IPL_NONE);
 
-	for (int r = IPL_PREEMPT; r <= IPL_HIGH; r++) {
+	for (int r = IPL_SOFTCLOCK; r <= IPL_HIGH; r++) {
 		/*
 		 * As IPL increases, more intrs may be masked but no intrs
 		 * may become unmasked.
