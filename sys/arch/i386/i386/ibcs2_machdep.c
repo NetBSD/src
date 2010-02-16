@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.36 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.36.16.1 2010/02/16 21:24:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.36 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.36.16.1 2010/02/16 21:24:22 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -78,7 +78,7 @@ ibcs2_setregs(l, epp, stack)
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __iBCS2_NPXCW__;
 	tf = l->l_md.md_regs;
 	tf->tf_eax = 0x2000000;		/* XXX base of heap */
-	tf->tf_cs = GSEL(LUCODEBIG_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);
 }
 
 /*
