@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.8 2008/05/30 09:49:07 joerg Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.9 2010/02/16 00:03:47 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -82,7 +82,7 @@ typedef int pci_intr_handle_t;
  * i386-specific PCI variables and functions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
-extern int pci_mode;
+void		pci_mode_set(int);
 int		pci_mode_detect(void);
 int		pci_bus_flags(void);
 struct		pci_attach_args;
