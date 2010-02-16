@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.22 2008/05/16 09:21:59 hannken Exp $	 */
+/* $NetBSD: pass6.c,v 1.23 2010/02/16 23:20:30 mlelstv Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,8 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 	struct inode *ip;
 	daddr_t daddr, ooff;
 	int num, error;
-	int i, bb, osize = 0, obb = 0;
+	int i, osize = 0;
+	int frags, ofrags = 0;
 	u_int32_t oldsn, sn;
 
 	ip = VTOI(vp);
@@ -99,23 +100,23 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 	if (daddr > 0)
 		daddr = dbtofsb(fs, daddr);
 
-	bb = fragstofsb(fs, numfrags(fs, size));
+	frags = numfrags(fs, size);
 	switch (num) {
 	case 0:
 		ooff = ip->i_ffs1_db[lbn];
 		if (ooff <= 0)
-			ip->i_ffs1_blocks += bb;
+			ip->i_ffs1_blocks += frags;
 		else {
 			/* possible fragment truncation or extension */
-			obb = btofsb(fs, ip->i_lfs_fragsize[lbn]);
-			ip->i_ffs1_blocks += (bb - obb);
+			ofrags = ip->i_lfs_fragsize[lbn];
+			ip->i_ffs1_blocks += (frags - ofrags);
 		}
 		ip->i_ffs1_db[lbn] = ndaddr;
 		break;
 	case 1:
 		ooff = ip->i_ffs1_ib[a[0].in_off];
 		if (ooff <= 0)
-			ip->i_ffs1_blocks += bb;
+			ip->i_ffs1_blocks += frags;
 		ip->i_ffs1_ib[a[0].in_off] = ndaddr;
 		break;
 	default:
@@ -126,7 +127,7 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 
 		ooff = ((ufs_daddr_t *) bp->b_data)[ap->in_off];
 		if (ooff <= 0)
-			ip->i_ffs1_blocks += bb;
+			ip->i_ffs1_blocks += frags;
 		((ufs_daddr_t *) bp->b_data)[ap->in_off] = ndaddr;
 		(void) VOP_BWRITE(bp);
 	}
@@ -188,7 +189,7 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 	if (daddr <= 0) {
 		fs->lfs_bfree -= btofsb(fs, size);
 	} else if (size != osize) {
-		fs->lfs_bfree -= (bb - obb);
+		fs->lfs_bfree -= (frags - ofrags);
 	}
 
 	/*
@@ -292,7 +293,7 @@ pass6check(struct inodesc * idesc)
 
 	/* Check that the blocks do not lie within clean segments. */
 	anyout = anynew = 0;
-	for (i = 0; i < fragstofsb(fs, idesc->id_numfrags); i++) {
+	for (i = 0; i < idesc->id_numfrags; i++) {
 		sn = dtosn(fs, idesc->id_blkno + i);
 		if (sn < 0 || sn >= fs->lfs_nseg ||
 		    (seg_table[sn].su_flags & SEGUSE_DIRTY) == 0) {

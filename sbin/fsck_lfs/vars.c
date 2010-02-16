@@ -1,4 +1,4 @@
-/* $NetBSD: vars.c,v 1.13 2008/04/28 20:23:08 martin Exp $	 */
+/* $NetBSD: vars.c,v 1.14 2010/02/16 23:20:30 mlelstv Exp $	 */
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -48,8 +48,6 @@ struct lfs *fs;
 daddr_t idaddr;			/* inode block containing ifile inode */
 long numdirs, listmax, inplast;
 
-long dev_bsize;			/* computed value of DEV_BSIZE */
-long secsize;			/* actual disk sector size */
 char nflag;			/* assume a no response */
 char yflag;			/* assume a yes response */
 int bflag;			/* location of alternate super block */
