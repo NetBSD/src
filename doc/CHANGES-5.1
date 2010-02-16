@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.197 2010/02/15 18:04:37 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.198 2010/02/16 21:27:25 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16763,4 +16763,26 @@ sys/arch/amd64/conf/XEN3_DOM0			patch
 
 	Enable cgd(4) support on all amd64 and i386 XEN kernels.
 	[tron, ticket #1306]
+
+sys/arch/i386/i386/ibcs2_machdep.c		1.40
+sys/arch/i386/i386/svr4_machdep.c		1.96
+
+	fix confused CS selector, fixes the panic reported by Mark Davis
+	per PR port-i386/42787 (the panic happens due to a GPF when a
+	privileged descriptor is tried to be loaded with the UPL bit set)
+	The original bug is very old (pre-2.0, i386/svr4_machdep.c rev. 1.69),
+	but it was relatively harmless until the order of GDT entries was
+	shuffled (pre-5.0, i386/segments.h rev. 1.42). Before, it caused
+	a userlevel data selector to be used for CS which broke the emulation
+	(likely the reason of PR port-i386/32424). The shuffle made that
+	a privileged selector was used, causing the GPF.
+	(recent -current doesn't panic on that GPF which seems to be a
+	side effect of another change)
+	[drochner, ticket #1307]
+
+tools/compat/getmode.c				1.8
+
+	include unistd.h where getmode is traditionally declared.
+	Fix build on OS X 10.6.
+	[snj, ticket #1308]
 
