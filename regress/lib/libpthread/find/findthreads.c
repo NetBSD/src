@@ -1,4 +1,4 @@
-/* $NetBSD: findthreads.c,v 1.1 2009/04/02 12:58:44 drochner Exp $ */
+/* $NetBSD: findthreads.c,v 1.2 2010/02/16 00:15:19 mrg Exp $ */
 
 #include <err.h>
 #include <pthread.h>
@@ -36,7 +36,7 @@ main(int argc, char **argv)
 	for (i = 0; i < NUM; i++) {
 		res = pthread_create(&thr[i], 0, f, 0);
 		if (res)
-			errx(1, "pthread_create: %s", strerror(res));
+			errx(1, "pthread_create iter %d: %s", i, strerror(res));
 		for (j = 0; j <= i; j++) {
 			res = pthread_getname_np(thr[j], nam, sizeof(nam));
 			if (res) {
