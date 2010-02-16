@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/11/17 09:03:51 pooka Exp $
+#	$NetBSD: Makefile,v 1.6 2010/02/16 20:42:46 pooka Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../fs/udf
@@ -8,8 +8,6 @@ LIB=	rumpfs_udf
 SRCS=	udf_osta.c udf_vfsops.c udf_vnops.c udf_subr.c \
 	udf_allocation.c udf_readwrite.c udf_strat_bootstrap.c \
 	udf_strat_direct.c udf_strat_sequential.c udf_strat_rmw.c
-
-CFLAGS+=	-Wno-pointer-sign
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
