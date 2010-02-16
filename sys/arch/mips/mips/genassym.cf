@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44.12.16 2010/02/15 07:36:03 matt Exp $
+#	$NetBSD: genassym.cf,v 1.44.12.17 2010/02/16 08:13:57 matt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -79,10 +79,10 @@ include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/user.h>
 include <sys/mutex.h>
+include <sys/cpu.h>
 
 include <uvm/uvm.h>
 
-include <mips/cpu.h>
 include <mips/cache.h>
 include <mips/regnum.h>
 include <mips/vmparam.h>
@@ -290,10 +290,6 @@ define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 
 define	IPL_NONE		IPL_NONE
-ifdef __HAVE_PREEMPTION
-define	__HAVE_PREEMPTION	1
-define	IPL_PREEMPT		IPL_PREEMPT
-endif
 define	IPL_SOFTCLOCK		IPL_SOFTCLOCK
 define	IPL_SOFTBIO		IPL_SOFTBIO
 define	IPL_SOFTNET		IPL_SOFTNET
@@ -302,6 +298,12 @@ define	IPL_VM			IPL_VM
 define	IPL_SCHED		IPL_SCHED
 define	IPL_HIGH		IPL_HIGH
 
+ifdef __HAVE_PREEMPTION
+define	__HAVE_PREEMPTION	1
+define	CPU_INFO_SOFTINTS	offsetof(struct cpu_info, ci_softints)
+define	RESCHED_KPREEMPT	RESCHED_KPREEMPT
+define	SOFTINT_KPREEMPT	SOFTINT_KPREEMPT
+endif
 define	TLBMASK_HI		offsetof(struct tlbmask, tlb_hi)
 define	TLBMASK_LO0		offsetof(struct tlbmask, tlb_lo0)
 define	TLBMASK_LO1		offsetof(struct tlbmask, tlb_lo1)
