@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/09/06 20:42:26 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2010/02/16 20:42:45 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../netsmb
@@ -12,8 +12,6 @@ SRCS+=	component.c
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 #CPPFLAGS+=	-DSMB_SOCKET_DEBUG -DSMB_IOD_DEBUG
-
-CFLAGS+=	-Wno-pointer-sign
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

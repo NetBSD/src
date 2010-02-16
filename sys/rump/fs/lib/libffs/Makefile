@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2009/05/02 01:15:53 pooka Exp $
+#	$NetBSD: Makefile,v 1.10 2010/02/16 20:42:46 pooka Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../ufs/ffs ${.CURDIR}/../../../../ufs/ufs
@@ -14,7 +14,6 @@ SRCS+=	ufs_bmap.c ufs_dirhash.c ufs_ihash.c ufs_inode.c ufs_lookup.c	\
 
 CPPFLAGS+=	-DFFS_EI -DWAPBL -DAPPLE_UFS
 CPPFLAGS+=	-DUFS_DIRHASH -DWAPBL -DAPPLE_UFS
-CFLAGS+=	-Wno-pointer-sign
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
