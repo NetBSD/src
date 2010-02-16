@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.24 2008/05/16 09:21:59 hannken Exp $	 */
+/* $NetBSD: dir.c,v 1.25 2010/02/16 23:20:30 mlelstv Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -144,7 +144,7 @@ dirscan(struct inodesc *idesc)
 	    (idesc->id_filesize & (DIRBLKSIZ - 1)) != 0)
 		idesc->id_filesize = roundup(idesc->id_filesize, DIRBLKSIZ);
 	blksiz = idesc->id_numfrags * fs->lfs_fsize;
-	if (chkrange(idesc->id_blkno, fragstofsb(fs, idesc->id_numfrags))) {
+	if (chkrange(idesc->id_blkno, idesc->id_numfrags)) {
 		idesc->id_filesize -= blksiz;
 		return (SKIP);
 	}

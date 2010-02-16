@@ -1,4 +1,4 @@
-/* $NetBSD: vnode.c,v 1.10 2009/08/06 00:51:55 pooka Exp $ */
+/* $NetBSD: vnode.c,v 1.11 2010/02/16 23:20:30 mlelstv Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -75,10 +75,10 @@ raw_vop_strategy(struct ubuf * bp)
 {
 	if (bp->b_flags & B_READ) {
 		return kops.ko_pread(bp->b_vp->v_fd, bp->b_data, bp->b_bcount,
-		    dbtob(bp->b_blkno));
+		    bp->b_blkno * dev_bsize);
 	} else {
 		return kops.ko_pwrite(bp->b_vp->v_fd, bp->b_data, bp->b_bcount,
-		    dbtob(bp->b_blkno));
+		    bp->b_blkno * dev_bsize);
 	}
 }
 

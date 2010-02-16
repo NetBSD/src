@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.29 2007/10/08 21:39:49 ad Exp $	 */
+/* $NetBSD: pass1.c,v 1.30 2010/02/16 23:20:30 mlelstv Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -328,7 +328,7 @@ pass1check(struct inodesc *idesc)
 	struct dups *dlp;
 	struct dups *new;
 
-	if ((anyout = chkrange(blkno, fragstofsb(fs, idesc->id_numfrags))) != 0) {
+	if ((anyout = chkrange(blkno, idesc->id_numfrags)) != 0) {
 		blkerror(idesc->id_number, "BAD", blkno);
 		if (badblk++ >= MAXBAD) {
 			pwarn("EXCESSIVE BAD BLKS I=%llu",
@@ -342,7 +342,7 @@ pass1check(struct inodesc *idesc)
 	} else if (!testbmap(blkno)) {
 		seg_table[dtosn(fs, blkno)].su_nbytes += idesc->id_numfrags * fs->lfs_fsize;
 	}
-	for (ndblks = fragstofsb(fs, idesc->id_numfrags); ndblks > 0; blkno++, ndblks--) {
+	for (ndblks = idesc->id_numfrags; ndblks > 0; blkno++, ndblks--) {
 		if (anyout && chkrange(blkno, 1)) {
 			res = SKIP;
 		} else if (!testbmap(blkno)) {
