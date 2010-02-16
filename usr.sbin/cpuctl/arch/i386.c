@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.20 2009/10/02 13:54:01 jmcneill Exp $	*/
+/*	$NetBSD: i386.c,v 1.21 2010/02/16 00:13:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.20 2009/10/02 13:54:01 jmcneill Exp $");
+__RCSID("$NetBSD: i386.c,v 1.21 2010/02/16 00:13:14 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -309,7 +309,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Pentium III (Tualatin)", 0,
 				"Pentium M (Dothan)", 
 				"Pentium M (Yonah)",
-				"Core 2 (Merom)",
+				"Core 2",
 				"Pentium Pro, II or III"	/* Default */
 			},
 			NULL,
