@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.h,v 1.2 2008/04/28 20:23:08 martin Exp $ */
+/* $NetBSD: segwrite.h,v 1.3 2010/02/16 23:20:30 mlelstv Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 #define	LFS_PARTIAL_FITS(fs) \
 	((fs)->lfs_fsbpseg - ((fs)->lfs_offset - (fs)->lfs_curseg) > \
-	fragstofsb((fs), (fs)->lfs_frag))
+	(fs)->lfs_frag)
 
 /* op values to lfs_writevnodes */
 #define	VN_REG		0
