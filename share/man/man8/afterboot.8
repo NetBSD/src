@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.45 2010/02/10 07:38:09 wiz Exp $
+.\"	$NetBSD: afterboot.8,v 1.46 2010/02/17 00:49:21 snj Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -594,7 +594,7 @@ at the top, or your message will be overwritten.
 To add new users and groups, there are
 .Xr useradd 8
 and
-.Xr groupadd 8 ,
+.Xr groupadd 8 ;
 see also
 .Xr user 8
 for further programs for user and group manipulation.
@@ -1002,46 +1002,70 @@ For more details see:
 .Xr date 1 ,
 .Xr df 1 ,
 .Xr domainname 1 ,
+.Xr fstat 1 ,
 .Xr hostname 1 ,
 .Xr make 1 ,
 .Xr man 1 ,
 .Xr netstat 1 ,
 .Xr newaliases 1 ,
 .Xr passwd 1 ,
+.Xr pkg_add 1 ,
+.Xr ps 1 ,
+.Xr ssh 1 ,
 .Xr su 1 ,
+.Xr systat 1 ,
+.Xr top 1 ,
+.Xr xdm 1 ,
 .Xr ccd 4 ,
 .Xr aliases 5 ,
 .Xr crontab 5 ,
+.Xr dhclient.conf 5 ,
 .Xr exports 5 ,
 .Xr fstab 5 ,
 .Xr group 5 ,
+.Xr ifconfig.if 5 ,
 .Xr mailer.conf 5 ,
+.Xr nsswitch.conf 5 ,
 .Xr passwd 5 ,
+.Xr printcap 5 ,
 .Xr rc.conf 5 ,
 .Xr resolv.conf 5 ,
+.Xr sshd_config 5 ,
+.Xr wscons.conf 5 ,
 .Xr hier 7 ,
 .Xr hostname 7 ,
 .Xr pkgsrc 7 ,
 .Xr amd 8 ,
 .Xr ccdconfig 8 ,
 .Xr chown 8 ,
+.Xr dhclient 8 ,
 .Xr dhcpd 8 ,
+.Xr dmesg 8 ,
+.Xr groupadd 8 ,
 .Xr ifconfig 8 ,
 .Xr inetd 8 ,
 .Xr kerberos 8 ,
+.Xr lpd 8 ,
 .Xr mount 8 ,
 .Xr mrouted 8 ,
 .Xr mtree 8 ,
 .Xr named 8 ,
 .Xr nis 8 ,
+.Xr ntpd 8 ,
+.Xr ntpdate 8 ,
 .Xr rbootd 8 ,
 .Xr rc 8 ,
+.Xr rdate 8 ,
 .Xr rmt 8 ,
 .Xr route 8 ,
 .Xr rpc.bootparamd 8 ,
+.Xr rpcbind 8 ,
+.Xr sshd 8 ,
+.Xr timed 8 ,
 .Xr umount 8 ,
 .Xr useradd 8 ,
 .Xr vipw 8 ,
+.Xr yp 8 ,
 .Xr ypbind 8
 .Sh HISTORY
 This document first appeared in
