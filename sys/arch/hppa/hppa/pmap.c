@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.66 2010/02/17 11:31:39 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.67 2010/02/17 14:16:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66 2010/02/17 11:31:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.67 2010/02/17 14:16:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1007,7 +1007,7 @@ pmap_bootstrap(vaddr_t vstart)
 
 	availphysmem = 0;
 
-	pmap_page_physload(resvmem, atop(ksro));	
+	pmap_page_physload(resvmem, atop(ksrx));	
 	pmap_page_physload(atop(kero), atop(ksrw));	
 	pmap_page_physload(atop(kerw), physmem);	
 
