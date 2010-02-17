@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.1 2010/02/11 02:22:09 pooka Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.2 2010/02/17 20:39:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.1 2010/02/11 02:22:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.2 2010/02/17 20:39:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -491,6 +491,7 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 	case C(0x22, UT_WRITE_CLASS_INTERFACE):
 	case C(0x0a, UT_WRITE_CLASS_INTERFACE):
 	case C(UR_SET_FEATURE, UT_WRITE_CLASS_OTHER):
+	case C(UR_SET_FEATURE, UT_WRITE_DEVICE):
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_OTHER):
 	case C(UR_SET_REPORT, UT_WRITE_CLASS_INTERFACE):
 	case C(UR_CLEAR_FEATURE, UT_WRITE_ENDPOINT):
@@ -501,10 +502,12 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 		ucr.ucr_data = buf;
 		if (rumpuser_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
 		    USB_DO_REQUEST, &ucr, &ru_error) == -1) {
-			if (!mightfail)
+			if (!mightfail) {
 				panic("request failed: %d", ru_error);
-			else
+			} else {
 				err = ru_error;
+				printf("warning: request failed: %d\n", err);
+			}
 		}
 		}
 		break;
@@ -719,7 +722,9 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 	}
  out:
 	val = 0;
+	error = 0;
 	rumpuser_ioctl(sc->sc_ugenfd[endpt], USB_SET_SHORT_XFER, &val, &error);
+	xfer->status = error;
 	usb_transfer_complete(xfer);
 	return (USBD_IN_PROGRESS);
 }
