@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.65 2010/02/17 10:03:30 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.66 2010/02/17 11:31:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.65 2010/02/17 10:03:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66 2010/02/17 11:31:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,7 @@ static inline void pmap_flush_page(struct vm_page *, bool);
 
 void pmap_copy_page(paddr_t, paddr_t);
 
-static void pmap_page_physload(paddr_t, paddr_t)
+static void pmap_page_physload(paddr_t, paddr_t);
 
 #ifdef USE_HPT
 static inline struct hpt_entry *pmap_hash(pmap_t, vaddr_t);
