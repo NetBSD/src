@@ -21,7 +21,7 @@ struct mdlwp {
 
 struct mdproc {
   /* XXX: Todo */
-	void	(*md_syscall)(struct trapframe *);
+	void	(*md_syscall)(struct lwp *, u_int64_t, struct trapframe *);
 					/* Syscall handling function */
 };
 
