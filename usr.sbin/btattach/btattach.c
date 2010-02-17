@@ -1,4 +1,4 @@
-/*	$NetBSD: btattach.c,v 1.5 2009/12/06 12:55:46 kiyohara Exp $	*/
+/*	$NetBSD: btattach.c,v 1.6 2010/02/17 09:49:41 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008 Iain Hibbert.  All rights reserved.");
-__RCSID("$NetBSD: btattach.c,v 1.5 2009/12/06 12:55:46 kiyohara Exp $");
+__RCSID("$NetBSD: btattach.c,v 1.6 2010/02/17 09:49:41 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -54,18 +54,18 @@ static int opt_debug = 0;	/* global? */
 
 const struct devtype types[] = {
     {
-	.name = "bcsp",
-	.line = "bcsp",
-	.descr = "Generic BlueCore Serial Protocol",
-	.cflag = CRTSCTS,
-	.speed = B57600,
-    },
-    {
 	.name = "bcm2035",
 	.line = "btuart",
 	.descr = "Broadcom BCM2035",
 	.init = &init_bcm2035,
 	.speed = B115200,
+    },
+    {
+	.name = "bcsp",
+	.line = "bcsp",
+	.descr = "Generic BlueCore Serial Protocol",
+	.cflag = CRTSCTS,
+	.speed = B57600,
     },
     {
 	.name = "bgb2xx",
@@ -83,7 +83,7 @@ const struct devtype types[] = {
     {
 	.name = "csr",
 	.line = "btuart",
-	.descr = "CSR Casira serial adaptor",
+	.descr = "Cambridge Silicon Radio based modules (not BCSP)",
 	.init = &init_csr,
 	.cflag = CRTSCTS,
 	.speed = B57600,
