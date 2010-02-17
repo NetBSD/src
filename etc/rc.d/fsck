@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: fsck,v 1.10 2009/07/10 20:02:21 christos Exp $
+# $NetBSD: fsck,v 1.11 2010/02/17 23:32:07 christos Exp $
 #
 
 # PROVIDE: fsck
@@ -22,7 +22,7 @@ fsck_start()
 	trap : 3		# enter single-user mode on failure.
 
 	echo "Starting file system checks:"
-	fsck $fsck_flags
+	fsck -x / $fsck_flags
 	handle_fsck_error "$?"
 }
 
