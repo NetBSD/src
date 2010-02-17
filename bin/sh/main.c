@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.53 2009/01/18 00:30:54 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.54 2010/02/17 15:57:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.53 2009/01/18 00:30:54 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.54 2010/02/17 15:57:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -184,7 +184,7 @@ state1:
 	}
 state2:
 	state = 3;
-	if (getuid() == geteuid() && getgid() == getegid()) {
+	if (iflag && getuid() == geteuid() && getgid() == getegid()) {
 		if ((shinit = lookupvar("ENV")) != NULL && *shinit != '\0') {
 			state = 3;
 			read_profile(shinit);
