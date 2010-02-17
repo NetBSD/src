@@ -1200,6 +1200,11 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"mtc2",    "t,G,H",	0x48800000, 0xffe007f8,	COD|RD_t|WR_C2|WR_CC,	0,		I32	},
 {"mthc2",   "t,i",	0x48e00000, 0xffe00000,	COD|RD_t|WR_C2|WR_CC,	0,		I33	},
 
+/* RMI Coprocessor 2 ops */
+{"msgsnd",  "t",	0x4a000001, 0xffe0ffff,	COD|RD_t|WR_C2,		0,		I64	},
+{"msgld",   "t",	0x4a000002, 0xffe0ffff,	COD|RD_t|WR_C2,		0,		I64	},
+{"msgwait", "t",	0x4a000003, 0xffe0ffff,	COD|RD_t|WR_C2,		0,		I64	},
+
 /* No hazard protection on coprocessor instructions--they shouldn't
    change the state of the processor and if they do it's up to the
    user to put in nops as necessary.  These are at the end so that the
