@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34 2009/06/03 21:08:51 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.35 2010/02/17 11:14:10 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -152,10 +152,17 @@ extern register_t kpsw;
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-
+#if defined(HP8000_CPU) || defined(HP8200_CPU) || \
+    defined(HP8500_CPU) || defined(HP8600_CPU)
+#define	HPPA_PGALIAS	0x00400000
+#define	HPPA_PGAMASK	0xffc00000
+#define	HPPA_PGAOFF	0x003fffff
+#else
 #define	HPPA_PGALIAS	0x00100000
 #define	HPPA_PGAMASK	0xfff00000
 #define	HPPA_PGAOFF	0x000fffff
+#endif
+
 #define	HPPA_SPAMASK	0xf0f0f000
 
 #define	HPPA_IOSPACE	0xf0000000
