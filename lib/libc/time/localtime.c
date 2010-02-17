@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.46 2010/02/02 19:04:37 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.47 2010/02/17 17:25:55 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.9";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.46 2010/02/02 19:04:37 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.47 2010/02/17 17:25:55 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -386,6 +386,7 @@ register const int		doextend;
 					4 * TZ_MAX_TIMES];
 	} u;
 
+	sp->goback = sp->goahead = FALSE;
 	if (name == NULL && (name = TZDEFAULT) == NULL)
 		return -1;
 	{
@@ -600,7 +601,6 @@ register const int		doextend;
 					sp->ttis[sp->typecnt++] = ts.ttis[1];
 			}
 	}
-	sp->goback = sp->goahead = FALSE;
 	if (sp->timecnt > 1) {
 		for (i = 1; i < sp->timecnt; ++i)
 			if (typesequiv(sp, sp->types[i], sp->types[0]) &&
@@ -1208,7 +1208,7 @@ tzsetwall_unlocked(void)
 #ifdef ALL_STATE
 	if (lclptr == NULL) {
 		int saveerrno = errno;
-		lclptr = (struct state *) malloc(sizeof *lclptr);
+		lclptr = calloc(1, sizeof *lclptr);
 		errno = saveerrno;
 		if (lclptr == NULL) {
 			settzname();	/* all we can do */
@@ -1266,7 +1266,7 @@ tzset_unlocked(void)
 #ifdef ALL_STATE
 	if (lclptr == NULL) {
 		saveerrno = errno;
-		lclptr = (struct state *) malloc(sizeof *lclptr);
+		lclptr = calloc(1, sizeof *lclptr);
 		errno = saveerrno;
 		if (lclptr == NULL) {
 			settzname();	/* all we can do */
@@ -1459,7 +1459,7 @@ struct tm * const	tmp;
 		gmt_is_set = TRUE;
 #ifdef ALL_STATE
 		saveerrno = errno;
-		gmtptr = (struct state *) malloc(sizeof *gmtptr);
+		gmtptr = calloc(1, sizeof *gmtptr);
 		errno = saveerrno;
 		if (gmtptr != NULL)
 #endif /* defined ALL_STATE */
