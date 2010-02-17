@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.60 2010/02/17 15:50:54 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.61 2010/02/17 15:54:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.60 2010/02/17 15:50:54 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.61 2010/02/17 15:54:10 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -290,7 +290,7 @@ main(int argc, char *argv[])
 
 	/*
 	 * For root link count, just guess something ridiculously high.
-	 * Guessing too high has no known adverse effects, but fsu()
+	 * Guessing too high has no known adverse effects, but fts(3)
 	 * doesn't like too low values.  This guess will be replaced
 	 * with the real value when readdir is first called for
 	 * the root directory.
