@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/02/16 20:42:45 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2010/02/17 20:44:34 pooka Exp $
 #
 #
 # umass.  includes scsibus+sd for simplicity due to the umass code
@@ -23,6 +23,11 @@ SRCS=	dummy.c
 .endif
 
 CPPFLAGS+=	-I${.CURDIR}/opt -I${RUMPTOP}/librump/rumpvfs
+
+.if 1
+SRCS+=		scsipi_verbose.c
+CPPFLAGS+=	-DSCSIVERBOSE
+.endif
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
