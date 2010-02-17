@@ -1,4 +1,4 @@
-/*	$NetBSD: sdread.c,v 1.2 2009/10/13 18:41:06 pooka Exp $	*/
+/*	$NetBSD: sdread.c,v 1.3 2010/02/17 20:43:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -31,6 +31,7 @@
 
 #include <ufs/ufs/ufsmount.h>
 #include <msdosfs/msdosfsmount.h>
+#include <isofs/cd9660/cd9660_mount.h>
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
@@ -56,13 +57,19 @@ main(int argc, char *argv[])
 	char buf[2048];
 	struct msdosfs_args args;
 	struct ufs_args uargs;
+	struct iso_args iargs;
 	struct dirent *dp;
 	const char *msg = NULL;
 	int fd, n, fd_h, sverrno;
+	int probeonly = 0;
 
-	if (argc > 1 && argc != 3) {
-		fprintf(stderr, "usage: a.out [src hostdest]\n");
-		exit(1);
+	if (argc > 1) {
+		if (argc == 2 && strcmp(argv[1], "probe") == 0) {
+			probeonly = 1;
+		} else if (argc != 3) {
+			fprintf(stderr, "usage: a.out [src hostdest]\n");
+			exit(1);
+		}
 	}
 
 	memset(&args, 0, sizeof(args));
@@ -72,7 +79,15 @@ main(int argc, char *argv[])
 	memset(&uargs, 0, sizeof(uargs));
 	uargs.fspec = strdup("/dev/sd0e");
 
+	memset(&iargs, 0, sizeof(iargs));
+	iargs.fspec = strdup("/dev/cd0a");
+
+	if (probeonly)
+		rump_boot_sethowto(RUMP_AB_VERBOSE);
 	rump_init();
+	if (probeonly) {
+		exit(0);
+	}
 
 	if (rump_sys_mkdir("/mp", 0777) == -1)
 		err(1, "mkdir");
@@ -80,7 +95,17 @@ main(int argc, char *argv[])
 	    &args, sizeof(args)) == -1) {
 		if (rump_sys_mount(MOUNT_FFS, "/mp", MNT_RDONLY,
 		    &uargs, sizeof(uargs)) == -1) {
-			err(1, "mount");
+			printf("Trying CD.  This might fail with "
+			    "\"media not present\".\n");
+			printf("If that happens, wait a while without "
+			    "unplugging the device and re-run.\n");
+			printf("Some devices apparently need a long time "
+			    "to settle after they are initialized.\n\n");
+
+			if (rump_sys_mount(MOUNT_CD9660, "/mp", MNT_RDONLY,
+			    &iargs, sizeof(iargs)) == -1) {
+				err(1, "mount");
+			}
 		}
 	}
 
