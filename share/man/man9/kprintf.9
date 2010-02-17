@@ -1,4 +1,4 @@
-.\"     $NetBSD: kprintf.9,v 1.28 2009/09/04 23:29:03 apb Exp $
+.\"     $NetBSD: kprintf.9,v 1.29 2010/02/17 22:04:14 cnst Exp $
 .\"
 .\" Copyright (c) 1998, 2002, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -217,9 +217,10 @@ and
 which work like their counterparts without the suffixes, except that
 they take a
 .Ft device_t
-or
-.Ft struct ifnet *
-respectively as first argument and prefix the log message with the
+and
+.Ft struct ifnet * ,
+respectively, as first argument,
+and prefix the log message with the
 corresponding device or interface name.
 .Pp
 The
