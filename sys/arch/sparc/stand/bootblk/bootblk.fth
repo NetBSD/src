@@ -1,4 +1,4 @@
-\	$NetBSD: bootblk.fth,v 1.10 2010/02/13 23:38:17 eeh Exp $
+\	$NetBSD: bootblk.fth,v 1.11 2010/02/17 15:49:19 eeh Exp $
 \
 \	IEEE 1275 Open Firmware Boot Block
 \
@@ -34,6 +34,8 @@ hex
 headers
 
 false value boot-debug?
+
+: KB d# 1024 * ;
 
 \
 \ First some housekeeping:  Open /chosen and set up vectors into
@@ -610,6 +612,7 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
       endcase
    then					( sb )
    \ The FFS magic is at the end of the superblock
+   \ XXX we should check to make sure this is not an alternate SB.
    fs_magic l@  case
       fs1_magic_value  of  init-ffs-v1 true  endof
       fs2_magic_value  of  init-ffs-v2 true  endof
@@ -688,6 +691,26 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
    then
 ;
 
+: check-supers ( -- found? )
+   \ Superblocks used to be 8KB into the partition, but ffsv2 changed that.
+   \ See comments in src/sys/ufs/ffs/fs.h
+   \ Put a list of offets to check on the stack, ending with -1
+   -1
+   0
+   d# 128 KB
+   d# 64 KB
+   8 KB
+   
+   begin  dup -1 <>  while			( -1 .. off )
+	 raid-offset dev_bsize * + read-super	( -1 .. )
+	 sb-buf fs-magic?  if			( -1 .. )
+	    begin  -1 =  until	 \ Clean out extra stuff from stack
+	    true exit
+	 then
+   repeat
+   drop false
+;
+
 : ufs-open ( bootpath len -- )
    boot-ihandle -1 =  if
       2dup + 0 swap c!	\ Nul terminate.
@@ -700,13 +723,12 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
    2drop
    
    boot-debug?  if ." Try a RAID superblock read" cr  then
-   rf_protected dup  to  raid-offset 
-   dev_bsize * sboff + read-super
-   sb-buf fs-magic? invert  if
+   \ RAIDFRAME skips 64 sectors.
+   d# 64  to  raid-offset
+   check-supers invert  if
       boot-debug?  if ." Try a normal superblock read" cr  then
       0  to  raid-offset 
-      sboff read-super
-      sb-buf fs-magic? invert  abort" Invalid superblock magic"
+      check-supers 0=  abort" Invalid superblock magic"
    then
    sb-buf fs-bsize l@ dup maxbsize >  if
       ." Superblock bsize" space . ." too large" cr
@@ -857,9 +879,10 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
 ;
 
 : do-boot ( bootfile -- )
-    ." NetBSD IEEE 1275 Multi-FS Bootblock" cr
-    boot-path load-file ( -- load-base )
-    dup 0<>  if  " init-program " evaluate  then
+   ." NetBSD IEEE 1275 Multi-FS Bootblock" cr
+   ." Version $NetBSD: bootblk.fth,v 1.11 2010/02/17 15:49:19 eeh Exp $" cr
+   boot-path load-file ( -- load-base )
+   dup 0<>  if  " init-program " evaluate  then
 ; 
 
 
