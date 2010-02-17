@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.31 2010/01/08 20:07:14 dyoung Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.32 2010/02/17 00:15:24 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.31 2010/01/08 20:07:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.32 2010/02/17 00:15:24 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -860,6 +860,8 @@ pmf_device_subtree_release(device_t dv, pmf_qual_t qual)
 	struct pmf_qual pq;
 
 	device_pmf_remove_suspensor(dv, qual);
+
+	pmf_qual_recursive_copy(&pq, qual);
 
 	return pmf_device_descendants_release(dv, &pq);
 }
