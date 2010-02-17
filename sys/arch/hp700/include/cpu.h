@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.35 2010/02/17 11:14:10 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.36 2010/02/17 11:21:24 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -56,7 +56,6 @@
 #include <machine/trap.h>
 #include <machine/frame.h>
 #include <machine/reg.h>
-
 
 #ifndef _LOCORE
 
