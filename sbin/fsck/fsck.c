@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.47 2008/02/23 21:41:47 christos Exp $	*/
+/*	$NetBSD: fsck.c,v 1.48 2010/02/17 23:30:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.47 2008/02/23 21:41:47 christos Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.48 2010/02/17 23:30:21 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,7 +67,7 @@ __RCSID("$NetBSD: fsck.c,v 1.47 2008/02/23 21:41:47 christos Exp $");
 
 static enum { IN_LIST, NOT_IN_LIST } which = NOT_IN_LIST;
 
-TAILQ_HEAD(fstypelist, entry) opthead, selhead;
+TAILQ_HEAD(fstypelist, entry) opthead, selhead, omhead;
 
 struct entry {
 	char *type;
@@ -81,6 +81,7 @@ static int flags = 0;
 
 static int checkfs(const char *, const char *, const char *, void *, pid_t *);
 static int selected(const char *);
+static int omitted(const char *);
 static void addoption(char *);
 static const char *getoptions(const char *);
 static void addentry(struct fstypelist *, const char *, const char *);
@@ -105,8 +106,9 @@ main(int argc, char *argv[])
 
 	TAILQ_INIT(&selhead);
 	TAILQ_INIT(&opthead);
+	TAILQ_INIT(&omhead);
 
-	while ((i = getopt(argc, argv, "dfl:nPpqT:t:vy")) != -1) {
+	while ((i = getopt(argc, argv, "dfl:nPpqT:t:vx:y")) != -1) {
 		switch (i) {
 		case 'd':
 			flags |= CHECK_DEBUG;
@@ -151,6 +153,10 @@ main(int argc, char *argv[])
 		case 'v':
 			flags |= CHECK_VERBOSE;
 			continue;
+
+		case 'x':
+			addentry(&omhead, optarg, "");
+			break;
 
 		case 'y':
 			break;
@@ -234,6 +240,9 @@ isok(struct fstab *fs)
 		return NULL;
 
 	if (!selected(fs->fs_vfstype))
+		return NULL;
+
+	if (omitted(fs->fs_file))
 		return NULL;
 
 	return fs;
@@ -388,6 +397,20 @@ selected(const char *type)
 			return which == IN_LIST ? 1 : 0;
 
 	return which == IN_LIST ? 0 : 1;
+}
+
+
+static int
+omitted(const char *mountedon)
+{
+	struct entry *e;
+
+	/* If no type specified, it's always selected. */
+	TAILQ_FOREACH(e, &omhead, entries)
+		if (!strcmp(e->type, mountedon))
+			return 1;
+
+	return 0;
 }
 
 
@@ -558,7 +581,7 @@ static void
 usage(void)
 {
 	static const char common[] =
-	    "[-dfnPpqvy] [-l maxparallel] [-T fstype:fsoptions]\n\t\t[-t fstype]";
+	    "[-dfnPpqvy] [-x excludemount] [-l maxparallel] [-T fstype:fsoptions]\n\t\t[-t fstype]";
 
 	(void)fprintf(stderr, "usage: %s %s [special|node]...\n",
 	    getprogname(), common);

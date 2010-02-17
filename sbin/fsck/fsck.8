@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck.8,v 1.35 2009/10/21 01:07:46 snj Exp $
+.\"	$NetBSD: fsck.8,v 1.36 2010/02/17 23:30:21 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 23, 2008
+.Dd February 17, 2010
 .Dt FSCK 8
 .Os
 .Sh NAME
@@ -34,6 +34,7 @@
 .Op Fl l Ar maxparallel
 .Op Fl T Ar fstype:fsoptions
 .Op Fl t Ar fstype
+.Op Fl x Ar mountpoint
 .Op special | node ...
 .Sh DESCRIPTION
 The
@@ -111,6 +112,12 @@ then invoke
 for the file system types that are not specified in the list.
 .It Fl v
 Print the commands before executing them.
+.It Fl x Ar mountpoint
+Exclude the filesystem which has a
+.Ar mountpoint
+the same as in
+.Pa /etc/fstab .
+Used only in ``preen'' mode.
 .It Fl y
 Causes
 .Nm
