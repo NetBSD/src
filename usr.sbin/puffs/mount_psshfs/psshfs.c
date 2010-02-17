@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.59 2010/01/12 18:43:37 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.60 2010/02/17 15:50:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.59 2010/01/12 18:43:37 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.60 2010/02/17 15:50:54 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -287,7 +287,15 @@ main(int argc, char *argv[])
 
 	rva = &pn_root->pn_va;
 	rva->va_fileid = pctx.nextino++;
-	rva->va_nlink = 101; /* XXX */
+
+	/*
+	 * For root link count, just guess something ridiculously high.
+	 * Guessing too high has no known adverse effects, but fsu()
+	 * doesn't like too low values.  This guess will be replaced
+	 * with the real value when readdir is first called for
+	 * the root directory.
+	 */
+	rva->va_nlink = 8811;
 
 	if (detach)
 		if (puffs_daemon(pu, 1, 1) == -1)
