@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.48 2010/01/07 21:05:50 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.49 2010/02/17 15:47:36 pooka Exp $        */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.48 2010/01/07 21:05:50 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.49 2010/02/17 15:47:36 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -344,6 +344,14 @@ sftp_readdir(struct puffs_usermount *pu, struct psshfs_ctx *pctx,
 			}
 			free(longname);
 			longname = NULL;
+			
+			/*
+			 * In case of DOT, copy the attributes (mostly
+			 * because we want the link count for the root dir).
+			 */
+			if (strcmp(psn->dir[idx].entryname, ".") == 0) {
+				setpnva(pu, pn, &psn->dir[idx].va);
+			}
 
 			/*
 			 * Check if we already have a psshfs_dir for the
