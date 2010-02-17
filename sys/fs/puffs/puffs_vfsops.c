@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.86 2010/01/14 19:50:07 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.87 2010/02/17 14:32:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.86 2010/01/14 19:50:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.87 2010/02/17 14:32:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -222,13 +222,39 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	mp->mnt_flag &= ~MNT_LOCAL; /* we don't really know, so ... */
 	mp->mnt_data = pmp;
 
+#if 0
+	/*
+	 * XXX: puffs code is MPSAFE.  However, VFS really isn't.
+	 * Currently, there is nothing which protects an inode from
+	 * reclaim while there are threads inside the file system.
+	 * This means that in the event of a server crash, an MPSAFE
+	 * mount is likely to end up accessing invalid memory.  For the
+	 * non-mpsafe case, the kernel lock, general structure of
+	 * puffs and pmp_refcount protect the threads during escape.
+	 *
+	 * Fixing this will require:
+	 *  a) fixing vfs
+	 * OR
+	 *  b) adding a small sleep to puffs_msgif_close() between
+	 *     userdead() and dounmount().
+	 *     (well, this isn't really a fix, but would solve
+	 *     99.999% of the race conditions).
+	 *
+	 * Also, in the event of "b", unmount -f should be used,
+	 * like with any other file system, sparingly and only when
+	 * it is "known" to be safe.
+	 */
+	mp->mnt_iflags |= IMNT_MPSAFE;
+#endif
+
 	pmp->pmp_status = PUFFSTAT_MOUNTING;
 	pmp->pmp_mp = mp;
 	pmp->pmp_msg_maxsize = args->pa_maxmsglen;
 	pmp->pmp_args = *args;
 
 	pmp->pmp_npnodehash = args->pa_nhashbuckets;
-	pmp->pmp_pnodehash = kmem_alloc(BUCKETALLOC(pmp->pmp_npnodehash), KM_SLEEP);
+	pmp->pmp_pnodehash = kmem_alloc(BUCKETALLOC(pmp->pmp_npnodehash),
+	    KM_SLEEP);
 	for (i = 0; i < pmp->pmp_npnodehash; i++)
 		LIST_INIT(&pmp->pmp_pnodehash[i]);
 	LIST_INIT(&pmp->pmp_newcookie);
@@ -435,7 +461,7 @@ puffs_vfsop_statvfs(struct mount *mp, struct statvfs *sbp)
 	 * requesting statvfs from userspace would mean a deadlock.
 	 * Compensate.
 	 */
-	if (pmp->pmp_status == PUFFSTAT_MOUNTING)
+	if (__predict_false(pmp->pmp_status == PUFFSTAT_MOUNTING))
 		return EINPROGRESS;
 
 	PUFFS_MSG_ALLOC(vfs, statvfs);
