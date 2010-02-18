@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.53 2009/10/18 12:09:48 ahoka Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.54 2010/02/18 12:21:52 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -359,9 +359,9 @@ get_ptn_sizes(daddr_t part_start, daddr_t sectors, int no_swap)
 	 	  DEFSWAPSIZE,	DEFSWAPSIZE, 0, 0 },
 		{ PART_TMP_RAMDISK,
 #ifdef HAVE_TMPFS
-		  { 't', 'm', 'p', ' ', '(', 't', 'm', 'p', 'f', 's', ')', '\0' },
+		  { '/', 't', 'm', 'p', ' ', '(', 't', 'm', 'p', 'f', 's', ')', '\0' },
 #else
-		  { 't', 'm', 'p', ' ', '(', 'm', 'f', 's', ')', '\0' },
+		  { '/', 't', 'm', 'p', ' ', '(', 'm', 'f', 's', ')', '\0' },
 #endif
 		  64, 0, 0, 0 },
 #define PI_USR 3
