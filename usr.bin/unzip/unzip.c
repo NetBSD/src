@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.11 2010/01/09 09:27:42 mbalmer Exp $ */
+/* $NetBSD: unzip.c,v 1.12 2010/02/18 15:51:57 joerg Exp $ */
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.11 2010/01/09 09:27:42 mbalmer Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.12 2010/02/18 15:51:57 joerg Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -865,7 +865,7 @@ unzip(const char *fn)
 	ac(archive_read_support_format_zip(a));
 	ac(archive_read_open_fd(a, fd, 8192));
 
-	if (!q_opt)
+	if (!q_opt && !p_opt)
 	    printf("Archive:  %s\n", fn);
 
 	if (v_opt == 1) {
