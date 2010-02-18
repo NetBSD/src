@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.40 2010/02/18 21:30:00 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.41 2010/02/18 21:38:32 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -820,7 +820,7 @@ switch_diag:
 kstack_ok:
 #endif
 
-	/* If old LWP exited, don't bother. */
+	/* If old LWP exited, don't bother saving anything. */
 	comb,=,n %r0, %arg0, switch_exited
 
 	/*
