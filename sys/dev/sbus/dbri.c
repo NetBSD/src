@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.29 2010/01/14 02:20:07 macallan Exp $	*/
+/*	$NetBSD: dbri.c,v 1.30 2010/02/18 02:21:38 macallan Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.29 2010/01/14 02:20:07 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.30 2010/02/18 02:21:38 macallan Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -447,8 +447,12 @@ dbri_config_interrupts(device_t dev)
 	struct dbri_softc *sc = device_private(dev);
 
 	dbri_init(sc);
-	mmcodec_init(sc);
-	
+	if (mmcodec_init(sc) == -1) {
+		printf("%s: no codec detected, aborting\n",
+		    device_xname(dev));
+		return;
+	}
+
 	/* Attach ourselves to the high level audio interface */
 	audio_attach_mi(&dbri_hw_if, sc, sc->sc_dev);
 
