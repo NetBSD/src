@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck.8,v 1.36 2010/02/17 23:30:21 christos Exp $
+.\"	$NetBSD: fsck.8,v 1.37 2010/02/18 06:57:17 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
 .\"
@@ -47,7 +47,9 @@ file or in the command line for consistency.
 It is normally used in the script
 .Pa /etc/rc
 during automatic reboot.
-If no file systems are specified, and ``preen'' mode is enabled (
+If no file systems are specified, and
+.Dq preen
+mode is enabled (
 .Fl p
 option)
 .Nm
@@ -117,7 +119,9 @@ Exclude the filesystem which has a
 .Ar mountpoint
 the same as in
 .Pa /etc/fstab .
-Used only in ``preen'' mode.
+Used only in
+.Dq preen
+mode.
 .It Fl y
 Causes
 .Nm
@@ -126,7 +130,7 @@ as the answer to all operator questions.
 .El
 .Sh EXIT STATUS
 .Nm
-exits with 
+exits with
 .Dv 0
 on success.
 Any major problems will cause
@@ -149,7 +153,7 @@ mount was unsuccessful. A reboot (without sync) is required.
 .It Dv 8
 The filesystem check has failed, and a subsequent check is required
 that will require human intervention.
-.It Dv 12 
+.It Dv 12
 .Nm
 exited because of the result of a signal (usually
 .Dv SIGINT
