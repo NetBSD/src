@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.39 2009/12/10 05:10:01 rmind Exp $	*/
+/*	$NetBSD: locore.S,v 1.40 2010/02/18 21:30:00 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -765,7 +765,7 @@ EXIT(cpu_die)
 
 /*
  * struct lwp *
- * cpu_switchto(struct lwp *curl, struct lwp *newl)
+ * cpu_switchto(struct lwp *oldl, struct lwp *newl, bool returning)
  */
 	.align	32
 ENTRY(cpu_switchto,128)
@@ -803,7 +803,7 @@ switch_diag:
 
 	/*
 	 * cpu_lwp_fork sets the initial stack to a page above uarea address.
-	 * Check that the stack is above this value for curl.
+	 * Check that the stack is above this value for oldl.
 	 */
 	ldw	L_PCB(%arg1), %arg2
 	ldw	PCB_KSP(%arg2), %t1		/* t1 for switch_error */
@@ -826,13 +826,13 @@ kstack_ok:
 	/*
 	 * save old LWP context
 	 *
-	 * arg0: old LWP (curl)
+	 * arg0: old LWP (oldl)
 	 * arg1: new LWP (newl)
 	 */
 
-	ldw	L_PCB(%arg0), %t3	/* curl pcb */
+	ldw	L_PCB(%arg0), %t3	/* oldl pcb */
 	stw	%sp, PCB_KSP(%t3)
-	fdc	%r0(%t3)		/* flush curl pcb  - surely fdc PCB_KSP(%t3) */
+	fdc	%r0(%t3)		/* flush oldl pcb  - surely fdc PCB_KSP(%t3) */
 
 	/*
 	 * Save the callee-save registers. We don't need to do
@@ -857,7 +857,7 @@ kstack_ok:
 	/*
 	 * restore new LWP context
 	 *
-	 * arg0: old LWP (curl)
+	 * arg0: old LWP (oldl)
 	 * arg1: new LWP (newl)
 	 */
 switch_exited:
@@ -909,12 +909,12 @@ switch_exited:
 	/*
 	 * Save some caller-saves we want to preserve.
 	 *
-	 * We save curl (%arg0) and newl (%arg1) for the benefit of
+	 * We save oldl (%arg0) and newl (%arg1) for the benefit of
 	 * lwp_trampoline() for when it calls lwp_startup().
 	 *
-	 * curl (%arg0) is saved as it's the return value
+	 * oldl (%arg0) is saved as it's the return value
 	 */
-	stw	%arg0, HPPA_FRAME_ARG(0)(%r3)		/* curl */
+	stw	%arg0, HPPA_FRAME_ARG(0)(%r3)		/* oldl */
 	stw	%arg1, HPPA_FRAME_ARG(1)(%r3)		/* newl */
 
 	copy	%arg1, %arg0
@@ -969,7 +969,7 @@ EXIT(cpu_switchto)
  * the first kernel function to call, and its argument.
  *
  * cpu_switchto() also makes sure that %arg0 and %arg1 are (still)
- * curl and newl respectively.
+ * oldl and newl respectively.
  */
 ENTRY_NOPROFILE(lwp_trampoline,HPPA_FRAME_SIZE)
 	/* no return point */
