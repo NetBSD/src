@@ -21,7 +21,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) $Header: /cvsroot/src/dist/libpcap/Attic/gencode.c,v 1.4 2006/10/15 19:27:21 christos Exp $ (LBL)";
+    "@(#) $Header: /cvsroot/src/dist/libpcap/Attic/gencode.c,v 1.5 2010/02/18 14:00:39 wiz Exp $ (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -5292,7 +5292,7 @@ gen_load(proto, inst, size)
 
 		/*
 		 * Load into the X register the offset computed into the
-		 * register specifed by "index".
+		 * register specified by "index".
 		 */
 		s = xfer_to_x(inst);
 
