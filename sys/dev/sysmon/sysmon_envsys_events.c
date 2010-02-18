@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.84 2010/02/15 22:32:04 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.85 2010/02/18 12:30:53 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.84 2010/02/15 22:32:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.85 2010/02/18 12:30:53 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -101,21 +101,32 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	/*
 	 * Some validation first for limit-checking events
 	 *
-	 * Capacity limits are permitted only if the sensor has the
-	 * ENVSYS_FPERCENT flag set.
-	 * Value limits are permitted only if the ENVSYS_FPERCENT
-	 * flag is not set and the units is not ENVSYS_INDICATOR.
+	 * 1. Limits are not permitted if the units is ENVSYS_INDICATOR.
+	 *
+	 * 2. Capacity limits are permitted only if the sensor has the
+	 *    ENVSYS_FPERCENT flag set and value_max is set.
+	 *
+	 * 3. It is not permissible for both capacity and value limits
+	 *    to coexist.
+	 *
+	 * Note that it permissible for a sensor to have value limits
+	 * even if its ENVSYS_FPERCENT flag and value_max are set.
 	 */
 
 	DPRINTF(("%s: units %d props 0x%04x edata-flags 0x%04x\n",
 		__func__, edata->units, props, edata->flags));
 
-	if ((props & PROP_VAL_LIMITS) &&
-	    ((edata->flags & ENVSYS_FPERCENT) ||
-	     (edata->units == ENVSYS_INDICATOR)))
+	if (props && edata->units == ENVSYS_INDICATOR)
 		return ENOTSUP;
+
 	if ((props & PROP_CAP_LIMITS) &&
-	    !(edata->flags & ENVSYS_FPERCENT))
+	    ((edata->value_max == 0) ||
+	     !(edata->flags & ENVSYS_FPERCENT) ||
+	     (props & PROP_VAL_LIMITS) ||
+	     (edata->upropset & PROP_VAL_LIMITS)))
+		return ENOTSUP;
+
+	if ((props & PROP_VAL_LIMITS) && (edata->upropset & PROP_CAP_LIMITS))
 		return ENOTSUP;
 
 	/* 
