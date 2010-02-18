@@ -1,4 +1,4 @@
-/*	$NetBSD: info.c,v 1.11 2008/09/02 08:00:24 christos Exp $	*/
+/*	$NetBSD: info.c,v 1.12 2010/02/18 14:00:39 wiz Exp $	*/
 
 /* info.c -- Display nodes of Info files in multiple windows.
    Id: info.c,v 1.11 2004/04/11 17:56:45 karl Exp
@@ -358,7 +358,7 @@ For more information about these matters, see the files named COPYING.\n"));
     }
 
   /* Get the initial Info node.  It is either "(dir)Top", or what the user
-     specifed with values in user_filename and user_nodenames. */
+     specified with values in user_filename and user_nodenames. */
   initial_node = info_get_node (user_filename,
                                 user_nodenames ? user_nodenames[0] : 0);
 
