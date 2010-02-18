@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.3 2010/02/18 15:25:13 pooka Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.4 2010/02/18 16:13:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.3 2010/02/18 15:25:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.4 2010/02/18 16:13:30 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -584,23 +584,52 @@ rhscintr(void *arg)
 	int fd, error;
 
 	makeugendevstr(sc->sc_devnum, 0, buf);
+
 	for (;;) {
-		fd = rumpuser_open(buf, O_RDWR, &error);
-		if (fd != -1)
-			break;
-		kpause("ugwait", false, hz/4, NULL);
+		/*
+		 * Detect device attach.
+		 */
+
+		for (;;) {
+			fd = rumpuser_open(buf, O_RDWR, &error);
+			if (fd != -1)
+				break;
+			kpause("ugwait", false, hz/4, NULL);
+		}
+
+		sc->sc_ugenfd[UGEN_EPT_CTRL] = fd;
+		sc->sc_port_status = UPS_CURRENT_CONNECT_STATUS
+		    | UPS_PORT_ENABLED | UPS_PORT_POWER;
+		sc->sc_port_change = UPS_C_CONNECT_STATUS;
+
+		xfer = sc->sc_intrxfer;
+		xfer->actlen = 0;
+		xfer->status = USBD_NORMAL_COMPLETION;
+		usb_transfer_complete(xfer);
+
+		/*
+		 * Detect device detach.
+		 */
+
+		for (;;) {
+			fd = rumpuser_open(buf, O_RDWR, &error);
+			if (fd == -1)
+				break;
+			
+			rumpuser_close(fd, &error);
+			kpause("ugwait2", false, hz/4, NULL);
+		}
+
+		sc->sc_port_status = ~(UPS_CURRENT_CONNECT_STATUS
+		    | UPS_PORT_ENABLED | UPS_PORT_POWER);
+		sc->sc_port_change = UPS_C_CONNECT_STATUS;
+		sc->sc_ugenfd[UGEN_EPT_CTRL] = -1;
+
+		xfer = sc->sc_intrxfer;
+		xfer->actlen = 0;
+		xfer->status = USBD_NORMAL_COMPLETION;
+		usb_transfer_complete(xfer);
 	}
-
-	sc->sc_ugenfd[UGEN_EPT_CTRL] = fd;
-
-	sc->sc_port_status = UPS_CURRENT_CONNECT_STATUS
-	    | UPS_PORT_ENABLED | UPS_PORT_POWER;
-	sc->sc_port_change = UPS_C_CONNECT_STATUS;
-
-	xfer = sc->sc_intrxfer;;
-	xfer->actlen = 0;
-	xfer->status = USBD_NORMAL_COMPLETION;
-	usb_transfer_complete(xfer);
 
 	kthread_exit(0);
 }
