@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.58 2010/02/14 23:06:58 pgoyette Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.59 2010/02/18 14:10:15 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.58 2010/02/14 23:06:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.59 2010/02/18 14:10:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,9 +355,11 @@ static char *
 acpitz_celcius_string(int dk)
 {
 	static char buf[10];
+	int dc;
 
-	snprintf(buf, sizeof(buf), "%d.%d", (dk - ATZ_ZEROC) / 10,
-	    (dk - ATZ_ZEROC) % 10);
+	dc = abs(dk - ATZ_ZEROC);
+	snprintf(buf, sizeof(buf), "%s%d.%d", (dk >= ATZ_ZEROC)?"":"-",
+		dc / 10, dc % 10);
 
 	return buf;
 }
@@ -526,7 +528,7 @@ acpitz_get_zone(void *opaque, int verbose)
 			    acpitz_celcius_string(sc->sc_zone.hot));
 		if (sc->sc_zone.psv != ATZ_TMP_INVALID)
 			aprint_normal(" passive %sC",
-			    acpitz_celcius_string(sc->sc_zone.tmp));
+			    acpitz_celcius_string(sc->sc_zone.psv));
 	}
 
 	if (valid_levels == 0) {
