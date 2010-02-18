@@ -1,4 +1,4 @@
-#	$NetBSD: files.uvm,v 1.16 2009/10/21 21:12:07 rmind Exp $
+#	$NetBSD: files.uvm,v 1.17 2010/02/18 14:57:01 drochner Exp $
 
 #
 # UVM options
@@ -10,6 +10,7 @@ defflag opt_readahead.h		READAHEAD_STATS
 defflag opt_ubc.h		UBC_STATS
 defparam opt_pagermap.h		PAGER_MAP_SIZE
 defflag				PDPOLICY_CLOCKPRO
+defparam			USER_VA0_DISABLED_DEFAULT
 
 file	uvm/uvm_amap.c
 file	uvm/uvm_anon.c
