@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.47 2009/12/08 08:18:24 stacktic Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.48 2010/02/18 12:21:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.47 2009/12/08 08:18:24 stacktic Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.48 2010/02/18 12:21:28 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -69,10 +69,11 @@ __RCSID("$NetBSD: rumpuser.c,v 1.47 2009/12/08 08:18:24 stacktic Exp $");
 #include "rumpuser_int.h"
 
 int
-rumpuser_getfileinfo(const char *path, uint64_t *size, int *ft, int *error)
+rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp, int *error)
 {
 	struct stat sb;
-	int needsdev = 0;
+	uint64_t size;
+	int needsdev = 0, rv = 0, ft;
 
 	if (stat(path, &sb) == -1) {
 		*error = errno;
@@ -81,26 +82,26 @@ rumpuser_getfileinfo(const char *path, uint64_t *size, int *ft, int *error)
 
 	switch (sb.st_mode & S_IFMT) {
 	case S_IFDIR:
-		*ft = RUMPUSER_FT_DIR;
+		ft = RUMPUSER_FT_DIR;
 		break;
 	case S_IFREG:
-		*ft = RUMPUSER_FT_REG;
+		ft = RUMPUSER_FT_REG;
 		break;
 	case S_IFBLK:
-		*ft = RUMPUSER_FT_BLK;
+		ft = RUMPUSER_FT_BLK;
 		needsdev = 1;
 		break;
 	case S_IFCHR:
-		*ft = RUMPUSER_FT_CHR;
+		ft = RUMPUSER_FT_CHR;
 		needsdev = 1;
 		break;
 	default:
-		*ft = RUMPUSER_FT_OTHER;
+		ft = RUMPUSER_FT_OTHER;
 		break;
 	}
 
 	if (!needsdev) {
-		*size = sb.st_size;
+		size = sb.st_size;
 	} else {
 		/*
 		 * Welcome to the jungle.  Of course querying the kernel
@@ -123,19 +124,21 @@ rumpuser_getfileinfo(const char *path, uint64_t *size, int *ft, int *error)
 		fd = open(path, O_RDONLY);
 		if (fd == -1) {
 			*error = errno;
-			return -1;
+			rv = -1;
+			goto out;
 		}
 
 		off = lseek(fd, 0, SEEK_END);
 		close(fd);
 		if (off != 0) {
-			*size = off;
-			return 0;
+			size = off;
+			goto out;
 		}
 		fprintf(stderr, "error: device size query not implemented on "
 		    "this platform\n");
 		*error = EOPNOTSUPP;
-		return -1;
+		rv = -1;
+		goto out;
 #else
 		struct disklabel lab;
 		struct partition *parta;
@@ -144,21 +147,29 @@ rumpuser_getfileinfo(const char *path, uint64_t *size, int *ft, int *error)
 		fd = open(path, O_RDONLY);
 		if (fd == -1) {
 			*error = errno;
-			return -1;
+			rv = -1;
+			goto out;
 		}
 
 		if (ioctl(fd, DIOCGDINFO, &lab) == -1) {
 			*error = errno;
-			return -1;
+			rv = -1;
+			goto out;
 		}
 		close(fd);
 
 		parta = &lab.d_partitions[DISKPART(sb.st_rdev)];
-		*size = (uint64_t)lab.d_secsize * parta->p_size;
+		size = (uint64_t)lab.d_secsize * parta->p_size;
 #endif /* __NetBSD__ */
 	}
 
-	return 0;
+ out:
+	if (rv == 0 && sizep)
+		*sizep = size;
+	if (rv == 0 && ftp)
+		*ftp = ft;
+
+	return rv;
 }
 
 int
