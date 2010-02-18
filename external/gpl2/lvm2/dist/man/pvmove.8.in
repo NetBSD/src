@@ -21,7 +21,7 @@ free (or specified) extents on
 .IR DestinationPhysicalVolume (s).
 If no
 .I DestinationPhysicalVolume
-is specifed, the normal allocation rules for the volume group are used.
+is specified, the normal allocation rules for the volume group are used.
 
 If \fBpvmove\fP gets interrupted for any reason (e.g. the machine crashes)
 then run \fBpvmove\fP again without any PhysicalVolume arguments to
