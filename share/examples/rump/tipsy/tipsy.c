@@ -1,4 +1,4 @@
-/*	$NetBSD: tipsy.c,v 1.1 2009/12/20 19:50:29 pooka Exp $	*/
+/*	$NetBSD: tipsy.c,v 1.2 2010/02/18 16:14:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -100,8 +100,10 @@ main(int argc, char *argv[])
 	if (probeonly)
 		rump_boot_sethowto(RUMP_AB_VERBOSE);
 	rump_init();
-	if (probeonly)
+	if (probeonly) {
+		pause();
 		exit(0);
+	}
 
 	com = rump_sys_open("/dev/dtyU0", O_RDWR);
 	if (com == -1)
