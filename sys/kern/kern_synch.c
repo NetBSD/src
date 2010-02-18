@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.274 2009/12/30 23:54:30 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.275 2010/02/18 20:58:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.274 2009/12/30 23:54:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.275 2010/02/18 20:58:23 skrll Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -752,7 +752,7 @@ mi_switch(lwp_t *l)
 			pmap_deactivate(l);
 
 		/*
-		 * We may need to spin-wait for if 'newl' is still
+		 * We may need to spin-wait if 'newl' is still
 		 * context switching on another CPU.
 		 */
 		if (__predict_false(newl->l_ctxswtch != 0)) {
@@ -893,7 +893,7 @@ lwp_exit_switchaway(lwp_t *l)
 		l->l_lwpctl->lc_curcpu = LWPCTL_CPU_EXITED;
 
 	/*
-	 * We may need to spin-wait for if 'newl' is still
+	 * We may need to spin-wait if 'newl' is still
 	 * context switching on another CPU.
 	 */
 	if (__predict_false(newl->l_ctxswtch != 0)) {
