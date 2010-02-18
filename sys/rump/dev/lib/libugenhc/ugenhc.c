@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.2 2010/02/17 20:39:53 pooka Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.3 2010/02/18 15:25:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.2 2010/02/17 20:39:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.3 2010/02/18 15:25:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -98,6 +98,9 @@ struct ugenhc_softc {
 	int sc_port_change;
 	int sc_addr;
 	int sc_conf;
+
+	struct lwp *sc_rhintr;
+	usbd_xfer_handle sc_intrxfer;
 };
 
 static int	ugenhc_probe(struct device *, struct cfdata *, void *);
@@ -382,8 +385,10 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 			totlen = min(len, USB_DEVICE_DESCRIPTOR_SIZE);
 			memset(buf, 0, totlen);
 			if (rumpuser_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
-			    USB_GET_DEVICE_DESC, &uddesc, &ru_error) == -1)
-				panic("%d", ru_error);
+			    USB_GET_DEVICE_DESC, &uddesc, &ru_error) == -1) {
+				err = EIO;
+				goto ret;
+			}
 			memcpy(buf, &uddesc, totlen);
 			}
 
@@ -570,39 +575,49 @@ static const struct usbd_pipe_methods rumpusb_device_ctrl_methods = {
 	.done =		rumpusb_device_ctrl_done,
 };
 
-struct intrent {
-	usbd_xfer_handle xfer;
-	LIST_ENTRY(intrent) entries;
-};
-
-static LIST_HEAD(, intrent) intrlist = LIST_HEAD_INITIALIZER(intrlist);
-
 static void
-rhscintr(void)
+rhscintr(void *arg)
 {
-	struct intrent *ie, *ie_next;
+	char buf[UGENDEV_BUFSIZE];
+	struct ugenhc_softc *sc = arg;
 	usbd_xfer_handle xfer;
+	int fd, error;
 
-	for (ie = LIST_FIRST(&intrlist); ie; ie = ie_next) {
-		xfer = ie->xfer;
-		xfer->actlen = xfer->length;
-		xfer->status = USBD_NORMAL_COMPLETION;
-		usb_transfer_complete(xfer);
-
-		ie_next = LIST_NEXT(ie, entries);
-		LIST_REMOVE(ie, entries);
-		kmem_free(ie, sizeof(*ie));
+	makeugendevstr(sc->sc_devnum, 0, buf);
+	for (;;) {
+		fd = rumpuser_open(buf, O_RDWR, &error);
+		if (fd != -1)
+			break;
+		kpause("ugwait", false, hz/4, NULL);
 	}
+
+	sc->sc_ugenfd[UGEN_EPT_CTRL] = fd;
+
+	sc->sc_port_status = UPS_CURRENT_CONNECT_STATUS
+	    | UPS_PORT_ENABLED | UPS_PORT_POWER;
+	sc->sc_port_change = UPS_C_CONNECT_STATUS;
+
+	xfer = sc->sc_intrxfer;;
+	xfer->actlen = 0;
+	xfer->status = USBD_NORMAL_COMPLETION;
+	usb_transfer_complete(xfer);
+
+	kthread_exit(0);
 }
 
 static usbd_status
 rumpusb_root_intr_start(usbd_xfer_handle xfer)
 {
-	struct intrent *ie;
+	struct ugenhc_softc *sc = xfer->pipe->device->bus->hci_private;
+	int error;
 
-	ie = kmem_alloc(sizeof(*ie), KM_SLEEP);
-	ie->xfer = xfer;
-	LIST_INSERT_HEAD(&intrlist, ie, entries);
+	sc->sc_intrxfer = xfer;
+	if (!sc->sc_rhintr) {
+		error = kthread_create(PRI_NONE, 0, NULL,
+		    rhscintr, sc, &sc->sc_rhintr, "ugenrhi");
+		if (error)
+			xfer->status = error;
+	}
 
 	return (USBD_IN_PROGRESS);
 }
@@ -831,10 +846,6 @@ ugenhc_open(struct usbd_pipe *pipe)
 	int endpt, oflags, error;
 	int fd, val;
 
-	sc->sc_port_status = UPS_CURRENT_CONNECT_STATUS
-	    | UPS_PORT_ENABLED | UPS_PORT_POWER;
-	sc->sc_port_change = UPS_C_CONNECT_STATUS;
-
 	if (addr == sc->sc_addr) {
 		switch (xfertype) {
 		case UE_CONTROL:
@@ -955,14 +966,14 @@ static int
 ugenhc_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	char buf[UGENDEV_BUFSIZE];
-	int fd, error;
+	int error;
 
 	makeugendevstr(match->cf_unit, 0, buf);
-	fd = rumpuser_open(buf, O_RDWR, &error);
-	if (fd == -1)
+	if (rumpuser_getfileinfo(buf, NULL, NULL, &error) == -1) {
+		printf("match error %d\n", error);
 		return 0;
+	}
 
-	rumpuser_close(fd, &error);
 	return 1;
 }
 
@@ -971,8 +982,6 @@ ugenhc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *maa = aux;
 	struct ugenhc_softc *sc = device_private(self);
-	char buf[UGENDEV_BUFSIZE];
-	int error;
 
 	aprint_normal("\n");
 
@@ -986,15 +995,5 @@ ugenhc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bus.pipe_size = sizeof(struct ugenhc_pipe);
 	sc->sc_devnum = maa->maa_unit;
 
-	makeugendevstr(sc->sc_devnum, 0, buf);
-	sc->sc_ugenfd[UGEN_EPT_CTRL] = rumpuser_open(buf, O_RDWR, &error);
-	if (error)
-		panic("ugenhc_attach: failed to open ctrl ept %s\n", buf);
-
 	config_found(self, &sc->sc_bus, usbctlprint);
-
-	/* whoah, like extreme XXX, bro */
-	rhscintr();
-	if (!rump_threads)
-		config_pending_decr();
 }
