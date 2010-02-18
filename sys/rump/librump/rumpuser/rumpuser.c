@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.48 2010/02/18 12:21:28 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.49 2010/02/18 12:32:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.48 2010/02/18 12:21:28 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.49 2010/02/18 12:32:30 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -102,7 +102,7 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp, int *error)
 
 	if (!needsdev) {
 		size = sb.st_size;
-	} else {
+	} else if (sizep) {
 		/*
 		 * Welcome to the jungle.  Of course querying the kernel
 		 * for a device partition size is supposed to be far from
