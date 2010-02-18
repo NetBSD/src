@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.27 2009/09/16 10:47:54 mlelstv Exp $ */
+/* $NetBSD: aiboost.c,v 1.28 2010/02/18 13:52:33 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.27 2009/09/16 10:47:54 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.28 2010/02/18 13:52:33 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,13 +320,15 @@ aiboost_getcomp(ACPI_HANDLE *h, const char *name, struct aiboost_comp **comp)
 
 	status = AcpiGetHandle(h, name, &h1);
 	if (ACPI_FAILURE(status)) {
-		DPRINTF(("%s: AcpiGetHandle\n", __func__));
+		DPRINTF(("%s: AcpiGetHandle: %s\n", __func__,
+			AcpiFormatException(status) ));
 		return status;
 	}
 
 	status = acpi_eval_struct(h1, NULL, &buf);
 	if (ACPI_FAILURE(status)) {
-		DPRINTF(("%s: acpi_eval_struct\n", __func__));
+		DPRINTF(("%s: acpi_eval_struct: %s\n", __func__,
+			AcpiFormatException(status) ));
 		return status;
 	}
 
@@ -378,8 +380,8 @@ aiboost_getcomp(ACPI_HANDLE *h, const char *name, struct aiboost_comp **comp)
 			c->elem[i].h = elem->Reference.Handle;
 			status = acpi_eval_struct(c->elem[i].h, NULL, &buf2);
 			if (ACPI_FAILURE(status)) {
-				DPRINTF(("%s: fetching object in buf2\n",
-				    __func__));
+				DPRINTF(("%s: fetching object in buf2: %s\n",
+				    __func__, AcpiFormatException(status) ));
 				goto error;
 			}
 			subobj = buf2.Pointer;
