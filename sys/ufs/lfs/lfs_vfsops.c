@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.283 2010/02/16 23:20:30 mlelstv Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.284 2010/02/18 01:14:00 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.283 2010/02/16 23:20:30 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.284 2010/02/18 01:14:00 eeh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -516,8 +516,10 @@ int
 lfs_mountroot(void)
 {
 	extern struct vnode *rootvp;
+	struct lfs *fs = NULL;				/* LFS */
 	struct mount *mp;
 	struct lwp *l = curlwp;
+	struct ufsmount *ump;
 	int error;
 
 	if (device_class(root_device) != DV_DISK)
@@ -537,6 +539,10 @@ lfs_mountroot(void)
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
+	ump = VFSTOUFS(mp);
+	fs = ump->um_lfs;
+	memset(fs->lfs_fsmnt, 0, sizeof(fs->lfs_fsmnt));
+	(void)copystr(mp->mnt_stat.f_mntonname, fs->lfs_fsmnt, MNAMELEN - 1, 0);
 	(void)lfs_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp, false, NULL);
 	setrootfstime((time_t)(VFSTOUFS(mp)->um_lfs->lfs_tstamp));
@@ -597,8 +603,15 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			 * used for our initial mount
 			 */
 			ump = VFSTOUFS(mp);
-			if (devvp != ump->um_devvp)
-				error = EINVAL;
+			if (devvp != ump->um_devvp) {
+				if (devvp->v_rdev != ump->um_devvp->v_rdev)
+					error = EINVAL;
+				else {
+					vrele(devvp);
+					devvp = ump->um_devvp;
+					vref(devvp);
+				}
+			}
 		}
 	} else {
 		if (!update) {
