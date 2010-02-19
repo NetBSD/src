@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man_macro.c,v 1.29 2009/10/24 05:45:05 kristaps Exp $ */
+/*	$Vendor-Id: man_macro.c,v 1.30 2010/01/01 17:14:28 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -14,6 +14,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>

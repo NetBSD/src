@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_strings.c,v 1.13 2009/11/02 06:22:46 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_strings.c,v 1.14 2010/01/01 17:14:30 kristaps Exp $ */
 /*
  * Copyright (c) 2008 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -14,6 +14,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/types.h>
 
 #include <assert.h>

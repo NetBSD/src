@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man_argv.c,v 1.1 2009/08/13 11:45:29 kristaps Exp $ */
+/*	$Vendor-Id: man_argv.c,v 1.2 2010/01/01 17:14:28 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -14,6 +14,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/types.h>
 
 #include <assert.h>

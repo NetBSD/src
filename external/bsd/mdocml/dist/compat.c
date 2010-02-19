@@ -15,12 +15,16 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/types.h>
 #include <string.h>
 
-#ifdef __linux__
+int dummy; /* To prevent an empty object file */
 
+#ifndef HAVE_STRLCAT
 /*
  * Appends src to string dst of size siz (unlike strncat, siz is the
  * full size of dst, not space left).  At most siz-1 characters
@@ -55,7 +59,9 @@ strlcat(char *dst, const char *src, size_t siz)
 
 	return(dlen + (s - src));	/* count does not include NUL */
 }
+#endif
 
+#ifndef HAVE_STRLCPY
 /*
  * Copy src to string dst of size siz.  At most siz-1 characters
  * will be copied.  Always NUL terminates (unless siz == 0).
@@ -86,5 +92,4 @@ strlcpy(char *dst, const char *src, size_t siz)
 
 	return(s - src - 1);	/* count does not include NUL */
 }
-
 #endif 

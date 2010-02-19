@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_macro.c,v 1.38 2009/10/26 17:05:44 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_macro.c,v 1.41 2010/01/30 08:42:20 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -14,6 +14,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -27,6 +31,7 @@
 #define	REWIND_NOHALT	(1 << 1)
 #define	REWIND_HALT	(1 << 2)
 
+static	int	  ctx_synopsis(MACRO_PROT_ARGS);
 static	int	  obsolete(MACRO_PROT_ARGS);
 static	int	  blk_part_exp(MACRO_PROT_ARGS);
 static	int	  in_line_eoln(MACRO_PROT_ARGS);
@@ -94,7 +99,7 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ in_line_eoln, 0 }, /* Rv */
 	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED }, /* St */ 
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Va */
-	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Vt */ 
+	{ ctx_synopsis, MDOC_CALLABLE | MDOC_PARSED }, /* Vt */ 
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Xr */
 	{ in_line_eoln, 0 }, /* %A */
 	{ in_line_eoln, 0 }, /* %B */
@@ -394,6 +399,8 @@ rew_dohalt(int tok, enum mdoc_type type, const struct mdoc_node *p)
 	case (MDOC_Qq):
 		/* FALLTHROUGH */
 	case (MDOC_Sq):
+		/* FALLTHROUGH */
+	case (MDOC_Vt):
 		assert(MDOC_TAIL != type);
 		if (type == p->type && tok == p->tok)
 			return(REWIND_REWIND);
@@ -808,6 +815,17 @@ in_line(MACRO_PROT_ARGS)
 			cnt++;
 		if ( ! mdoc_word_alloc(m, line, la, p))
 			return(0);
+
+		/*
+		 * `Fl' macros have their scope re-opened with each new
+		 * word so that the `-' can be added to each one without
+		 * having to parse out spaces.
+		 */
+		if (0 == lastpunct && MDOC_Fl == tok) {
+			if ( ! rew_elem(m, tok))
+				return(0);
+			lastpunct = 1;
+		}
 	}
 
 	if (0 == lastpunct && ! rew_elem(m, tok))
@@ -1302,6 +1320,29 @@ in_line_eoln(MACRO_PROT_ARGS)
 	/* Close out (no delimiters). */
 
 	return(rew_elem(m, tok));
+}
+
+
+/* ARGSUSED */
+static int
+ctx_synopsis(MACRO_PROT_ARGS)
+{
+
+	/* If we're not in the SYNOPSIS, go straight to in-line. */
+	if (SEC_SYNOPSIS != m->lastsec)
+		return(in_line(m, tok, line, ppos, pos, buf));
+
+	/* If we're a nested call, same place. */
+	if (ppos > 1)
+		return(in_line(m, tok, line, ppos, pos, buf));
+
+	/*
+	 * XXX: this will open a block scope; however, if later we end
+	 * up formatting the block scope, then child nodes will inherit
+	 * the formatting.  Be careful.
+	 */
+
+	return(blk_part_imp(m, tok, line, ppos, pos, buf));
 }
 
 
