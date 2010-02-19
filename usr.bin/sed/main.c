@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2009/04/13 07:29:55 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2010/02/19 16:35:27 tnn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.20 2009/04/13 07:29:55 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2010/02/19 16:35:27 tnn Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,6 +90,7 @@ __RCSID("$NetBSD: main.c,v 1.20 2009/04/13 07:29:55 lukem Exp $");
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <regex.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -206,13 +207,17 @@ main(int argc, char *argv[])
  * together.  Empty strings and files are ignored.
  */
 char *
-cu_fgets(char *buf, int n)
+cu_fgets(char **outbuf, size_t *outsize)
 {
 	static enum {ST_EOF, ST_FILE, ST_STRING} state = ST_EOF;
 	static FILE *f;		/* Current open file */
 	static char *s;		/* Current pointer inside string */
 	static char string_ident[30];
+	size_t len;
 	char *p;
+
+	if (*outbuf == NULL)
+		*outsize = 0;
 
 again:
 	switch (state) {
@@ -240,11 +245,18 @@ again:
 			goto again;
 		}
 	case ST_FILE:
-		if ((p = fgets(buf, n, f)) != NULL) {
+		if ((p = fgetln(f, &len)) != NULL) {
 			linenum++;
-			if (linenum == 1 && buf[0] == '#' && buf[1] == 'n')
+			if (len >= *outsize) {
+				free(*outbuf);
+				*outsize = ROUNDLEN(len + 1);
+				*outbuf = xmalloc(*outsize);
+			}
+			memcpy(*outbuf, p, len);
+			(*outbuf)[len] = '\0';
+			if (linenum == 1 && p[0] == '#' && p[1] == 'n')
 				nflag = 1;
-			return (p);
+			return (*outbuf);
 		}
 		script = script->next;
 		(void)fclose(f);
@@ -253,12 +265,15 @@ again:
 	case ST_STRING:
 		if (linenum == 0 && s[0] == '#' && s[1] == 'n')
 			nflag = 1;
-		p = buf;
+		p = *outbuf;
+		len = *outsize;
 		for (;;) {
-			if (n-- <= 1) {
-				*p = '\0';
-				linenum++;
-				return (buf);
+			if (len <= 1) {
+				*outbuf = xrealloc(*outbuf,
+				    *outsize + _POSIX2_LINE_MAX);
+				p = *outbuf + *outsize - len;
+				len += _POSIX2_LINE_MAX;
+				*outsize += _POSIX2_LINE_MAX;
 			}
 			switch (*s) {
 			case '\0':
@@ -270,16 +285,17 @@ again:
 					script = script->next;
 					*p = '\0';
 					linenum++;
-					return (buf);
+					return (*outbuf);
 				}
 			case '\n':
 				*p++ = '\n';
 				*p = '\0';
 				s++;
 				linenum++;
-				return (buf);
+				return (*outbuf);
 			default:
 				*p++ = *s++;
+				len--;
 			}
 		}
 	}
