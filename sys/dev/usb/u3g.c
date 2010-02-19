@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.10 2010/02/08 20:45:43 snj Exp $	*/
+/*	$NetBSD: u3g.c,v 1.11 2010/02/19 15:10:02 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.10 2010/02/08 20:45:43 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.11 2010/02/19 15:10:02 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,6 +190,7 @@ static const struct usb_devno u3g_devs[] = {
 	/* OEM: Huawei */
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_MOBILE },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E220 },
+	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_K3765 },
 	/* OEM: Novatel */
 	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_MERLINV620 },
 	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_ES620 },
@@ -240,15 +241,80 @@ static const struct usb_devno u3g_devs[] = {
 };
 
 static int
-u3g_novatel_reinit(usbd_device_handle dev)
+send_bulkmsg(usbd_device_handle dev, char *cmd, size_t cmdlen)
 {
-	unsigned char cmd[31];
 	usbd_interface_handle iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	usbd_pipe_handle pipe;
 	usbd_xfer_handle xfer;
 	int err, i;
+
+	/* Move the device into the configured state. */
+	err = usbd_set_config_index(dev, 0, 0);
+	if (err) {
+		aprint_error("u3g: failed to set configuration index\n");
+		return UMATCH_NONE;
+	}
+
+	err = usbd_device2interface_handle(dev, 0, &iface);
+	if (err != 0) {
+		aprint_error("u3ginit: failed to get interface\n");
+		return UMATCH_NONE;
+	}
+
+	id = usbd_get_interface_descriptor(iface);
+	ed = NULL;
+	for (i = 0 ; i < id->bNumEndpoints ; i++) {
+		ed = usbd_interface2endpoint_descriptor(iface, i);
+		if (ed == NULL)
+			continue;
+		if (UE_GET_DIR(ed->bEndpointAddress) != UE_DIR_OUT)
+			continue;
+		if ((ed->bmAttributes & UE_XFERTYPE) == UE_BULK)
+			break;
+	}
+
+	if (i == id->bNumEndpoints)
+		return UMATCH_NONE;
+
+	err = usbd_open_pipe(iface, ed->bEndpointAddress,
+	    USBD_EXCLUSIVE_USE, &pipe);
+	if (err != 0) {
+		aprint_error("u3ginit: failed to open bulk transfer pipe %d\n",
+		    ed->bEndpointAddress);
+		return UMATCH_NONE;
+	}
+
+	xfer = usbd_alloc_xfer(dev);
+	if (xfer != NULL) {
+		usbd_setup_xfer(xfer, pipe, NULL, cmd, cmdlen,
+		    USBD_SYNCHRONOUS, USBD_DEFAULT_TIMEOUT, NULL);
+
+		err = usbd_transfer(xfer);
+
+#if 0 /* XXXpooka: at least my huawei "fails" this always, but still detaches */
+		if (err)
+			aprint_error("u3ginit: transfer failed\n");
+#else
+		err = 0;
+#endif
+		usbd_free_xfer(xfer);
+	} else {
+		aprint_error("u3ginit: failed to allocate xfer\n");
+		err = USBD_NOMEM;
+	}
+
+	usbd_abort_pipe(pipe);
+	usbd_close_pipe(pipe);
+
+	return (err == USBD_NORMAL_COMPLETION ? UMATCH_HIGHEST : UMATCH_NONE);
+}
+
+static int
+u3g_novatel_reinit(usbd_device_handle dev)
+{
+	unsigned char cmd[31];
 
 	memset(cmd, 0, sizeof(cmd));
 	/* Byte 0..3: Command Block Wrapper (CBW) signature */
@@ -271,61 +337,7 @@ u3g_novatel_reinit(usbd_device_handle dev)
 	cmd[19] = 0x02;
 	/* 5: unused */
 
-
-	/* Move the device into the configured state. */
-	err = usbd_set_config_index(dev, 0, 0);
-	if (err) {
-		aprint_error("u3g: failed to set configuration index\n");
-		return UMATCH_NONE;
-	}
-
-	err = usbd_device2interface_handle(dev, 0, &iface);
-	if (err != 0) {
-		aprint_error("u3g: failed to get interface\n");
-		return UMATCH_NONE;
-	}
-
-	id = usbd_get_interface_descriptor(iface);
-	ed = NULL;
-	for (i = 0 ; i < id->bNumEndpoints ; i++) {
-		ed = usbd_interface2endpoint_descriptor(iface, i);
-		if (ed == NULL)
-			continue;
-		if (UE_GET_DIR(ed->bEndpointAddress) != UE_DIR_OUT)
-			continue;
-		if ((ed->bmAttributes & UE_XFERTYPE) == UE_BULK)
-			break;
-	}
-
-	if (i == id->bNumEndpoints)
-		return UMATCH_NONE;
-
-	err = usbd_open_pipe(iface, ed->bEndpointAddress, USBD_EXCLUSIVE_USE,
-	    &pipe);
-	if (err != 0) {
-		aprint_error("u3g: failed to open bulk transfer pipe %d\n",
-		    ed->bEndpointAddress);
-		return UMATCH_NONE;
-	}
-
-	xfer = usbd_alloc_xfer(dev);
-	if (xfer != NULL) {
-		usbd_setup_xfer(xfer, pipe, NULL, cmd, sizeof(cmd),
-		    USBD_SYNCHRONOUS, USBD_DEFAULT_TIMEOUT, NULL);
-
-		err = usbd_transfer(xfer);
-		if (err)
-			aprint_error("u3g: transfer failed\n");
-		usbd_free_xfer(xfer);
-	} else {
-		aprint_error("u3g: failed to allocate xfer\n");
-		err = USBD_NOMEM;
-	}
-
-	usbd_abort_pipe(pipe);
-	usbd_close_pipe(pipe);
-
-	return (err == USBD_NORMAL_COMPLETION ? UMATCH_HIGHEST : UMATCH_NONE);
+	return send_bulkmsg(dev, cmd, sizeof(cmd));
 }
 
 static int
@@ -377,7 +389,24 @@ u3g_huawei_reinit(usbd_device_handle dev)
 
 	(void) usbd_do_request(dev, &req, 0);
 
-	return (UMATCH_HIGHEST); /* Match to prevent umass from attaching */
+	return (UMATCH_HIGHEST); /* Prevent umass from attaching */
+}
+
+static int
+u3g_huawei_k3765_reinit(usbd_device_handle dev)
+{
+	unsigned char cmd[31];
+
+	/* magic string adapted from some webpage */
+	memset(cmd, 0, sizeof(cmd));
+	cmd[0] = 0x55; 
+	cmd[1] = 0x53;
+	cmd[2] = 0x42;
+	cmd[3] = 0x43;
+	cmd[15]= 0x11;
+	cmd[16]= 0x06;
+
+	return send_bulkmsg(dev, cmd, sizeof(cmd));
 }
 
 static int
@@ -400,7 +429,6 @@ u3g_sierra_reinit(usbd_device_handle dev)
 	return (UMATCH_HIGHEST); /* Match to prevent umass from attaching */
 }
 
-
 /*
  * First personality:
  *
@@ -412,8 +440,18 @@ u3ginit_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	if (uaa->vendor == USB_VENDOR_HUAWEI)
-		return u3g_huawei_reinit(uaa->device);
+	/*
+	 * Huawei changes product when it is configured as a modem.
+	 */
+	if (uaa->vendor == USB_VENDOR_HUAWEI) {
+		if (uaa->product == USB_PRODUCT_HUAWEI_K3765)
+			return UMATCH_NONE;
+
+		if (uaa->product == USB_PRODUCT_HUAWEI_K3765INIT)
+			return u3g_huawei_k3765_reinit(uaa->device);
+		else
+			return u3g_huawei_reinit(uaa->device);
+	}
 
 	if (uaa->vendor == USB_VENDOR_NOVATEL2 &&
 	    uaa->product == USB_PRODUCT_NOVATEL2_MC950D_DRIVER)
