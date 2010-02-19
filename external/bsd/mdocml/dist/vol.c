@@ -1,4 +1,4 @@
-/*	$Vendor-Id: vol.c,v 1.5 2009/10/26 17:05:45 kristaps Exp $ */
+/*	$Vendor-Id: vol.c,v 1.6 2010/01/01 17:14:31 kristaps Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -14,6 +14,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>

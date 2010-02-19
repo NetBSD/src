@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man_html.c,v 1.24 2009/11/16 08:46:59 kristaps Exp $ */
+/*	$Vendor-Id: man_html.c,v 1.26 2010/01/29 14:39:38 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -14,6 +14,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/types.h>
 
 #include <assert.h>
@@ -66,11 +70,6 @@ static	int		  man_SH_pre(MAN_ARGS);
 static	int		  man_SM_pre(MAN_ARGS);
 static	int		  man_SS_pre(MAN_ARGS);
 
-#ifdef __linux__
-extern	size_t	  	  strlcpy(char *, const char *, size_t);
-extern	size_t	  	  strlcat(char *, const char *, size_t);
-#endif
-
 static	const struct htmlman mans[MAN_MAX] = {
 	{ man_br_pre, NULL }, /* br */
 	{ NULL, NULL }, /* TH */
@@ -115,7 +114,7 @@ html_man(void *arg, const struct man *m)
 
 	h = (struct html *)arg;
 
-	print_gen_doctype(h);
+	print_gen_decls(h);
 
 	t = print_otag(h, TAG_HTML, 0, NULL);
 	print_man(man_meta(m), man_node(m), h);

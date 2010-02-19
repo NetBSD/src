@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_html.c,v 1.48 2009/11/16 08:46:59 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_html.c,v 1.54 2010/01/30 08:42:20 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -14,8 +14,11 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/types.h>
-#include <sys/param.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -35,6 +38,10 @@
 #define	MDOC_ARGS	  const struct mdoc_meta *m, \
 			  const struct mdoc_node *n, \
 			  struct html *h
+
+#ifndef MIN
+#define	MIN(a,b)	((/*CONSTCOND*/(a)<(b))?(a):(b))
+#endif
 
 struct	htmlmdoc {
 	int		(*pre)(MDOC_ARGS);
@@ -125,11 +132,6 @@ static	int		  mdoc_va_pre(MDOC_ARGS);
 static	int		  mdoc_vt_pre(MDOC_ARGS);
 static	int		  mdoc_xr_pre(MDOC_ARGS);
 static	int		  mdoc_xx_pre(MDOC_ARGS);
-
-#ifdef __linux__
-extern	size_t	  	  strlcpy(char *, const char *, size_t);
-extern	size_t	  	  strlcat(char *, const char *, size_t);
-#endif
 
 static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{mdoc_ap_pre, NULL}, /* Ap */
@@ -264,7 +266,7 @@ html_mdoc(void *arg, const struct mdoc *m)
 
 	h = (struct html *)arg;
 
-	print_gen_doctype(h);
+	print_gen_decls(h);
 	t = print_otag(h, TAG_HTML, 0, NULL);
 	print_mdoc(mdoc_meta(m), mdoc_node(m), h);
 	print_tagq(h, t);
@@ -661,10 +663,19 @@ mdoc_fl_pre(MDOC_ARGS)
 
 	PAIR_CLASS_INIT(&tag, "flag");
 	print_otag(h, TAG_SPAN, 1, &tag);
-	if (MDOC_Fl == n->tok) {
-		print_text(h, "\\-");
+
+	/* `Cm' has no leading hyphen. */
+
+	if (MDOC_Cm == n->tok)
+		return(1);
+
+	print_text(h, "\\-");
+
+	/* A blank `Fl' should incur a subsequent space. */
+
+	if (n->child)
 		h->flags |= HTML_NOSPACE;
-	}
+
 	return(1);
 }
 
@@ -1572,15 +1583,18 @@ mdoc_vt_pre(MDOC_ARGS)
 	struct htmlpair	 tag;
 	struct roffsu	 su;
 
-	if (SEC_SYNOPSIS == n->sec) {
-		if (n->next && MDOC_Vt != n->next->tok) {
+	if (MDOC_BLOCK == n->type) {
+		if (n->prev && MDOC_Vt != n->prev->tok) {
 			SCALE_VS_INIT(&su, 1);
-			bufcat_su(h, "margin-bottom", &su);
+			bufcat_su(h, "margin-top", &su);
 			PAIR_STYLE_INIT(&tag, h);
 			print_otag(h, TAG_DIV, 1, &tag);
 		} else
 			print_otag(h, TAG_DIV, 0, NULL);
-	}
+
+		return(1);
+	} else if (MDOC_HEAD == n->type)
+		return(0);
 
 	PAIR_CLASS_INIT(&tag, "type");
 	print_otag(h, TAG_SPAN, 1, &tag);

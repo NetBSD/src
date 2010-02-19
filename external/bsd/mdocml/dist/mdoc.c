@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc.c,v 1.113 2009/10/30 05:58:38 kristaps Exp $ */
+/*	$Vendor-Id: mdoc.c,v 1.116 2010/01/07 10:24:43 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -14,6 +14,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/types.h>
 
 #include <assert.h>
@@ -93,11 +97,11 @@ const	char *const __mdoc_macronames[MDOC_MAX] = {
 	"Nm",		"Op",		"Ot",		"Pa",
 	"Rv",		"St",		"Va",		"Vt",
 	/* LINTED */
-	"Xr",		"\%A",		"\%B",		"\%D",
+	"Xr",		"%A",		"%B",		"%D",
 	/* LINTED */
-	"\%I",		"\%J",		"\%N",		"\%O",
+	"%I",		"%J",		"%N",		"%O",
 	/* LINTED */
-	"\%P",		"\%R",		"\%T",		"\%V",
+	"%P",		"%R",		"%T",		"%V",
 	"Ac",		"Ao",		"Aq",		"At",
 	"Bc",		"Bf",		"Bo",		"Bq",
 	"Bsx",		"Bx",		"Db",		"Dc",
@@ -114,11 +118,11 @@ const	char *const __mdoc_macronames[MDOC_MAX] = {
 	"Fr",		"Ud",		"Lb",		"Lp",
 	"Lk",		"Mt",		"Brq",		"Bro",
 	/* LINTED */
-	"Brc",		"\%C",		"Es",		"En",
+	"Brc",		"%C",		"Es",		"En",
 	/* LINTED */
-	"Dx",		"\%Q",		"br",		"sp",
+	"Dx",		"%Q",		"br",		"sp",
 	/* LINTED */
-	"\%U"
+	"%U"
 	};
 
 const	char *const __mdoc_argnames[MDOC_ARG_MAX] = {		 
@@ -147,11 +151,6 @@ static	int		  parsemacro(struct mdoc *, int, char *);
 static	int		  macrowarn(struct mdoc *, int, const char *);
 static	int		  pstring(struct mdoc *, int, int, 
 				const char *, size_t);
-
-#ifdef __linux__
-extern	size_t	  	  strlcpy(char *, const char *, size_t);
-#endif
-
 
 const struct mdoc_node *
 mdoc_node(const struct mdoc *m)
@@ -582,6 +581,7 @@ static int
 parsetext(struct mdoc *m, int line, char *buf)
 {
 	int		 i, j;
+	char		 sv;
 
 	if (SEC_NONE == m->lastnamed)
 		return(mdoc_perr(m, line, 0, ETEXTPROL));
@@ -598,7 +598,8 @@ parsetext(struct mdoc *m, int line, char *buf)
 
 	for (i = 0; ' ' == buf[i]; i++)
 		/* Skip leading whitespace. */ ;
-	if (0 == buf[i])
+
+	if ('\0' == buf[i])
 		return(mdoc_perr(m, line, 0, ENOBLANK));
 
 	/*
@@ -614,15 +615,30 @@ parsetext(struct mdoc *m, int line, char *buf)
 		if (i && ' ' == buf[i] && '\\' == buf[i - 1])
 			continue;
 
-		buf[i++] = 0;
+		sv = buf[i];
+		buf[i++] = '\0';
+
 		if ( ! pstring(m, line, j, &buf[j], (size_t)(i - j)))
 			return(0);
+
+		/* Trailing whitespace?  Check at overwritten byte. */
+
+		if (' ' == sv && '\0' == buf[i])
+			if ( ! mdoc_pwarn(m, line, i - 1, ETAILWS))
+				return(0);
 
 		for ( ; ' ' == buf[i]; i++)
 			/* Skip trailing whitespace. */ ;
 
 		j = i;
-		if (0 == buf[i])
+
+		/* Trailing whitespace? */
+
+		if (' ' == buf[i - 1] && '\0' == buf[i])
+			if ( ! mdoc_pwarn(m, line, i - 1, ETAILWS))
+				return(0);
+
+		if ('\0' == buf[i])
 			break;
 	}
 
@@ -659,7 +675,7 @@ parsemacro(struct mdoc *m, int ln, char *buf)
 
 	/* Empty lines are ignored. */
 
-	if (0 == buf[1])
+	if ('\0' == buf[1])
 		return(1);
 
 	i = 1;
@@ -670,14 +686,14 @@ parsemacro(struct mdoc *m, int ln, char *buf)
 		i++;
 		while (buf[i] && ' ' == buf[i])
 			i++;
-		if (0 == buf[i])
+		if ('\0' == buf[i])
 			return(1);
 	}
 
 	/* Copy the first word into a nil-terminated buffer. */
 
 	for (j = 0; j < 4; j++, i++) {
-		if (0 == (mac[j] = buf[i]))
+		if ('\0' == (mac[j] = buf[i]))
 			break;
 		else if (' ' == buf[i])
 			break;
@@ -707,6 +723,12 @@ parsemacro(struct mdoc *m, int ln, char *buf)
 
 	while (buf[i] && ' ' == buf[i])
 		i++;
+
+	/* Trailing whitespace? */
+
+	if ('\0' == buf[i] && ' ' == buf[i - 1])
+		if ( ! mdoc_pwarn(m, ln, i - 1, ETAILWS))
+			goto err;
 
 	/* 
 	 * Begin recursive parse sequence.  Since we're at the start of

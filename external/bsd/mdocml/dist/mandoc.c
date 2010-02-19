@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mandoc.c,v 1.8 2009/11/05 10:16:01 kristaps Exp $ */
+/*	$Vendor-Id: mandoc.c,v 1.10 2010/01/05 19:51:10 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -14,8 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#if defined(__linux__) || defined(__MINT__)
-# define _GNU_SOURCE /* strptime() */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include <sys/types.h>
@@ -43,8 +43,6 @@ mandoc_special(const char *p)
 		return(0);
 
 	switch (*p) {
-	case ('\\'):
-		/* FALLTHROUGH */
 	case ('\''):
 		/* FALLTHROUGH */
 	case ('`'):

@@ -1,4 +1,4 @@
-/*	$Vendor-Id: main.h,v 1.1 2009/10/13 10:57:25 kristaps Exp $ */
+/*	$Vendor-Id: main.h,v 1.2 2010/01/29 14:39:38 kristaps Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -30,6 +30,7 @@ struct	man;
  */
 
 void		 *html_alloc(char *);
+void		 *xhtml_alloc(char *);
 void		  html_mdoc(void *, const struct mdoc *);
 void		  html_man(void *, const struct man *);
 void		  html_free(void *);
