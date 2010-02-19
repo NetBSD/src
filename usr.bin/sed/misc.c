@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.10 2009/04/13 07:29:55 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.11 2010/02/19 16:35:27 tnn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.10 2009/04/13 07:29:55 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.11 2010/02/19 16:35:27 tnn Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ __RCSID("$NetBSD: misc.c,v 1.10 2009/04/13 07:29:55 lukem Exp $");
  * malloc with result test
  */
 void *
-xmalloc(u_int size)
+xmalloc(size_t size)
 {
 	void *p;
 
@@ -109,7 +109,7 @@ xmalloc(u_int size)
  * realloc with result test
  */
 void *
-xrealloc(void *p, u_int size)
+xrealloc(void *p, size_t size)
 {
 	if (p == NULL)			/* Compatibility hack. */
 		return (xmalloc(size));

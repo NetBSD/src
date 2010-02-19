@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.9 2004/11/20 06:40:42 grant Exp $	*/
+/*	$NetBSD: defs.h,v 1.10 2010/02/19 16:35:27 tnn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)defs.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: defs.h,v 1.9 2004/11/20 06:40:42 grant Exp $
+ *	$NetBSD: defs.h,v 1.10 2010/02/19 16:35:27 tnn Exp $
  */
 
 /*-
@@ -70,7 +70,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)defs.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: defs.h,v 1.9 2004/11/20 06:40:42 grant Exp $
+ *	$NetBSD: defs.h,v 1.10 2010/02/19 16:35:27 tnn Exp $
  */
 
 /*
@@ -179,3 +179,9 @@ typedef struct {
 #define	WARNING		2	/* Just print the warning */
 #define	COMPILE		3	/* Print error, count and finish script */
 #define	COMPILE2	3	/* Print error, count and finish script */
+
+/*
+ * Round up to the nearest multiple of _POSIX2_LINE_MAX
+ */
+#define ROUNDLEN(x) \
+    (((x) + _POSIX2_LINE_MAX - 1) & ~(_POSIX2_LINE_MAX - 1))
