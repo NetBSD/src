@@ -12,7 +12,6 @@ static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
 #define YYMAJOR 1
 #define YYMINOR 9
 
-#define YYLEX yylex()
 #define YYEMPTY        (-1)
 #define yyclearin      (yychar = YYEMPTY)
 #define yyerrok        (yyerrflag = 0)
@@ -21,18 +20,24 @@ static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
 /* compatibility with bison */
 #ifdef YYPARSE_PARAM
 /* compatibility with FreeBSD */
-#ifdef YYPARSE_PARAM_TYPE
-#define YYPARSE_DECL() yyparse(YYPARSE_PARAM_TYPE YYPARSE_PARAM)
+# ifdef YYPARSE_PARAM_TYPE
+#  define YYPARSE_DECL() yyparse(YYPARSE_PARAM_TYPE YYPARSE_PARAM)
+# else
+#  define YYPARSE_DECL() yyparse(void *YYPARSE_PARAM)
+# endif
 #else
-#define YYPARSE_DECL() yyparse(void *YYPARSE_PARAM)
+# define YYPARSE_DECL() yyparse(void)
 #endif
-#else
-#define YYPARSE_DECL() yyparse(void)
-#endif /* YYPARSE_PARAM */
 
-static int yygrowstack(void);
+/* Pure parsers. */
+#define YYPURE 0
+#ifdef YYLEX_PARAM
+# define YYLEX yylex(YYLEX_PARAM)
+#else
+# define YYLEX yylex()
+#endif
+
 #define YYPREFIX "yy"
-#line 37 "/usr/src/external/bsd/flex/dist/parse.y"
 /*  Copyright (c) 1990 The Regents of the University of California. */
 /*  All rights reserved. */
 
@@ -113,7 +118,6 @@ int previous_continued_action;	/* whether the previous rule's action was '|' */
  */
 #define YYSTYPE int
 
-#line 116 "/usr/src/external/bsd/flex/dist/parse.c"
 #define CHAR 257
 #define NUMBER 258
 #define SECTEND 259
@@ -465,6 +469,8 @@ typedef int YYSTYPE;
 #endif
 
 extern int YYPARSE_DECL();
+static int yygrowstack(short **, short **, short **,
+    YYSTYPE **, YYSTYPE **, unsigned *);
 
 /* define the initial stack-sizes */
 #ifdef YYSTACKSIZE
@@ -482,20 +488,11 @@ extern int YYPARSE_DECL();
 #define YYINITSTACKSIZE 500
 
 int      yydebug;
-int      yynerrs;
 int      yyerrflag;
-int      yychar;
-short   *yyssp;
-YYSTYPE *yyvsp;
-YYSTYPE  yyval;
-YYSTYPE  yylval;
+    int      yynerrs;
+    int      yychar;
+    YYSTYPE  yylval;
 
-/* variables for the parser stack */
-static short   *yyss;
-static short   *yysslim;
-static YYSTYPE *yyvs;
-static unsigned yystacksize;
-#line 952 "/usr/src/external/bsd/flex/dist/parse.y"
 
 
 /* build_eof_action - build the "<<EOF>>" action for the active start
@@ -634,41 +631,37 @@ void yyerror( msg )
 const char *msg;
 	{
 	}
-#line 637 "/usr/src/external/bsd/flex/dist/parse.c"
 /* allocate initial stack or double stack size, up to YYMAXDEPTH */
-static int yygrowstack(void)
+static int yygrowstack(short **yyss, short **yyssp, short **yysslim,
+    YYSTYPE **yyvs, YYSTYPE **yyvsp, unsigned *yystacksize)
 {
     int i;
     unsigned newsize;
     short *newss;
     YYSTYPE *newvs;
 
-    if ((newsize = yystacksize) == 0)
+    if ((newsize = *yystacksize) == 0)
         newsize = YYINITSTACKSIZE;
     else if (newsize >= YYMAXDEPTH)
         return -1;
     else if ((newsize *= 2) > YYMAXDEPTH)
         newsize = YYMAXDEPTH;
 
-    i = yyssp - yyss;
-    newss = (yyss != 0)
-          ? (short *)realloc(yyss, newsize * sizeof(*newss))
-          : (short *)malloc(newsize * sizeof(*newss));
+    i = *yyssp - *yyss;
+    newss = (short *)realloc(*yyss, newsize * sizeof(*newss));
     if (newss == 0)
         return -1;
 
-    yyss  = newss;
-    yyssp = newss + i;
-    newvs = (yyvs != 0)
-          ? (YYSTYPE *)realloc(yyvs, newsize * sizeof(*newvs))
-          : (YYSTYPE *)malloc(newsize * sizeof(*newvs));
+    *yyss  = newss;
+    *yyssp = newss + i;
+    newvs = (YYSTYPE *)realloc(*yyvs, newsize * sizeof(*newvs));
     if (newvs == 0)
         return -1;
 
-    yyvs = newvs;
-    yyvsp = newvs + i;
-    yystacksize = newsize;
-    yysslim = yyss + newsize - 1;
+    *yyvs = newvs;
+    *yyvsp = newvs + i;
+    *yystacksize = newsize;
+    *yysslim = *yyss + newsize - 1;
     return 0;
 }
 
@@ -681,6 +674,15 @@ int
 YYPARSE_DECL()
 {
     int yym, yyn, yystate;
+
+    YYSTYPE  yyval;
+    /* variables for the parser stack */
+    short   *yyssp;
+    short   *yyss;
+    short   *yysslim;
+    YYSTYPE *yyvs;
+    YYSTYPE *yyvsp;
+    unsigned yystacksize;
 #if YYDEBUG
     const char *yys;
 
@@ -697,9 +699,11 @@ YYPARSE_DECL()
     yychar = YYEMPTY;
     yystate = 0;
 
-    if (yyss == NULL && yygrowstack()) goto yyoverflow;
-    yyssp = yyss;
-    yyvsp = yyvs;
+    yystacksize = 0;
+    yyvs = yyvsp = NULL;
+    yyss = yyssp = NULL;
+    if (yygrowstack(&yyss, &yyssp, &yysslim, &yyvs, &yyvsp, &yystacksize))
+        goto yyoverflow;
     yystate = 0;
     *yyssp = 0;
 
@@ -727,7 +731,8 @@ yyloop:
             printf("%sdebug: state %d, shifting to state %d\n",
                     YYPREFIX, yystate, yytable[yyn]);
 #endif
-        if (yyssp >= yysslim && yygrowstack())
+        if (yyssp >= yysslim && yygrowstack(&yyss, &yyssp, &yysslim,
+            &yyvs, &yyvsp, &yystacksize))
         {
             goto yyoverflow;
         }
@@ -767,7 +772,8 @@ yyinrecovery:
                     printf("%sdebug: state %d, error recovery shifting\
  to state %d\n", YYPREFIX, *yyssp, yytable[yyn]);
 #endif
-                if (yyssp >= yysslim && yygrowstack())
+                if (yyssp >= yysslim && yygrowstack(&yyss, &yyssp,
+                    &yysslim, &yyvs, &yyvsp, &yystacksize))
                 {
                     goto yyoverflow;
                 }
@@ -820,7 +826,6 @@ yyreduce:
     switch (yyn)
     {
 case 1:
-#line 121 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ /* add default rule */
 			int def_rule;
 
@@ -849,7 +854,6 @@ case 1:
 			}
 break;
 case 2:
-#line 150 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ /* initialize for processing rules */
 
 			/* Create default DFA start condition. */
@@ -857,11 +861,9 @@ case 2:
 			}
 break;
 case 6:
-#line 161 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ synerr( _("unknown error processing section 1") ); }
 break;
 case 7:
-#line 165 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			check_options();
 			scon_stk = allocate_integer_array( lastsc + 1 );
@@ -869,62 +871,48 @@ case 7:
 			}
 break;
 case 8:
-#line 173 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ xcluflg = false; }
 break;
 case 9:
-#line 176 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ xcluflg = true; }
 break;
 case 10:
-#line 180 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ scinstal( nmstr, xcluflg ); }
 break;
 case 11:
-#line 183 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ scinstal( nmstr, xcluflg ); }
 break;
 case 12:
-#line 186 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ synerr( _("bad start condition list") ); }
 break;
 case 16:
-#line 197 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			outfilename = copy_string( nmstr );
 			did_outfilename = 1;
 			}
 break;
 case 17:
-#line 202 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ extra_type = copy_string( nmstr ); }
 break;
 case 18:
-#line 204 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ prefix = copy_string( nmstr ); }
 break;
 case 19:
-#line 206 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ yyclass = copy_string( nmstr ); }
 break;
 case 20:
-#line 208 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ headerfilename = copy_string( nmstr ); }
 break;
 case 21:
-#line 210 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ tablesext = true; tablesfilename = copy_string( nmstr ); }
 break;
 case 22:
-#line 214 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ scon_stk_ptr = yyvsp[-3]; }
 break;
 case 23:
-#line 216 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ scon_stk_ptr = yyvsp[-3]; }
 break;
 case 25:
-#line 221 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			/* Initialize for a parse of one rule. */
 			trlcontxt = variable_trail_rule = varlength = false;
@@ -937,7 +925,6 @@ case 25:
 			}
 break;
 case 26:
-#line 234 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			pat = yyvsp[0];
 			finish_rule( pat, variable_trail_rule,
@@ -974,7 +961,6 @@ case 26:
 			}
 break;
 case 27:
-#line 270 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			pat = yyvsp[0];
 			finish_rule( pat, variable_trail_rule,
@@ -999,7 +985,6 @@ case 27:
 			}
 break;
 case 28:
-#line 294 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			if ( scon_stk_ptr > 0 )
 				build_eof_action();
@@ -1023,19 +1008,15 @@ case 28:
 			}
 break;
 case 29:
-#line 317 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ synerr( _("unrecognized rule") ); }
 break;
 case 30:
-#line 321 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ yyval = scon_stk_ptr; }
 break;
 case 31:
-#line 325 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ yyval = yyvsp[-2]; }
 break;
 case 32:
-#line 328 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			yyval = scon_stk_ptr;
 
@@ -1053,15 +1034,12 @@ case 32:
 			}
 break;
 case 33:
-#line 345 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ yyval = scon_stk_ptr; }
 break;
 case 36:
-#line 353 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ synerr( _("bad start condition list") ); }
 break;
 case 37:
-#line 357 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			if ( (scnum = sclookup( nmstr )) == 0 )
 				format_pinpoint_message(
@@ -1084,7 +1062,6 @@ case 37:
 			}
 break;
 case 38:
-#line 380 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			if ( transchar[lastst[yyvsp[0]]] != SYM_EPSILON )
 				/* Provide final transition \now/ so it
@@ -1141,11 +1118,9 @@ case 38:
 			}
 break;
 case 39:
-#line 436 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ synerr( _("trailing context used twice") ); }
 break;
 case 40:
-#line 439 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			headcnt = 0;
 			trailcnt = 1;
@@ -1189,7 +1164,6 @@ case 40:
 			}
 break;
 case 41:
-#line 482 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			yyval = yyvsp[0];
 
@@ -1206,18 +1180,15 @@ case 41:
 			}
 break;
 case 42:
-#line 500 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			varlength = true;
 			yyval = mkor( yyvsp[-2], yyvsp[0] );
 			}
 break;
 case 43:
-#line 506 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ yyval = yyvsp[0]; }
 break;
 case 44:
-#line 511 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			/* This rule is written separately so the
 			 * reduction will occur before the trailing
@@ -1244,7 +1215,6 @@ case 44:
 			}
 break;
 case 45:
-#line 538 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			/* This is where concatenation of adjacent patterns
 			 * gets done.
@@ -1253,11 +1223,9 @@ case 45:
 			}
 break;
 case 46:
-#line 546 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ yyval = yyvsp[0]; }
 break;
 case 47:
-#line 549 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			varlength = true;
 
@@ -1286,7 +1254,6 @@ case 47:
 			}
 break;
 case 48:
-#line 577 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			varlength = true;
 
@@ -1301,7 +1268,6 @@ case 48:
 			}
 break;
 case 49:
-#line 591 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			/* The series could be something like "(foo)",
 			 * in which case we have no idea what its length
@@ -1322,7 +1288,6 @@ case 49:
 			}
 break;
 case 50:
-#line 613 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			varlength = true;
 
@@ -1330,21 +1295,18 @@ case 50:
 			}
 break;
 case 51:
-#line 620 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			varlength = true;
 			yyval = mkposcl( yyvsp[-1] );
 			}
 break;
 case 52:
-#line 626 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			varlength = true;
 			yyval = mkopt( yyvsp[-1] );
 			}
 break;
 case 53:
-#line 632 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			varlength = true;
 
@@ -1373,7 +1335,6 @@ case 53:
 			}
 break;
 case 54:
-#line 660 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			varlength = true;
 
@@ -1388,7 +1349,6 @@ case 54:
 			}
 break;
 case 55:
-#line 674 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			/* The singleton could be something like "(foo)",
 			 * in which case we have no idea what its length
@@ -1408,7 +1368,6 @@ case 55:
 			}
 break;
 case 56:
-#line 693 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			if ( ! madeany )
 				{
@@ -1443,7 +1402,6 @@ case 56:
 			}
 break;
 case 57:
-#line 727 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 				/* Sort characters for fast searching.  We
 				 * use a shell sort since this list could
@@ -1464,7 +1422,6 @@ case 57:
 			}
 break;
 case 58:
-#line 747 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			++rulelen;
 
@@ -1475,15 +1432,12 @@ case 58:
 			}
 break;
 case 59:
-#line 757 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ yyval = yyvsp[-1]; }
 break;
 case 60:
-#line 760 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ yyval = yyvsp[-1]; }
 break;
 case 61:
-#line 763 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			++rulelen;
 
@@ -1498,26 +1452,21 @@ case 61:
 			}
 break;
 case 62:
-#line 777 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ yyval = ccl_set_diff  (yyvsp[-2], yyvsp[0]); }
 break;
 case 63:
-#line 778 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ yyval = ccl_set_union (yyvsp[-2], yyvsp[0]); }
 break;
 case 65:
-#line 784 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ yyval = yyvsp[-1]; }
 break;
 case 66:
-#line 787 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			cclnegate( yyvsp[-1] );
 			yyval = yyvsp[-1];
 			}
 break;
 case 67:
-#line 794 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 
 			if (sf_case_ins())
@@ -1578,7 +1527,6 @@ case 67:
 			}
 break;
 case 68:
-#line 854 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			ccladd( yyvsp[-1], yyvsp[0] );
 			cclsorted = cclsorted && (yyvsp[0] > lastchar);
@@ -1597,7 +1545,6 @@ case 68:
 			}
 break;
 case 69:
-#line 872 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			/* Too hard to properly maintain cclsorted. */
 			cclsorted = false;
@@ -1605,7 +1552,6 @@ case 69:
 			}
 break;
 case 70:
-#line 879 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			cclsorted = true;
 			lastchar = 0;
@@ -1613,31 +1559,24 @@ case 70:
 			}
 break;
 case 71:
-#line 887 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ CCL_EXPR(isalnum); }
 break;
 case 72:
-#line 888 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ CCL_EXPR(isalpha); }
 break;
 case 73:
-#line 889 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ CCL_EXPR(IS_BLANK); }
 break;
 case 74:
-#line 890 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ CCL_EXPR(iscntrl); }
 break;
 case 75:
-#line 891 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ CCL_EXPR(isdigit); }
 break;
 case 76:
-#line 892 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ CCL_EXPR(isgraph); }
 break;
 case 77:
-#line 893 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ 
                           CCL_EXPR(islower);
                           if (sf_case_ins())
@@ -1645,23 +1584,18 @@ case 77:
                         }
 break;
 case 78:
-#line 898 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ CCL_EXPR(isprint); }
 break;
 case 79:
-#line 899 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ CCL_EXPR(ispunct); }
 break;
 case 80:
-#line 900 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ CCL_EXPR(isspace); }
 break;
 case 81:
-#line 901 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ CCL_EXPR(isxdigit); }
 break;
 case 82:
-#line 902 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
                     CCL_EXPR(isupper);
                     if (sf_case_ins())
@@ -1669,47 +1603,36 @@ case 82:
 				}
 break;
 case 83:
-#line 908 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ CCL_NEG_EXPR(isalnum); }
 break;
 case 84:
-#line 909 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ CCL_NEG_EXPR(isalpha); }
 break;
 case 85:
-#line 910 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ CCL_NEG_EXPR(IS_BLANK); }
 break;
 case 86:
-#line 911 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ CCL_NEG_EXPR(iscntrl); }
 break;
 case 87:
-#line 912 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ CCL_NEG_EXPR(isdigit); }
 break;
 case 88:
-#line 913 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ CCL_NEG_EXPR(isgraph); }
 break;
 case 89:
-#line 914 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ CCL_NEG_EXPR(isprint); }
 break;
 case 90:
-#line 915 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ CCL_NEG_EXPR(ispunct); }
 break;
 case 91:
-#line 916 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ CCL_NEG_EXPR(isspace); }
 break;
 case 92:
-#line 917 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ CCL_NEG_EXPR(isxdigit); }
 break;
 case 93:
-#line 918 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ 
 				if ( sf_case_ins() )
 					lwarn(_("[:^lower:] is ambiguous in case insensitive scanner"));
@@ -1718,7 +1641,6 @@ case 93:
 				}
 break;
 case 94:
-#line 924 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 				if ( sf_case_ins() )
 					lwarn(_("[:^upper:] ambiguous in case insensitive scanner"));
@@ -1727,7 +1649,6 @@ case 94:
 				}
 break;
 case 95:
-#line 933 "/usr/src/external/bsd/flex/dist/parse.y"
 	{
 			if ( yyvsp[0] == nlch )
 				rule_has_nl[num_rules] = true;
@@ -1743,10 +1664,8 @@ case 95:
 			}
 break;
 case 96:
-#line 948 "/usr/src/external/bsd/flex/dist/parse.y"
 	{ yyval = mkstate( SYM_EPSILON ); }
 break;
-#line 1749 "/usr/src/external/bsd/flex/dist/parse.c"
     }
     yyssp -= yym;
     yystate = *yyssp;
@@ -1789,7 +1708,8 @@ break;
         printf("%sdebug: after reduction, shifting from state %d \
 to state %d\n", YYPREFIX, *yyssp, yystate);
 #endif
-    if (yyssp >= yysslim && yygrowstack())
+    if (yyssp >= yysslim && yygrowstack(&yyss, &yyssp,
+        &yysslim, &yyvs, &yyvsp, &yystacksize))
     {
         goto yyoverflow;
     }
@@ -1801,8 +1721,12 @@ yyoverflow:
     yyerror("yacc stack overflow");
 
 yyabort:
+	 free(yyss);
+	 free(yyvs);
     return (1);
 
 yyaccept:
+	 free(yyss);
+	 free(yyvs);
     return (0);
 }

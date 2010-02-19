@@ -26,7 +26,7 @@
 
 /* end standard C headers. */
 
-/*	$NetBSD: initscan.c,v 1.4 2009/10/29 14:49:40 christos Exp $	*/
+/*	$NetBSD: initscan.c,v 1.5 2010/02/19 14:22:43 njoly Exp $	*/
 
 /* flex integer type definitions */
 
@@ -1876,10 +1876,8 @@ static int yy_more_len = 0;
 #define YY_MORE_ADJ (yy_more_len)
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "/usr/src/external/bsd/flex/dist/scan.l"
-/*	$NetBSD: initscan.c,v 1.4 2009/10/29 14:49:40 christos Exp $	*/
+/*	$NetBSD: initscan.c,v 1.5 2010/02/19 14:22:43 njoly Exp $	*/
 /* scan.l - scanner for flex input -*-C-*- */
-#line 6 "/usr/src/external/bsd/flex/dist/scan.l"
 /*  Copyright (c) 1990 The Regents of the University of California. */
 /*  All rights reserved. */
 
@@ -1971,15 +1969,6 @@ extern const char *escaped_qstart, *escaped_qend;
 #define YY_USER_INIT \
 	if ( getenv("POSIXLY_CORRECT") ) \
 		posix_compat = true;
-
-
-
-
-
-
-
-
-#line 1983 "<stdout>"
 
 #define INITIAL 0
 #define SECT2 1
@@ -2199,8 +2188,6 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 133 "/usr/src/external/bsd/flex/dist/scan.l"
-
 	static int bracelevel, didadef, indented_code;
 	static int doing_rule_action = false;
 	static int option_sense;
@@ -2208,9 +2195,6 @@ YY_DECL
 	int doing_codeblock = false;
 	int i, brace_depth=0, brace_start_line=0;
 	Char nmdef[MAXLINE];
-
-
-#line 2214 "<stdout>"
 
 	if ( !(yy_init) )
 		{
@@ -2314,33 +2298,27 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 144 "/usr/src/external/bsd/flex/dist/scan.l"
 indented_code = true; BEGIN(CODEBLOCK);
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 145 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO; yy_push_state( COMMENT );
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 146 "/usr/src/external/bsd/flex/dist/scan.l"
 yy_push_state( LINEDIR );
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 147 "/usr/src/external/bsd/flex/dist/scan.l"
 return SCDECL;
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 148 "/usr/src/external/bsd/flex/dist/scan.l"
 return XSCDECL;
 	YY_BREAK
 case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
-#line 149 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			++linenum;
 			line_directive_out( (FILE *) 0, 1 );
@@ -2351,7 +2329,6 @@ YY_RULE_SETUP
 case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
-#line 155 "/usr/src/external/bsd/flex/dist/scan.l"
 {
                 brace_start_line = linenum;
                 ++linenum;
@@ -2362,17 +2339,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 163 "/usr/src/external/bsd/flex/dist/scan.l"
 synerr( _("malformed '%top' directive") );
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 165 "/usr/src/external/bsd/flex/dist/scan.l"
 /* discard */
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 167 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			sectnum = 2;
 			bracelevel = 0;
@@ -2385,42 +2359,35 @@ YY_RULE_SETUP
 case 11:
 /* rule 11 can match eol */
 YY_RULE_SETUP
-#line 176 "/usr/src/external/bsd/flex/dist/scan.l"
 yytext_is_array = false; ++linenum;
 	YY_BREAK
 case 12:
 /* rule 12 can match eol */
 YY_RULE_SETUP
-#line 177 "/usr/src/external/bsd/flex/dist/scan.l"
 yytext_is_array = true; ++linenum;
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 179 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(OPTION); return OPTION_OP;
 	YY_BREAK
 case 14:
 /* rule 14 can match eol */
 YY_RULE_SETUP
-#line 181 "/usr/src/external/bsd/flex/dist/scan.l"
 ++linenum; /* ignore */
 	YY_BREAK
 case 15:
 /* rule 15 can match eol */
 YY_RULE_SETUP
-#line 182 "/usr/src/external/bsd/flex/dist/scan.l"
 ++linenum;	/* ignore */
 	YY_BREAK
 /* xgettext: no-c-format */
 case 16:
 /* rule 16 can match eol */
 YY_RULE_SETUP
-#line 185 "/usr/src/external/bsd/flex/dist/scan.l"
 synerr( _( "unrecognized '%' directive" ) );
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 187 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			if(yyleng < MAXLINE)
         		 {
@@ -2438,112 +2405,89 @@ YY_RULE_SETUP
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 202 "/usr/src/external/bsd/flex/dist/scan.l"
 RETURNNAME;
 	YY_BREAK
 case 19:
 /* rule 19 can match eol */
 YY_RULE_SETUP
-#line 203 "/usr/src/external/bsd/flex/dist/scan.l"
 ++linenum; /* allows blank lines in section 1 */
 	YY_BREAK
 case 20:
 /* rule 20 can match eol */
 YY_RULE_SETUP
-#line 204 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO; ++linenum; /* maybe end of comment line */
 	YY_BREAK
 
-
 case 21:
 YY_RULE_SETUP
-#line 209 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO; yy_pop_state();
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 210 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO;
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 211 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO_QSTART;
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 212 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO_QEND;
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 213 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO;
 	YY_BREAK
 case 26:
 /* rule 26 can match eol */
 YY_RULE_SETUP
-#line 214 "/usr/src/external/bsd/flex/dist/scan.l"
 ++linenum; ACTION_ECHO;
 	YY_BREAK
-
 
 /* This is the same as COMMENT, but is discarded rather than output. */
 case 27:
 YY_RULE_SETUP
-#line 219 "/usr/src/external/bsd/flex/dist/scan.l"
 yy_pop_state();
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 220 "/usr/src/external/bsd/flex/dist/scan.l"
 ;
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 221 "/usr/src/external/bsd/flex/dist/scan.l"
 ;
 	YY_BREAK
 case 30:
 /* rule 30 can match eol */
 YY_RULE_SETUP
-#line 222 "/usr/src/external/bsd/flex/dist/scan.l"
 ++linenum;
 	YY_BREAK
 
-
 case 31:
 YY_RULE_SETUP
-#line 226 "/usr/src/external/bsd/flex/dist/scan.l"
 yy_pop_state();
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 227 "/usr/src/external/bsd/flex/dist/scan.l"
 ;
 	YY_BREAK
 case 33:
 /* rule 33 can match eol */
 YY_RULE_SETUP
-#line 228 "/usr/src/external/bsd/flex/dist/scan.l"
 ++linenum;        
 	YY_BREAK
-
 
 case 34:
 /* rule 34 can match eol */
 YY_RULE_SETUP
-#line 232 "/usr/src/external/bsd/flex/dist/scan.l"
 yy_pop_state();
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 233 "/usr/src/external/bsd/flex/dist/scan.l"
 linenum = myctoi( yytext );
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 235 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			flex_free( (void *) infilename );
 			infilename = copy_string( yytext + 1 );
@@ -2552,36 +2496,29 @@ YY_RULE_SETUP
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 240 "/usr/src/external/bsd/flex/dist/scan.l"
 /* ignore spurious characters */
 	YY_BREAK
-
 
 case 38:
 /* rule 38 can match eol */
 YY_RULE_SETUP
-#line 244 "/usr/src/external/bsd/flex/dist/scan.l"
 ++linenum; BEGIN(INITIAL);
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 246 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO_QSTART;
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 247 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO_QEND;
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 248 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO;
 	YY_BREAK
 case 42:
 /* rule 42 can match eol */
 YY_RULE_SETUP
-#line 250 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			++linenum;
 			ACTION_ECHO;
@@ -2590,10 +2527,8 @@ YY_RULE_SETUP
 			}
 	YY_BREAK
 
-
 case 43:
 YY_RULE_SETUP
-#line 259 "/usr/src/external/bsd/flex/dist/scan.l"
 {
                 if( --brace_depth == 0){
                     /* TODO: Matched. */
@@ -2604,7 +2539,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 267 "/usr/src/external/bsd/flex/dist/scan.l"
 {
                 brace_depth++;
                 buf_strnappend(&top_buf, yytext, yyleng);
@@ -2613,7 +2547,6 @@ YY_RULE_SETUP
 case 45:
 /* rule 45 can match eol */
 YY_RULE_SETUP
-#line 272 "/usr/src/external/bsd/flex/dist/scan.l"
 {
                 ++linenum;
                 buf_strnappend(&top_buf, yytext, yyleng);
@@ -2621,23 +2554,19 @@ YY_RULE_SETUP
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 277 "/usr/src/external/bsd/flex/dist/scan.l"
 buf_strnappend(&top_buf, escaped_qstart, strlen(escaped_qstart));
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 278 "/usr/src/external/bsd/flex/dist/scan.l"
 buf_strnappend(&top_buf, escaped_qend, strlen(escaped_qend));
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 280 "/usr/src/external/bsd/flex/dist/scan.l"
 {
                 buf_strnappend(&top_buf, yytext, yyleng);
                }
 	YY_BREAK
 case YY_STATE_EOF(CODEBLOCK_MATCH_BRACE):
-#line 284 "/usr/src/external/bsd/flex/dist/scan.l"
 {
                 linenum = brace_start_line;
                 synerr(_("Unmatched '{'"));
@@ -2645,15 +2574,12 @@ case YY_STATE_EOF(CODEBLOCK_MATCH_BRACE):
                 }
 	YY_BREAK
 
-
 case 49:
 YY_RULE_SETUP
-#line 293 "/usr/src/external/bsd/flex/dist/scan.l"
 /* separates name and definition */
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 295 "/usr/src/external/bsd/flex/dist/scan.l"
 {
  		        if(yyleng < MAXLINE)
  		         {
@@ -2679,7 +2605,6 @@ YY_RULE_SETUP
 case 51:
 /* rule 51 can match eol */
 YY_RULE_SETUP
-#line 317 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			if ( ! didadef )
 				synerr( _( "incomplete name definition" ) );
@@ -2688,46 +2613,37 @@ YY_RULE_SETUP
 			}
 	YY_BREAK
 
-
 case 52:
 /* rule 52 can match eol */
 YY_RULE_SETUP
-#line 327 "/usr/src/external/bsd/flex/dist/scan.l"
 ++linenum; BEGIN(INITIAL);
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 328 "/usr/src/external/bsd/flex/dist/scan.l"
 option_sense = true;
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 330 "/usr/src/external/bsd/flex/dist/scan.l"
 return '=';
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 332 "/usr/src/external/bsd/flex/dist/scan.l"
 option_sense = ! option_sense;
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 334 "/usr/src/external/bsd/flex/dist/scan.l"
 csize = option_sense ? 128 : 256;
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 335 "/usr/src/external/bsd/flex/dist/scan.l"
 csize = option_sense ? 256 : 128;
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 337 "/usr/src/external/bsd/flex/dist/scan.l"
 long_align = option_sense;
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 338 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			ACTION_M4_IFDEF( "M4""_YY_ALWAYS_INTERACTIVE", option_sense );
             interactive = option_sense;
@@ -2735,74 +2651,60 @@ YY_RULE_SETUP
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 342 "/usr/src/external/bsd/flex/dist/scan.l"
 yytext_is_array = option_sense;
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 343 "/usr/src/external/bsd/flex/dist/scan.l"
 ansi_func_defs = option_sense;
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 344 "/usr/src/external/bsd/flex/dist/scan.l"
 ansi_func_protos = option_sense;
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 345 "/usr/src/external/bsd/flex/dist/scan.l"
 backing_up_report = option_sense;
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 346 "/usr/src/external/bsd/flex/dist/scan.l"
 interactive = ! option_sense;
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 347 "/usr/src/external/bsd/flex/dist/scan.l"
 bison_bridge_lval = option_sense;
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 348 "/usr/src/external/bsd/flex/dist/scan.l"
 { if((bison_bridge_lloc = option_sense))
                             bison_bridge_lval = true;
                      }
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 351 "/usr/src/external/bsd/flex/dist/scan.l"
 C_plus_plus = option_sense;
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 352 "/usr/src/external/bsd/flex/dist/scan.l"
 sf_set_case_ins(!option_sense);
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 353 "/usr/src/external/bsd/flex/dist/scan.l"
 sf_set_case_ins(option_sense);
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 354 "/usr/src/external/bsd/flex/dist/scan.l"
 ddebug = option_sense;
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 355 "/usr/src/external/bsd/flex/dist/scan.l"
 spprdflt = ! option_sense;
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 356 "/usr/src/external/bsd/flex/dist/scan.l"
 useecs = option_sense;
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 357 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			useecs = usemecs = false;
 			use_read = fullspd = true;
@@ -2810,7 +2712,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 361 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			useecs = usemecs = false;
 			use_read = fulltbl = true;
@@ -2818,27 +2719,22 @@ YY_RULE_SETUP
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 365 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_IFDEF("YY_NO_INPUT", ! option_sense);
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 366 "/usr/src/external/bsd/flex/dist/scan.l"
 interactive = option_sense;
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 367 "/usr/src/external/bsd/flex/dist/scan.l"
 lex_compat = option_sense;
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 368 "/usr/src/external/bsd/flex/dist/scan.l"
 posix_compat = option_sense;
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 369 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			ACTION_M4_IFDEF( "M4""_YY_MAIN", option_sense);
             /* Override yywrap */
@@ -2848,12 +2744,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 375 "/usr/src/external/bsd/flex/dist/scan.l"
 usemecs = option_sense;
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 376 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			ACTION_M4_IFDEF( "M4""_YY_NEVER_INTERACTIVE", option_sense );
             interactive = !option_sense;
@@ -2861,237 +2755,190 @@ YY_RULE_SETUP
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 380 "/usr/src/external/bsd/flex/dist/scan.l"
 performance_report += option_sense ? 1 : -1;
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 381 "/usr/src/external/bsd/flex/dist/scan.l"
 yytext_is_array = ! option_sense;
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 382 "/usr/src/external/bsd/flex/dist/scan.l"
 use_read = option_sense;
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 383 "/usr/src/external/bsd/flex/dist/scan.l"
 reentrant = option_sense;
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 384 "/usr/src/external/bsd/flex/dist/scan.l"
 reject_really_used = option_sense;
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 385 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF( "M4""_YY_STACK_USED", option_sense );
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 386 "/usr/src/external/bsd/flex/dist/scan.l"
 do_stdinit = option_sense;
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 387 "/usr/src/external/bsd/flex/dist/scan.l"
 use_stdout = option_sense;
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 388 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_IFDEF("YY_NO_UNISTD_H", ! option_sense);
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 389 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_UNPUT", ! option_sense);
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
-#line 390 "/usr/src/external/bsd/flex/dist/scan.l"
 printstats = option_sense;
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
-#line 391 "/usr/src/external/bsd/flex/dist/scan.l"
 nowarn = ! option_sense;
 	YY_BREAK
 case 94:
 YY_RULE_SETUP
-#line 392 "/usr/src/external/bsd/flex/dist/scan.l"
 do_yylineno = option_sense; ACTION_M4_IFDEF("M4""_YY_USE_LINENO", option_sense);
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
-#line 393 "/usr/src/external/bsd/flex/dist/scan.l"
 yymore_really_used = option_sense;
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
-#line 394 "/usr/src/external/bsd/flex/dist/scan.l"
 do_yywrap = option_sense;
 	YY_BREAK
 case 97:
 YY_RULE_SETUP
-#line 396 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_PUSH_STATE", ! option_sense);
 	YY_BREAK
 case 98:
 YY_RULE_SETUP
-#line 397 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_POP_STATE", ! option_sense);
 	YY_BREAK
 case 99:
 YY_RULE_SETUP
-#line 398 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_TOP_STATE", ! option_sense);
 	YY_BREAK
 case 100:
 YY_RULE_SETUP
-#line 400 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_SCAN_BUFFER", ! option_sense);
 	YY_BREAK
 case 101:
 YY_RULE_SETUP
-#line 401 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_SCAN_BYTES", ! option_sense);
 	YY_BREAK
 case 102:
 YY_RULE_SETUP
-#line 402 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_SCAN_STRING", ! option_sense);
 	YY_BREAK
 case 103:
 YY_RULE_SETUP
-#line 404 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_FLEX_ALLOC", ! option_sense);
 	YY_BREAK
 case 104:
 YY_RULE_SETUP
-#line 405 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_FLEX_REALLOC", ! option_sense);
 	YY_BREAK
 case 105:
 YY_RULE_SETUP
-#line 406 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_FLEX_FREE", ! option_sense);
 	YY_BREAK
 case 106:
 YY_RULE_SETUP
-#line 408 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_GET_DEBUG", ! option_sense);
 	YY_BREAK
 case 107:
 YY_RULE_SETUP
-#line 409 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_SET_DEBUG", ! option_sense);
 	YY_BREAK
 case 108:
 YY_RULE_SETUP
-#line 410 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_GET_EXTRA", ! option_sense);
 	YY_BREAK
 case 109:
 YY_RULE_SETUP
-#line 411 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_SET_EXTRA", ! option_sense);
 	YY_BREAK
 case 110:
 YY_RULE_SETUP
-#line 412 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_GET_LENG", ! option_sense);
 	YY_BREAK
 case 111:
 YY_RULE_SETUP
-#line 413 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_GET_TEXT", ! option_sense);
 	YY_BREAK
 case 112:
 YY_RULE_SETUP
-#line 414 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_GET_LINENO", ! option_sense);
 	YY_BREAK
 case 113:
 YY_RULE_SETUP
-#line 415 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_SET_LINENO", ! option_sense);
 	YY_BREAK
 case 114:
 YY_RULE_SETUP
-#line 416 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_GET_IN", ! option_sense);
 	YY_BREAK
 case 115:
 YY_RULE_SETUP
-#line 417 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_SET_IN", ! option_sense);
 	YY_BREAK
 case 116:
 YY_RULE_SETUP
-#line 418 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_GET_OUT", ! option_sense);
 	YY_BREAK
 case 117:
 YY_RULE_SETUP
-#line 419 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_SET_OUT", ! option_sense);
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
-#line 420 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_GET_LVAL", ! option_sense);
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
-#line 421 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_SET_LVAL", ! option_sense);
 	YY_BREAK
 case 120:
 YY_RULE_SETUP
-#line 422 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_GET_LLOC", ! option_sense);
 	YY_BREAK
 case 121:
 YY_RULE_SETUP
-#line 423 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_M4_IFDEF("M4""_YY_NO_SET_LLOC", ! option_sense);
 	YY_BREAK
 case 122:
 YY_RULE_SETUP
-#line 425 "/usr/src/external/bsd/flex/dist/scan.l"
 return OPT_EXTRA_TYPE;
 	YY_BREAK
 case 123:
 YY_RULE_SETUP
-#line 426 "/usr/src/external/bsd/flex/dist/scan.l"
 return OPT_OUTFILE;
 	YY_BREAK
 case 124:
 YY_RULE_SETUP
-#line 427 "/usr/src/external/bsd/flex/dist/scan.l"
 return OPT_PREFIX;
 	YY_BREAK
 case 125:
 YY_RULE_SETUP
-#line 428 "/usr/src/external/bsd/flex/dist/scan.l"
 return OPT_YYCLASS;
 	YY_BREAK
 case 126:
 YY_RULE_SETUP
-#line 429 "/usr/src/external/bsd/flex/dist/scan.l"
 return OPT_HEADER;
 	YY_BREAK
 case 127:
 YY_RULE_SETUP
-#line 430 "/usr/src/external/bsd/flex/dist/scan.l"
 return OPT_TABLES;
 	YY_BREAK
 case 128:
 YY_RULE_SETUP
-#line 431 "/usr/src/external/bsd/flex/dist/scan.l"
 {
                     tablesverify = option_sense;
                     if(!tablesext && option_sense)
@@ -3100,7 +2947,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 129:
 YY_RULE_SETUP
-#line 438 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			if(yyleng-1 < MAXLINE)
         		 {
@@ -3117,7 +2963,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 130:
 YY_RULE_SETUP
-#line 452 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			format_synerr( _( "unrecognized %%option: %s" ),
 				yytext );
@@ -3128,28 +2973,23 @@ YY_RULE_SETUP
 case 131:
 /* rule 131 can match eol */
 YY_RULE_SETUP
-#line 459 "/usr/src/external/bsd/flex/dist/scan.l"
 ++linenum; BEGIN(INITIAL);
 	YY_BREAK
 
 case 132:
 YY_RULE_SETUP
-#line 463 "/usr/src/external/bsd/flex/dist/scan.l"
 ++bracelevel; yyless( 2 );	/* eat only %{ */
 	YY_BREAK
 case 133:
 YY_RULE_SETUP
-#line 464 "/usr/src/external/bsd/flex/dist/scan.l"
 --bracelevel; yyless( 2 );	/* eat only %} */
 	YY_BREAK
 case 134:
 YY_RULE_SETUP
-#line 466 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO;	/* indented code in prolog */
 	YY_BREAK
 case 135:
 YY_RULE_SETUP
-#line 468 "/usr/src/external/bsd/flex/dist/scan.l"
 {	/* non-indented code */
 			if ( bracelevel <= 0 )
 				{ /* not in %{ ... %} */
@@ -3164,17 +3004,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 136:
 YY_RULE_SETUP
-#line 480 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO;
 	YY_BREAK
 case 137:
 /* rule 137 can match eol */
 YY_RULE_SETUP
-#line 481 "/usr/src/external/bsd/flex/dist/scan.l"
 ++linenum; ACTION_ECHO;
 	YY_BREAK
 case YY_STATE_EOF(SECT2PROLOG):
-#line 483 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			mark_prolog();
 			sectnum = 0;
@@ -3182,16 +3019,13 @@ case YY_STATE_EOF(SECT2PROLOG):
 			}
 	YY_BREAK
 
-
 case 138:
 /* rule 138 can match eol */
 YY_RULE_SETUP
-#line 491 "/usr/src/external/bsd/flex/dist/scan.l"
 ++linenum; /* allow blank lines in section 2 */
 	YY_BREAK
 case 139:
 YY_RULE_SETUP
-#line 493 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			indented_code = false;
 			doing_codeblock = true;
@@ -3201,7 +3035,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 140:
 YY_RULE_SETUP
-#line 500 "/usr/src/external/bsd/flex/dist/scan.l"
 {
                         /* Allow "<" to appear in (?x) patterns. */
                         if (!sf_skip_ws())
@@ -3211,12 +3044,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 141:
 YY_RULE_SETUP
-#line 506 "/usr/src/external/bsd/flex/dist/scan.l"
 return '^';
 	YY_BREAK
 case 142:
 YY_RULE_SETUP
-#line 507 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(QUOTE); return '"';
 	YY_BREAK
 case 143:
@@ -3224,7 +3055,6 @@ case 143:
 (yy_c_buf_p) = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 508 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			BEGIN(NUM);
 			if ( lex_compat || posix_compat )
@@ -3239,12 +3069,10 @@ case 144:
 (yy_c_buf_p) = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 515 "/usr/src/external/bsd/flex/dist/scan.l"
 return '$';
 	YY_BREAK
 case 145:
 YY_RULE_SETUP
-#line 517 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			bracelevel = 1;
 			BEGIN(PERCENT_BRACE_ACTION);
@@ -3260,7 +3088,6 @@ YY_RULE_SETUP
 case 146:
 /* rule 146 can match eol */
 YY_RULE_SETUP
-#line 528 "/usr/src/external/bsd/flex/dist/scan.l"
 {
                         if (sf_skip_ws()){
                             /* We're in the middle of a (?x: ) pattern. */
@@ -3278,7 +3105,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 147:
 YY_RULE_SETUP
-#line 543 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 
                 if (sf_skip_ws()){
@@ -3295,12 +3121,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 148:
 YY_RULE_SETUP
-#line 557 "/usr/src/external/bsd/flex/dist/scan.l"
 /* allow indented rules */ ;
 	YY_BREAK
 case 149:
 YY_RULE_SETUP
-#line 559 "/usr/src/external/bsd/flex/dist/scan.l"
 {
             if (sf_skip_ws()){
                 /* We're in the middle of a (?x: ) pattern. */
@@ -3326,7 +3150,6 @@ YY_RULE_SETUP
 case 150:
 /* rule 150 can match eol */
 YY_RULE_SETUP
-#line 581 "/usr/src/external/bsd/flex/dist/scan.l"
 {
             if (sf_skip_ws()){
                 /* We're in the middle of a (?x: ) pattern. */
@@ -3348,15 +3171,12 @@ YY_RULE_SETUP
 			}
 	YY_BREAK
 case 151:
-#line 602 "/usr/src/external/bsd/flex/dist/scan.l"
 case 152:
 YY_RULE_SETUP
-#line 602 "/usr/src/external/bsd/flex/dist/scan.l"
 return EOF_OP;
 	YY_BREAK
 case 153:
 YY_RULE_SETUP
-#line 604 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			sectnum = 3;
 			BEGIN(SECT3);
@@ -3366,7 +3186,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 154:
 YY_RULE_SETUP
-#line 611 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			int cclval;
 
@@ -3416,12 +3235,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 155:
 YY_RULE_SETUP
-#line 657 "/usr/src/external/bsd/flex/dist/scan.l"
 return CCL_OP_DIFF;
 	YY_BREAK
 case 156:
 YY_RULE_SETUP
-#line 658 "/usr/src/external/bsd/flex/dist/scan.l"
 return CCL_OP_UNION;
 	YY_BREAK
 /* Check for :space: at the end of the rule so we don't
@@ -3431,7 +3248,6 @@ return CCL_OP_UNION;
 case 157:
 /* rule 157 can match eol */
 YY_RULE_SETUP
-#line 665 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			register Char *nmdefptr;
             int end_is_ws, end_ch;
@@ -3482,7 +3298,6 @@ nmstr[yyleng - 2 - end_is_ws] = '\0';  /* chop trailing brace */
 	YY_BREAK
 case 158:
 YY_RULE_SETUP
-#line 713 "/usr/src/external/bsd/flex/dist/scan.l"
 {
                     if (sf_skip_ws())
                         yy_push_state(COMMENT_DISCARD);
@@ -3495,7 +3310,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 159:
 YY_RULE_SETUP
-#line 723 "/usr/src/external/bsd/flex/dist/scan.l"
 {
                     if (lex_compat || posix_compat){
                         /* Push back the "?#" and treat it like a normal parens. */
@@ -3509,7 +3323,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 160:
 YY_RULE_SETUP
-#line 733 "/usr/src/external/bsd/flex/dist/scan.l"
 {
                     sf_push();
                     if (lex_compat || posix_compat)
@@ -3522,40 +3335,32 @@ YY_RULE_SETUP
 	YY_BREAK
 case 161:
 YY_RULE_SETUP
-#line 742 "/usr/src/external/bsd/flex/dist/scan.l"
 sf_push(); return '(';
 	YY_BREAK
 case 162:
 YY_RULE_SETUP
-#line 743 "/usr/src/external/bsd/flex/dist/scan.l"
 sf_pop(); return ')';
 	YY_BREAK
 case 163:
 YY_RULE_SETUP
-#line 745 "/usr/src/external/bsd/flex/dist/scan.l"
 return (unsigned char) yytext[0];
 	YY_BREAK
 case 164:
 YY_RULE_SETUP
-#line 746 "/usr/src/external/bsd/flex/dist/scan.l"
 RETURNCHAR;
 	YY_BREAK
-
 
 case 165:
 /* rule 165 can match eol */
 YY_RULE_SETUP
-#line 751 "/usr/src/external/bsd/flex/dist/scan.l"
 ++linenum;	/* Allow blank lines & continuations */
 	YY_BREAK
 case 166:
 YY_RULE_SETUP
-#line 752 "/usr/src/external/bsd/flex/dist/scan.l"
 return (unsigned char) yytext[0];
 	YY_BREAK
 case 167:
 YY_RULE_SETUP
-#line 753 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(SECT2); return '>';
 	YY_BREAK
 case 168:
@@ -3563,17 +3368,14 @@ case 168:
 (yy_c_buf_p) = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 754 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CARETISBOL); return '>';
 	YY_BREAK
 case 169:
 YY_RULE_SETUP
-#line 755 "/usr/src/external/bsd/flex/dist/scan.l"
 RETURNNAME;
 	YY_BREAK
 case 170:
 YY_RULE_SETUP
-#line 756 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			format_synerr( _( "bad <start condition>: %s" ),
 				yytext );
@@ -3582,24 +3384,20 @@ YY_RULE_SETUP
 
 case 171:
 YY_RULE_SETUP
-#line 762 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(SECT2); return '^';
 	YY_BREAK
 
 case 172:
 YY_RULE_SETUP
-#line 766 "/usr/src/external/bsd/flex/dist/scan.l"
 RETURNCHAR;
 	YY_BREAK
 case 173:
 YY_RULE_SETUP
-#line 767 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(SECT2); return '"';
 	YY_BREAK
 case 174:
 /* rule 174 can match eol */
 YY_RULE_SETUP
-#line 769 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			synerr( _( "missing quote" ) );
 			BEGIN(SECT2);
@@ -3608,62 +3406,49 @@ YY_RULE_SETUP
 			}
 	YY_BREAK
 
-
 case 175:
 YY_RULE_SETUP
-#line 778 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(SECT2);
 	YY_BREAK
 case 176:
 YY_RULE_SETUP
-#line 779 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(GROUP_MINUS_PARAMS);
 	YY_BREAK
 case 177:
 YY_RULE_SETUP
-#line 780 "/usr/src/external/bsd/flex/dist/scan.l"
 sf_set_case_ins(1);
 	YY_BREAK
 case 178:
 YY_RULE_SETUP
-#line 781 "/usr/src/external/bsd/flex/dist/scan.l"
 sf_set_dot_all(1);
 	YY_BREAK
 case 179:
 YY_RULE_SETUP
-#line 782 "/usr/src/external/bsd/flex/dist/scan.l"
 sf_set_skip_ws(1);
 	YY_BREAK
 
-
 case 180:
 YY_RULE_SETUP
-#line 785 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(SECT2);
 	YY_BREAK
 case 181:
 YY_RULE_SETUP
-#line 786 "/usr/src/external/bsd/flex/dist/scan.l"
 sf_set_case_ins(0);
 	YY_BREAK
 case 182:
 YY_RULE_SETUP
-#line 787 "/usr/src/external/bsd/flex/dist/scan.l"
 sf_set_dot_all(0);
 	YY_BREAK
 case 183:
 YY_RULE_SETUP
-#line 788 "/usr/src/external/bsd/flex/dist/scan.l"
 sf_set_skip_ws(0);
 	YY_BREAK
-
 
 case 184:
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
 (yy_c_buf_p) = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 792 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return '^';
 	YY_BREAK
 case 185:
@@ -3671,38 +3456,31 @@ case 185:
 (yy_c_buf_p) = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 793 "/usr/src/external/bsd/flex/dist/scan.l"
 return '^';
 	YY_BREAK
 case 186:
 YY_RULE_SETUP
-#line 794 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); RETURNCHAR;
 	YY_BREAK
-
 
 case 187:
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
 (yy_c_buf_p) = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 798 "/usr/src/external/bsd/flex/dist/scan.l"
 return '-';
 	YY_BREAK
 case 188:
 YY_RULE_SETUP
-#line 799 "/usr/src/external/bsd/flex/dist/scan.l"
 RETURNCHAR;
 	YY_BREAK
 case 189:
 YY_RULE_SETUP
-#line 800 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(SECT2); return ']';
 	YY_BREAK
 case 190:
 /* rule 190 can match eol */
 YY_RULE_SETUP
-#line 801 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			synerr( _( "bad character class" ) );
 			BEGIN(SECT2);
@@ -3710,130 +3488,104 @@ YY_RULE_SETUP
 			}
 	YY_BREAK
 
-
 case 191:
 YY_RULE_SETUP
-#line 809 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_ALNUM;
 	YY_BREAK
 case 192:
 YY_RULE_SETUP
-#line 810 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_ALPHA;
 	YY_BREAK
 case 193:
 YY_RULE_SETUP
-#line 811 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_BLANK;
 	YY_BREAK
 case 194:
 YY_RULE_SETUP
-#line 812 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_CNTRL;
 	YY_BREAK
 case 195:
 YY_RULE_SETUP
-#line 813 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_DIGIT;
 	YY_BREAK
 case 196:
 YY_RULE_SETUP
-#line 814 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_GRAPH;
 	YY_BREAK
 case 197:
 YY_RULE_SETUP
-#line 815 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_LOWER;
 	YY_BREAK
 case 198:
 YY_RULE_SETUP
-#line 816 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_PRINT;
 	YY_BREAK
 case 199:
 YY_RULE_SETUP
-#line 817 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_PUNCT;
 	YY_BREAK
 case 200:
 YY_RULE_SETUP
-#line 818 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_SPACE;
 	YY_BREAK
 case 201:
 YY_RULE_SETUP
-#line 819 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_UPPER;
 	YY_BREAK
 case 202:
 YY_RULE_SETUP
-#line 820 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_XDIGIT;
 	YY_BREAK
 case 203:
 YY_RULE_SETUP
-#line 822 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_NEG_ALNUM;
 	YY_BREAK
 case 204:
 YY_RULE_SETUP
-#line 823 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_NEG_ALPHA;
 	YY_BREAK
 case 205:
 YY_RULE_SETUP
-#line 824 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_NEG_BLANK;
 	YY_BREAK
 case 206:
 YY_RULE_SETUP
-#line 825 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_NEG_CNTRL;
 	YY_BREAK
 case 207:
 YY_RULE_SETUP
-#line 826 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_NEG_DIGIT;
 	YY_BREAK
 case 208:
 YY_RULE_SETUP
-#line 827 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_NEG_GRAPH;
 	YY_BREAK
 case 209:
 YY_RULE_SETUP
-#line 828 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_NEG_LOWER;
 	YY_BREAK
 case 210:
 YY_RULE_SETUP
-#line 829 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_NEG_PRINT;
 	YY_BREAK
 case 211:
 YY_RULE_SETUP
-#line 830 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_NEG_PUNCT;
 	YY_BREAK
 case 212:
 YY_RULE_SETUP
-#line 831 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_NEG_SPACE;
 	YY_BREAK
 case 213:
 YY_RULE_SETUP
-#line 832 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_NEG_UPPER;
 	YY_BREAK
 case 214:
 YY_RULE_SETUP
-#line 833 "/usr/src/external/bsd/flex/dist/scan.l"
 BEGIN(CCL); return CCE_NEG_XDIGIT;
 	YY_BREAK
 case 215:
 YY_RULE_SETUP
-#line 834 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			format_synerr(
 				_( "bad character class expression: %s" ),
@@ -3842,10 +3594,8 @@ YY_RULE_SETUP
 			}
 	YY_BREAK
 
-
 case 216:
 YY_RULE_SETUP
-#line 843 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			yylval = myctoi( yytext );
 			return NUMBER;
@@ -3853,12 +3603,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 217:
 YY_RULE_SETUP
-#line 848 "/usr/src/external/bsd/flex/dist/scan.l"
 return ',';
 	YY_BREAK
 case 218:
 YY_RULE_SETUP
-#line 849 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			BEGIN(SECT2);
 			if ( lex_compat || posix_compat )
@@ -3869,7 +3617,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 219:
 YY_RULE_SETUP
-#line 857 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			synerr( _( "bad character inside {}'s" ) );
 			BEGIN(SECT2);
@@ -3879,7 +3626,6 @@ YY_RULE_SETUP
 case 220:
 /* rule 220 can match eol */
 YY_RULE_SETUP
-#line 863 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			synerr( _( "missing }" ) );
 			BEGIN(SECT2);
@@ -3888,21 +3634,17 @@ YY_RULE_SETUP
 			}
 	YY_BREAK
 
-
 case 221:
 YY_RULE_SETUP
-#line 873 "/usr/src/external/bsd/flex/dist/scan.l"
 bracelevel = 0;
 	YY_BREAK
 case 222:
 YY_RULE_SETUP
-#line 875 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO; yy_push_state( COMMENT );
 	YY_BREAK
 
 case 223:
 YY_RULE_SETUP
-#line 878 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			ACTION_ECHO;
 			CHECK_REJECT(yytext);
@@ -3910,7 +3652,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 224:
 YY_RULE_SETUP
-#line 882 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			ACTION_ECHO;
 			CHECK_YYMORE(yytext);
@@ -3919,23 +3660,19 @@ YY_RULE_SETUP
 
 case 225:
 YY_RULE_SETUP
-#line 888 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO_QEND;
 	YY_BREAK
 case 226:
 YY_RULE_SETUP
-#line 889 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO_QEND;
 	YY_BREAK
 case 227:
 YY_RULE_SETUP
-#line 890 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO;
 	YY_BREAK
 case 228:
 /* rule 228 can match eol */
 YY_RULE_SETUP
-#line 891 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			++linenum;
 			ACTION_ECHO;
@@ -3955,53 +3692,43 @@ YY_RULE_SETUP
 
 case 229:
 YY_RULE_SETUP
-#line 909 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO; ++bracelevel;
 	YY_BREAK
 case 230:
 YY_RULE_SETUP
-#line 910 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO; --bracelevel;
 	YY_BREAK
 case 231:
 YY_RULE_SETUP
-#line 911 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO_QEND;
 	YY_BREAK
 case 232:
 YY_RULE_SETUP
-#line 912 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO_QEND;
 	YY_BREAK
 case 233:
 YY_RULE_SETUP
-#line 913 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO;
 	YY_BREAK
 case 234:
 YY_RULE_SETUP
-#line 914 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO;
 	YY_BREAK
 case 235:
 YY_RULE_SETUP
-#line 915 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO;
 	YY_BREAK
 case 236:
 YY_RULE_SETUP
-#line 916 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO; /* character constant */
 	YY_BREAK
 case 237:
 YY_RULE_SETUP
-#line 917 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO; BEGIN(ACTION_STRING);
 	YY_BREAK
 case 238:
 /* rule 238 can match eol */
 YY_RULE_SETUP
-#line 918 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			++linenum;
 			ACTION_ECHO;
@@ -4017,35 +3744,28 @@ YY_RULE_SETUP
 	YY_BREAK
 case 239:
 YY_RULE_SETUP
-#line 930 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO;
 	YY_BREAK
 
-
 case 240:
 YY_RULE_SETUP
-#line 934 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO;
 	YY_BREAK
 case 241:
 YY_RULE_SETUP
-#line 935 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO;
 	YY_BREAK
 case 242:
 /* rule 242 can match eol */
 YY_RULE_SETUP
-#line 936 "/usr/src/external/bsd/flex/dist/scan.l"
 ++linenum; ACTION_ECHO; BEGIN(ACTION);
 	YY_BREAK
 case 243:
 YY_RULE_SETUP
-#line 937 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO; BEGIN(ACTION);
 	YY_BREAK
 case 244:
 YY_RULE_SETUP
-#line 938 "/usr/src/external/bsd/flex/dist/scan.l"
 ACTION_ECHO;
 	YY_BREAK
 
@@ -4053,7 +3773,6 @@ case YY_STATE_EOF(COMMENT):
 case YY_STATE_EOF(COMMENT_DISCARD):
 case YY_STATE_EOF(ACTION):
 case YY_STATE_EOF(ACTION_STRING):
-#line 941 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			synerr( _( "EOF encountered inside an action" ) );
 			yyterminate();
@@ -4062,7 +3781,6 @@ case YY_STATE_EOF(ACTION_STRING):
 case YY_STATE_EOF(EXTENDED_COMMENT):
 case YY_STATE_EOF(GROUP_WITH_PARAMS):
 case YY_STATE_EOF(GROUP_MINUS_PARAMS):
-#line 946 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			synerr( _( "EOF encountered inside pattern" ) );
 			yyterminate();
@@ -4070,7 +3788,6 @@ case YY_STATE_EOF(GROUP_MINUS_PARAMS):
 	YY_BREAK
 case 245:
 YY_RULE_SETUP
-#line 951 "/usr/src/external/bsd/flex/dist/scan.l"
 {
 			yylval = myesc( (Char *) yytext );
 
@@ -4083,43 +3800,35 @@ YY_RULE_SETUP
 
 case 246:
 YY_RULE_SETUP
-#line 962 "/usr/src/external/bsd/flex/dist/scan.l"
 fwrite (escaped_qstart, 1, strlen(escaped_qstart), yyout);
 	YY_BREAK
 case 247:
 YY_RULE_SETUP
-#line 963 "/usr/src/external/bsd/flex/dist/scan.l"
 fwrite (escaped_qend, 1, strlen(escaped_qend), yyout);
 	YY_BREAK
 case 248:
 /* rule 248 can match eol */
 YY_RULE_SETUP
-#line 964 "/usr/src/external/bsd/flex/dist/scan.l"
 ECHO;
 	YY_BREAK
 case 249:
 /* rule 249 can match eol */
 YY_RULE_SETUP
-#line 965 "/usr/src/external/bsd/flex/dist/scan.l"
 ECHO;
 	YY_BREAK
 case YY_STATE_EOF(SECT3):
-#line 966 "/usr/src/external/bsd/flex/dist/scan.l"
 sectnum = 0; yyterminate();
 	YY_BREAK
 
 case 250:
 /* rule 250 can match eol */
 YY_RULE_SETUP
-#line 969 "/usr/src/external/bsd/flex/dist/scan.l"
 format_synerr( _( "bad character: %s" ), yytext );
 	YY_BREAK
 case 251:
 YY_RULE_SETUP
-#line 971 "/usr/src/external/bsd/flex/dist/scan.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 4123 "<stdout>"
 			case YY_STATE_EOF(INITIAL):
 			case YY_STATE_EOF(SECT2):
 			case YY_STATE_EOF(CODEBLOCK):
@@ -5151,11 +4860,6 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 971 "/usr/src/external/bsd/flex/dist/scan.l"
-
-
-
-
 int yywrap()
 	{
 	if ( --num_input_files > 0 )
@@ -5167,7 +4871,6 @@ int yywrap()
 	else
 		return 1;
 	}
-
 
 /* set_input_file - open the given file (if NULL, stdin) for scanning */
 
@@ -5191,7 +4894,6 @@ char *file;
 
 	linenum = 1;
 	}
-
 
 /* Wrapper routines for accessing the scanner's malloc routines. */
 
