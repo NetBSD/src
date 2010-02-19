@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2010/02/12 12:18:33 roy Exp $
+#	$NetBSD: Makefile,v 1.10 2010/02/19 13:53:17 njoly Exp $
 
 USE_SHLIBDIR=	yes
 
@@ -41,6 +41,8 @@ hash:
 terminfo.5: terminfo.5.in term.h termcap_map.c
 		@echo "Generating terminfo man pages"
 		cd ${.CURDIR} && ${HOST_SH} ./genman >${.OBJDIR}/$@
+
+CLEANFILES+=	terminfo.5
 
 # Allow terminfo descriptions to be compiled into libterminfo
 compiled_terms:
