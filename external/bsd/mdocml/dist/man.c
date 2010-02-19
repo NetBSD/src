@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man.c,v 1.46 2009/11/02 08:40:31 kristaps Exp $ */
+/*	$Vendor-Id: man.c,v 1.49 2010/01/07 10:24:43 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -14,6 +14,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/types.h>
 
 #include <assert.h>
@@ -71,10 +75,6 @@ static	void		 man_alloc1(struct man *);
 static	int		 pstring(struct man *, int, int, 
 				const char *, size_t);
 static	int		 macrowarn(struct man *, int, const char *);
-
-#ifdef __linux__
-extern	size_t	  	  strlcpy(char *, const char *, size_t);
-#endif
 
 
 const struct man_node *
@@ -365,6 +365,7 @@ static int
 man_ptext(struct man *m, int line, char *buf)
 {
 	int		 i, j;
+	char		 sv;
 
 	/* Literal free-form text whitespace is preserved. */
 
@@ -378,7 +379,12 @@ man_ptext(struct man *m, int line, char *buf)
 
 	for (i = 0; ' ' == buf[i]; i++)
 		/* Skip leading whitespace. */ ;
-	if (0 == buf[i]) {
+
+	if ('\0' == buf[i]) {
+		/* Trailing whitespace? */
+		if (i && ' ' == buf[i - 1])
+			if ( ! man_pwarn(m, line, i - 1, WTSPACE))
+				return(0);
 		if ( ! pstring(m, line, 0, &buf[i], 0))
 			return(0);
 		goto descope;
@@ -392,15 +398,30 @@ man_ptext(struct man *m, int line, char *buf)
 		if (i && ' ' == buf[i] && '\\' == buf[i - 1])
 			continue;
 
-		buf[i++] = 0;
+		sv = buf[i];
+		buf[i++] = '\0';
+
 		if ( ! pstring(m, line, j, &buf[j], (size_t)(i - j)))
 			return(0);
+
+		/* Trailing whitespace?  Check at overwritten byte. */
+
+		if (' ' == sv && '\0' == buf[i])
+			if ( ! man_pwarn(m, line, i - 1, WTSPACE))
+				return(0);
 
 		for ( ; ' ' == buf[i]; i++)
 			/* Skip trailing whitespace. */ ;
 
 		j = i;
-		if (0 == buf[i])
+
+		/* Trailing whitespace? */
+
+		if (' ' == buf[i - 1] && '\0' == buf[i])
+			if ( ! man_pwarn(m, line, i - 1, WTSPACE))
+				return(0);
+
+		if ('\0' == buf[i])
 			break;
 	}
 
@@ -463,7 +484,7 @@ man_pmacro(struct man *m, int ln, char *buf)
 		i++;
 		while (buf[i] && ' ' == buf[i])
 			i++;
-		if (0 == buf[i])
+		if ('\0' == buf[i])
 			goto out;
 	}
 
@@ -472,7 +493,7 @@ man_pmacro(struct man *m, int ln, char *buf)
 	/* Copy the first word into a nil-terminated buffer. */
 
 	for (j = 0; j < 4; j++, i++) {
-		if (0 == (mac[j] = buf[i]))
+		if ('\0' == (mac[j] = buf[i]))
 			break;
 		else if (' ' == buf[i])
 			break;
@@ -506,6 +527,12 @@ man_pmacro(struct man *m, int ln, char *buf)
 
 	while (buf[i] && ' ' == buf[i])
 		i++;
+
+	/* Trailing whitespace? */
+
+	if ('\0' == buf[i] && ' ' == buf[i - 1])
+		if ( ! man_pwarn(m, ln, i - 1, WTSPACE))
+			goto err;
 
 	/* Remove prior ELINE macro, if applicable. */
 

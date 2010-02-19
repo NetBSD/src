@@ -1,4 +1,4 @@
-/*	$Vendor-Id: chars.in,v 1.19 2009/11/05 07:21:02 kristaps Exp $ */
+/*	$Vendor-Id: chars.in,v 1.20 2010/01/05 19:51:10 kristaps Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -412,7 +412,6 @@ CHAR("r?",			2,	"c",		1,	"&#191;",	6)
 CHAR("em",			2, 	"--",		2,	"&#8212;",	7)
 CHAR("en",			2, 	"-",		1,	"&#8211;",	7)
 CHAR("hy",			2, 	"-",		1,	"&#8208;",	7)
-CHAR("\\",			1,	"\\",		1,	"\\",		1)
 CHAR("e",			1,	"\\",		1,	"\\",		1)
 
 /* Units. */
