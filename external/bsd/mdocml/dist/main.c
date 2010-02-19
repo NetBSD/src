@@ -1,4 +1,4 @@
-/*	$Vendor-Id: main.c,v 1.57 2009/11/02 08:29:25 kristaps Exp $ */
+/*	$Vendor-Id: main.c,v 1.59 2010/01/29 14:39:38 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -14,6 +14,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/stat.h>
 
 #include <assert.h>
@@ -38,11 +42,6 @@
 # endif
 #endif /* !defined(__GNUC__) || (__GNUC__ < 2) */
 
-#ifdef __linux__
-extern	int		  getsubopt(char **, char * const *, char **);
-extern	size_t	  	  strlcat(char *, const char *, size_t);
-#endif
-
 typedef	void		(*out_mdoc)(void *, const struct mdoc *);
 typedef	void		(*out_man)(void *, const struct man *);
 typedef	void		(*out_free)(void *);
@@ -62,6 +61,7 @@ enum	outt {
 	OUTT_ASCII = 0,
 	OUTT_TREE,
 	OUTT_HTML,
+	OUTT_XHTML,
 	OUTT_LINT
 };
 
@@ -429,6 +429,12 @@ fdesc(struct buf *blk, struct buf *ln, struct curparse *curp)
 
 	if ( ! (curp->outman && curp->outmdoc)) {
 		switch (curp->outtype) {
+		case (OUTT_XHTML):
+			curp->outdata = xhtml_alloc(curp->outopts);
+			curp->outman = html_man;
+			curp->outmdoc = html_mdoc;
+			curp->outfree = html_free;
+			break;
 		case (OUTT_HTML):
 			curp->outdata = html_alloc(curp->outopts);
 			curp->outman = html_man;
@@ -551,6 +557,8 @@ toptions(enum outt *tflags, char *arg)
 		*tflags = OUTT_TREE;
 	else if (0 == strcmp(arg, "html"))
 		*tflags = OUTT_HTML;
+	else if (0 == strcmp(arg, "xhtml"))
+		*tflags = OUTT_XHTML;
 	else {
 		fprintf(stderr, "%s: Bad argument\n", arg);
 		return(0);
