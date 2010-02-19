@@ -1,10 +1,15 @@
-# $NetBSD: Makefile.inc,v 1.4 2009/11/16 22:28:43 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.5 2010/02/19 23:02:41 joerg Exp $
 
 .include <bsd.own.mk>
 
-VERSION=	1.9.14
+VERSION=	1.9.15pl1
 
 CPPFLAGS+=	-DVERSION=\"${VERSION}\"
+
+.if (${HOSTPROG:U} == "")
+CPPFLAGE+=	-DHAVE_STRLCAT -DHAVE_STRLCPY
+.endif
+
 
 DISTDIR:=	${.PARSEDIR}/dist
 

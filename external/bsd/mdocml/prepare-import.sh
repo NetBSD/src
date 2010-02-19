@@ -3,7 +3,7 @@
 set -e
 
 cd dist
-rm -rf ChangeLog.xsl Makefile example.style.css index.css *.sgml
+rm -rf ChangeLog.xsl example.style.css index.css *.sgml
 
 uuencode external.png < external.png > external.png.uu
 rm external.png
