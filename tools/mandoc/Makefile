@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/10/30 17:18:51 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2010/02/19 23:03:02 joerg Exp $
 
 HOSTPROGNAME=	${_TOOL_PREFIX}mandoc
 HOST_SRCDIR=	external/bsd/mdocml/bin/mandoc
@@ -10,6 +10,24 @@ NOMAN=		# defined
 NETBSD_MINOR!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh -n
 NETBSD_OSNAME=	"NetBSD ${NETBSD_MINOR}"
 
-HOST_CPPFLAGS+=	-DOSNAME=${NETBSD_OSNAME:Q}
+HOST_CPPFLAGS+=	-DOSNAME=${NETBSD_OSNAME:Q} -DHAVE_CONFIG_H -I.
+
+DPSRCS+=	config.h
+
+config.h: config.h.pre config.h.post
+	rm -f config.log
+	( cat ${DISTDIR}/config.h.pre; \
+	echo; \
+	if $(CC) $(CFLAGS) -Werror -c ${DISTDIR}/test-strlcat.c >> config.log 2>&1; then \
+		echo '#define HAVE_STRLCAT'; \
+		rm test-strlcat.o; \
+	fi; \
+	if $(CC) $(CFLAGS) -Werror -c ${DISTDIR}/test-strlcpy.c >> config.log 2>&1; then \
+		echo '#define HAVE_STRLCPY'; \
+		rm test-strlcpy.o; \
+	fi; \
+	echo; \
+	cat ${DISTDIR}/config.h.post \
+	) > $@
 
 .include "${.CURDIR}/../Makefile.host"
