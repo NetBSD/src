@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.201 2010/02/15 20:20:34 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.202 2010/02/19 22:28:47 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.201 2010/02/15 20:20:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.202 2010/02/19 22:28:47 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1184,6 +1184,15 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	if (dev == NULL)
 		panic("config_devalloc: memory allocation for device_t failed");
 
+	dev->dv_class = cd->cd_class;
+	dev->dv_cfdata = cf;
+	dev->dv_cfdriver = cd;
+	dev->dv_cfattach = ca;
+	dev->dv_activity_count = 0;
+	dev->dv_activity_handlers = NULL;
+	dev->dv_private = dev_private;
+	dev->dv_flags = ca->ca_flags;	/* inherit flags from class */
+
 	myunit = config_unit_alloc(dev, cd, cf);
 	if (myunit == -1) {
 		config_devfree(dev);
@@ -1202,13 +1211,6 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	mutex_init(&dvl->dvl_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&dvl->dvl_cv, "pmfsusp");
 
-	dev->dv_class = cd->cd_class;
-	dev->dv_cfdata = cf;
-	dev->dv_cfdriver = cd;
-	dev->dv_cfattach = ca;
-	dev->dv_activity_count = 0;
-	dev->dv_activity_handlers = NULL;
-	dev->dv_private = dev_private;
 	memcpy(dev->dv_xname, cd->cd_name, lname);
 	memcpy(dev->dv_xname + lname, xunit, lunit);
 	dev->dv_parent = parent;
@@ -1216,8 +1218,7 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 		dev->dv_depth = parent->dv_depth + 1;
 	else
 		dev->dv_depth = 0;
-	dev->dv_flags = DVF_ACTIVE;	/* always initially active */
-	dev->dv_flags |= ca->ca_flags;	/* inherit flags from class */
+	dev->dv_flags |= DVF_ACTIVE;	/* always initially active */
 	if (locs) {
 		KASSERT(parent); /* no locators at root */
 		ia = cfiattr_lookup(cfdata_ifattr(cf), parent->dv_cfdriver);
