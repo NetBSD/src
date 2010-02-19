@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.33 2010/02/18 10:43:50 tron Exp $	*/
+/*	$NetBSD: wc.c,v 1.34 2010/02/19 11:15:23 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.33 2010/02/18 10:43:50 tron Exp $");
+__RCSID("$NetBSD: wc.c,v 1.34 2010/02/19 11:15:23 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -185,7 +185,7 @@ cnt(const char *file)
 	wchar_t *WC;
 	const char *name;			/* filename or <stdin> */
 	size_t r = 0;
-	int fd, gotsp, len = 0;
+	int fd, len = 0;
 
 	linect = wordct = charct = longest = 0;
 	if (file != NULL) {
@@ -200,17 +200,16 @@ cnt(const char *file)
 		name = "<stdin>";
 	}
 
-	if (dochar || doword)
-		memset(&st, 0, sizeof(st));
+	if (dochar || doword || dolongest)
+		(void)memset(&st, 0, sizeof(st));
 
-	if (!doword) {
+	if (!(doword || dolongest)) {
 		/*
 		 * line counting is split out because it's a lot
 		 * faster to get lines than to get words, since
 		 * the word count requires some logic.
 		 */
-		if (doline || dochar || dolongest) {
-			wc_count_t llen = 0;
+		if (doline || dochar) {
 			while ((len = read(fd, buf, MAXBSIZE)) > 0) {
 				if (dochar) {
 					size_t wlen;
@@ -220,16 +219,10 @@ cnt(const char *file)
 					charct += wlen;
 				} else if (dobyte)
 					charct += len;
-				if (doline || dolongest) {
+				if (doline) {
 					for (C = buf; len--; ++C) {
-						if (*C == '\n') {
+						if (*C == '\n')
 							++linect;
-							if (llen > longest)
-								longest = llen;
-							llen = 0;
-						} else {
-							llen++;
-						}
 					}
 				}
 			}
@@ -260,9 +253,11 @@ cnt(const char *file)
 		}
 	} else {
 		/* do it the hard way... */
-		wc_count_t llen = 0;
+		wc_count_t linelen;
+                bool       gotsp;
 
-		gotsp = 1;
+		linelen = 0;
+		gotsp = true;
 		while ((len = read(fd, buf, MAXBSIZE)) > 0) {
 			size_t wlen;
 
@@ -275,14 +270,14 @@ cnt(const char *file)
 			}
 			for (WC = wbuf; wlen--; ++WC) {
 				if (iswspace(*WC)) {
-					gotsp = 1;
+					gotsp = true;
 					if (*WC == L'\n') {
 						++linect;
-						if (llen > longest)
-							longest = llen;
-						llen = 0;
+						if (linelen > longest)
+							longest = linelen;
+						linelen = 0;
 					} else {
-						llen++;
+						linelen++;
 					}
 				} else {
 					/*
@@ -294,11 +289,11 @@ cnt(const char *file)
 					 * printing or non-printing.
 					 */
 					if (gotsp) {
-						gotsp = 0;
+						gotsp = false;
 						++wordct;
 					}
 
-					llen++;
+					linelen++;
 				}
 			}
 		}
