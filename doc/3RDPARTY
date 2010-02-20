@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.747 2010/01/31 21:02:05 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.748 2010/02/20 02:55:52 joerg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -518,16 +518,15 @@ does not detect NetBSD has a sigset_t due to a bad test; this is fixed
 by hand in defines.h.)
 
 Package:	libarchive
-Version:	2.5.4b
-Current Ves.:	2.6.0
-Maintainer:	kientzle@freebsd.org
-Archive Site:	http://people.freebsd.org/~kientzle/libarchive/
-Home Page: 	http://people.freebsd.org/~kientzle/libarchive/
+Version:	2.8.0
+Current Ves.:	2.8.0
+Maintainer:	kientzle@freebsd.org, joerg@NetBSD.org
+Archive Site:	http://code.google.com/p/libarchive/
+Home Page: 	http://code.google.com/p/libarchive/
 Responsible:	joerg
 License:	BSD
 Notes:
-Distribution is stripped down to the relevant part. cpio is currently
-not usable, so it was left out.
+Distribution is stripped down to the relevant part.
 
 Package:	libcdk
 Version:	4.9.9-20000407-myc3
