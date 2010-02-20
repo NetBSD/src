@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.14 2010/02/03 14:23:39 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.15 2010/02/20 04:41:52 joerg Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.14 2010/02/03 14:23:39 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.15 2010/02/20 04:41:52 joerg Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -729,8 +729,9 @@ extract_files(struct pkg_task *pkg)
 
 		r = archive_write_header(writer, pkg->entry);
 		if (r != ARCHIVE_OK) {
-			warnx("Failed to write %s: %s",
+			warnx("Failed to write %s for %s: %s",
 			    archive_entry_pathname(pkg->entry),
+			    pkg->pkgname,
 			    archive_error_string(writer));
 			goto out;
 		}
@@ -760,7 +761,8 @@ extract_files(struct pkg_task *pkg)
 			continue;
 		}
 		if (r != ARCHIVE_OK) {
-			warnx("Failed to read from archive: %s",
+			warnx("Failed to read from archive for %s: %s",
+			    pkg->pkgname,
 			    archive_error_string(pkg->archive));
 			goto out;
 		}
@@ -1334,6 +1336,7 @@ check_license(struct pkg_task *pkg)
 static int
 pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 {
+	char *archive_name;
 	int status, invalid_sig;
 	struct pkg_task *pkg;
 
@@ -1341,14 +1344,15 @@ pkg_do(const char *pkgpath, int mark_automatic, int top_level)
 
 	status = -1;
 
-	pkg->archive = find_archive(pkgpath, top_level);
+	pkg->archive = find_archive(pkgpath, top_level, &archive_name);
 	if (pkg->archive == NULL) {
 		warnx("no pkg found for '%s', sorry.", pkgpath);
 		goto clean_find_archive;
 	}
 
-	invalid_sig = pkg_verify_signature(&pkg->archive, &pkg->entry,
+	invalid_sig = pkg_verify_signature(archive_name, &pkg->archive, &pkg->entry,
 	    &pkg->pkgname);
+	free(archive_name);
 
 	if (pkg->archive == NULL)
 		goto clean_memory;
