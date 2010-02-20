@@ -1,13 +1,10 @@
-# $NetBSD: Makefile,v 1.1 2008/09/19 22:01:26 joerg Exp $
+# $NetBSD: Makefile,v 1.2 2010/02/20 02:55:53 joerg Exp $
 
 PROG=	bsdcpio
-SRCS=	cmdline.c cpio.c err.c matching.c pathmatch.c
+SRCS=	cmdline.c cpio.c
 
 .include <bsd.init.mk>
 
-.PATH: ${LIBARCHIVEDIR}/cpio
-
-DPADD=	${LIBARCHIVE} ${LIBBZ2} ${LIBZ}
-LDADD=	-larchive -lbz2 -lz
+.PATH:		${LIBARCHIVEDIR}/cpio
 
 .include <bsd.prog.mk>
