@@ -23,26 +23,38 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_compress_program.c,v 1.2 2007/07/06 15:43:11 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/test/test_write_compress_program.c 201247 2009-12-30 05:59:21Z kientzle $");
 
 char buff[1000000];
 char buff2[64];
 
 DEFINE_TEST(test_write_compress_program)
 {
-#if ARCHIVE_VERSION_STAMP < 1009000
+#if ARCHIVE_VERSION_NUMBER < 1009000
 	skipping("archive_write_set_compress_program()");
 #else
 	struct archive_entry *ae;
 	struct archive *a;
 	size_t used;
 	int blocksize = 1024;
+	int r;
+
+	if (!canGzip()) {
+		skipping("Cannot run 'gzip'");
+		return;
+	}
 
 	/* Create a new archive in memory. */
 	/* Write it through an external "gzip" program. */
 	assert((a = archive_write_new()) != NULL);
 	assertA(0 == archive_write_set_format_ustar(a));
-	assertA(0 == archive_write_set_compression_program(a, "gzip"));
+	r = archive_write_set_compression_program(a, "gzip");
+	if (r == ARCHIVE_FATAL) {
+		skipping("Write compression via external "
+		    "program unsupported on this platform");
+		archive_write_finish(a);
+		return;
+	}
 	assertA(0 == archive_write_set_bytes_per_block(a, blocksize));
 	assertA(0 == archive_write_set_bytes_in_last_block(a, blocksize));
 	assertA(blocksize == archive_write_get_bytes_in_last_block(a));
@@ -64,38 +76,43 @@ DEFINE_TEST(test_write_compress_program)
 
 	/* Close out the archive. */
 	assertA(0 == archive_write_close(a));
-#if ARCHIVE_API_VERSION > 1
 	assertA(0 == archive_write_finish(a));
-#else
-	archive_write_finish(a);
-#endif
 
 	/*
 	 * Now, read the data back through the built-in gzip support.
 	 */
 	assert((a = archive_read_new()) != NULL);
-	assertA(0 == archive_read_support_format_all(a));
-	assertA(0 == archive_read_support_compression_all(a));
-	assertA(0 == archive_read_open_memory(a, buff, used));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_compression_all(a));
+	r = archive_read_support_compression_gzip(a);
+	/* The compression_gzip() handler will fall back to gunzip
+	 * automatically, but if we know gunzip isn't available, then
+	 * skip the rest. */
+	if (r != ARCHIVE_OK && !canGunzip()) {
+		skipping("No libz and no gunzip program, "
+		    "unable to verify gzip compression");
+		assertEqualInt(ARCHIVE_OK, archive_read_finish(a));
+		return;
+	}
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_memory(a, buff, used));
 
-	assertA(0 == archive_read_next_header(a, &ae));
+	if (!assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae))) {
+		archive_read_finish(a);
+		return;
+	}
 
-	assert(1 == archive_entry_mtime(ae));
-	assert(0 == archive_entry_atime(ae));
-	assert(0 == archive_entry_ctime(ae));
+	assertEqualInt(1, archive_entry_mtime(ae));
+	assertEqualInt(0, archive_entry_atime(ae));
+	assertEqualInt(0, archive_entry_ctime(ae));
 	assertEqualString("file", archive_entry_pathname(ae));
-	assert((S_IFREG | 0755) == archive_entry_mode(ae));
-	assert(8 == archive_entry_size(ae));
-	assertA(8 == archive_read_data(a, buff2, 10));
-	assert(0 == memcmp(buff2, "12345678", 8));
+	assertEqualInt((S_IFREG | 0755), archive_entry_mode(ae));
+	assertEqualInt(8, archive_entry_size(ae));
+	assertEqualIntA(a, 8, archive_read_data(a, buff2, 10));
+	assertEqualMem(buff2, "12345678", 8);
 
 	/* Verify the end of the archive. */
-	assert(1 == archive_read_next_header(a, &ae));
-	assert(0 == archive_read_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assert(0 == archive_read_finish(a));
-#else
-	archive_read_finish(a);
-#endif
+	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_finish(a));
 #endif
 }

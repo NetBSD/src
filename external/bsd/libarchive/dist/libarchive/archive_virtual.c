@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_virtual.c,v 1.1 2007/03/03 07:37:36 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/archive_virtual.c 201098 2009-12-28 02:58:14Z kientzle $");
 
 #include "archive.h"
 #include "archive_entry.h"
@@ -33,27 +33,40 @@ __FBSDID("$FreeBSD: src/lib/libarchive/archive_virtual.c,v 1.1 2007/03/03 07:37:
 int
 archive_write_close(struct archive *a)
 {
-	return ((a->vtable->archive_write_close)(a));
+	return ((a->vtable->archive_close)(a));
+}
+
+int
+archive_read_close(struct archive *a)
+{
+	return ((a->vtable->archive_close)(a));
 }
 
 #if ARCHIVE_API_VERSION > 1
 int
 archive_write_finish(struct archive *a)
 {
-	return ((a->vtable->archive_write_finish)(a));
+	return ((a->vtable->archive_finish)(a));
 }
 #else
 /* Temporarily allow library to compile with either 1.x or 2.0 API. */
 void
 archive_write_finish(struct archive *a)
 {
-	(void)(a->vtable->archive_write_finish)(a);
+	(void)(a->vtable->archive_finish)(a);
 }
 #endif
 
 int
+archive_read_finish(struct archive *a)
+{
+	return ((a->vtable->archive_finish)(a));
+}
+
+int
 archive_write_header(struct archive *a, struct archive_entry *entry)
 {
+	++a->file_count;
 	return ((a->vtable->archive_write_header)(a, entry));
 }
 

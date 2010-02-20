@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_check_magic.c,v 1.8 2007/04/02 00:15:45 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/archive_check_magic.c 201089 2009-12-28 02:20:23Z kientzle $");
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -40,20 +40,36 @@ __FBSDID("$FreeBSD: src/lib/libarchive/archive_check_magic.c,v 1.8 2007/04/02 00
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#include <windows.h>
+#include <winbase.h>
+#endif
 
 #include "archive_private.h"
 
 static void
 errmsg(const char *m)
 {
-	write(STDERR_FILENO, m, strlen(m));
+	size_t s = strlen(m);
+	ssize_t written;
+
+	while (s > 0) {
+		written = write(2, m, strlen(m));
+		if (written <= 0)
+			return;
+		m += written;
+		s -= written;
+	}
 }
 
 static void
 diediedie(void)
 {
-	*(char *)0 = 1;	/* Deliberately segfault and force a coredump. */
-	_exit(1);	/* If that didn't work, just exit with an error. */
+#if defined(_WIN32) && !defined(__CYGWIN__) && defined(_DEBUG)
+	/* Cause a breakpoint exception  */
+	DebugBreak();
+#endif
+	abort();        /* Terminate the program abnormally. */
 }
 
 static const char *
@@ -77,7 +93,7 @@ write_all_states(unsigned int states)
 	unsigned int lowbit;
 
 	/* A trick for computing the lowest set bit. */
-	while ((lowbit = states & (-states)) != 0) {
+	while ((lowbit = states & (1 + ~states)) != 0) {
 		states &= ~lowbit;		/* Clear the low bit. */
 		errmsg(state_name(lowbit));
 		if (states != 0)

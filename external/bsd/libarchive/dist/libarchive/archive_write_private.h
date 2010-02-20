@@ -22,8 +22,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/archive_write_private.h,v 1.3 2008/03/15 11:04:45 kientzle Exp $
+ * $FreeBSD: head/lib/libarchive/archive_write_private.h 201155 2009-12-29 05:20:12Z kientzle $
  */
+
+#ifndef __LIBARCHIVE_BUILD
+#error This header is only to be used internally to libarchive.
+#endif
 
 #ifndef ARCHIVE_WRITE_PRIVATE_H_INCLUDED
 #define	ARCHIVE_WRITE_PRIVATE_H_INCLUDED
@@ -37,7 +41,7 @@ struct archive_write {
 
 	/* Dev/ino of the archive being written. */
 	dev_t		  skip_file_dev;
-	ino_t		  skip_file_ino;
+	int64_t		  skip_file_ino;
 
 	/* Utility:  Pointer to a block of nulls. */
 	const unsigned char	*nulls;
@@ -77,6 +81,8 @@ struct archive_write {
 		void	 *data;
 		void	 *config;
 		int	(*init)(struct archive_write *);
+		int	(*options)(struct archive_write *,
+			    const char *key, const char *value);
 		int	(*finish)(struct archive_write *);
 		int	(*write)(struct archive_write *, const void *, size_t);
 	} compressor;
@@ -86,7 +92,10 @@ struct archive_write {
 	 * initialized by archive_write_set_format_XXX() calls.
 	 */
 	void	 *format_data;
+	const char *format_name;
 	int	(*format_init)(struct archive_write *);
+	int	(*format_options)(struct archive_write *,
+		    const char *key, const char *value);
 	int	(*format_finish)(struct archive_write *);
 	int	(*format_destroy)(struct archive_write *);
 	int	(*format_finish_entry)(struct archive_write *);

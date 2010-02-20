@@ -23,30 +23,35 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD$");
+__FBSDID("$FreeBSD: src/usr.bin/cpio/test/test_option_y.c,v 1.2 2008/08/24 06:21:00 kientzle Exp $");
 
 DEFINE_TEST(test_option_y)
 {
 	char *p;
-	int fd;
 	int r;
 	size_t s;
 
 	/* Create a file. */
-	fd = open("f", O_CREAT | O_WRONLY, 0644);
-	assert(fd >= 0);
-	assertEqualInt(1, write(fd, "a", 1));
-	close(fd);
+	assertMakeFile("f", 0644, "a");
 
 	/* Archive it with bzip2 compression. */
 	r = systemf("echo f | %s -oy >archive.out 2>archive.err",
 	    testprog);
-	assertFileContents("1 block\n", 8, "archive.err");
-	failure("-y (bzip) option seems to be broken");
-	if (assertEqualInt(r, 0)) {
-		/* Check that the archive file has a bzip2 signature. */
-		p = slurpfile(&s, "archive.out");
-		assert(s > 2);
-		assertEqualMem(p, "BZh9", 4);
+	p = slurpfile(&s, "archive.err");
+	p[s] = '\0';
+	if (r != 0) {
+		if (strstr(p, "compression not available") != NULL) {
+			skipping("This version of bsdcpio was compiled "
+			    "without bzip2 support");
+			return;
+		}
+		failure("-y option is broken");
+		assertEqualInt(r, 0);
+		return;
 	}
+	assertTextFileContents("1 block\n", "archive.err");
+	/* Check that the archive file has a bzip2 signature. */
+	p = slurpfile(&s, "archive.out");
+	assert(s > 2);
+	assertEqualMem(p, "BZh9", 4);
 }

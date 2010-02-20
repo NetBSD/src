@@ -22,8 +22,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/archive_entry_private.h,v 1.4 2008/05/26 17:00:22 kientzle Exp $
+ * $FreeBSD: head/lib/libarchive/archive_entry_private.h 201096 2009-12-28 02:41:27Z kientzle $
  */
+
+#ifndef __LIBARCHIVE_BUILD
+#error This header is only to be used internally to libarchive.
+#endif
 
 #ifndef ARCHIVE_ENTRY_PRIVATE_H_INCLUDED
 #define	ARCHIVE_ENTRY_PRIVATE_H_INCLUDED
@@ -112,8 +116,10 @@ struct archive_entry {
 		uint32_t	aest_ctime_nsec;
 		int64_t		aest_mtime;
 		uint32_t	aest_mtime_nsec;
+		int64_t		aest_birthtime;
+		uint32_t	aest_birthtime_nsec;
 		gid_t		aest_gid;
-		ino_t		aest_ino;
+		int64_t		aest_ino;
 		mode_t		aest_mode;
 		uint32_t	aest_nlink;
 		uint64_t	aest_size;
@@ -136,6 +142,15 @@ struct archive_entry {
 		dev_t		aest_rdevminor;
 	} ae_stat;
 
+	int ae_set; /* bitmap of fields that are currently set */
+#define	AE_SET_HARDLINK	1
+#define	AE_SET_SYMLINK	2
+#define	AE_SET_ATIME	4
+#define	AE_SET_CTIME	8
+#define	AE_SET_MTIME	16
+#define	AE_SET_BIRTHTIME 32
+#define	AE_SET_SIZE	64
+
 	/*
 	 * Use aes here so that we get transparent mbs<->wcs conversions.
 	 */
@@ -147,8 +162,6 @@ struct archive_entry {
 	struct aes ae_pathname;	/* Name of entry */
 	struct aes ae_symlink;		/* symlink contents */
 	struct aes ae_uname;		/* Name of owner */
-	unsigned char	ae_hardlinkset;
-	unsigned char	ae_symlinkset;
 
 	/* Not used within libarchive; useful for some clients. */
 	struct aes ae_sourcepath;	/* Path this entry is sourced from. */
