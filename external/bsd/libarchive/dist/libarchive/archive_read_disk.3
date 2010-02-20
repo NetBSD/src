@@ -93,11 +93,9 @@ objects.
 Allocates and initializes a
 .Tn struct archive
 object suitable for reading object information from disk.
-.It Xo
-.Fn archive_read_disk_set_symlink_logical ,
-.Fn archive_read_disk_set_symlink_physical ,
-.Fn archive_read_disk_set_symlink_hybrid
-.Xc
+.It Fn archive_read_disk_set_symlink_logical , \
+Fn archive_read_disk_set_symlink_physical , \
+Fn archive_read_disk_set_symlink_hybrid
 This sets the mode used for handling symbolic links.
 The
 .Dq logical
@@ -110,16 +108,12 @@ The
 mode currently behaves identically to the
 .Dq logical
 mode.
-.It Xo
-.Fn archive_read_disk_gname ,
-.Fn archive_read_disk_uname
-.Xc
+.It Fn archive_read_disk_gname , \
+Fn archive_read_disk_uname
 Returns a user or group name given a gid or uid value.
 By default, these always return a NULL string.
-.It Xo
-.Fn archive_read_disk_set_gname_lookup ,
-.Fn archive_read_disk_set_uname_lookup
-.Xc
+.It Fn archive_read_disk_set_gname_lookup , \
+Fn archive_read_disk_set_uname_lookup
 These allow you to override the functions used for
 user and group name lookups.
 You may also provide a
