@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_compression_none.c,v 1.16 2007/12/30 04:58:22 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/archive_write_set_compression_none.c 201080 2009-12-28 02:03:54Z kientzle $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -208,11 +208,10 @@ archive_compressor_none_finish(struct archive_write *a)
 	ssize_t target_block_length;
 	ssize_t bytes_written;
 	int ret;
-	int ret2;
 	struct archive_none *state;
 
 	state = (struct archive_none *)a->compressor.data;
-	ret = ret2 = ARCHIVE_OK;
+	ret = ARCHIVE_OK;
 	if (a->client_writer == NULL) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_PROGRAMMER,
 		    "No write callback is registered?  "
@@ -225,7 +224,6 @@ archive_compressor_none_finish(struct archive_write *a)
 		block_length = state->buffer_size - state->avail;
 
 		/* Tricky calculation to determine size of last block */
-		target_block_length = block_length;
 		if (a->bytes_in_last_block <= 0)
 			/* Default or Zero: pad to full block */
 			target_block_length = a->bytes_per_block;

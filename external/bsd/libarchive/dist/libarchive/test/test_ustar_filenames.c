@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD$");
+__FBSDID("$FreeBSD: head/lib/libarchive/test/test_ustar_filenames.c 189308 2009-03-03 17:02:51Z kientzle $");
 
 /*
  * Exercise various lengths of filenames in ustar archives.
@@ -43,7 +43,7 @@ test_filename(const char *prefix, int dlen, int flen)
 
 	if (prefix != NULL) {
 		strcpy(filename, prefix);
-		i = strlen(prefix);
+		i = (int)strlen(prefix);
 	}
 	if (dlen > 0) {
 		for (; i < dlen; i++)
@@ -53,7 +53,7 @@ test_filename(const char *prefix, int dlen, int flen)
 	}
 	for (; i < dlen + flen + separator; i++)
 		filename[i] = 'b';
-	filename[i++] = '\0';
+	filename[i] = '\0';
 
 	strcpy(dirname, filename);
 
@@ -111,7 +111,11 @@ test_filename(const char *prefix, int dlen, int flen)
 
 	/* Close out the archive. */
 	assertA(0 == archive_write_close(a));
-	assertA(0 == archive_write_finish(a));
+#if ARCHIVE_VERSION_NUMBER < 2000000
+	archive_write_finish(a);
+#else
+	assertEqualInt(0, archive_write_finish(a));
+#endif
 
 	/*
 	 * Now, read the data back.
@@ -153,7 +157,11 @@ test_filename(const char *prefix, int dlen, int flen)
 	failure("This fails if entries were written that should not have been written.  dlen=%d, flen=%d", dlen, flen);
 	assertEqualInt(1, archive_read_next_header(a, &ae));
 	assert(0 == archive_read_close(a));
-	assert(0 == archive_read_finish(a));
+#if ARCHIVE_VERSION_NUMBER < 2000000
+	archive_read_finish(a);
+#else
+	assertEqualInt(0, archive_read_finish(a));
+#endif
 }
 
 DEFINE_TEST(test_ustar_filenames)

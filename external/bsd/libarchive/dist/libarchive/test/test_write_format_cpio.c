@@ -23,10 +23,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_format_cpio.c,v 1.4 2008/01/01 22:28:04 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/test/test_write_format_cpio.c 185672 2008-12-06 06:02:26Z kientzle $");
 
 /* The version stamp macro was introduced after cpio write support. */
-#if ARCHIVE_VERSION_STAMP >= 1009000
+#if ARCHIVE_VERSION_NUMBER >= 1009000
 static void
 test_format(int	(*set_format)(struct archive *))
 {
@@ -104,14 +104,16 @@ test_format(int	(*set_format)(struct archive *))
 
 	/* Close out the archive. */
 	assertA(0 == archive_write_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assertA(0 == archive_write_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_write_finish(a);
+#else
+	assertA(0 == archive_write_finish(a));
 #endif
 
 	/*
 	 * Damage the second entry to test the search-ahead recovery.
+	 * TODO: Move the damage-recovery checking to a separate test;
+	 * it doesn't really belong in this write test.
 	 */
 	{
 		int i;
@@ -124,7 +126,7 @@ test_format(int	(*set_format)(struct archive *))
 		}
 	}
 	failure("Unable to locate the second header for damage-recovery test.");
-	assert(damaged = 1);
+	assert(damaged == 1);
 
 	/*
 	 * Now, read the data back.
@@ -134,7 +136,10 @@ test_format(int	(*set_format)(struct archive *))
 	assertA(0 == archive_read_support_compression_all(a));
 	assertA(0 == archive_read_open_memory(a, buff, used));
 
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
+	if (!assertEqualIntA(a, 0, archive_read_next_header(a, &ae))) {
+		archive_read_finish(a);
+		return;
+	}
 
 	assertEqualInt(1, archive_entry_mtime(ae));
 	/* Not the same as above: cpio doesn't store hi-res times. */
@@ -148,28 +153,14 @@ test_format(int	(*set_format)(struct archive *))
 	assert(0 == memcmp(filedata, "12345678", 8));
 
 	/*
-	 * Read the second file back.
+	 * The second file can't be read because we damaged its header.
 	 */
-	if (!damaged) {
-		assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-		assertEqualInt(1, archive_entry_mtime(ae));
-		/* Not the same as above: cpio doesn't store hi-res times. */
-		assert(0 == archive_entry_mtime_nsec(ae));
-		assert(0 == archive_entry_atime(ae));
-		assert(0 == archive_entry_ctime(ae));
-		assertEqualString("file2", archive_entry_pathname(ae));
-		assert((S_IFREG | 0755) == archive_entry_mode(ae));
-		assertEqualInt(4, archive_entry_size(ae));
-		assertEqualIntA(a, 4, archive_read_data(a, filedata, 10));
-		assert(0 == memcmp(filedata, "1234", 4));
-	}
 
 	/*
 	 * Read the dir entry back.
+	 * ARCHIVE_WARN here because the damaged entry was skipped.
 	 */
-	assertEqualIntA(a,
-	    damaged ? ARCHIVE_WARN : ARCHIVE_OK,
-	    archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_WARN, archive_read_next_header(a, &ae));
 	assertEqualInt(11, archive_entry_mtime(ae));
 	assert(0 == archive_entry_mtime_nsec(ae));
 	assert(0 == archive_entry_atime(ae));
@@ -182,10 +173,10 @@ test_format(int	(*set_format)(struct archive *))
 	/* Verify the end of the archive. */
 	assertEqualIntA(a, 1, archive_read_next_header(a, &ae));
 	assert(0 == archive_read_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assert(0 == archive_read_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_read_finish(a);
+#else
+	assert(0 == archive_read_finish(a));
 #endif
 
 	free(buff);
@@ -194,7 +185,7 @@ test_format(int	(*set_format)(struct archive *))
 
 DEFINE_TEST(test_write_format_cpio)
 {
-#if ARCHIVE_VERSION_STAMP >= 1009000
+#if ARCHIVE_VERSION_NUMBER >= 1009000
 	test_format(archive_write_set_format_cpio);
 	test_format(archive_write_set_format_cpio_newc);
 #else

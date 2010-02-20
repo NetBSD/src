@@ -29,16 +29,21 @@ __FBSDID("$FreeBSD$");
  * This first test does basic sanity checks on the environment.  For
  * most of these, we just exit on failure.
  */
+#if !defined(_WIN32) || defined(__CYGWIN__)
+#define DEV_NULL "/dev/null"
+#else
+#define DEV_NULL "NUL"
+#endif
 
 DEFINE_TEST(test_0)
 {
 	struct stat st;
 
-	failure("File %s does not exist?!", testprog);
-	if (!assertEqualInt(0, stat(testprog, &st)))
+	failure("File %s does not exist?!", testprogfile);
+	if (!assertEqualInt(0, stat(testprogfile, &st)))
 		exit(1);
 
-	failure("%s is not executable?!", testprog);
+	failure("%s is not executable?!", testprogfile);
 	if (!assert((st.st_mode & 0111) != 0))
 		exit(1);
 
@@ -46,9 +51,9 @@ DEFINE_TEST(test_0)
 	 * Try to succesfully run the program; this requires that
 	 * we know some option that will succeed.
 	 */
-	if (0 == systemf("%s --version >/dev/null", testprog)) {
+	if (0 == systemf("%s --version >" DEV_NULL, testprog)) {
 		/* This worked. */
-	} else if (0 == systemf("%s -W version >/dev/null", testprog)) {
+	} else if (0 == systemf("%s -W version >" DEV_NULL, testprog)) {
 		/* This worked. */
 	} else {
 		failure("Unable to successfully run any of the following:\n"

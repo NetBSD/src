@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_format_tar_empty.c,v 1.3 2007/07/06 15:43:11 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/test/test_write_format_tar_empty.c 189308 2009-03-03 17:02:51Z kientzle $");
 
 /*
  * Check that an "empty" tar archive is correctly created.
@@ -46,13 +46,13 @@ DEFINE_TEST(test_write_format_tar_empty)
 
 	/* Close out the archive. */
 	assertA(0 == archive_write_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assertA(0 == archive_write_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_write_finish(a);
+#else
+	assertA(0 == archive_write_finish(a));
 #endif
 
-#if ARCHIVE_VERSION_STAMP < 1009000
+#if ARCHIVE_VERSION_NUMBER < 1009000
 	/* Earlier versions wrote 0-length files for empty tar archives. */
 	skipping("empty tar archive size");
 #else
@@ -73,17 +73,17 @@ DEFINE_TEST(test_write_format_tar_empty)
 
 	/* Close out the archive. */
 	assertA(0 == archive_write_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assertA(0 == archive_write_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_write_finish(a);
+#else
+	assertA(0 == archive_write_finish(a));
 #endif
 
-#if ARCHIVE_VERSION_STAMP < 1009000
+#if ARCHIVE_VERSION_NUMBER < 1009000
 	/* Earlier versions wrote 0-length files for empty tar archives. */
 	skipping("empty tar archive size");
 #else
-	assertEqualInt(used, 1024);
+	assertEqualInt((int)used, 1024);
 #endif
 	for (i = 0; i < used; i++) {
 		failure("Empty tar archive should be all nulls.");

@@ -53,44 +53,47 @@ from_octal(const char *p, size_t l)
 
 DEFINE_TEST(test_option_c)
 {
-	int fd, filelist;
+	FILE *filelist;
 	int r;
+	int uid = -1;
 	int dev, ino, gid;
 	time_t t, now;
 	char *p, *e;
 	size_t s;
-	mode_t oldmask;
 
-	oldmask = umask(0);
+	assertUmask(0);
+
+#if !defined(_WIN32)
+	uid = getuid();
+#endif
 
 	/*
 	 * Create an assortment of files.
 	 * TODO: Extend this to cover more filetypes.
 	 */
-	filelist = open("filelist", O_CREAT | O_WRONLY, 0644);
+	filelist = fopen("filelist", "w");
 
 	/* "file" */
-	fd = open("file", O_CREAT | O_WRONLY, 0644);
-	assert(fd >= 0);
-	assertEqualInt(10, write(fd, "123456789", 10));
-	close(fd);
-	assertEqualInt(5, write(filelist, "file\n", 5));
+	assertMakeFile("file", 0644, "1234567890");
+	fprintf(filelist, "file\n");
 
 	/* "symlink" */
-	assertEqualInt(0, symlink("file", "symlink"));
-	assertEqualInt(8, write(filelist, "symlink\n", 8));
+	if (canSymlink()) {
+		assertMakeSymlink("symlink", "file");
+		fprintf(filelist, "symlink\n");
+	}
 
 	/* "dir" */
-	assertEqualInt(0, mkdir("dir", 0775));
+	assertMakeDir("dir", 0775);
 	/* Record some facts about what we just created: */
 	now = time(NULL); /* They were all created w/in last two seconds. */
-	assertEqualInt(4, write(filelist, "dir\n", 4));
+	fprintf(filelist, "dir\n");
 
 	/* Use the cpio program to create an archive. */
-	close(filelist);
+	fclose(filelist);
 	r = systemf("%s -oc <filelist >basic.out 2>basic.err", testprog);
 	/* Verify that nothing went to stderr. */
-	assertFileContents("1 block\n", 8, "basic.err");
+	assertTextFileContents("1 block\n", "basic.err");
 
 	/* Assert that the program finished. */
 	failure("%s -oc crashed", testprog);
@@ -114,8 +117,15 @@ DEFINE_TEST(test_option_c)
 	dev = from_octal(e + 6, 6);
 	assert(is_octal(e + 12, 6)); /* ino */
 	ino = from_octal(e + 12, 6);
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	/* Group members bits and others bits do not work. */
+	assertEqualMem(e + 18, "100666", 6); /* Mode */
+#else
 	assertEqualMem(e + 18, "100644", 6); /* Mode */
-	assertEqualInt(from_octal(e + 24, 6), getuid()); /* uid */
+#endif
+	if (uid < 0)
+		uid = from_octal(e + 24, 6);
+	assertEqualInt(from_octal(e + 24, 6), uid); /* uid */
 	assert(is_octal(e + 30, 6)); /* gid */
 	gid = from_octal(e + 30, 6);
 	assertEqualMem(e + 36, "000001", 6); /* nlink */
@@ -128,31 +138,37 @@ DEFINE_TEST(test_option_c)
 	assertEqualMem(e + 59, "000005", 6); /* Name size */
 	assertEqualMem(e + 65, "00000000012", 11); /* File size */
 	assertEqualMem(e + 76, "file\0", 5); /* Name contents */
-	assertEqualMem(e + 81, "123456789\0", 10); /* File contents */
+	assertEqualMem(e + 81, "1234567890", 10); /* File contents */
 	e += 91;
 
-	/* Second entry is "symlink" pointing to "file" */
-	assert(is_octal(e, 76)); /* Entire header is octal digits. */
-	assertEqualMem(e + 0, "070707", 6); /* Magic */
-	assertEqualInt(dev, from_octal(e + 6, 6)); /* dev */
-	assert(dev != from_octal(e + 12, 6)); /* ino */
-	assertEqualMem(e + 18, "120777", 6); /* Mode */
-	assertEqualInt(from_octal(e + 24, 6), getuid()); /* uid */
-	assertEqualInt(gid, from_octal(e + 30, 6)); /* gid */
-	assertEqualMem(e + 36, "000001", 6); /* nlink */
-	failure("file entries should have rdev == 0 (dev was 0%o)",
-	    from_octal(e + 6, 6));
-	assertEqualMem(e + 42, "000000", 6); /* rdev */
-	t = from_octal(e + 48, 11); /* mtime */
-	assert(t <= now); /* File wasn't created in future. */
-	assert(t >= now - 2); /* File was created w/in last 2 secs. */
-	assertEqualMem(e + 59, "000010", 6); /* Name size */
-	assertEqualMem(e + 65, "00000000004", 11); /* File size */
-	assertEqualMem(e + 76, "symlink\0", 8); /* Name contents */
-	assertEqualMem(e + 84, "file", 4); /* Symlink target. */
-	e += 88;
+	/* "symlink" pointing to "file" */
+	if (canSymlink()) {
+		assert(is_octal(e, 76)); /* Entire header is octal digits. */
+		assertEqualMem(e + 0, "070707", 6); /* Magic */
+		assertEqualInt(dev, from_octal(e + 6, 6)); /* dev */
+		assert(ino != from_octal(e + 12, 6)); /* ino */
+#if !defined(_WIN32) || defined(__CYGWIN__)
+		/* On Windows, symbolic link and group members bits and
+		 * others bits do not work. */
+		assertEqualMem(e + 18, "120777", 6); /* Mode */
+#endif
+		assertEqualInt(from_octal(e + 24, 6), uid); /* uid */
+		assertEqualInt(gid, from_octal(e + 30, 6)); /* gid */
+		assertEqualMem(e + 36, "000001", 6); /* nlink */
+		failure("file entries should have rdev == 0 (dev was 0%o)",
+		    from_octal(e + 6, 6));
+		assertEqualMem(e + 42, "000000", 6); /* rdev */
+		t = from_octal(e + 48, 11); /* mtime */
+		assert(t <= now); /* File wasn't created in future. */
+		assert(t >= now - 2); /* File was created w/in last 2 secs. */
+		assertEqualMem(e + 59, "000010", 6); /* Name size */
+		assertEqualMem(e + 65, "00000000004", 11); /* File size */
+		assertEqualMem(e + 76, "symlink\0", 8); /* Name contents */
+		assertEqualMem(e + 84, "file", 4); /* Symlink target. */
+		e += 88;
+	}
 
-	/* Second entry is "dir" */
+	/* "dir" */
 	assert(is_octal(e, 76));
 	assertEqualMem(e + 0, "070707", 6); /* Magic */
 	/* Dev should be same as first entry. */
@@ -161,12 +177,21 @@ DEFINE_TEST(test_option_c)
 	/* Ino must be different from first entry. */
 	assert(is_octal(e + 12, 6)); /* ino */
 	assert(dev != from_octal(e + 12, 6));
-	assertEqualMem(e + 18, "040775", 6); /* Mode */
-	assertEqualInt(from_octal(e + 24, 6), getuid()); /* uid */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	/* Group members bits and others bits do not work. */
+	assertEqualMem(e + 18, "040777", 6); /* Mode */
+#else
+	/* Accept 042775 to accomodate systems where sgid bit propagates. */
+	if (memcmp(e + 18, "042775", 6) != 0)
+		assertEqualMem(e + 18, "040775", 6); /* Mode */
+#endif
+	assertEqualInt(from_octal(e + 24, 6), uid); /* uid */
 	/* Gid should be same as first entry. */
 	assert(is_octal(e + 30, 6)); /* gid */
 	assertEqualInt(gid, from_octal(e + 30, 6));
+#ifndef NLINKS_INACCURATE_FOR_DIRS
 	assertEqualMem(e + 36, "000002", 6); /* Nlink */
+#endif
 	t = from_octal(e + 48, 11); /* mtime */
 	assert(t <= now); /* File wasn't created in future. */
 	assert(t >= now - 2); /* File was created w/in last 2 secs. */
@@ -193,6 +218,4 @@ DEFINE_TEST(test_option_c)
 	assertEqualMem(e + 76, "TRAILER!!!\0", 11); /* Name */
 
 	free(p);
-
-	umask(oldmask);
 }

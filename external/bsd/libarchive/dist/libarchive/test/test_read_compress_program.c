@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_compress_program.c,v 1.2 2007/07/06 15:43:11 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/test/test_read_compress_program.c 201247 2009-12-30 05:59:21Z kientzle $");
 
 static unsigned char archive[] = {
 31,139,8,0,222,'C','p','C',0,3,211,'c',160,'=','0','0','0','0','7','5','U',
@@ -34,26 +34,51 @@ static unsigned char archive[] = {
 
 DEFINE_TEST(test_read_compress_program)
 {
-#if ARCHIVE_VERSION_STAMP < 1009000
-	skipping("archive_read_support_compression_program()");
-#else
+	int r;
 	struct archive_entry *ae;
 	struct archive *a;
+
+	/*
+	 * First, test handling when a non-existent compression
+	 * program is requested.
+	 */
 	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, 0, archive_read_support_compression_none(a));
-	assertEqualIntA(a, 0, archive_read_support_compression_program(a, "gunzip"));
-	assert(0 == archive_read_support_format_all(a));
-	assertEqualIntA(a, 0, archive_read_open_memory(a, archive, sizeof(archive)));
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assert(archive_compression(a) == ARCHIVE_COMPRESSION_PROGRAM);
-	assert(archive_format(a) == ARCHIVE_FORMAT_TAR_USTAR);
-	assert(0 == archive_read_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assert(0 == archive_read_finish(a));
-#else
-	archive_read_finish(a);
-#endif
-#endif
+	r = archive_read_support_compression_program(a, "nonexistent");
+	if (r == ARCHIVE_FATAL) {
+		skipping("archive_read_support_compression_program() "
+		    "unsupported on this platform");
+		return;
+	}
+	assertEqualIntA(a, ARCHIVE_OK, r);
+	assertEqualIntA(a, ARCHIVE_OK,
+	    archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_FATAL,
+	    archive_read_open_memory(a, archive, sizeof(archive)));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_finish(a));
+
+	/*
+	 * If we have "gzip -d", try using that.
+	 */
+	if (!canGunzip()) {
+		skipping("Can't run gunzip program on this platform");
+		return;
+	}
+	assert((a = archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK,
+	    archive_read_support_compression_none(a));
+	assertEqualIntA(a, ARCHIVE_OK,
+	    archive_read_support_compression_program(a, "gunzip"));
+	assertEqualIntA(a, ARCHIVE_OK,
+	    archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK,
+	    archive_read_open_memory(a, archive, sizeof(archive)));
+	assertEqualIntA(a, ARCHIVE_OK,
+	    archive_read_next_header(a, &ae));
+	assertEqualInt(archive_compression(a), ARCHIVE_COMPRESSION_PROGRAM);
+	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_TAR_USTAR);
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_finish(a));
 }
 
 

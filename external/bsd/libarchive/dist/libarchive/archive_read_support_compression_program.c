@@ -24,25 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_compression_program.c,v 1.4 2008/06/15 10:45:57 kientzle Exp $");
-
-/* This capability is only available on POSIX systems. */
-#if !defined(HAVE_PIPE) || !defined(HAVE_FCNTL) || \
-    !(defined(HAVE_FORK) || defined(HAVE_VFORK))
-
-/*
- * On non-Posix systems, allow the program to build, but choke if
- * this function is actually invoked.
- */
-int
-archive_read_support_compression_program(struct archive *_a, const char *cmd)
-{
-	archive_set_error(_a, -1,
-	    "External compression programs not supported on this platform");
-	return (ARCHIVE_FATAL);
-}
-
-#else
+__FBSDID("$FreeBSD: head/lib/libarchive/archive_read_support_compression_program.c 201112 2009-12-28 06:59:35Z kientzle $");
 
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
@@ -55,6 +37,9 @@ archive_read_support_compression_program(struct archive *_a, const char *cmd)
 #endif
 #ifdef HAVE_LIMITS_H
 #  include <limits.h>
+#endif
+#ifdef HAVE_SIGNAL_H
+#  include <signal.h>
 #endif
 #ifdef HAVE_STDLIB_H
 #  include <stdlib.h>
@@ -70,272 +55,405 @@ archive_read_support_compression_program(struct archive *_a, const char *cmd)
 #include "archive_private.h"
 #include "archive_read_private.h"
 
-#include "filter_fork.h"
+int
+archive_read_support_compression_program(struct archive *a, const char *cmd)
+{
+	return (archive_read_support_compression_program_signature(a, cmd, NULL, 0));
+}
 
-struct archive_decompress_program {
-	char		*description;
-	pid_t		 child;
-	int		 child_stdin, child_stdout;
 
-	char		*child_out_buf;
-	char		*child_out_buf_next;
-	size_t		 child_out_buf_len, child_out_buf_avail;
+/* This capability is only available on POSIX systems. */
+#if (!defined(HAVE_PIPE) || !defined(HAVE_FCNTL) || \
+    !(defined(HAVE_FORK) || defined(HAVE_VFORK))) && (!defined(_WIN32) || defined(__CYGWIN__))
 
-	const char	*child_in_buf;
-	size_t		 child_in_buf_avail;
-};
+/*
+ * On non-Posix systems, allow the program to build, but choke if
+ * this function is actually invoked.
+ */
+int
+archive_read_support_compression_program_signature(struct archive *_a,
+    const char *cmd, void *signature, size_t signature_len)
+{
+	(void)_a; /* UNUSED */
+	(void)cmd; /* UNUSED */
+	(void)signature; /* UNUSED */
+	(void)signature_len; /* UNUSED */
 
-static int	archive_decompressor_program_bid(const void *, size_t);
-static int	archive_decompressor_program_finish(struct archive_read *);
-static int	archive_decompressor_program_init(struct archive_read *,
-		    const void *, size_t);
-static ssize_t	archive_decompressor_program_read_ahead(struct archive_read *,
-		    const void **, size_t);
-static ssize_t	archive_decompressor_program_read_consume(struct archive_read *,
-		    size_t);
+	archive_set_error(_a, -1,
+	    "External compression programs not supported on this platform");
+	return (ARCHIVE_FATAL);
+}
 
 int
-archive_read_support_compression_program(struct archive *_a, const char *cmd)
+__archive_read_program(struct archive_read_filter *self, const char *cmd)
+{
+	(void)self; /* UNUSED */
+	(void)cmd; /* UNUSED */
+
+	archive_set_error(&self->archive->archive, -1,
+	    "External compression programs not supported on this platform");
+	return (ARCHIVE_FATAL);
+}
+
+#else
+
+#include "filter_fork.h"
+
+/*
+ * The bidder object stores the command and the signature to watch for.
+ * The 'inhibit' entry here is used to ensure that unchecked filters never
+ * bid twice in the same pipeline.
+ */
+struct program_bidder {
+	char *cmd;
+	void *signature;
+	size_t signature_len;
+	int inhibit;
+};
+
+static int	program_bidder_bid(struct archive_read_filter_bidder *,
+		    struct archive_read_filter *upstream);
+static int	program_bidder_init(struct archive_read_filter *);
+static int	program_bidder_free(struct archive_read_filter_bidder *);
+
+/*
+ * The actual filter needs to track input and output data.
+ */
+struct program_filter {
+	char		*description;
+	pid_t		 child;
+	int		 exit_status;
+	int		 waitpid_return;
+	int		 child_stdin, child_stdout;
+
+	char		*out_buf;
+	size_t		 out_buf_len;
+};
+
+static ssize_t	program_filter_read(struct archive_read_filter *,
+		    const void **);
+static int	program_filter_close(struct archive_read_filter *);
+
+int
+archive_read_support_compression_program_signature(struct archive *_a,
+    const char *cmd, const void *signature, size_t signature_len)
 {
 	struct archive_read *a = (struct archive_read *)_a;
-	struct decompressor_t *decompressor;
+	struct archive_read_filter_bidder *bidder;
+	struct program_bidder *state;
 
-	if (cmd == NULL || *cmd == '\0')
-		return (ARCHIVE_WARN);
+	/*
+	 * Get a bidder object from the read core.
+	 */
+	bidder = __archive_read_get_bidder(a);
+	if (bidder == NULL)
+		return (ARCHIVE_FATAL);
 
-	decompressor = __archive_read_register_compression(a,
-		    archive_decompressor_program_bid,
-		    archive_decompressor_program_init);
-	if (decompressor == NULL)
-		return (ARCHIVE_WARN);
+	/*
+	 * Allocate our private state.
+	 */
+	state = (struct program_bidder *)calloc(sizeof (*state), 1);
+	if (state == NULL)
+		return (ARCHIVE_FATAL);
+	state->cmd = strdup(cmd);
+	if (signature != NULL && signature_len > 0) {
+		state->signature_len = signature_len;
+		state->signature = malloc(signature_len);
+		memcpy(state->signature, signature, signature_len);
+	}
 
-	decompressor->config = strdup(cmd);
+	/*
+	 * Fill in the bidder object.
+	 */
+	bidder->data = state;
+	bidder->bid = program_bidder_bid;
+	bidder->init = program_bidder_init;
+	bidder->options = NULL;
+	bidder->free = program_bidder_free;
+	return (ARCHIVE_OK);
+}
+
+static int
+program_bidder_free(struct archive_read_filter_bidder *self)
+{
+	struct program_bidder *state = (struct program_bidder *)self->data;
+	free(state->cmd);
+	free(state->signature);
+	free(self->data);
 	return (ARCHIVE_OK);
 }
 
 /*
- * If the user used us to register, they must really want us to
- * handle it, so this module always bids INT_MAX.
+ * If we do have a signature, bid only if that matches.
+ *
+ * If there's no signature, we bid INT_MAX the first time
+ * we're called, then never bid again.
  */
 static int
-archive_decompressor_program_bid(const void *buff, size_t len)
+program_bidder_bid(struct archive_read_filter_bidder *self,
+    struct archive_read_filter *upstream)
 {
-	(void)buff; /* UNUSED */
-	(void)len; /* UNUSED */
+	struct program_bidder *state = self->data;
+	const char *p;
 
-	return (INT_MAX); /* Default: We'll take it. */
+	/* If we have a signature, use that to match. */
+	if (state->signature_len > 0) {
+		p = __archive_read_filter_ahead(upstream,
+		    state->signature_len, NULL);
+		if (p == NULL)
+			return (0);
+		/* No match, so don't bid. */
+		if (memcmp(p, state->signature, state->signature_len) != 0)
+			return (0);
+		return ((int)state->signature_len * 8);
+	}
+
+	/* Otherwise, bid once and then never bid again. */
+	if (state->inhibit)
+		return (0);
+	state->inhibit = 1;
+	return (INT_MAX);
 }
 
-static ssize_t
-child_read(struct archive_read *a, char *buf, size_t buf_len)
+/*
+ * Shut down the child, return ARCHIVE_OK if it exited normally.
+ *
+ * Note that the return value is sticky; if we're called again,
+ * we won't reap the child again, but we will return the same status
+ * (including error message if the child came to a bad end).
+ */
+static int
+child_stop(struct archive_read_filter *self, struct program_filter *state)
 {
-	struct archive_decompress_program *state = a->decompressor->data;
-	ssize_t ret, requested;
-	const void *child_buf;
-
-	if (state->child_stdout == -1)
-		return (-1);
-
-	if (buf_len == 0)
-		return (-1);
-
-restart_read:
-	requested = buf_len > SSIZE_MAX ? SSIZE_MAX : buf_len;
-
-	do {
-		ret = read(state->child_stdout, buf, requested);
-	} while (ret == -1 && errno == EINTR);
-
-	if (ret > 0)
-		return (ret);
-	if (ret == 0 || (ret == -1 && errno == EPIPE)) {
+	/* Close our side of the I/O with the child. */
+	if (state->child_stdin != -1) {
+		close(state->child_stdin);
+		state->child_stdin = -1;
+	}
+	if (state->child_stdout != -1) {
 		close(state->child_stdout);
 		state->child_stdout = -1;
-		return (0);
 	}
-	if (ret == -1 && errno != EAGAIN)
-		return (-1);
 
-	if (state->child_in_buf_avail == 0) {
-		child_buf = state->child_in_buf;
-		ret = (a->client_reader)(&a->archive,
-		    a->client_data,&child_buf);
-		state->child_in_buf = (const char *)child_buf;
+	if (state->child != 0) {
+		/* Reap the child. */
+		do {
+			state->waitpid_return
+			    = waitpid(state->child, &state->exit_status, 0);
+		} while (state->waitpid_return == -1 && errno == EINTR);
+		state->child = 0;
+	}
 
-		if (ret < 0) {
-			close(state->child_stdin);
-			state->child_stdin = -1;
-			fcntl(state->child_stdout, F_SETFL, 0);
+	if (state->waitpid_return < 0) {
+		/* waitpid() failed?  This is ugly. */
+		archive_set_error(&self->archive->archive, ARCHIVE_ERRNO_MISC,
+		    "Child process exited badly");
+		return (ARCHIVE_WARN);
+	}
+
+#if !defined(_WIN32) || defined(__CYGWIN__)
+	if (WIFSIGNALED(state->exit_status)) {
+#ifdef SIGPIPE
+		/* If the child died because we stopped reading before
+		 * it was done, that's okay.  Some archive formats
+		 * have padding at the end that we routinely ignore. */
+		/* The alternative to this would be to add a step
+		 * before close(child_stdout) above to read from the
+		 * child until the child has no more to write. */
+		if (WTERMSIG(state->exit_status) == SIGPIPE)
+			return (ARCHIVE_OK);
+#endif
+		archive_set_error(&self->archive->archive, ARCHIVE_ERRNO_MISC,
+		    "Child process exited with signal %d",
+		    WTERMSIG(state->exit_status));
+		return (ARCHIVE_WARN);
+	}
+#endif /* !_WIN32 || __CYGWIN__ */
+
+	if (WIFEXITED(state->exit_status)) {
+		if (WEXITSTATUS(state->exit_status) == 0)
+			return (ARCHIVE_OK);
+
+		archive_set_error(&self->archive->archive,
+		    ARCHIVE_ERRNO_MISC,
+		    "Child process exited with status %d",
+		    WEXITSTATUS(state->exit_status));
+		return (ARCHIVE_WARN);
+	}
+
+	return (ARCHIVE_WARN);
+}
+
+/*
+ * Use select() to decide whether the child is ready for read or write.
+ */
+static ssize_t
+child_read(struct archive_read_filter *self, char *buf, size_t buf_len)
+{
+	struct program_filter *state = self->data;
+	ssize_t ret, requested, avail;
+	const char *p;
+
+	requested = buf_len > SSIZE_MAX ? SSIZE_MAX : buf_len;
+
+	for (;;) {
+		do {
+			ret = read(state->child_stdout, buf, requested);
+		} while (ret == -1 && errno == EINTR);
+
+		if (ret > 0)
+			return (ret);
+		if (ret == 0 || (ret == -1 && errno == EPIPE))
+			/* Child has closed its output; reap the child
+			 * and return the status. */
+			return (child_stop(self, state));
+		if (ret == -1 && errno != EAGAIN)
 			return (-1);
+
+		if (state->child_stdin == -1) {
+			/* Block until child has some I/O ready. */
+			__archive_check_child(state->child_stdin,
+			    state->child_stdout);
+			continue;
 		}
-		if (ret == 0) {
+
+		/* Get some more data from upstream. */
+		p = __archive_read_filter_ahead(self->upstream, 1, &avail);
+		if (p == NULL) {
 			close(state->child_stdin);
 			state->child_stdin = -1;
 			fcntl(state->child_stdout, F_SETFL, 0);
-			goto restart_read;
+			if (avail < 0)
+				return (avail);
+			continue;
 		}
-		state->child_in_buf_avail = ret;
-	}
 
-	if (state->child_stdin == -1) {
-		fcntl(state->child_stdout, F_SETFL, 0);
-		__archive_check_child(state->child_stdin, state->child_stdout);
-		goto restart_read;
-	}
+		do {
+			ret = write(state->child_stdin, p, avail);
+		} while (ret == -1 && errno == EINTR);
 
-	do {
-		ret = write(state->child_stdin, state->child_in_buf,
-		    state->child_in_buf_avail);
-	} while (ret == -1 && errno == EINTR);
-
-	if (ret > 0) {
-		state->child_in_buf += ret;
-		state->child_in_buf_avail -= ret;
-		goto restart_read;
-	} else if (ret == -1 && errno == EAGAIN) {
-		__archive_check_child(state->child_stdin, state->child_stdout);
-		goto restart_read;
-	} else if (ret == 0 || (ret == -1 && errno == EPIPE)) {
-		close(state->child_stdin);
-		state->child_stdin = -1;
-		fcntl(state->child_stdout, F_SETFL, 0);
-		goto restart_read;
-	} else {
-		close(state->child_stdin);
-		state->child_stdin = -1;
-		fcntl(state->child_stdout, F_SETFL, 0);
-		return (-1);
+		if (ret > 0) {
+			/* Consume whatever we managed to write. */
+			__archive_read_filter_consume(self->upstream, ret);
+		} else if (ret == -1 && errno == EAGAIN) {
+			/* Block until child has some I/O ready. */
+			__archive_check_child(state->child_stdin,
+			    state->child_stdout);
+		} else {
+			/* Write failed. */
+			close(state->child_stdin);
+			state->child_stdin = -1;
+			fcntl(state->child_stdout, F_SETFL, 0);
+			/* If it was a bad error, we're done; otherwise
+			 * it was EPIPE or EOF, and we can still read
+			 * from the child. */
+			if (ret == -1 && errno != EPIPE)
+				return (-1);
+		}
 	}
 }
 
-static int
-archive_decompressor_program_init(struct archive_read *a, const void *buff, size_t n)
+int
+__archive_read_program(struct archive_read_filter *self, const char *cmd)
 {
-	struct archive_decompress_program	*state;
-	const char *cmd = a->decompressor->config;
+	struct program_filter	*state;
+	static const size_t out_buf_len = 65536;
+	char *out_buf;
+	char *description;
 	const char *prefix = "Program: ";
 
-
-	state = (struct archive_decompress_program *)malloc(sizeof(*state));
-	if (!state) {
-		archive_set_error(&a->archive, ENOMEM,
+	state = (struct program_filter *)calloc(1, sizeof(*state));
+	out_buf = (char *)malloc(out_buf_len);
+	description = (char *)malloc(strlen(prefix) + strlen(cmd) + 1);
+	if (state == NULL || out_buf == NULL || description == NULL) {
+		archive_set_error(&self->archive->archive, ENOMEM,
 		    "Can't allocate input data");
+		free(state);
+		free(out_buf);
+		free(description);
 		return (ARCHIVE_FATAL);
 	}
 
-	a->archive.compression_code = ARCHIVE_COMPRESSION_PROGRAM;
-	state->description = (char *)malloc(strlen(prefix) + strlen(cmd) + 1);
+	self->code = ARCHIVE_COMPRESSION_PROGRAM;
+	state->description = description;
 	strcpy(state->description, prefix);
 	strcat(state->description, cmd);
-	a->archive.compression_name = state->description;
+	self->name = state->description;
 
-	state->child_out_buf_next = state->child_out_buf = malloc(65536);
-	if (!state->child_out_buf) {
-		free(state);
-		archive_set_error(&a->archive, ENOMEM,
-		    "Can't allocate filter buffer");
-		return (ARCHIVE_FATAL);
-	}
-	state->child_out_buf_len = 65536;
-	state->child_out_buf_avail = 0;
-
-	state->child_in_buf = buff;
-	state->child_in_buf_avail = n;
+	state->out_buf = out_buf;
+	state->out_buf_len = out_buf_len;
 
 	if ((state->child = __archive_create_child(cmd,
 		 &state->child_stdin, &state->child_stdout)) == -1) {
-		free(state->child_out_buf);
+		free(state->out_buf);
 		free(state);
-		archive_set_error(&a->archive, EINVAL,
+		archive_set_error(&self->archive->archive, EINVAL,
 		    "Can't initialise filter");
 		return (ARCHIVE_FATAL);
 	}
 
-	a->decompressor->data = state;
-	a->decompressor->read_ahead = archive_decompressor_program_read_ahead;
-	a->decompressor->consume = archive_decompressor_program_read_consume;
-	a->decompressor->skip = NULL;
-	a->decompressor->finish = archive_decompressor_program_finish;
+	self->data = state;
+	self->read = program_filter_read;
+	self->skip = NULL;
+	self->close = program_filter_close;
 
 	/* XXX Check that we can read at least one byte? */
 	return (ARCHIVE_OK);
 }
 
-static ssize_t
-archive_decompressor_program_read_ahead(struct archive_read *a, const void **buff,
-    size_t min)
+static int
+program_bidder_init(struct archive_read_filter *self)
 {
-	struct archive_decompress_program *state;
-	ssize_t bytes_read;
+	struct program_bidder   *bidder_state;
 
-	state = (struct archive_decompress_program *)a->decompressor->data;
-
-	if (min > state->child_out_buf_len)
-		min = state->child_out_buf_len;
-
-	while (state->child_stdout != -1 && min > state->child_out_buf_avail) {
-		if (state->child_out_buf != state->child_out_buf_next) {
-			memmove(state->child_out_buf, state->child_out_buf_next,
-			    state->child_out_buf_avail);
-			state->child_out_buf_next = state->child_out_buf;
-		}
-
-		bytes_read = child_read(a,
-		    state->child_out_buf + state->child_out_buf_avail,
-		    state->child_out_buf_len - state->child_out_buf_avail);
-		if (bytes_read == -1)
-			return (-1);
-		if (bytes_read == 0)
-			break;
-		state->child_out_buf_avail += bytes_read;
-		a->archive.raw_position += bytes_read;
-	}
-
-	*buff = state->child_out_buf_next;
-	return (state->child_out_buf_avail);
+	bidder_state = (struct program_bidder *)self->bidder->data;
+	return (__archive_read_program(self, bidder_state->cmd));
 }
 
 static ssize_t
-archive_decompressor_program_read_consume(struct archive_read *a, size_t request)
+program_filter_read(struct archive_read_filter *self, const void **buff)
 {
-	struct archive_decompress_program *state;
+	struct program_filter *state;
+	ssize_t bytes;
+	size_t total;
+	char *p;
 
-	state = (struct archive_decompress_program *)a->decompressor->data;
+	state = (struct program_filter *)self->data;
 
-	state->child_out_buf_next += request;
-	state->child_out_buf_avail -= request;
+	total = 0;
+	p = state->out_buf;
+	while (state->child_stdout != -1 && total < state->out_buf_len) {
+		bytes = child_read(self, p, state->out_buf_len - total);
+		if (bytes < 0)
+			/* No recovery is possible if we can no longer
+			 * read from the child. */
+			return (ARCHIVE_FATAL);
+		if (bytes == 0)
+			/* We got EOF from the child. */
+			break;
+		total += bytes;
+		p += bytes;
+	}
 
-	a->archive.file_position += request;
-	return (request);
+	*buff = state->out_buf;
+	return (total);
 }
 
 static int
-archive_decompressor_program_finish(struct archive_read *a)
+program_filter_close(struct archive_read_filter *self)
 {
-	struct archive_decompress_program	*state;
-	int status;
+	struct program_filter	*state;
+	int e;
 
-	state = (struct archive_decompress_program *)a->decompressor->data;
-
-	/* Release our configuration data. */
-	free(a->decompressor->config);
-	a->decompressor->config = NULL;
-
-	/* Shut down the child. */
-	if (state->child_stdin != -1)
-		close(state->child_stdin);
-	if (state->child_stdout != -1)
-		close(state->child_stdout);
-	while (waitpid(state->child, &status, 0) == -1 && errno == EINTR)
-		continue;
+	state = (struct program_filter *)self->data;
+	e = child_stop(self, state);
 
 	/* Release our private data. */
-	free(state->child_out_buf);
+	free(state->out_buf);
 	free(state->description);
 	free(state);
-	a->decompressor->data = NULL;
 
-	return (ARCHIVE_OK);
+	return (e);
 }
 
 #endif /* !defined(HAVE_PIPE) || !defined(HAVE_VFORK) || !defined(HAVE_FCNTL) */

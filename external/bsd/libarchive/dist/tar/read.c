@@ -24,15 +24,10 @@
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/read.c,v 1.38 2008/05/26 17:10:10 kientzle Exp $");
+__FBSDID("$FreeBSD: src/usr.bin/tar/read.c,v 1.40 2008/08/21 06:41:14 kientzle Exp $");
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#endif
-#ifdef MAJOR_IN_MKDEV
-#include <sys/mkdev.h>
-#elif defined(MAJOR_IN_SYSMACROS)
-#include <sys/sysmacros.h>
 #endif
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -53,6 +48,9 @@ __FBSDID("$FreeBSD: src/usr.bin/tar/read.c,v 1.38 2008/05/26 17:10:10 kientzle E
 #ifdef HAVE_PWD_H
 #include <pwd.h>
 #endif
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
 #include <stdio.h>
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
@@ -68,6 +66,13 @@ __FBSDID("$FreeBSD: src/usr.bin/tar/read.c,v 1.38 2008/05/26 17:10:10 kientzle E
 #endif
 
 #include "bsdtar.h"
+#include "err.h"
+
+struct progress_data {
+	struct bsdtar *bsdtar;
+	struct archive *archive;
+	struct archive_entry *entry;
+};
 
 static void	list_item_verbose(struct bsdtar *, FILE *,
 		    struct archive_entry *);
@@ -77,28 +82,48 @@ void
 tar_mode_t(struct bsdtar *bsdtar)
 {
 	read_archive(bsdtar, 't');
-	unmatched_inclusions_warn(bsdtar, "Not found in archive");
+	if (lafe_unmatched_inclusions_warn(bsdtar->matching, "Not found in archive") != 0)
+		bsdtar->return_value = 1;
 }
 
 void
 tar_mode_x(struct bsdtar *bsdtar)
 {
-	/* We want to catch SIGINFO and SIGUSR1. */
-	siginfo_init(bsdtar);
-
 	read_archive(bsdtar, 'x');
 
-	unmatched_inclusions_warn(bsdtar, "Not found in archive");
-	/* Restore old SIGINFO + SIGUSR1 handlers. */
-	siginfo_done(bsdtar);
+	if (lafe_unmatched_inclusions_warn(bsdtar->matching, "Not found in archive") != 0)
+		bsdtar->return_value = 1;
 }
 
 static void
-progress_func(void * cookie)
+progress_func(void *cookie)
 {
-	struct bsdtar * bsdtar = cookie;
+	struct progress_data *progress_data = cookie;
+	struct bsdtar *bsdtar = progress_data->bsdtar;
+	struct archive *a = progress_data->archive;
+	struct archive_entry *entry = progress_data->entry;
+	uint64_t comp, uncomp;
 
-	siginfo_printinfo(bsdtar, 0);
+	if (!need_report())
+		return;
+
+	if (bsdtar->verbose)
+		fprintf(stderr, "\n");
+	if (a != NULL) {
+		comp = archive_position_compressed(a);
+		uncomp = archive_position_uncompressed(a);
+		fprintf(stderr,
+		    "In: %s bytes, compression %d%%;",
+		    tar_i64toa(comp), (int)((uncomp - comp) * 100 / uncomp));
+		fprintf(stderr, "  Out: %d files, %s bytes\n",
+		    archive_file_count(a), tar_i64toa(uncomp));
+	}
+	if (entry != NULL) {
+		safe_fprintf(stderr, "Current: %s",
+		    archive_entry_pathname(entry));
+		fprintf(stderr, " (%s bytes)\n",
+		    tar_i64toa(archive_entry_size(entry)));
+	}
 }
 
 /*
@@ -107,6 +132,7 @@ progress_func(void * cookie)
 static void
 read_archive(struct bsdtar *bsdtar, char mode)
 {
+	struct progress_data	progress_data;
 	FILE			 *out;
 	struct archive		 *a;
 	struct archive_entry	 *entry;
@@ -114,12 +140,13 @@ read_archive(struct bsdtar *bsdtar, char mode)
 	int			  r;
 
 	while (*bsdtar->argv) {
-		include(bsdtar, *bsdtar->argv);
+		lafe_include(&bsdtar->matching, *bsdtar->argv);
 		bsdtar->argv++;
 	}
 
 	if (bsdtar->names_from_file != NULL)
-		include_from_file(bsdtar, bsdtar->names_from_file);
+		lafe_include_from_file(&bsdtar->matching,
+		    bsdtar->names_from_file, bsdtar->option_null);
 
 	a = archive_read_new();
 	if (bsdtar->compress_program != NULL)
@@ -127,26 +154,30 @@ read_archive(struct bsdtar *bsdtar, char mode)
 	else
 		archive_read_support_compression_all(a);
 	archive_read_support_format_all(a);
+	if (ARCHIVE_OK != archive_read_set_options(a, bsdtar->option_options))
+		lafe_errc(1, 0, "%s", archive_error_string(a));
 	if (archive_read_open_file(a, bsdtar->filename,
 	    bsdtar->bytes_per_block != 0 ? bsdtar->bytes_per_block :
 	    DEFAULT_BYTES_PER_BLOCK))
-		bsdtar_errc(bsdtar, 1, 0, "Error opening archive: %s",
+		lafe_errc(1, 0, "Error opening archive: %s",
 		    archive_error_string(a));
 
 	do_chdir(bsdtar);
 
 	if (mode == 'x') {
 		/* Set an extract callback so that we can handle SIGINFO. */
+		progress_data.bsdtar = bsdtar;
+		progress_data.archive = a;
 		archive_read_extract_set_progress_callback(a, progress_func,
-		    bsdtar);
+		    &progress_data);
 	}
 
 	if (mode == 'x' && bsdtar->option_chroot) {
 #if HAVE_CHROOT
 		if (chroot(".") != 0)
-			bsdtar_errc(bsdtar, 1, errno, "Can't chroot to \".\"");
+			lafe_errc(1, errno, "Can't chroot to \".\"");
 #else
-		bsdtar_errc(bsdtar, 1, 0,
+		lafe_errc(1, 0,
 		    "chroot isn't supported on this platform");
 #endif
 	}
@@ -154,19 +185,20 @@ read_archive(struct bsdtar *bsdtar, char mode)
 	for (;;) {
 		/* Support --fast-read option */
 		if (bsdtar->option_fast_read &&
-		    unmatched_inclusions(bsdtar) == 0)
+		    lafe_unmatched_inclusions(bsdtar->matching) == 0)
 			break;
 
 		r = archive_read_next_header(a, &entry);
+		progress_data.entry = entry;
 		if (r == ARCHIVE_EOF)
 			break;
 		if (r < ARCHIVE_OK)
-			bsdtar_warnc(bsdtar, 0, "%s", archive_error_string(a));
+			lafe_warnc(0, "%s", archive_error_string(a));
 		if (r <= ARCHIVE_WARN)
 			bsdtar->return_value = 1;
 		if (r == ARCHIVE_RETRY) {
 			/* Retryable error: try again */
-			bsdtar_warnc(bsdtar, 0, "Retrying...");
+			lafe_warnc(0, "Retrying...");
 			continue;
 		}
 		if (r == ARCHIVE_FATAL)
@@ -207,25 +239,20 @@ read_archive(struct bsdtar *bsdtar, char mode)
 		 * rewrite, there would be no way to exclude foo1/bar
 		 * while allowing foo2/bar.)
 		 */
-		if (excluded(bsdtar, archive_entry_pathname(entry)))
+		if (lafe_excluded(bsdtar->matching, archive_entry_pathname(entry)))
 			continue; /* Excluded by a pattern test. */
-
-		/*
-		 * Modify the pathname as requested by the user.  We
-		 * do this for -t as well to give users a way to
-		 * preview the effects of their rewrites.  We also do
-		 * this before extraction security checks (including
-		 * leading '/' removal).  Note that some rewrite
-		 * failures prevent extraction.
-		 */
-		if (edit_pathname(bsdtar, entry))
-			continue; /* Excluded by a rewrite failure. */
 
 		if (mode == 't') {
 			/* Perversely, gtar uses -O to mean "send to stderr"
 			 * when used with -t. */
 			out = bsdtar->option_stdout ? stderr : stdout;
 
+			/*
+			 * TODO: Provide some reasonable way to
+			 * preview rewrites.  gtar always displays
+			 * the unedited path in -t output, which means
+			 * you cannot easily preview rewrites.
+			 */
 			if (bsdtar->verbose < 2)
 				safe_fprintf(out, "%s",
 				    archive_entry_pathname(entry));
@@ -235,23 +262,27 @@ read_archive(struct bsdtar *bsdtar, char mode)
 			r = archive_read_data_skip(a);
 			if (r == ARCHIVE_WARN) {
 				fprintf(out, "\n");
-				bsdtar_warnc(bsdtar, 0, "%s",
+				lafe_warnc(0, "%s",
 				    archive_error_string(a));
 			}
 			if (r == ARCHIVE_RETRY) {
 				fprintf(out, "\n");
-				bsdtar_warnc(bsdtar, 0, "%s",
+				lafe_warnc(0, "%s",
 				    archive_error_string(a));
 			}
 			if (r == ARCHIVE_FATAL) {
 				fprintf(out, "\n");
-				bsdtar_warnc(bsdtar, 0, "%s",
+				lafe_warnc(0, "%s",
 				    archive_error_string(a));
 				bsdtar->return_value = 1;
 				break;
 			}
 			fprintf(out, "\n");
 		} else {
+			/* Note: some rewrite failures prevent extraction. */
+			if (edit_pathname(bsdtar, entry))
+				continue; /* Excluded by a rewrite failure. */
+
 			if (bsdtar->option_interactive &&
 			    !yes("extract '%s'", archive_entry_pathname(entry)))
 				continue;
@@ -266,10 +297,7 @@ read_archive(struct bsdtar *bsdtar, char mode)
 				fflush(stderr);
 			}
 
-			/* Tell the SIGINFO-handler code what we're doing. */
-			siginfo_setinfo(bsdtar, "extracting",
-			    archive_entry_pathname(entry), 0);
-			siginfo_printinfo(bsdtar, 0);
+			// TODO siginfo_printinfo(bsdtar, 0);
 
 			if (bsdtar->option_stdout)
 				r = archive_read_data_into_fd(a, 1);
@@ -293,6 +321,13 @@ read_archive(struct bsdtar *bsdtar, char mode)
 		}
 	}
 
+
+	r = archive_read_close(a);
+	if (r != ARCHIVE_OK)
+		lafe_warnc(0, "%s", archive_error_string(a));
+	if (r <= ARCHIVE_WARN)
+		bsdtar->return_value = 1;
+
 	if (bsdtar->verbose > 2)
 		fprintf(stdout, "Archive Format: %s,  Compression: %s\n",
 		    archive_format_name(a), archive_compression_name(a));
@@ -312,15 +347,12 @@ read_archive(struct bsdtar *bsdtar, char mode)
 static void
 list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 {
-	const struct stat	*st;
 	char			 tmp[100];
 	size_t			 w;
 	const char		*p;
 	const char		*fmt;
 	time_t			 tim;
 	static time_t		 now;
-
-	st = archive_entry_stat(entry);
 
 	/*
 	 * We avoid collecting the entire list in memory at once by
@@ -337,12 +369,13 @@ list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 		time(&now);
 	fprintf(out, "%s %d ",
 	    archive_entry_strmode(entry),
-	    (int)(st->st_nlink));
+	    archive_entry_nlink(entry));
 
 	/* Use uname if it's present, else uid. */
 	p = archive_entry_uname(entry);
 	if ((p == NULL) || (*p == '\0')) {
-		sprintf(tmp, "%lu ", (unsigned long)st->st_uid);
+		sprintf(tmp, "%lu ",
+		    (unsigned long)archive_entry_uid(entry));
 		p = tmp;
 	}
 	w = strlen(p);
@@ -356,7 +389,8 @@ list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 		fprintf(out, "%s", p);
 		w = strlen(p);
 	} else {
-		sprintf(tmp, "%lu", (unsigned long)st->st_gid);
+		sprintf(tmp, "%lu",
+		    (unsigned long)archive_entry_gid(entry));
 		w = strlen(tmp);
 		fprintf(out, "%s", tmp);
 	}
@@ -366,29 +400,30 @@ list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 	 * total width of group and devnum/filesize fields be gs_width.
 	 * If gs_width is too small, grow it.
 	 */
-	if (S_ISCHR(st->st_mode) || S_ISBLK(st->st_mode)) {
+	if (archive_entry_filetype(entry) == AE_IFCHR
+	    || archive_entry_filetype(entry) == AE_IFBLK) {
 		sprintf(tmp, "%lu,%lu",
-		    (unsigned long)major(st->st_rdev),
-		    (unsigned long)minor(st->st_rdev)); /* ls(1) also casts here. */
+		    (unsigned long)archive_entry_rdevmajor(entry),
+		    (unsigned long)archive_entry_rdevminor(entry));
 	} else {
-		/*
-		 * Note the use of platform-dependent macros to format
-		 * the filesize here.  We need the format string and the
-		 * corresponding type for the cast.
-		 */
-		sprintf(tmp, BSDTAR_FILESIZE_PRINTF,
-		    (BSDTAR_FILESIZE_TYPE)st->st_size);
+		strcpy(tmp, tar_i64toa(archive_entry_size(entry)));
 	}
 	if (w + strlen(tmp) >= bsdtar->gs_width)
 		bsdtar->gs_width = w+strlen(tmp)+1;
 	fprintf(out, "%*s", (int)(bsdtar->gs_width - w), tmp);
 
 	/* Format the time using 'ls -l' conventions. */
-	tim = (time_t)st->st_mtime;
-	if (abs(tim - now) > (365/2)*86400)
-		fmt = bsdtar->day_first ? "%e %b  %Y" : "%b %e  %Y";
+	tim = archive_entry_mtime(entry);
+#define HALF_YEAR (time_t)365 * 86400 / 2
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#define DAY_FMT  "%d"  /* Windows' strftime function does not support %e format. */
+#else
+#define DAY_FMT  "%e"  /* Day number without leading zeros */
+#endif
+	if (tim < now - HALF_YEAR || tim > now + HALF_YEAR)
+		fmt = bsdtar->day_first ? DAY_FMT " %b  %Y" : "%b " DAY_FMT "  %Y";
 	else
-		fmt = bsdtar->day_first ? "%e %b %H:%M" : "%b %e %H:%M";
+		fmt = bsdtar->day_first ? DAY_FMT " %b %H:%M" : "%b " DAY_FMT " %H:%M";
 	strftime(tmp, sizeof(tmp), fmt, localtime(&tim));
 	fprintf(out, " %s ", tmp);
 	safe_fprintf(out, "%s", archive_entry_pathname(entry));
@@ -397,6 +432,6 @@ list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 	if (archive_entry_hardlink(entry)) /* Hard link */
 		safe_fprintf(out, " link to %s",
 		    archive_entry_hardlink(entry));
-	else if (S_ISLNK(st->st_mode)) /* Symbolic link */
+	else if (archive_entry_symlink(entry)) /* Symbolic link */
 		safe_fprintf(out, " -> %s", archive_entry_symlink(entry));
 }

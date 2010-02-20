@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_disk_secure.c,v 1.4 2008/06/15 10:35:22 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/test/test_write_disk_secure.c 201247 2009-12-30 05:59:21Z kientzle $");
 
 #define UMASK 022
 
@@ -34,15 +34,15 @@ __FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_disk_secure.c,v 1.4 2008/
 
 DEFINE_TEST(test_write_disk_secure)
 {
-#if ARCHIVE_VERSION_STAMP < 1009000
+#if ARCHIVE_VERSION_NUMBER < 1009000
 	skipping("archive_write_disk interface");
-#else
+#elif !defined(_WIN32) || defined(__CYGWIN__)
 	struct archive *a;
 	struct archive_entry *ae;
 	struct stat st;
 
 	/* Start with a known umask. */
-	umask(UMASK);
+	assertUmask(UMASK);
 
 	/* Create an archive_write_disk object. */
 	assert((a = archive_write_disk_new()) != NULL);
@@ -80,7 +80,7 @@ DEFINE_TEST(test_write_disk_secure)
 	archive_entry_set_mode(ae, S_IFREG | 0777);
 	archive_write_disk_set_options(a, ARCHIVE_EXTRACT_SECURE_SYMLINKS);
 	failure("Extracting a file through a symlink should fail here.");
-	assertEqualInt(ARCHIVE_WARN, archive_write_header(a, ae));
+	assertEqualInt(ARCHIVE_FAILED, archive_write_header(a, ae));
 	archive_entry_free(ae);
 	assert(0 == archive_write_finish_entry(a));
 
@@ -105,12 +105,80 @@ DEFINE_TEST(test_write_disk_secure)
 	archive_entry_free(ae);
 	assert(0 == archive_write_finish_entry(a));
 
+	/*
+	 * Without security checks, extracting a dir over a link to a
+	 * dir should follow the link.
+	 */
+	/* Create a symlink to a dir. */
+	assert((ae = archive_entry_new()) != NULL);
+	archive_entry_copy_pathname(ae, "link_to_dir3");
+	archive_entry_set_mode(ae, S_IFLNK | 0777);
+	archive_entry_set_symlink(ae, "dir");
+	archive_write_disk_set_options(a, 0);
+	assert(0 == archive_write_header(a, ae));
+	assert(0 == archive_write_finish_entry(a));
+	/* Extract a dir whose name matches the symlink. */
+	assert(archive_entry_clear(ae) != NULL);
+	archive_entry_copy_pathname(ae, "link_to_dir3");
+	archive_entry_set_mode(ae, S_IFDIR | 0777);
+	assert(0 == archive_write_header(a, ae));
+	assert(0 == archive_write_finish_entry(a));
+	/* Verify link was followed. */
+	assertEqualInt(0, lstat("link_to_dir3", &st));
+	assert(S_ISLNK(st.st_mode));
+	archive_entry_free(ae);
 
-#if ARCHIVE_API_VERSION > 1
+	/*
+	 * As above, but a broken link, so the link should get replaced.
+	 */
+	/* Create a symlink to a dir. */
+	assert((ae = archive_entry_new()) != NULL);
+	archive_entry_copy_pathname(ae, "link_to_dir4");
+	archive_entry_set_mode(ae, S_IFLNK | 0777);
+	archive_entry_set_symlink(ae, "nonexistent_dir");
+	archive_write_disk_set_options(a, 0);
+	assert(0 == archive_write_header(a, ae));
+	assert(0 == archive_write_finish_entry(a));
+	/* Extract a dir whose name matches the symlink. */
+	assert(archive_entry_clear(ae) != NULL);
+	archive_entry_copy_pathname(ae, "link_to_dir4");
+	archive_entry_set_mode(ae, S_IFDIR | 0777);
+	assert(0 == archive_write_header(a, ae));
+	assert(0 == archive_write_finish_entry(a));
+	/* Verify link was replaced. */
+	assertEqualInt(0, lstat("link_to_dir4", &st));
+	assert(S_ISDIR(st.st_mode));
+	archive_entry_free(ae);
+
+	/*
+	 * As above, but a link to a non-dir, so the link should get replaced.
+	 */
+	/* Create a regular file and a symlink to it */
+	assert((ae = archive_entry_new()) != NULL);
+	archive_entry_copy_pathname(ae, "non_dir");
+	archive_entry_set_mode(ae, S_IFREG | 0777);
+	archive_write_disk_set_options(a, 0);
+	assert(0 == archive_write_header(a, ae));
+	assert(0 == archive_write_finish_entry(a));
+	/* Create symlink to the file. */
+	archive_entry_copy_pathname(ae, "link_to_dir5");
+	archive_entry_set_mode(ae, S_IFLNK | 0777);
+	archive_entry_set_symlink(ae, "non_dir");
+	archive_write_disk_set_options(a, 0);
+	assert(0 == archive_write_header(a, ae));
+	assert(0 == archive_write_finish_entry(a));
+	/* Extract a dir whose name matches the symlink. */
+	assert(archive_entry_clear(ae) != NULL);
+	archive_entry_copy_pathname(ae, "link_to_dir5");
+	archive_entry_set_mode(ae, S_IFDIR | 0777);
+	assert(0 == archive_write_header(a, ae));
+	assert(0 == archive_write_finish_entry(a));
+	/* Verify link was replaced. */
+	assertEqualInt(0, lstat("link_to_dir5", &st));
+	assert(S_ISDIR(st.st_mode));
+	archive_entry_free(ae);
+
 	assert(0 == archive_write_finish(a));
-#else
-	archive_write_finish(a);
-#endif
 
 	/* Test the entries on disk. */
 	assert(0 == lstat("dir", &st));

@@ -25,11 +25,11 @@
 
 #include "archive_platform.h"
 
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_compression_program.c,v 1.3 2008/06/15 10:45:57 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/archive_write_set_compression_program.c 201104 2009-12-28 03:14:30Z kientzle $");
 
 /* This capability is only available on POSIX systems. */
-#if !defined(HAVE_PIPE) || !defined(HAVE_FCNTL) || \
-    !(defined(HAVE_FORK) || defined(HAVE_VFORK))
+#if (!defined(HAVE_PIPE) || !defined(HAVE_FCNTL) || \
+    !(defined(HAVE_FORK) || defined(HAVE_VFORK))) && (!defined(_WIN32) || defined(__CYGWIN__))
 #include "archive.h"
 
 /*
@@ -230,11 +230,9 @@ static int
 archive_compressor_program_write(struct archive_write *a, const void *buff,
     size_t length)
 {
-	struct private_data *state;
 	ssize_t ret;
 	const char *buf;
 
-	state = (struct private_data *)a->compressor.data;
 	if (a->client_writer == NULL) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_PROGRAMMER,
 		    "No write callback is registered?  "

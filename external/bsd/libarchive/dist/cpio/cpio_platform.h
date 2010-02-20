@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $FreeBSD: src/usr.bin/cpio/cpio_platform.h,v 1.2 2008/12/06 07:15:42 kientzle Exp $
  */
 
 /*
@@ -37,19 +37,18 @@
 #if defined(PLATFORM_CONFIG_H)
 /* Use hand-built config.h in environments that need it. */
 #include PLATFORM_CONFIG_H
-#elif defined(HAVE_CONFIG_H)
-/* Most POSIX platforms use the 'configure' script to build config.h */
-#include "../config.h"
 #else
-/* Warn if cpio hasn't been (automatically or manually) configured. */
-#error Oops: No config.h and no built-in configuration in cpio_platform.h.
-#endif /* !HAVE_CONFIG_H */
+/* Read config.h or die trying. */
+#include "config.h"
+#endif
 
-/* No non-FreeBSD platform will have __FBSDID, so just define it here. */
-#ifdef __FreeBSD__
-#include <sys/cdefs.h>  /* For __FBSDID */
-#else
-/* Just leaving this macro replacement empty leads to a dangling semicolon. */
+/* Get a real definition for __FBSDID if we can */
+#if HAVE_SYS_CDEFS_H
+#include <sys/cdefs.h>
+#endif
+
+/* If not, define it so as to avoid dangling semicolons. */
+#ifndef __FBSDID
 #define	__FBSDID(a)     struct _undefined_hack
 #endif
 
@@ -63,22 +62,16 @@
 #include "archive_entry.h"
 #endif
 
-/*
- * We need to be able to display a filesize using printf().  The type
- * and format string here must be compatible with one another and
- * large enough for any file.
- */
-#if HAVE_UINTMAX_T
-#define	CPIO_FILESIZE_TYPE	uintmax_t
-#define	CPIO_FILESIZE_PRINTF	"%ju"
+/* How to mark functions that don't return. */
+#if defined(__GNUC__) && (__GNUC__ > 2 || \
+                          (__GNUC__ == 2 && __GNUC_MINOR__ >= 5))
+#define __LA_DEAD       __attribute__((__noreturn__))
 #else
-#if HAVE_UNSIGNED_LONG_LONG
-#define	CPIO_FILESIZE_TYPE	unsigned long long
-#define	CPIO_FILESIZE_PRINTF	"%llu"
-#else
-#define	CPIO_FILESIZE_TYPE	unsigned long
-#define	CPIO_FILESIZE_PRINTF	"%lu"
+#define __LA_DEAD
 #endif
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#include "cpio_windows.h"
 #endif
 
 #endif /* !CPIO_PLATFORM_H_INCLUDED */

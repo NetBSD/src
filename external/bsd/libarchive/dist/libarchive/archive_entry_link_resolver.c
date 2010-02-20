@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_entry_link_resolver.c,v 1.3 2008/06/15 04:31:43 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/archive_entry_link_resolver.c 201100 2009-12-28 03:05:31Z kientzle $");
 
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -181,15 +181,17 @@ archive_entry_linkify(struct archive_entry_linkresolver *res,
 	/* If it has only one link, then we're done. */
 	if (archive_entry_nlink(*e) == 1)
 		return;
-	/* Directories never have hardlinks. */
-	if (archive_entry_filetype(*e) == AE_IFDIR)
+	/* Directories, devices never have hardlinks. */
+	if (archive_entry_filetype(*e) == AE_IFDIR
+	    || archive_entry_filetype(*e) == AE_IFBLK
+	    || archive_entry_filetype(*e) == AE_IFCHR)
 		return;
 
 	switch (res->strategy) {
 	case ARCHIVE_ENTRY_LINKIFY_LIKE_TAR:
 		le = find_entry(res, *e);
 		if (le != NULL) {
-			archive_entry_set_size(*e, 0);
+			archive_entry_unset_size(*e);
 			archive_entry_copy_hardlink(*e,
 			    archive_entry_pathname(le->canonical));
 		} else
@@ -217,7 +219,7 @@ archive_entry_linkify(struct archive_entry_linkresolver *res,
 			*e = le->entry;
 			le->entry = t;
 			/* Make the old entry into a hardlink. */
-			archive_entry_set_size(*e, 0);
+			archive_entry_unset_size(*e);
 			archive_entry_copy_hardlink(*e,
 			    archive_entry_pathname(le->canonical));
 			/* If we ran out of links, return the
@@ -249,7 +251,7 @@ find_entry(struct archive_entry_linkresolver *res,
 	struct links_entry	*le;
 	int			 hash, bucket;
 	dev_t			 dev;
-	ino_t			 ino;
+	int64_t			 ino;
 
 	/* Free a held entry. */
 	if (res->spare != NULL) {
@@ -264,15 +266,15 @@ find_entry(struct archive_entry_linkresolver *res,
 		return (NULL);
 
 	dev = archive_entry_dev(entry);
-	ino = archive_entry_ino(entry);
-	hash = dev ^ ino;
+	ino = archive_entry_ino64(entry);
+	hash = (int)(dev ^ ino);
 
 	/* Try to locate this entry in the links cache. */
 	bucket = hash % res->number_buckets;
 	for (le = res->buckets[bucket]; le != NULL; le = le->next) {
 		if (le->hash == hash
 		    && dev == archive_entry_dev(le->canonical)
-		    && ino == archive_entry_ino(le->canonical)) {
+		    && ino == archive_entry_ino64(le->canonical)) {
 			/*
 			 * Decrement link count each time and release
 			 * the entry if it hits zero.  This saves
@@ -350,7 +352,7 @@ insert_entry(struct archive_entry_linkresolver *res,
 	if (res->number_entries > res->number_buckets * 2)
 		grow_hash(res);
 
-	hash = archive_entry_dev(entry) ^ archive_entry_ino(entry);
+	hash = archive_entry_dev(entry) ^ archive_entry_ino64(entry);
 	bucket = hash % res->number_buckets;
 
 	/* If we could allocate the entry, record it. */

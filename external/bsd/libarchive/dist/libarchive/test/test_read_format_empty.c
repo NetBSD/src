@@ -23,9 +23,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_format_empty.c,v 1.1 2007/03/03 07:37:37 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/test/test_read_format_empty.c 189308 2009-03-03 17:02:51Z kientzle $");
 
-static unsigned char archive[] = { };
+static unsigned char archive[] = { 0 };
 
 DEFINE_TEST(test_read_format_empty)
 {
@@ -34,16 +34,14 @@ DEFINE_TEST(test_read_format_empty)
 	assert((a = archive_read_new()) != NULL);
 	assertA(0 == archive_read_support_compression_all(a));
 	assertA(0 == archive_read_support_format_all(a));
-	assertA(0 == archive_read_open_memory(a, archive, sizeof(archive)));
+	assertA(0 == archive_read_open_memory(a, archive, 0));
 	assertA(ARCHIVE_EOF == archive_read_next_header(a, &ae));
 	assertA(archive_compression(a) == ARCHIVE_COMPRESSION_NONE);
 	assertA(archive_format(a) == ARCHIVE_FORMAT_EMPTY);
 	assert(0 == archive_read_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assert(0 == archive_read_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_read_finish(a);
+#else
+	assert(0 == archive_read_finish(a));
 #endif
 }
-
-

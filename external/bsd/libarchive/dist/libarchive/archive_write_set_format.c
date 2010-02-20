@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_format.c,v 1.5 2007/06/22 05:47:00 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/archive_write_set_format.c 201168 2009-12-29 06:15:32Z kientzle $");
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -44,6 +44,7 @@ struct { int code; int (*setter)(struct archive *); } codes[] =
 	{ ARCHIVE_FORMAT_CPIO,		archive_write_set_format_cpio },
 	{ ARCHIVE_FORMAT_CPIO_SVR4_NOCRC,	archive_write_set_format_cpio_newc },
 	{ ARCHIVE_FORMAT_CPIO_POSIX,	archive_write_set_format_cpio },
+	{ ARCHIVE_FORMAT_MTREE,		archive_write_set_format_mtree },
 	{ ARCHIVE_FORMAT_SHAR,		archive_write_set_format_shar },
 	{ ARCHIVE_FORMAT_SHAR_BASE,	archive_write_set_format_shar },
 	{ ARCHIVE_FORMAT_SHAR_DUMP,	archive_write_set_format_shar_dump },
@@ -52,6 +53,7 @@ struct { int code; int (*setter)(struct archive *); } codes[] =
 	{ ARCHIVE_FORMAT_TAR_PAX_RESTRICTED,
 				archive_write_set_format_pax_restricted },
 	{ ARCHIVE_FORMAT_TAR_USTAR,	archive_write_set_format_ustar },
+	{ ARCHIVE_FORMAT_ZIP,	archive_write_set_format_zip },
 	{ 0,		NULL }
 };
 

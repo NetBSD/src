@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_format_gtar_sparse.c,v 1.8 2008/03/12 05:12:23 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/test/test_read_format_gtar_sparse.c 189308 2009-03-03 17:02:51Z kientzle $");
 
 
 struct contents {
@@ -171,13 +171,6 @@ struct archive_contents {
 	{ NULL, NULL }
 };
 
-/*
- * A tricky piece of code that verifies the contents of a sparse
- * archive entry against a description as defined at the top of this
- * source file.
- */
-#define min(a,b) ((a) < (b) ? (a) : (b))
-
 static void
 verify_archive_file(const char *name, struct archive_contents *ac)
 {
@@ -187,6 +180,7 @@ verify_archive_file(const char *name, struct archive_contents *ac)
 	struct contents expect;
 	/* data, size, offset of block read from archive. */
 	struct contents actual;
+	const void *p;
 	struct archive *a;
 
 	extract_reference_file(name);
@@ -200,16 +194,19 @@ verify_archive_file(const char *name, struct archive_contents *ac)
 	while (ac->filename != NULL) {
 		struct contents *cts = ac->contents;
 
-		assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
+		if (!assertEqualIntA(a, 0, archive_read_next_header(a, &ae))) {
+			assert(0 == archive_read_finish(a));
+			return;
+		}
 		failure("Name mismatch in archive %s", name);
 		assertEqualString(ac->filename, archive_entry_pathname(ae));
 
 		expect = *cts++;
 		while (0 == (err = archive_read_data_block(a,
-				 (const void **)&actual.d,
-				 &actual.s, &actual.o))) {
+				 &p, &actual.s, &actual.o))) {
+			actual.d = p;
 			while (actual.s > 0) {
-				char c = *(const char *)actual.d;
+				char c = *actual.d;
 				if(actual.o < expect.o) {
 					/*
 					 * Any byte before the expected
@@ -247,8 +244,8 @@ verify_archive_file(const char *name, struct archive_contents *ac)
 		failure("%s: should be end of entry", name);
 		assertEqualIntA(a, err, ARCHIVE_EOF);
 		failure("%s: Size returned at EOF must be zero", name);
-		assertEqualInt(actual.s, 0);
-#if ARCHIVE_VERSION_STAMP < 1009000
+		assertEqualInt((int)actual.s, 0);
+#if ARCHIVE_VERSION_NUMBER < 1009000
 		/* libarchive < 1.9 doesn't get this right */
 		skipping("offset of final sparse chunk");
 #else
@@ -263,10 +260,10 @@ verify_archive_file(const char *name, struct archive_contents *ac)
 	assertEqualIntA(a, ARCHIVE_EOF, err);
 
 	assert(0 == archive_read_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assert(0 == archive_read_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_read_finish(a);
+#else
+	assert(0 == archive_read_finish(a));
 #endif
 }
 
@@ -274,33 +271,33 @@ verify_archive_file(const char *name, struct archive_contents *ac)
 DEFINE_TEST(test_read_format_gtar_sparse)
 {
 	/* Two archives that use the "GNU tar sparse format". */
-	verify_archive_file("test_read_format_gtar_sparse_1_13.tgz", files);
-	verify_archive_file("test_read_format_gtar_sparse_1_17.tgz", files);
+	verify_archive_file("test_read_format_gtar_sparse_1_13.tar", files);
+	verify_archive_file("test_read_format_gtar_sparse_1_17.tar", files);
 
 	/*
 	 * libarchive < 1.9 doesn't support the newer --posix sparse formats
 	 * from GNU tar 1.15 and later.
 	 */
-#if ARCHIVE_VERSION_STAMP < 1009000
+#if ARCHIVE_VERSION_NUMBER < 1009000
 	skipping("read support for GNUtar --posix sparse formats");
 #else
 	/*
 	 * An archive created by GNU tar 1.17 using --posix --sparse-format=0.1
 	 */
 	verify_archive_file(
-		"test_read_format_gtar_sparse_1_17_posix00.tgz",
+		"test_read_format_gtar_sparse_1_17_posix00.tar",
 		files);
 	/*
 	 * An archive created by GNU tar 1.17 using --posix --sparse-format=0.1
 	 */
 	verify_archive_file(
-		"test_read_format_gtar_sparse_1_17_posix01.tgz",
+		"test_read_format_gtar_sparse_1_17_posix01.tar",
 		files);
 	/*
 	 * An archive created by GNU tar 1.17 using --posix --sparse-format=1.0
 	 */
 	verify_archive_file(
-		"test_read_format_gtar_sparse_1_17_posix10.tgz",
+		"test_read_format_gtar_sparse_1_17_posix10.tar",
 		files);
 	/*
 	 * The last test archive here is a little odd.  First, it's

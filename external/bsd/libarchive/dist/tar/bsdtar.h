@@ -22,11 +22,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/usr.bin/tar/bsdtar.h,v 1.33 2008/05/26 17:10:10 kientzle Exp $
+ * $FreeBSD: src/usr.bin/tar/bsdtar.h,v 1.37 2008/12/06 07:37:14 kientzle Exp $
  */
 
 #include "bsdtar_platform.h"
 #include <stdio.h>
+
+#include "matching.h"
 
 #define	DEFAULT_BYTES_PER_BLOCK	(20*512)
 
@@ -60,6 +62,7 @@ struct bsdtar {
 	char		  option_chroot; /* --chroot */
 	char		  option_dont_traverse_mounts; /* --one-file-system */
 	char		  option_fast_read; /* --fast-read */
+	const char	 *option_options; /* --options */
 	char		  option_honor_nodump; /* --nodump */
 	char		  option_interactive; /* -w */
 	char		  option_no_owner; /* -o */
@@ -76,10 +79,9 @@ struct bsdtar {
 	int		  fd;
 
 	/* Miscellaneous state information */
-	struct archive	 *archive;
-	const char	 *progname;
 	int		  argc;
 	char		**argv;
+	const char	 *optarg;
 	size_t		  gs_width; /* For 'list_item' in read.c */
 	size_t		  u_width; /* for 'list_item' in read.c */
 	uid_t		  user_uid; /* UID running this program */
@@ -91,45 +93,62 @@ struct bsdtar {
 	 * Data for various subsystems.  Full definitions are located in
 	 * the file where they are used.
 	 */
-	struct archive_entry_linkresolver *resolver;
+	struct archive		*diskreader;	/* for write.c */
+	struct archive_entry_linkresolver *resolver; /* for write.c */
 	struct archive_dir	*archive_dir;	/* for write.c */
 	struct name_cache	*gname_cache;	/* for write.c */
-	struct matching		*matching;	/* for matching.c */
+	char			*buff;		/* for write.c */
+	struct lafe_matching	*matching;	/* for matching.c */
 	struct security		*security;	/* for read.c */
 	struct name_cache	*uname_cache;	/* for write.c */
 	struct siginfo_data	*siginfo;	/* for siginfo.c */
 	struct substitution	*substitution;	/* for subst.c */
 };
 
-void	bsdtar_errc(struct bsdtar *, int _eval, int _code,
-	    const char *fmt, ...);
-void	bsdtar_warnc(struct bsdtar *, int _code, const char *fmt, ...);
-void	cleanup_exclusions(struct bsdtar *);
+/* Fake short equivalents for long options that otherwise lack them. */
+enum {
+	OPTION_CHECK_LINKS = 1,
+	OPTION_CHROOT,
+	OPTION_EXCLUDE,
+	OPTION_FORMAT,
+	OPTION_OPTIONS,
+	OPTION_HELP,
+	OPTION_INCLUDE,
+	OPTION_KEEP_NEWER_FILES,
+	OPTION_LZMA,
+	OPTION_NEWER_CTIME,
+	OPTION_NEWER_CTIME_THAN,
+	OPTION_NEWER_MTIME,
+	OPTION_NEWER_MTIME_THAN,
+	OPTION_NODUMP,
+	OPTION_NO_SAME_OWNER,
+	OPTION_NO_SAME_PERMISSIONS,
+	OPTION_NULL,
+	OPTION_NUMERIC_OWNER,
+	OPTION_ONE_FILE_SYSTEM,
+	OPTION_POSIX,
+	OPTION_SAME_OWNER,
+	OPTION_STRIP_COMPONENTS,
+	OPTION_TOTALS,
+	OPTION_USE_COMPRESS_PROGRAM,
+	OPTION_VERSION
+};
+
+
+int	bsdtar_getopt(struct bsdtar *);
 void	do_chdir(struct bsdtar *);
 int	edit_pathname(struct bsdtar *, struct archive_entry *);
-int	exclude(struct bsdtar *, const char *pattern);
-int	exclude_from_file(struct bsdtar *, const char *pathname);
-int	excluded(struct bsdtar *, const char *pathname);
-int	include(struct bsdtar *, const char *pattern);
-int	include_from_file(struct bsdtar *, const char *pathname);
+int	need_report(void);
 int	pathcmp(const char *a, const char *b);
-int	process_lines(struct bsdtar *bsdtar, const char *pathname,
-	    int (*process)(struct bsdtar *, const char *));
 void	safe_fprintf(FILE *, const char *fmt, ...);
 void	set_chdir(struct bsdtar *, const char *newdir);
-void	siginfo_init(struct bsdtar *);
-void	siginfo_setinfo(struct bsdtar *, const char * oper,
-	    const char * path, int64_t size);
-void	siginfo_printinfo(struct bsdtar *, off_t progress);
-void	siginfo_done(struct bsdtar *);
+const char *tar_i64toa(int64_t);
 void	tar_mode_c(struct bsdtar *bsdtar);
 void	tar_mode_r(struct bsdtar *bsdtar);
 void	tar_mode_t(struct bsdtar *bsdtar);
 void	tar_mode_u(struct bsdtar *bsdtar);
 void	tar_mode_x(struct bsdtar *bsdtar);
-int	unmatched_inclusions(struct bsdtar *bsdtar);
-int	unmatched_inclusions_warn(struct bsdtar *bsdtar, const char *msg);
-void	usage(struct bsdtar *);
+void	usage(void);
 int	yes(const char *fmt, ...);
 
 #if HAVE_REGEX_H

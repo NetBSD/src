@@ -22,8 +22,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/archive_private.h,v 1.29 2007/04/02 00:15:45 kientzle Exp $
+ * $FreeBSD: head/lib/libarchive/archive_private.h 201098 2009-12-28 02:58:14Z kientzle $
  */
+
+#ifndef __LIBARCHIVE_BUILD
+#error This header is only to be used internally to libarchive.
+#endif
 
 #ifndef ARCHIVE_PRIVATE_H_INCLUDED
 #define	ARCHIVE_PRIVATE_H_INCLUDED
@@ -31,22 +35,30 @@
 #include "archive.h"
 #include "archive_string.h"
 
+#if defined(__GNUC__) && (__GNUC__ > 2 || \
+			  (__GNUC__ == 2 && __GNUC_MINOR__ >= 5))
+#define	__LA_DEAD	__attribute__((__noreturn__))
+#else
+#define	__LA_DEAD
+#endif
+
 #define	ARCHIVE_WRITE_MAGIC	(0xb0c5c0deU)
 #define	ARCHIVE_READ_MAGIC	(0xdeb0c5U)
-#define ARCHIVE_WRITE_DISK_MAGIC (0xc001b0c5U)
+#define	ARCHIVE_WRITE_DISK_MAGIC (0xc001b0c5U)
+#define	ARCHIVE_READ_DISK_MAGIC (0xbadb0c5U)
 
 #define	ARCHIVE_STATE_ANY	0xFFFFU
 #define	ARCHIVE_STATE_NEW	1U
 #define	ARCHIVE_STATE_HEADER	2U
 #define	ARCHIVE_STATE_DATA	4U
-#define ARCHIVE_STATE_DATA_END	8U
+#define	ARCHIVE_STATE_DATA_END	8U
 #define	ARCHIVE_STATE_EOF	0x10U
 #define	ARCHIVE_STATE_CLOSED	0x20U
 #define	ARCHIVE_STATE_FATAL	0x8000U
 
 struct archive_vtable {
-	int	(*archive_write_close)(struct archive *);
-	int	(*archive_write_finish)(struct archive *);
+	int	(*archive_close)(struct archive *);
+	int	(*archive_finish)(struct archive *);
 	int	(*archive_write_header)(struct archive *,
 	    struct archive_entry *);
 	int	(*archive_write_finish_entry)(struct archive *);
@@ -79,9 +91,11 @@ struct archive {
 	const char *compression_name;
 
 	/* Position in UNCOMPRESSED data stream. */
-	off_t		  file_position;
+	int64_t		  file_position;
 	/* Position in COMPRESSED data stream. */
-	off_t		  raw_position;
+	int64_t		  raw_position;
+	/* Number of file entries processed. */
+	int		  file_count;
 
 	int		  archive_error_number;
 	const char	 *error;
@@ -92,8 +106,19 @@ struct archive {
 void	__archive_check_magic(struct archive *, unsigned int magic,
 	    unsigned int state, const char *func);
 
-void	__archive_errx(int retvalue, const char *msg);
+void	__archive_errx(int retvalue, const char *msg) __LA_DEAD;
+
+int	__archive_parse_options(const char *p, const char *fn,
+	    int keysize, char *key, int valsize, char *val);
 
 #define	err_combine(a,b)	((a) < (b) ? (a) : (b))
+
+#if defined(__BORLANDC__) || (defined(_MSC_VER) &&  _MSC_VER <= 1300)
+# define	ARCHIVE_LITERAL_LL(x)	x##i64
+# define	ARCHIVE_LITERAL_ULL(x)	x##ui64
+#else
+# define	ARCHIVE_LITERAL_LL(x)	x##ll
+# define	ARCHIVE_LITERAL_ULL(x)	x##ull
+#endif
 
 #endif

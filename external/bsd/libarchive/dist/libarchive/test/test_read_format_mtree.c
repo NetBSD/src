@@ -23,58 +23,61 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_format_mtree.c,v 1.2 2008/05/26 17:00:24 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/test/test_read_format_mtree.c 201247 2009-12-30 05:59:21Z kientzle $");
 
-/* Single entry with a hardlink. */
-static unsigned char archive[] = {
-	"#mtree\n"
-	"file type=file uid=18 mode=0123\n"
-	"dir type=dir\n"
-	" file\\040with\\040space type=file uid=18\n"
-	" ..\n"
-	"file\\04with\\040space type=file\n"
-	"dir2 type=dir\n"
-	" dir3a type=dir\n"
-	"  indir3a type=file\n"
-	"dir2/fullindir2 type=file mode=0777\n"
-	"  ..\n"
-	" indir2 type=file\n"
-	" dir3b type=dir\n"
-	"  indir3b type=file\n"
-	"  ..\n"
-	" ..\n"
-	"notindir type=file\n"
-	"dir2/fullindir2 mode=0644\n"
-};
-
-DEFINE_TEST(test_read_format_mtree)
+static void
+test_read_format_mtree1(void)
 {
+	const char reffile[] = "test_read_format_mtree.mtree";
+	char buff[16];
 	struct archive_entry *ae;
 	struct archive *a;
+	FILE *f;
+
+	extract_reference_file(reffile);
+
+	/*
+	 * An access error occurred on some platform when mtree
+	 * format handling open a directory. It is for through
+	 * the routine which open a directory that we create
+	 * "dir" and "dir2" directories.
+	 */
+	assertMakeDir("dir", 0775);
+	assertMakeDir("dir2", 0775);
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK,
 	    archive_read_support_compression_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
 	    archive_read_support_format_all(a));
-	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_memory(a, archive, sizeof(archive)));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_file(a, reffile, 11));
+
+	/*
+	 * Read "file", whose data is available on disk.
+	 */
+	f = fopen("file", "wb");
+	assert(f != NULL);
+	assertEqualInt(3, fwrite("hi\n", 1, 3, f));
+	fclose(f);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_MTREE_V1);
+	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_MTREE);
 	assertEqualString(archive_entry_pathname(ae), "file");
 	assertEqualInt(archive_entry_uid(ae), 18);
-	assert(S_ISREG(archive_entry_mode(ae)));
+	assertEqualInt(AE_IFREG, archive_entry_filetype(ae));
 	assertEqualInt(archive_entry_mode(ae), AE_IFREG | 0123);
+	assertEqualInt(archive_entry_size(ae), 3);
+	assertEqualInt(3, archive_read_data(a, buff, 3));
+	assertEqualMem(buff, "hi\n", 3);
 
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
 	assertEqualString(archive_entry_pathname(ae), "dir");
-	assert(S_ISDIR(archive_entry_mode(ae)));
+	assertEqualInt(AE_IFDIR, archive_entry_filetype(ae));
 
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
 	assertEqualString(archive_entry_pathname(ae), "dir/file with space");
 
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualString(archive_entry_pathname(ae), "file\\04with space");
+	assertEqualString(archive_entry_pathname(ae), "file with space");
 
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
 	assertEqualString(archive_entry_pathname(ae), "dir2");
@@ -103,11 +106,38 @@ DEFINE_TEST(test_read_format_mtree)
 
 	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
 	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-#if ARCHIVE_API_VERSION > 1
 	assertEqualInt(ARCHIVE_OK, archive_read_finish(a));
-#else
-	archive_read_finish(a);
-#endif
+}
+
+static void
+test_read_format_mtree2(void)
+{
+	static char archive[] =
+	    "#mtree\n"
+	    "d type=dir content=.\n";
+	struct archive_entry *ae;
+	struct archive *a;
+
+	assert((a = archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK,
+	    archive_read_support_compression_all(a));
+	assertEqualIntA(a, ARCHIVE_OK,
+	    archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK,
+	    archive_read_open_memory(a, archive, sizeof(archive)));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_MTREE);
+	assertEqualString(archive_entry_pathname(ae), "d");
+	assertEqualInt(archive_entry_filetype(ae), AE_IFDIR);
+	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_finish(a));
 }
 
 
+
+DEFINE_TEST(test_read_format_mtree)
+{
+	test_read_format_mtree1();
+	test_read_format_mtree2();
+}

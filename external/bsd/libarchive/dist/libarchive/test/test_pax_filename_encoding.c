@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_pax_filename_encoding.c,v 1.2 2008/05/26 17:00:24 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/test/test_pax_filename_encoding.c 201247 2009-12-30 05:59:21Z kientzle $");
 
 #include <locale.h>
 
@@ -40,9 +40,10 @@ __FBSDID("$FreeBSD: src/lib/libarchive/test/test_pax_filename_encoding.c,v 1.2 2
  * the right filename returned and that we get a warning only
  * if the header isn't marked as binary.
  */
-DEFINE_TEST(test_pax_filename_encoding_1)
+static void
+test_pax_filename_encoding_1(void)
 {
-	static const char testname[] = "test_pax_filename_encoding.tar.gz";
+	static const char testname[] = "test_pax_filename_encoding.tar";
 	/*
 	 * \314\214 is a valid 2-byte UTF-8 sequence.
 	 * \374 is invalid in UTF-8.
@@ -57,7 +58,7 @@ DEFINE_TEST(test_pax_filename_encoding_1)
 	extract_reference_file(testname);
 	a = archive_read_new();
 	assertEqualInt(ARCHIVE_OK, archive_read_support_format_tar(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_support_compression_gzip(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_support_compression_all(a));
 	assertEqualInt(ARCHIVE_OK,
 	    archive_read_open_filename(a, testname, 10240));
 	/*
@@ -84,7 +85,8 @@ DEFINE_TEST(test_pax_filename_encoding_1)
  * This should work; the underlying implementation should automatically
  * fall back to storing the pathname in binary.
  */
-DEFINE_TEST(test_pax_filename_encoding_2)
+static void
+test_pax_filename_encoding_2(void)
 {
 	char filename[] = "abc\314\214mno\374xyz";
 	struct archive *a;
@@ -105,9 +107,10 @@ DEFINE_TEST(test_pax_filename_encoding_2)
 	 * de_DE.UTF-8 seems to be commonly supported.
 	 */
 	/* If it doesn't exist, just warn and return. */
-	if (NULL == setlocale(LC_ALL, "de_DE.UTF-8")) {
+	if (LOCALE_UTF8 == NULL
+	    || NULL == setlocale(LC_ALL, LOCALE_UTF8)) {
 		skipping("invalid encoding tests require a suitable locale;"
-		    " de_DE.UTF-8 not available on this system");
+		    " %s not available on this system", LOCALE_UTF8);
 		return;
 	}
 
@@ -183,7 +186,8 @@ DEFINE_TEST(test_pax_filename_encoding_2)
  * read it back into "C" locale, which doesn't support the name.
  * TODO: Figure out the "right" behavior here.
  */
-DEFINE_TEST(test_pax_filename_encoding_3)
+static void
+test_pax_filename_encoding_3(void)
 {
 	wchar_t badname[] = L"xxxAyyyBzzz";
 	const char badname_utf8[] = "xxx\xE1\x88\xB4yyy\xE5\x99\xB8zzz";
@@ -201,6 +205,31 @@ DEFINE_TEST(test_pax_filename_encoding_3)
 		    "certain character-conversion failures");
 		return;
 	}
+
+	/* If wctomb is broken, warn and return. */
+	if (wctomb(buff, 0x1234) > 0) {
+		skipping("Cannot test conversion failures because \"C\" "
+		    "locale on this system has no invalid characters.");
+		return;
+	}
+
+	/* If wctomb is broken, warn and return. */
+	if (wctomb(buff, 0x1234) > 0) {
+		skipping("Cannot test conversion failures because \"C\" "
+		    "locale on this system has no invalid characters.");
+		return;
+	}
+
+	/* Skip test if archive_entry_update_pathname_utf8() is broken. */
+	/* In particular, this is currently broken on Win32 because
+	 * setlocale() does not set the default encoding for CP_ACP. */
+	entry = archive_entry_new();
+	if (archive_entry_update_pathname_utf8(entry, badname_utf8)) {
+		archive_entry_free(entry);
+		skipping("Cannot test conversion failures.");
+		return;
+	}
+	archive_entry_free(entry);
 
 	assert((a = archive_write_new()) != NULL);
 	assertEqualIntA(a, 0, archive_write_set_format_pax(a));
@@ -294,4 +323,11 @@ DEFINE_TEST(test_pax_filename_encoding_3)
 
 	assertEqualInt(0, archive_read_close(a));
 	assertEqualInt(0, archive_read_finish(a));
+}
+
+DEFINE_TEST(test_pax_filename_encoding)
+{
+	test_pax_filename_encoding_1();
+	test_pax_filename_encoding_2();
+	test_pax_filename_encoding_3();
 }

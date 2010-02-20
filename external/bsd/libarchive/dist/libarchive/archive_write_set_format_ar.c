@@ -26,7 +26,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_format_ar.c,v 1.7 2008/05/26 17:00:23 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/archive_write_set_format_ar.c 201108 2009-12-28 03:28:21Z kientzle $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -125,6 +125,7 @@ archive_write_set_format_ar(struct archive_write *a)
 	memset(ar, 0, sizeof(*ar));
 	a->format_data = ar;
 
+	a->format_name = "ar";
 	a->format_write_header = archive_write_ar_header;
 	a->format_write_data = archive_write_ar_data;
 	a->format_finish = archive_write_ar_finish;
@@ -144,7 +145,6 @@ archive_write_ar_header(struct archive_write *a, struct archive_entry *entry)
 	const char *filename;
 	int64_t size;
 
-	ret = 0;
 	append_fn = 0;
 	ar = (struct ar_w *)a->format_data;
 	ar->is_strtab = 0;
@@ -388,6 +388,9 @@ archive_write_ar_destroy(struct archive_write *a)
 	struct ar_w *ar;
 
 	ar = (struct ar_w *)a->format_data;
+
+	if (ar == NULL)
+		return (ARCHIVE_OK);
 
 	if (ar->has_strtab > 0) {
 		free(ar->strtab);

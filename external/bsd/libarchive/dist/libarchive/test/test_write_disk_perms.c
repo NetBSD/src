@@ -23,9 +23,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_disk_perms.c,v 1.9 2008/06/15 10:35:22 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/test/test_write_disk_perms.c 201247 2009-12-30 05:59:21Z kientzle $");
 
-#if ARCHIVE_VERSION_STAMP >= 1009000
+#if ARCHIVE_VERSION_NUMBER >= 1009000 && (!defined(_WIN32) || defined(__CYGWIN__))
 
 #define UMASK 022
 
@@ -60,7 +60,7 @@ searchgid(void)
 	_searched = 1;
 
 	/* Create a file on disk in the current default dir. */
-	fd = open("test_gid", O_CREAT, 0664);
+	fd = open("test_gid", O_CREAT | O_BINARY, 0664);
 	failure("Couldn't create a file for gid testing.");
 	assert(fd > 0);
 
@@ -125,12 +125,14 @@ defaultgid(void)
 
 DEFINE_TEST(test_write_disk_perms)
 {
-#if ARCHIVE_VERSION_STAMP < 1009000
+#if ARCHIVE_VERSION_NUMBER < 1009000 || (defined(_WIN32) && !defined(__CYGWIN__))
 	skipping("archive_write_disk interface");
 #else
 	struct archive *a;
 	struct archive_entry *ae;
 	struct stat st;
+
+	assertUmask(UMASK);
 
 	/*
 	 * Set ownership of the current directory to the group of this
@@ -182,7 +184,7 @@ DEFINE_TEST(test_write_disk_perms)
 
 	/* Overwrite an existing dir. */
 	/* For dir, the first perms should get left. */
-	assert(mkdir("dir_overwrite_0744", 0744) == 0);
+	assertMakeDir("dir_overwrite_0744", 0744);
 	/* Check original perms. */
 	assert(0 == stat("dir_overwrite_0744", &st));
 	failure("dir_overwrite_0744: st.st_mode=%o", st.st_mode);
@@ -272,7 +274,7 @@ DEFINE_TEST(test_write_disk_perms)
 		 * Current user must belong to at least two groups or
 		 * else we can't test setting the GID to another group.
 		 */
-		printf("Current user can't test gid restore: must belong to more than one group.\n");
+		skipping("Current user can't test gid restore: must belong to more than one group.");
 	} else {
 		/*
 		 * Write a regular file with ARCHIVE_EXTRACT_PERM & SGID bit
@@ -363,10 +365,10 @@ DEFINE_TEST(test_write_disk_perms)
 		assertEqualIntA(a,ARCHIVE_WARN,archive_write_finish_entry(a));
 	}
 
-#if ARCHIVE_API_VERSION > 1
-	assert(0 == archive_write_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_write_finish(a);
+#else
+	assert(0 == archive_write_finish(a));
 #endif
 	archive_entry_free(ae);
 

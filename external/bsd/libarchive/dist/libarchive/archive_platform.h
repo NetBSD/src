@@ -22,8 +22,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/archive_platform.h,v 1.30 2008/05/26 17:00:22 kientzle Exp $
+ * $FreeBSD: head/lib/libarchive/archive_platform.h 201090 2009-12-28 02:22:04Z kientzle $
  */
+
+/* !!ONLY FOR USE INTERNALLY TO LIBARCHIVE!! */
 
 /*
  * This header is the first thing included in any of the libarchive
@@ -39,18 +41,23 @@
 /* archive.h and archive_entry.h require this. */
 #define	__LIBARCHIVE_BUILD 1
 
-#ifdef _WIN32
-#include "config_windows.h"
-#include "archive_windows.h"
-#elif defined(PLATFORM_CONFIG_H)
+#if defined(PLATFORM_CONFIG_H)
 /* Use hand-built config.h in environments that need it. */
 #include PLATFORM_CONFIG_H
 #elif defined(HAVE_CONFIG_H)
 /* Most POSIX platforms use the 'configure' script to build config.h */
-#include "../config.h"
+#include "config.h"
 #else
 /* Warn if the library hasn't been (automatically or manually) configured. */
 #error Oops: No config.h and no pre-built configuration in archive_platform.h.
+#endif
+
+/* It should be possible to get rid of this by extending the feature-test
+ * macros to cover Windows API functions, probably along with non-trivial
+ * refactoring of code to find structures that sit more cleanly on top of
+ * either Windows or Posix APIs. */
+#if (defined(__WIN32__) || defined(_WIN32) || defined(__WIN32)) && !defined(__CYGWIN__)
+#include "archive_windows.h"
 #endif
 
 /*
@@ -59,24 +66,50 @@
  * headers as required.
  */
 
-/* No non-FreeBSD platform will have __FBSDID, so just define it here. */
-#ifdef __FreeBSD__
-#include <sys/cdefs.h>  /* For __FBSDID */
-#else
-/* Just leaving this macro replacement empty leads to a dangling semicolon. */
+/* Get a real definition for __FBSDID if we can */
+#if HAVE_SYS_CDEFS_H
+#include <sys/cdefs.h>
+#endif
+
+/* If not, define it so as to avoid dangling semicolons. */
+#ifndef __FBSDID
 #define	__FBSDID(a)     struct _undefined_hack
 #endif
 
 /* Try to get standard C99-style integer type definitions. */
 #if HAVE_INTTYPES_H
 #include <inttypes.h>
-#elif HAVE_STDINT_H
+#endif
+#if HAVE_STDINT_H
 #include <stdint.h>
+#endif
+
+/* Borland warns about its own constants!  */
+#if defined(__BORLANDC__)
+# if HAVE_DECL_UINT64_MAX
+#  undef	UINT64_MAX
+#  undef	HAVE_DECL_UINT64_MAX
+# endif
+# if HAVE_DECL_UINT64_MIN
+#  undef	UINT64_MIN
+#  undef	HAVE_DECL_UINT64_MIN
+# endif
+# if HAVE_DECL_INT64_MAX
+#  undef	INT64_MAX
+#  undef	HAVE_DECL_INT64_MAX
+# endif
+# if HAVE_DECL_INT64_MIN
+#  undef	INT64_MIN
+#  undef	HAVE_DECL_INT64_MIN
+# endif
 #endif
 
 /* Some platforms lack the standard *_MAX definitions. */
 #if !HAVE_DECL_SIZE_MAX
 #define	SIZE_MAX (~(size_t)0)
+#endif
+#if !HAVE_DECL_SSIZE_MAX
+#define	SSIZE_MAX ((ssize_t)(SIZE_MAX >> 1))
 #endif
 #if !HAVE_DECL_UINT32_MAX
 #define	UINT32_MAX (~(uint32_t)0)

@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_format_pax_bz2.c,v 1.1 2007/03/03 07:37:37 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/test/test_read_format_pax_bz2.c 201247 2009-12-30 05:59:21Z kientzle $");
 
 static unsigned char archive[] = {
 'B','Z','h','9','1','A','Y','&','S','Y',152,180,30,185,0,0,140,127,176,212,
@@ -44,19 +44,23 @@ DEFINE_TEST(test_read_format_pax_bz2)
 {
 	struct archive_entry *ae;
 	struct archive *a;
+	int r;
+
 	assert((a = archive_read_new()) != NULL);
-	assert(0 == archive_read_support_compression_all(a));
-	assert(0 == archive_read_support_format_all(a));
-	assert(0 == archive_read_open_memory(a, archive, sizeof(archive)));
-	assert(0 == archive_read_next_header(a, &ae));
-	assert(archive_compression(a) == ARCHIVE_COMPRESSION_BZIP2);
-	assert(archive_format(a) == ARCHIVE_FORMAT_TAR_PAX_INTERCHANGE);
-	assert(0 == archive_read_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assert(0 == archive_read_finish(a));
-#else
-	archive_read_finish(a);
-#endif
+	r = archive_read_support_compression_bzip2(a);
+	if (r != ARCHIVE_OK) {
+		archive_read_close(a);
+		skipping("Bzip2 unavailable");
+		return;
+	}
+	assertEqualIntA(a,ARCHIVE_OK, archive_read_support_format_all(a));
+	assertEqualIntA(a,ARCHIVE_OK,
+	    archive_read_open_memory(a, archive, sizeof(archive)));
+	assertEqualIntA(a,ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualInt(archive_compression(a), ARCHIVE_COMPRESSION_BZIP2);
+	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_TAR_PAX_INTERCHANGE);
+	assertEqualIntA(a,ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_finish(a));
 }
 
 
