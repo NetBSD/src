@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.30 2010/02/02 04:28:56 mrg Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.31 2010/02/20 16:46:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.30 2010/02/02 04:28:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.31 2010/02/20 16:46:38 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.30 2010/02/02 04:28:56 mrg Exp $");
 
 /* CPU sets containing halted, paused and resumed cpus */
 static volatile sparc64_cpuset_t cpus_halted;
+static volatile sparc64_cpuset_t cpus_spinning;
 static volatile sparc64_cpuset_t cpus_paused;
 static volatile sparc64_cpuset_t cpus_resumed;
 
@@ -78,16 +79,19 @@ sparc64_ipi_halt_thiscpu(void *arg)
 	extern void prom_printf(const char *fmt, ...);
 
 	printf("cpu%d: shutting down\n", cpu_number());
-	CPUSET_ADD(cpus_halted, cpu_number());
-	if (CPU_IS_USIII_UP()) {
+	if (prom_has_stop_other() || !prom_has_stopself()) {
 		/*
-		 * prom_selfstop() doesn't seem to work on newer machines.
+		 * just loop here, the final cpu will stop us later
 		 */
+		CPUSET_ADD(cpus_spinning, cpu_number());
+		CPUSET_ADD(cpus_halted, cpu_number());
 		spl0();
 		while (1)
 			/* nothing */;
-	} else
+	} else {
+		CPUSET_ADD(cpus_halted, cpu_number());
 		prom_stopself();
+	}
 }
 
 void
@@ -151,6 +155,7 @@ sparc64_ipi_init()
 
 	/* Clear all cpu sets. */
 	CPUSET_CLEAR(cpus_halted);
+	CPUSET_CLEAR(cpus_spinning);
 	CPUSET_CLEAR(cpus_paused);
 	CPUSET_CLEAR(cpus_resumed);
 }
@@ -272,6 +277,7 @@ void
 mp_halt_cpus(void)
 {
 	sparc64_cpuset_t cpumask, cpuset;
+	struct cpu_info *ci;
 
 	CPUSET_ASSIGN(cpuset, cpus_active);
 	CPUSET_DEL(cpuset, cpu_number());
@@ -281,9 +287,28 @@ mp_halt_cpus(void)
 	if (CPUSET_EMPTY(cpuset))
 		return;
 
+	CPUSET_CLEAR(cpus_spinning);
 	sparc64_multicast_ipi(cpuset, sparc64_ipi_halt, 0, 0);
 	if (sparc64_ipi_wait(&cpus_halted, cpumask))
 		sparc64_ipi_error("halt", cpumask, cpus_halted);
+
+	/*
+	 * Depending on available firmware methods, other cpus will
+	 * either shut down themselfs, or spin and wait for us to
+	 * stop them.
+	 */
+	if (CPUSET_EMPTY(cpus_spinning)) {
+		/* give other cpus a few cycles to actually power down */
+		delay(10000);
+		return;
+	}
+	/* there are cpus spinning - shut them down if we can */
+	if (prom_has_stop_other()) {
+		for (ci = cpus; ci != NULL; ci = ci->ci_next) {
+			if (!CPUSET_HAS(cpus_spinning, ci->ci_index)) continue;
+			prom_stop_other(ci->ci_cpuid);
+		}
+	}
 }
 
 /*
