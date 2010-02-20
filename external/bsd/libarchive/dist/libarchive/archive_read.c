@@ -32,7 +32,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read.c,v 1.38 2008/03/12 04:58:32 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/archive_read.c 201157 2009-12-29 05:30:23Z kientzle $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -53,9 +53,27 @@ __FBSDID("$FreeBSD: src/lib/libarchive/archive_read.c,v 1.38 2008/03/12 04:58:32
 #include "archive_private.h"
 #include "archive_read_private.h"
 
-static void	choose_decompressor(struct archive_read *, const void*, size_t);
+#define minimum(a, b) (a < b ? a : b)
+
+static int	build_stream(struct archive_read *);
 static int	choose_format(struct archive_read *);
-static off_t	dummy_skip(struct archive_read *, off_t);
+static int	cleanup_filters(struct archive_read *);
+static struct archive_vtable *archive_read_vtable(void);
+static int	_archive_read_close(struct archive *);
+static int	_archive_read_finish(struct archive *);
+
+static struct archive_vtable *
+archive_read_vtable(void)
+{
+	static struct archive_vtable av;
+	static int inited = 0;
+
+	if (!inited) {
+		av.archive_finish = _archive_read_finish;
+		av.archive_close = _archive_read_close;
+	}
+	return (&av);
+}
 
 /*
  * Allocate, initialize and return a struct archive object.
@@ -73,9 +91,7 @@ archive_read_new(void)
 
 	a->archive.state = ARCHIVE_STATE_NEW;
 	a->entry = archive_entry_new();
-
-	/* We always support uncompressed archives. */
-	archive_read_support_compression_none(&a->archive);
+	a->archive.vtable = archive_read_vtable();
 
 	return (&a->archive);
 }
@@ -93,6 +109,121 @@ archive_read_extract_set_skip_file(struct archive *_a, dev_t d, ino_t i)
 	a->skip_file_ino = i;
 }
 
+/*
+ * Set read options for the format.
+ */
+int
+archive_read_set_format_options(struct archive *_a, const char *s)
+{
+	struct archive_read *a;
+	struct archive_format_descriptor *format;
+	char key[64], val[64];
+	char *valp;
+	size_t i;
+	int len, r;
+
+	__archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
+	    "archive_read_set_format_options");
+
+	if (s == NULL || *s == '\0')
+		return (ARCHIVE_OK);
+	a = (struct archive_read *)_a;
+	__archive_check_magic(&a->archive, ARCHIVE_READ_MAGIC,
+	    ARCHIVE_STATE_NEW, "archive_read_set_format_options");
+	len = 0;
+	for (i = 0; i < sizeof(a->formats)/sizeof(a->formats[0]); i++) {
+		format = &a->formats[i];
+		if (format == NULL || format->options == NULL ||
+		    format->name == NULL)
+			/* This format does not support option. */
+			continue;
+
+		while ((len = __archive_parse_options(s, format->name,
+		    sizeof(key), key, sizeof(val), val)) > 0) {
+			valp = val[0] == '\0' ? NULL : val;
+			a->format = format;
+			r = format->options(a, key, valp);
+			a->format = NULL;
+			if (r == ARCHIVE_FATAL)
+				return (r);
+			s += len;
+		}
+	}
+	if (len < 0) {
+		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		    "Illegal format options.");
+		return (ARCHIVE_WARN);
+	}
+	return (ARCHIVE_OK);
+}
+
+/*
+ * Set read options for the filter.
+ */
+int
+archive_read_set_filter_options(struct archive *_a, const char *s)
+{
+	struct archive_read *a;
+	struct archive_read_filter *filter;
+	struct archive_read_filter_bidder *bidder;
+	char key[64], val[64];
+	int len, r;
+
+	__archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
+	    "archive_read_set_filter_options");
+
+	if (s == NULL || *s == '\0')
+		return (ARCHIVE_OK);
+	a = (struct archive_read *)_a;
+	__archive_check_magic(&a->archive, ARCHIVE_READ_MAGIC,
+	    ARCHIVE_STATE_NEW, "archive_read_set_filter_options");
+	len = 0;
+	for (filter = a->filter; filter != NULL; filter = filter->upstream) {
+		bidder = filter->bidder;
+		if (bidder == NULL)
+			continue;
+		if (bidder->options == NULL)
+			/* This bidder does not support option */
+			continue;
+		while ((len = __archive_parse_options(s, filter->name,
+		    sizeof(key), key, sizeof(val), val)) > 0) {
+			if (val[0] == '\0')
+				r = bidder->options(bidder, key, NULL);
+			else
+				r = bidder->options(bidder, key, val);
+			if (r == ARCHIVE_FATAL)
+				return (r);
+			s += len;
+		}
+	}
+	if (len < 0) {
+		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		    "Illegal format options.");
+		return (ARCHIVE_WARN);
+	}
+	return (ARCHIVE_OK);
+}
+
+/*
+ * Set read options for the format and the filter.
+ */
+int
+archive_read_set_options(struct archive *_a, const char *s)
+{
+	int r;
+
+	__archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
+	    "archive_read_set_options");
+	archive_clear_error(_a);
+
+	r = archive_read_set_format_options(_a, s);
+	if (r != ARCHIVE_OK)
+		return (r);
+	r = archive_read_set_filter_options(_a, s);
+	if (r != ARCHIVE_OK)
+		return (r);
+	return (ARCHIVE_OK);
+}
 
 /*
  * Open the archive
@@ -108,6 +239,54 @@ archive_read_open(struct archive *a, void *client_data,
 	    client_reader, NULL, client_closer);
 }
 
+static ssize_t
+client_read_proxy(struct archive_read_filter *self, const void **buff)
+{
+	ssize_t r;
+	r = (self->archive->client.reader)(&self->archive->archive,
+	    self->data, buff);
+	self->archive->archive.raw_position += r;
+	return (r);
+}
+
+static int64_t
+client_skip_proxy(struct archive_read_filter *self, int64_t request)
+{
+	int64_t ask, get, total;
+	/* Limit our maximum seek request to 1GB on platforms
+	* with 32-bit off_t (such as Windows). */
+	int64_t skip_limit = ((int64_t)1) << (sizeof(off_t) * 8 - 2);
+
+	if (self->archive->client.skipper == NULL)
+		return (0);
+	total = 0;
+	for (;;) {
+		ask = request;
+		if (ask > skip_limit)
+			ask = skip_limit;
+		get = (self->archive->client.skipper)(&self->archive->archive,
+			self->data, ask);
+		if (get == 0)
+			return (total);
+		request -= get;
+		self->archive->archive.raw_position += get;
+		total += get;
+	}
+}
+
+static int
+client_close_proxy(struct archive_read_filter *self)
+{
+	int r = ARCHIVE_OK;
+
+	if (self->archive->client.closer != NULL)
+		r = (self->archive->client.closer)((struct archive *)self->archive,
+		    self->data);
+	self->data = NULL;
+	return (r);
+}
+
+
 int
 archive_read_open2(struct archive *_a, void *client_data,
     archive_open_callback *client_opener,
@@ -116,27 +295,16 @@ archive_read_open2(struct archive *_a, void *client_data,
     archive_close_callback *client_closer)
 {
 	struct archive_read *a = (struct archive_read *)_a;
-	const void *buffer;
-	ssize_t bytes_read;
+	struct archive_read_filter *filter;
 	int e;
 
-	__archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW, "archive_read_open");
+	__archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
+	    "archive_read_open");
+	archive_clear_error(&a->archive);
 
 	if (client_reader == NULL)
 		__archive_errx(1,
 		    "No reader function provided to archive_read_open");
-
-	/*
-	 * Set these NULL initially.  If the open or initial read fails,
-	 * we'll leave them NULL to indicate that the file is invalid.
-	 * (In particular, this helps ensure that the closer doesn't
-	 * get called more than once.)
-	 */
-	a->client_opener = NULL;
-	a->client_reader = NULL;
-	a->client_skipper = NULL;
-	a->client_closer = NULL;
-	a->client_data = NULL;
 
 	/* Open data source. */
 	if (client_opener != NULL) {
@@ -149,147 +317,107 @@ archive_read_open2(struct archive *_a, void *client_data,
 		}
 	}
 
-	/* Read first block now for compress format detection. */
-	bytes_read = (client_reader)(&a->archive, client_data, &buffer);
+	/* Save the client functions and mock up the initial source. */
+	a->client.reader = client_reader;
+	a->client.skipper = client_skipper;
+	a->client.closer = client_closer;
 
-	if (bytes_read < 0) {
-		/* If the first read fails, close before returning error. */
-		if (client_closer)
-			(client_closer)(&a->archive, client_data);
-		/* client_reader should have already set error information. */
+	filter = calloc(1, sizeof(*filter));
+	if (filter == NULL)
 		return (ARCHIVE_FATAL);
-	}
+	filter->bidder = NULL;
+	filter->upstream = NULL;
+	filter->archive = a;
+	filter->data = client_data;
+	filter->read = client_read_proxy;
+	filter->skip = client_skip_proxy;
+	filter->close = client_close_proxy;
+	filter->name = "none";
+	filter->code = ARCHIVE_COMPRESSION_NONE;
+	a->filter = filter;
 
-	/* Now that the client callbacks have worked, remember them. */
-	a->client_opener = client_opener; /* Do we need to remember this? */
-	a->client_reader = client_reader;
-	a->client_skipper = client_skipper;
-	a->client_closer = client_closer;
-	a->client_data = client_data;
-
-	/* Select a decompression routine. */
-	choose_decompressor(a, buffer, (size_t)bytes_read);
-	if (a->decompressor == NULL)
-		return (ARCHIVE_FATAL);
-
-	/* Initialize decompression routine with the first block of data. */
-	e = (a->decompressor->init)(a, buffer, (size_t)bytes_read);
-
+	/* Build out the input pipeline. */
+	e = build_stream(a);
 	if (e == ARCHIVE_OK)
 		a->archive.state = ARCHIVE_STATE_HEADER;
-
-	/*
-	 * If the decompressor didn't register a skip function, provide a
-	 * dummy compression-layer skip function.
-	 */
-	if (a->decompressor->skip == NULL)
-		a->decompressor->skip = dummy_skip;
 
 	return (e);
 }
 
 /*
- * Allow each registered decompression routine to bid on whether it
- * wants to handle this stream.  Return index of winning bidder.
+ * Allow each registered stream transform to bid on whether
+ * it wants to handle this stream.  Repeat until we've finished
+ * building the pipeline.
  */
-static void
-choose_decompressor(struct archive_read *a,
-    const void *buffer, size_t bytes_read)
+static int
+build_stream(struct archive_read *a)
 {
-	int decompression_slots, i, bid, best_bid;
-	struct decompressor_t *decompressor, *best_decompressor;
+	int number_bidders, i, bid, best_bid;
+	struct archive_read_filter_bidder *bidder, *best_bidder;
+	struct archive_read_filter *filter;
+	ssize_t avail;
+	int r;
 
-	decompression_slots = sizeof(a->decompressors) /
-	    sizeof(a->decompressors[0]);
+	for (;;) {
+		number_bidders = sizeof(a->bidders) / sizeof(a->bidders[0]);
 
-	best_bid = 0;
-	a->decompressor = NULL;
-	best_decompressor = NULL;
+		best_bid = 0;
+		best_bidder = NULL;
 
-	decompressor = a->decompressors;
-	for (i = 0; i < decompression_slots; i++) {
-		if (decompressor->bid) {
-			bid = (decompressor->bid)(buffer, bytes_read);
-			if (bid > best_bid || best_decompressor == NULL) {
-				best_bid = bid;
-				best_decompressor = decompressor;
+		bidder = a->bidders;
+		for (i = 0; i < number_bidders; i++, bidder++) {
+			if (bidder->bid != NULL) {
+				bid = (bidder->bid)(bidder, a->filter);
+				if (bid > best_bid) {
+					best_bid = bid;
+					best_bidder = bidder;
+				}
 			}
 		}
-		decompressor ++;
-	}
 
-	/*
-	 * There were no bidders; this is a serious programmer error
-	 * and demands a quick and definitive abort.
-	 */
-	if (best_decompressor == NULL)
-		__archive_errx(1, "No decompressors were registered; you "
-		    "must call at least one "
-		    "archive_read_support_compression_XXX function in order "
-		    "to successfully read an archive.");
+		/* If no bidder, we're done. */
+		if (best_bidder == NULL) {
+			a->archive.compression_name = a->filter->name;
+			a->archive.compression_code = a->filter->code;
+			return (ARCHIVE_OK);
+		}
 
-	/*
-	 * There were bidders, but no non-zero bids; this means we  can't
-	 * support this stream.
-	 */
-	if (best_bid < 1) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
-		    "Unrecognized archive format");
-		return;
-	}
-
-	/* Record the best decompressor for this stream. */
-	a->decompressor = best_decompressor;
-}
-
-/*
- * Dummy skip function, for use if the compression layer doesn't provide
- * one: This code just reads data and discards it.
- */
-static off_t
-dummy_skip(struct archive_read * a, off_t request)
-{
-	const void * dummy_buffer;
-	ssize_t bytes_read;
-	off_t bytes_skipped;
-
-	for (bytes_skipped = 0; request > 0;) {
-		bytes_read = (a->decompressor->read_ahead)(a, &dummy_buffer, 1);
-		if (bytes_read < 0)
-			return (bytes_read);
-		if (bytes_read == 0) {
-			/* Premature EOF. */
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-			    "Truncated input file (need to skip %jd bytes)",
-			    (intmax_t)request);
+		filter
+		    = (struct archive_read_filter *)calloc(1, sizeof(*filter));
+		if (filter == NULL)
+			return (ARCHIVE_FATAL);
+		filter->bidder = best_bidder;
+		filter->archive = a;
+		filter->upstream = a->filter;
+		r = (best_bidder->init)(filter);
+		if (r != ARCHIVE_OK) {
+			free(filter);
+			return (r);
+		}
+		a->filter = filter;
+		/* Verify the filter by asking it for some data. */
+		__archive_read_filter_ahead(filter, 1, &avail);
+		if (avail < 0) {
+			cleanup_filters(a);
 			return (ARCHIVE_FATAL);
 		}
-		if (bytes_read > request)
-			bytes_read = (ssize_t)request;
-		(a->decompressor->consume)(a, (size_t)bytes_read);
-		request -= bytes_read;
-		bytes_skipped += bytes_read;
 	}
-
-	return (bytes_skipped);
 }
 
 /*
  * Read header of next entry.
  */
 int
-archive_read_next_header(struct archive *_a, struct archive_entry **entryp)
+archive_read_next_header2(struct archive *_a, struct archive_entry *entry)
 {
 	struct archive_read *a = (struct archive_read *)_a;
-	struct archive_entry *entry;
 	int slot, ret;
 
 	__archive_check_magic(_a, ARCHIVE_READ_MAGIC,
 	    ARCHIVE_STATE_HEADER | ARCHIVE_STATE_DATA,
 	    "archive_read_next_header");
 
-	*entryp = NULL;
-	entry = a->entry;
+	++_a->file_count;
 	archive_entry_clear(entry);
 	archive_clear_error(&a->archive);
 
@@ -347,10 +475,20 @@ archive_read_next_header(struct archive *_a, struct archive_entry **entryp)
 		break;
 	}
 
-	*entryp = entry;
 	a->read_data_output_offset = 0;
 	a->read_data_remaining = 0;
 	return (ret);
+}
+
+int
+archive_read_next_header(struct archive *_a, struct archive_entry **entryp)
+{
+	int ret;
+	struct archive_read *a = (struct archive_read *)_a;
+	*entryp = NULL;
+	ret = archive_read_next_header2(_a, a->entry);
+	*entryp = a->entry;
+	return ret;
 }
 
 /*
@@ -581,8 +719,8 @@ archive_read_data_block(struct archive *_a,
  * Don't assume we actually read anything or performed any non-trivial
  * initialization.
  */
-int
-archive_read_close(struct archive *_a)
+static int
+_archive_read_close(struct archive *_a)
 {
 	struct archive_read *a = (struct archive_read *)_a;
 	int r = ARCHIVE_OK, r1 = ARCHIVE_OK;
@@ -590,7 +728,9 @@ archive_read_close(struct archive *_a)
 
 	__archive_check_magic(&a->archive, ARCHIVE_READ_MAGIC,
 	    ARCHIVE_STATE_ANY, "archive_read_close");
+	archive_clear_error(&a->archive);
 	a->archive.state = ARCHIVE_STATE_CLOSED;
+
 
 	/* Call cleanup functions registered by optional components. */
 	if (a->cleanup_archive_extract != NULL)
@@ -598,36 +738,48 @@ archive_read_close(struct archive *_a)
 
 	/* TODO: Clean up the formatters. */
 
-	/* Clean up the decompressors. */
-	n = sizeof(a->decompressors)/sizeof(a->decompressors[0]);
+	/* Release the filter objects. */
+	r1 = cleanup_filters(a);
+	if (r1 < r)
+		r = r1;
+
+	/* Release the bidder objects. */
+	n = sizeof(a->bidders)/sizeof(a->bidders[0]);
 	for (i = 0; i < n; i++) {
-		if (a->decompressors[i].finish != NULL) {
-			r1 = (a->decompressors[i].finish)(a);
+		if (a->bidders[i].free != NULL) {
+			r1 = (a->bidders[i].free)(&a->bidders[i]);
 			if (r1 < r)
 				r = r1;
 		}
 	}
 
-	/* Close the client stream. */
-	if (a->client_closer != NULL) {
-		r1 = ((a->client_closer)(&a->archive, a->client_data));
-		if (r1 < r)
-			r = r1;
-	}
-
 	return (r);
+}
+
+static int
+cleanup_filters(struct archive_read *a)
+{
+	int r = ARCHIVE_OK;
+	/* Clean up the filter pipeline. */
+	while (a->filter != NULL) {
+		struct archive_read_filter *t = a->filter->upstream;
+		if (a->filter->close != NULL) {
+			int r1 = (a->filter->close)(a->filter);
+			if (r1 < r)
+				r = r1;
+		}
+		free(a->filter->buffer);
+		free(a->filter);
+		a->filter = t;
+	}
+	return r;
 }
 
 /*
  * Release memory and other resources.
  */
-#if ARCHIVE_API_VERSION > 1
-int
-#else
-/* Temporarily allow library to compile with either 1.x or 2.0 API. */
-void
-#endif
-archive_read_finish(struct archive *_a)
+static int
+_archive_read_finish(struct archive *_a)
 {
 	struct archive_read *a = (struct archive_read *)_a;
 	int i;
@@ -664,7 +816,9 @@ archive_read_finish(struct archive *_a)
 int
 __archive_read_register_format(struct archive_read *a,
     void *format_data,
+    const char *name,
     int (*bid)(struct archive_read *),
+    int (*options)(struct archive_read *, const char *, const char *),
     int (*read_header)(struct archive_read *, struct archive_entry *),
     int (*read_data)(struct archive_read *, const void **, size_t *, off_t *),
     int (*read_data_skip)(struct archive_read *),
@@ -683,11 +837,13 @@ __archive_read_register_format(struct archive_read *a,
 			return (ARCHIVE_WARN); /* We've already installed */
 		if (a->formats[i].bid == NULL) {
 			a->formats[i].bid = bid;
+			a->formats[i].options = options;
 			a->formats[i].read_header = read_header;
 			a->formats[i].read_data = read_data;
 			a->formats[i].read_data_skip = read_data_skip;
 			a->formats[i].cleanup = cleanup;
 			a->formats[i].data = format_data;
+			a->formats[i].name = name;
 			return (ARCHIVE_OK);
 		}
 	}
@@ -700,26 +856,21 @@ __archive_read_register_format(struct archive_read *a,
  * Used internally by decompression routines to register their bid and
  * initialization functions.
  */
-struct decompressor_t *
-__archive_read_register_compression(struct archive_read *a,
-    int (*bid)(const void *, size_t),
-    int (*init)(struct archive_read *, const void *, size_t))
+struct archive_read_filter_bidder *
+__archive_read_get_bidder(struct archive_read *a)
 {
 	int i, number_slots;
 
 	__archive_check_magic(&a->archive,
 	    ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
-	    "__archive_read_register_compression");
+	    "__archive_read_get_bidder");
 
-	number_slots = sizeof(a->decompressors) / sizeof(a->decompressors[0]);
+	number_slots = sizeof(a->bidders) / sizeof(a->bidders[0]);
 
 	for (i = 0; i < number_slots; i++) {
-		if (a->decompressors[i].bid == bid)
-			return (a->decompressors + i);
-		if (a->decompressors[i].bid == NULL) {
-			a->decompressors[i].bid = bid;
-			a->decompressors[i].init = init;
-			return (a->decompressors + i);
+		if (a->bidders[i].bid == NULL) {
+			memset(a->bidders + i, 0, sizeof(a->bidders[0]));
+			return (a->bidders + i);
 		}
 	}
 
@@ -727,13 +878,372 @@ __archive_read_register_compression(struct archive_read *a,
 	return (NULL); /* Never actually executed. */
 }
 
-/* used internally to simplify read-ahead */
-const void *
-__archive_read_ahead(struct archive_read *a, size_t len)
-{
-	const void *h;
+/*
+ * The next three functions comprise the peek/consume internal I/O
+ * system used by archive format readers.  This system allows fairly
+ * flexible read-ahead and allows the I/O code to operate in a
+ * zero-copy manner most of the time.
+ *
+ * In the ideal case, filters generate blocks of data
+ * and __archive_read_ahead() just returns pointers directly into
+ * those blocks.  Then __archive_read_consume() just bumps those
+ * pointers.  Only if your request would span blocks does the I/O
+ * layer use a copy buffer to provide you with a contiguous block of
+ * data.  The __archive_read_skip() is an optimization; it scans ahead
+ * very quickly (it usually translates into a seek() operation if
+ * you're reading uncompressed disk files).
+ *
+ * A couple of useful idioms:
+ *  * "I just want some data."  Ask for 1 byte and pay attention to
+ *    the "number of bytes available" from __archive_read_ahead().
+ *    You can consume more than you asked for; you just can't consume
+ *    more than is available.  If you consume everything that's
+ *    immediately available, the next read_ahead() call will pull
+ *    the next block.
+ *  * "I want to output a large block of data."  As above, ask for 1 byte,
+ *    emit all that's available (up to whatever limit you have), then
+ *    repeat until you're done.
+ *  * "I want to peek ahead by a large amount."  Ask for 4k or so, then
+ *    double and repeat until you get an error or have enough.  Note
+ *    that the I/O layer will likely end up expanding its copy buffer
+ *    to fit your request, so use this technique cautiously.  This
+ *    technique is used, for example, by some of the format tasting
+ *    code that has uncertain look-ahead needs.
+ *
+ * TODO: Someday, provide a more generic __archive_read_seek() for
+ * those cases where it's useful.  This is tricky because there are lots
+ * of cases where seek() is not available (reading gzip data from a
+ * network socket, for instance), so there needs to be a good way to
+ * communicate whether seek() is available and users of that interface
+ * need to use non-seeking strategies whenever seek() is not available.
+ */
 
-	if ((a->decompressor->read_ahead)(a, &h, len) < (ssize_t)len)
+/*
+ * Looks ahead in the input stream:
+ *  * If 'avail' pointer is provided, that returns number of bytes available
+ *    in the current buffer, which may be much larger than requested.
+ *  * If end-of-file, *avail gets set to zero.
+ *  * If error, *avail gets error code.
+ *  * If request can be met, returns pointer to data, returns NULL
+ *    if request is not met.
+ *
+ * Note: If you just want "some data", ask for 1 byte and pay attention
+ * to *avail, which will have the actual amount available.  If you
+ * know exactly how many bytes you need, just ask for that and treat
+ * a NULL return as an error.
+ *
+ * Important:  This does NOT move the file pointer.  See
+ * __archive_read_consume() below.
+ */
+
+/*
+ * This is tricky.  We need to provide our clients with pointers to
+ * contiguous blocks of memory but we want to avoid copying whenever
+ * possible.
+ *
+ * Mostly, this code returns pointers directly into the block of data
+ * provided by the client_read routine.  It can do this unless the
+ * request would split across blocks.  In that case, we have to copy
+ * into an internal buffer to combine reads.
+ */
+const void *
+__archive_read_ahead(struct archive_read *a, size_t min, ssize_t *avail)
+{
+	return (__archive_read_filter_ahead(a->filter, min, avail));
+}
+
+const void *
+__archive_read_filter_ahead(struct archive_read_filter *filter,
+    size_t min, ssize_t *avail)
+{
+	ssize_t bytes_read;
+	size_t tocopy;
+
+	if (filter->fatal) {
+		if (avail)
+			*avail = ARCHIVE_FATAL;
 		return (NULL);
-	return (h);
+	}
+
+	/*
+	 * Keep pulling more data until we can satisfy the request.
+	 */
+	for (;;) {
+
+		/*
+		 * If we can satisfy from the copy buffer (and the
+		 * copy buffer isn't empty), we're done.  In particular,
+		 * note that min == 0 is a perfectly well-defined
+		 * request.
+		 */
+		if (filter->avail >= min && filter->avail > 0) {
+			if (avail != NULL)
+				*avail = filter->avail;
+			return (filter->next);
+		}
+
+		/*
+		 * We can satisfy directly from client buffer if everything
+		 * currently in the copy buffer is still in the client buffer.
+		 */
+		if (filter->client_total >= filter->client_avail + filter->avail
+		    && filter->client_avail + filter->avail >= min) {
+			/* "Roll back" to client buffer. */
+			filter->client_avail += filter->avail;
+			filter->client_next -= filter->avail;
+			/* Copy buffer is now empty. */
+			filter->avail = 0;
+			filter->next = filter->buffer;
+			/* Return data from client buffer. */
+			if (avail != NULL)
+				*avail = filter->client_avail;
+			return (filter->client_next);
+		}
+
+		/* Move data forward in copy buffer if necessary. */
+		if (filter->next > filter->buffer &&
+		    filter->next + min > filter->buffer + filter->buffer_size) {
+			if (filter->avail > 0)
+				memmove(filter->buffer, filter->next, filter->avail);
+			filter->next = filter->buffer;
+		}
+
+		/* If we've used up the client data, get more. */
+		if (filter->client_avail <= 0) {
+			if (filter->end_of_file) {
+				if (avail != NULL)
+					*avail = 0;
+				return (NULL);
+			}
+			bytes_read = (filter->read)(filter,
+			    &filter->client_buff);
+			if (bytes_read < 0) {		/* Read error. */
+				filter->client_total = filter->client_avail = 0;
+				filter->client_next = filter->client_buff = NULL;
+				filter->fatal = 1;
+				if (avail != NULL)
+					*avail = ARCHIVE_FATAL;
+				return (NULL);
+			}
+			if (bytes_read == 0) {	/* Premature end-of-file. */
+				filter->client_total = filter->client_avail = 0;
+				filter->client_next = filter->client_buff = NULL;
+				filter->end_of_file = 1;
+				/* Return whatever we do have. */
+				if (avail != NULL)
+					*avail = filter->avail;
+				return (NULL);
+			}
+			filter->position += bytes_read;
+			filter->client_total = bytes_read;
+			filter->client_avail = filter->client_total;
+			filter->client_next = filter->client_buff;
+		}
+		else
+		{
+			/*
+			 * We can't satisfy the request from the copy
+			 * buffer or the existing client data, so we
+			 * need to copy more client data over to the
+			 * copy buffer.
+			 */
+
+			/* Ensure the buffer is big enough. */
+			if (min > filter->buffer_size) {
+				size_t s, t;
+				char *p;
+
+				/* Double the buffer; watch for overflow. */
+				s = t = filter->buffer_size;
+				if (s == 0)
+					s = min;
+				while (s < min) {
+					t *= 2;
+					if (t <= s) { /* Integer overflow! */
+						archive_set_error(
+							&filter->archive->archive,
+							ENOMEM,
+						    "Unable to allocate copy buffer");
+						filter->fatal = 1;
+						if (avail != NULL)
+							*avail = ARCHIVE_FATAL;
+						return (NULL);
+					}
+					s = t;
+				}
+				/* Now s >= min, so allocate a new buffer. */
+				p = (char *)malloc(s);
+				if (p == NULL) {
+					archive_set_error(
+						&filter->archive->archive,
+						ENOMEM,
+					    "Unable to allocate copy buffer");
+					filter->fatal = 1;
+					if (avail != NULL)
+						*avail = ARCHIVE_FATAL;
+					return (NULL);
+				}
+				/* Move data into newly-enlarged buffer. */
+				if (filter->avail > 0)
+					memmove(p, filter->next, filter->avail);
+				free(filter->buffer);
+				filter->next = filter->buffer = p;
+				filter->buffer_size = s;
+			}
+
+			/* We can add client data to copy buffer. */
+			/* First estimate: copy to fill rest of buffer. */
+			tocopy = (filter->buffer + filter->buffer_size)
+			    - (filter->next + filter->avail);
+			/* Don't waste time buffering more than we need to. */
+			if (tocopy + filter->avail > min)
+				tocopy = min - filter->avail;
+			/* Don't copy more than is available. */
+			if (tocopy > filter->client_avail)
+				tocopy = filter->client_avail;
+
+			memcpy(filter->next + filter->avail, filter->client_next,
+			    tocopy);
+			/* Remove this data from client buffer. */
+			filter->client_next += tocopy;
+			filter->client_avail -= tocopy;
+			/* add it to copy buffer. */
+			filter->avail += tocopy;
+		}
+	}
+}
+
+/*
+ * Move the file pointer forward.  This should be called after
+ * __archive_read_ahead() returns data to you.  Don't try to move
+ * ahead by more than the amount of data available according to
+ * __archive_read_ahead().
+ */
+/*
+ * Mark the appropriate data as used.  Note that the request here will
+ * often be much smaller than the size of the previous read_ahead
+ * request.
+ */
+ssize_t
+__archive_read_consume(struct archive_read *a, size_t request)
+{
+	ssize_t r;
+	r = __archive_read_filter_consume(a->filter, request);
+	a->archive.file_position += r;
+	return (r);
+}
+
+ssize_t
+__archive_read_filter_consume(struct archive_read_filter * filter,
+    size_t request)
+{
+	if (filter->avail > 0) {
+		/* Read came from copy buffer. */
+		filter->next += request;
+		filter->avail -= request;
+	} else {
+		/* Read came from client buffer. */
+		filter->client_next += request;
+		filter->client_avail -= request;
+	}
+	return (request);
+}
+
+/*
+ * Move the file pointer ahead by an arbitrary amount.  If you're
+ * reading uncompressed data from a disk file, this will actually
+ * translate into a seek() operation.  Even in cases where seek()
+ * isn't feasible, this at least pushes the read-and-discard loop
+ * down closer to the data source.
+ */
+int64_t
+__archive_read_skip(struct archive_read *a, int64_t request)
+{
+	int64_t skipped = __archive_read_skip_lenient(a, request);
+	if (skipped == request)
+		return (skipped);
+	/* We hit EOF before we satisfied the skip request. */
+	if (skipped < 0)  // Map error code to 0 for error message below.
+		skipped = 0;
+	archive_set_error(&a->archive,
+	    ARCHIVE_ERRNO_MISC,
+	    "Truncated input file (needed %jd bytes, only %jd available)",
+	    (intmax_t)request, (intmax_t)skipped);
+	return (ARCHIVE_FATAL);
+}
+
+int64_t
+__archive_read_skip_lenient(struct archive_read *a, int64_t request)
+{
+	int64_t skipped = __archive_read_filter_skip(a->filter, request);
+	if (skipped > 0)
+		a->archive.file_position += skipped;
+	return (skipped);
+}
+
+int64_t
+__archive_read_filter_skip(struct archive_read_filter *filter, int64_t request)
+{
+	int64_t bytes_skipped, total_bytes_skipped = 0;
+	size_t min;
+
+	if (filter->fatal)
+		return (-1);
+	/*
+	 * If there is data in the buffers already, use that first.
+	 */
+	if (filter->avail > 0) {
+		min = minimum(request, (off_t)filter->avail);
+		bytes_skipped = __archive_read_filter_consume(filter, min);
+		request -= bytes_skipped;
+		total_bytes_skipped += bytes_skipped;
+	}
+	if (filter->client_avail > 0) {
+		min = minimum(request, (int64_t)filter->client_avail);
+		bytes_skipped = __archive_read_filter_consume(filter, min);
+		request -= bytes_skipped;
+		total_bytes_skipped += bytes_skipped;
+	}
+	if (request == 0)
+		return (total_bytes_skipped);
+	/*
+	 * If a client_skipper was provided, try that first.
+	 */
+#if ARCHIVE_API_VERSION < 2
+	if ((filter->skip != NULL) && (request < SSIZE_MAX)) {
+#else
+	if (filter->skip != NULL) {
+#endif
+		bytes_skipped = (filter->skip)(filter, request);
+		if (bytes_skipped < 0) {	/* error */
+			filter->client_total = filter->client_avail = 0;
+			filter->client_next = filter->client_buff = NULL;
+			filter->fatal = 1;
+			return (bytes_skipped);
+		}
+		total_bytes_skipped += bytes_skipped;
+		request -= bytes_skipped;
+		filter->client_next = filter->client_buff;
+		filter->client_avail = filter->client_total = 0;
+	}
+	/*
+	 * Note that client_skipper will usually not satisfy the
+	 * full request (due to low-level blocking concerns),
+	 * so even if client_skipper is provided, we may still
+	 * have to use ordinary reads to finish out the request.
+	 */
+	while (request > 0) {
+		ssize_t bytes_read;
+		(void)__archive_read_filter_ahead(filter, 1, &bytes_read);
+		if (bytes_read < 0)
+			return (bytes_read);
+		if (bytes_read == 0) {
+			return (total_bytes_skipped);
+		}
+		min = (size_t)(minimum(bytes_read, request));
+		bytes_read = __archive_read_filter_consume(filter, min);
+		total_bytes_skipped += bytes_read;
+		request -= bytes_read;
+	}
+	return (total_bytes_skipped);
 }

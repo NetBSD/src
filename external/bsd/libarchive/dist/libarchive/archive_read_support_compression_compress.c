@@ -64,7 +64,7 @@
 
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_compression_compress.c,v 1.10 2007/05/29 01:00:19 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/archive_read_support_compression_compress.c 201094 2009-12-28 02:29:21Z kientzle $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -100,11 +100,8 @@ struct private_data {
 	size_t			 bytes_in_section;
 
 	/* Output variables. */
-	size_t			 uncompressed_buffer_size;
-	void			*uncompressed_buffer;
-	unsigned char		*read_next;   /* Data for client. */
-	unsigned char		*next_out;    /* Where to write new data. */
-	size_t			 avail_out;   /* Space at end of buffer. */
+	size_t			 out_block_size;
+	void			*out_block;
 
 	/* Decompression status variables. */
 	int			 use_reset_code;
@@ -133,21 +130,31 @@ struct private_data {
 	unsigned char		 stack[65300];
 };
 
-static int	bid(const void *, size_t);
-static int	finish(struct archive_read *);
-static int	init(struct archive_read *, const void *, size_t);
-static ssize_t	read_ahead(struct archive_read *, const void **, size_t);
-static ssize_t	read_consume(struct archive_read *, size_t);
-static int	getbits(struct archive_read *, struct private_data *, int n);
-static int	next_code(struct archive_read *a, struct private_data *state);
+static int	compress_bidder_bid(struct archive_read_filter_bidder *, struct archive_read_filter *);
+static int	compress_bidder_init(struct archive_read_filter *);
+static int	compress_bidder_free(struct archive_read_filter_bidder *);
+
+static ssize_t	compress_filter_read(struct archive_read_filter *, const void **);
+static int	compress_filter_close(struct archive_read_filter *);
+
+static int	getbits(struct archive_read_filter *, int n);
+static int	next_code(struct archive_read_filter *);
 
 int
 archive_read_support_compression_compress(struct archive *_a)
 {
 	struct archive_read *a = (struct archive_read *)_a;
-	if (__archive_read_register_compression(a, bid, init) != NULL)
-		return (ARCHIVE_OK);
-	return (ARCHIVE_FATAL);
+	struct archive_read_filter_bidder *bidder = __archive_read_get_bidder(a);
+
+	if (bidder == NULL)
+		return (ARCHIVE_FATAL);
+
+	bidder->data = NULL;
+	bidder->bid = compress_bidder_bid;
+	bidder->init = compress_bidder_init;
+	bidder->options = NULL;
+	bidder->free = compress_bidder_free;
+	return (ARCHIVE_OK);
 }
 
 /*
@@ -158,27 +165,28 @@ archive_read_support_compression_compress(struct archive *_a)
  * from verifying as much as we would like.
  */
 static int
-bid(const void *buff, size_t len)
+compress_bidder_bid(struct archive_read_filter_bidder *self,
+    struct archive_read_filter *filter)
 {
 	const unsigned char *buffer;
+	ssize_t avail;
 	int bits_checked;
 
-	if (len < 1)
+	(void)self; /* UNUSED */
+
+	buffer = __archive_read_filter_ahead(filter, 2, &avail);
+
+	if (buffer == NULL)
 		return (0);
 
-	buffer = (const unsigned char *)buff;
 	bits_checked = 0;
 	if (buffer[0] != 037)	/* Verify first ID byte. */
 		return (0);
 	bits_checked += 8;
-	if (len < 2)
-		return (bits_checked);
 
 	if (buffer[1] != 0235)	/* Verify second ID byte. */
 		return (0);
 	bits_checked += 8;
-	if (len < 3)
-		return (bits_checked);
 
 	/*
 	 * TODO: Verify more.
@@ -191,60 +199,40 @@ bid(const void *buff, size_t len)
  * Setup the callbacks.
  */
 static int
-init(struct archive_read *a, const void *buff, size_t n)
+compress_bidder_init(struct archive_read_filter *self)
 {
 	struct private_data *state;
+	static const size_t out_block_size = 64 * 1024;
+	void *out_block;
 	int code;
 
-	a->archive.compression_code = ARCHIVE_COMPRESSION_COMPRESS;
-	a->archive.compression_name = "compress (.Z)";
+	self->code = ARCHIVE_COMPRESSION_COMPRESS;
+	self->name = "compress (.Z)";
 
-	a->decompressor->read_ahead = read_ahead;
-	a->decompressor->consume = read_consume;
-	a->decompressor->skip = NULL; /* not supported */
-	a->decompressor->finish = finish;
-
-	state = (struct private_data *)malloc(sizeof(*state));
-	if (state == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+	state = (struct private_data *)calloc(sizeof(*state), 1);
+	out_block = malloc(out_block_size);
+	if (state == NULL || out_block == NULL) {
+		free(out_block);
+		free(state);
+		archive_set_error(&self->archive->archive, ENOMEM,
 		    "Can't allocate data for %s decompression",
-		    a->archive.compression_name);
+		    self->name);
 		return (ARCHIVE_FATAL);
 	}
-	memset(state, 0, sizeof(*state));
-	a->decompressor->data = state;
 
-	state->uncompressed_buffer_size = 64 * 1024;
-	state->uncompressed_buffer = malloc(state->uncompressed_buffer_size);
+	self->data = state;
+	state->out_block_size = out_block_size;
+	state->out_block = out_block;
+	self->read = compress_filter_read;
+	self->skip = NULL; /* not supported */
+	self->close = compress_filter_close;
 
-	if (state->uncompressed_buffer == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
-		    "Can't allocate %s decompression buffers",
-		    a->archive.compression_name);
-		goto fatal;
-	}
+	/* XXX MOVE THE FOLLOWING OUT OF INIT() XXX */
 
-	state->next_in = (const unsigned char *)buff;
-	state->avail_in = n;
-	state->read_next = state->next_out = (unsigned char *)state->uncompressed_buffer;
-	state->avail_out = state->uncompressed_buffer_size;
+	(void)getbits(self, 8); /* Skip first signature byte. */
+	(void)getbits(self, 8); /* Skip second signature byte. */
 
-	code = getbits(a, state, 8);
-	if (code != 037) /* This should be impossible. */
-		goto fatal;
-
-	code = getbits(a, state, 8);
-	if (code != 0235) {
-		/* This can happen if the library is receiving 1-byte
-		 * blocks and gzip and compress are both enabled.
-		 * You can't distinguish gzip and compress only from
-		 * the first byte. */
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
-		    "Compress signature did not match.");
-		goto fatal;
-	}
-
-	code = getbits(a, state, 8);
+	code = getbits(self, 8);
 	state->maxcode_bits = code & 0x1f;
 	state->maxcode = (1 << state->maxcode_bits);
 	state->use_reset_code = code & 0x80;
@@ -261,12 +249,9 @@ init(struct archive_read *a, const void *buff, size_t n)
 		state->prefix[code] = 0;
 		state->suffix[code] = code;
 	}
-	next_code(a, state);
-	return (ARCHIVE_OK);
+	next_code(self);
 
-fatal:
-	finish(a);
-	return (ARCHIVE_FATAL);
+	return (ARCHIVE_OK);
 }
 
 /*
@@ -274,93 +259,57 @@ fatal:
  * as necessary.
  */
 static ssize_t
-read_ahead(struct archive_read *a, const void **p, size_t min)
+compress_filter_read(struct archive_read_filter *self, const void **pblock)
 {
 	struct private_data *state;
-	size_t read_avail;
+	unsigned char *p, *start, *end;
 	int ret;
 
-	state = (struct private_data *)a->decompressor->data;
-	if (!a->client_reader) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_PROGRAMMER,
-		    "No read callback is registered?  "
-		    "This is probably an internal programming error.");
-		return (ARCHIVE_FATAL);
+	state = (struct private_data *)self->data;
+	if (state->end_of_stream) {
+		*pblock = NULL;
+		return (0);
 	}
+	p = start = (unsigned char *)state->out_block;
+	end = start + state->out_block_size;
 
-	read_avail = state->next_out - state->read_next;
-
-	if (read_avail < min  &&  state->end_of_stream) {
-		if (state->end_of_stream == ARCHIVE_EOF)
-			return (0);
-		else
-			return (-1);
-	}
-
-	if (read_avail < min) {
-		memmove(state->uncompressed_buffer, state->read_next,
-		    read_avail);
-		state->read_next = (unsigned char *)state->uncompressed_buffer;
-		state->next_out = state->read_next + read_avail;
-		state->avail_out
-		    = state->uncompressed_buffer_size - read_avail;
-
-		while (read_avail < state->uncompressed_buffer_size
-			&& !state->end_of_stream) {
-			if (state->stackp > state->stack) {
-				*state->next_out++ = *--state->stackp;
-				state->avail_out--;
-				read_avail++;
-			} else {
-				ret = next_code(a, state);
-				if (ret == ARCHIVE_EOF)
-					state->end_of_stream = ret;
-				else if (ret != ARCHIVE_OK)
-					return (ret);
-			}
+	while (p < end && !state->end_of_stream) {
+		if (state->stackp > state->stack) {
+			*p++ = *--state->stackp;
+		} else {
+			ret = next_code(self);
+			if (ret == -1)
+				state->end_of_stream = ret;
+			else if (ret != ARCHIVE_OK)
+				return (ret);
 		}
 	}
 
-	*p = state->read_next;
-	return (read_avail);
+	*pblock = start;
+	return (p - start);
 }
 
 /*
- * Mark a previously-returned block of data as read.
- */
-static ssize_t
-read_consume(struct archive_read *a, size_t n)
-{
-	struct private_data *state;
-
-	state = (struct private_data *)a->decompressor->data;
-	a->archive.file_position += n;
-	state->read_next += n;
-	if (state->read_next > state->next_out)
-		__archive_errx(1, "Request to consume too many "
-		    "bytes from compress decompressor");
-	return (n);
-}
-
-/*
- * Clean up the decompressor.
+ * Clean up the reader.
  */
 static int
-finish(struct archive_read *a)
+compress_bidder_free(struct archive_read_filter_bidder *self)
 {
-	struct private_data *state;
-	int ret = ARCHIVE_OK;
+	self->data = NULL;
+	return (ARCHIVE_OK);
+}
 
-	state = (struct private_data *)a->decompressor->data;
+/*
+ * Close and release the filter.
+ */
+static int
+compress_filter_close(struct archive_read_filter *self)
+{
+	struct private_data *state = (struct private_data *)self->data;
 
-	if (state != NULL) {
-		if (state->uncompressed_buffer != NULL)
-			free(state->uncompressed_buffer);
-		free(state);
-	}
-
-	a->decompressor->data = NULL;
-	return (ret);
+	free(state->out_block);
+	free(state);
+	return (ARCHIVE_OK);
 }
 
 /*
@@ -369,14 +318,15 @@ finish(struct archive_read *a)
  * format error, ARCHIVE_EOF if we hit end of data, ARCHIVE_OK otherwise.
  */
 static int
-next_code(struct archive_read *a, struct private_data *state)
+next_code(struct archive_read_filter *self)
 {
+	struct private_data *state = (struct private_data *)self->data;
 	int code, newcode;
 
 	static int debug_buff[1024];
 	static unsigned debug_index;
 
-	code = newcode = getbits(a, state, state->bits);
+	code = newcode = getbits(self, state->bits);
 	if (code < 0)
 		return (code);
 
@@ -398,7 +348,7 @@ next_code(struct archive_read *a, struct private_data *state)
 		skip_bytes %= state->bits;
 		state->bits_avail = 0; /* Discard rest of this byte. */
 		while (skip_bytes-- > 0) {
-			code = getbits(a, state, 8);
+			code = getbits(self, 8);
 			if (code < 0)
 				return (code);
 		}
@@ -408,12 +358,13 @@ next_code(struct archive_read *a, struct private_data *state)
 		state->section_end_code = (1 << state->bits) - 1;
 		state->free_ent = 257;
 		state->oldcode = -1;
-		return (next_code(a, state));
+		return (next_code(self));
 	}
 
 	if (code > state->free_ent) {
 		/* An invalid code is a fatal error. */
-		archive_set_error(&a->archive, -1, "Invalid compressed data");
+		archive_set_error(&(self->archive->archive), -1,
+		    "Invalid compressed data");
 		return (ARCHIVE_FATAL);
 	}
 
@@ -457,27 +408,27 @@ next_code(struct archive_read *a, struct private_data *state)
  * -1 indicates end of available data.
  */
 static int
-getbits(struct archive_read *a, struct private_data *state, int n)
+getbits(struct archive_read_filter *self, int n)
 {
-	int code, ret;
+	struct private_data *state = (struct private_data *)self->data;
+	int code;
+	ssize_t ret;
 	static const int mask[] = {
 		0x00, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f, 0x7f, 0xff,
 		0x1ff, 0x3ff, 0x7ff, 0xfff, 0x1fff, 0x3fff, 0x7fff, 0xffff
 	};
-	const void *read_buf;
 
 	while (state->bits_avail < n) {
 		if (state->avail_in <= 0) {
-			read_buf = state->next_in;
-			ret = (a->client_reader)(&a->archive, a->client_data,
-			    &read_buf);
-			state->next_in = read_buf;
-			if (ret < 0)
-				return (ARCHIVE_FATAL);
+			state->next_in
+			    = __archive_read_filter_ahead(self->upstream,
+				1, &ret);
 			if (ret == 0)
-				return (ARCHIVE_EOF);
-			a->archive.raw_position += ret;
+				return (-1);
+			if (ret < 0 || state->next_in == NULL)
+				return (ARCHIVE_FATAL);
 			state->avail_in = ret;
+			__archive_read_filter_consume(self->upstream, ret);
 		}
 		state->bit_buffer |= *state->next_in++ << state->bits_avail;
 		state->avail_in--;

@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_format_tar.c,v 1.3 2008/01/13 23:50:30 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/test/test_read_format_tar.c 201247 2009-12-30 05:59:21Z kientzle $");
 
 /*
  * Each of these archives is a short archive with a single entry.  The
@@ -71,14 +71,15 @@ static void verifyEmpty(void)
 	assertA(0 == archive_read_open_memory(a, archiveEmpty, 512));
 	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
 	assertEqualInt(archive_compression(a), ARCHIVE_COMPRESSION_NONE);
+	assertEqualString(archive_compression_name(a), "none");
 	failure("512 zero bytes should be recognized as a tar archive.");
 	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_TAR);
 
 	assert(0 == archive_read_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assert(0 == archive_read_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_read_finish(a);
+#else
+	assert(0 == archive_read_finish(a));
 #endif
 }
 
@@ -100,9 +101,9 @@ static unsigned char archive1[] = {
 static void verify1(struct archive_entry *ae)
 {
 	/* A hardlink is not a symlink. */
-	assert(!S_ISLNK(archive_entry_mode(ae)));
+	assert(archive_entry_filetype(ae) != AE_IFLNK);
 	/* Nor is it a directory. */
-	assert(!S_ISDIR(archive_entry_mode(ae)));
+	assert(archive_entry_filetype(ae) != AE_IFDIR);
 	assertEqualInt(archive_entry_mode(ae) & 0777, 0644);
 	assertEqualInt(archive_entry_uid(ae), 1000);
 	assertEqualInt(archive_entry_gid(ae), 1000);
@@ -131,7 +132,7 @@ static unsigned char archive2[] = {
 
 static void verify2(struct archive_entry *ae)
 {
-	assert(S_ISLNK(archive_entry_mode(ae)));
+	assertEqualInt(archive_entry_filetype(ae), AE_IFLNK);
 	assertEqualInt(archive_entry_mode(ae) & 0777, 0755);
 	assertEqualInt(archive_entry_uid(ae), 1000);
 	assertEqualInt(archive_entry_gid(ae), 1000);
@@ -160,7 +161,7 @@ static unsigned char archive3[] = {
 
 static void verify3(struct archive_entry *ae)
 {
-	assert(S_ISCHR(archive_entry_mode(ae)));
+	assertEqualInt(archive_entry_filetype(ae), AE_IFCHR);
 	assertEqualInt(archive_entry_mode(ae) & 0777, 0755);
 	assertEqualInt(archive_entry_uid(ae), 1000);
 	assertEqualInt(archive_entry_gid(ae), 1000);
@@ -189,7 +190,7 @@ static unsigned char archive4[] = {
 
 static void verify4(struct archive_entry *ae)
 {
-	assert(S_ISBLK(archive_entry_mode(ae)));
+	assertEqualInt(archive_entry_filetype(ae), AE_IFBLK);
 	assertEqualInt(archive_entry_mode(ae) & 0777, 0755);
 	assertEqualInt(archive_entry_uid(ae), 1000);
 	assertEqualInt(archive_entry_gid(ae), 1000);
@@ -218,7 +219,7 @@ static unsigned char archive5[] = {
 
 static void verify5(struct archive_entry *ae)
 {
-	assert(S_ISDIR(archive_entry_mode(ae)));
+	assertEqualInt(archive_entry_filetype(ae), AE_IFDIR);
 	assertEqualInt(archive_entry_mtime(ae), 1131430878);
 	assertEqualInt(archive_entry_mode(ae) & 0777, 0755);
 	assertEqualInt(archive_entry_uid(ae), 1000);
@@ -244,7 +245,7 @@ static unsigned char archive6[] = {
 
 static void verify6(struct archive_entry *ae)
 {
-	assert(S_ISFIFO(archive_entry_mode(ae)));
+	assertEqualInt(archive_entry_filetype(ae), AE_IFIFO);
 	assertEqualInt(archive_entry_mode(ae) & 0777, 0755);
 	assertEqualInt(archive_entry_uid(ae), 1000);
 	assertEqualInt(archive_entry_gid(ae), 1000);
@@ -315,7 +316,7 @@ static unsigned char archiveK[] = {
 
 static void verifyK(struct archive_entry *ae)
 {
-	assert(S_ISLNK(archive_entry_mode(ae)));
+	assertEqualInt(archive_entry_filetype(ae), AE_IFLNK);
 	assertEqualInt(archive_entry_mode(ae) & 0777, 0755);
 	assertEqualInt(archive_entry_uid(ae), 1000);
 	assertEqualInt(archive_entry_gid(ae), 1000);
@@ -401,7 +402,7 @@ static unsigned char archivexL[] = {
 
 static void verifyxL(struct archive_entry *ae)
 {
-	assert(S_ISLNK(archive_entry_mode(ae)));
+	assertEqualInt(archive_entry_filetype(ae), AE_IFLNK);
 	assertEqualInt(archive_entry_mode(ae) & 0777, 0755);
 	assertEqualInt(archive_entry_uid(ae), 1000);
 	assertEqualInt(archive_entry_gid(ae), 1000);
@@ -447,10 +448,10 @@ static void verify(unsigned char *d, size_t s,
 	f(ae);
 
 	assert(0 == archive_read_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assert(0 == archive_read_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_read_finish(a);
+#else
+	assert(0 == archive_read_finish(a));
 #endif
 	free(buff);
 }

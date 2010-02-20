@@ -23,10 +23,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/archive_endian.h,v 1.3 2008/05/26 17:00:22 kientzle Exp $
+ * $FreeBSD: head/lib/libarchive/archive_endian.h 201085 2009-12-28 02:17:15Z kientzle $
  *
  * Borrowed from FreeBSD's <sys/endian.h>
  */
+
+#ifndef __LIBARCHIVE_BUILD
+#error This header is only to be used internally to libarchive.
+#endif
 
 /* Note:  This is a purely internal header! */
 /* Do not use this outside of libarchive internal code! */
@@ -35,14 +39,16 @@
 #define ARCHIVE_ENDIAN_H_INCLUDED
 
 
-/* Watcom C++ doesn't support 'inline' in C code.  (For any version?) */
-#if defined( __WATCOMC__ )
-	#define	inline
-#endif
-
-/* Visual C++ 6.0 doesn't support 'inline' in C code.  (Does VC7? VC8?) */
-#if defined(_MSC_VER)
-	#define	inline
+/*
+ * Disabling inline keyword for compilers known to choke on it:
+ * - Watcom C++ in C code.  (For any version?)
+ * - SGI MIPSpro
+ * - Microsoft Visual C++ 6.0 (supposedly newer versions too)
+ */
+#if defined(__WATCOMC__) || defined(__sgi) || defined(__hpux) || defined(__BORLANDC__)
+#define	inline
+#elif defined(_MSC_VER)
+#define inline __inline
 #endif
 
 /* Alignment-agnostic encode/decode bytestream to/from little/big endian. */

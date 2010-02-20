@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_data_large.c,v 1.3 2007/05/29 01:00:20 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/test/test_read_data_large.c 201247 2009-12-30 05:59:21Z kientzle $");
 
 /*
  * Test read/write of a 10M block of data in a single operation.
@@ -32,6 +32,11 @@ __FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_data_large.c,v 1.3 2007/05
  * this and also exercises archive_read_data_into_fd() (which
  * had a bug relating to this, fixed in Nov 2006).
  */
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#define open _open
+#define close _close
+#endif
 
 char buff1[11000000];
 char buff2[10000000];
@@ -43,6 +48,7 @@ DEFINE_TEST(test_read_data_large)
 	struct archive *a;
 	char tmpfilename[] = "largefile";
 	int tmpfilefd;
+	FILE *f;
 	unsigned int i;
 	size_t used;
 
@@ -63,14 +69,14 @@ DEFINE_TEST(test_read_data_large)
 	archive_entry_set_size(ae, sizeof(buff2));
 	assertA(0 == archive_write_header(a, ae));
 	archive_entry_free(ae);
-	assertA(sizeof(buff2) == archive_write_data(a, buff2, sizeof(buff2)));
+	assertA((int)sizeof(buff2) == archive_write_data(a, buff2, sizeof(buff2)));
 
 	/* Close out the archive. */
 	assertA(0 == archive_write_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assertA(0 == archive_write_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_write_finish(a);
+#else
+	assertA(0 == archive_write_finish(a));
 #endif
 
 	/* Check that archive_read_data can handle 10*10^6 at a pop. */
@@ -84,10 +90,10 @@ DEFINE_TEST(test_read_data_large)
 	failure("Read expected 10MB, but data read didn't match what was written");
 	assert(0 == memcmp(buff2, buff3, sizeof(buff3)));
 	assert(0 == archive_read_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assert(0 == archive_read_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_read_finish(a);
+#else
+	assert(0 == archive_read_finish(a));
 #endif
 
 	/* Check archive_read_data_into_fd */
@@ -96,22 +102,24 @@ DEFINE_TEST(test_read_data_large)
 	assertA(0 == archive_read_support_compression_all(a));
 	assertA(0 == archive_read_open_memory(a, buff1, sizeof(buff1)));
 	assertA(0 == archive_read_next_header(a, &ae));
-	tmpfilefd = open(tmpfilename, O_WRONLY | O_CREAT, 0777);
+#if defined(__BORLANDC__)
+	tmpfilefd = open(tmpfilename, O_WRONLY | O_CREAT | O_BINARY);
+#else
+	tmpfilefd = open(tmpfilename, O_WRONLY | O_CREAT | O_BINARY, 0777);
+#endif
 	assert(tmpfilefd != 0);
 	assertEqualIntA(a, 0, archive_read_data_into_fd(a, tmpfilefd));
 	assert(0 == archive_read_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assert(0 == archive_read_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_read_finish(a);
+#else
+	assert(0 == archive_read_finish(a));
 #endif
 	close(tmpfilefd);
 
-	tmpfilefd = open(tmpfilename, O_RDONLY);
-	assert(tmpfilefd != 0);
-	assertEqualIntA(NULL, sizeof(buff3), read(tmpfilefd, buff3, sizeof(buff3)));
-	close(tmpfilefd);
+	f = fopen(tmpfilename, "rb");
+	assert(f != NULL);
+	assertEqualInt(sizeof(buff3), fread(buff3, 1, sizeof(buff3), f));
+	fclose(f);
 	assert(0 == memcmp(buff2, buff3, sizeof(buff3)));
-
-	unlink(tmpfilename);
 }
