@@ -31,7 +31,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.9 2009/02/07 18:12:22 uebayasi Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.10 2010/02/20 08:47:10 mlelstv Exp $");
 #endif
 
 #include <sys/param.h>
@@ -676,10 +676,10 @@ gpt_open(const char *dev)
  found:
 #endif
 #ifdef __NetBSD__
+	device_name = device_path + strlen(_PATH_DEV);
 	fd = opendisk(dev, mode, device_path, sizeof(device_path), 0);
 	if (fd == -1)
 		return -1;
-	device_name = device_path + strlen(_PATH_DEV);
 #endif
 
 	if (fstat(fd, &sb) == -1)
