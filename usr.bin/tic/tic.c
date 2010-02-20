@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.7 2010/02/20 06:08:01 pgoyette Exp $ */
+/* $NetBSD: tic.c,v 1.8 2010/02/20 06:15:06 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,10 +32,13 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.7 2010/02/20 06:08:01 pgoyette Exp $");
+__RCSID("$NetBSD: tic.c,v 1.8 2010/02/20 06:15:06 pgoyette Exp $");
 
 #include <sys/types.h>
+
+#ifdef HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
+#endif
 
 #include <ctype.h>
 #include <err.h>
