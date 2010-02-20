@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211.2.7 2010/02/10 15:48:28 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211.2.8 2010/02/20 16:48:57 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.7 2010/02/10 15:48:28 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.8 2010/02/20 16:48:57 uebayasi Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -4794,7 +4794,9 @@ pmap_grow_map(vaddr_t va, pt_entry_t cache_mode, paddr_t *pap)
 			return (1);
 		pa = VM_PAGE_TO_PHYS(pg);
 #ifdef PMAP_CACHE_VIPT
+#ifdef DIAGNOSTIC
 		struct vm_page_md *md = VM_PAGE_TO_MD(pg);
+#endif
 		/*
 		 * This new page must not have any mappings.  Enter it via
 		 * pmap_kenter_pa and let that routine do the hard work.
