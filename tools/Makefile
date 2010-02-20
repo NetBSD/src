@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.135 2010/02/03 20:56:54 roy Exp $
+#	$NetBSD: Makefile,v 1.136 2010/02/20 00:35:11 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -55,10 +55,10 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 		pwd_mkdb stat strfile sunlabel zic
 
 .if ${MKMAN} != "no" || ${MKDOC} != "no" || ${MKHTML} != "no"
+.  if ${MKGROFF} != "no"
 SUBDIR+=	groff
-.  if ${MKMANDOC} == "yes"
-SUBDIR+=	mandoc
 .  endif
+SUBDIR+=	mandoc
 .endif
 
 .if ${MKMAINTAINERTOOLS:Uno} != "no"
