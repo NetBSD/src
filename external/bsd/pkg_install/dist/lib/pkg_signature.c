@@ -1,4 +1,4 @@
-/*	$NetBSD: pkg_signature.c,v 1.1.1.6 2009/08/06 16:55:28 joerg Exp $	*/
+/*	$NetBSD: pkg_signature.c,v 1.1.1.7 2010/02/20 04:41:58 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkg_signature.c,v 1.1.1.6 2009/08/06 16:55:28 joerg Exp $");
+__RCSID("$NetBSD: pkg_signature.c,v 1.1.1.7 2010/02/20 04:41:58 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -165,7 +165,8 @@ verify_signature_close_cb(struct archive *archive, void *cookie)
 }
 
 static int
-read_file_from_archive(struct archive *archive, struct archive_entry **entry,
+read_file_from_archive(const char *archive_name, struct archive *archive,
+    struct archive_entry **entry,
     const char *fname, char **content, size_t *len)
 {
 	int r;
@@ -177,10 +178,10 @@ retry:
 	if (*entry == NULL &&
 	    (r = archive_read_next_header(archive, entry)) != ARCHIVE_OK) {
 		if (r == ARCHIVE_FATAL) {
-			warnx("Cannot read from archive: %s",
-			    archive_error_string(archive));
+			warnx("Cannot read from archive `%s': %s",
+			    archive_name, archive_error_string(archive));
 		} else {
-			warnx("Premature end of archive");
+			warnx("Premature end of archive `%s'", archive_name);
 		}
 		*entry = NULL;
 		return -1;
@@ -195,14 +196,16 @@ retry:
 		return 1;
 
 	if (archive_entry_size(*entry) > SSIZE_MAX - 1) {
-		warnx("signature too large to process");
+		warnx("Signature of archive `%s' too large to process",
+		    archive_name);
 		return 1;
 	}
 	*len = archive_entry_size(*entry);
 	*content = xmalloc(*len + 1);
 
 	if (archive_read_data(archive, *content, *len) != (ssize_t)*len) {
-		warnx("cannot read complete %s from archive", fname);
+		warnx("Cannot read complete %s from archive `%s'", fname,
+		    archive_name);
 		free(*content);
 		*len = 0;
 		*content = NULL;
@@ -310,8 +313,8 @@ cleanup:
 }
 
 int
-pkg_verify_signature(struct archive **archive, struct archive_entry **entry,
-    char **pkgname)
+pkg_verify_signature(const char *archive_name, struct archive **archive,
+    struct archive_entry **entry, char **pkgname)
 {
 	struct signature_archive *state;
 	struct archive_entry *my_entry;
@@ -327,7 +330,7 @@ pkg_verify_signature(struct archive **archive, struct archive_entry **entry,
 	state->sign_buf = NULL;
 	state->archive = NULL;
 
-	r = read_file_from_archive(*archive, entry, HASH_FNAME,
+	r = read_file_from_archive(archive_name, *archive, entry, HASH_FNAME,
 	    &hash_file, &hash_len);
 	if (r == -1) {
 		archive_read_finish(*archive);
@@ -342,7 +345,7 @@ pkg_verify_signature(struct archive **archive, struct archive_entry **entry,
 	if (parse_hash_file(hash_file, pkgname, state))
 		goto no_valid_signature;
 
-	r = read_file_from_archive(*archive, entry, SIGNATURE_FNAME,
+	r = read_file_from_archive(archive_name, *archive, entry, SIGNATURE_FNAME,
 	    &signature_file, &signature_len);
 	if (r == -1) {
 		archive_read_finish(*archive);
@@ -352,8 +355,8 @@ pkg_verify_signature(struct archive **archive, struct archive_entry **entry,
 		goto no_valid_signature;
 	} else if (r != 0) {
 		if (*entry != NULL)
-			r = read_file_from_archive(*archive, entry,
-			    GPG_SIGNATURE_FNAME,
+			r = read_file_from_archive(archive_name, *archive,
+			    entry, GPG_SIGNATURE_FNAME,
 			    &signature_file, &signature_len);
 		if (r == -1) {
 			archive_read_finish(*archive);
@@ -418,13 +421,13 @@ no_valid_signature:
 }
 
 int
-pkg_full_signature_check(struct archive **archive)
+pkg_full_signature_check(const char *archive_name, struct archive **archive)
 {
 	struct archive_entry *entry = NULL;
 	char *pkgname;
 	int r;
 
-	if (pkg_verify_signature(archive, &entry, &pkgname))
+	if (pkg_verify_signature(archive_name, archive, &entry, &pkgname))
 		return -1;
 	if (pkgname == NULL)
 		return 0;

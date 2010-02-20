@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.13 2010/01/30 21:33:23 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.14 2010/02/20 04:41:53 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.13 2010/01/30 21:33:23 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.14 2010/02/20 04:41:53 joerg Exp $");
 
 /*-
  * Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
@@ -614,13 +614,16 @@ main(int argc, char *argv[])
 
 		rc = 0;
 		for (--argc, ++argv; argc > 0; --argc, ++argv) {
-			pkg = open_archive(*argv);
+			char *archive_name;
+
+			pkg = open_archive(*argv, &archive_name);
 			if (pkg == NULL) {
 				warnx("%s could not be opened", *argv);
 				continue;
 			}
-			if (pkg_full_signature_check(&pkg))
+			if (pkg_full_signature_check(archive_name, &pkg))
 				rc = 1;
+			free(archive_name);
 			if (!pkg)
 				archive_read_finish(pkg);
 		}

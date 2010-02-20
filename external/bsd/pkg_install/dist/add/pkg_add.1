@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.1.1.9 2010/01/30 21:33:20 joerg Exp $
+.\" $NetBSD: pkg_add.1,v 1.1.1.10 2010/02/20 04:41:53 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd January 30, 2010
+.Dd February 18, 2010
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -162,8 +162,8 @@ Implies
 .It Fl u
 If the package that's being installed is already installed,
 an update is performed.
-If this is specified twice, then any dependent packages that are
-too old will also be updated to fulfill the dependency.
+Installed dependent packages are updated recursively, if they are too
+old to fulfill the dependencies of the to-be-installed version.
 See below for a more detailed description of the process.
 .It Fl V
 Print version number and exit.
@@ -224,15 +224,21 @@ is already recorded as installed.
 If it is,
 installation is terminated if the
 .Fl u
-option is not given.
+or
+.Fl U
+options are not given.
 .Pp
+If the same version is installed and
+.Fl U
+is not given, it is marked as manually installed and process stops.
 If the
 .Fl u
 option is given, it's assumed the package should be replaced by the
 new version instead.
 Before doing so, all packages that depend on the
 pkg being upgraded are checked if they also work with the new version.
-If that test is successful, replacing is prepared by moving an existing
+If that test is not successful, the dependent packages are updated first.
+The replacing is then prepared by moving an existing
 .Pa +REQUIRED_BY
 file aside (if it exists), and running
 .Xr pkg_delete 1
@@ -282,14 +288,6 @@ If any of these required packages are not currently installed,
 an attempt is made to find and install it;
 if the missing package cannot be found or installed,
 the installation is terminated.
-If the
-.Fl u
-option was specified twice, any required packages that are installed,
-but which have a version number that is considered to be too old,
-are also updated.
-The dependent packages are found according to the normal
-.Ev PKG_PATH
-rules.
 .It
 If the package contains an
 .Ar install
