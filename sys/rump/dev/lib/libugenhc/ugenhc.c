@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.5 2010/02/18 16:24:19 pooka Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.6 2010/02/20 13:56:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.5 2010/02/18 16:24:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.6 2010/02/20 13:56:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -707,7 +707,7 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 	bool isread;
 	int len, error, endpt;
 	uint8_t *buf;
-	int xfererr = 0;
+	int xfererr = USBD_NORMAL_COMPLETION;
 	int val;
 
 	endpt = xfer->pipe->endpoint->edesc->bEndpointAddress;
@@ -734,7 +734,7 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 				if (error == ETIMEDOUT)
 					continue;
 				n = 0;
-				xfer->status = USBD_IOERROR;
+				xfererr = USBD_IOERROR;
 				goto out;
 			}
 			done += n;
@@ -746,8 +746,11 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 			done = n;
 			if (done == len)
 				break;
-			else
+			else if (n != -1)
 				panic("short write");
+
+			xfererr = USBD_IOERROR;
+			goto out;
 		}
 
 		if (xfer->flags & USBD_SHORT_XFER_OK)
@@ -756,21 +759,12 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 
 	if (RUSB(xfer)->rusb_status == 0) {
 		xfer->actlen = done;
-		xfer->status = USBD_NORMAL_COMPLETION;
-		/* override */
-		if (xfererr) {
-			printf("err!\n");
-			xfer->status = xfererr;
-		}
 	} else {
-		xfer->status = USBD_CANCELLED;
+		xfererr = USBD_CANCELLED;
 		RUSB(xfer)->rusb_status = 2;
 	}
  out:
-	val = 0;
-	error = 0;
-	rumpuser_ioctl(sc->sc_ugenfd[endpt], USB_SET_SHORT_XFER, &val, &error);
-	xfer->status = error;
+	xfer->status = xfererr;
 	usb_transfer_complete(xfer);
 	return (USBD_IN_PROGRESS);
 }
