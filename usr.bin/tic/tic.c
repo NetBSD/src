@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.6 2010/02/11 13:09:57 roy Exp $ */
+/* $NetBSD: tic.c,v 1.7 2010/02/20 06:08:01 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,9 +32,10 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.6 2010/02/11 13:09:57 roy Exp $");
+__RCSID("$NetBSD: tic.c,v 1.7 2010/02/20 06:08:01 pgoyette Exp $");
 
 #include <sys/types.h>
+#include <sys/endian.h>
 
 #include <ctype.h>
 #include <err.h>
