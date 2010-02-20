@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_disk_set_standard_lookup.c,v 1.4 2007/05/29 01:00:19 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/archive_write_disk_set_standard_lookup.c 201083 2009-12-28 02:09:57Z kientzle $");
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -118,12 +118,35 @@ lookup_gid(void *private_data, const char *gname, gid_t gid)
 	b->hash = h;
 #if HAVE_GRP_H
 	{
-		struct group	*grent = getgrnam(gname);
-		if (grent != NULL)
-			gid = grent->gr_gid;
+		char _buffer[128];
+		size_t bufsize = 128;
+		char *buffer = _buffer;
+		struct group	grent, *result;
+		int r;
+
+		for (;;) {
+			result = &grent; /* Old getgrnam_r ignores last arg. */
+			r = getgrnam_r(gname, &grent, buffer, bufsize, &result);
+			if (r == 0)
+				break;
+			if (r != ERANGE)
+				break;
+			bufsize *= 2;
+			if (buffer != _buffer)
+				free(buffer);
+			buffer = malloc(bufsize);
+			if (buffer == NULL)
+				break;
+		}
+		if (result != NULL)
+			gid = result->gr_gid;
+		if (buffer != _buffer)
+			free(buffer);
 	}
-#elif _WIN32
+#elif defined(_WIN32) && !defined(__CYGWIN__)
 	/* TODO: do a gname->gid lookup for Windows. */
+#else
+	#error No way to perform gid lookups on this platform
 #endif
 	b->id = gid;
 
@@ -155,12 +178,35 @@ lookup_uid(void *private_data, const char *uname, uid_t uid)
 	b->hash = h;
 #if HAVE_PWD_H
 	{
-		struct passwd	*pwent = getpwnam(uname);
-		if (pwent != NULL)
-			uid = pwent->pw_uid;
+		char _buffer[128];
+		size_t bufsize = 128;
+		char *buffer = _buffer;
+		struct passwd	pwent, *result;
+		int r;
+
+		for (;;) {
+			result = &pwent; /* Old getpwnam_r ignores last arg. */
+			r = getpwnam_r(uname, &pwent, buffer, bufsize, &result);
+			if (r == 0)
+				break;
+			if (r != ERANGE)
+				break;
+			bufsize *= 2;
+			if (buffer != _buffer)
+				free(buffer);
+			buffer = malloc(bufsize);
+			if (buffer == NULL)
+				break;
+		}
+		if (result != NULL)
+			uid = result->pw_uid;
+		if (buffer != _buffer)
+			free(buffer);
 	}
-#elif _WIN32
+#elif defined(_WIN32) && !defined(__CYGWIN__)
 	/* TODO: do a uname->uid lookup for Windows. */
+#else
+	#error No way to look up uids on this platform
 #endif
 	b->id = uid;
 
@@ -186,8 +232,8 @@ hash(const char *p)
 	   as used by ELF for hashing function names. */
 	unsigned g, h = 0;
 	while (*p != '\0') {
-		h = ( h << 4 ) + *p++;
-		if (( g = h & 0xF0000000 )) {
+		h = (h << 4) + *p++;
+		if ((g = h & 0xF0000000) != 0) {
 			h ^= g >> 24;
 			h &= 0x0FFFFFFF;
 		}

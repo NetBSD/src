@@ -24,13 +24,19 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_open_fd.c,v 1.13 2007/06/26 03:06:48 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/archive_read_open_fd.c 201103 2009-12-28 03:13:49Z kientzle $");
 
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
+#endif
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+#ifdef HAVE_IO_H
+#include <io.h>
 #endif
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
@@ -52,7 +58,6 @@ struct read_fd_data {
 };
 
 static int	file_close(struct archive *, void *);
-static int	file_open(struct archive *, void *);
 static ssize_t	file_read(struct archive *, void *, const void **buff);
 #if ARCHIVE_API_VERSION < 2
 static ssize_t	file_skip(struct archive *, void *, size_t request);
@@ -63,50 +68,45 @@ static off_t	file_skip(struct archive *, void *, off_t request);
 int
 archive_read_open_fd(struct archive *a, int fd, size_t block_size)
 {
+	struct stat st;
 	struct read_fd_data *mine;
+	void *b;
+
+	archive_clear_error(a);
+	if (fstat(fd, &st) != 0) {
+		archive_set_error(a, errno, "Can't stat fd %d", fd);
+		return (ARCHIVE_FATAL);
+	}
 
 	mine = (struct read_fd_data *)malloc(sizeof(*mine));
-	if (mine == NULL) {
+	b = malloc(block_size);
+	if (mine == NULL || b == NULL) {
 		archive_set_error(a, ENOMEM, "No memory");
+		free(mine);
+		free(b);
 		return (ARCHIVE_FATAL);
 	}
 	mine->block_size = block_size;
-	mine->buffer = malloc(mine->block_size);
-	if (mine->buffer == NULL) {
-		archive_set_error(a, ENOMEM, "No memory");
-		free(mine);
-		return (ARCHIVE_FATAL);
-	}
+	mine->buffer = b;
 	mine->fd = fd;
-	/* lseek() hardly ever works, so disable it by default.  See below. */
-	mine->can_skip = 0;
-	return (archive_read_open2(a, mine, file_open, file_read, file_skip, file_close));
-}
-
-static int
-file_open(struct archive *a, void *client_data)
-{
-	struct read_fd_data *mine = (struct read_fd_data *)client_data;
-	struct stat st;
-
-	if (fstat(mine->fd, &st) != 0) {
-		archive_set_error(a, errno, "Can't stat fd %d", mine->fd);
-		return (ARCHIVE_FATAL);
-	}
-
+	/*
+	 * Skip support is a performance optimization for anything
+	 * that supports lseek().  On FreeBSD, only regular files and
+	 * raw disk devices support lseek() and there's no portable
+	 * way to determine if a device is a raw disk device, so we
+	 * only enable this optimization for regular files.
+	 */
 	if (S_ISREG(st.st_mode)) {
 		archive_read_extract_set_skip_file(a, st.st_dev, st.st_ino);
-		/*
-		 * Enabling skip here is a performance optimization for
-		 * anything that supports lseek().  On FreeBSD, only
-		 * regular files and raw disk devices support lseek() and
-		 * there's no portable way to determine if a device is
-		 * a raw disk device, so we only enable this optimization
-		 * for regular files.
-		 */
 		mine->can_skip = 1;
-	}
-	return (ARCHIVE_OK);
+	} else
+		mine->can_skip = 0;
+#if defined(__CYGWIN__) || defined(_WIN32)
+	setmode(mine->fd, O_BINARY);
+#endif
+
+	return (archive_read_open2(a, mine,
+		NULL, file_read, file_skip, file_close));
 }
 
 static ssize_t
@@ -180,8 +180,7 @@ file_close(struct archive *a, void *client_data)
 	struct read_fd_data *mine = (struct read_fd_data *)client_data;
 
 	(void)a; /* UNUSED */
-	if (mine->buffer != NULL)
-		free(mine->buffer);
+	free(mine->buffer);
 	free(mine);
 	return (ARCHIVE_OK);
 }

@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_format_tar.c,v 1.3 2007/05/29 01:00:21 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/test/test_write_format_tar.c 189308 2009-03-03 17:02:51Z kientzle $");
 
 char buff[1000000];
 char buff2[64];
@@ -42,8 +42,8 @@ DEFINE_TEST(test_write_format_tar)
 		assert((a = archive_write_new()) != NULL);
 		assertA(0 == archive_write_set_format_ustar(a));
 		assertA(0 == archive_write_set_compression_none(a));
-		assertA(0 == archive_write_set_bytes_per_block(a, blocksize));
-		assertA(0 == archive_write_set_bytes_in_last_block(a, blocksize));
+		assertA(0 == archive_write_set_bytes_per_block(a, (int)blocksize));
+		assertA(0 == archive_write_set_bytes_in_last_block(a, (int)blocksize));
 		assertA(blocksize == (size_t)archive_write_get_bytes_in_last_block(a));
 		assertA(0 == archive_write_open_memory(a, buff, sizeof(buff), &used));
 		assertA(blocksize == (size_t)archive_write_get_bytes_in_last_block(a));
@@ -72,10 +72,10 @@ DEFINE_TEST(test_write_format_tar)
 
 		/* Close out the archive. */
 		assertA(0 == archive_write_close(a));
-#if ARCHIVE_API_VERSION > 1
-		assertA(0 == archive_write_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 		archive_write_finish(a);
+#else
+		assertA(0 == archive_write_finish(a));
 #endif
 		/* This calculation gives "the smallest multiple of
 		 * the block size that is at least 2048 bytes". */
@@ -105,10 +105,10 @@ DEFINE_TEST(test_write_format_tar)
 		/* Verify the end of the archive. */
 		assert(1 == archive_read_next_header(a, &ae));
 		assert(0 == archive_read_close(a));
-#if ARCHIVE_API_VERSION > 1
-		assert(0 == archive_read_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 		archive_read_finish(a);
+#else
+		assert(0 == archive_read_finish(a));
 #endif
 	}
 }

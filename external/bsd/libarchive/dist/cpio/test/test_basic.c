@@ -23,71 +23,35 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD$");
+__FBSDID("$FreeBSD: src/usr.bin/cpio/test/test_basic.c,v 1.4 2008/08/25 06:39:29 kientzle Exp $");
 
 static void
-verify_files(const char *target)
+verify_files(const char *msg)
 {
-	struct stat st, st2;
-	char buff[128];
-	int r;
-
 	/*
 	 * Verify unpacked files.
 	 */
 
 	/* Regular file with 2 links. */
-	r = lstat("file", &st);
-	failure("Failed to stat file %s/file, errno=%d", target, errno);
-	assertEqualInt(r, 0);
-	if (r == 0) {
-		assert(S_ISREG(st.st_mode));
-		assertEqualInt(0644, st.st_mode & 0777);
-		assertEqualInt(10, st.st_size);
-		failure("file %s/file should have 2 links", target);
-		assertEqualInt(2, st.st_nlink);
-	}
+	assertIsReg("file", 0644);
+	failure(msg);
+	assertFileSize("file", 10);
+	assertFileNLinks("file", 2);
 
 	/* Another name for the same file. */
-	r = lstat("linkfile", &st2);
-	failure("Failed to stat file %s/linkfile, errno=%d", target, errno);
-	assertEqualInt(r, 0);
-	if (r == 0) {
-		assert(S_ISREG(st2.st_mode));
-		assertEqualInt(0644, st2.st_mode & 0777);
-		assertEqualInt(10, st2.st_size);
-		failure("file %s/linkfile should have 2 links", target);
-		assertEqualInt(2, st2.st_nlink);
-		/* Verify that the two are really hardlinked. */
-		assertEqualInt(st.st_dev, st2.st_dev);
-		failure("%s/linkfile and %s/file should be hardlinked",
-		    target, target);
-		assertEqualInt(st.st_ino, st2.st_ino);
-	}
+	assertIsHardlink("linkfile", "file");
 
 	/* Symlink */
-	r = lstat("symlink", &st);
-	failure("Failed to stat file %s/symlink, errno=%d", target, errno);
-	assertEqualInt(r, 0);
-	if (r == 0) {
-		failure("symlink should be a symlink; actual mode is %o",
-		    st.st_mode);
-		assert(S_ISLNK(st.st_mode));
-		if (S_ISLNK(st.st_mode)) {
-			r = readlink("symlink", buff, sizeof(buff));
-			assertEqualInt(r, 4);
-			buff[r] = '\0';
-			assertEqualString(buff, "file");
-		}
-	}
+	if (canSymlink())
+		assertIsSymlink("symlink", "file");
+
+	/* Another file with 1 link and different permissions. */
+	assertIsReg("file2", 0777);
+	assertFileSize("file2", 10);
+	assertFileNLinks("file2", 1);
 
 	/* dir */
-	r = lstat("dir", &st);
-	if (r == 0) {
-		assertEqualInt(r, 0);
-		assert(S_ISDIR(st.st_mode));
-		assertEqualInt(0775, st.st_mode & 0777);
-	}
+	assertIsDir("dir", 0775);
 }
 
 static void
@@ -98,7 +62,7 @@ basic_cpio(const char *target,
 {
 	int r;
 
-	if (!assertEqualInt(0, mkdir(target, 0775)))
+	if (!assertMakeDir(target, 0775))
 	    return;
 
 	/* Use the cpio program to create an archive. */
@@ -107,11 +71,11 @@ basic_cpio(const char *target,
 	failure("Error invoking %s -o %s", testprog, pack_options);
 	assertEqualInt(r, 0);
 
-	chdir(target);
+	assertChdir(target);
 
 	/* Verify stderr. */
 	failure("Expected: %s, options=%s", se, pack_options);
-	assertFileContents(se, strlen(se), "pack.err");
+	assertTextFileContents(se, "pack.err");
 
 	/*
 	 * Use cpio to unpack the archive into another directory.
@@ -123,11 +87,11 @@ basic_cpio(const char *target,
 
 	/* Verify stderr. */
 	failure("Error invoking %s -i %s in dir %s", testprog, unpack_options, target);
-	assertFileContents(se, strlen(se), "unpack.err");
+	assertTextFileContents(se, "unpack.err");
 
-	verify_files(target);
+	verify_files(pack_options);
 
-	chdir("..");
+	assertChdir("..");
 }
 
 static void
@@ -135,70 +99,75 @@ passthrough(const char *target)
 {
 	int r;
 
-	if (!assertEqualInt(0, mkdir(target, 0775)))
+	if (!assertMakeDir(target, 0775))
 		return;
 
 	/*
 	 * Use cpio passthrough mode to copy files to another directory.
 	 */
-	r = systemf("%s -p -W quiet %s <filelist >%s/stdout 2>%s/stderr", 
+	r = systemf("%s -p %s <filelist >%s/stdout 2>%s/stderr",
 	    testprog, target, target, target);
 	failure("Error invoking %s -p", testprog);
 	assertEqualInt(r, 0);
 
-	chdir(target);
+	assertChdir(target);
 
 	/* Verify stderr. */
 	failure("Error invoking %s -p in dir %s",
 	    testprog, target);
-	assertEmptyFile("stderr");
+	assertTextFileContents("1 block\n", "stderr");
 
-	verify_files(target);
-	chdir("..");
+	verify_files("passthrough");
+	assertChdir("..");
 }
 
 DEFINE_TEST(test_basic)
 {
-	int fd;
-	int filelist;
-	int oldumask;
+	FILE *filelist;
+	const char *msg;
 
-	oldumask = umask(0);
+	assertUmask(0);
 
 	/*
 	 * Create an assortment of files on disk.
 	 */
-	filelist = open("filelist", O_CREAT | O_WRONLY, 0644);
+	filelist = fopen("filelist", "w");
 
 	/* File with 10 bytes content. */
-	fd = open("file", O_CREAT | O_WRONLY, 0644);
-	assert(fd >= 0);
-	assertEqualInt(10, write(fd, "123456789", 10));
-	close(fd);
-	write(filelist, "file\n", 5);
+	assertMakeFile("file", 0644, "1234567890");
+	fprintf(filelist, "file\n");
 
 	/* hardlink to above file. */
-	assertEqualInt(0, link("file", "linkfile"));
-	write(filelist, "linkfile\n", 9);
+	assertMakeHardlink("linkfile", "file");
+	fprintf(filelist, "linkfile\n");
 
 	/* Symlink to above file. */
-	assertEqualInt(0, symlink("file", "symlink"));
-	write(filelist, "symlink\n", 8);
+	if (canSymlink()) {
+		assertMakeSymlink("symlink", "file");
+		fprintf(filelist, "symlink\n");
+	}
+
+	/* Another file with different permissions. */
+	assertMakeFile("file2", 0777, "1234567890");
+	fprintf(filelist, "file2\n");
 
 	/* Directory. */
-	assertEqualInt(0, mkdir("dir", 0775));
-	write(filelist, "dir\n", 4);
+	assertMakeDir("dir", 0775);
+	fprintf(filelist, "dir\n");
 	/* All done. */
-	close(filelist);
+	fclose(filelist);
+
+	assertUmask(022);
 
 	/* Archive/dearchive with a variety of options. */
-	basic_cpio("copy", "", "", "1 block\n");
-	basic_cpio("copy_odc", "--format=odc", "", "1 block\n");
+	msg = canSymlink() ? "2 blocks\n" : "1 block\n";
+	basic_cpio("copy", "", "", msg);
+	basic_cpio("copy_odc", "--format=odc", "", msg);
 	basic_cpio("copy_newc", "-H newc", "", "2 blocks\n");
-	basic_cpio("copy_cpio", "-H odc", "", "1 block\n");
-	basic_cpio("copy_ustar", "-H ustar", "", "7 blocks\n");
+	basic_cpio("copy_cpio", "-H odc", "", msg);
+	msg = canSymlink() ? "9 blocks\n" : "8 blocks\n";
+	basic_cpio("copy_ustar", "-H ustar", "", msg);
+
 	/* Copy in one step using -p */
 	passthrough("passthrough");
-
-	umask(oldumask);
 }
