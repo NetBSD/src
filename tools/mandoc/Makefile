@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/02/19 23:03:02 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2010/02/20 13:43:31 joerg Exp $
 
 HOSTPROGNAME=	${_TOOL_PREFIX}mandoc
 HOST_SRCDIR=	external/bsd/mdocml/bin/mandoc
@@ -6,6 +6,7 @@ HOST_SRCDIR=	external/bsd/mdocml/bin/mandoc
 NOMAN=		# defined
 
 .include <bsd.own.mk>
+.include <bsd.sys.mk>
 
 NETBSD_MINOR!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh -n
 NETBSD_OSNAME=	"NetBSD ${NETBSD_MINOR}"
@@ -13,6 +14,8 @@ NETBSD_OSNAME=	"NetBSD ${NETBSD_MINOR}"
 HOST_CPPFLAGS+=	-DOSNAME=${NETBSD_OSNAME:Q} -DHAVE_CONFIG_H -I.
 
 DPSRCS+=	config.h
+
+CLEANFILES+=	config.log config.h
 
 config.h: config.h.pre config.h.post
 	rm -f config.log
