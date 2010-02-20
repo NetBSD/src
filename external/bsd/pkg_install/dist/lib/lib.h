@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.3 2010/02/03 19:31:49 joerg Exp $ */
+/* $NetBSD: lib.h,v 1.4 2010/02/20 04:44:59 joerg Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -322,8 +322,8 @@ int	has_pkgdir(const char *);
 struct archive;
 struct archive_entry;
 
-struct archive *open_archive(const char *);
-struct archive *find_archive(const char *, int);
+struct archive *open_archive(const char *, char **);
+struct archive *find_archive(const char *, int, char **);
 void	process_pkg_path(void);
 struct url *find_best_package(const char *, const char *, int);
 
@@ -391,8 +391,8 @@ void pkg_install_config(void);
 void pkg_install_show_variable(const char *);
 
 /* Package signature creation and validation */
-int pkg_verify_signature(struct archive **, struct archive_entry **, char **);
-int pkg_full_signature_check(struct archive **);
+int pkg_verify_signature(const char *, struct archive **, struct archive_entry **, char **);
+int pkg_full_signature_check(const char *, struct archive **);
 #ifdef HAVE_SSL
 void pkg_sign_x509(const char *, const char *, const char *, const char *);
 #endif
