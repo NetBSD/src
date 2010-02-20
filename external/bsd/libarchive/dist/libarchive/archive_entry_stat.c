@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_entry_stat.c,v 1.1 2007/05/29 01:00:18 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/archive_entry_stat.c 201100 2009-12-28 03:05:31Z kientzle $");
 
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -64,12 +64,15 @@ archive_entry_stat(struct archive_entry *entry)
 	 * the appropriate conversions get invoked.
 	 */
 	st->st_atime = archive_entry_atime(entry);
+#if HAVE_STRUCT_STAT_ST_BIRTHTIME
+	st->st_birthtime = archive_entry_birthtime(entry);
+#endif
 	st->st_ctime = archive_entry_ctime(entry);
 	st->st_mtime = archive_entry_mtime(entry);
 	st->st_dev = archive_entry_dev(entry);
 	st->st_gid = archive_entry_gid(entry);
 	st->st_uid = archive_entry_uid(entry);
-	st->st_ino = archive_entry_ino(entry);
+	st->st_ino = archive_entry_ino64(entry);
 	st->st_nlink = archive_entry_nlink(entry);
 	st->st_rdev = archive_entry_rdev(entry);
 	st->st_size = archive_entry_size(entry);
@@ -87,6 +90,21 @@ archive_entry_stat(struct archive_entry *entry)
 	st->st_atim.tv_nsec = archive_entry_atime_nsec(entry);
 	st->st_ctim.tv_nsec = archive_entry_ctime_nsec(entry);
 	st->st_mtim.tv_nsec = archive_entry_mtime_nsec(entry);
+#elif HAVE_STRUCT_STAT_ST_MTIME_N
+	st->st_atime_n = archive_entry_atime_nsec(entry);
+	st->st_ctime_n = archive_entry_ctime_nsec(entry);
+	st->st_mtime_n = archive_entry_mtime_nsec(entry);
+#elif HAVE_STRUCT_STAT_ST_UMTIME
+	st->st_uatime = archive_entry_atime_nsec(entry) / 1000;
+	st->st_uctime = archive_entry_ctime_nsec(entry) / 1000;
+	st->st_umtime = archive_entry_mtime_nsec(entry) / 1000;
+#elif HAVE_STRUCT_STAT_ST_MTIME_USEC
+	st->st_atime_usec = archive_entry_atime_nsec(entry) / 1000;
+	st->st_ctime_usec = archive_entry_ctime_nsec(entry) / 1000;
+	st->st_mtime_usec = archive_entry_mtime_nsec(entry) / 1000;
+#endif
+#if HAVE_STRUCT_STAT_ST_BIRTHTIMESPEC_TV_NSEC
+	st->st_birthtimespec.tv_nsec = archive_entry_birthtime_nsec(entry);
 #endif
 
 	/*

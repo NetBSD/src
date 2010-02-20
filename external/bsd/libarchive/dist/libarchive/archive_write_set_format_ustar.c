@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_format_ustar.c,v 1.27 2008/05/26 17:00:23 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/archive_write_set_format_ustar.c 191579 2009-04-27 18:35:03Z kientzle $");
 
 
 #ifdef HAVE_ERRNO_H
@@ -181,6 +181,7 @@ archive_write_set_format_ustar(struct archive *_a)
 	a->format_data = ustar;
 
 	a->pad_uncompressed = 1;	/* Mimic gtar in this respect. */
+	a->format_name = "ustar";
 	a->format_write_header = archive_write_ustar_header;
 	a->format_write_data = archive_write_ustar_data;
 	a->format_finish = archive_write_ustar_finish;
@@ -413,8 +414,14 @@ __archive_write_format_header_ustar(struct archive_write *a, char h[512],
 		case AE_IFBLK: h[USTAR_typeflag_offset] = '4' ; break;
 		case AE_IFDIR: h[USTAR_typeflag_offset] = '5' ; break;
 		case AE_IFIFO: h[USTAR_typeflag_offset] = '6' ; break;
+		case AE_IFSOCK:
+			archive_set_error(&a->archive,
+			    ARCHIVE_ERRNO_FILE_FORMAT,
+			    "tar format cannot archive socket");
+			return (ARCHIVE_FAILED);
 		default:
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+			archive_set_error(&a->archive,
+			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "tar format cannot archive this (mode=0%lo)",
 			    (unsigned long)archive_entry_mode(entry));
 			ret = ARCHIVE_FAILED;

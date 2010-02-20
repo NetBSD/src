@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_open_memory.c,v 1.3 2007/05/29 01:00:21 kientzle Exp $");
+__FBSDID("$FreeBSD: head/lib/libarchive/test/test_write_open_memory.c 189308 2009-03-03 17:02:51Z kientzle $");
 
 /* Try to force archive_write_open_memory.c to write past the end of an array. */
 static unsigned char buff[16384];
@@ -50,7 +50,7 @@ DEFINE_TEST(test_write_open_memory)
 		assert((a = archive_write_new()) != NULL);
 		assertA(0 == archive_write_set_format_ustar(a));
 		assertA(0 == archive_write_set_bytes_in_last_block(a, 1));
-		assertA(0 == archive_write_set_bytes_per_block(a, blocksize));
+		assertA(0 == archive_write_set_bytes_per_block(a, (int)blocksize));
 		buff[i] = 0xAE;
 		assertA(0 == archive_write_open_memory(a, buff, i, &s));
 		/* If buffer is smaller than a tar header, this should fail. */
@@ -64,10 +64,10 @@ DEFINE_TEST(test_write_open_memory)
 			assertA(ARCHIVE_FATAL == archive_write_close(a));
 		else
 			assertA(0 == archive_write_close(a));
-#if ARCHIVE_API_VERSION > 1
-		assert(0 == archive_write_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 		archive_write_finish(a);
+#else
+		assert(0 == archive_write_finish(a));
 #endif
 		assert(buff[i] == 0xAE);
 		assert(s <= i);

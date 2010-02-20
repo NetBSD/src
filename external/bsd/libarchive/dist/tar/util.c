@@ -24,7 +24,7 @@
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/util.c,v 1.20 2008/06/09 14:03:55 cperciva Exp $");
+__FBSDID("$FreeBSD: src/usr.bin/tar/util.c,v 1.23 2008/12/15 06:00:25 kientzle Exp $");
 
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -36,8 +36,14 @@ __FBSDID("$FreeBSD: src/usr.bin/tar/util.c,v 1.20 2008/06/09 14:03:55 cperciva E
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
 #endif
+#ifdef HAVE_IO_H
+#include <io.h>
+#endif
 #ifdef HAVE_STDARG_H
 #include <stdarg.h>
+#endif
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
 #endif
 #include <stdio.h>
 #ifdef HAVE_STDLIB_H
@@ -46,122 +52,163 @@ __FBSDID("$FreeBSD: src/usr.bin/tar/util.c,v 1.20 2008/06/09 14:03:55 cperciva E
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
+#ifdef HAVE_WCTYPE_H
+#include <wctype.h>
+#else
+/* If we don't have wctype, we need to hack up some version of iswprint(). */
+#define iswprint isprint
+#endif
 
 #include "bsdtar.h"
+#include "err.h"
 
-static void	bsdtar_vwarnc(struct bsdtar *, int code,
-		    const char *fmt, va_list ap);
+static size_t	bsdtar_expand_char(char *, size_t, char);
+static const char *strip_components(const char *path, int elements);
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#define read _read
+#endif
+
+/* TODO:  Hack up a version of mbtowc for platforms with no wide
+ * character support at all.  I think the following might suffice,
+ * but it needs careful testing.
+ * #if !HAVE_MBTOWC
+ * #define mbtowc(wcp, p, n) ((*wcp = *p), 1)
+ * #endif
+ */
 
 /*
  * Print a string, taking care with any non-printable characters.
+ *
+ * Note that we use a stack-allocated buffer to receive the formatted
+ * string if we can.  This is partly performance (avoiding a call to
+ * malloc()), partly out of expedience (we have to call vsnprintf()
+ * before malloc() anyway to find out how big a buffer we need; we may
+ * as well point that first call at a small local buffer in case it
+ * works), but mostly for safety (so we can use this to print messages
+ * about out-of-memory conditions).
  */
 
 void
 safe_fprintf(FILE *f, const char *fmt, ...)
 {
-	char *buff;
-	char *buff_heap;
-	int buff_length;
-	int length;
+	char fmtbuff_stack[256]; /* Place to format the printf() string. */
+	char outbuff[256]; /* Buffer for outgoing characters. */
+	char *fmtbuff_heap; /* If fmtbuff_stack is too small, we use malloc */
+	char *fmtbuff;  /* Pointer to fmtbuff_stack or fmtbuff_heap. */
+	int fmtbuff_length;
+	int length, n;
 	va_list ap;
-	char *p;
+	const char *p;
 	unsigned i;
-	char buff_stack[256];
-	char copy_buff[256];
+	wchar_t wc;
+	char try_wc;
 
 	/* Use a stack-allocated buffer if we can, for speed and safety. */
-	buff_heap = NULL;
-	buff_length = sizeof(buff_stack);
-	buff = buff_stack;
+	fmtbuff_heap = NULL;
+	fmtbuff_length = sizeof(fmtbuff_stack);
+	fmtbuff = fmtbuff_stack;
 
+	/* Try formatting into the stack buffer. */
 	va_start(ap, fmt);
-	length = vsnprintf(buff, buff_length, fmt, ap);
+	length = vsnprintf(fmtbuff, fmtbuff_length, fmt, ap);
 	va_end(ap);
-	/* If the result is too large, allocate a buffer on the heap. */
-	if (length >= buff_length) {
-		buff_length = length+1;
-		buff_heap = malloc(buff_length);
-		/* Failsafe: use the truncated string if malloc fails. */
-		if (buff_heap != NULL) {
-			buff = buff_heap;
+
+	/* If the result was too large, allocate a buffer on the heap. */
+	if (length >= fmtbuff_length) {
+		fmtbuff_length = length+1;
+		fmtbuff_heap = malloc(fmtbuff_length);
+
+		/* Reformat the result into the heap buffer if we can. */
+		if (fmtbuff_heap != NULL) {
+			fmtbuff = fmtbuff_heap;
 			va_start(ap, fmt);
-			length = vsnprintf(buff, buff_length, fmt, ap);
+			length = vsnprintf(fmtbuff, fmtbuff_length, fmt, ap);
 			va_end(ap);
+		} else {
+			/* Leave fmtbuff pointing to the truncated
+			 * string in fmtbuff_stack. */
+			length = sizeof(fmtbuff_stack) - 1;
 		}
 	}
 
-	/* Write data, expanding unprintable characters. */
-	p = buff;
-	i = 0;
-	while (*p != '\0') {
-		unsigned char c = *p++;
+	/* Note: mbrtowc() has a cleaner API, but mbtowc() seems a bit
+	 * more portable, so we use that here instead. */
+	n = mbtowc(NULL, NULL, 1); /* Reset the shift state. */
 
-		if (isprint(c) && c != '\\')
-			copy_buff[i++] = c;
-		else {
-			copy_buff[i++] = '\\';
-			switch (c) {
-			case '\a': copy_buff[i++] = 'a'; break;
-			case '\b': copy_buff[i++] = 'b'; break;
-			case '\f': copy_buff[i++] = 'f'; break;
-			case '\n': copy_buff[i++] = 'n'; break;
-#if '\r' != '\n'
-			/* On some platforms, \n and \r are the same. */
-			case '\r': copy_buff[i++] = 'r'; break;
-#endif
-			case '\t': copy_buff[i++] = 't'; break;
-			case '\v': copy_buff[i++] = 'v'; break;
-			case '\\': copy_buff[i++] = '\\'; break;
-			default:
-				sprintf(copy_buff + i, "%03o", c);
-				i += 3;
+	/* Write data, expanding unprintable characters. */
+	p = fmtbuff;
+	i = 0;
+	try_wc = 1;
+	while (*p != '\0') {
+
+		/* Convert to wide char, test if the wide
+		 * char is printable in the current locale. */
+		if (try_wc && (n = mbtowc(&wc, p, length)) != -1) {
+			length -= n;
+			if (iswprint(wc) && wc != L'\\') {
+				/* Printable, copy the bytes through. */
+				while (n-- > 0)
+					outbuff[i++] = *p++;
+			} else {
+				/* Not printable, format the bytes. */
+				while (n-- > 0)
+					i += (unsigned)bsdtar_expand_char(
+					    outbuff, i, *p++);
 			}
+		} else {
+			/* After any conversion failure, don't bother
+			 * trying to convert the rest. */
+			i += (unsigned)bsdtar_expand_char(outbuff, i, *p++);
+			try_wc = 0;
 		}
 
-		/* If our temp buffer is full, dump it and keep going. */
-		if (i > (sizeof(copy_buff) - 8)) {
-			copy_buff[i++] = '\0';
-			fprintf(f, "%s", copy_buff);
+		/* If our output buffer is full, dump it and keep going. */
+		if (i > (sizeof(outbuff) - 20)) {
+			outbuff[i] = '\0';
+			fprintf(f, "%s", outbuff);
 			i = 0;
 		}
 	}
-	copy_buff[i++] = '\0';
-	fprintf(f, "%s", copy_buff);
+	outbuff[i] = '\0';
+	fprintf(f, "%s", outbuff);
 
-	/* If we allocated a heap-based buffer, free it now. */
-	if (buff_heap != NULL)
-		free(buff_heap);
+	/* If we allocated a heap-based formatting buffer, free it now. */
+	if (fmtbuff_heap != NULL)
+		free(fmtbuff_heap);
 }
 
-static void
-bsdtar_vwarnc(struct bsdtar *bsdtar, int code, const char *fmt, va_list ap)
+/*
+ * Render an arbitrary sequence of bytes into printable ASCII characters.
+ */
+static size_t
+bsdtar_expand_char(char *buff, size_t offset, char c)
 {
-	fprintf(stderr, "%s: ", bsdtar->progname);
-	vfprintf(stderr, fmt, ap);
-	if (code != 0)
-		fprintf(stderr, ": %s", strerror(code));
-	fprintf(stderr, "\n");
-}
+	size_t i = offset;
 
-void
-bsdtar_warnc(struct bsdtar *bsdtar, int code, const char *fmt, ...)
-{
-	va_list ap;
+	if (isprint((unsigned char)c) && c != '\\')
+		buff[i++] = c;
+	else {
+		buff[i++] = '\\';
+		switch (c) {
+		case '\a': buff[i++] = 'a'; break;
+		case '\b': buff[i++] = 'b'; break;
+		case '\f': buff[i++] = 'f'; break;
+		case '\n': buff[i++] = 'n'; break;
+#if '\r' != '\n'
+		/* On some platforms, \n and \r are the same. */
+		case '\r': buff[i++] = 'r'; break;
+#endif
+		case '\t': buff[i++] = 't'; break;
+		case '\v': buff[i++] = 'v'; break;
+		case '\\': buff[i++] = '\\'; break;
+		default:
+			sprintf(buff + i, "%03o", 0xFF & (int)c);
+			i += 3;
+		}
+	}
 
-	va_start(ap, fmt);
-	bsdtar_vwarnc(bsdtar, code, fmt, ap);
-	va_end(ap);
-}
-
-void
-bsdtar_errc(struct bsdtar *bsdtar, int eval, int code, const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	bsdtar_vwarnc(bsdtar, code, fmt, ap);
-	va_end(ap);
-	exit(eval);
+	return (i - offset);
 }
 
 int
@@ -184,7 +231,7 @@ yes(const char *fmt, ...)
 	buff[l] = 0;
 
 	for (p = buff; *p != '\0'; p++) {
-		if (isspace(0xff & (int)*p))
+		if (isspace((unsigned char)*p))
 			continue;
 		switch(*p) {
 		case 'y': case 'Y':
@@ -197,95 +244,6 @@ yes(const char *fmt, ...)
 	}
 
 	return (0);
-}
-
-/*
- * Read lines from file and do something with each one.  If option_null
- * is set, lines are terminated with zero bytes; otherwise, they're
- * terminated with newlines.
- *
- * This uses a self-sizing buffer to handle arbitrarily-long lines.
- * If the "process" function returns non-zero for any line, this
- * function will return non-zero after attempting to process all
- * remaining lines.
- */
-int
-process_lines(struct bsdtar *bsdtar, const char *pathname,
-    int (*process)(struct bsdtar *, const char *))
-{
-	FILE *f;
-	char *buff, *buff_end, *line_start, *line_end, *p;
-	size_t buff_length, new_buff_length, bytes_read, bytes_wanted;
-	int separator;
-	int ret;
-
-	separator = bsdtar->option_null ? '\0' : '\n';
-	ret = 0;
-
-	if (strcmp(pathname, "-") == 0)
-		f = stdin;
-	else
-		f = fopen(pathname, "r");
-	if (f == NULL)
-		bsdtar_errc(bsdtar, 1, errno, "Couldn't open %s", pathname);
-	buff_length = 8192;
-	buff = malloc(buff_length);
-	if (buff == NULL)
-		bsdtar_errc(bsdtar, 1, ENOMEM, "Can't read %s", pathname);
-	line_start = line_end = buff_end = buff;
-	for (;;) {
-		/* Get some more data into the buffer. */
-		bytes_wanted = buff + buff_length - buff_end;
-		bytes_read = fread(buff_end, 1, bytes_wanted, f);
-		buff_end += bytes_read;
-		/* Process all complete lines in the buffer. */
-		while (line_end < buff_end) {
-			if (*line_end == separator) {
-				*line_end = '\0';
-				if ((*process)(bsdtar, line_start) != 0)
-					ret = -1;
-				line_start = line_end + 1;
-				line_end = line_start;
-			} else
-				line_end++;
-		}
-		if (feof(f))
-			break;
-		if (ferror(f))
-			bsdtar_errc(bsdtar, 1, errno,
-			    "Can't read %s", pathname);
-		if (line_start > buff) {
-			/* Move a leftover fractional line to the beginning. */
-			memmove(buff, line_start, buff_end - line_start);
-			buff_end -= line_start - buff;
-			line_end -= line_start - buff;
-			line_start = buff;
-		} else {
-			/* Line is too big; enlarge the buffer. */
-			new_buff_length = buff_length * 2;
-			if (new_buff_length <= buff_length)
-				bsdtar_errc(bsdtar, 1, ENOMEM,
-				    "Line too long in %s", pathname);
-			buff_length = new_buff_length;
-			p = realloc(buff, buff_length);
-			if (p == NULL)
-				bsdtar_errc(bsdtar, 1, ENOMEM,
-				    "Line too long in %s", pathname);
-			buff_end = p + (buff_end - buff);
-			line_end = p + (line_end - buff);
-			line_start = buff = p;
-		}
-	}
-	/* At end-of-file, handle the final line. */
-	if (line_end > line_start) {
-		*line_end = '\0';
-		if ((*process)(bsdtar, line_start) != 0)
-			ret = -1;
-	}
-	free(buff);
-	if (f != stdin)
-		fclose(f);
-	return (ret);
 }
 
 /*-
@@ -304,6 +262,8 @@ process_lines(struct bsdtar *bsdtar, const char *pathname,
  * This way, programs that build tar command lines don't have to worry
  * about -C with non-existent directories; such requests will only
  * fail if the directory must be accessed.
+ *
+ * TODO: Make this handle Windows paths correctly.
  */
 void
 set_chdir(struct bsdtar *bsdtar, const char *newdir)
@@ -329,7 +289,7 @@ set_chdir(struct bsdtar *bsdtar, const char *newdir)
 		free(old_pending);
 	}
 	if (bsdtar->pending_chdir == NULL)
-		bsdtar_errc(bsdtar, 1, errno, "No memory");
+		lafe_errc(1, errno, "No memory");
 }
 
 void
@@ -339,11 +299,50 @@ do_chdir(struct bsdtar *bsdtar)
 		return;
 
 	if (chdir(bsdtar->pending_chdir) != 0) {
-		bsdtar_errc(bsdtar, 1, 0, "could not chdir to '%s'\n",
+		lafe_errc(1, 0, "could not chdir to '%s'\n",
 		    bsdtar->pending_chdir);
 	}
 	free(bsdtar->pending_chdir);
 	bsdtar->pending_chdir = NULL;
+}
+
+static const char *
+strip_components(const char *p, int elements)
+{
+	/* Skip as many elements as necessary. */
+	while (elements > 0) {
+		switch (*p++) {
+		case '/':
+#if defined(_WIN32) && !defined(__CYGWIN__)
+		case '\\': /* Support \ path sep on Windows ONLY. */
+#endif
+			elements--;
+			break;
+		case '\0':
+			/* Path is too short, skip it. */
+			return (NULL);
+		}
+	}
+
+	/* Skip any / characters.  This handles short paths that have
+	 * additional / termination.  This also handles the case where
+	 * the logic above stops in the middle of a duplicate //
+	 * sequence (which would otherwise get converted to an
+	 * absolute path). */
+	for (;;) {
+		switch (*p) {
+		case '/':
+#if defined(_WIN32) && !defined(__CYGWIN__)
+		case '\\': /* Support \ path sep on Windows ONLY. */
+#endif
+			++p;
+			break;
+		case '\0':
+			return (NULL);
+		default:
+			return (p);
+		}
+	}
 }
 
 /*
@@ -358,13 +357,13 @@ edit_pathname(struct bsdtar *bsdtar, struct archive_entry *entry)
 	const char *name = archive_entry_pathname(entry);
 #if HAVE_REGEX_H
 	char *subst_name;
-#endif
 	int r;
+#endif
 
 #if HAVE_REGEX_H
 	r = apply_substitution(bsdtar, name, &subst_name, 0);
 	if (r == -1) {
-		bsdtar_warnc(bsdtar, 0, "Invalid substituion, skipping entry");
+		lafe_warnc(0, "Invalid substitution, skipping entry");
 		return 1;
 	}
 	if (r == 1) {
@@ -380,7 +379,7 @@ edit_pathname(struct bsdtar *bsdtar, struct archive_entry *entry)
 	if (archive_entry_hardlink(entry)) {
 		r = apply_substitution(bsdtar, archive_entry_hardlink(entry), &subst_name, 1);
 		if (r == -1) {
-			bsdtar_warnc(bsdtar, 0, "Invalid substituion, skipping entry");
+			lafe_warnc(0, "Invalid substitution, skipping entry");
 			return 1;
 		}
 		if (r == 1) {
@@ -391,7 +390,7 @@ edit_pathname(struct bsdtar *bsdtar, struct archive_entry *entry)
 	if (archive_entry_symlink(entry) != NULL) {
 		r = apply_substitution(bsdtar, archive_entry_symlink(entry), &subst_name, 1);
 		if (r == -1) {
-			bsdtar_warnc(bsdtar, 0, "Invalid substituion, skipping entry");
+			lafe_warnc(0, "Invalid substitution, skipping entry");
 			return 1;
 		}
 		if (r == 1) {
@@ -402,42 +401,88 @@ edit_pathname(struct bsdtar *bsdtar, struct archive_entry *entry)
 #endif
 
 	/* Strip leading dir names as per --strip-components option. */
-	if ((r = bsdtar->strip_components) > 0) {
-		const char *p = name;
+	if (bsdtar->strip_components > 0) {
+		const char *linkname = archive_entry_hardlink(entry);
 
-		while (r > 0) {
-			switch (*p++) {
-			case '/':
-				r--;
-				name = p;
-				break;
-			case '\0':
-				/* Path is too short, skip it. */
-				return (1);
-			}
-		}
-		while (*name == '/')
-			++name;
-		if (*name == '\0')
+		name = strip_components(name, bsdtar->strip_components);
+		if (name == NULL)
 			return (1);
+
+		if (linkname != NULL) {
+			linkname = strip_components(linkname,
+			    bsdtar->strip_components);
+			if (linkname == NULL)
+				return (1);
+			archive_entry_copy_hardlink(entry, linkname);
+		}
 	}
 
-	/* Strip redundant leading '/' characters. */
-	while (name[0] == '/' && name[1] == '/')
-		name++;
+	/* By default, don't write or restore absolute pathnames. */
+	if (!bsdtar->option_absolute_paths) {
+		const char *rp, *p = name;
+		int slashonly = 1;
 
-	/* Strip leading '/' unless user has asked us not to. */
-	if (name[0] == '/' && !bsdtar->option_absolute_paths) {
-		/* Generate a warning the first time this happens. */
-		if (!bsdtar->warned_lead_slash) {
-			bsdtar_warnc(bsdtar, 0,
-			    "Removing leading '/' from member names");
+		/* Remove leading "//./" or "//?/" or "//?/UNC/"
+		 * (absolute path prefixes used by Windows API) */
+		if ((p[0] == '/' || p[0] == '\\') &&
+		    (p[1] == '/' || p[1] == '\\') &&
+		    (p[2] == '.' || p[2] == '?') &&
+		    (p[3] == '/' || p[3] == '\\'))
+		{
+			if (p[2] == '?' &&
+			    (p[4] == 'U' || p[4] == 'u') &&
+			    (p[5] == 'N' || p[5] == 'n') &&
+			    (p[6] == 'C' || p[6] == 'c') &&
+			    (p[7] == '/' || p[7] == '\\'))
+				p += 8;
+			else
+				p += 4;
+			slashonly = 0;
+		}
+		do {
+			rp = p;
+			/* Remove leading drive letter from archives created
+			 * on Windows. */
+			if (((p[0] >= 'a' && p[0] <= 'z') ||
+			     (p[0] >= 'A' && p[0] <= 'Z')) &&
+				 p[1] == ':') {
+				p += 2;
+				slashonly = 0;
+			}
+			/* Remove leading "/../", "//", etc. */
+			while (p[0] == '/' || p[0] == '\\') {
+				if (p[1] == '.' && p[2] == '.' &&
+					(p[3] == '/' || p[3] == '\\')) {
+					p += 3; /* Remove "/..", leave "/"
+							 * for next pass. */
+					slashonly = 0;
+				} else
+					p += 1; /* Remove "/". */
+			}
+		} while (rp != p);
+
+		if (p != name && !bsdtar->warned_lead_slash) {
+			/* Generate a warning the first time this happens. */
+			if (slashonly)
+				lafe_warnc(0,
+				    "Removing leading '%c' from member names",
+				    name[0]);
+			else
+				lafe_warnc(0,
+				    "Removing leading drive letter from "
+				    "member names");
 			bsdtar->warned_lead_slash = 1;
 		}
-		name++;
-		/* Special case: Stripping leading '/' from "/" yields ".". */
-		if (*name == '\0')
+
+		/* Special case: Stripping everything yields ".". */
+		if (*p == '\0')
 			name = ".";
+		else
+			name = p;
+	} else {
+		/* Strip redundant leading '/' characters. */
+		while (name[0] == '/' && name[1] == '/')
+			name++;
 	}
 
 	/* Safely replace name in archive_entry. */
@@ -450,6 +495,28 @@ edit_pathname(struct bsdtar *bsdtar, struct archive_entry *entry)
 }
 
 /*
+ * It would be nice to just use printf() for formatting large numbers,
+ * but the compatibility problems are quite a headache.  Hence the
+ * following simple utility function.
+ */
+const char *
+tar_i64toa(int64_t n0)
+{
+	static char buff[24];
+	int64_t n = n0 < 0 ? -n0 : n0;
+	char *p = buff + sizeof(buff);
+
+	*--p = '\0';
+	do {
+		*--p = '0' + (int)(n % 10);
+		n /= 10;
+	} while (n > 0);
+	if (n0 < 0)
+		*--p = '-';
+	return p;
+}
+
+/*
  * Like strcmp(), but try to be a little more aware of the fact that
  * we're comparing two paths.  Right now, it just handles leading
  * "./" and trailing '/' specially, so that "a/b/" == "./a/b"
@@ -459,6 +526,9 @@ edit_pathname(struct bsdtar *bsdtar, struct archive_entry *entry)
  * TODO: Publish the path normalization routines in libarchive so
  * that bsdtar can normalize paths and use fast strcmp() instead
  * of this.
+ *
+ * Note: This is currently only used within write.c, so should
+ * not handle \ path separators.
  */
 
 int
