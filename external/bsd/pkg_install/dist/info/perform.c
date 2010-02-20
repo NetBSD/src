@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.12 2010/01/30 21:33:40 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.13 2010/02/20 04:41:55 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -13,7 +13,7 @@
 #if HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.12 2010/01/30 21:33:40 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.13 2010/02/20 04:41:55 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -346,16 +346,16 @@ pkg_do(const char *pkg)
 #else
 		struct archive *archive;
 		struct archive_entry *entry;
-		char *pkgname;
+		char *archive_name, *pkgname;
 
-		archive = open_archive(pkg);
+		archive = open_archive(pkg, &archive_name);
 		if (archive == NULL) {
 			warnx("can't find package `%s', skipped", pkg);
 			return -1;
 		}
 		pkgname = NULL;
 		entry = NULL;
-		pkg_verify_signature(&archive, &entry, &pkgname);
+		pkg_verify_signature(archive_name, &archive, &entry, &pkgname);
 		if (archive == NULL)
 			return -1;
 		free(pkgname);
