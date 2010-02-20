@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/02/20 02:55:53 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2010/02/20 22:49:22 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -11,7 +11,6 @@ LIBDPLIBS+=	bz2	${NETBSDSRCDIR}/lib/libbz2 \
 
 SRCS=		archive_check_magic.c \
 		archive_entry.c \
-		archive_entry_copy_bhfi.c \
 		archive_entry_copy_stat.c \
 		archive_entry_link_resolver.c \
 		archive_entry_stat.c \
