@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.288 2010/02/18 14:57:01 drochner Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.289 2010/02/20 13:21:58 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.288 2010/02/18 14:57:01 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.289 2010/02/20 13:21:58 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -5268,7 +5268,7 @@ SYSCTL_SETUP(sysctl_uvmmap_setup, "sysctl uvmmap setup")
 
         sysctl_createv(clog, 0, NULL, NULL,
                        CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-                       CTLTYPE_INT, "user_va0_disabled",
+                       CTLTYPE_INT, "user_va0_disable",
                        SYSCTL_DESCR("Disable VA 0"),
                        sysctl_user_va0_disabled, 0, &user_va0_disabled, 0,
                        CTL_VM, CTL_CREATE, CTL_EOL);
