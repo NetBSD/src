@@ -1,4 +1,4 @@
-/*	$NetBSD: pkg_io.c,v 1.1.1.7 2009/08/21 15:19:19 joerg Exp $	*/
+/*	$NetBSD: pkg_io.c,v 1.1.1.8 2010/02/20 04:41:57 joerg Exp $	*/
 /*-
  * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: pkg_io.c,v 1.1.1.7 2009/08/21 15:19:19 joerg Exp $");
+__RCSID("$NetBSD: pkg_io.c,v 1.1.1.8 2010/02/20 04:41:57 joerg Exp $");
 
 #include <archive.h>
 #include <archive_entry.h>
@@ -98,7 +98,7 @@ fetch_archive_close(struct archive *a, void *client_data)
 }
 
 static struct archive *
-open_archive_by_url(struct url *url)
+open_archive_by_url(struct url *url, char **archive_name)
 {
 	struct fetch_archive *f;
 	struct archive *a;
@@ -106,11 +106,15 @@ open_archive_by_url(struct url *url)
 	f = xmalloc(sizeof(*f));
 	f->url = url;
 
+	*archive_name = fetchStringifyURL(url);
+
 	a = archive_read_new();
 	archive_read_support_compression_all(a);
 	archive_read_support_format_all(a);
 	if (archive_read_open(a, f, fetch_archive_open, fetch_archive_read,
 	    fetch_archive_close)) {
+		free(*archive_name);
+		*archive_name = NULL;
 		archive_read_finish(a);
 		return NULL;
 	}
@@ -119,10 +123,12 @@ open_archive_by_url(struct url *url)
 }
 
 struct archive *
-open_archive(const char *url)
+open_archive(const char *url, char **archive_name)
 {
 	struct url *u;
 	struct archive *a;
+
+	*archive_name = NULL;
 
 	if (!IS_URL(url)) {
 		a = archive_read_new();
@@ -132,13 +138,14 @@ open_archive(const char *url)
 			archive_read_close(a);
 			return NULL;
 		}
+		*archive_name = xstrdup(url);
 		return a;
 	}
 
 	if ((u = fetchParseURL(url)) == NULL)
 		return NULL;
 
-	a = open_archive_by_url(u);
+	a = open_archive_by_url(u, archive_name);
 
 	fetchFreeURL(u);
 	return a;
@@ -291,7 +298,7 @@ find_best_package(const char *toplevel, const char *pattern, int do_path)
 }
 
 struct archive *
-find_archive(const char *fname, int top_level)
+find_archive(const char *fname, int top_level, char **archive_name)
 {
 	struct archive *a;
 	struct url *best_match;
@@ -315,7 +322,7 @@ find_archive(const char *fname, int top_level)
 		*last_slash = '/';
 	}
 
-	a = open_archive(full_fname);
+	a = open_archive(full_fname, archive_name);
 	if (a != NULL) {
 		free(full_fname);
 		return a;
@@ -333,7 +340,7 @@ find_archive(const char *fname, int top_level)
 
 	if (best_match == NULL)
 		return NULL;
-	a = open_archive_by_url(best_match);
+	a = open_archive_by_url(best_match, archive_name);
 	fetchFreeURL(best_match);
 	return a;
 }
