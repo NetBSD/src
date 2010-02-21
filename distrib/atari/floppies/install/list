@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.14 2010/02/21 20:09:50 tsutsui Exp $
+#	$NetBSD: list,v 1.15 2010/02/21 20:10:51 tsutsui Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -56,8 +56,8 @@ SPECIAL	route		srcdir	distrib/utils/x_route
 SPECIAL	umount		srcdir	distrib/utils/x_umount
 
 # various files that we need in /etc for the install
-COPY	${NETBSDSRCDIR}/etc/netconfig			etc/netconfig
-COPY	${DISTRIBDIR}/common/protocols	etc/protocols
+COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
+COPY	${DISTRIBDIR}/common/protocols		etc/protocols
 COPY	${DISTRIBDIR}/common/services		etc/services
 
 # we need the boot block code in /usr/mdec
