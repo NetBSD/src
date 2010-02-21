@@ -49,6 +49,7 @@ extern "C" {
 #include <sys/types.h>
 #include <sys/modctl.h>
 #include <sys/processor.h>
+#include <sys/proc.h>
 #if defined(sun)
 #include <sys/systm.h>
 #else
@@ -59,7 +60,9 @@ extern "C" {
 typedef int model_t;
 #endif
 #include <sys/ctf_api.h>
+#if 0
 #include <sys/cyclic.h>
+#endif
 #if defined(sun)
 #include <sys/int_limits.h>
 #else
@@ -2013,9 +2016,12 @@ typedef struct dof_helper {
  *   instrument the kernel arbitrarily should be sure to not instrument these
  *   routines.
  */
+
+typedef dtrace_modctl_t *mymodctl_p;
+
 typedef struct dtrace_pops {
 	void (*dtps_provide)(void *arg, dtrace_probedesc_t *spec);
-	void (*dtps_provide_module)(void *arg, modctl_t *mp);
+	void (*dtps_provide_module)(void *arg, dtrace_modctl_t *mp);
 	void (*dtps_enable)(void *arg, dtrace_id_t id, void *parg);
 	void (*dtps_disable)(void *arg, dtrace_id_t id, void *parg);
 	void (*dtps_suspend)(void *arg, dtrace_id_t id, void *parg);
@@ -2239,8 +2245,8 @@ extern void dtrace_membar_producer(void);
 extern void dtrace_membar_consumer(void);
 
 extern void (*dtrace_cpu_init)(processorid_t);
-extern void (*dtrace_modload)(modctl_t *);
-extern void (*dtrace_modunload)(modctl_t *);
+extern void (*dtrace_modload)(dtrace_modctl_t *);
+extern void (*dtrace_modunload)(dtrace_modctl_t *);
 extern void (*dtrace_helpers_cleanup)(void);
 extern void (*dtrace_helpers_fork)(proc_t *parent, proc_t *child);
 extern void (*dtrace_cpustart_init)(void);
@@ -2253,12 +2259,12 @@ extern dtrace_cacheid_t dtrace_predcache_id;
 #if defined(sun)
 extern hrtime_t dtrace_gethrtime(void);
 #else
-void dtrace_debug_printf(const char *, ...) __printflike(1, 2);
+void dtrace_debug_printf(const char *, ...);
 #endif
 extern void dtrace_sync(void);
 extern void dtrace_toxic_ranges(void (*)(uintptr_t, uintptr_t));
 extern void dtrace_xcall(processorid_t, dtrace_xcall_t, void *);
-extern void dtrace_vpanic(const char *, __va_list);
+extern void dtrace_vpanic(const char *, _BSD_VA_LIST_);
 extern void dtrace_panic(const char *, ...);
 
 extern int dtrace_safe_defer_signal(void);
@@ -2280,13 +2286,13 @@ extern void dtrace_getfsr(uint64_t *);
 #endif
 
 #define	DTRACE_CPUFLAG_ISSET(flag) \
-	(cpu_core[curcpu].cpuc_dtrace_flags & (flag))
+	(cpu_core[curcpu_id].cpuc_dtrace_flags & (flag))
 
 #define	DTRACE_CPUFLAG_SET(flag) \
-	(cpu_core[curcpu].cpuc_dtrace_flags |= (flag))
+	(cpu_core[curcpu_id].cpuc_dtrace_flags |= (flag))
 
 #define	DTRACE_CPUFLAG_CLEAR(flag) \
-	(cpu_core[curcpu].cpuc_dtrace_flags &= ~(flag))
+	(cpu_core[curcpu_id].cpuc_dtrace_flags &= ~(flag))
 
 #endif /* _KERNEL */
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: prototype.c,v 1.2 2010/02/21 01:46:32 darran Exp $	*/
+
 /*
  * This file is freeware. You are free to use it and add your own
  * license.

@@ -1,3 +1,5 @@
+/*	$NetBSD: dtrace_sysctl.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+
 /*
  * CDDL HEADER START
  *
@@ -23,9 +25,12 @@
  */
 
 int	dtrace_debug = 0;
+#if 0
 TUNABLE_INT("debug.dtrace.debug", &dtrace_debug);
 SYSCTL_INT(_debug_dtrace, OID_AUTO, debug, CTLFLAG_RW, &dtrace_debug, 0, "");
+#endif
 
+#if 0	/* XXX TBD sysctl */
 /* Report registered DTrace providers. */
 static int
 sysctl_dtrace_providers(SYSCTL_HANDLER_ARGS)
@@ -79,4 +84,4 @@ sysctl_dtrace_providers(SYSCTL_HANDLER_ARGS)
 
 SYSCTL_PROC(_debug_dtrace, OID_AUTO, providers, CTLTYPE_STRING | CTLFLAG_RD,
     0, 0, sysctl_dtrace_providers, "A", "");
-
+#endif

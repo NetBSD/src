@@ -251,6 +251,7 @@ dt_aggregate_quantizedcmp(int64_t *lhs, int64_t *rhs)
 static void
 dt_aggregate_usym(dtrace_hdl_t *dtp, uint64_t *data)
 {
+#if 0	/* XXX TBD needs libproc */
 	uint64_t pid = data[0];
 	uint64_t *pc = &data[1];
 	struct ps_prochandle *P;
@@ -273,11 +274,15 @@ dt_aggregate_usym(dtrace_hdl_t *dtp, uint64_t *data)
 
 	dt_proc_unlock(dtp, P);
 	dt_proc_release(dtp, P);
+#else
+	printf("XXX %s not implemented\n", __func__);
+#endif
 }
 
 static void
 dt_aggregate_umod(dtrace_hdl_t *dtp, uint64_t *data)
 {
+#if 0	/* XXX TBD needs libproc */
 	uint64_t pid = data[0];
 	uint64_t *pc = &data[1];
 	struct ps_prochandle *P;
@@ -300,6 +305,9 @@ dt_aggregate_umod(dtrace_hdl_t *dtp, uint64_t *data)
 
 	dt_proc_unlock(dtp, P);
 	dt_proc_release(dtp, P);
+#else
+	printf("XXX %s not implemented\n", __func__);
+#endif
 }
 
 static void

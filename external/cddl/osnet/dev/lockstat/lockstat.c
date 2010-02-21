@@ -1,3 +1,5 @@
+/*	$NetBSD: lockstat.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+
 /*
  * CDDL HEADER START
  *

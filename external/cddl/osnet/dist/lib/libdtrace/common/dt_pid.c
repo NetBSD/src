@@ -108,6 +108,7 @@ dt_pid_error(dtrace_hdl_t *dtp, dt_pcb_t *pcb, dt_proc_t *dpr,
 static int
 dt_pid_per_sym(dt_pid_probe_t *pp, const GElf_Sym *symp, const char *func)
 {
+#if 0	/* XXX TBD needs libproc */
 	dtrace_hdl_t *dtp = pp->dpp_dtp;
 	dt_pcb_t *pcb = pp->dpp_pcb;
 	dt_proc_t *dpr = pp->dpp_dpr;
@@ -223,6 +224,10 @@ dt_pid_per_sym(dt_pid_probe_t *pp, const GElf_Sym *symp, const char *func)
 	dt_free(dtp, ftp);
 
 	return (0);
+#else
+	printf("XXX %s not implemented\n", __func__);
+	return ENODEV;
+#endif
 }
 
 static int
@@ -263,6 +268,7 @@ dt_pid_sym_filt(void *arg, const GElf_Sym *symp, const char *func)
 static int
 dt_pid_per_mod(void *arg, const prmap_t *pmp, const char *obj)
 {
+#if 0	/* XXX TBD needs libproc */
 	dt_pid_probe_t *pp = arg;
 	dtrace_hdl_t *dtp = pp->dpp_dtp;
 	dt_pcb_t *pcb = pp->dpp_pcb;
@@ -421,6 +427,10 @@ dt_pid_per_mod(void *arg, const prmap_t *pmp, const char *obj)
 	}
 
 	return (0);
+#else
+	printf("XXX %s not implemented\n", __func__);
+	return ENODEV;
+#endif
 }
 
 static int
@@ -507,6 +517,7 @@ static int
 dt_pid_create_pid_probes(dtrace_probedesc_t *pdp, dtrace_hdl_t *dtp,
     dt_pcb_t *pcb, dt_proc_t *dpr)
 {
+#if 0	/* XXX TBD needs libproc */
 	dt_pid_probe_t pp;
 	int ret = 0;
 
@@ -588,11 +599,16 @@ dt_pid_create_pid_probes(dtrace_probedesc_t *pdp, dtrace_hdl_t *dtp,
 #endif
 
 	return (ret);
+#else
+	printf("XXX %s not implemented\n", __func__);
+	return ENODEV;
+#endif
 }
 
 static int
 dt_pid_usdt_mapping(void *data, const prmap_t *pmp, const char *oname)
 {
+#if 0	/* XXX TBD needs libproc */
 	struct ps_prochandle *P = data;
 	GElf_Sym sym;
 #if defined(sun)
@@ -664,12 +680,17 @@ dt_pid_usdt_mapping(void *data, const prmap_t *pmp, const char *oname)
 #endif
 
 	return (0);
+#else
+	printf("XXX %s not implemented\n", __func__);
+	return ENODEV;
+#endif
 }
 
 static int
 dt_pid_create_usdt_probes(dtrace_probedesc_t *pdp, dtrace_hdl_t *dtp,
     dt_pcb_t *pcb, dt_proc_t *dpr)
 {
+#if 0	/* XXX TBD needs libproc */
 	struct ps_prochandle *P = dpr->dpr_proc;
 	int ret = 0;
 
@@ -695,6 +716,10 @@ dt_pid_create_usdt_probes(dtrace_probedesc_t *pdp, dtrace_hdl_t *dtp,
 	(void) dt_pid_fix_mod(pdp, P);
 
 	return (ret);
+#else
+	printf("XXX %s not implemented\n", __func__);
+	return ENODEV;
+#endif
 }
 
 static pid_t
@@ -730,6 +755,7 @@ dt_pid_get_pid(dtrace_probedesc_t *pdp, dtrace_hdl_t *dtp, dt_pcb_t *pcb,
 int
 dt_pid_create_probes(dtrace_probedesc_t *pdp, dtrace_hdl_t *dtp, dt_pcb_t *pcb)
 {
+#if 0	/* XXX TBD needs libproc */
 	char provname[DTRACE_PROVNAMELEN];
 	struct ps_prochandle *P;
 	dt_proc_t *dpr;
@@ -804,6 +830,10 @@ dt_pid_create_probes(dtrace_probedesc_t *pdp, dtrace_hdl_t *dtp, dt_pcb_t *pcb)
 	}
 
 	return (err ? -1 : 0);
+#else
+	printf("XXX %s not implemented\n", __func__);
+	return -1;
+#endif
 }
 
 int

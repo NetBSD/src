@@ -1,3 +1,5 @@
+/*	$NetBSD: dtrace_asm.S,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+
 /*
  * CDDL HEADER START
  *
@@ -28,14 +30,10 @@
 
 #define _ASM
 
-#include <machine/asmacros.h>
 #include <sys/cpuvar_defs.h>
 #include <sys/dtrace.h>
+#include <machine/asm.h>
 
-#include "assym.s"
-
-	.globl	calltrap
-	.type	calltrap,@function
 	ENTRY(dtrace_invop_start)
 
 	pushl	%eax			/* push %eax -- may be return value */
@@ -56,7 +54,7 @@
 	 * those values.
 	 */
 	addl	$12, %esp
-	ALTENTRY(dtrace_invop_callsite)
+//	ALTENTRY(dtrace_invop_callsite)
 	cmpl	$DTRACE_INVOP_PUSHL_EBP, %eax
 	je	invop_push
 	cmpl	$DTRACE_INVOP_POPL_EBP, %eax
@@ -172,7 +170,19 @@ uint32_t dtrace_cas32(uint32_t *target, uint32_t cmp, uint32_t new)
 */
 
 	ENTRY(dtrace_cas32)
-	ALTENTRY(dtrace_casptr)
+	movl	4(%esp), %edx
+	movl	8(%esp), %eax
+	movl	12(%esp), %ecx
+	lock
+	cmpxchgl %ecx, (%edx)
+	ret
+	END(dtrace_cas32)
+
+/*
+uint32_t dtrace_casptr(uint32_t *target, uint32_t cmp, uint32_t new)
+*/
+
+	ENTRY(dtrace_casptr)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
 	movl	12(%esp), %ecx
@@ -180,7 +190,7 @@ uint32_t dtrace_cas32(uint32_t *target, uint32_t cmp, uint32_t new)
 	cmpxchgl %ecx, (%edx)
 	ret
 	END(dtrace_casptr)
-	END(dtrace_cas32)
+
 
 /*
 uintptr_t dtrace_caller(int aframes)

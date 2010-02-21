@@ -1,3 +1,5 @@
+/*	$NetBSD: dtrace_modevent.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+
 /*
  * CDDL HEADER START
  *
@@ -24,24 +26,20 @@
 
 /* ARGSUSED */
 static int
-dtrace_modevent(module_t mod __unused, int type, void *data __unused)
+dtrace_modcmd(modcmd_t cmd, void *data)
 {
+	int bmajor = -1, cmajor = -1;
 	int error = 0;
 
-	switch (type) {
-	case MOD_LOAD:
-		break;
-
-	case MOD_UNLOAD:
-		break;
-
-	case MOD_SHUTDOWN:
-		break;
-
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		dtrace_load(NULL);
+		return devsw_attach("dtrace", NULL, &bmajor,
+		    &dtrace_cdevsw, &cmajor);
+	case MODULE_CMD_FINI:
+		dtrace_unload();
+		return devsw_detach(NULL, &dtrace_cdevsw);
 	default:
-		error = EOPNOTSUPP;
-		break;
-
+		return ENOTTY;
 	}
-	return (error);
 }

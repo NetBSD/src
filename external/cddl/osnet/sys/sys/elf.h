@@ -1,3 +1,5 @@
+/*	$NetBSD: elf.h,v 1.3 2010/02/21 01:46:35 darran Exp $	*/
+
 /*
  * CDDL HEADER START
  *
@@ -18,7 +20,7 @@
  *
  * CDDL HEADER END
  *
- * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/elf.h,v 1.2.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: src/sys/compat/opensolaris/sys/elf.h,v 1.1 2007/11/28 21:50:40 jb Exp $
  *
  * ELF compatibility definitions for OpenSolaris source.
  *
@@ -27,32 +29,20 @@
 #ifndef	_SYS__ELF_SOLARIS_H_
 #define	_SYS__ELF_SOLARIS_H_
 
-#include_next <sys/elf.h>
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/sys/exec_elf.h>
+#else
+#include <sys/exec_elf.h>
+#endif
 
-#define __sElfN(x)       typedef __CONCAT(__CONCAT(__CONCAT(Elf,__ELF_WORD_SIZE),_),x) x
+#define	SHT_SUNW_dof		0x6ffffff4
+#define	EM_AMD64		EM_X86_64
 
-__sElfN(Addr);
-__sElfN(Cap);
-__sElfN(Dyn);
-__sElfN(Ehdr);
-__sElfN(Move);
-__sElfN(Off);
-__sElfN(Phdr);
-__sElfN(Rel);
-__sElfN(Rela);
-__sElfN(Shdr);
-__sElfN(Sym);
-__sElfN(Syminfo);
-__sElfN(Verdaux);
-__sElfN(Verdef);
-__sElfN(Vernaux);
-__sElfN(Verneed);
-__sElfN(Versym);
+#define __ELF_WORD_SIZE ELFSIZE
+#define __CONCAT(x,y)	x ## y
+#define __sElfN(x)       typedef __CONCAT(Elf32_,x) x
 
-__sElfN(Half);
-__sElfN(Sword);
-__sElfN(Word);
-
+#if 0	/* XXX not needed? */
 #if __ELF_WORD_SIZE == 32
 typedef	Elf32_Word	Xword;	/* Xword/Sxword are 32-bits in Elf32 */
 typedef	Elf32_Sword	Sxword;
@@ -112,5 +102,6 @@ typedef	Elf64_Sxword	Sxword;
 #define	Elf_ver_line_4		__ElfN(ver_line_4)
 #define	Elf_ver_line_5		__ElfN(ver_line_5)
 #define	Elf_ver_need_title	__ElfN(ver_need_title)
+#endif
 
 #endif /* !_SYS__ELF_SOLARIS_H_ */

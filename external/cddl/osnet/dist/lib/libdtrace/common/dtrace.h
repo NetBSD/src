@@ -30,6 +30,7 @@
 #pragma ident	"%Z%%M%	%I%	%E% SMI"
 
 #include <sys/dtrace.h>
+typedef processorid_t test_processor_id_t;
 #include <stdarg.h>
 #include <stdio.h>
 #include <gelf.h>

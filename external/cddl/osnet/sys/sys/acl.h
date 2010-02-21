@@ -1,3 +1,5 @@
+/*	$NetBSD: acl.h,v 1.2 2010/02/21 01:46:35 darran Exp $	*/
+
 /*-
  * Copyright (c) 2008, 2009 Edward Tomasz Napierała <trasz@FreeBSD.org>
  * All rights reserved.

@@ -60,10 +60,10 @@ ctf_create(int *errp)
 	if (hash == NULL)
 		return (ctf_set_open_errno(errp, EAGAIN));
 
-	cts.cts_name = _CTF_SECTION;
+	cts.cts_name = (char *)_CTF_SECTION;
 	cts.cts_type = SHT_PROGBITS;
 	cts.cts_flags = 0;
-	cts.cts_data = &hdr;
+	cts.cts_data = (ctf_header_t *)&hdr;
 	cts.cts_size = sizeof (hdr);
 	cts.cts_entsize = 1;
 	cts.cts_offset = 0;
@@ -364,7 +364,7 @@ ctf_update(ctf_file_t *fp)
 	 * is successful, we then switch nfp and fp and free the old container.
 	 */
 	ctf_data_protect(buf, size);
-	cts.cts_name = _CTF_SECTION;
+	cts.cts_name = (char *)_CTF_SECTION;
 	cts.cts_type = SHT_PROGBITS;
 	cts.cts_flags = 0;
 	cts.cts_data = buf;
