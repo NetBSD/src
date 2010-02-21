@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.79 2010/02/21 14:16:47 bouyer Exp $	*/
+/*	$NetBSD: iop.c,v 1.80 2010/02/21 18:50:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.79 2010/02/21 14:16:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.80 2010/02/21 18:50:10 bouyer Exp $");
 
 #include "iop.h"
 
@@ -990,17 +990,17 @@ iop_ofifo_init(struct iop_softc *sc)
 	mb[0] += 2 << 16;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
-	    BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_POSTWRITE);
 	*sw = 0;
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
-	    BUS_DMASYNC_POSTWRITE);
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	if ((rv = iop_post(sc, mb)) != 0)
 		return (rv);
 
 	POLL(5000,
 	    (bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
-	    BUS_DMASYNC_POSTREAD),
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD),
 	    *sw == htole32(I2O_EXEC_OUTBOUND_INIT_COMPLETE)));
 
 	if (*sw != htole32(I2O_EXEC_OUTBOUND_INIT_COMPLETE)) {
@@ -1535,17 +1535,17 @@ iop_reset(struct iop_softc *sc)
 	mf.statushigh = (u_int32_t)((u_int64_t)pa >> 32);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
-	    BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_POSTWRITE);
 	*sw = htole32(0);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
-	    BUS_DMASYNC_POSTWRITE);
+	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
 	if ((rv = iop_post(sc, (u_int32_t *)&mf)))
 		return (rv);
 
 	POLL(2500,
 	    (bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
-	    BUS_DMASYNC_POSTREAD), *sw != 0));
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD), *sw != 0));
 	if (*sw != htole32(I2O_RESET_IN_PROGRESS)) {
 		aprint_error_dev(&sc->sc_dv, "reset rejected, status 0x%x\n",
 		    le32toh(*sw));
