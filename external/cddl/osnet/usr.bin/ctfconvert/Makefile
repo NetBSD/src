@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/02/21 01:46:36 darran Exp $
+#	$NetBSD: Makefile,v 1.3 2010/02/21 11:00:01 darran Exp $
 
 # $FreeBSD: src/cddl/usr.bin/ctfconvert/Makefile,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
 
@@ -42,9 +42,12 @@ CFLAGS+=	-I${OSNETDIR}/sys \
 		-g
 
 .ifndef HOSTPROG
+LIBCTF_OBJDIR!=	cd ${.CURDIR}/../../lib/libctf  && ${PRINTOBJDIR}
+
 LDADD+=		-L${OSNETDIR}/lib/libctf \
 		-L${NETBSDSRCDIR}/external/bsd/libdwarf/lib \
-		-L${NETBSDSRCDIR}/external/bsd/libelf/lib
+		-L${NETBSDSRCDIR}/external/bsd/libelf/lib \
+		-L${LIBCTF_OBJDIR}
 LDADD+=		-lctf -ldwarf -lelf -lz 
 .endif
 
