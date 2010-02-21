@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1393 2010/02/20 02:55:52 joerg Exp $
+#	$NetBSD: mi,v 1.1394 2010/02/21 03:18:46 darran Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -16,6 +16,9 @@
 ./usr/bin/config				comp-util-bin
 ./usr/bin/crunchgen				comp-c-bin
 ./usr/bin/crunchide				comp-c-bin
+./usr/bin/ctfconvert				comp-util-bin		dtrace
+./usr/bin/ctfdump				comp-util-bin		dtrace
+./usr/bin/ctfmerge				comp-util-bin		dtrace
 ./usr/bin/cvs					comp-cvs-bin		cvs
 ./usr/bin/cvsbug				comp-cvs-bin		cvs
 ./usr/bin/f77					comp-fortran-bin	gcc=3,gcccmds
@@ -2355,6 +2358,9 @@
 ./usr/lib/libcrypto_rc5.a			comp-c-lib		crypto_rc5
 ./usr/lib/libcrypto_rc5_g.a			-unknown-		debuglib,crypto_rc5
 ./usr/lib/libcrypto_rc5_p.a			comp-c-proflib		profile,crypto_rc5
+./usr/lib/libctf.a				comp-c-lib		dtrace
+./usr/lib/libctf_g.a				-unknown-		dtrace,debuglib
+./usr/lib/libctf_p.a				comp-c-proflib		dtrace,profile
 ./usr/lib/libcurses.a				comp-c-lib
 ./usr/lib/libcurses_g.a				-unknown-		debuglib
 ./usr/lib/libcurses_p.a				comp-c-proflib		profile
@@ -2370,6 +2376,9 @@
 ./usr/lib/libdns_sd.a				comp-mdns-lib		mdns
 ./usr/lib/libdns_sd_g.a				-unknown-		debuglib,mdns
 ./usr/lib/libdns_sd_p.a				comp-mdns-proflib	profile,mdns
+./usr/lib/libdtrace.a				comp-c-lib		dtrace
+./usr/lib/libdtrace_g.a				-unknown-		dtrace,debuglib
+./usr/lib/libdtrace_p.a				comp-c-proflib		dtrace,profile
 ./usr/lib/libdwarf.a				comp-c-lib
 ./usr/lib/libdwarf_g.a				-unknown-		debuglib
 ./usr/lib/libdwarf_p.a				comp-c-proflib		profile

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.522 2010/02/20 02:55:52 joerg Exp $
+# $NetBSD: shl.mi,v 1.523 2010/02/21 03:18:46 darran Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -67,11 +67,13 @@
 ./usr/lib/libcom_err.so.6.0			base-krb5-shlib		kerberos
 ./usr/lib/libcrypt.so.1.0			base-sys-shlib
 ./usr/lib/libcrypto.so.6.1			base-crypto-shlib	crypto
+./usr/lib/libctf.so.2.0				base-sys-shlib		dtrace
 ./usr/lib/libcurses.so.7.0			base-sys-shlib
 ./usr/lib/libdes.so.8.1				base-crypto-shlib	crypto
 ./usr/lib/libdevmapper.so.1.0			base-lvm-shlib		lvm
 ./usr/lib/libdns.so.5.1				base-bind-shlib
 ./usr/lib/libdns_sd.so.0.0			base-mdns-shlib		mdns
+./usr/lib/libdtrace.so.2.0			base-sys-shlib		dtrace
 ./usr/lib/libdwarf.so.0.0			base-sys-shlib
 ./usr/lib/libedit.so.3.0			base-sys-shlib
 ./usr/lib/libelf.so.0.0				base-sys-shlib

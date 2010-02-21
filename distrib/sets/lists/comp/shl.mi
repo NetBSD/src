@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.105 2010/02/11 02:29:24 pooka Exp $
+# $NetBSD: shl.mi,v 1.106 2010/02/21 03:18:46 darran Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -20,10 +20,12 @@
 ./usr/lib/libcrypt_pic.a			comp-c-piclib
 ./usr/lib/libcrypto_pic.a			comp-c-piclib		crypto
 ./usr/lib/libcurses_pic.a			comp-c-piclib
+./usr/lib/libctf_pic.a				comp-c-piclib		dtrace
 ./usr/lib/libdes_pic.a				comp-c-piclib		crypto
 ./usr/lib/libdevmapper_pic.a			comp-lvm-piclib		lvm
 ./usr/lib/libdns_pic.a				comp-bind-piclib
 ./usr/lib/libdns_sd_pic.a			comp-mdns-piclib	mdns
+./usr/lib/libdtrace_pic.a			comp-c-piclib		dtrace
 ./usr/lib/libdwarf_pic.a			comp-c-piclib
 ./usr/lib/libedit_pic.a				comp-c-piclib
 ./usr/lib/libelf_pic.a				comp-c-piclib
