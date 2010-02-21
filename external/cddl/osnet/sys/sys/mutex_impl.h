@@ -1,11 +1,11 @@
-/*	$NetBSD: processor.h,v 1.1 2009/08/07 20:57:58 haad Exp $	*/
+/*	$NetBSD: mutex_impl.h,v 1.1 2010/02/21 01:46:36 darran Exp $	*/
 
 /*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
+ * by Jason R. Thorpe and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,3 +28,21 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _COMPAT_OPENSOLARIS_SYS_MUTEX_IMPL_H
+#define	_COMPAT_OPENSOLARIS_SYS_MUTEX_IMPL_H
+
+#define	__MUTEX_PRIVATE
+#include <sys/mutex.h>
+
+#define	mtx_owner 		u.mtxa_owner
+#define	MUTEX_THREAD		((uintptr_t)-16L)
+#define	MUTEX_OWNER(mtx)	\
+	((mtx)->mtx_owner & MUTEX_THREAD)
+#define MUTEX_NO_OWNER		0
+
+#define	MUTEX_BIT_SPIN		0x01
+#define MUTEX_TYPE_ADAPTIVE(mtx) (((mtx)->mtx_owner & MUTEX_BIT_SPIN) == 0)
+#define MUTEX_TYPE_SPIN(mtx)	 (((mtx)->mtx_owner & MUTEX_BIT_SPIN) != 0)
+
+#endif

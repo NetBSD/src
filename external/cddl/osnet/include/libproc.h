@@ -1,3 +1,5 @@
+/*	$NetBSD: libproc.h,v 1.2 2010/02/21 01:46:34 darran Exp $	*/
+
 /*
  * Copyright (C) 2008 John Birrell <jb@freebsd.org>
  * All rights reserved.
@@ -41,6 +43,24 @@
 #define	PGRAB_RDONLY	O_RDONLY
 #define	PGRAB_FORCE	0
 
+struct proc_handle;
+typedef void (*proc_child_func)(void *);
+
+/* Values returned by proc_state(). */
+#define PS_IDLE         1
+#define PS_STOP         2
+#define PS_RUN          3
+#define PS_UNDEAD       4
+#define PS_DEAD         5
+#define PS_LOST         6
+
+
+typedef struct prmap {
+	uintptr_t	pr_vaddr;       /* Virtual address. */
+} prmap_t;
+
+#if 0
 #include_next <libproc.h>
+#endif
 
 #endif

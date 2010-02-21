@@ -1,3 +1,5 @@
+/*	$NetBSD: objfs.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+
 /*
  * CDDL HEADER START
  *
@@ -17,8 +19,6 @@
  * information: Portions Copyright [yyyy] [name of copyright owner]
  *
  * CDDL HEADER END
- *
- * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/objfs.h,v 1.3.4.1 2009/08/03 08:13:06 kensmith Exp $
  */
 
 #ifndef _COMPAT_OPENSOLARIS_SYS_OBJFS_H

@@ -1,3 +1,5 @@
+/*	$NetBSD: dtrace_isa.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+
 /*
  * CDDL HEADER START
  *
@@ -30,21 +32,27 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/stack.h>
-#include <sys/pcpu.h>
+//#include <sys/pcpu.h>
 
-#include <machine/md_var.h>
-#include <machine/stack.h>
+//#include <machine/md_var.h>
+//#include <machine/stack.h>
 
-#include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/pmap.h>
+//#include <vm/vm.h>
+#include <machine/vmparam.h>
+#include <machine/pmap.h>
 
-extern uintptr_t kernbase;
-uintptr_t kernelbase = (uintptr_t) &kernbase;
+uintptr_t kernelbase = (uintptr_t)KERNBASE;
 
 #define INKERNEL(va) (((vm_offset_t)(va)) >= USRSTACK && \
 	 ((vm_offset_t)(va)) < VM_MAX_KERNEL_ADDRESS)
+
+struct i386_frame {
+	struct i386_frame	*f_frame;
+	int			 f_retaddr;
+	int			 f_arg0;
+};
+
+typedef	unsigned long	vm_offset_t;
 
 uint8_t dtrace_fuword8_nocheck(void *);
 uint16_t dtrace_fuword16_nocheck(void *);
@@ -59,7 +67,11 @@ dtrace_getpcstack(pc_t *pcstack, int pcstack_limit, int aframes,
 	register_t ebp;
 	struct i386_frame *frame;
 	vm_offset_t callpc;
-	pc_t caller = (pc_t) solaris_cpu[curcpu].cpu_dtrace_caller;
+#if 0	/* XXX TBD needs solaris_cpu (for fbt) */
+	pc_t caller = (pc_t) solaris_cpu[cpu_number()].cpu_dtrace_caller;
+#else
+	pc_t caller = (pc_t) 0;
+#endif
 
 	if (intrpc != 0)
 		pcstack[depth++] = (pc_t) intrpc;
@@ -90,7 +102,7 @@ dtrace_getpcstack(pc_t *pcstack, int pcstack_limit, int aframes,
 
 		if (frame->f_frame <= frame ||
 		    (vm_offset_t)frame->f_frame >=
-		    (vm_offset_t)ebp + KSTACK_PAGES * PAGE_SIZE)
+		    (vm_offset_t)ebp + KSTACK_SIZE)
 			break;
 		frame = frame->f_frame;
 	}
@@ -109,7 +121,7 @@ dtrace_getustack_common(uint64_t *pcstack, int pcstack_limit, uintptr_t pc,
 	proc_t *p = curproc;
 	uintptr_t oldcontext = lwp->lwp_oldcontext;
 	volatile uint16_t *flags =
-	    (volatile uint16_t *)&cpu_core[curcpu].cpuc_dtrace_flags;
+	    (volatile uint16_t *)&cpu_core[cpu_number()].cpuc_dtrace_flags;
 	size_t s1, s2;
 	int ret = 0;
 
@@ -186,7 +198,7 @@ dtrace_getupcstack(uint64_t *pcstack, int pcstack_limit)
 	struct regs *rp;
 	uintptr_t pc, sp;
 	volatile uint16_t *flags =
-	    (volatile uint16_t *)&cpu_core[curcpu].cpuc_dtrace_flags;
+	    (volatile uint16_t *)&cpu_core[cpu_number()].cpuc_dtrace_flags;
 	int n;
 
 	if (*flags & CPU_DTRACE_FAULT)
@@ -247,7 +259,7 @@ dtrace_getufpstack(uint64_t *pcstack, uint64_t *fpstack, int pcstack_limit)
 	struct regs *rp;
 	uintptr_t pc, sp, oldcontext;
 	volatile uint16_t *flags =
-	    (volatile uint16_t *)&cpu_core[curcpu].cpuc_dtrace_flags;
+	    (volatile uint16_t *)&cpu_core[cpu_number()].cpuc_dtrace_flags;
 	size_t s1, s2;
 
 	if (*flags & CPU_DTRACE_FAULT)
@@ -355,8 +367,9 @@ dtrace_getarg(int arg, int aframes)
 	uintptr_t val;
 	struct i386_frame *fp = (struct i386_frame *)dtrace_getfp();
 	uintptr_t *stack;
-	int i;
 
+#if 0 /* XXX TBD needs ALTENTRY in dtrace_asm.S */
+	int i;
 	for (i = 1; i <= aframes; i++) {
 		fp = fp->f_frame;
 
@@ -372,8 +385,8 @@ dtrace_getarg(int arg, int aframes)
 			stack = ((uintptr_t **)&fp[1])[1] + 1;
 			goto load;
 		}
-
 	}
+#endif
 
 	/*
 	 * We know that we did not come through a trap to get into
@@ -414,7 +427,7 @@ dtrace_getstackdepth(int aframes)
 		depth++;
 		if (frame->f_frame <= frame ||
 		    (vm_offset_t)frame->f_frame >=
-		    (vm_offset_t)ebp + KSTACK_PAGES * PAGE_SIZE)
+		    (vm_offset_t)ebp + KSTACK_SIZE)
 			break;
 		frame = frame->f_frame;
 	}
@@ -538,7 +551,7 @@ dtrace_copycheck(uintptr_t uaddr, uintptr_t kaddr, size_t size)
 
 	if (uaddr + size >= kernelbase || uaddr + size < uaddr) {
 		DTRACE_CPUFLAG_SET(CPU_DTRACE_BADADDR);
-		cpu_core[curcpu].cpuc_dtrace_illval = uaddr;
+		cpu_core[cpu_number()].cpuc_dtrace_illval = uaddr;
 		return (0);
 	}
 
@@ -582,7 +595,7 @@ dtrace_fuword8(void *uaddr)
 {
 	if ((uintptr_t)uaddr >= kernelbase) {
 		DTRACE_CPUFLAG_SET(CPU_DTRACE_BADADDR);
-		cpu_core[curcpu].cpuc_dtrace_illval = (uintptr_t)uaddr;
+		cpu_core[cpu_number()].cpuc_dtrace_illval = (uintptr_t)uaddr;
 		return (0);
 	}
 	return (dtrace_fuword8_nocheck(uaddr));
@@ -593,7 +606,7 @@ dtrace_fuword16(void *uaddr)
 {
 	if ((uintptr_t)uaddr >= kernelbase) {
 		DTRACE_CPUFLAG_SET(CPU_DTRACE_BADADDR);
-		cpu_core[curcpu].cpuc_dtrace_illval = (uintptr_t)uaddr;
+		cpu_core[cpu_number()].cpuc_dtrace_illval = (uintptr_t)uaddr;
 		return (0);
 	}
 	return (dtrace_fuword16_nocheck(uaddr));
@@ -604,7 +617,7 @@ dtrace_fuword32(void *uaddr)
 {
 	if ((uintptr_t)uaddr >= kernelbase) {
 		DTRACE_CPUFLAG_SET(CPU_DTRACE_BADADDR);
-		cpu_core[curcpu].cpuc_dtrace_illval = (uintptr_t)uaddr;
+		cpu_core[cpu_number()].cpuc_dtrace_illval = (uintptr_t)uaddr;
 		return (0);
 	}
 	return (dtrace_fuword32_nocheck(uaddr));
@@ -615,7 +628,7 @@ dtrace_fuword64(void *uaddr)
 {
 	if ((uintptr_t)uaddr >= kernelbase) {
 		DTRACE_CPUFLAG_SET(CPU_DTRACE_BADADDR);
-		cpu_core[curcpu].cpuc_dtrace_illval = (uintptr_t)uaddr;
+		cpu_core[cpu_number()].cpuc_dtrace_illval = (uintptr_t)uaddr;
 		return (0);
 	}
 	return (dtrace_fuword64_nocheck(uaddr));

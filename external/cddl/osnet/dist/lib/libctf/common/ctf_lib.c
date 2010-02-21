@@ -252,7 +252,7 @@ ctf_fdopen(int fd, int *errp)
 		if (ctfsect.cts_data == MAP_FAILED)
 			return (ctf_set_open_errno(errp, errno));
 
-		ctfsect.cts_name = _CTF_SECTION;
+		ctfsect.cts_name = (char *)_CTF_SECTION;
 		ctfsect.cts_type = SHT_PROGBITS;
 		ctfsect.cts_flags = SHF_ALLOC;
 		ctfsect.cts_size = (size_t)st.st_size;

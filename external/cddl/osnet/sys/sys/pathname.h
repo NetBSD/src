@@ -1,3 +1,5 @@
+/*	$NetBSD: pathname.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
@@ -23,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/pathname.h,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/pathname.h,v 1.1 2008/11/17 20:49:29 pjd Exp $
  */
 
 #ifndef _OPENSOLARIS_SYS_PATHNAME_H_
@@ -44,8 +46,10 @@ typedef struct pathname {
 #define	pn_alloc(pnp)	panic("pn_alloc() called")
 #define	pn_free(pnp)	panic("pn_free() called")
 
-int lookupname(char *, enum uio_seg, enum symfollow, vnode_t **, vnode_t **);
-int lookupnameat(char *, enum uio_seg, enum symfollow, vnode_t **, vnode_t **,
+#define	NO_FOLLOW	NOFOLLOW
+
+int lookupname(char *, enum uio_seg, vnode_t **, vnode_t **);
+int lookupnameat(char *, enum uio_seg, vnode_t **, vnode_t **,
     vnode_t *);
 int traverse(vnode_t **, int);
 

@@ -1,9 +1,10 @@
+#	$NetBSD: Makefile,v 1.2 2010/02/21 01:46:35 darran Exp $
+
 # $FreeBSD: src/cddl/lib/libctf/Makefile,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
 
 .include	"../../Makefile.inc"
 
 LIB=		ctf
-SHLIB_MAJOR=	2
 
 SRCS=		ctf_create.c \
 		ctf_decl.c \
@@ -23,8 +24,8 @@ SRCS=		ctf_create.c \
 
 CFLAGS+=	-DCTF_OLD_VERSIONS
 
-CFLAGS+=	-I${.CURDIR}/../../../sys/cddl/compat/opensolaris \
-		-I${.CURDIR}/../../../cddl/compat/opensolaris/include \
+CFLAGS+=	-I${OSNETDIR}/sys \
+		-I${OSNETDIR}/include \
 		-I${OPENSOLARIS_USR_DISTDIR}/head \
 		-I${OPENSOLARIS_USR_DISTDIR}/common/ctf \
 		-I${OPENSOLARIS_USR_DISTDIR}/lib/libctf/common \

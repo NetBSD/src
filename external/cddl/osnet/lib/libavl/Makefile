@@ -1,10 +1,9 @@
-# $FreeBSD: src/cddl/lib/libavl/Makefile,v 1.3.2.1 2009/08/03 08:13:06 kensmith Exp $
+#	$NetBSD: Makefile,v 1.3 2010/02/21 01:46:35 darran Exp $
 
-.PATH: ${.CURDIR}/../../../sys/cddl/contrib/opensolaris/common/avl
+.PATH:	${.CURDIR}/../../dist/common/avl
 
 LIB=	avl
 SRCS=	avl.c
-CFLAGS+= -I${.CURDIR}/../../../sys/cddl/compat/opensolaris
-CFLAGS+= -I${.CURDIR}/../../../sys/cddl/contrib/opensolaris/uts/common
 
+.include "../../Makefile.zfs"
 .include <bsd.lib.mk>

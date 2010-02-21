@@ -1,3 +1,5 @@
+/*	$NetBSD: alloca.h,v 1.3 2010/02/21 01:46:34 darran Exp $	*/
+
 /*
  * Copyright (C) 2007 John Birrell <jb@freebsd.org>
  * All rights reserved.
@@ -23,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/cddl/compat/opensolaris/include/alloca.h,v 1.2.4.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: src/compat/opensolaris/include/alloca.h,v 1.1 2007/11/28 21:40:07 jb Exp $
  *
  */
 

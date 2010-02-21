@@ -1,3 +1,5 @@
+/*	$NetBSD: sunddi.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
@@ -23,16 +25,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/sunddi.h,v 1.3.2.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: src/sys/compat/opensolaris/sys/sunddi.h,v 1.1 2007/04/23 00:52:06 pjd Exp $
  */
 
 #ifndef _OPENSOLARIS_SYS_SUNDDI_H_
 #define	_OPENSOLARIS_SYS_SUNDDI_H_
 
-#define	ddi_driver_major(zfs_dip)		(0)
 #define	ddi_copyin(from, to, size, flag)	(bcopy((from), (to), (size)), 0)
 #define	ddi_copyout(from, to, size, flag)	(bcopy((from), (to), (size)), 0)
-int ddi_strtol(const char *str, char **nptr, int base, long *result);
 int ddi_strtoul(const char *str, char **nptr, int base, unsigned long *result);
 
 #endif	/* _OPENSOLARIS_SYS_SUNDDI_H_ */

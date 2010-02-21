@@ -78,6 +78,8 @@ typedef struct workqueue {
 
 	int wq_nomorefiles;
 
+	pthread_t *wq_thread;
+
 	barrier_t wq_bar1;
 	barrier_t wq_bar2;
 } workqueue_t;

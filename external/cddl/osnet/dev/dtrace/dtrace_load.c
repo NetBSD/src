@@ -1,3 +1,5 @@
+/*	$NetBSD: dtrace_load.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+
 /*
  * CDDL HEADER START
  *
@@ -22,30 +24,25 @@
  *
  */
 
-static void
-dtrace_ap_start(void *dummy)
-{
-	int i;
+static void dtrace_debug_init(void *);
+static void dtrace_anon_init(void *dummy);
+void dtrace_gethrtime_init(void *);
 
-	mutex_enter(&cpu_lock);
+int dtrace_helptrace_size=0;
 
-	/* Setup the rest of the CPUs. */
-	for (i = 1; i <= mp_maxid; i++) {
-		if (pcpu_find(i) == NULL)
-			continue;
-
-		(void) dtrace_cpu_setup(CPU_CONFIG, i);
-	}
-
-	mutex_exit(&cpu_lock);
-}
-
-SYSINIT(dtrace_ap_start, SI_SUB_SMP, SI_ORDER_ANY, dtrace_ap_start, NULL);
+#ifndef mutex_init
+#define	mutex_init(a, b, c, d)	mutex_init(a, c, IPL_NONE)
+#endif
 
 static void
 dtrace_load(void *dummy)
 {
 	dtrace_provider_id_t id;
+	CPU_INFO_ITERATOR cpuind;
+	struct cpu_info *cinfo;
+
+	dtrace_debug_init(NULL);
+	dtrace_gethrtime_init(NULL);
 
 	/* Hook into the trap handler. */
 	dtrace_trap_func = dtrace_trap;
@@ -81,7 +78,8 @@ dtrace_load(void *dummy)
 
 	ASSERT(MUTEX_HELD(&cpu_lock));
 
-	dtrace_arena = new_unrhdr(1, INT_MAX, &dtrace_unr_mtx);
+	dtrace_arena = vmem_create("dtrace", 1, INT_MAX, 1,
+			NULL, NULL, NULL, 0, VM_SLEEP, IPL_NONE);
 
 	dtrace_state_cache = kmem_cache_create("dtrace_state_cache",
 	    sizeof (dtrace_dstate_percpu_t) * NCPU, DTRACE_STATE_ALIGN,
@@ -142,6 +140,7 @@ dtrace_load(void *dummy)
 		dtrace_helptrace_buffer =
 		    kmem_zalloc(dtrace_helptrace_bufsize, KM_SLEEP);
 		dtrace_helptrace_next = 0;
+		dtrace_helptrace_size = dtrace_helptrace_bufsize;
 	}
 
 	mutex_exit(&dtrace_lock);
@@ -149,18 +148,15 @@ dtrace_load(void *dummy)
 
 	mutex_enter(&cpu_lock);
 
-	/* Setup the boot CPU */
-	(void) dtrace_cpu_setup(CPU_CONFIG, 0);
+	/* Setup the CPUs */
+	for (CPU_INFO_FOREACH(cpuind, cinfo)) {
+		(void) dtrace_cpu_setup(CPU_CONFIG, cpu_index(cinfo));
+	}
 
 	mutex_exit(&cpu_lock);
 
-#if __FreeBSD_version < 800039
-	/* Enable device cloning. */
-	clone_setup(&dtrace_clones);
-
-	/* Setup device cloning events. */
-	eh_tag = EVENTHANDLER_REGISTER(dev_clone, dtrace_clone, 0, 1000);
-#else
+	dtrace_anon_init(NULL);
+#if 0
 	dtrace_dev = make_dev(&dtrace_cdevsw, 0, UID_ROOT, GID_WHEEL, 0600, "dtrace/dtrace");
 #endif
 

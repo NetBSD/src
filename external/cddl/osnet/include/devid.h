@@ -1,3 +1,5 @@
+/*	$NetBSD: devid.h,v 1.3 2010/02/21 01:46:34 darran Exp $	*/
+
 /*
  * CDDL HEADER START
  *
@@ -18,8 +20,6 @@
  * information: Portions Copyright [yyyy] [name of copyright owner]
  *
  * CDDL HEADER END
- *
- * $FreeBSD: src/cddl/compat/opensolaris/include/devid.h,v 1.4.2.1 2009/08/03 08:13:06 kensmith Exp $
  */
 /*
  * Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
@@ -32,6 +32,8 @@
 #include <sys/param.h>
 #include <sys/disk.h>
 #include <stdlib.h>
+
+#define	DISK_IDENT_SIZE	128
 
 typedef struct ddi_devid {
 	char devid[DISK_IDENT_SIZE];

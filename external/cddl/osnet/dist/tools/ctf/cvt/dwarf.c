@@ -1043,7 +1043,16 @@ die_sou_resolve(tdesc_t *tdp, tdesc_t **tdpp __unused, void *private)
 				continue;
 			if (mt->t_type == ARRAY && mt->t_ardef->ad_nelems == 0)
 				continue;
+			if (mt->t_type == STRUCT && 
+				mt->t_members != NULL &&
+				mt->t_members->ml_type->t_type == ARRAY &&
+				mt->t_members->ml_type->t_ardef->ad_nelems == 0) {
+			    /* struct with zero sized array */
+			    continue;
+			}
 
+			printf("%s unresolved type = %d (%s)\n", tdesc_name(tdp),
+				mt->t_type, tdesc_name(mt));
 			dw->dw_nunres++;
 			return (1);
 		}
@@ -1798,8 +1807,13 @@ dw_read(tdata_t *td, Elf *elf, char *filename __unused)
 	}
 
 	if ((rc = dwarf_next_cu_header(dw.dw_dw, &hdrlen, &vers, &abboff,
-	    &addrsz, &nxthdr, &dw.dw_err)) != DW_DLV_OK)
+	    &addrsz, &nxthdr, &dw.dw_err)) != DW_DLV_OK) {
+		if (rc == DW_DLV_NO_ENTRY) {
+		    /* no compilation unit in the DWARF section */
+		    return 0;
+		}
 		terminate("rc = %d %s\n", rc, dwarf_errmsg(&dw.dw_err));
+	}
 
 	if ((cu = die_sibling(&dw, NULL)) == NULL)
 		terminate("file does not contain dwarf type data "

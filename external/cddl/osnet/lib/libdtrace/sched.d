@@ -1,3 +1,5 @@
+/*	$NetBSD: sched.d,v 1.2 2010/02/21 01:46:35 darran Exp $	*/
+
 /*
  * CDDL HEADER START
  *

@@ -1,22 +1,19 @@
-# $FreeBSD: src/cddl/lib/Makefile,v 1.9.2.1 2009/08/03 08:13:06 kensmith Exp $
+#	$NetBSD: Makefile,v 1.3 2010/02/21 01:46:34 darran Exp $
+#
+#
 
-.include <bsd.own.mk>
-
-SUBDIR=	drti \
-	libavl \
-	libctf \
-	libdtrace \
-	libnvpair \
-	libumem \
-	libuutil \
-	${_libzfs} \
-	${_libzpool}
-
-.if ${MK_ZFS} != "no"
-_libzfs=	libzfs
-.if ${MK_LIBTHR} != "no"
-_libzpool=	libzpool
+.if (defined(MKDTRACE) && ${MKDTRACE} != "no")
+SUBDIR+=	libdtrace
+SUBDIR+=	libctf
 .endif
+
+.if !defined(MKZFS) || ${MKZFS} != "no"
+SUBDIR+=	libavl
+SUBDIR+=	libnvpair
+SUBDIR+=	libumem
+SUBDIR+=	libuutil
+SUBDIR+=	libzfs
+SUBDIR+=	libzpool
 .endif
 
 .include <bsd.subdir.mk>

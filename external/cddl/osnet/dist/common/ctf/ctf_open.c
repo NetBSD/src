@@ -694,11 +694,11 @@ ctf_bufopen(const ctf_sect_t *ctfsect, const ctf_sect_t *symsect,
 		fp->ctf_strtab.cts_name = ctf_strdup(fp->ctf_strtab.cts_name);
 
 	if (fp->ctf_data.cts_name == NULL)
-		fp->ctf_data.cts_name = _CTF_NULLSTR;
+		fp->ctf_data.cts_name = (char *)_CTF_NULLSTR;
 	if (fp->ctf_symtab.cts_name == NULL)
-		fp->ctf_symtab.cts_name = _CTF_NULLSTR;
+		fp->ctf_symtab.cts_name = (char *)_CTF_NULLSTR;
 	if (fp->ctf_strtab.cts_name == NULL)
-		fp->ctf_strtab.cts_name = _CTF_NULLSTR;
+		fp->ctf_strtab.cts_name = (char *)_CTF_NULLSTR;
 
 	fp->ctf_str[CTF_STRTAB_0].cts_strs = (const char *)buf + hp.cth_stroff;
 	fp->ctf_str[CTF_STRTAB_0].cts_len = hp.cth_strlen;

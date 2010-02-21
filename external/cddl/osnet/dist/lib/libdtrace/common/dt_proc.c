@@ -91,6 +91,89 @@
 #include <dt_pid.h>
 #include <dt_impl.h>
 
+/* XXX TBD needs libproc */
+/* Stub proc functions for now */
+int
+proc_setflags(struct proc_handle *phdl, int mask)
+{
+
+    printf("dtrace: XXX %s not implemented\n", __func__);
+    return EINVAL;
+}
+
+int
+proc_create(const char *file, char * const *argv, proc_child_func *pcf,
+    void *child_arg, struct proc_handle **pphdl)
+{
+
+    printf("dtrace: XXX %s not implemented\n", __func__);
+    return EINVAL;
+}
+
+int
+proc_detach(struct proc_handle *phdl)
+{
+
+    printf("dtrace: XXX %s not implemented\n", __func__);
+    return EINVAL;
+}
+
+int
+proc_getflags(struct proc_handle *phdl)
+{
+
+    printf("dtrace: XXX %s not implemented\n", __func__);
+    return -1;
+}
+
+int
+proc_wait(struct proc_handle *phdl)
+{
+
+    printf("dtrace: XXX %s not implemented\n", __func__);
+    return EINVAL;
+}
+
+pid_t
+proc_getpid(struct proc_handle *phdl)
+{
+
+    printf("dtrace: XXX %s not implemented\n", __func__);
+    return -1;
+}
+
+int
+proc_attach(pid_t pid, int flags, struct proc_handle **pphdl)
+{
+
+    printf("dtrace: XXX %s not implemented\n", __func__);
+    return EINVAL;
+}
+
+int
+proc_state(struct proc_handle *phdl)
+{
+
+    printf("dtrace: XXX %s not implemented\n", __func__);
+    return -1;
+}
+
+int
+proc_clearflags(struct proc_handle *phdl, int mask)
+{
+
+    printf("dtrace: XXX %s not implemented\n", __func__);
+    return EINVAL;
+}
+
+int
+proc_continue(struct proc_handle *phdl)
+{
+
+    printf("dtrace: XXX %s not implemented\n", __func__);
+    return EINVAL;
+}
+
 #define	IS_SYS_EXEC(w)	(w == SYS_exec || w == SYS_execve)
 #define	IS_SYS_FORK(w)	(w == SYS_vfork || w == SYS_fork1 ||	\
 			w == SYS_forkall || w == SYS_forksys)

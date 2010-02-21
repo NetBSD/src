@@ -1,11 +1,11 @@
-/*	$NetBSD: kcondvar.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: rwlock_impl.h,v 1.1 2010/02/21 01:46:36 darran Exp $	*/
 
 /*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
+ * by Jason R. Thorpe and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,20 +29,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _OPENSOLARIS_SYS_KCONDVAR_H_
-#define	_OPENSOLARIS_SYS_KCONDVAR_H_
+#ifndef _COMPAT_OPENSOLARIS_SYS_RWLOCK_IMPL_H
+#define	_COMPAT_OPENSOLARIS_SYS_RWLOCK_IMPL_H
 
-#include_next <sys/condvar.h>
+#define __RWLOCK_PRIVATE
+#include <sys/rwlock.h>
 
-#ifdef _KERNEL
+#define _RW_READ_HELD(rw)	((((rw)->rw_owner & RW_WRITE_LOCKED) == 0) && \
+				 (((rw)->rw_owner & RW_THREAD) != 0))
+#define _RW_WRITE_HELD(rw)	\
+		(((rw)->rw_owner & RW_THREAD) && \
+		 ((rw)->rw_owner & RW_WRITE_LOCKED))
+#define _RW_ISWRITER(rw)	\
+		(((rw)->rw_owner & RW_WRITE_LOCKED) && \
+		 (((rw)->rw_owner & RW_THREAD) == \
+		 (uintptr_t)curlwp))
 
-typedef enum {
-	CV_DEFAULT,
-	CV_DRIVER
-} kcv_type_t;
-
-#define	cv_init(a, b, c, d)	cv_init(a, "zfscv")
-
-#endif	/* _KERNEL */
-
-#endif	/* _OPENSOLARIS_SYS_KCONDVAR_H_ */
+#endif

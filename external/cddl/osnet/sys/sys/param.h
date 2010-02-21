@@ -1,3 +1,5 @@
+/*	$NetBSD: param.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+
 /*
  * Copyright (C) 2007 John Birrell <jb@freebsd.org>
  * All rights reserved.
@@ -23,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/param.h,v 1.3.2.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: src/sys/compat/opensolaris/sys/param.h,v 1.1 2007/11/28 21:50:40 jb Exp $
  *
  */
 
@@ -32,10 +34,10 @@
 
 #include_next <sys/param.h>
 
-#define	PAGESIZE	PAGE_SIZE
-
 #ifdef _KERNEL
-#define	ptob(x)		((uint64_t)(x) << PAGE_SHIFT)
+#define	PAGESIZE	PAGE_SIZE
+#else
+#define	PAGESIZE	getpagesize()
 #endif
 
 #endif

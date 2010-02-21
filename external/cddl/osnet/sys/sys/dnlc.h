@@ -1,3 +1,5 @@
+/*	$NetBSD: dnlc.h,v 1.3 2010/02/21 01:46:35 darran Exp $	*/
+
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
@@ -23,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/dnlc.h,v 1.4.2.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: src/sys/compat/opensolaris/sys/dnlc.h,v 1.2 2007/05/24 13:44:45 pjd Exp $
  */
 
 #ifndef _OPENSOLARIS_SYS_DNLC_H_
@@ -35,6 +37,6 @@
 #define	dnlc_update(dvp, name, vp)	do { } while (0)
 #define	dnlc_remove(dvp, name)		do { } while (0)
 #define	dnlc_purge_vfsp(vfsp, count)	(0)
-#define	dnlc_reduce_cache(percent)	EVENTHANDLER_INVOKE(vfs_lowvnodes, (int)(intptr_t)(percent))
+#define	dnlc_reduce_cache(percent)	do { } while (0)
 
 #endif	/* !_OPENSOLARIS_SYS_DNLC_H_ */

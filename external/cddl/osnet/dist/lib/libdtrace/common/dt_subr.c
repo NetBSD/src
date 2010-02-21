@@ -948,6 +948,7 @@ int
 dtrace_uaddr2str(dtrace_hdl_t *dtp, pid_t pid,
     uint64_t addr, char *str, int nbytes)
 {
+#if 0	/* XXX TBD needs libproc */
 	char name[PATH_MAX], objname[PATH_MAX], c[PATH_MAX * 2];
 	struct ps_prochandle *P = NULL;
 	GElf_Sym sym;
@@ -994,4 +995,8 @@ dtrace_uaddr2str(dtrace_hdl_t *dtp, pid_t pid,
 	dt_proc_release(dtp, P);
 
 	return (dt_string2str(c, str, nbytes));
+#else
+	printf("XXX %s not implemented\n", __func__);
+	return 0;
+#endif
 }
