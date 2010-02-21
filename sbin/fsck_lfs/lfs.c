@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.32 2010/02/16 23:20:30 mlelstv Exp $ */
+/* $NetBSD: lfs.c,v 1.33 2010/02/21 16:24:21 mlelstv Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -102,7 +102,7 @@ extern struct uvnodelst vnodelist;
 extern struct uvnodelst getvnodelist[VNODE_HASH_MAX];
 extern int nvnodes;
 
-long dev_bsize;
+long dev_bsize = DEV_BSIZE;
 
 static int
 lfs_fragextend(struct uvnode *, int, int, daddr_t, struct ubuf **);
