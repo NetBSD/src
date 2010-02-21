@@ -1,5 +1,3 @@
-/*	$NetBSD: misc.h,v 1.1 2009/08/07 20:57:58 haad Exp $	*/
-
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
@@ -25,11 +23,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/misc.h,v 1.2 2007/04/23 00:52:06 pjd Exp $
+ * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/misc.h,v 1.4.2.1 2009/08/03 08:13:06 kensmith Exp $
  */
 
 #ifndef _OPENSOLARIS_SYS_MISC_H_
 #define	_OPENSOLARIS_SYS_MISC_H_
+
+#define	MAXUID	2147483647
+
+#define	SPEC_MAXOFFSET_T	OFF_MAX
+
+#define	_ACL_ACLENT_ENABLED	0x1
+#define	_ACL_ACE_ENABLED	0x2
 
 #define	_FIOFFS		(INT_MIN)
 #define	_FIOGDIO	(INT_MIN+1)
@@ -38,6 +43,10 @@
 #define	_FIO_SEEK_DATA	FIOSEEKDATA
 #define	_FIO_SEEK_HOLE	FIOSEEKHOLE
 
-extern char hw_serial[11];
+struct opensolaris_utsname {
+	char *nodename;
+};
 
+extern char hw_serial[11];
+extern struct opensolaris_utsname utsname;
 #endif	/* _OPENSOLARIS_SYS_MISC_H_ */

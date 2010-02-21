@@ -33,6 +33,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <gelf.h>
+#include <libproc.h>
 
 #ifdef	__cplusplus
 extern "C" {
@@ -148,7 +149,7 @@ typedef struct dtrace_stmtdesc {
 	dtrace_actdesc_t *dtsd_action_last;	/* last action in action list */
 	void *dtsd_aggdata;			/* aggregation data */
 	void *dtsd_fmtdata;			/* type-specific output data */
-	void (*dtsd_callback)();		/* callback function for EPID */
+	void (*dtsd_callback)(void);		/* callback function for EPID */
 	void *dtsd_data;			/* callback data pointer */
 	dtrace_attribute_t dtsd_descattr;	/* probedesc attributes */
 	dtrace_attribute_t dtsd_stmtattr;	/* statement attributes */
@@ -413,7 +414,7 @@ extern int dtrace_aggregate_walk_valvarrevsorted(dtrace_hdl_t *,
  */
 
 extern struct ps_prochandle *dtrace_proc_create(dtrace_hdl_t *,
-    const char *, char *const *);
+    const char *, char *const *, proc_child_func *, void *);
 
 extern struct ps_prochandle *dtrace_proc_grab(dtrace_hdl_t *, pid_t, int);
 extern void dtrace_proc_release(dtrace_hdl_t *, struct ps_prochandle *);
@@ -521,7 +522,11 @@ extern int dtrace_probe_info(dtrace_hdl_t *,
  * entry point to obtain a library handle.
  */
 struct dtrace_vector {
+#if defined(sun)
 	int (*dtv_ioctl)(void *, int, void *);
+#else
+	int (*dtv_ioctl)(void *, u_long, void *);
+#endif
 	int (*dtv_lookup_by_addr)(void *, GElf_Addr, GElf_Sym *,
 	    dtrace_syminfo_t *);
 	int (*dtv_status)(void *, processorid_t);
@@ -566,6 +571,11 @@ extern int _dtrace_debug;
 
 #ifdef	__cplusplus
 }
+#endif
+
+#if !defined(sun)
+#define _SC_CPUID_MAX		_SC_NPROCESSORS_CONF
+#define _SC_NPROCESSORS_MAX	_SC_NPROCESSORS_CONF
 #endif
 
 #endif	/* _DTRACE_H */

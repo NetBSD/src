@@ -28,7 +28,9 @@
 
 #include <assert.h>
 #include <strings.h>
+#if defined(sun)
 #include <alloca.h>
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 

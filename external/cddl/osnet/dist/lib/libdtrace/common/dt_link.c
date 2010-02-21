@@ -30,18 +30,28 @@
 #include <elf.h>
 
 #include <sys/types.h>
+#if defined(sun)
 #include <sys/sysmacros.h>
+#else
+#define	P2ROUNDUP(x, align)		(-(-(x) & -(align)))
+#endif
 
 #include <unistd.h>
 #include <strings.h>
+#if defined(sun)
 #include <alloca.h>
+#endif
 #include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
+#if defined(sun)
 #include <wait.h>
+#else
+#include <sys/wait.h>
+#endif
 #include <assert.h>
 #include <sys/ipc.h>
 
@@ -214,11 +224,23 @@ prepare_elf32(dtrace_hdl_t *dtp, const dof_hdr_t *dof, dof_elf32_t *dep)
 		s = &dofs[dofrh->dofr_tgtsec];
 
 		for (j = 0; j < nrel; j++) {
-#if defined(__i386) || defined(__amd64)
+#if defined(__arm__)
+/* XXX */
+printf("%s:%s(%d): DOODAD\n",__FUNCTION__,__FILE__,__LINE__);
+#elif defined(__ia64__)
+/* XXX */
+printf("%s:%s(%d): DOODAD\n",__FUNCTION__,__FILE__,__LINE__);
+#elif defined(__i386) || defined(__amd64)
 			rel->r_offset = s->dofs_offset +
 			    dofr[j].dofr_offset;
 			rel->r_info = ELF32_R_INFO(count + dep->de_global,
 			    R_386_32);
+#elif defined(__mips__)
+/* XXX */
+printf("%s:%s(%d): DOODAD\n",__FUNCTION__,__FILE__,__LINE__);
+#elif defined(__powerpc__)
+/* XXX */
+printf("%s:%s(%d): DOODAD\n",__FUNCTION__,__FILE__,__LINE__);
 #elif defined(__sparc)
 			/*
 			 * Add 4 bytes to hit the low half of this 64-bit
@@ -390,7 +412,17 @@ prepare_elf64(dtrace_hdl_t *dtp, const dof_hdr_t *dof, dof_elf64_t *dep)
 		s = &dofs[dofrh->dofr_tgtsec];
 
 		for (j = 0; j < nrel; j++) {
-#if defined(__i386) || defined(__amd64)
+printf("%s:%s(%d): DOODAD\n",__FUNCTION__,__FILE__,__LINE__);
+#ifdef DOODAD
+#if defined(__arm__)
+/* XXX */
+#elif defined(__ia64__)
+/* XXX */
+#elif defined(__mips__)
+/* XXX */
+#elif defined(__powerpc__)
+/* XXX */
+#elif defined(__i386) || defined(__amd64)
 			rel->r_offset = s->dofs_offset +
 			    dofr[j].dofr_offset;
 			rel->r_info = ELF64_R_INFO(count + dep->de_global,
@@ -402,6 +434,7 @@ prepare_elf64(dtrace_hdl_t *dtp, const dof_hdr_t *dof, dof_elf64_t *dep)
 			    R_SPARC_64);
 #else
 #error unknown ISA
+#endif
 #endif
 
 			sym->st_name = base + dofr[j].dofr_name - 1;
@@ -480,13 +513,24 @@ dump_elf32(dtrace_hdl_t *dtp, const dof_hdr_t *dof, int fd)
 	elf_file.ehdr.e_ident[EI_MAG3] = ELFMAG3;
 	elf_file.ehdr.e_ident[EI_VERSION] = EV_CURRENT;
 	elf_file.ehdr.e_ident[EI_CLASS] = ELFCLASS32;
-#if defined(_BIG_ENDIAN)
+#if BYTE_ORDER == _BIG_ENDIAN
 	elf_file.ehdr.e_ident[EI_DATA] = ELFDATA2MSB;
-#elif defined(_LITTLE_ENDIAN)
+#else
 	elf_file.ehdr.e_ident[EI_DATA] = ELFDATA2LSB;
 #endif
+#if defined(__FreeBSD__)
+	elf_file.ehdr.e_ident[EI_OSABI] = ELFOSABI_FREEBSD;
+#endif
 	elf_file.ehdr.e_type = ET_REL;
-#if defined(__sparc)
+#if defined(__arm__)
+	elf_file.ehdr.e_machine = EM_ARM;
+#elif defined(__ia64__)
+	elf_file.ehdr.e_machine = EM_IA_64;
+#elif defined(__mips__)
+	elf_file.ehdr.e_machine = EM_MIPS;
+#elif defined(__powerpc__)
+	elf_file.ehdr.e_machine = EM_PPC;
+#elif defined(__sparc)
 	elf_file.ehdr.e_machine = EM_SPARC;
 #elif defined(__i386) || defined(__amd64)
 	elf_file.ehdr.e_machine = EM_386;
@@ -617,13 +661,24 @@ dump_elf64(dtrace_hdl_t *dtp, const dof_hdr_t *dof, int fd)
 	elf_file.ehdr.e_ident[EI_MAG3] = ELFMAG3;
 	elf_file.ehdr.e_ident[EI_VERSION] = EV_CURRENT;
 	elf_file.ehdr.e_ident[EI_CLASS] = ELFCLASS64;
-#if defined(_BIG_ENDIAN)
+#if BYTE_ORDER == _BIG_ENDIAN
 	elf_file.ehdr.e_ident[EI_DATA] = ELFDATA2MSB;
-#elif defined(_LITTLE_ENDIAN)
+#else
 	elf_file.ehdr.e_ident[EI_DATA] = ELFDATA2LSB;
 #endif
+#if defined(__FreeBSD__)
+	elf_file.ehdr.e_ident[EI_OSABI] = ELFOSABI_FREEBSD;
+#endif
 	elf_file.ehdr.e_type = ET_REL;
-#if defined(__sparc)
+#if defined(__arm__)
+	elf_file.ehdr.e_machine = EM_ARM;
+#elif defined(__ia64__)
+	elf_file.ehdr.e_machine = EM_IA_64;
+#elif defined(__mips__)
+	elf_file.ehdr.e_machine = EM_MIPS;
+#elif defined(__powerpc__)
+	elf_file.ehdr.e_machine = EM_PPC;
+#elif defined(__sparc)
 	elf_file.ehdr.e_machine = EM_SPARCV9;
 #elif defined(__i386) || defined(__amd64)
 	elf_file.ehdr.e_machine = EM_AMD64;
@@ -739,7 +794,44 @@ dt_symtab_lookup(Elf_Data *data_sym, int nsym, uintptr_t addr, uint_t shn,
 	return (ret);
 }
 
-#if defined(__sparc)
+#if defined(__arm__)
+/* XXX */
+static int
+dt_modtext(dtrace_hdl_t *dtp, char *p, int isenabled, GElf_Rela *rela,
+    uint32_t *off)
+{
+printf("%s:%s(%d): DOODAD\n",__FUNCTION__,__FILE__,__LINE__);
+	return (0);
+}
+#elif defined(__ia64__)
+/* XXX */
+static int
+dt_modtext(dtrace_hdl_t *dtp, char *p, int isenabled, GElf_Rela *rela,
+    uint32_t *off)
+{
+printf("%s:%s(%d): DOODAD\n",__FUNCTION__,__FILE__,__LINE__);
+	return (0);
+}
+#elif defined(__mips__)
+/* XXX */
+static int
+dt_modtext(dtrace_hdl_t *dtp, char *p, int isenabled, GElf_Rela *rela,
+    uint32_t *off)
+{
+printf("%s:%s(%d): DOODAD\n",__FUNCTION__,__FILE__,__LINE__);
+	return (0);
+}
+#elif defined(__powerpc__)
+/* XXX */
+static int
+dt_modtext(dtrace_hdl_t *dtp, char *p, int isenabled, GElf_Rela *rela,
+    uint32_t *off)
+{
+printf("%s:%s(%d): DOODAD\n",__FUNCTION__,__FILE__,__LINE__);
+	return (0);
+}
+
+#elif defined(__sparc)
 
 #define	DT_OP_RET		0x81c7e008
 #define	DT_OP_NOP		0x01000000
@@ -1060,7 +1152,13 @@ process_obj(dtrace_hdl_t *dtp, const char *obj, int *eprobesp)
 
 	if (dtp->dt_oflags & DTRACE_O_LP64) {
 		eclass = ELFCLASS64;
-#if defined(__sparc)
+#if defined(__ia64__)
+		emachine1 = emachine2 = EM_IA_64;
+#elif defined(__mips__)
+		emachine1 = emachine2 = EM_MIPS;
+#elif defined(__powerpc__)
+		emachine1 = emachine2 = EM_PPC64;
+#elif defined(__sparc)
 		emachine1 = emachine2 = EM_SPARCV9;
 #elif defined(__i386) || defined(__amd64)
 		emachine1 = emachine2 = EM_AMD64;
@@ -1068,10 +1166,16 @@ process_obj(dtrace_hdl_t *dtp, const char *obj, int *eprobesp)
 		symsize = sizeof (Elf64_Sym);
 	} else {
 		eclass = ELFCLASS32;
-#if defined(__sparc)
+#if defined(__arm__)
+		emachine1 = emachine2 = EM_ARM;
+#elif defined(__mips__)
+		emachine1 = emachine2 = EM_MIPS;
+#elif defined(__powerpc__)
+		emachine1 = emachine2 = EM_PPC;
+#elif defined(__sparc)
 		emachine1 = EM_SPARC;
 		emachine2 = EM_SPARC32PLUS;
-#elif defined(__i386) || defined(__amd64)
+#elif defined(__i386) || defined(__amd64) || defined(__ia64__)
 		emachine1 = emachine2 = EM_386;
 #endif
 		symsize = sizeof (Elf32_Sym);
@@ -1434,10 +1538,13 @@ process_obj(dtrace_hdl_t *dtp, const char *obj, int *eprobesp)
 			 * already been processed by an earlier link
 			 * invocation.
 			 */
+printf("%s:%s(%d): DOODAD\n",__FUNCTION__,__FILE__,__LINE__);
+#ifdef DOODAD
 			if (rsym.st_shndx != SHN_SUNW_IGNORE) {
 				rsym.st_shndx = SHN_SUNW_IGNORE;
 				(void) gelf_update_sym(data_sym, ndx, &rsym);
 			}
+#endif
 		}
 	}
 
@@ -1465,12 +1572,20 @@ int
 dtrace_program_link(dtrace_hdl_t *dtp, dtrace_prog_t *pgp, uint_t dflags,
     const char *file, int objc, char *const objv[])
 {
+#if !defined(sun)
+	char tfile[PATH_MAX];
+#endif
 	char drti[PATH_MAX];
 	dof_hdr_t *dof;
 	int fd, status, i, cur;
 	char *cmd, tmp;
 	size_t len;
 	int eprobes = 0, ret = 0;
+
+#if !defined(sun)
+	/* XXX Should get a temp file name here. */
+	snprintf(tfile, sizeof(tfile), "%s.tmp", file);
+#endif
 
 	/*
 	 * A NULL program indicates a special use in which we just link
@@ -1533,6 +1648,7 @@ dtrace_program_link(dtrace_hdl_t *dtp, dtrace_prog_t *pgp, uint_t dflags,
 	if ((dof = dtrace_dof_create(dtp, pgp, dflags)) == NULL)
 		return (-1); /* errno is set for us */
 
+#if defined(sun)
 	/*
 	 * Create a temporary file and then unlink it if we're going to
 	 * combine it with drti.o later.  We can still refer to it in child
@@ -1542,6 +1658,11 @@ dtrace_program_link(dtrace_hdl_t *dtp, dtrace_prog_t *pgp, uint_t dflags,
 		return (dt_link_error(dtp, NULL, -1, NULL,
 		    "failed to open %s: %s", file, strerror(errno)));
 	}
+#else
+	if ((fd = open(tfile, O_RDWR | O_CREAT | O_TRUNC, 0666)) == -1)
+		return (dt_link_error(dtp, NULL, -1, NULL,
+		    "failed to open %s: %s", tfile, strerror(errno)));
+#endif
 
 	/*
 	 * If -xlinktype=DOF has been selected, just write out the DOF.
@@ -1571,8 +1692,10 @@ dtrace_program_link(dtrace_hdl_t *dtp, dtrace_prog_t *pgp, uint_t dflags,
 	}
 
 
+#if defined(sun)
 	if (!dtp->dt_lazyload)
 		(void) unlink(file);
+#endif
 
 	if (dtp->dt_oflags & DTRACE_O_LP64)
 		status = dump_elf64(dtp, dof, fd);
@@ -1585,6 +1708,7 @@ dtrace_program_link(dtrace_hdl_t *dtp, dtrace_prog_t *pgp, uint_t dflags,
 	}
 
 	if (!dtp->dt_lazyload) {
+#if defined(sun)
 		const char *fmt = "%s -o %s -r -Blocal -Breduce /dev/fd/%d %s";
 
 		if (dtp->dt_oflags & DTRACE_O_LP64) {
@@ -1601,6 +1725,33 @@ dtrace_program_link(dtrace_hdl_t *dtp, dtrace_prog_t *pgp, uint_t dflags,
 		cmd = alloca(len);
 
 		(void) snprintf(cmd, len, fmt, dtp->dt_ld_path, file, fd, drti);
+#else
+		const char *fmt = "%s -o %s -r %s %s";
+
+#if defined(__amd64__)
+		/*
+		 * Arches which default to 64-bit need to explicitly use
+		 * the 32-bit library path.
+		 */
+		int use_32 = !(dtp->dt_oflags & DTRACE_O_LP64);
+#else
+		/*
+		 * Arches which are 32-bit only just use the normal
+		 * library path.
+		 */
+		int use_32 = 0;
+#endif
+
+		(void) snprintf(drti, sizeof (drti), "/usr/lib%s/dtrace/drti.o",
+		    use_32 ? "32":"");
+
+		len = snprintf(&tmp, 1, fmt, dtp->dt_ld_path, file, tfile,
+		    drti) + 1;
+
+		cmd = alloca(len);
+
+		(void) snprintf(cmd, len, fmt, dtp->dt_ld_path, file, tfile, drti);
+#endif
 
 		if ((status = system(cmd)) == -1) {
 			ret = dt_link_error(dtp, NULL, -1, NULL,
@@ -1630,5 +1781,9 @@ dtrace_program_link(dtrace_hdl_t *dtp, dtrace_prog_t *pgp, uint_t dflags,
 
 done:
 	dtrace_dof_destroy(dtp, dof);
+
+#if !defined(sun)
+	unlink(tfile);
+#endif
 	return (ret);
 }
