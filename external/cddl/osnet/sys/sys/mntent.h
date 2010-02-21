@@ -1,3 +1,5 @@
+/*	$NetBSD: mntent.h,v 1.2 2010/02/21 01:46:36 darran Exp $	*/
+
 /*
  * CDDL HEADER START
  *

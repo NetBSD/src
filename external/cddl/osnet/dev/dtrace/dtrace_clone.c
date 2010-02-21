@@ -1,3 +1,5 @@
+/*	$NetBSD: dtrace_clone.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+
 /*-
  * Copyright (C) 2006 John Birrell <jb@freebsd.org>.
  * All rights reserved.

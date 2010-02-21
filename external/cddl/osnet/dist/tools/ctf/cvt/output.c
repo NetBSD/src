@@ -472,7 +472,7 @@ write_file(Elf *src, const char *srcname, Elf *dst, const char *dstname,
 	int pad;
 	int i;
 
-	if (gelf_newehdr(dst, gelf_getclass(src)) == NULL)
+	if (gelf_newehdr(dst, gelf_getclass(src)) == 0)
 		elfterminate(dstname, "Cannot copy ehdr to temp file");
 	gelf_getehdr(src, &sehdr);
 	memcpy(&dehdr, &sehdr, sizeof (GElf_Ehdr));
@@ -488,7 +488,7 @@ write_file(Elf *src, const char *srcname, Elf *dst, const char *dstname,
 	 */
 	if (sehdr.e_phnum != 0) {
 		(void) elf_flagelf(dst, ELF_C_SET, ELF_F_LAYOUT);
-		if (gelf_newphdr(dst, sehdr.e_phnum) == NULL)
+		if (gelf_newphdr(dst, sehdr.e_phnum) == 0)
 			elfterminate(dstname, "Cannot make phdrs in temp file");
 
 		for (i = 0; i < sehdr.e_phnum; i++) {
@@ -579,8 +579,9 @@ write_file(Elf *src, const char *srcname, Elf *dst, const char *dstname,
 			elfterminate(dstname, "Cannot update sect %s", sname);
 #endif
 
-		if ((sdata = elf_getdata(sscn, NULL)) == NULL)
+		if ((sdata = elf_getdata(sscn, NULL)) == NULL) {
 			elfterminate(srcname, "Cannot get sect %s data", sname);
+		}
 		if ((ddata = elf_newdata(dscn)) == NULL)
 			elfterminate(dstname, "Can't make sect %s data", sname);
 #if defined(sun)
@@ -644,7 +645,7 @@ write_file(Elf *src, const char *srcname, Elf *dst, const char *dstname,
 		}
 
 #if !defined(sun)
-		if (ddata->d_buf == NULL) {
+		if ((ddata->d_buf == NULL) && (sdata->d_buf != NULL)) {
 			ddata->d_buf = xmalloc(shdr.sh_size);
 			bcopy(sdata->d_buf, ddata->d_buf, shdr.sh_size);
 		}

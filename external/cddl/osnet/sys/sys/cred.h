@@ -1,3 +1,5 @@
+/*	$NetBSD: cred.h,v 1.3 2010/02/21 01:46:35 darran Exp $	*/
+
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
@@ -23,36 +25,63 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/cred.h,v 1.3.2.1 2009/08/03 08:13:06 kensmith Exp $
+ * $FreeBSD: src/sys/compat/opensolaris/sys/cred.h,v 1.1 2007/04/06 01:09:06 pjd Exp $
  */
 
 #ifndef _OPENSOLARIS_SYS_CRED_H_
 #define	_OPENSOLARIS_SYS_CRED_H_
 
 #include <sys/param.h>
-#define	_WANT_UCRED
-#include <sys/ucred.h>
-#undef _WANT_UCRED
-
-typedef struct ucred cred_t;
-typedef struct ucred ucred_t;
+#include <sys/types.h>
 
 #ifdef _KERNEL
-#define	CRED()		(curthread->td_ucred)
+#include <sys/kauth.h>
 
-/*
- * kcred is used when you need all privileges.
- */
-#define	kcred	(thread0.td_ucred)
+#define	CRED()		(kauth_cred_get())
+#define KCRED()		(cred0)
+#define	kcred		cred0
 
-#define	crgetuid(cred)		((cred)->cr_uid)
-#define	crgetgid(cred)		((cred)->cr_gid)
-#define	crgetgroups(cred)	((cred)->cr_groups)
-#define	crgetngroups(cred)	((cred)->cr_ngroups)
-#define	crgetsid(cred, i)	(NULL)
-#else	/* !_KERNEL */
-#define	kcred		NULL
-#define	CRED()		NULL
-#endif	/* !_KERNEL */
+extern kauth_cred_t	cred0;
+
+#define	crget(cr)		cr = kauth_cred_get()
+#define	crgetuid(cr)		kauth_cred_getuid(cr)
+#define	crgetgid(cr)		kauth_cred_getgid(cr)
+#define	crgetngroups(cr) 	kauth_cred_ngroups(cr)
+#define	cralloc()		kauth_cred_alloc()
+#define	crfree(cr)		kauth_cred_free(cr)
+#define	crsetugid(cr, u, g)	( \
+	kauth_cred_setuid(cr, u), \
+	kauth_cred_setgid(cr, g), \
+	kauth_cred_seteuid(cr, u), \
+	kauth_cred_setegid(cr, g), \
+	kauth_cred_setsvuid(cr, u), \
+	kauth_cred_setsvgid(cr, g), 0)
+#define	crsetgroups(cr, gc, ga)	\
+    kauth_cred_setgroups(cr, ga, gc, 0, UIO_SYSSPACE)
+#define crgetsid(cr, i) (NULL)
+
+static __inline gid_t *
+crgetgroups(cred_t *cr)
+{
+	static gid_t gids[NGROUPS_MAX];
+
+	memset(gids, 0, NGROUPS_MAX);
+	if (kauth_cred_getgroups(cr, gids, NGROUPS_MAX, UIO_SYSSPACE) != 0) 
+		return NULL;
+	
+	return gids;
+}
+
+static int
+groupmember(gid_t gid, cred_t *cr) 
+{
+  int result;
+
+  kauth_cred_ismember_gid(cr, gid, &result);
+
+  return result;
+}
+
+#endif	/* _KERNEL */
 
 #endif	/* _OPENSOLARIS_SYS_CRED_H_ */

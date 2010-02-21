@@ -25,6 +25,7 @@
 
 #pragma ident	"%Z%%M%	%I%	%E% SMI"
 
+#define ELFSIZE ARCH_ELFSIZE	/* XXX debug */
 #include <sys/types.h>
 #if defined(sun)
 #include <sys/modctl.h>
@@ -37,6 +38,7 @@
 #include <sys/param.h>
 #include <sys/linker.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 #endif
 
 #include <unistd.h>
@@ -825,11 +827,7 @@ dt_module_modelname(dt_module_t *dmp)
  * including the path.
  */
 static void
-#if defined(sun)
 dt_module_update(dtrace_hdl_t *dtp, const char *name)
-#else
-dt_module_update(dtrace_hdl_t *dtp, struct kld_file_stat *k_stat)
-#endif
 {
 	char fname[MAXPATHLEN];
 	struct stat64 st;
@@ -847,11 +845,38 @@ dt_module_update(dtrace_hdl_t *dtp, struct kld_file_stat *k_stat)
 	    "%s/%s/object", OBJFS_ROOT, name);
 #else
 	GElf_Phdr ph;
-	char name[MAXPATHLEN];
-	int i = 0;
+	int i;
+	int mib_osrel[2] = { CTL_KERN, KERN_OSRELEASE };
+	int mib_mach[2] = { CTL_HW, HW_MACHINE };
+	char osrel[64];
+	char machine[64];
+	size_t len;
 
-	(void) strlcpy(name, k_stat->name, sizeof(name));
-	(void) strlcpy(fname, k_stat->pathname, sizeof(fname));
+	printf("dt_module_update: %s\n", name);	/* XXX debug */
+
+	if (strcmp("netbsd",name) == 0) {
+		/* want the kernel */
+		strncpy(fname, "/netbsd", sizeof(fname));
+	} else {
+
+		/* build stand module path from system */
+		len = sizeof(osrel);
+		if (sysctl(mib_osrel, 2, osrel, &len, NULL, 0) == -1) {
+			dt_dprintf("sysctl osrel failed: %s\n",
+				strerror(errno));
+		    return;
+		}
+
+		len = sizeof(machine);
+		if (sysctl(mib_mach, 2, machine, &len, NULL, 0) == -1) {
+			dt_dprintf("sysctl machine failed: %s\n",
+				strerror(errno));
+		    return;
+		}
+
+		(void) snprintf(fname, sizeof (fname),
+		    "/stand/%s/%s/%s.kmod", machine, osrel, name, name);
+	}
 #endif
 
 	if ((fd = open(fname, O_RDONLY)) == -1 || fstat64(fd, &st) == -1 ||
@@ -928,6 +953,7 @@ dt_module_update(dtrace_hdl_t *dtp, struct kld_file_stat *k_stat)
 	dmp->dm_modid = (int)OBJFS_MODID(st.st_ino);
 #else
 #if defined(__i386__)
+#if 0	/* XXX TBD needs module support */
 	/*
 	 * Find the first load section and figure out the relocation
 	 * offset for the symbols. The kernel module will not need
@@ -939,6 +965,7 @@ dt_module_update(dtrace_hdl_t *dtp, struct kld_file_stat *k_stat)
 			break;
 		}
 	}
+#endif
 #endif
 #endif
 
@@ -993,6 +1020,9 @@ dtrace_update(dtrace_hdl_t *dtp)
 		if (kldstat(fileid, &k_stat) == 0)
 			dt_module_update(dtp, &k_stat);
 	}
+#else
+	/* XXX just the kernel for now */
+	dt_module_update(dtp, "netbsd");
 #endif
 
 	/*

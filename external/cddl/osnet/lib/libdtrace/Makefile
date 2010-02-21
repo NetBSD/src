@@ -1,11 +1,12 @@
+#	$NetBSD: Makefile,v 1.2 2010/02/21 01:46:35 darran Exp $
+
 # $FreeBSD: src/cddl/lib/libdtrace/Makefile,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
 
 .include	"../../Makefile.inc"
 
 LIB=		dtrace
-SHLIB_MAJOR=	2
 
-WARNS=		1
+#WARNS=		1
 
 SRCS=		dt_aggregate.c \
 		dt_as.c \
@@ -55,12 +56,14 @@ DSRCS=		errno.d			\
 .PATH:		${OPENSOLARIS_USR_DISTDIR}/lib/libgen/common
 
 CFLAGS+=	-I${.OBJDIR} \
-		-I${.CURDIR}/../../../sys/cddl/compat/opensolaris \
-		-I${.CURDIR}/../../../cddl/compat/opensolaris/include \
+		-I${OSNETDIR}/sys \
+		-I${OSNETDIR}/include \
 		-I${OPENSOLARIS_USR_DISTDIR}/head \
 		-I${OPENSOLARIS_USR_DISTDIR}/lib/libctf/common \
 		-I${OPENSOLARIS_USR_DISTDIR}/lib/libdtrace/common \
 		-I${OPENSOLARIS_SYS_DISTDIR}/uts/common
+
+# XXX need new libelf (not GPL)
 
 #CFLAGS+=	-DYYDEBUG
 
@@ -77,7 +80,7 @@ LFLAGS+=-l
 
 YFLAGS+=-d
 
-CLEANFILES=	dt_errtags.c dt_names.c
+CLEANFILES=	dt_errtags.c dt_names.c dt_grammar.h
 
 dt_errtags.c:
 	sh ${OPENSOLARIS_USR_DISTDIR}/lib/libdtrace/common/mkerrtags.sh < ${OPENSOLARIS_USR_DISTDIR}/lib/libdtrace/common/dt_errtags.h > dt_errtags.c
@@ -87,11 +90,11 @@ dt_names.c:
 
 beforedepend:	dt_errtags.c dt_names.c
 
-beforeinstall:
-.if exists(${DESTDIR}/usr/lib/dtrace)
-.for file in ${DSRCS}
-	${INSTALL} -o ${BINOWN} -g ${BINGRP} -m ${NOBINMODE} ${.CURDIR}/${file} ${DESTDIR}/usr/lib/dtrace
-.endfor
-.endif
+#beforeinstall:
+#.if exists(${DESTDIR}/usr/lib/dtrace)
+#.for file in ${DSRCS}
+#	${INSTALL} -o ${BINOWN} -g ${BINGRP} -m ${NOBINMODE} ${.CURDIR}/${file} ${DESTDIR}/usr/lib/dtrace
+#.endfor
+#.endif
 
 .include <bsd.lib.mk>

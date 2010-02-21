@@ -905,6 +905,7 @@ int
 dt_print_ustack(dtrace_hdl_t *dtp, FILE *fp, const char *format,
     caddr_t addr, uint64_t arg)
 {
+#if 0	/* XXX TBD needs libproc */
 	/* LINTED - alignment */
 	uint64_t *pc = (uint64_t *)addr;
 	uint32_t depth = DTRACE_USTACK_NFRAMES(arg);
@@ -1048,11 +1049,16 @@ dt_print_ustack(dtrace_hdl_t *dtp, FILE *fp, const char *format,
 	}
 
 	return (err);
+#else
+	printf("XXX %s not implemented\n", __func__);
+	return ENODEV;
+#endif
 }
 
 static int
 dt_print_usym(dtrace_hdl_t *dtp, FILE *fp, caddr_t addr, dtrace_actkind_t act)
 {
+#if 0	/* XXX TBD needs libproc */
 	/* LINTED - alignment */
 	uint64_t pid = ((uint64_t *)addr)[0];
 	/* LINTED - alignment */
@@ -1088,11 +1094,16 @@ dt_print_usym(dtrace_hdl_t *dtp, FILE *fp, caddr_t addr, dtrace_actkind_t act)
 	} while ((len = dtrace_uaddr2str(dtp, pid, pc, s, n)) >= n);
 
 	return (dt_printf(dtp, fp, format, s));
+#else
+	printf("XXX %s not implemented\n", __func__);
+	return ENODEV;
+#endif
 }
 
 int
 dt_print_umod(dtrace_hdl_t *dtp, FILE *fp, const char *format, caddr_t addr)
 {
+#if 0	/* XXX TBD needs libproc */
 	/* LINTED - alignment */
 	uint64_t pid = ((uint64_t *)addr)[0];
 	/* LINTED - alignment */
@@ -1135,6 +1146,10 @@ dt_print_umod(dtrace_hdl_t *dtp, FILE *fp, const char *format, caddr_t addr)
 	}
 
 	return (err);
+#else
+	printf("XXX %s not implemented\n", __func__);
+	return -1;
+#endif
 }
 
 int

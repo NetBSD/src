@@ -1,3 +1,5 @@
+/*	$NetBSD: cyclic_machdep.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+
 /*-
  * Copyright 2006-2008 John Birrell <jb@FreeBSD.org>
  *

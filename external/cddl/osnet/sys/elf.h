@@ -1,11 +1,8 @@
-/*	$NetBSD: kcondvar.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: elf.h,v 1.1 2010/02/21 01:46:35 darran Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,20 +26,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _OPENSOLARIS_SYS_KCONDVAR_H_
-#define	_OPENSOLARIS_SYS_KCONDVAR_H_
+#ifndef _ELF_H_
+#define _ELF_H_
 
-#include_next <sys/condvar.h>
+#if HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/sys/exec_elf.h>
+#else
+#include <sys/exec_elf.h>
+#endif
 
-#ifdef _KERNEL
-
-typedef enum {
-	CV_DEFAULT,
-	CV_DRIVER
-} kcv_type_t;
-
-#define	cv_init(a, b, c, d)	cv_init(a, "zfscv")
-
-#endif	/* _KERNEL */
-
-#endif	/* _OPENSOLARIS_SYS_KCONDVAR_H_ */
+#endif
