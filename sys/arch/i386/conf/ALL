@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.238 2010/02/12 15:51:16 hubertf Exp $
+# $NetBSD: ALL,v 1.239 2010/02/21 05:16:29 cnst Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.238 $"
+#ident 		"ALL-$Revision: 1.239 $"
 
 maxusers	64		# estimated number of users
 
@@ -698,8 +698,13 @@ finsio0 	at isa? port 0x4e
 # iTE IT87xxF Super I/O with watchdog and sensors support
 itesio0 	at isa? port 0x2e
 
+# Winbond LPC Super I/O
+wbsio*	at isa? port 0x2e
+wbsio*	at isa? port 0x4e
+
 # LM7[89] and compatible hardware monitors
 lm0	at isa?	port 0x290 flags 0x0	# other common: 0x280, 0x310
+lm*	at wbsio?
 
 # SMSC LPC47B397 hardware monitor functions
 smsc0	at isa? port 0x02e
