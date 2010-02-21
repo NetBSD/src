@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.275 2010/02/18 20:58:23 skrll Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.276 2010/02/21 02:11:40 darran Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.275 2010/02/18 20:58:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.276 2010/02/21 02:11:40 darran Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -101,6 +101,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.275 2010/02/18 20:58:23 skrll Exp $
 #include <uvm/uvm_extern.h>
 
 #include <dev/lockstat.h>
+
+#ifdef KDTRACE_HOOKS
+#include <sys/dtrace_bsd.h>
+int                             dtrace_vtime_active;
+dtrace_vtime_switch_func_t      dtrace_vtime_switch_func;
+#endif
 
 static void	sched_unsleep(struct lwp *, bool);
 static void	sched_changepri(struct lwp *, pri_t);
@@ -762,6 +768,17 @@ mi_switch(lwp_t *l)
 				SPINLOCK_BACKOFF(count);
 		}
 
+#ifdef KDTRACE_HOOKS
+		/*
+		 * If DTrace has set the active vtime enum to anything
+		 * other than INACTIVE (0), then it should have set the
+		 * function to call.
+		 */
+		if (dtrace_vtime_active) {
+			(*dtrace_vtime_switch_func)(newl);
+		}
+#endif
+
 		/* Switch to the new LWP.. */
 		prevlwp = cpu_switchto(l, newl, returning);
 		ci = curcpu();
@@ -902,6 +919,17 @@ lwp_exit_switchaway(lwp_t *l)
 		while (newl->l_ctxswtch)
 			SPINLOCK_BACKOFF(count);
 	}
+
+#ifdef KDTRACE_HOOKS
+	    /*
+	     * If DTrace has set the active vtime enum to anything
+	     * other than INACTIVE (0), then it should have set the
+	     * function to call.
+	     */
+	    if (dtrace_vtime_active) {
+		    (*dtrace_vtime_switch_func)(newl);
+	    }
+#endif
 
 	/* Switch to the new LWP.. */
 	(void)cpu_switchto(NULL, newl, false);
