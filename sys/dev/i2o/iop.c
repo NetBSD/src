@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.78 2010/02/19 12:36:15 asau Exp $	*/
+/*	$NetBSD: iop.c,v 1.79 2010/02/21 14:16:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.78 2010/02/19 12:36:15 asau Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.79 2010/02/21 14:16:47 bouyer Exp $");
 
 #include "iop.h"
 
@@ -1538,7 +1538,7 @@ iop_reset(struct iop_softc *sc)
 	    BUS_DMASYNC_PREWRITE);
 	*sw = htole32(0);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
-	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+	    BUS_DMASYNC_POSTWRITE);
 
 	if ((rv = iop_post(sc, (u_int32_t *)&mf)))
 		return (rv);
