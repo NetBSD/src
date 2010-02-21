@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.2 2009/03/06 19:05:02 reed Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.3 2010/02/21 13:28:46 wiz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,10 +61,10 @@ sure you that you want to do this?
 (Answering 'no' will take you back to the partition edit menu.)}
 
 message nobootpart
-{There is no Linux Ext2 partition in the MBR partition table.}
+{There is no Linux ext2 partition in the MBR partition table.}
 
 message boottoosmall
-{The Linux Ext2 partition to install the native bootloader is too small.
+{The Linux ext2 partition to install the native bootloader is too small.
 It needs to be at least 1MB in size, however a size of at least 5MB is
 recommended.}
 
@@ -73,7 +73,7 @@ message nobootpartdisklabel
 match the boot partition you set up in the MBR partition table.}
 
 message copybootloader
-{Installing bootloader into the Linux Ext2 partition on %s...
+{Installing bootloader into the Linux ext2 partition on %s...
 }
 
 message set_kernel_1
