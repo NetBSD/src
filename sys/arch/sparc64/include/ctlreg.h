@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.50 2010/02/13 08:46:23 mrg Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.51 2010/02/21 00:57:44 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -79,12 +79,12 @@
 #define	ASI_AFSR			0x4c	/* [4u] asynchronous fault status register */
 #define	ASI_AFAR			0x4d	/* [4u] asynchronous fault address register */
 
-#define	ASI_ICACHE_DATA			0x66	/* [4u] diagnostic access to D-cache data RAM */
-#define	ASI_ICACHE_TAG			0x67	/* [4u] diagnostic access to D-cache tag RAM */
-#define	ASI_FLUSH_I_PAGE_PRIMARY	0x68	/* [4u] flush D-cache page using primary context */
-#define	ASI_FLUSH_I_PAGE_SECONDARY	0x69	/* [4u] flush D-cache page using secondary context */
-#define	ASI_FLUSH_I_CTX_PRIMARY		0x6a	/* [4u] flush D-cache context using primary context */
-#define	ASI_FLUSH_I_CTX_SECONDARY	0x6b	/* [4u] flush D-cache context using secondary context */
+#define	ASI_ICACHE_DATA			0x66	/* [4u] diagnostic access to I-cache data RAM */
+#define	ASI_ICACHE_TAG			0x67	/* [4u] diagnostic access to I-cache tag RAM */
+#define	ASI_FLUSH_I_PAGE_PRIMARY	0x68	/* [4u] flush I-cache page using primary context */
+#define	ASI_FLUSH_I_PAGE_SECONDARY	0x69	/* [4u] flush I-cache page using secondary context */
+#define	ASI_FLUSH_I_CTX_PRIMARY		0x6a	/* [4u] flush I-cache context using primary context */
+#define	ASI_FLUSH_I_CTX_SECONDARY	0x6b	/* [4u] flush I-cache context using secondary context */
 
 #define	ASI_BLOCK_AS_IF_USER_PRIMARY	0x70	/* [4u] primary user address space, block loads/stores */
 #define	ASI_BLOCK_AS_IF_USER_SECONDARY	0x71	/* [4u] secondary user address space, block loads/stores */
