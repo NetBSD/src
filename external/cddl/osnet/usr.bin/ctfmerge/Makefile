@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/02/21 01:46:36 darran Exp $
+#	$NetBSD: Makefile,v 1.3 2010/02/21 11:00:01 darran Exp $
 
 # $FreeBSD: src/cddl/usr.bin/ctfmerge/Makefile,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
 
@@ -36,10 +36,9 @@ CFLAGS+=	-I${OSNETDIR}/sys \
 		-I${OPENSOLARIS_SYS_DISTDIR}/uts/common \
 
 .ifndef HOSTPROG
-LDADD+=		-L${OSNETDIR}/lib/libctf \
-		-L${NETBSDSRCDIR}/exernal/bsd/libdwarf/lib \
-		-L${NETBSDSRCDIR}/external/bsd/libelf/lib
-LDADD+=		-lctf -ldwarf -lelf -lz -lpthread
+LIBCTF_OBJDIR!=	cd ${.CURDIR}/../../lib/libctf && ${PRINTOBJDIR}
+LDADD+=		-L${LIBCTF_OBJDIR} -lctf
+LDADD+=		-ldwarf -lelf -lz -lpthread
 .endif
 
 .PATH:		${OPENSOLARIS_USR_DISTDIR}/tools/ctf/common
