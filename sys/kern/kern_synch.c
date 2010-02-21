@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.277 2010/02/21 07:01:57 darran Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.278 2010/02/21 07:39:18 darran Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.277 2010/02/21 07:01:57 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.278 2010/02/21 07:39:18 darran Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -775,7 +775,7 @@ mi_switch(lwp_t *l)
 		 * other than INACTIVE (0), then it should have set the
 		 * function to call.
 		 */
-		if (dtrace_vtime_active) {
+		if (__predict_false(dtrace_vtime_active)) {
 			(*dtrace_vtime_switch_func)(newl);
 		}
 #endif
@@ -927,7 +927,7 @@ lwp_exit_switchaway(lwp_t *l)
 	     * other than INACTIVE (0), then it should have set the
 	     * function to call.
 	     */
-	    if (dtrace_vtime_active) {
+	    if (__predict_false(dtrace_vtime_active)) {
 		    (*dtrace_vtime_switch_func)(newl);
 	    }
 #endif
