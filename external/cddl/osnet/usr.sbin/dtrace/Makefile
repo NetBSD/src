@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2010/02/21 01:46:36 darran Exp $
+#	$NetBSD: Makefile,v 1.3 2010/02/21 11:00:02 darran Exp $
 
 # $FreeBSD: src/cddl/usr.sbin/dtrace/Makefile,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
 
+.include <bsd.own.mk>
 .include	"../../Makefile.inc"
 
 PROG=		dtrace
@@ -26,20 +27,15 @@ CFLAGS+=	-I${OSNETDIR}/sys \
 #CFLAGS+=	-DNEED_ERRLOC
 #YFLAGS+=	-d
 
-LDFLAGS+=	-pthread \
-		-L${OSNETDIR}/lib/libdtrace \
-		-L${OSNETDIR}/lib/libctf 
 
-LDADD+=		-ldtrace -ly -ll -lctf -lelf -lz
+LDFLAGS+=	-pthread
 
-#LDFLAGS+=	-pthread \
-		-L${.OBJDIR}/../../lib/libdtrace \
-		-L${.OBJDIR}/../../lib/libproc \
-		-L${.OBJDIR}/../../lib/libctf \
-		-L${.OBJDIR}/../../../lib/libelf
+LIBCTF_OBJDIR!=	cd ${.CURDIR}/../../lib/libctf && ${PRINTOBJDIR}
+LDFLAGS+=	-L${LIBDTRACE_OBJDIR} -ldtrace
 
-#LDADD+=		-ldtrace -ly -ll -lproc -lctf -lelf -lz
+LIBDTRACE_OBJDIR!= cd ${.CURDIR}/../../lib/libdtrace && ${PRINTOBJDIR}
+LDFLAGS+=	-L${LIBCTF_OBJDIR} -lctf
 
-#DPADD+= ${LIBDTRACE} ${LIBCTF} ${LIBELF} ${LIBPTHREAD} ${LIBL} ${LIBY} ${LIBZ}
+LDADD+=		-ly -ll -lelf -lz
 
 .include <bsd.prog.mk>
