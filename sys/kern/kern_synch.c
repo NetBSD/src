@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.276 2010/02/21 02:11:40 darran Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.277 2010/02/21 07:01:57 darran Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,11 +69,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.276 2010/02/21 02:11:40 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.277 2010/02/21 07:01:57 darran Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
 #include "opt_sa.h"
+#include "opt_dtrace.h"
 
 #define	__MUTEX_PRIVATE
 

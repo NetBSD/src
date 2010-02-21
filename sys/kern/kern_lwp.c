@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.138 2010/02/21 02:11:40 darran Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.139 2010/02/21 07:01:57 darran Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -209,11 +209,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.138 2010/02/21 02:11:40 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.139 2010/02/21 07:01:57 darran Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
 #include "opt_sa.h"
+#include "opt_dtrace.h"
 
 #define _LWP_API_PRIVATE
 
