@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.617 2010/02/11 00:20:50 macallan Exp $
+#	$NetBSD: bsd.own.mk,v 1.618 2010/02/21 01:48:03 darran Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -717,7 +717,7 @@ MKKMOD=		no
 #
 _MKVARS.no= \
 	MKCRYPTO_IDEA MKCRYPTO_MDC2 MKCRYPTO_RC5 MKDEBUG MKDEBUGLIB \
-	MKEXTSRC \
+	MKDTRACE MKEXTSRC \
 	MKMANDOC MKMANZ MKOBJDIRS \
 	MKPCC MKPCCCMDS \
 	MKSOFTFLOAT MKSTRIPIDENT \
