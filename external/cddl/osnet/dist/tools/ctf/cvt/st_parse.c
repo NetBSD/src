@@ -19,7 +19,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
@@ -76,12 +76,11 @@ static char *tdefdecl(char *cp, int h, tdesc_t **rtdp);
 static char *intrinsic(char *cp, tdesc_t **rtdp);
 static char *arraydef(char *cp, tdesc_t **rtdp);
 
-extern int debug_level;
 int debug_parse = DEBUG_PARSE;
 
 /*PRINTFLIKE3*/
 static void
-parse_debug(int level, char *cp, char *fmt, ...)
+parse_debug(int level, char *cp, const char *fmt, ...)
 {
 	va_list ap;
 	char buf[1024];
@@ -113,9 +112,9 @@ parse_debug(int level, char *cp, char *fmt, ...)
 /* Report unexpected syntax in stabs. */
 static void
 _expected(
-	char *who,	/* what function, or part thereof, is reporting */
-	char *what,	/* what was expected */
-	char *where,	/* where we were in the line of input */
+	const char *who,	/* what function, or part thereof, is reporting */
+	const char *what,	/* what was expected */
+	const char *where,	/* where we were in the line of input */
 	int line)
 {
 	fprintf(stderr, "%s, expecting \"%s\" at \"%s\"\n", who, what, where);
@@ -126,7 +125,7 @@ _expected(
 
 /*ARGSUSED*/
 void
-parse_init(tdata_t *td)
+parse_init(tdata_t *td __unused)
 {
 	int i;
 
@@ -159,7 +158,7 @@ unres_new(int tid)
 	return (tdp);
 }
 
-char *
+static char *
 read_tid(char *cp, tdesc_t **tdpp)
 {
 	tdesc_t *tdp;
@@ -190,7 +189,7 @@ read_tid(char *cp, tdesc_t **tdpp)
 static iitype_t
 parse_fun(char *cp, iidesc_t *ii)
 {
-	iitype_t iitype;
+	iitype_t iitype = 0;
 	tdesc_t *tdp;
 	tdesc_t **args = NULL;
 	int nargs = 0;
@@ -250,7 +249,7 @@ static iitype_t
 parse_sym(char *cp, iidesc_t *ii)
 {
 	tdesc_t *tdp;
-	iitype_t iitype;
+	iitype_t iitype = 0;
 
 	/*
 	 * name:G		global variable
@@ -482,8 +481,7 @@ whitesp(char *cp)
 {
 	char c;
 
-	for (c = *cp++; isspace(c); c = *cp++)
-		;
+	for (c = *cp++; isspace(c); c = *cp++);
 	--cp;
 	return (cp);
 }
@@ -498,8 +496,8 @@ name(char *cp, char **w)
 	c = *cp++;
 	if (c == ':')
 		*w = NULL;
-	else if (isalpha(c) || strchr("_.$#", c)) {
-		for (c = *cp++; isalnum(c) || strchr(" _.$#", c); c = *cp++)
+	else if (isalpha(c) || strchr("_.$", c)) {
+		for (c = *cp++; isalnum(c) || strchr(" _.$", c); c = *cp++)
 			;
 		if (c != ':')
 			reset();
@@ -1039,14 +1037,14 @@ enumdef(char *cp, tdesc_t **rtdp)
 	}
 }
 
-tdesc_t *
-lookup_name(tdesc_t **hash, const char *name)
+static tdesc_t *
+lookup_name(tdesc_t **hash, const char *name1)
 {
-	int bucket = compute_sum(name);
+	int bucket = compute_sum(name1);
 	tdesc_t *tdp, *ttdp = NULL;
 
 	for (tdp = hash[bucket]; tdp != NULL; tdp = tdp->t_next) {
-		if (tdp->t_name != NULL && strcmp(tdp->t_name, name) == 0) {
+		if (tdp->t_name != NULL && strcmp(tdp->t_name, name1) == 0) {
 			if (tdp->t_type == STRUCT || tdp->t_type == UNION ||
 			    tdp->t_type == ENUM || tdp->t_type == INTRINSIC)
 				return (tdp);
@@ -1058,9 +1056,9 @@ lookup_name(tdesc_t **hash, const char *name)
 }
 
 tdesc_t *
-lookupname(const char *name)
+lookupname(const char *name1)
 {
-	return (lookup_name(name_table, name));
+	return (lookup_name(name_table, name1));
 }
 
 /*
@@ -1152,8 +1150,9 @@ check_hash(void)
 
 /*ARGSUSED1*/
 static int
-resolve_typed_bitfields_cb(mlist_t *ml, void *private)
+resolve_typed_bitfields_cb(void *arg, void *private __unused)
 {
+	mlist_t *ml = arg;
 	tdesc_t *tdp = ml->ml_type;
 
 	debug(3, "Resolving typed bitfields (member %s)\n",
@@ -1195,5 +1194,5 @@ void
 resolve_typed_bitfields(void)
 {
 	(void) list_iter(typedbitfldmems,
-	    (int (*)())resolve_typed_bitfields_cb, NULL);
+	    resolve_typed_bitfields_cb, NULL);
 }

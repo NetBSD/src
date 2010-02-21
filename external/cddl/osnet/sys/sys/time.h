@@ -1,5 +1,3 @@
-/*	$NetBSD: time.h,v 1.1 2009/08/07 20:57:58 haad Exp $	*/
-
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
@@ -25,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/time.h,v 1.2 2007/11/28 21:44:17 jb Exp $
+ * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/time.h,v 1.4.2.1 2009/08/03 08:13:06 kensmith Exp $
  */
 
 #ifndef _OPENSOLARIS_SYS_TIME_H_
@@ -38,13 +36,15 @@
 #define MICROSEC	1000000
 #define NANOSEC		1000000000
 
+typedef longlong_t	hrtime_t;
+
 #define	LBOLT	((gethrtime() * hz) / NANOSEC)
 
-#define TIMESPEC_OVERFLOW(ts)                       \
+#define	TIMESPEC_OVERFLOW(ts)						\
 	((ts)->tv_sec < INT32_MIN || (ts)->tv_sec > INT32_MAX)
 
 #ifdef _KERNEL
-#include <sys/systm.h>
+#define	lbolt64	(int64_t)(LBOLT)
 
 static __inline hrtime_t
 gethrtime(void) {
@@ -68,9 +68,10 @@ gethrtime(void) {
 
 static __inline hrtime_t gethrtime(void) {
 	struct timespec ts;
-	clock_gettime(CLOCK_REALTIME,&ts);
+	clock_gettime(CLOCK_UPTIME,&ts);
 	return (((u_int64_t) ts.tv_sec) * NANOSEC + ts.tv_nsec);
 }
+
 
 #endif	/* _KERNEL */
 

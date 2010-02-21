@@ -1,5 +1,3 @@
-/*	$NetBSD: stat.h,v 1.1 2009/08/07 20:57:58 haad Exp $	*/
-
 /*
  * Copyright (C) 2007 John Birrell <jb@freebsd.org>
  * All rights reserved.
@@ -25,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/stat.h,v 1.1 2007/11/28 21:50:40 jb Exp $
+ * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/stat.h,v 1.2.4.1 2009/08/03 08:13:06 kensmith Exp $
  *
  */
 
@@ -36,7 +34,5 @@
 
 #define	stat64	stat
 #define	fstat64	fstat
-
-#define SF_NOUNLINK 0x00100000
 
 #endif

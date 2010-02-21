@@ -1,5 +1,3 @@
-/*	$NetBSD: cpupart.h,v 1.1 2009/08/07 20:57:57 haad Exp $	*/
-
 /*
  * CDDL HEADER START
  *
@@ -19,6 +17,8 @@
  * information: Portions Copyright [yyyy] [name of copyright owner]
  *
  * CDDL HEADER END
+ *
+ * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/cpupart.h,v 1.3.4.1 2009/08/03 08:13:06 kensmith Exp $
  */
 
 /*

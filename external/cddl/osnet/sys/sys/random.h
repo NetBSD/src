@@ -1,5 +1,3 @@
-/*	$NetBSD: random.h,v 1.1 2009/08/07 20:57:58 haad Exp $	*/
-
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
@@ -25,15 +23,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/random.h,v 1.1 2007/04/06 01:09:06 pjd Exp $
+ * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/random.h,v 1.2.4.1 2009/08/03 08:13:06 kensmith Exp $
  */
 
 #ifndef _OPENSOLARIS_SYS_RANDOM_H_
 #define	_OPENSOLARIS_SYS_RANDOM_H_
 
-#include <sys/rnd.h>
+#include_next <sys/random.h>
 
-#define	random_get_bytes(p, s)		rnd_extract_data((p), (uint32_t)(s), 0)
-#define	random_get_pseudo_bytes(p, s)	rnd_extract_data((p), (uint32_t)(s), 0)
+#define	random_get_bytes(p, s)		read_random((p), (int)(s))
+#define	random_get_pseudo_bytes(p, s)	read_random((p), (int)(s))
 
 #endif	/* !_OPENSOLARIS_SYS_RANDOM_H_ */
