@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.289 2010/02/20 13:21:58 drochner Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.290 2010/02/21 13:17:50 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.289 2010/02/20 13:21:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.290 2010/02/21 13:17:50 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.289 2010/02/20 13:21:58 drochner Exp $
 #ifndef __USER_VA0_IS_SAFE
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
-#include "opt_user_va0_disabled_default.h"
+#include "opt_user_va0_disable_default.h"
 #endif
 
 #ifdef SYSVSHM
@@ -174,14 +174,14 @@ vaddr_t uvm_maxkaddr;
 #endif
 
 #ifndef __USER_VA0_IS_SAFE
-#ifndef __USER_VA0_DISABLED_DEFAULT
-#define __USER_VA0_DISABLED_DEFAULT 1
+#ifndef __USER_VA0_DISABLE_DEFAULT
+#define __USER_VA0_DISABLE_DEFAULT 1
 #endif
-#ifdef USER_VA0_DISABLED_DEFAULT /* kernel config option overrides */
-#undef __USER_VA0_DISABLED_DEFAULT
-#define __USER_VA0_DISABLED_DEFAULT USER_VA0_DISABLED_DEFAULT
+#ifdef USER_VA0_DISABLE_DEFAULT /* kernel config option overrides */
+#undef __USER_VA0_DISABLE_DEFAULT
+#define __USER_VA0_DISABLE_DEFAULT USER_VA0_DISABLE_DEFAULT
 #endif
-static int user_va0_disabled = __USER_VA0_DISABLED_DEFAULT;
+static int user_va0_disable = __USER_VA0_DISABLE_DEFAULT;
 #endif
 
 /*
@@ -1192,7 +1192,7 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 
 #ifndef __USER_VA0_IS_SAFE
 	if ((flags & UVM_FLAG_FIXED) && *startp == 0 &&
-	    !VM_MAP_IS_KERNEL(map) && user_va0_disabled)
+	    !VM_MAP_IS_KERNEL(map) && user_va0_disable)
 		return EACCES;
 #endif
 
@@ -5240,26 +5240,26 @@ uvm_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 
 #ifndef __USER_VA0_IS_SAFE
 static int
-sysctl_user_va0_disabled(SYSCTLFN_ARGS)
+sysctl_user_va0_disable(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
 	int t, error;
 
 	node = *rnode;
 	node.sysctl_data = &t;
-	t = user_va0_disabled;
+	t = user_va0_disable;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return (error);
 
 	/* lower only at securelevel < 1 */
-	if (!t && user_va0_disabled &&
+	if (!t && user_va0_disable &&
 	    kauth_authorize_system(l->l_cred,
 				   KAUTH_SYSTEM_CHSYSFLAGS /* XXX */, 0,
 				   NULL, NULL, NULL))
 		return EPERM;
 
-	user_va0_disabled = !!t;
+	user_va0_disable = !!t;
 	return 0;
 }
 
@@ -5270,7 +5270,7 @@ SYSCTL_SETUP(sysctl_uvmmap_setup, "sysctl uvmmap setup")
                        CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
                        CTLTYPE_INT, "user_va0_disable",
                        SYSCTL_DESCR("Disable VA 0"),
-                       sysctl_user_va0_disabled, 0, &user_va0_disabled, 0,
+                       sysctl_user_va0_disable, 0, &user_va0_disable, 0,
                        CTL_VM, CTL_CREATE, CTL_EOL);
 }
 #endif

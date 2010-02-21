@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.30 2010/01/09 17:28:06 snj Exp $
+.\"	$NetBSD: sysctl.7,v 1.31 2010/02/21 13:17:51 drochner Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1953,6 +1953,8 @@ The value of the maxslp kernel global variable.
 Return system wide virtual memory statistics.
 The returned data consists of a
 .Va struct vmtotal .
+.It vm.user_va0_disable
+A flag which controls whether user processes can map virtual address 0.
 .It Li vm.uspace ( VM_USPACE )
 The number of bytes allocated for each kernel stack.
 .It Li vm.uvmexp ( VM_UVMEXP )

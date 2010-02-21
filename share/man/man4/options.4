@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.382 2009/12/05 20:11:02 pooka Exp $
+.\"	$NetBSD: options.4,v 1.383 2010/02/21 13:17:51 drochner Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -2310,6 +2310,11 @@ be done using
 See
 .Xr security 8
 for more details.
+.It Cd options USER_VA0_DISABLE_DEFAULT=value
+Sets the initial value of the flag which controls whether user programs
+can map virtual address 0.
+The flag can be changed at runtime by
+.Xr sysctl 3 .
 .El
 .Ss amiga-specific Options
 .Bl -ohang
