@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.6 2010/01/25 22:21:28 pooka Exp $
+# $NetBSD: mi,v 1.7 2010/02/21 03:18:47 darran Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -32,6 +32,8 @@
 ./@MODULEDIR@/dirhash/dirhash.kmod		base-obsolete	obsolete
 ./@MODULEDIR@/dm				base-kernel-modules	lvm,kmod
 ./@MODULEDIR@/dm/dm.kmod			base-kernel-modules	lvm,kmod
+./@MODULEDIR@/dtrace				base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/dtrace/dtrace.kmod		base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/efs				base-kernel-modules	kmod
 ./@MODULEDIR@/efs/efs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/exec_script			base-kernel-modules	kmod

@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.120 2010/02/04 13:07:55 plunky Exp $
+#	$NetBSD: sets.subr,v 1.121 2010/02/21 03:18:45 darran Exp $
 #
 
 #
@@ -168,7 +168,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.120 2010/02/04 13:07:55 plunky Exp $
+# 	# $NetBSD: sets.subr,v 1.121 2010/02/21 03:18:45 darran Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -200,6 +200,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	debug			${MKDEBUG} != no
 #	debuglib		${MKDEBUGLIB} != no
 #	doc			${MKDOC} != no
+#	dtrace			${MKDTRACE} != no
 #	dynamicroot		${MKDYNAMICROOT} != no
 #	extsrc			${MKEXTSRC} != no
 #	gcc			${MKGCC} != no

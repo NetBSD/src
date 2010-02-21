@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1191 2010/02/16 01:18:02 pgoyette Exp $
+# $NetBSD: mi,v 1.1192 2010/02/21 03:18:46 darran Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -135,6 +135,7 @@
 ./usr/share/man/cat1/domainname.0		man-nis-catman		.cat
 ./usr/share/man/cat1/download-vulnerability-list.0	man-obsolete		obsolete
 ./usr/share/man/cat1/dtmfdecode.0		man-isdn-catman		.cat
+./usr/share/man/cat1/dtrace.0			man-debug-catman	dtrace,.cat
 ./usr/share/man/cat1/du.0			man-util-catman		.cat
 ./usr/share/man/cat1/echo.0			man-util-catman		.cat
 ./usr/share/man/cat1/ed.0			man-util-catman		.cat
@@ -2857,6 +2858,7 @@
 ./usr/share/man/html1/domainname.html		man-nis-htmlman		html
 ./usr/share/man/html1/download-vulnerability-list.html	man-obsolete		obsolete
 ./usr/share/man/html1/dtmfdecode.html		man-isdn-htmlman	html
+./usr/share/man/html1/dtrace.html		man-debug-htmlman	dtrace,html
 ./usr/share/man/html1/du.html			man-util-htmlman	html
 ./usr/share/man/html1/echo.html			man-util-htmlman	html
 ./usr/share/man/html1/ed.html			man-util-htmlman	html
@@ -5199,6 +5201,7 @@
 ./usr/share/man/man1/domainname.1		man-nis-man		.man
 ./usr/share/man/man1/download-vulnerability-list.1	man-obsolete		obsolete
 ./usr/share/man/man1/dtmfdecode.1		man-isdn-man		.man
+./usr/share/man/man1/dtrace.1			man-debug-man		dtrace,.man
 ./usr/share/man/man1/du.1			man-util-man		.man
 ./usr/share/man/man1/echo.1			man-util-man		.man
 ./usr/share/man/man1/ed.1			man-util-man		.man

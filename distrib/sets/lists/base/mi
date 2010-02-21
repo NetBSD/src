@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.858 2010/02/05 19:08:25 plunky Exp $
+# $NetBSD: mi,v 1.859 2010/02/21 03:18:45 darran Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1048,6 +1048,7 @@
 ./usr/sbin/dnssec-signzone			base-bind-bin
 ./usr/sbin/download-vulnerability-list		base-pkgutil-bin
 ./usr/sbin/dtmfdecode				base-isdn-bin
+./usr/sbin/dtrace				base-debug-bin		dtrace
 ./usr/sbin/dumpfs				base-sysutil-bin
 ./usr/sbin/dumplfs				base-sysutil-bin
 ./usr/sbin/eaytest				base-obsolete		obsolete
