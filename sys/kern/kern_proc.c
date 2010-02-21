@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.160 2010/02/21 02:11:40 darran Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.161 2010/02/21 07:01:57 darran Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,10 +62,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.160 2010/02/21 02:11:40 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.161 2010/02/21 07:01:57 darran Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
+#include "opt_dtrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
