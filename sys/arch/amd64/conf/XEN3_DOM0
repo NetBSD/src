@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.49 2010/02/09 03:19:50 cnst Exp $
+# $NetBSD: XEN3_DOM0,v 1.50 2010/02/21 05:16:29 cnst Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -298,8 +298,13 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #dbcool* at iic? addr 0x2D		# Tyan S2881
 #dbcool* at iic? addr 0x2E		# Tyan S2882-D
 
+# Winbond LPC Super I/O
+#wbsio*	at isa? port 0x2e
+#wbsio*	at isa? port 0x4e
+
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common: 0x280, 0x310, 0xc00
+#lm*	at wbsio?
 
 # VIA VT82C686A/VT8231 Hardware Monitor and Power Management TImer
 #viaenv*	at pci? dev ? function ?
