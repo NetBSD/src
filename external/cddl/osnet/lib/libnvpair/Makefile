@@ -1,17 +1,18 @@
-#	$NetBSD: Makefile,v 1.2 2010/02/17 17:36:32 christos Exp $
+# $FreeBSD: src/cddl/lib/libnvpair/Makefile,v 1.4.2.2 2009/08/17 08:09:46 pjd Exp $
 
-.PATH:  ${.CURDIR}/../../dist/lib/libnvpair
-.PATH:  ${.CURDIR}/../../dist/common/nvpair
+.PATH: ${.CURDIR}/../../../cddl/contrib/opensolaris/lib/libnvpair
+.PATH: ${.CURDIR}/../../../sys/cddl/contrib/opensolaris/common/nvpair
 
 LIB=	nvpair
 
-SRCS=	lib_nvpair.c nvpair_alloc_system.c nvpair_alloc_fixed.c nvpair.c
+SRCS=	libnvpair.c \
+	nvpair_alloc_system.c \
+	nvpair_alloc_fixed.c \
+	nvpair.c
 
-lib_nvpair.c: libnvpair.c
-	@rm -f ${.TARGET}
-	@ln -s ${.ALLSRC} ${.TARGET}
+CFLAGS+= -I${.CURDIR}/../../../cddl/compat/opensolaris/include
+CFLAGS+= -I${.CURDIR}/../../../sys/cddl/compat/opensolaris
+CFLAGS+= -I${.CURDIR}/../../../sys/cddl/contrib/opensolaris/uts/common
+CFLAGS+= -I${.CURDIR}/../../../sys
 
-CLEANFILES+=lib_nvpair.c
-
-.include "../../Makefile.zfs"
 .include <bsd.lib.mk>

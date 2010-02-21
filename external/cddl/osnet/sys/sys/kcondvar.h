@@ -1,11 +1,6 @@
-/*	$NetBSD: kcondvar.h,v 1.1 2009/08/07 20:57:57 haad Exp $	*/
-
 /*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -16,33 +11,52 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/kcondvar.h,v 1.3.4.1 2009/08/03 08:13:06 kensmith Exp $
  */
 
-#ifndef _OPENSOLARIS_SYS_KCONDVAR_H_
-#define	_OPENSOLARIS_SYS_KCONDVAR_H_
+#ifndef _OPENSOLARIS_SYS_CONDVAR_H_
+#define	_OPENSOLARIS_SYS_CONDVAR_H_
 
-#include_next <sys/condvar.h>
+#include <sys/param.h>
+#include <sys/proc.h>
 
 #ifdef _KERNEL
+
+#include <sys/mutex.h>
+#include <sys/condvar.h>
+
+typedef struct cv	kcondvar_t;
 
 typedef enum {
 	CV_DEFAULT,
 	CV_DRIVER
 } kcv_type_t;
 
-#define	cv_init(a, b, c, d)	cv_init(a, "zfscv")
+#define	zfs_cv_init(cv, name, type, arg)	do {			\
+	const char *_name;						\
+	ASSERT((type) == CV_DEFAULT);					\
+	for (_name = #cv; *_name != '\0'; _name++) {			\
+		if (*_name >= 'a' && *_name <= 'z')			\
+			break;						\
+	}								\
+	if (*_name == '\0')						\
+		_name = #cv;						\
+	cv_init((cv), _name);						\
+} while (0)
+#define	cv_init(cv, name, type, arg)	zfs_cv_init((cv), (name), (type), (arg))
 
 #endif	/* _KERNEL */
 
-#endif	/* _OPENSOLARIS_SYS_KCONDVAR_H_ */
+#endif	/* _OPENSOLARIS_SYS_CONDVAR_H_ */

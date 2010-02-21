@@ -19,10 +19,11 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
+#pragma ident	"%Z%%M%	%I%	%E% SMI"
 
 #include <sys/dtrace.h>
 #include <sys/systrace.h>
@@ -335,8 +336,7 @@ static struct dev_ops systrace_ops = {
 	nodev,			/* reset */
 	&systrace_cb_ops,	/* driver operations */
 	NULL,			/* bus operations */
-	nodev,			/* dev power */
-	ddi_quiesce_not_needed,		/* quiesce */
+	nodev			/* dev power */
 };
 
 /*

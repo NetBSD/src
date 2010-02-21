@@ -1,34 +1,3 @@
-/*	$NetBSD: uio.h,v 1.1 2009/08/07 20:57:58 haad Exp $	*/
-
-/*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
@@ -54,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/uio.h,v 1.1 2007/04/06 01:09:06 pjd Exp $
+ * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/uio.h,v 1.4.2.1 2009/08/03 08:13:06 kensmith Exp $
  */
 
 #ifndef _OPENSOLARIS_SYS_UIO_H_
@@ -64,8 +33,6 @@
 #include <sys/debug.h>
 
 #ifndef _KERNEL
-#include <assert.h>
-
 #define	FOF_OFFSET	1	/* Use the offset in uio argument */
 
 struct uio {
@@ -82,19 +49,17 @@ struct uio {
 typedef	struct uio	uio_t;
 typedef	struct iovec	iovec_t;
 
-typedef enum uio_seg    uio_seg_t;
-
 #define	uio_loffset	uio_offset
 
-int	uiomove(void *, size_t, struct uio *);
-
+#ifdef BUILDING_ZFS
 static __inline int
 zfs_uiomove(void *cp, size_t n, enum uio_rw dir, uio_t *uio)
 {
 
-	assert(uio->uio_rw == dir);
+	ASSERT(uio->uio_rw == dir);
 	return (uiomove(cp, (int)n, uio));
 }
 #define	uiomove(cp, n, dir, uio)	zfs_uiomove((cp), (n), (dir), (uio))
+#endif	/* BUILDING_ZFS */
 
 #endif	/* !_OPENSOLARIS_SYS_UIO_H_ */

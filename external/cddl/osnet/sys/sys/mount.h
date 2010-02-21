@@ -1,5 +1,3 @@
-/*	$NetBSD: mount.h,v 1.1 2009/08/07 20:57:58 haad Exp $	*/
-
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
@@ -25,42 +23,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/compat/opensolaris/sys/mount.h,v 1.1 2007/04/06 01:09:06 pjd Exp $
+ * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/mount.h,v 1.2.4.1 2009/08/03 08:13:06 kensmith Exp $
  */
-
-#include_next <sys/mount.h>
 
 #ifndef _OPENSOLARIS_SYS_MOUNT_H_
 #define	_OPENSOLARIS_SYS_MOUNT_H_
 
-#define	MS_OVERLAY	0
+#include_next <sys/mount.h>
+
 #define	MS_FORCE	MNT_FORCE
 #define	MS_REMOUNT	MNT_UPDATE
-#define	MS_OPTIONSTR	__MNT_UNUSED1
-#define	MS_NOMNTTAB	__MNT_UNUSED2
 
 typedef	struct fid		fid_t;
-
-#define	mount(a,b,c,d,e,f,g,h)	zmount(a,b,c,d,e,f,g,h)
-
-struct zfs_args {
-	char fspec[MAXNAMELEN - 1];
-	char dataptr[MAXPATHLEN];
-	char optptr[MAXPATHLEN];
-	char *fstype;
-	int  mflag;
-	int  datalen;
-	int  optlen;
-	int  flags;
-} za;
-
-typedef struct zfs_args zfs_args_t;
-
-int
-zmount(const char *spec, const char *dir, int mflag, char *fstype,
-    char *dataptr, int datalen, char *optptr, int optlen);
-
-int
-umount2(const char *spec, int mflag);
 
 #endif	/* !_OPENSOLARIS_SYS_MOUNT_H_ */
