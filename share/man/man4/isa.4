@@ -1,4 +1,4 @@
-.\"	$NetBSD: isa.4,v 1.40 2006/12/23 06:58:20 wiz Exp $
+.\"	$NetBSD: isa.4,v 1.41 2010/02/21 05:16:29 cnst Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -276,6 +276,8 @@ Databook DB86082, DB86084, DB86184, and DB86072
 controllers.
 .It vga
 VGA graphics boards.
+.It wbsio
+Winbond LPC Super I/O.
 .El
 .Pp
 Note that some
@@ -370,6 +372,7 @@ It is usually due to a suboptimally coded driver.
 .Xr tr 4 ,
 .Xr uha 4 ,
 .Xr vga 4 ,
+.Xr wbsio 4 ,
 .Xr wd 4 ,
 .Xr wdc 4 ,
 .Xr wds 4 ,
