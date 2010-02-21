@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.159 2009/12/17 01:25:10 rmind Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.160 2010/02/21 02:11:40 darran Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.159 2009/12/17 01:25:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.160 2010/02/21 02:11:40 darran Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -93,6 +93,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.159 2009/12/17 01:25:10 rmind Exp $"
 #include <sys/sleepq.h>
 #include <sys/atomic.h>
 #include <sys/kmem.h>
+
+#ifdef KDTRACE_HOOKS
+#include <sys/dtrace_bsd.h>
+#endif
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
@@ -442,6 +446,10 @@ proc0_init(void)
 	mutex_init(&p->p_sigacts->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
 	siginit(p);
 
+#ifdef KDTRACE_HOOKS
+	kdtrace_proc_ctor(NULL, p);
+#endif
+
 	proc_initspecific(p);
 	lwp_initspecific(l);
 
@@ -710,6 +718,10 @@ proc_alloc(void)
 	pt->pt_proc = p;
 	pid_alloc_cnt++;
 
+#ifdef KDTRACE_HOOKS
+	kdtrace_proc_ctor(NULL, p);
+#endif
+
 	mutex_exit(proc_lock);
 
 	return p;
@@ -753,6 +765,9 @@ void
 proc_free_mem(struct proc *p)
 {
 
+#ifdef KDTRACE_HOOKS
+	kdtrace_proc_dtor(NULL, p);
+#endif
 	pool_cache_put(proc_cache, p);
 }
 

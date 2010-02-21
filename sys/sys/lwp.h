@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.127 2009/11/29 16:23:49 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.128 2010/02/21 02:11:39 darran Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -179,6 +179,8 @@ struct lwp {
 	/* These are only used by 'options SYSCALL_TIMES' */
 	uint32_t        l_syscall_time; /* !: time epoch for current syscall */
 	uint64_t        *l_syscall_counter; /* !: counter for current process */
+
+	struct kdtrace_thread *l_dtrace; /* ?: DTrace-specific data. */
 };
 
 /*

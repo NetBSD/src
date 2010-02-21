@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.253 2010/01/17 22:21:18 dsl Exp $	*/
+/*	$NetBSD: trap.c,v 1.254 2010/02/21 02:11:40 darran Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.253 2010/01/17 22:21:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.254 2010/02/21 02:11:40 darran Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -119,6 +119,20 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.253 2010/01/17 22:21:18 dsl Exp $");
 #endif
 
 #include "npx.h"
+
+#ifdef KDTRACE_HOOKS
+#include <sys/dtrace_bsd.h>
+
+/*
+ * This is a hook which is initialised by the dtrace module
+ * to handle traps which might occur during DTrace probe
+ * execution.
+ */
+dtrace_trap_func_t	dtrace_trap_func = NULL;
+
+dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
+#endif
+
 
 static inline int xmm_si_code(struct lwp *);
 void trap(struct trapframe *);
@@ -337,6 +351,27 @@ trap(struct trapframe *frame)
 		pcb->pcb_cr2 = 0;
 		LWP_CACHE_CREDS(l, p);
 	}
+
+#ifdef KDTRACE_HOOKS
+	/*
+	 * A trap can occur while DTrace executes a probe. Before
+	 * executing the probe, DTrace blocks re-scheduling and sets
+	 * a flag in it's per-cpu flags to indicate that it doesn't
+	 * want to fault. On returning from the the probe, the no-fault
+	 * flag is cleared and finally re-scheduling is enabled.
+	 *
+	 * If the DTrace kernel module has registered a trap handler,
+	 * call it and if it returns non-zero, assume that it has
+	 * handled the trap and modified the trap frame so that this
+	 * function can return normally.
+	 */
+	if ((type == T_PROTFLT || type == T_PAGEFLT) &&
+	    dtrace_trap_func != NULL) {
+		if ((*dtrace_trap_func)(frame, type)) {
+			return;
+		}
+	}
+#endif
 
 	switch (type) {
 

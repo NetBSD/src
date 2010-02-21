@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.294 2009/12/10 14:13:54 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.295 2010/02/21 02:11:39 darran Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -326,6 +326,7 @@ struct proc {
 	u_short		p_acflag;	/* p: Acc. flags; see struct lwp also */
 	struct mdproc	p_md;		/* p: Any machine-dependent fields */
 	vaddr_t		p_stackbase;	/* :: ASLR randomized stack base */
+	struct kdtrace_proc *p_dtrace;	/* :: DTrace-specific data. */
 };
 
 #define	p_rlimit	p_limit->pl_rlimit
