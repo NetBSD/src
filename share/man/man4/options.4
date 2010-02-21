@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.383 2010/02/21 13:17:51 drochner Exp $
+.\"	$NetBSD: options.4,v 1.384 2010/02/21 13:26:46 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -688,7 +688,7 @@ Includes code implementing the Berkeley Fast File System
 Most machines need this if they are not running diskless.
 .It Cd file-system EXT2FS
 Includes code implementing the Second Extended File System
-.Po Em EXT2FS Pc ,
+.Po Em ext2 Pc ,
 revision 0 and revision 1 with the
 .Em filetype
 and
@@ -697,7 +697,7 @@ options.
 This is the most commonly used file system on the Linux operating system,
 and is provided here for compatibility.
 Some of the specific features of
-.Em EXT2FS
+.Em ext2
 like the "behavior on errors" are not implemented.
 This file system can't be used with UID or GID greater than 65535.
 See
@@ -1008,7 +1008,7 @@ required.
 .It Cd options EXT2FS_SYSTEM_FLAGS
 This option changes the behavior of the APPEND and IMMUTABLE flags
 for a file on an
-.Em EXT2FS
+.Em ext2
 file system.
 Without this option, the superuser or owner of the file can
 set and clear them.
