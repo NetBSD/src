@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2010/01/25 22:21:28 pooka Exp $
+#	$NetBSD: Makefile,v 1.39 2010/02/21 11:14:47 darran Exp $
 
 .include <bsd.own.mk>
 
@@ -107,9 +107,16 @@ SUBDIR+=	viadrm
 SUBDIR+= 	dm
 .endif
 
-# we need solaris and zfs modules for ZFS
-.if (${MKZFS} != "no")
+.if (${MKDTRACE} != "no")
+SUBDIR+=	dtrace
+.endif
+
+# we need solaris for the dtrace and zfs modules
+.if (${MKDTRACE} != "no" || ${MKZFS} != "no")
 SUBDIR+=        solaris
+.endif
+
+.if (${MKZFS} != "no")
 SUBDIR+=	zfs
 .endif
 
