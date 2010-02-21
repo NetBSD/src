@@ -1,5 +1,3 @@
-/*	$NetBSD: fsshare.h,v 1.1 2009/08/07 20:57:55 haad Exp $	*/
-
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
  * All rights reserved.
@@ -25,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/compat/opensolaris/include/fsshare.h,v 1.1 2007/04/06 01:08:58 pjd Exp $
+ * $FreeBSD: src/cddl/compat/opensolaris/include/fsshare.h,v 1.2.4.1 2009/08/03 08:13:06 kensmith Exp $
  */
 
 #ifndef _OPENSOLARIS_FSSHARE_H_

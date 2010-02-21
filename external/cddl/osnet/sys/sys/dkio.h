@@ -1,5 +1,3 @@
-/*	$NetBSD: dkio.h,v 1.1 2009/08/07 20:57:57 haad Exp $	*/
-
 /*
  * CDDL HEADER START
  *
@@ -19,6 +17,8 @@
  * information: Portions Copyright [yyyy] [name of copyright owner]
  *
  * CDDL HEADER END
+ *
+ * $FreeBSD: src/sys/cddl/compat/opensolaris/sys/dkio.h,v 1.3.2.1 2009/08/03 08:13:06 kensmith Exp $
  */
 /*
  * Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
@@ -27,7 +27,6 @@
 
 #ifndef _OPENSOLARIS_SYS_DKIO_H_
 #define	_OPENSOLARIS_SYS_DKIO_H_
-
 
 #ifdef	__cplusplus
 extern "C" {
@@ -84,7 +83,5 @@ struct dk_callback {
 #ifdef	__cplusplus
 }
 #endif
-
-#include_next <sys/dkio.h>
 
 #endif /* _OPENSOLARIS_SYS_DKIO_H_ */

@@ -44,7 +44,9 @@ typedef struct dt_proc {
 	dtrace_hdl_t *dpr_hdl;		/* back pointer to libdtrace handle */
 	struct ps_prochandle *dpr_proc;	/* proc handle for libproc calls */
 	char dpr_errmsg[BUFSIZ];	/* error message */
+#if defined(sun)
 	rd_agent_t *dpr_rtld;		/* rtld handle for librtld_db calls */
+#endif
 	pthread_mutex_t dpr_lock;	/* lock for manipulating dpr_hdl */
 	pthread_cond_t dpr_cv;		/* cond for dpr_stop/quit/done */
 	pid_t dpr_pid;			/* pid of process */
@@ -97,7 +99,7 @@ typedef struct dt_proc_hash {
 } dt_proc_hash_t;
 
 extern struct ps_prochandle *dt_proc_create(dtrace_hdl_t *,
-    const char *, char *const *);
+    const char *, char *const *, proc_child_func *, void *);
 
 extern struct ps_prochandle *dt_proc_grab(dtrace_hdl_t *, pid_t, int, int);
 extern void dt_proc_release(dtrace_hdl_t *, struct ps_prochandle *);

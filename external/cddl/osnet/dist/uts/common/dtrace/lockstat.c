@@ -23,6 +23,7 @@
  * Use is subject to license terms.
  */
 
+#pragma ident	"%Z%%M%	%I%	%E% SMI"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -309,13 +310,11 @@ static struct dev_ops lockstat_ops = {
 	nulldev,		/* reset */
 	&lockstat_cb_ops,	/* cb_ops */
 	NULL,			/* bus_ops */
-	NULL,			/* power */
-	ddi_quiesce_not_needed,		/* quiesce */
 };
 
 static struct modldrv modldrv = {
 	&mod_driverops,		/* Type of module.  This one is a driver */
-	"Lock Statistics",	/* name of module */
+	"Lock Statistics %I%",	/* name of module */
 	&lockstat_ops,		/* driver ops */
 };
 

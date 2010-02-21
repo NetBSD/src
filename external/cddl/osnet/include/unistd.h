@@ -1,5 +1,3 @@
-/*	$NetBSD: unistd.h,v 1.1 2009/08/07 20:57:55 haad Exp $	*/
-
 /*
  * Copyright (C) 2007 John Birrell <jb@freebsd.org>
  * All rights reserved.
@@ -25,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/compat/opensolaris/include/unistd.h,v 1.1 2007/11/28 21:40:07 jb Exp $
+ * $FreeBSD: src/cddl/compat/opensolaris/include/unistd.h,v 1.2.4.1 2009/08/03 08:13:06 kensmith Exp $
  *
  */
 

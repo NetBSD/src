@@ -24,6 +24,7 @@
  * Use is subject to license terms.
  */
 
+#pragma ident	"%Z%%M%	%I%	%E% SMI"
 
 #include <sys/atomic.h>
 #include <sys/errno.h>
@@ -2338,8 +2339,7 @@ static struct dev_ops fasttrap_ops = {
 	nodev,			/* reset */
 	&fasttrap_cb_ops,	/* driver operations */
 	NULL,			/* bus operations */
-	nodev,			/* dev power */
-	ddi_quiesce_not_needed,		/* quiesce */
+	nodev			/* dev power */
 };
 
 /*
