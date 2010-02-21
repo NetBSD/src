@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_ext2fs.8,v 1.13 2005/01/31 05:19:19 erh Exp $
+.\"	$NetBSD: mount_ext2fs.8,v 1.14 2010/02/21 13:26:45 wiz Exp $
 .\"
 .\" Copyright (c) 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .Os
 .Sh NAME
 .Nm mount_ext2fs
-.Nd Mount an EXT2FS file system
+.Nd Mount an ext2 file system
 .Sh SYNOPSIS
 .Nm
 .Op Fl o Ar options
@@ -42,7 +42,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-command attaches an EXT2FS file system
+command attaches an ext2 file system
 .Ar special
 device on to the file system tree at the point
 .Ar node .
@@ -78,7 +78,7 @@ The
 utility first appeared in
 .Fx 2.2 .
 .Sh BUGS
-Some EXT2FS-specific options, features or file flags are not supported.
+Some ext2-specific options, features or file flags are not supported.
 .Pp
-Because of EXT2FS limitations, an EXT2FS file system can't be used with
+Because of ext2 limitations, an ext2 file system can't be used with
 any UID or GID greater than 65535.
