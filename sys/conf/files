@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.975 2010/02/21 04:00:47 darran Exp $
+#	$NetBSD: files,v 1.976 2010/02/21 07:01:57 darran Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -58,6 +58,8 @@ defparam opt_dump.h		DUMP_ON_PANIC
 defflag	opt_callout.h		CALLWHEEL_STATS
 
 defflag				CPU_IN_CKSUM
+
+defflag opt_dtrace.h		KDTRACE_HOOKS
 
 defflag opt_posix.h		P1003_1B_SEMAPHORE
 defflag	opt_sysv.h		SYSVMSG SYSVSEM	SYSVSHM
