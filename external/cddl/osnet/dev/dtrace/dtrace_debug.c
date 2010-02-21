@@ -1,3 +1,5 @@
+/*	$NetBSD: dtrace_debug.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+
 /*-
  * Copyright (C) 2008 John Birrell <jb@freebsd.org>.
  * All rights reserved.
@@ -28,6 +30,9 @@
  * $FreeBSD: src/sys/cddl/dev/dtrace/dtrace_debug.c,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
  *
  */
+
+static char const hex2ascii_data[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+#define	hex2ascii(hex)	(hex2ascii_data[hex])
 
 #ifdef DEBUG
 
@@ -82,11 +87,11 @@ struct dtrace_debug_data {
 	char *first;
 	char *last;
 	char *next;
-} dtrace_debug_data[MAXCPU];
+} dtrace_debug_data[MAXCPUS];
 
 static char dtrace_debug_bufr[DTRACE_DEBUG_BUFR_SIZE];
 
-static volatile u_long	dtrace_debug_flag[MAXCPU];
+static volatile u_long	dtrace_debug_flag[MAXCPUS];
 
 static void
 dtrace_debug_lock(int cpu)
@@ -107,12 +112,11 @@ dtrace_debug_init(void *dummy)
 {
 	int i;
 	struct dtrace_debug_data *d;
+	CPU_INFO_ITERATOR cpuind;
+	struct cpu_info *cinfo;
 
-	for (i = 0; i <= mp_maxid; i++) {
-		if (pcpu_find(i) == NULL)
-			continue;
-
-		d = &dtrace_debug_data[i];
+	for (CPU_INFO_FOREACH(cpuind, cinfo)) {
+		d = &dtrace_debug_data[cpu_index(cinfo)];
 
 		if (d->first == NULL) {
 			d->first = d->bufr;
@@ -123,24 +127,25 @@ dtrace_debug_init(void *dummy)
 	}
 }
 
-SYSINIT(dtrace_debug_init, SI_SUB_KDTRACE, SI_ORDER_ANY, dtrace_debug_init, NULL);
-SYSINIT(dtrace_debug_smpinit, SI_SUB_SMP, SI_ORDER_ANY, dtrace_debug_init, NULL);
+//SYSINIT(dtrace_debug_init, SI_SUB_KDTRACE, SI_ORDER_ANY, dtrace_debug_init, NULL);
+//SYSINIT(dtrace_debug_smpinit, SI_SUB_SMP, SI_ORDER_ANY, dtrace_debug_init, NULL);
 
 static void
 dtrace_debug_output(void)
 {
 	char *p;
-	int i;
 	struct dtrace_debug_data *d;
 	uintptr_t count;
+	CPU_INFO_ITERATOR cpuind;
+	struct cpu_info *cinfo;
+	cpuid_t cpuid;
 
-	for (i = 0; i <= mp_maxid; i++) {
-		if (pcpu_find(i) == NULL)
-			continue;
+	for (CPU_INFO_FOREACH(cpuind, cinfo)) {
+	    	cpuid = cpu_index(cinfo);
 
-		dtrace_debug_lock(i);
+		dtrace_debug_lock(cpuid);
 
-		d = &dtrace_debug_data[i];
+		d = &dtrace_debug_data[cpuid];
 
 		count = 0;
 
@@ -168,7 +173,7 @@ dtrace_debug_output(void)
 		d->first = d->bufr;
 		d->next = d->bufr;
 
-		dtrace_debug_unlock(i);
+		dtrace_debug_unlock(cpuid);
 
 		if (count > 0) {
 			char *last = dtrace_debug_bufr + count;
@@ -199,7 +204,7 @@ dtrace_debug_output(void)
 static __inline void
 dtrace_debug__putc(char c)
 {
-	struct dtrace_debug_data *d = &dtrace_debug_data[curcpu];
+	struct dtrace_debug_data *d = &dtrace_debug_data[cpu_number()];
 
 	*d->next++ = c;
 
@@ -218,24 +223,24 @@ dtrace_debug__putc(char c)
 static void __used
 dtrace_debug_putc(char c)
 {
-	dtrace_debug_lock(curcpu);
+	dtrace_debug_lock(cpu_number());
 
 	dtrace_debug__putc(c);
 
-	dtrace_debug_unlock(curcpu);
+	dtrace_debug_unlock(cpu_number());
 }
 
 static void __used
 dtrace_debug_puts(const char *s)
 {
-	dtrace_debug_lock(curcpu);
+	dtrace_debug_lock(cpu_number());
 
 	while (*s != '\0')
 		dtrace_debug__putc(*s++);
 
 	dtrace_debug__putc('\0');
 
-	dtrace_debug_unlock(curcpu);
+	dtrace_debug_unlock(cpu_number());
 }
 
 /*
@@ -576,7 +581,7 @@ dtrace_debug_printf(const char *fmt, ...)
 {
 	va_list ap;
 
-	dtrace_debug_lock(curcpu);
+	dtrace_debug_lock(cpu_number());
 
 	va_start(ap, fmt);
 
@@ -584,7 +589,7 @@ dtrace_debug_printf(const char *fmt, ...)
 
 	va_end(ap);
 
-	dtrace_debug_unlock(curcpu);
+	dtrace_debug_unlock(cpu_number());
 }
 
 #else

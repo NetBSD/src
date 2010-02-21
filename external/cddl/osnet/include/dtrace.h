@@ -1,3 +1,5 @@
+/*	$NetBSD: dtrace.h,v 1.2 2010/02/21 01:46:34 darran Exp $	*/
+
 /*
  * Copyright (C) 2008 John Birrell <jb@freebsd.org>
  * All rights reserved.

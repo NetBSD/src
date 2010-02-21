@@ -788,8 +788,10 @@ _dtrace_init(void)
 	}
 #endif
 #if defined(__i386__)
+#if 0	/* XXX TBD - no NetBSD equivalent? */
 	/* make long doubles 64 bits -sson */
 	(void) fpsetprec(FP_PE);
+#endif
 #endif
 }
 
@@ -1233,6 +1235,7 @@ alloc:
 	int i;
 	size_t len = sizeof(bootfile);
 
+#if 0	/* XXX debug */
 	/* This call shouldn't fail, but use a default just in case. */
 	if (sysctlbyname("kern.bootfile", bootfile, &len, NULL, 0) != 0)
 		strlcpy(bootfile, "kernel", sizeof(bootfile));
@@ -1241,6 +1244,9 @@ alloc:
 		p++;
 	else
 		p = bootfile;
+#else
+	p = "netbsd";
+#endif
 
 	/*
 	 * Format the global variables based on the kernel module name.

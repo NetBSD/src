@@ -1,3 +1,5 @@
+/*	$NetBSD: dtrace_ioctl.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+
 /*
  * CDDL HEADER START
  *
@@ -22,23 +24,18 @@
  *
  */
 
-static int dtrace_verbose_ioctl;
-SYSCTL_INT(_debug_dtrace, OID_AUTO, verbose_ioctl, CTLFLAG_RW, &dtrace_verbose_ioctl, 0, "");
+static int dtrace_verbose_ioctl=0;
+//SYSCTL_INT(_debug_dtrace, OID_AUTO, verbose_ioctl, CTLFLAG_RW, &dtrace_verbose_ioctl, 0, "");
 
 #define DTRACE_IOCTL_PRINTF(fmt, ...)	if (dtrace_verbose_ioctl) printf(fmt, ## __VA_ARGS__ )
 
 /* ARGSUSED */
 static int
-dtrace_ioctl(struct cdev *dev, u_long cmd, caddr_t addr,
-    int flags __unused, struct thread *td)
+dtrace_ioctl(struct file *fp, u_long cmd, void *addr)
 {
-#if __FreeBSD_version < 800039
-	dtrace_state_t *state = dev->si_drv1;
-#else
-	dtrace_state_t *state;
-	devfs_get_cdevpriv((void **) &state);
-#endif
+	dtrace_state_t *state = (dtrace_state_t *)fp->f_data;
 	int error = 0;
+
 	if (state == NULL)
 		return (EINVAL);
 
@@ -168,11 +165,9 @@ dtrace_ioctl(struct cdev *dev, u_long cmd, caddr_t addr,
 		    __func__,__LINE__,
 		    cmd == DTRACEIOC_AGGSNAP ?
 		    "DTRACEIOC_AGGSNAP":"DTRACEIOC_BUFSNAP",
-		    curcpu, desc.dtbd_cpu);
+		    cpu_number(), desc.dtbd_cpu);
 
-		if (desc.dtbd_cpu < 0 || desc.dtbd_cpu >= NCPU)
-			return (ENOENT);
-		if (pcpu_find(desc.dtbd_cpu) == NULL)
+		if (desc.dtbd_cpu < 0 || desc.dtbd_cpu >= ncpu)
 			return (ENOENT);
 
 		mutex_enter(&dtrace_lock);
@@ -366,7 +361,7 @@ dtrace_ioctl(struct cdev *dev, u_long cmd, caddr_t addr,
 			return (EBUSY);
 		}
 
-		if (dtrace_dof_slurp(dof, vstate, td->td_ucred, &enab, 0, B_TRUE) != 0) {
+		if (dtrace_dof_slurp(dof, vstate, curlwp->l_cred, &enab, 0, B_TRUE) != 0) {
 			mutex_exit(&dtrace_lock);
 			mutex_exit(&cpu_lock);
 			dtrace_dof_destroy(dof);
@@ -610,7 +605,7 @@ dtrace_ioctl(struct cdev *dev, u_long cmd, caddr_t addr,
 			pkey.dtpk_id = DTRACE_IDNONE;
 		}
 
-		dtrace_cred2priv(td->td_ucred, &priv, &uid, &zoneid);
+		dtrace_cred2priv(curlwp->l_cred, &priv, &uid, &zoneid);
 
 		mutex_enter(&dtrace_lock);
 
@@ -696,8 +691,10 @@ dtrace_ioctl(struct cdev *dev, u_long cmd, caddr_t addr,
 	case DTRACEIOC_STATUS: {
 		dtrace_status_t *stat = (dtrace_status_t *) addr;
 		dtrace_dstate_t *dstate;
-		int i, j;
+		int j;
 		uint64_t nerrs;
+		CPU_INFO_ITERATOR cpuind;
+		struct cpu_info *cinfo;
 
 		DTRACE_IOCTL_PRINTF("%s(%d): DTRACEIOC_STATUS\n",__func__,__LINE__);
 
@@ -725,28 +722,25 @@ dtrace_ioctl(struct cdev *dev, u_long cmd, caddr_t addr,
 		nerrs = state->dts_errors;
 		dstate = &state->dts_vstate.dtvs_dynvars;
 
-		for (i = 0; i < NCPU; i++) {
-#if !defined(sun)
-			if (pcpu_find(i) == NULL)
-				continue;
-#endif
-			dtrace_dstate_percpu_t *dcpu = &dstate->dtds_percpu[i];
+		for (CPU_INFO_FOREACH(cpuind, cinfo)) {
+		    	int ci = cpu_index(cinfo);
+			dtrace_dstate_percpu_t *dcpu = &dstate->dtds_percpu[ci];
 
 			stat->dtst_dyndrops += dcpu->dtdsc_drops;
 			stat->dtst_dyndrops_dirty += dcpu->dtdsc_dirty_drops;
 			stat->dtst_dyndrops_rinsing += dcpu->dtdsc_rinsing_drops;
 
-			if (state->dts_buffer[i].dtb_flags & DTRACEBUF_FULL)
+			if (state->dts_buffer[ci].dtb_flags & DTRACEBUF_FULL)
 				stat->dtst_filled++;
 
-			nerrs += state->dts_buffer[i].dtb_errors;
+			nerrs += state->dts_buffer[ci].dtb_errors;
 
 			for (j = 0; j < state->dts_nspeculations; j++) {
 				dtrace_speculation_t *spec;
 				dtrace_buffer_t *buf;
 
 				spec = &state->dts_speculations[j];
-				buf = &spec->dtsp_buffer[i];
+				buf = &spec->dtsp_buffer[ci];
 				stat->dtst_specdrops += buf->dtb_xamot_drops;
 			}
 		}

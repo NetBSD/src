@@ -1,51 +1,30 @@
-# $FreeBSD: src/cddl/lib/libzfs/Makefile,v 1.5.2.1 2009/08/03 08:13:06 kensmith Exp $
+#	$NetBSD: Makefile,v 1.3 2010/02/21 01:46:35 darran Exp $
 
-.PATH: ${.CURDIR}/../../../cddl/compat/opensolaris/misc
-.PATH: ${.CURDIR}/../../../sys/cddl/contrib/opensolaris/common/zfs
-.PATH: ${.CURDIR}/../../../sys/cddl/contrib/opensolaris/uts/common/fs/zfs
-.PATH: ${.CURDIR}/../../../cddl/contrib/opensolaris/lib/libzfs/common
+.PATH: ${.CURDIR}/../../dist/common/zfs
+.PATH: ${.CURDIR}/../../dist/common/fs/zfs
+.PATH: ${.CURDIR}/../../dist/lib/libzfs/common
 
 LIB=	zfs
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
 
-SRCS=	deviceid.c \
-	fsshare.c \
-	mkdirp.c \
-	mnttab.c \
-	zmount.c \
-	zone.c
+# Local
+SRCS=	deviceid.c mnttab.c mkdirp.c zmount.c fsshare.c zone.c efi.c ucred.c
 
-SRCS+=	zfs_deleg.c \
-	zfs_namecheck.c \
-	zfs_prop.c \
-	zpool_prop.c \
-	zprop_common.c \
-	libzfs_dataset.c \
-	libzfs_util.c \
-	libzfs_graph.c \
-	libzfs_mount.c \
-	libzfs_pool.c \
-	libzfs_changelist.c \
-	libzfs_config.c \
-	libzfs_import.c \
-	libzfs_sendrecv.c \
-	libzfs_status.c
+# Sun
+SRCS+=	zfs_namecheck.c zprop_common.c zfs_prop.c zpool_prop.c
+SRCS+=	zfs_deleg.c zfs_comutil.c
+SRCS+=	libzfs_dataset.c libzfs_util.c libzfs_graph.c libzfs_mount.c
+SRCS+=	libzfs_pool.c libzfs_changelist.c libzfs_config.c libzfs_import.c
+SRCS+=	libzfs_status.c libzfs_sendrecv.c
 
-CFLAGS+= -DZFS_NO_ACL
-CFLAGS+= -I${.CURDIR}/../../../sbin/mount
-CFLAGS+= -I${.CURDIR}/../../../cddl/lib/libumem
-CFLAGS+= -I${.CURDIR}/../../../sys/cddl/compat/opensolaris
-CFLAGS+= -I${.CURDIR}/../../../cddl/compat/opensolaris/include
-CFLAGS+= -I${.CURDIR}/../../../cddl/compat/opensolaris/lib/libumem
-CFLAGS+= -I${.CURDIR}/../../../cddl/contrib/opensolaris/lib/libzpool/common
-CFLAGS+= -I${.CURDIR}/../../../sys/cddl/contrib/opensolaris/common/zfs
-CFLAGS+= -I${.CURDIR}/../../../sys/cddl/contrib/opensolaris/uts/common/fs/zfs
-CFLAGS+= -I${.CURDIR}/../../../sys/cddl/contrib/opensolaris/uts/common/sys
-CFLAGS+= -I${.CURDIR}/../../../cddl/contrib/opensolaris/head
-CFLAGS+= -I${.CURDIR}/../../../sys/cddl/contrib/opensolaris/uts/common
-CFLAGS+= -I${.CURDIR}/../../../cddl/contrib/opensolaris/lib/libnvpair
-CFLAGS+= -I${.CURDIR}/../../../cddl/contrib/opensolaris/lib/libuutil/common
-CFLAGS+= -I${.CURDIR}/../../../cddl/contrib/opensolaris/lib/libzfs/common
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sbin/mount
 
+# Avoid conflict with libprop
+CPPFLAGS+=	-D_PROPLIB_ZFS_CONFLICT
+
+# Avoid internal header conflicts
+CPPFLAGS+=	-D_ZFS_CONTEXT_NO_VERIFY
+
+.include "../../Makefile.zfs"
 .include <bsd.lib.mk>

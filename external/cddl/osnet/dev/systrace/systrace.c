@@ -1,3 +1,5 @@
+/*	$NetBSD: systrace.c,v 1.2 2010/02/21 01:46:34 darran Exp $	*/
+
 /*
  * CDDL HEADER START
  *

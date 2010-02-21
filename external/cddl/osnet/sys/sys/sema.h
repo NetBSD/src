@@ -1,3 +1,5 @@
+/*	$NetBSD: sema.h,v 1.2 2010/02/21 01:46:36 darran Exp $	*/
+
 /*
  * Copyright (C) 2007 John Birrell <jb@freebsd.org>
  * All rights reserved.

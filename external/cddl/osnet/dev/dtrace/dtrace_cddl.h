@@ -1,3 +1,5 @@
+/*	$NetBSD: dtrace_cddl.h,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+
 /*
  * CDDL HEADER START
  *
@@ -84,25 +86,25 @@ typedef struct kdtrace_thread {
  * that the separation on FreeBSD is a licensing constraint designed to
  * keep the GENERIC kernel BSD licensed.
  */
-#define	t_dtrace_vtime	td_dtrace->td_dtrace_vtime
-#define	t_dtrace_start	td_dtrace->td_dtrace_start
-#define	t_dtrace_stop	td_dtrace->td_dtrace_stop
-#define	t_dtrace_sig	td_dtrace->td_dtrace_sig
-#define	t_predcache	td_dtrace->td_predcache
+#define	t_dtrace_vtime	l_dtrace->td_dtrace_vtime
+#define	t_dtrace_start	l_dtrace->td_dtrace_start
+#define	t_dtrace_stop	l_dtrace->td_dtrace_stop
+#define	t_dtrace_sig	l_dtrace->td_dtrace_sig
+#define	t_predcache	l_dtrace->td_predcache
 #define p_dtrace_helpers	p_dtrace->p_dtrace_helpers
 
 /*
  * Definitions for fields in struct proc which are named differntly in FreeBSD.
  */
-#define	p_cred		p_ucred
+//#define	p_cred		p_ucred
 #define	p_parent	p_pptr
 
 /*
- * Definitions for fields in struct thread which are named differntly in FreeBSD.
+ * Definitions for fields in struct thread which are named differntly in NetBSD.
  */
-#define	t_procp		td_proc
-#define	t_tid		td_tid
-#define	t_did		td_tid
+#define	t_procp		l_proc
+#define	t_tid		l_lid
+#define	t_did		l_lid
 
 
 int priv_policy(const cred_t *, int, boolean_t, int, const char *);
