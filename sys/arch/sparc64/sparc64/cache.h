@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.11 2010/02/01 03:43:27 mrg Exp $ */
+/*	$NetBSD: cache.h,v 1.12 2010/02/22 00:16:31 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -73,12 +73,46 @@
  */
 
 /* The following are for I$ and D$ flushes and are in locore.s */
-void 	dcache_flush_page(paddr_t);	/* flush page from D$ */
+void 	dcache_flush_page_us(paddr_t);	/* flush page from D$ */
+void 	dcache_flush_page_usiii(paddr_t); /* flush page from D$ */
 void 	blast_dcache(void);		/* Clear entire D$ */
-void 	blast_icache(void);		/* Clear entire I$ */
+void 	blast_icache_us(void);		/* Clear entire I$ */
+void 	blast_icache_usiii(void);	/* Clear entire I$ */
 
 /* The following flush a range from the D$ and I$ but not E$. */
-void	cache_flush_phys(paddr_t, psize_t, int);
+void	cache_flush_phys_us(paddr_t, psize_t, int);
+void	cache_flush_phys_usiii(paddr_t, psize_t, int);
 
-/* Smallest E$ line size. */
+static __inline__ void
+dcache_flush_page(paddr_t pa)
+{
+	if (CPU_IS_USIII_UP())
+		dcache_flush_page_usiii(pa);
+	else
+		dcache_flush_page_us(pa);
+}
+
+static __inline__ void
+cache_flush_phys(paddr_t pa, psize_t size, int ecache)
+{
+	if (CPU_IS_USIII_UP())
+		cache_flush_phys_usiii(pa, size, ecache);
+	else
+		cache_flush_phys_us(pa, size, ecache);
+}
+
+static __inline__ void
+blast_icache(void)
+{
+	if (CPU_IS_USIII_UP())
+		blast_icache_usiii();
+	else
+		blast_icache_us();
+}
+
+/* Various cache size/line sizes */
 extern	int	ecache_min_line_size;
+extern	int	dcache_line_size;
+extern	int	dcache_size;
+extern	int	icache_line_size;
+extern	int	icache_size;
