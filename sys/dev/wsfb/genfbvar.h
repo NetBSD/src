@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.12 2010/01/08 19:51:11 dyoung Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.13 2010/02/22 05:55:10 ahoka Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,10 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.12 2010/01/08 19:51:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.13 2010/02/22 05:55:10 ahoka Exp $");
 
 #ifndef GENFBVAR_H
 #define GENFBVAR_H
+
+#include "opt_splash.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -44,6 +46,13 @@ __KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.12 2010/01/08 19:51:11 dyoung Exp $")
 #include <dev/rasops/rasops.h>
 
 #include <dev/wscons/wsdisplay_vconsvar.h>
+
+#ifdef SPLASHSCREEN
+#define GENFB_DISABLE_TEXT
+#include <dev/splash/splash.h>
+/* XXX */
+extern const char _splash_header_data_cmap[64+32][3];
+#endif
 
 struct genfb_ops {
 	int (*genfb_ioctl)(void *, void *, u_long, void *, int, struct lwp *);
@@ -81,6 +90,12 @@ struct genfb_softc {
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
 	bool sc_want_clear;
+#ifdef SPLASHSCREEN
+	struct splash_info sc_splash;
+#ifdef SPLASHSCREEN_PROGRESS
+	struct splash_progress sc_progress;
+#endif
+#endif
 };
 
 void	genfb_cnattach(void);
