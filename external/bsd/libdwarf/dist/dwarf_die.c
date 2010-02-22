@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_die.c,v 1.1.1.1 2009/12/23 00:03:25 darran Exp $	*/
+/*	$NetBSD: dwarf_die.c,v 1.2 2010/02/22 11:01:29 darran Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -27,6 +27,10 @@
  *
  * $FreeBSD: src/lib/libdwarf/dwarf_die.c,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <stdlib.h>
 #include "_libdwarf.h"
