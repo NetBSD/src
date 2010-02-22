@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.37.12.11 2010/02/01 04:16:20 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.37.12.12 2010/02/22 20:17:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.11 2010/02/01 04:16:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.12 2010/02/22 20:17:09 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sa.h"
@@ -127,6 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37.12.11 2010/02/01 04:16:20 matt Exp 
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
+#include <mips/locore.h>
 #include <mips/trap.h>
 #include <mips/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
@@ -186,7 +187,7 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 
 	LWP_CACHE_CREDS(l, p);
 
-	uvmexp.syscalls++;
+	curcpu()->ci_data.cpu_nsyscall++;
 
 	if (cause & MIPS_CR_BR_DELAY)
 		reg->r_regs[_R_PC] = MachEmulateBranch(tf, opc, 0, 0);

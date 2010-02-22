@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.29.62.3 2010/02/01 04:16:19 matt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.29.62.4 2010/02/22 20:17:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.29.62.3 2010/02/01 04:16:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.29.62.4 2010/02/22 20:17:09 matt Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -105,8 +105,10 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.29.62.3 2010/02/01 04:16:19 ma
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/ptrace.h>
+
 #include <mips/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
+#include <mips/locore.h>
 
 int
 process_read_regs(struct lwp *l, struct reg *regs)
