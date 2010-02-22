@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_begin.c,v 1.5 2010/02/22 10:48:32 darran Exp $	*/
+/*	$NetBSD: elf_begin.c,v 1.6 2010/02/22 10:59:08 darran Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -38,9 +38,6 @@
 #include <sys/stat.h>
 
 #include <ar.h>
-#include <ctype.h>
-#include <db.h>
-#include <err.h>
 #include <err.h>
 #include <errno.h>
 #include <libelf.h>
