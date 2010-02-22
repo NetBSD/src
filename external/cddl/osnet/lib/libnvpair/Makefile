@@ -1,17 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2010/02/21 01:46:35 darran Exp $
+#	$NetBSD: Makefile,v 1.5 2010/02/22 20:05:03 haad Exp $
 
 .PATH:  ${.CURDIR}/../../dist/lib/libnvpair
 .PATH:  ${.CURDIR}/../../dist/common/nvpair
 
 LIB=	nvpair
 
-SRCS=	lib_nvpair.c nvpair_alloc_system.c nvpair_alloc_fixed.c nvpair.c
-
-lib_nvpair.c: libnvpair.c
-	@rm -f ${.TARGET}
-	@ln -s ${.ALLSRC} ${.TARGET}
-
-CLEANFILES+=lib_nvpair.c
+SRCS=	libnvpair.c nvpair_alloc_system.c nvpair_alloc_fixed.c nvpair.c
 
 .include "../../Makefile.zfs"
 .include <bsd.lib.mk>
