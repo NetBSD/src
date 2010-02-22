@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.324 2010/01/07 09:25:19 jdc Exp $
+#	$NetBSD: files.pci,v 1.325 2010/02/22 05:55:10 ahoka Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -924,7 +924,7 @@ attach sdhc at pci with sdhc_pci
 file	dev/pci/sdhc_pci.c		sdhc_pci
 
 # generic framebuffer console driver, PCI frontend
-attach genfb at pci with genfb_pci
+attach genfb at pci with genfb_pci : splash
 file	dev/pci/genfb_pci.c	genfb_pci
 
 # NVIDIA nForce2/3/4 SMBus controller
