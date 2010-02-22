@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.1.2.5 2010/02/16 08:13:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.1.2.6 2010/02/22 20:17:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: mips_softint.c,v 1.1.2.5 2010/02/16 08:13:57 matt Ex
 #include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
+#include <mips/locore.h>
 
 #ifdef __HAVE_FAST_SOFTINTS
 
