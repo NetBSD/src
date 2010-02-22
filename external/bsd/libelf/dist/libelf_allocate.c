@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_allocate.c,v 1.4 2009/12/29 17:05:58 thorpej Exp $	*/
+/*	$NetBSD: libelf_allocate.c,v 1.5 2010/02/22 10:48:32 darran Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -29,6 +29,10 @@
 /*
  * Internal APIs
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf_allocate.c,v 1.2.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */

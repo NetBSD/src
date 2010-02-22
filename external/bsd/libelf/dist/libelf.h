@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf.h,v 1.6 2009/12/29 17:32:18 thorpej Exp $	*/
+/*	$NetBSD: libelf.h,v 1.7 2010/02/22 10:48:32 darran Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -30,6 +30,10 @@
 
 #ifndef	_LIBELF_H_
 #define	_LIBELF_H_
+
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/queue.h>
