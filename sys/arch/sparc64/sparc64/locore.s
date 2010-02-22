@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.317 2010/02/15 12:46:24 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.318 2010/02/22 00:16:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -61,7 +61,6 @@
 #undef	TRAPS_USE_IG		/* Use Interrupt Globals for all traps */
 #define	HWREF			/* Track ref/mod bits in trap handlers */
 #undef	DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
-#undef	SPITFIRE		/* Only used in DLFLUSH* now, see DCACHE_BUG */
 #undef	NO_TSB			/* Don't use TSB */
 #define	USE_BLOCK_STORE_LOAD	/* enable block load/store ops */
 #define	BB_ERRATA_1		/* writes to TICK_CMPR may fail */
@@ -202,20 +201,14 @@
  * It uses a register with the address to clear and a temporary
  * which is destroyed.
  */
-#ifdef SPITFIRE
-#define ASI_DCACHE_TAG_OR_INV	ASI_DCACHE_TAG
-#else
-#define ASI_DCACHE_TAG_OR_INV	ASI_DCACHE_INVALIDATE
-#endif
-
 #ifdef DCACHE_BUG
 #define DLFLUSH(a,t) \
 	andn	a, 0x1f, t; \
-	stxa	%g0, [ t ] ASI_DCACHE_TAG_OR_INV; \
+	stxa	%g0, [ t ] ASI_DCACHE_TAG; \
 	membar	#Sync
 /* The following can be used if the pointer is 16-byte aligned */
 #define DLFLUSH2(t) \
-	stxa	%g0, [ t ] ASI_DCACHE_TAG_OR_INV; \
+	stxa	%g0, [ t ] ASI_DCACHE_TAG; \
 	membar	#Sync
 #else
 #define DLFLUSH(a,t)
@@ -2285,9 +2278,12 @@ winfixsave:
 	/* Did we save a user or kernel window ? */
 !	srax	%g3, 48, %g5				! User or kernel store? (TAG TARGET)
 	sllx	%g3, (64-13), %g5			! User or kernel store? (TAG ACCESS)
-	sethi	%hi((2*NBPG)-8), %g7
+	sethi	%hi(dcache_size), %g7
+	ld	[%g7 + %lo(dcache_size)], %g7
+	sethi	%hi(dcache_line_size), %g6
+	ld	[%g6 + %lo(dcache_line_size)], %g6
 	brnz,pt	%g5, 1f					! User fault -- save windows to pcb
-	 or	%g7, %lo((2*NBPG)-8), %g7
+	 sub	%g7, %g6, %g7
 
 	and	%g4, CWP, %g4				! %g4 = %cwp of trap
 	wrpr	%g4, 0, %cwp				! Kernel fault -- restore %cwp and force and trap to debugger
@@ -2316,10 +2312,9 @@ winfixsave:
 1:
 #if 1
 	/* Now we need to blast away the D$ to make sure we're in sync */
-dlflush1:
 	stxa	%g0, [%g7] ASI_DCACHE_TAG
 	brnz,pt	%g7, 1b
-	 dec	8, %g7
+	 sub	%g7, %g6, %g7
 #endif
 
 #ifdef NOTDEF_DEBUG
@@ -5296,14 +5291,19 @@ ENTRY(blast_dcache)
 #endif
 
 	rdpr	%pstate, %o3
-	set	(2 * NBPG) - 32, %o1
+	sethi	%hi(dcache_size), %o1
+	ld	[%o1 + %lo(dcache_size)], %o1
+	sethi	%hi(dcache_line_size), %o5
+	ld	[%o5 + %lo(dcache_line_size)], %o5
+	sub	%o1, %o5, %o1
 	andn	%o3, PSTATE_IE, %o4			! Turn off PSTATE_IE bit
 	wrpr	%o4, 0, %pstate
 1:
-dlflush2:
 	stxa	%g0, [%o1] ASI_DCACHE_TAG
+	membar	#Sync
 	brnz,pt	%o1, 1b
-	 dec	32, %o1
+	 sub	%o1, %o5, %o1
+
 	sethi	%hi(KERNBASE), %o2
 	flush	%o2
 	membar	#Sync
@@ -5317,39 +5317,69 @@ dlflush2:
 #endif
 
 /*
- * blast_icache()
+ * blast_icache_us()
+ * blast_icache_usiii()
  *
  * Clear out all of I$ regardless of contents
  * Does not modify %o0
  *
+ * We turn off interrupts for the duration to prevent RED exceptions.
+ * For the Cheetah version, we also have to to turn off the I$ during this as
+ * ASI_ICACHE_TAG accesses interfere with coherency.
  */
 	.align 8
-ENTRY(blast_icache)
-/*
- * We turn off interrupts for the duration to prevent RED exceptions.
- */
+ENTRY(blast_icache_us)
 	rdpr	%pstate, %o3
-	set	(2 * NBPG) - 32, %o1
+	sethi	%hi(icache_size), %o1
+	ld	[%o1 + %lo(icache_size)], %o1
+	sethi	%hi(icache_line_size), %o2
+	ld	[%o2 + %lo(icache_line_size)], %o2
+	sub	%o1, %o2, %o1
 	andn	%o3, PSTATE_IE, %o4			! Turn off PSTATE_IE bit
 	wrpr	%o4, 0, %pstate
 1:
 	stxa	%g0, [%o1] ASI_ICACHE_TAG
 	brnz,pt	%o1, 1b
-	 dec	32, %o1
-	sethi	%hi(KERNBASE), %o2
-	flush	%o2
+	 sub	%o1, %o2, %o1
+	sethi	%hi(KERNBASE), %o5
+	flush	%o5
 	membar	#Sync
 	retl
 	 wrpr	%o3, %pstate
 
+	.align 8
+ENTRY(blast_icache_usiii)
+	rdpr	%pstate, %o3
+	sethi	%hi(icache_size), %o1
+	ld	[%o1 + %lo(icache_size)], %o1
+	sethi	%hi(icache_line_size), %o2
+	ld	[%o2 + %lo(icache_line_size)], %o2
+	sub	%o1, %o2, %o1
+	andn	%o3, PSTATE_IE, %o4			! Turn off PSTATE_IE bit
+	wrpr	%o4, 0, %pstate
+	ldxa    [%g0] ASI_MCCR, %o5
+	andn	%o5, MCCR_ICACHE_EN, %o4		! Turn off the I$
+	stxa	%o4, [%g0] ASI_MCCR
+	flush 	%g0
+1:
+	stxa	%g0, [%o1] ASI_ICACHE_TAG
+	membar	#Sync
+	brnz,pt	%o1, 1b
+	 sub	%o1, %o2, %o1
+	stxa	%o5, [%g0] ASI_MCCR			! Restore the I$
+	flush 	%g0
+	retl
+	 wrpr	%o3, %pstate
+
 /*
- * dcache_flush_page(paddr_t pa)
+ * dcache_flush_page_us(paddr_t pa)
+ * dcache_flush_page_usiii(paddr_t pa)
  *
  * Clear one page from D$.
  *
  */
 	.align 8
-ENTRY(dcache_flush_page)
+ENTRY(dcache_flush_page_us)
 #ifndef _LP64
 	COMBINE(%o0, %o1, %o0)
 #endif
@@ -5374,7 +5404,6 @@ ENTRY(dcache_flush_page)
 	bne,pt	%xcc, 1b
 	 membar	#LoadStore
 
-dlflush3:
 	stxa	%g0, [%o0] ASI_DCACHE_TAG
 	ba,pt	%icc, 1b
 	 membar	#StoreLoad
@@ -5385,15 +5414,38 @@ dlflush3:
 	retl
 	 membar	#Sync
 
+	.align 8
+ENTRY(dcache_flush_page_usiii)
+#ifndef _LP64
+	COMBINE(%o0, %o1, %o0)
+#endif
+	set	NBPG, %o1
+	sethi	%hi(dcache_line_size), %o2
+	add	%o0, %o1, %o1	! end address
+	ld	[%o2 + %lo(dcache_line_size)], %o2
+
+1:
+	stxa	%g0, [%o0] ASI_DCACHE_INVALIDATE
+	add	%o0, %o2, %o0
+	cmp	%o0, %o1
+	bl,pt	%xcc, 1b
+	 nop
+
+	sethi	%hi(KERNBASE), %o5
+	flush	%o5
+	retl
+	 membar	#Sync
+
 /*
- *	cache_flush_phys(paddr_t, psize_t, int);
+ *	cache_flush_phys_us(paddr_t, psize_t, int);
+ *	cache_flush_phys_usiii(paddr_t, psize_t, int);
  *
  *	Clear a set of paddrs from the D$, I$ and if param3 is
  *	non-zero, E$.  (E$ is not supported yet).
  */
 
 	.align 8
-ENTRY(cache_flush_phys)
+ENTRY(cache_flush_phys_us)
 #ifndef _LP64
 	COMBINE(%o0, %o1, %o0)
 	COMBINE(%o2, %o3, %o1)
@@ -5433,13 +5485,9 @@ ENTRY(cache_flush_phys)
 	 nop
 
 	membar	#LoadStore
-dlflush4:
 	stxa	%g0, [%o4] ASI_DCACHE_TAG ! Just right
 	membar	#Sync
 2:
-nop_on_us_1:
-	b	3f
-	 nop					! XXXMRG put something useful here?
 	ldda	[%o4] ASI_ICACHE_TAG, %g0	! Tag goes in %g1
 	sllx	%g1, 40-35, %g1			! Shift I$ tag into place
 	and	%g1, %o2, %g1			! Mask out trash
@@ -5457,9 +5505,36 @@ nop_on_us_1:
 
 	sethi	%hi(KERNBASE), %o5
 	flush	%o5
-	membar	#Sync
 	retl
+	 membar	#Sync
+
+	.align 8
+ENTRY(cache_flush_phys_usiii)
+#ifndef _LP64
+	COMBINE(%o0, %o1, %o0)
+	COMBINE(%o2, %o3, %o1)
+	mov	%o4, %o2
+#endif
+#ifdef DEBUG
+	tst	%o2		! Want to clear E$?
+	tnz	1		! Error!
+#endif
+	add	%o0, %o1, %o1	! End PA
+	sethi	%hi(dcache_line_size), %o3
+	ld	[%o3 + %lo(dcache_line_size)], %o3
+	sethi	%hi(KERNBASE), %o5
+1:
+	stxa	%g0, [%o0] ASI_DCACHE_INVALIDATE
+	add	%o0, %o3, %o0
+	cmp	%o0, %o1
+	bl,pt	%xcc, 1b
 	 nop
+
+	/* don't need to flush the I$ on cheetah */
+
+	flush	%o5
+	retl
+	 membar	#Sync
 
 #ifdef COMPAT_16
 #ifdef _LP64
@@ -9694,16 +9769,3 @@ _C_LABEL(ssym):
 	.comm	_C_LABEL(trapdebug), 4
 	.comm	_C_LABEL(pmapdebug), 4
 #endif
-
-	.globl  _C_LABEL(dlflush_start)
-_C_LABEL(dlflush_start):
-	POINTER	dlflush1
-	POINTER	dlflush2
-	POINTER	dlflush3
-	POINTER	dlflush4
-	POINTER	0
-
-	.globl  _C_LABEL(nop_on_us_1_start)
-_C_LABEL(nop_on_us_1_start):
-	POINTER	nop_on_us_1
-	POINTER	0
