@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.16.14.3 2010/02/01 04:16:20 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.16.14.4 2010/02/22 20:17:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16.14.3 2010/02/01 04:16:20 matt Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16.14.4 2010/02/22 20:17:09 matt Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16.14.3 2010/02/01 04:16:20 matt E
 
 #include <mips/frame.h>
 #include <mips/regnum.h>
+#include <mips/locore.h>
 
 void *	
 getframe(struct lwp *l, int sig, int *onstack)
