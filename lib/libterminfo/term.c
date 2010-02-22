@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.9 2010/02/12 12:18:33 roy Exp $ */
+/* $NetBSD: term.c,v 1.10 2010/02/22 23:05:39 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.9 2010/02/12 12:18:33 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.10 2010/02/22 23:05:39 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -286,23 +286,41 @@ static int
 _ti_findterm(TERMINAL *term, const char *name, int flags)
 {
 	int r;
-	char *e, h[PATH_MAX];
+	char *c, *e, h[PATH_MAX];
+	TIC *tic;
+	uint8_t *f;
+	ssize_t len;
 
 	_DIAGASSERT(term != NULL);
 	_DIAGASSERT(name != NULL);
 
 	database[0] = '\0';
 	_ti_database = NULL;
+	r = 0;
 
-	if ((e = getenv("TERMINFO")) != NULL) {
+	if ((e = getenv("TERMINFO")) != NULL && *e != '\0') {
 		if (e[0] == '/')
 			return _ti_dbgetterm(term, e, name, flags);
+		c = strdup(e); /* So we don't destroy env */
+		tic = _ti_compile(c, TIC_WARNING | TIC_EXTRA);
+		free(c);
+		if (tic != NULL && strcmp(tic->name, name) == 0) {
+			len = _ti_flatten(&f, tic);
+			if (len != -1) {
+				r = _ti_readterm(term, (char *)f, len, flags);
+				free(f);
+			}
+		}
+		_ti_freetic(tic);
+		if (r == 1) {
+			_ti_database = "$TERMINFO";
+			return r;
+		}
 	}
 
 	if ((e = getenv("TERMINFO_DIRS")) != NULL)
 		return _ti_dbgettermp(term, e, name, flags);
 
-	r = 0;
 	if ((e = getenv("HOME")) != NULL) {
 		snprintf(h, sizeof(h), "%s/.terminfo", e);
 		r = _ti_dbgetterm(term, h, name, flags);
@@ -323,7 +341,7 @@ _ti_getterm(TERMINAL *term, const char *name, int flags)
 
 	r = _ti_findterm(term, name, flags);
 	if (r == 1)
-		return 1;
+		return r;
 
 	for (i = 0; i < __arraycount(compiled_terms); i++) {
 		t = &compiled_terms[i];
@@ -340,16 +358,11 @@ void
 _ti_freeterm(TERMINAL *term)
 {
 
-	_DIAGASSERT(term != NULL);
-
-	free(term->_area);
-	term->_area = NULL;
-	free(term->strs);
-	term->strs = NULL;
-	free(term->nums);
-	term->nums = NULL;
-	free(term->flags);
-	term->flags = NULL;
-	free(term->_userdefs);
-	term->_userdefs = NULL;
+	if (term != NULL) {
+		free(term->_area);
+		free(term->strs);
+		free(term->nums);
+		free(term->flags);
+		free(term->_userdefs);
+	}
 }
