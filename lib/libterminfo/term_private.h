@@ -1,4 +1,4 @@
-/* $NetBSD: term_private.h,v 1.5 2010/02/11 00:27:09 roy Exp $ */
+/* $NetBSD: term_private.h,v 1.6 2010/02/22 23:05:39 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -116,4 +116,38 @@ int		_ti_getterm(TERMINAL *, const char *, int);
 void		_ti_setospeed(TERMINAL *);
 void		_ti_freeterm(TERMINAL *);
 
+/* libterminfo can compile terminfo strings too */
+#define TIC_WARNING	(1 << 0)
+#define TIC_DESCRIPTION	(1 << 1)
+#define TIC_ALIAS	(1 << 2)
+#define TIC_COMMENT	(1 << 3)
+#define TIC_EXTRA	(1 << 4)
+
+#define UINT16_T_MAX 0xffff
+
+typedef struct tbuf {
+	char *buf;
+	size_t buflen;
+	size_t bufpos;
+	size_t entries;
+} TBUF;
+
+typedef struct tic {
+	char *name;
+	char *alias;
+	char *desc;
+	TBUF flags;
+	TBUF nums;
+	TBUF strs;
+	TBUF extras;
+} TIC;
+
+char *_ti_grow_tbuf(TBUF *, size_t);
+char *_ti_find_cap(TBUF *, char,  short);
+char *_ti_find_extra(TBUF *, const char *);
+size_t _ti_store_extra(TIC *, int, char *, char, char, short,
+    char *, size_t, int);
+TIC *_ti_compile(char *, int);
+ssize_t _ti_flatten(uint8_t **, const TIC *);
+void _ti_freetic(TIC *);
 #endif
