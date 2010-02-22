@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.208 2010/02/04 22:25:21 roy Exp $
+$NetBSD: UPDATING,v 1.209 2010/02/22 12:35:32 njoly Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20100222:
+	The shared objects file extension has been changed from .so to
+	.pico, in order to avoid conflicts with shared libraries names
+	libXX.so.  All now stale regular .so files can be removed from
+	your object directories.
 
 20100204:
 	The termcap database has been removed from the sources,
