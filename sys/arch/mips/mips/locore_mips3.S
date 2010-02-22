@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.93.38.5 2010/02/15 07:36:03 matt Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.93.38.6 2010/02/22 20:13:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -304,6 +304,7 @@ LEAF(mips3_cp0_count_read)
 	j	ra
 	nop
 END(mips3_cp0_count_read)
+WEAK_ALIAS(cpu_counter32, mips3_cp0_count_read)
 
 /*
  * void mips3_cp0_count_write(uint32_t)
