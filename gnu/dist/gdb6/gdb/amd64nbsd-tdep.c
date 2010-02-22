@@ -170,7 +170,7 @@ amd64nbsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
 
   /* The trap frame layout was changed lf the %rip value is less than 2^16 it
    * is almost certainly the %ss of the old format. */
-  if (rip < 2^16)
+  if (rip < (1 << 16))
     {
 
       for (i = 0; i < ARRAY_SIZE (amd64nbsd_tf_reg_offset); i++)
