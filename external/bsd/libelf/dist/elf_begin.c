@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_begin.c,v 1.4 2009/12/29 17:05:58 thorpej Exp $	*/
+/*	$NetBSD: elf_begin.c,v 1.5 2010/02/22 10:48:32 darran Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -26,6 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/elf_begin.c,v 1.1.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
 
@@ -35,6 +39,9 @@
 
 #include <ar.h>
 #include <ctype.h>
+#include <db.h>
+#include <err.h>
+#include <err.h>
 #include <errno.h>
 #include <libelf.h>
 
