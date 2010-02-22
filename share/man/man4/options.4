@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.386 2010/02/22 06:10:30 ahoka Exp $
+.\"	$NetBSD: options.4,v 1.387 2010/02/22 09:51:11 tsutsui Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -690,16 +690,16 @@ Most machines need this if they are not running diskless.
 Includes code implementing the Second Extended File System
 .Po Em ext2 Pc ,
 revision 0 and revision 1 with the
-.Em filetype
-and
+.Em filetype ,
 .Em sparse_super
+and
+.Em large_file
 options.
 This is the most commonly used file system on the Linux operating system,
 and is provided here for compatibility.
 Some of the specific features of
 .Em ext2
 like the "behavior on errors" are not implemented.
-This file system can't be used with UID or GID greater than 65535.
 See
 .Xr mount_ext2fs 8
 for details.
