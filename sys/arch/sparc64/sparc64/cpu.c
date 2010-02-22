@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.88 2009/12/02 07:55:01 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.89 2010/02/22 00:16:31 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.88 2009/12/02 07:55:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.89 2010/02/22 00:16:31 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -91,6 +91,12 @@ char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[100];			/* machine model (primary CPU) */
 extern char machine_model[];
+
+/* These are used in locore.s, and are maximums */
+int	dcache_line_size;
+int	dcache_size;
+int	icache_line_size;
+int	icache_size;
 
 #ifdef MULTIPROCESSOR
 static const char *ipi_evcnt_names[IPI_EVCNT_NUM] = IPI_EVCNT_NAMES;
@@ -238,7 +244,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	int bigcache, cachesize;
 	char buf[100];
 	int 	totalsize = 0;
-	int 	linesize;
+	int 	linesize, dcachesize, icachesize;
 
 	/* tell them what we have */
 	node = ma->ma_node;
@@ -295,14 +301,18 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 
 	bigcache = 0;
 
-	linesize = l =
-		prom_getpropint(node, "icache-line-size", 0);
+	icachesize = prom_getpropint(node, "icache-size", 0);
+	if (icachesize > icache_size)
+		icache_size = icachesize;
+	linesize = l = prom_getpropint(node, "icache-line-size", 0);
+	if (linesize > icache_line_size)
+		icache_line_size = linesize;
+
 	for (i = 0; (1 << i) < l && l; i++)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad icache line size %d", l);
-	totalsize =
-		prom_getpropint(node, "icache-size", 0) *
+	totalsize = icachesize *
 		prom_getpropint(node, "icache-associativity", 1);
 	if (totalsize == 0)
 		totalsize = l *
@@ -321,14 +331,18 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		sep = ", ";
 	}
 
-	linesize = l =
-		prom_getpropint(node, "dcache-line-size",0);
+	dcachesize = prom_getpropint(node, "dcache-size", 0);
+	if (dcachesize > dcache_size)
+		dcache_size = dcachesize;
+	linesize = l = prom_getpropint(node, "dcache-line-size", 0);
+	if (linesize > dcache_line_size)
+		dcache_line_size = linesize;
+
 	for (i = 0; (1 << i) < l && l; i++)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad dcache line size %d", l);
-	totalsize =
-		prom_getpropint(node, "dcache-size", 0) *
+	totalsize = dcachesize *
 		prom_getpropint(node, "dcache-associativity", 1);
 	if (totalsize == 0)
 		totalsize = l *
