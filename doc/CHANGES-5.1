@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.198 2010/02/16 21:27:25 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.199 2010/02/22 04:55:03 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16785,4 +16785,44 @@ tools/compat/getmode.c				1.8
 	include unistd.h where getmode is traditionally declared.
 	Fix build on OS X 10.6.
 	[snj, ticket #1308]
+
+sys/arch/xen/xen/isa_machdep.c			1.23
+sys/arch/xen/xen/pciide_machdep.c		1.17
+
+	Enlarge temporary buffer, so that event counter's name is not
+	truncated for ioapic interrupts.
+	[bouyer, ticket #1299]
+
+sys/ufs/ext2fs/ext2fs_inode.c			1.71
+sys/ufs/ffs/ffs_inode.c				1.104
+sys/ufs/lfs/lfs_inode.c				1.121
+sys/ufs/ufs/ufs_inode.c				1.79
+
+	Fix 2 issues with file system full or data block overquota
+	condition, which can lead to file data corruption, and eventually
+	metadata corruption:
+	- ufs_balloc_range(): on error, only PG_RELEASED the pages that
+	  were allocated to extend the file to the new size. Releasing all
+	  pages may release pages that contains previously-written data not
+	  yet flushed to disk. Should fix PR kern/35704
+	- {ffs,lfs,ext2fs}_truncate(): Even if the inode's size is the same
+	  as the new length, call uvm_vnp_setsize(). *_truncate() may have
+	  been called by *_write() in the error path (e.g. block allocation
+	  failure because of quota of file system full), and at this point
+	  v_writesize has been set to the desired size of the file and not
+	  reverted to the old size. Not adjusting v_writesize to the real
+	  size cause genfs_do_io() to write to disk past the real end of
+	  the file.
+	[bouyer, ticket #1302]
+
+usr.sbin/repquota/repquota.c			1.25
+
+	Make block fields one char wider; allows to sanely display quotas
+	up to 99.9GB while still fitting 80 columns.
+	[bouyer, ticket #1309]
+
+distrib/hp700/ramdisk/list			patch
+
+	Add dhclient to the hp700 install media.
+	[skrll, ticket #1311]
 
