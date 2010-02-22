@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1193 2010/02/21 05:16:29 cnst Exp $
+# $NetBSD: mi,v 1.1194 2010/02/22 03:54:24 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1432,6 +1432,7 @@
 ./usr/share/man/cat4/slip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/smsc.0			man-sys-catman		.cat
+./usr/share/man/cat4/smscmon.0			man-sys-catman		.cat
 ./usr/share/man/cat4/smsh.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sn.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sony.0			man-sys-catman		.cat
@@ -4010,6 +4011,7 @@
 ./usr/share/man/html4/slip.html			man-sys-htmlman		html
 ./usr/share/man/html4/sm.html			man-sys-htmlman		html
 ./usr/share/man/html4/smsc.html			man-sys-htmlman		html
+./usr/share/man/html4/smscmon.html		man-sys-htmlman		html
 ./usr/share/man/html4/smsh.html			man-sys-htmlman		html
 ./usr/share/man/html4/sn.html			man-sys-htmlman		html
 ./usr/share/man/html4/sony.html			man-sys-htmlman		html
@@ -6500,6 +6502,7 @@
 ./usr/share/man/man4/slip.4			man-sys-man		.man
 ./usr/share/man/man4/sm.4			man-sys-man		.man
 ./usr/share/man/man4/smsc.4			man-sys-man		.man
+./usr/share/man/man4/smscmon.4			man-sys-man		.man
 ./usr/share/man/man4/smsh.4			man-sys-man		.man
 ./usr/share/man/man4/sn.4			man-sys-man		.man
 ./usr/share/man/man4/sony.4			man-sys-man		.man
