@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_shdr.c,v 1.1.1.2 2009/12/29 16:58:08 thorpej Exp $	*/
+/*	$NetBSD: libelf_shdr.c,v 1.2 2010/02/22 10:48:33 darran Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -25,6 +25,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libelf/libelf_shdr.c,v 1.1.10.1.2.1 2009/10/25 01:10:29 kensmith Exp $"); */
