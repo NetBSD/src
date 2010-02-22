@@ -1,7 +1,7 @@
-/*	$NetBSD: ugenhc.c,v 1.6 2010/02/20 13:56:29 pooka Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.7 2010/02/22 14:47:40 pooka Exp $	*/
 
 /*
- * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.6 2010/02/20 13:56:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.7 2010/02/22 14:47:40 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -396,14 +396,16 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 		case UDESC_CONFIG:
 			{
 			struct usb_full_desc ufdesc;
-			ufdesc.ufd_config_index = 0;
+			ufdesc.ufd_config_index = value & 0xff;
 			ufdesc.ufd_size = len;
 			ufdesc.ufd_data = buf;
-			memset(buf, 0, totlen);
+			memset(buf, 0, len);
 			if (rumpuser_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
-			    USB_GET_FULL_DESC, &ufdesc, &ru_error) == -1)
-				panic("%d", ru_error);
-			totlen = len;
+			    USB_GET_FULL_DESC, &ufdesc, &ru_error) == -1) {
+				err = USBD_IOERROR;
+				goto ret;
+			}
+			totlen = ufdesc.ufd_size;
 			}
 			break;
 
@@ -446,7 +448,13 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 		break;
 
 	case C(UR_SET_CONFIG, UT_WRITE_DEVICE):
-		/* ignored, ugen won't let us .... REALLY? */
+		if (rumpuser_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
+		    USB_SET_CONFIG, &value, &ru_error) == -1) {
+			printf("ugenhc: set config failed: %d\n",
+			    ru_error);
+			err = USBD_IOERROR;
+			goto ret;
+		}
 		break;
 
 	case C(UR_SET_INTERFACE, UT_WRITE_INTERFACE):
@@ -511,7 +519,6 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 				panic("request failed: %d", ru_error);
 			} else {
 				err = ru_error;
-				printf("warning: request failed: %d\n", err);
 			}
 		}
 		}
@@ -600,12 +607,16 @@ rhscintr(void *arg)
 		sc->sc_ugenfd[UGEN_EPT_CTRL] = fd;
 		sc->sc_port_status = UPS_CURRENT_CONNECT_STATUS
 		    | UPS_PORT_ENABLED | UPS_PORT_POWER;
-		sc->sc_port_change = UPS_C_CONNECT_STATUS;
+		sc->sc_port_change = UPS_C_CONNECT_STATUS | UPS_C_PORT_RESET;
 
 		xfer = sc->sc_intrxfer;
-		xfer->actlen = 0;
+		memset(xfer->buffer, 0xff, xfer->length);
+		xfer->actlen = xfer->length;
 		xfer->status = USBD_NORMAL_COMPLETION;
+
 		usb_transfer_complete(xfer);
+
+		kpause("ugwait2", false, hz, NULL);
 
 		/*
 		 * Detect device detach.
@@ -615,22 +626,25 @@ rhscintr(void *arg)
 			fd = rumpuser_open(buf, O_RDWR, &error);
 			if (fd == -1)
 				break;
-			
+
 			rumpuser_close(fd, &error);
 			kpause("ugwait2", false, hz/4, NULL);
 		}
 
 		sc->sc_port_status = ~(UPS_CURRENT_CONNECT_STATUS
 		    | UPS_PORT_ENABLED | UPS_PORT_POWER);
-		sc->sc_port_change = UPS_C_CONNECT_STATUS;
+		sc->sc_port_change = UPS_C_CONNECT_STATUS | UPS_C_PORT_RESET;
 
 		rumpuser_close(sc->sc_ugenfd[UGEN_EPT_CTRL], &error);
 		sc->sc_ugenfd[UGEN_EPT_CTRL] = -1;
 
 		xfer = sc->sc_intrxfer;
-		xfer->actlen = 0;
+		memset(xfer->buffer, 0xff, xfer->length);
+		xfer->actlen = xfer->length;
 		xfer->status = USBD_NORMAL_COMPLETION;
 		usb_transfer_complete(xfer);
+
+		kpause("ugwait3", false, hz, NULL);
 	}
 
 	kthread_exit(0);
@@ -826,7 +840,17 @@ rumpusb_device_bulk_abort(usbd_xfer_handle xfer)
 static void
 rumpusb_device_bulk_close(usbd_pipe_handle pipe)
 {
+	struct ugenhc_softc *sc = pipe->device->bus->hci_private;
+	int endpt = pipe->endpoint->edesc->bEndpointAddress;
+	usbd_xfer_handle xfer;
+	int error;
 
+	while ((xfer = SIMPLEQ_FIRST(&pipe->queue)) != NULL)
+		rumpusb_device_bulk_abort(xfer);
+
+	rumpuser_close(sc->sc_ugenfd[endpt], &error);
+	sc->sc_ugenfd[endpt] = -1;
+	sc->sc_fdmodes[endpt] = -1;
 }
 
 static void
@@ -994,10 +1018,8 @@ ugenhc_probe(struct device *parent, struct cfdata *match, void *aux)
 	int error;
 
 	makeugendevstr(match->cf_unit, 0, buf);
-	if (rumpuser_getfileinfo(buf, NULL, NULL, &error) == -1) {
-		printf("match error %d\n", error);
+	if (rumpuser_getfileinfo(buf, NULL, NULL, &error) == -1)
 		return 0;
-	}
 
 	return 1;
 }
