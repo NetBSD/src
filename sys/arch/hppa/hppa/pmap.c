@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.67 2010/02/17 14:16:53 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.68 2010/02/22 21:32:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.67 2010/02/17 14:16:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68 2010/02/22 21:32:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,14 @@ pmap_pagealloc(struct uvm_object *obj, voff_t off)
 void
 pmap_pagefree(struct vm_page *pg)
 {
-	fdcache(HPPA_SID_KERNEL, VM_PAGE_TO_PHYS(pg), PAGE_SIZE);
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	pdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
+
+#if defined(HP8000_CPU) || defined(HP8200_CPU) || \
+    defined(HP8500_CPU) || defined(HP8600_CPU)
+	pdtlb(HPPA_SID_KERNEL, pa);
+	pitlb(HPPA_SID_KERNEL, pa);
+#endif
 	uvm_pagefree(pg);
 }
 
@@ -415,12 +422,12 @@ void
 pmap_pte_flush(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 {
 
+	fdcache(pmap->pm_space, va, PAGE_SIZE);
+	pdtlb(pmap->pm_space, va);
 	if (pte & PTE_PROT(TLB_EXECUTE)) {
 		ficache(pmap->pm_space, va, PAGE_SIZE);
 		pitlb(pmap->pm_space, va);
 	}
-	fdcache(pmap->pm_space, va, PAGE_SIZE);
-	pdtlb(pmap->pm_space, va);
 #ifdef USE_HPT
 	if (pmap_hpt) {
 		struct hpt_entry *hpt;
@@ -1696,16 +1703,21 @@ pmap_flush_page(struct vm_page *pg, bool purge)
 	KASSERT(!(pg->mdpage.pvh_attrs & PVF_NC));
 
 	/* purge cache for all possible mappings for the pa */
-	mutex_enter(&pg->mdpage.pvh_lock);
 	for (pve = pg->mdpage.pvh_list; pve; pve = pve->pv_next) {
 		vaddr_t va = pve->pv_va & PV_VAMASK;
+		pa_space_t sp = pve->pv_pmap->pm_space;
 
 		if (purge)
-			pdcache(pve->pv_pmap->pm_space, va, PAGE_SIZE);
+			pdcache(sp, va, PAGE_SIZE);
 		else
-			fdcache(pve->pv_pmap->pm_space, va, PAGE_SIZE);
+			fdcache(sp, va, PAGE_SIZE);
+#if defined(HP8000_CPU) || defined(HP8200_CPU) || \
+    defined(HP8500_CPU) || defined(HP8600_CPU)
+		pdtlb(sp, va);
+		ficache(sp, va, PAGE_SIZE);
+		pitlb(sp, va);
+#endif
 	}
-	mutex_exit(&pg->mdpage.pvh_lock);
 }
 
 /*
@@ -1723,6 +1735,12 @@ pmap_zero_page(paddr_t pa)
 
 	memset((void *)pa, 0, PAGE_SIZE);
 	fdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
+#if defined(HP8000_CPU) || defined(HP8200_CPU) || \
+    defined(HP8500_CPU) || defined(HP8600_CPU)
+	pdtlb(HPPA_SID_KERNEL, pa);
+	ficache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
+	pitlb(HPPA_SID_KERNEL, pa);
+#endif
 }
 
 /*
@@ -1745,6 +1763,15 @@ pmap_copy_page(paddr_t spa, paddr_t dpa)
 
 	pdcache(HPPA_SID_KERNEL, spa, PAGE_SIZE);
 	fdcache(HPPA_SID_KERNEL, dpa, PAGE_SIZE);
+#if defined(HP8000_CPU) || defined(HP8200_CPU) || \
+    defined(HP8500_CPU) || defined(HP8600_CPU)
+	pdtlb(HPPA_SID_KERNEL, spa);
+	pdtlb(HPPA_SID_KERNEL, dpa);
+	ficache(HPPA_SID_KERNEL, spa, PAGE_SIZE);
+	ficache(HPPA_SID_KERNEL, dpa, PAGE_SIZE);
+	pitlb(HPPA_SID_KERNEL, spa);
+	pitlb(HPPA_SID_KERNEL, dpa);
+#endif
 }
 
 void
