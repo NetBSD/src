@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.3.96.3 2010/02/16 08:13:57 matt Exp $ */
+/* $NetBSD: intr.h,v 1.3.96.4 2010/02/22 20:08:58 matt Exp $ */
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,22 +37,29 @@
 
 #define	IPL_NONE	0
 #define	IPL_SOFTCLOCK	(IPL_NONE+1)
-#define	IPL_SOFTBIO	(IPL_SOFTCLOCK)		/* shares SWINT with softclock */
+#define	IPL_SOFTBIO	(IPL_SOFTCLOCK)	/* shares SWINT with softclock */
 #define	IPL_SOFTNET	(IPL_SOFTBIO+1)
-#define	IPL_SOFTSERIAL	(IPL_SOFTNET)		/* shares SWINT with softnet */
+#define	IPL_SOFTSERIAL	(IPL_SOFTNET)	/* shares SWINT with softnet */
 #define	IPL_VM		(IPL_SOFTSERIAL+1)
 #define	IPL_SCHED	(IPL_VM+1)
 #define	IPL_HIGH	(IPL_SCHED)
 
 #define	_IPL_N		(IPL_HIGH+1)
 
-#define	IST_UNUSABLE	-1	/* interrupt cannot be used */
-#define	IST_NONE	0	/* none (dummy) */
-#define	IST_PULSE	1	/* pulsed */
-#define	IST_EDGE	2	/* edge-triggered */
-#define	IST_LEVEL	3	/* level-triggered */
-#define	IST_LEVEL_HIGH	4	/* level triggered, active high */
-#define	IST_LEVEL_LOW	5       /* level triggered, active low */
+#define	IST_UNUSABLE	-1		/* interrupt cannot be used */
+#define	IST_NONE	0		/* none (dummy) */
+#define	IST_PULSE	1		/* pulsed */
+#define	IST_EDGE	2		/* edge-triggered */
+#define	IST_LEVEL	3		/* level-triggered */
+#define	IST_LEVEL_HIGH	4		/* level triggered, active high */
+#define	IST_LEVEL_LOW	5		/* level triggered, active low */
+
+#define	IPI_NOP		__BIT(0)	/* do nothing, interrupt only */
+#define	IPI_SHOOTDOWN	__BIT(1)	/* do a tlb shootdown */
+#define	IPI_FPSYNC	__BIT(2)	/* save current fp registers */
+#define	IPI_FPDISCARD	__BIT(3)	/* discard current fp registers */
+#define	IPI_ISYNC	__BIT(4)	/* sync icache for pages */
+#define	IPI_KPREEMPT	__BIT(5)	/* schedule a kernel preemption */
 
 struct splsw {
 	int	(*splsw_splhigh)(void);
