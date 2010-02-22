@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.12 2009/12/14 00:48:35 matt Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.13 2010/02/22 19:46:18 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.12 2009/12/14 00:48:35 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.13 2010/02/22 19:46:18 drochner Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -154,6 +154,16 @@ pax_aslr_elf(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
 	uprintf("pax offset=0x%zx entry=0x%llx\n",
 	    pax_offset, (unsigned long long)eh->e_entry);
 #endif
+}
+#else
+static void
+elf_placedynexec(Elf_Ehdr *eh, Elf_Phdr *ph)
+{
+	int i;
+
+	for (i = 0; i < eh->e_phnum; i++)
+		ph[i].p_vaddr += PAGE_SIZE;
+	eh->e_entry += PAGE_SIZE;
 }
 #endif /* PAX_ASLR */
 
@@ -715,9 +725,11 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	p->p_pax = epp->ep_pax_flags;
 #endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
 
-#ifdef PAX_ASLR
 	if (is_dyn)
+#ifdef PAX_ASLR
 		pax_aslr_elf(l, epp, eh, ph);
+#else
+		elf_placedynexec(eh, ph);
 #endif /* PAX_ASLR */
 
 	/*
