@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.268 2010/02/22 05:59:04 ahoka Exp $
+# $NetBSD: GENERIC,v 1.269 2010/02/22 13:42:04 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.268 $"
+#ident 		"GENERIC-$Revision: 1.269 $"
 
 maxusers	64		# estimated number of users
 
@@ -436,6 +436,10 @@ amdtemp* at pci? dev ? function ?	# AMD CPU Temperature sensors
 
 # SMSC LPC47B397 hardware monitor functions
 #smsc0   at isa? port 0x02e
+
+# SMSC LPC47M192 hardware monitor
+#smscmon*	at iic? addr 0x2c
+#smscmon*	at iic? addr 0x2d	# (alternate address)
 
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
