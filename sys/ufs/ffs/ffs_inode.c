@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.99 2008/08/30 08:25:53 hannken Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.99.4.1 2010/02/22 04:43:46 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.99 2008/08/30 08:25:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.99.4.1 2010/02/22 04:43:46 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -242,6 +242,8 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		return (ffs_update(ovp, NULL, NULL, 0));
 	}
 	if (oip->i_size == length) {
+		/* still do a uvm_vnp_setsize() as writesize may be larger */
+		uvm_vnp_setsize(ovp, length);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (ffs_update(ovp, NULL, NULL, 0));
 	}
