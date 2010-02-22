@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.28 2009/08/24 11:03:44 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.29 2010/02/22 05:55:10 ahoka Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.28 2009/08/24 11:03:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.29 2010/02/22 05:55:10 ahoka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,12 @@ __KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.28 2009/08/24 11:03:44 jmcneill Exp $");
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
 #include <dev/wsfb/genfbvar.h>
+
+#ifdef GENFB_DISABLE_TEXT
+#include <sys/reboot.h>
+#define DISABLESPLASH (boothowto & (RB_SINGLE | RB_USERCONF | RB_ASKNAME | \
+		AB_VERBOSE | AB_DEBUG) )
+#endif
 
 #include "opt_genfb.h"
 #include "opt_wsfb.h"
@@ -204,6 +210,15 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	    &defattr);
 	sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
+#ifdef SPLASHSCREEN
+/*
+ * If system isn't going to go multiuser, or user has requested to see
+ * boot text, don't render splash screen immediately
+ */
+	if (DISABLESPLASH)
+#endif
+		vcons_redraw_screen(&sc->sc_console_screen);
+
 	sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
 	sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 	sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
@@ -217,16 +232,53 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 
 	j = 0;
 	for (i = 0; i < min(1 << sc->sc_depth, 256); i++) {
-
+#ifndef SPLASHSCREEN
 		sc->sc_cmap_red[i] = rasops_cmap[j];
 		sc->sc_cmap_green[i] = rasops_cmap[j + 1];
 		sc->sc_cmap_blue[i] = rasops_cmap[j + 2];
 		genfb_putpalreg(sc, i, rasops_cmap[j], rasops_cmap[j + 1],
 		    rasops_cmap[j + 2]);
 		j += 3;
+#else
+		if(i >= SPLASH_CMAP_OFFSET &&
+		    i < SPLASH_CMAP_OFFSET + SPLASH_CMAP_SIZE) {
+			sc->sc_cmap_red[i] = _splash_header_data_cmap[j][0];
+			sc->sc_cmap_green[i] = _splash_header_data_cmap[j][1];
+			sc->sc_cmap_blue[i] = _splash_header_data_cmap[j][2];
+		} else {
+			sc->sc_cmap_red[i] = rasops_cmap[j];
+			sc->sc_cmap_green[i] = rasops_cmap[j + 1];
+			sc->sc_cmap_blue[i] = rasops_cmap[j + 2];
+			genfb_putpalreg(sc, i, rasops_cmap[j],
+				rasops_cmap[j + 1],
+				rasops_cmap[j + 2]);
+		}
+		j += 3;
+#endif
 	}
 
+#ifdef SPLASHSCREEN
+	sc->sc_splash.si_depth = sc->sc_depth;
+	sc->sc_splash.si_bits = sc->sc_console_screen.scr_ri.ri_bits;
+	sc->sc_splash.si_hwbits = sc->sc_fbaddr;
+	sc->sc_splash.si_width = sc->sc_width;
+	sc->sc_splash.si_height = sc->sc_height;
+	sc->sc_splash.si_stride = sc->sc_stride;
+	sc->sc_splash.si_fillrect = NULL;
+	if (!DISABLESPLASH)
+		splash_render(&sc->sc_splash, SPLASH_F_CENTER|SPLASH_F_FILL);
+#ifdef SPLASHSCREEN_PROGRESS
+	sc->sc_progress.sp_top = (sc->sc_height / 8) * 7;
+	sc->sc_progress.sp_width = (sc->sc_width / 4) * 3;
+	sc->sc_progress.sp_left = (sc->sc_width / 8) * 7;
+	sc->sc_progress.sp_height = 20;
+	sc->sc_progress.sp_state = -1;
+	sc->sc_progress.sp_si = &sc->sc_splash;
+	splash_progress_init(&sc->sc_progress);
+#endif
+#else
 	vcons_replay_msgbuf(&sc->sc_console_screen);
+#endif
 
 	if (genfb_softc == NULL)
 		genfb_softc = sc;
@@ -235,6 +287,11 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	aa.scrdata = &sc->sc_screenlist;
 	aa.accessops = &genfb_accessops;
 	aa.accesscookie = &sc->vd;
+
+#ifdef GENFB_DISABLE_TEXT
+	if (!DISABLESPLASH)
+		SCREEN_DISABLE_DRAWING(&sc->sc_console_screen);
+#endif
 
 	config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
 
@@ -293,6 +350,36 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				}
 			}
 			return 0;
+		case WSDISPLAYIO_SSPLASH:
+#if defined(SPLASHSCREEN)
+			if(*(int *)data == 1) {
+				SCREEN_DISABLE_DRAWING(&sc->sc_console_screen);
+				splash_render(&sc->sc_splash,
+						SPLASH_F_CENTER|SPLASH_F_FILL);
+#if defined(SPLASHSCREEN_PROGRESS)
+				sc->sc_progress.sp_running = 1;
+#endif
+			} else {
+				SCREEN_ENABLE_DRAWING(&sc->sc_console_screen);
+#if defined(SPLASHSCREEN_PROGRESS)
+				sc->sc_progress.sp_running = 0;
+#endif
+			}
+			vcons_redraw_screen(ms);
+			return 0;
+#else
+			return ENODEV;
+#endif
+		case WSDISPLAYIO_SPROGRESS:
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+			sc->sc_progress.sp_force = 1;
+			splash_progress_update(&sc->sc_progress);
+			sc->sc_progress.sp_force = 0;
+			vcons_redraw_screen(ms);
+			return 0;
+#else
+			return ENODEV;
+#endif
 		default:
 			if (sc->sc_ops.genfb_ioctl)
 				return sc->sc_ops.genfb_ioctl(sc, vs, cmd,
@@ -347,6 +434,11 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 
 	/* TODO: actually center output */
 	ri->ri_hw = scr;
+
+#ifdef GENFB_DISABLE_TEXT
+	if (scr == &sc->sc_console_screen && !DISABLESPLASH)
+		SCREEN_DISABLE_DRAWING(&sc->sc_console_screen);
+#endif
 }
 
 static int
