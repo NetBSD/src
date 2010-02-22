@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.4 2010/02/16 21:27:22 bouyer Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.5 2010/02/22 16:07:24 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -146,4 +146,9 @@ tools/compat/getmode.c				1.8
 	include unistd.h where getmode is traditionally declared.
 	Fix build on OS X 10.6.
 	[snj, ticket #1308]
+
+sys/arch/hppa/hppa/vm_machdep.c 		patch
+
+	Fix ticket #793: s/setfunc_trampoline/lwp_trampoline/.
+	[skrll, ticket #1312]
 
