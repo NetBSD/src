@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.199 2010/02/22 04:55:03 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.200 2010/02/22 16:09:41 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16825,4 +16825,9 @@ distrib/hp700/ramdisk/list			patch
 
 	Add dhclient to the hp700 install media.
 	[skrll, ticket #1311]
+
+sys/arch/hppa/hppa/vm_machdep.c			patch
+
+	Fix ticket #793: s/setfunc_trampoline/lwp_trampoline/.
+	[skrll, ticket #1312]
 
