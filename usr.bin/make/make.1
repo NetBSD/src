@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.166 2009/11/19 06:48:37 wiz Exp $
+.\"	$NetBSD: make.1,v 1.167 2010/02/22 19:20:33 joerg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1750,10 +1750,10 @@ character when used outside of any quoting characters.
 .El
 Example:
 .Bd -literal
-\&.SHELL: name=ksh path=/bin/ksh hasErrCtl=true \\
-	check="set -e" ignore="set +e" \\
-	echo="set -v" quiet="set +v" filter="set +v" \\
-	echoFlag=v errFlag=e newline="'\\n'"
+\&.SHELL: name=ksh path=/bin/ksh hasErrCtl=true \e
+	check="set -e" ignore="set +e" \e
+	echo="set -v" quiet="set +v" filter="set +v" \e
+	echoFlag=v errFlag=e newline="'\en'"
 .Ed
 .It Ic .SILENT
 Apply the
