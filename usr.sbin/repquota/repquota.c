@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.23 2008/07/21 13:36:59 lukem Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.23.4.1 2010/02/22 04:48:14 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,7 +216,7 @@ repquota(fs, type, qfpathname)
 	fclose(qf);
 	printf("                        Block limits               File limits\n");
 	printf(type == USRQUOTA ? "User " : "Group");
-	printf("           used    soft    hard  grace      used    soft    hard  grace\n");
+	printf("            used     soft     hard  grace      used    soft    hard  grace\n");
 	for (id = 0; id <= highid[type]; id++) {
 		fup = lookup(id, type);
 		if (fup == 0)
@@ -228,7 +228,7 @@ repquota(fs, type, qfpathname)
 			printf("%s ", fup->fu_name);
 		else
 			printf("%-10s", fup->fu_name);
-		printf("%c%c%8d%8d%8d%7s",
+		printf("%c%c%9d%9d%9d%7s",
 			fup->fu_dqblk.dqb_bsoftlimit && 
 			    fup->fu_dqblk.dqb_curblocks >= 
 			    fup->fu_dqblk.dqb_bsoftlimit ? '+' : '-',
