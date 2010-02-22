@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.52 2010/02/21 02:11:40 darran Exp $	*/
+/*	$NetBSD: vector.S,v 1.53 2010/02/22 06:42:14 darran Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,13 +65,14 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.52 2010/02/21 02:11:40 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.53 2010/02/22 06:42:14 darran Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_ipkdb.h"
 #include "opt_vm86.h"
 #include "opt_xen.h"
+#include "opt_dtrace.h"
 
 #include <machine/i8259.h>
 #include <machine/i82093reg.h>
