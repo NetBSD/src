@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2010/02/20 19:04:48 roy Exp $
+#	$NetBSD: Makefile,v 1.4 2010/02/22 23:05:39 roy Exp $
 
 HOSTPROGNAME=	${_TOOL_PREFIX}tic
 HOST_SRCDIR=	usr.bin/tic
-HOST_SRCS=	hash.c
+HOST_SRCS=	compile.c hash.c
 
 .include "${.CURDIR}/../Makefile.host"
 

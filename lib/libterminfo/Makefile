@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2010/02/19 13:53:17 njoly Exp $
+#	$NetBSD: Makefile,v 1.11 2010/02/22 23:05:39 roy Exp $
 
 USE_SHLIBDIR=	yes
 
@@ -8,7 +8,7 @@ WARNS=		4
 CPPFLAGS+=	-I${.CURDIR}
 
 SRCS=		term.c ti.c setupterm.c curterm.c tparm.c tputs.c
-SRCS+=		hash.c
+SRCS+=		compile.c hash.c
 INCS=		term.h
 INCSDIR=	/usr/include
 
