@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.84 2009/11/27 03:23:10 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.85 2010/02/22 23:52:17 jym Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -150,7 +150,6 @@ define	PAGE_SIZE		PAGE_SIZE
 define	LSRUN			LSRUN
 define	LSONPROC		LSONPROC
 
-define	PTE_BASE		PTE_BASE
 define	UPAGES			UPAGES
 define	USPACE			USPACE
 define	KSTACK_SIZE		KSTACK_SIZE
@@ -168,6 +167,9 @@ define	L1_SLOT_KERNBASE	pl1_pi(KERNBASE)
 
 define	PDIR_SLOT_PTE		PDIR_SLOT_PTE
 define	PTE_BASE		PTE_BASE
+
+define	PDP_SIZE		PDP_SIZE
+define	PDE_SIZE		sizeof(pd_entry_t)
 
 define	IOMAPSIZE		IOMAPSIZE
 
