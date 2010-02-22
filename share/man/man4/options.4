@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.385 2010/02/21 14:26:33 wiz Exp $
+.\"	$NetBSD: options.4,v 1.386 2010/02/22 06:10:30 ahoka Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd February 21, 2010
+.Dd February 22, 2010
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -2585,6 +2585,12 @@ a Multiboot-compliant boot manager such as GRUB.
 See
 .Xr multiboot 8
 for more information.
+.It Cd options SPLASHSCREEN
+Display a splash screen during boot.
+.It Cd options SPLASHSCREEN_PROGRESS
+Display a progress bar at the splash screen during boot.
+This option requires
+.Em SPLASHSCREEN.
 .El
 .Ss isa-specific Options
 Options specific to
