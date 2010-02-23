@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.30 2010/02/06 12:10:59 uebayasi Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.31 2010/02/23 20:51:25 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,9 +36,10 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.30 2010/02/06 12:10:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.31 2010/02/23 20:51:25 mlelstv Exp $");
 
 #include <sys/param.h>
+#include <sys/bitops.h>
 
 #ifdef _KERNEL
 #include <sys/param.h>
@@ -317,8 +318,8 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	struct vnode *devvp;
 	daddr_t logpbn;
 	int error;
-	int log_dev_bshift = DEV_BSHIFT;
-	int fs_dev_bshift = DEV_BSHIFT;
+	int log_dev_bshift = ilog2(blksize);
+	int fs_dev_bshift = mp->mnt_fs_bshift; /* XXX */
 	int run;
 
 	WAPBL_PRINTF(WAPBL_PRINT_OPEN, ("wapbl_start: vp=%p off=%" PRId64
@@ -744,7 +745,7 @@ wapbl_circ_write(struct wapbl *wl, void *data, size_t len, off_t *offp)
 	slen = wl->wl_circ_off + wl->wl_circ_size - off;
 	if (slen < len) {
 		error = wapbl_write(data, slen, wl->wl_devvp,
-		    wl->wl_logpbn + (off >> wl->wl_log_dev_bshift));
+		    wl->wl_logpbn + btodb(off));
 		if (error)
 			return error;
 		data = (uint8_t *)data + slen;
@@ -752,7 +753,7 @@ wapbl_circ_write(struct wapbl *wl, void *data, size_t len, off_t *offp)
 		off = wl->wl_circ_off;
 	}
 	error = wapbl_write(data, len, wl->wl_devvp,
-			    wl->wl_logpbn + (off >> wl->wl_log_dev_bshift));
+			    wl->wl_logpbn + btodb(off));
 	if (error)
 		return error;
 	off += len;
@@ -2239,7 +2240,7 @@ wapbl_replay_start(struct wapbl_replay **wrp, struct vnode *vp,
 	struct wapbl_wc_header *wch;
 	struct wapbl_wc_header *wch2;
 	/* Use this until we read the actual log header */
-	int log_dev_bshift = DEV_BSHIFT;
+	int log_dev_bshift = ilog2(blksize);
 	size_t used;
 
 	WAPBL_PRINTF(WAPBL_PRINT_REPLAY,
