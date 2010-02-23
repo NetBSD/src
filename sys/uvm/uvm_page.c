@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.12 2010/02/12 04:33:05 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.13 2010/02/23 07:44:25 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.12 2010/02/12 04:33:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.13 2010/02/23 07:44:25 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -165,6 +165,10 @@ vaddr_t uvm_zerocheckkva;
 
 static void uvm_pageinsert(struct uvm_object *, struct vm_page *);
 static void uvm_pageremove(struct uvm_object *, struct vm_page *);
+static void vm_page_device_mdpage_insert(paddr_t);
+#if 0
+static void vm_page_device_mdpage_remove(paddr_t);
+#endif
 
 /*
  * per-object tree of pages
@@ -449,7 +453,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 		paddr = ptoa(vm_physmem[lcv].start);
 		for (i = 0 ; i < n ; i++, paddr += PAGE_SIZE) {
 #ifdef __HAVE_VM_PAGE_MD
-			VM_MDPAGE_INIT(&vm_physmem[lcv].pgs[i]);
+			VM_MDPAGE_INIT(&vm_physmem[lcv].pgs[i].mdpage, paddr);
 #endif
 			if (atop(paddr) >= vm_physmem[lcv].avail_start &&
 			    atop(paddr) <= vm_physmem[lcv].avail_end) {
@@ -738,9 +742,37 @@ uvm_page_physget(paddr_t *paddrp)
  * => we are limited to VM_PHYSSEG_MAX physical memory segments
  */
 
+static void
+uvm_page_physload_common(struct vm_physseg * const, const int,
+    const paddr_t, const paddr_t, const paddr_t, const paddr_t, const int);
+
 void
 uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
     paddr_t avail_end, int free_list)
+{
+
+	uvm_page_physload_common(vm_physmem, vm_nphysmem, start, end,
+	    avail_start, avail_end, free_list);
+	vm_nphysmem++;
+}
+
+void
+uvm_page_physload_device(paddr_t start, paddr_t end, paddr_t avail_start,
+    paddr_t avail_end, int free_list)
+{
+
+	uvm_page_physload_common(vm_physdev, vm_nphysdev, start, end,
+	    avail_start, avail_end, free_list);
+	vm_nphysdev++;
+
+	for (paddr_t pf = start; pf < end; pf++)
+		vm_page_device_mdpage_insert(pf);
+}
+
+static void
+uvm_page_physload_common(struct vm_physseg * const segs, const int nsegs,
+    const paddr_t start, const paddr_t end,
+    const paddr_t avail_start, const paddr_t avail_end, const int free_list)
 {
 	int preload, lcv;
 	psize_t npages;
@@ -758,7 +790,7 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 	 * do we have room?
 	 */
 
-	if (vm_nphysmem == VM_PHYSSEG_MAX) {
+	if (nsegs == VM_PHYSSEG_MAX) {
 		printf("uvm_page_physload: unable to load physical memory "
 		    "segment\n");
 		printf("\t%d segments allocated, ignoring 0x%llx -> 0x%llx\n",
@@ -767,20 +799,26 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 		return;
 	}
 
+	if (segs == vm_physdev) {
+		preload = false;
+		goto uvm_page_physload_common_insert;
+	}
+
 	/*
 	 * check to see if this is a "preload" (i.e. uvm_mem_init hasn't been
 	 * called yet, so malloc is not available).
 	 */
 
-	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++) {
-		if (vm_physmem[lcv].pgs)
+	for (lcv = 0 ; lcv < nsegs ; lcv++) {
+		if (segs[lcv].pgs)
 			break;
 	}
-	preload = (lcv == vm_nphysmem);
+	preload = (lcv == nsegs);
 
 	/*
 	 * if VM is already running, attempt to malloc() vm_page structures
 	 */
+	/* XXXUEBS this is super ugly */
 
 	if (!preload) {
 #if defined(VM_PHYSSEG_NOADD)
@@ -814,39 +852,40 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 		npages = 0;
 	}
 
+uvm_page_physload_common_insert:
 	/*
-	 * now insert us in the proper place in vm_physmem[]
+	 * now insert us in the proper place in segs[]
 	 */
 
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_RANDOM)
 	/* random: put it at the end (easy!) */
-	ps = &vm_physmem[vm_nphysmem];
+	ps = &segs[nsegs];
 #elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
 	{
 		int x;
 		/* sort by address for binary search */
-		for (lcv = 0 ; lcv < vm_nphysmem ; lcv++)
-			if (start < vm_physmem[lcv].start)
+		for (lcv = 0 ; lcv < nsegs ; lcv++)
+			if (start < segs[lcv].start)
 				break;
-		ps = &vm_physmem[lcv];
+		ps = &segs[lcv];
 		/* move back other entries, if necessary ... */
-		for (x = vm_nphysmem ; x > lcv ; x--)
+		for (x = nsegs ; x > lcv ; x--)
 			/* structure copy */
-			vm_physmem[x] = vm_physmem[x - 1];
+			segs[x] = segs[x - 1];
 	}
 #elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST)
 	{
 		int x;
 		/* sort by largest segment first */
-		for (lcv = 0 ; lcv < vm_nphysmem ; lcv++)
+		for (lcv = 0 ; lcv < nsegs ; lcv++)
 			if ((end - start) >
-			    (vm_physmem[lcv].end - vm_physmem[lcv].start))
+			    (segs[lcv].end - segs[lcv].start))
 				break;
-		ps = &vm_physmem[lcv];
+		ps = &segs[lcv];
 		/* move back other entries, if necessary ... */
-		for (x = vm_nphysmem ; x > lcv ; x--)
+		for (x = nsegs ; x > lcv ; x--)
 			/* structure copy */
-			vm_physmem[x] = vm_physmem[x - 1];
+			segs[x] = segs[x - 1];
 	}
 #else
 	panic("uvm_page_physload: unknown physseg strategy selected!");
@@ -854,16 +893,16 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 
 	ps->start = start;
 	ps->end = end;
+
+	if (segs == vm_physdev)
+		return;
+
+	/* XXXUEBS ugly */
 	ps->avail_start = avail_start;
 	ps->avail_end = avail_end;
-	if (preload) {
-		ps->pgs = NULL;
-	} else {
-		ps->pgs = pgs;
-		ps->endpg = pgs + npages;
-	}
+	ps->pgs = pgs;
+	ps->endpg = pgs + npages;
 	ps->free_list = free_list;
-	vm_nphysmem++;
 
 	if (!preload) {
 		uvmpdpol_reinit();
@@ -1052,8 +1091,8 @@ vm_physseg_lt_p(struct vm_physseg *seg, int op, paddr_t pframe,
 #define	VM_PAGE_DEVICE_MAGIC_MASK	0x3
 #define	VM_PAGE_DEVICE_MAGIC_SHIFT	2
 
-static inline struct vm_page *
-PHYS_TO_VM_PAGE_DEVICE(paddr_t pa)
+struct vm_page *
+uvm_phys_to_vm_page_device(paddr_t pa)
 {
 	paddr_t pf = pa >> PAGE_SHIFT;
 	uintptr_t cookie = pf << VM_PAGE_DEVICE_MAGIC_SHIFT;
@@ -1092,7 +1131,7 @@ uvm_phys_to_vm_page(paddr_t pa)
 #ifdef DEVICE_PAGE
 	psi = vm_physseg_find_device(pf, &off);
 	if (psi != -1)
-		return(PHYS_TO_VM_PAGE_DEVICE(pa));
+		return(uvm_phys_to_vm_page_device(pa));
 #endif
 	psi = vm_physseg_find(pf, &off);
 	if (psi != -1)
@@ -1155,13 +1194,6 @@ struct vm_page_device_mdpage {
 /* Global for now.  Consider to make this per-vm_physseg. */
 struct vm_page_device_mdpage vm_page_device_mdpage;
 
-static u_int
-vm_page_device_mdpage_hash(struct vm_page *pg)
-{
-
-	return VM_PAGE_DEVICE_TO_PHYS(pg);
-}
-
 static struct vm_page_device_mdpage_head *
 vm_page_device_mdpage_head(u_int hash)
 {
@@ -1177,14 +1209,15 @@ vm_page_device_mdpage_lock(u_int hash)
 }
 
 void
-vm_page_device_mdpage_insert(struct vm_page *pg)
+vm_page_device_mdpage_insert(paddr_t pf)
 {
-	paddr_t pf = VM_PAGE_DEVICE_TO_PHYS(pg);
-	u_int hash = vm_page_device_mdpage_hash(pg);
+	u_int hash = (u_int)pf;
 	kmutex_t *lock = vm_page_device_mdpage_lock(hash);
 	struct vm_page_device_mdpage_head *head = vm_page_device_mdpage_head(hash);
 
 	struct vm_page_device_mdpage_entry *mde = kmem_zalloc(sizeof(*mde), KM_SLEEP);
+
+	VM_MDPAGE_INIT(&mde->mde_mdpage, pf << PAGE_SHIFT);
 	mde->mde_pf = pf;
 
 	mutex_spin_enter(lock);
@@ -1192,11 +1225,11 @@ vm_page_device_mdpage_insert(struct vm_page *pg)
 	mutex_spin_exit(lock);
 }
 
+#if 0
 void
-vm_page_device_mdpage_remove(struct vm_page *pg)
+vm_page_device_mdpage_remove(paddr_t pf)
 {
-	paddr_t pf = VM_PAGE_DEVICE_TO_PHYS(pg);
-	u_int hash = vm_page_device_mdpage_hash(pg);
+	u_int hash = (u_int)pf;
 	kmutex_t *lock = vm_page_device_mdpage_lock(hash);
 	struct vm_page_device_mdpage_head *head = vm_page_device_mdpage_head(hash);
 
@@ -1219,16 +1252,17 @@ vm_page_device_mdpage_remove(struct vm_page *pg)
 	KASSERT(mde != NULL);
 	kmem_free(mde, sizeof(*mde));
 }
+#endif
 
 struct vm_page_md *
 vm_page_device_mdpage_lookup(struct vm_page *pg)
 {
-	paddr_t pf = VM_PAGE_DEVICE_TO_PHYS(pg);
-	u_int hash = vm_page_device_mdpage_hash(pg);
+	paddr_t pf = VM_PAGE_DEVICE_TO_PHYS(pg) >> PAGE_SHIFT;
+	u_int hash = (u_int)pf;
 	kmutex_t *lock = vm_page_device_mdpage_lock(hash);
 	struct vm_page_device_mdpage_head *head = vm_page_device_mdpage_head(hash);
 
-	struct vm_page_device_mdpage_entry *mde;
+	struct vm_page_device_mdpage_entry *mde = NULL;
 
 	mutex_spin_enter(lock);
 	SLIST_FOREACH(mde, &head->list, mde_hash)
