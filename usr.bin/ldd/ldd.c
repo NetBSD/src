@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.12 2009/12/13 08:50:56 mrg Exp $	*/
+/*	$NetBSD: ldd.c,v 1.13 2010/02/23 08:23:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.12 2009/12/13 08:50:56 mrg Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.13 2010/02/23 08:23:24 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -290,10 +290,10 @@ print_needed(Obj_Entry *obj, const char *fmt1, const char *fmt2)
 		const char *libname = obj->strtab + needed->name;
 
 		if (needed->obj != NULL) {
-			print_needed(needed->obj, fmt1, fmt2);
 			if (!needed->obj->printed) {
 				fmtprint(libname, needed->obj, fmt1, fmt2);
 				needed->obj->printed = 1;
+				print_needed(needed->obj, fmt1, fmt2);
 			}
 		} else {
 			fmtprint(libname, needed->obj, fmt1, fmt2);
