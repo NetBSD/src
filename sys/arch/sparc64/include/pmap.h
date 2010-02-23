@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.47 2010/02/02 04:28:56 mrg Exp $	*/
+/*	$NetBSD: pmap.h,v 1.48 2010/02/23 22:52:21 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -221,7 +221,7 @@ tlb_flush_pte(vaddr_t va, pmap_t pm)
 	if (CPU_IS_USIII_UP())
 		sp_tlb_flush_pte_usiii(va, pm->pm_ctx);
 	else
-		sp_tlb_flush_pte_usiii(va, pm->pm_ctx);
+		sp_tlb_flush_pte_us(va, pm->pm_ctx);
 }
 #endif
 
