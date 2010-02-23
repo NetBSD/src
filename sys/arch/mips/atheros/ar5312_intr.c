@@ -1,4 +1,4 @@
-/* $Id: ar5312_intr.c,v 1.6.28.2 2010/02/16 08:13:57 matt Exp $ */
+/* $Id: ar5312_intr.c,v 1.6.28.3 2010/02/23 20:25:57 matt Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5312_intr.c,v 1.6.28.2 2010/02/16 08:13:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5312_intr.c,v 1.6.28.3 2010/02/23 20:25:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -90,16 +90,19 @@ struct ar531x_intr {
 	struct evcnt	intr_count;
 };
 
-const uint32_t	ipl_sr_bits[_IPL_N] = {
-    [IPL_NONE]		= 0,
-    [IPL_SOFTCLOCK]	= MIPS_SOFT_INT_MASK_0,
-    [IPL_SOFTBIO]	= MIPS_SOFT_INT_MASK_0,
-    [IPL_SOFTNET]	= MIPS_SOFT_INT_MASK,
-    [IPL_SOFTSERIAL]	= MIPS_SOFT_INT_MASK,
-    [IPL_VM]		= MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0
-	| MIPS_INT_MASK_1 | MIPS_INT_MASK_2 | MIPS_INT_MASK_3,
-    [IPL_SCHED]		= MIPS_INT_MASK,
-    [IPL_HIGH]		= MIPS_INT_MASK,
+static const struct ipl_sr_map ar5312_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE]		= 0,
+	[IPL_SOFTCLOCK]		= MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTBIO]		= MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET]		= MIPS_SOFT_INT_MASK,
+	[IPL_SOFTSERIAL]	= MIPS_SOFT_INT_MASK,
+	[IPL_VM]		= MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0
+				    | MIPS_INT_MASK_1 | MIPS_INT_MASK_2
+				    | MIPS_INT_MASK_3,
+	[IPL_SCHED]		= MIPS_INT_MASK,
+	[IPL_HIGH]		= MIPS_INT_MASK,
+    },
 };
 
 static const char * const ar5312_cpuintrnames[NINTRS] = {
@@ -128,15 +131,15 @@ static int ar531x_miscintr(void *);
 void
 ar531x_intr_init(void)
 {
-	int	i;
+	ipl_sr_map = ar5312_ipl_sr_map;
 
-	for (i = 0; i < NINTRS; i++) {
+	for (size_t i = 0; i < NINTRS; i++) {
 		LIST_INIT(&ar5312_cpuintrs[i].intr_l);
 		evcnt_attach_dynamic(&ar5312_cpuintrs[i].intr_count,
 		    EVCNT_TYPE_INTR, NULL, "mips", ar5312_cpuintrnames[i]);
 	}
 
-	for (i = 0; i < NIRQS; i++) {
+	for (size_t i = 0; i < NIRQS; i++) {
 		LIST_INIT(&ar5312_miscintrs[i].intr_l);
 		evcnt_attach_dynamic(&ar5312_miscintrs[i].intr_count,
 		    EVCNT_TYPE_INTR, NULL, "ar5312", ar5312_miscintrnames[i]);
