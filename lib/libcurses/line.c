@@ -1,4 +1,4 @@
-/*	$NetBSD: line.c,v 1.5 2007/05/28 15:01:56 blymn Exp $	*/
+/*	$NetBSD: line.c,v 1.6 2010/02/23 19:48:26 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: line.c,v 1.5 2007/05/28 15:01:56 blymn Exp $");
+__RCSID("$NetBSD: line.c,v 1.6 2010/02/23 19:48:26 drochner Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -83,6 +83,7 @@ mvwhline(WINDOW *win, int y, int x, chtype ch, int count)
 int
 whline(WINDOW *win, chtype ch, int count)
 {
+#ifndef HAVE_WCHAR
 	int ocurx, n, i;
 
 	n = min(count, win->maxx - win->curx);
@@ -95,6 +96,17 @@ whline(WINDOW *win, chtype ch, int count)
 		
 	wmove(win, win->cury, ocurx);
 	return OK;
+#else
+	cchar_t cch, *cchp;
+
+	if (ch & __CHARTEXT) {
+		__cursesi_chtype_to_cchar(ch, &cch);
+		cchp = & cch;
+	} else
+		cchp = WACS_HLINE;
+
+	return whline_set(win, cchp, count);
+#endif
 }
 
 /*
@@ -140,6 +152,7 @@ mvwvline(WINDOW *win, int y, int x, chtype ch, int count)
 int
 wvline(WINDOW *win, chtype ch, int count)
 {
+#ifndef HAVE_WCHAR
 	int ocury, ocurx, n, i;
 
 	n = min(count, win->maxy - win->cury);
@@ -153,6 +166,17 @@ wvline(WINDOW *win, chtype ch, int count)
 
 	wmove(win, ocury, ocurx);
 	return OK;
+#else
+	cchar_t cch, *cchp;
+
+	if (ch & __CHARTEXT) {
+		__cursesi_chtype_to_cchar(ch, &cch);
+		cchp = & cch;
+	} else
+		cchp = WACS_VLINE;
+
+	return wvline_set(win, cchp, count);
+#endif
 }
 
 int hline_set(const cchar_t *wch, int n)
@@ -194,6 +218,8 @@ int whline_set(WINDOW *win, const cchar_t *wch, int n)
 	cchar_t cc;
 
 	cw = wcwidth( wch->vals[ 0 ]);
+	if (cw < 0)
+		cw = 1;
 	if ( ( win->maxx - win->curx ) < cw )
 		return ERR;
 	wcn = min( n, ( win->maxx - win->curx ) / cw );
@@ -204,7 +230,7 @@ int whline_set(WINDOW *win, const cchar_t *wch, int n)
 
 	memcpy( &cc, wch, sizeof( cchar_t ));
 	if (!(wch->vals[ 0 ]))
-		cc.vals[ 0 ] |= WACS_HLINE;
+		cc.vals[ 0 ] |= WACS_HLINE->vals[0];
 	for (i = 0; i < wcn; i++ ) {
 #ifdef DEBUG
 		__CTRACE(__CTRACE_LINE, "whline_set: (%d,%d)\n",
@@ -265,7 +291,7 @@ int wvline_set(WINDOW *win, const cchar_t *wch, int n)
 
 	memcpy( &cc, wch, sizeof( cchar_t ));
 	if (!(wch->vals[ 0 ]))
-		cc.vals[ 0 ] |= WACS_VLINE;
+		cc.vals[ 0 ] |= WACS_VLINE->vals[0];
 	for (i = 0; i < wcn; i++) {
 		mvwadd_wch(win, ocury + i, ocurx, &cc);
 #ifdef DEBUG
