@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.51 2010/02/21 00:57:44 mrg Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.52 2010/02/23 05:24:50 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -374,6 +374,11 @@
 #define TLB_SIZE_CHEETAH_D16		16
 #define TLB_SIZE_CHEETAH_D512_0		512
 #define TLB_SIZE_CHEETAH_D512_1		512
+#define TLB_CHEETAH_I16			(0 << 16)
+#define TLB_CHEETAH_I128		(2 << 16)
+#define TLB_CHEETAH_D16			(0 << 16)
+#define TLB_CHEETAH_D512_0		(2 << 16)
+#define TLB_CHEETAH_D512_1		(3 << 16)
 
 /*
  * Interrupt registers.  This really gets hairy.
