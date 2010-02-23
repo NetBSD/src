@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.31 2009/07/09 21:43:16 rmind Exp $	*/
+/*	$NetBSD: vector.S,v 1.32 2010/02/23 00:23:36 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
+#include "opt_xen.h"
 
 #define ALIGN_TEXT	.align 16,0x90
 
