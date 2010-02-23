@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_bsd.h,v 1.1 2010/02/21 02:11:39 darran Exp $	*/
+/*	$NetBSD: dtrace_bsd.h,v 1.2 2010/02/23 22:19:27 darran Exp $	*/
 
 /*-
  * Copyright (c) 2007-2008 John Birrell (jb@freebsd.org)
@@ -32,6 +32,15 @@
 
 #ifndef _SYS_DTRACE_BSD_H
 #define	_SYS_DTRACE_BSD_H
+
+#include "opt_dtrace.h"
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/kmem.h>
+#include <sys/proc.h>
 
 /* Forward definitions: */
 struct mbuf;
@@ -149,22 +158,89 @@ extern dtrace_nfsclient_nfs23_done_probe_func_t
     dtrace_nfsclient_nfs23_done_probe;
 
 /*
- * Functions which allow the dtrace module to check that the kernel 
- * hooks have been compiled with sufficient space for it's private
- * structures.
- */
-size_t	kdtrace_proc_size(void);
-void kdtrace_proc_ctor(void *, struct proc *);
-void kdtrace_proc_dtor(void *, struct proc *);
-size_t	kdtrace_thread_size(void);
-void kdtrace_thread_ctor(void *, struct lwp *);
-void kdtrace_thread_dtor(void *, struct lwp *);
-
-/*
  * OpenSolaris compatible time functions returning nanoseconds.
  * On OpenSolaris these return hrtime_t which we define as uint64_t.
  */
 uint64_t	dtrace_gethrtime(void);
 uint64_t	dtrace_gethrestime(void);
+
+/* sizes based on DTrace structure requirements */
+#define KDTRACE_PROC_SIZE	64
+#define KDTRACE_PROC_ZERO	8
+#define	KDTRACE_THREAD_SIZE	256
+#define	KDTRACE_THREAD_ZERO	64
+
+/*
+ * Functions for managing the opaque DTrace memory areas for 
+ * processes and lwps.
+ */
+
+static inline size_t	kdtrace_proc_size(void);
+static inline void kdtrace_proc_ctor(void *, struct proc *);
+static inline void kdtrace_proc_dtor(void *, struct proc *);
+static inline size_t	kdtrace_thread_size(void);
+static inline void kdtrace_thread_ctor(void *, struct lwp *);
+static inline void kdtrace_thread_dtor(void *, struct lwp *);
+
+
+/* Return the DTrace process data size compiled in the kernel hooks. */
+static inline size_t
+kdtrace_proc_size()
+{
+
+	return(KDTRACE_PROC_SIZE);
+}
+
+/* Return the DTrace thread data size compiled in the kernel hooks. */
+static inline size_t
+kdtrace_thread_size()
+{
+
+	return(KDTRACE_THREAD_SIZE);
+}
+
+static inline void
+kdtrace_proc_ctor(void *arg, struct proc *p)
+{
+
+#ifdef KDTRACE_HOOKS
+	p->p_dtrace = kmem_alloc(KDTRACE_PROC_SIZE, KM_SLEEP);
+	memset(p->p_dtrace, 0, KDTRACE_PROC_ZERO);
+#endif
+}
+
+static inline void
+kdtrace_proc_dtor(void *arg, struct proc *p)
+{
+
+#ifdef KDTRACE_HOOKS
+	if (p->p_dtrace != NULL) {
+		kmem_free(p->p_dtrace, KDTRACE_PROC_SIZE);
+		p->p_dtrace = NULL;
+	}
+#endif
+}
+
+static inline void
+kdtrace_thread_ctor(void *arg, struct lwp *l)
+{
+
+#ifdef KDTRACE_HOOKS
+	l->l_dtrace = kmem_alloc(KDTRACE_THREAD_SIZE, KM_SLEEP);
+	memset(l->l_dtrace, 0, KDTRACE_THREAD_ZERO);
+#endif
+}
+
+static inline void
+kdtrace_thread_dtor(void *arg, struct lwp *l)
+{
+
+#ifdef KDTRACE_HOOKS
+	if (l->l_dtrace != NULL) {
+		kmem_free(l->l_dtrace, KDTRACE_THREAD_SIZE);
+		l->l_dtrace = NULL;
+	}
+#endif
+}
 
 #endif /* _SYS_DTRACE_BSD_H */

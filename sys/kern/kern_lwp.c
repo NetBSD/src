@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.139 2010/02/21 07:01:57 darran Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.140 2010/02/23 22:19:27 darran Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.139 2010/02/21 07:01:57 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.140 2010/02/23 22:19:27 darran Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -236,10 +236,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.139 2010/02/21 07:01:57 darran Exp $"
 #include <sys/lwpctl.h>
 #include <sys/atomic.h>
 #include <sys/filedesc.h>
-
-#ifdef KDTRACE_HOOKS
 #include <sys/dtrace_bsd.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
@@ -625,9 +622,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	l2->l_cpu = l1->l_cpu;
 	kpreempt_enable();
 
-#ifdef KDTRACE_HOOKS
 	kdtrace_thread_ctor(NULL, l2);
-#endif
 	lwp_initspecific(l2);
 	sched_lwp_fork(l1, l2);
 	lwp_update_creds(l2);
@@ -964,9 +959,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 
 	KASSERT(SLIST_EMPTY(&l->l_pi_lenders));
 	KASSERT(l->l_inheritedprio == -1);
-#ifdef KDTRACE_HOOKS
 	kdtrace_thread_dtor(NULL, l);
-#endif
 	if (!recycle)
 		pool_cache_put(lwp_cache, l);
 }
