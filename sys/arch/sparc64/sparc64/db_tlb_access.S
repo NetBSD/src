@@ -1,9 +1,9 @@
-/*	$NetBSD: db_tlb_access.S,v 1.1 2010/02/22 22:28:58 mrg Exp $	*/
+/*	$NetBSD: db_tlb_access.S,v 1.2 2010/02/23 05:32:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
+ * Copyright (c) 2010 Matthew R. Green
  * All rights reserved.
- *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,65 +25,19 @@
  *
  */
 
-#include "opt_ddb.h"
-
 #include <machine/ctlreg.h>
 #include <machine/asm.h>
 
-#ifdef DDB
-!!!
-!!! Dump the DTLB to phys address in %o0 and print it
-!!!
-!!! Only toast a few %o registers
-!!!
-
-ENTRY_NOPROFILE(dump_dtlb)
-	clr	%o1
-	add	%o1, (64 * 8), %o3		! XXX TLB_SIZE
-1:
-	ldxa	[%o1] ASI_DMMU_TLB_TAG, %o2
-	membar	#Sync
-	stx	%o2, [%o0]
-	membar	#Sync
-	inc	8, %o0
-	ldxa	[%o1] ASI_DMMU_TLB_DATA, %o4
-	membar	#Sync
-	inc	8, %o1
-	stx	%o4, [%o0]
-	cmp	%o1, %o3
-	membar	#Sync
-	bl	1b
-	 inc	8, %o0
-
-	retl
-	 nop
-
-ENTRY_NOPROFILE(dump_itlb)
-	clr	%o1
-	add	%o1, (64 * 8), %o3		! XXX TLB_SIZE
-1:
-	ldxa	[%o1] ASI_IMMU_TLB_TAG, %o2
-	membar	#Sync
-	stx	%o2, [%o0]
-	membar	#Sync
-	inc	8, %o0
-	ldxa	[%o1] ASI_IMMU_TLB_DATA, %o4
-	membar	#Sync
-	inc	8, %o1
-	stx	%o4, [%o0]
-	cmp	%o1, %o3
-	membar	#Sync
-	bl	1b
-	 inc	8, %o0
-
-	retl
-	 nop
+/*
+ * Basic routines to print the I/D-TLB tag & data info.
+ */
 
 #ifdef _LP64
 ENTRY_NOPROFILE(print_dtlb)
 	save	%sp, -CC64FSZ, %sp
-	clr	%l1
-	add	%l1, (64 * 8), %l3		! XXX TLB_SIZE
+	sll	%i0, 3, %l3
+	or	%l3, %i1, %l3
+	mov	%i1, %l1
 	clr	%l2
 1:
 	ldxa	[%l1] ASI_DMMU_TLB_TAG, %o2
@@ -113,11 +67,11 @@ ENTRY_NOPROFILE(print_dtlb)
 	ret
 	 restore
 
-
 ENTRY_NOPROFILE(print_itlb)
 	save	%sp, -CC64FSZ, %sp
-	clr	%l1
-	add	%l1, (64 * 8), %l3		! XXX TLB_SIZE
+	sll	%i0, 3, %l3
+	or	%l3, %i1, %l3
+	mov	%i1, %l1
 	clr	%l2
 1:
 	ldxa	[%l1] ASI_IMMU_TLB_TAG, %o2
@@ -156,8 +110,9 @@ ENTRY_NOPROFILE(print_itlb)
 #else
 ENTRY_NOPROFILE(print_dtlb)
 	save	%sp, -CC64FSZ, %sp
-	clr	%l1
-	add	%l1, (64 * 8), %l3		! XXX TLB_SIZE
+	sll	%i0, 3, %l3
+	or	%l3, %i1, %l3
+	mov	%i1, %l1
 	clr	%l2
 1:
 	ldxa	[%l1] ASI_DMMU_TLB_TAG, %o2
@@ -197,8 +152,9 @@ ENTRY_NOPROFILE(print_dtlb)
 
 ENTRY_NOPROFILE(print_itlb)
 	save	%sp, -CC64FSZ, %sp
-	clr	%l1
-	add	%l1, (64 * 8), %l3		! XXX TLB_SIZE
+	sll	%i0, 3, %l3
+	or	%l3, %i1, %l3
+	mov	%i1, %l1
 	clr	%l2
 1:
 	ldxa	[%l1] ASI_IMMU_TLB_TAG, %o2
@@ -242,5 +198,4 @@ ENTRY_NOPROFILE(print_itlb)
 3:
 	.asciz	"%2d:%08x:%08x %08x:%08x\r\n"
 	.text
-#endif
 #endif
