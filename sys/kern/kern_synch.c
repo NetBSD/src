@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.278 2010/02/21 07:39:18 darran Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.279 2010/02/23 22:19:27 darran Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.278 2010/02/21 07:39:18 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.279 2010/02/23 22:19:27 darran Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -103,11 +103,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.278 2010/02/21 07:39:18 darran Exp 
 
 #include <dev/lockstat.h>
 
-#ifdef KDTRACE_HOOKS
 #include <sys/dtrace_bsd.h>
-int                             dtrace_vtime_active;
+int                             dtrace_vtime_active=0;
 dtrace_vtime_switch_func_t      dtrace_vtime_switch_func;
-#endif
 
 static void	sched_unsleep(struct lwp *, bool);
 static void	sched_changepri(struct lwp *, pri_t);
@@ -769,7 +767,6 @@ mi_switch(lwp_t *l)
 				SPINLOCK_BACKOFF(count);
 		}
 
-#ifdef KDTRACE_HOOKS
 		/*
 		 * If DTrace has set the active vtime enum to anything
 		 * other than INACTIVE (0), then it should have set the
@@ -778,7 +775,6 @@ mi_switch(lwp_t *l)
 		if (__predict_false(dtrace_vtime_active)) {
 			(*dtrace_vtime_switch_func)(newl);
 		}
-#endif
 
 		/* Switch to the new LWP.. */
 		prevlwp = cpu_switchto(l, newl, returning);
@@ -921,16 +917,14 @@ lwp_exit_switchaway(lwp_t *l)
 			SPINLOCK_BACKOFF(count);
 	}
 
-#ifdef KDTRACE_HOOKS
-	    /*
-	     * If DTrace has set the active vtime enum to anything
-	     * other than INACTIVE (0), then it should have set the
-	     * function to call.
-	     */
-	    if (__predict_false(dtrace_vtime_active)) {
-		    (*dtrace_vtime_switch_func)(newl);
-	    }
-#endif
+	/*
+	 * If DTrace has set the active vtime enum to anything
+	 * other than INACTIVE (0), then it should have set the
+	 * function to call.
+	 */
+	if (__predict_false(dtrace_vtime_active)) {
+		(*dtrace_vtime_switch_func)(newl);
+	}
 
 	/* Switch to the new LWP.. */
 	(void)cpu_switchto(NULL, newl, false);
