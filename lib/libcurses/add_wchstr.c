@@ -1,4 +1,4 @@
-/*   $NetBSD: add_wchstr.c,v 1.3 2009/07/22 16:57:14 roy Exp $ */
+/*   $NetBSD: add_wchstr.c,v 1.4 2010/02/23 19:48:26 drochner Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: add_wchstr.c,v 1.3 2009/07/22 16:57:14 roy Exp $");
+__RCSID("$NetBSD: add_wchstr.c,v 1.4 2010/02/23 19:48:26 drochner Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -233,6 +233,8 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 		__CTRACE(__CTRACE_INPUT, "wadd_wchnstr: adding %x", wc);
 #endif /* DEBUG */
 		cw = wcwidth(wc);
+		if (cw < 0)
+			cw = 1;
 		if (cw) {
 			/* spacing character */
 #ifdef DEBUG

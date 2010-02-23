@@ -1,4 +1,4 @@
-/*   $NetBSD: cchar.c,v 1.3 2007/05/29 11:10:56 blymn Exp $ */
+/*   $NetBSD: cchar.c,v 1.4 2010/02/23 19:48:26 drochner Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cchar.c,v 1.3 2007/05/29 11:10:56 blymn Exp $");
+__RCSID("$NetBSD: cchar.c,v 1.4 2010/02/23 19:48:26 drochner Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -117,4 +117,22 @@ setcchar(cchar_t *wcval, const wchar_t *wch, const attr_t attrs,
 
 	return OK;
 #endif /* HAVE_WCHAR */
+}
+
+void
+__cursesi_chtype_to_cchar(chtype in, cchar_t *out)
+{
+	unsigned int idx;
+
+	if (in & __ACS_IS_WACS) {
+		idx = in & __CHARTEXT;
+		if (idx < NUM_ACS) {
+			memcpy(out, &_wacs_char[idx], sizeof(cchar_t));
+			out->attributes |= in & __ATTRIBUTES;
+			return;
+		}
+	}
+	out->vals[0] = in & __CHARTEXT;
+	out->attributes = in & __ATTRIBUTES;
+	out->elements = 1;
 }

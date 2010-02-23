@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wch.c,v 1.4 2009/07/22 16:57:15 roy Exp $ */
+/*   $NetBSD: ins_wch.c,v 1.5 2010/02/23 19:48:26 drochner Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wch.c,v 1.4 2009/07/22 16:57:15 roy Exp $");
+__RCSID("$NetBSD: ins_wch.c,v 1.5 2010/02/23 19:48:26 drochner Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -110,6 +110,8 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 	if ( !wch )
 		return OK;
 	cw = wcwidth(wch->vals[0]);
+	if (cw < 0)
+		cw = 1;
 	if (!cw)
 		return wadd_wch( win, wch );
 

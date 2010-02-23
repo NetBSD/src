@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.35 2009/07/22 16:57:14 roy Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.36 2010/02/23 19:48:26 drochner Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.35 2009/07/22 16:57:14 roy Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.36 2010/02/23 19:48:26 drochner Exp $");
 #endif
 #endif				/* not lint */
 
@@ -438,6 +438,8 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 
 	/* check for enough space before the end of line */
 	cw = wcwidth(wch->vals[0]);
+	if (cw < 0)
+		cw = 1;
 	if (cw > win->maxx - *x) {
 #ifdef DEBUG
 		__CTRACE(__CTRACE_INPUT,

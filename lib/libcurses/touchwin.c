@@ -1,4 +1,4 @@
-/*	$NetBSD: touchwin.c,v 1.25 2009/07/22 16:57:15 roy Exp $	*/
+/*	$NetBSD: touchwin.c,v 1.26 2010/02/23 19:48:26 drochner Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touchwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: touchwin.c,v 1.25 2009/07/22 16:57:15 roy Exp $");
+__RCSID("$NetBSD: touchwin.c,v 1.26 2010/02/23 19:48:26 drochner Exp $");
 #endif
 #endif				/* not lint */
 
@@ -210,4 +210,28 @@ __touchline(WINDOW *win, int y, int sx, int ex)
 	    *win->alines[y]->firstchp, *win->alines[y]->lastchp);
 #endif
 	return (OK);
+}
+
+void
+wsyncup(WINDOW *win)
+{
+
+	do {
+		touchwin(win);
+		win = win->orig;
+	} while (win);
+}
+
+void
+wsyncdown(WINDOW *win)
+{
+	WINDOW *w = win->orig;
+
+	while (w) {
+		if (is_wintouched(w)) {
+			touchwin(win);
+			break;
+		}
+		w = w->orig;
+	}
 }

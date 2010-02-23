@@ -1,4 +1,4 @@
-/*	$NetBSD: addch.c,v 1.15 2007/05/28 15:01:53 blymn Exp $	*/
+/*	$NetBSD: addch.c,v 1.16 2010/02/23 19:48:26 drochner Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addch.c,v 1.15 2007/05/28 15:01:53 blymn Exp $");
+__RCSID("$NetBSD: addch.c,v 1.16 2010/02/23 19:48:26 drochner Exp $");
 #endif
 #endif				/* not lint */
 
@@ -94,9 +94,7 @@ waddch(WINDOW *win, chtype ch)
 #endif
 
 #ifdef HAVE_WCHAR
-	cc.vals[0] = ch & __CHARTEXT;
-	cc.elements = 1;
-	cc.attributes = ch & __ATTRIBUTES;
+	__cursesi_chtype_to_cchar(ch, &cc);
 #else
 	buf.ch = (wchar_t) ch & __CHARTEXT;
 	buf.attr = (attr_t) ch & __ATTRIBUTES;
