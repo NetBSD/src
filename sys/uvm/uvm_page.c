@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.13 2010/02/23 07:44:25 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.14 2010/02/23 08:46:17 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.13 2010/02/23 07:44:25 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.14 2010/02/23 08:46:17 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1168,6 +1168,16 @@ uvm_vm_page_to_phys(const struct vm_page *pg)
  *
  * XXX Consider to allocate slots on-demand.
  */
+
+struct vm_page_md *vm_page_device_mdpage_lookup(struct vm_page *);
+
+struct vm_page_md *
+uvm_vm_page_to_md(struct vm_page *pg)
+{
+
+	return uvm_pageisdevice_p(pg) ?
+	    vm_page_device_mdpage_lookup(pg) : &pg->mdpage;
+}
 
 struct vm_page_device_mdpage_entry {
 	struct vm_page_md mde_mdpage;

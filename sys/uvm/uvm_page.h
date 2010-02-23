@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59.2.13 2010/02/23 07:44:25 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.14 2010/02/23 08:46:17 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -308,10 +308,6 @@ paddr_t uvm_vm_page_to_phys_device(const struct vm_page *);
 struct vm_page *uvm_phys_to_vm_page_device(paddr_t);
 #endif
 
-#ifdef XIP
-struct vm_page_md *vm_page_device_mdpage_lookup(struct vm_page *);
-#endif
-
 /*
  * macros
  */
@@ -324,8 +320,8 @@ struct vm_page_md *vm_page_device_mdpage_lookup(struct vm_page *);
 #ifndef XIP
 #define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 #else
-#define	VM_PAGE_TO_MD(pg) \
-    (uvm_pageisdevice_p(pg) ? vm_page_device_mdpage_lookup(pg) : &(pg)->mdpage)
+struct vm_page_md *uvm_vm_page_to_md(struct vm_page *);
+#define	VM_PAGE_TO_MD(pg)	uvm_vm_page_to_md(pg)
 #endif
 #endif
 
