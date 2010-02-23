@@ -1,4 +1,4 @@
-/*	$NetBSD: adm5120_intr.c,v 1.3.18.2 2010/02/16 08:13:57 matt Exp $	*/
+/*	$NetBSD: adm5120_intr.c,v 1.3.18.3 2010/02/23 20:25:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm5120_intr.c,v 1.3.18.2 2010/02/16 08:13:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm5120_intr.c,v 1.3.18.3 2010/02/23 20:25:57 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -92,15 +92,17 @@ __KERNEL_RCSID(0, "$NetBSD: adm5120_intr.c,v 1.3.18.2 2010/02/16 08:13:57 matt E
  * This is a mask of bits to clear in the SR when we go to a
  * given hardware interrupt priority level.
  */
-const uint32_t ipl_sr_bits[_IPL_N] = {
-    [IPL_NONE]		= 0,
-    [IPL_SOFTCLOCK]	= MIPS_SOFT_INT_MASK_0,
-    [IPL_SOFTBIO]	= MIPS_SOFT_INT_MASK_0,
-    [IPL_SOFTNET]	= MIPS_SOFT_INT_MASK,
-    [IPL_SOFTSERIAL]	= MIPS_SOFT_INT_MASK,
-    [IPL_VM]		= MIPS_SOFT_INT_MASK|MIPS_INT_MASK_0,
-    [IPL_SCHED]		= MIPS_INT_MASK,
-    [IPL_HIGH]		= MIPS_INT_MASK,
+static const struct ipl_sr_map adm5120_ipl_sr_map = {
+    .sr_bits = {
+	    [IPL_NONE]		= 0,
+	    [IPL_SOFTCLOCK]	= MIPS_SOFT_INT_MASK_0,
+	    [IPL_SOFTBIO]	= MIPS_SOFT_INT_MASK_0,
+	    [IPL_SOFTNET]	= MIPS_SOFT_INT_MASK,
+	    [IPL_SOFTSERIAL]	= MIPS_SOFT_INT_MASK,
+	    [IPL_VM]		= MIPS_SOFT_INT_MASK|MIPS_INT_MASK_0,
+	    [IPL_SCHED]		= MIPS_INT_MASK,
+	    [IPL_HIGH]		= MIPS_INT_MASK,
+     },
 };
 
 #define	NIRQS		32
@@ -164,15 +166,15 @@ const char * const adm5120_cpuintrnames[NINTRS] = {
 void
 evbmips_intr_init(void)
 {
-	int i;
+	ipl_sr_map = adm5120_ipl_sr_map;
 
-	for (i = 0; i < NINTRS; i++) {
+	for (size_t i = 0; i < NINTRS; i++) {
 		LIST_INIT(&adm5120_cpuintrs[i].cintr_list);
 		evcnt_attach_dynamic(&adm5120_cpuintrs[i].cintr_count,
 		    EVCNT_TYPE_INTR, NULL, "mips", adm5120_cpuintrnames[i]);
 	}
 
-	for (i = 0; i < NIRQS; i++) {
+	for (size_t i = 0; i < NIRQS; i++) {
 		/* XXX steering - use an irqmap array? */
 
 		adm5120_intrtab[i].intr_refcnt = 0;

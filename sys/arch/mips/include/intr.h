@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.3.96.4 2010/02/22 20:08:58 matt Exp $ */
+/* $NetBSD: intr.h,v 1.3.96.5 2010/02/23 20:24:36 matt Exp $ */
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -85,6 +85,10 @@ typedef struct {
         ipl_t _spl;
 } ipl_cookie_t;
 
+struct ipl_sr_map {
+	uint32_t sr_bits[_IPL_N];
+};
+
 #ifdef _KERNEL
 #ifdef MULTIPROCESSOR
 #define __HAVE_PREEMPTION
@@ -92,7 +96,7 @@ typedef struct {
 #endif
 
 extern	struct splsw	mips_splsw;
-extern	const uint32_t	ipl_sr_bits[_IPL_N];
+extern	struct ipl_sr_map ipl_sr_map;
 
 static inline int
 splhigh(void)
