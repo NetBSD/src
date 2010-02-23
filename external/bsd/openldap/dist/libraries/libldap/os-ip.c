@@ -699,7 +699,7 @@ ldap_host_connected_to( Sockbuf *sb, const char *host )
 		char *herr;
 #ifdef NI_MAXHOST
 		char hbuf[NI_MAXHOST];
-#elif defined( MAXHOSTNAMELEN
+#elif defined( MAXHOSTNAMELEN )
 		char hbuf[MAXHOSTNAMELEN];
 #else
 		char hbuf[256];
