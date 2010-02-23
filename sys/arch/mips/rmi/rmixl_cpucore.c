@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.3 2010/01/20 20:48:12 matt Exp $	*/
+/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.4 2010/02/23 20:33:48 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,12 +38,15 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.3 2010/01/20 20:48:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.4 2010/02/23 20:33:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <mips/rmi/rmixlvar.h>
 #include <mips/rmi/rmixl_cpunodevar.h>
 #include <mips/rmi/rmixl_cpucorevar.h>
@@ -84,6 +87,19 @@ cpucore_rmixl_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_core = na->na_core;
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Create the TLB structure needed - one per core and core0 uses the
+	 * default one for the system.
+	 */
+	if (sc->sc_core == 0) {
+		sc->sc_tlbinfo = &pmap_tlb_info;
+	} else {
+		sc->sc_tlbinfo = &sc->sc_tlbinfo0;
+		pmap_tlb_info_init(sc->sc_tlbinfo);
+	}
+#endif
 
 	aprint_normal("\n");
 	aprint_normal_dev(self, "%lu.%02luMHz (hz cycles = %lu, "

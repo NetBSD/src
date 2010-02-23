@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.1.2.4 2010/01/29 00:22:53 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.1.2.5 2010/02/23 20:33:48 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.4 2010/01/29 00:22:53 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.5 2010/02/23 20:33:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.4 2010/01/29 00:22:53 cliff Exp 
 #include <sys/lock.h>
 #include <uvm/uvm_pglist.h>
 #include <uvm/uvm_extern.h>
+#include <mips/pmap.h>
 #include <mips/rmi/rmixlreg.h>
 #include <mips/rmi/rmixlvar.h>
 #include <mips/rmi/rmixl_cpucorevar.h>
@@ -91,8 +92,9 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 		self->dv_private = ci;
 #ifdef MULTIPROCESSOR
 	} else {
-		struct pglist pglist;
+		struct cpucore_softc * const ccsc = device_private(parent);
 		rmixlfw_psb_type_t psb_type = rmixl_configuration.rc_psb_type;
+		struct pglist pglist;
 		int error;
 
 		switch (psb_type) {
@@ -122,12 +124,11 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 		const vaddr_t va = MIPS_PHYS_TO_KSEG0(pa);
 		struct cpu_info * const ci = (void *) (va + 0x400);
 		memset((void *)va, 0, PAGE_SIZE);
-		ci->ci_ebase = va;
-		ci->ci_ebase_pa = pa;
 		ci->ci_dev = self;
 		KASSERT(ca->ca_core < 8);
 		KASSERT(ca->ca_thread < 4);
 		ci->ci_cpuid = (ca->ca_core << 2) | ca->ca_thread;
+		pmap_tlb_info_attach(ccsc->sc_tlbinfo, ci);
 		self->dv_private = ci;
 
 		cpu_setup_trampoline(self, ci);
