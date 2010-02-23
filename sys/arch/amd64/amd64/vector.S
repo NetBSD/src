@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.32 2010/02/23 00:23:36 cegger Exp $	*/
+/*	$NetBSD: vector.S,v 1.33 2010/02/23 06:27:40 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
+#include "opt_dtrace.h"
 
 #define ALIGN_TEXT	.align 16,0x90
 
@@ -112,6 +113,21 @@
 
 #define	BPTTRAP(a)	ZTRAP(a)
 
+#ifdef KDTRACE_HOOKS
+	.bss
+	.globl	dtrace_invop_jump_addr
+	.align	8
+	.type	dtrace_invop_jump_addr, @object
+	.size	dtrace_invop_jump_addr, 8
+dtrace_invop_jump_addr:
+	.zero	8
+	.globl	dtrace_invop_calltrap_addr
+	.align	8
+	.type	dtrace_invop_calltrap_addr, @object
+	.size	dtrace_invop_calltrap_addr, 8
+dtrace_invop_calltrap_addr:
+	.zero	8
+#endif
 	.text
 
 IDTVEC(trap00)
@@ -283,6 +299,30 @@ NENTRY(resume_pop_es)
 NENTRY(alltraps)
 	INTRENTRY
   	STI(si)
+#ifdef KDTRACE_HOOKS
+	/*
+	 * DTrace Function Boundary Trace (fbt) probes are triggered
+	 * by int3 (0xcc) which causes the #BP (T_BPTFLT) breakpoint
+	 * interrupt. For all other trap types, just handle them in
+	 * the usual way.
+	 */
+	cmpl    $T_BPTFLT,TF_TRAPNO(%rsp)
+	jne     calltrap
+
+	/* Check if there is no DTrace hook registered. */
+	cmpq	$0,dtrace_invop_jump_addr
+	je	calltrap
+
+	/*
+	 * Set our jump address for the jump back in the event that
+	 * the exception wasn't caused by DTrace at all.
+	 */
+	movq	$calltrap, dtrace_invop_calltrap_addr(%rip)
+
+	/* Jump to the code hooked in by DTrace. */
+	movq	dtrace_invop_jump_addr, %rax
+	jmpq	*dtrace_invop_jump_addr
+#endif
 calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
