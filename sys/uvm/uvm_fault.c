@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.166.2.3 2010/02/12 16:09:56 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.166.2.4 2010/02/23 07:11:46 uebayasi Exp $	*/
 
 /*
  *
@@ -39,9 +39,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.3 2010/02/12 16:09:56 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.4 2010/02/23 07:11:46 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
+#include "opt_device_page.h"
 #include "opt_xip.h"
 
 #include <sys/param.h>
@@ -1916,11 +1917,11 @@ uvm_fault_lower_direct(
 	 * set "pg" to the page we want to map in (uobjpage, usually)
 	 */
 	pg = uobjpage;		/* map in the actual object */
+	uvmexp.flt_obj++;
 
 	if (uvm_pageisdevice_p(uobjpage))
 		goto uvm_fault_lower_direct_done;
 
-	uvmexp.flt_obj++;
 	if (UVM_ET_ISCOPYONWRITE(ufi->entry) ||
 	    UVM_OBJ_NEEDS_WRITEFAULT(uobjpage->uobject))
 		flt->enter_prot &= ~VM_PROT_WRITE;
@@ -2035,6 +2036,9 @@ uvm_fault_lower_promote(
 			 */
 		}
 
+		if (uvm_pageisdevice_p(uobjpage))
+			goto uvm_fault_lower_promote_done;
+
 		/*
 		 * dispose of uobjpage.  it can't be PG_RELEASED
 		 * since we still hold the object lock.
@@ -2046,6 +2050,8 @@ uvm_fault_lower_promote(
 			wakeup(uobjpage);
 		uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
 		UVM_PAGE_OWN(uobjpage, NULL);
+
+uvm_fault_lower_promote_done:
 		mutex_exit(&uobj->vmobjlock);
 		uobj = NULL;
 
