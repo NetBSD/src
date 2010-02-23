@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.64 2010/02/12 04:01:07 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.65 2010/02/23 19:28:00 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -805,12 +805,6 @@ struct pci_rom {
  * Threshold below which 32bit PCI DMA needs bouncing.
  */
 #define PCI32_DMA_BOUNCE_THRESHOLD	0x100000000ULL
-
-/*
- * Common PCI register for PCI transmit handling.
- */
-#define	PCI_RETRY_TIMEOUT_REG		0x40
-#define		PCI_RETRY_TIMEOUT_REG_MASK	0x0000ff00
 
 /*
  * PCI-X 2.0 Extended Capability List
