@@ -504,7 +504,7 @@ elf_i386_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 /* The name of the dynamic interpreter.  This is put in the .interp
    section.  */
 
-#define ELF_DYNAMIC_INTERPRETER "/usr/lib/libc.so.1"
+#define ELF_DYNAMIC_INTERPRETER "/libexec/ld.elf_so"
 
 /* If ELIMINATE_COPY_RELOCS is non-zero, the linker will try to avoid
    copying dynamic variables from a shared lib into an app's dynbss
