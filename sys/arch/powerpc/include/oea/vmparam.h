@@ -206,9 +206,9 @@ struct vm_page_md {
 	unsigned int mdpg_attrs; 
 };
 
-#define	VM_MDPAGE_INIT(pg) do {			\
-	LIST_INIT(&(pg)->mdpage.mdpg_pvoh);	\
-	(pg)->mdpage.mdpg_attrs = 0;		\
+#define	VM_MDPAGE_INIT(md, pa) do {		\
+	LIST_INIT(&(md)->mdpg_pvoh);		\
+	(md)->mdpg_attrs = 0;			\
 } while (/*CONSTCOND*/0)
 
 #endif	/* _LOCORE */

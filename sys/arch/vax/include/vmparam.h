@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.45 2009/03/06 20:31:53 joerg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.45.2.1 2010/02/23 15:27:57 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -116,7 +116,7 @@ struct vm_page_md {
 	unsigned int md_attrs;
 };
 
-#define	VM_MDPAGE_INIT(pg)	((pg)->mdpage.md_attrs = 0)
+#define	VM_MDPAGE_INIT(md, pa)	((md)->md_attrs = 0)
 #endif
 
 

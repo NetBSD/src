@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.19 2009/03/06 20:31:51 joerg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.19.2.1 2010/02/23 15:27:56 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -97,9 +97,8 @@ struct vm_page_md {
 	int pvh_flags;
 };
 
-#define	VM_MDPAGE_INIT(pg)						\
+#define	VM_MDPAGE_INIT(pvh, pa)						\
 do {									\
-	struct vm_page_md *pvh = &(pg)->mdpage;				\
 	SLIST_INIT(&pvh->pvh_head);					\
 	pvh->pvh_flags = 0;						\
 } while (/*CONSTCOND*/0)

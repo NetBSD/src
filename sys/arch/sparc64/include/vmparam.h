@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.30 2009/03/06 20:31:52 joerg Exp $ */
+/*	$NetBSD: vmparam.h,v 1.30.2.1 2010/02/23 15:27:56 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -189,11 +189,11 @@ typedef struct pv_entry {
 struct vm_page_md {
 	struct pv_entry mdpg_pvh;
 };
-#define	VM_MDPAGE_INIT(pg)						\
+#define	VM_MDPAGE_INIT(md, pa)						\
 do {									\
-	(pg)->mdpage.mdpg_pvh.pv_next = NULL;				\
-	(pg)->mdpage.mdpg_pvh.pv_pmap = NULL;				\
-	(pg)->mdpage.mdpg_pvh.pv_va = 0;				\
+	(md)->mdpg_pvh.pv_next = NULL;					\
+	(md)->mdpg_pvh.pv_pmap = NULL;					\
+	(md)->mdpg_pvh.pv_va = 0;					\
 } while (/*CONSTCOND*/0)
 
 #endif	/* _KERNEL */

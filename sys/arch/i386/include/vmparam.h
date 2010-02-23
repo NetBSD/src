@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.70 2009/03/06 20:31:49 joerg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.70.2.1 2010/02/23 15:27:55 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -137,9 +137,9 @@
 #include <x86/pmap_pv.h>
 
 #define	__HAVE_VM_PAGE_MD
-#define	VM_MDPAGE_INIT(pg) \
-	memset(&(pg)->mdpage, 0, sizeof((pg)->mdpage)); \
-	PMAP_PAGE_INIT(&(pg)->mdpage.mp_pp)
+#define	VM_MDPAGE_INIT(md, pa) \
+	memset((md), 0, sizeof(*(md))); \
+	PMAP_PAGE_INIT(&(md)->mp_pp)
 
 struct vm_page_md {
 	struct pmap_page mp_pp;

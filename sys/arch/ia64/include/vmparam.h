@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5 2009/07/20 04:41:37 kiyohara Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5.2.1 2010/02/23 15:27:56 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -125,10 +125,10 @@ struct vm_page_md {
 	int pvh_attrs;			/* page attributes */
 };
 
-#define	VM_MDPAGE_INIT(pg)						\
+#define	VM_MDPAGE_INIT(md, pa)						\
 do {									\
-	TAILQ_INIT(&(pg)->mdpage.pv_list);				\
-	mutex_init(&(pg)->mdpage.pv_mutex, MUTEX_DEFAULT, IPL_NONE);	\
+	TAILQ_INIT(&(md)->pv_list);					\
+	mutex_init(&(md)->pv_mutex, MUTEX_DEFAULT, IPL_NONE);		\
 } while (/*CONSTCOND*/0)
 #endif /*_LOCORE*/
 
