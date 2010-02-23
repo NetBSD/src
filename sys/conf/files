@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.976 2010/02/21 07:01:57 darran Exp $
+#	$NetBSD: files,v 1.977 2010/02/23 22:21:25 darran Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -1425,7 +1425,6 @@ file	kern/kern_condvar.c
 file	kern/kern_core.c		coredump
 file	kern/kern_cpu.c
 file	kern/kern_descrip.c
-file	kern/kern_dtrace.c		kdtrace_hooks
 file	kern/kern_event.c
 file	kern/kern_exec.c
 file	kern/kern_exit.c
