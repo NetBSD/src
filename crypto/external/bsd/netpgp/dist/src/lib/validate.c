@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.29 2010/02/12 03:38:48 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.30 2010/02/23 01:24:44 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -949,7 +949,7 @@ __ops_validate_mem(__ops_io_t *io,
 	__ops_teardown_memory_read(stream, mem);
 
 	/* this is triggered only for --cat output */
-	if (*cat) {
+	if (cat) {
 		/* need to send validated output somewhere */
 		*cat = validation.mem;
 	} else {
