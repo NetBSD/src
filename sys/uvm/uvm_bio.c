@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.68.2.1 2010/02/12 13:38:41 uebayasi Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.68.2.2 2010/02/23 07:05:05 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,10 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.1 2010/02/12 13:38:41 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.2 2010/02/23 07:05:05 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
+#include "opt_device_page.h"
 #include "opt_xip.h"
 
 #include <sys/param.h>
@@ -336,6 +337,8 @@ again:
 			continue;
 		}
 
+		mutex_enter(&uobj->vmobjlock);
+
 		if (uvm_pageisdevice_p(pg)) {
 			UVMHIST_LOG(ubchist, "pg is device", i, 0,0,0);
 			goto ubc_fault_enter;
@@ -343,7 +346,6 @@ again:
 
 		KASSERT(uobj == pg->uobject);
 			
-		mutex_enter(&uobj->vmobjlock);
 		if (pg->flags & PG_WANTED) {
 			wakeup(pg);
 		}
@@ -551,7 +553,7 @@ again_faultbusy:
 			struct vm_page *pg = pgs[i];
 
 			if (uvm_pageisdevice_p(pg))
-				goto uvm_alloc_enter;
+				goto ubc_alloc_enter;
 
 			KASSERT(pg->uobject == uobj);
 			if (pg->loan_count != 0) {
@@ -572,7 +574,7 @@ again_faultbusy:
 				pgs[i] = pg;
 			}
 
-uvm_alloc_enter:
+ubc_alloc_enter:
 			pmap_kenter_pa(va + slot_offset + (i << PAGE_SHIFT),
 			    VM_PAGE_TO_PHYS(pg),
 			    VM_PROT_READ | VM_PROT_WRITE, 0);
