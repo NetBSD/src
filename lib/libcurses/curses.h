@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.99 2010/02/03 15:34:40 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.100 2010/02/23 19:48:26 drochner Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -230,6 +230,9 @@ typedef chtype cchar_t;
 #define __ALTCHARSET	0x00010000	/* Added characters are ACS */
 #define __COLOR		0x03fe0000	/* Color bits */
 #define __ATTRIBUTES	0x03ffff00	/* All 8-bit attribute bits */
+#ifdef HAVE_WCHAR
+#define __ACS_IS_WACS	0x04000000 /* internal: use wacs table for ACS char */
+#endif
 
 typedef struct __ldata __LDATA;
 typedef struct __line  __LINE;
@@ -325,38 +328,38 @@ extern chtype _acs_char[NUM_ACS];
 #ifdef HAVE_WCHAR
 extern cchar_t _wacs_char[NUM_ACS];
 
-#define	WACS_RARROW     _wacs_char[(unsigned char)'+'].vals[0]
-#define	WACS_LARROW     _wacs_char[(unsigned char)','].vals[0]
-#define	WACS_UARROW     _wacs_char[(unsigned char)'-'].vals[0]
-#define	WACS_DARROW     _wacs_char[(unsigned char)'.'].vals[0]
-#define	WACS_BLOCK      _wacs_char[(unsigned char)'0'].vals[0]
-#define	WACS_DIAMOND    _wacs_char[(unsigned char)'`'].vals[0]
-#define	WACS_CKBOARD    _wacs_char[(unsigned char)'a'].vals[0]
-#define	WACS_DEGREE     _wacs_char[(unsigned char)'f'].vals[0]
-#define	WACS_PLMINUS    _wacs_char[(unsigned char)'g'].vals[0]
-#define	WACS_BOARD      _wacs_char[(unsigned char)'h'].vals[0]
-#define	WACS_LANTERN    _wacs_char[(unsigned char)'i'].vals[0]
-#define	WACS_LRCORNER   _wacs_char[(unsigned char)'j'].vals[0]
-#define	WACS_URCORNER   _wacs_char[(unsigned char)'k'].vals[0]
-#define	WACS_ULCORNER   _wacs_char[(unsigned char)'l'].vals[0]
-#define	WACS_LLCORNER   _wacs_char[(unsigned char)'m'].vals[0]
-#define	WACS_PLUS       _wacs_char[(unsigned char)'n'].vals[0]
-#define	WACS_HLINE      _wacs_char[(unsigned char)'q'].vals[0]
-#define	WACS_S1         _wacs_char[(unsigned char)'o'].vals[0]
-#define	WACS_S9         _wacs_char[(unsigned char)'s'].vals[0]
-#define	WACS_LTEE       _wacs_char[(unsigned char)'t'].vals[0]
-#define	WACS_RTEE       _wacs_char[(unsigned char)'u'].vals[0]
-#define	WACS_BTEE       _wacs_char[(unsigned char)'v'].vals[0]
-#define	WACS_TTEE       _wacs_char[(unsigned char)'w'].vals[0]
-#define	WACS_VLINE      _wacs_char[(unsigned char)'x'].vals[0]
-#define	WACS_BULLET     _wacs_char[(unsigned char)'~'].vals[0]
-#define	WACS_S3		_wacs_char[(unsigned char)'p'].vals[0]
-#define	WACS_S7		_wacs_char[(unsigned char)'r'].vals[0]
-#define	WACS_LEQUAL	_wacs_char[(unsigned char)'y'].vals[0]
-#define	WACS_GEQUAL	_wacs_char[(unsigned char)'z'].vals[0]
-#define	WACS_PI		_wacs_char[(unsigned char)'{'].vals[0]
-#define	WACS_NEQUAL	_wacs_char[(unsigned char)'|'].vals[0]
-#define	WACS_STERLING	_wacs_char[(unsigned char)'}'].vals[0]
+#define	WACS_RARROW     (&_wacs_char[(unsigned char)'+'])
+#define	WACS_LARROW     (&_wacs_char[(unsigned char)','])
+#define	WACS_UARROW     (&_wacs_char[(unsigned char)'-'])
+#define	WACS_DARROW     (&_wacs_char[(unsigned char)'.'])
+#define	WACS_BLOCK      (&_wacs_char[(unsigned char)'0'])
+#define	WACS_DIAMOND    (&_wacs_char[(unsigned char)'`'])
+#define	WACS_CKBOARD    (&_wacs_char[(unsigned char)'a'])
+#define	WACS_DEGREE     (&_wacs_char[(unsigned char)'f'])
+#define	WACS_PLMINUS    (&_wacs_char[(unsigned char)'g'])
+#define	WACS_BOARD      (&_wacs_char[(unsigned char)'h'])
+#define	WACS_LANTERN    (&_wacs_char[(unsigned char)'i'])
+#define	WACS_LRCORNER   (&_wacs_char[(unsigned char)'j'])
+#define	WACS_URCORNER   (&_wacs_char[(unsigned char)'k'])
+#define	WACS_ULCORNER   (&_wacs_char[(unsigned char)'l'])
+#define	WACS_LLCORNER   (&_wacs_char[(unsigned char)'m'])
+#define	WACS_PLUS       (&_wacs_char[(unsigned char)'n'])
+#define	WACS_HLINE      (&_wacs_char[(unsigned char)'q'])
+#define	WACS_S1         (&_wacs_char[(unsigned char)'o'])
+#define	WACS_S9         (&_wacs_char[(unsigned char)'s'])
+#define	WACS_LTEE       (&_wacs_char[(unsigned char)'t'])
+#define	WACS_RTEE       (&_wacs_char[(unsigned char)'u'])
+#define	WACS_BTEE       (&_wacs_char[(unsigned char)'v'])
+#define	WACS_TTEE       (&_wacs_char[(unsigned char)'w'])
+#define	WACS_VLINE      (&_wacs_char[(unsigned char)'x'])
+#define	WACS_BULLET     (&_wacs_char[(unsigned char)'~'])
+#define	WACS_S3		(&_wacs_char[(unsigned char)'p'])
+#define	WACS_S7		(&_wacs_char[(unsigned char)'r'])
+#define	WACS_LEQUAL	(&_wacs_char[(unsigned char)'y'])
+#define	WACS_GEQUAL	(&_wacs_char[(unsigned char)'z'])
+#define	WACS_PI		(&_wacs_char[(unsigned char)'{'])
+#define	WACS_NEQUAL	(&_wacs_char[(unsigned char)'|'])
+#define	WACS_STERLING	(&_wacs_char[(unsigned char)'}'])
 #endif /* HAVE_WCHAR */
 
 /* System V compatibility */
@@ -755,6 +758,7 @@ int	 wclear(WINDOW *);
 int	 wclrtobot(WINDOW *);
 int	 wclrtoeol(WINDOW *);
 int	 wcolor_set(WINDOW *, short, void *);
+void	 wcursyncup(WINDOW *);
 int	 wdelch(WINDOW *);
 int	 wdeleteln(WINDOW *);
 int	 wechochar(WINDOW *, const chtype);
@@ -782,6 +786,8 @@ int	 wscrl(WINDOW *, int);
 int	 wsetscrreg(WINDOW *, int, int);
 int	 wstandend(WINDOW *);
 int	 wstandout(WINDOW *);
+void	 wsyncdown(WINDOW *);
+void	 wsyncup(WINDOW *);
 void	 wtimeout(WINDOW *, int);
 int	 wtouchln(WINDOW *, int, int, int);
 int	 wunderend(WINDOW *);
