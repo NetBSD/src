@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr_local.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: inet_addr_local.c,v 1.2 2010/02/23 16:41:01 jnemeth Exp $	*/
 
 /*++
 /* NAME
@@ -288,8 +288,9 @@ static int ial_siocglif(INET_ADDR_LIST *addr_list,
 		lifr = NEXT_INTERFACE(lifr);
 		continue;
 	    }
+	}
 #ifdef HAS_IPV6
-	} else if (af == AF_INET6) {
+	else if (af == AF_INET6) {
 	    if (IN6_IS_ADDR_UNSPECIFIED(&SOCK_ADDR_IN6_ADDR(sa))) {
 		lifr = NEXT_INTERFACE(lifr);
 		continue;
