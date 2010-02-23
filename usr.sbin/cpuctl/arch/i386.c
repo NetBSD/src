@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.21 2010/02/16 00:13:14 mrg Exp $	*/
+/*	$NetBSD: i386.c,v 1.22 2010/02/23 08:46:33 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.21 2010/02/16 00:13:14 mrg Exp $");
+__RCSID("$NetBSD: i386.c,v 1.22 2010/02/23 08:46:33 cegger Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1478,10 +1478,14 @@ identifycpu(const char *cpuname)
 #endif
 
 	if (cpu_vendor == CPUVENDOR_AMD) {
-		powernow_probe(ci);
+		uint32_t data[4];
 
-		if ((ci->ci_feat_val[3] & CPUID_SVM) != 0) {
-			uint32_t data[4];
+		x86_cpuid(0x80000000, data);
+		if (data[0] >= 0x80000007)
+			powernow_probe(ci);
+
+		if ((data[0] >= 0x8000000a)
+		   && (ci->ci_feat_val[3] & CPUID_SVM) != 0) {
 
 			x86_cpuid(0x8000000a, data);
 			aprint_verbose("%s: SVM Rev. %d\n", cpuname,
@@ -1842,11 +1846,6 @@ powernow_probe(struct cpu_info *ci)
 	uint32_t regs[4];
 	char buf[256];
 
-	x86_cpuid(0x80000000, regs);
-
-	/* We need CPUID(0x80000007) */
-	if (regs[0] < 0x80000007)
-		return;
 	x86_cpuid(0x80000007, regs);
 
 	snprintb(buf, sizeof(buf), CPUID_APM_FLAGS, regs[3]);
