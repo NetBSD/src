@@ -1,4 +1,4 @@
-.\"	$NetBSD: agr.4,v 1.7 2009/06/08 07:59:38 wiz Exp $
+.\"	$NetBSD: agr.4,v 1.8 2010/02/23 07:02:23 martti Exp $
 .\"
 .\" Copyright (c)2005, 2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd June 7, 2009
+.Dd February 23, 2010
 .Dt AGR 4
 .Os
 .\" ------------------------------------------------------------
@@ -77,13 +77,21 @@ and attach
 and
 .Sy re1
 to it.
-(In other words, aggregate
+In other words, aggregate
 .Sy re0
 and
 .Sy re1
 so that they can be used as a single interface,
-.Sy agr0 )
+.Sy agr0 .
+The physical interfaces which are attached to the
+.Nm
+interface must not have any IP addresses, neither IPv4 nor IPv6.
 .Bd -literal -offset indent
+	ifconfig re0 inet xxx.xxx.xxx.xxx delete
+	ifconfig re0 inet6 fe80::xxxx:xxxx:xxxx:xxxx delete
+	ifconfig re1 inet xxx.xxx.xxx.xxx delete
+	ifconfig re1 inet6 fe80::xxxx:xxxx:xxxx:xxxx delete
+
 	ifconfig agr0 create
 	ifconfig agr0 agrport re0
 	ifconfig agr0 agrport re1
