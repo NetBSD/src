@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.7 2010/02/22 14:47:40 pooka Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.8 2010/02/23 14:05:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.7 2010/02/22 14:47:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.8 2010/02/23 14:05:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -136,6 +136,8 @@ static const usb_device_descriptor_t rumphub_udd = {
 	.bDeviceSubClass	= UDSUBCLASS_HUB,
 	.bDeviceProtocol	= UDPROTO_FSHUB,
 	.bMaxPacketSize		= 64,
+	.idVendor		= { 0x75, 0x72 },
+	.idProduct		= { 0x70, 0x6d },
 	.bNumConfigurations	= 1,
 };
 
@@ -845,6 +847,8 @@ rumpusb_device_bulk_close(usbd_pipe_handle pipe)
 	usbd_xfer_handle xfer;
 	int error;
 
+	endpt = UE_GET_ADDR(endpt);
+
 	while ((xfer = SIMPLEQ_FIRST(&pipe->queue)) != NULL)
 		rumpusb_device_bulk_abort(xfer);
 
@@ -974,9 +978,11 @@ ugenhc_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
 }
 
 static void
-ugenhc_freem(struct usbd_bus *ubus, usb_dma_t *udma)
+ugenhc_freem(struct usbd_bus *bus, usb_dma_t *dma)
 {
+	struct ugenhc_softc *sc = bus->hci_private;
 
+	usb_freemem(&sc->sc_bus, dma);
 }
 
 static struct usbd_xfer *
