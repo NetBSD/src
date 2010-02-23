@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.12 2010/02/16 08:13:57 matt Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.13 2010/02/23 20:24:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.12 2010/02/16 08:13:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.13 2010/02/23 20:24:37 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -104,13 +104,15 @@ int iointr_debug = IOINTR_DEBUG;
  * _SR_BITS_DFLT bits are to be always clear (disabled)
  */
 #define _SR_BITS_DFLT	(MIPS_INT_MASK_2|MIPS_INT_MASK_3|MIPS_INT_MASK_4)
-const uint32_t ipl_sr_bits[_IPL_N] = {
-    [IPL_NONE]		= _SR_BITS_DFLT,
-    [IPL_SOFTCLOCK]	= _SR_BITS_DFLT | MIPS_SOFT_INT_MASK_0,
-    [IPL_SOFTNET]	= _SR_BITS_DFLT | MIPS_SOFT_INT_MASK,
-    [IPL_VM]		= _SR_BITS_DFLT | MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0,
-    [IPL_SCHED]		= MIPS_INT_MASK,
-    [IPL_HIGH]		= MIPS_INT_MASK,
+static const struct ipl_sr_map rmixl_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE]	= _SR_BITS_DFLT,
+	[IPL_SOFTCLOCK]	= _SR_BITS_DFLT | MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET]	= _SR_BITS_DFLT | MIPS_SOFT_INT_MASK,
+	[IPL_VM]	= _SR_BITS_DFLT | MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0,
+	[IPL_SCHED]	= MIPS_INT_MASK,
+	[IPL_HIGH]	= MIPS_INT_MASK,
+    },
 };
 
 /*
@@ -320,6 +322,7 @@ evbmips_intr_init(void)
 	int i;
 
 	KASSERT(cpu_rmixls(mips_options.mips_cpu));
+	ipl_sr_map = rmixl_ipl_sr_map;
 
 #ifdef DIAGNOSTIC
 	if (evbmips_intr_init_done != 0)

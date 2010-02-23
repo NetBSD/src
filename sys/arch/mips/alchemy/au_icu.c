@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.23.18.1 2010/02/15 07:37:36 matt Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.23.18.2 2010/02/23 20:25:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.23.18.1 2010/02/15 07:37:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.23.18.2 2010/02/23 20:25:57 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -93,21 +93,17 @@ __KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.23.18.1 2010/02/15 07:37:36 matt Exp $"
  * given hardware interrupt priority level.
  */
 
-const uint32_t ipl_sr_bits[_IPL_N] = {
-	0,					/*  0: IPL_NONE */
-	MIPS_SOFT_INT_MASK_0,			/*  1: IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_0,			/*  2: IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0,		/*  3: IPL_VM */
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3|
-		MIPS_INT_MASK_4|
-		MIPS_INT_MASK_5,		/*  4: IPL_{SCHED,HIGH} */
+static const struct ipl_sr_map alchemy_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE] =		0,
+	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTBIO] =		MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
+	[IPL_SOFTSERIAL] =	MIPS_SOFT_INT_MASK,
+	[IPL_VM] =		MIPS_SOFT_INT_MASK|MIPS_INT_MASK_0,
+	[IPL_SCHED] =		MIPS_INT_MASK,
+	[IPL_HIGH] =		MIPS_INT_MASK,
+    },
 };
 
 #define	NIRQS		64
@@ -134,7 +130,7 @@ struct au_cpuintr {
 };
 
 struct au_cpuintr au_cpuintrs[NINTRS];
-const char *au_cpuintrnames[NINTRS] = {
+const char * const au_cpuintrnames[NINTRS] = {
 	"icu 0, req 0",
 	"icu 0, req 1",
 	"icu 1, req 0",
@@ -146,22 +142,21 @@ static bus_addr_t ic0_base, ic1_base;
 void
 au_intr_init(void)
 {
-	int			i;
-	struct au_chipdep	*chip;
+	ipl_sr_map = alchemy_ipl_sr_map;
 
-	for (i = 0; i < NINTRS; i++) {
+	for (size_t i = 0; i < NINTRS; i++) {
 		LIST_INIT(&au_cpuintrs[i].cintr_list);
 		evcnt_attach_dynamic(&au_cpuintrs[i].cintr_count,
 		    EVCNT_TYPE_INTR, NULL, "mips", au_cpuintrnames[i]);
 	}
 
-	chip = au_chipdep();
+	struct au_chipdep * const chip = au_chipdep();
 	KASSERT(chip != NULL);
 
 	ic0_base = chip->icus[0];
 	ic1_base = chip->icus[1];
 
-	for (i = 0; i < NIRQS; i++) {
+	for (size_t i = 0; i < NIRQS; i++) {
 		au_icu_intrtab[i].intr_refcnt = 0;
 		evcnt_attach_dynamic(&au_icu_intrtab[i].intr_count,
 		    EVCNT_TYPE_INTR, NULL, chip->name, chip->irqnames[i]);

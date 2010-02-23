@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.1.2.2 2010/02/15 07:36:04 matt Exp $	*/
+/*	$NetBSD: spl.S,v 1.1.2.3 2010/02/23 20:32:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -37,9 +37,23 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.1.2.2 2010/02/15 07:36:04 matt Exp $")
+RCSID("$NetBSD: spl.S,v 1.1.2.3 2010/02/23 20:32:33 matt Exp $")
 
 #include "assym.h"
+
+	.data
+	.globl	_C_LABEL(ipl_sr_map)
+	.type	_C_LABEL(ipl_sr_map),@object
+	.p2align INT_SCALESHIFT
+_C_LABEL(ipl_sr_map):
+	.word	0			/* IPL_NONE */
+	.word	MIPS_SOFT_INT_MASK_0	/* IPL_SOFT{CLOCK,BIO} */
+	.word	MIPS_SOFT_INT_MASK	/* IPL_SOFT{NET,SERIAL} */
+	.word	MIPS_INT_MASK		/* IPL_VM */
+	.word	MIPS_INT_MASK		/* IPL_SCHED */
+#if IPL_SCHED != IPL_HIGH
+	.word	MIPS_INT_MASK		/* IPL_HIGH */
+#endif
 
 	.text
 /*
@@ -93,7 +107,7 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 #endif /* PARANOIA */
 	#move	a1, zero			# avoid lookup on splx(IPL_NONE)
 	#beq	a0, zero, 1f			# skip fetch
-	PTR_LA	v1, _C_LABEL(ipl_sr_bits)	# get address of table
+	PTR_LA	v1, _C_LABEL(ipl_sr_map)	# get address of table
 	sll	a2, a0, INT_SCALESHIFT		# convert IPL to array offset
 	PTR_ADDU v1, a2				# add to table addr
 	INT_L	a1, (v1)			# load SR bits for this IPL
@@ -113,7 +127,7 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 #endif /* PARANOIA */
 2:
 #ifdef PARANOIA
-	PTR_LA	v1, _C_LABEL(ipl_sr_bits)	# get address of table
+	PTR_LA	v1, _C_LABEL(ipl_sr_map)	# get address of table
 	sll	a2, a0, INT_SCALESHIFT		# convert IPL to array offset
 	PTR_ADDU v1, a2				# add to table addr
 	INT_L	a1, (v1)			# load SR bits for this IPL
@@ -128,7 +142,7 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 END(_splsw_splx)
 
 STATIC_LEAF(_splsw_spl0)
-	INT_L	v1, _C_LABEL(ipl_sr_bits) + 4*IPL_NONE
+	INT_L	v1, _C_LABEL(ipl_sr_map) + 4*IPL_NONE
 	xor	v1, MIPS_INT_MASK | MIPS_SR_INT_IE # invert and or in IE
 	PTR_L	a3, L_CPU(MIPS_CURLWP)
 	mtc0	zero, MIPS_COP_0_CAUSE		# clear SOFT_INT bits
@@ -187,7 +201,7 @@ END(_splsw_clrsoftintr)
 
 STATIC_LEAF(_splsw_splraise)
 	move	a1, a0
-	PTR_LA	v1, _C_LABEL(ipl_sr_bits)
+	PTR_LA	v1, _C_LABEL(ipl_sr_map)
 	sll	a2, a0, INT_SCALESHIFT
 	PTR_ADDU v1, a2
 	INT_L	a0, (v1)
@@ -224,41 +238,41 @@ STATIC_XLEAF(_splsw_splhigh_noprof)
 END(_splsw_splhigh)
 
 STATIC_LEAF(_splsw_splsched)
-	INT_L	a0, _C_LABEL(ipl_sr_bits) + 4*IPL_SCHED
+	INT_L	a0, _C_LABEL(ipl_sr_map) + 4*IPL_SCHED
 	li	a1, IPL_SCHED
 	b	_splraise
 	 nop
 END(_splsw_splsched)
 
 STATIC_LEAF(_splsw_splvm)
-	INT_L	a0, _C_LABEL(ipl_sr_bits) + 4*IPL_VM
+	INT_L	a0, _C_LABEL(ipl_sr_map) + 4*IPL_VM
 	li	a1, IPL_VM
 	b	_splraise
 END(_splsw_splvm)
 
 STATIC_LEAF(_splsw_splsoftserial)
-	INT_L	a0, _C_LABEL(ipl_sr_bits) + 4*IPL_SOFTSERIAL
+	INT_L	a0, _C_LABEL(ipl_sr_map) + 4*IPL_SOFTSERIAL
 	li	a1, IPL_SOFTSERIAL
 	b	_splraise
 	 nop
 END(_splsw_splsoftserial)
 
 STATIC_LEAF(_splsw_splsoftnet)
-	INT_L	a0, _C_LABEL(ipl_sr_bits) + 4*IPL_SOFTNET
+	INT_L	a0, _C_LABEL(ipl_sr_map) + 4*IPL_SOFTNET
 	li	a1, IPL_SOFTNET
 	b	_splraise
 	 nop
 END(_splsw_splsoftnet)
 
 STATIC_LEAF(_splsw_splsoftbio)
-	INT_L	a0, _C_LABEL(ipl_sr_bits) + 4*IPL_SOFTBIO
+	INT_L	a0, _C_LABEL(ipl_sr_map) + 4*IPL_SOFTBIO
 	li	a1, IPL_SOFTBIO
 	b	_splraise
 	 nop
 END(_splsw_splsoftbio)
 
 STATIC_LEAF(_splsw_splsoftclock)
-	INT_L	a0, _C_LABEL(ipl_sr_bits) + 4*IPL_SOFTCLOCK
+	INT_L	a0, _C_LABEL(ipl_sr_map) + 4*IPL_SOFTCLOCK
 	li	a1, IPL_SOFTCLOCK
 	b	_splraise
 	 nop
@@ -273,7 +287,7 @@ STATIC_LEAF(_splsw_splintr)
 	beq	v1, zero, 2f			# quick exit if nothing pending
 
 	li	v0, IPL_VM			# start at IPL_VM
-	PTR_LA	ta3, _C_LABEL(ipl_sr_bits) + 4*IPL_VM
+	PTR_LA	ta3, _C_LABEL(ipl_sr_map) + 4*IPL_VM
 	INT_L	ta2, -4(ta3)			# load mask for IPL_SOFTSERIAL
 	xor	ta2, MIPS_INT_MASK		# invert
 	and	v1, ta2				# apply to pending bits
@@ -303,7 +317,7 @@ STATIC_LEAF(_splsw_splcheck)
 	mfc0	t0, MIPS_COP_0_STATUS		# get current status
 	and	t0, MIPS_INT_MASK		# just want INT bits
 
-	PTR_LA	t2, _C_LABEL(ipl_sr_bits)
+	PTR_LA	t2, _C_LABEL(ipl_sr_map)
 	sll	t1, INT_SCALESHIFT		# shift cpl to array index
 	PTR_ADDU t2, t1
 	INT_L	t3, (t2)			# load value

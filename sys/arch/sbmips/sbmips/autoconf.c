@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.6 2005/12/11 12:18:51 christos Exp $ */
+/* $NetBSD: autoconf.c,v 1.6.96.1 2010/02/23 20:24:37 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2005/12/11 12:18:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6.96.1 2010/02/23 20:24:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ cpu_configure(void)
 	if (config_rootfound("zbbus", NULL) == NULL)
 		panic("no zbbus found");
 
-	_splnone();
+	spl0();
 }
 
 void

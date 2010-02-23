@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.19.16.4 2010/02/16 08:13:57 matt Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.19.16.5 2010/02/23 20:24:37 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.19.16.4 2010/02/16 08:13:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.19.16.5 2010/02/23 20:24:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -63,13 +63,15 @@ __KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.19.16.4 2010/02/16 08:13:57 matt Ex
  * This is a mask of bits to clear in the SR when we go to a
  * given hardware interrupt priority level.
  */
-const uint32_t ipl_sr_bits[_IPL_N] = {
+static const struct ipl_sr_map malta_ipl_sr_map = {
+    .sr_bits = {
 	[IPL_NONE] =		0,
 	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
 	[IPL_VM] =		MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0,
 	[IPL_SCHED] =		MIPS_INT_MASK,
 	[IPL_HIGH] =		MIPS_INT_MASK,
+    },
 };
 
 struct malta_cpuintr {
@@ -102,10 +104,11 @@ static void	*malta_pciide_compat_intr_establish(void *, struct device *,
 void
 evbmips_intr_init(void)
 {
-	struct malta_config *mcp = &malta_configuration;
-	int i;
+	struct malta_config * const mcp = &malta_configuration;
 
-	for (i = 0; i < NINTRS; i++) {
+	ipl_sr_map = malta_ipl_sr_map;
+
+	for (size_t i = 0; i < NINTRS; i++) {
 		LIST_INIT(&malta_cpuintrs[i].cintr_list);
 		evcnt_attach_dynamic(&malta_cpuintrs[i].cintr_count,
 		    EVCNT_TYPE_INTR, NULL, "mips", malta_cpuintrnames[i]);

@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.h,v 1.7.28.2 2010/01/21 04:09:18 matt Exp $ */
+/* $NetBSD: systemsw.h,v 1.7.28.3 2010/02/23 20:24:37 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -39,7 +39,7 @@
 
 struct systemsw {
 	/* ordered to match likely locality. */
-	void	(*s_cpu_intr)(uint32_t, uint32_t, vaddr_t, uint32_t);
+	void	(*s_cpu_intr)(int, vaddr_t, uint32_t);
 
 	void	*s_clock_arg;
 	void	(*s_clock_init)(void *);

@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.9.36.3 2010/02/05 07:39:53 matt Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.9.36.4 2010/02/23 20:24:37 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9.36.3 2010/02/05 07:39:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9.36.4 2010/02/23 20:24:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,24 @@ __KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9.36.3 2010/02/05 07:39:53 matt Exp
 #include <mips/locore.h>
 
 /* XXX for now, this copes with one cpu only, and assumes it's CPU 0 */
+
+static const struct ipl_sr_map sb1250_ipl_sr_map = {
+    .sr_bits = {
+	[IPL_NONE]	=	0,
+	[IPL_SOFTCLOCK]	=	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTBIO]	=	MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET]	=	MIPS_SOFT_INT_MASK,
+	[IPL_SOFTSERIAL] =	MIPS_SOFT_INT_MASK,
+	[IPL_VM]	=	MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0,
+#if IPL_SCHED == IPL_HIGH
+	[IPL_SCHED]	=	MIPS_INT_MASK,
+#else
+	[IPL_SCHED]	=	MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0
+			  	    | MIPS_INT_MASK_1 | MIPS_INT_MASK_5,
+#endif
+	[IPL_HIGH]	=	MIPS_INT_MASK,
+    },
+};
 
 /* imr values corresponding to each pin */
 uint64_t ints_for_line[6];
@@ -72,7 +90,7 @@ static struct sb1250_ihand sb1250_ihands[64];		/* XXX */
 #define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
 #define	WRITE_REG(rp, val)	(mips3_sd((volatile uint64_t *)(rp), (val)))
 
-static void	sb1250_cpu_intr(uint32_t, uint32_t, vaddr_t, uint32_t);
+static void	sb1250_cpu_intr(int, vaddr_t, uint32_t);
 static void	*sb1250_intr_establish(u_int, u_int,
 		    void (*fun)(void *, uint32_t, vaddr_t), void *);
 
@@ -81,6 +99,8 @@ sb1250_icu_init(void)
 {
 	int i;
 	char *name;
+
+	ipl_sr_map = sb1250_ipl_sr_map;
 
 	/* zero out the list of used interrupts/lines */
 	memset(ints_for_line, 0, sizeof ints_for_line);
@@ -103,52 +123,43 @@ sb1250_icu_init(void)
 }
 
 static void
-sb1250_cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
+sb1250_cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 {
 	int i, j;
+	int ipl;
 	uint64_t sstatus;
 	uint32_t cycles;
-	struct cpu_info *ci;
+	uint32_t pending;
 
-	ci = curcpu();
-	ci->ci_idepth++;
 	uvmexp.intrs++;
 
-	/* XXX do something if 5? */
-	if (ipending & (MIPS_INT_MASK_0 << 5)) {
-		cycles = mips3_cp0_count_read();
-		mips3_cp0_compare_write(cycles - 1);
-		/* just leave the bugger disabled */
-	}
+	while (ppl < (ipl = splintr(&pending))) {
+		splx(ipl);
 
-	for (i = 4; i >= 0; i--) {
-		if (ipending & (MIPS_INT_MASK_0 << i)) {
+		/* XXX do something if 5? */
+		if (pending & MIPS_INT_MASK_5) {
+			cycles = mips3_cp0_count_read();
+			mips3_cp0_compare_write(cycles - 1);
+			/* just leave the bugger disabled */
+		}
 
-			sstatus = READ_REG(SB1250_I_IMR_SSTATUS);
-			sstatus &= ints_for_line[i];
-			for (j = 0; sstatus != 0 && j < 64; j++) {
-				if (sstatus & ((uint64_t)1 << j)) {
-					struct sb1250_ihand *ihp =
-					    &sb1250_ihands[j];
-					(*ihp->fun)(ihp->arg, status, pc);
-					sstatus &= ~((uint64_t)1 << j);
-					ihp->count.ev_count++;
+		for (i = 4; i >= 0; i--) {
+			if (pending & (MIPS_INT_MASK_0 << i)) {
+				sstatus = READ_REG(SB1250_I_IMR_SSTATUS);
+				sstatus &= ints_for_line[i];
+				for (j = 0; sstatus != 0 && j < 64; j++) {
+					if (sstatus & ((uint64_t)1 << j)) {
+						struct sb1250_ihand *ihp =
+						    &sb1250_ihands[j];
+						(*ihp->fun)(ihp->arg, status, pc);
+						sstatus &= ~((uint64_t)1 << j);
+						ihp->count.ev_count++;
+					}
 				}
 			}
 		}
-		cause &= ~(MIPS_INT_MASK_0 << i);
+		(void) splhigh();
 	}
-	ci->ci_idepth--;
-
-	/* Re-enable anything that we have processed. */
-	_splset(MIPS_SR_INT_IE | ((status & ~cause) & MIPS_HARD_INT_MASK));
-
-#ifdef __HAVE_FAST_SOFTINTS
-	ipending &= MIPS_SOFT_INT_MASK;
-	if (ipending == 0)
-		return;
-	softint_process(ipending);
-#endif
 }
 
 static void *
@@ -161,7 +172,7 @@ sb1250_intr_establish(u_int num, u_int ipl,
 
 	if (num >= 64)					/* XXX */
 	    panic("invalid interrupt number (0x%x)", num);
-	if (ipl >= _NIPL)
+	if (ipl >= _IPL_N)
 	    panic("invalid ipl (0x%x)", ipl);
 
 	if (sb1250_ihands[num].fun != NULL)
@@ -199,20 +210,4 @@ sb1250_intr_establish(u_int num, u_int ipl,
 	splx(s);
 
 	return (&sb1250_ihands[num]);
-}
-
-static const int ipl2spl_table[] = {
-	[IPL_NONE] = 0,
-	[IPL_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
-	[IPL_SOFTNET] = MIPS_SOFT_INT_MASK_1,
-	[IPL_VM] = _IMR_VM,
-	[IPL_SCHED] = _IMR_SCHED,
-	[IPL_HIGH] = _IMR_HIGH,
-};
-
-ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._spl = ipl2spl_table[ipl]};
 }
