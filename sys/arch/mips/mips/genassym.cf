@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44.12.17 2010/02/16 08:13:57 matt Exp $
+#	$NetBSD: genassym.cf,v 1.44.12.18 2010/02/23 20:33:48 matt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -288,6 +288,7 @@ define	CPU_INFO_PMAP_SEGBASE	offsetof(struct cpu_info, ci_pmap_segbase)
 define	CPU_INFO_DIVISOR_DELAY	offsetof(struct cpu_info, ci_divisor_delay)
 define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
+define	CPU_INFO_KSP_TLB_SLOT	offsetof(struct cpu_info, ci_ksp_tlb_slot)
 
 define	IPL_NONE		IPL_NONE
 define	IPL_SOFTCLOCK		IPL_SOFTCLOCK
@@ -311,6 +312,7 @@ define	TLBMASK_MASK		offsetof(struct tlbmask, tlb_mask)
 
 define	MO_CPU_ID		offsetof(struct mips_options, mips_cpu_id)
 define	MO_FPU_ID		offsetof(struct mips_options, mips_fpu_id)
+define	MO_NUM_TLB_ENTRIES	offsetof(struct mips_options, mips_num_tlb_entries)
 
 define	MCI_SDCACHE_SIZE	offsetof(struct mips_cache_info, mci_sdcache_size)
 

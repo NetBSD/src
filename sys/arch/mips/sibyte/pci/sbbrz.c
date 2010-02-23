@@ -1,4 +1,4 @@
-/* $NetBSD: sbbrz.c,v 1.1.2.4 2010/01/21 08:08:41 matt Exp $ */
+/* $NetBSD: sbbrz.c,v 1.1.2.5 2010/02/23 20:33:48 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -107,6 +107,7 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#include <mips/locore.h>
 #include <mips/sibyte/include/sb1250_regs.h>
 #include <mips/sibyte/include/sb1250_scd.h>
 #include <mips/sibyte/include/zbbusvar.h>

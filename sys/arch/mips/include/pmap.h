@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.8 2010/01/26 21:19:25 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.9 2010/02/23 20:33:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -126,6 +126,7 @@ struct tlbmask {
 	uint32_t tlb_mask;
 };
 
+#ifdef _KERNEL
 struct pmap;
 typedef bool (*pte_callback_t)(struct pmap *, vaddr_t, vaddr_t,
 	union pt_entry *, uintptr_t);
@@ -133,41 +134,84 @@ union pt_entry *pmap_pte_lookup(struct pmap *, vaddr_t);
 union pt_entry *pmap_pte_reserve(struct pmap *, vaddr_t, int);
 void pmap_pte_process(struct pmap *, vaddr_t, vaddr_t, pte_callback_t,
 	uintptr_t);
-void pmap_segtab_activate(struct lwp *);
+void pmap_segtab_activate(struct pmap *, struct lwp *);
 void pmap_segtab_alloc(struct pmap *);
 void pmap_segtab_free(struct pmap *);
+#endif /* _KERNEL */
 
 /*
- * Per cpu asid info
+ * Per TLB (normally same as CPU) asid info
  */
 struct pmap_asid_info {
-	uint32_t	pai_asid;	/* TLB address space tag */
+#ifdef MULTIPROCESSOR
+	LIST_ENTRY(pmap_asid_info) pai_link;
+#else
 	uint32_t	pai_asid_generation; /* its generation number */
-	struct tlb	*pai_tlb;
+#endif
+	uint32_t	pai_asid;	/* TLB address space tag */
 };
 
 #ifdef MULTIPROCESSOR
-#define	PMAP_PAI(pmap, ci)	(&(pmap)->pm_pai[(ci)->ci_cpuid])
+#define	TLBINFO_LOCK(ti)	mutex_spin_enter((ti)->ti_lock)
+#define	TLBINFO_UNLOCK(ti)	mutex_spin_exit((ti)->ti_lock)
+#define	PMAP_PAI_ASIDVALID_P(pai, ti)	\
+	((pai)->pai_asid != 0)
 #else
-#define	PMAP_PAI(pmap, ci)	(&(pmap)->pm_pai[0])
+#define	TLBINFO_LOCK(ti)	do { } while (/*CONSTCOND*/0)
+#define	TLBINFO_UNLOCK(ti)	do { } while (/*CONSTCOND*/0)
+#define	PMAP_PAI_ASIDVALID_P(pai, ti)	\
+	((pai)->pai_asid != 0 \
+	 && (pai)->pai_asid_generation == (ti)->ti_asid_generation)
 #endif
-#define	PMAP_PAI_ASIDVALID_P(pai, ci)	\
-		((pai)->pai_asid != (ci)->ci_pmap_asid_reserved \
-		 && (pai)->pai_asid_generation == (ci)->ci_pmap_asid_generation)
+#define	PMAP_PAI(pmap, ti)	(&(pmap)->pm_pai[tlbinfo_index(ti)])
+#define	PAI_PMAP(pai, ti)	\
+	((pmap_t)((intptr_t)(pai) \
+	    - offsetof(struct pmap, pm_pai[tlbinfo_index(ti)])))
 
 /*
  * Machine dependent pmap structure.
  */
 typedef struct pmap {
-	kmutex_t		pm_lock;	/* lock on pmap */
-	struct segtab		*pm_segtab;	/* pointers to pages of PTEs */
 #ifdef MULTIPROCESSOR
-	uint32_t		pm_cpus;	/* pmap was active on ... */
+	volatile uint32_t	pm_active;	/* pmap was active on ... */
+	volatile uint32_t	pm_onproc;	/* pmap is active on ... */
+	volatile u_int		pm_shootdown_pending;
 #endif
-	int			pm_count;	/* pmap reference count */
+	struct segtab		*pm_segtab;	/* pointers to pages of PTEs */
+	u_int			pm_count;	/* pmap reference count */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	struct pmap_asid_info	pm_pai[1];
 } *pmap_t;
+
+enum tlb_invalidate_op {
+	TLBINV_NOBODY=0,
+	TLBINV_ONE=1,
+	TLBINV_ALLUSER=2,
+	TLBINV_ALLKERNEL=3,
+	TLBINV_ALL=4
+};
+
+struct pmap_tlb_info {
+	uint32_t ti_asid_hint;		/* probable next ASID to use */
+#ifdef MULTIPROCESSOR
+	uint32_t ti_asids_free;		/* # of ASIDs free */
+	u_int ti_asid_bitmap[MIPS_TLB_NUM_PIDS / (sizeof(u_int) * 8)];
+	kmutex_t *ti_lock;
+	LIST_HEAD(, pmap_asid_info) ti_pais; /* list of active ASIDs */
+	pmap_t ti_victim;
+	uint32_t ti_cpu_mask;		/* bitmask of CPUs sharing this TLB */
+	enum tlb_invalidate_op ti_tlbinvop;
+	u_int ti_index;
+#define tlbinfo_index(ti)	((ti)->ti_index)
+#define	tlbinfo_noasids_p(ti)	((ti)->ti_asids_free == 0)
+#else
+#define tlbinfo_index(ti)	(0)
+#define	tlbinfo_noasids_p(ti)	((ti)->ti_asid_hint == 0)
+	uint32_t ti_asid_generation;
+#endif /* MULTIPROCESSOR */
+	u_int ti_wired;			/* # of wired TLB entries */
+};
+
 
 #ifdef	_KERNEL
 
@@ -179,6 +223,7 @@ struct pmap_kernel {
 };
 
 extern struct pmap_kernel kernel_pmap_store;
+extern struct pmap_tlb_info pmap_tlb_info;
 extern paddr_t mips_avail_start;
 extern paddr_t mips_avail_end;
 extern vaddr_t mips_virtual_end;
@@ -204,10 +249,19 @@ void	pmap_set_modified(paddr_t);
 void	pmap_procwr(struct proc *, vaddr_t, size_t);
 #define	PMAP_NEED_PROCWR
 
-uint32_t pmap_tlb_asid_alloc(pmap_t pmap, struct cpu_info *ci);
-void	pmap_tlb_invalidate_asid(pmap_t pmap);
-int	pmap_tlb_update(pmap_t pmap, vaddr_t, uint32_t);
+#ifdef MULTIPROCESSOR
+void	pmap_tlb_shootdown_process(void);
+bool	pmap_tlb_shootdown_bystanders(pmap_t pmap);
+void	pmap_tlb_info_attach(struct pmap_tlb_info *, struct cpu_info *);
+void	pmap_tlb_info_init(struct pmap_tlb_info *);
+#endif
+void	pmap_tlb_asid_acquire(pmap_t pmap, struct lwp *l);
+void	pmap_tlb_asid_deactivate(pmap_t pmap);
+void	pmap_tlb_asid_release_all(pmap_t pmap);
+int	pmap_tlb_update_addr(pmap_t pmap, vaddr_t, uint32_t, bool);
 void	pmap_tlb_invalidate_addr(pmap_t pmap, vaddr_t);
+
+uint16_t pmap_pvlist_lock(struct vm_page *, bool);
 
 /*
  * pmap_prefer() helps reduce virtual-coherency exceptions in

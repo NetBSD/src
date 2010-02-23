@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.43.36.13 2010/02/05 07:36:51 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.43.36.14 2010/02/23 20:33:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -78,6 +78,7 @@ typedef __uint32_t	vsize_t;
 #endif
 #endif
 
+typedef int		mips_prid_t;
 /* Make sure this is signed; we need pointers to be sign-extended. */
 #if defined(__mips_o64) || defined(__mips_o32)
 typedef	__uint32_t	fpregister_t;
@@ -135,6 +136,7 @@ typedef	volatile int		__cpu_simple_lock_t;
 #define	__HAVE_AST_PERPROC
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_PROCESS_XFPREGS
+#define __HAVE_MD_CPU_OFFLINE
 
 #if !defined(__mips_o32) || defined(MIPS3_PLUS)
 #define	__HAVE_CPU_COUNTER

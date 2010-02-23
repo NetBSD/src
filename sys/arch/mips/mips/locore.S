@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167.38.14 2010/02/16 08:03:14 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.167.38.15 2010/02/23 20:33:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -241,35 +241,34 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	 move	a0, MIPS_CURLWP
 
 	PTR_L	t2, L_CPU(MIPS_CURLWP)
+	nop					# patchable load delay slot
 	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(t2)
 
 	/* Check for restartable atomic sequences (RAS) */
-	PTR_L	t1, L_PROC(MIPS_CURLWP)
-	PTR_L	a0, L_ADDR(MIPS_CURLWP)
-	PTR_L	v1, P_RASLIST(t1)
-	PTR_ADDU t0, a0, USPACE - TF_SIZ
-	beq	v1, zero, 1f
-	nop
-	move	a0, t1
-	jal	_C_LABEL(ras_lookup)
-	PTR_L	a1, TF_REG_EPC(t0)
-	PTR_L	a0, L_ADDR(MIPS_CURLWP)
-	li	v1, -1
-	beq	v1, v0, 1f
-	PTR_ADDU t0, a0, USPACE - TF_SIZ
-	PTR_S	v0, TF_REG_EPC(t0)
+	PTR_L	a0, L_PROC(MIPS_CURLWP)		# argument to ras_lookup
+	PTR_L	s5, L_ADDR(MIPS_CURLWP)
+	nop					# patchable load deay slot
+	PTR_L	v1, P_RASLIST(a0)		# get raslist
+	beqz	v1, 1f				#   skip call if empty
+	 nop
+	jal	_C_LABEL(ras_lookup)		# ras_lookup(p, pc)
+	 PTR_L	a1, (USPACE - TF_SIZ + TF_REG_EPC)(s5)
+	PTR_ADDU v1, v0, 1
+	beqz	v1, 1f				# branch if v0 + 1 == 0
+	 nop
+	PTR_S	v0, (USPACE - TF_SIZ + TF_REG_EPC)(s5)
 1:
 	/* New context is now active */
-	PTR_L	a0, L_ADDR(MIPS_CURLWP)
 	move	v0, s6				# Save return value
 	REG_PROLOGUE
-	REG_L	t0, U_PCB_CONTEXT+SF_REG_SR(a0)
-#ifdef PARANOIA
+	REG_L	t0, U_PCB_CONTEXT+SF_REG_SR(s5)
+#ifdef PARANOID_LOOP
 	and	t1, t0, MIPS_SR_INT_IE
 2:	beqz	t1, 2b			# status reg should not differ
 	 nop
-#endif /* PARANOIA */
+#endif /* PARANOID_LOOP */
 	DYNAMIC_STATUS_MASK(t0,ra)
+	move	a0, s5
 	REG_L	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
 	REG_L	s0, U_PCB_CONTEXT+SF_REG_S0(a0)
 	REG_L	s1, U_PCB_CONTEXT+SF_REG_S1(a0)
@@ -340,11 +339,11 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 	 * to.
  	 */
 	mfc0	t1, MIPS_COP_0_STATUS
-#ifdef PARANOIA
+#ifdef PARANOID_LOOP
 	and	v0, t1, MIPS_SR_INT_IE		# assert interrupts are on
 1:	beqz	v0, 1b
 	 nop
-#endif /* PARANOIA */
+#endif /* PARANOID_LOOP */
 	PTR_LA	t2, softint_cleanup		# if softint blocks, return here
 	REG_PROLOGUE
 	REG_S	s0, U_PCB_CONTEXT+SF_REG_S0(t0)
@@ -370,10 +369,12 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 	 * state and we use a private KSEG0/XKPHYS mapped stack so don't have
 	 * to do TLB manipulation.
 	 */
-	move	s0, MIPS_CURLWP
-	PTR_L	s1, L_CPU(MIPS_CURLWP)			# get curcpu()
+	move	s0, MIPS_CURLWP				# remember current lwp
 	move	MIPS_CURLWP, a0				# switch to softint lwp
+	PTR_L	s1, L_CPU(MIPS_CURLWP)			# get curcpu()
+	nop		# patchable load delay slot
 	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(s1)	#    ...
+	nop		# patchable slot
 	move	s2, sp					# remember sp
 	move	s3, t0					# remember curpcb
 
@@ -388,7 +389,9 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 
 	REG_PROLOGUE
 	REG_L	s0, U_PCB_CONTEXT+SF_REG_S0(s3)		# restore the saved
+	nop			# patchable delay slot
 	REG_L	s1, U_PCB_CONTEXT+SF_REG_S1(s3)		#    registers that we
+	nop			# patchable delay slot
 	REG_L	s2, U_PCB_CONTEXT+SF_REG_S2(s3)		#    used
 	REG_L	s3, U_PCB_CONTEXT+SF_REG_S3(s3)
 	REG_EPILOGUE

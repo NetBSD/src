@@ -1,4 +1,4 @@
-/* $NetBSD: mips_fputrap.c,v 1.5.66.4 2010/02/01 04:16:19 matt Exp $ */
+/* $NetBSD: mips_fputrap.c,v 1.5.66.5 2010/02/23 20:33:48 matt Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -31,8 +31,10 @@
 #include <sys/proc.h>
 #include <sys/signal.h>
 #include <sys/siginfo.h>
+
 #include <mips/cpuregs.h>
 #include <mips/regnum.h>
+#include <mips/locore.h>
 
 #if defined(FPEMUL) || !defined(NOFPU)
 void mips_fpuexcept(struct lwp *, unsigned int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41.28.11 2010/02/06 05:28:30 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.28.12 2010/02/23 20:33:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -237,12 +237,23 @@ struct vm_page_md {
 	struct pv_entry pvh_first;	/* pv_entry first */
 #ifdef MULTIPROCESSOR
 	volatile u_int pvh_attrs;	/* page attributes */
-	__cpu_simple_lock_t pvh_slock;	/* pv list lock */
-#define	VM_MDPAGE_SLOCK_INIT(pg)	\
-	__cpu_simple_lock_clear(&(pg)->mdpage.pvh_slock)
+	kmutex_t *pvh_lock;		/* pv list lock */
+#define	VM_PAGE_PVLIST_LOCK_INIT(pg) 		\
+	(pg)->mdpage.pvh_lock = NULL
+#define	VM_PAGE_PVLIST_LOCKED_P(pg)		\
+	(mutex_owner((pg)->mdpage.pvh_lock) != 0)
+#define	VM_PAGE_PVLIST_LOCK(pg, list_change)	\
+	pmap_pvlist_lock(pg, list_change)
+#define	VM_PAGE_PVLIST_UNLOCK(pg)		\
+	mutex_spin_exit((pg)->mdpage.pvh_lock);
+#define	VM_PAGE_PVLIST_GEN(pg)		((uint16_t)(pg->mdpage.pvh_attrs >> 16))
 #else
 	u_int pvh_attrs;		/* page attributes */
-#define	VM_MDPAGE_SLOCK_INIT(pg)	do { } while (/*CONSTCOND*/ 0)
+#define	VM_PAGE_PVLIST_LOCK_INIT(pg)	do { } while (/*CONSTCOND*/ 0)
+#define	VM_PAGE_PVLIST_LOCKED_P(pg)	true
+#define	VM_PAGE_PVLIST_LOCK(pg, lc)	(0)
+#define	VM_PAGE_PVLIST_UNLOCK(pg)	do { } while (/*CONSTCOND*/ 0)
+#define	VM_PAGE_PVLIST_GEN(pg)		(0)
 #endif
 };
 
@@ -251,7 +262,7 @@ do {									\
 	(pg)->mdpage.pvh_first.pv_next = NULL;				\
 	(pg)->mdpage.pvh_first.pv_pmap = NULL;				\
 	(pg)->mdpage.pvh_first.pv_va = (pg)->phys_addr;			\
-	VM_MDPAGE_SLOCK_INIT(pg);					\
+	VM_PAGE_PVLIST_LOCK_INIT(pg);					\
 	(pg)->mdpage.pvh_attrs = 0;					\
 } while (/* CONSTCOND */ 0)
 
