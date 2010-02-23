@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.64.26.1.2.8 2010/02/15 07:36:03 matt Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.64.26.1.2.9 2010/02/23 20:33:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1281,6 +1281,9 @@ _C_LABEL(mips1_locoresw):
 	.word _C_LABEL(nullop)			# idle
 	.word _C_LABEL(mips1_setfunc_trampoline)
 	.word _C_LABEL(nullop)			# boot secondary processors
+	.word _C_LABEL(nullop)			# send ipi
+	.word _C_LABEL(nullop)			# spare
+	.word _C_LABEL(nullop)			# spare
 
 mips1_excpt_sw:
 	####

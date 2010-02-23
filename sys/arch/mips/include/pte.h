@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.19.18.2 2010/01/26 21:19:25 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.19.18.3 2010/02/23 20:33:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 #include <mips/cpu.h>
 
 typedef union pt_entry {
-	unsigned int	 pt_entry;	/* for copying, etc. */
+	uint32_t	 pt_entry;	/* for copying, etc. */
 	struct mips1_pte pt_mips1_pte;	/* for getting to bits by name */
 	struct mips3_pte pt_mips3_pte;
 } pt_entry_t;

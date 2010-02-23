@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.1.2.4 2010/01/26 21:19:25 matt Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.1.2.5 2010/02/23 20:33:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.1.2.4 2010/01/26 21:19:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.1.2.5 2010/02/23 20:33:48 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -306,11 +306,11 @@ pmap_segtab_free(pmap_t pmap)
  *	Make a new pmap (vmspace) active for the given process.
  */
 void
-pmap_segtab_activate(struct lwp *l)
+pmap_segtab_activate(struct pmap *pm, struct lwp *l)
 {
 	if (l == curlwp) {
-		pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
-		l->l_cpu->ci_pmap_segbase = pmap->pm_segtab;
+		KASSERT(pm == l->l_proc->p_vmspace->vm_map.pmap);
+		l->l_cpu->ci_pmap_segbase = pm->pm_segtab;
 	}
 }
 
@@ -380,7 +380,20 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 #else
 		pte = (pt_entry_t *)MIPS_PHYS_TO_KSEG0(pa);
 #endif
+#ifdef MULTIPROCESSOR
+		pt_entry_t *opte = atomic_cas_ptr(
+		    &stp->seg_tab[va >> SEGSHIFT], NULL, pte);
+		/*
+		 * If another thread allocated the segtab needed for this va
+		 * free the page we just allocated.
+		 */
+		if (__predict_false(opte != NULL)) {
+			uvm_pagefree(pg);
+			pte = opte;
+		}
+#else
 		stp->seg_tab[va >> SEGSHIFT] = pte;
+#endif
 
 		pte += (va >> PGSHIFT) & (NPTEPG - 1);
 #ifdef PARANOIADIAG

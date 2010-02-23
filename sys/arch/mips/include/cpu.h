@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.20 2010/02/16 08:13:57 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.21 2010/02/23 20:33:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -137,21 +137,18 @@ struct cpu_info {
 	int ci_idepth;			/* hardware interrupt depth */
 	int ci_cpl;			/* current [interrupt] priority level */
 	device_t ci_dev;		/* owning device */
-	vaddr_t ci_ebase;		/* VA of exception base */
-	paddr_t ci_ebase_pa;		/* PA of exception base */
 	u_long ci_cctr_freq;		/* cycle counter frequency */
 	struct lwp *ci_softlwps[SOFTINT_COUNT];
 #define	ci_softints	ci_data.cpu_softints
 	/*
 	 * Per-cpu pmap information
 	 */
+	uint32_t ci_ksp_tlb_slot;	/* reserved tlb entry for kernel stack */
+	struct pmap_tlb_info *ci_tlb_info;
+	struct pmap *ci_curpm;		/* current pmap */
 	struct segtab *ci_pmap_segbase;
 	vaddr_t ci_pmap_srcbase;	/* starting VA of ephemeral src space */
 	vaddr_t ci_pmap_dstbase;	/* starting VA of ephemeral dst space */
-	uint32_t ci_pmap_asid_next;	/* next asid to be assigned */
-	uint32_t ci_pmap_asid_generation; /* current asid generation */
-	uint32_t ci_pmap_asid_reserved;	/* base of ASID space */
-	uint32_t ci_pmap_asid_max;	/* max (exclusive) assignable asid */
 };
 
 #define	CPU_INFO_ITERATOR		int
@@ -217,6 +214,7 @@ struct cpu_info {
 #define MIPS_CURLWP             $24
 #define MIPS_CURLWP_QUOTED      "$24"
 #define MIPS_CURLWP_LABEL	_L_T8
+#define MIPS_CURLWP_REG		_R_T8
 #define TF_MIPS_CURLWP(x)	TF_REG_T8(x)
 
 #ifndef _LOCORE
@@ -230,12 +228,11 @@ register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
 #define	fpcurlwp		(curcpu()->ci_fpcurlwp)
 #ifdef MULTIPROCESSOR
 #define	cpu_number()		(curcpu()->ci_cpuid)
+#define	CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
 #else
 #define	cpu_number()		(0)
 #endif
 #define	cpu_proc_fork(p1, p2)	((void)((p2)->p_md.md_abi = (p1)->p_md.md_abi))
-
-#include <mips/locore.h>
 
 /* XXX simonb
  * Should the following be in a cpu_info type structure?
@@ -384,6 +381,11 @@ extern struct mips_options mips_options;
  * referenced in generic code
  */
 #define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
+
+/*
+ * Send an inter-processor interupt to another CPU.
+ */
+int cpu_send_ipi(struct cpu_info *, int);
 
 /*
  * cpu_intr(ppl, pc, status);  (most state needed by clockframe)

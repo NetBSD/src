@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.34 2010/02/16 08:13:57 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.35 2010/02/23 20:33:48 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.34 2010/02/16 08:13:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.35 2010/02/23 20:33:48 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -224,10 +224,7 @@ struct mips_options mips_options = {
 struct cpu_info cpu_info_store = {
 	.ci_curlwp = &lwp0,
 	.ci_fpcurlwp = &lwp0,
-	.ci_ebase = MIPS_KSEG0_START,
-	.ci_pmap_asid_max =
-	    __builtin_constant_p(MIPS_TLB_NUM_PIDS) ? MIPS_TLB_NUM_PIDS : 0,
-	.ci_pmap_asid_next = 1,
+	.ci_tlb_info = &pmap_tlb_info,
 	.ci_pmap_segbase = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
 	.ci_cpl = IPL_HIGH,
 };
@@ -528,12 +525,14 @@ static const char * const cidnames[] = {
  * MIPS-I locore function vector
  */
 static const mips_locore_jumpvec_t mips1_locore_vec = {
-	mips1_tlb_set_asid,
-	mips1_tlb_invalidate_asids,
-	mips1_tlb_invalidate_addr,
-	mips1_tlb_update,
-	mips1_tlb_read_indexed,
-	mips1_wbflush,
+	.ljv_tlb_set_asid		= mips1_tlb_set_asid,
+	.ljv_tlb_invalidate_addr	= mips1_tlb_invalidate_addr,
+	.ljv_tlb_invalidate_all		= mips1_tlb_invalidate_all,
+	.ljv_tlb_invalidate_asids	= mips1_tlb_invalidate_asids,
+	.ljv_tlb_invalidate_globals	= mips1_tlb_invalidate_globals,
+	.ljv_tlb_update			= mips1_tlb_update,
+	.ljv_tlb_read_indexed		= mips1_tlb_read_indexed,
+	.ljv_wbflush			= mips1_wbflush,
 };
 
 static void
@@ -574,12 +573,14 @@ mips1_vector_init(void)
  * MIPS III locore function vector
  */
 static const mips_locore_jumpvec_t mips3_locore_vec = {
-	mips3_tlb_set_asid,
-	mips3_tlb_invalidate_asids,
-	mips3_tlb_invalidate_addr,
-	mips3_tlb_update,
-	mips3_tlb_read_indexed,
-	mips3_wbflush,
+	.ljv_tlb_set_asid		= mips3_tlb_set_asid,
+	.ljv_tlb_invalidate_addr	= mips3_tlb_invalidate_addr,
+	.ljv_tlb_invalidate_all		= mips3_tlb_invalidate_all,
+	.ljv_tlb_invalidate_asids	= mips3_tlb_invalidate_asids,
+	.ljv_tlb_invalidate_globals	= mips3_tlb_invalidate_globals,
+	.ljv_tlb_update			= mips3_tlb_update,
+	.ljv_tlb_read_indexed		= mips3_tlb_read_indexed,
+	.ljv_wbflush			= mips3_wbflush,
 };
 
 static void
@@ -634,12 +635,14 @@ mips3_vector_init(void)
  * Same as MIPS32 - all MMU registers are 32bit.
  */
 static const mips_locore_jumpvec_t r5900_locore_vec = {
-	mips5900_tlb_set_asid,
-	mips5900_tlb_invalidate_asids,
-	mips5900_tlb_invalidate_addr,
-	mips5900_tlb_update,
-	mips5900_tlb_read_indexed,
-	mips5900_wbflush,
+	.ljv_tlb_set_asid		= mips5900_tlb_set_asid,
+	.ljv_tlb_invalidate_addr	= mips5900_tlb_invalidate_addr,
+	.ljv_tlb_invalidate_all		= mips5900_tlb_invalidate_all,
+	.ljv_tlb_invalidate_asids	= mips5900_tlb_invalidate_asids,
+	.ljv_tlb_invalidate_globals	= mips5900_tlb_invalidate_globals,
+	.ljv_tlb_update			= mips5900_tlb_update,
+	.ljv_tlb_read_indexed		= mips5900_tlb_read_indexed,
+	.ljv_wbflush			= mips5900_wbflush,
 };
 
 static void
@@ -682,12 +685,14 @@ r5900_vector_init(void)
  * MIPS32 locore function vector
  */
 static const mips_locore_jumpvec_t mips32_locore_vec = {
-	mips32_tlb_set_asid,
-	mips32_tlb_invalidate_asids,
-	mips32_tlb_invalidate_addr,
-	mips32_tlb_update,
-	mips32_tlb_read_indexed,
-	mips32_wbflush,
+	.ljv_tlb_set_asid		= mips32_tlb_set_asid,
+	.ljv_tlb_invalidate_addr	= mips32_tlb_invalidate_addr,
+	.ljv_tlb_invalidate_all		= mips32_tlb_invalidate_all,
+	.ljv_tlb_invalidate_asids	= mips32_tlb_invalidate_asids,
+	.ljv_tlb_invalidate_globals	= mips32_tlb_invalidate_globals,
+	.ljv_tlb_update			= mips32_tlb_update,
+	.ljv_tlb_read_indexed		= mips32_tlb_read_indexed,
+	.ljv_wbflush			= mips32_wbflush,
 };
 
 static void
@@ -743,12 +748,14 @@ mips32_vector_init(void)
  * MIPS64 locore function vector
  */
 const mips_locore_jumpvec_t mips64_locore_vec = {
-	mips64_tlb_set_asid,
-	mips64_tlb_invalidate_asids,
-	mips64_tlb_invalidate_addr,
-	mips64_tlb_update,
-	mips64_tlb_read_indexed,
-	mips64_wbflush,
+	.ljv_tlb_set_asid		= mips64_tlb_set_asid,
+	.ljv_tlb_invalidate_addr	= mips64_tlb_invalidate_addr,
+	.ljv_tlb_invalidate_all		= mips64_tlb_invalidate_all,
+	.ljv_tlb_invalidate_asids	= mips64_tlb_invalidate_asids,
+	.ljv_tlb_invalidate_globals	= mips64_tlb_invalidate_globals,
+	.ljv_tlb_update			= mips64_tlb_update,
+	.ljv_tlb_read_indexed		= mips64_tlb_read_indexed,
+	.ljv_wbflush			= mips64_wbflush,
 };
 
 static void
@@ -955,9 +962,7 @@ mips_vector_init(void)
 	switch (opts->mips_cpu_arch) {
 #if defined(MIPS1)
 	case CPU_ARCH_MIPS1:
-		if (!__builtin_constant_p(MIPS_TLB_NUM_PIDS))
-			curcpu()->ci_pmap_asid_max = MIPS_TLB_NUM_PIDS;
-		mips1_tlb_invalidate_all(opts->mips_num_tlb_entries);
+		mips1_tlb_invalidate_all();
 		mips1_vector_init();
 		mips_locoresw = mips1_locoresw;
 		break;
@@ -969,8 +974,8 @@ mips_vector_init(void)
 #if defined(MIPS3_5900)	/* XXX */
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
-		mips5900_tlb_invalidate_all(opts->mips_num_tlb_entries);
-		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
+		mips5900_tlb_invalidate_all();
+		mips3_cp0_wired_write(pmap_tlb_info.ti_wired);
 		r5900_vector_init();
 		mips_locoresw = mips5900_locoresw;
 #else /* MIPS3_5900 */
@@ -981,8 +986,8 @@ mips_vector_init(void)
 #endif
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
-		mips3_tlb_invalidate_all(opts->mips_num_tlb_entries);
-		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
+		mips3_tlb_invalidate_all();
+		mips3_cp0_wired_write(pmap_tlb_info.ti_wired);
 		mips3_vector_init();
 		mips_locoresw = mips3_locoresw;
 #endif /* MIPS3_5900 */
@@ -993,8 +998,8 @@ mips_vector_init(void)
 		mips3_tlb_probe();
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
-		mips32_tlb_invalidate_all(opts->mips_num_tlb_entries);
-		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
+		mips32_tlb_invalidate_all();
+		mips3_cp0_wired_write(pmap_tlb_info.ti_wired);
 		mips32_vector_init();
 		mips_locoresw = mips32_locoresw;
 		break;
@@ -1004,8 +1009,8 @@ mips_vector_init(void)
 		mips3_tlb_probe();
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
-		mips64_tlb_invalidate_all(opts->mips_num_tlb_entries);
-		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
+		mips64_tlb_invalidate_all();
+		mips3_cp0_wired_write(pmap_tlb_info.ti_wired);
 		mips64_vector_init();
 		mips_locoresw = mips64_locoresw;
 		break;
@@ -1040,8 +1045,6 @@ static void
 mips3_tlb_probe(void)
 {
 	struct mips_options * const opts = &mips_options;
-	if (!__builtin_constant_p(MIPS_TLB_NUM_PIDS))
-		curcpu()->ci_pmap_asid_max = MIPS_TLB_NUM_PIDS;
 	opts->mips3_tlb_pg_mask = mips_cp0_tlb_page_mask_probe();
 	if (CPUIS64BITS) {
 		opts->mips3_tlb_vpn_mask = mips_cp0_tlb_entry_hi_probe();
@@ -2310,14 +2313,6 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	return (0);
 }
 
-#ifdef MULTIPROCESSOR
-static void
-mips_send_ipi(struct cpu_info *ci, int ipi)
-{
-	/* do nothing */
-}
-#endif
-
 void
 cpu_need_resched(struct cpu_info *ci, int flags)
 {
@@ -2347,7 +2342,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 		 * interrupt.  So give it one.
 		 */
 		if (__predict_false(ci != cur_ci))
-			mips_send_ipi(ci, 0);
+			cpu_send_ipi(ci, IPI_NOP);
 #endif
 		return;
 	}
@@ -2364,7 +2359,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 		if (ci == cur_ci) {
 			softint_trigger(SOFTINT_KPREEMPT);
                 } else {
-                        mips_send_ipi(ci, 0);
+                        cpu_send_ipi(ci, IPI_KPREEMPT);
                 }
 #endif
 		return;
@@ -2372,7 +2367,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 	l->l_md.md_astpending = 1;		/* force call to ast() */
 #ifdef MULTIPROCESSOR
 	if (ci != cur_ci && (flags & RESCHED_IMMED)) {
-		mips_send_ipi(ci, 0);
+		cpu_send_ipi(ci, IPI_NOP);
 	} 
 #endif
 }
@@ -2473,26 +2468,43 @@ cpu_intr_p(void)
 }
 
 #ifdef MULTIPROCESSOR
+int
+cpu_send_ipi(struct cpu_info *ci, int tag)
+{
+
+	return (*mips_locoresw.lsw_send_ipi)(ci, tag);
+}
+
 void
 cpu_boot_secondary_processors(void)
 {
+	if (pmap_tlb_info.ti_wired != MIPS3_TLB_WIRED_UPAGES)
+		mips3_cp0_wired_write(pmap_tlb_info.ti_wired);
 
 	(*mips_locoresw.lsw_boot_secondary_processors)();
 }
-#endif
+#endif /* MULTIPROCESSOR */
+
+void
+cpu_offline_md(void)
+{
+
+	(*mips_locoresw.lsw_cpu_offline_md)();
+}
 
 #ifdef PARANOIA
 void
 std_splsw_test(void)
 {
 	struct cpu_info * const ci = curcpu();
+	const uint32_t * const sr_map = ipl_sr_map.sr_bits;
 	uint32_t status = mips_cp0_status_read();
 	uint32_t sr_bits;
 	int s;
 
 	KASSERT((status & MIPS_SR_INT_IE) == 0);
 
-	sr_bits = ipl_sr_bits[IPL_NONE];
+	sr_bits = sr_map[IPL_NONE];
 
 	splx(IPL_NONE);
 	status = mips_cp0_status_read() & MIPS_INT_MASK;
@@ -2501,43 +2513,43 @@ std_splsw_test(void)
 
 	s = splsoftclock();
 	status = mips_cp0_status_read() & MIPS_INT_MASK;
-	KASSERT((status ^ ipl_sr_bits[IPL_SOFTCLOCK]) == MIPS_INT_MASK);
+	KASSERT((status ^ sr_map[IPL_SOFTCLOCK]) == MIPS_INT_MASK);
 	KASSERT(ci->ci_cpl == IPL_SOFTCLOCK);
 	KASSERT(s == IPL_NONE);
 
 	s = splsoftbio();
 	status = mips_cp0_status_read() & MIPS_INT_MASK;
-	KASSERT((status ^ ipl_sr_bits[IPL_SOFTBIO]) == MIPS_INT_MASK);
+	KASSERT((status ^ sr_map[IPL_SOFTBIO]) == MIPS_INT_MASK);
 	KASSERT(ci->ci_cpl == IPL_SOFTBIO);
 	KASSERT(s == IPL_SOFTCLOCK);
 
 	s = splsoftnet();
 	status = mips_cp0_status_read() & MIPS_INT_MASK;
-	KASSERT((status ^ ipl_sr_bits[IPL_SOFTNET]) == MIPS_INT_MASK);
+	KASSERT((status ^ sr_map[IPL_SOFTNET]) == MIPS_INT_MASK);
 	KASSERT(ci->ci_cpl == IPL_SOFTNET);
 	KASSERT(s == IPL_SOFTBIO);
 
 	s = splsoftserial();
 	status = mips_cp0_status_read() & MIPS_INT_MASK;
-	KASSERT((status ^ ipl_sr_bits[IPL_SOFTSERIAL]) == MIPS_INT_MASK);
+	KASSERT((status ^ sr_map[IPL_SOFTSERIAL]) == MIPS_INT_MASK);
 	KASSERT(ci->ci_cpl == IPL_SOFTSERIAL);
 	KASSERT(s == IPL_SOFTNET);
 
 	s = splvm();
 	status = mips_cp0_status_read() & MIPS_INT_MASK;
-	KASSERT((status ^ ipl_sr_bits[IPL_VM]) == MIPS_INT_MASK);
+	KASSERT((status ^ sr_map[IPL_VM]) == MIPS_INT_MASK);
 	KASSERT(ci->ci_cpl == IPL_VM);
 	KASSERT(s == IPL_SOFTSERIAL);
 
 	s = splsched();
 	status = mips_cp0_status_read() & MIPS_INT_MASK;
-	KASSERT((status ^ ipl_sr_bits[IPL_SCHED]) == MIPS_INT_MASK);
+	KASSERT((status ^ sr_map[IPL_SCHED]) == MIPS_INT_MASK);
 	KASSERT(ci->ci_cpl == IPL_SCHED);
 	KASSERT(s == IPL_VM);
 
 	s = splhigh();
 	status = mips_cp0_status_read() & MIPS_INT_MASK;
-	KASSERT((status ^ ipl_sr_bits[IPL_HIGH]) == MIPS_INT_MASK);
+	KASSERT((status ^ sr_map[IPL_HIGH]) == MIPS_INT_MASK);
 	KASSERT(ci->ci_cpl == IPL_HIGH);
 	KASSERT(s == IPL_SCHED);
 
@@ -2551,27 +2563,27 @@ std_splsw_test(void)
 		 * As IPL increases, more intrs may be masked but no intrs
 		 * may become unmasked.
 		 */
-		KASSERT((ipl_sr_bits[r] & sr_bits) == sr_bits);
-		sr_bits |= ipl_sr_bits[r];
+		KASSERT((sr_map[r] & sr_bits) == sr_bits);
+		sr_bits |= sr_map[r];
 		s = splraise(r);
 		KASSERT(s == IPL_NONE);
 
 		for (int t = r; t <= IPL_HIGH; t++) {
 			int o = splraise(t);
 			status = mips_cp0_status_read() & MIPS_INT_MASK;
-			KASSERT((status ^ ipl_sr_bits[t]) == MIPS_INT_MASK);
+			KASSERT((status ^ sr_map[t]) == MIPS_INT_MASK);
 			KASSERT(ci->ci_cpl == t);
 			KASSERT(o == r);
 
 			splx(o);
 			status = mips_cp0_status_read() & MIPS_INT_MASK;
-			KASSERT((status ^ ipl_sr_bits[r]) == MIPS_INT_MASK);
+			KASSERT((status ^ sr_map[r]) == MIPS_INT_MASK);
 			KASSERT(ci->ci_cpl == r);
 		}
 
 		splx(s);
 		status = mips_cp0_status_read() & MIPS_INT_MASK;
-		KASSERT((status ^ ipl_sr_bits[s]) == MIPS_INT_MASK);
+		KASSERT((status ^ sr_map[s]) == MIPS_INT_MASK);
 		KASSERT(ci->ci_cpl == s);
 	}
 

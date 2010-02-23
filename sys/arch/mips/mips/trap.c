@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.19 2010/02/15 07:36:04 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.20 2010/02/23 20:33:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.19 2010/02/15 07:36:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.20 2010/02/23 20:33:48 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.19 2010/02/15 07:36:04 matt Exp $"
 #include <sys/savar.h>
 #include <sys/kauth.h>
 #include <sys/cpu.h>
+#include <sys/atomic.h>
 
 #include <mips/cache.h>
 #include <mips/locore.h>
@@ -207,7 +208,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 
 	KSI_INIT_TRAP(&ksi);
 
-	uvmexp.traps++;
+	curcpu()->ci_data.cpu_ntrap++;
 	type = TRAPTYPE(cause);
 	if (USERMODE(status)) {
 		type |= T_USER;
@@ -264,24 +265,31 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	case T_TLB_MOD:
 		if (KERNLAND(vaddr)) {
 			pt_entry_t *pte;
-			unsigned entry;
+			uint32_t pt_entry;
 			paddr_t pa;
 
 			pte = kvtopte(vaddr);
-			entry = pte->pt_entry;
-			if (!mips_pg_v(entry) || (entry & mips_pg_m_bit())) {
+			pt_entry = pte->pt_entry;
+			if (!mips_pg_v(pt_entry)) {
 				panic("ktlbmod: invalid pte");
 			}
-			if (entry & mips_pg_ro_bit()) {
+			if (pt_entry & mips_pg_ro_bit()) {
 				/* write to read only page in the kernel */
 				ftype = VM_PROT_WRITE;
 				goto kernelfault;
 			}
-			entry |= mips_pg_m_bit();
-			pte->pt_entry = entry;
+			if ((pt_entry & mips_pg_m_bit()) == 0) {
+				pt_entry |= mips_pg_m_bit();
+#ifdef MULTIPROCESSOR
+				atomic_or_32(&pte->pt_entry, mips_pg_m_bit());
+#else
+				pte->pt_entry = pt_entry;
+#endif
+			}
 			vaddr &= ~PGOFSET;
-			pmap_tlb_update(pmap_kernel(), vaddr, entry);
-			pa = mips_tlbpfn_to_paddr(entry);
+			pmap_tlb_update_addr(pmap_kernel(), vaddr, pt_entry,
+			    false);
+			pa = mips_tlbpfn_to_paddr(pt_entry);
 			if (!IS_VM_PHYSADDR(pa)) {
 				panic("ktlbmod: unmanaged page:"
 				    " va %#" PRIxVADDR " pa %#"PRIxPADDR,
@@ -298,22 +306,30 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		paddr_t pa;
 		pmap_t pmap;
 
+		kpreempt_disable();
 		pmap = p->p_vmspace->vm_map.pmap;
 		if (!(pte = pmap_pte_lookup(pmap, vaddr)))
 			panic("utlbmod: no pte");
 		pt_entry = pte->pt_entry;
-		if (!mips_pg_v(pt_entry) || (pt_entry & mips_pg_m_bit()))
+		if (!mips_pg_v(pt_entry))
 			panic("utlbmod: invalid pte");
-
 		if (pt_entry & mips_pg_ro_bit()) {
 			/* write to read only page */
 			ftype = VM_PROT_WRITE;
+			kpreempt_enable();
 			goto pagefault;
 		}
-		pt_entry |= mips_pg_m_bit();
-		pte->pt_entry = pt_entry;
-		vaddr = trunc_page(vaddr);
-		pmap_tlb_update(pmap, vaddr, pt_entry);
+		if ((pt_entry & mips_pg_m_bit()) == 0) {
+			pt_entry |= mips_pg_m_bit();
+#ifdef MULTIPROCESSOR
+			atomic_or_32(&pte->pt_entry, mips_pg_m_bit());
+#else
+			pte->pt_entry = pt_entry;
+#endif
+			vaddr = trunc_page(vaddr);
+		}
+		pmap_tlb_update_addr(pmap, vaddr, pt_entry, false);
+		kpreempt_enable();
 		pa = mips_tlbpfn_to_paddr(pt_entry);
 		if (!IS_VM_PHYSADDR(pa)) {
 			panic("utlbmod: unmanaged page:"

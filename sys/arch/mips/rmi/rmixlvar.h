@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.1.2.13 2010/01/29 00:22:06 cliff Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.1.2.14 2010/02/23 20:33:48 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -39,9 +39,12 @@
 #define _MIPS_RMI_RMIXLVAR_H_
 
 #include <mips/cpu.h>
-#include <dev/pci/pcivar.h>
-#include <machine/bus.h>
+#include <mips/locore.h>
 #include <mips/rmi/rmixl_firmware.h>
+
+#include <machine/bus.h>
+
+#include <dev/pci/pcivar.h>
 
 static inline bool
 cpu_rmixl(const struct pridtab *ct)
