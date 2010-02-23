@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.39 2010/02/12 03:38:48 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.40 2010/02/23 01:24:44 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1014,6 +1014,9 @@ netpgp_verify_memory(netpgp_t *netpgp, const void *in, const size_t size,
 	}
 	signedmem = __ops_memory_new();
 	__ops_memory_add(signedmem, in, size);
+	if (out) {
+		cat = __ops_memory_new();
+	}
 	ret = __ops_validate_mem(io, &result, signedmem,
 				(out) ? &cat : NULL,
 				armored, netpgp->pubring);
