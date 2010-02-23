@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.14 2010/02/23 08:46:17 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.15 2010/02/23 15:38:30 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.14 2010/02/23 08:46:17 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.15 2010/02/23 15:38:30 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -452,6 +452,9 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 		/* init and free vm_pages (we've already zeroed them) */
 		paddr = ptoa(vm_physmem[lcv].start);
 		for (i = 0 ; i < n ; i++, paddr += PAGE_SIZE) {
+#if 1
+			vm_physmem[lcv].pgs[i].phys_addr = paddr;
+#endif
 #ifdef __HAVE_VM_PAGE_MD
 			VM_MDPAGE_INIT(&vm_physmem[lcv].pgs[i].mdpage, paddr);
 #endif
@@ -835,10 +838,13 @@ uvm_page_physload_common(struct vm_physseg * const segs, const int nsegs,
 			printf("\tignoring 0x%lx -> 0x%lx\n", start, end);
 			return;
 		}
-		/* zero data, init free_list, and free pages */
+		/* zero data, init phys_addr, free_list, and free pages */
 		memset(pgs, 0, sizeof(struct vm_page) * npages);
 		for (lcv = 0, paddr = ptoa(start) ;
 				 lcv < npages ; lcv++, paddr += PAGE_SIZE) {
+#if 1
+			pgs[lcv].phys_addr = paddr;
+#endif
 			pgs[lcv].free_list = free_list;
 			if (atop(paddr) >= avail_start &&
 			    atop(paddr) <= avail_end)
@@ -1142,18 +1148,23 @@ uvm_phys_to_vm_page(paddr_t pa)
 paddr_t
 uvm_vm_page_to_phys(const struct vm_page *pg)
 {
-	const struct vm_physseg *seg;
-	int psi;
 
 #ifdef DEVICE_PAGE
 	if (uvm_pageisdevice_p(pg)) {
 		return VM_PAGE_DEVICE_TO_PHYS(pg);
 	}
 #endif
+#if 1
+	return pg->phys_addr;
+#else
+	const struct vm_physseg *seg;
+	int psi;
+
 	psi = VM_PHYSSEG_FIND(vm_physmem, vm_nphysmem, VM_PHYSSEG_OP_PG, 0, pg, NULL);
 	KASSERT(psi != -1);
 	seg = &vm_physmem[psi];
 	return (seg->start + pg - seg->pgs) * PAGE_SIZE;
+#endif
 }
 
 

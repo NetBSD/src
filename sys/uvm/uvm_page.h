@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59.2.14 2010/02/23 08:46:17 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.15 2010/02/23 15:38:30 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -142,6 +142,10 @@ struct vm_page {
 						 * to modify: [O _and_ P] */
 	uint16_t		wire_count;	/* wired down map refs [P] */
 	uint16_t		pqflags;	/* page queue flags [P] */
+#if 1
+	paddr_t			phys_addr;	/* physical address of page */
+#endif
+
 
 #ifdef __HAVE_VM_PAGE_MD
 	struct vm_page_md	mdpage;		/* pmap-specific data */
