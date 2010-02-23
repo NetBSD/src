@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.99 2010/01/08 19:47:42 dyoung Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.100 2010/02/23 19:28:00 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.99 2010/01/08 19:47:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.100 2010/02/23 19:28:00 dyoung Exp $");
 
 #include "opt_cardbus.h"
 
@@ -1136,22 +1136,6 @@ cardbus_conf_restore(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
 		if (val != pcs->reg[off])
 			cardbus_conf_write(cc, cf,tag, (off * 4), pcs->reg[off]);
 	}
-}
-
-void
-cardbus_disable_retry(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
-    cardbustag_t tag)
-{
-	/* See comment on sys/dev/pci/pci.c:pci_disable_retry() for
-	 * the reason I comment-out this code.
-	 */
-#if 0
-	cardbusreg_t retry;
-
-	retry = cardbus_conf_read(cc, cf, tag, PCI_RETRY_TIMEOUT_REG);
-	retry &= ~PCI_RETRY_TIMEOUT_REG_MASK;
-	cardbus_conf_write(cc, cf, tag, PCI_RETRY_TIMEOUT_REG, retry);
-#endif
 }
 
 struct cardbus_child_power {
