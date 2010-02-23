@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.257.2.1 2010/02/11 05:22:38 uebayasi Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.257.2.2 2010/02/23 07:00:58 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.257.2.1 2010/02/11 05:22:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.257.2.2 2010/02/23 07:00:58 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1176,11 +1176,18 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_iflag |= IMNT_MPSAFE;
 #ifdef XIP
 	paddr_t phys_addr = 0;
-	if ((VOP_IOCTL(devvp, DIOCGPHYSADDR, &phys_addr, FREAD,
-	    cred) == 0) &&
-	    phys_addr != 0) {
-		mp->mnt_iflag |= IMNT_XIP;
-		mp->mnt_phys_addr = phys_addr;
+	if (mp->mnt_flag & MNT_XIP) {
+		if ((mp->mnt_flag & MNT_RDONLY) == 0)
+			printf("XIP needs read-only mount\n");
+		else {
+			if ((VOP_IOCTL(devvp, DIOCGPHYSADDR, &phys_addr, FREAD,
+			    cred) == 0) &&
+			    phys_addr != 0) {
+				mp->mnt_iflag |= IMNT_XIP;
+				mp->mnt_phys_addr = phys_addr;
+			} else
+				printf("device doesn't support DIOCGPHYSADDR\n");
+		}
 	}
 #endif
 #ifdef FFS_EI
