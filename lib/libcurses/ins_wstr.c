@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wstr.c,v 1.4 2009/07/22 16:57:15 roy Exp $ */
+/*   $NetBSD: ins_wstr.c,v 1.5 2010/02/23 19:48:26 drochner Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wstr.c,v 1.4 2009/07/22 16:57:15 roy Exp $");
+__RCSID("$NetBSD: ins_wstr.c,v 1.5 2010/02/23 19:48:26 drochner Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -144,6 +144,8 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 	if (!wstr)
 		return OK;
 	cw = wcwidth(*wstr);
+	if (cw < 0)
+		cw = 1;
 	if (!cw)
 		return ERR;
 
@@ -152,9 +154,13 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 	len = 1;
 	n--;
 	while (*scp) {
+		int w;
 		if (!n)
 			break;
-		n--, len++, width += wcwidth(*scp);
+		w = wcwidth(*scp);
+		if (w < 0)
+			w = 1;
+		n--, len++, width += w;
 		scp++;
 	}
 #ifdef DEBUG
@@ -267,6 +273,8 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 				continue;
 		}
 		cw = wcwidth(*scp);
+		if (cw < 0)
+			cw = 1;
 		if (cw) {
 			/* 1st column */
 			temp1->ch = (wchar_t)*scp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: border.c,v 1.12 2009/07/22 16:57:14 roy Exp $	*/
+/*	$NetBSD: border.c,v 1.13 2010/02/23 19:48:26 drochner Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: border.c,v 1.12 2009/07/22 16:57:14 roy Exp $");
+__RCSID("$NetBSD: border.c,v 1.13 2010/02/23 19:48:26 drochner Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -66,6 +66,7 @@ int
 wborder(WINDOW *win, chtype left, chtype right, chtype top, chtype bottom,
 	chtype topleft, chtype topright, chtype botleft, chtype botright)
 {
+#ifndef HAVE_WCHAR
 	int	 endy, endx, i;
 	__LDATA	*fp, *lp;
 
@@ -134,20 +135,12 @@ wborder(WINDOW *win, chtype left, chtype right, chtype top, chtype bottom,
 		win->alines[i]->line[0].attr = (attr_t) left & __ATTRIBUTES;
 		win->alines[i]->line[endx].ch = (wchar_t) right & __CHARTEXT;
 		win->alines[i]->line[endx].attr = (attr_t) right & __ATTRIBUTES;
-#ifdef HAVE_WCHAR
-		SET_WCOL(win->alines[i]->line[0], 1);
-		SET_WCOL(win->alines[i]->line[endx], 1);
-#endif
 	}
 	for (i = 1; i < endx; i++) {
 		fp[i].ch = (wchar_t) top & __CHARTEXT;
 		fp[i].attr = (attr_t) top & __ATTRIBUTES;
 		lp[i].ch = (wchar_t) bottom & __CHARTEXT;
 		lp[i].attr = (attr_t) bottom & __ATTRIBUTES;
-#ifdef HAVE_WCHAR
-		SET_WCOL(fp[i], 1);
-		SET_WCOL(lp[i], 1);
-#endif
 	}
 
 	/* Corners */
@@ -161,15 +154,30 @@ wborder(WINDOW *win, chtype left, chtype right, chtype top, chtype bottom,
 		lp[0].attr = (attr_t) botleft & __ATTRIBUTES;
 		lp[endx].ch = (wchar_t) botright & __CHARTEXT;
 		lp[endx].attr = (attr_t) botright & __ATTRIBUTES;
-#ifdef HAVE_WCHAR
-		SET_WCOL(fp[0], 1);
-		SET_WCOL(fp[endx], 1);
-		SET_WCOL(lp[0], 1);
-		SET_WCOL(lp[endx], 1);
-#endif
 	}
 	__touchwin(win);
 	return (OK);
+#else /* HAVE_WCHAR */
+	cchar_t ls, rs, ts, bs, tl, tr, bl, br;
+	cchar_t *lsp, *rsp, *tsp, *bsp, *tlp, *trp, *blp, *brp;
+
+#define S(in, out) \
+	if (in & __CHARTEXT) { \
+		__cursesi_chtype_to_cchar(in, &out); \
+		out##p = &out; \
+	} else \
+		out##p = NULL
+	S(left, ls);
+	S(right, rs);
+	S(top, ts);
+	S(bottom, bs);
+	S(topleft, tl);
+	S(topright, tr);
+	S(botleft, bl);
+	S(botright, br);
+#undef S
+	return wborder_set(win, lsp, rsp, tsp, bsp, tlp, trp, blp, brp);
+#endif /* HAVE_WCHAR */
 }
 
 int border_set(const cchar_t *ls, const cchar_t *rs, const cchar_t *ts,
@@ -198,35 +206,35 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 	if ( ls && wcwidth( ls->vals[ 0 ]))
 		memcpy( &left, ls, sizeof( cchar_t ));
 	else
-		setcchar( &left, &WACS_VLINE, win->wattr, 0, NULL );
+		memcpy( &left, WACS_VLINE, sizeof( cchar_t ));
 	if ( rs && wcwidth( rs->vals[ 0 ]))
 		memcpy( &right, rs, sizeof( cchar_t ));
 	else
-		setcchar( &right, &WACS_VLINE, win->wattr, 0, NULL );
+		memcpy( &right, WACS_VLINE, sizeof( cchar_t ));
 	if ( ts && wcwidth( ts->vals[ 0 ]))
 		memcpy( &top, ts, sizeof( cchar_t ));
 	else
-		setcchar( &top, &WACS_HLINE, win->wattr, 0, NULL );
+		memcpy( &top, WACS_HLINE, sizeof( cchar_t ));
 	if ( bs && wcwidth( bs->vals[ 0 ]))
 		memcpy( &bottom, bs, sizeof( cchar_t ));
 	else
-		setcchar( &bottom, &WACS_HLINE, win->wattr, 0, NULL );
+		memcpy( &bottom, WACS_HLINE, sizeof( cchar_t ));
 	if ( tl && wcwidth( tl->vals[ 0 ]))
 		memcpy( &topleft, tl, sizeof( cchar_t ));
 	else
-		setcchar( &topleft, &WACS_ULCORNER, win->wattr, 0, NULL );
+		memcpy( &topleft, WACS_ULCORNER, sizeof( cchar_t ));
 	if ( tr && wcwidth( tr->vals[ 0 ]))
 		memcpy( &topright, tr, sizeof( cchar_t ));
 	else
-		setcchar( &topright, &WACS_URCORNER, win->wattr, 0, NULL );
+		memcpy( &topright, WACS_URCORNER, sizeof( cchar_t ));
 	if ( bl && wcwidth( bl->vals[ 0 ]))
 		memcpy( &botleft, bl, sizeof( cchar_t ));
 	else
-		setcchar( &botleft, &WACS_LLCORNER, win->wattr, 0, NULL );
+		memcpy( &botleft, WACS_LLCORNER, sizeof( cchar_t ));
 	if ( br && wcwidth( br->vals[ 0 ]))
 		memcpy( &botright, br, sizeof( cchar_t ));
 	else
-		setcchar( &botright, &WACS_LRCORNER, win->wattr, 0, NULL );
+		memcpy( &botright, WACS_LRCORNER, sizeof( cchar_t ));
 
 #ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "wborder_set: left = %c, 0x%x\n",
@@ -272,6 +280,8 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 	for (i = 1; i < endy; i++) {
 		/* left border */
 		cw = wcwidth( left.vals[ 0 ]);
+		if (cw < 0)
+			cw = 1;
 		for ( j = 0; j < cw; j++ ) {
 			win->alines[i]->line[j].ch = left.vals[ 0 ];
 			win->alines[i]->line[j].attr = left.attributes;
@@ -314,6 +324,8 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 		}
 		/* right border */
 		cw = wcwidth( right.vals[ 0 ]);
+		if (cw < 0)
+			cw = 1;
 		pcw = WCOL( win->alines[i]->line[endx - cw]);
 		for ( j = endx - cw + 1; j <= endx; j++ ) {
 			win->alines[i]->line[j].ch = right.vals[ 0 ];
@@ -363,11 +375,21 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 		}
 	}
 	tlcw = wcwidth( topleft.vals[ 0 ]);
+	if (tlcw < 0)
+		tlcw = 1;
 	blcw = wcwidth( botleft.vals[ 0 ]);
+	if (blcw < 0)
+		blcw = 1;
 	trcw = wcwidth( topright.vals[ 0 ]);
+	if (trcw < 0)
+		trcw = 1;
 	brcw = wcwidth( botright.vals[ 0 ]);
+	if (brcw < 0)
+		brcw = 1;
 	/* upper border */
 	cw = wcwidth( top.vals[ 0 ]);
+	if (cw < 0)
+		cw = 1;
 	for (i = tlcw; i <= min( endx - cw, endx - trcw ); i += cw ) {
 		for ( j = 0; j < cw; j++ ) {
 			win->alines[ 0 ]->line[i + j].ch = top.vals[ 0 ];

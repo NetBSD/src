@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.44 2010/02/03 15:34:40 roy Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.45 2010/02/23 19:48:26 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -311,6 +311,7 @@ int     _cursesi_copy_nsp(nschar_t *, struct __ldata *);
 void	__cursesi_free_nsp(nschar_t *);
 void	__cursesi_win_free_nsp(WINDOW *);
 void	__cursesi_putnsp(nschar_t *, const int, const int);
+void	__cursesi_chtype_to_cchar(chtype, cchar_t *);
 #endif /* HAVE_WCHAR */
 int	 __unget(wint_t);
 char	*__longname(char *, char *);	/* Original BSD version */
