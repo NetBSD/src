@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.1 2010/02/11 06:23:04 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.2 2010/02/23 07:46:28 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,8 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.1 2010/02/11 06:23:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.2 2010/02/23 07:46:28 uebayasi Exp $");
 
+#include "opt_device_page.h"
 #include "opt_xip.h"
 
 #include <sys/param.h>
@@ -767,9 +768,9 @@ genfs_do_getpages_xip(void *v)
 	int i;
 	paddr_t phys_addr;
 
-	KASSERT((vp->v_vflag & VV_XIP) != 0);
+	UVMHIST_FUNC("genfs_do_getpages_xip"); UVMHIST_CALLED(ubchist);
 
-	UVMHIST_LOG(ubchist, "xip!", 0, 0, 0, 0);
+	KASSERT((vp->v_vflag & VV_XIP) != 0);
 
 	/* XXXUEBS should we care about PGO_LOCKED? */
 
@@ -785,6 +786,9 @@ genfs_do_getpages_xip(void *v)
 	ebkoff = ((offset + PAGE_SIZE * npages) + (fs_bsize - 1)) & ~(fs_bsize - 1);
 
 	UVMHIST_LOG(ubchist, "xip npages=%d sbkoff=%lx ebkoff=%lx", npages, (long)sbkoff, (long)ebkoff, 0);
+
+	if ((flags & PGO_LOCKED) == 0)
+		mutex_exit(&uobj->vmobjlock);
 
 	/* XXX optimize */
 	off = offset;
@@ -809,26 +813,19 @@ genfs_do_getpages_xip(void *v)
 			    (off - (lbn << fs_bshift));
 		}
 
-		pps[i] = PHYS_TO_VM_PAGE(phys_addr);
+		pps[i] = uvm_phys_to_vm_page_device(phys_addr);
 
 		UVMHIST_LOG(ubchist, "xip pgs %d => phys_addr=0x%lx (%p)",
 			i,
 			(long)phys_addr,
 			pps[i],
 			0);
-		printf("xip pgs %d => phys_addr=0x%lx (%p)\n",
-			i,
-			(long)phys_addr,
-			pps[i]);
 
 		off += PAGE_SIZE;
 		i++;
 	}
 
 	*npagesp = i;
-
-	if ((flags & PGO_LOCKED) == 0)
-		mutex_exit(&uobj->vmobjlock);
 
 	return 0;
 }
