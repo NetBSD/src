@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.15 2009/05/09 17:32:27 pgoyette Exp $ */
+/* $NetBSD: spdmem.c,v 1.16 2010/02/23 00:13:06 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.15 2009/05/09 17:32:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.16 2010/02/23 00:13:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,14 +56,15 @@ static uint8_t spdmem_read(struct spdmem_softc *, uint8_t);
 /* Routines for decoding spd data */
 static void decode_edofpm(const struct sysctlnode *, device_t, struct spdmem *);
 static void decode_rom(const struct sysctlnode *, device_t, struct spdmem *);
-static void decode_sdram(const struct sysctlnode *, device_t, struct spdmem *);
+static void decode_sdram(const struct sysctlnode *, device_t, struct spdmem *,
+	int);
 static void decode_ddr(const struct sysctlnode *, device_t, struct spdmem *);
 static void decode_ddr2(const struct sysctlnode *, device_t, struct spdmem *);
 static void decode_ddr3(const struct sysctlnode *, device_t, struct spdmem *);
 static void decode_fbdimm(const struct sysctlnode *, device_t, struct spdmem *);
 
 static void decode_size_speed(const struct sysctlnode *, int, int, int, int,
-			      bool, const char *);
+			      bool, const char *, int);
 static void decode_voltage_refresh(device_t, struct spdmem *);
 
 CFATTACH_DECL_NEW(spdmem, sizeof(struct spdmem_softc),
@@ -390,7 +391,7 @@ spdmem_attach(device_t parent, device_t self, void *aux)
 		decode_rom(node, self, s);
 		break;
 	case SPDMEM_MEMTYPE_SDRAM:
-		decode_sdram(node, self, s);
+		decode_sdram(node, self, s, spd_len);
 		break;
 	case SPDMEM_MEMTYPE_DDRSDRAM:
 		decode_ddr(node, self, s);
@@ -437,7 +438,8 @@ SYSCTL_SETUP(sysctl_spdmem_setup, "sysctl hw.spdmem subtree setup")
 
 static void
 decode_size_speed(const struct sysctlnode *node, int dimm_size, int cycle_time,
-		  int d_clk, int bits, bool round, const char *ddr_type_string)
+		  int d_clk, int bits, bool round, const char *ddr_type_string,
+		  int speed)
 {
 	int p_clk;
 
@@ -462,9 +464,14 @@ decode_size_speed(const struct sysctlnode *node, int dimm_size, int cycle_time,
 	 * Calculate p_clk first, since for DDR3 we need maximum significance.
 	 * DDR3 rating is not rounded to a multiple of 100.  This results in
 	 * cycle_time of 1.5ns displayed as PC3-10666.
+	 *
+	 * For SDRAM, the speed is provided by the caller so we use it.
 	 */
 	d_clk *= 1000 * 1000;
-	p_clk = (d_clk * bits) / 8 / cycle_time;
+	if (speed)
+		p_clk = speed;
+	else
+		p_clk = (d_clk * bits) / 8 / cycle_time;
 	d_clk = ((d_clk + cycle_time / 2) ) / cycle_time;
 	if (round) {
 		if ((p_clk % 100) >= 50)
@@ -519,8 +526,9 @@ decode_rom(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 }
 
 static void
-decode_sdram(const struct sysctlnode *node, device_t self, struct spdmem *s) {
-	int dimm_size, cycle_time, bits, tAA, i;
+decode_sdram(const struct sysctlnode *node, device_t self, struct spdmem *s,
+	     int spd_len) {
+	int dimm_size, cycle_time, bits, tAA, i, speed, freq;
 
 	aprint_normal("%s, %s, ",
 		(s->sm_sdr.sdr_mod_attrs & SPDMEM_SDR_MASK_REG)?
@@ -536,7 +544,30 @@ decode_sdram(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 	bits = le16toh(s->sm_sdr.sdr_datawidth);
 	if (s->sm_config == 1 || s->sm_config == 2)
 		bits -= 8;
-	decode_size_speed(node, dimm_size, cycle_time, 1, bits, TRUE, "PC");
+
+	/* Calculate speed here - from OpenBSD */
+	if (spd_len >= 128)
+		freq = ((uint8_t *)s)[126];
+	else
+		freq = 0;
+	switch (freq) {
+		/*
+		 * Must check cycle time since some PC-133 DIMMs 
+		 * actually report PC-100
+		 */
+	    case 100:
+	    case 133:
+		if (cycle_time < 8000)
+			speed = 133;
+		else
+			speed = 100;
+		break;
+	    case 0x66:		/* Legacy DIMMs use _hex_ 66! */
+	    default:
+		speed = 66;
+	}
+	decode_size_speed(node, dimm_size, cycle_time, 1, bits, FALSE, "PC",
+			  speed);
 
 	aprint_verbose_dev(self,
 	    "%d rows, %d cols, %d banks, %d banks/chip, %d.%dns cycle time\n",
@@ -573,7 +604,7 @@ decode_ddr(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 	bits = le16toh(s->sm_ddr.ddr_datawidth);
 	if (s->sm_config == 1 || s->sm_config == 2)
 		bits -= 8;
-	decode_size_speed(node, dimm_size, cycle_time, 2, bits, TRUE, "PC");
+	decode_size_speed(node, dimm_size, cycle_time, 2, bits, TRUE, "PC", 0);
 
 	aprint_verbose_dev(self,
 	    "%d rows, %d cols, %d ranks, %d banks/chip, %d.%dns cycle time\n",
@@ -617,7 +648,7 @@ decode_ddr2(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 	bits = s->sm_ddr2.ddr2_datawidth;
 	if ((s->sm_config & 0x03) != 0)
 		bits -= 8;
-	decode_size_speed(node, dimm_size, cycle_time, 2, bits, TRUE, "PC2");
+	decode_size_speed(node, dimm_size, cycle_time, 2, bits, TRUE, "PC2", 0);
 
 	aprint_verbose_dev(self,
 	    "%d rows, %d cols, %d ranks, %d banks/chip, %d.%02dns cycle time\n",
@@ -671,7 +702,7 @@ decode_ddr3(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 		     s->sm_ddr3.ddr3_mtb_divisor;
 	cycle_time *= s->sm_ddr3.ddr3_tCKmin;
 	bits = 1 << (s->sm_ddr3.ddr3_datawidth + 3);
-	decode_size_speed(node, dimm_size, cycle_time, 2, bits, FALSE, "PC3");
+	decode_size_speed(node, dimm_size, cycle_time, 2, bits, FALSE, "PC3", 0);
 
 	aprint_verbose_dev(self,
 	    "%d rows, %d cols, %d log. banks, %d phys. banks, "
@@ -706,7 +737,7 @@ decode_fbdimm(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 			    (s->sm_fbd.fbdimm_mtb_divisor / 2)) /
 		     s->sm_fbd.fbdimm_mtb_divisor;
 	bits = 1 << (s->sm_fbd.fbdimm_dev_width + 2);
-	decode_size_speed(node, dimm_size, cycle_time, 2, bits, TRUE, "PC2");
+	decode_size_speed(node, dimm_size, cycle_time, 2, bits, TRUE, "PC2", 0);
 
 	aprint_verbose_dev(self,
 	    "%d rows, %d cols, %d banks, %d.%02dns cycle time\n",
