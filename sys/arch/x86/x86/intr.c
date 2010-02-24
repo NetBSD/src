@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.66 2009/11/25 14:28:50 rmind Exp $	*/
+/*	$NetBSD: intr.c,v 1.67 2010/02/24 21:22:01 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.66 2009/11/25 14:28:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.67 2010/02/24 21:22:01 dyoung Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -325,7 +325,7 @@ intr_add_pcibus(struct pcibus_attach_args *pba)
 
 static int
 intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
-		    pci_chipset_tag_t *pci_chipset_tag)
+		    pci_chipset_tag_t *pc)
 {
 	struct intr_extra_bus *iebp;
 	struct mp_bus *mpb;
@@ -338,7 +338,7 @@ intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
 		if (mpb->mb_pci_bridge_tag == NULL)
 			return ENOENT;
 		*pci_bridge_tag = *mpb->mb_pci_bridge_tag;
-		*pci_chipset_tag = mpb->mb_pci_chipset_tag;
+		*pc = mpb->mb_pci_chipset_tag;
 		return 0;
 	}
 
@@ -347,7 +347,7 @@ intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
 			if (iebp->pci_bridge_tag == NULL)
 				return ENOENT;
 			*pci_bridge_tag = *iebp->pci_bridge_tag;
-			*pci_chipset_tag = iebp->pci_chipset_tag;
+			*pc = iebp->pci_chipset_tag;
 			return 0;
 		}
 	}
@@ -362,18 +362,18 @@ intr_find_mpmapping(int bus, int pin, int *handle)
 #if NPCI > 0
 	int dev, func;
 	pcitag_t pci_bridge_tag;
-	pci_chipset_tag_t pci_chipset_tag;
+	pci_chipset_tag_t pc;
 #endif
 
 #if NPCI > 0
 	while (intr_scan_bus(bus, pin, handle) != 0) {
 		if (intr_find_pcibridge(bus, &pci_bridge_tag,
-		    &pci_chipset_tag) != 0)
+		    &pc) != 0)
 			return ENOENT;
 		dev = pin >> 2;
 		pin = pin & 3;
 		pin = PPB_INTERRUPT_SWIZZLE(pin + 1, dev) - 1;
-		pci_decompose_tag(pci_chipset_tag, pci_bridge_tag, &bus,
+		pci_decompose_tag(pc, pci_bridge_tag, &bus,
 		    &dev, &func);
 		pin |= (dev << 2);
 	}
