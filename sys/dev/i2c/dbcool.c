@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.15 2010/02/24 22:37:57 dyoung Exp $ */
+/*	$NetBSD: dbcool.c,v 1.16 2010/02/24 23:37:45 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.15 2010/02/24 22:37:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.16 2010/02/24 23:37:45 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,6 @@ static int sysctl_dbcool_volt_limit(SYSCTLFN_PROTO);
 static int sysctl_dbcool_temp_limit(SYSCTLFN_PROTO);
 static int sysctl_dbcool_fan_limit(SYSCTLFN_PROTO);
 static int sysctl_dbcool_thyst(SYSCTLFN_PROTO);
-static int sysctl_dbcool_vid(SYSCTLFN_PROTO);
 
 /* Set-up subroutines */
 static void dbcool_setup_controllers(struct dbcool_softc *,
@@ -155,7 +154,7 @@ static struct dbc_sysctl_info dbc_sysctl_table[] = {
 static const char *dbc_sensor_names[] = {
 	"l_temp",  "r1_temp", "r2_temp", "Vccp",   "Vcc",    "fan1",
 	"fan2",    "fan3",    "fan4",    "AIN1",   "AIN2",   "V2dot5",
-	"V5",      "V12",     "Vtt",     "Imon"
+	"V5",      "V12",     "Vtt",     "Imon",   "VID"
 };
 
 /*
@@ -220,6 +219,9 @@ struct dbcool_sensor ADT7490_sensor_table[] = {
 	{ DBC_FAN,  {	DBCOOL_FAN4_TACH_LSB,
 			DBCOOL_NO_REG,
 			DBCOOL_TACH4_MIN_LSB },		8, 0, 0 },
+	{ DBC_VID,  {	DBCOOL_VID_REG,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		16, 0, 0 },
 	{ DBC_CTL,  {	DBCOOL_LOCAL_TMIN,
 			DBCOOL_NO_REG,
 			DBCOOL_NO_REG },		0, 5, 0 },
@@ -287,6 +289,9 @@ struct dbcool_sensor ADT7476_sensor_table[] = {
 	{ DBC_FAN,  {	DBCOOL_FAN4_TACH_LSB,
 			DBCOOL_NO_REG,
 			DBCOOL_TACH4_MIN_LSB },		8, 0, 0 },
+	{ DBC_VID,  {	DBCOOL_VID_REG,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		16, 0, 0 },
 	{ DBC_CTL,  {	DBCOOL_LOCAL_TMIN,
 			DBCOOL_NO_REG,
 			DBCOOL_NO_REG },		0, 5, 0 },
@@ -454,6 +459,9 @@ struct dbcool_sensor ADM1027_sensor_table[] = {
 	{ DBC_FAN,  {	DBCOOL_FAN4_TACH_LSB,
 			DBCOOL_NO_REG,
 			DBCOOL_TACH4_MIN_LSB },		8, 0, 0 },
+	{ DBC_VID,  {	DBCOOL_VID_REG,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		16, 0, 0 },
 	{ DBC_CTL,  {	DBCOOL_LOCAL_TMIN,
 			DBCOOL_NO_REG,
 			DBCOOL_NO_REG },		0, 5, 0 },
@@ -524,13 +532,12 @@ struct dbcool_power_control ADM1030_power_table[] = {
 
 struct chip_id chip_table[] = {
 	{ DBCOOL_COMPANYID, ADT7490_DEVICEID, ADT7490_REV_ID,
-		ADT7475_sensor_table, ADT7475_power_table,
-		DBCFLAG_TEMPOFFSET | DBCFLAG_HAS_MAXDUTY | DBCFLAG_HAS_VID |
-			DBCFLAG_HAS_PECI,
+		ADT7490_sensor_table, ADT7475_power_table,
+		DBCFLAG_TEMPOFFSET | DBCFLAG_HAS_MAXDUTY | DBCFLAG_HAS_PECI,
 		90000 * 60, "ADT7490" },
 	{ DBCOOL_COMPANYID, ADT7476_DEVICEID, 0xff,
 		ADT7476_sensor_table, ADT7475_power_table,
-		DBCFLAG_TEMPOFFSET | DBCFLAG_HAS_MAXDUTY | DBCFLAG_HAS_VID,
+		DBCFLAG_TEMPOFFSET | DBCFLAG_HAS_MAXDUTY,
 		90000 * 60, "ADT7476" },
 	{ DBCOOL_COMPANYID, ADT7475_DEVICEID, 0xff,
 		ADT7475_sensor_table, ADT7475_power_table,
@@ -547,7 +554,7 @@ struct chip_id chip_table[] = {
 	{ DBCOOL_COMPANYID, ADT7468_DEVICEID, 0xff,
 		ADT7476_sensor_table, ADT7475_power_table,
 		DBCFLAG_TEMPOFFSET  | DBCFLAG_MULTI_VCC | DBCFLAG_HAS_MAXDUTY |
-		    DBCFLAG_4BIT_VER | DBCFLAG_HAS_SHDN | DBCFLAG_HAS_VID,
+		    DBCFLAG_4BIT_VER | DBCFLAG_HAS_SHDN,
 		90000 * 60, "ADT7467/ADT7468" },
 	{ DBCOOL_COMPANYID, ADT7466_DEVICEID, 0xff,
 		ADT7466_sensor_table, NULL,
@@ -555,21 +562,20 @@ struct chip_id chip_table[] = {
 		82000 * 60, "ADT7466" },
 	{ DBCOOL_COMPANYID, ADT7463_DEVICEID, ADT7463_REV_ID1,
 		ADM1027_sensor_table, ADT7475_power_table,
-		DBCFLAG_MULTI_VCC | DBCFLAG_4BIT_VER | DBCFLAG_HAS_SHDN |
-		    DBCFLAG_ADM1027 | DBCFLAG_HAS_VID,
+		DBCFLAG_MULTI_VCC | DBCFLAG_4BIT_VER | DBCFLAG_HAS_SHDN,
 		90000 * 60, "ADT7463" },
 	{ DBCOOL_COMPANYID, ADT7463_DEVICEID, ADT7463_REV_ID2,
 		ADM1027_sensor_table, ADT7475_power_table,
 		DBCFLAG_MULTI_VCC | DBCFLAG_4BIT_VER | DBCFLAG_HAS_SHDN |
-		    DBCFLAG_HAS_VID | DBCFLAG_HAS_VID_SEL,
+		    DBCFLAG_HAS_VID_SEL,
 		90000 * 60, "ADT7463" },
 	{ DBCOOL_COMPANYID, ADM1027_DEVICEID, ADM1027_REV_ID,
 		ADM1027_sensor_table, ADT7475_power_table,
-		DBCFLAG_MULTI_VCC | DBCFLAG_4BIT_VER | DBCFLAG_HAS_VID,
+		DBCFLAG_MULTI_VCC | DBCFLAG_4BIT_VER,
 		90000 * 60, "ADM1027" },
 	{ DBCOOL_COMPANYID, ADM1030_DEVICEID, 0xff,
 		ADM1030_sensor_table, ADM1030_power_table,
-		DBCFLAG_ADM1030,
+		DBCFLAG_ADM1030 | DBCFLAG_NO_READBYTE,
 		11250 * 60, "ADM1030" },
 	{ 0, 0, 0, NULL, NULL, 0, 0, NULL }
 };
@@ -703,7 +709,7 @@ dbcool_readreg(struct dbcool_chipset *dc, uint8_t reg)
 	if (iic_acquire_bus(dc->dc_tag, 0) != 0)
 		return data;
 
-	if (dc->dc_chip == NULL || dc->dc_chip->flags & DBCFLAG_ADM1027) {
+	if (dc->dc_chip == NULL || dc->dc_chip->flags & DBCFLAG_NO_READBYTE) {
 		/* ADM1027 doesn't support i2c read_byte protocol */
 		if (iic_smbus_send_byte(dc->dc_tag, dc->dc_addr, reg, 0) != 0)
 			goto bad;
@@ -1340,35 +1346,6 @@ sysctl_dbcool_fan_limit(SYSCTLFN_ARGS)
 }
 
 static int
-sysctl_dbcool_vid(SYSCTLFN_ARGS)
-{
-	struct sysctlnode node;
-	struct dbcool_softc *sc;
-	int reg, error;
-	uint8_t chipreg, newreg;
-
-	node = *rnode;
-	sc = (struct dbcool_softc *)node.sysctl_data;
-	chipreg = node.sysctl_num;
-
-	/* retrieve 5- or 6-bit value */
-	newreg = sc->sc_dc.dc_readreg(&sc->sc_dc, chipreg);
-	if ((sc->sc_dc.dc_chip->flags & DBCFLAG_HAS_VID_SEL) &&
-	    (reg & 0x80))
-		reg = newreg & 0x3f;
-	else
-		reg = newreg & 0x1f;
-
-	node.sysctl_data = &reg;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-
-	if (error == 0 && newp != NULL)
-		error = EINVAL;
-
-	return error;
-}
-
-static int
 sysctl_dbcool_thyst(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
@@ -1518,16 +1495,6 @@ dbcool_setup(device_t self)
 	       CTLTYPE_NODE, device_xname(self), NULL,
 	       NULL, 0, NULL, 0,
 	       CTL_HW, CTL_CREATE, CTL_EOL);
-	if (sc->sc_dc.dc_chip->flags & DBCFLAG_HAS_VID) {
-		ret = sysctl_createv(NULL, 0, NULL,
-			(const struct sysctlnode **)&node,
-			CTLFLAG_READONLY, CTLTYPE_INT, "CPU_VID_bits", NULL,
-			sysctl_dbcool_vid,
-			0, sc, sizeof(int),
-			CTL_HW, me->sysctl_num, DBCOOL_VID_REG, CTL_EOL);
-		if (node != NULL)
-			node->sysctl_data = sc;
-	}
 
 #ifdef DBCOOL_DEBUG
 	ret = sysctl_createv(NULL, 0, NULL,
@@ -1596,32 +1563,61 @@ dbcool_setup_sensors(struct dbcool_softc *sc, const struct sysctlnode *me,
 {
 	int i, j, ret;
 	int error = 0;
-	uint8_t	sysctl_reg;
+	uint8_t	sysctl_reg, vid_reg, vid_val;
 	struct sysctlnode *node = NULL;
+	struct chip_id *chip = sc->sc_dc.dc_chip;
 	int sysctl_index, sysctl_num;
 	char name[SYSCTL_NAMELEN];
 
-	for (i=0; sc->sc_dc.dc_chip->table[i].type != DBC_EOF; i++) {
+	for (i=0; chip->table[i].type != DBC_EOF; i++) {
 		if (i >= DBCOOL_MAXSENSORS &&
-		    sc->sc_dc.dc_chip->table[i].type != DBC_CTL) {
+		    chip->table[i].type != DBC_CTL) {
 			aprint_normal_dev(sc->sc_dev, "chip table too big!\n");
 			break;
 		}
-		switch (sc->sc_dc.dc_chip->table[i].type) {
+		switch (chip->table[i].type) {
 		case DBC_TEMP:
 			sc->sc_sensor[i].units = ENVSYS_STEMP;
+			sc->sc_sensor[i].flags |= ENVSYS_FMONLIMITS;
 			error = dbcool_attach_sensor(sc, me, i,
 					sysctl_dbcool_temp_limit);
 			break;
 		case DBC_VOLT:
+			/*
+			 * If 12V-In pin has been reconfigured as 6th bit
+			 * of VID code, don't create a 12V-In sensor
+			 */
+			if ((chip->flags & DBCFLAG_HAS_VID_SEL) &&
+			    (chip->table[i].reg.val_reg == DBCOOL_12VIN) &&
+			    (sc->sc_dc.dc_readreg(&sc->sc_dc, DBCOOL_VID_REG) &
+					0x80))
+				break;
+
 			sc->sc_sensor[i].units = ENVSYS_SVOLTS_DC;
+			sc->sc_sensor[i].flags |= ENVSYS_FMONLIMITS;
 			error = dbcool_attach_sensor(sc, me, i,
 					sysctl_dbcool_volt_limit);
 			break;
 		case DBC_FAN:
 			sc->sc_sensor[i].units = ENVSYS_SFANRPM;
+			sc->sc_sensor[i].flags |= ENVSYS_FMONLIMITS;
 			error = dbcool_attach_sensor(sc, me, i,
 					sysctl_dbcool_fan_limit);
+			break;
+		case DBC_VID:
+			sc->sc_sensor[i].units = ENVSYS_INTEGER;
+			sc->sc_sensor[i].flags |= ENVSYS_FMONNOTSUPP;
+
+			/* retrieve 5- or 6-bit value */
+			vid_reg = chip->table[i].reg.val_reg;
+			vid_val = sc->sc_dc.dc_readreg(&sc->sc_dc, vid_reg);
+			if (chip->flags & DBCFLAG_HAS_VID_SEL)
+				vid_val &= 0x3f;
+			else
+				vid_val &= 0x1f;
+			sc->sc_sensor[i].value_cur = vid_val;
+
+			error = dbcool_attach_sensor(sc, me, i, NULL);
 			break;
 		case DBC_CTL:
 			/*
@@ -1631,18 +1627,18 @@ dbcool_setup_sensors(struct dbcool_softc *sc, const struct sysctlnode *me,
 			sysctl_num = -1;
 			for (j = 0; j < i; j++) {
 				if (j > DBCOOL_MAXSENSORS ||
-				    sc->sc_dc.dc_chip->table[j].type != DBC_TEMP)
+				    chip->table[j].type != DBC_TEMP)
 					continue;
-				if (sc->sc_dc.dc_chip->table[j].name_index ==
-				    sc->sc_dc.dc_chip->table[i].name_index) {
+				if (chip->table[j].name_index ==
+				    chip->table[i].name_index) {
 					sysctl_num = sc->sc_sysctl_num[j];
 					break;
 				}
 			}
 			if (sysctl_num == -1)
 				break;
-			sysctl_index = sc->sc_dc.dc_chip->table[i].sysctl_index;
-			sysctl_reg = sc->sc_dc.dc_chip->table[i].reg.val_reg;
+			sysctl_index = chip->table[i].sysctl_index;
+			sysctl_reg = chip->table[i].reg.val_reg;
 			strlcpy(name, dbc_sysctl_table[sysctl_index].name,
 			    sizeof(name));
 			ret = sysctl_createv(NULL, 0, NULL,
@@ -1661,7 +1657,7 @@ dbcool_setup_sensors(struct dbcool_softc *sc, const struct sysctlnode *me,
 		default:
 			aprint_error_dev(sc->sc_dev,
 				"sensor_table index %d has bad type %d\n",
-				i, sc->sc_dc.dc_chip->table[i].type);
+				i, chip->table[i].type);
 			break;
 		}
 		if (error)
@@ -1687,12 +1683,13 @@ dbcool_attach_sensor(struct dbcool_softc *sc, const struct sysctlnode *me,
 	sc->sc_regs[idx] = &sc->sc_dc.dc_chip->table[idx].reg;
 	sc->sc_nom_volt[idx] = sc->sc_dc.dc_chip->table[idx].nom_volt_index;
 
-	sc->sc_sensor[idx].flags |= ENVSYS_FMONLIMITS;
-
 	error = sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[idx]);
 	if (error)
 		return error;
 
+	/* VIDs do not have any limits */
+	if (sc->sc_dc.dc_chip->table[idx].type == DBC_VID)
+		return 0;
 	/*
 	 * create sysctl node for the sensor, and the nodes for
 	 * the sensor's high and low limit values
@@ -1810,6 +1807,8 @@ dbcool_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			low = dbcool_read_rpm(sc, reg->lo_lim_reg);
 			hi  = 1 << 16;
 			break;
+		case ENVSYS_INTEGER:
+			return;
 		default:
 			edata->state = ENVSYS_SINVALID;
 			return;
