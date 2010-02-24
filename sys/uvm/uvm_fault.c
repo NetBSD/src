@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.169 2010/02/24 04:32:58 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.170 2010/02/24 05:00:55 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.169 2010/02/24 04:32:58 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.170 2010/02/24 05:00:55 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1047,11 +1047,6 @@ uvm_fault_check(
 		/* now forget about the backpages */
 		if (amap)
 			*ranons += nback;
-#if 0
-		/* XXXUEBS */
-		if (uobj)
-			*rpages += nback;
-#endif
 		flt->startva += (nback << PAGE_SHIFT);
 		flt->npages -= nback;
 		flt->centeridx = 0;
