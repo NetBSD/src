@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.29 2010/01/18 18:52:35 pooka Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.30 2010/02/24 22:37:57 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.29 2010/01/18 18:52:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.30 2010/02/24 22:37:57 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -117,8 +117,8 @@ CFATTACH_DECL3_NEW(atw_cardbus, sizeof(struct atw_cardbus_softc),
 
 static void	atw_cardbus_setup(struct atw_cardbus_softc *);
 
-static bool	atw_cardbus_suspend(device_t, pmf_qual_t);
-static bool	atw_cardbus_resume(device_t, pmf_qual_t);
+static bool	atw_cardbus_suspend(device_t, const pmf_qual_t *);
+static bool	atw_cardbus_resume(device_t, const pmf_qual_t *);
 
 static const struct atw_cardbus_product *atw_cardbus_lookup
    (const struct cardbus_attach_args *);
@@ -322,7 +322,7 @@ atw_cardbus_detach(device_t self, int flags)
 }
 
 static bool
-atw_cardbus_resume(device_t self, pmf_qual_t qual)
+atw_cardbus_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct atw_cardbus_softc *csc = device_private(self);
 	struct atw_softc *sc = &csc->sc_atw;
@@ -344,7 +344,7 @@ atw_cardbus_resume(device_t self, pmf_qual_t qual)
 }
 
 static bool
-atw_cardbus_suspend(device_t self, pmf_qual_t qual)
+atw_cardbus_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct atw_cardbus_softc *csc = device_private(self);
 	cardbus_devfunc_t ct = csc->sc_ct;

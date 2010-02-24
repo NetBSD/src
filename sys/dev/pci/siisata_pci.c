@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_pci.c,v 1.7 2010/01/30 16:16:35 jakllsch Exp $ */
+/* $NetBSD: siisata_pci.c,v 1.8 2010/02/24 22:38:01 dyoung Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.7 2010/01/30 16:16:35 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.8 2010/02/24 22:38:01 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -75,7 +75,7 @@ struct siisata_pci_softc {
 static int siisata_pci_match(device_t, cfdata_t, void *);
 static void siisata_pci_attach(device_t, device_t, void *);
 static int siisata_pci_detach(device_t, int);
-static bool siisata_pci_resume(device_t, pmf_qual_t);
+static bool siisata_pci_resume(device_t, const pmf_qual_t *);
 
 struct siisata_pci_board {
 	pci_vendor_id_t		spb_vend;
@@ -298,7 +298,7 @@ siisata_pci_detach(device_t dv, int flags)
 }
 
 static bool
-siisata_pci_resume(device_t dv, pmf_qual_t qual)
+siisata_pci_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct siisata_pci_softc *psc = device_private(dv);
 	struct siisata_softc *sc = &psc->si_sc;

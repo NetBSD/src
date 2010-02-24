@@ -1,4 +1,4 @@
-/* $NetBSD: pmf.h,v 1.17 2010/01/08 20:07:15 dyoung Exp $ */
+/* $NetBSD: pmf.h,v 1.18 2010/02/24 22:38:10 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -50,16 +50,16 @@ typedef enum {
 } pmf_generic_event_t;
 
 struct pmf_qual {
-	device_suspensor_t	pq_suspensor;
-	devact_level_t		pq_actlvl;
+	const device_suspensor_t	*pq_suspensor;
+	devact_level_t			pq_actlvl;
 };
 
-typedef const struct pmf_qual * pmf_qual_t;
-extern const struct pmf_qual * const PMF_Q_NONE;
-extern const struct pmf_qual * const PMF_Q_SELF;
-extern const struct pmf_qual * const PMF_Q_DRVCTL;
+typedef struct pmf_qual pmf_qual_t;
+extern const pmf_qual_t * const PMF_Q_NONE;
+extern const pmf_qual_t * const PMF_Q_SELF;
+extern const pmf_qual_t * const PMF_Q_DRVCTL;
 
-extern const struct device_suspensor
+extern const device_suspensor_t
     * const device_suspensor_self,
     * const device_suspensor_system,
     * const device_suspensor_drvctl;
@@ -75,30 +75,30 @@ void	pmf_event_deregister(device_t, pmf_generic_event_t,
 bool		pmf_set_platform(const char *, const char *);
 const char	*pmf_get_platform(const char *);
 
-bool		pmf_system_resume(pmf_qual_t);
-bool		pmf_system_bus_resume(pmf_qual_t);
-bool		pmf_system_suspend(pmf_qual_t);
+bool		pmf_system_resume(const pmf_qual_t *);
+bool		pmf_system_bus_resume(const pmf_qual_t *);
+bool		pmf_system_suspend(const pmf_qual_t *);
 void		pmf_system_shutdown(int);
 
 bool		pmf_device_register1(device_t,
-		    bool (*)(device_t, pmf_qual_t),
-		    bool (*)(device_t, pmf_qual_t),
+		    bool (*)(device_t, const pmf_qual_t *),
+		    bool (*)(device_t, const pmf_qual_t *),
 		    bool (*)(device_t, int));
 /* compatibility */
 #define pmf_device_register(__d, __s, __r) \
 	pmf_device_register1((__d), (__s), (__r), NULL)
 
 void		pmf_device_deregister(device_t);
-bool		pmf_device_suspend(device_t, pmf_qual_t);
-bool		pmf_device_resume(device_t, pmf_qual_t);
+bool		pmf_device_suspend(device_t, const pmf_qual_t *);
+bool		pmf_device_resume(device_t, const pmf_qual_t *);
 
-bool		pmf_device_recursive_suspend(device_t, pmf_qual_t);
-bool		pmf_device_recursive_resume(device_t, pmf_qual_t);
-bool		pmf_device_descendants_resume(device_t, pmf_qual_t);
-bool		pmf_device_subtree_resume(device_t, pmf_qual_t);
+bool		pmf_device_recursive_suspend(device_t, const pmf_qual_t *);
+bool		pmf_device_recursive_resume(device_t, const pmf_qual_t *);
+bool		pmf_device_descendants_resume(device_t, const pmf_qual_t *);
+bool		pmf_device_subtree_resume(device_t, const pmf_qual_t *);
 
-bool		pmf_device_descendants_release(device_t, pmf_qual_t);
-bool		pmf_device_subtree_release(device_t, pmf_qual_t);
+bool		pmf_device_descendants_release(device_t, const pmf_qual_t *);
+bool		pmf_device_subtree_release(device_t, const pmf_qual_t *);
 
 struct ifnet;
 void		pmf_class_network_register(device_t, struct ifnet *);
@@ -106,24 +106,24 @@ void		pmf_class_network_register(device_t, struct ifnet *);
 bool		pmf_class_input_register(device_t);
 bool		pmf_class_display_register(device_t);
 
-void		pmf_qual_recursive_copy(struct pmf_qual *, pmf_qual_t);
-void		pmf_self_suspensor_init(device_t, struct device_suspensor *,
-		    struct pmf_qual *);
+void		pmf_qual_recursive_copy(pmf_qual_t *, const pmf_qual_t *);
+void		pmf_self_suspensor_init(device_t, device_suspensor_t *,
+		    pmf_qual_t *);
 
-static inline device_suspensor_t
-pmf_qual_suspension(pmf_qual_t pq)
+static inline const device_suspensor_t *
+pmf_qual_suspension(const pmf_qual_t *pq)
 {
 	return pq->pq_suspensor;
 }
 
 static inline devact_level_t
-pmf_qual_depth(pmf_qual_t pq)
+pmf_qual_depth(const pmf_qual_t *pq)
 {
 	return pq->pq_actlvl;
 }
 
 static inline bool
-pmf_qual_descend_ok(pmf_qual_t pq)
+pmf_qual_descend_ok(const pmf_qual_t *pq)
 {
 	return pq->pq_actlvl == DEVACT_LEVEL_FULL;
 }

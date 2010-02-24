@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.30 2010/02/18 02:21:38 macallan Exp $	*/
+/*	$NetBSD: dbri.c,v 1.31 2010/02/24 22:38:08 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.30 2010/02/18 02:21:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.31 2010/02/24 22:38:08 dyoung Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -162,8 +162,8 @@ static void	dbri_free(void *, void *, struct malloc_type *);
 static paddr_t	dbri_mappage(void *, void *, off_t, int);
 static void	dbri_set_power(struct dbri_softc *, int);
 static void	dbri_bring_up(struct dbri_softc *);
-static bool	dbri_suspend(device_t, pmf_qual_t);
-static bool	dbri_resume(device_t, pmf_qual_t);
+static bool	dbri_suspend(device_t, const pmf_qual_t *);
+static bool	dbri_resume(device_t, const pmf_qual_t *);
 
 /* stupid support routines */
 static uint32_t	reverse_bytes(uint32_t, int);
@@ -2178,7 +2178,7 @@ dbri_close(void *cookie)
 }
 
 static bool
-dbri_suspend(device_t self, pmf_qual_t qual)
+dbri_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct dbri_softc *sc = device_private(self);
 
@@ -2187,7 +2187,7 @@ dbri_suspend(device_t self, pmf_qual_t qual)
 }
 
 static bool
-dbri_resume(device_t self, pmf_qual_t qual)
+dbri_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct dbri_softc *sc = device_private(self);
 

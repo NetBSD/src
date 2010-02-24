@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.13 2010/01/19 22:06:24 pooka Exp $	*/
+/*	$NetBSD: bwi.c,v 1.14 2010/02/24 22:37:58 dyoung Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.13 2010/01/19 22:06:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.14 2010/02/24 22:37:58 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -9714,7 +9714,7 @@ bwi_calc_rssi(struct bwi_softc *sc, const struct bwi_rxbuf_hdr *hdr)
 }
 
 bool
-bwi_suspend(device_t dv, pmf_qual_t qual)
+bwi_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct bwi_softc *sc = device_private(dv);
 
@@ -9724,7 +9724,7 @@ bwi_suspend(device_t dv, pmf_qual_t qual)
 }
 
 bool
-bwi_resume(device_t dv, pmf_qual_t qual)
+bwi_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct bwi_softc *sc = device_private(dv);
 

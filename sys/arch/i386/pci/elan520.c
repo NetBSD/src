@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.46 2010/01/08 19:45:28 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.47 2010/02/24 22:37:55 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.46 2010/01/08 19:45:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.47 2010/02/24 22:37:55 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -847,7 +847,7 @@ elanpex_intr_ack(bus_space_tag_t memt, bus_space_handle_t memh)
 }
 
 static bool
-elansc_suspend(device_t dev, pmf_qual_t qual)
+elansc_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	bool rc;
 	struct elansc_softc *sc = device_private(dev);
@@ -861,7 +861,7 @@ elansc_suspend(device_t dev, pmf_qual_t qual)
 }
 
 static bool
-elansc_resume(device_t dev, pmf_qual_t qual)
+elansc_resume(device_t dev, const pmf_qual_t *qual)
 {
 	struct elansc_softc *sc = device_private(dev);
 
@@ -947,7 +947,7 @@ elansc_intr_establish(device_t dev, int (*handler)(void *), void *arg)
 }
 
 static bool
-elanpex_resume(device_t self, pmf_qual_t qual)
+elanpex_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct elansc_softc *sc = device_private(device_parent(self));
 
@@ -956,7 +956,7 @@ elanpex_resume(device_t self, pmf_qual_t qual)
 }
 
 static bool
-elanpex_suspend(device_t self, pmf_qual_t qual)
+elanpex_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct elansc_softc *sc = device_private(device_parent(self));
 
@@ -966,7 +966,7 @@ elanpex_suspend(device_t self, pmf_qual_t qual)
 }
 
 static bool
-elanpar_resume(device_t self, pmf_qual_t qual)
+elanpar_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct elansc_softc *sc = device_private(device_parent(self));
 
@@ -975,7 +975,7 @@ elanpar_resume(device_t self, pmf_qual_t qual)
 }
 
 static bool
-elanpar_suspend(device_t self, pmf_qual_t qual)
+elanpar_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct elansc_softc *sc = device_private(device_parent(self));
 

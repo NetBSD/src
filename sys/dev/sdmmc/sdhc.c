@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.5 2010/01/12 08:41:16 uebayasi Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.6 2010/02/24 22:38:08 dyoung Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.5 2010/01/12 08:41:16 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.6 2010/02/24 22:38:08 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -310,7 +310,7 @@ err1:
 }
 
 bool
-sdhc_suspend(device_t dev, pmf_qual_t qual)
+sdhc_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	struct sdhc_softc *sc = device_private(dev);
 	struct sdhc_host *hp;
@@ -329,7 +329,7 @@ sdhc_suspend(device_t dev, pmf_qual_t qual)
 }
 
 bool
-sdhc_resume(device_t dev, pmf_qual_t qual)
+sdhc_resume(device_t dev, const pmf_qual_t *qual)
 {
 	struct sdhc_softc *sc = device_private(dev);
 	struct sdhc_host *hp;
