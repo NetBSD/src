@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.16 2010/02/23 20:33:48 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.17 2010/02/24 00:09:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.16 2010/02/23 20:33:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.17 2010/02/24 00:09:04 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -412,7 +412,7 @@ pmap_map_ephemeral_page(struct vm_page *pg, int prot, pt_entry_t *old_pt_entry_p
 		if (PG_MD_CACHED_P(pg)
 		    && mips_cache_badalias(pv->pv_va, va))
 			mips_dcache_wbinv_range_index(pv->pv_va, PAGE_SIZE);
-		if (pv->pv_pmap == NULL);
+		if (pv->pv_pmap == NULL)
 			pv->pv_va = va;
 		VM_PAGE_PVLIST_UNLOCK(pg);
 	}
@@ -1236,6 +1236,11 @@ pmap_page_cache(struct vm_page *pg, bool cached)
 		uint32_t pt_entry;
 
 		KASSERT(pmap != NULL);
+		KASSERT(!MIPS_KSEG0_P(va));
+		KASSERT(!MIPS_KSEG1_P(va));
+#ifdef _LP64
+		KASSERT(!MIPS_XKPHYS_P(va));
+#endif
 		if (pmap == pmap_kernel()) {
 			/*
 			 * Change entries in kernel pmap.
@@ -1940,6 +1945,24 @@ pmap_set_modified(paddr_t pa)
 
 /******************** pv_entry management ********************/
 
+static void
+pmap_check_pvlist(struct vm_page *pg)
+{
+#ifdef PARANIOADIAG
+	pt_entry_t pv = &pg->mdpage.pvh_first;
+	if (pv->pv_pmap != NULL) {
+		for (; pv != NULL; pv = pv->pv_next) {
+			KASSERT(!MIPS_KSEG0_P(pv->pv_va));
+			KASSERT(!MIPS_KSEG1_P(pv->pv_va));
+#ifdef _LP64
+			KASSERT(!MIPS_XKPHYS_P(pv->pv_va));
+#endif
+		}
+		pv = &pg->mdpage.pvh_first;
+	}
+#endif /* PARANOIADIAG */
+}
+
 /*
  * Enter the pmap and virtual address into the
  * physical to virtual map table.
@@ -1948,6 +1971,12 @@ void
 pmap_enter_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, u_int *npte)
 {
 	pv_entry_t pv, npv, apv;
+
+        KASSERT(!MIPS_KSEG0_P(va));
+        KASSERT(!MIPS_KSEG1_P(va));
+#ifdef _LP64
+        KASSERT(!MIPS_XKPHYS_P(va));
+#endif
 
 	apv = NULL;
 	pv = &pg->mdpage.pvh_first;
@@ -1958,6 +1987,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, u_int *npte)
 #endif
 	kpreempt_disable();
 	(void)VM_PAGE_PVLIST_LOCK(pg, true);
+	pmap_check_pvlist(pg);
 #if defined(MIPS3_NO_PV_UNCACHED) || defined(MULTIPROCESSOR)
 again:
 #endif
@@ -2108,6 +2138,7 @@ again:
 		pv->pv_next = npv;
 		PMAP_COUNT(mappings);
 	}
+	pmap_check_pvlist(pg);
 	VM_PAGE_PVLIST_UNLOCK(pg);
 	kpreempt_enable();
 	if (__predict_false(apv != NULL))
@@ -2136,6 +2167,8 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, bool dirty)
 	pv = &pg->mdpage.pvh_first;
 
 	(void)VM_PAGE_PVLIST_LOCK(pg, true);
+	pmap_check_pvlist(pg);
+
 	/*
 	 * If it is the first entry on the list, it is actually
 	 * in the header and we must copy the following entry up
@@ -2148,6 +2181,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, bool dirty)
 		npv = pv->pv_next;
 		if (npv) {
 			*pv = *npv;
+			KASSERT(pv->pv_pmap != NULL);
 		} else {
 			pmap_clear_page_attributes(pg, PG_MD_UNCACHED);
 			pv->pv_pmap = NULL;
@@ -2180,7 +2214,10 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, bool dirty)
 			pmap_page_cache(pg, true);
 	}
 #endif
+
+	pmap_check_pvlist(pg);
 	VM_PAGE_PVLIST_UNLOCK(pg);
+
 	/*
 	 * Free the pv_entry if needed.
 	 */
