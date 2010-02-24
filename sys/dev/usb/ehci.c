@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.165 2010/01/08 20:38:43 dyoung Exp $ */
+/*	$NetBSD: ehci.c,v 1.166 2010/02/24 22:38:09 dyoung Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.165 2010/01/08 20:38:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.166 2010/02/24 22:38:09 dyoung Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1123,7 +1123,7 @@ ehci_activate(device_t self, enum devact act)
  * bus glue needs to call out to it.
  */
 bool
-ehci_suspend(device_t dv, pmf_qual_t qual)
+ehci_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	ehci_softc_t *sc = device_private(dv);
 	int i, s;
@@ -1174,7 +1174,7 @@ ehci_suspend(device_t dv, pmf_qual_t qual)
 }
 
 bool
-ehci_resume(device_t dv, pmf_qual_t qual)
+ehci_resume(device_t dv, const pmf_qual_t *qual)
 {
 	ehci_softc_t *sc = device_private(dv);
 	int i;

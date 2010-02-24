@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.145 2010/01/19 22:07:01 pooka Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.146 2010/02/24 22:38:00 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.145 2010/01/19 22:07:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.146 2010/02/24 22:38:00 dyoung Exp $");
 
 #include "rnd.h"
 
@@ -205,7 +205,7 @@ enum sip_attach_stage {
 struct sip_softc {
 	device_t sc_dev;		/* generic device information */
 	struct device_suspensor		sc_suspensor;
-	struct pmf_qual			sc_qual;
+	pmf_qual_t			sc_qual;
 
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
@@ -607,8 +607,8 @@ static int	sipcom_match(device_t, cfdata_t, void *);
 static void	sipcom_attach(device_t, device_t, void *);
 static void	sipcom_do_detach(device_t, enum sip_attach_stage);
 static int	sipcom_detach(device_t, int);
-static bool	sipcom_resume(device_t, pmf_qual_t);
-static bool	sipcom_suspend(device_t, pmf_qual_t);
+static bool	sipcom_resume(device_t, const pmf_qual_t *);
+static bool	sipcom_suspend(device_t, const pmf_qual_t *);
 
 int	gsip_copy_small = 0;
 int	sip_copy_small = 0;
@@ -962,7 +962,7 @@ sipcom_do_detach(device_t self, enum sip_attach_stage stage)
 }
 
 static bool
-sipcom_resume(device_t self, pmf_qual_t qual)
+sipcom_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct sip_softc *sc = device_private(self);
 
@@ -970,7 +970,7 @@ sipcom_resume(device_t self, pmf_qual_t qual)
 }
 
 static bool
-sipcom_suspend(device_t self, pmf_qual_t qual)
+sipcom_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct sip_softc *sc = device_private(self);
 

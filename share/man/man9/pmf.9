@@ -1,4 +1,4 @@
-.\" $NetBSD: pmf.9,v 1.16 2010/01/26 22:35:11 jruoho Exp $
+.\" $NetBSD: pmf.9,v 1.17 2010/02/24 22:37:54 dyoung Exp $
 .\"
 .\" Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -52,21 +52,21 @@
 .Sh SYNOPSIS
 .In sys/device.h
 .Ft bool
-.Fn pmf_device_register "device_t dev" "bool (*suspend)(device_t dev, pmf_qual_t qual)" "bool (*resume)(device_t dev, pmf_qual_t qual)"
+.Fn pmf_device_register "device_t dev" "bool (*suspend)(device_t dev, const pmf_qual_t *qual)" "bool (*resume)(device_t dev, const pmf_qual_t *qual)"
 .Ft bool
-.Fn pmf_device_register1 "device_t dev" "bool (*suspend)(device_t dev, pmf_qual_t qual)" "bool (*resume)(device_t dev, pmf_qual_t qual)" "bool (*shutdown)(device_t dev, int how)"
+.Fn pmf_device_register1 "device_t dev" "bool (*suspend)(device_t dev, const pmf_qual_t *qual)" "bool (*resume)(device_t dev, const pmf_qual_t *qual)" "bool (*shutdown)(device_t dev, int how)"
 .Ft void
 .Fn pmf_device_deregister "device_t dev"
 .Ft bool
-.Fn pmf_device_suspend "device_t dev" "pmf_qual_t qual"
+.Fn pmf_device_suspend "device_t dev" "const pmf_qual_t *qual"
 .Ft bool
-.Fn pmf_device_resume "device_t dev" "pmf_qual_t qual"
+.Fn pmf_device_resume "device_t dev" "const pmf_qual_t *qual"
 .Ft bool
-.Fn pmf_device_recursive_suspend "device_t dev" "pmf_qual_t qual"
+.Fn pmf_device_recursive_suspend "device_t dev" "const pmf_qual_t *qual"
 .Ft bool
-.Fn pmf_device_recursive_resume "device_t dev" "pmf_qual_t qual"
+.Fn pmf_device_recursive_resume "device_t dev" "const pmf_qual_t *qual"
 .Ft bool
-.Fn pmf_device_subtree_resume "device_t dev" "pmf_qual_t qual"
+.Fn pmf_device_subtree_resume "device_t dev" "const pmf_qual_t *qual"
 .Ft void
 .Fn pmf_class_network_register "device_t dev" "struct ifnet *ifp"
 .Ft bool
@@ -74,9 +74,9 @@
 .Ft bool
 .Fn pmf_class_display_register "device_t dev"
 .Ft bool
-.Fn pmf_system_suspend "pmf_qual_t qual"
+.Fn pmf_system_suspend "const pmf_qual_t *qual"
 .Ft bool
-.Fn pmf_system_resume "pmf_qual_t qual"
+.Fn pmf_system_resume "const pmf_qual_t *qual"
 .Ft void
 .Fn pmf_system_shutdown "int"
 .Ft bool

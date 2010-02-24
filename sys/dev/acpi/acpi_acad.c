@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.39 2010/01/31 11:16:18 jruoho Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.40 2010/02/24 22:37:56 dyoung Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.39 2010/01/31 11:16:18 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.40 2010/02/24 22:37:56 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ static const char * const acad_hid[] = {
 static int	acpiacad_match(device_t, cfdata_t, void *);
 static void	acpiacad_attach(device_t, device_t, void *);
 static int	acpiacad_detach(device_t, int);
-static bool	acpiacad_resume(device_t, pmf_qual_t);
+static bool	acpiacad_resume(device_t, const pmf_qual_t *);
 static void	acpiacad_get_status(void *);
 static void	acpiacad_notify_handler(ACPI_HANDLE, uint32_t, void *);
 static void	acpiacad_init_envsys(device_t);
@@ -165,7 +165,7 @@ acpiacad_detach(device_t self, int flags)
  * 	Queue a new status check.
  */
 static bool
-acpiacad_resume(device_t dv, pmf_qual_t qual)
+acpiacad_resume(device_t dv, const pmf_qual_t *qual)
 {
 
 	(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, acpiacad_get_status, dv);

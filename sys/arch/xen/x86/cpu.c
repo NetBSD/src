@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.40 2010/01/08 19:43:26 dyoung Exp $	*/
+/*	$NetBSD: cpu.c,v 1.41 2010/02/24 22:37:55 dyoung Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40 2010/01/08 19:43:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.41 2010/02/24 22:37:55 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1024,7 +1024,7 @@ cpu_offline_md(void)
 #if 0
 /* XXX joerg restructure and restart CPUs individually */
 static bool
-cpu_suspend(device_t dv, pmf_qual_t qual)
+cpu_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct cpu_softc *sc = device_private(dv);
 	struct cpu_info *ci = sc->sc_info;
@@ -1052,7 +1052,7 @@ cpu_suspend(device_t dv, pmf_qual_t qual)
 }
 
 static bool
-cpu_resume(device_t dv, pmf_qual_t qual)
+cpu_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct cpu_softc *sc = device_private(dv);
 	struct cpu_info *ci = sc->sc_info;

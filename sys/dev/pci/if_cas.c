@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.5 2010/01/22 14:34:34 jdc Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.6 2010/02/24 22:38:00 dyoung Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.5 2010/01/22 14:34:34 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.6 2010/02/24 22:38:00 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -99,8 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.5 2010/01/22 14:34:34 jdc Exp $");
 
 static bool	cas_estintr(struct cas_softc *sc, int);
 bool		cas_shutdown(device_t, int);
-static bool	cas_suspend(device_t, pmf_qual_t);
-static bool	cas_resume(device_t, pmf_qual_t);
+static bool	cas_suspend(device_t, const pmf_qual_t *);
+static bool	cas_resume(device_t, const pmf_qual_t *);
 static int	cas_detach(device_t, int);
 static void	cas_partial_detach(struct cas_softc *, enum cas_attach_stage);
 
@@ -1789,7 +1789,7 @@ cas_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 }
 
 static bool
-cas_suspend(device_t self, pmf_qual_t qual)
+cas_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct cas_softc *sc = device_private(self);
 	bus_space_tag_t t = sc->sc_memt;
@@ -1805,7 +1805,7 @@ cas_suspend(device_t self, pmf_qual_t qual)
 }
 
 static bool
-cas_resume(device_t self, pmf_qual_t qual)
+cas_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct cas_softc *sc = device_private(self);
 

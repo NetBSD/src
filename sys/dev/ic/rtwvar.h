@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.41 2010/01/17 19:45:06 pooka Exp $ */
+/* $NetBSD: rtwvar.h,v 1.42 2010/02/24 22:37:58 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -415,8 +415,8 @@ struct rtw_led_state {
 
 struct rtw_softc {
 	device_t		sc_dev;
-	struct device_suspensor	sc_suspensor;
-	struct pmf_qual		sc_qual;
+	device_suspensor_t	sc_suspensor;
+	pmf_qual_t		sc_qual;
 
 	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
@@ -502,8 +502,8 @@ void rtw_attach(struct rtw_softc *);
 int rtw_detach(struct rtw_softc *);
 int rtw_intr(void *);
 
-bool rtw_suspend(device_t, pmf_qual_t);
-bool rtw_resume(device_t, pmf_qual_t);
+bool rtw_suspend(device_t, const pmf_qual_t *);
+bool rtw_resume(device_t, const pmf_qual_t *);
 
 int rtw_activate(device_t, enum devact);
 

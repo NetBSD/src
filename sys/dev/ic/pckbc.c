@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.47 2010/01/08 20:02:39 dyoung Exp $ */
+/* $NetBSD: pckbc.c,v 1.48 2010/02/24 22:37:58 dyoung Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.47 2010/01/08 20:02:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.48 2010/02/24 22:37:58 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -680,7 +680,7 @@ pckbc_cnattach(bus_space_tag_t iot, bus_addr_t addr,
 }
 
 bool
-pckbc_resume(device_t dv, pmf_qual_t qual)
+pckbc_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct pckbc_softc *sc = device_private(dv);
 	struct pckbc_internal *t;

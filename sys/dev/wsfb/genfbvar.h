@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.13 2010/02/22 05:55:10 ahoka Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.14 2010/02/24 22:38:09 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.13 2010/02/22 05:55:10 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.14 2010/02/24 22:38:09 dyoung Exp $");
 
 #ifndef GENFBVAR_H
 #define GENFBVAR_H
@@ -66,8 +66,8 @@ struct genfb_colormap_callback {
 };
 
 struct genfb_pmf_callback {
-	bool (*gpc_suspend)(device_t, pmf_qual_t);
-	bool (*gpc_resume)(device_t, pmf_qual_t);
+	bool (*gpc_suspend)(device_t, const pmf_qual_t *);
+	bool (*gpc_resume)(device_t, const pmf_qual_t *);
 };
 
 struct genfb_softc {

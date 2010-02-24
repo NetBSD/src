@@ -1,4 +1,4 @@
-/*	$NetBSD: dalb_acpi.c,v 1.6 2010/01/31 19:49:29 jruoho Exp $	*/
+/*	$NetBSD: dalb_acpi.c,v 1.7 2010/02/24 22:37:56 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.6 2010/01/31 19:49:29 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.7 2010/02/24 22:37:56 dyoung Exp $");
 
 /*
  * Direct Application Launch Button:
@@ -70,7 +70,7 @@ static int	acpi_dalb_match(device_t, cfdata_t, void *);
 static void	acpi_dalb_attach(device_t, device_t, void *);
 static int	acpi_dalb_detach(device_t, int);
 static void	acpi_dalb_notify_handler(ACPI_HANDLE, UINT32, void *);
-static bool	acpi_dalb_resume(device_t, pmf_qual_t);
+static bool	acpi_dalb_resume(device_t, const pmf_qual_t *);
 
 static void	acpi_dalb_get_wakeup_hotkeys(void *opaque);
 static void	acpi_dalb_get_runtime_hotkeys(void *opaque);
@@ -265,7 +265,7 @@ acpi_dalb_get_runtime_hotkeys(void *opaque)
 }
 
 static bool
-acpi_dalb_resume(device_t dev, pmf_qual_t qual)
+acpi_dalb_resume(device_t dev, const pmf_qual_t *qual)
 {
 	struct acpi_dalb_softc *sc = device_private(dev);
 	ACPI_STATUS rv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.67 2010/02/24 00:01:11 jym Exp $	*/
+/*	$NetBSD: agp.c,v 1.68 2010/02/24 22:37:59 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.67 2010/02/24 00:01:11 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.68 2010/02/24 22:37:59 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ static int agp_deallocate_user(struct agp_softc *, int);
 static int agp_bind_user(struct agp_softc *, agp_bind *);
 static int agp_unbind_user(struct agp_softc *, agp_unbind *);
 static int agpdev_match(struct pci_attach_args *);
-static bool agp_resume(device_t, pmf_qual_t);
+static bool agp_resume(device_t, const pmf_qual_t *);
 
 #include "agp_ali.h"
 #include "agp_amd.h"
@@ -1119,7 +1119,7 @@ agp_free_dmamem(bus_dma_tag_t tag, size_t size, bus_dmamap_t map,
 }
 
 static bool
-agp_resume(device_t dv, pmf_qual_t qual)
+agp_resume(device_t dv, const pmf_qual_t *qual)
 {
 	agp_flush_cache();
 

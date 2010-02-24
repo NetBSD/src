@@ -163,7 +163,7 @@ MODULE_DEPEND(i915, drm, 1, 1, 1);
 #elif   defined(__NetBSD__)
 
 static bool
-i915drm_suspend(device_t self, pmf_qual_t qual)
+i915drm_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct drm_device *dev = device_private(self);
 
@@ -172,7 +172,7 @@ i915drm_suspend(device_t self, pmf_qual_t qual)
 }
 
 static bool
-i915drm_resume(device_t self, pmf_qual_t qual)
+i915drm_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct drm_device *dev = device_private(self);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.81 2010/01/31 06:45:09 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.82 2010/02/24 22:37:56 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.81 2010/01/31 06:45:09 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.82 2010/02/24 22:37:56 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,7 +199,7 @@ static void         acpibat_update_status(void *);
 static void         acpibat_init_envsys(device_t);
 static void         acpibat_notify_handler(ACPI_HANDLE, UINT32, void *);
 static void         acpibat_refresh(struct sysmon_envsys *, envsys_data_t *);
-static bool	    acpibat_resume(device_t, pmf_qual_t);
+static bool	    acpibat_resume(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL_NEW(acpibat, sizeof(struct acpibat_softc),
     acpibat_match, acpibat_attach, acpibat_detach, NULL);
@@ -774,7 +774,7 @@ acpibat_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 }
 
 static bool
-acpibat_resume(device_t dv, pmf_qual_t qual)
+acpibat_resume(device_t dv, const pmf_qual_t *qual)
 {
 
 	(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update_info, dv);

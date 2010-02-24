@@ -1,4 +1,4 @@
-/*	$NetBSD: zssp.c,v 1.8 2010/01/08 19:42:11 dyoung Exp $	*/
+/*	$NetBSD: zssp.c,v 1.9 2010/02/24 22:37:56 dyoung Exp $	*/
 /*	$OpenBSD: zaurus_ssp.c,v 1.6 2005/04/08 21:58:49 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.8 2010/01/08 19:42:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.9 2010/02/24 22:37:56 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ CFATTACH_DECL_NEW(zssp, sizeof(struct zssp_softc),
 	zssp_match, zssp_attach, NULL, NULL);
 
 static void	zssp_init(void);
-static bool	zssp_resume(device_t dv, pmf_qual_t);
+static bool	zssp_resume(device_t dv, const pmf_qual_t *);
 
 static struct zssp_softc *zssp_sc;
 
@@ -116,7 +116,7 @@ zssp_init(void)
 }
 
 static bool
-zssp_resume(device_t dv, pmf_qual_t qual)
+zssp_resume(device_t dv, const pmf_qual_t *qual)
 {
 	int s;
 

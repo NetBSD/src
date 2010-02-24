@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.113 2010/01/31 18:12:51 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.114 2010/02/24 22:37:58 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.113 2010/01/31 18:12:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.114 2010/02/24 22:37:58 dyoung Exp $");
 
 
 #include <sys/param.h>
@@ -2488,7 +2488,7 @@ rtw_tune(struct rtw_softc *sc)
 }
 
 bool
-rtw_suspend(device_t self, pmf_qual_t qual)
+rtw_suspend(device_t self, const pmf_qual_t *qual)
 {
 	int rc;
 	struct rtw_softc *sc = device_private(self);
@@ -2510,7 +2510,7 @@ rtw_suspend(device_t self, pmf_qual_t qual)
 }
 
 bool
-rtw_resume(device_t self, pmf_qual_t qual)
+rtw_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct rtw_softc *sc = device_private(self);
 

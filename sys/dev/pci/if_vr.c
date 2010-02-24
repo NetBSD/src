@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.102 2010/01/19 22:07:02 pooka Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.103 2010/02/24 22:38:01 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.102 2010/01/19 22:07:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.103 2010/02/24 22:38:01 dyoung Exp $");
 
 #include "rnd.h"
 
@@ -315,7 +315,7 @@ static void	vr_setmulti(struct vr_softc *);
 static void	vr_reset(struct vr_softc *);
 static int	vr_restore_state(pci_chipset_tag_t, pcitag_t, device_t,
     pcireg_t);
-static bool	vr_resume(device_t, pmf_qual_t);
+static bool	vr_resume(device_t, const pmf_qual_t *);
 
 int	vr_copy_small = 0;
 
@@ -1751,7 +1751,7 @@ vr_restore_state(pci_chipset_tag_t pc, pcitag_t tag, device_t self,
 }
 
 static bool
-vr_resume(device_t self, pmf_qual_t qual)
+vr_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct vr_softc *sc = device_private(self);
 

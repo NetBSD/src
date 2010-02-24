@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.66 2010/02/24 15:18:15 tsutsui Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.67 2010/02/24 22:37:58 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.66 2010/02/24 15:18:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.67 2010/02/24 22:37:58 dyoung Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -909,7 +909,7 @@ ne2000_ipkdb_attach(struct ipkdb_if *kip)
 #endif
 
 bool
-ne2000_suspend(device_t self, pmf_qual_t qual)
+ne2000_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct ne2000_softc *sc = device_private(self);
 	struct dp8390_softc *dsc = &sc->sc_dp8390;
@@ -925,7 +925,7 @@ ne2000_suspend(device_t self, pmf_qual_t qual)
 }
 
 bool
-ne2000_resume(device_t self, pmf_qual_t qual)
+ne2000_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct ne2000_softc *sc = device_private(self);
 	struct dp8390_softc *dsc = &sc->sc_dp8390;
