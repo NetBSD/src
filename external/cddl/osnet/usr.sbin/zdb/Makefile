@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/10/21 22:29:54 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2010/02/24 11:56:35 tron Exp $
 
 .include "../../Makefile.zfs"
 
@@ -28,6 +28,8 @@ LIBZPOOL_OBJDIR!=  cd ${LIBZPOOL_SRCDIR} && ${PRINTOBJDIR}
 LDADD+=         -L${LIBZPOOL_OBJDIR} -lzpool
 
 LDADD+= 	-lm -lpthread
+
+COPTS.zdb_il.c += -Wno-stack-protector
 
 .PATH:	${ZFSDIR}/dist/cmd/zdb
 
