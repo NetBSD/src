@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.171 2010/02/24 05:26:28 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.172 2010/02/24 06:18:19 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.171 2010/02/24 05:26:28 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.172 2010/02/24 06:18:19 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1111,8 +1111,13 @@ uvm_fault_upper_lookup(
 			struct vm_anon *anon = anons[lcv];
 
 			mutex_enter(&anon->an_lock);
-			uvm_fault_upper_neighbor(ufi, flt, currva,
-			    anon->an_page, anon->an_ref > 1);
+			struct vm_page *pg = anon->an_page;
+
+			/* ignore loaned and busy pages */
+			if (pg != NULL && pg->loan_count == 0 &&
+			    (pg->flags & PG_BUSY) == 0)
+				uvm_fault_upper_neighbor(ufi, flt, currva,
+				    pg, anon->an_ref > 1);
 			mutex_exit(&anon->an_lock);
 		}
 	}
@@ -1141,11 +1146,6 @@ uvm_fault_upper_neighbor(
 {
 	UVMHIST_FUNC("uvm_fault_upper_neighbor"); UVMHIST_CALLED(maphist);
 
-	/* ignore loaned and busy pages */
-	if (pg == NULL || pg->loan_count != 0 ||
-	    (pg->flags & PG_BUSY) != 0)
-		goto uvm_fault_upper_lookup_enter_done;
-
 	mutex_enter(&uvm_pageqlock);
 	uvm_pageenqueue(pg);
 	mutex_exit(&uvm_pageqlock);
@@ -1166,7 +1166,6 @@ uvm_fault_upper_neighbor(
 	    flt->enter_prot,
 	    PMAP_CANFAIL | (flt->wire_mapping ? PMAP_WIRED : 0));
 
-uvm_fault_upper_lookup_enter_done:
 	pmap_update(ufi->orig_map->pmap);
 }
 
