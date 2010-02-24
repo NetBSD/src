@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.45 2010/02/23 19:28:00 dyoung Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.46 2010/02/24 23:38:40 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -69,13 +69,13 @@ typedef struct cardbus_chipset_tag *cardbus_chipset_tag_t;
  *	int (*cardbus_ctrl)(cardbus_chipset_tag_t ct, int command);
  *	int (*cardbus_power)(cardbus_chipset_tag_t ct, int voltage);
  *
- *	cardbustag_t (*cardbus_make_tag)(cardbus_chipset_tag_t ct,
+ *	pcitag_t (*cardbus_make_tag)(cardbus_chipset_tag_t ct,
  *	    int busno, int functionno);
- *	void (*cardbus_free_tag)(cardbus_chipset_tag_t ct, cardbustag_t tag);
- *	cardbusreg_t (*cardbus_conf_read)(cardbus_chipset_tag_t ct,
- *	    cardbustag_t tag, int offs);
+ *	void (*cardbus_free_tag)(cardbus_chipset_tag_t ct, pcitag_t tag);
+ *	pcireg_t (*cardbus_conf_read)(cardbus_chipset_tag_t ct,
+ *	    pcitag_t tag, int offs);
  *	void (*cardbus_conf_write)(cardbus_chipset_tag_t ct,
- *	    cardbustag_t tag, int offs, cardbusreg_t val);
+ *	    pcitag_t tag, int offs, pcireg_t val);
  */
 typedef const struct cardbus_functions {
 	int (*cardbus_space_alloc)(cardbus_chipset_tag_t, rbus_tag_t,
@@ -89,12 +89,12 @@ typedef const struct cardbus_functions {
 	int (*cardbus_ctrl)(cardbus_chipset_tag_t, int);
 	int (*cardbus_power)(cardbus_chipset_tag_t, int);
 
-	cardbustag_t (*cardbus_make_tag)(cardbus_chipset_tag_t, int, int);
-	void (*cardbus_free_tag)(cardbus_chipset_tag_t, cardbustag_t);
-	cardbusreg_t (*cardbus_conf_read)(cardbus_chipset_tag_t,
-	    cardbustag_t, int);
-	void (*cardbus_conf_write)(cardbus_chipset_tag_t, cardbustag_t,
-	    int, cardbusreg_t);
+	pcitag_t (*cardbus_make_tag)(cardbus_chipset_tag_t, int, int);
+	void (*cardbus_free_tag)(cardbus_chipset_tag_t, pcitag_t);
+	pcireg_t (*cardbus_conf_read)(cardbus_chipset_tag_t,
+	    pcitag_t, int);
+	void (*cardbus_conf_write)(cardbus_chipset_tag_t, pcitag_t,
+	    int, pcireg_t);
 } cardbus_function_t, *cardbus_function_tag_t;
 
 #else
@@ -112,11 +112,11 @@ typedef const struct cardbus_functions {
 	    int (*)(void *), void *);
 	void (*cardbus_intr_disestablish)(cardbus_chipset_tag_t, void *);
 
-	cardbustag_t (*cardbus_make_tag)(cardbus_chipset_tag_t, int, int);
-	cardbusreg_t (*cardbus_conf_read)(cardbus_chipset_tag_t,
-	    cardbustag_t, int);
-	void (*cardbus_conf_write)(cardbus_chipset_tag_t, cardbustag_t,
-	    int, cardbusreg_t);
+	pcitag_t (*cardbus_make_tag)(cardbus_chipset_tag_t, int, int);
+	pcireg_t (*cardbus_conf_read)(cardbus_chipset_tag_t,
+	    pcitag_t, int);
+	void (*cardbus_conf_write)(cardbus_chipset_tag_t, pcitag_t,
+	    int, pcireg_t);
 } cardbus_function_t, *cardbus_function_tag_t;
 #endif /* rbus */
 
@@ -193,7 +193,7 @@ struct cardbus_softc {
 };
 
 struct cardbus_conf_state {
-	cardbusreg_t reg[16];
+	pcireg_t reg[16];
 };
 
 /*
@@ -215,8 +215,8 @@ typedef struct cardbus_devfunc {
 	rbus_tag_t ct_rbus_memt;	/* CardBus mem rbus tag */
 #endif
 
-	cardbusreg_t ct_bar[6];		/* Base Address Regs 0 to 6 */
-	cardbusreg_t ct_bhlc;		/* Latency timer and cache line size */
+	pcireg_t ct_bar[6];		/* Base Address Regs 0 to 6 */
+	pcireg_t ct_bhlc;		/* Latency timer and cache line size */
 	/* u_int32_t ct_cisreg; */	/* CIS reg: is it needed??? */
 
 	device_t ct_device;	/* pointer to the device */
@@ -258,9 +258,9 @@ struct cardbus_attach_args {
 
 	u_int ca_bus;
 	u_int ca_function;
-	cardbustag_t ca_tag;
-	cardbusreg_t ca_id;
-	cardbusreg_t ca_class;
+	pcitag_t ca_tag;
+	pcireg_t ca_id;
+	pcireg_t ca_class;
 
 	/* interrupt information */
 	cardbus_intr_line_t ca_intrline;
@@ -311,7 +311,7 @@ void *cardbus_intr_establish(cardbus_chipset_tag_t, cardbus_function_tag_t,
 void cardbus_intr_disestablish(cardbus_chipset_tag_t,
     cardbus_function_tag_t, void *);
 
-int cardbus_mapreg_map(struct cardbus_softc *, int, int, cardbusreg_t,
+int cardbus_mapreg_map(struct cardbus_softc *, int, int, pcireg_t,
     int, bus_space_tag_t *, bus_space_handle_t *, bus_addr_t *, bus_size_t *);
 int cardbus_mapreg_unmap(struct cardbus_softc *, int, int,
     bus_space_tag_t, bus_space_handle_t, bus_size_t);
@@ -323,14 +323,14 @@ int cardbus_function_enable(struct cardbus_softc *, int);
 int cardbus_function_disable(struct cardbus_softc *, int);
 
 int cardbus_get_capability(cardbus_chipset_tag_t, cardbus_function_tag_t,
-    cardbustag_t, int, int *, cardbusreg_t *);
-int cardbus_get_powerstate(cardbus_devfunc_t, cardbustag_t, cardbusreg_t *);
-int cardbus_set_powerstate(cardbus_devfunc_t, cardbustag_t, cardbusreg_t);
+    pcitag_t, int, int *, pcireg_t *);
+int cardbus_get_powerstate(cardbus_devfunc_t, pcitag_t, pcireg_t *);
+int cardbus_set_powerstate(cardbus_devfunc_t, pcitag_t, pcireg_t);
 
 void cardbus_conf_capture(cardbus_chipset_tag_t, cardbus_function_tag_t,
-    cardbustag_t, struct cardbus_conf_state *);
+    pcitag_t, struct cardbus_conf_state *);
 void cardbus_conf_restore(cardbus_chipset_tag_t, cardbus_function_tag_t,
-    cardbustag_t, struct cardbus_conf_state *);
+    pcitag_t, struct cardbus_conf_state *);
 
 #define Cardbus_function_enable(ct) cardbus_function_enable((ct)->ct_sc, (ct)->ct_func)
 #define Cardbus_function_disable(ct) cardbus_function_disable((ct)->ct_sc, (ct)->ct_func)
