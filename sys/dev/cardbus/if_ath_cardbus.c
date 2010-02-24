@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.38 2010/01/18 18:52:35 pooka Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.39 2010/02/24 19:52:51 dyoung Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.38 2010/01/18 18:52:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.39 2010/02/24 19:52:51 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -89,7 +89,7 @@ struct ath_cardbus_softc {
 	/* CardBus-specific goo. */
 	void	*sc_ih;			/* interrupt handle */
 	cardbus_devfunc_t sc_ct;	/* our CardBus devfuncs */
-	cardbustag_t sc_tag;		/* our CardBus tag */
+	pcitag_t sc_tag;		/* our CardBus tag */
 	bus_size_t sc_mapsize;		/* the size of mapped bus space region */
 
 	pcireg_t sc_bar_val;		/* value of the BAR */
@@ -109,7 +109,7 @@ CFATTACH_DECL_NEW(ath_cardbus, sizeof(struct ath_cardbus_softc),
 void	ath_cardbus_setup(struct ath_cardbus_softc *);
 
 static bool
-ath_cardbus_suspend(device_t self, pmf_qual_t qual)
+ath_cardbus_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct ath_cardbus_softc *csc = device_private(self);
 
@@ -123,7 +123,7 @@ ath_cardbus_suspend(device_t self, pmf_qual_t qual)
 }
 
 static bool
-ath_cardbus_resume(device_t self, pmf_qual_t qual)
+ath_cardbus_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct ath_cardbus_softc *csc = device_private(self);
 

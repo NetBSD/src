@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_cardbus.c,v 1.20 2009/09/02 15:11:13 tsutsui Exp $	*/
+/*	$NetBSD: if_re_cardbus.c,v 1.21 2010/02/24 19:52:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2004 Jonathan Stone
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.20 2009/09/02 15:11:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.21 2010/02/24 19:52:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ struct re_cardbus_softc {
 	/* CardBus-specific goo. */
 	void *sc_ih;
 	cardbus_devfunc_t sc_ct;
-	cardbustag_t sc_tag;
+	pcitag_t sc_tag;
 	int sc_csr;
 	int sc_cben;
 	int sc_bar_reg;

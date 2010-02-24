@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.29 2009/11/12 19:21:03 dyoung Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.30 2010/02/24 19:52:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.29 2009/11/12 19:21:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.30 2010/02/24 19:52:51 dyoung Exp $");
 
 #include "opt_ahc_cardbus.h"
 
@@ -77,8 +77,7 @@ struct ahc_cardbus_softc {
 
 	/* CardBus-specific goo. */
 	cardbus_devfunc_t sc_ct;	/* our CardBus devfuncs */
-	cardbus_intr_line_t sc_intrline; /* our interrupt line */
-	cardbustag_t sc_tag;
+	pcitag_t sc_tag;
 
 	int	sc_cbenable;		/* what CardBus access type to enable */
 	int	sc_csr;			/* CSR bits */
@@ -123,7 +122,6 @@ ahc_cardbus_attach(device_t parent, device_t self, void *aux)
 	ahc->sc_dev = self;
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
-	csc->sc_intrline = ca->ca_intrline;
 
 	printf(": Adaptec ADP-1480 SCSI\n");
 

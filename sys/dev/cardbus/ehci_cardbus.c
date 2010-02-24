@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_cardbus.c,v 1.24 2010/01/08 19:47:42 dyoung Exp $	*/
+/*	$NetBSD: ehci_cardbus.c,v 1.25 2010/02/24 19:52:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.24 2010/01/08 19:47:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.25 2010/02/24 19:52:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ ehci_cardbus_match(device_t parent, cfdata_t match, void *aux)
 }
 
 static bool
-ehci_cardbus_suspend(device_t dv, pmf_qual_t qual)
+ehci_cardbus_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	ehci_suspend(dv, qual);
 #if 0
@@ -114,7 +114,7 @@ ehci_cardbus_suspend(device_t dv, pmf_qual_t qual)
 }
 
 static bool
-ehci_cardbus_resume(device_t dv, pmf_qual_t qual)
+ehci_cardbus_resume(device_t dv, const pmf_qual_t *qual)
 {
 #if 0
 	struct ehci_cardbus_softc *sc = device_private(dv);
@@ -131,7 +131,7 @@ ehci_cardbus_attach(device_t parent, device_t self, void *aux)
 	cardbus_devfunc_t ct = ca->ca_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	cardbusreg_t csr;
+	pcireg_t csr;
 	char devinfo[256];
 	usbd_status r;
 	const char *vendor;

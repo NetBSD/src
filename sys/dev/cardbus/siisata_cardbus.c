@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_cardbus.c,v 1.4 2010/01/30 16:16:35 jakllsch Exp $ */
+/* $NetBSD: siisata_cardbus.c,v 1.5 2010/02/24 19:52:52 dyoung Exp $ */
 /* Id: siisata_pci.c,v 1.11 2008/05/21 16:20:11 jakllsch Exp  */
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata_cardbus.c,v 1.4 2010/01/30 16:16:35 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata_cardbus.c,v 1.5 2010/02/24 19:52:52 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -82,7 +82,7 @@ struct siisata_cardbus_softc {
 static int siisata_cardbus_match(device_t, cfdata_t, void *);
 static void siisata_cardbus_attach(device_t, device_t, void *);
 static int siisata_cardbus_detach(device_t, int);
-static bool siisata_cardbus_resume(device_t, pmf_qual_t);
+static bool siisata_cardbus_resume(device_t, const pmf_qual_t *);
 
 static const struct siisata_cardbus_product {
 	cardbus_vendor_id_t scp_vendor;
@@ -139,7 +139,7 @@ siisata_cardbus_attach(device_t parent, device_t self, void *aux)
 	cardbus_devfunc_t ct = ca->ca_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	cardbusreg_t csr;
+	pcireg_t csr;
 	const struct siisata_cardbus_product *scp;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
@@ -269,7 +269,7 @@ siisata_cardbus_detach(device_t self, int flags)
 	struct cardbus_devfunc *ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	cardbustag_t ctag = cardbus_make_tag(cc, cf, cbsc->sc_bus, ct->ct_func);
+	pcitag_t ctag = cardbus_make_tag(cc, cf, cbsc->sc_bus, ct->ct_func);
 	int rv;
 
 	rv = siisata_detach(sc, flags);
@@ -296,7 +296,7 @@ siisata_cardbus_detach(device_t self, int flags)
 }
 
 static bool
-siisata_cardbus_resume(device_t dv, pmf_qual_t qual)
+siisata_cardbus_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct siisata_cardbus_softc *csc = device_private(dv);
 	struct siisata_softc *sc = &csc->si_sc;

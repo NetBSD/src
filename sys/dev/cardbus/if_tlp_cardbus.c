@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.62 2010/01/18 18:52:35 pooka Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.63 2010/02/24 19:52:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.62 2010/01/18 18:52:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.63 2010/02/24 19:52:51 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -95,7 +95,7 @@ struct tulip_cardbus_softc {
 	/* CardBus-specific goo. */
 	void	*sc_ih;			/* interrupt handle */
 	cardbus_devfunc_t sc_ct;	/* our CardBus devfuncs */
-	cardbustag_t sc_tag;		/* our CardBus tag */
+	pcitag_t sc_tag;		/* our CardBus tag */
 	int	sc_csr;			/* CSR bits */
 	bus_size_t sc_mapsize;		/* the size of mapped bus space
 					   region */

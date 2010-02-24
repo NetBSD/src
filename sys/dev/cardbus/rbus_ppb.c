@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.31 2009/05/12 14:17:31 cegger Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.32 2010/02/24 19:52:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.31 2009/05/12 14:17:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.32 2010/02/24 19:52:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -649,7 +649,7 @@ ppb_cardbus_attach(device_t parent, device_t self, void *aux)
 	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(ca->ca_class));
 
-	csc->sc_tag = ca->ca_tag;	/* XXX cardbustag_t == pcitag_t */
+	csc->sc_tag = ca->ca_tag;
 
 	busdata = cardbus_conf_read(cc, cf, ca->ca_tag, PPB_REG_BUSINFO);
 	minbus = pcibios_max_bus;
@@ -744,7 +744,7 @@ ppb_cardbus_setup(struct ppb_softc * sc)
 	printf("ppb_cardbus_setup called\n");
 #if 0
 	/* not sure what to do here */
-	cardbustag_t tag = cardbus_make_tag(cc, cf, csc->ct->ct_bus,
+	pcitag_t tag = cardbus_make_tag(cc, cf, csc->ct->ct_bus,
 	    csc->ct->ct_dev, csc->ct->ct_func);
 
 	command = Cardbus_conf_read(csc->ct, tag, CARDBUS_COMMAND_STATUS_REG);

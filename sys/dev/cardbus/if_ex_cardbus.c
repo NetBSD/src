@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.46 2009/12/15 22:17:12 snj Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.47 2010/02/24 19:52:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.46 2009/12/15 22:17:12 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.47 2010/02/24 19:52:51 dyoung Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -104,7 +104,7 @@ struct ex_cardbus_softc {
 
 	bus_size_t sc_mapsize;		/* the size of mapped bus space region */
 
-	cardbustag_t sc_tag;
+	pcitag_t sc_tag;
 
 	int	sc_csr;			/* CSR bits */
 	int	sc_bar_reg;		/* which BAR to use */
@@ -380,7 +380,7 @@ ex_cardbus_setup(struct ex_cardbus_softc *csc)
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	cardbusreg_t  reg;
+	pcireg_t reg;
 
 	(void)cardbus_set_powerstate(ct, csc->sc_tag, PCI_PWR_D0);
 

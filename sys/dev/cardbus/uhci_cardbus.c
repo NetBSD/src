@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_cardbus.c,v 1.13 2009/05/12 12:11:17 cegger Exp $	*/
+/*	$NetBSD: uhci_cardbus.c,v 1.14 2010/02/24 19:52:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.13 2009/05/12 12:11:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.14 2010/02/24 19:52:52 dyoung Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -63,7 +63,7 @@ struct uhci_cardbus_softc {
 	cardbus_chipset_tag_t	sc_cc;
 	cardbus_function_tag_t	sc_cf;
 	cardbus_devfunc_t	sc_ct;
-	cardbustag_t		sc_tag;
+	pcitag_t		sc_tag;
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
@@ -101,8 +101,8 @@ uhci_cardbus_attach(device_t parent, device_t self,
 	cardbus_devfunc_t ct = ca->ca_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	cardbustag_t tag = ca->ca_tag;
-	cardbusreg_t csr;
+	pcitag_t tag = ca->ca_tag;
+	pcireg_t csr;
 	const char *vendor;
 	const char *devname = device_xname(self);
 	char devinfo[256];
