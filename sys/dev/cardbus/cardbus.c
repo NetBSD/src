@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.101 2010/02/24 22:37:57 dyoung Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.102 2010/02/24 23:38:40 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.101 2010/02/24 22:37:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.102 2010/02/24 23:38:40 dyoung Exp $");
 
 #include "opt_cardbus.h"
 
@@ -78,7 +78,7 @@ static void print_tuple(u_int8_t*, int, void*);
 #endif
 
 static int cardbus_read_tuples(struct cardbus_attach_args *,
-    cardbusreg_t, u_int8_t *, size_t);
+    pcireg_t, u_int8_t *, size_t);
 
 static void enable_function(struct cardbus_softc *, int, int);
 static void disable_function(struct cardbus_softc *, int);
@@ -151,19 +151,19 @@ cardbusdetach(device_t self, int flags)
 }
 
 static int
-cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
+cardbus_read_tuples(struct cardbus_attach_args *ca, pcireg_t cis_ptr,
     u_int8_t *tuples, size_t len)
 {
 	struct cardbus_softc *sc = ca->ca_ct->ct_sc;
 	cardbus_chipset_tag_t cc = ca->ca_ct->ct_cc;
 	cardbus_function_tag_t cf = ca->ca_ct->ct_cf;
-	cardbustag_t tag = ca->ca_tag;
-	cardbusreg_t command;
+	pcitag_t tag = ca->ca_tag;
+	pcireg_t command;
 	bus_space_tag_t bar_tag;
 	bus_space_handle_t bar_memh;
 	bus_size_t bar_size;
 	bus_addr_t bar_addr;
-	cardbusreg_t reg;
+	pcireg_t reg;
 	int found = 0;
 	int cardbus_space = cis_ptr & CARDBUS_CIS_ASIMASK;
 	int i, j;
@@ -222,7 +222,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 		    (uintmax_t)bar_size, (uintmax_t)bar_addr);
 
 		if (cardbus_space == CARDBUS_CIS_ASI_ROM) {
-			cardbusreg_t exrom;
+			pcireg_t exrom;
 			int save;
 			struct cardbus_rom_image_head rom_image;
 			struct cardbus_rom_image *p;
@@ -423,9 +423,9 @@ cardbus_rescan(device_t self, const char *ifattr,
 	struct cardbus_softc *sc = device_private(self);
 	cardbus_chipset_tag_t cc;
 	cardbus_function_tag_t cf;
-	cardbustag_t tag;
-	cardbusreg_t id, class, cis_ptr;
-	cardbusreg_t bhlc, icr, lattimer;
+	pcitag_t tag;
+	pcireg_t id, class, cis_ptr;
+	pcireg_t bhlc, icr, lattimer;
 	int cdstatus;
 	int function, nfunction;
 	device_t csc;
@@ -803,8 +803,8 @@ cardbus_function_enable(struct cardbus_softc *sc, int func)
 	cardbus_chipset_tag_t cc = sc->sc_cc;
 	cardbus_function_tag_t cf = sc->sc_cf;
 	cardbus_devfunc_t ct;
-	cardbusreg_t command;
-	cardbustag_t tag;
+	pcireg_t command;
+	pcitag_t tag;
 
 	DPRINTF(("entering cardbus_function_enable...  "));
 
@@ -852,16 +852,16 @@ cardbus_function_disable(struct cardbus_softc *sc, int func)
 
 /*
  * int cardbus_get_capability(cardbus_chipset_tag_t cc,
- *	cardbus_function_tag_t cf, cardbustag_t tag, int capid, int *offset,
- *	cardbusreg_t *value)
+ *	cardbus_function_tag_t cf, pcitag_t tag, int capid, int *offset,
+ *	pcireg_t *value)
  *
  *	Find the specified PCI capability.
  */
 int
 cardbus_get_capability(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
-    cardbustag_t tag, int capid, int *offset, cardbusreg_t *value)
+    pcitag_t tag, int capid, int *offset, pcireg_t *value)
 {
-	cardbusreg_t reg;
+	pcireg_t reg;
 	unsigned int ofs;
 
 	reg = cardbus_conf_read(cc, cf, tag, PCI_COMMAND_STATUS_REG);
@@ -948,10 +948,10 @@ decode_tuple(u_int8_t *tuple, u_int8_t *end,
  * XXX: this is another reason why this code should be shared with PCI.
  */
 static int
-cardbus_get_powerstate_int(cardbus_devfunc_t ct, cardbustag_t tag,
-    cardbusreg_t *state, int offset)
+cardbus_get_powerstate_int(cardbus_devfunc_t ct, pcitag_t tag,
+    pcireg_t *state, int offset)
 {
-	cardbusreg_t value, now;
+	pcireg_t value, now;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
@@ -970,13 +970,12 @@ cardbus_get_powerstate_int(cardbus_devfunc_t ct, cardbustag_t tag,
 }
 
 int
-cardbus_get_powerstate(cardbus_devfunc_t ct, cardbustag_t tag,
-    cardbusreg_t *state)
+cardbus_get_powerstate(cardbus_devfunc_t ct, pcitag_t tag, pcireg_t *state)
 {
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	int offset;
-	cardbusreg_t value;
+	pcireg_t value;
 
 	if (!cardbus_get_capability(cc, cf, tag, PCI_CAP_PWRMGMT, &offset, &value))
 		return EOPNOTSUPP;
@@ -985,13 +984,13 @@ cardbus_get_powerstate(cardbus_devfunc_t ct, cardbustag_t tag,
 }
 
 static int
-cardbus_set_powerstate_int(cardbus_devfunc_t ct, cardbustag_t tag,
-    cardbusreg_t state, int offset, cardbusreg_t cap_reg)
+cardbus_set_powerstate_int(cardbus_devfunc_t ct, pcitag_t tag,
+    pcireg_t state, int offset, pcireg_t cap_reg)
 {
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
-	cardbusreg_t value, cap, now;
+	pcireg_t value, cap, now;
 
 	KASSERT((offset & 0x3) == 0);
 
@@ -1041,12 +1040,12 @@ cardbus_set_powerstate_int(cardbus_devfunc_t ct, cardbustag_t tag,
 }
 
 int
-cardbus_set_powerstate(cardbus_devfunc_t ct, cardbustag_t tag, cardbusreg_t state)
+cardbus_set_powerstate(cardbus_devfunc_t ct, pcitag_t tag, pcireg_t state)
 {
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	int offset;
-	cardbusreg_t value;
+	pcireg_t value;
 
 	if (!cardbus_get_capability(cc, cf, tag, PCI_CAP_PWRMGMT, &offset,
 	    &value))
@@ -1116,7 +1115,7 @@ print_tuple(u_int8_t *tuple, int len, void *data)
 
 void
 cardbus_conf_capture(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
-    cardbustag_t tag, struct cardbus_conf_state *pcs)
+    pcitag_t tag, struct cardbus_conf_state *pcs)
 {
 	int off;
 
@@ -1126,10 +1125,10 @@ cardbus_conf_capture(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
 
 void
 cardbus_conf_restore(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
-    cardbustag_t tag, struct cardbus_conf_state *pcs)
+    pcitag_t tag, struct cardbus_conf_state *pcs)
 {
 	int off;
-	cardbusreg_t val;
+	pcireg_t val;
 
 	for (off = 15; off >= 0; off--) {
 		val = cardbus_conf_read(cc, cf, tag, (off * 4));
@@ -1141,10 +1140,10 @@ cardbus_conf_restore(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
 struct cardbus_child_power {
 	struct cardbus_conf_state p_cardbusconf;
 	cardbus_devfunc_t p_ct;
-	cardbustag_t p_tag;
+	pcitag_t p_tag;
 	cardbus_chipset_tag_t p_cc;
 	cardbus_function_tag_t p_cf;
-	cardbusreg_t p_pm_cap;
+	pcireg_t p_pm_cap;
 	bool p_has_pm;
 	int p_pm_offset;
 };
@@ -1205,7 +1204,7 @@ cardbus_child_register(device_t child)
 	struct cardbus_devfunc *ct;
 	struct cardbus_child_power *priv;
 	int off;
-	cardbusreg_t reg;
+	pcireg_t reg;
 
 	ct = sc->sc_funcs[device_locator(child, CARDBUSCF_FUNCTION)];
 
