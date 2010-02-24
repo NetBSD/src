@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.46 2009/05/12 07:07:44 cegger Exp $	*/
+/*	$NetBSD: fd.c,v 1.47 2010/02/24 23:03:00 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.46 2009/05/12 07:07:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47 2010/02/24 23:03:00 dyoung Exp $");
 
 #include "opt_ddb.h"
 
@@ -595,7 +595,8 @@ fdstrategy(struct buf *bp)
 		fdstart(fd);
 #ifdef DIAGNOSTIC
 	else {
-		struct fdc_softc *fdc = (void *) device_parent(&fd->sc_dev);
+		struct fdc_softc *fdc =
+		    device_private(device_parent(&fd->sc_dev));
 		if (fdc->sc_state == DEVIDLE) {
 			printf("fdstrategy: controller inactive\n");
 			fdcstart(fdc);
