@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.30 2010/02/24 22:37:57 dyoung Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.31 2010/02/24 23:38:40 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.30 2010/02/24 22:37:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.31 2010/02/24 23:38:40 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -94,15 +94,15 @@ struct atw_cardbus_softc {
 	/* CardBus-specific goo. */
 	void			*sc_ih;		/* interrupt handle */
 	cardbus_devfunc_t	sc_ct;		/* our CardBus devfuncs */
-	cardbustag_t		sc_tag;		/* our CardBus tag */
-	cardbusreg_t		sc_csr;		/* CSR bits */
+	pcitag_t		sc_tag;		/* our CardBus tag */
+	pcireg_t		sc_csr;		/* CSR bits */
 	bus_size_t		sc_mapsize;	/* the size of mapped bus space
 						 * region
 						 */
 
 	int			sc_cben;	/* CardBus enables */
 	int			sc_bar_reg;	/* which BAR to use */
-	cardbusreg_t		sc_bar_val;	/* value of the BAR */
+	pcireg_t		sc_bar_val;	/* value of the BAR */
 
 	cardbus_intr_line_t sc_intrline; /* interrupt line */
 };
@@ -364,7 +364,7 @@ atw_cardbus_setup(struct atw_cardbus_softc *csc)
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	cardbusreg_t csr;
+	pcireg_t csr;
 	int rc;
 
 	if ((rc = cardbus_set_powerstate(ct, csc->sc_tag, PCI_PWR_D0)) != 0)
