@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.65 2010/02/24 15:13:34 tsutsui Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.66 2010/02/24 15:18:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.65 2010/02/24 15:13:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.66 2010/02/24 15:18:15 tsutsui Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -716,8 +716,7 @@ ne2000_readmem(bus_space_tag_t nict, bus_space_handle_t nich, bus_space_tag_t as
 	NIC_BARRIER(nict, nich);
 
 	/* Round up to a word. */
-	if (amount & 1)
-		++amount;
+	amount = roundup2(amount, sizeof(uint16_t));
 
 	/* Set up DMA byte count. */
 	bus_space_write_1(nict, nich, ED_P0_RBCR0, amount);
