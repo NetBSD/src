@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2010/02/21 01:46:34 darran Exp $
+#	$NetBSD: Makefile,v 1.4 2010/02/24 12:18:37 tron Exp $
 #
 #
+
+.include <bsd.own.mk>
 
 .if (defined(MKDTRACE) && ${MKDTRACE} != "no")
 SUBDIR+=	libdtrace
