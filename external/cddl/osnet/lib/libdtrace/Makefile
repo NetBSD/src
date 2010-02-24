@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/02/24 12:51:05 tron Exp $
+#	$NetBSD: Makefile,v 1.4 2010/02/24 15:40:54 tron Exp $
 
 # $FreeBSD: src/cddl/lib/libdtrace/Makefile,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
 
@@ -70,6 +70,17 @@ CFLAGS+=	-I${.OBJDIR} \
 COPTS.dt_aggregate.c	+= -Wno-stack-protector
 COPTS.dt_consume.c	+= -Wno-stack-protector
 COPTS.dt_decl.c		+= -Wno-stack-protector
+COPTS.dt_dof.c		+= -Wno-stack-protector
+COPTS.dt_handle.c	+= -Wno-stack-protector
+COPTS.dt_ident.c	+= -Wno-stack-protector
+COPTS.dt_link.c		+= -Wno-stack-protector
+COPTS.dt_options.c	+= -Wno-stack-protector
+COPTS.dt_parser.c	+= -Wno-stack-protector
+COPTS.dt_pragma.c	+= -Wno-stack-protector
+COPTS.dt_printf.c	+= -Wno-stack-protector
+COPTS.dt_program.c	+= -Wno-stack-protector
+COPTS.dt_provider.c	+= -Wno-stack-protector
+COPTS.dt_subr.c		+= -Wno-stack-protector
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "amd64"
 CFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/intel
