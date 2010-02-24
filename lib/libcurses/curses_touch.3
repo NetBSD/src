@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_touch.3,v 1.7 2005/03/04 11:41:36 wiz Exp $
+.\"	$NetBSD: curses_touch.3,v 1.8 2010/02/24 13:02:13 drochner Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd March 4, 2005
+.Dd February 23, 2010
 .Dt CURSES_TOUCH 3
 .Os
 .Sh NAME
@@ -43,7 +43,9 @@
 .Nm is_linetouched ,
 .Nm is_wintouched ,
 .Nm redrawwin ,
-.Nm wredrawln
+.Nm wredrawln ,
+.Nm wsyncup ,
+.Nm wsyncdown
 .Nd curses window modification routines
 .Sh LIBRARY
 .Lb libcurses
@@ -67,6 +69,10 @@
 .Fn redrawwin "WINDOW *win"
 .Ft int
 .Fn wredrawln "WINDOW *win" "int line" "int n"
+.Ft void
+.Fn wsyncup "WINDOW *win"
+.Ft void
+.Fn wsyncdown "WINDOW *win"
 .Sh DESCRIPTION
 These functions mark lines and windows as modified and check the modification
 status of lines and windows.
@@ -157,6 +163,17 @@ lines starting at
 in the given window as corrupted.
 It is equivalent to
 .Fn wtouchln win line n 1 .
+.Pp
+The
+.Fn wsyncup
+function touches all ancestors of
+.Fa win .
+.Pp
+The
+.Fn wsyncdown
+function touches
+.Fa win
+if any of its ancestors is touched.
 .Sh RETURN VALUES
 Functions returning pointers will return
 .Dv NULL
