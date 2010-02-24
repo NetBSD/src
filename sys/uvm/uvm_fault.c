@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.167 2010/02/24 04:18:09 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.168 2010/02/24 04:20:45 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.167 2010/02/24 04:18:09 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.168 2010/02/24 04:20:45 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -704,6 +704,7 @@ struct uvm_faultctx {
 	bool wire_paging;
 	bool maxprot;
 	bool cow_now;
+	bool promote;
 };
 
 static inline int	uvm_fault_check(
@@ -911,6 +912,8 @@ uvm_fault_check(
 	} else {
 		flt->cow_now = (flt->access_type & VM_PROT_WRITE) != 0;
 	}
+
+	flt->promote = false;
 
 	/*
 	 * handle "needs_copy" case.   if we need to copy the amap we will
@@ -1437,6 +1440,7 @@ uvm_fault_upper(
 	 */
 
 	if (flt->cow_now && anon->an_ref > 1) {
+		flt->promote = true;
 		error = uvm_fault_upper_promote(ufi, flt, uobj, anon);
 	} else {
 		error = uvm_fault_upper_direct(ufi, flt, uobj, anon);
@@ -1568,8 +1572,8 @@ uvm_fault_upper_enter(
 	 * now map the page in.
 	 */
 
-	UVMHIST_LOG(maphist, "  MAPPING: anon: pm=0x%x, va=0x%x, pg=0x%x",
-	    ufi->orig_map->pmap, ufi->orig_rvaddr, pg, 0);
+	UVMHIST_LOG(maphist, "  MAPPING: anon: pm=0x%x, va=0x%x, pg=0x%x, promote=%d",
+	    ufi->orig_map->pmap, ufi->orig_rvaddr, pg, flt->promote);
 	if (pmap_enter(ufi->orig_map->pmap, ufi->orig_rvaddr, VM_PAGE_TO_PHYS(pg),
 	    flt->enter_prot, flt->access_type | PMAP_CANFAIL | (flt->wire_mapping ? PMAP_WIRED : 0))
 	    != 0) {
@@ -1648,7 +1652,6 @@ uvm_fault_lower1(
 #ifdef DIAGNOSTIC
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
 #endif
-	bool promote;
 	int error;
 	UVMHIST_FUNC("uvm_fault_lower1"); UVMHIST_CALLED(maphist);
 
@@ -1673,13 +1676,13 @@ uvm_fault_lower1(
 
 	if (uobj == NULL) {
 		uobjpage = PGO_DONTCARE;
-		promote = true;		/* always need anon here */
+		flt->promote = true;		/* always need anon here */
 	} else {
 		KASSERT(uobjpage != PGO_DONTCARE);
-		promote = flt->cow_now && UVM_ET_ISCOPYONWRITE(ufi->entry);
+		flt->promote = flt->cow_now && UVM_ET_ISCOPYONWRITE(ufi->entry);
 	}
 	UVMHIST_LOG(maphist, "  case 2 fault: promote=%d, zfill=%d",
-	    promote, (uobj == NULL), 0,0);
+	    flt->promote, (uobj == NULL), 0,0);
 
 	/*
 	 * if uobjpage is not null then we do not need to do I/O to get the
@@ -1719,7 +1722,7 @@ uvm_fault_lower1(
 	KASSERT(uobj == NULL || !UVM_OBJ_IS_CLEAN(uobjpage->uobject) ||
 	    (uobjpage->flags & PG_CLEAN) != 0);
 
-	if (promote == false) {
+	if (flt->promote == false) {
 		error = uvm_fault_lower_direct(ufi, flt, uobj, uobjpage);
 	} else {
 		error = uvm_fault_lower_promote(ufi, flt, uobj, uobjpage);
@@ -2050,8 +2053,8 @@ uvm_fault_lower_enter(
 	 */
 
 	UVMHIST_LOG(maphist,
-	    "  MAPPING: case2: pm=0x%x, va=0x%x, pg=0x%x, promote=XXX",
-	    ufi->orig_map->pmap, ufi->orig_rvaddr, pg, 0);
+	    "  MAPPING: case2: pm=0x%x, va=0x%x, pg=0x%x, promote=%d",
+	    ufi->orig_map->pmap, ufi->orig_rvaddr, pg, flt->promote);
 	KASSERT((flt->access_type & VM_PROT_WRITE) == 0 ||
 		(pg->flags & PG_RDONLY) == 0);
 	if (pmap_enter(ufi->orig_map->pmap, ufi->orig_rvaddr, VM_PAGE_TO_PHYS(pg),
