@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.57 2010/01/19 22:07:43 pooka Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.58 2010/02/24 17:00:25 plunky Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,13 +56,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.57 2010/01/19 22:07:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.58 2010/02/24 17:00:25 plunky Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
 #include "rnd.h"
 #elif defined(__OpenBSD__)
-include "bpfilter.h"
+#include "bpfilter.h"
 #endif /* defined(__OpenBSD__) */
 
 #include <sys/param.h>
