@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.30 2010/01/17 19:45:06 pooka Exp $	*/
+/*	$NetBSD: athvar.h,v 1.31 2010/02/24 22:37:57 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -176,7 +176,7 @@ struct ath_tx99;
 struct ath_softc {
 	device_t 		sc_dev;
 	struct device_suspensor	sc_suspensor;
-	struct pmf_qual		sc_qual;
+	pmf_qual_t		sc_qual;
 	struct ethercom		sc_ec;		/* interface common */
 	struct ath_stats	sc_stats;	/* interface statistics */
 	struct ieee80211com	sc_ic;		/* IEEE 802.11 common */

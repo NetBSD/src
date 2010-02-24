@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.100 2010/02/23 19:28:00 dyoung Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.101 2010/02/24 22:37:57 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.100 2010/02/23 19:28:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.101 2010/02/24 22:37:57 dyoung Exp $");
 
 #include "opt_cardbus.h"
 
@@ -1150,7 +1150,7 @@ struct cardbus_child_power {
 };
 
 static bool
-cardbus_child_suspend(device_t dv, pmf_qual_t qual)
+cardbus_child_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct cardbus_child_power *priv = device_pmf_bus_private(dv);
 
@@ -1170,7 +1170,7 @@ cardbus_child_suspend(device_t dv, pmf_qual_t qual)
 }
 
 static bool
-cardbus_child_resume(device_t dv, pmf_qual_t qual)
+cardbus_child_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct cardbus_child_power *priv = device_pmf_bus_private(dv);
 

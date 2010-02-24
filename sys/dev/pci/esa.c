@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.53 2010/01/08 19:56:51 dyoung Exp $ */
+/* $NetBSD: esa.c,v 1.54 2010/02/24 22:38:00 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001-2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.53 2010/01/08 19:56:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.54 2010/02/24 22:38:00 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -163,8 +163,8 @@ static void		esa_remove_list(struct esa_voice *, struct esa_list *,
 					int);
 
 /* power management */
-static bool		esa_suspend(device_t, pmf_qual_t);
-static bool		esa_resume(device_t, pmf_qual_t);
+static bool		esa_suspend(device_t, const pmf_qual_t *);
+static bool		esa_resume(device_t, const pmf_qual_t *);
 
 
 #define ESA_NENCODINGS 8
@@ -1652,7 +1652,7 @@ esa_remove_list(struct esa_voice *vc, struct esa_list *el, int index)
 }
 
 static bool
-esa_suspend(device_t dv, pmf_qual_t qual)
+esa_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct esa_softc *sc = device_private(dv);
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1680,7 +1680,7 @@ esa_suspend(device_t dv, pmf_qual_t qual)
 }
 
 static bool
-esa_resume(device_t dv, pmf_qual_t qual)
+esa_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct esa_softc *sc = device_private(dv);
 	bus_space_tag_t iot = sc->sc_iot;

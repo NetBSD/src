@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000var.h,v 1.23 2010/01/08 20:02:39 dyoung Exp $	*/
+/*	$NetBSD: ne2000var.h,v 1.24 2010/02/24 22:37:58 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ int	ne2000_ipkdb_attach(struct ipkdb_if *);
 #endif
 
 /* pmf(9) */
-bool ne2000_suspend(device_t, pmf_qual_t);
-bool ne2000_resume(device_t, pmf_qual_t);
+bool ne2000_suspend(device_t, const pmf_qual_t *);
+bool ne2000_resume(device_t, const pmf_qual_t *);
 
 #endif /* _DEV_IC_NE2000VAR_H_ */

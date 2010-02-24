@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.202 2010/02/19 22:28:47 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.203 2010/02/24 22:38:10 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.202 2010/02/19 22:28:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.203 2010/02/24 22:38:10 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1984,7 +1984,7 @@ device_pmf_is_registered(device_t dev)
 }
 
 bool
-device_pmf_driver_suspend(device_t dev, pmf_qual_t qual)
+device_pmf_driver_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	if ((dev->dv_flags & DVF_DRIVER_SUSPENDED) != 0)
 		return true;
@@ -2000,7 +2000,7 @@ device_pmf_driver_suspend(device_t dev, pmf_qual_t qual)
 }
 
 bool
-device_pmf_driver_resume(device_t dev, pmf_qual_t qual)
+device_pmf_driver_resume(device_t dev, const pmf_qual_t *qual)
 {
 	if ((dev->dv_flags & DVF_DRIVER_SUSPENDED) == 0)
 		return true;
@@ -2027,8 +2027,8 @@ device_pmf_driver_shutdown(device_t dev, int how)
 
 bool
 device_pmf_driver_register(device_t dev,
-    bool (*suspend)(device_t, pmf_qual_t),
-    bool (*resume)(device_t, pmf_qual_t),
+    bool (*suspend)(device_t, const pmf_qual_t *),
+    bool (*resume)(device_t, const pmf_qual_t *),
     bool (*shutdown)(device_t, int))
 {
 	dev->dv_driver_suspend = suspend;
@@ -2165,7 +2165,7 @@ device_pmf_bus_private(device_t dev)
 }
 
 bool
-device_pmf_bus_suspend(device_t dev, pmf_qual_t qual)
+device_pmf_bus_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) != 0)
 		return true;
@@ -2182,7 +2182,7 @@ device_pmf_bus_suspend(device_t dev, pmf_qual_t qual)
 }
 
 bool
-device_pmf_bus_resume(device_t dev, pmf_qual_t qual)
+device_pmf_bus_resume(device_t dev, const pmf_qual_t *qual)
 {
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) == 0)
 		return true;
@@ -2207,8 +2207,8 @@ device_pmf_bus_shutdown(device_t dev, int how)
 
 void
 device_pmf_bus_register(device_t dev, void *priv,
-    bool (*suspend)(device_t, pmf_qual_t),
-    bool (*resume)(device_t, pmf_qual_t),
+    bool (*suspend)(device_t, const pmf_qual_t *),
+    bool (*resume)(device_t, const pmf_qual_t *),
     bool (*shutdown)(device_t, int), void (*deregister)(device_t))
 {
 	dev->dv_bus_private = priv;
@@ -2237,7 +2237,7 @@ device_pmf_class_private(device_t dev)
 }
 
 bool
-device_pmf_class_suspend(device_t dev, pmf_qual_t qual)
+device_pmf_class_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) != 0)
 		return true;
@@ -2251,7 +2251,7 @@ device_pmf_class_suspend(device_t dev, pmf_qual_t qual)
 }
 
 bool
-device_pmf_class_resume(device_t dev, pmf_qual_t qual)
+device_pmf_class_resume(device_t dev, const pmf_qual_t *qual)
 {
 	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) == 0)
 		return true;
@@ -2269,8 +2269,8 @@ device_pmf_class_resume(device_t dev, pmf_qual_t qual)
 
 void
 device_pmf_class_register(device_t dev, void *priv,
-    bool (*suspend)(device_t, pmf_qual_t),
-    bool (*resume)(device_t, pmf_qual_t),
+    bool (*suspend)(device_t, const pmf_qual_t *),
+    bool (*resume)(device_t, const pmf_qual_t *),
     void (*deregister)(device_t))
 {
 	dev->dv_class_private = priv;

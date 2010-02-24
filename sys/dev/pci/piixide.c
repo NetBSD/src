@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.53 2010/01/08 19:56:52 dyoung Exp $	*/
+/*	$NetBSD: piixide.c,v 1.54 2010/02/24 22:38:01 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.53 2010/01/08 19:56:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.54 2010/02/24 22:38:01 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,8 @@ static u_int32_t piix_setup_sidetim_timings(u_int8_t, u_int8_t, u_int8_t);
 static void piixsata_chip_map(struct pciide_softc*, struct pci_attach_args *);
 static int piix_dma_init(void *, int, int, void *, size_t, int);
 
-static bool piixide_resume(device_t, pmf_qual_t);
-static bool piixide_suspend(device_t, pmf_qual_t);
+static bool piixide_resume(device_t, const pmf_qual_t *);
+static bool piixide_suspend(device_t, const pmf_qual_t *);
 static int  piixide_match(device_t, cfdata_t, void *);
 static void piixide_attach(device_t, device_t, void *);
 
@@ -367,7 +367,7 @@ piixide_attach(device_t parent, device_t self, void *aux)
 }
 
 static bool
-piixide_resume(device_t dv, pmf_qual_t qual)
+piixide_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct pciide_softc *sc = device_private(dv);
 
@@ -380,7 +380,7 @@ piixide_resume(device_t dv, pmf_qual_t qual)
 }
 
 static bool
-piixide_suspend(device_t dv, pmf_qual_t qual)
+piixide_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct pciide_softc *sc = device_private(dv);
 

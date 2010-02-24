@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.49 2010/01/19 22:07:01 pooka Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.50 2010/02/24 22:38:00 dyoung Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.49 2010/01/19 22:07:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.50 2010/02/24 22:38:00 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -109,7 +109,7 @@ void	nfe_get_macaddr(struct nfe_softc *, uint8_t *);
 void	nfe_set_macaddr(struct nfe_softc *, const uint8_t *);
 void	nfe_tick(void *);
 void	nfe_poweron(device_t);
-bool	nfe_resume(device_t, pmf_qual_t);
+bool	nfe_resume(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL_NEW(nfe, sizeof(struct nfe_softc), nfe_match, nfe_attach,
     NULL, NULL);
@@ -1940,7 +1940,7 @@ nfe_poweron(device_t self)
 }
 
 bool
-nfe_resume(device_t dv, pmf_qual_t qual)
+nfe_resume(device_t dv, const pmf_qual_t *qual)
 {
 	nfe_poweron(dv);
 
