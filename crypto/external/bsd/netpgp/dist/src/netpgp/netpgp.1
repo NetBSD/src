@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgp.1,v 1.8 2010/02/23 01:24:45 agc Exp $
+.\" $NetBSD: netpgp.1,v 1.9 2010/02/24 08:22:58 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -270,17 +270,18 @@ using its own methods of retrieving the passphrase from
 the user.
 .It Fl Fl from Ns = Ns Ar signature-valid-from
 This option allows the signer to specify a time as the
-starting point for validity of the signature. In this way
-it is possible to prevent files from being verified until a
-specific point in time. The time can be specified either
-in
+starting point for validity of the signature.
+In this way it is possible to prevent files from being verified
+until a specific point in time.
+The time can be specified either in
 .Dv YYYY-MM-DD
 format, or as the number of seconds since the epoch.
 .It Fl Fl duration Ns = Ns Ar signature-valid-to
 This option allows the signer to specify a time as the
-end point for validity of the signature. In this way
-it is possible to prevent files from being verified after a
-specific point in time. The time can be specified either
+end point for validity of the signature.
+In this way it is possible to prevent files from being verified
+after a specific point in time.
+The time can be specified either
 in
 .Dv YYYY-MM-DD
 format, or as the number of seconds.
@@ -411,20 +412,20 @@ This simple (and contrived) example shows that
 .Nm
 commands can be used together in a pipeline to produce the desired effect.
 .Bd -literal
-% netpgp --sign \*[Lt] a | netpgp --cat \*[Gt] b 
+% netpgp --sign \*[Lt] a | netpgp --cat \*[Gt] b
 netpgp: default key set to "C0596823"
 netpgp: default key set to "C0596823"
 pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
-Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
+Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
 uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
 uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
 uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
 uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
-netpgp passphrase: 
+netpgp passphrase:
 Good signature for \*[Lt]stdin\*[Gt] made Mon Dec 21 18:25:02 2009
 using RSA (Encrypt or Sign) key 1b68dcfcc0596823
 pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
-Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
+Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
 uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
 uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
 uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
