@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.146 2010/02/24 22:38:00 dyoung Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.147 2010/02/24 23:52:49 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.146 2010/02/24 22:38:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.147 2010/02/24 23:52:49 dyoung Exp $");
 
 #include "rnd.h"
 
@@ -204,7 +204,7 @@ enum sip_attach_stage {
  */
 struct sip_softc {
 	device_t sc_dev;		/* generic device information */
-	struct device_suspensor		sc_suspensor;
+	device_suspensor_t		sc_suspensor;
 	pmf_qual_t			sc_qual;
 
 	bus_space_tag_t sc_st;		/* bus space tag */
