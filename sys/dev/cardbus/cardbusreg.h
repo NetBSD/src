@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusreg.h,v 1.3 2009/12/15 22:17:12 snj Exp $ */
+/*	$NetBSD: cardbusreg.h,v 1.4 2010/02/24 23:38:40 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -31,8 +31,6 @@
 
 #include <dev/pci/pcivar.h>	/* for pcitag_t */
 
-typedef u_int32_t cardbusreg_t;
-typedef pcitag_t cardbustag_t;
 typedef int cardbus_intr_line_t;
 
 #define CARDBUS_ID_REG          0x00

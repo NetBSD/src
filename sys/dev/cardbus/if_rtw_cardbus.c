@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.35 2010/02/24 22:37:57 dyoung Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.36 2010/02/24 23:38:40 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.35 2010/02/24 22:37:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.36 2010/02/24 23:38:40 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -120,7 +120,7 @@ struct rtw_cardbus_softc {
 	/* CardBus-specific goo. */
 	void			*sc_ih;		/* interrupt handle */
 	cardbus_devfunc_t	sc_ct;		/* our CardBus devfuncs */
-	cardbustag_t		sc_tag;		/* our CardBus tag */
+	pcitag_t		sc_tag;		/* our CardBus tag */
 	int			sc_csr;		/* CSR bits */
 	bus_size_t		sc_mapsize;	/* size of the mapped bus space
 						 * region
@@ -386,10 +386,10 @@ rtw_cardbus_suspend(device_t self, const pmf_qual_t *qual)
 void
 rtw_cardbus_setup(struct rtw_cardbus_softc *csc)
 {
-	cardbustag_t tag = csc->sc_tag;
+	pcitag_t tag = csc->sc_tag;
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbusreg_t bhlc, csr, lattimer;
+	pcireg_t bhlc, csr, lattimer;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	(void)cardbus_set_powerstate(ct, tag, PCI_PWR_D0);
