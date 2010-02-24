@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.73 2009/09/14 10:36:51 degroote Exp $	*/
+/*	$NetBSD: main.c,v 1.74 2010/02/24 11:00:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.73 2009/09/14 10:36:51 degroote Exp $");
+__RCSID("$NetBSD: main.c,v 1.74 2010/02/24 11:00:27 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -471,6 +471,9 @@ main(argc, argv)
 			gflag = 1;
 			break;
 #endif
+		case 'h':
+			hflag = 1;
+			break;
 		case 'I':
 			iflag = 1;
 			interface = optarg;
