@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.12 2010/02/22 00:16:31 mrg Exp $ */
+/*	$NetBSD: cache.h,v 1.13 2010/02/24 04:48:29 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -109,6 +109,38 @@ blast_icache(void)
 	else
 		blast_icache_us();
 }
+
+/* SPARC64 specific */
+/* Assembly routines to flush TLB mappings */
+void sp_tlb_flush_pte_us(vaddr_t, int);
+void sp_tlb_flush_pte_usiii(vaddr_t, int);
+void sp_tlb_flush_all_us(void);
+void sp_tlb_flush_all_usiii(void);
+
+static __inline__ void
+sp_tlb_flush_pte(vaddr_t va, int ctx)
+{
+	if (CPU_IS_USIII_UP())
+		sp_tlb_flush_pte_usiii(va, ctx);
+	else
+		sp_tlb_flush_pte_us(va, ctx);
+}
+
+static __inline__ void
+sp_tlb_flush_all(void)
+{
+	if (CPU_IS_USIII_UP())
+		sp_tlb_flush_all_usiii();
+	else
+		sp_tlb_flush_all_us();
+}
+
+#ifdef MULTIPROCESSOR
+void smp_tlb_flush_pte(vaddr_t, pmap_t);
+#define	tlb_flush_pte(va,pm)	smp_tlb_flush_pte(va, pm)
+#else
+#define	tlb_flush_pte(va,pm)	sp_tlb_flush_pte(va, (pm)->pm_ctx)
+#endif
 
 /* Various cache size/line sizes */
 extern	int	ecache_min_line_size;
