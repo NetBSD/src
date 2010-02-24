@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.319 2010/02/22 22:28:57 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.320 2010/02/24 01:58:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -4965,7 +4965,8 @@ ENTRY(sp_tlb_flush_pte_usiii)
 
 
 /*
- * sp_tlb_flush_all_us(void)/sp_tlb_flush_all_usiii(void)
+ * sp_tlb_flush_all_us(void)
+ * sp_tlb_flush_all_usiii(void)
  *
  * Flush all user TLB entries from both IMMU and DMMU.
  * We have both UltraSPARC I+II, and UltraSPARC >=III versions.
