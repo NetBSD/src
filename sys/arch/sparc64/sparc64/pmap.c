@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.253 2010/02/24 09:49:36 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.254 2010/02/24 10:11:53 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.253 2010/02/24 09:49:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.254 2010/02/24 10:11:53 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1320,7 +1320,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	/* Align with the start of a page table */
 	for (kbreak &= (-1 << PDSHIFT); kbreak < maxkvaddr;
 	     kbreak += (1 << PDSHIFT)) {
-		if (pseg_get(pm, kbreak))
+		if (pseg_get(pm, kbreak) & TLB_V)
 			continue;
 
 		pa = 0;
@@ -1578,7 +1578,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 #endif
 
 		data = pseg_get(pm, va);
-		if (data == 0) {
+		if ((data & TLB_V) == 0) {
 			continue;
 		}
 
@@ -1948,7 +1948,7 @@ pmap_remove(struct pmap *pm, vaddr_t va, vaddr_t endva)
 #endif
 
 		data = pseg_get(pm, va);
-		if (data == 0) {
+		if ((data & TLB_V) == 0) {
 			continue;
 		}
 
@@ -3344,6 +3344,7 @@ pmap_page_cache(struct pmap *pm, paddr_t pa, int mode)
 
 			/* Disable caching */
 			data = pseg_get(pv->pv_pmap, va);
+			KASSERT(data & TLB_V);
 			rv = pseg_set(pv->pv_pmap, va, data & ~TLB_CV, 0);
 			if (rv & 1)
 				panic("pmap_page_cache: pseg_set needs"
