@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_cardbus.c,v 1.22 2009/05/12 14:17:31 cegger Exp $	*/
+/*	$NetBSD: adv_cardbus.c,v 1.23 2010/02/24 19:52:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.22 2009/05/12 14:17:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.23 2010/02/24 19:52:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,8 +74,7 @@ struct adv_cardbus_softc {
 
 	/* CardBus-specific goo. */
 	cardbus_devfunc_t sc_ct;	/* our CardBus devfuncs */
-	cardbus_intr_line_t sc_intrline; /* our interrupt line */
-	cardbustag_t sc_tag;
+	pcitag_t sc_tag;
 
 	int	sc_cbenable;		/* what CardBus access type to enable */
 	int	sc_csr;			/* CSR bits */
@@ -151,7 +150,6 @@ adv_cardbus_attach(device_t parent, device_t self,
 
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
-	csc->sc_intrline = ca->ca_intrline;
 	csc->sc_cbenable = 0;
 
 	/*

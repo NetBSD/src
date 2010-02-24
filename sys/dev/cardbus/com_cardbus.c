@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.23 2009/11/12 20:30:29 dyoung Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.24 2010/02/24 19:52:51 dyoung Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.23 2009/11/12 20:30:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.24 2010/02/24 19:52:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,12 +60,12 @@ struct com_cardbus_softc {
 	void			*cc_ih;
 	cardbus_devfunc_t	cc_ct;
 	bus_addr_t		cc_addr;
-	cardbusreg_t		cc_base;
+	pcireg_t		cc_base;
 	bus_size_t		cc_size;
-	cardbusreg_t		cc_csr;
+	pcireg_t		cc_csr;
 	int			cc_cben;
-	cardbustag_t		cc_tag;
-	cardbusreg_t		cc_reg;
+	pcitag_t		cc_tag;
+	pcireg_t		cc_reg;
 	int			cc_type;
 };
 
@@ -85,7 +85,7 @@ CFATTACH_DECL_NEW(com_cardbus, sizeof(struct com_cardbus_softc),
 static struct csdev {
 	int		vendor;
 	int		product;
-	cardbusreg_t	reg;
+	pcireg_t	reg;
 	int		type;
 } csdevs[] = {
 	{ PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MODEM56,
@@ -138,7 +138,7 @@ static int
 gofigure(struct cardbus_attach_args *ca, struct com_cardbus_softc *csc)
 {
 	int i, index = -1;
-	cardbusreg_t cis_ptr;
+	pcireg_t cis_ptr;
 	struct csdev *cp;
 
 	/* If this device is listed above, use the known values, */
@@ -267,7 +267,7 @@ com_cardbus_setup(struct com_cardbus_softc *csc)
         cardbus_devfunc_t ct = csc->cc_ct;
         cardbus_chipset_tag_t cc = ct->ct_cc;
         cardbus_function_tag_t cf = ct->ct_cf;
-	cardbusreg_t reg;
+	pcireg_t reg;
 
 	Cardbus_conf_write(ct, csc->cc_tag, csc->cc_reg, csc->cc_base);
 

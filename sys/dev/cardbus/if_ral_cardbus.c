@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_cardbus.c,v 1.17 2010/01/18 18:52:35 pooka Exp $	*/
+/*	$NetBSD: if_ral_cardbus.c,v 1.18 2010/02/24 19:52:51 dyoung Exp $	*/
 /*	$OpenBSD: if_ral_cardbus.c,v 1.6 2006/01/09 20:03:31 damien Exp $  */
 
 /*-
@@ -22,7 +22,7 @@
  * CardBus front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.17 2010/01/18 18:52:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.18 2010/02/24 19:52:51 dyoung Exp $");
 
 
 #include <sys/param.h>
@@ -85,7 +85,7 @@ struct ral_cardbus_softc {
 	/* cardbus specific goo */
 	struct ral_opns		*sc_opns;
 	cardbus_devfunc_t	sc_ct;
-	cardbustag_t		sc_tag;
+	pcitag_t		sc_tag;
 	void			*sc_ih;
 	bus_size_t		sc_mapsize;
 	pcireg_t		sc_bar_val;

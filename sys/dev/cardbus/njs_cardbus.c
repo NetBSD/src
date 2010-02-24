@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_cardbus.c,v 1.11 2009/05/12 14:17:31 cegger Exp $	*/
+/*	$NetBSD: njs_cardbus.c,v 1.12 2010/02/24 19:52:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.11 2009/05/12 14:17:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.12 2010/02/24 19:52:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,7 @@ struct njsc32_cardbus_softc {
 
 	/* CardBus-specific goo */
 	cardbus_devfunc_t	sc_ct;		/* our CardBus devfuncs */
-	cardbus_intr_line_t	sc_intrline;	/* our interrupt line */
-	cardbustag_t		sc_tag;
+	pcitag_t		sc_tag;
 
 	bus_space_handle_t	sc_regmaph;
 	bus_size_t		sc_regmap_size;
@@ -141,7 +140,6 @@ njs_cardbus_attach(device_t parent, device_t self, void *aux)
 
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
-	csc->sc_intrline = ca->ca_intrline;
 
 	/*
 	 * Map the device.
