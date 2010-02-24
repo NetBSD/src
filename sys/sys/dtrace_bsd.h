@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_bsd.h,v 1.2 2010/02/23 22:19:27 darran Exp $	*/
+/*	$NetBSD: dtrace_bsd.h,v 1.3 2010/02/24 10:18:19 tron Exp $	*/
 
 /*-
  * Copyright (c) 2007-2008 John Birrell (jb@freebsd.org)
@@ -33,7 +33,9 @@
 #ifndef _SYS_DTRACE_BSD_H
 #define	_SYS_DTRACE_BSD_H
 
+#if defined(_KERNEL_OPT)
 #include "opt_dtrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
