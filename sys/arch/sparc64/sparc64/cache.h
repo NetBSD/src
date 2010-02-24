@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.14 2010/02/24 06:05:35 mrg Exp $ */
+/*	$NetBSD: cache.h,v 1.15 2010/02/24 09:49:36 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -138,8 +138,11 @@ sp_tlb_flush_all(void)
 #ifdef MULTIPROCESSOR
 void smp_tlb_flush_pte(vaddr_t, struct pmap *);
 #define	tlb_flush_pte(va,pm)	smp_tlb_flush_pte(va, pm)
+void smp_dcache_flush_page_all(paddr_t pa);
+#define	dcache_flush_page_all(pa)	smp_dcache_flush_page_all(pa)
 #else
 #define	tlb_flush_pte(va,pm)	sp_tlb_flush_pte(va, (pm)->pm_ctx)
+#define	dcache_flush_page_all(pa)	dcache_flush_page(pa)
 #endif
 
 /* Various cache size/line sizes */
