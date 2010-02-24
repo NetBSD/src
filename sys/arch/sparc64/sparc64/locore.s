@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.320 2010/02/24 01:58:53 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.321 2010/02/24 09:49:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -9045,6 +9045,65 @@ ENTRY(sparc64_ipi_drop_fpstate)
 	CASPTR	[%g1] ASI_N, %g2, %g0	! fplwp = NULL if fplwp == %g2
 	membar	#Sync			! Should not be needed due to retry
 	IPIEVC_INC(IPI_EVCNT_FPU_FLUSH,%g2,%g3)
+	ba,a	ret_from_intr_vector
+	 nop
+
+/*
+ * IPI handler to drop the current FPU state.
+ * void sparc64_ipi_dcache_flush_page_usiii(paddr_t pa, int line_size)
+ * void sparc64_ipi_dcache_flush_page_us(paddr_t pa, int line_size)
+ *
+ * On entry:
+ *	%g2 = pa
+ *	%g3 = line_size
+ */
+ENTRY(sparc64_ipi_dcache_flush_page_usiii)
+	set	NBPG, %g1
+	add	%g2, %g1, %g1	! end address
+
+1:
+	stxa	%g0, [%g2] ASI_DCACHE_INVALIDATE
+	add	%g2, %g3, %g2
+	cmp	%g2, %g1
+	bl,pt	%xcc, 1b
+	 nop
+
+	sethi	%hi(KERNBASE), %g5
+	flush	%g5
+	membar	#Sync
+	ba,a	ret_from_intr_vector
+	 nop
+
+ENTRY(sparc64_ipi_dcache_flush_page_us)
+	mov	-1, %g1		! Generate mask for tag: bits [29..2]
+	srlx	%g2, 13-2, %g5	! Tag is PA bits <40:13> in bits <29:2>
+	clr	%g4
+	srl	%g1, 2, %g1	! Now we have bits <29:0> set
+	set	(2*NBPG), %g7
+	ba,pt	%icc, 1f
+	 andn	%g1, 3, %g1	! Now we have bits <29:2> set
+
+	.align 8
+1:
+	ldxa	[%g4] ASI_DCACHE_TAG, %g6
+	mov	%g4, %g2
+	deccc	32, %g7
+	bl,pn	%icc, 2f
+	 inc	32, %g4
+
+	xor	%g6, %g5, %g6
+	andcc	%g6, %g1, %g0
+	bne,pt	%xcc, 1b
+	 membar	#LoadStore
+
+	stxa	%g0, [%g2] ASI_DCACHE_TAG
+	ba,pt	%icc, 1b
+	 membar	#StoreLoad
+2:
+
+	sethi	%hi(KERNBASE), %g5
+	flush	%g5
+	membar	#Sync
 	ba,a	ret_from_intr_vector
 	 nop
 #endif
