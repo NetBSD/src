@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.1 2010/02/06 11:14:41 tonio Exp $   */
+/*	$NetBSD: uthum.c,v 1.2 2010/02/24 17:34:56 plunky Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -136,6 +136,9 @@ USB_ATTACH(uthum)
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
 	sc->sc_num_sensors = 0;
+
+	aprint_normal("\n");
+	aprint_naive("\n");
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	repid = uha->reportid;
