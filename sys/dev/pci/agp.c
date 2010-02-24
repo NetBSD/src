@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.66 2010/01/08 19:56:51 dyoung Exp $	*/
+/*	$NetBSD: agp.c,v 1.67 2010/02/24 00:01:11 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.66 2010/01/08 19:56:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.67 2010/02/24 00:01:11 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,7 +327,7 @@ agpattach(device_t parent, device_t self, void *aux)
 	 * Work out an upper bound for agp memory allocation. This
 	 * uses a heuristic table from the Linux driver.
 	 */
-	memsize = ptoa(physmem) >> 20;
+	memsize = physmem >> (20 - PAGE_SHIFT); /* memsize is in MB */
 	for (i = 0; i < agp_max_size; i++) {
 		if (memsize <= agp_max[i][0])
 			break;
