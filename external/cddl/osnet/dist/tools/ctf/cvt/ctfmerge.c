@@ -171,9 +171,15 @@
  * this comment will not live to see the stock hit five.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
+#define _NETBSD_SOURCE
 #include <unistd.h>
+#undef _NETBSD_SOURCE
 #include <pthread.h>
 #include <assert.h>
 #if defined(sun)
