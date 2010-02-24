@@ -30,6 +30,10 @@
  * for placing the resulting data into an output file.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>

@@ -29,6 +29,10 @@
  * Create and parse buffers containing CTF data.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>

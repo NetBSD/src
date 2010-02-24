@@ -29,6 +29,10 @@
  * Routines for manipulating iidesc_t structures
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
