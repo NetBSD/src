@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.48 2010/02/17 23:30:21 christos Exp $	*/
+/*	$NetBSD: fsck.c,v 1.49 2010/02/24 13:56:07 hannken Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.48 2010/02/17 23:30:21 christos Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.49 2010/02/24 13:56:07 hannken Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -156,7 +156,7 @@ main(int argc, char *argv[])
 
 		case 'x':
 			addentry(&omhead, optarg, "");
-			break;
+			continue;
 
 		case 'y':
 			break;
