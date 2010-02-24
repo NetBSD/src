@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153 2010/01/27 03:56:33 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.154 2010/02/24 00:01:12 jym Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153 2010/01/27 03:56:33 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.154 2010/02/24 00:01:12 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -339,7 +339,7 @@ uvm_page_init_buckets(struct pgfreelist *pgfl)
 void
 uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 {
-	vsize_t freepages, pagecount, bucketcount, n;
+	psize_t freepages, pagecount, bucketcount, n;
 	struct pgflbucket *bucketarray, *cpuarray;
 	struct vm_page *pagearray;
 	int lcv;
@@ -439,7 +439,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 		vm_physmem[lcv].lastpg = vm_physmem[lcv].pgs + (n - 1);
 
 		/* init and free vm_pages (we've already zeroed them) */
-		paddr = ptoa(vm_physmem[lcv].start);
+		paddr = ctob(vm_physmem[lcv].start);
 		for (i = 0 ; i < n ; i++, paddr += PAGE_SIZE) {
 			vm_physmem[lcv].pgs[i].phys_addr = paddr;
 #ifdef __HAVE_VM_PAGE_MD
@@ -642,7 +642,7 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 		/* try from front */
 		if (vm_physmem[lcv].avail_start == vm_physmem[lcv].start &&
 		    vm_physmem[lcv].avail_start < vm_physmem[lcv].avail_end) {
-			*paddrp = ptoa(vm_physmem[lcv].avail_start);
+			*paddrp = ctob(vm_physmem[lcv].avail_start);
 			vm_physmem[lcv].avail_start++;
 			vm_physmem[lcv].start++;
 			/* nothing left?   nuke it */
@@ -661,7 +661,7 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 		/* try from rear */
 		if (vm_physmem[lcv].avail_end == vm_physmem[lcv].end &&
 		    vm_physmem[lcv].avail_start < vm_physmem[lcv].avail_end) {
-			*paddrp = ptoa(vm_physmem[lcv].avail_end - 1);
+			*paddrp = ctob(vm_physmem[lcv].avail_end - 1);
 			vm_physmem[lcv].avail_end--;
 			vm_physmem[lcv].end--;
 			/* nothing left?   nuke it */
@@ -690,7 +690,7 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 		if (vm_physmem[lcv].avail_start >= vm_physmem[lcv].avail_end)
 			continue;  /* nope */
 
-		*paddrp = ptoa(vm_physmem[lcv].avail_start);
+		*paddrp = ctob(vm_physmem[lcv].avail_start);
 		vm_physmem[lcv].avail_start++;
 		/* truncate! */
 		vm_physmem[lcv].start = vm_physmem[lcv].avail_start;
@@ -793,7 +793,7 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 		}
 		/* zero data, init phys_addr and free_list, and free pages */
 		memset(pgs, 0, sizeof(struct vm_page) * npages);
-		for (lcv = 0, paddr = ptoa(start) ;
+		for (lcv = 0, paddr = ctob(start) ;
 				 lcv < npages ; lcv++, paddr += PAGE_SIZE) {
 			pgs[lcv].phys_addr = paddr;
 			pgs[lcv].free_list = free_list;
