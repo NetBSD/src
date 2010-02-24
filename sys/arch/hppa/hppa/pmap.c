@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.68 2010/02/22 21:32:55 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.69 2010/02/24 06:38:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68 2010/02/22 21:32:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69 2010/02/24 06:38:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -477,14 +477,14 @@ pmap_dump_table(pa_space_t space, vaddr_t sva)
 				va = pdemask + PDE_SIZE;
 				continue;
 			}
-			printf("%x:%8p:\n", space, pde);
+			db_printf("%x:%8p:\n", space, pde);
 		}
 
 		pte = pmap_pte_get(pde, va);
 		if (pte) {
 			snprintb(buf, sizeof(buf), TLB_BITS,
 			   TLB_PROT(pte & PAGE_MASK));
-			printf("0x%08lx-0x%08x:%s\n", va, pte & ~PAGE_MASK,
+			db_printf("0x%08lx-0x%08x:%s\n", va, pte & ~PAGE_MASK,
 			    buf);
 		}
 		va += PAGE_SIZE;
@@ -499,10 +499,10 @@ pmap_dump_pv(paddr_t pa)
 
 	pg = PHYS_TO_VM_PAGE(pa);
 	mutex_enter(&pg->mdpage.pvh_lock);
-	printf("pg %p attr 0x%08x aliases %d\n", pg, pg->mdpage.pvh_attrs,
+	db_printf("pg %p attr 0x%08x aliases %d\n", pg, pg->mdpage.pvh_attrs,
 	    pg->mdpage.pvh_aliases);
 	for (pve = pg->mdpage.pvh_list; pve; pve = pve->pv_next)
-		printf("%x:%lx\n", pve->pv_pmap->pm_space,
+		db_printf("%x:%lx\n", pve->pv_pmap->pm_space,
 		    pve->pv_va & PV_VAMASK);
 	mutex_exit(&pg->mdpage.pvh_lock);
 }
