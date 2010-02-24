@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.170 2010/02/24 05:00:55 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.171 2010/02/24 05:26:28 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.170 2010/02/24 05:00:55 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.171 2010/02/24 05:26:28 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -736,7 +736,7 @@ static int		uvm_fault_upper_enter(
 static inline void	uvm_fault_upper_done(
 			    struct uvm_faultinfo *, struct uvm_faultctx *,
 			    struct uvm_object *, struct vm_anon *,
-			    struct vm_page *, struct vm_anon *);
+			    struct vm_page *);
 
 static int		uvm_fault_lower(
 			    struct uvm_faultinfo *, struct uvm_faultctx *,
@@ -770,8 +770,8 @@ static int		uvm_fault_lower_enter(
 			    struct vm_page *);
 static inline void	uvm_fault_lower_done(
 			    struct uvm_faultinfo *, struct uvm_faultctx *,
-			    struct uvm_object *,
-			    struct vm_anon *, struct vm_page *);
+			    struct uvm_object *, struct vm_anon *,
+			    struct vm_page *);
 
 int
 uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
@@ -1277,7 +1277,7 @@ uvm_fault_lower_lookup(
 		/*
 		 * if center page is resident and not PG_BUSY|PG_RELEASED
 		 * then pgo_get made it PG_BUSY for us and gave us a handle
-		 * to it.  remember this page as "uobjpage." (for later use).
+		 * to it.
 		 */
 
 		if (lcv == flt->centeridx) {
@@ -1595,7 +1595,7 @@ uvm_fault_upper_enter(
 		return ERESTART;
 	}
 
-	uvm_fault_upper_done(ufi, flt, uobj, anon, pg, oanon);
+	uvm_fault_upper_done(ufi, flt, uobj, anon, pg);
 
 	/*
 	 * done case 1!  finish up by unlocking everything and returning success
@@ -1611,8 +1611,7 @@ uvm_fault_upper_enter(
 static void
 uvm_fault_upper_done(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct uvm_object *uobj, struct vm_anon *anon,
-	struct vm_page *pg, struct vm_anon *oanon)
+	struct uvm_object *uobj, struct vm_anon *anon, struct vm_page *pg)
 {
 
 	/*
@@ -2074,6 +2073,7 @@ uvm_fault_lower_enter(
 
 		pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL);
+
 		uvmfault_unlockall(ufi, amap, uobj, anon);
 		if (!uvm_reclaimable()) {
 			UVMHIST_LOG(maphist,
@@ -2122,6 +2122,7 @@ uvm_fault_lower_done(
 		uvm_pageactivate(pg);
 	}
 	mutex_exit(&uvm_pageqlock);
+
 	if (pg->flags & PG_WANTED)
 		wakeup(pg);
 
