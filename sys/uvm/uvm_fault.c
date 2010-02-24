@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.168 2010/02/24 04:20:45 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.169 2010/02/24 04:32:58 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.168 2010/02/24 04:20:45 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.169 2010/02/24 04:32:58 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -733,7 +733,7 @@ static int		uvm_fault_upper_enter(
 			    struct uvm_faultinfo *, struct uvm_faultctx *,
 			    struct uvm_object *, struct vm_anon *,
 			    struct vm_page *, struct vm_anon *);
-static inline int	uvm_fault_upper_done(
+static inline void	uvm_fault_upper_done(
 			    struct uvm_faultinfo *, struct uvm_faultctx *,
 			    struct uvm_object *, struct vm_anon *,
 			    struct vm_page *, struct vm_anon *);
@@ -768,7 +768,7 @@ static int		uvm_fault_lower_enter(
 			    struct uvm_object *,
 			    struct vm_anon *, struct vm_page *,
 			    struct vm_page *);
-static inline int	uvm_fault_lower_done(
+static inline void	uvm_fault_lower_done(
 			    struct uvm_faultinfo *, struct uvm_faultctx *,
 			    struct uvm_object *,
 			    struct vm_anon *, struct vm_page *);
@@ -1600,16 +1600,25 @@ uvm_fault_upper_enter(
 		return ERESTART;
 	}
 
-	return uvm_fault_upper_done(ufi, flt, uobj, anon, pg, oanon);
+	uvm_fault_upper_done(ufi, flt, uobj, anon, pg, oanon);
+
+	/*
+	 * done case 1!  finish up by unlocking everything and returning success
+	 */
+
+	if (anon != oanon)
+		mutex_exit(&anon->an_lock);
+	uvmfault_unlockall(ufi, amap, uobj, oanon);
+	pmap_update(ufi->orig_map->pmap);
+	return 0;
 }
 
-static int
+static void
 uvm_fault_upper_done(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct uvm_object *uobj, struct vm_anon *anon,
 	struct vm_page *pg, struct vm_anon *oanon)
 {
-	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
 
 	/*
 	 * ... update the page queues.
@@ -1632,16 +1641,6 @@ uvm_fault_upper_done(
 		uvm_pageactivate(pg);
 	}
 	mutex_exit(&uvm_pageqlock);
-
-	/*
-	 * done case 1!  finish up by unlocking everything and returning success
-	 */
-
-	if (anon != oanon)
-		mutex_exit(&anon->an_lock);
-	uvmfault_unlockall(ufi, amap, uobj, oanon);
-	pmap_update(ufi->orig_map->pmap);
-	return 0;
 }
 
 static int
@@ -2093,15 +2092,19 @@ uvm_fault_lower_enter(
 		return ERESTART;
 	}
 
-	return uvm_fault_lower_done(ufi, flt, uobj, anon, pg);
+	uvm_fault_lower_done(ufi, flt, uobj, anon, pg);
+
+	uvmfault_unlockall(ufi, amap, uobj, anon);
+	pmap_update(ufi->orig_map->pmap);
+	UVMHIST_LOG(maphist, "<- done (SUCCESS!)",0,0,0,0);
+	return 0;
 }
 
-int
+void
 uvm_fault_lower_done(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct uvm_object *uobj, struct vm_anon *anon, struct vm_page *pg)
 {
-	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
 	UVMHIST_FUNC("uvm_fault_lower_done"); UVMHIST_CALLED(maphist);
 
 	mutex_enter(&uvm_pageqlock);
@@ -2135,10 +2138,6 @@ uvm_fault_lower_done(
 
 	pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
 	UVM_PAGE_OWN(pg, NULL);
-	uvmfault_unlockall(ufi, amap, uobj, anon);
-	pmap_update(ufi->orig_map->pmap);
-	UVMHIST_LOG(maphist, "<- done (SUCCESS!)",0,0,0,0);
-	return 0;
 }
 
 
