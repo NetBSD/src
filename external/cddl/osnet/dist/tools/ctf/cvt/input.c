@@ -29,6 +29,10 @@
  * Routines for retrieving CTF data from a .SUNW_ctf ELF section
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>

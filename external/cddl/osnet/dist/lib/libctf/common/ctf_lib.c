@@ -26,6 +26,10 @@
 
 #pragma ident	"%Z%%M%	%I%	%E% SMI"
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>

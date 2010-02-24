@@ -30,6 +30,10 @@
  * CTF data, and replace the stabs sections with a CTF section.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

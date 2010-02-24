@@ -29,6 +29,10 @@
  * This file is a sewer.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
