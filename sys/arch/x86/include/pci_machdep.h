@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.11 2010/02/24 21:25:51 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.12 2010/02/24 21:34:23 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -64,7 +64,7 @@ extern struct x86_bus_dma_tag pci_bus_dma64_tag;
 #endif
 
 struct {
-        int dummy;
+	int dummy;
 } pci_chipset_tag;
 
 /*
