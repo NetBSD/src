@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.96 2009/12/10 12:29:44 nakayama Exp $	*/
+/*	$NetBSD: iommu.c,v 1.97 2010/02/24 06:34:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.96 2009/12/10 12:29:44 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.97 2010/02/24 06:34:55 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -1121,7 +1121,7 @@ iommu_dvmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	cbit = 0;
 	if (flags & BUS_DMA_COHERENT)	/* Disable vcache */
 		cbit |= PMAP_NVC;
-	if (flags & BUS_DMA_NOCACHE)	/* sideffects */
+	if (flags & BUS_DMA_NOCACHE)	/* side effects */
 		cbit |= PMAP_NC;
 
 	/*
