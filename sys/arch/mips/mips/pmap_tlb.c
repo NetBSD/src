@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.2 2010/02/23 20:33:48 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.1.2.3 2010/02/24 00:30:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.2 2010/02/23 20:33:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.3 2010/02/24 00:30:21 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -124,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.2 2010/02/23 20:33:48 matt Exp $"
 #include <sys/proc.h>
 #include <sys/mutex.h>
 #include <sys/atomic.h>
+#include <sys/kernel.h>			/* for cold */
 #include <sys/cpu.h>
 
 #include <uvm/uvm.h>
@@ -225,11 +226,18 @@ pmap_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
 {
 	KASSERT(!CPU_IS_PRIMARY(ci));
 	KASSERT(ci->ci_data.cpu_idlelwp != NULL);
+	KASSERT(cold);
 
 	TLBINFO_LOCK(ti);
-	ti->ti_cpu_mask |= 1 << cpu_index(ci);
+	uint32_t cpu_mask = 1 << cpu_index(ci);
+	ti->ti_cpu_mask |= cpu_mask;
 	ci->ci_tlb_info = ti;
 	ci->ci_ksp_tlb_slot = ti->ti_wired++;
+	/*
+	 * Mark the kernel as active and "onproc" for this cpu.
+	 */
+	pmap_kernel()->pm_active |= cpu_mask;
+	pmap_kernel()->pm_onproc |= cpu_mask;
 	TLBINFO_UNLOCK(ti);
 }
 #endif /* MULTIPROCESSOR */
