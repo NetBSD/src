@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032_intr.c,v 1.20 2008/05/26 15:59:29 tsutsui Exp $	*/
+/*	$NetBSD: algor_p4032_intr.c,v 1.20.16.1 2010/02/24 00:09:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.20 2008/05/26 15:59:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.20.16.1 2010/02/24 00:09:31 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -99,7 +99,7 @@ struct p4032_irqreg p4032_irqsteer[NSTEERREG] = {
 #define	IRQMAP_8BITBASE		NPCIIRQS
 #define	NIRQMAPS		(IRQMAP_8BITBASE + N8BITIRQS)
 
-const char *p4032_intrnames[NIRQMAPS] = {
+const char * const p4032_intrnames[NIRQMAPS] = {
 	/*
 	 * PCI INTERRUPTS
 	 */
@@ -205,12 +205,12 @@ struct p4032_cpuintr {
 };
 
 struct p4032_cpuintr p4032_cpuintrs[NINTRS];
-const char *p4032_cpuintrnames[NINTRS] = {
+const char * const p4032_cpuintrnames[NINTRS] = {
 	"int 0 (pci)",
 	"int 1 (8-bit)",
 };
 
-const char *p4032_intrgroups[NINTRS] = {
+const char * const p4032_intrgroups[NINTRS] = {
 	"pci",
 	"8-bit",
 };
@@ -226,7 +226,7 @@ void	*algor_p4032_pci_intr_establish(void *, pci_intr_handle_t, int,
 void	algor_p4032_pci_intr_disestablish(void *, void *);
 void	algor_p4032_pci_conf_interrupt(void *, int, int, int, int, int *);
 
-void	algor_p4032_iointr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void	algor_p4032_iointr(int, vaddr_t, uint32_t);
 
 void
 algor_p4032_intr_init(struct p4032_config *acp)
@@ -414,8 +414,7 @@ algor_p4032_intr_disestablish(void *cookie)
 }
 
 void
-algor_p4032_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc,
-    u_int32_t ipending)
+algor_p4032_iointr(int ipl, vaddr_t pc, u_int32_t ipending)
 {
 	const struct p4032_irqmap *irqmap;
 	struct algor_intrhand *ih;
@@ -452,9 +451,6 @@ algor_p4032_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 		 * XXX the floppy interrupt here.
 		 */
 
-		cause &= ~MIPS_INT_MASK_3;
-		_splset(MIPS_SR_INT_IE |
-		    ((status & ~cause) & MIPS_HARD_INT_MASK));
 	}
 
 	/*
@@ -481,11 +477,7 @@ algor_p4032_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 				(*ih->ih_func)(ih->ih_arg);
 			}
 		}
-		cause &= ~(MIPS_INT_MASK_0 << level);
 	}
-
-	/* Re-enable anything that we have processed. */
-	_splset(MIPS_SR_INT_IE | ((status & ~cause) & MIPS_HARD_INT_MASK));
 }
 
 /*****************************************************************************

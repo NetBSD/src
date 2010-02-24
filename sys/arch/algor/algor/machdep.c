@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38.10.5 2010/02/01 04:21:45 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38.10.6 2010/02/24 00:09:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.5 2010/02/01 04:21:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.6 2010/02/24 00:09:31 matt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -214,9 +214,6 @@ mach_init(int argc, char *argv[], char *envp[])
 	char *cp0;
 	size_t i;
 
-	/* Disable interrupts. */
-	(void) splhigh();
-
 	/*
 	 * First, find the start and end of the kernel and clear
 	 * the BSS segment.  Account for a bit of space for the
@@ -226,6 +223,16 @@ mach_init(int argc, char *argv[], char *envp[])
 	kernstart = (vaddr_t) mips_trunc_page(kernel_text) - 2 * NBPG;
 	kernend   = (vaddr_t) mips_round_page(end);
 	memset(edata, 0, kernend - (vaddr_t)edata);
+
+	/*
+	 * Copy the exception-dispatch code down to the exception vector.
+	 * Initialize the locore function vector.  Clear out the I- and
+	 * D-caches.
+	 *
+	 * We can no longer call into PMON after this.
+	 */
+	led_display('v', 'e', 'c', 'i');
+	mips_vector_init();
 
 	/*
 	 * Initialize PAGE_SIZE-dependent variables.
@@ -483,16 +490,6 @@ mach_init(int argc, char *argv[], char *envp[])
 	mem_clusters[mem_cluster_cnt].size =
 	    size - mem_clusters[mem_cluster_cnt].start;
 	mem_cluster_cnt++;
-
-	/*
-	 * Copy the exception-dispatch code down to the exception vector.
-	 * Initialize the locore function vector.  Clear out the I- and
-	 * D-caches.
-	 *
-	 * We can no longer call into PMON after this.
-	 */
-	led_display('v', 'e', 'c', 'i');
-	mips_vector_init();
 
 	/*
 	 * Load the physical memory clusters into the VM system.
