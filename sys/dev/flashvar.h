@@ -1,4 +1,4 @@
-/*	$Id: flashvar.h,v 1.1.2.1 2010/02/12 01:36:02 uebayasi Exp $	*/
+/*	$Id: flashvar.h,v 1.1.2.2 2010/02/24 01:19:37 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Tsubai Masanari.  All rights reserved.
@@ -29,6 +29,8 @@
 #ifndef _DEV_FLASH_FLASHVAR_H_
 #define _DEV_FLASH_FLASHVAR_H_
 
+#include <sys/disk.h>
+
 struct flash_product {
 	u_char manuId;
 	u_char devId1, devId2, devId3;
@@ -38,6 +40,7 @@ struct flash_product {
 
 struct flash_softc {
 	struct device sc_dev;
+	struct disk sc_dkdev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_baseioh;
 	bus_space_handle_t sc_ioh;
