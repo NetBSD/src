@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.1 2009/11/30 16:18:34 tsutsui Exp $	*/
+/*	$NetBSD: udl.c,v 1.2 2010/02/24 12:29:47 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.1 2009/11/30 16:18:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.2 2010/02/24 12:29:47 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1191,8 +1191,8 @@ udl_draw_rect(struct udl_softc *sc, struct udl_ioctl_damage *d)
 
 	x = d->x1;
 	y = d->y1;
-	width = d->x2 - d->x1 + 1;
-	height = d->y2 - d->y1 + 1;
+	width = d->x2 - d->x1;
+	height = d->y2 - d->y1;
 	sbase = y * sc->sc_width;
 	ebase = (y + height) * sc->sc_width;
 
@@ -1225,8 +1225,8 @@ udl_draw_rect_comp(struct udl_softc *sc, struct udl_ioctl_damage *d)
 
 	x = d->x1;
 	y = d->y1;
-	width = d->x2 - d->x1 + 1;
-	height = d->y2 - d->y1 + 1;
+	width = d->x2 - d->x1;
+	height = d->y2 - d->y1;
 	soff = y * sc->sc_width + x;
 	eoff = (y + height) * sc->sc_width + x;
 
