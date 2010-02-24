@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_var.h,v 1.8 2010/02/24 22:37:57 dyoung Exp $ */
+/*	$NetBSD: dbcool_var.h,v 1.9 2010/02/24 23:37:45 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.8 2010/02/24 22:37:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.9 2010/02/24 23:37:45 pgoyette Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
@@ -62,6 +62,7 @@ enum dbc_sensor_type {
 	DBC_TEMP,
 	DBC_VOLT,
 	DBC_FAN,
+	DBC_VID,
 	DBC_EOF
 };
 
@@ -70,15 +71,15 @@ enum dbc_sensor_type {
 #define	DBCFLAG_HAS_SHDN	0x0004
 #define	DBCFLAG_MULTI_VCC	0x0008
 #define	DBCFLAG_4BIT_VER	0x0010
-#define	DBCFLAG_HAS_VID		0x0020
+#define	DBCFLAG_OBSOLETE	0x0020	/* was DBCFLAG_HAS_VID */
 #define	DBCFLAG_HAS_VID_SEL	0x0040
 #define	DBCFLAG_HAS_PECI	0x0080
-#define	DBCFLAG_ADM1027		0x1000
+#define	DBCFLAG_NO_READBYTE	0x1000
 #define	DBCFLAG_ADM1030		0x2000
 #define	DBCFLAG_ADT7466		0x4000
 
 /* Maximum sensors for any dbCool device */
-#define DBCOOL_MAXSENSORS       15
+#define DBCOOL_MAXSENSORS       16
 
 struct reg_list {
 	uint8_t val_reg;
