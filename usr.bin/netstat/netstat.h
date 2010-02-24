@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.39 2009/09/14 10:36:51 degroote Exp $	*/
+/*	$NetBSD: netstat.h,v 1.40 2010/02/24 11:00:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,6 +41,7 @@ int	dflag;		/* show i/f dropped packets */
 #ifndef SMALL
 int	gflag;		/* show group (multicast) routing or stats */
 #endif
+int	hflag;		/* humanize byte counts */
 int	iflag;		/* show interfaces */
 int	Lflag;		/* don't show LLINFO entries */
 int	lflag;		/* show routing table with use and ref */

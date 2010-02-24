@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.67 2009/09/27 18:19:18 plunky Exp $	*/
+/*	$NetBSD: if.c,v 1.68 2010/02/24 11:00:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.67 2009/09/27 18:19:18 plunky Exp $");
+__RCSID("$NetBSD: if.c,v 1.68 2010/02/24 11:00:27 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,8 @@ __RCSID("$NetBSD: if.c,v 1.67 2009/09/27 18:19:18 plunky Exp $");
 #include "netstat.h"
 
 #define	MAXIF	100
+
+#define HUMBUF_SIZE 7
 
 struct	iftot {
 	char ift_name[IFNAMSIZ];	/* interface name */
@@ -523,9 +525,19 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd)
 	}
 
 	if (bflag) {
-		printf("%10llu %10llu", 
-			(unsigned long long)ifd->ifi_ibytes,
-			(unsigned long long)ifd->ifi_obytes);
+		char humbuf[HUMBUF_SIZE];
+
+		if (hflag && humanize_number(humbuf, sizeof(humbuf),
+		    ifd->ifi_ibytes, "", HN_AUTOSCALE, HN_NOSPACE | HN_B) > 0)
+			printf("%10s ", humbuf);
+		else
+			printf("%10llu ", (unsigned long long)ifd->ifi_ibytes);
+
+		if (hflag && humanize_number(humbuf, sizeof(humbuf),
+		    ifd->ifi_obytes, "", HN_AUTOSCALE, HN_NOSPACE | HN_B) > 0)
+			printf("%10s", humbuf);
+		else
+			printf("%10llu", (unsigned long long)ifd->ifi_obytes);
 	} else {
 		printf("%8llu %5llu %8llu %5llu %5llu",
 			(unsigned long long)ifd->ifi_ipackets,
@@ -793,11 +805,27 @@ loop:
 		}
 		if (ip == interesting) {
 			if (bflag) {
-				printf("%10llu %8.8s %10llu %5.5s",
-				    (unsigned long long)(ifnet.if_ibytes -
-					ip->ift_ib), " ",
-				    (unsigned long long)(ifnet.if_obytes -
-					ip->ift_ob), " ");
+				char humbuf[HUMBUF_SIZE];
+
+				if (hflag && humanize_number(humbuf,
+				    sizeof(humbuf),
+				    ifnet.if_ibytes - ip->ift_ib, "",
+				    HN_AUTOSCALE, HN_NOSPACE | HN_B) > 0)
+					printf("%10s %8.8s ", humbuf, " ");
+				else
+					printf("%10llu %8.8s ", 
+					    (unsigned long long)
+					    (ifnet.if_ibytes-ip->ift_ib), " ");
+
+				if (hflag && humanize_number(humbuf,
+				    sizeof(humbuf),
+				    ifnet.if_obytes - ip->ift_ob, "",
+				    HN_AUTOSCALE, HN_NOSPACE | HN_B) > 0)
+					printf("%10s %5.5s", humbuf, " ");
+				else
+					printf("%10llu %5.5s", 
+					    (unsigned long long)
+					    (ifnet.if_obytes-ip->ift_ob), " ");
 			} else {
 				printf("%8llu %5llu %8llu %5llu %5llu",
 				    (unsigned long long)
@@ -836,11 +864,25 @@ loop:
 	}
 	if (lastif - iftot > 0) {
 		if (bflag) {
-			printf("  %10llu %8.8s %10llu %5.5s",
-			    (unsigned long long)
-				(sum->ift_ib - total->ift_ib), " ",
-			    (unsigned long long)
-				(sum->ift_ob - total->ift_ob), " ");
+			char humbuf[HUMBUF_SIZE];
+
+			if (hflag && humanize_number(humbuf,
+			    sizeof(humbuf), sum->ift_ib - total->ift_ib, "",
+			    HN_AUTOSCALE, HN_NOSPACE | HN_B) > 0)
+				printf("%10s %8.8s ", humbuf, " ");
+			else
+				printf("%10llu %8.8s ", 
+				    (unsigned long long)
+				    (sum->ift_ib - total->ift_ib), " ");
+
+			if (hflag && humanize_number(humbuf,
+			    sizeof(humbuf), sum->ift_ob -  total->ift_ob, "",
+			    HN_AUTOSCALE, HN_NOSPACE | HN_B) > 0)
+				printf("%10s %5.5s", humbuf, " ");
+			else
+				printf("%10llu %5.5s", 
+				    (unsigned long long)
+				    (sum->ift_ob - total->ift_ob), " ");
 		} else {
 			printf("  %8llu %5llu %8llu %5llu %5llu",
 			    (unsigned long long)
