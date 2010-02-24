@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.64 2010/01/08 20:02:39 dyoung Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.65 2010/02/24 15:13:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.64 2010/01/08 20:02:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.65 2010/02/24 15:13:34 tsutsui Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -297,13 +297,6 @@ ne2000_attach(struct ne2000_softc *nsc, u_int8_t *myea)
 		aprint_error_dev(dsc->sc_dev, "setup failed\n");
 		return (1);
 	}
-
-	/*
-	 * We need to compute mem_ring a bit differently; override the
-	 * value set up in dp8390_config().
-	 */
-	dsc->mem_ring =
-	    dsc->mem_start + ((dsc->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
 
 	return (0);
 }
