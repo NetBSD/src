@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032var.h,v 1.5 2008/04/28 20:23:10 martin Exp $	*/
+/*	$NetBSD: algor_p4032var.h,v 1.5.18.1 2010/02/24 00:09:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ void	algor_p4032_dma_init(struct p4032_config *);
 
 void	algor_p4032_intr_init(struct p4032_config *);
 
-void	algor_p4032_iointr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void	algor_p4032_iointr(int, vaddr_t, uint32_t);
 
 void	algor_p4032_cal_timer(bus_space_tag_t, bus_space_handle_t);
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064var.h,v 1.6 2008/04/28 20:23:10 martin Exp $	*/
+/*	$NetBSD: algor_p5064var.h,v 1.6.18.1 2010/02/24 00:09:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ void	algor_p5064_dma_init(struct p5064_config *);
 
 void	algor_p5064_intr_init(struct p5064_config *);
 
-void	algor_p5064_iointr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void	algor_p5064_iointr(int, vaddr_t, uint32_t);
 
 void	algor_p5064_cal_timer(bus_space_tag_t, bus_space_handle_t);
 #endif /* _KERNEL */
