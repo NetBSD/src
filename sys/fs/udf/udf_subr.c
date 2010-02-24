@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.101 2010/01/05 13:30:11 mbalmer Exp $ */
+/* $NetBSD: udf_subr.c,v 1.102 2010/02/24 19:14:12 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.101 2010/01/05 13:30:11 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.102 2010/02/24 19:14:12 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -3117,6 +3117,10 @@ udf_read_metadata_nodes(struct udf_mount *ump, union udf_pmap *mapping)
 	struct long_ad	 icb_loc;
 	struct vnode *vp;
 	int error;
+
+	/* extract our allocation parameters set up on format */
+	ump->alloc_unit_size     = udf_rw32(mapping->pmm.alloc_unit_size);
+	ump->alignment_unit_size = udf_rw16(mapping->pmm.alignment_unit_size);
 
 	DPRINTF(VOLUMES, ("Reading in Metadata files\n"));
 	icb_loc.loc.part_num = pmm->part_num;
