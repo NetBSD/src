@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.166 2010/02/08 00:02:50 mlelstv Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.167 2010/02/24 04:18:09 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166 2010/02/08 00:02:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.167 2010/02/24 04:18:09 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -740,18 +740,12 @@ static inline int	uvm_fault_upper_done(
 static int		uvm_fault_lower(
 			    struct uvm_faultinfo *, struct uvm_faultctx *,
 			    struct vm_page **);
-static inline int	uvm_fault_lower_special(
-			    struct uvm_faultinfo *, struct uvm_faultctx *,
-			    struct vm_page **);
 static inline		int uvm_fault_lower_lookup(
 			    struct uvm_faultinfo *, struct uvm_faultctx *,
 			    struct vm_page **);
 static inline void	uvm_fault_lower_neighbor(
 			    struct uvm_faultinfo *, struct uvm_faultctx *,
 			    vaddr_t, struct vm_page *, bool);
-static inline int	uvm_fault_lower_generic(
-			    struct uvm_faultinfo *, struct uvm_faultctx *,
-			    struct vm_page **);
 static inline int	uvm_fault_lower1(
 			    struct uvm_faultinfo *, struct uvm_faultctx *,
 			    struct uvm_object *, struct vm_page *);
@@ -828,8 +822,24 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 
 		if (pages[flt.centeridx] == PGO_DONTCARE)
 			error = uvm_fault_upper(&ufi, &flt, anons);
-		else
-			error = uvm_fault_lower(&ufi, &flt, pages);
+		else {
+			struct uvm_object * const uobj = ufi.entry->object.uvm_obj;
+
+			if (uobj && uobj->pgops->pgo_fault != NULL) {
+				mutex_enter(&uobj->vmobjlock);
+				/* locked: maps(read), amap (if there), uobj */
+				error = uobj->pgops->pgo_fault(&ufi, flt.startva, pages, flt.npages,
+				    flt.centeridx, flt.access_type, PGO_LOCKED|PGO_SYNCIO);
+
+				/* locked: nothing, pgo_fault has unlocked everything */
+
+				/*
+				 * object fault routine responsible for pmap_update().
+				 */
+			} else {
+				error = uvm_fault_lower(&ufi, &flt, pages);
+			}
+		}
 	}
 
 	if (flt.anon_spare != NULL) {
@@ -1167,8 +1177,11 @@ uvm_fault_lower(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_page **pages)
 {
+#ifdef DIAGNOSTIC
+	struct vm_amap *amap = ufi->entry->aref.ar_amap;
+#endif
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
-	int error;
+	struct vm_page *uobjpage;
 
 	/*
 	 * if the desired page is not shadowed by the amap and we have a
@@ -1177,49 +1190,6 @@ uvm_fault_lower(
 	 * with the usual pgo_get hook).  the backing object signals this by
 	 * providing a pgo_fault routine.
 	 */
-
-	if (uobj && uobj->pgops->pgo_fault != NULL) {
-		error = uvm_fault_lower_special(ufi, flt, pages);
-	} else {
-		error = uvm_fault_lower_generic(ufi, flt, pages);
-	}
-	return error;
-}
-
-static int
-uvm_fault_lower_special(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_page **pages)
-{
-	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
-	int error;
-
-	mutex_enter(&uobj->vmobjlock);
-	/* locked: maps(read), amap (if there), uobj */
-	error = uobj->pgops->pgo_fault(ufi, flt->startva, pages, flt->npages,
-	    flt->centeridx, flt->access_type, PGO_LOCKED|PGO_SYNCIO);
-
-	/* locked: nothing, pgo_fault has unlocked everything */
-
-	if (error == ERESTART)
-		error = ERESTART;		/* try again! */
-	/*
-	 * object fault routine responsible for pmap_update().
-	 */
-
-	return error;
-}
-
-static int
-uvm_fault_lower_generic(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_page **pages)
-{
-#ifdef DIAGNOSTIC
-	struct vm_amap *amap = ufi->entry->aref.ar_amap;
-#endif
-	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
-	struct vm_page *uobjpage;
 
 	/*
 	 * now, if the desired page is not shadowed by the amap and we have
