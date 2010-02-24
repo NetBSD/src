@@ -12856,7 +12856,7 @@ dtrace_state_deadman(void *arg)
 
 	    if (state != dtrace_anon.dta_state &&
 		now - state->dts_laststatus >= dtrace_deadman_user)
-		    return;
+		    continue;
 
 	    /*
 	     * We must be sure that dts_alive never appears to be less than the
