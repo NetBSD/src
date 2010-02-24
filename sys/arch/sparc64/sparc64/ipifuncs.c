@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.32 2010/02/24 01:58:53 mrg Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.33 2010/02/24 06:05:35 mrg Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.32 2010/02/24 01:58:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.33 2010/02/24 06:05:35 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.32 2010/02/24 01:58:53 mrg Exp $");
 #include <machine/ctlreg.h>
 #include <machine/pmap.h>
 #include <machine/sparc64.h>
+
+#include <sparc64/sparc64/cache.h>
 
 #if defined(DDB) || defined(KGDB)
 #ifdef DDB
@@ -369,7 +371,7 @@ mp_cpu_is_paused(sparc64_cpuset_t cpunum)
  * Flush pte on all active processors.
  */
 void
-smp_tlb_flush_pte(vaddr_t va, pmap_t pm)
+smp_tlb_flush_pte(vaddr_t va, struct pmap * pm)
 {
 	sparc64_cpuset_t cpuset;
 	struct cpu_info *ci;
