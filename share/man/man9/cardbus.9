@@ -1,4 +1,4 @@
-.\"     $NetBSD: cardbus.9,v 1.12 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: cardbus.9,v 1.13 2010/02/24 23:49:34 dyoung Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 3, 2004
+.Dd February 24, 2010
 .Dt CARDBUS 9
 .Os
 .Sh NAME
@@ -72,7 +72,7 @@
 .Ft int
 .Fo cardbus_mapreg_map
 .Fa "struct cardbus_softc *csc" "int cf" "int reg"
-.Fa "cardbusreg_t type" "int busflags" "bus_space_tag_t *tagp"
+.Fa "pcireg_t type" "int busflags" "bus_space_tag_t *tagp"
 .Fa "bus_space_handle_t *handlep" "bus_addr_t *basep" "bus_size_t *sizep"
 .Fc
 .Ft int
@@ -81,20 +81,20 @@
 "bus_size_t size"
 .Ft int
 .Fn cardbus_get_capability "cardbus_chipset_tag_t cc" \
-"cardbus_function_tag_t cf" "cardbustag_t tag" "int capid" \
-"int *offsetp" "cardbusreg_t *valuep"
-.Ft cardbustag_t
+"cardbus_function_tag_t cf" "pcitag_t tag" "int capid" \
+"int *offsetp" "pcireg_t *valuep"
+.Ft pcitag_t
 .Fn cardbus_make_tag "cardbus_chipset_tag_t cc" "int cf" "int bus" \
 "int device" "int function"
 .Ft void
 .Fn cardbus_free_tag "cardbus_chipset_tag_t cc" "int cf" \
-"cardbustag_t tag"
-.Ft cardbusreg_t
+"pcitag_t tag"
+.Ft pcireg_t
 .Fn cardbus_conf_read "cardbus_chipset_tag_t cc" "int cf" \
-"cardbustag_t tag" "int offs"
+"pcitag_t tag" "int offs"
 .Ft void
 .Fn cardbus_conf_write "cardbus_chipset_tag_t cc" "int cf" \
-"cardbustag_t tag" "int offs" "busreg_t val"
+"pcitag_t tag" "int offs" "busreg_t val"
 .Ft void *
 .Fn cardbus_intr_establish "cardbus_chipset_tag_t cc" \
 "cardbus_function_tag_t cf" "cardbus_intr_handle_t irq" "int level" \
@@ -103,30 +103,30 @@
 .Fn cardbus_intr_disestablish "cardbus_chipset_tag_t cc" \
 "cardbus_function_tag_t cf" "void *ih"
 .Ft int
-.Fn CARDBUS_VENDOR "cardbusreg_t id"
+.Fn CARDBUS_VENDOR "pcireg_t id"
 .Ft int
-.Fn CARDBUS_PRODUCT "cardbusreg_t id"
+.Fn CARDBUS_PRODUCT "pcireg_t id"
 .Ft int
 .Fn Cardbus_function_enable "cardbus_devfunc_t ct"
 .Ft int
 .Fn Cardbus_function_disable "cardbus_devfunc_t ct"
 .Ft int
 .Fn Cardbus_mapreg_map "cardbus_devfunc_t ct" "int reg" \
-"cardbusreg_t type" "int busflags" "bus_space_tag_t *tagp" \
+"pcireg_t type" "int busflags" "bus_space_tag_t *tagp" \
 "bus_space_handle_t *handlep" "bus_addr_t *basep" "bus_size_t *sizep"
 .Ft int
 .Fn Cardbus_mapreg_unmap "cardbus_devfunc_t ct" \
 "int reg" "bus_space_tag_t tag" "bus_space_handle_t handle" \
 "bus_size_t size"
-.Ft cardbustag_t
+.Ft pcitag_t
 .Fn Cardbus_make_tag "cardbus_devfunc_t ct "
 .Ft void
-.Fn Cardbus_free_tag "cardbus_devfunc_t ct" "cardbustag_t tag"
-.Ft cardbusreg_t
-.Fn Cardbus_conf_read "cardbus_devfunc_t ct" "cardbustag_t tag" \
+.Fn Cardbus_free_tag "cardbus_devfunc_t ct" "pcitag_t tag"
+.Ft pcireg_t
+.Fn Cardbus_conf_read "cardbus_devfunc_t ct" "pcitag_t tag" \
 "int offs"
 .Ft void
-.Fn Cardbus_conf_write "cardbus_devfunc_t ct" "cardbustag_t tag" \
+.Fn Cardbus_conf_write "cardbus_devfunc_t ct" "pcitag_t tag" \
 "int offs" "busreg_t val"
 .Sh DESCRIPTION
 The machine-independent
@@ -166,9 +166,9 @@ It contains the following members:
 	bus_space_tag_t ca_memt;      /* CardBus MEM space tag */
 	bus_dma_tag_t ca_dmat;        /* DMA tag */
 	u_int ca_device;
-	cardbustag_t ca_tag;
-	cardbusreg_t ca_id;
-	cardbusreg_t ca_class;
+	pcitag_t ca_tag;
+	pcireg_t ca_id;
+	pcireg_t ca_class;
 	cardbus_intr_line_t ca_intrline; /* interrupt info */
 	struct cardbus_cis_info ca_cis;
 .Ed
