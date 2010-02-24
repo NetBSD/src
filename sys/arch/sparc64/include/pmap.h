@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.48 2010/02/23 22:52:21 mrg Exp $	*/
+/*	$NetBSD: pmap.h,v 1.49 2010/02/24 01:58:52 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -211,18 +211,29 @@ void sp_tlb_flush_pte_usiii(vaddr_t, int);
 void sp_tlb_flush_all_us(void);
 void sp_tlb_flush_all_usiii(void);
 
+static __inline__ void
+sp_tlb_flush_pte(vaddr_t va, int ctx)
+{
+	if (CPU_IS_USIII_UP())
+		sp_tlb_flush_pte_usiii(va, ctx);
+	else
+		sp_tlb_flush_pte_us(va, ctx);
+}
+
+static __inline__ void
+sp_tlb_flush_all(void)
+{
+	if (CPU_IS_USIII_UP())
+		sp_tlb_flush_all_usiii();
+	else
+		sp_tlb_flush_all_us();
+}
+
 #ifdef MULTIPROCESSOR
 void smp_tlb_flush_pte(vaddr_t, pmap_t);
 #define	tlb_flush_pte(va,pm)	smp_tlb_flush_pte(va, pm)
 #else
-static __inline__ void
-tlb_flush_pte(vaddr_t va, pmap_t pm)
-{
-	if (CPU_IS_USIII_UP())
-		sp_tlb_flush_pte_usiii(va, pm->pm_ctx);
-	else
-		sp_tlb_flush_pte_us(va, pm->pm_ctx);
-}
+#define	tlb_flush_pte(va,pm)	sp_tlb_flush_pte(va, (pm)->pm_ctx)
 #endif
 
 /* Installed physical memory, as discovered during bootstrap. */
