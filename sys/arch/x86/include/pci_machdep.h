@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.9 2010/02/16 00:03:47 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.10 2010/02/24 21:24:20 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -71,10 +71,14 @@ extern struct x86_bus_dma_tag pci_bus_dma_tag;
 extern struct x86_bus_dma_tag pci_bus_dma64_tag;
 #endif
 
+struct {
+        int dummy;
+} pci_chipset_tag;
+
 /*
  * Types provided to machine-independent PCI code
  */
-typedef void *pci_chipset_tag_t;
+typedef struct pci_chipset_tag *pci_chipset_tag_t;
 typedef union x86_pci_tag_u pcitag_t;
 typedef int pci_intr_handle_t;
 
