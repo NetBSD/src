@@ -1,4 +1,4 @@
-/*	$Id: flash.c,v 1.1.2.1 2010/02/12 01:36:02 uebayasi Exp $	*/
+/*	$Id: flash.c,v 1.1.2.2 2010/02/24 01:19:37 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Tsubai Masanari.  All rights reserved.
@@ -26,6 +26,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_xip.h"
+
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/conf.h>
@@ -44,7 +46,7 @@ static dev_type_size(flash_size);
 
 struct bdevsw flash_bdevsw = {
 	flash_open, flash_close, flash_strategy, flash_ioctl,
-	nodump, flash_size, D_DISK
+	nodump, flash_size, D_DISK | D_MPSAFE
 };
 
 struct cdevsw flash_cdevsw = {
@@ -56,9 +58,22 @@ static int
 flash_open(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct flash_softc *sc = device_lookup_private(&flash_cd, minor(dev));
+	struct disk *dk = &sc->sc_dkdev;
 
 	if (sc == NULL)
 		return ENXIO;
+
+	mutex_enter(&dk->dk_openlock);
+	switch (fmt) {
+		case S_IFCHR:
+		dk->dk_copenmask |= pmask;
+		break;
+	case S_IFBLK:
+		dk->dk_bopenmask |= pmask;
+		break;
+	}
+	dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;
+	mutex_exit(&dk->dk_openlock);
 
 	return 0;
 }
@@ -74,11 +89,37 @@ flash_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct flash_softc *sc = device_lookup_private(&flash_cd, minor(dev));
 	struct flash_program *fp;
+	int error = 0;
 
 	if (sc == NULL)
 		return -1;
 
-	return EPASSTHROUGH;
+	switch (cmd) {
+#ifdef XIP
+	case DIOCGPHYSADDR:
+		if (sc->sc_addr == 0)
+			error = EINVAL;
+		else
+			*(paddr_t *)data = sc->sc_addr;
+		break;
+#endif
+
+	case DIOCGDINFO:
+		*(struct disklabel *)data = *sc->sc_dkdev.dk_label;
+		break;
+
+	case DIOCGPART:
+		((struct partinfo *)data)->disklab = sc->sc_dkdev.dk_label;
+		((struct partinfo *)data)->part =
+		    &sc->sc_dkdev.dk_label->d_partitions[part];
+		break;
+
+	default:
+		error = EINVAL;
+		break;
+	}
+
+	return error;
 }
 
 int
