@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.172 2010/02/24 06:18:19 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.173 2010/02/24 15:58:26 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.172 2010/02/24 06:18:19 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.173 2010/02/24 15:58:26 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -741,15 +741,12 @@ static inline void	uvm_fault_upper_done(
 static int		uvm_fault_lower(
 			    struct uvm_faultinfo *, struct uvm_faultctx *,
 			    struct vm_page **);
-static inline		int uvm_fault_lower_lookup(
+static inline void	uvm_fault_lower_lookup(
 			    struct uvm_faultinfo *, struct uvm_faultctx *,
 			    struct vm_page **);
 static inline void	uvm_fault_lower_neighbor(
 			    struct uvm_faultinfo *, struct uvm_faultctx *,
 			    vaddr_t, struct vm_page *, bool);
-static inline int	uvm_fault_lower1(
-			    struct uvm_faultinfo *, struct uvm_faultctx *,
-			    struct uvm_object *, struct vm_page *);
 static inline int	uvm_fault_lower_io(
 			    struct uvm_faultinfo *, struct uvm_faultctx *,
 			    struct uvm_object **, struct vm_page **);
@@ -827,10 +824,15 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 			struct uvm_object * const uobj = ufi.entry->object.uvm_obj;
 
 			if (uobj && uobj->pgops->pgo_fault != NULL) {
+				/*
+				 * invoke "special" fault routine.
+				 */
 				mutex_enter(&uobj->vmobjlock);
-				/* locked: maps(read), amap (if there), uobj */
-				error = uobj->pgops->pgo_fault(&ufi, flt.startva, pages, flt.npages,
-				    flt.centeridx, flt.access_type, PGO_LOCKED|PGO_SYNCIO);
+				/* locked: maps(read), amap(if there), uobj */
+				error = uobj->pgops->pgo_fault(&ufi,
+				    flt.startva, pages, flt.npages,
+				    flt.centeridx, flt.access_type,
+				    PGO_LOCKED|PGO_SYNCIO);
 
 				/* locked: nothing, pgo_fault has unlocked everything */
 
@@ -849,6 +851,21 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 	}
 	return error;
 }
+
+/*
+ * uvm_fault_check: check prot, handle needs-copy, etc.
+ *
+ *	1. lookup entry.
+ *	2. check protection.
+ *	3. adjust fault condition (mainly for simulated fault).
+ *	4. handle needs-copy (lazy amap copy).
+ *	5. establish range of interest for neighbor fault (aka pre-fault).
+ *	6. look up anons (if amap exists).
+ *	7. flush pages (if MADV_SEQUENTIAL)
+ *
+ * => called with nothing locked.
+ * => if we fail (result != 0) we unlock everything.
+ */
 
 static int
 uvm_fault_check(
@@ -1059,6 +1076,17 @@ uvm_fault_check(
 	return 0;
 }
 
+/*
+ * uvm_fault_upper_lookup: look up existing h/w mapping and amap.
+ *
+ * iterate range of interest:
+ *	1. check if h/w mapping exists.  if yes, we don't care
+ *	2. check if anon exists.  if not, page is lower.
+ *	3. if anon exists, enter h/w mapping for neighbors.
+ *
+ * => called with amap locked (if exists).
+ */
+
 static int
 uvm_fault_upper_lookup(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
@@ -1139,12 +1167,20 @@ uvm_fault_upper_lookup(
 	return 0;
 }
 
+/*
+ * uvm_fault_upper_neighbor: enter single lower neighbor page.
+ *
+ * => called with amap and anon locked.
+ */
+
 static void
 uvm_fault_upper_neighbor(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	vaddr_t currva, struct vm_page *pg, bool readonly)
 {
 	UVMHIST_FUNC("uvm_fault_upper_neighbor"); UVMHIST_CALLED(maphist);
+
+	/* locked: amap, anon */
 
 	mutex_enter(&uvm_pageqlock);
 	uvm_pageenqueue(pg);
@@ -1169,180 +1205,14 @@ uvm_fault_upper_neighbor(
 	pmap_update(ufi->orig_map->pmap);
 }
 
-static int
-uvm_fault_lower(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_page **pages)
-{
-#ifdef DIAGNOSTIC
-	struct vm_amap *amap = ufi->entry->aref.ar_amap;
-#endif
-	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
-	struct vm_page *uobjpage;
-
-	/*
-	 * if the desired page is not shadowed by the amap and we have a
-	 * backing object, then we check to see if the backing object would
-	 * prefer to handle the fault itself (rather than letting us do it
-	 * with the usual pgo_get hook).  the backing object signals this by
-	 * providing a pgo_fault routine.
-	 */
-
-	/*
-	 * now, if the desired page is not shadowed by the amap and we have
-	 * a backing object that does not have a special fault routine, then
-	 * we ask (with pgo_get) the object for resident pages that we care
-	 * about and attempt to map them in.  we do not let pgo_get block
-	 * (PGO_LOCKED).
-	 */
-
-	if (uobj == NULL) {
-		/* zero fill; don't care neighbor pages */
-		uobjpage = NULL;
-	} else {
-		uvm_fault_lower_lookup(ufi, flt, pages);
-		uobjpage = pages[flt->centeridx];
-	}
-
-	/* locked: maps(read), amap(if there), uobj(if !null), uobjpage(if !null) */
-	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
-	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
-	KASSERT(uobjpage == NULL || (uobjpage->flags & PG_BUSY) != 0);
-
-	/*
-	 * note that at this point we are done with any front or back pages.
-	 * we are now going to focus on the center page (i.e. the one we've
-	 * faulted on).  if we have faulted on the upper (anon) layer
-	 * [i.e. case 1], then the anon we want is anons[centeridx] (we have
-	 * not touched it yet).  if we have faulted on the bottom (uobj)
-	 * layer [i.e. case 2] and the page was both present and available,
-	 * then we've got a pointer to it as "uobjpage" and we've already
-	 * made it BUSY.
-	 */
-
-	/*
-	 * there are four possible cases we must address: 1A, 1B, 2A, and 2B
-	 */
-
-	/*
-	 * redirect case 2: if we are not shadowed, go to case 2.
-	 */
-
-	return uvm_fault_lower1(ufi, flt, uobj, uobjpage);
-}
-
-static int
-uvm_fault_lower_lookup(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct vm_page **pages)
-{
-	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
-	int lcv, gotpages;
-	vaddr_t currva;
-	UVMHIST_FUNC("uvm_fault_lower_lookup"); UVMHIST_CALLED(maphist);
-
-	mutex_enter(&uobj->vmobjlock);
-	/* locked (!shadowed): maps(read), amap (if there), uobj */
-	/*
-	 * the following call to pgo_get does _not_ change locking state
-	 */
-
-	uvmexp.fltlget++;
-	gotpages = flt->npages;
-	(void) uobj->pgops->pgo_get(uobj,
-	    ufi->entry->offset + flt->startva - ufi->entry->start,
-	    pages, &gotpages, flt->centeridx,
-	    flt->access_type & MASK(ufi->entry), ufi->entry->advice, PGO_LOCKED);
-
-	/*
-	 * check for pages to map, if we got any
-	 */
-
-	if (gotpages == 0) {
-		pages[flt->centeridx] = NULL;
-		return 0;
-	}
-
-	currva = flt->startva;
-	for (lcv = 0; lcv < flt->npages; lcv++, currva += PAGE_SIZE) {
-		struct vm_page *curpg;
-
-		curpg = pages[lcv];
-		if (curpg == NULL || curpg == PGO_DONTCARE) {
-			continue;
-		}
-		KASSERT(curpg->uobject == uobj);
-
-		/*
-		 * if center page is resident and not PG_BUSY|PG_RELEASED
-		 * then pgo_get made it PG_BUSY for us and gave us a handle
-		 * to it.
-		 */
-
-		if (lcv == flt->centeridx) {
-			UVMHIST_LOG(maphist, "  got uobjpage "
-			    "(0x%x) with locked get",
-			    curpg, 0,0,0);
-		} else {
-			bool readonly = (curpg->flags & PG_RDONLY)
-			    || (curpg->loan_count > 0)
-			    || UVM_OBJ_NEEDS_WRITEFAULT(curpg->uobject);
-
-			uvm_fault_lower_neighbor(ufi, flt,
-			    currva, curpg, readonly);
-		}
-	}
-	pmap_update(ufi->orig_map->pmap);
-	return 0;
-}
-
-static void
-uvm_fault_lower_neighbor(
-	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	vaddr_t currva, struct vm_page *pg, bool readonly)
-{
-	UVMHIST_FUNC("uvm_fault_lower_neighor"); UVMHIST_CALLED(maphist);
-
-	/*
-	 * calling pgo_get with PGO_LOCKED returns us pages which
-	 * are neither busy nor released, so we don't need to check
-	 * for this.  we can just directly enter the pages.
-	 */
-
-	mutex_enter(&uvm_pageqlock);
-	uvm_pageenqueue(pg);
-	mutex_exit(&uvm_pageqlock);
-	UVMHIST_LOG(maphist,
-	    "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
-	    ufi->orig_map->pmap, currva, pg, 0);
-	uvmexp.fltnomap++;
-
-	/*
-	 * Since this page isn't the page that's actually faulting,
-	 * ignore pmap_enter() failures; it's not critical that we
-	 * enter these right now.
-	 */
-	KASSERT((pg->flags & PG_PAGEOUT) == 0);
-	KASSERT((pg->flags & PG_RELEASED) == 0);
-	KASSERT(!UVM_OBJ_IS_CLEAN(pg->uobject) ||
-	    (pg->flags & PG_CLEAN) != 0);
-
-	(void) pmap_enter(ufi->orig_map->pmap, currva,
-	    VM_PAGE_TO_PHYS(pg),
-	    readonly ? (flt->enter_prot & ~VM_PROT_WRITE) :
-	    flt->enter_prot & MASK(ufi->entry),
-	    PMAP_CANFAIL | (flt->wire_mapping ? PMAP_WIRED : 0));
-
-	/*
-	 * NOTE: page can't be PG_WANTED or PG_RELEASED because we've
-	 * held the lock the whole time we've had the handle.
-	 */
-	KASSERT((pg->flags & PG_WANTED) == 0);
-	KASSERT((pg->flags & PG_RELEASED) == 0);
-
-	pg->flags &= ~(PG_BUSY);
-	UVM_PAGE_OWN(pg, NULL);
-}
+/*
+ * uvm_fault_upper: handle upper fault.
+ *
+ *	1. acquire anon lock.
+ *	2. get anon.  let uvmfault_anonget do the dirty work.
+ *	3. handle loan.
+ *	4. dispatch direct or promote handlers.
+ */
 
 static int
 uvm_fault_upper(
@@ -1442,6 +1312,13 @@ uvm_fault_upper(
 	return error;
 }
 
+/*
+ * uvm_fault_upper_loan: handle loaned upper page.
+ *
+ *	1. if not cow'ing now, just mark enter_prot as read-only.
+ *	2. if cow'ing now, and if ref count is 1, break loan.
+ */
+
 static int
 uvm_fault_upper_loan(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
@@ -1449,6 +1326,7 @@ uvm_fault_upper_loan(
 {
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
 	int error = 0;
+	UVMHIST_FUNC("uvm_fault_upper_loan"); UVMHIST_CALLED(maphist);
 
 	if (!flt->cow_now) {
 
@@ -1488,6 +1366,15 @@ uvm_fault_upper_loan(
 	}
 	return error;
 }
+
+/*
+ * uvm_fault_upper_promote: promote upper page.
+ *
+ *	1. call uvmfault_promote.
+ *	2. enqueue page.
+ *	3. deref.
+ *	4. pass page to uvm_fault_upper_enter.
+ */
 
 static int
 uvm_fault_upper_promote(
@@ -1532,6 +1419,10 @@ uvm_fault_upper_promote(
 	return uvm_fault_upper_enter(ufi, flt, uobj, anon, pg, oanon);
 }
 
+/*
+ * uvm_fault_upper_direct: handle direct fault.
+ */
+
 static int
 uvm_fault_upper_direct(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
@@ -1539,6 +1430,7 @@ uvm_fault_upper_direct(
 {
 	struct vm_anon * const oanon = anon;
 	struct vm_page *pg;
+	UVMHIST_FUNC("uvm_fault_upper_direct"); UVMHIST_CALLED(maphist);
 
 	uvmexp.flt_anon++;
 	pg = anon->an_page;
@@ -1547,6 +1439,10 @@ uvm_fault_upper_direct(
 
 	return uvm_fault_upper_enter(ufi, flt, uobj, anon, pg, oanon);
 }
+
+/*
+ * uvm_fault_upper_enter: enter h/w mapping of upper page.
+ */
 
 static int
 uvm_fault_upper_enter(
@@ -1557,7 +1453,7 @@ uvm_fault_upper_enter(
 	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
 	UVMHIST_FUNC("uvm_fault_upper_enter"); UVMHIST_CALLED(maphist);
 
-	/* locked: maps(read), amap, oanon, anon (if different from oanon) */
+	/* locked: maps(read), amap, oanon, anon(if different from oanon) */
 	KASSERT(mutex_owned(&amap->am_l));
 	KASSERT(mutex_owned(&anon->an_lock));
 	KASSERT(mutex_owned(&oanon->an_lock));
@@ -1607,11 +1503,16 @@ uvm_fault_upper_enter(
 	return 0;
 }
 
+/*
+ * uvm_fault_upper_done: queue upper center page.
+ */
+
 static void
 uvm_fault_upper_done(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct uvm_object *uobj, struct vm_anon *anon, struct vm_page *pg)
 {
+	UVMHIST_FUNC("uvm_fault_upper_done"); UVMHIST_CALLED(maphist);
 
 	/*
 	 * ... update the page queues.
@@ -1636,19 +1537,64 @@ uvm_fault_upper_done(
 	mutex_exit(&uvm_pageqlock);
 }
 
+/*
+ * uvm_fault_lower: handle lower fault.
+ *
+ *	1. check uobj
+ *	1.1. if null, ZFOD.
+ *	1.2. if not null, look up unnmapped neighbor pages.
+ *	2. for center page, check if promote.
+ *	2.1. ZFOD always needs promotion.
+ *	2.2. other uobjs, when entry is marked COW (usually MAP_PRIVATE vnode).
+ *	3. if uobj is not ZFOD and page is not found, do i/o.
+ *	4. dispatch either direct / promote fault.
+ */
+
 static int
-uvm_fault_lower1(
+uvm_fault_lower(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-	struct uvm_object *uobj, struct vm_page *uobjpage)
+	struct vm_page **pages)
 {
 #ifdef DIAGNOSTIC
-	struct vm_amap * const amap = ufi->entry->aref.ar_amap;
+	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 #endif
+	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
+	struct vm_page *uobjpage;
 	int error;
-	UVMHIST_FUNC("uvm_fault_lower1"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC("uvm_fault_lower"); UVMHIST_CALLED(maphist);
+
+	/* locked: maps(read), amap(if there), uobj(if !null) */
 
 	/*
-	 * handle case 2: faulting on backing object or zero fill
+	 * now, if the desired page is not shadowed by the amap and we have
+	 * a backing object that does not have a special fault routine, then
+	 * we ask (with pgo_get) the object for resident pages that we care
+	 * about and attempt to map them in.  we do not let pgo_get block
+	 * (PGO_LOCKED).
+	 */
+
+	if (uobj == NULL) {
+		/* zero fill; don't care neighbor pages */
+		uobjpage = NULL;
+	} else {
+		uvm_fault_lower_lookup(ufi, flt, pages);
+		uobjpage = pages[flt->centeridx];
+	}
+
+	/* locked: maps(read), amap(if there), uobj(if !null), uobjpage(if !null) */
+	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
+	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
+	KASSERT(uobjpage == NULL || (uobjpage->flags & PG_BUSY) != 0);
+
+	/*
+	 * note that at this point we are done with any front or back pages.
+	 * we are now going to focus on the center page (i.e. the one we've
+	 * faulted on).  if we have faulted on the upper (anon) layer
+	 * [i.e. case 1], then the anon we want is anons[centeridx] (we have
+	 * not touched it yet).  if we have faulted on the bottom (uobj)
+	 * layer [i.e. case 2] and the page was both present and available,
+	 * then we've got a pointer to it as "uobjpage" and we've already
+	 * made it BUSY.
 	 */
 
 	/*
@@ -1721,6 +1667,136 @@ uvm_fault_lower1(
 	}
 	return error;
 }
+
+/*
+ * uvm_fault_lower_lookup: look up on-memory uobj pages.
+ *
+ *	1. get on-memory pages.
+ *	2. if failed, give up (get only center page later).
+ *	3. if succeeded, enter h/w mapping of neighbor pages.
+ */
+
+static void
+uvm_fault_lower_lookup(
+	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
+	struct vm_page **pages)
+{
+	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
+	int lcv, gotpages;
+	vaddr_t currva;
+	UVMHIST_FUNC("uvm_fault_lower_lookup"); UVMHIST_CALLED(maphist);
+
+	mutex_enter(&uobj->vmobjlock);
+	/* locked: maps(read), amap(if there), uobj */
+	/*
+	 * the following call to pgo_get does _not_ change locking state
+	 */
+
+	uvmexp.fltlget++;
+	gotpages = flt->npages;
+	(void) uobj->pgops->pgo_get(uobj,
+	    ufi->entry->offset + flt->startva - ufi->entry->start,
+	    pages, &gotpages, flt->centeridx,
+	    flt->access_type & MASK(ufi->entry), ufi->entry->advice, PGO_LOCKED);
+
+	/*
+	 * check for pages to map, if we got any
+	 */
+
+	if (gotpages == 0) {
+		pages[flt->centeridx] = NULL;
+		return;
+	}
+
+	currva = flt->startva;
+	for (lcv = 0; lcv < flt->npages; lcv++, currva += PAGE_SIZE) {
+		struct vm_page *curpg;
+
+		curpg = pages[lcv];
+		if (curpg == NULL || curpg == PGO_DONTCARE) {
+			continue;
+		}
+		KASSERT(curpg->uobject == uobj);
+
+		/*
+		 * if center page is resident and not PG_BUSY|PG_RELEASED
+		 * then pgo_get made it PG_BUSY for us and gave us a handle
+		 * to it.
+		 */
+
+		if (lcv == flt->centeridx) {
+			UVMHIST_LOG(maphist, "  got uobjpage "
+			    "(0x%x) with locked get",
+			    curpg, 0,0,0);
+		} else {
+			bool readonly = (curpg->flags & PG_RDONLY)
+			    || (curpg->loan_count > 0)
+			    || UVM_OBJ_NEEDS_WRITEFAULT(curpg->uobject);
+
+			uvm_fault_lower_neighbor(ufi, flt,
+			    currva, curpg, readonly);
+		}
+	}
+	pmap_update(ufi->orig_map->pmap);
+}
+
+/*
+ * uvm_fault_lower_neighbor: enter h/w mapping of lower neighbor page.
+ */
+
+static void
+uvm_fault_lower_neighbor(
+	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
+	vaddr_t currva, struct vm_page *pg, bool readonly)
+{
+	UVMHIST_FUNC("uvm_fault_lower_neighor"); UVMHIST_CALLED(maphist);
+
+	/* locked: maps(read), amap(if there), uobj */
+
+	/*
+	 * calling pgo_get with PGO_LOCKED returns us pages which
+	 * are neither busy nor released, so we don't need to check
+	 * for this.  we can just directly enter the pages.
+	 */
+
+	mutex_enter(&uvm_pageqlock);
+	uvm_pageenqueue(pg);
+	mutex_exit(&uvm_pageqlock);
+	UVMHIST_LOG(maphist,
+	    "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
+	    ufi->orig_map->pmap, currva, pg, 0);
+	uvmexp.fltnomap++;
+
+	/*
+	 * Since this page isn't the page that's actually faulting,
+	 * ignore pmap_enter() failures; it's not critical that we
+	 * enter these right now.
+	 * NOTE: page can't be PG_WANTED or PG_RELEASED because we've
+	 * held the lock the whole time we've had the handle.
+	 */
+	KASSERT((pg->flags & PG_PAGEOUT) == 0);
+	KASSERT((pg->flags & PG_RELEASED) == 0);
+	KASSERT((pg->flags & PG_WANTED) == 0);
+	KASSERT(!UVM_OBJ_IS_CLEAN(pg->uobject) ||
+	    (pg->flags & PG_CLEAN) != 0);
+	pg->flags &= ~(PG_BUSY);
+	UVM_PAGE_OWN(pg, NULL);
+
+	(void) pmap_enter(ufi->orig_map->pmap, currva,
+	    VM_PAGE_TO_PHYS(pg),
+	    readonly ? (flt->enter_prot & ~VM_PROT_WRITE) :
+	    flt->enter_prot & MASK(ufi->entry),
+	    PMAP_CANFAIL | (flt->wire_mapping ? PMAP_WIRED : 0));
+}
+
+/*
+ * uvm_fault_lower_io: get lower page from backing store.
+ *
+ *	1. unlock everything, because i/o will block.
+ *	2. call pgo_get.
+ *	3. if failed, recover.
+ *	4. if succeeded, relock everything and verify things.
+ */
 
 static int
 uvm_fault_lower_io(
@@ -1852,12 +1928,20 @@ uvm_fault_lower_io(
 	return 0;
 }
 
+/*
+ * uvm_fault_lower_direct: fault lower center page
+ *
+ *	1. adjust h/w mapping protection.
+ *	2. if page is loaned, resolve.
+ */
+
 int
 uvm_fault_lower_direct(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct uvm_object *uobj, struct vm_page *uobjpage)
 {
 	struct vm_page *pg;
+	UVMHIST_FUNC("uvm_fault_lower_direct"); UVMHIST_CALLED(maphist);
 
 	/*
 	 * we are not promoting.   if the mapping is COW ensure that we
@@ -1888,6 +1972,13 @@ uvm_fault_lower_direct(
 
 	return uvm_fault_lower_enter(ufi, flt, uobj, NULL, pg, uobjpage);
 }
+
+/*
+ * uvm_fault_lower_direct_loan: resolve loaned page.
+ *
+ *	1. if not cow'ing, adjust h/w mapping protection.
+ *	2. if cow'ing, break loan.
+ */
 
 static int
 uvm_fault_lower_direct_loan(
@@ -1931,6 +2022,14 @@ uvm_fault_lower_direct_loan(
 	}
 	return 0;
 }
+
+/*
+ * uvm_fault_lower_promote: promote lower page.
+ *
+ *	1. call uvmfault_promote.
+ *	2. fill in data.
+ *	3. if not ZFOD, dispose old page.
+ */
 
 int
 uvm_fault_lower_promote(
@@ -2016,6 +2115,10 @@ uvm_fault_lower_promote(
 	return uvm_fault_lower_enter(ufi, flt, uobj, anon, pg, uobjpage);
 }
 
+/*
+ * uvm_fault_lower_enter: enter h/w mapping of lower page.
+ */
+
 int
 uvm_fault_lower_enter(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
@@ -2093,6 +2196,10 @@ uvm_fault_lower_enter(
 	UVMHIST_LOG(maphist, "<- done (SUCCESS!)",0,0,0,0);
 	return 0;
 }
+
+/*
+ * uvm_fault_lower_done: queue lower center page.
+ */
 
 void
 uvm_fault_lower_done(
