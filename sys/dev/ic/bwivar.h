@@ -1,4 +1,4 @@
-/*	$NetBSD: bwivar.h,v 1.6 2010/01/19 22:06:24 pooka Exp $	*/
+/*	$NetBSD: bwivar.h,v 1.7 2010/02/24 22:37:58 dyoung Exp $	*/
 /*	$OpenBSD: bwivar.h,v 1.23 2008/02/25 20:36:54 mglocker Exp $	*/
 
 /*
@@ -790,7 +790,7 @@ int		bwi_attach(struct bwi_softc *);
 void		bwi_detach(struct bwi_softc *);
 
 /* Power Management Framework */
-bool		bwi_suspend(device_t, pmf_qual_t);
-bool		bwi_resume(device_t, pmf_qual_t);
+bool		bwi_suspend(device_t, const pmf_qual_t *);
+bool		bwi_resume(device_t, const pmf_qual_t *);
 
 #endif	/* !_DEV_IC_BWIVAR_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.92 2010/01/19 22:06:24 pooka Exp $ */
+/*	$NetBSD: gem.c,v 1.93 2010/02/24 22:37:58 dyoung Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.92 2010/01/19 22:06:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.93 2010/02/24 22:37:58 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -2599,7 +2599,7 @@ gem_inten(struct gem_softc *sc)
 }
 
 bool
-gem_resume(device_t self, pmf_qual_t qual)
+gem_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct gem_softc *sc = device_private(self);
 
@@ -2609,7 +2609,7 @@ gem_resume(device_t self, pmf_qual_t qual)
 }
 
 bool
-gem_suspend(device_t self, pmf_qual_t qual)
+gem_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct gem_softc *sc = device_private(self);
 	bus_space_tag_t t = sc->sc_bustag;

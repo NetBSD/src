@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.205 2010/01/08 20:39:04 dyoung Exp $	*/
+/*	$NetBSD: ohci.c,v 1.206 2010/02/24 22:38:09 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.205 2010/01/08 20:39:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.206 2010/02/24 22:38:09 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -997,7 +997,7 @@ ohci_shutdown(device_t self, int flags)
 }
 
 bool
-ohci_resume(device_t dv, pmf_qual_t qual)
+ohci_resume(device_t dv, const pmf_qual_t *qual)
 {
 	ohci_softc_t *sc = device_private(dv);
 	uint32_t ctl;
@@ -1032,7 +1032,7 @@ ohci_resume(device_t dv, pmf_qual_t qual)
 }
 
 bool
-ohci_suspend(device_t dv, pmf_qual_t qual)
+ohci_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	ohci_softc_t *sc = device_private(dv);
 	uint32_t ctl;
