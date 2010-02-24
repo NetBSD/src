@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_chars.c,v 1.14 2010/02/10 19:45:30 drochner Exp $ */
+/* $NetBSD: pcdisplay_chars.c,v 1.15 2010/02/24 18:33:45 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_chars.c,v 1.14 2010/02/10 19:45:30 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_chars.c,v 1.15 2010/02/24 18:33:45 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,7 +265,16 @@ static const struct {
 	int quality;
 } replacements[] = {
 	{0x00af, 0x2d, 3}, /* MACRON -> - */
+	{0x2010, 0x2d, 3}, /* HYPHEN -> - */
 	{0x2013, 0x2d, 3}, /* EN DASH -> - */
+	{0x2014, 0x2d, 3}, /* EM DASH -> - */
+	{0x2018, 0x60, 3}, /* LEFT SINGLE QUOTATION MARK -> ` */
+	{0x2019, 0x27, 3}, /* RIGHT SINGLE QUOTATION MARK -> ' */
+	{0x201A, 0x2c, 3}, /* SINGLE LOW QUOTATION MARK -> , */
+	{0x201c, 0x22, 3}, /* LEFT DOUBLE QUOTATION MARK -> " */
+	{0x201d, 0x22, 3}, /* RIGHT DOUBLE QUOTATION MARK -> " */
+	{0x2039, 0x3c, 3}, /* SINGLE LEFT-POINTING ANGLE QUOTATION MARK -> < */
+	{0x203a, 0x3e, 3}, /* SINGLE RIGHT-POINTING ANGLE QUOTATION MARK -> > */
 	{0x221f, 0xc0, 3}, /* RIGHT ANGLE -> light up and right */
 	{0x222a, 0x55, 3}, /* UNION -> U */
 	{0x223c, 0x7e, 3}, /* TILDE OPERATOR -> ~ */
@@ -290,6 +299,7 @@ static const struct {
 	{0x03bd, 0x76, 2}, /* GREEK SMALL LETTER NU -> v */
 	{0x03c9, 0x77, 2}, /* GREEK SMALL LETTER OMEGA -> w */
 	{0x20ac, 0x45, 2}, /* EURO SIGN -> E */
+	{0x25cf, 0xf9, 2}, /* BLACK CIRCLE */
 	{_e002U, 0x2d, 2}, /* scan 3 -> - */
 	{_e004U, 0x2d, 2}, /* scan 7 -> - */
 	{_e007U, 0xda, 2}, /* bracelefttp -> light down and right */
@@ -350,6 +360,10 @@ static const struct {
 	{0x0171, 0x81, 1}, /* LATIN SMALL LETTER U WITH DOUBLE ACUTE */
 	{0x017d, 0x5a, 1}, /* LATIN CAPITAL LETTER Z WITH CARON -> Z */
 	{0x017e, 0x7a, 1}, /* LATIN SMALL LETTER Z WITH CARON -> z */
+	{0x201e, 0x22, 1}, /* DOUBLE LOW QUOTATION MARK -> " */
+	{0x2026, 0x5f, 1}, /* HORIZONTAL ELLIPSIS -> _ */
+	{0x25a1, 0xfe, 1}, /* WHITE SQUARE */
+	{0x2606, 0x2a, 1}, /* WHITE STAR -> * */
 };
 
 int
