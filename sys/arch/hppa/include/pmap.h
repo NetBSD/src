@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.23 2009/11/15 12:26:02 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.23.2.1 2010/02/25 04:11:29 uebayasi Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -83,8 +83,8 @@ struct pmap {
 						/* pg/mp is uncacheable */
 
 #define	pmap_is_aliased(pg)	\
-	(((pg)->mdpage.pvh_attrs & PVF_NC) == 0 && \
-	 ((pg)->mdpage.pvh_attrs & PVF_UNCACHEABLE) != 0)
+	((VM_PAGE_TO_MD(pg)->pvh_attrs & PVF_NC) == 0 && \
+	 (VM_PAGE_TO_MD(pg)->pvh_attrs & PVF_UNCACHEABLE) != 0)
 
 #define	HPPA_MAX_PID	0xfffa
 #define	HPPA_SID_MAX	0x7ffd
