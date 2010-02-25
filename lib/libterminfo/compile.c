@@ -1,4 +1,4 @@
-/* $NetBSD: compile.c,v 1.1 2010/02/22 23:05:39 roy Exp $ */
+/* $NetBSD: compile.c,v 1.2 2010/02/25 23:44:02 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.1 2010/02/22 23:05:39 roy Exp $");
+__RCSID("$NetBSD: compile.c,v 1.2 2010/02/25 23:44:02 roy Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -235,7 +235,12 @@ _ti_flatten(uint8_t **buf, const TIC *tic)
 		return -1;
 	
 	cap = *buf;
-	*cap++ = 2; /* version */
+	if (alen == 0 && dlen == 0 && tic->flags.bufpos == 0 &&
+	    tic->nums.bufpos == 0 && tic->strs.bufpos == 0 &&
+	    tic->extras.bufpos == 0)
+		*cap++ = 0; /* alias */
+	else
+		*cap++ = 2; /* version */
 	le16enc(cap, len);
 	cap += sizeof(uint16_t);
 	memcpy(cap, tic->name, len);
