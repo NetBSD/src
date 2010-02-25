@@ -248,6 +248,7 @@ uintptr_t	dtrace_in_probe_addr;	/* Address of invop when already in probe */
 
 kmutex_t dtrace_deadman_mutex;
 void *dtrace_deadman_wchan; 
+void *dtrace_cleanup_wchan; 
 int dtrace_deadman_alive; 			/* deadman thread keep alive */
 lwp_t *dtrace_deadman_proc;
 #endif
@@ -12872,6 +12873,9 @@ dtrace_state_deadman(void *arg)
 	    state->dts_alive = now;
 	}
 
+	/* let the cleanup code know we're done */
+	dtrace_deadman_alive = -1;
+
 	kthread_exit(0);
 }
 #endif
@@ -13729,10 +13733,16 @@ dtrace_state_destroy(dtrace_state_t *state)
 
 	/* Kill off the deadman thread */
 	if (dtrace_deadman_alive) {
+	    /* tell the deadman thread to exit */
 	    dtrace_deadman_alive = 0;
+	    dtrace_cleanup_wchan = &dtrace_cleanup_wchan;
 	    wakeup(dtrace_deadman_wchan);
 	    /* Wait for thread to exit */
 	    mutex_enter(&dtrace_deadman_mutex);
+	    do {
+		    mtsleep(&dtrace_cleanup_wchan, PRI_BIO,
+			    "deadman_exit", 10, &dtrace_deadman_mutex);
+	    } while (!dtrace_deadman_alive);
 	    mutex_exit(&dtrace_deadman_mutex);
 	    mutex_destroy(&dtrace_deadman_mutex);
 	}
