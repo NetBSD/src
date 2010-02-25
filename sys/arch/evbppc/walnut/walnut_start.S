@@ -1,4 +1,4 @@
-/*	$NetBSD: walnut_start.S,v 1.17 2009/11/26 00:19:17 matt Exp $	*/
+/*	$NetBSD: walnut_start.S,v 1.18 2010/02/25 23:33:44 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -88,6 +88,7 @@
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/dcr405gp.h>
 #include <powerpc/ibm4xx/pmap.h>
 

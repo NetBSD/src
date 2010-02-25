@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.109 2010/01/20 17:12:08 phx Exp $	*/
+/*	$NetBSD: machdep.c,v 1.110 2010/02/25 23:33:45 matt Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2010/01/20 17:12:08 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 2010/02/25 23:33:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2010/01/20 17:12:08 phx Exp $");
 #include <machine/trap.h>
 #include <machine/bus.h>
 #include <machine/isa_machdep.h>
-#include <machine/spr.h>
 
+#include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 #include <powerpc/oea/bat.h>
 #include <powerpc/ofw_cons.h>
 #include <powerpc/rtas.h>

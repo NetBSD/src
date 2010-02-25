@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.19 2009/11/26 00:19:13 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.20 2010/02/25 23:33:44 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 
 /*
  * Some instructions gas doesn't understand (yet?)

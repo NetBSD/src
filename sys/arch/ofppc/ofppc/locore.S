@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.42 2009/11/26 00:19:20 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.43 2010/02/25 23:33:45 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,6 +50,7 @@
 #include <machine/vmparam.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 
 #include "ksyms.h"
 

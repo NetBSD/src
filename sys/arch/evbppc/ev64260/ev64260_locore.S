@@ -1,4 +1,4 @@
-/*	$NetBSD: ev64260_locore.S,v 1.12 2009/11/26 00:19:16 matt Exp $	*/
+/*	$NetBSD: ev64260_locore.S,v 1.13 2010/02/25 23:33:44 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 #include <powerpc/oea/bat.h>
 #include <powerpc/oea/hid.h>
 

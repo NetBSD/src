@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 2010/02/08 19:02:28 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.31 2010/02/25 23:33:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2010/02/08 19:02:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2010/02/25 23:33:44 matt Exp $");
 
 #include "opt_explora.h"
 #include "opt_modular.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2010/02/08 19:02:28 joerg Exp $");
 #include <machine/trap.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/dcr403cgx.h>
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
