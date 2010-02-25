@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.21 2008/10/21 12:16:59 ad Exp $ */
+/*	$NetBSD: syscall.c,v 1.22 2010/02/25 07:21:20 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.21 2008/10/21 12:16:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.22 2010/02/25 07:21:20 skrll Exp $");
 
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
@@ -381,7 +381,7 @@ child_return(void *arg)
 	struct lwp *l = arg;
 
 	/*
-	 * Return values in the frame set by cpu_fork().
+	 * Return values in the frame set by cpu_lwp_fork().
 	 */
 	userret(l, l->l_md.md_tf->tf_pc, 0);
 	ktrsysret((l->l_proc->p_lflag & PL_PPWAIT) ? SYS_vfork : SYS_fork,
