@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_cardbus.c,v 1.6 2010/02/25 00:47:39 dyoung Exp $ */
+/* $NetBSD: siisata_cardbus.c,v 1.7 2010/02/25 20:36:31 dyoung Exp $ */
 /* Id: siisata_pci.c,v 1.11 2008/05/21 16:20:11 jakllsch Exp  */
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata_cardbus.c,v 1.6 2010/02/25 00:47:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata_cardbus.c,v 1.7 2010/02/25 20:36:31 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -73,6 +73,7 @@ struct siisata_cardbus_softc {
 	cardbus_chipset_tag_t sc_cc;
 	cardbus_function_tag_t sc_cf;
 	cardbus_devfunc_t sc_ct;
+	pcitag_t sc_tag;
 
 	bus_size_t sc_grsize;
 	bus_size_t sc_prsize;
@@ -153,6 +154,7 @@ siisata_cardbus_attach(device_t parent, device_t self, void *aux)
 	csc->sc_cc = cc;
 	csc->sc_cf = cf;
 	csc->sc_ct = ct;
+	csc->sc_tag = ca->ca_tag;
 
 	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	aprint_naive(": SATA-II HBA\n");
@@ -269,7 +271,7 @@ siisata_cardbus_detach(device_t self, int flags)
 	struct cardbus_devfunc *ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	pcitag_t ctag = cardbus_make_tag(cc, cf, cbsc->sc_bus, ct->ct_func);
+	pcitag_t ctag = csc->sc_tag;
 	int rv;
 
 	rv = siisata_detach(sc, flags);

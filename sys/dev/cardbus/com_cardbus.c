@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.24 2010/02/24 19:52:51 dyoung Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.25 2010/02/25 20:36:31 dyoung Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.24 2010/02/24 19:52:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.25 2010/02/25 20:36:31 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,7 @@ com_cardbus_attach (device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	csc->cc_ct = ca->ca_ct;
-	csc->cc_tag = Cardbus_make_tag(csc->cc_ct);
+	csc->cc_tag = ca->ca_tag;
 
 	if(gofigure(ca, csc) != 0)
 		return;
