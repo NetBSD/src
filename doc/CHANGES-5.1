@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.200 2010/02/22 16:09:41 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.201 2010/02/25 11:03:32 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16405,9 +16405,9 @@ sys/dev/pci/if_bnxreg.h				1.9 via patch
 	Support associated BCM5709CAX and BCM5709C PHYs.
 	[bouyer, ticket #1268]
 
-sys/dev/pci/if_wm.c				1.184-1.194
+sys/dev/pci/if_wm.c				1.184-1.194 + patch
 sys/dev/pci/if_wmreg.h				1.29-1.35
-sys/dev/pci/if_wmvar.h				1.5-1.8
+sys/dev/pci/if_wmvar.h				1.5-1.8 + patch
 sys/dev/pci/pcidevs		1.1006,1.1009-1.1010, 1.1012-1.1013 via patch
 sys/dev/pci/pcidevs.h				regen
 sys/dev/pci/pcidevs_data.h			regen
@@ -16442,6 +16442,7 @@ sys/dev/mii/inbmphyreg.h			1.1
 	  we have to do the same work for ICH9.
 	- Fixes the rx stall problem on 82578 with a lot of workaround
 	  code. We need more work for 82577.
+	- Fix regression with i80003
 	[msaitoh, ticket #1277]
 
 libexec/ld.elf_so/map_object.c			1.39
