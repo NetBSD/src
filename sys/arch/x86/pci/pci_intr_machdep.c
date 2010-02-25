@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.14 2009/08/18 16:41:03 jmcneill Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.15 2010/02/25 20:51:10 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.14 2009/08/18 16:41:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.15 2010/02/25 20:51:10 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -115,11 +115,14 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int pin = pa->pa_intrpin;
 	int line = pa->pa_intrline;
+	pci_chipset_tag_t pc;
 #if NIOAPIC > 0 || NACPICA > 0
 	int rawpin = pa->pa_rawintrpin;
-	pci_chipset_tag_t pc = pa->pa_pc;
 	int bus, dev, func;
 #endif
+
+	if ((pc = pa->pa_pc) != NULL && pc->pc_intr_map != NULL)
+		return (*pc->pc_intr_map)(pa, ihp);
 
 	if (pin == 0) {
 		/* No IRQ used. */
@@ -207,6 +210,9 @@ bad:
 const char *
 pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
+	if (pc != NULL && pc->pc_intr_string != NULL)
+		return (*pc->pc_intr_string)(pc, ih);
+
 	return intr_string(ih & ~MPSAFE_MASK);
 }
 
@@ -214,6 +220,9 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 const struct evcnt *
 pci_intr_evcnt(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
+
+	if (pc != NULL && pc->pc_intr_evcnt != NULL)
+		return (*pc->pc_intr_evcnt)(pc, ih);
 
 	/* XXX for now, no evcnt parent reported */
 	return NULL;
@@ -249,6 +258,9 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 #endif
 	bool mpsafe;
 
+	if (pc != NULL && pc->pc_intr_establish != NULL)
+		return (*pc->pc_intr_establish)(pc, ih, level, func, arg);
+
 	pic = &i8259_pic;
 	pin = irq = (ih & ~MPSAFE_MASK);
 	mpsafe = ((ih & MPSAFE_MASK) != 0);
@@ -276,6 +288,11 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 void
 pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
+
+	if (pc != NULL && pc->pc_intr_disestablish != NULL) {
+		(*pc->pc_intr_disestablish)(pc, cookie);
+		return;
+	}
 
 	intr_disestablish(cookie);
 }
