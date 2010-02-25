@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.35 2010/02/23 20:33:48 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.36 2010/02/25 05:45:12 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.35 2010/02/23 20:33:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.36 2010/02/25 05:45:12 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -173,9 +173,9 @@ u_long	cpu_dump_mempagecnt(void);
 int	cpu_dump(void);
 
 #if defined(MIPS3_PLUS)
-uint32_t mips_cp0_tlb_page_mask_probe(void);
-uint64_t mips_cp0_tlb_entry_hi_probe(void);
-uint64_t mips_cp0_tlb_entry_lo_probe(void);
+uint32_t mips3_cp0_tlb_page_mask_probe(void);
+uint64_t mips3_cp0_tlb_entry_hi_probe(void);
+uint64_t mips3_cp0_tlb_entry_lo_probe(void);
 
 static void mips3_tlb_probe(void);
 #endif
@@ -530,6 +530,7 @@ static const mips_locore_jumpvec_t mips1_locore_vec = {
 	.ljv_tlb_invalidate_all		= mips1_tlb_invalidate_all,
 	.ljv_tlb_invalidate_asids	= mips1_tlb_invalidate_asids,
 	.ljv_tlb_invalidate_globals	= mips1_tlb_invalidate_globals,
+	.ljv_tlb_record_asids		= mips1_tlb_record_asids,
 	.ljv_tlb_update			= mips1_tlb_update,
 	.ljv_tlb_read_indexed		= mips1_tlb_read_indexed,
 	.ljv_wbflush			= mips1_wbflush,
@@ -578,6 +579,7 @@ static const mips_locore_jumpvec_t mips3_locore_vec = {
 	.ljv_tlb_invalidate_all		= mips3_tlb_invalidate_all,
 	.ljv_tlb_invalidate_asids	= mips3_tlb_invalidate_asids,
 	.ljv_tlb_invalidate_globals	= mips3_tlb_invalidate_globals,
+	.ljv_tlb_record_asids		= mips3_tlb_record_asids,
 	.ljv_tlb_update			= mips3_tlb_update,
 	.ljv_tlb_read_indexed		= mips3_tlb_read_indexed,
 	.ljv_wbflush			= mips3_wbflush,
@@ -640,6 +642,7 @@ static const mips_locore_jumpvec_t r5900_locore_vec = {
 	.ljv_tlb_invalidate_all		= mips5900_tlb_invalidate_all,
 	.ljv_tlb_invalidate_asids	= mips5900_tlb_invalidate_asids,
 	.ljv_tlb_invalidate_globals	= mips5900_tlb_invalidate_globals,
+	.ljv_tlb_record_asids		= mips5900_tlb_record_asids,
 	.ljv_tlb_update			= mips5900_tlb_update,
 	.ljv_tlb_read_indexed		= mips5900_tlb_read_indexed,
 	.ljv_wbflush			= mips5900_wbflush,
@@ -690,6 +693,7 @@ static const mips_locore_jumpvec_t mips32_locore_vec = {
 	.ljv_tlb_invalidate_all		= mips32_tlb_invalidate_all,
 	.ljv_tlb_invalidate_asids	= mips32_tlb_invalidate_asids,
 	.ljv_tlb_invalidate_globals	= mips32_tlb_invalidate_globals,
+	.ljv_tlb_record_asids		= mips32_tlb_record_asids,
 	.ljv_tlb_update			= mips32_tlb_update,
 	.ljv_tlb_read_indexed		= mips32_tlb_read_indexed,
 	.ljv_wbflush			= mips32_wbflush,
@@ -753,6 +757,7 @@ const mips_locore_jumpvec_t mips64_locore_vec = {
 	.ljv_tlb_invalidate_all		= mips64_tlb_invalidate_all,
 	.ljv_tlb_invalidate_asids	= mips64_tlb_invalidate_asids,
 	.ljv_tlb_invalidate_globals	= mips64_tlb_invalidate_globals,
+	.ljv_tlb_record_asids		= mips64_tlb_record_asids,
 	.ljv_tlb_update			= mips64_tlb_update,
 	.ljv_tlb_read_indexed		= mips64_tlb_read_indexed,
 	.ljv_wbflush			= mips64_wbflush,
@@ -1045,12 +1050,12 @@ static void
 mips3_tlb_probe(void)
 {
 	struct mips_options * const opts = &mips_options;
-	opts->mips3_tlb_pg_mask = mips_cp0_tlb_page_mask_probe();
+	opts->mips3_tlb_pg_mask = mips3_cp0_tlb_page_mask_probe();
 	if (CPUIS64BITS) {
-		opts->mips3_tlb_vpn_mask = mips_cp0_tlb_entry_hi_probe();
+		opts->mips3_tlb_vpn_mask = mips3_cp0_tlb_entry_hi_probe();
 		opts->mips3_tlb_vpn_mask <<= 2;
 		opts->mips3_tlb_vpn_mask >>= 2;
-		opts->mips3_tlb_pfn_mask = mips_cp0_tlb_entry_lo_probe();
+		opts->mips3_tlb_pfn_mask = mips3_cp0_tlb_entry_lo_probe();
 	}
 }
 #endif

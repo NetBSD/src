@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.14 2010/02/23 20:33:47 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.15 2010/02/25 05:45:12 matt Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -51,6 +51,7 @@ void	mips1_tlb_invalidate_all(void);
 void	mips1_tlb_invalidate_globals(void);
 void	mips1_tlb_invalidate_asids(uint32_t, uint32_t);
 void	mips1_tlb_invalidate_addr(vaddr_t);
+u_int	mips1_tlb_record_asids(u_long *, uint32_t);
 int	mips1_tlb_update(vaddr_t, uint32_t);
 void	mips1_tlb_read_indexed(size_t, struct tlbmask *);
 void	mips1_wbflush(void);
@@ -67,6 +68,7 @@ void	mips3_tlb_invalidate_all(void);
 void	mips3_tlb_invalidate_globals(void);
 void	mips3_tlb_invalidate_asids(uint32_t, uint32_t);
 void	mips3_tlb_invalidate_addr(vaddr_t);
+u_int	mips3_tlb_record_asids(u_long *, uint32_t);
 int	mips3_tlb_update(vaddr_t, uint32_t);
 void	mips3_tlb_read_indexed(size_t, struct tlbmask *);
 void	mips3_tlb_write_indexed_VPS(size_t, struct tlbmask *);
@@ -82,6 +84,7 @@ void	mips5900_tlb_invalidate_all(void);
 void	mips5900_tlb_invalidate_globals(void);
 void	mips5900_tlb_invalidate_asids(uint32_t, uint32_t);
 void	mips5900_tlb_invalidate_addr(vaddr_t);
+u_int	mips5900_tlb_record_asids(u_long *, uint32_t);
 int	mips5900_tlb_update(vaddr_t, uint32_t);
 void	mips5900_tlb_read_indexed(size_t, struct tlbmask *);
 void	mips5900_tlb_write_indexed_VPS(size_t, struct tlbmask *);
@@ -99,6 +102,7 @@ void	mips32_tlb_invalidate_all(void);
 void	mips32_tlb_invalidate_globals(void);
 void	mips32_tlb_invalidate_asids(uint32_t, uint32_t);
 void	mips32_tlb_invalidate_addr(vaddr_t);
+u_int	mips32_tlb_record_asids(u_long *, uint32_t);
 int	mips32_tlb_update(vaddr_t, uint32_t);
 void	mips32_tlb_read_indexed(size_t, struct tlbmask *);
 void	mips32_tlb_write_indexed_VPS(size_t, struct tlbmask *);
@@ -114,6 +118,7 @@ void	mips64_tlb_invalidate_all(void);
 void	mips64_tlb_invalidate_globals(void);
 void	mips64_tlb_invalidate_asids(uint32_t, uint32_t);
 void	mips64_tlb_invalidate_addr(vaddr_t);
+u_int	mips64_tlb_record_asids(u_long *, uint32_t);
 int	mips64_tlb_update(vaddr_t, uint32_t);
 void	mips64_tlb_read_indexed(size_t, struct tlbmask *);
 void	mips64_tlb_write_indexed_VPS(size_t, struct tlbmask *);
@@ -295,6 +300,7 @@ typedef struct  {
 	void (*ljv_tlb_invalidate_addr)(vaddr_t);
 	void (*ljv_tlb_invalidate_globals)(void);
 	void (*ljv_tlb_invalidate_all)(void);
+	u_int (*ljv_tlb_record_asids)(u_long *, uint32_t);
 	int  (*ljv_tlb_update)(vaddr_t, uint32_t);
 	void (*ljv_tlb_read_indexed)(size_t, struct tlbmask *);
 	void (*ljv_wbflush)(void);
@@ -334,6 +340,7 @@ extern struct locoresw mips_locoresw;
 #define tlb_invalidate_addr	mips1_tlb_invalidate_addr
 #define tlb_invalidate_globals	mips1_tlb_invalidate_globals
 #define tlb_invalidate_all	mips1_tlb_invalidate_all
+#define tlb_record_asids	mips1_tlb_record_asids
 #define tlb_update		mips1_tlb_update
 #define tlb_read_indexed	mips1_tlb_read_indexed
 #define wbflush			mips1_wbflush
@@ -345,6 +352,7 @@ extern struct locoresw mips_locoresw;
 #define tlb_invalidate_addr	mips3_tlb_invalidate_addr
 #define tlb_invalidate_globals	mips3_tlb_invalidate_globals
 #define tlb_invalidate_all	mips3_tlb_invalidate_all
+#define tlb_record_asids	mips3_tlb_record_asids
 #define tlb_update		mips3_tlb_update
 #define tlb_read_indexed	mips3_tlb_read_indexed
 #define tlb_write_indexed_VPS	mips3_tlb_write_indexed_VPS
@@ -357,6 +365,7 @@ extern struct locoresw mips_locoresw;
 #define tlb_invalidate_addr	mips32_tlb_invalidate_addr
 #define tlb_invalidate_globals	mips32_tlb_invalidate_globals
 #define tlb_invalidate_all	mips32_tlb_invalidate_all
+#define tlb_record_asids	mips32_tlb_record_asids
 #define tlb_update		mips32_tlb_update
 #define tlb_read_indexed	mips32_tlb_read_indexed
 #define tlb_write_indexed_VPS	mips32_tlb_write_indexed_VPS
@@ -370,6 +379,7 @@ extern struct locoresw mips_locoresw;
 #define tlb_invalidate_addr	mips64_tlb_invalidate_addr
 #define tlb_invalidate_globals	mips64_tlb_invalidate_globals
 #define tlb_invalidate_all	mips64_tlb_invalidate_all
+#define tlb_record_asids	mips64_tlb_record_asids
 #define tlb_update		mips64_tlb_update
 #define tlb_read_indexed	mips64_tlb_read_indexed
 #define tlb_write_indexed_VPS	mips64_tlb_write_indexed_VPS
@@ -382,6 +392,7 @@ extern struct locoresw mips_locoresw;
 #define tlb_invalidate_addr	mips5900_tlb_invalidate_addr
 #define tlb_invalidate_globals	mips5900_tlb_invalidate_globals
 #define tlb_invalidate_all	mips5900_tlb_invalidate_all
+#define tlb_record_asids	mips5900_tlb_record_asids
 #define tlb_update		mips5900_tlb_update
 #define tlb_read_indexed	mips5900_tlb_read_indexed
 #define tlb_write_indexed_VPS	mips5900_tlb_write_indexed_VPS
@@ -394,6 +405,7 @@ extern struct locoresw mips_locoresw;
 #define tlb_invalidate_addr	(*mips_locore_jumpvec.ljv_tlb_invalidate_addr)
 #define tlb_invalidate_globals	(*mips_locore_jumpvec.ljv_tlb_invalidate_globals)
 #define tlb_invalidate_all	(*mips_locore_jumpvec.ljv_tlb_invalidate_all)
+#define tlb_record_asids	(*mips_locore_jumpvec.ljv_tlb_record_asids)
 #define tlb_update		(*mips_locore_jumpvec.ljv_tlb_update)
 #define tlb_read_indexed	(*mips_locore_jumpvec.ljv_tlb_read_indexed)
 #define wbflush			(*mips_locore_jumpvec.ljv_wbflush)
