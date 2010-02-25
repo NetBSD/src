@@ -1,4 +1,4 @@
-.\"     $NetBSD: cardbus.9,v 1.13 2010/02/24 23:49:34 dyoung Exp $
+.\"     $NetBSD: cardbus.9,v 1.14 2010/02/25 00:50:52 dyoung Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,6 @@
 .Nm cardbus_mapreg_unmap ,
 .Nm cardbus_get_capability ,
 .Nm cardbus_make_tag ,
-.Nm cardbus_free_tag ,
 .Nm cardbus_conf_read ,
 .Nm cardbus_conf_write ,
 .Nm cardbus_intr_establish ,
@@ -52,7 +51,6 @@
 .Nm Cardbus_mapreg_map ,
 .Nm Cardbus_mapreg_unmap ,
 .Nm Cardbus_make_tag ,
-.Nm Cardbus_free_tag ,
 .Nm Cardbus_conf_read ,
 .Nm Cardbus_conf_write
 .Nd support for CardBus PC-Card devices
@@ -86,9 +84,6 @@
 .Ft pcitag_t
 .Fn cardbus_make_tag "cardbus_chipset_tag_t cc" "int cf" "int bus" \
 "int device" "int function"
-.Ft void
-.Fn cardbus_free_tag "cardbus_chipset_tag_t cc" "int cf" \
-"pcitag_t tag"
 .Ft pcireg_t
 .Fn cardbus_conf_read "cardbus_chipset_tag_t cc" "int cf" \
 "pcitag_t tag" "int offs"
@@ -120,8 +115,6 @@
 "bus_size_t size"
 .Ft pcitag_t
 .Fn Cardbus_make_tag "cardbus_devfunc_t ct "
-.Ft void
-.Fn Cardbus_free_tag "cardbus_devfunc_t ct" "pcitag_t tag"
 .Ft pcireg_t
 .Fn Cardbus_conf_read "cardbus_devfunc_t ct" "pcitag_t tag" \
 "int offs"
@@ -228,10 +221,6 @@ and
 Make a tag to access config space of a CardBus card.
 It works the same as
 .Fn pci_make_tag .
-.It Fn cardbus_free_tag "cc" "cf" "tag"
-Release a tag used to access the config space of a CardBus card.
-It works the same as
-.Fn pci_free_tag .
 .It Fn cardbus_conf_read "cc" "cf" "tag" "offs"
 Read the config space of a CardBus card.
 It works the same as
