@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.100 2010/01/31 00:43:37 hubertf Exp $	*/
+/*	$NetBSD: pmap.c,v 1.100.2.1 2010/02/25 02:57:17 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100 2010/01/31 00:43:37 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100.2.1 2010/02/25 02:57:17 uebayasi Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -415,7 +415,7 @@ paddr_t pmap_pa_start; /* PA of first physical page for this domain */
 paddr_t pmap_pa_end;   /* PA of last physical page for this domain */
 #endif /* XEN */
 
-#define	VM_PAGE_TO_PP(pg)	(&(pg)->mdpage.mp_pp)
+#define	VM_PAGE_TO_PP(pg)	(&VM_PAGE_TO_MD(pg)->mp_pp)
 
 #define	pp_lock(pp)	mutex_spin_enter(&(pp)->pp_lock)
 #define	pp_unlock(pp)	mutex_spin_exit(&(pp)->pp_lock)
