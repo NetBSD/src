@@ -8,9 +8,11 @@ agrep \- print lines approximately matching a pattern
 .RI [ FILE ]...
 .SH DESCRIPTION
 Searches for approximate matches of PATTERN in each FILE or standard
-input.   Example: `agrep \-2 optimize foo.txt' outputs all lines in
-file `foo.txt' that match "optimize" within two errors.  E.g. lines
-which contain "optimise", "optmise", and "opitmize" all match.
+input.
+Example: `agrep \-2 optimize foo.txt' outputs all lines in
+file `foo.txt' that match "optimize" within two errors.
+E.g. lines which contain "optimise", "optmise", and "opitmize" all
+match.
 .SH OPTIONS
 .SS "Regexp selection and interpretation:"
 .TP
@@ -34,13 +36,14 @@ characters.
 .BR \-w ", " \-\^\-word\-regexp
 Force
 .I PATTERN
-to match only whole words.  A "whole word" is a substring which either
-starts at the beginning or the record or is preceded by a non-word
-constituent character.   Similarly, the substring must either end at
-the end of the record or be followed by a non-word constituent
-character.  Word-constituent characters are alphanumerics (as
-defined by the current locale) and the underscore character.  Note
-that the non-word constituent characters
+to match only whole words.
+A "whole word" is a substring which either starts at the beginning
+or the record or is preceded by a non-word constituent character.
+Similarly, the substring must either end at the end of the record
+or be followed by a non-word constituent character.
+Word-constituent characters are alphanumerics (as
+defined by the current locale) and the underscore character.
+Note that the non-word constituent characters
 .B must
 surround the match; they cannot be counted as errors.
 .SS "Approximate matching settings:"
@@ -58,10 +61,10 @@ Set cost of incorrect characters to
 .IR NUM .
 Note that a deletion (a missing character) and an insertion (an extra
 character) together constitute a substituted character, but the cost
-will be the that of a deletion and an insertion added together.  Thus,
-if the const of a substitution is set to be larger than the sum
-of the costs of deletion and insertion, direct substitutions will
-never be done.
+will be the that of a deletion and an insertion added together.
+Thus, if the const of a substitution is set to be larger than the
+sum of the costs of deletion and insertion, direct substitutions
+will never be done.
 .TP
 .BI \-E " NUM" "\fR,\fP \-\^\-max\-errors=" NUM
 Select records that have at most
@@ -77,7 +80,8 @@ digit between 0 and 9).
 Set the record delimiter regular expression to
 .IR PATTERN .
 The text between two delimiters, before the first delimiter, and after
-the last delimiter is considered to be a record.  The default record
+the last delimiter is considered to be a record.
+The default record
 delimiter is the regexp "\\n", so by default a record is a line.
 .I PATTERN
 can be any regular expression that does not match the empty string.
@@ -93,7 +97,8 @@ Select non-matching records instead of matching records.
 Print version information and exit.
 .TP
 .BR \-y ", " \-\^\-nothing
-Does nothing.  This options exists only for compatibility with the
+Does nothing.
+This options exists only for compatibility with the
 non-free agrep program.
 .TP
 .BR \-\^\-help
@@ -102,14 +107,16 @@ Display a brief help message and exit.
 .TP
 .BR \-B ", " \-\^\-best\-match
 Only output the best matching records, that is, the records with the
-lowest cost.  This is currently implemented by making two passes over
+lowest cost.
+This is currently implemented by making two passes over
 the input files and cannot be used when reading from standard input.
 .TP
 .BR \-\^\-color ", " \-\^\-colour
-Highlight the matching strings in the output with a color marker.  The
-color string is taken from the
+Highlight the matching strings in the output with a color marker.
+The color string is taken from the
 .BI GREP_COLOR
-environment variable.  The default color is red.
+environment variable.
+The default color is red.
 .TP
 .BR \-c ", " \-\^\-count
 Only print a count of matching records per each input file,
@@ -125,39 +132,43 @@ record was read from.
 .TP
 .BR \-l ", " \-\^\-files\-with\-matches
 Only print the name of each input file which contains at least one
-match, suppressing normal output.  The scanning for each file will
-stop on the first match.
+match, suppressing normal output.
+The scanning for each file will stop on the first match.
 .TP
 .BR \-n ", " \-\^\-record\-number
 Prefix each output record with its sequence number in the input file.
 The number of the first record is 1.
 .TP
 .BR \-q ", " \-\^\-quiet ", " \-\^\-silent
-Do not write anything to standard output.  Exit immediately with zero
-exit status if a match is found.
+Do not write anything to standard output.
+Exit immediately with zero exit status if a match is found.
 .TP
 .BR \-s ", " \-\^\-show\-cost
 Print match cost with output.
 .TP
 .BR \-\^\-show\-position
 Prefix each output record with the start and end offset of the first
-match within the record.  The offset of the first character of the
-record is 0.  The end position is given as the offset of the first
+match within the record.
+The offset of the first character of the record is 0.
+The end position is given as the offset of the first
 character after the match.
 .TP
 .BR \-M ", " \-\^\-delimiter\-after
 By default, the record delimiter is the newline character and is
-output after the matching record.  If
+output after the matching record.
+If
 .B \-d
 is used, the record delimiter will be output before the matching
-record.  This option causes the delimiter to be output after the
+record.
+This option causes the delimiter to be output after the
 matching record.
 .PP
 With no
 .IR FILE ,
 or when
 .I FILE
-is -, reads standard input.  If less than two
+is -, reads standard input.
+If less than two
 .IR FILE s
 are given
 .B \-h
@@ -166,7 +177,8 @@ is assumed, otherwise
 is the default.
 .SH DIAGNOSTICS
 Exit status is 0 if a match is found, 1 for no match, and 2 if there
-were errors.  If
+were errors.
+If
 .B \-E
 or -\fI#\fR is not specified, only exact matches are selected.
 .PP
