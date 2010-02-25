@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.199 2010/02/16 15:17:17 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.200 2010/02/25 15:07:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.199 2010/02/16 15:17:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.200 2010/02/25 15:07:06 msaitoh Exp $");
 
 #include "rnd.h"
 
@@ -5546,11 +5546,11 @@ wm_gmii_i82544_readreg(device_t self, int phy, int reg)
 	CSR_WRITE(sc, WMREG_MDIC, MDIC_OP_READ | MDIC_PHYADD(phy) |
 	    MDIC_REGADD(reg));
 
-	for (i = 0; i < 320; i++) {
+	for (i = 0; i < WM_GEN_POLL_TIMEOUT * 3; i++) {
 		mdic = CSR_READ(sc, WMREG_MDIC);
 		if (mdic & MDIC_READY)
 			break;
-		delay(10);
+		delay(50);
 	}
 
 	if ((mdic & MDIC_READY) == 0) {
@@ -5587,11 +5587,11 @@ wm_gmii_i82544_writereg(device_t self, int phy, int reg, int val)
 	CSR_WRITE(sc, WMREG_MDIC, MDIC_OP_WRITE | MDIC_PHYADD(phy) |
 	    MDIC_REGADD(reg) | MDIC_DATA(val));
 
-	for (i = 0; i < 320; i++) {
+	for (i = 0; i < WM_GEN_POLL_TIMEOUT * 3; i++) {
 		mdic = CSR_READ(sc, WMREG_MDIC);
 		if (mdic & MDIC_READY)
 			break;
-		delay(10);
+		delay(50);
 	}
 
 	if ((mdic & MDIC_READY) == 0)
