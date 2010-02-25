@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.42 2010/02/24 23:38:40 dyoung Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.43 2010/02/25 20:36:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.42 2010/02/24 23:38:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.43 2010/02/25 20:36:31 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -91,6 +91,7 @@ static void fxp_cardbus_disable(struct fxp_softc *);
 struct fxp_cardbus_softc {
 	struct fxp_softc sc;
 	cardbus_devfunc_t ct;
+	pcitag_t tag;
 	pcireg_t base0_reg;
 	pcireg_t base1_reg;
 	bus_size_t size;
@@ -133,6 +134,7 @@ fxp_cardbus_attach(device_t parent, device_t self,
 
 	sc->sc_dev = self;
 	csc->ct = ca->ca_ct;
+	csc->tag = ca->ca_tag;
 
 	/*
          * Map control/status registers.
@@ -193,8 +195,7 @@ fxp_cardbus_setup(struct fxp_softc * sc)
 	cardbus_function_tag_t cf = psc->sc_cf;
 	pcireg_t command;
 
-	pcitag_t tag = cardbus_make_tag(cc, cf, csc->ct->ct_bus,
-	    csc->ct->ct_func);
+	pcitag_t tag = csc->tag;
 
 	command = Cardbus_conf_read(csc->ct, tag, CARDBUS_COMMAND_STATUS_REG);
 	if (csc->base0_reg) {
