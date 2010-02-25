@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.25 2010/02/25 20:36:31 dyoung Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.26 2010/02/25 22:31:51 dyoung Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.25 2010/02/25 20:36:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.26 2010/02/25 22:31:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.25 2010/02/25 20:36:31 dyoung Exp 
 
 struct com_cardbus_softc {
 	struct com_softc	cc_com;
+	cardbus_intr_line_t	cc_intrline;
 	void			*cc_ih;
 	cardbus_devfunc_t	cc_ct;
 	bus_addr_t		cc_addr;
@@ -211,6 +212,7 @@ com_cardbus_attach (device_t parent, device_t self, void *aux)
 	bus_space_tag_t		iot;
 
 	sc->sc_dev = self;
+	csc->cc_intrline = ca->ca_intrline;
 	csc->cc_ct = ca->ca_ct;
 	csc->cc_tag = ca->ca_tag;
 
@@ -297,17 +299,16 @@ static int
 com_cardbus_enable(struct com_softc *sc)
 {
 	struct com_cardbus_softc *csc = (struct com_cardbus_softc*)sc;
-	struct cardbus_softc *psc =
-		device_private(device_parent(sc->sc_dev));
-	cardbus_chipset_tag_t cc = psc->sc_cc;
-	cardbus_function_tag_t cf = psc->sc_cf;
+	cardbus_devfunc_t ct = csc->cc_ct;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
 
-	Cardbus_function_enable(csc->cc_ct);
+	Cardbus_function_enable(ct);
 
 	com_cardbus_setup(csc);
 
 	/* establish the interrupt. */
-	csc->cc_ih = cardbus_intr_establish(cc, cf, psc->sc_intrline,
+	csc->cc_ih = cardbus_intr_establish(cc, cf, csc->cc_intrline,
 					    IPL_SERIAL, comintr, sc);
 	if (csc->cc_ih == NULL) {
 		aprint_error_dev(DEVICET(csc),
@@ -322,15 +323,14 @@ static void
 com_cardbus_disable(struct com_softc *sc)
 {
 	struct com_cardbus_softc *csc = (struct com_cardbus_softc*)sc;
-	struct cardbus_softc *psc =
-		device_private(device_parent(sc->sc_dev));
-	cardbus_chipset_tag_t cc = psc->sc_cc;
-	cardbus_function_tag_t cf = psc->sc_cf;
+	cardbus_devfunc_t ct = csc->cc_ct;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
 
 	cardbus_intr_disestablish(cc, cf, csc->cc_ih);
 	csc->cc_ih = NULL;
 
-	Cardbus_function_disable(csc->cc_ct);
+	Cardbus_function_disable(ct);
 }
 
 static int
@@ -338,14 +338,14 @@ com_cardbus_detach(device_t self, int flags)
 {
 	struct com_cardbus_softc *csc = device_private(self);
 	struct com_softc *sc = device_private(self);
-	struct cardbus_softc *psc = device_private(device_parent(self));
+	cardbus_devfunc_t ct = csc->cc_ct;
 	int error;
 
 	if ((error = com_detach(self, flags)) != 0)
 		return error;
 
 	if (csc->cc_ih != NULL)
-		cardbus_intr_disestablish(psc->sc_cc, psc->sc_cf, csc->cc_ih);
+		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->cc_ih);
 
 	Cardbus_mapreg_unmap(csc->cc_ct, csc->cc_reg, sc->sc_regs.cr_iot,
 	    sc->sc_regs.cr_ioh, csc->cc_size);

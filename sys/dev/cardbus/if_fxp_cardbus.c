@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.43 2010/02/25 20:36:31 dyoung Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.44 2010/02/25 22:31:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.43 2010/02/25 20:36:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.44 2010/02/25 22:31:51 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -91,6 +91,7 @@ static void fxp_cardbus_disable(struct fxp_softc *);
 struct fxp_cardbus_softc {
 	struct fxp_softc sc;
 	cardbus_devfunc_t ct;
+	cardbus_intr_line_t intrline;
 	pcitag_t tag;
 	pcireg_t base0_reg;
 	pcireg_t base1_reg;
@@ -133,6 +134,7 @@ fxp_cardbus_attach(device_t parent, device_t self,
 	bus_size_t size;
 
 	sc->sc_dev = self;
+	csc->intrline = ca->ca_intrline;
 	csc->ct = ca->ca_ct;
 	csc->tag = ca->ca_tag;
 
@@ -190,9 +192,8 @@ static void
 fxp_cardbus_setup(struct fxp_softc * sc)
 {
 	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *)sc;
-	struct cardbus_softc *psc = device_private(device_parent(sc->sc_dev));
-	cardbus_chipset_tag_t cc = psc->sc_cc;
-	cardbus_function_tag_t cf = psc->sc_cf;
+	cardbus_chipset_tag_t cc = csc->ct->ct_cc;
+	cardbus_function_tag_t cf = csc->ct->ct_cf;
 	pcireg_t command;
 
 	pcitag_t tag = csc->tag;
@@ -222,9 +223,8 @@ static int
 fxp_cardbus_enable(struct fxp_softc * sc)
 {
 	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *)sc;
-	struct cardbus_softc *psc = device_private(device_parent(sc->sc_dev));
-	cardbus_chipset_tag_t cc = psc->sc_cc;
-	cardbus_function_tag_t cf = psc->sc_cf;
+	cardbus_chipset_tag_t cc = csc->ct->ct_cc;
+	cardbus_function_tag_t cf = csc->ct->ct_cf;
 
 	Cardbus_function_enable(csc->ct);
 
@@ -232,7 +232,7 @@ fxp_cardbus_enable(struct fxp_softc * sc)
 
 	/* Map and establish the interrupt. */
 
-	sc->sc_ih = cardbus_intr_establish(cc, cf, psc->sc_intrline, IPL_NET,
+	sc->sc_ih = cardbus_intr_establish(cc, cf, csc->intrline, IPL_NET,
 	    fxp_intr, sc);
 	if (NULL == sc->sc_ih) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt\n");
@@ -246,9 +246,9 @@ static void
 fxp_cardbus_disable(struct fxp_softc * sc)
 {
 	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *)sc;
-	struct cardbus_softc *psc = device_private(device_parent(sc->sc_dev));
-	cardbus_chipset_tag_t cc = psc->sc_cc;
-	cardbus_function_tag_t cf = psc->sc_cf;
+	struct cardbus_devfunc *ct = csc->ct;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* Remove interrupt handler. */
 	cardbus_intr_disestablish(cc, cf, sc->sc_ih);
