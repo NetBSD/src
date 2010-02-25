@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_locore.S,v 1.7 2009/11/26 00:19:16 matt Exp $	*/
+/*	$NetBSD: obs200_locore.S,v 1.8 2010/02/25 23:33:44 matt Exp $	*/
 /*	Original Tag: locore.S,v 1.1 2003/09/23 15:21:58 shige Exp	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
@@ -89,6 +89,7 @@
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/dcr405gp.h>
 #include <powerpc/ibm4xx/pmap.h>
 

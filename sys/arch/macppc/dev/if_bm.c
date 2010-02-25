@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.41 2010/01/19 22:06:21 pooka Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.42 2010/02/25 23:33:45 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.41 2010/01/19 22:06:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.42 2010/02/25 23:33:45 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.41 2010/01/19 22:06:21 pooka Exp $");
 #include <dev/mii/mii_bitbang.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 
 #include <machine/autoconf.h>
 #include <machine/pio.h>
