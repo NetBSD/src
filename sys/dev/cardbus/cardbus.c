@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.102 2010/02/24 23:38:40 dyoung Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.103 2010/02/25 00:47:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.102 2010/02/24 23:38:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.103 2010/02/25 00:47:39 dyoung Exp $");
 
 #include "opt_cardbus.h"
 
@@ -825,8 +825,6 @@ cardbus_function_enable(struct cardbus_softc *sc, int func)
 
 	if ((ct = sc->sc_funcs[func]) != NULL)
 		Cardbus_conf_write(ct, tag, CARDBUS_BHLC_REG, ct->ct_bhlc);
-
-	cardbus_free_tag(cc, cf, tag);
 
 	DPRINTF(("%x\n", sc->sc_poweron_func));
 

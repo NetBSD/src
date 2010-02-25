@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.195 2010/02/24 23:38:40 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.196 2010/02/25 00:47:40 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.195 2010/02/24 23:38:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.196 2010/02/25 00:47:40 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -134,7 +134,6 @@ static void *pccbb_cb_intr_establish(cardbus_chipset_tag_t,
 static void pccbb_cb_intr_disestablish(cardbus_chipset_tag_t ct, void *ih);
 
 static pcitag_t pccbb_make_tag(cardbus_chipset_tag_t, int, int);
-static void pccbb_free_tag(cardbus_chipset_tag_t, pcitag_t);
 static pcireg_t pccbb_conf_read(cardbus_chipset_tag_t, pcitag_t, int);
 static void pccbb_conf_write(cardbus_chipset_tag_t, pcitag_t, int,
     pcireg_t);
@@ -237,7 +236,6 @@ static const struct cardbus_functions pccbb_funcs = {
 	pccbb_ctrl,
 	pccbb_power_ct,
 	pccbb_make_tag,
-	pccbb_free_tag,
 	pccbb_conf_read,
 	pccbb_conf_write,
 };
@@ -1908,11 +1906,6 @@ pccbb_make_tag(cardbus_chipset_tag_t cc, int busno, int function)
 	struct pccbb_softc *sc = (struct pccbb_softc *)cc;
 
 	return pci_make_tag(sc->sc_pc, busno, 0, function);
-}
-
-static void
-pccbb_free_tag(cardbus_chipset_tag_t cc, pcitag_t tag)
-{
 }
 
 /*
