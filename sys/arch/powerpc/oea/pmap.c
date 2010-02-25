@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.69 2009/11/21 17:40:29 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.70 2010/02/25 07:21:19 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69 2009/11/21 17:40:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.70 2010/02/25 07:21:19 skrll Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -2363,7 +2363,7 @@ pmap_activate(struct lwp *l)
 	    ("pmap_activate: lwp %p (curlwp %p)\n", l, curlwp));
 
 	/*
-	 * XXX Normally performed in cpu_fork().
+	 * XXX Normally performed in cpu_lwp_fork().
 	 */
 	pcb->pcb_pm = pmap;
 
