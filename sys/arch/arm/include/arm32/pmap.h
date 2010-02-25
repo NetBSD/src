@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.94.2.1 2010/02/10 14:20:23 uebayasi Exp $	*/
+/*	$NetBSD: pmap.h,v 1.94.2.2 2010/02/25 03:30:22 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -269,9 +269,10 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
 #define	pmap_is_modified(pg)	\
-	(((pg)->mdpage.pvh_attrs & PVF_MOD) != 0)
+	((VM_PAGE_TO_MD(pg)->pvh_attrs & PVF_MOD) != 0)
 #define	pmap_is_referenced(pg)	\
-	(((pg)->mdpage.pvh_attrs & PVF_REF) != 0)
+	((VM_PAGE_TO_MD(pg)->pvh_attrs & PVF_REF) != 0)
+
 #define	pmap_is_page_colored_p(md)	\
 	(((md)->pvh_attrs & PVF_COLORED) != 0)
 
