@@ -1,195 +1,205 @@
-.TH agrep 1 "November 21, 2004" "TRE agrep 0.8.0"
-.SH NAME
-agrep \- print lines approximately matching a pattern
-.SH SYNOPSIS
-.B agrep
-.RI [ OPTION ]...
-.I PATTERN
-.RI [ FILE ]...
-.SH DESCRIPTION
-Searches for approximate matches of PATTERN in each FILE or standard
-input.
-Example: `agrep \-2 optimize foo.txt' outputs all lines in
-file `foo.txt' that match "optimize" within two errors.
-E.g. lines which contain "optimise", "optmise", and "opitmize" all
-match.
-.SH OPTIONS
-.SS "Regexp selection and interpretation:"
-.TP
-.BI \-e " PATTERN" "\fR,\fP \-\^\-regexp=" PATTERN
+.\" $NetBSD: agrep.1,v 1.3 2010/02/25 13:51:44 wiz Exp $
+.Dd November 21, 2004
+.Dt AGREP 1
+.Os
+.Sh NAME
+.Nm agrep
+.Nd print lines approximately matching a pattern
+.Sh SYNOPSIS
+.Nm
+.Op options
+.Ar pattern
+.Op files
+.Sh DESCRIPTION
+Searches for approximate matches of
+.Ar pattern
+in each
+.Ar FILE
+or standard input.
+.Sh OPTIONS
+.Ss Regexp selection and interpretation
+.Bl -tag -width 10n
+.It Fl e Ar pattern , Fl Fl regexp= Ns Ar pattern
 Use
-.I PATTERN
+.Ar PATTERN
 as a regular expression; useful to protect patterns beginning with
-.BR \- .
-.TP
-.BR \-i ", " \-\^\-ignore\-case
+.Sq - .
+.It Fl i , Fl Fl ignore-case
 Ignore case distinctions (as defined by the current locale) in
-.I PATTERN
+.Ar pattern
 and input files.
-.TP
-.BR \-k ", " \-\^\-literal
+.It Fl k , Fl Fl literal
 Treat
-.I PATTERN
+.Ar pattern
 as a literal string, that is, a fixed string with no special
 characters.
-.TP
-.BR \-w ", " \-\^\-word\-regexp
+.It Fl w , Fl Fl word-regexp
 Force
-.I PATTERN
+.Ar pattern
 to match only whole words.
-A "whole word" is a substring which either starts at the beginning
+A
+.Dq whole word
+is a substring which either starts at the beginning
 or the record or is preceded by a non-word constituent character.
 Similarly, the substring must either end at the end of the record
 or be followed by a non-word constituent character.
 Word-constituent characters are alphanumerics (as
 defined by the current locale) and the underscore character.
 Note that the non-word constituent characters
-.B must
+.Em must
 surround the match; they cannot be counted as errors.
-.SS "Approximate matching settings:"
-.TP
-.BI \-D " NUM" "\fR,\fP \-\^\-delete\-cost=" NUM
+.El
+.Ss Approximate matching settings
+.Bl -tag -width 10n
+.It Fl D Ar num , Fl Fl delete-cost= Ns Ar num
 Set cost of missing characters to
-.IR NUM .
-.TP
-.BI \-I " NUM" "\fR,\fP \-\^\-insert\-cost=" NUM
+.Ar num .
+.It Fl I Ar num , Fl Fl insert-cost= Ns Ar num
 Set cost of extra characters to
-.IR NUM .
-.TP
-.BI \-S " NUM" "\fR,\fP \-\^\-substitute\-cost=" NUM
+.Ar num .
+.It Fl S Ar num , Fl Fl substitue-cost= Ns Ar num
 Set cost of incorrect characters to
-.IR NUM .
+.Ar num .
 Note that a deletion (a missing character) and an insertion (an extra
 character) together constitute a substituted character, but the cost
 will be the that of a deletion and an insertion added together.
 Thus, if the const of a substitution is set to be larger than the
 sum of the costs of deletion and insertion, direct substitutions
 will never be done.
-.TP
-.BI \-E " NUM" "\fR,\fP \-\^\-max\-errors=" NUM
+.It Fl E num , Fl Fl max-errors= Ns Ar num
 Select records that have at most
-.I NUM
+.Ar num
 errors.
-.TP
--\fI#\fR
-Select records that have at most \fI#\fR errors (\fI#\fR is a
-digit between 0 and 9).
-.SS "Miscellaneous:"
-.TP
-.BI \-d " PATTERN" "\fR,\fP \-\^\-delimiter=" PATTERN
+.It Fl Ns Ar #
+Select records that have at most
+.Ar #
+errors
+.Ar ( #
+is a digit between 0 and 9).
+.El
+.Ss Miscellaneous
+.Bl -tag -width 10n
+.It Fl d pattern , Fl Fl delimiter= Ns Ar pattern
 Set the record delimiter regular expression to
-.IR PATTERN .
+.Ar pattern .
 The text between two delimiters, before the first delimiter, and after
 the last delimiter is considered to be a record.
 The default record
-delimiter is the regexp "\\n", so by default a record is a line.
-.I PATTERN
+delimiter is the regexp
+.Dq \en ,
+so by default a record is a line.
+.Ar pattern
 can be any regular expression that does not match the empty string.
 For example, using
-.B \-d
-"^From "
+.Fl d Ar \"^From \"
 defines mail messages as records in a Mailbox format file.
-.TP
-.BR \-v ", " \-\^\-invert\-match
+.It Fl v , Fl Fl invert-match
 Select non-matching records instead of matching records.
-.TP
-.BR \-V ", " \-\^\-version
+.It Fl V , Fl Fl version
 Print version information and exit.
-.TP
-.BR \-y ", " \-\^\-nothing
+.It Fl y , Fl Fl nothing
 Does nothing.
 This options exists only for compatibility with the
 non-free agrep program.
-.TP
-.BR \-\^\-help
+.It Fl Fl help
 Display a brief help message and exit.
-.SS "Output control:"
-.TP
-.BR \-B ", " \-\^\-best\-match
+.El
+.Ss Output control
+.Bl -tag -width 10n
+.It Fl B , Fl Fl best-match
 Only output the best matching records, that is, the records with the
 lowest cost.
 This is currently implemented by making two passes over
 the input files and cannot be used when reading from standard input.
-.TP
-.BR \-\^\-color ", " \-\^\-colour
+.It Fl Fl color , Fl Fl colour
 Highlight the matching strings in the output with a color marker.
 The color string is taken from the
-.BI GREP_COLOR
+.Ev GREP_COLOR
 environment variable.
 The default color is red.
-.TP
-.BR \-c ", " \-\^\-count
+.It Fl c , Fl Fl count
 Only print a count of matching records per each input file,
 suppressing normal output.
-.TP
-.BR \-h ", " \-\^\-no\-filename
+.It Fl h , Fl Fl no-filename
 Suppress the prefixing filename on output when multiple files are
 searched.
-.TP
-.BR \-H ", " \-\^\-with\-filename
+.It Fl H , Fl Fl with-filename
 Prefix each output record with the name of the input file where the
 record was read from.
-.TP
-.BR \-l ", " \-\^\-files\-with\-matches
+.It Fl l , Fl Fl files-with-matches
 Only print the name of each input file which contains at least one
 match, suppressing normal output.
 The scanning for each file will stop on the first match.
-.TP
-.BR \-n ", " \-\^\-record\-number
+.It Fl n , Fl Fl record-number
 Prefix each output record with its sequence number in the input file.
 The number of the first record is 1.
-.TP
-.BR \-q ", " \-\^\-quiet ", " \-\^\-silent
+.It Fl q , Fl Fl quiet , Fl Fl silent
 Do not write anything to standard output.
 Exit immediately with zero exit status if a match is found.
-.TP
-.BR \-s ", " \-\^\-show\-cost
+.It Fl s , Fl Fl show-cost
 Print match cost with output.
-.TP
-.BR \-\^\-show\-position
+.It Fl Fl show-position
 Prefix each output record with the start and end offset of the first
 match within the record.
 The offset of the first character of the record is 0.
 The end position is given as the offset of the first
 character after the match.
-.TP
-.BR \-M ", " \-\^\-delimiter\-after
+.It Fl M , Fl Fl delimiter-after
 By default, the record delimiter is the newline character and is
 output after the matching record.
 If
-.B \-d
+.Fl d
 is used, the record delimiter will be output before the matching
 record.
 This option causes the delimiter to be output after the
 matching record.
-.PP
+.El
+.Pp
 With no
-.IR FILE ,
+.Ar file ,
 or when
-.I FILE
-is -, reads standard input.
+.Ar file
+is
+.Dq - ,
+.Nm
+reads standard input.
 If less than two
-.IR FILE s
+.Ar files
 are given
-.B \-h
+.Fl h
 is assumed, otherwise
-.B \-H
+.Fl H
 is the default.
-.SH DIAGNOSTICS
+.Sh EXAMPLES
+.Dl agrep \-2 optimize foo.txt
+outputs all lines in file
+.Pa foo.txt
+that match
+.Dq optimize
+within two errors.
+E.g. lines which contain
+.Dq optimise ,
+.Dq optmise ,
+and
+.Dq opitmize
+all match.
+.Sh DIAGNOSTICS
 Exit status is 0 if a match is found, 1 for no match, and 2 if there
 were errors.
 If
-.B \-E
-or -\fI#\fR is not specified, only exact matches are selected.
-.PP
-.I PATTERN
+.Fl E
+or
+.Fl Ns Ar #
+is not specified, only exact matches are selected.
+.Pp
+.Ar pattern
 is a POSIX extended regular expression (ERE) with the TRE extensions.
-.SH "REPORTING BUGS"
+.Sh REPORTING BUGS
 Report bugs to the TRE mailing list
-.BR "" < tre-general@lists.laurikari.net >.
-.SH COPYRIGHT
+.Aq tre-general@lists.laurikari.net .
+.Sh COPYRIGHT
 Copyright \(co 2002-2004 Ville Laurikari.
-.br
+.Pp
 This is free software, and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute this software under certain
 conditions; see the source for the full license text.
