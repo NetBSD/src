@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.12 2010/02/24 21:34:23 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.13 2010/02/25 20:48:34 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -63,9 +63,8 @@ extern struct x86_bus_dma_tag pci_bus_dma_tag;
 extern struct x86_bus_dma_tag pci_bus_dma64_tag;
 #endif
 
-struct {
-	int dummy;
-} pci_chipset_tag;
+struct pci_chipset_tag;
+struct pci_attach_args;
 
 /*
  * Types provided to machine-independent PCI code
@@ -74,6 +73,34 @@ typedef struct pci_chipset_tag *pci_chipset_tag_t;
 typedef union x86_pci_tag_u pcitag_t;
 typedef int pci_intr_handle_t;
 
+struct pci_chipset_tag {
+	pcireg_t (*pc_conf_read)(pci_chipset_tag_t, pcitag_t, int);
+
+	void (*pc_conf_write)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
+
+#if 0
+	int (*pc_find_rom)(struct pci_attach_args *, bus_space_tag_t,
+	    bus_space_handle_t, int, bus_space_handle_t *, bus_space_size_t *);
+#endif
+
+	int (*pc_intr_map)(struct pci_attach_args *, pci_intr_handle_t *);
+
+	const char *(*pc_intr_string)(pci_chipset_tag_t, pci_intr_handle_t);
+
+	const struct evcnt *(*pc_intr_evcnt)(pci_chipset_tag_t,
+	    pci_intr_handle_t);
+
+	void *(*pc_intr_establish)(pci_chipset_tag_t, pci_intr_handle_t, int,
+	    int (*)(void *), void *);
+
+	void (*pc_intr_disestablish)(pci_chipset_tag_t, void *);
+
+	pcitag_t (*pc_make_tag)(pci_chipset_tag_t, int, int, int);
+
+	void (*pc_decompose_tag)(pci_chipset_tag_t, pcitag_t,
+	    int *, int *, int *);
+};
+
 /*
  * i386-specific PCI variables and functions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
@@ -81,7 +108,6 @@ typedef int pci_intr_handle_t;
 void		pci_mode_set(int);
 int		pci_mode_detect(void);
 int		pci_bus_flags(void);
-struct		pci_attach_args;
 
 /*
  * Functions provided to machine-independent PCI code.
