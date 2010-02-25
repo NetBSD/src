@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_cardbus.c,v 1.13 2010/02/25 21:18:35 dyoung Exp $	*/
+/*	$NetBSD: njs_cardbus.c,v 1.14 2010/02/25 23:40:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.13 2010/02/25 21:18:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.14 2010/02/25 23:40:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,6 @@ njs_cardbus_attach(device_t parent, device_t self, void *aux)
 #endif
 		csr |= PCI_COMMAND_MEM_ENABLE;
 		sc->sc_flags = NJSC32_MEM_MAPPED;
-		(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_MEM_ENABLE);
 	} else {
 	try_io:
 		if (Cardbus_mapreg_map(csc->sc_ct, NJSC32_CARDBUS_BASEADDR_IO,
@@ -177,15 +176,11 @@ njs_cardbus_attach(device_t parent, device_t self, void *aux)
 #endif
 			csr |= PCI_COMMAND_IO_ENABLE;
 			sc->sc_flags = NJSC32_IO_MAPPED;
-			(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE);
 		} else {
 			aprint_error_dev(self, "unable to map device registers\n");
 			return;
 		}
 	}
-
-	/* Make sure the right access type is on the CardBus bridge. */
-	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the appropriate bits in the PCI CSR. */
 	reg = cardbus_conf_read(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG);

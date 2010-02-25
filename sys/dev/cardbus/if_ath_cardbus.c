@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.39 2010/02/24 19:52:51 dyoung Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.40 2010/02/25 23:40:39 dyoung Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.39 2010/02/24 19:52:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.40 2010/02/25 23:40:39 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -254,8 +254,6 @@ void
 ath_cardbus_setup(struct ath_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 	int rc;
 	pcireg_t reg;
 
@@ -263,11 +261,11 @@ ath_cardbus_setup(struct ath_cardbus_softc *csc)
 		aprint_debug("%s: cardbus_set_powerstate %d\n", __func__, rc);
 
 	/* Program the BAR. */
-	cardbus_conf_write(cc, cf, csc->sc_tag, ATH_PCI_MMBA, csc->sc_bar_val);
+	Cardbus_conf_write(ct, csc->sc_tag, ATH_PCI_MMBA, csc->sc_bar_val);
 
 	/* Enable the appropriate bits in the PCI CSR. */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag,
+	reg = Cardbus_conf_read(ct, csc->sc_tag,
 	    PCI_COMMAND_STATUS_REG);
 	reg |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE;
-	cardbus_conf_write(cc, cf, csc->sc_tag, PCI_COMMAND_STATUS_REG, reg);
+	Cardbus_conf_write(ct, csc->sc_tag, PCI_COMMAND_STATUS_REG, reg);
 }
