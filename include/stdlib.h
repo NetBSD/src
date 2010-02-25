@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.90 2009/11/15 22:21:03 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.91 2010/02/25 18:37:12 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -299,7 +299,7 @@ void	 mi_vector_hash(const void * __restrict, size_t, uint32_t,
 	    uint32_t[3]);
 
 void	 setproctitle(const char *, ...)
-	    __attribute__((__format__(__printf__, 1, 2)));
+	    __printflike(1, 2);
 const char *getprogname(void) __attribute__((const));
 void	setprogname(const char *);
 
