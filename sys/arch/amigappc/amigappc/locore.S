@@ -1,4 +1,4 @@
-/*      $NetBSD: locore.S,v 1.18 2010/02/02 20:56:13 phx Exp $   */
+/*      $NetBSD: locore.S,v 1.19 2010/02/25 23:33:43 matt Exp $   */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -54,8 +54,9 @@
 #define _NOREGNAMES
 #include <machine/asm.h>
 
-#include <powerpc/oea/hid.h>
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
+#include <powerpc/oea/hid.h>
 #include <amiga/amiga/custom.h>
 #include <amigappc/amigappc/p5reg.h>
 
