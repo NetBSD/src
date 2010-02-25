@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.131 2010/01/19 22:06:24 pooka Exp $	*/
+/*	$NetBSD: i82557.c,v 1.132 2010/02/25 23:40:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.131 2010/01/19 22:06:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.132 2010/02/25 23:40:39 dyoung Exp $");
 
 #include "rnd.h"
 
@@ -2491,7 +2491,7 @@ fxp_activate(device_t self, enum devact act)
  *	Detach an i82557 interface.
  */
 int
-fxp_detach(struct fxp_softc *sc)
+fxp_detach(struct fxp_softc *sc, int flags)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i;

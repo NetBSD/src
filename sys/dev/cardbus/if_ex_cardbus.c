@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.47 2010/02/24 19:52:51 dyoung Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.48 2010/02/25 23:40:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.47 2010/02/24 19:52:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.48 2010/02/25 23:40:39 dyoung Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -388,7 +388,6 @@ ex_cardbus_setup(struct ex_cardbus_softc *csc)
 	cardbus_conf_write(cc, cf, csc->sc_tag,
 		csc->sc_bar_reg, csc->sc_bar_val);
 	/* Make sure the right access type is on the CardBus bridge. */
-	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE);
 	if (csc->sc_cardtype == EX_CB_CYCLONE) {
 		/* Program the BAR */
 		cardbus_conf_write(cc, cf, csc->sc_tag,
@@ -398,9 +397,7 @@ ex_cardbus_setup(struct ex_cardbus_softc *csc)
 		 * memory access is enabled by BIOS, but some BIOSes do not
 		 * enable it.
 		 */
-		(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_MEM_ENABLE);
 	}
-	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the appropriate bits in the CARDBUS CSR. */
 	reg = cardbus_conf_read(cc, cf, csc->sc_tag,

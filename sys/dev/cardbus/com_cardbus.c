@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.26 2010/02/25 22:31:51 dyoung Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.27 2010/02/25 23:40:39 dyoung Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.26 2010/02/25 22:31:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.27 2010/02/25 23:40:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ struct com_cardbus_softc {
 	pcireg_t		cc_base;
 	bus_size_t		cc_size;
 	pcireg_t		cc_csr;
-	int			cc_cben;
 	pcitag_t		cc_tag;
 	pcireg_t		cc_reg;
 	int			cc_type;
@@ -238,10 +237,8 @@ com_cardbus_attach (device_t parent, device_t self, void *aux)
 	if(csc->cc_type == CARDBUS_MAPREG_TYPE_IO) {
 		csc->cc_base |= CARDBUS_MAPREG_TYPE_IO;
 		csc->cc_csr |= CARDBUS_COMMAND_IO_ENABLE;
-		csc->cc_cben = CARDBUS_IO_ENABLE;
 	} else {
 		csc->cc_csr |= CARDBUS_COMMAND_MEM_ENABLE;
-		csc->cc_cben = CARDBUS_MEM_ENABLE;
 	}
 
 	sc->sc_frequency = COM_FREQ;
@@ -272,10 +269,6 @@ com_cardbus_setup(struct com_cardbus_softc *csc)
 	pcireg_t reg;
 
 	Cardbus_conf_write(ct, csc->cc_tag, csc->cc_reg, csc->cc_base);
-
-	/* enable accesses on cardbus bridge */
-	(*cf->cardbus_ctrl)(cc, csc->cc_cben);
-	(*cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* and the card itself */
 	reg = Cardbus_conf_read(ct, csc->cc_tag, CARDBUS_COMMAND_STATUS_REG);
