@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.2.46.2 2010/01/27 22:27:42 sborrill Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.2.46.3 2010/02/25 10:59:58 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -129,6 +129,7 @@ typedef enum {
 } wm_phy_type;
 
 
+#define WM_GEN_POLL_TIMEOUT	640
 #define WM_PHY_CFG_TIMEOUT	100
 #define	WM_ICH8_LAN_INIT_TIMEOUT 1500
 #define	WM_MDIO_OWNERSHIP_TIMEOUT 10
