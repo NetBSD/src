@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1361 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1362 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -554,3 +554,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		hardware monitor with limit support.	[cnst 20100209]
 	wbsio(4): New driver for Winbond Super I/O attachment of
 		lm(4) on any port.	[cnst 20100221]
+	wcfb: A driver for 3Dlabs Wildcat graphics cards [macallan 20100224]
