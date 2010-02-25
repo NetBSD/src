@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.26.6.1 2010/02/10 14:20:23 uebayasi Exp $	*/
+/*	$NetBSD: mem.c,v 1.26.6.2 2010/02/25 03:19:51 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -74,9 +74,11 @@
 
 #include "opt_arm32_pmap.h"
 #include "opt_compat_netbsd.h"
+#include "opt_device_page.h"
+#include "opt_xip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26.6.1 2010/02/10 14:20:23 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26.6.2 2010/02/25 03:19:51 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -144,7 +146,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			{
 				struct vm_page *pg;
 				pg = PHYS_TO_VM_PAGE(trunc_page(v));
-				if (pg != NULL && pmap_is_page_colored_p(&pg->mdpage))
+				if (pg != NULL && pmap_is_page_colored_p(VM_PAGE_TO_MD(pg)))
 					o = pg->mdpage.pvh_attrs;
 				else
 					o = v;
