@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.103 2010/02/24 19:20:13 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.104 2010/02/25 16:15:57 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.103 2010/02/24 19:20:13 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.104 2010/02/25 16:15:57 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -3883,6 +3883,29 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
 			return (error1 | error2);
 
 		ump->lvclose &= ~UDF_WRITE_PART_BITMAPS;
+	}
+
+	/* write out metadata partition nodes if requested */
+	if (ump->lvclose & UDF_WRITE_METAPART_NODES) {
+		/* sync writeout metadata descriptor node */
+		error1 = udf_writeout_node(ump->metadata_node, FSYNC_WAIT);
+		if (error1)
+			printf( "udf_close_logvol: writeout of metadata partition "
+				"node failed\n");
+
+		/* duplicate metadata partition descriptor if needed */
+		udf_synchronise_metadatamirror_node(ump);
+
+		/* sync writeout metadatamirror descriptor node */
+		error2 = udf_writeout_node(ump->metadatamirror_node, FSYNC_WAIT);
+		if (error2)
+			printf( "udf_close_logvol: writeout of metadata partition "
+				"mirror node failed\n");
+
+		if (error1 || error2)
+			return (error1 | error2);
+
+		ump->lvclose &= ~UDF_WRITE_METAPART_NODES;
 	}
 
 	/* mark it closed */
