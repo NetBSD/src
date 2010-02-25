@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.21 2009/05/12 14:30:25 cegger Exp $	*/
+/*	$NetBSD: gt.c,v 1.22 2010/02/25 23:34:54 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.21 2009/05/12 14:30:25 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.22 2010/02/25 23:34:54 matt Exp $");
 
 #include "opt_marvell.h"
 #include "locators.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.21 2009/05/12 14:30:25 cegger Exp $");
 
 #include <powerpc/spr.h>
 #include <powerpc/oea/hid.h>
+#include <powerpc/oea/spr.h>
 
 #include <dev/marvell/gtreg.h>
 #include <dev/marvell/gtintrreg.h>

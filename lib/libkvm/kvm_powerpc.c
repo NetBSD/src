@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_powerpc.c,v 1.8 2008/01/15 13:57:42 ad Exp $	*/
+/*	$NetBSD: kvm_powerpc.c,v 1.9 2010/02/25 23:35:29 matt Exp $	*/
 
 /*
  * Copyright (c) 2005 Wasabi Systems, Inc.
@@ -86,6 +86,7 @@
 #include <machine/kcore.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 #include <powerpc/oea/bat.h>
 #include <powerpc/oea/pte.h>
 
