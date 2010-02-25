@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.25 2010/02/23 20:33:48 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.26 2010/02/25 05:45:12 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -179,6 +179,12 @@
 #if defined(MIPS64)
 #define	USE_64BIT_INSTRUCTIONS
 #define	USE_64BIT_CP0_FUNCTIONS
+#endif
+
+#ifdef _LP64
+#define	_SLLV		dsllv
+#else
+#define	_SLLV		sllv
 #endif
 
 #if defined(USE_64BIT_CP0_FUNCTIONS)
@@ -2304,6 +2310,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_asids))
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 	COP0_SYNC
 
+	_MFC0	t0, MIPS_COP_0_TLB_HI		# Save the current PID.
 	mfc0	t1, MIPS_COP_0_TLB_WIRED
 	li	v0, MIPS_KSEG0_START		# invalid address
 	INT_L	t2, _C_LABEL(mips_options) + MO_NUM_TLB_ENTRIES
@@ -2355,6 +2362,8 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_asids))
 	bne	t1, t2, 1b
 	 nop
 
+	_MFC0	t0, MIPS_COP_0_TLB_HI		# restore PID.
+	COP0_SYNC
 	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	COP0_SYNC
 	/* XXX simonb: lose these nops for mips32/64? */
@@ -2364,6 +2373,89 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_asids))
 	 mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	COP0_SYNC				# XXXX - not executed!!
 END(MIPSX(tlb_invalidate_asids))
+
+/*
+ * u_int mipsN_tlb_record_asids(u_long *bitmap, uint32_t asid_mask);
+ *
+ * Record all the ASIDs in use in the TLB and return the number of different
+ * ASIDs present.
+ */
+LEAF_NOPROFILE(MIPSX(tlb_record_asids))
+
+	_MFC0	a3, MIPS_COP_0_TLB_HI		# Save the current PID.
+	mfc0	ta0, MIPS_COP_0_TLB_WIRED
+	INT_L	ta1, _C_LABEL(mips_options) + MO_NUM_TLB_ENTRIES
+	move	ta2, zero
+	li	ta3, 1
+	move	v0, zero
+
+	mfc0	v1, MIPS_COP_0_STATUS		# save status register
+#ifdef _LP64
+	and	t0, v1, MIPS_SR_INT_IE
+	xor	t0, v1
+	mtc0	t0, MIPS_COP_0_STATUS		# disable interrupts
+#else
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
+#endif
+	COP0_SYNC
+
+	# do {} while (ta0 < ta1)
+1:
+	mtc0	ta0, MIPS_COP_0_TLB_INDEX	# set index
+	COP0_SYNC
+	nop
+	nop
+	/* XXX simonb: lose this nop for mips32/64? */
+	nop
+	tlbr					# obtain an entry
+	COP0_SYNC
+	/* XXX simonb: lose these nops for mips32/64? */
+	nop
+	nop
+	nop
+	_MFC0	t0, MIPS_COP_0_TLB_LO1
+	and	t0, MIPS3_PG_G			# check to see it has G bit
+	bnez	t0, 4f				# yep, skip this one.
+	 nop
+	_MFC0	t0, MIPS_COP_0_TLB_HI		# get VA and ASID
+	and	t0, a1				# focus on ASID
+
+	srl	a2, t0, 3 + LONG_SCALESHIFT	# drop low 5 or 6 bits
+	sll	a2, LONG_SCALESHIFT		# make an index for the bitmap
+	_SLLV	t0, ta3, t0			# t0 is mask (ta3 == 1)
+
+	PTR_ADDU a2, a0				# index into the bitmap 
+	beq	a2, ta2, 3f			# is the desired cell loaded?
+	 nop					#    yes, don't reload it
+	beqz	ta2, 2f				# have we ever loaded it?
+	 nop					#   nope, so don't save it.
+
+	LONG_S	t2, 0(ta2)			# save the updated value.
+2:
+	move	ta2, a2				# remember the new cell's addr
+	LONG_L	t2, 0(ta2)			# and load it
+3:
+	and	t1, t2, t0			# t1 = t2 & t0
+	sltu	t1, t1, ta3			# t1 = t1 < 1 (aka t1 == 0)
+	addu	v0, t1				# v0 += t1
+	or	t2, t0				# or in the new ASID bits
+4:
+	addu	ta0, 1				# increment TLB entry #
+	bne	ta0, ta1, 1b			# keep lookup if not limit
+	 nop
+
+	beqz	ta2, 5f				# do we have a cell to write?
+	 nop					#   nope.  nothing
+
+	LONG_S	t2, 0(ta2)			# save the updated value.
+5:
+	_MTC0	a3, MIPS_COP_0_TLB_HI		# restore ASID
+	COP0_SYNC
+
+	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
+	j	ra
+	 COP0_SYNC				# XXXX - not executed!!
+END(MIPSX(tlb_record_asids))
 
 /*
  * void mipsN_tlb_invalidate_globals(void);
