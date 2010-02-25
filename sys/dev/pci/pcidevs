@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1023 2010/02/16 10:10:04 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1024 2010/02/25 03:18:44 macallan Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -726,6 +726,7 @@ product 3DLABS PERMEDIA2	0x0007	GLINT Permedia 2
 product 3DLABS GAMMA		0x0008	GLINT GAMMA
 product 3DLABS PERMEDIA2V	0x0009	GLINT Permedia 2V
 product 3DLABS PERMEDIA3	0x000a	GLINT Permedia 3
+product 3DLABS WILDCAT5110	0x07a2	WILDCAT 5110
 
 /* 3ware products */
 product 3WARE ESCALADE		0x1000	Escalade ATA RAID Controller
