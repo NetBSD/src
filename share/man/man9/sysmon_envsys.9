@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.31 2009/12/19 00:16:51 snj Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.32 2010/02/25 03:11:25 pgoyette Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 13, 2009
+.Dd February 25, 2010
 .Dt SYSMON_ENVSYS 9
 .Os
 .Sh NAME
@@ -105,9 +105,9 @@ struct sysmon_envsys {
 	void 		*sme_cookie;
 	void (*sme_refresh)(struct sysmon_envsys *, envsys_data_t *);
 	void (*sme_set_limits)(struct sysmon_envsys *, envsys_data_t *,
-			       sysmon_envsys_lim_t *);
+			       sysmon_envsys_lim_t *, uint32_t *);
 	void (*sme_get_limits)(struct sysmon_envsys *, envsys_data_t *,
-			       sysmon_envsys_lim_t *);
+			       sysmon_envsys_lim_t *, uint32_t *);
 };
 .Ed
 .Pp
@@ -286,6 +286,8 @@ typedef struct envsys_data {
 	int32_t		value_max;
 	int32_t		value_min;
 	int32_t		value_avg;
+	sysmon_envsys_lim_t limits;
+	int		upropset;
 	bool		monitor;
 	char		desc[ENVSYS_DESCLEN];
 } envsys_data_t;
@@ -318,6 +320,10 @@ Used to set the maximum value.
 Used to set the minimum value.
 .It Fa value_avg
 Used to set the average value.
+.It Fa limits
+Structure used to contain the sensor's alarm thresholds.
+.It Fa upropset
+Used to keep track of which sensor properties are set.
 .It Fa monitor
 Used to enable automatic sensor monitoring (by default
 it's disabled).
