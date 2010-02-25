@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.32 2010/02/24 19:52:52 dyoung Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.33 2010/02/25 20:36:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.32 2010/02/24 19:52:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.33 2010/02/25 20:36:31 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -744,8 +744,7 @@ ppb_cardbus_setup(struct ppb_softc * sc)
 	printf("ppb_cardbus_setup called\n");
 #if 0
 	/* not sure what to do here */
-	pcitag_t tag = cardbus_make_tag(cc, cf, csc->ct->ct_bus,
-	    csc->ct->ct_dev, csc->ct->ct_func);
+	pcitag_t tag = csc->sc_tag;
 
 	command = Cardbus_conf_read(csc->ct, tag, CARDBUS_COMMAND_STATUS_REG);
 	if (csc->base0_reg) {
