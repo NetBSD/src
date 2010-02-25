@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.15 2010/02/16 00:47:46 dyoung Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.16 2010/02/25 22:20:03 dyoung Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -79,19 +79,50 @@ union x86_pci_tag_u {
 	} mode2;
 };
 
-typedef union x86_pci_tag_u pcitag_t;
-
 #ifndef DOM0OPS
 int		xpci_enumerate_bus(struct pci_softc *, const int *,
 		   int (*)(struct pci_attach_args *), struct pci_attach_args *);
 #define PCI_MACHDEP_ENUMERATE_BUS xpci_enumerate_bus
 #endif
-typedef void *pci_chipset_tag_t;
+struct pci_chipset_tag;
+struct pci_attach_args;
 
+/*
+ * Types provided to machine-independent PCI code
+ */
+typedef struct pci_chipset_tag *pci_chipset_tag_t;
+typedef union x86_pci_tag_u pcitag_t;
 typedef struct xen_intr_handle pci_intr_handle_t;
 
+struct pci_chipset_tag {
+	pcireg_t (*pc_conf_read)(pci_chipset_tag_t, pcitag_t, int);
+
+	void (*pc_conf_write)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
+
+#if 0
+	int (*pc_find_rom)(struct pci_attach_args *, bus_space_tag_t,
+	    bus_space_handle_t, int, bus_space_handle_t *, bus_space_size_t *);
+#endif
+
+	int (*pc_intr_map)(struct pci_attach_args *, pci_intr_handle_t *);
+
+	const char *(*pc_intr_string)(pci_chipset_tag_t, pci_intr_handle_t);
+
+	const struct evcnt *(*pc_intr_evcnt)(pci_chipset_tag_t,
+	    pci_intr_handle_t);
+
+	void *(*pc_intr_establish)(pci_chipset_tag_t, pci_intr_handle_t, int,
+	    int (*)(void *), void *);
+
+	void (*pc_intr_disestablish)(pci_chipset_tag_t, void *);
+
+	pcitag_t (*pc_make_tag)(pci_chipset_tag_t, int, int, int);
+
+	void (*pc_decompose_tag)(pci_chipset_tag_t, pcitag_t,
+	    int *, int *, int *);
+};
+
 /* functions provided to MI PCI */
-struct pci_attach_args;
 
 void		pci_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
