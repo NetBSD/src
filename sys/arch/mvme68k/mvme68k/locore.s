@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.104 2009/12/13 11:24:03 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.105 2010/02/25 07:17:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -689,7 +689,7 @@ Ltbia040:
 Lenab3:
 /*
  * final setup for C code:
- * Create a fake exception frame so that cpu_fork() can copy it.
+ * Create a fake exception frame so that cpu_lwp_fork() can copy it.
  * main() nevers returns; we exit to user mode from a forked process
  * later on.
  */

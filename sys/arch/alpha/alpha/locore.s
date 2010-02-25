@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.118 2009/12/10 05:10:00 rmind Exp $ */
+/* $NetBSD: locore.s,v 1.119 2010/02/25 07:14:48 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.118 2009/12/10 05:10:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.119 2010/02/25 07:14:48 skrll Exp $");
 
 #include "assym.h"
 
@@ -730,7 +730,7 @@ LEAF(cpu_switchto, 0)
 /*
  * lwp_trampoline()
  *
- * Arrange for a function to be invoked neatly, after a cpu_fork().
+ * Arrange for a function to be invoked neatly, after a cpu_lwp_fork().
  *
  * Invokes the function specified by the s0 register with the return
  * address specified by the s1 register and with one argument specified
