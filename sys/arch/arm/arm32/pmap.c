@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211.2.8 2010/02/20 16:48:57 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211.2.9 2010/02/25 03:30:22 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -191,6 +191,8 @@
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
+#include "opt_device_page.h"
+#include "opt_xip.h"
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -211,7 +213,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.8 2010/02/20 16:48:57 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.9 2010/02/25 03:30:22 uebayasi Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3343,8 +3345,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	struct vm_page_md *md = VM_PAGE_TO_MD(pg);
 
 	NPDEBUG(PDB_KENTER,
-	    printf("pmap_kenter_pa: va 0x%08lx, pa 0x%08lx, prot 0x%x\n",
-	    va, pa, prot));
+	    printf("pmap_kenter_pa: va 0x%08lx, pa 0x%08lx, prot 0x%x pg %p md %p\n",
+	    va, pa, prot, pg, md));
 
 	l2b = pmap_get_l2_bucket(pmap_kernel(), va);
 	KDASSERT(l2b != NULL);

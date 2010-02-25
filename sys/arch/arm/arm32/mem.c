@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.26.6.2 2010/02/25 03:19:51 uebayasi Exp $	*/
+/*	$NetBSD: mem.c,v 1.26.6.3 2010/02/25 03:30:22 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
 #include "opt_xip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26.6.2 2010/02/25 03:19:51 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26.6.3 2010/02/25 03:30:22 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -147,7 +147,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				struct vm_page *pg;
 				pg = PHYS_TO_VM_PAGE(trunc_page(v));
 				if (pg != NULL && pmap_is_page_colored_p(VM_PAGE_TO_MD(pg)))
-					o = pg->mdpage.pvh_attrs;
+					o = VM_PAGE_TO_MD(pg)->pvh_attrs;
 				else
 					o = v;
 				m += o & arm_cache_prefer_mask;
