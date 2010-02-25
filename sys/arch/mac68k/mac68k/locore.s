@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.159 2009/12/12 09:55:44 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.160 2010/02/25 07:17:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -371,7 +371,7 @@ Lnocache0:
 	jbsr	_C_LABEL(mac68k_init)
 
 /*
- * Create a fake exception frame so that cpu_fork() can copy it.
+ * Create a fake exception frame so that cpu_lwp_fork() can copy it.
  * main() nevers returns; we exit to user mode from a forked process
  * later on.
  */
