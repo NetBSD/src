@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.52 2010/02/08 19:02:31 joerg Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.53 2010/02/25 23:31:47 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.52 2010/02/08 19:02:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.53 2010/02/25 23:31:47 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -75,15 +75,17 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.52 2010/02/08 19:02:31 joerg Exp $
 #include <ipkdb/ipkdb.h>
 #endif
 
-#include <powerpc/oea/bat.h>
-#include <powerpc/oea/sr_601.h>
-#include <powerpc/oea/cpufeat.h>
 #include <powerpc/trap.h>
 #include <powerpc/stdarg.h>
 #include <powerpc/spr.h>
 #include <powerpc/pte.h>
 #include <powerpc/altivec.h>
 #include <machine/powerpc.h>
+
+#include <powerpc/oea/spr.h>
+#include <powerpc/oea/bat.h>
+#include <powerpc/oea/sr_601.h>
+#include <powerpc/oea/cpufeat.h>
 
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
