@@ -177,9 +177,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#define _NETBSD_SOURCE
+#ifndef _NETBSD_SOURCE
+#define _NETBSD_SOURCE	/* XXX TBD fix this */
 #include <unistd.h>
 #undef _NETBSD_SOURCE
+#else
+#include <unistd.h>
+#endif
 #include <pthread.h>
 #include <assert.h>
 #if defined(sun)
