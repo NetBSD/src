@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.5 2005/12/11 12:18:43 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2010/02/25 23:30:05 matt Exp $
 
 INCSDIR= /usr/include/powerpc/ibm4xx
 
-INCS=	cpu.h pmap.h tlb.h
+INCS=	cpu.h pmap.h spr.h tlb.h
 
 .include <bsd.kinc.mk>
