@@ -1,4 +1,4 @@
-/*	$NetBSD: acs.c,v 1.18 2010/02/23 19:48:26 drochner Exp $	*/
+/*	$NetBSD: acs.c,v 1.19 2010/02/25 10:56:24 drochner Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: acs.c,v 1.18 2010/02/23 19:48:26 drochner Exp $");
+__RCSID("$NetBSD: acs.c,v 1.19 2010/02/25 10:56:24 drochner Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -197,7 +197,7 @@ __init_wacs(SCREEN *screen)
 		ACS_RARROW = '+' | __ACS_IS_WACS;
 		WACS_LARROW->vals[0]  = 0x2190;
 		ACS_LARROW = ',' | __ACS_IS_WACS;
-		WACS_UARROW->vals[0]  = 0x2192;
+		WACS_UARROW->vals[0]  = 0x2191;
 		ACS_UARROW = '-' | __ACS_IS_WACS;
 		WACS_DARROW->vals[0]  = 0x2193;
 		ACS_DARROW = '.' | __ACS_IS_WACS;
