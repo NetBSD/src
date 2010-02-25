@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.9 2010/02/23 20:33:47 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.10 2010/02/25 05:53:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -143,27 +143,14 @@ void pmap_segtab_free(struct pmap *);
  * Per TLB (normally same as CPU) asid info
  */
 struct pmap_asid_info {
-#ifdef MULTIPROCESSOR
 	LIST_ENTRY(pmap_asid_info) pai_link;
-#else
-	uint32_t	pai_asid_generation; /* its generation number */
-#endif
 	uint32_t	pai_asid;	/* TLB address space tag */
 };
 
-#ifdef MULTIPROCESSOR
-#define	TLBINFO_LOCK(ti)	mutex_spin_enter((ti)->ti_lock)
-#define	TLBINFO_UNLOCK(ti)	mutex_spin_exit((ti)->ti_lock)
-#define	PMAP_PAI_ASIDVALID_P(pai, ti)	\
-	((pai)->pai_asid != 0)
-#else
-#define	TLBINFO_LOCK(ti)	do { } while (/*CONSTCOND*/0)
-#define	TLBINFO_UNLOCK(ti)	do { } while (/*CONSTCOND*/0)
-#define	PMAP_PAI_ASIDVALID_P(pai, ti)	\
-	((pai)->pai_asid != 0 \
-	 && (pai)->pai_asid_generation == (ti)->ti_asid_generation)
-#endif
-#define	PMAP_PAI(pmap, ti)	(&(pmap)->pm_pai[tlbinfo_index(ti)])
+#define	TLBINFO_LOCK(ti)		mutex_spin_enter((ti)->ti_lock)
+#define	TLBINFO_UNLOCK(ti)		mutex_spin_exit((ti)->ti_lock)
+#define	PMAP_PAI_ASIDVALID_P(pai, ti)	((pai)->pai_asid != 0)
+#define	PMAP_PAI(pmap, ti)		(&(pmap)->pm_pai[tlbinfo_index(ti)])
 #define	PAI_PMAP(pai, ti)	\
 	((pmap_t)((intptr_t)(pai) \
 	    - offsetof(struct pmap, pm_pai[tlbinfo_index(ti)])))
@@ -193,23 +180,23 @@ enum tlb_invalidate_op {
 
 struct pmap_tlb_info {
 	uint32_t ti_asid_hint;		/* probable next ASID to use */
-#ifdef MULTIPROCESSOR
 	uint32_t ti_asids_free;		/* # of ASIDs free */
-	u_int ti_asid_bitmap[MIPS_TLB_NUM_PIDS / (sizeof(u_int) * 8)];
+#define	tlbinfo_noasids_p(ti)	((ti)->ti_asids_free == 0)
+	u_long ti_asid_bitmap[MIPS_TLB_NUM_PIDS / (sizeof(u_long) * 8)];
 	kmutex_t *ti_lock;
+	u_int ti_wired;			/* # of wired TLB entries */
+	uint32_t ti_asid_mask;
+	uint32_t ti_asid_max;
 	LIST_HEAD(, pmap_asid_info) ti_pais; /* list of active ASIDs */
+#ifdef MULTIPROCESSOR
 	pmap_t ti_victim;
 	uint32_t ti_cpu_mask;		/* bitmask of CPUs sharing this TLB */
 	enum tlb_invalidate_op ti_tlbinvop;
 	u_int ti_index;
 #define tlbinfo_index(ti)	((ti)->ti_index)
-#define	tlbinfo_noasids_p(ti)	((ti)->ti_asids_free == 0)
 #else
 #define tlbinfo_index(ti)	(0)
-#define	tlbinfo_noasids_p(ti)	((ti)->ti_asid_hint == 0)
-	uint32_t ti_asid_generation;
-#endif /* MULTIPROCESSOR */
-	u_int ti_wired;			/* # of wired TLB entries */
+#endif
 };
 
 
@@ -253,8 +240,8 @@ void	pmap_procwr(struct proc *, vaddr_t, size_t);
 void	pmap_tlb_shootdown_process(void);
 bool	pmap_tlb_shootdown_bystanders(pmap_t pmap);
 void	pmap_tlb_info_attach(struct pmap_tlb_info *, struct cpu_info *);
-void	pmap_tlb_info_init(struct pmap_tlb_info *);
 #endif
+void	pmap_tlb_info_init(struct pmap_tlb_info *);
 void	pmap_tlb_asid_acquire(pmap_t pmap, struct lwp *l);
 void	pmap_tlb_asid_deactivate(pmap_t pmap);
 void	pmap_tlb_asid_release_all(pmap_t pmap);
