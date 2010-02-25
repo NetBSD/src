@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_ext2fs.8,v 1.10 2010/02/21 13:23:15 wiz Exp $
+.\"	$NetBSD: newfs_ext2fs.8,v 1.11 2010/02/25 13:09:17 tsutsui Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -110,7 +110,7 @@ It must be the same with blocksize because the current ext2fs
 implementation doesn't support fragmentation.
 .It Fl I
 Do not require that the file system type listed in the disk label is
-.Ql Linux Ext2 .
+.Ql Linux\ Ext2 .
 .It Fl i Ar bytes-per-inode
 This specifies the density of inodes in the file system.
 If fewer inodes are desired, a larger number should be used;
@@ -247,7 +247,7 @@ For the
 command to succeed,
 the disk label should first be updated such that the fstype field for the
 partition is set to
-.Ql Linux Ext2 ,
+.Ql Linux\ Ext2 ,
 unless
 .Fl F
 or
