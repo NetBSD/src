@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 2009/11/26 00:19:20 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.7 2010/02/25 23:31:47 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -88,8 +88,9 @@
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
-#include <powerpc/ibm4xx/dcr405gp.h>
+#include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/pmap.h>
+#include <powerpc/ibm4xx/dcr405gp.h>
 
 /* Function pointer for requesting board_config_data from openbios*/
 #define BOARD_CFG_FP       0xFFFE0B50

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.132 2010/01/05 13:20:29 mbalmer Exp $	*/
+/*	$NetBSD: trap.c,v 1.133 2010/02/25 23:31:48 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.132 2010/01/05 13:20:29 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133 2010/02/25 23:31:48 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -61,8 +61,10 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.132 2010/01/05 13:20:29 mbalmer Exp $");
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <powerpc/altivec.h>
-#include <powerpc/spr.h>
 #include <powerpc/userret.h>
+
+#include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 
 static int emulated_opcode(struct lwp *, struct trapframe *);
 static int fix_unaligned(struct lwp *, struct trapframe *);

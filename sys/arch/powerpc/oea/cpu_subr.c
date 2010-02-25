@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.54 2009/11/21 17:40:29 rmind Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.55 2010/02/25 23:31:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.54 2009/11/21 17:40:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.55 2010/02/25 23:31:47 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -50,9 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.54 2009/11/21 17:40:29 rmind Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#include <powerpc/spr.h>
 #include <powerpc/oea/hid.h>
 #include <powerpc/oea/hid_601.h>
-#include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 #include <powerpc/oea/cpufeat.h>
 
 #include <dev/sysmon/sysmonvar.h>

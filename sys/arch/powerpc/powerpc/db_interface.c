@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.43 2010/01/28 21:10:49 phx Exp $ */
+/*	$NetBSD: db_interface.c,v 1.44 2010/02/25 23:31:48 matt Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.43 2010/01/28 21:10:49 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.44 2010/02/25 23:31:48 matt Exp $");
 
 #define USERACC
 
@@ -23,9 +23,18 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.43 2010/01/28 21:10:49 phx Exp $"
 #include <powerpc/bat.h>
 #include <powerpc/pte.h>
 
+#if defined (PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+#include <powerpc/oea/spr.h>
+#endif
+
 #ifdef PPC_IBM4XX
+#include <powerpc/ibm4xx/spr.h>
 #include <machine/tlb.h>
 #include <uvm/uvm_extern.h>
+#endif
+
+#ifdef PPC_BOOKE
+#include <powerpc/booke/spr.h>
 #endif
 
 #ifdef DDB
