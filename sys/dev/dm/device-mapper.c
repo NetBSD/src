@@ -1,7 +1,7 @@
-/*        $NetBSD: device-mapper.c,v 1.16 2010/02/25 20:48:58 jakllsch Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.17 2010/02/25 23:37:39 haad Exp $ */
 
 /*
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -46,6 +46,7 @@
 #include <sys/ioccom.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
+#include <sys/once.h>
 
 #include "netbsd-dm.h"
 #include "dm.h"
@@ -59,10 +60,9 @@ static dev_type_strategy(dmstrategy);
 static dev_type_size(dmsize);
 
 /* attach and detach routines */
-void dmattach(int);
-void dmdestroy(void);
+int dmattach(void);
+int dmdestroy(void);
 
-static void dm_init(void);
 static int dm_cmd_to_fun(prop_dictionary_t);
 static int disk_ioctl_switch(dev_t, u_long, void *);
 static int dm_ioctl_switch(u_long);
@@ -149,9 +149,7 @@ MODULE(MODULE_CLASS_DRIVER, dm, NULL);
 static int
 dm_modcmd(modcmd_t cmd, void *arg)
 {
-#ifdef _MODULE
-	int error;
-	int bmajor, cmajor;
+	int error, bmajor, cmajor;
 
 	error = 0;
 	bmajor = -1;
@@ -163,7 +161,7 @@ dm_modcmd(modcmd_t cmd, void *arg)
 		if (error)
 			break;
 
-		error = config_cfattach_attach(dm_cd.cd_name, &dm_ca);
+		error = dmattach();
 		if (error) {
 			config_cfdriver_detach(&dm_cd);
 			aprint_error("%s: unable to register cfattach\n",
@@ -178,9 +176,6 @@ dm_modcmd(modcmd_t cmd, void *arg)
 			config_cfdriver_detach(&dm_cd);
 			break;
 		}
-
-		dm_init();
-
 		break;
 
 	case MODULE_CMD_FINI:
@@ -192,9 +187,8 @@ dm_modcmd(modcmd_t cmd, void *arg)
 		 */ 
 		if (dm_dev_counter > 0)
 			return EBUSY;
-		dmdestroy();
 
-		error = config_cfattach_detach(dm_cd.cd_name, &dm_ca);
+		error = dmdestroy();
 		if (error)
 			break;
 
@@ -210,13 +204,6 @@ dm_modcmd(modcmd_t cmd, void *arg)
 	}
 
 	return error;
-#else
-
-	if (cmd == MODULE_CMD_INIT)
-		return 0;
-	return ENOTTY;
-
-#endif /* _MODULE */
 }
 
 
@@ -284,31 +271,48 @@ dm_detach(device_t self, int flags)
 	return 0;
 }
 
-/* attach routine */
-void
-dmattach(int num)
+static int
+doinit(void)
 {
 	int error;
-
+	
 	error = config_cfattach_attach(dm_cd.cd_name, &dm_ca);
 	if (error) {
-		aprint_error("%s: unable to register cfattach\n",
-		    dm_cd.cd_name);
-		return;
+		aprint_error("Unable to register cfattach for dm driver\n");
+		return error;
 	}
+	
+	dm_target_init();
+	dm_dev_init();
+	dm_pdev_init();
 
-	dm_init();
+	return 0;
+}
+
+/* attach routine */
+int
+dmattach(void)
+{
+	static ONCE_DECL(control);
+
+	return RUN_ONCE(&control, doinit);
 }
 
 /* Destroy routine */
-void
+int
 dmdestroy(void)
 {
+	int error;
 
+	error = config_cfattach_detach(dm_cd.cd_name, &dm_ca);
+	if (error)
+		return error;
+	
 	dm_dev_destroy();
 	dm_pdev_destroy();
 	dm_target_destroy();
 
+	return 0;
 }
 
 static int
@@ -364,14 +368,6 @@ cleanup_exit:
 	}
 
 	return r;
-}
-
-static void
-dm_init(void)
-{
-	dm_target_init();
-	dm_dev_init();
-	dm_pdev_init();
 }
 
 /*
