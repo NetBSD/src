@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.39 2010/02/16 19:29:40 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.40 2010/02/25 20:51:10 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.39 2010/02/16 19:29:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.40 2010/02/25 20:51:10 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -344,6 +344,9 @@ pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
 {
 	pcitag_t tag;
 
+	if (pc != NULL && pc->pc_make_tag != NULL)
+		return (*pc->pc_make_tag)(pc, bus, device, function);
+
 	switch (pci_mode) {
 	case 1:
 		if (bus >= 256 || device >= 32 || function >= 8)
@@ -369,6 +372,11 @@ void
 pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag,
     int *bp, int *dp, int *fp)
 {
+
+	if (pc != NULL && pc->pc_decompose_tag != NULL) {
+		(*pc->pc_decompose_tag)(pc, tag, bp, dp, fp);
+		return;
+	}
 
 	switch (pci_mode) {
 	case 1:
@@ -400,6 +408,10 @@ pci_conf_read( pci_chipset_tag_t pc, pcitag_t tag,
 	int s;
 
 	KASSERT((reg & 0x3) == 0);
+
+	if (pc != NULL && pc->pc_conf_read != NULL)
+		return (*pc->pc_conf_read)(pc, tag, reg);
+
 #if defined(__i386__) && defined(XBOX)
 	if (arch_i386_is_xbox) {
 		int bus, dev, fn;
@@ -424,6 +436,12 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
 	int s;
 
 	KASSERT((reg & 0x3) == 0);
+
+	if (pc != NULL && pc->pc_conf_write != NULL) {
+		(*pc->pc_conf_write)(pc, tag, reg, data);
+		return;
+	}
+
 #if defined(__i386__) && defined(XBOX)
 	if (arch_i386_is_xbox) {
 		int bus, dev, fn;
