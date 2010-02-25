@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.40.2.1 2010/02/23 15:27:56 uebayasi Exp $ */
+/*	$NetBSD: vmparam.h,v 1.40.2.2 2010/02/25 05:54:03 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,7 +136,7 @@ struct vm_page_md {
 		int	pv_flags;		/* flags (below) */
 	} pvlisthead;
 };
-#define VM_MDPAGE_PVHEAD(pg)	(&(pg)->mdpage.pvlisthead)
+#define VM_MDPAGE_PVHEAD(pg)	(&VM_PAGE_TO_MD(pg)->pvlisthead)
 
 #define VM_MDPAGE_INIT(md, pa) do {			\
 	(md)->pvlisthead.pv_next = NULL;		\
