@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.17 2010/02/24 00:09:04 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.18 2010/02/25 05:53:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.17 2010/02/24 00:09:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.18 2010/02/25 05:53:23 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -464,9 +464,7 @@ pmap_bootstrap(void)
 {
 	vsize_t bufsz;
 
-#ifdef MULTIPROCESSOR
-	pmap_tlb_info_init(&pmap_tlb_info);
-#endif
+	pmap_tlb_info_init(&pmap_tlb_info);	/* init the lock */
 
 	/*
 	 * Compute the number of pages kmem_map will have.
