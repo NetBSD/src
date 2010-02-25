@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.40 2010/02/24 19:20:13 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.41 2010/02/25 16:15:57 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -190,9 +190,10 @@ extern int udf_verbose;
 #define UDF_WRITE_LVINT		  0x10	/* write out open lvint              */
 #define UDF_WRITE_PART_BITMAPS	  0x20	/* write out partition space bitmaps */
 #define UDF_APPENDONLY_LVINT	  0x40	/* no shifting, only appending       */
+#define UDF_WRITE_METAPART_NODES  0x80	/* write out metadata partition nodes*/
 #define UDFLOGVOL_BITS "\20\1OPEN_SESSION\2CLOSE_SESSION\3FINALISE_DISC" \
 			"\4WRITE_VAT\5WRITE_LVINT\6WRITE_PART_BITMAPS" \
-			"\7APPENDONLY_LVINT"
+			"\7APPENDONLY_LVINT\10WRITE_METAPART_NODES"
 
 /* logical volume error handling actions */
 #define UDF_UPDATE_TRACKINFO	  0x01	/* update trackinfo and re-shedule   */
