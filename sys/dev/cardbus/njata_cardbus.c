@@ -1,4 +1,4 @@
-/*	$Id: njata_cardbus.c,v 1.10 2010/02/25 21:18:35 dyoung Exp $	*/
+/*	$Id: njata_cardbus.c,v 1.11 2010/02/25 23:40:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi <itohy@NetBSD.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njata_cardbus.c,v 1.10 2010/02/25 21:18:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njata_cardbus.c,v 1.11 2010/02/25 23:40:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,6 @@ njata_cardbus_attach(device_t parent, device_t self, void *aux)
 #endif
 		csr |= PCI_COMMAND_MEM_ENABLE;
 		sc->sc_flags = NJATA32_MEM_MAPPED;
-		(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_MEM_ENABLE);
 	} else {
 	try_io:
 		if (Cardbus_mapreg_map(csc->sc_ct, NJATA32_CARDBUS_BASEADDR_IO,
@@ -183,16 +182,12 @@ njata_cardbus_attach(device_t parent, device_t self, void *aux)
 #endif
 			csr |= PCI_COMMAND_IO_ENABLE;
 			sc->sc_flags = NJATA32_IO_MAPPED;
-			(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE);
 		} else {
 			aprint_error("%s: unable to map device registers\n",
 			    NJATA32NAME(sc));
 			return;
 		}
 	}
-
-	/* Make sure the right access type is on the CardBus bridge. */
-	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the appropriate bits in the PCI CSR. */
 	reg = cardbus_conf_read(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG);

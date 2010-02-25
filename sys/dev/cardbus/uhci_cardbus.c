@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_cardbus.c,v 1.14 2010/02/24 19:52:52 dyoung Exp $	*/
+/*	$NetBSD: uhci_cardbus.c,v 1.15 2010/02/25 23:40:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.14 2010/02/24 19:52:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.15 2010/02/25 23:40:39 dyoung Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -131,8 +131,6 @@ uhci_cardbus_attach(device_t parent, device_t self,
 #else
 XXX	(ct->ct_cf->cardbus_io_open)(cc, 0, iob, iob + 0x40);
 #endif
-	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE);
-	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the device. */
 	csr = cardbus_conf_read(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG);
