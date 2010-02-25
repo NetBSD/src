@@ -1,7 +1,7 @@
-/*	$NetBSD: wcfb.c,v 1.1 2010/02/25 03:33:09 macallan Exp $ */
+/*	$NetBSD: wcfb.c,v 1.2 2010/02/25 20:56:20 macallan Exp $ */
 
 /*-
- * Copyright (c) 2007 Michael Lorenz
+ * Copyright (c) 2010 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.1 2010/02/25 03:33:09 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.2 2010/02/25 20:56:20 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,6 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 	bool			is_console;
 	char 			devinfo[256];
 	void *wtf;
-	uint32_t *tcfb;
 
 	sc->sc_dev = self;
 	sc->putchar = NULL;
@@ -164,7 +163,7 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 
 	dict = device_properties(self);
 	prop_dictionary_get_bool(dict, "is_console", &is_console);
-if(!is_console) return;
+	if(!is_console) return;
 
 	sc->sc_memt = pa->pa_memt;
 	sc->sc_iot = pa->pa_iot;	
@@ -346,6 +345,11 @@ wcfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * #define PCI_IOAREA_SIZE
 	 * somewhere in a MD header and compile this code only if all are
 	 * present
+	 */
+	/*
+	 * PCI_IOAREA_PADDR is useless, that's what the IO tag is for
+	 * the address isn't guaranteed to be the same on each host bridge
+	 * either, never mind the fact that it would be a bus address
 	 */
 #ifdef PCI_MAGIC_IO_RANGE
 	/* allow to map our IO space */
