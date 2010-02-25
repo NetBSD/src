@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.32 2010/02/24 19:52:51 dyoung Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.33 2010/02/25 00:47:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.32 2010/02/24 19:52:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.33 2010/02/25 00:47:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,7 +304,6 @@ cardbus_mapreg_map(struct cardbus_softc *sc, int func, int reg, pcireg_t type, i
 	if (sizep != 0) {
 		*sizep = size;
 	}
-	cardbus_free_tag(cc, cf, tag);
 
 	return 0;
 }
@@ -357,8 +356,6 @@ cardbus_mapreg_unmap(struct cardbus_softc *sc, int func, int reg, bus_space_tag_
 	(*cf->cardbus_space_free)(cc, rbustag, handle, size);
 #endif
 
-	cardbus_free_tag(cc, cf, cardbustag);
-
 	return st;
 }
 
@@ -387,8 +384,6 @@ int cardbus_save_bar(cardbus_devfunc_t ct)
 
 	DPRINTF(("cardbus_save_bar: %x %x\n", ct->ct_bar[0], ct->ct_bar[1]));
 
-	Cardbus_free_tag(ct, tag);
-
 	return 0;
 }
 
@@ -412,8 +407,6 @@ int cardbus_restore_bar(cardbus_devfunc_t ct)
 	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE3_REG, ct->ct_bar[3]);
 	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE4_REG, ct->ct_bar[4]);
 	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE5_REG, ct->ct_bar[5]);
-
-	Cardbus_free_tag(ct, tag);
 
 	return 0;
 }

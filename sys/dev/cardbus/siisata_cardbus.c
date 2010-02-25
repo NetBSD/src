@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_cardbus.c,v 1.5 2010/02/24 19:52:52 dyoung Exp $ */
+/* $NetBSD: siisata_cardbus.c,v 1.6 2010/02/25 00:47:39 dyoung Exp $ */
 /* Id: siisata_pci.c,v 1.11 2008/05/21 16:20:11 jakllsch Exp  */
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata_cardbus.c,v 1.5 2010/02/24 19:52:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata_cardbus.c,v 1.6 2010/02/25 00:47:39 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -291,7 +291,6 @@ siisata_cardbus_detach(device_t self, int flags)
 		    csc->sc_prsize);
 		csc->sc_prsize = 0;
 	}
-	cardbus_free_tag(cc, cf, ctag);
 	return 0;
 }
 

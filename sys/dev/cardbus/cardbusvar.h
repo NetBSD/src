@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.46 2010/02/24 23:38:40 dyoung Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.47 2010/02/25 00:47:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -47,8 +47,7 @@ typedef struct cardbus_chipset_tag *cardbus_chipset_tag_t;
  * The child devices can use those functions.  The contained functions
  * are: cardbus_space_alloc, cardbus_space_free,
  * cardbus_intr_establish, cardbus_intr_disestablish, cardbus_ctrl,
- * cardbus_power, cardbus_make_tag, cardbus_free_tag and
- * cardbus_conf_write.
+ * cardbus_power, cardbus_make_tag, and cardbus_conf_write.
  *
  *	int (*cardbus_space_alloc)(cardbus_chipset_tag_t ct, rbus_tag_t rb,
  *	    bus_addr_t addr, bus_size_t size,
@@ -71,7 +70,6 @@ typedef struct cardbus_chipset_tag *cardbus_chipset_tag_t;
  *
  *	pcitag_t (*cardbus_make_tag)(cardbus_chipset_tag_t ct,
  *	    int busno, int functionno);
- *	void (*cardbus_free_tag)(cardbus_chipset_tag_t ct, pcitag_t tag);
  *	pcireg_t (*cardbus_conf_read)(cardbus_chipset_tag_t ct,
  *	    pcitag_t tag, int offs);
  *	void (*cardbus_conf_write)(cardbus_chipset_tag_t ct,
@@ -90,7 +88,6 @@ typedef const struct cardbus_functions {
 	int (*cardbus_power)(cardbus_chipset_tag_t, int);
 
 	pcitag_t (*cardbus_make_tag)(cardbus_chipset_tag_t, int, int);
-	void (*cardbus_free_tag)(cardbus_chipset_tag_t, pcitag_t);
 	pcireg_t (*cardbus_conf_read)(cardbus_chipset_tag_t,
 	    pcitag_t, int);
 	void (*cardbus_conf_write)(cardbus_chipset_tag_t, pcitag_t,
@@ -345,9 +342,6 @@ void cardbus_conf_restore(cardbus_chipset_tag_t, cardbus_function_tag_t,
 
 #define Cardbus_make_tag(ct) (*(ct)->ct_cf->cardbus_make_tag)((ct)->ct_cc, (ct)->ct_bus, (ct)->ct_func)
 #define cardbus_make_tag(cc, cf, bus, function) ((cf)->cardbus_make_tag)((cc), (bus), (function))
-
-#define Cardbus_free_tag(ct, tag) (*(ct)->ct_cf->cardbus_free_tag)((ct)->ct_cc, (tag))
-#define cardbus_free_tag(cc, cf, tag) (*(cf)->cardbus_free_tag)(cc, (tag))
 
 #define Cardbus_conf_read(ct, tag, offs) (*(ct)->ct_cf->cardbus_conf_read)((ct)->ct_cc, (tag), (offs))
 #define cardbus_conf_read(cc, cf, tag, offs) ((cf)->cardbus_conf_read)((cc), (tag), (offs))
