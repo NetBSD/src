@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.21 2010/02/23 20:33:47 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.22 2010/02/25 05:24:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -145,7 +145,6 @@ struct cpu_info {
 	 */
 	uint32_t ci_ksp_tlb_slot;	/* reserved tlb entry for kernel stack */
 	struct pmap_tlb_info *ci_tlb_info;
-	struct pmap *ci_curpm;		/* current pmap */
 	struct segtab *ci_pmap_segbase;
 	vaddr_t ci_pmap_srcbase;	/* starting VA of ephemeral src space */
 	vaddr_t ci_pmap_dstbase;	/* starting VA of ephemeral dst space */
