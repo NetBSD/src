@@ -1,4 +1,4 @@
-/*	$Id: njata_cardbus.c,v 1.9 2010/02/24 19:52:52 dyoung Exp $	*/
+/*	$Id: njata_cardbus.c,v 1.10 2010/02/25 21:18:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi <itohy@NetBSD.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njata_cardbus.c,v 1.9 2010/02/24 19:52:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njata_cardbus.c,v 1.10 2010/02/25 21:18:35 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,8 @@ CFATTACH_DECL_NEW(njata_cardbus, sizeof(struct njata32_cardbus_softc),
     njata_cardbus_match, njata_cardbus_attach, njata_cardbus_detach, NULL);
 
 static const struct njata32_cardbus_product {
-	cardbus_vendor_id_t	p_vendor;
-	cardbus_product_id_t	p_product;
+	pci_vendor_id_t		p_vendor;
+	pci_product_id_t	p_product;
 	uint8_t			p_flags;
 #define NJATA32_FL_IOMAP_ONLY	1	/* registers are only in the I/O map */
 } njata32_cardbus_products[] = {

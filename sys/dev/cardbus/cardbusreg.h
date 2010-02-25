@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusreg.h,v 1.4 2010/02/24 23:38:40 dyoung Exp $ */
+/*	$NetBSD: cardbusreg.h,v 1.5 2010/02/25 21:18:35 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -33,11 +33,6 @@
 
 typedef int cardbus_intr_line_t;
 
-#define CARDBUS_ID_REG          0x00
-
-typedef u_int16_t cardbus_vendor_id_t;
-typedef u_int16_t cardbus_product_id_t;
-
 #  define CARDBUS_VENDOR_SHIFT  0
 #  define CARDBUS_VENDOR_MASK   0xffff
 #  define CARDBUS_VENDOR(id) \
@@ -62,8 +57,6 @@ typedef u_int16_t cardbus_product_id_t;
 #  define CARDBUS_COMMAND_SERR_ENABLE        0x00000100
 #  define CARDBUS_COMMAND_BACKTOBACK_ENABLE  0x00000200
 
-
-#define CARDBUS_CLASS_REG       0x08
 
 #define	CARDBUS_CLASS_SHIFT				24
 #define	CARDBUS_CLASS_MASK				0xff

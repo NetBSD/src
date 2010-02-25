@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.103 2010/02/25 00:47:39 dyoung Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.104 2010/02/25 21:18:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.103 2010/02/25 00:47:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.104 2010/02/25 21:18:35 dyoung Exp $");
 
 #include "opt_cardbus.h"
 
@@ -460,7 +460,7 @@ cardbus_rescan(device_t self, const char *ifattr,
 		int i;
 
 		for (i = 0; i < 5; ++i) {
-			id = cardbus_conf_read(cc, cf, tag, CARDBUS_ID_REG);
+			id = cardbus_conf_read(cc, cf, tag, PCI_ID_REG);
 			if (id != 0xffffffff && id != 0) {
 				break;
 			}
@@ -497,8 +497,8 @@ cardbus_rescan(device_t self, const char *ifattr,
 
 		tag = cardbus_make_tag(cc, cf, sc->sc_bus, function);
 
-		id = cardbus_conf_read(cc, cf, tag, CARDBUS_ID_REG);
-		class = cardbus_conf_read(cc, cf, tag, CARDBUS_CLASS_REG);
+		id = cardbus_conf_read(cc, cf, tag, PCI_ID_REG);
+		class = cardbus_conf_read(cc, cf, tag, PCI_CLASS_REG);
 		cis_ptr = cardbus_conf_read(cc, cf, tag, CARDBUS_CIS_REG);
 
 		/* Invalid vendor ID value? */

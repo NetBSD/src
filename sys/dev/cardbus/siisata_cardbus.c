@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_cardbus.c,v 1.7 2010/02/25 20:36:31 dyoung Exp $ */
+/* $NetBSD: siisata_cardbus.c,v 1.8 2010/02/25 21:18:35 dyoung Exp $ */
 /* Id: siisata_pci.c,v 1.11 2008/05/21 16:20:11 jakllsch Exp  */
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata_cardbus.c,v 1.7 2010/02/25 20:36:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata_cardbus.c,v 1.8 2010/02/25 21:18:35 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -86,8 +86,8 @@ static int siisata_cardbus_detach(device_t, int);
 static bool siisata_cardbus_resume(device_t, const pmf_qual_t *);
 
 static const struct siisata_cardbus_product {
-	cardbus_vendor_id_t scp_vendor;
-	cardbus_product_id_t scp_product;
+	pci_vendor_id_t scp_vendor;
+	pci_product_id_t scp_product;
 	int scp_ports;
 	int scp_chip;
 

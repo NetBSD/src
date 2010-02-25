@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_cardbus.c,v 1.12 2010/02/24 19:52:52 dyoung Exp $	*/
+/*	$NetBSD: njs_cardbus.c,v 1.13 2010/02/25 21:18:35 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.12 2010/02/24 19:52:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.13 2010/02/25 21:18:35 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,8 +72,8 @@ CFATTACH_DECL_NEW(njs_cardbus, sizeof(struct njsc32_cardbus_softc),
     njs_cardbus_match, njs_cardbus_attach, njs_cardbus_detach, NULL);
 
 static const struct njsc32_cardbus_product {
-	cardbus_vendor_id_t	p_vendor;
-	cardbus_product_id_t	p_product;
+	pci_vendor_id_t		p_vendor;
+	pci_product_id_t	p_product;
 	njsc32_model_t		p_model;
 	int			p_clk;		/* one of NJSC32_CLK_* */
 } njsc32_cardbus_products[] = {
