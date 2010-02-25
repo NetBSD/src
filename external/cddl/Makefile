@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2009/10/05 22:44:26 haad Exp $
+#	$NetBSD: Makefile,v 1.2 2010/02/25 00:14:10 darran Exp $
 .include <bsd.own.mk>
 
 # We need more modular flag e.g. we can add dtrace to osnet later
 
-.if ( ${MKZFS} != "no")
+.if ( ${MKZFS} != "no" || ${MKDTRACE} != "no" )
 SUBDIR+= osnet
 .endif
 
