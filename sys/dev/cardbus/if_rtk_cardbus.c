@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.40 2010/02/24 19:52:51 dyoung Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.41 2010/02/25 23:40:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.40 2010/02/24 19:52:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.41 2010/02/25 23:40:39 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -128,7 +128,6 @@ struct rtk_cardbus_softc {
 	cardbus_devfunc_t sc_ct;
 	pcitag_t sc_tag;
 	int sc_csr;
-	int sc_cben;
 	int sc_bar_reg;
 	pcireg_t sc_bar_val;
 	bus_size_t sc_mapsize;
@@ -212,7 +211,6 @@ rtk_cardbus_attach(device_t parent, device_t self, void *aux)
 #else
 		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);
 #endif
-		csc->sc_cben = CARDBUS_IO_ENABLE;
 		csc->sc_csr |= CARDBUS_COMMAND_IO_ENABLE;
 		csc->sc_bar_reg = RTK_PCI_LOIO;
 		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_IO;
@@ -224,7 +222,6 @@ rtk_cardbus_attach(device_t parent, device_t self, void *aux)
 #else
 		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
 #endif
-		csc->sc_cben = CARDBUS_MEM_ENABLE;
 		csc->sc_csr |= CARDBUS_COMMAND_MEM_ENABLE;
 		csc->sc_bar_reg = RTK_PCI_LOMEM;
 		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_MEM;
@@ -333,10 +330,6 @@ rtk_cardbus_setup(struct rtk_cardbus_softc *csc)
 	/* Program the BAR */
 	cardbus_conf_write(cc, cf, csc->sc_tag,
 	    csc->sc_bar_reg, csc->sc_bar_val);
-
-	/* Make sure the right access type is on the CardBus bridge. */
-	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
-	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the appropriate bits in the CARDBUS CSR. */
 	reg = cardbus_conf_read(cc, cf, csc->sc_tag,

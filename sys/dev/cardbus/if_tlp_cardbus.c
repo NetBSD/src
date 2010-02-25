@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.63 2010/02/24 19:52:51 dyoung Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.64 2010/02/25 23:40:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.63 2010/02/24 19:52:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.64 2010/02/25 23:40:39 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -100,7 +100,6 @@ struct tulip_cardbus_softc {
 	bus_size_t sc_mapsize;		/* the size of mapped bus space
 					   region */
 
-	int	sc_cben;		/* CardBus enables */
 	int	sc_bar_reg;		/* which BAR to use */
 	pcireg_t sc_bar_val;		/* value of the BAR */
 
@@ -313,7 +312,6 @@ tlp_cardbus_attach(device_t parent, device_t self,
 #else
 		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
 #endif
-		csc->sc_cben = CARDBUS_MEM_ENABLE;
 		csc->sc_csr |= CARDBUS_COMMAND_MEM_ENABLE;
 		csc->sc_bar_reg = TULIP_PCI_MMBA;
 		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_MEM;
@@ -324,7 +322,6 @@ tlp_cardbus_attach(device_t parent, device_t self,
 #else
 		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);
 #endif
-		csc->sc_cben = CARDBUS_IO_ENABLE;
 		csc->sc_csr |= CARDBUS_COMMAND_IO_ENABLE;
 		csc->sc_bar_reg = TULIP_PCI_IOBA;
 		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_IO;
@@ -586,10 +583,6 @@ tlp_cardbus_setup(struct tulip_cardbus_softc *csc)
 	/* Program the BAR. */
 	cardbus_conf_write(cc, cf, csc->sc_tag, csc->sc_bar_reg,
 	    csc->sc_bar_val);
-
-	/* Make sure the right access type is on the CardBus bridge. */
-	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
-	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the appropriate bits in the PCI CSR. */
 	reg = cardbus_conf_read(cc, cf, csc->sc_tag, PCI_COMMAND_STATUS_REG);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.28 2010/02/24 19:52:51 dyoung Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.29 2010/02/25 23:40:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.28 2010/02/24 19:52:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.29 2010/02/25 23:40:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,8 +123,6 @@ fwohci_cardbus_attach(device_t parent, device_t self, void *aux)
 #else
 XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 #endif
-	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_MEM_ENABLE);
-	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	OHCI_CSR_WRITE(&sc->sc_sc, FWOHCI_INTMASKCLR, OHCI_INT_EN);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.33 2010/02/25 20:36:31 dyoung Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.34 2010/02/25 23:40:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.33 2010/02/25 20:36:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.34 2010/02/25 23:40:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -750,18 +750,14 @@ ppb_cardbus_setup(struct ppb_softc * sc)
 	if (csc->base0_reg) {
 		Cardbus_conf_write(csc->ct, tag,
 		    CARDBUS_BASE0_REG, csc->base0_reg);
-		(cf->cardbus_ctrl) (cc, CARDBUS_MEM_ENABLE);
 		command |= CARDBUS_COMMAND_MEM_ENABLE |
 		    CARDBUS_COMMAND_MASTER_ENABLE;
 	} else if (csc->base1_reg) {
 		Cardbus_conf_write(csc->ct, tag,
 		    CARDBUS_BASE1_REG, csc->base1_reg);
-		(cf->cardbus_ctrl) (cc, CARDBUS_IO_ENABLE);
 		command |= (CARDBUS_COMMAND_IO_ENABLE |
 		    CARDBUS_COMMAND_MASTER_ENABLE);
 	}
-
-	(cf->cardbus_ctrl) (cc, CARDBUS_BM_ENABLE);
 
 	/* enable the card */
 	Cardbus_conf_write(csc->ct, tag, CARDBUS_COMMAND_STATUS_REG, command);

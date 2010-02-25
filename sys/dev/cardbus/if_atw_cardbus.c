@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.31 2010/02/24 23:38:40 dyoung Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.32 2010/02/25 23:40:39 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.31 2010/02/24 23:38:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.32 2010/02/25 23:40:39 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -100,7 +100,6 @@ struct atw_cardbus_softc {
 						 * region
 						 */
 
-	int			sc_cben;	/* CardBus enables */
 	int			sc_bar_reg;	/* which BAR to use */
 	pcireg_t		sc_bar_val;	/* value of the BAR */
 
@@ -200,15 +199,17 @@ atw_cardbus_attach(device_t parent, device_t self, void *aux)
 #if 0
 	printf("%s: signature %08x\n", device_xname(self),
 	    (rev >> 4) & 0xf, rev & 0xf,
-	    cardbus_conf_read(ct->ct_cc, ct->ct_cf, csc->sc_tag, 0x80));
+	    Cardbus_conf_read(ct, csc->sc_tag, 0x80));
 #endif
 
 	/*
 	 * Map the device.
 	 */
-	csc->sc_csr = CARDBUS_COMMAND_MASTER_ENABLE;
+	csc->sc_csr = PCI_COMMAND_MASTER_ENABLE |
+	              PCI_COMMAND_PARITY_ENABLE |
+		      PCI_COMMAND_SERR_ENABLE;
 	if (Cardbus_mapreg_map(ct, ATW_PCI_MMBA,
-	    CARDBUS_MAPREG_TYPE_MEM, 0, &sc->sc_st, &sc->sc_sh, &adr,
+	    PCI_MAPREG_TYPE_MEM, 0, &sc->sc_st, &sc->sc_sh, &adr,
 	    &csc->sc_mapsize) == 0) {
 #if 0
 		printf("%s: atw_cardbus_attach mapped %d bytes mem space\n",
@@ -218,12 +219,11 @@ atw_cardbus_attach(device_t parent, device_t self, void *aux)
 #else
 		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
 #endif
-		csc->sc_cben = CARDBUS_MEM_ENABLE;
-		csc->sc_csr |= CARDBUS_COMMAND_MEM_ENABLE;
+		csc->sc_csr |= PCI_COMMAND_MEM_ENABLE;
 		csc->sc_bar_reg = ATW_PCI_MMBA;
-		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_MEM;
+		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_MEM;
 	} else if (Cardbus_mapreg_map(ct, ATW_PCI_IOBA,
-	    CARDBUS_MAPREG_TYPE_IO, 0, &sc->sc_st, &sc->sc_sh, &adr,
+	    PCI_MAPREG_TYPE_IO, 0, &sc->sc_st, &sc->sc_sh, &adr,
 	    &csc->sc_mapsize) == 0) {
 #if 0
 		printf("%s: atw_cardbus_attach mapped %d bytes I/O space\n",
@@ -233,10 +233,9 @@ atw_cardbus_attach(device_t parent, device_t self, void *aux)
 #else
 		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);
 #endif
-		csc->sc_cben = CARDBUS_IO_ENABLE;
-		csc->sc_csr |= CARDBUS_COMMAND_IO_ENABLE;
+		csc->sc_csr |= PCI_COMMAND_IO_ENABLE;
 		csc->sc_bar_reg = ATW_PCI_IOBA;
-		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_IO;
+		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_IO;
 	} else {
 		aprint_error_dev(self, "unable to map device registers\n");
 		return;
@@ -362,8 +361,6 @@ static void
 atw_cardbus_setup(struct atw_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t csr;
 	int rc;
 
@@ -371,18 +368,12 @@ atw_cardbus_setup(struct atw_cardbus_softc *csc)
 		aprint_debug("%s: cardbus_set_powerstate %d\n", __func__, rc);
 
 	/* Program the BAR. */
-	cardbus_conf_write(cc, cf, csc->sc_tag, csc->sc_bar_reg,
+	Cardbus_conf_write(ct, csc->sc_tag, csc->sc_bar_reg,
 	    csc->sc_bar_val);
 
-	/* Make sure the right access type is on the CardBus bridge. */
-	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
-	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
-
 	/* Enable the appropriate bits in the PCI CSR. */
-	csr = cardbus_conf_read(cc, cf, csc->sc_tag,
-	    CARDBUS_COMMAND_STATUS_REG);
-	csr &= ~(CARDBUS_COMMAND_IO_ENABLE|CARDBUS_COMMAND_MEM_ENABLE);
+	csr = Cardbus_conf_read(ct, csc->sc_tag, PCI_COMMAND_STATUS_REG);
+	csr &= ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
 	csr |= csc->sc_csr;
-	cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_COMMAND_STATUS_REG,
-	    csr);
+	Cardbus_conf_write(ct, csc->sc_tag, PCI_COMMAND_STATUS_REG, csr);
 }
