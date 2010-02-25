@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.101 2009/02/19 00:39:25 jmcneill Exp $ */
+/* $NetBSD: vga.c,v 1.102 2010/02/25 11:20:10 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.101 2009/02/19 00:39:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.102 2010/02/25 11:20:10 drochner Exp $");
 
 /* for WSCONS_SUPPORT_PCVTFONTS */
 #include "opt_wsdisplay_compat.h"
@@ -1246,11 +1246,11 @@ static const u_int16_t pcvt_unichars[0xa0] = {
 	0x00ac, /* NOT SIGN */
 	0x00a8, /* DIAERESIS */
 	0x2260, /* NOT EQUAL TO */
-	_e005U, /* scan 9 */
-	_e004U, /* scan 7 */
-	_e003U, /* scan 5 */
-	_e002U, /* scan 3 */
-	_e001U, /* scan 1 */
+	0x23bd, /* scan 9 */
+	0x23bc, /* scan 7 */
+	0x2500, /* scan 5 */
+	0x23bb, /* scan 3 */
+	0x23ba, /* scan 1 */
 	0x03c5, /* GREEK SMALL LETTER UPSILON */
 	0x00f8, /* LATIN SMALL LETTER O WITH STROKE */
 /* 8 */	0x0153, /* LATIN SMALL LIGATURE OE */
