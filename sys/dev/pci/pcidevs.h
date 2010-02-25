@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.1020 2010/02/16 10:10:26 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1021 2010/02/25 03:20:02 macallan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -733,6 +733,7 @@
 #define	PCI_PRODUCT_3DLABS_GAMMA	0x0008		/* GLINT GAMMA */
 #define	PCI_PRODUCT_3DLABS_PERMEDIA2V	0x0009		/* GLINT Permedia 2V */
 #define	PCI_PRODUCT_3DLABS_PERMEDIA3	0x000a		/* GLINT Permedia 3 */
+#define	PCI_PRODUCT_3DLABS_WILDCAT5110	0x07a2		/* WILDCAT 5110 */
 
 /* 3ware products */
 #define	PCI_PRODUCT_3WARE_ESCALADE	0x1000		/* Escalade ATA RAID Controller */
