@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.36 2010/02/24 23:38:40 dyoung Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.37 2010/02/25 23:01:48 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.36 2010/02/24 23:38:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.37 2010/02/25 23:01:48 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -136,8 +136,9 @@ int	rtw_cardbus_match(device_t, cfdata_t, void *);
 void	rtw_cardbus_attach(device_t, device_t, void *);
 int	rtw_cardbus_detach(device_t, int);
 
-CFATTACH_DECL_NEW(rtw_cardbus, sizeof(struct rtw_cardbus_softc),
-    rtw_cardbus_match, rtw_cardbus_attach, rtw_cardbus_detach, NULL);
+CFATTACH_DECL3_NEW(rtw_cardbus, sizeof(struct rtw_cardbus_softc),
+    rtw_cardbus_match, rtw_cardbus_attach, rtw_cardbus_detach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 void	rtw_cardbus_setup(struct rtw_cardbus_softc *);
 
@@ -232,15 +233,15 @@ rtw_cardbus_attach(device_t parent, device_t self, void *aux)
 	RTW_DPRINTF(RTW_DEBUG_ATTACH,
 	    ("%s: pass %d.%d signature %08x\n", device_xname(self),
 	     (rev >> 4) & 0xf, rev & 0xf,
-	     cardbus_conf_read(ct->ct_cc, ct->ct_cf, csc->sc_tag, 0x80)));
+	     Cardbus_conf_read(ct, csc->sc_tag, 0x80)));
 
 	/*
 	 * Map the device.
 	 */
-	csc->sc_csr = CARDBUS_COMMAND_MASTER_ENABLE |
-	              CARDBUS_COMMAND_PARITY_ENABLE |
-		      CARDBUS_COMMAND_SERR_ENABLE;
-	if (Cardbus_mapreg_map(ct, RTW_PCI_MMBA, CARDBUS_MAPREG_TYPE_MEM, 0,
+	csc->sc_csr = PCI_COMMAND_MASTER_ENABLE |
+	              PCI_COMMAND_PARITY_ENABLE |
+		      PCI_COMMAND_SERR_ENABLE;
+	if (Cardbus_mapreg_map(ct, RTW_PCI_MMBA, PCI_MAPREG_TYPE_MEM, 0,
 	    &regs->r_bt, &regs->r_bh, &adr, &regs->r_sz) == 0) {
 		RTW_DPRINTF(RTW_DEBUG_ATTACH,
 		    ("%s: %s mapped %" PRIuMAX " bytes mem space\n",
@@ -249,10 +250,10 @@ rtw_cardbus_attach(device_t parent, device_t self, void *aux)
 #else
 		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
 #endif
-		csc->sc_csr |= CARDBUS_COMMAND_MEM_ENABLE;
+		csc->sc_csr |= PCI_COMMAND_MEM_ENABLE;
 		csc->sc_bar_reg = RTW_PCI_MMBA;
-		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_MEM;
-	} else if (Cardbus_mapreg_map(ct, RTW_PCI_IOBA, CARDBUS_MAPREG_TYPE_IO,
+		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_MEM;
+	} else if (Cardbus_mapreg_map(ct, RTW_PCI_IOBA, PCI_MAPREG_TYPE_IO,
 	    0, &regs->r_bt, &regs->r_bh, &adr, &regs->r_sz) == 0) {
 		RTW_DPRINTF(RTW_DEBUG_ATTACH,
 		    ("%s: %s mapped %" PRIuMAX " bytes I/O space\n",
@@ -261,9 +262,9 @@ rtw_cardbus_attach(device_t parent, device_t self, void *aux)
 #else
 		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);
 #endif
-		csc->sc_csr |= CARDBUS_COMMAND_IO_ENABLE;
+		csc->sc_csr |= PCI_COMMAND_IO_ENABLE;
 		csc->sc_bar_reg = RTW_PCI_IOBA;
-		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_IO;
+		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_IO;
 	} else {
 		aprint_error_dev(self, "unable to map device registers\n");
 		return;
@@ -388,29 +389,27 @@ rtw_cardbus_setup(struct rtw_cardbus_softc *csc)
 {
 	pcitag_t tag = csc->sc_tag;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
 	pcireg_t bhlc, csr, lattimer;
-	cardbus_function_tag_t cf = ct->ct_cf;
 
 	(void)cardbus_set_powerstate(ct, tag, PCI_PWR_D0);
 
 	/* I believe the datasheet tries to warn us that the RTL8180
 	 * wants for 16 (0x10) to divide the latency timer.
 	 */
-	bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
+	bhlc = Cardbus_conf_read(ct, tag, PCI_BHLC_REG);
 	lattimer = rounddown(PCI_LATTIMER(bhlc), 0x10);
 	if (PCI_LATTIMER(bhlc) != lattimer) {
 		bhlc &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
 		bhlc |= (lattimer << PCI_LATTIMER_SHIFT);
-		cardbus_conf_write(cc, cf, tag, CARDBUS_BHLC_REG, bhlc);
+		Cardbus_conf_write(ct, tag, PCI_BHLC_REG, bhlc);
 	}
 
 	/* Program the BAR. */
-	cardbus_conf_write(cc, cf, tag, csc->sc_bar_reg, csc->sc_bar_val);
+	Cardbus_conf_write(ct, tag, csc->sc_bar_reg, csc->sc_bar_val);
 
 	/* Enable the appropriate bits in the PCI CSR. */
-	csr = cardbus_conf_read(cc, cf, tag, PCI_COMMAND_STATUS_REG);
+	csr = Cardbus_conf_read(ct, tag, PCI_COMMAND_STATUS_REG);
 	csr &= ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
 	csr |= csc->sc_csr;
-	cardbus_conf_write(cc, cf, tag, PCI_COMMAND_STATUS_REG, csr);
+	Cardbus_conf_write(ct, tag, PCI_COMMAND_STATUS_REG, csr);
 }
