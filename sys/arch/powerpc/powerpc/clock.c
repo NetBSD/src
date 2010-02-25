@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 2008/02/05 22:31:50 garbled Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 2010/02/25 23:31:48 matt Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2008/02/05 22:31:50 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2010/02/25 23:31:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -44,6 +44,15 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2008/02/05 22:31:50 garbled Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <powerpc/spr.h>
+#if defined (PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+#include <powerpc/oea/spr.h>
+#elif defined (PPC_BOOKE)
+#include <powerpc/booke/spr.h>
+#elif defined (PPC_IBM4XX)
+#include <powerpc/ibm4xx/spr.h>
+#else
+#error unknown powerpc variant
+#endif
 
 void decr_intr(struct clockframe *);
 void init_powerpc_tc(void);

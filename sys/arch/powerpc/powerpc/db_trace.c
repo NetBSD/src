@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.50 2009/11/21 17:40:29 rmind Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.51 2010/02/25 23:31:48 matt Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.50 2009/11/21 17:40:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.51 2010/02/25 23:31:48 matt Exp $");
 
 #include "opt_ppcarch.h"
 
@@ -41,6 +41,15 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.50 2009/11/21 17:40:29 rmind Exp $");
 #include <machine/db_machdep.h>
 #include <machine/pmap.h>
 #include <powerpc/spr.h>
+#if defined (PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+#include <powerpc/oea/spr.h>
+#elif defined(PPC_IBM4XX)
+#include <powerpc/ibm4xx/spr.h>
+#elif defined(PPC_BOOKE)
+#include <powerpc/booke/spr.h>
+#else
+#include unknown powerpc variants
+#endif
 
 #include <ddb/db_access.h>
 #include <ddb/db_interface.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61 2010/02/25 07:21:19 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.62 2010/02/25 23:31:47 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61 2010/02/25 07:21:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.62 2010/02/25 23:31:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61 2010/02/25 07:21:19 skrll Exp $");
 #include <machine/powerpc.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 #include <machine/tlb.h>
 
 /*
