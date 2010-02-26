@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.45 2010/02/25 23:40:39 dyoung Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.46 2010/02/26 00:57:02 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.45 2010/02/25 23:40:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.46 2010/02/26 00:57:02 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -113,8 +113,8 @@ fxp_cardbus_match(device_t parent, cfdata_t match,
 {
 	struct cardbus_attach_args *ca = aux;
 
-	if (CARDBUS_VENDOR(ca->ca_id) == PCI_VENDOR_INTEL &&
-	    CARDBUS_PRODUCT(ca->ca_id) == PCI_PRODUCT_INTEL_82557)
+	if (PCI_VENDOR(ca->ca_id) == PCI_VENDOR_INTEL &&
+	    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_INTEL_82557)
 		return (1);
 
 	return (0);
@@ -140,12 +140,12 @@ fxp_cardbus_attach(device_t parent, device_t self,
 	/*
          * Map control/status registers.
          */
-	if (Cardbus_mapreg_map(csc->ct, CARDBUS_BASE1_REG,
+	if (Cardbus_mapreg_map(csc->ct, PCI_BAR1,
 	    PCI_MAPREG_TYPE_IO, 0, &iot, &ioh, &adr, &sc->sc_size) == 0) {
 		csc->base1_reg = adr | 1;
 		sc->sc_st = iot;
 		sc->sc_sh = ioh;
-	} else if (Cardbus_mapreg_map(csc->ct, CARDBUS_BASE0_REG,
+	} else if (Cardbus_mapreg_map(csc->ct, PCI_BAR0,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 	    0, &memt, &memh, &adr, &sc->sc_size) == 0) {
 		csc->base0_reg = adr;
@@ -160,7 +160,7 @@ fxp_cardbus_attach(device_t parent, device_t self,
 	else
 		printf("\n");
 
-	sc->sc_rev = CARDBUS_REVISION(ca->ca_class);
+	sc->sc_rev = PCI_REVISION(ca->ca_class);
 	if (sc->sc_rev >= FXP_REV_82558_A4)
 		sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB;
 	if (sc->sc_rev >= FXP_REV_82559_A0)
@@ -193,21 +193,19 @@ fxp_cardbus_setup(struct fxp_softc * sc)
 
 	pcitag_t tag = csc->tag;
 
-	command = Cardbus_conf_read(csc->ct, tag, CARDBUS_COMMAND_STATUS_REG);
+	command = Cardbus_conf_read(csc->ct, tag, PCI_COMMAND_STATUS_REG);
 	if (csc->base0_reg) {
 		Cardbus_conf_write(csc->ct, tag,
-		    CARDBUS_BASE0_REG, csc->base0_reg);
-		command |= CARDBUS_COMMAND_MEM_ENABLE |
-		    CARDBUS_COMMAND_MASTER_ENABLE;
+		    PCI_BAR0, csc->base0_reg);
+		command |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
 	} else if (csc->base1_reg) {
 		Cardbus_conf_write(csc->ct, tag,
-		    CARDBUS_BASE1_REG, csc->base1_reg);
-		command |= (CARDBUS_COMMAND_IO_ENABLE |
-		    CARDBUS_COMMAND_MASTER_ENABLE);
+		    PCI_BAR1, csc->base1_reg);
+		command |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MASTER_ENABLE;
 	}
 
 	/* enable the card */
-	Cardbus_conf_write(csc->ct, tag, CARDBUS_COMMAND_STATUS_REG, command);
+	Cardbus_conf_write(csc->ct, tag, PCI_COMMAND_STATUS_REG, command);
 }
 
 static int
@@ -271,9 +269,9 @@ fxp_cardbus_detach(device_t self, int flags)
 	 * release bus space and close window
 	 */
 	if (csc->base0_reg)
-		reg = CARDBUS_BASE0_REG;
+		reg = PCI_BAR0;
 	else
-		reg = CARDBUS_BASE1_REG;
+		reg = PCI_BAR1;
 	Cardbus_mapreg_unmap(ct, reg, sc->sc_st, sc->sc_sh, sc->sc_size);
 	return 0;
 }

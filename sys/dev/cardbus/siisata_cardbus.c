@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_cardbus.c,v 1.9 2010/02/25 22:40:16 dyoung Exp $ */
+/* $NetBSD: siisata_cardbus.c,v 1.10 2010/02/26 00:57:02 dyoung Exp $ */
 /* Id: siisata_pci.c,v 1.11 2008/05/21 16:20:11 jakllsch Exp  */
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata_cardbus.c,v 1.9 2010/02/25 22:40:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata_cardbus.c,v 1.10 2010/02/26 00:57:02 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -65,8 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: siisata_cardbus.c,v 1.9 2010/02/25 22:40:16 dyoung E
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/ic/siisatavar.h>
-
-#define cardbus_devinfo		pci_devinfo
 
 struct siisata_cardbus_softc {
 	struct siisata_softc si_sc;
@@ -118,8 +116,8 @@ siisata_cardbus_lookup(const struct cardbus_attach_args *ca)
 	const struct siisata_cardbus_product *scp;
 
 	for (scp = siisata_cardbus_products; scp->scp_ports > 0; scp++) {
-		if (CARDBUS_VENDOR(ca->ca_id) == scp->scp_vendor &&
-		    CARDBUS_PRODUCT(ca->ca_id) == scp->scp_product)
+		if (PCI_VENDOR(ca->ca_id) == scp->scp_vendor &&
+		    PCI_PRODUCT(ca->ca_id) == scp->scp_product)
 			return scp;
 	}
 	return NULL;
@@ -168,7 +166,7 @@ siisata_cardbus_attach(device_t parent, device_t self, void *aux)
 	csc->sc_rbus_memt = ca->ca_rbus_memt;
 #endif
 
-	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
+	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	aprint_naive(": SATA-II HBA\n");
 	aprint_normal(": %s\n", devinfo);
 
@@ -182,7 +180,7 @@ siisata_cardbus_attach(device_t parent, device_t self, void *aux)
 #define SIISATA_BAR0_SIZE	128
 		grsize = SIISATA_BAR0_SIZE;
 		csr =
-		    cardbus_conf_read(cc, cf, ca->ca_tag, SIISATA_CARDBUS_BAR0);
+		    Cardbus_conf_read(ct, ca->ca_tag, SIISATA_CARDBUS_BAR0);
 		base = PCI_MAPREG_MEM_ADDR(csr);
 		memt = csc->sc_memt;
 		if ((*cf->cardbus_space_alloc)(cc, csc->sc_rbus_memt, base,
@@ -192,7 +190,7 @@ siisata_cardbus_attach(device_t parent, device_t self, void *aux)
 			    SIISATANAME(sc));
 			return;
 		}
-		cardbus_conf_write(cc, cf, ca->ca_tag, SIISATA_CARDBUS_BAR0,
+		Cardbus_conf_write(ct, ca->ca_tag, SIISATA_CARDBUS_BAR0,
 		    base);
 	}
 	sc->sc_grt = memt;
@@ -203,12 +201,12 @@ siisata_cardbus_attach(device_t parent, device_t self, void *aux)
 	{
 #define SIISATA_BAR1_SIZE	(32 * 1024)
 		prsize = SIISATA_BAR1_SIZE;
-		base = PCI_MAPREG_MEM_ADDR(cardbus_conf_read(cc, cf, ca->ca_tag,
+		base = PCI_MAPREG_MEM_ADDR(Cardbus_conf_read(ct, ca->ca_tag,
 		    SIISATA_CARDBUS_BAR1));
 		memt = csc->sc_memt;
 		if ((*cf->cardbus_space_alloc)(cc, csc->sc_rbus_memt, base,
 		    prsize, prsize - 1, prsize, 0, &base, &memh)) {
-			cardbus_conf_write(cc, cf, ca->ca_tag,
+			Cardbus_conf_write(ct, ca->ca_tag,
 			    SIISATA_CARDBUS_BAR0, 0);
 			(*cf->cardbus_space_free)(cc, csc->sc_rbus_memt,
 			    sc->sc_grh, grsize);
@@ -217,7 +215,7 @@ siisata_cardbus_attach(device_t parent, device_t self, void *aux)
 			    SIISATANAME(sc));
 			return;
 		}
-		cardbus_conf_write(cc, cf, ca->ca_tag, SIISATA_CARDBUS_BAR1,
+		Cardbus_conf_write(ct, ca->ca_tag, SIISATA_CARDBUS_BAR1,
 		    base);
 	}
 	sc->sc_prt = memt;
@@ -230,10 +228,10 @@ siisata_cardbus_attach(device_t parent, device_t self, void *aux)
 	csc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline, IPL_BIO,
 	    siisata_intr, sc);
 	if (csc->sc_ih == NULL) {
-		cardbus_conf_write(cc, cf, ca->ca_tag, SIISATA_CARDBUS_BAR0, 0);
+		Cardbus_conf_write(ct, ca->ca_tag, SIISATA_CARDBUS_BAR0, 0);
 		(*cf->cardbus_space_free)(cc, csc->sc_rbus_memt, sc->sc_grh,
 		    grsize);
-		cardbus_conf_write(cc, cf, ca->ca_tag, SIISATA_CARDBUS_BAR1, 0);
+		Cardbus_conf_write(ct, ca->ca_tag, SIISATA_CARDBUS_BAR1, 0);
 		(*cf->cardbus_space_free)(cc, csc->sc_rbus_memt, sc->sc_prh,
 		    prsize);
 		aprint_error("%s: couldn't establish interrupt\n",
@@ -250,10 +248,10 @@ siisata_cardbus_attach(device_t parent, device_t self, void *aux)
 		panic("siisata: the universe might be falling apart!\n");
 
 	/* enable bus mastering in case the firmware didn't */
-	csr = cardbus_conf_read(cc, cf, ca->ca_tag, CARDBUS_COMMAND_STATUS_REG);
-	csr |= CARDBUS_COMMAND_MASTER_ENABLE;
-	csr |= CARDBUS_COMMAND_MEM_ENABLE;
-	cardbus_conf_write(cc, cf, ca->ca_tag, CARDBUS_COMMAND_STATUS_REG, csr);
+	csr = Cardbus_conf_read(ct, ca->ca_tag, PCI_COMMAND_STATUS_REG);
+	csr |= PCI_COMMAND_MASTER_ENABLE;
+	csr |= PCI_COMMAND_MEM_ENABLE;
+	Cardbus_conf_write(ct, ca->ca_tag, PCI_COMMAND_STATUS_REG, csr);
 
 	gcreg = GRREAD(sc, GR_GC);
 
@@ -293,13 +291,13 @@ siisata_cardbus_detach(device_t self, int flags)
 		csc->sc_ih = NULL;
 	}
 	if (csc->sc_grsize) {
-		cardbus_conf_write(cc, cf, ctag, SIISATA_CARDBUS_BAR0, 0);
+		Cardbus_conf_write(ct, ctag, SIISATA_CARDBUS_BAR0, 0);
 		(*cf->cardbus_space_free)(cc, csc->sc_rbus_memt, sc->sc_grh,
 		    csc->sc_grsize);
 		csc->sc_grsize = 0;
 	}
 	if (csc->sc_prsize) {
-		cardbus_conf_write(cc, cf, ctag, SIISATA_CARDBUS_BAR1, 0);
+		Cardbus_conf_write(ct, ctag, SIISATA_CARDBUS_BAR1, 0);
 		(*cf->cardbus_space_free)(cc, csc->sc_rbus_memt, sc->sc_prh,
 		    csc->sc_prsize);
 		csc->sc_prsize = 0;
