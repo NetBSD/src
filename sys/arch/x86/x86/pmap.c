@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.104 2010/02/16 00:48:17 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105 2010/02/26 19:25:07 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.104 2010/02/16 00:48:17 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 2010/02/26 19:25:07 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1397,11 +1397,10 @@ pmap_bootstrap(vaddr_t kva_start)
 			tlbflush();
 		}
 #if defined(DEBUG)
-		aprint_normal("kernel text is mapped with "
-		    "%lu large pages and %lu normal pages\n",
-		    (unsigned long)howmany(kva - KERNBASE, NBPD_L2),
-		    (unsigned long)howmany((vaddr_t)&__data_start - kva,
-		    NBPD_L1));
+		aprint_normal("kernel text is mapped with %" PRIuPSIZE " large "
+		    "pages and %" PRIuPSIZE " normal pages\n",
+		    howmany(kva - KERNBASE, NBPD_L2),
+		    howmany((vaddr_t)&__data_start - kva, NBPD_L1));
 #endif /* defined(DEBUG) */
 	}
 #endif /* !XEN */
@@ -1416,7 +1415,7 @@ pmap_bootstrap(vaddr_t kva_start)
 		 */
 
 		early_zerop = (void *)(KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
-		early_zero_pte = PTE_BASE + pl1_i((unsigned long)early_zerop);
+		early_zero_pte = PTE_BASE + pl1_i((vaddr_t)early_zerop);
 	}
 
 	/*
@@ -2038,8 +2037,8 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 		ptp = pmap_find_ptp(pmap, va, ppa, 1);
 #ifdef DIAGNOSTIC
 		if (ptp == NULL) {
-			printf("va %lx ppa %lx\n", (unsigned long)va,
-			    (unsigned long)ppa);
+			printf("va %" PRIxVADDR " ppa %" PRIxPADDR "\n",
+			    va, ppa);
 			panic("pmap_get_ptp: unmanaged user PTP");
 		}
 #endif
@@ -2094,8 +2093,8 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	 * PG_V) value at the right place.
 	 */
 	pdir[PDIR_SLOT_KERN + nkptp[PTP_LEVELS - 1] - 1] =
-	     (unsigned long)-1 & PG_FRAME;
-#else /* XEN  && __x86_64__*/
+	     (pd_entry_t)-1 & PG_FRAME;
+#else /* XEN && __x86_64__*/
 	/* zero init area */
 	memset(pdir, 0, PDIR_SLOT_PTE * sizeof(pd_entry_t));
 
@@ -2780,7 +2779,7 @@ pmap_load(void)
 	int i;
 	int s = splvm();
 	/* don't update the kernel L3 slot */
-	for (i = 0 ; i < PDP_SIZE - 1  ; i++, l3_pd += sizeof(pd_entry_t)) {
+	for (i = 0 ; i < PDP_SIZE - 1; i++, l3_pd += sizeof(pd_entry_t)) {
 		xpq_queue_pte_update(l3_pd,
 		    xpmap_ptom(pmap->pm_pdirpa[i]) | PG_V);
 	}
@@ -2916,7 +2915,7 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
 	struct cpu_info *ci;
-	vaddr_t pa;
+	paddr_t pa;
 	lwp_t *l;
 	bool hard, rv;
 
@@ -3303,7 +3302,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 #if defined(DIAGNOSTIC) && !defined(DOM0OPS)
 			if (PHYS_TO_VM_PAGE(pmap_pte2pa(opte)) != NULL)
 				panic("pmap_remove_ptes: managed page without "
-				      "PG_PVLIST for 0x%lx", startva);
+				      "PG_PVLIST for %#" PRIxVADDR, startva);
 #endif
 			continue;
 		}
@@ -3312,8 +3311,9 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 #ifdef DIAGNOSTIC
 		if (pg == NULL)
 			panic("pmap_remove_ptes: unmanaged page marked "
-			      "PG_PVLIST, va = 0x%lx, pa = 0x%lx",
-			      startva, (u_long)pmap_pte2pa(opte));
+			      "PG_PVLIST, va = %#" PRIxVADDR ", "
+			      "pa = %#" PRIxPADDR,
+			      startva, (paddr_t)pmap_pte2pa(opte));
 #endif
 
 		/* sync R/M bits */
@@ -3388,7 +3388,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 #if defined(DIAGNOSTIC) && !defined(DOM0OPS)
 		if (PHYS_TO_VM_PAGE(pmap_pte2pa(opte)) != NULL)
 			panic("pmap_remove_pte: managed page without "
-			      "PG_PVLIST for 0x%lx", va);
+			      "PG_PVLIST for %#" PRIxVADDR, va);
 #endif
 		return(true);
 	}
@@ -3397,8 +3397,8 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 #ifdef DIAGNOSTIC
 	if (pg == NULL)
 		panic("pmap_remove_pte: unmanaged page marked "
-		    "PG_PVLIST, va = 0x%lx, pa = 0x%lx", va,
-		    (u_long)(pmap_pte2pa(opte)));
+		    "PG_PVLIST, va = %#" PRIxVADDR ", pa = %#" PRIxPADDR,
+		    va, (paddr_t)pmap_pte2pa(opte));
 #endif
 
 	/* sync R/M bits */
@@ -4483,9 +4483,9 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		for (/* null */; sva < blkendva ; sva += PAGE_SIZE, pte++) {
 			if (!pmap_valid_entry(*pte))
 				continue;
-			printf("va %#lx -> pa %#lx (pte=%#lx)\n",
-			       sva, (unsigned long)*pte,
-			       (unsigned long)pmap_pte2pa(*pte));
+			printf("va %#" PRIxVADDR " -> pa %#" PRIxPADDR
+			    " (pte=%#" PRIxPADDR ")\n",
+			    sva, (paddr_t)pmap_pte2pa(*pte), (paddr_t)*pte);
 		}
 	}
 	pmap_unmap_ptes(pmap, pmap2);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.5 2010/01/28 14:10:54 mbalmer Exp $	*/
+/*	$NetBSD: pte.h,v 1.6 2010/02/26 19:25:07 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -81,10 +81,10 @@ typedef uint64_t pt_entry_t;		/* PTE */
 #define	L2_SHIFT	21
 #define	L3_SHIFT	30
 #define	L4_SHIFT	39
-#define	NBPD_L1		(1ULL << L1_SHIFT) /* # bytes mapped by L1 ent (4K) */
-#define	NBPD_L2		(1ULL << L2_SHIFT) /* # bytes mapped by L2 ent (2MB) */
-#define	NBPD_L3		(1ULL << L3_SHIFT) /* # bytes mapped by L3 ent (1G) */
-#define	NBPD_L4		(1ULL << L4_SHIFT) /* # bytes mapped by L4 ent (512G) */
+#define	NBPD_L1		(1UL << L1_SHIFT) /* # bytes mapped by L1 ent (4K) */
+#define	NBPD_L2		(1UL << L2_SHIFT) /* # bytes mapped by L2 ent (2MB) */
+#define	NBPD_L3		(1UL << L3_SHIFT) /* # bytes mapped by L3 ent (1G) */
+#define	NBPD_L4		(1UL << L4_SHIFT) /* # bytes mapped by L4 ent (512G) */
 
 #define L4_MASK		0x0000ff8000000000
 #define L3_MASK		0x0000007fc0000000

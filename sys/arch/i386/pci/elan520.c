@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.47 2010/02/24 22:37:55 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.48 2010/02/26 19:25:07 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.47 2010/02/24 22:37:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.48 2010/02/26 19:25:07 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -725,8 +725,9 @@ elansc_protect_text(device_t self, struct elansc_softc *sc)
 	par = bus_space_read_4(memt, memh, MMCR_PAR(pidx));
 
 	aprint_debug_dev(self,
-	    "protect kernel text at physical addresses %p - %p\n",
-	    (void *)region0.start, (void *)region0.end);
+	    "protect kernel text at physical addresses "
+	    "%#" PRIxPADDR " - %#" PRIxPADDR "\n",
+	    region0.start, region0.end);
 
 	nregion = region_paddr_to_par(&region0, regions, sfkb);
 	if (nregion == 0) {
@@ -742,8 +743,9 @@ elansc_protect_text(device_t self, struct elansc_softc *sc)
 	end_pa = regions[0].end;
 
 	aprint_debug_dev(self,
-	    "actually protect kernel text at physical addresses %p - %p\n",
-	    (void *)start_pa, (void *)end_pa);
+	    "actually protect kernel text at physical addresses "
+	    "%#" PRIxPADDR " - %#" PRIxPADDR "\n",
+	    start_pa, end_pa);
 
 	aprint_verbose_dev(self,
 	    "%" PRIu32 " bytes of kernel text are unprotected\n", unprotsize);
@@ -758,8 +760,9 @@ elansc_protect_text(device_t self, struct elansc_softc *sc)
 	for (i = 1; i < nregion; i++) {
 		xnregion = region_paddr_to_par(&regions[i], xregions, fkb);
 		if (xnregion == 0) {
-			aprint_verbose_dev(self, "skip region %p - %p\n",
-			    (void *)regions[i].start, (void *)regions[i].end);
+			aprint_verbose_dev(self, "skip region "
+			    "%#" PRIxPADDR " - %#" PRIxPADDR "\n",
+			    regions[i].start, regions[i].end);
 			continue;
 		}
 		if ((pidx = elansc_alloc_par(memt, memh)) == -1) {
@@ -771,8 +774,9 @@ elansc_protect_text(device_t self, struct elansc_softc *sc)
 		sc->sc_textpar[tidx++] = pidx;
 
 		aprint_debug_dev(self,
-		    "protect add'l kernel text at physical addresses %p - %p\n",
-		    (void *)xregions[0].start, (void *)xregions[0].end);
+		    "protect add'l kernel text at physical addresses "
+		    "%#" PRIxPADDR " - %#" PRIxPADDR "\n",
+		    xregions[0].start, xregions[0].end);
 
 		for (j = 1; j < xnregion; j++)
 			unprotsize += xregions[j].end - xregions[j].start;
