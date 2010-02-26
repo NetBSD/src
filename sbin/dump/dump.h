@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.45 2008/02/16 17:58:01 matt Exp $	*/
+/*	$NetBSD: dump.h,v 1.46 2010/02/26 02:11:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -110,6 +110,7 @@ int	lflag;		/* autoload flag */
 int	diskfd;		/* disk file descriptor */
 int	tapefd;		/* tape file descriptor */
 int	pipeout;	/* true => output to standard output */
+int	trueinc;	/* true => "true incremental", i.e use last 9 as ref */
 ino_t	curino;		/* current inumber; used globally */
 int	newtape;	/* new tape flag */
 u_int64_t	tapesize;	/* estimated tape size, blocks */

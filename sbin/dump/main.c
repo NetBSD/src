@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.64 2008/07/20 01:20:22 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.65 2010/02/26 02:11:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.64 2008/07/20 01:20:22 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.65 2010/02/26 02:11:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,7 @@ main(int argc, char *argv[])
 
 	obsolete(&argc, &argv);
 	while ((ch = getopt(argc, argv,
-	    "0123456789aB:b:cd:eFf:h:k:l:L:nr:s:StT:uWwx:X")) != -1)
+	    "0123456789aB:b:cd:eFf:h:ik:l:L:nr:s:StT:uWwx:X")) != -1)
 		switch (ch) {
 		/* dump level */
 		case '0': case '1': case '2': case '3': case '4':
@@ -179,6 +179,11 @@ main(int argc, char *argv[])
 
 		case 'h':
 			honorlevel = numarg("honor level", 0L, 10L);
+			break;
+
+		case 'i':	/* "true incremental" regardless level 9 */
+			level = '9';
+			trueinc = 1;
 			break;
 
 		case 'k':
