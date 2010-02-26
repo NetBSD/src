@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_cardbus.c,v 1.25 2010/02/26 00:01:27 dyoung Exp $	*/
+/*	$NetBSD: adv_cardbus.c,v 1.26 2010/02/26 00:57:01 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.25 2010/02/26 00:01:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.26 2010/02/26 00:57:01 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.25 2010/02/26 00:01:27 dyoung Exp 
 #include <dev/ic/advlib.h>
 #include <dev/ic/adv.h>
 
-#define ADV_CARDBUS_IOBA CARDBUS_BASE0_REG
-#define ADV_CARDBUS_MMBA CARDBUS_BASE1_REG
+#define ADV_CARDBUS_IOBA PCI_BAR0
+#define ADV_CARDBUS_MMBA PCI_BAR1
 
 #define ADV_CARDBUS_DEBUG
 #define ADV_CARDBUS_ALLOW_MEMIO
@@ -94,8 +94,8 @@ adv_cardbus_match(device_t parent, cfdata_t match,
 {
 	struct cardbus_attach_args *ca = aux;
 
-	if (CARDBUS_VENDOR(ca->ca_id) == PCI_VENDOR_ADVSYS &&
-	    CARDBUS_PRODUCT(ca->ca_id) == PCI_PRODUCT_ADVSYS_ULTRA)
+	if (PCI_VENDOR(ca->ca_id) == PCI_VENDOR_ADVSYS &&
+	    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_ADVSYS_ULTRA)
 		return (1);
 
 	return (0);

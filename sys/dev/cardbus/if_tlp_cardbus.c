@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.65 2010/02/26 00:01:27 dyoung Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.66 2010/02/26 00:57:02 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.65 2010/02/26 00:01:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.66 2010/02/26 00:57:02 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -278,8 +278,7 @@ tlp_cardbus_attach(device_t parent, device_t self,
 		 * differentiated by a "signature" register that
 		 * is like, but not identical, to a PCI ID register.
 		 */
-		reg = cardbus_conf_read(ct->ct_cc, ct->ct_cf, csc->sc_tag,
-		    0x80);
+		reg = Cardbus_conf_read(ct, csc->sc_tag, 0x80);
 		switch (reg) {
 		case 0x09811317:
 			sc->sc_chip = TULIP_CHIP_AN985;
@@ -304,27 +303,27 @@ tlp_cardbus_attach(device_t parent, device_t self,
 	/*
 	 * Map the device.
 	 */
-	csc->sc_csr = CARDBUS_COMMAND_MASTER_ENABLE;
+	csc->sc_csr = PCI_COMMAND_MASTER_ENABLE;
 	if (Cardbus_mapreg_map(ct, TULIP_PCI_MMBA,
-	    CARDBUS_MAPREG_TYPE_MEM, 0, &sc->sc_st, &sc->sc_sh, &adr,
+	    PCI_MAPREG_TYPE_MEM, 0, &sc->sc_st, &sc->sc_sh, &adr,
 	    &csc->sc_mapsize) == 0) {
 #if rbus
 #else
 		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
 #endif
-		csc->sc_csr |= CARDBUS_COMMAND_MEM_ENABLE;
+		csc->sc_csr |= PCI_COMMAND_MEM_ENABLE;
 		csc->sc_bar_reg = TULIP_PCI_MMBA;
-		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_MEM;
+		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_MEM;
 	} else if (Cardbus_mapreg_map(ct, TULIP_PCI_IOBA,
-	    CARDBUS_MAPREG_TYPE_IO, 0, &sc->sc_st, &sc->sc_sh, &adr,
+	    PCI_MAPREG_TYPE_IO, 0, &sc->sc_st, &sc->sc_sh, &adr,
 	    &csc->sc_mapsize) == 0) {
 #if rbus
 #else
 		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);
 #endif
-		csc->sc_csr |= CARDBUS_COMMAND_IO_ENABLE;
+		csc->sc_csr |= PCI_COMMAND_IO_ENABLE;
 		csc->sc_bar_reg = TULIP_PCI_IOBA;
-		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_IO;
+		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_IO;
 	} else {
 		aprint_error_dev(self, "unable to map device registers\n");
 		return;
@@ -552,8 +551,6 @@ tlp_cardbus_setup(struct tulip_cardbus_softc *csc)
 {
 	struct tulip_softc *sc = &csc->sc_tulip;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 
 	/*
@@ -567,9 +564,9 @@ tlp_cardbus_setup(struct tulip_cardbus_softc *csc)
 		/*
 		 * Clear the "sleep mode" bit in the CFDA register.
 		 */
-		reg = cardbus_conf_read(cc, cf, csc->sc_tag, TULIP_PCI_CFDA);
+		reg = Cardbus_conf_read(ct, csc->sc_tag, TULIP_PCI_CFDA);
 		if (reg & (CFDA_SLEEP|CFDA_SNOOZE))
-			cardbus_conf_write(cc, cf, csc->sc_tag, TULIP_PCI_CFDA,
+			Cardbus_conf_write(ct, csc->sc_tag, TULIP_PCI_CFDA,
 			    reg & ~(CFDA_SLEEP|CFDA_SNOOZE));
 		break;
 
@@ -581,24 +578,23 @@ tlp_cardbus_setup(struct tulip_cardbus_softc *csc)
 	(void)cardbus_set_powerstate(ct, csc->sc_tag, PCI_PWR_D0);
 
 	/* Program the BAR. */
-	cardbus_conf_write(cc, cf, csc->sc_tag, csc->sc_bar_reg,
-	    csc->sc_bar_val);
+	Cardbus_conf_write(ct, csc->sc_tag, csc->sc_bar_reg, csc->sc_bar_val);
 
 	/* Enable the appropriate bits in the PCI CSR. */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag, PCI_COMMAND_STATUS_REG);
+	reg = Cardbus_conf_read(ct, csc->sc_tag, PCI_COMMAND_STATUS_REG);
 	reg &= ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
 	reg |= csc->sc_csr;
-	cardbus_conf_write(cc, cf, csc->sc_tag, PCI_COMMAND_STATUS_REG, reg);
+	Cardbus_conf_write(ct, csc->sc_tag, PCI_COMMAND_STATUS_REG, reg);
 
 	/*
 	 * Make sure the latency timer is set to some reasonable
 	 * value.
 	 */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag, PCI_BHLC_REG);
+	reg = Cardbus_conf_read(ct, csc->sc_tag, PCI_BHLC_REG);
 	if (PCI_LATTIMER(reg) < 0x20) {
 		reg &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
 		reg |= (0x20 << PCI_LATTIMER_SHIFT);
-		cardbus_conf_write(cc, cf, csc->sc_tag, PCI_BHLC_REG, reg);
+		Cardbus_conf_write(ct, csc->sc_tag, PCI_BHLC_REG, reg);
 	}
 }
 

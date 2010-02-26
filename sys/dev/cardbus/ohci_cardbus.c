@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.34 2010/02/25 23:40:39 dyoung Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.35 2010/02/26 00:57:02 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.34 2010/02/25 23:40:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.35 2010/02/26 00:57:02 dyoung Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -85,19 +85,14 @@ struct ohci_cardbus_softc {
 CFATTACH_DECL_NEW(ohci_cardbus, sizeof(struct ohci_cardbus_softc),
     ohci_cardbus_match, ohci_cardbus_attach, ohci_cardbus_detach, ohci_activate);
 
-#define CARDBUS_INTERFACE_OHCI PCI_INTERFACE_OHCI
-#define CARDBUS_CBMEM PCI_CBMEM
-#define cardbus_findvendor pci_findvendor
-#define cardbus_devinfo pci_devinfo
-
 int
 ohci_cardbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct cardbus_attach_args *ca = (struct cardbus_attach_args *)aux;
 
-	if (CARDBUS_CLASS(ca->ca_class) == CARDBUS_CLASS_SERIALBUS &&
-	    CARDBUS_SUBCLASS(ca->ca_class) == CARDBUS_SUBCLASS_SERIALBUS_USB &&
-	    CARDBUS_INTERFACE(ca->ca_class) == CARDBUS_INTERFACE_OHCI)
+	if (PCI_CLASS(ca->ca_class) == PCI_CLASS_SERIALBUS &&
+	    PCI_SUBCLASS(ca->ca_class) == PCI_SUBCLASS_SERIALBUS_USB &&
+	    PCI_INTERFACE(ca->ca_class) == PCI_INTERFACE_OHCI)
 		return (1);
 
 	return (0);
@@ -120,12 +115,12 @@ ohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_dev = self;
 	sc->sc.sc_bus.hci_private = sc;
 
-	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
+	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo,
-	       CARDBUS_REVISION(ca->ca_class));
+	       PCI_REVISION(ca->ca_class));
 
 	/* Map I/O registers */
-	if (Cardbus_mapreg_map(ct, CARDBUS_CBMEM, CARDBUS_MAPREG_TYPE_MEM, 0,
+	if (Cardbus_mapreg_map(ct, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
 			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
 		printf("%s: can't map mem space\n", devname);
 		return;
@@ -142,11 +137,11 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 #endif
 
 	/* Enable the device. */
-	csr = cardbus_conf_read(cc, cf, ca->ca_tag,
-				CARDBUS_COMMAND_STATUS_REG);
-	cardbus_conf_write(cc, cf, ca->ca_tag, CARDBUS_COMMAND_STATUS_REG,
-		       csr | CARDBUS_COMMAND_MASTER_ENABLE
-			   | CARDBUS_COMMAND_MEM_ENABLE);
+	csr = Cardbus_conf_read(ct, ca->ca_tag,
+				PCI_COMMAND_STATUS_REG);
+	Cardbus_conf_write(ct, ca->ca_tag, PCI_COMMAND_STATUS_REG,
+		       csr | PCI_COMMAND_MASTER_ENABLE
+			   | PCI_COMMAND_MEM_ENABLE);
 
 	/* Disable interrupts, so we don't can any spurious ones. */
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
@@ -160,13 +155,13 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 	}
 
 	/* Figure out vendor for root hub descriptor. */
-	vendor = cardbus_findvendor(ca->ca_id);
-	sc->sc.sc_id_vendor = CARDBUS_VENDOR(ca->ca_id);
+	vendor = pci_findvendor(ca->ca_id);
+	sc->sc.sc_id_vendor = PCI_VENDOR(ca->ca_id);
 	if (vendor)
 		strlcpy(sc->sc.sc_vendor, vendor, sizeof(sc->sc.sc_vendor));
 	else
 		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
-		    "vendor 0x%04x", CARDBUS_VENDOR(ca->ca_id));
+		    "vendor 0x%04x", PCI_VENDOR(ca->ca_id));
 
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
@@ -206,7 +201,7 @@ ohci_cardbus_detach(device_t self, int flags)
 		sc->sc_ih = NULL;
 	}
 	if (sc->sc.sc_size) {
-		Cardbus_mapreg_unmap(ct, CARDBUS_CBMEM, sc->sc.iot,
+		Cardbus_mapreg_unmap(ct, PCI_CBMEM, sc->sc.iot,
 		    sc->sc.ioh, sc->sc.sc_size);
 		sc->sc.sc_size = 0;
 	}
