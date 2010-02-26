@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.458 2010/02/08 08:32:58 cnst Exp $
+.\"	$NetBSD: main,v 1.459 2010/02/26 21:52:22 morr Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1205,6 +1205,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Jachym Holecek Ta Mt freza@NetBSD.org
 .It Ta David A. Holland Ta Mt dholland@NetBSD.org
 .It Ta Christian E. Hopps Ta Mt chopps@NetBSD.org
+.It Ta Daniel Horecki Ta Mt morr@NetBSD.org
 .It Ta Ken Hornstein Ta Mt kenh@NetBSD.org
 .It Ta Marc Horowitz Ta Mt marc@NetBSD.org
 .It Ta Eduardo Horvath Ta Mt eeh@NetBSD.org
