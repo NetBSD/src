@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.50 2009/05/05 10:02:52 cegger Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.51 2010/02/26 00:38:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.50 2009/05/05 10:02:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.51 2010/02/26 00:38:14 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,12 +326,6 @@ ex_d3tod0(pci_chipset_tag_t pc, pcitag_t tag, device_t self, pcireg_t state)
 {
 
 #define PCI_CACHE_LAT_BIST	0x0c
-#define PCI_BAR0		0x10
-#define PCI_BAR1		0x14
-#define PCI_BAR2		0x18
-#define PCI_BAR3		0x1C
-#define PCI_BAR4		0x20
-#define PCI_BAR5		0x24
 #define PCI_EXP_ROM_BAR		0x30
 #define PCI_INT_GNT_LAT		0x3c
 
