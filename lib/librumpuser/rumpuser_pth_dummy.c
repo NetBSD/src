@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth_dummy.c,v 1.8 2009/12/08 08:18:24 stacktic Exp $	*/
+/*	$NetBSD: rumpuser_pth_dummy.c,v 1.1 2010/02/26 18:54:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.8 2009/12/08 08:18:24 stacktic Exp $");
+__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.1 2010/02/26 18:54:20 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/time.h>
