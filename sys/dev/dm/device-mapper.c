@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.17 2010/02/25 23:37:39 haad Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.18 2010/02/26 23:52:43 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@
 #include <sys/ioccom.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
-#include <sys/once.h>
 
 #include "netbsd-dm.h"
 #include "dm.h"
@@ -60,9 +59,10 @@ static dev_type_strategy(dmstrategy);
 static dev_type_size(dmsize);
 
 /* attach and detach routines */
-int dmattach(void);
+void dmattach(int);
 int dmdestroy(void);
 
+static int doinit(void);
 static int dm_cmd_to_fun(prop_dictionary_t);
 static int disk_ioctl_switch(dev_t, u_long, void *);
 static int dm_ioctl_switch(u_long);
@@ -161,11 +161,9 @@ dm_modcmd(modcmd_t cmd, void *arg)
 		if (error)
 			break;
 
-		error = dmattach();
+		error = doinit();
 		if (error) {
 			config_cfdriver_detach(&dm_cd);
-			aprint_error("%s: unable to register cfattach\n",
-			    dm_cd.cd_name);
 			break;
 		}
 
@@ -278,7 +276,8 @@ doinit(void)
 	
 	error = config_cfattach_attach(dm_cd.cd_name, &dm_ca);
 	if (error) {
-		aprint_error("Unable to register cfattach for dm driver\n");
+		aprint_error("%s: unable to register cfattach\n",
+		    dm_cd.cd_name);
 		return error;
 	}
 	
@@ -290,12 +289,10 @@ doinit(void)
 }
 
 /* attach routine */
-int
-dmattach(void)
+void
+dmattach(int n)
 {
-	static ONCE_DECL(control);
-
-	return RUN_ONCE(&control, doinit);
+	doinit();
 }
 
 /* Destroy routine */
