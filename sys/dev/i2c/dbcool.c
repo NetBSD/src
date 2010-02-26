@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.16 2010/02/24 23:37:45 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.17 2010/02/26 18:16:18 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.16 2010/02/24 23:37:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.17 2010/02/26 18:16:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1459,7 +1459,9 @@ dbcool_setup(device_t self)
 {
 	struct dbcool_softc *sc = device_private(self);
 	const struct sysctlnode *me = NULL;
+#ifdef DBCOOL_DEBUG
 	struct sysctlnode *node = NULL;
+#endif
 	uint8_t cfg_val, cfg_reg;
 	int ro_flag, rw_flag, ret, error;
 
