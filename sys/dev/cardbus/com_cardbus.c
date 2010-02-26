@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.27 2010/02/25 23:40:39 dyoung Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.28 2010/02/26 00:57:01 dyoung Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.27 2010/02/25 23:40:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.28 2010/02/26 00:57:01 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,15 +89,15 @@ static struct csdev {
 	int		type;
 } csdevs[] = {
 	{ PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MODEM56,
-	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
+	  PCI_BAR0, PCI_MAPREG_TYPE_IO },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MODEM56,
-	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
+	  PCI_BAR0, PCI_MAPREG_TYPE_IO },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656_M,
-	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
+	  PCI_BAR0, PCI_MAPREG_TYPE_IO },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656B_M,
-	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
+	  PCI_BAR0, PCI_MAPREG_TYPE_IO },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656C_M,
-	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
+	  PCI_BAR0, PCI_MAPREG_TYPE_IO },
 };
 
 static const int ncsdevs = sizeof(csdevs) / sizeof(csdevs[0]);
@@ -108,8 +108,8 @@ find_csdev(struct cardbus_attach_args *ca)
 	struct csdev *cp;
 
 	for(cp = csdevs; cp < csdevs + ncsdevs; cp++)
-		if(cp->vendor == CARDBUS_VENDOR(ca->ca_id) &&
-		   cp->product == CARDBUS_PRODUCT(ca->ca_id))
+		if(cp->vendor == PCI_VENDOR(ca->ca_id) &&
+		   cp->product == PCI_PRODUCT(ca->ca_id))
 			return cp;
 	return NULL;
 }
@@ -172,9 +172,9 @@ gofigure(struct cardbus_attach_args *ca, struct com_cardbus_softc *csc)
 	}
 	csc->cc_reg = CARDBUS_CIS_ASI_BAR(ca->ca_cis.bar[index].flags);
 	if ((ca->ca_cis.bar[index].flags & 0x10) == 0)
-		csc->cc_type = CARDBUS_MAPREG_TYPE_MEM;
+		csc->cc_type = PCI_MAPREG_TYPE_MEM;
 	else
-		csc->cc_type = CARDBUS_MAPREG_TYPE_IO;
+		csc->cc_type = PCI_MAPREG_TYPE_IO;
 	return 0;
 
   multi_bar:
@@ -183,7 +183,7 @@ gofigure(struct cardbus_attach_args *ca, struct com_cardbus_softc *csc)
 	aprint_error_dev(DEVICET(csc), "address for this device, "
 	       "please report the following information\n");
 	aprint_error_dev(DEVICET(csc), "vendor 0x%x product 0x%x\n",
-	       CARDBUS_VENDOR(ca->ca_id), CARDBUS_PRODUCT(ca->ca_id));
+	       PCI_VENDOR(ca->ca_id), PCI_PRODUCT(ca->ca_id));
 	for(i = 0; i < 7; i++) {
 		/* ignore zero sized BARs */
 		if(ca->ca_cis.bar[i].size == 0)
@@ -233,12 +233,12 @@ com_cardbus_attach (device_t parent, device_t self, void *aux)
 	COM_INIT_REGS(sc->sc_regs, iot, ioh, csc->cc_addr);
 
 	csc->cc_base = csc->cc_addr;
-	csc->cc_csr = CARDBUS_COMMAND_MASTER_ENABLE;
-	if(csc->cc_type == CARDBUS_MAPREG_TYPE_IO) {
-		csc->cc_base |= CARDBUS_MAPREG_TYPE_IO;
-		csc->cc_csr |= CARDBUS_COMMAND_IO_ENABLE;
+	csc->cc_csr = PCI_COMMAND_MASTER_ENABLE;
+	if(csc->cc_type == PCI_MAPREG_TYPE_IO) {
+		csc->cc_base |= PCI_MAPREG_TYPE_IO;
+		csc->cc_csr |= PCI_COMMAND_IO_ENABLE;
 	} else {
-		csc->cc_csr |= CARDBUS_COMMAND_MEM_ENABLE;
+		csc->cc_csr |= PCI_COMMAND_MEM_ENABLE;
 	}
 
 	sc->sc_frequency = COM_FREQ;
@@ -264,27 +264,25 @@ static void
 com_cardbus_setup(struct com_cardbus_softc *csc)
 {
         cardbus_devfunc_t ct = csc->cc_ct;
-        cardbus_chipset_tag_t cc = ct->ct_cc;
-        cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 
 	Cardbus_conf_write(ct, csc->cc_tag, csc->cc_reg, csc->cc_base);
 
 	/* and the card itself */
-	reg = Cardbus_conf_read(ct, csc->cc_tag, CARDBUS_COMMAND_STATUS_REG);
-	reg &= ~(CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE);
+	reg = Cardbus_conf_read(ct, csc->cc_tag, PCI_COMMAND_STATUS_REG);
+	reg &= ~(PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE);
 	reg |= csc->cc_csr;
-	Cardbus_conf_write(ct, csc->cc_tag, CARDBUS_COMMAND_STATUS_REG, reg);
+	Cardbus_conf_write(ct, csc->cc_tag, PCI_COMMAND_STATUS_REG, reg);
 
         /*
          * Make sure the latency timer is set to some reasonable
          * value.
          */
-        reg = cardbus_conf_read(cc, cf, csc->cc_tag, CARDBUS_BHLC_REG);
-        if (CARDBUS_LATTIMER(reg) < 0x20) {
-                reg &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
-                reg |= (0x20 << CARDBUS_LATTIMER_SHIFT);
-                cardbus_conf_write(cc, cf, csc->cc_tag, CARDBUS_BHLC_REG, reg);
+        reg = Cardbus_conf_read(ct, csc->cc_tag, PCI_BHLC_REG);
+        if (PCI_LATTIMER(reg) < 0x20) {
+                reg &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
+                reg |= (0x20 << PCI_LATTIMER_SHIFT);
+                Cardbus_conf_write(ct, csc->cc_tag, PCI_BHLC_REG, reg);
         }
 }
 

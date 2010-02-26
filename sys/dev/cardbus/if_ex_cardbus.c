@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.49 2010/02/26 00:01:27 dyoung Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.50 2010/02/26 00:57:02 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.49 2010/02/26 00:01:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.50 2010/02/26 00:57:02 dyoung Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.49 2010/02/26 00:01:27 dyoung Ex
 #define DPRINTF(a)
 #endif
 
-#define CARDBUS_3C575BTX_FUNCSTAT_PCIREG  CARDBUS_BASE2_REG  /* means 0x18 */
+#define CARDBUS_3C575BTX_FUNCSTAT_PCIREG  PCI_BAR2  /* means 0x18 */
 #define EX_CB_INTR 4		/* intr acknowledge reg. CardBus only */
 #define EX_CB_INTR_ACK 0x8000 /* intr acknowledge bit */
 
@@ -126,47 +126,47 @@ const struct ex_cardbus_product {
 } ex_cardbus_products[] = {
 	{ PCI_PRODUCT_3COM_3C575TX,
 	  EX_CONF_MII | EX_CONF_EEPROM_OFF | EX_CONF_EEPROM_8BIT,
-	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MASTER_ENABLE,
+	  PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MASTER_ENABLE,
 	  EX_CB_BOOMERANG,
 	  "3c575-TX Ethernet" },
 
 	{ PCI_PRODUCT_3COM_3C575BTX,
 	  EX_CONF_90XB|EX_CONF_MII|EX_CONF_INV_LED_POLARITY |
 	    EX_CONF_EEPROM_OFF | EX_CONF_EEPROM_8BIT,
-	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
-	      CARDBUS_COMMAND_MASTER_ENABLE,
+	  PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+	      PCI_COMMAND_MASTER_ENABLE,
 	  EX_CB_CYCLONE,
 	  "3c575B-TX Ethernet" },
 
 	{ PCI_PRODUCT_3COM_3C575CTX,
 	  EX_CONF_90XB | EX_CONF_PHY_POWER | EX_CONF_EEPROM_OFF |
 	    EX_CONF_EEPROM_8BIT,
-	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
-	      CARDBUS_COMMAND_MASTER_ENABLE,
+	  PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+	      PCI_COMMAND_MASTER_ENABLE,
 	  EX_CB_CYCLONE,
 	  "3c575CT Ethernet" },
 
 	{ PCI_PRODUCT_3COM_3C656_E,
 	  EX_CONF_90XB | EX_CONF_PHY_POWER | EX_CONF_EEPROM_OFF |
 	    EX_CONF_EEPROM_8BIT | EX_CONF_INV_LED_POLARITY,
-	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
-	      CARDBUS_COMMAND_MASTER_ENABLE,
+	  PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+	      PCI_COMMAND_MASTER_ENABLE,
 	  EX_CB_CYCLONE,
 	  "3c656-TX Ethernet" },
 
 	{ PCI_PRODUCT_3COM_3C656B_E,
 	  EX_CONF_90XB | EX_CONF_PHY_POWER | EX_CONF_EEPROM_OFF |
 	    EX_CONF_EEPROM_8BIT | EX_CONF_INV_LED_POLARITY,
-	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
-	      CARDBUS_COMMAND_MASTER_ENABLE,
+	  PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+	      PCI_COMMAND_MASTER_ENABLE,
 	  EX_CB_CYCLONE,
 	  "3c656B-TX Ethernet" },
 
 	{ PCI_PRODUCT_3COM_3C656C_E,
 	  EX_CONF_90XB | EX_CONF_PHY_POWER | EX_CONF_EEPROM_OFF |
 	    EX_CONF_EEPROM_8BIT,
-	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
-	      CARDBUS_COMMAND_MASTER_ENABLE,
+	  PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+	      PCI_COMMAND_MASTER_ENABLE,
 	  EX_CB_CYCLONE,
 	  "3c656C-TX Ethernet" },
 
@@ -188,11 +188,11 @@ ex_cardbus_lookup(const struct cardbus_attach_args *ca)
 {
 	const struct ex_cardbus_product *ecp;
 
-	if (CARDBUS_VENDOR(ca->ca_id) != PCI_VENDOR_3COM)
+	if (PCI_VENDOR(ca->ca_id) != PCI_VENDOR_3COM)
 		return (NULL);
 
 	for (ecp = ex_cardbus_products; ecp->ecp_name != NULL; ecp++)
-		if (CARDBUS_PRODUCT(ca->ca_id) == ecp->ecp_prodid)
+		if (PCI_PRODUCT(ca->ca_id) == ecp->ecp_prodid)
 			return (ecp);
 	return (NULL);
 }
@@ -242,27 +242,27 @@ ex_cardbus_attach(device_t parent, device_t self, void *aux)
 	csc->sc_cardtype = ecp->ecp_cardtype;
 	csc->sc_csr = ecp->ecp_csr;
 
-	if (Cardbus_mapreg_map(ct, CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO, 0,
+	if (Cardbus_mapreg_map(ct, PCI_BAR0, PCI_MAPREG_TYPE_IO, 0,
 		&sc->sc_iot, &sc->sc_ioh, &adr, &csc->sc_mapsize) == 0) {
 #if rbus
 #else
 		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr + csc->sc_mapsize);
 #endif
-		csc->sc_bar_reg = CARDBUS_BASE0_REG;
-		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_IO;
+		csc->sc_bar_reg = PCI_BAR0;
+		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_IO;
 
 		if (csc->sc_cardtype == EX_CB_CYCLONE) {
 			/* Map CardBus function status window. */
 			if (Cardbus_mapreg_map(ct,
 				CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
-		    		CARDBUS_MAPREG_TYPE_MEM, 0,
+		    		PCI_MAPREG_TYPE_MEM, 0,
 				 &csc->sc_funct, &csc->sc_funch,
 				 &adr1, &csc->sc_funcsize) == 0) {
 
 				csc->sc_bar_reg1 =
 					CARDBUS_3C575BTX_FUNCSTAT_PCIREG;
 				csc->sc_bar_val1 =
-					adr1 | CARDBUS_MAPREG_TYPE_MEM;
+					adr1 | PCI_MAPREG_TYPE_MEM;
 
 			} else {
 				aprint_error_dev(self, "unable to map function "
@@ -334,7 +334,7 @@ ex_cardbus_detach(device_t self, int arg)
 			    csc->sc_funct, csc->sc_funch, csc->sc_funcsize);
 		}
 
-		Cardbus_mapreg_unmap(ct, CARDBUS_BASE0_REG, sc->sc_iot,
+		Cardbus_mapreg_unmap(ct, PCI_BAR0, sc->sc_iot,
 		    sc->sc_ioh, csc->sc_mapsize);
 	}
 	return (rv);
@@ -378,19 +378,16 @@ void
 ex_cardbus_setup(struct ex_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 
 	(void)cardbus_set_powerstate(ct, csc->sc_tag, PCI_PWR_D0);
 
 	/* Program the BAR */
-	cardbus_conf_write(cc, cf, csc->sc_tag,
-		csc->sc_bar_reg, csc->sc_bar_val);
+	Cardbus_conf_write(ct, csc->sc_tag, csc->sc_bar_reg, csc->sc_bar_val);
 	/* Make sure the right access type is on the CardBus bridge. */
 	if (csc->sc_cardtype == EX_CB_CYCLONE) {
 		/* Program the BAR */
-		cardbus_conf_write(cc, cf, csc->sc_tag,
+		Cardbus_conf_write(ct, csc->sc_tag,
 			csc->sc_bar_reg1, csc->sc_bar_val1);
 		/*
 		 * Make sure CardBus brigde can access memory space.  Usually
@@ -400,22 +397,20 @@ ex_cardbus_setup(struct ex_cardbus_softc *csc)
 	}
 
 	/* Enable the appropriate bits in the CARDBUS CSR. */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag,
-	    CARDBUS_COMMAND_STATUS_REG);
+	reg = Cardbus_conf_read(ct, csc->sc_tag, PCI_COMMAND_STATUS_REG);
 	reg |= csc->sc_csr;
-	cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_COMMAND_STATUS_REG,
-	    reg);
+	Cardbus_conf_write(ct, csc->sc_tag, PCI_COMMAND_STATUS_REG, reg);
 
  	/*
 	 * set latency timer
 	 */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG);
-	if (CARDBUS_LATTIMER(reg) < 0x20) {
+	reg = Cardbus_conf_read(ct, csc->sc_tag, PCI_BHLC_REG);
+	if (PCI_LATTIMER(reg) < 0x20) {
 		/* at least the value of latency timer should 0x20. */
 		DPRINTF(("if_ex_cardbus: lattimer 0x%x -> 0x20\n",
-		    CARDBUS_LATTIMER(reg)));
-		reg &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
-		reg |= (0x20 << CARDBUS_LATTIMER_SHIFT);
-		cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG, reg);
+		    PCI_LATTIMER(reg)));
+		reg &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
+		reg |= (0x20 << PCI_LATTIMER_SHIFT);
+		Cardbus_conf_write(ct, csc->sc_tag, PCI_BHLC_REG, reg);
 	}
 }

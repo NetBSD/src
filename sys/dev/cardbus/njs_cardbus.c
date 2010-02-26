@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_cardbus.c,v 1.14 2010/02/25 23:40:39 dyoung Exp $	*/
+/*	$NetBSD: njs_cardbus.c,v 1.15 2010/02/26 00:57:02 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.14 2010/02/25 23:40:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.15 2010/02/26 00:57:02 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.14 2010/02/25 23:40:39 dyoung Exp 
 #include <dev/ic/ninjascsi32reg.h>
 #include <dev/ic/ninjascsi32var.h>
 
-#define NJSC32_CARDBUS_BASEADDR_IO	CARDBUS_BASE0_REG
-#define NJSC32_CARDBUS_BASEADDR_MEM	CARDBUS_BASE1_REG
+#define NJSC32_CARDBUS_BASEADDR_IO	PCI_BAR0
+#define NJSC32_CARDBUS_BASEADDR_MEM	PCI_BAR1
 
 struct njsc32_cardbus_softc {
 	struct njsc32_softc	sc_njsc32;
@@ -97,8 +97,8 @@ njs_cardbus_lookup(const struct cardbus_attach_args *ca)
 
 	for (p = njsc32_cardbus_products;
 	    p->p_model != NJSC32_MODEL_INVALID; p++) {
-		if (CARDBUS_VENDOR(ca->ca_id) == p->p_vendor &&
-		    CARDBUS_PRODUCT(ca->ca_id) == p->p_product)
+		if (PCI_VENDOR(ca->ca_id) == p->p_vendor &&
+		    PCI_PRODUCT(ca->ca_id) == p->p_product)
 			return p;
 	}
 
@@ -183,20 +183,20 @@ njs_cardbus_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Enable the appropriate bits in the PCI CSR. */
-	reg = cardbus_conf_read(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG);
+	reg = Cardbus_conf_read(ct, ca->ca_tag, PCI_COMMAND_STATUS_REG);
 	reg &= ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
 	reg |= csr;
-	cardbus_conf_write(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG, reg);
+	Cardbus_conf_write(ct, ca->ca_tag, PCI_COMMAND_STATUS_REG, reg);
 
 	/*
 	 * Make sure the latency timer is set to some reasonable
 	 * value.
 	 */
-	reg = cardbus_conf_read(cc, cf, ca->ca_tag, CARDBUS_BHLC_REG);
-	if (CARDBUS_LATTIMER(reg) < latency) {
-		reg &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
-		reg |= (latency << CARDBUS_LATTIMER_SHIFT);
-		cardbus_conf_write(cc, cf, ca->ca_tag, CARDBUS_BHLC_REG, reg);
+	reg = Cardbus_conf_read(ct, ca->ca_tag, PCI_BHLC_REG);
+	if (PCI_LATTIMER(reg) < latency) {
+		reg &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
+		reg |= (latency << PCI_LATTIMER_SHIFT);
+		Cardbus_conf_write(ct, ca->ca_tag, PCI_BHLC_REG, reg);
 	}
 
 	sc->sc_dmat = ca->ca_dmat;

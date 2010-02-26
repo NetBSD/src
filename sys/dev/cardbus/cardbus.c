@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.104 2010/02/25 21:18:35 dyoung Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.105 2010/02/26 00:57:01 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.104 2010/02/25 21:18:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.105 2010/02/26 00:57:01 dyoung Exp $");
 
 #include "opt_cardbus.h"
 
@@ -213,7 +213,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, pcireg_t cis_ptr,
 		 */
 		cardbus_conf_write(cc, cf, tag, reg, 0);
 		if (Cardbus_mapreg_map(ca->ca_ct, reg,
-		    CARDBUS_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
+		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 		    0, &bar_tag, &bar_memh, &bar_addr, &bar_size)) {
 			aprint_error_dev(sc->sc_dev, "failed to map memory\n");
 			return (1);
@@ -233,10 +233,10 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, pcireg_t cis_ptr,
 			cardbus_conf_write(cc, cf, tag, reg, exrom | 1);
 
 			command = cardbus_conf_read(cc, cf, tag,
-			    CARDBUS_COMMAND_STATUS_REG);
+			    PCI_COMMAND_STATUS_REG);
 			cardbus_conf_write(cc, cf, tag,
-			    CARDBUS_COMMAND_STATUS_REG,
-			    command | CARDBUS_COMMAND_MEM_ENABLE);
+			    PCI_COMMAND_STATUS_REG,
+			    command | PCI_COMMAND_MEM_ENABLE);
 
 			if (cardbus_read_exrom(bar_tag, bar_memh, &rom_image))
 				goto out;
@@ -261,10 +261,10 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, pcireg_t cis_ptr,
 			splx(save);
 		} else {
 			command = cardbus_conf_read(cc, cf, tag,
-			    CARDBUS_COMMAND_STATUS_REG);
+			    PCI_COMMAND_STATUS_REG);
 			cardbus_conf_write(cc, cf, tag,
-			    CARDBUS_COMMAND_STATUS_REG,
-			    command | CARDBUS_COMMAND_MEM_ENABLE);
+			    PCI_COMMAND_STATUS_REG,
+			    command | PCI_COMMAND_MEM_ENABLE);
 			/* XXX byte order? */
 			bus_space_read_region_1(bar_tag, bar_memh,
 			    cis_ptr, tuples,
@@ -272,9 +272,9 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, pcireg_t cis_ptr,
 			found++;
 		}
 		command = cardbus_conf_read(cc, cf, tag,
-		    CARDBUS_COMMAND_STATUS_REG);
-		cardbus_conf_write(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG,
-		    command & ~CARDBUS_COMMAND_MEM_ENABLE);
+		    PCI_COMMAND_STATUS_REG);
+		cardbus_conf_write(cc, cf, tag, PCI_COMMAND_STATUS_REG,
+		    command & ~PCI_COMMAND_MEM_ENABLE);
 		cardbus_conf_write(cc, cf, tag, reg, 0);
 
 		Cardbus_mapreg_unmap(ca->ca_ct, reg, bar_tag, bar_memh,
@@ -479,9 +479,9 @@ cardbus_rescan(device_t self, const char *ifattr,
 		}
 	}
 
-	bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
+	bhlc = cardbus_conf_read(cc, cf, tag, PCI_BHLC_REG);
 	DPRINTF(("%s bhlc 0x%08x -> ", device_xname(sc->sc_dev), bhlc));
-	nfunction = CARDBUS_HDRTYPE_MULTIFN(bhlc) ? 8 : 1;
+	nfunction = PCI_HDRTYPE_MULTIFN(bhlc) ? 8 : 1;
 
 	for (function = 0; function < nfunction; function++) {
 		struct cardbus_attach_args ca;
@@ -502,33 +502,33 @@ cardbus_rescan(device_t self, const char *ifattr,
 		cis_ptr = cardbus_conf_read(cc, cf, tag, CARDBUS_CIS_REG);
 
 		/* Invalid vendor ID value? */
-		if (CARDBUS_VENDOR(id) == PCI_VENDOR_INVALID) {
+		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID) {
 			continue;
 		}
 
 		DPRINTF(("cardbus_attach_card: "
 		    "Vendor 0x%x, Product 0x%x, CIS 0x%x\n",
-		    CARDBUS_VENDOR(id), CARDBUS_PRODUCT(id), cis_ptr));
+		    PCI_VENDOR(id), PCI_PRODUCT(id), cis_ptr));
 
 		enable_function(sc, cdstatus, function);
 
 		/* clean up every BAR */
-		cardbus_conf_write(cc, cf, tag, CARDBUS_BASE0_REG, 0);
-		cardbus_conf_write(cc, cf, tag, CARDBUS_BASE1_REG, 0);
-		cardbus_conf_write(cc, cf, tag, CARDBUS_BASE2_REG, 0);
-		cardbus_conf_write(cc, cf, tag, CARDBUS_BASE3_REG, 0);
-		cardbus_conf_write(cc, cf, tag, CARDBUS_BASE4_REG, 0);
-		cardbus_conf_write(cc, cf, tag, CARDBUS_BASE5_REG, 0);
+		cardbus_conf_write(cc, cf, tag, PCI_BAR0, 0);
+		cardbus_conf_write(cc, cf, tag, PCI_BAR1, 0);
+		cardbus_conf_write(cc, cf, tag, PCI_BAR2, 0);
+		cardbus_conf_write(cc, cf, tag, PCI_BAR3, 0);
+		cardbus_conf_write(cc, cf, tag, PCI_BAR4, 0);
+		cardbus_conf_write(cc, cf, tag, PCI_BAR5, 0);
 		cardbus_conf_write(cc, cf, tag, CARDBUS_ROM_REG, 0);
 
 		/* set initial latency and cacheline size */
-		bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
-		icr = cardbus_conf_read(cc, cf, tag, CARDBUS_INTERRUPT_REG);
+		bhlc = cardbus_conf_read(cc, cf, tag, PCI_BHLC_REG);
+		icr = cardbus_conf_read(cc, cf, tag, PCI_INTERRUPT_REG);
 		DPRINTF(("%s func%d icr 0x%08x bhlc 0x%08x -> ",
 		    device_xname(sc->sc_dev), function, icr, bhlc));
-		bhlc &= ~(CARDBUS_CACHELINE_MASK << CARDBUS_CACHELINE_SHIFT);
-		bhlc |= (sc->sc_cacheline & CARDBUS_CACHELINE_MASK) <<
-		    CARDBUS_CACHELINE_SHIFT;
+		bhlc &= ~(PCI_CACHELINE_MASK << PCI_CACHELINE_SHIFT);
+		bhlc |= (sc->sc_cacheline & PCI_CACHELINE_MASK) <<
+		    PCI_CACHELINE_SHIFT;
 		/*
 		 * Set the initial value of the Latency Timer.
 		 *
@@ -552,8 +552,8 @@ cardbus_rescan(device_t self, const char *ifattr,
 			bhlc |= (lattimer << PCI_LATTIMER_SHIFT);
 		}
 
-		cardbus_conf_write(cc, cf, tag, CARDBUS_BHLC_REG, bhlc);
-		bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
+		cardbus_conf_write(cc, cf, tag, PCI_BHLC_REG, bhlc);
+		bhlc = cardbus_conf_read(cc, cf, tag, PCI_BHLC_REG);
 		DPRINTF(("0x%08x\n", bhlc));
 
 		/*
@@ -817,14 +817,14 @@ cardbus_function_enable(struct cardbus_softc *sc, int func)
 
 	tag = cardbus_make_tag(cc, cf, sc->sc_bus, func);
 
-	command = cardbus_conf_read(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG);
-	command |= (CARDBUS_COMMAND_MEM_ENABLE | CARDBUS_COMMAND_IO_ENABLE |
-	    CARDBUS_COMMAND_MASTER_ENABLE); /* XXX: good guess needed */
+	command = cardbus_conf_read(cc, cf, tag, PCI_COMMAND_STATUS_REG);
+	command |= (PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_IO_ENABLE |
+	    PCI_COMMAND_MASTER_ENABLE); /* XXX: good guess needed */
 
-	cardbus_conf_write(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG, command);
+	cardbus_conf_write(cc, cf, tag, PCI_COMMAND_STATUS_REG, command);
 
 	if ((ct = sc->sc_funcs[func]) != NULL)
-		Cardbus_conf_write(ct, tag, CARDBUS_BHLC_REG, ct->ct_bhlc);
+		Cardbus_conf_write(ct, tag, PCI_BHLC_REG, ct->ct_bhlc);
 
 	DPRINTF(("%x\n", sc->sc_poweron_func));
 

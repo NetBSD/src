@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.32 2010/02/26 00:01:27 dyoung Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.33 2010/02/26 00:57:01 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.32 2010/02/26 00:01:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.33 2010/02/26 00:57:01 dyoung Exp $");
 
 #include "opt_ahc_cardbus.h"
 
@@ -96,8 +96,8 @@ ahc_cardbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
-	if (CARDBUS_VENDOR(ca->ca_id) == PCI_VENDOR_ADP &&
-	    CARDBUS_PRODUCT(ca->ca_id) == PCI_PRODUCT_ADP_APA1480)
+	if (PCI_VENDOR(ca->ca_id) == PCI_VENDOR_ADP &&
+	    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_ADP_APA1480)
 		return (1);
 
 	return (0);

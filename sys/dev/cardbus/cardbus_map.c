@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.33 2010/02/25 00:47:39 dyoung Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.34 2010/02/26 00:57:01 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.33 2010/02/25 00:47:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.34 2010/02/26 00:57:01 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,12 +375,12 @@ int cardbus_save_bar(cardbus_devfunc_t ct)
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
-	ct->ct_bar[0] = cardbus_conf_read(cc, cf, tag, CARDBUS_BASE0_REG);
-	ct->ct_bar[1] = cardbus_conf_read(cc, cf, tag, CARDBUS_BASE1_REG);
-	ct->ct_bar[2] = cardbus_conf_read(cc, cf, tag, CARDBUS_BASE2_REG);
-	ct->ct_bar[3] = cardbus_conf_read(cc, cf, tag, CARDBUS_BASE3_REG);
-	ct->ct_bar[4] = cardbus_conf_read(cc, cf, tag, CARDBUS_BASE4_REG);
-	ct->ct_bar[5] = cardbus_conf_read(cc, cf, tag, CARDBUS_BASE5_REG);
+	ct->ct_bar[0] = cardbus_conf_read(cc, cf, tag, PCI_BAR0);
+	ct->ct_bar[1] = cardbus_conf_read(cc, cf, tag, PCI_BAR1);
+	ct->ct_bar[2] = cardbus_conf_read(cc, cf, tag, PCI_BAR2);
+	ct->ct_bar[3] = cardbus_conf_read(cc, cf, tag, PCI_BAR3);
+	ct->ct_bar[4] = cardbus_conf_read(cc, cf, tag, PCI_BAR4);
+	ct->ct_bar[5] = cardbus_conf_read(cc, cf, tag, PCI_BAR5);
 
 	DPRINTF(("cardbus_save_bar: %x %x\n", ct->ct_bar[0], ct->ct_bar[1]));
 
@@ -401,12 +401,12 @@ int cardbus_restore_bar(cardbus_devfunc_t ct)
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
-	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE0_REG, ct->ct_bar[0]);
-	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE1_REG, ct->ct_bar[1]);
-	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE2_REG, ct->ct_bar[2]);
-	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE3_REG, ct->ct_bar[3]);
-	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE4_REG, ct->ct_bar[4]);
-	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE5_REG, ct->ct_bar[5]);
+	cardbus_conf_write(cc, cf, tag, PCI_BAR0, ct->ct_bar[0]);
+	cardbus_conf_write(cc, cf, tag, PCI_BAR1, ct->ct_bar[1]);
+	cardbus_conf_write(cc, cf, tag, PCI_BAR2, ct->ct_bar[2]);
+	cardbus_conf_write(cc, cf, tag, PCI_BAR3, ct->ct_bar[3]);
+	cardbus_conf_write(cc, cf, tag, PCI_BAR4, ct->ct_bar[4]);
+	cardbus_conf_write(cc, cf, tag, PCI_BAR5, ct->ct_bar[5]);
 
 	return 0;
 }
