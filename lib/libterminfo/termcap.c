@@ -1,4 +1,4 @@
-/* $NetBSD: termcap.c,v 1.2 2010/02/04 09:46:26 roy Exp $ */
+/* $NetBSD: termcap.c,v 1.3 2010/02/26 00:09:00 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,9 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap.c,v 1.2 2010/02/04 09:46:26 roy Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.3 2010/02/26 00:09:00 roy Exp $");
 
 #include <assert.h>
+#include <ctype.h>
+#include <errno.h>
 #include <stdint.h>
 #include <string.h>
 #include <term_private.h>
@@ -180,3 +182,176 @@ tgoto(const char *cm, int destcol, int destline)
 	_DIAGASSERT(cm != NULL);
 	return vtparm(cm, destline, destcol);
 }
+
+static const char *
+flagname(const char *key)
+{
+	uint32_t idx;
+
+	idx = _t_flaghash((const unsigned char *)key, strlen(key));
+	if (idx <= __arraycount(_ti_cap_flagids) &&
+	    strcmp(key, _ti_cap_flagids[idx].id) == 0)
+		return _ti_flagid(_ti_cap_flagids[idx].ti);
+	return key;
+}
+
+static const char *
+numname(const char *key)
+{
+	uint32_t idx;
+
+	idx = _t_numhash((const unsigned char *)key, strlen(key));
+	if (idx <= __arraycount(_ti_cap_numids) && 
+	    strcmp(key, _ti_cap_numids[idx].id) == 0)
+		return _ti_numid(_ti_cap_numids[idx].ti);
+	return key;
+}
+
+static const char *
+strname(const char *key)
+{
+	uint32_t idx;
+
+	idx = _t_strhash((const unsigned char *)key, strlen(key));
+	if (idx <= __arraycount(_ti_cap_strids) &&
+	    strcmp(key, _ti_cap_strids[idx].id) == 0)
+		return _ti_strid(_ti_cap_strids[idx].ti);
+
+	if (strcmp(key, "tc") == 0)
+		return "use";
+
+	return key;
+}
+
+/* We don't currently map %> %B %D
+ * That means no conversion for regent100, hz1500, act4, act5, mime terms. */
+static char *
+strval(const char *val)
+{
+	char *info, *ip, c;
+	int p;
+	size_t len, l, n;
+
+	len = 1024; /* no single string should be bigger */
+	info = ip = malloc(len);
+	if (info == NULL)
+		return 0;
+
+	l = 0;
+	p = 1;
+	for (; *val != '\0'; val++) {
+		if (l + 2 > len)
+			goto elen;
+		if (*val != '%') {
+			*ip++ = *val;
+			l++;
+			continue;
+		}
+		switch (c = *(++val)) {
+		case 'd':
+			if (l + 6 > len)
+				goto elen;
+			*ip++ = '%';
+			*ip++ = 'p';
+			*ip++ = '0' + p;
+			*ip++ = '%';
+			*ip++ = 'd';
+			l += 5;
+			n += 5;
+			/* FALLTHROUGH */
+		case 'r':
+			p = 3 - p;
+			break;
+		default:
+			/* Hope it matches a terminfo command. */
+			*ip++ = '%';
+			*ip++ = c;
+			l += 2;
+			break;
+		}
+	}
+
+	*ip = '\0';
+	return info;
+
+elen:
+	free(info);
+	errno = ENOMEM;
+	return NULL;
+}
+
+char *
+captoinfo(char *cap)
+{
+	char *info, *ip, *token, *val, *p, tok[3];
+	const char *name;
+	size_t len, lp, nl, vl, rl;
+
+	_DIAGASSERT(cap != NULL);
+
+	len = strlen(cap) * 2;
+	info = ip = malloc(len);
+	if (info == NULL)
+		return NULL;
+
+	lp = 0;
+	tok[2] = '\0';
+	while ((token = strsep(&cap, ":")) != NULL) {
+		/* Trim whitespace */
+		while (isspace((unsigned char)*token))
+			token++;
+		if (token[0] == '\0')
+			continue;
+		name = token;
+		val = NULL;
+		if (token[1] != '\0') {
+			tok[0] = token[0];
+			tok[1] = token[1];
+			if (token[2] == '\0') {
+				name = flagname(tok);
+				val = NULL;
+			} else if (token[2] == '#') {
+				name = numname(tok);
+				val = token + 2;
+			} else if (token[2] == '=') {
+				name = strname(tok);
+				val = strval(token + 2);
+			}
+		}
+		nl = strlen(name);
+		if (val == NULL)
+			vl = 0;
+		else
+			vl = strlen(val);
+		rl = nl + vl + 3; /* , \0 */
+
+		if (lp + rl > len) {
+			if (rl < 256)
+				len += 256;
+			else
+				len += rl;
+			p = realloc(info, len);
+			if (p == NULL)
+				return NULL;
+			info = p;
+		}
+
+		if (ip != info) {
+			*ip++ = ',';
+			*ip++ = ' ';
+		}
+
+		strcpy(ip, name);
+		ip += nl;
+		if (val != NULL) {
+			strcpy(ip, val);
+			ip += vl;
+			if (token[2] == '=')
+				free(val);
+		}
+	}
+
+	*ip = '\0';
+	return info;
+}
+

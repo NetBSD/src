@@ -1,4 +1,4 @@
-/* $NetBSD: term.h,v 1.4 2010/02/11 00:27:09 roy Exp $ */
+/* $NetBSD: term.h,v 1.5 2010/02/26 00:09:00 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -1511,6 +1511,10 @@ char *		t_vparm(TERMINAL *, const char *, ...);
 #  define tparm	vtparm
 #  define t_parm t_vtparm
 #endif
+
+/* Convert a termcap string into a terminfo string.
+ * The passed string is destroyed and the return string needs to be freed. */
+char *		captoinfo(char *);
 
 __END_DECLS
 #endif
