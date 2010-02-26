@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.11 2009/12/08 08:12:49 stacktic Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.12 2010/02/26 15:23:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.11 2009/12/08 08:12:49 stacktic Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.12 2010/02/26 15:23:20 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -332,7 +332,7 @@ process(const char *soname, rump_modinit_fn domodinit)
  * from all objects in the linkmap.
  */
 void
-rumpuser_dl_module_bootstrap(rump_modinit_fn domodinit,
+rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 	rump_symload_fn symload)
 {
 	struct link_map *map, *origmap;
@@ -404,11 +404,10 @@ rumpuser_dl_module_bootstrap(rump_modinit_fn domodinit,
 }
 #else
 void
-rumpuser_dl_module_bootstrap(rump_modinit_fn domodinit,
+rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 	rump_symload_fn symload)
 {
 
 	fprintf(stderr, "Warning, dlinfo() unsupported on host?\n");
-	fprintf(stderr, "module bootstrap unavailable\n");
 }
 #endif
