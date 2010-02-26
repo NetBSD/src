@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.31 2010/02/23 20:51:25 mlelstv Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.32 2010/02/26 22:24:07 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.31 2010/02/23 20:51:25 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.32 2010/02/26 22:24:07 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -319,7 +319,7 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	daddr_t logpbn;
 	int error;
 	int log_dev_bshift = ilog2(blksize);
-	int fs_dev_bshift = mp->mnt_fs_bshift; /* XXX */
+	int fs_dev_bshift = log_dev_bshift;
 	int run;
 
 	WAPBL_PRINTF(WAPBL_PRINT_OPEN, ("wapbl_start: vp=%p off=%" PRId64
