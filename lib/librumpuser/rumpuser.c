@@ -1,10 +1,7 @@
-/*	$NetBSD: rumpuser.c,v 1.49 2010/02/18 12:32:30 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.1 2010/02/26 18:54:20 pooka Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by Google Summer of Code
- * and the Finnish Cultural Foundation.
+ * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.49 2010/02/18 12:32:30 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.1 2010/02/26 18:54:20 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
