@@ -1,10 +1,7 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.40 2009/12/08 08:18:24 stacktic Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.1 2010/02/26 18:54:20 pooka Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by the
- * Finnish Cultural Foundation.
+ * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.40 2009/12/08 08:18:24 stacktic Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.1 2010/02/26 18:54:20 pooka Exp $");
 #endif /* !lint */
 
 #ifdef __linux__
