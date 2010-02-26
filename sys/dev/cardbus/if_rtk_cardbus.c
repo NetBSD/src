@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.41 2010/02/25 23:40:39 dyoung Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.42 2010/02/26 00:01:27 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.41 2010/02/25 23:40:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.42 2010/02/26 00:01:27 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -127,7 +127,7 @@ struct rtk_cardbus_softc {
 	void *sc_ih;
 	cardbus_devfunc_t sc_ct;
 	pcitag_t sc_tag;
-	int sc_csr;
+	pcireg_t sc_csr;
 	int sc_bar_reg;
 	pcireg_t sc_bar_val;
 	bus_size_t sc_mapsize;

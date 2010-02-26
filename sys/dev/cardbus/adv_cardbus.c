@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_cardbus.c,v 1.24 2010/02/25 23:40:39 dyoung Exp $	*/
+/*	$NetBSD: adv_cardbus.c,v 1.25 2010/02/26 00:01:27 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.24 2010/02/25 23:40:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.25 2010/02/26 00:01:27 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ struct adv_cardbus_softc {
 	pcitag_t sc_tag;
 
 	int	sc_bar;
-	int	sc_csr;			/* CSR bits */
+	pcireg_t	sc_csr;
 	bus_size_t sc_size;
 };
 
