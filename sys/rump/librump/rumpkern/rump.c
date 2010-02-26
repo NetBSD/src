@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.152 2010/02/09 16:53:13 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.153 2010/02/26 15:23:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.152 2010/02/09 16:53:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.153 2010/02/26 15:23:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -299,7 +299,7 @@ rump__init(int rump_version)
 
 	sysctl_finalize();
 
-	rumpuser_dl_module_bootstrap(rump_module_init, rump_kernelfsym_load);
+	rumpuser_dl_bootstrap(rump_module_init, rump_kernelfsym_load);
 
 	rumpuser_gethostname(hostname, MAXHOSTNAMELEN, &error);
 	hostnamelen = strlen(hostname);
