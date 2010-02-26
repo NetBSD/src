@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_net.c,v 1.7 2009/09/02 19:02:51 pooka Exp $	*/
+/*	$NetBSD: rumpuser_net.c,v 1.1 2010/02/26 18:54:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_net.c,v 1.7 2009/09/02 19:02:51 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_net.c,v 1.1 2010/02/26 18:54:20 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
