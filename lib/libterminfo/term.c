@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.10 2010/02/22 23:05:39 roy Exp $ */
+/* $NetBSD: term.c,v 1.11 2010/02/26 00:09:00 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.10 2010/02/22 23:05:39 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.11 2010/02/26 00:09:00 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -283,6 +283,34 @@ _ti_dbgettermp(TERMINAL *term, const char *path, const char *name, int flags)
 }
 
 static int
+ticcmp(const TIC *tic, const char *name)
+{
+	char *alias, *s;
+	size_t len, l;
+
+	if (strcmp(tic->name, name) == 0)
+		return 0;
+	if (tic->alias == NULL)
+		return -1;
+
+	len = strlen(name);
+	alias = tic->alias;
+	while (*alias != '\0') {
+		s = strchr(alias, '|');
+		if (s == NULL)
+			l = strlen(alias);
+		else
+			l = s - alias;
+		if (len == l && strncmp(alias, name, l) == 0)
+			return 0;
+		if (s == NULL)
+			break;
+		alias = s + 1;
+	}
+	return 1;
+}
+
+static int
 _ti_findterm(TERMINAL *term, const char *name, int flags)
 {
 	int r;
@@ -298,13 +326,32 @@ _ti_findterm(TERMINAL *term, const char *name, int flags)
 	_ti_database = NULL;
 	r = 0;
 
-	if ((e = getenv("TERMINFO")) != NULL && *e != '\0') {
+	if ((e = getenv("TERMINFO")) != NULL && *e != '\0')
 		if (e[0] == '/')
 			return _ti_dbgetterm(term, e, name, flags);
-		c = strdup(e); /* So we don't destroy env */
-		tic = _ti_compile(c, TIC_WARNING | TIC_EXTRA);
-		free(c);
-		if (tic != NULL && strcmp(tic->name, name) == 0) {
+
+	c = NULL;
+	if (e == NULL && (c = getenv("TERMCAP")) != NULL) {
+		if (*c != '\0' && *c != '/') {
+			c = strdup(c);
+			if (c != NULL) {
+				e = captoinfo(c);
+				free(c);
+			}
+		}
+	}
+
+	if (e != NULL) {
+		if (c == NULL)
+			e = strdup(e); /* So we don't destroy env */
+		if (e  == NULL)
+			tic = NULL;
+		else
+			tic = _ti_compile(e, TIC_WARNING |
+			    TIC_ALIAS | TIC_DESCRIPTION | TIC_EXTRA);
+		if (c == NULL && e != NULL)
+			free(e);
+		if (tic != NULL && ticcmp(tic, name) == 0) {
 			len = _ti_flatten(&f, tic);
 			if (len != -1) {
 				r = _ti_readterm(term, (char *)f, len, flags);
@@ -313,7 +360,10 @@ _ti_findterm(TERMINAL *term, const char *name, int flags)
 		}
 		_ti_freetic(tic);
 		if (r == 1) {
-			_ti_database = "$TERMINFO";
+			if (c == NULL)
+				_ti_database = "$TERMINFO";
+			else
+				_ti_database = "$TERMCAP";
 			return r;
 		}
 	}
