@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.228 2010/01/13 02:24:06 pooka Exp $
+#	$NetBSD: build.sh,v 1.229 2010/02/26 18:57:06 pooka Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1352,7 +1352,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.228 2010/01/13 02:24:06 pooka Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.229 2010/02/26 18:57:06 pooka Exp $
 # with these arguments: ${_args}
 #
 
@@ -1569,7 +1569,6 @@ dorump()
 
 	[ "${MKUPDATE}" = "no" ] && doclean="cleandir"
 	targlist="${doclean} ${doobjs} dependall install"
-	setmakeenv NORUMPUSER 1
 	# optimize: for test we build only static libs (3x test speedup)
 	if [ "${1}" = "rumptest" ] ; then
 		setmakeenv NOPIC 1
