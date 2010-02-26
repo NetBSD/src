@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.47 2010/02/25 00:47:39 dyoung Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.48 2010/02/26 01:12:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -303,6 +303,10 @@ struct cardbus_attach_args {
 
 int cardbus_attach_card(struct cardbus_softc *);
 void cardbus_detach_card(struct cardbus_softc *);
+void *
+Cardbus_intr_establish(cardbus_devfunc_t,
+    cardbus_intr_line_t, int, int (*)(void *), void *);
+void Cardbus_intr_disestablish(cardbus_devfunc_t, void *);
 void *cardbus_intr_establish(cardbus_chipset_tag_t, cardbus_function_tag_t,
     cardbus_intr_line_t, int, int (*) (void *), void *arg);
 void cardbus_intr_disestablish(cardbus_chipset_tag_t,
