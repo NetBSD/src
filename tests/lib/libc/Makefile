@@ -1,8 +1,11 @@
-# $NetBSD: Makefile,v 1.3 2010/01/24 21:12:17 joerg Exp $
+# $NetBSD: Makefile,v 1.4 2010/02/26 09:35:08 martin Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR+=	hash stdlib string
+SUBDIR+=	hash stdlib
+
+# Disabled for now, only test in there is very expensive
+#SUBDIR+=	 string
 
 TESTSDIR=	${TESTSBASE}/lib/libc
 
