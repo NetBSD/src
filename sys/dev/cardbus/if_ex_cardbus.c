@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.48 2010/02/25 23:40:39 dyoung Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.49 2010/02/26 00:01:27 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.48 2010/02/25 23:40:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.49 2010/02/26 00:01:27 dyoung Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -106,7 +106,7 @@ struct ex_cardbus_softc {
 
 	pcitag_t sc_tag;
 
-	int	sc_csr;			/* CSR bits */
+	pcireg_t	sc_csr;
 	int	sc_bar_reg;		/* which BAR to use */
 	pcireg_t sc_bar_val;		/* value of the BAR */
 	int	sc_bar_reg1;		/* which BAR to use */
