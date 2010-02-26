@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.28 2010/02/25 16:15:57 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.29 2010/02/26 09:57:39 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.28 2010/02/25 16:15:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.29 2010/02/26 09:57:39 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1499,7 +1499,7 @@ udf_trunc_metadatapart(struct udf_mount *ump, uint32_t num_lb)
 	DPRINTF(RESERVE, ("\tfree space on metadata partition %"PRIu64" blks\n", meta_free_lbs));
 
 	/* give away some of the free meta space, in unit block sizes */
-	to_trunc = meta_free_lbs/4;			/* give out a quart */
+	to_trunc = meta_free_lbs/4;			/* give out a quarter */
 	to_trunc = MAX(to_trunc, num_lb);
 	to_trunc = unit * ((to_trunc + unit-1) / unit);	/* round up */
 
@@ -1533,7 +1533,6 @@ udf_trunc_metadatapart(struct udf_mount *ump, uint32_t num_lb)
 	sbd->num_bits  = udf_rw32(sbd->num_bits)  - to_trunc;
 	sbd->num_bytes = udf_rw32(sbd->num_bytes) - to_trunc/8;
 	bitmap->max_offset = udf_rw32(sbd->num_bits);
-
 
 	num_vpart = udf_rw32(lvid->num_part);
 	freepos = &lvid->tables[0] + meta_vpart_num;
