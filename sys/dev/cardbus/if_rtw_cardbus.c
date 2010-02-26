@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.37 2010/02/25 23:01:48 dyoung Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.38 2010/02/26 01:12:56 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.37 2010/02/25 23:01:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.38 2010/02/26 01:12:56 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -321,7 +321,7 @@ rtw_cardbus_detach(device_t self, int flags)
 	 * Unhook the interrupt handler.
 	 */
 	if (csc->sc_ih != NULL)
-		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
+		Cardbus_intr_disestablish(ct, csc->sc_ih);
 
 	/*
 	 * Release bus space and close window.
@@ -339,13 +339,11 @@ rtw_cardbus_resume(device_t self, const pmf_qual_t *qual)
 	struct rtw_cardbus_softc *csc = device_private(self);
 	struct rtw_softc *sc = &csc->sc_rtw;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/*
 	 * Map and establish the interrupt.
 	 */
-	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
+	csc->sc_ih = Cardbus_intr_establish(ct, csc->sc_intrline, IPL_NET,
 	    rtw_intr, sc);
 	if (csc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev,
@@ -367,8 +365,6 @@ rtw_cardbus_suspend(device_t self, const pmf_qual_t *qual)
 	struct rtw_cardbus_softc *csc = device_private(self);
 	struct rtw_softc *sc = &csc->sc_rtw;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 
 	if (!rtw_suspend(self, qual))
 		return false;
@@ -379,7 +375,7 @@ rtw_cardbus_suspend(device_t self, const pmf_qual_t *qual)
 	rtw_cardbus_funcregen(&sc->sc_regs, 0);
 
 	/* Unhook the interrupt handler. */
-	cardbus_intr_disestablish(cc, cf, csc->sc_ih);
+	Cardbus_intr_disestablish(ct, csc->sc_ih);
 	csc->sc_ih = NULL;
 	return true;
 }

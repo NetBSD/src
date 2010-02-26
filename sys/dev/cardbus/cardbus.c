@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.105 2010/02/26 00:57:01 dyoung Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.106 2010/02/26 01:12:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.105 2010/02/26 00:57:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.106 2010/02/26 01:12:56 dyoung Exp $");
 
 #include "opt_cardbus.h"
 
@@ -710,6 +710,14 @@ cardbus_childdetached(device_t self, device_t child)
 	free(ct, M_DEVBUF);
 }
 
+void *
+Cardbus_intr_establish(cardbus_devfunc_t ct,
+    cardbus_intr_line_t irq, int level, int (*func)(void *), void *arg)
+{
+	return cardbus_intr_establish(ct->ct_cc, ct->ct_cf, irq, level, func,
+	    arg);
+}
+
 /*
  * void *cardbus_intr_establish(cc, cf, irq, level, func, arg)
  *   Interrupt handler of pccard.
@@ -724,6 +732,12 @@ cardbus_intr_establish(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
 
 	DPRINTF(("- cardbus_intr_establish: irq %d\n", irq));
 	return ((*cf->cardbus_intr_establish)(cc, irq, level, func, arg));
+}
+
+void
+Cardbus_intr_disestablish(cardbus_devfunc_t ct, void *handler)
+{
+	cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, handler);
 }
 
 /*
