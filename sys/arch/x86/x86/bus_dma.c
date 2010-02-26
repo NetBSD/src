@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.52 2009/11/06 23:10:10 dsl Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.53 2010/02/26 19:25:07 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.52 2009/11/06 23:10:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.53 2010/02/26 19:25:07 jym Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -182,7 +182,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size,
 #ifdef DIAGNOSTIC
 		if (curaddr < low || curaddr >= high) {
 			printf("vm_page_alloc_memory returned non-sensical"
-			    " address 0x%lx\n", curaddr);
+			    " address %#" PRIxPADDR "\n", curaddr);
 			panic("_bus_dmamem_alloc_range");
 		}
 #endif
