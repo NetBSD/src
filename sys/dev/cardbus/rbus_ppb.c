@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.34 2010/02/25 23:40:39 dyoung Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.35 2010/02/26 00:57:02 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.34 2010/02/25 23:40:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.35 2010/02/26 00:57:02 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,8 +120,8 @@ ppb_cardbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
-	if (CARDBUS_VENDOR(ca->ca_id) ==  PCI_VENDOR_DEC &&
-	    CARDBUS_PRODUCT(ca->ca_id) == PCI_PRODUCT_DEC_21152)
+	if (PCI_VENDOR(ca->ca_id) ==  PCI_VENDOR_DEC &&
+	    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_DEC_21152)
 		return (1);
 
 	if(PCI_CLASS(ca->ca_class) == PCI_CLASS_BRIDGE &&
@@ -651,7 +651,7 @@ ppb_cardbus_attach(device_t parent, device_t self, void *aux)
 
 	csc->sc_tag = ca->ca_tag;
 
-	busdata = cardbus_conf_read(cc, cf, ca->ca_tag, PPB_REG_BUSINFO);
+	busdata = Cardbus_conf_read(ct, ca->ca_tag, PPB_REG_BUSINFO);
 	minbus = pcibios_max_bus;
 	maxbus = minbus;		/* XXX; gcc */
 
@@ -662,19 +662,19 @@ ppb_cardbus_attach(device_t parent, device_t self, void *aux)
 	   * first, pull the reset wire on the secondary bridge
 	   * to clear all devices
 	   */
-	  busdata = cardbus_conf_read(cc, cf, ca->ca_tag,
+	  busdata = Cardbus_conf_read(ct, ca->ca_tag,
 				      PPB_REG_BRIDGECONTROL);
-	  cardbus_conf_write(cc, cf, ca->ca_tag, PPB_REG_BRIDGECONTROL,
+	  Cardbus_conf_write(ct, ca->ca_tag, PPB_REG_BRIDGECONTROL,
 			     busdata | PPB_BC_SECONDARY_RESET);
 	  delay(1);
-	  cardbus_conf_write(cc, cf, ca->ca_tag, PPB_REG_BRIDGECONTROL,
+	  Cardbus_conf_write(ct, ca->ca_tag, PPB_REG_BRIDGECONTROL,
 			     busdata);
 
 	  /* then go initialize the bridge control registers */
 	  maxbus = pci_bus_fixup(psc->sc_pc, 0);
 	}
 
-	busdata = cardbus_conf_read(cc, cf, ca->ca_tag, PPB_REG_BUSINFO);
+	busdata = Cardbus_conf_read(ct, ca->ca_tag, PPB_REG_BUSINFO);
 	if(PPB_BUSINFO_SECONDARY(busdata) == 0) {
 		aprint_error_dev(self, "still not configured, not fixable.\n");
 		return;
@@ -746,21 +746,19 @@ ppb_cardbus_setup(struct ppb_softc * sc)
 	/* not sure what to do here */
 	pcitag_t tag = csc->sc_tag;
 
-	command = Cardbus_conf_read(csc->ct, tag, CARDBUS_COMMAND_STATUS_REG);
+	command = Cardbus_conf_read(csc->ct, tag, PCI_COMMAND_STATUS_REG);
 	if (csc->base0_reg) {
 		Cardbus_conf_write(csc->ct, tag,
-		    CARDBUS_BASE0_REG, csc->base0_reg);
-		command |= CARDBUS_COMMAND_MEM_ENABLE |
-		    CARDBUS_COMMAND_MASTER_ENABLE;
+		    PCI_BAR0, csc->base0_reg);
+		command |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
 	} else if (csc->base1_reg) {
 		Cardbus_conf_write(csc->ct, tag,
-		    CARDBUS_BASE1_REG, csc->base1_reg);
-		command |= (CARDBUS_COMMAND_IO_ENABLE |
-		    CARDBUS_COMMAND_MASTER_ENABLE);
+		    PCI_BAR1, csc->base1_reg);
+		command |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MASTER_ENABLE);
 	}
 
 	/* enable the card */
-	Cardbus_conf_write(csc->ct, tag, CARDBUS_COMMAND_STATUS_REG, command);
+	Cardbus_conf_write(csc->ct, tag, PCI_COMMAND_STATUS_REG, command);
 #endif
 }
 
@@ -834,9 +832,9 @@ ppb_cardbus_detach(device_t self, int flags)
 		 * release bus space and close window
 		 */
 		if (csc->base0_reg)
-			reg = CARDBUS_BASE0_REG;
+			reg = PCI_BAR0;
 		else
-			reg = CARDBUS_BASE1_REG;
+			reg = PCI_BAR1;
 		Cardbus_mapreg_unmap(ct, reg, sc->sc_st, sc->sc_sh, csc->size);
 	}
 	return (rv);
