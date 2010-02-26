@@ -1,4 +1,4 @@
-.\"	$NetBSD: terminfo.5.in,v 1.13 2010/02/26 00:09:00 roy Exp $
+.\"	$NetBSD: terminfo.5.in,v 1.14 2010/02/26 07:03:49 wiz Exp $
 .\"
 .\" Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -203,14 +203,17 @@ is appended to each file checked.
 .Pp
 If the environment variable
 .Ev TERMINFO
-is available, does not begin with /, can be compiled with the above rules and
-whose name matches
+is available, does not begin with
+.Pq Sq / ,
+can be compiled with the above rules and whose name matches
 .Ev TERM
 then it is used.
 .Pp
 If the environment variable
 .Ev TERMCAP
-is available and does not begin with / then it will be translated into
+is available and does not begin with a slash
+.Pq Sq /
+then it will be translated into
 terminfo and compiled as above.
 If its name matches
 .Ev TERM
@@ -218,7 +221,9 @@ then it is used.
 .Pp
 If the environment variable
 .Ev TERMINFO
-is available and begins with / then only this file is searched.
+is available and begins with a slash
+.Pq Sq /
+then only this file is searched.
 Otherwise
 .Nm
 will first look for
@@ -259,4 +264,4 @@ Extensions to the standard are noted in
 .Sh BUGS
 The
 .Ev TERMCAP
-capabilities %>, %B and %D are not converted into terminfo capabilities.
+capabilities %\*[Gt], %B and %D are not converted into terminfo capabilities.
