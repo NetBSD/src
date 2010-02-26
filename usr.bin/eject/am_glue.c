@@ -1,4 +1,4 @@
-/*	$NetBSD: am_glue.c,v 1.2 2010/02/26 20:18:37 christos Exp $	*/
+/*	$NetBSD: am_glue.c,v 1.3 2010/02/26 22:44:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: am_glue.c,v 1.2 2010/02/26 20:18:37 christos Exp $");
+__RCSID("$NetBSD: am_glue.c,v 1.3 2010/02/26 22:44:17 christos Exp $");
 #endif /* not lint */
 
 #ifdef HAVE_CONFIG_H
@@ -60,6 +60,7 @@ ping_pmap(void)
 	struct pmap parms;
 	struct sockaddr_in si;
 	int s = -1, rv;
+	static struct timeval pingtv = { 1, 0 };
 
 	(void)memset(&si, 0, sizeof(si));
 	si.sin_family = AF_INET;
@@ -67,7 +68,7 @@ ping_pmap(void)
 	si.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	si.sin_port = htons(PMAPPORT);
 
-	if ((cl = clntudp_bufcreate(&si, PMAPPROG, PMAPVERS, tv,
+	if ((cl = clntudp_bufcreate(&si, PMAPPROG, PMAPVERS, pingtv,
 	    &s, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE)) == NULL)
 		return -1;
 
@@ -78,7 +79,7 @@ ping_pmap(void)
 
 	rv = CLNT_CALL(cl, (rpcproc_t)PMAPPROC_GETPORT,
 	    (xdrproc_t)xdr_pmap, &parms,
-	    (xdrproc_t)xdr_u_short, &port, tv) == RPC_SUCCESS ? 0 : -1;
+	    (xdrproc_t)xdr_u_short, &port, pingtv) == RPC_SUCCESS ? 0 : -1;
 
 	CLNT_DESTROY(cl);
 	return rv;
