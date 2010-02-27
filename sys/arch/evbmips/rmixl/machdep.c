@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.21 2010/02/27 20:35:14 snj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.22 2010/02/27 21:26:28 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.21 2010/02/27 20:35:14 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.22 2010/02/27 21:26:28 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -248,7 +248,7 @@ void rmixlfw_mmap_print(rmixlfw_mmap_t *);
 
 
 #ifdef MULTIPROCESSOR
-static bool rmixl_fixup_cop0_oscratch(int32_t, uint32_t [2])
+static bool rmixl_fixup_cop0_oscratch(int32_t, uint32_t [2]);
 void rmixl_get_wakeup_info(struct rmixl_config *);
 #ifdef MACHDEP_DEBUG
 static void rmixl_wakeup_info_print(volatile rmixlfw_cpu_wakeup_info_t *);
