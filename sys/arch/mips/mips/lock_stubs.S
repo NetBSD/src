@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.9.18.8 2010/02/27 19:22:03 snj Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.9.18.9 2010/02/27 19:22:47 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -241,7 +241,7 @@ NESTED(mutex_spin_enter, CALLFRAME_SIZ, ra)
 
 	/*
 	 * If the current IPL is less than the mutex's IPL, we need to raise
-         * our IPL to the mutex'es 
+	 * our IPL to the mutex'es 
 	 */
 	sltu	v1, ta1, ta0		# v1 = ta1 < ta0
 	beqz	v1, 1f
@@ -457,7 +457,7 @@ NESTED(mutex_spin_enter, CALLFRAME_SIZ, ra)
 
 	/*
 	 * If the current IPL is less than the mutex's IPL, we need to raise
-         * our IPL to the mutex'es 
+	 * our IPL to the mutex'es 
 	 */
 	sltu	a3, ta1, a0			# a3 = ta1 < a0
 	beqz	a3, 1f
