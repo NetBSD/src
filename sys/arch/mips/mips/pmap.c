@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.19 2010/02/27 07:58:52 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.20 2010/02/27 19:49:26 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.19 2010/02/27 07:58:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.20 2010/02/27 19:49:26 snj Exp $");
 
 /*
  *	Manages physical address maps.
@@ -544,7 +544,7 @@ pmap_bootstrap(void)
 	/*
 	 * The R4?00 stores only one copy of the Global bit in the
 	 * translation lookaside buffer for each 2 page entry.
-	 * Thus invalid entrys must have the Global bit set so
+	 * Thus invalid entries must have the Global bit set so
 	 * when Entry LO and Entry HI G bits are anded together
 	 * they will produce a global bit to store in the tlb.
 	 */
@@ -980,7 +980,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		(void)VM_PAGE_PVLIST_LOCK(pg, false);
 		pv = &pg->mdpage.pvh_first;
 		/*
-		 * Loop over all current mappings setting/clearing as appropos.
+		 * Loop over all current mappings setting/clearing as apropos.
 		 */
 		if (pv->pv_pmap != NULL) {
 			while (pv != NULL) {
@@ -1946,7 +1946,7 @@ pmap_set_modified(paddr_t pa)
 static void
 pmap_check_pvlist(struct vm_page *pg)
 {
-#ifdef PARANIOADIAG
+#ifdef PARANOIADIAG
 	pt_entry_t pv = &pg->mdpage.pvh_first;
 	if (pv->pv_pmap != NULL) {
 		for (; pv != NULL; pv = pv->pv_next) {
@@ -2282,7 +2282,7 @@ pmap_pvlist_lock(struct vm_page *pg, bool list_change)
 	int16_t gen;
 
 	/*
-	 * Allocate a lock on an as-needed basis.  This will hopefully us
+	 * Allocate a lock on an as-needed basis.  This will hopefully give us
 	 * semi-random distribution not based on page color.
 	 */
 	if (__predict_false(lock == NULL)) {
@@ -2509,7 +2509,7 @@ mips_pmap_unmap_poolpage(vaddr_t va)
 #if defined(MIPS3_PLUS)
 	if (MIPS_CACHE_VIRTUAL_ALIAS) {
 		/*
-		 * We've unmapped a poolpage.  Its contents are irrelavent.
+		 * We've unmapped a poolpage.  Its contents are irrelevant.
 		 */
 		mips_dcache_inv_range(va, PAGE_SIZE);
 	}
