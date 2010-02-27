@@ -143,7 +143,7 @@ bind_interface(void *arg)
 		lease->leasetime = ~0U;
 		lease->net.s_addr = ifo->req_mask.s_addr;
 		state->reason = "STATIC";
-	} else if (IN_LINKLOCAL(htonl(state->new->yiaddr))) {
+	} else if (state->new->cookie != htonl(MAGIC_COOKIE)) {
 		syslog(LOG_INFO, "%s: using IPv4LL address %s",
 		    iface->name, inet_ntoa(lease->addr));
 		lease->leasetime = ~0U;
