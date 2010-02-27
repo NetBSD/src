@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.75 2010/02/27 04:36:56 tsutsui Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.76 2010/02/27 04:40:11 tsutsui Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.75 2010/02/27 04:36:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.76 2010/02/27 04:40:11 tsutsui Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -61,17 +61,16 @@ __KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.75 2010/02/27 04:36:56 tsutsui Exp $");
 #include <dev/ic/dp8390var.h>
 
 #ifdef DEBUG
-#define inline	/* XXX for debugging porpoises */
 int	dp8390_debug = 0;
 #endif
 
-static inline void	dp8390_xmit(struct dp8390_softc *);
+static void		dp8390_xmit(struct dp8390_softc *);
 
-static inline void	dp8390_read_hdr(struct dp8390_softc *,
+static void		dp8390_read_hdr(struct dp8390_softc *,
 			    int, struct dp8390_ring *);
-static inline int	dp8390_ring_copy(struct dp8390_softc *,
+static int		dp8390_ring_copy(struct dp8390_softc *,
 			    int, void *, u_short);
-static inline int	dp8390_write_mbuf(struct dp8390_softc *,
+static int		dp8390_write_mbuf(struct dp8390_softc *,
 			    struct mbuf *, int);
 
 static int		dp8390_test_mem(struct dp8390_softc *);
@@ -99,8 +98,16 @@ dp8390_config(struct dp8390_softc *sc)
 
 	rv = 1;
 
-	if (!sc->test_mem)
+	if (sc->test_mem == NULL)
 		sc->test_mem = dp8390_test_mem;
+	if (sc->read_hdr == NULL)
+		sc->read_hdr = dp8390_read_hdr;
+	if (sc->recv_int == NULL)
+		sc->recv_int = dp8390_rint;
+	if (sc->ring_copy == NULL)
+		sc->ring_copy = dp8390_ring_copy;
+	if (sc->write_mbuf == NULL)
+		sc->write_mbuf = dp8390_write_mbuf;
 
 	/* Allocate one xmit buffer if < 16k, two buffers otherwise. */
 	if ((sc->mem_size < 16384) ||
@@ -394,7 +401,7 @@ dp8390_init(struct dp8390_softc *sc)
 /*
  * This routine actually starts the transmission on the interface.
  */
-static inline void
+static void
 dp8390_xmit(struct dp8390_softc *sc)
 {
 	bus_space_tag_t regt = sc->sc_regt;
@@ -483,10 +490,7 @@ outloop:
 	buffer = sc->mem_start +
 	    ((sc->txb_new * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
 
-	if (sc->write_mbuf)
-		len = (*sc->write_mbuf)(sc, m0, buffer);
-	else
-		len = dp8390_write_mbuf(sc, m0, buffer);
+	len = (*sc->write_mbuf)(sc, m0, buffer);
 
 	m_freem(m0);
 	sc->txb_len[sc->txb_new] = len;
@@ -547,10 +551,7 @@ loop:
 		packet_ptr = sc->mem_ring +
 		    ((sc->next_packet - sc->rec_page_start) << ED_PAGE_SHIFT);
 
-		if (sc->read_hdr)
-			(*sc->read_hdr)(sc, packet_ptr, &packet_hdr);
-		else
-			dp8390_read_hdr(sc, packet_ptr, &packet_hdr);
+		(*sc->read_hdr)(sc, packet_ptr, &packet_hdr);
 		len = packet_hdr.count;
 
 		/*
@@ -791,10 +792,7 @@ dp8390_intr(void *arg)
 				 * (we've configured the interface to not
 				 * accept packets with errors).
 				 */
-				if (sc->recv_int)
-					(*sc->recv_int)(sc);
-				else
-					dp8390_rint(sc);
+				(*sc->recv_int)(sc);
 			}
 		}
 
@@ -1077,10 +1075,7 @@ dp8390_get(struct dp8390_softc *sc, int src, u_short total_len)
 		}
 
 		m->m_len = len = min(total_len, len);
-		if (sc->ring_copy)
-			src = (*sc->ring_copy)(sc, src, mtod(m, void *), len);
-		else
-			src = dp8390_ring_copy(sc, src, mtod(m, void *), len);
+		src = (*sc->ring_copy)(sc, src, mtod(m, void *), len);
 
 		total_len -= len;
 		if (total_len > 0) {
@@ -1131,7 +1126,7 @@ dp8390_test_mem(struct dp8390_softc *sc)
 /*
  * Read a packet header from the ring, given the source offset.
  */
-static inline void
+static void
 dp8390_read_hdr(struct dp8390_softc *sc, int src, struct dp8390_ring *hdrp)
 {
 	bus_space_tag_t buft = sc->sc_buft;
@@ -1152,7 +1147,7 @@ dp8390_read_hdr(struct dp8390_softc *sc, int src, struct dp8390_ring *hdrp)
  * destination buffer, given a source offset and destination address.
  * Takes into account ring-wrap.
  */
-static inline int
+static int
 dp8390_ring_copy(struct dp8390_softc *sc, int src, void *dst, u_short amount)
 {
 	bus_space_tag_t buft = sc->sc_buft;
@@ -1181,7 +1176,7 @@ dp8390_ring_copy(struct dp8390_softc *sc, int src, void *dst, u_short amount)
  * Currently uses an extra buffer/extra memory copy, unless the whole
  * packet fits in one mbuf.
  */
-static inline int
+static int
 dp8390_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 {
 	bus_space_tag_t buft = sc->sc_buft;
