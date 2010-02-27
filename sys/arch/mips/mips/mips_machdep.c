@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.36 2010/02/25 05:45:12 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.37 2010/02/27 07:58:52 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.36 2010/02/25 05:45:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.37 2010/02/27 07:58:52 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -138,6 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.36 2010/02/25 05:45
 #include <sys/cpu.h>
 #include <sys/atomic.h>
 #include <sys/ucontext.h>
+#include <sys/bitops.h>
 
 #include <mips/kcore.h>
 
@@ -221,12 +222,18 @@ struct mips_options mips_options = {
 	.mips_fpu_id = 0xffffffff,
 };
 
-struct cpu_info cpu_info_store = {
+struct cpu_info cpu_info_store
+#ifdef MULTIPROCESSOR
+	__section(".data1")
+	__aligned(1LU << ilog2((2*sizeof(struct cpu_info)-1)))
+#endif
+    = {
 	.ci_curlwp = &lwp0,
 	.ci_fpcurlwp = &lwp0,
-	.ci_tlb_info = &pmap_tlb_info,
+	.ci_tlb_info = &pmap_tlb0_info,
 	.ci_pmap_segbase = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
 	.ci_cpl = IPL_HIGH,
+	.ci_tlb_slot = -1,
 };
 
 struct	user *proc0paddr;
@@ -524,21 +531,11 @@ static const char * const cidnames[] = {
 /*
  * MIPS-I locore function vector
  */
-static const mips_locore_jumpvec_t mips1_locore_vec = {
-	.ljv_tlb_set_asid		= mips1_tlb_set_asid,
-	.ljv_tlb_invalidate_addr	= mips1_tlb_invalidate_addr,
-	.ljv_tlb_invalidate_all		= mips1_tlb_invalidate_all,
-	.ljv_tlb_invalidate_asids	= mips1_tlb_invalidate_asids,
-	.ljv_tlb_invalidate_globals	= mips1_tlb_invalidate_globals,
-	.ljv_tlb_record_asids		= mips1_tlb_record_asids,
-	.ljv_tlb_update			= mips1_tlb_update,
-	.ljv_tlb_read_indexed		= mips1_tlb_read_indexed,
-	.ljv_wbflush			= mips1_wbflush,
-};
 
 static void
 mips1_vector_init(void)
 {
+	extern const mips_locore_jumpvec_t mips1_locore_vec;
 	extern char mips1_utlb_miss[], mips1_utlb_miss_end[];
 	extern char mips1_exception[], mips1_exception_end[];
 
@@ -569,25 +566,10 @@ mips1_vector_init(void)
 #endif /* MIPS1 */
 
 #if defined(MIPS3)
-#ifndef MIPS3_5900	/* XXX */
-/*
- * MIPS III locore function vector
- */
-static const mips_locore_jumpvec_t mips3_locore_vec = {
-	.ljv_tlb_set_asid		= mips3_tlb_set_asid,
-	.ljv_tlb_invalidate_addr	= mips3_tlb_invalidate_addr,
-	.ljv_tlb_invalidate_all		= mips3_tlb_invalidate_all,
-	.ljv_tlb_invalidate_asids	= mips3_tlb_invalidate_asids,
-	.ljv_tlb_invalidate_globals	= mips3_tlb_invalidate_globals,
-	.ljv_tlb_record_asids		= mips3_tlb_record_asids,
-	.ljv_tlb_update			= mips3_tlb_update,
-	.ljv_tlb_read_indexed		= mips3_tlb_read_indexed,
-	.ljv_wbflush			= mips3_wbflush,
-};
-
 static void
 mips3_vector_init(void)
 {
+	extern const mips_locore_jumpvec_t mips3_locore_vec;
 	/* r4000 exception handler address and end */
 	extern char mips3_exception[], mips3_exception_end[];
 
@@ -629,28 +611,13 @@ mips3_vector_init(void)
 	/* Clear BEV in SR so we start handling our own exceptions */
 	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS_SR_BEV);
 }
-#endif /* !MIPS3_5900 */
+#endif /* MIPS3 */
 
 #if defined(MIPS3_5900)	/* XXX */
-/*
- * MIPS R5900 locore function vector.
- * Same as MIPS32 - all MMU registers are 32bit.
- */
-static const mips_locore_jumpvec_t r5900_locore_vec = {
-	.ljv_tlb_set_asid		= mips5900_tlb_set_asid,
-	.ljv_tlb_invalidate_addr	= mips5900_tlb_invalidate_addr,
-	.ljv_tlb_invalidate_all		= mips5900_tlb_invalidate_all,
-	.ljv_tlb_invalidate_asids	= mips5900_tlb_invalidate_asids,
-	.ljv_tlb_invalidate_globals	= mips5900_tlb_invalidate_globals,
-	.ljv_tlb_record_asids		= mips5900_tlb_record_asids,
-	.ljv_tlb_update			= mips5900_tlb_update,
-	.ljv_tlb_read_indexed		= mips5900_tlb_read_indexed,
-	.ljv_wbflush			= mips5900_wbflush,
-};
-
 static void
 r5900_vector_init(void)
 {
+	extern const mips_locore_jumpvec_t r5900_locore_vec;
 	extern char mips5900_exception[], mips5900_exception_end[];
 	extern char mips5900_tlb_miss[], mips5900_tlb_miss_end[];
 	size_t esz = mips5900_exception_end - mips5900_exception;
@@ -681,27 +648,14 @@ r5900_vector_init(void)
 	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS_SR_BEV);
 }
 #endif /* MIPS3_5900 */
-#endif /* MIPS3 */
 
 #if defined(MIPS32)
-/*
- * MIPS32 locore function vector
- */
-static const mips_locore_jumpvec_t mips32_locore_vec = {
-	.ljv_tlb_set_asid		= mips32_tlb_set_asid,
-	.ljv_tlb_invalidate_addr	= mips32_tlb_invalidate_addr,
-	.ljv_tlb_invalidate_all		= mips32_tlb_invalidate_all,
-	.ljv_tlb_invalidate_asids	= mips32_tlb_invalidate_asids,
-	.ljv_tlb_invalidate_globals	= mips32_tlb_invalidate_globals,
-	.ljv_tlb_record_asids		= mips32_tlb_record_asids,
-	.ljv_tlb_update			= mips32_tlb_update,
-	.ljv_tlb_read_indexed		= mips32_tlb_read_indexed,
-	.ljv_wbflush			= mips32_wbflush,
-};
-
 static void
 mips32_vector_init(void)
 {
+	/* MIPS32 locore function vector */
+	extern const mips_locore_jumpvec_t mips32_locore_vec;
+
 	/* r4000 exception handler address */
 	extern char mips32_exception[];
 
@@ -748,24 +702,12 @@ mips32_vector_init(void)
 #endif /* MIPS32 */
 
 #if defined(MIPS64)
-/*
- * MIPS64 locore function vector
- */
-const mips_locore_jumpvec_t mips64_locore_vec = {
-	.ljv_tlb_set_asid		= mips64_tlb_set_asid,
-	.ljv_tlb_invalidate_addr	= mips64_tlb_invalidate_addr,
-	.ljv_tlb_invalidate_all		= mips64_tlb_invalidate_all,
-	.ljv_tlb_invalidate_asids	= mips64_tlb_invalidate_asids,
-	.ljv_tlb_invalidate_globals	= mips64_tlb_invalidate_globals,
-	.ljv_tlb_record_asids		= mips64_tlb_record_asids,
-	.ljv_tlb_update			= mips64_tlb_update,
-	.ljv_tlb_read_indexed		= mips64_tlb_read_indexed,
-	.ljv_wbflush			= mips64_wbflush,
-};
-
 static void
 mips64_vector_init(void)
 {
+	/* MIPS64 locore function vector */
+	extern const mips_locore_jumpvec_t mips64_locore_vec;
+
 	/* r4000 exception handler address */
 	extern char mips64_exception[];
 
@@ -980,7 +922,7 @@ mips_vector_init(void)
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
 		mips5900_tlb_invalidate_all();
-		mips3_cp0_wired_write(pmap_tlb_info.ti_wired);
+		mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
 		r5900_vector_init();
 		mips_locoresw = mips5900_locoresw;
 #else /* MIPS3_5900 */
@@ -992,7 +934,7 @@ mips_vector_init(void)
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
 		mips3_tlb_invalidate_all();
-		mips3_cp0_wired_write(pmap_tlb_info.ti_wired);
+		mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
 		mips3_vector_init();
 		mips_locoresw = mips3_locoresw;
 #endif /* MIPS3_5900 */
@@ -1004,7 +946,7 @@ mips_vector_init(void)
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
 		mips32_tlb_invalidate_all();
-		mips3_cp0_wired_write(pmap_tlb_info.ti_wired);
+		mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
 		mips32_vector_init();
 		mips_locoresw = mips32_locoresw;
 		break;
@@ -1015,7 +957,7 @@ mips_vector_init(void)
 		mips3_cp0_pg_mask_write(MIPS3_PG_SIZE_4K);
 		mips3_cp0_wired_write(0);
 		mips64_tlb_invalidate_all();
-		mips3_cp0_wired_write(pmap_tlb_info.ti_wired);
+		mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
 		mips64_vector_init();
 		mips_locoresw = mips64_locoresw;
 		break;
@@ -2483,8 +2425,8 @@ cpu_send_ipi(struct cpu_info *ci, int tag)
 void
 cpu_boot_secondary_processors(void)
 {
-	if (pmap_tlb_info.ti_wired != MIPS3_TLB_WIRED_UPAGES)
-		mips3_cp0_wired_write(pmap_tlb_info.ti_wired);
+	if (pmap_tlb0_info.ti_wired != MIPS3_TLB_WIRED_UPAGES)
+		mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
 
 	(*mips_locoresw.lsw_boot_secondary_processors)();
 }

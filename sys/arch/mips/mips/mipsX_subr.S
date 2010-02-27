@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.26 2010/02/25 05:45:12 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.27 2010/02/27 07:58:52 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -497,6 +497,7 @@ VECTOR(MIPSX(exception), unknown)
 #ifndef _LP64
 	nop					#0f
 #endif
+	.p2align 4
 MIPSX(kernelfault):
 	j	_C_LABEL(MIPSX(kernel_tlb_miss)) #10: kernel exception
 	 nop					#11: branch delay slot
@@ -2572,6 +2573,103 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_all))
 	COP0_SYNC				# XXXX - not executed!!
 END(MIPSX(tlb_invalidate_all))
 
+/*
+ * mipsX_tlb_enter(size_t tlb_index, vaddr_t va, uint32_t pte);
+ */
+LEAF(MIPSX(tlb_enter))
+	.set	noat
+	mfc0	ta0, MIPS_COP_0_TLB_HI		# save EntryHi
+
+	and	a3, a1, MIPS3_PG_ODDPG		# select odd page bit
+	xor	a3, a1				# clear it.
+	mtc0	a3, MIPS_COP_0_TLB_HI		# set the VA for tlbp
+	COP0_SYNC
+	nop
+	nop
+
+	and	t2, a2, MIPS3_PG_G		# make prototype tlb_lo0
+	and	t3, a2, MIPS3_PG_G		# make prototype tlb_lo1
+
+	tlbp					# is va in TLB?
+	nop
+	nop
+	nop
+
+	mfc0	v0, MIPS_COP_0_TLB_INDEX	# was it in the TLB?
+	bltz	v0, 1f				# nope
+	 nop
+
+	/*
+	 * Get the existing tlb_lo's because we need to replace one of them.
+	 */
+	mfc0	t2, MIPS_COP_0_TLB_LO0		# save for update
+	mfc0	t3, MIPS_COP_0_TLB_LO1		# save for update
+
+	/*
+	 * If it's already where we want, no reason to invalidate it.
+	 */
+	beq	v0, a0, 2f			# already where we want it?
+	 nop					
+
+	/*
+	 * Make an
+	 */
+	sll	t1, 1 + PGSHIFT			# make a fake addr for the entry
+	lui	v1, %hi(MIPS_KSEG0_START)
+	or	t1, v1
+	mtc0	t1, MIPS_COP_0_TLB_HI
+	COP0_SYNC
+	nop
+	nop
+
+	and	t0, a2, MIPS3_PG_G		# make prototype tlb_lo
+	mtc0	t0, MIPS_COP_0_TLB_LO0		# use an invalid tlb_lo
+	COP0_SYNC
+	mtc0	t0, MIPS_COP_0_TLB_LO1		# use an invalid tlb_lo
+	COP0_SYNC
+
+	tlbwi					# now write the invalid TLB
+	COP0_SYNC
+
+	mtc0	a3, MIPS_COP_0_TLB_HI		# retore the addr for new TLB
+	COP0_SYNC
+	nop
+	nop
+1:
+	mtc0	a0, MIPS_COP_0_TLB_INDEX	# set the index
+	COP0_SYNC
+
+2:
+	and	v1, a1, MIPS3_PG_ODDPG		# odd or even page
+	sll	v1, 31 - PGSHIFT		# move to MSB
+	sra	v1, 31				# v1 a mask (0/~0 = even/odd)
+	not	v0, v1				# v0 a mask (~0/0 = even/odd)
+
+	and	ta2, t2, v1
+	and	ta3, a2, v0
+	or	t2, ta2, ta3			# t2 = (v1 & t2) | (~v1 & a2)
+	and	ta2, t3, v0
+	and	ta3, a2, v1
+	or	t3, ta2, ta3			# t3 = (~v1 & t3) | (v1 & a2)
+
+	mtc0	t2, MIPS_COP_0_TLB_LO0		# set tlb_lo0 (even)
+	COP0_SYNC
+	mtc0	t3, MIPS_COP_0_TLB_LO1		# set tlb_lo1 (odd)
+	COP0_SYNC
+
+	tlbwi					# enter it into the TLB
+	nop
+	nop
+	nop
+
+	mtc0	ta1, MIPS_COP_0_TLB_HI		# restore EntryHi
+	COP0_SYNC
+
+	j	ra
+	 nop
+	.set	at
+END(MIPSX(tlb_enter))
+
 #ifdef USE_64BIT_INSTRUCTIONS
 LEAF(MIPSX(pagezero))
 	li	a1, PAGE_SIZE >> 6
@@ -2594,6 +2692,19 @@ END(MIPSX(pagezero))
 #endif /* USE_64BIT_INSTRUCTIONS */
 
 	.rdata
+
+	.globl _C_LABEL(MIPSX(locore_vec))
+_C_LABEL(MIPSX(locore_vec)):
+	PTR_WORD _C_LABEL(MIPSX(tlb_set_asid))
+	PTR_WORD _C_LABEL(MIPSX(tlb_invalidate_asids))
+	PTR_WORD _C_LABEL(MIPSX(tlb_invalidate_addr))
+	PTR_WORD _C_LABEL(MIPSX(tlb_invalidate_globals))
+	PTR_WORD _C_LABEL(MIPSX(tlb_invalidate_all))
+	PTR_WORD _C_LABEL(MIPSX(tlb_record_asids))
+	PTR_WORD _C_LABEL(MIPSX(tlb_update))
+	PTR_WORD _C_LABEL(MIPSX(tlb_enter))
+	PTR_WORD _C_LABEL(MIPSX(tlb_read_indexed))
+	PTR_WORD _C_LABEL(MIPSX(wbflush))
 
 	.globl _C_LABEL(MIPSX(locoresw))
 _C_LABEL(MIPSX(locoresw)):
