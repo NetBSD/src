@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.32 2010/02/26 22:24:07 mlelstv Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.33 2010/02/27 12:04:19 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.32 2010/02/26 22:24:07 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.33 2010/02/27 12:04:19 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -344,6 +344,10 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	if (blksize % DEV_BSIZE)
 		return EINVAL;
 
+	/* Kernel uses DEV_BSIZE units */
+	off = btodb(off << log_dev_bshift);
+	count = btodb(count << log_dev_bshift);
+
 	/* XXXTODO: verify that the full load is writable */
 
 	/*
@@ -379,7 +383,7 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 
 	/* Reserve two log device blocks for the commit headers */
 	wl->wl_circ_off = 2<<wl->wl_log_dev_bshift;
-	wl->wl_circ_size = ((count * blksize) - wl->wl_circ_off);
+	wl->wl_circ_size = ((count * DEV_BSIZE) - wl->wl_circ_off);
 	/* truncate the log usage to a multiple of log_dev_bshift */
 	wl->wl_circ_size >>= wl->wl_log_dev_bshift;
 	wl->wl_circ_size <<= wl->wl_log_dev_bshift;
@@ -1855,7 +1859,8 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 	 */
 
 	error = wapbl_write(wc, wc->wc_len, wl->wl_devvp,
-	    wl->wl_logpbn + wc->wc_generation % 2);
+	    wl->wl_logpbn +
+	    ((wc->wc_generation % 2) << (wc->wc_log_dev_bshift - DEV_BSHIFT)));
 	if (error)
 		return error;
 
@@ -2256,6 +2261,10 @@ wapbl_replay_start(struct wapbl_replay **wrp, struct vnode *vp,
 		return EINVAL;
 
 #ifdef _KERNEL
+	/* Kernel uses DEV_BSIZE units */
+	off = btodb(off << log_dev_bshift);
+	count = btodb(count << log_dev_bshift);
+
 #if 0
 	/* XXX vp->v_size isn't reliably set for VBLK devices,
 	 * especially root.  However, we might still want to verify

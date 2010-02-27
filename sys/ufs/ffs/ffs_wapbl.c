@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.14 2010/02/23 20:41:41 mlelstv Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.15 2010/02/27 12:04:19 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.14 2010/02/23 20:41:41 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.15 2010/02/27 12:04:19 mlelstv Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -553,6 +553,10 @@ wapbl_log_position(struct mount *mp, struct fs *fs, struct vnode *devvp,
 		*countp = (logend - logstart);
 		*extradatap = 0;
 
+		/* convert to physical block numbers */
+		*startp = dbtob(*startp) / secsize;
+		*countp = dbtob(*countp) / secsize;
+
 		fs->fs_journallocs[UFS_WAPBL_EPART_ADDR] = *startp;
 		fs->fs_journallocs[UFS_WAPBL_EPART_COUNT] = *countp;
 		fs->fs_journallocs[UFS_WAPBL_EPART_BLKSZ] = *blksizep;
@@ -567,6 +571,10 @@ wapbl_log_position(struct mount *mp, struct fs *fs, struct vnode *devvp,
 		error = wapbl_create_infs_log(mp, fs, devvp,
 		                  startp, countp, extradatap);
 		ffs_sync(mp, MNT_WAIT, FSCRED);
+
+		/* convert to physical block numbers */
+		*startp = dbtob(*startp) / secsize;
+		*countp = dbtob(*countp) / secsize;
 
 		fs->fs_journallocs[UFS_WAPBL_INFS_ADDR] = *startp;
 		fs->fs_journallocs[UFS_WAPBL_INFS_COUNT] = *countp;
