@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.4 2010/02/25 05:53:23 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.1.2.5 2010/02/27 07:58:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.4 2010/02/25 05:53:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.5 2010/02/27 07:58:52 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -142,14 +142,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.4 2010/02/25 05:53:23 matt Exp $"
 #include <mips/pte.h>
 
 static kmutex_t pmap_tlb0_mutex __aligned(32);
-#ifdef MULTIPROCESSOR
-static struct pmap_tlb_info *pmap_tlbs[MAXCPUS] = {
-	[0] = &pmap_tlb_info,
-};
-static u_int pmap_ntlbs = 1;
-#endif
 
-struct pmap_tlb_info pmap_tlb_info = {
+struct pmap_tlb_info pmap_tlb0_info = {
 	.ti_asid_hint = 1,
 	.ti_asid_mask = MIPS_TLB_NUM_PIDS - 1,
 	.ti_asid_max = MIPS_TLB_NUM_PIDS - 1,
@@ -164,6 +158,12 @@ struct pmap_tlb_info pmap_tlb_info = {
 #endif
 };
 
+#ifdef MULTIPROCESSOR
+static struct pmap_tlb_info *pmap_tlbs[MAXCPUS] = {
+	[0] = &pmap_tlb0_info,
+};
+static u_int pmap_ntlbs = 1;
+#endif
 #define	__BITMAP_SET(bm, n) \
 	((bm)[(n) / (8*sizeof(bm[0]))] |= 1LU << ((n) % (8*sizeof(bm[0]))))
 #define	__BITMAP_CLR(bm, n) \
@@ -215,9 +215,24 @@ void
 pmap_tlb_info_init(struct pmap_tlb_info *ti)
 {
 #ifdef MULTIPROCESSOR
-	if (ti == &pmap_tlb_info) {
+	if (ti == &pmap_tlb0_info) {
+#endif /* MULTIPROCESSOR */
+		KASSERT(ti == &pmap_tlb0_info);
 		mutex_init(ti->ti_lock, MUTEX_DEFAULT, IPL_SCHED);
+		if (!CPUISMIPSNN) {
+			ti->ti_asid_max = mips_options.mips_num_tlb_entries - 1;
+			ti->ti_asids_free = ti->ti_asid_max;
+			ti->ti_asid_mask = ti->ti_asid_max;
+			/*
+			 * Now figure out what mask we need to focus on
+			 * asid_max.
+			 */
+			while ((ti->ti_asid_mask + 1) & ti->ti_asid_mask) {
+				ti->ti_asid_mask |= ti->ti_asid_mask >> 1;
+			}
+		}
 		return;
+#ifdef MULTIPROCESSOR
 	}
 
 	KASSERT(pmap_tlbs[pmap_ntlbs] == NULL);
@@ -225,29 +240,19 @@ pmap_tlb_info_init(struct pmap_tlb_info *ti)
 	ti->ti_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
 	ti->ti_asid_bitmap[0] = 1;
 	ti->ti_asid_hint = 1;
-	ti->ti_asid_max = pmap_tlbs[0]->ti_asid_max;
-	ti->ti_asid_mask = pmap_tlbs[0]->ti_asid_mask;
+	ti->ti_asid_max = pmap_tlb0_info.ti_asid_max;
+	ti->ti_asid_mask = pmap_tlb0_info.ti_asid_mask;
 	ti->ti_asids_free = ti->ti_asid_max;
 	ti->ti_tlbinvop = TLBINV_NOBODY,
 	ti->ti_victim = NULL;
 	ti->ti_cpu_mask = 0;
 	ti->ti_index = pmap_ntlbs++;
-	ti->ti_wired = 0;
+	/*
+	 * If we are reserving a tlb slot for mapping cpu_info,
+	 * allocate it now.
+	 */
+	ti->ti_wired = (cpu_info_store.ci_tlb_slot >= 0);
 	pmap_tlbs[ti->ti_index] = ti;
-#else
-	KASSERT(ti == &pmap_tlb_info);
-	mutex_init(ti->ti_lock, MUTEX_DEFAULT, IPL_SCHED);
-	if (!CPUISMIPSNN) {
-		ti->ti_asid_max = mips_options.mips_num_tlb_entries - 1;
-		ti->ti_asids_free = ti->ti_asid_max;
-		ti->ti_asid_mask = ti->ti_asid_max;
-		/*
-		 * Now figure out what mask we need to focus on asid_max.
-		 */
-		while ((ti->ti_asid_mask + 1) & ti->ti_asid_mask) {
-			ti->ti_asid_mask |= ti->ti_asid_mask >> 1;
-		}
-	}
 #endif /* MULTIPROCESSOR */
 }
 
@@ -265,7 +270,13 @@ pmap_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
 	ci->ci_tlb_info = ti;
 	ci->ci_ksp_tlb_slot = ti->ti_wired++;
 	/*
-	 * Mark the kernel as active and "onproc" for this cpu.
+	 * If we need a tlb slot for mapping cpu_info, use 0.  If we don't
+	 * need one then ci_tlb_slot will be -1, and so will ci->ci_tlb_slot
+	 */
+	ci->ci_tlb_slot = -(cpu_info_store.ci_tlb_slot < 0);
+	/*
+	 * Mark the kernel as active and "onproc" for this cpu.  We assume
+	 * we are the only CPU running so atomic ops are not needed.
 	 */
 	pmap_kernel()->pm_active |= cpu_mask;
 	pmap_kernel()->pm_onproc |= cpu_mask;

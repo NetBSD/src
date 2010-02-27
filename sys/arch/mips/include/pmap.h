@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.10 2010/02/25 05:53:23 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.11 2010/02/27 07:58:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -210,7 +210,7 @@ struct pmap_kernel {
 };
 
 extern struct pmap_kernel kernel_pmap_store;
-extern struct pmap_tlb_info pmap_tlb_info;
+extern struct pmap_tlb_info pmap_tlb0_info;
 extern paddr_t mips_avail_start;
 extern paddr_t mips_avail_end;
 extern vaddr_t mips_virtual_end;
