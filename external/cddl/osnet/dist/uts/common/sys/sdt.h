@@ -19,14 +19,12 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
 #ifndef _SYS_SDT_H
 #define	_SYS_SDT_H
-
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -131,6 +129,16 @@ extern "C" {
 	    (uintptr_t)(arg6), (uintptr_t)(arg7));			\
 }
 
+#define	DTRACE_PROBE8(name, type1, arg1, type2, arg2, type3, arg3,	\
+    type4, arg4, type5, arg5, type6, arg6, type7, arg7, type8, arg8) {	\
+	extern void __dtrace_probe_##name(uintptr_t, uintptr_t,		\
+	    uintptr_t, uintptr_t, uintptr_t, uintptr_t,			\
+	    uintptr_t, uintptr_t);					\
+	__dtrace_probe_##name((uintptr_t)(arg1), (uintptr_t)(arg2),	\
+	    (uintptr_t)(arg3), (uintptr_t)(arg4), (uintptr_t)(arg5),	\
+	    (uintptr_t)(arg6), (uintptr_t)(arg7), (uintptr_t)(arg8));	\
+}
+
 #define	DTRACE_SCHED(name)						\
 	DTRACE_PROBE(__sched_##name);
 
@@ -181,6 +189,40 @@ extern "C" {
     type3, arg3, type4, arg4)						\
 	DTRACE_PROBE4(__io_##name, type1, arg1, type2, arg2, 		\
 	    type3, arg3, type4, arg4);
+
+#define	DTRACE_ISCSI_2(name, type1, arg1, type2, arg2)			\
+	DTRACE_PROBE2(__iscsi_##name, type1, arg1, type2, arg2);
+
+#define	DTRACE_ISCSI_3(name, type1, arg1, type2, arg2, type3, arg3)	\
+	DTRACE_PROBE3(__iscsi_##name, type1, arg1, type2, arg2, type3, arg3);
+
+#define	DTRACE_ISCSI_4(name, type1, arg1, type2, arg2,			\
+    type3, arg3, type4, arg4)						\
+	DTRACE_PROBE4(__iscsi_##name, type1, arg1, type2, arg2,		\
+	    type3, arg3, type4, arg4);
+
+#define	DTRACE_ISCSI_5(name, type1, arg1, type2, arg2,			\
+    type3, arg3, type4, arg4, type5, arg5)				\
+	DTRACE_PROBE5(__iscsi_##name, type1, arg1, type2, arg2,		\
+	    type3, arg3, type4, arg4, type5, arg5);
+
+#define	DTRACE_ISCSI_6(name, type1, arg1, type2, arg2,			\
+    type3, arg3, type4, arg4, type5, arg5, type6, arg6)			\
+	DTRACE_PROBE6(__iscsi_##name, type1, arg1, type2, arg2,		\
+	    type3, arg3, type4, arg4, type5, arg5, type6, arg6);
+
+#define	DTRACE_ISCSI_7(name, type1, arg1, type2, arg2,			\
+    type3, arg3, type4, arg4, type5, arg5, type6, arg6, type7, arg7)	\
+	DTRACE_PROBE7(__iscsi_##name, type1, arg1, type2, arg2,		\
+	    type3, arg3, type4, arg4, type5, arg5, type6, arg6,		\
+	    type7, arg7);
+
+#define	DTRACE_ISCSI_8(name, type1, arg1, type2, arg2,			\
+    type3, arg3, type4, arg4, type5, arg5, type6, arg6,			\
+    type7, arg7, type8, arg8)						\
+	DTRACE_PROBE8(__iscsi_##name, type1, arg1, type2, arg2,		\
+	    type3, arg3, type4, arg4, type5, arg5, type6, arg6,		\
+	    type7, arg7, type8, arg8);
 
 #define	DTRACE_NFSV3_3(name, type1, arg1, type2, arg2, 			\
     type3, arg3)							\
@@ -258,6 +300,59 @@ extern "C" {
 	    type4, arg4)						\
 	DTRACE_PROBE4(__xpv_##name, type1, arg1, type2, arg2, 		\
 	    type3, arg3, type4, arg4);
+
+#define	DTRACE_FC_1(name, type1, arg1) \
+	DTRACE_PROBE1(__fc_##name, type1, arg1);
+
+#define	DTRACE_FC_2(name, type1, arg1, type2, arg2) \
+	DTRACE_PROBE2(__fc_##name, type1, arg1, type2, arg2);
+
+#define	DTRACE_FC_3(name, type1, arg1, type2, arg2, type3, arg3) \
+	DTRACE_PROBE3(__fc_##name, type1, arg1, type2, arg2, type3, arg3);
+
+#define	DTRACE_FC_4(name, type1, arg1, type2, arg2, type3, arg3, type4, arg4) \
+	DTRACE_PROBE4(__fc_##name, type1, arg1, type2, arg2, type3, arg3, \
+	    type4, arg4);
+
+#define	DTRACE_FC_5(name, type1, arg1, type2, arg2, type3, arg3, 	\
+	    type4, arg4, type5, arg5)					\
+	DTRACE_PROBE5(__fc_##name, type1, arg1, type2, arg2, type3, arg3, \
+	    type4, arg4, type5, arg5);
+
+#define	DTRACE_SRP_1(name, type1, arg1)					\
+	DTRACE_PROBE1(__srp_##name, type1, arg1);
+
+#define	DTRACE_SRP_2(name, type1, arg1, type2, arg2)			\
+	DTRACE_PROBE2(__srp_##name, type1, arg1, type2, arg2);
+
+#define	DTRACE_SRP_3(name, type1, arg1, type2, arg2, type3, arg3)	\
+	DTRACE_PROBE3(__srp_##name, type1, arg1, type2, arg2, type3, arg3);
+
+#define	DTRACE_SRP_4(name, type1, arg1, type2, arg2, type3, arg3,	\
+	    type4, arg4)						\
+	DTRACE_PROBE4(__srp_##name, type1, arg1, type2, arg2, 		\
+	    type3, arg3, type4, arg4);
+
+#define	DTRACE_SRP_5(name, type1, arg1, type2, arg2, type3, arg3,	\
+	    type4, arg4, type5, arg5)					\
+	DTRACE_PROBE5(__srp_##name, type1, arg1, type2, arg2, 		\
+	    type3, arg3, type4, arg4, type5, arg5);
+
+#define	DTRACE_SRP_6(name, type1, arg1, type2, arg2, type3, arg3,	\
+	    type4, arg4, type5, arg5, type6, arg6)			\
+	DTRACE_PROBE6(__srp_##name, type1, arg1, type2, arg2, 		\
+	    type3, arg3, type4, arg4, type5, arg5, type6, arg6);
+
+#define	DTRACE_SRP_7(name, type1, arg1, type2, arg2, type3, arg3,	\
+	    type4, arg4, type5, arg5, type6, arg6, type7, arg7)		\
+	DTRACE_PROBE7(__srp_##name, type1, arg1, type2, arg2, 		\
+	    type3, arg3, type4, arg4, type5, arg5, type6, arg6, type7, arg7);
+
+#define	DTRACE_SRP_8(name, type1, arg1, type2, arg2, type3, arg3,	\
+	    type4, arg4, type5, arg5, type6, arg6, type7, arg7, type8, arg8) \
+	DTRACE_PROBE8(__srp_##name, type1, arg1, type2, arg2, 		\
+	    type3, arg3, type4, arg4, type5, arg5, type6, arg6,		\
+	    type7, arg7, type8, arg8);
 
 #endif /* _KERNEL */
 

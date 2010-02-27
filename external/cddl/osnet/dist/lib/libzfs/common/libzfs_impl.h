@@ -20,7 +20,7 @@
  */
 
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
@@ -38,6 +38,8 @@
 #include <libzfs.h>
 #include <libshare.h>
 
+#include <fm/libtopo.h>
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -46,6 +48,13 @@ extern "C" {
 #undef	VERIFY
 #endif
 #define	VERIFY	verify
+
+typedef struct libzfs_fru {
+	char *zf_device;
+	char *zf_fru;
+	struct libzfs_fru *zf_chain;
+	struct libzfs_fru *zf_next;
+} libzfs_fru_t;
 
 struct libzfs_handle {
 	int libzfs_error;
@@ -63,7 +72,15 @@ struct libzfs_handle {
 	int libzfs_printerr;
 	void *libzfs_sharehdl; /* libshare handle */
 	uint_t libzfs_shareflags;
+	boolean_t libzfs_mnttab_enable;
+	avl_tree_t libzfs_mnttab_cache;
+	int libzfs_pool_iter;
+	topo_hdl_t *libzfs_topo_hdl;
+	libzfs_fru_t **libzfs_fru_hash;
+	libzfs_fru_t *libzfs_fru_list;
+	char libzfs_chassis_id[256];
 };
+
 #define	ZFSSHARE_MISS	0x01	/* Didn't find entry in cache */
 
 struct zfs_handle {
@@ -75,8 +92,10 @@ struct zfs_handle {
 	dmu_objset_stats_t zfs_dmustats;
 	nvlist_t *zfs_props;
 	nvlist_t *zfs_user_props;
+	nvlist_t *zfs_recvd_props;
 	boolean_t zfs_mntcheck;
 	char *zfs_mntopts;
+	uint8_t *zfs_props_table;
 };
 
 /*
@@ -169,9 +188,6 @@ zfs_handle_t *make_dataset_handle(libzfs_handle_t *, const char *);
 
 int zpool_open_silent(libzfs_handle_t *, const char *, zpool_handle_t **);
 
-int zvol_create_link(libzfs_handle_t *, const char *);
-int zvol_remove_link(libzfs_handle_t *, const char *);
-int zpool_iter_zvol(zpool_handle_t *, int (*)(const char *, void *), void *);
 boolean_t zpool_name_valid(libzfs_handle_t *, boolean_t, const char *);
 
 void namespace_clear(libzfs_handle_t *);
@@ -184,8 +200,11 @@ extern int zfs_init_libshare(libzfs_handle_t *, int);
 extern void zfs_uninit_libshare(libzfs_handle_t *);
 extern int zfs_parse_options(char *, zfs_share_proto_t);
 
-extern int zfs_unshare_proto(zfs_handle_t *zhp,
+extern int zfs_unshare_proto(zfs_handle_t *,
     const char *, zfs_share_proto_t *);
+
+extern void libzfs_fru_clear(libzfs_handle_t *, boolean_t);
+
 #ifdef	__cplusplus
 }
 #endif

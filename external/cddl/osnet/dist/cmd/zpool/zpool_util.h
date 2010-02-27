@@ -19,7 +19,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2010 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
@@ -37,7 +37,6 @@ extern "C" {
  * Basic utility functions
  */
 void *safe_malloc(size_t);
-char *safe_strdup(const char *);
 void zpool_no_memory(void);
 uint_t num_logs(nvlist_t *nv);
 
@@ -47,6 +46,8 @@ uint_t num_logs(nvlist_t *nv);
 
 nvlist_t *make_root_vdev(zpool_handle_t *zhp, int force, int check_rep,
     boolean_t isreplace, boolean_t dryrun, int argc, char **argv);
+nvlist_t *split_mirror_vdev(zpool_handle_t *zhp, char *newname,
+    nvlist_t *props, splitflags_t flags, int argc, char **argv);
 
 /*
  * Pool list functions

@@ -19,7 +19,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2010 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
@@ -74,6 +74,7 @@ extern "C" {
 #define	DNODES_PER_BLOCK_SHIFT	(DNODE_BLOCK_SHIFT - DNODE_SHIFT)
 #define	DNODES_PER_BLOCK	(1ULL << DNODES_PER_BLOCK_SHIFT)
 #define	DNODES_PER_LEVEL_SHIFT	(DN_MAX_INDBLKSHIFT - SPA_BLKPTRSHIFT)
+#define	DNODES_PER_LEVEL	(1ULL << DNODES_PER_LEVEL_SHIFT)
 
 /* The +2 here is a cheesy way to round up */
 #define	DN_MAX_LEVELS	(2 + ((DN_MAX_OFFSET_SHIFT - SPA_MINBLOCKSHIFT) / \
@@ -88,7 +89,7 @@ extern "C" {
 #define	EPB(blkshift, typeshift)	(1 << (blkshift - typeshift))
 
 struct dmu_buf_impl;
-struct objset_impl;
+struct objset;
 struct zio;
 
 enum dnode_dirtycontext {
@@ -98,7 +99,8 @@ enum dnode_dirtycontext {
 };
 
 /* Is dn_used in bytes?  if not, it's in multiples of SPA_MINBLOCKSIZE */
-#define	DNODE_FLAG_USED_BYTES	(1<<0)
+#define	DNODE_FLAG_USED_BYTES		(1<<0)
+#define	DNODE_FLAG_USERUSED_ACCOUNTED	(1<<1)
 
 typedef struct dnode_phys {
 	uint8_t dn_type;		/* dmu_object_type_t */
@@ -131,14 +133,11 @@ typedef struct dnode {
 	 */
 	krwlock_t dn_struct_rwlock;
 
-	/*
-	 * Our link on dataset's dd_dnodes list.
-	 * Protected by dd_accounting_mtx.
-	 */
+	/* Our link on dn_objset->os_dnodes list; protected by os_lock.  */
 	list_node_t dn_link;
 
 	/* immutable: */
-	struct objset_impl *dn_objset;
+	struct objset *dn_objset;
 	uint64_t dn_object;
 	struct dmu_buf_impl *dn_dbuf;
 	dnode_phys_t *dn_phys; /* pointer into dn->dn_dbuf->db.db_data */
@@ -160,6 +159,7 @@ typedef struct dnode {
 	uint16_t dn_datablkszsec;	/* in 512b sectors */
 	uint32_t dn_datablksz;		/* in bytes */
 	uint64_t dn_maxblkid;
+	uint8_t dn_next_nblkptr[TXG_SIZE];
 	uint8_t dn_next_nlevels[TXG_SIZE];
 	uint8_t dn_next_indblkshift[TXG_SIZE];
 	uint16_t dn_next_bonuslen[TXG_SIZE];
@@ -190,6 +190,9 @@ typedef struct dnode {
 	/* parent IO for current sync write */
 	zio_t *dn_zio;
 
+	/* used in syncing context */
+	dnode_phys_t *dn_oldphys;
+
 	/* holds prefetch structure */
 	struct zfetch	dn_zfetch;
 } dnode_t;
@@ -200,14 +203,14 @@ typedef struct free_range {
 	uint64_t fr_nblks;
 } free_range_t;
 
-dnode_t *dnode_special_open(struct objset_impl *dd, dnode_phys_t *dnp,
+dnode_t *dnode_special_open(struct objset *dd, dnode_phys_t *dnp,
     uint64_t object);
 void dnode_special_close(dnode_t *dn);
 
 void dnode_setbonuslen(dnode_t *dn, int newsize, dmu_tx_t *tx);
-int dnode_hold(struct objset_impl *dd, uint64_t object,
+int dnode_hold(struct objset *dd, uint64_t object,
     void *ref, dnode_t **dnp);
-int dnode_hold_impl(struct objset_impl *dd, uint64_t object, int flag,
+int dnode_hold_impl(struct objset *dd, uint64_t object, int flag,
     void *ref, dnode_t **dnp);
 boolean_t dnode_add_ref(dnode_t *dn, void *ref);
 void dnode_rele(dnode_t *dn, void *ref);

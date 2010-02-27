@@ -19,14 +19,12 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
 #ifndef	_SYS_ZAP_H
 #define	_SYS_ZAP_H
-
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
 
 /*
  * ZAP - ZFS Attribute Processor
@@ -87,9 +85,6 @@
 extern "C" {
 #endif
 
-#define	ZAP_MAXNAMELEN 256
-#define	ZAP_MAXVALUELEN 1024
-
 /*
  * The matchtype specifies which entry will be accessed.
  * MT_EXACT: only find an exact match (non-normalized)
@@ -105,6 +100,18 @@ typedef enum matchtype
 	MT_BEST,
 	MT_FIRST
 } matchtype_t;
+
+typedef enum zap_flags {
+	/* Use 64-bit hash value (serialized cursors will always use 64-bits) */
+	ZAP_FLAG_HASH64 = 1 << 0,
+	/* Key is binary, not string (zap_add_uint64() can be used) */
+	ZAP_FLAG_UINT64_KEY = 1 << 1,
+	/*
+	 * First word of key (which must be an array of uint64) is
+	 * already randomly distributed.
+	 */
+	ZAP_FLAG_PRE_HASHED_KEY = 1 << 2,
+} zap_flags_t;
 
 /*
  * Create a new zapobj with no attributes and return its object number.
@@ -122,6 +129,9 @@ typedef enum matchtype
 uint64_t zap_create(objset_t *ds, dmu_object_type_t ot,
     dmu_object_type_t bonustype, int bonuslen, dmu_tx_t *tx);
 uint64_t zap_create_norm(objset_t *ds, int normflags, dmu_object_type_t ot,
+    dmu_object_type_t bonustype, int bonuslen, dmu_tx_t *tx);
+uint64_t zap_create_flags(objset_t *os, int normflags, zap_flags_t flags,
+    dmu_object_type_t ot, int leaf_blockshift, int indirect_blockshift,
     dmu_object_type_t bonustype, int bonuslen, dmu_tx_t *tx);
 
 /*
@@ -185,6 +195,12 @@ int zap_lookup_norm(objset_t *ds, uint64_t zapobj, const char *name,
     uint64_t integer_size, uint64_t num_integers, void *buf,
     matchtype_t mt, char *realname, int rn_len,
     boolean_t *normalization_conflictp);
+int zap_lookup_uint64(objset_t *os, uint64_t zapobj, const uint64_t *key,
+    int key_numints, uint64_t integer_size, uint64_t num_integers, void *buf);
+int zap_contains(objset_t *ds, uint64_t zapobj, const char *name);
+
+int zap_count_write(objset_t *os, uint64_t zapobj, const char *name,
+    int add, uint64_t *towrite, uint64_t *tooverwrite);
 
 /*
  * Create an attribute with the given name and value.
@@ -192,8 +208,11 @@ int zap_lookup_norm(objset_t *ds, uint64_t zapobj, const char *name,
  * If an attribute with the given name already exists, the call will
  * fail and return EEXIST.
  */
-int zap_add(objset_t *ds, uint64_t zapobj, const char *name,
+int zap_add(objset_t *ds, uint64_t zapobj, const char *key,
     int integer_size, uint64_t num_integers,
+    const void *val, dmu_tx_t *tx);
+int zap_add_uint64(objset_t *ds, uint64_t zapobj, const uint64_t *key,
+    int key_numints, int integer_size, uint64_t num_integers,
     const void *val, dmu_tx_t *tx);
 
 /*
@@ -206,6 +225,9 @@ int zap_add(objset_t *ds, uint64_t zapobj, const char *name,
  */
 int zap_update(objset_t *ds, uint64_t zapobj, const char *name,
     int integer_size, uint64_t num_integers, const void *val, dmu_tx_t *tx);
+int zap_update_uint64(objset_t *os, uint64_t zapobj, const uint64_t *key,
+    int key_numints,
+    int integer_size, uint64_t num_integers, const void *val, dmu_tx_t *tx);
 
 /*
  * Get the length (in integers) and the integer size of the specified
@@ -216,6 +238,8 @@ int zap_update(objset_t *ds, uint64_t zapobj, const char *name,
  */
 int zap_length(objset_t *ds, uint64_t zapobj, const char *name,
     uint64_t *integer_size, uint64_t *num_integers);
+int zap_length_uint64(objset_t *os, uint64_t zapobj, const uint64_t *key,
+    int key_numints, uint64_t *integer_size, uint64_t *num_integers);
 
 /*
  * Remove the specified attribute.
@@ -226,6 +250,8 @@ int zap_length(objset_t *ds, uint64_t zapobj, const char *name,
 int zap_remove(objset_t *ds, uint64_t zapobj, const char *name, dmu_tx_t *tx);
 int zap_remove_norm(objset_t *ds, uint64_t zapobj, const char *name,
     matchtype_t mt, dmu_tx_t *tx);
+int zap_remove_uint64(objset_t *os, uint64_t zapobj, const uint64_t *key,
+    int key_numints, dmu_tx_t *tx);
 
 /*
  * Returns (in *count) the number of attributes in the specified zap
@@ -257,6 +283,8 @@ int zap_join(objset_t *os, uint64_t fromobj, uint64_t intoobj, dmu_tx_t *tx);
 int zap_add_int(objset_t *os, uint64_t obj, uint64_t value, dmu_tx_t *tx);
 int zap_remove_int(objset_t *os, uint64_t obj, uint64_t value, dmu_tx_t *tx);
 int zap_lookup_int(objset_t *os, uint64_t obj, uint64_t value);
+int zap_increment_int(objset_t *os, uint64_t obj, uint64_t key, int64_t delta,
+    dmu_tx_t *tx);
 
 struct zap;
 struct zap_leaf;
@@ -266,6 +294,7 @@ typedef struct zap_cursor {
 	struct zap *zc_zap;
 	struct zap_leaf *zc_leaf;
 	uint64_t zc_zapobj;
+	uint64_t zc_serialized;
 	uint64_t zc_hash;
 	uint32_t zc_cd;
 } zap_cursor_t;
@@ -315,6 +344,11 @@ void zap_cursor_advance(zap_cursor_t *zc);
  * fewer than 2^22 (4.2 million) entries in the zap object.
  */
 uint64_t zap_cursor_serialize(zap_cursor_t *zc);
+
+/*
+ * Advance the cursor to the attribute having the given key.
+ */
+int zap_cursor_move_to_key(zap_cursor_t *zc, const char *name, matchtype_t mt);
 
 /*
  * Initialize a zap cursor pointing to the position recorded by

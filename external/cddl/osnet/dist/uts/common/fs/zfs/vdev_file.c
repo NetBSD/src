@@ -19,7 +19,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
@@ -51,6 +51,16 @@ vdev_file_open(vdev_t *vd, uint64_t *psize, uint64_t *ashift)
 		return (EINVAL);
 	}
 
+	/*
+	 * Reopen the device if it's not currently open.  Otherwise,
+	 * just update the physical size of the device.
+	 */
+	if (vd->vdev_tsd != NULL) {
+		ASSERT(vd->vdev_reopening);
+		vf = vd->vdev_tsd;
+		goto skip_open;
+	}
+
 	vf = vd->vdev_tsd = kmem_zalloc(sizeof (vdev_file_t), KM_SLEEP);
 
 	/*
@@ -61,7 +71,7 @@ vdev_file_open(vdev_t *vd, uint64_t *psize, uint64_t *ashift)
 	 */
 	ASSERT(vd->vdev_path != NULL && vd->vdev_path[0] == '/');
 	error = vn_openat(vd->vdev_path + 1, UIO_SYSSPACE,
-	    spa_mode | FOFFMAX, 0, &vp, 0, 0, rootdir, -1);
+	    spa_mode(vd->vdev_spa) | FOFFMAX, 0, &vp, 0, 0, rootdir, -1);
 
 	if (error) {
 		vd->vdev_stat.vs_aux = VDEV_AUX_OPEN_FAILED;
@@ -79,6 +89,8 @@ vdev_file_open(vdev_t *vd, uint64_t *psize, uint64_t *ashift)
 		return (ENODEV);
 	}
 #endif
+
+skip_open:
 	/*
 	 * Determine the physical size of the file.
 	 */
@@ -100,12 +112,13 @@ vdev_file_close(vdev_t *vd)
 {
 	vdev_file_t *vf = vd->vdev_tsd;
 
-	if (vf == NULL)
+	if (vd->vdev_reopening || vf == NULL)
 		return;
 
 	if (vf->vf_vnode != NULL) {
 		(void) VOP_PUTPAGE(vf->vf_vnode, 0, 0, B_INVAL, kcred, NULL);
-		(void) VOP_CLOSE(vf->vf_vnode, spa_mode, 1, 0, kcred, NULL);
+		(void) VOP_CLOSE(vf->vf_vnode, spa_mode(vd->vdev_spa), 1, 0,
+		    kcred, NULL);
 		VN_RELE(vf->vf_vnode);
 	}
 

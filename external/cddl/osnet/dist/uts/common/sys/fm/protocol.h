@@ -20,7 +20,7 @@
  */
 
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2010 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
@@ -47,6 +47,7 @@ extern "C" {
 /* FM event class values */
 #define	FM_EREPORT_CLASS		"ereport"
 #define	FM_FAULT_CLASS			"fault"
+#define	FM_DEFECT_CLASS			"defect"
 #define	FM_RSRC_CLASS			"resource"
 #define	FM_LIST_EVENT			"list"
 
@@ -83,9 +84,11 @@ extern "C" {
 #define	FM_SUSPECT_FAULT_LIST		"fault-list"
 #define	FM_SUSPECT_FAULT_SZ		"fault-list-sz"
 #define	FM_SUSPECT_FAULT_STATUS		"fault-status"
+#define	FM_SUSPECT_INJECTED		"__injected"
 #define	FM_SUSPECT_MESSAGE		"message"
 #define	FM_SUSPECT_RETIRE		"retire"
 #define	FM_SUSPECT_RESPONSE		"response"
+#define	FM_SUSPECT_SEVERITY		"severity"
 
 #define	FM_SUSPECT_VERS0		0
 #define	FM_SUSPECT_VERSION		FM_SUSPECT_VERS0
@@ -121,6 +124,7 @@ extern "C" {
 #define	FM_RSRC_ASRU_REPAIRED		"repaired"
 #define	FM_RSRC_ASRU_REPLACED		"replaced"
 #define	FM_RSRC_ASRU_ACQUITTED		"acquitted"
+#define	FM_RSRC_ASRU_RESOLVED		"resolved"
 #define	FM_RSRC_ASRU_UNUSABLE		"unusable"
 #define	FM_RSRC_ASRU_EVENT		"event"
 
@@ -129,6 +133,8 @@ extern "C" {
 #define	FM_RSRC_XPRT_VERSION		FM_RSRC_XPRT_VERS0
 #define	FM_RSRC_XPRT_UUID		"uuid"
 #define	FM_RSRC_XPRT_SUBCLASS		"subclass"
+#define	FM_RSRC_XPRT_FAULT_STATUS	"fault-status"
+#define	FM_RSRC_XPRT_FAULT_HAS_ASRU	"fault-has-asru"
 
 /*
  * FM ENA Format Macros
@@ -167,6 +173,7 @@ extern "C" {
 
 /* FMRI authority-type member names */
 #define	FM_FMRI_AUTH_CHASSIS		"chassis-id"
+#define	FM_FMRI_AUTH_PRODUCT_SN		"product-sn"
 #define	FM_FMRI_AUTH_PRODUCT		"product-id"
 #define	FM_FMRI_AUTH_DOMAIN		"domain-id"
 #define	FM_FMRI_AUTH_SERVER		"server-id"
@@ -205,6 +212,8 @@ extern "C" {
 #define	FM_PKG_SCHEME_VERSION		PKG_SCHEME_VERSION0
 #define	LEGACY_SCHEME_VERSION0		0
 #define	FM_LEGACY_SCHEME_VERSION	LEGACY_SCHEME_VERSION0
+#define	SVC_SCHEME_VERSION0		0
+#define	FM_SVC_SCHEME_VERSION		SVC_SCHEME_VERSION0
 #define	ZFS_SCHEME_VERSION0		0
 #define	FM_ZFS_SCHEME_VERSION		ZFS_SCHEME_VERSION0
 
@@ -246,14 +255,13 @@ extern "C" {
 #define	FM_FMRI_PKG_VERSION		"pkg-version"
 
 /* svc scheme member names */
-#define	FM_FMRI_SVC_NAME		"service-name"
-#define	FM_FMRI_SVC_VERSION		"service-version"
-#define	FM_FMRI_SVC_INSTANCE		"instance"
-#define	FM_FMRI_SVC_CONTRACT_ID		"contract-id"
+#define	FM_FMRI_SVC_NAME		"svc-name"
+#define	FM_FMRI_SVC_INSTANCE		"svc-instance"
+#define	FM_FMRI_SVC_CONTRACT_ID		"svc-contract-id"
 
 /* svc-authority member names */
 #define	FM_FMRI_SVC_AUTH_SCOPE		"scope"
-#define	FM_FMRI_SVC_AUTH_SYSTEM_FQN	"system-FQN"
+#define	FM_FMRI_SVC_AUTH_SYSTEM_FQN	"system-fqn"
 
 /* cpu scheme member names */
 #define	FM_FMRI_CPU_ID			"cpuid"
@@ -316,6 +324,8 @@ extern void fm_fmri_mem_set(nvlist_t *, int, const nvlist_t *, const char *,
 extern void fm_authority_set(nvlist_t *, int, const char *, const char *,
     const char *, const char *);
 extern void fm_fmri_zfs_set(nvlist_t *, int, uint64_t, uint64_t);
+extern void fm_fmri_hc_create(nvlist_t *, int, const nvlist_t *, nvlist_t *,
+    nvlist_t *, int, ...);
 
 extern uint64_t fm_ena_increment(uint64_t);
 extern uint64_t fm_ena_generate(uint64_t, uchar_t);

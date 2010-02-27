@@ -19,7 +19,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
@@ -102,6 +102,13 @@ static int
 vdev_offlined(uint64_t state, uint64_t aux, uint64_t errs)
 {
 	return (state == VDEV_STATE_OFFLINE);
+}
+
+/* ARGSUSED */
+static int
+vdev_removed(uint64_t state, uint64_t aux, uint64_t errs)
+{
+	return (state == VDEV_STATE_REMOVED);
 }
 
 /*
@@ -276,6 +283,12 @@ check_status(nvlist_t *config, boolean_t isimport)
 		return (ZPOOL_STATUS_OFFLINE_DEV);
 
 	/*
+	 * Removed device
+	 */
+	if (find_vdev_problem(nvroot, vdev_removed))
+		return (ZPOOL_STATUS_REMOVED_DEV);
+
+	/*
 	 * Currently resilvering
 	 */
 	if (!vs->vs_scrub_complete && vs->vs_scrub_type == POOL_SCRUB_RESILVER)
@@ -314,4 +327,69 @@ zpool_import_status(nvlist_t *config, char **msgid)
 		*msgid = zfs_msgid_table[ret];
 
 	return (ret);
+}
+
+static void
+dump_ddt_stat(const ddt_stat_t *dds, int h)
+{
+	char refcnt[6];
+	char blocks[6], lsize[6], psize[6], dsize[6];
+	char ref_blocks[6], ref_lsize[6], ref_psize[6], ref_dsize[6];
+
+	if (dds == NULL || dds->dds_blocks == 0)
+		return;
+
+	if (h == -1)
+		(void) strcpy(refcnt, "Total");
+	else
+		zfs_nicenum(1ULL << h, refcnt, sizeof (refcnt));
+
+	zfs_nicenum(dds->dds_blocks, blocks, sizeof (blocks));
+	zfs_nicenum(dds->dds_lsize, lsize, sizeof (lsize));
+	zfs_nicenum(dds->dds_psize, psize, sizeof (psize));
+	zfs_nicenum(dds->dds_dsize, dsize, sizeof (dsize));
+	zfs_nicenum(dds->dds_ref_blocks, ref_blocks, sizeof (ref_blocks));
+	zfs_nicenum(dds->dds_ref_lsize, ref_lsize, sizeof (ref_lsize));
+	zfs_nicenum(dds->dds_ref_psize, ref_psize, sizeof (ref_psize));
+	zfs_nicenum(dds->dds_ref_dsize, ref_dsize, sizeof (ref_dsize));
+
+	(void) printf("%6s   %6s   %5s   %5s   %5s   %6s   %5s   %5s   %5s\n",
+	    refcnt,
+	    blocks, lsize, psize, dsize,
+	    ref_blocks, ref_lsize, ref_psize, ref_dsize);
+}
+
+/*
+ * Print the DDT histogram and the column totals.
+ */
+void
+zpool_dump_ddt(const ddt_stat_t *dds_total, const ddt_histogram_t *ddh)
+{
+	int h;
+
+	(void) printf("\n");
+
+	(void) printf("bucket   "
+	    "           allocated             "
+	    "          referenced          \n");
+	(void) printf("______   "
+	    "______________________________   "
+	    "______________________________\n");
+
+	(void) printf("%6s   %6s   %5s   %5s   %5s   %6s   %5s   %5s   %5s\n",
+	    "refcnt",
+	    "blocks", "LSIZE", "PSIZE", "DSIZE",
+	    "blocks", "LSIZE", "PSIZE", "DSIZE");
+
+	(void) printf("%6s   %6s   %5s   %5s   %5s   %6s   %5s   %5s   %5s\n",
+	    "------",
+	    "------", "-----", "-----", "-----",
+	    "------", "-----", "-----", "-----");
+
+	for (h = 0; h < 64; h++)
+		dump_ddt_stat(&ddh->ddh_stat[h], h);
+
+	dump_ddt_stat(dds_total, -1);
+
+	(void) printf("\n");
 }
