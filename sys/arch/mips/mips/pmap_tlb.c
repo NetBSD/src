@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.5 2010/02/27 07:58:52 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.1.2.6 2010/02/27 20:10:26 snj Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.5 2010/02/27 07:58:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.6 2010/02/27 20:10:26 snj Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -79,16 +79,16 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.5 2010/02/27 07:58:52 matt Exp $"
  *
  * When a change to the local TLB may require a change in the TLB's of other
  * CPUs, we try to avoid sending an IPI if at all possible.  For instance, if
- * are updating a PTE and that PTE previously was invalid and therefore
- * couldn't support an active mapping, there's no need for an IPI since can be
- * no TLB entry to invalidate.  The other case is when we change a PTE to be
- * modified we just update the local TLB.  If another TLB has a stale entry,
- * a TLB MOD exception will be raised and that will cause the local TLB to be
- * updated.
+ * we are updating a PTE and that PTE previously was invalid and therefore
+ * couldn't support an active mapping, there's no need for an IPI since there
+ * can be no TLB entry to invalidate.  The other case is when we change a PTE
+ * to be modified we just update the local TLB.  If another TLB has a stale
+ * entry, a TLB MOD exception will be raised and that will cause the local TLB
+ * to be updated.
  *
  * We never need to update a non-local TLB if the pmap doesn't have a valid
  * ASID for that TLB.  If it does have a valid ASID but isn't current "onproc"
- * we simply reset its ASID for that TLB and then time it goes "onproc" it
+ * we simply reset its ASID for that TLB and then when it goes "onproc" it
  * will allocate a new ASID and any existing TLB entries will be orphaned.
  * Only in the case that pmap has an "onproc" ASID do we actually have to send
  * an IPI.
@@ -110,12 +110,12 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.5 2010/02/27 07:58:52 matt Exp $"
  *	0) nothing,
  *	1) if that ASID is still "onproc", we invalidate the TLB entries for
  *	   that single ASID.  If not, just reset the pmap's ASID to invalidate
- *	   and let it allocated the next time it goes "onproc",
+ *	   and let it be allocated the next time it goes "onproc",
  *	2) we reinitialize the ASID space (preserving any "onproc" ASIDs) and
  *	   invalidate all non-wired non-global TLB entries,
  *	3) we invalidate all of the non-wired global TLB entries,
  *	4) we reinitialize the ASID space (again preserving any "onproc" ASIDs)
- *	   invalidate all non-wried TLB entries.
+ *	   invalidate all non-wired TLB entries.
  *
  * As you can see, shootdowns are not concerned with addresses, just address
  * spaces.  Since the number of TLB entries is usually quite small, this avoids
@@ -654,7 +654,7 @@ pmap_tlb_asid_alloc(struct pmap_tlb_info *ti, pmap_t pm,
 
 #ifdef MULTIPROCESSOR
 	/*
-	 * Mark that we now an active ASID for all CPUs sharing this TLB.
+	 * Mark that we now have an active ASID for all CPUs sharing this TLB.
 	 * The bits in pm_active belonging to this TLB can only be changed
 	 * while this TLBs lock is held.
 	 */
