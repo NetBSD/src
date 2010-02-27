@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.74 2010/02/24 13:10:26 tsutsui Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.75 2010/02/27 04:36:56 tsutsui Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.74 2010/02/24 13:10:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.75 2010/02/27 04:36:56 tsutsui Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -1304,7 +1304,8 @@ dp8390_ipkdb_attach(struct ipkdb_if *kip)
 	sc->tx_page_start = sc->mem_start >> ED_PAGE_SHIFT;
 	sc->rec_page_start = sc->tx_page_start + sc->txb_cnt * ED_TXBUF_SIZE;
 	sc->rec_page_stop = sc->tx_page_start + (sc->mem_size >> ED_PAGE_SHIFT);
-	sc->mem_ring = sc->mem_start + (sc->rec_page_start << ED_PAGE_SHIFT);
+	sc->mem_ring = sc->mem_start +
+	    ((sc->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
 	sc->mem_end = sc->mem_start + sc->mem_size;
 
 	dp8390_stop(sc);
