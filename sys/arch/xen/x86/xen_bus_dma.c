@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.17 2010/02/12 01:55:46 jym Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.18 2010/02/27 09:22:40 jym Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.17 2010/02/12 01:55:46 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.18 2010/02/27 09:22:40 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,8 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 		    != 1) {
 #ifdef DEBUG
 			printf("xen_alloc_contig: XENMEM_decrease_reservation "
-			    "failed!\n");
+			    "failed: err %d (pa %#" PRIxPADDR " mfn %#lx)\n",
+			    error, pa, mfn);
 #endif
 			xpmap_phys_to_machine_mapping[
 			    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn;
