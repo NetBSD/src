@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.20 2010/02/27 08:00:02 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.21 2010/02/27 20:35:14 snj Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.20 2010/02/27 08:00:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.21 2010/02/27 20:35:14 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -464,7 +464,7 @@ rmixl_fixup_cop0_oscratch(int32_t load_addr, uint32_t new_insns[2])
 	KASSERT(offset < sizeof(struct cpu_info));
 
 	/*
-	 * Fixup this direct load cpu_info_store to actual get the current
+	 * Fixup this direct load cpu_info_store to actually get the current
 	 * CPU's cpu_info from COP0 OSSCRATCH0 and then fix the load to be
 	 * relative from the start of struct cpu_info.
 	 */
