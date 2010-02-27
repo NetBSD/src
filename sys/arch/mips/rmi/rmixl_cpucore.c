@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.4 2010/02/23 20:33:48 matt Exp $	*/
+/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.5 2010/02/27 21:25:24 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.4 2010/02/23 20:33:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.5 2010/02/27 21:25:24 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -94,7 +94,7 @@ cpucore_rmixl_attach(device_t parent, device_t self, void *aux)
 	 * default one for the system.
 	 */
 	if (sc->sc_core == 0) {
-		sc->sc_tlbinfo = &pmap_tlb_info;
+		sc->sc_tlbinfo = &pmap_tlb0_info;
 	} else {
 		sc->sc_tlbinfo = &sc->sc_tlbinfo0;
 		pmap_tlb_info_init(sc->sc_tlbinfo);
