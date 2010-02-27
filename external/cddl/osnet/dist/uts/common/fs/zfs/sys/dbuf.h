@@ -19,7 +19,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2010 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
@@ -75,7 +75,6 @@ typedef enum dbuf_states {
 	DB_EVICTING
 } dbuf_states_t;
 
-struct objset_impl;
 struct dnode;
 struct dmu_tx;
 
@@ -134,6 +133,7 @@ typedef struct dbuf_dirty_record {
 			arc_buf_t *dr_data;
 			blkptr_t dr_overridden_by;
 			override_states_t dr_override_state;
+			uint8_t dr_copies;
 		} dl;
 	} dt;
 } dbuf_dirty_record_t;
@@ -148,7 +148,7 @@ typedef struct dmu_buf_impl {
 	dmu_buf_t db;
 
 	/* the objset we belong to */
-	struct objset_impl *db_objset;
+	struct objset *db_objset;
 
 	/*
 	 * the dnode we belong to (NULL when evicted)
@@ -255,6 +255,7 @@ void dbuf_add_ref(dmu_buf_impl_t *db, void *tag);
 uint64_t dbuf_refcount(dmu_buf_impl_t *db);
 
 void dbuf_rele(dmu_buf_impl_t *db, void *tag);
+void dbuf_rele_and_unlock(dmu_buf_impl_t *db, void *tag);
 
 dmu_buf_impl_t *dbuf_find(struct dnode *dn, uint8_t level, uint64_t blkid);
 
@@ -264,7 +265,9 @@ void dbuf_fill_done(dmu_buf_impl_t *db, dmu_tx_t *tx);
 void dmu_buf_will_not_fill(dmu_buf_t *db, dmu_tx_t *tx);
 void dmu_buf_will_fill(dmu_buf_t *db, dmu_tx_t *tx);
 void dmu_buf_fill_done(dmu_buf_t *db, dmu_tx_t *tx);
+void dbuf_assign_arcbuf(dmu_buf_impl_t *db, arc_buf_t *buf, dmu_tx_t *tx);
 dbuf_dirty_record_t *dbuf_dirty(dmu_buf_impl_t *db, dmu_tx_t *tx);
+arc_buf_t *dbuf_loan_arcbuf(dmu_buf_impl_t *db);
 
 void dbuf_clear(dmu_buf_impl_t *db);
 void dbuf_evict(dmu_buf_impl_t *db);
@@ -323,7 +326,7 @@ _NOTE(CONSTCOND) } while (0)
 #define	dprintf_dbuf_bp(db, bp, fmt, ...) do {			\
 	if (zfs_flags & ZFS_DEBUG_DPRINTF) {			\
 	char *__blkbuf = kmem_alloc(BP_SPRINTF_LEN, KM_SLEEP);	\
-	sprintf_blkptr(__blkbuf, BP_SPRINTF_LEN, bp);		\
+	sprintf_blkptr(__blkbuf, bp);				\
 	dprintf_dbuf(db, fmt " %s\n", __VA_ARGS__, __blkbuf);	\
 	kmem_free(__blkbuf, BP_SPRINTF_LEN);			\
 	} 							\
