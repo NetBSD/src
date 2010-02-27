@@ -26,6 +26,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/utsname.h>
 
 #include <arpa/inet.h>
 
@@ -44,6 +45,7 @@
 #include "common.h"
 #include "if-options.h"
 #include "net.h"
+#include "platform.h"
 
 /* These options only make sense in the config file, so don't use any
    valid short options for them */
@@ -771,8 +773,9 @@ read_config(const char *file,
 {
 	struct if_options *ifo;
 	FILE *f;
-	char *line, *option, *p;
+	char *line, *option, *p, *platform;
 	int skip = 0, have_profile = 0;
+	struct utsname utn;
 
 	/* Seed our default options */
 	ifo = xzalloc(sizeof(*ifo));
@@ -788,9 +791,17 @@ read_config(const char *file,
 	if (strcmp(ifo->hostname, "(none)") == 0 ||
 	    strcmp(ifo->hostname, "localhost") == 0)
 		ifo->hostname[0] = '\0';
-	ifo->vendorclassid[0] = snprintf((char *)ifo->vendorclassid + 1,
-	    VENDORCLASSID_MAX_LEN,
-	    "%s %s", PACKAGE, VERSION);
+
+	platform = hardware_platform();
+	if (uname(&utn) == 0)
+		ifo->vendorclassid[0] = snprintf((char *)ifo->vendorclassid + 1,
+		    VENDORCLASSID_MAX_LEN,
+	            "%s-%s:%s-%s:%s%s%s", PACKAGE, VERSION,
+		    utn.sysname, utn.release, utn.machine,
+		    platform ? ":" : "", platform);
+	else
+		ifo->vendorclassid[0] = snprintf((char *)ifo->vendorclassid + 1,
+		    VENDORCLASSID_MAX_LEN, "%s-%s", PACKAGE, VERSION);
 
 	/* Parse our options file */
 	f = fopen(file ? file : CONFIG, "r");
