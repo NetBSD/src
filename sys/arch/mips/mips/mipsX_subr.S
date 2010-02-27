@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.27 2010/02/27 07:58:52 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.28 2010/02/27 20:32:04 snj Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -671,7 +671,7 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 
 	/*
 	 * We need to find out if this was due to a T_BREAK and if so
-	 * turn off interrupts in addition to clearing the execption level.
+	 * turn off interrupts in addition to clearing the exception level.
 	 */
 	li	v1, 1 << T_BREAK		# make a mask of T_BREAK
 	sll	t0, a1, MIPS_CR_EXC_CODE_SHIFT	# shift exc code to low 5 bits
@@ -1205,7 +1205,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	 * Clear interrupt enable
 	 */
 	mfc0	v0, MIPS_COP_0_STATUS		# read it 
-	xor	v0, MIPS_SR_INT_IE		# disable interrutps
+	xor	v0, MIPS_SR_INT_IE		# disable interrupts
 	mtc0	v0, MIPS_COP_0_STATUS		# write it
 	COP0_SYNC
 	nop
@@ -1957,7 +1957,7 @@ END(MIPSX(tlb_read_indexed))
  * mipsN_VCED --
  *
  *	Handle virtual coherency exceptions.
- *	Called directly from the mips3 execption-table code.
+ *	Called directly from the mips3 exception-table code.
  *	only k0, k1 are available on entry
  *
  * Results:
@@ -1965,7 +1965,7 @@ END(MIPSX(tlb_read_indexed))
  *
  * Side effects:
  *	Remaps the conflicting address as uncached and returns
- *	from the execption.
+ *	from the exception.
  *
  *	NB: cannot be profiled, all registers are user registers on entry.
  *
@@ -2631,7 +2631,7 @@ LEAF(MIPSX(tlb_enter))
 	tlbwi					# now write the invalid TLB
 	COP0_SYNC
 
-	mtc0	a3, MIPS_COP_0_TLB_HI		# retore the addr for new TLB
+	mtc0	a3, MIPS_COP_0_TLB_HI		# restore the addr for new TLB
 	COP0_SYNC
 	nop
 	nop
