@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.56 2010/02/27 10:49:58 wiz Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.57 2010/02/27 12:07:40 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.56 2010/02/27 10:49:58 wiz Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.57 2010/02/27 12:07:40 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -750,12 +750,12 @@ print_journal(const char *name, int fd)
 		count  = afs.fs_journallocs[1];
 		blklen = afs.fs_journallocs[2];
 
-		for (bno=0; bno<count; bno += skip / DEV_BSIZE) {
+		for (bno=0; bno<count; bno += skip / blklen) {
 
 			skip = blklen;
 
-			boff = bno * DEV_BSIZE;
-			if (bno * DEV_BSIZE >= 2 * blklen &&
+			boff = bno * blklen;
+			if (bno * blklen >= 2 * blklen &&
 			  ((head >= tail && (boff < tail || boff >= head)) ||
 			  (head < tail && (boff >= head && boff < tail))))
 				continue;
@@ -763,7 +763,7 @@ print_journal(const char *name, int fd)
 			printf("journal block %lu offset %lld\n",
 				(unsigned long)bno, (long long) boff);
 
-			if (lseek(fd, (off_t)(off*DEV_BSIZE) + boff, SEEK_SET)
+			if (lseek(fd, (off_t)(off*blklen) + boff, SEEK_SET)
 			    == (off_t)-1)
 				return (1);
 			if (read(fd, &jbuf, blklen) != (ssize_t)blklen) {
@@ -791,8 +791,10 @@ print_journal(const char *name, int fd)
 				break;
 			}
 
-			if (blklen)
-				skip = (skip + blklen - 1) / blklen * blklen;
+			if (blklen == 0)
+				break;
+
+			skip = (skip + blklen - 1) / blklen * blklen;
 			if (skip == 0)
 				break;
 
