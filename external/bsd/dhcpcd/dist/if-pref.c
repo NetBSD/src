@@ -51,9 +51,9 @@ ifcmp(struct interface *si, struct interface *ti)
 		return 1;
 	/* If we are either, they neither have a lease, or they both have.
 	 * We need to check for IPv4LL and make it non-preferred. */
-	if (si->state->new) {
-		sill = IN_LINKLOCAL(htonl(si->state->new->yiaddr));
-		till = IN_LINKLOCAL(htonl(ti->state->new->yiaddr));
+	if (si->state->new && ti->state->new) {
+		sill = (si->state->new->cookie == htonl(MAGIC_COOKIE));
+		till = (ti->state->new->cookie == htonl(MAGIC_COOKIE));
 		if (!sill && till)
 			return -1;
 		if (sill && !till)

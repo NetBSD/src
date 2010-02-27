@@ -1,7 +1,8 @@
-/*
+/* 
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2010 Roy Marples <roy@marples.name>
- *
+ * All rights reserved
+
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -24,29 +25,20 @@
  * SUCH DAMAGE.
  */
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <sys/utsname.h>
 
-#define PACKAGE			"dhcpcd"
-#define VERSION			"5.2.0"
+static char march[SYS_NMLN];
 
-#ifndef CONFIG
-# define CONFIG			SYSCONFDIR "/" PACKAGE ".conf"
-#endif
-#ifndef SCRIPT
-# define SCRIPT			LIBEXECDIR "/" PACKAGE "-run-hooks"
-#endif
-#ifndef DUID
-# define DUID			SYSCONFDIR "/" PACKAGE ".duid"
-#endif
-#ifndef LEASEFILE
-# define LEASEFILE		DBDIR "/" PACKAGE "-%s.lease"
-#endif
-#ifndef PIDFILE
-# define PIDFILE		RUNDIR "/" PACKAGE "%s%s.pid"
-#endif
-#ifndef CONTROLSOCKET
-# define CONTROLSOCKET		RUNDIR "/" PACKAGE ".sock"
-#endif
+char *
+hardware_platform(void)
+{
+	int mib[2] = { CTL_HW, HW_MACHINE_ARCH };
+	size_t len = sizeof(march);
 
-#endif
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+		march, &len, NULL, 0) != 0)
+		return NULL;
+	return march;
+}

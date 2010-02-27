@@ -78,7 +78,7 @@ send_arp(const struct interface *iface, int op, in_addr_t sip, in_addr_t tip)
 static void
 handle_arp_failure(struct interface *iface)
 {
-	if (IN_LINKLOCAL(htonl(iface->state->fail.s_addr))) {
+	if (iface->state->offer->cookie != htonl(MAGIC_COOKIE)) {
 		handle_ipv4ll_failure(iface);
 		return;
 	}
@@ -216,7 +216,7 @@ send_arp_announce(void *arg)
 		add_timeout_sec(ANNOUNCE_WAIT, send_arp_announce, iface);
 		return;
 	}
-	if (IN_LINKLOCAL(htonl(state->new->yiaddr))) {
+	if (state->new->cookie != htonl(MAGIC_COOKIE)) {
 		/* We should pretend to be at the end
 		 * of the DHCP negotation cycle unless we rebooted */
 		if (state->interval != 0)

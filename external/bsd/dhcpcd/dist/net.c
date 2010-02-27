@@ -449,6 +449,14 @@ discover_interfaces(int argc, char * const *argv)
 				    "%s: unknown hardware family", p);
 			}
 		}
+
+		/* Handle any platform init for the interface */
+		if (if_init(ifp) == -1) {
+			syslog(LOG_ERR, "%s: if_init: %m", p);
+			free_interface(ifp);
+			continue;
+		}
+
 		if (ifl)
 			ifl->next = ifp; 
 		else

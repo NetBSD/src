@@ -73,6 +73,13 @@
 static int r_fd = -1;
 
 int
+if_init(_unused struct interface *iface)
+{
+	/* BSD promotes secondary address by default */
+	return 0;
+}
+
+int
 init_sockets(void)
 {
 	if ((socket_afnet = socket(AF_INET, SOCK_DGRAM, 0)) == -1)

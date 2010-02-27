@@ -165,6 +165,7 @@ struct dhcp_lease {
 	time_t leasedfrom;
 	struct timeval boundtime;
 	uint8_t frominfo;
+	uint32_t cookie;
 };
 
 #include "dhcpcd.h"
