@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.1 2010/02/27 07:58:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.2 2010/02/27 18:25:25 snj Exp $");
 
 #include <sys/param.h>
 
@@ -136,7 +136,7 @@ mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2])
 	KASSERT(load_addr < (intptr_t)(ci + 1));
 
 	/*
-	 * Use the load instrution as a prototype and it make use $0
+	 * Use the load instruction as a prototype and it make use $0
 	 * as base and the new negative offset.  The second instruction
 	 * is a NOP.
 	 */
@@ -152,7 +152,7 @@ mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2])
 	    (new_insns[0] >> 21) & 31);
 #endif
 	/*
-	 * Contruct the TLB_LO entry needed to map cpu_info_store.
+	 * Construct the TLB_LO entry needed to map cpu_info_store.
 	 */
 	const uint32_t tlb_lo = MIPS3_PG_G|MIPS3_PG_V|MIPS3_PG_D
 	    | mips3_paddr_to_tlbpfn(MIPS_KSEG0_TO_PHYS(trunc_page(load_addr)));
