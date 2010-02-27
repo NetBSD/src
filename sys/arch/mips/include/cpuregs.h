@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.74.28.14 2010/02/05 07:36:51 matt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.74.28.15 2010/02/27 07:52:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -486,6 +486,7 @@
  * 18	MIPS_COP_0_WATCH_LO	.336 WatchLo register.
  * 19	MIPS_COP_0_WATCH_HI	.333 WatchHi register.
  * 20	MIPS_COP_0_TLB_XCONTEXT .6.6 TLB XContext register.
+ * 22	MIPS_COP_0_OSSCRATCH	...6 [RMI] OS Scratch register. (select 0..7)
  * 23	MIPS_COP_0_DEBUG	.... Debug JTAG register.
  * 24	MIPS_COP_0_DEPC		.... DEPC JTAG register.
  * 25	MIPS_COP_0_PERFCNT	..36 Performance Counter register.
@@ -546,6 +547,7 @@
 #define	MIPS_COP_0_ERROR_PC	_(30)
 
 /* MIPS32/64 */
+#define	MIPS_COP_0_OSSCRATCH	_(22)
 #define	MIPS_COP_0_DEBUG	_(23)
 #define	MIPS_COP_0_DEPC		_(24)
 #define	MIPS_COP_0_PERFCNT	_(25)
