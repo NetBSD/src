@@ -19,7 +19,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
@@ -63,6 +63,7 @@ extern "C" {
 #define	ZFS_OPAQUE		0x0000010000000000
 #define	ZFS_AV_QUARANTINED 	0x0000020000000000
 #define	ZFS_AV_MODIFIED 	0x0000040000000000
+#define	ZFS_REPARSE		0x0000080000000000
 
 #define	ZFS_ATTR_SET(zp, attr, value)	\
 { \
@@ -83,6 +84,7 @@ extern "C" {
 #define	ZFS_ACL_DEFAULTED	0x20		/* ACL should be defaulted */
 #define	ZFS_ACL_AUTO_INHERIT	0x40		/* ACL should be inherited */
 #define	ZFS_BONUS_SCANSTAMP	0x80		/* Scanstamp in bonus area */
+#define	ZFS_NO_EXECS_DENIED	0x100		/* exec was given to everyone */
 
 /*
  * Is ID ephemeral?
@@ -99,12 +101,15 @@ extern "C" {
 
 /*
  * Special attributes for master node.
+ * "userquota@" and "groupquota@" are also valid (from
+ * zfs_userquota_prop_prefixes[]).
  */
 #define	ZFS_FSID		"FSID"
 #define	ZFS_UNLINKED_SET	"DELETE_QUEUE"
 #define	ZFS_ROOT_OBJ		"ROOT"
 #define	ZPL_VERSION_STR		"VERSION"
 #define	ZFS_FUID_TABLES		"FUID"
+#define	ZFS_SHARES_DIR		"SHARES"
 
 #define	ZFS_MAX_BLOCKSIZE	(SPA_MAXBLOCKSIZE)
 
@@ -179,7 +184,7 @@ typedef struct znode_phys {
 typedef struct zfs_dirlock {
 	char		*dl_name;	/* directory entry being locked */
 	uint32_t	dl_sharecnt;	/* 0 if exclusive, > 0 if shared */
-	uint32_t	dl_refcnt;	/* reference counter for dirlock structure */
+	uint8_t		dl_namelock;	/* 1 if z_name_lock is NOT held */
 	uint16_t	dl_namesize;	/* set if dl_name was allocated */
 	kcondvar_t	dl_cv;		/* wait for entry to be unlocked */
 	struct znode	*dl_dzp;	/* directory znode */
@@ -194,7 +199,6 @@ typedef struct znode {
 	vnode_t		*z_vnode;
 	uint64_t	z_id;		/* object ID for this znode */
 	kmutex_t	z_lock;		/* znode modification lock */
-	krwlock_t	z_map_lock;	/* page map lock */
 	krwlock_t	z_parent_lock;	/* parent lock for directories */
 	krwlock_t	z_name_lock;	/* "master" lock for dirent locks */
 	zfs_dirlock_t	*z_dirlocks;	/* directory entry lock list */
@@ -210,6 +214,7 @@ typedef struct znode {
 	uint64_t	z_gen;		/* generation (same as zp_gen) */
 	uint32_t	z_sync_cnt;	/* synchronous open count */
 	kmutex_t	z_acl_lock;	/* acl data lock */
+	zfs_acl_t	*z_acl_cached;	/* cached acl */
 	list_node_t	z_link_node;	/* all znodes in fs link */
 	/*
 	 * These are dmu managed fields.
@@ -322,7 +327,6 @@ extern int	zfs_create_op_tables();
 extern int	zfs_sync(vfs_t *vfsp, int flag, cred_t *cr);
 extern dev_t	zfs_cmpldev(uint64_t);
 extern int	zfs_get_zplprop(objset_t *os, zfs_prop_t prop, uint64_t *value);
-extern int	zfs_set_version(const char *name, uint64_t newvers);
 extern int	zfs_get_stats(objset_t *os, nvlist_t *nv);
 extern void	zfs_znode_dmu_fini(znode_t *);
 
@@ -349,6 +353,7 @@ extern void zfs_log_acl(zilog_t *zilog, dmu_tx_t *tx, znode_t *zp,
     vsecattr_t *vsecp, zfs_fuid_info_t *fuidp);
 extern void zfs_xvattr_set(znode_t *zp, xvattr_t *xvap);
 extern void zfs_upgrade(zfsvfs_t *zfsvfs, dmu_tx_t *tx);
+extern int zfs_create_share_dir(zfsvfs_t *zfsvfs, dmu_tx_t *tx);
 
 extern caddr_t zfs_map_page(page_t *, enum seg_rw);
 extern void zfs_unmap_page(page_t *, caddr_t);
