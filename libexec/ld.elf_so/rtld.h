@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.88 2010/01/17 08:04:20 skrll Exp $	 */
+/*	$NetBSD: rtld.h,v 1.89 2010/02/27 11:16:38 roy Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -58,6 +58,16 @@ extern size_t _rtld_pagesz;
 
 #define NEW(type)	((type *) xmalloc(sizeof(type)))
 #define CNEW(type)	((type *) xcalloc(sizeof(type)))
+
+/*
+ * Fill in a DoneList with an allocation large enough to hold all of
+ * the currently-loaded objects.
+ */
+#define _rtld_donelist_init(dlp)						\
+    ((dlp)->objs = xmalloc(_rtld_objcount * sizeof((dlp)->objs[0])),	\
+    (dlp)->num_alloc = _rtld_objcount,					\
+    (dlp)->num_used = 0)
+#define _rtld_donelist_clear(dlp)		xfree((dlp)->objs)
 
 #endif /* _RTLD_SOURCE */
 
@@ -198,12 +208,20 @@ typedef struct Struct_Obj_Entry {
 	void		*ehdr;
 } Obj_Entry;
 
+typedef struct Struct_DoneList {
+	const Obj_Entry **objs;		/* Array of object pointers */
+	unsigned int num_alloc;		/* Allocated size of the array */
+	unsigned int num_used;		/* Number of array slots used */
+} DoneList;
+
+
 #if defined(_RTLD_SOURCE)
 
 extern struct r_debug _rtld_debug;
 extern Search_Path *_rtld_default_paths;
 extern Obj_Entry *_rtld_objlist;
 extern Obj_Entry **_rtld_objtail;
+extern int _rtld_objcount;
 extern Obj_Entry *_rtld_objmain;
 extern Obj_Entry _rtld_objself;
 extern Search_Path *_rtld_paths;
@@ -276,11 +294,12 @@ const Elf_Sym *_rtld_find_plt_symdef(unsigned long, const Obj_Entry *,
     const Obj_Entry **, bool);
 
 const Elf_Sym *_rtld_symlook_list(const char *, unsigned long,
-    const Objlist *, const Obj_Entry **, bool);
+    const Objlist *, const Obj_Entry **, bool, DoneList *);
 const Elf_Sym *_rtld_symlook_default(const char *, unsigned long,
     const Obj_Entry *, const Obj_Entry **, bool);
 const Elf_Sym *_rtld_symlook_needed(const char *, unsigned long,
-    const Needed_Entry *, const Obj_Entry **, bool);
+    const Needed_Entry *, const Obj_Entry **, bool,
+    DoneList *, DoneList *);
 #ifdef COMBRELOC
 void _rtld_combreloc_reset(const Obj_Entry *);
 #endif

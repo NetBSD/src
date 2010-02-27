@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.50 2010/01/13 20:17:21 christos Exp $	 */
+/*	$NetBSD: symbol.c,v 1.51 2010/02/27 11:16:38 roy Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.50 2010/01/13 20:17:21 christos Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.51 2010/02/27 11:16:38 roy Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -59,6 +59,27 @@ __RCSID("$NetBSD: symbol.c,v 1.50 2010/01/13 20:17:21 christos Exp $");
 #include "rtld.h"
 
 typedef void (*fptr_t)(void);
+
+/*
+ * If the given object is already in the donelist, return true.  Otherwise
+ * add the object to the list and return false.
+ */
+static bool
+_rtld_donelist_check(DoneList *dlp, const Obj_Entry *obj)
+{
+	unsigned int i;
+
+	for (i = 0;  i < dlp->num_used;  i++)
+		if (dlp->objs[i] == obj)
+			return true;
+	/*
+	 * Our donelist allocation may not always be sufficient as we're not
+	 * thread safe. We'll handle it properly anyway.
+	 */
+	if (dlp->num_used < dlp->num_alloc)
+		dlp->objs[dlp->num_used++] = obj;
+	return false;
+}
 
 static bool
 _rtld_is_exported(const Elf_Sym *def)
@@ -108,7 +129,7 @@ _rtld_elf_hash(const char *name)
 
 const Elf_Sym *
 _rtld_symlook_list(const char *name, unsigned long hash, const Objlist *objlist,
-    const Obj_Entry **defobj_out, bool in_plt)
+    const Obj_Entry **defobj_out, bool in_plt, DoneList *dlp)
 {
 	const Elf_Sym *symp;
 	const Elf_Sym *def;
@@ -118,6 +139,8 @@ _rtld_symlook_list(const char *name, unsigned long hash, const Objlist *objlist,
 	def = NULL;
 	defobj = NULL;
 	SIMPLEQ_FOREACH(elm, objlist, link) {
+		if (_rtld_donelist_check(dlp, elm->obj))
+			continue;
 		rdbg(("search object %p (%s) for %s", elm->obj, elm->obj->path,
 		    name));
 		if ((symp = _rtld_symlook_obj(name, hash, elm->obj, in_plt))
@@ -143,7 +166,8 @@ _rtld_symlook_list(const char *name, unsigned long hash, const Objlist *objlist,
  */
 const Elf_Sym *
 _rtld_symlook_needed(const char *name, unsigned long hash,
-    const Needed_Entry *needed, const Obj_Entry **defobj_out, bool inplt)
+    const Needed_Entry *needed, const Obj_Entry **defobj_out, bool inplt,
+    DoneList *breadth, DoneList *depth)
 {
 	const Elf_Sym *def, *def_w;
 	const Needed_Entry *n;
@@ -152,8 +176,11 @@ _rtld_symlook_needed(const char *name, unsigned long hash,
 	def = def_w = NULL;
 	defobj = NULL;
 	for (n = needed; n != NULL; n = n->next) {
-		if ((obj = n->obj) == NULL ||
-		     (def = _rtld_symlook_obj(name, hash, obj, inplt)) == NULL)
+		if ((obj = n->obj) == NULL)
+			continue;
+		if (_rtld_donelist_check(breadth, obj))
+			continue;
+		if ((def = _rtld_symlook_obj(name, hash, obj, inplt)) == NULL)
 			continue;
 		defobj = obj;
 		if (ELF_ST_BIND(def->st_info) != STB_WEAK) {
@@ -169,8 +196,10 @@ _rtld_symlook_needed(const char *name, unsigned long hash,
 	for (n = needed; n != NULL; n = n->next) {
 		if ((obj = n->obj) == NULL)
 			continue;
+		if (_rtld_donelist_check(depth, obj))
+			continue;
 		def_w = _rtld_symlook_needed(name, hash, obj->needed, &defobj1,
-		    inplt);
+		    inplt, breadth, depth);
 		if (def_w == NULL)
 			continue;
 		if (def == NULL || ELF_ST_BIND(def_w->st_info) != STB_WEAK) {
@@ -381,9 +410,12 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 	const Objlist_Entry *elm;
 	def = NULL;
 	defobj = NULL;
+	DoneList donelist;
+
+	_rtld_donelist_init(&donelist);
 
 	/* Look first in the referencing object if linked symbolically. */
-	if (refobj->symbolic) {
+	if (refobj->symbolic && !_rtld_donelist_check(&donelist, refobj)) {
 		rdbg(("search referencing object for %s", name));
 		symp = _rtld_symlook_obj(name, hash, refobj, in_plt);
 		if (symp != NULL) {
@@ -396,7 +428,7 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
 		rdbg(("search _rtld_list_main for %s", name));
 		symp = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj,
-		    in_plt);
+		    in_plt, &donelist);
 		if (symp != NULL &&
 		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 			def = symp;
@@ -408,7 +440,7 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
 		rdbg(("search _rtld_list_global for %s", name));
 		symp = _rtld_symlook_list(name, hash, &_rtld_list_global,
-		    &obj, in_plt);
+		    &obj, in_plt, &donelist);
 		if (symp != NULL &&
 		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 			def = symp;
@@ -423,7 +455,7 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 		rdbg(("search DAG with root %p (%s) for %s", elm->obj,
 		    elm->obj->path, name));
 		symp = _rtld_symlook_list(name, hash, &elm->obj->dagmembers,
-		    &obj, in_plt);
+		    &obj, in_plt, &donelist);
 		if (symp != NULL &&
 		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
 			def = symp;
@@ -446,6 +478,8 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 			defobj = &_rtld_objself;
 		}
 	}
+
+	_rtld_donelist_clear(&donelist);
 
 	if (def != NULL)
 		*defobj_out = defobj;
