@@ -950,7 +950,7 @@ zfs_valid_proplist(libzfs_handle_t *hdl, zfs_type_t type, nvlist_t *nvl,
 			}
 
 			break;
-
+#ifdef PORT_SOLARIS
 		case ZFS_PROP_MLSLABEL:
 		{
 			/*
@@ -1004,7 +1004,7 @@ badlabel:
 			goto error;
 
 		}
-
+#endif
 		case ZFS_PROP_MOUNTPOINT:
 		{
 			namecheck_err_t why;
@@ -2042,7 +2042,7 @@ zfs_prop_get(zfs_handle_t *zhp, zfs_prop_t prop, char *propbuf, size_t proplen,
 		 */
 		(void) strlcpy(propbuf, zhp->zfs_name, proplen);
 		break;
-
+#ifdef PORT_SOLARIS
 	case ZFS_PROP_MLSLABEL:
 		{
 			m_label_t *new_sl = NULL;
@@ -2080,7 +2080,7 @@ zfs_prop_get(zfs_handle_t *zhp, zfs_prop_t prop, char *propbuf, size_t proplen,
 			free(ascii);
 		}
 		break;
-
+#endif
 	default:
 		switch (zfs_prop_get_type(prop)) {
 		case PROP_TYPE_NUMBER:
@@ -2172,6 +2172,7 @@ zfs_prop_get_numeric(zfs_handle_t *zhp, zfs_prop_t prop, uint64_t *value,
 	return (0);
 }
 
+#ifdef PORT_SOLARIS /* NetBSD zfs QUOTA support */
 static int
 idmap_id_to_numeric_domain_rid(uid_t id, boolean_t isuser,
     char **domainp, idmap_rid_t *ridp)
@@ -2321,6 +2322,14 @@ userquota_propname_decode(const char *propname, boolean_t zoned,
 	ASSERT3P(numericsid, ==, NULL);
 	return (0);
 }
+#else
+static int
+userquota_propname_decode(const char *propname, boolean_t zoned,
+    zfs_userquota_prop_t *typep, char *domain, int domainlen, uint64_t *ridp)
+{
+	return (ENOENT);
+}
+#endif /* PORT_SOLARIS */
 
 static int
 zfs_prop_get_userquota_common(zfs_handle_t *zhp, const char *propname,

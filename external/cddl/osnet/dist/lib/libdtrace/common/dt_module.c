@@ -19,13 +19,10 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
-#define ELFSIZE ARCH_ELFSIZE	/* XXX debug */
 #include <sys/types.h>
 #if defined(sun)
 #include <sys/modctl.h>
@@ -79,7 +76,10 @@ dt_module_symhash_insert(dt_module_t *dmp, const char *name, uint_t id)
 static uint_t
 dt_module_syminit32(dt_module_t *dmp)
 {
-	Elf32_Sym *sym = dmp->dm_symtab.cts_data;
+#if STT_NUM != (STT_TLS + 1)
+#error "STT_NUM has grown. update dt_module_syminit32()"
+#endif
+	const Elf32_Sym *sym = dmp->dm_symtab.cts_data;
 	const char *base = dmp->dm_strtab.cts_data;
 	size_t ss_size = dmp->dm_strtab.cts_size;
 	uint_t i, n = dmp->dm_nsymelems;
@@ -113,7 +113,10 @@ dt_module_syminit32(dt_module_t *dmp)
 static uint_t
 dt_module_syminit64(dt_module_t *dmp)
 {
-	Elf64_Sym *sym = dmp->dm_symtab.cts_data;
+#if STT_NUM != (STT_TLS + 1)
+#error "STT_NUM has grown. update dt_module_syminit64()"
+#endif
+	const Elf64_Sym *sym = dmp->dm_symtab.cts_data;
 	const char *base = dmp->dm_strtab.cts_data;
 	size_t ss_size = dmp->dm_strtab.cts_size;
 	uint_t i, n = dmp->dm_nsymelems;
@@ -491,7 +494,7 @@ dt_module_load_sect(dtrace_hdl_t *dtp, dt_module_t *dmp, ctf_sect_t *ctsp)
 	Elf_Data *dp;
 	Elf_Scn *sp;
 
-	if (elf_getshstrndx(dmp->dm_elf, &shstrs) == 0)
+	if (elf_getshdrstrndx(dmp->dm_elf, &shstrs) == -1)
 		return (dt_set_errno(dtp, EDT_NOTLOADED));
 
 	for (sp = NULL; (sp = elf_nextscn(dmp->dm_elf, sp)) != NULL; ) {
@@ -897,7 +900,7 @@ dt_module_update(dtrace_hdl_t *dtp, const char *name)
 	(void) close(fd);
 
 	if (dmp->dm_elf == NULL || err == -1 ||
-	    elf_getshstrndx(dmp->dm_elf, &shstrs) == 0) {
+	    elf_getshdrstrndx(dmp->dm_elf, &shstrs) == -1) {
 		dt_dprintf("failed to load %s: %s\n",
 		    fname, elf_errmsg(elf_errno()));
 		dt_module_destroy(dtp, dmp);

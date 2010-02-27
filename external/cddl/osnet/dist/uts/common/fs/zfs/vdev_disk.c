@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
@@ -69,10 +69,11 @@ vdev_disk_flush(struct work *work, void *cookie)
 static int
 vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *ashift)
 {
-	struct partinfo pinfo;
+	spa_t *spa = vd->vdev_spa;
 	vdev_disk_t *dvd;
 	vnode_t *vp;
 	int error, cmd;
+	struct partinfo pinfo;
 
 	/*
 	 * We must have a pathname, and it must be absolute.
@@ -80,6 +81,16 @@ vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *ashift)
 	if (vd->vdev_path == NULL || vd->vdev_path[0] != '/') {
 		vd->vdev_stat.vs_aux = VDEV_AUX_BAD_LABEL;
 		return (EINVAL);
+	}
+
+	/*
+	 * Reopen the device if it's not currently open. Otherwise,
+	 * just update the physical size of the device.
+	 */
+	if (vd->vdev_tsd != NULL) {
+		ASSERT(vd->vdev_reopening);
+		dvd = vd->vdev_tsd;
+		goto skip_open;
 	}
 
 	dvd = vd->vdev_tsd = kmem_zalloc(sizeof (vdev_disk_t), KM_SLEEP);
@@ -99,7 +110,6 @@ vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *ashift)
 	 *
 	 * 3. Otherwise, the device may have moved.  Try opening the device
 	 *    by the devid instead.
-	 *
 	 */
 	if (vd->vdev_devid != NULL) {
 		/* XXXNETBSD wedges */
@@ -123,6 +133,7 @@ vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *ashift)
 	 * XXXNETBSD Compare the devid to the stored value.
 	 */
 
+skip_open:
 	/*
 	 * Determine the actual size of the device.
 	 * XXXNETBSD wedges.
@@ -164,12 +175,8 @@ vdev_disk_close(vdev_t *vd)
 	vdev_disk_t *dvd = vd->vdev_tsd;
 	vnode_t *vp;
 
-	if (dvd == NULL)
+	if (vd->vdev_reopening || dvd == NULL)
 		return;
-
-	dprintf("removing disk %s, devid %s\n",
-	    vd->vdev_path ? vd->vdev_path : "<none>",
-	    vd->vdev_devid ? vd->vdev_devid : "<none>");
 
 	if ((vp = dvd->vd_vn) != NULL) {
 /* XXX NetBSD Sometimes we deadlock on this why ? */
@@ -179,6 +186,7 @@ vdev_disk_close(vdev_t *vd)
 /* XXX is this needed ?		vrele(vp); */
 		workqueue_destroy(dvd->vd_wq);
 	}
+
 	kmem_free(dvd, sizeof (vdev_disk_t));
 	vd->vdev_tsd = NULL;
 }
@@ -188,7 +196,6 @@ vdev_disk_io_intr(buf_t *bp)
 {
 	zio_t *zio = bp->b_private;
 
-	dprintf("vdev_disk_io_intr bp=%p\n", bp);
 	/*
 	 * The rest of the zio stack only deals with EIO, ECKSUM, and ENXIO.
 	 * Rather than teach the rest of the stack about other error
@@ -204,7 +211,29 @@ vdev_disk_io_intr(buf_t *bp)
 		zio->io_error = EIO;
 	}
 
+
 	putiobuf(bp);
+	zio_interrupt(zio);
+}
+
+static void
+vdev_disk_ioctl_free(zio_t *zio)
+{
+	kmem_free(zio->io_vsd, sizeof (struct dk_callback));
+}
+
+static const zio_vsd_ops_t vdev_disk_vsd_ops = {
+	vdev_disk_ioctl_free,
+	zio_vsd_default_cksum_report
+};
+
+static void
+vdev_disk_ioctl_done(void *zio_arg, int error)
+{
+	zio_t *zio = zio_arg;
+
+	zio->io_error = error;
+
 	zio_interrupt(zio);
 }
 
@@ -240,6 +269,7 @@ vdev_disk_io_start(zio_t *zio)
 			bp->b_private = zio;
 			workqueue_enqueue(dvd->vd_wq, &bp->b_work, NULL);
 			return (ZIO_PIPELINE_STOP);
+			break;
 
 		default:
 			zio->io_error = ENOTSUP;

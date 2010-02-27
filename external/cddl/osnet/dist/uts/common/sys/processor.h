@@ -1,4 +1,4 @@
-/*
+	/*
  * CDDL HEADER START
  *
  * The contents of this file are subject to the terms of the
@@ -54,7 +54,7 @@ typedef uint16_t lgrpid_t;
 /*
  * Type for processor name (CPU number).
  */
-//typedef	int	processorid_t;
+typedef	int	processorid_t;
 typedef int	chipid_t;
 
 /*
