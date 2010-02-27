@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.19 2010/02/01 04:17:51 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.20 2010/02/27 08:00:02 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.19 2010/02/01 04:17:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.20 2010/02/27 08:00:02 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -248,6 +248,7 @@ void rmixlfw_mmap_print(rmixlfw_mmap_t *);
 
 
 #ifdef MULTIPROCESSOR
+static bool rmixl_fixup_cop0_oscratch(int32_t, uint32_t [2])
 void rmixl_get_wakeup_info(struct rmixl_config *);
 #ifdef MACHDEP_DEBUG
 static void rmixl_wakeup_info_print(volatile rmixlfw_cpu_wakeup_info_t *);
@@ -443,7 +444,42 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
+#ifdef MULTIPROCESSOR
+	/*
+	 * Fix up the exception vector to use COP0 OSSCRATCH0
+	 */
+	__asm __volatile("mtc0 %0,$%1"
+		:: "r"(&cpu_info_store), "n"(MIPS_COP_0_OSSCRATCH));
+	mips_fixup_exceptions(rmixl_fixup_cop0_oscratch);
+#endif
 }
+
+#ifdef MULTIPROCESSOR
+static bool
+rmixl_fixup_cop0_oscratch(int32_t load_addr, uint32_t new_insns[2])
+{
+	size_t offset = load_addr - (intptr_t)&cpu_info_store;
+
+	KASSERT(MIPS_KSEG0_P(load_addr));
+	KASSERT(offset < sizeof(struct cpu_info));
+
+	/*
+	 * Fixup this direct load cpu_info_store to actual get the current
+	 * CPU's cpu_info from COP0 OSSCRATCH0 and then fix the load to be
+	 * relative from the start of struct cpu_info.
+	 */
+
+	/* [0] = mfc0 rX, $22 (OSScratch) */
+	new_insns[0] = (020 << 26)
+	    | (new_insns[0] & 0x001f0000)
+	    | (MIPS_COP_0_OSSCRATCH << 11) | (0 << 0);
+
+	/* [1] = l[dw] rX, offset(rX) */
+	new_insns[1] = (new_insns[1] & 0xffff0000) | offset;
+
+	return true;
+}
+#endif /* MULTIPROCESSOR */
 
 /*
  * ram_seg_resv - cut reserved regions out of segs, fragmenting as needed
