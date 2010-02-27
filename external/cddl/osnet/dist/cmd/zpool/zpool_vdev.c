@@ -20,7 +20,7 @@
  */
 
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2010 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
@@ -66,6 +66,7 @@
 #include <fcntl.h>
 #include <libintl.h>
 #include <libnvpair.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -944,19 +945,34 @@ check_in_use(nvlist_t *config, nvlist_t *nv, int force, int isreplacing,
 }
 
 static const char *
-is_grouping(const char *type, int *mindev)
+is_grouping(const char *type, int *mindev, int *maxdev)
 {
-	if (strcmp(type, "raidz") == 0 || strcmp(type, "raidz1") == 0) {
+	if (strncmp(type, "raidz", 5) == 0) {
+		const char *p = type + 5;
+		char *end;
+		long nparity;
+
+		if (*p == '\0') {
+			nparity = 1;
+		} else if (*p == '0') {
+			return (NULL); /* no zero prefixes allowed */
+		} else {
+			errno = 0;
+			nparity = strtol(p, &end, 10);
+			if (errno != 0 || nparity < 1 || nparity >= 255 ||
+			    *end != '\0')
+				return (NULL);
+		}
+
 		if (mindev != NULL)
-			*mindev = 2;
+			*mindev = nparity + 1;
+		if (maxdev != NULL)
+			*maxdev = 255;
 		return (VDEV_TYPE_RAIDZ);
 	}
 
-	if (strcmp(type, "raidz2") == 0) {
-		if (mindev != NULL)
-			*mindev = 3;
-		return (VDEV_TYPE_RAIDZ);
-	}
+	if (maxdev != NULL)
+		*maxdev = INT_MAX;
 
 	if (strcmp(type, "mirror") == 0) {
 		if (mindev != NULL)
@@ -995,7 +1011,7 @@ nvlist_t *
 construct_spec(int argc, char **argv)
 {
 	nvlist_t *nvroot, *nv, **top, **spares, **l2cache;
-	int t, toplevels, mindev, nspares, nlogs, nl2cache;
+	int t, toplevels, mindev, maxdev, nspares, nlogs, nl2cache;
 	const char *type;
 	uint64_t is_log;
 	boolean_t seen_logs;
@@ -1017,7 +1033,7 @@ construct_spec(int argc, char **argv)
 		 * If it's a mirror or raidz, the subsequent arguments are
 		 * its leaves -- until we encounter the next mirror or raidz.
 		 */
-		if ((type = is_grouping(argv[0], &mindev)) != NULL) {
+		if ((type = is_grouping(argv[0], &mindev, &maxdev)) != NULL) {
 			nvlist_t **child = NULL;
 			int c, children = 0;
 
@@ -1074,7 +1090,7 @@ construct_spec(int argc, char **argv)
 			}
 
 			for (c = 1; c < argc; c++) {
-				if (is_grouping(argv[c], NULL) != NULL)
+				if (is_grouping(argv[c], NULL, NULL) != NULL)
 					break;
 				children++;
 				child = realloc(child,
@@ -1091,6 +1107,13 @@ construct_spec(int argc, char **argv)
 				(void) fprintf(stderr, gettext("invalid vdev "
 				    "specification: %s requires at least %d "
 				    "devices\n"), argv[0], mindev);
+				return (NULL);
+			}
+
+			if (children > maxdev) {
+				(void) fprintf(stderr, gettext("invalid vdev "
+				    "specification: %s supports no more than "
+				    "%d devices\n"), argv[0], maxdev);
 				return (NULL);
 			}
 
@@ -1188,6 +1211,52 @@ construct_spec(int argc, char **argv)
 	return (nvroot);
 }
 
+nvlist_t *
+split_mirror_vdev(zpool_handle_t *zhp, char *newname, nvlist_t *props,
+    splitflags_t flags, int argc, char **argv)
+{
+	nvlist_t *newroot = NULL, **child;
+	uint_t c, children;
+
+	if (argc > 0) {
+		if ((newroot = construct_spec(argc, argv)) == NULL) {
+			(void) fprintf(stderr, gettext("Unable to build a "
+			    "pool from the specified devices\n"));
+			return (NULL);
+		}
+
+		if (!flags.dryrun && make_disks(zhp, newroot) != 0) {
+			nvlist_free(newroot);
+			return (NULL);
+		}
+
+		/* avoid any tricks in the spec */
+		verify(nvlist_lookup_nvlist_array(newroot,
+		    ZPOOL_CONFIG_CHILDREN, &child, &children) == 0);
+		for (c = 0; c < children; c++) {
+			char *path;
+			const char *type;
+			int min, max;
+
+			verify(nvlist_lookup_string(child[c],
+			    ZPOOL_CONFIG_PATH, &path) == 0);
+			if ((type = is_grouping(path, &min, &max)) != NULL) {
+				(void) fprintf(stderr, gettext("Cannot use "
+				    "'%s' as a device for splitting\n"), type);
+				nvlist_free(newroot);
+				return (NULL);
+			}
+		}
+	}
+
+	if (zpool_vdev_split(zhp, newname, &newroot, props, flags) != 0) {
+		if (newroot != NULL)
+			nvlist_free(newroot);
+		return (NULL);
+	}
+
+	return (newroot);
+}
 
 /*
  * Get and validate the contents of the given vdev specification.  This ensures
