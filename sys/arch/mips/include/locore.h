@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.80 2009/12/14 00:46:04 matt Exp $ */
+/* $NetBSD: locore.h,v 1.81 2010/02/27 19:10:41 snj Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -16,7 +16,7 @@
 /*
  * Jump table for MIPS CPU locore functions that are implemented
  * differently on different generations, or instruction-level
- * archtecture (ISA) level, the Mips family.
+ * architecture (ISA) level, the Mips family.
  *
  * We currently provide support for MIPS I and MIPS III.
  */
@@ -308,7 +308,7 @@ struct locoresw {
 };
 
 /*
- * The "active" locore-fuction vector, and
+ * The "active" locore-function vector, and
  */
 extern mips_locore_jumpvec_t mips_locore_jumpvec;
 extern struct locoresw mips_locoresw;
