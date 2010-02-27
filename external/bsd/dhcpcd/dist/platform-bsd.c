@@ -29,6 +29,8 @@
 #include <sys/sysctl.h>
 #include <sys/utsname.h>
 
+#include "platform.h"
+
 static char march[SYS_NMLN];
 
 char *
