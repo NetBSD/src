@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.6 2010/02/27 20:10:26 snj Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.1.2.7 2010/02/27 21:29:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.6 2010/02/27 20:10:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.7 2010/02/27 21:29:01 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -612,7 +612,9 @@ pmap_tlb_asid_alloc(struct pmap_tlb_info *ti, pmap_t pm,
 	 * a new one.
 	 */
 	if (__predict_false(TLBINFO_ASID_INUSE_P(ti, ti->ti_asid_hint))) {
+#ifdef DIAGNOSTIC
 		const size_t words = __arraycount(ti->ti_asid_bitmap);
+#endif
 		const size_t nbpw = 8 * sizeof(ti->ti_asid_bitmap[0]);
 		for (size_t i = 0; i < ti->ti_asid_hint / nbpw; i++) {
 			KASSERT(~ti->ti_asid_bitmap[i] == 0);
