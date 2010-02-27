@@ -20,11 +20,9 @@
  */
 
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
-
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
 
 #include <sys/spa.h>
 #include <sys/spa_impl.h>
@@ -105,7 +103,8 @@ spa_history_create_obj(spa_t *spa, dmu_tx_t *tx)
 	 * Figure out maximum size of history log.  We set it at
 	 * 1% of pool size, with a max of 32MB and min of 128KB.
 	 */
-	shpp->sh_phys_max_off = spa_get_dspace(spa) / 100;
+	shpp->sh_phys_max_off =
+	    metaslab_class_get_dspace(spa_normal_class(spa)) / 100;
 	shpp->sh_phys_max_off = MIN(shpp->sh_phys_max_off, 32<<20);
 	shpp->sh_phys_max_off = MAX(shpp->sh_phys_max_off, 128<<10);
 
@@ -127,12 +126,12 @@ spa_history_advance_bof(spa_t *spa, spa_history_phys_t *shpp)
 	firstread = MIN(sizeof (reclen), shpp->sh_phys_max_off - phys_bof);
 
 	if ((err = dmu_read(mos, spa->spa_history, phys_bof, firstread,
-	    buf)) != 0)
+	    buf, DMU_READ_PREFETCH)) != 0)
 		return (err);
 	if (firstread != sizeof (reclen)) {
 		if ((err = dmu_read(mos, spa->spa_history,
 		    shpp->sh_pool_create_len, sizeof (reclen) - firstread,
-		    buf + firstread)) != 0)
+		    buf + firstread, DMU_READ_PREFETCH)) != 0)
 			return (err);
 	}
 
@@ -380,10 +379,11 @@ spa_history_get(spa_t *spa, uint64_t *offp, uint64_t *len, char *buf)
 		return (0);
 	}
 
-	err = dmu_read(mos, spa->spa_history, phys_read_off, read_len, buf);
+	err = dmu_read(mos, spa->spa_history, phys_read_off, read_len, buf,
+	    DMU_READ_PREFETCH);
 	if (leftover && err == 0) {
 		err = dmu_read(mos, spa->spa_history, shpp->sh_pool_create_len,
-		    leftover, buf + read_len);
+		    leftover, buf + read_len, DMU_READ_PREFETCH);
 	}
 	mutex_exit(&spa->spa_history_lock);
 
@@ -391,13 +391,12 @@ spa_history_get(spa_t *spa, uint64_t *offp, uint64_t *len, char *buf)
 	return (err);
 }
 
-void
-spa_history_internal_log(history_internal_events_t event, spa_t *spa,
-    dmu_tx_t *tx, cred_t *cr, const char *fmt, ...)
+static void
+log_internal(history_internal_events_t event, spa_t *spa,
+    dmu_tx_t *tx, cred_t *cr, const char *fmt, va_list adx)
 {
 	history_arg_t *hap;
 	char *str;
-	va_list adx;
 
 	/*
 	 * If this is part of creating a pool, not everything is
@@ -409,9 +408,7 @@ spa_history_internal_log(history_internal_events_t event, spa_t *spa,
 	hap = kmem_alloc(sizeof (history_arg_t), KM_SLEEP);
 	str = kmem_alloc(HIS_MAX_RECORD_LEN, KM_SLEEP);
 
-	va_start(adx, fmt);
 	(void) vsnprintf(str, HIS_MAX_RECORD_LEN, fmt, adx);
-	va_end(adx);
 
 	hap->ha_log_type = LOG_INTERNAL;
 	hap->ha_history_str = str;
@@ -425,4 +422,49 @@ spa_history_internal_log(history_internal_events_t event, spa_t *spa,
 		    spa_history_log_sync, spa, hap, 0, tx);
 	}
 	/* spa_history_log_sync() will free hap and str */
+}
+
+void
+spa_history_internal_log(history_internal_events_t event, spa_t *spa,
+    dmu_tx_t *tx, cred_t *cr, const char *fmt, ...)
+{
+	dmu_tx_t *htx = tx;
+	va_list adx;
+
+	/* create a tx if we didn't get one */
+	if (tx == NULL) {
+		htx = dmu_tx_create_dd(spa_get_dsl(spa)->dp_mos_dir);
+		if (dmu_tx_assign(htx, TXG_WAIT) != 0) {
+			dmu_tx_abort(htx);
+			return;
+		}
+	}
+
+	va_start(adx, fmt);
+	log_internal(event, spa, htx, cr, fmt, adx);
+	va_end(adx);
+
+	/* if we didn't get a tx from the caller, commit the one we made */
+	if (tx == NULL)
+		dmu_tx_commit(htx);
+}
+
+void
+spa_history_log_version(spa_t *spa, history_internal_events_t event)
+{
+#ifdef _KERNEL
+	uint64_t current_vers = spa_version(spa);
+
+	if (current_vers >= SPA_VERSION_ZPOOL_HISTORY) {
+		spa_history_internal_log(event, spa, NULL, CRED(),
+		    "pool spa %llu; zfs spa %llu; zpl %d; uts %s %s %s %s",
+		    (u_longlong_t)current_vers, SPA_VERSION, ZPL_VERSION,
+		    utsname.nodename, utsname.release, utsname.version,
+		    utsname.machine);
+	}
+	cmn_err(CE_CONT, "!%s version %llu pool %s using %llu",
+	    event == LOG_POOL_IMPORT ? "imported" :
+	    event == LOG_POOL_CREATE ? "created" : "accessed",
+	    (u_longlong_t)current_vers, spa_name(spa), SPA_VERSION);
+#endif
 }

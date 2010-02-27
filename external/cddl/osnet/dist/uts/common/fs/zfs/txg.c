@@ -19,13 +19,14 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
 #include <sys/zfs_context.h>
 #include <sys/txg_impl.h>
 #include <sys/dmu_impl.h>
+#include <sys/dmu_tx.h>
 #include <sys/dsl_pool.h>
 #include <sys/callb.h>
 
@@ -57,11 +58,19 @@ txg_init(dsl_pool_t *dp, uint64_t txg)
 		for (i = 0; i < TXG_SIZE; i++) {
 			cv_init(&tx->tx_cpu[c].tc_cv[i], NULL, CV_DEFAULT,
 			    NULL);
+			list_create(&tx->tx_cpu[c].tc_callbacks[i],
+			    sizeof (dmu_tx_callback_t),
+			    offsetof(dmu_tx_callback_t, dcb_node));
 		}
 	}
 
-	rw_init(&tx->tx_suspend, NULL, RW_DEFAULT, NULL);
 	mutex_init(&tx->tx_sync_lock, NULL, MUTEX_DEFAULT, NULL);
+
+	cv_init(&tx->tx_sync_more_cv, NULL, CV_DEFAULT, NULL);
+	cv_init(&tx->tx_sync_done_cv, NULL, CV_DEFAULT, NULL);
+	cv_init(&tx->tx_quiesce_more_cv, NULL, CV_DEFAULT, NULL);
+	cv_init(&tx->tx_quiesce_done_cv, NULL, CV_DEFAULT, NULL);
+	cv_init(&tx->tx_exit_cv, NULL, CV_DEFAULT, NULL);
 
 	tx->tx_open_txg = txg;
 }
@@ -77,16 +86,26 @@ txg_fini(dsl_pool_t *dp)
 
 	ASSERT(tx->tx_threads == 0);
 
-	rw_destroy(&tx->tx_suspend);
 	mutex_destroy(&tx->tx_sync_lock);
+
+	cv_destroy(&tx->tx_sync_more_cv);
+	cv_destroy(&tx->tx_sync_done_cv);
+	cv_destroy(&tx->tx_quiesce_more_cv);
+	cv_destroy(&tx->tx_quiesce_done_cv);
+	cv_destroy(&tx->tx_exit_cv);
 
 	for (c = 0; c < max_ncpus; c++) {
 		int i;
 
 		mutex_destroy(&tx->tx_cpu[c].tc_lock);
-		for (i = 0; i < TXG_SIZE; i++)
+		for (i = 0; i < TXG_SIZE; i++) {
 			cv_destroy(&tx->tx_cpu[c].tc_cv[i]);
+			list_destroy(&tx->tx_cpu[c].tc_callbacks[i]);
+		}
 	}
+
+	if (tx->tx_commit_cb_taskq != NULL)
+		taskq_destroy(tx->tx_commit_cb_taskq);
 
 	kmem_free(tx->tx_cpu, max_ncpus * sizeof (tx_cpu_t));
 
@@ -147,7 +166,8 @@ txg_thread_wait(tx_state_t *tx, callb_cpr_t *cpr, kcondvar_t *cv, uint64_t time)
 	CALLB_CPR_SAFE_BEGIN(cpr);
 
 	if (time)
-		(void) cv_timedwait(cv, &tx->tx_sync_lock, lbolt + time);
+		(void) cv_timedwait(cv, &tx->tx_sync_lock,
+		    ddi_get_lbolt() + time);
 	else
 		cv_wait(cv, &tx->tx_sync_lock);
 
@@ -167,7 +187,11 @@ txg_sync_stop(dsl_pool_t *dp)
 	 * Finish off any work in progress.
 	 */
 	ASSERT(tx->tx_threads == 2);
-	txg_wait_synced(dp, 0);
+
+	/*
+	 * We need to ensure that we've vacated the deferred space_maps.
+	 */
+	txg_wait_synced(dp, tx->tx_open_txg + TXG_DEFER_SIZE);
 
 	/*
 	 * Wake all sync threads and wait for them to die.
@@ -213,6 +237,17 @@ txg_rele_to_quiesce(txg_handle_t *th)
 {
 	tx_cpu_t *tc = th->th_cpu;
 
+	mutex_exit(&tc->tc_lock);
+}
+
+void
+txg_register_callbacks(txg_handle_t *th, list_t *tx_callbacks)
+{
+	tx_cpu_t *tc = th->th_cpu;
+	int g = th->th_txg & TXG_MASK;
+
+	mutex_enter(&tc->tc_lock);
+	list_move_tail(&tc->tc_callbacks[g], tx_callbacks);
 	mutex_exit(&tc->tc_lock);
 }
 
@@ -267,8 +302,58 @@ txg_quiesce(dsl_pool_t *dp, uint64_t txg)
 }
 
 static void
+txg_do_callbacks(list_t *cb_list)
+{
+	dmu_tx_do_callbacks(cb_list, 0);
+
+	list_destroy(cb_list);
+
+	kmem_free(cb_list, sizeof (list_t));
+}
+
+/*
+ * Dispatch the commit callbacks registered on this txg to worker threads.
+ */
+static void
+txg_dispatch_callbacks(dsl_pool_t *dp, uint64_t txg)
+{
+	int c;
+	tx_state_t *tx = &dp->dp_tx;
+	list_t *cb_list;
+
+	for (c = 0; c < max_ncpus; c++) {
+		tx_cpu_t *tc = &tx->tx_cpu[c];
+		/* No need to lock tx_cpu_t at this point */
+
+		int g = txg & TXG_MASK;
+
+		if (list_is_empty(&tc->tc_callbacks[g]))
+			continue;
+
+		if (tx->tx_commit_cb_taskq == NULL) {
+			/*
+			 * Commit callback taskq hasn't been created yet.
+			 */
+			tx->tx_commit_cb_taskq = taskq_create("tx_commit_cb",
+			    max_ncpus, minclsyspri, max_ncpus, max_ncpus * 2,
+			    TASKQ_PREPOPULATE);
+		}
+
+		cb_list = kmem_alloc(sizeof (list_t), KM_SLEEP);
+		list_create(cb_list, sizeof (dmu_tx_callback_t),
+		    offsetof(dmu_tx_callback_t, dcb_node));
+
+		list_move_tail(&tc->tc_callbacks[g], cb_list);
+
+		(void) taskq_dispatch(tx->tx_commit_cb_taskq, (task_func_t *)
+		    txg_do_callbacks, cb_list, TQ_SLEEP);
+	}
+}
+
+static void
 txg_sync_thread(dsl_pool_t *dp)
 {
+	spa_t *spa = dp->dp_spa;
 	tx_state_t *tx = &dp->dp_tx;
 	callb_cpr_t cpr;
 	uint64_t start, delta;
@@ -287,14 +372,15 @@ txg_sync_thread(dsl_pool_t *dp)
 		 */
 		timer = (delta >= timeout ? 0 : timeout - delta);
 		while ((dp->dp_scrub_func == SCRUB_FUNC_NONE ||
-		    spa_shutting_down(dp->dp_spa)) &&
+		    spa_load_state(spa) != SPA_LOAD_NONE ||
+		    spa_shutting_down(spa)) &&
 		    !tx->tx_exiting && timer > 0 &&
 		    tx->tx_synced_txg >= tx->tx_sync_txg_waiting &&
 		    tx->tx_quiesced_txg == 0) {
 			dprintf("waiting; tx_synced=%llu waiting=%llu dp=%p\n",
 			    tx->tx_synced_txg, tx->tx_sync_txg_waiting, dp);
 			txg_thread_wait(tx, &cpr, &tx->tx_sync_more_cv, timer);
-			delta = lbolt - start;
+			delta = ddi_get_lbolt() - start;
 			timer = (delta > timeout ? 0 : timeout - delta);
 		}
 
@@ -312,8 +398,6 @@ txg_sync_thread(dsl_pool_t *dp)
 		if (tx->tx_exiting)
 			txg_thread_exit(tx, &cpr, &tx->tx_sync_thread);
 
-		rw_enter(&tx->tx_suspend, RW_WRITER);
-
 		/*
 		 * Consume the quiesced txg which has been handed off to
 		 * us.  This may cause the quiescing thread to now be
@@ -323,22 +407,24 @@ txg_sync_thread(dsl_pool_t *dp)
 		tx->tx_quiesced_txg = 0;
 		tx->tx_syncing_txg = txg;
 		cv_broadcast(&tx->tx_quiesce_more_cv);
-		rw_exit(&tx->tx_suspend);
 
 		dprintf("txg=%llu quiesce_txg=%llu sync_txg=%llu\n",
 		    txg, tx->tx_quiesce_txg_waiting, tx->tx_sync_txg_waiting);
 		mutex_exit(&tx->tx_sync_lock);
 
-		start = lbolt;
-		spa_sync(dp->dp_spa, txg);
-		delta = lbolt - start;
+		start = ddi_get_lbolt();
+		spa_sync(spa, txg);
+		delta = ddi_get_lbolt() - start;
 
 		mutex_enter(&tx->tx_sync_lock);
-		rw_enter(&tx->tx_suspend, RW_WRITER);
 		tx->tx_synced_txg = txg;
 		tx->tx_syncing_txg = 0;
-		rw_exit(&tx->tx_suspend);
 		cv_broadcast(&tx->tx_sync_done_cv);
+
+		/*
+		 * Dispatch commit callbacks to worker threads.
+		 */
+		txg_dispatch_callbacks(dp, txg);
 	}
 }
 
@@ -395,7 +481,7 @@ void
 txg_delay(dsl_pool_t *dp, uint64_t txg, int ticks)
 {
 	tx_state_t *tx = &dp->dp_tx;
-	int timeout = lbolt + ticks;
+	int timeout = ddi_get_lbolt() + ticks;
 
 	/* don't delay if this txg could transition to quiesing immediately */
 	if (tx->tx_open_txg > txg ||
@@ -408,7 +494,7 @@ txg_delay(dsl_pool_t *dp, uint64_t txg, int ticks)
 		return;
 	}
 
-	while (lbolt < timeout &&
+	while (ddi_get_lbolt() < timeout &&
 	    tx->tx_syncing_txg < txg-1 && !txg_stalled(dp))
 		(void) cv_timedwait(&tx->tx_quiesce_more_cv, &tx->tx_sync_lock,
 		    timeout);
@@ -424,7 +510,7 @@ txg_wait_synced(dsl_pool_t *dp, uint64_t txg)
 	mutex_enter(&tx->tx_sync_lock);
 	ASSERT(tx->tx_threads == 2);
 	if (txg == 0)
-		txg = tx->tx_open_txg;
+		txg = tx->tx_open_txg + TXG_DEFER_SIZE;
 	if (tx->tx_sync_txg_waiting < txg)
 		tx->tx_sync_txg_waiting = txg;
 	dprintf("txg=%llu quiesce_txg=%llu sync_txg=%llu\n",
@@ -473,21 +559,6 @@ txg_sync_waiting(dsl_pool_t *dp)
 
 	return (tx->tx_syncing_txg <= tx->tx_sync_txg_waiting ||
 	    tx->tx_quiesced_txg != 0);
-}
-
-void
-txg_suspend(dsl_pool_t *dp)
-{
-	tx_state_t *tx = &dp->dp_tx;
-	/* XXX some code paths suspend when they are already suspended! */
-	rw_enter(&tx->tx_suspend, RW_READER);
-}
-
-void
-txg_resume(dsl_pool_t *dp)
-{
-	tx_state_t *tx = &dp->dp_tx;
-	rw_exit(&tx->tx_suspend);
 }
 
 /*
