@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28.10.4 2010/02/01 04:17:51 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28.10.5 2010/02/27 08:00:02 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.10.4 2010/02/01 04:17:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.10.5 2010/02/27 08:00:02 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -143,6 +143,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.10.4 2010/02/01 04:17:51 matt Exp $
 #include <machine/cpu.h>
 #include <machine/psl.h>
 #include <machine/yamon.h>
+
+#include <mips/locore.h>
 
 #include <evbmips/malta/autoconf.h>
 #include <evbmips/malta/maltareg.h>
@@ -327,6 +329,13 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 #if defined(DDB)
 	if (boothowto & RB_KDB)
 		Debugger();
+#endif
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * We can never running on more than one processor but we can dream.
+	 */
+	mips_fixup_exceptions(mips_fixup_zero_relative);
 #endif
 }
 
