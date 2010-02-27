@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.54 2010/02/27 09:05:59 mlelstv Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.55 2010/02/27 09:53:33 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.54 2010/02/27 09:05:59 mlelstv Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.55 2010/02/27 09:53:33 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -755,7 +755,7 @@ print_journal(const char *name, int fd)
 			skip = blklen;
 
 			boff = bno * DEV_BSIZE;
-			if (bno >= 2 &&
+			if (bno * DEV_BSIZE >= 2 * blklen &&
 			  ((head >= tail && (boff < tail || boff >= head)) ||
 			  (head < tail && (boff >= head && boff < tail))))
 				continue;
