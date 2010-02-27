@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.55 2010/02/27 09:53:33 mlelstv Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.56 2010/02/27 10:49:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.55 2010/02/27 09:53:33 mlelstv Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.56 2010/02/27 10:49:58 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,14 +130,14 @@ main(int argc, char *argv[])
 {
 	int ch, eval;
 
-	while ((ch = getopt(argc, argv, "acimsjvF")) != -1)
+	while ((ch = getopt(argc, argv, "acijmsvF")) != -1)
 		switch(ch) {
 		case 'a':	/* alternate superblocks */
 		case 'c':	/* cylinder group info */
 		case 'i':	/* actual inodes */
+		case 'j':	/* journal */
 		case 'm':	/* cylinder group summary */
 		case 's':	/* superblock */
-		case 'j':	/* journal */
 		case 'v':	/* more verbose */
 			opt_flags |= OPT_FLAG(ch);
 			break;
@@ -903,7 +903,7 @@ void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: dumpfs [-acFimsjv] filesys | device [...]\n");
+	(void)fprintf(stderr, "usage: dumpfs [-acFijmsv] filesys | device [...]\n");
 	exit(1);
 }
 
