@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.15 2010/02/25 05:45:12 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.16 2010/02/27 07:58:52 matt Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -42,8 +42,13 @@ void	mips_cp0_cause_write(uint32_t);
 uint32_t mips_cp0_status_read(void);
 void	mips_cp0_status_write(uint32_t);
 
-void softint_process(uint32_t);
-void softint_fast_dispatch(struct lwp *, int);
+void	softint_process(uint32_t);
+void	softint_fast_dispatch(struct lwp *, int);
+
+typedef bool (*mips_fixup_callback_t)(int32_t, uint32_t [2]);
+ 
+bool	mips_fixup_exceptions(mips_fixup_callback_t);
+bool	mips_fixup_zero_relative(int32_t, uint32_t [2]);
 
 #ifdef MIPS1
 void	mips1_tlb_set_asid(uint32_t);
@@ -53,11 +58,12 @@ void	mips1_tlb_invalidate_asids(uint32_t, uint32_t);
 void	mips1_tlb_invalidate_addr(vaddr_t);
 u_int	mips1_tlb_record_asids(u_long *, uint32_t);
 int	mips1_tlb_update(vaddr_t, uint32_t);
+void	mips1_tlb_enter(size_t, vaddr_t, uint32_t);
 void	mips1_tlb_read_indexed(size_t, struct tlbmask *);
 void	mips1_wbflush(void);
 void	mips1_lwp_trampoline(void);
 void	mips1_setfunc_trampoline(void);
-void	mips1_cpu_switch_resume(void);
+void	mips1_cpu_switch_resume(struct lwp *);
 
 uint32_t tx3900_cp0_config_read(void);
 #endif
@@ -70,12 +76,13 @@ void	mips3_tlb_invalidate_asids(uint32_t, uint32_t);
 void	mips3_tlb_invalidate_addr(vaddr_t);
 u_int	mips3_tlb_record_asids(u_long *, uint32_t);
 int	mips3_tlb_update(vaddr_t, uint32_t);
+void	mips3_tlb_enter(size_t, vaddr_t, uint32_t);
 void	mips3_tlb_read_indexed(size_t, struct tlbmask *);
 void	mips3_tlb_write_indexed_VPS(size_t, struct tlbmask *);
 void	mips3_wbflush(void);
 void	mips3_lwp_trampoline(void);
 void	mips3_setfunc_trampoline(void);
-void	mips3_cpu_switch_resume(void);
+void	mips3_cpu_switch_resume(struct lwp *);
 void	mips3_pagezero(void *dst);
 
 #ifdef MIPS3_5900
@@ -86,12 +93,13 @@ void	mips5900_tlb_invalidate_asids(uint32_t, uint32_t);
 void	mips5900_tlb_invalidate_addr(vaddr_t);
 u_int	mips5900_tlb_record_asids(u_long *, uint32_t);
 int	mips5900_tlb_update(vaddr_t, uint32_t);
+void	mips5900_tlb_enter(size_t, vaddr_t, uint32_t);
 void	mips5900_tlb_read_indexed(size_t, struct tlbmask *);
 void	mips5900_tlb_write_indexed_VPS(size_t, struct tlbmask *);
 void	mips5900_wbflush(void);
 void	mips5900_lwp_trampoline(void);
 void	mips5900_setfunc_trampoline(void);
-void	mips5900_cpu_switch_resume(void);
+void	mips5900_cpu_switch_resume(struct lwp *);
 void	mips5900_pagezero(void *dst);
 #endif
 #endif
@@ -104,12 +112,13 @@ void	mips32_tlb_invalidate_asids(uint32_t, uint32_t);
 void	mips32_tlb_invalidate_addr(vaddr_t);
 u_int	mips32_tlb_record_asids(u_long *, uint32_t);
 int	mips32_tlb_update(vaddr_t, uint32_t);
+void	mips32_tlb_enter(size_t, vaddr_t, uint32_t);
 void	mips32_tlb_read_indexed(size_t, struct tlbmask *);
 void	mips32_tlb_write_indexed_VPS(size_t, struct tlbmask *);
 void	mips32_wbflush(void);
 void	mips32_lwp_trampoline(void);
 void	mips32_setfunc_trampoline(void);
-void	mips32_cpu_switch_resume(void);
+void	mips32_cpu_switch_resume(struct lwp *);
 #endif
 
 #ifdef MIPS64
@@ -120,12 +129,13 @@ void	mips64_tlb_invalidate_asids(uint32_t, uint32_t);
 void	mips64_tlb_invalidate_addr(vaddr_t);
 u_int	mips64_tlb_record_asids(u_long *, uint32_t);
 int	mips64_tlb_update(vaddr_t, uint32_t);
+void	mips64_tlb_enter(size_t, vaddr_t, uint32_t);
 void	mips64_tlb_read_indexed(size_t, struct tlbmask *);
 void	mips64_tlb_write_indexed_VPS(size_t, struct tlbmask *);
 void	mips64_wbflush(void);
 void	mips64_lwp_trampoline(void);
 void	mips64_setfunc_trampoline(void);
-void	mips64_cpu_switch_resume(void);
+void	mips64_cpu_switch_resume(struct lwp *);
 void	mips64_pagezero(void *dst);
 #endif
 
@@ -295,15 +305,16 @@ mips3_sw_a64(uint64_t addr, uint32_t val)
  * locore function, and macros which jump through it.
  */
 typedef struct  {
-	void (*ljv_tlb_set_asid)(uint32_t pid);
-	void (*ljv_tlb_invalidate_asids)(uint32_t, uint32_t);
-	void (*ljv_tlb_invalidate_addr)(vaddr_t);
-	void (*ljv_tlb_invalidate_globals)(void);
-	void (*ljv_tlb_invalidate_all)(void);
-	u_int (*ljv_tlb_record_asids)(u_long *, uint32_t);
-	int  (*ljv_tlb_update)(vaddr_t, uint32_t);
-	void (*ljv_tlb_read_indexed)(size_t, struct tlbmask *);
-	void (*ljv_wbflush)(void);
+	void	(*ljv_tlb_set_asid)(uint32_t pid);
+	void	(*ljv_tlb_invalidate_asids)(uint32_t, uint32_t);
+	void	(*ljv_tlb_invalidate_addr)(vaddr_t);
+	void	(*ljv_tlb_invalidate_globals)(void);
+	void	(*ljv_tlb_invalidate_all)(void);
+	u_int	(*ljv_tlb_record_asids)(u_long *, uint32_t);
+	int	(*ljv_tlb_update)(vaddr_t, uint32_t);
+	void	(*ljv_tlb_enter)(size_t, vaddr_t, uint32_t);
+	void	(*ljv_tlb_read_indexed)(size_t, struct tlbmask *);
+	void	(*ljv_wbflush)(void);
 } mips_locore_jumpvec_t;
 
 void	mips_set_wbflush(void (*)(void));
@@ -313,13 +324,13 @@ void	stacktrace(void);
 void	logstacktrace(void);
 
 struct locoresw {
-	uintptr_t lsw_cpu_switch_resume;
-	uintptr_t lsw_lwp_trampoline;
-	void (*lsw_cpu_idle)(void);
-	uintptr_t lsw_setfunc_trampoline;
-	void (*lsw_boot_secondary_processors)(void);
-	int (*lsw_send_ipi)(struct cpu_info *, int);
-	void (*lsw_cpu_offline_md)(void);
+	void		(*lsw_cpu_switch_resume)(struct lwp *);
+	uintptr_t	lsw_lwp_trampoline;
+	void		(*lsw_cpu_idle)(void);
+	uintptr_t	lsw_setfunc_trampoline;
+	void		(*lsw_boot_secondary_processors)(void);
+	int		(*lsw_send_ipi)(struct cpu_info *, int);
+	void		(*lsw_cpu_offline_md)(void);
 };
 
 struct mips_vmfreelist {
@@ -342,6 +353,7 @@ extern struct locoresw mips_locoresw;
 #define tlb_invalidate_all	mips1_tlb_invalidate_all
 #define tlb_record_asids	mips1_tlb_record_asids
 #define tlb_update		mips1_tlb_update
+#define tlb_enter		mips1_tlb_enter
 #define tlb_read_indexed	mips1_tlb_read_indexed
 #define wbflush			mips1_wbflush
 #define lwp_trampoline		mips1_lwp_trampoline
@@ -354,6 +366,7 @@ extern struct locoresw mips_locoresw;
 #define tlb_invalidate_all	mips3_tlb_invalidate_all
 #define tlb_record_asids	mips3_tlb_record_asids
 #define tlb_update		mips3_tlb_update
+#define tlb_enter		mips3_tlb_enter
 #define tlb_read_indexed	mips3_tlb_read_indexed
 #define tlb_write_indexed_VPS	mips3_tlb_write_indexed_VPS
 #define lwp_trampoline		mips3_lwp_trampoline
@@ -367,6 +380,7 @@ extern struct locoresw mips_locoresw;
 #define tlb_invalidate_all	mips32_tlb_invalidate_all
 #define tlb_record_asids	mips32_tlb_record_asids
 #define tlb_update		mips32_tlb_update
+#define tlb_enter		mips32_tlb_enter
 #define tlb_read_indexed	mips32_tlb_read_indexed
 #define tlb_write_indexed_VPS	mips32_tlb_write_indexed_VPS
 #define lwp_trampoline		mips32_lwp_trampoline
@@ -381,6 +395,7 @@ extern struct locoresw mips_locoresw;
 #define tlb_invalidate_all	mips64_tlb_invalidate_all
 #define tlb_record_asids	mips64_tlb_record_asids
 #define tlb_update		mips64_tlb_update
+#define tlb_enter		mips64_tlb_enter
 #define tlb_read_indexed	mips64_tlb_read_indexed
 #define tlb_write_indexed_VPS	mips64_tlb_write_indexed_VPS
 #define lwp_trampoline		mips64_lwp_trampoline
@@ -394,6 +409,7 @@ extern struct locoresw mips_locoresw;
 #define tlb_invalidate_all	mips5900_tlb_invalidate_all
 #define tlb_record_asids	mips5900_tlb_record_asids
 #define tlb_update		mips5900_tlb_update
+#define tlb_enter		mips5900_tlb_enter
 #define tlb_read_indexed	mips5900_tlb_read_indexed
 #define tlb_write_indexed_VPS	mips5900_tlb_write_indexed_VPS
 #define lwp_trampoline		mips5900_lwp_trampoline
@@ -407,6 +423,7 @@ extern struct locoresw mips_locoresw;
 #define tlb_invalidate_all	(*mips_locore_jumpvec.ljv_tlb_invalidate_all)
 #define tlb_record_asids	(*mips_locore_jumpvec.ljv_tlb_record_asids)
 #define tlb_update		(*mips_locore_jumpvec.ljv_tlb_update)
+#define tlb_enter		(*mips_locore_jumpvec.ljv_tlb_enter)
 #define tlb_read_indexed	(*mips_locore_jumpvec.ljv_tlb_read_indexed)
 #define wbflush			(*mips_locore_jumpvec.ljv_wbflush)
 #define lwp_trampoline		mips_locoresw.lsw_lwp_trampoline
