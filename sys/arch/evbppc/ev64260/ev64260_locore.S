@@ -1,4 +1,4 @@
-/*	$NetBSD: ev64260_locore.S,v 1.13 2010/02/25 23:33:44 matt Exp $	*/
+/*	$NetBSD: ev64260_locore.S,v 1.14 2010/02/27 22:12:31 snj Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -289,7 +289,7 @@ _C_LABEL(return_to_dink):
 #include <powerpc/powerpc/locore_subr.S>
 
 /*
- * Include common trap / execption code
+ * Include common trap / exception code
  */
 #include <powerpc/powerpc/trap_subr.S>
 

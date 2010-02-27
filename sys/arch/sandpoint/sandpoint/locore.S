@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.17 2010/02/25 23:33:45 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.18 2010/02/27 22:12:32 snj Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -160,7 +160,7 @@ _C_LABEL(jump_to_ppc_reset_entry):
 #include <powerpc/powerpc/locore_subr.S>
 
 /*
- * Include common trap / execption code
+ * Include common trap / exception code
  */
 #include <powerpc/powerpc/trap_subr.S>
 
