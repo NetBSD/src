@@ -362,7 +362,7 @@ exit:
 		*len = bl;
 	if (bp) {
 		memcpy(bp, op, ol);
-		return (const uint8_t *)&opt_buffer;
+		return (const uint8_t *)opt_buffer;
 	}
 	if (op)
 		return op;
@@ -843,19 +843,16 @@ make_message(struct dhcp_message **message,
 	m = (uint8_t *)dhcp;
 	p = dhcp->options;
 
-	if ((type == DHCP_INFORM ||
-		type == DHCP_RELEASE ||
-		type == DHCP_REQUEST) &&
-	    !IN_LINKLOCAL(ntohl(iface->addr.s_addr)))
+	if ((type == DHCP_INFORM || type == DHCP_RELEASE ||
+		(type == DHCP_REQUEST &&
+		    iface->net.s_addr == lease->net.s_addr &&
+		    (iface->state->new == NULL ||
+			iface->state->new->cookie == htonl(MAGIC_COOKIE)))))
 	{
 		dhcp->ciaddr = iface->addr.s_addr;
 		/* In-case we haven't actually configured the address yet */
 		if (type == DHCP_INFORM && iface->addr.s_addr == 0)
 			dhcp->ciaddr = lease->addr.s_addr;
-		/* Zero the address if we're currently on a different subnet */
-		if (type == DHCP_REQUEST &&
-		    iface->net.s_addr != lease->net.s_addr)
-			dhcp->ciaddr = 0;
 	}
 
 	dhcp->op = DHCP_BOOTREQUEST;
@@ -893,7 +890,7 @@ make_message(struct dhcp_message **message,
 		p += iface->clientid[0] + 1;
 	}
 
-	if (lease->addr.s_addr && !IN_LINKLOCAL(htonl(lease->addr.s_addr))) {
+	if (lease->addr.s_addr && lease->cookie == htonl(MAGIC_COOKIE)) {
 		if (type == DHCP_DECLINE ||
 		    type == DHCP_DISCOVER ||
 		    (type == DHCP_REQUEST &&
@@ -1374,6 +1371,7 @@ get_lease(struct dhcp_lease *lease, const struct dhcp_message *dhcp)
 {
 	struct timeval now;
 
+	lease->cookie = dhcp->cookie;
 	/* BOOTP does not set yiaddr for replies when ciaddr is set. */
 	if (dhcp->yiaddr)
 		lease->addr.s_addr = dhcp->yiaddr;
