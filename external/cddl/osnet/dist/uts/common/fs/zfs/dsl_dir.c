@@ -19,7 +19,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
@@ -32,6 +32,7 @@
 #include <sys/dsl_synctask.h>
 #include <sys/dsl_deleg.h>
 #include <sys/spa.h>
+#include <sys/metaslab.h>
 #include <sys/zap.h>
 #include <sys/zio.h>
 #include <sys/arc.h>
@@ -96,7 +97,6 @@ dsl_dir_open_obj(dsl_pool_t *dp, uint64_t ddobj,
 #endif
 	if (dd == NULL) {
 		dsl_dir_t *winner;
-		int err;
 
 		dd = kmem_zalloc(sizeof (dsl_dir_t), KM_SLEEP);
 		dd->dd_object = ddobj;
@@ -107,6 +107,8 @@ dsl_dir_open_obj(dsl_pool_t *dp, uint64_t ddobj,
 
 		list_create(&dd->dd_prop_cbs, sizeof (dsl_prop_cb_record_t),
 		    offsetof(dsl_prop_cb_record_t, cbr_node));
+
+		dsl_dir_snap_cmtime_update(dd);
 
 		if (dd->dd_phys->dd_parent_obj) {
 			err = dsl_dir_open_obj(dp, dd->dd_phys->dd_parent_obj,
@@ -227,24 +229,11 @@ dsl_dir_namelen(dsl_dir_t *dd)
 	return (result);
 }
 
-int
-dsl_dir_is_private(dsl_dir_t *dd)
-{
-	int rv = FALSE;
-
-	if (dd->dd_parent && dsl_dir_is_private(dd->dd_parent))
-		rv = TRUE;
-	if (dataset_name_hidden(dd->dd_myname))
-		rv = TRUE;
-	return (rv);
-}
-
-
 static int
 getcomponent(const char *path, char *component, const char **nextp)
 {
 	char *p;
-	if (path == NULL)
+	if ((path == NULL) || (path[0] == '\0'))
 		return (ENOENT);
 	/* This would be a good place to reserve some namespace... */
 	p = strpbrk(path, "/@");
@@ -441,7 +430,8 @@ dsl_dir_create_sync(dsl_pool_t *dp, dsl_dir_t *pds, const char *name,
 int
 dsl_dir_destroy_check(void *arg1, void *arg2, dmu_tx_t *tx)
 {
-	dsl_dir_t *dd = arg1;
+	dsl_dataset_t *ds = arg1;
+	dsl_dir_t *dd = ds->ds_dir;
 	dsl_pool_t *dp = dd->dd_pool;
 	objset_t *mos = dp->dp_meta_objset;
 	int err;
@@ -470,17 +460,25 @@ dsl_dir_destroy_check(void *arg1, void *arg2, dmu_tx_t *tx)
 void
 dsl_dir_destroy_sync(void *arg1, void *tag, cred_t *cr, dmu_tx_t *tx)
 {
-	dsl_dir_t *dd = arg1;
+	dsl_dataset_t *ds = arg1;
+	dsl_dir_t *dd = ds->ds_dir;
 	objset_t *mos = dd->dd_pool->dp_meta_objset;
-	uint64_t val, obj;
+	dsl_prop_setarg_t psa;
+	uint64_t value = 0;
+	uint64_t obj;
 	dd_used_t t;
 
 	ASSERT(RW_WRITE_HELD(&dd->dd_pool->dp_config_rwlock));
 	ASSERT(dd->dd_phys->dd_head_dataset_obj == 0);
 
 	/* Remove our reservation. */
-	val = 0;
-	dsl_dir_set_reservation_sync(dd, &val, cr, tx);
+	dsl_prop_setarg_init_uint64(&psa, "reservation",
+	    (ZPROP_SRC_NONE | ZPROP_SRC_LOCAL | ZPROP_SRC_RECEIVED),
+	    &value);
+	psa.psa_effective_value = 0;	/* predict default value */
+
+	dsl_dir_set_reservation_sync(ds, &psa, cr, tx);
+
 	ASSERT3U(dd->dd_phys->dd_used_bytes, ==, 0);
 	ASSERT3U(dd->dd_phys->dd_reserved, ==, 0);
 	for (t = 0; t < DD_USED_NUM; t++)
@@ -662,7 +660,7 @@ dsl_dir_space_available(dsl_dir_t *dd,
 		 * dsl_pool_adjustedsize()), something is very
 		 * wrong.
 		 */
-		ASSERT3U(used, <=, spa_get_space(dd->dd_pool->dp_spa));
+		ASSERT3U(used, <=, spa_get_dspace(dd->dd_pool->dp_spa));
 	} else {
 		/*
 		 * the lesser of the space provided by our parent and
@@ -690,8 +688,9 @@ dsl_dir_tempreserve_impl(dsl_dir_t *dd, uint64_t asize, boolean_t netfree,
 {
 	uint64_t txg = tx->tx_txg;
 	uint64_t est_inflight, used_on_disk, quota, parent_rsrv;
+	uint64_t deferred = 0;
 	struct tempreserve *tr;
-	int enospc = EDQUOT;
+	int retval = EDQUOT;
 	int txgidx = txg & TXG_MASK;
 	int i;
 	uint64_t ref_rsrv = 0;
@@ -717,7 +716,7 @@ dsl_dir_tempreserve_impl(dsl_dir_t *dd, uint64_t asize, boolean_t netfree,
 	 */
 	if (first && tx->tx_objset) {
 		int error;
-		dsl_dataset_t *ds = tx->tx_objset->os->os_dsl_dataset;
+		dsl_dataset_t *ds = tx->tx_objset->os_dsl_dataset;
 
 		error = dsl_dataset_check_quota(ds, checkrefquota,
 		    asize, est_inflight, &used_on_disk, &ref_rsrv);
@@ -737,7 +736,8 @@ dsl_dir_tempreserve_impl(dsl_dir_t *dd, uint64_t asize, boolean_t netfree,
 		quota = dd->dd_phys->dd_quota;
 
 	/*
-	 * Adjust the quota against the actual pool size at the root.
+	 * Adjust the quota against the actual pool size at the root
+	 * minus any outstanding deferred frees.
 	 * To ensure that it's possible to remove files from a full
 	 * pool without inducing transient overcommits, we throttle
 	 * netfree transactions against a quota that is slightly larger,
@@ -746,10 +746,12 @@ dsl_dir_tempreserve_impl(dsl_dir_t *dd, uint64_t asize, boolean_t netfree,
 	 * removes to get through.
 	 */
 	if (dd->dd_parent == NULL) {
+		spa_t *spa = dd->dd_pool->dp_spa;
 		uint64_t poolsize = dsl_pool_adjustedsize(dd->dd_pool, netfree);
-		if (poolsize < quota) {
-			quota = poolsize;
-			enospc = ENOSPC;
+		deferred = metaslab_class_get_deferred(spa_normal_class(spa));
+		if (poolsize - deferred < quota) {
+			quota = poolsize - deferred;
+			retval = ENOSPC;
 		}
 	}
 
@@ -759,15 +761,16 @@ dsl_dir_tempreserve_impl(dsl_dir_t *dd, uint64_t asize, boolean_t netfree,
 	 * on-disk is over quota and there are no pending changes (which
 	 * may free up space for us).
 	 */
-	if (used_on_disk + est_inflight > quota) {
-		if (est_inflight > 0 || used_on_disk < quota)
-			enospc = ERESTART;
+	if (used_on_disk + est_inflight >= quota) {
+		if (est_inflight > 0 || used_on_disk < quota ||
+		    (retval == ENOSPC && used_on_disk < quota + deferred))
+			retval = ERESTART;
 		dprintf_dd(dd, "failing: used=%lluK inflight = %lluK "
 		    "quota=%lluK tr=%lluK err=%d\n",
 		    used_on_disk>>10, est_inflight>>10,
-		    quota>>10, asize>>10, enospc);
+		    quota>>10, asize>>10, retval);
 		mutex_exit(&dd->dd_lock);
-		return (enospc);
+		return (retval);
 	}
 
 	/* We need to up our estimated delta before dropping dd_lock */
@@ -1001,13 +1004,16 @@ dsl_dir_transfer_space(dsl_dir_t *dd, int64_t delta,
 static int
 dsl_dir_set_quota_check(void *arg1, void *arg2, dmu_tx_t *tx)
 {
-	dsl_dir_t *dd = arg1;
-	uint64_t *quotap = arg2;
-	uint64_t new_quota = *quotap;
-	int err = 0;
+	dsl_dataset_t *ds = arg1;
+	dsl_dir_t *dd = ds->ds_dir;
+	dsl_prop_setarg_t *psa = arg2;
+	int err;
 	uint64_t towrite;
 
-	if (new_quota == 0)
+	if ((err = dsl_prop_predict_sync(ds->ds_dir, psa)) != 0)
+		return (err);
+
+	if (psa->psa_effective_value == 0)
 		return (0);
 
 	mutex_enter(&dd->dd_lock);
@@ -1019,68 +1025,89 @@ dsl_dir_set_quota_check(void *arg1, void *arg2, dmu_tx_t *tx)
 	 */
 	towrite = dsl_dir_space_towrite(dd);
 	if ((dmu_tx_is_syncing(tx) || towrite == 0) &&
-	    (new_quota < dd->dd_phys->dd_reserved ||
-	    new_quota < dd->dd_phys->dd_used_bytes + towrite)) {
+	    (psa->psa_effective_value < dd->dd_phys->dd_reserved ||
+	    psa->psa_effective_value < dd->dd_phys->dd_used_bytes + towrite)) {
 		err = ENOSPC;
 	}
 	mutex_exit(&dd->dd_lock);
 	return (err);
 }
 
+extern void dsl_prop_set_sync(void *, void *, cred_t *, dmu_tx_t *);
+
 /* ARGSUSED */
 static void
 dsl_dir_set_quota_sync(void *arg1, void *arg2, cred_t *cr, dmu_tx_t *tx)
 {
-	dsl_dir_t *dd = arg1;
-	uint64_t *quotap = arg2;
-	uint64_t new_quota = *quotap;
+	dsl_dataset_t *ds = arg1;
+	dsl_dir_t *dd = ds->ds_dir;
+	dsl_prop_setarg_t *psa = arg2;
+	uint64_t effective_value = psa->psa_effective_value;
+
+	dsl_prop_set_sync(ds, psa, cr, tx);
+	DSL_PROP_CHECK_PREDICTION(dd, psa);
 
 	dmu_buf_will_dirty(dd->dd_dbuf, tx);
 
 	mutex_enter(&dd->dd_lock);
-	dd->dd_phys->dd_quota = new_quota;
+	dd->dd_phys->dd_quota = effective_value;
 	mutex_exit(&dd->dd_lock);
 
 	spa_history_internal_log(LOG_DS_QUOTA, dd->dd_pool->dp_spa,
 	    tx, cr, "%lld dataset = %llu ",
-	    (longlong_t)new_quota, dd->dd_phys->dd_head_dataset_obj);
+	    (longlong_t)effective_value, dd->dd_phys->dd_head_dataset_obj);
 }
 
 int
-dsl_dir_set_quota(const char *ddname, uint64_t quota)
+dsl_dir_set_quota(const char *ddname, zprop_source_t source, uint64_t quota)
 {
 	dsl_dir_t *dd;
+	dsl_dataset_t *ds;
+	dsl_prop_setarg_t psa;
 	int err;
 
-	err = dsl_dir_open(ddname, FTAG, &dd, NULL);
+	dsl_prop_setarg_init_uint64(&psa, "quota", source, &quota);
+
+	err = dsl_dataset_hold(ddname, FTAG, &ds);
 	if (err)
 		return (err);
 
-	if (quota != dd->dd_phys->dd_quota) {
-		/*
-		 * If someone removes a file, then tries to set the quota, we
-		 * want to make sure the file freeing takes effect.
-		 */
-		txg_wait_open(dd->dd_pool, 0);
-
-		err = dsl_sync_task_do(dd->dd_pool, dsl_dir_set_quota_check,
-		    dsl_dir_set_quota_sync, dd, &quota, 0);
+	err = dsl_dir_open(ddname, FTAG, &dd, NULL);
+	if (err) {
+		dsl_dataset_rele(ds, FTAG);
+		return (err);
 	}
+
+	ASSERT(ds->ds_dir == dd);
+
+	/*
+	 * If someone removes a file, then tries to set the quota, we want to
+	 * make sure the file freeing takes effect.
+	 */
+	txg_wait_open(dd->dd_pool, 0);
+
+	err = dsl_sync_task_do(dd->dd_pool, dsl_dir_set_quota_check,
+	    dsl_dir_set_quota_sync, ds, &psa, 0);
+
 	dsl_dir_close(dd, FTAG);
+	dsl_dataset_rele(ds, FTAG);
 	return (err);
 }
 
 int
 dsl_dir_set_reservation_check(void *arg1, void *arg2, dmu_tx_t *tx)
 {
-	dsl_dir_t *dd = arg1;
-	uint64_t *reservationp = arg2;
-	uint64_t new_reservation = *reservationp;
+	dsl_dataset_t *ds = arg1;
+	dsl_dir_t *dd = ds->ds_dir;
+	dsl_prop_setarg_t *psa = arg2;
+	uint64_t effective_value;
 	uint64_t used, avail;
-	int64_t delta;
+	int err;
 
-	if (new_reservation > INT64_MAX)
-		return (EOVERFLOW);
+	if ((err = dsl_prop_predict_sync(ds->ds_dir, psa)) != 0)
+		return (err);
+
+	effective_value = psa->psa_effective_value;
 
 	/*
 	 * If we are doing the preliminary check in open context, the
@@ -1091,8 +1118,6 @@ dsl_dir_set_reservation_check(void *arg1, void *arg2, dmu_tx_t *tx)
 
 	mutex_enter(&dd->dd_lock);
 	used = dd->dd_phys->dd_used_bytes;
-	delta = MAX(used, new_reservation) -
-	    MAX(used, dd->dd_phys->dd_reserved);
 	mutex_exit(&dd->dd_lock);
 
 	if (dd->dd_parent) {
@@ -1102,11 +1127,17 @@ dsl_dir_set_reservation_check(void *arg1, void *arg2, dmu_tx_t *tx)
 		avail = dsl_pool_adjustedsize(dd->dd_pool, B_FALSE) - used;
 	}
 
-	if (delta > 0 && delta > avail)
-		return (ENOSPC);
-	if (delta > 0 && dd->dd_phys->dd_quota > 0 &&
-	    new_reservation > dd->dd_phys->dd_quota)
-		return (ENOSPC);
+	if (MAX(used, effective_value) > MAX(used, dd->dd_phys->dd_reserved)) {
+		uint64_t delta = MAX(used, effective_value) -
+		    MAX(used, dd->dd_phys->dd_reserved);
+
+		if (delta > avail)
+			return (ENOSPC);
+		if (dd->dd_phys->dd_quota > 0 &&
+		    effective_value > dd->dd_phys->dd_quota)
+			return (ENOSPC);
+	}
+
 	return (0);
 }
 
@@ -1114,19 +1145,23 @@ dsl_dir_set_reservation_check(void *arg1, void *arg2, dmu_tx_t *tx)
 static void
 dsl_dir_set_reservation_sync(void *arg1, void *arg2, cred_t *cr, dmu_tx_t *tx)
 {
-	dsl_dir_t *dd = arg1;
-	uint64_t *reservationp = arg2;
-	uint64_t new_reservation = *reservationp;
+	dsl_dataset_t *ds = arg1;
+	dsl_dir_t *dd = ds->ds_dir;
+	dsl_prop_setarg_t *psa = arg2;
+	uint64_t effective_value = psa->psa_effective_value;
 	uint64_t used;
 	int64_t delta;
+
+	dsl_prop_set_sync(ds, psa, cr, tx);
+	DSL_PROP_CHECK_PREDICTION(dd, psa);
 
 	dmu_buf_will_dirty(dd->dd_dbuf, tx);
 
 	mutex_enter(&dd->dd_lock);
 	used = dd->dd_phys->dd_used_bytes;
-	delta = MAX(used, new_reservation) -
+	delta = MAX(used, effective_value) -
 	    MAX(used, dd->dd_phys->dd_reserved);
-	dd->dd_phys->dd_reserved = new_reservation;
+	dd->dd_phys->dd_reserved = effective_value;
 
 	if (dd->dd_parent != NULL) {
 		/* Roll up this additional usage into our ancestors */
@@ -1137,21 +1172,37 @@ dsl_dir_set_reservation_sync(void *arg1, void *arg2, cred_t *cr, dmu_tx_t *tx)
 
 	spa_history_internal_log(LOG_DS_RESERVATION, dd->dd_pool->dp_spa,
 	    tx, cr, "%lld dataset = %llu",
-	    (longlong_t)new_reservation, dd->dd_phys->dd_head_dataset_obj);
+	    (longlong_t)effective_value, dd->dd_phys->dd_head_dataset_obj);
 }
 
 int
-dsl_dir_set_reservation(const char *ddname, uint64_t reservation)
+dsl_dir_set_reservation(const char *ddname, zprop_source_t source,
+    uint64_t reservation)
 {
 	dsl_dir_t *dd;
+	dsl_dataset_t *ds;
+	dsl_prop_setarg_t psa;
 	int err;
 
-	err = dsl_dir_open(ddname, FTAG, &dd, NULL);
+	dsl_prop_setarg_init_uint64(&psa, "reservation", source, &reservation);
+
+	err = dsl_dataset_hold(ddname, FTAG, &ds);
 	if (err)
 		return (err);
+
+	err = dsl_dir_open(ddname, FTAG, &dd, NULL);
+	if (err) {
+		dsl_dataset_rele(ds, FTAG);
+		return (err);
+	}
+
+	ASSERT(ds->ds_dir == dd);
+
 	err = dsl_sync_task_do(dd->dd_pool, dsl_dir_set_reservation_check,
-	    dsl_dir_set_reservation_sync, dd, &reservation, 0);
+	    dsl_dir_set_reservation_sync, ds, &psa, 0);
+
 	dsl_dir_close(dd, FTAG);
+	dsl_dataset_rele(ds, FTAG);
 	return (err);
 }
 
@@ -1328,4 +1379,27 @@ dsl_dir_transfer_possible(dsl_dir_t *sdd, dsl_dir_t *tdd, uint64_t space)
 		return (ENOSPC);
 
 	return (0);
+}
+
+timestruc_t
+dsl_dir_snap_cmtime(dsl_dir_t *dd)
+{
+	timestruc_t t;
+
+	mutex_enter(&dd->dd_lock);
+	t = dd->dd_snap_cmtime;
+	mutex_exit(&dd->dd_lock);
+
+	return (t);
+}
+
+void
+dsl_dir_snap_cmtime_update(dsl_dir_t *dd)
+{
+	timestruc_t t;
+
+	gethrestime(&t);
+	mutex_enter(&dd->dd_lock);
+	dd->dd_snap_cmtime = t;
+	mutex_exit(&dd->dd_lock);
 }

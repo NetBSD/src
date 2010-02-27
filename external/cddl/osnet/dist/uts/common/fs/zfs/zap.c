@@ -19,12 +19,9 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
-
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
 
 /*
  * This file contains the top half of the zfs directory structure
@@ -45,6 +42,7 @@
 #include <sys/dmu.h>
 #include <sys/zfs_context.h>
 #include <sys/zfs_znode.h>
+#include <sys/fs/zfs.h>
 #include <sys/zap.h>
 #include <sys/refcount.h>
 #include <sys/zap_impl.h>
@@ -72,7 +70,7 @@ fzap_byteswap(void *vbuf, size_t size)
 }
 
 void
-fzap_upgrade(zap_t *zap, dmu_tx_t *tx)
+fzap_upgrade(zap_t *zap, dmu_tx_t *tx, zap_flags_t flags)
 {
 	dmu_buf_t *db;
 	zap_leaf_t *l;
@@ -104,6 +102,7 @@ fzap_upgrade(zap_t *zap, dmu_tx_t *tx)
 	zp->zap_num_entries = 0;
 	zp->zap_salt = zap->zap_salt;
 	zp->zap_normflags = zap->zap_normflags;
+	zp->zap_flags = flags;
 
 	/* block 1 will be the first leaf */
 	for (i = 0; i < (1<<zp->zap_ptrtbl.zt_shift); i++)
@@ -317,8 +316,13 @@ zap_ptrtbl_transfer(const uint64_t *src, uint64_t *dst, int n)
 static int
 zap_grow_ptrtbl(zap_t *zap, dmu_tx_t *tx)
 {
-	/* In case things go horribly wrong. */
-	if (zap->zap_f.zap_phys->zap_ptrtbl.zt_shift >= ZAP_HASHBITS-2)
+	/*
+	 * The pointer table should never use more hash bits than we
+	 * have (otherwise we'd be using useless zero bits to index it).
+	 * If we are within 2 bits of running out, stop growing, since
+	 * this is already an aberrant condition.
+	 */
+	if (zap->zap_f.zap_phys->zap_ptrtbl.zt_shift >= zap_hashbits(zap) - 2)
 		return (ENOSPC);
 
 	if (zap->zap_f.zap_phys->zap_ptrtbl.zt_numblks == 0) {
@@ -702,13 +706,17 @@ zap_put_leaf_maybe_grow_ptrtbl(zap_name_t *zn, zap_leaf_t *l, dmu_tx_t *tx)
 	}
 }
 
+static int
+fzap_checkname(zap_name_t *zn)
+{
+	if (zn->zn_key_orig_numints * zn->zn_key_intlen > ZAP_MAXNAMELEN)
+		return (ENAMETOOLONG);
+	return (0);
+}
 
 static int
-fzap_checksize(const char *name, uint64_t integer_size, uint64_t num_integers)
+fzap_checksize(uint64_t integer_size, uint64_t num_integers)
 {
-	if (name && strlen(name) > ZAP_MAXNAMELEN)
-		return (E2BIG);
-
 	/* Only integer sizes supported by C */
 	switch (integer_size) {
 	case 1:
@@ -726,6 +734,16 @@ fzap_checksize(const char *name, uint64_t integer_size, uint64_t num_integers)
 	return (0);
 }
 
+static int
+fzap_check(zap_name_t *zn, uint64_t integer_size, uint64_t num_integers)
+{
+	int err;
+
+	if ((err = fzap_checkname(zn)) != 0)
+		return (err);
+	return (fzap_checksize(integer_size, num_integers));
+}
+
 /*
  * Routines for manipulating attributes.
  */
@@ -738,8 +756,7 @@ fzap_lookup(zap_name_t *zn,
 	int err;
 	zap_entry_handle_t zeh;
 
-	err = fzap_checksize(zn->zn_name_orij, integer_size, num_integers);
-	if (err != 0)
+	if ((err = fzap_checkname(zn)) != 0)
 		return (err);
 
 	err = zap_deref_leaf(zn->zn_zap, zn->zn_hash, NULL, RW_READER, &l);
@@ -747,8 +764,13 @@ fzap_lookup(zap_name_t *zn,
 		return (err);
 	err = zap_leaf_lookup(l, zn, &zeh);
 	if (err == 0) {
+		if ((err = fzap_checksize(integer_size, num_integers)) != 0) {
+			zap_put_leaf(l);
+			return (err);
+		}
+
 		err = zap_entry_read(&zeh, integer_size, num_integers, buf);
-		(void) zap_entry_read_name(&zeh, rn_len, realname);
+		(void) zap_entry_read_name(zn->zn_zap, &zeh, rn_len, realname);
 		if (ncp) {
 			*ncp = zap_entry_normalization_conflict(&zeh,
 			    zn, NULL, zn->zn_zap);
@@ -771,8 +793,7 @@ fzap_add_cd(zap_name_t *zn,
 
 	ASSERT(RW_LOCK_HELD(&zap->zap_rwlock));
 	ASSERT(!zap->zap_ismicro);
-	ASSERT(fzap_checksize(zn->zn_name_orij,
-	    integer_size, num_integers) == 0);
+	ASSERT(fzap_check(zn, integer_size, num_integers) == 0);
 
 	err = zap_deref_leaf(zap, zn->zn_hash, tx, RW_WRITER, &l);
 	if (err != 0)
@@ -786,7 +807,7 @@ retry:
 	if (err != ENOENT)
 		goto out;
 
-	err = zap_entry_create(l, zn->zn_name_orij, zn->zn_hash, cd,
+	err = zap_entry_create(l, zn, cd,
 	    integer_size, num_integers, val, &zeh);
 
 	if (err == 0) {
@@ -809,12 +830,12 @@ fzap_add(zap_name_t *zn,
     uint64_t integer_size, uint64_t num_integers,
     const void *val, dmu_tx_t *tx)
 {
-	int err = fzap_checksize(zn->zn_name_orij, integer_size, num_integers);
+	int err = fzap_check(zn, integer_size, num_integers);
 	if (err != 0)
 		return (err);
 
 	return (fzap_add_cd(zn, integer_size, num_integers,
-	    val, ZAP_MAXCD, tx));
+	    val, ZAP_NEED_CD, tx));
 }
 
 int
@@ -827,7 +848,7 @@ fzap_update(zap_name_t *zn,
 	zap_t *zap = zn->zn_zap;
 
 	ASSERT(RW_LOCK_HELD(&zap->zap_rwlock));
-	err = fzap_checksize(zn->zn_name_orij, integer_size, num_integers);
+	err = fzap_check(zn, integer_size, num_integers);
 	if (err != 0)
 		return (err);
 
@@ -840,8 +861,8 @@ retry:
 	ASSERT(err == 0 || err == ENOENT);
 
 	if (create) {
-		err = zap_entry_create(l, zn->zn_name_orij, zn->zn_hash,
-		    ZAP_MAXCD, integer_size, num_integers, val, &zeh);
+		err = zap_entry_create(l, zn, ZAP_NEED_CD,
+		    integer_size, num_integers, val, &zeh);
 		if (err == 0)
 			zap_increment_num_entries(zap, 1, tx);
 	} else {
@@ -980,6 +1001,30 @@ zap_lookup_int(objset_t *os, uint64_t obj, uint64_t value)
 	return (zap_lookup(os, obj, name, 8, 1, &value));
 }
 
+int
+zap_increment_int(objset_t *os, uint64_t obj, uint64_t key, int64_t delta,
+    dmu_tx_t *tx)
+{
+	char name[20];
+	uint64_t value = 0;
+	int err;
+
+	if (delta == 0)
+		return (0);
+
+	(void) snprintf(name, sizeof (name), "%llx", (longlong_t)key);
+	err = zap_lookup(os, obj, name, 8, 1, &value);
+	if (err != 0 && err != ENOENT)
+		return (err);
+	value += delta;
+	if (value == 0)
+		err = zap_remove(os, obj, name, tx);
+	else
+		err = zap_update(os, obj, name, 8, 1, &value, tx);
+	return (err);
+}
+
+
 /*
  * Routines for iterating over the attributes.
  */
@@ -1041,7 +1086,7 @@ again:
 			err = zap_entry_read(&zeh, 8, 1, &za->za_first_integer);
 			ASSERT(err == 0 || err == EOVERFLOW);
 		}
-		err = zap_entry_read_name(&zeh,
+		err = zap_entry_read_name(zap, &zeh,
 		    sizeof (za->za_name), za->za_name);
 		ASSERT(err == 0);
 
@@ -1078,6 +1123,31 @@ zap_stats_ptrtbl(zap_t *zap, uint64_t *tbl, int len, zap_stats_t *zs)
 			zap_put_leaf(l);
 		}
 	}
+}
+
+int
+fzap_cursor_move_to_key(zap_cursor_t *zc, zap_name_t *zn)
+{
+	int err;
+	zap_leaf_t *l;
+	zap_entry_handle_t zeh;
+
+	if (zn->zn_key_orig_numints * zn->zn_key_intlen > ZAP_MAXNAMELEN)
+		return (ENAMETOOLONG);
+
+	err = zap_deref_leaf(zc->zc_zap, zn->zn_hash, NULL, RW_READER, &l);
+	if (err != 0)
+		return (err);
+
+	err = zap_leaf_lookup(l, zn, &zeh);
+	if (err != 0)
+		return (err);
+
+	zc->zc_leaf = l;
+	zc->zc_hash = zeh.zeh_hash;
+	zc->zc_cd = zeh.zeh_cd;
+
+	return (err);
 }
 
 void
@@ -1133,4 +1203,59 @@ fzap_get_stats(zap_t *zap, zap_stats_t *zs)
 			}
 		}
 	}
+}
+
+int
+fzap_count_write(zap_name_t *zn, int add, uint64_t *towrite,
+    uint64_t *tooverwrite)
+{
+	zap_t *zap = zn->zn_zap;
+	zap_leaf_t *l;
+	int err;
+
+	/*
+	 * Account for the header block of the fatzap.
+	 */
+	if (!add && dmu_buf_freeable(zap->zap_dbuf)) {
+		*tooverwrite += zap->zap_dbuf->db_size;
+	} else {
+		*towrite += zap->zap_dbuf->db_size;
+	}
+
+	/*
+	 * Account for the pointer table blocks.
+	 * If we are adding we need to account for the following cases :
+	 * - If the pointer table is embedded, this operation could force an
+	 *   external pointer table.
+	 * - If this already has an external pointer table this operation
+	 *   could extend the table.
+	 */
+	if (add) {
+		if (zap->zap_f.zap_phys->zap_ptrtbl.zt_blk == 0)
+			*towrite += zap->zap_dbuf->db_size;
+		else
+			*towrite += (zap->zap_dbuf->db_size * 3);
+	}
+
+	/*
+	 * Now, check if the block containing leaf is freeable
+	 * and account accordingly.
+	 */
+	err = zap_deref_leaf(zap, zn->zn_hash, NULL, RW_READER, &l);
+	if (err != 0) {
+		return (err);
+	}
+
+	if (!add && dmu_buf_freeable(l->l_dbuf)) {
+		*tooverwrite += l->l_dbuf->db_size;
+	} else {
+		/*
+		 * If this an add operation, the leaf block could split.
+		 * Hence, we need to account for an additional leaf block.
+		 */
+		*towrite += (add ? 2 : 1) * l->l_dbuf->db_size;
+	}
+
+	zap_put_leaf(l);
+	return (0);
 }
