@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.53 2009/05/07 06:40:38 lukem Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.54 2010/02/27 09:05:59 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,15 +39,19 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.53 2009/05/07 06:40:38 lukem Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.54 2010/02/27 09:05:59 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 
+#include <sys/wapbl.h>
+#include <sys/wapbl_replay.h>
+
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/ufs_bswap.h>
+#include <ufs/ufs/ufs_wapbl.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 
@@ -76,6 +80,14 @@ union {
 } cgun;
 #define	acg	cgun.cg
 
+union {
+	struct wapbl_wc_header wh;
+	struct wapbl_wc_null wn;
+	char pad[MAXBSIZE];
+} jbuf;
+#define awh 	jbuf.wh
+#define awn 	jbuf.wn
+
 #define OPT_FLAG(ch)	(1 << ((ch) & 31))
 #define ISOPT(opt)	(opt_flags & (opt))
 #define opt_alt_super	OPT_FLAG('a')
@@ -83,9 +95,10 @@ union {
 #define opt_cg_summary	OPT_FLAG('m')
 #define opt_cg_info	OPT_FLAG('c')
 #define opt_inodes	OPT_FLAG('i')
+#define opt_journal	OPT_FLAG('j')
 #define opt_verbose	OPT_FLAG('v')
 #define DFLT_CHECK (opt_alt_super | opt_cg_info | opt_inodes | \
-    opt_cg_summary | opt_superblock)
+    opt_cg_summary | opt_superblock | opt_journal )
 #define DFLT_OPTS	(opt_superblock | opt_cg_summary | opt_cg_info | opt_verbose)
 
 long	dev_bsize = 512;
@@ -100,6 +113,9 @@ int	print_cgsum(const char *, int);
 int	print_cginfo(const char *, int);
 int	print_inodes(const char *, int, int, int);
 int	print_alt_super(const char *, int);
+int	print_journal(const char *, int);
+void	print_journal_header(const char *);
+off_t	print_journal_entries(const char *, size_t);
 int	dumpcg(const char *, int, int);
 int	main(int, char **);
 int	openpartition(const char *, int, char *, size_t);
@@ -114,13 +130,14 @@ main(int argc, char *argv[])
 {
 	int ch, eval;
 
-	while ((ch = getopt(argc, argv, "acimsvF")) != -1)
+	while ((ch = getopt(argc, argv, "acimsjvF")) != -1)
 		switch(ch) {
 		case 'a':	/* alternate superblocks */
 		case 'c':	/* cylinder group info */
 		case 'i':	/* actual inodes */
 		case 'm':	/* cylinder group summary */
 		case 's':	/* superblock */
+		case 'j':	/* journal */
 		case 'v':	/* more verbose */
 			opt_flags |= OPT_FLAG(ch);
 			break;
@@ -215,6 +232,8 @@ dumpfs(const char *name)
 		rval = print_cgsum(name, fd);
 	if (rval == 0 && ISOPT(opt_alt_super))
 		rval = print_alt_super(name, fd);
+	if (rval == 0 && ISOPT(opt_journal))
+		rval = print_journal(name, fd);
 	if (rval == 0 && ISOPT(opt_cg_info))
 		rval = print_cginfo(name, fd);
 	else if (rval == 0 && ISOPT(opt_inodes))
@@ -687,7 +706,6 @@ print_ufs2_inode(int inum, int i_off, void *ibuf)
 		i->di_gen, i->di_uid, i->di_gid);
 }
 
-
 void
 pbits(int offset, void *vp, int max)
 {
@@ -710,11 +728,182 @@ pbits(int offset, void *vp, int max)
 	printf("\n");
 }
 
+int
+print_journal(const char *name, int fd)
+{
+	daddr_t off;
+	size_t count, blklen, bno, skip;
+	off_t boff, head, tail, len;
+	uint32_t generation;
+
+	if (afs.fs_journal_version != UFS_WAPBL_VERSION)
+		return 0;
+
+	generation = 0;
+	head = tail = 0;
+
+	switch (afs.fs_journal_location) {
+	case UFS_WAPBL_JOURNALLOC_END_PARTITION:
+	case UFS_WAPBL_JOURNALLOC_IN_FILESYSTEM:
+
+		off    = afs.fs_journallocs[0];
+		count  = afs.fs_journallocs[1];
+		blklen = afs.fs_journallocs[2];
+
+		for (bno=0; bno<count; bno += skip / DEV_BSIZE) {
+
+			skip = blklen;
+
+			boff = bno * DEV_BSIZE;
+			if (bno >= 2 &&
+			  ((head >= tail && (boff < tail || boff >= head)) ||
+			  (head < tail && (boff >= head && boff < tail))))
+				continue;
+
+			printf("journal block %lu offset %lld\n",
+				(unsigned long)bno, (long long) boff);
+
+			if (lseek(fd, (off_t)(off*DEV_BSIZE) + boff, SEEK_SET)
+			    == (off_t)-1)
+				return (1);
+			if (read(fd, &jbuf, blklen) != (ssize_t)blklen) {
+				warnx("%s: error reading journal", name);
+				return 1;
+			}
+
+			switch (awh.wc_type) {
+			case 0:
+				break;
+			case WAPBL_WC_HEADER:
+				print_journal_header(name);
+				if (awh.wc_generation > generation) {
+					head = awh.wc_head;
+					tail = awh.wc_tail;
+				}
+				generation = awh.wc_generation;
+				skip = awh.wc_len;
+				break;
+			default:
+				len = print_journal_entries(name, blklen);
+				skip = awh.wc_len;
+				if (len != (off_t)skip)
+					printf("  CORRUPTED RECORD\n");
+				break;
+			}
+
+			if (blklen)
+				skip = (skip + blklen - 1) / blklen * blklen;
+			if (skip == 0)
+				break;
+
+		}
+		break;
+	}
+
+	return 0;
+}
+
+static const char *
+wapbl_type_string(unsigned t)
+{
+	static char buf[12];
+
+	switch (t) {
+	case WAPBL_WC_BLOCKS:
+		return "blocks";
+	case WAPBL_WC_REVOCATIONS:
+		return "revocations";
+	case WAPBL_WC_INODES:
+		return "inodes";
+	case WAPBL_WC_HEADER:
+		return "header";
+	}
+
+	snprintf(buf,sizeof(buf),"%08x",t);
+	return buf;
+}
+
+void
+print_journal_header(const char *name)
+{
+	printf("  type %s len %d  version %u\n",
+		wapbl_type_string(awh.wc_type), awh.wc_len,
+		awh.wc_version);
+	printf("  checksum      %08x  generation %9u\n",
+		awh.wc_checksum, awh.wc_generation);
+	printf("  fsid %08x.%08x  time %llu nsec %u\n",
+		awh.wc_fsid[0], awh.wc_fsid[1],
+		(unsigned long long)awh.wc_time, awh.wc_timensec);
+	printf("  log_bshift  %10u  fs_bshift %10u\n",
+		awh.wc_log_dev_bshift, awh.wc_fs_dev_bshift);
+	printf("  head        %10lld  tail      %10lld\n",
+		(long long)awh.wc_head, (long long)awh.wc_tail);
+	printf("  circ_off    %10lld  circ_size %10lld\n",
+		(long long)awh.wc_circ_off, (long long)awh.wc_circ_size);
+}
+
+off_t
+print_journal_entries(const char *name, size_t blklen)
+{
+	int i, n;
+	struct wapbl_wc_blocklist *wcb;
+	struct wapbl_wc_inodelist *wci;
+	off_t len = 0;
+	int ph;
+
+	printf("  type %s len %d",
+		wapbl_type_string(awn.wc_type), awn.wc_len);
+
+	switch (awn.wc_type) {
+	case WAPBL_WC_BLOCKS:
+	case WAPBL_WC_REVOCATIONS:
+		wcb = (struct wapbl_wc_blocklist *)&awn;
+		printf("  blkcount %u\n", wcb->wc_blkcount);
+		ph = (blklen - offsetof(struct wapbl_wc_blocklist, wc_blocks))
+			/ sizeof(wcb->wc_blocks[0]);
+		n = MIN(wcb->wc_blkcount, ph);
+		for (i=0; i<n; i++) {
+			if (ISOPT(opt_verbose)) {
+				printf("  %3d: daddr %14llu  dlen %d\n", i,
+				 (unsigned long long)wcb->wc_blocks[i].wc_daddr,
+				 wcb->wc_blocks[i].wc_dlen);
+			}
+			len += wcb->wc_blocks[i].wc_dlen;
+		}
+		if (awn.wc_type == WAPBL_WC_BLOCKS) {
+			if (len % blklen)
+				len += blklen - len % blklen;
+		} else
+			len = 0;
+		break;
+	case WAPBL_WC_INODES:
+		wci = (struct wapbl_wc_inodelist *)&awn;
+		printf("  count %u clear %u\n",
+			wci->wc_inocnt, wci->wc_clear);
+		ph = (blklen - offsetof(struct wapbl_wc_inodelist, wc_inodes))
+			/ sizeof(wci->wc_inodes[0]);
+		n = MIN(wci->wc_inocnt, ph);
+		for (i=0; i<n; ++i) {
+			if (ISOPT(opt_verbose)) {
+				printf("  %3d: inumber %10u  imode %08x\n", i,
+					wci->wc_inodes[i].wc_inumber,
+					wci->wc_inodes[i].wc_imode);
+			}
+		}
+		break;
+	default:
+		printf("\n");
+		break;
+	}
+
+	return len + blklen;
+}
+
 void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: dumpfs [-acFimsv] filesys | device [...]\n");
+	(void)fprintf(stderr, "usage: dumpfs [-acFimsjv] filesys | device [...]\n");
 	exit(1);
 }
 

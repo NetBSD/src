@@ -1,4 +1,4 @@
-.\"	$NetBSD: dumpfs.8,v 1.18 2004/01/03 21:05:21 wiz Exp $
+.\"	$NetBSD: dumpfs.8,v 1.19 2010/02/27 09:05:59 mlelstv Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,6 +58,8 @@ Print details of each allocated inode.
 Print details of the cylinder group summary.
 .It Fl s
 Print details of the superblock.
+.It Fl j
+Print details of the WAPBL journal.
 .It Fl v
 Be even more verbose.
 .El
@@ -67,8 +69,9 @@ If none of
 .Fl c ,
 .Fl i ,
 .Fl m ,
+.Fl s ,
 or
-.Fl s
+.Fl j
 are given, then
 .Nm
 defaults to
@@ -107,3 +110,7 @@ and
 .Fl s
 options, and the inode dump were added for
 .Nx 2.0 .
+The
+.Fl j ,
+option was added for
+.Nx 6.0 .
