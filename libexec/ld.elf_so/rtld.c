@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.128 2010/01/10 06:37:32 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.129 2010/02/27 11:16:38 roy Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.128 2010/01/10 06:37:32 skrll Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.129 2010/02/27 11:16:38 roy Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -83,6 +83,7 @@ struct r_debug  _rtld_debug;	/* for GDB; */
 bool            _rtld_trust;	/* False for setuid and setgid programs */
 Obj_Entry      *_rtld_objlist;	/* Head of linked list of shared objects */
 Obj_Entry     **_rtld_objtail;	/* Link field of last object in list */
+int		_rtld_objcount;	/* Number of shared objects */
 Obj_Entry      *_rtld_objmain;	/* The main program shared object */
 Obj_Entry       _rtld_objself;	/* The dynamic linker shared object */
 const char	_rtld_path[] = _PATH_RTLD;
@@ -271,6 +272,7 @@ _rtld_init(caddr_t mapbase, caddr_t relocbase, const char *execname)
 	/* Make the object list empty again. */
 	_rtld_objlist = NULL;
 	_rtld_objtail = &_rtld_objlist;
+	_rtld_objcount = 0;
 
 	_rtld_debug.r_brk = _rtld_debug_state;
 	_rtld_debug.r_state = RT_CONSISTENT;
@@ -705,6 +707,7 @@ _rtld_unload_object(Obj_Entry *root, bool do_fini_funcs)
 				_rtld_objlist_remove(&_rtld_list_global, obj);
 				_rtld_linkmap_delete(obj);
 				*linkp = obj->next;
+				_rtld_objcount--;
 				_rtld_obj_free(obj);
 			} else
 				linkp = &obj->next;
@@ -810,11 +813,16 @@ _rtld_objmain_sym(const char *name)
 	unsigned long hash;
 	const Elf_Sym *def;
 	const Obj_Entry *obj;
+	DoneList donelist;
 
 	hash = _rtld_elf_hash(name);
 	obj = _rtld_objmain;
+	_rtld_donelist_init(&donelist);
 
-	def = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, false);
+	def = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, false,
+	    &donelist);
+
+	_rtld_donelist_clear(&donelist);
 
 	if (def != NULL)
 		return obj->relocbase + def->st_value;
@@ -838,6 +846,7 @@ dlsym(void *handle, const char *name)
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
 	void *retaddr;
+	DoneList donelist; 
 	
 	hash = _rtld_elf_hash(name);
 	def = NULL;
@@ -892,20 +901,28 @@ dlsym(void *handle, const char *name)
 		if ((obj = _rtld_dlcheck(handle)) == NULL)
 			return NULL;
 		
+		_rtld_donelist_init(&donelist);
+
 		if (obj->mainprog) {
 			/* Search main program and all libraries loaded by it */
 			def = _rtld_symlook_list(name, hash, &_rtld_list_main,
-			    &defobj, false);
+			    &defobj, false, &donelist);
 		} else {
 			Needed_Entry fake;
+			DoneList depth;
 
 			/* Search the object and all the libraries loaded by it. */
 			fake.next = NULL;
 			fake.obj = __UNCONST(obj);
 			fake.name = 0;
+
+			_rtld_donelist_init(&depth);
 			def = _rtld_symlook_needed(name, hash, &fake, &defobj,
-			    false);
+			    false, &donelist, &depth);
+			_rtld_donelist_clear(&depth);
 		}
+
+		_rtld_donelist_clear(&donelist);
 		break;
 	}
 	
