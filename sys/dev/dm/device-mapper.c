@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.18 2010/02/26 23:52:43 jakllsch Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.19 2010/02/27 00:31:57 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <sys/ioccom.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
+#include <sys/once.h>
 
 #include "netbsd-dm.h"
 #include "dm.h"
@@ -62,7 +63,9 @@ static dev_type_size(dmsize);
 void dmattach(int);
 int dmdestroy(void);
 
+static ONCE_DECL(doinit_control);
 static int doinit(void);
+
 static int dm_cmd_to_fun(prop_dictionary_t);
 static int disk_ioctl_switch(dev_t, u_long, void *);
 static int dm_ioctl_switch(u_long);
@@ -161,7 +164,7 @@ dm_modcmd(modcmd_t cmd, void *arg)
 		if (error)
 			break;
 
-		error = doinit();
+		error = RUN_ONCE(&doinit_control, doinit);
 		if (error) {
 			config_cfdriver_detach(&dm_cd);
 			break;
@@ -292,7 +295,7 @@ doinit(void)
 void
 dmattach(int n)
 {
-	doinit();
+	RUN_ONCE(&doinit_control, doinit);
 }
 
 /* Destroy routine */
