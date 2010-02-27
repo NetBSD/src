@@ -19,7 +19,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2010 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
@@ -55,28 +55,40 @@ typedef struct zil_header {
 	uint64_t zh_claim_txg;	/* txg in which log blocks were claimed */
 	uint64_t zh_replay_seq;	/* highest replayed sequence number */
 	blkptr_t zh_log;	/* log chain */
-	uint64_t zh_claim_seq;	/* highest claimed sequence number */
-	uint64_t zh_pad[5];
+	uint64_t zh_claim_blk_seq; /* highest claimed block sequence number */
+	uint64_t zh_flags;	/* header flags */
+	uint64_t zh_claim_lr_seq; /* highest claimed lr sequence number */
+	uint64_t zh_pad[3];
 } zil_header_t;
 
 /*
- * Log block trailer - structure at the end of the header and each log block
+ * zh_flags bit settings
+ */
+#define	ZIL_REPLAY_NEEDED	0x1	/* replay needed - internal only */
+#define	ZIL_CLAIM_LR_SEQ_VALID	0x2	/* zh_claim_lr_seq field is valid */
+
+/*
+ * Log block chaining.
  *
- * The zit_bt contains a zbt_cksum which for the intent log is
+ * Log blocks are chained together. Originally they were chained at the
+ * end of the block. For performance reasons the chain was moved to the
+ * beginning of the block which allows writes for only the data being used.
+ * The older position is supported for backwards compatability.
+ *
+ * The zio_eck_t contains a zec_cksum which for the intent log is
  * the sequence number of this log block. A seq of 0 is invalid.
- * The zbt_cksum is checked by the SPA against the sequence
+ * The zec_cksum is checked by the SPA against the sequence
  * number passed in the blk_cksum field of the blkptr_t
  */
-typedef struct zil_trailer {
-	uint64_t zit_pad;
-	blkptr_t zit_next_blk;	/* next block in chain */
-	uint64_t zit_nused;	/* bytes in log block used */
-	zio_block_tail_t zit_bt; /* block trailer */
-} zil_trailer_t;
+typedef struct zil_chain {
+	uint64_t zc_pad;
+	blkptr_t zc_next_blk;	/* next block in chain */
+	uint64_t zc_nused;	/* bytes in log block used */
+	zio_eck_t zc_eck;	/* block trailer */
+} zil_chain_t;
 
 #define	ZIL_MIN_BLKSZ	4096ULL
 #define	ZIL_MAX_BLKSZ	SPA_MAXBLOCKSIZE
-#define	ZIL_BLK_DATA_SZ(lwb)	((lwb)->lwb_sz - sizeof (zil_trailer_t))
 
 /*
  * The words of a log block checksum.
@@ -133,7 +145,8 @@ typedef enum zil_create {
 #define	TX_MKDIR_ACL		17	/* mkdir with ACL */
 #define	TX_MKDIR_ATTR		18	/* mkdir with attr */
 #define	TX_MKDIR_ACL_ATTR	19	/* mkdir with ACL + attrs */
-#define	TX_MAX_TYPE		20	/* Max transaction type */
+#define	TX_WRITE2		20	/* dmu_sync EALREADY write */
+#define	TX_MAX_TYPE		21	/* Max transaction type */
 
 /*
  * The transactions for mkdir, symlink, remove, rmdir, link, and rename
@@ -141,6 +154,20 @@ typedef enum zil_create {
  * specified case-insensitive handling of names.
  */
 #define	TX_CI	((uint64_t)0x1 << 63) /* case-insensitive behavior requested */
+
+/*
+ * Transactions for write, truncate, setattr, acl_v0, and acl can be logged
+ * out of order.  For convenience in the code, all such records must have
+ * lr_foid at the same offset.
+ */
+#define	TX_OOO(txtype)			\
+	((txtype) == TX_WRITE ||	\
+	(txtype) == TX_TRUNCATE ||	\
+	(txtype) == TX_SETATTR ||	\
+	(txtype) == TX_ACL_V0 ||	\
+	(txtype) == TX_ACL ||		\
+	(txtype) == TX_WRITE2)
+
 
 /*
  * Format of log records.
@@ -160,6 +187,14 @@ typedef struct {			/* common log record header */
 	uint64_t	lrc_txg;	/* dmu transaction group number */
 	uint64_t	lrc_seq;	/* see comment above */
 } lr_t;
+
+/*
+ * Common start of all out-of-order record types (TX_OOO() above).
+ */
+typedef struct {
+	lr_t		lr_common;	/* common portion of log record */
+	uint64_t	lr_foid;	/* object id */
+} lr_ooo_t;
 
 /*
  * Handle option extended vattr attributes.
@@ -251,7 +286,7 @@ typedef struct {
 	uint64_t	lr_foid;	/* file object to write */
 	uint64_t	lr_offset;	/* offset to write to */
 	uint64_t	lr_length;	/* user data length to write */
-	uint64_t	lr_blkoff;	/* offset represented by lr_blkptr */
+	uint64_t	lr_blkoff;	/* no longer used */
 	blkptr_t	lr_blkptr;	/* spa block pointer for replay */
 	/* write data will follow for small writes */
 } lr_write_t;
@@ -299,13 +334,34 @@ typedef struct {
  */
 
 /*
- * ZFS intent log transaction structure
+ * Writes are handled in three different ways:
+ *
+ * WR_INDIRECT:
+ *    In this mode, if we need to commit the write later, then the block
+ *    is immediately written into the file system (using dmu_sync),
+ *    and a pointer to the block is put into the log record.
+ *    When the txg commits the block is linked in.
+ *    This saves additionally writing the data into the log record.
+ *    There are a few requirements for this to occur:
+ *	- write is greater than zfs/zvol_immediate_write_sz
+ *	- not using slogs (as slogs are assumed to always be faster
+ *	  than writing into the main pool)
+ *	- the write occupies only one block
+ * WR_COPIED:
+ *    If we know we'll immediately be committing the
+ *    transaction (FSYNC or FDSYNC), the we allocate a larger
+ *    log record here for the data and copy the data in.
+ * WR_NEED_COPY:
+ *    Otherwise we don't allocate a buffer, and *if* we need to
+ *    flush the write later then a buffer is allocated and
+ *    we retrieve the data using the dmu.
  */
 typedef enum {
 	WR_INDIRECT,	/* indirect - a large write (dmu_sync() data */
 			/* and put blkptr in log, rather than actual data) */
 	WR_COPIED,	/* immediate - data is copied into lr_write_t */
 	WR_NEED_COPY,	/* immediate - data needs to be copied if pushed */
+	WR_NUM_STATES	/* number of states */
 } itx_wr_state_t;
 
 typedef struct itx {
@@ -318,27 +374,14 @@ typedef struct itx {
 	/* followed by type-specific part of lr_xx_t and its immediate data */
 } itx_t;
 
-
-/*
- * zgd_t is passed through dmu_sync() to the callback routine zfs_get_done()
- * to handle the cleanup of the dmu_sync() buffer write
- */
-typedef struct {
-	zilog_t		*zgd_zilog;	/* zilog */
-	blkptr_t	*zgd_bp;	/* block pointer */
-	struct rl	*zgd_rl;	/* range lock */
-} zgd_t;
-
-
-typedef void zil_parse_blk_func_t(zilog_t *zilog, blkptr_t *bp, void *arg,
+typedef int zil_parse_blk_func_t(zilog_t *zilog, blkptr_t *bp, void *arg,
     uint64_t txg);
-typedef void zil_parse_lr_func_t(zilog_t *zilog, lr_t *lr, void *arg,
+typedef int zil_parse_lr_func_t(zilog_t *zilog, lr_t *lr, void *arg,
     uint64_t txg);
 typedef int zil_replay_func_t();
-typedef void zil_replay_cleaner_t();
 typedef int zil_get_data_t(void *arg, lr_write_t *lr, char *dbuf, zio_t *zio);
 
-extern uint64_t	zil_parse(zilog_t *zilog, zil_parse_blk_func_t *parse_blk_func,
+extern int zil_parse(zilog_t *zilog, zil_parse_blk_func_t *parse_blk_func,
     zil_parse_lr_func_t *parse_lr_func, void *arg, uint64_t txg);
 
 extern void	zil_init(void);
@@ -350,28 +393,31 @@ extern void	zil_free(zilog_t *zilog);
 extern zilog_t	*zil_open(objset_t *os, zil_get_data_t *get_data);
 extern void	zil_close(zilog_t *zilog);
 
-extern void	zil_replay(objset_t *os, void *arg, uint64_t *txgp,
-    zil_replay_func_t *replay_func[TX_MAX_TYPE],
-    zil_replay_cleaner_t *replay_cleaner);
+extern void	zil_replay(objset_t *os, void *arg,
+    zil_replay_func_t *replay_func[TX_MAX_TYPE]);
+extern boolean_t zil_replaying(zilog_t *zilog, dmu_tx_t *tx);
 extern void	zil_destroy(zilog_t *zilog, boolean_t keep_first);
 extern void	zil_rollback_destroy(zilog_t *zilog, dmu_tx_t *tx);
 
 extern itx_t	*zil_itx_create(uint64_t txtype, size_t lrsize);
+extern void	zil_itx_destroy(itx_t *itx);
 extern uint64_t zil_itx_assign(zilog_t *zilog, itx_t *itx, dmu_tx_t *tx);
 
 extern void	zil_commit(zilog_t *zilog, uint64_t seq, uint64_t oid);
 
-extern int	zil_claim(char *osname, void *txarg);
-extern int	zil_check_log_chain(char *osname, void *txarg);
-extern int	zil_clear_log_chain(char *osname, void *txarg);
+extern int	zil_vdev_offline(const char *osname, void *txarg);
+extern int	zil_claim(const char *osname, void *txarg);
+extern int	zil_check_log_chain(const char *osname, void *txarg);
 extern void	zil_sync(zilog_t *zilog, dmu_tx_t *tx);
 extern void	zil_clean(zilog_t *zilog);
-extern int	zil_is_committed(zilog_t *zilog);
 
 extern int	zil_suspend(zilog_t *zilog);
 extern void	zil_resume(zilog_t *zilog);
 
-extern void	zil_add_block(zilog_t *zilog, blkptr_t *bp);
+extern void	zil_add_block(zilog_t *zilog, const blkptr_t *bp);
+extern int	zil_bp_tree_add(zilog_t *zilog, const blkptr_t *bp);
+
+extern void	zil_set_logbias(zilog_t *zilog, uint64_t slogval);
 
 extern int zil_disable;
 

@@ -2,9 +2,8 @@
  * CDDL HEADER START
  *
  * The contents of this file are subject to the terms of the
- * Common Development and Distribution License, Version 1.0 only
- * (the "License").  You may not use this file except in compliance
- * with the License.
+ * Common Development and Distribution License (the "License").
+ * You may not use this file except in compliance with the License.
  *
  * You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
  * or http://www.opensolaris.org/os/licensing.
@@ -20,17 +19,17 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2004 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
 #ifndef	_SYS_TASKQ_IMPL_H
 #define	_SYS_TASKQ_IMPL_H
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
 #include <sys/taskq.h>
+#include <sys/inttypes.h>
 #include <sys/vmem.h>
+#include <sys/list.h>
 #include <sys/kstat.h>
 
 #ifdef	__cplusplus
@@ -84,12 +83,16 @@ struct taskq_bucket {
 #define	TQBUCKET_CLOSE		0x01
 #define	TQBUCKET_SUSPEND	0x02
 
+#define	TASKQ_INTERFACE_FLAGS	0x0000ffff	/* defined in <sys/taskq.h> */
+
 /*
  * taskq implementation flags: bit range 16-31
  */
-#define	TASKQ_ACTIVE		0x00010000
-#define	TASKQ_SUSPENDED		0x00020000
-#define	TASKQ_NOINSTANCE	0x00040000
+#define	TASKQ_CHANGING		0x00010000	/* nthreads != target */
+#define	TASKQ_SUSPENDED		0x00020000	/* taskq is suspended */
+#define	TASKQ_NOINSTANCE	0x00040000	/* no instance number */
+#define	TASKQ_THREAD_CREATED	0x00080000	/* a thread has been created */
+#define	TASKQ_DUTY_CYCLE	0x00100000	/* using the SDC class */
 
 struct taskq {
 	char		tq_name[TASKQ_NAMELEN + 1];
@@ -97,16 +100,20 @@ struct taskq {
 	krwlock_t	tq_threadlock;
 	kcondvar_t	tq_dispatch_cv;
 	kcondvar_t	tq_wait_cv;
+	kcondvar_t	tq_exit_cv;
+	pri_t		tq_pri;		/* Scheduling priority */
 	uint_t		tq_flags;
 	int		tq_active;
 	int		tq_nthreads;
+	int		tq_nthreads_target;
+	int		tq_nthreads_max;
+	int		tq_threads_ncpus_pct;
 	int		tq_nalloc;
 	int		tq_minalloc;
 	int		tq_maxalloc;
 	taskq_ent_t	*tq_freelist;
 	taskq_ent_t	tq_task;
 	int		tq_maxsize;
-	pri_t		tq_pri;		/* Scheduling priority	    */
 	taskq_bucket_t	*tq_buckets;	/* Per-cpu array of buckets */
 	int		tq_instance;
 	uint_t		tq_nbuckets;	/* # of buckets	(2^n)	    */
@@ -114,13 +121,19 @@ struct taskq {
 		kthread_t *_tq_thread;
 		kthread_t **_tq_threadlist;
 	}		tq_thr;
+
+	list_node_t	tq_cpupct_link;	/* linkage for taskq_cpupct_list */
+	struct proc	*tq_proc;	/* process for taskq threads */
+	int		tq_cpupart;	/* cpupart id bound to */
+	uint_t		tq_DC;		/* duty cycle for SDC */
+
 	/*
 	 * Statistics.
 	 */
 	kstat_t		*tq_kstat;	/* Exported statistics */
 	hrtime_t	tq_totaltime;	/* Time spent processing tasks */
-	int		tq_tasks;	/* Total # of tasks posted */
-	int		tq_executed;	/* Total # of tasks executed */
+	uint64_t	tq_tasks;	/* Total # of tasks posted */
+	uint64_t	tq_executed;	/* Total # of tasks executed */
 	int		tq_maxtasks;	/* Max number of tasks in the queue */
 	int		tq_tcreates;
 	int		tq_tdeaths;
@@ -128,6 +141,9 @@ struct taskq {
 
 #define	tq_thread tq_thr._tq_thread
 #define	tq_threadlist tq_thr._tq_threadlist
+
+/* The MAX guarantees we have at least one thread */
+#define	TASKQ_THREADS_PCT(ncpus, pct)	MAX(((ncpus) * (pct)) / 100, 1)
 
 #ifdef	__cplusplus
 }
