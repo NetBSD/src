@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.60 2010/01/24 21:12:17 joerg Exp $
+# $NetBSD: mi,v 1.61 2010/02/27 12:16:50 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -151,8 +151,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/hash/t_sha2.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_mi_vector_hash.debug	tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libc/string				tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/libc/string/t_popcount.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/string				tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/lib/libc/string/t_popcount.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libevent				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libevent/h_event.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/libexec					tests-lib-debug
@@ -934,9 +934,9 @@
 ./usr/tests/lib/libc/stdlib			tests-lib-tests
 ./usr/tests/lib/libc/stdlib/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_mi_vector_hash	tests-lib-tests		atf
-./usr/tests/lib/libc/string			tests-lib-tests
-./usr/tests/lib/libc/string/Atffile		tests-lib-tests		atf
-./usr/tests/lib/libc/string/t_popcount		tests-lib-tests		atf
+./usr/tests/lib/libc/string			tests-obsolete		obsolete
+./usr/tests/lib/libc/string/Atffile		tests-obsolete		obsolete
+./usr/tests/lib/libc/string/t_popcount		tests-obsolete		obsolete
 ./usr/tests/lib/libevent			tests-lib-tests
 ./usr/tests/lib/libevent/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libevent/h_event		tests-lib-tests		atf
