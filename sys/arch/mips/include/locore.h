@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.16 2010/02/27 07:58:52 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.17 2010/02/28 03:21:06 matt Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -47,8 +47,14 @@ void	softint_fast_dispatch(struct lwp *, int);
 
 typedef bool (*mips_fixup_callback_t)(int32_t, uint32_t [2]);
  
+void	fixup_splcalls(void);				/* splstubs.c */
 bool	mips_fixup_exceptions(mips_fixup_callback_t);
 bool	mips_fixup_zero_relative(int32_t, uint32_t [2]);
+void	mips_fixup_stubs(uint32_t *, uint32_t *, const uint32_t *,
+	    const uint32_t *, size_t);
+void	fixup_mips_cpu_switch_resume(void);
+
+void	mips_cpu_switch_resume(struct lwp *);
 
 #ifdef MIPS1
 void	mips1_tlb_set_asid(uint32_t);
