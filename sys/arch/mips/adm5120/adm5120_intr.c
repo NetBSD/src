@@ -1,4 +1,4 @@
-/*	$NetBSD: adm5120_intr.c,v 1.3.18.3 2010/02/23 20:25:57 matt Exp $	*/
+/*	$NetBSD: adm5120_intr.c,v 1.3.18.4 2010/02/28 03:28:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -67,9 +67,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm5120_intr.c,v 1.3.18.3 2010/02/23 20:25:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm5120_intr.c,v 1.3.18.4 2010/02/28 03:28:01 matt Exp $");
 
 #include "opt_ddb.h"
+#define __INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/queue.h>

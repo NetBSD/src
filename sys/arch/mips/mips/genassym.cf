@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44.12.18 2010/02/23 20:33:48 matt Exp $
+#	$NetBSD: genassym.cf,v 1.44.12.19 2010/02/28 03:28:01 matt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -71,6 +71,7 @@
 #	from @(#)genassym.c	8.2 (Berkeley) 9/23/93
 #
 
+quote #define	__INTR_PRIVATE
 quote #define	__MUTEX_PRIVATE	1
 
 include <sys/param.h>
@@ -317,6 +318,3 @@ define	MO_NUM_TLB_ENTRIES	offsetof(struct mips_options, mips_num_tlb_entries)
 define	MCI_SDCACHE_SIZE	offsetof(struct mips_cache_info, mci_sdcache_size)
 
 define	SPLSW_SPLCHECK		offsetof(struct splsw, splsw_splcheck)
-define	SPLSW_SPLHIGH		offsetof(struct splsw, splsw_splhigh_noprof)
-define	SPLSW_SPLRAISE		offsetof(struct splsw, splsw_splraise)
-define	SPLSW_SPLX		offsetof(struct splsw, splsw_splx)

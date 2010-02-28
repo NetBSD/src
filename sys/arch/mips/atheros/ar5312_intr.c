@@ -1,4 +1,4 @@
-/* $Id: ar5312_intr.c,v 1.6.28.3 2010/02/23 20:25:57 matt Exp $ */
+/* $Id: ar5312_intr.c,v 1.6.28.4 2010/02/28 03:28:01 matt Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5312_intr.c,v 1.6.28.3 2010/02/23 20:25:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5312_intr.c,v 1.6.28.4 2010/02/28 03:28:01 matt Exp $");
+
+#define __INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/queue.h>
