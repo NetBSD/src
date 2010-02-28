@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167.38.16 2010/02/25 05:45:12 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.167.38.17 2010/02/28 03:28:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -148,8 +148,7 @@ _C_LABEL(kernel_text):
 	/*
 	 * Raise to IPLHIGH
 	 */
-	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLHIGH
-	jalr	t9				# splhigh()
+	jal	_C_LABEL(splhigh_noprof)	# go to splhigh
 	 nop
 	/*
 	 * Now enable interrupts (but they are all masked).
@@ -236,8 +235,9 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 /*
  * Switch to new context.
  */
-	PTR_L	t9, _C_LABEL(mips_locoresw) + MIPSX_CPU_SWITCH_RESUME
-	jalr	t9
+	.globl	_C_LABEL(__cpu_switchto_fixup)
+_C_LABEL(__cpu_switchto_fixup):
+	jal	_C_LABEL(mips_cpu_switch_resume)
 	 move	a0, MIPS_CURLWP
 
 	PTR_L	t2, L_CPU(MIPS_CURLWP)
@@ -247,7 +247,6 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	/* Check for restartable atomic sequences (RAS) */
 	PTR_L	a0, L_PROC(MIPS_CURLWP)		# argument to ras_lookup
 	PTR_L	s5, L_ADDR(MIPS_CURLWP)
-	nop					# patchable load deay slot
 	PTR_L	v1, P_RASLIST(a0)		# get raslist
 	beqz	v1, 1f				#   skip call if empty
 	 nop
@@ -374,7 +373,6 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 	PTR_L	s1, L_CPU(MIPS_CURLWP)			# get curcpu()
 	nop		# patchable load delay slot
 	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(s1)	#    ...
-	nop		# patchable slot
 	move	s2, sp					# remember sp
 	move	s3, t0					# remember curpcb
 
@@ -387,19 +385,18 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 	move	MIPS_CURLWP, s0				# restore curlwp
 	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(s1)	#    ....
 
+	REG_L	ra, CALLFRAME_RA(sp)		# load early since we use it
+
 	REG_PROLOGUE
 	REG_L	s0, U_PCB_CONTEXT+SF_REG_S0(s3)		# restore the saved
-	nop			# patchable delay slot
 	REG_L	s1, U_PCB_CONTEXT+SF_REG_S1(s3)		#    registers that we
-	nop			# patchable delay slot
 	REG_L	s2, U_PCB_CONTEXT+SF_REG_S2(s3)		#    used
 	REG_L	s3, U_PCB_CONTEXT+SF_REG_S3(s3)
 	REG_EPILOGUE
 
 	/*
-	 * Almost everything (all except sp) is restored so we ca retrn.
+	 * Almost everything (all except sp) is restored so we can return.
 	 */
-	REG_L	ra, CALLFRAME_RA(sp)
 	j	ra
 	 PTR_ADDU sp, CALLFRAME_SIZ
 END(softint_fast_dispatch)

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.9.18.9 2010/02/27 19:22:47 snj Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.9.18.10 2010/02/28 03:28:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -254,8 +254,7 @@ NESTED(mutex_spin_enter, CALLFRAME_SIZ, ra)
 	 * (only uses a0-a3 and v0-v1)
 	 */
 	move	t3, ra			# need to save ra
-	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLRAISE
-	jalr	t9
+	jal	_C_LABEL(splraise)
 	 move	a0, ta0
 	move	ra, t3			# move ra back
 #ifdef PARANOIA
@@ -468,8 +467,7 @@ NESTED(mutex_spin_enter, CALLFRAME_SIZ, ra)
 	 * call splraise (only uses a0-a3, v0-v1, and ra)
 	 */
 	move	t3, ra
-	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLRAISE
-	jalr	t9
+	jal	_C_LABEL(splraise)
 	 nop
 	move	ra, t3
 
@@ -630,17 +628,18 @@ LEAF(mutex_spin_exit)
 #endif /* PARANOIA */
 
 	beq	a0, a1, 1f		# if oldspl == cpl
-	 move	t9, ra			#   no reason to drop ipl
+	 nop				#   no reason to drop ipl
 
 	bltz	t0, 1f			# there are still holders
-	 move	t9, ra			# so don't drop IPL
+	 nop				# so don't drop IPL
 
 	/*
 	 * Mutex count is zero so we need to restore the old IPL
 	 */
-	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLX
+	j	 _C_LABEL(splx)
+	 nop
 1:
-	j	t9
+	j	ra
 	 nop
 #if defined(DIAGNOSTIC)
 2:
