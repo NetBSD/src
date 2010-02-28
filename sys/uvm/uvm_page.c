@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.15 2010/02/23 15:38:30 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.16 2010/02/28 06:29:19 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.15 2010/02/23 15:38:30 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.16 2010/02/28 06:29:19 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -165,9 +165,11 @@ vaddr_t uvm_zerocheckkva;
 
 static void uvm_pageinsert(struct uvm_object *, struct vm_page *);
 static void uvm_pageremove(struct uvm_object *, struct vm_page *);
+#ifdef DEVICE_PAGE
 static void vm_page_device_mdpage_insert(paddr_t);
 #if 0
 static void vm_page_device_mdpage_remove(paddr_t);
+#endif
 #endif
 
 /*
@@ -759,6 +761,7 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 	vm_nphysmem++;
 }
 
+#ifdef DEVICE_PAGE
 void
 uvm_page_physload_device(paddr_t start, paddr_t end, paddr_t avail_start,
     paddr_t avail_end, int free_list)
@@ -771,6 +774,7 @@ uvm_page_physload_device(paddr_t start, paddr_t end, paddr_t avail_start,
 	for (paddr_t pf = start; pf < end; pf++)
 		vm_page_device_mdpage_insert(pf);
 }
+#endif
 
 static void
 uvm_page_physload_common(struct vm_physseg * const segs, const int nsegs,
@@ -802,10 +806,12 @@ uvm_page_physload_common(struct vm_physseg * const segs, const int nsegs,
 		return;
 	}
 
+#ifdef DEVICE_PAGE
 	if (segs == vm_physdev) {
 		preload = false;
 		goto uvm_page_physload_common_insert;
 	}
+#endif
 
 	/*
 	 * check to see if this is a "preload" (i.e. uvm_mem_init hasn't been
@@ -858,7 +864,9 @@ uvm_page_physload_common(struct vm_physseg * const segs, const int nsegs,
 		npages = 0;
 	}
 
+#ifdef DEVICE_PAGE
 uvm_page_physload_common_insert:
+#endif
 	/*
 	 * now insert us in the proper place in segs[]
 	 */
@@ -900,8 +908,10 @@ uvm_page_physload_common_insert:
 	ps->start = start;
 	ps->end = end;
 
+#ifdef DEVICE_PAGE
 	if (segs == vm_physdev)
 		return;
+#endif
 
 	/* XXXUEBS ugly */
 	ps->avail_start = avail_start;
