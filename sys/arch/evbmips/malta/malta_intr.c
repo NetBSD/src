@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.19.16.5 2010/02/23 20:24:37 matt Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.19.16.6 2010/02/28 03:32:23 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.19.16.5 2010/02/23 20:24:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.19.16.6 2010/02/28 03:32:23 matt Exp $");
+
+#define	__INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/device.h>
