@@ -1,4 +1,4 @@
-# $NetBSD: SCHIZO,v 1.6 2010/02/13 22:24:09 mrg Exp $
+# $NetBSD: SCHIZO,v 1.7 2010/02/28 11:49:44 martin Exp $
 #
 # GENERIC with schizo support enabled, with the annoying schizo interupt
 # option
@@ -7,7 +7,7 @@
 include 	"arch/sparc64/conf/GENERIC.MP"
 #include 	"arch/sparc64/conf/GENERIC"
 
-#ident		"SCHIZO.$Revision: 1.6 $"
+#ident		"SCHIZO.$Revision: 1.7 $"
 
 options 	CHEETAH
 
@@ -20,6 +20,3 @@ options 	DDB_ONPANIC=2   # print stack trace
 
 # this crashes when attaching.
 #no machfb
-
-# this matches when it isn't present. ugh.
-no admtemp
