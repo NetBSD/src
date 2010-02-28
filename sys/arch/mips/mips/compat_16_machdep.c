@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.12.14.5 2010/02/22 20:17:09 matt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.12.14.6 2010/02/28 23:45:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12.14.5 2010/02/22 20:17:09 matt Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12.14.6 2010/02/28 23:45:06 matt Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -132,7 +132,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	ksc.sc_fpused = l->l_md.md_flags & MDP_FPUSED;
 	if (ksc.sc_fpused) {
 		/* if FPU has current state, save it first */
-		savefpregs(l);
+		fpusave_lwp(l);
 	}
 #endif
 	*(struct fpreg *)ksc.sc_fpregs = *(struct fpreg *)&l->l_addr->u_pcb.pcb_fpregs;
@@ -270,11 +270,8 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 		tf->tf_regs[i] = ksc.sc_regs[i];
 #endif
 #if defined(FPEMUL) || !defined(NOFPU)
-	if (scp->sc_fpused) {
-		/* Disable the FPU to fault in FP registers. */
-		tf->tf_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
-		fpcurlwp = &lwp0;
-	}
+	if (scp->sc_fpused)
+		fpudiscard_lwp(l);
 #endif
 	*(struct fpreg *)&l->l_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
 

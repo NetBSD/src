@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.20 2010/02/27 19:49:26 snj Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.21 2010/02/28 23:45:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.20 2010/02/27 19:49:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.21 2010/02/28 23:45:06 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -700,7 +700,6 @@ pmap_init(void)
 		KASSERT(curcpu()->ci_pmap_srcbase);
 	}
 #endif
-	
 
 #ifdef MIPS3
 	if (MIPS_HAS_R4K_MMU) {

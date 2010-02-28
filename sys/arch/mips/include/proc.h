@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.21.36.5 2010/02/01 04:16:19 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.21.36.6 2010/02/28 23:45:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,6 +48,10 @@ struct trapframe;
 
 struct mdlwp {
 	struct trapframe *md_utf;	/* trapframe from userspace */
+#ifndef NOFPU
+	struct cpu_info * volatile md_fpcpu;	/* cpu owning FP state */
+#define	l_fpcpu l_md.md_fpcpu
+#endif
 	int	md_flags;		/* machine-dependent flags */
 	int	md_upte[UPAGES];	/* ptes for mapping u page */
 	vaddr_t	md_ss_addr;		/* single step address for ptrace */

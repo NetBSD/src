@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.17 2010/02/28 03:21:06 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.18 2010/02/28 23:45:07 matt Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -557,6 +557,75 @@ struct kernframe {
 };
 
 CTASSERT(sizeof(struct kernframe) % (2*sizeof(mips_reg_t)) == 0);
+
+/*
+ * PRocessor IDentity TABle
+ */
+
+struct pridtab {
+	int	cpu_cid;
+	int	cpu_pid;
+	int	cpu_rev;	/* -1 == wildcard */
+	int	cpu_copts;	/* -1 == wildcard */
+	int	cpu_isa;	/* -1 == probed (mips32/mips64) */
+	int	cpu_ntlb;	/* -1 == unknown, 0 == probed */
+	int	cpu_flags;
+	u_int	cpu_cp0flags;	/* presence of some cp0 regs */
+	u_int	cpu_cidflags;	/* company-specific flags */
+	const char	*cpu_name;
+};
+
+/*
+ * bitfield defines for cpu_cp0flags
+ */
+#define  MIPS_CP0FL_USE		__BIT(0)	/* use these flags */
+#define  MIPS_CP0FL_ECC		__BIT(1)
+#define  MIPS_CP0FL_CACHE_ERR	__BIT(2)
+#define  MIPS_CP0FL_EIRR	__BIT(3)
+#define  MIPS_CP0FL_EIMR	__BIT(4)
+#define  MIPS_CP0FL_EBASE	__BIT(5)
+#define  MIPS_CP0FL_CONFIG	__BIT(6)
+#define  MIPS_CP0FL_CONFIGn(n)	(__BIT(7) << ((n) & 7))
+
+/*
+ * cpu_cidflags defines, by company
+ */
+/*
+ * RMI company-specific cpu_cidflags
+ */
+#define MIPS_CIDFL_RMI_TYPE     	__BITS(2,0)
+# define  CIDFL_RMI_TYPE_XLR     	0
+# define  CIDFL_RMI_TYPE_XLS     	1
+# define  CIDFL_RMI_TYPE_XLP     	2
+#define MIPS_CIDFL_RMI_THREADS_MASK	__BITS(6,3)
+# define MIPS_CIDFL_RMI_THREADS_SHIFT	3
+#define MIPS_CIDFL_RMI_CORES_MASK	__BITS(10,7)
+# define MIPS_CIDFL_RMI_CORES_SHIFT	7
+# define LOG2_1	0
+# define LOG2_2	1
+# define LOG2_4	2
+# define LOG2_8	3
+# define MIPS_CIDFL_RMI_CPUS(ncores, nthreads)				\
+		((LOG2_ ## ncores << MIPS_CIDFL_RMI_CORES_SHIFT)	\
+		|(LOG2_ ## nthreads << MIPS_CIDFL_RMI_THREADS_SHIFT))
+# define MIPS_CIDFL_RMI_NTHREADS(cidfl)					\
+		(1 << (((cidfl) & MIPS_CIDFL_RMI_THREADS_MASK)		\
+			>> MIPS_CIDFL_RMI_THREADS_SHIFT))
+# define MIPS_CIDFL_RMI_NCORES(cidfl)					\
+		(1 << (((cidfl) & MIPS_CIDFL_RMI_CORES_MASK)		\
+			>> MIPS_CIDFL_RMI_CORES_SHIFT))
+#define MIPS_CIDFL_RMI_L2SZ_MASK	__BITS(14,11)
+# define MIPS_CIDFL_RMI_L2SZ_SHIFT	11
+# define RMI_L2SZ_256KB	 0
+# define RMI_L2SZ_512KB  1
+# define RMI_L2SZ_1MB    2
+# define RMI_L2SZ_2MB    3
+# define RMI_L2SZ_4MB    4
+# define MIPS_CIDFL_RMI_L2(l2sz)					\
+		(RMI_L2SZ_ ## l2sz << MIPS_CIDFL_RMI_L2SZ_SHIFT)
+# define MIPS_CIDFL_RMI_L2SZ(cidfl)					\
+		((256*1024) << (((cidfl) & MIPS_CIDFL_RMI_L2SZ_MASK)	\
+			>> MIPS_CIDFL_RMI_L2SZ_SHIFT))
 
 #endif	/* _KERNEL */
 #endif	/* _MIPS_LOCORE_H */
