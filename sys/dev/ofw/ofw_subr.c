@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.17 2010/02/28 11:35:40 martin Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.18 2010/02/28 13:59:05 martin Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.17 2010/02/28 11:35:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.18 2010/02/28 13:59:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,13 +333,13 @@ of_get_mode_string(char *buffer, int len)
  * This is used by the i2c bus attach code to do direct configuration.
  */
 void
-of_enter_i2c_devs(prop_dictionary_t props, int ofnode)
+of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size)
 {
 	int node, len;
 	char name[32];
-	uint64_t r64;
-	uint64_t r32;
-	uint8_t smr[24];
+	uint64_t reg64;
+	uint32_t reg32;
+	uint64_t addr;
 	prop_array_t array;
 	prop_dictionary_t dev;
 
@@ -349,30 +349,26 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode)
 		if (OF_getprop(node, "name", name, sizeof(name)) <= 0)
 			continue;
 		len = OF_getproplen(node, "reg");
-		if (len == sizeof(r64)) {
-			if (OF_getprop(node, "reg", &r64, sizeof(r64))
-			    != sizeof(r64))
+		addr = 0;
+		if (cell_size == 8 && len >= sizeof(reg64)) {
+			if (OF_getprop(node, "reg", &reg64, sizeof(reg64))
+			    < sizeof(reg64))
 				continue;
-			r32 = r64;
-		} else if (len == sizeof(r32)) {
-			if (OF_getprop(node, "reg", &r32, sizeof(r32))
-			    != sizeof(r32))
+			addr = reg64;
+		} else if (cell_size == 4 && len >= sizeof(reg32)) {
+			if (OF_getprop(node, "reg", &reg32, sizeof(reg32))
+			    < sizeof(reg32))
 				continue;
-		} else if (len == 24) {
-			if (OF_getprop(node, "reg", smr, sizeof(smr))
-			    != sizeof(smr))
-				continue;
-			/* smbus reg property */
-			r32 = smr[7];
+			addr = reg32;
 		} else {
-			panic("unexpected \"reg\" size %d for \"%s\", "
-			    "parent %x, node %x",
-			    len, name, ofnode, node);
+			continue;
 		}
+		addr >>= 1;
+		if (addr == 0) continue;
 
 		dev = prop_dictionary_create();
 		prop_dictionary_set_cstring(dev, "name", name);
-		prop_dictionary_set_uint32(dev, "addr", r32 >> 1);
+		prop_dictionary_set_uint32(dev, "addr", addr);
 		prop_dictionary_set_uint64(dev, "cookie", node);
 		of_to_dataprop(dev, node, "compatible", "compatible");
 		prop_array_add(array, dev);
