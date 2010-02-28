@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.82 2010/02/24 22:37:56 dyoung Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.83 2010/02/28 17:22:41 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,13 +75,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.82 2010/02/24 22:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.83 2010/02/28 17:22:41 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>		/* for hz */
 #include <sys/kmem.h>
 #include <sys/device.h>
+#include <sys/module.h>
 #include <sys/mutex.h>
 
 #include <dev/sysmon/sysmonvar.h>
@@ -782,3 +783,79 @@ acpibat_resume(device_t dv, const pmf_qual_t *qual)
 
 	return true;
 }
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, acpibat, NULL);
+CFDRIVER_DECL(acpibat, DV_DULL, NULL);
+
+static int acpibatloc[] = { -1 };
+extern struct cfattach acpibat_ca;
+
+static struct cfparent acpiparent = {
+	"acpinodebus", NULL, DVUNIT_ANY
+};
+
+static struct cfdata acpibat_cfdata[] = {
+	{
+		.cf_name = "acpibat",
+		.cf_atname = "acpibat",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = acpibatloc,
+		.cf_flags = 0,
+		.cf_pspec = &acpiparent,
+	},
+
+	{ NULL }
+};
+
+static int
+acpibat_modcmd(modcmd_t cmd, void *context)
+{
+	int err;
+
+	switch (cmd) {
+
+	case MODULE_CMD_INIT:
+
+		err = config_cfdriver_attach(&acpibat_cd);
+
+		if (err != 0)
+			return err;
+
+		err = config_cfattach_attach("acpibat", &acpibat_ca);
+
+		if (err != 0) {
+			config_cfdriver_detach(&acpibat_cd);
+			return err;
+		}
+
+		err = config_cfdata_attach(acpibat_cfdata, 1);
+
+		if (err != 0) {
+			config_cfattach_detach("acpibat", &acpibat_ca);
+			config_cfdriver_detach(&acpibat_cd);
+			return err;
+		}
+
+		return 0;
+
+	case MODULE_CMD_FINI:
+
+		err = config_cfdata_detach(acpibat_cfdata);
+
+		if (err != 0)
+			return err;
+
+		config_cfattach_detach("acpibat", &acpibat_ca);
+		config_cfdriver_detach(&acpibat_cd);
+
+		return 0;
+
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif	/* _MODULE */

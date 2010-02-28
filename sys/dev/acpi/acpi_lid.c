@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.34 2010/02/28 09:23:30 jruoho Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.35 2010/02/28 17:22:41 jruoho Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,11 +40,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.34 2010/02/28 09:23:30 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.35 2010/02/28 17:22:41 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/module.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
@@ -234,3 +235,79 @@ acpilid_suspend(device_t dv, const pmf_qual_t *qual)
 
 	return true;
 }
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, acpilid, NULL);
+CFDRIVER_DECL(acpilid, DV_DULL, NULL);
+
+static int acpilidloc[] = { -1 };
+extern struct cfattach acpilid_ca;
+
+static struct cfparent acpiparent = {
+	"acpinodebus", NULL, DVUNIT_ANY
+};
+
+static struct cfdata acpilid_cfdata[] = {
+	{
+		.cf_name = "acpilid",
+		.cf_atname = "acpilid",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = acpilidloc,
+		.cf_flags = 0,
+		.cf_pspec = &acpiparent,
+	},
+
+	{ NULL }
+};
+
+static int
+acpilid_modcmd(modcmd_t cmd, void *context)
+{
+	int err;
+
+	switch (cmd) {
+
+	case MODULE_CMD_INIT:
+
+		err = config_cfdriver_attach(&acpilid_cd);
+
+		if (err != 0)
+			return err;
+
+		err = config_cfattach_attach("acpilid", &acpilid_ca);
+
+		if (err != 0) {
+			config_cfdriver_detach(&acpilid_cd);
+			return err;
+		}
+
+		err = config_cfdata_attach(acpilid_cfdata, 1);
+
+		if (err != 0) {
+			config_cfattach_detach("acpilid", &acpilid_ca);
+			config_cfdriver_detach(&acpilid_cd);
+			return err;
+		}
+
+		return 0;
+
+	case MODULE_CMD_FINI:
+
+		err = config_cfdata_detach(acpilid_cfdata);
+
+		if (err != 0)
+			return err;
+
+		config_cfattach_detach("acpilid", &acpilid_ca);
+		config_cfdriver_detach(&acpilid_cd);
+
+		return 0;
+
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif	/* _MODULE */

@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.26 2010/02/24 22:37:56 dyoung Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.27 2010/02/28 17:22:41 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.26 2010/02/24 22:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.27 2010/02/28 17:22:41 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 #include <sys/buf.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
@@ -673,3 +674,79 @@ thinkpad_resume(device_t dv, const pmf_qual_t *qual)
 
 	return true;
 }
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, thinkpad, NULL);
+CFDRIVER_DECL(thinkpad, DV_DULL, NULL);
+
+static int thinkpadloc[] = { -1 };
+extern struct cfattach thinkpad_ca;
+
+static struct cfparent acpiparent = {
+	"acpinodebus", NULL, DVUNIT_ANY
+};
+
+static struct cfdata thinkpad_cfdata[] = {
+	{
+		.cf_name = "thinkpad",
+		.cf_atname = "thinkpad",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = thinkpadloc,
+		.cf_flags = 0,
+		.cf_pspec = &acpiparent,
+	},
+
+	{ NULL }
+};
+
+static int
+thinkpad_modcmd(modcmd_t cmd, void *opaque)
+{
+	int err;
+
+	switch (cmd) {
+
+	case MODULE_CMD_INIT:
+
+		err = config_cfdriver_attach(&thinkpad_cd);
+
+		if (err != 0)
+			return err;
+
+		err = config_cfattach_attach("thinkpad", &thinkpad_ca);
+
+		if (err != 0) {
+			config_cfdriver_detach(&thinkpad_cd);
+			return err;
+		}
+
+		err = config_cfdata_attach(thinkpad_cfdata, 1);
+
+		if (err != 0) {
+			config_cfattach_detach("thinkpad", &thinkpad_ca);
+			config_cfdriver_detach(&thinkpad_cd);
+			return err;
+		}
+
+		return 0;
+
+	case MODULE_CMD_FINI:
+
+		err = config_cfdata_detach(thinkpad_cfdata);
+
+		if (err != 0)
+			return err;
+
+		config_cfattach_detach("thinkpad", &thinkpad_ca);
+		config_cfdriver_detach(&thinkpad_cd);
+
+		return 0;
+
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif	/* _MODULE */
