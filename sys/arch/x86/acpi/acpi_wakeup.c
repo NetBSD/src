@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.20 2009/11/07 07:27:48 cegger Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.21 2010/02/28 13:56:49 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.20 2009/11/07 07:27:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.21 2010/02/28 13:56:49 jruoho Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -195,11 +195,13 @@ enter_s4_with_bios(void)
 
 	/* run the _PTS and _GTS methods */
 
-	ACPI_MEMSET(&ArgList, 0, sizeof(ArgList));
+	(void)memset(&ArgList, 0, sizeof(ArgList));
+
 	ArgList.Count = 1;
 	ArgList.Pointer = &Arg;
 
-	ACPI_MEMSET(&Arg, 0, sizeof(Arg));
+	(void)memset(&Arg, 0, sizeof(Arg));
+
 	Arg.Type = ACPI_TYPE_INTEGER;
 	Arg.Integer.Value = ACPI_STATE_S4;
 

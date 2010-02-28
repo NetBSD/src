@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.13 2010/02/24 22:37:56 dyoung Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.14 2010/02/28 13:56:49 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.13 2010/02/24 22:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.14 2010/02/28 13:56:49 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -258,7 +258,7 @@ acpi_wmi_add(struct acpi_wmi_softc *sc, ACPI_OBJECT *obj)
 		if ((wmi = kmem_zalloc(sizeof(*wmi), KM_NOSLEEP)) == NULL)
 			goto fail;
 
-		ACPI_MEMCPY(&wmi->guid, obj->Buffer.Pointer + offset, siz);
+		(void)memcpy(&wmi->guid, obj->Buffer.Pointer + offset, siz);
 
 		wmi->eevent = false;
 		offset = offset + siz;
@@ -332,7 +332,7 @@ acpi_wmi_guid_get(struct acpi_wmi_softc *sc,
 	const char *ptr;
 	uint8_t i;
 
-	if (sc == NULL || src == NULL || ACPI_STRLEN(src) != 36)
+	if (sc == NULL || src == NULL || strlen(src) != 36)
 		return AE_BAD_PARAMETER;
 
 	for (ptr = src, i = 0; i < 16; i++) {
@@ -340,12 +340,12 @@ acpi_wmi_guid_get(struct acpi_wmi_softc *sc,
 		if (*ptr == '-')
 			ptr++;
 
-		ACPI_MEMCPY(hex, ptr, 2);
+		(void)memcpy(hex, ptr, 2);
 
 		if (!HEXCHAR(hex[0]) || !HEXCHAR(hex[1]))
 			return AE_BAD_HEX_CONSTANT;
 
-		bin[i] = ACPI_STRTOUL(hex, NULL, 16) & 0xFF;
+		bin[i] = strtoul(hex, NULL, 16) & 0xFF;
 
 		ptr++;
 		ptr++;
