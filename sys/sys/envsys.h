@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.30 2010/02/15 22:32:04 pgoyette Exp $ */
+/* $NetBSD: envsys.h,v 1.31 2010/02/28 20:04:04 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -46,39 +46,6 @@
 
 #define ENVSYS_MAXSENSORS	512
 #define ENVSYS_DESCLEN		32
-
-/*
- * Thresholds/limits that are being monitored
- */
-struct sysmon_envsys_lim {
-	int32_t		sel_critmax;
-	int32_t		sel_warnmax;
-	int32_t		sel_warnmin;
-	int32_t		sel_critmin;
-};
-
-typedef struct sysmon_envsys_lim sysmon_envsys_lim_t;
-
-/* struct used by a sensor */
-struct envsys_data {
-	TAILQ_ENTRY(envsys_data)	sensors_head;
-	uint32_t	sensor;		/* sensor number */
-	uint32_t	units;		/* type of sensor */
-	uint32_t	state;		/* sensor state */
-	uint32_t	flags;		/* sensor flags */
-	uint32_t	rpms;		/* for fans, nominal RPMs */
-	int32_t		rfact;		/* for volts, factor x 10^4 */
-	int32_t		value_cur;	/* current value */
-	int32_t		value_max;	/* max value */
-	int32_t		value_min;	/* min value */
-	int32_t		value_avg;	/* avg value */
-	sysmon_envsys_lim_t limits;	/* thresholds for monitoring */
-	int		upropset;	/* userland property set? */
-	bool		monitor;	/* monitoring enabled/disabled */
-	char		desc[ENVSYS_DESCLEN];	/* sensor description */
-};
-
-typedef struct envsys_data envsys_data_t;
 
 /* sensor units */
 enum envsys_units {
@@ -138,48 +105,12 @@ enum envsys_battery_capacity_states {
 	ENVSYS_BATTERY_CAPACITY_LOW		/* low cap in battery */
 };
 
-/* sensor flags */
-#define ENVSYS_FPERCENT 	0x00000001	/* sensor wants a percentage */
-#define ENVSYS_FVALID_MAX	0x00000002	/* max value is ok */
-#define ENVSYS_FVALID_MIN	0x00000004	/* min value is ok */
-#define ENVSYS_FVALID_AVG	0x00000008	/* avg value is ok */
-#define ENVSYS_FCHANGERFACT	0x00000010	/* sensor can change rfact */
-
-/* monitoring flags */
-#define ENVSYS_FMONCRITICAL	0x00000020	/* monitor a critical state */
-#define ENVSYS_FMONLIMITS	0x00000040	/* monitor limits/thresholds */
-#define ENVSYS_FMONSTCHANGED	0x00000400	/* monitor a battery/drive state */
-#define ENVSYS_FMONNOTSUPP	0x00000800	/* monitoring not supported */
-#define ENVSYS_FNEED_REFRESH	0x00001000	/* sensor needs refreshing */
-
 /*
  * IOCTLs
  */
 #define ENVSYS_GETDICTIONARY	_IOWR('E', 0, struct plistref)
 #define ENVSYS_SETDICTIONARY	_IOWR('E', 1, struct plistref)
 #define ENVSYS_REMOVEPROPS	_IOWR('E', 2, struct plistref)
-
-/*
- * Properties that can be set in upropset (and in the event_limit's
- * flags field)
- */
-#define	PROP_CRITMAX		0x0001
-#define	PROP_CRITMIN		0x0002
-#define	PROP_WARNMAX		0x0004
-#define	PROP_WARNMIN		0x0008
-#define	PROP_BATTCAP		0x0010
-#define	PROP_BATTWARN		0x0020
-#define	PROP_BATTHIGH		0x0040
-#define	PROP_BATTMAX		0x0080
-#define	PROP_DESC		0x0100
-#define	PROP_RFACT		0x0200
-
-#define	PROP_DRIVER_LIMITS	0x8000
-#define	PROP_CAP_LIMITS		(PROP_BATTCAP  | PROP_BATTWARN | \
-				 PROP_BATTHIGH | PROP_BATTMAX)
-#define	PROP_VAL_LIMITS		(PROP_CRITMAX  | PROP_CRITMIN | \
-				 PROP_WARNMAX  | PROP_WARNMIN)
-#define	PROP_LIMITS		(PROP_CAP_LIMITS | PROP_VAL_LIMITS)
 
 /*
  * Compatibility with old interface. Only ENVSYS_GTREDATA
