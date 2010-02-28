@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.168 2010/02/22 00:16:31 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.169 2010/02/28 11:43:40 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.168 2010/02/22 00:16:31 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.169 2010/02/28 11:43:40 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -94,7 +94,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.168 2010/02/22 00:16:31 mrg Exp $");
 
 #include <dev/ata/atavar.h>
 #include <dev/pci/pcivar.h>
+#include <dev/ebus/ebusvar.h>
 #include <dev/sbus/sbusvar.h>
+#include <dev/i2c/i2cvar.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -867,6 +869,14 @@ device_register(struct device *dev, void *aux)
 		struct sbus_attach_args *sa = aux;
 
 		ofnode = sa->sa_node;
+	} else if (device_is_a(busdev, "ebus")) {
+		struct ebus_attach_args *ea = aux;
+
+		ofnode = ea->ea_node;
+	} else if (device_is_a(dev, "iic")) {
+		struct i2c_attach_args *ia = aux;
+
+		ofnode = (int)ia->ia_cookie;
 	} else if (device_is_a(dev, "sd") || device_is_a(dev, "cd")) {
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
@@ -971,6 +981,21 @@ noether:
 				prop_dictionary_set(dict, "node-wwn", nwwnd);
 				prop_object_release(nwwnd);
 			}
+		}
+	}
+
+	/*
+	 * Check for I2C busses and add data for their direct configuration.
+	 */
+	if (device_is_a(dev, "iic")) {
+		int busnode = device_ofnode(busdev);
+
+		if (busnode) {
+			prop_dictionary_t props = device_properties(busdev);
+			prop_object_t cfg = prop_dictionary_get(props,
+				"i2c-child-devices");
+			if (!cfg)
+				of_enter_i2c_devs(props, busnode);
 		}
 	}
 
