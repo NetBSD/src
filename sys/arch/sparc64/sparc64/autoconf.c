@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.169 2010/02/28 11:43:40 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.170 2010/02/28 13:59:05 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.169 2010/02/28 11:43:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.170 2010/02/28 13:59:05 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -873,7 +873,7 @@ device_register(struct device *dev, void *aux)
 		struct ebus_attach_args *ea = aux;
 
 		ofnode = ea->ea_node;
-	} else if (device_is_a(dev, "iic")) {
+	} else if (device_is_a(busdev, "iic")) {
 		struct i2c_attach_args *ia = aux;
 
 		ofnode = (int)ia->ia_cookie;
@@ -995,7 +995,8 @@ noether:
 			prop_object_t cfg = prop_dictionary_get(props,
 				"i2c-child-devices");
 			if (!cfg)
-				of_enter_i2c_devs(props, busnode);
+				of_enter_i2c_devs(props, busnode,
+				    sizeof(cell_t));
 		}
 	}
 
