@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.3 2009/06/05 12:42:43 hubertf Exp $ */
+/*	$NetBSD: adm1021.c,v 1.4 2010/02/28 11:36:27 martin Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.3 2009/06/05 12:42:43 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.4 2010/02/28 11:36:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,18 +62,35 @@ void	admtemp_refresh(struct sysmon_envsys *, envsys_data_t *);
 CFATTACH_DECL_NEW(admtemp, sizeof(struct admtemp_softc),
 	admtemp_match, admtemp_attach, NULL, NULL);
 
+static const char * admtemp_compats[] = {
+	"i2c-max1617",
+	NULL
+};
 
 int
 admtemp_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (((ia->ia_addr >= 0x18) && (ia->ia_addr <= 0x1a)) ||
-	    ((ia->ia_addr >= 0x29) && (ia->ia_addr <= 0x2b)) ||
-	    ((ia->ia_addr >= 0x4c) && (ia->ia_addr <= 0x4e)))
-		return (1);
+	if (ia->ia_name == NULL) {
+		/*
+		 * Indirect config - not much we can do!
+		 * Check typical addresses.
+		 */
+		if (((ia->ia_addr >= 0x18) && (ia->ia_addr <= 0x1a)) ||
+		    ((ia->ia_addr >= 0x29) && (ia->ia_addr <= 0x2b)) ||
+		    ((ia->ia_addr >= 0x4c) && (ia->ia_addr <= 0x4e)))
+			return (1);
+	} else {
+		/*
+		 * Direct config - match via the list of compatible
+		 * hardware.
+		 */
+		if (iic_compat_match(ia, admtemp_compats))
+			return 1;
+	}
 
-	return (0);
+	return 0;
 }
 
 
