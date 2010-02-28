@@ -1,4 +1,4 @@
-/*	$Id: flash.c,v 1.1.2.2 2010/02/24 01:19:37 uebayasi Exp $	*/
+/*	$Id: flash.c,v 1.1.2.3 2010/02/28 04:36:27 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Tsubai Masanari.  All rights reserved.
@@ -122,6 +122,21 @@ flash_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	return error;
 }
 
+paddr_t
+flash_mmap(dev_t dev, off_t off, int prot)
+{
+	struct flash_softc *sc = device_lookup_private(&flash_cd, minor(dev));
+
+	if (sc == NULL)
+		return -1;
+
+	if ((u_int64_t)off >= sc->sc_size)
+		return -1;
+
+	return bus_space_mmap(sc->sc_iot, sc->sc_addr, off, prot,
+	    BUS_SPACE_MAP_LINEAR);
+}
+
 int
 flash_map(struct flash_softc *sc, u_long addr)
 {
@@ -193,4 +208,34 @@ flash_size(dev_t dev)
 		return 0;
 
 	return sc->sc_size >> DEV_BSHIFT;
+}
+
+void
+flash_init(struct flash_softc *sc)
+{
+
+#ifdef notyet
+	if (bus_space_map(sc->sc_iot, sc->sc_addr, 0x1000, 0, &sc->sc_baseioh)) {
+		printf(": failed to map registers\n");
+		return;
+	}
+
+	if (intelflash_probe(sc) == 0)
+		goto found;
+	if (amdflash_probe(sc) == 0)
+		goto found;
+	printf(": unknown chip\n");
+	return;
+
+found:
+
+	sc->sc_program = amdflash_program_word;
+	sc->sc_eraseblk = amdflash_erase_block;
+	sc->sc_size = sc->sc_product->size;
+	printf(": %s (%dKB, %d bit/word)\n", sc->sc_product->name,
+	    sc->sc_size / 1024, sc->sc_wordsize * 8);
+#endif
+
+	disk_init(&sc->sc_dkdev, device_xname(&sc->sc_dev), NULL);
+	disk_attach(&sc->sc_dkdev);
 }
