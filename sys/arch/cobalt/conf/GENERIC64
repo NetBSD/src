@@ -1,0 +1,10 @@
+# $NetBSD: GENERIC64,v 1.1.4.2 2010/02/28 04:04:46 matt Exp $
+#
+include "arch/cobalt/conf/GENERIC"
+
+makeoptions	LP64="yes"
+
+options 	EXEC_ELF64
+options 	COMPAT_NETBSD32
+
+#options 	UVMHIST, UVMHIST_PRINT

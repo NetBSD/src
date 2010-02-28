@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98.10.2 2010/02/01 04:17:50 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98.10.3 2010/02/28 04:04:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.10.2 2010/02/01 04:17:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.10.3 2010/02/28 04:04:46 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -125,7 +125,7 @@ static const char * const cobalt_model[] =
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-void	mach_init(unsigned int, u_int, char*);
+void	mach_init(uint32_t, u_int, uint32_t);
 void	decode_bootstring(void);
 static char *strtok_light(char *, const char);
 static u_int read_board_id(void);
@@ -145,9 +145,11 @@ extern struct user *proc0paddr;
  * Do all the stuff that locore normally does before calling main().
  */
 void
-mach_init(unsigned int memsize, u_int bim, char *bip)
+mach_init(uint32_t memsize32, u_int bim, uint32_t bip32)
 {
+	intptr_t memsize = (int32_t)memsize32;
 	char *kernend;
+	char *bip = (char *)(intptr_t)(int32_t)bip32;
 	u_long first, last;
 	extern char edata[], end[];
 	const char *bi_msg;
@@ -185,14 +187,6 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 		 */
 		memset(edata, 0, kernend - edata);
 
-		/*
-		 * XXX
-		 * lwp0 and cpu_info_store are allocated in BSS
-		 * and initialized before mach_init() is called,
-		 * so restore them again.
-		 */
-		lwp0.l_cpu = &cpu_info_store;
-		cpu_info_store.ci_curlwp = &lwp0;
 	}
 
 	/* Check for valid bootinfo passed from bootstrap */
@@ -214,8 +208,8 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	/* Load symbol table if present */
 	if (bi_syms != NULL) {
 		nsym = bi_syms->nsym;
-		ssym = (void *)bi_syms->ssym;
-		esym = (void *)bi_syms->esym;
+		ssym = (void *)(intptr_t)bi_syms->ssym;
+		esym = (void *)(intptr_t)bi_syms->esym;
 		kernend = (void *)mips_round_page(esym);
 	}
 #endif
@@ -510,12 +504,12 @@ lookup_bootinfo(int type)
 
 	do {
 		bt = (struct btinfo_common *)help;
-		printf("Type %d @0x%x\n", bt->type, (u_int)bt);
+		printf("Type %d @0x%x\n", bt->type, (u_int)(uintptr_t)bt);
 		if (bt->type == type)
 			return (void *)help;
 		help += bt->next;
 	} while (bt->next != 0 &&
-	    (size_t)help < (size_t)bootinfo + BOOTINFO_SIZE);
+	    (uintptr_t)help < (uintptr_t)bootinfo + BOOTINFO_SIZE);
 
 	return NULL;
 }
