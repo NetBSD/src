@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.2 2010/02/27 18:25:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.3 2010/02/28 03:21:07 matt Exp $");
 
 #include <sys/param.h>
 
@@ -71,20 +71,20 @@ mips_fixup_exceptions(mips_fixup_callback_t callback)
 		if (INSN_LUI_P(insn)) {
 			const int32_t offset = insn << 16;
 			lui_reg = (insn >> 16) & 31;
-#ifdef DEBUG
-			printf("%s: %#x: insn %08x: lui r%zu, %%hi(%#x)", 
+#ifdef DEBUG_VERBOSE
+			printf("%s: %#x: insn %08x: lui r%zu, %%hi(%#x)",
 			    __func__, (int32_t)(intptr_t)insnp,
 			    insn, lui_reg, offset);
 #endif
 			if (upper_addr == offset) {
 				lui_insnp = insnp;
-#ifdef DEBUG
+#ifdef DEBUG_VERBOSE
 				printf(" (maybe)");
 #endif
 			} else {
 				lui_insnp = NULL;
 			}
-#ifdef DEBUG
+#ifdef DEBUG_VERBOSE
 			printf("\n");
 #endif
 		} else if (lui_insnp != NULL && INSN_LOAD_P(insn)) {
@@ -95,8 +95,8 @@ mips_fixup_exceptions(mips_fixup_callback_t callback)
 			    && load_addr < addr + size
 			    && base == lui_reg
 			    && rt == lui_reg) {
-#ifdef DEBUG
-				printf("%s: %#x: insn %08x: %s r%zu, %%lo(%08x)(r%zu)\n", 
+#ifdef DEBUG_VERBOSE
+				printf("%s: %#x: insn %08x: %s r%zu, %%lo(%08x)(r%zu)\n",
 				    __func__, (int32_t)(intptr_t)insnp,
 				    insn, INSN_LW_P(insn) ? "lw" : "ld",
 				    rt, load_addr, base);
@@ -143,8 +143,8 @@ mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2])
 	new_insns[0] =
 	    (new_insns[1] & (0xfc1f0000|PAGE_MASK)) | (0xffff & ~PAGE_MASK);
 	new_insns[1] = 0;
-#ifdef DEBUG
-	printf("%s: %08x: insn#1 %08x: %s r%u, %d(r%u)\n", 
+#ifdef DEBUG_VERBOSE
+	printf("%s: %08x: insn#1 %08x: %s r%u, %d(r%u)\n",
 	    __func__, (int32_t)load_addr, new_insns[0],
 	    INSN_LW_P(new_insns[0]) ? "lw" : "ld",
 	    (new_insns[0] >> 16) & 31,
@@ -170,4 +170,122 @@ mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2])
 	TLBINFO_UNLOCK(ti);
 
 	return true;
+}
+
+#define OPCODE_J		002
+#define OPCODE_JAL		003
+
+static void
+fixup_mips_jump(uint32_t *insnp, uint32_t stub, uint32_t real)
+{
+	uint32_t insn = *insnp;
+
+	KASSERT((insn >> (26+1)) == (OPCODE_J >> 1));
+	KASSERT((insn << 6) == (stub << 4));
+
+	insn ^= (stub ^ real) << 4 >> 6;
+
+	KASSERT((insn << 6) == (real << 4));
+
+	*insnp = insn;
+}
+
+void
+mips_fixup_stubs(uint32_t *start, uint32_t *end,
+	const uint32_t *stub_offsets, const uint32_t *real_offsets,
+	size_t noffsets)
+{
+	uint32_t min_offset = 0x03ffffff;
+	uint32_t max_offset = 0x00000000;
+#ifdef DEBUG
+	size_t fixups = 0;
+	uint32_t cycles = (CPUISMIPS3 ? mips3_cp0_count_read() : 0);
+#endif
+
+	/*
+	 * Find the lowest and highest jumps we will be replacing.  We don't
+	 * need to do but it does make weeding out the non-matching jumps
+	 * faster.
+	 */
+	for (size_t i = 0; i < noffsets; i++) {
+		if (stub_offsets[i] < min_offset)
+			min_offset = stub_offsets[i];
+		if (max_offset < stub_offsets[i])
+			max_offset = stub_offsets[i];
+	}
+
+	for (uint32_t *insnp = start; insnp < end; insnp++) {
+		uint32_t insn = *insnp;
+		uint32_t offset = insn & 0x03ffffff;
+		uint32_t opcode = insn >> 26;
+
+		/*
+		 * First we check to see if this is a jump and whether its
+		 * within the range we are interested in.
+		 */
+		if ((opcode != OPCODE_J && opcode != OPCODE_JAL)
+		    || offset < min_offset || max_offset < offset)
+			continue;
+
+		/*
+		 * We know it's a jump, but does it match one we want to
+		 * fixup?
+		 */
+		for (size_t i = 0; i < noffsets; i++) {
+			if (stub_offsets[i] != offset)
+				continue;
+			/*
+			 * Yes, we need to fix it up.  Replace the old
+			 * displacement with the real displacement.  If we've
+			 * moved to a new cache line, sync the last cacheline
+			 * we fixed.
+			 */
+			*insnp ^= offset ^ real_offsets[i];
+#ifdef DEBUG
+#if 0
+			int32_t va = ((intptr_t) insnp >> 26) << 26;
+			printf("%s: %08x: [%08x] %s %08x -> [%08x] %s %08x\n",
+			    __func__, (int32_t)(intptr_t)insnp,
+			    insn, opcode == OPCODE_J ? "j" : "jal",
+			    va | (offset << 2),
+			    *insnp, opcode == OPCODE_J ? "j" : "jal",
+			    va | (real_offsets[i] << 2));
+#endif
+			fixups++;
+#endif
+			break;
+		}
+	}
+
+	if (sizeof(uint32_t [end - start]) > mips_cache_info.mci_picache_size)
+		mips_icache_sync_all();
+	else
+		mips_icache_sync_range((vaddr_t)start,
+		    sizeof(uint32_t [end - start]));
+
+#ifdef DEBUG
+	if (CPUISMIPS3)
+		cycles = mips3_cp0_count_read() - cycles;
+	printf("%s: %zu fixup%s done in %u cycles\n", __func__,
+	    fixups, fixups == 1 ? "" : "s",
+	    cycles);
+#endif
+}
+
+void mips_cpu_switch_resume(struct lwp *l) __section(".stub");
+
+void
+mips_cpu_switch_resume(struct lwp *l)
+{
+	(*mips_locoresw.lsw_cpu_switch_resume)(l);
+}
+
+void
+fixup_mips_cpu_switch_resume(void)
+{
+	extern uint32_t __cpu_switchto_fixup[];
+
+	fixup_mips_jump(__cpu_switchto_fixup,
+	    (uintptr_t)mips_cpu_switch_resume,
+	    (uintptr_t)mips_locoresw.lsw_cpu_switch_resume);
 }
