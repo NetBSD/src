@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rtreg.h,v 1.15 2007/03/04 05:59:20 christos Exp $	*/
+/*	$NetBSD: grf_rtreg.h,v 1.16 2010/02/28 15:52:16 snj Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -381,10 +381,10 @@ extern unsigned char NCRStdPalette[];
 #define SEQ_ID_CHAR_MAP_SELECT	0x03
 #define SEQ_ID_MEMORY_MODE	0x04
 #define SEQ_ID_EXTENDED_ENABLE	0x05	/* down from here, all seq registers are NCR extensions */
-#define SEQ_ID_UNKNOWN1         0x06	/* it does exist so it's probably usefull */
-#define SEQ_ID_UNKNOWN2         0x07	/* it does exist so it's probably usefull */
+#define SEQ_ID_UNKNOWN1         0x06	/* it does exist so it's probably useful */
+#define SEQ_ID_UNKNOWN2         0x07	/* it does exist so it's probably useful */
 #define SEQ_ID_CHIP_ID		0x08
-#define SEQ_ID_UNKNOWN3         0x09	/* it does exist so it's probably usefull */
+#define SEQ_ID_UNKNOWN3         0x09	/* it does exist so it's probably useful */
 #define SEQ_ID_CURSOR_COLOR1	0x0A
 #define SEQ_ID_CURSOR_COLOR0	0x0B
 #define SEQ_ID_CURSOR_CONTROL	0x0C

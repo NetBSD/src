@@ -1,4 +1,4 @@
-/*	$NetBSD: sockmisc.h,v 1.11 2009/07/03 06:41:47 tteras Exp $	*/
+/*	$NetBSD: sockmisc.h,v 1.12 2010/02/28 15:52:16 snj Exp $	*/
 
 /* Id: sockmisc.h,v 1.9 2005/10/05 16:55:41 manubsd Exp */
 
@@ -88,7 +88,7 @@ extern char *naddrwop2str_fromto __P((const char *format, const struct netaddr *
 				      const struct netaddr *daddr));
 extern int naddr_score(const struct netaddr *naddr, const struct sockaddr *saddr);
 
-/* Some usefull functions for sockaddr port manipulations. */
+/* Some useful functions for sockaddr port manipulations. */
 extern u_int16_t extract_port __P((const struct sockaddr *addr));
 extern u_int16_t *set_port __P((struct sockaddr *addr, u_int16_t new_port));
 extern u_int16_t *get_port_ptr __P((struct sockaddr *addr));

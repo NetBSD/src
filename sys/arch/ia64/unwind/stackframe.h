@@ -1,4 +1,4 @@
-/*	$NetBSD: stackframe.h,v 1.1 2006/04/07 14:21:37 cherry Exp $	*/
+/*	$NetBSD: stackframe.h,v 1.2 2010/02/28 15:52:16 snj Exp $	*/
 
 /* 
  * Contributed to the NetBSD foundation by Cherry G. Mathew
@@ -63,7 +63,7 @@ struct staterecord {
 
 /* The unwind frame is a simpler version of the trap frame
  * and contains a subset of preserved registers, which are 
- * usefull in unwinding an ia64 stack frame.
+ * useful in unwinding an ia64 stack frame.
  * Keep this in sync with the staterecord. See: stackframe.c:updateregs()
  */
    

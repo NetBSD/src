@@ -2241,7 +2241,7 @@
 	* src/racoon/crypto_openssl.c (eay_3des_*): Check for strict key 
 	  length only with old API.
 	  (eay_des_encrypt): Ditto.
-	* src/racoon/eaytest.c: Make the testsuite usefull, i.e. exit with
+	* src/racoon/eaytest.c: Make the testsuite useful, i.e. exit with
 	  non-zero error code if any of the tests fail.
 	  (main): Print banner with version.
 	* src/racoon/Makefile.in: Run eaytest in 'make check'.
