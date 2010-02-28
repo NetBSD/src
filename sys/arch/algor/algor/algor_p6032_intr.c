@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_intr.c,v 1.16.16.1 2010/02/24 00:09:31 matt Exp $	*/
+/*	$NetBSD: algor_p6032_intr.c,v 1.16.16.2 2010/02/28 03:32:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.16.16.1 2010/02/24 00:09:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.16.16.2 2010/02/28 03:32:23 matt Exp $");
 
 #include "opt_ddb.h"
+#define	__INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/queue.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.13.18.3 2010/02/24 00:09:31 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.13.18.4 2010/02/28 03:32:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.13.18.3 2010/02/24 00:09:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.13.18.4 2010/02/28 03:32:23 matt Exp $");
+
+#define	__INTR_PRIVATE
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
