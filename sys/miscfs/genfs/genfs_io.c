@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.2 2010/02/23 07:46:28 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.3 2010/02/28 05:03:58 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.2 2010/02/23 07:46:28 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.3 2010/02/28 05:03:58 uebayasi Exp $");
 
 #include "opt_device_page.h"
 #include "opt_xip.h"
@@ -808,7 +808,8 @@ genfs_do_getpages_xip(void *v)
 			/* unallocated page is redirected to read-only zero-filled page */
 			phys_addr = uvm_pageofzero_xip_phys_addr();
 		} else {
-			phys_addr = vp->v_mount->mnt_phys_addr +
+			/* bus_space_mmap cookie -> paddr_t */
+			phys_addr = pmap_phys_address(vp->v_mount->mnt_phys_addr) +
 			    (blkno << dev_bshift) +
 			    (off - (lbn << fs_bshift));
 		}

@@ -1,4 +1,4 @@
-/*	$Id: flash.c,v 1.1.2.3 2010/02/28 04:36:27 uebayasi Exp $	*/
+/*	$Id: flash.c,v 1.1.2.4 2010/02/28 05:03:58 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Tsubai Masanari.  All rights reserved.
@@ -100,7 +100,8 @@ flash_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if (sc->sc_addr == 0)
 			error = EINVAL;
 		else
-			*(paddr_t *)data = sc->sc_addr;
+			*(paddr_t *)data = bus_space_mmap(sc->sc_iot,
+			    sc->sc_addr, 0, 0/* XXX prot */, BUS_SPACE_MAP_LINEAR);
 		break;
 #endif
 
