@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.zfs,v 1.1 2009/08/07 20:57:55 haad Exp $
+#	$NetBSD: Makefile.zfs,v 1.2 2010/02/28 15:24:04 haad Exp $
 
 .include <bsd.own.mk>
 
@@ -36,6 +36,8 @@ CPPFLAGS+=	-I${ZFSDIR}/dist/lib/libumem
 CPPFLAGS+=	-I${ZFSDIR}/dist/lib/libuutil/common
 CPPFLAGS+=	-I${ZFSDIR}/dist/lib/libzfs/common
 CPPFLAGS+=	-I${ZFSDIR}/dist/lib/libzpool/common
+
+CPPFLAGS+=      -I${ZFSDIR}/dist/common
 
 LIBAVL_SRCDIR= ${ZFSDIR}/lib/libavl
 LIBNVPAIR_SRCDIR= ${ZFSDIR}/lib/libnvpair
