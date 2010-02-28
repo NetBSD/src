@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8591_envctrl.c,v 1.2 2010/02/28 12:40:46 pgoyette Exp $	*/
+/*	$NetBSD: pcf8591_envctrl.c,v 1.3 2010/02/28 15:30:22 martin Exp $	*/
 /*	$OpenBSD: pcf8591_envctrl.c,v 1.6 2007/10/25 21:17:20 kettenis Exp $ */
 
 /*
@@ -193,7 +193,7 @@ ecadc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_naive(": Temp Sensors\n");
-	aprint_normal("%s Temp Sensors\n", ia->ia_name);
+	aprint_normal(": %s Temp Sensors\n", ia->ia_name);
 }
 
 static void
