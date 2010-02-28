@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.c,v 1.1 2009/08/07 20:57:56 haad Exp $	*/
+/*     $NetBSD: kernel.c,v 1.2 2010/02/28 17:36:51 haad Exp $  */
 
 /*
  * CDDL HEADER START
@@ -29,7 +29,7 @@
 #pragma ident	"%Z%%M%	%I%	%E% SMI"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: kernel.c,v 1.1 2009/08/07 20:57:56 haad Exp $");
+__RCSID("$NetBSD: kernel.c,v 1.2 2010/02/28 17:36:51 haad Exp $");
 
 #include <sys/zfs_context.h>
 #include <sys/sysctl.h>
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: kernel.c,v 1.1 2009/08/07 20:57:56 haad Exp $");
 #ifdef XXXNETBSD
 int hz = 119;	/* frequency when using gethrtime() >> 23 for lbolt */
 #endif
+int aok;
 uint64_t physmem;
 vnode_t *rootdir = (vnode_t *)0xabcd1234;
 char hw_serial[11];
@@ -62,6 +63,9 @@ size_t pgsize;
 struct utsname utsname = {
 	"userland"
 };
+
+/* this only exists to have its address taken */
+struct proc p0;
 
 /*
  * =========================================================================
@@ -691,4 +695,11 @@ ptob(size_t npg)
 {
 
 	return npg * pgsize;
+}
+
+void
+print_timestamp(int fmt)
+{
+
+	return;
 }

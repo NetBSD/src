@@ -1,4 +1,4 @@
-/*	$NetBSD: mnttab.c,v 1.1 2009/08/07 20:57:56 haad Exp $	*/
+/*     $NetBSD: mnttab.c,v 1.2 2010/02/28 17:36:51 haad Exp $  */
 
 /*-
  * Copyright (c) 2006 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/compat/opensolaris/misc/mnttab.c,v 1.1 2007/04/06 01:08:59 pjd Exp $"); */
-__RCSID("$NetBSD: mnttab.c,v 1.1 2009/08/07 20:57:56 haad Exp $"); 
+__RCSID("$NetBSD: mnttab.c,v 1.2 2010/02/28 17:36:51 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/statvfs.h>
@@ -194,4 +194,11 @@ getstatfs(struct statvfs *stat, const char *path)
 
 	free(statvfs);
 	return (0);
+}
+
+int
+getmntent(FILE *file, struct mnttab *mnttab) {
+
+
+	return 1;
 }
