@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.12 2010/02/15 07:36:04 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.13 2010/02/28 23:45:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.12 2010/02/15 07:36:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.13 2010/02/28 23:45:07 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,8 +143,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	if (l1 != curlwp && l1 != &lwp0)
 		panic("cpu_lwp_fork: curlwp");
 #endif
-	if ((l1->l_md.md_flags & MDP_FPUSED) && l1 == fpcurlwp)
-		savefpregs(l1);
+#ifndef NOFPU
+	if (l1->l_md.md_flags & MDP_FPUSED)
+		fpusave_lwp(l1);
+#endif
 
 	/*
 	 * Copy pcb from lwp l1 to l2.
@@ -328,9 +330,13 @@ void
 cpu_lwp_free(struct lwp *l, int proc)
 {
 
-	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
-		fpcurlwp = &lwp0;	/* save some NULL checks */
-	KASSERT(fpcurlwp != l);
+	if (l->l_md.md_flags & MDP_FPUSED)
+		fpudiscard_lwp(l);
+
+#ifndef NOFPU
+	KASSERT(l->l_fpcpu == NULL);
+	KASSERT(curcpu()->ci_fpcurlwp != l);
+#endif
 }
 
 void
@@ -363,8 +369,9 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 		return 0;
 	}
 
-	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
-		savefpregs(l);
+	if (l->l_md.md_flags & MDP_FPUSED)
+		fpusave_lwp(l);
+
 	cpustate.frame = *l->l_md.md_utf;
 	cpustate.fpregs = l->l_addr->u_pcb.pcb_fpregs;
 

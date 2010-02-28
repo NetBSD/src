@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.29.62.4 2010/02/22 20:17:09 matt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.29.62.5 2010/02/28 23:45:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.29.62.4 2010/02/22 20:17:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.29.62.5 2010/02/28 23:45:06 matt Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -144,8 +144,8 @@ process_read_xfpregs(struct lwp *l, struct fpreg *regs, size_t *regslen_p)
 		*regslen_p = sizeof(struct fpreg_oabi);
 #endif
 
-	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
-		savefpregs(l);
+	if (l->l_md.md_flags & MDP_FPUSED)
+		fpusave_lwp(l);
 	memcpy(regs, &l->l_addr->u_pcb.pcb_fpregs, *regslen_p);
 	return 0;
 }
@@ -155,9 +155,12 @@ process_write_xfpregs(struct lwp *l, const struct fpreg *regs, size_t regslen)
 {
 	KASSERT(regslen <= sizeof(struct fpreg));
 
+#ifndef NOFPU
 	/* to load FPA contents next time when FP insn is executed */
-	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
-		fpcurlwp = &lwp0;
+	if (l->l_md.md_flags & MDP_FPUSED)
+		fpudiscard_lwp(l);
+#endif /* !NOFPU */
+
 #if defined(__mips_n32) || defined(__mips_n64)
 	KASSERT((_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi) ? sizeof(struct fpreg) : sizeof(struct fpreg_oabi)) == regslen);
 #else
