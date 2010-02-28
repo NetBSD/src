@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.7 2010/02/28 11:34:42 martin Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.8 2010/02/28 15:33:21 snj Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -124,9 +124,9 @@ struct i2c_attach_args {
 					   ia_compat array */
 	const char **	ia_compat;	/* chip names */
 	/*
-	 * The following is of limited usefullness and should only be used
-	 * in rare cases where we realy know what we are doing. Example:
-	 * a machine depended i2c driver (located in sys/arch/$arch/dev)
+	 * The following is of limited usefulness and should only be used
+	 * in rare cases where we really know what we are doing. Example:
+	 * a machine dependent i2c driver (located in sys/arch/$arch/dev)
 	 * needing to access some firmware properties.
 	 * Depending on the firmware in use, an identifier for the device
 	 * may be present. Example: on OpenFirmware machines the device
