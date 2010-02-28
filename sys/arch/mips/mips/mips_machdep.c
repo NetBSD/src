@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.37 2010/02/27 07:58:52 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.38 2010/02/28 03:30:34 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,9 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.37 2010/02/27 07:58:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.38 2010/02/28 03:30:34 matt Exp $");
+
+#define	__INTR_PRIVATE
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -967,6 +969,13 @@ mips_vector_init(void)
 		printf("cpu_arch 0x%x: not supported\n", opts->mips_cpu_arch);
 		cpu_reboot(RB_HALT, NULL);
 	}
+
+	/*
+	 * Now that the splsw and locoresw have been filled in, fixup the
+	 * jumps to their stubs to instead jump to the real routines.
+	 */
+	fixup_mips_cpu_switch_resume();
+	fixup_splcalls();
 
 /* XXX simonb: ugg, another ugly #ifdef check... */
 #if (defined(MIPS3) && !defined(MIPS3_5900)) || defined(MIPS32) || defined(MIPS64)
