@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.23.18.2 2010/02/23 20:25:57 matt Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.23.18.3 2010/02/28 03:28:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,9 +68,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.23.18.2 2010/02/23 20:25:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.23.18.3 2010/02/28 03:28:01 matt Exp $");
 
 #include "opt_ddb.h"
+#define __INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/queue.h>
