@@ -1,4 +1,4 @@
-/*	$NetBSD: zfs_context.h,v 1.5 2009/10/12 10:05:29 haad Exp $	*/
+/*	$NetBSD: zfs_context.h,v 1.6 2010/02/28 14:45:47 haad Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -42,7 +42,7 @@ extern "C" {
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
 #include <sys/condvar.h>
-
+	
 #define	_SYS_SYSTM_H
 #define	_SYS_DEBUG_H
 #define	_SYS_T_LOCK_H
@@ -81,6 +81,7 @@ extern "C" {
 #include <sys/u8_textprep.h>
 #include <sys/zone.h>
 #include <sys/pathname.h>
+#include <sys/sysevent.h>
 
 extern void panic(const char *, ...);
 
@@ -94,6 +95,8 @@ extern void panic(const char *, ...);
 #define	ABS(a) ((a) < 0 ? -(a) : (a))
 #endif
 
+extern int aok;
+	
 /*
  * Debugging
  */
@@ -203,9 +206,20 @@ typedef pthread_t kthread_t;
 #define	thread_create(stk, stksize, func, arg, len, pp, state, pri)	\
 	zk_thread_create(func, arg)
 #define	thread_exit() thr_exit(NULL)
+#define thread_join(t)  panic("libzpool cannot join threads")
 
+#define newproc(f, a, cid, pri, ctp, pid)   (ENOSYS)
+	
 extern kthread_t *zk_thread_create(void (*func)(), void *arg);
 
+/* In NetBSD struct proc is visible in userspace therefore we use it's original
+   definition. */
+/* struct proc {
+	uintptr_t   this_is_never_used_dont_dereference_it;
+	}; */
+
+extern struct proc p0;
+	
 #define	issig(why)		(FALSE)
 #define	ISSIG(thr, why)		(FALSE)
 #define	makedevice(min, maj)	makedev((min), (maj))
@@ -293,24 +307,31 @@ typedef struct taskq taskq_t;
 typedef uintptr_t taskqid_t;
 typedef void (task_func_t)(void *);
 
-#define	TASKQ_PREPOPULATE	0x0001
-#define	TASKQ_CPR_SAFE		0x0002	/* Use CPR safe protocol */
-#define	TASKQ_DYNAMIC		0x0004	/* Use dynamic thread scheduling */
+#define TASKQ_PREPOPULATE   0x0001
+#define TASKQ_CPR_SAFE      0x0002  /* Use CPR safe protocol */
+#define TASKQ_DYNAMIC       0x0004  /* Use dynamic thread scheduling */
+#define TASKQ_THREADS_CPU_PCT   0x0008  /* Scale # threads by # cpus */
+#define TASKQ_DC_BATCH      0x0010  /* Mark threads as batch */
 
-#define	TQ_SLEEP	KM_SLEEP	/* Can block for memory */
-#define	TQ_NOSLEEP	KM_NOSLEEP	/* cannot block for memory; may fail */
-#define	TQ_NOQUEUE	0x02	/* Do not enqueue if can't dispatch */
+#define TQ_SLEEP    KM_SLEEP    /* Can block for memory */
+#define TQ_NOSLEEP  KM_NOSLEEP  /* cannot block for memory; may fail */
+#define TQ_NOQUEUE  0x02        /* Do not enqueue if can't dispatch */
+#define TQ_FRONT    0x08        /* Queue in front */
 
 extern taskq_t *system_taskq;
 
-extern taskq_t	*taskq_create(const char *, int, pri_t, int, int, uint_t);
+extern taskq_t  *taskq_create(const char *, int, pri_t, int, int, uint_t);
+#define taskq_create_proc(a, b, c, d, e, p, f) \
+	(taskq_create(a, b, c, d, e, f))
+#define taskq_create_sysdc(a, b, d, e, p, dc, f) \
+	(taskq_create(a, b, maxclsyspri, d, e, f))
 extern taskqid_t taskq_dispatch(taskq_t *, task_func_t, void *, uint_t);
-extern void	taskq_destroy(taskq_t *);
-extern void	taskq_wait(taskq_t *);
-extern int	taskq_member(taskq_t *, void *);
-
-extern void	system_taskq_init(void);
-
+extern void taskq_destroy(taskq_t *);
+extern void taskq_wait(taskq_t *);
+extern int  taskq_member(taskq_t *, void *);
+extern void system_taskq_init(void);
+extern void system_taskq_fini(void);
+	
 #define	XVA_MAPSIZE	3
 #define	XVA_MAGIC	0x78766174
 
@@ -378,10 +399,15 @@ extern vnode_t *rootdir;
 #define	lbolt	(gethrtime() >> 23)
 #define	lbolt64	(gethrtime() >> 23)
 #define	hz	119	/* frequency when using gethrtime() >> 23 for lbolt */
-
+	
 extern void delay(clock_t ticks);
 
 #define	gethrestime_sec() time(NULL)
+#define gethrestime(t) \
+	do {\
+	(t)->tv_sec = gethrestime_sec();\
+	(t)->tv_nsec = 0;\
+	} while (0);
 
 #define	max_ncpus	64
 
@@ -439,6 +465,8 @@ extern struct utsname utsname;
 extern char hw_serial[];
 extern int ddi_strtoul(const char *str, char **nptr, int base,
     unsigned long *result);
+#define	ddi_get_lbolt()	(gethrtime() >> 23)
+#define	ddi_get_lbolt64() (gethrtime() >> 23)
 
 /* ZFS Boot Related stuff. */
 
@@ -538,7 +566,19 @@ typedef struct ace_object {
 #define	di_devlink_init(a, b)	(NULL)
 #define	di_devlink_fini(a)	(0)
 typedef void			*di_devlink_handle_t;
-                                                                                        
+
+extern char *kmem_asprintf(const char *fmt, ...);
+#define strfree(str) kmem_free((str), strlen(str)+1)
+
+//#define print_timestamp(a)	0
+
+extern void print_timestamp(int);
+
+#define DEV_PHYS_PATH "phys_path"
+
+#define DDI_SLEEP KM_SLEEP
+#define ddi_log_sysevent(_a, _b, _c, _d, _e, _f, _g) 0	
+
 #else	/* _KERNEL */
 
 #include <sys/systm.h>
@@ -549,6 +589,7 @@ typedef void			*di_devlink_handle_t;
 #include <sys/stdint.h>
 #include <sys/note.h>
 #include <sys/kernel.h>
+#include <sys/kstat.h>
 #include <sys/debug.h>
 #include <sys/proc.h>
 #include <sys/sysmacros.h>
@@ -590,6 +631,9 @@ typedef void			*di_devlink_handle_t;
 #define	lbolt		hardclock_ticks
 #define	lbolt64		lbolt
 
+clock_t ddi_get_lbolt(void);
+int64_t ddi_get_lbolt64(void);
+
 #ifdef	__cplusplus
 }
 #endif
@@ -626,9 +670,28 @@ extern struct utsname utsname;
 #define	tsd_get(x)		lwp_getspecific(x)
 #define	tsd_set(x, y)		(lwp_setspecific(x, y), 0)
 #define	kmem_debugging()	0
+
+#define zone_get_hostid(a)      0
+
+extern char *kmem_asprintf(const char *fmt, ...);
+#define strfree(str) kmem_free((str), strlen(str)+1)
+
+/* NetBSD doesn't need this routines in zfs code, yet */
+#define	taskq_create_proc(a, b, c, d, e, p, f) \
+	(taskq_create(a, b, c, d, e, f))
+#define	taskq_create_sysdc(a, b, d, e, p, dc, f) \
+	(taskq_create(a, b, maxclsyspri, d, e, f))
+
 #define	MAXUID			UID_MAX
 #define	FIGNORECASE		0
 #define	CREATE_XATTR_DIR	0
+
+#define DEV_PHYS_PATH "phys_path"
+
+#define DDI_SLEEP KM_SLEEP
+#define ddi_log_sysevent(_a, _b, _c, _d, _e, _f, _g) 0
+
+#define sys_shutdown	0
 
 #endif	/* _KERNEL */
 

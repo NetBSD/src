@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.1 2009/08/07 20:57:57 haad Exp $	*/
+/*	$NetBSD: misc.c,v 1.2 2010/02/28 14:45:47 haad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -104,6 +104,28 @@ thread_exit(void)
 {
 
 	kthread_exit(0);
+}
+
+void
+thread_join(uint64_t kid)
+{
+
+	return;
+}
+
+int
+newproc(void (*pc)(), caddr_t arg, id_t cid, int pri, struct contract **ct,
+    pid_t pid)
+{
+	int error;
+
+	ASSERT(cid == PRI_NONE);
+	
+	error = kthread_create(pri, KTHREAD_MPSAFE, NULL,
+	    pc, arg, NULL, "zfs_proc");
+	KASSERT(error == 0);
+
+	return 0;
 }
 
 void

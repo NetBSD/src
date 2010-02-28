@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.3 2010/02/21 01:46:34 darran Exp $	*/
+/*	$NetBSD: unistd.h,v 1.4 2010/02/28 14:45:47 haad Exp $	*/
 
 /*
  * Copyright (C) 2007 John Birrell <jb@freebsd.org>
@@ -37,5 +37,7 @@
 #define	fork1		fork
 #define	ftruncate64	ftruncate
 #define	pread64		pread
+
+#define	_SC_PHYS_PAGES			500
 
 #endif

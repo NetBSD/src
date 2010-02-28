@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/10/21 22:31:19 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2010/02/28 14:45:47 haad Exp $
 
 .include "../../Makefile.zfs"
 
@@ -18,7 +18,10 @@ LDADD+=         -L${LIBUUTIL_OBJDIR} -luutil
 LIBZFS_OBJDIR!=  cd ${LIBZFS_SRCDIR} && ${PRINTOBJDIR}
 LDADD+=         -L${LIBZFS_OBJDIR} -lzfs
 
-LDADD+= -lm -lutil
+LIBUMEM_OBJDIR!=  cd ${LIBUMEM_SRCDIR} && ${PRINTOBJDIR}
+LDADD+=         -L${LIBUMEM_OBJDIR} -lumem
+
+LDADD+= -lm -lutil -lpthread
 
 .PATH: ${ZFSDIR}/dist/cmd/zfs
 

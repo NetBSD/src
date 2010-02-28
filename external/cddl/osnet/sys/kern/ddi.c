@@ -34,6 +34,7 @@
 #include <sys/ddi.h>
 #include <sys/errno.h>
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/cmn_err.h>
 #include <sys/namei.h>
@@ -565,4 +566,18 @@ ddi_remove_minor_node(dev_info_t *dip, char *name)
 	snprintf(pn, MAXPATHLEN, "/dev/zvol/rdsk/%s", name);
 	(void)do_sys_unlink(pn, UIO_SYSSPACE);
 	PNBUF_PUT(pn);
+}
+
+clock_t
+ddi_get_lbolt()
+{
+
+	return hardclock_ticks;
+}
+
+int64_t
+ddi_get_lbolt64()
+{
+
+	return hardclock_ticks;
 }
