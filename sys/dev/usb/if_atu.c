@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.35 2010/01/19 22:07:43 pooka Exp $ */
+/*	$NetBSD: if_atu.c,v 1.36 2010/02/28 15:52:16 snj Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.35 2010/01/19 22:07:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.36 2010/02/28 15:52:16 snj Exp $");
 
 
 #include <sys/param.h>
@@ -649,7 +649,7 @@ atu_initial_config(struct atu_softc *sc)
 	/*
 	 * TODO:
 	 * read reg domain MIB_PHY @ 0x17 (1 byte), (reply = 0x30)
-	 * we should do something usefull with this info. right now it's just
+	 * we should do something useful with this info. right now it's just
 	 * ignored
 	 */
 	err = atu_get_mib(sc, MIB_PHY__REG_DOMAIN, &reg_domain);

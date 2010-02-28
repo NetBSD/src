@@ -1,4 +1,4 @@
-/*	$NetBSD: sockmisc.c,v 1.17 2009/07/07 12:25:22 tteras Exp $	*/
+/*	$NetBSD: sockmisc.c,v 1.18 2010/02/28 15:52:16 snj Exp $	*/
 
 /* Id: sockmisc.c,v 1.24 2006/05/07 21:32:59 manubsd Exp */
 
@@ -940,7 +940,7 @@ naddr_score(const struct netaddr *naddr, const struct sockaddr *saddr)
 	return -1;
 }
 
-/* Some usefull functions for sockaddr port manipulations. */
+/* Some useful functions for sockaddr port manipulations. */
 u_int16_t
 extract_port (const struct sockaddr *addr)
 {
