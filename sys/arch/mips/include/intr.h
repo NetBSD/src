@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.3.96.5 2010/02/23 20:24:36 matt Exp $ */
+/* $NetBSD: intr.h,v 1.3.96.6 2010/02/28 03:26:25 matt Exp $ */
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -61,6 +61,7 @@
 #define	IPI_ISYNC	__BIT(4)	/* sync icache for pages */
 #define	IPI_KPREEMPT	__BIT(5)	/* schedule a kernel preemption */
 
+#ifdef __INTR_PRIVATE
 struct splsw {
 	int	(*splsw_splhigh)(void);
 	int	(*splsw_splsched)(void);
@@ -74,20 +75,21 @@ struct splsw {
 	void	(*splsw_splx)(int);
 	int	(*splsw_splhigh_noprof)(void);
 	void	(*splsw_splx_noprof)(int);
-	void	(*splsw_setsoftintr)(uint32_t);
-	void	(*splsw_clrsoftintr)(uint32_t);
+	void	(*splsw__setsoftintr)(uint32_t);
+	void	(*splsw__clrsoftintr)(uint32_t);
 	int	(*splsw_splintr)(uint32_t *);
 	void	(*splsw_splcheck)(void);
 };
+
+struct ipl_sr_map {
+	uint32_t sr_bits[_IPL_N];
+};
+#endif /* __INTR_PRIVATE */
 
 typedef int ipl_t;
 typedef struct {
         ipl_t _spl;
 } ipl_cookie_t;
-
-struct ipl_sr_map {
-	uint32_t sr_bits[_IPL_N];
-};
 
 #ifdef _KERNEL
 #ifdef MULTIPROCESSOR
@@ -95,87 +97,30 @@ struct ipl_sr_map {
 #define SOFTINT_KPREEMPT	(SOFTINT_COUNT+0)
 #endif
 
+#ifdef __INTR_PRIVATE
 extern	struct splsw	mips_splsw;
 extern	struct ipl_sr_map ipl_sr_map;
+#endif /* __INTR_PRIVATE */
 
-static inline int
-splhigh(void)
-{
-	return (*mips_splsw.splsw_splhigh)();
-}
+int	splhigh(void);
+int	splhigh_noprof(void);
+int	splsched(void);
+int	splvm(void);
+int	splsoftserial(void);
+int	splsoftnet(void);
+int	splsoftbio(void);
+int	splsoftclock(void);
+int	splraise(int);
+void	splx(int);
+void	splx_noprof(int);
+void	spl0(void);
+int	splintr(uint32_t *);
+void	_setsoftintr(uint32_t);
+void	_clrsoftintr(uint32_t);
 
-static inline int
-splhigh_noprof(void)
-{
-	return (*mips_splsw.splsw_splhigh_noprof)();
-}
-
-static inline int
-splsched(void)
-{
-	return (*mips_splsw.splsw_splsched)();
-}
-
-static inline int
-splvm(void)
-{
-	return (*mips_splsw.splsw_splvm)();
-}
-
-static inline int
-splsoftserial(void)
-{
-	return (*mips_splsw.splsw_splsoftserial)();
-}
-
-static inline int
-splsoftnet(void)
-{
-	return (*mips_splsw.splsw_splsoftnet)();
-}
-
-static inline int
-splsoftbio(void)
-{
-	return (*mips_splsw.splsw_splsoftbio)();
-}
-
-static inline int
-splsoftclock(void)
-{
-	return (*mips_splsw.splsw_splsoftclock)();
-}
-
-static inline void
-spl0(void)
-{
-	(*mips_splsw.splsw_spl0)();
-}
-
-static inline void
-splx(int s)
-{
-	(*mips_splsw.splsw_splx)(s);
-}
-
-static inline void
-splx_noprof(int s)
-{
-	(*mips_splsw.splsw_splx_noprof)(s);
-}
-
-static inline void
-_setsoftintr(uint32_t m)
-{
-	(*mips_splsw.splsw_setsoftintr)(m);
-}
-
-static inline void
-_clrsoftintr(uint32_t m)
-{
-	(*mips_splsw.splsw_clrsoftintr)(m);
-}
-
+/*
+ * These make no sense *NOT* to be inlined.
+ */
 static inline ipl_cookie_t
 makeiplcookie(ipl_t s)
 {
@@ -183,21 +128,9 @@ makeiplcookie(ipl_t s)
 }
 
 static inline int
-splraise(int s)
-{
-        return (*mips_splsw.splsw_splraise)(s);
-}
-
-static inline int
 splraiseipl(ipl_cookie_t icookie)
 {
 	return splraise(icookie._spl);
-}
-
-static inline int
-splintr(uint32_t *p)
-{
-	return (*mips_splsw.splsw_splintr)(p);
 }
 
 #endif /* _KERNEL */
