@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: mount.h,v 1.4 2010/02/28 14:45:47 haad Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -62,5 +62,7 @@ zmount(const char *spec, const char *dir, int mflag, char *fstype,
 
 int
 umount2(const char *spec, int mflag);
+
+#define	vfs_fstype mnt_op->vfs_name
 
 #endif	/* !_OPENSOLARIS_SYS_MOUNT_H_ */
