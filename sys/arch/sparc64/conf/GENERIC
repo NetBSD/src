@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.117 2010/02/13 08:54:58 mrg Exp $
+# $NetBSD: GENERIC,v 1.118 2010/02/28 11:49:44 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.117 $"
+#ident 		"GENERIC-$Revision: 1.118 $"
 
 maxusers	64
 
@@ -906,17 +906,20 @@ options 	FONT_GALLANT12x22		# PROM font look-alike
 #### Other device configuration
 
 psm*		at ebus?		# Ultrabook IIi microcontroller
-envctrl*	at ebus?		# Ultra E450 environmental monitoring
+pcfiic*		at ebus?		# various environmental monitoring
+iic*		at pcfiic?
 lom*		at ebus?		# LOMlite lights out management
 
 # Netra X1 / T1 style environmental monitoring
 alipm*		at pci?
 iic*		at alipm?
-spdmem*		at iic? addr 0x54
-spdmem*		at iic? addr 0x55
-spdmem*		at iic? addr 0x56
-spdmem*		at iic? addr 0x57
-admtemp*	at iic? addr 0x18
+
+# I2C devices
+spdmem*		at iic? addr?
+admtemp*	at iic? addr?
+ecadc*		at iic? addr?	# envctrl/envctrltwo on E250/E450
+lmtemp*		at iic? addr?
+tda*		at iic? addr?	# fan controll on SB1000/2000
 
 ### Other pseudo-devices
 
