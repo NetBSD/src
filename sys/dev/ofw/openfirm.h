@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.27 2009/11/11 16:56:52 macallan Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.28 2010/02/28 11:35:40 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -114,5 +114,7 @@ boolean_t	of_to_dataprop(prop_dictionary_t, int, const char *,
 
 int	*of_network_decode_media(int, int *, int *);
 char	*of_get_mode_string(char *, int);
+
+void	of_enter_i2c_devs(prop_dictionary_t, int);
 
 #endif /*_OPENFIRM_H_*/
