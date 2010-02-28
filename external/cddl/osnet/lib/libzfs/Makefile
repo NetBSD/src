@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/02/28 17:40:35 haad Exp $
+#	$NetBSD: Makefile,v 1.5 2010/02/28 22:40:09 haad Exp $
 
 .PATH: ${.CURDIR}/../../dist/common/zfs
 .PATH: ${.CURDIR}/../../dist/common/fs/zfs
@@ -13,7 +13,7 @@ SRCS=	deviceid.c mnttab.c mkdirp.c zmount.c fsshare.c zone.c efi.c ucred.c stubs
 
 # Sun
 SRCS+=	zfs_namecheck.c zprop_common.c zfs_prop.c zpool_prop.c
-SRCS+=	zfs_deleg.c zfs_comutil.c
+SRCS+=	zfs_deleg.c zfs_fletcher.c zfs_comutil.c
 SRCS+=	libzfs_dataset.c libzfs_util.c libzfs_graph.c libzfs_mount.c
 SRCS+=	libzfs_pool.c libzfs_changelist.c libzfs_config.c libzfs_import.c
 SRCS+=	libzfs_status.c libzfs_sendrecv.c
