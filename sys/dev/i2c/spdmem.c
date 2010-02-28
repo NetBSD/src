@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.16 2010/02/23 00:13:06 pgoyette Exp $ */
+/* $NetBSD: spdmem.c,v 1.17 2010/02/28 11:36:27 martin Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.16 2010/02/23 00:13:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.17 2010/02/28 11:36:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -155,6 +155,7 @@ static uint16_t spdcrc16 (struct spdmem_softc *sc, int count)
 	}
 	return (crc & 0xFFFF);
 }
+
 static int
 spdmem_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -165,8 +166,17 @@ spdmem_match(device_t parent, cfdata_t match, void *aux)
 	int spd_len, spd_crc_cover;
 	uint16_t crc_calc, crc_spd;
 
-	if ((ia->ia_addr & SPDMEM_ADDRMASK) != SPDMEM_ADDR)
-		return 0;
+	if (ia->ia_name) {
+		/* add other names as we find more firmware variations */
+		if (strcmp(ia->ia_name, "dimm-spd"))
+			return 0;
+	}
+
+	/* only do this lame test when not using direct config */
+	if (ia->ia_name == NULL) {
+		if ((ia->ia_addr & SPDMEM_ADDRMASK) != SPDMEM_ADDR)
+			return 0;
+	}
 
 	sc.sc_tag = ia->ia_tag;
 	sc.sc_addr = ia->ia_addr;
