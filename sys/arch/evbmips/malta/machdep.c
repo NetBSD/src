@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28.10.6 2010/02/27 20:35:13 snj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28.10.7 2010/02/28 23:47:05 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.10.6 2010/02/27 20:35:13 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.10.7 2010/02/28 23:47:05 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -355,37 +355,16 @@ consinit(void)
 void
 cpu_startup()
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-
 	/*
-	 * Good {morning,afternoon,evening,night}.
+	 * Do the common startup items.
 	 */
-	printf("%s%s", copyright, version);
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
+	cpu_startup_common();
 
 	/*
 	 * Virtual memory is bootstrapped -- notify the bus spaces
 	 * that memory allocation is now safe.
 	 */
 	malta_configuration.mc_mallocsafe = 1;
-
-	minaddr = 0;
-	/*
-	 * Allocate a submap for physio.
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				    VM_PHYS_SIZE, 0, FALSE, NULL);
-
-	/*
-	 * (No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use KSEG to
-	 * map those pages.)
-	 */
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
 }
 
 int	waittime = -1;
