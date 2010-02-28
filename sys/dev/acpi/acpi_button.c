@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.30 2010/01/31 06:10:53 jruoho Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.31 2010/02/28 17:22:41 jruoho Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,11 +40,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.30 2010/01/31 06:10:53 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.31 2010/02/28 17:22:41 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/module.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
@@ -231,3 +232,79 @@ acpibut_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		    notify);
 	}
 }
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, acpibut, NULL);
+CFDRIVER_DECL(acpibut, DV_DULL, NULL);
+
+static int acpibutloc[] = { -1 };
+extern struct cfattach acpibut_ca;
+
+static struct cfparent acpiparent = {
+	"acpinodebus", NULL, DVUNIT_ANY
+};
+
+static struct cfdata acpibut_cfdata[] = {
+	{
+		.cf_name = "acpibut",
+		.cf_atname = "acpibut",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = acpibutloc,
+		.cf_flags = 0,
+		.cf_pspec = &acpiparent,
+	},
+
+	{ NULL }
+};
+
+static int
+acpibut_modcmd(modcmd_t cmd, void *context)
+{
+	int err;
+
+	switch (cmd) {
+
+	case MODULE_CMD_INIT:
+
+		err = config_cfdriver_attach(&acpibut_cd);
+
+		if (err != 0)
+			return err;
+
+		err = config_cfattach_attach("acpibut", &acpibut_ca);
+
+		if (err != 0) {
+			config_cfdriver_detach(&acpibut_cd);
+			return err;
+		}
+
+		err = config_cfdata_attach(acpibut_cfdata, 1);
+
+		if (err != 0) {
+			config_cfattach_detach("acpibut", &acpibut_ca);
+			config_cfdriver_detach(&acpibut_cd);
+			return err;
+		}
+
+		return 0;
+
+	case MODULE_CMD_FINI:
+
+		err = config_cfdata_detach(acpibut_cfdata);
+
+		if (err != 0)
+			return err;
+
+		config_cfattach_detach("acpibut", &acpibut_ca);
+		config_cfdriver_detach(&acpibut_cd);
+
+		return 0;
+
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif	/* _MODULE */

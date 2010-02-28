@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.40 2010/02/24 22:37:56 dyoung Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.41 2010/02/28 17:22:41 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,11 +40,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.40 2010/02/24 22:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.41 2010/02/28 17:22:41 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/module.h>
 #include <sys/mutex.h>
 
 #include <dev/acpi/acpica.h>
@@ -301,3 +302,79 @@ fail:
 	sysmon_envsys_destroy(sc->sc_sme);
 	sc->sc_sme = NULL;
 }
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, acpiacad, NULL);
+CFDRIVER_DECL(acpiacad, DV_DULL, NULL);
+
+static int acpiacadloc[] = { -1 };
+extern struct cfattach acpiacad_ca;
+
+static struct cfparent acpiparent = {
+	"acpinodebus", NULL, DVUNIT_ANY
+};
+
+static struct cfdata acpiacad_cfdata[] = {
+	{
+		.cf_name = "acpiacad",
+		.cf_atname = "acpiacad",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = acpiacadloc,
+		.cf_flags = 0,
+		.cf_pspec = &acpiparent,
+	},
+
+	{ NULL }
+};
+
+static int
+acpiacad_modcmd(modcmd_t cmd, void *context)
+{
+	int err;
+
+	switch (cmd) {
+
+	case MODULE_CMD_INIT:
+
+		err = config_cfdriver_attach(&acpiacad_cd);
+
+		if (err != 0)
+			return err;
+
+		err = config_cfattach_attach("acpiacad", &acpiacad_ca);
+
+		if (err != 0) {
+			config_cfdriver_detach(&acpiacad_cd);
+			return err;
+		}
+
+		err = config_cfdata_attach(acpiacad_cfdata, 1);
+
+		if (err != 0) {
+			config_cfattach_detach("acpiacad", &acpiacad_ca);
+			config_cfdriver_detach(&acpiacad_cd);
+			return err;
+		}
+
+		return 0;
+
+	case MODULE_CMD_FINI:
+
+		err = config_cfdata_detach(acpiacad_cfdata);
+
+		if (err != 0)
+			return err;
+
+		config_cfattach_detach("acpiacad", &acpiacad_ca);
+		config_cfdriver_detach(&acpiacad_cd);
+
+		return 0;
+
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif	/* _MODULE */
