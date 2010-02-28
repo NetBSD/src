@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.6 2007/07/09 21:00:33 ad Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.7 2010/02/28 11:34:42 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -118,12 +118,29 @@ struct i2c_attach_args {
 	i2c_addr_t	ia_addr;	/* address of device */
 	int		ia_size;	/* size (for EEPROMs) */
 	int		ia_type;	/* bus type */
+	/* only set if using direct config */
+	const char *	ia_name;	/* name of the device */
+	int		ia_ncompat;	/* number of pointers in the
+					   ia_compat array */
+	const char **	ia_compat;	/* chip names */
+	/*
+	 * The following is of limited usefullness and should only be used
+	 * in rare cases where we realy know what we are doing. Example:
+	 * a machine depended i2c driver (located in sys/arch/$arch/dev)
+	 * needing to access some firmware properties.
+	 * Depending on the firmware in use, an identifier for the device
+	 * may be present. Example: on OpenFirmware machines the device
+	 * tree OF node - if available. This info is hard to transport
+	 * down to MD drivers through the MI i2c bus otherwise.
+	 */
+	uintptr_t	ia_cookie;	/* OF node in openfirmware machines */
 };
 
 /*
  * API presented to i2c controllers.
  */
 int	iicbus_print(void *, const char *);
+int	iic_compat_match(struct i2c_attach_args*, const char **);
 
 #ifdef _I2C_PRIVATE
 /*
