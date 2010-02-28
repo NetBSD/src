@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.3 2010/02/28 03:21:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.4 2010/02/28 15:32:32 snj Exp $");
 
 #include <sys/param.h>
 
@@ -204,7 +204,7 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end,
 
 	/*
 	 * Find the lowest and highest jumps we will be replacing.  We don't
-	 * need to do but it does make weeding out the non-matching jumps
+	 * need to do it but it does make weeding out the non-matching jumps
 	 * faster.
 	 */
 	for (size_t i = 0; i < noffsets; i++) {
@@ -220,7 +220,7 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end,
 		uint32_t opcode = insn >> 26;
 
 		/*
-		 * First we check to see if this is a jump and whether its
+		 * First we check to see if this is a jump and whether it is
 		 * within the range we are interested in.
 		 */
 		if ((opcode != OPCODE_J && opcode != OPCODE_JAL)
@@ -237,7 +237,7 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end,
 			/*
 			 * Yes, we need to fix it up.  Replace the old
 			 * displacement with the real displacement.  If we've
-			 * moved to a new cache line, sync the last cacheline
+			 * moved to a new cache line, sync the last cache line
 			 * we fixed.
 			 */
 			*insnp ^= offset ^ real_offsets[i];
