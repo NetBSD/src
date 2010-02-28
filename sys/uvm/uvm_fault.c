@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.166.2.5 2010/02/24 16:22:58 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.166.2.6 2010/02/28 06:52:12 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.5 2010/02/24 16:22:58 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.6 2010/02/28 06:52:12 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_device_page.h"
@@ -1769,10 +1769,6 @@ uvm_fault_lower_neighbor(
 	mutex_enter(&uvm_pageqlock);
 	uvm_pageenqueue(pg);
 	mutex_exit(&uvm_pageqlock);
-	UVMHIST_LOG(maphist,
-	    "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
-	    ufi->orig_map->pmap, currva, pg, 0);
-	uvmexp.fltnomap++;
 
 	/*
 	 * Since this page isn't the page that's actually faulting,
@@ -1790,6 +1786,11 @@ uvm_fault_lower_neighbor(
 	UVM_PAGE_OWN(pg, NULL);
 
 uvm_fault_lower_neighbor_enter:
+	UVMHIST_LOG(maphist,
+	    "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
+	    ufi->orig_map->pmap, currva, pg, 0);
+	uvmexp.fltnomap++;
+
 	(void) pmap_enter(ufi->orig_map->pmap, currva,
 	    VM_PAGE_TO_PHYS(pg),
 	    readonly ? (flt->enter_prot & ~VM_PROT_WRITE) :
@@ -1962,8 +1963,10 @@ uvm_fault_lower_direct(
 	pg = uobjpage;		/* map in the actual object */
 	uvmexp.flt_obj++;
 
-	if (uvm_pageisdevice_p(uobjpage))
+	if (uvm_pageisdevice_p(uobjpage)) {
+		/* XIP'ed device pages are always read-only */
 		goto uvm_fault_lower_direct_done;
+	}
 
 	if (UVM_ET_ISCOPYONWRITE(ufi->entry) ||
 	    UVM_OBJ_NEEDS_WRITEFAULT(uobjpage->uobject))
@@ -2094,8 +2097,13 @@ uvm_fault_lower_promote(
 			 */
 		}
 
-		if (uvm_pageisdevice_p(uobjpage))
+		if (uvm_pageisdevice_p(uobjpage)) {
+			/*
+			 * XIP devices pages are never paged out, no need to
+			 * dispose.
+			 */
 			goto uvm_fault_lower_promote_done;
+		}
 
 		/*
 		 * dispose of uobjpage.  it can't be PG_RELEASED
@@ -2176,8 +2184,10 @@ uvm_fault_lower_enter(
 	    (flt->enter_prot & ~VM_PROT_WRITE) : flt->enter_prot,
 	    flt->access_type | PMAP_CANFAIL | (flt->wire_mapping ? PMAP_WIRED : 0)) != 0) {
 
-		if (uvm_pageisdevice_p(pg))
+		if (uvm_pageisdevice_p(pg)) {
+			/* Device pages never involve paging activity. */
 			goto uvm_fault_lower_enter_error_done;
+		}
 
 		/*
 		 * No need to undo what we did; we can simply think of
