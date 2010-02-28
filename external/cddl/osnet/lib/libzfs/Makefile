@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/02/21 01:46:35 darran Exp $
+#	$NetBSD: Makefile,v 1.4 2010/02/28 17:40:35 haad Exp $
 
 .PATH: ${.CURDIR}/../../dist/common/zfs
 .PATH: ${.CURDIR}/../../dist/common/fs/zfs
@@ -9,7 +9,7 @@ DPADD=	${LIBUTIL}
 LDADD=	-lutil
 
 # Local
-SRCS=	deviceid.c mnttab.c mkdirp.c zmount.c fsshare.c zone.c efi.c ucred.c
+SRCS=	deviceid.c mnttab.c mkdirp.c zmount.c fsshare.c zone.c efi.c ucred.c stubs.c
 
 # Sun
 SRCS+=	zfs_namecheck.c zprop_common.c zfs_prop.c zpool_prop.c
