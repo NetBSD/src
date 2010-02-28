@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.18.16.3 2010/01/13 21:16:13 matt Exp $ */
+/* $NetBSD: cpu.c,v 1.18.16.4 2010/02/28 23:46:18 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.3 2010/01/13 21:16:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.4 2010/02/28 23:46:18 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -83,26 +83,16 @@ cpu_match(device_t parent, cfdata_t match, void *aux)
 static void
 cpu_attach(device_t parent, device_t self, void *aux)
 {
-	struct cpu_info * const ci = curcpu();
+	struct cpu_info *ci;
 	const char * const xname = device_xname(self);
 	int plldiv;
 	uint32_t config;
 
-	/* XXX this code must run on the target CPU */
-	config = mips3_cp0_config_read();
-	config &= ~MIPS3_CONFIG_K0_MASK;
-	config |= 0x05;				/* XXX.  cacheable coherent */
-	mips3_cp0_config_write(config);
-
 	found++;
 
-	/*
-	 * Flush all of the caches, so that any lines marked non-coherent will
-	 * be flushed.  Don't need to worry about L2; it's always
-	 * coherent (XXX???).
-	 */
-	mips_icache_sync_all();
-	mips_dcache_wbinv_all();
+	/* XXX this code must run on the target CPU */
+	config = mips3_cp0_config_read();
+	KASSERT((config & MIPS3_CONFIG_K0_MASK) == 5);
 
 	/* Determine CPU frequency */
 
@@ -118,30 +108,36 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		aprint_normal("%s", xname);
 	}
 
-	ci->ci_cpu_freq = 50000000 * plldiv;
-	/* Compute the delay divisor. */
-	ci->ci_divisor_delay = (ci->ci_cpu_freq + 500000) / 1000000;
-	/* Compute clock cycles per hz */
-	ci->ci_cycles_per_hz = (ci->ci_cpu_freq + hz / 2 ) / hz;
-
-	aprint_normal(": %lu.%02luMHz (hz cycles = %lu, delay divisor = %lu)\n",
-	    ci->ci_cpu_freq / 1000000,
-	    (ci->ci_cpu_freq % 1000000) / 10000,
-	    ci->ci_cycles_per_hz, ci->ci_divisor_delay);
-
-	/*
-	 * If we're the primary CPU, no more work to do; we're already
-	 * running!
-	 */
 	if (found == 1) {
+		ci = curcpu();
+		ci->ci_cpu_freq = 50000000 * plldiv;
+		/* Compute the delay divisor. */
+		ci->ci_divisor_delay = (ci->ci_cpu_freq + 500000) / 1000000;
+		/* Compute clock cycles per hz */
+		ci->ci_cycles_per_hz = (ci->ci_cpu_freq + hz / 2 ) / hz;
+
+		aprint_normal(": %lu.%02luMHz (hz cycles = %lu, delay divisor = %lu)\n",
+		    ci->ci_cpu_freq / 1000000,
+		    (ci->ci_cpu_freq % 1000000) / 10000,
+		    ci->ci_cycles_per_hz, ci->ci_divisor_delay);
+
+		/*
+		 * If we're the primary CPU, no more work to do; we're already
+		 * running!
+		 */
 		aprint_normal("%s: ", xname);
 		cpu_identify(self);
 	} else {
 #if defined(MULTIPROCESSOR)
-# error!
+		ci = cpu_info_alloc(NULL, found);
+		KASSERT(ci);
+		// * spinup
 #else
 		aprint_normal("%s: processor off-line; multiprocessor support "
 		    "not present in kernel\n", xname);
+		return;
 #endif
 	}
+
+	cpu_attach_common(self, ci);
 }
