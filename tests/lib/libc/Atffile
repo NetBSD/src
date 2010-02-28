@@ -4,4 +4,4 @@ prop: test-suite = "NetBSD"
 
 tp: hash
 tp: stdlib
-tp: string
+
