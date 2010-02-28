@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.3 2010/02/28 05:03:58 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.4 2010/02/28 06:29:19 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.3 2010/02/28 05:03:58 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.4 2010/02/28 06:29:19 uebayasi Exp $");
 
 #include "opt_device_page.h"
 #include "opt_xip.h"
@@ -60,7 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.3 2010/02/28 05:03:58 uebayasi E
 #include <uvm/uvm_pager.h>
 
 static int genfs_do_getpages(void *);
+#ifdef XIP
 static int genfs_do_getpages_xip(void *);
+#endif
 static int genfs_do_directio(struct vmspace *, vaddr_t, size_t, struct vnode *,
     off_t, enum uio_rw);
 static void genfs_dio_iodone(struct buf *);
@@ -99,6 +101,7 @@ genfs_rel_pages(struct vm_page **pgs, int npages)
 int
 genfs_getpages(void *v)
 {
+#ifdef XIP
 	struct vop_getpages_args /* {
 		struct vnode *a_vp;
 		voff_t a_offset;
@@ -111,7 +114,6 @@ genfs_getpages(void *v)
 	} */ * const ap = v;
 	struct vnode * const vp = ap->a_vp;
 
-#ifdef XIP
 	if ((vp->v_vflag & VV_XIP) != 0)
 		return genfs_do_getpages_xip(v);
 	else
