@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.23 2010/02/27 07:58:52 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.24 2010/02/28 23:45:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,107 +48,50 @@
 #ifndef _LOCORE
 #include <sys/cpu_data.h>
 #include <sys/device.h>
+#include <sys/evcnt.h>
 
 #if defined(_KERNEL_OPT)
+#include "opt_cputype.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #endif
 
-struct pridtab {
-	int	cpu_cid;
-	int	cpu_pid;
-	int	cpu_rev;	/* -1 == wildcard */
-	int	cpu_copts;	/* -1 == wildcard */
-	int	cpu_isa;	/* -1 == probed (mips32/mips64) */
-	int	cpu_ntlb;	/* -1 == unknown, 0 == probed */
-	int	cpu_flags;
-	u_int	cpu_cp0flags;	/* presence of some cp0 regs */
-	u_int	cpu_cidflags;	/* company-specific flags */
-	const char	*cpu_name;
-};
-
-/*
- * bitfield defines for cpu_cp0flags
- */
-#define  MIPS_CP0FL_USE		__BIT(0)	/* use these flags */
-#define  MIPS_CP0FL_ECC		__BIT(1)
-#define  MIPS_CP0FL_CACHE_ERR	__BIT(2)
-#define  MIPS_CP0FL_EIRR	__BIT(3)
-#define  MIPS_CP0FL_EIMR	__BIT(4)
-#define  MIPS_CP0FL_EBASE	__BIT(5)
-#define  MIPS_CP0FL_CONFIG	__BIT(6)
-#define  MIPS_CP0FL_CONFIGn(n)	(__BIT(7) << ((n) & 7))
-
-/*
- * cpu_cidflags defines, by company
- */
-/*
- * RMI company-specific cpu_cidflags
- */
-#define MIPS_CIDFL_RMI_TYPE     	__BITS(2,0)
-# define  CIDFL_RMI_TYPE_XLR     	0
-# define  CIDFL_RMI_TYPE_XLS     	1
-# define  CIDFL_RMI_TYPE_XLP     	2
-#define MIPS_CIDFL_RMI_THREADS_MASK	__BITS(6,3)
-# define MIPS_CIDFL_RMI_THREADS_SHIFT	3
-#define MIPS_CIDFL_RMI_CORES_MASK	__BITS(10,7)
-# define MIPS_CIDFL_RMI_CORES_SHIFT	7
-# define LOG2_1	0
-# define LOG2_2	1
-# define LOG2_4	2
-# define LOG2_8	3
-# define MIPS_CIDFL_RMI_CPUS(ncores, nthreads)				\
-		((LOG2_ ## ncores << MIPS_CIDFL_RMI_CORES_SHIFT)	\
-		|(LOG2_ ## nthreads << MIPS_CIDFL_RMI_THREADS_SHIFT))
-# define MIPS_CIDFL_RMI_NTHREADS(cidfl)					\
-		(1 << (((cidfl) & MIPS_CIDFL_RMI_THREADS_MASK)		\
-			>> MIPS_CIDFL_RMI_THREADS_SHIFT))
-# define MIPS_CIDFL_RMI_NCORES(cidfl)					\
-		(1 << (((cidfl) & MIPS_CIDFL_RMI_CORES_MASK)		\
-			>> MIPS_CIDFL_RMI_CORES_SHIFT))
-#define MIPS_CIDFL_RMI_L2SZ_MASK	__BITS(14,11)
-# define MIPS_CIDFL_RMI_L2SZ_SHIFT	11
-# define RMI_L2SZ_256KB	 0
-# define RMI_L2SZ_512KB  1
-# define RMI_L2SZ_1MB    2
-# define RMI_L2SZ_2MB    3
-# define RMI_L2SZ_4MB    4
-# define MIPS_CIDFL_RMI_L2(l2sz)					\
-		(RMI_L2SZ_ ## l2sz << MIPS_CIDFL_RMI_L2SZ_SHIFT)
-# define MIPS_CIDFL_RMI_L2SZ(cidfl)					\
-		((256*1024) << (((cidfl) & MIPS_CIDFL_RMI_L2SZ_MASK)	\
-			>> MIPS_CIDFL_RMI_L2SZ_SHIFT))
-
-
-
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	struct cpu_info *ci_next;	/* Next CPU in list */
+	device_t ci_dev;		/* owning device */
 	cpuid_t ci_cpuid;		/* Machine-level identifier */
+	u_long ci_cctr_freq;		/* cycle counter frequency */
 	u_long ci_cpu_freq;		/* CPU frequency */
 	u_long ci_cycles_per_hz;	/* CPU freq / hz */
 	u_long ci_divisor_delay;	/* for delay/DELAY */
 	u_long ci_divisor_recip;	/* unused, for obsolete microtime(9) */
 	struct lwp *ci_curlwp;		/* currently running lwp */
+#ifndef NOFPU
 	struct lwp *ci_fpcurlwp;	/* the current FPU owner */
-	int ci_want_resched;		/* user preemption pending */
+#endif
+	volatile int ci_want_resched;	/* user preemption pending */
 	int ci_mtx_count;		/* negative count of held mutexes */
 	int ci_mtx_oldspl;		/* saved SPL value */
 	int ci_idepth;			/* hardware interrupt depth */
 	int ci_cpl;			/* current [interrupt] priority level */
-	device_t ci_dev;		/* owning device */
-	u_long ci_cctr_freq;		/* cycle counter frequency */
 	struct lwp *ci_softlwps[SOFTINT_COUNT];
 #define	ci_softints	ci_data.cpu_softints
 	/*
 	 * Per-cpu pmap information
 	 */
-	uint32_t ci_ksp_tlb_slot;	/* reserved tlb entry for kernel stack */
 	int ci_tlb_slot;		/* reserved tlb entry for cpu_info */
-	struct pmap_tlb_info *ci_tlb_info;
+	struct pmap_tlb_info *ci_tlb_info; /* tlb information for this cpu */
 	struct segtab *ci_pmap_segbase;
 	vaddr_t ci_pmap_srcbase;	/* starting VA of ephemeral src space */
 	vaddr_t ci_pmap_dstbase;	/* starting VA of ephemeral dst space */
+#ifdef MULTIPROCESSOR
+	uint64_t ci_active_ipis;	/* bitmask of IPIs being serviced */
+	uint32_t ci_ksp_tlb_slot;	/* tlb entry for kernel stack */
+	void *ci_fpsave_si;		/* FP sync softint handler */
+	struct evcnt ci_evcnt_all_ipis;	/* aggregated IPI counter */
+	struct evcnt ci_evcnt_per_ipi[NIPIS];	/* individual IPI counters*/
+#endif
 };
 
 #define	CPU_INFO_ITERATOR		int
@@ -172,7 +115,6 @@ struct cpu_info {
  */
 #ifndef CPU_MAXID
 #define CPU_MAXID		5	/* number of valid machdep ids */
-
 #endif
 
 #ifdef _KERNEL
@@ -192,6 +134,7 @@ struct cpu_info {
 /* Shortcut for MIPS3 or above defined */
 #if defined(MIPS3) || defined(MIPS4) || defined(MIPS32) || defined(MIPS64)
 #define	MIPS3_PLUS	1
+#define __HAVE_CPU_COUNTER
 #else
 #undef MIPS3_PLUS
 #endif
@@ -225,7 +168,6 @@ register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
 #define	curlwp			mips_curlwp
 #define	curcpu()		(curlwp->l_cpu)
 #define	curpcb			(&curlwp->l_addr->u_pcb)
-#define	fpcurlwp		(curcpu()->ci_fpcurlwp)
 #ifdef MULTIPROCESSOR
 #define	cpu_number()		(curcpu()->ci_cpuid)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
@@ -457,6 +399,13 @@ void	cpu_set_curpri(int);
 
 extern int mips_poolpage_vmfreelist;	/* freelist to allocate poolpages */
 
+/* cpu_subr.c */
+struct cpu_info *
+	cpu_info_alloc(struct pmap_tlb_info *, u_int);
+void	cpu_attach_common(device_t, struct cpu_info *);
+void	cpu_startup_common(void);
+void	cpu_trampoline(struct cpu_info *ci);
+
 /* copy.S */
 int8_t	ufetch_int8(void *);
 int16_t	ufetch_int16(void *);
@@ -538,6 +487,13 @@ int	ustore_uint32_isync(void *, uint32_t);
 void	netintr(void);
 int	kdbpeek(vaddr_t);
 
+/* mips_fpu.c */
+void	fpu_init(void);
+void	fpudiscard_lwp(struct lwp *);
+void	fpuload_lwp(struct lwp *);
+void	fpusave_lwp(struct lwp *);
+void	fpusave_cpu(struct cpu_info *);
+
 /* mips_machdep.c */
 struct mips_vmfreelist;
 struct phys_ram_seg;
@@ -549,8 +505,6 @@ void	mips_init_lwp0_uarea(void);
 void	mips_page_physload(vaddr_t, vaddr_t,
 	    const struct phys_ram_seg *, size_t,
 	    const struct mips_vmfreelist *, size_t);
-void	savefpregs(struct lwp *);
-void	loadfpregs(struct lwp *);
 void	cpu_identify(device_t);
 #ifdef MULTIPROCESSOR
 void	cpu_boot_secondary_processors(void);
