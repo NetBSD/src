@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.15 2010/02/17 16:11:00 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.16 2010/02/28 22:42:44 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,6 +40,7 @@
 /* md.h -- Machine specific definitions for the sparc */
 
 /* Constants and defines */
+#define	DEFSWAPSIZE	(-1)
 
 /*
  * Symbolic names for disk partitions.
