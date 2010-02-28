@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.28 2010/02/27 20:32:04 snj Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.29 2010/02/28 03:28:54 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1117,8 +1117,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	/*
 	 * We first need to get to IPL_HIGH so that interrupts are masked.
 	 */
-	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLHIGH
-	jalr	t9
+	jal	_C_LABEL(splhigh_noprof)
 	 nop
 
 #ifdef PARANOIA
@@ -1234,8 +1233,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	/*
 	 * Restore IPL knowing interrupts are disabled
 	 */
-	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLX
-	jalr	t9				# splx(ppl)
+	jal	_C_LABEL(splx_noprof)		# splx(ppl)
 	 nop
 
 #ifdef PARANOIA
@@ -1393,8 +1391,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	/*
 	 * We first need to get to IPL_HIGH so that interrupts are masked.
 	 */
-	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLHIGH
-	jalr	t9				# splhigh()
+	jal	_C_LABEL(splhigh_noprof)	# splhigh()
 	 nop
 	move	s0, v0				# remember previous priority
 
@@ -1469,8 +1466,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	/*
 	 * Restore IPL knowing interrupts are off
 	 */
-	PTR_L	t9, _C_LABEL(mips_splsw) + SPLSW_SPLX
-	jalr	t9
+	jal	_C_LABEL(splx_noprof)
 	 move	a0, s0				# fetch previous priority level
 
 /*
