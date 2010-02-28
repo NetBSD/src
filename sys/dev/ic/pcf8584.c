@@ -1,239 +1,308 @@
-/*	$NetBSD: pcf8584.c,v 1.5 2008/04/28 20:23:51 martin Exp $ */
-
-/*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Tobias Nygren.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+/*	$NetBSD: pcf8584.c,v 1.6 2010/02/28 11:47:28 martin Exp $	*/
+/*	$OpenBSD: pcf8584.c,v 1.9 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
- * Philips PCF8584 I2C Bus Controller
+ * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
  *
- * This driver does not yet support multi-master arbitration, concurrent access
- * or interrupts, but it should be usable for single-master applications.
- * It is currently used by the envctrl(4) driver on sparc64.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8584.c,v 1.5 2008/04/28 20:23:51 martin Exp $");
 
 #include <sys/param.h>
-#include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/condvar.h>
-#include <sys/mutex.h>
-#include <sys/bus.h>
-#include <machine/param.h>
+#include <sys/device.h>
+#include <sys/malloc.h>
+#include <sys/kernel.h>
+#include <sys/rwlock.h>
+#include <sys/proc.h>
+
+#include <machine/bus.h>
+
 #include <dev/i2c/i2cvar.h>
-#include <dev/ic/pcf8584reg.h>
+
 #include <dev/ic/pcf8584var.h>
 
-static void pcf8584_bus_reset(struct pcf8584_handle *, int);
-static int pcf8584_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
-			void *, size_t, int);
-static int pcf8584_acquire_bus(void *, int);
-static void pcf8584_release_bus(void *, int);
-static void pcf8584_wait(struct pcf8584_handle *, int);
+#define PCF_S0			0x00
+#define PCF_S1			0x01
+#define PCF_S2			0x02
+#define PCF_S3			0x03
 
-/*  Must delay for 500 ns between bus accesses according to manual. */
-#define DATA_W(x) (DELAY(1), bus_space_write_1(ha->ha_iot, ha->ha_ioh, 0, x))
-#define DATA_R() (DELAY(1), bus_space_read_1(ha->ha_iot, ha->ha_ioh, 0))
-#define CSR_W(x) (DELAY(1), bus_space_write_1(ha->ha_iot, ha->ha_ioh, 1, x))
-#define STATUS_R() (DELAY(1), bus_space_read_1(ha->ha_iot, ha->ha_ioh, 1))
-#define BUSY() ((STATUS_R() & PCF8584_STATUS_BBN) == 0)
-#define PENDING() ((STATUS_R() & PCF8584_STATUS_PIN) == 0)
-#define NAK() ((STATUS_R() & PCF8584_STATUS_LRB) != 0)
+#define PCF_CTRL_ACK		(1<<0)
+#define PCF_CTRL_STO		(1<<1)
+#define PCF_CTRL_STA		(1<<2)
+#define PCF_CTRL_ENI		(1<<3)
+#define PCF_CTRL_ES2		(1<<4)
+#define PCF_CTRL_ES1		(1<<5)
+#define PCF_CTRL_ESO		(1<<6)
+#define PCF_CTRL_PIN		(1<<7)
 
-/*
- * Wait for an interrupt.
- */
-static void
-pcf8584_wait(struct pcf8584_handle *ha, int flags)
+#define PCF_CTRL_START		(PCF_CTRL_PIN | PCF_CTRL_ESO | \
+    PCF_CTRL_STA | PCF_CTRL_ACK)
+#define PCF_CTRL_STOP		(PCF_CTRL_PIN | PCF_CTRL_ESO | \
+    PCF_CTRL_STO | PCF_CTRL_ACK)
+#define PCF_CTRL_REPSTART	(PCF_CTRL_ESO | PCF_CTRL_STA | PCF_CTRL_ACK)
+#define PCF_CTRL_IDLE		(PCF_CTRL_PIN | PCF_CTRL_ESO | PCF_CTRL_ACK)
+
+#define PCF_STAT_nBB		(1<<0)
+#define PCF_STAT_LAB		(1<<1)
+#define PCF_STAT_AAS		(1<<2)
+#define PCF_STAT_AD0		(1<<3)
+#define PCF_STAT_LRB		(1<<3)
+#define PCF_STAT_BER		(1<<4)
+#define PCF_STAT_STS		(1<<5)
+#define PCF_STAT_PIN		(1<<7)
+
+void		pcfiic_init(struct pcfiic_softc *);
+int		pcfiic_i2c_acquire_bus(void *, int);
+void		pcfiic_i2c_release_bus(void *, int);
+int		pcfiic_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
+		    size_t, void *, size_t, int);
+
+int		pcfiic_xmit(struct pcfiic_softc *, u_int8_t, const u_int8_t *,
+		    size_t);
+int		pcfiic_recv(struct pcfiic_softc *, u_int8_t, u_int8_t *,
+		    size_t);
+
+u_int8_t	pcfiic_read(struct pcfiic_softc *, bus_size_t);
+void		pcfiic_write(struct pcfiic_softc *, bus_size_t, u_int8_t);
+void		pcfiic_choose_bus(struct pcfiic_softc *, u_int8_t);
+int		pcfiic_wait_nBB(struct pcfiic_softc *);
+int		pcfiic_wait_pin(struct pcfiic_softc *, volatile u_int8_t *);
+
+void
+pcfiic_init(struct pcfiic_softc *sc)
 {
-	int timeo;
+	/* init S1 */
+	pcfiic_write(sc, PCF_S1, PCF_CTRL_PIN);
+	/* own address */
+	pcfiic_write(sc, PCF_S0, sc->sc_addr);
 
-	if (flags & I2C_F_POLL) {
-		timeo = 20;
-		while (timeo && !PENDING()) {
-			DELAY(1000);
-			timeo--;
-		}
+	/* select clock reg */
+	pcfiic_write(sc, PCF_S1, PCF_CTRL_PIN|PCF_CTRL_ES1);
+	pcfiic_write(sc, PCF_S0, sc->sc_clock);
+
+	pcfiic_write(sc, PCF_S1, PCF_CTRL_IDLE);
+
+	delay(200000);	/* Multi-Master mode, wait for longest i2c message */
+}
+
+void
+pcfiic_attach(struct pcfiic_softc *sc, i2c_addr_t addr, u_int8_t clock,
+    int swapregs)
+{
+	struct i2cbus_attach_args		iba;
+
+	if (swapregs) {
+		sc->sc_regmap[PCF_S1] = PCF_S0;
+		sc->sc_regmap[PCF_S0] = PCF_S1;
 	} else {
-		mutex_enter(&ha->ha_intrmtx);
-		cv_timedwait(&ha->ha_intrcond, &ha->ha_intrmtx, mstohz(20));
-		mutex_exit(&ha->ha_intrmtx);
+		sc->sc_regmap[PCF_S0] = PCF_S0;
+		sc->sc_regmap[PCF_S1] = PCF_S1;
 	}
-}
+	sc->sc_clock = clock;
+	sc->sc_addr = addr;
 
-#ifdef notyet
-static void
-pcf8584_intr(struct pcf8584_handle *ha) {
+	pcfiic_init(sc);
 
-	cv_wakeup(&ha->ha_intrcond);
+	printf("\n");
+
+	if (sc->sc_master)
+		pcfiic_choose_bus(sc, 0);
+
+	rw_init(&sc->sc_lock);
+	sc->sc_i2c.ic_cookie = sc;
+	sc->sc_i2c.ic_acquire_bus = pcfiic_i2c_acquire_bus;
+	sc->sc_i2c.ic_release_bus = pcfiic_i2c_release_bus;
+	sc->sc_i2c.ic_exec = pcfiic_i2c_exec;
+
+	bzero(&iba, sizeof(iba));
+	iba.iba_tag = &sc->sc_i2c;
+	config_found(sc->sc_dev, &iba, iicbus_print);
 }
-#endif
 
 int
-pcf8584_init(struct pcf8584_handle *ha)
+pcfiic_intr(void *arg)
 {
+	return (0);
+}
 
-	ha->ha_i2c.ic_cookie = ha;
-	ha->ha_i2c.ic_acquire_bus = pcf8584_acquire_bus;
-	ha->ha_i2c.ic_release_bus = pcf8584_release_bus;
-	ha->ha_i2c.ic_exec = pcf8584_exec;
+int
+pcfiic_i2c_acquire_bus(void *arg, int flags)
+{
+	struct pcfiic_softc	*sc = arg;
 
-	mutex_init(&ha->ha_intrmtx, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&ha->ha_intrcond, "pcf8584");
+	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
+		return (0);
 
-	pcf8584_bus_reset(ha, I2C_F_POLL);
-
+	rw_enter(&sc->sc_lock, RW_WRITER);
 	return 0;
 }
 
-/*
- * Reset i2c bus.
- */
-static void
-pcf8584_bus_reset(struct pcf8584_handle *ha, int flags)
+void
+pcfiic_i2c_release_bus(void *arg, int flags)
 {
+	struct pcfiic_softc	*sc = arg;
 
-	/* initialize PCF8584 */
-	CSR_W(PCF8584_CTRL_PIN);
-	DATA_W(0x55);
-	CSR_W(PCF8584_CTRL_PIN | PCF8584_REG_S2);
-	DATA_W(PCF8584_CLK_12 | PCF8584_SCL_90);
-	CSR_W(PCF8584_CTRL_PIN | PCF8584_CTRL_ESO | PCF8584_CTRL_ACK);
+	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
+		return;
 
-	/* XXX needs multi-master synchronization delay here */
-
-	/*
-	 * Blindly attempt a write at a nonexistent i2c address (0x7F).
-	 * This allows hung i2c devices to pick up the stop condition.
-	 */
-	DATA_W(0x7F << 1);
-	CSR_W(PCF8584_CMD_START);
-	pcf8584_wait(ha, flags);
-	CSR_W(PCF8584_CMD_STOP);
-	pcf8584_wait(ha, flags);
+	rw_exit(&sc->sc_lock);
 }
 
-static int
-pcf8584_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, 
-    const void *cmdbuf, size_t cmdlen, void *buf,
-    size_t len, int flags)
+int
+pcfiic_i2c_exec(void *arg, i2c_op_t op, i2c_addr_t addr,
+    const void *cmdbuf, size_t cmdlen, void *buf, size_t len, int flags)
 {
-	int i;
-	struct pcf8584_handle *ha = cookie;
-	uint8_t *p = buf;
+	struct pcfiic_softc	*sc = arg;
+	int			ret = 0;
 
-	KASSERT(cmdlen == 0);
-	KASSERT(op == I2C_OP_READ_WITH_STOP || op == I2C_OP_WRITE_WITH_STOP);
+#if 0
+        printf("%s: exec op: %d addr: 0x%x cmdlen: %d len: %d flags 0x%x\n",
+            sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags);
+#endif
 
-	if (BUSY()) {
-		/* We're the only master on the bus, something is wrong. */
-		printf("*%s: i2c bus busy!\n", device_xname(ha->ha_parent));
-		pcf8584_bus_reset(ha, flags);
+	if (cold || sc->sc_poll)
+		flags |= I2C_F_POLL;
+
+	if (sc->sc_master)
+		pcfiic_choose_bus(sc, addr >> 7);
+
+	if (cmdlen > 0)
+		if (pcfiic_xmit(sc, addr & 0x7f, cmdbuf, cmdlen) != 0)
+			return (1);
+
+	if (len > 0) {
+		if (I2C_OP_WRITE_P(op))
+			ret = pcfiic_xmit(sc, addr & 0x7f, buf, len);
+		else
+			ret = pcfiic_recv(sc, addr & 0x7f, buf, len);
 	}
-	if (op == I2C_OP_READ_WITH_STOP)
-		DATA_W((addr << 1) | 1);
-	else
-		DATA_W(addr << 1);
-
-	CSR_W(PCF8584_CMD_START);
-	pcf8584_wait(ha, flags);
-	if (!PENDING()) {
-		printf("%s: no intr after i2c sla\n", device_xname(ha->ha_parent));
-	}
-	if (NAK())
-		goto fail;
-
-	if (op == I2C_OP_READ_WITH_STOP) {
-		(void) DATA_R();/* dummy read */
-		for (i = 0; i < len; i++) {
-			/* wait for a byte to arrive */
-			pcf8584_wait(ha, flags);
-			if (!PENDING()) {
-				printf("%s: lost intr during i2c read\n",
-				    device_xname(ha->ha_parent));
-				goto fail;
-			}
-			if (NAK())
-				goto fail;
-			if (i == len - 1) {
-				/*
-				 * we're about to read the final byte, so we
-				 * set the controller to NAK the following
-				 * byte, if any.
-				 */
-				CSR_W(PCF8584_CMD_NAK);
-			}
-			*p++ = DATA_R();
-		}
-		pcf8584_wait(ha, flags);
-		if (!PENDING()) {
-			printf("%s: no intr on final i2c nak\n",
-			    device_xname(ha->ha_parent));
-			goto fail;
-		}
-		CSR_W(PCF8584_CMD_STOP);
-		(void) DATA_R();/* dummy read */
-	} else {
-		for (i = 0; i < len; i++) {
-			DATA_W(*p++);
-			pcf8584_wait(ha, flags);
-			if (!PENDING()) {
-				printf("%s: no intr during i2c write\n",
-				    device_xname(ha->ha_parent));
-				goto fail;
-			}
-			if (NAK())
-				goto fail;
-		}
-		CSR_W(PCF8584_CMD_STOP);
-	}
-	pcf8584_wait(ha, flags);
-	return 0;
-fail:
-	CSR_W(PCF8584_CMD_STOP);
-	pcf8584_wait(ha, flags);
-
-	return 1;
+	return (ret);
 }
 
-static int
-pcf8584_acquire_bus(void *cookie, int flags)
+int
+pcfiic_xmit(struct pcfiic_softc *sc, u_int8_t addr, const u_int8_t *buf,
+    size_t len)
 {
+	int			i, err = 0;
+	volatile u_int8_t	r;
 
-	/* XXX concurrent access not yet implemented */
-	return 0;
+	if (pcfiic_wait_nBB(sc) != 0)
+		return (1);
+
+	pcfiic_write(sc, PCF_S0, addr << 1);
+	pcfiic_write(sc, PCF_S1, PCF_CTRL_START);
+
+	for (i = 0; i <= len; i++) {
+		if (pcfiic_wait_pin(sc, &r) != 0) {
+			pcfiic_write(sc, PCF_S1, PCF_CTRL_STOP);
+			return (1);
+		}
+
+		if (r & PCF_STAT_LRB) {
+			err = 1;
+			break;
+		}
+
+		if (i < len)
+			pcfiic_write(sc, PCF_S0, buf[i]);
+	}
+	pcfiic_write(sc, PCF_S1, PCF_CTRL_STOP);
+	return (err);
 }
 
-static void
-pcf8584_release_bus(void *cookie, int flags)
+int
+pcfiic_recv(struct pcfiic_softc *sc, u_int8_t addr, u_int8_t *buf, size_t len)
 {
+	int			i = 0, err = 0;
+	volatile u_int8_t	r;
 
+	if (pcfiic_wait_nBB(sc) != 0)
+		return (1);
+
+	pcfiic_write(sc, PCF_S0, (addr << 1) | 0x01);
+	pcfiic_write(sc, PCF_S1, PCF_CTRL_START);
+
+	for (i = 0; i <= len; i++) {
+		if (pcfiic_wait_pin(sc, &r) != 0) {
+			pcfiic_write(sc, PCF_S1, PCF_CTRL_STOP);
+			return (1);
+		}
+
+		if ((i != len) && (r & PCF_STAT_LRB)) {
+			pcfiic_write(sc, PCF_S1, PCF_CTRL_STOP);
+			return (1);
+		}
+
+		if (i == len - 1) {
+			pcfiic_write(sc, PCF_S1, PCF_CTRL_ESO);
+		} else if (i == len) {
+			pcfiic_write(sc, PCF_S1, PCF_CTRL_STOP);
+		}
+
+		r = pcfiic_read(sc, PCF_S0);
+		if (i > 0)
+			buf[i - 1] = r;
+	}
+	return (err);
+}
+
+u_int8_t
+pcfiic_read(struct pcfiic_softc *sc, bus_size_t r)
+{
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[r], 1,
+	    BUS_SPACE_BARRIER_READ);
+	return (bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[r]));
+}
+
+void
+pcfiic_write(struct pcfiic_softc *sc, bus_size_t r, u_int8_t v)
+{
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[r], v);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[r], 1,
+	    BUS_SPACE_BARRIER_WRITE);
+}
+
+void
+pcfiic_choose_bus(struct pcfiic_softc *sc, u_int8_t bus)
+{
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh2, 0, bus);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh2, 0, 1,
+	    BUS_SPACE_BARRIER_WRITE);
+}
+
+int
+pcfiic_wait_nBB(struct pcfiic_softc *sc)
+{
+	int		i;
+
+	for (i = 0; i < 1000; i++) {
+		if (pcfiic_read(sc, PCF_S1) & PCF_STAT_nBB)
+			return (0);
+		delay(1000);
+	}
+	return (1);
+}
+
+int
+pcfiic_wait_pin(struct pcfiic_softc *sc, volatile u_int8_t *r)
+{
+	int		i;
+
+	for (i = 0; i < 1000; i++) {
+		*r = pcfiic_read(sc, PCF_S1);
+		if ((*r & PCF_STAT_PIN) == 0)
+			return (0);
+		delay(1000);
+	}
+	return (1);
 }
