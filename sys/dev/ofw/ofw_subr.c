@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.16 2010/01/21 15:56:08 martin Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.17 2010/02/28 11:35:40 martin Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.16 2010/01/21 15:56:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.17 2010/02/28 11:35:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,4 +324,61 @@ of_get_mode_string(char *buffer, int len)
 		return NULL;
 	strncpy(buffer, pos + 2, len);
 	return buffer;
+}
+
+/*
+ * Iterate over the subtree of a i2c controller node.
+ * Add all sub-devices into an array as part of the controller's
+ * device properties.
+ * This is used by the i2c bus attach code to do direct configuration.
+ */
+void
+of_enter_i2c_devs(prop_dictionary_t props, int ofnode)
+{
+	int node, len;
+	char name[32];
+	uint64_t r64;
+	uint64_t r32;
+	uint8_t smr[24];
+	prop_array_t array;
+	prop_dictionary_t dev;
+
+	array = prop_array_create();
+
+	for (node = OF_child(ofnode); node; node = OF_peer(node)) {
+		if (OF_getprop(node, "name", name, sizeof(name)) <= 0)
+			continue;
+		len = OF_getproplen(node, "reg");
+		if (len == sizeof(r64)) {
+			if (OF_getprop(node, "reg", &r64, sizeof(r64))
+			    != sizeof(r64))
+				continue;
+			r32 = r64;
+		} else if (len == sizeof(r32)) {
+			if (OF_getprop(node, "reg", &r32, sizeof(r32))
+			    != sizeof(r32))
+				continue;
+		} else if (len == 24) {
+			if (OF_getprop(node, "reg", smr, sizeof(smr))
+			    != sizeof(smr))
+				continue;
+			/* smbus reg property */
+			r32 = smr[7];
+		} else {
+			panic("unexpected \"reg\" size %d for \"%s\", "
+			    "parent %x, node %x",
+			    len, name, ofnode, node);
+		}
+
+		dev = prop_dictionary_create();
+		prop_dictionary_set_cstring(dev, "name", name);
+		prop_dictionary_set_uint32(dev, "addr", r32 >> 1);
+		prop_dictionary_set_uint64(dev, "cookie", node);
+		of_to_dataprop(dev, node, "compatible", "compatible");
+		prop_array_add(array, dev);
+		prop_object_release(dev);
+	}
+
+	prop_dictionary_set(props, "i2c-child-devices", array);
+	prop_object_release(array);
 }
