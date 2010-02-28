@@ -1,5 +1,5 @@
 
-/*	$NetBSD: vnode.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: vnode.h,v 1.4 2010/02/28 14:45:47 haad Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -175,6 +175,7 @@ typedef struct xoptattr {
 	uint8_t		xoa_av_quarantined;
 	uint8_t		xoa_av_modified;
 	uint8_t		xoa_av_scanstamp[AV_SCANSTAMP_SZ];
+	uint8_t 	xoa_reparse;
 } xoptattr_t;
 
 
@@ -261,6 +262,8 @@ typedef struct xvattr {
 #define	VSA_ACECNT		0x0020
 #define	VSA_ACE_ALLTYPES	0x0040
 #define	VSA_ACE_ACLFLAGS	0x0080	/* get/set ACE ACL flags */
+
+#define v_lock v_interlock
 
 int	vn_is_readonly(vnode_t *);
 
@@ -380,6 +383,7 @@ int	vn_is_readonly(vnode_t *);
 #define	XAT0_AV_QUARANTINED	0x00000400	/* anti-virus quarantine */
 #define	XAT0_AV_MODIFIED	0x00000800	/* anti-virus modified */
 #define	XAT0_AV_SCANSTAMP	0x00001000	/* anti-virus scanstamp */
+#define XAT0_REPARSE 	0x00002000 	/* FS reparse point */
 
 #define	XAT0_ALL_ATTRS	(XAT0_CREATETIME|XAT0_ARCHIVE|XAT0_SYSTEM| \
     XAT0_READONLY|XAT0_HIDDEN|XAT0_NOUNLINK|XAT0_IMMUTABLE|XAT0_APPENDONLY| \
@@ -417,6 +421,7 @@ int	vn_is_readonly(vnode_t *);
 #define	XAT_AV_QUARANTINED	((XAT0_INDEX << XVA_SHFT) | XAT0_AV_QUARANTINED)
 #define	XAT_AV_MODIFIED		((XAT0_INDEX << XVA_SHFT) | XAT0_AV_MODIFIED)
 #define	XAT_AV_SCANSTAMP	((XAT0_INDEX << XVA_SHFT) | XAT0_AV_SCANSTAMP)
+#define XAT_REPARSE 		((XAT0_INDEX << XVA_SHFT) | XAT0_REPARSE)
 
 /*
  * The returned attribute map array (xva_rtnattrmap[]) is located past the
@@ -436,6 +441,14 @@ int	vn_is_readonly(vnode_t *);
 	ASSERT((xvap)->xva_magic == XVA_MAGIC);			\
 	(xvap)->xva_reqattrmap[XVA_INDEX(attr)] |= XVA_ATTRBIT(attr)
 
+/*
+ * XVA_CLR_REQ() clears an attribute bit in the proper element in the bitmap
+ * of requested attributes (xva_reqattrmap[]).
+ */
+#define XVA_CLR_REQ(xvap, attr)                                 \
+	ASSERT((xvap)->xva_vattr.va_mask | AT_XVATTR);          \
+	ASSERT((xvap)->xva_magic == XVA_MAGIC);                 \
+	(xvap)->xva_reqattrmap[XVA_INDEX(attr)] &= ~XVA_ATTRBIT(attr)
 /*
  * XVA_SET_RTN() sets an attribute bit in the proper element in the bitmap
  * of returned attributes (xva_rtnattrmap[]).
@@ -640,18 +653,23 @@ vn_remove(char *fnamep, enum uio_seg seg, enum rm dirflag)
 	return (do_sys_unlink(fnamep, seg));
 }
 
+#define VN_RELE_ASYNC(vp, taskq) 	vrele_async((vp))
+#define vn_exists(a) 	do { } while(0)
+#define vn_reinit(a) 	vclean((a), 0)
+
 /*
  * Flags for VOP_LOOKUP
  *
  * Defined in file.h, but also possible, FIGNORECASE
  *
  */
-#define LOOKUP_XATTR            0x02    /* lookup up extended attr dir */
+#define LOOKUP_XATTR 		0x02	/* lookup up extended attr dir */
 
 /*
  * Flags for VOP_READDIR
  */
-#define V_RDDIR_ENTFLAGS    0x01    /* request dirent flags */
+#define V_RDDIR_ENTFLAGS 	0x01    /* request dirent flags */
+#define	V_RDDIR_ACCFILTER 	0x02	/* filter out inaccessible dirents */
 
 /*
  * Extensible vnode attribute (xva) routines:
