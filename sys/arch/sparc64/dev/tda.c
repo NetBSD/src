@@ -1,4 +1,4 @@
-/*	$NetBSD: tda.c,v 1.1 2010/02/28 11:49:44 martin Exp $	*/
+/*	$NetBSD: tda.c,v 1.2 2010/03/01 22:53:09 martin Exp $	*/
 /*	$OpenBSD: tda.c,v 1.4 2008/02/27 17:25:00 robert Exp $ */
 
 /*
@@ -200,7 +200,8 @@ tda_adjust(void *v)
 		return;
 	}
 
-	aprint_debug_dev(sc->sc_dev, "current temperature: cpu %lu system %lu\n",
+	aprint_debug_dev(sc->sc_dev, "current temperature: cpu %" PRIu64
+		" system %" PRIu64 "\n",
 		ctemp, stemp);
 
 	if (ctemp < CPU_TEMP_MIN)
