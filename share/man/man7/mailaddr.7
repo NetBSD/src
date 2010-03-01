@@ -1,4 +1,4 @@
-.\"	$NetBSD: mailaddr.7,v 1.13 2003/09/07 16:22:29 wiz Exp $
+.\"	$NetBSD: mailaddr.7,v 1.14 2010/03/01 16:52:41 jruoho Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,7 +53,7 @@ Simply because mail may be sent to ``user@somedomain.com'' does not imply
 that there is any actual host named ``somedomain.com'', and does not
 imply a particular routing of the message.
 Routing is performed by Mail Transport Agents, such as
-.Xr sendmail 8 ,
+.Xr postfix 1 ,
 based on policies set in the MTA's configuration.
 .Ss Abbreviation
 Under certain circumstances it may not be necessary to type the entire
@@ -81,15 +81,11 @@ the ``percent hack'') and others have been used historically.
 All these addressing formats are now considered obsolete, and should no
 longer be used.
 .Pp
-To some extent,
-.Xr sendmail 8
-(when running with normal configuration files) attempts to provide
-backward compatibility for these addressing forms, but in practice
-many of them no longer work.
+To some extent, MTAs attempt to provide backward compatibility
+for these addressing forms, but in practice many of them no longer work.
 Users should always use standard Internet style addresses.
 .Sh SEE ALSO
-.Xr mail 1 ,
-.Xr sendmail 8
+.Xr mail 1
 .Rs
 .%R RFC
 .%N 822
