@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.h,v 1.4 2010/03/01 11:19:40 darran Exp $	*/
+/*	$NetBSD: sdt.h,v 1.5 2010/03/01 23:42:41 darran Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -34,6 +34,7 @@
 #include_next <sys/sdt.h>
 #include <sys/dtrace.h>
 
+#ifdef _KERNEL
 typedef struct {
     char			name[SDT_MAX_NAME_SIZE];
     dtrace_provider_id_t	id;
@@ -43,6 +44,7 @@ typedef struct {
 
 int sdt_register(sdt_provider_t *);
 int sdt_unregister(sdt_provider_t *);
+#endif /* _KERNEL */
 
 #undef	DTRACE_PROBE
 #undef	DTRACE_PROBE1
