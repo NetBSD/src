@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.8 2010/02/28 23:20:21 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.1.2.9 2010/03/01 23:53:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.8 2010/02/28 23:20:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.9 2010/03/01 23:53:26 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -409,7 +409,7 @@ pmap_tlb_shootdown_process(void)
 			 * next called for this pmap, it will allocate a new
 			 * ASID.
 			 */
-			KASSERT((pm->pm_onproc & ti->ti_cpu_mask) == 0);
+			KASSERT((curlwp->l_proc->p_vmspace->vm_map.pmap->pm_onproc & ti->ti_cpu_mask) == 0);
 			pmap_pai_reset(ti, pai, PAI_PMAP(pai, ti));
 		}
 		break;
