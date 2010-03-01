@@ -1,4 +1,4 @@
-/*     $NetBSD: kernel.c,v 1.2 2010/02/28 17:36:51 haad Exp $  */
+/*     $NetBSD: kernel.c,v 1.3 2010/03/01 21:13:10 haad Exp $  */
 
 /*
  * CDDL HEADER START
@@ -29,7 +29,7 @@
 #pragma ident	"%Z%%M%	%I%	%E% SMI"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: kernel.c,v 1.2 2010/02/28 17:36:51 haad Exp $");
+__RCSID("$NetBSD: kernel.c,v 1.3 2010/03/01 21:13:10 haad Exp $");
 
 #include <sys/zfs_context.h>
 #include <sys/sysctl.h>
@@ -702,4 +702,28 @@ print_timestamp(int fmt)
 {
 
 	return;
+}
+
+/*
+ * Do not change the length of the returned string; it must be freed
+ * with strfree().
+ */
+char *
+kmem_asprintf(const char *fmt, ...)
+{
+	int size;
+	va_list adx;
+	char *buf;
+
+	va_start(adx, fmt);
+	size = vsnprintf(NULL, 0, fmt, adx) + 1;
+	va_end(adx);
+
+	buf = kmem_alloc(size, KM_SLEEP);
+
+	va_start(adx, fmt);
+	size = vsnprintf(buf, size, fmt, adx);
+	va_end(adx);
+
+	return (buf);
 }
