@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.h,v 1.4 2010/02/28 14:45:47 haad Exp $	*/
+/*	$NetBSD: policy.h,v 1.5 2010/03/01 11:19:40 darran Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -35,6 +35,8 @@
 
 #ifdef _KERNEL
 
+#include <sys/vnode.h>
+
 struct mount;
 struct ucred;
 struct vattr;
@@ -43,7 +45,7 @@ struct vnode;
 int	secpolicy_zfs(struct kauth_cred  *cred);
 int	secpolicy_sys_config(struct kauth_cred  *cred, int checkonly);
 int	secpolicy_zinject(struct kauth_cred  *cred);
-int 	secpolicy_fs_mount(struct kauth_cred *cred, vnode_t *mvp, struct mount *vfsp);
+int 	secpolicy_fs_mount(struct kauth_cred *cred, struct vnode *mvp, struct mount *vfsp);
 int	secpolicy_fs_unmount(struct kauth_cred  *cred, struct mount *vfsp);
 int	secpolicy_basic_link(struct kauth_cred  *cred);
 int	secpolicy_vnode_stky_modify(struct kauth_cred *cred);
