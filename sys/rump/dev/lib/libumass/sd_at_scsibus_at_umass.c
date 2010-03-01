@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_at_scsibus_at_umass.c,v 1.1 2010/02/11 02:22:09 pooka Exp $	*/
+/*	$NetBSD: sd_at_scsibus_at_umass.c,v 1.2 2010/03/01 13:12:20 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -8,6 +8,7 @@
 
 #include "ioconf.c"
 
+#include "rump_private.h"
 #include "rump_dev_private.h"
 #include "rump_vfs_private.h"
 
@@ -18,8 +19,7 @@ do {									\
 		panic("\"%s\" failed", #call);				\
 } while (/*CONSTCOND*/0)
 
-void
-rump_device_configuration(void)
+RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 	extern struct cfattach ugenhc_ca;
 	extern struct cfattach usb_ca, uhub_ca, uroothub_ca, umass_ca;

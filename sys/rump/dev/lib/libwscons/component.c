@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.1 2010/02/11 02:22:10 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.2 2010/03/01 13:12:20 pooka Exp $	*/
 
 /*
  * MACHINE GENERATED: DO NOT EDIT
@@ -421,6 +421,7 @@ struct cfdata cfdata_wscons[] = {
 
 #include <sys/stat.h>
 
+#include "rump_private.h"
 #include "rump_dev_private.h"
 #include "rump_vfs_private.h"
 
@@ -431,8 +432,7 @@ do {									\
 		panic("\"%s\" failed", #call);				\
 } while (/*CONSTCOND*/0)
 
-void
-rump_wscons_configuration(void)
+RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 	extern struct cfattach wskbd_ca, wsmouse_ca;
 	extern struct cdevsw wskbd_cdevsw, wsmouse_cdevsw;
