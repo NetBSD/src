@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.18 2010/02/28 23:45:07 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.19 2010/03/01 19:26:00 matt Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -45,13 +45,26 @@ void	mips_cp0_status_write(uint32_t);
 void	softint_process(uint32_t);
 void	softint_fast_dispatch(struct lwp *, int);
 
+/*
+ * Convert an address to an offset used in a MIPS jump instruction.  The offset
+ * contains the low 28 bits (allowing a jump to anywhere within the same 256MB
+ * segment of address space) of the address but since mips instructions are
+ * always on a 4 byte boundary the low 2 bits are always zero so the 28 bits
+ * get shifted right by 2 bits leaving us with a 26 bit result.  To make the
+ * offset, we shift left to clear the upper four bits and then right by 6.
+ */
+#define	fixup_addr2offset(x)	((((uint32_t)(uintptr_t)(x)) << 4) >> 6)
 typedef bool (*mips_fixup_callback_t)(int32_t, uint32_t [2]);
+struct mips_jump_fixup_info {
+	uint32_t jfi_stub;
+	uint32_t jfi_real;
+};
  
 void	fixup_splcalls(void);				/* splstubs.c */
 bool	mips_fixup_exceptions(mips_fixup_callback_t);
 bool	mips_fixup_zero_relative(int32_t, uint32_t [2]);
-void	mips_fixup_stubs(uint32_t *, uint32_t *, const uint32_t *,
-	    const uint32_t *, size_t);
+void	mips_fixup_stubs(uint32_t *, uint32_t *,
+	    const struct mips_jump_fixup_info *, size_t);
 void	fixup_mips_cpu_switch_resume(void);
 
 void	mips_cpu_switch_resume(struct lwp *);

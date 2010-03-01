@@ -1,4 +1,4 @@
-/* $NetBSD: spl_stubs.c,v 1.1.2.1 2010/02/28 03:23:06 matt Exp $ */
+/* $NetBSD: spl_stubs.c,v 1.1.2.2 2010/03/01 19:26:01 matt Exp $ */
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: spl_stubs.c,v 1.1.2.1 2010/02/28 03:23:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl_stubs.c,v 1.1.2.2 2010/03/01 19:26:01 matt Exp $");
 
 #define __INTR_PRIVATE
 
@@ -55,134 +55,103 @@ void	spl0(void)		__section(".stub");
 int	splintr(uint32_t *)	__section(".stub");
 void	_setsoftintr(uint32_t)	__section(".stub");
 void	_clrsoftintr(uint32_t)	__section(".stub");
+void	splcheck(void)		__section(".stub");
 
-#define	J_SPLHIGH	0
 int
 splhigh(void)
 {
 	return (*mips_splsw.splsw_splhigh)();
 }
 
-#define	J_SPLHIGH_NOPROF	(J_SPLHIGH+1)
 int
 splhigh_noprof(void)
 {
 	return (*mips_splsw.splsw_splhigh_noprof)();
 }
 
-#define	J_SPLSCHED		(J_SPLHIGH_NOPROF+1)
 int
 splsched(void)
 {
 	return (*mips_splsw.splsw_splsched)();
 }
 
-#define	J_SPLVM			(J_SPLSCHED+1)
 int
 splvm(void)
 {
 	return (*mips_splsw.splsw_splvm)();
 }
 
-#define	J_SPLSOFTSERIAL		(J_SPLVM+1)
 int
 splsoftserial(void)
 {
 	return (*mips_splsw.splsw_splsoftserial)();
 }
 
-#define	J_SPLSOFTNET		(J_SPLSOFTSERIAL+1)
 int
 splsoftnet(void)
 {
 	return (*mips_splsw.splsw_splsoftnet)();
 }
 
-#define	J_SPLSOFTBIO		(J_SPLSOFTNET+1)
 int
 splsoftbio(void)
 {
 	return (*mips_splsw.splsw_splsoftbio)();
 }
 
-#define	J_SPLSOFTCLOCK		(J_SPLSOFTBIO+1)
 int
 splsoftclock(void)
 {
 	return (*mips_splsw.splsw_splsoftclock)();
 }
 
-#define	J_SPL0			(J_SPLSOFTCLOCK+1)
 void
 spl0(void)
 {
 	(*mips_splsw.splsw_spl0)();
 }
 
-#define	J_SPLX			(J_SPL0+1)
 void
 splx(int s)
 {
 	(*mips_splsw.splsw_splx)(s);
 }
 
-#define	J_SPLX_NOPROF		(J_SPLX+1)
 void
 splx_noprof(int s)
 {
 	(*mips_splsw.splsw_splx_noprof)(s);
 }
 
-#define	J_SPLRAISE		(J_SPLX_NOPROF+1)
 int
 splraise(int s)
 {
         return (*mips_splsw.splsw_splraise)(s);
 }
 
-#define	J_SPLINTR		(J_SPLRAISE+1)
 int
 splintr(uint32_t *p)
 {
 	return (*mips_splsw.splsw_splintr)(p);
 }
 
-#define	J_SETSOFTINTR		(J_SPLINTR+1)
 void
 _setsoftintr(uint32_t m)
 {
 	(*mips_splsw.splsw__setsoftintr)(m);
 }
 
-#define	J_CLRSOFTINTR		(J_SETSOFTINTR+1)
 void
 _clrsoftintr(uint32_t m)
 {
 	(*mips_splsw.splsw__clrsoftintr)(m);
 }
 
-#define	J_SPLMAX		(J_CLRSOFTINTR+1)
-
-#if 0
-#define	offsetofsplsw(x)	(offsetof(struct splsw, x) / sizeof(uint32_t))
-static uint32_t splreal[J_SPLMAX] = {
-	[J_SPLHIGH] =		offsetofsplsw(splsw_splhigh),
-	[J_SPLHIGH_NOPROF] =	offsetofsplsw(splsw_splhigh_noprof),
-	[J_SPLSCHED] =		offsetofsplsw(splsw_splsched),
-	[J_SPLVM] =		offsetofsplsw(splsw_splvm),
-	[J_SPLSOFTSERIAL] =	offsetofsplsw(splsw_splsoftserial),
-	[J_SPLSOFTNET] =	offsetofsplsw(splsw_splsoftnet),
-	[J_SPLSOFTBIO] =	offsetofsplsw(splsw_splsoftbio),
-	[J_SPLSOFTCLOCK] =	offsetofsplsw(splsw_splsoftclock),
-	[J_SPL0] =		offsetofsplsw(splsw_spl0),
-	[J_SPLX] =		offsetofsplsw(splsw_splx),
-	[J_SPLX_NOPROF] =	offsetofsplsw(splsw_splx_noprof),
-	[J_SPLRAISE] =		offsetofsplsw(splsw_splraise),
-	[J_SPLINTR] =		offsetofsplsw(splsw_splintr),
-	[J_SETSOFTINTR] =	offsetofsplsw(splsw_setsoftintr),
-	[J_CLRSOFTINTR] =	offsetofsplsw(splsw_clrsoftintr),
-};
-#endif
+void
+splcheck(void)
+{
+	(*mips_splsw.splsw_splcheck)();
+}
 
 void
 fixup_splcalls(void)
@@ -190,49 +159,39 @@ fixup_splcalls(void)
 	extern uint32_t _ftext[];
 	extern uint32_t _etext[];
 
-#define	addr2offset(x)	((((uint32_t)(uintptr_t)(x)) << 4) >> 6)
-#define	stuboffset(x)	addr2offset(x)
-	uint32_t splstubs[J_SPLMAX] = {
-		[J_SPLHIGH] =		stuboffset(splhigh),
-		[J_SPLHIGH_NOPROF] =	stuboffset(splhigh_noprof),
-		[J_SPLSCHED] =		stuboffset(splsched),
-		[J_SPLVM] =		stuboffset(splvm),
-		[J_SPLSOFTSERIAL] =	stuboffset(splsoftserial),
-		[J_SPLSOFTNET] =	stuboffset(splsoftnet),
-		[J_SPLSOFTBIO] =	stuboffset(splsoftbio),
-		[J_SPLSOFTCLOCK] =	stuboffset(splsoftclock),
-		[J_SPL0] =		stuboffset(spl0),
-		[J_SPLX] =		stuboffset(splx),
-		[J_SPLX_NOPROF] =	stuboffset(splx_noprof),
-		[J_SPLRAISE] =		stuboffset(splraise),
-		[J_SPLINTR] =		stuboffset(splintr),
-		[J_SETSOFTINTR] =	stuboffset(_setsoftintr),
-		[J_CLRSOFTINTR] =	stuboffset(_clrsoftintr),
+#define	splfixupinfo(x)	{ fixup_addr2offset(x), \
+			  fixup_addr2offset(mips_splsw.splsw_##x) }
+	struct mips_jump_fixup_info fixups[] = {
+		splfixupinfo(splhigh),
+		splfixupinfo(splhigh_noprof),
+		splfixupinfo(splsched),
+		splfixupinfo(splvm),
+		splfixupinfo(splsoftserial),
+		splfixupinfo(splsoftnet),
+		splfixupinfo(splsoftbio),
+		splfixupinfo(splsoftclock),
+		splfixupinfo(spl0),
+		splfixupinfo(splx),
+		splfixupinfo(splx_noprof),
+		splfixupinfo(splraise),
+		splfixupinfo(splintr),
+		splfixupinfo(_setsoftintr),
+		splfixupinfo(_clrsoftintr),
+		splfixupinfo(splcheck),
 	};
 
-#define	realoffset(x)	addr2offset(mips_splsw.splsw_##x)
-	uint32_t splreal[J_SPLMAX] = {
-		[J_SPLHIGH] =		realoffset(splhigh),
-		[J_SPLHIGH_NOPROF] =	realoffset(splhigh_noprof),
-		[J_SPLSCHED] =		realoffset(splsched),
-		[J_SPLVM] =		realoffset(splvm),
-		[J_SPLSOFTSERIAL] =	realoffset(splsoftserial),
-		[J_SPLSOFTNET] =	realoffset(splsoftnet),
-		[J_SPLSOFTBIO] =	realoffset(splsoftbio),
-		[J_SPLSOFTCLOCK] =	realoffset(splsoftclock),
-		[J_SPL0] =		realoffset(spl0),
-		[J_SPLX] =		realoffset(splx),
-		[J_SPLX_NOPROF] =	realoffset(splx_noprof),
-		[J_SPLRAISE] =		realoffset(splraise),
-		[J_SPLINTR] =		realoffset(splintr),
-		[J_SETSOFTINTR] =	realoffset(_setsoftintr),
-		[J_CLRSOFTINTR] =	realoffset(_clrsoftintr),
-	};
-
-#if 0
-	for (size_t i = 0; i < J_SPLMAX; i++) {
-		splreal[i] = (((uint32_t *)&mips_splsw)[splreal[i]] << 4) >> 6;
+	/*
+	 * [bubble] sort fixups from lowest stub to highest stub.
+	 */
+	for (size_t i = 0; i < __arraycount(fixups) - 1; i++) {
+		for (size_t j = i + 1; j < __arraycount(fixups); j++) {
+			if (fixups[i].jfi_stub > fixups[j].jfi_stub) {
+				struct mips_jump_fixup_info tmp = fixups[i];
+				fixups[i] = fixups[j];
+				fixups[j] = tmp;
+			}
+		}
 	}
-#endif
-	mips_fixup_stubs(_ftext, _etext, splstubs, splreal, J_SPLMAX);
+
+	mips_fixup_stubs(_ftext, _etext, fixups, __arraycount(fixups));
 }
