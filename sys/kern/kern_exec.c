@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.293 2010/01/08 11:35:10 pooka Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.294 2010/03/01 21:10:15 darran Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.293 2010/01/08 11:35:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.294 2010/03/01 21:10:15 darran Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.293 2010/01/08 11:35:10 pooka Exp $"
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
 #endif /* NVERIEXEC > 0 */
+#include <sys/sdt.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -115,6 +116,22 @@ static int exec_sigcode_map(struct proc *, const struct emul *);
 #else
 #define DPRINTF(a)
 #endif /* DEBUG_EXEC */
+
+/*
+ * DTrace SDT provider definitions
+ */
+SDT_PROBE_DEFINE(proc,,,exec, 
+	    "char *", NULL,
+	    NULL, NULL, NULL, NULL,
+	    NULL, NULL, NULL, NULL);
+SDT_PROBE_DEFINE(proc,,,exec_success, 
+	    "char *", NULL,
+	    NULL, NULL, NULL, NULL,
+	    NULL, NULL, NULL, NULL);
+SDT_PROBE_DEFINE(proc,,,exec_failure, 
+	    "int", NULL,
+	    NULL, NULL, NULL, NULL,
+	    NULL, NULL, NULL, NULL);
 
 /*
  * Exec function switch:
@@ -519,6 +536,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	p = l->l_proc;
  	modgen = 0;
+
+	SDT_PROBE(proc,,,exec, path, 0, 0, 0, 0);
 
 	/*
 	 * Check if we have exceeded our number of processes limit.
@@ -1063,6 +1082,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	kmem_free(pack.ep_hdr, pack.ep_hdrlen);
 
+	SDT_PROBE(proc,,,exec_success, path, 0, 0, 0, 0);
+
 	/* The emulation root will usually have been found when we looked
 	 * for the elf interpreter (or similar), if not look now. */
 	if (pack.ep_esch->es_emul->e_path != NULL && pack.ep_emul_root == NULL)
@@ -1181,9 +1202,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		goto retry;
 	}
 
+	SDT_PROBE(proc,,,exec_failure, error, 0, 0, 0, 0);
 	return error;
 
  exec_abort:
+	SDT_PROBE(proc,,,exec_failure, error, 0, 0, 0, 0);
 	PNBUF_PUT(pathbuf);
 	rw_exit(&p->p_reflock);
 	rw_exit(&exec_lock);
