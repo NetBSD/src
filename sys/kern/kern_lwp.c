@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.140 2010/02/23 22:19:27 darran Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.141 2010/03/01 21:10:17 darran Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.140 2010/02/23 22:19:27 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.141 2010/03/01 21:10:17 darran Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -237,6 +237,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.140 2010/02/23 22:19:27 darran Exp $"
 #include <sys/atomic.h>
 #include <sys/filedesc.h>
 #include <sys/dtrace_bsd.h>
+#include <sys/sdt.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
@@ -247,6 +248,20 @@ struct pool lwp_uc_pool;
 
 static pool_cache_t lwp_cache;
 static specificdata_domain_t lwp_specificdata_domain;
+
+/* DTrace proc provider probes */
+SDT_PROBE_DEFINE(proc,,,lwp_create,
+	"struct lwp *", NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL);
+SDT_PROBE_DEFINE(proc,,,lwp_start,
+	"struct lwp *", NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL);
+SDT_PROBE_DEFINE(proc,,,lwp_exit,
+	"struct lwp *", NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL);
 
 void
 lwpinit(void)
@@ -681,6 +696,8 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	}
 	mutex_exit(p2->p_lock);
 
+	SDT_PROBE(proc,,,lwp_create, l2, 0,0,0,0);
+
 	mutex_enter(proc_lock);
 	LIST_INSERT_HEAD(&alllwp, l2, l_list);
 	mutex_exit(proc_lock);
@@ -701,6 +718,8 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 void
 lwp_startup(struct lwp *prev, struct lwp *new)
 {
+
+	SDT_PROBE(proc,,,lwp_start, new, 0,0,0,0);
 
 	KASSERT(kpreempt_disabled());
 	if (prev != NULL) {
@@ -737,6 +756,8 @@ lwp_exit(struct lwp *l)
 
 	KASSERT(current || (l->l_stat == LSIDL && l->l_target_cpu == NULL));
 	KASSERT(p == curproc);
+
+	SDT_PROBE(proc,,,lwp_exit, l, 0,0,0,0);
 
 	/*
 	 * Verify that we hold no locks other than the kernel lock.

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.7 2010/02/21 03:18:47 darran Exp $
+# $NetBSD: mi,v 1.8 2010/03/01 21:10:19 darran Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -92,6 +92,8 @@
 ./@MODULEDIR@/puffs/puffs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/putter				base-kernel-modules	kmod
 ./@MODULEDIR@/putter/putter.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/sdt				base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/sdt/sdt.kmod			base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/secmodel_bsd44			base-kernel-modules	kmod
 ./@MODULEDIR@/secmodel_bsd44/secmodel_bsd44.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/secmodel_overlay			base-kernel-modules	kmod
@@ -100,8 +102,8 @@
 ./@MODULEDIR@/securelevel/securelevel.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/smbfs				base-kernel-modules	kmod
 ./@MODULEDIR@/smbfs/smbfs.kmod			base-kernel-modules	kmod
-./@MODULEDIR@/solaris				base-kernel-modules     kmod,zfs
-./@MODULEDIR@/solaris/solaris.kmod		base-kernel-modules     kmod,zfs
+./@MODULEDIR@/solaris				base-kernel-modules     kmod,dtrace
+./@MODULEDIR@/solaris/solaris.kmod		base-kernel-modules     kmod,dtrace
 ./@MODULEDIR@/suser				base-kernel-modules	kmod
 ./@MODULEDIR@/suser/suser.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/sysvbfs				base-kernel-modules	kmod

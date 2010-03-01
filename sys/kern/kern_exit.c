@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.225 2009/11/04 21:23:02 rmind Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.226 2010/03/01 21:10:15 darran Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.225 2009/11/04 21:23:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.226 2010/03/01 21:10:15 darran Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.225 2009/11/04 21:23:02 rmind Exp $"
 #include <sys/cpu.h>
 #include <sys/lwpctl.h>
 #include <sys/atomic.h>
+#include <sys/sdt.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -122,6 +123,13 @@ int debug_exit = 0;
 static int find_stopped_child(struct proc *, pid_t, int, struct proc **, int *);
 static void proc_free(struct proc *, struct rusage *);
 
+/*
+ * DTrace SDT provider definitions
+ */
+SDT_PROBE_DEFINE(proc,,,exit, 
+	    "int", NULL, 		/* reason */
+	    NULL, NULL, NULL, NULL,
+	    NULL, NULL, NULL, NULL);
 /*
  * Fill in the appropriate signal information, and signal the parent.
  */
@@ -401,6 +409,11 @@ exit1(struct lwp *l, int rv)
 	 * Notify interested parties of our demise.
 	 */
 	KNOTE(&p->p_klist, NOTE_EXIT);
+
+	SDT_PROBE(proc,,,exit, 
+		(WCOREDUMP(rv) ? CLD_DUMPED :
+		 (WIFSIGNALED(rv) ? CLD_KILLED : CLD_EXITED)),
+		0,0,0,0);
 
 #if PERFCTRS
 	/*

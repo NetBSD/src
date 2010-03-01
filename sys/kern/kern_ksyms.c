@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.53 2010/01/31 00:43:37 hubertf Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.54 2010/03/01 21:10:16 darran Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.53 2010/01/31 00:43:37 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.54 2010/03/01 21:10:16 darran Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -124,6 +124,7 @@ int		db_symtabsize = SYMTAB_SPACE;
 
 int ksyms_symsz;
 int ksyms_strsz;
+int ksyms_ctfsz = 0;
 TAILQ_HEAD(, ksyms_symtab) ksyms_symtabs =
     TAILQ_HEAD_INITIALIZER(ksyms_symtabs);
 static struct ksyms_symtab kernel_symtab;
@@ -264,7 +265,7 @@ addsymtab_compar(const void *a, const void *b)
 static void
 addsymtab(const char *name, void *symstart, size_t symsize,
 	  void *strstart, size_t strsize, struct ksyms_symtab *tab,
-	  void *newstart)
+	  void *newstart, void *ctfstart, size_t ctfsize)
 {
 	Elf_Sym *sym, *nsym, ts;
 	int i, j, n, nglob;
@@ -279,6 +280,8 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	tab->sd_maxsym = 0;
 	tab->sd_usroffset = 0;
 	tab->sd_gone = false;
+	tab->sd_ctfstart = ctfstart;
+	tab->sd_ctfsize = ctfsize;
 #ifdef KSYMS_DEBUG
 	printf("newstart %p sym %p ksyms_symsz %d str %p strsz %d send %p\n",
 	    newstart, symstart, symsize, strstart, strsize,
@@ -353,6 +356,8 @@ ksyms_addsyms_elf(int symsize, void *start, void *end)
 	char *symstart = NULL, *strstart = NULL;
 	size_t strsize = 0;
 	Elf_Ehdr *ehdr;
+	char *ctfstart = NULL;
+	size_t ctfsize = 0;
 
 	if (symsize <= 0) {
 		printf("[ Kernel symbol table missing! ]\n");
@@ -397,10 +402,26 @@ ksyms_addsyms_elf(int symsize, void *start, void *end)
 		break;
 	}
 
+	/* Find the CTF section */
+	shdr = (Elf_Shdr *)((uint8_t *)start + ehdr->e_shoff);
+	for (i = 1; i < ehdr->e_shnum; i++) {
+		if (shdr[i].sh_type != SHT_PROGBITS)
+			continue;
+		if (strncmp(".SUNW_ctf", &strstart[shdr[i].sh_name] ,10) != 0)
+		    	continue;
+		ctfstart = (uint8_t *)start + shdr[i].sh_offset;
+		ctfsize = shdr[i].sh_size;
+		ksyms_ctfsz = ctfsize;
+		printf("%s: found CTF at 0x%x, size 0x%x\n",
+			__func__,
+			(uint32_t)ctfstart, ctfsize);
+		break;
+	}
+
 	if (!ksyms_verify(symstart, strstart))
 		return;
 	addsymtab("netbsd", symstart, symsize, strstart, strsize,
-	    &kernel_symtab, start);
+	    &kernel_symtab, start, ctfstart, ctfsize);
 
 #ifdef DEBUG
 	aprint_normal("Loaded initial symtab at %p, strtab at %p, # entries %ld\n",
@@ -427,7 +448,7 @@ ksyms_addsyms_explicit(void *ehdr, void *symstart, size_t symsize,
 
 	ksyms_hdr_init(ehdr);
 	addsymtab("netbsd", symstart, symsize, strstart, strsize,
-	    &kernel_symtab, symstart);
+	    &kernel_symtab, symstart, NULL, 0);
 }
 
 /*
@@ -548,7 +569,8 @@ ksyms_modload(const char *name, void *symstart, vsize_t symsize,
 
 	st = kmem_zalloc(sizeof(*st), KM_SLEEP);
 	mutex_enter(&ksyms_lock);
-	addsymtab(name, symstart, symsize, strstart, strsize, st, symstart);
+	addsymtab(name, symstart, symsize, strstart, strsize, st, symstart, 
+		NULL, 0);
 	mutex_exit(&ksyms_lock);
 }
 
@@ -716,11 +738,19 @@ ksyms_hdr_init(void *hdraddr)
 
 	/* Fifth section, ".bss". All symbols reside here. */
 	ksyms_hdr.kh_shdr[SHBSS].sh_name = 27; /* This section name offset */
-	ksyms_hdr.kh_shdr[SHBSS].sh_type = SHT_NOBITS;
+	ksyms_hdr.kh_shdr[SHBSS].sh_type = SHT_SYMTAB;
 	ksyms_hdr.kh_shdr[SHBSS].sh_offset = 0;
 	ksyms_hdr.kh_shdr[SHBSS].sh_size = (unsigned long)-1L;
 	ksyms_hdr.kh_shdr[SHBSS].sh_addralign = PAGE_SIZE;
 	ksyms_hdr.kh_shdr[SHBSS].sh_flags = SHF_ALLOC | SHF_EXECINSTR;
+
+	/* Sixth section, ".SUNW_ctf". CTF section for DTrace */
+	ksyms_hdr.kh_shdr[SHCTF].sh_name = 32; /* This section name offset */
+	ksyms_hdr.kh_shdr[SHCTF].sh_type = SHT_NOBITS;
+/*	ksyms_hdr.kh_shdr[SHCTF].sh_offset = filled at open; */
+/*	ksyms_hdr.kh_shdr[SHCTF].sh_size = filled at open; */
+	ksyms_hdr.kh_shdr[SHCTF].sh_addralign = PAGE_SIZE;
+	ksyms_hdr.kh_shdr[SHCTF].sh_flags = 0;
 
 	/* Set section names */
 	strlcpy(&ksyms_hdr.kh_strtab[1], ".symtab",
@@ -731,6 +761,8 @@ ksyms_hdr_init(void *hdraddr)
 	    sizeof(ksyms_hdr.kh_strtab) - 17);
 	strlcpy(&ksyms_hdr.kh_strtab[27], ".bss",
 	    sizeof(ksyms_hdr.kh_strtab) - 27);
+	strlcpy(&ksyms_hdr.kh_strtab[32], ".SUNW_ctf",
+	    sizeof(ksyms_hdr.kh_strtab) - 32);
 }
 
 static int
@@ -747,8 +779,11 @@ ksymsopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 	mutex_enter(&ksyms_lock);
 	ksyms_hdr.kh_shdr[SYMTAB].sh_size = ksyms_symsz;
 	ksyms_hdr.kh_shdr[SYMTAB].sh_info = ksyms_symsz / sizeof(Elf_Sym);
-	ksyms_hdr.kh_shdr[STRTAB].sh_offset = ksyms_symsz +
+	ksyms_hdr.kh_shdr[SHCTF].sh_size = ksyms_ctfsz;
+	ksyms_hdr.kh_shdr[SHCTF].sh_offset = ksyms_symsz +
 	    ksyms_hdr.kh_shdr[SYMTAB].sh_offset;
+	ksyms_hdr.kh_shdr[STRTAB].sh_offset = 
+	    ksyms_hdr.kh_shdr[SHCTF].sh_offset + ksyms_ctfsz;
 	ksyms_hdr.kh_shdr[STRTAB].sh_size = ksyms_strsz;
 	ksyms_isopen = true;
 	mutex_exit(&ksyms_lock);
@@ -784,7 +819,7 @@ ksymsclose(dev_t dev, int oflags, int devtype, struct lwp *l)
 static int
 ksymsread(dev_t dev, struct uio *uio, int ioflag)
 {
-	struct ksyms_symtab *st;
+	struct ksyms_symtab *st, *cst;
 	size_t filepos, inpos, off;
 	int error;
 
@@ -818,10 +853,29 @@ ksymsread(dev_t dev, struct uio *uio, int ioflag)
 	}
 
 	/*
+	 * Copy out the CTF table.
+	 */
+	cst = TAILQ_FIRST(&ksyms_symtabs);
+	printf("%s: ctf start 0x%x size 0x%x\n",
+		__func__,
+		(uint32_t)cst->sd_ctfstart, cst->sd_ctfsize);
+	if (uio->uio_resid == 0)
+		return 0;
+	if (uio->uio_offset <= cst->sd_symsize + filepos) {
+		inpos = uio->uio_offset - filepos;
+		error = uiomove((char *)cst->sd_ctfstart + inpos,
+		   cst->sd_ctfsize - inpos, uio);
+		if (error != 0)
+			return error;
+	}
+	filepos += cst->sd_ctfsize;
+
+	/*
 	 * Copy out the string table
 	 */
 	KASSERT(filepos == sizeof(struct ksyms_hdr) +
-	    ksyms_hdr.kh_shdr[SYMTAB].sh_size);
+	    ksyms_hdr.kh_shdr[SYMTAB].sh_size +
+	    ksyms_hdr.kh_shdr[SHCTF].sh_size);
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
 		if (uio->uio_resid == 0)
 			return 0;

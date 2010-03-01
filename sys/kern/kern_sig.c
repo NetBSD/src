@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.302 2009/12/30 23:31:56 rmind Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.303 2010/03/01 21:10:17 darran Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.302 2009/12/30 23:31:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.303 2010/03/01 21:10:17 darran Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.302 2009/12/30 23:31:56 rmind Exp $")
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/module.h>
+#include <sys/sdt.h>
 
 #ifdef PAX_SEGVGUARD
 #include <sys/pax.h>
@@ -123,6 +124,30 @@ static pool_cache_t ksiginfo_cache;
 void (*sendsig_sigcontext_vec)(const struct ksiginfo *, const sigset_t *);
 int (*coredump_vec)(struct lwp *, const char *) =
     (int (*)(struct lwp *, const char *))enosys;
+
+/*
+ * DTrace SDT provider definitions
+ */
+SDT_PROBE_DEFINE(proc,,,signal_send, 
+	    "struct lwp *", NULL,	/* target thread */
+	    "struct proc *", NULL,	/* target process */
+	    "int", NULL, 		/* signal */
+	    NULL, NULL, NULL, NULL);
+SDT_PROBE_DEFINE(proc,,,signal_discard, 
+	    "struct lwp *", NULL,	/* target thread */
+	    "struct proc *", NULL,	/* target process */
+	    "int", NULL, 		/* signal */
+	    NULL, NULL, NULL, NULL);
+SDT_PROBE_DEFINE(proc,,,signal_clear, 
+	    "int", NULL,		/* signal */
+	    NULL, NULL, NULL, NULL,
+	    NULL, NULL, NULL, NULL);
+SDT_PROBE_DEFINE(proc,,,signal_handle, 
+	    "int", NULL,		/* signal */
+	    "ksiginfo_t *", NULL,
+	    "void (*)(void)", NULL,	/* handler address */
+	    NULL, NULL, NULL, NULL);
+
 
 static struct pool_allocator sigactspool_allocator = {
 	.pa_alloc = sigacts_poolpage_alloc,
@@ -1071,6 +1096,8 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig, int idlecheck)
 	if (l->l_refcnt == 0)
 		return 0;
 
+	SDT_PROBE(proc,,,signal_send, l, p, sig,  0, 0);
+
 	/*
 	 * Have the LWP check for signals.  This ensures that even if no LWP
 	 * is found to take the signal immediately, it should be taken soon.
@@ -1834,6 +1861,10 @@ issignal(struct lwp *l)
 		}
 
 		prop = sigprop[signo];
+
+		/* XXX no siginfo? */
+		SDT_PROBE(proc,,,signal_handle, signo, 0, 
+			SIGACTION(p, signo).sa_handler, 0, 0);
 
 		/*
 		 * Decide whether the signal should be returned.
