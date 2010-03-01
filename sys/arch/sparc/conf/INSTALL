@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.72 2009/12/05 20:11:17 pooka Exp $
+#	$NetBSD: INSTALL,v 1.73 2010/03/01 06:14:17 macallan Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -561,6 +561,10 @@ cgfourteen*	at obio0			# sun4m
 
 # P9100-based display on Tadpole SPARCbook 3.
 pnozz0		at sbus? slot ? offset ?
+# the SPARCbook 3 hardware docs say that accesses to P9100 registers need to be
+# 'latched in' but at least my 3GX works happily without
+# Enable it by default since we don't know which hardware really needs it.
+options PNOZZ_USE_LATCH
 
 # Sun ZX/Leo 24-bit framebuffer
 zx*		at sbus? slot ? offset ?
