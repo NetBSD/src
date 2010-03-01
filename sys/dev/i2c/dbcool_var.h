@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_var.h,v 1.10 2010/02/26 18:16:18 pgoyette Exp $ */
+/*	$NetBSD: dbcool_var.h,v 1.11 2010/03/01 03:14:49 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.10 2010/02/26 18:16:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.11 2010/03/01 03:14:49 pgoyette Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
@@ -119,6 +119,7 @@ struct dbcool_softc {
 	struct sysmon_envsys *sc_sme;
 	struct dbcool_chipset sc_dc;
 	envsys_data_t sc_sensor[DBCOOL_MAXSENSORS];
+	int sc_root_sysctl_num;
 	int sc_sysctl_num[DBCOOL_MAXSENSORS];
 	struct reg_list *sc_regs[DBCOOL_MAXSENSORS];
 	int sc_nom_volt[DBCOOL_MAXSENSORS];
