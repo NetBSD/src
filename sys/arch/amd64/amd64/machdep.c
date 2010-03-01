@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.142 2010/02/08 19:02:26 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.143 2010/03/01 01:35:11 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142 2010/02/08 19:02:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143 2010/03/01 01:35:11 jym Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -906,7 +906,7 @@ dodumpsys(void)
 	if ((error = cpu_dump()) != 0)
 		goto err;
 
-	totalbytesleft = ptoa(cpu_dump_mempagecnt());
+	totalbytesleft = ctob(cpu_dump_mempagecnt());
 	blkno = dumplo + cpu_dumpsize();
 	dump = bdev->d_dump;
 	error = 0;
@@ -1151,7 +1151,7 @@ init_x86_64_msgbuf(void)
 
 	for (x = 0; x < vm_nphysseg; x++) {
 		vps = &vm_physmem[x];
-		if (ptoa(vps->avail_end) == avail_end)
+		if (ctob(vps->avail_end) == avail_end)
 			break;
 	}
 	if (x == vm_nphysseg)
@@ -1159,12 +1159,12 @@ init_x86_64_msgbuf(void)
 
 	/* Shrink so it'll fit in the last segment. */
 	if ((vps->avail_end - vps->avail_start) < atop(sz))
-		sz = ptoa(vps->avail_end - vps->avail_start);
+		sz = ctob(vps->avail_end - vps->avail_start);
 
 	vps->avail_end -= atop(sz);
 	vps->end -= atop(sz);
             msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
-            msgbuf_p_seg[msgbuf_p_cnt++].paddr = ptoa(vps->avail_end);
+            msgbuf_p_seg[msgbuf_p_cnt++].paddr = ctob(vps->avail_end);
 
 	/* Remove the last segment if it now has no pages. */
 	if (vps->start == vps->end) {
@@ -1176,7 +1176,7 @@ init_x86_64_msgbuf(void)
 	for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
 		if (vm_physmem[x].avail_end > avail_end)
 			avail_end = vm_physmem[x].avail_end;
-	avail_end = ptoa(avail_end);
+	avail_end = ctob(avail_end);
 
 	if (sz == reqsz)
 		return;
@@ -1293,7 +1293,7 @@ init_x86_64(paddr_t first_avail)
 
 	/* Determine physical address space */
 	avail_start = first_avail;
-	avail_end = ptoa(xen_start_info.nr_pages);
+	avail_end = ctob(xen_start_info.nr_pages);
 	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
 	pmap_pa_end = avail_end;
 	__PRINTK(("pmap_pa_start 0x%lx avail_start 0x%lx avail_end 0x%lx\n",
