@@ -54,7 +54,9 @@ typedef uint16_t lgrpid_t;
 /*
  * Type for processor name (CPU number).
  */
+#if defined(sun)
 typedef	int	processorid_t;
+#endif
 typedef int	chipid_t;
 
 /*
