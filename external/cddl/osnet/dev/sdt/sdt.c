@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.c,v 1.3 2010/03/01 21:10:19 darran Exp $	*/
+/*	$NetBSD: sdt.c,v 1.4 2010/03/01 22:38:29 darran Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -54,9 +54,9 @@ static dev_type_open(sdt_open);
 
 static int	sdt_unload(void);
 static void	sdt_getargdesc(void *, dtrace_id_t, void *, dtrace_argdesc_t *);
-static void	sdt_provide(void *, dtrace_probedesc_t *);
+static void	sdt_provide(void *, const dtrace_probedesc_t *);
 static void	sdt_destroy(void *, dtrace_id_t, void *);
-static void	sdt_enable(void *, dtrace_id_t, void *);
+static int	sdt_enable(void *, dtrace_id_t, void *);
 static void	sdt_disable(void *, dtrace_id_t, void *);
 static void	sdt_load(void *);
 
@@ -195,7 +195,7 @@ sdt_getargdesc(void *arg, dtrace_id_t id, void *parg, dtrace_argdesc_t *desc)
 }
 
 static void
-sdt_provide(void *arg, dtrace_probedesc_t *desc)
+sdt_provide(void *arg, const dtrace_probedesc_t *desc)
 {
     	sdt_provider_t *sprov = arg;
 	int res;
@@ -266,7 +266,7 @@ sdt_destroy(void *arg, dtrace_id_t id, void *parg)
 	}
 }
 
-static void
+static int
 sdt_enable(void *arg, dtrace_id_t id, void *parg)
 {
     	sdt_provider_t *sprov = arg;
@@ -290,6 +290,8 @@ sdt_enable(void *arg, dtrace_id_t id, void *parg)
 			break;
 		}
 	}
+
+	return 0;
 }
 
 static void
