@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.36 2009/12/03 12:54:30 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.37 2010/03/01 13:03:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.36 2009/12/03 12:54:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.37 2010/03/01 13:03:30 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -820,6 +820,10 @@ rumpfs_mount(struct mount *mp, const char *mntpath, void *arg, size_t *alen)
 int
 rumpfs_unmount(struct mount *mp, int flags)
 {
+
+	/* if going for it, just lie about it */
+	if (panicstr)
+		return 0;
 
 	return EOPNOTSUPP; /* ;) */
 }
