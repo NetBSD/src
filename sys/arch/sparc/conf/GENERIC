@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.219 2010/01/15 20:57:12 bouyer Exp $
+# $NetBSD: GENERIC,v 1.220 2010/03/01 06:14:17 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.219 $"
+#ident 		"GENERIC-$Revision: 1.220 $"
 
 maxusers	32
 
@@ -693,6 +693,10 @@ cgfourteen*	at obio0			# sun4m
 
 # P9100-based display on Tadpole SPARCbook 3.
 pnozz0		at sbus? slot ? offset ?
+# the SPARCbook 3 hardware docs say that accesses to P9100 registers need to be
+# 'latched in' but at least my 3GX works happily without
+# Enable it by default since we don't know which hardware really needs it.
+options PNOZZ_USE_LATCH
 
 # Sun ZX/Leo 24-bit framebuffer
 zx*		at sbus? slot ? offset ?
