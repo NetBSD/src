@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.102 2009/10/23 23:12:10 joerg Exp $
+#	$NetBSD: bsd.man.mk,v 1.103 2010/03/01 22:00:07 joerg Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -6,9 +6,7 @@
 ##### Basic targets
 .PHONY:		catinstall maninstall catpages manpages catlinks manlinks
 .PHONY:		htmlinstall htmlpages htmllinks
-.if ${MKMANDOC} == "yes"
 .PHONY:		lintmanpages
-.endif
 realinstall:	${MANINSTALL}
 
 ##### Default values
@@ -274,9 +272,9 @@ cleanman: .PHONY
 .endif
 # (XXX ${CATPAGES:S...} cleans up old .catN files where .catN.gz now used)
 
-.if ${MKMANDOC} == "yes" && !empty(MANPAGES)
+.if !empty(MANPAGES)
 lintmanpages: ${MANPAGES}
-	${TOOL_MANDOC_LINT} -Tlint -fstrict ${.ALLSRC}
+	${TOOL_MANDOC_LINT} -Tlint -fstrict -Wall ${.ALLSRC}
 .endif
 
 ##### Pull in related .mk logic
