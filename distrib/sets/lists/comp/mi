@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1397 2010/03/01 16:03:34 jruoho Exp $
+#	$NetBSD: mi,v 1.1398 2010/03/01 16:37:46 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8106,6 +8106,7 @@
 ./usr/share/man/cat3/tgetflag.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tgetnum.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tgetstr.0			comp-c-catman		.cat
+./usr/share/man/cat3/tgmath.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tgoto.0			comp-c-catman		.cat
 ./usr/share/man/cat3/threads.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/ti_getflag.0		comp-c-catman		.cat
@@ -13784,6 +13785,7 @@
 ./usr/share/man/html3/tgetflag.html		comp-c-htmlman		html
 ./usr/share/man/html3/tgetnum.html		comp-c-htmlman		html
 ./usr/share/man/html3/tgetstr.html		comp-c-htmlman		html
+./usr/share/man/html3/tgmath.html		comp-c-htmlman		html
 ./usr/share/man/html3/tgoto.html		comp-c-htmlman		html
 ./usr/share/man/html3/ti_getflag.html		comp-c-htmlman		html
 ./usr/share/man/html3/ti_getnum.html		comp-c-htmlman		html
@@ -19530,6 +19532,7 @@
 ./usr/share/man/man3/tgetflag.3			comp-c-man		.man
 ./usr/share/man/man3/tgetnum.3			comp-c-man		.man
 ./usr/share/man/man3/tgetstr.3			comp-c-man		.man
+./usr/share/man/man3/tgmath.3			comp-c-man		.man
 ./usr/share/man/man3/tgoto.3			comp-c-man		.man
 ./usr/share/man/man3/threads.3			comp-obsolete		obsolete
 ./usr/share/man/man3/ti_getflag.3		comp-c-man		.man
