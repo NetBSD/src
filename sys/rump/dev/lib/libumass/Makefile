@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/02/17 20:44:34 pooka Exp $
+#	$NetBSD: Makefile,v 1.5 2010/03/01 15:41:15 pooka Exp $
 #
 #
 # umass.  includes scsibus+sd for simplicity due to the umass code
@@ -8,7 +8,7 @@
 .PATH:	${.CURDIR}/../../../../dev/usb ${.CURDIR}/../../../../dev/scsipi
 
 LIB=	rumpdev_umass
-IOCONFIG= UMASS.ioconf
+IOCONF=	UMASS.ioconf
 
 .if ${MACHINE} == "i386"
 SRCS=	umass.c umass_isdata.c umass_quirks.c umass_scsipi.c
