@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2010/02/16 20:42:45 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2010/03/01 15:41:15 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/usb ${.CURDIR}/../../../../kern	\
 	${.CURDIR}/../../../../dev/wscons
 
 LIB=	rumpdev_ukbd
+IOCONF= UKBD.ioconf
 
 SRCS=	ukbd.c ukbdmap.c
 
@@ -13,8 +14,6 @@ SRCS+=	ukbd_at_usb.c
 
 # XXX
 SRCS+=  tty.c tty_conf.c tty_tty.c tty_subr.c
-
-IOCONFIG= UKBD.ioconf
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 
