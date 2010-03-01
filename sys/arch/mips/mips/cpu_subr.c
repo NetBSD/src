@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.1 2010/02/28 23:45:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.2 2010/03/01 19:29:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.1 2010/02/28 23:45:06 matt Exp $"
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/ras.h>
+#include <sys/bitops.h>
+#include <sys/idle.h>
 #ifdef KERN_SA
 #include <sys/sa.h>
 #include <sys/savar.h>
@@ -51,10 +53,35 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.1 2010/02/28 23:45:06 matt Exp $"
 
 #include <mips/locore.h>
 #include <mips/regnum.h>
+#include <mips/cache.h>
 #include <mips/frame.h>
 #include <mips/userret.h>
+#include <mips/pte.h>
+
+struct cpu_info cpu_info_store
+#ifdef MULTIPROCESSOR
+	__section(".data1")
+	__aligned(1LU << ilog2((2*sizeof(struct cpu_info)-1)))
+#endif
+    = {
+	.ci_curlwp = &lwp0,
+#ifndef NOFPU
+	.ci_fpcurlwp = &lwp0,
+#endif
+	.ci_tlb_info = &pmap_tlb0_info,
+	.ci_pmap_segbase = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
+	.ci_cpl = IPL_HIGH,
+	.ci_tlb_slot = -1,
+#ifdef MULTIPROCESSOR
+	.ci_flags = CPUF_PRIMARY|CPUF_PRESENT|CPUF_RUNNING,
+#endif
+};
 
 #ifdef MULTIPROCESSOR
+
+volatile u_long cpus_running = 1;
+volatile u_long cpus_hatched = 1;
+volatile u_long cpus_paused = 0;
 
 static struct cpu_info *cpu_info_last = &cpu_info_store;
 
@@ -103,16 +130,13 @@ cpu_info_alloc(struct pmap_tlb_info *ti, u_int cpu_id)
         ci->ci_divisor_recip = cpu_info_store.ci_divisor_recip;
 
 	/*
-	 * Tail insert this onto the list of cpu_info's.
+	 * Attach its TLB info (which must be direct-mapped)
 	 */
-	KASSERT(ci->ci_next == NULL);
-	KASSERT(cpu_info_last->ci_next == NULL);
-	cpu_info_last->ci_next = ci;
-	cpu_info_last = ci;
-
-	/*
-	 * Attach its TLB 
-	 */
+#ifdef _LP64
+	KASSERT(MIPS_KSEG0_P(ti) || MIPS_XKPHYS_P(ti));
+#else
+	KASSERT(MIPS_KSEG0_P(ti));
+#endif
 	pmap_tlb_info_attach(ti, ci);
 
 #ifndef _LP64
@@ -133,6 +157,12 @@ cpu_info_alloc(struct pmap_tlb_info *ti, u_int cpu_id)
 
 	mi_cpu_attach(ci);
 
+	/*
+	 * Switch the idle lwp to a direct mapped stack since we use its
+	 * stack and we won't have a TLB entry for it.
+	 */
+	cpu_uarea_remap(ci->ci_data.cpu_idlelwp);
+
 	return ci;
 }
 #endif /* MULTIPROCESSOR */
@@ -147,6 +177,19 @@ cpu_attach_common(device_t self, struct cpu_info *ci)
 	self->dv_private = ci;
 
 #ifdef MULTIPROCESSOR
+	if (ci != &cpu_info_store) {
+		/*
+		 * Tail insert this onto the list of cpu_info's.
+		 */
+		KASSERT(ci->ci_next == NULL);
+		KASSERT(cpu_info_last->ci_next == NULL);
+		cpu_info_last->ci_next = ci;
+		cpu_info_last = ci;
+	}
+
+	/*
+	 * Initialize IPI framework for this cpu instance
+	 */
 	ipi_init(ci);
 #endif
 
@@ -527,12 +570,77 @@ cpu_send_ipi(struct cpu_info *ci, int tag)
 }
 
 void
+cpu_hatch(struct cpu_info *ci)
+{
+	struct pmap_tlb_info * const ti = ci->ci_tlb_info;
+	const u_long cpu_mask = 1L << cpu_index(ci);
+
+	/*
+	 * Invalidate all the TLB enties (even wired ones) and then reserve
+	 * space for the wired TLB entries.
+	 */
+	mips3_cp0_wired_write(0);
+	tlb_invalidate_all();
+	mips3_cp0_wired_write(ti->ti_wired);
+
+	/*
+	 * If we are using register zero relative addressing to access cpu_info
+	 * in the exception vectors, enter that mapping into TLB now.
+	 */
+	if (ci->ci_tlb_slot >= 0) {
+		const uint32_t tlb_lo = MIPS3_PG_G|MIPS3_PG_V
+		    | mips3_paddr_to_tlbpfn((vaddr_t)ci);
+
+		tlb_enter(ci->ci_tlb_slot, -PAGE_SIZE, tlb_lo);
+	}
+
+	/*
+	 * Flush the icache just be sure.
+	 */
+	mips_icache_sync_all();
+
+	/*
+	 * Announce we are hatched
+	 */
+	atomic_or_ulong(&cpus_hatched, cpu_mask);
+
+	/*
+	 * Now wait to be set free!
+	 */
+	while ((cpus_running & cpu_mask) == 0) {
+		/* spin, spin, spin */
+	}
+
+	/*
+	 * Now turn on interrupts.
+	 */
+	spl0();
+
+	/*
+	 * And do a tail call to idle_loop
+	 */
+	idle_loop(NULL);
+}
+
+void
 cpu_boot_secondary_processors(void)
 {
-	if (pmap_tlb0_info.ti_wired != MIPS3_TLB_WIRED_UPAGES)
-		mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
+	for (struct cpu_info *ci = cpu_info_store.ci_next;
+	     ci != NULL;
+	     ci = ci->ci_next) {
+		const u_long cpu_mask = 1L << cpu_index(ci);
+		KASSERT(!CPU_IS_PRIMARY(ci));
+		KASSERT(ci->ci_data.cpu_idlelwp);
 
-	(*mips_locoresw.lsw_boot_secondary_processors)();
+		/*
+		 * Skip this CPU if it didn't sucessfully hatch.
+		 */
+		if ((cpus_hatched & cpu_mask) == 0)
+			continue;
+
+		atomic_or_ulong(&ci->ci_flags, CPUF_RUNNING);
+		atomic_or_ulong(&cpus_running, cpu_mask);
+	}
 }
 #endif /* MULTIPROCESSOR */
 

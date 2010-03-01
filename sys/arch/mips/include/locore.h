@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.19 2010/03/01 19:26:00 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.20 2010/03/01 19:29:41 matt Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -347,7 +347,6 @@ struct locoresw {
 	uintptr_t	lsw_lwp_trampoline;
 	void		(*lsw_cpu_idle)(void);
 	uintptr_t	lsw_setfunc_trampoline;
-	void		(*lsw_boot_secondary_processors)(void);
 	int		(*lsw_send_ipi)(struct cpu_info *, int);
 	void		(*lsw_cpu_offline_md)(void);
 };

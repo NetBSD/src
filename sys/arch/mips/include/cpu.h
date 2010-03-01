@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.24 2010/02/28 23:45:07 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.25 2010/03/01 19:29:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -86,11 +86,18 @@ struct cpu_info {
 	vaddr_t ci_pmap_srcbase;	/* starting VA of ephemeral src space */
 	vaddr_t ci_pmap_dstbase;	/* starting VA of ephemeral dst space */
 #ifdef MULTIPROCESSOR
+	volatile u_long ci_flags;
 	uint64_t ci_active_ipis;	/* bitmask of IPIs being serviced */
 	uint32_t ci_ksp_tlb_slot;	/* tlb entry for kernel stack */
 	void *ci_fpsave_si;		/* FP sync softint handler */
 	struct evcnt ci_evcnt_all_ipis;	/* aggregated IPI counter */
 	struct evcnt ci_evcnt_per_ipi[NIPIS];	/* individual IPI counters*/
+
+#define	CPUF_PRIMARY	0x01		/* CPU is primary CPU */
+#define	CPUF_PRESENT	0x02		/* CPU is present */
+#define	CPUF_RUNNING	0x04		/* CPU is running */
+#define	CPUF_PAUSED	0x08		/* CPU is paused */
+#define	CPUF_FPUSAVE	0x10		/* CPU is currently in fpusave_cpu() */
 #endif
 };
 
@@ -400,11 +407,21 @@ void	cpu_set_curpri(int);
 extern int mips_poolpage_vmfreelist;	/* freelist to allocate poolpages */
 
 /* cpu_subr.c */
+#ifdef MULTIPROCESSOR
+extern volatile u_long cpus_running;
+extern volatile u_long cpus_hatched;
+extern volatile u_long cpus_halted;
+#endif
+
 struct cpu_info *
 	cpu_info_alloc(struct pmap_tlb_info *, u_int);
 void	cpu_attach_common(device_t, struct cpu_info *);
 void	cpu_startup_common(void);
-void	cpu_trampoline(struct cpu_info *ci);
+#ifdef MULTIPROCESSOR
+void	cpu_hatch(struct cpu_info *ci);
+void	cpu_trampoline(void);
+void	cpu_boot_secondary_processors(void);
+#endif
 
 /* copy.S */
 int8_t	ufetch_int8(void *);
@@ -506,9 +523,6 @@ void	mips_page_physload(vaddr_t, vaddr_t,
 	    const struct phys_ram_seg *, size_t,
 	    const struct mips_vmfreelist *, size_t);
 void	cpu_identify(device_t);
-#ifdef MULTIPROCESSOR
-void	cpu_boot_secondary_processors(void);
-#endif
 
 /* locore*.S */
 int	badaddr(void *, size_t);
