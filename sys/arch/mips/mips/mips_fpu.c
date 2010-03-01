@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.1.2.1 2010/02/28 23:45:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.1.2.2 2010/03/01 19:26:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -42,10 +42,14 @@ __KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.1.2.1 2010/02/28 23:45:06 matt Exp $"
 #include <mips/regnum.h>
 
 #ifndef NOFPU
-kmutex_t fp_mutex __aligned(32);
+static struct {
+	kmutex_t fpx_mutex;
 #ifdef MULTIPROCESSOR
-kcondvar_t fp_cv __aligned(32);
+	kcondvar_t fpx_cv;
 #endif
+} fp_lockinfo __aligned(COHERENCY_UNIT);
+#define	fp_mutex	fp_lockinfo.fpx_mutex
+#define	fp_cv		fp_lockinfo.fpx_cv
 #endif /* !NOFPU */
 
 void
