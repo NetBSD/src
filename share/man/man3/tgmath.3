@@ -1,4 +1,4 @@
-.\" $NetBSD: tgmath.3,v 1.1 2010/03/01 16:36:15 jruoho Exp $
+.\" $NetBSD: tgmath.3,v 1.2 2010/03/01 21:37:18 wiz Exp $
 .\"
 .\" Copyright (c) 2004 Stefan Farfeleder
 .\" All rights reserved.
@@ -46,14 +46,14 @@ functions that have
 .Vt float
 (suffixed with
 .Sy f ) ,
-.Vt double
+.Vt double ,
 and
 .Vt "long double"
 (suffixed with
 .Sy l )
 versions.
 The arguments that vary across the three functions and have type
-.Vt float , double
+.Vt float , double ,
 and
 .Vt "long double" ,
 respectively, are called
@@ -69,7 +69,7 @@ the
 .Vt "long double"
 function is called.
 Else, if any generic argument has type
-.Vt double , "double complex"
+.Vt double , "double complex" ,
 or an integer type, the
 .Vt double
 version is invoked.
