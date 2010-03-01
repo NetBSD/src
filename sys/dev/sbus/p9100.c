@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.52 2010/02/24 22:38:08 dyoung Exp $ */
+/*	$NetBSD: p9100.c,v 1.53 2010/03/01 05:26:53 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.52 2010/02/24 22:38:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.53 2010/03/01 05:26:53 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,7 +256,7 @@ struct wsdisplay_accessops p9100_accessops = {
 };
 #endif
 
-#define PNOZZ_LATCH(sc, off) if(sc->sc_last_offset == (off & 0xffffff80)) { \
+#define PNOZZ_LATCH(sc, off) if(sc->sc_last_offset != (off & 0xffffff80)) { \
 		sc->sc_junk = bus_space_read_4(sc->sc_bustag, sc->sc_fb_memh, \
 		    off); \
 		sc->sc_last_offset = off & 0xffffff80; }
