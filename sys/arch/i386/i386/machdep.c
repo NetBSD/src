@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.683 2010/03/01 01:15:23 jym Exp $	*/
+/*	$NetBSD: machdep.c,v 1.684 2010/03/01 01:35:11 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.683 2010/03/01 01:15:23 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.684 2010/03/01 01:35:11 jym Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1188,7 +1188,7 @@ init386_msgbuf(void)
 	vps = NULL;
 	for (x = 0; x < vm_nphysseg; ++x) {
 		vps = &vm_physmem[x];
-		if (ptoa(vps->avail_end) == avail_end) {
+		if (ctob(vps->avail_end) == avail_end) {
 			break;
 		}
 	}
@@ -1197,12 +1197,12 @@ init386_msgbuf(void)
 
 	/* Shrink so it'll fit in the last segment. */
 	if (vps->avail_end - vps->avail_start < atop(sz))
-		sz = ptoa(vps->avail_end - vps->avail_start);
+		sz = ctob(vps->avail_end - vps->avail_start);
 
 	vps->avail_end -= atop(sz);
 	vps->end -= atop(sz);
 	msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
-	msgbuf_p_seg[msgbuf_p_cnt++].paddr = ptoa(vps->avail_end);
+	msgbuf_p_seg[msgbuf_p_cnt++].paddr = ctob(vps->avail_end);
 
 	/* Remove the last segment if it now has no pages. */
 	if (vps->start == vps->end) {
@@ -1214,7 +1214,7 @@ init386_msgbuf(void)
 	for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
 		if (vm_physmem[x].avail_end > avail_end)
 			avail_end = vm_physmem[x].avail_end;
-	avail_end = ptoa(avail_end);
+	avail_end = ctob(avail_end);
 
 	if (sz == reqsz)
 		return;
@@ -1386,7 +1386,7 @@ init386(paddr_t first_avail)
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
 	avail_start = first_avail;
-	avail_end = ptoa(xen_start_info.nr_pages) + XPMAP_OFFSET;
+	avail_end = ctob(xen_start_info.nr_pages) + XPMAP_OFFSET;
 	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
 	pmap_pa_end = avail_end;
 	mem_clusters[0].start = avail_start;
