@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.18.16.4 2010/02/28 23:46:18 matt Exp $ */
+/* $NetBSD: cpu.c,v 1.18.16.5 2010/03/01 23:55:49 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.4 2010/02/28 23:46:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.5 2010/03/01 23:55:49 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.4 2010/02/28 23:46:18 matt Exp $");
 #include <mips/sibyte/include/sb1250_regs.h>
 #include <mips/sibyte/include/sb1250_scd.h>
 #include <mips/sibyte/dev/sbscdvar.h>
+#include <mips/cfe/cfe_api.h>
 
 #define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
 
@@ -61,7 +62,7 @@ static void	cpu_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(cpu, 0,
     cpu_match, cpu_attach, NULL, NULL);
 
-static int found = 0;
+static u_int found = 0;
 
 static int
 cpu_match(device_t parent, cfdata_t match, void *aux)
@@ -121,23 +122,44 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		    (ci->ci_cpu_freq % 1000000) / 10000,
 		    ci->ci_cycles_per_hz, ci->ci_divisor_delay);
 
-		/*
-		 * If we're the primary CPU, no more work to do; we're already
-		 * running!
-		 */
-		aprint_normal("%s: ", xname);
-		cpu_identify(self);
 	} else {
 #if defined(MULTIPROCESSOR)
+		int status;
 		ci = cpu_info_alloc(NULL, found);
 		KASSERT(ci);
-		// * spinup
+
+		sb1250_cpu_init(ci);
+
+		status = cfe_cpu_start(ci->ci_cpuid, cpu_trampoline,
+		    (long) ci->ci_data.cpu_idlelwp->l_md.md_utf, 0,
+		    (long) ci);
+		if (status != 0) {
+			aprint_error(": CFE call to start failed: %d\n",
+			    status);
+		}
+		const u_long cpu_mask = 1L << cpu_index(ci);
+		for (size_t i = 0; i < 10000; i++) {
+			if (cpus_hatched & cpu_mask)
+				 break;
+			DELAY(100);
+		}
+		if ((cpus_hatched & cpu_mask) == 0) {
+			aprint_error(": failed to hatched!\n");
+			return;
+		}
 #else
-		aprint_normal("%s: processor off-line; multiprocessor support "
-		    "not present in kernel\n", xname);
+		aprint_normal_dev(self,
+		    "processor off-line; "
+		    "multiprocessor support not present in kernel\n");
 		return;
 #endif
 	}
+
+	/*
+	 * Announce ourselves.
+	 */
+	aprint_normal("%s: ", xname);
+	cpu_identify(self);
 
 	cpu_attach_common(self, ci);
 }
