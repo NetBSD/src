@@ -1,4 +1,4 @@
-/* $NetBSD: termcap.c,v 1.3 2010/02/26 00:09:00 roy Exp $ */
+/* $NetBSD: termcap.c,v 1.4 2010/03/01 11:02:31 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap.c,v 1.3 2010/02/26 00:09:00 roy Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.4 2010/03/01 11:02:31 roy Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -243,6 +243,12 @@ strval(const char *val)
 		if (l + 2 > len)
 			goto elen;
 		if (*val != '%') {
+			if (*val == ',') {
+				if (l + 3 > len)
+					goto elen;
+				*ip++ = '\\';
+				l++;
+			}
 			*ip++ = *val;
 			l++;
 			continue;
