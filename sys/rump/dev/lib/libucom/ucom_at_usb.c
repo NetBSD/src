@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom_at_usb.c,v 1.2 2010/03/01 11:34:27 pooka Exp $	*/
+/*	$NetBSD: ucom_at_usb.c,v 1.3 2010/03/01 13:12:20 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -9,6 +9,7 @@
 
 #include "ioconf.c"
 
+#include "rump_private.h"
 #include "rump_dev_private.h"
 #include "rump_vfs_private.h"
 
@@ -21,8 +22,7 @@ do {									\
 
 void tty_init(void);
 
-void
-rump_device_configuration(void)
+RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 	extern struct cdevsw ucom_cdevsw;
 	devmajor_t cmaj, bmaj;
