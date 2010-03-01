@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.93.38.7 2010/02/25 05:45:12 matt Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.93.38.8 2010/03/01 19:29:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -83,6 +83,7 @@
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
@@ -572,3 +573,51 @@ LEAF(mips3_cp0_tlb_page_mask_probe)
 	j	ra
 	 nop
 END(mips3_cp0_tlb_page_mask_probe)
+
+#ifdef MULTIPROCESSOR
+/*
+ * The presence of this routine here will causes MIPS1 MULTIPROCESSOR kernels
+ * to fail, as they should since we won't support much abominations.
+ *
+ * MD code calls/jumps to with the pointer to this CPU's cpu_info in a1,
+ * sp set to ci->ci_data.cpu_idlwp->l_md.md_utf.  gp will be overridden so
+ * 0 can be supplied if needed.  (This happens to match what CFE wants)
+ */
+NESTED_NOPROFILE(cpu_trampoline, 0, ra)
+	/*
+	 * We act as the idle lwp so make it CURLWP.  When know
+	 * that the cpu_info is a KSEG0 address.
+	 */
+	move	a0, a1
+	PTR_L	MIPS_CURLWP, CPU_INFO_IDLELWP(a0)
+	nop
+	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(a0)
+
+#ifdef _LP64
+	li	v0, MIPS_SR_KX			# allow 64bit addressing
+#else
+	li	v0, 0
+#endif
+	mtc0	v0, MIPS_COP_0_STATUS		# reset to known state
+	COP0_SYNC
+
+	/*
+	 * Indicate that no one has called us.
+	 */
+	move	ra, zero
+	REG_S	ra, CALLFRAME_RA(sp)
+
+#ifdef __GP_SUPPORT__
+	/*
+	 * New execution constant needs GP to be loaded.
+	 */
+	PTR_LA	gp, _C_LABEL(_gp)
+#endif
+
+	/*
+	 * and off we go.
+	 */
+	j	_C_LABEL(cpu_hatch)		# does everything
+	 nop
+END(cpu_trampoline)
+#endif /* MULTIPROCESSOR */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.29 2010/02/28 03:28:54 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.30 2010/03/01 19:29:41 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2708,8 +2708,8 @@ _C_LABEL(MIPSX(locoresw)):
 	PTR_WORD _C_LABEL(MIPSX(lwp_trampoline))
 	PTR_WORD _C_LABEL(nullop)	# cpu_idle
 	PTR_WORD _C_LABEL(MIPSX(setfunc_trampoline))
-	PTR_WORD _C_LABEL(nullop)	# boot secondary processors
 	PTR_WORD _C_LABEL(nullop)	# send ipi
+	PTR_WORD _C_LABEL(nullop)	# cpu_offline_md
 	PTR_WORD _C_LABEL(nullop)	# spare
 	PTR_WORD _C_LABEL(nullop)	# spare
 
