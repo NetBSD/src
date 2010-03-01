@@ -1,4 +1,4 @@
-/* $NetBSD: smbus_acpi.c,v 1.2 2010/03/01 05:37:37 jruoho Exp $ */
+/* $NetBSD: smbus_acpi.c,v 1.3 2010/03/01 13:16:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.2 2010/03/01 05:37:37 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.3 2010/03/01 13:16:21 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,18 +274,16 @@ acpi_smbus_detach(device_t self, int flags)
 	struct acpi_smbus_softc *sc = device_private(self);
 	ACPI_STATUS rv;
 
+	rv = AcpiRemoveNotifyHandler(sc->sc_devnode->ad_handle,
+	    ACPI_DEVICE_NOTIFY, acpi_smbus_notify_handler);
+
+	if (ACPI_FAILURE(rv))
+		return EBUSY;
+
 	pmf_device_deregister(self);
 
 	callout_halt(&sc->sc_callout, NULL);
-
-	rv = AcpiRemoveNotifyHandler(sc->sc_devnode->ad_handle,
-	    ACPI_DEVICE_NOTIFY, acpi_smbus_notify_handler);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(self,
-		    "unable to deregister DEVICE NOTIFY handler: %s\n",
-		    AcpiFormatException(rv));
-		return EBUSY;
-	}
+	callout_destroy(&sc->sc_callout);
 
 	mutex_destroy(&sc->sc_i2c_mutex);
 
