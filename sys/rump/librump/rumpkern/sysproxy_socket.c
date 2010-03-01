@@ -1,4 +1,4 @@
-/*	$NetBSD: sysproxy_socket.c,v 1.5 2009/10/15 16:39:22 pooka Exp $	*/
+/*	$NetBSD: sysproxy_socket.c,v 1.6 2010/03/01 13:02:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysproxy_socket.c,v 1.5 2009/10/15 16:39:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysproxy_socket.c,v 1.6 2010/03/01 13:02:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -60,7 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: sysproxy_socket.c,v 1.5 2009/10/15 16:39:22 pooka Ex
  * global "sock" will go away, it's quite disgusting.
  */
 
-enum rumprpc { RUMPRPC_SYSCALL, RUMPRPC_SYSCALL_RESP,
+enum rumprpc { RUMPRPC_LWP_CREATE, RUMPRPC_LWP_EXIT,
+	       RUMPRPC_SYSCALL, RUMPRPC_SYSCALL_RESP,
 	       RUMPRPC_COPYIN, RUMPRPC_COPYIN_RESP,
 	       RUMPRPC_COPYOUT, RUMPRPC_COPYOUT_RESP };
 
