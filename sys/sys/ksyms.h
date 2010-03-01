@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.23 2009/03/07 21:59:25 ad Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.24 2010/03/01 21:10:13 darran Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -47,6 +47,8 @@ struct ksyms_symtab {
 	int sd_strsize;		/* Size of string table */
 	int sd_nglob;		/* Number of global symbols */
 	bool sd_gone;		/* dead but around for open() */
+	void *sd_ctfstart;	/* Address of CTF contents */
+	int sd_ctfsize;		/* Size in bytes of CTF contents */
 };
 
 /*
@@ -57,10 +59,11 @@ struct ksyms_symtab {
 #define	STRTAB		2
 #define	SHSTRTAB	3
 #define	SHBSS		4
-#define NSECHDR		5
+#define	SHCTF		5
+#define NSECHDR		6
 
 #define	NPRGHDR		1
-#define	SHSTRSIZ	32
+#define	SHSTRSIZ	42
 
 struct ksyms_hdr {
 	Elf_Ehdr	kh_ehdr;
