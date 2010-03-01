@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_net_private.h,v 1.4 2009/10/14 17:29:20 pooka Exp $	*/
+/*	$NetBSD: rump_net_private.h,v 1.5 2010/03/01 13:12:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -38,11 +38,7 @@ do {									\
         }								\
 } while (/*CONSTCOND*/0)
 
-void 		rump_net_net_init(void);
-void 		rump_net_inet_init(void);
-void 		rump_net_local_init(void);
-void 		rump_net_sockin_init(void);
-void 		rump_net_virtif_init(void);
+void		rump_net_components(void);
 
 void		rump_dummyif_create(void);
 

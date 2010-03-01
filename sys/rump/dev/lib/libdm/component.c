@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.1 2009/12/04 22:13:59 haad Exp $	*/
+/*	$NetBSD: component.c,v 1.2 2010/03/01 13:12:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2009/12/04 22:13:59 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2 2010/03/01 13:12:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -36,14 +36,13 @@ __KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2009/12/04 22:13:59 haad Exp $");
 
 #include <sys/vfs_syscalls.h>
 
-
+#include "rump_private.h"
 #include "rump_dev_private.h"
 #include "rump_vfs_private.h"
 
 void dmattach(int);
 
-void
-rump_dev_dm_init()
+RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 	extern const struct bdevsw dm_bdevsw;
 	extern const struct cdevsw dm_cdevsw;

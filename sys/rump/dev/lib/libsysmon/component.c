@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.1 2010/01/31 03:06:59 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.2 2010/03/01 13:12:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2010/01/31 03:06:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2 2010/03/01 13:12:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -36,13 +36,13 @@ __KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2010/01/31 03:06:59 pooka Exp $");
 #include <dev/sysmon/sysmon_taskq.h>
 #include <dev/sysmon/sysmonvar.h>
 
+#include "rump_private.h"
 #include "rump_dev_private.h"
 #include "rump_vfs_private.h"
 
 void swwdogattach(int);
 
-void
-rump_dev_sysmon_init()
+RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 	extern const struct cdevsw sysmon_cdevsw;
 	devmajor_t bmaj, cmaj;
