@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.72 2009/11/17 18:54:26 jld Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.73 2010/03/01 21:10:26 jld Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.72 2009/11/17 18:54:26 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.73 2010/03/01 21:10:26 jld Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -132,7 +132,9 @@ rf_ConfigureDisks(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 			goto fail;
 
 		if (disks[c].status == rf_ds_optimal) {
-			raidfetch_component_label(raidPtr, c);
+			ret = raidfetch_component_label(raidPtr, c);
+			if (ret)
+				goto fail;
 		}
 
 		if (disks[c].status != rf_ds_optimal) {
