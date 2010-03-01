@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.122 2010/02/08 19:02:33 joerg Exp $	*/
+/*	$NetBSD: emul.c,v 1.123 2010/03/01 11:35:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.122 2010/02/08 19:02:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.123 2010/03/01 11:35:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -495,4 +495,18 @@ sigismasked(struct lwp *l, int sig)
 {
 
 	return 0;
+}
+
+void
+sigclearall(struct proc *p, const sigset_t *mask, ksiginfoq_t *kq)
+{
+
+	panic("%s unimplemented", __func__);
+}
+
+void
+ksiginfo_queue_drain0(ksiginfoq_t *kq)
+{
+
+	panic("%s unimplemented", __func__);
 }
