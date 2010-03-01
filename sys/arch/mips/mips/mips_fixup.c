@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.4 2010/02/28 15:32:32 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.1.2.5 2010/03/01 19:26:01 matt Exp $");
 
 #include <sys/param.h>
 
@@ -175,44 +175,53 @@ mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2])
 #define OPCODE_J		002
 #define OPCODE_JAL		003
 
-static void
-fixup_mips_jump(uint32_t *insnp, uint32_t stub, uint32_t real)
+static inline void
+fixup_mips_jump(uint32_t *insnp, const struct mips_jump_fixup_info *jfi)
 {
 	uint32_t insn = *insnp;
 
 	KASSERT((insn >> (26+1)) == (OPCODE_J >> 1));
-	KASSERT((insn << 6) == (stub << 4));
+	KASSERT((insn << 6) == (jfi->jfi_stub << 6));
 
-	insn ^= (stub ^ real) << 4 >> 6;
+	insn ^= (jfi->jfi_stub ^ jfi->jfi_real);
 
-	KASSERT((insn << 6) == (real << 4));
+	KASSERT((insn << 6) == (jfi->jfi_real << 6));
 
+#ifdef DEBUG
+#if 0
+	int32_t va = ((intptr_t) insnp >> 26) << 26;
+	printf("%s: %08x: [%08x] %s %08x -> [%08x] %s %08x\n",
+	    __func__, (int32_t)(intptr_t)insnp,
+	    insn, opcode == OPCODE_J ? "j" : "jal",
+	    va | (jfi->jfo_stub << 2),
+	    *insnp, opcode == OPCODE_J ? "j" : "jal",
+	    va | (jfi->jfi_real << 2));
+#endif
+#endif
 	*insnp = insn;
 }
 
 void
 mips_fixup_stubs(uint32_t *start, uint32_t *end,
-	const uint32_t *stub_offsets, const uint32_t *real_offsets,
-	size_t noffsets)
+	const struct mips_jump_fixup_info *fixups,
+	size_t nfixups)
 {
-	uint32_t min_offset = 0x03ffffff;
-	uint32_t max_offset = 0x00000000;
+	const uint32_t min_offset = fixups[0].jfi_stub;
+	const uint32_t max_offset = fixups[nfixups-1].jfi_stub;
 #ifdef DEBUG
-	size_t fixups = 0;
+	size_t fixups_done = 0;
 	uint32_t cycles = (CPUISMIPS3 ? mips3_cp0_count_read() : 0);
 #endif
 
+#ifdef DIAGNOGSTIC
 	/*
-	 * Find the lowest and highest jumps we will be replacing.  We don't
-	 * need to do it but it does make weeding out the non-matching jumps
-	 * faster.
+	 * Verify the fixup list is sorted from low stub to high stub.
 	 */
-	for (size_t i = 0; i < noffsets; i++) {
-		if (stub_offsets[i] < min_offset)
-			min_offset = stub_offsets[i];
-		if (max_offset < stub_offsets[i])
-			max_offset = stub_offsets[i];
+	for (const struct mips_jump_fixup_info *jfi = fixups + 1;
+	     jfi < fixups + nfixups; jfi++) {
+		KASSERT(jfi[-1].jfi_stub < jfi[0].jfi_stub);
 	}
+#endif
 
 	for (uint32_t *insnp = start; insnp < end; insnp++) {
 		uint32_t insn = *insnp;
@@ -231,29 +240,28 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end,
 		 * We know it's a jump, but does it match one we want to
 		 * fixup?
 		 */
-		for (size_t i = 0; i < noffsets; i++) {
-			if (stub_offsets[i] != offset)
-				continue;
+		for (const struct mips_jump_fixup_info *jfi = fixups;
+		     jfi < fixups + nfixups; jfi++) {
 			/*
-			 * Yes, we need to fix it up.  Replace the old
-			 * displacement with the real displacement.  If we've
-			 * moved to a new cache line, sync the last cache line
-			 * we fixed.
+			 * The caller has sorted the fixup list from lowest
+			 * stub to highest stub so if the current offset is
+			 * less than the this fixup's stub offset, we know
+			 * can't match anything else in the fixup list.
 			 */
-			*insnp ^= offset ^ real_offsets[i];
+			if (jfi->jfi_stub > offset)
+				break;
+
+			if (jfi->jfi_stub == offset) {
+				/*
+				 * Yes, we need to fix it up.  Replace the old
+				 * displacement with the real displacement.
+				 */
+				fixup_mips_jump(insnp, jfi);
 #ifdef DEBUG
-#if 0
-			int32_t va = ((intptr_t) insnp >> 26) << 26;
-			printf("%s: %08x: [%08x] %s %08x -> [%08x] %s %08x\n",
-			    __func__, (int32_t)(intptr_t)insnp,
-			    insn, opcode == OPCODE_J ? "j" : "jal",
-			    va | (offset << 2),
-			    *insnp, opcode == OPCODE_J ? "j" : "jal",
-			    va | (real_offsets[i] << 2));
+				fixups_done++;
 #endif
-			fixups++;
-#endif
-			break;
+				break;
+			}
 		}
 	}
 
@@ -267,7 +275,7 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end,
 	if (CPUISMIPS3)
 		cycles = mips3_cp0_count_read() - cycles;
 	printf("%s: %zu fixup%s done in %u cycles\n", __func__,
-	    fixups, fixups == 1 ? "" : "s",
+	    fixups_done, fixups_done == 1 ? "" : "s",
 	    cycles);
 #endif
 }
@@ -285,7 +293,10 @@ fixup_mips_cpu_switch_resume(void)
 {
 	extern uint32_t __cpu_switchto_fixup[];
 
-	fixup_mips_jump(__cpu_switchto_fixup,
-	    (uintptr_t)mips_cpu_switch_resume,
-	    (uintptr_t)mips_locoresw.lsw_cpu_switch_resume);
+	struct mips_jump_fixup_info fixup = {
+		fixup_addr2offset(mips_cpu_switch_resume),
+		fixup_addr2offset(mips_locoresw.lsw_cpu_switch_resume)
+	};
+
+	fixup_mips_jump(__cpu_switchto_fixup, &fixup);
 }
