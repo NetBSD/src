@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.42 2009/12/05 13:01:31 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.43 2010/03/01 13:12:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -58,6 +58,28 @@ extern int rump_threads;
 extern struct device rump_rootdev;
 
 extern struct sysent rump_sysent[];
+
+enum rump_component_type {
+	RUMP_COMPONENT_DEV,
+	RUMP_COMPONENT_NET, RUMP_COMPONENT_NET_ROUTE, RUMP_COMPONENT_NET_IF,
+	RUMP_COMPONENT_VFS,
+	RUMP_COMPONENT_MAX,
+};
+struct rump_component {
+	enum rump_component_type rc_type;
+	void (*rc_init)(void);
+};
+#define RUMP_COMPONENT(type)				\
+static void rumpcompinit(void);				\
+static const struct rump_component rumpcomp = {		\
+	.rc_type = type,				\
+	.rc_init = rumpcompinit,			\
+};							\
+__link_set_add_rodata(rump_components, rumpcomp);	\
+static void rumpcompinit(void)
+
+void		rump_component_init(enum rump_component_type);
+int		rump_component_count(enum rump_component_type);
 
 void		rumpvm_init(void);
 struct vm_page	*rumpvm_makepage(struct uvm_object *, voff_t);

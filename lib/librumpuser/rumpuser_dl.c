@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.1 2010/02/26 18:54:20 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.2 2010/03/01 13:13:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.1 2010/02/26 18:54:20 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.2 2010/03/01 13:13:48 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -402,10 +402,57 @@ rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 				couldload = 1;
 	} while (couldload);
 }
+
+void
+rumpuser_dl_component_init(int type, rump_component_init_fn compinit)
+{
+	struct link_map *map;
+
+	if (dlinfo(RTLD_SELF, RTLD_DI_LINKMAP, &map) == -1) {
+		fprintf(stderr, "warning: rumpuser module bootstrap "
+		    "failed: %s\n", dlerror());
+		return;
+	}
+
+	for (; map->l_next; map = map->l_next)
+		continue;
+	for (; map; map = map->l_prev) {
+		if (strstr(map->l_name, "librump") != NULL) {
+			void *handle;
+			struct rump_component **rc, **rc_end;
+
+			handle = dlopen(map->l_name, RTLD_LAZY);
+			if (handle == NULL)
+				continue;
+
+			rc = dlsym(handle,
+			    "__start_link_set_rump_components");
+			if (!rc)
+				goto loop;
+			rc_end = dlsym(handle,
+			    "__stop_link_set_rump_components");
+			if (!rc_end)
+				goto loop;
+
+			for (; rc < rc_end; rc++)
+				compinit(*rc, type);
+			assert(rc == rc_end);
+ loop:
+			dlclose(handle);
+		}
+	}
+}
 #else
 void
 rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 	rump_symload_fn symload)
+{
+
+	fprintf(stderr, "Warning, dlinfo() unsupported on host?\n");
+}
+
+void
+rumpuser_dl_component_init(int type, rump_component_init_fn compinit)
 {
 
 	fprintf(stderr, "Warning, dlinfo() unsupported on host?\n");

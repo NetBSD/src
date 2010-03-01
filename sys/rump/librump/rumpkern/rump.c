@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.153 2010/02/26 15:23:20 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.154 2010/03/01 13:12:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.153 2010/02/26 15:23:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.154 2010/03/01 13:12:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -582,6 +582,34 @@ rump_nextlid(void)
 	mutex_exit(proc0.p_lock);
 
 	return retid;
+}
+
+static int compcounter[RUMP_COMPONENT_MAX];
+
+static void
+rump_component_init_cb(struct rump_component *rc, int type)
+{
+
+	KASSERT(type < RUMP_COMPONENT_MAX);
+	if (rc->rc_type == type) {
+		rc->rc_init();
+		compcounter[type]++;
+	}
+}
+
+int
+rump_component_count(enum rump_component_type type)
+{
+
+	KASSERT(type <= RUMP_COMPONENT_MAX);
+	return compcounter[type];
+}
+
+void
+rump_component_init(enum rump_component_type type)
+{
+
+	rumpuser_dl_component_init(type, rump_component_init_cb);
 }
 
 #define ERROUT(err) do { rv = err; goto out; } while (/*CONSTCOND*/0)

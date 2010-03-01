@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt_at_usb.c,v 1.1 2010/02/11 02:22:09 pooka Exp $	*/
+/*	$NetBSD: ulpt_at_usb.c,v 1.2 2010/03/01 13:12:20 pooka Exp $	*/
 
 /*
  * MACHINE GENERATED: DO NOT EDIT
@@ -381,6 +381,7 @@ struct cfdata cfdata_ulpt[] = {
     { NULL,		NULL,		 0, 0,    NULL,      0, NULL }
 };
 
+#include "rump_private.h"
 #include "rump_dev_private.h"
 #include "rump_vfs_private.h"
 
@@ -391,8 +392,7 @@ do {									\
 		panic("\"%s\" failed", #call);				\
 } while (/*CONSTCOND*/0)
 
-void
-rump_device_configuration(void)
+RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 	extern struct cfattach usb_ca, uhub_ca, uroothub_ca, ulpt_ca;
 	extern struct cdevsw ulpt_cdevsw;
