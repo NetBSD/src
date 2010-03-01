@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.24 2009/12/15 22:17:12 snj Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.25 2010/03/01 01:15:24 jym Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.24 2009/12/15 22:17:12 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.25 2010/03/01 01:15:24 jym Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -82,10 +82,10 @@ bus_addr_t rbus_min_start = RBUS_MIN_START;
  * or 2046 vs 2048.
  */
 void
-rbus_min_start_hint(size_t ram)
+rbus_min_start_hint(psize_t ram)
 {
 #ifdef RBUS_MIN_START_FORCED
-	aprint_debug("rbus: rbus_min_start from config at 0x%0lx\n",
+	aprint_debug("rbus: rbus_min_start from config at %#0" PRIxPADDR "\n",
 	    rbus_min_start);
 #else
         if (ram <= 192*1024*1024UL) {
@@ -113,7 +113,7 @@ rbus_min_start_hint(size_t ram)
 		rbus_min_start =  3 * 1024 * 1024 * 1024UL;
 	}
 
-	aprint_debug("rbus: rbus_min_start set to 0x%0lx\n",
+	aprint_debug("rbus: rbus_min_start set to %#0" PRIxPADDR "\n",
 	   rbus_min_start);
 #endif
 }

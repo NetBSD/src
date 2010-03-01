@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.682 2010/02/08 19:02:29 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.683 2010/03/01 01:15:23 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.682 2010/02/08 19:02:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.683 2010/03/01 01:15:23 jym Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -481,7 +481,7 @@ cpu_startup(void)
 
 #if NCARDBUS > 0
 	/* Tell RBUS how much RAM we have, so it can use heuristics. */
-	rbus_min_start_hint(ptoa(physmem));
+	rbus_min_start_hint(ctob((psize_t)physmem));
 #endif
 
 	minaddr = 0;
