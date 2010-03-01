@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.13 2010/02/28 23:45:07 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.14 2010/03/01 19:27:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.13 2010/02/28 23:45:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.14 2010/03/01 19:27:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,8 +275,8 @@ cpu_uarea_remap(struct lwp *l)
 
 	/*
 	 * Now set the new uarea (if it's different). If l->l_addr was already
-	 * direct mapped address then routine really change anything but that's
-	 * not probably so don't micro optimize for it.
+	 * direct mapped address then this routine really won't change anything
+	 * but that's not probable so don't micro optimize for it.
 	 */
 #ifdef _LP64
 	va = MIPS_PHYS_TO_XKPHYS_CACHED(pa);
