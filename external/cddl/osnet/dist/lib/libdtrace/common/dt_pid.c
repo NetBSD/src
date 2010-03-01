@@ -694,7 +694,7 @@ dt_pid_create_usdt_probes(dtrace_probedesc_t *pdp, dtrace_hdl_t *dtp,
 	struct ps_prochandle *P = dpr->dpr_proc;
 	int ret = 0;
 
-	assert(MUTEX_HELD(&dpr->dpr_lock));
+	assert(DT_MUTEX_HELD(&dpr->dpr_lock));
 
 #ifdef DOODAD
 	(void) Pupdate_maps(P);
