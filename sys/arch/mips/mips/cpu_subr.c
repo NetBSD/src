@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.2 2010/03/01 19:29:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.3 2010/03/01 23:54:49 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -598,6 +598,12 @@ cpu_hatch(struct cpu_info *ci)
 	 * Flush the icache just be sure.
 	 */
 	mips_icache_sync_all();
+
+	/*
+	 * Let this CPU do its own initialization (for things that have to be
+	 * done on the local CPU).
+	 */
+	(*mips_locoresw.lsw_cpu_init)(ci);
 
 	/*
 	 * Announce we are hatched
