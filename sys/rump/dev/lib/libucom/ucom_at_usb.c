@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom_at_usb.c,v 1.1 2010/02/11 02:22:09 pooka Exp $	*/
+/*	$NetBSD: ucom_at_usb.c,v 1.2 2010/03/01 11:34:27 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -40,6 +40,12 @@ rump_device_configuration(void)
 
 	FLAWLESSCALL(config_cfdriver_attach(&uplcom_cd));
 	FLAWLESSCALL(config_cfattach_attach("uplcom", &uplcom_ca));
+
+	FLAWLESSCALL(config_cfdriver_attach(&u3ginit_cd));
+	FLAWLESSCALL(config_cfattach_attach("u3ginit", &u3ginit_ca));
+
+	FLAWLESSCALL(config_cfdriver_attach(&u3g_cd));
+	FLAWLESSCALL(config_cfattach_attach("u3g", &u3g_ca));
 
 	FLAWLESSCALL(config_cfdriver_attach(&ucom_cd));
 	FLAWLESSCALL(config_cfattach_attach("ucom", &ucom_ca));
