@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdma.c,v 1.1 2010/02/09 18:57:03 pooka Exp $	*/
+/*	$NetBSD: rumpdma.c,v 1.2 2010/03/01 13:01:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -108,5 +108,5 @@ void
 bus_dmamem_unmap(bus_dma_tag_t a, void *kva, size_t b)
 {
 
-	panic("unimplemented %s", __func__);
+	kmem_free(kva, b);
 }
