@@ -1,4 +1,4 @@
-/*	$NetBSD: modctl.h,v 1.4 2010/02/28 14:45:47 haad Exp $	*/
+/*	$NetBSD: modctl.h,v 1.5 2010/03/01 11:19:40 darran Exp $	*/
 
 /*
  * Copyright (C) 2007 John Birrell <jb@freebsd.org>
@@ -34,5 +34,7 @@
 
 #include <sys/param.h>
 #include <sys/linker.h>
+
+typedef struct module dtrace_modctl_t;
 
 #endif /* _COMPAT_OPENSOLARIS_SYS_MODCTL_H */

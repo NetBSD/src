@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.4 2010/02/28 14:45:47 haad Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.5 2010/03/01 11:19:39 darran Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -30,6 +30,7 @@
 #define	_COMPAT_OPENSOLARIS_SYS_CPUVAR_H
 
 #include <sys/mutex.h>
+#include <sys/cpuvar_defs.h>
 
 #ifdef _KERNEL
 #define	CPU_CACHE_COHERENCE_SIZE	64
