@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.104 2010/02/09 22:51:13 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.105 2010/03/01 00:55:33 jym Exp $	*/
 
 /*
  *
@@ -279,11 +279,7 @@
 #define NKL2_START_ENTRIES	0	/* XXX computed on runtime */
 #define NKL1_START_ENTRIES	0	/* XXX unused */
 
-#ifdef PAE
-#define NTOPLEVEL_PDES		(PAGE_SIZE * 4 / (sizeof (pd_entry_t)))
-#else
-#define NTOPLEVEL_PDES		(PAGE_SIZE / (sizeof (pd_entry_t)))
-#endif
+#define NTOPLEVEL_PDES		(PAGE_SIZE * PDP_SIZE / (sizeof (pd_entry_t)))
 
 #define NPDPG			(PAGE_SIZE / sizeof (pd_entry_t))
 
