@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1396 2010/03/01 13:45:54 jruoho Exp $
+#	$NetBSD: mi,v 1.1397 2010/03/01 16:03:34 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4729,6 +4729,7 @@
 ./usr/share/man/cat3/__SHIFTOUT_MASK.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__UNCONST.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__UNVOLATILE.0		comp-c-catman		.cat
+./usr/share/man/cat3/__arraycount.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__builtin_object_size.0	comp-c-catman		.cat
 ./usr/share/man/cat3/__svc_getcallercreds.0	comp-c-catman		.cat
 ./usr/share/man/cat3/_longjmp.0			comp-c-catman		.cat
@@ -10542,6 +10543,7 @@
 ./usr/share/man/html3/__SHIFTOUT_MASK.html	comp-c-htmlman		html
 ./usr/share/man/html3/__UNCONST.html		comp-c-htmlman		html
 ./usr/share/man/html3/__UNVOLATILE.html		comp-c-htmlman		html
+./usr/share/man/html3/__arraycount.html		comp-c-htmlman		html
 ./usr/share/man/html3/__builtin_object_size.html	comp-c-htmlman		html
 ./usr/share/man/html3/__svc_getcallercreds.html	comp-c-htmlman		html
 ./usr/share/man/html3/_longjmp.html		comp-c-htmlman		html
@@ -16155,6 +16157,7 @@
 ./usr/share/man/man3/__SHIFTOUT_MASK.3		comp-c-man		.man
 ./usr/share/man/man3/__UNCONST.3		comp-c-man		.man
 ./usr/share/man/man3/__UNVOLATILE.3		comp-c-man		.man
+./usr/share/man/man3/__arraycount.3		comp-c-man		.man
 ./usr/share/man/man3/__builtin_object_size.3	comp-c-man		.man
 ./usr/share/man/man3/__svc_getcallercreds.3	comp-c-man		.man
 ./usr/share/man/man3/_longjmp.3			comp-c-man		.man
