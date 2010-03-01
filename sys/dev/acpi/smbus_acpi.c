@@ -1,4 +1,4 @@
-/* $NetBSD: smbus_acpi.c,v 1.1 2010/02/06 20:10:18 pgoyette Exp $ */
+/* $NetBSD: smbus_acpi.c,v 1.2 2010/03/01 05:37:37 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.1 2010/02/06 20:10:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.2 2010/03/01 05:37:37 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,14 +84,14 @@ struct acpi_smbus_softc {
 
 static int	acpi_smbus_match(device_t, cfdata_t, void *);
 static void	acpi_smbus_attach(device_t, device_t, void *);
-static int	acpi_smbus_detach(device_t, int); 
+static int	acpi_smbus_detach(device_t, int);
 static int	acpi_smbus_acquire_bus(void *, int);
 static void	acpi_smbus_release_bus(void *, int);
 static int	acpi_smbus_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 				size_t, void *, size_t, int);
 static void	acpi_smbus_alerts(struct acpi_smbus_softc *);
 static void	acpi_smbus_tick(void *);
-static void	acpi_smbus_notify_handler(ACPI_HANDLE, UINT32, void *);
+static void	acpi_smbus_notify_handler(ACPI_HANDLE, uint32_t, void *);
 
 struct SMB_UDID {
 	uint8_t		dev_cap;
@@ -203,7 +203,7 @@ acpi_smbus_attach(device_t parent, device_t self, void *aux)
 
 	/* Retrieve polling interval for SMBus Alerts */
 	rv = acpi_eval_struct(aa->aa_node->ad_handle, "_SBI", &smi_buf);
-	if (!ACPI_FAILURE(rv)) {
+	if (ACPI_SUCCESS(rv)) {
 		p = smi_buf.Pointer;
 		if (p != NULL && p->Type == ACPI_TYPE_PACKAGE &&
 		    p->Package.Count >= 2) {
@@ -242,17 +242,17 @@ acpi_smbus_attach(device_t parent, device_t self, void *aux)
 	 * Retrieve and display native controller info
 	 */
 	rv = AcpiGetParent(sc->sc_devnode->ad_handle, &native_dev);
-	if (!ACPI_FAILURE(rv))
+	if (ACPI_SUCCESS(rv))
 		rv = AcpiGetParent(native_dev, &native_bus);
-	if (!ACPI_FAILURE(rv))
+	if (ACPI_SUCCESS(rv))
 		rv = AcpiGetObjectInfo(native_bus, &native_bus_info);
-	if (!ACPI_FAILURE(rv) &&
+	if (ACPI_SUCCESS(rv) &&
 	    acpi_match_hid(native_bus_info, pcibus_acpi_ids) != 0) {
 		rv = AcpiGetObjectInfo(native_dev, &native_dev_info);
-		if (!ACPI_FAILURE(rv)) {
+		if (ACPI_SUCCESS(rv)) {
 			pci_bus = native_bus_info->Address;
-			pci_dev = (native_dev_info->Address >> 16) & 0xffff;
-			pci_func = native_dev_info->Address & 0xffff;
+			pci_dev = ACPI_ADR_PCI_DEV(native_dev_info->Address);
+			pci_func = ACPI_ADR_PCI_FUNC(native_dev_info->Address);
 			aprint_debug_dev(self, "Native i2c host controller"
 			    " is on PCI bus %d dev %d func %d\n",
 			    pci_bus, pci_dev, pci_func);
@@ -269,11 +269,11 @@ acpi_smbus_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-acpi_smbus_detach(device_t self, int flags) 
+acpi_smbus_detach(device_t self, int flags)
 {
 	struct acpi_smbus_softc *sc = device_private(self);
 	ACPI_STATUS rv;
- 
+
 	pmf_device_deregister(self);
 
 	callout_halt(&sc->sc_callout, NULL);
@@ -288,7 +288,7 @@ acpi_smbus_detach(device_t self, int flags)
 	}
 
 	mutex_destroy(&sc->sc_i2c_mutex);
-   
+
 	return 0;
 }
 
@@ -296,16 +296,16 @@ static int
 acpi_smbus_acquire_bus(void *cookie, int flags)
 {
         struct acpi_smbus_softc *sc = cookie;
-  
+
         mutex_enter(&sc->sc_i2c_mutex);
         return 0;
-}       
-                
+}
+
 static void
 acpi_smbus_release_bus(void *cookie, int flags)
-{       
+{
         struct acpi_smbus_softc *sc = cookie;
-                                
+
         mutex_exit(&sc->sc_i2c_mutex);
 }
 static int
@@ -485,7 +485,7 @@ acpi_smbus_tick(void *opaque)
 }
 
 static void
-acpi_smbus_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
+acpi_smbus_notify_handler(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
 {
 	device_t dv = opaque;
 	struct acpi_smbus_softc *sc = device_private(dv);
