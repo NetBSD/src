@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf-bdz.c,v 1.2 2009/08/17 14:15:07 joerg Exp $	*/
+/*	$NetBSD: nbperf-bdz.c,v 1.3 2010/03/01 21:46:58 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf-bdz.c,v 1.2 2009/08/17 14:15:07 joerg Exp $");
+__RCSID("$NetBSD: nbperf-bdz.c,v 1.3 2010/03/01 21:46:58 joerg Exp $");
 
 #include <err.h>
 #include <inttypes.h>
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: nbperf-bdz.c,v 1.2 2009/08/17 14:15:07 joerg Exp $");
  *
  * Each edge in the represents a key.  The vertices are the reminder of
  * the hash function mod n.  n = cm with c > 1.23.  This ensures that
- * can be found with a very high probality.
+ * an acyclic graph can be found with a very high probality.
  *
  * An acyclic graph has an edge order, where at least one vertex of
  * each edge hasn't been seen before.   It is declares the first unvisited
