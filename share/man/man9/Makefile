@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.317 2010/03/01 17:21:02 jruoho Exp $
+#       $NetBSD: Makefile,v 1.318 2010/03/01 19:09:41 jruoho Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -45,7 +45,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	rt_timer.9 rwlock.9 RUN_ONCE.9 \
 	sched_4bsd.9 scsipi.9 \
 	secmodel.9 secmodel_bsd44.9 secmodel_overlay.9 secmodel_securelevel.9 \
-	secmodel_suser.9 setjmp.9 shutdownhook_establish.9 \
+	secmodel_suser.9 setbit.9 setjmp.9 shutdownhook_establish.9 \
 	signal.9 sockopt.9 softintr.9 spl.9 splraiseipl.9 \
 	store.9 suspendsched.9 \
 	sysctl.9 sysmon_envsys.9 sysmon_pswitch.9 sysmon_taskq.9 tc.9 \
@@ -595,6 +595,9 @@ MLINKS+=select.9 selinit.9 \
 	select.9 seldestroy.9 \
 	select.9 selrecord.9 \
 	select.9 selnotify.9
+MLINKS+=setbit.9 clrbit.9 \
+	setbit.9 isset.9 \
+	setbit.9 isclr.9
 MLINKS+=setjmp.9 longjmp.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
 MLINKS+=signal.9 siginit.9 \
