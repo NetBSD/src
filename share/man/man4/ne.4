@@ -1,4 +1,4 @@
-.\"	$NetBSD: ne.4,v 1.11 2008/04/30 13:10:54 martin Exp $
+.\"	$NetBSD: ne.4,v 1.12 2010/03/01 14:16:39 tsutsui Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,18 +28,37 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 20, 2001
+.Dd March 1, 2010
 .Dt NE 4
 .Os
 .Sh NAME
 .Nm ne
 .Nd NE2000 and compatible Ethernet cards device driver
 .Sh SYNOPSIS
-.Cd "ne0 at isa? port 0x300 irq 9"
+.Ss ISA boards
+.Cd "ne0 at isa? port 0x280 irq 9"
+.Cd "ne1 at isa? port 0x300 irq 10"
 .Cd "ne* at isapnp?"
+.Ss MCA boards
 .Cd "ne* at mca? slot ?"
+.Ss PCI boards
 .Cd "ne* at pci? dev ? function ?"
+.Ss PCMCIA
 .Cd "ne* at pcmcia? function ?"
+.Ss acorn32
+.Cd "ne* at podulebus?"
+.Ss amiga
+.Cd "ne* at zbus0"
+.Ss amigappc
+.Cd "ne* at zbus0"
+.Ss evbarm
+.Cd "ne0 at obio? addr 0x0e000200 intr 5"
+.Ss x68k
+.Cd "ne* at intio0 addr 0xece300 intr 249"
+.Cd "ne* at intio0 addr 0xeceb00 intr 248"
+.Cd "neptune0 at intio0 addr 0xece000 intr 249"
+.Cd "neptune1 at intio0 addr 0xece400 intr 249"
+.Cd "ne* at neptune? addr 0x300"
 .Sh DESCRIPTION
 The
 .Nm
