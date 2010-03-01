@@ -1,4 +1,4 @@
-.\" $NetBSD: __arraycount.3,v 1.2 2010/03/01 17:06:18 jruoho Exp $
+.\" $NetBSD: __arraycount.3,v 1.3 2010/03/01 21:34:30 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .Dd March 1, 2010
 .Os
-.Dt __arraycount 3
+.Dt __ARRAYCOUNT 3
 .Sh NAME
 .Nm __arraycount
 .Nd macro for statically allocated arrays
@@ -50,7 +50,7 @@ size_t i;
 
 \&...
 
-for (i = 0; i < __arraycount(buf); i++)
+for (i = 0; i \*[Lt] __arraycount(buf); i++)
 	\&...
 .Ed
 .Sh HISTORY
