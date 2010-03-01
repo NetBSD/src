@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.170 2010/02/28 13:59:05 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.171 2010/03/01 01:14:58 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.170 2010/02/28 13:59:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.171 2010/03/01 01:14:58 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1128,8 +1128,6 @@ copyprops(struct device *busdev, int node, prop_dictionary_t dict)
 		prop_dictionary_set_uint32(dict, "depth", 8);
 	}
 	OF_getprop(console_node, "address", &fbaddr, sizeof(fbaddr));
-	if (fbaddr == 0)
-		OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
 	if (fbaddr != 0) {
 	
 		pmap_extract(pmap_kernel(), fbaddr, &fbpa);
@@ -1164,7 +1162,6 @@ copyprops(struct device *busdev, int node, prop_dictionary_t dict)
 		return;
 	if (OF_getprop(options, "output-device", output_device, 256) == 0)
 		return;
-	printf("output-device: %s\n", output_device);
 	/* find the mode string if there is one */
 	pos = strstr(output_device, ":r");
 	if (pos == NULL)
