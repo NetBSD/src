@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1399 2010/03/01 17:22:20 jruoho Exp $
+#	$NetBSD: mi,v 1.1400 2010/03/01 19:12:49 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8717,6 +8717,7 @@
 ./usr/share/man/cat9/clock_secs_to_ymdhms.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/clock_ymdhms_to_secs.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/closef.0			comp-sys-catman		.cat
+./usr/share/man/cat9/clrbit.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cltom.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cn_check_magic.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cn_destroy_magic.0		comp-sys-catman		.cat
@@ -9052,6 +9053,8 @@
 ./usr/share/man/cat9/isapnp_config.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/isapnp_devmatch.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/isapnp_unconfig.0		comp-sys-catman		.cat
+./usr/share/man/cat9/isclr.0			comp-sys-catman		.cat
+./usr/share/man/cat9/isset.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/issignal.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/itimerfix.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kauth.0			comp-sys-catman		.cat
@@ -9406,6 +9409,7 @@
 ./usr/share/man/cat9/selwakeup.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/sendsig.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/setdisklabel.0		comp-sys-catman		.cat
+./usr/share/man/cat9/setbit.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/setjmp.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/setrunqueue.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/shutdownhook_disestablish.0	comp-sys-catman		.cat
@@ -14371,6 +14375,7 @@
 ./usr/share/man/html9/clock_secs_to_ymdhms.html	comp-sys-htmlman	html
 ./usr/share/man/html9/clock_ymdhms_to_secs.html	comp-sys-htmlman	html
 ./usr/share/man/html9/closef.html		comp-sys-htmlman	html
+./usr/share/man/html9/clrbit.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cltom.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cn_check_magic.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cn_destroy_magic.html	comp-sys-htmlman	html
@@ -14688,6 +14693,8 @@
 ./usr/share/man/html9/isapnp_config.html	comp-sys-htmlman	html
 ./usr/share/man/html9/isapnp_devmatch.html	comp-sys-htmlman	html
 ./usr/share/man/html9/isapnp_unconfig.html	comp-sys-htmlman	html
+./usr/share/man/html9/isclr.html		comp-sys-htmlman	html
+./usr/share/man/html9/isset.html		comp-sys-htmlman	html
 ./usr/share/man/html9/issignal.html		comp-sys-htmlman	html
 ./usr/share/man/html9/itimerfix.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kauth.html		comp-sys-htmlman	html
@@ -15020,6 +15027,7 @@
 ./usr/share/man/html9/selrecord.html		comp-sys-htmlman	html
 ./usr/share/man/html9/sendsig.html		comp-sys-htmlman	html
 ./usr/share/man/html9/setdisklabel.html		comp-sys-htmlman	html
+./usr/share/man/html9/setbit.html		comp-sys-htmlman	html
 ./usr/share/man/html9/setjmp.html		comp-sys-htmlman	html
 ./usr/share/man/html9/shutdownhook_disestablish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/shutdownhook_establish.html	comp-sys-htmlman	html
@@ -20144,6 +20152,7 @@
 ./usr/share/man/man9/clock_secs_to_ymdhms.9	comp-sys-man		.man
 ./usr/share/man/man9/clock_ymdhms_to_secs.9	comp-sys-man		.man
 ./usr/share/man/man9/closef.9			comp-sys-man		.man
+./usr/share/man/man9/clrbit.9			comp-sys-man		.man
 ./usr/share/man/man9/cltom.9			comp-sys-man		.man
 ./usr/share/man/man9/cn_check_magic.9		comp-sys-man		.man
 ./usr/share/man/man9/cn_destroy_magic.9		comp-sys-man		.man
@@ -20479,6 +20488,8 @@
 ./usr/share/man/man9/isapnp_config.9		comp-sys-man		.man
 ./usr/share/man/man9/isapnp_devmatch.9		comp-sys-man		.man
 ./usr/share/man/man9/isapnp_unconfig.9		comp-sys-man		.man
+./usr/share/man/man9/isclr.9			comp-sys-man		.man
+./usr/share/man/man9/isset.9			comp-sys-man		.man
 ./usr/share/man/man9/issignal.9			comp-sys-man		.man
 ./usr/share/man/man9/itimerfix.9		comp-sys-man		.man
 ./usr/share/man/man9/kauth.9			comp-sys-man		.man
@@ -20833,6 +20844,7 @@
 ./usr/share/man/man9/selwakeup.9		comp-obsolete		obsolete
 ./usr/share/man/man9/sendsig.9			comp-sys-man		.man
 ./usr/share/man/man9/setdisklabel.9		comp-sys-man		.man
+./usr/share/man/man9/setbit.9			comp-sys-man		.man
 ./usr/share/man/man9/setjmp.9			comp-sys-man		.man
 ./usr/share/man/man9/setrunqueue.9		comp-obsolete		obsolete
 ./usr/share/man/man9/shutdownhook_disestablish.9	comp-sys-man		.man
