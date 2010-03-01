@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.17 2010/02/26 18:16:18 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.18 2010/03/01 03:14:49 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.17 2010/02/26 18:16:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.18 2010/03/01 03:14:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,25 @@ static int dbcool_read_rpm(struct dbcool_softc *, uint8_t);
 static int dbcool_read_temp(struct dbcool_softc *, uint8_t, bool);
 static int dbcool_read_volt(struct dbcool_softc *, uint8_t, int, bool);
 
+/* Sensor get/set limit functions */
+static void dbcool_get_limits(struct sysmon_envsys *, envsys_data_t *,
+			      sysmon_envsys_lim_t *, uint32_t *);
+static void dbcool_get_temp_limits(struct dbcool_softc *, int,
+				   sysmon_envsys_lim_t *, uint32_t *);
+static void dbcool_get_volt_limits(struct dbcool_softc *, int,
+				   sysmon_envsys_lim_t *, uint32_t *);
+static void dbcool_get_fan_limits(struct dbcool_softc *, int,
+				  sysmon_envsys_lim_t *, uint32_t *);
+
+static void dbcool_set_limits(struct sysmon_envsys *, envsys_data_t *,
+			      sysmon_envsys_lim_t *, uint32_t *);
+static void dbcool_set_temp_limits(struct dbcool_softc *, int,
+				   sysmon_envsys_lim_t *, uint32_t *);
+static void dbcool_set_volt_limits(struct dbcool_softc *, int,
+				   sysmon_envsys_lim_t *, uint32_t *);
+static void dbcool_set_fan_limits(struct dbcool_softc *, int,
+				  sysmon_envsys_lim_t *, uint32_t *);
+
 /* SYSCTL Helpers */
 static int sysctl_dbcool_temp(SYSCTLFN_PROTO);
 static int sysctl_adm1030_temp(SYSCTLFN_PROTO);
@@ -85,18 +104,14 @@ static int sysctl_adm1030_trange(SYSCTLFN_PROTO);
 static int sysctl_dbcool_duty(SYSCTLFN_PROTO);
 static int sysctl_dbcool_behavior(SYSCTLFN_PROTO);
 static int sysctl_dbcool_slope(SYSCTLFN_PROTO);
-static int sysctl_dbcool_volt_limit(SYSCTLFN_PROTO);
-static int sysctl_dbcool_temp_limit(SYSCTLFN_PROTO);
-static int sysctl_dbcool_fan_limit(SYSCTLFN_PROTO);
 static int sysctl_dbcool_thyst(SYSCTLFN_PROTO);
 
 /* Set-up subroutines */
-static void dbcool_setup_controllers(struct dbcool_softc *,
-	const struct sysctlnode *, int, int);
-static int dbcool_setup_sensors(struct dbcool_softc *,
-	const struct sysctlnode *, int, int);
-static int dbcool_attach_sensor(struct dbcool_softc *,
-	const struct sysctlnode *, int, int (*)(SYSCTLFN_PROTO));
+static void dbcool_setup_controllers(struct dbcool_softc *);
+static int  dbcool_setup_sensors(struct dbcool_softc *);
+static int  dbcool_attach_sensor(struct dbcool_softc *, int);
+static int  dbcool_attach_temp_control(struct dbcool_softc *, int,
+	struct chip_id *);
 
 #ifdef DBCOOL_DEBUG
 static int sysctl_dbcool_reg_select(SYSCTLFN_PROTO);
@@ -1211,141 +1226,6 @@ sysctl_dbcool_slope(SYSCTLFN_ARGS)
 }
 
 static int
-sysctl_dbcool_volt_limit(SYSCTLFN_ARGS)
-{
-	struct sysctlnode node;
-	struct dbcool_softc *sc;
-	int reg, error;
-	int nom, sensor_index;
-	int64_t val, newval;
-	uint8_t chipreg, newreg;
-
-	node = *rnode;
-	sc = (struct dbcool_softc *)node.sysctl_data;
-	chipreg = node.sysctl_num & 0xff;
-
-	/*
-	 * Retrieve the nominal value for the voltage sensor
-	 */
-	sensor_index = (node.sysctl_num >> 8 ) & 0xff;
-	nom = nominal_voltages[sc->sc_dc.dc_chip->table[sensor_index].nom_volt_index];
-	if (nom < 0)
-		nom = dbcool_supply_voltage(sc);
-
-	/*
-	 * Use int64_t for calculation to avoid overflow
-	 */
-	val =  sc->sc_dc.dc_readreg(&sc->sc_dc, chipreg);
-	val *= nom;
-	val /= 0xc0;	/* values are scaled so 0xc0 == nominal voltage */
-	reg = val;
-	node.sysctl_data = &reg;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-
-	if (error || newp == NULL)
-		return error;
-
-	/*
-	 * We were asked to update the value, so scale it and sanity
-	 * check before writing
-	 */
-	if (nom == 0)
-		return EINVAL;
-	newval =  *(int *)node.sysctl_data;
-	newval *= 0xc0;
-	newval /= nom;
-	if (newval < 0 || newval > 0xff)
-		return EINVAL;
-
-	newreg = newval;
-	sc->sc_dc.dc_writereg(&sc->sc_dc, chipreg, newreg);
-	return 0;
-}
-
-static int
-sysctl_dbcool_temp_limit(SYSCTLFN_ARGS)
-{
-	struct sysctlnode node;
-	struct dbcool_softc *sc;
-	int reg, error, newtemp;
-	uint8_t chipreg;
-
-	node = *rnode;
-	sc = (struct dbcool_softc *)node.sysctl_data;
-	chipreg = node.sysctl_num & 0xff;
-
-	/* If using offset mode, adjust, else treat as signed */
-	if (sc->sc_temp_offset) {
-		reg = sc->sc_dc.dc_readreg(&sc->sc_dc, chipreg);
-		reg -= sc->sc_temp_offset;
-	 } else
-		reg = (int8_t)sc->sc_dc.dc_readreg(&sc->sc_dc, chipreg);
-
-	node.sysctl_data = &reg;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-
-	if (error || newp == NULL)
-		return error;
-
-	/* We were asked to update the value - sanity check before writing */	
-	newtemp = *(int *)node.sysctl_data + sc->sc_temp_offset;
-	if (newtemp < 0 || newtemp > 0xff)
-		return EINVAL;
-
-	sc->sc_dc.dc_writereg(&sc->sc_dc, chipreg, newtemp);
-	return 0;
-}
-
-static int
-sysctl_dbcool_fan_limit(SYSCTLFN_ARGS)
-{
-	struct sysctlnode node;
-	struct dbcool_softc *sc;
-	int reg, error, newrpm, dividend;
-	uint8_t chipreg;
-	uint8_t newreg;
-
-	node = *rnode;
-	sc = (struct dbcool_softc *)node.sysctl_data;
-	chipreg = node.sysctl_num & 0xff;
-
-	/* retrieve two-byte limit */
-	reg = dbcool_read_rpm(sc, chipreg);
-
-	node.sysctl_data = &reg;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-
-	if (error || newp == NULL)
-		return error;
-
-	/*
-	 * We were asked to update the value.  Calculate the two-byte
-	 * limit and validate it.  Due to the way fan RPM is calculated,
-	 * the new value must be at least 83 RPM (331 RPM for ADM1030)!
-	 * Allow a value of -1 or 0 to indicate no limit.
-	 */
-	newrpm = *(int *)node.sysctl_data;
-	if (newrpm == 0 || newrpm == -1)
-		newrpm = 0xffff;
-	else {
-		if (sc->sc_dc.dc_chip->flags & DBCFLAG_ADM1030)
-			dividend = 11250 * 60;
-		else
-			dividend = 90000 * 60;
-		newrpm = dividend / newrpm;
-		if (newrpm & ~0xffff)
-			return EINVAL;
-	}
-
-	/* Update the on-chip registers with new value */
-	newreg = newrpm & 0xff;
-	sc->sc_dc.dc_writereg(&sc->sc_dc, chipreg, newreg);
-	newreg = (newrpm >> 8) & 0xff;
-	sc->sc_dc.dc_writereg(&sc->sc_dc, chipreg + 1, newreg);
-	return 0;
-}
-
-static int
 sysctl_dbcool_thyst(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
@@ -1463,7 +1343,7 @@ dbcool_setup(device_t self)
 	struct sysctlnode *node = NULL;
 #endif
 	uint8_t cfg_val, cfg_reg;
-	int ro_flag, rw_flag, ret, error;
+	int ret, error;
 
 	/*
 	 * Some chips are capable of reporting an extended temperature range
@@ -1487,44 +1367,46 @@ dbcool_setup(device_t self)
 	/* Determine Vcc for this chip */
 	sc->sc_supply_voltage = dbcool_supply_voltage(sc);
 
-	sc->sc_sme = sysmon_envsys_create();
-
-	ro_flag = dbcool_islocked(sc)?CTLFLAG_READONLY:CTLFLAG_READWRITE;
-	ro_flag |= CTLFLAG_OWNDESC;
-	rw_flag = CTLFLAG_READWRITE | CTLFLAG_OWNDESC;
 	ret = sysctl_createv(NULL, 0, NULL, &me,
 	       CTLFLAG_READWRITE,
 	       CTLTYPE_NODE, device_xname(self), NULL,
 	       NULL, 0, NULL, 0,
 	       CTL_HW, CTL_CREATE, CTL_EOL);
-
-#ifdef DBCOOL_DEBUG
-	ret = sysctl_createv(NULL, 0, NULL,
-		(const struct sysctlnode **)&node,
-		CTLFLAG_READWRITE, CTLTYPE_INT, "reg_select", NULL,
-		sysctl_dbcool_reg_select,
-		0, sc, sizeof(int),
-		CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
-	if (node != NULL)
-		node->sysctl_data = sc;
-
-	ret = sysctl_createv(NULL, 0, NULL,
-		(const struct sysctlnode **)&node,
-		CTLFLAG_READWRITE, CTLTYPE_INT, "reg_access", NULL,
-		sysctl_dbcool_reg_access,
-		0, sc, sizeof(int),
-		CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
-	if (node != NULL)
-		node->sysctl_data = sc;
-#endif /* DBCOOL_DEBUG */
+	if (ret == 0)
+		sc->sc_root_sysctl_num = me->sysctl_num;
+	else
+		sc->sc_root_sysctl_num = 0;
 
 	/* Create the sensors for this device */
-	if (dbcool_setup_sensors(sc, me, rw_flag, ro_flag))
+	sc->sc_sme = sysmon_envsys_create();
+	if (dbcool_setup_sensors(sc))
 		goto out;
 
-	/* If supported, create sysctl tree for fan PWM controllers */
-	if (sc->sc_dc.dc_chip->power != NULL)
-		dbcool_setup_controllers(sc, me, rw_flag, ro_flag);
+	if (sc->sc_root_sysctl_num != 0) {
+		/* If supported, create sysctl tree for fan PWM controllers */
+		if (sc->sc_dc.dc_chip->power != NULL)
+			dbcool_setup_controllers(sc);
+
+#ifdef DBCOOL_DEBUG
+		ret = sysctl_createv(NULL, 0, NULL,
+			(const struct sysctlnode **)&node,
+			CTLFLAG_READWRITE, CTLTYPE_INT, "reg_select", NULL,
+			sysctl_dbcool_reg_select,
+			0, sc, sizeof(int),
+			CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
+		if (node != NULL)
+			node->sysctl_data = sc;
+
+		ret = sysctl_createv(NULL, 0, NULL,
+			(const struct sysctlnode **)&node,
+			CTLFLAG_READWRITE, CTLTYPE_INT, "reg_access", NULL,
+			sysctl_dbcool_reg_access,
+			0, sc, sizeof(int),
+			CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
+		if (node != NULL)
+			node->sysctl_data = sc;
+#endif /* DBCOOL_DEBUG */
+	}
 
 	/*
 	 * Read and rewrite config register to activate device
@@ -1546,6 +1428,8 @@ dbcool_setup(device_t self)
 	sc->sc_sme->sme_name = device_xname(self);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = dbcool_refresh;
+	sc->sc_sme->sme_set_limits = dbcool_set_limits;
+	sc->sc_sme->sme_get_limits = dbcool_get_limits;
 
 	if ((error = sysmon_envsys_register(sc->sc_sme)) != 0) {
 		aprint_error_dev(self,
@@ -1560,20 +1444,17 @@ out:
 }
 
 static int
-dbcool_setup_sensors(struct dbcool_softc *sc, const struct sysctlnode *me,
-		     int rw_flag, int ro_flag)
+dbcool_setup_sensors(struct dbcool_softc *sc)
 {
-	int i, j, ret;
+	int i;
 	int error = 0;
-	uint8_t	sysctl_reg, vid_reg, vid_val;
-	struct sysctlnode *node = NULL;
+	uint8_t	vid_reg, vid_val;
 	struct chip_id *chip = sc->sc_dc.dc_chip;
-	int sysctl_index, sysctl_num;
-	char name[SYSCTL_NAMELEN];
 
 	for (i=0; chip->table[i].type != DBC_EOF; i++) {
-		if (i >= DBCOOL_MAXSENSORS &&
-		    chip->table[i].type != DBC_CTL) {
+		if (i < DBCOOL_MAXSENSORS)
+			sc->sc_sysctl_num[i] = -1;
+		else if (chip->table[i].type != DBC_CTL) {
 			aprint_normal_dev(sc->sc_dev, "chip table too big!\n");
 			break;
 		}
@@ -1581,8 +1462,7 @@ dbcool_setup_sensors(struct dbcool_softc *sc, const struct sysctlnode *me,
 		case DBC_TEMP:
 			sc->sc_sensor[i].units = ENVSYS_STEMP;
 			sc->sc_sensor[i].flags |= ENVSYS_FMONLIMITS;
-			error = dbcool_attach_sensor(sc, me, i,
-					sysctl_dbcool_temp_limit);
+			error = dbcool_attach_sensor(sc, i);
 			break;
 		case DBC_VOLT:
 			/*
@@ -1597,14 +1477,12 @@ dbcool_setup_sensors(struct dbcool_softc *sc, const struct sysctlnode *me,
 
 			sc->sc_sensor[i].units = ENVSYS_SVOLTS_DC;
 			sc->sc_sensor[i].flags |= ENVSYS_FMONLIMITS;
-			error = dbcool_attach_sensor(sc, me, i,
-					sysctl_dbcool_volt_limit);
+			error = dbcool_attach_sensor(sc, i);
 			break;
 		case DBC_FAN:
 			sc->sc_sensor[i].units = ENVSYS_SFANRPM;
 			sc->sc_sensor[i].flags |= ENVSYS_FMONLIMITS;
-			error = dbcool_attach_sensor(sc, me, i,
-					sysctl_dbcool_fan_limit);
+			error = dbcool_attach_sensor(sc, i);
 			break;
 		case DBC_VID:
 			sc->sc_sensor[i].units = ENVSYS_INTEGER;
@@ -1619,42 +1497,16 @@ dbcool_setup_sensors(struct dbcool_softc *sc, const struct sysctlnode *me,
 				vid_val &= 0x1f;
 			sc->sc_sensor[i].value_cur = vid_val;
 
-			error = dbcool_attach_sensor(sc, me, i, NULL);
+			error = dbcool_attach_sensor(sc, i);
 			break;
 		case DBC_CTL:
-			/*
-			 * Search for the corresponding temp sensor
-			 * (temp sensors need to be created first!)
-			 */
-			sysctl_num = -1;
-			for (j = 0; j < i; j++) {
-				if (j > DBCOOL_MAXSENSORS ||
-				    chip->table[j].type != DBC_TEMP)
-					continue;
-				if (chip->table[j].name_index ==
-				    chip->table[i].name_index) {
-					sysctl_num = sc->sc_sysctl_num[j];
-					break;
-				}
+			error = dbcool_attach_temp_control(sc, i, chip);
+			if (error) {
+				aprint_error_dev(sc->sc_dev,
+						"attach index %d failed %d\n",
+						i, error);
+				error = 0;
 			}
-			if (sysctl_num == -1)
-				break;
-			sysctl_index = chip->table[i].sysctl_index;
-			sysctl_reg = chip->table[i].reg.val_reg;
-			strlcpy(name, dbc_sysctl_table[sysctl_index].name,
-			    sizeof(name));
-			ret = sysctl_createv(NULL, 0, NULL,
-				(const struct sysctlnode **)&node,
-				dbc_sysctl_table[sysctl_index].lockable?
-					ro_flag:rw_flag,
-				CTLTYPE_INT, name,
-				dbc_sysctl_table[sysctl_index].desc,
-				dbc_sysctl_table[sysctl_index].helper,
-				0, sc, sizeof(int),
-				CTL_HW, me->sysctl_num, sysctl_num,
-				DBC_PWM_SYSCTL(i, sysctl_reg), CTL_EOL);
-			if (node != NULL)
-				node->sysctl_data = sc;
 			break;
 		default:
 			aprint_error_dev(sc->sc_dev,
@@ -1669,14 +1521,9 @@ dbcool_setup_sensors(struct dbcool_softc *sc, const struct sysctlnode *me,
 }
 
 static int
-dbcool_attach_sensor(struct dbcool_softc *sc, const struct sysctlnode *me,
-		     int idx, int (*helper)(SYSCTLFN_PROTO))
+dbcool_attach_sensor(struct dbcool_softc *sc, int idx)
 {
-	struct sysctlnode *node = NULL;
-	const struct sysctlnode *me2 = NULL;
-	uint8_t sysctl_reg;
 	int name_index;
-	int ret;
 	int error = 0;
 
 	name_index = sc->sc_dc.dc_chip->table[idx].name_index;
@@ -1686,82 +1533,96 @@ dbcool_attach_sensor(struct dbcool_softc *sc, const struct sysctlnode *me,
 	sc->sc_nom_volt[idx] = sc->sc_dc.dc_chip->table[idx].nom_volt_index;
 
 	error = sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[idx]);
-	if (error)
-		return error;
+	return error;
+}
 
-	/* VIDs do not have any limits */
-	if (sc->sc_dc.dc_chip->table[idx].type == DBC_VID)
-		return 0;
-	/*
-	 * create sysctl node for the sensor, and the nodes for
-	 * the sensor's high and low limit values
-	 */
-	ret = sysctl_createv(NULL, 0, NULL, &me2, CTLFLAG_READWRITE,
-			CTLTYPE_NODE, sc->sc_sensor[idx].desc, NULL,
-			NULL, 0, NULL, 0,
-			CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
-	if (me2 == NULL)
-		return 0;
+static int
+dbcool_attach_temp_control(struct dbcool_softc *sc, int idx,
+			   struct chip_id *chip)
+{
+	const struct sysctlnode *me2 = NULL;
+	struct sysctlnode *node = NULL;
+	int j, ret, sysctl_index, rw_flag;
+	uint8_t	sysctl_reg;
+	char name[SYSCTL_NAMELEN];
 
-	sc->sc_sysctl_num[idx] = me2->sysctl_num;
+	/* Search for the corresponding temp sensor */
+	for (j = 0; j < idx; j++) {
+		if (j >= DBCOOL_MAXSENSORS || chip->table[j].type != DBC_TEMP)
+			continue;
+		if (chip->table[j].name_index == chip->table[idx].name_index)
+			break;
+	}
+	if (j >= idx)	/* Temp sensor not found */
+		return ENOENT;
 
-	/* create sysctl node for the low limit */
-	sysctl_reg = sc->sc_regs[idx]->lo_lim_reg;
+	/* create sysctl node for the sensor if not one already there */
+	if (sc->sc_sysctl_num[j] == -1) {
+		ret = sysctl_createv(NULL, 0, NULL, &me2, CTLFLAG_READWRITE,
+				     CTLTYPE_NODE, sc->sc_sensor[j].desc, NULL,
+				     NULL, 0, NULL, 0,
+				     CTL_HW, sc->sc_root_sysctl_num, CTL_CREATE,
+					CTL_EOL);
+		if (me2 != NULL)
+			sc->sc_sysctl_num[j] = me2->sysctl_num;
+		else
+			return ret;
+	}
+	/* add sysctl leaf node for this control variable */
+	sysctl_index = chip->table[idx].sysctl_index;
+	sysctl_reg = chip->table[idx].reg.val_reg;
+	strlcpy(name, dbc_sysctl_table[sysctl_index].name, sizeof(name));
+	if (dbc_sysctl_table[sysctl_index].lockable && dbcool_islocked(sc))
+		rw_flag = CTLFLAG_READONLY | CTLFLAG_OWNDESC;
+	else
+		rw_flag = CTLFLAG_READWRITE | CTLFLAG_OWNDESC;
 	ret = sysctl_createv(NULL, 0, NULL,
-			(const struct sysctlnode **)&node,
-			CTLFLAG_READWRITE,
-			CTLTYPE_INT, "low_lim", NULL, helper, 0, sc, 0,
-			CTL_HW, me->sysctl_num, me2->sysctl_num,
-			DBC_PWM_SYSCTL(idx, sysctl_reg), CTL_EOL);
+			     (const struct sysctlnode **)&node, rw_flag,
+			     CTLTYPE_INT, name,
+			     dbc_sysctl_table[sysctl_index].desc,
+			     dbc_sysctl_table[sysctl_index].helper,
+			     0, sc, sizeof(int),
+			     CTL_HW, sc->sc_root_sysctl_num,
+				sc->sc_sysctl_num[j],
+				DBC_PWM_SYSCTL(idx, sysctl_reg), CTL_EOL);
 	if (node != NULL)
 		node->sysctl_data = sc;
 
-	/* Fans do not have a high limit */
-	if (sc->sc_dc.dc_chip->table[idx].type == DBC_FAN)
-		return 0;
-
-	sysctl_reg = sc->sc_regs[idx]->hi_lim_reg;
-	ret = sysctl_createv(NULL, 0, NULL,
-			(const struct sysctlnode **)&node,
-			CTLFLAG_READWRITE,
-			CTLTYPE_INT, "hi_lim", NULL, helper, 0, sc, 0,
-			CTL_HW, me->sysctl_num, me2->sysctl_num,
-			DBC_PWM_SYSCTL(idx, sysctl_reg), CTL_EOL);
-	if (node != NULL)
-		node->sysctl_data = sc;
-
-	return 0;
+	return ret;
 }
 
 static void
-dbcool_setup_controllers(struct dbcool_softc *sc, const struct sysctlnode *me,
-			 int rw_flag, int ro_flag)
+dbcool_setup_controllers(struct dbcool_softc *sc)
 {
-	int i, j, ret;
+	int i, j, ret, rw_flag;
 	uint8_t sysctl_reg;
+	struct chip_id *chip = sc->sc_dc.dc_chip;
 	const struct sysctlnode *me2 = NULL;
 	struct sysctlnode *node = NULL;
 	char name[SYSCTL_NAMELEN];
 
-	for (i = 0; sc->sc_dc.dc_chip->power[i].desc != NULL; i++) {
+	for (i = 0; chip->power[i].desc != NULL; i++) {
 		snprintf(name, sizeof(name), "fan_ctl_%d", i);
 		ret = sysctl_createv(NULL, 0, NULL, &me2,
-		       rw_flag,
+		       CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
 		       CTLTYPE_NODE, name, NULL,
 		       NULL, 0, NULL, 0,
-		       CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
+		       CTL_HW, sc->sc_root_sysctl_num, CTL_CREATE, CTL_EOL);
 
 		for (j = DBC_PWM_BEHAVIOR; j < DBC_PWM_LAST_PARAM; j++) {
 			if (j == DBC_PWM_MAX_DUTY &&
-			    (sc->sc_dc.dc_chip->flags & DBCFLAG_HAS_MAXDUTY) == 0)
+			    (chip->flags & DBCFLAG_HAS_MAXDUTY) == 0)
 				continue;
-			sysctl_reg = sc->sc_dc.dc_chip->power[i].power_regs[j];
+			sysctl_reg = chip->power[i].power_regs[j];
 			if (sysctl_reg == DBCOOL_NO_REG)
 				continue;
 			strlcpy(name, dbc_sysctl_table[j].name, sizeof(name));
+			if (dbc_sysctl_table[j].lockable && dbcool_islocked(sc))
+				rw_flag = CTLFLAG_READONLY | CTLFLAG_OWNDESC;
+			else
+				rw_flag = CTLFLAG_READWRITE | CTLFLAG_OWNDESC;
 			ret = sysctl_createv(NULL, 0, NULL,
-				(const struct sysctlnode **)&node,
-				(dbc_sysctl_table[j].lockable)?ro_flag:rw_flag,
+				(const struct sysctlnode **)&node, rw_flag,
 				(j == DBC_PWM_BEHAVIOR)?
 					CTLTYPE_STRING:CTLTYPE_INT,
 				name,
@@ -1770,7 +1631,7 @@ dbcool_setup_controllers(struct dbcool_softc *sc, const struct sysctlnode *me,
 				0, sc, 
 				( j == DBC_PWM_BEHAVIOR)?
 					sizeof(dbcool_cur_behav): sizeof(int),
-				CTL_HW, me->sysctl_num, me2->sysctl_num,
+				CTL_HW, sc->sc_root_sysctl_num, me2->sysctl_num,
 				DBC_PWM_SYSCTL(j, sysctl_reg), CTL_EOL);
 			if (node != NULL)
 				node->sysctl_data = sc;
@@ -1782,32 +1643,25 @@ static void
 dbcool_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct dbcool_softc *sc=sme->sme_cookie;
-	int i, nom_volt_idx;
-	int cur, hi, low;
+	int i, nom_volt_idx, cur;
 	struct reg_list *reg;
 	
 	i = edata->sensor;
 	reg = sc->sc_regs[i];
+	
+	edata->state = ENVSYS_SVALID;
 	switch (edata->units)
 	{
 		case ENVSYS_STEMP:
 			cur = dbcool_read_temp(sc, reg->val_reg, true);
-			low = dbcool_read_temp(sc, reg->lo_lim_reg, false);
-			hi  = dbcool_read_temp(sc, reg->hi_lim_reg, false);
 			break;
 		case ENVSYS_SVOLTS_DC:
 			nom_volt_idx = sc->sc_nom_volt[i];
 			cur = dbcool_read_volt(sc, reg->val_reg, nom_volt_idx,
 						true);
-			low = dbcool_read_volt(sc, reg->lo_lim_reg,
-						nom_volt_idx, false);
-			hi  = dbcool_read_volt(sc, reg->hi_lim_reg,
-						nom_volt_idx, false);
 			break;
 		case ENVSYS_SFANRPM:
 			cur = dbcool_read_rpm(sc, reg->val_reg);
-			low = dbcool_read_rpm(sc, reg->lo_lim_reg);
-			hi  = 1 << 16;
 			break;
 		case ENVSYS_INTEGER:
 			return;
@@ -1816,30 +1670,16 @@ dbcool_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			return;
 	}
 
-	if (cur == 0 && edata->units != ENVSYS_SFANRPM)
+	if (cur == 0 && (edata->units != ENVSYS_SFANRPM))
 		edata->state = ENVSYS_SINVALID;
-
-	/* Make sure limits are sensible */
-	else if (hi <= low)
-		edata->state = ENVSYS_SVALID;
 
 	/*
 	 * If fan is "stalled" but has no low limit, treat
 	 * it as though the fan is not installed.
 	 */
 	else if (edata->units == ENVSYS_SFANRPM && cur == 0 &&
-			(low == 0 || low == -1))
+			!(edata->upropset & (PROP_CRITMIN | PROP_WARNMIN)))
 		edata->state = ENVSYS_SINVALID;
-
-	/*
-	 * Compare current value against the limits
-	 */
-	else if (cur < low)
-		edata->state = ENVSYS_SCRITUNDER;
-	else if (cur > hi)
-		edata->state = ENVSYS_SCRITOVER;
-	else
-		edata->state = ENVSYS_SVALID;
 
 	edata->value_cur = cur;
 }
@@ -1871,3 +1711,240 @@ dbcool_chip_ident(struct dbcool_chipset *dc)
 
 	return -1;
 }  
+
+/*
+ * Retrieve sensor limits from the chip registers
+ */
+static void
+dbcool_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
+		  sysmon_envsys_lim_t *limits, uint32_t *props)
+{
+	int index = edata->sensor;
+	struct dbcool_softc *sc = sme->sme_cookie;
+
+	switch (edata->units) {
+	    case ENVSYS_STEMP:
+		dbcool_get_temp_limits(sc, index, limits, props);
+		break;
+	    case ENVSYS_SVOLTS_DC:
+		dbcool_get_volt_limits(sc, index, limits, props);
+		break;
+	    case ENVSYS_SFANRPM:
+		dbcool_get_fan_limits(sc, index, limits, props);
+
+	    /* FALLTHROUGH */
+	    default:
+		break;
+	}
+	*props &= ~PROP_DRIVER_LIMITS;
+}
+
+static void
+dbcool_get_temp_limits(struct dbcool_softc *sc, int idx,
+		       sysmon_envsys_lim_t *lims, uint32_t *props)
+{
+	struct reg_list *reg = sc->sc_regs[idx];
+	int32_t	limit;
+
+	if (sc->sc_temp_offset) {
+		limit = sc->sc_dc.dc_readreg(&sc->sc_dc, reg->lo_lim_reg);
+		limit -= sc->sc_temp_offset;
+	} else
+		limit = (int8_t)sc->sc_dc.dc_readreg(&sc->sc_dc,
+						     reg->lo_lim_reg);
+
+	if (limit) {
+		limit *= 1000000;
+		limit += 273150000;
+		lims->sel_critmin = limit;
+		*props |= PROP_CRITMIN;
+	} else
+		*props &= ~PROP_CRITMIN;
+
+	if (sc->sc_temp_offset) {
+		limit = sc->sc_dc.dc_readreg(&sc->sc_dc, reg->hi_lim_reg);
+		limit -= sc->sc_temp_offset;
+	} else
+		limit = (int8_t)sc->sc_dc.dc_readreg(&sc->sc_dc,
+						     reg->hi_lim_reg);
+	if (limit) {
+		limit *= 1000000;
+		limit += 273150000;
+		lims->sel_critmax = limit;
+		*props |= PROP_CRITMAX;
+	} else
+		*props &= ~PROP_CRITMAX;
+
+}
+
+static void
+dbcool_get_volt_limits(struct dbcool_softc *sc, int idx,
+		       sysmon_envsys_lim_t *lims, uint32_t *props)
+{
+	struct reg_list *reg = sc->sc_regs[idx];
+	int64_t limit;
+	int nom;
+
+	nom = nominal_voltages[sc->sc_dc.dc_chip->table[idx].nom_volt_index];
+	if (nom < 0)
+		nom = dbcool_supply_voltage(sc);
+	nom *= 1000000;		/* scale for microvolts */
+
+	limit = sc->sc_dc.dc_readreg(&sc->sc_dc, reg->lo_lim_reg);
+	if (limit == 0x00 || limit == 0xff)
+		*props &= ~PROP_CRITMIN;
+	else {
+		limit *= nom;
+		limit /= 0xc0;
+		lims->sel_critmin = limit;
+		*props |= PROP_CRITMIN;
+	}
+	limit = sc->sc_dc.dc_readreg(&sc->sc_dc, reg->hi_lim_reg);
+	if (limit == 0x00 || limit == 0xff)
+		*props &= ~PROP_CRITMAX;
+	else {
+		limit *= nom;
+		limit /= 0xc0;
+		lims->sel_critmax = limit;
+		*props |= PROP_CRITMAX;
+	}
+}
+
+static void
+dbcool_get_fan_limits(struct dbcool_softc *sc, int idx,
+		      sysmon_envsys_lim_t *lims, uint32_t *props)
+{
+	struct reg_list *reg = sc->sc_regs[idx];
+	int32_t	limit;
+
+	limit = dbcool_read_rpm(sc, reg->lo_lim_reg);
+	if (limit) {
+		lims->sel_critmin = limit;
+		*props |= PROP_CRITMIN;
+	} else
+		*props &= ~PROP_CRITMIN;
+}
+
+/*
+ * Update sensor limits in the chip registers
+ */
+static void
+dbcool_set_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
+		  sysmon_envsys_lim_t *limits, uint32_t *props)
+{
+	int index = edata->sensor;
+	struct dbcool_softc *sc = sme->sme_cookie;
+
+	switch (edata->units) {
+	    case ENVSYS_STEMP:
+		dbcool_set_temp_limits(sc, index, limits, props);
+		break;
+	    case ENVSYS_SVOLTS_DC:
+		dbcool_set_volt_limits(sc, index, limits, props);
+		break;
+	    case ENVSYS_SFANRPM:
+		dbcool_set_fan_limits(sc, index, limits, props);
+
+	    /* FALLTHROUGH */
+	    default:
+		break;
+	}
+	*props &= ~PROP_DRIVER_LIMITS;
+}
+
+static void
+dbcool_set_temp_limits(struct dbcool_softc *sc, int idx,
+		       sysmon_envsys_lim_t *lims, uint32_t *props)
+{
+	struct reg_list *reg = sc->sc_regs[idx];
+	int32_t	limit;
+
+	if (*props & PROP_CRITMIN) {
+		limit = lims->sel_critmin - 273150000;
+		limit /= 1000000;
+		limit += sc->sc_temp_offset;
+		if (limit < 0)
+			limit = 0;
+		else if (limit > 0xff)
+			limit = 0xff;
+	} else
+		limit = 0;
+	sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg, (uint8_t)limit);
+
+	if (*props & PROP_CRITMAX) {
+		limit = lims->sel_critmax - 273150000;
+		limit /= 1000000;
+		limit += sc->sc_temp_offset;
+		if (limit < 0)
+			limit = 0;
+		else if (limit > 0xff)
+			limit = 0xff;
+	} else
+		limit = 0xff;
+	sc->sc_dc.dc_writereg(&sc->sc_dc, reg->hi_lim_reg, (uint8_t)limit);
+}
+
+static void
+dbcool_set_volt_limits(struct dbcool_softc *sc, int idx,
+		       sysmon_envsys_lim_t *lims, uint32_t *props)
+{
+	struct reg_list *reg = sc->sc_regs[idx];
+	int64_t limit;
+	int nom;
+
+	nom = nominal_voltages[sc->sc_dc.dc_chip->table[idx].nom_volt_index];
+	if (nom < 0)
+		nom = dbcool_supply_voltage(sc);
+	nom *= 1000000;		/* scale for microvolts */
+
+	if (*props & PROP_CRITMIN) {
+		limit = lims->sel_critmin;
+		limit *= 0xc0;
+		limit /= nom;
+		if (limit > 0xff)
+			limit = 0xff;
+		else if (limit < 0)
+			limit = 0;
+	} else
+		limit = 0;
+	sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg, limit);
+
+	if (*props & PROP_CRITMAX) {
+		limit = lims->sel_critmax;
+		limit *= 0xc0;
+		limit /= nom;
+		if (limit > 0xff)
+			limit = 0xff;
+		else if (limit < 0)
+			limit = 0;
+	} else
+		limit = 0xff;
+	sc->sc_dc.dc_writereg(&sc->sc_dc, reg->hi_lim_reg, limit);
+}
+
+static void
+dbcool_set_fan_limits(struct dbcool_softc *sc, int idx,
+		      sysmon_envsys_lim_t *lims, uint32_t *props)
+{
+	struct reg_list *reg = sc->sc_regs[idx];
+	int32_t	limit, dividend;
+
+	if (*props & PROP_CRITMIN) {
+		limit = lims->sel_critmin;
+		if (limit == 0)
+			limit = 0xffff;
+		else {
+			if (sc->sc_dc.dc_chip->flags & DBCFLAG_ADM1030)
+				dividend = 11250 * 60;
+			else
+				dividend = 90000 * 60;
+			limit = limit / dividend;
+			if (limit > 0xffff)
+				limit = 0xffff;
+		}
+	} else
+		limit = 0xffff;
+	sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg, limit & 0xff);
+	limit >>= 8;
+	sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg + 1, limit & 0xff);
+}
