@@ -1,4 +1,4 @@
-.\"	$NetBSD: __UNCONST.3,v 1.1 2010/03/01 13:44:09 jruoho Exp $
+.\"	$NetBSD: __UNCONST.3,v 1.2 2010/03/01 15:30:47 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,6 @@ In the same vein, the
 macro can be used to omit warnings related to the
 .Em volatile
 type qualifier.
-.Pp
 .Sh IMPLEMENTATION NOTES
 Both macros are implemented by explicitly using
 .Em unsigned long
@@ -74,6 +73,8 @@ api_function(char *str)
 	\&...
 
 .Ed
+.Sh SEE ALSO
+.Xr cc 1
 .Sh CAVEATS
 Both macros should be used with care because these can hide valid errors.
 A typical use case for
@@ -86,5 +87,3 @@ Valid use cases of
 .Fn __UNVOLATILE
 include passing a volatile pointer to
 .Xr memset 3 .
-.Sh SEE ALSO
-.Xr cc 1
