@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.39 2010/02/28 23:45:06 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.40 2010/03/01 19:29:41 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.39 2010/02/28 23:45:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.40 2010/03/01 19:29:41 matt Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -175,11 +175,6 @@ int	cpu_dumpsize(void);
 u_long	cpu_dump_mempagecnt(void);
 int	cpu_dump(void);
 
-#ifndef NOFPU
-kmutex_t fp_lock __aligned(32);
-kcondvar_t fp_cv __aligned(32);
-#endif
-
 #if defined(MIPS3_PLUS)
 uint32_t mips3_cp0_tlb_page_mask_probe(void);
 uint64_t mips3_cp0_tlb_entry_hi_probe(void);
@@ -227,22 +222,6 @@ struct splsw mips_splsw;
 struct mips_options mips_options = {
 	.mips_cpu_id = 0xffffffff,
 	.mips_fpu_id = 0xffffffff,
-};
-
-struct cpu_info cpu_info_store
-#ifdef MULTIPROCESSOR
-	__section(".data1")
-	__aligned(1LU << ilog2((2*sizeof(struct cpu_info)-1)))
-#endif
-    = {
-	.ci_curlwp = &lwp0,
-#ifndef NOFPU
-	.ci_fpcurlwp = &lwp0,
-#endif
-	.ci_tlb_info = &pmap_tlb0_info,
-	.ci_pmap_segbase = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
-	.ci_cpl = IPL_HIGH,
-	.ci_tlb_slot = -1,
 };
 
 struct	user *proc0paddr;
