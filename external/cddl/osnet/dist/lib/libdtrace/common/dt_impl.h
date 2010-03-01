@@ -40,7 +40,6 @@
 #include <libctf.h>
 #include <dtrace.h>
 #include <gelf.h>
-#include <synch.h>
 
 #ifdef	__cplusplus
 extern "C" {
@@ -599,6 +598,19 @@ extern void dt_buffered_disable(dtrace_hdl_t *);
 extern void dt_buffered_destroy(dtrace_hdl_t *);
 
 extern uint64_t dt_stddev(uint64_t *, uint64_t);
+
+#define	DT_MUTEX_HELD(x)	dt_mutex_held(x)
+
+static inline int
+dt_mutex_held(pthread_mutex_t *lock)
+{
+#if defined(sun)
+	extern int _mutex_held(struct _lwp_mutex *);
+	return (_mutex_held((struct _lwp_mutex *)lock));
+#else
+	return (1);
+#endif
+}
 
 extern int dt_options_load(dtrace_hdl_t *);
 
