@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.95 2009/12/26 16:01:25 uebayasi Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.96 2010/03/02 21:17:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,12 +40,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.95 2009/12/26 16:01:25 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.96 2010/03/02 21:17:31 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
 #include "opt_pmap_debug.h"
-#include "fs_nfs.h"
 #include "ksyms.h"
 
 #include <sys/param.h>
@@ -91,13 +90,11 @@ __KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.95 2009/12/26 16:01:25 uebayasi Ex
 #include <dev/hpc/apm/apmvar.h>
 #include <dev/hpc/bicons.h>
 
-#ifdef NFS
 #include <sys/mount.h>
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
-#endif /* NFS */
 
 /* Kernel text starts 256K in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00040000)
@@ -360,14 +357,10 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 		case 'b':
 			/* boot device: -b=sd0 etc. */
 			cp = cp + 2;
-#ifdef NFS
 			if (strcmp(cp, MOUNT_NFS) == 0)
 				rootfstype = MOUNT_NFS;
 			else
 				strncpy(boot_file, cp, sizeof(boot_file));
-#else /* !NFS */
-			strncpy(boot_file, cp, sizeof(boot_file));
-#endif /* !NFS */
 			break;
 		default:
 			BOOT_FLAG(*cp, boothowto);
