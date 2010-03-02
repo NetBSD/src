@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.284 2010/02/18 01:14:00 eeh Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.285 2010/03/02 19:30:34 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.284 2010/02/18 01:14:00 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.285 2010/03/02 19:30:34 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1047,6 +1047,13 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if (lfs_writer_daemon == 0 && kthread_create(PRI_BIO, 0, NULL,
 	    lfs_writerd, NULL, NULL, "lfs_writer") != 0)
 		panic("fork lfs_writer");
+	/*
+	 * XXX: Get extra reference to LFS vfsops.  This prevents unload,
+	 * but also prevents kernel panic due to text being unloaded
+	 * from below lfs_writerd.  When lfs_writerd can exit, remove
+	 * this!!!
+	 */
+	vfs_getopsbyname(MOUNT_LFS);
 
 	printf("WARNING: the log-structured file system is experimental\n"
 	    "WARNING: it may cause system crashes and/or corrupt data\n");
