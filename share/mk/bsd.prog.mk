@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.246 2009/12/14 08:51:16 mrg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.247 2010/03/02 20:49:18 darran Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -62,6 +62,12 @@ CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g+
 CFLAGS+=	${COPTS}
 OBJCFLAGS+=	${OBJCOPTS}
 MKDEP_SUFFIXES?=	.o .ln
+
+# CTF preserve debug symbols
+.if defined(MKDTRACE) && (${MKDTRACE} != "no") && (${CFLAGS:M-g} != "")
+CTFFLAGS+= -g
+CTFMFLAGS+= -g
+.endif
 
 # ELF platforms depend on crti.o, crtbegin.o, crtend.o, and crtn.o
 .if ${OBJECT_FMT} == "ELF"
@@ -299,6 +305,9 @@ ${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${D
 	    ${OBJS.${_P}} ${_LDADD.${_P}} \
 	    ${DESTDIR:D-L${_GCC_LIBGCCDIR}} \
 	    ${_PROGLDOPTS}
+.if defined(CTFMERGE)
+	${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${OBJS.${_P}}
+.endif
 .if defined(PAXCTL_FLAGS.${_P})
 	${PAXCTL} ${PAXCTL_FLAGS.${_P}} ${.TARGET}
 .endif
