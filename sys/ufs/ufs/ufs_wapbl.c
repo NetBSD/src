@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.7 2009/04/06 14:09:57 pooka Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.8 2010/03/02 14:45:55 pooka Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,12 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.7 2009/04/06 14:09:57 pooka Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_quota.h"
-#include "fs_lfs.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.8 2010/03/02 14:45:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
