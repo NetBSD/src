@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.201 2010/02/25 11:03:32 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.202 2010/03/02 06:34:57 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16831,4 +16831,9 @@ sys/arch/hppa/hppa/vm_machdep.c			patch
 
 	Fix ticket #793: s/setfunc_trampoline/lwp_trampoline/.
 	[skrll, ticket #1312]
+
+sys/sys/atomic.h				1.11
+
+	Make atomics usable from C++.
+	[dholland, ticket #1314]
 
