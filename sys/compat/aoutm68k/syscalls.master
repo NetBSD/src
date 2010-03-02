@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.34 2010/03/02 16:00:03 pooka Exp $
+	$NetBSD: syscalls.master,v 1.35 2010/03/02 16:08:15 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -42,7 +42,6 @@
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
 
-#include "fs_lfs.h"
 #include "fs_nfs.h"
 #endif
 
