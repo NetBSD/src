@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.50 2009/09/29 23:56:34 tsarna Exp $
+.\"	$NetBSD: mk.conf.5,v 1.51 2010/03/02 07:26:47 jruoho Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -829,8 +829,9 @@ Indicates whether GCC stack-smashing protection (SSP) support,
 which detects stack overflows and aborts the program,
 is enabled.
 This imposes some performance penalty.
-.DFLTn
-.
+.DFLTy
+on i386 and amd64, otherwise
+.Dq no .
 .It Sy USE_YP
 .YorN
 Indicates whether YP (NIS) support is
