@@ -1,6 +1,6 @@
-#	$NetBSD: files.nfs,v 1.12 2010/03/02 23:19:09 pooka Exp $
+#	$NetBSD: files.nfs,v 1.13 2010/03/02 23:49:11 pooka Exp $
 
-deffs	fs_nfs.h		NFS
+deffs				NFS
 
 defflag opt_nfs_boot.h		NFS_BOOT_BOOTP NFS_BOOT_BOOTPARAM NFS_BOOT_DHCP
 				NFS_BOOT_GATEWAY NFS_BOOT_TCP
