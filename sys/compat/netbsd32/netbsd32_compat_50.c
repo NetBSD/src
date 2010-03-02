@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.9 2010/01/19 23:15:50 pooka Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.10 2010/03/02 16:09:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,12 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.9 2010/01/19 23:15:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.10 2010/03/02 16:09:11 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
-
-#include "fs_lfs.h"
 #endif
 
 #include <sys/param.h>
@@ -279,15 +277,6 @@ compat_50_netbsd32_adjtime(struct lwp *l,
 
 	return 0;
 }
-
-#if defined(LFS) || !defined(_KERNEL)
-int
-compat_50_netbsd32_lfs_segwait(struct lwp *l,
-    const struct compat_50_netbsd32_lfs_segwait_args *uap, register_t *retval)
-{
-	return 0;
-}
-#endif
 
 int
 compat_50_netbsd32_futimes(struct lwp *l,
