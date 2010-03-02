@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.136 2010/02/20 00:35:11 joerg Exp $
+#	$NetBSD: Makefile,v 1.137 2010/03/02 20:47:01 darran Exp $
 
 .include <bsd.own.mk>
 
@@ -27,6 +27,14 @@ TOOLCHAIN_BITS+= pcc
 TOOLCHAIN_BITS+= .WAIT dbsym mdsetimage
 .endif
 
+DTRACE_BITS=
+.if ${MKDTRACE} != "no"
+DTRACE_BITS+= .WAIT libelf
+DTRACE_BITS+= .WAIT libdwarf
+DTRACE_BITS+= .WAIT libctf 
+DTRACE_BITS+= .WAIT ctfconvert ctfmerge
+.endif
+
 LINT_BITS=
 .if ${MKLINT} != "no"
 LINT_BITS= lint lint2
@@ -45,6 +53,7 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	.WAIT lex \
 	.WAIT pax \
 	.WAIT ${TOOLCHAIN_BITS} \
+	${DTRACE_BITS} \
 		asn1_compile atf-compile cat cksum compile_et config db \
 		file lint1 \
 		makefs menuc mkcsmapper mkesdb mklocale mknod msgc \
