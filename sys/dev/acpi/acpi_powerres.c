@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_powerres.c,v 1.9 2010/01/18 18:36:50 jruoho Exp $ */
+/* $NetBSD: acpi_powerres.c,v 1.10 2010/03/02 18:44:47 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2001 Michael Smith
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_powerres.c,v 1.9 2010/01/18 18:36:50 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_powerres.c,v 1.10 2010/03/02 18:44:47 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -395,7 +395,7 @@ acpi_pwr_switch_consumer(ACPI_HANDLE consumer, int state)
 		}
 		reslist_object = (ACPI_OBJECT *)reslist_buffer.Pointer;
 		if (reslist_object->Type != ACPI_TYPE_PACKAGE) {
-			ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS, "resource list is not ACPI_TYPE_PACKAGE (%d)\n",
+			ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS, "resource list is not ACPI_TYPE_PACKAGE (%u)\n",
 					     reslist_object->Type));
 			status = AE_TYPE;
 			goto out;
@@ -423,7 +423,7 @@ acpi_pwr_switch_consumer(ACPI_HANDLE consumer, int state)
 	 */
 	if (reslist_object != NULL) {
 		ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS,
-				     "referencing %d new resources\n",
+				     "referencing %u new resources\n",
 				     reslist_object->Package.Count));
 		acpi_foreach_package_object(reslist_object,
 		    acpi_pwr_reference_resource, pc);
@@ -554,9 +554,9 @@ acpi_pwr_switch_power(void)
 		status = acpi_eval_integer(rp->ap_resource, "_STA", &cur);
 		if (ACPI_FAILURE(status)) {
 			ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS,
-					     "can't get status of %s - %d\n",
+					     "can't get status of %s - %s\n",
 					     acpi_name(rp->ap_resource),
-					     status));
+					     AcpiFormatException(status)));
 			/* XXX is this correct?  Always switch if in doubt? */
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: dalb_acpi.c,v 1.7 2010/02/24 22:37:56 dyoung Exp $	*/
+/*	$NetBSD: dalb_acpi.c,v 1.8 2010/03/02 18:44:47 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.7 2010/02/24 22:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.8 2010/03/02 18:44:47 jruoho Exp $");
 
 /*
  * Direct Application Launch Button:
@@ -136,7 +136,7 @@ acpi_dalb_init(device_t dev)
 	obj = (ACPI_OBJECT *)ret.Pointer;
 	if (obj->Type != ACPI_TYPE_BUFFER) {
 		sc->sc_usageid = DALB_ID_INVALID;
-		aprint_debug_dev(dev, "invalid ACPI type: %d\n", obj->Type);
+		aprint_debug_dev(dev, "invalid ACPI type: %u\n", obj->Type);
 		goto out;
 	}
 
