@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.231 2009/11/26 17:20:20 pooka Exp $
+	$NetBSD: syscalls.master,v 1.232 2010/03/02 19:34:26 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -46,8 +46,6 @@
 #include "opt_modular.h"
 #include "opt_ntp.h"
 #include "opt_sysv.h"
-
-#include "fs_lfs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,20 +356,13 @@
 181	STD 		{ int|sys||setgid(gid_t gid); }
 182	STD 		{ int|sys||setegid(gid_t egid); }
 183	STD 		{ int|sys||seteuid(uid_t euid); }
-#if defined(LFS) || !defined(_KERNEL)
-184	STD 		{ int|sys||lfs_bmapv(fsid_t *fsidp, \
+184	STD MODULAR	{ int|sys||lfs_bmapv(fsid_t *fsidp, \
 			    struct block_info *blkiov, int blkcnt); }
-185	STD 		{ int|sys||lfs_markv(fsid_t *fsidp, \
+185	STD MODULAR	{ int|sys||lfs_markv(fsid_t *fsidp, \
 			    struct block_info *blkiov, int blkcnt); }
-186	STD		{ int|sys||lfs_segclean(fsid_t *fsidp, u_long segment); }
+186	STD MODULAR	{ int|sys||lfs_segclean(fsid_t *fsidp, u_long segment); }
 187	COMPAT_50 MODULAR { int|sys||lfs_segwait(fsid_t *fsidp, \
 			    struct timeval50 *tv); }
-#else
-184	EXCL		lfs_bmapv
-185	EXCL		lfs_markv
-186	EXCL		lfs_segclean
-187	EXCL		lfs_segwait
-#endif
 188	COMPAT_12 MODULAR { int|sys||stat(const char *path, struct stat12 *ub); } \
 			    stat12
 189	COMPAT_12 MODULAR { int|sys||fstat(int fd, struct stat12 *sb); } fstat12
@@ -809,12 +800,8 @@
 			    const struct timeval *tptr); }
 421	STD		{ int|sys|50|adjtime(const struct timeval *delta, \
 			    struct timeval *olddelta); }
-#if defined(LFS) || !defined(_KERNEL)
-422	STD		{ int|sys|50|lfs_segwait(fsid_t *fsidp, \
+422	STD  MODULAR	{ int|sys|50|lfs_segwait(fsid_t *fsidp, \
 			    struct timeval *tv); }
-#else
-422	EXCL		__lfs_segwait50
-#endif
 423	STD  RUMP	{ int|sys|50|futimes(int fd, \
 			    const struct timeval *tptr); }
 424	STD  RUMP 	{ int|sys|50|lutimes(const char *path, \
