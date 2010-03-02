@@ -1,4 +1,4 @@
-.\"	$NetBSD: __UNCONST.3,v 1.2 2010/03/01 15:30:47 wiz Exp $
+.\"	$NetBSD: __UNCONST.3,v 1.3 2010/03/02 06:20:03 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,40 +43,31 @@
 The
 .Fn __UNCONST
 macro can be used to omit warnings produced by certain compilers when
-a pointer declared with the
+operating with pointers declared with the
 .Em const
-type qualifier is being passed to a function without such qualifier.
+type qualifier in a context without such qualifier.
+Examples include passing a pointer declared with the
+.Em const
+qualifier to a function without such qualifier,
+and variable assignment from a
+.Em const
+pointer to a non-const pointer.
 In the same vein, the
 .Fn __UNVOLATILE
-macro can be used to omit warnings related to the
+macro can be used to exclude warnings related to the
 .Em volatile
 type qualifier.
 .Sh IMPLEMENTATION NOTES
-Both macros are implemented by explicitly using
+These macros are implemented by explicitly using
 .Em unsigned long
 instead of
 .Em intptr_t ,
 a signed type guaranteed to hold a pointer.
-.Sh EXAMPLES
-The following example demonstrates a possible usage of
-.Fn __UNCONST :
-.Bd -literal -offset indent
-const char *str = "/dev/null";
-
-api_function(__UNCONST(str));
-
-\&...
-
-static void
-api_function(char *str)
-{
-	\&...
-
-.Ed
 .Sh SEE ALSO
 .Xr cc 1
 .Sh CAVEATS
-Both macros should be used with care because these can hide valid errors.
+As both macros may hide valid errors, their usage is not recommended
+unless there is a well-thought reason for a cast.
 A typical use case for
 .Fn __UNCONST
 involve an
@@ -85,5 +76,7 @@ that does not follow the so-called ``const correctness''
 even if it would be appropriate.
 Valid use cases of
 .Fn __UNVOLATILE
-include passing a volatile pointer to
+include passing a
+.Em volatile
+pointer to
 .Xr memset 3 .
