@@ -1,7 +1,7 @@
-/*	$NetBSD: mfs_extern.h,v 1.31 2010/03/02 17:20:02 pooka Exp $	*/
+/*	$NetBSD: mfs_miniroot.c,v 1.1 2010/03/02 17:20:02 pooka Exp $	*/
 
-/*-
- * Copyright (c) 1991, 1993
+/*
+ * Copyright (c) 1989, 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,52 +28,41 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mfs_extern.h	8.4 (Berkeley) 3/30/95
+ *	@(#)mfs_vfsops.c	8.11 (Berkeley) 6/19/95
  */
 
-#ifndef _UFS_MFS_MFS_EXTERN_H_
-#define _UFS_MFS_MFS_EXTERN_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mfs_miniroot.c,v 1.1 2010/03/02 17:20:02 pooka Exp $");
 
 #include <sys/param.h>
-#include <sys/mount.h>
-#include <sys/mallocvar.h>
 
-struct buf;
-struct mount;
-struct nameidata;
-struct proc;
-struct statvfs;
-struct vnode;
+#include <ufs/mfs/mfs_extern.h>
+#include <ufs/ffs/fs.h>
 
-__BEGIN_DECLS
-#define	mfs_ioctl	genfs_enoioctl
+void *	mfs_rootbase;	/* address of mini-root in kernel virtual memory */
+u_long	mfs_rootsize;	/* size of mini-root in bytes */
 
-/* mfs_vfsops.c */
-VFS_PROTOS(mfs);
+/*
+ * This is called early in boot to set the base address and size
+ * of the mini-root.
+ */
+int
+mfs_initminiroot(void *base)
+{
+	struct fs *fs = (struct fs *)((char *)base + SBLOCK_UFS1);
+	static bool inited = false;
 
-int	mfs_initminiroot(void *);
+	if (inited)
+		panic("mfs_initminiroot() called more than once");
+	inited = true;
 
-/* mfs_vnops.c */
-int	mfs_open(void *);
-int	mfs_strategy(void *);
-void	mfs_doio(struct buf *, void *);
-int	mfs_bmap(void *);
-int	mfs_close(void *);
-int	mfs_inactive(void *);
-int	mfs_reclaim(void *);
-int	mfs_print(void *);
-int	mfs_fsync(void *);
-
-#ifdef _KERNEL
-
-#include <sys/mutex.h>
-
-extern kmutex_t	mfs_lock;
-extern void *mfs_rootbase;
-extern u_long mfs_rootsize;
-
-#endif
-
-__END_DECLS
-
-#endif /* !_UFS_MFS_MFS_EXTERN_H_ */
+	/* check for valid super block */
+	if (fs->fs_magic != FS_UFS1_MAGIC || fs->fs_bsize > MAXBSIZE ||
+	    fs->fs_bsize < sizeof(struct fs))
+		return (0);
+	rootfstype = MOUNT_MFS;
+	mfs_rootbase = base;
+	mfs_rootsize = fs->fs_fsize * fs->fs_size;
+	rootdev = makedev(255, 0);
+	return (mfs_rootsize);
+}
