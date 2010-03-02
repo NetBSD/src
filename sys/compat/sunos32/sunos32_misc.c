@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.67 2009/06/29 05:08:16 dholland Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.68 2010/03/02 21:09:21 pooka Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,14 +77,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.67 2009/06/29 05:08:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.68 2010/03/02 21:09:21 pooka Exp $");
 
 #define COMPAT_SUNOS 1
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
 #include "opt_compat_netbsd.h"
-#include "fs_nfs.h"
 #endif
 
 #include <sys/param.h>
@@ -527,19 +526,6 @@ sunos32_sys_mount(struct lwp *l, const struct sunos32_sys_mount_args *uap, regis
 	    SCARG_P32(uap, path), nflags, SCARG_P32(uap, data), UIO_USERSPACE,
 	    0, &dummy);
 }
-
-#if defined(NFS)
-int
-async_daemon(struct lwp *l, const void *v, register_t *retval)
-{
-	struct netbsd32_nfssvc_args ouap;
-
-	SCARG(&ouap, flag) = NFSSVC_BIOD;
-	NETBSD32PTR32(SCARG(&ouap, argp), 0);
-
-	return (netbsd32_nfssvc(l, &ouap, retval));
-}
-#endif /* NFS */
 
 void	native_to_sunos_sigset(const sigset_t *, int *);
 void	sunos_to_native_sigset(const int, sigset_t *);
