@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.40 2010/02/25 23:40:39 dyoung Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.41 2010/03/02 20:31:14 dyoung Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.40 2010/02/25 23:40:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.41 2010/03/02 20:31:14 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -115,8 +115,7 @@ ath_cardbus_suspend(device_t self, const pmf_qual_t *qual)
 
 	ath_suspend(&csc->sc_ath);
 	if (csc->sc_ih != NULL) {
-		cardbus_intr_disestablish(csc->sc_ct->ct_cc, csc->sc_ct->ct_cf,
-		    csc->sc_ih);
+		Cardbus_intr_disestablish(csc->sc_ct, csc->sc_ih);
 		csc->sc_ih = NULL;
 	}
 	return true;
@@ -127,8 +126,8 @@ ath_cardbus_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct ath_cardbus_softc *csc = device_private(self);
 
-	csc->sc_ih = cardbus_intr_establish(csc->sc_ct->ct_cc,
-	    csc->sc_ct->ct_cf, csc->sc_intrline, IPL_NET, ath_intr,
+	csc->sc_ih = Cardbus_intr_establish(csc->sc_ct,
+	    csc->sc_intrline, IPL_NET, ath_intr,
 	    &csc->sc_ath);
 
 	if (csc->sc_ih == NULL) {
@@ -235,7 +234,7 @@ ath_cardbus_detach(device_t self, int flags)
 	 * Unhook the interrupt handler.
 	 */
 	if (csc->sc_ih != NULL) {
-		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
+		Cardbus_intr_disestablish(ct, csc->sc_ih);
 		csc->sc_ih = NULL;
 	}
 
