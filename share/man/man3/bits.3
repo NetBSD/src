@@ -1,4 +1,4 @@
-.\"	$NetBSD: bits.3,v 1.4 2009/10/19 23:19:38 rmind Exp $
+.\"	$NetBSD: bits.3,v 1.5 2010/03/02 06:52:53 jruoho Exp $
 .\"
 .\" Copyright (c) 2006 David Young.  All rights reserved.
 .\"
@@ -109,9 +109,9 @@ Note that
 /*
  * Register definitions taken from the RFMD RF3000 manual.
  */
-#define	RF3000_GAINCTL		0x11		/* TX variable gain control */
-#define		RF3000_GAINCTL_TXVGC_MASK	__BITS(7, 2)
-#define		RF3000_GAINCTL_SCRAMBLER	__BIT(1)
+#define	RF3000_GAINCTL			0x11
+#define RF3000_GAINCTL_TXVGC_MASK	__BITS(7, 2)
+#define	RF3000_GAINCTL_SCRAMBLER	__BIT(1)
 
 /*
  * Shift the transmit power into the transmit-power field of the
@@ -122,19 +122,18 @@ atw_rf3000_write(sc, RF3000_GAINCTL,
 
 /*
  * Register definitions taken from the ADMtek ADM8211 manual.
- *
  */
-#define	ATW_RXSTAT_OWN	__BIT(31)		/* 1: NIC may fill descriptor */
-/* ... */
-#define	ATW_RXSTAT_DA1	__BIT(17)		/* DA bit 1, admin'd address */
-#define	ATW_RXSTAT_DA0          __BIT(16)	/* DA bit 0, group address */
-#define	ATW_RXSTAT_RXDR_MASK    __BITS(15,12)	/* RX data rate */
-#define	ATW_RXSTAT_FL_MASK	__BITS(11,0)	/* RX frame length, last
-						 * descriptor only
-						 */
+#define	ATW_RXSTAT_OWN		__BIT(31)
 
-/* Extract the frame length from the Rx descriptor's
- * status field.
+/* ... */
+
+#define	ATW_RXSTAT_DA1		__BIT(17)
+#define	ATW_RXSTAT_DA0          __BIT(16)
+#define	ATW_RXSTAT_RXDR_MASK    __BITS(15,12)
+#define	ATW_RXSTAT_FL_MASK	__BITS(11,0)
+
+/*
+ * Extract the frame length from the Rx descriptor's status field.
  */
 len = __SHIFTOUT(rxstat, ATW_RXSTAT_FL_MASK);
 .Ed
