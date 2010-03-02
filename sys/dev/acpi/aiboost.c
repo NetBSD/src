@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.28 2010/02/18 13:52:33 pgoyette Exp $ */
+/* $NetBSD: aiboost.c,v 1.29 2010/03/02 18:44:47 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.28 2010/02/18 13:52:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.29 2010/03/02 18:44:47 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,9 +363,9 @@ aiboost_getcomp(ACPI_HANDLE *h, const char *name, struct aiboost_comp **comp)
 		DPRINTF(("elem[%d]->Type = %x\n", i+1, elem->Type));
 		if (elem->Type == ACPI_TYPE_PACKAGE &&
 			elem->Package.Elements[0].Type == ACPI_TYPE_INTEGER) {
-			DPRINTF((" subelem->Type = %x, %d\n",
+			DPRINTF((" subelem->Type = %x, %"PRIu64"\n",
 			    elem->Package.Elements[0].Type,
-			    (int)elem->Package.Elements[0].Integer.Value));
+			    elem->Package.Elements[0].Integer.Value));
 		}
 	}
 #endif
