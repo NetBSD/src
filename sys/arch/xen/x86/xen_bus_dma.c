@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.18 2010/02/27 09:22:40 jym Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.19 2010/03/02 00:13:50 jym Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.18 2010/02/27 09:22:40 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.19 2010/03/02 00:13:50 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	npagesreq = (size >> PAGE_SHIFT);
 	KASSERT(npages >= npagesreq);
 
-	/* get npages from UWM, and give them back to the hypervisor */
+	/* get npages from UVM, and give them back to the hypervisor */
 	error = uvm_pglistalloc(((psize_t)npages) << PAGE_SHIFT,
             0, avail_end, 0, 0, mlistp, npages, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
@@ -96,8 +96,8 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 		res.nr_extents = 1;
 		res.extent_order = 0;
 		res.domid = DOMID_SELF;
-		if (HYPERVISOR_memory_op(XENMEM_decrease_reservation, &res)
-		    != 1) {
+		error = HYPERVISOR_memory_op(XENMEM_decrease_reservation, &res);
+		if (error != 1) {
 #ifdef DEBUG
 			printf("xen_alloc_contig: XENMEM_decrease_reservation "
 			    "failed: err %d (pa %#" PRIxPADDR " mfn %#lx)\n",
