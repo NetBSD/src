@@ -1,9 +1,9 @@
-#	$NetBSD: files.ufs,v 1.23 2010/03/02 17:28:09 pooka Exp $
+#	$NetBSD: files.ufs,v 1.24 2010/03/02 19:59:09 pooka Exp $
 
 deffs					FFS
 deffs					EXT2FS
 deffs					MFS
-deffs	fs_lfs.h			LFS		# XXX
+deffs					LFS
 
 defflag	opt_ffs.h			FFS_EI FFS_NO_SNAPSHOT APPLE_UFS
 					UFS_DIRHASH
