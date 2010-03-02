@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1400 2010/03/01 19:12:49 jruoho Exp $
+#	$NetBSD: mi,v 1.1401 2010/03/02 20:04:16 darran Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2084,6 +2084,7 @@
 ./usr/include/sys/scanio.h			comp-c-include
 ./usr/include/sys/sched.h			comp-c-include
 ./usr/include/sys/scsiio.h			comp-c-include
+./usr/include/sys/sdt.h				comp-c-include
 ./usr/include/sys/select.h			comp-c-include
 ./usr/include/sys/selinfo.h			comp-c-include
 ./usr/include/sys/sem.h				comp-c-include
