@@ -1,4 +1,4 @@
-/* $NetBSD: compile.c,v 1.3 2010/03/01 01:59:48 dholland Exp $ */
+/* $NetBSD: compile.c,v 1.4 2010/03/02 14:11:11 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.3 2010/03/01 01:59:48 dholland Exp $");
+__RCSID("$NetBSD: compile.c,v 1.4 2010/03/02 14:11:11 roy Exp $");
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
@@ -413,11 +413,10 @@ encode_string(const char *term, const char *cap, TBUF *tbuf, const char *str,
 	return 0;
 }
 
-static char *
-get_token(char **cap)
+char *
+_ti_get_token(char **cap, char sep)
 {
-	char *token;
-	int esc;
+	char esc, *token;
 
 	while (isspace((unsigned char)**cap))
 		(*cap)++;
@@ -425,16 +424,21 @@ get_token(char **cap)
 		return NULL;
 
 	/* We can't use stresep(3) as ^ we need two escape chars */
-	esc = 0;
+	esc = '\0';
 	for (token = *cap;
-	     **cap != '\0' && (esc == 1 || **cap != ',');
+	     **cap != '\0' && (esc != '\0' || **cap != sep);
 	     (*cap)++)
 	{
-		if (esc == 0) {
+		if (esc == '\0') {
 			if (**cap == '\\' || **cap == '^')
-				esc = 1;
-		} else
-			esc = 0;
+				esc = **cap;
+		} else {
+			/* termcap /E/ is valid */
+			if (sep == ':' && esc == '\\' && **cap == 'E')
+				esc = 'x';
+			else
+				esc = '\0';
+		}
 	}
 
 	if (**cap != '\0')
@@ -456,7 +460,7 @@ _ti_compile(char *cap, int flags)
 
 	_DIAGASSERT(cap != NULL);	
 
-	name = get_token(&cap);
+	name = _ti_get_token(&cap, ',');
 	if (name == NULL) {
 		dowarn(flags, "no seperator found: %s", cap);
 		return NULL;
@@ -489,9 +493,9 @@ _ti_compile(char *cap, int flags)
 			goto error;
 	}
 
-	for (token = get_token(&cap);
+	for (token = _ti_get_token(&cap, ',');
 	     token != NULL && *token != '\0';
-	     token = get_token(&cap))
+	     token = _ti_get_token(&cap, ','))
 	{
 		/* Skip commented caps */
 		if (!(flags & TIC_COMMENT) && token[0] == '.')

@@ -1,4 +1,4 @@
-/* $NetBSD: termcap.c,v 1.4 2010/03/01 11:02:31 roy Exp $ */
+/* $NetBSD: termcap.c,v 1.5 2010/03/02 14:11:11 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap.c,v 1.4 2010/03/01 11:02:31 roy Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.5 2010/03/02 14:11:11 roy Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -277,6 +277,16 @@ strval(const char *val)
 		}
 	}
 
+	/* \E\ is valid termcap.
+	 * We need to escape the final \ for terminfo. */
+	if (l > 2 && info[l - 1] == '\\' &&
+	    (info[l - 2] != '\\' && info[l - 2] != '^'))
+	{
+		if (l + 1 > len)
+			goto elen;
+		*ip++ = '\\';
+	}
+
 	*ip = '\0';
 	return info;
 
@@ -302,10 +312,10 @@ captoinfo(char *cap)
 
 	lp = 0;
 	tok[2] = '\0';
-	while ((token = strsep(&cap, ":")) != NULL) {
-		/* Trim whitespace */
-		while (isspace((unsigned char)*token))
-			token++;
+	for (token = _ti_get_token(&cap, ':');
+	     token != NULL;
+	     token = _ti_get_token(&cap, ':'))
+	{
 		if (token[0] == '\0')
 			continue;
 		name = token;

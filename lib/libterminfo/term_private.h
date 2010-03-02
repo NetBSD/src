@@ -1,4 +1,4 @@
-/* $NetBSD: term_private.h,v 1.6 2010/02/22 23:05:39 roy Exp $ */
+/* $NetBSD: term_private.h,v 1.7 2010/03/02 14:11:11 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -143,6 +143,7 @@ typedef struct tic {
 } TIC;
 
 char *_ti_grow_tbuf(TBUF *, size_t);
+char *_ti_get_token(char **, char);
 char *_ti_find_cap(TBUF *, char,  short);
 char *_ti_find_extra(TBUF *, const char *);
 size_t _ti_store_extra(TIC *, int, char *, char, char, short,
