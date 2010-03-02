@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.93 2010/01/05 15:23:32 skrll Exp $
+#	$NetBSD: makesyscalls.sh,v 1.94 2010/03/02 19:33:12 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -134,6 +134,7 @@ BEGIN {
 	sysprotos = \"$sysprotos\"
 	sysnumhdr = \"$sysnumhdr\"
 	sysarghdr = \"$sysarghdr\"
+	sysarghdrextra = \"$sysarghdrextra\"
 	rumpcalls = \"$rumpcalls\"
 	rumpcallshdr = \"$rumpcallshdr\"
 	rumpsysent = \"$rumpsysent\"
@@ -254,6 +255,7 @@ NR == 1 {
 	printf "#define	_" constprefix "SYSCALL_H_\n\n" > sysnumhdr
 	printf "#ifndef _" constprefix "SYSCALLARGS_H_\n" > sysarghdr
 	printf "#define	_" constprefix "SYSCALLARGS_H_\n\n" > sysarghdr
+	printf "%s", sysarghdrextra > sysarghdr
 	# Write max number of system call arguments to both headers
 	printf("#define\t%sMAXSYSARGS\t%d\n\n", constprefix, maxsysargs) \
 		> sysnumhdr
