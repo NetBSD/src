@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.36 2009/09/16 10:47:55 mlelstv Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.37 2010/03/02 18:44:47 jruoho Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.36 2009/09/16 10:47:55 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.37 2010/03/02 18:44:47 jruoho Exp $");
 
 #include "rnd.h"
 
@@ -249,13 +249,13 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 	}
 	fde = (ACPI_OBJECT *)abuf.Pointer;
 	if (fde->Type != ACPI_TYPE_BUFFER) {
-		aprint_error_dev(sc->sc_dev, "expected BUFFER, got %d\n",
+		aprint_error_dev(sc->sc_dev, "expected BUFFER, got %u\n",
 		    fde->Type);
 		goto out;
 	}
 	if (fde->Buffer.Length < 5 * sizeof(UINT32)) {
 		aprint_error_dev(sc->sc_dev,
-		    "expected buffer len of %lu, got %d\n",
+		    "expected buffer len of %lu, got %u\n",
 		    (unsigned long)(5 * sizeof(UINT32)), fde->Buffer.Length);
 		goto out;
 	}
@@ -316,7 +316,7 @@ fdc_acpi_getknownfds(struct fdc_acpi_softc *asc)
 		fdi = (ACPI_OBJECT *)abuf.Pointer;
 		if (fdi->Type != ACPI_TYPE_PACKAGE) {
 			aprint_error_dev(sc->sc_dev,
-			    "expected PACKAGE, got %d\n", fdi->Type);
+			    "expected PACKAGE, got %u\n", fdi->Type);
 			goto out;
 		}
 		e = fdi->Package.Elements;

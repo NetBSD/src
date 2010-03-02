@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.60 2010/02/24 22:37:56 dyoung Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.61 2010/03/02 18:44:46 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.60 2010/02/24 22:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.61 2010/03/02 18:44:46 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,7 @@ acpiecdt_find(device_t parent, ACPI_HANDLE *ec_handle,
 
 	if (ecdt->Control.BitWidth != 8 || ecdt->Data.BitWidth != 8) {
 		aprint_error_dev(parent,
-		    "ECDT register width invalid (%d/%d)\n",
+		    "ECDT register width invalid (%u/%u)\n",
 		    ecdt->Control.BitWidth, ecdt->Data.BitWidth);
 		return false;
 	}
