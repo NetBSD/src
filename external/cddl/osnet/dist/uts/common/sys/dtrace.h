@@ -2034,7 +2034,7 @@ typedef dtrace_modctl_t *mymodctl_p;
 
 typedef struct dtrace_pops {
 	void (*dtps_provide)(void *arg, const dtrace_probedesc_t *spec);
-	void (*dtps_provide_module)(void *arg, struct modctl *mp);
+	void (*dtps_provide_module)(void *arg, dtrace_modctl_t *mp);
 	int (*dtps_enable)(void *arg, dtrace_id_t id, void *parg);
 	void (*dtps_disable)(void *arg, dtrace_id_t id, void *parg);
 	void (*dtps_suspend)(void *arg, dtrace_id_t id, void *parg);
