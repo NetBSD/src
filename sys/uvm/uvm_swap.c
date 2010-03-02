@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.149 2010/02/07 15:51:28 mlelstv Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.150 2010/03/02 21:32:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,9 +30,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.149 2010/02/07 15:51:28 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.150 2010/03/02 21:32:29 pooka Exp $");
 
-#include "fs_nfs.h"
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -818,9 +817,6 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 	long addr;
 	u_long result;
 	struct vattr va;
-#ifdef NFS
-	extern int (**nfsv2_vnodeop_p)(void *);
-#endif /* NFS */
 	const struct bdevsw *bdev;
 	dev_t dev;
 	UVMHIST_FUNC("swap_on"); UVMHIST_CALLED(pdhist);
@@ -877,11 +873,9 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 		 * limit the max # of outstanding I/O requests we issue
 		 * at any one time.   take it easy on NFS servers.
 		 */
-#ifdef NFS
-		if (vp->v_op == nfsv2_vnodeop_p)
+		if (vp->v_tag == VT_NFS)
 			sdp->swd_maxactive = 2; /* XXX */
 		else
-#endif /* NFS */
 			sdp->swd_maxactive = 8; /* XXX */
 		break;
 
