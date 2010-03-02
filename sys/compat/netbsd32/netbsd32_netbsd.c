@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.163 2009/12/14 00:47:11 matt Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.164 2010/03/02 16:03:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.163 2009/12/14 00:47:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.164 2010/03/02 16:03:59 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1351,36 +1351,6 @@ netbsd32_seteuid(struct lwp *l, const struct netbsd32_seteuid_args *uap, registe
 	NETBSD32TO64_UAP(euid);
 	return (sys_seteuid(l, &ua, retval));
 }
-
-#ifdef LFS
-int
-netbsd32_lfs_bmapv(struct lwp *l, const struct netbsd32_lfs_bmapv_args *v, register_t *retval)
-{
-
-	return (ENOSYS);	/* XXX */
-}
-
-int
-netbsd32_lfs_markv(struct lwp *l, const struct netbsd32_lfs_markv_args *v, register_t *retval)
-{
-
-	return (ENOSYS);	/* XXX */
-}
-
-int
-netbsd32_lfs_segclean(struct lwp *l, const struct netbsd32_lfs_segclean_args *v, register_t *retval)
-{
-
-	return (ENOSYS);	/* XXX */
-}
-
-int
-netbsd32___lfs_segwait50(struct lwp *l, const struct netbsd32___lfs_segwait50_args *v, register_t *retval)
-{
-
-	return (ENOSYS);	/* XXX */
-}
-#endif
 
 int
 netbsd32_pathconf(struct lwp *l, const struct netbsd32_pathconf_args *uap, register_t *retval)
