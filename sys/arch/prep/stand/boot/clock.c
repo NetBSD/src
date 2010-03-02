@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 2006/04/10 18:40:06 garbled Exp $	*/
+/*	$NetBSD: clock.c,v 1.10 2010/03/02 21:52:32 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,6 +35,7 @@
 #include <dev/isa/isareg.h>
 #include <dev/ic/i8253reg.h>
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 
 #include "boot.h"
 
