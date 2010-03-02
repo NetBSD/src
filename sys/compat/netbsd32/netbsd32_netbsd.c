@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.164 2010/03/02 16:03:59 pooka Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.165 2010/03/02 16:08:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.164 2010/03/02 16:03:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.165 2010/03/02 16:08:15 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -37,8 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.164 2010/03/02 16:03:59 pooka 
 #include "opt_sysv.h"
 #include "opt_syscall_debug.h"
 #include "opt_sa.h"
-
-#include "fs_lfs.h"
 #endif
 
 /*
