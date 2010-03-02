@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.125 2010/02/28 11:49:44 martin Exp $
+#	$NetBSD: files.sparc64,v 1.126 2010/03/02 12:18:35 nakayama Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -74,11 +74,11 @@ file	arch/sparc64/dev/tda.c			tda
 
 device pcfiic: sysmon_envsys, pcf8584, i2cbus
 attach pcfiic at ebus
-file	arch/sparc64/dev/pcfiic_ebus.c	pcfiic
+file	arch/sparc64/dev/pcfiic_ebus.c		pcfiic
 
 device ecadc
 attach ecadc at iic
-file	arch/sparc64/dev/pcf8591_envctrl.c
+file	arch/sparc64/dev/pcf8591_envctrl.c	ecadc
 
 device lom: sysmon_envsys, sysmon_wdog
 attach lom at ebus
