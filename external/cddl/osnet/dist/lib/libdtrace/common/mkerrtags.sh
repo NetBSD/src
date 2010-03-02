@@ -26,7 +26,7 @@
 #
 #ident	"%Z%%M%	%I%	%E% SMI"
 
-BSDECHO=-e
+BSDECHO=
 
 echo ${BSDECHO} "\
 /*\n\
