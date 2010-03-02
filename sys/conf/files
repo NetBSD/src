@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.978 2010/03/01 21:10:14 darran Exp $
+#	$NetBSD: files,v 1.979 2010/03/02 13:27:27 uebayasi Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -1574,6 +1574,7 @@ file	miscfs/genfs/layer_vnops.c	nullfs | overlay | umapfs
 file	miscfs/specfs/spec_vnops.c
 file	miscfs/syncfs/sync_subr.c
 file	miscfs/syncfs/sync_vnops.c
+
 file	net/bpf.c			bpfilter
 file	net/bpf_filter.c		bpf_filter
 file	net/bpf_stub.c
@@ -1632,39 +1633,7 @@ file	netinet/ip_etherip.c		etherip & inet
 file	netinet6/ip6_etherip.c		etherip & inet6
 file	netinet6/in6_gif.c		gif & inet6
 
-file	netisdn/i4b_ctl.c		isdnctl			needs-flag
-file	netisdn/i4b_isppp.c		ippp			needs-count
-file	netisdn/i4b_ipr.c		irip			needs-count
-file	netisdn/i4b_rbch.c		isdnbchan		needs-count
-file	netisdn/i4b_tel.c		isdntel			needs-count
-file	netisdn/i4b_trace.c		isdntrc			needs-count
-
-file	netisdn/i4b_mbuf.c		passive_isdn
-file	netisdn/i4b_l2.c		passive_isdn
-file	netisdn/i4b_l2fsm.c		passive_isdn
-file	netisdn/i4b_uframe.c		passive_isdn
-file	netisdn/i4b_tei.c		passive_isdn
-file	netisdn/i4b_sframe.c		passive_isdn
-file	netisdn/i4b_iframe.c		passive_isdn
-file	netisdn/i4b_l2timer.c		passive_isdn
-file	netisdn/i4b_util.c		passive_isdn
-file	netisdn/i4b_lme.c		passive_isdn
-# Q.931 handler
-file	netisdn/i4b_q931.c		passive_isdn
-file	netisdn/i4b_q932fac.c		passive_isdn
-file	netisdn/i4b_l3fsm.c		passive_isdn
-file	netisdn/i4b_l3timer.c		passive_isdn
-file	netisdn/i4b_l2if.c		passive_isdn
-file	netisdn/i4b_l4if.c		passive_isdn
-# isdn device driver, interface to isdnd
-file	netisdn/i4b_i4bdrv.c		isdn			needs-flag
-file	netisdn/i4b_l4.c		isdndev			needs-flag
-file	netisdn/i4b_l4mgmt.c		isdndev			needs-flag
-file	netisdn/i4b_l4timer.c		isdndev			needs-flag
-# capi
-file	netisdn/i4b_capi_l4if.c		isdncapi
-file	netisdn/i4b_capi_llif.c		isdncapi
-file	netisdn/i4b_capi_msgs.c		isdncapi
+include "netisdn/files.i4b"
 
 # Game adapter (joystick)
 device	joy
