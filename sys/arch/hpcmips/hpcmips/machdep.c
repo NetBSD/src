@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.110 2010/03/02 17:28:08 pooka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.111 2010/03/02 21:17:31 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 2010/03/02 17:28:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2010/03/02 21:17:31 pooka Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -119,7 +119,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 2010/03/02 17:28:08 pooka Exp $");
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_rtc_offset.h"
-#include "fs_nfs.h"
 #include "opt_kloader.h"
 #include "opt_kloader_kernel_path.h"
 #include "debug_hpc.h"
@@ -179,12 +178,10 @@ static int __bicons_enable;
 #define DPRINTF(arg)
 #endif /* NBICONSDEV > 0 */
 
-#ifdef NFS
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
-#endif
 
 #ifdef MEMORY_DISK_DYNAMIC
 #include <dev/md.h>
@@ -413,14 +410,10 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 
 			case 'b':
 				/* boot device: -b=sd0 etc. */
-#ifdef NFS
 				if (strcmp(cp+2, "nfs") == 0)
 					rootfstype = MOUNT_NFS;
 				else
 					makebootdev(cp+2);
-#else /* NFS */
-				makebootdev(cp+2);
-#endif /* NFS */
 				cp += strlen(cp);
 				break;
 			default:
