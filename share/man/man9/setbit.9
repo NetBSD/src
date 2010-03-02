@@ -1,4 +1,4 @@
-.\" $NetBSD: setbit.9,v 1.1 2010/03/01 19:09:41 jruoho Exp $
+.\" $NetBSD: setbit.9,v 1.2 2010/03/02 06:37:11 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,6 +74,8 @@ char buf[10];
 
 setbit(buf, 12);	/* set the fifth bit in the second byte */
 .Ed
+.Sh SEE ALSO
+.Xr bitstring 3
 .Sh CAVEATS
 The number of valid bits in a given array is assumed to be multiple of
 .Dv CHAR_BIT ,
