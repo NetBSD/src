@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmacros.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: sysmacros.h,v 1.4 2010/03/02 21:08:36 darran Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -44,7 +44,9 @@ extern "C" {
 /*
  * Disk blocks (sectors) and bytes.
  */
+#ifndef dtob
 #define	dtob(DD)	((DD) << DEV_BSHIFT)
+#endif
 #define	btod(BB)	(((BB) + DEV_BSIZE - 1) >> DEV_BSHIFT)
 #define	btodt(BB)	((BB) >> DEV_BSHIFT)
 #define	lbtod(BB)	(((offset_t)(BB) + DEV_BSIZE - 1) >> DEV_BSHIFT)
@@ -140,16 +142,18 @@ extern unsigned char bcd_to_byte[256];
 
 /* major part of a device external from the kernel (same as emajor below) */
 
+#undef major
 #define	major(x)	(major_t)((((unsigned)(x)) >> O_BITSMINOR) & O_MAXMAJ)
 
 /* minor part of a device external from the kernel  (same as eminor below) */
-
+#undef minor
 #define	minor(x)	(minor_t)((x) & O_MAXMIN)
 
 #endif	/* _KERNEL */
 
 /* create old device number */
 
+#undef makedev
 #define	makedev(x, y) (unsigned short)(((x) << O_BITSMINOR) | ((y) & O_MAXMIN))
 
 /* make an new device number */
@@ -224,6 +228,7 @@ extern unsigned char bcd_to_byte[256];
 /*
  * Macros for counting and rounding.
  */
+#undef howmany
 #define	howmany(x, y)	(((x)+((y)-1))/(y))
 #define	roundup(x, y)	((((x)+((y)-1))/(y))*(y))
 
@@ -342,7 +347,7 @@ extern unsigned char bcd_to_byte[256];
  * because if a field crosses a byte boundary it's not likely to be meaningful
  * without reassembly in its nonnative endianness.
  */
-#ifndef __NetBSD__
+#if !defined(__NetBSD__) && !defined(__APPLE__)
 #if defined(_BIT_FIELDS_LTOH)
 #define	DECL_BITFIELD2(_a, _b)				\
 	uint8_t _a, _b

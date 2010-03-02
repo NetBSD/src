@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.7 2010/03/01 11:19:40 darran Exp $	*/
+/*	$NetBSD: types.h,v 1.8 2010/03/02 21:08:36 darran Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -64,14 +64,8 @@
  * This is a bag of dirty hacks to keep things compiling.
  */
 
-#include <sys/stdint.h>
-#ifndef _NETBSD_SOURCE
-#define _NETBSD_SOURCE		/* XXX TBD fix this */
+#include <stdint.h>
 #include_next <sys/types.h>
-#undef _NETBSD_SOURCE
-#else
-#include_next <sys/types.h>
-#endif
 #include_next <sys/ccompile.h>
 
 #ifndef _KERNEL
@@ -82,6 +76,12 @@
 
 #define	MAXNAMELEN	256
 #define	FMNAMESZ	8
+
+#ifdef __APPLE__
+typedef int64_t longlong_t;
+typedef uint64_t u_longlong_t;
+typedef unsigned long vsize_t;
+#endif
 
 typedef unsigned int	size32_t;
 typedef unsigned int	caddr32_t;
