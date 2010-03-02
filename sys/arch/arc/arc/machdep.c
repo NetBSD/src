@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120 2010/02/08 19:02:26 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121 2010/03/02 17:28:08 pooka Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,9 +78,8 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 2010/02/08 19:02:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 2010/03/02 17:28:08 pooka Exp $");
 
-#include "fs_mfs.h"
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
 #include "opt_md.h"
@@ -108,9 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 2010/02/08 19:02:26 joerg Exp $");
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
 #include <sys/ksyms.h>
-#ifdef MFS
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
-#endif
 
 #include <machine/bootinfo.h>
 #include <machine/cpu.h>
@@ -401,14 +398,12 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	sprintf(cpu_model, "%s %s%s",
 	    platform->vendor, platform->model, platform->variant);
 
-#ifdef MFS
 	/*
 	 * Check to see if a mini-root was loaded into memory. It resides
 	 * at the start of the next page just after the end of BSS.
 	 */
 	if (boothowto & RB_MINIROOT)
 		kernend += round_page(mfs_initminiroot(kernend));
-#endif
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.109 2010/02/08 19:02:29 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.110 2010/03/02 17:28:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2010/02/08 19:02:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 2010/03/02 17:28:08 pooka Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -116,7 +116,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2010/02/08 19:02:29 joerg Exp $");
 #include "opt_modular.h"
 #include "opt_spec_platform.h"
 #include "biconsdev.h"
-#include "fs_mfs.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_rtc_offset.h"
@@ -430,7 +429,6 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 			}
 		}
 	}
-#ifdef MFS
 	/*
 	 * Check to see if a mini-root was loaded into memory. It resides
 	 * at the start of the next page just after the end of BSS.
@@ -443,7 +441,6 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #endif /* MEMORY_DISK_DYNAMIC */
 		kernend = (char *)kernend + fssz;
 	}
-#endif /* MFS */
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */

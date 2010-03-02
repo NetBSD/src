@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 2009/11/27 03:23:09 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71 2010/03/02 17:28:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,13 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70 2009/11/27 03:23:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2010/03/02 17:28:08 pooka Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_modular.h"
-#include "fs_mfs.h"
 #include "fs_nfs.h"
 #include "biconsdev.h"
 #include "debug_hpc.h"
@@ -256,7 +255,6 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 		}
 	}
 
-#ifdef MFS
 	/*
 	 * Check to see if a mini-root was loaded into memory. It resides
 	 * at the start of the next page just after the end of BSS.
@@ -269,7 +267,6 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 #endif
 		kernend += fssz;
 	}
-#endif /* MFS */
 
 	/* Console */
 	consinit();
