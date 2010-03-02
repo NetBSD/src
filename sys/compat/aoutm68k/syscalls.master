@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.33 2009/01/13 22:27:43 pooka Exp $
+	$NetBSD: syscalls.master,v 1.34 2010/03/02 16:00:03 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -508,20 +508,10 @@
 181	NOARGS		{ int|sys||setgid(gid_t gid); }
 182	NOARGS		{ int|sys||setegid(gid_t egid); }
 183	NOARGS		{ int|sys||seteuid(uid_t euid); }
-#if defined(LFS) || !defined(_KERNEL)
-184	NOARGS		{ int|sys||lfs_bmapv(fsid_t *fsidp, \
-			    struct block_info *blkiov, int blkcnt); }
-185	NOARGS		{ int|sys||lfs_markv(fsid_t *fsidp, \
-			    struct block_info *blkiov, int blkcnt); }
-186	NOARGS		{ int|sys||lfs_segclean(fsid_t *fsidp, u_long segment); }
-187	NOARGS		{ int|compat_50_sys||lfs_segwait(fsid_t *fsidp, \
-			    struct timeval50 *tv); }
-#else
 184	EXCL		lfs_bmapv
 185	EXCL		lfs_markv
 186	EXCL		lfs_segclean
 187	EXCL		lfs_segwait
-#endif
 #if defined(COMPAT_12) || !defined(_KERNEL)
 188	STD	{ int|aoutm68k_compat_12_sys||stat(const char *path, \
 			    struct aoutm68k_stat12 *ub); } stat12
