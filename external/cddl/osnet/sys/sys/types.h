@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.8 2010/03/02 21:08:36 darran Exp $	*/
+/*	$NetBSD: types.h,v 1.9 2010/03/02 22:00:32 darran Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -63,8 +63,11 @@
 /*
  * This is a bag of dirty hacks to keep things compiling.
  */
-
+#ifdef __APPLE__
 #include <stdint.h>
+#else
+#include <sys/stdint.h>
+#endif
 #include_next <sys/types.h>
 #include_next <sys/ccompile.h>
 
