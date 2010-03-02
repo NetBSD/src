@@ -51,6 +51,7 @@ extern "C" {
 #if defined(sun)
 #include <sys/systm.h>
 #else
+#include <sys/pset.h>
 #include <sys/param.h>
 #include <sys/linker.h>
 #include <sys/ioccom.h>
