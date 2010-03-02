@@ -1,4 +1,4 @@
-/*	$NetBSD: atk0110.c,v 1.5 2010/02/14 23:06:58 pgoyette Exp $	*/
+/*	$NetBSD: atk0110.c,v 1.6 2010/03/02 18:44:47 jruoho Exp $	*/
 /*	$OpenBSD: atk0110.c,v 1.1 2009/07/23 01:38:16 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.5 2010/02/14 23:06:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.6 2010/03/02 18:44:47 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,7 @@ aibs_attach_sif(device_t self, enum envsys_units st)
 		/* acpica5 automatically evaluates the referenced package */
 		if(o[0].Type != ACPI_TYPE_PACKAGE) {
 			aprint_error_dev(self,
-			    "%s: %i: not a package: %i type\n",
+			    "%s: %i: not a package: %u type\n",
 			    name, i, o[0].Type);
 			continue;
 		}

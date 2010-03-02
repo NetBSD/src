@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.149 2010/02/24 22:37:56 dyoung Exp $	*/
+/*	$NetBSD: acpi.c,v 1.150 2010/03/02 18:44:46 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.149 2010/02/24 22:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.150 2010/03/02 18:44:46 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -515,7 +515,7 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sleepstate = ACPI_STATE_S0;
 
 	/* Show SCI interrupt. */
-	aprint_verbose_dev(self, "SCI interrupting at int %d\n",
+	aprint_verbose_dev(self, "SCI interrupting at int %u\n",
 	    AcpiGbl_FADT.SciInterrupt);
 
 	/*
@@ -976,7 +976,7 @@ acpi_print(void *aux, const char *pnp)
 					aprint_normal("buffer %p ", obj->Buffer.Pointer);
 					break;
 				default:
-					aprint_normal("type %d ",obj->Type);
+					aprint_normal("type %u ",obj->Type);
 					break;
 				}
 				ACPI_FREE(buf.Pointer);
@@ -1638,7 +1638,7 @@ acpi_allocate_resources(ACPI_HANDLE handle)
 			resn->Length = resp->Length;
 			break;
 		default:
-			printf("acpi_allocate_resources: res=%d\n", resc->Type);
+			printf("acpi_allocate_resources: res=%u\n", resc->Type);
 			rv = AE_BAD_DATA;
 			goto out2;
 		}
