@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.67 2010/02/24 22:37:59 dyoung Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.68 2010/03/02 08:30:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.67 2010/02/24 22:37:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.68 2010/03/02 08:30:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -554,7 +554,7 @@ mii_phy_detach(device_t self, int flags)
 	/* XXX Invalidate parent's media setting? */
 
 	if (sc->mii_flags & MIIF_DOINGAUTO)
-		callout_stop(&sc->mii_nway_ch);
+		callout_halt(&sc->mii_nway_ch, NULL);
 
 	callout_destroy(&sc->mii_nway_ch);
 
