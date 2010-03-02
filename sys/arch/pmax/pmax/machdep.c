@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.239 2010/02/08 19:02:31 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.240 2010/03/02 17:28:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,9 +77,8 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.239 2010/02/08 19:02:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.240 2010/03/02 17:28:08 pooka Exp $");
 
-#include "fs_mfs.h"
 #include "opt_ddb.h"
 #include "opt_modular.h"
 
@@ -335,14 +334,12 @@ mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip
 		}
 	}
 
-#ifdef MFS
 	/*
 	 * Check to see if a mini-root was loaded into memory. It resides
 	 * at the start of the next page just after the end of BSS.
 	 */
 	if (boothowto & RB_MINIROOT)
 		kernend += round_page(mfs_initminiroot(kernend));
-#endif
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */
