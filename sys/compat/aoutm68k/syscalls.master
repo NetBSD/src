@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.35 2010/03/02 16:08:15 pooka Exp $
+	$NetBSD: syscalls.master,v 1.36 2010/03/02 21:07:21 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -41,8 +41,6 @@
 #include "opt_compat_netbsd.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
-
-#include "fs_nfs.h"
 #endif
 
 #include <sys/param.h>
@@ -423,11 +421,7 @@
 152	UNIMPL
 153	UNIMPL
 154	UNIMPL
-#if defined(NFSSERVER) || !defined(_KERNEL)
-155	NOARGS		{ int|sys||nfssvc(int flag, void *argp); }
-#else
 155	EXCL		nfssvc
-#endif
 #if defined(COMPAT_43) || !defined(_KERNEL)
 156	NOARGS		{ int|compat_43_sys||getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries

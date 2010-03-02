@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.63 2010/03/02 16:00:03 pooka Exp $
+	$NetBSD: syscalls.master,v 1.64 2010/03/02 21:07:21 pooka Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -301,12 +301,8 @@
 			    struct statfs12 *buf); }
 159	UNIMPL
 160	UNIMPL
-#ifdef NFS
 161	NOARGS		{ int|compat_30_sys||getfh(const char *fname, \
 			    struct compat_30_fhandle *fhp); }
-#else
-161	UNIMPL		getfh
-#endif
 162	NOARGS		{ int|compat_09_sys||getdomainname(char *domainname, \
 			    int len); }
 163	NOARGS		{ int|compat_09_sys||setdomainname(char *domainname, \
