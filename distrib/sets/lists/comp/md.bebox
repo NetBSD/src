@@ -1,4 +1,4 @@
-# $NetBSD: md.bebox,v 1.30 2008/08/22 13:42:19 lukem Exp $
+# $NetBSD: md.bebox,v 1.31 2010/03/02 21:54:06 matt Exp $
 ./usr/include/bebox				comp-c-include
 ./usr/include/bebox/_G_config.h			comp-obsolete		obsolete
 ./usr/include/bebox/ansi.h			comp-c-include
@@ -57,7 +57,7 @@
 ./usr/include/bebox/setjmp.h			comp-c-include
 ./usr/include/bebox/signal.h			comp-c-include
 ./usr/include/bebox/spkr.h			comp-c-include
-./usr/include/bebox/spr.h			comp-c-include
+./usr/include/bebox/spr.h			comp-obsolete		obsolete
 ./usr/include/bebox/stdarg.h			comp-c-include
 ./usr/include/bebox/trap.h			comp-c-include
 ./usr/include/bebox/types.h			comp-c-include
