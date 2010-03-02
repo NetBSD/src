@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.50 2009/01/17 15:48:06 he Exp $
+	$NetBSD: syscalls.master,v 1.51 2010/03/02 21:07:22 pooka Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -30,10 +30,6 @@
 ;
 ; #ifdef's, etc. may be included, and are copied to the output files.
 ; #include's are copied to the syscall names and switch definition files only.
-
-#if defined(_KERNEL_OPT)
-#include "fs_nfs.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +245,7 @@
 155	UNIMPL		atomic_op
 156	UNIMPL
 157	UNIMPL
-158	STD		{ int|ultrix_sys||nfssvc(int fd); }
+158	UNIMPL		ultrix_sys_nfssvc
 159	NOARGS		{ int|compat_43_sys||getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
 160	STD		{ int|ultrix_sys||statfs(const char *path, \
@@ -257,13 +253,8 @@
 161	STD		{ int|ultrix_sys||fstatfs(int fd, \
 			    struct ultrix_statfs *buf); }
 162	UNIMPL		umount
-#ifdef NFS
-163	NOARGS		{ int|async||daemon(void); }
-164	NOARGS		{ int|compat_30_sys||getfh(char *fname, fhandle_t *fhp); }
-#else
 163	UNIMPL		async_daemon
-164	UNIMPL		getfh
-#endif
+164	NOARGS		{ int|compat_30_sys||getfh(char *fname, fhandle_t *fhp); }
 165	NOARGS		{ int|compat_09_sys||getdomainname(char *domainname, \
 			    int len); }
 166	NOARGS		{ int|compat_09_sys||setdomainname(char *domainname, \
