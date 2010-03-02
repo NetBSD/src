@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.165 2010/03/02 16:08:15 pooka Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.166 2010/03/02 21:09:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.165 2010/03/02 16:08:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.166 2010/03/02 21:09:21 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1201,25 +1201,6 @@ netbsd32_quotactl(struct lwp *l, const struct netbsd32_quotactl_args *uap, regis
 	NETBSD32TO64_UAP(uid);
 	NETBSD32TOP_UAP(arg, void *);
 	return (sys_quotactl(l, &ua, retval));
-}
-
-int
-netbsd32_nfssvc(struct lwp *l, const struct netbsd32_nfssvc_args *uap, register_t *retval)
-{
-#if 0
-	/* {
-		syscallarg(int) flag;
-		syscallarg(netbsd32_voidp) argp;
-	} */
-	struct sys_nfssvc_args ua;
-
-	NETBSD32TO64_UAP(flag);
-	NETBSD32TOP_UAP(argp, void);
-	return (sys_nfssvc(l, &ua, retval));
-#else
-	/* Why would we want to support a 32-bit nfsd? */
-	return (ENOSYS);
-#endif
 }
 
 int
