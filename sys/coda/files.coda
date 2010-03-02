@@ -1,6 +1,6 @@
-#	$NetBSD: files.coda,v 1.5 2005/12/11 12:19:50 christos Exp $
+#	$NetBSD: files.coda,v 1.6 2010/03/02 16:43:48 pooka Exp $
 
-deffs	fs_coda.h			CODA
+deffs	CODA
 
 file	coda/coda_namecache.c		coda
 file	coda/coda_subr.c		coda
