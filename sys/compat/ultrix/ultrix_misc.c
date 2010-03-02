@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.118 2009/01/17 15:48:06 he Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.119 2010/03/02 21:09:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.118 2009/01/17 15:48:06 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.119 2010/03/02 21:09:21 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -90,10 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.118 2009/01/17 15:48:06 he Exp $")
  * Ultrix system calls that are implemented differently in BSD are
  * handled here.
  */
-
-#if defined(_KERNEL_OPT)
-#include "fs_nfs.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,19 +299,6 @@ ultrix_sys_select(struct lwp *l, const struct ultrix_sys_select_args *uap, regis
 done:
 	return error;
 }
-
-#if defined(NFS)
-int
-async_daemon(struct lwp *l, const void *v, register_t *retval)
-{
-	struct sys_nfssvc_args ouap;
-
-	SCARG(&ouap, flag) = NFSSVC_BIOD;
-	SCARG(&ouap, argp) = NULL;
-
-	return sys_nfssvc(l, &ouap, retval);
-}
-#endif /* NFS */
 
 
 #define	SUN__MAP_NEW	0x80000000	/* if not, old mmap & cannot handle */
