@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.21 2010/03/02 16:43:48 pooka Exp $
+#	$NetBSD: files.ufs,v 1.22 2010/03/02 17:23:36 pooka Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -50,6 +50,7 @@ file	ufs/lfs/lfs_vnops.c		lfs
 
 file	ufs/mfs/mfs_vfsops.c		mfs
 file	ufs/mfs/mfs_vnops.c		mfs
+file	ufs/mfs/mfs_miniroot.c
 
 file	ufs/ufs/ufs_bmap.c		ffs | lfs | mfs | ext2fs
 file	ufs/ufs/ufs_dirhash.c		(ffs | lfs | mfs | ext2fs) & ufs_dirhash

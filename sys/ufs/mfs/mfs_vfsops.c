@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.101 2009/01/13 13:35:54 yamt Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.102 2010/03/02 17:20:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.101 2009/01/13 13:35:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.102 2010/03/02 17:20:02 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -68,11 +68,10 @@ __KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.101 2009/01/13 13:35:54 yamt Exp $"
 
 MODULE(MODULE_CLASS_VFS, mfs, "ffs");
 
-void *	mfs_rootbase;	/* address of mini-root in kernel virtual memory */
-u_long	mfs_rootsize;	/* size of mini-root in bytes */
 kmutex_t mfs_lock;	/* global lock */
 
-static int mfs_minor;	/* used for building internal dev_t */
+/* used for building internal dev_t, minor == 0 reserved for miniroot */
+static int mfs_minor = 1;
 static int mfs_initcnt;
 
 extern int (**mfs_vnodeop_p)(void *);
@@ -238,27 +237,6 @@ mfs_mountroot(void)
 	(void)ffs_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp, false, NULL);
 	return (0);
-}
-
-/*
- * This is called early in boot to set the base address and size
- * of the mini-root.
- */
-int
-mfs_initminiroot(void *base)
-{
-	struct fs *fs = (struct fs *)((char *)base + SBLOCK_UFS1);
-
-	/* check for valid super block */
-	if (fs->fs_magic != FS_UFS1_MAGIC || fs->fs_bsize > MAXBSIZE ||
-	    fs->fs_bsize < sizeof(struct fs))
-		return (0);
-	rootfstype = MOUNT_MFS;
-	mfs_rootbase = base;
-	mfs_rootsize = fs->fs_fsize * fs->fs_size;
-	rootdev = makedev(255, mfs_minor);
-	mfs_minor++;
-	return (mfs_rootsize);
 }
 
 /*
