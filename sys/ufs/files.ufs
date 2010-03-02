@@ -1,6 +1,6 @@
-#	$NetBSD: files.ufs,v 1.20 2010/03/02 15:18:22 pooka Exp $
+#	$NetBSD: files.ufs,v 1.21 2010/03/02 16:43:48 pooka Exp $
 
-deffs	fs_ffs.h			FFS
+deffs					FFS
 deffs					EXT2FS
 deffs	fs_mfs.h			MFS		# XXX
 deffs	fs_lfs.h			LFS		# XXX
