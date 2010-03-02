@@ -1,4 +1,4 @@
-/*	$NetBSD: _libelf.h,v 1.4 2009/12/20 23:23:46 thorpej Exp $	*/
+/*	$NetBSD: _libelf.h,v 1.5 2010/03/02 21:08:36 darran Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -35,6 +35,10 @@
 
 #ifndef	NULL
 #define NULL 	((void *) 0)
+#endif
+
+#ifndef roundup2
+#define roundup2(x, m)  (((x) + (m) - 1) & ~((m) - 1))
 #endif
 
 /*
