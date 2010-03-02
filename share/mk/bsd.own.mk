@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.619 2010/02/27 22:42:54 haad Exp $
+#	$NetBSD: bsd.own.mk,v 1.620 2010/03/02 20:49:18 darran Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -236,6 +236,8 @@ TOOL_COMPILE_ET=	${TOOLDIR}/bin/${_TOOL_PREFIX}compile_et
 TOOL_CONFIG=		${TOOLDIR}/bin/${_TOOL_PREFIX}config
 TOOL_CRUNCHGEN=		MAKE=${.MAKE:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}crunchgen
 TOOL_CTAGS=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctags
+TOOL_CTFCONVERT=	${TOOLDIR}/bin/${_TOOL_PREFIX}ctfconvert
+TOOL_CTFMERGE=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctfmerge
 TOOL_DB=		${TOOLDIR}/bin/${_TOOL_PREFIX}db
 TOOL_DISKLABEL=		${TOOLDIR}/bin/nbdisklabel-${MAKEWRAPPERMACHINE}
 TOOL_EQN=		${TOOLDIR}/bin/${_TOOL_PREFIX}eqn
@@ -311,6 +313,8 @@ TOOL_COMPILE_ET=	compile_et
 TOOL_CONFIG=		config
 TOOL_CRUNCHGEN=		crunchgen
 TOOL_CTAGS=		ctags
+TOOL_CTFCONVERT=	ctfconvert
+TOOL_CTFMERGE=		ctfmerge
 TOOL_DB=		db
 TOOL_DISKLABEL=		disklabel
 TOOL_EQN=		eqn

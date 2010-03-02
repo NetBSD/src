@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.304 2010/02/22 12:33:22 njoly Exp $
+#	$NetBSD: bsd.lib.mk,v 1.305 2010/03/02 20:49:18 darran Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -216,9 +216,18 @@ OBJCFLAGS+=	${OBJCOPTS}
 AFLAGS+=	${COPTS}
 FFLAGS+=	${FOPTS}
 
+.if defined(CTFCONVERT)
+.if defined(CFLAGS) && !empty(CFLAGS:M*-g*)
+CTFFLAGS+=	-g
+.endif
+.endif
+
 .c.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
 	${OBJCOPY} -x ${.TARGET}
 .endif
@@ -226,6 +235,9 @@ FFLAGS+=	${FOPTS}
 .c.po:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -pg ${.IMPSRC} -o ${.TARGET}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
 	${OBJCOPY} -X ${.TARGET}
 .endif
@@ -269,6 +281,9 @@ FFLAGS+=	${FOPTS}
 .f.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.f} ${.IMPSRC} -o ${.TARGET}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .if !defined(FOPTS) || empty(FOPTS:M*-g*)
 	${OBJCOPY} -x ${.TARGET}
 .endif
@@ -276,6 +291,9 @@ FFLAGS+=	${FOPTS}
 .f.po:
 	${_MKTARGET_COMPILE}
 	${COMPILE.f} ${PROFFLAGS} -pg ${.IMPSRC} -o ${.TARGET}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .if !defined(FOPTS) || empty(FOPTS:M*-g*)
 	${OBJCOPY} -X ${.TARGET}
 .endif
@@ -298,6 +316,9 @@ FFLAGS+=	${FOPTS}
 .m.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.m} ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .if !defined(OBJCFLAGS) || empty(OBJCFLAGS:M*-g*)
 	${OBJCOPY} -x ${.TARGET}
 .endif
@@ -305,6 +326,9 @@ FFLAGS+=	${FOPTS}
 .m.po:
 	${_MKTARGET_COMPILE}
 	${COMPILE.m} ${PROFFLAGS} -pg ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .if !defined(OBJCFLAGS) || empty(OBJCFLAGS:M*-g*)
 	${OBJCOPY} -X ${.TARGET}
 .endif
@@ -326,21 +350,33 @@ FFLAGS+=	${FOPTS}
 .s.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.s} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 	${OBJCOPY} -x ${.TARGET}
 
 .S.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 	${OBJCOPY} -x ${.TARGET}
 
 .s.po:
 	${_MKTARGET_COMPILE}
 	${COMPILE.s} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 	${OBJCOPY} -X ${.TARGET}
 
 .S.po:
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${PROFFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 	${OBJCOPY} -X ${.TARGET}
 
 .s.go:

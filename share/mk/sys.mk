@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.99 2008/09/07 15:54:52 kent Exp $
+#	$NetBSD: sys.mk,v 1.100 2010/03/02 20:49:18 darran Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -47,6 +47,22 @@ CFLAGS?=	${DBG}
 LDFLAGS?=
 COMPILE.c?=	${CC} ${CFLAGS} ${CPPFLAGS} -c
 LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
+
+# C Type Format data is required for DTrace
+# XXX TBD VERSION is not defined
+CTFFLAGS	?=	-L VERSION
+CTFMFLAGS	?=	-t -L VERSION
+
+.if defined(MKDTRACE) && ${MKDTRACE} != "no"
+CTFCONVERT	?=	${TOOL_CTFCONVERT}
+CTFMERGE	?=	${TOOL_CTFMERGE}
+.if defined(CFLAGS) && (${CFLAGS:M-g} != "")
+CTFFLAGS	+=	-g
+CTFMFLAGS	+=	-g
+.else
+CFLAGS		+=	-g
+.endif
+.endif
 
 CXX?=		c++
 CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes:N-Wno-pointer-sign:N-ffreestanding:N-std=gnu99}
@@ -113,8 +129,14 @@ YACC.y?=	${YACC} ${YFLAGS}
 # C
 .c:
 	${LINK.c} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .c.o:
 	${COMPILE.c} ${.IMPSRC}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .c.a:
 	${COMPILE.c} ${.IMPSRC}
 	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
@@ -146,8 +168,14 @@ YACC.y?=	${YACC} ${YFLAGS}
 
 .F:
 	${LINK.F} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .F.o:
 	${COMPILE.F} ${.IMPSRC}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .F.a:
 	${COMPILE.F} ${.IMPSRC}
 	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
@@ -165,8 +193,14 @@ YACC.y?=	${YACC} ${YFLAGS}
 # Pascal
 .p:
 	${LINK.p} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .p.o:
 	${COMPILE.p} ${.IMPSRC}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .p.a:
 	${COMPILE.p} ${.IMPSRC}
 	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
@@ -175,16 +209,28 @@ YACC.y?=	${YACC} ${YFLAGS}
 # Assembly
 .s:
 	${LINK.s} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .s.o:
 	${COMPILE.s} ${.IMPSRC}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .s.a:
 	${COMPILE.s} ${.IMPSRC}
 	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
 	rm -f ${.PREFIX}.o
 .S:
 	${LINK.S} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .S.o:
 	${COMPILE.S} ${.IMPSRC}
+.if defined(CTFCONVERT)
+	${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.endif
 .S.a:
 	${COMPILE.S} ${.IMPSRC}
 	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
