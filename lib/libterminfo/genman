@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: genman,v 1.2 2010/02/03 20:56:54 roy Exp $
+# $NetBSD: genman,v 1.3 2010/03/03 12:09:49 roy Exp $
 
 # Copyright (c) 2009 The NetBSD Foundation, Inc.
 #
@@ -29,6 +29,7 @@
 
 # Generate variable tables for terminfo.5 from our source files.
 
+set -e
 : ${TOOL_SED:=sed}
 : ${TOOL_SORT:=sort}
 
