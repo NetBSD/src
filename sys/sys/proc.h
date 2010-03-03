@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.295 2010/02/21 02:11:39 darran Exp $	*/
+/*	$NetBSD: proc.h,v 1.296 2010/03/03 00:45:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -533,6 +533,10 @@ _proclist_skipmarker(struct proc *p0)
 
 	return p;
 }
+
+/*
+ * PROCLIST_FOREACH: iterate on the given proclist, skipping PK_MARKER ones.
+ */
 #define	PROCLIST_FOREACH(var, head)					\
 	for ((var) = LIST_FIRST(head);					\
 		((var) = _proclist_skipmarker(var)) != NULL;		\
