@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.109 2009/11/04 21:23:02 rmind Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.110 2010/03/03 08:20:39 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.109 2009/11/04 21:23:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.110 2010/03/03 08:20:39 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -472,8 +472,12 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == SCARG(uap, buf))
+	if (outp == SCARG(uap, buf)) {
+		if (cookiebuf)
+			free(cookiebuf, M_TEMP);
+		cookiebuf = NULL;
 		goto again;
+	}
 	fp->f_offset = off;	/* update the vnode offset */
 
 eof:
@@ -602,8 +606,12 @@ again:
 		resid -= ibcs2_reclen;
 	}
 	/* if we squished out the whole block, try again */
-	if (outp == SCARG(uap, buf))
+	if (outp == SCARG(uap, buf)) {
+		if (cookiebuf)
+			free(cookiebuf, M_TEMP);
+		cookiebuf = NULL;
 		goto again;
+	}
 	fp->f_offset = off;		/* update the vnode offset */
 eof:
 	*retval = SCARG(uap, nbytes) - resid;
