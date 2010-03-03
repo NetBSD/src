@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7 2010/02/25 23:33:45 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.8 2010/03/03 00:30:15 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +34,6 @@
 #define _NOREGNAMES
 
 #include "opt_ddb.h"
-#include "fs_kernfs.h"
 #include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
 #include "opt_ppcparam.h"
@@ -114,7 +113,7 @@ __start_:
 /* compute end of kernel memory */
 	lis	8,_C_LABEL(end)@ha
 	addi	8,8,_C_LABEL(end)@l
-#if defined(DDB) || defined(KERNFS)
+#if defined(DDB)
 	lis	7,_C_LABEL(startsym)@ha
 	addi	7,7,_C_LABEL(startsym)@l
 	stw	3,0(7)

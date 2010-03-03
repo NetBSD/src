@@ -1,4 +1,4 @@
-/*      $NetBSD: locore.S,v 1.19 2010/02/25 23:33:43 matt Exp $   */
+/*      $NetBSD: locore.S,v 1.20 2010/03/03 00:30:15 pooka Exp $   */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,7 +36,6 @@
  * Rewritten for 4.0 and bootargs support by Frank Wille.
  */
 #include "opt_ddb.h"
-#include "fs_kernfs.h"
 #include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -167,7 +166,7 @@ __start:
 	lis	6,_C_LABEL(end)+3@ha
 	addi	6,6,_C_LABEL(end)+3@l
 	rlwinm	7,6,0,0,29		/* startsym = end - 32-bit alignment */
-#if NKSYMS || defined(DDB) || defined(MODULAR) || defined(KERNFS)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	lis	8,_C_LABEL(startsym)@ha
 	stw	7,_C_LABEL(startsym)@l(8)
 	mr.	27,27			/* esym == 0 ? */
