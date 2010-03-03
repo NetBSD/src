@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_lfs.c,v 1.15 2010/01/12 18:43:37 pooka Exp $	*/
+/*	$NetBSD: rump_lfs.c,v 1.16 2010/03/03 17:37:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -73,9 +73,12 @@ main(int argc, char *argv[])
 	puffs_unmountonsignal(SIGINT, true);
 	puffs_unmountonsignal(SIGTERM, true);
 
-	UKFS_DEVICE_ARGVPROBE(&part);
-	if (part != ukfs_part_none) {
-		errx(1, "lfs does not currently support embedded partitions");
+	if (argc >= 3) {
+		UKFS_DEVICE_ARGVPROBE(&part);
+		if (part != ukfs_part_none) {
+			errx(1, "lfs does not currently support "
+			    "embedded partitions");
+		}
 	}
 	mount_lfs_parseargs(argc, argv, &args, &mntflags, canon_dev, canon_dir);
 
