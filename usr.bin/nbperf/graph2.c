@@ -1,4 +1,4 @@
-/*	$NetBSD: graph2.c,v 1.2 2009/08/22 17:52:17 joerg Exp $	*/
+/*	$NetBSD: graph2.c,v 1.3 2010/03/03 01:55:04 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,12 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: graph2.c,v 1.2 2009/08/22 17:52:17 joerg Exp $");
+__RCSID("$NetBSD: graph2.c,v 1.3 2010/03/03 01:55:04 joerg Exp $");
 
 #include <err.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "nbperf.h"
 #include "graph2.h"
@@ -69,6 +70,35 @@ graph2_free(struct graph2 *graph)
 	graph->verts = NULL;
 	graph->edges = NULL;
 	graph->output_order = NULL;
+}
+
+static int
+graph2_check_duplicates(struct nbperf *nbperf, struct graph2 *graph)
+{
+	struct vertex2 *v;
+	struct edge2 *e, *e2;
+	uint32_t i, j;
+
+	for (i = 0; i < graph->e; ++i) {
+		e = &graph->edges[i];
+		v = &graph->verts[e->left];
+		j = v->l_edge;
+		e2 = &graph->edges[j];
+		for (;;) {
+			if (i < j && e->right == e2->right &&
+			    nbperf->keylens[i] == nbperf->keylens[j] &&
+			    memcmp(nbperf->keys[i], nbperf->keys[j],
+			    nbperf->keylens[i]) == 0) {
+				nbperf->has_duplicates = 1;
+				return -1;
+			}
+			if (e2->l_next == unused)
+				break;
+			j = e2->l_next;
+			e2 = &graph->edges[j];
+		}		
+	}
+	return 0;
 }
 
 int
@@ -106,6 +136,11 @@ graph2_hash(struct nbperf *nbperf, struct graph2 *graph)
 		graph->edges[i].r_next = v->r_edge;
 		graph->edges[i].r_prev = unused;
 		v->r_edge = i;
+	}
+
+	if (nbperf->first_round) {
+		nbperf->first_round = 0;
+		return graph2_check_duplicates(nbperf, graph);
 	}
 
 	return 0;
