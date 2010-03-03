@@ -1,4 +1,4 @@
-/*	$NetBSD: ev64260_locore.S,v 1.14 2010/02/27 22:12:31 snj Exp $	*/
+/*	$NetBSD: ev64260_locore.S,v 1.15 2010/03/03 00:30:15 pooka Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
  */
 
 #include "opt_ddb.h"
-#include "fs_kernfs.h"
 #include "opt_ppcparam.h"
 #include "opt_ipkdb.h"
 #include "opt_modular.h"
@@ -214,7 +213,7 @@ __start:
 /* compute end of kernel memory */
 	lis	8,_C_LABEL(end)@ha
 	addi	8,8,_C_LABEL(end)@l
-#if NKSYMS || defined(DDB) || defined(MODULAR) || defined(KERNFS)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	lis	7,_C_LABEL(startsym)@ha
 	addi	7,7,_C_LABEL(startsym)@l
 	stw	3,0(7)
