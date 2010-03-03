@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.91 2009/12/10 05:10:04 rmind Exp $	*/
+/*	$NetBSD: locore.s,v 1.92 2010/03/03 06:53:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -165,7 +165,7 @@ L_high_code:
 | is finished, to avoid spurrious interrupts.
 
 /*
- * Create a fake exception frame so that cpu_fork() can copy it.
+ * Create a fake exception frame so that cpu_lwp_fork() can copy it.
  * main() nevers returns; we exit to user mode from a forked process
  * later on.
  */
