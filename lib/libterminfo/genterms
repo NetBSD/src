@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: genterms,v 1.1 2010/02/12 12:18:33 roy Exp $
+# $NetBSD: genterms,v 1.2 2010/03/03 12:09:49 roy Exp $
 
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 #
@@ -29,6 +29,7 @@
 
 # Generate compiled terminfo descriptions to embed into libterminfo
 
+set -e
 : ${TOOL_TIC:=tic}
 : ${NETBSDSRCDIR:=/usr/src}
 : ${TERMINFO:=${NETBSDSRCDIR}/share/terminfo/terminfo}

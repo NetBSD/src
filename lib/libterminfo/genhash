@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: genhash,v 1.5 2010/02/04 12:25:08 roy Exp $
+# $NetBSD: genhash,v 1.6 2010/03/03 12:09:49 roy Exp $
 
 # Copyright (c) 2009 The NetBSD Foundation, Inc.
 #
@@ -32,6 +32,7 @@
 # This allows us to freely change how we hash or store our string tables
 # in the future.
 
+set -e
 : ${TOOL_AWK:=awk}
 : ${TOOL_NBPERF:=nbperf}
 : ${TOOL_SED:=sed}
@@ -92,7 +93,7 @@ cat <<EOF
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("\$NetBSD: genhash,v 1.5 2010/02/04 12:25:08 roy Exp $");
+__RCSID("\$NetBSD: genhash,v 1.6 2010/03/03 12:09:49 roy Exp $");
 
 #include <stdint.h>
 #include <stdlib.h>
