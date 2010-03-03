@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.303 2010/03/01 21:10:17 darran Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.304 2010/03/03 00:47:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.303 2010/03/01 21:10:17 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.304 2010/03/03 00:47:31 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -862,7 +862,7 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 		 */
 		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_pid <= 1 || p == cp ||
-			    p->p_flag & (PK_SYSTEM|PK_MARKER))
+			    (p->p_flag & PK_SYSTEM) != 0)
 				continue;
 			mutex_enter(p->p_lock);
 			if (kauth_authorize_process(pc,
@@ -2283,8 +2283,6 @@ proc_stop_callout(void *cookie)
 
 		mutex_enter(proc_lock);
 		PROCLIST_FOREACH(p, &allproc) {
-			if ((p->p_flag & PK_MARKER) != 0)
-				continue;
 			mutex_enter(p->p_lock);
 
 			if ((p->p_sflag & PS_STOPPING) == 0) {

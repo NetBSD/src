@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.403 2010/01/15 01:00:46 pooka Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.404 2010/03/03 00:47:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.403 2010/01/15 01:00:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.404 2010/03/03 00:47:31 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -578,8 +578,6 @@ checkdirs(struct vnode *olddp)
 		retry = false;
 		mutex_enter(proc_lock);
 		PROCLIST_FOREACH(p, &allproc) {
-			if ((p->p_flag & PK_MARKER) != 0)
-				continue;
 			if ((cwdi = p->p_cwdi) == NULL)
 				continue;
 			/*

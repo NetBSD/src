@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.154 2009/10/02 22:46:18 elad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.155 2010/03/03 00:47:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.154 2009/10/02 22:46:18 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.155 2010/03/03 00:47:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,8 +192,6 @@ sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap,
 		if (who == 0)
 			who = (int)kauth_cred_geteuid(l->l_cred);
 		PROCLIST_FOREACH(p, &allproc) {
-			if ((p->p_flag & PK_MARKER) != 0)
-				continue;
 			mutex_enter(p->p_lock);
 			if (kauth_cred_geteuid(p->p_cred) ==
 			    (uid_t)who && p->p_nice < low)
@@ -263,8 +261,6 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 		if (who == 0)
 			who = (int)kauth_cred_geteuid(l->l_cred);
 		PROCLIST_FOREACH(p, &allproc) {
-			if ((p->p_flag & PK_MARKER) != 0)
-				continue;
 			mutex_enter(p->p_lock);
 			if (kauth_cred_geteuid(p->p_cred) ==
 			    (uid_t)SCARG(uap, who)) {
