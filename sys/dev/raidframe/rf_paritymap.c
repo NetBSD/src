@@ -1,4 +1,4 @@
-/* $NetBSD: rf_paritymap.c,v 1.3 2009/11/26 07:35:39 pooka Exp $ */
+/* $NetBSD: rf_paritymap.c,v 1.4 2010/03/03 14:23:27 oster Exp $ */
 
 /*-
  * Copyright (c) 2009 Jed Davis.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritymap.c,v 1.3 2009/11/26 07:35:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritymap.c,v 1.4 2010/03/03 14:23:27 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -359,11 +359,30 @@ rf_paritymap_set_params(struct rf_paritymap *pm,
 	if (todisk) {
 		raidPtr = pm->raid;
 		for (col = 0; col < raidPtr->numCol; col++) {
+			if (RF_DEAD_DISK(raidPtr->Disks[col].status))
+				continue;
+
 			clabel = raidget_component_label(raidPtr, col);
 			clabel->parity_map_ntick = cooldown;
 			clabel->parity_map_tickms = tickms;
 			clabel->parity_map_regions = regions;
+			
+			/* Don't touch the disk if it's been spared */
+			if (clabel->status == rf_ds_spared)
+				continue;
+				
 			raidflush_component_label(raidPtr, col);
+		}
+
+		/* handle the spares too... */
+		for (col = 0; col < raidPtr->numSpare; col++) {
+			if (raidPtr->Disks[raidPtr->numCol+col].status == rf_ds_used_spare) {
+				clabel = raidget_component_label(raidPtr, raidPtr->numCol+col);
+				clabel->parity_map_ntick = cooldown;
+				clabel->parity_map_tickms = tickms;
+				clabel->parity_map_regions = regions;
+				raidflush_component_label(raidPtr, raidPtr->numCol+col);
+			}				
 		}
 	}
 	return 0;
@@ -603,6 +622,8 @@ rf_paritymap_attach(RF_Raid_t *raidPtr, int force)
 	 */
 	if (!force) {
 		for (col = 0; col < raidPtr->numCol; col++) {
+			if (RF_DEAD_DISK(raidPtr->Disks[col].status))
+				continue;
 			clabel = raidget_component_label(raidPtr, col);
 			flags = clabel->parity_map_flags;
 			/* Check for use by non-parity-map kernel. */
@@ -670,6 +691,8 @@ rf_paritymap_attach(RF_Raid_t *raidPtr, int force)
 
 	/* Alter labels in-core to reflect the current view of things. */
 	for (col = 0; col < raidPtr->numCol; col++) {
+		if (RF_DEAD_DISK(raidPtr->Disks[col].status))
+			continue;
 		clabel = raidget_component_label(raidPtr, col);
 
 		if (pm_use)
@@ -683,12 +706,13 @@ rf_paritymap_attach(RF_Raid_t *raidPtr, int force)
 		clabel->parity_map_regions = g_regions;
 		raidflush_component_label(raidPtr, col);
 	}
+	/* Note that we're just in 'attach' here, and there won't
+	   be any spare disks at this point. */
 }
 
 /*
  * For initializing the parity-map fields of a component label, both on
- * initial creation and on reconstruct/copyback/etc.
- */
+ * initial creation and on reconstruct/copyback/etc.  */
 void
 rf_paritymap_init_label(struct rf_paritymap *pm, RF_ComponentLabel_t *clabel)
 {
@@ -724,10 +748,19 @@ rf_paritymap_get_disable(RF_Raid_t *raidPtr)
 
 	dis = 0;
 	for (col = 0; col < raidPtr->numCol; col++) {
+		if (RF_DEAD_DISK(raidPtr->Disks[col].status))
+			continue;
 		clabel = raidget_component_label(raidPtr, col);
 		if (clabel->parity_map_flags & RF_PMLABEL_DISABLE)
 			dis = 1;
 	}
+        for (col = 0; col < raidPtr->numSpare; col++) {
+		if (raidPtr->Disks[raidPtr->numCol+col].status != rf_ds_used_spare)
+                        continue;
+                clabel = raidget_component_label(raidPtr, raidPtr->numCol+col);
+                if (clabel->parity_map_flags & RF_PMLABEL_DISABLE)
+                        dis = 1;
+        }
 
 	return dis;
 }
@@ -740,11 +773,26 @@ rf_paritymap_set_disable(RF_Raid_t *raidPtr, int dis)
 	RF_RowCol_t col;
 
 	for (col = 0; col < raidPtr->numCol; col++) {
+		if (RF_DEAD_DISK(raidPtr->Disks[col].status))
+			continue;
 		clabel = raidget_component_label(raidPtr, col);
 		if (dis)
 			clabel->parity_map_flags |= RF_PMLABEL_DISABLE;
 		else
 			clabel->parity_map_flags &= ~RF_PMLABEL_DISABLE;
 		raidflush_component_label(raidPtr, col);
+	}
+
+	/* update any used spares as well */
+	for (col = 0; col < raidPtr->numSpare; col++) {
+		if (raidPtr->Disks[raidPtr->numCol+col].status != rf_ds_used_spare)
+			continue;
+
+		clabel = raidget_component_label(raidPtr, raidPtr->numCol+col);
+		if (dis)
+			clabel->parity_map_flags |= RF_PMLABEL_DISABLE;
+		else
+			clabel->parity_map_flags &= ~RF_PMLABEL_DISABLE;
+		raidflush_component_label(raidPtr, raidPtr->numCol+col);
 	}
 }
