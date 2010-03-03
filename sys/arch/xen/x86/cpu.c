@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.41 2010/02/24 22:37:55 dyoung Exp $	*/
+/*	$NetBSD: cpu.c,v 1.42 2010/03/03 00:09:03 jym Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.41 2010/02/24 22:37:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.42 2010/03/03 00:09:03 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -236,8 +236,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		aprint_naive(": Application Processor\n");
 		ptr = (uintptr_t)kmem_zalloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
 		    KM_SLEEP);
-		ci = (struct cpu_info *)((ptr + CACHE_LINE_SIZE - 1) &
-		    ~(CACHE_LINE_SIZE - 1));
+		ci = (struct cpu_info *)roundup2(ptr, CACHE_LINE_SIZE);
 		ci->ci_curldt = -1;
 	} else {
 		aprint_naive(": %s Processor\n",
@@ -372,8 +371,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		aprint_naive(": Application Processor\n");
 		ptr = (uintptr_t)kmem_alloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
 		    KM_SLEEP);
-		ci = (struct cpu_info *)((ptr + CACHE_LINE_SIZE - 1) &
-		    ~(CACHE_LINE_SIZE - 1));
+		ci = (struct cpu_info *)roundup2(ptr, CACHE_LINE_SIZE);
 		memset(ci, 0, sizeof(*ci));
 #ifdef TRAPLOG
 		ci->ci_tlog_base = kmem_zalloc(sizeof(struct tlog), KM_SLEEP);
