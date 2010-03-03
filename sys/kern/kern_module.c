@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.57 2010/01/19 15:23:14 pooka Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.58 2010/03/03 17:58:36 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.57 2010/01/19 15:23:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.58 2010/03/03 17:58:36 pooka Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -247,7 +247,7 @@ module_init_class(modclass_t class)
 {
 	__link_set_decl(modules, modinfo_t);
 	modinfo_t *const *mip, *mi;
-	module_t *mod;
+	module_t *mod, *mod_next;
 
 	mutex_enter(&module_lock);
 	/*
@@ -268,7 +268,8 @@ module_init_class(modclass_t class)
 	 * list as we call module_do_load();
 	 */
 	do {
-		TAILQ_FOREACH(mod, &module_bootlist, mod_chain) {
+		for (mod = TAILQ_FIRST(&module_bootlist); mod; mod = mod_next) {
+			mod_next = TAILQ_NEXT(mod, mod_chain);
 			mi = mod->mod_info;
 			if (class != MODULE_CLASS_ANY &&
 			    class != mi->mi_class)
