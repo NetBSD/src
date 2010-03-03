@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.38 2010/02/13 22:57:03 pooka Exp $	*/
+/*	$NetBSD: main.c,v 1.39 2010/03/03 13:53:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -609,7 +609,7 @@ add_dependencies(struct nvlist *nv, struct nvlist *deps)
  * Otherwise, no preprocessor #defines will be generated.
  */
 void
-deffilesystem(const char *fname, struct nvlist *fses, struct nvlist *deps)
+deffilesystem(struct nvlist *fses, struct nvlist *deps)
 {
 	struct nvlist *nv;
 
@@ -631,23 +631,6 @@ deffilesystem(const char *fname, struct nvlist *fses, struct nvlist *deps)
 		if (ht_insert(deffstab, nv->nv_name, nv))
 			panic("file system `%s' already in table?!",
 			    nv->nv_name);
-
-		if (fname != NULL) {
-			/*
-			 * Only one file system allowed in this case.
-			 */
-			if (nv->nv_next != NULL) {
-				cfgerror("only one file system per option "
-				    "file may be specified");
-				return;
-			}
-
-			if (ht_insert(optfiletab, fname, nv)) {
-				cfgerror("option file `%s' already exists",
-				    fname);
-				return;
-			}
-		}
 
 		add_dependencies(nv, deps);
 	}
