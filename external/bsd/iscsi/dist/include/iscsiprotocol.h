@@ -391,6 +391,7 @@ typedef struct iscsi_scsi_cmd_args_t {
 	uint8_t  	*ahs;
 	uint8_t         ahs_len;
 	uint8_t  	*send_data;
+	uint8_t		*send_buffer;	/* malloc'ed buffer for READ */
 	int32_t         send_sg_len;
 	uint8_t  	*recv_data;
 	int32_t         recv_sg_len;
