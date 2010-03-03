@@ -1,4 +1,4 @@
-.\"	$NetBSD: nbperf.1,v 1.1 2009/08/15 16:21:05 joerg Exp $
+.\"	$NetBSD: nbperf.1,v 1.2 2010/03/03 01:55:04 joerg Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 13, 2009
+.Dd March 3, 2010
 .Dt NBPERF 1
 .Os
 .Sh NAME
@@ -122,6 +122,11 @@ If the
 flag is specified, it will be static.
 .Pp
 After each failing iteration, a dot is written to stderr.
+.Pp
+.Nm
+checks for duplicate keys on the first iteration that passed basic hash distribution
+tests.
+In that case, an error message is printed and the program terminates.
 .Sh EXIT STATUS
 .Ex -std
 .Sh SEE ALSO

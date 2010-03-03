@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf.c,v 1.2 2009/08/22 17:52:17 joerg Exp $	*/
+/*	$NetBSD: nbperf.c,v 1.3 2010/03/03 01:55:04 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nbperf.c,v 1.2 2009/08/22 17:52:17 joerg Exp $");
+__RCSID("$NetBSD: nbperf.c,v 1.3 2010/03/03 01:55:04 joerg Exp $");
 
 #include <sys/endian.h>
 #include <err.h>
@@ -101,6 +101,8 @@ main(int argc, char **argv)
 	    .map_output = NULL,
 	    .output = NULL,
 	    .static_hash = 0,
+	    .first_round = 1,
+	    .has_duplicates = 0,
 	};
 	FILE *input;
 	size_t curlen = 0, curalloc = 0;
@@ -217,6 +219,8 @@ main(int argc, char **argv)
 
 	looped = 0;
 	while ((*build_hash)(&nbperf)) {
+		if (nbperf.has_duplicates)
+			errx(1, "Duplicate keys detected");
 		fputc('.', stderr);
 		looped = 1;
 		if (max_iterations == 0xffffffffU)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nbperf.h,v 1.2 2009/08/22 17:52:17 joerg Exp $	*/
+/*	$NetBSD: nbperf.h,v 1.3 2010/03/03 01:55:04 joerg Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,6 +41,7 @@ struct nbperf {
 	size_t n;
 	const void * __restrict * keys;
 	const size_t *keylens;
+	int first_round, has_duplicates;
 
 	double c;
 
