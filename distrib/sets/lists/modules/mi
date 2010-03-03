@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.10 2010/03/03 14:43:41 tron Exp $
+# $NetBSD: mi,v 1.11 2010/03/03 16:13:42 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -102,8 +102,8 @@
 ./@MODULEDIR@/securelevel/securelevel.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/smbfs				base-kernel-modules	kmod
 ./@MODULEDIR@/smbfs/smbfs.kmod			base-kernel-modules	kmod
-./@MODULEDIR@/solaris				base-kernel-modules     kmod,dtrace,zfs
-./@MODULEDIR@/solaris/solaris.kmod		base-kernel-modules     kmod,dtrace,zfs
+./@MODULEDIR@/solaris				base-kernel-modules     kmod,solaris
+./@MODULEDIR@/solaris/solaris.kmod		base-kernel-modules     kmod,solaris
 ./@MODULEDIR@/suser				base-kernel-modules	kmod
 ./@MODULEDIR@/suser/suser.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/sysvbfs				base-kernel-modules	kmod

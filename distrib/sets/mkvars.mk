@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.1 2009/12/10 15:51:24 uebayasi Exp $
+# $NetBSD: mkvars.mk,v 1.2 2010/03/03 16:13:42 tron Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -45,7 +45,7 @@ MKXORG:=no
 
 #####
 
-mkvars: mkvarsyesno mkextravars .PHONY
+mkvars: mkvarsyesno mkextravars mksolaris .PHONY
 
 mkvarsyesno: .PHONY
 .for i in ${_MKVARS.yes}
@@ -59,3 +59,10 @@ mkextravars: .PHONY
 .for i in ${MKEXTRAVARS}
 	@echo $i="${$i}"
 .endfor
+
+mksolaris: .PHONY
+.if (${MKDTRACE} != "no" || ${MKZFS} != "no")
+	@echo "MKSOLARIS=yes"
+.else
+	@echo "MKSOLARIS=no"
+.endif
