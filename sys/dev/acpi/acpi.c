@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.151 2010/03/03 06:54:25 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.152 2010/03/03 06:57:05 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.151 2010/03/03 06:54:25 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.152 2010/03/03 06:57:05 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -932,7 +932,7 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 		if ((ad->ad_devinfo->Valid & ACPI_VALID_HID) == 0)
 			return AE_OK;
 
-#ifdef ACPI_EXTRA_DEBUG
+#ifdef ACPIVERBOSE
 		aprint_normal_dev(sc->sc_dev,
 		    "HID %s found in scope %s level %d\n",
 		    ad->ad_devinfo->HardwareId.String,
