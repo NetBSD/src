@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.39 2010/03/03 13:53:22 pooka Exp $	*/
+/*	$NetBSD: main.c,v 1.40 2010/03/03 13:56:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -603,10 +603,7 @@ add_dependencies(struct nvlist *nv, struct nvlist *deps)
 }
 
 /*
- * Define one or more file systems.  If file system options file name is
- * specified, a preprocessor #define for that file system will be placed
- * in that file.  In this case, only one file system may be specified.
- * Otherwise, no preprocessor #defines will be generated.
+ * Define one or more file systems.
  */
 void
 deffilesystem(struct nvlist *fses, struct nvlist *deps)
