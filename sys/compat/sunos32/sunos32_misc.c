@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.70 2010/03/03 10:56:47 martin Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.71 2010/03/03 11:02:34 pooka Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.70 2010/03/03 10:56:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.71 2010/03/03 11:02:34 pooka Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -995,37 +995,6 @@ sunos32_sys_open(struct lwp *l, const struct sunos32_sys_open_args *uap, registe
 		}
 	}
 	return ret;
-}
-
-struct sunos32_sys_nfssvc_args;
-int sunos32_sys_nfssvc(struct lwp *l, const struct sunos32_sys_nfssvc_args *uap, register_t *retval);
-int
-sunos32_sys_nfssvc(struct lwp *l, const struct sunos32_sys_nfssvc_args *uap, register_t *retval)
-{
-#if 0
-	struct emul *e = p->p_emul;
-	struct sys_nfssvc_args outuap;
-	struct sockaddr sa;
-	int error;
-	void *sg = stackgap_init(p, 0);
-
-	memset(&outuap, 0, sizeof outuap);
-	SCARG(&outuap, fd) = SCARG(uap, fd);
-	SCARG(&outuap, mskval) = stackgap_alloc(p, &sg, sizeof(sa));
-	SCARG(&outuap, msklen) = sizeof(sa);
-	SCARG(&outuap, mtchval) = stackgap_alloc(p, &sg, sizeof(sa));
-	SCARG(&outuap, mtchlen) = sizeof(sa);
-
-	memset(&sa, 0, sizeof sa);
-	if (error = copyout(&sa, SCARG(&outuap, mskval), SCARG(&outuap, msklen)))
-		return (error);
-	if (error = copyout(&sa, SCARG(&outuap, mtchval), SCARG(&outuap, mtchlen)))
-		return (error);
-
-	return nfssvc(l, &outuap, retval);
-#else
-	return (ENOSYS);
-#endif
 }
 
 int
