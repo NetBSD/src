@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.279 2010/02/23 22:19:27 darran Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.280 2010/03/03 00:47:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.279 2010/02/23 22:19:27 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.280 2010/03/03 00:47:31 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -1033,9 +1033,6 @@ suspendsched(void)
 	 */
 	mutex_enter(proc_lock);
 	PROCLIST_FOREACH(p, &allproc) {
-		if ((p->p_flag & PK_MARKER) != 0)
-			continue;
-
 		mutex_enter(p->p_lock);
 		if ((p->p_flag & PK_SYSTEM) != 0) {
 			mutex_exit(p->p_lock);
@@ -1177,9 +1174,6 @@ sched_pstats(void *arg)
 
 	mutex_enter(proc_lock);
 	PROCLIST_FOREACH(p, &allproc) {
-		if (__predict_false((p->p_flag & PK_MARKER) != 0))
-			continue;
-
 		/* Increment sleep time (if sleeping), ignore overflow. */
 		mutex_enter(p->p_lock);
 		runtm = p->p_rtime.sec;
