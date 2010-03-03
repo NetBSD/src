@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.35 2010/02/26 00:57:02 dyoung Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.36 2010/03/03 00:56:41 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.35 2010/02/26 00:57:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.36 2010/03/03 00:56:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -777,7 +777,7 @@ ppb_cardbus_enable(struct ppb_softc * sc)
 
 	/* Map and establish the interrupt. */
 
-	sc->sc_ih = cardbus_intr_establish(cc, cf, psc->sc_intrline, IPL_NET,
+	sc->sc_ih = Cardbus_intr_establish(ct, psc->sc_intrline, IPL_NET,
 	    fxp_intr, sc);
 	if (NULL == sc->sc_ih) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt\n");
@@ -800,7 +800,7 @@ ppb_cardbus_disable(struct ppb_softc * sc)
 	cardbus_function_tag_t cf = psc->sc_cf;
 
 	/* Remove interrupt handler. */
-	cardbus_intr_disestablish(cc, cf, sc->sc_ih);
+	Cardbus_intr_disestablish(ct, sc->sc_ih);
 
 	Cardbus_function_disable(((struct fxp_cardbus_softc *) sc)->ct);
 #endif
@@ -826,7 +826,7 @@ ppb_cardbus_detach(device_t self, int flags)
 		/*
 		 * Unhook the interrupt handler.
 		 */
-		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
+		Cardbus_intr_disestablish(ct, sc->sc_ih);
 
 		/*
 		 * release bus space and close window
