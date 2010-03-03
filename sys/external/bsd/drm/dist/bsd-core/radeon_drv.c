@@ -137,24 +137,33 @@ MODULE_DEPEND(radeon, drm, 1, 1, 1);
 static bool
 radeondrm_suspend(device_t self, const pmf_qual_t *qual)
 {
-	struct drm_device *rad_dev = device_private(self);
+	struct drm_device *dev = device_private(self);
 	drm_radeon_cp_stop_t stop_args;
+	bool rv = true;
 
 	stop_args.flush = stop_args.idle = 0;
-	if (radeon_cp_stop(rad_dev, &stop_args, rad_dev->lock.file_priv) != 0)
-		return false;
+	DRM_LOCK();
+	if (drm_find_file_by_proc(dev, curlwp->l_proc) &&
+	    radeon_cp_stop(dev, &stop_args, dev->lock.file_priv) != 0)
+		rv = false;
+	DRM_UNLOCK();
 
-	return true;
+	return rv;
 }
 
 static bool
 radeondrm_resume(device_t self, const pmf_qual_t *qual)
 {
-	struct drm_device *rad_dev = device_private(self);
-	if (radeon_cp_resume(rad_dev, NULL, NULL) != 0)
-		return false;
+	struct drm_device *dev = device_private(self);
+	bool rv = true;
+
+	DRM_LOCK();
+	if (drm_find_file_by_proc(dev, curlwp->l_proc) &&
+	    radeon_cp_resume(dev, NULL, NULL) != 0)
+		rv =  false;
+	DRM_UNLOCK();
 	
-	return true;
+	return rv;
 }
 
 static int
