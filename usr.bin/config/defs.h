@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.31 2010/02/03 21:00:49 pooka Exp $	*/
+/*	$NetBSD: defs.h,v 1.32 2010/03/03 13:53:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -494,7 +494,7 @@ void	addfsoption(const char *);
 void	addmkoption(const char *, const char *);
 void	appendmkoption(const char *, const char *);
 void	appendcondmkoption(struct nvlist *, const char *, const char *);
-void	deffilesystem(const char *, struct nvlist *, struct nvlist *);
+void	deffilesystem(struct nvlist *, struct nvlist *);
 void	defoption(const char *, struct nvlist *, struct nvlist *);
 void	defflag(const char *, struct nvlist *, struct nvlist *, int);
 void	defparam(const char *, struct nvlist *, struct nvlist *, int);

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.20 2010/02/03 21:00:49 pooka Exp $	*/
+/*	$NetBSD: gram.y,v 1.21 2010/03/03 13:53:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -147,7 +147,6 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %type	<val>	flags_opt
 %type	<str>	deffs
 %type	<list>	deffses
-%type	<str>	fsoptfile_opt
 %type	<list>	defopt
 %type	<list>	defopts
 %type	<str>	optdep
@@ -277,8 +276,7 @@ one_def:
 	device_major			{ do_devsw = 1; } |
 	prefix |
 	DEVCLASS WORD			{ (void)defattr($2, NULL, NULL, 1); } |
-	DEFFS fsoptfile_opt deffses defoptdeps
-					{ deffilesystem($2, $3, $4); } |
+	DEFFS deffses defoptdeps	{ deffilesystem($2, $3); } |
 	DEFINE WORD interface_opt attrs_opt
 					{ (void)defattr($2, $3, $4, 0); } |
 	DEFOPT optfile_opt defopts defoptdeps
@@ -390,10 +388,6 @@ locdefault:
 
 locdefaults:
 	'=' '{' values '}'		{ $$ = $3; };
-
-fsoptfile_opt:
-	filename			{ $$ = $1; } |
-	/* empty */			{ $$ = NULL; };
 
 optfile_opt:
 	filename			{ $$ = $1; } |
