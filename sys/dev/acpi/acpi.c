@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.150 2010/03/02 18:44:46 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.151 2010/03/03 06:54:25 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.150 2010/03/02 18:44:46 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.151 2010/03/03 06:54:25 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -193,7 +193,8 @@ static char acpi_supported_states[3 * 6 + 1] = "";
  * Prototypes.
  */
 static void		acpi_build_tree(struct acpi_softc *);
-static ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, UINT32, void *, void **);
+static ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, uint32_t,
+					  void *, void **);
 
 static void		acpi_enable_fixed_events(struct acpi_softc *);
 
@@ -851,96 +852,106 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
  *	Make an ACPI devnode.
  */
 static ACPI_STATUS
-acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
-    void **status)
+acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
+    void *context, void **status)
 {
 	struct acpi_make_devnode_state *state = context;
-#if defined(ACPI_DEBUG) || defined(ACPI_EXTRA_DEBUG)
 	struct acpi_softc *sc = state->softc;
-#endif
 	struct acpi_scope *as = state->scope;
 	struct acpi_devnode *ad;
-	ACPI_OBJECT_TYPE type;
 	ACPI_DEVICE_INFO *devinfo;
-	ACPI_STATUS rv;
+	ACPI_OBJECT_TYPE type;
 	ACPI_NAME_UNION *anu;
-	int i, clear = 0;
+	ACPI_STATUS rv;
+	int clear, i;
 
 	rv = AcpiGetType(handle, &type);
-	if (ACPI_SUCCESS(rv)) {
-		rv = AcpiGetObjectInfo(handle, &devinfo);
-		if (ACPI_FAILURE(rv)) {
-#ifdef ACPI_DEBUG
-			aprint_normal_dev(sc->sc_dev,
-			    "AcpiGetObjectInfo failed: %s\n",
-			    AcpiFormatException(rv));
-#endif
-			goto out; /* XXX why return OK */
-		}
 
-		switch (type) {
-		case ACPI_TYPE_DEVICE:
+	if (ACPI_FAILURE(rv))
+		return AE_OK;	/* Do not terminate the walk. */
+
+	rv = AcpiGetObjectInfo(handle, &devinfo);
+
+	if (ACPI_FAILURE(rv)) {
+		aprint_debug_dev(sc->sc_dev, "failed to get object "
+		    "information: %s\n", AcpiFormatException(rv));
+		return AE_OK;
+	}
+
+	switch (type) {
+
+	case ACPI_TYPE_DEVICE:
+
 #ifdef ACPI_ACTIVATE_DEV
-			if ((devinfo->Valid & (ACPI_VALID_STA|ACPI_VALID_HID)) ==
-			    (ACPI_VALID_STA|ACPI_VALID_HID) &&
-			    (devinfo->CurrentStatus &
-			     (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED)) ==
-			    ACPI_STA_DEV_PRESENT)
-				acpi_activate_device(handle, &devinfo);
+		if ((devinfo->Valid & (ACPI_VALID_STA | ACPI_VALID_HID)) ==
+		    (ACPI_VALID_STA | ACPI_VALID_HID) &&
+		    (devinfo->CurrentStatus &
+			(ACPI_STA_DEV_PRESENT | ACPI_STA_DEV_ENABLED)) ==
+		    ACPI_STA_DEV_PRESENT)
+			acpi_activate_device(handle, &devinfo);
 
 			/* FALLTHROUGH */
 #endif
 
-		case ACPI_TYPE_PROCESSOR:
-		case ACPI_TYPE_THERMAL:
-		case ACPI_TYPE_POWER:
-			ad = malloc(sizeof(*ad), M_ACPI, M_NOWAIT|M_ZERO);
-			if (ad == NULL)
-				return AE_NO_MEMORY;
+	case ACPI_TYPE_PROCESSOR:
+	case ACPI_TYPE_THERMAL:
+	case ACPI_TYPE_POWER:
 
-			ad->ad_devinfo = devinfo;
-			ad->ad_handle = handle;
-			ad->ad_level = level;
-			ad->ad_scope = as;
-			ad->ad_type = type;
+		ad = malloc(sizeof(*ad), M_ACPI, M_NOWAIT | M_ZERO);
 
-			anu = (ACPI_NAME_UNION *)&devinfo->Name;
-			ad->ad_name[4] = '\0';
-			for (i = 3, clear = 0; i >= 0; i--) {
-				if (!clear && anu->Ascii[i] == '_')
-					ad->ad_name[i] = '\0';
-				else {
-					ad->ad_name[i] = anu->Ascii[i];
-					clear = 1;
-				}
+		if (ad == NULL)
+			return AE_NO_MEMORY;
+
+		ad->ad_devinfo = devinfo;
+		ad->ad_handle = handle;
+		ad->ad_level = level;
+		ad->ad_scope = as;
+		ad->ad_type = type;
+
+		anu = (ACPI_NAME_UNION *)&devinfo->Name;
+		ad->ad_name[4] = '\0';
+
+		for (i = 3, clear = 0; i >= 0; i--) {
+
+			if (clear == 0 && anu->Ascii[i] == '_')
+				ad->ad_name[i] = '\0';
+			else {
+				ad->ad_name[i] = anu->Ascii[i];
+				clear = 1;
 			}
-			if (ad->ad_name[0] == '\0')
-				ad->ad_name[0] = '_';
+		}
 
-			TAILQ_INSERT_TAIL(&as->as_devnodes, ad, ad_list);
+		if (ad->ad_name[0] == '\0')
+			ad->ad_name[0] = '_';
 
-			if (type == ACPI_TYPE_DEVICE &&
-			    (ad->ad_devinfo->Valid & ACPI_VALID_HID) == 0)
-				goto out;
+		TAILQ_INSERT_TAIL(&as->as_devnodes, ad, ad_list);
+
+		if (type != ACPI_TYPE_DEVICE)
+			return AE_OK;
+
+		if ((ad->ad_devinfo->Valid & ACPI_VALID_HID) == 0)
+			return AE_OK;
 
 #ifdef ACPI_EXTRA_DEBUG
-			aprint_normal_dev(sc->sc_dev,
-			    "HID %s found in scope %s level %d\n",
-			    ad->ad_devinfo->HardwareId.String,
-			    as->as_name, ad->ad_level);
-			if (ad->ad_devinfo->Valid & ACPI_VALID_UID)
-				aprint_normal("       UID %s\n",
-				    ad->ad_devinfo->UniqueId.String);
-			if (ad->ad_devinfo->Valid & ACPI_VALID_ADR)
-				aprint_normal("       ADR 0x%016" PRIx64 "\n",
-				    ad->ad_devinfo->Address);
-			if (ad->ad_devinfo->Valid & ACPI_VALID_STA)
-				aprint_normal("       STA 0x%08x\n",
-				    ad->ad_devinfo->CurrentStatus);
+		aprint_normal_dev(sc->sc_dev,
+		    "HID %s found in scope %s level %d\n",
+		    ad->ad_devinfo->HardwareId.String,
+		    as->as_name, ad->ad_level);
+
+		if (ad->ad_devinfo->Valid & ACPI_VALID_UID)
+			aprint_normal("       UID %s\n",
+			    ad->ad_devinfo->UniqueId.String);
+
+		if (ad->ad_devinfo->Valid & ACPI_VALID_ADR)
+			aprint_normal("       ADR 0x%016" PRIx64 "\n",
+			    ad->ad_devinfo->Address);
+
+		if (ad->ad_devinfo->Valid & ACPI_VALID_STA)
+			aprint_normal("       STA 0x%08x\n",
+			    ad->ad_devinfo->CurrentStatus);
 #endif
-		}
 	}
- out:
+
 	return AE_OK;
 }
 
