@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.69 2010/03/03 08:20:39 he Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.70 2010/03/03 10:56:47 martin Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.69 2010/03/03 08:20:39 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.70 2010/03/03 10:56:47 martin Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -997,6 +997,8 @@ sunos32_sys_open(struct lwp *l, const struct sunos32_sys_open_args *uap, registe
 	return ret;
 }
 
+struct sunos32_sys_nfssvc_args;
+int sunos32_sys_nfssvc(struct lwp *l, const struct sunos32_sys_nfssvc_args *uap, register_t *retval);
 int
 sunos32_sys_nfssvc(struct lwp *l, const struct sunos32_sys_nfssvc_args *uap, register_t *retval)
 {
