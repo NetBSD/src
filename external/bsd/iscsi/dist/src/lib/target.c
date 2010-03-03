@@ -178,6 +178,7 @@ scsi_command_t(target_session_t *sess, uint8_t *header)
 
 	(void) memset(&scsi_cmd, 0x0, sizeof(scsi_cmd));
 	scsi_cmd.ahs = NULL;
+	scsi_cmd.send_buffer = NULL;
 	if (iscsi_scsi_cmd_decap(header, &scsi_cmd) != 0) {
 		iscsi_err(__FILE__, __LINE__,
 				"iscsi_scsi_cmd_decap() failed\n");
@@ -517,6 +518,7 @@ out:
 	if (sg_new != NULL) {
 		iscsi_free_atomic(sg_new);
 	}
+	free(scsi_cmd.send_buffer);
 	return result;
 }
 
