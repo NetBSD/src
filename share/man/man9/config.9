@@ -1,4 +1,4 @@
-.\"     $NetBSD: config.9,v 1.26 2009/03/15 14:02:39 joerg Exp $
+.\"     $NetBSD: config.9,v 1.27 2010/03/03 13:57:35 pooka Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 19, 2003
+.Dd March 3, 2010
 .Dt CONFIG 9
 .Os
 .Sh NAME
@@ -193,7 +193,7 @@ the lower-case of the option name, ``opt_foo.h'' for example.
 The
 .Em option
 is case-sensitive.
-.It deffs [filename] name
+.It deffs name [[name] ...]
 Define a filesystem
 .Em name .
 .It devclass name
