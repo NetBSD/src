@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.153 2010/03/04 20:17:30 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.154 2010/03/04 23:25:07 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.153 2010/03/04 20:17:30 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.154 2010/03/04 23:25:07 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1112,19 +1112,12 @@ acpi_enable_fixed_events(struct acpi_softc *sc)
 static UINT32
 acpi_fixed_button_handler(void *context)
 {
+	static const int handler = OSL_NOTIFY_HANDLER;
 	struct sysmon_pswitch *smpsw = context;
-	ACPI_STATUS rv;
 
-#ifdef ACPI_BUT_DEBUG
-	printf("%s: fixed button handler\n", smpsw->smpsw_name);
-#endif
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s\n", __func__));
 
-	rv = AcpiOsExecute(OSL_NOTIFY_HANDLER,
-	    acpi_fixed_button_pressed, smpsw);
-	if (ACPI_FAILURE(rv))
-		printf("%s: WARNING: unable to queue fixed button pressed "
-		    "callback: %s\n", smpsw->smpsw_name,
-		    AcpiFormatException(rv));
+	(void)AcpiOsExecute(handler, acpi_fixed_button_pressed, smpsw);
 
 	return ACPI_INTERRUPT_HANDLED;
 }
@@ -1139,10 +1132,8 @@ acpi_fixed_button_pressed(void *context)
 {
 	struct sysmon_pswitch *smpsw = context;
 
-#ifdef ACPI_BUT_DEBUG
-	printf("%s: fixed button pressed, calling sysmon\n",
-	    smpsw->smpsw_name);
-#endif
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s: %s fixed button pressed\n",
+		__func__, smpsw->smpsw_name));
 
 	sysmon_pswitch_event(smpsw, PSWITCH_EVENT_PRESSED);
 }
