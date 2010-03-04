@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.36 2010/03/03 00:56:41 dyoung Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.37 2010/03/04 18:31:57 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.36 2010/03/03 00:56:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.37 2010/03/04 18:31:57 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +78,6 @@ struct ppb_softc;
 static int  ppb_cardbus_match(device_t, cfdata_t, void *);
 static void ppb_cardbus_attach(device_t, device_t, void *);
 static int  ppb_cardbus_detach(device_t  self, int flags);
-/*static*/ void ppb_cardbus_setup(struct ppb_softc * sc);
-/*static*/ int  ppb_cardbus_enable(struct ppb_softc * sc);
-/*static*/ void ppb_cardbus_disable(struct ppb_softc * sc);
 static int  ppb_activate(device_t, enum devact);
 int rppbprint(void *, const char *);
 int rbus_intr_fixup(pci_chipset_tag_t, int, int, int);
@@ -727,83 +724,6 @@ ppb_cardbus_attach(device_t parent, device_t self, void *aux)
 	pba.pba_intrtag  = psc->sc_pa.pa_intrtag;
 
 	config_found_ia(self, "pcibus", &pba, rppbprint);
-}
-
-void
-ppb_cardbus_setup(struct ppb_softc * sc)
-{
-	struct ppb_cardbus_softc *csc = (struct ppb_cardbus_softc *) sc;
-#if 0
-	cardbus_chipset_tag_t cc  = psc->sc_cc;
-	cardbus_function_tag_t cf = psc->sc_cf;
-#endif
-
-	/* shut up compiler */
-	csc->foo=2;
-
-	printf("ppb_cardbus_setup called\n");
-#if 0
-	/* not sure what to do here */
-	pcitag_t tag = csc->sc_tag;
-
-	command = Cardbus_conf_read(csc->ct, tag, PCI_COMMAND_STATUS_REG);
-	if (csc->base0_reg) {
-		Cardbus_conf_write(csc->ct, tag,
-		    PCI_BAR0, csc->base0_reg);
-		command |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
-	} else if (csc->base1_reg) {
-		Cardbus_conf_write(csc->ct, tag,
-		    PCI_BAR1, csc->base1_reg);
-		command |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MASTER_ENABLE);
-	}
-
-	/* enable the card */
-	Cardbus_conf_write(csc->ct, tag, PCI_COMMAND_STATUS_REG, command);
-#endif
-}
-
-int
-ppb_cardbus_enable(struct ppb_softc * sc)
-{
-#if 0
-	struct ppb_cardbus_softc *csc = (struct ppb_cardbus_softc *) sc;
-	struct cardbus_softc *psc = device_private(device_parent(sc->sc_dev));
-	cardbus_chipset_tag_t cc = psc->sc_cc;
-	cardbus_function_tag_t cf = psc->sc_cf;
-
-	Cardbus_function_enable(csc->ct);
-
-	fxp_cardbus_setup(sc);
-
-	/* Map and establish the interrupt. */
-
-	sc->sc_ih = Cardbus_intr_establish(ct, psc->sc_intrline, IPL_NET,
-	    fxp_intr, sc);
-	if (NULL == sc->sc_ih) {
-		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt\n");
-		return 1;
-	}
-
-	printf("%s: interrupting at %d\n", device_xname(sc->sc_dev),
-	    psc->sc_intrline);
-
-#endif
-	return 0;
-}
-
-void
-ppb_cardbus_disable(struct ppb_softc * sc)
-{
-#if 0
-	struct cardbus_softc *psc = device_private(device_parent(sc->sc_dev));
-	cardbus_chipset_tag_t cc = psc->sc_cc;
-	cardbus_function_tag_t cf = psc->sc_cf;
-
-	/* Remove interrupt handler. */
-	Cardbus_intr_disestablish(ct, sc->sc_ih);
-
-	Cardbus_function_disable(((struct fxp_cardbus_softc *) sc)->ct);
-#endif
 }
 
 static int
