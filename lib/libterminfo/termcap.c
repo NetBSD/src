@@ -1,4 +1,4 @@
-/* $NetBSD: termcap.c,v 1.6 2010/03/04 15:16:39 roy Exp $ */
+/* $NetBSD: termcap.c,v 1.7 2010/03/04 15:35:26 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap.c,v 1.6 2010/03/04 15:16:39 roy Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.7 2010/03/04 15:35:26 roy Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -347,7 +347,7 @@ captoinfo(char *cap)
 	char *info, *ip, *token, *val, *p, tok[3];
 	const char *name;
 	size_t len, lp, nl, vl, rl;
-	int defs[__arraycount(def_infos)];
+	int defs[__arraycount(def_infos)], fv;
 
 	_DIAGASSERT(cap != NULL);
 
@@ -367,10 +367,12 @@ captoinfo(char *cap)
 		if (token[0] == '\0')
 			continue;
 		name = token;
-		val = NULL;
+		val = p = NULL;
+		fv = nl = 0;
 		if (token[1] != '\0') {
 			tok[0] = token[0];
 			tok[1] = token[1];
+			nl = 1;
 			if (token[2] == '\0') {
 				name = flagname(tok);
 				val = NULL;
@@ -380,13 +382,23 @@ captoinfo(char *cap)
 			} else if (token[2] == '=') {
 				name = strname(tok);
 				val = strval(token + 2);
+				fv = 1;
+			} else
+				nl = 0;
+		}
+		/* If not matched we may need to convert padding still. */
+		if (nl == 0) {
+			p = strchr(name, '=');
+			if (p != NULL) {
+				val = strval(p);
+				*p = '\0';
+				fv = 1;
 			}
 		}
 
 		/* See if this sets a default. */
 		for (nl = 0; nl < __arraycount(def_infos); nl++) {
 			if (strcmp(name, def_infos[nl].name) == 0) {
-				printf ("matched %s\n", name);
 				defs[nl] = 1;
 				break;
 			}
@@ -420,7 +432,7 @@ captoinfo(char *cap)
 		if (val != NULL) {
 			strcpy(ip, val);
 			ip += vl;
-			if (token[2] == '=')
+			if (fv == 1)
 				free(val);
 		}
 	}
