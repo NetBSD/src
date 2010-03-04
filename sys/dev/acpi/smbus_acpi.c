@@ -1,4 +1,4 @@
-/* $NetBSD: smbus_acpi.c,v 1.7 2010/03/04 20:17:30 jruoho Exp $ */
+/* $NetBSD: smbus_acpi.c,v 1.8 2010/03/04 20:46:18 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.7 2010/03/04 20:17:30 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.8 2010/03/04 20:46:18 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,13 +242,20 @@ acpi_smbus_attach(device_t parent, device_t self, void *aux)
 	 * Retrieve and display native controller info
 	 */
 	rv = AcpiGetParent(sc->sc_devnode->ad_handle, &native_dev);
+
+	native_bus_info = native_dev_info = NULL;
+
 	if (ACPI_SUCCESS(rv))
 		rv = AcpiGetParent(native_dev, &native_bus);
+
 	if (ACPI_SUCCESS(rv))
 		rv = AcpiGetObjectInfo(native_bus, &native_bus_info);
+
 	if (ACPI_SUCCESS(rv) &&
 	    acpi_match_hid(native_bus_info, pcibus_acpi_ids) != 0) {
+
 		rv = AcpiGetObjectInfo(native_dev, &native_dev_info);
+
 		if (ACPI_SUCCESS(rv)) {
 			pci_bus = native_bus_info->Address;
 			pci_dev = ACPI_ADR_PCI_DEV(native_dev_info->Address);
@@ -262,6 +269,12 @@ acpi_smbus_attach(device_t parent, device_t self, void *aux)
 			 */
 		}
 	}
+
+	if (native_bus_info != NULL)
+		ACPI_FREE(native_bus_info);
+
+	if (native_dev_info != NULL)
+		ACPI_FREE(native_dev_info);
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c_tag;
