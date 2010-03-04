@@ -1,4 +1,4 @@
-/* $NetBSD: smbus_acpi.c,v 1.6 2010/03/04 13:11:14 pgoyette Exp $ */
+/* $NetBSD: smbus_acpi.c,v 1.7 2010/03/04 20:17:30 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -36,10 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.6 2010/03/04 13:11:14 pgoyette Exp $");
-
-#define _COMPONENT		ACPI_BUS_COMPONENT
-ACPI_MODULE_NAME		("smbus_acpi")
+__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.7 2010/03/04 20:17:30 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +54,9 @@ ACPI_MODULE_NAME		("smbus_acpi")
 #include <dev/acpi/acpivar.h>
 
 #include <dev/i2c/i2cvar.h>
+
+#define _COMPONENT		ACPI_BUS_COMPONENT
+ACPI_MODULE_NAME		("smbus_acpi")
 
 /*
  * ACPI SMBus CMI protocol codes
