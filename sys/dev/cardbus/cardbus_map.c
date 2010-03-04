@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.34 2010/02/26 00:57:01 dyoung Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.35 2010/03/04 22:42:22 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.34 2010/02/26 00:57:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.35 2010/03/04 22:42:22 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,9 +231,7 @@ cardbus_mapreg_map(struct cardbus_softc *sc, int func, int reg, pcireg_t type, i
 	cardbus_chipset_tag_t cc = sc->sc_cc;
 	cardbus_function_tag_t cf = sc->sc_cf;
 	bus_space_tag_t bustag;
-#if rbus
 	rbus_tag_t rbustag;
-#endif
 	bus_space_handle_t handle;
 	bus_addr_t base;
 	bus_size_t size;
@@ -254,20 +252,15 @@ cardbus_mapreg_map(struct cardbus_softc *sc, int func, int reg, pcireg_t type, i
 			status = 1;
 		}
 		bustag = sc->sc_iot;
-#if rbus
 		rbustag = sc->sc_rbus_iot;
-#endif
 	} else {
 		if (cardbus_mem_find(cc, cf, tag, reg, type, &base, &size, &flags)){
 			status = 1;
 		}
 		bustag = sc->sc_memt;
-#if rbus
 		rbustag = sc->sc_rbus_memt;
-#endif
 	}
 	if (status == 0) {
-#if rbus
 		bus_addr_t mask = size - 1;
 		if (base != 0) {
 			mask = 0xffffffff;
@@ -276,17 +269,6 @@ cardbus_mapreg_map(struct cardbus_softc *sc, int func, int reg, pcireg_t type, i
 		    size, busflags | flags, &base, &handle)) {
 			panic("io alloc");
 		}
-#else
-		bus_addr_t start = 0x8300;
-		bus_addr_t end = 0x8400;
-		if (base != 0) {
-			bus_addr_t start = base;
-			bus_addr_t end = base + size;
-		}
-		if (bus_space_alloc(bustag, start, end, size, size, 0, 0, &base, &handle)) {
-			panic("io alloc");
-		}
-#endif
 	}
 	cardbus_conf_write(cc, cf, tag, reg, base);
 
@@ -332,7 +314,6 @@ cardbus_mapreg_unmap(struct cardbus_softc *sc, int func, int reg, bus_space_tag_
 	cardbus_function_tag_t cf = sc->sc_cf;
 	int st = 1;
 	pcitag_t cardbustag;
-#if rbus
 	rbus_tag_t rbustag;
 
 	if (sc->sc_iot == tag) {
@@ -346,15 +327,12 @@ cardbus_mapreg_unmap(struct cardbus_softc *sc, int func, int reg, bus_space_tag_
 	} else {
 		return 1;
 	}
-#endif
 
 	cardbustag = cardbus_make_tag(cc, cf, sc->sc_bus, func);
 
 	cardbus_conf_write(cc, cf, cardbustag, reg, 0);
 
-#if rbus
 	(*cf->cardbus_space_free)(cc, rbustag, handle, size);
-#endif
 
 	return st;
 }
