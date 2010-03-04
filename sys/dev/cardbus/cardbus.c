@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.106 2010/02/26 01:12:56 dyoung Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.107 2010/03/04 22:37:38 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.106 2010/02/26 01:12:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.107 2010/03/04 22:37:38 dyoung Exp $");
 
 #include "opt_cardbus.h"
 
@@ -129,10 +129,8 @@ cardbusattach(device_t parent, device_t self, void *aux)
 	sc->sc_cc = cba->cba_cc;
 	sc->sc_cf = cba->cba_cf;
 
-#if rbus
 	sc->sc_rbus_iot = cba->cba_rbus_iot;
 	sc->sc_rbus_memt = cba->cba_rbus_memt;
-#endif
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -581,10 +579,8 @@ cardbus_rescan(device_t self, const char *ifattr,
 		ca.ca_memt = sc->sc_memt;
 		ca.ca_dmat = sc->sc_dmat;
 
-#if rbus
 		ca.ca_rbus_iot = sc->sc_rbus_iot;
 		ca.ca_rbus_memt= sc->sc_rbus_memt;
-#endif
 
 		ca.ca_tag = tag;
 		ca.ca_bus = sc->sc_bus;
