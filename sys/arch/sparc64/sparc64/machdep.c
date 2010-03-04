@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.251 2010/02/08 19:02:32 joerg Exp $ */
+/*	$NetBSD: machdep.c,v 1.252 2010/03/04 08:01:35 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.251 2010/02/08 19:02:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.252 2010/03/04 08:01:35 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1299,7 +1299,7 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 			 * We should be flushing a subrange, but we
 			 * don't know where the segments starts.
 			 */
-			dcache_flush_page(pa);
+			dcache_flush_page_all(pa);
 		}
 	}
 
