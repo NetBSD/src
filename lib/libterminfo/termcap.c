@@ -1,4 +1,4 @@
-/* $NetBSD: termcap.c,v 1.5 2010/03/02 14:11:11 roy Exp $ */
+/* $NetBSD: termcap.c,v 1.6 2010/03/04 15:16:39 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap.c,v 1.5 2010/03/02 14:11:11 roy Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.6 2010/03/04 15:16:39 roy Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -229,6 +229,7 @@ static char *
 strval(const char *val)
 {
 	char *info, *ip, c;
+	const char *ps, *pe;
 	int p;
 	size_t len, l, n;
 
@@ -236,6 +237,22 @@ strval(const char *val)
 	info = ip = malloc(len);
 	if (info == NULL)
 		return 0;
+
+	/* Move the = */
+	*ip++ = *val++;
+
+	/* Set ps and pe to point to the start and end of the padding */
+	if (isdigit((unsigned char)*val)) {
+		for (ps = pe = val;
+		     isdigit((unsigned char)*val) || *val == '.';
+		     val++)
+			pe++;
+		if (*val == '*') {
+			val++;
+			pe++;
+		}
+	} else
+		ps = pe  = NULL;
 
 	l = 0;
 	p = 1;
@@ -287,6 +304,19 @@ strval(const char *val)
 		*ip++ = '\\';
 	}
 
+	/* Add our padding at the end. */
+	if (ps != NULL) {
+		n = pe - ps;
+		if (l + n + 4 > len)
+			goto elen;
+		*ip++ = '$';
+		*ip++ = '<';
+		strncpy(ip, ps, n);
+		ip += n;
+		*ip++ = '/';
+		*ip++ = '>';
+	}
+
 	*ip = '\0';
 	return info;
 
@@ -296,20 +326,38 @@ elen:
 	return NULL;
 }
 
+static struct def_info {
+	const char *name;
+	const char *cap;
+} def_infos[] = {
+	{ "bel",	"^G" },
+	{ "cr",		"^M" },
+	{ "cud1",	"^J" },
+	{ "ht",		"^I" },
+	{ "ind",	"^J" },
+	{ "kbs",	"^H" },
+	{ "kcub1",	"^H" },
+	{ "kcud1",	"^J" },
+	{ "nel",	"^M^J" }
+};
+
 char *
 captoinfo(char *cap)
 {
 	char *info, *ip, *token, *val, *p, tok[3];
 	const char *name;
 	size_t len, lp, nl, vl, rl;
+	int defs[__arraycount(def_infos)];
 
 	_DIAGASSERT(cap != NULL);
 
 	len = strlen(cap) * 2;
+	len += __arraycount(def_infos) * (5 + 4 + 3); /* reserve for defs */
 	info = ip = malloc(len);
 	if (info == NULL)
 		return NULL;
 
+	memset(defs, 0, sizeof(defs));
 	lp = 0;
 	tok[2] = '\0';
 	for (token = _ti_get_token(&cap, ':');
@@ -334,6 +382,16 @@ captoinfo(char *cap)
 				val = strval(token + 2);
 			}
 		}
+
+		/* See if this sets a default. */
+		for (nl = 0; nl < __arraycount(def_infos); nl++) {
+			if (strcmp(name, def_infos[nl].name) == 0) {
+				printf ("matched %s\n", name);
+				defs[nl] = 1;
+				break;
+			}
+		}
+
 		nl = strlen(name);
 		if (val == NULL)
 			vl = 0;
@@ -364,6 +422,19 @@ captoinfo(char *cap)
 			ip += vl;
 			if (token[2] == '=')
 				free(val);
+		}
+	}
+
+	/* Add any defaults not set above. */
+	for (nl = 0; nl < __arraycount(def_infos); nl++) {
+		if (defs[nl] == 0) {
+			*ip++ = ',';
+			*ip++ = ' ';
+			strcpy(ip, def_infos[nl].name);
+			ip += strlen(def_infos[nl].name);
+			*ip++ = '=';
+			strcpy(ip, def_infos[nl].cap);
+			ip += strlen(def_infos[nl].cap);
 		}
 	}
 
