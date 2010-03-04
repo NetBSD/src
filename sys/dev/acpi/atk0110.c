@@ -1,4 +1,4 @@
-/*	$NetBSD: atk0110.c,v 1.6 2010/03/02 18:44:47 jruoho Exp $	*/
+/*	$NetBSD: atk0110.c,v 1.7 2010/03/04 08:44:55 jruoho Exp $	*/
 /*	$OpenBSD: atk0110.c,v 1.1 2009/07/23 01:38:16 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.6 2010/03/02 18:44:47 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.7 2010/03/04 08:44:55 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,9 @@ __KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.6 2010/03/02 18:44:47 jruoho Exp $");
  *
  *				  -- Constantine A. Murenin <http://cnst.su/>
  */
+
+#define _COMPONENT		 ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME		 ("acpi_aibs")
 
 #define AIBS_MORE_SENSORS
 
@@ -168,14 +171,14 @@ aibs_attach_sif(device_t self, enum envsys_units st)
 	o = bp->Package.Elements;
 	if (o[0].Type != ACPI_TYPE_INTEGER) {
 		aprint_error_dev(self, "%s[0]: invalid type\n", name);
-		AcpiOsFree(b.Pointer);
+		ACPI_FREE(b.Pointer);
 		return;
 	}
 
 	n = o[0].Integer.Value;
 	if (bp->Package.Count - 1 < n) {
 		aprint_error_dev(self, "%s: invalid package\n", name);
-		AcpiOsFree(b.Pointer);
+		ACPI_FREE(b.Pointer);
 		return;
 	} else if (bp->Package.Count - 1 > n) {
 		int on = n;
@@ -189,14 +192,14 @@ aibs_attach_sif(device_t self, enum envsys_units st)
 	if (n < 1) {
 		aprint_error_dev(self, "%s: no members in the package\n",
 		    name);
-		AcpiOsFree(b.Pointer);
+		ACPI_FREE(b.Pointer);
 		return;
 	}
 
 	as = malloc(sizeof(*as) * n, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (as == NULL) {
 		aprint_error_dev(self, "%s: malloc fail\n", name);
-		AcpiOsFree(b.Pointer);
+		ACPI_FREE(b.Pointer);
 		return;
 	}
 	switch (st) {
@@ -255,7 +258,7 @@ aibs_attach_sif(device_t self, enum envsys_units st)
 			    name[0], i);
 	}
 
-	AcpiOsFree(b.Pointer);
+	ACPI_FREE(b.Pointer);
 	return;
 }
 
@@ -327,7 +330,7 @@ aibs_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	}
 	bp = b.Pointer;
 	v = bp->Integer.Value;
-	AcpiOsFree(b.Pointer);
+	ACPI_FREE(b.Pointer);
 
 	switch (st) {
 	case ENVSYS_STEMP:
