@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.33 2010/03/02 20:31:14 dyoung Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.34 2010/03/04 22:34:37 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.33 2010/03/02 20:31:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.34 2010/03/04 22:34:37 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -215,10 +215,6 @@ atw_cardbus_attach(device_t parent, device_t self, void *aux)
 		printf("%s: atw_cardbus_attach mapped %d bytes mem space\n",
 		    device_xname(self), csc->sc_mapsize);
 #endif
-#if rbus
-#else
-		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
-#endif
 		csc->sc_csr |= PCI_COMMAND_MEM_ENABLE;
 		csc->sc_bar_reg = ATW_PCI_MMBA;
 		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_MEM;
@@ -228,10 +224,6 @@ atw_cardbus_attach(device_t parent, device_t self, void *aux)
 #if 0
 		printf("%s: atw_cardbus_attach mapped %d bytes I/O space\n",
 		    device_xname(self), csc->sc_mapsize);
-#endif
-#if rbus
-#else
-		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);
 #endif
 		csc->sc_csr |= PCI_COMMAND_IO_ENABLE;
 		csc->sc_bar_reg = ATW_PCI_IOBA;
