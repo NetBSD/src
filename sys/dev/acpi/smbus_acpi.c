@@ -1,4 +1,4 @@
-/* $NetBSD: smbus_acpi.c,v 1.4 2010/03/04 03:10:18 pgoyette Exp $ */
+/* $NetBSD: smbus_acpi.c,v 1.5 2010/03/04 13:07:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.4 2010/03/04 03:10:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.5 2010/03/04 13:07:01 pgoyette Exp $");
+
+#define _COMPONENT		ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME		("smbus_acpi")
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +166,7 @@ acpi_smbus_match(device_t parent, cfdata_t match, void *aux)
 	}
 done:
 	if (smi_buf.Pointer != NULL)
-		AcpiOsFree(smi_buf.Pointer);
+		ACPI_FREE(smi_buf.Pointer);
 
 	return r;
 }
@@ -212,7 +215,7 @@ acpi_smbus_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 	if (smi_buf.Pointer != NULL)
-		AcpiOsFree(smi_buf.Pointer);
+		ACPI_FREE(smi_buf.Pointer);
 
 	/* Install notify handler if possible */
 	rv = AcpiInstallNotifyHandler(sc->sc_devnode->ad_handle,
@@ -419,7 +422,7 @@ acpi_smbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		}
 	}
 	if (smbuf.Pointer)
-		AcpiOsFree(smbuf.Pointer);
+		ACPI_FREE(smbuf.Pointer);
 
 	return r;
 }
@@ -464,7 +467,7 @@ acpi_smbus_alerts(struct acpi_smbus_softc *sc)
 		}
 done:
 		if (alert.Pointer != NULL)
-			AcpiOsFree(alert.Pointer);
+			ACPI_FREE(alert.Pointer);
 	} while (status == 0);
 }
 
