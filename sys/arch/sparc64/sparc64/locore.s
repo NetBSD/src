@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.321 2010/02/24 09:49:36 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.322 2010/03/04 08:01:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -203,10 +203,10 @@
  */
 #ifdef DCACHE_BUG
 #define DLFLUSH(a,t) \
-	andn	a, 0x1f, t; \
+	andn	a, 0x3f, t; \
 	stxa	%g0, [ t ] ASI_DCACHE_TAG; \
 	membar	#Sync
-/* The following can be used if the pointer is 16-byte aligned */
+/* The following can be used if the pointer is 32-byte aligned */
 #define DLFLUSH2(t) \
 	stxa	%g0, [ t ] ASI_DCACHE_TAG; \
 	membar	#Sync
@@ -775,7 +775,6 @@ ufast_IMMU_miss:			! 064 = fast instr access MMU miss
 	TA32
 ufast_DMMU_miss:			! 068 = fast data access MMU miss
 	ldxa	[%g0] ASI_DMMU_8KPTR, %g2! Load DMMU 8K TSB pointer
-
 #ifdef NO_TSB
 	ba,a	%icc, data_miss
 #endif
@@ -4947,11 +4946,15 @@ ENTRY(sp_tlb_flush_pte_usiii)
 	membar	#Sync
 	or	%o0, DEMAP_PAGE_PRIMARY, %o0
 	stxa	%o0, [%o0] ASI_DMMU_DEMAP		! Do the demap
+	membar	#Sync
 	stxa	%o0, [%o0] ASI_IMMU_DEMAP		! to both TLBs
+	membar	#Sync
 #ifdef TLB_FLUSH_LOWVA
 	srl	%o0, 0, %o0				! and make sure it's both 32- and 64-bit entries
 	stxa	%o0, [%o0] ASI_DMMU_DEMAP		! Do the demap
+	membar	#Sync
 	stxa	%o0, [%o0] ASI_IMMU_DEMAP		! Do the demap
+	membar	#Sync
 #endif
 	flush	%o1
 	stxa	%o5, [%o2] ASI_DMMU			! Restore primary context
@@ -5050,6 +5053,7 @@ ENTRY(sp_tlb_flush_all_usiii)
 	wrpr	%o4, 0, %pstate
 
 	stxa	%o2, [%o2] ASI_IMMU_DEMAP
+	membar	#Sync
 	stxa	%o2, [%o2] ASI_DMMU_DEMAP
 
 	sethi	%hi(KERNBASE), %o4
@@ -6566,22 +6570,19 @@ ENTRY(probeset)
 	 membar	#StoreStore|#StoreLoad
 
 /*
- * pmap_zero_page(pa)
+ * pmap_zero_page_phys(pa)
  *
  * Zero one page physically addressed
  *
  * Block load/store ASIs do not exist for physical addresses,
  * so we won't use them.
  *
- * While we do the zero operation, we also need to blast away
- * the contents of the D$.  We will execute a flush at the end
- * to sync the I$.
+ * We will execute a flush at the end to sync the I$.
+ *
+ * This version expects to have the dcache_flush_page_all(pa)
+ * to have been called before calling into here.
  */
-	.data
-paginuse:
-	.word	0
-	.text
-ENTRY(pmap_zero_page)
+ENTRY(pmap_zero_page_phys)
 #ifndef _LP64
 	COMBINE(%o0, %o1, %o0)
 #endif
@@ -6625,7 +6626,7 @@ ENTRY(pmap_zero_page)
 	 wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Make C code happy
 
 /*
- * pmap_copy_page(paddr_t src, paddr_t dst)
+ * pmap_copy_page_phys(paddr_t src, paddr_t dst)
  *
  * Copy one page physically addressed
  * We need to use a global reg for ldxa/stxa
@@ -6634,10 +6635,11 @@ ENTRY(pmap_zero_page)
  * 32-bit stack.  We will unroll the loop by 4 to
  * improve performance.
  *
- * XXX We also need to blast the D$ and flush like
- * XXX pmap_zero_page.
+ * This version expects to have the dcache_flush_page_all(pa)
+ * to have been called before calling into here.
+ *
  */
-ENTRY(pmap_copy_page)
+ENTRY(pmap_copy_page_phys)
 #ifndef _LP64
 	COMBINE(%o0, %o1, %o0)
 	COMBINE(%o2, %o3, %o1)

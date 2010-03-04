@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.254 2010/02/24 10:11:53 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.255 2010/03/04 08:01:35 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.254 2010/02/24 10:11:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.255 2010/03/04 08:01:35 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1608,11 +1608,10 @@ pmap_kremove(vaddr_t va, vsize_t size)
 		 */
 
 		tlb_flush_pte(va, pm);
+		dcache_flush_page_all(pa);
 	}
-	if (flush) {
+	if (flush)
 		REMOVE_STAT(flushes);
-		blast_dcache();
-	}
 }
 
 /*
@@ -1998,11 +1997,10 @@ pmap_remove(struct pmap *pm, vaddr_t va, vaddr_t endva)
 		tsb_invalidate(va, pm);
 		REMOVE_STAT(tflushes);
 		tlb_flush_pte(va, pm);
+		dcache_flush_page_all(pa);
 	}
-	if (flush && pm->pm_refs) {
+	if (flush && pm->pm_refs)
 		REMOVE_STAT(flushes);
-		blast_dcache();
-	}
 	DPRINTF(PDB_REMOVE, ("\n"));
 	pv_check();
 	mutex_exit(&pmap_lock);
@@ -2418,9 +2416,7 @@ pmap_clear_modify(struct vm_page *pg)
 	int modified = 0;
 
 	DPRINTF(PDB_CHANGEPROT|PDB_REF, ("pmap_clear_modify(%p)\n", pg));
-#endif
 
-#if defined(DEBUG)
 	modified = pmap_is_modified(pg);
 #endif
 	mutex_enter(&pmap_lock);
@@ -2556,7 +2552,7 @@ pmap_clear_reference(struct vm_page *pg)
 			}
 		}
 	}
-	dcache_flush_page(VM_PAGE_TO_PHYS(pg));
+	dcache_flush_page_all(VM_PAGE_TO_PHYS(pg));
 	pv_check();
 #ifdef DEBUG
 	if (pmap_is_referenced_locked(pg)) {
@@ -2924,9 +2920,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 				pv->pv_next = NULL;
 			}
 		}
-		if (needflush) {
-			dcache_flush_page(VM_PAGE_TO_PHYS(pg));
-		}
+		if (needflush)
+			dcache_flush_page_all(VM_PAGE_TO_PHYS(pg));
 	}
 	/* We should really only flush the pages we demapped. */
 	pv_check();
@@ -3623,4 +3618,29 @@ pmap_update(struct pmap *pmap)
 	}
 	pmap->pm_refs = 1;
 	pmap_activate_pmap(pmap);
+}
+
+/*
+ * pmap_copy_page()/pmap_zero_page()
+ *
+ * we make sure that the destination page is flushed from all D$'s
+ * before we perform the copy/zero.
+ */
+extern int cold;
+void
+pmap_copy_page(paddr_t src, paddr_t dst)
+{
+
+	if (!cold)
+		dcache_flush_page_all(dst);
+	pmap_copy_page_phys(src, dst);
+}
+
+void
+pmap_zero_page(paddr_t pa)
+{
+
+	if (!cold)
+		dcache_flush_page_all(pa);
+	pmap_zero_page_phys(pa);
 }
