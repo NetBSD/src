@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.41 2010/03/02 20:31:14 dyoung Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.42 2010/03/04 22:34:37 dyoung Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.41 2010/03/02 20:31:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.42 2010/03/04 22:34:37 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -174,10 +174,6 @@ ath_cardbus_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (Cardbus_mapreg_map(ct, ATH_PCI_MMBA, PCI_MAPREG_TYPE_MEM, 0,
 	    &csc->sc_iot, &csc->sc_ioh, &adr, &csc->sc_mapsize) == 0) {
-#if rbus
-#else
-		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
-#endif
 		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_MEM;
 	} else {
 		aprint_error_dev(self, "unable to map device registers\n");
