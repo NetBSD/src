@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1366 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1367 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -561,3 +561,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	wcfb: A driver for 3Dlabs Wildcat graphics cards [macallan 20100224]
 	ld.so_elf: Implement negative symbol lookup cache [roy 20100227]	  
 	dhcpcd(8): Import dhcpcd-5.2.1. [roy 20100227]
+	ne(4): Add proper support for NE2000 8 bit mode. [tsutsui 20090303]
