@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.26 2009/06/24 11:28:48 tteras Exp $	*/
+/*	$NetBSD: session.c,v 1.27 2010/03/04 15:13:53 vanhu Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -170,11 +170,6 @@ session(void)
 	if (pfkey_init() < 0)
 		errx(1, "failed to initialize pfkey socket");
 
-#ifdef ENABLE_ADMINPORT
-	if (admin_init() < 0)
-		errx(1, "failed to initialize admin port socket");
-#endif
-
 	if (isakmp_init() < 0)
 		errx(1, "failed to initialize ISAKMP structures");
 
@@ -203,6 +198,12 @@ session(void)
 	if (cfparse() != 0)
 		errx(1, "failed to parse configuration file.");
 	restore_params();
+
+#ifdef ENABLE_ADMINPORT
+	if (admin_init() < 0)
+		errx(1, "failed to initialize admin port socket");
+#endif
+
 
 #ifdef ENABLE_HYBRID
 	if(isakmp_cfg_config.network4 && isakmp_cfg_config.pool_size == 0)
