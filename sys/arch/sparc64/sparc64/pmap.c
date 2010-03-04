@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.255 2010/03/04 08:01:35 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.256 2010/03/04 08:11:42 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.255 2010/03/04 08:01:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.256 2010/03/04 08:11:42 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -308,8 +308,8 @@ struct {
 	int pvfirst;
 	int pvsearch;
 } remove_stats;
-#define	ENTER_STAT(x)	enter_stats.x ++
-#define	REMOVE_STAT(x)	remove_stats.x ++
+#define	ENTER_STAT(x)	do { enter_stats.x ++; } while (0)
+#define	REMOVE_STAT(x)	do { remove_stats.x ++; } while (0)
 
 #define	PDB_CREATE		0x000001
 #define	PDB_DESTROY		0x000002
@@ -339,8 +339,8 @@ int	pmap_pages_stolen = 0;
 #define	BDPRINTF(n, f)	if (pmapdebug & (n)) prom_printf f
 #define	DPRINTF(n, f)	if (pmapdebug & (n)) printf f
 #else
-#define	ENTER_STAT(x)
-#define	REMOVE_STAT(x)
+#define	ENTER_STAT(x)	do { /* nothing */ } while (0)
+#define	REMOVE_STAT(x)	do { /* nothing */ } while (0)
 #define	BDPRINTF(n, f)
 #define	DPRINTF(n, f)
 #endif
