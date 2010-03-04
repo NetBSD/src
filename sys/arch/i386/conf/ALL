@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.245 2010/03/03 06:57:53 jruoho Exp $
+# $NetBSD: ALL,v 1.246 2010/03/04 21:47:58 jruoho Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.245 $"
+#ident 		"ALL-$Revision: 1.246 $"
 
 maxusers	64		# estimated number of users
 
@@ -1759,16 +1759,16 @@ options AC97_DEBUG
 options AC97_IO_DEBUG
 options ACPI_APM_DEBUG
 options ACPI_BUT_DEBUG
-
+#
 # ACPI_DEBUG_ALLOC can not be used with ACPI
 # kernel modules. It requires also ACPI_DEBUG.
+# ACPI_DEBUG_MUTEX is only for ACPICA debugging.
 #
-#options ACPI_DEBUG
-#options ACPI_DEBUG_ALLOC
-
+options ACPI_DEBUG
+options ACPI_DEBUG_ALLOC
+options ACPI_MUTEX_DEBUG
 options ACPI_FDC_DEBUG
 options ACPI_MADT_DEBUG
-#options ACPI_MUTEX_DEBUG
 options ADB_DEBUG
 options ADM1030_DEBUG
 options ADT7467_DEBUG
