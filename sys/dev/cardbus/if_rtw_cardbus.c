@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.38 2010/02/26 01:12:56 dyoung Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.39 2010/03/04 22:33:12 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.38 2010/02/26 01:12:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.39 2010/03/04 22:33:12 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -88,12 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.38 2010/02/26 01:12:56 dyoung E
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_radiotap.h>
 #include <net80211/ieee80211_var.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
-
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -246,10 +240,6 @@ rtw_cardbus_attach(device_t parent, device_t self, void *aux)
 		RTW_DPRINTF(RTW_DEBUG_ATTACH,
 		    ("%s: %s mapped %" PRIuMAX " bytes mem space\n",
 		     device_xname(self), __func__, (uintmax_t)regs->r_sz));
-#if rbus
-#else
-		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
-#endif
 		csc->sc_csr |= PCI_COMMAND_MEM_ENABLE;
 		csc->sc_bar_reg = RTW_PCI_MMBA;
 		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_MEM;
@@ -258,10 +248,6 @@ rtw_cardbus_attach(device_t parent, device_t self, void *aux)
 		RTW_DPRINTF(RTW_DEBUG_ATTACH,
 		    ("%s: %s mapped %" PRIuMAX " bytes I/O space\n",
 		     device_xname(self), __func__, (uintmax_t)regs->r_sz));
-#if rbus
-#else
-		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);
-#endif
 		csc->sc_csr |= PCI_COMMAND_IO_ENABLE;
 		csc->sc_bar_reg = RTW_PCI_IOBA;
 		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_IO;
