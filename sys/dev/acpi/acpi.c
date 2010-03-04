@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.152 2010/03/03 06:57:05 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.153 2010/03/04 20:17:30 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.152 2010/03/03 06:57:05 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.153 2010/03/04 20:17:30 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -822,8 +822,8 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
 	ACPI_DEVICE_INFO *newdi;
 
 #ifdef ACPI_DEBUG
-	aprint_normal("acpi_activate_device: %s, old status=%x\n",
-	       (*di)->HardwareId.Value, (*di)->CurrentStatus);
+	aprint_normal("%s: %s, old status=%x\n", __func__,
+	       (*di)->HardwareId.String, (*di)->CurrentStatus);
 #endif
 
 	rv = acpi_allocate_resources(handle);
@@ -840,8 +840,8 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
 	*di = newdi;
 
 #ifdef ACPI_DEBUG
-	aprint_normal("acpi_activate_device: %s, new status=%x\n",
-	       (*di)->HardwareId.Value, (*di)->CurrentStatus);
+	aprint_normal("%s: %s, new status=%x\n", __func__,
+	       (*di)->HardwareId.String, (*di)->CurrentStatus);
 #endif
 }
 #endif /* ACPI_ACTIVATE_DEV */
