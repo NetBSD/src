@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.50 2010/02/24 04:48:28 mrg Exp $	*/
+/*	$NetBSD: pmap.h,v 1.51 2010/03/04 08:01:35 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -203,6 +203,10 @@ int             pmap_dumpmmu(int (*)(dev_t, daddr_t, void *, size_t),
 int		pmap_pa_exists(paddr_t);
 void		switchexit(struct lwp *, int);
 void		pmap_kprotect(vaddr_t, vm_prot_t);
+
+/* SPARC64 specific */
+void		pmap_copy_page_phys(paddr_t, paddr_t);
+void		pmap_zero_page_phys(paddr_t);
 
 /* Installed physical memory, as discovered during bootstrap. */
 extern int phys_installed_size;
