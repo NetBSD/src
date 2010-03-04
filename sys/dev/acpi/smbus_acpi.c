@@ -1,4 +1,4 @@
-/* $NetBSD: smbus_acpi.c,v 1.5 2010/03/04 13:07:01 pgoyette Exp $ */
+/* $NetBSD: smbus_acpi.c,v 1.6 2010/03/04 13:11:14 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -36,9 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.5 2010/03/04 13:07:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.6 2010/03/04 13:11:14 pgoyette Exp $");
 
-#define _COMPONENT		ACPI_RESOURCE_COMPONENT
+#define _COMPONENT		ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME		("smbus_acpi")
 
 #include <sys/param.h>
