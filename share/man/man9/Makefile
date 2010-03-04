@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.318 2010/03/01 19:09:41 jruoho Exp $
+#       $NetBSD: Makefile,v 1.319 2010/03/04 08:09:51 jruoho Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -41,8 +41,8 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	pcmcia.9 pcq.9 percpu.9 pfil.9 physio.9 pmap.9 pmatch.9 pmc.9 pmf.9 \
 	pool.9 pool_cache.9 powerhook_establish.9 ppsratecheck.9 \
 	preempt.9 putter.9 \
-	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rssadapt.9 \
-	rt_timer.9 rwlock.9 RUN_ONCE.9 \
+	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 roundup.9 \
+	rssadapt.9 rt_timer.9 rwlock.9 RUN_ONCE.9 \
 	sched_4bsd.9 scsipi.9 \
 	secmodel.9 secmodel_bsd44.9 secmodel_overlay.9 secmodel_securelevel.9 \
 	secmodel_suser.9 setbit.9 setjmp.9 shutdownhook_establish.9 \
@@ -577,6 +577,10 @@ MLINKS+=rasops.9 rasops_init.9 \
 	rasops.9 rasops_reconfig.9
 MLINKS+=rnd.9 rnd_attach_source.9 rnd.9 rnd_detach_source.9 \
 	rnd.9 rnd_add_data.9 rnd.9 rnd_add_uint32.9
+MLINKS+=roundup.9 howmany.9 \
+	roundup.9 rounddown.9 \
+	roundup.9 roundup2.9 \
+	roundup.9 powerof2.9
 MLINKS+=rssadapt.9 ieee80211_rssadapt_choose.9 \
 	rssadapt.9 ieee80211_rssadapt_input.9 \
 	rssadapt.9 ieee80211_rssadapt_lower_rate.9 \
