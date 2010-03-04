@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.32 2010/03/04 22:29:47 jruoho Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.33 2010/03/04 23:06:36 jruoho Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.32 2010/03/04 22:29:47 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.33 2010/03/04 23:06:36 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ acpibut_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_node = aa->aa_node;
 
-	(void)pmf_device_register(self, NULL, NULL)
+	(void)pmf_device_register(self, NULL, NULL);
 	(void)sysmon_pswitch_register(&sc->sc_smpsw);
 
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
