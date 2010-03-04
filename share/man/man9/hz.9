@@ -1,4 +1,4 @@
-.\"	$NetBSD: hz.9,v 1.6 2008/04/30 13:10:58 martin Exp $
+.\"	$NetBSD: hz.9,v 1.7 2010/03/04 09:57:12 jruoho Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,8 @@
 .Nd system clock frequency
 .Sh SYNOPSIS
 .In sys/kernel.h
-.Va int hz;
+.Pp
+.Va extern int hz;
 .Sh DESCRIPTION
 .Nm
 specifies the number of times the
