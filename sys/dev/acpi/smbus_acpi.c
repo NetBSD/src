@@ -1,4 +1,4 @@
-/* $NetBSD: smbus_acpi.c,v 1.3 2010/03/01 13:16:21 jruoho Exp $ */
+/* $NetBSD: smbus_acpi.c,v 1.4 2010/03/04 03:10:18 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.3 2010/03/01 13:16:21 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.4 2010/03/04 03:10:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,9 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.3 2010/03/01 13:16:21 jruoho Exp $"
 #include <dev/acpi/acpivar.h>
 
 #include <dev/i2c/i2cvar.h>
-
-#define _COMPONENT          ACPI_SMBUS_COMPONENT
-ACPI_MODULE_NAME            ("acpi_smbus")
 
 /*
  * ACPI SMBus CMI protocol codes
@@ -166,7 +163,7 @@ acpi_smbus_match(device_t parent, cfdata_t match, void *aux)
 	}
 done:
 	if (smi_buf.Pointer != NULL)
-		ACPI_FREE(smi_buf.Pointer);
+		AcpiOsFree(smi_buf.Pointer);
 
 	return r;
 }
@@ -215,7 +212,7 @@ acpi_smbus_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 	if (smi_buf.Pointer != NULL)
-		ACPI_FREE(smi_buf.Pointer);
+		AcpiOsFree(smi_buf.Pointer);
 
 	/* Install notify handler if possible */
 	rv = AcpiInstallNotifyHandler(sc->sc_devnode->ad_handle,
@@ -422,7 +419,7 @@ acpi_smbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		}
 	}
 	if (smbuf.Pointer)
-		ACPI_FREE(smbuf.Pointer);
+		AcpiOsFree(smbuf.Pointer);
 
 	return r;
 }
@@ -467,7 +464,7 @@ acpi_smbus_alerts(struct acpi_smbus_softc *sc)
 		}
 done:
 		if (alert.Pointer != NULL)
-			ACPI_FREE(alert.Pointer);
+			AcpiOsFree(alert.Pointer);
 	} while (status == 0);
 }
 
