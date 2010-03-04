@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.31 2010/01/05 13:57:18 jruoho Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.32 2010/03/04 21:54:35 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,8 +62,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* #define VALD_ACPI_DEBUG */
-
 /*
  * ACPI VALD Driver for Toshiba Libretto L3.
  *	This driver is based on acpibat driver.
@@ -76,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.31 2010/01/05 13:57:18 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.32 2010/03/04 21:54:35 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,8 +124,6 @@ static const char * const vald_acpi_hids[] = {
 	"TOS6200",
 	NULL
 };
-
-#define AVALD_F_VERBOSE		0x01	/* verbose events */
 
 #define LIBRIGHT_HOLD	0x00
 #define LIBRIGHT_UP	0x01
@@ -253,29 +249,19 @@ vald_acpi_attach(device_t parent, device_t self, void *aux)
  *	Notify handler.
  */
 static void
-vald_acpi_notify_handler(ACPI_HANDLE handle, UINT32 notify,
-    void *context)
+vald_acpi_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 {
 	struct vald_acpi_softc *sc = context;
-	ACPI_STATUS rv;
 
 	switch (notify) {
+
 	case ACPI_NOTIFY_ValdStatusChanged:
-#ifdef VALD_ACPI_DEBUG
-		printf("%s: received ValdStatusChanged message.\n",
-		    device_xname(sc->sc_dev));
-#endif /* VALD_ACPI_DEBUG */
-
-		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, vald_acpi_event, sc);
-
-		if (ACPI_FAILURE(rv))
-			aprint_error_dev(sc->sc_dev, "WARNING: unable to queue vald change "
-			    "event: %s\n", AcpiFormatException(rv));
+		(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, vald_acpi_event, sc);
 		break;
 
 	default:
-		aprint_error_dev(sc->sc_dev, "received unknown notify messages: 0x%x\n",
-		    notify);
+		aprint_error_dev(sc->sc_dev,
+		    "unknown notify 0x%02X\n", notify);
 		break;
 	}
 }
@@ -296,10 +282,7 @@ vald_acpi_event(void *arg)
 		rv = vald_acpi_ghci_get(sc, GHCI_SYSTEM_EVENT_FIFO, &value,
 		    &result);
 		if (ACPI_SUCCESS(rv) && result == 0) {
-#ifdef VALD_ACPI_DEBUG
-			printf("%s: System Event %x\n", device_xname(sc->sc_dev),
-			    value);
-#endif
+
 			switch (value) {
 			case 0x1c3: /* Fn + F9 */
 				break;
