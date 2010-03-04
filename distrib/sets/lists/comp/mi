@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1401 2010/03/02 20:04:16 darran Exp $
+#	$NetBSD: mi,v 1.1402 2010/03/04 08:13:29 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8951,6 +8951,7 @@
 ./usr/share/man/cat9/hashdone.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/hashinit.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/holdrele.0			comp-sys-catman		.cat
+./usr/share/man/cat9/howmany.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/htobe16.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/htobe32.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/htobe64.0			comp-sys-catman		.cat
@@ -9330,6 +9331,7 @@
 ./usr/share/man/cat9/postsig.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/powerhook_disestablish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/powerhook_establish.0	comp-sys-catman		.cat
+./usr/share/man/cat9/powerof2.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ppsratecheck.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/preempt.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/printf.0			comp-sys-catman		.cat
@@ -9371,6 +9373,9 @@
 ./usr/share/man/cat9/rnd_add_uint32.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/rnd_attach_source.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/rnd_detach_source.0	comp-sys-catman		.cat
+./usr/share/man/cat9/rounddown.0		comp-sys-catman		.cat
+./usr/share/man/cat9/roundup.0			comp-sys-catman		.cat
+./usr/share/man/cat9/roundup2.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/rssadapt.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/rt_timer.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/rt_timer_add.0		comp-sys-catman		.cat
@@ -14591,6 +14596,7 @@
 ./usr/share/man/html9/hashdone.html		comp-sys-htmlman	html
 ./usr/share/man/html9/hashinit.html		comp-sys-htmlman	html
 ./usr/share/man/html9/holdrele.html		comp-sys-htmlman	html
+./usr/share/man/html9/howmany.html		comp-sys-htmlman	html
 ./usr/share/man/html9/htobe16.html		comp-sys-htmlman	html
 ./usr/share/man/html9/htobe32.html		comp-sys-htmlman	html
 ./usr/share/man/html9/htobe64.html		comp-sys-htmlman	html
@@ -14963,6 +14969,7 @@
 ./usr/share/man/html9/postsig.html		comp-sys-htmlman	html
 ./usr/share/man/html9/powerhook_disestablish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/powerhook_establish.html	comp-sys-htmlman	html
+./usr/share/man/html9/powerof2.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ppsratecheck.html		comp-sys-htmlman	html
 ./usr/share/man/html9/preempt.html		comp-sys-htmlman	html
 ./usr/share/man/html9/printf.html		comp-sys-htmlman	html
@@ -14994,6 +15001,9 @@
 ./usr/share/man/html9/rnd_add_uint32.html	comp-sys-htmlman	html
 ./usr/share/man/html9/rnd_attach_source.html	comp-sys-htmlman	html
 ./usr/share/man/html9/rnd_detach_source.html	comp-sys-htmlman	html
+./usr/share/man/html9/rounddown.html		comp-sys-htmlman	html
+./usr/share/man/html9/roundup.html		comp-sys-htmlman	html
+./usr/share/man/html9/roundup2.html		comp-sys-htmlman	html
 ./usr/share/man/html9/rssadapt.html		comp-sys-htmlman	html
 ./usr/share/man/html9/rt_timer.html		comp-sys-htmlman	html
 ./usr/share/man/html9/rt_timer_add.html		comp-sys-htmlman	html
@@ -20386,6 +20396,7 @@
 ./usr/share/man/man9/hashdone.9			comp-sys-man		.man
 ./usr/share/man/man9/hashinit.9			comp-sys-man		.man
 ./usr/share/man/man9/holdrele.9			comp-sys-man		.man
+./usr/share/man/man9/howmany.9			comp-sys-man		.man
 ./usr/share/man/man9/htobe16.9			comp-sys-man		.man
 ./usr/share/man/man9/htobe32.9			comp-sys-man		.man
 ./usr/share/man/man9/htobe64.9			comp-sys-man		.man
@@ -20765,6 +20776,7 @@
 ./usr/share/man/man9/postsig.9			comp-sys-man		.man
 ./usr/share/man/man9/powerhook_disestablish.9	comp-sys-man		.man
 ./usr/share/man/man9/powerhook_establish.9	comp-sys-man		.man
+./usr/share/man/man9/powerof2.9			comp-sys-man		.man
 ./usr/share/man/man9/ppsratecheck.9		comp-sys-man		.man
 ./usr/share/man/man9/preempt.9			comp-sys-man		.man
 ./usr/share/man/man9/printf.9			comp-sys-man		.man
@@ -20806,6 +20818,9 @@
 ./usr/share/man/man9/rnd_add_uint32.9		comp-sys-man		.man
 ./usr/share/man/man9/rnd_attach_source.9	comp-sys-man		.man
 ./usr/share/man/man9/rnd_detach_source.9	comp-sys-man		.man
+./usr/share/man/man9/rounddown.9		comp-sys-man		.man
+./usr/share/man/man9/roundup.9			comp-sys-man		.man
+./usr/share/man/man9/roundup2.9			comp-sys-man		.man
 ./usr/share/man/man9/rssadapt.9			comp-sys-man		.man
 ./usr/share/man/man9/rt_timer.9			comp-sys-man		.man
 ./usr/share/man/man9/rt_timer_add.9		comp-sys-man		.man
