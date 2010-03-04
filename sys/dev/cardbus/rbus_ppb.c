@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.37 2010/03/04 18:31:57 dyoung Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.38 2010/03/04 18:49:14 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.37 2010/03/04 18:31:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.38 2010/03/04 18:49:14 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.37 2010/03/04 18:31:57 dyoung Exp $")
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/kmem.h>
 
 #if NRND > 0
 #include <sys/rnd.h>
@@ -231,10 +232,11 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 		    struct cardbus_softc *sc,
 		    pci_chipset_tag_t     pc,
 		    struct cardbus_attach_args *caa,
-		    int minbus, int maxbus)
+		    int minbus, const int maxbus)
 {
 	struct rbus_pci_addr_fixup_context rct;
-	int    size, busnum;
+	const size_t size = sizeof(bus_size_t[maxbus+1]);
+	int busnum;
 	bus_addr_t start;
 	bus_space_handle_t handle;
 	u_int32_t reg;
@@ -245,14 +247,13 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 	rct.caa=caa;
 	rct.minbus = minbus;
 	rct.maxbus = maxbus;
-	size = sizeof(bus_size_t)*(maxbus+1);
-	rct.bussize_ioreqs  = alloca(size);
-	rct.bussize_memreqs = alloca(size);
-	rct.iobustags = alloca(maxbus * sizeof(rbus_tag_t));
-	rct.membustags = alloca(maxbus * sizeof(rbus_tag_t));
-
-	memset(rct.bussize_ioreqs, 0, size);
-	memset(rct.bussize_memreqs, 0, size);
+	if ((rct.bussize_ioreqs  = kmem_zalloc(size, KM_SLEEP)) == NULL ||
+	    (rct.bussize_memreqs = kmem_zalloc(size, KM_SLEEP)) == NULL ||
+	    (rct.iobustags =
+	     kmem_zalloc(maxbus * sizeof(rbus_tag_t), KM_SLEEP)) == NULL ||
+	    (rct.membustags =
+	     kmem_zalloc(maxbus * sizeof(rbus_tag_t), KM_SLEEP)) == NULL)
+		panic("%s: memory allocation failed", __func__);
 
 	printf("%s: sizing buses %d-%d\n",
 	       device_xname(rct.csc->sc_dev),
@@ -297,7 +298,7 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 	rct.bussize_memreqs[minbus] =
 	  rbus_round_up(rct.bussize_memreqs[minbus], 8);
 
-	printf("%s: total needs IO %08lx and MEM %08lx\n",
+	printf("%s: total needs IO %08zx and MEM %08zx\n",
 	       device_xname(rct.csc->sc_dev),
 	       rct.bussize_ioreqs[minbus], rct.bussize_memreqs[minbus]);
 
@@ -313,7 +314,7 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 			      /* flags */ 0,
 			      &start,
 			      &handle) != 0) {
-	    panic("rbus_ppb: can not allocate %ld bytes in IO bus %d",
+	    panic("rbus_ppb: can not allocate %zu bytes in IO bus %d",
 		  rct.bussize_ioreqs[minbus], minbus);
 	  }
 	  rct.iobustags[minbus]=rbus_new(caa->ca_rbus_iot,
@@ -332,7 +333,7 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 			      /* flags */ 0,
 			      &start,
 			      &handle) != 0) {
-	    panic("%s: can not allocate %ld bytes in MEM bus %d",
+	    panic("%s: can not allocate %zu bytes in MEM bus %d",
 		  device_xname(rct.csc->sc_dev),
 		  rct.bussize_memreqs[minbus], minbus);
 	  }
@@ -350,7 +351,7 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 
 	  busparent = pci_bus_parent[busnum];
 
-	  printf("%s: bus %d (parent=%d) needs IO %08lx and MEM %08lx\n",
+	  printf("%s: bus %d (parent=%d) needs IO %08zx and MEM %08zx\n",
 		 device_xname(rct.csc->sc_dev),
 		 busnum,
 		 busparent,
@@ -370,7 +371,7 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 				/* flags */ 0,
 				&start,
 				&handle) != 0) {
-	      panic("rbus_ppb: can not allocate %ld bytes in IO bus %d",
+	      panic("rbus_ppb: can not allocate %zu bytes in IO bus %d",
 		    rct.bussize_ioreqs[busnum], busnum);
 	    }
 	    rct.iobustags[busnum]=rbus_new(rct.iobustags[busparent],
@@ -407,7 +408,7 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 				/* flags */ 0,
 				&start,
 				&handle) != 0) {
-	      panic("rbus_ppb: can not allocate %ld bytes in MEM bus %d",
+	      panic("rbus_ppb: can not allocate %zu bytes in MEM bus %d",
 		    rct.bussize_memreqs[busnum], busnum);
 	    }
 	    rct.membustags[busnum]=rbus_new(rct.membustags[busparent],
@@ -453,6 +454,11 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 	       minbus, maxbus);
 	pci_device_foreach_min(pc, minbus, maxbus,
 			       rbus_pci_phys_allocate, &rct);
+
+	kmem_free(rct.bussize_ioreqs, size);
+	kmem_free(rct.bussize_memreqs, size);
+	kmem_free(rct.iobustags, maxbus * sizeof(rbus_tag_t));
+	kmem_free(rct.membustags, maxbus * sizeof(rbus_tag_t));
 }
 
 static void
@@ -624,7 +630,6 @@ ppb_cardbus_attach(device_t parent, device_t self, void *aux)
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 	struct pccbb_softc *psc = (struct pccbb_softc *)cc;
 	struct pcibus_attach_args pba;
 	char devinfo[256];
