@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.152 2009/07/13 19:05:41 roy Exp $	*/
+/*	$NetBSD: util.c,v 1.153 2010/03/04 21:40:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.152 2009/07/13 19:05:41 roy Exp $");
+__RCSID("$NetBSD: util.c,v 1.153 2010/03/04 21:40:53 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -85,6 +85,7 @@ __RCSID("$NetBSD: util.c,v 1.152 2009/07/13 19:05:41 roy Exp $");
 #include <signal.h>
 #include <libgen.h>
 #include <limits.h>
+#include <locale.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -756,7 +757,7 @@ remotemodtime(const char *file, int noisy)
 			else
 				goto cleanup_parse_time;
 		} else {
-			DPRINTF("remotemodtime: parsed date `%s' as " LLF
+			DPRINTF("remotemodtime: parsed time `%s' as " LLF
 			    ", %s",
 			    timestr, (LLT)rtime,
 			    rfc2822time(localtime(&rtime)));
@@ -789,6 +790,32 @@ rfc2822time(const struct tm *tm)
 	    "%a, %d %b %Y %H:%M:%S %z\n", tm) == 0)
 		errx(1, "Can't convert RFC2822 time: buffer too small");
 	return result;
+}
+
+/*
+ * Parse HTTP-date as per RFC 2616.
+ * Return a pointer to the next character of the consumed date string,
+ * or NULL if failed.
+ */
+const char *
+parse_rfc2616time(struct tm *parsed, const char *httpdate)
+{
+	const char *t;
+	const char *curlocale;
+
+	/* The representation of %a depends on the current locale. */
+	curlocale = setlocale(LC_TIME, NULL);
+	(void)setlocale(LC_TIME, "C");
+								/* RFC1123 */
+	if ((t = strptime(httpdate, "%a, %d %b %Y %H:%M:%S GMT", parsed)) ||
+								/* RFC0850 */
+	    (t = strptime(httpdate, "%a, %d-%b-%y %H:%M:%S GMT", parsed)) ||
+								/* asctime */
+	    (t = strptime(httpdate, "%a, %b %d %H:%M:%S %Y", parsed))) {
+		;			/* do nothing */
+	}
+	(void)setlocale(LC_TIME, curlocale);
+	return t;
 }
 
 /*
