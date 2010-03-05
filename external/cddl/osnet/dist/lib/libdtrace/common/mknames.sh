@@ -26,7 +26,11 @@
 #
 #ident	"%Z%%M%	%I%	%E% SMI"
 
-BSDECHO=
+if [[ $(uname) = "Darwin" ]]; then
+    BSDECHO=
+else
+    BSDECHO=-e
+fi
 
 echo ${BSDECHO} "\
 /*\n\
