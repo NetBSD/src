@@ -1,4 +1,4 @@
-/*      $NetBSD: locore.S,v 1.20 2010/03/03 00:30:15 pooka Exp $   */
+/*      $NetBSD: locore.S,v 1.21 2010/03/05 17:55:42 phx Exp $   */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -185,10 +185,8 @@ __start:
 /*
  * Pass boot arguments
  */
-/* XXX eclockfreq not needed for amigappc
 	lis	11,_C_LABEL(eclockfreq)@ha
 	stw	20,_C_LABEL(eclockfreq)@l(11)
-*/
 	mr	3,26			/* boothowto */
 	mr	4,23			/* fphystart */
 	mr	5,24			/* fphysize */
@@ -249,187 +247,6 @@ __start:
 
 loop:
 	b	loop			/* not reached */
-
-
-/*
- * Dump registers to (r3) - for debugging
- */
-	.globl	_C_LABEL(dumpregs)
-_C_LABEL(dumpregs):
-	/* save IBATs */
-	mfspr	0,528
-	stw	0,0(3)
-	mfspr	0,529
-	stw	0,4(3)
-	mfspr	0,530
-	stw	0,8(3)
-	mfspr	0,531
-	stw	0,12(3)
-	mfspr	0,532
-	stw	0,16(3)
-	mfspr	0,533
-	stw	0,20(3)
-	mfspr	0,534
-	stw	0,24(3)
-	mfspr	0,535
-	stw	0,28(3)
-	mfspr	0,536
-
-	/* save DBATs */
-	stw	0,32(3)
-	mfspr	0,537
-	stw	0,36(3)
-	mfspr	0,538
-	stw	0,40(3)
-	mfspr	0,539
-	stw	0,44(3)
-	mfspr	0,540
-	stw	0,48(3)
-	mfspr	0,541
-	stw	0,52(3)
-	mfspr	0,542
-	stw	0,56(3)
-	mfspr	0,543
-	stw	0,60(3)
-
-	/* save SRs */
-	addi	12,3,60
-	li	11,0
-1:	mfsrin	0,11
-	stwu	0,4(12)
-	addis	11,11,0x10000000@h
-	cmpwi	11,0
-	bne	1b
-
-	/* HID0, HID1, TBL, TBU */
-	mfspr	0,1008
-	stw	0,128(3)
-	mfspr	0,1009
-	stw	0,132(3)
-	mfspr	0,268
-	stw	0,136(3)
-	mfspr	0,269
-	stw	0,140(3)
-
-	/* DEC, EAR, SDR1, MSR */
-	mfspr	0,22
-	stw	0,144(3)
-	mfspr	0,282
-	stw	0,148(3)
-	mfspr	0,25
-	stw	0,152(3)
-	mfmsr	0
-	stw	0,156(3)
-
-	blr
-
-	.globl	_C_LABEL(test_int),_C_LABEL(test_int_size)
-_C_LABEL(test_int):
-	mtsprg0 0
-	mtsprg1 3
-	mtsprg2	4
-	mtsprg3	5
-	mflr	4
-	bl	1f
-1:	mflr	5
-	andi.	5,5,0x3f00
-	lis	3,crash_dump@ha
-	addi	3,3,crash_dump@l
-	mtlr	3
-	blr
-	_C_LABEL(test_int_size) = .-_C_LABEL(test_int)
-
-crash_dump:
-	lis	3,0xfff70000@h
-	stw	5,0(3)
-	mfmsr	0
-	stw	0,4(3)
-	mfsrr0	0
-	stw	0,8(3)
-	mfsrr1	0
-	stw	0,0xc(3)
-	mfdar	0
-	stw	0,0x10(3)
-	mfdsisr	0
-	stw	0,0x14(3)
-	mfspr	0,1008
-	stw	0,0x18(3)
-	mfspr	0,1009
-	stw	0,0x1c(3)
-	stw	4,0x20(3)
-	mfcr	0
-	stw	0,0x24(3)
-	mfctr	0
-	stw	0,0x28(3)
-	mfspr	0,22
-	stw	0,0x2c(3)
-	stw	1,0x34(3)
-	stw	2,0x38(3)
-	stmw	6,0x48(3)
-	mfsprg0	0
-	stw	0,0x30(3)
-	mfsprg1	0
-	stw	0,0x3c(3)
-	mfsprg2	0
-	stw	0,0x40(3)
-	mfsprg3	0
-	stw	0,0x44(3)
-	mfspr	0,528
-	stw	0,0xb0(3)
-	mfspr	0,529
-	stw	0,0xb4(3)
-	mfspr	0,530
-	stw	0,0xb8(3)
-	mfspr	0,531
-	stw	0,0xbc(3)
-	mfspr	0,532
-	stw	0,0xc0(3)
-	mfspr	0,533
-	stw	0,0xc4(3)
-	mfspr	0,534
-	stw	0,0xc8(3)
-	mfspr	0,535
-	stw	0,0xcc(3)
-	mfspr	0,536
-	stw	0,0xd0(3)
-	mfspr	0,537
-	stw	0,0xd4(3)
-	mfspr	0,538
-	stw	0,0xd8(3)
-	mfspr	0,539
-	stw	0,0xdc(3)
-	mfspr	0,540
-	stw	0,0xe0(3)
-	mfspr	0,541
-	stw	0,0xe4(3)
-	mfspr	0,542
-	stw	0,0xe8(3)
-	mfspr	0,543
-	stw	0,0xec(3)
-	mfpvr	0
-	stw	0,0xf0(3)
-	mftbu	0
-	stw	0,0xf4(3)
-	mftbl	0
-	stw	0,0xf8(3)
-	mfspr	0,25
-	stw	0,0xfc(3)
-	addi	12,3,0xfc
-	li	11,0
-2:	mfsrin	0,11
-	stwu	0,4(12)
-	addis	11,11,0x10000000@h
-	cmpwi	11,0
-	bne	2b
-	lis	3,0xdff180@ha
-	addi	3,3,0xdff180@l
-3:	li	0,0xf80
-	sth	0,0(3)
-	sync
-	li	0,0x00a
-	sth	0,0(3)
-	sync
-	b	3b
 
 
 /*
