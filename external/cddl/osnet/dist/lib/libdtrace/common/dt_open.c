@@ -143,7 +143,6 @@ static char	curthread_str[MAXPATHLEN];
 static char	intmtx_str[MAXPATHLEN];
 static char	threadmtx_str[MAXPATHLEN];
 static char	rwlock_str[MAXPATHLEN];
-static char	sxlock_str[MAXPATHLEN];
 #endif
 
 /*
@@ -432,17 +431,6 @@ static const dt_ident_t _dtrace_globals[] = {
 	&dt_idops_func, "string(const char *, int, [int])" },
 { "sum", DT_IDENT_AGGFUNC, 0, DTRACEAGG_SUM, DT_ATTR_STABCMN, DT_VERS_1_0,
 	&dt_idops_func, "void(@)" },
-#if !defined(sun)
-{ "sx_isexclusive", DT_IDENT_FUNC, 0, DIF_SUBR_SX_ISEXCLUSIVE,
-	DT_ATTR_EVOLCMN, DT_VERS_1_0,
-	&dt_idops_func, sxlock_str },
-{ "sx_shared_held", DT_IDENT_FUNC, 0, DIF_SUBR_SX_SHARED_HELD,
-	DT_ATTR_EVOLCMN, DT_VERS_1_0,
-	&dt_idops_func, sxlock_str },
-{ "sx_exclusive_held", DT_IDENT_FUNC, 0, DIF_SUBR_SX_EXCLUSIVE_HELD,
-	DT_ATTR_EVOLCMN, DT_VERS_1_0,
-	&dt_idops_func, sxlock_str },
-#endif
 { "sym", DT_IDENT_ACTFUNC, 0, DT_ACT_SYM, DT_ATTR_STABCMN,
 	DT_VERS_1_2, &dt_idops_func, "_symaddr(uintptr_t)" },
 { "system", DT_IDENT_ACTFUNC, 0, DT_ACT_SYSTEM, DT_ATTR_STABCMN, DT_VERS_1_0,
@@ -1251,11 +1239,10 @@ alloc:
 	/*
 	 * Format the global variables based on the kernel module name.
 	 */
-	snprintf(curthread_str, sizeof(curthread_str), "%s`struct thread *",p);
-	snprintf(intmtx_str, sizeof(intmtx_str), "int(%s`struct mtx *)",p);
-	snprintf(threadmtx_str, sizeof(threadmtx_str), "struct thread *(%s`struct mtx *)",p);
+	snprintf(curthread_str, sizeof(curthread_str), "%s`struct lwp *",p);
+	snprintf(intmtx_str, sizeof(intmtx_str), "int(%s`struct kmutex *)",p);
+	snprintf(threadmtx_str, sizeof(threadmtx_str), "struct lwp *(%s`struct kmutex *)",p);
 	snprintf(rwlock_str, sizeof(rwlock_str), "int(%s`struct rwlock *)",p);
-	snprintf(sxlock_str, sizeof(sxlock_str), "int(%s`struct sxlock *)",p);
 	}
 #endif
 
