@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.159 2009/04/15 03:42:33 jld Exp $	*/
+/*	$NetBSD: ftp.c,v 1.160 2010/03/05 07:41:10 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.159 2009/04/15 03:42:33 jld Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.160 2010/03/05 07:41:10 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -805,7 +805,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 			}
 			(void)putc(c, dout);
 			bytes++;
-#if 0	/* this violates RFC0959 */
+#if 0	/* this violates RFC 959 */
 			if (c == '\r') {
 				(void)putc('\0', dout);
 				bytes++;
@@ -1152,7 +1152,7 @@ recvrequest(const char *cmd, const char *volatile local, const char *remote,
 
  abort:
 			/*
-			 * abort using RFC0959 recommended IP,SYNC sequence
+			 * abort using RFC 959 recommended IP,SYNC sequence
 			 */
 	if (! sigsetjmp(xferabort, 1)) {
 			/* this is the first call */
