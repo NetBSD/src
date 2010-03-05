@@ -18,7 +18,7 @@ Q: How can I make racoon interoperate with <IKE/IPsec implementation>?
 
 A:
 	Configure both ends exactly the same.  With just a tiny little
-	differnce, you will be in trouble.
+	difference, you will be in trouble.
 
 Q: How to build racoon on my platform?
 
