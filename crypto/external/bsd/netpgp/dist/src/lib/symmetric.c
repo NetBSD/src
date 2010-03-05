@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: symmetric.c,v 1.9 2009/11/19 21:56:01 agc Exp $");
+__RCSID("$NetBSD: symmetric.c,v 1.10 2010/03/05 16:01:10 agc Exp $");
 #endif
 
 #include "crypto.h"
@@ -83,14 +83,14 @@ __RCSID("$NetBSD: symmetric.c,v 1.9 2009/11/19 21:56:01 agc Exp $");
 
 
 static void 
-std_set_iv(__ops_crypt_t *crypt, const unsigned char *iv)
+std_set_iv(__ops_crypt_t *crypt, const uint8_t *iv)
 {
 	(void) memcpy(crypt->iv, iv, crypt->blocksize);
 	crypt->num = 0;
 }
 
 static void 
-std_set_key(__ops_crypt_t *crypt, const unsigned char *key)
+std_set_key(__ops_crypt_t *crypt, const uint8_t *key)
 {
 	(void) memcpy(crypt->key, key, crypt->keysize);
 }
@@ -520,16 +520,16 @@ size_t
 __ops_decrypt_se(__ops_crypt_t *decrypt, void *outvoid, const void *invoid,
 		size_t count)
 {
-	unsigned char  *out = outvoid;
-	const unsigned char *in = invoid;
-	int             saved = count;
+	const uint8_t	*in = invoid;
+	uint8_t		*out = outvoid;
+	int              saved = count;
 
 	/*
 	 * in order to support v3's weird resyncing we have to implement CFB
 	 * mode ourselves
 	 */
 	while (count-- > 0) {
-		unsigned char   t;
+		uint8_t   t;
 
 		if ((size_t) decrypt->num == decrypt->blocksize) {
 			(void) memcpy(decrypt->siv, decrypt->civ,
@@ -549,9 +549,9 @@ size_t
 __ops_encrypt_se(__ops_crypt_t *encrypt, void *outvoid, const void *invoid,
 	       size_t count)
 {
-	unsigned char  *out = outvoid;
-	const unsigned char *in = invoid;
-	int             saved = count;
+	const uint8_t	*in = invoid;
+	uint8_t		*out = outvoid;
+	int              saved = count;
 
 	/*
 	 * in order to support v3's weird resyncing we have to implement CFB

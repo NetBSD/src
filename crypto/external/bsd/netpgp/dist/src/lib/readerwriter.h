@@ -63,21 +63,19 @@ void __ops_reader_set_memory(__ops_stream_t *, const void *, size_t);
 
 /* Do a sum mod 65536 of all bytes read (as needed for secret keys) */
 void __ops_reader_push_sum16(__ops_stream_t *);
-unsigned short __ops_reader_pop_sum16(__ops_stream_t *);
+uint16_t __ops_reader_pop_sum16(__ops_stream_t *);
 
 void __ops_reader_push_se_ip_data(__ops_stream_t *, __ops_crypt_t *,
 				__ops_region_t *);
 void __ops_reader_pop_se_ip_data(__ops_stream_t *);
 
 /* */
-unsigned __ops_write_mdc(const unsigned char *, __ops_output_t *);
-unsigned __ops_write_se_ip_pktset(const unsigned char *,
-		       const unsigned int,
-		       __ops_crypt_t *,
-		       __ops_output_t *);
+unsigned __ops_write_mdc(__ops_output_t *, const uint8_t *);
+unsigned __ops_write_se_ip_pktset(__ops_output_t *, const uint8_t *,
+		       const unsigned,
+		       __ops_crypt_t *);
 void __ops_push_enc_crypt(__ops_output_t *, __ops_crypt_t *);
-void __ops_push_enc_se_ip(__ops_output_t *,
-			const __ops_key_t *);
+void __ops_push_enc_se_ip(__ops_output_t *, const __ops_key_t *);
 
 /* Secret Key checksum */
 void __ops_push_checksum_writer(__ops_output_t *, __ops_seckey_t *);

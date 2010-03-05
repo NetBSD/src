@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.40 2010/02/23 01:24:44 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.41 2010/03/05 16:01:09 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -120,7 +120,7 @@ conffile(netpgp_t *netpgp, char *homedir, char *userid, size_t length)
 
 /* small function to pretty print an 8-character raw userid */
 static char    *
-userid_to_id(const unsigned char *userid, char *id)
+userid_to_id(const uint8_t *userid, char *id)
 {
 	static const char *hexes = "0123456789abcdef";
 	int		   i;
@@ -161,7 +161,7 @@ resultp(__ops_io_t *io,
 			userid_to_id(res->valid_sigs[i].signer_id, id));
 		from = 0;
 		pubkey = __ops_getkeybyid(io, ring,
-			(const unsigned char *) res->valid_sigs[i].signer_id,
+			(const uint8_t *) res->valid_sigs[i].signer_id,
 			&from);
 		__ops_print_keydata(io, pubkey, "pub", &pubkey->key.pubkey);
 	}
@@ -298,9 +298,9 @@ readsshkeys(netpgp_t *netpgp, char *homedir)
 static void
 set_ssh_userid(__ops_keyring_t *pubring, char *id, size_t len, int last)
 {
-	unsigned char	*src;
-	int		 i;
-	int		 n;
+	uint8_t	*src;
+	int	 i;
+	int	 n;
 
 	(void) memset(id, 0x0, len);
 	src = pubring->keys[(last) ? pubring->keyc - 1 : 0].key_id;
@@ -310,12 +310,36 @@ set_ssh_userid(__ops_keyring_t *pubring, char *id, size_t len, int last)
 	id[n] = 0x0;
 }
 
+/* find the time - in a specific %Y-%m-%d format - using a regexp */
+static int
+grabdate(char *s, int64_t *t)
+{
+	static regex_t	r;
+	static int	compiled;
+	regmatch_t	matches[10];
+	struct tm	tm;
+
+	if (!compiled) {
+		compiled = 1;
+		(void) regcomp(&r, "([0-9][0-9][0-9][0-9])[-/]([0-9][0-9])[-/]([0-9][0-9])", REG_EXTENDED);
+	}
+	if (regexec(&r, s, 10, matches, 0) == 0) {
+		(void) memset(&tm, 0x0, sizeof(tm));
+		tm.tm_year = (int)strtol(&s[(int)matches[1].rm_so], NULL, 10);
+		tm.tm_mon = (int)strtol(&s[(int)matches[2].rm_so], NULL, 10) - 1;
+		tm.tm_mday = (int)strtol(&s[(int)matches[3].rm_so], NULL, 10);
+		*t = mktime(&tm);
+		return 1;
+	}
+	return 0;
+}
+
 /* get expiration in seconds */
 static uint64_t
 get_duration(char *s)
 {
-	struct tm	 tm;
 	uint64_t	 now;
+	int64_t	 	 t;
 	char		*mult;
 
 	if (s == NULL) {
@@ -336,11 +360,8 @@ get_duration(char *s)
 			return now * 60 * 60 * 24 * 365;
 		}
 	}
-	if (strptime(s, "%Y-%m-%d", &tm) != NULL) {
-		return mktime(&tm);
-	}
-	if (strptime(s, "%Y/%m/%d", &tm) != NULL) {
-		return mktime(&tm);
+	if (grabdate(s, &t)) {
+		return t;
 	}
 	return (uint64_t)strtoll(s, NULL, 10);
 }
@@ -349,16 +370,13 @@ get_duration(char *s)
 static int64_t
 get_birthtime(char *s)
 {
-	struct tm	 tm;
+	int64_t	t;
 
 	if (s == NULL) {
 		return time(NULL);
 	}
-	if (strptime(s, "%Y-%m-%d", &tm) != NULL) {
-		return mktime(&tm);
-	}
-	if (strptime(s, "%Y/%m/%d", &tm) != NULL) {
-		return mktime(&tm);
+	if (grabdate(s, &t)) {
+		return t;
 	}
 	return (uint64_t)strtoll(s, NULL, 10);
 }
@@ -536,6 +554,9 @@ netpgp_match_keys(netpgp_t *netpgp, char *name, const char *fmt, void *vp)
 	strings_t		 pubs;
 	FILE			*fp = (FILE *)vp;
 
+	if (name[0] == '0' && name[1] == 'x') {
+		name += 2;
+	}
 	(void) memset(&pubs, 0x0, sizeof(pubs));
 	k = 0;
 	do {
@@ -561,7 +582,8 @@ netpgp_match_keys(netpgp_t *netpgp, char *name, const char *fmt, void *vp)
 	if (strcmp(fmt, "mr") == 0) {
 		(void) fprintf(fp, "info:%d:%d\n", HKP_VERSION, pubs.c);
 	} else {
-		(void) fprintf(fp, "%d keys found\n", pubs.c);
+		(void) fprintf(fp, "%d key%s found\n", pubs.c,
+			(pubs.c == 1) ? "" : "s");
 	}
 	for (k = 0 ; k < pubs.c ; k++) {
 		(void) fprintf(fp, "%s", pubs.v[k]);
@@ -590,7 +612,7 @@ netpgp_match_pubkeys(netpgp_t *netpgp, char *name, void *vp)
 			ALLOC(char *, pubs.v, pubs.size, pubs.c, 10, 10,
 					"netpgp_match_pubkeys", return 0);
 			(void) __ops_sprint_pubkey(key, out, sizeof(out));
-			pubs.v[pubs.c++] = strdup(out);
+			pubs.v[pubs.c++] = netpgp_strdup(out);
 			k += 1;
 		}
 	} while (key != NULL);
@@ -619,44 +641,51 @@ netpgp_find_key(netpgp_t *netpgp, char *id)
 
 /* get a key in a keyring */
 char *
-netpgp_get_key(netpgp_t *netpgp, const char *id)
+netpgp_get_key(netpgp_t *netpgp, const char *name, const char *fmt)
 {
 	const __ops_key_t	*key;
 	__ops_io_t		*io;
 	char			*newkey;
 
 	io = netpgp->io;
-	if (id == NULL) {
-		/* just get the default userid */
-		id = netpgp_getvar(netpgp, "userid");
+	if (name == NULL) {
+		name = netpgp_getvar(netpgp, "userid");
+	} else if (name[0] == '0' && name[1] == 'x') {
+		name += 2;
 	}
-	key = __ops_getkeybyname(netpgp->io, netpgp->pubring, id);
+	key = __ops_getkeybyname(netpgp->io, netpgp->pubring, name);
 	if (key == NULL) {
-		(void) fprintf(io->errs, "Can't find key '%s'\n", id);
+		(void) fprintf(io->errs, "Can't find key '%s'\n", name);
 		return NULL;
+	}
+	if (strcmp(fmt, "mr") == 0) {
+		return (__ops_hkp_sprint_keydata(key, &newkey,
+				&key->key.pubkey) > 0) ? newkey : NULL;
 	}
 	return (__ops_sprint_keydata(key, &newkey, "pub",
 				&key->key.pubkey) > 0) ? newkey : NULL;
 }
 
 /* export a given key */
-int
-netpgp_export_key(netpgp_t *netpgp, char *userid)
+char *
+netpgp_export_key(netpgp_t *netpgp, char *name)
 {
-	const __ops_key_t	*keypair;
+	const __ops_key_t	*key;
 	__ops_io_t		*io;
 
 	io = netpgp->io;
-	if (userid == NULL) {
-		userid = netpgp_getvar(netpgp, "userid");
+	if (name == NULL) {
+		name = netpgp_getvar(netpgp, "userid");
+	} else if (name[0] == '0' && name[1] == 'x') {
+		name += 2;
 	}
-	keypair = __ops_getkeybyname(io, netpgp->pubring, userid);
-	if (keypair == NULL) {
+	key = __ops_getkeybyname(io, netpgp->pubring, name);
+	if (key == NULL) {
 		(void) fprintf(io->errs,
-			"Cannot find own key \"%s\" in keyring\n", userid);
+			"Cannot find own key \"%s\" in keyring\n", name);
 		return 0;
 	}
-	return __ops_export_key(keypair, NULL);
+	return __ops_export_key(io, key, NULL);
 }
 
 /* import a key into our keyring */
@@ -695,8 +724,8 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	(void) memset(&uid, 0x0, sizeof(uid));
 	io = netpgp->io;
 	/* generate a new key for 'id' */
-	uid.userid = (unsigned char *) id;
-	keypair = __ops_rsa_new_selfsign_key(numbits, 65537UL, &uid);
+	uid.userid = (uint8_t *) id;
+	keypair = __ops_rsa_new_selfsign_key(numbits, (uint32_t) 65537, &uid);
 	if (keypair == NULL) {
 		(void) fprintf(io->errs, "Cannot generate key\n");
 		return 0;
@@ -1201,7 +1230,7 @@ netpgp_setvar(netpgp_t *netpgp, const char *name, const char *value)
 	if ((i = findvar(netpgp, name)) < 0) {
 		/* add the element to the array */
 		if (size_arrays(netpgp, netpgp->size + 15)) {
-			netpgp->name[i = netpgp->c++] = strdup(name);
+			netpgp->name[i = netpgp->c++] = netpgp_strdup(name);
 		}
 	} else {
 		/* replace the element in the array */
@@ -1216,7 +1245,7 @@ netpgp_setvar(netpgp_t *netpgp, const char *name, const char *value)
 			return 0;
 		}
 	}
-	netpgp->value[i] = strdup(value);
+	netpgp->value[i] = netpgp_strdup(value);
 	return 1;
 }
 

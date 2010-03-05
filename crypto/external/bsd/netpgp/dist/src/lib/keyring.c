@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.27 2010/02/06 02:24:33 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.28 2010/03/05 16:01:09 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -244,7 +244,7 @@ decrypt_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 
 	case OPS_GET_PASSPHRASE:
 		(void) __ops_getpassphrase(decrypt->passfp, pass, sizeof(pass));
-		*content->skey_passphrase.passphrase = strdup(pass);
+		*content->skey_passphrase.passphrase = netpgp_strdup(pass);
 		__ops_forget(pass, sizeof(pass));
 		return OPS_KEEP_MEMORY;
 
@@ -334,7 +334,7 @@ __ops_set_seckey(__ops_contents_t *cont, const __ops_key_t *key)
 \param key Keydata to get Key ID from
 \return Pointer to Key ID inside keydata
 */
-const unsigned char *
+const uint8_t *
 __ops_get_key_id(const __ops_key_t *key)
 {
 	return key->key_id;
@@ -359,7 +359,7 @@ __ops_get_userid_count(const __ops_key_t *key)
 \param index Which key to get
 \return Pointer to requested user id
 */
-const unsigned char *
+const uint8_t *
 __ops_get_userid(const __ops_key_t *key, unsigned subscript)
 {
 	return key->uids[subscript].userid;
@@ -398,8 +398,9 @@ __ops_is_key_supported(const __ops_key_t *key)
 static __ops_userid_t * 
 __ops_copy_userid(__ops_userid_t *dst, const __ops_userid_t *src)
 {
-	size_t          len = strlen((char *) src->userid);
+	size_t          len;
 
+	len = strlen((char *) src->userid);
 	if (dst->userid) {
 		free(dst->userid);
 	}
@@ -454,6 +455,8 @@ __ops_add_userid(__ops_key_t *key, const __ops_userid_t *userid)
 	return __ops_copy_userid(uidp, userid);
 }
 
+void print_packet_hex(const __ops_subpacket_t *pkt);
+
 /**
 \ingroup Core_Keys
 \brief Add packet to key
@@ -467,7 +470,6 @@ __ops_add_subpacket(__ops_key_t *keydata, const __ops_subpacket_t *packet)
 	__ops_subpacket_t   *subpktp;
 
 	EXPAND_ARRAY(keydata, packet);
-
 	/* initialise new entry in array */
 	subpktp = &keydata->packets[keydata->packetc++];
 	subpktp->length = 0;
@@ -754,7 +756,7 @@ __ops_keyring_free(__ops_keyring_t *keyring)
 
 /* simple function to print out a binary keyid */
 void
-__ops_pkeyid(FILE *fp, const unsigned char *keyid, size_t size)
+__ops_pkeyid(FILE *fp, const uint8_t *keyid, size_t size)
 {
 	size_t	i;
 
@@ -779,7 +781,7 @@ __ops_pkeyid(FILE *fp, const unsigned char *keyid, size_t size)
 */
 const __ops_key_t *
 __ops_getkeybyid(__ops_io_t *io, const __ops_keyring_t *keyring,
-			   const unsigned char *keyid, unsigned *from)
+			   const uint8_t *keyid, unsigned *from)
 {
 	for ( ; keyring && *from < keyring->keyc; *from += 1) {
 		if (__ops_get_debug_level(__FILE__)) {
@@ -805,15 +807,15 @@ __ops_getkeybyid(__ops_io_t *io, const __ops_keyring_t *keyring,
 
 /* convert a string keyid into a binary keyid */
 static void
-str2keyid(const char *userid, unsigned char *keyid, size_t len)
+str2keyid(const char *userid, uint8_t *keyid, size_t len)
 {
 	static const char	*uppers = "0123456789ABCDEF";
 	static const char	*lowers = "0123456789abcdef";
-	unsigned char		 hichar;
-	unsigned char		 lochar;
-	size_t			 j;
 	const char		*hi;
 	const char		*lo;
+	uint8_t			 hichar;
+	uint8_t			 lochar;
+	size_t			 j;
 	int			 i;
 
 	for (i = j = 0 ; j < len && userid[i] && userid[i + 1] ; i += 2, j++) {
@@ -846,12 +848,12 @@ getkeybyname(__ops_io_t *io,
 			unsigned *from)
 {
 	const __ops_key_t	*kp;
-	__ops_key_t		*keyp;
 	__ops_userid_t		*uidp;
-	unsigned char		 keyid[OPS_KEY_ID_SIZE + 1];
-	unsigned int    	 i = 0;
+	unsigned    	 i = 0;
+	__ops_key_t		*keyp;
 	unsigned		 savedstart;
 	regex_t			 r;
+	uint8_t		 	 keyid[OPS_KEY_ID_SIZE + 1];
 	size_t          	 len;
 
 	if (!keyring) {
@@ -966,11 +968,12 @@ __ops_keyring_list(__ops_io_t *io, const __ops_keyring_t *keyring)
 }
 
 /* this interface isn't right - hook into callback for getting passphrase */
-int
-__ops_export_key(const __ops_key_t *keydata, unsigned char *passphrase)
+char *
+__ops_export_key(__ops_io_t *io, const __ops_key_t *keydata, uint8_t *passphrase)
 {
 	__ops_output_t	*output;
-	__ops_memory_t		*mem;
+	__ops_memory_t	*mem;
+	char		*cp;
 
 	__ops_setup_memory_write(&output, &mem, 128);
 	if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) {
@@ -979,9 +982,9 @@ __ops_export_key(const __ops_key_t *keydata, unsigned char *passphrase)
 		__ops_write_xfer_seckey(output, keydata, passphrase,
 					strlen((char *)passphrase), 1);
 	}
-	printf("%s", (char *) __ops_mem_data(mem));
+	cp = netpgp_strdup(__ops_mem_data(mem));
 	__ops_teardown_memory_write(output, mem);
-	return 1;
+	return cp;
 }
 
 /* add a key to a public keyring */

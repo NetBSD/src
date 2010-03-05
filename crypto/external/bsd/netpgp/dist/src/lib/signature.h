@@ -70,21 +70,21 @@ unsigned __ops_check_useridcert_sig(const __ops_pubkey_t *,
 			  const __ops_userid_t *,
 			  const __ops_sig_t *,
 			  const __ops_pubkey_t *,
-			  const unsigned char *);
+			  const uint8_t *);
 unsigned __ops_check_userattrcert_sig(const __ops_pubkey_t *,
 			  const __ops_userattr_t *,
 			  const __ops_sig_t *,
 			  const __ops_pubkey_t *,
-			  const unsigned char *);
+			  const uint8_t *);
 unsigned __ops_check_subkey_sig(const __ops_pubkey_t *,
 			   const __ops_pubkey_t *,
 			   const __ops_sig_t *,
 			   const __ops_pubkey_t *,
-			   const unsigned char *);
+			   const uint8_t *);
 unsigned __ops_check_direct_sig(const __ops_pubkey_t *,
 			   const __ops_sig_t *,
 			   const __ops_pubkey_t *,
-			   const unsigned char *);
+			   const uint8_t *);
 unsigned __ops_check_hash_sig(__ops_hash_t *,
 			 const __ops_sig_t *,
 			 const __ops_pubkey_t *);
@@ -105,7 +105,7 @@ unsigned __ops_write_sig(__ops_output_t *, __ops_create_sig_t *,
 unsigned   __ops_add_birthtime(__ops_create_sig_t *, time_t);
 unsigned __ops_add_expiration(__ops_create_sig_t *, time_t);
 unsigned __ops_add_issuer_keyid(__ops_create_sig_t *,
-			const unsigned char *);
+			const uint8_t *);
 void __ops_add_primary_userid(__ops_create_sig_t *, unsigned);
 
 /* Standard Interface */
@@ -129,7 +129,7 @@ int __ops_sign_detached(__ops_io_t *,
 			const uint64_t);
 
 /* armoured stuff */
-unsigned __ops_crc24(unsigned, unsigned char);
+unsigned __ops_crc24(unsigned, uint8_t);
 
 void __ops_reader_push_dearmour(__ops_stream_t *);
 

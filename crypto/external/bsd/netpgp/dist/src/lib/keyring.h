@@ -72,7 +72,7 @@ typedef struct __ops_keyring_t {
 
 const __ops_key_t *__ops_getkeybyid(__ops_io_t *,
 					const __ops_keyring_t *,
-					const unsigned char *,
+					const uint8_t *,
 					unsigned *);
 const __ops_key_t *__ops_getkeybyname(__ops_io_t *,
 					const __ops_keyring_t *,
@@ -98,9 +98,9 @@ int __ops_keyring_list(__ops_io_t *, const __ops_keyring_t *);
 void __ops_set_seckey(__ops_contents_t *, const __ops_key_t *);
 void __ops_forget(void *, unsigned);
 
-const unsigned char *__ops_get_key_id(const __ops_key_t *);
+const uint8_t *__ops_get_key_id(const __ops_key_t *);
 unsigned __ops_get_userid_count(const __ops_key_t *);
-const unsigned char *__ops_get_userid(const __ops_key_t *, unsigned);
+const uint8_t *__ops_get_userid(const __ops_key_t *, unsigned);
 unsigned __ops_is_key_supported(const __ops_key_t *);
 
 __ops_userid_t *__ops_add_userid(__ops_key_t *, const __ops_userid_t *);
@@ -117,7 +117,7 @@ void __ops_keydata_init(__ops_key_t *, const __ops_content_tag_t);
 
 int __ops_parse_and_accumulate(__ops_keyring_t *, __ops_stream_t *);
 
-void __ops_pkeyid(FILE *, const unsigned char *, size_t);
+void __ops_pkeyid(FILE *, const uint8_t *, size_t);
 
 int __ops_sprint_keydata(const __ops_key_t *, char **, const char *,
 			const __ops_pubkey_t *);
@@ -136,7 +136,7 @@ int __ops_list_packets(__ops_io_t *,
 			void *,
 			__ops_cbfunc_t *);
 
-int __ops_export_key(const __ops_key_t *, unsigned char *);
+char *__ops_export_key(__ops_io_t *, const __ops_key_t *, uint8_t *);
 
 int __ops_add_to_pubring(__ops_keyring_t *, const __ops_pubkey_t *);
 int __ops_add_to_secring(__ops_keyring_t *, const __ops_seckey_t *);
