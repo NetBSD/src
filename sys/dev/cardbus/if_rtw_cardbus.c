@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.39 2010/03/04 22:33:12 dyoung Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.40 2010/03/05 00:54:01 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.39 2010/03/04 22:33:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.40 2010/03/05 00:54:01 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -120,8 +120,7 @@ struct rtw_cardbus_softc {
 						 * region
 						 */
 
-	int			sc_bar_reg;	/* which BAR to use */
-	pcireg_t		sc_bar_val;	/* value of the BAR */
+	int			sc_bar;	/* which BAR to use */
 
 	cardbus_intr_line_t	sc_intrline;	/* interrupt line */
 };
@@ -241,16 +240,14 @@ rtw_cardbus_attach(device_t parent, device_t self, void *aux)
 		    ("%s: %s mapped %" PRIuMAX " bytes mem space\n",
 		     device_xname(self), __func__, (uintmax_t)regs->r_sz));
 		csc->sc_csr |= PCI_COMMAND_MEM_ENABLE;
-		csc->sc_bar_reg = RTW_PCI_MMBA;
-		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_MEM;
+		csc->sc_bar = RTW_PCI_MMBA;
 	} else if (Cardbus_mapreg_map(ct, RTW_PCI_IOBA, PCI_MAPREG_TYPE_IO,
 	    0, &regs->r_bt, &regs->r_bh, &adr, &regs->r_sz) == 0) {
 		RTW_DPRINTF(RTW_DEBUG_ATTACH,
 		    ("%s: %s mapped %" PRIuMAX " bytes I/O space\n",
 		     device_xname(self), __func__, (uintmax_t)regs->r_sz));
 		csc->sc_csr |= PCI_COMMAND_IO_ENABLE;
-		csc->sc_bar_reg = RTW_PCI_IOBA;
-		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_IO;
+		csc->sc_bar = RTW_PCI_IOBA;
 	} else {
 		aprint_error_dev(self, "unable to map device registers\n");
 		return;
@@ -312,8 +309,8 @@ rtw_cardbus_detach(device_t self, int flags)
 	/*
 	 * Release bus space and close window.
 	 */
-	if (csc->sc_bar_reg != 0)
-		Cardbus_mapreg_unmap(ct, csc->sc_bar_reg,
+	if (csc->sc_bar != 0)
+		Cardbus_mapreg_unmap(ct, csc->sc_bar,
 		    regs->r_bt, regs->r_bh, regs->r_sz);
 
 	return 0;
@@ -385,9 +382,6 @@ rtw_cardbus_setup(struct rtw_cardbus_softc *csc)
 		bhlc |= (lattimer << PCI_LATTIMER_SHIFT);
 		Cardbus_conf_write(ct, tag, PCI_BHLC_REG, bhlc);
 	}
-
-	/* Program the BAR. */
-	Cardbus_conf_write(ct, tag, csc->sc_bar_reg, csc->sc_bar_val);
 
 	/* Enable the appropriate bits in the PCI CSR. */
 	csr = Cardbus_conf_read(ct, tag, PCI_COMMAND_STATUS_REG);
