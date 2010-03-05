@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ssio.c,v 1.1 2009/05/28 08:41:29 skrll Exp $	*/
+/*	$NetBSD: com_ssio.c,v 1.2 2010/03/05 18:41:29 skrll Exp $	*/
 
 /*	$OpenBSD: com_ssio.c,v 1.2 2007/06/24 16:28:39 kettenis Exp $	*/
 
@@ -85,9 +85,10 @@ com_ssio_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+        /* Test if this is the console. */
 	pagezero_cookie = hp700_pagezero_map();
 	if (PAGE0->mem_cons.pz_class == PCL_DUPLEX &&
-	    PAGE0->mem_cons.pz_hpa == (struct iomod *)iobase) {
+	    PAGE0->mem_cons.pz_hpa == (struct iomod *)ioh) {
 		bus_space_unmap(iot, ioh, COM_NPORTS);
 		if (comcnattach(iot, iobase, B9600, COM_SSIO_FREQ,
 		    COM_TYPE_NORMAL, 
