@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.126 2010/03/01 21:10:14 darran Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.127 2010/03/05 23:06:49 njoly Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -123,7 +123,7 @@ COPTS.debugsyms.c+=	-g
 # Add CTF sections for DTrace
 .if defined(CTFCONVERT)
 COMPILE_CTFCONVERT=	${_MKSHECHO}\
-			${CTFCONVERT} ${CTFFLAGS} ${.TARGET}; \
+			${CTFCONVERT} ${CTFFLAGS} ${.TARGET} && \
 			${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
 .else
 COMPILE_CTFCONVERT=	${_MKSHECHO}
@@ -131,19 +131,19 @@ COMPILE_CTFCONVERT=	${_MKSHECHO}
 
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # NOPROF and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
-NORMAL_C?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}"; \
+NORMAL_C?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
 		${_MKSHECHO}\
-		${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<; \
-		${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<; \
+		${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $< && \
+		${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $< && \
 		${COMPILE_CTFCONVERT}
-NOPROF_C?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}"; \
+NOPROF_C?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
 		${_MKSHECHO}\
-		${CC} ${CFLAGS} ${CPPFLAGS} -c $<; \
-		${CC} ${CFLAGS} ${CPPFLAGS} -c $<; \
+		${CC} ${CFLAGS} ${CPPFLAGS} -c $< && \
+		${CC} ${CFLAGS} ${CPPFLAGS} -c $< && \
 		${COMPILE_CTFCONVERT}
-NORMAL_S?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}"; \
+NORMAL_S?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
 		${_MKSHECHO}\
-		${CC} ${AFLAGS} ${CPPFLAGS} -c $<; \
+		${CC} ${AFLAGS} ${CPPFLAGS} -c $< && \
 		${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 
 ##
