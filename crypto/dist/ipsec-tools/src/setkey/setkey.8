@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.20 2006/10/06 12:02:27 manu Exp $
+.\"	$NetBSD: setkey.8,v 1.20.6.1 2010/03/05 06:51:26 tteras Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -677,7 +677,7 @@ When using ESP over UDP, you can specify port numbers in the endpoint
 addresses to get the correct matching.
 Here is an example:
 .Bd -literal -offset
-spdadd 10.0.11.0/24[any] 10.0.11.33/32[any] any -P out ipsec
+spdadd 10.0.11.0/24[any] 10.0.11.33/32[any] any \-P out ipsec
     esp/tunnel/192.168.0.1[4500]-192.168.1.2[30000]/require ;
 
 .Ed
@@ -813,14 +813,14 @@ The command exits with 0 on success, and non-zero on errors.
 .Sh EXAMPLES
 .Bd -literal -offset
 add 3ffe:501:4819::1 3ffe:501:481d::1 esp 123457
-	-E des-cbc 0x3ffe05014819ffff ;
+	\-E des-cbc 0x3ffe05014819ffff ;
 
-add -6 myhost.example.com yourhost.example.com ah 123456
-	-A hmac-sha1 "AH SA configuration!" ;
+add \-6 myhost.example.com yourhost.example.com ah 123456
+	\-A hmac-sha1 "AH SA configuration!" ;
 
 add 10.0.11.41 10.0.11.33 esp 0x10001
-	-E des-cbc 0x3ffe05014819ffff
-	-A hmac-md5 "authentication!!" ;
+	\-E des-cbc 0x3ffe05014819ffff
+	\-A hmac-md5 "authentication!!" ;
 
 get 3ffe:501:4819::1 3ffe:501:481d::1 ah 123456 ;
 
@@ -829,17 +829,17 @@ flush ;
 dump esp ;
 
 spdadd 10.0.11.41/32[21] 10.0.11.33/32[any] any
-	-P out ipsec esp/tunnel/192.168.0.1-192.168.1.2/require ;
+	\-P out ipsec esp/tunnel/192.168.0.1-192.168.1.2/require ;
 
-add 10.1.10.34 10.1.10.36 tcp 0x1000 -A tcp-md5 "TCP-MD5 BGP secret" ;
+add 10.1.10.34 10.1.10.36 tcp 0x1000 \-A tcp-md5 "TCP-MD5 BGP secret" ;
 
 add 10.0.11.41 10.0.11.33 esp 0x10001
-	-ctx 1 1 "system_u:system_r:unconfined_t:SystemLow-SystemHigh"
-	-E des-cbc 0x3ffe05014819ffff;
+	\-ctx 1 1 "system_u:system_r:unconfined_t:SystemLow-SystemHigh"
+	\-E des-cbc 0x3ffe05014819ffff;
 
 spdadd 10.0.11.41 10.0.11.33 any
-	-ctx 1 1 "system_u:system_r:unconfined_t:SystemLow-SystemHigh"
-	-P out ipsec esp/transport//require ;
+	\-ctx 1 1 "system_u:system_r:unconfined_t:SystemLow-SystemHigh"
+	\-P out ipsec esp/transport//require ;
 .Ed
 .\"
 .Sh SEE ALSO
