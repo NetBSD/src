@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.2 2009/12/04 10:42:39 njoly Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.3 2010/03/05 14:00:17 jruoho Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -33,18 +33,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.2 2009/12/04 10:42:39 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.3 2010/03/05 14:00:17 jruoho Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
-
-#include <sys/bus.h>
 #include <sys/kmem.h>
-#include <dev/pci/pcivar.h>
+#include <sys/queue.h>
+#include <sys/systm.h>
 
-#include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_pci.h>

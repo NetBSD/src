@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.37 2010/03/02 18:44:47 jruoho Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.38 2010/03/05 14:00:17 jruoho Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,32 +31,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.37 2010/03/02 18:44:47 jruoho Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.38 2010/03/05 14:00:17 jruoho Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/callout.h>
 #include <sys/device.h>
-#include <sys/buf.h>
-#include <sys/bufq.h>
-#include <sys/queue.h>
 #include <sys/disk.h>
+#include <sys/systm.h>
+
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
 
-#include <sys/bus.h>
-#include <sys/intr.h>
-
-#include <dev/isa/isavar.h>
-#include <dev/isa/isadmavar.h>
-
-#include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
+#include <dev/isa/isadmavar.h>
 #include <dev/isa/fdcvar.h>
 #include <dev/isa/fdvar.h>
 #include <dev/isa/fdreg.h>

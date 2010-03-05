@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.83 2010/02/28 17:22:41 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.84 2010/03/05 14:00:16 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,19 +75,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.83 2010/02/28 17:22:41 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.84 2010/03/05 14:00:16 jruoho Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>		/* for hz */
-#include <sys/kmem.h>
+#include <sys/condvar.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
+#include <sys/systm.h>
 
-#include <dev/sysmon/sysmonvar.h>
-
-#include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 

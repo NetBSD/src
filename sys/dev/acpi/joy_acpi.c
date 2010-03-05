@@ -1,4 +1,4 @@
-/* $NetBSD: joy_acpi.c,v 1.9 2009/02/17 12:46:01 jmcneill Exp $ */
+/* $NetBSD: joy_acpi.c,v 1.10 2010/03/05 14:00:17 jruoho Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,19 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_acpi.c,v 1.9 2009/02/17 12:46:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_acpi.c,v 1.10 2010/03/05 14:00:17 jruoho Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
 #include <sys/device.h>
-#include <sys/proc.h>
+#include <sys/systm.h>
 
-#include <sys/bus.h>
-
-#include <dev/acpi/acpica.h>
-#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
 #include <dev/ic/joyvar.h>
