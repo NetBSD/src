@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.28 2010/03/05 16:01:09 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.29 2010/03/05 16:30:05 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -975,6 +975,7 @@ __ops_export_key(__ops_io_t *io, const __ops_key_t *keydata, uint8_t *passphrase
 	__ops_memory_t	*mem;
 	char		*cp;
 
+	__OPS_USED(io);
 	__ops_setup_memory_write(&output, &mem, 128);
 	if (keydata->type == OPS_PTAG_CT_PUBLIC_KEY) {
 		__ops_write_xfer_pubkey(output, keydata, 1);
