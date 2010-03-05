@@ -15,7 +15,6 @@ separate from libcrypto?
 thresholds
 default compression when signing?
 elgamal enc/decryption?
-hkpd
 
 Done
 ====
@@ -89,3 +88,6 @@ unarmoured static in packet-print.c and skipping in crypto.c
 duration -> expiry
 print signing key info properly when prompting for passphrase
 print decryption key info properly when prompting for passphrase
+hkpd
+hkpclient
+netbsd/pkgsrc pr 42922

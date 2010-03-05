@@ -74,8 +74,8 @@ int netpgp_set_homedir(netpgp_t *, char *, const char *, const int);
 /* key management */
 int netpgp_list_keys(netpgp_t *);
 int netpgp_find_key(netpgp_t *, char *);
-char *netpgp_get_key(netpgp_t *, const char *);
-int netpgp_export_key(netpgp_t *, char *);
+char *netpgp_get_key(netpgp_t *, const char *, const char *);
+char *netpgp_export_key(netpgp_t *, char *);
 int netpgp_import_key(netpgp_t *, char *);
 int netpgp_generate_key(netpgp_t *, char *, int);
 

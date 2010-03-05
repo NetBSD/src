@@ -75,8 +75,8 @@ typedef struct __ops_printstate_t {
 
 typedef struct {
 	size_t          len;
-	unsigned char  *contents;
-	unsigned char	mmapped;	/* contents need an munmap(2) */
+	uint8_t		*contents;
+	uint8_t		mmapped;	/* contents need an munmap(2) */
 } __ops_data_t;
 
 /************************************/
@@ -420,13 +420,12 @@ typedef enum {
 typedef struct {
 	__ops_version_t		version;/* version of the key (v3, v4...) */
 	time_t			birthtime;
-		/* when the key was created.  Note that
-		 * interpretation varies with key version.  */
-	unsigned		days_valid;
+	time_t			duration;
 		/* validity period of the key in days since
 		* creation.  A value of 0 has a special meaning
 		* indicating this key does not expire.  Only used with
 		* v3 keys.  */
+	unsigned		days_valid;	/* v4 duration */
 	__ops_pubkey_alg_t	alg;	/* Public Key Algorithm type */
 	__ops_pubkey_union_t	key;	/* Public Key Parameters */
 } __ops_pubkey_t;
@@ -507,11 +506,13 @@ typedef enum {
 	OPS_HASH_SHA224 = 11	/* SHA224 */
 } __ops_hash_alg_t;
 
-void   __ops_calc_mdc_hash(const unsigned char *,
+#define	OPS_DEFAULT_HASH_ALGORITHM	OPS_HASH_SHA256
+
+void   __ops_calc_mdc_hash(const uint8_t *,
 			const size_t,
-			const unsigned char *,
-			const unsigned int,
-			unsigned char *);
+			const uint8_t *,
+			const unsigned,
+			uint8_t *);
 unsigned   __ops_is_hash_alg_supported(const __ops_hash_alg_t *);
 
 /* Maximum block size for symmetric crypto */
@@ -534,12 +535,12 @@ typedef struct {
 	__ops_s2k_specifier_t		s2k_specifier;
 	__ops_symm_alg_t		alg;
 	__ops_hash_alg_t		hash_alg;
-	unsigned char			salt[OPS_SALT_SIZE];
+	uint8_t				salt[OPS_SALT_SIZE];
 	unsigned			octetc;
-	unsigned char			iv[OPS_MAX_BLOCK_SIZE];
+	uint8_t				iv[OPS_MAX_BLOCK_SIZE];
 	__ops_seckey_union_t		key;
 	unsigned			checksum;
-	unsigned char		       *checkhash;
+	uint8_t			       *checkhash;
 } __ops_seckey_t;
 
 /** Structure to hold one trust packet's data */
@@ -550,7 +551,7 @@ typedef struct {
 
 /** Structure to hold one user id */
 typedef struct {
-	unsigned char  *userid;/* User ID - UTF-8 string */
+	uint8_t		*userid;/* User ID - UTF-8 string */
 } __ops_userid_t;
 
 /** Structure to hold one user attribute */
@@ -641,28 +642,25 @@ typedef struct {
 	__ops_sig_type_t  type;	/* signature type value */
 	time_t          birthtime;	/* creation time of the signature */
 	time_t          duration;	/* number of seconds it's valid for */
-	unsigned char   signer_id[OPS_KEY_ID_SIZE];	/* Eight-octet key ID
+	uint8_t		signer_id[OPS_KEY_ID_SIZE];	/* Eight-octet key ID
 							 * of signer */
 	__ops_pubkey_alg_t key_alg;	/* public key algorithm number */
 	__ops_hash_alg_t hash_alg;	/* hashing algorithm number */
 	__ops_sig_union_t sig;	/* signature params */
 	size_t          v4_hashlen;
-	unsigned char  *v4_hashed;
-	unsigned   birthtime_set:1;
-	unsigned   signer_id_set:1;
-	unsigned   duration_set:1;
+	uint8_t		*v4_hashed;
+	unsigned	 birthtime_set:1;
+	unsigned	 signer_id_set:1;
+	unsigned	 duration_set:1;
 } __ops_sig_info_t;
 
 /** Struct used when parsing a signature */
 typedef struct __ops_sig_t {
 	__ops_sig_info_t info;	/* The signature information */
 	/* The following fields are only used while parsing the signature */
-	unsigned char   hash2[2];	/* high 2 bytes of hashed value -
-					 * for quick test */
-	size_t          v4_hashstart;	/* only valid if accumulate
-						 * is set */
-	__ops_hash_t     *hash;	/* if set, the hash filled in for the data
-				 * so far */
+	uint8_t		 hash2[2];	/* high 2 bytes of hashed value */
+	size_t		 v4_hashstart;	/* only valid if accumulate is set */
+	__ops_hash_t     *hash;	/* the hash filled in for the data so far */
 } __ops_sig_t;
 
 /** The raw bytes of a signature subpacket */
@@ -670,14 +668,14 @@ typedef struct __ops_sig_t {
 typedef struct {
 	__ops_content_tag_t	 tag;
 	size_t          	 length;
-	unsigned char		*raw;
+	uint8_t			*raw;
 } __ops_ss_raw_t;
 
 /** Signature Subpacket : Trust Level */
 
 typedef struct {
-	unsigned char		level;	/* Trust Level */
-	unsigned char		amount;	/* Amount */
+	uint8_t		level;	/* Trust Level */
+	uint8_t		amount;	/* Amount */
 } __ops_ss_trust_t;
 
 /** Signature Subpacket : Revocable */
@@ -692,7 +690,7 @@ typedef struct {
 
 /** Signature Subpacket : Key ID */
 typedef struct {
-	unsigned char		key_id[OPS_KEY_ID_SIZE];
+	uint8_t		key_id[OPS_KEY_ID_SIZE];
 } __ops_ss_key_id_t;
 
 /** Signature Subpacket : Notation Data */
@@ -762,7 +760,7 @@ typedef struct {
 
 typedef struct __ops_subpacket_t {
 	size_t          length;
-	unsigned char  *raw;
+	uint8_t		*raw;
 } __ops_subpacket_t;
 
 /** Types of Compression */
@@ -784,11 +782,11 @@ typedef struct {
 
 /** __ops_one_pass_sig_t */
 typedef struct {
-	unsigned char		version;
+	uint8_t			version;
 	__ops_sig_type_t	sig_type;
 	__ops_hash_alg_t	hash_alg;
 	__ops_pubkey_alg_t	key_alg;
-	unsigned char		keyid[OPS_KEY_ID_SIZE];
+	uint8_t			keyid[OPS_KEY_ID_SIZE];
 	unsigned		nested;
 } __ops_one_pass_sig_t;
 
@@ -814,14 +812,14 @@ typedef struct {
 
 /** Signature Subpacket : Revocation Key */
 typedef struct {
-	unsigned char   class;
-	unsigned char   algid;
-	unsigned char   fingerprint[OPS_FINGERPRINT_SIZE];
+	uint8_t   class;
+	uint8_t   algid;
+	uint8_t   fingerprint[OPS_FINGERPRINT_SIZE];
 } __ops_ss_revocation_key_t;
 
 /** Signature Subpacket : Revocation Reason */
 typedef struct {
-	unsigned char   code;
+	uint8_t   code;
 	char           *reason;
 } __ops_ss_revocation_t;
 
@@ -844,14 +842,14 @@ typedef struct {
 /** __ops_litdata_body_t */
 typedef struct {
 	unsigned         length;
-	unsigned char   *data;
+	uint8_t		*data;
 	void		*mem;		/* __ops_memory_t pointer */
 } __ops_litdata_body_t;
 
 /** __ops_mdc_t */
 typedef struct {
 	unsigned	 length;
-	unsigned char   *data;
+	uint8_t		*data;
 } __ops_mdc_t;
 
 /** __ops_header_var_t */
@@ -885,7 +883,7 @@ typedef struct {
 /** __ops_cleartext_body_t */
 typedef struct {
 	unsigned        length;
-	unsigned char   data[8192];	/* \todo fix hard-coded value? */
+	uint8_t		data[8192];	/* \todo fix hard-coded value? */
 } __ops_cleartext_body_t;
 
 /** __ops_cleartext_trailer_t */
@@ -899,7 +897,7 @@ typedef struct {
 /** __ops_unarmoured_text_t */
 typedef struct {
 	unsigned        length;
-	unsigned char  *data;
+	uint8_t		*data;
 } __ops_unarmoured_text_t;
 
 typedef enum {
@@ -930,13 +928,13 @@ typedef union {
 
 /** __ops_pk_sesskey_t */
 typedef struct {
-	__ops_pk_sesskey_version_t version;
-	unsigned char   key_id[OPS_KEY_ID_SIZE];
-	__ops_pubkey_alg_t alg;
-	__ops_pk_sesskey_params_t params;
-	__ops_symm_alg_t symm_alg;
-	unsigned char   key[OPS_MAX_KEY_SIZE];
-	unsigned short  checksum;
+	__ops_pk_sesskey_version_t	version;
+	uint8_t				key_id[OPS_KEY_ID_SIZE];
+	__ops_pubkey_alg_t		alg;
+	__ops_pk_sesskey_params_t	params;
+	__ops_symm_alg_t		symm_alg;
+	uint8_t				key[OPS_MAX_KEY_SIZE];
+	uint16_t			checksum;
 } __ops_pk_sesskey_t;
 
 /** __ops_seckey_passphrase_t */
@@ -958,14 +956,14 @@ typedef struct {
 
 /** __ops_se_ip_data_body_t */
 typedef struct {
-	unsigned        length;
-	unsigned char  *data;	/* \todo remember to free this */
+	unsigned         length;
+	uint8_t		*data;	/* \todo remember to free this */
 } __ops_se_ip_data_body_t;
 
 /** __ops_se_data_body_t */
 typedef struct {
-	unsigned        length;
-	unsigned char   data[8192];	/* \todo parameterise this! */
+	unsigned	length;
+	uint8_t		data[8192];	/* \todo parameterise this! */
 } __ops_se_data_body_t;
 
 /** __ops_get_seckey_t */
@@ -1031,19 +1029,19 @@ typedef union {
 /** __ops_packet_t */
 struct __ops_packet_t {
 	__ops_content_tag_t	tag;		/* type of contents */
-	unsigned char		critical;	/* for sig subpackets */
+	uint8_t			critical;	/* for sig subpackets */
 	__ops_contents_t	u;		/* union for contents */
 };
 
 /** __ops_fingerprint_t */
 typedef struct {
-	unsigned char   fingerprint[OPS_FINGERPRINT_SIZE];
+	uint8_t		fingerprint[OPS_FINGERPRINT_SIZE];
 	unsigned        length;
 } __ops_fingerprint_t;
 
 void __ops_init(void);
 void __ops_finish(void);
-void __ops_keyid(unsigned char *, const size_t, const __ops_pubkey_t *);
+void __ops_keyid(uint8_t *, const size_t, const __ops_pubkey_t *);
 void __ops_fingerprint(__ops_fingerprint_t *, const __ops_pubkey_t *);
 void __ops_pubkey_free(__ops_pubkey_t *);
 void __ops_userid_free(__ops_userid_t *);
@@ -1110,7 +1108,7 @@ struct __ops_key_t {
 	DYNARRAY(__ops_userid_t, uid);
 	DYNARRAY(__ops_subpacket_t, packet);
 	DYNARRAY(sigpacket_t, sig);
-	unsigned char		key_id[OPS_KEY_ID_SIZE];
+	uint8_t			key_id[OPS_KEY_ID_SIZE];
 	__ops_fingerprint_t	fingerprint;
 	__ops_content_tag_t	type;
 	__ops_keydata_key_t	key;
