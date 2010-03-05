@@ -147,23 +147,23 @@ typedef enum {
 void __ops_parse_options(__ops_stream_t *, __ops_content_tag_t,
 			__ops_parse_type_t);
 
-unsigned __ops_limited_read(unsigned char *, size_t, __ops_region_t *,
+unsigned __ops_limited_read(uint8_t *, size_t, __ops_region_t *,
 			__ops_error_t **, __ops_reader_t *,
 			__ops_cbdata_t *);
-unsigned __ops_stacked_limited_read(unsigned char *, unsigned,
+unsigned __ops_stacked_limited_read(uint8_t *, unsigned,
 			__ops_region_t *, __ops_error_t **,
 			__ops_reader_t *, __ops_cbdata_t *);
 void __ops_parse_hash_init(__ops_stream_t *, __ops_hash_alg_t,
-			const unsigned char *);
+			const uint8_t *);
 void __ops_parse_hash_data(__ops_stream_t *, const void *, size_t);
 void __ops_parse_hash_finish(__ops_stream_t *);
-__ops_hash_t *__ops_parse_hash_find(__ops_stream_t *, const unsigned char *);
+__ops_hash_t *__ops_parse_hash_find(__ops_stream_t *, const uint8_t *);
 
 __ops_reader_func_t    __ops_stacked_read;
 
 int __ops_decompress(__ops_region_t *, __ops_stream_t *,
 			__ops_compression_type_t);
-unsigned __ops_writez(const unsigned char *, const unsigned int,
-			__ops_output_t *);
+unsigned __ops_writez(__ops_output_t *, const uint8_t *,
+			const unsigned);
 
 #endif /* PACKET_PARSE_H_ */

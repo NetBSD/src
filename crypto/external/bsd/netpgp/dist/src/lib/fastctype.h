@@ -29,18 +29,18 @@
 #ifndef FASTCTYPE_H_
 #define FASTCTYPE_H_
 
-int fast_isalnum(unsigned char);
-int fast_isalpha(unsigned char);
-int fast_isascii(unsigned char);
-int fast_iscntrl(unsigned char);
-int fast_isdigit(unsigned char);
-int fast_islower(unsigned char);
-int fast_isupper(unsigned char);
-int fast_isprint(unsigned char);
-int fast_isspace(unsigned char);
-int fast_isxdigit(unsigned char);
-int fast_tolower(unsigned char);
-int fast_toupper(unsigned char);
+int fast_isalnum(uint8_t);
+int fast_isalpha(uint8_t);
+int fast_isascii(uint8_t);
+int fast_iscntrl(uint8_t);
+int fast_isdigit(uint8_t);
+int fast_islower(uint8_t);
+int fast_isupper(uint8_t);
+int fast_isprint(uint8_t);
+int fast_isspace(uint8_t);
+int fast_isxdigit(uint8_t);
+int fast_tolower(uint8_t);
+int fast_toupper(uint8_t);
 
 #define isalnum(x)	fast_isalnum(x)
 #define isalpha(x)	fast_isalpha(x)

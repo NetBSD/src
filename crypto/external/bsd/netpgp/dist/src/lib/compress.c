@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: compress.c,v 1.14 2009/10/07 04:56:51 agc Exp $");
+__RCSID("$NetBSD: compress.c,v 1.15 2010/03/05 16:01:09 agc Exp $");
 #endif
 
 #ifdef HAVE_ZLIB_H
@@ -82,8 +82,8 @@ __RCSID("$NetBSD: compress.c,v 1.14 2009/10/07 04:56:51 agc Exp $");
 typedef struct {
 	__ops_compression_type_t type;
 	__ops_region_t   *region;
-	unsigned char   in[DECOMPRESS_BUFFER];
-	unsigned char   out[DECOMPRESS_BUFFER];
+	uint8_t   	in[DECOMPRESS_BUFFER];
+	uint8_t   	out[DECOMPRESS_BUFFER];
 	z_stream        zstream;/* ZIP and ZLIB */
 	size_t          offset;
 	int             inflate_ret;
@@ -101,8 +101,8 @@ typedef struct {
 
 typedef struct {
 	z_stream        stream;
-	unsigned char  *src;
-	unsigned char  *dst;
+	uint8_t  	*src;
+	uint8_t  	*dst;
 } compress_t;
 
 /*
@@ -247,7 +247,7 @@ bzip2_compressed_data_reader(void *dest, size_t length,
 					n = sizeof(bz->in);
 
 				if (!__ops_stacked_limited_read(
-						(unsigned char *) bz->in,
+						(uint8_t *) bz->in,
 						n, bz->region,
 						errors, readinfo, cbinfo))
 					return -1;
@@ -412,9 +412,7 @@ __ops_decompress(__ops_region_t *region, __ops_stream_t *stream,
 */
 
 unsigned 
-__ops_writez(const unsigned char *data,
-		     const unsigned int len,
-		     __ops_output_t *out)
+__ops_writez(__ops_output_t *out, const uint8_t *data, const unsigned len)
 {
 	compress_t	*zip;
 	size_t		 sz_in;
@@ -447,7 +445,7 @@ __ops_writez(const unsigned char *data,
 		return 0;
 	}
 
-	sz_in = len * sizeof(unsigned char);
+	sz_in = len * sizeof(uint8_t);
 	sz_out = ((101 * sz_in) / 100) + 12;	/* from zlib webpage */
 	if ((zip->src = calloc(1, sz_in)) == NULL) {
 		free(zip);

@@ -152,15 +152,21 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 	case FIND_KEY:
 		return netpgp_find_key(netpgp, netpgp_getvar(netpgp, "userid"));
 	case EXPORT_KEY:
-		return netpgp_export_key(netpgp,
+		key = netpgp_export_key(netpgp,
 				netpgp_getvar(netpgp, "userid"));
+		if (key) {
+			printf("%s", key);
+			return 1;
+		}
+		(void) fprintf(stderr, "key '%s' not found\n", f);
+		return 0;
 	case IMPORT_KEY:
 		return netpgp_import_key(netpgp, f);
 	case GENERATE_KEY:
 		return netpgp_generate_key(netpgp,
 				netpgp_getvar(netpgp, "userid"), p->numbits);
 	case GET_KEY:
-		key = netpgp_get_key(netpgp, f);
+		key = netpgp_get_key(netpgp, f, "human");
 		if (key) {
 			printf("%s", key);
 			return 1;

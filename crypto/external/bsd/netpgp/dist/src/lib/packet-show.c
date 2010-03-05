@@ -60,7 +60,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-show.c,v 1.14 2009/10/09 06:02:55 agc Exp $");
+__RCSID("$NetBSD: packet-show.c,v 1.15 2010/03/05 16:01:09 agc Exp $");
 #endif
 
 #include <stdlib.h>
@@ -68,6 +68,7 @@ __RCSID("$NetBSD: packet-show.c,v 1.14 2009/10/09 06:02:55 agc Exp $");
 
 #include "packet-show.h"
 
+#include "netpgpsdk.h"
 #include "netpgpdefs.h"
 
 
@@ -337,7 +338,7 @@ list_free(__ops_list_t *list)
 	list_init(list);
 }
 
-static unsigned int 
+static unsigned 
 list_resize(__ops_list_t *list)
 {
 	/*
@@ -358,7 +359,7 @@ list_resize(__ops_list_t *list)
 	return 0;
 }
 
-static unsigned int 
+static unsigned 
 add_str(__ops_list_t *list, const char *str)
 {
 	if (list->size == list->used && !list_resize(list)) {
@@ -370,7 +371,7 @@ add_str(__ops_list_t *list, const char *str)
 
 /* find a bitfield in a map - serial search */
 static const char *
-find_bitfield(__ops_bit_map_t *map, unsigned char octet)
+find_bitfield(__ops_bit_map_t *map, uint8_t octet)
 {
 	__ops_bit_map_t  *row;
 
@@ -413,7 +414,7 @@ __ops_text_free(__ops_text_t *text)
 /* XXX: should this (and many others) be unsigned? */
 /* ! generic function which adds text derived from single octet map to text */
 static unsigned
-add_str_from_octet_map(__ops_text_t *map, char *str, unsigned char octet)
+add_str_from_octet_map(__ops_text_t *map, char *str, uint8_t octet)
 {
 	if (str && !add_str(&map->known, str)) {
 		/*
@@ -444,8 +445,8 @@ add_str_from_octet_map(__ops_text_t *map, char *str, unsigned char octet)
 }
 
 /* ! generic function which adds text derived from single bit map to text */
-static unsigned int 
-add_bitmap_entry(__ops_text_t *map, const char *str, unsigned char bit)
+static unsigned 
+add_bitmap_entry(__ops_text_t *map, const char *str, uint8_t bit)
 {
 	const char     *fmt_unknown = "Unknown bit(0x%x)";
 
@@ -490,7 +491,7 @@ add_bitmap_entry(__ops_text_t *map, const char *str, unsigned char bit)
 
 static __ops_text_t *
 text_from_bytemapped_octets(__ops_data_t *data,
-			    const char *(*text_fn)(unsigned char octet))
+			    const char *(*text_fn)(uint8_t octet))
 {
 	__ops_text_t	*text;
 	const char	*str;
@@ -512,7 +513,7 @@ text_from_bytemapped_octets(__ops_data_t *data,
 		str = (*text_fn) (data->contents[i]);
 
 		/* ! and add to text */
-		if (!add_str_from_octet_map(text, strdup(str),
+		if (!add_str_from_octet_map(text, netpgp_strdup(str),
 						data->contents[i])) {
 			__ops_text_free(text);
 			return NULL;
@@ -532,13 +533,12 @@ text_from_bytemapped_octets(__ops_data_t *data,
  *
  */
 static __ops_text_t *
-showall_octets_bits(__ops_data_t *data, __ops_bit_map_t **map,
-		    size_t nmap)
+showall_octets_bits(__ops_data_t *data, __ops_bit_map_t **map, size_t nmap)
 {
-	unsigned char	 mask, bit;
 	__ops_text_t	*text;
 	const char	*str;
 	unsigned         i;
+	uint8_t		 mask, bit;
 	int              j = 0;
 
 	/*
@@ -651,7 +651,7 @@ __ops_show_pka(__ops_pubkey_alg_t pka)
  * \return string or "Unknown"
 */
 const char     *
-__ops_show_ss_zpref(unsigned char octet)
+__ops_show_ss_zpref(uint8_t octet)
 {
 	return __ops_str_from_map(octet, compression_alg_map);
 }
@@ -680,7 +680,7 @@ __ops_showall_ss_zpref(__ops_ss_zpref_t ss_zpref)
  * \return string or "Unknown"
  */
 const char     *
-__ops_show_hash_alg(unsigned char hash)
+__ops_show_hash_alg(uint8_t hash)
 {
 	return __ops_str_from_map(hash, hash_alg_map);
 }
@@ -701,7 +701,7 @@ __ops_showall_ss_hashpref(__ops_ss_hashpref_t ss_hashpref)
 }
 
 const char     *
-__ops_show_symm_alg(unsigned char hash)
+__ops_show_symm_alg(uint8_t hash)
 {
 	return __ops_str_from_map(hash, symm_alg_map);
 }
@@ -713,7 +713,7 @@ __ops_show_symm_alg(unsigned char hash)
  * \return string or "Unknown"
 */
 const char     *
-__ops_show_ss_skapref(unsigned char octet)
+__ops_show_ss_skapref(uint8_t octet)
 {
 	return __ops_str_from_map(octet, symm_alg_map);
 }
@@ -740,7 +740,7 @@ __ops_showall_ss_skapref(__ops_ss_skapref_t ss_skapref)
  * \return string or "Unknown"
 */
 static const char *
-__ops_show_ss_feature(unsigned char octet, unsigned offset)
+__ops_show_ss_feature(uint8_t octet, unsigned offset)
 {
 	if (offset >= OPS_ARRAY_SIZE(ss_feature_map)) {
 		return "Unknown";
@@ -760,10 +760,10 @@ __ops_show_ss_feature(unsigned char octet, unsigned offset)
 __ops_text_t     *
 __ops_showall_ss_features(__ops_ss_features_t ss_features)
 {
-	unsigned char	 mask, bit;
 	__ops_text_t	*text;
 	const char	*str;
 	unsigned	 i;
+	uint8_t		 mask, bit;
 	int		 j;
 
 	if ((text = calloc(1, sizeof(*text))) == NULL) {
@@ -796,7 +796,7 @@ __ops_showall_ss_features(__ops_ss_features_t ss_features)
  * \return
 */
 const char     *
-__ops_show_ss_key_flag(unsigned char octet, __ops_bit_map_t *map)
+__ops_show_ss_key_flag(uint8_t octet, __ops_bit_map_t *map)
 {
 	return find_bitfield(map, octet);
 }
@@ -812,9 +812,9 @@ __ops_show_ss_key_flag(unsigned char octet, __ops_bit_map_t *map)
 __ops_text_t     *
 __ops_showall_ss_key_flags(__ops_ss_key_flags_t ss_key_flags)
 {
-	unsigned char    mask, bit;
 	__ops_text_t	*text;
 	const char	*str;
+	uint8_t		 mask, bit;
 	int              i;
 
 	if ((text = calloc(1, sizeof(*text))) == NULL) {
@@ -828,7 +828,7 @@ __ops_showall_ss_key_flags(__ops_ss_key_flags_t ss_key_flags)
 		bit = ss_key_flags.data.contents[0] & mask;
 		if (bit) {
 			str = __ops_show_ss_key_flag(bit, &ss_key_flags_map[0]);
-			if (!add_bitmap_entry(text, strdup(str), bit)) {
+			if (!add_bitmap_entry(text, netpgp_strdup(str), bit)) {
 				__ops_text_free(text);
 				return NULL;
 			}
@@ -851,7 +851,7 @@ __ops_showall_ss_key_flags(__ops_ss_key_flags_t ss_key_flags)
  * \return string or "Unknown"
  */
 const char     *
-__ops_show_keyserv_pref(unsigned char prefs, __ops_bit_map_t *map)
+__ops_show_keyserv_pref(uint8_t prefs, __ops_bit_map_t *map)
 {
 	return find_bitfield(map, prefs);
 }
@@ -867,9 +867,9 @@ __ops_show_keyserv_pref(unsigned char prefs, __ops_bit_map_t *map)
 __ops_text_t     *
 __ops_show_keyserv_prefs(__ops_ss_key_server_prefs_t prefs)
 {
-	unsigned char	 mask, bit;
 	__ops_text_t	*text;
 	const char	*str;
+	uint8_t		 mask, bit;
 	int              i = 0;
 
 	if ((text = calloc(1, sizeof(*text))) == NULL) {
@@ -885,7 +885,7 @@ __ops_show_keyserv_prefs(__ops_ss_key_server_prefs_t prefs)
 		if (bit) {
 			str = __ops_show_keyserv_pref(bit,
 						ss_key_server_prefs_map);
-			if (!add_bitmap_entry(text, strdup(str), bit)) {
+			if (!add_bitmap_entry(text, netpgp_strdup(str), bit)) {
 				__ops_text_free(text);
 				return NULL;
 			}

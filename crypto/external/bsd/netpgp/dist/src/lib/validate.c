@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.30 2010/02/23 01:24:44 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.31 2010/03/05 16:01:10 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -175,16 +175,16 @@ to give the final hash value that is checked against the one in the signature
 
 /* Does the signed hash match the given hash? */
 unsigned
-check_binary_sig(const unsigned char *data,
+check_binary_sig(const uint8_t *data,
 		const unsigned len,
 		const __ops_sig_t *sig,
 		const __ops_pubkey_t *signer)
 {
-	unsigned char   hashout[OPS_MAX_HASH_SIZE];
-	unsigned char   trailer[6];
-	unsigned int    hashedlen;
+	unsigned    hashedlen;
 	__ops_hash_t	hash;
 	unsigned	n;
+	uint8_t		hashout[OPS_MAX_HASH_SIZE];
+	uint8_t		trailer[6];
 
 	__ops_hash_any(&hash, sig->info.hash_alg);
 	if (!hash.init(&hash)) {
@@ -198,7 +198,7 @@ check_binary_sig(const unsigned char *data,
 		trailer[1] = (unsigned)(sig->info.birthtime) >> 24;
 		trailer[2] = (unsigned)(sig->info.birthtime) >> 16;
 		trailer[3] = (unsigned)(sig->info.birthtime) >> 8;
-		trailer[4] = (unsigned char)(sig->info.birthtime);
+		trailer[4] = (uint8_t)(sig->info.birthtime);
 		hash.add(&hash, trailer, 5);
 		break;
 
@@ -409,8 +409,8 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		/* 1 byte for level (depth), 1 byte for trust amount */
 		printf("trust dump\n");
 		printf("Got trust\n");
-		//hexdump(stdout, (const unsigned char *)content->trust.data, 10, " ");
-		//hexdump(stdout, (const unsigned char *)&content->ss_trust, 2, " ");
+		//hexdump(stdout, (const uint8_t *)content->trust.data, 10, " ");
+		//hexdump(stdout, (const uint8_t *)&content->ss_trust, 2, " ");
 		//printf("Trust level %d, amount %d\n", key->trust.level, key->trust.amount);
 		break;
 
@@ -516,7 +516,7 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 			}
 			if (__ops_get_debug_level(__FILE__)) {
 				(void) fprintf(stderr, "about to check_binary_sig, dump of sig:\n");
-				hexdump(stderr, (const unsigned char *)(const void *)&content->sig,
+				hexdump(stderr, (const uint8_t *)(const void *)&content->sig,
 					sizeof(content->sig), "");
 			}
 			valid = check_binary_sig(__ops_mem_data(data->mem),
@@ -788,7 +788,7 @@ __ops_validate_file(__ops_io_t *io,
 			__ops_validation_t *result,
 			const char *infile,
 			const char *outfile,
-			const int armoured,
+			const int user_says_armoured,
 			const __ops_keyring_t *keyring)
 {
 	validate_data_cb_t	 validation;
@@ -806,7 +806,7 @@ __ops_validate_file(__ops_io_t *io,
 
 #define SIG_OVERHEAD	284 /* XXX - depends on sig size? */
 
-	realarmour = armoured;
+	realarmour = user_says_armoured;
 	if (stat(infile, &st) < 0) {
 		(void) fprintf(io->errs, "can't validate \"%s\"\n", infile);
 		return 0;
@@ -818,7 +818,7 @@ __ops_validate_file(__ops_io_t *io,
 		origfile[cc - 4] = 0x0;
 		if (stat(origfile, &st) == 0 &&
 		    st.st_size > sigsize - SIG_OVERHEAD) {
-			detachname = strdup(origfile);
+			detachname = netpgp_strdup(origfile);
 		}
 	}
 	if (strcmp(&origfile[cc - 4], ".asc") == 0) {
@@ -903,7 +903,7 @@ __ops_validate_file(__ops_io_t *io,
    \brief Verifies the signatures in a __ops_memory_t struct
    \param result Where to put the result
    \param mem Memory to be validated
-   \param armoured Treat data as armoured, if set
+   \param user_says_armoured Treat data as armoured, if set
    \param keyring Keyring to use
    \return 1 if signature validates successfully; 0 if not
    \note After verification, result holds the details of all keys which
@@ -917,12 +917,13 @@ __ops_validate_mem(__ops_io_t *io,
 			__ops_validation_t *result,
 			__ops_memory_t *mem,
 			__ops_memory_t **cat,
-			const int armoured,
+			const int user_says_armoured,
 			const __ops_keyring_t *keyring)
 {
 	validate_data_cb_t	 validation;
 	__ops_stream_t		*stream = NULL;
 	const int		 printerrors = 1;
+	int			 realarmour;
 
 	__ops_setup_memory_read(io, &stream, mem, &validation, validate_data_cb, 1);
 	/* Set verification reader and handling options */
@@ -935,7 +936,12 @@ __ops_validate_mem(__ops_io_t *io,
 	/* is never used. */
 	validation.reader = stream->readinfo.arg;
 
-	if (armoured) {
+	if ((realarmour = user_says_armoured) != 0 ||
+	    strncmp(__ops_mem_data(mem),
+	    		"-----BEGIN PGP MESSAGE-----", 27) == 0) {
+		realarmour = 1;
+	}
+	if (realarmour) {
 		__ops_reader_push_dearmour(stream);
 	}
 
@@ -943,7 +949,7 @@ __ops_validate_mem(__ops_io_t *io,
 	__ops_parse(stream, !printerrors);
 
 	/* Tidy up */
-	if (armoured) {
+	if (realarmour) {
 		__ops_reader_pop_dearmour(stream);
 	}
 	__ops_teardown_memory_read(stream, mem);
