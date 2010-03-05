@@ -1,4 +1,4 @@
-/*	$NetBSD: acpireg.h,v 1.6 2009/09/16 10:47:54 mlelstv Exp $	*/
+/*	$NetBSD: acpireg.h,v 1.7 2010/03/05 08:30:48 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _SYS_DEV_ACPI_ACPIREG_H
+#define _SYS_DEV_ACPI_ACPIREG_H
 
 /*
  * This file defines various ACPI event messages, etc.
@@ -320,3 +323,5 @@
 #define	ACPI_LID_COMPONENT	0x00200000
 #define	ACPI_RESOURCE_COMPONENT	0x00400000
 #define	ACPI_TZ_COMPONENT	0x00800000
+
+#endif	/* !_SYS_DEV_ACPI_ACPIREG_H */
