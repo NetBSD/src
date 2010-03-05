@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.41 2010/02/05 12:05:25 phx Exp $ */
+/* $NetBSD: machdep.c,v 1.42 2010/03/05 17:56:46 phx Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2010/02/05 12:05:25 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2010/03/05 17:56:46 phx Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -547,17 +547,29 @@ initppc(u_int startkernel, u_int endkernel)
 
 	/*
 	 * Initialize BAT tables.
+	 * The CSPPC RAM (A3000/A4000) always starts at 0x08000000 and is
+	 * up to 128MB big.
+	 * The BPPC RAM (A1200) can be up to 256MB and may start at nearly
+	 * any address between 0x40000000 and 0x80000000 depending on which
+	 * RAM module of which size was inserted into which bank:
+	 * The RAM module in bank 1 is located from 0x?8000000 downwards.
+	 * The RAM module in bank 2 is located from 0x?8000000 upwards.
+	 * Whether '?' is 4, 5, 6 or 7 probably depends on the size.
+	 * So we have to use the 'startkernel' symbol for BAT-mapping
+	 * our RAM.
 	 */
-	if (!is_a1200()) {
+	if (is_a1200()) {
+		amigappc_batinit(0x00000000, BAT_BL_16M, BAT_I|BAT_G,
+		    (startkernel & 0xf0000000), BAT_BL_256M, 0,
+		    0xfff00000, BAT_BL_512K, 0,
+		    ~0);
+	} else {
 		/* A3000 or A4000 */
 		amigappc_batinit(0x00000000, BAT_BL_16M, BAT_I|BAT_G,
-		    0x08000000, BAT_BL_128M, 0,
+		    (startkernel & 0xf8000000), BAT_BL_128M, 0,
 		    0xfff00000, BAT_BL_512K, 0,
 		    0x40000000, BAT_BL_256M, BAT_I|BAT_G,
 		    ~0);
-	}
-	else {
-		panic("A1200 BPPC batinit?");
 	}
 
 	/*
