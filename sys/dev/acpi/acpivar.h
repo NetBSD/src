@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.40 2010/01/31 11:26:20 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.41 2010/03/05 08:30:48 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _SYS_DEV_ACPI_ACPIVAR_H
+#define _SYS_DEV_ACPI_ACPIVAR_H
 
 /*
  * This file defines the ACPI interface provided to the rest of the
@@ -335,3 +338,5 @@ int acpi_find_quirks(void);
 #ifdef ACPI_DEBUG
 void acpi_debug_init(void);
 #endif
+
+#endif	/* !_SYS_DEV_ACPI_ACPIVAR_H */
