@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.155 2010/03/05 14:00:16 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.156 2010/03/05 21:01:44 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.155 2010/03/05 14:00:16 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.156 2010/03/05 21:01:44 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1519,7 +1519,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			break;
 		}
 
-		acpi_wakedev_commit(sc);
+		acpi_wakedev_commit(sc, state);
 
 		if (state != ACPI_STATE_S1 && !pmf_system_suspend(PMF_Q_NONE)) {
 			aprint_error_dev(sc->sc_dev, "aborting suspend\n");
