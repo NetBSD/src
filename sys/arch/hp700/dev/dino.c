@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.23 2010/02/10 20:39:04 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.24 2010/03/05 17:47:09 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.23 2010/02/10 20:39:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.24 2010/03/05 17:47:09 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -1597,6 +1597,10 @@ dinomatch(device_t parent, cfdata_t cfdata, void *aux)
 	/* there will be only one */
 	if (ca->ca_type.iodc_type != HPPA_TYPE_BRIDGE ||
 	    ca->ca_type.iodc_sv_model != HPPA_BRIDGE_DINO)
+		return 0;
+
+	/* do not match on the elroy family */
+	if (ca->ca_type.iodc_model == 0x78)
 		return 0;
 
 	/* Make sure we have an IRQ. */
