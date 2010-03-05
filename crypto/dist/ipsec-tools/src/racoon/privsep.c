@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.19 2008/12/23 14:03:12 tteras Exp $	*/
+/*	$NetBSD: privsep.c,v 1.20 2010/03/05 06:47:58 tteras Exp $	*/
 
 /* Id: privsep.c,v 1.15 2005/08/08 11:23:44 vanhu Exp */
 
@@ -1465,7 +1465,7 @@ safety_check(msg, index)
 }
 
 /*
- * Filter unsafe environement variables
+ * Filter unsafe environment variables
  */
 static int
 unsafe_env(envp)
@@ -1486,7 +1486,7 @@ unsafe_env(envp)
 	return 0;
 found:
 	plog(LLV_ERROR, LOCATION, NULL, 
-	    "privsep_script_exec: unsafe environement variable\n");
+	    "privsep_script_exec: unsafe environment variable\n");
 	return -1;
 }
 
