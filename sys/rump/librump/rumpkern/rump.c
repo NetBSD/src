@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.154 2010/03/01 13:12:20 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.155 2010/03/05 18:41:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.154 2010/03/01 13:12:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.155 2010/03/05 18:41:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -144,6 +144,8 @@ __weak_alias(usermount_common_policy,rump__unavailable_vfs_panic);
 
 rump_proc_vfs_init_fn rump_proc_vfs_init;
 rump_proc_vfs_release_fn rump_proc_vfs_release;
+
+static void add_linkedin_modules(const struct modinfo *const *, size_t);
 
 static void __noinline
 messthestack(void)
@@ -284,6 +286,8 @@ rump__init(int rump_version)
 	devsw_init();
 	pipe_init();
 
+	rumpuser_dl_bootstrap(add_linkedin_modules, rump_kernelfsym_load);
+
 	/* these do nothing if not present */
 	rump_vfs_init();
 	rump_net_init();
@@ -299,7 +303,7 @@ rump__init(int rump_version)
 
 	sysctl_finalize();
 
-	rumpuser_dl_bootstrap(rump_module_init, rump_kernelfsym_load);
+	module_init_class(MODULE_CLASS_ANY);
 
 	rumpuser_gethostname(hostname, MAXHOSTNAMELEN, &error);
 	hostnamelen = strlen(hostname);
@@ -612,48 +616,37 @@ rump_component_init(enum rump_component_type type)
 	rumpuser_dl_component_init(type, rump_component_init_cb);
 }
 
-#define ERROUT(err) do { rv = err; goto out; } while (/*CONSTCOND*/0)
+/*
+ * Initialize a module which has already been loaded and linked
+ * with dlopen(). This is fundamentally the same as a builtin module.
+ */
 int
-rump_module_init(struct modinfo *mi, prop_dictionary_t props)
+rump_module_init(const struct modinfo * const *mip, size_t nmodinfo)
 {
-	struct module *mod;
-	int rv;
 
-	/* module_dummy */
-	if (mi->mi_name == NULL)
-		return EINVAL;
-
-	mutex_enter(&module_lock);
-	if (module_lookup(mi->mi_name))
-		ERROUT(EEXIST);
-
-	if (!module_compatible(mi->mi_version, __NetBSD_Version__))
-		ERROUT(EPROGMISMATCH);
-
-	rv = mi->mi_modcmd(MODULE_CMD_INIT, props);
-	if (rv == 0) {
-		mod = kmem_zalloc(sizeof(*mod), KM_SLEEP);
-		mod->mod_info = mi;
-		module_enqueue(mod);
-		if (mi->mi_class == MODULE_CLASS_SECMODEL)
-			secmodel_register();
-	}
-
- out:
-	mutex_exit(&module_lock);
-	return rv;
+	return module_builtin_add(mip, nmodinfo, true);
 }
 
+/*
+ * Finish module (flawless victory, fatality!).
+ */
 int
-rump_module_fini(struct modinfo *mi)
+rump_module_fini(const struct modinfo *mi)
 {
-	int rv;
 
-	rv = mi->mi_modcmd(MODULE_CMD_FINI, NULL);
-	if (rv == 0 && mi->mi_class == MODULE_CLASS_SECMODEL)
-		secmodel_deregister();
+	return module_builtin_remove(mi, true);
+}
 
-	return rv;
+/*
+ * Add loaded and linked module to the builtin list.  It will
+ * later be initialized with module_init_class().
+ */
+
+static void
+add_linkedin_modules(const struct modinfo * const *mip, size_t nmodinfo)
+{
+
+	module_builtin_add(mip, nmodinfo, false);
 }
 
 int
