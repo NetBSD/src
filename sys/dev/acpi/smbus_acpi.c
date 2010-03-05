@@ -1,4 +1,4 @@
-/* $NetBSD: smbus_acpi.c,v 1.8 2010/03/04 20:46:18 jruoho Exp $ */
+/* $NetBSD: smbus_acpi.c,v 1.9 2010/03/05 14:00:17 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -36,20 +36,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.8 2010/03/04 20:46:18 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.9 2010/03/05 14:00:17 jruoho Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/callout.h>
-#include <sys/proc.h>
+#include <sys/kernel.h>
 #include <sys/mutex.h>
+#include <sys/systm.h>
 
-#include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
