@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.59 2010/02/18 14:10:15 pgoyette Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.60 2010/03/05 12:44:16 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.59 2010/02/18 14:10:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.60 2010/03/05 12:44:16 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ ACPI_MODULE_NAME            ("acpi_tz")
 /* constants */
 #define ATZ_TZP_RATE	300	/* default if no _TZP CM present (30 secs) */
 #define ATZ_NLEVELS	10	/* number of cooling levels, from ACPI spec */
-#define ATZ_ZEROC	2732	/* 0C in tenths degrees Kelvin */
+#define ATZ_ZEROC	2732	/* 0C, measured in 0.1 Kelvin */
 #define ATZ_TMP_INVALID	0xffffffff	/* invalid temperature */
 #define ATZ_ZONE_EXPIRE	9000	/* zone info refetch interval (15min) */
 
@@ -75,8 +75,8 @@ static void	acpitz_attach(device_t, device_t, void *);
 
 /*
  * ACPI Temperature Zone information. Note all temperatures are reported
- * in tenths of degrees Kelvin, and that the ACPI specification assumes
- * that K = C + 273.2 rather than the nominal 273.15 used by envsys(4).
+ * in 0.1 Kelvin, and that the ACPI specification assumes that
+ * K = C + 273.2 rather than the nominal 273.15 used by envsys(4).
  * So define an appropriate conversion.
  */
 
