@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modcmd.c,v 1.4 2009/11/06 15:26:54 pooka Exp $	*/
+/*	$NetBSD: t_modcmd.c,v 1.5 2010/03/05 18:49:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -63,9 +63,9 @@ ATF_TC_HEAD(cmsg_modcmd, tc)
 ATF_TC_BODY(cmsg_modcmd, tc)
 {
 	struct tmpfs_args args;
-	struct modinfo **mi;
+	const struct modinfo *const *mi_start, *const *mi_end;
 	void *handle;
-	int rv;
+	int i, rv, loop = 0;
 
 	rump_init();
 	memset(&args, 0, sizeof(args));
@@ -82,18 +82,33 @@ ATF_TC_BODY(cmsg_modcmd, tc)
 		const char *dlmsg = dlerror();
 		atf_tc_fail("cannot open %s: %s", TMPFSMODULE, dlmsg);
 	}
-	mi = dlsym(handle, "__start_link_set_modules");
-	if (mi == NULL)
+
+ again:
+	mi_start = dlsym(handle, "__start_link_set_modules");
+	mi_end = dlsym(handle, "__stop_link_set_modules");
+	if (mi_start == NULL || mi_end == NULL)
 		atf_tc_fail("cannot find module info");
-	if ((rv = rump_pub_module_init(*mi, NULL)) != 0)
+	if ((rv = rump_pub_module_init(mi_start, (size_t)(mi_end-mi_start)))!=0)
 		atf_tc_fail("module init failed: %d (%s)", rv, strerror(rv));
+	if ((rv = rump_pub_module_init(mi_start, (size_t)(mi_end-mi_start)))==0)
+		atf_tc_fail("module double init succeeded");
 
 	if (rump_sys_mount(MOUNT_TMPFS, "/mp", 0, &args, sizeof(args)) == -1)
 		atf_tc_fail_errno("still cannot mount");
 	if (rump_sys_unmount("/mp", 0) == -1)
 		atf_tc_fail("cannot unmount");
-	if ((rv = rump_pub_module_fini(*mi)) != 0)
-		atf_tc_fail("module fini failed: %d (%s)", rv, strerror(rv));
+	for (i = 0; i < (int)(mi_end-mi_start); i++) {
+		if ((rv = rump_pub_module_fini(mi_start[i])) != 0)
+			atf_tc_fail("module fini failed: %d (%s)",
+			    rv, strerror(rv));
+	}
+	for (i = 0; i < (int)(mi_end-mi_start); i++) {
+		if ((rv = rump_pub_module_fini(mi_start[i])) == 0)
+			atf_tc_fail("module double fini succeeded");
+	}
+	if (loop++ == 0)
+		goto again;
+
 	if (dlclose(handle)) {
 		const char *dlmsg = dlerror();
 		atf_tc_fail("cannot close %s: %s", TMPFSMODULE, dlmsg);
