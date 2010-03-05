@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.4 2010/03/05 21:01:44 jruoho Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.5 2010/03/05 22:00:11 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.4 2010/03/05 21:01:44 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.5 2010/03/05 22:00:11 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,20 +40,22 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.4 2010/03/05 21:01:44 jruoho Exp 
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_wakedev.h>
 
-static void	acpi_wakedev_prepare(struct acpi_devnode *, int, int);
+#define _COMPONENT		   ACPI_BUS_COMPONENT
+ACPI_MODULE_NAME		   ("acpi_wakedev")
+
+struct acpi_wakedev {
+	struct acpi_devnode	  *aw_node;
+	struct sysctllog	  *aw_sysctllog;
+	int			   aw_enabled;
+
+	TAILQ_ENTRY(acpi_wakedev)  aw_list;
+};
 
 struct acpi_wakedev;
+static int acpi_wakedev_node = -1;
 
 static TAILQ_HEAD(, acpi_wakedev) acpi_wakedevlist =
     TAILQ_HEAD_INITIALIZER(acpi_wakedevlist);
-static int acpi_wakedev_node = -1;
-
-struct acpi_wakedev {
-	struct acpi_devnode	*aw_node;
-	int			aw_enabled;
-	struct sysctllog	*aw_sysctllog;
-	TAILQ_ENTRY(acpi_wakedev) aw_list;
-};
 
 static const char * const acpi_wakedev_default[] = {
 	"PNP0C0C",	/* power button */
@@ -62,6 +64,11 @@ static const char * const acpi_wakedev_default[] = {
 	"PNP03??",	/* PC KBD port */
 	NULL,
 };
+
+static void	acpi_wakedev_sysctl_add(struct acpi_wakedev *);
+static bool	acpi_wakedev_add(struct acpi_softc *, struct acpi_devnode *);
+static void	acpi_wakedev_print(struct acpi_wakedev *);
+static void	acpi_wakedev_prepare(struct acpi_devnode *, int, int);
 
 SYSCTL_SETUP(sysctl_acpi_wakedev_setup, "sysctl hw.wake subtree setup")
 {
@@ -97,9 +104,8 @@ acpi_wakedev_sysctl_add(struct acpi_wakedev *aw)
 	    NULL, NULL, 0, &aw->aw_enabled, 0,
 	    CTL_HW, acpi_wakedev_node, CTL_CREATE, CTL_EOL);
 	if (err)
-		printf("acpi_wakedev_sysctl_add: "
-		    "sysctl_createv(hw.wake.%s) failed. (%d)\n",
-		    aw->aw_node->ad_name, err);
+		aprint_error("%s: sysctl_createv(hw.wake.%s) failed (%d)\n",
+		    __func__, aw->aw_node->ad_name, err);
 }
 
 static bool
@@ -113,7 +119,7 @@ acpi_wakedev_add(struct acpi_softc *sc, struct acpi_devnode *ad)
 
 	aw = kmem_alloc(sizeof(*aw), KM_SLEEP);
 	if (aw == NULL) {
-		aprint_error("acpi_wakedev_add: kmem_alloc failed\n");
+		aprint_error("%s: kmem_alloc failed\n", __func__);
 		return false;
 	}
 	aw->aw_node = ad;
@@ -254,4 +260,3 @@ fail:
 	aprint_error_dev(ad->ad_device, "failed to evaluate wake "
 	    "control method: %s\n", AcpiFormatException(rv));
 }
-
