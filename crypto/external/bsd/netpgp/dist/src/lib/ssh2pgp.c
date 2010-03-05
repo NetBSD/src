@@ -182,7 +182,7 @@ getbignum(bufgap_t *bg, char *buf, const char *header)
 	len = ntohl(len);
 	(void) bufgap_seek(bg, sizeof(len), BGFromHere, BGByte);
 	(void) bufgap_getbin(bg, buf, len);
-	bignum = BN_bin2bn((const unsigned char *)buf, (int)len, NULL);
+	bignum = BN_bin2bn((const uint8_t *)buf, (int)len, NULL);
 	if (__ops_get_debug_level(__FILE__)) {
 		show(header, buf, (int)len);
 	}
@@ -346,12 +346,12 @@ __ops_ssh2pubkey(__ops_io_t *io, const char *f, __ops_key_t *key)
 int
 __ops_ssh2seckey(__ops_io_t *io, const char *f, __ops_key_t *key, __ops_pubkey_t *pubkey)
 {
-	unsigned char	sesskey[CAST_KEY_LENGTH];
-	unsigned char   hashed[OPS_SHA1_HASH_SIZE];
 	__ops_crypt_t	crypted;
 	__ops_hash_t	hash;
-	unsigned int    done = 0;
-	unsigned int    i = 0;
+	unsigned    done = 0;
+	unsigned    i = 0;
+	uint8_t		sesskey[CAST_KEY_LENGTH];
+	uint8_t		hashed[OPS_SHA1_HASH_SIZE];
 
 	/* XXX - check for rsa/dsa */
 	if (!openssl_read_pem_seckey(f, key, "ssh-rsa", 0)) {
@@ -367,8 +367,8 @@ __ops_ssh2seckey(__ops_io_t *io, const char *f, __ops_key_t *key, __ops_pubkey_t
 	key->key.seckey.s2k_specifier = OPS_S2KS_SALTED;
 	key->key.seckey.hash_alg = OPS_HASH_SHA1;
 	for (done = 0, i = 0; done < CAST_KEY_LENGTH; i++) {
-		unsigned char   zero = 0;
 		unsigned 	j;
+		uint8_t		zero = 0;
 		int             needed;
 		int             size;
 

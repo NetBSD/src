@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.25 2010/02/06 02:24:33 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.26 2010/03/05 16:01:10 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -134,17 +134,17 @@ __ops_dump_sig(__ops_sig_t *sig)
 }
 #endif
 
-static unsigned char prefix_md5[] = {
+static uint8_t prefix_md5[] = {
 	0x30, 0x20, 0x30, 0x0C, 0x06, 0x08, 0x2A, 0x86, 0x48, 0x86,
 	0xF7, 0x0D, 0x02, 0x05, 0x05, 0x00, 0x04, 0x10
 };
 
-static unsigned char prefix_sha1[] = {
+static uint8_t prefix_sha1[] = {
 	0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0E, 0x03, 0x02,
 	0x1A, 0x05, 0x00, 0x04, 0x14
 };
 
-static unsigned char prefix_sha256[] = {
+static uint8_t prefix_sha256[] = {
 	0x30, 0x31, 0x30, 0x0d, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01,
 	0x65, 0x03, 0x04, 0x02, 0x01, 0x05, 0x00, 0x04, 0x20
 };
@@ -158,15 +158,15 @@ rsa_sign(__ops_hash_t *hash,
 	const __ops_rsa_seckey_t *secrsa,
 	__ops_output_t *out)
 {
-	unsigned char   hashbuf[NETPGP_BUFSIZ];
-	unsigned char   sigbuf[NETPGP_BUFSIZ];
-	unsigned char  *prefix;
 	unsigned        prefixsize;
 	unsigned        expected;
 	unsigned        hashsize;
 	unsigned        keysize;
 	unsigned        n;
 	unsigned        t;
+	uint8_t		hashbuf[NETPGP_BUFSIZ];
+	uint8_t		sigbuf[NETPGP_BUFSIZ];
+	uint8_t		*prefix;
 	BIGNUM         *bn;
 
 	if (strcmp(hash->name, "SHA1") == 0) {
@@ -228,9 +228,9 @@ dsa_sign(__ops_hash_t *hash,
 	 const __ops_dsa_seckey_t *sdsa,
 	 __ops_output_t *output)
 {
-	unsigned char   hashbuf[NETPGP_BUFSIZ];
 	unsigned        hashsize;
 	unsigned        t;
+	uint8_t		hashbuf[NETPGP_BUFSIZ];
 	DSA_SIG        *dsasig;
 
 	/* hashsize must be "equal in size to the number of bits of q,  */
@@ -260,21 +260,21 @@ dsa_sign(__ops_hash_t *hash,
 
 static unsigned 
 rsa_verify(__ops_hash_alg_t type,
-	   const unsigned char *hash,
+	   const uint8_t *hash,
 	   size_t hash_length,
 	   const __ops_rsa_sig_t *sig,
 	   const __ops_rsa_pubkey_t *pubrsa)
 {
-	const unsigned char	*prefix;
-	unsigned char   	 sigbuf[NETPGP_BUFSIZ];
-	unsigned char   	 hashbuf_from_sig[NETPGP_BUFSIZ];
-	unsigned        	 n;
-	unsigned        	 keysize;
-	unsigned		 plen;
-	unsigned		 debug_len_decrypted;
+	const uint8_t	*prefix;
+	unsigned       	 n;
+	unsigned       	 keysize;
+	unsigned	 plen;
+	unsigned	 debug_len_decrypted;
+	uint8_t   	 sigbuf[NETPGP_BUFSIZ];
+	uint8_t   	 hashbuf_from_sig[NETPGP_BUFSIZ];
 
 	plen = 0;
-	prefix = (const unsigned char *) "";
+	prefix = (const uint8_t *) "";
 	keysize = BN_num_bytes(pubrsa->n);
 	/* RSA key can't be bigger than 65535 bits, so... */
 	if (keysize > sizeof(hashbuf_from_sig)) {
@@ -403,7 +403,7 @@ init_key_sig(__ops_hash_t *hash, const __ops_sig_t *sig,
 
 static void 
 hash_add_trailer(__ops_hash_t *hash, const __ops_sig_t *sig,
-		 const unsigned char *raw_packet)
+		 const uint8_t *raw_packet)
 {
 	if (sig->info.version == OPS_V4) {
 		if (raw_packet) {
@@ -429,7 +429,7 @@ hash_add_trailer(__ops_hash_t *hash, const __ops_sig_t *sig,
    \return 1 if good; else 0
 */
 unsigned 
-__ops_check_sig(const unsigned char *hash, unsigned length,
+__ops_check_sig(const uint8_t *hash, unsigned length,
 		    const __ops_sig_t * sig,
 		    const __ops_pubkey_t * signer)
 {
@@ -465,7 +465,7 @@ hash_and_check_sig(__ops_hash_t *hash,
 			 const __ops_sig_t *sig,
 			 const __ops_pubkey_t *signer)
 {
-	unsigned char   hashout[OPS_MAX_HASH_SIZE];
+	uint8_t   hashout[OPS_MAX_HASH_SIZE];
 	unsigned	n;
 
 	n = hash->finish(hash, hashout);
@@ -476,7 +476,7 @@ static unsigned
 finalise_sig(__ops_hash_t *hash,
 		   const __ops_sig_t *sig,
 		   const __ops_pubkey_t *signer,
-		   const unsigned char *raw_packet)
+		   const uint8_t *raw_packet)
 {
 	hash_add_trailer(hash, sig, raw_packet);
 	return hash_and_check_sig(hash, sig, signer);
@@ -499,7 +499,7 @@ __ops_check_useridcert_sig(const __ops_pubkey_t *key,
 			  const __ops_userid_t *id,
 			  const __ops_sig_t *sig,
 			  const __ops_pubkey_t *signer,
-			  const unsigned char *raw_packet)
+			  const uint8_t *raw_packet)
 {
 	__ops_hash_t	hash;
 	size_t          userid_len = strlen((char *) id->userid);
@@ -532,7 +532,7 @@ __ops_check_userattrcert_sig(const __ops_pubkey_t *key,
 				const __ops_userattr_t *attribute,
 				const __ops_sig_t *sig,
 				const __ops_pubkey_t *signer,
-				const unsigned char *raw_packet)
+				const uint8_t *raw_packet)
 {
 	__ops_hash_t      hash;
 
@@ -564,7 +564,7 @@ __ops_check_subkey_sig(const __ops_pubkey_t *key,
 			   const __ops_pubkey_t *subkey,
 			   const __ops_sig_t *sig,
 			   const __ops_pubkey_t *signer,
-			   const unsigned char *raw_packet)
+			   const uint8_t *raw_packet)
 {
 	__ops_hash_t	hash;
 	unsigned	ret;
@@ -590,7 +590,7 @@ unsigned
 __ops_check_direct_sig(const __ops_pubkey_t *key,
 			   const __ops_sig_t *sig,
 			   const __ops_pubkey_t *signer,
-			   const unsigned char *raw_packet)
+			   const uint8_t *raw_packet)
 {
 	__ops_hash_t	hash;
 	unsigned	ret;
@@ -902,7 +902,7 @@ __ops_add_expiration(__ops_create_sig_t *sig, time_t duration)
 
 unsigned 
 __ops_add_issuer_keyid(__ops_create_sig_t *sig,
-				const unsigned char keyid[OPS_KEY_ID_SIZE])
+				const uint8_t keyid[OPS_KEY_ID_SIZE])
 {
 	return __ops_write_ss_header(sig->output, OPS_KEY_ID_SIZE + 1,
 				OPS_PTAG_SS_ISSUER_KEY_ID) &&
@@ -995,7 +995,7 @@ __ops_sign_file(__ops_io_t *io,
 	__ops_hash_alg_t	 hash_alg;
 	__ops_memory_t		*infile;
 	__ops_output_t		*output;
-	unsigned char		 keyid[OPS_KEY_ID_SIZE];
+	uint8_t		 keyid[OPS_KEY_ID_SIZE];
 	__ops_hash_t		*hash;
 	unsigned		 ret;
 	int			 fd_out;
@@ -1083,17 +1083,20 @@ __ops_sign_file(__ops_io_t *io,
 		hash = __ops_sig_get_hash(sig);
 		hash->add(hash, __ops_mem_data(infile), __ops_mem_len(infile));
 
+#if 1
 		/* output file contents as Literal Data packet */
-		if (__ops_get_debug_level(__FILE__)) {
-			fprintf(io->errs, "** Writing out data now\n");
-		}
 		__ops_write_litdata(output, __ops_mem_data(infile),
 			(const int)__ops_mem_len(infile),
 			OPS_LDT_BINARY);
-
-		if (__ops_get_debug_level(__FILE__)) {
-			fprintf(io->errs, "** After Writing out data now\n");
-		}
+#else
+		/* XXX - agc - sync with writer.c 1094 for ops_writez */
+		__ops_setup_memory_write(&litoutput, &litmem, bufsz);
+		__ops_setup_memory_write(&zoutput, &zmem, bufsz);
+		__ops_write_litdata(litoutput,
+			__ops_mem_data(__ops_mem_data(infile),
+			(const int)__ops_mem_len(infile), OPS_LDT_BINARY);
+		__ops_writez(zoutput, __ops_mem_data(litmem), __ops_mem_len(litmem));
+#endif
 
 		/* add creation time to signature */
 		__ops_add_birthtime(sig, (long long)from);
@@ -1145,7 +1148,7 @@ __ops_sign_buf(__ops_io_t *io,
 	__ops_hash_alg_t	 hash_alg;
 	__ops_output_t		*output;
 	__ops_memory_t		*mem;
-	unsigned char		 keyid[OPS_KEY_ID_SIZE];
+	uint8_t		 keyid[OPS_KEY_ID_SIZE];
 	__ops_hash_t		*hash;
 	unsigned		 ret;
 
@@ -1252,7 +1255,7 @@ __ops_sign_detached(__ops_io_t *io,
 	__ops_hash_alg_t	 alg;
 	__ops_output_t		*output;
 	__ops_memory_t		*mem;
-	unsigned char	 	 keyid[OPS_KEY_ID_SIZE];
+	uint8_t	 	 keyid[OPS_KEY_ID_SIZE];
 	char			 fname[MAXPATHLEN];
 	int			 fd;
 

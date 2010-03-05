@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.26 2010/02/12 03:38:48 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.27 2010/03/05 16:01:09 agc Exp $");
 #endif
 
 #include <string.h>
@@ -100,7 +100,7 @@ print_name(int indent, const char *name)
 }
 
 static void 
-print_hexdump(int indent, const char *name, const unsigned char *data, unsigned int len)
+print_hexdump(int indent, const char *name, const uint8_t *data, unsigned len)
 {
 	print_name(indent, name);
 
@@ -110,7 +110,7 @@ print_hexdump(int indent, const char *name, const unsigned char *data, unsigned 
 }
 
 static void 
-hexdump_data(int indent, const char *name, const unsigned char *data, unsigned len)
+hexdump_data(int indent, const char *name, const uint8_t *data, unsigned len)
 {
 	print_name(indent, name);
 
@@ -120,7 +120,7 @@ hexdump_data(int indent, const char *name, const unsigned char *data, unsigned l
 }
 
 static void 
-print_uint(int indent, const char *name, unsigned int val)
+print_uint(int indent, const char *name, unsigned val)
 {
 	print_name(indent, name);
 	printf("%u\n", val);
@@ -142,7 +142,7 @@ print_time(int indent, const char *name, time_t t)
 }
 
 static void 
-print_string_and_value(int indent, const char *name, const char *str, unsigned char value)
+print_string_and_value(int indent, const char *name, const char *str, uint8_t value)
 {
 	print_name(indent, name);
 	printf("%s (0x%x)\n", str, value);
@@ -177,9 +177,9 @@ print_bn(int indent, const char *name, const BIGNUM *bn)
 static void 
 print_packet_hex(const __ops_subpacket_t *pkt)
 {
-	unsigned char  *cur;
 	unsigned	rem;
 	unsigned	blksz = 4;
+	uint8_t		*cur;
 	int             i;
 
 	printf("\nhexdump of packet contents follows:\n");
@@ -198,7 +198,7 @@ print_packet_hex(const __ops_subpacket_t *pkt)
 }
 
 static void 
-print_escaped(const unsigned char *data, size_t length)
+print_escaped(const uint8_t *data, size_t length)
 {
 	while (length-- > 0) {
 		if ((*data >= 0x20 && *data < 0x7f && *data != '%') ||
@@ -215,12 +215,12 @@ static void
 print_string(int indent, const char *name, const char *str)
 {
 	print_name(indent, name);
-	print_escaped((const unsigned char *) str, strlen(str));
+	print_escaped((const uint8_t *) str, strlen(str));
 	putchar('\n');
 }
 
 static void 
-print_utf8_string(int indent, const char *name, const unsigned char *str)
+print_utf8_string(int indent, const char *name, const uint8_t *str)
 {
 	/* \todo Do this better for non-English character sets */
 	print_string(indent, name, (const char *) str);
@@ -252,7 +252,7 @@ print_duration(int indent, const char *name, time_t t)
 }
 
 static void 
-print_boolean(int indent, const char *name, unsigned char boolval)
+print_boolean(int indent, const char *name, uint8_t boolval)
 {
 	print_name(indent, name);
 	printf("%s\n", (boolval) ? "Yes" : "No");
@@ -298,7 +298,7 @@ print_headers(const __ops_headers_t *h)
 }
 
 static void 
-print_block(int indent, const char *name, const unsigned char *str, size_t length)
+print_block(int indent, const char *name, const uint8_t *str, size_t length)
 {
 	int             o = length;
 
@@ -356,7 +356,7 @@ numkeybits(const __ops_pubkey_t *pubkey)
 
 /* return the hexdump as a string */
 static char *
-strhexdump(char *dest, const unsigned char *src, size_t length, const char *sep)
+strhexdump(char *dest, const uint8_t *src, size_t length, const char *sep)
 {
 	unsigned i;
 	int	n;
@@ -426,14 +426,14 @@ __ops_hkp_sprint_keydata(const __ops_key_t *key, char **buf,
 			"uid:%s:%lld:%lld:\n",
 			key->uids[i].userid,
 			(long long)pubkey->birthtime,
-			(long long)0);
+			(long long)pubkey->duration);
 	}
 	return __ops_asprintf(buf, "pub:%s:%d:%d:%lld:%lld\n%s",
 		strhexdump(fp, key->fingerprint.fingerprint, OPS_FINGERPRINT_SIZE, ""),
 		pubkey->alg,
 		numkeybits(pubkey),
 		(long long)pubkey->birthtime,
-		(long long)0,
+		(long long)pubkey->duration,
 		uidbuf);
 }
 
@@ -559,7 +559,7 @@ __ops_print_seckey_verbose(const __ops_content_tag_t type,
 		printf("Symmetric algorithm: %d (%s)\n", seckey->alg,
 		       __ops_show_symm_alg(seckey->alg));
 		printf("Hash algorithm: %d (%s)\n", seckey->hash_alg,
-		       __ops_show_hash_alg((unsigned char)seckey->hash_alg));
+		       __ops_show_hash_alg((uint8_t)seckey->hash_alg));
 		if (seckey->s2k_specifier != OPS_S2KS_SIMPLE) {
 			print_hexdump(0, "Salt", seckey->salt,
 					sizeof(seckey->salt));
@@ -772,9 +772,9 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 			__ops_show_pka(content->sig.info.key_alg),
 				     content->sig.info.key_alg);
 		print_string_and_value(print->indent, "Hash Algorithm",
-			__ops_show_hash_alg((unsigned char)
+			__ops_show_hash_alg((uint8_t)
 				content->sig.info.hash_alg),
-			(unsigned char)content->sig.info.hash_alg);
+			(uint8_t)content->sig.info.hash_alg);
 		print_uint(print->indent, "Hashed data len",
 			content->sig.info.v4_hashlen);
 		print_indent(print->indent);
@@ -820,8 +820,8 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 		    __ops_show_sig_type(content->one_pass_sig.sig_type),
 				       content->one_pass_sig.sig_type);
 		print_string_and_value(print->indent, "Hash Algorithm",
-			__ops_show_hash_alg((unsigned char)content->one_pass_sig.hash_alg),
-			(unsigned char)content->one_pass_sig.hash_alg);
+			__ops_show_hash_alg((uint8_t)content->one_pass_sig.hash_alg),
+			(uint8_t)content->one_pass_sig.hash_alg);
 		print_string_and_value(print->indent, "Public Key Algorithm",
 			__ops_show_pka(content->one_pass_sig.key_alg),
 			content->one_pass_sig.key_alg);
@@ -1007,7 +1007,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 	case OPS_PTAG_SS_REGEXP:
 		start_subpacket(&print->indent, pkt->tag);
 		print_hexdump(print->indent, "Regular Expression",
-			      (unsigned char *) content->ss_regexp.regexp,
+			      (uint8_t *) content->ss_regexp.regexp,
 			      strlen(content->ss_regexp.regexp));
 		print_string(print->indent, NULL, content->ss_regexp.regexp);
 		end_subpacket(&print->indent);
@@ -1118,8 +1118,8 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 			__ops_show_pka(content->sig.info.key_alg),
 				     content->sig.info.key_alg);
 		print_string_and_value(print->indent, "Hash Algorithm",
-			__ops_show_hash_alg((unsigned char)content->sig.info.hash_alg),
-			(unsigned char)content->sig.info.hash_alg);
+			__ops_show_hash_alg((uint8_t)content->sig.info.hash_alg),
+			(uint8_t)content->sig.info.hash_alg);
 		print_uint(print->indent, "Hashed data len",
 			content->sig.info.v4_hashlen);
 

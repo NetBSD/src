@@ -31,7 +31,7 @@ env USETOOLS=no MAKEOBJDIRPREFIX=/usr/obj/i386 sh -c 'cd ../netpgpverify && \
 	su root -c "make install"'
 
 passed=0
-total=25
+total=26
 echo "======> sign/verify 180938 file"
 cp configure a
 /usr/bin/netpgp --sign a
@@ -96,6 +96,9 @@ cp Makefile.in g
 /usr/bin/netpgp --sign --armor g && passed=$(expr $passed + 1)
 echo "======> ascii armoured sig detection and verification of large file"
 /usr/bin/netpgp --verify g.asc && passed=$(expr $passed + 1)
+echo "======> verify memory by recognising ascii armour"
+/usr/bin/netpgp --cat < g.asc > g2
+diff g g2 && passed=$(expr $passed + 1)
 echo "======> list ssh host RSA public key"
 /usr/bin/netpgpkeys --ssh-keys --sshkeyfile=/etc/ssh/ssh_host_rsa_key.pub --list-keys && passed=$(expr $passed + 1)
 echo "======> sign/verify file with ssh host keys"
@@ -118,5 +121,5 @@ rm -f h.sig
 /usr/bin/netpgp --sign --duration 2 --detached h
 sleep 3
 /usr/bin/netpgp --verify h.sig || passed=$(expr $passed + 1)
-rm -f a a.gpg b b.gpg c c.gpg d d.gpg e f f.sig g g.asc a2 a3 a4 a5 h h.sig
+rm -f a a.gpg b b.gpg c c.gpg d d.gpg e f f.sig g g.asc g2 a2 a3 a4 a5 h h.sig
 echo "Passed ${passed}/${total} tests"

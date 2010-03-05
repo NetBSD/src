@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009,2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.26 2009/12/14 23:29:56 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.27 2010/03/05 16:01:09 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -81,6 +81,7 @@ __RCSID("$NetBSD: misc.c,v 1.26 2009/12/14 23:29:56 agc Exp $");
 #include "packet.h"
 #include "crypto.h"
 #include "create.h"
+#include "fastctype.h"
 #include "packet-parse.h"
 #include "packet-show.h"
 #include "signature.h"
@@ -497,13 +498,13 @@ __ops_fingerprint(__ops_fingerprint_t *fp, const __ops_pubkey_t *key)
  */
 
 void 
-__ops_keyid(unsigned char *keyid, const size_t idlen, const __ops_pubkey_t *key)
+__ops_keyid(uint8_t *keyid, const size_t idlen, const __ops_pubkey_t *key)
 {
 	__ops_fingerprint_t finger;
 
 	if (key->version == 2 || key->version == 3) {
-		unsigned char   bn[NETPGP_BUFSIZ];
-		unsigned        n;
+		unsigned	n;
+		uint8_t		bn[NETPGP_BUFSIZ];
 
 		n = (unsigned) BN_num_bytes(key->key.rsa.n);
 		if (n > sizeof(bn)) {
@@ -536,9 +537,9 @@ __ops_keyid(unsigned char *keyid, const size_t idlen, const __ops_pubkey_t *key)
 void 
 __ops_hash_add_int(__ops_hash_t *hash, unsigned n, unsigned length)
 {
-	while (length--) {
-		unsigned char   c;
+	uint8_t   c;
 
+	while (length--) {
 		c = n >> (length * 8);
 		hash->add(hash, &c, 1);
 	}
@@ -627,24 +628,27 @@ __ops_hash_size(__ops_hash_alg_t alg)
 __ops_hash_alg_t 
 __ops_str_to_hash_alg(const char *hash)
 {
-	if (strcasecmp(hash, "SHA1") == 0) {
+	if (hash == NULL) {
+		return OPS_DEFAULT_HASH_ALGORITHM;
+	}
+	if (netpgp_strcasecmp(hash, "SHA1") == 0) {
 		return OPS_HASH_SHA1;
 	}
-	if (strcasecmp(hash, "MD5") == 0) {
+	if (netpgp_strcasecmp(hash, "MD5") == 0) {
 		return OPS_HASH_MD5;
 	}
-	if (strcasecmp(hash, "SHA256") == 0) {
+	if (netpgp_strcasecmp(hash, "SHA256") == 0) {
 		return OPS_HASH_SHA256;
 	}
 	/*
-        if (strcasecmp(hash,"SHA224") == 0) {
+        if (netpgp_strcasecmp(hash,"SHA224") == 0) {
 		return OPS_HASH_SHA224;
 	}
         */
-	if (strcasecmp(hash, "SHA512") == 0) {
+	if (netpgp_strcasecmp(hash, "SHA512") == 0) {
 		return OPS_HASH_SHA512;
 	}
-	if (strcasecmp(hash, "SHA384") == 0) {
+	if (netpgp_strcasecmp(hash, "SHA384") == 0) {
 		return OPS_HASH_SHA384;
 	}
 	return OPS_HASH_UNKNOWN;
@@ -660,8 +664,7 @@ __ops_str_to_hash_alg(const char *hash)
 \return Size of hash created
 */
 unsigned 
-__ops_hash(unsigned char *out, __ops_hash_alg_t alg, const void *in,
-	 size_t length)
+__ops_hash(uint8_t *out, __ops_hash_alg_t alg, const void *in, size_t length)
 {
 	__ops_hash_t      hash;
 
@@ -685,14 +688,14 @@ __ops_hash(unsigned char *out, __ops_hash_alg_t alg, const void *in,
 \param hashed Resulting hash
 */
 void 
-__ops_calc_mdc_hash(const unsigned char *preamble,
+__ops_calc_mdc_hash(const uint8_t *preamble,
 			const size_t sz_preamble,
-			const unsigned char *plaintext,
+			const uint8_t *plaintext,
 			const unsigned sz_plaintext,
-			unsigned char *hashed)
+			uint8_t *hashed)
 {
-	unsigned char	c;
 	__ops_hash_t	hash;
+	uint8_t		c;
 
 	if (__ops_get_debug_level(__FILE__)) {
 		unsigned	i;
@@ -776,7 +779,7 @@ __ops_random(void *dest, size_t length)
 void 
 __ops_memory_init(__ops_memory_t *mem, size_t needed)
 {
-	unsigned char	*temp;
+	uint8_t	*temp;
 
 	mem->length = 0;
 	if (mem->buf) {
@@ -806,7 +809,7 @@ __ops_memory_init(__ops_memory_t *mem, size_t needed)
 void 
 __ops_memory_pad(__ops_memory_t *mem, size_t length)
 {
-	unsigned char	*temp;
+	uint8_t	*temp;
 
 	if (mem->allocated < mem->length) {
 		(void) fprintf(stderr, "__ops_memory_pad: bad alloc in\n");
@@ -834,7 +837,7 @@ __ops_memory_pad(__ops_memory_t *mem, size_t length)
 \param length Length of data to add
 */
 void 
-__ops_memory_add(__ops_memory_t *mem, const unsigned char *src, size_t length)
+__ops_memory_add(__ops_memory_t *mem, const uint8_t *src, size_t length)
 {
 	__ops_memory_pad(mem, length);
 	(void) memcpy(mem->buf + mem->length, src, length);
@@ -1007,7 +1010,7 @@ __ops_mem_readfile(__ops_memory_t *mem, const char *f)
 }
 
 typedef struct {
-	unsigned short  sum;
+	uint16_t  sum;
 } sum16_t;
 
 
@@ -1050,7 +1053,7 @@ __ops_str_from_map(int type, __ops_map_t *map)
 }
 
 void 
-hexdump(FILE *fp, const unsigned char *src, size_t length, const char *sep)
+hexdump(FILE *fp, const uint8_t *src, size_t length, const char *sep)
 {
 	unsigned i;
 
@@ -1092,10 +1095,10 @@ static int
 sum16_reader(void *dest_, size_t length, __ops_error_t **errors,
 	     __ops_reader_t *readinfo, __ops_cbdata_t *cbinfo)
 {
-	const unsigned char	*dest = dest_;
-	sum16_t			*arg = __ops_reader_get_arg(readinfo);
-	int			 r;
-	int			 n;
+	const uint8_t	*dest = dest_;
+	sum16_t		*arg = __ops_reader_get_arg(readinfo);
+	int		 r;
+	int		 n;
 
 	r = __ops_stacked_read(dest_, length, errors, readinfo, cbinfo);
 	if (r < 0) {
@@ -1135,10 +1138,10 @@ __ops_reader_push_sum16(__ops_stream_t *stream)
    \param stream Parse settings
    \return sum
 */
-unsigned short 
+uint16_t 
 __ops_reader_pop_sum16(__ops_stream_t *stream)
 {
-	unsigned short	 sum;
+	uint16_t	 sum;
 	sum16_t		*arg;
 
 	arg = __ops_reader_get_arg(__ops_readinfo(stream));
@@ -1181,7 +1184,7 @@ __ops_set_debug_level(const char *f)
 	if (i == MAX_DEBUG_NAMES) {
 		return 0;
 	}
-	debugv[debugc++] = strdup(name);
+	debugv[debugc++] = netpgp_strdup(name);
 	return 1;
 }
 
@@ -1256,4 +1259,30 @@ netpgp_log(const char *fmt, ...)
 	va_end(vp);
 	/* do something with message */
 	/* put into log buffer? */
+}
+
+/* portable replacement for strdup(3) */
+char *
+netpgp_strdup(const char *s)
+{
+	size_t	 len;
+	char	*cp;
+
+	len = strlen(s);
+	if ((cp = calloc(1, len + 1)) != NULL) {
+		(void) memcpy(cp, s, len);
+		cp[len] = 0x0;
+	}
+	return cp;
+}
+
+/* portable replacement for strcasecmp(3) */
+int
+netpgp_strcasecmp(const char *s1, const char *s2)
+{
+	int	n;
+
+	for (n = 0 ; *s1 && *s2 && (n = tolower(*s1) - tolower(*s2)) == 0 ; s1++, s2++) {
+	}
+	return n;
 }

@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: openssl_crypto.c,v 1.19 2010/02/06 02:24:33 agc Exp $");
+__RCSID("$NetBSD: openssl_crypto.c,v 1.20 2010/03/05 16:01:09 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_DSA_H
@@ -121,13 +121,13 @@ md5_init(__ops_hash_t *hash)
 }
 
 static void 
-md5_add(__ops_hash_t *hash, const unsigned char *data, unsigned length)
+md5_add(__ops_hash_t *hash, const uint8_t *data, unsigned length)
 {
 	MD5_Update(hash->data, data, length);
 }
 
 static unsigned 
-md5_finish(__ops_hash_t *hash, unsigned char *out)
+md5_finish(__ops_hash_t *hash, uint8_t *out)
 {
 	MD5_Final(out, hash->data);
 	free(hash->data);
@@ -174,10 +174,10 @@ sha1_init(__ops_hash_t *hash)
 }
 
 static void 
-sha1_add(__ops_hash_t *hash, const unsigned char *data, unsigned length)
+sha1_add(__ops_hash_t *hash, const uint8_t *data, unsigned length)
 {
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned int    i;
+		unsigned    i;
 
 		(void) fprintf(stderr, "adding %u to hash:\n ", length);
 		for (i = 0; i < length; i++) {
@@ -194,7 +194,7 @@ sha1_add(__ops_hash_t *hash, const unsigned char *data, unsigned length)
 }
 
 static unsigned 
-sha1_finish(__ops_hash_t *hash, unsigned char *out)
+sha1_finish(__ops_hash_t *hash, uint8_t *out)
 {
 	SHA1_Final(out, hash->data);
 	if (__ops_get_debug_level(__FILE__)) {
@@ -249,10 +249,10 @@ sha256_init(__ops_hash_t *hash)
 }
 
 static void 
-sha256_add(__ops_hash_t *hash, const unsigned char *data, unsigned length)
+sha256_add(__ops_hash_t *hash, const uint8_t *data, unsigned length)
 {
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned int    i;
+		unsigned    i;
 
 		(void) fprintf(stderr, "adding %d to hash:\n ", length);
 		for (i = 0; i < length; i++) {
@@ -268,7 +268,7 @@ sha256_add(__ops_hash_t *hash, const unsigned char *data, unsigned length)
 }
 
 static unsigned 
-sha256_finish(__ops_hash_t *hash, unsigned char *out)
+sha256_finish(__ops_hash_t *hash, uint8_t *out)
 {
 	SHA256_Final(out, hash->data);
 	if (__ops_get_debug_level(__FILE__)) {
@@ -321,10 +321,10 @@ sha384_init(__ops_hash_t *hash)
 }
 
 static void 
-sha384_add(__ops_hash_t *hash, const unsigned char *data, unsigned length)
+sha384_add(__ops_hash_t *hash, const uint8_t *data, unsigned length)
 {
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned int    i;
+		unsigned    i;
 
 		(void) fprintf(stderr, "adding %u to hash:\n ", length);
 		for (i = 0; i < length; i++) {
@@ -340,7 +340,7 @@ sha384_add(__ops_hash_t *hash, const unsigned char *data, unsigned length)
 }
 
 static unsigned 
-sha384_finish(__ops_hash_t *hash, unsigned char *out)
+sha384_finish(__ops_hash_t *hash, uint8_t *out)
 {
 	SHA384_Final(out, hash->data);
 	if (__ops_get_debug_level(__FILE__)) {
@@ -393,10 +393,10 @@ sha512_init(__ops_hash_t *hash)
 }
 
 static void 
-sha512_add(__ops_hash_t *hash, const unsigned char *data, unsigned length)
+sha512_add(__ops_hash_t *hash, const uint8_t *data, unsigned length)
 {
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned int    i;
+		unsigned    i;
 
 		(void) fprintf(stderr, "adding %u to hash:\n ", length);
 		for (i = 0; i < length; i++) {
@@ -412,7 +412,7 @@ sha512_add(__ops_hash_t *hash, const unsigned char *data, unsigned length)
 }
 
 static unsigned 
-sha512_finish(__ops_hash_t *hash, unsigned char *out)
+sha512_finish(__ops_hash_t *hash, uint8_t *out)
 {
 	SHA512_Final(out, hash->data);
 	if (__ops_get_debug_level(__FILE__)) {
@@ -466,10 +466,10 @@ sha224_init(__ops_hash_t *hash)
 }
 
 static void 
-sha224_add(__ops_hash_t *hash, const unsigned char *data, unsigned length)
+sha224_add(__ops_hash_t *hash, const uint8_t *data, unsigned length)
 {
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned int    i;
+		unsigned    i;
 
 		(void) fprintf(stderr, "adding %u to hash:\n ", length);
 		for (i = 0; i < length; i++) {
@@ -485,7 +485,7 @@ sha224_add(__ops_hash_t *hash, const unsigned char *data, unsigned length)
 }
 
 static unsigned 
-sha224_finish(__ops_hash_t *hash, unsigned char *out)
+sha224_finish(__ops_hash_t *hash, uint8_t *out)
 {
 	SHA224_Final(out, hash->data);
 	if (__ops_get_debug_level(__FILE__)) {
@@ -518,7 +518,7 @@ __ops_hash_sha224(__ops_hash_t *hash)
 }
 
 unsigned 
-__ops_dsa_verify(const unsigned char *hash, size_t hash_length,
+__ops_dsa_verify(const uint8_t *hash, size_t hash_length,
 	       const __ops_dsa_sig_t *sig,
 	       const __ops_dsa_pubkey_t *dsa)
 {
@@ -548,7 +548,7 @@ __ops_dsa_verify(const unsigned char *hash, size_t hash_length,
 		printf("hash_length=%" PRIsize "d\n", hash_length);
 		printf("Q=%d\n", BN_num_bytes(odsa->q));
 	}
-	/* XXX - Flexelint -  Info 732: Loss of sign (assignment) (int to unsigned int) */
+	/* XXX - Flexelint -  Info 732: Loss of sign (assignment) (int to unsigned) */
 	if ((qlen = BN_num_bytes(odsa->q)) < hash_length) {
 		hash_length = qlen;
 	}
@@ -580,8 +580,8 @@ __ops_dsa_verify(const unsigned char *hash, size_t hash_length,
    \return size of recovered message digest
 */
 int 
-__ops_rsa_public_decrypt(unsigned char *out,
-			const unsigned char *in,
+__ops_rsa_public_decrypt(uint8_t *out,
+			const uint8_t *in,
 			size_t length,
 			const __ops_rsa_pubkey_t *pubkey)
 {
@@ -611,8 +611,8 @@ __ops_rsa_public_decrypt(unsigned char *out,
    \return number of bytes decrypted
 */
 int 
-__ops_rsa_private_encrypt(unsigned char *out,
-			const unsigned char *in,
+__ops_rsa_private_encrypt(uint8_t *out,
+			const uint8_t *in,
 			size_t length,
 			const __ops_rsa_seckey_t *seckey,
 			const __ops_rsa_pubkey_t *pubkey)
@@ -660,8 +660,8 @@ __ops_rsa_private_encrypt(unsigned char *out,
 \return size of recovered plaintext
 */
 int 
-__ops_rsa_private_decrypt(unsigned char *out,
-			const unsigned char *in,
+__ops_rsa_private_decrypt(uint8_t *out,
+			const uint8_t *in,
 			size_t length,
 			const __ops_rsa_seckey_t *seckey,
 			const __ops_rsa_pubkey_t *pubkey)
@@ -712,8 +712,8 @@ __ops_rsa_private_decrypt(unsigned char *out,
    \param pubkey RSA Public Key
 */
 int 
-__ops_rsa_public_encrypt(unsigned char *out,
-			const unsigned char *in,
+__ops_rsa_public_encrypt(uint8_t *out,
+			const uint8_t *in,
 			size_t length,
 			const __ops_rsa_pubkey_t *pubkey)
 {
@@ -924,7 +924,7 @@ __ops_rsa_new_selfsign_key(const int numbits,
 }
 
 DSA_SIG        *
-__ops_dsa_sign(unsigned char *hashbuf,
+__ops_dsa_sign(uint8_t *hashbuf,
 		unsigned hashsize,
 		const __ops_dsa_seckey_t *secdsa,
 		const __ops_dsa_pubkey_t *pubdsa)

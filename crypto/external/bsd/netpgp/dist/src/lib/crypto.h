@@ -63,8 +63,8 @@
 #define OPS_MIN_HASH_SIZE	16
 
 typedef int __ops_hash_init_t(__ops_hash_t *);
-typedef void __ops_hash_add_t(__ops_hash_t *, const unsigned char *, unsigned);
-typedef unsigned __ops_hash_finish_t(__ops_hash_t *, unsigned char *);
+typedef void __ops_hash_add_t(__ops_hash_t *, const uint8_t *, unsigned);
+typedef unsigned __ops_hash_finish_t(__ops_hash_t *, uint8_t *);
 
 /** _ops_hash_t */
 struct _ops_hash_t {
@@ -77,8 +77,8 @@ struct _ops_hash_t {
 	void		 	*data;		/* blob for data */
 };
 
-typedef void __ops_setiv_func_t(__ops_crypt_t *, const unsigned char *);
-typedef void __ops_setkey_func_t(__ops_crypt_t *, const unsigned char *);
+typedef void __ops_setiv_func_t(__ops_crypt_t *, const uint8_t *);
+typedef void __ops_setkey_func_t(__ops_crypt_t *, const uint8_t *);
 typedef void __ops_crypt_init_t(__ops_crypt_t *);
 typedef void __ops_crypt_resync_t(__ops_crypt_t *);
 typedef void __ops_blkenc_t(__ops_crypt_t *, void *, const void *);
@@ -105,11 +105,11 @@ struct _ops_crypt_t {
 	__ops_crypt_cfb_encrypt_t	*cfb_encrypt;
 	__ops_crypt_cfb_decrypt_t	*cfb_decrypt;
 	__ops_crypt_finish_t		*decrypt_finish;
-	unsigned char			iv[OPS_MAX_BLOCK_SIZE];
-	unsigned char			civ[OPS_MAX_BLOCK_SIZE];
-	unsigned char			siv[OPS_MAX_BLOCK_SIZE];
+	uint8_t				iv[OPS_MAX_BLOCK_SIZE];
+	uint8_t				civ[OPS_MAX_BLOCK_SIZE];
+	uint8_t				siv[OPS_MAX_BLOCK_SIZE];
 		/* siv is needed for weird v3 resync */
-	unsigned char			key[OPS_MAX_KEY_SIZE];
+	uint8_t				key[OPS_MAX_KEY_SIZE];
 	int				num;
 		/* num is offset - see openssl _encrypt doco */
 	void				*encrypt_key;
@@ -128,22 +128,22 @@ void __ops_hash_any(__ops_hash_t *, __ops_hash_alg_t);
 __ops_hash_alg_t __ops_str_to_hash_alg(const char *);
 const char *__ops_text_from_hash(__ops_hash_t *);
 unsigned __ops_hash_size(__ops_hash_alg_t);
-unsigned __ops_hash(unsigned char *, __ops_hash_alg_t, const void *, size_t);
+unsigned __ops_hash(uint8_t *, __ops_hash_alg_t, const void *, size_t);
 
 void __ops_hash_add_int(__ops_hash_t *, unsigned, unsigned);
 
-unsigned __ops_dsa_verify(const unsigned char *, size_t,
+unsigned __ops_dsa_verify(const uint8_t *, size_t,
 			const __ops_dsa_sig_t *,
 			const __ops_dsa_pubkey_t *);
 
-int __ops_rsa_public_decrypt(unsigned char *, const unsigned char *, size_t,
+int __ops_rsa_public_decrypt(uint8_t *, const uint8_t *, size_t,
 			const __ops_rsa_pubkey_t *);
-int __ops_rsa_public_encrypt(unsigned char *, const unsigned char *, size_t,
+int __ops_rsa_public_encrypt(uint8_t *, const uint8_t *, size_t,
 			const __ops_rsa_pubkey_t *);
 
-int __ops_rsa_private_encrypt(unsigned char *, const unsigned char *, size_t,
+int __ops_rsa_private_encrypt(uint8_t *, const uint8_t *, size_t,
 			const __ops_rsa_seckey_t *, const __ops_rsa_pubkey_t *);
-int __ops_rsa_private_decrypt(unsigned char *, const unsigned char *, size_t,
+int __ops_rsa_private_decrypt(uint8_t *, const uint8_t *, size_t,
 			const __ops_rsa_seckey_t *, const __ops_rsa_pubkey_t *);
 
 unsigned __ops_block_size(__ops_symm_alg_t);
@@ -169,9 +169,9 @@ void __ops_reader_pop_decrypt(__ops_stream_t *);
 void __ops_reader_push_hash(__ops_stream_t *, __ops_hash_t *);
 void __ops_reader_pop_hash(__ops_stream_t *);
 
-int __ops_decrypt_decode_mpi(unsigned char *, unsigned, const BIGNUM *,
+int __ops_decrypt_decode_mpi(uint8_t *, unsigned, const BIGNUM *,
 			const __ops_seckey_t *);
-unsigned __ops_rsa_encrypt_mpi(const unsigned char *, const size_t,
+unsigned __ops_rsa_encrypt_mpi(const uint8_t *, const size_t,
 			const __ops_pubkey_t *,
 			__ops_pk_sesskey_params_t *);
 
@@ -214,7 +214,7 @@ __ops_key_t  *__ops_rsa_new_selfsign_key(const int,
 			const unsigned long, __ops_userid_t *);
 
 int __ops_dsa_size(const __ops_dsa_pubkey_t *);
-DSA_SIG *__ops_dsa_sign(unsigned char *, unsigned,
+DSA_SIG *__ops_dsa_sign(uint8_t *, unsigned,
 				const __ops_dsa_seckey_t *,
 				const __ops_dsa_pubkey_t *);
 
@@ -226,7 +226,7 @@ struct __ops_reader_t {
 	__ops_reader_destroyer_t *destroyer;
 	void			*arg;	/* args to pass to reader function */
 	unsigned		 accumulate:1;	/* set to gather packet data */
-	unsigned char		*accumulated;	/* the accumulated data */
+	uint8_t		*accumulated;	/* the accumulated data */
 	unsigned		 asize;	/* size of the buffer */
 	unsigned		 alength;/* used buffer */
 	unsigned		 position;	/* reader-specific offset */
@@ -262,7 +262,7 @@ struct __ops_cbdata_t {
 /** __ops_hashtype_t */
 typedef struct {
 	__ops_hash_t	hash;	/* hashes we should hash data with */
-	unsigned char	keyid[OPS_KEY_ID_SIZE];
+	uint8_t	keyid[OPS_KEY_ID_SIZE];
 } __ops_hashtype_t;
 
 #define NTAGS	0x100	/* == 256 */
@@ -290,9 +290,9 @@ typedef struct {
  */
 
 struct __ops_stream_t {
-	unsigned char		 ss_raw[NTAGS / 8];
+	uint8_t		 	ss_raw[NTAGS / 8];
 		/* 1 bit / sig-subpkt type; set to get raw data */
-	unsigned char		 ss_parsed[NTAGS / 8];
+	uint8_t		 	ss_parsed[NTAGS / 8];
 		/* 1 bit / sig-subpkt type; set to get parsed data */
 	__ops_reader_t	 	 readinfo;
 	__ops_cbdata_t		 cbinfo;

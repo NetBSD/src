@@ -298,73 +298,73 @@ static const uint8_t fastctypes[] = {
 };
 
 int
-fast_isalnum(unsigned char c)
+fast_isalnum(uint8_t c)
 {
 	return fastctypes[c] & (UPPER | LOWER | OCTAL | DEC | HEX);
 }
 
 int
-fast_isalpha(unsigned char c)
+fast_isalpha(uint8_t c)
 {
 	return fastctypes[c] & (UPPER | LOWER);
 }
 
 int
-fast_isascii(unsigned char c)
+fast_isascii(uint8_t c)
 {
 	return (c > 0 && c <= 127);
 }
 
 int
-fast_iscntrl(unsigned char c)
+fast_iscntrl(uint8_t c)
 {
 	return (c > 0 && c < 32) || c == 127;
 }
 
 int
-fast_isprint(unsigned char c)
+fast_isprint(uint8_t c)
 {
 	return (c >= 32 && c < 127);
 }
 
 int
-fast_isdigit(unsigned char c)
+fast_isdigit(uint8_t c)
 {
 	return fastctypes[c] & DEC;
 }
 
 int
-fast_islower(unsigned char c)
+fast_islower(uint8_t c)
 {
 	return fastctypes[c] & LOWER;
 }
 
 int
-fast_isupper(unsigned char c)
+fast_isupper(uint8_t c)
 {
 	return fastctypes[c] & UPPER;
 }
 
 int
-fast_isspace(unsigned char c)
+fast_isspace(uint8_t c)
 {
 	return fastctypes[c] & SPACE;
 }
 
 int
-fast_tolower(unsigned char c)
+fast_tolower(uint8_t c)
 {
 	return (fastctypes[c] & UPPER) ? 'a' + (c - 'A') : c;
 }
 
 int
-fast_toupper(unsigned char c)
+fast_toupper(uint8_t c)
 {
 	return (fastctypes[c] & LOWER) ? 'A' + (c - 'a') : c;
 }
 
 int
-fast_isxdigit(unsigned char c)
+fast_isxdigit(uint8_t c)
 {
 	return fastctypes[c] & HEX;
 }

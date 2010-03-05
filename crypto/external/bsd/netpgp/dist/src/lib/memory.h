@@ -59,7 +59,7 @@
 /** __ops_memory_t
  */
 typedef struct __ops_memory_t {
-	unsigned char  *buf;
+	uint8_t		*buf;
 	size_t          length;
 	size_t          allocated;
 	unsigned	mmapped;
@@ -70,7 +70,7 @@ __ops_memory_t   *__ops_memory_new(void);
 void __ops_memory_free(__ops_memory_t *);
 void __ops_memory_init(__ops_memory_t *, size_t);
 void __ops_memory_pad(__ops_memory_t *, size_t);
-void __ops_memory_add(__ops_memory_t *, const unsigned char *, size_t);
+void __ops_memory_add(__ops_memory_t *, const uint8_t *, size_t);
 void __ops_memory_place_int(__ops_memory_t *, unsigned, unsigned, size_t);
 void __ops_memory_make_packet(__ops_memory_t *, __ops_content_tag_t);
 void __ops_memory_clear(__ops_memory_t *);

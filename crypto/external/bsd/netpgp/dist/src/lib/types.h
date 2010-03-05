@@ -72,7 +72,7 @@ typedef struct _ops_crypt_t	__ops_crypt_t;
 typedef struct _ops_hash_t	__ops_hash_t;
 
 /** Revocation Reason type */
-typedef unsigned char		__ops_ss_rr_code_t;
+typedef uint8_t		__ops_ss_rr_code_t;
 
 /** __ops_packet_t */
 typedef struct __ops_packet_t	__ops_packet_t;

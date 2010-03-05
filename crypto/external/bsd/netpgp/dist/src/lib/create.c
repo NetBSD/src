@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.22 2010/02/12 03:38:48 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.23 2010/03/05 16:01:09 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -122,7 +122,7 @@ __ops_write_ss_header(__ops_output_t *output,
  */
 
 void 
-__ops_fast_create_userid(__ops_userid_t *id, unsigned char *userid)
+__ops_fast_create_userid(__ops_userid_t *id, uint8_t *userid)
 {
 	id->userid = userid;
 }
@@ -151,7 +151,7 @@ __ops_write_struct_userid(__ops_output_t *output, __ops_userid_t *id)
  * \return return value from __ops_write_struct_userid()
  */
 unsigned 
-__ops_write_userid(const unsigned char *userid, __ops_output_t *output)
+__ops_write_userid(const uint8_t *userid, __ops_output_t *output)
 {
 	__ops_userid_t   id;
 
@@ -272,18 +272,18 @@ write_pubkey_body(const __ops_pubkey_t *key, __ops_output_t *output)
  */
 static unsigned 
 write_seckey_body(const __ops_seckey_t *key,
-		      const unsigned char *passphrase,
+		      const uint8_t *passphrase,
 		      const size_t pplen,
 		      __ops_output_t *output)
 {
 	/* RFC4880 Section 5.5.3 Secret-Key Packet Formats */
 
-	__ops_crypt_t     crypted;
-	__ops_hash_t      hash;
-	unsigned char   hashed[OPS_SHA1_HASH_SIZE];
-	unsigned char   sesskey[CAST_KEY_LENGTH];
-	unsigned int    done = 0;
-	unsigned int    i = 0;
+	__ops_crypt_t   crypted;
+	__ops_hash_t    hash;
+	unsigned	done = 0;
+	unsigned	i = 0;
+	uint8_t		hashed[OPS_SHA1_HASH_SIZE];
+	uint8_t		sesskey[CAST_KEY_LENGTH];
 
 	if (!write_pubkey_body(&key->pubkey, output)) {
 		return 0;
@@ -362,8 +362,8 @@ write_seckey_body(const __ops_seckey_t *key,
 		/* RFC4880: section 3.7.1.1 and 3.7.1.2 */
 
 		for (done = 0, i = 0; done < CAST_KEY_LENGTH; i++) {
-			unsigned char   zero = 0;
 			unsigned 	j;
+			uint8_t		zero = 0;
 			int             needed;
 			int             size;
 
@@ -521,7 +521,7 @@ __ops_write_xfer_pubkey(__ops_output_t *output,
 			const __ops_key_t *keydata,
 			const unsigned armoured)
 {
-	unsigned int    i, j;
+	unsigned    i, j;
 
 	if (armoured) {
 		__ops_writer_push_armoured(output, OPS_PGP_PUBLIC_KEY_BLOCK);
@@ -563,7 +563,7 @@ __ops_write_xfer_pubkey(__ops_output_t *output,
 	 */
 
 	if (armoured) {
-		writer_info_finalise(&output->errors, &output->writer);
+		__ops_writer_info_finalise(&output->errors, &output->writer);
 		__ops_writer_pop(output);
 	}
 	return 1;
@@ -585,7 +585,7 @@ __ops_write_xfer_pubkey(__ops_output_t *output,
 unsigned 
 __ops_write_xfer_seckey(__ops_output_t *output,
 				const __ops_key_t *keydata,
-				const unsigned char *passphrase,
+				const uint8_t *passphrase,
 				const size_t pplen,
 				unsigned armoured)
 {
@@ -632,7 +632,7 @@ __ops_write_xfer_seckey(__ops_output_t *output,
 	 */
 
 	if (armoured) {
-		writer_info_finalise(&output->errors, &output->writer);
+		__ops_writer_info_finalise(&output->errors, &output->writer);
 		__ops_writer_pop(output);
 	}
 	return 1;
@@ -731,7 +731,7 @@ __ops_fast_create_rsa_seckey(__ops_seckey_t *key, time_t t,
  */
 unsigned 
 __ops_write_struct_seckey(const __ops_seckey_t *key,
-			    const unsigned char *passphrase,
+			    const uint8_t *passphrase,
 			    const size_t pplen,
 			    __ops_output_t *output)
 {
@@ -846,7 +846,7 @@ __ops_output_new(void)
 void 
 __ops_output_delete(__ops_output_t *output)
 {
-	writer_info_delete(&output->writer);
+	__ops_writer_info_delete(&output->writer);
 	free(output);
 }
 
@@ -858,10 +858,10 @@ __ops_output_delete(__ops_output_t *output)
  \return 1 if OK; else 0
 */
 unsigned 
-__ops_calc_sesskey_checksum(__ops_pk_sesskey_t *sesskey, unsigned char cs[2])
+__ops_calc_sesskey_checksum(__ops_pk_sesskey_t *sesskey, uint8_t cs[2])
 {
-	unsigned long   checksum = 0;
-	unsigned int    i;
+	uint32_t   checksum = 0;
+	unsigned    i;
 
 	if (!__ops_is_sa_supported(sesskey->symm_alg)) {
 		return 0;
@@ -872,8 +872,8 @@ __ops_calc_sesskey_checksum(__ops_pk_sesskey_t *sesskey, unsigned char cs[2])
 	}
 	checksum = checksum % 65536;
 
-	cs[0] = (unsigned char)((checksum >> 8) & 0xff);
-	cs[1] = (unsigned char)(checksum & 0xff);
+	cs[0] = (uint8_t)((checksum >> 8) & 0xff);
+	cs[1] = (uint8_t)(checksum & 0xff);
 
 	if (__ops_get_debug_level(__FILE__)) {
 		(void) fprintf(stderr,"\nm buf checksum: ");
@@ -884,7 +884,7 @@ __ops_calc_sesskey_checksum(__ops_pk_sesskey_t *sesskey, unsigned char cs[2])
 }
 
 static unsigned 
-create_unencoded_m_buf(__ops_pk_sesskey_t *sesskey, unsigned char *m_buf)
+create_unencoded_m_buf(__ops_pk_sesskey_t *sesskey, uint8_t *m_buf)
 {
 	int             i;
 
@@ -921,11 +921,10 @@ create_unencoded_m_buf(__ops_pk_sesskey_t *sesskey, unsigned char *m_buf)
 \return 1 if OK; else 0
 */
 unsigned 
-encode_m_buf(const unsigned char *M, size_t mLen,
-	     const __ops_pubkey_t * pubkey,
-	     unsigned char *EM)
+encode_m_buf(const uint8_t *M, size_t mLen, const __ops_pubkey_t * pubkey,
+	     uint8_t *EM)
 {
-	unsigned int    k;
+	unsigned    k;
 	unsigned        i;
 
 	/* implementation of EME-PKCS1-v1_5-ENCODE, as defined in OpenPGP RFC */
@@ -961,7 +960,7 @@ encode_m_buf(const unsigned char *M, size_t mLen,
 	(void) memcpy(EM + i, M, mLen);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned int    i2;
+		unsigned    i2;
 
 		(void) fprintf(stderr, "Encoded Message: \n");
 		for (i2 = 0; i2 < mLen; i2++) {
@@ -998,8 +997,8 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 
 	const __ops_pubkey_t	*pubkey;
 	__ops_pk_sesskey_t	*sesskey;
-	unsigned char		 unencoded_m_buf[SZ_UNENCODED_M_BUF];
-	unsigned char		*encoded_m_buf;
+	uint8_t			 unencoded_m_buf[SZ_UNENCODED_M_BUF];
+	uint8_t			*encoded_m_buf;
 	size_t			 sz_encoded_m_buf;
 
 	pubkey = __ops_get_pubkey(key);
@@ -1027,7 +1026,7 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 			sizeof(sesskey->key_id));
 
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned int    i;
+		unsigned    i;
 
 		(void) fprintf(stderr, "Encrypting for RSA key id : ");
 		for (i = 0; i < sizeof(sesskey->key_id); i++) {
@@ -1049,7 +1048,7 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 	__ops_random(sesskey->key, CAST_KEY_LENGTH);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned int    i;
+		unsigned    i;
 
 		(void) fprintf(stderr,
 			"CAST5 session key created (len=%d):\n ",
@@ -1065,7 +1064,7 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 		return NULL;
 	}
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned int    i;
+		unsigned    i;
 
 		printf("unencoded m buf:\n");
 		for (i = 0; i < SZ_UNENCODED_M_BUF; i++) {
@@ -1129,7 +1128,7 @@ __ops_write_pk_sesskey(__ops_output_t *output, __ops_pk_sesskey_t *pksk)
 */
 
 unsigned 
-__ops_write_mdc(const unsigned char *hashed, __ops_output_t *output)
+__ops_write_mdc(__ops_output_t *output, const uint8_t *hashed)
 {
 	/* write it out */
 	return __ops_write_ptag(output, OPS_PTAG_CT_MDC) &&
@@ -1148,7 +1147,7 @@ __ops_write_mdc(const unsigned char *hashed, __ops_output_t *output)
 */
 unsigned 
 __ops_write_litdata(__ops_output_t *output,
-			const unsigned char *data,
+			const uint8_t *data,
 			const int maxlen,
 			const __ops_litdata_type_t type)
 {
@@ -1250,14 +1249,13 @@ __ops_filewrite(const char *filename, const char *buf,
 \note Hard-coded to use AES256
 */
 unsigned 
-__ops_write_symm_enc_data(const unsigned char *data,
+__ops_write_symm_enc_data(const uint8_t *data,
 				       const int len,
 				       __ops_output_t * output)
 {
-			/* buffer to write encrypted data to */
-	unsigned char  *encrypted = (unsigned char *) NULL;
 	__ops_crypt_t	crypt_info;
-	size_t		encrypted_sz;	/* size of encrypted data */
+	uint8_t		*encrypted = (uint8_t *) NULL;
+	size_t		encrypted_sz;
 	int             done = 0;
 
 	/* \todo assume AES256 for now */
@@ -1298,7 +1296,7 @@ __ops_write_one_pass_sig(__ops_output_t *output,
 			const __ops_hash_alg_t hash_alg,
 			const __ops_sig_type_t sig_type)
 {
-	unsigned char   keyid[OPS_KEY_ID_SIZE];
+	uint8_t   keyid[OPS_KEY_ID_SIZE];
 
 	__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey);
 	return __ops_write_ptag(output, OPS_PTAG_CT_1_PASS_SIG) &&

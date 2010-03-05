@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.20 2010/02/12 03:38:48 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.21 2010/03/05 16:01:09 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -84,13 +84,13 @@ __RCSID("$NetBSD: crypto.c,v 1.20 2010/02/12 03:38:48 agc Exp $");
 \note only RSA at present
 */
 int 
-__ops_decrypt_decode_mpi(unsigned char *buf,
+__ops_decrypt_decode_mpi(uint8_t *buf,
 				unsigned buflen,
 				const BIGNUM *encmpi,
 				const __ops_seckey_t *seckey)
 {
-	unsigned char   encmpibuf[NETPGP_BUFSIZ];
-	unsigned char   mpibuf[NETPGP_BUFSIZ];
+	uint8_t   encmpibuf[NETPGP_BUFSIZ];
+	uint8_t   mpibuf[NETPGP_BUFSIZ];
 	unsigned        mpisize;
 	int             n;
 	int             i;
@@ -178,13 +178,13 @@ __ops_decrypt_decode_mpi(unsigned char *buf,
 \brief RSA-encrypt an MPI
 */
 unsigned 
-__ops_rsa_encrypt_mpi(const unsigned char *encoded_m_buf,
+__ops_rsa_encrypt_mpi(const uint8_t *encoded_m_buf,
 		    const size_t sz_encoded_m_buf,
 		    const __ops_pubkey_t * pubkey,
 		    __ops_pk_sesskey_params_t * skp)
 {
 
-	unsigned char   encmpibuf[NETPGP_BUFSIZ];
+	uint8_t   encmpibuf[NETPGP_BUFSIZ];
 	int             n;
 
 	if (sz_encoded_m_buf != (size_t)BN_num_bytes(pubkey->key.rsa.n)) {

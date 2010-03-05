@@ -66,7 +66,7 @@ typedef struct {
 	}               	 last_seen;
 	__ops_userid_t		 userid;
 	__ops_userattr_t	 userattr;
-	unsigned char   	 hash[OPS_MAX_HASH_SIZE];
+	uint8_t			 hash[OPS_MAX_HASH_SIZE];
 	const __ops_keyring_t	*keyring;
 	validate_reader_t	*reader;
 	__ops_validation_t	*result;
@@ -84,7 +84,7 @@ typedef struct {
 		__ops_litdata_body_t	 litdata_body;
 		__ops_cleartext_body_t	 cleartext_body;
 	} data;
-	unsigned char			 hash[OPS_MAX_HASH_SIZE];
+	uint8_t			 	 hash[OPS_MAX_HASH_SIZE];
 	__ops_memory_t			*mem;
 	const __ops_keyring_t		*keyring;
 	validate_reader_t		*reader;/* reader-specific arg */
@@ -96,7 +96,7 @@ void __ops_keydata_reader_set(__ops_stream_t *, const __ops_key_t *);
 
 __ops_cb_ret_t __ops_validate_key_cb(const __ops_packet_t *, __ops_cbdata_t *);
 
-unsigned check_binary_sig(const unsigned char *,
+unsigned check_binary_sig(const uint8_t *,
 		const unsigned,
 		const __ops_sig_t *,
 		const __ops_pubkey_t *);

@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.29 2010/02/06 10:50:52 dsl Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.30 2010/03/05 16:01:09 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -107,7 +107,7 @@ __RCSID("$NetBSD: packet-parse.c,v 1.29 2010/02/06 10:50:52 dsl Exp $");
  * \return 1 on success, 0 on failure
  */
 static int 
-limread_data(__ops_data_t *data, unsigned int len,
+limread_data(__ops_data_t *data, unsigned len,
 		  __ops_region_t *subregion, __ops_stream_t *stream)
 {
 	data->len = len;
@@ -151,7 +151,7 @@ read_data(__ops_data_t *data, __ops_region_t *region, __ops_stream_t *stream)
  */
 
 static int 
-read_unsig_str(unsigned char **str, __ops_region_t *subregion,
+read_unsig_str(uint8_t **str, __ops_region_t *subregion,
 		     __ops_stream_t *stream)
 {
 	size_t	len;
@@ -172,7 +172,7 @@ read_unsig_str(unsigned char **str, __ops_region_t *subregion,
 static int 
 read_string(char **str, __ops_region_t *subregion, __ops_stream_t *stream)
 {
-	return read_unsig_str((unsigned char **) str, subregion, stream);
+	return read_unsig_str((uint8_t **) str, subregion, stream);
 }
 
 void 
@@ -252,7 +252,7 @@ sub_base_read(void *dest, size_t length, __ops_error_t **errors,
 			return 0;
 		}
 		if (readinfo->alength + n > readinfo->asize) {
-			unsigned char	*temp;
+			uint8_t	*temp;
 
 			readinfo->asize = (readinfo->asize * 2) + n;
 			temp = realloc(readinfo->accumulated, readinfo->asize);
@@ -287,8 +287,7 @@ __ops_stacked_read(void *dest, size_t length, __ops_error_t **errors,
 
 /* This will do a full read so long as length < MAX_INT */
 static int 
-base_read(unsigned char *dest, size_t length,
-	  __ops_stream_t *stream)
+base_read(uint8_t *dest, size_t length, __ops_stream_t *stream)
 {
 	return sub_base_read(dest, length, &stream->errors, &stream->readinfo,
 			     &stream->cbinfo);
@@ -300,7 +299,7 @@ base_read(unsigned char *dest, size_t length,
  */
 
 static size_t 
-full_read(unsigned char *dest,
+full_read(uint8_t *dest,
 		size_t length,
 		int *last_read,
 		__ops_error_t **errors,
@@ -352,8 +351,8 @@ _read_scalar(unsigned *result, unsigned length,
 	}
 
 	while (length--) {
-		unsigned char   c;
-		int             r;
+		uint8_t	c;
+		int	r;
 
 		r = base_read(&c, 1, stream);
 		if (r != 1)
@@ -392,7 +391,7 @@ _read_scalar(unsigned *result, unsigned length,
  * \return		1 on success, 0 on error
  */
 unsigned 
-__ops_limited_read(unsigned char *dest,
+__ops_limited_read(uint8_t *dest,
 			size_t length,
 			__ops_region_t *region,
 			__ops_error_t **errors,
@@ -433,7 +432,7 @@ __ops_limited_read(unsigned char *dest,
    \brief Call __ops_limited_read on next in stack
 */
 unsigned 
-__ops_stacked_limited_read(unsigned char *dest, unsigned length,
+__ops_stacked_limited_read(uint8_t *dest, unsigned length,
 			 __ops_region_t *region,
 			 __ops_error_t **errors,
 			 __ops_reader_t *readinfo,
@@ -444,7 +443,7 @@ __ops_stacked_limited_read(unsigned char *dest, unsigned length,
 }
 
 static unsigned 
-limread(unsigned char *dest, unsigned length,
+limread(uint8_t *dest, unsigned length,
 	     __ops_region_t *region, __ops_stream_t *info)
 {
 	return __ops_limited_read(dest, length, region, &info->errors,
@@ -452,7 +451,7 @@ limread(unsigned char *dest, unsigned length,
 }
 
 static unsigned 
-exact_limread(unsigned char *dest, unsigned len,
+exact_limread(uint8_t *dest, unsigned len,
 		   __ops_region_t *region,
 		   __ops_stream_t *stream)
 {
@@ -478,7 +477,7 @@ exact_limread(unsigned char *dest, unsigned len,
 static int 
 limskip(unsigned length, __ops_region_t *region, __ops_stream_t *stream)
 {
-	unsigned char   buf[NETPGP_BUFSIZ];
+	uint8_t   buf[NETPGP_BUFSIZ];
 
 	while (length > 0) {
 		unsigned	n = length % NETPGP_BUFSIZ;
@@ -513,7 +512,7 @@ limread_scalar(unsigned *dest,
 			__ops_region_t *region,
 			__ops_stream_t *stream)
 {
-	unsigned char   c[4] = "";
+	uint8_t		c[4] = "";
 	unsigned        t;
 	unsigned        n;
 
@@ -595,9 +594,9 @@ static int
 limited_read_time(time_t *dest, __ops_region_t *region,
 		  __ops_stream_t *stream)
 {
-	unsigned char   c;
-	time_t          mytime = 0;
-	int             i;
+	uint8_t	c;
+	time_t	mytime = 0;
+	int	i;
 
 	/*
          * Cannot assume that time_t is 4 octets long -
@@ -643,7 +642,7 @@ limited_read_time(time_t *dest, __ops_region_t *region,
 static int 
 limread_mpi(BIGNUM **pbn, __ops_region_t *region, __ops_stream_t *stream)
 {
-	unsigned char   buf[NETPGP_BUFSIZ] = "";
+	uint8_t   buf[NETPGP_BUFSIZ] = "";
 					/* an MPI has a 2 byte length part.
 					 * Length is given in bits, so the
 					 * largest we should ever need for
@@ -706,7 +705,7 @@ limread_mpi(BIGNUM **pbn, __ops_region_t *region, __ops_stream_t *stream)
 static unsigned 
 read_new_length(unsigned *length, __ops_stream_t *stream)
 {
-	unsigned char   c;
+	uint8_t   c;
 
 	if (base_read(&c, 1, stream) != 1)
 		return 0;
@@ -756,7 +755,7 @@ static int
 limited_read_new_length(unsigned *length, __ops_region_t *region,
 			__ops_stream_t *stream)
 {
-	unsigned char   c = 0x0;
+	uint8_t   c = 0x0;
 
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
@@ -1303,7 +1302,7 @@ static int
 parse_pubkey_data(__ops_pubkey_t *key, __ops_region_t *region,
 		      __ops_stream_t *stream)
 {
-	unsigned char   c = 0x0;
+	uint8_t   c = 0x0;
 
 	if (region->readc != 0) {
 		/* We should not have read anything so far */
@@ -1517,7 +1516,7 @@ parse_userid(__ops_region_t *region, __ops_stream_t *stream)
 }
 
 static __ops_hash_t     *
-parse_hash_find(__ops_stream_t *stream, const unsigned char *keyid)
+parse_hash_find(__ops_stream_t *stream, const uint8_t *keyid)
 {
 	__ops_hashtype_t	*hp;
 	size_t			 n;
@@ -1550,7 +1549,7 @@ parse_v3_sig(__ops_region_t *region,
 		   __ops_stream_t *stream)
 {
 	__ops_packet_t	pkt;
-	unsigned char	c = 0x0;
+	uint8_t		c = 0x0;
 
 	/* clear signature */
 	(void) memset(&pkt.u.sig, 0x0, sizeof(pkt.u.sig));
@@ -1670,8 +1669,8 @@ parse_one_sig_subpacket(__ops_sig_t *sig,
 {
 	__ops_region_t	subregion;
 	__ops_packet_t	pkt;
-	unsigned char   bools = 0x0;
-	unsigned char	c = 0x0;
+	uint8_t		bools = 0x0;
+	uint8_t		c = 0x0;
 	unsigned	doread = 1;
 	unsigned        t8;
 	unsigned        t7;
@@ -2016,8 +2015,8 @@ parse_sig_subpkts(__ops_sig_t *sig,
 static int 
 parse_v4_sig(__ops_region_t *region, __ops_stream_t *stream)
 {
-	unsigned char   c = 0x0;
-	__ops_packet_t pkt;
+	__ops_packet_t	pkt;
+	uint8_t		c = 0x0;
 
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "\nparse_v4_sig\n");
@@ -2193,8 +2192,8 @@ parse_v4_sig(__ops_region_t *region, __ops_stream_t *stream)
 static int 
 parse_sig(__ops_region_t *region, __ops_stream_t *stream)
 {
-	unsigned char   c = 0x0;
-	__ops_packet_t pkt;
+	__ops_packet_t	pkt;
+	uint8_t		c = 0x0;
 
 	if (region->readc != 0) {
 		/* We should not have read anything so far */
@@ -2225,7 +2224,7 @@ static int
 parse_compressed(__ops_region_t *region, __ops_stream_t *stream)
 {
 	__ops_packet_t	pkt;
-	unsigned char	c = 0x0;
+	uint8_t		c = 0x0;
 
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
@@ -2247,7 +2246,7 @@ parse_compressed(__ops_region_t *region, __ops_stream_t *stream)
 /* same, then duping them just before checking the signature. */
 static void 
 parse_hash_init(__ops_stream_t *stream, __ops_hash_alg_t type,
-		    const unsigned char *keyid)
+		    const uint8_t *keyid)
 {
 	__ops_hashtype_t *hash;
 
@@ -2278,8 +2277,8 @@ parse_hash_init(__ops_stream_t *stream, __ops_hash_alg_t type,
 static int 
 parse_one_pass(__ops_region_t * region, __ops_stream_t * stream)
 {
-	unsigned char   c = 0x0;
-	__ops_packet_t pkt;
+	__ops_packet_t	pkt;
+	uint8_t		c = 0x0;
 
 	if (!limread(&pkt.u.one_pass_sig.version, 1, region, stream)) {
 		return 0;
@@ -2357,7 +2356,7 @@ parse_litdata(__ops_region_t *region, __ops_stream_t *stream)
 {
 	__ops_memory_t	*mem;
 	__ops_packet_t	 pkt;
-	unsigned char	 c = 0x0;
+	uint8_t		 c = 0x0;
 
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
@@ -2366,7 +2365,7 @@ parse_litdata(__ops_region_t *region, __ops_stream_t *stream)
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
-	if (!limread((unsigned char *)pkt.u.litdata_header.filename,
+	if (!limread((uint8_t *)pkt.u.litdata_header.filename,
 			(unsigned)c, region, stream)) {
 		return 0;
 	}
@@ -2468,11 +2467,11 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 	__ops_packet_t		pkt;
 	__ops_region_t		encregion;
 	__ops_region_t	       *saved_region = NULL;
-	unsigned char		c = 0x0;
 	__ops_crypt_t		decrypt;
 	__ops_hash_t		checkhash;
 	unsigned		blocksize;
 	unsigned		crypted;
+	uint8_t			c = 0x0;
 	int			ret = 1;
 
 	if (__ops_get_debug_level(__FILE__)) {
@@ -2546,8 +2545,8 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 
 	if (crypted) {
 		__ops_packet_t	seckey;
-		unsigned char   key[OPS_MAX_KEY_SIZE + OPS_MAX_HASH_SIZE];
 		__ops_hash_t	hashes[(OPS_MAX_KEY_SIZE + OPS_MIN_HASH_SIZE - 1) / OPS_MIN_HASH_SIZE];
+		uint8_t   	key[OPS_MAX_KEY_SIZE + OPS_MAX_HASH_SIZE];
 		size_t          passlen;
 		char           *passphrase;
 		int             hashsize;
@@ -2611,7 +2610,7 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 			/* preload hashes with zeroes... */
 			for (i = 0; i < n; ++i) {
 				hashes[n].add(&hashes[n],
-					(const unsigned char *) "", 1);
+					(const uint8_t *) "", 1);
 			}
 		}
 		passlen = strlen(passphrase);
@@ -2626,7 +2625,7 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 				/* FALLTHROUGH */
 			case OPS_S2KS_SIMPLE:
 				hashes[n].add(&hashes[n],
-					(unsigned char *) passphrase, passlen);
+					(uint8_t *) passphrase, passlen);
 				break;
 
 			case OPS_S2KS_ITERATED_AND_SALTED:
@@ -2644,7 +2643,7 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 							OPS_SALT_SIZE : j);
 					if (j > OPS_SALT_SIZE) {
 						hashes[n].add(&hashes[n],
-						(unsigned char *) passphrase,
+						(uint8_t *) passphrase,
 						j - OPS_SALT_SIZE);
 					}
 				}
@@ -2748,7 +2747,7 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 	stream->reading_v3_secret = 0;
 
 	if (pkt.u.seckey.s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED) {
-		unsigned char   hash[OPS_CHECKHASH_SIZE];
+		uint8_t   hash[OPS_CHECKHASH_SIZE];
 
 		__ops_reader_pop_hash(stream);
 		checkhash.finish(&checkhash, hash);
@@ -2771,7 +2770,7 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 			}
 		}
 	} else {
-		unsigned short  sum;
+		uint16_t  sum;
 
 		sum = __ops_reader_pop_sum16(stream);
 		if (crypted &&
@@ -2823,9 +2822,9 @@ parse_pk_sesskey(__ops_region_t *region,
 	const __ops_seckey_t	*secret;
 	__ops_packet_t		 sesskey;
 	__ops_packet_t		 pkt;
-	unsigned char		*iv;
-	unsigned char	   	 c = 0x0;
-	unsigned char		 cs[2];
+	uint8_t			*iv;
+	uint8_t		   	 c = 0x0;
+	uint8_t			 cs[2];
 	unsigned		 k;
 	BIGNUM			*enc_m;
 	int			 n;
@@ -2833,7 +2832,7 @@ parse_pk_sesskey(__ops_region_t *region,
 	/* Can't rely on it being CAST5 */
 	/* \todo FIXME RW */
 	/* const size_t sz_unencoded_m_buf=CAST_KEY_LENGTH+1+2; */
-	unsigned char		 unencoded_m_buf[1024];
+	uint8_t		 unencoded_m_buf[1024];
 
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
@@ -2937,7 +2936,7 @@ parse_pk_sesskey(__ops_region_t *region,
 	(void) memcpy(pkt.u.pk_sesskey.key, unencoded_m_buf + 1, k);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned int    j;
+		unsigned    j;
 		printf("session key recovered (len=%u):\n", k);
 		for (j = 0; j < k; j++)
 			printf("%2x ", pkt.u.pk_sesskey.key[j]);
@@ -2986,7 +2985,7 @@ __ops_decrypt_se_data(__ops_content_tag_t tag, __ops_region_t *region,
 
 	decrypt = __ops_get_decrypt(stream);
 	if (decrypt) {
-		unsigned char   buf[OPS_MAX_BLOCK_SIZE + 2] = "";
+		uint8_t   buf[OPS_MAX_BLOCK_SIZE + 2] = "";
 		size_t          b = decrypt->blocksize;
 		/* __ops_packet_t pkt; */
 		__ops_region_t    encregion;
@@ -3107,7 +3106,7 @@ static int
 parse_se_ip_data(__ops_region_t *region, __ops_stream_t *stream)
 {
 	__ops_packet_t	pkt;
-	unsigned char   c = 0x0;
+	uint8_t		c = 0x0;
 
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
@@ -3161,11 +3160,11 @@ parse_mdc(__ops_region_t *region, __ops_stream_t *stream)
  * \param *pktlen	On return, will contain number of bytes in packet
  * \return 1 on success, 0 on error, -1 on EOF */
 static int 
-__ops_parse_packet(__ops_stream_t *stream, unsigned long *pktlen)
+__ops_parse_packet(__ops_stream_t *stream, uint32_t *pktlen)
 {
 	__ops_packet_t	pkt;
 	__ops_region_t	region;
-	unsigned char	ptag;
+	uint8_t		ptag;
 	unsigned	indeterminate = 0;
 	int		ret;
 
@@ -3370,7 +3369,7 @@ __ops_parse_packet(__ops_stream_t *stream, unsigned long *pktlen)
 int 
 __ops_parse(__ops_stream_t *stream, const int perrors)
 {
-	unsigned long   pktlen;
+	uint32_t   pktlen;
 	int             r;
 
 	do {

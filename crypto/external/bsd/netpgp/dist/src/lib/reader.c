@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.30 2010/02/12 03:38:48 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.31 2010/03/05 16:01:10 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -130,6 +130,7 @@ __RCSID("$NetBSD: reader.c,v 1.30 2010/02/12 03:38:48 agc Exp $");
 #include "packet.h"
 #include "keyring.h"
 #include "readerwriter.h"
+#include "netpgpsdk.h"
 #include "netpgpdefs.h"
 #include "netpgpdigest.h"
 
@@ -279,22 +280,22 @@ typedef struct {
 	unsigned   	got_sig:1;
 	/* base64 stuff */
 	unsigned        buffered;
-	unsigned char   buffer[3];
+	uint8_t		buffer[3];
 	unsigned	eof64;
-	unsigned long   checksum;
-	unsigned long   read_checksum;
+	uint32_t   checksum;
+	uint32_t   read_checksum;
 	/* unarmoured text blocks */
-	unsigned char   unarmoured[NETPGP_BUFSIZ];
+	uint8_t   unarmoured[NETPGP_BUFSIZ];
 	size_t          unarmoredc;
 	/* pushed back data (stored backwards) */
-	unsigned char  *pushback;
+	uint8_t  *pushback;
 	unsigned        pushbackc;
 	/* armoured block headers */
 	__ops_headers_t	headers;
 } dearmour_t;
 
 static void 
-push_back(dearmour_t *dearmour, const unsigned char *buf,
+push_back(dearmour_t *dearmour, const uint8_t *buf,
 	  unsigned length)
 {
 	unsigned        n;
@@ -424,7 +425,7 @@ read_char(dearmour_t *dearmour,
 		__ops_cbdata_t *cbinfo,
 		unsigned skip)
 {
-	unsigned char   c;
+	uint8_t   c;
 
 	do {
 		if (dearmour->pushbackc) {
@@ -542,8 +543,8 @@ __ops_dup_headers(__ops_headers_t *dest, const __ops_headers_t *src)
 	} else {
 		dest->headerc = src->headerc;
 		for (n = 0; n < src->headerc; ++n) {
-			dest->headers[n].key = strdup(src->headers[n].key);
-			dest->headers[n].value = strdup(src->headers[n].value);
+			dest->headers[n].key = netpgp_strdup(src->headers[n].key);
+			dest->headers[n].value = netpgp_strdup(src->headers[n].value);
 		}
 	}
 }
@@ -648,7 +649,7 @@ process_dash_escaped(dearmour_t *dearmour,
 				return -1;
 			}
 			if (body->data[0] == '\n') {
-				hash->add(hash, (const unsigned char *)"\r", 1);
+				hash->add(hash, (const uint8_t *)"\r", 1);
 			}
 			hash->add(hash, body->data, body->length);
 			if (__ops_get_debug_level(__FILE__)) {
@@ -707,8 +708,8 @@ add_header(dearmour_t *dearmour, const char *key, const char *value)
 			(void) fprintf(stderr, "add_header: bad alloc\n");
 			return 0;
 		}
-		dearmour->headers.headers[n].key = strdup(key);
-		dearmour->headers.headers[n].value = strdup(value);
+		dearmour->headers.headers[n].key = netpgp_strdup(key);
+		dearmour->headers.headers[n].value = netpgp_strdup(value);
 		dearmour->headers.headerc = n + 1;
 		return 1;
 	}
@@ -774,7 +775,7 @@ parse_headers(dearmour_t *dearmour, __ops_error_t **errors,
 						 * line.
 						 */
 						buf[nbuf] = '\n';
-						push_back(dearmour, (unsigned char *) buf, nbuf + 1);
+						push_back(dearmour, (uint8_t *) buf, nbuf + 1);
 						ret = -1;
 						break;
 					}
@@ -817,10 +818,10 @@ end:
 static int 
 read4(dearmour_t *dearmour, __ops_error_t **errors,
       __ops_reader_t *readinfo, __ops_cbdata_t *cbinfo,
-      int *pc, unsigned *pn, unsigned long *pl)
+      int *pc, unsigned *pn, uint32_t *pl)
 {
 	int             n, c;
-	unsigned long   l = 0;
+	uint32_t   l = 0;
 
 	for (n = 0; n < 4; ++n) {
 		c = read_char(dearmour, errors, readinfo, cbinfo, 1);
@@ -833,11 +834,11 @@ read4(dearmour_t *dearmour, __ops_error_t **errors,
 		}
 		l <<= 6;
 		if (c >= 'A' && c <= 'Z') {
-			l += (unsigned long)(c - 'A');
+			l += (uint32_t)(c - 'A');
 		} else if (c >= 'a' && c <= 'z') {
-			l += (unsigned long)(c - 'a') + 26;
+			l += (uint32_t)(c - 'a') + 26;
 		} else if (c >= '0' && c <= '9') {
-			l += (unsigned long)(c - '0') + 52;
+			l += (uint32_t)(c - '0') + 52;
 		} else if (c == '+') {
 			l += 62;
 		} else if (c == '/') {
@@ -856,7 +857,7 @@ read4(dearmour_t *dearmour, __ops_error_t **errors,
 }
 
 unsigned 
-__ops_crc24(unsigned checksum, unsigned char c)
+__ops_crc24(unsigned checksum, uint8_t c)
 {
 	unsigned        i;
 
@@ -875,7 +876,7 @@ decode64(dearmour_t *dearmour, __ops_error_t **errors,
 {
 	unsigned        n;
 	int             n2;
-	unsigned long   l;
+	uint32_t   l;
 	int             c;
 	int             ret;
 
@@ -995,7 +996,7 @@ decode64(dearmour_t *dearmour, __ops_error_t **errors,
 	}
 
 	for (n = 0; n < dearmour->buffered; ++n) {
-		dearmour->buffer[n] = (unsigned char)l;
+		dearmour->buffer[n] = (uint8_t)l;
 		l >>= 8;
 	}
 
@@ -1029,9 +1030,9 @@ armoured_data_reader(void *dest_, size_t length, __ops_error_t **errors,
 		     __ops_cbdata_t *cbinfo)
 {
 	__ops_packet_t	 content;
-	unsigned char	*dest = dest_;
 	dearmour_t	*dearmour;
 	unsigned	 first;
+	uint8_t		*dest = dest_;
 	char		 buf[1024];
 	int		 saved;
 	int              ret;
@@ -1366,7 +1367,7 @@ __ops_reader_pop_dearmour(__ops_stream_t *stream)
 
 /* this is actually used for *decrypting* */
 typedef struct {
-	unsigned char	 decrypted[1024 * 15];
+	uint8_t		 decrypted[1024 * 15];
 	size_t		 c;
 	size_t		 off;
 	__ops_crypt_t	*decrypt;
@@ -1427,8 +1428,8 @@ encrypted_data_reader(void *dest,
 			cdest += n;
 			dest = cdest;
 		} else {
-			unsigned        n = encrypted->region->length;
-			unsigned char   buffer[1024];
+			unsigned	n = encrypted->region->length;
+			uint8_t		buffer[1024];
 
 			if (!n) {
 				return -1;
@@ -1549,7 +1550,7 @@ typedef struct {
 	/* boolean: 0 once we've done the preamble/MDC checks */
 	/* and are reading from the plaintext */
 	int              passed_checks;
-	unsigned char	*plaintext;
+	uint8_t		*plaintext;
 	size_t           plaintext_available;
 	size_t           plaintext_offset;
 	__ops_region_t	*region;
@@ -1571,18 +1572,18 @@ se_ip_data_reader(void *dest_,
 {
 	decrypt_se_ip_t	*se_ip;
 	__ops_region_t	 decrypted_region;
-	unsigned int	 n = 0;
+	unsigned	 n = 0;
 
 	se_ip = __ops_reader_get_arg(readinfo);
 	if (!se_ip->passed_checks) {
-		unsigned char  *buf = NULL;
-		unsigned char   hashed[OPS_SHA1_HASH_SIZE];
-		unsigned char  *preamble;
-		unsigned char  *plaintext;
-		unsigned char  *mdc;
-		unsigned char  *mdc_hash;
+		uint8_t		*buf = NULL;
+		uint8_t		hashed[OPS_SHA1_HASH_SIZE];
+		uint8_t		*preamble;
+		uint8_t		*plaintext;
+		uint8_t		*mdc;
+		uint8_t		*mdc_hash;
 		__ops_hash_t	hash;
-		size_t          b;
+		size_t		b;
 		size_t          sz_preamble;
 		size_t          sz_mdc_hash;
 		size_t          sz_mdc;
@@ -1825,10 +1826,10 @@ __ops_reader_set_fd(__ops_stream_t *stream, int fd)
 /**************************************************************************/
 
 typedef struct {
-	const unsigned char *buffer;
+	const uint8_t *buffer;
 	size_t          length;
 	size_t          offset;
-}               reader_mem_t;
+} reader_mem_t;
 
 static int 
 mem_reader(void *dest, size_t length, __ops_error_t **errors,
@@ -2284,7 +2285,7 @@ get_passphrase_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	switch (pkt->tag) {
 	case OPS_GET_PASSPHRASE:
 		*(content->skey_passphrase.passphrase) =
-				strdup(getpass("netpgp passphrase: "));
+				netpgp_strdup(getpass("netpgp passphrase: "));
 		return OPS_KEEP_MEMORY;
 	default:
 		break;

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009,2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,11 +35,11 @@
 #include "packet-show.h"
 
 typedef struct __ops_validation_t {
-	unsigned int		 validc;
+	unsigned		 validc;
 	__ops_sig_info_t	*valid_sigs;
-	unsigned int		 invalidc;
+	unsigned		 invalidc;
 	__ops_sig_info_t	*invalid_sigs;
-	unsigned int		 unknownc;
+	unsigned		 unknownc;
 	__ops_sig_info_t	*unknown_sigs;
 	time_t			 birthtime;
 	time_t			 duration;
@@ -58,7 +58,7 @@ __ops_validate_all_sigs(__ops_validation_t *,
 		const __ops_keyring_t *,
 		__ops_cb_ret_t cb(const __ops_packet_t *, __ops_cbdata_t *));
 
-unsigned   __ops_check_sig(const unsigned char *,
+unsigned   __ops_check_sig(const uint8_t *,
 		unsigned, const __ops_sig_t *, const __ops_pubkey_t *);
 
 const char     *__ops_get_info(const char *type);
@@ -66,6 +66,9 @@ const char     *__ops_get_info(const char *type);
 int __ops_asprintf(char **, const char *, ...);
 
 void netpgp_log(const char *, ...);
+
+int netpgp_strcasecmp(const char *, const char *);
+char *netpgp_strdup(const char *);
 
 
 #endif
