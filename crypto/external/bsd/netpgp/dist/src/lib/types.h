@@ -46,9 +46,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef TYPES_H_
 #define TYPES_H_
+
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
 
 typedef struct __ops_io_t {
 	void	*outs;	/* output file stream */
