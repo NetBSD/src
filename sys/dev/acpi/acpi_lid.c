@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.36 2010/03/05 14:00:16 jruoho Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.37 2010/03/05 21:01:44 jruoho Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.36 2010/03/05 14:00:16 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.37 2010/03/05 21:01:44 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -69,8 +69,6 @@ static void	acpilid_attach(device_t, device_t, void *);
 static int	acpilid_detach(device_t, int);
 static void	acpilid_status_changed(void *);
 static void	acpilid_notify_handler(ACPI_HANDLE, UINT32, void *);
-static void	acpilid_wake_event(device_t, bool);
-static bool	acpilid_suspend(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL_NEW(acpilid, sizeof(struct acpilid_softc),
     acpilid_match, acpilid_attach, acpilid_detach, NULL);
@@ -111,8 +109,8 @@ acpilid_attach(device_t parent, device_t self, void *aux)
 	sc->sc_smpsw.smpsw_name = device_xname(self);
 	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_LID;
 
+	(void)pmf_device_register(self, NULL, NULL);
 	(void)sysmon_pswitch_register(&sc->sc_smpsw);
-	(void)pmf_device_register(self, acpilid_suspend, NULL);
 
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, acpilid_notify_handler, self);
@@ -137,47 +135,6 @@ acpilid_detach(device_t self, int flags)
 	sysmon_pswitch_unregister(&sc->sc_smpsw);
 
 	return 0;
-}
-
-static void
-acpilid_wake_event(device_t dv, bool enable)
-{
-	struct acpilid_softc *sc = device_private(dv);
-	ACPI_OBJECT_LIST arg;
-	ACPI_OBJECT obj[3];
-	ACPI_STATUS rv;
-
-	/*
-	 * First try to call the Device Sleep Wake control method, _DSW.
-	 * Only if this is not available, resort to to the Power State
-	 * Wake control method, _PSW, which was deprecated in ACPI 3.0.
-	 */
-	obj[0].Integer.Value = enable ? 1 : 0;
-	obj[1].Integer.Value = obj[2].Integer.Value = 0;
-	obj[0].Type = obj[1].Type = obj[2].Type = ACPI_TYPE_INTEGER;
-
-	arg.Count = 3;
-	arg.Pointer = obj;
-
-	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "_DSW", &arg, NULL);
-
-	if (ACPI_SUCCESS(rv))
-		return;
-
-	if (rv != AE_NOT_FOUND)
-		goto fail;
-
-	rv = acpi_eval_set_integer(sc->sc_node->ad_handle, "_PSW",
-	    enable ? 1 : 0);
-
-	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND)
-		goto fail;
-
-	return;
-
-fail:
-	aprint_error_dev(dv, "unable to evaluate wake control method: %s\n",
-	    AcpiFormatException(rv));
 }
 
 /*
@@ -221,16 +178,6 @@ acpilid_notify_handler(ACPI_HANDLE handle, uint32_t notify, void *context)
 	default:
 		aprint_error_dev(dv, "unknown notify 0x%02X\n", notify);
 	}
-}
-
-static bool
-acpilid_suspend(device_t dv, const pmf_qual_t *qual)
-{
-	struct acpilid_softc *sc = device_private(dv);
-
-	acpilid_wake_event(dv, sc->sc_status == 0);
-
-	return true;
 }
 
 #ifdef _MODULE
