@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 2009/10/03 02:27:43 elad Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2010/03/05 10:27:16 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.8 2009/10/03 02:27:43 elad Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 2010/03/05 10:27:16 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -86,7 +86,7 @@ main(int argc, char **argv)
 	if (argc != 0)
 		usage();
 
-	for (len = 4096;;) {
+	for (len = 8192;;) {
 		iov.iov_base = malloc(len);
 		iov.iov_len = len;
 		if (modctl(MODCTL_STAT, &iov)) {
