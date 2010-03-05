@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_srat.h,v 1.2 2009/12/04 10:42:39 njoly Exp $ */
+/* $NetBSD: acpi_srat.h,v 1.3 2010/03/05 08:30:48 jruoho Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ACPI_SRAT_H
-#define ACPI_SRAT_H
+#ifndef _SYS_DEV_ACPI_ACPI_SRAT_H
+#define _SYS_DEV_ACPI_ACPI_SRAT_H
 
 typedef uint32_t acpisrat_nodeid_t;
 
@@ -95,4 +95,4 @@ uint32_t acpisrat_node_memoryranges(acpisrat_nodeid_t);
 void acpisrat_cpu(acpisrat_nodeid_t, uint32_t cpunum, struct acpisrat_cpu *);
 void acpisrat_mem(acpisrat_nodeid_t, uint32_t memrange, struct acpisrat_mem *);
 
-#endif /* ACPI_SRAT_H */
+#endif	/* !_SYS_DEV_ACPI_ACPI_SRAT_H */
