@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.459 2010/02/26 21:52:22 morr Exp $
+.\"	$NetBSD: main,v 1.460 2010/03/05 22:18:33 pettai Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1307,6 +1307,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Rui Paulo Ta Mt rpaulo@NetBSD.org
 .It Ta Jonathan Perkin Ta Mt sketch@NetBSD.org
 .It Ta Andrey Petrov Ta Mt petrov@NetBSD.org
+.It Ta Fredrik Pettai Ta Mt pettai@NetBSD.org
 .It Ta Herb Peyerl Ta Mt hpeyerl@NetBSD.org
 .It Ta Matthias Pfaller Ta Mt matthias@NetBSD.org
 .It Ta Chris Pinnock Ta Mt cjep@NetBSD.org
