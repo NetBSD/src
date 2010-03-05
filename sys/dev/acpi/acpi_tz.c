@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.60 2010/03/05 12:44:16 pgoyette Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.61 2010/03/05 14:00:17 jruoho Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,20 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.60 2010/03/05 12:44:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.61 2010/03/05 14:00:17 jruoho Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/callout.h>
-#include <sys/proc.h>
-#include <dev/sysmon/sysmonvar.h>
+#include <sys/kernel.h>
+#include <sys/systm.h>
 
-#include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 

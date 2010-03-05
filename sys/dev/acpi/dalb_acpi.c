@@ -1,4 +1,4 @@
-/*	$NetBSD: dalb_acpi.c,v 1.8 2010/03/02 18:44:47 jruoho Exp $	*/
+/*	$NetBSD: dalb_acpi.c,v 1.9 2010/03/05 14:00:17 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.8 2010/03/02 18:44:47 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.9 2010/03/05 14:00:17 jruoho Exp $");
 
 /*
  * Direct Application Launch Button:
@@ -35,18 +35,12 @@ __KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.8 2010/03/02 18:44:47 jruoho Exp $")
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/proc.h>
-#include <sys/kernel.h>
-#include <sys/callout.h>
 #include <sys/sysctl.h>
+#include <sys/systm.h>
 
-#include <machine/bus.h>
-
-#include <dev/acpi/acpica.h>
-#include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpireg.h>
+#include <dev/acpi/acpivar.h>
 
 #define _COMPONENT          ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME            ("dalb_acpi")

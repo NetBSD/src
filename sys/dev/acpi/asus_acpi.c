@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.17 2010/02/24 22:37:56 dyoung Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.18 2010/03/05 14:00:17 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008, 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,19 +27,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.17 2010/02/24 22:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.18 2010/03/05 14:00:17 jruoho Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/malloc.h>
-#include <sys/buf.h>
-#include <sys/callout.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/sysctl.h>
+#include <sys/systm.h>
 
-#include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpireg.h>
+#include <dev/acpi/acpivar.h>
 
 #define _COMPONENT          ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME            ("asus_acpi")

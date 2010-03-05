@@ -1,14 +1,16 @@
-/* $NetBSD: acpi_timer.c,v 1.14 2009/04/08 00:15:45 dyoung Exp $ */
+/* $NetBSD: acpi_timer.c,v 1.15 2010/03/05 14:00:17 jruoho Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.14 2009/04/08 00:15:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.15 2010/03/05 14:00:17 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/timetc.h>
-#include <dev/acpi/acpica.h>
+
+#include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_timer.h>
+
 #include <machine/acpi_machdep.h>
 
 static int acpitimer_test(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_quirks.c,v 1.10 2009/01/25 02:26:30 christos Exp $	*/
+/*	$NetBSD: acpi_quirks.c,v 1.11 2010/03/05 14:00:17 jruoho Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,19 +37,14 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.10 2009/01/25 02:26:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.11 2010/03/05 14:00:17 jruoho Exp $");
 
 #include "opt_acpi.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 
-#include <dev/acpi/acpica.h>
-#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
 static int acpi_rev_cmp(uint32_t, uint32_t, int);

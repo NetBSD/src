@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.154 2010/03/04 23:25:07 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.155 2010/03/05 14:00:16 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,27 +70,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.154 2010/03/04 23:25:07 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.155 2010/03/05 14:00:16 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mutex.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/systm.h>
 
-#include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_osd.h>
+#include <dev/acpi/acpi_pci.h>
 #include <dev/acpi/acpi_timer.h>
 #include <dev/acpi/acpi_wakedev.h>
-#include <dev/acpi/acpi_pci.h>
+
 #ifdef ACPIVERBOSE
 #include <dev/acpi/acpidevs_data.h>
 #endif

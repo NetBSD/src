@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.33 2010/03/04 23:06:36 jruoho Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.34 2010/03/05 14:00:16 jruoho Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,17 +40,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.33 2010/03/04 23:06:36 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.34 2010/03/05 14:00:16 jruoho Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/module.h>
+#include <sys/systm.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-
-#include <dev/sysmon/sysmonvar.h>
 
 #define _COMPONENT		 ACPI_BUTTON_COMPONENT
 ACPI_MODULE_NAME		 ("acpi_button")

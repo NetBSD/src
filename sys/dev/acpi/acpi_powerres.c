@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_powerres.c,v 1.10 2010/03/02 18:44:47 jruoho Exp $ */
+/* $NetBSD: acpi_powerres.c,v 1.11 2010/03/05 14:00:17 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2001 Michael Smith
@@ -29,16 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_powerres.c,v 1.10 2010/03/02 18:44:47 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_powerres.c,v 1.11 2010/03/05 14:00:17 jruoho Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/conf.h>
-#include <sys/systm.h>
 
-#include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 

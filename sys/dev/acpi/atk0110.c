@@ -1,4 +1,4 @@
-/*	$NetBSD: atk0110.c,v 1.8 2010/03/04 20:17:30 jruoho Exp $	*/
+/*	$NetBSD: atk0110.c,v 1.9 2010/03/05 14:00:17 jruoho Exp $	*/
 /*	$OpenBSD: atk0110.c,v 1.1 2009/07/23 01:38:16 cnst Exp $	*/
 
 /*
@@ -18,14 +18,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.8 2010/03/04 20:17:30 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.9 2010/03/05 14:00:17 jruoho Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
-
-#include <dev/sysmon/sysmonvar.h>
+#include <sys/systm.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
