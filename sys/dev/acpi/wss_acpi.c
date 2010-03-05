@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.25 2009/08/18 21:33:29 cegger Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.26 2010/03/05 14:00:17 jruoho Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,28 +26,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.25 2009/08/18 21:33:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.26 2010/03/05 14:00:17 jruoho Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/syslog.h>
-#include <sys/device.h>
-#include <sys/proc.h>
-
-#include <sys/bus.h>
-
 #include <sys/audioio.h>
+#include <sys/device.h>
+#include <sys/systm.h>
+
 #include <dev/audio_if.h>
 
-#include <dev/isa/isavar.h>
-#include <dev/isa/isadmavar.h>
-
-#include <dev/acpi/acpica.h>
-#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
+#include <dev/isa/isadmavar.h>
 #include <dev/isa/ad1848var.h>
 #include <dev/isa/wssreg.h>
 #include <dev/isa/wssvar.h>

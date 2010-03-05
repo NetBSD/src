@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.15 2009/09/16 10:47:54 mlelstv Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.16 2010/03/05 14:00:17 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,21 +27,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.15 2009/09/16 10:47:54 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.16 2010/03/05 14:00:17 jruoho Exp $");
 
-#include "opt_acpi.h"
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/reboot.h>
+#include <sys/systm.h>
 
-#include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
 #include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
+
+#include "opt_acpi.h"
+
 
 #define _COMPONENT          ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME            ("acpi_pci_link")

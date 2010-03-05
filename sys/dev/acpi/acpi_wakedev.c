@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.2 2009/08/04 17:06:10 jmcneill Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.3 2010/03/05 14:00:17 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,18 +27,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.2 2009/08/04 17:06:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.3 2010/03/05 14:00:17 jruoho Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/kernel.h>
-#include <sys/kmem.h>
 #include <sys/device.h>
+#include <sys/kmem.h>
 #include <sys/queue.h>
 #include <sys/sysctl.h>
+#include <sys/systm.h>
 
-#include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpireg.h>
+#include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_wakedev.h>
 
 struct acpi_wakedev;

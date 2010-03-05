@@ -1,4 +1,4 @@
-/* $NetBSD: hpqlb_acpi.c,v 1.6 2010/02/24 22:37:56 dyoung Exp $ */
+/* $NetBSD: hpqlb_acpi.c,v 1.7 2010/03/05 14:00:17 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2008  Christoph Egger <cegger@netbsd.org>
@@ -27,24 +27,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.6 2010/02/24 22:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.7 2010/03/05 14:00:17 jruoho Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/malloc.h>
-#include <sys/buf.h>
-#include <sys/callout.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/pmf.h>
+#include <sys/systm.h>
+
+#include <machine/pio.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
-#include <machine/pio.h>
+#include <dev/isa/isareg.h>
+
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
-#include <dev/isa/isareg.h>
 
 #define _COMPONENT		ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME		("hpqlb_acpi")

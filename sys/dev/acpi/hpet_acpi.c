@@ -1,4 +1,4 @@
-/* $NetBSD: hpet_acpi.c,v 1.4 2009/02/17 12:46:01 jmcneill Exp $ */
+/* $NetBSD: hpet_acpi.c,v 1.5 2010/03/05 14:00:17 jruoho Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -29,21 +29,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet_acpi.c,v 1.4 2009/02/17 12:46:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet_acpi.c,v 1.5 2010/03/05 14:00:17 jruoho Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/errno.h>
 #include <sys/device.h>
-
-#include <sys/bus.h>
-
-#include <dev/acpi/acpica.h>
-#include <dev/acpi/acpireg.h>
-#include <dev/acpi/acpivar.h>
-
+#include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/timetc.h>
+
+#include <dev/acpi/acpivar.h>
 
 #include <dev/ic/hpetvar.h>
 

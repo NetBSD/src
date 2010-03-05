@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.27 2010/02/28 17:22:41 jruoho Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.28 2010/03/05 14:00:17 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,19 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.27 2010/02/28 17:22:41 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.28 2010/03/05 14:00:17 jruoho Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/malloc.h>
-#include <sys/module.h>
-#include <sys/buf.h>
-#include <sys/callout.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/pmf.h>
-#include <sys/queue.h>
-#include <sys/kmem.h>
+#include <sys/module.h>
+#include <sys/systm.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
