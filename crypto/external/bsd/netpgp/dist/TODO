@@ -3,10 +3,10 @@ To Do
 agent
 agentctl
 trust subpackets
+make netpgpkeys work - add, import, commit, update, sign, passphrase
 convert to and from ascii armored sigs
 gpgme compat lib
 --list-sigs - these come out in __ops_check_subkey_sig()
-make netpgpkeys work - add, import, commit, update, sign, passphrase
 return userids from successful verify, and then print id out if required
 is get_passphrase_cb needed?
 error logging

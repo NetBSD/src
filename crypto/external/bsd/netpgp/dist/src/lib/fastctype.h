@@ -29,6 +29,10 @@
 #ifndef FASTCTYPE_H_
 #define FASTCTYPE_H_
 
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+
 int fast_isalnum(uint8_t);
 int fast_isalpha(uint8_t);
 int fast_isascii(uint8_t);
