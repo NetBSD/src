@@ -1,6 +1,6 @@
-.\" 	$NetBSD: ftp.1,v 1.130 2009/07/11 18:35:48 joerg Exp $
+.\" 	$NetBSD: ftp.1,v 1.131 2010/03/05 07:41:10 lukem Exp $
 .\"
-.\" Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1996-2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -57,7 +57,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd May 10, 2008
+.Dd March 5, 2010
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -777,7 +777,7 @@ mode is
 .Dq stream .
 .It Ic modtime Ar remote-file
 Show the last modification time of the file on the remote machine, in
-.Li RFC2822
+.Li RFC 2822
 format.
 .It Ic more Ar file
 A synonym for
@@ -998,7 +998,7 @@ traffic.
 servers are required to support the
 .Dv PASV
 command by
-.Li RFC1123 ,
+.Li RFC 1123 ,
 some do not.)
 .It Ic pdir Op Ar remote-path
 Perform
@@ -1591,7 +1591,7 @@ ascii or binary (respectively).
 The default transfer type is binary.
 .Pp
 In order to be compliant with
-.Li RFC3986 ,
+.Li RFC 3986 ,
 .Nm
 interprets the
 .Ar path
@@ -1644,7 +1644,7 @@ Any
 .Sq Li \&% Ns Ar XX
 codes
 (per
-.Li RFC3986 )
+.Li RFC 3986 )
 within the path components are decoded, with
 .Ar XX
 representing a character code in hexadecimal.
@@ -2285,7 +2285,7 @@ URL characters are required in the username or password
 or
 .Sq / ) ,
 encode them with
-.Li RFC3986
+.Li RFC 3986
 .Sq Li \&% Ns Ar XX
 encoding.
 .Pp
@@ -2330,23 +2330,23 @@ for an example of how to make this automatic.
 .Nm
 attempts to be compliant with:
 .Bl -tag -offset indent -width 8n
-.It Li RFC0959
+.It Li RFC 959
 .Em File Transfer Protocol
-.It Li RFC1123
+.It Li RFC 1123
 .Em Requirements for Internet Hosts - Application and Support
-.It Li RFC1635
+.It Li RFC 1635
 .Em How to Use Anonymous FTP
-.It Li RFC2389
+.It Li RFC 2389
 .Em Feature negotiation mechanism for the File Transfer Protocol
-.It Li RFC2428
+.It Li RFC 2428
 .Em FTP Extensions for IPv6 and NATs
-.It Li RFC2616
+.It Li RFC 2616
 .Em Hypertext Transfer Protocol -- HTTP/1.1
-.It Li RFC2822
+.It Li RFC 2822
 .Em Internet Message Format
-.It Li RFC3659
+.It Li RFC 3659
 .Em Extensions to FTP
-.It Li RFC3986
+.It Li RFC 3986
 .Em Uniform Resource Identifier (URI)
 .El
 .Sh HISTORY
