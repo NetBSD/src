@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.153 2010/03/04 21:40:53 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.154 2010/03/05 07:41:10 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.153 2010/03/04 21:40:53 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.154 2010/03/05 07:41:10 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -169,7 +169,7 @@ parse_feat(const char *fline)
 
 			/*
 			 * work-around broken ProFTPd servers that can't
-			 * even obey RFC2389.
+			 * even obey RFC 2389.
 			 */
 	while (*fline && isspace((int)*fline))
 		fline++;
@@ -393,7 +393,7 @@ ftp_login(const char *host, const char *luser, const char *lpass)
 	 */
 	if (anonftp) {
 		FREEPTR(fuser);
-		fuser = ftp_strdup("anonymous");	/* as per RFC1635 */
+		fuser = ftp_strdup("anonymous");	/* as per RFC 1635 */
 		FREEPTR(pass);
 		pass = ftp_strdup(getoptionvalue("anonpass"));
 	}
@@ -778,7 +778,7 @@ remotemodtime(const char *file, int noisy)
 }
 
 /*
- * Format tm in an RFC2822 compatible manner, with a trailing \n.
+ * Format tm in an RFC 2822 compatible manner, with a trailing \n.
  * Returns a pointer to a static string containing the result.
  */
 const char *
@@ -788,7 +788,7 @@ rfc2822time(const struct tm *tm)
 
 	if (strftime(result, sizeof(result),
 	    "%a, %d %b %Y %H:%M:%S %z\n", tm) == 0)
-		errx(1, "Can't convert RFC2822 time: buffer too small");
+		errx(1, "Can't convert RFC 2822 time: buffer too small");
 	return result;
 }
 
@@ -806,9 +806,9 @@ parse_rfc2616time(struct tm *parsed, const char *httpdate)
 	/* The representation of %a depends on the current locale. */
 	curlocale = setlocale(LC_TIME, NULL);
 	(void)setlocale(LC_TIME, "C");
-								/* RFC1123 */
+								/* RFC 1123 */
 	if ((t = strptime(httpdate, "%a, %d %b %Y %H:%M:%S GMT", parsed)) ||
-								/* RFC0850 */
+								/* RFC 850 */
 	    (t = strptime(httpdate, "%a, %d-%b-%y %H:%M:%S GMT", parsed)) ||
 								/* asctime */
 	    (t = strptime(httpdate, "%a, %b %d %H:%M:%S %Y", parsed))) {
