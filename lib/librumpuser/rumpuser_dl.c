@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.2 2010/03/01 13:13:48 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.3 2010/03/05 18:47:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.2 2010/03/01 13:13:48 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.3 2010/03/05 18:47:50 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -296,35 +296,30 @@ getsymbols(struct link_map *map)
 	return 0;
 }
 
-static int
+static void
 process(const char *soname, rump_modinit_fn domodinit)
 {
 	void *handle;
-	struct modinfo **mi, **mi_end;
-	int loaded = 0;
+	const struct modinfo *const *mi_start, *const *mi_end;
 
 	if (strstr(soname, "librump") == NULL)
-		return 0;
+		return;
 
 	handle = dlopen(soname, RTLD_LAZY);
 	if (handle == NULL)
-		return 0;
+		return;
 
-	mi = dlsym(handle, "__start_link_set_modules");
-	if (!mi)
+	mi_start = dlsym(handle, "__start_link_set_modules");
+	if (!mi_start)
 		goto out;
 	mi_end = dlsym(handle, "__stop_link_set_modules");
 	if (!mi_end)
 		goto out;
 
-	for (; mi < mi_end; mi++)
-		if (domodinit(*mi, NULL) == 0)
-			loaded = 1;
-	assert(mi == mi_end);
+	domodinit(mi_start, (size_t)(mi_end-mi_start));
 
  out:
 	dlclose(handle);
-	return loaded;
 }
 
 /*
@@ -336,7 +331,6 @@ rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 	rump_symload_fn symload)
 {
 	struct link_map *map, *origmap;
-	int couldload;
 	int error;
 
 	if (dlinfo(RTLD_SELF, RTLD_DI_LINKMAP, &origmap) == -1) {
@@ -394,13 +388,8 @@ rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 	/*
 	 * Next, load modules from dynlibs.
 	 */
-	do {
-		couldload = 0;
-		map = origmap;
-		for (; map; map = map->l_prev)
-			if (process(map->l_name, domodinit))
-				couldload = 1;
-	} while (couldload);
+	for (map = origmap; map; map = map->l_prev)
+		process(map->l_name, domodinit);
 }
 
 void
