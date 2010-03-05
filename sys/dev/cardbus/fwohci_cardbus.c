@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.30 2010/02/26 00:57:01 dyoung Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.31 2010/03/05 00:36:06 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.30 2010/02/26 00:57:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.31 2010/03/05 00:36:06 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,11 +115,6 @@ fwohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_cf = cf;
 	sc->sc_ct = ct;
 
-#if rbus
-#else
-XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
-#endif
-
 	/* Disable interrupts, so we don't get any spurious ones. */
 	OHCI_CSR_WRITE(&sc->sc_sc, FWOHCI_INTMASKCLR, OHCI_INT_EN);
 
@@ -128,7 +123,7 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 	Cardbus_conf_write(ct, ca->ca_tag, PCI_COMMAND_STATUS_REG,
 	    csr | PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE);
 
-	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline,
+	sc->sc_ih = Cardbus_intr_establish(ct, ca->ca_intrline,
 					   IPL_BIO, fwohci_filt, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
@@ -137,7 +132,7 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 
 	/* XXX NULL should be replaced by some call to Cardbus coed */
 	if (fwohci_init(&sc->sc_sc, sc->sc_sc.fc.dev) != 0) {
-		cardbus_intr_disestablish(cc, cf, sc->sc_ih);
+		Cardbus_intr_disestablish(ct, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
 }
@@ -154,7 +149,7 @@ fwohci_cardbus_detach(device_t self, int flags)
 	if (rv)
 		return (rv);
 	if (sc->sc_ih != NULL) {
-		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
+		Cardbus_intr_disestablish(ct, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
 	if (sc->sc_sc.bssize) {
