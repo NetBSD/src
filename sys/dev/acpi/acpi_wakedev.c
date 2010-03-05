@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.3 2010/03/05 14:00:17 jruoho Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.4 2010/03/05 21:01:44 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.3 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.4 2010/03/05 21:01:44 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.3 2010/03/05 14:00:17 jruoho Exp 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_wakedev.h>
+
+static void	acpi_wakedev_prepare(struct acpi_devnode *, int, int);
 
 struct acpi_wakedev;
 
@@ -173,16 +175,83 @@ acpi_wakedev_scan(struct acpi_softc *sc)
 }
 
 void
-acpi_wakedev_commit(struct acpi_softc *sc)
+acpi_wakedev_commit(struct acpi_softc *sc, int state)
 {
 	struct acpi_wakedev *aw;
 
+	/*
+	 * As noted in ACPI 3.0 (p. 243), preparing
+	 * a device for wakeup is a two-step process:
+	 *
+	 *  1.	Enable all power resources in _PRW.
+	 *
+	 *  2.	If present, execute _DSW/_PSW method.
+	 *
+	 * XXX: The first one is yet to be implemented.
+	 */
 	TAILQ_FOREACH(aw, &acpi_wakedevlist, aw_list) {
+
 		if (aw->aw_enabled) {
 			aprint_debug_dev(sc->sc_dev, "set wake GPE (%s)\n",
 			    aw->aw_node->ad_name);
 			acpi_set_wake_gpe(aw->aw_node->ad_handle);
 		} else
 			acpi_clear_wake_gpe(aw->aw_node->ad_handle);
+
+		acpi_wakedev_prepare(aw->aw_node, aw->aw_enabled, state);
 	}
 }
+
+static void
+acpi_wakedev_prepare(struct acpi_devnode *ad, int enable, int state)
+{
+	ACPI_OBJECT_LIST arg;
+	ACPI_OBJECT obj[3];
+	ACPI_STATUS rv;
+
+	/*
+	 * First try to call the Device Sleep Wake control method, _DSW.
+	 * Only if this is not available, resort to to the Power State
+	 * Wake control method, _PSW, which was deprecated in ACPI 3.0.
+	 *
+	 * The arguments to these methods are as follows:
+	 *
+	 *		arg0		arg1		arg2
+	 *		----		----		----
+	 *	 _PSW	0: disable
+	 *		1: enable
+	 *
+	 *	 _DSW	0: disable	0: S0		0: D0
+	 *		1: enable	1: S1		1: D0 or D1
+	 *						2: D0, D1, or D2
+	 *				x: Sx		3: D0, D1, D2 or D3
+	 */
+	arg.Count = 3;
+	arg.Pointer = obj;
+
+	obj[0].Integer.Value = enable;
+	obj[1].Integer.Value = state;
+	obj[2].Integer.Value = 3;
+
+	obj[0].Type = obj[1].Type = obj[2].Type = ACPI_TYPE_INTEGER;
+
+	rv = AcpiEvaluateObject(ad->ad_handle, "_DSW", &arg, NULL);
+
+	if (ACPI_SUCCESS(rv))
+		return;
+
+	if (rv != AE_NOT_FOUND)
+		goto fail;
+
+	rv = acpi_eval_set_integer(ad->ad_handle, "_PSW", enable);
+
+	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND)
+		goto fail;
+
+	return;
+
+fail:
+	aprint_error_dev(ad->ad_device, "failed to evaluate wake "
+	    "control method: %s\n", AcpiFormatException(rv));
+}
+
