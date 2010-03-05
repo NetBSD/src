@@ -1,4 +1,4 @@
-.\" $NetBSD: modload.8,v 1.37 2009/06/11 08:11:52 wiz Exp $
+.\" $NetBSD: modload.8,v 1.38 2010/03/05 18:51:22 pooka Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd June 9, 2009
+.Dd March 5, 2010
 .Dt MODLOAD 8
 .Os
 .Sh NAME
@@ -90,6 +90,10 @@ This option disables compatibility checks.
 .Em Note :
 an incompatible module can cause system instability, including data
 loss or corruption.
+.Pp
+This option is also required for re-enabling a builtin module that
+was disabled using
+.Xr modunload 8 .
 .It Fl i Ar var=integer
 Pass the module an integer property with the name
 .Ar var
