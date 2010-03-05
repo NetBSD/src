@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.c,v 1.4 2010/03/01 22:38:29 darran Exp $	*/
+/*	$NetBSD: sdt.c,v 1.5 2010/03/05 02:21:41 darran Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -475,4 +475,4 @@ sdt_open(dev_t dev, int flags, int mode, struct lwp *l)
 	return (0);
 }
 
-MODULE(MODULE_CLASS_MISC, sdt, NULL);
+MODULE(MODULE_CLASS_MISC, sdt, "dtrace");
