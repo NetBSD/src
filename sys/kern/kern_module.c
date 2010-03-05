@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.59 2010/03/05 18:35:01 pooka Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.60 2010/03/05 20:10:05 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.59 2010/03/05 18:35:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.60 2010/03/05 20:10:05 pooka Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -91,6 +91,9 @@ static int	module_do_unload(const char *);
 static int	module_do_builtin(const char *, module_t **);
 static int	module_fetch_info(module_t *);
 static void	module_thread(void *);
+
+static module_t	*module_lookup(const char *);
+static void	module_enqueue(module_t *);
 
 static bool	module_merge_dicts(prop_dictionary_t, const prop_dictionary_t);
 
