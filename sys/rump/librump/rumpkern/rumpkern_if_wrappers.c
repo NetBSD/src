@@ -1,8 +1,8 @@
-/*	$NetBSD: rumpkern_if_wrappers.c,v 1.5 2009/11/26 09:21:16 pooka Exp $	*/
+/*	$NetBSD: rumpkern_if_wrappers.c,v 1.6 2010/03/05 18:43:59 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpkern.ifspec,v 1.3 2009/11/26 09:20:07 pooka Exp 
+ * from: NetBSD: rumpkern.ifspec,v 1.4 2010/03/05 18:41:46 pooka Exp 
  * by:   NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp 
  */
 
@@ -45,7 +45,7 @@ rump_pub_getversion(void)
 }
 
 int
-rump_pub_module_init(struct modinfo *arg1, prop_dictionary_t arg2)
+rump_pub_module_init(const struct modinfo * const *arg1, size_t arg2)
 {
 	int rv;
 
@@ -57,7 +57,7 @@ rump_pub_module_init(struct modinfo *arg1, prop_dictionary_t arg2)
 }
 
 int
-rump_pub_module_fini(struct modinfo *arg1)
+rump_pub_module_fini(const struct modinfo *arg1)
 {
 	int rv;
 
