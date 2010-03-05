@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.10 2009/12/21 15:13:13 njoly Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.11 2010/03/05 16:55:56 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.10 2009/12/21 15:13:13 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.11 2010/03/05 16:55:56 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -286,6 +286,7 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		if (p != NULL) {
 			return EBUSY;
 		}
+		sendsig_sigcontext_vec = NULL;
 #endif
 		/* Unlink the system calls. */
 		error = syscall_disestablish(NULL, compat_syscalls);
