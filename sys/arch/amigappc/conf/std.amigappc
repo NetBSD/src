@@ -1,4 +1,4 @@
-#	$NetBSD: std.amigappc,v 1.7 2009/07/21 09:49:15 phx Exp $
+#	$NetBSD: std.amigappc,v 1.8 2010/03/05 17:58:15 phx Exp $
 #
 # standard, required NetBSD/amigappc 'options'
 
@@ -17,4 +17,6 @@ options 	INTSTK=0x2000
 options		MSGBUFADDR=0xfff70000
 options		MSGBUFSIZE=0x10000
 
+# The kernel has to be relocated by the boot loader
 makeoptions     TEXTADDR=0x08000000
+makeoptions	EXTRA_LINKFLAGS="-q"
