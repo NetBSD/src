@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.38 2010/03/04 18:49:14 dyoung Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.39 2010/03/05 22:47:03 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.38 2010/03/04 18:49:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.39 2010/03/05 22:47:03 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,6 @@ struct ppb_softc;
 
 static int  ppb_cardbus_match(device_t, cfdata_t, void *);
 static void ppb_cardbus_attach(device_t, device_t, void *);
-static int  ppb_cardbus_detach(device_t  self, int flags);
 static int  ppb_activate(device_t, enum devact);
 int rppbprint(void *, const char *);
 int rbus_intr_fixup(pci_chipset_tag_t, int, int, int);
@@ -104,7 +103,7 @@ struct ppb_cardbus_softc {
 };
 
 CFATTACH_DECL_NEW(rbus_ppb, sizeof(struct ppb_cardbus_softc),
-    ppb_cardbus_match, ppb_cardbus_attach, ppb_cardbus_detach, ppb_activate);
+    ppb_cardbus_match, ppb_cardbus_attach, NULL, ppb_activate);
 
 #ifdef  CBB_DEBUG
 int rbus_ppb_debug = 0;   /* hack with kdb */
@@ -509,8 +508,6 @@ rbus_pci_phys_allocate(pci_chipset_tag_t pc, pcitag_t tag, void *context)
         int bus, device, function, command;
 	struct rbus_pci_addr_fixup_context *rct =
 	  (struct rbus_pci_addr_fixup_context *)context;
-	//cardbus_chipset_tag_t ct = rct->ct;
-	//	struct cardbus_softc *sc = rct->sc;
 
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
 
@@ -729,45 +726,6 @@ ppb_cardbus_attach(device_t parent, device_t self, void *aux)
 	pba.pba_intrtag  = psc->sc_pa.pa_intrtag;
 
 	config_found_ia(self, "pcibus", &pba, rppbprint);
-}
-
-static int
-ppb_cardbus_detach(device_t self, int flags)
-{
-  /* struct ppb_softc *sc = device_private(self);*/
-	struct ppb_cardbus_softc *csc = device_private(self);
-
-#if 0
-	struct cardbus_devfunc *ct = csc->ct;
-	int rv, reg;
-
-#ifdef DIAGNOSTIC
-	if (ct == NULL)
-		panic("%s: data structure lacks", device_xname(sc->sc_dev));
-#endif
-
-	rv = fxp_detach(sc);
-	if (rv == 0) {
-		/*
-		 * Unhook the interrupt handler.
-		 */
-		Cardbus_intr_disestablish(ct, sc->sc_ih);
-
-		/*
-		 * release bus space and close window
-		 */
-		if (csc->base0_reg)
-			reg = PCI_BAR0;
-		else
-			reg = PCI_BAR1;
-		Cardbus_mapreg_unmap(ct, reg, sc->sc_st, sc->sc_sh, csc->size);
-	}
-	return (rv);
-
-#endif
-	csc->foo=1;
-	return 0;
-
 }
 
 int
