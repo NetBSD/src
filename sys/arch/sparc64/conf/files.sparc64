@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.126 2010/03/02 12:18:35 nakayama Exp $
+#	$NetBSD: files.sparc64,v 1.127 2010/03/06 23:26:10 mrg Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -209,6 +209,7 @@ file	arch/sparc64/sparc64/kobj_machdep.c	modular
 # sparc64/sparc64/locore.s is handled specially in the makefile,
 # because it must come first in the "ld" command line.
 file	arch/sparc64/sparc64/machdep.c
+file	arch/sparc64/sparc64/memcpyset.s
 file	arch/sparc64/sparc64/process_machdep.c
 file	arch/sparc64/sparc64/procfs_machdep.c	procfs
 file	arch/sparc64/sparc64/mem.c
