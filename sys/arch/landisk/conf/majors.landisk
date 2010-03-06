@@ -1,4 +1,4 @@
-#	$NetBSD: majors.landisk,v 1.5 2010/03/06 21:31:51 plunky Exp $
+#	$NetBSD: majors.landisk,v 1.6 2010/03/06 23:45:39 plunky Exp $
 #
 # Device majors for landisk
 #
@@ -59,7 +59,6 @@ device-major	ugen		char 67			ugen
 device-major	ucom		char 68			ucom
 device-major	uscanner	char 69			uscanner
 device-major	urio		char 70			urio
-device-major	uhso		char 71			uhso
 
 device-major	midi		char 72			midi
 device-major	sequencer	char 73			sequencer
