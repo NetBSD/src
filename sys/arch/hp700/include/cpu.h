@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.37 2010/02/17 11:33:51 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.38 2010/03/06 21:22:42 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -52,6 +52,10 @@
 
 #ifndef	_MACHINE_CPU_H_
 #define	_MACHINE_CPU_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_cputype.h"
+#endif
 
 #include <machine/trap.h>
 #include <machine/frame.h>
