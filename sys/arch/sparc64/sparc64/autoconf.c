@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.171 2010/03/01 01:14:58 macallan Exp $ */
+/*	$NetBSD: autoconf.c,v 1.172 2010/03/06 08:08:29 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.171 2010/03/01 01:14:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.172 2010/03/06 08:08:29 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -207,7 +207,7 @@ get_ncpus(void)
 		sparc_ncpus++;
 	}
 #else
-	sparc_ncpus = 1;
+	/* #define sparc_ncpus 1 */
 #endif
 }
 

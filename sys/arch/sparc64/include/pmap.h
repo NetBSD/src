@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.51 2010/03/04 08:01:35 mrg Exp $	*/
+/*	$NetBSD: pmap.h,v 1.52 2010/03/06 08:08:29 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -111,19 +111,20 @@ extern struct page_size_map page_size_map[];
 #define va_to_dir(v)	(int)((((paddr_t)(v))>>PDSHIFT)&PDMASK)
 #define va_to_pte(v)	(int)((((paddr_t)(v))>>PTSHIFT)&PTMASK)
 
+#ifdef MULTIPROCESSOR
+#define PMAP_LIST_MAXNUMCPU	CPUSET_MAXNUMCPU
+#else
+#define PMAP_LIST_MAXNUMCPU	1
+#endif
+
 struct pmap {
 	struct uvm_object pm_obj;
 #define pm_lock pm_obj.vmobjlock
 #define pm_refs pm_obj.uo_refs
-#ifdef MULTIPROCESSOR
-	LIST_ENTRY(pmap) pm_list[CPUSET_MAXNUMCPU];	/* per cpu ctx used list */
-#else
-	LIST_ENTRY(pmap) pm_list;	/* single ctx used list */
-#endif
+	LIST_ENTRY(pmap) pm_list[PMAP_LIST_MAXNUMCPU];	/* per cpu ctx used list */
 
 	struct pmap_statistics pm_stats;
 
-#ifdef MULTIPROCESSOR
 	/*
 	 * We record the context used on any cpu here. If the context
 	 * is actually present in the TLB, it will be the plain context
@@ -132,10 +133,7 @@ struct pmap {
 	 * If this pmap has no context allocated on that cpu, the entry
 	 * will be 0.
 	 */
-	int pm_ctx[CPUSET_MAXNUMCPU];	/* Current context per cpu */
-#else
-	int pm_ctx;			/* Current context */
-#endif
+	int pm_ctx[PMAP_LIST_MAXNUMCPU];	/* Current context per cpu */
 
 	/*
 	 * This contains 64-bit pointers to pages that contain

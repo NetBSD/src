@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.88 2010/02/02 04:28:55 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.89 2010/03/06 08:08:29 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -131,9 +131,9 @@ struct cpu_info {
 
 	/* Event counters */
 	struct evcnt		ci_tick_evcnt;
-#ifdef MULTIPROCESSOR
+
+	/* This could be under MULTIPROCESSOR, but there's no good reason */
 	struct evcnt		ci_ipi_evcnt[IPI_EVCNT_NUM];
-#endif
 
 	int			ci_flags;
 	int			ci_want_ast;
@@ -191,7 +191,12 @@ struct cpu_bootargs {
 
 extern struct cpu_bootargs *cpu_args;
 
+#if defined(MULTIPROCESSOR)
 extern int sparc_ncpus;
+#else
+#define sparc_ncpus 1
+#endif
+
 extern struct cpu_info *cpus;
 extern struct pool_cache *fpstate_cache;
 
