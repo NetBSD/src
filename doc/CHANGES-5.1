@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.205 2010/03/06 21:19:49 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.206 2010/03/06 22:03:19 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16858,4 +16858,11 @@ usr.bin/wc/wc.1					1.14-1.15
 	Add support for "-L" option (longest line) as present in the GNU
 	and FreeBSD versions of "wc".
 	[tron, ticket #1313]
+
+include/math.h					1.51
+
+	Address PR#36988: ISO C99 mandates that HUGE_VAL, HUGE_VALF,
+	HUGE_VALL and INFINITY are constant expressions.
+	Use the GCC builtins if possible to implement them.
+	[joerg, ticket #1315]
 
