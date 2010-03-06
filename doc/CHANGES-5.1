@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.202 2010/03/02 06:34:57 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.203 2010/03/06 20:56:44 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16836,4 +16836,12 @@ sys/sys/atomic.h				1.11
 
 	Make atomics usable from C++.
 	[dholland, ticket #1314]
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.272
+
+	Don't merge a good parity map with random stuff in the event that
+	the first component is missing.  (Since the merging just OR's the
+	maps, this isn't that big of a deal, as it will just over-estimate
+	the amount of checking that needs to be done.)
+	[oster, ticket #1324]
 
