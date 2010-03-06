@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.130 2009/09/25 06:06:04 mrg Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.131 2010/03/06 21:05:36 plunky Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -179,6 +179,7 @@
 #	ugen*	USB generic devices
 #	urio*	USB Diamond Rio 500 devices
 #	uscanner*	USB scanners
+#	ttyHS*	USB Option N.V. modems
 #	ttyU*	USB modems
 #	ttyY*	USB serial adapters
 #
@@ -859,6 +860,17 @@ uscanner*)
 utoppy*)
 	unit=${i#utoppy}
 	mkdev utoppy$unit c %utoppy_chr% $unit
+	;;
+
+ttyHS*)
+	unit=${i#ttyHS}
+	for j in 00 01 02 03 04 05 06 07 08 09 10
+	do
+		base=$(($unit * 16 + ${j#0}))
+		mkdev ttyHS$unit.$j c %uhso_chr% $(($base + $dialin  )) "" "" $u_uucp
+		mkdev dtyHS$unit.$j c %uhso_chr% $(($base + $dialout )) "" "" $u_uucp
+		mkdev ctyHS$unit.$j c %uhso_chr% $(($base + $callunit)) "" "" $u_uucp
+	done
 	;;
 
 ttyY*)
