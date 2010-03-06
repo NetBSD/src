@@ -1,4 +1,4 @@
-# $NetBSD: XBOX,v 1.20 2010/01/07 18:49:30 tnn Exp $
+# $NetBSD: XBOX,v 1.21 2010/03/06 21:12:04 plunky Exp $
 #
 # XBOX -- A basic Microsoft XBox kernel config file.
 #
@@ -202,6 +202,9 @@ ulpt*	at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem* at uhub? port ? configuration ?
 ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?

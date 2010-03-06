@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.972 2010/03/06 04:28:53 cnst Exp $
+# $NetBSD: GENERIC,v 1.973 2010/03/06 21:12:04 plunky Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.972 $"
+#ident 		"GENERIC-$Revision: 1.973 $"
 
 maxusers	64		# estimated number of users
 
@@ -1145,6 +1145,9 @@ ulpt*	at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem* at uhub? port ? configuration ?
 ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?

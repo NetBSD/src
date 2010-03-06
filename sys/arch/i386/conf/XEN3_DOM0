@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.30 2010/03/06 04:33:24 cnst Exp $
+#	$NetBSD: XEN3_DOM0,v 1.31 2010/03/06 21:12:04 plunky Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -554,6 +554,9 @@ ulpt*   at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem* at uhub? port ? configuration ?
 ucom*   at umodem?
+
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*  at uhub? port ? configuration ? interface ?
