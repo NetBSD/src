@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.206 2010/03/06 22:03:19 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.207 2010/03/06 22:11:08 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16865,4 +16865,13 @@ include/math.h					1.51
 	HUGE_VALL and INFINITY are constant expressions.
 	Use the GCC builtins if possible to implement them.
 	[joerg, ticket #1315]
+
+sys/dev/ic/ahcisata_core.c			1.23
+
+	Move ahci_channel_start() after BSY has cleared (do not touch
+	SError while BSY is asserted). Fixes random behaviour of Intel
+	ESB2 controller with some models of Hitachi drives (serial
+	console corruption/misfunction, misbehavior of USB controllers,
+	crazy interrupts crashing the Xen hypervisor, etc.).
+	[bouyer, ticket #1317]
 
