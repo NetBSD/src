@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.269 2010/02/22 13:42:04 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.270 2010/03/06 04:28:53 cnst Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.269 $"
+#ident 		"GENERIC-$Revision: 1.270 $"
 
 maxusers	64		# estimated number of users
 
@@ -285,7 +285,6 @@ acpitz* 	at acpi?		# ACPI Thermal Zone
 acpiwmi*	at acpi?		# ACPI WMI Mapper
 
 # Mainboard devices
-aiboost* 	at acpi?		# ASUS AI Booster Hardware monitor
 aibs*		at acpi?		# ASUSTeK AI Booster hardware monitor
 asus*		at acpi?		# ASUS hotkeys
 attimer*	at acpi?		# AT Timer
