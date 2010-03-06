@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.41 2010/02/27 21:12:58 wiz Exp $
+.\" $NetBSD: acpi.4,v 1.42 2010/03/06 06:25:51 jruoho Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -256,7 +256,7 @@ facility of different debugging methods.
 To ease the use of these,
 .Nx
 provides two
-.Xr sysctl 7
+.Xr sysctl 8
 variables that control the debug output at runtime.
 These are only available if the running kernel has been compiled with the
 .Tn ACPI_DEBUG
@@ -270,7 +270,7 @@ layer and the
 .Ic hw.acpi.debug_level
 controls the debug level.
 Both
-.Xr sysctl 7
+.Xr sysctl 8
 variables are string literals.
 The possible values are:
 .Bl -column -offset indent \
@@ -382,7 +382,7 @@ Finally, it can be noted that the
 implementation uses the prefix
 .Dv ACPI_DB ,
 whereas the debug level
-.Xr sysctl 7
+.Xr sysctl 8
 variable is always specified with the prefix
 .Dv ACPI_LV .
 .Sh SEE ALSO
