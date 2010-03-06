@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.208 2010/03/06 22:35:34 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.209 2010/03/06 22:48:46 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16886,4 +16886,10 @@ gnu/dist/gdb6/libiberty/floatformat.c		1.2
 	value) is good enough and the side effects of ISO C99 7.12 (4)
 	are not desired.
 	[joerg, ticket #1328]
+
+usr.bin/ldd/ldd.c				1.13
+
+	Mark each object as printed as visited and then print.
+	Fixes PR/42811. Improve print order.
+	[skrll, ticket #1318]
 
