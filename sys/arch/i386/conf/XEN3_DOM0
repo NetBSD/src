@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.29 2010/02/21 05:16:29 cnst Exp $
+#	$NetBSD: XEN3_DOM0,v 1.30 2010/03/06 04:33:24 cnst Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -837,5 +837,5 @@ acpidalb*	at acpi?		# ACPI Direct Application Launch Button
 acpiec* 	at acpi?		# ACPI Embedded Controller (late binding)
 acpiecdt* 	at acpi?		# ACPI Embedded Controller (early binding)
 acpilid* 	at acpi?		# ACPI Lid Switch
+aibs*		at acpi?		# ASUSTeK AI Booster hardware monitor
 hpqlb*		at acpi?		# HP Quick Launch Buttons
- 
