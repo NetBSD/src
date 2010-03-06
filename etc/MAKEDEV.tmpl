@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.131 2010/03/06 21:05:36 plunky Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.132 2010/03/06 21:33:20 plunky Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -798,6 +798,7 @@ usbs)
 	makedev ulpt0 ulpt1
 	makedev ttyU0 ttyU1
 	makedev ttyY0 ttyY1
+	makedev ttyHS0
 	makedev urio0
 	makedev uscanner0 uscanner1
 	makedev utoppy0 utoppy1
