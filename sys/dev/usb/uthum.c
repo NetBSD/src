@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.2 2010/02/24 17:34:56 plunky Exp $   */
+/*	$NetBSD: uthum.c,v 1.3 2010/03/06 04:39:16 cnst Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -167,7 +167,8 @@ USB_ATTACH(uthum)
 		sc->sc_sensor[UTHUM_TEMP].units = ENVSYS_STEMP;
 		sc->sc_sensor[UTHUM_TEMP].state = ENVSYS_SINVALID;
 
-		(void)strlcpy(sc->sc_sensor[UTHUM_HUMIDITY].desc, "humidity",
+		(void)strlcpy(sc->sc_sensor[UTHUM_HUMIDITY].desc,
+		    "relative humidity",
 		    sizeof(sc->sc_sensor[UTHUM_HUMIDITY].desc));
 		sc->sc_sensor[UTHUM_HUMIDITY].units = ENVSYS_INTEGER;
 		sc->sc_sensor[UTHUM_HUMIDITY].value_cur = 0;
@@ -346,7 +347,7 @@ uthum_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		temp = uthum_sht1x_temp(temp_tick);
 		rh = uthum_sht1x_rh(humidity_tick, temp);
 
-		sc->sc_sensor[UTHUM_HUMIDITY].value_cur = rh;
+		sc->sc_sensor[UTHUM_HUMIDITY].value_cur = rh / 1000;
 		sc->sc_sensor[UTHUM_HUMIDITY].state = ENVSYS_SVALID;
 		break;
 	case UTHUM_TYPE_TEMPER:
