@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbmips,v 1.25 2010/03/06 21:31:51 plunky Exp $
+#	$NetBSD: majors.evbmips,v 1.26 2010/03/06 23:45:39 plunky Exp $
 #
 # Device majors for evbmips
 #
@@ -77,7 +77,6 @@ device-major	sysmon		char 74			sysmon_envsys | sysmon_wdog
 device-major	cgd		char 75  block 18	cgd
 device-major	ksyms		char 76			ksyms
 device-major	uart		char 77			uart
-device-major	uhso		char 78			uhso
 
 device-major	nsmb		char 98			nsmb
 device-major	athflash	char 99			athflash

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbppc,v 1.29 2010/03/06 21:31:51 plunky Exp $
+#	$NetBSD: majors.evbppc,v 1.30 2010/03/06 23:45:39 plunky Exp $
 #
 # Device majors for evbppc
 # (When possible, make entries the same as macppc)
@@ -77,7 +77,6 @@ device-major	wsfont		char 73			wsfont
 device-major	ksyms		char 74			ksyms
 device-major	dmoverio	char 75			dmoverio
 device-major	twe		char 76 		twe
-device-major	uhso		char 77 		uhso
 
 device-major	nsmb		char 98			nsmb
 device-major 	xlcom 		char 99 		xlcom
