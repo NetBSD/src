@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.209 2010/03/06 22:48:46 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.210 2010/03/06 22:58:27 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16892,4 +16892,10 @@ usr.bin/ldd/ldd.c				1.13
 	Mark each object as printed as visited and then print.
 	Fixes PR/42811. Improve print order.
 	[skrll, ticket #1318]
+
+crypto/dist/openssl/crypto/evp/m_sha1.c		patch
+
+	Ensure that SHA384 always calls the SHA384 functions.
+	Should fix PR#42881.
+	[joerg, ticket #1320]
 
