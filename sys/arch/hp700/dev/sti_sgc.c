@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.18 2009/11/03 05:07:25 snj Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.19 2010/03/06 19:36:33 skrll Exp $	*/
 
 /*	$OpenBSD: sti_sgc.c,v 1.21 2003/12/22 23:39:06 mickey Exp $	*/
 
@@ -35,7 +35,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.18 2009/11/03 05:07:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.19 2010/03/06 19:36:33 skrll Exp $");
+
+#include "opt_cputype.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,7 +249,7 @@ sti_sgc_attach(device_t parent, device_t self, void *aux)
 	 * "pcxl2_ers.{ps,pdf}", (section / chapter . rel. page / abs. page)
 	 * 8.7.4 / 8-12 / 92, 11.3.14 / 11-14 / 122 and 14.8 / 14-5 / 203.
 	 */
-	if (strcmp(hppa_cpu_info->hppa_cpu_info_chip_type, "PCX-L2") == 0
+	if (hppa_cpu_info->hci_cputype == hpcxl2
 	    && ca->ca_hpa >= PCXL2_ACCEL_IO_START
 	    && ca->ca_hpa <= PCXL2_ACCEL_IO_END)
 		eaio_l2(PCXL2_ACCEL_IO_ADDR2MASK(ca->ca_hpa));
