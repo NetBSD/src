@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.204 2010/03/06 21:06:07 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.205 2010/03/06 21:19:49 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16851,4 +16851,11 @@ sys/dev/raidframe/rf_paritymap.c		1.4
 	disks'. Update used spares with the correct parity map bits too.
 	Addresses PR#42904.
 	[oster, ticket #1325]
+
+usr.bin/wc/wc.c					1.32-1.34
+usr.bin/wc/wc.1					1.14-1.15
+
+	Add support for "-L" option (longest line) as present in the GNU
+	and FreeBSD versions of "wc".
+	[tron, ticket #1313]
 
