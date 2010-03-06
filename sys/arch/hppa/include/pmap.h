@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.24 2010/02/22 21:32:55 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.25 2010/03/06 21:22:42 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -34,6 +34,10 @@
 
 #ifndef	_HPPA_PMAP_H_
 #define	_HPPA_PMAP_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_cputype.h"
+#endif
 
 #include <sys/mutex.h>
 #include <machine/pte.h>
