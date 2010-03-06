@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.544 2010/02/19 13:55:51 pooka Exp $
+$NetBSD: usbdevs,v 1.545 2010/03/06 20:59:07 plunky Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1793,7 +1793,24 @@ product OPTIONNV QUADUMTS2	0x6000	GlobeTrotter Fusion Quad Lite UMTS/GPRS
 product OPTIONNV QUADUMTS	0x6300	GlobeTrotter Fusion Quad Lite 3D
 product OPTIONNV QUADPLUSUMTS	0x6600	GlobeTrotter 3G Quad Plus
 product OPTIONNV HSDPA   	0x6701	GlobeTrotter HSDPA Modem
+product OPTIONNV MAXHSDPA   	0x6701	GlobeTrotter Max HSDPA Modem
+product OPTIONNV GSICON72	0x6911	GlobeSurfer iCON 7.2
+product OPTIONNV ICON225	0x6971	iCON 225
 product OPTIONNV GTMAXHSUPA	0x7001	GlobeTrotter HSUPA
+product OPTIONNV GEHSUPA	0x7011	GlobeTrotter Express HSUPA
+product OPTIONNV GTHSUPA	0x7031	GlobeTrotter HSUPA
+product OPTIONNV GSHSUPA	0x7251	GlobeSurfer HSUPA
+product OPTIONNV GE40X1		0x7301	GE40x
+product OPTIONNV GE40X2		0x7361	GE40x
+product OPTIONNV GE40X3		0x7381	GE40x
+product OPTIONNV ICON401	0x7401	iCON 401
+product OPTIONNV GTM382		0x7501	GTM 382
+product OPTIONNV GE40X4		0x7601	GE40x
+product OPTIONNV ICONEDGE	0xc031	iCON EDGE
+product OPTIONNV MODHSXPA	0xd013	Module HSxPA
+product OPTIONNV ICON321	0xd031	iCON 321
+product OPTIONNV ICON322	0xd033	iCON 322
+product OPTIONNV ICON505	0xd055	iCON 505
 
 /* OQO */
 product OQO WIFI01		0x0002	model 01 WiFi interface
