@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.255 2010/01/15 20:57:13 bouyer Exp $
+#	$NetBSD: DEVNAMES,v 1.256 2010/03/06 05:58:56 cnst Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -29,6 +29,7 @@ acpibat			MI
 acpibut			MI
 acpiec			MI
 acpilid			MI
+acpismbus		MI
 acpitz			MI
 ad			vax
 ad1848			MI		Attribute
@@ -61,6 +62,7 @@ ahsc			amiga
 ahsc			amigappc
 ai			MI
 aiboost			MI
+aibs			MI
 aic			MI
 akbd			mac68k
 akbd			macppc
@@ -1368,6 +1370,7 @@ uscanner		MI
 usscanner		MI
 ustir			MI
 ut			vax
+uthum			MI
 utoppy			MI
 uu			vax
 uvisor			MI
@@ -1412,6 +1415,7 @@ vsms			alpha
 vt			i386
 vtpbc			algor
 vz			vax
+wbsio			MI
 wd			MI
 wd33c93			MI		Attribute
 wdc			MI
