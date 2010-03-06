@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.31 2008/07/21 14:19:28 lukem Exp $	*/
+/*	$NetBSD: wc.c,v 1.31.4.1 2010/03/06 21:19:11 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -39,11 +39,11 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.31 2008/07/21 14:19:28 lukem Exp $");
+__RCSID("$NetBSD: wc.c,v 1.31.4.1 2010/03/06 21:19:11 sborrill Exp $");
 #endif
 #endif /* not lint */
 
-/* wc line, word and char count */
+/* wc line, word, char count and optionally longest line. */
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: wc.c,v 1.31 2008/07/21 14:19:28 lukem Exp $");
 #include <err.h>
 #include <errno.h>
 #include <locale.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -71,12 +72,13 @@ typedef u_quad_t wc_count_t;
 # define WCCAST	unsigned long long
 #endif
 
-static wc_count_t	tlinect, twordct, tcharct;
-static int		doline, doword, dobyte, dochar;
+static wc_count_t	tlinect, twordct, tcharct, tlongest;
+static bool		doline, doword, dobyte, dochar, dolongest;
 static int 		rval = 0;
 
-static void	cnt(char *);
-static void	print_counts(wc_count_t, wc_count_t, wc_count_t, char *);
+static void	cnt(const char *);
+static void	print_counts(wc_count_t, wc_count_t, wc_count_t, wc_count_t,
+		    const char *);
 static void	usage(void);
 static size_t	do_mb(wchar_t *, const char *, size_t, mbstate_t *,
 		    size_t *, const char *);
@@ -89,21 +91,24 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "lwcm")) != -1)
+	while ((ch = getopt(argc, argv, "lwcmL")) != -1)
 		switch (ch) {
 		case 'l':
-			doline = 1;
+			doline = true;
 			break;
 		case 'w':
-			doword = 1;
+			doword = true;
 			break;
 		case 'm':
-			dochar = 1;
+			dochar = true;
 			dobyte = 0;
 			break;
 		case 'c':
 			dochar = 0;
-			dobyte = 1;
+			dobyte = true;
+			break;
+		case 'L':
+			dolongest = true;
 			break;
 		case '?':
 		default:
@@ -113,40 +118,42 @@ main(int argc, char *argv[])
 	argc -= optind;
 
 	/* Wc's flags are on by default. */
-	if (doline + doword + dobyte + dochar == 0)
-		doline = doword = dobyte = 1;
+	if (!(doline || doword || dobyte || dochar || dolongest))
+		doline = doword = dobyte = true;
 
-	if (!*argv) {
+	if (*argv == NULL) {
 		cnt(NULL);
 	} else {
-		int dototal = (argc > 1);
+		bool dototal = (argc > 1);
 
 		do {
 			cnt(*argv);
 		} while(*++argv);
 
-		if (dototal)
-			print_counts(tlinect, twordct, tcharct, "total");
+		if (dototal) {
+			print_counts(tlinect, twordct, tcharct, tlongest,
+			    "total");
+		}
 	}
 
 	exit(rval);
 }
 
 static size_t
-do_mb(wchar_t *wc, const char *p, size_t mblen, mbstate_t *st,
-    size_t *cnt, const char *file)
+do_mb(wchar_t *wc, const char *p, size_t len, mbstate_t *st,
+    size_t *retcnt, const char *file)
 {
 	size_t r;
 	size_t c = 0;
 
 	do {
-		r = mbrtowc(wc, p, mblen, st);
+		r = mbrtowc(wc, p, len, st);
 		if (r == (size_t)-1) {
 			warnx("%s: invalid byte sequence", file);
 			rval = 1;
 
 			/* XXX skip 1 byte */
-			mblen--;
+			len--;
 			p++;
 			memset(st, 0, sizeof(*st));
 			continue;
@@ -157,31 +164,31 @@ do_mb(wchar_t *wc, const char *p, size_t mblen, mbstate_t *st,
 		c++;
 		if (wc)
 			wc++;
-		mblen -= r;
+		len -= r;
 		p += r;
-	} while (mblen > 0);
+	} while (len > 0);
 
-	*cnt = c;
+	*retcnt = c;
 
 	return (r);
 }
 
 static void
-cnt(char *file)
+cnt(const char *file)
 {
 	u_char buf[MAXBSIZE];
 	wchar_t wbuf[MAXBSIZE];
 	struct stat sb;
-	wc_count_t charct, linect, wordct;
+	wc_count_t charct, linect, wordct, longest;
 	mbstate_t st;
 	u_char *C;
 	wchar_t *WC;
-	char *name;				/* filename or <stdin> */
+	const char *name;			/* filename or <stdin> */
 	size_t r = 0;
-	int fd, gotsp, len = 0;
+	int fd, len = 0;
 
-	linect = wordct = charct = 0;
-	if (file) {
+	linect = wordct = charct = longest = 0;
+	if (file != NULL) {
 		if ((fd = open(file, O_RDONLY, 0)) < 0) {
 			warn("%s", file);
 			rval = 1;
@@ -193,10 +200,10 @@ cnt(char *file)
 		name = "<stdin>";
 	}
 
-	if (dochar || doword)
-		memset(&st, 0, sizeof(st));
+	if (dochar || doword || dolongest)
+		(void)memset(&st, 0, sizeof(st));
 
-	if (!doword) {
+	if (!(doword || dolongest)) {
 		/*
 		 * line counting is split out because it's a lot
 		 * faster to get lines than to get words, since
@@ -212,10 +219,12 @@ cnt(char *file)
 					charct += wlen;
 				} else if (dobyte)
 					charct += len;
-				if (doline)
-					for (C = buf; len--; ++C)
+				if (doline) {
+					for (C = buf; len--; ++C) {
 						if (*C == '\n')
 							++linect;
+					}
+				}
 			}
 		}
 
@@ -244,7 +253,11 @@ cnt(char *file)
 		}
 	} else {
 		/* do it the hard way... */
-		gotsp = 1;
+		wc_count_t linelen;
+                bool       gotsp;
+
+		linelen = 0;
+		gotsp = true;
 		while ((len = read(fd, buf, MAXBSIZE)) > 0) {
 			size_t wlen;
 
@@ -252,13 +265,19 @@ cnt(char *file)
 			    name);
 			if (dochar) {
 				charct += wlen;
-			} else if (dobyte)
+			} else if (dobyte) {
 				charct += len;
+			}
 			for (WC = wbuf; wlen--; ++WC) {
 				if (iswspace(*WC)) {
-					gotsp = 1;
+					gotsp = true;
 					if (*WC == L'\n') {
 						++linect;
+						if (linelen > longest)
+							longest = linelen;
+						linelen = 0;
+					} else {
+						linelen++;
 					}
 				} else {
 					/*
@@ -270,9 +289,11 @@ cnt(char *file)
 					 * printing or non-printing.
 					 */
 					if (gotsp) {
-						gotsp = 0;
+						gotsp = false;
 						++wordct;
 					}
+
+					linelen++;
 				}
 			}
 		}
@@ -287,7 +308,7 @@ cnt(char *file)
 		rval = 1;
 	}
 
-	print_counts(linect, wordct, charct, file);
+	print_counts(linect, wordct, charct, longest, file);
 
 	/*
 	 * don't bother checkint doline, doword, or dobyte --- speeds
@@ -296,6 +317,8 @@ cnt(char *file)
 	tlinect += linect;
 	twordct += wordct;
 	tcharct += charct;
+	if (dolongest && longest > tlongest)
+		tlongest = longest;
 
 	if (close(fd)) {
 		warn("%s", name);
@@ -304,26 +327,29 @@ cnt(char *file)
 }
 
 static void
-print_counts(wc_count_t lines, wc_count_t words, wc_count_t chars, char *name)
+print_counts(wc_count_t lines, wc_count_t words, wc_count_t chars,
+    wc_count_t longest, const char *name)
 {
 
 	if (doline)
-		printf(WCFMT, (WCCAST)lines);
+		(void)printf(WCFMT, (WCCAST)lines);
 	if (doword)
-		printf(WCFMT, (WCCAST)words);
+		(void)printf(WCFMT, (WCCAST)words);
 	if (dobyte || dochar)
-		printf(WCFMT, (WCCAST)chars);
+		(void)printf(WCFMT, (WCCAST)chars);
+	if (dolongest)
+		(void)printf(WCFMT, (WCCAST)longest);
 
-	if (name)
-		printf(" %s\n", name);
+	if (name != NULL)
+		(void)printf(" %s\n", name);
 	else
-		printf("\n");
+		(void)putchar('\n');
 }
 
 static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: wc [-c | -m] [-lw] [file ...]\n");
+	(void)fprintf(stderr, "usage: wc [-c | -m] [-Llw] [file ...]\n");
 	exit(1);
 }
