@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc,v 1.31 2010/03/06 21:31:52 plunky Exp $
+#	$NetBSD: majors.sparc,v 1.32 2010/03/06 23:45:40 plunky Exp $
 #
 # Device majors for sparc
 #
@@ -77,7 +77,6 @@ device-major	isdntel		char 76			isdntel
 # sparc64: device-major	urio	char 83			urio
 # sparc64: device-major	uscanner char 84		uscanner
 # sparc64: device-major	radio	char 85			radio
-# sparc64: device-major	uhso	char 86			uhso
 
 device-major	wsdisplay	char 90			wsdisplay
 device-major	wskbd		char 91			wskbd

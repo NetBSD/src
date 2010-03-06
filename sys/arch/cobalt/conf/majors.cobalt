@@ -1,4 +1,4 @@
-#	$NetBSD: majors.cobalt,v 1.27 2010/03/06 21:31:51 plunky Exp $
+#	$NetBSD: majors.cobalt,v 1.28 2010/03/06 23:45:39 plunky Exp $
 #
 # Device majors for cobalt
 #
@@ -57,7 +57,6 @@ device-major	wskbd		char 52			wskbd
 device-major	wsmouse		char 53			wsmouse
 device-major	wsmux		char 54			wsmux
 device-major	wsfont		char 55			wsfont
-device-major	uhso		char 56			uhso
 
 device-major	altq		char 77			altq
 
