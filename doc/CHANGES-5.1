@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.207 2010/03/06 22:11:08 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.208 2010/03/06 22:35:34 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16874,4 +16874,16 @@ sys/dev/ic/ahcisata_core.c			1.23
 	console corruption/misfunction, misbehavior of USB controllers,
 	crazy interrupts crashing the Xen hypervisor, etc.).
 	[bouyer, ticket #1317]
+
+usr.sbin/altq/libaltq/qop_hfsc.c		1.9
+dist/pf/sbin/pfctl/pfctl_altq.c			1.9
+gnu/dist/binutils/libiberty/floatformat.c	patch
+gnu/dist/gcc4/libiberty/floatformat.c		1.2
+gnu/dist/gdb6/libiberty/floatformat.c		1.2
+
+	Fix standard-violating use of INFINITY in build of NetBSD/vax.
+	Use HUGE_VAL instead of INFINITY as positive infinity (or maximum
+	value) is good enough and the side effects of ISO C99 7.12 (4)
+	are not desired.
+	[joerg, ticket #1328]
 
