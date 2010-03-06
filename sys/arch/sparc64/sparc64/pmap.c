@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.256 2010/03/04 08:11:42 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.257 2010/03/06 08:08:30 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.256 2010/03/04 08:11:42 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.257 2010/03/06 08:08:30 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -151,9 +151,7 @@ struct pmap *const kernel_pmap_ptr = &kernel_pmap_;
 static int ctx_alloc(struct pmap *);
 static bool pmap_is_referenced_locked(struct vm_page *);
 
-#ifdef MULTIPROCESSOR
 static void ctx_free(struct pmap *, struct cpu_info *);
-#define pmap_ctx(PM)	((PM)->pm_ctx[cpu_number()])
 
 /*
  * Check if any MMU has a non-zero context
@@ -171,6 +169,12 @@ pmap_has_ctx(struct pmap *p)
 	return false;	
 }
 
+#ifdef MULTIPROCESSOR
+#define pmap_ctx(PM)	((PM)->pm_ctx[cpu_number()])
+#else
+#define pmap_ctx(PM)	((PM)->pm_ctx[0])
+#endif
+
 /*
  * Check if this pmap has a live mapping on some MMU.
  */
@@ -183,22 +187,6 @@ pmap_is_on_mmu(struct pmap *p)
 
 	return pmap_has_ctx(p);
 }
-#else
-static void ctx_free(struct pmap *);
-#define pmap_ctx(PM)	((PM)->pm_ctx)
-
-static inline bool
-pmap_has_ctx(struct pmap *p)
-{
-	return pmap_ctx(p) > 0;
-}
-
-static inline bool
-pmap_is_on_mmu(struct pmap *p)
-{
-	return p == pmap_kernel() || pmap_ctx(p) > 0;
-}
-#endif
 
 /*
  * Virtual and physical addresses of the start and end of kernel text
@@ -236,7 +224,6 @@ clrx(void *addr)
 	__asm volatile("clrx [%0]" : : "r" (addr) : "memory");
 }
 
-#ifdef MULTIPROCESSOR
 static void
 tsb_invalidate(vaddr_t va, pmap_t pm)
 {
@@ -247,9 +234,13 @@ tsb_invalidate(vaddr_t va, pmap_t pm)
 	int64_t tag;
 
 	i = ptelookup_va(va);
+#ifdef MULTIPROCESSOR
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
 		if (!CPUSET_HAS(cpus_active, ci->ci_index))
 			continue;
+#else
+		ci = curcpu();
+#endif
 		ctx = pm->pm_ctx[ci->ci_index];
 		if (kpm || ctx > 0) {
 			tag = TSB_TAG(0, ctx, va);
@@ -260,25 +251,10 @@ tsb_invalidate(vaddr_t va, pmap_t pm)
 				clrx(&ci->ci_tsb_immu[i].data);
 			}
 		}
+#ifdef MULTIPROCESSOR
 	}
-}
-#else
-static inline void
-tsb_invalidate(vaddr_t va, pmap_t pm)
-{
-	int i;
-	int64_t tag;
-
-	i = ptelookup_va(va);
-	tag = TSB_TAG(0, pmap_ctx(pm), va);
-	if (curcpu()->ci_tsb_dmmu[i].tag == tag) {
-		clrx(&curcpu()->ci_tsb_dmmu[i].data);
-	}
-	if (curcpu()->ci_tsb_immu[i].tag == tag) {
-		clrx(&curcpu()->ci_tsb_immu[i].data);
-	}
-}
 #endif
+}
 
 struct prom_map *prom_map;
 int prom_map_size;
@@ -1397,7 +1373,7 @@ pmap_destroy(struct pmap *pm)
 	}
 	mutex_exit(&pmap_lock);
 #else
-	ctx_free(pm);
+	ctx_free(pm, curcpu());
 #endif
 
 	/* we could be a little smarter and leave pages zeroed */
@@ -1902,7 +1878,7 @@ pmap_remove_all(struct pmap *pm)
 	}
 	mutex_exit(&pmap_lock);
 #else
-	ctx_free(pm);
+	ctx_free(pm, curcpu());
 #endif
 	REMOVE_STAT(flushes);
 	blast_dcache();
@@ -3054,11 +3030,9 @@ ctx_alloc(struct pmap *pm)
 		while (!LIST_EMPTY(&curcpu()->ci_pmap_ctxlist)) {
 #ifdef MULTIPROCESSOR
 			KASSERT(pmap_ctx(LIST_FIRST(&curcpu()->ci_pmap_ctxlist)) != 0);
+#endif
 			ctx_free(LIST_FIRST(&curcpu()->ci_pmap_ctxlist),
 				 curcpu());
-#else
-			ctx_free(LIST_FIRST(&curcpu()->ci_pmap_ctxlist));
-#endif
 		}
 		for (i = TSBENTS - 1; i >= 0; i--) {
 			if (TSB_TAG_CTX(curcpu()->ci_tsb_dmmu[i].tag) != 0) {
@@ -3073,13 +3047,7 @@ ctx_alloc(struct pmap *pm)
 		curcpu()->ci_pmap_next_ctx = 2;
 	}
 	curcpu()->ci_ctxbusy[ctx] = pm->pm_physaddr;
-	LIST_INSERT_HEAD(&curcpu()->ci_pmap_ctxlist, pm,
-#ifdef MULTIPROCESSOR
-		pm_list[cpu_number()]
-#else
-		pm_list
-#endif
-	);
+	LIST_INSERT_HEAD(&curcpu()->ci_pmap_ctxlist, pm, pm_list[cpu_number()]);
 	pmap_ctx(pm) = ctx;
 	mutex_exit(&pmap_lock);
 	DPRINTF(PDB_CTX_ALLOC, ("ctx_alloc: cpu%d allocated ctx %d\n",
@@ -3090,14 +3058,22 @@ ctx_alloc(struct pmap *pm)
 /*
  * Give away a context.
  */
-#ifdef MULTIPROCESSOR
 static void
 ctx_free(struct pmap *pm, struct cpu_info *ci)
 {
 	int oldctx;
+	int cpunum;
 
 	KASSERT(mutex_owned(&pmap_lock));
-	oldctx = pm->pm_ctx[ci->ci_index];
+
+#ifdef MULTIPROCESSOR
+	cpunum = ci->ci_index;
+#else
+	/* Give the compiler a hint.. */
+	cpunum = 0;
+#endif
+
+	oldctx = pm->pm_ctx[cpunum];
 	if (oldctx == 0)
 		return;
 
@@ -3118,40 +3094,9 @@ ctx_free(struct pmap *pm, struct cpu_info *ci)
 	DPRINTF(PDB_CTX_ALLOC, ("ctx_free: cpu%d freeing ctx %d\n",
 		cpu_number(), oldctx));
 	ci->ci_ctxbusy[oldctx] = 0UL;
-	pm->pm_ctx[ci->ci_index] = 0;
-	LIST_REMOVE(pm, pm_list[ci->ci_index]);
+	pm->pm_ctx[cpunum] = 0;
+	LIST_REMOVE(pm, pm_list[cpunum]);
 }
-#else
-static void
-ctx_free(struct pmap *pm)
-{
-	int oldctx;
-
-	oldctx = pmap_ctx(pm);
-	if (oldctx == 0)
-		return;
-
-#ifdef DIAGNOSTIC
-	if (pm == pmap_kernel())
-		panic("ctx_free: freeing kernel context");
-	if (curcpu()->ci_ctxbusy[oldctx] == 0)
-		printf("ctx_free: freeing free context %d\n", oldctx);
-	if (curcpu()->ci_ctxbusy[oldctx] != pm->pm_physaddr) {
-		printf("ctx_free: freeing someone else's context\n "
-		       "ctxbusy[%d] = %p, pm(%p)->pm_ctx = %p\n",
-		       oldctx, (void *)(u_long)curcpu()->ci_ctxbusy[oldctx], pm,
-		       (void *)(u_long)pm->pm_physaddr);
-		Debugger();
-	}
-#endif
-	/* We should verify it has not been stolen and reallocated... */
-	DPRINTF(PDB_CTX_ALLOC, ("ctx_free: cpu%d freeing ctx %d\n",
-		cpu_number(), oldctx));
-	curcpu()->ci_ctxbusy[oldctx] = 0UL;
-	pmap_ctx(pm) = 0;
-	LIST_REMOVE(pm, pm_list);
-}
-#endif
 
 /*
  * Enter the pmap and virtual address into the

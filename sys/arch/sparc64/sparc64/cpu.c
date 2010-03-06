@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.89 2010/02/22 00:16:31 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.90 2010/03/06 08:08:29 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.89 2010/02/22 00:16:31 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.90 2010/03/06 08:08:29 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -77,7 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.89 2010/02/22 00:16:31 mrg Exp $");
 int ecache_min_line_size;
 
 /* Linked list of all CPUs in system. */
+#if defined(MULTIPROCESSOR)
 int sparc_ncpus = 0;
+#endif
 struct cpu_info *cpus = NULL;
 
 volatile sparc64_cpuset_t cpus_active;/* set of active cpus */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.15 2010/02/24 09:49:36 mrg Exp $ */
+/*	$NetBSD: cache.h,v 1.16 2010/03/06 08:08:29 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -141,7 +141,7 @@ void smp_tlb_flush_pte(vaddr_t, struct pmap *);
 void smp_dcache_flush_page_all(paddr_t pa);
 #define	dcache_flush_page_all(pa)	smp_dcache_flush_page_all(pa)
 #else
-#define	tlb_flush_pte(va,pm)	sp_tlb_flush_pte(va, (pm)->pm_ctx)
+#define	tlb_flush_pte(va,pm)	sp_tlb_flush_pte(va, (pm)->pm_ctx[0])
 #define	dcache_flush_page_all(pa)	dcache_flush_page(pa)
 #endif
 

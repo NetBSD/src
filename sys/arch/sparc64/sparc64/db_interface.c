@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.122 2010/02/23 05:32:08 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.123 2010/03/06 08:08:29 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.122 2010/02/23 05:32:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.123 2010/03/06 08:08:29 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -87,7 +87,7 @@ static uint64_t nil;
 #ifdef MULTIPROCESSOR
 #define pmap_ctx(PM)	((PM)->pm_ctx[cpu_number()])
 #else
-#define pmap_ctx(PM)	((PM)->pm_ctx)
+#define pmap_ctx(PM)	((PM)->pm_ctx[0])
 #endif
 
 void fill_ddb_regs_from_tf(struct trapframe64 *tf);

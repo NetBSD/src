@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.27 2010/02/01 02:42:33 mrg Exp $ */
+/*	$NetBSD: intr.h,v 1.28 2010/03/06 08:08:29 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,12 +73,12 @@ void	mp_resume_cpus (void);
 int	mp_cpu_is_paused (sparc64_cpuset_t);
 void	mp_resume_cpu(int);
 #endif	/* _LOCORE */
+#endif
 
 #define IPI_EVCNT_TLB_PTE	0
 #define IPI_EVCNT_FPU_SYNCH	1
 #define IPI_EVCNT_FPU_FLUSH	2
 #define IPI_EVCNT_NUM		3
 #define IPI_EVCNT_NAMES { "TLB pte IPI", "FPU synch IPI", "FPU flush IPI" }
-#endif
 
 #endif /* _SPARC64_INTR_H_ */
