@@ -1,4 +1,4 @@
-/*	$NetBSD: partutil.c,v 1.9 2009/07/16 23:50:32 dyoung Exp $	*/
+/*	$NetBSD: partutil.c,v 1.10 2010/03/06 00:30:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: partutil.c,v 1.9 2009/07/16 23:50:32 dyoung Exp $");
+__RCSID("$NetBSD: partutil.c,v 1.10 2010/03/06 00:30:54 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
@@ -76,12 +76,16 @@ label2geom(struct disk_geom *geo, const struct disklabel *lp)
 static void
 dict2geom(struct disk_geom *geo, prop_dictionary_t dict)
 {
-	memset(geo, 0, sizeof(struct disk_geom));
-	prop_dictionary_get_int64(dict, "sectors-per-unit", &geo->dg_secperunit);
+	(void)memset(geo, 0, sizeof(struct disk_geom));
+	prop_dictionary_get_int64(dict, "sectors-per-unit",
+	    &geo->dg_secperunit);
 	prop_dictionary_get_uint32(dict, "sector-size", &geo->dg_secsize);
-	prop_dictionary_get_uint32(dict, "sectors-per-track", &geo->dg_nsectors);
-	prop_dictionary_get_uint32(dict, "tracks-per-cylinder", &geo->dg_ntracks);
-	prop_dictionary_get_uint32(dict, "cylinders-per-unit", &geo->dg_ncylinders);
+	prop_dictionary_get_uint32(dict, "sectors-per-track",
+	    &geo->dg_nsectors);
+	prop_dictionary_get_uint32(dict, "tracks-per-cylinder",
+	    &geo->dg_ntracks);
+	prop_dictionary_get_uint32(dict, "cylinders-per-unit",
+	    &geo->dg_ncylinders);
 }
 
 
@@ -159,7 +163,7 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 	if (dt) {
 		lp = getdiskbyname(dt);
 		if (lp == NULL)
-			errx(1, "%s: unknown disk type", dt);
+			errx(1, "unknown disk type `%s'", dt);
 	}
 
 	/* Get disk description dictionary */
@@ -171,7 +175,7 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 		 * cgd, ccd pseudo disk drives doesn't support DIOCGDDISKINFO
 		 */
 		if (ioctl(fd, DIOCGDINFO, lp) == -1) {
-			printf("DIOCGDINFO on %s failed\n", s);
+			warn("DIOCGDINFO on %s failed", s);
 			return -1;
 		}
 		label2geom(geo, lp);
@@ -183,8 +187,8 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 	/* Get info about partition/wedge */
 	if (ioctl(fd, DIOCGWEDGEINFO, dkw) == -1) {
 		if (ioctl(fd, DIOCGDINFO, lp) == -1)
-			errx(errno, "Please implement DIOCGWEDGEINFO or "
-			    "DIOCGDINFO for disk device %s\n", s);
+			err(1, "Please implement DIOCGWEDGEINFO or "
+			    "DIOCGDINFO for disk device %s", s);
 
 		part2wedge(dkw, lp, s);
 	}
