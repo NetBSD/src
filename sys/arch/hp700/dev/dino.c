@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.24 2010/03/05 17:47:09 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.25 2010/03/06 16:57:00 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.24 2010/03/05 17:47:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.25 2010/03/06 16:57:00 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -1617,7 +1617,7 @@ dinoattach(device_t parent, device_t self, void *aux)
 	struct confargs *ca = (struct confargs *)aux, nca;
 	struct pcibus_attach_args pba;
 	volatile struct dino_regs *r;
-	const char *p;
+	const char *p = NULL;
 	u_int data;
 	int s, ver;
 
@@ -1678,34 +1678,36 @@ dinoattach(device_t parent, device_t self, void *aux)
 
 	/* TODO establish the bus error interrupt */
 
-	r->iodc = 0;
-	data = r->iodc;
-	ver = (ca->ca_type.iodc_model << 4) |
-	    (ca->ca_type.iodc_revision >> 4);
-	switch (ver) {
-	case 0x05d:	p = "Dino";	/* j2240 */
-	case 0x680:	p = "Dino";
-		switch (data >> 16) {
-		case 0x6800:	ver = 0x20;	break;
-		case 0x6801:	ver = 0x21;	break;
-		case 0x6802:	ver = 0x30;	break;
-		case 0x6803:	ver = 0x31;	break;
-		default:	ver = 0x40;	break;
+	ver = ca->ca_type.iodc_revision;
+	switch ((ca->ca_type.iodc_model << 4) |
+	    (ca->ca_type.iodc_revision >> 4)) {
+	case 0x05d:
+		p = "Dino (card)";	/* j2240 */
+		/* FALLTHROUGH */
+	case 0x680:
+		if (!p)
+			p = "Dino";
+		switch (ver & 0xf) {
+		case 0:	ver = 0x20;	break;
+		case 1:	ver = 0x21;	break;
+		case 2:	ver = 0x30;	break;
+		case 3:	ver = 0x31;	break;
 		}
 		break;
 
-	case 0x682:	p = "Cujo";
-		switch (data >> 16) {
-		case 0x6820:	ver = 0x10;	break;
-		case 0x6821:	ver = 0x20;	break;
-		default:	ver = 0x30;	break;
+	case 0x682:
+		p = "Cujo";
+		switch (ver & 0xf) {
+		case 0:	ver = 0x10;	break;
+		case 1:	ver = 0x20;	break;
 		}
 		break;
 
-	default:	p = "Mojo";
-		ver = (data >> 16) & 0xff;
+	default:
+		p = "Mojo";
 		break;
 	}
+
 	sc->sc_ver = ver;
 	aprint_normal(": %s V%d.%d\n", p, ver >> 4, ver & 0xf);
 
