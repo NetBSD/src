@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.69 2010/02/24 06:38:53 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.70 2010/03/06 21:22:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69 2010/02/24 06:38:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.70 2010/03/06 21:22:42 skrll Exp $");
+
+#include "opt_cputype.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
