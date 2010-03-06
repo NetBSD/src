@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.5 2010/02/22 16:07:24 snj Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.6 2010/03/06 23:21:18 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -151,4 +151,10 @@ sys/arch/hppa/hppa/vm_machdep.c 		patch
 
 	Fix ticket #793: s/setfunc_trampoline/lwp_trampoline/.
 	[skrll, ticket #1312]
+
+crypto/dist/openssl/crypto/evp/m_sha1.c		patch
+
+	Ensure that SHA384 always calls the SHA384 functions.
+	Should fix PR#42881.
+	[joerg, ticket #1320]
 
