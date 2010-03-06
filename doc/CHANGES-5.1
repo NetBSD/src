@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.203 2010/03/06 20:56:44 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.204 2010/03/06 21:06:07 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16844,4 +16844,11 @@ sys/dev/raidframe/rf_netbsdkintf.c		1.272
 	maps, this isn't that big of a deal, as it will just over-estimate
 	the amount of checking that needs to be done.)
 	[oster, ticket #1324]
+
+sys/dev/raidframe/rf_paritymap.c		1.4
+
+	Don't attempt to read or write component label stuff from/to 'dead
+	disks'. Update used spares with the correct parity map bits too.
+	Addresses PR#42904.
+	[oster, ticket #1325]
 
