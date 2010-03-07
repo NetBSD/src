@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.7 2009/05/12 10:05:07 plunky Exp $	*/
+/*	$NetBSD: server.c,v 1.8 2010/03/07 10:58:40 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.7 2009/05/12 10:05:07 plunky Exp $");
+__RCSID("$NetBSD: server.c,v 1.8 2010/03/07 10:58:40 plunky Exp $");
 
 #include <sys/select.h>
 #include <sys/stat.h>
@@ -398,6 +398,9 @@ server_accept_client(server_t *srv, int fd)
 	srv->fdidx[cfd].omtu = (omtu > srv->omtu) ? srv->omtu : omtu;
 	srv->fdidx[cfd].offset = 0;
 	bdaddr_copy(&srv->fdidx[cfd].bdaddr, &sa.bt_bdaddr);
+
+	log_debug("new %s client on fd#%d",
+	    srv->fdidx[cfd].control ? "control" : "L2CAP", cfd);
 }
 
 /*
@@ -511,6 +514,7 @@ server_process_request(server_t *srv, int fd)
 		srv->pdu.pid = SDP_PDU_ERROR_RESPONSE;
 		srv->pdu.len = sizeof(error);
 		be16enc(srv->obuf, error);
+		log_debug("sending ErrorResponse (error=0x%04x)", error);
 	}
 
 	iov[0].iov_base = &srv->pdu;
@@ -566,6 +570,8 @@ server_close_fd(server_t *srv, int fd)
 
 		srv->fdmax = fd;
 	}
+
+	log_debug("client on fd#%d closed", fd);
 }
 
 /*
