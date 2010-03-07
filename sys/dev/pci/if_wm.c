@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.200 2010/02/25 15:07:06 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.201 2010/03/07 07:09:00 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.200 2010/02/25 15:07:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.201 2010/03/07 07:09:00 msaitoh Exp $");
 
 #include "rnd.h"
 
@@ -245,13 +245,12 @@ struct wm_softc {
 	device_t sc_dev;		/* generic device information */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
+	bus_space_handle_t sc_ss;	/* bus space size */
 	bus_space_tag_t sc_iot;		/* I/O space tag */
 	bus_space_handle_t sc_ioh;	/* I/O space handle */
 	bus_space_tag_t sc_flasht;	/* flash registers space tag */
 	bus_space_handle_t sc_flashh;	/* flash registers space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
-	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
-#define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
 
 	struct ethercom sc_ethercom;	/* ethernet common data */
 	struct mii_data sc_mii;		/* MII/media information */
@@ -288,8 +287,13 @@ struct wm_softc {
 	/*
 	 * Control data structures.
 	 */
-	int			sc_ntxdesc;	/* must be a power of two */
+	int sc_ntxdesc;			/* must be a power of two */
 	struct wm_control_data_82544 *sc_control_data;
+	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
+	bus_dma_segment_t sc_cd_seg;	/* control data segment */
+	int sc_cd_rseg;			/* real number of control segment */
+	size_t sc_cd_size;		/* control data size */
+#define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
 #define	sc_txdescs	sc_control_data->wcd_txdescs
 #define	sc_rxdescs	sc_control_data->wcd_rxdescs
 
@@ -544,6 +548,7 @@ static void	wm_kmrn_writereg(struct wm_softc *, int, int);
 static void	wm_set_spiaddrbits(struct wm_softc *);
 static int	wm_match(device_t, cfdata_t, void *);
 static void	wm_attach(device_t, device_t, void *);
+static int	wm_detach(device_t, int);
 static int	wm_is_onboard_nvm_eeprom(struct wm_softc *);
 static void	wm_get_auto_rd_done(struct wm_softc *);
 static void	wm_lan_init_done(struct wm_softc *);
@@ -577,8 +582,8 @@ static void	wm_configure_k1_ich8lan(struct wm_softc *, int);
 static void	wm_set_pcie_completion_timeout(struct wm_softc *);
 static void	wm_reset_init_script_82575(struct wm_softc *);
 
-CFATTACH_DECL_NEW(wm, sizeof(struct wm_softc),
-    wm_match, wm_attach, NULL, NULL);
+CFATTACH_DECL3_NEW(wm, sizeof(struct wm_softc),
+    wm_match, wm_attach, wm_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 /*
  * Devices supported by this driver.
@@ -1060,14 +1065,13 @@ wm_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
-	size_t cdata_size;
 	const char *intrstr = NULL;
 	const char *eetype, *xname;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
-	bus_dma_segment_t seg;
+	bus_size_t memsize;
 	int memh_valid;
-	int i, rseg, error;
+	int i, error;
 	const struct wm_product *wmp;
 	prop_data_t ea;
 	prop_number_t pn;
@@ -1125,7 +1129,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 		memh_valid = (pci_mapreg_map(pa, WM_PCI_MMBA,
-		    memtype, 0, &memt, &memh, NULL, NULL) == 0);
+		    memtype, 0, &memt, &memh, NULL, &memsize) == 0);
 		break;
 	default:
 		memh_valid = 0;
@@ -1135,6 +1139,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	if (memh_valid) {
 		sc->sc_st = memt;
 		sc->sc_sh = memh;
+		sc->sc_ss = memsize;
 	} else {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to map device registers\n");
@@ -1344,26 +1349,28 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 */
 	WM_NTXDESC(sc) = sc->sc_type < WM_T_82544 ?
 	    WM_NTXDESC_82542 : WM_NTXDESC_82544;
-	cdata_size = sc->sc_type < WM_T_82544 ?
+	sc->sc_cd_size = sc->sc_type < WM_T_82544 ?
 	    sizeof(struct wm_control_data_82542) :
 	    sizeof(struct wm_control_data_82544);
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, cdata_size, PAGE_SIZE,
-		    (bus_size_t) 0x100000000ULL, &seg, 1, &rseg, 0)) != 0) {
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_cd_size, PAGE_SIZE,
+		    (bus_size_t) 0x100000000ULL, &sc->sc_cd_seg, 1,
+		    &sc->sc_cd_rseg, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to allocate control data, error = %d\n",
 		    error);
 		goto fail_0;
 	}
 
-	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, cdata_size,
+	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_cd_seg,
+		    sc->sc_cd_rseg, sc->sc_cd_size,
 		    (void **)&sc->sc_control_data, BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to map control data, error = %d\n", error);
 		goto fail_1;
 	}
 
-	if ((error = bus_dmamap_create(sc->sc_dmat, cdata_size, 1, cdata_size,
-		    0, 0, &sc->sc_cddmamap)) != 0) {
+	if ((error = bus_dmamap_create(sc->sc_dmat, sc->sc_cd_size, 1,
+		    sc->sc_cd_size, 0, 0, &sc->sc_cddmamap)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to create control data DMA map, error = %d\n",
 		    error);
@@ -1371,7 +1378,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
-		    sc->sc_control_data, cdata_size, NULL, 0)) != 0) {
+		    sc->sc_control_data, sc->sc_cd_size, NULL, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to load control data DMA map, error = %d\n",
 		    error);
@@ -1947,11 +1954,78 @@ wm_attach(device_t parent, device_t self, void *aux)
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
  fail_2:
 	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
-	    cdata_size);
+	    sc->sc_cd_size);
  fail_1:
-	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_cd_seg, sc->sc_cd_rseg);
  fail_0:
 	return;
+}
+
+static int
+wm_detach(device_t self, int flags __unused)
+{
+	struct wm_softc *sc = device_private(self);
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	int i, s;
+
+	s = splnet();
+	/* Stop the interface. Callouts are stopped in it. */
+	wm_stop(ifp, 1);
+	splx(s);
+
+	pmf_device_deregister(self);
+
+	/* Tell the firmware about the release */
+#if 0
+	wm_release_manageability(sc);
+#endif
+
+	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	/* Delete all remaining media. */
+	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+
+	/* Unload RX dmamaps and free mbufs */ 
+	wm_rxdrain(sc);
+
+	/* Free dmamap. It's the same as the end of the wm_attach() function */
+	for (i = 0; i < WM_NRXDESC; i++) {
+		if (sc->sc_rxsoft[i].rxs_dmamap != NULL)
+			bus_dmamap_destroy(sc->sc_dmat,
+			    sc->sc_rxsoft[i].rxs_dmamap);
+	}
+	for (i = 0; i < WM_TXQUEUELEN(sc); i++) {
+		if (sc->sc_txsoft[i].txs_dmamap != NULL)
+			bus_dmamap_destroy(sc->sc_dmat,
+			    sc->sc_txsoft[i].txs_dmamap);
+	}
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_cddmamap);
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
+	    sc->sc_cd_size);
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_cd_seg, sc->sc_cd_rseg);
+
+	/* Disestablish the interrupt handler */
+	if (sc->sc_ih != NULL) {
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
+
+	/* Unmap the register */
+	if (sc->sc_ss) {
+		bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_ss);
+		sc->sc_ss = 0;
+	}
+
+#if 0
+	wm_release_hw_control(sc);
+#endif
+
+	return 0;
 }
 
 /*
