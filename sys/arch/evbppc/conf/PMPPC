@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.12 2010/02/08 19:02:28 joerg Exp $
+#	$NetBSD: PMPPC,v 1.13 2010/03/07 09:39:42 plunky Exp $
 #
 #	PMPPC
 #
@@ -334,6 +334,9 @@ ulpt*	at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?

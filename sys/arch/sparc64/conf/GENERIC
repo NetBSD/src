@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.118 2010/02/28 11:49:44 martin Exp $
+# $NetBSD: GENERIC,v 1.119 2010/03/07 09:39:44 plunky Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.118 $"
+#ident 		"GENERIC-$Revision: 1.119 $"
 
 maxusers	64
 
@@ -589,6 +589,9 @@ ulpt*	at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?

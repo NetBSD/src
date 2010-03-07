@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.39 2009/12/05 20:11:11 pooka Exp $
+#	$NetBSD: SMDK2410,v 1.40 2010/03/07 09:39:42 plunky Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -256,6 +256,9 @@ ulpt*	at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.330 2009/12/05 20:11:03 pooka Exp $
+# $NetBSD: GENERIC,v 1.331 2010/03/07 09:39:42 plunky Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.330 $"
+ident		"GENERIC-$Revision: 1.331 $"
 
 maxusers 32
 
@@ -574,6 +574,9 @@ ulpt*	at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?

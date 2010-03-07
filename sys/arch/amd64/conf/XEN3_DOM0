@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.51 2010/03/06 04:28:54 cnst Exp $
+# $NetBSD: XEN3_DOM0,v 1.52 2010/03/07 09:39:42 plunky Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -570,6 +570,9 @@ ulpt*   at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem* at uhub? port ? configuration ?
 ucom*   at umodem?
+
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*  at uhub? port ? configuration ? interface ?

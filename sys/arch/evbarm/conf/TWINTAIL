@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.32 2009/12/05 20:11:11 pooka Exp $
+#	$NetBSD: TWINTAIL,v 1.33 2010/03/07 09:39:42 plunky Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -226,6 +226,9 @@ opio0 	at obio?  intr 2
 # USB Modem
 #umodem*	at uhub? port ? configuration ?
 #ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+#uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?

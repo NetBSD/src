@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.58 2010/02/19 15:25:28 he Exp $
+#	$NetBSD: P5064,v 1.59 2010/03/07 09:39:42 plunky Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.58 $"
+#ident 		"P5064-$Revision: 1.59 $"
 
 maxusers 32
 
@@ -336,6 +336,9 @@ fd*	at	fdc? drive ?
 # USB Modem
 #umodem*	at uhub? port ? configuration ?
 #ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+#uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?

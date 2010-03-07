@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.123 2010/02/08 19:02:30 joerg Exp $
+# $NetBSD: GENERIC,v 1.124 2010/03/07 09:39:43 plunky Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.123 $"
+#ident 		"GENERIC-$Revision: 1.124 $"
 
 maxusers	32
 
@@ -336,6 +336,7 @@ uhid*	at uhidev? reportid ?				# USB Generic HID
 ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
 umodem*	at uhub? port ? configuration ?			# USB Modem
 ucom*	at umodem?
+uhso*	at uhub? port ? configuration ?			# Option N.V. Wireless WAN modems
 #uaudio*	at uhub? port ? configuration ?			# USB audio
 
 # D-Link DSB-R100 USB FM radio tuner

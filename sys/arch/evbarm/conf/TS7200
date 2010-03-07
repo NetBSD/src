@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.40 2009/12/05 20:11:11 pooka Exp $
+#	$NetBSD: TS7200,v 1.41 2010/03/07 09:39:42 plunky Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -314,6 +314,9 @@ uhub*	at uhub? port ?
 # USB Modem
 #umodem*	at uhub? port ? configuration ?
 #ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+#uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?

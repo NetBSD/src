@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.51 2009/03/06 20:31:46 joerg Exp $
+#	$NetBSD: P4032,v 1.52 2010/03/07 09:39:42 plunky Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.51 $"
+#ident 		"P4032-$Revision: 1.52 $"
 
 maxusers 32
 
@@ -272,6 +272,9 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # USB Modem
 #umodem*	at uhub? port ? configuration ?
 #ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+#uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?

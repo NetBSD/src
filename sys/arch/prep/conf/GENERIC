@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.149 2009/12/05 20:11:16 pooka Exp $
+# $NetBSD: GENERIC,v 1.150 2010/03/07 09:39:43 plunky Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.149 $"
+#ident		"GENERIC-$Revision: 1.150 $"
 
 maxusers	32
 
@@ -434,6 +434,9 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # USB Modem
 #umodem* at uhub? port ? configuration ?
 #ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+#uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?

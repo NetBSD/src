@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.147 2009/12/05 20:11:17 pooka Exp $
+# $NetBSD: GENERIC,v 1.148 2010/03/07 09:39:44 plunky Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.147 $"
+#ident 		"GENERIC-$Revision: 1.148 $"
 
 maxusers	8
 
@@ -345,6 +345,9 @@ bmd*	at intio0 addr 0xecebf0		# Nereid
 # USB Modem
 #umodem*	at uhub? port ? configuration ?
 #ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+#uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage; wd not supported
 #umass*	at uhub? port ? configuration ? interface ?
