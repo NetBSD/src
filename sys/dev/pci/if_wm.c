@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.201 2010/03/07 07:09:00 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.202 2010/03/07 07:53:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.201 2010/03/07 07:09:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.202 2010/03/07 07:53:37 msaitoh Exp $");
 
 #include "rnd.h"
 
@@ -118,9 +118,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.201 2010/03/07 07:09:00 msaitoh Exp $");
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
+#include <dev/mii/miidevs.h>
 #include <dev/mii/mii_bitbang.h>
 #include <dev/mii/ikphyreg.h>
 #include <dev/mii/igphyreg.h>
+#include <dev/mii/igphyvar.h>
 #include <dev/mii/inbmphyreg.h>
 
 #include <dev/pci/pcireg.h>
@@ -576,6 +578,8 @@ static int	wm_check_mng_mode_generic(struct wm_softc *);
 static int	wm_check_reset_block(struct wm_softc *);
 static void	wm_get_hw_control(struct wm_softc *);
 static int	wm_check_for_link(struct wm_softc *);
+static void	wm_kmrn_lock_loss_workaround_ich8lan(struct wm_softc *);
+static void	wm_gig_downshift_workaround_ich8lan(struct wm_softc *);
 static void	wm_hv_phy_workaround_ich8lan(struct wm_softc *);
 static void	wm_k1_gig_workaround_hv(struct wm_softc *, int);
 static void	wm_configure_k1_ich8lan(struct wm_softc *, int);
@@ -3179,6 +3183,9 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 					sc->sc_ctrl |= CTRL_FD;
 				CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 			}
+		} else if ((sc->sc_type == WM_T_ICH8)
+		    && (sc->sc_phytype == WMPHY_IGP_3)) {
+			wm_kmrn_lock_loss_workaround_ich8lan(sc);
 		} else if (sc->sc_type == WM_T_PCH) {
 			wm_k1_gig_workaround_hv(sc,
 			    ((sc->sc_mii.mii_media_status & IFM_ACTIVE) != 0));
@@ -5433,7 +5440,20 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
 		sc->sc_phytype = WMPHY_NONE;
 	} else {
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		/* Check PHY type */
+		uint32_t model;
+		struct mii_softc *child;
+
+		child = LIST_FIRST(&sc->sc_mii.mii_phys);
+		if (device_is_a(child->mii_dev, "igphy")) {
+			struct igphy_softc *isc = (struct igphy_softc *)child;
+
+			model = isc->sc_mii.mii_mpd_model;
+			if (model == MII_MODEL_yyINTEL_I82566)
+				sc->sc_phytype = WMPHY_IGP_3;
+		}
+
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
 	}
 }
 
@@ -6846,6 +6866,68 @@ wm_check_for_link(struct wm_softc *sc)
 	}
 
 	return 0;
+}
+
+/* Work-around for 82566 Kumeran PCS lock loss */
+static void
+wm_kmrn_lock_loss_workaround_ich8lan(struct wm_softc *sc)
+{
+	int miistatus, active, i;
+	int reg;
+
+	miistatus = sc->sc_mii.mii_media_status;
+
+	/* If the link is not up, do nothing */
+	if ((miistatus & IFM_ACTIVE) != 0)
+		return;
+
+	active = sc->sc_mii.mii_media_active;
+
+	/* Nothing to do if the link is other than 1Gbps */
+	if (IFM_SUBTYPE(active) != IFM_1000_T)
+		return;
+
+	for (i = 0; i < 10; i++) {
+		/* read twice */
+		reg = wm_gmii_i80003_readreg(sc->sc_dev, 1, IGP3_KMRN_DIAG);
+		reg = wm_gmii_i80003_readreg(sc->sc_dev, 1, IGP3_KMRN_DIAG);
+		if ((reg & IGP3_KMRN_DIAG_PCS_LOCK_LOSS) != 0)
+			goto out;	/* GOOD! */
+
+		/* Reset the PHY */
+		wm_gmii_reset(sc);
+		delay(5*1000);
+	}
+
+	/* Disable GigE link negotiation */
+	reg = CSR_READ(sc, WMREG_PHY_CTRL);
+	reg |= PHY_CTRL_GBE_DIS | PHY_CTRL_NOND0A_GBE_DIS;
+	CSR_WRITE(sc, WMREG_PHY_CTRL, reg);
+	
+	/*
+	 * Call gig speed drop workaround on Gig disable before accessing
+	 * any PHY registers.
+	 */
+	wm_gig_downshift_workaround_ich8lan(sc);
+
+out:
+	return;
+}
+
+/* WOL from S5 stops working */
+static void
+wm_gig_downshift_workaround_ich8lan(struct wm_softc *sc)
+{
+	uint16_t kmrn_reg;
+
+	/* Only for igp3 */
+	if (sc->sc_phytype == WMPHY_IGP_3) {
+		kmrn_reg = wm_kmrn_readreg(sc, KUMCTRLSTA_OFFSET_DIAG);
+		kmrn_reg |= KUMCTRLSTA_DIAG_NELPBK;
+		wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_DIAG, kmrn_reg);
+		kmrn_reg &= ~KUMCTRLSTA_DIAG_NELPBK;
+		wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_DIAG, kmrn_reg);
+	}
 }
 
 /*
