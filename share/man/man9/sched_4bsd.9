@@ -1,4 +1,4 @@
-.\"     $NetBSD: sched_4bsd.9,v 1.6 2010/03/06 22:02:15 wiz Exp $
+.\"     $NetBSD: sched_4bsd.9,v 1.7 2010/03/07 05:37:25 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,7 +48,9 @@
 .Ft void
 .Fn updatepri "lwp_t *l"
 .Sh DESCRIPTION
-The traditional 4.4BSD scheduler employs a
+The traditional
+.Bx 4.4
+scheduler employs a
 .Dq multilevel feedback queues
 algorithm, favouring interactive, short-running threads to
 CPU-bound ones.
@@ -83,7 +85,9 @@ source tree where actual code implementing the scheduler can be found.
 All pathnames are relative to
 .Pa /usr/src .
 .Pp
-The 4.4BSD scheduler subsystem is implemented within the file
+The
+.Bx 4.4
+scheduler subsystem is implemented within the file
 .Pa sys/kern/sched_4bsd.c .
 .Sh SEE ALSO
 .Xr csf 9 ,
