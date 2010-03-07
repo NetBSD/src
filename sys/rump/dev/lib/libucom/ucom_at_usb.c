@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom_at_usb.c,v 1.3 2010/03/01 13:12:20 pooka Exp $	*/
+/*	$NetBSD: ucom_at_usb.c,v 1.4 2010/03/07 17:44:40 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -57,9 +57,9 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	FLAWLESSCALL(devsw_attach("ucom", NULL, &bmaj, &ucom_cdevsw, &cmaj));
 
 	FLAWLESSCALL(rump_vfs_makedevnodes(S_IFCHR, "/dev/ttyU", '0',
-	    cmaj, 0, 1));
+	    cmaj, 0, 2));
 	FLAWLESSCALL(rump_vfs_makedevnodes(S_IFCHR, "/dev/dtyU", '0',
-	    cmaj, 0x80000, 1));
+	    cmaj, 0x80000, 2));
 
 	tty_init();
 }
