@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.38 2010/02/16 15:17:17 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.39 2010/03/07 07:53:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -757,6 +757,9 @@ struct livengood_tcpip_ctxdesc {
 #define	KUMCTRLSTA_INB_CTRL_LINK_TMOUT_DFLT 0x00000500
 #define	KUMCTRLSTA_INB_CTRL_DIS_PADDING	0x00000010
 
+/* Diag */
+#define	KUMCTRLSTA_DIAG_NELPBK	0x1000
+
 /* K1 Config */
 #define	KUMCTRLSTA_K1_ENABLE	0x0002
 
@@ -833,6 +836,11 @@ struct livengood_tcpip_ctxdesc {
 #define E1000_EXTCNF_CTRL_SWFLAG	EXTCNFCTR_MDIO_SW_OWNERSHIP
 
 #define	WMREG_PHY_CTRL	0x0f10	/* PHY control */
+#define	PHY_CTRL_SPD_EN		(1 << 0)
+#define	PHY_CTRL_D0A_LPLU	(1 << 1)
+#define	PHY_CTRL_NOND0A_LPLU	(1 << 2)
+#define	PHY_CTRL_NOND0A_GBE_DIS	(1 << 3)
+#define	PHY_CTRL_GBE_DIS	(1 << 4)
 
 /* ich8 flash control */
 #define ICH_FLASH_COMMAND_TIMEOUT            5000    /* 5000 uSecs - adjusted */
