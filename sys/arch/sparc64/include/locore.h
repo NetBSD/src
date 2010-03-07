@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.2 2010/03/07 00:42:58 mrg Exp $	*/
+/*	$NetBSD: locore.h,v 1.3 2010/03/07 01:52:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -86,3 +86,7 @@
 
 /* if < 32, copy by bytes, memcpy, kcopy, ... */
 #define	BCOPY_SMALL	32
+
+/* use as needed to align things on longword boundaries */
+#define	_ALIGN	.align 8
+#define ICACHE_ALIGN	.align	32
