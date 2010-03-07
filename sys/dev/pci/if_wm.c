@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.203 2010/03/07 09:05:19 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.204 2010/03/07 10:11:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.203 2010/03/07 09:05:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.204 2010/03/07 10:11:04 msaitoh Exp $");
 
 #include "rnd.h"
 
@@ -249,7 +249,7 @@ struct wm_softc {
 	device_t sc_dev;		/* generic device information */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
-	bus_space_handle_t sc_ss;	/* bus space size */
+	bus_size_t sc_ss;		/* bus space size */
 	bus_space_tag_t sc_iot;		/* I/O space tag */
 	bus_space_handle_t sc_ioh;	/* I/O space handle */
 	bus_space_tag_t sc_flasht;	/* flash registers space tag */
