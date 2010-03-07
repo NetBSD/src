@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.82 2009/12/14 00:46:12 matt Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.83 2010/03/07 09:39:43 plunky Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.82 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.83 $"
 
 maxusers	32
 
@@ -328,6 +328,9 @@ ulpt*   at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem* at uhub? port ? configuration ?
 ucom*   at umodem?
+
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*  at uhub? port ? configuration ? interface ?

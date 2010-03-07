@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.MP,v 1.7 2010/02/08 19:02:31 joerg Exp $
+# $NetBSD: GENERIC.MP,v 1.8 2010/03/07 09:39:43 plunky Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.7 $"
+#ident 		"GENERIC-$Revision: 1.8 $"
 
 maxusers	32
 
@@ -340,6 +340,7 @@ ucycom*	at uhidev? reportid ?				# USB serial adapter
 uhid*	at uhidev? reportid ?				# USB Generic HID
 ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
 umodem*	at uhub? port ? configuration ?			# USB Modem
+uhso*	at uhub? port ? configuration ?			# Option N.V. Wireless WAN modems
 ucom*	at umodem?
 #uaudio*	at uhub? port ? configuration ?			# USB audio
 
