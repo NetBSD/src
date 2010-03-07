@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.74 2009/12/05 20:11:10 pooka Exp $
+#	$NetBSD: INSTALL,v 1.75 2010/03/07 09:39:42 plunky Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -321,6 +321,9 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # USB Modem
 #umodem*	at uhub? port ? configuration ?
 #ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+#uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?

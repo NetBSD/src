@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.207 2009/12/05 20:11:14 pooka Exp $
+# $NetBSD: GENERIC,v 1.208 2010/03/07 09:39:43 plunky Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.207 $"
+#ident 		"GENERIC-$Revision: 1.208 $"
 
 maxusers	16
 
@@ -578,6 +578,9 @@ ulpt*	at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?

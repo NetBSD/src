@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.22 2009/12/17 20:07:19 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.23 2010/03/07 09:39:43 plunky Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.22 $"
+#ident          "GENERIC-$Revision: 1.23 $"
 
 maxusers	16		# estimated number of users
 
@@ -306,6 +306,9 @@ ulpt*	at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?

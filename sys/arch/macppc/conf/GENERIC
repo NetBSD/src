@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.278 2010/01/18 23:40:06 jmmv Exp $
+# $NetBSD: GENERIC,v 1.279 2010/03/07 09:39:43 plunky Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.278 $"
+#ident 		"GENERIC-$Revision: 1.279 $"
 
 maxusers	32
 
@@ -480,6 +480,8 @@ ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
 
 umodem*	at uhub? port ? configuration ?			# USB Modem
 ucom*	at umodem?
+
+uhso*	at uhub? port ? configuration ?			# Option N.V. Wireless WAN modems
 
 umass*	at uhub? port ? configuration ? interface ?	# USB Mass Storage
 
