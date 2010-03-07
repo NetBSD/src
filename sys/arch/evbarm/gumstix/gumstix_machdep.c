@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.24 2010/01/24 03:46:48 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.25 2010/03/07 09:18:51 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -137,6 +137,7 @@
  * boards using RedBoot firmware.
  */
 
+#include "opt_gumstix.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
@@ -257,7 +258,7 @@ pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 /* Prototypes */
 static void	read_system_serial(void);
 static void	process_kernel_args(int, char *[]);
-static void	process_kernel_args_line(char *);
+static void	process_kernel_args_liner(char *);
 #ifdef KGDB
 static void	kgdb_port_init(void);
 #endif
@@ -281,6 +282,10 @@ bs_protos(bs_notimpl);
 
 int comcnspeed = CONSPEED;
 int comcnmode = CONMODE;
+
+#ifdef GUMSTIX_NETBSD_ARGS_CONSOLE
+static char console[16];
+#endif
 
 extern void gxio_config_pin(void);
 extern void gxio_config_expansion(char *);
@@ -351,8 +356,7 @@ cpu_reboot(int howto, char *bootstr)
 	/*NOTREACHED*/
 }
 
-static inline
-pd_entry_t *
+static inline pd_entry_t *
 read_ttb(void)
 {
   long ttb;
@@ -501,16 +505,12 @@ initarm(void *arg)
 
 	pxa2x0_clkman_bootstrap(GUMSTIX_CLKMAN_VBASE);
 
+#ifndef GUMSTIX_NETBSD_ARGS_CONSOLE
 	consinit();
+#endif
 #ifdef KGDB
 	kgdb_port_init();
 #endif
-
-	/* Talk to the user */
-	printf("\nNetBSD/evbarm (gumstix) booting ...\n");
-
-	/* Read system serial */
-	read_system_serial();
 
         /*
 	 * Examine the boot args string for options we need to know about
@@ -526,7 +526,16 @@ initarm(void *arg)
 		 * Maybe r3 is 'boot args string' of 'bootm'.  This string is
 		 * linely.
 		 */
-		process_kernel_args_line((char *)u_boot_args[r3]);
+		process_kernel_args_liner((char *)u_boot_args[r3]);
+#ifdef GUMSTIX_NETBSD_ARGS_CONSOLE
+	consinit();
+#endif
+
+	/* Talk to the user */
+	printf("\nNetBSD/evbarm (gumstix) booting ...\n");
+
+	/* Read system serial */
+	read_system_serial();
 
 	memstart = SDRAM_START;
 	memsize = ram_size;
@@ -939,7 +948,12 @@ read_system_serial(void)
 	printf("\n");
 }
 
+#ifdef GUMSTIX_NETBSD_ARGS_BUSHEADER
 static const char busheader_name[] = "busheader=";
+#endif
+#ifdef GUMSTIX_NETBSD_ARGS_CONSOLE
+static const char console_name[] = "console=";
+#endif
 static void
 process_kernel_args(int argc, char *argv[])
 {
@@ -948,12 +962,21 @@ process_kernel_args(int argc, char *argv[])
 	boothowto = 0;
 
 	for (i = 1, j = 0; i < argc; i++) {
+#ifdef GUMSTIX_NETBSD_ARGS_BUSHEADER
 		if (!strncmp(argv[i], busheader_name, strlen(busheader_name))) {
 			/* configure for GPIOs of busheader side */
 			gxio_config_expansion(argv[i] + strlen(busheader_name));
 			gxio_configured = 1;
 			continue;
 		}
+#endif
+#ifdef GUMSTIX_NETBSD_ARGS_CONSOLE
+		if (!strncmp(argv[i], console_name, strlen(console_name))) {
+			strncpy(console, argv[i] + strlen(console_name),
+			    sizeof(console));
+			consinit();
+		}
+#endif
 		if (j == MAX_BOOT_STRING) {
 			*(bootargs + j) = '\0';
 			continue;
@@ -972,28 +995,49 @@ process_kernel_args(int argc, char *argv[])
 }
 
 static void
-process_kernel_args_line(char *args)
+process_kernel_args_liner(char *args)
 {
 	int i;
-	char expansion[256], *p, c;
+	char *p = NULL;
 
 	boothowto = 0;
 
 	strncpy(bootargs, args, sizeof(bootargs));
+#ifdef GUMSTIX_NETBSD_ARGS_BUSHEADER
 	p = strstr(bootargs, busheader_name);
-	if (p == NULL)
-		gxio_config_expansion(NULL);
-	else {
+	if (p) {
+		char expansion[256], c;
+
 		i = 0;
 		do {
 			c = *(p + strlen(busheader_name) + i);
 			if (c == ' ')
 				c = '\0';
 			expansion[i++] = c;
-		} while (c != '\0');
+		} while (c != '\0' && i < sizeof(expansion));
 		gxio_config_expansion(expansion);
 		strcpy(p, p + i);
 	}
+#endif
+	if (p == NULL) {
+		gxio_config_expansion(NULL);
+	}
+#ifdef GUMSTIX_NETBSD_ARGS_CONSOLE
+	p = strstr(bootargs, console_name);
+	if (p != NULL) {
+		char c;
+
+		i = 0;
+		do {
+			c = *(p + strlen(console_name) + i);
+			if (c == ' ')
+				c = '\0';
+			console[i++] = c;
+		} while (c != '\0' && i < sizeof(console));
+		consinit();
+		strcpy(p, p + i);
+	}
+#endif
 	boot_args = bootargs;
 
 	parse_mi_bootargs(boot_args);
@@ -1024,6 +1068,7 @@ void
 consinit(void)
 {
 	static int consinit_called = 0;
+	int rv;
 
 	if (consinit_called != 0)
 		return;
@@ -1034,13 +1079,17 @@ consinit(void)
 
 #ifdef FFUARTCONSOLE
 #ifdef KGDB
-	if (0 == strcmp(kgdb_devname, "ffuart")){
+	if (strcmp(kgdb_devname, "ffuart") == 0){
 		/* port is reserved for kgdb */
 	} else
 #endif
+#if defined(GUMSTIX_NETBSD_ARGS_CONSOLE)
+	if (console[0] == '\0' || strcasecmp(console, "ffuart") == 0)
+#endif
 	{
-		if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_FFUART_BASE,
-		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode)) {
+		rv = comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_FFUART_BASE,
+		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode);
+		if (rv == 0) {
 			pxa2x0_clkman_config(CKEN_FFUART, 1);
 			return;
 		}
@@ -1049,13 +1098,17 @@ consinit(void)
 
 #ifdef STUARTCONSOLE
 #ifdef KGDB
-	if (0 == strcmp(kgdb_devname, "stuart")) {
+	if (strcmp(kgdb_devname, "stuart") == 0) {
 		/* port is reserved for kgdb */
 	} else
 #endif
+#if defined(GUMSTIX_NETBSD_ARGS_CONSOLE)
+	if (console[0] == '\0' || strcasecmp(console, "stuart") == 0)
+#endif
 	{
-		if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_STUART_BASE,
-		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode)) {
+		rv = comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_STUART_BASE,
+		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode);
+		if (rv == 0) {
 			pxa2x0_clkman_config(CKEN_STUART, 1);
 			return;
 		}
@@ -1064,13 +1117,17 @@ consinit(void)
 
 #ifdef BTUARTCONSOLE
 #ifdef KGDB
-	if (0 == strcmp(kgdb_devname, "btuart")) {
+	if (strcmp(kgdb_devname, "btuart") == 0) {
 		/* port is reserved for kgdb */
 	} else
 #endif
+#if defined(GUMSTIX_NETBSD_ARGS_CONSOLE)
+	if (console[0] == '\0' || strcasecmp(console, "btuart") == 0)
+#endif
 	{
-		if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_BTUART_BASE,
-		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode)) {
+		rv = comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_BTUART_BASE,
+		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode);
+		if (rv == 0) {
 			pxa2x0_clkman_config(CKEN_BTUART, 1);
 			return;
 		}
@@ -1079,13 +1136,17 @@ consinit(void)
 
 #ifdef HWUARTCONSOLE
 #ifdef KGDB
-	if (0 == strcmp(kgdb_devname, "hwuart")) {
+	if (strcmp(kgdb_devname, "hwuart") == 0) {
 		/* port is reserved for kgdb */
 	} else
 #endif
+#if defined(GUMSTIX_NETBSD_ARGS_CONSOLE)
+	if (console[0] == '\0' || strcasecmp(console, "hwuart") == 0)
+#endif
 	{
-		if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_HWUART_BASE,
-		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode)) {
+		rv = comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_HWUART_BASE,
+		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode);
+		if (rv == 0) {
 			pxa2x0_clkman_config(CKEN_HWUART, 1);
 			return;
 		}
@@ -1095,7 +1156,12 @@ consinit(void)
 #endif /* NCOM */
 
 #if NLCD > 0
-	gxlcd_cnattach();
+#if defined(GUMSTIX_NETBSD_ARGS_CONSOLE)
+	if (console[0] == '\0' || strcasecmp(console, "lcd") == 0)
+#endif
+	{
+		gxlcd_cnattach();
+	}
 #endif
 }
 
