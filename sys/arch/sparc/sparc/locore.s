@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.255 2010/01/28 05:08:11 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.256 2010/03/07 00:42:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -74,18 +74,6 @@
 #include <machine/trap.h>
 	
 #include <sys/syscall.h>
-
-/*
- * GNU assembler does not understand `.empty' directive; Sun assembler
- * gripes about labels without it.  To allow cross-compilation using
- * the Sun assembler, and because .empty directives are useful documentation,
- * we use this trick.
- */
-#ifdef SUN_AS
-#define	EMPTY	.empty
-#else
-#define	EMPTY	/* .empty */
-#endif
 
 /* use as needed to align things on longword boundaries */
 #define	_ALIGN	.align 4
@@ -1276,7 +1264,7 @@ Lpanic_red:
 	cmp	pte, -1; \
 	be,a	1f; andn addr, page_offset, pte; \
 	tst	pte; \
-	bne	bad; EMPTY; \
+	bne	bad; .empty; \
 	andn	addr, page_offset, pte; \
 1:
 
@@ -1703,14 +1691,14 @@ ctw_user:
 	st	%g7, [%g6 + PCB_UW]	! cpcb->pcb_uw--;
 	btst	7, %sp			! if not aligned,
 	bne	ctw_invalid		! choke on it
-	 EMPTY
+	 .empty
 
 	sethi	%hi(_C_LABEL(pgofset)), %g6	! trash %g6=curpcb
 	ld	[%g6 + %lo(_C_LABEL(pgofset))], %g6
 	PTE_OF_ADDR(%sp, %g7, ctw_invalid, %g6, NOP_ON_4M_1)
 	CMP_PTE_USER_WRITE(%g7, %g5, NOP_ON_4M_2) ! likewise if not writable
 	bne	ctw_invalid
-	 EMPTY
+	 .empty
 	/* Note side-effect of SLT_IF_1PAGE_RW: decrements %g6 by 62 */
 	SLT_IF_1PAGE_RW(%sp, %g7, %g6)
 	bl,a	ctw_merge		! all ok if only 1
@@ -2076,7 +2064,7 @@ illinst4m:
 
 	btst	PSR_PS, %l0		! slowtrap() if from kernel
 	bnz	slowtrap
-	 EMPTY
+	 .empty
 
 	! clear fault status
 	set	SRMMU_SFSR, %l7
@@ -2099,7 +2087,7 @@ illinst4m:
 	lda	[%l7]ASI_SRMMU, %l6		! fault status
 	andcc	%l6, SFSR_FAV, %l6		! get fault status bits
 	bnz	slowtrap
-	 EMPTY
+	 .empty
 
 	! we got the insn; check whether it was a FLUSH
 	! instruction format: op=2, op3=0x3b (see also instr.h)
@@ -2129,7 +2117,7 @@ fp_exception:
 	set	special_fp_store, %l4	! see if we came from the special one
 	cmp	%l1, %l4		! pc == special_fp_store?
 	bne	slowtrap		! no, go handle per usual
-	 EMPTY
+	 .empty
 	sethi	%hi(savefpcont), %l4	! yes, "return" to the special code
 	or	%lo(savefpcont), %l4, %l4
 	jmp	%l4
@@ -2205,17 +2193,17 @@ softtrap:
 	ld	[%l6 + %lo(_EINTSTACKP)], %l7
 	cmp	%sp, %l7
 	bge	Lslowtrap_reenter
-	 EMPTY
+	 .empty
 	set	INT_STACK_SIZE, %l6
 	sub	%l7, %l6, %l7
 	cmp	%sp, %l7
 	blu	Lslowtrap_reenter
-	 EMPTY
+	 .empty
 #else
 	sethi	%hi(_C_LABEL(eintstack)), %l7
 	cmp	%sp, %l7
 	bge	Lslowtrap_reenter
-	 EMPTY
+	 .empty
 #endif
 	sethi	%hi(cpcb), %l6
 	ld	[%l6 + %lo(cpcb)], %l6
@@ -3413,14 +3401,14 @@ winuf_user:
 	 */
 	btst	7, %sp			! if unaligned, it is invalid
 	bne	winuf_invalid
-	 EMPTY
+	 .empty
 
 	sethi	%hi(_C_LABEL(pgofset)), %l4
 	ld	[%l4 + %lo(_C_LABEL(pgofset))], %l4
 	PTE_OF_ADDR(%sp, %l7, winuf_invalid, %l4, NOP_ON_4M_5)
 	CMP_PTE_USER_READ(%l7, %l5, NOP_ON_4M_6) ! if first page not readable,
 	bne	winuf_invalid		! it is invalid
-	 EMPTY
+	 .empty
 	SLT_IF_1PAGE_RW(%sp, %l7, %l4)	! first page is readable
 	bl,a	winuf_ok		! if only one page, enter window X
 	 restore %g0, 1, %l1		! and goto ok, & set %l1 to 1
@@ -3637,14 +3625,14 @@ rft_user:
 1:
 	btst	7, %fp			! if unaligned, address is invalid
 	bne	rft_invalid
-	 EMPTY
+	 .empty
 
 	sethi	%hi(_C_LABEL(pgofset)), %l3
 	ld	[%l3 + %lo(_C_LABEL(pgofset))], %l3
 	PTE_OF_ADDR(%fp, %l7, rft_invalid, %l3, NOP_ON_4M_9)
 	CMP_PTE_USER_READ(%l7, %l5, NOP_ON_4M_10)	! try first page
 	bne	rft_invalid		! no good
-	 EMPTY
+	 .empty
 	SLT_IF_1PAGE_RW(%fp, %l7, %l3)
 	bl,a	rft_user_ok		! only 1 page: ok
 	 wr	%g0, 0, %wim
@@ -5053,10 +5041,10 @@ ENTRY(fuword)
 	set	KERNBASE, %o2
 	cmp	%o0, %o2		! if addr >= KERNBASE...
 	bgeu	Lfsbadaddr
-	EMPTY
+	 .empty
 	btst	3, %o0			! or has low bits set...
 	bnz	Lfsbadaddr		!	go return -1
-	EMPTY
+	 .empty
 	sethi	%hi(cpcb), %o2		! cpcb->pcb_onfault = Lfserr;
 	ld	[%o2 + %lo(cpcb)], %o2
 	set	Lfserr, %o3
@@ -5090,7 +5078,7 @@ ENTRY(fuswintr)
 	set	KERNBASE, %o2
 	cmp	%o0, %o2		! if addr >= KERNBASE
 	bgeu	Lfsbadaddr		!	return error
-	EMPTY
+	 .empty
 	sethi	%hi(cpcb), %o2		! cpcb->pcb_onfault = Lfsbail;
 	ld	[%o2 + %lo(cpcb)], %o2
 	set	_C_LABEL(Lfsbail), %o3
@@ -5103,7 +5091,7 @@ ENTRY(fusword)
 	set	KERNBASE, %o2
 	cmp	%o0, %o2		! if addr >= KERNBASE
 	bgeu	Lfsbadaddr		!	return error
-	EMPTY
+	 .empty
 	sethi	%hi(cpcb), %o2		! cpcb->pcb_onfault = Lfserr;
 	ld	[%o2 + %lo(cpcb)], %o2
 	set	Lfserr, %o3
@@ -5117,7 +5105,7 @@ ENTRY(fubyte)
 	set	KERNBASE, %o2
 	cmp	%o0, %o2		! if addr >= KERNBASE
 	bgeu	Lfsbadaddr		!	return error
-	EMPTY
+	 .empty
 	sethi	%hi(cpcb), %o2		! cpcb->pcb_onfault = Lfserr;
 	ld	[%o2 + %lo(cpcb)], %o2
 	set	Lfserr, %o3
@@ -5131,10 +5119,10 @@ ENTRY(suword)
 	set	KERNBASE, %o2
 	cmp	%o0, %o2		! if addr >= KERNBASE ...
 	bgeu	Lfsbadaddr
-	EMPTY
+	 .empty
 	btst	3, %o0			! or has low bits set ...
 	bnz	Lfsbadaddr		!	go return error
-	EMPTY
+	 .empty
 	sethi	%hi(cpcb), %o2		! cpcb->pcb_onfault = Lfserr;
 	ld	[%o2 + %lo(cpcb)], %o2
 	set	Lfserr, %o3
@@ -5148,7 +5136,7 @@ ENTRY(suswintr)
 	set	KERNBASE, %o2
 	cmp	%o0, %o2		! if addr >= KERNBASE
 	bgeu	Lfsbadaddr		!	go return error
-	EMPTY
+	 .empty
 	sethi	%hi(cpcb), %o2		! cpcb->pcb_onfault = Lfsbail;
 	ld	[%o2 + %lo(cpcb)], %o2
 	set	_C_LABEL(Lfsbail), %o3
@@ -5162,7 +5150,7 @@ ENTRY(susword)
 	set	KERNBASE, %o2
 	cmp	%o0, %o2		! if addr >= KERNBASE
 	bgeu	Lfsbadaddr		!	go return error
-	EMPTY
+	 .empty
 	sethi	%hi(cpcb), %o2		! cpcb->pcb_onfault = Lfserr;
 	ld	[%o2 + %lo(cpcb)], %o2
 	set	Lfserr, %o3
@@ -5177,7 +5165,7 @@ ENTRY(subyte)
 	set	KERNBASE, %o2
 	cmp	%o0, %o2		! if addr >= KERNBASE
 	bgeu	Lfsbadaddr		!	go return error
-	EMPTY
+	 .empty
 	sethi	%hi(cpcb), %o2		! cpcb->pcb_onfault = Lfserr;
 	ld	[%o2 + %lo(cpcb)], %o2
 	set	Lfserr, %o3
@@ -5348,7 +5336,7 @@ Lbcopy_start:
 	 */
 	deccc	%o2		! while (--len >= 0)
 	bl	1f
-	EMPTY
+	 .empty
 0:
 	inc	%o0
 	ldsb	[%o0 - 1], %o4	!	(++dst)[-1] = *src++;
@@ -5368,7 +5356,7 @@ Lbcopy_fancy:
 	! check for common case first: everything lines up.
 !	btst	7, %o0		! done already
 	bne	1f
-	EMPTY
+	 .empty
 	btst	7, %o1
 	be,a	Lbcopy_doubles
 	dec	8, %o2		! if all lined up, len -= 8, goto bcopy_doubes
@@ -5524,7 +5512,7 @@ ENTRY(ovbcopy)
 	 */
 	deccc	%o2		! while (--len >= 0)
 	bl	1f
-	EMPTY
+	 .empty
 0:
 	dec	%o0		!	*--dst = *--src;
 	ldsb	[%o0], %o4
@@ -5683,7 +5671,7 @@ Lkcopy_start:
 	 */
 	deccc	%o2		! while (--len >= 0)
 	bl	1f
-	 EMPTY
+	 .empty
 0:
 	ldsb	[%o0], %o4	!	*dst++ = *src++;
 	inc	%o0
@@ -5704,7 +5692,7 @@ Lkcopy_fancy:
 	! check for common case first: everything lines up.
 !	btst	7, %o0		! done already
 	bne	1f
-	 EMPTY
+	 .empty
 	btst	7, %o1
 	be,a	Lkcopy_doubles
 	 dec	8, %o2		! if all lined up, len -= 8, goto bcopy_doubes
@@ -6176,7 +6164,7 @@ ENTRY_NOPROFILE(__cpu_simple_lock)
 	 ldub	[%o0], %o1
 1:
 	retl
-	 EMPTY
+	 .empty
 2:
 	set	0x1000000, %o2	! set spinout counter
 3:

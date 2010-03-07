@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.1 2010/03/06 23:26:10 mrg Exp $	*/
+/*	$NetBSD: locore.h,v 1.2 2010/03/07 00:42:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -80,8 +80,6 @@
 #define STKB		0
 #define	CCCR		%icc
 #endif
-
-#define	EMPTY	.empty
 
 /* Give this real authority: reset the machine */
 #define NOTREACHED	sir
