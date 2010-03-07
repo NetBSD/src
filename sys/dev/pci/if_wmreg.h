@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.39 2010/03/07 07:53:37 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.40 2010/03/07 09:05:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -275,9 +275,11 @@ struct livengood_tcpip_ctxdesc {
 #define	EEPROM_OFF_MACADDR	0x00	/* MAC address offset */
 #define	EEPROM_OFF_CFG1		0x0a	/* config word 1 */
 #define	EEPROM_OFF_CFG2		0x0f	/* config word 2 */
+#define	EEPROM_OFF_CFG3_PORTB	0x14	/* config word 3 */
 #define	EEPROM_INIT_3GIO_3	0x1a	/* PCIe Initial Configuration Word 3 */
 #define	EEPROM_OFF_K1_CONFIG	0x1b	/* NVM K1 Config */
 #define	EEPROM_OFF_SWDPIN	0x20	/* SWD Pins (Cordova) */
+#define	EEPROM_OFF_CFG3_PORTA	0x24	/* config word 3 */
 
 #define	EEPROM_CFG1_LVDID	(1U << 0)
 #define	EEPROM_CFG1_LSSID	(1U << 1)
@@ -294,7 +296,7 @@ struct livengood_tcpip_ctxdesc {
 #define	EEPROM_CFG1_64_32_BAR	(1U << 13)
 
 #define	EEPROM_CFG2_CSR_RD_SPLIT (1U << 1)
-#define	EEPROM_CFG2_APM_EN	(1U << 2)
+#define	EEPROM_CFG2_82544_APM_EN (1U << 2)
 #define	EEPROM_CFG2_64_BIT	(1U << 3)
 #define	EEPROM_CFG2_MAX_READ	(1U << 4)
 #define	EEPROM_CFG2_DMCR_MAP	(1U << 5)
@@ -302,6 +304,7 @@ struct livengood_tcpip_ctxdesc {
 #define	EEPROM_CFG2_MSI_DIS	(1U << 7)
 #define	EEPROM_CFG2_FLASH_DIS	(1U << 8)
 #define	EEPROM_CFG2_FLASH_SIZE(x) (((x) & 3) >> 9)
+#define	EEPROM_CFG2_APM_EN (1U << 10)
 #define	EEPROM_CFG2_ANE		(1U << 11)
 #define	EEPROM_CFG2_PAUSE(x)	(((x) & 3) >> 12)
 #define	EEPROM_CFG2_ASDE	(1U << 14)
@@ -317,6 +320,8 @@ struct livengood_tcpip_ctxdesc {
 #define	EEPROM_SWDPIN_SWDPIO_SHIFT 8
 
 #define EEPROM_3GIO_3_ASPM_MASK	(0x3 << 2)	/* Active State PM Support */
+
+#define EEPROM_CFG3_APME	(1U << 10)	
 
 #define	WMREG_EERD	0x0014	/* EEPROM read */
 #define	EERD_DONE	0x02    /* done bit */
@@ -778,11 +783,30 @@ struct livengood_tcpip_ctxdesc {
 #define WMREG_RLPML	0x5004	/* Rx Long Packet Max Length */
 
 #define	WMREG_WUC	0x5800	/* Wakeup Control */
+#define	WUC_APME		0x00000001 /* APM Enable */
+#define	WUC_PME_EN		0x00000002 /* PME Enable */
+
+#define	WMREG_WUFC	0x5808	/* Wakeup Filter COntrol */
+#define WUFC_MAG		0x00000002 /* Magic Packet Wakeup Enable */
+#define WUFC_EX			0x00000004 /* Directed Exact Wakeup Enable */
+#define WUFC_MC			0x00000008 /* Directed Multicast Wakeup En */
+#define WUFC_BC			0x00000010 /* Broadcast Wakeup Enable */
+#define WUFC_ARP		0x00000020 /* ARP Request Packet Wakeup En */
+#define WUFC_IPV4		0x00000040 /* Directed IPv4 Packet Wakeup En */
+#define WUFC_IPV6		0x00000080 /* Directed IPv6 Packet Wakeup En */
 
 #define	WMREG_MANC	0x5820	/* Management Control */
+#define	MANC_SMBUS_EN		0x00000001
+#define	MANC_ASF_EN		0x00000002
+#define	MANC_ARP_EN		0x00002000
+#define	MANC_RECV_TCO_EN	0x00020000
 #define	MANC_BLK_PHY_RST_ON_IDE	0x00040000
+#define	MANC_EN_MAC_ADDR_FILTER	0x00100000
+#define	MANC_EN_MNG2HOST	0x00200000
 
 #define	WMREG_MANC2H	0x5860	/* Manaegment Control To Host - RW */
+#define MANC2H_PORT_623		(1 << 5)
+#define MANC2H_PORT_624		(1 << 6)
 
 #define WMREG_GCR	0x5b00	/* PCIe Control */
 #define GCR_RXD_NO_SNOOP	0x00000001
@@ -795,6 +819,11 @@ struct livengood_tcpip_ctxdesc {
 #define GCR_CMPL_TMOUT_10MS	0x00001000
 #define GCR_CMPL_TMOUT_RESEND	0x00010000
 #define GCR_CAP_VER2		0x00040000
+
+#define WMREG_FACTPS	0x5b30	/* Function Active and Power State to MNG */
+#define FACTPS_MNGCG		0x20000000
+#define FACTPS_LFS		0x40000000	/* LAN Function Select */
+
 #define WMREG_GIOCTL	0x5b44	/* GIO Analog Control Register */
 #define WMREG_CCMCTL	0x5b48	/* CCM Control Register */
 #define WMREG_SCCTL	0x5b4c	/* PCIc PLL Configuration Register */
@@ -808,7 +837,7 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_FWSM	0x5b54	/* FW Semaphore */
 #define	FWSM_MODE_MASK		0xe
 #define	FWSM_MODE_SHIFT		0x1
-#define	MNG_ICH_IAMT_MODE	0x2
+#define	MNG_ICH_IAMT_MODE	0x2	/* PT mode? */
 #define	MNG_IAMT_MODE		0x3
 #define FWSM_RSPCIPHY	0x00000040	/* Reset PHY on PCI reset */
 
