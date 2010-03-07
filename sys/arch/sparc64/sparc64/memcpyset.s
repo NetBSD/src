@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpyset.s,v 1.1 2010/03/06 23:26:10 mrg Exp $	*/
+/*	$NetBSD: memcpyset.s,v 1.2 2010/03/07 00:42:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -174,7 +174,7 @@ Lmemcpy_start:
 	 */
 	deccc	%o2		! while (--len >= 0)
 	bl	1f
-	 EMPTY
+	 .empty
 0:
 	inc	%o0
 	ldsb	[%o0 - 1], %o4	!	(++dst)[-1] = *src++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.323 2010/03/06 23:26:10 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.324 2010/03/07 00:42:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3254,7 +3254,7 @@ setup_sparcintr:
 	CASPTR	[%g1] ASI_N, %g3, %g7
 	cmp	%g7, %g3		! Did it work?
 	bne,pn	CCCR, 1b		! No, try again
-	 EMPTY
+	 .empty
 2:
 #ifdef NOT_DEBUG
 	set	_C_LABEL(intrdebug), %g7
@@ -3662,7 +3662,7 @@ sparc_intr_retry:
 	CASPTR	[%l4] ASI_N, %l2, %l7	! Grab the entire list
 	cmp	%l7, %l2
 	bne,pn	CCCR, 1b
-	 EMPTY
+	 .empty
 2:
 	add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
 	LDPTR	[%l2 + IH_PEND], %l7	! save ih->ih_pending
@@ -5574,7 +5574,7 @@ Lcopyin_fancy:
 	! check for common case first: everything lines up.
 !	btst	7, %o0		! done already
 	bne	1f
-	 EMPTY
+	 .empty
 	btst	7, %o1
 	be,a	Lcopyin_doubles
 	 dec	8, %o2		! if all lined up, len -= 8, goto copyin_doubes
@@ -5765,7 +5765,7 @@ Lcopyout_start:
 	 */
 	deccc	%o2		! while (--len >= 0)
 	bl	1f
-	 EMPTY
+	 .empty
 0:
 	inc	%o0
 	ldsb	[%o0 - 1], %o4!	(++dst)[-1] = *src++;
@@ -5785,7 +5785,7 @@ Lcopyout_fancy:
 	! check for common case first: everything lines up.
 !	btst	7, %o0		! done already
 	bne	1f
-	 EMPTY
+	 .empty
 	btst	7, %o1
 	be,a	Lcopyout_doubles
 	 dec	8, %o2		! if all lined up, len -= 8, goto copyout_doubes
@@ -6144,7 +6144,7 @@ ALTENTRY(fuiword)
 ENTRY(fuword)
 	btst	3, %o0			! has low bits set...
 	bnz	Lfsbadaddr		!	go return -1
-	 EMPTY
+	 .empty
 	sethi	%hi(CPCB), %o2		! cpcb->pcb_onfault = Lfserr;
 	set	Lfserr, %o3
 	LDPTR	[%o2 + %lo(CPCB)], %o2
@@ -6224,7 +6224,7 @@ ALTENTRY(suiword)
 ENTRY(suword)
 	btst	3, %o0			! or has low bits set ...
 	bnz	Lfsbadaddr		!	go return error
-	 EMPTY
+	 .empty
 	sethi	%hi(CPCB), %o2		! cpcb->pcb_onfault = Lfserr;
 	LDPTR	[%o2 + %lo(CPCB)], %o2
 	set	Lfserr, %o3
@@ -6814,7 +6814,7 @@ Lkcopy_start:
 	 */
 	deccc	%o2		! while (--len >= 0)
 	bl	1f
-	 EMPTY
+	 .empty
 0:
 	ldsb	[%o0], %o4	!	*dst++ = *src++;
 	inc	%o0
@@ -6837,7 +6837,7 @@ Lkcopy_fancy:
 	! check for common case first: everything lines up.
 !	btst	7, %o0		! done already
 	bne	1f
-	 EMPTY
+	 .empty
 	btst	7, %o1
 	be,a	Lkcopy_doubles
 	 dec	8, %o2		! if all lined up, len -= 8, goto kcopy_doubes
@@ -7341,7 +7341,7 @@ ENTRY(send_softint)
 	CASPTR	[%o3] ASI_N, %o5, %o4
 	cmp	%o4, %o5		! Did it work?
 	bne,pn	CCCR, 2b		! No, try again
-	 EMPTY
+	 .empty
 
 	mov	1, %o4			! Change from level to bitmask
 	sllx	%o4, %o1, %o4
