@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.3 2010/03/06 04:39:16 cnst Exp $   */
+/*	$NetBSD: uthum.c,v 1.4 2010/03/07 11:28:46 jdc Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -248,7 +248,7 @@ uthum_intr(struct uhidev *addr, void *ibuf, u_int len)
 
 int
 uthum_read_data(struct uthum_softc *sc, uint8_t target_cmd, uint8_t *buf,
-	size_t len, int delay)
+	size_t len, int need_delay)
 {
 	int i;
 	uint8_t cmdbuf[32], report[256];
@@ -282,8 +282,8 @@ uthum_read_data(struct uthum_softc *sc, uint8_t target_cmd, uint8_t *buf,
 		return EIO;
 
 	/* wait if required */
-	if (delay > 1)
-		tsleep(&sc->sc_sme, 0, "uthum", (delay*hz+999)/1000 + 1);
+	if (need_delay > 1)
+		tsleep(&sc->sc_sme, 0, "uthum", (need_delay*hz+999)/1000 + 1);
 
 	/* get answer */
 	if (uhidev_get_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
