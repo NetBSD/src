@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.16 2009/12/05 20:11:11 pooka Exp $
+# $NetBSD: HDL_G,v 1.17 2010/03/07 09:39:42 plunky Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -291,6 +291,9 @@ ulpt*	at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
