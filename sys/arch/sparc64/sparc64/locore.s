@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.324 2010/03/07 00:42:58 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.325 2010/03/07 01:52:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -116,10 +116,6 @@
 
 	.register	%g2,#scratch
 	.register	%g3,#scratch
-
-/* use as needed to align things on longword boundaries */
-#define	_ALIGN	.align 8
-#define ICACHE_ALIGN	.align	32
 
 /*
  * This macro will clear out a cache line before an explicit
