@@ -1,4 +1,4 @@
-/*	$NetBSD: sdread.c,v 1.3 2010/02/17 20:43:35 pooka Exp $	*/
+/*	$NetBSD: sdread.c,v 1.4 2010/03/07 23:18:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -86,6 +86,7 @@ main(int argc, char *argv[])
 		rump_boot_sethowto(RUMP_AB_VERBOSE);
 	rump_init();
 	if (probeonly) {
+		pause();
 		exit(0);
 	}
 
