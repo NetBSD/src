@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.20 2009/02/12 04:32:05 lukem Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.21 2010/03/07 23:45:22 dholland Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_bcast.c 1.15 89/04/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_bcast.c,v 1.20 2009/02/12 04:32:05 lukem Exp $");
+__RCSID("$NetBSD: clnt_bcast.c,v 1.21 2010/03/07 23:45:22 dholland Exp $");
 #endif
 #endif
 
@@ -475,7 +475,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 						      " broadcast packet");
 						stat = RPC_CANTSEND;
 						continue;
-					};
+					}
 #ifdef RPC_DEBUG
 				if (!__rpc_lowvers)
 					fprintf(stderr, "Broadcast packet sent "
