@@ -149,7 +149,7 @@
 /* #undef PECOFFABI */
 
 /* Define path to alternate preprocessor */
-/* #undef PREPROCESSOR */
+#define PREPROCESSOR "pcpp"
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be

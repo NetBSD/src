@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1403 2010/03/06 16:42:55 dsieger Exp $
+#	$NetBSD: mi,v 1.1404 2010/03/07 16:27:17 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3343,7 +3343,7 @@
 ./usr/libdata/debug/usr/libexec/ching/castching.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/libexec/ching/printching.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/libexec/comsat.debug	comp-mail-debug		debug
-./usr/libdata/debug/usr/libexec/cpp.debug	comp-c-debug		pcccmds,debug
+./usr/libdata/debug/usr/libexec/cpp.debug	comp-obsolete		pcccmds,obsolete
 ./usr/libdata/debug/usr/libexec/f771.debug	comp-fortran-debug	gcc=3,gcccmds,debug
 ./usr/libdata/debug/usr/libexec/f771.debug	comp-obsolete		gcc=4,obsolete
 ./usr/libdata/debug/usr/libexec/fingerd.debug	comp-netutil-debug	debug
@@ -3368,6 +3368,7 @@
 ./usr/libdata/debug/usr/libexec/makekey.debug	comp-crypto-debug	debug
 ./usr/libdata/debug/usr/libexec/makewhatis.debug	comp-man-debug		debug
 ./usr/libdata/debug/usr/libexec/ntalkd.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/libexec/pcpp.debug	comp-c-debug		pcccmds,debug
 ./usr/libdata/debug/usr/libexec/postfix/anvil.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/bounce.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/libexec/postfix/cleanup.debug	comp-postfix-debug	postfix,debug
@@ -3771,11 +3772,12 @@
 ./usr/libexec/cc1plus				comp-cxx-bin		gcccmds
 ./usr/libexec/ccom				comp-c-bin		pcccmds
 ./usr/libexec/collect2				comp-obsolete		obsolete
-./usr/libexec/cpp				comp-c-bin		pcccmds
+./usr/libexec/cpp				comp-obsolete		pcccmds,obsolete
 ./usr/libexec/f771				comp-fortran-bin	gcc=3,gcccmds
 ./usr/libexec/f771				comp-obsolete		gcc=4,obsolete
 ./usr/libexec/lint1				comp-c-bin
 ./usr/libexec/lint2				comp-c-bin
+./usr/libexec/pcpp				comp-c-bin		pcccmds
 ./usr/sbin/config				comp-obsolete		obsolete
 ./usr/sbin/config.new				comp-obsolete		obsolete
 ./usr/sbin/genassym				comp-obsolete		obsolete
