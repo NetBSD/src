@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.38 2010/03/06 21:22:42 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.39 2010/03/07 08:44:28 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -157,15 +157,19 @@ extern register_t kpsw;
  */
 #if defined(HP8000_CPU) || defined(HP8200_CPU) || \
     defined(HP8500_CPU) || defined(HP8600_CPU)
+
 /* PA2.0 aliases */
 #define	HPPA_PGALIAS	0x00400000
 #define	HPPA_PGAMASK	0xffc00000	/* PA bits 0-9 not used in index */
 #define	HPPA_PGAOFF	0x003fffff
+
 #else
+
 /* PA1.x aliases */
 #define	HPPA_PGALIAS	0x00100000
 #define	HPPA_PGAMASK	0xfff00000	/* PA bits 0-11 not used in index */
 #define	HPPA_PGAOFF	0x000fffff
+
 #endif
 
 #define	HPPA_SPAMASK	0xf0f0f000	/* PA bits 0-3,8-11,16-19 not used */
