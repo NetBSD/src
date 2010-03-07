@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.229 2010/02/26 18:57:06 pooka Exp $
+#	$NetBSD: build.sh,v 1.230 2010/03/07 16:57:41 pooka Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1352,7 +1352,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.229 2010/02/26 18:57:06 pooka Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.230 2010/03/07 16:57:41 pooka Exp $
 # with these arguments: ${_args}
 #
 
@@ -1542,8 +1542,9 @@ installworld()
 RUMP_LIBSETS='
 	-lrump,
 	-lrumpvfs -lrump,
+	-lrumpdev -lrump,
 	-lrumpfs_tmpfs -lrumpvfs -lrump,
-	-lrumpfs_ffs -lrumpfs_msdosfs -lrumpvfs -lrump,
+	-lrumpfs_ffs -lrumpfs_msdos -lrumpvfs -lrumpdev_disk -lrumpdev -lrump,
 	-lrumpnet_virtif -lrumpnet_netinet -lrumpnet_net -lrumpnet -lrump,
 	-lrumpnet_sockin -lrumpfs_smbfs -lrumpdev_netsmb
 	    -lrumpcrypto -lrumpdev -lrumpnet -lrumpvfs -lrump,
@@ -1602,6 +1603,7 @@ dorump()
 				    "`(rumpuser_|__" quirks ")") == 0)
 					fails[NR] = $0
 			}
+			/cannot find -l/{fails[NR] = $0}
 			END{
 				for (x in fails)
 					print fails[x]
