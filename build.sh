@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.230 2010/03/07 16:57:41 pooka Exp $
+#	$NetBSD: build.sh,v 1.231 2010/03/07 17:34:25 hans Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1352,7 +1352,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.230 2010/03/07 16:57:41 pooka Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.231 2010/03/07 17:34:25 hans Exp $
 # with these arguments: ${_args}
 #
 
@@ -1586,7 +1586,7 @@ dorump()
 	    || bomb "cd to rumpkern failed"
 	md_quirks=`${runcmd} "${makewrapper}" -V '${_SYMQUIRK}'`
 	# one little, two little, three little backslashes ...
-	md_quirks="`echo ${md_quirks} | sed 's,\\\,\\\\\\\,g'";s/'//g" `"
+	md_quirks="$(echo ${md_quirks} | sed 's,\\,\\\\,g'";s/'//g" )"
 	${runcmd} cd "${TOP}" || bomb "cd to ${TOP} failed"
 	tool_ld=`${runcmd} "${makewrapper}" -V '${LD}'`
 
