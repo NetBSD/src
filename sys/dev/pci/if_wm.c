@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.202 2010/03/07 07:53:37 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.203 2010/03/07 09:05:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.202 2010/03/07 07:53:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.203 2010/03/07 09:05:19 msaitoh Exp $");
 
 #include "rnd.h"
 
@@ -137,7 +137,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.202 2010/03/07 07:53:37 msaitoh Exp $");
 #define	WM_DEBUG_TX		0x02
 #define	WM_DEBUG_RX		0x04
 #define	WM_DEBUG_GMII		0x08
-int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK|WM_DEBUG_GMII;
+#define	WM_DEBUG_MANAGE		0x10
+int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
+    | WM_DEBUG_MANAGE;
 
 #define	DPRINTF(x, y)	if (wm_debug & (x)) printf y
 #else
@@ -262,6 +264,7 @@ struct wm_softc {
 	int sc_bus_speed;		/* PCI/PCIX bus speed */
 	int sc_pcixe_capoff;		/* PCI[Xe] capability register offset */
 
+	const struct wm_product *sc_wmp; /* Pointer to the wm_product entry */
 	wm_chip_type sc_type;		/* MAC type */
 	int sc_rev;			/* MAC revision */
 	wm_phy_type sc_phytype;		/* PHY type */
@@ -282,9 +285,9 @@ struct wm_softc {
 	/*
 	 * Software state for the transmit and receive descriptors.
 	 */
-	int			sc_txnum;	/* must be a power of two */
-	struct wm_txsoft	sc_txsoft[WM_TXQUEUELEN_MAX];
-	struct wm_rxsoft	sc_rxsoft[WM_NRXDESC];
+	int sc_txnum;			/* must be a power of two */
+	struct wm_txsoft sc_txsoft[WM_TXQUEUELEN_MAX];
+	struct wm_rxsoft sc_rxsoft[WM_NRXDESC];
 
 	/*
 	 * Control data structures.
@@ -498,6 +501,8 @@ static void	wm_watchdog(struct ifnet *);
 static int	wm_ioctl(struct ifnet *, u_long, void *);
 static int	wm_init(struct ifnet *);
 static void	wm_stop(struct ifnet *, int);
+static bool	wm_suspend(device_t, const pmf_qual_t *);
+static bool	wm_resume(device_t, const pmf_qual_t *);
 
 static void	wm_reset(struct wm_softc *);
 static void	wm_rxdrain(struct wm_softc *);
@@ -575,16 +580,28 @@ static int	wm_check_mng_mode(struct wm_softc *);
 static int	wm_check_mng_mode_ich8lan(struct wm_softc *);
 static int	wm_check_mng_mode_82574(struct wm_softc *);
 static int	wm_check_mng_mode_generic(struct wm_softc *);
+static int	wm_enable_mng_pass_thru(struct wm_softc *);
 static int	wm_check_reset_block(struct wm_softc *);
 static void	wm_get_hw_control(struct wm_softc *);
 static int	wm_check_for_link(struct wm_softc *);
 static void	wm_kmrn_lock_loss_workaround_ich8lan(struct wm_softc *);
 static void	wm_gig_downshift_workaround_ich8lan(struct wm_softc *);
+#ifdef WM_WOL
+static void	wm_igp3_phy_powerdown_workaround_ich8lan(struct wm_softc *);
+#endif
 static void	wm_hv_phy_workaround_ich8lan(struct wm_softc *);
 static void	wm_k1_gig_workaround_hv(struct wm_softc *, int);
 static void	wm_configure_k1_ich8lan(struct wm_softc *, int);
 static void	wm_set_pcie_completion_timeout(struct wm_softc *);
 static void	wm_reset_init_script_82575(struct wm_softc *);
+static void	wm_release_manageability(struct wm_softc *);
+static void	wm_release_hw_control(struct wm_softc *);
+static void	wm_get_wakeup(struct wm_softc *);
+#ifdef WM_WOL
+static void	wm_enable_phy_wakeup(struct wm_softc *);
+static void	wm_enable_wakeup(struct wm_softc *);
+#endif
+static void	wm_init_manageability(struct wm_softc *);
 
 CFATTACH_DECL3_NEW(wm, sizeof(struct wm_softc),
     wm_match, wm_attach, wm_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
@@ -600,6 +617,7 @@ static const struct wm_product {
 	int			wmp_flags;
 #define	WMP_F_1000X		0x01
 #define	WMP_F_1000T		0x02
+#define	WMP_F_SERDES		0x04
 } wm_products[] = {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82542,
 	  "Intel i82542 1000BASE-X Ethernet",
@@ -1082,12 +1100,13 @@ wm_attach(device_t parent, device_t self, void *aux)
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	uint16_t myea[ETHER_ADDR_LEN / 2], cfg1, cfg2, swdpin, io3;
 	pcireg_t preg, memtype;
+	uint16_t eeprom_data, apme_mask;
 	uint32_t reg;
 
 	sc->sc_dev = self;
 	callout_init(&sc->sc_tick_ch, 0);
 
-	wmp = wm_lookup(pa);
+	sc->sc_wmp = wmp = wm_lookup(pa);
 	if (wmp == NULL) {
 		printf("\n");
 		panic("wm_attach: impossible");
@@ -1118,7 +1137,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
 	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER))
-	  sc->sc_flags |= WM_F_NEWQUEUE;
+		sc->sc_flags |= WM_F_NEWQUEUE;
 
 	/* Set device properties (mactype) */
 	dict = device_properties(sc->sc_dev);
@@ -1149,6 +1168,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 		    "unable to map device registers\n");
 		return;
 	}
+
+	wm_get_wakeup(sc);
 
 	/*
 	 * In addition, i82544 and later support I/O mapped indirect
@@ -1638,6 +1659,58 @@ wm_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
+	/* check for WM_F_WOL */
+	switch (sc->sc_type) {
+	case WM_T_82542_2_0:
+	case WM_T_82542_2_1:
+	case WM_T_82543:
+		/* dummy? */
+		eeprom_data = 0;
+		apme_mask = EEPROM_CFG3_APME;
+		break;
+	case WM_T_82544:
+		apme_mask = EEPROM_CFG2_82544_APM_EN;
+		eeprom_data = cfg2;
+		break;
+	case WM_T_82546:
+	case WM_T_82546_3:
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82573:
+	case WM_T_82574:
+	case WM_T_82583:
+	case WM_T_80003:
+	default:
+		apme_mask = EEPROM_CFG3_APME;
+		wm_read_eeprom(sc, (sc->sc_funcid == 1) ? EEPROM_OFF_CFG3_PORTB
+		    : EEPROM_OFF_CFG3_PORTA, 1, &eeprom_data);
+		break;
+	case WM_T_82575:
+	case WM_T_82576:
+	case WM_T_82580:
+	case WM_T_82580ER:
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+	case WM_T_PCH:
+		apme_mask = WUC_APME;
+		eeprom_data = CSR_READ(sc, WMREG_WUC);
+		break;
+	}
+
+	/* Check for WM_F_WOL flag after the setting of the EEPROM stuff */
+	if ((eeprom_data & apme_mask) != 0)
+		sc->sc_flags |= WM_F_WOL;
+#ifdef WM_DEBUG
+	if ((sc->sc_flags & WM_F_WOL) != 0)
+		printf("WOL\n");
+#endif
+
+	/*
+	 * XXX need special handling for some multiple port cards
+	 * to disable a paticular port.
+	 */
+
 	if (sc->sc_type >= WM_T_82544) {
 		pn = prop_dictionary_get(dict, "i82543-swdpin");
 		if (pn != NULL) {
@@ -1930,7 +2003,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	    NULL, xname, "rx_macctl");
 #endif /* WM_EVENT_COUNTERS */
 
-	if (pmf_device_register(self, NULL, NULL))
+	if (pmf_device_register(self, wm_suspend, wm_resume))
 		pmf_class_network_register(self, ifp);
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -1980,9 +2053,7 @@ wm_detach(device_t self, int flags __unused)
 	pmf_device_deregister(self);
 
 	/* Tell the firmware about the release */
-#if 0
 	wm_release_manageability(sc);
-#endif
 
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
@@ -2025,9 +2096,7 @@ wm_detach(device_t self, int flags __unused)
 		sc->sc_ss = 0;
 	}
 
-#if 0
 	wm_release_hw_control(sc);
-#endif
 
 	return 0;
 }
@@ -3989,6 +4058,9 @@ wm_init(struct ifnet *ifp)
 	/* Set the media. */
 	if ((error = mii_ifmedia_change(&sc->sc_mii)) != 0)
 		goto out;
+
+	/* Configure for OS presence */
+	wm_init_manageability(sc);
 
 	/*
 	 * Set up the receive control register; we actually program
@@ -6729,6 +6801,36 @@ wm_check_mng_mode_generic(struct wm_softc *sc)
 }
 
 static int
+wm_enable_mng_pass_thru(struct wm_softc *sc)
+{
+	uint32_t manc, fwsm, factps;
+
+	if ((sc->sc_flags & WM_F_ASF_FIRMWARE_PRES) == 0)
+		return 0;
+
+	manc = CSR_READ(sc, WMREG_MANC);
+
+	DPRINTF(WM_DEBUG_MANAGE, ("%s: MANC (%08x)\n",
+		device_xname(sc->sc_dev), manc));
+	if (((manc & MANC_RECV_TCO_EN) == 0)
+	    || ((manc & MANC_EN_MAC_ADDR_FILTER) == 0))
+		return 0;
+
+	if ((sc->sc_flags & WM_F_ARC_SUBSYS_VALID) != 0) {
+		fwsm = CSR_READ(sc, WMREG_FWSM);
+		factps = CSR_READ(sc, WMREG_FACTPS);
+		if (((factps & FACTPS_MNGCG) == 0)
+		    && ((fwsm & FWSM_MODE_MASK)
+			== (MNG_ICH_IAMT_MODE << FWSM_MODE_SHIFT)))
+			return 1;
+	} else if (((manc & MANC_SMBUS_EN) != 0)
+	    && ((manc & MANC_ASF_EN) == 0))
+		return 1;
+
+	return 0;
+}
+
+static int
 wm_check_reset_block(struct wm_softc *sc)
 {
 	uint32_t reg;
@@ -6771,19 +6873,13 @@ wm_get_hw_control(struct wm_softc *sc)
 
 	switch (sc->sc_type) {
 	case WM_T_82573:
-#if 0
-	case WM_T_82574:
-	case WM_T_82583:
-		/*
-		 * FreeBSD's em driver has the function for 82574 to checks
-		 * the management mode, but it's not used. Why?
-		 */
-#endif
 		reg = CSR_READ(sc, WMREG_SWSM);
 		CSR_WRITE(sc, WMREG_SWSM, reg | SWSM_DRV_LOAD);
 		break;
 	case WM_T_82571:
 	case WM_T_82572:
+	case WM_T_82574:
+	case WM_T_82583:
 	case WM_T_80003:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
@@ -6794,6 +6890,24 @@ wm_get_hw_control(struct wm_softc *sc)
 		break;
 	default:
 		break;
+	}
+}
+
+static void
+wm_release_hw_control(struct wm_softc *sc)
+{
+	uint32_t reg;
+
+	if ((sc->sc_flags & WM_F_HAS_MANAGE) == 0)
+		return;
+	
+	if (sc->sc_type == WM_T_82573) {
+		reg = CSR_READ(sc, WMREG_SWSM);
+		reg &= ~SWSM_DRV_LOAD;
+		CSR_WRITE(sc, WMREG_SWSM, reg & ~SWSM_DRV_LOAD);
+	} else {
+		reg = CSR_READ(sc, WMREG_CTRL_EXT);
+		CSR_WRITE(sc, WMREG_CTRL_EXT, reg & ~CTRL_EXT_DRV_LOAD);
 	}
 }
 
@@ -6929,6 +7043,45 @@ wm_gig_downshift_workaround_ich8lan(struct wm_softc *sc)
 		wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_DIAG, kmrn_reg);
 	}
 }
+
+#ifdef WM_WOL
+/* Power down workaround on D3 */
+static void
+wm_igp3_phy_powerdown_workaround_ich8lan(struct wm_softc *sc)
+{
+	uint32_t reg;
+	int i;
+
+	for (i = 0; i < 2; i++) {
+		/* Disable link */
+		reg = CSR_READ(sc, WMREG_PHY_CTRL);
+		reg |= PHY_CTRL_GBE_DIS | PHY_CTRL_NOND0A_GBE_DIS;
+		CSR_WRITE(sc, WMREG_PHY_CTRL, reg);
+
+		/*
+		 * Call gig speed drop workaround on Gig disable before
+		 * accessing any PHY registers
+		 */
+		if (sc->sc_type == WM_T_ICH8)
+			wm_gig_downshift_workaround_ich8lan(sc);
+
+		/* Write VR power-down enable */
+		reg = sc->sc_mii.mii_readreg(sc->sc_dev, 1, IGP3_VR_CTRL);
+		reg &= ~IGP3_VR_CTRL_DEV_POWERDOWN_MODE_MASK;
+		reg |= IGP3_VR_CTRL_MODE_SHUTDOWN;
+		sc->sc_mii.mii_writereg(sc->sc_dev, 1, IGP3_VR_CTRL, reg);
+
+		/* Read it back and test */
+		reg = sc->sc_mii.mii_readreg(sc->sc_dev, 1, IGP3_VR_CTRL);
+		reg &= IGP3_VR_CTRL_DEV_POWERDOWN_MODE_MASK;
+		if ((reg == IGP3_VR_CTRL_MODE_SHUTDOWN) || (i != 0))
+			break;
+
+		/* Issue PHY reset and repeat at most one more time */
+		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_PHY_RESET);
+	}
+}
+#endif /* WM_WOL */
 
 /*
  * Workaround for pch's PHYs
@@ -7082,4 +7235,226 @@ wm_reset_init_script_82575(struct wm_softc *sc)
 	wm_82575_write_8bit_ctlr_reg(sc, WMREG_SCCTL, 0x02, 0x47);
 	wm_82575_write_8bit_ctlr_reg(sc, WMREG_SCCTL, 0x14, 0x00);
 	wm_82575_write_8bit_ctlr_reg(sc, WMREG_SCCTL, 0x10, 0x00);
+}
+
+static void
+wm_init_manageability(struct wm_softc *sc)
+{
+
+	if (sc->sc_flags & WM_F_HAS_MANAGE) {
+		uint32_t manc2h = CSR_READ(sc, WMREG_MANC2H);
+		uint32_t manc = CSR_READ(sc, WMREG_MANC);
+
+		/* disabl hardware interception of ARP */
+		manc &= ~MANC_ARP_EN;
+
+		/* enable receiving management packets to the host */
+		if (sc->sc_type >= WM_T_82571) {
+			manc |= MANC_EN_MNG2HOST;
+			manc2h |= MANC2H_PORT_623| MANC2H_PORT_624;
+			CSR_WRITE(sc, WMREG_MANC2H, manc2h);
+			
+		}
+
+		CSR_WRITE(sc, WMREG_MANC, manc);
+	}
+}
+
+static void
+wm_release_manageability(struct wm_softc *sc)
+{
+
+	if (sc->sc_flags & WM_F_HAS_MANAGE) {
+		uint32_t manc = CSR_READ(sc, WMREG_MANC);
+
+		if (sc->sc_type >= WM_T_82571)
+			manc &= ~MANC_EN_MNG2HOST;
+
+		CSR_WRITE(sc, WMREG_MANC, manc);
+	}
+}
+
+static void
+wm_get_wakeup(struct wm_softc *sc)
+{
+
+	/* 0: HAS_AMT, ARC_SUBSYS_VALID, ASF_FIRMWARE_PRES */
+	switch (sc->sc_type) {
+	case WM_T_82573:
+	case WM_T_82583:
+		sc->sc_flags |= WM_F_HAS_AMT;
+		/* FALLTHROUGH */
+	case WM_T_80003: 
+	case WM_T_82541:
+	case WM_T_82547:
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82574:
+	case WM_T_82575:
+	case WM_T_82576:
+		if ((CSR_READ(sc, WMREG_FWSM) & FWSM_MODE_MASK) != 0)
+			sc->sc_flags |= WM_F_ARC_SUBSYS_VALID;
+		sc->sc_flags |= WM_F_ASF_FIRMWARE_PRES;
+		break;
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+	case WM_T_PCH:
+		sc->sc_flags |= WM_F_HAS_AMT;
+		sc->sc_flags |= WM_F_ASF_FIRMWARE_PRES;
+		break;
+	default:
+		break;
+	}
+
+	/* 1: HAS_MANAGE */
+	if (wm_enable_mng_pass_thru(sc) != 0)
+		sc->sc_flags |= WM_F_HAS_MANAGE;
+
+#ifdef WM_DEBUG
+	printf("\n");
+	if ((sc->sc_flags & WM_F_HAS_AMT) != 0)
+		printf("HAS_AMT,");
+	if ((sc->sc_flags & WM_F_ARC_SUBSYS_VALID) != 0)
+		printf("ARC_SUBSYS_VALID,");
+	if ((sc->sc_flags & WM_F_ASF_FIRMWARE_PRES) != 0)
+		printf("ASF_FIRMWARE_PRES,");
+	if ((sc->sc_flags & WM_F_HAS_MANAGE) != 0)
+		printf("HAS_MANAGE,");
+	printf("\n");
+#endif
+	/*
+	 * Note that the WOL flags is set after the resetting of the eeprom
+	 * stuff
+	 */
+}
+
+#ifdef WM_WOL
+/* WOL in the newer chipset interfaces (pchlan) */
+static void
+wm_enable_phy_wakeup(struct wm_softc *sc)
+{
+#if 0
+	uint16_t preg;
+
+	/* Copy MAC RARs to PHY RARs */
+
+	/* Copy MAC MTA to PHY MTA */
+
+	/* Configure PHY Rx Control register */
+
+	/* Enable PHY wakeup in MAC register */
+
+	/* Configure and enable PHY wakeup in PHY registers */
+
+	/* Activate PHY wakeup */
+
+	/* XXX */
+#endif
+}
+
+static void
+wm_enable_wakeup(struct wm_softc *sc)
+{
+	uint32_t reg, pmreg;
+	pcireg_t pmode;
+
+	if (pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_PWRMGMT,
+		&pmreg, NULL) == 0)
+		return;
+
+	/* Advertise the wakeup capability */
+	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl | CTRL_SWDPIN(2)
+	    | CTRL_SWDPIN(3));
+	CSR_WRITE(sc, WMREG_WUC, WUC_APME);
+
+	/* ICH workaround */
+	switch (sc->sc_type) {
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+	case WM_T_ICH10:
+	case WM_T_PCH:
+		/* Disable gig during WOL */
+		reg = CSR_READ(sc, WMREG_PHY_CTRL);
+		reg |= PHY_CTRL_D0A_LPLU | PHY_CTRL_GBE_DIS;
+		CSR_WRITE(sc, WMREG_PHY_CTRL, reg);
+		if (sc->sc_type == WM_T_PCH)
+			wm_gmii_reset(sc);
+
+		/* Power down workaround */
+		if (sc->sc_phytype == WMPHY_82577) {
+			struct mii_softc *child;
+
+			/* Assume that the PHY is copper */
+			child = LIST_FIRST(&sc->sc_mii.mii_phys);
+			if (child->mii_mpd_rev <= 2)
+				sc->sc_mii.mii_writereg(sc->sc_dev, 1,
+				    (768 << 5) | 25, 0x0444); /* magic num */
+		}
+		break;
+	default:
+		break;
+	}
+
+	/* Keep the laser running on fiber adapters */
+	if (((sc->sc_wmp->wmp_flags & WMP_F_1000X) != 0)
+	    || (sc->sc_wmp->wmp_flags & WMP_F_SERDES) != 0) {
+		reg = CSR_READ(sc, WMREG_CTRL_EXT);
+		reg |= CTRL_EXT_SWDPIN(3);
+		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+	}
+
+	reg = CSR_READ(sc, WMREG_WUFC) | WUFC_MAG;
+#if 0	/* for the multicast packet */
+	reg |= WUFC_MC;
+	CSR_WRITE(sc, WMREG_RCTL, CSR_READ(sc, WMREG_RCTL) | RCTL_MPE);
+#endif
+
+	if (sc->sc_type == WM_T_PCH) {
+		wm_enable_phy_wakeup(sc);
+	} else {
+		CSR_WRITE(sc, WMREG_WUC, WUC_PME_EN);
+		CSR_WRITE(sc, WMREG_WUFC, reg);
+	}
+
+	if (((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
+		|| (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH))
+		    && (sc->sc_phytype == WMPHY_IGP_3))
+			wm_igp3_phy_powerdown_workaround_ich8lan(sc);
+
+	/* Request PME */
+	pmode = pci_conf_read(sc->sc_pc, sc->sc_pcitag, pmreg + PCI_PMCSR);
+#if 0
+	/* Disable WOL */
+	pmode &= ~(PCI_PMCSR_PME_STS | PCI_PMCSR_PME_EN);
+#else
+	/* For WOL */
+	pmode |= PCI_PMCSR_PME_STS | PCI_PMCSR_PME_EN;
+#endif
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, pmreg + PCI_PMCSR, pmode);
+}
+#endif /* WM_WOL */
+
+static bool
+wm_suspend(device_t self, const pmf_qual_t *qual)
+{
+	struct wm_softc *sc = device_private(self);
+
+	wm_release_manageability(sc);
+	wm_release_hw_control(sc);
+#ifdef WM_WOL
+	wm_enable_wakeup(sc);
+#endif
+
+	return true;
+}
+
+static bool
+wm_resume(device_t self, const pmf_qual_t *qual)
+{
+	struct wm_softc *sc = device_private(self);
+
+	wm_init_manageability(sc);
+
+	return true;
 }
