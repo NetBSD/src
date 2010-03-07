@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2010/02/05 08:37:48 plunky Exp $
+#	$NetBSD: Makefile,v 1.7 2010/03/07 16:27:18 plunky Exp $
 
 WARNS?=	2
 
@@ -7,16 +7,21 @@ WARNS?=	2
 .PATH:	${PCC_DIST}/cc/cpp \
 	${PCC_DIST}/mip
 
-PROG=	cpp
+#
+# We build cpp(1) as pcpp(1) to avoid confusion with GCC
+#
+
+PROG=	pcpp
 
 SRCS=	cpy.y
 SRCS+=	cpp.c token.c
 
-# avoid conflicts with the GCC cpp.1 page
 MAN=	pcpp.1
 
 pcpp.1:	cpp.1
-	cp ${.ALLSRC} ${.TARGET}
+	${TOOL_SED} -e "s,Nm cpp,Nm pcpp,"	\
+		    -e "s,Dt CPP,Dt PCPP,"	\
+		    ${.ALLSRC} > ${.TARGET}
 
 CPPFLAGS+=	-DCPP_DEBUG
 CPPFLAGS+=	-I${.OBJDIR}
