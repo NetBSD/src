@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev.c,v 1.15 2010/03/01 13:12:20 pooka Exp $	*/
+/*	$NetBSD: rump_dev.c,v 1.16 2010/03/07 16:46:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.15 2010/03/01 13:12:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.16 2010/03/07 16:46:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.15 2010/03/01 13:12:20 pooka Exp $");
 void nocomponent(void);
 void nocomponent() {}
 __weak_alias(rump_device_components,nocomponent);
+__weak_alias(buf_syncwait,nullop);
 
 const char *rootspec = "rump0a"; /* usually comes from config */
 
