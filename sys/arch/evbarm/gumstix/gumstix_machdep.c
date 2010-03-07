@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.25 2010/03/07 09:18:51 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.26 2010/03/07 09:29:26 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -147,42 +147,41 @@
 #include "md.h"
 
 #include <sys/param.h>
-#include <sys/device.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/exec.h>
-#include <sys/proc.h>
-#include <sys/msgbuf.h>
-#include <sys/reboot.h>
-#include <sys/termios.h>
-#include <sys/ksyms.h>
-
-#include <uvm/uvm_extern.h>
-
 #include <sys/conf.h>
-#include <dev/cons.h>
-#include <dev/md.h>
-
-#include <machine/db_machdep.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_extern.h>
-#ifdef KGDB
-#include <sys/kgdb.h>
-#endif
+#include <sys/device.h>
+#include <sys/exec.h>
+#include <sys/kernel.h>
+#include <sys/ksyms.h>
+#include <sys/msgbuf.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/systm.h>
+#include <sys/termios.h>
 
 #include <machine/bootconfig.h>
 #include <machine/bus.h>
 #include <machine/cpu.h>
+#include <machine/db_machdep.h>
 #include <machine/frame.h>
-#include <arm/undefined.h>
 
 #include <arm/arm32/machdep.h>
-
+#include <arm/undefined.h>
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
 #include <evbarm/gumstix/gumstixreg.h>
 #include <evbarm/gumstix/gumstixvar.h>
+
+#include <uvm/uvm_extern.h>
+
+#include <dev/cons.h>
+#include <dev/md.h>
+
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
 
 /* Kernel text starts 2MB in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
