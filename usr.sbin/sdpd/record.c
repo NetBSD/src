@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.1 2009/05/12 10:05:07 plunky Exp $	*/
+/*	$NetBSD: record.c,v 1.2 2010/03/07 10:58:40 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: record.c,v 1.1 2009/05/12 10:05:07 plunky Exp $");
+__RCSID("$NetBSD: record.c,v 1.2 2010/03/07 10:58:40 plunky Exp $");
 
 #include <bluetooth.h>
 #include <sdp.h>
@@ -51,6 +51,8 @@ record_insert_request(server_t *srv, int fd)
 {
 	sdp_data_t	seq;
 	bdaddr_t	bdaddr;
+
+	log_debug("RecordInsertRequest by client on fd#%d", fd);
 
 	seq.next = srv->ibuf;
 	seq.end = srv->ibuf + srv->pdu.len;
@@ -103,6 +105,8 @@ record_update_request(server_t *srv, int fd)
 {
 	record_t	*rec;
 	sdp_data_t	seq;
+
+	log_debug("RecordUpdateRequest by client on fd#%d", fd);
 
 	seq.next = srv->ibuf;
 	seq.end = srv->ibuf + srv->pdu.len;
@@ -159,6 +163,8 @@ uint16_t
 record_remove_request(server_t *srv, int fd)
 {
 	record_t	*rec;
+
+	log_debug("RecordRemoveRequest by client on fd#%d", fd);
 
 	if (!srv->fdidx[fd].control
 	    || !srv->fdidx[fd].priv)

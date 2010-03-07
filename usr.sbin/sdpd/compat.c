@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.1 2009/05/12 10:05:06 plunky Exp $	*/
+/*	$NetBSD: compat.c,v 1.2 2010/03/07 10:58:40 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compat.c,v 1.1 2009/05/12 10:05:06 plunky Exp $");
+__RCSID("$NetBSD: compat.c,v 1.2 2010/03/07 10:58:40 plunky Exp $");
 
 #include <arpa/inet.h>
 
@@ -780,6 +780,8 @@ compat_register_request(server_t *srv, int fd)
 	uint16_t class;
 	int i;
 
+	log_debug("compat RegisterRequest by client on fd#%d", fd);
+
 	if (!srv->fdidx[fd].control
 	    || !srv->fdidx[fd].priv)
 		return SDP_ERROR_CODE_INVALID_REQUEST_SYNTAX;
@@ -828,6 +830,8 @@ compat_change_request(server_t *srv, int fd)
 	record_t *rec;
 	sdp_data_t d, r;
 	int i;
+
+	log_debug("compat ChangeRequest by client on fd#%d", fd);
 
 	if (!srv->fdidx[fd].control
 	    || !srv->fdidx[fd].priv)

@@ -1,4 +1,4 @@
-/*	$NetBSD: service.c,v 1.1 2009/05/12 10:05:07 plunky Exp $	*/
+/*	$NetBSD: service.c,v 1.2 2010/03/07 10:58:40 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: service.c,v 1.1 2009/05/12 10:05:07 plunky Exp $");
+__RCSID("$NetBSD: service.c,v 1.2 2010/03/07 10:58:40 plunky Exp $");
 
 #include <bluetooth.h>
 #include <sdp.h>
@@ -62,6 +62,8 @@ service_search_request(server_t *srv, int fd)
 	record_t	*r;
 	sdp_data_t	d, s;
 	int		max, total, count;
+
+	log_debug("ServiceSearchRequest by client on fd#%d", fd);
 
 	d.next = srv->ibuf;
 	d.end = srv->ibuf + srv->pdu.len;
@@ -168,6 +170,8 @@ service_attribute_request(server_t *srv, int fd)
 	uint8_t		*tmp;
 	uint32_t	handle;
 	int		max;
+
+	log_debug("ServiceAttributeRequest by client on fd#%d", fd);
 
 	d.next = srv->ibuf;
 	d.end = srv->ibuf + srv->pdu.len;
@@ -291,6 +295,8 @@ service_search_attribute_request(server_t *srv, int fd)
 	sdp_data_t	a, d, s;
 	uint8_t		*tmp;
 	int		max;
+
+	log_debug("ServiceSearchAttributeRequest by client on fd#%d", fd);
 
 	d.next = srv->ibuf;
 	d.end = srv->ibuf + srv->pdu.len;
