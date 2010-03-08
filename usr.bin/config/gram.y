@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.21 2010/03/03 13:53:22 pooka Exp $	*/
+/*	$NetBSD: gram.y,v 1.22 2010/03/08 10:19:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -111,7 +111,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %token	XMACHINE MAJOR MAKEOPTIONS MAXUSERS MAXPARTITIONS MINOR
 %token	NEEDS_COUNT NEEDS_FLAG NO
 %token	XOBJECT OBSOLETE ON OPTIONS
-%token	PACKAGE PLUSEQ PREFIX PSEUDO_DEVICE
+%token	PACKAGE PLUSEQ PREFIX PSEUDO_DEVICE PSEUDO_ROOT
 %token	ROOT
 %token	SOURCE
 %token	TYPE
@@ -464,6 +464,7 @@ config_spec:
 	NO CONFIG WORD			{ delconf($3); } |
 	NO PSEUDO_DEVICE WORD		{ delpseudo($3); } |
 	PSEUDO_DEVICE WORD npseudo	{ addpseudo($2, $3); } |
+	PSEUDO_ROOT device_instance	{ addpseudoroot($2); } |
 	NO device_instance AT attachment
 					{ deldevi($2, $4); } |
 	NO DEVICE AT attachment		{ deldeva($4); } |
