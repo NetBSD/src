@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom_at_usb.c,v 1.4 2010/03/07 17:44:40 pooka Exp $	*/
+/*	$NetBSD: ucom_at_usb.c,v 1.5 2010/03/08 10:24:37 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -29,15 +29,6 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 
 	FLAWLESSCALL(config_cfdata_attach(cfdata_ucom, 0));
 
-	FLAWLESSCALL(config_cfdriver_attach(&mainbus_cd));
-	FLAWLESSCALL(config_cfattach_attach("mainbus", &mainbus_ca));
-
-	FLAWLESSCALL(config_cfdriver_attach(&ugenhc_cd));
-	FLAWLESSCALL(config_cfattach_attach("ugenhc", &ugenhc_ca));
-
-	FLAWLESSCALL(config_cfdriver_attach(&usb_cd));
-	FLAWLESSCALL(config_cfattach_attach("usb", &usb_ca));
-
 	FLAWLESSCALL(config_cfdriver_attach(&uplcom_cd));
 	FLAWLESSCALL(config_cfattach_attach("uplcom", &uplcom_ca));
 
@@ -49,9 +40,6 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 
 	FLAWLESSCALL(config_cfdriver_attach(&ucom_cd));
 	FLAWLESSCALL(config_cfattach_attach("ucom", &ucom_ca));
-
-	FLAWLESSCALL(config_cfdriver_attach(&uhub_cd));
-	FLAWLESSCALL(config_cfattach_attach("uhub", &uroothub_ca));
 
 	bmaj = cmaj = -1;
 	FLAWLESSCALL(devsw_attach("ucom", NULL, &bmaj, &ucom_cdevsw, &cmaj));
