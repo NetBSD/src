@@ -1,4 +1,4 @@
-/*	$NetBSD: btattach.c,v 1.9 2010/03/08 21:19:29 plunky Exp $	*/
+/*	$NetBSD: btattach.c,v 1.10 2010/03/08 21:48:42 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008 Iain Hibbert.  All rights reserved.");
-__RCSID("$NetBSD: btattach.c,v 1.9 2010/03/08 21:19:29 plunky Exp $");
+__RCSID("$NetBSD: btattach.c,v 1.10 2010/03/08 21:48:42 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -589,7 +589,7 @@ test(const char *tty, tcflag_t cflag, tcflag_t Cflag)
 
 		n = read(fd, buf, sizeof(buf));
 		if (opt_debug > 1)
-			printf("  %dbyte read\n", n);
+			printf("  %zd bytes read\n", n);
 		if (n < 0) {
 			if (i == 0 && errno == EAGAIN) {
 				printf("This module is *maybe* supported by btuart(4).\n"
