@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.40 2010/02/13 10:39:39 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.41 2010/03/08 07:42:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -1234,23 +1234,9 @@ EXIT(hppa_fpu_swap)
 	depi	1, 0, 1, t		/* and set the valid bit */
 
 #if 0
-	.section .bss
-	.export	dtlb_c, data
-	.export	tlbd_c, data
-	.export	itlb_c, data
-#if 0
 	BSS(dtlb_c, 8)
 	BSS(tlbd_c, 8)
 	BSS(itlb_c, 8)
-#else
-dtlb_c:
-	.block 8
-tlbd_c:
-	.block 8
-itlb_c:
-	.block 8
-#endif
-	.text
 
 	/* XXX this touches tr5, which it should not, perhaps */
 #define	TLB_STATS_PRE(t) \
