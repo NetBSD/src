@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.90 2010/03/06 08:08:29 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.91 2010/03/08 04:18:48 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.90 2010/03/06 08:08:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.91 2010/03/08 04:18:48 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -198,14 +198,16 @@ cpu_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp(cf->cf_name, ma->ma_name) != 0)
 		return 0;
 
-#ifndef MULTIPROCESSOR
 	/*
 	 * If we are going to only attach a single cpu, make sure
 	 * to pick the one we are running on right now.
 	 */
-	if (upaid_from_node(ma->ma_node) != CPU_UPAID)
-		return 0;
+	if (upaid_from_node(ma->ma_node) != CPU_UPAID) {
+#ifdef MULTIPROCESSOR
+		if (boothowto & RB_MD1)
 #endif
+			return 0;
+	}
 
 	return 1;
 }
@@ -314,8 +316,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad icache line size %d", l);
-	totalsize = icachesize *
-		prom_getpropint(node, "icache-associativity", 1);
+	totalsize = icachesize;
 	if (totalsize == 0)
 		totalsize = l *
 			prom_getpropint(node, "icache-nlines", 64) *
@@ -344,8 +345,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad dcache line size %d", l);
-	totalsize = dcachesize *
-		prom_getpropint(node, "dcache-associativity", 1);
+	totalsize = dcachesize;
 	if (totalsize == 0)
 		totalsize = l *
 			prom_getpropint(node, "dcache-nlines", 128) *
@@ -369,9 +369,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad ecache line size %d", l);
-	totalsize = 
-		prom_getpropint(node, "ecache-size", 0) *
-		prom_getpropint(node, "ecache-associativity", 1);
+	totalsize = prom_getpropint(node, "ecache-size", 0);
 	if (totalsize == 0)
 		totalsize = l *
 			prom_getpropint(node, "ecache-nlines", 32768) *
