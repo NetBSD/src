@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.84 2010/03/05 14:00:16 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.85 2010/03/08 11:45:45 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.84 2010/03/05 14:00:16 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.85 2010/03/08 11:45:45 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -164,19 +164,6 @@ static const char * const bat_hid[] = {
 #define ACPIBAT_ST_DISCHARGING	0x00000001  /* battery is discharging */
 #define ACPIBAT_ST_CHARGING	0x00000002  /* battery is charging */
 #define ACPIBAT_ST_CRITICAL	0x00000004  /* battery is critical */
-
-/*
- * Flags for battery status from _STA return. Note that
- * this differs from the conventional evaluation of _STA:
- *
- *	"Unlike most other devices, when a battery is inserted or
- *	 removed from the system, the device itself (the battery bay)
- *	 is still considered to be present in the system. For most
- *	 systems, the _STA for this device will always return a value
- *	 with bits 0-3 set and will toggle bit 4 to indicate the actual
- *	 presence of a battery. (ACPI 3.0, sec. 10.2.1, p. 320.)"
- */
-#define ACPIBAT_STA_PRESENT	0x00000010  /* battery present */
 
 /*
  * A value used when _BST or _BIF is teporarily unknown (see ibid.).
@@ -318,7 +305,7 @@ acpibat_get_sta(device_t dv)
 
 	sc->sc_sensor[ACPIBAT_PRESENT].state = ENVSYS_SVALID;
 
-	if ((val & ACPIBAT_STA_PRESENT) == 0) {
+	if ((val & ACPI_STA_BATTERY_PRESENT) == 0) {
 		sc->sc_sensor[ACPIBAT_PRESENT].value_cur = 0;
 		return 0;
 	}
