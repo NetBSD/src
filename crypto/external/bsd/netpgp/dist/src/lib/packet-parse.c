@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.30 2010/03/05 16:01:09 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.31 2010/03/08 07:37:24 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -2113,6 +2113,7 @@ parse_v4_sig(__ops_region_t *region, __ops_stream_t *stream)
 		if (__ops_get_debug_level(__FILE__)) {
 			(void) fprintf(stderr, "parse_v4_sig: RSA: sig is\n");
 			BN_print_fp(stderr, pkt.u.sig.info.sig.rsa.sig);
+			(void) fprintf(stderr, "\n");
 		}
 		break;
 
