@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.750 2010/03/04 17:57:26 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.751 2010/03/08 06:48:10 lukem Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -716,7 +716,7 @@ Notes:
 We have lots of local fixes.
 
 Package:	OpenLDAP
-Version:	2.4.11
+Version:	2.4.21
 Current Vers:	2.4.21
 Maintainer:	OpenLDAP Foundation
 Archive Site:	http://www.openldap.org/
@@ -726,7 +726,6 @@ Responsible:	lukem
 License:	BSD (3-clause)
 Notes:
 Imported into src/external/bsd/openldap/dist/
-Next import will need $ Id removal..
 
 Package:	OpenPAM
 Version:	20071221
