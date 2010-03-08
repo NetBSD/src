@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.84 2010/02/03 15:34:37 roy Exp $
+# $NetBSD: md.amd64,v 1.85 2010/03/08 06:40:06 lukem Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -121,11 +121,11 @@
 ./usr/lib/i386/libkvm.so.6			base-compat-shlib	compat,pic
 ./usr/lib/i386/libkvm.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblber.so.3			base-compat-shlib	compat,pic,ldap
-./usr/lib/i386/liblber.so.3.0			base-compat-shlib	compat,pic,ldap
+./usr/lib/i386/liblber.so.3.1			base-compat-shlib	compat,pic,ldap
 ./usr/lib/i386/libldap.so.4			base-compat-shlib	compat,pic,ldap
-./usr/lib/i386/libldap.so.4.0			base-compat-shlib	compat,pic,ldap
+./usr/lib/i386/libldap.so.4.1			base-compat-shlib	compat,pic,ldap
 ./usr/lib/i386/libldap_r.so.4			base-compat-shlib	compat,pic,ldap
-./usr/lib/i386/libldap_r.so.4.0			base-compat-shlib	compat,pic,ldap
+./usr/lib/i386/libldap_r.so.4.1			base-compat-shlib	compat,pic,ldap
 ./usr/lib/i386/liblwres.so.5			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblwres.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libm.so.0			base-compat-shlib	compat,pic

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.859 2010/02/21 03:18:45 darran Exp $
+# $NetBSD: mi,v 1.860 2010/03/08 06:40:06 lukem Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -454,6 +454,7 @@
 ./usr/bin/ldapmodrdn				base-ldap-bin		ldap
 ./usr/bin/ldappasswd				base-ldap-bin		ldap
 ./usr/bin/ldapsearch				base-ldap-bin		ldap
+./usr/bin/ldapurl				base-ldap-bin		ldap
 ./usr/bin/ldapwhoami				base-ldap-bin		ldap
 # This is also used by pkgsrc, and should stay in base-util-bin
 ./usr/bin/ldd					base-util-bin
