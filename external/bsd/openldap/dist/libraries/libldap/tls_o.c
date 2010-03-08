@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_o.c,v 1.1.1.1 2010/03/08 02:14:16 lukem Exp $	*/
+/*	$NetBSD: tls_o.c,v 1.2 2010/03/08 05:00:51 lukem Exp $	*/
 
 /* tls_o.c - Handle tls/ssl using OpenSSL */
 /* OpenLDAP: pkg/ldap/libraries/libldap/tls_o.c,v 1.5.2.10 2009/10/30 17:55:19 quanah Exp */
@@ -663,7 +663,7 @@ static int
 tlso_session_strength( tls_session *sess )
 {
 	tlso_session *s = (tlso_session *)sess;
-	SSL_CIPHER *c;
+	const SSL_CIPHER *c;
 
 	c = SSL_get_current_cipher(s);
 	return SSL_CIPHER_get_bits(c, NULL);
