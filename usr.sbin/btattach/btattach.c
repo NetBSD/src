@@ -1,4 +1,4 @@
-/*	$NetBSD: btattach.c,v 1.7 2010/03/08 17:41:11 kiyohara Exp $	*/
+/*	$NetBSD: btattach.c,v 1.8 2010/03/08 17:59:52 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008 Iain Hibbert.  All rights reserved.");
-__RCSID("$NetBSD: btattach.c,v 1.7 2010/03/08 17:41:11 kiyohara Exp $");
+__RCSID("$NetBSD: btattach.c,v 1.8 2010/03/08 17:59:52 kiyohara Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: btattach.c,v 1.7 2010/03/08 17:41:11 kiyohara Exp $");
 
 static void sighandler(int);
 static void usage(void);
+static void test(const char *, tcflag_t, tcflag_t);
 
 static int sigcount = 0;	/* signals received */
 static int opt_debug = 0;	/* global? */
@@ -151,16 +152,17 @@ main(int argc, char *argv[])
 	struct termios tio;
 	unsigned int init_speed, speed;
 	tcflag_t cflag, Cflag;
-	int fd, ch, i;
+	int fd, ch, tflag, i;
 	const char *name;
 	char *ptr;
 
 	init_speed = 0;
 	cflag = CLOCAL;
 	Cflag = 0;
+	tflag = 0;
 	name = "btuart";
 
-	while ((ch = getopt(argc, argv, "dFfi:oPp")) != -1) {
+	while ((ch = getopt(argc, argv, "dFfi:oPpt")) != -1) {
 		switch (ch) {
 		case 'd':
 			opt_debug++;
@@ -193,6 +195,10 @@ main(int argc, char *argv[])
 			cflag |= PARENB;
 			break;
 
+		case 't':
+			tflag = 1;
+			break;
+
 		case '?':
 		default:
 			usage();
@@ -200,6 +206,13 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (tflag) {
+		if (argc != 1)
+			usage();
+		test(argv[0], cflag, Cflag);
+		exit(EXIT_SUCCESS);
+	}
 
 	if (argc == 3) {
 		name = argv[0];
@@ -287,6 +300,7 @@ usage(void)
 
 	fprintf(stderr,
 		"Usage: %s [-dFfoPp] [-i speed] [type] tty speed\n"
+		"       %s -t [-dFfoPp] tty\n"
 		"\n"
 		"Where:\n"
 		"\t-d          debug mode (no detach, dump io)\n"
@@ -296,9 +310,10 @@ usage(void)
 		"\t-o          odd parity\n"
 		"\t-P          no parity\n"
 		"\t-p          even parity\n"
+		"\t-t          test mode\n"
 		"\n"
 		"Known types:\n"
-		"", getprogname());
+		"", getprogname(), getprogname());
 
 	for (i = 0; i < __arraycount(types); i++)
 		fprintf(stderr, "\t%-12s%s\n", types[i].name, types[i].descr);
@@ -501,4 +516,119 @@ uart_recv_cc(int fd, uint16_t opcode, void *buf, size_t len)
 	}
 
 	return n;
+}
+
+static void
+test(const char *tty, tcflag_t cflag, tcflag_t Cflag)
+{
+	struct termios tio;
+	int fd, guessed, i, j, k, n;
+	unsigned char buf[32];
+	const int bauds[] = {
+		 57600,		/* BCSP specific default */
+		921600,		/* latest major baud rate */
+		115200,		/* old major baud rate */
+
+		460800,
+		230400,
+//		 76800,
+		 28800,
+		 38400,
+		 19200,
+		 14400,
+		  9600,
+		  7200,
+		  4800,
+		  2400,
+		  1800,
+		  1200,
+		   600,
+		   300,
+		   200,
+		   150,
+		   134,
+		   110,
+		    75,
+		    50,
+	};
+	const unsigned char bcsp_lepkt[] =
+	    /* ESC  ------- header -------  --- link establish ---   ESC */
+	    { 0xc0, 0x00, 0x41, 0x00, 0xbe, 0xda, 0xdc, 0xed, 0xed, 0xc0 };
+
+	printf("test mode\n");
+
+	/* open tty */
+	if ((fd = open(tty, O_RDWR | O_NONBLOCK | O_EXLOCK, 0)) < 0)
+		err(EXIT_FAILURE, "%s", tty);
+
+	/* setup tty */
+	if (tcgetattr(fd, &tio) < 0)
+		err(EXIT_FAILURE, "tcgetattr");
+	cfmakeraw(&tio);
+	tio.c_cflag |= (CLOCAL | CRTSCTS | PARENB);
+	tio.c_cflag |= cflag;
+	tio.c_cflag &= ~Cflag;
+
+	guessed = 0;
+	for (i = 0; i < __arraycount(bauds); i++) {
+		if (cfsetspeed(&tio, bauds[i]) < 0
+		    || tcsetattr(fd, TCSANOW, &tio) < 0
+		    || tcflush(fd, TCIOFLUSH) < 0)
+			if (bauds[i] > 115200)
+				continue;
+			else
+				err(EXIT_FAILURE, "tty setup failed");
+
+		if (opt_debug)
+			printf("  try with B%d\n", bauds[i]);
+
+		sleep(bauds[i] < 9600 ? 3 : 1);
+
+		n = read(fd, buf, sizeof(buf));
+		if (opt_debug > 1)
+			printf("  %dbyte read\n", n);
+		if (n < 0) {
+			if (i == 0 && errno == EAGAIN) {
+				printf("This module is *maybe* supported by btuart(4).\n"
+				    "you specify aproporiate <speed>.\n"
+				    "  Also can specify <type> for initialize.\n");
+				guessed = 1;
+				break;
+			}
+			if (errno == EAGAIN)
+				continue;
+
+			err(EXIT_FAILURE, "read");
+		} else {
+			if (n < sizeof(bcsp_lepkt))
+				continue;
+			for (j = 0; j < n - sizeof(bcsp_lepkt); j++) {
+				for (k = 0; k < sizeof(bcsp_lepkt); k++) 
+					if (buf[j + k] != bcsp_lepkt[k]) {
+						j += k;
+						break;
+					}
+				if (k < sizeof(bcsp_lepkt))
+					continue;
+
+				printf(
+				    "This module is supported by bcsp(4).\n"
+				    "  baud rate %d\n",
+				    bauds[i]);
+				if (tio.c_cflag & PARENB)
+					printf("  with %sparity\n",
+					    tio.c_cflag & PARODD ? "odd " : "");
+				guessed = 1;
+				break;
+			}
+			if (guessed)
+				break;
+		}
+
+	}
+
+	close(fd);
+
+	if (!guessed)
+		printf("don't understand...\n");
 }
