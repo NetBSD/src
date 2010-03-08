@@ -1,7 +1,7 @@
 .TH SLAPD.BACKENDS 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2006-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2006-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.backends.5,v 1.3.2.3 2008/02/11 23:26:40 kurt Exp $
+.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd.backends.5,v 1.3.2.6 2009/06/03 01:41:58 quanah Exp
 .SH NAME
 slapd.backends \- backends for slapd, the stand-alone LDAP daemon
 .SH DESCRIPTION
@@ -16,7 +16,7 @@ slapd server.
 
 Configuration options for each backend are documented separately in the
 corresponding
-.BR slapd-<backend> (5)
+.BR slapd\-<backend> (5)
 manual pages.
 .TP
 .B bdb
@@ -71,6 +71,11 @@ daemon. Only a single instance of the
 .B monitor
 backend may be defined.
 .TP
+.B ndb
+This backend is experimental.
+It uses the transactional database interface of the MySQL Cluster Engine
+(NDB) to store data.
+.TP
 .B null
 Operations in this backend succeed but do nothing.
 .TP
@@ -93,7 +98,7 @@ in the same server, based on the naming context of the request.
 Its use requires the 
 .B rwm
 overlay (see
-.BR slapo-rwm (5)
+.BR slapo\-rwm (5)
 for details) to rewrite the naming context of the request.
 It is primarily intended to implement virtual views on databases
 that actually store data.

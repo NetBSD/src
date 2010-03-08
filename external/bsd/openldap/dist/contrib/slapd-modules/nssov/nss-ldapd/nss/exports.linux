@@ -78,6 +78,14 @@ EXPORTED {
     _nss_ldap_getspent_r;
     _nss_ldap_endspent;
 
+	# pam - pluggable auth
+	pam_sm_acct_mgmt;
+	pam_sm_authenticate;
+	pam_sm_chauthtok;
+	pam_sm_close_session;
+	pam_sm_open_session;
+	pam_sm_setcred;
+
   # everything else should not be exported
   local:
     *;

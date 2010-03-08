@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-common.h,v 1.2.2.5 2008/02/11 23:26:50 kurt Exp $ */
+/*	$NetBSD: slapd-common.h,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/tests/progs/slapd-common.h,v 1.2.2.7 2009/02/10 17:13:05 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,7 +39,7 @@ extern void tester_error( const char *msg );
 extern void tester_perror( const char *fname, const char *msg );
 extern void tester_ldap_error( LDAP *ld, const char *fname, const char *msg );
 extern int tester_ignore_str2errlist( const char *err );
-extern unsigned tester_ignore_err( int err );
+extern int tester_ignore_err( int err );
 
 extern pid_t		pid;
 

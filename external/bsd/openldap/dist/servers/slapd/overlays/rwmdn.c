@@ -1,8 +1,10 @@
+/*	$NetBSD: rwmdn.c,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+
 /* rwmdn.c - massages dns */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmdn.c,v 1.18.2.4 2008/02/11 23:26:49 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmdn.c,v 1.18.2.5 2009/01/22 00:01:13 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.

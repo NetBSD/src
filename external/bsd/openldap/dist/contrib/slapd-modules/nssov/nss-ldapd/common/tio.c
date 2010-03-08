@@ -1,3 +1,5 @@
+/*	$NetBSD: tio.c,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+
 /*
    tio.c - timed io functions
    This file is part of the nss-ldapd library.

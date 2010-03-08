@@ -1,4 +1,4 @@
-// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/SaslInteractionHandler.cpp,v 1.3.2.2 2008/04/14 23:09:26 quanah Exp $
+// OpenLDAP: pkg/ldap/contrib/ldapc++/src/SaslInteractionHandler.cpp,v 1.3.2.3 2009/07/22 19:50:57 quanah Exp
 /*
  * Copyright 2007, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -11,6 +11,7 @@
 
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
+#include <cstdio>
 #endif
 
 #include <string.h>

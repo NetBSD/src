@@ -1,11 +1,11 @@
 .TH LDAP_BIND 3 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man3/ldap_bind.3,v 1.20.2.5 2008/02/11 23:26:39 kurt Exp $
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" OpenLDAP: pkg/ldap/doc/man/man3/ldap_bind.3,v 1.20.2.7 2009/06/03 01:41:53 quanah Exp
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap_bind, ldap_bind_s, ldap_simple_bind, ldap_simple_bind_s, ldap_sasl_bind, ldap_sasl_bind_s, ldap_sasl_interactive_bind_s, ldap_parse_sasl_bind_result, ldap_unbind, ldap_unbind_s, ldap_unbind_ext, ldap_unbind_ext_s, ldap_set_rebind_proc \- LDAP bind routines
 .SH LIBRARY
-OpenLDAP LDAP (libldap, -lldap)
+OpenLDAP LDAP (libldap, \-lldap)
 .SH SYNOPSIS
 .nf
 .B #include <ldap.h>
@@ -267,7 +267,7 @@ and
 .B ldap_unbind_ext_s()
 allows the operations to specify  controls.
 .SH ERRORS
-Asynchronous routines will return -1 in case of error, setting the
+Asynchronous routines will return \-1 in case of error, setting the
 \fIld_errno\fP parameter of the \fIld\fP structure.  Synchronous
 routines return whatever \fIld_errno\fP is set to.  See
 .BR ldap_error (3)

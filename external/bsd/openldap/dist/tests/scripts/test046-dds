@@ -1,8 +1,8 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test046-dds,v 1.4.2.3 2008/02/11 23:26:51 kurt Exp $
+# OpenLDAP: pkg/ldap/tests/scripts/test046-dds,v 1.4.2.6 2009/08/13 00:47:41 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 2005-2008 The OpenLDAP Foundation.
+## Copyright 2005-2009 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -15,6 +15,11 @@
 
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
+
+if test $BACKEND = "ldif" ; then
+        echo "LDIF backend does not support acls, test skipped"
+        exit 0
+fi
 
 if test $DDS = ddsno; then 
 	echo "Dynamic Directory Services overlay not available, test skipped"
@@ -391,7 +396,7 @@ member: $BJORNSDN
 dn: $MEETINGDN
 changetype: modify
 add: member
-member: $JAJDN
+member: $JOHNDDN
 EOMODS
 RC=$?
 if test $RC != 0 ; then
@@ -464,6 +469,17 @@ fi
 
 echo "Trying to refresh the meeting anonymously (should fail)..."
 $LDAPEXOP -h $LOCALHOST -p $PORT1 \
+	"refresh" "$MEETINGDN" "240" \
+	>> $TESTOUT 2>&1
+RC=$?
+if test $RC = 0 ; then
+	echo "ldapexop should have failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Trying to refresh the meeting as $JAJDN (should fail)..."
+$LDAPEXOP -D "$JAJDN" -w "jaj" -h $LOCALHOST -p $PORT1 \
 	"refresh" "$MEETINGDN" "240" \
 	>> $TESTOUT 2>&1
 RC=$?

@@ -1,9 +1,9 @@
 .TH SLAPD-MONITOR 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-monitor.5,v 1.9.2.3 2008/02/11 23:26:40 kurt Exp $
+.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd-monitor.5,v 1.9.2.6 2009/06/03 01:41:56 quanah Exp
 .SH NAME
-slapd-monitor \- Monitor backend to slapd
+slapd\-monitor \- Monitor backend to slapd
 .SH SYNOPSIS
 ETCDIR/slapd.conf
 .SH DESCRIPTION
@@ -72,7 +72,7 @@ The usage is:
 .LP
 .RS
 .nf
-configure --enable-monitor
+configure \-\-enable\-monitor
 .fi
 .RE
 .TP
@@ -118,6 +118,7 @@ backend does not honor size/time limits in search operations.
 default slapd configuration file
 .SH SEE ALSO
 .BR slapd.conf (5),
+.BR slapd\-config (5),
 .BR slapd.access (5),
 .BR slapd (8),
 .BR ldap (3).

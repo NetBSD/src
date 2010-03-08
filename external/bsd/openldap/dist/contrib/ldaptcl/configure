@@ -537,7 +537,7 @@ else
 fi
 
 
-# $OpenLDAP: pkg/ldap/contrib/ldaptcl/configure,v 1.7.2.1 2007/08/31 23:13:51 quanah Exp $
+# OpenLDAP: pkg/ldap/contrib/ldaptcl/configure,v 1.7.2.1 2007/08/31 23:13:51 quanah Exp
 
 NEO_VERSION=2.0
 NEO_MAJOR_VERSION=2

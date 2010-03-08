@@ -1,11 +1,11 @@
 .TH LDAP_RESULT 3 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man3/ldap_result.3,v 1.20.2.4 2008/02/11 23:26:39 kurt Exp $
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" OpenLDAP: pkg/ldap/doc/man/man3/ldap_result.3,v 1.20.2.8 2009/11/18 17:04:31 quanah Exp
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap_result \- Wait for the result of an LDAP operation
 .SH LIBRARY
-OpenLDAP LDAP (libldap, -lldap)
+OpenLDAP LDAP (libldap, \-lldap)
 .SH SYNOPSIS
 .nf
 .ft B
@@ -29,7 +29,7 @@ an operation previously initiated by one of the LDAP asynchronous
 operation routines (e.g.,
 .BR ldap_search_ext (3),
 .BR ldap_modify_ext (3),
-etc.).  Those routines all return -1 in case of error, and an
+etc.).  Those routines all return \-1 in case of error, and an
 invocation identifier upon successful initiation of the operation. The
 invocation identifier is picked by the library and is guaranteed to be
 unique across the LDAP session.  It can be used to request the result
@@ -48,7 +48,11 @@ is a NULL  pointer, the LDAP_OPT_TIMEOUT value set by
 is used. With the default setting,
 the  select  blocks  indefinitely.   To
 effect  a  poll,  the  timeout argument should be a non-NULL
-pointer, pointing to a zero-valued timeval structure.  See
+pointer, pointing to a zero-valued timeval structure.
+To obtain the behavior of the default setting, bypassing any value set by 
+.BR ldap_set_option (3),
+set to -1 the \fItv_sec\fP field of the \fItimeout\fP parameter.
+See
 .BR select (2)
 for further details.
 .LP
@@ -73,7 +77,7 @@ If it's set to 1, the search
 response will only be returned in its entirety, i.e., after all entries,
 all references, all extended partial responses, and the final search
 result have been received.
-.LP
+.SH RETURN VALUE
 Upon success, the type of the result received is returned and the
 \fIresult\fP parameter will contain the result of the operation;
 otherwise, the \fIresult\fP parameter is undefined.  This
@@ -118,12 +122,12 @@ The
 routine returns the message id of a message.
 .SH ERRORS
 .B ldap_result()
-returns -1 if something bad happens, and zero if the
+returns \-1 if something bad happens, and zero if the
 timeout specified was exceeded.
 .B ldap_msgtype()
 and
 .B ldap_msgid()
-return -1 on error.
+return \-1 on error.
 .SH SEE ALSO
 .BR ldap (3),
 .BR ldap_first_message (3),

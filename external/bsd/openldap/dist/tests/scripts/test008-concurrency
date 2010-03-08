@@ -1,8 +1,8 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test008-concurrency,v 1.40.2.3 2008/02/11 23:26:51 kurt Exp $
+# OpenLDAP: pkg/ldap/tests/scripts/test008-concurrency,v 1.40.2.6 2009/01/22 00:01:18 kurt Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2008 The OpenLDAP Foundation.
+## Copyright 1998-2009 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -15,6 +15,10 @@
 
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
+
+if test x$TESTLOOPS = x ; then
+	TESTLOOPS=50
+fi
 
 mkdir -p $TESTDIR $DBDIR1
 
@@ -50,9 +54,13 @@ for i in 0 1 2 3 4 5; do
 	sleep 5
 done
 
+# fix test data to include back-monitor, if available
+# NOTE: copies do_* files from $DATADIR to $TESTDIR
+$MONITORDATA "$MONITORDB" "$DATADIR" "$TESTDIR"
+
 echo "Using tester for concurrent server access..."
-time $SLAPDTESTER -P "$PROGDIR" -d "$DATADIR" -h $LOCALHOST -p $PORT1 -D "$MANAGERDN" -w $PASSWD -l 50
-#$SLAPDTESTER -P "$PROGDIR" -d "$DATADIR" -h $LOCALHOST -p $PORT1 -D "$MANAGERDN" -w $PASSWD -l 50
+time $SLAPDTESTER -P "$PROGDIR" -d "$TESTDIR" -h $LOCALHOST -p $PORT1 -D "$MANAGERDN" -w $PASSWD -l $TESTLOOPS
+#$SLAPDTESTER -P "$PROGDIR" -d "$TESTDIR" -h $LOCALHOST -p $PORT1 -D "$MANAGERDN" -w $PASSWD -l $TESTLOOPS
 RC=$?
 
 if test $RC != 0 ; then

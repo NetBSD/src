@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-read.c,v 1.37.2.6 2008/02/11 23:26:50 kurt Exp $ */
+/*	$NetBSD: slapd-read.c,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/tests/progs/slapd-read.c,v 1.37.2.9 2009/02/10 17:13:05 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -319,7 +321,7 @@ do_random( char *uri, char *manager, struct berval *passwd,
 		break;
 	}
 
-	fprintf( stderr, " PID=%ld - Search done (%d).\n", (long) pid, rc );
+	fprintf( stderr, "  PID=%ld - Search done (%d).\n", (long) pid, rc );
 
 	if ( ld != NULL ) {
 		ldap_unbind_ext( ld, NULL, NULL );
@@ -389,7 +391,7 @@ retry:;
 		}
 
 		if ( rc ) {
-			unsigned	first = tester_ignore_err( rc );
+			int		first = tester_ignore_err( rc );
 			char		buf[ BUFSIZ ];
 
 			snprintf( buf, sizeof( buf ), "ldap_search_ext_s(%s)", entry );
@@ -397,7 +399,7 @@ retry:;
 			/* if ignore.. */
 			if ( first ) {
 				/* only log if first occurrence */
-				if ( force < 2 || first == 1 ) {
+				if ( ( force < 2 && first > 0 ) || abs(first) == 1 ) {
 					tester_ldap_error( ld, buf, NULL );
 				}
 				continue;
@@ -419,7 +421,7 @@ retry:;
 		*ldp = ld;
 
 	} else {
-		fprintf( stderr, " PID=%ld - Read done (%d).\n", (long) pid, rc );
+		fprintf( stderr, "  PID=%ld - Read done (%d).\n", (long) pid, rc );
 
 		if ( ld != NULL ) {
 			ldap_unbind_ext( ld, NULL, NULL );

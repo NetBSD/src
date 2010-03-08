@@ -1,10 +1,10 @@
 .TH SLAPO-RETCODE 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2008 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2009 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-retcode.5,v 1.9.2.4 2008/07/12 05:49:03 quanah Exp $
+.\" OpenLDAP: pkg/ldap/doc/man/man5/slapo-retcode.5,v 1.9.2.9 2009/06/03 01:42:00 quanah Exp
 .SH NAME
-slapo-retcode \- return code overlay to slapd
+slapo\-retcode \- return code overlay to slapd
 .SH SYNOPSIS
 ETCDIR/slapd.conf
 .SH DESCRIPTION
@@ -58,7 +58,7 @@ If not defined, the suffix of the database is used.
 .hy 0
 .B retcode\-item <RDN> <errCode> [op=<oplist>] [text=<message>]
 .B [ref=<referral>] [sleeptime=<sec>] [matched=<DN>]
-.B [unsolicited=<OID>[:<data>]] [flags=[{pre|post}-]disconnect[,...]]
+.B [unsolicited=<OID>[:<data>]] [flags=[{pre|post}\-]disconnect[,...]]
 .RS
 A dynamically generated entry, located below \fBretcode\-parent\fP.
 The \fBerrCode\fP is the number of the response code;
@@ -79,9 +79,9 @@ The \fBunsolicited\fP field can be used to cause the return
 of an RFC 4511 unsolicited response message; if \fBOID\fP
 is not "0", an extended response is generated, with the optional
 \fBdata\fP appended.
-If \fBflags\fP contains \fBdisconnect\fP, or \fBpre-disconnect\fP,
+If \fBflags\fP contains \fBdisconnect\fP, or \fBpre\-disconnect\fP,
 .BR slapd (8)
-disconnects abruptly, without notice; \fBpost-disconnect\fP
+disconnects abruptly, without notice; \fBpost\-disconnect\fP
 causes disconnection right after sending response as appropriate.
 .RE
 .TP
@@ -89,7 +89,7 @@ causes disconnection right after sending response as appropriate.
 Enables exploitation of in-directory stored errAbsObject.
 May result in a lot of unnecessary overhead.
 .TP
-.B retcode\-sleep [-]<n>
+.B retcode\-sleep [\-]<n>
 Defines a sleep time in seconds that is spent before actually handling
 any operation.
 If negative, a random time between 0 and the absolute value of the argument
@@ -119,7 +119,7 @@ The error code:
     EQUALITY integerMatch
     ORDERING integerOrderingMatch
     SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
-    SINGLE-VALUE )
+    SINGLE\-VALUE )
 .RE
 .LP
 The operations that trigger the response code:
@@ -140,7 +140,7 @@ The text message:
     EQUALITY caseIgnoreMatch
     SUBSTR caseIgnoreSubstringsMatch
     SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
-    SINGLE-VALUE )
+    SINGLE\-VALUE )
 .RE
 .LP
 The sleep time before the response is actually returned to the client:
@@ -150,7 +150,7 @@ The sleep time before the response is actually returned to the client:
     DESC 'Time to wait before returning the error'
     EQUALITY integerMatch
     SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
-    SINGLE-VALUE )
+    SINGLE\-VALUE )
 .RE
 .LP
 The matched DN returned to the client:
@@ -160,7 +160,7 @@ The matched DN returned to the client:
     DESC 'Value to be returned as matched DN'
     EQUALITY distinguishedNameMatch
     SYNTAX 1.3.6.1.4.1.1466.115.121.1.12
-    SINGLE-VALUE )
+    SINGLE\-VALUE )
 .RE
 .LP
 The OID to be returned as extended response OID
@@ -172,7 +172,7 @@ in RFC 4511 unsolicited responses
     DESC 'OID to be returned within unsolicited response'
     EQUALITY objectIdentifierMatch
     SYNTAX 1.3.6.1.4.1.1466.115.121.1.38
-    SINGLE-VALUE )
+    SINGLE\-VALUE )
 .RE
 .LP
 The octet string to be returned as extended response data
@@ -182,7 +182,7 @@ in RFC 4511 unsolicited response:
     NAME ( 'errUnsolicitedData' )
     DESC 'Data to be returned within unsolicited response'
     SYNTAX 1.3.6.1.4.1.1466.115.121.1.40
-    SINGLE-VALUE )
+    SINGLE\-VALUE )
 .RE
 .LP
 If TRUE,
@@ -194,7 +194,7 @@ after sending response as appropriate:
     NAME ( 'errDisconnect' )
     DESC 'Disconnect without notice'
     SYNTAX 1.3.6.1.4.1.1466.115.121.1.7
-    SINGLE-VALUE )
+    SINGLE\-VALUE )
 .RE
 .LP
 The abstract class that triggers the overlay:
@@ -226,13 +226,15 @@ The auxiliary objectclass to alter the behavior of existing objects:
 .RS
 .nf
 overlay         retcode
-retcode-parent  "ou=RetCodes,dc=example,dc=com"
+retcode\-parent  "ou=RetCodes,dc=example,dc=com"
+
+# retcode.conf is found in tests/data/ of the source tree
 include         ./retcode.conf
 
 # Wait 10 seconds, then return success (0x00)
-retcode-item    "cn=Success after 10 seconds" 0x00 sleeptime=10
+retcode\-item    "cn=Success after 10 seconds" 0x00 sleeptime=10
 # Wait 10 seconds, then return timelimitExceeded (0x03)
-retcode-item    "cn=Timelimit after 10 seconds" 0x03 sleeptime=10
+retcode\-item    "cn=Timelimit after 10 seconds" 0x03 sleeptime=10
 .fi
 .RE
 .LP
@@ -244,7 +246,12 @@ ETCDIR/slapd.conf
 default slapd configuration file
 .SH SEE ALSO
 .BR slapd.conf (5),
-.BR slapd (8),
+.BR slapd\-config (5),
+.BR slapd (8).
+The
+.BR slapo\-retcode (5)
+overlay supports dynamic configuration via
+.BR back-config .
 .SH ACKNOWLEDGEMENTS
 .P
 This module was written in 2005 by Pierangelo Masarati for SysNet s.n.c.

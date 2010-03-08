@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-# $OpenLDAP: pkg/ldap/contrib/ldapc++/src/Makefile.in,v 1.9.2.9 2008/07/09 22:48:25 quanah Exp $
+# OpenLDAP: pkg/ldap/contrib/ldapc++/src/Makefile.in,v 1.9.2.9 2008/07/09 22:48:25 quanah Exp
 
 ###
 # Copyright 2000-2008, OpenLDAP Foundation, All Rights Reserved.

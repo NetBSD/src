@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/admin/quickstart.sdf,v 1.44.2.5 2008/02/11 23:26:39 kurt Exp $
-# Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
+# OpenLDAP: pkg/openldap-guide/admin/quickstart.sdf,v 1.44.2.7 2009/01/22 00:00:47 kurt Exp
+# Copyright 1999-2009 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: A Quick-Start Guide
@@ -271,8 +271,7 @@ Note that by default, the {{slapd}}(8) database grants {{read access
 to everybody}} excepting the {{super-user}} (as specified by the
 {{EX:rootdn}} configuration directive).  It is highly recommended
 that you establish controls to restrict access to authorized users.
-Access controls are discussed in the {{SECT:The access Configuration
-Directive}} section of {{SECT:The slapd Configuration File}} chapter.
+Access controls are discussed in the {{SECT:Access Control}} chapter.
 You are also encouraged to read the {{SECT:Security Considerations}},
 {{SECT:Using SASL}} and {{SECT:Using TLS}} sections.
 

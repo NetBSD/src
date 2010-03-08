@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/admin/referrals.sdf,v 1.25.2.5 2008/02/11 23:26:39 kurt Exp $
-# Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
+# OpenLDAP: pkg/openldap-guide/admin/referrals.sdf,v 1.25.2.7 2009/02/02 22:46:51 quanah Exp
+# Copyright 1999-2009 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Constructing a Distributed Directory Service
@@ -139,3 +139,8 @@ installation has already been built using referrals, the use of the
 of the Directory system. A better approach would be to use explicitly
 defined local and proxy databases in {{subordinate}} configurations to
 provide a seamless view of the Distributed Directory.
+
+Note: LDAP operations, even subtree searches, normally access only one
+database. That can be changed by gluing databases together with the
+{{B:subordinate}}/{{B:olcSubordinate}} keyword. Please see {{slapd.conf}}(5) 
+and {{slapd-config}}(5).

@@ -1,14 +1,14 @@
 .TH SLAPO-UNIQUE 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2004-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2004-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-unique.5,v 1.6.2.3 2008/02/11 23:26:40 kurt Exp $
+.\" OpenLDAP: pkg/ldap/doc/man/man5/slapo-unique.5,v 1.6.2.7 2009/06/03 01:42:00 quanah Exp
 .SH NAME
-slapo-unique \- Attribute Uniqueness overlay to slapd
+slapo\-unique \- Attribute Uniqueness overlay to slapd
 .SH SYNOPSIS
 ETCDIR/slapd.conf
 .SH DESCRIPTION
 The Attribute Uniqueness overlay can be used with a backend database such as
-.BR slapd-bdb (5)
+.BR slapd\-bdb (5)
 to enforce the uniqueness of some or all attributes within a
 scope. This subtree defaults to all objects within the subtree of the
 database for which the Uniqueness overlay is configured.
@@ -27,6 +27,10 @@ have a
 .B uid
 attribute containing the same value. If any are found, the request is
 rejected.
+.LP
+The search is performed using the rootdn of the database, to avoid issues
+with ACLs preventing the overlay from seeing all of the relevant data. As
+such, the database must have a rootdn configured.
 .SH CONFIGURATION
 These
 .B slapd.conf
@@ -37,11 +41,13 @@ directive.
 .TP
 .B unique_uri <[strict ][ignore ]URI[URI...]...>
 Configure the base, attributes, scope, and filter for uniqueness
-checking.  Multiple URIs may be specified within a domain, allowing complex selections of objects.  Multiple
+checking.  Multiple URIs may be specified within a domain,
+allowing complex selections of objects.  Multiple
 .B unique_uri
 statements or
 .B olcUniqueURI
-attributes will create independent domains, each with their own independent lists of URIs and ignore/strict settings.
+attributes will create independent domains, each with their own
+independent lists of URIs and ignore/strict settings.
 
 The LDAP URI syntax is a subset of
 .B RFC-4516,
@@ -51,7 +57,8 @@ ldap:///[base dn]?[attributes...]?scope[?filter]
 
 The
 .B base dn
-defaults to that of the back-end database.  Specified base dns must be within the subtree of the back-end database.
+defaults to that of the back-end database.
+Specified base dns must be within the subtree of the back-end database.
 
 If no
 .B attributes
@@ -107,7 +114,9 @@ that only one attribute within a subtree will be allowed to have a
 null value.  Strictness applies to all URIs within a uniqueness
 domain, but some domains may be strict while others are not.
 .LP
-It is not possible to set both URIs and legacy slapo-unique configuration parameters simultaneously.  In general, the legacy configuration options control pieces of a single unfiltered subtree domain.
+It is not possible to set both URIs and legacy slapo\-unique configuration
+parameters simultaneously. In general, the legacy configuration options
+control pieces of a single unfiltered subtree domain.
 .TP
 .B unique_base <basedn>
 This legacy configuration parameter should be converted to the
@@ -150,4 +159,5 @@ maximum flexibility in meeting site-specific requirements.
 ETCDIR/slapd.conf
 default slapd configuration file
 .SH SEE ALSO
-.BR slapd.conf (5).
+.BR slapd.conf (5),
+.BR slapd\-config (5).

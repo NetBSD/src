@@ -1,4 +1,4 @@
-// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LdifReader.cpp,v 1.4.2.4 2008/07/09 21:45:42 quanah Exp $
+// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LdifReader.cpp,v 1.4.2.5 2009/09/29 21:35:03 quanah Exp
 /*
  * Copyright 2008, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -179,11 +179,12 @@ int LdifReader::readNextRecord( bool first )
 
 LDAPEntry LdifReader::getEntryRecord()
 {
+    std::list<stringpair>::const_iterator i = m_currentRecord.begin();
     if ( m_curRecType != LDAPMsg::SEARCH_ENTRY )
     {
-        // Error
+        throw( std::runtime_error( "The LDIF record: '" + i->second +
+                                   "' is not a valid LDAP Entry" ));
     }
-    std::list<stringpair>::const_iterator i = m_currentRecord.begin();
     LDAPEntry resEntry(i->second);
     i++;
     LDAPAttribute curAttr(i->first);

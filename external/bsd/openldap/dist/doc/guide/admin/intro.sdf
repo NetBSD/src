@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/admin/intro.sdf,v 1.45.2.6 2008/02/11 23:26:39 kurt Exp $
-# Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
+# OpenLDAP: pkg/openldap-guide/admin/intro.sdf,v 1.45.2.8 2009/01/22 00:00:47 kurt Exp
+# Copyright 1999-2009 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 H1: Introduction to OpenLDAP Directory Services
 
@@ -424,7 +424,7 @@ well-defined {{TERM:C}} {{TERM:API}}, you can write your own
 customized modules which extend {{slapd}} in numerous ways.  Also,
 a number of {{programmable database}} modules are provided.  These
 allow you to expose external data sources to {{slapd}} using popular
-programming languages ({{PRD:Perl}}, {{shell}}, and {{TERM:SQL}}.
+programming languages ({{PRD:Perl}}, {{shell}}, and {{TERM:SQL}}).
 
 {{B:Threads}}: {{slapd}} is threaded for high performance.  A single
 multi-threaded {{slapd}} process handles all incoming requests using

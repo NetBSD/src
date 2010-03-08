@@ -1,4 +1,4 @@
-// $OpenLDAP: pkg/ldap/contrib/ldapc++/examples/urlTest.cpp,v 1.1.2.3 2008/04/14 23:18:59 quanah Exp $
+// OpenLDAP: pkg/ldap/contrib/ldapc++/examples/urlTest.cpp,v 1.1.2.3 2008/04/14 23:18:59 quanah Exp
 /*
  * Copyright 2008, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

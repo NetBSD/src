@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
+
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:cc="http://creativecommons.org/ns#"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
@@ -12,9 +13,8 @@
    height="212.5425"
    id="svg2"
    sodipodi:version="0.32"
-   inkscape:version="0.45.1"
+   inkscape:version="0.47pre4 r22446"
    version="1.0"
-   sodipodi:docbase="/home/andreas/cvs/openldap-guide/images/src"
    sodipodi:docname="set-recursivegroup.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
    inkscape:export-filename="/home/andreas/set-recursivegroup.png"
@@ -22,6 +22,13 @@
    inkscape:export-ydpi="70.18">
   <defs
      id="defs4">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 106.27125 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="833.63007 : 106.27125 : 1"
+       inkscape:persp3d-origin="416.81503 : 70.847499 : 1"
+       id="perspective3053" />
     <marker
        inkscape:stockid="Arrow1Lend"
        orient="auto"
@@ -95,19 +102,20 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.1313286"
-     inkscape:cx="471.10533"
-     inkscape:cy="166.19896"
+     inkscape:zoom="2.9689479"
+     inkscape:cx="232.40369"
+     inkscape:cy="118.87263"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      showguides="false"
-     inkscape:window-width="1280"
-     inkscape:window-height="953"
+     inkscape:window-width="1655"
+     inkscape:window-height="1001"
      inkscape:window-x="0"
-     inkscape:window-y="24"
+     inkscape:window-y="25"
      width="1052.3622px"
-     height="744.09449px" />
+     height="744.09449px"
+     inkscape:window-maximized="1" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -306,7 +314,7 @@
          id="text2170"
          y="86.335617"
          x="262.09247"
-         style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
          xml:space="preserve"><tspan
            y="86.335617"
            x="262.09247"
@@ -329,7 +337,7 @@
            id="tspan3297"
            y="146.33562"
            x="262.09247"
-           sodipodi:role="line">member: cn=accountadm,ou=people,dc=example,dc=com</tspan><tspan
+           sodipodi:role="line">member: cn=accountadm,ou=group,dc=example,dc=com</tspan><tspan
            id="tspan3411"
            y="161.33562"
            x="262.09247"
@@ -345,9 +353,9 @@
          id="rect7321"
          style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.97492063px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
       <rect
-         style="opacity:0.28915663;fill:#aa9ab2;fill-opacity:1;stroke:none;stroke-width:0.69669151;stroke-opacity:1"
+         style="opacity:0.28915663;fill:#aa9ab2;fill-opacity:1;stroke:none"
          id="rect5582"
-         width="365.16586"
+         width="360.11356"
          height="31.950695"
          x="260.02518"
          y="120.25619"
@@ -378,7 +386,7 @@
        inkscape:export-ydpi="80.970001" />
     <path
        style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow2Lend);stroke-opacity:1"
-       d="M 407.72184,145.90577 C 440.42676,177.72675 428.93584,200.70858 374.13302,201.5925"
+       d="m 404.35364,144.89531 c 26.30535,21.71639 24.5822,55.81327 -30.22062,56.69719"
        id="path7689"
        sodipodi:nodetypes="cc"
        inkscape:export-filename="/home/andreas/set-recursivegroup.png"
@@ -406,7 +414,7 @@
          id="tspan9639"
          sodipodi:role="line">more<tspan
    id="tspan9641"
-   style="font-weight:bold"></tspan></tspan><tspan
+   style="font-weight:bold" /></tspan><tspan
          y="247.54912"
          x="473.47699"
          sodipodi:role="line"
@@ -427,7 +435,7 @@
          x="473.47699"
          y="112.54912">more<tspan
    style="font-weight:bold"
-   id="tspan9651"></tspan></tspan><tspan
+   id="tspan9651" /></tspan><tspan
          id="tspan9653"
          sodipodi:role="line"
          x="473.47699"
@@ -448,7 +456,7 @@
          id="tspan10628"
          sodipodi:role="line">more<tspan
    id="tspan10630"
-   style="font-weight:bold"></tspan></tspan><tspan
+   style="font-weight:bold" /></tspan><tspan
          y="188.85262"
          x="431.01266"
          sodipodi:role="line"

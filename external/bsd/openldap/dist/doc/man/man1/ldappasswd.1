@@ -1,6 +1,6 @@
 .TH LDAPPASSWD 1 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man1/ldappasswd.1,v 1.39.2.5 2008/02/11 23:26:39 kurt Exp $
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" OpenLDAP: pkg/ldap/doc/man/man1/ldappasswd.1,v 1.39.2.8 2009/06/03 01:41:51 quanah Exp
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldappasswd \- change the password of an LDAP entry
@@ -39,7 +39,7 @@ ldappasswd \- change the password of an LDAP entry
 [\c
 .BI \-y \ passwdfile\fR]
 [\c
-.BR \-O \ security-properties ]
+.BI \-O \ security-properties\fR]
 [\c
 .BR \-I ]
 [\c
@@ -55,7 +55,7 @@ ldappasswd \- change the password of an LDAP entry
 [\c
 .BI \-Y \ mech\fR]
 [\c
-.BR \-Z[Z] ]
+.BR \-Z [ Z ]]
 [\c
 .IR user ]
 .SH DESCRIPTION
@@ -94,6 +94,7 @@ Use simple authentication instead of SASL.
 .TP
 .BI \-D \ binddn
 Use the Distinguished Name \fIbinddn\fP to bind to the LDAP directory.
+For SASL binds, the server is expected to ignore this value.
 .TP
 .BI \-d \ debuglevel
 Set the LDAP debugging level to \fIdebuglevel\fP.
@@ -107,16 +108,15 @@ is expected.
 .TP
 .BI \-h \ ldaphost
 Specify an alternate host on which the ldap server is running.
-Deprecated in favor of -H.
+Deprecated in favor of \fB\-H\fP.
 .TP
 .BI \-p \ ldapport
 Specify an alternate TCP port where the ldap server is listening.
-Deprecated in favor of -H.
+Deprecated in favor of \fB\-H\fP.
 .TP
 .B \-n
 Do not set password. (Can be useful when used in conjunction with
-.BR \-v \ or
-.BR \-d )
+\fB\-v\fP or \fB\-d\fP)
 .TP
 .BI \-S
 Prompt for new password.
@@ -164,7 +164,7 @@ depends on the actual SASL mechanism used.
 Specify the requested authorization ID for SASL bind.
 .I authzid
 must be one of the following formats:
-.BI dn: <distinguished name>
+.BI dn: "<distinguished name>"
 or
 .BI u: <username>\fP.
 .TP
@@ -172,10 +172,9 @@ or
 Specify the SASL mechanism to be used for authentication. If it's not
 specified, the program will choose the best mechanism the server knows.
 .TP
-.B \-Z[Z]
+.BR \-Z [ Z ]
 Issue StartTLS (Transport Layer Security) extended operation. If you use
-.BR \-ZZ ,
-the command will require the operation to be successful
+\fB\-ZZ\fP, the command will require the operation to be successful
 .SH SEE ALSO
 .BR ldap_sasl_bind (3),
 .BR ldap_extended_operation (3),

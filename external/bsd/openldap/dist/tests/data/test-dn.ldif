@@ -226,12 +226,12 @@ uniqueMember: cn=Name and Optional UID,ou=Related Syntaxes,dc=example,dc=com
 uniqueMember: #'1'B
 uniqueMember: #'0010'B
 uniqueMember: dc=example,dc=com#'1000'B
-uniqueMember: dc=example,dc=com#'0'B
+uniqueMember: dc=example,dc=com#''B
 description: cn=Name and Optional UID,ou=Related Syntaxes,dc=example,dc=com // only DN portion
 description: #'1'B // empty "" DN
 description: #'0010'B // empty "" DN with leading '0's
 description: dc=example,dc=com#'1000'B // with DN portion
-description: dc=example,dc=com#'0'B // with DN portion and just one '0'
+description: dc=example,dc=com#''B // with DN portion + bitstring with no bits
 
 dn: cn=Should Fail 1,cn=Name and Optional UID,ou=Related Syntaxes,dc=example,dc=com
 objectClass: groupOfUniqueNames

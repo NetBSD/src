@@ -1,8 +1,8 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/sql-test001-concurrency,v 1.4.2.4 2008/02/11 23:26:50 kurt Exp $
+# OpenLDAP: pkg/ldap/tests/scripts/sql-test001-concurrency,v 1.4.2.6 2009/01/22 00:01:18 kurt Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2008 The OpenLDAP Foundation.
+## Copyright 1998-2009 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -26,8 +26,8 @@ if test $RDBMS = "rdbmsno" ; then
 	exit 0
 fi
 
-if test "x$LOOPS" = "x" ; then
-	LOOPS=5
+if test "x$TESTLOOPS" = "x" ; then
+	TESTLOOPS=5
 fi
 
 if test "x$CHILDREN" = "x" ; then
@@ -102,7 +102,7 @@ fi
 echo "Using tester for concurrent server access..."
 $SLAPDTESTER -P "$PROGDIR" -d "$SQLDATADIR" \
 	-h $LOCALHOST -p $PORT1 -D "$MANAGERDN" -w $PASSWD \
-	-l $LOOPS $CHILDREN -FF
+	-l $TESTLOOPS $CHILDREN -FF
 RC=$?
 
 if test $RC != 0 ; then

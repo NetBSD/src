@@ -78,15 +78,15 @@ objectClass: groupOfUniqueNames
 cn: Name and Optional UID
 uniqueMember: cn=Name and Optional UID,ou=Related Syntaxes,dc=example,dc=com
 uniqueMember: #'1'B
-uniqueMember: #'10'B
+uniqueMember: #'0010'B
 uniqueMember: dc=example,dc=com#'1000'B
-uniqueMember: dc=example,dc=com#'0'B
+uniqueMember: dc=example,dc=com#''B
 description: cn=Name and Optional UID,ou=Related Syntaxes,dc=example,dc=com //
   only DN portion
 description: #'1'B // empty "" DN
 description: #'0010'B // empty "" DN with leading '0's
 description: dc=example,dc=com#'1000'B // with DN portion
-description: dc=example,dc=com#'0'B // with DN portion and just one '0'
+description: dc=example,dc=com#''B // with DN portion + bitstring with no bits
 
 dn: ou=Related Syntaxes,dc=example,dc=com
 objectClass: organizationalUnit
@@ -183,20 +183,21 @@ description: testUUID=597ae2f6-16a6-1027-98f4-abcdefABCDEF,DC=Example
 
 # Searching database for nameAndOptionalUID="dc=example,dc=com"...
 # Searching database for nameAndOptionalUID="dc=example,dc=com#'001000'B"...
+# Searching database for nameAndOptionalUID="dc=example,dc=com#'1000'B"...
 dn: cn=Name and Optional UID,ou=Related Syntaxes,dc=example,dc=com
 objectClass: groupOfUniqueNames
 cn: Name and Optional UID
 uniqueMember: cn=Name and Optional UID,ou=Related Syntaxes,dc=example,dc=com
 uniqueMember: #'1'B
-uniqueMember: #'10'B
+uniqueMember: #'0010'B
 uniqueMember: dc=example,dc=com#'1000'B
-uniqueMember: dc=example,dc=com#'0'B
+uniqueMember: dc=example,dc=com#''B
 description: cn=Name and Optional UID,ou=Related Syntaxes,dc=example,dc=com //
   only DN portion
 description: #'1'B // empty "" DN
 description: #'0010'B // empty "" DN with leading '0's
 description: dc=example,dc=com#'1000'B // with DN portion
-description: dc=example,dc=com#'0'B // with DN portion and just one '0'
+description: dc=example,dc=com#''B // with DN portion + bitstring with no bits
 
 # Searching database for uniqueMember~="dc=example,dc=com" (approx)...
 dn: cn=Name and Optional UID,ou=Related Syntaxes,dc=example,dc=com
@@ -204,29 +205,29 @@ objectClass: groupOfUniqueNames
 cn: Name and Optional UID
 uniqueMember: cn=Name and Optional UID,ou=Related Syntaxes,dc=example,dc=com
 uniqueMember: #'1'B
-uniqueMember: #'10'B
+uniqueMember: #'0010'B
 uniqueMember: dc=example,dc=com#'1000'B
-uniqueMember: dc=example,dc=com#'0'B
+uniqueMember: dc=example,dc=com#''B
 description: cn=Name and Optional UID,ou=Related Syntaxes,dc=example,dc=com //
   only DN portion
 description: #'1'B // empty "" DN
 description: #'0010'B // empty "" DN with leading '0's
 description: dc=example,dc=com#'1000'B // with DN portion
-description: dc=example,dc=com#'0'B // with DN portion and just one '0'
+description: dc=example,dc=com#''B // with DN portion + bitstring with no bits
 
-# Searching database for uniqueMember~="dc=example,dc=com#'001000'B" (approx)...
+# Searching database for uniqueMember~="dc=example,dc=com#'1000'B" (approx)...
 dn: cn=Name and Optional UID,ou=Related Syntaxes,dc=example,dc=com
 objectClass: groupOfUniqueNames
 cn: Name and Optional UID
 uniqueMember: cn=Name and Optional UID,ou=Related Syntaxes,dc=example,dc=com
 uniqueMember: #'1'B
-uniqueMember: #'10'B
+uniqueMember: #'0010'B
 uniqueMember: dc=example,dc=com#'1000'B
-uniqueMember: dc=example,dc=com#'0'B
+uniqueMember: dc=example,dc=com#''B
 description: cn=Name and Optional UID,ou=Related Syntaxes,dc=example,dc=com //
   only DN portion
 description: #'1'B // empty "" DN
 description: #'0010'B // empty "" DN with leading '0's
 description: dc=example,dc=com#'1000'B // with DN portion
-description: dc=example,dc=com#'0'B // with DN portion and just one '0'
+description: dc=example,dc=com#''B // with DN portion + bitstring with no bits
 

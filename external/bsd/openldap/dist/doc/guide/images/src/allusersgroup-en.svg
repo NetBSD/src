@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
+
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:cc="http://creativecommons.org/ns#"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
@@ -12,16 +13,22 @@
    height="107.84196"
    id="svg2"
    sodipodi:version="0.32"
-   inkscape:version="0.45.1"
+   inkscape:version="0.46+devel"
    version="1.0"
-   sodipodi:docbase="/home/andreas/palestra"
    sodipodi:docname="allusersgroup-en.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
-   inkscape:export-filename="/home/andreas/palestra/ppolicy.png"
-   inkscape:export-xdpi="136.2"
-   inkscape:export-ydpi="136.2">
+   inkscape:export-filename="/anything/src/openldap/ldap/doc/guide/admin/allusersgroup-en.png"
+   inkscape:export-xdpi="107.65753"
+   inkscape:export-ydpi="107.65753">
   <defs
      id="defs4">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 53.920979 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="419.4133 : 53.920979 : 1"
+       inkscape:persp3d-origin="209.70665 : 35.947319 : 1"
+       id="perspective30" />
     <marker
        inkscape:stockid="Arrow2Lstart"
        orient="auto"
@@ -63,11 +70,12 @@
      inkscape:current-layer="layer1"
      showgrid="true"
      showguides="true"
-     inkscape:window-width="1280"
-     inkscape:window-height="953"
+     inkscape:window-width="1274"
+     inkscape:window-height="950"
      inkscape:window-x="0"
-     inkscape:window-y="24"
-     inkscape:guide-bbox="true" />
+     inkscape:window-y="25"
+     inkscape:guide-bbox="true"
+     inkscape:window-maximized="0" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -76,6 +84,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -106,7 +115,7 @@
          y="78.033184"
          id="tspan5379">objectClass: <tspan
    style="font-weight:bold"
-   id="tspan5396">groupOfNames</tspan></tspan><tspan
+   id="tspan5396">groupOfURLs</tspan></tspan><tspan
          sodipodi:role="line"
          x="116.88309"
          y="92.036435"

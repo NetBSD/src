@@ -1,8 +1,10 @@
+/*	$NetBSD: rwmconf.c,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+
 /* rwmconf.c - rewrite/map configuration file routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmconf.c,v 1.25.2.3 2008/02/11 23:26:48 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmconf.c,v 1.25.2.5 2009/01/22 00:01:13 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -69,6 +71,13 @@ rwm_map_config(
 			"{<foreign> | *}\"\n",
 			fname, lineno );
 		return 1;
+	}
+
+	if ( !is_oc && map->map == NULL ) {
+		/* only init if required */
+		if ( rwm_map_init( map, &mapping ) != LDAP_SUCCESS ) {
+			return 1;
+		}
 	}
 
 	if ( strcmp( argv[2], "*" ) == 0 ) {
@@ -225,11 +234,6 @@ rwm_map_config(
 				rwm_mapping_cmp, rwm_mapping_dup );
 
 success_return:;
-	if ( !is_oc && map->map == NULL ) {
-		/* only init if required */
-		rc = rwm_map_init( map, &mapping ) != LDAP_SUCCESS;
-	}
-
 	return rc;
 
 error_return:;

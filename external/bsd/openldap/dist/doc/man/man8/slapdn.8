@@ -1,17 +1,24 @@
 .TH SLAPDN 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2004-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2004-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.\" OpenLDAP: pkg/ldap/doc/man/man8/slapdn.8,v 1.6.2.10 2009/06/03 01:42:01 quanah Exp
 .SH NAME
 slapdn \- Check a list of string-represented LDAP DNs based on schema syntax
 .SH SYNOPSIS
 .B SBINDIR/slapdn
-.B [\-d level]
-.B [\-f slapd.conf]
-.B [\-F confdir]
-.B [\-N | \-P]
-.B [\-o name[=value]]
-.B [\-v]
-.B DN [...]
+[\c
+.BI \-d \ debug-level\fR]
+[\c
+.BI \-f \ slapd.conf\fR]
+[\c
+.BI \-F \ confdir\fR]
+[\c
+.BR \-N | \-P ]
+[\c
+.BI \-o \ option\fR[ = value\fR]]
+[\c
+.BR \-v ]
+.IR DN \ [...]
 .LP
 .SH DESCRIPTION
 .LP
@@ -23,31 +30,31 @@ and that loaded via
 .BR slapd.conf (5).
 It opens the
 .BR slapd.conf (5)
-configuration file, reads in the schema definitions, and then
+configuration file or the slapd\-config (5) backend, reads in the schema definitions, and then
 parses the 
-.B DN
+.I DN
 list given on the command-line.
 .LP
 .SH OPTIONS
 .TP
-.BI \-d " level"
+.BI \-d \ debug-level
 enable debugging messages as defined by the specified
-.IR level ;
+.IR debug-level ;
 see
 .BR slapd (8)
 for details.
 .TP
-.BI \-f " slapd.conf"
+.BI \-f \ slapd.conf
 specify an alternative
 .BR slapd.conf (5)
 file.
 .TP
-.BI \-F " confdir"
+.BI \-F \ confdir
 specify a config directory.
 If both
-.B -f
+.B \-f
 and
-.B -F
+.B \-F
 are specified, the config file will be read and converted to
 config directory format and written to the specified directory.
 If neither option is specified, an attempt to read the
@@ -56,26 +63,26 @@ config file. If a valid config directory exists then the
 default config file is ignored.
 .TP
 .BI \-N
-only output a normalized form of the DN, suitable to be used
+only output a normalized form of the \fIDN\fP, suitable to be used
 in a normalization tool; incompatible with
 .BR \-P .
 .TP
-.BI \-o " option[=value]"
+.BI \-o \ option\fR[ = value\fR]
 Specify an
-.BR option
+.I option
 with a(n optional)
-.BR value .
+.IR value .
 Possible generic options/values are:
 .LP
 .nf
               syslog=<subsystems>  (see `\-s' in slapd(8))
-              syslog-level=<level> (see `\-S' in slapd(8))
-              syslog-user=<user>   (see `\-l' in slapd(8))
+              syslog\-level=<level> (see `\-S' in slapd(8))
+              syslog\-user=<user>   (see `\-l' in slapd(8))
 
 .fi
 .TP
 .BI \-P
-only output a prettified form of the DN, suitable to be used
+only output a prettified form of the \fIDN\fP, suitable to be used
 in a check and beautification tool; incompatible with
 .BR \-N .
 .TP
@@ -88,12 +95,12 @@ give the command:
 .LP
 .nf
 .ft tt
-	SBINDIR/slapdn -f /ETCDIR/slapd.conf -v DN
+	SBINDIR/slapdn \-f /ETCDIR/slapd.conf \-v DN
 .ft
 .fi
 .SH "SEE ALSO"
 .BR ldap (3),
-.BR slapd (8)
+.BR slapd (8),
 .BR slaptest (8)
 .LP
 "OpenLDAP Administrator's Guide" (http://www.OpenLDAP.org/doc/admin/)

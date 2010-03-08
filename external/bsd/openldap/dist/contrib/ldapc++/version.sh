@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/contrib/ldapc++/version.sh,v 1.1.2.1 2008/07/09 21:59:44 quanah Exp $
+# OpenLDAP: pkg/ldap/contrib/ldapc++/version.sh,v 1.1.2.1 2008/07/09 21:59:44 quanah Exp
 #
 # Copyright 2008, OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT file

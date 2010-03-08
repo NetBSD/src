@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/preamble.sdf,v 1.70.2.7 2008/04/14 19:18:48 quanah Exp $
-# Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
+# OpenLDAP: pkg/openldap-guide/preamble.sdf,v 1.70.2.10 2009/11/24 02:41:10 quanah Exp
+# Copyright 1999-2009 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
  
 #
@@ -164,7 +164,7 @@ ASN.1|Abstract Syntax Notation - One
 AVA|Attribute Value Assertion
 AuthcDN|Authentication DN
 AuthcId|Authentication Identity
-AuthzDN|Authorizaiton DN
+AuthzDN|Authorization DN
 AuthzId|Authorization Identity
 BCP|Best Current Practice
 BDB|Berkeley DB (Backend)
@@ -296,7 +296,7 @@ RFC4013|PS|SASLprep: Stringprep Profile for User Names and Passwords|http://www.
 RFC4346|PS|The Transport Layer Security (TLS) Protocol, Version 1.1|http://www.rfc-editor.org/rfc/rfc4346.txt
 RFC4422|PS|Simple Authentication and Security Layer (SASL)|http://www.rfc-editor.org/rfc/rfc4422.txt
 RFC4510|PS|Lightweight Directory Access Protocol (LDAP): Technical Specification Roadmap|http://www.rfc-editor.org/rfc/rfc4510.txt
-RFC4511|PS|Lightweight Directory Access Protocol (LDAP): The Protocol|http://www.rfc-editor.org/rfc/rfc4512.txt
+RFC4511|PS|Lightweight Directory Access Protocol (LDAP): The Protocol|http://www.rfc-editor.org/rfc/rfc4511.txt
 RFC4512|PS|Lightweight Directory Access Protocol (LDAP): Directory Information Models|http://www.rfc-editor.org/rfc/rfc4512.txt
 RFC4513|PS|Lightweight Directory Access Protocol (LDAP): Authentication Methods and Security Mechanisms|http://www.rfc-editor.org/rfc/rfc4513.txt
 RFC4514|PS|Lightweight Directory Access Protocol (LDAP): String Representation of Distinguished Names|http://www.rfc-editor.org/rfc/rfc4514.txt

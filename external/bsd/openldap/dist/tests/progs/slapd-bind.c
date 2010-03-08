@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-bind.c,v 1.18.2.7 2008/02/11 23:26:50 kurt Exp $ */
+/*	$NetBSD: slapd-bind.c,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/tests/progs/slapd-bind.c,v 1.18.2.11 2009/03/09 23:16:48 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -249,13 +251,17 @@ main( int argc, char **argv )
 	uri = tester_uri( uri, host, port );
 
 	for ( i = 0; i < outerloops; i++ ) {
+		int rc;
+
 		if ( base != NULL ) {
-			do_base( uri, dn, &pass, base, filter, pwattr, loops,
+			rc = do_base( uri, dn, &pass, base, filter, pwattr, loops,
 				force, chaserefs, noinit, delay, -1, NULL );
 		} else {
-			do_bind( uri, dn, &pass, loops,
+			rc = do_bind( uri, dn, &pass, loops,
 				force, chaserefs, noinit, NULL, -1, NULL );
 		}
+		if ( rc == LDAP_SERVER_DOWN )
+			break;
 	}
 
 	exit( EXIT_SUCCESS );
@@ -339,12 +345,12 @@ do_bind( char *uri, char *dn, struct berval *pass, int maxloop,
 
 		rc = ldap_sasl_bind_s( ld, dn, LDAP_SASL_SIMPLE, pass, NULL, NULL, NULL );
 		if ( rc ) {
-			unsigned first = tester_ignore_err( rc );
+			int first = tester_ignore_err( rc );
 
 			/* if ignore.. */
 			if ( first ) {
 				/* only log if first occurrence */
-				if ( force < 2 || first == 1 ) {
+				if ( ( force < 2 && first > 0 ) || abs(first) == 1 ) {
 					tester_ldap_error( ld, "ldap_sasl_bind_s", NULL );
 				}
 				rc = LDAP_SUCCESS;
@@ -394,7 +400,7 @@ do_bind( char *uri, char *dn, struct berval *pass, int maxloop,
 	}
 
 	if ( maxloop > 1 ) {
-		fprintf( stderr, " PID=%ld - Bind done (%d).\n", (long) pid, rc );
+		fprintf( stderr, "  PID=%ld - Bind done (%d).\n", (long) pid, rc );
 	}
 
 	if ( ldp && noinit ) {
@@ -570,7 +576,7 @@ novals:;
 	end = GetTickCount();
 	end -= beg;
 
-	fprintf( stderr, " PID=%ld - Bind done %d in %d.%03d seconds.\n",
+	fprintf( stderr, "  PID=%ld - Bind done %d in %d.%03d seconds.\n",
 		(long) pid, i, end / 1000, end % 1000 );
 #else
 	gettimeofday( &end, NULL );
@@ -581,13 +587,13 @@ novals:;
 	}
 	end.tv_sec -= beg.tv_sec;
 
-	fprintf( stderr, " PID=%ld - Bind done %d in %ld.%06ld seconds.\n",
+	fprintf( stderr, "  PID=%ld - Bind done %d in %ld.%06ld seconds.\n",
 		(long) pid, i, (long) end.tv_sec, (long) end.tv_usec );
 #endif
 
 	if ( dns ) {
 		for ( i = 0; i < ndns; i++ ) {
-			free( dns[i] );
+			ber_memfree( dns[i] );
 		}
 		free( dns );
 	}
@@ -595,7 +601,7 @@ novals:;
 	if ( creds ) {
 		for ( i = 0; i < ndns; i++ ) {
 			if ( creds[i].bv_val != nullstr ) {
-				free( creds[i].bv_val );
+				ber_memfree( creds[i].bv_val );
 			}
 		}
 		free( creds );

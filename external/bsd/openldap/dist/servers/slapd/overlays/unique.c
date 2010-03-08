@@ -1,8 +1,10 @@
+/*	$NetBSD: unique.c,v 1.1.1.3 2010/03/08 02:14:20 lukem Exp $	*/
+
 /* unique.c - attribute uniqueness module */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/unique.c,v 1.20.2.9 2008/07/09 23:45:53 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/overlays/unique.c,v 1.20.2.17 2009/12/02 16:52:10 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2008 The OpenLDAP Foundation.
+ * Copyright 2004-2009 The OpenLDAP Foundation.
  * Portions Copyright 2004,2006-2007 Symas Corporation.
  * All rights reserved.
  *
@@ -47,6 +49,7 @@ typedef struct unique_domain_uri_s {
 	struct berval dn;
 	struct berval ndn;
 	struct berval filter;
+	Filter *f;
 	struct unique_attrs_s *attrs;
 	int scope;
 } unique_domain_uri;
@@ -141,6 +144,7 @@ unique_free_domain_uri ( unique_domain_uri *uri )
 		ch_free ( uri->dn.bv_val );
 		ch_free ( uri->ndn.bv_val );
 		ch_free ( uri->filter.bv_val );
+		filter_free( uri->f );
 		attr = uri->attrs;
 		while ( attr ) {
 			next_attr = attr->next;
@@ -197,6 +201,15 @@ unique_new_domain_uri ( unique_domain_uri **urip,
 			goto exit;
 		}
 
+		if ( be->be_nsuffix == NULL ) {
+			snprintf( c->cr_msg, sizeof( c->cr_msg ),
+				  "suffix must be set" );
+			Debug ( LDAP_DEBUG_CONFIG, "unique config: %s\n",
+				c->cr_msg, NULL, NULL );
+			rc = ARG_BAD_CONF;
+			goto exit;
+		}
+
 		if ( !dnIsSuffix ( &uri->ndn, &be->be_nsuffix[0] ) ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
 				  "dn <%s> is not a suffix of backend base dn <%s>",
@@ -204,6 +217,13 @@ unique_new_domain_uri ( unique_domain_uri **urip,
 				  be->be_nsuffix[0].bv_val );
 			rc = ARG_BAD_CONF;
 			goto exit;
+		}
+
+		if ( BER_BVISNULL( &be->be_rootndn ) || BER_BVISEMPTY( &be->be_rootndn ) ) {
+			Debug( LDAP_DEBUG_ANY,
+				"slapo-unique needs a rootdn; "
+				"backend <%s> has none, YMMV.\n",
+				be->be_nsuffix[0].bv_val, 0, 0 );
 		}
 	}
 
@@ -238,16 +258,24 @@ unique_new_domain_uri ( unique_domain_uri **urip,
 	}
 
 	if (url_desc->lud_filter) {
-		Filter *f = str2filter( url_desc->lud_filter );
-		if ( !f ) {
+		char *ptr;
+		uri->f = str2filter( url_desc->lud_filter );
+		if ( !uri->f ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
 				  "unique: bad filter");
 			rc = ARG_BAD_CONF;
 			goto exit;
 		}
 		/* make sure the strfilter is in normal form (ITS#5581) */
-		filter2bv( f, &uri->filter );
-		filter_free( f );
+		filter2bv( uri->f, &uri->filter );
+		ptr = strstr( uri->filter.bv_val, "(?=" /*)*/ );
+		if ( ptr != NULL && ptr <= ( uri->filter.bv_val - STRLENOF( "(?=" /*)*/ ) + uri->filter.bv_len ) )
+		{
+			snprintf( c->cr_msg, sizeof( c->cr_msg ),
+				  "unique: bad filter");
+			rc = ARG_BAD_CONF;
+			goto exit;
+		}
 	}
 exit:
 	uri->next = *urip;
@@ -406,6 +434,14 @@ unique_cf_base( ConfigArgs *c )
 			rc = ARG_BAD_CONF;
 			break;
 		}
+		if ( be->be_nsuffix == NULL ) {
+			snprintf( c->cr_msg, sizeof( c->cr_msg ),
+				  "suffix must be set" );
+			Debug ( LDAP_DEBUG_CONFIG, "unique config: %s\n",
+				c->cr_msg, NULL, NULL );
+			rc = ARG_BAD_CONF;
+			break;
+		}
 		if ( !dnIsSuffix ( &c->value_ndn,
 				   &be->be_nsuffix[0] ) ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
@@ -431,6 +467,13 @@ unique_cf_base( ConfigArgs *c )
 		break;
 	default:
 		abort();
+	}
+
+	if ( rc ) {
+		ch_free( c->value_dn.bv_val );
+		BER_BVZERO( &c->value_dn );
+		ch_free( c->value_ndn.bv_val );
+		BER_BVZERO( &c->value_ndn );
 	}
 
 	return rc;
@@ -956,9 +999,16 @@ unique_search(
 	unique_counter uq = { NULL, 0 };
 	int rc;
 
-	Debug(LDAP_DEBUG_TRACE, "==> unique_search %s\n", key, 0, 0);
+	Debug(LDAP_DEBUG_TRACE, "==> unique_search %s\n", key->bv_val, 0, 0);
 
 	nop->ors_filter = str2filter_x(nop, key->bv_val);
+	if(nop->ors_filter == NULL) {
+		op->o_bd->bd_info = (BackendInfo *) on->on_info;
+		send_ldap_error(op, rs, LDAP_OTHER,
+			"unique_search invalid filter");
+		return(rs->sr_err);
+	}
+
 	nop->ors_filterstr = *key;
 
 	cb.sc_response	= (slap_response*)count_attr_cb;
@@ -980,7 +1030,7 @@ unique_search(
 
 	nop->o_bd = on->on_info->oi_origdb;
 	rc = nop->o_bd->be_search(nop, &nrs);
-	filter_free_x(nop, nop->ors_filter);
+	filter_free_x(nop, nop->ors_filter, 1);
 	op->o_tmpfree( key->bv_val, op->o_tmpmemctx );
 
 	if(rc != LDAP_SUCCESS && rc != LDAP_NO_SUCH_OBJECT) {
@@ -1026,17 +1076,28 @@ unique_add(
 	      domain = domain->next )
 	{
 		unique_domain_uri *uri;
-		int ks = STRLENOF("(|)");
 
 		for ( uri = domain->uri;
 		      uri;
 		      uri = uri->next )
 		{
 			int len;
+			int ks = 0;
 
 			if ( uri->ndn.bv_val
 			     && !dnIsSuffix( &op->o_req_ndn, &uri->ndn ))
 				continue;
+
+			if ( uri->f ) {
+				if ( test_filter( NULL, op->ora_e, uri->f )
+					== LDAP_COMPARE_FALSE )
+				{
+					Debug( LDAP_DEBUG_TRACE,
+						"==> unique_add_skip<%s>\n",
+						op->o_req_dn.bv_val, 0, 0 );
+					continue;
+				}
+			}
 
 			if(!(a = op->ora_e->e_attrs)) {
 				op->o_bd->bd_info = (BackendInfo *) on->on_info;
@@ -1058,7 +1119,7 @@ unique_add(
 			if ( !ks ) continue;
 
 			/* terminating NUL */
-			ks++;
+			ks += sizeof("(|)");
 
 			if ( uri->filter.bv_val && uri->filter.bv_len )
 				ks += uri->filter.bv_len + STRLENOF ("(&)");
@@ -1136,13 +1197,13 @@ unique_modify(
 	      domain = domain->next )
 	{
 		unique_domain_uri *uri;
-		int ks = STRLENOF("(|)");
 
 		for ( uri = domain->uri;
 		      uri;
 		      uri = uri->next )
 		{
 			int len;
+			int ks = 0;
 
 			if ( uri->ndn.bv_val
 			     && !dnIsSuffix( &op->o_req_ndn, &uri->ndn ))
@@ -1169,7 +1230,7 @@ unique_modify(
 			if ( !ks ) continue;
 
 			/* terminating NUL */
-			ks++;
+			ks += sizeof("(|)");
 
 			if ( uri->filter.bv_val && uri->filter.bv_len )
 				ks += uri->filter.bv_len + STRLENOF ("(&)");
@@ -1250,13 +1311,13 @@ unique_modrdn(
 	      domain = domain->next )
 	{
 		unique_domain_uri *uri;
-		int ks = STRLENOF("(|)");
 
 		for ( uri = domain->uri;
 		      uri;
 		      uri = uri->next )
 		{
 			int i, len;
+			int ks = 0;
 
 			if ( uri->ndn.bv_val
 			     && !dnIsSuffix( &op->o_req_ndn, &uri->ndn )
@@ -1305,7 +1366,7 @@ unique_modrdn(
 			if ( !ks ) continue;
 
 			/* terminating NUL */
-			ks++;
+			ks += sizeof("(|)");
 
 			if ( uri->filter.bv_val && uri->filter.bv_len )
 				ks += uri->filter.bv_len + STRLENOF ("(&)");

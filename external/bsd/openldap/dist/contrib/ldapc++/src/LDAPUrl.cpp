@@ -1,4 +1,4 @@
-// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPUrl.cpp,v 1.3.10.5 2008/04/14 23:09:26 quanah Exp $
+// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPUrl.cpp,v 1.3.10.5 2008/04/14 23:09:26 quanah Exp
 /*
  * Copyright 2000-2006, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

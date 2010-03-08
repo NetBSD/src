@@ -1,17 +1,23 @@
 .TH SLAPPASSWD 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man8/slappasswd.8,v 1.21.2.5 2008/02/11 23:26:40 kurt Exp $
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.\" OpenLDAP: pkg/ldap/doc/man/man8/slappasswd.8,v 1.21.2.10 2009/06/03 01:42:01 quanah Exp
 .SH NAME
 slappasswd \- OpenLDAP password utility
 .SH SYNOPSIS
 .B SBINDIR/slappasswd
-.B [\-v]
-.B [\-u]
-.B [\-g|\-s secret|\-T file]
-.B [\-h hash]
-.B [\-c salt-format]
-.B [\-n]
+[\c
+.BR \-v ]
+[\c
+.BR \-u ]
+[\c
+.BR \-g \||\| \-s \ \fIsecret\fR \||\| \fB\-T \ \fIfile\fR]
+[\c
+.BI \-h \ hash\fR]
+[\c
+.BI \-c \ salt-format\fR]
+[\c
+.BR \-n ]
 .B 
 .LP
 .SH DESCRIPTION
@@ -19,11 +25,14 @@ slappasswd \- OpenLDAP password utility
 .B Slappasswd
 is used to generate an userPassword value
 suitable for use with
-.BR ldapmodify (1)
-or
+.BR ldapmodify (1),
 .BR slapd.conf (5)
 .I rootpw
+configuration directive or the 
+.BR slapd\-config (5) 
+.I olcRootPW
 configuration directive.
+.
 .SH OPTIONS
 .TP
 .B \-v
@@ -34,7 +43,7 @@ Generate RFC 2307 userPassword values (the default).  Future
 versions of this program may generate alternative syntaxes
 by default.  This option is provided for forward compatibility.
 .TP
-.BI \-s " secret"
+.BI \-s \ secret
 The secret to hash.
 If this,
 .B \-g
@@ -45,7 +54,7 @@ are absent, the user will be prompted for the secret to hash.
 .B \-g
 and
 .B \-T
-and mutually exclusive flags.
+are mutually exclusive flags.
 .TP
 .BI \-g
 Generate the secret.
@@ -58,7 +67,7 @@ are absent, the user will be prompted for the secret to hash.
 .B \-g
 and
 .B \-T
-and mutually exclusive flags.
+are mutually exclusive flags.
 If this is present,
 .I {CLEARTEXT}
 is used as scheme.
@@ -67,7 +76,7 @@ and
 .B \-h
 are mutually exclusive flags.
 .TP
-.BI \-T " file"
+.BI \-T \ "file"
 Hash the contents of the file.
 If this,
 .B \-g
@@ -80,16 +89,16 @@ and
 .B \-T
 and mutually exclusive flags.
 .TP
-.BI \-h " scheme"
-If -h is specified, one of the following RFC 2307 schemes may
+.BI \-h \ "scheme"
+If \fB\-h\fP is specified, one of the following RFC 2307 schemes may
 be specified:
-.IR {CRYPT} ,
-.IR {MD5} ,
-.IR {SMD5} ,
-.IR {SSHA} ", and"
-.IR {SHA} .
+.BR {CRYPT} ,
+.BR {MD5} ,
+.BR {SMD5} ,
+.BR {SSHA} ", and"
+.BR {SHA} .
 The default is 
-.IR {SSHA} .
+.BR {SSHA} .
 
 Note that scheme names may need to be protected, due to
 .B {
@@ -116,22 +125,31 @@ indicates that the new password should be added to userPassword as
 clear text.
 Unless
 .I {CLEARTEXT}
-is used, this flag is incompatible with
+is used, this flag is incompatible with option
 .BR \-g .
 .TP
-.BI \-c " crypt-salt-format"
+.BI \-c \ crypt-salt-format
 Specify the format of the salt passed to
 .BR crypt (3)
 when generating {CRYPT} passwords.  
 This string needs to be in
 .BR sprintf (3)
-format and may include one (and only one) %s conversion.
-This conversion will be substituted with a string random
-characters from [A\-Za\-z0\-9./].  For example, '%.2s'
-provides a two character salt and '$1$%.8s' tells some
-versions of crypt(3) to use an MD5 algorithm and provides
-8 random characters of salt.  The default is '%s', which
-provides 31 characters of salt.
+format and may include one (and only one)
+.B %s
+conversion.
+This conversion will be substituted with a string of random
+characters from [A\-Za\-z0\-9./].  For example,
+.RB ' %.2s '
+provides a two character salt and
+.RB ' $1$%.8s '
+tells some
+versions of
+.BR crypt (3)
+to use an MD5 algorithm and provides
+8 random characters of salt.
+The default is
+.RB ' %s ' ,
+which provides 31 characters of salt.
 .TP
 .BI \-n
 Omit the trailing newline; useful to pipe the credentials
@@ -150,17 +168,18 @@ is platform specific.
 .SH "SECURITY CONSIDERATIONS"
 Use of hashed passwords does not protect passwords during
 protocol transfer.  TLS or other eavesdropping protections
-should be in\-place before using LDAP simple bind.
+should be in-place before using LDAP simple bind.
 .LP
 The hashed password values should be protected as if they
 were clear text passwords.
 .SH "SEE ALSO"
 .BR ldappasswd (1),
 .BR ldapmodify (1),
-.BR slapd (8)
-.BR slapd.conf (5)
-.B RFC 2307
-.B RFC 4519
+.BR slapd (8),
+.BR slapd.conf (5),
+.BR slapd\-config (5),
+.B RFC 2307\fP,
+.B RFC 4519\fP,
 .B RFC 3112
 .LP
 "OpenLDAP Administrator's Guide" (http://www.OpenLDAP.org/doc/admin/)

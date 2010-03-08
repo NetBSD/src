@@ -1,9 +1,9 @@
 .TH SLAPD-BDB 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-bdb.5,v 1.31.2.5 2008/02/11 23:26:39 kurt Exp $
+.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd-bdb.5,v 1.31.2.12 2009/07/27 17:38:40 quanah Exp
 .SH NAME
-slapd-bdb, slapd-hdb \- Berkeley DB backends to slapd
+slapd\-bdb, slapd\-hdb \- Berkeley DB backends to slapd
 .SH SYNOPSIS
 .B ETCDIR/slapd.conf
 .SH DESCRIPTION
@@ -60,6 +60,10 @@ the \fI<min>\fP argument is non-zero, an internal task will run every
 \fI<min>\fP minutes to perform the checkpoint.
 See the Berkeley DB reference guide for more details.
 .TP
+.B checksum
+Enable checksum validation of DB pages whenever they are read from disk.
+This setting can only be configured before any database files are created.
+.TP
 .BI cryptfile \ <file>
 Specify the pathname of a file containing an encryption key to use for
 encrypting the database. Encryption is performed using Berkeley DB's
@@ -79,7 +83,7 @@ or
 .B cryptfile
 may be configured.
 .TP
-.BI dbconfig \ <Berkeley\-DB\-setting>
+.BI dbconfig \ <Berkeley-DB-setting>
 Specify a configuration directive to be placed in the
 .B DB_CONFIG
 file of the database directory. The
@@ -111,12 +115,25 @@ Enabling this option may improve performance at the expense of data
 security.
 See the Berkeley DB reference guide for more details.
 .TP
+\fBdbpagesize \fR \fI<dbfile> <size>\fR
+Specify the page size to use for a particular database file, in units
+of 1024 bytes. The default for the
+.B id2entry
+file is 16, the default for all other files depends on the size of the
+underlying filesystem's block size (typically 4 or 8).
+The maximum that BerkeleyDB supports is 64. This
+setting usually should not need to be changed, but if BerkeleyDB's
+"db_stat \-d" shows a large amount of overflow pages in use in a file,
+setting a larger size may increase performance at the expense of
+data integrity. This setting only takes effect when a database is
+being newly created. See the Berkeley DB reference guide for more details.
+.TP
 .BI directory \ <directory>
 Specify the directory where the BDB files containing this database and
 associated indexes live.
 A separate directory must be specified for each database.
 The default is
-.BR LOCALSTATEDIR/openldap-data .
+.BR LOCALSTATEDIR/openldap\-data .
 .TP
 .B dirtyread
 Allow reads of modified but not yet committed data.
@@ -128,9 +145,19 @@ In this case, the modified data is discarded and a subsequent search
 will return a different result.
 .TP
 .BI dncachesize \ <integer>
-Specify the maximum number of DNs in the in-memory DN cache. The
-default is twice the \fBcachesize\fP. Ideally this cache should be
-large enough to contain the DNs of every entry in the database.
+Specify the maximum number of DNs in the in-memory DN cache.
+Ideally this cache should be
+large enough to contain the DNs of every entry in the database. If
+set to a smaller value than the \fBcachesize\fP it will be silently
+increased to equal the \fBcachesize\fP. The default value is 0 which
+means unlimited, i.e. the DN cache will grow without bound.
+
+It should be noted that the \fBDN cache\fP is allowed to temporarily
+grow beyond the configured size. It does this if many entries are 
+locked when it tries to do a purge, because that means they're
+legitimately in use. Also, the \fBDN cache\fP never purges entries
+that have cached children, so depending on the shape of the DIT, it 
+could have lots of cached DNs over the defined limit.
 .TP
 .BI idlcachesize \ <integer>
 Specify the size of the in-memory index cache, in index slots. The
@@ -243,6 +270,7 @@ configuration file
 Berkeley DB configuration file
 .SH SEE ALSO
 .BR slapd.conf (5),
+.BR slapd\-config (5),
 .BR slapd (8),
 .BR slapadd (8),
 .BR slapcat (8),

@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/admin/runningslapd.sdf,v 1.16.2.5 2008/02/11 23:26:39 kurt Exp $
-# Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
+# OpenLDAP: pkg/openldap-guide/admin/runningslapd.sdf,v 1.16.2.8 2009/02/06 16:38:31 quanah Exp
+# Copyright 1999-2009 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 H1: Running slapd
 
@@ -21,7 +21,7 @@ The default is normally {{F:/usr/local/etc/openldap/slapd.conf}}.
 
 >	-F <slapd-config-directory>
 
-Specifies the slapd configuration directory. The default is {{F:/usr/local/etc/openldap/slapd.d}}
+Specifies the slapd configuration directory. The default is {{F:/usr/local/etc/openldap/slapd.d}}.
 
 If both {{EX:-f}} and {{EX:-F}} are specified, the config file will be read and converted 
 to config directory format and written to the specified directory.  
@@ -80,35 +80,30 @@ debugging levels are
 
 !block table; colaligns="RL"; align=Center; \
 	title="Table 7.1: Debugging Levels"
-Level	Description
--1	enable all debugging
-0	no debugging
-1	trace function calls
-2	debug packet handling
-4	heavy trace debugging
-8	connection management
-16	print out packets sent and received
-32	search filter processing
-64	configuration file processing
-128	access control list processing
-256	stats log connections/operations/results
-512	stats log entries sent
-1024	print communication with shell backends
-2048	print entry parsing debugging
+Level	Keyword		Description
+-1	any		enable all debugging
+0			no debugging
+1	(0x1 trace)	trace function calls
+2	(0x2 packets)	debug packet handling
+4	(0x4 args)	heavy trace debugging
+8	(0x8 conns)	connection management
+16	(0x10 BER)	print out packets sent and received
+32	(0x20 filter)	search filter processing
+64	(0x40 config)	configuration processing
+128	(0x80 ACL)	access control list processing
+256	(0x100 stats)	stats log connections/operations/results
+512	(0x200 stats2)	stats log entries sent
+1024	(0x400 shell)	print communication with shell backends
+2048	(0x800 parse)	print entry parsing debugging
+16384	(0x4000 sync)	syncrepl consumer processing
+32768	(0x8000 none)	only messages that get logged whatever log level is set
 !endblock
 
-You may enable multiple levels by specifying the debug option
-once for each desired level.  Or, since debugging levels are
-additive, you can do the math yourself. That is, if you want
-to trace function calls and watch the config file being
-processed, you could set level to the sum of those two levels
-(in this case, {{EX: -d 65}}).  Or, you can let slapd do the
-math, (e.g. {{EX: -d 1 -d 64}}).  Consult {{F: <ldap_log.h>}} for
-more details.
+You may enable multiple levels by specifying the debug option once for each desired level.  Or, since debugging levels are additive, you can do the math yourself. That is, if you want to trace function calls and watch the config file being processed, you could set level to the sum of those two levels (in this case, {{EX: -d 65}}).  Or, you can let slapd do the math, (e.g. {{EX: -d 1 -d 64}}).  Consult {{F: <ldap_log.h>}} for more details.
 
-Note: slapd must have been compiled with {{EX:-DLDAP_DEBUG}}
+Note: slapd must have been compiled with {{EX:--enable-debug}}
 defined for any debugging information beyond the two stats levels
-to be available.
+to be available (the default).
 
 
 H2: Starting slapd

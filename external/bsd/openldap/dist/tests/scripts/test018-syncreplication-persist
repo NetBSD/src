@@ -1,8 +1,8 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test018-syncreplication-persist,v 1.38.2.3 2008/02/11 23:26:51 kurt Exp $
+# OpenLDAP: pkg/ldap/tests/scripts/test018-syncreplication-persist,v 1.38.2.10 2009/03/05 23:32:21 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2008 The OpenLDAP Foundation.
+## Copyright 1998-2009 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -13,7 +13,7 @@
 ## top-level directory of the distribution or, alternatively, at
 ## <http://www.OpenLDAP.org/license.html>.
 
-if test "$BACKEND" != "bdb" && test "$BACKEND" != "hdb" ; then
+if test "$BACKEND" != "bdb" && test "$BACKEND" != "hdb" && test "$BACKEND" != "ldif"; then
 	echo "Test does not support $BACKEND"
 	exit 0
 fi
@@ -118,8 +118,8 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Waiting 15 seconds for syncrepl to receive changes..."
-sleep 15
+echo "Waiting $SLEEP1 seconds for syncrepl to receive changes..."
+sleep $SLEEP1
 
 echo "Stopping the provider, sleeping 10 seconds and restarting it..."
 kill -HUP "$PID"
@@ -147,6 +147,9 @@ for i in 0 1 2 3 4 5; do
 	echo "Waiting 5 seconds for slapd to start..."
 	sleep 5
 done
+
+echo "Waiting $SLEEP1 seconds for consumer to reconnect..."
+sleep $SLEEP1
 
 if test $RC != 0 ; then
 	echo "ldapsearch failed ($RC)!"
@@ -231,6 +234,21 @@ newsuperior: ou=Retired, ou=People, dc=example,dc=com
 dn: cn=James A Jones 2, ou=Information Technology Division, ou=People, dc=example,dc=com
 changetype: delete
 
+dn: dc=testdomain1,dc=example,dc=com
+changetype: modrdn
+newrdn: dc=itsdomain1
+deleteoldrdn: 1
+
+dn: dc=itsdomain1,dc=example,dc=com
+changetype: modify
+replace: description
+description: Example, Inc. ITS test domain
+
+dn: dc=testdomain2,dc=example,dc=com
+changetype: modrdn
+newrdn: dc=itsdomain2
+deleteoldrdn: 1
+
 EOMODS
 
 RC=$?
@@ -251,8 +269,8 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Waiting 15 seconds for syncrepl to receive changes..."
-sleep 15
+echo "Waiting $SLEEP1 seconds for syncrepl to receive changes..."
+sleep $SLEEP1
 
 echo "Stopping consumer to test recovery..."
 kill -HUP $SLAVEPID
@@ -276,7 +294,19 @@ sn: Coltrane
 uid: rosco
 cn: Rosco P. Coltrane
 
+dn: dc=itsdomain2,dc=example,dc=com
+changetype: modify
+replace: description
+description: Example, Inc. itsdomain2 test domain
+
 EOMODS
+
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
 
 echo "Restarting consumer..."
 echo "RESTART" >> $LOG4
@@ -288,8 +318,8 @@ if test $WAIT != 0 ; then
 fi
 KILLPIDS="$PID $SLAVEPID"
 
-echo "Waiting 25 seconds for syncrepl to receive changes..."
-sleep 25
+echo "Waiting $SLEEP1 seconds for syncrepl to receive changes..."
+sleep $SLEEP1
 
 if test ! $BACKLDAP = "ldapno" ; then
 	echo "Try updating the consumer slapd..."
@@ -322,8 +352,8 @@ EOMODS
 		exit $RC
 	fi
 
-	echo "Waiting 15 seconds for syncrepl to receive changes..."
-	sleep 15
+	echo "Waiting $SLEEP1 seconds for syncrepl to receive changes..."
+	sleep $SLEEP1
 fi
 
 OPATTRS="entryUUID creatorsName createTimestamp modifiersName modifyTimestamp"

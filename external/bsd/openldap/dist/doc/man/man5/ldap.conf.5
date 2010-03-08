@@ -1,11 +1,11 @@
 .TH LDAP.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/ldap.conf.5,v 1.33.2.6 2008/02/11 23:26:39 kurt Exp $
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" OpenLDAP: pkg/ldap/doc/man/man5/ldap.conf.5,v 1.33.2.13 2009/11/18 20:41:15 quanah Exp
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
-ldap.conf, .ldaprc \- ldap configuration file
+ldap.conf, .ldaprc \- LDAP configuration file/environment variables
 .SH SYNOPSIS
-ETCDIR/ldap.conf, .ldaprc
+ETCDIR/ldap.conf, ldaprc, .ldaprc, $LDAP<option-name>
 .SH DESCRIPTION
 If the environment variable \fBLDAPNOINIT\fP is defined, all
 defaulting is disabled.
@@ -40,17 +40,29 @@ The name of the variable is the option name with an added prefix of \fBLDAP\fP.
 For example, to define \fBBASE\fP via the environment, set the variable
 \fBLDAPBASE\fP to the desired value.
 .LP
-Some options are user\-only.  Such options are ignored if present
+Some options are user-only.  Such options are ignored if present
 in the
 .I ldap.conf
 (or file specified by
 .BR LDAPCONF ).
-.SH OPTIONS
+.LP
+Thus the following files and variables are read, in order:
+.nf
+    variable     $LDAPNOINIT, and if that is not set:
+    system file  ETCDIR/ldap.conf,
+    user files   $HOME/ldaprc,  $HOME/.ldaprc,  ./ldaprc,
+    system file  $LDAPCONF,
+    user files   $HOME/$LDAPRC, $HOME/.$LDAPRC, ./$LDAPRC,
+    variables    $LDAP<uppercase option name>.
+.fi
+Settings late in the list override earlier ones.
+.SH SYNTAX
 The configuration options are case-insensitive;
 their value, on a case by case basis, may be case-sensitive.
 .LP
-Blank lines and lines beginning with a hash mark (`#')
-are ignored up to their end.
+Blank lines are ignored.
+.br
+Lines beginning with a hash mark (`#') are comments, and ignored.
 .LP
 Valid lines are made of an option's name (a sequence of non-blanks,
 conventionally written in uppercase, although not required), 
@@ -63,19 +75,27 @@ for that option, if any.  Quoting values that contain blanks
 may be incorrect, as the quotes would become part of the value.
 For example,
 
-	URI	"ldap:// ldaps://"
+.nf
+	# Wrong - erroneous quotes:
+	URI     "ldap:// ldaps://"
 
-is incorrect, while
+	# Right - space-separated list of URIs, without quotes:
+	URI     ldap:// ldaps://
 
-	URI	ldap:// ldaps://
+	# Right - DN syntax needs quoting for Example, Inc:
+	BASE    ou=IT staff,o="Example, Inc",c=US
+	# or:
+	BASE    ou=IT staff,o=Example2C Inc,c=US
 
-is correct (note the absence of the double quotes).
+	# Wrong - comment on same line as option:
+	DEREF   never           # Never follow aliases
+.fi
 .LP
 A line cannot be longer than LINE_MAX, which should be more than 2000 bytes
 on all platforms.
 There is no mechanism to split a long line on multiple lines, either for
 beautification or to overcome the above limit.
-.LP
+.SH OPTIONS
 The different configuration options are:
 .TP
 .B URI <ldap[si]://[name[:port]] ...>
@@ -116,7 +136,7 @@ The base must be specified as a Distinguished Name in LDAP format.
 .B BINDDN <dn>
 Specifies the default bind DN to use when performing ldap operations.
 The bind DN must be specified as a Distinguished Name in LDAP format.
-.B This is a user\-only option.
+.B This is a user-only option.
 .TP
 .B DEREF <when>
 Specifies how alias dereferencing is done when performing a search. The
@@ -175,14 +195,17 @@ Note that the command line tools
 .\"Determines whether the library should implicitly restart connections (FIXME).
 .TP
 .B SIZELIMIT <integer>
-Specifies a size limit to use when performing searches.  The
-number should be a non-negative integer.  \fISIZELIMIT\fP of zero (0)
-specifies unlimited search size.
+Specifies a size limit (number of entries) to use when performing searches.
+The number should be a non-negative integer.  \fISIZELIMIT\fP of zero (0)
+specifies a request for unlimited search size.  Please note that the server
+may still apply any server-side limit on the amount of entries that can be 
+returned by a search operation.
 .TP
 .B TIMELIMIT <integer>
-Specifies a time limit to use when performing searches.  The
-number should be a non-negative integer.  \fITIMELIMIT\fP of zero (0)
-specifies unlimited search time to be used.
+Specifies a time limit (in seconds) to use when performing searches.
+The number should be a non-negative integer.  \fITIMELIMIT\fP of zero (0)
+specifies unlimited search time to be used.  Please note that the server
+may still apply any server-side limit on the duration of a search operation.
 .B VERSION {2|3}
 Specifies what version of the LDAP protocol should be used.
 .TP
@@ -197,19 +220,19 @@ there are more options you can specify.
 .TP
 .B SASL_MECH <mechanism>
 Specifies the SASL mechanism to use.
-.B This is a user\-only option.
+.B This is a user-only option.
 .TP
 .B SASL_REALM <realm>
 Specifies the SASL realm.
-.B This is a user\-only option.
+.B This is a user-only option.
 .TP
 .B SASL_AUTHCID <authcid>
 Specifies the authentication identity.
-.B This is a user\-only option.
+.B This is a user-only option.
 .TP
 .B SASL_AUTHZID <authcid>
 Specifies the proxy authorization identity.
-.B This is a user\-only option.
+.B This is a user-only option.
 .TP
 .B SASL_SECPROPS <properties>
 Specifies Cyrus SASL security properties. The 
@@ -261,6 +284,22 @@ description).  The default is
 specifies the maximum security layer receive buffer
 size allowed.  0 disables security layers.  The default is 65536.
 .RE
+.SH GSSAPI OPTIONS
+If OpenLDAP is built with Generic Security Services Application Programming Interface support,
+there are more options you can specify.
+.TP
+.B GSSAPI_SIGN <on/true/yes/off/false/no>
+Specifies if GSSAPI signing (GSS_C_INTEG_FLAG) should be used.
+The default is off.
+.TP
+.B GSSAPI_ENCRYPT <on/true/yes/off/false/no>
+Specifies if GSSAPI encryption (GSS_C_INTEG_FLAG and GSS_C_CONF_FLAG)
+should be used. The default is off.
+.TP
+.B GSSAPI_ALLOW_REMOTE_PRINCIPAL <on/true/yes/off/false/no>
+Specifies if GSSAPI based authentification should try to form the
+target principal name out of the ldapServiceName or dnsHostName
+attribute of the targets RootDSE entry. The default is off.
 .SH TLS OPTIONS
 If OpenLDAP is built with Transport Layer Security support, there
 are more options you can specify.  These options are used when an
@@ -282,7 +321,7 @@ This parameter is ignored with GNUtls.
 .TP
 .B TLS_CERT <filename>
 Specifies the file that contains the client certificate.
-.B This is a user\-only option.
+.B This is a user-only option.
 .TP
 .B TLS_KEY <filename>
 Specifies the file that contains the private key that matches the certificate
@@ -290,12 +329,24 @@ stored in the
 .B TLS_CERT
 file. Currently, the private key must not be protected with a password, so
 it is of critical importance that the key file is protected carefully.
-.B This is a user\-only option.
+.B This is a user-only option.
 .TP
 .B TLS_CIPHER_SUITE <cipher-suite-spec>
 Specifies acceptable cipher suite and preference order.
 <cipher-suite-spec> should be a cipher specification for OpenSSL,
 e.g., HIGH:MEDIUM:+SSLv2.
+
+To check what ciphers a given spec selects, use:
+
+.nf
+	openssl ciphers \-v <cipher-suite-spec>
+.fi
+
+To obtain the list of ciphers in GNUtls use:
+
+.nf
+	gnutls-cli \-l
+.fi
 .TP
 .B TLS_RANDFILE <filename>
 Specifies the file to obtain random bits from when /dev/[u]random is

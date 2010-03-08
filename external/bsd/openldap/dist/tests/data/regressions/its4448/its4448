@@ -1,8 +1,8 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/data/regressions/its4448/its4448,v 1.1.2.3 2008/02/11 23:26:50 kurt Exp $
+# OpenLDAP: pkg/ldap/tests/data/regressions/its4448/its4448,v 1.1.2.5 2009/12/15 20:37:40 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2008 The OpenLDAP Foundation.
+## Copyright 1998-2009 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -297,7 +297,7 @@ fi
 
 echo "Using ldapsearch to retrieve all the entries..."
 $LDAPSEARCH -S "" -b "$METABASEDN" -h $LOCALHOST -p $PORT3 \
-			'objectClass=*' > $SEARCHOUT 2>&1
+			'(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
 
 test $KILLSERVERS != no && kill -HUP $KILLPIDS
@@ -312,7 +312,7 @@ echo "Filtering ldapsearch results..."
 echo "Filtering original ldif used to create database..."
 . $LDIFFILTER < $METACONCURRENCYOUT > $LDIFFLT
 echo "Comparing filter output..."
-$CMP $SEARCHFLT $LDIFFLT > $CMPOUT
+$BCMP $SEARCHFLT $LDIFFLT > $CMPOUT
 
 if test $? != 0 ; then
 	echo "comparison failed - slapd-meta search/modification didn't succeed"

@@ -1,7 +1,8 @@
 #! /bin/sh
+# OpenLDAP: pkg/ldap/tests/scripts/test026-dn,v 1.13.2.6 2009/01/22 00:01:19 kurt Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 2004-2008 The OpenLDAP Foundation.
+## Copyright 2004-2009 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -117,6 +118,19 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
+DN="dc=example,dc=com#'1000'B"
+echo "Searching database for nameAndOptionalUID=\"$DN\"..."
+echo "# Searching database for nameAndOptionalUID=\"$DN\"..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+	"(uniqueMember=$DN)" >> $SEARCHOUT 2>&1
+
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
 DN="dc=example,dc=com"
 echo "Searching database for uniqueMember~=\"$DN\" (approx)..."
 echo "# Searching database for uniqueMember~=\"$DN\" (approx)..." >> $SEARCHOUT
@@ -130,7 +144,7 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-DN="dc=example,dc=com#'001000'B"
+DN="dc=example,dc=com#'1000'B"
 echo "Searching database for uniqueMember~=\"$DN\" (approx)..."
 echo "# Searching database for uniqueMember~=\"$DN\" (approx)..." >> $SEARCHOUT
 $LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \

@@ -1,14 +1,14 @@
 .TH LDAP_SYNC 3 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man3/ldap_sync.3,v 1.1.2.3 2008/02/11 23:26:39 kurt Exp $
-.\" Copyright 2006-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" OpenLDAP: pkg/ldap/doc/man/man3/ldap_sync.3,v 1.1.2.6 2009/06/03 01:41:55 quanah Exp
+.\" Copyright 2006-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap_sync_init, ldap_sync_init_refresh_only, ldap_sync_init_refresh_and_persist, ldap_sync_poll \- LDAP sync routines
 .SH LIBRARY
-OpenLDAP LDAP (libldap, -lldap)
+OpenLDAP LDAP (libldap, \-lldap)
 .SH SYNOPSIS
 .nf
-.B #include <ldap_sync.h>
+.B #include <ldap.h>
 .LP
 .BI "int ldap_sync_init(ldap_sync_t *" ls ", int " mode ");"
 .LP
@@ -98,7 +98,7 @@ to indicate no limit.
 The desired timeout during polling with
 .BR ldap_sync_poll (3).
 A value of
-.BR -1
+.BR \-1
 means that polling is blocking, so 
 .BR ldap_sync_poll (3)
 will not return until a message is received; a value of
@@ -218,7 +218,7 @@ the regular client API routines, like
 .BR ldap_parse_result (3).
 The
 .BR refreshDeletes
-argument is not relevant in this case; it should always be -1.
+argument is not relevant in this case; it should always be \-1.
 .TP
 .BI "void *" ls_private
 A pointer to private data.  The client may register here
@@ -291,7 +291,7 @@ in this case, it might be appropriate to set
 .BR ls_timeout
 to 0, or to set it to a finite, small value.
 Otherwise, if the client's main purpose consists in waiting for
-responses, a timeout of -1 is most suitable, so that the function
+responses, a timeout of \-1 is most suitable, so that the function
 only returns after some data has been received and handled.
 
 .SH ERRORS

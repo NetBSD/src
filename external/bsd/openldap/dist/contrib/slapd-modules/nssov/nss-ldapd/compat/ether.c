@@ -1,3 +1,5 @@
+/*	$NetBSD: ether.c,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+
 /*
    ether.c - useful ethernet functions for systems lacking those
 

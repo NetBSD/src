@@ -1,7 +1,7 @@
 .TH SLAPD.ACCESS 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.access.5,v 1.70.2.10 2008/07/09 00:48:35 quanah Exp $
+.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd.access.5,v 1.70.2.18 2009/06/27 18:00:32 quanah Exp
 .SH NAME
 slapd.access \- access configuration for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -54,11 +54,18 @@ are then used.
 If no access controls are present, the default policy
 allows anyone and everyone to read anything but restricts
 updates to rootdn.  (e.g., "access to * by * read").
-The rootdn can always read and write EVERYTHING!
+.LP
+When dealing with an access list, because the global access list is 
+effectively appended to each per-database list, if the resulting 
+list is non-empty then the access list will end with an implicit 
+.B access to * by * none
+directive. If there are no access directives applicable to a backend, 
+then a default read is used.
+.LP
+.B Be warned: the rootdn can always read and write EVERYTHING!
 .LP
 For entries not held in any backend (such as a root DSE), the
-directives of the first backend (and any global directives) are
-used.
+global directives are used.
 .LP
 Arguments that should be replaced by actual text are shown in
 brackets <>.
@@ -189,7 +196,7 @@ as detailed in
 and/or
 .BR re_format (7),
 matching a normalized string representation of the entry's DN.
-The regex form of the pattern does not (yet) support UTF\-8.
+The regex form of the pattern does not (yet) support UTF-8.
 .LP
 The statement
 .B filter=<ldapfilter>
@@ -303,7 +310,7 @@ with
 	<groupstyle>={exact|expand}
 	<peernamestyle>={<style>|ip|ipv6|path}
 	<domainstyle>={exact|regex|sub(tree)}
-	<setstyle>={exact|regex}
+	<setstyle>={exact|expand}
 	<modifier>={expand}
 	<name>=aci		<pattern>=<attrname>]
 .fi
@@ -369,6 +376,10 @@ ranging from 0 to 9 (where 0 matches the entire string),
 or the form
 .BR ${<digit>+} ,
 for submatches higher than 9.
+Substring substitution from attribute value can
+be done in 
+using the form
+.BR ${v<digit>+} .
 Since the dollar character is used to indicate a substring replacement,
 the dollar character that is used to indicate match up to the end of
 the string must be escaped by a second dollar character, e.g.
@@ -711,7 +722,7 @@ Its component are defined as
 .LP
 .nf
 	<level> ::= none|disclose|auth|compare|search|read|{write|add|delete}|manage
-	<priv> ::= {=|+|-}{0|d|x|c|s|r|{w|a|z}|m}+
+	<priv> ::= {=|+|\-}{0|d|x|c|s|r|{w|a|z}|m}+
 .fi
 .LP
 The modifier
@@ -728,7 +739,8 @@ modifier.
 An example is the
 .B selfwrite
 access to the member attribute of a group, which allows one to add/delete
-its own DN from the member list of a group, without affecting other members.
+its own DN from the member list of a group, while being not allowed
+to affect other members.
 .LP
 The 
 .B level 
@@ -786,7 +798,7 @@ access privileges will be only those defined by the clause.
 The 
 .B +
 and
-.B -
+.B \-
 signs add/remove access privileges to the existing ones.
 The privileges are
 .B m
@@ -910,7 +922,15 @@ When adding the suffix entry of a database,
 .B add
 access to
 .B children
-of the empty DN ("") is required.
+of the empty DN ("") is required. Also if
+Add content ACL checking has been configured on
+the database (see the
+.BR slapd.conf (5)
+or
+.BR slapd\-config (5)
+manual page),
+.B add (=a)
+will be required on all of the attributes being added.
 
 .LP
 The 
@@ -1047,12 +1067,12 @@ Access control to search entries is checked by the frontend,
 so it is fully honored by all backends; for all other operations
 and for the discovery phase of the search operation,
 full ACL semantics is only supported by the primary backends, i.e.
-.BR back-bdb (5),
+.BR back\-bdb (5),
 and
-.BR back-hdb (5).
+.BR back\-hdb (5).
 
 Some other backend, like
-.BR back-sql (5),
+.BR back\-sql (5),
 may fully support them; others may only support a portion of the 
 described semantics, or even differ in some aspects.
 The relevant details are described in the backend-specific man pages.
@@ -1135,7 +1155,7 @@ ETCDIR/slapd.conf
 default slapd configuration file
 .SH SEE ALSO
 .BR slapd (8),
-.BR slapd-* (5),
+.BR slapd\-* (5),
 .BR slapacl (8),
 .BR regex (7),
 .BR re_format (7)

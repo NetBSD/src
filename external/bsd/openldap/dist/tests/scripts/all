@@ -1,8 +1,8 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/all,v 1.26.2.3 2008/02/11 23:26:50 kurt Exp $
+# OpenLDAP: pkg/ldap/tests/scripts/all,v 1.26.2.8 2009/08/13 00:05:07 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2008 The OpenLDAP Foundation.
+## Copyright 1998-2009 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -26,20 +26,38 @@ SLEEPTIME=10
 echo ">>>>> Executing all LDAP tests for $BACKEND"
 
 for CMD in $SRCDIR/scripts/test*; do
+	case "$CMD" in
+		*~)		continue;;
+		*.bak)	continue;;
+		*.orig)	continue;;
+		*.sav)	continue;;
+		*)		test -f "$CMD" || continue;;
+	esac
+
 	# remove cruft from prior test
 	if test $PRESERVE = yes ; then
 		/bin/rm -rf $TESTDIR/db.*
 	else
 		/bin/rm -rf $TESTDIR
 	fi
+	if test $BACKEND = ndb ; then
+		mysql --user root <<EOF
+		drop database if exists db_1;
+		drop database if exists db_2;
+		drop database if exists db_3;
+		drop database if exists db_4;
+		drop database if exists db_5;
+		drop database if exists db_6;
+EOF
+	fi
 
-	echo ">>>>> Starting ${TB}`basename $CMD`${TN} ..."
+	echo ">>>>> Starting ${TB}`basename $CMD`${TN} for $BACKEND..."
 	$CMD
 	RC=$?
 	if test $RC -eq 0 ; then
-		echo ">>>>> $CMD completed ${TB}OK${TN}."
+		echo ">>>>> $CMD completed ${TB}OK${TN} for $BACKEND."
 	else
-		echo ">>>>> $CMD ${TB}failed${TN} (exit $RC)"
+		echo ">>>>> $CMD ${TB}failed${TN} for $BACKEND (exit $RC)"
 		exit $RC
 	fi
 

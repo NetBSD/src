@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/admin/maintenance.sdf,v 1.7.2.6 2008/04/14 22:37:01 quanah Exp $
-# Copyright 2007-2008 The OpenLDAP Foundation, All Rights Reserved.
+# OpenLDAP: pkg/openldap-guide/admin/maintenance.sdf,v 1.7.2.9 2009/01/22 00:00:47 kurt Exp
+# Copyright 2007-2009 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Maintenance
@@ -112,7 +112,7 @@ The advantages of {{F:DB_CONFIG}} usage can be the following:
 To figure out the best-practice BDB backup scenario, the reader is highly 
 recommended to read the whole Chapter 9: Berkeley DB Transactional Data Store Applications. 
 This chapter is a set of small pages with examples in C language. Non-programming 
-people can skip this examples without loss of knowledge.
+people can skip these examples without loss of knowledge.
 
 
 H2: Checkpointing
@@ -138,6 +138,29 @@ a workaround is to invoke "db_checkpoint" from a cron script every so often, say
 
 H2: Migration
 
-Exporting to a new system......
+The simplest steps needed to migrate between versions or upgrade, depending on your deployment
+type are:
+
+.{{S: }}
+^{{B: Stop the current server when convenient}}
+
+.{{S: }}
++{{B: slapcat the current data out}}
+
+.{{S: }}
++{{B: Clear out the current data directory (/usr/local/var/openldap-data/) leaving DB_CONFIG in place}}
+
+.{{S: }}
++{{B: Perform the software upgrades}}
+
+.{{S: }}
++{{B: slapadd the exported data back into the directory}}
+
+.{{S: }}
++{{B: Start the server}}
+
+Obviously this doesn't cater for any complicated deployments like {{SECT: MirrorMode}} or {{SECT: N-Way Multi-Master}}, 
+but following the above sections and using either commercial support or community support should help. Also check the
+{{SECT: Troubleshooting}} section.
 
 
