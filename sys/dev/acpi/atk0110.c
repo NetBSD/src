@@ -1,4 +1,4 @@
-/*	$NetBSD: atk0110.c,v 1.9 2010/03/05 14:00:17 jruoho Exp $	*/
+/*	$NetBSD: atk0110.c,v 1.10 2010/03/08 11:54:35 cnst Exp $	*/
 /*	$OpenBSD: atk0110.c,v 1.1 2009/07/23 01:38:16 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.9 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.10 2010/03/08 11:54:35 cnst Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -129,6 +129,9 @@ aibs_attach(device_t parent, device_t self, void *aux)
 			free(sc->sc_asens_fan, M_DEVBUF);
 		return;
 	}
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "could not establish power handler\n");
 }
 
 static void
@@ -264,6 +267,7 @@ aibs_detach(device_t self, int flags)
 {
 	struct aibs_softc	*sc = device_private(self);
 
+	pmf_device_deregister(self);
 	sysmon_envsys_unregister(sc->sc_sme);
 	if (sc->sc_asens_volt != NULL)
 		free(sc->sc_asens_volt, M_DEVBUF);
