@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.40 2010/03/03 13:56:29 pooka Exp $	*/
+/*	$NetBSD: main.c,v 1.41 2010/03/08 10:19:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1026,8 +1026,14 @@ deva_has_instances(struct deva *deva, int unit)
 {
 	struct devi *i;
 
+	/*
+	 * EHAMMERTOOBIG: we shouldn't check i_pseudoroot here.
+	 * What we want by this check is them to appear non-present
+	 * except for purposes of other devices being able to attach
+	 * to them.
+	 */
 	for (i = deva->d_ihead; i != NULL; i = i->i_asame)
-		if (i->i_active == DEVI_ACTIVE &&
+		if (i->i_active == DEVI_ACTIVE && i->i_pseudoroot == 0 &&
 		    (unit == WILD || unit == i->i_unit || i->i_unit == STAR))
 			return (1);
 	return (0);

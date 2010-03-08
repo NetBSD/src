@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.32 2010/03/03 13:53:22 pooka Exp $	*/
+/*	$NetBSD: defs.h,v 1.33 2010/03/08 10:19:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -260,6 +260,7 @@ struct devi {
 #define	DEVI_ACTIVE	1	/* instance has an active parent */
 #define	DEVI_IGNORED	2	/* instance's parent has been removed */
 #define DEVI_BROKEN	3	/* instance is broken (syntax error) */
+	int	i_pseudoroot;	/* instance is pseudoroot */
 
 	/* created during packing or ioconf.c generation */
 	short	i_collapsed;	/* set => this alias no longer needed */

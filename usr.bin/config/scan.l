@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.14 2010/02/03 21:00:49 pooka Exp $	*/
+/*	$NetBSD: scan.l,v 1.15 2010/03/08 10:19:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -161,6 +161,7 @@ on		return ON;
 options		return OPTIONS;
 prefix		return PREFIX;
 pseudo-device	return PSEUDO_DEVICE;
+pseudo-root	return PSEUDO_ROOT;
 root		return ROOT;
 source		return SOURCE;
 type		return TYPE;
