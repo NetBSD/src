@@ -1,4 +1,4 @@
-/*	$NetBSD: btattach.c,v 1.8 2010/03/08 17:59:52 kiyohara Exp $	*/
+/*	$NetBSD: btattach.c,v 1.9 2010/03/08 21:19:29 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008 Iain Hibbert.  All rights reserved.");
-__RCSID("$NetBSD: btattach.c,v 1.8 2010/03/08 17:59:52 kiyohara Exp $");
+__RCSID("$NetBSD: btattach.c,v 1.9 2010/03/08 21:19:29 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -522,7 +522,9 @@ static void
 test(const char *tty, tcflag_t cflag, tcflag_t Cflag)
 {
 	struct termios tio;
-	int fd, guessed, i, j, k, n;
+	int fd, guessed;
+	size_t i, j, k;
+	ssize_t n;
 	unsigned char buf[32];
 	const int bauds[] = {
 		 57600,		/* BCSP specific default */
@@ -573,11 +575,12 @@ test(const char *tty, tcflag_t cflag, tcflag_t Cflag)
 	for (i = 0; i < __arraycount(bauds); i++) {
 		if (cfsetspeed(&tio, bauds[i]) < 0
 		    || tcsetattr(fd, TCSANOW, &tio) < 0
-		    || tcflush(fd, TCIOFLUSH) < 0)
+		    || tcflush(fd, TCIOFLUSH) < 0) {
 			if (bauds[i] > 115200)
 				continue;
 			else
 				err(EXIT_FAILURE, "tty setup failed");
+		}
 
 		if (opt_debug)
 			printf("  try with B%d\n", bauds[i]);
@@ -600,7 +603,7 @@ test(const char *tty, tcflag_t cflag, tcflag_t Cflag)
 
 			err(EXIT_FAILURE, "read");
 		} else {
-			if (n < sizeof(bcsp_lepkt))
+			if ((size_t)n < sizeof(bcsp_lepkt))
 				continue;
 			for (j = 0; j < n - sizeof(bcsp_lepkt); j++) {
 				for (k = 0; k < sizeof(bcsp_lepkt); k++) 
