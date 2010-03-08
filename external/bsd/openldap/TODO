@@ -1,7 +1,4 @@
-#	$NetBSD: TODO,v 1.1 2008/08/13 04:46:08 lukem Exp $
-
-provide an openldap2netbsd conversion script
-(libraries/liblunicode needs $Id: TODO,v 1.1 2008/08/13 04:46:08 lukem Exp $ fixing)
+#	$NetBSD: TODO,v 1.2 2010/03/08 06:43:18 lukem Exp $
 
 install ldap.conf ?
 
