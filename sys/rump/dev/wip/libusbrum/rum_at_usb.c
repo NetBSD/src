@@ -1,4 +1,4 @@
-/*	$NetBSD: rum_at_usb.c,v 1.3 2010/02/10 02:26:24 pooka Exp $	*/
+/*	$NetBSD: rum_at_usb.c,v 1.4 2010/03/08 10:36:10 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -81,6 +81,7 @@ struct cfdata rum_cfdata[] = {
 	{ "rum", "rum", 0, FSTATE_STAR, NULL, 0, &usbdevif_pspec },
 };
 
+#include "rump_private.h"
 #include "rump_dev_private.h"
 
 #define FLAWLESSCALL(call)						\
@@ -90,8 +91,7 @@ do {									\
 		panic("\"%s\" failed", #call);				\
 } while (/*CONSTCOND*/0)
 
-void
-rump_device_configuration(void)
+RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 	extern struct cfattach usb_ca, uhub_ca, uroothub_ca, rum_ca;
 
