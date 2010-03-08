@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.10 2010/01/14 10:04:18 wiz Exp $
+# $NetBSD: ad.mips64el,v 1.11 2010/03/08 06:40:05 lukem Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib		compat
@@ -116,11 +116,11 @@
 ./usr/lib/64/libkvm.so.6			base-compat-shlib	compat,pic
 ./usr/lib/64/libkvm.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/64/liblber.so.3			base-compat-shlib	compat,pic
-./usr/lib/64/liblber.so.3.0			base-compat-shlib	compat,pic
+./usr/lib/64/liblber.so.3.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libldap.so.4			base-compat-shlib	compat,pic
-./usr/lib/64/libldap.so.4.0			base-compat-shlib	compat,pic
+./usr/lib/64/libldap.so.4.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libldap_r.so.4			base-compat-shlib	compat,pic
-./usr/lib/64/libldap_r.so.4.0			base-compat-shlib	compat,pic
+./usr/lib/64/libldap_r.so.4.1			base-compat-shlib	compat,pic
 ./usr/lib/64/liblwres.so.5			base-compat-shlib	compat,pic
 ./usr/lib/64/liblwres.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libm.so.0				base-compat-shlib	compat,pic
@@ -348,11 +348,11 @@
 ./usr/lib/o32/libkvm.so.6			base-compat-shlib	compat,pic
 ./usr/lib/o32/libkvm.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblber.so.3			base-compat-shlib	compat,pic
-./usr/lib/o32/liblber.so.3.0			base-compat-shlib	compat,pic
+./usr/lib/o32/liblber.so.3.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libldap.so.4			base-compat-shlib	compat,pic
-./usr/lib/o32/libldap.so.4.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libldap.so.4.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libldap_r.so.4			base-compat-shlib	compat,pic
-./usr/lib/o32/libldap_r.so.4.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libldap_r.so.4.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblwres.so.5			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblwres.so.5.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libm.so.0				base-compat-shlib	compat,pic

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1196 2010/03/06 21:05:36 plunky Exp $
+# $NetBSD: mi,v 1.1197 2010/03/08 06:40:07 lukem Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -235,10 +235,12 @@
 ./usr/share/man/cat1/ldapadd.0			man-ldap-catman		ldap,.cat
 ./usr/share/man/cat1/ldapcompare.0		man-ldap-catman		ldap,.cat
 ./usr/share/man/cat1/ldapdelete.0		man-ldap-catman		ldap,.cat
+./usr/share/man/cat1/ldapexop.0			man-ldap-catman		ldap,.cat
 ./usr/share/man/cat1/ldapmodify.0		man-ldap-catman		ldap,.cat
 ./usr/share/man/cat1/ldapmodrdn.0		man-ldap-catman		ldap,.cat
 ./usr/share/man/cat1/ldappasswd.0		man-ldap-catman		ldap,.cat
 ./usr/share/man/cat1/ldapsearch.0		man-ldap-catman		ldap,.cat
+./usr/share/man/cat1/ldapurl.0			man-ldap-catman		ldap,.cat
 ./usr/share/man/cat1/ldapwhoami.0		man-ldap-catman		ldap,.cat
 ./usr/share/man/cat1/ldd.0			man-util-catman		.cat
 ./usr/share/man/cat1/leave.0			man-util-catman		.cat
@@ -2949,10 +2951,12 @@
 ./usr/share/man/html1/ldapadd.html		man-ldap-htmlman	ldap,html
 ./usr/share/man/html1/ldapcompare.html		man-ldap-htmlman	ldap,html
 ./usr/share/man/html1/ldapdelete.html		man-ldap-htmlman	ldap,html
+./usr/share/man/html1/ldapexop.html		man-ldap-htmlman	ldap,html
 ./usr/share/man/html1/ldapmodify.html		man-ldap-htmlman	ldap,html
 ./usr/share/man/html1/ldapmodrdn.html		man-ldap-htmlman	ldap,html
 ./usr/share/man/html1/ldappasswd.html		man-ldap-htmlman	ldap,html
 ./usr/share/man/html1/ldapsearch.html		man-ldap-htmlman	ldap,html
+./usr/share/man/html1/ldapurl.html		man-ldap-htmlman	ldap,html
 ./usr/share/man/html1/ldapwhoami.html		man-ldap-htmlman	ldap,html
 ./usr/share/man/html1/ldd.html			man-util-htmlman	html
 ./usr/share/man/html1/leave.html		man-util-htmlman	html
@@ -5309,10 +5313,12 @@
 ./usr/share/man/man1/ldapadd.1			man-ldap-man		ldap,.man
 ./usr/share/man/man1/ldapcompare.1		man-ldap-man		ldap,.man
 ./usr/share/man/man1/ldapdelete.1		man-ldap-man		ldap,.man
+./usr/share/man/man1/ldapexop.1			man-ldap-man		ldap,.man
 ./usr/share/man/man1/ldapmodify.1		man-ldap-man		ldap,.man
 ./usr/share/man/man1/ldapmodrdn.1		man-ldap-man		ldap,.man
 ./usr/share/man/man1/ldappasswd.1		man-ldap-man		ldap,.man
 ./usr/share/man/man1/ldapsearch.1		man-ldap-man		ldap,.man
+./usr/share/man/man1/ldapurl.1			man-ldap-man		ldap,.man
 ./usr/share/man/man1/ldapwhoami.1		man-ldap-man		ldap,.man
 ./usr/share/man/man1/ldd.1			man-util-man		.man
 ./usr/share/man/man1/leave.1			man-util-man		.man

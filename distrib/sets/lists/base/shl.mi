@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.523 2010/02/21 03:18:46 darran Exp $
+# $NetBSD: shl.mi,v 1.524 2010/03/08 06:40:06 lukem Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -98,9 +98,9 @@
 ./usr/lib/libkafs.so.11.0			base-krb5-shlib		kerberos
 ./usr/lib/libkrb5.so.24.0			base-krb5-shlib		kerberos
 ./usr/lib/libkvm.so.6.0				base-sys-shlib
-./usr/lib/liblber.so.3.0			base-ldap-shlib		ldap
-./usr/lib/libldap.so.4.0			base-ldap-shlib		ldap
-./usr/lib/libldap_r.so.4.0			base-ldap-shlib		ldap
+./usr/lib/liblber.so.3.1			base-ldap-shlib		ldap
+./usr/lib/libldap.so.4.1			base-ldap-shlib		ldap
+./usr/lib/libldap_r.so.4.1			base-ldap-shlib		ldap
 ./usr/lib/liblwres.so.5.1			base-bind-shlib
 ./usr/lib/liblzf.so.0.0				base-sys-shlib
 ./usr/lib/libm.so.0.8				base-sys-shlib
