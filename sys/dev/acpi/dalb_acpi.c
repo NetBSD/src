@@ -1,4 +1,4 @@
-/*	$NetBSD: dalb_acpi.c,v 1.9 2010/03/05 14:00:17 jruoho Exp $	*/
+/*	$NetBSD: dalb_acpi.c,v 1.10 2010/03/08 11:39:42 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.9 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.10 2010/03/08 11:39:42 jruoho Exp $");
 
 /*
  * Direct Application Launch Button:
@@ -36,7 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.9 2010/03/05 14:00:17 jruoho Exp $")
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/sysctl.h>
 #include <sys/systm.h>
 
 #include <dev/acpi/acpireg.h>
@@ -50,7 +49,6 @@ ACPI_MODULE_NAME            ("dalb_acpi")
 struct acpi_dalb_softc {
 	device_t sc_dev;
 	struct acpi_devnode *sc_node;
-	struct sysctllog *sc_log;
 
 	ACPI_INTEGER sc_usageid;
 
