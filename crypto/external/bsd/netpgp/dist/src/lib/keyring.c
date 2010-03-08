@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.30 2010/03/08 07:37:24 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.31 2010/03/08 08:56:03 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -609,9 +609,9 @@ cb_keyring_read(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	case OPS_PARSER_ERRCODE:
 		break;
 	case OPS_PTAG_SS_KEY_EXPIRY:
+		EXPAND_ARRAY(keyring, key);
 		keyring->keys[keyring->keyc].key.pubkey.duration = pkt->u.ss_time.time;
 		break;
-
 	default:
 		break;
 	}
