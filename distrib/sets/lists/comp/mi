@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1404 2010/03/07 16:27:17 plunky Exp $
+#	$NetBSD: mi,v 1.1405 2010/03/08 06:40:06 lukem Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3062,6 +3062,7 @@
 ./usr/libdata/debug/usr/bin/ldapmodrdn.debug	comp-ldap-debug		ldap,debug
 ./usr/libdata/debug/usr/bin/ldappasswd.debug	comp-ldap-debug		ldap,debug
 ./usr/libdata/debug/usr/bin/ldapsearch.debug	comp-ldap-debug		ldap,debug
+./usr/libdata/debug/usr/bin/ldapurl.debug	comp-ldap-debug		ldap,debug
 ./usr/libdata/debug/usr/bin/ldapwhoami.debug	comp-ldap-debug		ldap,debug
 ./usr/libdata/debug/usr/bin/ldd.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/leave.debug		comp-util-debug		debug
