@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_at_scsibus_at_umass.c,v 1.2 2010/03/01 13:12:20 pooka Exp $	*/
+/*	$NetBSD: sd_at_scsibus_at_umass.c,v 1.3 2010/03/08 10:24:37 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -21,26 +21,13 @@ do {									\
 
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
-	extern struct cfattach ugenhc_ca;
-	extern struct cfattach usb_ca, uhub_ca, uroothub_ca, umass_ca;
+	extern struct cfattach umass_ca;
 	extern struct cfattach scsibus_ca, atapibus_ca, sd_ca, cd_ca;
 	extern struct bdevsw sd_bdevsw, cd_bdevsw;
 	extern struct cdevsw sd_cdevsw, cd_cdevsw;
 	devmajor_t bmaj, cmaj;
 
 	FLAWLESSCALL(config_cfdata_attach(cfdata_umass, 0));
-
-	FLAWLESSCALL(config_cfdriver_attach(&mainbus_cd));
-	FLAWLESSCALL(config_cfattach_attach("mainbus", &mainbus_ca));
-
-	FLAWLESSCALL(config_cfdriver_attach(&ugenhc_cd));
-	FLAWLESSCALL(config_cfattach_attach("ugenhc", &ugenhc_ca));
-
-	FLAWLESSCALL(config_cfdriver_attach(&usb_cd));
-	FLAWLESSCALL(config_cfattach_attach("usb", &usb_ca));
-
-	FLAWLESSCALL(config_cfdriver_attach(&uhub_cd));
-	FLAWLESSCALL(config_cfattach_attach("uhub", &uhub_ca));
 
 	FLAWLESSCALL(config_cfdriver_attach(&umass_cd));
 	FLAWLESSCALL(config_cfattach_attach("umass", &umass_ca));
@@ -56,8 +43,6 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 
 	FLAWLESSCALL(config_cfdriver_attach(&cd_cd));
 	FLAWLESSCALL(config_cfattach_attach("cd", &cd_ca));
-
-	FLAWLESSCALL(config_cfattach_attach("uhub", &uroothub_ca));
 
 	bmaj = cmaj = -1;
 	FLAWLESSCALL(devsw_attach("sd", &sd_bdevsw, &bmaj, &sd_cdevsw, &cmaj));
