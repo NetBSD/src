@@ -1,8 +1,8 @@
-#	$NetBSD: openldap.mk,v 1.3 2008/08/31 10:29:51 mrg Exp $
+#	$NetBSD: openldap.mk,v 1.4 2010/03/08 05:17:25 lukem Exp $
 
 .include <bsd.own.mk>
 
-LDAP_VERSION=	2.4.11
+LDAP_VERSION=	2.4.21
 
 LDAP_SRCDIR=	${NETBSDSRCDIR}/external/bsd/openldap
 LDAP_DISTDIR=	${NETBSDSRCDIR}/external/bsd/openldap/dist
