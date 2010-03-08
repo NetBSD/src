@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2010/02/11 02:22:09 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2010/03/08 10:24:37 pooka Exp $
 #
 
 LIB=	rumpdev_ugenhc
+IOCONF= UGENHC.ioconf
 
-SRCS=	ugenhc.c
+SRCS=	ugenhc.c ugenhc_at_mainbus.c
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/02/16 20:42:45 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2010/03/08 10:24:37 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/usb
@@ -6,8 +6,11 @@
 LIB=	rumpdev_usb
 
 .if ${MACHINE} == "i386"
+IOCONF= USB.ioconf
+
 SRCS=	usb.c usbdi.c usbdi_util.c usb_mem.c usb_subr.c usb_quirks.c	\
 	uhub.c usbroothub_subr.c
+SRCS+=	usb_at_ugenhc.c
 .else
 SRCS=	dummy.c
 .endif
