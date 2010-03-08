@@ -55,7 +55,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: verify.c,v 1.5 2010/03/05 19:58:39 agc Exp $");
+__RCSID("$NetBSD: verify.c,v 1.6 2010/03/08 07:37:24 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -161,7 +161,7 @@ __RCSID("$NetBSD: verify.c,v 1.5 2010/03/05 19:58:39 agc Exp $");
 #undef USE_SHA384
 
 /* development versions have .99 suffix */
-#define NETPGP_BASE_VERSION	"1.99.21"
+#define NETPGP_BASE_VERSION	"1.99.22"
 
 #define NETPGP_VERSION_CAT(a, b)	"NetPGP portable " a "/[" b "]"
 #define NETPGP_VERSION_STRING \

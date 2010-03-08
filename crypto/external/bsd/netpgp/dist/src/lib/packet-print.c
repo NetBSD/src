@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.27 2010/03/05 16:01:09 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.28 2010/03/08 07:37:24 agc Exp $");
 #endif
 
 #include <string.h>
@@ -392,22 +392,38 @@ __ops_sprint_keydata(const __ops_key_t *key, char **buf, const char *header,
 		const __ops_pubkey_t *pubkey)
 {
 	unsigned	 i;
+	time_t		 now;
 	char		 uidbuf[KB(128)];
 	char		 keyid[OPS_KEY_ID_SIZE * 3];
 	char		 fp[(OPS_FINGERPRINT_SIZE * 3) + 1];
+	char		 expired[128];
 	char		 t[32];
+	int		 cc;
 	int		 n;
 
 	for (i = 0, n = 0; i < key->uidc; i++) {
 		n += snprintf(&uidbuf[n], sizeof(uidbuf) - n,
 			"uid              %s\n", key->uids[i].userid);
 	}
-	return __ops_asprintf(buf, "%s %d/%s %s %s\nKey fingerprint: %s\n%s",
+	now = time(NULL);
+	if (pubkey->duration > 0) {
+		cc = snprintf(expired, sizeof(expired),
+			(pubkey->birthtime + pubkey->duration < now) ?
+			"[EXPIRED " : "[EXPIRES ");
+		ptimestr(&expired[cc], sizeof(expired) - cc,
+			pubkey->birthtime + pubkey->duration);
+		cc += 10;
+		cc += snprintf(&expired[cc], sizeof(expired) - cc, "]");
+	} else {
+		expired[0] = 0x0;
+	}
+	return __ops_asprintf(buf, "%s %d/%s %s %s %s\nKey fingerprint: %s\n%s",
 		header,
 		numkeybits(pubkey),
 		__ops_show_pka(pubkey->alg),
 		strhexdump(keyid, key->key_id, OPS_KEY_ID_SIZE, ""),
 		ptimestr(t, sizeof(t), pubkey->birthtime),
+		expired,
 		strhexdump(fp, key->fingerprint.fingerprint, OPS_FINGERPRINT_SIZE, " "),
 		uidbuf);
 }

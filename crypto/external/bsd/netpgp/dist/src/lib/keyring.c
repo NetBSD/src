@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.29 2010/03/05 16:30:05 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.30 2010/03/08 07:37:24 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -584,20 +584,32 @@ __ops_keydata_init(__ops_key_t *keydata, const __ops_content_tag_t type)
 }
 
 
+/* used to point to data during keyring read */
+typedef struct keyringcb_t {
+	__ops_keyring_t		*keyring;	/* the keyring we're reading */
+} keyringcb_t;
+
+
 static __ops_cb_ret_t
 cb_keyring_read(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
-	__OPS_USED(cbinfo);
+	__ops_keyring_t	*keyring;
+	keyringcb_t	*cb;
 
+	cb = __ops_callback_arg(cbinfo);
+	keyring = cb->keyring;
 	switch (pkt->tag) {
 	case OPS_PARSER_PTAG:
-	case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY:	/* we get these because we
-						 * didn't prompt */
+	case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY:
+		/* we get these because we didn't prompt */
 	case OPS_PTAG_CT_SIGNATURE_HEADER:
 	case OPS_PTAG_CT_SIGNATURE_FOOTER:
 	case OPS_PTAG_CT_SIGNATURE:
 	case OPS_PTAG_CT_TRUST:
 	case OPS_PARSER_ERRCODE:
+		break;
+	case OPS_PTAG_SS_KEY_EXPIRY:
+		keyring->keys[keyring->keyc].key.pubkey.duration = pkt->u.ss_time.time;
 		break;
 
 	default:
@@ -638,9 +650,12 @@ __ops_keyring_fileread(__ops_keyring_t *keyring,
 			const char *filename)
 {
 	__ops_stream_t	*stream;
-	unsigned		 res = 1;
-	int			 fd;
+	keyringcb_t	 cb;
+	unsigned	 res = 1;
+	int		 fd;
 
+	(void) memset(&cb, 0x0, sizeof(cb));
+	cb.keyring = keyring;
 	stream = __ops_new(sizeof(*stream));
 
 	/* add this for the moment, */
@@ -668,7 +683,7 @@ __ops_keyring_fileread(__ops_keyring_t *keyring,
 	__ops_reader_set_fd(stream, fd);
 #endif
 
-	__ops_set_callback(stream, cb_keyring_read, NULL);
+	__ops_set_callback(stream, cb_keyring_read, &cb);
 
 	if (armour) {
 		__ops_reader_push_dearmour(stream);
@@ -718,11 +733,14 @@ __ops_keyring_read_from_mem(__ops_io_t *io,
 {
 	__ops_stream_t	*stream;
 	const unsigned	 noaccum = 0;
+	keyringcb_t	 cb;
 	unsigned	 res;
 
+	(void) memset(&cb, 0x0, sizeof(cb));
+	cb.keyring = keyring;
 	stream = __ops_new(sizeof(*stream));
 	__ops_parse_options(stream, OPS_PTAG_SS_ALL, OPS_PARSE_PARSED);
-	__ops_setup_memory_read(io, &stream, mem, NULL, cb_keyring_read,
+	__ops_setup_memory_read(io, &stream, mem, &cb, cb_keyring_read,
 					noaccum);
 	if (armour) {
 		__ops_reader_push_dearmour(stream);
@@ -993,14 +1011,17 @@ int
 __ops_add_to_pubring(__ops_keyring_t *keyring, const __ops_pubkey_t *pubkey)
 {
 	__ops_key_t	*key;
+	time_t		 duration;
 
 	EXPAND_ARRAY(keyring, key);
 	key = &keyring->keys[keyring->keyc++];
+	duration = key->key.pubkey.duration;
 	(void) memset(key, 0x0, sizeof(*key));
 	__ops_keyid(key->key_id, OPS_KEY_ID_SIZE, pubkey);
 	__ops_fingerprint(&key->fingerprint, pubkey);
 	key->type = OPS_PTAG_CT_PUBLIC_KEY;
 	key->key.pubkey = *pubkey;
+	key->key.pubkey.duration = duration;
 	return 1;
 }
 

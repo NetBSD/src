@@ -1,5 +1,6 @@
 To Do
 =====
+add revocation information to public key display
 agent
 agentctl
 trust subpackets
@@ -91,3 +92,4 @@ print decryption key info properly when prompting for passphrase
 hkpd
 hkpclient
 netbsd/pkgsrc pr 42922
+add expiry information to public key display
