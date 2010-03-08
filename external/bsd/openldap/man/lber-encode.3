@@ -1,11 +1,11 @@
-.TH LBER_ENCODE 3 "2008/07/16" "OpenLDAP 2.4.11"
-.\" $OpenLDAP: pkg/ldap/doc/man/man3/lber-encode.3,v 1.21.2.4 2008/02/11 23:26:39 kurt Exp $
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.TH LBER_ENCODE 3 "2009/12/20" "OpenLDAP 2.4.21"
+.\" OpenLDAP: pkg/ldap/doc/man/man3/lber-encode.3,v 1.21.2.6 2009/06/03 01:41:52 quanah Exp
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ber_alloc_t, ber_flush, ber_flush2, ber_printf, ber_put_int, ber_put_enum, ber_put_ostring, ber_put_string, ber_put_null, ber_put_boolean, ber_put_bitstring, ber_start_seq, ber_start_set, ber_put_seq, ber_put_set \- OpenLDAP LBER simplified Basic Encoding Rules library routines for encoding
 .SH LIBRARY
-OpenLDAP LBER (liblber, -llber)
+OpenLDAP LBER (liblber, \-llber)
 .SH SYNOPSIS
 .B #include <lber.h>
 .LP
@@ -266,14 +266,14 @@ can be achieved like so:
       rc = ber_printf( ber, "{siiiib{v}}", dn, scope, ali,
           size, time, attrsonly, attrs );
 
-      if( rc == -1 ) {
+      if( rc == \-1 ) {
               /* error */
       } else {
               /* success */
       }
 .fi
 .SH ERRORS
-If an error occurs during encoding, generally these routines return -1.
+If an error occurs during encoding, generally these routines return \-1.
 .LP
 .SH NOTES
 .LP

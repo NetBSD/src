@@ -1,23 +1,35 @@
-.TH SLAPINDEX 8C "2008/07/16" "OpenLDAP 2.4.11"
-.\" $OpenLDAP: pkg/ldap/doc/man/man8/slapindex.8,v 1.19.2.10 2008/02/11 23:26:40 kurt Exp $
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.TH SLAPINDEX 8C "2009/12/20" "OpenLDAP 2.4.21"
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.\" OpenLDAP: pkg/ldap/doc/man/man8/slapindex.8,v 1.19.2.14 2009/06/03 01:42:01 quanah Exp
 .SH NAME
 slapindex \- Reindex entries in a SLAPD database
 .SH SYNOPSIS
 .B /usr/sbin/slapindex
-.B [\-b suffix]
-.B [\-c]
-.B [\-d level]
-.B [\-f slapd.conf]
-.B [\-F confdir]
-.B [\-g]
-.B [\-n dbnum]
-.B [\-o name[=value]]
-.B [\-q]
-.B [\-t]
-.B [\-v]
-.B [attr] [...]
+[\c
+.BI \-b \ suffix\fR]
+[\c
+.BR \-c ]
+[\c
+.BI \-d \ debug-level\fR]
+[\c
+.BI \-f \ slapd.conf\fR]
+[\c
+.BI \-F \ confdir\fR]
+[\c
+.BR \-g ]
+[\c
+.BI \-n \ dbnum\fR]
+[\c
+.BI \-o \ option\fR[ = value\fR]]
+[\c
+.BR \-q ]
+[\c
+.BR \-t ]
+[\c
+.BR \-v ]
+[\c
+.IR attr [ ... ]]
 .B 
 .LP
 .SH DESCRIPTION
@@ -33,7 +45,7 @@ on the command line, only the indices for those attributes will
 be regenerated.
 Databases configured as
 .B subordinate
-of this one are also re-indexed, unless \fB-g\fP is specified.
+of this one are also re-indexed, unless \fB\-g\fP is specified.
 
 All files eventually created by
 .BR slapindex
@@ -51,9 +63,9 @@ or change file ownership before running
 .BR slapd (8).
 .SH OPTIONS
 .TP
-.BI \-b " suffix" 
+.BI \-b \ suffix
 Use the specified \fIsuffix\fR to determine which database to
-generate output for.  The \-b cannot be used in conjunction
+generate output for.  The \fB\-b\fP cannot be used in conjunction
 with the
 .B \-n
 option.
@@ -61,24 +73,24 @@ option.
 .B \-c
 enable continue (ignore errors) mode.
 .TP
-.BI \-d " level"
+.BI \-d \ debug-level
 enable debugging messages as defined by the specified
-.IR level ;
+.IR debug-level ;
 see
 .BR slapd (8)
 for details.
 .TP
-.BI \-f " slapd.conf"
+.BI \-f \ slapd.conf
 specify an alternative
 .BR slapd.conf (5)
 file.
 .TP
-.BI \-F " confdir"
+.BI \-F \ confdir
 specify a config directory.
 If both
-.B -f
+.B \-f
 and
-.B -F
+.B \-F
 are specified, the config file will be read and converted to
 config directory format and written to the specified directory.
 If neither option is specified, an attempt to read the
@@ -90,25 +102,30 @@ default config file is ignored.
 disable subordinate gluing.  Only the specified database will be
 processed, and not its glued subordinates (if any).
 .TP
-.BI \-n " dbnum"
-Generate output for the \fIdbnum\fR\-th database listed in the
-configuration file.  The
+.BI \-n \ dbnum
+Generate output for the \fIdbnum\fR-th database listed in the
+configuration file. The config database
+.BR slapd\-config (5),
+is always the first database, so use
+.B \-n 0
+
+The
 .B \-n
 cannot be used in conjunction with the
 .B \-b
 option.
 .TP
-.BI \-o " option[=value]"
+.BI \-o \ option\fR[ = value\fR]
 Specify an
-.BR option
+.I option
 with a(n optional)
-.BR value .
+.IR value .
 Possible generic options/values are:
 .LP
 .nf
               syslog=<subsystems>  (see `\-s' in slapd(8))
-              syslog-level=<level> (see `\-S' in slapd(8))
-              syslog-user=<user>   (see `\-l' in slapd(8))
+              syslog\-level=<level> (see `\-S' in slapd(8))
+              syslog\-user=<user>   (see `\-l' in slapd(8))
 
 .fi
 .TP

@@ -1,9 +1,9 @@
-.TH SLAPO-SYNCPROV 5 "2008/07/16" "OpenLDAP 2.4.11"
-.\" Copyright 2004-2008 The OpenLDAP Foundation All Rights Reserved.
+.TH SLAPO-SYNCPROV 5 "2009/12/20" "OpenLDAP 2.4.21"
+.\" Copyright 2004-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-syncprov.5,v 1.9.2.4 2008/02/11 23:26:40 kurt Exp $
+.\" OpenLDAP: pkg/ldap/doc/man/man5/slapo-syncprov.5,v 1.9.2.8 2009/06/03 01:42:00 quanah Exp
 .SH NAME
-slapo-syncprov \- Sync Provider overlay to slapd
+slapo\-syncprov \- Sync Provider overlay to slapd
 .SH SYNOPSIS
 /etc/openldap/slapd.conf
 .SH DESCRIPTION
@@ -31,7 +31,7 @@ They should appear after the
 .B overlay
 directive.
 .TP
-.B syncprov-checkpoint <ops> <minutes>
+.B syncprov\-checkpoint <ops> <minutes>
 After a write operation has succeeded, write the contextCSN to the underlying
 database if
 .B <ops>
@@ -40,22 +40,22 @@ write operations or more than
 time have passed
 since the last checkpoint. Checkpointing is disabled by default.
 .TP
-.B syncprov-sessionlog <ops>
-Specify a session log for recording information about write operations made
-on the database.  The
+.B syncprov\-sessionlog <ops>
+Configures an in-memory session log for recording information about write
+operations made on the database.  The
 .B <ops>
 specifies the number of operations that are recorded in the log. All write
 operations (except Adds) are recorded in the log.
 When using the session log, it is helpful to set an eq index on the
 entryUUID attribute in the underlying database.
 .TP
-.B syncprov-nopresent TRUE | FALSE
+.B syncprov\-nopresent TRUE | FALSE
 Specify that the Present phase of refreshing should be skipped. This value
 should only be set TRUE for a syncprov instance on top of a log database
 (such as one managed by the accesslog overlay).
 The default is FALSE.
 .TP
-.B syncprov-reloadhint TRUE | FALSE
+.B syncprov\-reloadhint TRUE | FALSE
 Specify that the overlay should honor the reloadHint flag in the Sync
 Control. In OpenLDAP releases 2.3.11 and earlier the syncrepl consumer did
 not properly set this flag, so the overlay must ignore it. This option
@@ -68,7 +68,8 @@ delta-based syncrepl replication support.  The default is FALSE.
 default slapd configuration file
 .SH SEE ALSO
 .BR slapd.conf (5),
-.BR slapo-accesslog (5).
+.BR slapd\-config (5),
+.BR slapo\-accesslog (5).
 OpenLDAP Administrator's Guide.
 .SH ACKNOWLEDGEMENTS
 .\" Shared Project Acknowledgement Text
