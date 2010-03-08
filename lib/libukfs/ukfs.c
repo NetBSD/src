@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.48 2010/03/05 18:49:30 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.49 2010/03/08 12:38:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -501,6 +501,30 @@ process_diskdevice(const char *devpath, struct ukfs_part *part, int rdonly,
 	return rv;
 }
 
+struct mountinfo {
+	const char *mi_vfsname;
+	const char *mi_mountpath;
+	int mi_mntflags;
+	void *mi_arg;
+	size_t mi_alen;
+	int *mi_error;
+};
+static void *
+mfs_mounter(void *arg)
+{
+	struct mountinfo *mi = arg;
+	int rv;
+
+	rv = rump_sys_mount(mi->mi_vfsname, mi->mi_mountpath, mi->mi_mntflags,
+	    mi->mi_arg, mi->mi_alen);
+	if (rv) {
+		warn("mfs mount failed.  fix me.");
+		abort(); /* XXX */
+	}
+
+	return NULL;
+}
+
 static struct ukfs *
 doukfsmount(const char *vfsname, const char *devpath, struct ukfs_part *part,
 	const char *mountpath, int mntflags, void *arg, size_t alen)
@@ -544,11 +568,50 @@ doukfsmount(const char *vfsname, const char *devpath, struct ukfs_part *part,
 		regged = 1;
 	}
 
-	rv = rump_sys_mount(vfsname, mountpath, mntflags, arg, alen);
-	if (rv) {
-		rv = errno;
-		goto out;
+	/*
+	 * MFS is special since mount(2) doesn't return.  Hence, we
+	 * create a thread here.  Could fix mfs to return, but there's
+	 * too much history for me to bother.
+	 */
+	if (strcmp(vfsname, MOUNT_MFS) == 0) {
+		pthread_t pt;
+		struct mountinfo mi;
+		int i;
+
+		mi.mi_vfsname = vfsname;
+		mi.mi_mountpath = mountpath;
+		mi.mi_mntflags = mntflags;
+		mi.mi_arg = arg;
+		mi.mi_alen = alen;
+
+		if (pthread_create(&pt, NULL, mfs_mounter, &mi) == -1) {
+			rv = errno;
+			goto out;
+		}
+
+		for (i = 0;i < 100000; i++) {
+			struct statvfs svfsb;
+
+			rv = rump_sys_statvfs1(mountpath, &svfsb, ST_WAIT);
+			if (rv == -1) {
+				rv = errno;
+				goto out;
+			}
+
+			if (strcmp(svfsb.f_mntonname, mountpath) == 0 && 
+			    strcmp(svfsb.f_fstypename, MOUNT_MFS) == 0) {
+				break;
+			}
+			usleep(1);
+		}
+	} else {
+		rv = rump_sys_mount(vfsname, mountpath, mntflags, arg, alen);
+		if (rv) {
+			rv = errno;
+			goto out;
+		}
 	}
+
 	mounted = 1;
 	rv = rump_pub_vfs_getmp(mountpath, &fs->ukfs_mp);
 	if (rv) {
