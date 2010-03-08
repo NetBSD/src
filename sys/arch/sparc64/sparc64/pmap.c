@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.257 2010/03/06 08:08:30 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.258 2010/03/08 08:59:06 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.257 2010/03/06 08:08:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.258 2010/03/08 08:59:06 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1365,16 +1365,16 @@ pmap_destroy(struct pmap *pm)
 		return;
 	}
 	DPRINTF(PDB_DESTROY, ("pmap_destroy: freeing pmap %p\n", pm));
-#ifdef MULTIPROCESSOR
 	mutex_enter(&pmap_lock);
+#ifdef MULTIPROCESSOR
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
 		if (CPUSET_HAS(cpus_active, ci->ci_index))
 			ctx_free(pm, ci);
 	}
-	mutex_exit(&pmap_lock);
 #else
 	ctx_free(pm, curcpu());
 #endif
+	mutex_exit(&pmap_lock);
 
 	/* we could be a little smarter and leave pages zeroed */
 	for (pg = TAILQ_FIRST(&pm->pm_obj.memq); pg != NULL; pg = nextpg) {
@@ -1863,6 +1863,7 @@ pmap_remove_all(struct pmap *pm)
 {
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
+	sparc64_cpuset_t pmap_cpus_active;
 #endif
 
 	if (pm == pmap_kernel()) {
@@ -1870,18 +1871,28 @@ pmap_remove_all(struct pmap *pm)
 	}
 	write_user_windows();
 	pm->pm_refs = 0;
-#ifdef MULTIPROCESSOR
+
 	mutex_enter(&pmap_lock);
+#ifdef MULTIPROCESSOR
+	CPUSET_CLEAR(pmap_cpus_active);
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
-		if (CPUSET_HAS(cpus_active, ci->ci_index))
+		if (CPUSET_HAS(cpus_active, ci->ci_index)) {
+			if (pm->pm_ctx[ci->ci_index] > 0)
+				CPUSET_ADD(pmap_cpus_active, ci->ci_index);
 			ctx_free(pm, ci);
+		}
 	}
-	mutex_exit(&pmap_lock);
 #else
 	ctx_free(pm, curcpu());
 #endif
+	mutex_exit(&pmap_lock);
+
 	REMOVE_STAT(flushes);
-	blast_dcache();
+#ifdef MULTIPROCESSOR
+	smp_blast_dcache(pmap_cpus_active);
+#else
+	sp_blast_dcache(dcache_size, dcache_line_size);
+#endif
 }
 
 /*

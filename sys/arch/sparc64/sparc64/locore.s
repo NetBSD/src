@@ -1,6 +1,7 @@
-/*	$NetBSD: locore.s,v 1.325 2010/03/07 01:52:44 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.326 2010/03/08 08:59:06 mrg Exp $	*/
 
 /*
+ * Copyright (c) 2006-2010 Matthew R. Green
  * Copyright (c) 1996-2002 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
  * Copyright (c) 1996
@@ -4918,14 +4919,12 @@ ENTRY(sp_tlb_flush_all_usiii)
 	 wrpr	%o3, %pstate
 
 /*
- * blast_dcache()
+ * sp_blast_dcache(int dcache_size, int dcache_line_size)
  *
  * Clear out all of D$ regardless of contents
- * Does not modify %o0
- *
  */
 	.align 8
-ENTRY(blast_dcache)
+ENTRY(sp_blast_dcache)
 /*
  * We turn off interrupts for the duration to prevent RED exceptions.
  */
@@ -4934,18 +4933,14 @@ ENTRY(blast_dcache)
 #endif
 
 	rdpr	%pstate, %o3
-	sethi	%hi(dcache_size), %o1
-	ld	[%o1 + %lo(dcache_size)], %o1
-	sethi	%hi(dcache_line_size), %o5
-	ld	[%o5 + %lo(dcache_line_size)], %o5
-	sub	%o1, %o5, %o1
+	sub	%o0, %o1, %o0
 	andn	%o3, PSTATE_IE, %o4			! Turn off PSTATE_IE bit
 	wrpr	%o4, 0, %pstate
 1:
-	stxa	%g0, [%o1] ASI_DCACHE_TAG
+	stxa	%g0, [%o0] ASI_DCACHE_TAG
 	membar	#Sync
-	brnz,pt	%o1, 1b
-	 sub	%o1, %o5, %o1
+	brnz,pt	%o0, 1b
+	 sub	%o0, %o1, %o0
 
 	sethi	%hi(KERNBASE), %o2
 	flush	%o2
@@ -4958,6 +4953,33 @@ ENTRY(blast_dcache)
 	retl
 	 wrpr	%o3, %pstate
 #endif
+
+#ifdef MULTIPROCESSOR
+/*
+ * void sparc64_ipi_blast_dcache(int dcache_size, int dcache_line_size)
+ *
+ * Clear out all of D$ regardless of contents
+ *
+ * On entry:
+ *	%g2 = dcache_size
+ *	%g3 = dcache_line_size
+ */
+	.align 8
+ENTRY(sparc64_ipi_blast_dcache)
+	sub	%g2, %g3, %g2
+1:
+	stxa	%g0, [%g2] ASI_DCACHE_TAG
+	membar	#Sync
+	brnz,pt	%g2, 1b
+	 sub	%g2, %g3, %g2
+
+	sethi	%hi(KERNBASE), %g5
+	flush	%g5
+	membar	#Sync
+
+	ba,a	ret_from_intr_vector
+	 nop
+#endif /* MULTIPROCESSOR */
 
 /*
  * blast_icache_us()
