@@ -1,24 +1,8 @@
-#	$NetBSD: files.rump,v 1.1 2010/02/12 04:20:51 pooka Exp $
+#	$NetBSD: files.rump,v 1.2 2010/03/08 10:24:37 pooka Exp $
 #
 
 device mainbus { }
 attach mainbus at root
+
 device ugenhc: usbus, usbroothub
 attach ugenhc at mainbus
-
-# ugen0 - ugen3
-mainbus0 at root
-ugenhc0 at mainbus0
-ugenhc1 at mainbus0
-ugenhc2 at mainbus0
-ugenhc3 at mainbus0
-
-# USB bus support
-usb*    at ugenhc?
-
-# USB ROOT Hub
-#
-# Do *NOT* configure uhub @ uhub.
-# That is not compatible with ugen.
-#
-uhub*   at usb?
