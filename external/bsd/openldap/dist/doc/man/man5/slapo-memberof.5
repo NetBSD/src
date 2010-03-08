@@ -1,9 +1,9 @@
 .TH SLAPO-MEMBEROF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2008 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2009 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-memberof.5,v 1.1.2.3 2008/02/11 23:26:40 kurt Exp $
+.\" OpenLDAP: pkg/ldap/doc/man/man5/slapo-memberof.5,v 1.1.2.6 2009/06/03 01:41:59 quanah Exp
 .SH NAME
-slapo-memberof \- Reverse Group Membership overlay to slapd
+slapo\-memberof \- Reverse Group Membership overlay to slapd
 .SH SYNOPSIS
 ETCDIR/slapd.conf
 .SH DESCRIPTION
@@ -36,7 +36,7 @@ The following
 configuration options are defined for the memberofoverlay.
 
 .TP
-.BI memberof-group-oc \ <group-oc>
+.BI memberof\-group\-oc \ <group-oc>
 The value 
 .I <group-oc> 
 is the name of the objectClass that triggers the reverse group membership
@@ -44,7 +44,7 @@ update.
 It defaults to \fIgroupOfNames\fP.
 
 .TP
-.BI memberof-member-ad \ <member-ad>
+.BI memberof\-member\-ad \ <member-ad>
 The value 
 .I <member-ad> 
 is the name of the attribute that contains the names of the members
@@ -52,7 +52,7 @@ in the group objects; it must be DN-valued.
 It defaults to \fImember\fP.
 
 .TP
-.BI memberof-memberof-ad \ <memberof-ad>
+.BI memberof\-memberof\-ad \ <memberof-ad>
 The value 
 .I <memberof-ad> 
 is the name of the attribute that contains the names of the groups
@@ -61,7 +61,7 @@ automatically updated by the overlay.
 It defaults to \fImemberOf\fP.
 
 .TP
-.BI memberof-dn \ <dn>
+.BI memberof\-dn \ <dn>
 The value 
 .I <dn> 
 contains the DN that is used as \fImodifiersName\fP for internal 
@@ -69,7 +69,7 @@ modifications performed to update the reverse group membership.
 It defaults to the \fIrootdn\fP of the underlying database.
 
 .TP
-.BI "memberof-dangling {" ignore ", " drop ", " error "}"
+.BI "memberof\-dangling {" ignore ", " drop ", " error "}"
 This option determines the behavior of the overlay when, during 
 a modification, it encounters dangling references.
 The default is
@@ -84,9 +84,9 @@ which causes modifications that would result in dangling references
 to fail.
 
 .TP
-.BI memberof-dangling-error \ <error-code>
+.BI memberof\-dangling\-error \ <error-code>
 If
-.BR memberof-dangling
+.BR memberof\-dangling
 is set to
 .IR error ,
 this configuration parameter can be used to modify the response code
@@ -94,7 +94,7 @@ returned in case of violation.  It defaults to "constraint violation",
 but other implementations are known to return "no such object" instead.
 
 .TP
-.BI "memberof-refint {" true "|" FALSE "}"
+.BI "memberof\-refint {" true "|" FALSE "}"
 This option determines whether the overlay will try to preserve
 referential integrity or not.
 If set to
@@ -113,9 +113,10 @@ ETCDIR/slapd.conf
 default slapd configuration file
 .SH SEE ALSO
 .BR slapd.conf (5),
+.BR slapd\-config (5),
 .BR slapd (8).
 The
-.BR slapo-memberof (5)
+.BR slapo\-memberof (5)
 overlay supports dynamic configuration via
 .BR back-config .
 .SH ACKNOWLEDGEMENTS

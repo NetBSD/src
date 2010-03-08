@@ -1,8 +1,10 @@
+/*	$NetBSD: rwmmap.c,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+
 /* rwmmap.c - rewrite/mapping routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmmap.c,v 1.31.2.6 2008/02/11 23:26:49 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmmap.c,v 1.31.2.12 2009/02/17 19:14:42 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -81,7 +83,9 @@ rwm_map_init( struct ldapmap *lm, struct ldapmapping **m )
 		return LDAP_NO_MEMORY;
 	}
 
-	/* FIXME: I don't think this is needed any more... */
+	/* NOTE: this is needed to make sure that
+	 *	rwm-map attribute *
+	 * does not  filter out all attributes including objectClass */
 	rc = slap_str2ad( "objectClass", &mapping[0].m_src_ad, &text );
 	if ( rc != LDAP_SUCCESS ) {
 		ch_free( mapping );
@@ -118,6 +122,15 @@ rwm_mapping( struct ldapmap *map, struct berval *s, struct ldapmapping **m, int 
 	}
 
 	assert( m != NULL );
+
+	/* let special attrnames slip through (ITS#5760) */
+	if ( bvmatch( s, slap_bv_no_attrs )
+		|| bvmatch( s, slap_bv_all_user_attrs )
+		|| bvmatch( s, slap_bv_all_operational_attrs ) )
+	{
+		*m = NULL;
+		return 0;
+	}
 
 	if ( remap == RWM_REMAP ) {
 		tree = map->remap;
@@ -310,7 +323,7 @@ rwm_map_attrnames(
 
 	if ( j == 0 && i != 0 ) {
 		memset( &(*anp)[0], 0, sizeof( AttributeName ) );
-		BER_BVSTR( &(*anp)[0].an_name, LDAP_NO_ATTRS );
+		(*anp)[0].an_name = *slap_bv_no_attrs;
 		j = 1;
 	}
 	memset( &(*anp)[j], 0, sizeof( AttributeName ) );
@@ -491,6 +504,10 @@ rwm_int_filter_map_rewrite(
 	if ( f == NULL ) {
 		ber_dupbv( fstr, &ber_bvnone );
 		return LDAP_OTHER;
+	}
+
+	if ( f->f_choice & SLAPD_FILTER_UNDEFINED ) {
+		goto computed;
 	}
 
 	switch ( f->f_choice & SLAPD_FILTER_MASK ) {
@@ -704,7 +721,7 @@ rwm_int_filter_map_rewrite(
 
 	case -1:
 computed:;
-		filter_free_x( op, f );
+		filter_free_x( op, f, 0 );
 		f->f_choice = SLAPD_FILTER_COMPUTED;
 		f->f_result = SLAPD_COMPARE_UNDEFINED;
 		/* fallthru */
@@ -1172,7 +1189,8 @@ rwm_referral_result_rewrite(
 int
 rwm_dnattr_result_rewrite(
 	dncookie		*dc,
-	BerVarray		a_vals )
+	BerVarray		a_vals,
+	BerVarray		a_nvals )
 {
 	int		i, last;
 
@@ -1180,11 +1198,11 @@ rwm_dnattr_result_rewrite(
 	last--;
 
 	for ( i = 0; !BER_BVISNULL( &a_vals[i] ); i++ ) {
-		struct berval	dn;
+		struct berval	pdn, ndn = BER_BVNULL;
 		int		rc;
 		
-		dn = a_vals[i];
-		rc = rwm_dn_massage_pretty( dc, &a_vals[i], &dn );
+		pdn = a_vals[i];
+		rc = rwm_dn_massage_pretty_normalize( dc, &a_vals[i], &pdn, &ndn );
 		switch ( rc ) {
 		case LDAP_UNWILLING_TO_PERFORM:
 			/*
@@ -1192,19 +1210,27 @@ rwm_dnattr_result_rewrite(
 			 * legal to trim values when adding/modifying;
 			 * it should be when searching (e.g. ACLs).
 			 */
+			assert( a_vals[i].bv_val != a_nvals[i].bv_val );
 			ch_free( a_vals[i].bv_val );
+			ch_free( a_nvals[i].bv_val );
 			if ( last > i ) {
 				a_vals[i] = a_vals[last];
+				a_nvals[i] = a_nvals[last];
 			}
 			BER_BVZERO( &a_vals[last] );
+			BER_BVZERO( &a_nvals[last] );
 			last--;
 			break;
 
 		default:
 			/* leave attr untouched if massage failed */
-			if ( !BER_BVISNULL( &dn ) && a_vals[i].bv_val != dn.bv_val ) {
+			if ( !BER_BVISNULL( &pdn ) && a_vals[i].bv_val != pdn.bv_val ) {
 				ch_free( a_vals[i].bv_val );
-				a_vals[i] = dn;
+				a_vals[i] = pdn;
+			}
+			if ( !BER_BVISNULL( &ndn ) && a_nvals[i].bv_val != ndn.bv_val ) {
+				ch_free( a_nvals[i].bv_val );
+				a_nvals[i] = ndn;
 			}
 			break;
 		}

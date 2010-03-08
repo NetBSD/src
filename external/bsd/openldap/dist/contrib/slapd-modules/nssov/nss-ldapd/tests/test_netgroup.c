@@ -1,3 +1,5 @@
+/*	$NetBSD: test_netgroup.c,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+
 /*
    test_netgroup.c - simple tests of developed nss code
 

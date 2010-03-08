@@ -1,8 +1,8 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.141.2.12 2008/04/14 21:51:34 quanah Exp $
+# OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.141.2.23 2009/12/04 18:38:02 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2008 The OpenLDAP Foundation.
+## Copyright 1998-2009 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,8 @@ WITH_SASL=${AC_WITH_SASL-no}
 USE_SASL=${SLAPD_USE_SASL-no}
 ACI=${AC_ACI_ENABLED-acino}
 THREADS=${AC_THREADS-threadsno}
+SLEEP1=${SLEEP1-7}
+SLEEP2=${SLEEP2-15}
 
 # dirs
 PROGDIR=./progs
@@ -131,6 +133,7 @@ DDSCONF=$DATADIR/slapd-dds.conf
 PASSWDCONF=$DATADIR/slapd-passwd.conf
 UNDOCONF=$DATADIR/slapd-config-undo.conf
 NAKEDCONF=$DATADIR/slapd-config-naked.conf
+VALREGEXCONF=$DATADIR/slapd-valregex.conf
 
 DYNAMICCONF=$DATADIR/slapd-dynamic.ldif
 
@@ -163,6 +166,8 @@ TOOLPROTO="-P 3"
 LDIFFILTER=$SRCDIR/scripts/acfilter.sh
 CONFFILTER=$SRCDIR/scripts/conf.sh
 
+MONITORDATA=$SRCDIR/scripts/monitor_data.sh
+
 SLAPADD="$TESTWD/../servers/slapd/slapd -Ta -d 0 $LDAP_VERBOSE"
 SLAPCAT="$TESTWD/../servers/slapd/slapd -Tc -d 0 $LDAP_VERBOSE"
 SLAPINDEX="$TESTWD/../servers/slapd/slapd -Ti -d 0 $LDAP_VERBOSE"
@@ -187,7 +192,7 @@ LDAPWHOAMI="$CLIENTDIR/ldapwhoami $TOOLARGS"
 LDAPCOMPARE="$CLIENTDIR/ldapcompare $TOOLARGS"
 LDAPEXOP="$CLIENTDIR/ldapexop $TOOLARGS"
 SLAPDTESTER=$PROGDIR/slapd-tester
-LVL=${SLAPD_DEBUG-261}
+LVL=${SLAPD_DEBUG-0x4105}
 LOCALHOST=localhost
 BASEPORT=${SLAPD_BASEPORT-9010}
 PORT1=`expr $BASEPORT + 1`
@@ -264,6 +269,11 @@ METABASEDN="ou=Meta,$BASEDN"
 METAMANAGERDN="cn=Manager,$METABASEDN"
 VALSORTDN="cn=Manager,o=valsort"
 VALSORTBASEDN="o=valsort"
+MONITORDN="cn=Monitor"
+OPERATIONSMONITORDN="cn=Operations,$MONITORDN"
+CONNECTIONSMONITORDN="cn=Connections,$MONITORDN"
+DATABASESMONITORDN="cn=Databases,$MONITORDN"
+STATISTICSMONITORDN="cn=Statistics,$MONITORDN"
 
 # generated outputs
 SEARCHOUT=$TESTDIR/ldapsearch.out
@@ -276,6 +286,10 @@ INITOUT=$TESTDIR/init.out
 VALSORTOUT1=$DATADIR/valsort1.out
 VALSORTOUT2=$DATADIR/valsort2.out
 VALSORTOUT3=$DATADIR/valsort3.out
+MONITOROUT1=$DATADIR/monitor1.out
+MONITOROUT2=$DATADIR/monitor2.out
+MONITOROUT3=$DATADIR/monitor3.out
+MONITOROUT4=$DATADIR/monitor4.out
 
 SERVER1OUT=$TESTDIR/server1.out
 SERVER1FLT=$TESTDIR/server1.flt
@@ -336,7 +350,6 @@ ACIOUT=$DATADIR/aci.out
 DYNLISTOUT=$DATADIR/dynlist.out
 DDSOUT=$DATADIR/dds.out
 MEMBEROFOUT=$DATADIR/memberof.out
+MEMBEROFREFINTOUT=$DATADIR/memberof-refint.out
 SHTOOL="$SRCDIR/../build/shtool"
 
-# Just in case we linked the binaries dynamically
-LD_LIBRARY_PATH=$TESTWD/../libraries:${LD_LIBRARY_PATH} export LD_LIBRARY_PATH

@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/admin/security.sdf,v 1.16.2.8 2008/05/29 16:19:01 quanah Exp $
-# Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
+# OpenLDAP: pkg/openldap-guide/admin/security.sdf,v 1.16.2.10 2009/01/22 00:00:47 kurt Exp
+# Copyright 1999-2009 The OpenLDAP Foundation, All Rights Reserved.
 # Portions Copyright 2008 Andrew Findlay.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
@@ -107,8 +107,7 @@ protection, 3DES equivalent, for update operations (e.g. add, delete,
 modify, etc.).  See {{slapd.conf}}(5) for details.
 
 For fine-grained control, SSFs may be used in access controls.
-See {{SECT:The access Configuration Directive}} section of the
-{{SECT:The slapd Configuration File}} for more information.
+See the {{SECT:Access Control}} section for more information.
 
 
 H2: Authentication Methods

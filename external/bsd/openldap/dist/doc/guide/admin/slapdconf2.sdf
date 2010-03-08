@@ -1,32 +1,34 @@
-# $OpenLDAP: pkg/openldap-guide/admin/slapdconf2.sdf,v 1.20.2.12 2008/04/14 22:37:01 quanah Exp $
-# Copyright 2005-2008 The OpenLDAP Foundation, All Rights Reserved.
+# OpenLDAP: pkg/openldap-guide/admin/slapdconf2.sdf,v 1.20.2.20 2009/06/27 17:55:39 quanah Exp
+# Copyright 2005-2009 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Configuring slapd
 
 Once the software has been built and installed, you are ready
-to configure {{slapd}}(8) for use at your site. Unlike previous
+to configure {{slapd}}(8) for use at your site.
+
+Unlike previous
 OpenLDAP releases, the slapd(8) runtime configuration in 2.3 (and later)
 is fully LDAP-enabled and can be managed using the standard LDAP
 operations with data in {{TERM:LDIF}}. The LDAP configuration engine
 allows all of slapd's configuration options to be changed on the fly,
 generally without requiring a server restart for the changes
-to take effect. The old style {{slapd.conf}}(5) file is still
+to take effect.
+
+The old style {{slapd.conf}}(5) file is still
 supported, but must be converted to the new {{slapd-config}}(5) format
 to allow runtime changes to be saved. While the old style
 configuration uses a single file, normally installed as
 {{F:/usr/local/etc/openldap/slapd.conf}}, the new style
 uses a slapd backend database to store the configuration. The
 configuration database normally resides in the
-{{F:/usr/local/etc/openldap/slapd.d}} directory. When
-converting from the slapd.conf format to slapd.d format, any
-include files will also be integrated into the resulting configuration
-database.
+{{F:/usr/local/etc/openldap/slapd.d}} directory. An alternate configuration
+directory (or file) can be specified via a command-line option to
+{{slapd}}(8).
 
-An alternate configuration directory (or file) can be specified via
-a command-line option to {{slapd}}(8). This chapter describes the
-general format of the configuration system, followed by a detailed
-description of commonly used config settings.
+This chapter briefly discusses converting to the new style configuration,
+then describes the general format of the configuration system, followed by
+a detailed description of commonly used config settings.
 
 Note: some of the backends and of the distributed overlays
 do not support runtime configuration yet.  In those cases,
@@ -125,7 +127,7 @@ keywords, using the keyword as the attribute name, with the "olc"
 prefix attached.
 
 A configuration directive may take arguments.  If so, the arguments are
-separated by white space.  If an argument contains white space,
+separated by whitespace.  If an argument contains whitespace,
 the argument should be enclosed in double quotes {{EX:"like this"}}.
 In the descriptions that follow, arguments that should be replaced
 by actual text are shown in brackets {{EX:<>}}.
@@ -171,45 +173,65 @@ to work (except for the two statistics levels, which are always
 enabled). Log levels may be specified as integers or by keyword.
 Multiple log levels may be used and the levels are additive.
 To display what levels
-correspond to what kind of debugging, invoke slapd with {{EX:-?}}
+correspond to what kind of debugging, invoke slapd with {{EX:-d?}}
 or consult the table below. The possible values for <level> are:
 
 !block table; colaligns="RL"; align=Center; \
 	title="Table 5.1: Debugging Levels"
-Level	Keyword	Description
--1	Any	enable all debugging
-0		no debugging
-1	Trace	trace function calls
-2	Packets	debug packet handling
-4	Args	heavy trace debugging
-8	Conns	connection management
-16	BER	print out packets sent and received
-32	Filter	search filter processing
-64	Config	configuration processing
-128	ACL	access control list processing
-256	Stats	stats log connections/operations/results
-512	Stats2	stats log entries sent
-1024	Shell	print communication with shell backends
-2048	Parse	print entry parsing debugging
-4096	Cache	database cache processing
-8192	Index	database indexing
-16384	Sync	syncrepl consumer processing
+Level	Keyword		Description
+-1	any		enable all debugging
+0			no debugging
+1	(0x1 trace)	trace function callss
+2	(0x2 packets)	debug packet handling
+4	(0x4 args)	heavy trace debugging
+8	(0x8 conns)	connection management
+16	(0x10 BER)	print out packets sent and received
+32	(0x20 filter)	search filter processing
+64	(0x40 config)	configuration processing
+128	(0x80 ACL)	access control list processing
+256	(0x100 stats)	stats log connections/operations/results
+512	(0x200 stats2)	stats log entries sent
+1024	(0x400 shell)	print communication with shell backends
+2048	(0x800 parse)	print entry parsing debugging
+16384	(0x4000 sync)	syncrepl consumer processing
+32768	(0x8000 none)	only messages that get logged whatever log level is set
 !endblock
 
-\Example:
+The desired log level can be input as a single integer that
+combines the (ORed) desired levels, both in decimal or in hexadecimal 
+notation, as a list of integers (that are ORed internally), or as a list of the names that are shown between brackets, such that
 
-E: olcLogLevel: -1
+>		olcLogLevel 129
+>		olcLogLevel 0x81
+>		olcLogLevel 128 1
+>		olcLogLevel 0x80 0x1
+>		olcLogLevel acl trace
+
+are equivalent.
+
+\Examples:
+
+E: olcLogLevel -1
 
 This will cause lots and lots of debugging information to be
 logged.
 
-E: olcLogLevel: Conns Filter
+E: olcLogLevel conns filter
 
 Just log the connection and search filter processing.
 
+E: olcLogLevel none
+
+Log those messages that are logged regardless of the configured loglevel. This
+differs from setting the log level to 0, when no logging occurs. At least the
+{{EX:None}} level is required to have high priority messages logged.
+
 \Default:
 
-E: olcLogLevel: Stats
+E: olcLogLevel stats
+
+Basic stats logging is configured by default. However, if no olcLogLevel is
+defined, no logging occurs (equivalent to a 0 level).
 
 
 H4: olcReferral <URI>
@@ -474,6 +496,8 @@ from a search operation.
 
 >	olcSizeLimit: 500
 
+See the {{SECT:Limits}} section of this guide and slapd-config(5)
+for more details.
 
 
 H4: olcSuffix: <dn suffix>
@@ -667,6 +691,9 @@ exceeded timelimit will be returned.
 \Default:
 
 >	olcTimeLimit: 3600
+
+See the {{SECT:Limits}} section of this guide and slapd-config(5)
+for more details.
 
 
 H4: olcUpdateref: <URL>
@@ -885,10 +912,11 @@ full indexing and so a separate slapindex run is not needed. With
 this option, slapadd does no indexing and slapindex must be used.
 
 
-H4: olcDbMode: <integer>
+H4: olcDbMode: { <octal> | <symbolic> }
 
 This directive specifies the file protection mode that newly
-created database index files should have.
+created database index files should have. This can be in the form
+{{EX:0600}} or {{EX:-rw-------}}
 
 \Default:
 
@@ -946,3 +974,143 @@ H4: Sample Entry
 >olcDbConfig: set_flags DB_LOG_AUTOREMOVE
 >olcDbIDLcacheSize: 3000
 >olcDbIndex: objectClass eq
+
+
+H2: Configuration Example
+
+The following is an example configuration, interspersed
+with explanatory text. It defines two databases to handle
+different parts of the {{TERM:X.500}} tree; both are {{TERM:BDB}}
+database instances. The line numbers shown are provided for
+reference only and are not included in the actual file. First, the
+global configuration section:
+
+E:  1.    # example config file - global configuration entry
+E:  2.    dn: cn=config
+E:  3.    objectClass: olcGlobal
+E:  4.    cn: config
+E:  5.    olcReferral: ldap://root.openldap.org
+E:  6.    
+
+Line 1 is a comment. Lines 2-4 identify this as the global
+configuration entry.
+The {{EX:olcReferral:}} directive on line 5
+means that queries not local to one of the databases defined
+below will be referred to the LDAP server running on the
+standard port (389) at the host {{EX:root.openldap.org}}.
+Line 6 is a blank line, indicating the end of this entry.
+
+E:  7.    # internal schema
+E:  8.    dn: cn=schema,cn=config
+E:  9.    objectClass: olcSchemaConfig
+E: 10.    cn: schema
+E: 11.    
+
+Line 7 is a comment. Lines 8-10 identify this as the root of
+the schema subtree. The actual schema definitions in this entry
+are hardcoded into slapd so no additional attributes are specified here.
+Line 11 is a blank line, indicating the end of this entry.
+
+E: 12.    # include the core schema
+E: 13.    include: file:///usr/local/etc/openldap/schema/core.ldif
+E: 14.    
+
+Line 12 is a comment. Line 13 is an LDIF include directive which
+accesses the {{core}} schema definitions in LDIF format. Line 14
+is a blank line.
+
+Next comes the database definitions. The first database is the
+special {{EX:frontend}} database whose settings are applied globally
+to all the other databases.
+
+E: 15.    # global database parameters
+E: 16.    dn: olcDatabase=frontend,cn=config
+E: 17.    objectClass: olcDatabaseConfig
+E: 18.    olcDatabase: frontend
+E: 19.    olcAccess: to * by * read
+E: 20.    
+
+Line 15 is a comment. Lines 16-18 identify this entry as the global
+database entry. Line 19 is a global access control. It applies to all
+entries (after any applicable database-specific access controls).
+
+The next entry defines a BDB backend that will handle queries for things
+in the "dc=example,dc=com" portion of the tree. Indices are to be maintained
+for several attributes, and the {{EX:userPassword}} attribute is to be
+protected from unauthorized access.
+
+E: 21.    # BDB definition for example.com
+E: 22.    dn: olcDatabase=bdb,cn=config
+E: 23.    objectClass: olcDatabaseConfig
+E: 24.    objectClass: olcBdbConfig
+E: 25.    olcDatabase: bdb
+E: 26.    olcSuffix: "dc=example,dc=com"
+E: 27.    olcDbDirectory: /usr/local/var/openldap-data
+E: 28.    olcRootDN: "cn=Manager,dc=example,dc=com"
+E: 29.    olcRootPW: secret
+E: 30.    olcDbIndex: uid pres,eq
+E: 31.    olcDbIndex: cn,sn,uid pres,eq,approx,sub
+E: 32.    olcDbIndex: objectClass eq
+E: 33.    olcAccess: to attrs=userPassword
+E: 34.      by self write
+E: 35.      by anonymous auth
+E: 36.      by dn.base="cn=Admin,dc=example,dc=com" write
+E: 37.      by * none
+E: 38.    olcAccess: to *
+E: 39.      by self write
+E: 40.      by dn.base="cn=Admin,dc=example,dc=com" write
+E: 41.      by * read
+E: 42.    
+
+Line 21 is a comment. Lines 22-25 identify this entry as a BDB database
+configuration entry.  Line 26 specifies the DN suffix
+for queries to pass to this database. Line 27 specifies the directory
+in which the database files will live.
+
+Lines 28 and 29 identify the database {{super-user}} entry and associated
+password. This entry is not subject to access control or size or
+time limit restrictions.
+
+Lines 30 through 32 indicate the indices to maintain for various
+attributes.
+
+Lines 33 through 41 specify access control for entries in this
+database. For all applicable entries, the {{EX:userPassword}} attribute is writable
+by the entry itself and by the "admin" entry.  It may be used for
+authentication/authorization purposes, but is otherwise not readable.
+All other attributes are writable by the entry and the "admin"
+entry, but may be read by all users (authenticated or not).
+
+Line 42 is a blank line, indicating the end of this entry.
+
+The next section of the example configuration file defines another
+BDB database. This one handles queries involving the
+{{EX:dc=example,dc=net}} subtree but is managed by the same entity
+as the first database.  Note that without line 52, the read access
+would be allowed due to the global access rule at line 19.
+
+E: 43.    # BDB definition for example.net
+E: 44.    dn: olcDatabase=bdb,cn=config
+E: 45.    objectClass: olcDatabaseConfig
+E: 46.    objectClass: olcBdbConfig
+E: 47.    olcDatabase: bdb
+E: 48.    olcSuffix: "dc=example,dc=net"
+E: 49.    olcDbDirectory: /usr/local/var/openldap-data-net
+E: 50.    olcRootDN: "cn=Manager,dc=example,dc=com"
+E: 51.    olcDbIndex: objectClass eq
+E: 52.    olcAccess: to * by users read
+
+
+H2: Converting old style {{slapd.conf}}(5) file to {{cn=config}} format
+
+An existing {{slapd.conf}}(5) file can be converted to the new format using
+{{slaptest}}(8) or any of the slap tools:
+
+>	slaptest -f /usr/local/etc/openldap/slapd.conf -F /usr/local/etc/openldap/slapd.d
+
+You can then discard the old {{slapd.conf}}(5) file. Make sure to launch
+{{slapd}}(8) with the {{-F}} option to specify the configuration directory.
+
+Note: When converting from the slapd.conf format to slapd.d format, any
+included files will also be integrated into the resulting configuration
+database.

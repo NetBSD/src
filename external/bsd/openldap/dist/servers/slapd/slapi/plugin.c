@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/plugin.c,v 1.43.2.6 2008/06/02 18:00:53 quanah Exp $ */
+/*	$NetBSD: plugin.c,v 1.1.1.3 2010/03/08 02:14:20 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/slapi/plugin.c,v 1.43.2.7 2009/01/22 00:01:14 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2008 The OpenLDAP Foundation.
+ * Copyright 2002-2009 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *

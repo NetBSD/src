@@ -1,3 +1,5 @@
+/*	$NetBSD: rpc.c,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+
 /*
    rpc.c - NSS lookup functions for rpc database
 

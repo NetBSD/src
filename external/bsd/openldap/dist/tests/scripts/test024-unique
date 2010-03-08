@@ -1,8 +1,8 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test024-unique,v 1.8.2.5 2008/02/11 23:26:51 kurt Exp $
+# OpenLDAP: pkg/ldap/tests/scripts/test024-unique,v 1.8.2.7 2009/07/27 18:39:18 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 2004-2008 The OpenLDAP Foundation.
+## Copyright 2004-2009 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -425,6 +425,7 @@ dn: olcOverlay={0}unique,olcDatabase={1}$BACKEND,cn=config
 changetype: modify
 add: olcUniqueURI
 olcUniqueURI: ldap:///?sn?sub?(cn=e*)
+olcUniqueURI: ldap:///?uid?sub?(cn=edgar)
 -
 delete: olcUniqueURI
 olcUniqueURI: ldap:///?description?one
@@ -445,6 +446,7 @@ objectClass: olcUniqueConfig
 olcOverlay: {0}unique
 olcUniqueURI: ldap:///?employeeNumber,displayName?sub
 olcUniqueURI: ldap:///?sn?sub?(cn=e*)
+olcUniqueURI: ldap:///?uid?sub?(cn=edgar)
 
 EOF
 diff $TESTDIR/third-config.ldif $TESTDIR/third-reference.ldif > /dev/null 2>&1
@@ -472,6 +474,24 @@ if test $RC != 0 ; then
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit -1
 fi
+
+echo "Adding a record unique in all domains because of filter conditions "
+$LDAPADD -D "$UNIQUEDN" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
+	 $TESTOUT 2>&1 << EOF
+dn: uid=empty,ou=users,o=unique
+objectClass: inetOrgPerson
+uid: edgar
+cn: empty
+sn: empty
+EOF
+
+RC=$?
+if test $RC != 0 ; then
+	echo "spurious unique error ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit -1
+fi
+
 
 echo "Adding a record unique in one domain, non-unique in the filtered domain..."
 
