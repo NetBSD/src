@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.33 2009/04/11 12:41:10 lukem Exp $	*/
+/*	$NetBSD: sem.c,v 1.34 2010/03/08 10:19:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -922,6 +922,7 @@ newdevi(const char *name, int unit, struct devbase *d)
 	i->i_srcfile = yyfile;
 	i->i_active = DEVI_ORPHAN; /* Proper analysis comes later */
 	i->i_level = devilevel;
+	i->i_pseudoroot = 0;
 	if (unit >= d->d_umax)
 		d->d_umax = unit + 1;
 	return (i);
@@ -1404,6 +1405,33 @@ deldev(const char *name)
 	for (nv = stack; nv != NULL; nv = nv->nv_next)
 		remove_devi(nv->nv_ptr);
 	nvfreel(stack);
+}
+
+void
+addpseudoroot(const char *name)
+{
+	struct devi *i;
+	struct deva *iba;
+	struct devbase *ib;
+
+	fprintf(stderr, "WARNING: pseudo-root is an experimental feature\n");
+
+	i = getdevi(name);
+	if (i == NULL)
+		return;
+	ib = i->i_base;
+	iba = ib->d_ahead; /* XXX: take the first for now, revisit later */
+
+	i->i_atdeva = iba;
+	i->i_cfflags = 0;
+	i->i_locs = fixloc(name, &errattr, NULL);
+	i->i_pseudoroot = 1;
+	i->i_active = DEVI_ORPHAN; /* set active by kill_orphans() */
+
+	*iba->d_ipp = i;
+	iba->d_ipp = &i->i_asame;
+
+	ht_insert(devroottab, ib->d_name, ib);
 }
 
 void
