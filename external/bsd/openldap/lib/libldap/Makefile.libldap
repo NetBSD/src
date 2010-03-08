@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libldap,v 1.5 2009/07/20 15:41:55 christos Exp $
+#	$NetBSD: Makefile.libldap,v 1.6 2010/03/08 05:18:17 lukem Exp $
 
 .include "../../openldap.mk"
 
@@ -8,17 +8,17 @@ CPPFLAGS+=	-I${LDAP_DISTDIR}/libraries/libldap
 SRCS+=		bind.c open.c result.c error.c compare.c search.c \
 		controls.c messages.c references.c extended.c cyrus.c \
 		modify.c add.c modrdn.c delete.c abandon.c \
-		sasl.c sbind.c unbind.c cancel.c \
+		sasl.c gssapi.c sbind.c unbind.c cancel.c \
 		filter.c free.c sort.c passwd.c whoami.c \
 		getdn.c getentry.c getattr.c getvalues.c addentry.c \
 		request.c os-ip.c url.c pagectrl.c sortctrl.c vlvctrl.c \
 		init.c options.c print.c string.c util-int.c schema.c \
 		charray.c os-local.c dnssrv.c utf-8.c utf-8-conv.c \
 		turn.c ppolicy.c dds.c txn.c ldap_sync.c stctrl.c \
-		assertion.c
+		assertion.c deref.c
 
 .if ${MKCRYPTO} != "no"
-SRCS+=		tls.c 
+SRCS+=		tls2.c tls_o.c tls_g.c tls_m.c
 .endif
 
 CPPFLAGS+=	-DLDAP_LIBRARY
