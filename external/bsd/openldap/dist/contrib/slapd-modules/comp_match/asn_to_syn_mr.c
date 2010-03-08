@@ -1,3 +1,5 @@
+/*	$NetBSD: asn_to_syn_mr.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+
 #include <component.h>
 #include "asn.h"
 #include "componentlib.h"

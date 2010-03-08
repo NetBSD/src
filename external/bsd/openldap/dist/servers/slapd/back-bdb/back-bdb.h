@@ -1,8 +1,10 @@
+/*	$NetBSD: back-bdb.h,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* back-bdb.h - bdb back-end header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/back-bdb.h,v 1.141.2.14 2008/05/01 21:39:35 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/back-bdb.h,v 1.141.2.23 2009/08/25 22:58:09 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,34 +54,6 @@ LDAP_BEGIN_DECL
  */
 #ifndef BDB_ID2ENTRY_PAGESIZE
 #define	BDB_ID2ENTRY_PAGESIZE	16384
-#endif
-
-#ifndef BDB_PAGESIZE
-#define	BDB_PAGESIZE	4096	/* BDB's original default */
-#endif
-
-/* 4.6.18 redefines cursor->locker */
-#if DB_VERSION_FULL >= 0x04060012
-
-struct __db_locker {
-	u_int32_t	id;
-};
-
-typedef struct __db_locker * BDB_LOCKER;
-
-extern int __lock_getlocker(DB_LOCKTAB *lt, u_int32_t locker, int create, DB_LOCKER **ret);
-
-#define CURSOR_SETLOCKER(cursor, id)	cursor->locker = id
-#define CURSOR_GETLOCKER(cursor)	cursor->locker
-#define BDB_LOCKID(locker)	locker->id
-#else
-
-typedef u_int32_t BDB_LOCKER;
-
-#define CURSOR_SETLOCKER(cursor, id)	cursor->locker = id
-#define CURSOR_GETLOCKER(cursor)	cursor->locker
-#define BDB_LOCKID(locker)	locker
-
 #endif
 
 #define DEFAULT_CACHE_SIZE     1000
@@ -153,14 +127,14 @@ typedef struct bdb_cache {
 	EntryInfo	*c_lruhead;	/* lru - add accessed entries here */
 	EntryInfo	*c_lrutail;	/* lru - rem lru entries from here */
 	EntryInfo	c_dntree;
-	unsigned	c_maxsize;
-	int		c_cursize;
-	unsigned	c_minfree;
-	unsigned	c_eimax;
-	int		c_eiused;	/* EntryInfo's in use */
-	int		c_leaves;	/* EntryInfo leaf nodes */
+	ID		c_maxsize;
+	ID		c_cursize;
+	ID		c_minfree;
+	ID		c_eimax;
+	ID		c_eiused;	/* EntryInfo's in use */
+	ID		c_leaves;	/* EntryInfo leaf nodes */
 	int		c_purging;
-	BDB_LOCKER	c_locker;	/* used by lru cleaner */
+	DB_TXN	*c_txn;	/* used by lru cleaner */
 	ldap_pvt_thread_rdwr_t c_rwlock;
 	ldap_pvt_thread_mutex_t c_lru_mutex;
 	ldap_pvt_thread_mutex_t c_count_mutex;
@@ -178,6 +152,12 @@ typedef struct bdb_cache {
 struct bdb_db_info {
 	struct berval	bdi_name;
 	DB			*bdi_db;
+};
+
+struct bdb_db_pgsize {
+	struct bdb_db_pgsize *bdp_next;
+	struct berval	bdp_name;
+	int	bdp_size;
 };
 
 #ifdef LDAP_DEVEL
@@ -202,9 +182,10 @@ struct bdb_info {
 	int			bi_dbenv_mode;
 
 	int			bi_ndatabases;
+	int		bi_db_opflags;	/* db-specific flags */
 	struct bdb_db_info **bi_databases;
 	ldap_pvt_thread_mutex_t	bi_database_mutex;
-	int		bi_db_opflags;	/* db-specific flags */
+	struct bdb_db_pgsize *bi_pagesizes;
 
 	slap_mask_t	bi_defaultmask;
 	Cache		bi_cache;
@@ -220,13 +201,13 @@ struct bdb_info {
 	struct re_s		*bi_txn_cp_task;
 	struct re_s		*bi_index_task;
 
-	int			bi_lock_detect;
+	u_int32_t		bi_lock_detect;
 	long		bi_shm_key;
 
 	ID			bi_lastid;
 	ldap_pvt_thread_mutex_t	bi_lastid_mutex;
-	unsigned	bi_idl_cache_max_size;
-	int		bi_idl_cache_size;
+	ID	bi_idl_cache_max_size;
+	ID		bi_idl_cache_size;
 	Avlnode		*bi_idl_tree;
 	bdb_idl_cache_entry_t	*bi_idl_lru_head;
 	bdb_idl_cache_entry_t	*bi_idl_lru_tail;
@@ -250,6 +231,7 @@ struct bdb_info {
 #define	BDB_UPD_CONFIG	0x04
 #define	BDB_DEL_INDEX	0x08
 #define	BDB_RE_OPEN		0x10
+#define BDB_CHKSUM		0x20
 #ifdef BDB_HIER
 	int		bi_modrdns;		/* number of modrdns completed */
 	ldap_pvt_thread_mutex_t	bi_modrdns_mutex;
@@ -262,17 +244,21 @@ struct bdb_info {
 
 struct bdb_lock_info {
 	struct bdb_lock_info *bli_next;
-	ID		bli_id;
 	DB_LOCK	bli_lock;
+	ID		bli_id;
+	int		bli_flag;
 };
+#define	BLI_DONTFREE	1
 
 struct bdb_op_info {
 	OpExtra boi_oe;
 	DB_TXN*		boi_txn;
-	u_int32_t	boi_err;
-	int		boi_acl_cache;
 	struct bdb_lock_info *boi_locks;	/* used when no txn */
+	u_int32_t	boi_err;
+	char		boi_acl_cache;
+	char		boi_flag;
 };
+#define BOI_DONTFREE	1
 
 #define	DB_OPEN(db, file, name, type, flags, mode) \
 	((db)->open)(db, file, name, type, flags, mode)
@@ -309,12 +295,6 @@ struct bdb_op_info {
 	((db)->open)(db, NULL, file, name, type, flags, mode)
 #endif
 
-/* BDB 4.6.18 makes locker a struct instead of an int */
-#if DB_VERSION_FULL >= 0x04060012
-#undef TXN_ID
-#define TXN_ID(txn)	(txn)->locker
-#endif
-
 /* #undef BDB_LOG_DEBUG */
 
 #ifdef BDB_LOG_DEBUG
@@ -343,8 +323,6 @@ extern int __db_logmsg(const DB_ENV *env, DB_TXN *txn, const char *op, u_int32_t
 #define DB_BUFFER_SMALL			ENOMEM
 #endif
 
-#define BDB_REUSE_LOCKERS
-
 #define BDB_CSN_COMMIT	0
 #define BDB_CSN_ABORT	1
 #define BDB_CSN_RETRY	2
@@ -360,7 +338,7 @@ extern int __db_logmsg(const DB_ENV *env, DB_TXN *txn, const char *op, u_int32_t
 
 /* Copy a pointer "src" to a pointer "dst" from big-endian to native order */
 #define BDB_DISK2ID( src, dst ) \
-	do { int i0; ID tmp = 0; unsigned char *_p;	\
+	do { unsigned i0; ID tmp = 0; unsigned char *_p;	\
 		_p = (unsigned char *)(src);	\
 		for ( i0=0; i0<sizeof(ID); i0++ ) {	\
 			tmp <<= 8; tmp |= *_p++;	\

@@ -1,8 +1,10 @@
+/*	$NetBSD: modify.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* modify.c - bdb backend modify routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.156.2.11 2008/05/01 21:39:35 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.156.2.17 2009/03/09 19:35:16 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,6 +29,44 @@ static struct berval scbva[] = {
 	BER_BVNULL
 };
 
+static void
+bdb_modify_idxflags(
+	Operation *op,
+	AttributeDescription *desc,
+	int got_delete,
+	Attribute *newattrs,
+	Attribute *oldattrs )
+{
+	struct berval	ix_at;
+	AttrInfo	*ai;
+
+	/* check if modified attribute was indexed
+	 * but not in case of NOOP... */
+	ai = bdb_index_mask( op->o_bd, desc, &ix_at );
+	if ( ai ) {
+		if ( got_delete ) {
+			Attribute 	*ap;
+			struct berval	ix2;
+
+			ap = attr_find( oldattrs, desc );
+			if ( ap ) ap->a_flags |= SLAP_ATTR_IXDEL;
+
+			/* Find all other attrs that index to same slot */
+			for ( ap = newattrs; ap; ap = ap->a_next ) {
+				ai = bdb_index_mask( op->o_bd, ap->a_desc, &ix2 );
+				if ( ai && ix2.bv_val == ix_at.bv_val )
+					ap->a_flags |= SLAP_ATTR_IXADD;
+			}
+
+		} else {
+			Attribute 	*ap;
+
+			ap = attr_find( newattrs, desc );
+			if ( ap ) ap->a_flags |= SLAP_ATTR_IXADD;
+		}
+	}
+}
+
 int bdb_modify_internal(
 	Operation *op,
 	DB_TXN *tid,
@@ -43,7 +83,6 @@ int bdb_modify_internal(
 	Attribute 	*ap;
 	int			glue_attr_delete = 0;
 	int			got_delete;
-	AttrInfo *ai;
 
 	Debug( LDAP_DEBUG_TRACE, "bdb_modify_internal: 0x%08lx: %s\n",
 		e->e_id, e->e_dn, 0);
@@ -89,7 +128,6 @@ int bdb_modify_internal(
 	}
 
 	for ( ml = modlist; ml != NULL; ml = ml->sml_next ) {
-		struct berval ix_at;
 		mod = &ml->sml_mod;
 		got_delete = 0;
 
@@ -202,31 +240,17 @@ int bdb_modify_internal(
 
 		if ( glue_attr_delete ) e->e_ocflags = 0;
 
+
 		/* check if modified attribute was indexed
 		 * but not in case of NOOP... */
-		ai = bdb_index_mask( op->o_bd, mod->sm_desc, &ix_at );
-		if ( ai && !op->o_noop ) {
-			if ( got_delete ) {
-				struct berval ix2;
-
-				ap = attr_find( save_attrs, mod->sm_desc );
-				if ( ap ) ap->a_flags |= SLAP_ATTR_IXDEL;
-
-				/* Find all other attrs that index to same slot */
-				for ( ap = e->e_attrs; ap; ap=ap->a_next ) {
-					ai = bdb_index_mask( op->o_bd, ap->a_desc, &ix2 );
-					if ( ai && ix2.bv_val == ix_at.bv_val )
-						ap->a_flags |= SLAP_ATTR_IXADD;
-				}
-			} else {
-				ap = attr_find( e->e_attrs, mod->sm_desc );
-				if ( ap ) ap->a_flags |= SLAP_ATTR_IXADD;
-			}
+		if ( !op->o_noop ) {
+			bdb_modify_idxflags( op, mod->sm_desc, got_delete, e->e_attrs, save_attrs );
 		}
 	}
 
 	/* check that the entry still obeys the schema */
-	rc = entry_schema_check( op, e, save_attrs, get_relax(op), 0,
+	ap = NULL;
+	rc = entry_schema_check( op, e, save_attrs, get_relax(op), 0, &ap,
 		text, textbuf, textlen );
 	if ( rc != LDAP_SUCCESS || op->o_noop ) {
 		attrs_free( e->e_attrs );
@@ -244,6 +268,15 @@ int bdb_modify_internal(
 
 		/* if NOOP then silently revert to saved attrs */
 		return rc;
+	}
+
+	/* structuralObjectClass modified! */
+	if ( ap ) {
+		assert( ap->a_desc == slap_schema.si_ad_structuralObjectClass );
+		if ( !op->o_noop ) {
+			bdb_modify_idxflags( op, slap_schema.si_ad_structuralObjectClass,
+				1, e->e_attrs, save_attrs );
+		}
 	}
 
 	/* update the indices of the modified attributes */
@@ -287,11 +320,11 @@ int bdb_modify_internal(
 				rc = bdb_index_values( op, tid, ap->a_desc,
 					vals, e->e_id, SLAP_INDEX_DELETE_OP );
 				if ( rc != LDAP_SUCCESS ) {
+					Debug( LDAP_DEBUG_ANY,
+						"%s: attribute \"%s\" index delete failure\n",
+						op->o_log_prefix, ap->a_desc->ad_cname.bv_val, 0 );
 					attrs_free( e->e_attrs );
 					e->e_attrs = save_attrs;
-					Debug( LDAP_DEBUG_ANY,
-						   "Attribute index delete failure",
-						   0, 0, 0 );
 					return rc;
 				}
 			}
@@ -306,11 +339,11 @@ int bdb_modify_internal(
 				ap->a_nvals,
 				e->e_id, SLAP_INDEX_ADD_OP );
 			if ( rc != LDAP_SUCCESS ) {
+				Debug( LDAP_DEBUG_ANY,
+				       "%s: attribute \"%s\" index add failure\n",
+					op->o_log_prefix, ap->a_desc->ad_cname.bv_val, 0 );
 				attrs_free( e->e_attrs );
 				e->e_attrs = save_attrs;
-				Debug( LDAP_DEBUG_ANY,
-				       "Attribute index add failure",
-				       0, 0, 0 );
 				return rc;
 			}
 		}
@@ -330,11 +363,9 @@ bdb_modify( Operation *op, SlapReply *rs )
 	char textbuf[SLAP_TEXT_BUFLEN];
 	size_t textlen = sizeof textbuf;
 	DB_TXN	*ltid = NULL, *lt2;
-	struct bdb_op_info opinfo = {0};
+	struct bdb_op_info opinfo = {{{ 0 }}};
 	Entry		dummy = {0};
-	int			fakeroot = 0;
 
-	BDB_LOCKER	locker = 0;
 	DB_LOCK		lock;
 
 	int		num_retries = 0;
@@ -438,8 +469,6 @@ retry:	/* transaction retry */
 		goto return_results;
 	}
 
-	locker = TXN_ID ( ltid );
-
 	opinfo.boi_oe.oe_key = bdb;
 	opinfo.boi_txn = ltid;
 	opinfo.boi_err = 0;
@@ -448,7 +477,7 @@ retry:	/* transaction retry */
 
 	/* get entry or ancestor */
 	rs->sr_err = bdb_dn2entry( op, ltid, &op->o_req_ndn, &ei, 1,
-		locker, &lock );
+		&lock );
 
 	if ( rs->sr_err != 0 ) {
 		Debug( LDAP_DEBUG_TRACE,
@@ -459,19 +488,6 @@ retry:	/* transaction retry */
 		case DB_LOCK_NOTGRANTED:
 			goto retry;
 		case DB_NOTFOUND:
-			if ( BER_BVISEMPTY( &op->o_req_ndn )) {
-				struct berval gluebv = BER_BVC("glue");
-				e = ch_calloc( 1, sizeof(Entry));
-				e->e_name.bv_val = ch_strdup( "" );
-				ber_dupbv( &e->e_nname, &e->e_name );
-				attr_merge_one( e, slap_schema.si_ad_objectClass,
-					&gluebv, NULL );
-				attr_merge_one( e, slap_schema.si_ad_structuralObjectClass,
-					&gluebv, NULL );
-				e->e_private = ei;
-				fakeroot = 1;
-				rs->sr_err = 0;
-			}
 			break;
 		case LDAP_BUSY:
 			rs->sr_text = "ldap server busy";
@@ -483,9 +499,7 @@ retry:	/* transaction retry */
 		}
 	}
 
-	if ( !fakeroot ) {
-		e = ei->bei_e;
-	}
+	e = ei->bei_e;
 
 	/* acquire and lock entry */
 	/* FIXME: dn2entry() should return non-glue entry */
@@ -648,19 +662,11 @@ retry:	/* transaction retry */
 	} else {
 		/* may have changed in bdb_modify_internal() */
 		e->e_ocflags = dummy.e_ocflags;
-		if ( fakeroot ) {
-			e->e_private = NULL;
-			entry_free( e );
-			e = NULL;
-			attrs_free( dummy.e_attrs );
-
-		} else {
-			rc = bdb_cache_modify( bdb, e, dummy.e_attrs, locker, &lock );
-			switch( rc ) {
-			case DB_LOCK_DEADLOCK:
-			case DB_LOCK_NOTGRANTED:
-				goto retry;
-			}
+		rc = bdb_cache_modify( bdb, e, dummy.e_attrs, ltid, &lock );
+		switch( rc ) {
+		case DB_LOCK_DEADLOCK:
+		case DB_LOCK_NOTGRANTED:
+			goto retry;
 		}
 		dummy.e_attrs = NULL;
 

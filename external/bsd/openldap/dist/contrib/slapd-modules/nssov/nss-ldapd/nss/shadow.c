@@ -1,3 +1,5 @@
+/*	$NetBSD: shadow.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    shadow.c - NSS lookup functions for shadow database
 

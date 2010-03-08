@@ -1,8 +1,10 @@
+/*	$NetBSD: avl.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+
 /* avl.c - routines to implement an avl tree */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/avl.c,v 1.9.2.3 2008/02/11 23:26:42 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/libraries/liblutil/avl.c,v 1.9.2.5 2009/01/30 20:12:54 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,6 +36,7 @@
 
 #include "portable.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <ac/stdlib.h>
 
@@ -47,6 +50,9 @@
 
 #define AVL_INTERNAL
 #include "avl.h"
+
+/* Maximum tree depth this host's address space could support */
+#define MAX_TREE_DEPTH	(sizeof(void *) * CHAR_BIT)
 
 static const int avl_bfs[] = {LH, RH};
 
@@ -180,8 +186,8 @@ avl_delete( Avlnode **root, void* data, AVL_CMP fcmp )
 	int side, side_bf, shorter, nside;
 
 	/* parent stack */
-	Avlnode *pptr[sizeof(void *)*8];
-	unsigned char pdir[sizeof(void *)*8];
+	Avlnode *pptr[MAX_TREE_DEPTH];
+	unsigned char pdir[MAX_TREE_DEPTH];
 	int depth = 0;
 
 	if ( *root == NULL )

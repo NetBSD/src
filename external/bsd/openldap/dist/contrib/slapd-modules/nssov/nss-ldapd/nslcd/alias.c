@@ -1,3 +1,5 @@
+/*	$NetBSD: alias.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    alias.c - alias entry lookup routines
    Parts of this file were part of the nss_ldap library (as ldap-alias.c)

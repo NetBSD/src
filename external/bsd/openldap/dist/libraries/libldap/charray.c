@@ -1,8 +1,10 @@
+/*	$NetBSD: charray.c,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+
 /* charray.c - routines for dealing with char * arrays */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/charray.c,v 1.16.2.3 2008/02/11 23:26:41 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/libraries/libldap/charray.c,v 1.16.2.6 2009/01/22 00:00:54 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -191,10 +193,10 @@ ldap_str2charray( const char *str_in, const char *brkstr )
 	}
 
 	i = 1;
-	for ( s = str; *s; s++ ) {
-		if ( ldap_utf8_strchr( brkstr, s ) != NULL ) {
-			i++;
-		}
+	for ( s = str; ; LDAP_UTF8_INCR(s) ) {
+		s = ldap_utf8_strpbrk( s, brkstr );
+		if ( !s ) break;
+		i++;
 	}
 
 	res = (char **) LDAP_MALLOC( (i + 1) * sizeof(char *) );

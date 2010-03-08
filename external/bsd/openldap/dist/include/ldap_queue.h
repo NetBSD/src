@@ -1,8 +1,10 @@
+/*	$NetBSD: ldap_queue.h,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+
 /* ldap_queue.h -- queue macros */
-/* $OpenLDAP: pkg/ldap/include/ldap_queue.h,v 1.13.2.3 2008/02/11 23:26:40 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/include/ldap_queue.h,v 1.13.2.4 2009/01/22 00:00:52 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2008 The OpenLDAP Foundation.
+ * Copyright 2001-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,7 +47,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)queue.h	8.5 (Berkeley) 8/20/94
- * $FreeBSD: src/sys/sys/queue.h,v 1.32.2.5 2001/09/30 21:12:54 luigi Exp $
+ * FreeBSD: src/sys/sys/queue.h,v 1.32.2.5 2001/09/30 21:12:54 luigi Exp
  *
  * See also: ftp://ftp.cs.berkeley.edu/pub/4bsd/README.Impt.License.Change
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: ether.h,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    ether.h - ethernet definitions for systems lacking those
 

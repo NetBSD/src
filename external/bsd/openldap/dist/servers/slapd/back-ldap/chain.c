@@ -1,8 +1,10 @@
+/*	$NetBSD: chain.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* chain.c - chain LDAP operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/chain.c,v 1.52.2.7 2008/02/11 23:26:46 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/chain.c,v 1.52.2.11 2009/08/26 00:50:19 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2008 The OpenLDAP Foundation.
+ * Copyright 2003-2009 The OpenLDAP Foundation.
  * Portions Copyright 2003 Howard Chu.
  * All rights reserved.
  *
@@ -63,6 +65,7 @@ typedef enum {
 	LDAP_CH_RES,
 	LDAP_CH_ERR
 } ldap_chain_status_t;
+
 static BackendInfo	*lback;
 
 typedef struct ldap_chain_t {
@@ -596,6 +599,8 @@ ldap_chain_search(
 	struct berval	odn = op->o_req_dn,
 			ondn = op->o_req_ndn;
 	slap_response	*save_response = op->o_callback->sc_response;
+	Entry		*save_entry = rs->sr_entry;
+	slap_mask_t	save_flags = rs->sr_flags;
 
 	int		rc = LDAP_OTHER,
 			first_rc = -1;
@@ -760,7 +765,8 @@ further_cleanup:;
 	op->o_req_ndn = ondn;
 	op->o_callback->sc_response = save_response;
 	rs->sr_type = REP_SEARCHREF;
-	rs->sr_entry = NULL;
+	rs->sr_entry = save_entry;
+	rs->sr_flags = save_flags;
 
 	if ( rc != LDAP_SUCCESS ) {
 		/* couldn't chase any of the referrals */
@@ -1096,7 +1102,7 @@ static ConfigOCs chainocs[] = {
 		"NAME 'olcChainDatabase' "
 		"DESC 'Chain remote server configuration' "
 		"AUXILIARY )",
-		Cft_Misc, chaincfg, chain_ldadd },
+		Cft_Misc, olcDatabaseDummy, chain_ldadd },
 	{ NULL, 0, NULL }
 };
 
@@ -1186,6 +1192,8 @@ chain_ldadd( CfEntryInfo *p, Entry *e, ConfigArgs *ca )
 			goto done;
 		}
 	}
+
+	ca->ca_private = on;
 
 done:;
 	if ( rc != LDAP_SUCCESS ) {
@@ -1510,17 +1518,11 @@ ldap_chain_db_init(
 	ldap_chain_t	*lc = NULL;
 
 	if ( lback == NULL ) {
-		static BackendInfo	lback2;
-
 		lback = backend_info( "ldap" );
 
 		if ( lback == NULL ) {
 			return 1;
 		}
-
-		lback2 = *lback;
-		lback2.bi_type = ldapchain.on_bi.bi_type;
-		lback = &lback2;
 	}
 
 	lc = ch_malloc( sizeof( ldap_chain_t ) );
@@ -2062,7 +2064,7 @@ ldap_chain_parse_ctrl(
 int
 chain_initialize( void )
 {
-	int	rc;
+	int rc;
 
 	/* Make sure we don't exceed the bits reserved for userland */
 	config_check_userland( CH_LAST );

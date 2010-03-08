@@ -1,8 +1,10 @@
+/*	$NetBSD: result.c,v 1.1.1.3 2010/03/08 02:14:19 lukem Exp $	*/
+
 /* result.c - sock backend result reading function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sock/result.c,v 1.3.2.2 2008/07/08 21:05:03 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-sock/result.c,v 1.3.2.3 2009/01/22 00:01:10 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2008 The OpenLDAP Foundation.
+ * Copyright 2007-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

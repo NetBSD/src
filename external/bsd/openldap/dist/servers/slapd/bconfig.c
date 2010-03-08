@@ -1,8 +1,10 @@
+/*	$NetBSD: bconfig.c,v 1.1.1.3 2010/03/08 02:14:17 lukem Exp $	*/
+
 /* bconfig.c - the config backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.202.2.37 2008/07/09 23:52:27 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.202.2.84 2009/12/15 20:40:12 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2008 The OpenLDAP Foundation.
+ * Copyright 2005-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,6 +27,7 @@
 #include <ac/ctype.h>
 #include <ac/errno.h>
 #include <sys/stat.h>
+#include <ac/unistd.h>
 
 #include "slap.h"
 
@@ -63,6 +66,7 @@ typedef struct ConfigFile {
 	ContentRule *c_cr_head, *c_cr_tail;
 	ObjectClass *c_oc_head, *c_oc_tail;
 	OidMacro *c_om_head, *c_om_tail;
+	Syntax *c_syn_head, *c_syn_tail;
 	BerVarray c_dseFiles;
 } ConfigFile;
 
@@ -87,7 +91,7 @@ static struct berval cfdir;
 
 /* Private state */
 static AttributeDescription *cfAd_backend, *cfAd_database, *cfAd_overlay,
-	*cfAd_include, *cfAd_attr, *cfAd_oc, *cfAd_om;
+	*cfAd_include, *cfAd_attr, *cfAd_oc, *cfAd_om, *cfAd_syntax;
 
 static ConfigFile *cfn;
 
@@ -97,9 +101,11 @@ static Avlnode *CfOcTree;
 extern AttributeType *at_sys_tail;	/* at.c */
 extern ObjectClass *oc_sys_tail;	/* oc.c */
 extern OidMacro *om_sys_tail;	/* oidm.c */
+extern Syntax *syn_sys_tail;	/* syntax.c */
 static AttributeType *cf_at_tail;
 static ObjectClass *cf_oc_tail;
 static OidMacro *cf_om_tail;
+static Syntax *cf_syn_tail;
 
 static int config_add_internal( CfBackInfo *cfb, Entry *e, ConfigArgs *ca,
 	SlapReply *rs, int *renumber, Operation *op );
@@ -117,6 +123,9 @@ static ConfigDriver config_timelimit;
 static ConfigDriver config_overlay;
 static ConfigDriver config_subordinate; 
 static ConfigDriver config_suffix; 
+#ifdef LDAP_TCP_BUFFER
+static ConfigDriver config_tcp_buffer; 
+#endif /* LDAP_TCP_BUFFER */
 static ConfigDriver config_rootdn;
 static ConfigDriver config_rootpw;
 static ConfigDriver config_restrict;
@@ -142,6 +151,7 @@ enum {
 	CFG_DATABASE,
 	CFG_TLS_RAND,
 	CFG_TLS_CIPHER,
+	CFG_TLS_PROTOCOL_MIN,
 	CFG_TLS_CERT_FILE,
 	CFG_TLS_CERT_KEY,
 	CFG_TLS_CA_PATH,
@@ -180,6 +190,9 @@ enum {
 	CFG_SERVERID,
 	CFG_SORTVALS,
 	CFG_IX_INTLEN,
+	CFG_SYNTAX,
+	CFG_ACL_ADD,
+	CFG_SYNC_SUBENTRY,
 
 	CFG_LAST
 };
@@ -254,6 +267,8 @@ static OidRec OidMacros[] = {
  * OLcfgOv{Oc|At}:17			-> dyngroup
  * OLcfgOv{Oc|At}:18			-> memberof
  * OLcfgOv{Oc|At}:19			-> collect
+ * OLcfgOv{Oc|At}:20			-> retcode
+ * OLcfgOv{Oc|At}:21			-> sssvlv
  */
 
 /* alphabetical ordering */
@@ -275,6 +290,10 @@ static ConfigTable config_back_cf_table[] = {
 			"DESC 'Access Control List' "
 			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString X-ORDERED 'VALUES' )", NULL, NULL },
+	{ "add_content_acl",	NULL, 0, 0, 0, ARG_MAY_DB|ARG_ON_OFF|ARG_MAGIC|CFG_ACL_ADD,
+		&config_generic, "( OLcfgGlAt:86 NAME 'olcAddContentAcl' "
+			"DESC 'Check ACLs against content of Add ops' "
+			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
 	{ "allows",	"features", 2, 0, 5, ARG_PRE_DB|ARG_MAGIC,
 		&config_allows, "( OLcfgGlAt:2 NAME 'olcAllows' "
 			"DESC 'Allowed set of deprecated features' "
@@ -309,7 +328,7 @@ static ConfigTable config_back_cf_table[] = {
 		&config_generic, "( OLcfgGlAt:7 NAME 'olcAuthzPolicy' "
 			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
-	{ "authz-regexp", NULL, 3, 3, 0, ARG_MAGIC|CFG_AZREGEXP|ARG_NO_INSERT,
+	{ "authz-regexp", "regexp> <DN", 3, 3, 0, ARG_MAGIC|CFG_AZREGEXP|ARG_NO_INSERT,
 		&config_generic, "( OLcfgGlAt:8 NAME 'olcAuthzRegexp' "
 			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString X-ORDERED 'VALUES' )", NULL, NULL },
@@ -362,10 +381,10 @@ static ConfigTable config_back_cf_table[] = {
 	{ "include", "file", 2, 2, 0, ARG_MAGIC,
 		&config_include, "( OLcfgGlAt:19 NAME 'olcInclude' "
 			"SUP labeledURI )", NULL, NULL },
-	{ "index_substr_if_minlen", "min", 2, 2, 0, ARG_INT|ARG_NONZERO|ARG_MAGIC|CFG_SSTR_IF_MIN,
+	{ "index_substr_if_minlen", "min", 2, 2, 0, ARG_UINT|ARG_NONZERO|ARG_MAGIC|CFG_SSTR_IF_MIN,
 		&config_generic, "( OLcfgGlAt:20 NAME 'olcIndexSubstrIfMinLen' "
 			"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
-	{ "index_substr_if_maxlen", "max", 2, 2, 0, ARG_INT|ARG_NONZERO|ARG_MAGIC|CFG_SSTR_IF_MAX,
+	{ "index_substr_if_maxlen", "max", 2, 2, 0, ARG_UINT|ARG_NONZERO|ARG_MAGIC|CFG_SSTR_IF_MAX,
 		&config_generic, "( OLcfgGlAt:21 NAME 'olcIndexSubstrIfMaxLen' "
 			"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
 	{ "index_substr_any_len", "len", 2, 2, 0, ARG_INT|ARG_NONZERO,
@@ -380,6 +399,13 @@ static ConfigTable config_back_cf_table[] = {
 	{ "lastmod", "on|off", 2, 2, 0, ARG_DB|ARG_ON_OFF|ARG_MAGIC|CFG_LASTMOD,
 		&config_generic, "( OLcfgDbAt:0.4 NAME 'olcLastMod' "
 			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
+	{ "ldapsyntax",	"syntax", 2, 0, 0,
+		ARG_PAREN|ARG_MAGIC|CFG_SYNTAX,
+		&config_generic, "( OLcfgGlAt:85 NAME 'olcLdapSyntaxes' "
+			"DESC 'OpenLDAP ldapSyntax' "
+			"EQUALITY caseIgnoreMatch "
+			"SYNTAX OMsDirectoryString X-ORDERED 'VALUES' )",
+				NULL, NULL },
 	{ "limits", "limits", 2, 0, 0, ARG_DB|ARG_MAGIC|CFG_LIMITS,
 		&config_generic, "( OLcfgDbAt:0.5 NAME 'olcLimits' "
 			"EQUALITY caseIgnoreMatch "
@@ -437,7 +463,7 @@ static ConfigTable config_back_cf_table[] = {
 	{ "password-crypt-salt-format", "salt", 2, 2, 0, ARG_STRING|ARG_MAGIC|CFG_SALT,
 		&config_generic, "( OLcfgGlAt:35 NAME 'olcPasswordCryptSaltFormat' "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
-	{ "password-hash", "hash", 2, 2, 0, ARG_MAGIC,
+	{ "password-hash", "hash", 2, 0, 0, ARG_MAGIC,
 		&config_passwd_hash, "( OLcfgGlAt:36 NAME 'olcPasswordHash' "
 			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString )", NULL, NULL },
@@ -512,6 +538,14 @@ static ConfigTable config_back_cf_table[] = {
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "sasl-authz-policy", NULL, 2, 2, 0, ARG_MAGIC|CFG_AZPOLICY,
 		&config_generic, NULL, NULL, NULL },
+	{ "sasl-auxprops", NULL, 2, 0, 0,
+#ifdef HAVE_CYRUS_SASL
+		ARG_STRING|ARG_UNIQUE, &slap_sasl_auxprops,
+#else
+		ARG_IGNORED, NULL,
+#endif
+		"( OLcfgGlAt:89 NAME 'olcSaslAuxprops' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "sasl-host", "host", 2, 2, 0,
 #ifdef HAVE_CYRUS_SASL
 		ARG_STRING|ARG_UNIQUE, &sasl_host,
@@ -573,10 +607,23 @@ static ConfigTable config_back_cf_table[] = {
 		&config_suffix, "( OLcfgDbAt:0.10 NAME 'olcSuffix' "
 			"EQUALITY distinguishedNameMatch "
 			"SYNTAX OMsDN )", NULL, NULL },
+	{ "sync_use_subentry", NULL, 0, 0, 0, ARG_ON_OFF|ARG_DB|ARG_MAGIC|CFG_SYNC_SUBENTRY,
+		&config_generic, "( OLcfgDbAt:0.19 NAME 'olcSyncUseSubentry' "
+			"DESC 'Store sync context in a subentry' "
+			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
 	{ "syncrepl", NULL, 0, 0, 0, ARG_DB|ARG_MAGIC,
 		&syncrepl_config, "( OLcfgDbAt:0.11 NAME 'olcSyncrepl' "
 			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString X-ORDERED 'VALUES' )", NULL, NULL },
+	{ "tcp-buffer", "[listener=<listener>] [{read|write}=]size", 0, 0, 0,
+#ifndef LDAP_TCP_BUFFER
+		ARG_IGNORED, NULL,
+#else /* LDAP_TCP_BUFFER */
+		ARG_MAGIC, &config_tcp_buffer,
+#endif /* LDAP_TCP_BUFFER */
+			"( OLcfgGlAt:90 NAME 'olcTCPBuffer' "
+			"DESC 'Custom TCP buffer size' "
+			"SYNTAX OMsDirectoryString )", NULL, NULL },
 	{ "threads", "count", 2, 2, 0,
 #ifdef NO_THREADS
 		ARG_IGNORED, NULL,
@@ -668,6 +715,14 @@ static ConfigTable config_back_cf_table[] = {
 #endif
 		"( OLcfgGlAt:77 NAME 'olcTLSDHParamFile' "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "TLSProtocolMin",	NULL, 0, 0, 0,
+#ifdef HAVE_TLS
+		CFG_TLS_PROTOCOL_MIN|ARG_STRING|ARG_MAGIC, &config_tls_config,
+#else
+		ARG_IGNORED, NULL,
+#endif
+		"( OLcfgGlAt:87 NAME 'olcTLSProtocolMin' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "tool-threads", "count", 2, 2, 0, ARG_INT|ARG_MAGIC|CFG_TTHREADS,
 		&config_generic, "( OLcfgGlAt:80 NAME 'olcToolThreads' "
 			"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
@@ -680,8 +735,20 @@ static ConfigTable config_back_cf_table[] = {
 		&config_updateref, "( OLcfgDbAt:0.13 NAME 'olcUpdateRef' "
 			"EQUALITY caseIgnoreMatch "
 			"SUP labeledURI )", NULL, NULL },
+	{ "writetimeout", "timeout", 2, 2, 0, ARG_INT,
+		&global_writetimeout, "( OLcfgGlAt:88 NAME 'olcWriteTimeout' "
+			"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
 	{ NULL,	NULL, 0, 0, 0, ARG_IGNORED,
 		NULL, NULL, NULL, NULL }
+};
+
+/* Need to no-op this keyword for dynamic config */
+ConfigTable olcDatabaseDummy[] = {
+	{ "", "", 0, 0, 0, ARG_IGNORED,
+		NULL, "( OLcfgGlAt:13 NAME 'olcDatabase' "
+			"DESC 'The backend type for a database instance' "
+			"SUP olcBackend SINGLE-VALUE X-ORDERED 'SIBLINGS' )", NULL, NULL },
+	{ NULL, NULL, 0, 0, 0, ARG_IGNORED }
 };
 
 /* Routines to check if a child can be added to this type */
@@ -717,27 +784,28 @@ static ConfigOCs cf_ocs[] = {
 		 "olcDisallows $ olcGentleHUP $ olcIdleTimeout $ "
 		 "olcIndexSubstrIfMaxLen $ olcIndexSubstrIfMinLen $ "
 		 "olcIndexSubstrAnyLen $ olcIndexSubstrAnyStep $ olcIndexIntLen $ "
-		 "olcLocalSSF $ olcLogLevel $ "
+		 "olcLocalSSF $ olcLogFile $ olcLogLevel $ "
 		 "olcPasswordCryptSaltFormat $ olcPasswordHash $ olcPidFile $ "
 		 "olcPluginLogFile $ olcReadOnly $ olcReferral $ "
 		 "olcReplogFile $ olcRequires $ olcRestrict $ olcReverseLookup $ "
 		 "olcRootDSE $ "
-		 "olcSaslHost $ olcSaslRealm $ olcSaslSecProps $ "
+		 "olcSaslAuxprops $ olcSaslHost $ olcSaslRealm $ olcSaslSecProps $ "
 		 "olcSecurity $ olcServerID $ olcSizeLimit $ "
 		 "olcSockbufMaxIncoming $ olcSockbufMaxIncomingAuth $ "
+		 "olcTCPBuffer $ "
 		 "olcThreads $ olcTimeLimit $ olcTLSCACertificateFile $ "
 		 "olcTLSCACertificatePath $ olcTLSCertificateFile $ "
 		 "olcTLSCertificateKeyFile $ olcTLSCipherSuite $ olcTLSCRLCheck $ "
 		 "olcTLSRandFile $ olcTLSVerifyClient $ olcTLSDHParamFile $ "
-		 "olcTLSCRLFile $ olcToolThreads $ "
+		 "olcTLSCRLFile $ olcToolThreads $ olcWriteTimeout $ "
 		 "olcObjectIdentifier $ olcAttributeTypes $ olcObjectClasses $ "
-		 "olcDitContentRules ) )", Cft_Global },
+		 "olcDitContentRules $ olcLdapSyntaxes ) )", Cft_Global },
 	{ "( OLcfgGlOc:2 "
 		"NAME 'olcSchemaConfig' "
 		"DESC 'OpenLDAP schema object' "
 		"SUP olcConfig STRUCTURAL "
 		"MAY ( cn $ olcObjectIdentifier $ olcAttributeTypes $ "
-		 "olcObjectClasses $ olcDitContentRules ) )",
+		 "olcObjectClasses $ olcDitContentRules $ olcLdapSyntaxes ) )",
 		 	Cft_Schema, NULL, cfAddSchema },
 	{ "( OLcfgGlOc:3 "
 		"NAME 'olcBackendConfig' "
@@ -750,11 +818,11 @@ static ConfigOCs cf_ocs[] = {
 		"SUP olcConfig STRUCTURAL "
 		"MUST olcDatabase "
 		"MAY ( olcHidden $ olcSuffix $ olcSubordinate $ olcAccess $ "
-		 "olcLastMod $ olcLimits $ "
+		 "olcAddContentAcl $ olcLastMod $ olcLimits $ "
 		 "olcMaxDerefDepth $ olcPlugin $ olcReadOnly $ olcReplica $ "
 		 "olcReplicaArgsFile $ olcReplicaPidFile $ olcReplicationInterval $ "
 		 "olcReplogFile $ olcRequires $ olcRestrict $ olcRootDN $ olcRootPW $ "
-		 "olcSchemaDN $ olcSecurity $ olcSizeLimit $ olcSyncrepl $ "
+		 "olcSchemaDN $ olcSecurity $ olcSizeLimit $ olcSyncUseSubentry $ olcSyncrepl $ "
 		 "olcTimeLimit $ olcUpdateDN $ olcUpdateRef $ olcMirrorMode $ "
 		 "olcMonitoring ) )",
 		 	Cft_Database, NULL, cfAddDatabase },
@@ -858,8 +926,7 @@ config_generic(ConfigArgs *c) {
 			if ( !c->rvalue_vals ) rc = 1;
 			break;
 		case CFG_RO:
-			c->value_int = (c->be->be_restrictops & SLAP_RESTRICT_OP_WRITES) ==
-				SLAP_RESTRICT_OP_WRITES;
+			c->value_int = (c->be->be_restrictops & SLAP_RESTRICT_READONLY);
 			break;
 		case CFG_AZPOLICY:
 			c->value_string = ch_strdup( slap_sasl_getpolicy());
@@ -926,6 +993,17 @@ config_generic(ConfigArgs *c) {
 				rc = 1;
 			}
 			break;
+		case CFG_SYNTAX: {
+			ConfigFile *cf = c->ca_private;
+			if ( !cf )
+				syn_unparse( &c->rvalue_vals, NULL, NULL, 1 );
+			else if ( cf->c_syn_head )
+				syn_unparse( &c->rvalue_vals, cf->c_syn_head,
+					cf->c_syn_tail, 0 );
+			if ( !c->rvalue_vals )
+				rc = 1;
+			}
+			break;
 		case CFG_DIT: {
 			ConfigFile *cf = c->ca_private;
 			if ( !cf )
@@ -942,12 +1020,7 @@ config_generic(ConfigArgs *c) {
 			AccessControl *a;
 			char *src, *dst, ibuf[11];
 			struct berval bv, abv;
-			AccessControl *end;
-			if ( c->be == frontendDB )
-				end = NULL;
-			else
-				end = frontendDB->be_acl;
-			for (i=0, a=c->be->be_acl; a && a != end; i++,a=a->acl_next) {
+			for (i=0, a=c->be->be_acl; a; i++,a=a->acl_next) {
 				abv.bv_len = snprintf( ibuf, sizeof( ibuf ), SLAP_X_ORDERED_FMT, i );
 				if ( abv.bv_len >= sizeof( ibuf ) ) {
 					ber_bvarray_free_x( c->rvalue_vals, NULL );
@@ -974,6 +1047,9 @@ config_generic(ConfigArgs *c) {
 			rc = (!i);
 			break;
 		}
+		case CFG_ACL_ADD:
+			c->value_int = (SLAP_DBACL_ADD(c->be) != 0);
+			break;
 		case CFG_ROOTDSE: {
 			ConfigFile *cf = c->ca_private;
 			if ( cf->c_dseFiles ) {
@@ -993,7 +1069,7 @@ config_generic(ConfigArgs *c) {
 					if ( !BER_BVISEMPTY( &si->si_url )) {
 						bv.bv_len = si->si_url.bv_len + 6;
 						bv.bv_val = ch_malloc( bv.bv_len );
-						sprintf( bv.bv_val, "%d %s", si->si_num,
+						bv.bv_len = sprintf( bv.bv_val, "%d %s", si->si_num,
 							si->si_url.bv_val );
 						ber_bvarray_add( &c->rvalue_vals, &bv );
 					} else {
@@ -1016,6 +1092,9 @@ config_generic(ConfigArgs *c) {
 		case CFG_LASTMOD:
 			c->value_int = (SLAP_NOLASTMOD(c->be) == 0);
 			break;
+		case CFG_SYNC_SUBENTRY:
+			c->value_int = (SLAP_SYNC_SUBENTRY(c->be) != 0);
+			break;
 		case CFG_MIRRORMODE:
 			if ( SLAP_SHADOW(c->be))
 				c->value_int = (SLAP_SINGLE_SHADOW(c->be) == 0);
@@ -1026,10 +1105,10 @@ config_generic(ConfigArgs *c) {
 			c->value_int = (SLAP_DBMONITORING(c->be) != 0);
 			break;
 		case CFG_SSTR_IF_MAX:
-			c->value_int = index_substr_if_maxlen;
+			c->value_uint = index_substr_if_maxlen;
 			break;
 		case CFG_SSTR_IF_MIN:
-			c->value_int = index_substr_if_minlen;
+			c->value_uint = index_substr_if_minlen;
 			break;
 		case CFG_IX_INTLEN:
 			c->value_int = index_intlen;
@@ -1127,6 +1206,8 @@ config_generic(ConfigArgs *c) {
 		case CFG_SASLSECP:
 		case CFG_SSTR_IF_MAX:
 		case CFG_SSTR_IF_MIN:
+		case CFG_ACL_ADD:
+		case CFG_SYNC_SUBENTRY:
 			break;
 
 		/* no-ops, requires slapd restart */
@@ -1179,13 +1260,8 @@ config_generic(ConfigArgs *c) {
 
 		case CFG_ACL:
 			if ( c->valx < 0 ) {
-				AccessControl *end;
-				if ( c->be == frontendDB )
-					end = NULL;
-				else
-					end = frontendDB->be_acl;
-				acl_destroy( c->be->be_acl, end );
-				c->be->be_acl = end;
+				acl_destroy( c->be->be_acl );
+				c->be->be_acl = NULL;
 
 			} else {
 				AccessControl **prev, *a;
@@ -1276,6 +1352,44 @@ config_generic(ConfigArgs *c) {
 				}
 			}
 			break;
+
+		case CFG_SYNTAX: {
+			CfEntryInfo *ce;
+			/* Can be NULL when undoing a failed add */
+			if ( c->ca_entry ) {
+				ce = c->ca_entry->e_private;
+				/* can't modify the hardcoded schema */
+				if ( ce->ce_parent->ce_type == Cft_Global )
+					return 1;
+				}
+			}
+			cfn = c->ca_private;
+			if ( c->valx < 0 ) {
+				Syntax *syn;
+
+				for( syn = cfn->c_syn_head; syn; syn_next( &syn )) {
+					syn_delete( syn );
+					if ( syn == cfn->c_syn_tail )
+						break;
+				}
+				cfn->c_syn_head = cfn->c_syn_tail = NULL;
+			} else {
+				Syntax *syn, *prev = NULL;
+
+				for ( i = 0, syn = cfn->c_syn_head; i < c->valx; i++) {
+					prev = syn;
+					syn_next( &syn );
+				}
+				syn_delete( syn );
+				if ( cfn->c_syn_tail == syn ) {
+					cfn->c_syn_tail = prev;
+				}
+				if ( cfn->c_syn_head == syn ) {
+					syn_next( &syn );
+					cfn->c_syn_head = syn;
+				}
+			}
+			break;
 		case CFG_SORTVALS:
 			if ( c->valx < 0 ) {
 				ADlist *sv;
@@ -1300,6 +1414,36 @@ config_generic(ConfigArgs *c) {
 
 		case CFG_LIMITS:
 			/* FIXME: there is no limits_free function */
+			if ( c->valx < 0 ) {
+				limits_destroy( c->be->be_limits );
+				c->be->be_limits = NULL;
+
+			} else {
+				int cnt, num = -1;
+
+				if ( c->be->be_limits ) {
+					for ( num = 0; c->be->be_limits[ num ]; num++ )
+						/* just count */ ;
+				}
+
+				if ( c->valx >= num ) {
+					return 1;
+				}
+
+				if ( num == 1 ) {
+					limits_destroy( c->be->be_limits );
+					c->be->be_limits = NULL;
+
+				} else {
+					limits_free_one( c->be->be_limits[ c->valx ] );
+
+					for ( cnt = c->valx; cnt < num; cnt++ ) {
+						c->be->be_limits[ cnt ] = c->be->be_limits[ cnt + 1 ];
+					}
+				}
+			}
+			break;
+
 		case CFG_ATOPT:
 			/* FIXME: there is no ad_option_free function */
 		case CFG_ROOTDSE:
@@ -1388,9 +1532,9 @@ config_generic(ConfigArgs *c) {
 
 		case CFG_RO:
 			if(c->value_int)
-				c->be->be_restrictops |= SLAP_RESTRICT_OP_WRITES;
+				c->be->be_restrictops |= SLAP_RESTRICT_READONLY;
 			else
-				c->be->be_restrictops &= ~SLAP_RESTRICT_OP_WRITES;
+				c->be->be_restrictops &= ~SLAP_RESTRICT_READONLY;
 			break;
 
 		case CFG_AZPOLICY:
@@ -1502,6 +1646,38 @@ config_generic(ConfigArgs *c) {
 			}
 			break;
 
+		case CFG_SYNTAX: {
+			Syntax *syn, *prev;
+
+			if ( c->op == LDAP_MOD_ADD && c->ca_private && cfn != c->ca_private )
+				cfn = c->ca_private;
+			if ( c->valx < 0 ) {
+				prev = cfn->c_syn_tail;
+			} else {
+				prev = NULL;
+				/* If adding anything after the first, prev is easy */
+				if ( c->valx ) {
+					int i;
+					for ( i = 0, syn = cfn->c_syn_head; i < c->valx; i++ ) {
+						prev = syn;
+						syn_next( &syn );
+					}
+				} else
+				/* If adding the first, and head exists, find its prev */
+					if (cfn->c_syn_head) {
+					for ( syn_start( &syn ); syn != cfn->c_syn_head; ) {
+						prev = syn;
+						syn_next( &syn );
+					}
+				}
+				/* else prev is NULL, append to end of global list */
+			}
+			if ( parse_syn( c, &syn, prev ) ) return(1);
+			if ( !cfn->c_syn_head ) cfn->c_syn_head = syn;
+			if ( cfn->c_syn_tail == prev ) cfn->c_syn_tail = syn;
+			}
+			break;
+
 		case CFG_DIT: {
 			ContentRule *cr;
 
@@ -1580,16 +1756,22 @@ sortval_reject:
 		case CFG_ACL:
 			/* Don't append to the global ACL if we're on a specific DB */
 			i = c->valx;
-			if ( c->be != frontendDB && frontendDB->be_acl && c->valx == -1 ) {
+			if ( c->valx == -1 ) {
 				AccessControl *a;
 				i = 0;
-				for ( a=c->be->be_acl; a && a != frontendDB->be_acl;
-					a = a->acl_next )
+				for ( a=c->be->be_acl; a; a = a->acl_next )
 					i++;
 			}
 			if ( parse_acl(c->be, c->fname, c->lineno, c->argc, c->argv, i ) ) {
 				return 1;
 			}
+			break;
+
+		case CFG_ACL_ADD:
+			if(c->value_int)
+				SLAP_DBFLAGS(c->be) |= SLAP_DBFLAG_ACL_ADD;
+			else
+				SLAP_DBFLAGS(c->be) &= ~SLAP_DBFLAG_ACL_ADD;
 			break;
 
 		case CFG_ROOTDSE:
@@ -1613,7 +1795,8 @@ sortval_reject:
 				ServerID *si, **sip;
 				LDAPURLDesc *lud;
 				int num;
-				if ( lutil_atoi( &num, c->argv[1] ) ||
+				if (( lutil_atoi( &num, c->argv[1] ) &&	
+					lutil_atoix( &num, c->argv[1], 16 )) ||
 					num < 0 || num > SLAP_SYNC_SID_MAX )
 				{
 					snprintf( c->cr_msg, sizeof( c->cr_msg ),
@@ -1658,7 +1841,7 @@ sortval_reject:
 					BER_BVZERO( &si->si_url );
 					slap_serverID = num;
 					Debug( LDAP_DEBUG_CONFIG,
-						"%s: SID=%d\n",
+						"%s: SID=0x%03x\n",
 						c->log, slap_serverID, 0 );
 				}
 				si->si_next = NULL;
@@ -1667,56 +1850,13 @@ sortval_reject:
 				*sip = si;
 
 				if (( slapMode & SLAP_SERVER_MODE ) && c->argc > 2 ) {
-					/* If hostname is empty, or is localhost, or matches
-					 * our hostname, this serverID refers to this host.
-					 * Compare it against listeners and ports.
-					 */
-					if ( !lud->lud_host || !lud->lud_host[0] ||
-						!strncasecmp("localhost", lud->lud_host,
-							STRLENOF("localhost")) ||
-						!strcasecmp( global_host, lud->lud_host )) {
-						Listener **l = slapd_get_listeners();
-						int i;
-
-						for ( i=0; l && l[i]; i++ ) {
-							LDAPURLDesc *lu2;
-							int isMe = 0;
-							ldap_url_parse( l[i]->sl_url.bv_val, &lu2 );
-							do {
-								if ( strcasecmp( lud->lud_scheme,
-									lu2->lud_scheme ))
-									break;
-								if ( lud->lud_port != lu2->lud_port )
-									break;
-								/* Listener on ANY address */
-								if ( !lu2->lud_host || !lu2->lud_host[0] ) {
-									isMe = 1;
-									break;
-								}
-								/* URL on ANY address */
-								if ( !lud->lud_host || !lud->lud_host[0] ) {
-									isMe = 1;
-									break;
-								}
-								/* Listener has specific host, must
-								 * match it
-								 */
-								if ( !strcasecmp( lud->lud_host,
-									lu2->lud_host )) {
-									isMe = 1;
-									break;
-								}
-							} while(0);
-							ldap_free_urldesc( lu2 );
-							if ( isMe ) {
-								slap_serverID = si->si_num;
-								Debug( LDAP_DEBUG_CONFIG,
-									"%s: SID=%d (listener=%s)\n",
-									c->log, slap_serverID,
-									l[i]->sl_url.bv_val );
-								break;
-							}
-						}
+					Listener *l = config_check_my_url( c->argv[2], lud );
+					if ( l ) {
+						slap_serverID = si->si_num;
+						Debug( LDAP_DEBUG_CONFIG,
+							"%s: SID=0x%03x (listener=%s)\n",
+							c->log, slap_serverID,
+							l->sl_url.bv_val );
 					}
 				}
 				if ( c->argc > 2 )
@@ -1745,7 +1885,7 @@ sortval_reject:
 			break;
 
 		case CFG_MIRRORMODE:
-			if(!SLAP_SHADOW(c->be)) {
+			if(c->value_int && !SLAP_SHADOW(c->be)) {
 				snprintf( c->cr_msg, sizeof( c->cr_msg ), "<%s> database is not a shadow",
 					c->argv[0] );
 				Debug(LDAP_DEBUG_ANY, "%s: %s\n",
@@ -1772,24 +1912,31 @@ sortval_reject:
 				SLAP_DBFLAGS(c->be) &= ~SLAP_DBFLAG_HIDDEN;
 			break;
 
+		case CFG_SYNC_SUBENTRY:
+			if (c->value_int)
+				SLAP_DBFLAGS(c->be) |= SLAP_DBFLAG_SYNC_SUBENTRY;
+			else
+				SLAP_DBFLAGS(c->be) &= ~SLAP_DBFLAG_SYNC_SUBENTRY;
+			break;
+
 		case CFG_SSTR_IF_MAX:
-			if (c->value_int < index_substr_if_minlen) {
+			if (c->value_uint < index_substr_if_minlen) {
 				snprintf( c->cr_msg, sizeof( c->cr_msg ), "<%s> invalid value", c->argv[0] );
 				Debug(LDAP_DEBUG_ANY, "%s: %s (%d)\n",
 					c->log, c->cr_msg, c->value_int );
 				return(1);
 			}
-			index_substr_if_maxlen = c->value_int;
+			index_substr_if_maxlen = c->value_uint;
 			break;
 
 		case CFG_SSTR_IF_MIN:
-			if (c->value_int > index_substr_if_maxlen) {
+			if (c->value_uint > index_substr_if_maxlen) {
 				snprintf( c->cr_msg, sizeof( c->cr_msg ), "<%s> invalid value", c->argv[0] );
 				Debug(LDAP_DEBUG_ANY, "%s: %s (%d)\n",
 					c->log, c->cr_msg, c->value_int );
 				return(1);
 			}
-			index_substr_if_minlen = c->value_int;
+			index_substr_if_minlen = c->value_uint;
 			break;
 
 #ifdef SLAPD_MODULES
@@ -1865,29 +2012,40 @@ sortval_reject:
 		case CFG_REWRITE: {
 			struct berval bv;
 			char *line;
-			
+			int rc = 0;
+
+			if ( c->op == LDAP_MOD_ADD ) {
+				c->argv++;
+				c->argc--;
+			}
 			if(slap_sasl_rewrite_config(c->fname, c->lineno, c->argc, c->argv))
-				return(1);
+				rc = 1;
+			if ( rc == 0 ) {
 
-			if ( c->argc > 1 ) {
-				char	*s;
+				if ( c->argc > 1 ) {
+					char	*s;
 
-				/* quote all args but the first */
-				line = ldap_charray2str( c->argv, "\" \"" );
-				ber_str2bv( line, 0, 0, &bv );
-				s = ber_bvchr( &bv, '"' );
-				assert( s != NULL );
-				/* move the trailing quote of argv[0] to the end */
-				AC_MEMCPY( s, s + 1, bv.bv_len - ( s - bv.bv_val ) );
-				bv.bv_val[ bv.bv_len - 1 ] = '"';
+					/* quote all args but the first */
+					line = ldap_charray2str( c->argv, "\" \"" );
+					ber_str2bv( line, 0, 0, &bv );
+					s = ber_bvchr( &bv, '"' );
+					assert( s != NULL );
+					/* move the trailing quote of argv[0] to the end */
+					AC_MEMCPY( s, s + 1, bv.bv_len - ( s - bv.bv_val ) );
+					bv.bv_val[ bv.bv_len - 1 ] = '"';
 
-			} else {
-				ber_str2bv( c->argv[ 0 ], 0, 1, &bv );
+				} else {
+					ber_str2bv( c->argv[ 0 ], 0, 1, &bv );
+				}
+
+				ber_bvarray_add( &authz_rewrites, &bv );
 			}
-			
-			ber_bvarray_add( &authz_rewrites, &bv );
+			if ( c->op == LDAP_MOD_ADD ) {
+				c->argv--;
+				c->argc++;
 			}
-			break;
+			return rc;
+			}
 #endif
 
 
@@ -2052,14 +2210,23 @@ config_sizelimit(ConfigArgs *c) {
 			rc = 1;
 		return rc;
 	} else if ( c->op == LDAP_MOD_DELETE ) {
-		/* Reset to defaults */
-		lim->lms_s_soft = SLAPD_DEFAULT_SIZELIMIT;
-		lim->lms_s_hard = 0;
-		lim->lms_s_unchecked = -1;
-		lim->lms_s_pr = 0;
-		lim->lms_s_pr_hide = 0;
-		lim->lms_s_pr_total = 0;
-		return 0;
+		/* Reset to defaults or values from frontend */
+		if ( c->be == frontendDB ) {
+			lim->lms_s_soft = SLAPD_DEFAULT_SIZELIMIT;
+			lim->lms_s_hard = 0;
+			lim->lms_s_unchecked = -1;
+			lim->lms_s_pr = 0;
+			lim->lms_s_pr_hide = 0;
+			lim->lms_s_pr_total = 0;
+		} else {
+			lim->lms_s_soft = frontendDB->be_def_limit.lms_s_soft;
+			lim->lms_s_hard = frontendDB->be_def_limit.lms_s_hard;
+			lim->lms_s_unchecked = frontendDB->be_def_limit.lms_s_unchecked;
+			lim->lms_s_pr = frontendDB->be_def_limit.lms_s_pr;
+			lim->lms_s_pr_hide = frontendDB->be_def_limit.lms_s_pr_hide;
+			lim->lms_s_pr_total = frontendDB->be_def_limit.lms_s_pr_total;
+		}
+		goto ok;
 	}
 	for(i = 1; i < c->argc; i++) {
 		if(!strncasecmp(c->argv[i], "size", 4)) {
@@ -2084,6 +2251,35 @@ config_sizelimit(ConfigArgs *c) {
 			lim->lms_s_hard = 0;
 		}
 	}
+
+ok:
+	if ( ( c->be == frontendDB ) && ( c->ca_entry ) ) {
+		/* This is a modification to the global limits apply it to
+		 * the other databases as needed */
+		AttributeDescription *ad=NULL;
+		const char *text = NULL;
+		CfEntryInfo *ce = c->ca_entry->e_private;
+
+		slap_str2ad(c->argv[0], &ad, &text);
+		/* if we got here... */
+		assert( ad != NULL );
+
+		if ( ce->ce_type == Cft_Global ){
+			ce = ce->ce_kids;
+		}
+		for (; ce; ce=ce->ce_sibs) {
+			Entry *dbe = ce->ce_entry;
+			if ( (ce->ce_type == Cft_Database) && (ce->ce_be != frontendDB)
+					&& (!attr_find(dbe->e_attrs, ad)) ) {
+				ce->ce_be->be_def_limit.lms_s_soft = lim->lms_s_soft;
+				ce->ce_be->be_def_limit.lms_s_hard = lim->lms_s_hard;
+				ce->ce_be->be_def_limit.lms_s_unchecked =lim->lms_s_unchecked;
+				ce->ce_be->be_def_limit.lms_s_pr =lim->lms_s_pr;
+				ce->ce_be->be_def_limit.lms_s_pr_hide =lim->lms_s_pr_hide;
+				ce->ce_be->be_def_limit.lms_s_pr_total =lim->lms_s_pr_total;
+			}
+		}
+	}
 	return(0);
 }
 
@@ -2103,10 +2299,15 @@ config_timelimit(ConfigArgs *c) {
 			rc = 1;
 		return rc;
 	} else if ( c->op == LDAP_MOD_DELETE ) {
-		/* Reset to defaults */
-		lim->lms_t_soft = SLAPD_DEFAULT_TIMELIMIT;
-		lim->lms_t_hard = 0;
-		return 0;
+		/* Reset to defaults or values from frontend */
+		if ( c->be == frontendDB ) {
+			lim->lms_t_soft = SLAPD_DEFAULT_TIMELIMIT;
+			lim->lms_t_hard = 0;
+		} else {
+			lim->lms_t_soft = frontendDB->be_def_limit.lms_t_soft;
+			lim->lms_t_hard = frontendDB->be_def_limit.lms_t_hard;
+		}
+		goto ok;
 	}
 	for(i = 1; i < c->argc; i++) {
 		if(!strncasecmp(c->argv[i], "time", 4)) {
@@ -2129,6 +2330,31 @@ config_timelimit(ConfigArgs *c) {
 				}
 			}
 			lim->lms_t_hard = 0;
+		}
+	}
+
+ok:
+	if ( ( c->be == frontendDB ) && ( c->ca_entry ) ) {
+		/* This is a modification to the global limits apply it to
+		 * the other databases as needed */
+		AttributeDescription *ad=NULL;
+		const char *text = NULL;
+		CfEntryInfo *ce = c->ca_entry->e_private;
+
+		slap_str2ad(c->argv[0], &ad, &text);
+		/* if we got here... */
+		assert( ad != NULL );
+
+		if ( ce->ce_type == Cft_Global ){
+			ce = ce->ce_kids;
+		}
+		for (; ce; ce=ce->ce_sibs) {
+			Entry *dbe = ce->ce_entry;
+			if ( (ce->ce_type == Cft_Database) && (ce->ce_be != frontendDB)
+					&& (!attr_find(dbe->e_attrs, ad)) ) {
+				ce->ce_be->be_def_limit.lms_t_soft = lim->lms_t_soft;
+				ce->ce_be->be_def_limit.lms_t_hard = lim->lms_t_hard;
+			}
 		}
 	}
 	return(0);
@@ -2158,7 +2384,7 @@ static int
 config_subordinate(ConfigArgs *c)
 {
 	int rc = 1;
-	int advertise;
+	int advertise = 0;
 
 	switch( c->op ) {
 	case SLAP_CONFIG_EMIT:
@@ -2183,12 +2409,368 @@ config_subordinate(ConfigArgs *c)
 		break;
 	case LDAP_MOD_ADD:
 	case SLAP_CONFIG_ADD:
-		advertise = ( c->argc == 2 && !strcasecmp( c->argv[1], "advertise" ));
+		if ( c->be->be_nsuffix == NULL ) {
+			/* log error */
+			snprintf( c->cr_msg, sizeof( c->cr_msg),
+				"subordinate configuration needs a suffix" );
+			Debug( LDAP_DEBUG_ANY,
+				"%s: %s.\n",
+				c->log, c->cr_msg, 0 );
+			rc = 1;
+			break;
+		}
+
+		if ( c->argc == 2 ) {
+			if ( strcasecmp( c->argv[1], "advertise" ) == 0 ) {
+				advertise = 1;
+
+			} else if ( strcasecmp( c->argv[1], "TRUE" ) != 0 ) {
+				/* log error */
+				snprintf( c->cr_msg, sizeof( c->cr_msg),
+					"subordinate must be \"TRUE\" or \"advertise\"" );
+				Debug( LDAP_DEBUG_ANY,
+					"%s: suffix \"%s\": %s.\n",
+					c->log, c->be->be_suffix[0].bv_val, c->cr_msg );
+				rc = 1;
+				break;
+			}
+		}
+
 		rc = glue_sub_add( c->be, advertise, CONFIG_ONLINE_ADD( c ));
 		break;
 	}
+
 	return rc;
 }
+
+/*
+ * [listener=<listener>] [{read|write}=]<size>
+ */
+
+#ifdef LDAP_TCP_BUFFER
+static BerVarray tcp_buffer;
+int tcp_buffer_num;
+
+#define SLAP_TCP_RMEM (0x1U)
+#define SLAP_TCP_WMEM (0x2U)
+
+static int
+tcp_buffer_parse( struct berval *val, int argc, char **argv,
+		int *size, int *rw, Listener **l )
+{
+	int i, rc = LDAP_SUCCESS;
+	LDAPURLDesc *lud = NULL;
+	char *ptr;
+
+	if ( val != NULL && argv == NULL ) {
+		char *s = val->bv_val;
+
+		argv = ldap_str2charray( s, " \t" );
+		if ( argv == NULL ) {
+			return LDAP_OTHER;
+		}
+	}
+
+	i = 0;
+	if ( strncasecmp( argv[ i ], "listener=", STRLENOF( "listener=" ) )
+		== 0 )
+	{
+		char *url = argv[ i ] + STRLENOF( "listener=" );
+		
+		if ( ldap_url_parse( url, &lud ) ) {
+			rc = LDAP_INVALID_SYNTAX;
+			goto done;
+		}
+
+		*l = config_check_my_url( url, lud );
+		if ( *l == NULL ) {
+			rc = LDAP_NO_SUCH_ATTRIBUTE;
+			goto done;
+		}
+
+		i++;
+	}
+
+	ptr = argv[ i ];
+	if ( strncasecmp( ptr, "read=", STRLENOF( "read=" ) ) == 0 ) {
+		*rw |= SLAP_TCP_RMEM;
+		ptr += STRLENOF( "read=" );
+
+	} else if ( strncasecmp( ptr, "write=", STRLENOF( "write=" ) ) == 0 ) {
+		*rw |= SLAP_TCP_WMEM;
+		ptr += STRLENOF( "write=" );
+
+	} else {
+		*rw |= ( SLAP_TCP_RMEM | SLAP_TCP_WMEM );
+	}
+
+	/* accept any base */
+	if ( lutil_atoix( size, ptr, 0 ) ) {
+		rc = LDAP_INVALID_SYNTAX;
+		goto done;
+	}
+
+done:;
+	if ( val != NULL && argv != NULL ) {
+		ldap_charray_free( argv );
+	}
+
+	if ( lud != NULL ) {
+		ldap_free_urldesc( lud );
+	}
+
+	return rc;
+}
+
+static int
+tcp_buffer_delete_one( struct berval *val )
+{
+	int rc = 0;
+	int size = -1, rw = 0;
+	Listener *l = NULL;
+
+	rc = tcp_buffer_parse( val, 0, NULL, &size, &rw, &l );
+	if ( rc != 0 ) {
+		return rc;
+	}
+
+	if ( l != NULL ) {
+		int i;
+		Listener **ll = slapd_get_listeners();
+
+		for ( i = 0; ll[ i ] != NULL; i++ ) {
+			if ( ll[ i ] == l ) break;
+		}
+
+		if ( ll[ i ] == NULL ) {
+			return LDAP_NO_SUCH_ATTRIBUTE;
+		}
+
+		if ( rw & SLAP_TCP_RMEM ) l->sl_tcp_rmem = -1;
+		if ( rw & SLAP_TCP_WMEM ) l->sl_tcp_wmem = -1;
+
+		for ( i++ ; ll[ i ] != NULL && bvmatch( &l->sl_url, &ll[ i ]->sl_url ); i++ ) {
+			if ( rw & SLAP_TCP_RMEM ) ll[ i ]->sl_tcp_rmem = -1;
+			if ( rw & SLAP_TCP_WMEM ) ll[ i ]->sl_tcp_wmem = -1;
+		}
+
+	} else {
+		/* NOTE: this affects listeners without a specific setting,
+		 * does not reset all listeners.  If a listener without
+		 * specific settings was assigned a buffer because of
+		 * a global setting, it will not be reset.  In any case,
+		 * buffer changes will only take place at restart. */
+		if ( rw & SLAP_TCP_RMEM ) slapd_tcp_rmem = -1;
+		if ( rw & SLAP_TCP_WMEM ) slapd_tcp_wmem = -1;
+	}
+
+	return rc;
+}
+
+static int
+tcp_buffer_delete( BerVarray vals )
+{
+	int i;
+
+	for ( i = 0; !BER_BVISNULL( &vals[ i ] ); i++ ) {
+		tcp_buffer_delete_one( &vals[ i ] );
+	}
+
+	return 0;
+}
+
+static int
+tcp_buffer_unparse( int size, int rw, Listener *l, struct berval *val )
+{
+	char buf[sizeof("2147483648")], *ptr;
+
+	/* unparse for later use */
+	val->bv_len = snprintf( buf, sizeof( buf ), "%d", size );
+	if ( l != NULL ) {
+		val->bv_len += STRLENOF( "listener=" " " ) + l->sl_url.bv_len;
+	}
+
+	if ( rw != ( SLAP_TCP_RMEM | SLAP_TCP_WMEM ) ) {
+		if ( rw & SLAP_TCP_RMEM ) {
+			val->bv_len += STRLENOF( "read=" );
+		} else if ( rw & SLAP_TCP_WMEM ) {
+			val->bv_len += STRLENOF( "write=" );
+		}
+	}
+
+	val->bv_val = SLAP_MALLOC( val->bv_len + 1 );
+
+	ptr = val->bv_val;
+
+	if ( l != NULL ) {
+		ptr = lutil_strcopy( ptr, "listener=" );
+		ptr = lutil_strncopy( ptr, l->sl_url.bv_val, l->sl_url.bv_len );
+		*ptr++ = ' ';
+	}
+
+	if ( rw != ( SLAP_TCP_RMEM | SLAP_TCP_WMEM ) ) {
+		if ( rw & SLAP_TCP_RMEM ) {
+			ptr = lutil_strcopy( ptr, "read=" );
+		} else if ( rw & SLAP_TCP_WMEM ) {
+			ptr = lutil_strcopy( ptr, "write=" );
+		}
+	}
+
+	ptr = lutil_strcopy( ptr, buf );
+	*ptr = '\0';
+
+	assert( val->bv_val + val->bv_len == ptr );
+
+	return LDAP_SUCCESS;
+}
+
+static int
+tcp_buffer_add_one( int argc, char **argv )
+{
+	int rc = 0;
+	int size = -1, rw = 0;
+	Listener *l = NULL;
+
+	struct berval val;
+
+	/* parse */
+	rc = tcp_buffer_parse( NULL, argc, argv, &size, &rw, &l );
+	if ( rc != 0 ) {
+		return rc;
+	}
+
+	/* unparse for later use */
+	rc = tcp_buffer_unparse( size, rw, l, &val );
+	if ( rc != LDAP_SUCCESS ) {
+		return rc;
+	}
+
+	/* use parsed values */
+	if ( l != NULL ) {
+		int i;
+		Listener **ll = slapd_get_listeners();
+
+		for ( i = 0; ll[ i ] != NULL; i++ ) {
+			if ( ll[ i ] == l ) break;
+		}
+
+		if ( ll[ i ] == NULL ) {
+			return LDAP_NO_SUCH_ATTRIBUTE;
+		}
+
+		/* buffer only applies to TCP listeners;
+		 * we do not do any check here, and delegate them
+		 * to setsockopt(2) */
+		if ( rw & SLAP_TCP_RMEM ) l->sl_tcp_rmem = size;
+		if ( rw & SLAP_TCP_WMEM ) l->sl_tcp_wmem = size;
+
+		for ( i++ ; ll[ i ] != NULL && bvmatch( &l->sl_url, &ll[ i ]->sl_url ); i++ ) {
+			if ( rw & SLAP_TCP_RMEM ) ll[ i ]->sl_tcp_rmem = size;
+			if ( rw & SLAP_TCP_WMEM ) ll[ i ]->sl_tcp_wmem = size;
+		}
+
+	} else {
+		/* NOTE: this affects listeners without a specific setting,
+		 * does not set all listeners */
+		if ( rw & SLAP_TCP_RMEM ) slapd_tcp_rmem = size;
+		if ( rw & SLAP_TCP_WMEM ) slapd_tcp_wmem = size;
+	}
+
+	tcp_buffer = SLAP_REALLOC( tcp_buffer, sizeof( struct berval ) * ( tcp_buffer_num + 2 ) );
+	/* append */
+	tcp_buffer[ tcp_buffer_num ] = val;
+
+	tcp_buffer_num++;
+	BER_BVZERO( &tcp_buffer[ tcp_buffer_num ] );
+
+	return rc;
+}
+
+static int
+config_tcp_buffer( ConfigArgs *c )
+{
+	if ( c->op == SLAP_CONFIG_EMIT ) {
+		if ( tcp_buffer == NULL || BER_BVISNULL( &tcp_buffer[ 0 ] ) ) {
+			return 1;
+		}
+		value_add( &c->rvalue_vals, tcp_buffer );
+		value_add( &c->rvalue_nvals, tcp_buffer );
+		
+	} else if ( c->op == LDAP_MOD_DELETE ) {
+		if ( !c->line  ) {
+			tcp_buffer_delete( tcp_buffer );
+			ber_bvarray_free( tcp_buffer );
+			tcp_buffer = NULL;
+			tcp_buffer_num = 0;
+
+		} else {
+			int rc = 0;
+			int size = -1, rw = 0;
+			Listener *l = NULL;
+
+			struct berval val = BER_BVNULL;
+
+			int i;
+
+			if ( tcp_buffer_num == 0 ) {
+				return 1;
+			}
+
+			/* parse */
+			rc = tcp_buffer_parse( NULL, c->argc - 1, &c->argv[ 1 ], &size, &rw, &l );
+			if ( rc != 0 ) {
+				return 1;
+			}
+
+			/* unparse for later use */
+			rc = tcp_buffer_unparse( size, rw, l, &val );
+			if ( rc != LDAP_SUCCESS ) {
+				return 1;
+			}
+
+			for ( i = 0; !BER_BVISNULL( &tcp_buffer[ i ] ); i++ ) {
+				if ( bvmatch( &tcp_buffer[ i ], &val ) ) {
+					break;
+				}
+			}
+
+			if ( BER_BVISNULL( &tcp_buffer[ i ] ) ) {
+				/* not found */
+				rc = 1;
+				goto done;
+			}
+
+			tcp_buffer_delete_one( &tcp_buffer[ i ] );
+			ber_memfree( tcp_buffer[ i ].bv_val );
+			for ( ; i < tcp_buffer_num; i++ ) {
+				tcp_buffer[ i ] = tcp_buffer[ i + 1 ];
+			}
+			tcp_buffer_num--;
+
+done:;
+			if ( !BER_BVISNULL( &val ) ) {
+				SLAP_FREE( val.bv_val );
+			}
+	
+		}
+
+	} else {
+		int rc;
+
+		rc = tcp_buffer_add_one( c->argc - 1, &c->argv[ 1 ] );
+		if ( rc ) {
+			snprintf( c->cr_msg, sizeof( c->cr_msg ),
+				"<%s> unable to add value #%d",
+				c->argv[0], tcp_buffer_num );
+			Debug( LDAP_DEBUG_ANY, "%s: %s\n",
+				c->log, c->cr_msg, 0 );
+			return 1;
+		}
+	}
+
+	return 0;
+}
+#endif /* LDAP_TCP_BUFFER */
 
 static int
 config_suffix(ConfigArgs *c)
@@ -2485,6 +3067,8 @@ config_disallows(ConfigArgs *c) {
 		{ BER_BVC("bind_simple"),	SLAP_DISALLOW_BIND_SIMPLE },
 		{ BER_BVC("tls_2_anon"),		SLAP_DISALLOW_TLS_2_ANON },
 		{ BER_BVC("tls_authc"),		SLAP_DISALLOW_TLS_AUTHC },
+		{ BER_BVC("proxy_authz_non_critical"),	SLAP_DISALLOW_PROXY_AUTHZ_N_CRIT },
+		{ BER_BVC("dontusecopy_non_critical"),	SLAP_DISALLOW_DONTUSECOPY_N_CRIT },
 		{ BER_BVNULL, 0 }
 	};
 	if (c->op == SLAP_CONFIG_EMIT) {
@@ -2563,7 +3147,7 @@ static int
 loglevel_init( void )
 {
 	slap_verbmasks	lo[] = {
-		{ BER_BVC("Any"),	-1 },
+		{ BER_BVC("Any"),	(slap_mask_t) LDAP_DEBUG_ANY },
 		{ BER_BVC("Trace"),	LDAP_DEBUG_TRACE },
 		{ BER_BVC("Packets"),	LDAP_DEBUG_PACKETS },
 		{ BER_BVC("Args"),	LDAP_DEBUG_ARGS },
@@ -2715,9 +3299,11 @@ loglevel_print( FILE *out )
 
 	fprintf( out, "Installed log subsystems:\n\n" );
 	for ( i = 0; !BER_BVISNULL( &loglevel_ops[ i ].word ); i++ ) {
-		fprintf( out, "\t%-30s (%lu)\n",
-			loglevel_ops[ i ].word.bv_val,
-			loglevel_ops[ i ].mask );
+		unsigned mask = loglevel_ops[ i ].mask & 0xffffffffUL;
+		fprintf( out,
+			(mask == ((slap_mask_t) -1 & 0xffffffffUL)
+			 ? "\t%-30s (-1, 0xffffffff)\n" : "\t%-30s (%u, 0x%x)\n"),
+			loglevel_ops[ i ].word.bv_val, mask, mask );
 	}
 
 	fprintf( out, "\nNOTE: custom log subsystems may be later installed "
@@ -2759,7 +3345,7 @@ config_loglevel(ConfigArgs *c) {
 		int	level;
 
 		if ( isdigit((unsigned char)c->argv[i][0]) || c->argv[i][0] == '-' ) {
-			if( lutil_atoi( &level, c->argv[i] ) != 0 ) {
+			if( lutil_atoix( &level, c->argv[i], 0 ) != 0 ) {
 				snprintf( c->cr_msg, sizeof( c->cr_msg ), "<%s> unable to parse level", c->argv[0] );
 				Debug( LDAP_DEBUG_ANY, "%s: %s \"%s\"\n",
 					c->log, c->cr_msg, c->argv[i]);
@@ -2944,7 +3530,7 @@ config_updatedn(ConfigArgs *c) {
 }
 
 int
-config_shadow( ConfigArgs *c, int flag )
+config_shadow( ConfigArgs *c, slap_mask_t flag )
 {
 	char	*notallowed = NULL;
 
@@ -2960,7 +3546,17 @@ config_shadow( ConfigArgs *c, int flag )
 		return 1;
 	}
 
-	SLAP_DBFLAGS(c->be) |= (SLAP_DBFLAG_SHADOW | SLAP_DBFLAG_SINGLE_SHADOW | flag);
+	if ( SLAP_SHADOW(c->be) ) {
+		/* if already shadow, only check consistency */
+		if ( ( SLAP_DBFLAGS(c->be) & flag ) != flag ) {
+			Debug( LDAP_DEBUG_ANY, "%s: inconsistent shadow flag 0x%lx.\n",
+				c->log, flag, 0 );
+			return 1;
+		}
+
+	} else {
+		SLAP_DBFLAGS(c->be) |= (SLAP_DBFLAG_SHADOW | SLAP_DBFLAG_SINGLE_SHADOW | flag);
+	}
 
 	return 0;
 }
@@ -3054,6 +3650,27 @@ config_include(ConfigArgs *c) {
 
 #ifdef HAVE_TLS
 static int
+config_tls_cleanup(ConfigArgs *c) {
+	int rc = 0;
+
+	if ( slap_tls_ld ) {
+		int opt = 1;
+
+		ldap_pvt_tls_ctx_free( slap_tls_ctx );
+
+		/* Force new ctx to be created */
+		rc = ldap_pvt_tls_set_option( slap_tls_ld, LDAP_OPT_X_TLS_NEWCTX, &opt );
+		if( rc == 0 ) {
+			/* The ctx's refcount is bumped up here */
+			ldap_pvt_tls_get_option( slap_tls_ld, LDAP_OPT_X_TLS_CTX, &slap_tls_ctx );
+			/* This is a no-op if it's already loaded */
+			load_extop( &slap_EXOP_START_TLS, 0, starttls_extop );
+		}
+	}
+	return rc;
+}
+
+static int
 config_tls_option(ConfigArgs *c) {
 	int flag;
 	LDAP *ld = slap_tls_ld;
@@ -3076,9 +3693,11 @@ config_tls_option(ConfigArgs *c) {
 	if (c->op == SLAP_CONFIG_EMIT) {
 		return ldap_pvt_tls_get_option( ld, flag, &c->value_string );
 	} else if ( c->op == LDAP_MOD_DELETE ) {
+		c->cleanup = config_tls_cleanup;
 		return ldap_pvt_tls_set_option( ld, flag, NULL );
 	}
 	ch_free(c->value_string);
+	c->cleanup = config_tls_cleanup;
 	return(ldap_pvt_tls_set_option(ld, flag, c->argv[1]));
 }
 
@@ -3089,6 +3708,7 @@ config_tls_config(ConfigArgs *c) {
 	switch(c->type) {
 	case CFG_TLS_CRLCHECK:	flag = LDAP_OPT_X_TLS_CRLCHECK; break;
 	case CFG_TLS_VERIFY:	flag = LDAP_OPT_X_TLS_REQUIRE_CERT; break;
+	case CFG_TLS_PROTOCOL_MIN: flag = LDAP_OPT_X_TLS_PROTOCOL_MIN; break;
 	default:
 		Debug(LDAP_DEBUG_ANY, "%s: "
 				"unknown tls_option <0x%x>\n",
@@ -3099,9 +3719,11 @@ config_tls_config(ConfigArgs *c) {
 		return slap_tls_get_config( slap_tls_ld, flag, &c->value_string );
 	} else if ( c->op == LDAP_MOD_DELETE ) {
 		int i = 0;
+		c->cleanup = config_tls_cleanup;
 		return ldap_pvt_tls_set_option( slap_tls_ld, flag, &i );
 	}
 	ch_free( c->value_string );
+	c->cleanup = config_tls_cleanup;
 	if ( isdigit( (unsigned char)c->argv[1][0] ) ) {
 		if ( lutil_atoi( &i, c->argv[1] ) != 0 ) {
 			Debug(LDAP_DEBUG_ANY, "%s: "
@@ -3160,7 +3782,7 @@ typedef struct setup_cookie {
 	ConfigArgs *ca;
 	Entry *frontend;
 	Entry *config;
-	int	got_frontend;
+	int got_frontend;
 	int got_config;
 } setup_cookie;
 
@@ -3169,15 +3791,18 @@ config_ldif_resp( Operation *op, SlapReply *rs )
 {
 	if ( rs->sr_type == REP_SEARCH ) {
 		setup_cookie *sc = op->o_callback->sc_private;
+		struct berval pdn;
 
 		sc->cfb->cb_got_ldif = 1;
 		/* Does the frontend exist? */
 		if ( !sc->got_frontend ) {
 			if ( !strncmp( rs->sr_entry->e_nname.bv_val,
-				"olcDatabase", STRLENOF( "olcDatabase" ))) {
+				"olcDatabase", STRLENOF( "olcDatabase" )))
+			{
 				if ( strncmp( rs->sr_entry->e_nname.bv_val +
 					STRLENOF( "olcDatabase" ), "={-1}frontend",
-					STRLENOF( "={-1}frontend" ))) {
+					STRLENOF( "={-1}frontend" )))
+				{
 					struct berval rdn;
 					int i = op->o_noop;
 					sc->ca->be = frontendDB;
@@ -3200,13 +3825,19 @@ config_ldif_resp( Operation *op, SlapReply *rs )
 				}
 			}
 		}
+
+		dnParent( &rs->sr_entry->e_nname, &pdn );
+
 		/* Does the configDB exist? */
 		if ( sc->got_frontend && !sc->got_config &&
 			!strncmp( rs->sr_entry->e_nname.bv_val,
-			"olcDatabase", STRLENOF( "olcDatabase" ))) {
+			"olcDatabase", STRLENOF( "olcDatabase" )) &&
+			dn_match( &config_rdn, &pdn ) )
+		{
 			if ( strncmp( rs->sr_entry->e_nname.bv_val +
 				STRLENOF( "olcDatabase" ), "={0}config",
-				STRLENOF( "={0}config" ))) {
+				STRLENOF( "={0}config" )))
+			{
 				struct berval rdn;
 				int i = op->o_noop;
 				sc->ca->be = LDAP_STAILQ_FIRST( &backendDB );
@@ -3507,6 +4138,9 @@ config_send( Operation *op, SlapReply *rs, CfEntryInfo *ce, int depth )
 		rs->sr_entry = ce->ce_entry;
 		rs->sr_flags = 0;
 		rc = send_search_entry( op, rs );
+		if ( rc != LDAP_SUCCESS ) {
+			return rc;
+		}
 	}
 	if ( op->ors_scope == LDAP_SCOPE_SUBTREE ) {
 		if ( ce->ce_kids ) {
@@ -3669,14 +4303,15 @@ config_rename_kids( CfEntryInfo *ce )
 	struct berval rdn, nrdn;
 
 	for (ce2 = ce->ce_kids; ce2; ce2 = ce2->ce_sibs) {
+		struct berval newdn, newndn;
 		dnRdn ( &ce2->ce_entry->e_name, &rdn );
 		dnRdn ( &ce2->ce_entry->e_nname, &nrdn );
+		build_new_dn( &newdn, &ce->ce_entry->e_name, &rdn, NULL );
+		build_new_dn( &newndn, &ce->ce_entry->e_nname, &nrdn, NULL );
 		free( ce2->ce_entry->e_name.bv_val );
 		free( ce2->ce_entry->e_nname.bv_val );
-		build_new_dn( &ce2->ce_entry->e_name, &ce->ce_entry->e_name,
-			&rdn, NULL );
-		build_new_dn( &ce2->ce_entry->e_nname, &ce->ce_entry->e_nname,
-			&nrdn, NULL );
+		ce2->ce_entry->e_name = newdn;
+		ce2->ce_entry->e_nname = newndn;
 		config_rename_kids( ce2 );
 	}
 }
@@ -3837,10 +4472,10 @@ check_name_index( CfEntryInfo *parent, ConfigType ce_type, Entry *e,
 			isconfig = 1;
 	}
 	ptr1 = ber_bvchr( &e->e_name, '{' );
-	if ( ptr1 && ptr1 - e->e_name.bv_val < rdn.bv_len ) {
+	if ( ptr1 && ptr1 < &e->e_name.bv_val[ rdn.bv_len ] ) {
 		char	*next;
 		ptr2 = strchr( ptr1, '}' );
-		if (!ptr2 || ptr2 - e->e_name.bv_val > rdn.bv_len)
+		if ( !ptr2 || ptr2 > &e->e_name.bv_val[ rdn.bv_len ] )
 			return LDAP_NAMING_VIOLATION;
 		if ( ptr2-ptr1 == 1)
 			return LDAP_NAMING_VIOLATION;
@@ -3881,7 +4516,7 @@ check_name_index( CfEntryInfo *parent, ConfigType ce_type, Entry *e,
 		if ( isconfig && index == -1 ) {
 			index = 0;
 		}
-		if ( !isfrontend && index == -1 ) {
+		if (( !isfrontend && index == -1 ) || ( index > nsibs ) ){
 			index = nsibs;
 		}
 
@@ -4040,6 +4675,7 @@ schema_destroy_one( ConfigArgs *ca, ConfigOCs **colst, int nocs,
 
 	ca->valx = -1;
 	ca->line = NULL;
+	ca->argc = 1;
 	if ( cfn->c_cr_head ) {
 		struct berval bv = BER_BVC("olcDitContentRules");
 		ad = NULL;
@@ -4056,6 +4692,13 @@ schema_destroy_one( ConfigArgs *ca, ConfigOCs **colst, int nocs,
 	}
 	if ( cfn->c_at_head ) {
 		struct berval bv = BER_BVC("olcAttributeTypes");
+		ad = NULL;
+		slap_bv2ad( &bv, &ad, &text );
+		ct = config_find_table( colst, nocs, ad, ca );
+		config_del_vals( ct, ca );
+	}
+	if ( cfn->c_syn_head ) {
+		struct berval bv = BER_BVC("olcLdapSyntaxes");
 		ad = NULL;
 		slap_bv2ad( &bv, &ad, &text );
 		ct = config_find_table( colst, nocs, ad, ca );
@@ -4132,6 +4775,9 @@ config_add_internal( CfBackInfo *cfb, Entry *e, ConfigArgs *ca, SlapReply *rs,
 			Debug( LDAP_DEBUG_TRACE, "%s: config_add_internal: "
 				"DN=\"%s\" already exists\n",
 				log_prefix, e->e_name.bv_val, 0 );
+			/* global schema ignores all writes */
+			if ( ce->ce_type == Cft_Schema && ce->ce_parent->ce_type == Cft_Global )
+				return LDAP_COMPARE_TRUE;
 			return LDAP_ALREADY_EXISTS;
 		}
 	}
@@ -4330,6 +4976,7 @@ config_add_internal( CfBackInfo *cfb, Entry *e, ConfigArgs *ca, SlapReply *rs,
 		if ( !ct ) continue;	/* user data? */
 		for (i=0; a->a_vals[i].bv_val; i++) {
 			char *iptr = NULL;
+			ca->valx = -1;
 			ca->line = a->a_vals[i].bv_val;
 			if ( a->a_desc->ad_type->sat_flags & SLAP_AT_ORDERED ) {
 				ptr = strchr( ca->line, '}' );
@@ -4341,8 +4988,6 @@ config_add_internal( CfBackInfo *cfb, Entry *e, ConfigArgs *ca, SlapReply *rs,
 			if ( a->a_desc->ad_type->sat_flags & SLAP_AT_ORDERED_SIB ) {
 				if ( iptr ) {
 					ca->valx = strtol( iptr+1, NULL, 0 );
-				} else {
-					ca->valx = -1;
 				}
 			} else {
 				ca->valx = i;
@@ -4357,10 +5002,10 @@ config_add_internal( CfBackInfo *cfb, Entry *e, ConfigArgs *ca, SlapReply *rs,
 ok:
 	/* Newly added databases and overlays need to be started up */
 	if ( CONFIG_ONLINE_ADD( ca )) {
-		if ( colst[0]->co_type == Cft_Database ) {
+		if ( coptr->co_type == Cft_Database ) {
 			rc = backend_startup_one( ca->be, &ca->reply );
 
-		} else if ( colst[0]->co_type == Cft_Overlay ) {
+		} else if ( coptr->co_type == Cft_Overlay ) {
 			if ( ca->bi->bi_db_open ) {
 				BackendInfo *bi_orig = ca->be->bd_info;
 				ca->be->bd_info = ca->bi;
@@ -4386,7 +5031,7 @@ ok:
 	ce->ce_parent = last;
 	ce->ce_entry = entry_dup( e );
 	ce->ce_entry->e_private = ce;
-	ce->ce_type = colst[0]->co_type;
+	ce->ce_type = coptr->co_type;
 	ce->ce_be = ca->be;
 	ce->ce_bi = ca->bi;
 	ce->ce_private = ca->ca_private;
@@ -4431,12 +5076,12 @@ ok:
 
 done:
 	if ( rc ) {
-		if ( (colst[0]->co_type == Cft_Database) && ca->be ) {
+		if ( (coptr->co_type == Cft_Database) && ca->be ) {
 			if ( ca->be != frontendDB )
 				backend_destroy_one( ca->be, 1 );
-		} else if ( (colst[0]->co_type == Cft_Overlay) && ca->bi ) {
+		} else if ( (coptr->co_type == Cft_Overlay) && ca->bi ) {
 			overlay_destroy_one( ca->be, (slap_overinst *)ca->bi );
-		} else if ( colst[0]->co_type == Cft_Schema ) {
+		} else if ( coptr->co_type == Cft_Schema ) {
 			schema_destroy_one( ca, colst, nocs, last );
 		}
 	}
@@ -4533,13 +5178,22 @@ config_back_add( Operation *op, SlapReply *rs )
 		goto out;
 	}
 
+	/*
+	 * Check for attribute ACL
+	 */
+	if ( !acl_check_modlist( op, op->ora_e, op->orm_modlist )) {
+		rs->sr_err = LDAP_INSUFFICIENT_ACCESS;
+		rs->sr_text = "no write access to attribute";
+		goto out;
+	}
+
 	cfb = (CfBackInfo *)op->o_bd->be_private;
 
 	/* add opattrs for syncprov */
 	{
 		char textbuf[SLAP_TEXT_BUFLEN];
 		size_t textlen = sizeof textbuf;
-		rs->sr_err = entry_schema_check(op, op->ora_e, NULL, 0, 1,
+		rs->sr_err = entry_schema_check(op, op->ora_e, NULL, 0, 1, NULL,
 			&rs->sr_text, textbuf, sizeof( textbuf ) );
 		if ( rs->sr_err != LDAP_SUCCESS )
 			goto out;
@@ -4552,6 +5206,10 @@ config_back_add( Operation *op, SlapReply *rs )
 		}
 	}
 
+	if ( op->o_abandon ) {
+		rs->sr_err = SLAPD_ABANDON;
+		goto out;
+	}
 	ldap_pvt_thread_pool_pause( &connection_pool );
 
 	/* Strategy:
@@ -4605,7 +5263,14 @@ out2:;
 	ldap_pvt_thread_pool_resume( &connection_pool );
 
 out:;
-	send_ldap_result( op, rs );
+	{	int repl = op->o_dont_replicate;
+		if ( rs->sr_err == LDAP_COMPARE_TRUE ) {
+			rs->sr_err = LDAP_SUCCESS;
+			op->o_dont_replicate = 1;
+		}
+		send_ldap_result( op, rs );
+		op->o_dont_replicate = repl;
+	}
 	slap_graduate_commit_csn( op );
 	return rs->sr_err;
 }
@@ -4622,6 +5287,7 @@ config_modify_add( ConfigTable *ct, ConfigArgs *ca, AttributeDescription *ad,
 {
 	int rc;
 
+	ca->valx = -1;
 	if (ad->ad_type->sat_flags & SLAP_AT_ORDERED &&
 		ca->line[0] == '{' )
 	{
@@ -4785,7 +5451,7 @@ config_modify_internal( CfEntryInfo *ce, Operation *op, SlapReply *rs,
 	
 	if ( rc == LDAP_SUCCESS) {
 		/* check that the entry still obeys the schema */
-		rc = entry_schema_check(op, e, NULL, 0, 0,
+		rc = entry_schema_check(op, e, NULL, 0, 0, NULL,
 			&rs->sr_text, ca->cr_msg, sizeof(ca->cr_msg) );
 	}
 	if ( rc ) goto out_noop;
@@ -4835,6 +5501,7 @@ config_modify_internal( CfEntryInfo *ce, Operation *op, SlapReply *rs,
 					}
 					ca->line = bv.bv_val;
 					ca->valx = d->idx[i];
+					config_parse_vals(ct, ca, d->idx[i] );
 					rc = config_del_vals( ct, ca );
 					if ( rc != LDAP_SUCCESS ) break;
 					if ( s )
@@ -4846,6 +5513,7 @@ config_modify_internal( CfEntryInfo *ce, Operation *op, SlapReply *rs,
 			} else {
 				ca->valx = -1;
 				ca->line = NULL;
+				ca->argc = 1;
 				rc = config_del_vals( ct, ca );
 				if ( rc ) rc = LDAP_OTHER;
 				if ( s )
@@ -4892,6 +5560,7 @@ out:
 					a->a_flags &= ~(SLAP_ATTR_IXDEL|SLAP_ATTR_IXADD);
 					ca->valx = -1;
 					ca->line = NULL;
+					ca->argc = 1;
 					config_del_vals( ct, ca );
 				}
 				for ( i=0; !BER_BVISNULL( &s->a_vals[i] ); i++ ) {
@@ -4906,6 +5575,7 @@ out:
 				ct = config_find_table( colst, nocs, a->a_desc, ca );
 				ca->valx = -1;
 				ca->line = NULL;
+				ca->argc = 1;
 				config_del_vals( ct, ca );
 				s = attr_find( save_attrs, a->a_desc );
 				if ( s ) {
@@ -4991,8 +5661,13 @@ config_back_modify( Operation *op, SlapReply *rs )
 
 	slap_mods_opattrs( op, &op->orm_modlist, 1 );
 
-	if ( do_pause )
+	if ( do_pause ) {
+		if ( op->o_abandon ) {
+			rs->sr_err = SLAPD_ABANDON;
+			goto out;
+		}
 		ldap_pvt_thread_pool_pause( &connection_pool );
+	}
 
 	/* Strategy:
 	 * 1) perform the Modify on the cached Entry.
@@ -5156,6 +5831,10 @@ config_back_modrdn( Operation *op, SlapReply *rs )
 		goto out;
 	}
 
+	if ( op->o_abandon ) {
+		rs->sr_err = SLAPD_ABANDON;
+		goto out;
+	}
 	ldap_pvt_thread_pool_pause( &connection_pool );
 
 	if ( ce->ce_type == Cft_Schema ) {
@@ -5236,8 +5915,6 @@ config_back_delete( Operation *op, SlapReply *rs )
 	CfBackInfo *cfb;
 	CfEntryInfo *ce, *last, *ce2;
 
-	slap_mask_t mask;
-
 	cfb = (CfBackInfo *)op->o_bd->be_private;
 
 	ce = config_find_base( cfb->cb_root, &op->o_req_ndn, &last );
@@ -5245,11 +5922,13 @@ config_back_delete( Operation *op, SlapReply *rs )
 		if ( last )
 			rs->sr_matched = last->ce_entry->e_name.bv_val;
 		rs->sr_err = LDAP_NO_SUCH_OBJECT;
-	} if ( ce->ce_kids ) {
+	} else if ( ce->ce_kids ) {
 		rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
+	} else if ( op->o_abandon ) {
+		rs->sr_err = SLAPD_ABANDON;
 	} else if ( ce->ce_type == Cft_Overlay ){
 		char *iptr;
-		int count, ixold, rc;
+		int count, ixold;
 
 		ldap_pvt_thread_pool_pause( &connection_pool );
 		
@@ -5348,20 +6027,22 @@ config_back_search( Operation *op, SlapReply *rs )
 	switch ( op->ors_scope ) {
 	case LDAP_SCOPE_BASE:
 	case LDAP_SCOPE_SUBTREE:
-		config_send( op, rs, ce, 0 );
+		rs->sr_err = config_send( op, rs, ce, 0 );
 		break;
 		
 	case LDAP_SCOPE_ONELEVEL:
 		for (ce = ce->ce_kids; ce; ce=ce->ce_sibs) {
-			config_send( op, rs, ce, 1 );
+			rs->sr_err = config_send( op, rs, ce, 1 );
+			if ( rs->sr_err ) {
+				break;
+			}
 		}
 		break;
 	}
-		
-	rs->sr_err = LDAP_SUCCESS;
+
 out:
 	send_ldap_result( op, rs );
-	return 0;
+	return rs->sr_err;
 }
 
 /* no-op, we never free entries */
@@ -5407,7 +6088,7 @@ int config_back_entry_get(
 	return rc;
 }
 
-static void
+static int
 config_build_attrs( Entry *e, AttributeType **at, AttributeDescription *ad,
 	ConfigTable *ct, ConfigArgs *c )
 {
@@ -5424,18 +6105,42 @@ config_build_attrs( Entry *e, AttributeType **at, AttributeDescription *ad,
 				 * returns success with no values */
 				if (rc == LDAP_SUCCESS && c->rvalue_vals != NULL ) {
 					if ( c->rvalue_nvals )
-						attr_merge(e, ct[i].ad, c->rvalue_vals,
+						rc = attr_merge(e, ct[i].ad, c->rvalue_vals,
 							c->rvalue_nvals);
-					else
-						attr_merge_normalize(e, ct[i].ad,
+					else {
+						slap_syntax_validate_func *validate =
+							ct[i].ad->ad_type->sat_syntax->ssyn_validate;
+						if ( validate ) {
+							int j;
+							for ( j=0; c->rvalue_vals[j].bv_val; j++ ) {
+								rc = ordered_value_validate( ct[i].ad,
+									&c->rvalue_vals[j], LDAP_MOD_ADD );
+								if ( rc ) {
+									Debug( LDAP_DEBUG_ANY,
+										"config_build_attrs: error %d on %s value #%d\n",
+										rc, ct[i].ad->ad_cname.bv_val, j );
+									return rc;
+								}
+							}
+						}
+							
+						rc = attr_merge_normalize(e, ct[i].ad,
 							c->rvalue_vals, NULL);
+					}
 					ber_bvarray_free( c->rvalue_nvals );
 					ber_bvarray_free( c->rvalue_vals );
+					if ( rc ) {
+						Debug( LDAP_DEBUG_ANY,
+							"config_build_attrs: error %d on %s\n",
+							rc, ct[i].ad->ad_cname.bv_val, 0 );
+						return rc;
+					}
 				}
 				break;
 			}
 		}
 	}
+	return 0;
 }
 
 Entry *
@@ -5449,7 +6154,7 @@ config_build_entry( Operation *op, SlapReply *rs, CfEntryInfo *parent,
 	AttributeDescription *ad = NULL;
 	int rc;
 	char *ptr;
-	const char *text;
+	const char *text = "";
 	Attribute *oc_at;
 	struct berval pdn;
 	ObjectClass *oc;
@@ -5487,7 +6192,7 @@ config_build_entry( Operation *op, SlapReply *rs, CfEntryInfo *parent,
 	ad_name.bv_len = ptr - rdn->bv_val;
 	rc = slap_bv2ad( &ad_name, &ad, &text );
 	if ( rc ) {
-		return NULL;
+		goto fail;
 	}
 	val.bv_val = ptr+1;
 	val.bv_len = rdn->bv_len - (val.bv_val - rdn->bv_val);
@@ -5495,26 +6200,35 @@ config_build_entry( Operation *op, SlapReply *rs, CfEntryInfo *parent,
 
 	oc = main->co_oc;
 	c->table = main->co_type;
-	if ( oc->soc_required )
-		config_build_attrs( e, oc->soc_required, ad, main->co_table, c );
+	if ( oc->soc_required ) {
+		rc = config_build_attrs( e, oc->soc_required, ad, main->co_table, c );
+		if ( rc ) goto fail;
+	}
 
-	if ( oc->soc_allowed )
-		config_build_attrs( e, oc->soc_allowed, ad, main->co_table, c );
+	if ( oc->soc_allowed ) {
+		rc = config_build_attrs( e, oc->soc_allowed, ad, main->co_table, c );
+		if ( rc ) goto fail;
+	}
 
 	if ( extra ) {
 		oc = extra->co_oc;
 		c->table = extra->co_type;
-		if ( oc->soc_required )
-			config_build_attrs( e, oc->soc_required, ad, extra->co_table, c );
+		if ( oc->soc_required ) {
+			rc = config_build_attrs( e, oc->soc_required, ad, extra->co_table, c );
+			if ( rc ) goto fail;
+		}
 
-		if ( oc->soc_allowed )
-			config_build_attrs( e, oc->soc_allowed, ad, extra->co_table, c );
+		if ( oc->soc_allowed ) {
+			rc = config_build_attrs( e, oc->soc_allowed, ad, extra->co_table, c );
+			if ( rc ) goto fail;
+		}
 	}
 
 	oc_at = attr_find( e->e_attrs, slap_schema.si_ad_objectClass );
 	rc = structural_class(oc_at->a_vals, &oc, NULL, &text, c->cr_msg,
 		sizeof(c->cr_msg), op ? op->o_tmpmemctx : NULL );
 	if ( rc != LDAP_SUCCESS ) {
+fail:
 		Debug( LDAP_DEBUG_ANY,
 			"config_build_entry: build \"%s\" failed: \"%s\"\n",
 			rdn->bv_val, text, 0);
@@ -5529,7 +6243,7 @@ config_build_entry( Operation *op, SlapReply *rs, CfEntryInfo *parent,
 			op->o_bd->be_add( op, rs );
 			if ( ( rs->sr_err != LDAP_SUCCESS ) 
 					&& (rs->sr_err != LDAP_ALREADY_EXISTS) ) {
-				return NULL;
+				goto fail;
 			}
 		}
 	}
@@ -5551,11 +6265,11 @@ config_build_schema_inc( ConfigArgs *c, CfEntryInfo *ceparent,
 	Entry *e;
 	ConfigFile *cf = c->ca_private;
 	char *ptr;
-	struct berval bv;
+	struct berval bv, rdn;
 
 	for (; cf; cf=cf->c_sibs, c->depth++) {
 		if ( !cf->c_at_head && !cf->c_cr_head && !cf->c_oc_head &&
-			!cf->c_om_head ) continue;
+			!cf->c_om_head && !cf->c_syn_head ) continue;
 		c->value_dn.bv_val = c->log;
 		LUTIL_SLASHPATH( cf->c_file.bv_val );
 		bv.bv_val = strrchr(cf->c_file.bv_val, LDAP_DIRSEP[0]);
@@ -5577,9 +6291,10 @@ config_build_schema_inc( ConfigArgs *c, CfEntryInfo *ceparent,
 			bv.bv_len );
 		c->value_dn.bv_len += bv.bv_len;
 		c->value_dn.bv_val[c->value_dn.bv_len] ='\0';
+		rdn = c->value_dn;
 
 		c->ca_private = cf;
-		e = config_build_entry( op, rs, ceparent, c, &c->value_dn,
+		e = config_build_entry( op, rs, ceparent, c, &rdn,
 			&CFOC_SCHEMA, NULL );
 		if ( !e ) {
 			return -1;
@@ -5684,6 +6399,21 @@ config_check_schema(Operation *op, CfBackInfo *cfb)
 			ber_bvarray_free( bv );
 			cf_oc_tail = oc_sys_tail;
 		}
+		if ( cf_syn_tail != syn_sys_tail ) {
+			a = attr_find( e->e_attrs, cfAd_syntax );
+			if ( a ) {
+				if ( a->a_nvals != a->a_vals )
+					ber_bvarray_free( a->a_nvals );
+				ber_bvarray_free( a->a_vals );
+				a->a_vals = NULL;
+				a->a_nvals = NULL;
+				a->a_numvals = 0;
+			}
+			syn_unparse( &bv, NULL, NULL, 1 );
+			attr_merge_normalize( e, cfAd_syntax, bv, NULL );
+			ber_bvarray_free( bv );
+			cf_syn_tail = syn_sys_tail;
+		}
 	} else {
 		SlapReply rs = {REP_RESULT};
 		c.ca_private = NULL;
@@ -5697,6 +6427,7 @@ config_check_schema(Operation *op, CfBackInfo *cfb)
 		cf_at_tail = at_sys_tail;
 		cf_oc_tail = oc_sys_tail;
 		cf_om_tail = om_sys_tail;
+		cf_syn_tail = syn_sys_tail;
 	}
 	return 0;
 }
@@ -5727,7 +6458,7 @@ config_back_db_open( BackendDB *be, ConfigReply *cr )
 	/* If we have no explicitly configured ACLs, don't just use
 	 * the global ACLs. Explicitly deny access to everything.
 	 */
-	if ( frontendDB->be_acl && be->be_acl == frontendDB->be_acl ) {
+	if ( !be->be_acl ) {
 		parse_acl(be, "config_back_db_open", 0, 6, (char **)defacl, 0 );
 	}
 
@@ -5788,6 +6519,7 @@ config_back_db_open( BackendDB *be, ConfigReply *cr )
 	cf_at_tail = at_sys_tail;
 	cf_oc_tail = oc_sys_tail;
 	cf_om_tail = om_sys_tail;
+	cf_syn_tail = syn_sys_tail;
 
 	/* Create schema nodes for included schema... */
 	if ( cfb->cb_config->c_kids ) {
@@ -6015,6 +6747,9 @@ config_back_db_init( BackendDB *be, ConfigReply* cr )
 	/* Hide from namingContexts */
 	SLAP_BFLAGS(be) |= SLAP_BFLAG_CONFIG;
 
+	/* Check ACLs on content of Adds by default */
+	SLAP_DBFLAGS(be) |= SLAP_DBFLAG_ACL_ADD;
+
 	return 0;
 }
 
@@ -6221,6 +6956,7 @@ static struct {
 	{ "backend", &cfAd_backend },
 	{ "database", &cfAd_database },
 	{ "include", &cfAd_include },
+	{ "ldapsyntax", &cfAd_syntax },
 	{ "objectclass", &cfAd_oc },
 	{ "objectidentifier", &cfAd_om },
 	{ "overlay", &cfAd_overlay },
@@ -6325,6 +7061,9 @@ config_back_initialize( BackendInfo *bi )
 	bi->bi_cf_ocs = cf_ocs;
 
 	i = config_register_schema( ct, cf_ocs );
+	if ( i ) return i;
+
+	i = slap_str2ad( "olcDatabase", &olcDatabaseDummy[0].ad, &text );
 	if ( i ) return i;
 
 	/* setup olcRootPW to be base64-encoded when written in LDIF form;

@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/schema.c,v 1.77.2.4 2008/04/14 22:32:48 quanah Exp $ */
+/*	$NetBSD: schema.c,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/libraries/libldap/schema.c,v 1.77.2.5 2009/01/22 00:00:55 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

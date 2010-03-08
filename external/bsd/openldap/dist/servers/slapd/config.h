@@ -1,8 +1,10 @@
+/*	$NetBSD: config.h,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+
 /* config.h - configuration abstraction structure */
-/* $OpenLDAP: pkg/ldap/servers/slapd/config.h,v 1.34.2.11 2008/04/14 18:25:54 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/config.h,v 1.34.2.19 2009/08/25 22:44:25 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,6 +60,8 @@ typedef enum {
 #define ARG_BERVAL	0x00006000
 #define ARG_DN		0x00007000
 #define ARG_UINT	0x00008000
+#define ARG_ATDESC	0x00009000
+#define ARG_ULONG	0x0000a000
 
 #define ARGS_SYNTAX	0xffff0000
 #define ARG_IGNORED	0x00080000
@@ -133,6 +137,7 @@ typedef struct config_args_s {
 		int v_int;
 		unsigned v_uint;
 		long v_long;
+		unsigned long v_ulong;
 		ber_len_t v_ber_t;
 		char *v_string;
 		struct berval v_bv;
@@ -140,6 +145,7 @@ typedef struct config_args_s {
 			struct berval vdn_dn;
 			struct berval vdn_ndn;
 		} v_dn;
+		AttributeDescription *v_ad;
 	} values;
 	/* return values for emit mode */
 	BerVarray rvalue_vals;
@@ -165,11 +171,15 @@ typedef struct config_args_s {
 #define value_int values.v_int
 #define value_uint values.v_uint
 #define value_long values.v_long
+#define value_ulong values.v_ulong
 #define value_ber_t values.v_ber_t
 #define value_string values.v_string
 #define value_bv values.v_bv
 #define value_dn values.v_dn.vdn_dn
 #define value_ndn values.v_dn.vdn_ndn
+#define value_ad values.v_ad
+
+int config_fp_parse_line(ConfigArgs *c);
 
 int config_register_schema(ConfigTable *ct, ConfigOCs *co);
 int config_del_vals(ConfigTable *cf, ConfigArgs *c);
@@ -188,7 +198,8 @@ ConfigTable * config_find_keyword(ConfigTable *ct, ConfigArgs *c);
 Entry * config_build_entry( Operation *op, SlapReply *rs, CfEntryInfo *parent,
 	ConfigArgs *c, struct berval *rdn, ConfigOCs *main, ConfigOCs *extra );
 
-int config_shadow( ConfigArgs *c, int flag );
+Listener *config_check_my_url(const char *url, LDAPURLDesc *lud);
+int config_shadow( ConfigArgs *c, slap_mask_t flag );
 #define	config_slurp_shadow(c)	config_shadow((c), SLAP_DBFLAG_SLURP_SHADOW)
 #define	config_sync_shadow(c)	config_shadow((c), SLAP_DBFLAG_SYNC_SHADOW)
 
@@ -198,8 +209,10 @@ int config_shadow( ConfigArgs *c, int flag );
 
 #define	SLAP_X_ORDERED_FMT	"{%d}"
 
-extern slap_verbmasks *slap_ldap_response_code;
+LDAP_SLAPD_V (slap_verbmasks *) slap_ldap_response_code;
 extern int slap_ldap_response_code_register( struct berval *bv, int err );
+
+LDAP_SLAPD_V (ConfigTable) olcDatabaseDummy[];
 
 LDAP_END_DECL
 

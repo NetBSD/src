@@ -1,4 +1,6 @@
-// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPSearchResults.h,v 1.3.10.2 2008/04/14 23:30:47 quanah Exp $
+/*	$NetBSD: LDAPSearchResults.h,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+
+// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPSearchResults.h,v 1.3.10.2 2008/04/14 23:30:47 quanah Exp
 /*
  * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

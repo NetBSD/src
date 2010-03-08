@@ -1,8 +1,10 @@
+/*	$NetBSD: operation.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* operation.c - routines to deal with pending ldap operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.75.2.8 2008/02/12 20:48:44 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.75.2.10 2009/01/22 00:01:02 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -110,6 +112,11 @@ slap_op_free( Operation *op, void *ctx )
 		slapi_int_free_object_extensions( SLAPI_X_EXT_OPERATION, op );
 	}
 #endif /* defined( LDAP_SLAPI ) */
+
+	if ( !BER_BVISNULL( &op->o_csn ) ) {
+		op->o_tmpfree( op->o_csn.bv_val, op->o_tmpmemctx );
+		BER_BVZERO( &op->o_csn );
+	}
 
 	opbuf = (OperationBuffer *) op;
 	memset( opbuf, 0, sizeof(*opbuf) );

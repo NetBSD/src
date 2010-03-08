@@ -1,3 +1,5 @@
+/*	$NetBSD: getopt_long.h,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    getopt_long.h - definition of getopt_long() for systems that lack it
 

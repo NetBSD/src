@@ -1,7 +1,11 @@
-/**
- * $Id: addpartial-overlay.c,v 1.1.1.1 2007/11/14 17:07:01 lukem Exp $
+/*	$NetBSD: addpartial-overlay.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+
+/* addpartial-overlay.c */
+/* OpenLDAP: pkg/ldap/contrib/slapd-modules/addpartial/addpartial-overlay.c,v 1.1.2.5 2009/08/17 21:48:56 quanah Exp */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright (C) 2004 Virginia Tech, David Hawes.
+ * Copyright 2004-2009 The OpenLDAP Foundation.
+ * Portions Copyright (C) 2004 Virginia Tech, David Hawes.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -11,15 +15,12 @@
  * A copy of this license is available in file LICENSE in the
  * top-level directory of the distribution or, alternatively, at
  * http://www.OpenLDAP.org/license.html.
- *
- * SEE LICENSE FOR MORE INFORMATION
- *
- * Author:  David H. Hawes, Jr.
- * Email:   dhawes@vt.edu
- * Version: $Revision: 1.1.1.1 $
- * Updated: $Date: 2007/11/14 17:07:01 $
- * 
- * addpartial-overlay
+ */
+/* ACKNOLEDGEDMENTS:
+ * This work was initially developed by David Hawes of Virginia Tech
+ * for inclusion in OpenLDAP Software.
+ */
+/* addpartial-overlay
  *
  * This is an OpenLDAP overlay that intercepts ADD requests, determines if a
  * change has actually taken place for that record, and then performs a modify
@@ -33,7 +34,6 @@
 #include "portable.h" 
 #include "slap.h"
 
-static int addpartial_search_cb( Operation *op, SlapReply *rs);
 static int collect_error_msg_cb( Operation *op, SlapReply *rs);
 
 static slap_overinst addpartial;
@@ -46,10 +46,8 @@ static int addpartial_add( Operation *op, SlapReply *rs)
 {
     Operation nop = *op;
     SlapReply nrs = { REP_RESULT };
-    Filter *filter = NULL;
     Entry *toAdd = NULL;
-    struct berval fstr = BER_BVNULL;
-    slap_callback cb = { NULL, addpartial_search_cb, NULL, NULL };
+    Entry *found = NULL;
     slap_overinst *on = (slap_overinst *) op->o_bd->bd_info;
     int rc;
 
@@ -64,61 +62,20 @@ static int addpartial_add( Operation *op, SlapReply *rs)
     {
         return SLAP_CB_CONTINUE;
     }
-    
-    rs->sr_text = NULL;
 
-    nop.o_callback = &cb;
-    op->o_bd->bd_info = (BackendInfo *) on->on_info;
-    nop.o_tag = LDAP_REQ_SEARCH;
-    nop.o_ctrls = NULL;
-    
-    filter = str2filter("(objectclass=*)");
-    filter2bv(filter, &fstr);
-
-    nop.ors_scope = LDAP_SCOPE_BASE;
-    nop.ors_deref = LDAP_DEREF_NEVER;
-    nop.ors_slimit = -1;//SLAP_NO_LIMIT;
-    nop.ors_tlimit = -1;//SLAP_NO_LIMIT;
-    nop.ors_attrsonly = 0;
-    nop.ors_attrs = slap_anlist_no_attrs;
-    nop.ors_filter = filter;
-    nop.ors_filterstr = fstr;
-
-    memset(&nrs, 0, sizeof(nrs));
-    nrs.sr_type = REP_RESULT;
-    nrs.sr_err = LDAP_SUCCESS;
-    nrs.sr_entry = NULL;
-    nrs.sr_flags |= REP_ENTRY_MUSTBEFREED;
-    nrs.sr_text = NULL;
-
-    Debug(LDAP_DEBUG_TRACE, "%s: performing search\n", addpartial.on_bi.bi_type,
-          0,0);
-
-    if(nop.o_bd->be_search)
-    {
-        rc = nop.o_bd->be_search(&nop, &nrs);
-        Debug(LDAP_DEBUG_TRACE, "%s: search performed\n",
-              addpartial.on_bi.bi_type,0,0);
-    }
-    else
-    {
-        Debug(LDAP_DEBUG_TRACE, "%s: backend missing search function\n",
-              addpartial.on_bi.bi_type,0,0);
-    }
-
-    if(filter)
-        filter_free(filter);
-    if(fstr.bv_val)
-        ch_free(fstr.bv_val);
+    rc = overlay_entry_get_ov(&nop, &nop.o_req_ndn, NULL, NULL, 0, &found, on);
 
     if(rc != LDAP_SUCCESS)
+    {
+        Debug(LDAP_DEBUG_TRACE,
+              "%s: no entry found, falling through to normal add\n",
+              addpartial.on_bi.bi_type, 0, 0);
         return SLAP_CB_CONTINUE;
+    }
     else
     { 
-        Entry *found = NULL;
         Debug(LDAP_DEBUG_TRACE, "%s: found the dn\n", addpartial.on_bi.bi_type,
               0,0);
-        found = (Entry *) cb.sc_private;
 
         if(found)
         {
@@ -150,8 +107,7 @@ static int addpartial_add( Operation *op, SlapReply *rs)
                     mod->sml_op &= LDAP_MOD_OP;
                     mod->sml_next = NULL;
                     mod->sml_desc = attr->a_desc;
-                    mod->sml_type.bv_val = attr->a_desc->ad_cname.bv_val;
-                    mod->sml_type.bv_len = strlen(mod->sml_type.bv_val);
+                    mod->sml_type = attr->a_desc->ad_cname;
                     mod->sml_values = attr->a_vals;
                     mod->sml_nvalues = attr->a_nvals;
                     mod->sml_numvals = attr->a_numvals;
@@ -190,8 +146,7 @@ static int addpartial_add( Operation *op, SlapReply *rs)
                         mod->sml_op &= LDAP_MOD_OP;
                         mod->sml_next = NULL;
                         mod->sml_desc = attr->a_desc;
-                        mod->sml_type.bv_val = attr->a_desc->ad_cname.bv_val;
-                        mod->sml_type.bv_len = strlen(mod->sml_type.bv_val);
+                        mod->sml_type = attr->a_desc->ad_cname;
                         mod->sml_values = attr->a_vals;
                         mod->sml_nvalues = attr->a_nvals;
                         mod->sml_numvals = attr->a_numvals;
@@ -245,9 +200,7 @@ static int addpartial_add( Operation *op, SlapReply *rs)
                             mod->sml_op &= LDAP_MOD_OP;
                             mod->sml_next = NULL;
                             mod->sml_desc = attr->a_desc;
-                            mod->sml_type.bv_val = 
-                                                  attr->a_desc->ad_cname.bv_val;
-                            mod->sml_type.bv_len = strlen(mod->sml_type.bv_val);
+                            mod->sml_type = attr->a_desc->ad_cname;
                             mod->sml_values = attr->a_vals;
                             mod->sml_nvalues = attr->a_nvals;
                             mod->sml_numvals = attr->a_numvals;
@@ -278,9 +231,7 @@ static int addpartial_add( Operation *op, SlapReply *rs)
                     mod->sml_op = LDAP_MOD_REPLACE;
                     mod->sml_next = NULL;
                     mod->sml_desc = attr->a_desc;
-                    mod->sml_type.bv_val = 
-                                          attr->a_desc->ad_cname.bv_val;
-                    mod->sml_type.bv_len = strlen(mod->sml_type.bv_val);
+                    mod->sml_type = attr->a_desc->ad_cname;
                     mod->sml_values = NULL;
                     mod->sml_nvalues = NULL;
                     mod->sml_numvals = 0;
@@ -296,71 +247,69 @@ static int addpartial_add( Operation *op, SlapReply *rs)
                 }
             }
 
+            overlay_entry_release_ov(&nop, found, 0, on);
+
             if(mods)
             {
+                Modifications *m = NULL;
+                Modifications *toDel;
+                int modcount;
+                slap_callback nullcb = { NULL, collect_error_msg_cb, 
+                                         NULL, NULL };
+
                 Debug(LDAP_DEBUG_TRACE, "%s: mods to do...\n",
                       addpartial.on_bi.bi_type, 0, 0);
+
+                memset(&nrs, 0, sizeof(nrs));
+                nrs.sr_type = REP_RESULT;
+                nrs.sr_err = LDAP_SUCCESS;
+                nrs.sr_entry = NULL;
+                nrs.sr_text = NULL;
+
+                nop.o_tag = LDAP_REQ_MODIFY;
+                nop.orm_modlist = mods;
+                nop.orm_no_opattrs = 0;
+                nop.o_callback = &nullcb;
+                nop.o_bd->bd_info = (BackendInfo *) on->on_info;
+
+                for(m = mods, modcount = 0; m; m = m->sml_next, 
+                    modcount++)
+                {
+                    /* count number of mods */
+                }
+
+                Debug(LDAP_DEBUG_TRACE, "%s: number of mods: %d\n",
+                      addpartial.on_bi.bi_type, modcount, 0);
+
                 if(nop.o_bd->be_modify)
                 {
-                    Modifications *m = NULL;
-                    int modcount;
-                    slap_callback nullcb = { NULL, collect_error_msg_cb, 
-                                             NULL, NULL };
-                    char textbuf[SLAP_TEXT_BUFLEN];
-                    size_t textlen = sizeof textbuf;
-
-                    memset(&nrs, 0, sizeof(nrs));
-                    nrs.sr_type = REP_RESULT;
-                    nrs.sr_err = LDAP_SUCCESS;
-                    nrs.sr_entry = NULL;
-                    nrs.sr_text = NULL;
-
-                    nop.o_tag = LDAP_REQ_MODIFY;
-                    nop.orm_modlist = mods;
-                    nop.o_callback = &nullcb;
-                    nop.o_bd->bd_info = (BackendInfo *) on->on_info;
-
-                    for(m = mods, modcount = 0; m; m = m->sml_next, 
-                        modcount++)
-                    {
-                        /* count number of mods */
-                    }
-
-                    Debug(LDAP_DEBUG_TRACE, "%s: number of mods: %d\n",
-                          addpartial.on_bi.bi_type, modcount, 0);
-
                     rc = (nop.o_bd->be_modify)(&nop, &nrs);
+                }
 
-                    if(rc == LDAP_SUCCESS)
-                    {
-                        Debug(LDAP_DEBUG_TRACE,
-                              "%s: modify successful\n",
-                              addpartial.on_bi.bi_type, 0, 0);
-                    }
-                    else
-                    {
-                        Debug(LDAP_DEBUG_TRACE, "%s: modify unsuccessful: %d\n",
-                              addpartial.on_bi.bi_type, rc, 0);
-                        rs->sr_err = rc;
-                        if(nrs.sr_text)
-                        {
-                            rs->sr_text = nullcb.sc_private;
-                        }
-                    }
-
-                    Debug(LDAP_DEBUG_TRACE, "%s: freeing mods...\n",
+                if(rc == LDAP_SUCCESS)
+                {
+                    Debug(LDAP_DEBUG_TRACE,
+                          "%s: modify successful\n",
                           addpartial.on_bi.bi_type, 0, 0);
-
-                    if(mods != NULL)
+                }
+                else
+                {
+                    Debug(LDAP_DEBUG_TRACE, "%s: modify unsuccessful: %d\n",
+                          addpartial.on_bi.bi_type, rc, 0);
+                    rs->sr_err = rc;
+                    if(nullcb.sc_private)
                     {
-                        Modifications *toDel;
-
-                        for(toDel = mods; toDel; toDel = mods)
-                        {
-                            mods = mods->sml_next;
-                            ch_free(toDel);
-                        }
+                        rs->sr_text = nullcb.sc_private;
                     }
+                }
+
+                Debug(LDAP_DEBUG_TRACE, "%s: freeing mods...\n",
+                      addpartial.on_bi.bi_type, 0, 0);
+
+                for(toDel = mods; toDel; toDel = mods)
+                {
+                    mods = mods->sml_next;
+                    ch_free(toDel);
                 }
             }
             else
@@ -368,9 +317,6 @@ static int addpartial_add( Operation *op, SlapReply *rs)
                 Debug(LDAP_DEBUG_TRACE, "%s: no mods to process\n",
                       addpartial.on_bi.bi_type, 0, 0);
             }
-
-            if(found != NULL)
-                entry_free(found);
         }
         else
         {
@@ -385,26 +331,6 @@ static int addpartial_add( Operation *op, SlapReply *rs)
 
         return LDAP_SUCCESS;
     }
-}
-
-static int addpartial_search_cb( Operation *op, SlapReply *rs)
-{
-    Entry *entry = NULL;
-
-    if(rs->sr_type != REP_SEARCH) return 0;
-        
-    Debug(LDAP_DEBUG_TRACE, "%s: addpartial_search_cb\n",
-          addpartial.on_bi.bi_type, 0, 0);
-
-    if(rs->sr_entry)
-    {
-        Debug(LDAP_DEBUG_TRACE, "%s: dn found: %s\n",
-              addpartial.on_bi.bi_type, rs->sr_entry->e_nname.bv_val, 0);
-        entry = rs->sr_entry;
-        op->o_callback->sc_private = (void *) entry_dup(entry);
-    }
-
-    return 0;
 }
 
 static int collect_error_msg_cb( Operation *op, SlapReply *rs)
@@ -427,5 +353,5 @@ int addpartial_init()
 
 int init_module(int argc, char *argv[]) 
 {
-        return addpartial_init();
+    return addpartial_init();
 }

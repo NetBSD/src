@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.163.2.8 2008/02/11 23:26:44 kurt Exp $ */
+/*	$NetBSD: saslauthz.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.163.2.11 2009/01/22 00:01:03 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * Portions Copyright 2000 Mark Adamson, Carnegie Mellon.
  * All rights reserved.
  *
@@ -1226,7 +1228,7 @@ is_dn:		bv.bv_len = uri->bv_len - (bv.bv_val - uri->bv_val);
 
 done:
 	if( rc != LDAP_SUCCESS ) {
-		if( *filter ) filter_free_x( op, *filter );
+		if( *filter ) filter_free_x( op, *filter, 1 );
 		BER_BVZERO( base );
 		BER_BVZERO( fstr );
 	} else {
@@ -1699,7 +1701,7 @@ exact_match:
 
 			/* leave room for at least one char of attributeType,
 			 * one for '=' and one for ',' */
-			if ( d < STRLENOF( "x=,") ) {
+			if ( d < (int) STRLENOF( "x=,") ) {
 				goto CONCLUDED;
 			}
 
@@ -1843,7 +1845,7 @@ exact_match:
 CONCLUDED:
 	if( !BER_BVISNULL( &op.o_req_dn ) ) slap_sl_free( op.o_req_dn.bv_val, opx->o_tmpmemctx );
 	if( !BER_BVISNULL( &op.o_req_ndn ) ) slap_sl_free( op.o_req_ndn.bv_val, opx->o_tmpmemctx );
-	if( op.ors_filter ) filter_free_x( opx, op.ors_filter );
+	if( op.ors_filter ) filter_free_x( opx, op.ors_filter, 1 );
 	if( !BER_BVISNULL( &op.ors_filterstr ) ) ch_free( op.ors_filterstr.bv_val );
 
 	Debug( LDAP_DEBUG_TRACE,
@@ -2015,7 +2017,7 @@ FINISHED:
 		slap_sl_free( op.o_req_ndn.bv_val, opx->o_tmpmemctx );
 	}
 	if( op.ors_filter ) {
-		filter_free_x( opx, op.ors_filter );
+		filter_free_x( opx, op.ors_filter, 1 );
 	}
 	if( !BER_BVISNULL( &op.ors_filterstr ) ) {
 		ch_free( op.ors_filterstr.bv_val );

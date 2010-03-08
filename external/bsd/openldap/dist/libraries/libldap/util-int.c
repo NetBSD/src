@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/util-int.c,v 1.57.2.3 2008/02/11 23:26:41 kurt Exp $ */
+/*	$NetBSD: util-int.c,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/libraries/libldap/util-int.c,v 1.57.2.5 2009/01/22 00:00:56 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * Portions Copyright 1998 A. Hartgers.
  * All rights reserved.
  *
@@ -410,6 +412,9 @@ void ldap_int_utils_init( void )
 
 #ifdef HAVE_CYRUS_SASL
 	ldap_pvt_thread_mutex_init( &ldap_int_sasl_mutex );
+#endif
+#ifdef HAVE_GSSAPI
+	ldap_pvt_thread_mutex_init( &ldap_int_gssapi_mutex );
 #endif
 #endif
 

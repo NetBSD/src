@@ -1,8 +1,10 @@
+/*	$NetBSD: compare.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* compare.c - bdb backend compare routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/compare.c,v 1.51.2.5 2008/02/11 23:26:45 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/compare.c,v 1.51.2.7 2009/01/22 00:01:05 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,10 +32,10 @@ bdb_compare( Operation *op, SlapReply *rs )
 	Attribute	*a;
 	int		manageDSAit = get_manageDSAit( op );
 
-	BDB_LOCKER	locker;
+	DB_TXN		*rtxn;
 	DB_LOCK		lock;
 
-	rs->sr_err = LOCK_ID(bdb->bi_dbenv, &locker);
+	rs->sr_err = bdb_reader_get(op, bdb->bi_dbenv, &rtxn);
 	switch(rs->sr_err) {
 	case 0:
 		break;
@@ -44,8 +46,8 @@ bdb_compare( Operation *op, SlapReply *rs )
 
 dn2entry_retry:
 	/* get entry */
-	rs->sr_err = bdb_dn2entry( op, NULL, &op->o_req_ndn, &ei, 1,
-		locker, &lock );
+	rs->sr_err = bdb_dn2entry( op, rtxn, &op->o_req_ndn, &ei, 1,
+		&lock );
 
 	switch( rs->sr_err ) {
 	case DB_NOTFOUND:
@@ -185,6 +187,5 @@ done:
 		bdb_cache_return_entry_r( bdb, e, &lock );
 	}
 
-	LOCK_ID_FREE ( bdb->bi_dbenv, locker );
 	return rs->sr_err;
 }

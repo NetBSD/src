@@ -1,8 +1,10 @@
+/*	$NetBSD: translucent.c,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+
 /* translucent.c - translucent proxy module */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/translucent.c,v 1.13.2.16 2008/04/14 21:13:44 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/overlays/translucent.c,v 1.13.2.33 2009/12/02 19:32:38 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2008 The OpenLDAP Foundation.
+ * Copyright 2004-2009 The OpenLDAP Foundation.
  * Portions Copyright 2005 Symas Corporation.
  * All rights reserved.
  *
@@ -41,6 +43,8 @@ typedef struct translucent_info {
 	int strict;
 	int no_glue;
 	int defer_db_open;
+	int bind_local;
+	int pwmod_local;
 } translucent_info;
 
 static ConfigLDAPadd translucent_ldadd;
@@ -67,25 +71,29 @@ static ConfigTable translucentcfg[] = {
 	  "DESC 'Disable automatic glue records for ADD and MODRDN' "
 	  "SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
 	{ "translucent_local", "attr[,attr...]", 1, 2, 0,
-	  ARG_STRING|ARG_MAGIC|TRANS_LOCAL,
+	  ARG_MAGIC|TRANS_LOCAL,
 	  translucent_cf_gen,
 	  "( OLcfgOvAt:14.3 NAME 'olcTranslucentLocal' "
 	  "DESC 'Attributes to use in local search filter' "
 	  "SYNTAX OMsDirectoryString )", NULL, NULL },
 	{ "translucent_remote", "attr[,attr...]", 1, 2, 0,
-	  ARG_STRING|ARG_MAGIC|TRANS_REMOTE,
+	  ARG_MAGIC|TRANS_REMOTE,
 	  translucent_cf_gen,
 	  "( OLcfgOvAt:14.4 NAME 'olcTranslucentRemote' "
 	  "DESC 'Attributes to use in remote search filter' "
 	  "SYNTAX OMsDirectoryString )", NULL, NULL },
-	{ NULL, NULL, 0, 0, 0, ARG_IGNORED }
-};
-
-static ConfigTable transdummy[] = {
-	{ "", "", 0, 0, 0, ARG_IGNORED,
-		NULL, "( OLcfgGlAt:13 NAME 'olcDatabase' "
-			"DESC 'The backend type for a database instance' "
-			"SUP olcBackend SINGLE-VALUE X-ORDERED 'SIBLINGS' )", NULL, NULL },
+	{ "translucent_bind_local", "on|off", 1, 2, 0,
+	  ARG_ON_OFF|ARG_OFFSET,
+	  (void *)offsetof(translucent_info, bind_local),
+	  "( OLcfgOvAt:14.5 NAME 'olcTranslucentBindLocal' "
+	  "DESC 'Enable local bind' "
+	  "SYNTAX OMsBoolean SINGLE-VALUE)", NULL, NULL },
+	{ "translucent_pwmod_local", "on|off", 1, 2, 0,
+	  ARG_ON_OFF|ARG_OFFSET,
+	  (void *)offsetof(translucent_info, pwmod_local),
+	  "( OLcfgOvAt:14.6 NAME 'olcTranslucentPwModLocal' "
+	  "DESC 'Enable local RFC 3062 Password Modify extended operation' "
+	  "SYNTAX OMsBoolean SINGLE-VALUE)", NULL, NULL },
 	{ NULL, NULL, 0, 0, 0, ARG_IGNORED }
 };
 
@@ -95,12 +103,13 @@ static ConfigOCs translucentocs[] = {
 	  "DESC 'Translucent configuration' "
 	  "SUP olcOverlayConfig "
 	  "MAY ( olcTranslucentStrict $ olcTranslucentNoGlue $"
-	  " olcTranslucentLocal $ olcTranslucentRemote ) )",
+	  " olcTranslucentLocal $ olcTranslucentRemote $"
+	  " olcTranslucentBindLocal $ olcTranslucentPwModLocal ) )",
 	  Cft_Overlay, translucentcfg, NULL, translucent_cfadd },
 	{ "( OLcfgOvOc:14.2 "
 	  "NAME 'olcTranslucentDatabase' "
 	  "DESC 'Translucent target database configuration' "
-	  "AUXILIARY )", Cft_Misc, transdummy, translucent_ldadd },
+	  "AUXILIARY )", Cft_Misc, olcDatabaseDummy, translucent_ldadd },
 	{ NULL, 0, NULL }
 };
 /* for translucent_init() */
@@ -151,8 +160,9 @@ translucent_cfadd( Operation *op, SlapReply *rs, Entry *e, ConfigArgs *ca )
 
 	/* FIXME: should not hardcode "olcDatabase" here */
 	bv.bv_len = snprintf( ca->cr_msg, sizeof( ca->cr_msg ),
-		"olcDatabase=%s", ov->db.bd_info->bi_type );
-	if ( bv.bv_len < 0 || bv.bv_len >= sizeof( ca->cr_msg ) ) {
+		"olcDatabase=" SLAP_X_ORDERED_FMT "%s",
+		0, ov->db.bd_info->bi_type );
+	if ( bv.bv_len >= sizeof( ca->cr_msg ) ) {
 		return -1;
 	}
 	bv.bv_val = ca->cr_msg;
@@ -272,22 +282,6 @@ void glue_parent(Operation *op) {
 	op->o_tmpfree( ndn.bv_val, op->o_tmpmemctx );
 
 	return;
-}
-
-/*
-** dup_bervarray()
-**	copy a BerVarray;
-*/
-
-BerVarray dup_bervarray(BerVarray b) {
-	int i, len;
-	BerVarray nb;
-	for(len = 0; b[len].bv_val; len++);
-	nb = ch_malloc((len+1) * sizeof(BerValue));
-	for(i = 0; i < len; i++) ber_dupbv(&nb[i], &b[i]);
-	nb[len].bv_val = NULL;
-	nb[len].bv_len = 0;
-	return(nb);
 }
 
 /*
@@ -425,6 +419,7 @@ static int translucent_modify(Operation *op, SlapReply *rs) {
 
 	db = op->o_bd;
 	op->o_bd = &ov->db;
+	ov->db.be_acl = op->o_bd->be_acl;
 	rc = ov->db.bd_info->bi_entry_get_rw(op, &op->o_req_ndn, NULL, NULL, 0, &re);
 	if(rc != LDAP_SUCCESS || re == NULL ) {
 		send_ldap_error((op), rs, LDAP_NO_SUCH_OBJECT,
@@ -592,7 +587,7 @@ static int translucent_compare(Operation *op, SlapReply *rs) {
 	slap_overinst *on = (slap_overinst *) op->o_bd->bd_info;
 	translucent_info *ov = on->on_bi.bi_private;
 	AttributeAssertion *ava = op->orc_ava;
-	Entry *e;
+	Entry *e = NULL;
 	BackendDB *db;
 	int rc;
 
@@ -622,10 +617,134 @@ static int translucent_compare(Operation *op, SlapReply *rs) {
 */
 	db = op->o_bd;
 	op->o_bd = &ov->db;
+	ov->db.be_acl = op->o_bd->be_acl;
 	rc = ov->db.bd_info->bi_op_compare(op, rs);
 	op->o_bd = db;
 
 	return(rc);
+}
+
+static int translucent_pwmod(Operation *op, SlapReply *rs) {
+	SlapReply nrs = { REP_RESULT };
+	Operation nop;
+
+	slap_overinst *on = (slap_overinst *) op->o_bd->bd_info;
+	translucent_info *ov = on->on_bi.bi_private;
+	const struct berval bv_exop_pwmod = BER_BVC(LDAP_EXOP_MODIFY_PASSWD);
+	Entry *e = NULL, *re = NULL;
+	BackendDB *db;
+	int rc = 0;
+	slap_callback cb = { 0 };
+
+	if (!ov->pwmod_local) {
+		rs->sr_err = LDAP_CONSTRAINT_VIOLATION,
+		rs->sr_text = "attempt to modify password in local database";
+		return rs->sr_err;
+	}
+
+/*
+** fetch entry from the captive backend;
+** if it did not exist, fail;
+** release it, if captive backend supports this;
+**
+*/
+	db = op->o_bd;
+	op->o_bd = &ov->db;
+	ov->db.be_acl = op->o_bd->be_acl;
+	rc = ov->db.bd_info->bi_entry_get_rw(op, &op->o_req_ndn, NULL, NULL, 0, &re);
+	if(rc != LDAP_SUCCESS || re == NULL ) {
+		send_ldap_error((op), rs, LDAP_NO_SUCH_OBJECT,
+			"attempt to modify nonexistent local record");
+		return(rs->sr_err);
+	}
+	op->o_bd = db;
+/*
+** fetch entry from local backend;
+** if it exists:
+**	return CONTINUE;
+*/
+
+	op->o_bd->bd_info = (BackendInfo *) on->on_info;
+	rc = be_entry_get_rw(op, &op->o_req_ndn, NULL, NULL, 0, &e);
+	op->o_bd->bd_info = (BackendInfo *) on;
+
+	if(e && rc == LDAP_SUCCESS) {
+		if(re) {
+			if(ov->db.bd_info->bi_entry_release_rw) {
+				op->o_bd = &ov->db;
+				ov->db.bd_info->bi_entry_release_rw(op, re, 0);
+				op->o_bd = db;
+			} else {
+				entry_free(re);
+			}
+		}
+		op->o_bd->bd_info = (BackendInfo *) on->on_info;
+		be_entry_release_r(op, e);
+		op->o_bd->bd_info = (BackendInfo *) on;
+		return SLAP_CB_CONTINUE;
+	}
+
+	/* don't leak remote entry copy */
+	if(re) {
+		if(ov->db.bd_info->bi_entry_release_rw) {
+			op->o_bd = &ov->db;
+			ov->db.bd_info->bi_entry_release_rw(op, re, 0);
+			op->o_bd = db;
+		} else {
+			entry_free(re);
+		}
+	}
+/*
+** glue_parent() for this Entry;
+** call bi_op_add() in local backend;
+**
+*/
+	e = entry_alloc();
+	ber_dupbv( &e->e_name, &op->o_req_dn );
+	ber_dupbv( &e->e_nname, &op->o_req_ndn );
+	e->e_attrs = NULL;
+
+	nop = *op;
+	nop.o_tag = LDAP_REQ_ADD;
+	cb.sc_response = slap_null_cb;
+	nop.oq_add.rs_e	= e;
+
+	glue_parent(&nop);
+
+	nop.o_callback = &cb;
+	rc = on->on_info->oi_orig->bi_op_add(&nop, &nrs);
+	if ( nop.ora_e == e ) {
+		entry_free( e );
+	}
+
+	if ( rc == LDAP_SUCCESS ) {
+		return SLAP_CB_CONTINUE;
+	}
+
+	return rc;
+}
+
+static int translucent_exop(Operation *op, SlapReply *rs) {
+	SlapReply nrs = { REP_RESULT };
+
+	slap_overinst *on = (slap_overinst *) op->o_bd->bd_info;
+	translucent_info *ov = on->on_bi.bi_private;
+	const struct berval bv_exop_pwmod = BER_BVC(LDAP_EXOP_MODIFY_PASSWD);
+
+	Debug(LDAP_DEBUG_TRACE, "==> translucent_exop: %s\n",
+		op->o_req_dn.bv_val, 0, 0);
+
+	if(ov->defer_db_open) {
+		send_ldap_error(op, rs, LDAP_UNAVAILABLE,
+			"remote DB not available");
+		return(rs->sr_err);
+	}
+
+	if ( bvmatch( &bv_exop_pwmod, &op->ore_reqoid ) ) {
+		return translucent_pwmod( op, rs );
+	}
+
+	return SLAP_CB_CONTINUE;
 }
 
 /*
@@ -653,6 +772,8 @@ typedef struct trans_ctx {
 	Filter *orig;
 	Avlnode *list;
 	int step;
+	int slimit;
+	AttributeName *attrs;
 } trans_ctx;
 
 static int translucent_search_cb(Operation *op, SlapReply *rs) {
@@ -663,6 +784,7 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 	Entry *le, *re;
 	Attribute *a, *ax, *an, *as = NULL;
 	int rc;
+	int test_f = 0;
 
 	tc = op->o_callback->sc_private;
 
@@ -675,6 +797,13 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 
 	Debug(LDAP_DEBUG_TRACE, "==> translucent_search_cb: %s\n",
 		rs->sr_entry->e_name.bv_val, 0, 0);
+
+	op->ors_slimit = tc->slimit + ( tc->slimit > 0 ? 1 : 0 );
+	if ( op->ors_attrs == slap_anlist_all_attributes ) {
+		op->ors_attrs = tc->attrs;
+		rs->sr_attrs = tc->attrs;
+		rs->sr_attr_flags = slap_attr_flags( rs->sr_attrs );
+	}
 
 	on = tc->on;
 	ov = on->on_bi.bi_private;
@@ -691,7 +820,7 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 			if ( re ) {
 				if ( rs->sr_flags & REP_ENTRY_MUSTRELEASE ) {
 					rs->sr_flags ^= REP_ENTRY_MUSTRELEASE;
-					be_entry_release_r( op, rs->sr_entry );
+					overlay_entry_release_ov( op, rs->sr_entry, 0, on );
 				}
 				if ( rs->sr_flags & REP_ENTRY_MUSTBEFREED ) {
 					rs->sr_flags ^= REP_ENTRY_MUSTBEFREED;
@@ -701,6 +830,11 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 				if ( rc == LDAP_COMPARE_TRUE ) {
 					rs->sr_flags |= REP_ENTRY_MUSTBEFREED;
 					rs->sr_entry = re;
+
+					if ( tc->slimit >= 0 && rs->sr_nentries >= tc->slimit ) {
+						return LDAP_SIZELIMIT_EXCEEDED;
+					}
+
 					return SLAP_CB_CONTINUE;
 				} else {
 					entry_free( re );
@@ -715,16 +849,18 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 			Entry *tmp = entry_dup( re );
 			be_entry_release_r( op, re );
 			re = tmp;
+			test_f = 1;
 		}
 	} else {
 	/* Else we have remote, get local */
 		op->o_bd = tc->db;
+		le = NULL;
 		rc = overlay_entry_get_ov(op, &rs->sr_entry->e_nname, NULL, NULL, 0, &le, on);
 		if ( rc == LDAP_SUCCESS && le ) {
 			re = entry_dup( rs->sr_entry );
 			if ( rs->sr_flags & REP_ENTRY_MUSTRELEASE ) {
 				rs->sr_flags ^= REP_ENTRY_MUSTRELEASE;
-				be_entry_release_r( op, rs->sr_entry );
+				overlay_entry_release_ov( op, rs->sr_entry, 0, on );
 			}
 			if ( rs->sr_flags & REP_ENTRY_MUSTBEFREED ) {
 				rs->sr_flags ^= REP_ENTRY_MUSTBEFREED;
@@ -749,12 +885,16 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 		for(ax = le->e_attrs; ax; ax = ax->a_next) {
 			for(a = re->e_attrs; a; a = a->a_next) {
 				if(a->a_desc == ax->a_desc) {
+					test_f = 1;
 					if(a->a_vals != a->a_nvals)
 						ber_bvarray_free(a->a_nvals);
 					ber_bvarray_free(a->a_vals);
-					a->a_vals = dup_bervarray(ax->a_vals);
-					a->a_nvals = (ax->a_vals == ax->a_nvals) ?
-						a->a_vals : dup_bervarray(ax->a_nvals);
+					ber_bvarray_dup_x( &a->a_vals, ax->a_vals, NULL );
+					if ( ax->a_vals == ax->a_nvals ) {
+						a->a_nvals = a->a_vals;
+					} else {
+						ber_bvarray_dup_x( &a->a_nvals, ax->a_nvals, NULL );
+					}
 					break;
 				}
 			}
@@ -767,7 +907,7 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 		if ( tc->step & LCL_SIDE ) {
 			if ( rs->sr_flags & REP_ENTRY_MUSTRELEASE ) {
 				rs->sr_flags ^= REP_ENTRY_MUSTRELEASE;
-				be_entry_release_r( op, rs->sr_entry );
+				overlay_entry_release_ov( op, rs->sr_entry, 0, on );
 			}
 			if ( rs->sr_flags & REP_ENTRY_MUSTBEFREED ) {
 				rs->sr_flags ^= REP_ENTRY_MUSTBEFREED;
@@ -795,7 +935,16 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 		/* send it now */
 			rs->sr_entry = re;
 			rs->sr_flags |= REP_ENTRY_MUSTBEFREED;
-			rc = SLAP_CB_CONTINUE;
+			if ( test_f ) {
+				rc = test_filter( op, rs->sr_entry, tc->orig );
+				if ( rc == LDAP_COMPARE_TRUE ) {
+					rc = SLAP_CB_CONTINUE;
+				} else {
+					rc = 0;
+				}
+			} else {
+				rc = SLAP_CB_CONTINUE;
+			}
 		}
 	} else if ( le ) {
 	/* Only a local entry: remote was deleted
@@ -820,6 +969,11 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 	}
 
 	op->o_bd = db;
+
+	if ( rc == SLAP_CB_CONTINUE && tc->slimit >= 0 && rs->sr_nentries >= tc->slimit ) {
+		return LDAP_SIZELIMIT_EXCEEDED;
+	}
+
 	return rc;
 }
 
@@ -956,16 +1110,22 @@ static int translucent_search(Operation *op, SlapReply *rs) {
 	cb.sc_private = &tc;
 	cb.sc_next = op->o_callback;
 
+	ov->db.be_acl = op->o_bd->be_acl;
 	tc.db = op->o_bd;
 	tc.on = on;
 	tc.orig = op->ors_filter;
 	tc.list = NULL;
 	tc.step = 0;
+	tc.slimit = op->ors_slimit;
+	tc.attrs = NULL;
 	fbv = op->ors_filterstr;
 
 	op->o_callback = &cb;
 
 	if ( fr || !fl ) {
+		tc.attrs = op->ors_attrs;
+		op->ors_slimit = SLAP_NO_LIMIT;
+		op->ors_attrs = slap_anlist_all_attributes;
 		op->o_bd = &ov->db;
 		tc.step |= RMT_SIDE;
 		if ( fl ) {
@@ -974,6 +1134,7 @@ static int translucent_search(Operation *op, SlapReply *rs) {
 			filter2bv_x( op, fr, &op->ors_filterstr );
 		}
 		rc = ov->db.bd_info->bi_op_search(op, rs);
+		op->ors_attrs = tc.attrs;
 		op->o_bd = tc.db;
 		if ( fl ) {
 			op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
@@ -989,6 +1150,9 @@ static int translucent_search(Operation *op, SlapReply *rs) {
 	op->ors_filterstr = fbv;
 	op->ors_filter = tc.orig;
 	op->o_callback = cb.sc_next;
+	rs->sr_attrs = op->ors_attrs;
+	rs->sr_attr_flags = slap_attr_flags( rs->sr_attrs );
+
 	/* Send out anything remaining on the list and finish */
 	if ( tc.step & USE_LIST ) {
 		if ( tc.list ) {
@@ -1013,6 +1177,8 @@ static int translucent_search(Operation *op, SlapReply *rs) {
 		send_ldap_result( op, rs );
 	}
 
+	op->ors_slimit = tc.slimit;
+
 	/* Free in reverse order */
 	if ( fl )
 		trans_filter_free( op, fl );
@@ -1033,6 +1199,7 @@ static int translucent_bind(Operation *op, SlapReply *rs) {
 	slap_overinst *on = (slap_overinst *) op->o_bd->bd_info;
 	translucent_info *ov = on->on_bi.bi_private;
 	BackendDB *db;
+	slap_callback sc = { 0 }, *save_cb;
 	int rc;
 
 	Debug(LDAP_DEBUG_TRACE, "translucent_bind: <%s> method %d\n",
@@ -1043,10 +1210,26 @@ static int translucent_bind(Operation *op, SlapReply *rs) {
 			"remote DB not available");
 		return(rs->sr_err);
 	}
+
+	if (ov->bind_local) {
+		sc.sc_response = slap_null_cb;
+		save_cb = op->o_callback;
+		op->o_callback = &sc;
+	}
+
 	db = op->o_bd;
 	op->o_bd = &ov->db;
+	ov->db.be_acl = op->o_bd->be_acl;
 	rc = ov->db.bd_info->bi_op_bind(op, rs);
 	op->o_bd = db;
+
+	if (ov->bind_local) {
+		op->o_callback = save_cb;
+		if (rc != LDAP_SUCCESS) {
+			rc = SLAP_CB_CONTINUE;
+		}
+	}
+
 	return rc;
 }
 
@@ -1112,7 +1295,6 @@ static int translucent_db_init(BackendDB *be, ConfigReply *cr) {
 	on->on_bi.bi_private = ov;
 	ov->db = *be;
 	ov->db.be_private = NULL;
-	ov->db.be_pcl_mutexp = &ov->db.be_pcl_mutex;
 	ov->defer_db_open = 1;
 
 	if ( !backend_db_init( "ldap", &ov->db, -1, NULL )) {
@@ -1235,6 +1417,7 @@ int translucent_initialize() {
 	translucent.on_bi.bi_op_search	= translucent_search;
 	translucent.on_bi.bi_op_compare	= translucent_compare;
 	translucent.on_bi.bi_connection_destroy = translucent_connection_destroy;
+	translucent.on_bi.bi_extended	= translucent_exop;
 
 	translucent.on_bi.bi_cf_ocs = translucentocs;
 	rc = config_register_schema ( translucentcfg, translucentocs );

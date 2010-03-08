@@ -1,8 +1,10 @@
+/*	$NetBSD: null.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+
 /* null.c - the null backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-null/null.c,v 1.18.2.5 2008/02/12 00:58:15 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-null/null.c,v 1.18.2.9 2009/12/16 19:09:37 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2008 The OpenLDAP Foundation.
+ * Copyright 2002-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,22 +52,177 @@ null_back_bind( Operation *op, SlapReply *rs )
 	return rs->sr_err;
 }
 
+
+static int
+null_back_respond( Operation *op, SlapReply *rs, int rc )
+{
+	LDAPControl ctrl[SLAP_MAX_RESPONSE_CONTROLS], *ctrls[SLAP_MAX_RESPONSE_CONTROLS];
+	int c = 0;
+
+	BerElementBuffer	ps_berbuf;
+	BerElement		*ps_ber = NULL;
+	LDAPControl		**preread_ctrl = NULL,
+				**postread_ctrl = NULL;
+
+	rs->sr_err = LDAP_OTHER;
+
+	/* this comes first, as in case of assertion failure
+	 * any further processing must stop */
+	if ( get_assert( op ) ) {
+		rs->sr_err = LDAP_ASSERTION_FAILED;
+		goto respond;
+	}
+
+	if ( op->o_preread ) {
+		Entry		e = { 0 };
+
+		switch ( op->o_tag ) {
+		case LDAP_REQ_MODIFY:
+		case LDAP_REQ_RENAME:
+		case LDAP_REQ_DELETE:
+			e.e_name = op->o_req_dn;
+			e.e_nname = op->o_req_ndn;
+
+			preread_ctrl = &ctrls[c];
+			*preread_ctrl = NULL;
+
+			if ( slap_read_controls( op, rs, &e,
+				&slap_pre_read_bv, preread_ctrl ) )
+			{
+				preread_ctrl = NULL;
+
+				Debug( LDAP_DEBUG_TRACE,
+					"<=- null_back_respond: pre-read "
+					"failed!\n", 0, 0, 0 );
+
+				if ( op->o_preread & SLAP_CONTROL_CRITICAL ) {
+					/* FIXME: is it correct to abort
+					 * operation if control fails? */
+					goto respond;
+				}
+
+			} else {
+				c++;
+			}
+			break;
+		}
+	}
+
+	if ( op->o_postread ) {
+		Entry		e = { 0 };
+
+		switch ( op->o_tag ) {
+		case LDAP_REQ_ADD:
+		case LDAP_REQ_MODIFY:
+		case LDAP_REQ_RENAME:
+			if ( op->o_tag == LDAP_REQ_ADD ) {
+				e.e_name = op->ora_e->e_name;
+				e.e_nname = op->ora_e->e_nname;
+
+			} else {
+				e.e_name = op->o_req_dn;
+				e.e_nname = op->o_req_ndn;
+			}
+
+			postread_ctrl = &ctrls[c];
+			*postread_ctrl = NULL;
+
+			if ( slap_read_controls( op, rs, &e,
+				&slap_post_read_bv, postread_ctrl ) )
+			{
+				postread_ctrl = NULL;
+
+				Debug( LDAP_DEBUG_TRACE,
+					"<=- null_back_respond: post-read "
+					"failed!\n", 0, 0, 0 );
+
+				if ( op->o_postread & SLAP_CONTROL_CRITICAL ) {
+					/* FIXME: is it correct to abort
+					 * operation if control fails? */
+					goto respond;
+				}
+
+			} else {
+				c++;
+			}
+			break;
+		}
+	}
+
+	if ( op->o_noop ) {
+		switch ( op->o_tag ) {
+		case LDAP_REQ_ADD:
+		case LDAP_REQ_MODIFY:
+		case LDAP_REQ_RENAME:
+		case LDAP_REQ_DELETE:
+		case LDAP_REQ_EXTENDED:
+			rc = LDAP_X_NO_OPERATION;
+			break;
+		}
+	}
+
+	if ( get_pagedresults( op ) > SLAP_CONTROL_IGNORED ) {
+		struct berval		cookie = BER_BVC( "" );
+
+		/* should not be here... */
+		assert( op->o_tag == LDAP_REQ_SEARCH );
+
+		ctrl[c].ldctl_oid = LDAP_CONTROL_PAGEDRESULTS;
+		ctrl[c].ldctl_iscritical = 0;
+
+		ps_ber = (BerElement *)&ps_berbuf;
+		ber_init2( ps_ber, NULL, LBER_USE_DER );
+
+		/* return size of 0 -- no estimate */
+		ber_printf( ps_ber, "{iO}", 0, &cookie ); 
+
+		if ( ber_flatten2( ps_ber, &ctrl[c].ldctl_value, 0 ) == -1 ) {
+			goto done;
+		}
+		
+		ctrls[c] = &ctrl[c];
+		c++;
+	}
+
+	/* terminate controls array */
+	ctrls[c] = NULL;
+	rs->sr_ctrls = ctrls;
+	rs->sr_err = rc;
+
+respond:;
+	send_ldap_result( op, rs );
+	rs->sr_ctrls = NULL;
+
+done:;
+	if ( ps_ber != NULL ) {
+		(void) ber_free_buf( ps_ber );
+	}
+
+	if( preread_ctrl != NULL && (*preread_ctrl) != NULL ) {
+		slap_sl_free( (*preread_ctrl)->ldctl_value.bv_val, op->o_tmpmemctx );
+		slap_sl_free( *preread_ctrl, op->o_tmpmemctx );
+	}
+
+	if( postread_ctrl != NULL && (*postread_ctrl) != NULL ) {
+		slap_sl_free( (*postread_ctrl)->ldctl_value.bv_val, op->o_tmpmemctx );
+		slap_sl_free( *postread_ctrl, op->o_tmpmemctx );
+	}
+
+	return rs->sr_err;
+}
+
 /* add, delete, modify, modrdn, search */
 static int
 null_back_success( Operation *op, SlapReply *rs )
 {
-	rs->sr_err = LDAP_SUCCESS;
-	send_ldap_result( op, rs );
-	return 0;
+	return null_back_respond( op, rs, LDAP_SUCCESS );
 }
 
 /* compare */
 static int
 null_back_false( Operation *op, SlapReply *rs )
 {
-	rs->sr_err = LDAP_COMPARE_FALSE;
-	send_ldap_result( op, rs );
-	return 0;
+	return null_back_respond( op, rs, LDAP_COMPARE_FALSE );
 }
 
 
@@ -79,8 +236,6 @@ null_back_entry_get(
 	int rw,
 	Entry **ent )
 {
-	assert( *ent == NULL );
-
 	/* don't admit the object isn't there */
 	return oc || at ? LDAP_NO_SUCH_ATTRIBUTE : LDAP_BUSY;
 }
@@ -184,6 +339,29 @@ null_back_db_destroy( Backend *be, ConfigReply *cr )
 int
 null_back_initialize( BackendInfo *bi )
 {
+	static char *controls[] = {
+		LDAP_CONTROL_ASSERT,
+		LDAP_CONTROL_MANAGEDSAIT,
+		LDAP_CONTROL_NOOP,
+		LDAP_CONTROL_PAGEDRESULTS,
+		LDAP_CONTROL_SUBENTRIES,
+		LDAP_CONTROL_PRE_READ,
+		LDAP_CONTROL_POST_READ,
+		LDAP_CONTROL_X_PERMISSIVE_MODIFY,
+		NULL
+	};
+
+	Debug( LDAP_DEBUG_TRACE,
+		"null_back_initialize: initialize null backend\n", 0, 0, 0 );
+
+	bi->bi_flags |=
+		SLAP_BFLAG_INCREMENT |
+		SLAP_BFLAG_SUBENTRIES |
+		SLAP_BFLAG_ALIASES |
+		SLAP_BFLAG_REFERRALS;
+
+	bi->bi_controls = controls;
+
 	bi->bi_open = 0;
 	bi->bi_close = 0;
 	bi->bi_config = 0;

@@ -1,8 +1,10 @@
+/*	$NetBSD: schema_prep.c,v 1.1.1.3 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* schema_prep.c - load builtin schema */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.169.2.8 2008/07/09 23:43:08 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.169.2.13 2009/04/27 22:50:10 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -449,7 +451,7 @@ static struct slap_schema_ad_map {
 			"EQUALITY objectIdentifierMatch "
 			"SYNTAX 1.3.6.1.4.1.1466.115.121.1.38 "
 			"SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )",
-		NULL, SLAP_AT_MANAGEABLE,
+		NULL, 0,
 		oidValidate, objectClassPretty,
 		NULL, NULL, objectSubClassMatch,
 			objectSubClassIndexer, objectSubClassFilter,
@@ -684,6 +686,7 @@ static struct slap_schema_ad_map {
 			"NAME 'monitorContext' "
 			"DESC 'monitor context' "
 			"SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 "
+			"EQUALITY distinguishedNameMatch "
 			"SINGLE-VALUE NO-USER-MODIFICATION "
 			"USAGE dSAOperation )",
 		rootDseAttribute, SLAP_AT_HIDE,
@@ -694,6 +697,7 @@ static struct slap_schema_ad_map {
 			"NAME 'configContext' "
 			"DESC 'config context' "
 			"SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 "
+			"EQUALITY distinguishedNameMatch "
 			"SINGLE-VALUE NO-USER-MODIFICATION "
 			"USAGE dSAOperation )",
 		rootDseAttribute, SLAP_AT_HIDE,
@@ -1072,6 +1076,10 @@ static struct slap_schema_mr_map {
 	{ "objectIdentifierFirstComponentMatch",
 		offsetof(struct slap_internal_schema,
 			si_mr_objectIdentifierFirstComponentMatch) },
+	{ "caseIgnoreMatch",
+		offsetof(struct slap_internal_schema, si_mr_caseIgnoreMatch) },
+	{ "caseIgnoreListMatch",
+		offsetof(struct slap_internal_schema, si_mr_caseIgnoreListMatch) },
 	{ NULL, 0 }
 };
 
@@ -1266,7 +1274,6 @@ slap_schema_load( void )
 					mr->smr_filter = ad_map[i].ssam_mr_filter;
 				}
 
-				/* FIXME: no-one will free this at exit */
 				(*adp)->ad_type->sat_equality = mr;
 			}
 		}

@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/proto-passwd.h,v 1.5.2.3 2008/02/11 23:26:47 kurt Exp $ */
+/*	$NetBSD: proto-passwd.h,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/back-passwd/proto-passwd.h,v 1.5.2.4 2009/01/22 00:01:09 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

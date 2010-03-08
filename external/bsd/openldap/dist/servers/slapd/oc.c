@@ -1,8 +1,10 @@
+/*	$NetBSD: oc.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* oc.c - object class routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/oc.c,v 1.77.2.6 2008/04/14 22:08:32 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/oc.c,v 1.77.2.11 2009/10/30 18:06:26 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -91,6 +93,9 @@ int is_entry_objectclass(
 			"no objectClass attribute\n",
 			e->e_dn == NULL ? "" : e->e_dn,
 			oc->soc_oclass.oc_oid, 0 );
+
+		/* mark flags as set */
+		e->e_ocflags |= SLAP_OC__END;
 
 		return 0;
 	}
@@ -227,6 +232,10 @@ oc_bvfind_undef( struct berval *ocname )
 	oc->soc_cname.bv_len = ocname->bv_len;
 	oc->soc_cname.bv_val = (char *)&oc[ 1 ];
 	AC_MEMCPY( oc->soc_cname.bv_val, ocname->bv_val, ocname->bv_len );
+	oc->soc_cname.bv_val[ oc->soc_cname.bv_len ] = '\0';
+
+	/* canonical to upper case */
+	ldap_pvt_str2upper( oc->soc_cname.bv_val );
 
 	LDAP_STAILQ_NEXT( oc, soc_next ) = NULL;
 	ldap_pvt_thread_mutex_lock( &oc_undef_mutex );
@@ -798,6 +807,10 @@ done:;
 
 		if ( soc->soc_allowed ) {
 			ch_free( soc->soc_allowed );
+		}
+
+		if ( soc->soc_oidmacro ) {
+			ch_free( soc->soc_oidmacro );
 		}
 
 		ch_free( soc );

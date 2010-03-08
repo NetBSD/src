@@ -1,3 +1,5 @@
+/*	$NetBSD: uctable.h,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+
 static const ac_uint4 _ucprop_size = 50;
 
 static const ac_uint2 _ucprop_offsets[] = {

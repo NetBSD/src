@@ -1,3 +1,5 @@
+/*	$NetBSD: tkAppInit.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+
 /* 
  * tkXAppInit.c --
  *
@@ -14,7 +16,7 @@
  * software for any purpose.  It is provided "as is" without express or
  * implied warranty.
  *-----------------------------------------------------------------------------
- * $OpenLDAP: pkg/ldap/contrib/ldaptcl/tkAppInit.c,v 1.3 2000/05/11 08:35:27 hyc Exp $
+ * OpenLDAP: pkg/ldap/contrib/ldaptcl/tkAppInit.c,v 1.3 2000/05/11 08:35:27 hyc Exp
  *-----------------------------------------------------------------------------
  */
 

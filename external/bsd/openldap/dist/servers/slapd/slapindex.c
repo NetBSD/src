@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapindex.c,v 1.3.2.3 2008/02/11 23:26:44 kurt Exp $ */
+/*	$NetBSD: slapindex.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/slapindex.c,v 1.3.2.5 2009/01/22 00:01:03 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -99,6 +101,7 @@ slapindex( int argc, char **argv )
 
 	(void) be->be_entry_close( be );
 
-	slap_tool_destroy();
+	if ( slap_tool_destroy())
+		rc = EXIT_FAILURE;
 	return( rc );
 }

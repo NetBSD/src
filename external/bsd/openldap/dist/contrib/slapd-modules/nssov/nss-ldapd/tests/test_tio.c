@@ -1,3 +1,5 @@
+/*	$NetBSD: test_tio.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    test_tio.c - simple test for the tio module
    This file is part of the nss-ldapd library.

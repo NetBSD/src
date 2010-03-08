@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.312.2.10 2008/07/09 00:29:57 quanah Exp $ */
+/*	$NetBSD: ldap.h,v 1.1.1.3 2010/03/08 02:14:16 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/include/ldap.h,v 1.312.2.23 2009/08/25 22:52:17 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -108,6 +110,17 @@ LDAP_BEGIN_DECL
 #define LDAP_OPT_ERROR_STRING			LDAP_OPT_DIAGNOSTIC_MESSAGE
 #define LDAP_OPT_MATCHED_DN			0x0033
 /* 0x0034 - 0x3fff not defined */
+/* 0x0091 used by Microsoft for LDAP_OPT_AUTO_RECONNECT */
+#define LDAP_OPT_SSPI_FLAGS			0x0092
+/* 0x0093 used by Microsoft for LDAP_OPT_SSL_INFO */
+/* 0x0094 used by Microsoft for LDAP_OPT_REF_DEREF_CONN_PER_MSG */
+#define LDAP_OPT_SIGN				0x0095
+#define LDAP_OPT_ENCRYPT			0x0096
+#define LDAP_OPT_SASL_METHOD			0x0097
+/* 0x0098 used by Microsoft for LDAP_OPT_AREC_EXCLUSIVE */
+#define LDAP_OPT_SECURITY_CONTEXT		0x0099
+/* 0x009A used by Microsoft for LDAP_OPT_ROOTDSE_CACHE */
+/* 0x009B - 0x3fff not defined */
 
 /* API Extensions */
 #define LDAP_OPT_API_EXTENSION_BASE 0x4000  /* API extensions */
@@ -123,19 +136,20 @@ LDAP_BEGIN_DECL
 #define LDAP_OPT_SOCKBUF            0x5008  /* sockbuf */
 #define LDAP_OPT_DEFBASE		0x5009	/* searchbase */
 #define	LDAP_OPT_CONNECT_ASYNC		0x5010	/* create connections asynchronously */
+#define	LDAP_OPT_CONNECT_CB			0x5011	/* connection callbacks */
 
 /* OpenLDAP TLS options */
 #define LDAP_OPT_X_TLS				0x6000
-#define LDAP_OPT_X_TLS_CTX			0x6001	/* OpenSSL CTX */
+#define LDAP_OPT_X_TLS_CTX			0x6001	/* OpenSSL CTX* */
 #define LDAP_OPT_X_TLS_CACERTFILE	0x6002
 #define LDAP_OPT_X_TLS_CACERTDIR	0x6003
 #define LDAP_OPT_X_TLS_CERTFILE		0x6004
 #define LDAP_OPT_X_TLS_KEYFILE		0x6005
 #define LDAP_OPT_X_TLS_REQUIRE_CERT	0x6006
-/* #define LDAP_OPT_X_TLS_PROTOCOL		0x6007 */
+#define LDAP_OPT_X_TLS_PROTOCOL_MIN	0x6007
 #define LDAP_OPT_X_TLS_CIPHER_SUITE	0x6008
 #define LDAP_OPT_X_TLS_RANDOM_FILE	0x6009
-#define LDAP_OPT_X_TLS_SSL_CTX		0x600a
+#define LDAP_OPT_X_TLS_SSL_CTX		0x600a	/* OpenSSL SSL* */
 #define LDAP_OPT_X_TLS_CRLCHECK		0x600b
 #define LDAP_OPT_X_TLS_CONNECT_CB	0x600c
 #define LDAP_OPT_X_TLS_CONNECT_ARG	0x600d
@@ -153,6 +167,14 @@ LDAP_BEGIN_DECL
 #define LDAP_OPT_X_TLS_CRL_PEER	1
 #define LDAP_OPT_X_TLS_CRL_ALL	2
 
+/* for LDAP_OPT_X_TLS_PROTOCOL_MIN */
+#define LDAP_OPT_X_TLS_PROTOCOL(maj,min)	(((maj) << 8) + (min))
+#define LDAP_OPT_X_TLS_PROTOCOL_SSL2		(2 << 8)
+#define LDAP_OPT_X_TLS_PROTOCOL_SSL3		(3 << 8)
+#define LDAP_OPT_X_TLS_PROTOCOL_TLS1_0		((3 << 8) + 1)
+#define LDAP_OPT_X_TLS_PROTOCOL_TLS1_1		((3 << 8) + 2)
+#define LDAP_OPT_X_TLS_PROTOCOL_TLS1_2		((3 << 8) + 3)
+
 /* OpenLDAP SASL options */
 #define LDAP_OPT_X_SASL_MECH			0x6100
 #define LDAP_OPT_X_SASL_REALM			0x6101
@@ -163,7 +185,22 @@ LDAP_BEGIN_DECL
 #define LDAP_OPT_X_SASL_SECPROPS		0x6106 /* write-only */
 #define LDAP_OPT_X_SASL_SSF_MIN			0x6107
 #define LDAP_OPT_X_SASL_SSF_MAX			0x6108
-#define	LDAP_OPT_X_SASL_MAXBUFSIZE		0x6109
+#define LDAP_OPT_X_SASL_MAXBUFSIZE		0x6109
+#define LDAP_OPT_X_SASL_MECHLIST		0x610a /* read-only */
+#define LDAP_OPT_X_SASL_NOCANON			0x610b
+#define LDAP_OPT_X_SASL_USERNAME		0x610c /* read-only */
+
+/* OpenLDAP GSSAPI options */
+#define LDAP_OPT_X_GSSAPI_DO_NOT_FREE_CONTEXT      0x6200
+#define LDAP_OPT_X_GSSAPI_ALLOW_REMOTE_PRINCIPAL   0x6201
+
+/*
+ * OpenLDAP per connection tcp-keepalive settings
+ * (Linux only, ignored where unsupported)
+ */
+#define LDAP_OPT_X_KEEPALIVE_IDLE		0x6300
+#define LDAP_OPT_X_KEEPALIVE_PROBES		0x6301
+#define LDAP_OPT_X_KEEPALIVE_INTERVAL	0x6302
 
 /* Private API Extensions -- reserved for application use */
 #define LDAP_OPT_PRIVATE_EXTENSION_BASE 0x7000  /* Private API inclusive */
@@ -219,7 +256,6 @@ typedef struct ldapcontrol {
 #define LDAP_CONTROL_PRE_READ			"1.3.6.1.1.13.1"		/* RFC 4527 */
 #define LDAP_CONTROL_POST_READ			"1.3.6.1.1.13.2"		/* RFC 4527 */
 
-/*  standard track - not implemented in slapd(8) */
 #define LDAP_CONTROL_SORTREQUEST    "1.2.840.113556.1.4.473" /* RFC 2891 */
 #define LDAP_CONTROL_SORTRESPONSE	"1.2.840.113556.1.4.474" /* RFC 2891 */
 
@@ -255,6 +291,7 @@ typedef struct ldapcontrol {
 #define LDAP_SYNC_ADD					1
 #define LDAP_SYNC_MODIFY				2
 #define LDAP_SYNC_DELETE				3
+#define LDAP_SYNC_NEW_COOKIE			4
 
 
 /* Password policy Controls *//* work in progress */
@@ -270,7 +307,8 @@ typedef struct ldapcontrol {
 #define LDAP_CONTROL_SLURP				"1.3.6.1.4.1.4203.666.5.13"
 #define LDAP_CONTROL_VALSORT			"1.3.6.1.4.1.4203.666.5.14"
 #define LDAP_CONTROL_DONTUSECOPY		"1.3.6.1.4.1.4203.666.5.15"
-
+#define	LDAP_CONTROL_X_DEREF			"1.3.6.1.4.1.4203.666.5.16"
+#define	LDAP_CONTROL_X_WHATFAILED		"1.3.6.1.4.1.4203.666.5.17"
 
 /* LDAP Chaining Behavior Control *//* work in progress */
 /* <draft-sermersheim-ldap-chaining>;
@@ -320,10 +358,9 @@ typedef struct ldapcontrol {
 #define LDAP_CONTROL_PERSIST_ENTRY_CHANGE_MODIFY	0x4
 #define LDAP_CONTROL_PERSIST_ENTRY_CHANGE_RENAME	0x8
 
-/* LDAP VLV *//* not implemented in slapd(8) */
+/* LDAP VLV */
 #define LDAP_CONTROL_VLVREQUEST    	"2.16.840.1.113730.3.4.9"
 #define LDAP_CONTROL_VLVRESPONSE    "2.16.840.1.113730.3.4.10"
-
 
 /* LDAP Unsolicited Notifications */
 #define	LDAP_NOTICE_OF_DISCONNECTION	"1.3.6.1.4.1.1466.20036" /* RFC 4511 */
@@ -480,6 +517,8 @@ typedef struct ldapcontrol {
 #define LDAP_AUTH_KRBV41 ((ber_tag_t) 0x81U) /* context specific + primitive */
 #define LDAP_AUTH_KRBV42 ((ber_tag_t) 0x82U) /* context specific + primitive */
 
+/* used by the Windows API but not used on the wire */
+#define LDAP_AUTH_NEGOTIATE ((ber_tag_t) 0x04FFU)
 
 /* filter types */
 #define LDAP_FILTER_AND	((ber_tag_t) 0xa0U)	/* context specific + constructed */
@@ -586,6 +625,8 @@ typedef struct ldapcontrol {
 #define LDAP_NO_OBJECT_CLASS_MODS	0x45
 #define LDAP_RESULTS_TOO_LARGE		0x46 /* CLDAP */
 #define LDAP_AFFECTS_MULTIPLE_DSAS	0x47
+
+#define LDAP_VLV_ERROR				0x4C
 
 #define LDAP_OTHER					0x50
 
@@ -880,6 +921,27 @@ struct ldap_sync_t {
 /*
  * End of LDAP sync (RFC4533) API
  */
+
+/*
+ * Connection callbacks...
+ */
+struct ldap_conncb;
+struct sockaddr;
+
+/* Called after a connection is established */
+typedef int (ldap_conn_add_f) LDAP_P(( LDAP *ld, Sockbuf *sb, LDAPURLDesc *srv, struct sockaddr *addr,
+	struct ldap_conncb *ctx ));
+/* Called before a connection is closed */
+typedef void (ldap_conn_del_f) LDAP_P(( LDAP *ld, Sockbuf *sb, struct ldap_conncb *ctx ));
+
+/* Callbacks are pushed on a stack. Last one pushed is first one executed. The
+ * delete callback is called with a NULL Sockbuf just before freeing the LDAP handle.
+ */
+typedef struct ldap_conncb {
+	ldap_conn_add_f *lc_add;
+	ldap_conn_del_f *lc_del;
+	void *lc_arg;
+} ldap_conncb;
 
 /*
  * The API draft spec says we should declare (or cause to be declared)
@@ -1292,6 +1354,22 @@ ldap_perror LDAP_P((	/* deprecated, use ldap_err2string */
 	LDAP *ld,
 	LDAP_CONST char *s ));
 #endif
+
+
+/*
+ * gssapi.c:
+ */
+LDAP_F( int )
+ldap_gssapi_bind LDAP_P((
+	LDAP *ld,
+	LDAP_CONST char *dn,
+	LDAP_CONST char *creds ));
+
+LDAP_F( int )
+ldap_gssapi_bind_s LDAP_P((
+	LDAP *ld,
+	LDAP_CONST char *dn,
+	LDAP_CONST char *creds ));
 
 
 /*
@@ -2358,6 +2436,57 @@ ldap_create_assertion_control LDAP_P((
 	char		*filter,
 	int		iscritical,
 	LDAPControl	**ctrlp ));
+
+/*
+ * in deref.c
+ */
+
+typedef struct LDAPDerefSpec {
+	char *derefAttr;
+	char **attributes;
+} LDAPDerefSpec;
+
+typedef struct LDAPDerefVal {
+	char *type;
+	BerVarray vals;
+	struct LDAPDerefVal *next;
+} LDAPDerefVal;
+
+typedef struct LDAPDerefRes {
+	char *derefAttr;
+	struct berval derefVal;
+	LDAPDerefVal *attrVals;
+	struct LDAPDerefRes *next;
+} LDAPDerefRes;
+
+LDAP_F( int )
+ldap_create_deref_control_value LDAP_P((
+	LDAP *ld,
+	LDAPDerefSpec *ds,
+	struct berval *value ));
+
+LDAP_F( int )
+ldap_create_deref_control LDAP_P((
+	LDAP		*ld,
+	LDAPDerefSpec	*ds,
+	int		iscritical,
+	LDAPControl	**ctrlp ));
+
+LDAP_F( void )
+ldap_derefresponse_free LDAP_P((
+	LDAPDerefRes *dr ));
+
+LDAP_F( int )
+ldap_parse_derefresponse_control LDAP_P((
+	LDAP *ld,
+	LDAPControl *ctrl,
+	LDAPDerefRes **drp ));
+
+LDAP_F( int )
+ldap_parse_deref_control LDAP_P((
+	LDAP		*ld,
+	LDAPControl	**ctrls,
+	LDAPDerefRes	**drp ));
 
 LDAP_END_DECL
 #endif /* _LDAP_H */

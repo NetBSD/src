@@ -1,8 +1,10 @@
+/*	$NetBSD: filterindex.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* filterindex.c - generate the list of candidate entries from a filter */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/filterindex.c,v 1.64.2.5 2008/02/11 23:26:45 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/filterindex.c,v 1.64.2.10 2009/01/22 00:01:05 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,39 +29,39 @@
 
 static int presence_candidates(
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *rtxn,
 	AttributeDescription *desc,
 	ID *ids );
 
 static int equality_candidates(
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *rtxn,
 	AttributeAssertion *ava,
 	ID *ids,
 	ID *tmp );
 static int inequality_candidates(
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *rtxn,
 	AttributeAssertion *ava,
 	ID *ids,
 	ID *tmp,
 	int gtorlt );
 static int approx_candidates(
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *rtxn,
 	AttributeAssertion *ava,
 	ID *ids,
 	ID *tmp );
 static int substring_candidates(
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *rtxn,
 	SubstringsAssertion *sub,
 	ID *ids,
 	ID *tmp );
 
 static int list_candidates(
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *rtxn,
 	Filter *flist,
 	int ftype,
 	ID *ids,
@@ -69,7 +71,7 @@ static int list_candidates(
 static int
 ext_candidates(
         Operation *op,
-		BDB_LOCKER locker,
+		DB_TXN *rtxn,
         MatchingRuleAssertion *mra,
         ID *ids,
         ID *tmp,
@@ -79,7 +81,7 @@ ext_candidates(
 static int
 comp_candidates (
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *rtxn,
 	MatchingRuleAssertion *mra,
 	ComponentFilter *f,
 	ID *ids,
@@ -89,7 +91,7 @@ comp_candidates (
 static int
 ava_comp_candidates (
 		Operation *op,
-		BDB_LOCKER locker,
+		DB_TXN *rtxn,
 		AttributeAssertion *ava,
 		AttributeAliasing *aa,
 		ID *ids,
@@ -100,7 +102,7 @@ ava_comp_candidates (
 int
 bdb_filter_candidates(
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *rtxn,
 	Filter	*f,
 	ID *ids,
 	ID *tmp,
@@ -139,30 +141,30 @@ bdb_filter_candidates(
 		break;
 	case LDAP_FILTER_PRESENT:
 		Debug( LDAP_DEBUG_FILTER, "\tPRESENT\n", 0, 0, 0 );
-		rc = presence_candidates( op, locker, f->f_desc, ids );
+		rc = presence_candidates( op, rtxn, f->f_desc, ids );
 		break;
 
 	case LDAP_FILTER_EQUALITY:
 		Debug( LDAP_DEBUG_FILTER, "\tEQUALITY\n", 0, 0, 0 );
 #ifdef LDAP_COMP_MATCH
 		if ( is_aliased_attribute && ( aa = is_aliased_attribute ( f->f_ava->aa_desc ) ) ) {
-			rc = ava_comp_candidates ( op, locker, f->f_ava, aa, ids, tmp, stack );
+			rc = ava_comp_candidates ( op, rtxn, f->f_ava, aa, ids, tmp, stack );
 		}
 		else
 #endif
 		{
-			rc = equality_candidates( op, locker, f->f_ava, ids, tmp );
+			rc = equality_candidates( op, rtxn, f->f_ava, ids, tmp );
 		}
 		break;
 
 	case LDAP_FILTER_APPROX:
 		Debug( LDAP_DEBUG_FILTER, "\tAPPROX\n", 0, 0, 0 );
-		rc = approx_candidates( op, locker, f->f_ava, ids, tmp );
+		rc = approx_candidates( op, rtxn, f->f_ava, ids, tmp );
 		break;
 
 	case LDAP_FILTER_SUBSTRINGS:
 		Debug( LDAP_DEBUG_FILTER, "\tSUBSTRINGS\n", 0, 0, 0 );
-		rc = substring_candidates( op, locker, f->f_sub, ids, tmp );
+		rc = substring_candidates( op, rtxn, f->f_sub, ids, tmp );
 		break;
 
 	case LDAP_FILTER_GE:
@@ -170,9 +172,9 @@ bdb_filter_candidates(
 		Debug( LDAP_DEBUG_FILTER, "\tGE\n", 0, 0, 0 );
 		if( f->f_ava->aa_desc->ad_type->sat_ordering &&
 			( f->f_ava->aa_desc->ad_type->sat_ordering->smr_usage & SLAP_MR_ORDERED_INDEX ) )
-			rc = inequality_candidates( op, locker, f->f_ava, ids, tmp, LDAP_FILTER_GE );
+			rc = inequality_candidates( op, rtxn, f->f_ava, ids, tmp, LDAP_FILTER_GE );
 		else
-			rc = presence_candidates( op, locker, f->f_ava->aa_desc, ids );
+			rc = presence_candidates( op, rtxn, f->f_ava->aa_desc, ids );
 		break;
 
 	case LDAP_FILTER_LE:
@@ -180,9 +182,9 @@ bdb_filter_candidates(
 		Debug( LDAP_DEBUG_FILTER, "\tLE\n", 0, 0, 0 );
 		if( f->f_ava->aa_desc->ad_type->sat_ordering &&
 			( f->f_ava->aa_desc->ad_type->sat_ordering->smr_usage & SLAP_MR_ORDERED_INDEX ) )
-			rc = inequality_candidates( op, locker, f->f_ava, ids, tmp, LDAP_FILTER_LE );
+			rc = inequality_candidates( op, rtxn, f->f_ava, ids, tmp, LDAP_FILTER_LE );
 		else
-			rc = presence_candidates( op, locker, f->f_ava->aa_desc, ids );
+			rc = presence_candidates( op, rtxn, f->f_ava->aa_desc, ids );
 		break;
 
 	case LDAP_FILTER_NOT:
@@ -195,18 +197,18 @@ bdb_filter_candidates(
 
 	case LDAP_FILTER_AND:
 		Debug( LDAP_DEBUG_FILTER, "\tAND\n", 0, 0, 0 );
-		rc = list_candidates( op, locker, 
+		rc = list_candidates( op, rtxn, 
 			f->f_and, LDAP_FILTER_AND, ids, tmp, stack );
 		break;
 
 	case LDAP_FILTER_OR:
 		Debug( LDAP_DEBUG_FILTER, "\tOR\n", 0, 0, 0 );
-		rc = list_candidates( op, locker,
+		rc = list_candidates( op, rtxn,
 			f->f_or, LDAP_FILTER_OR, ids, tmp, stack );
 		break;
 	case LDAP_FILTER_EXT:
                 Debug( LDAP_DEBUG_FILTER, "\tEXT\n", 0, 0, 0 );
-                rc = ext_candidates( op, locker, f->f_mra, ids, tmp, stack );
+                rc = ext_candidates( op, rtxn, f->f_mra, ids, tmp, stack );
                 break;
 	default:
 		Debug( LDAP_DEBUG_FILTER, "\tUNKNOWN %lu\n",
@@ -231,7 +233,7 @@ out:
 static int
 comp_list_candidates(
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *rtxn,
 	MatchingRuleAssertion* mra,
 	ComponentFilter	*flist,
 	int	ftype,
@@ -250,7 +252,7 @@ comp_list_candidates(
 			continue;
 		}
 		BDB_IDL_ZERO( save );
-		rc = comp_candidates( op, locker, mra, f, save, tmp, save+BDB_IDL_UM_SIZE );
+		rc = comp_candidates( op, rtxn, mra, f, save, tmp, save+BDB_IDL_UM_SIZE );
 
 		if ( rc != 0 ) {
 			if ( ftype == LDAP_COMP_FILTER_AND ) {
@@ -296,7 +298,7 @@ comp_list_candidates(
 static int
 comp_equality_candidates (
         Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *rtxn,
         MatchingRuleAssertion *mra,
 	ComponentAssertion *ca,
         ID *ids,
@@ -370,7 +372,7 @@ comp_equality_candidates (
                 return 0;
         }
         for ( i= 0; keys[i].bv_val != NULL; i++ ) {
-                rc = bdb_key_read( op->o_bd, db, locker, &keys[i], tmp, NULL, 0 );
+                rc = bdb_key_read( op->o_bd, db, rtxn, &keys[i], tmp, NULL, 0 );
 
                 if( rc == DB_NOTFOUND ) {
                         BDB_IDL_ZERO( ids );
@@ -407,7 +409,7 @@ comp_equality_candidates (
 static int
 ava_comp_candidates (
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *rtxn,
 	AttributeAssertion *ava,
 	AttributeAliasing *aa,
 	ID *ids,
@@ -425,13 +427,13 @@ ava_comp_candidates (
 	mra.ma_desc = aa->aa_aliased_ad;
 	mra.ma_rule = ava->aa_desc->ad_type->sat_equality;
 	
-	return comp_candidates ( op, locker, &mra, ava->aa_cf, ids, tmp, stack );
+	return comp_candidates ( op, rtxn, &mra, ava->aa_cf, ids, tmp, stack );
 }
 
 static int
 comp_candidates (
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *rtxn,
 	MatchingRuleAssertion *mra,
 	ComponentFilter *f,
 	ID *ids,
@@ -448,10 +450,10 @@ comp_candidates (
 		rc = f->cf_result;
 		break;
 	case LDAP_COMP_FILTER_AND:
-		rc = comp_list_candidates( op, locker, mra, f->cf_and, LDAP_COMP_FILTER_AND, ids, tmp, stack );
+		rc = comp_list_candidates( op, rtxn, mra, f->cf_and, LDAP_COMP_FILTER_AND, ids, tmp, stack );
 		break;
 	case LDAP_COMP_FILTER_OR:
-		rc = comp_list_candidates( op, locker, mra, f->cf_or, LDAP_COMP_FILTER_OR, ids, tmp, stack );
+		rc = comp_list_candidates( op, rtxn, mra, f->cf_or, LDAP_COMP_FILTER_OR, ids, tmp, stack );
 		break;
 	case LDAP_COMP_FILTER_NOT:
 		/* No component indexing supported for NOT filter */
@@ -463,7 +465,7 @@ comp_candidates (
 		rc = LDAP_PROTOCOL_ERROR;
 		break;
 	case LDAP_COMP_FILTER_ITEM:
-		rc = comp_equality_candidates( op, locker, mra, f->cf_ca, ids, tmp, stack );
+		rc = comp_equality_candidates( op, rtxn, mra, f->cf_ca, ids, tmp, stack );
 		break;
 	default:
 		{
@@ -480,7 +482,7 @@ comp_candidates (
 static int
 ext_candidates(
         Operation *op,
-		BDB_LOCKER locker,
+		DB_TXN *rtxn,
         MatchingRuleAssertion *mra,
         ID *ids,
         ID *tmp,
@@ -494,7 +496,7 @@ ext_candidates(
 	 * Indexing for an extensible filter is not supported yet
 	 */
 	if ( mra->ma_cf ) {
-		return comp_candidates ( op, locker, mra, mra->ma_cf, ids, tmp, stack);
+		return comp_candidates ( op, rtxn, mra, mra->ma_cf, ids, tmp, stack);
 	}
 #endif
 	if ( mra->ma_desc == slap_schema.si_ad_entryDN ) {
@@ -504,7 +506,7 @@ ext_candidates(
 		BDB_IDL_ZERO( ids );
 		if ( mra->ma_rule == slap_schema.si_mr_distinguishedNameMatch ) {
 			ei = NULL;
-			rc = bdb_cache_find_ndn( op, locker, &mra->ma_value, &ei );
+			rc = bdb_cache_find_ndn( op, rtxn, &mra->ma_value, &ei );
 			if ( rc == LDAP_SUCCESS )
 				bdb_idl_insert( ids, ei->bei_id );
 			if ( ei )
@@ -518,7 +520,7 @@ ext_candidates(
 				struct berval pdn;
 				ei = NULL;
 				dnParent( &mra->ma_value, &pdn );
-				bdb_cache_find_ndn( op, locker, &pdn, &ei );
+				bdb_cache_find_ndn( op, rtxn, &pdn, &ei );
 				if ( ei ) {
 					bdb_cache_entryinfo_unlock( ei );
 					while ( ei && ei->bei_id ) {
@@ -538,13 +540,13 @@ ext_candidates(
 				scope = LDAP_SCOPE_BASE;
 			if ( scope > LDAP_SCOPE_BASE ) {
 				ei = NULL;
-				rc = bdb_cache_find_ndn( op, locker, &mra->ma_value, &ei );
+				rc = bdb_cache_find_ndn( op, rtxn, &mra->ma_value, &ei );
 				if ( ei )
 					bdb_cache_entryinfo_unlock( ei );
 				if ( rc == LDAP_SUCCESS ) {
 					int sc = op->ors_scope;
 					op->ors_scope = scope;
-					rc = bdb_dn2idl( op, locker, &mra->ma_value, ei, ids,
+					rc = bdb_dn2idl( op, rtxn, &mra->ma_value, ei, ids,
 						stack );
 					op->ors_scope = sc;
 				}
@@ -560,7 +562,7 @@ ext_candidates(
 static int
 list_candidates(
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *rtxn,
 	Filter	*flist,
 	int		ftype,
 	ID *ids,
@@ -578,10 +580,13 @@ list_candidates(
 			continue;
 		}
 		BDB_IDL_ZERO( save );
-		rc = bdb_filter_candidates( op, locker, f, save, tmp,
+		rc = bdb_filter_candidates( op, rtxn, f, save, tmp,
 			save+BDB_IDL_UM_SIZE );
 
 		if ( rc != 0 ) {
+			if ( rc == DB_LOCK_DEADLOCK )
+				return rc;
+
 			if ( ftype == LDAP_FILTER_AND ) {
 				rc = 0;
 				continue;
@@ -626,7 +631,7 @@ list_candidates(
 static int
 presence_candidates(
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *rtxn,
 	AttributeDescription *desc,
 	ID *ids )
 {
@@ -671,7 +676,7 @@ presence_candidates(
 		return -1;
 	}
 
-	rc = bdb_key_read( op->o_bd, db, locker, &prefix, ids, NULL, 0 );
+	rc = bdb_key_read( op->o_bd, db, rtxn, &prefix, ids, NULL, 0 );
 
 	if( rc == DB_NOTFOUND ) {
 		BDB_IDL_ZERO( ids );
@@ -697,7 +702,7 @@ done:
 static int
 equality_candidates(
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *rtxn,
 	AttributeAssertion *ava,
 	ID *ids,
 	ID *tmp )
@@ -713,6 +718,20 @@ equality_candidates(
 
 	Debug( LDAP_DEBUG_TRACE, "=> bdb_equality_candidates (%s)\n",
 			ava->aa_desc->ad_cname.bv_val, 0, 0 );
+
+	if ( ava->aa_desc == slap_schema.si_ad_entryDN ) {
+		EntryInfo *ei = NULL;
+		rc = bdb_cache_find_ndn( op, rtxn, &ava->aa_value, &ei );
+		if ( rc == LDAP_SUCCESS ) {
+			/* exactly one ID can match */
+			ids[0] = 1;
+			ids[1] = ei->bei_id;
+		}
+		if ( ei ) {
+			bdb_cache_entryinfo_unlock( ei );
+		}
+		return rc;
+	}
 
 	BDB_IDL_ALL( bdb, ids );
 
@@ -768,7 +787,7 @@ equality_candidates(
 	}
 
 	for ( i= 0; keys[i].bv_val != NULL; i++ ) {
-		rc = bdb_key_read( op->o_bd, db, locker, &keys[i], tmp, NULL, 0 );
+		rc = bdb_key_read( op->o_bd, db, rtxn, &keys[i], tmp, NULL, 0 );
 
 		if( rc == DB_NOTFOUND ) {
 			BDB_IDL_ZERO( ids );
@@ -814,7 +833,7 @@ equality_candidates(
 static int
 approx_candidates(
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *rtxn,
 	AttributeAssertion *ava,
 	ID *ids,
 	ID *tmp )
@@ -890,7 +909,7 @@ approx_candidates(
 	}
 
 	for ( i= 0; keys[i].bv_val != NULL; i++ ) {
-		rc = bdb_key_read( op->o_bd, db, locker, &keys[i], tmp, NULL, 0 );
+		rc = bdb_key_read( op->o_bd, db, rtxn, &keys[i], tmp, NULL, 0 );
 
 		if( rc == DB_NOTFOUND ) {
 			BDB_IDL_ZERO( ids );
@@ -934,7 +953,7 @@ approx_candidates(
 static int
 substring_candidates(
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *rtxn,
 	SubstringsAssertion	*sub,
 	ID *ids,
 	ID *tmp )
@@ -1006,7 +1025,7 @@ substring_candidates(
 	}
 
 	for ( i= 0; keys[i].bv_val != NULL; i++ ) {
-		rc = bdb_key_read( op->o_bd, db, locker, &keys[i], tmp, NULL, 0 );
+		rc = bdb_key_read( op->o_bd, db, rtxn, &keys[i], tmp, NULL, 0 );
 
 		if( rc == DB_NOTFOUND ) {
 			BDB_IDL_ZERO( ids );
@@ -1050,7 +1069,7 @@ substring_candidates(
 static int
 inequality_candidates(
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *rtxn,
 	AttributeAssertion *ava,
 	ID *ids,
 	ID *tmp,
@@ -1123,7 +1142,7 @@ inequality_candidates(
 
 	BDB_IDL_ZERO( ids );
 	while(1) {
-		rc = bdb_key_read( op->o_bd, db, locker, &keys[0], tmp, &cursor, gtorlt );
+		rc = bdb_key_read( op->o_bd, db, rtxn, &keys[0], tmp, &cursor, gtorlt );
 
 		if( rc == DB_NOTFOUND ) {
 			rc = 0;

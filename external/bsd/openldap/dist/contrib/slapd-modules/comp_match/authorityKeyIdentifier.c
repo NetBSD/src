@@ -1,3 +1,5 @@
+/*	$NetBSD: authorityKeyIdentifier.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+
 /*
  *    authorityKeyIdentifier.c
  *    "AuthorityKeyIdentifierDefinition" ASN.1 module encode/decode/extracting/matching/free C src.

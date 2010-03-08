@@ -1,8 +1,10 @@
+/*	$NetBSD: aci.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+
 /* aci.c - routines to parse and check acl's */
-/* $OpenLDAP: pkg/ldap/servers/slapd/aci.c,v 1.14.2.6 2008/02/11 23:26:43 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/aci.c,v 1.14.2.11 2009/01/22 00:00:59 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -345,9 +347,12 @@ aci_list_get_rights(
 			continue;
 		}
 
-		found = 1;
 		*mask |= aci_list_get_attr_rights( &perm, attr, val );
 		*mask |= aci_list_get_attr_rights( &perm, &aci_bv[ ACI_BV_BR_ALL ], NULL );
+
+		if ( *mask != ACL_PRIV_NONE ) { 
+			found = 1;
+		}
 	}
 
 	return found;
@@ -397,11 +402,15 @@ aci_group_member (
 	if ( grp_oc != NULL && grp_ad != NULL ) {
 		char		buf[ ACI_BUF_SIZE ];
 		struct berval	bv, ndn;
+		AclRegexMatches amatches = { 0 };
+
+		amatches.dn_count = nmatch;
+		AC_MEMCPY( amatches.dn_data, matches, sizeof( amatches.dn_data ) );
 
 		bv.bv_len = sizeof( buf ) - 1;
 		bv.bv_val = (char *)&buf;
 		if ( acl_string_expand( &bv, &subjdn,
-				e->e_ndn, nmatch, matches ) )
+				&e->e_nname, NULL, &amatches ) )
 		{
 			rc = LDAP_OTHER;
 			goto done;
@@ -439,7 +448,9 @@ aci_mask(
 				opts,
 				sdn;
 	int			rc;
-		
+
+	ACL_INIT( *grant );
+	ACL_INIT( *deny );
 
 	assert( !BER_BVISNULL( &desc->ad_cname ) );
 
@@ -1038,7 +1049,7 @@ static int
 OpenLDAPaciValidatePerms(
 	struct berval *perms ) 
 {
-	int		i;
+	ber_len_t	i;
 
 	for ( i = 0; i < perms->bv_len; ) {
 		switch ( perms->bv_val[ i ] ) {
@@ -1738,6 +1749,12 @@ OpenLDAPaciPrettyNormal(
 		}
 
 		nsubject = ad->ad_cname;
+
+	} else if ( OpenLDAPacitypes[ idx ] == &aci_bv[ ACI_BV_SET ]
+		|| OpenLDAPacitypes[ idx ] == &aci_bv[ ACI_BV_SET_REF ] )
+	{
+		/* NOTE: dunno how to normalize it... */
+		nsubject = subject;
 	}
 
 

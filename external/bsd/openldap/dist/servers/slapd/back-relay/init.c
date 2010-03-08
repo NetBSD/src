@@ -1,8 +1,10 @@
+/*	$NetBSD: init.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+
 /* init.c - initialize relay backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-relay/init.c,v 1.19.2.4 2008/02/12 01:03:16 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-relay/init.c,v 1.19.2.8 2009/08/12 23:57:40 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2008 The OpenLDAP Foundation.
+ * Copyright 2004-2009 The OpenLDAP Foundation.
  * Portions Copyright 2004 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -108,10 +110,8 @@ relay_back_cf( ConfigArgs *c )
 				"of relay dn \"%s\" "
 				"in \"olcRelay <dn>\"\n",
 				c->value_dn.bv_val );
-			Log2( LDAP_DEBUG_ANY, LDAP_LEVEL_ERR,
+			Log2( LDAP_DEBUG_CONFIG, LDAP_LEVEL_ERR,
 				"%s: %s.\n", c->log, c->cr_msg );
-			rc = 1;
-			goto relay_done;
 
 		} else if ( bd->be_private == c->be->be_private ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg),
@@ -153,26 +153,17 @@ relay_back_initialize( BackendInfo *bi )
 	bi->bi_db_destroy = relay_back_db_destroy;
 
 	bi->bi_op_bind = relay_back_op_bind;
-	bi->bi_op_unbind = relay_back_op_unbind;
 	bi->bi_op_search = relay_back_op_search;
 	bi->bi_op_compare = relay_back_op_compare;
 	bi->bi_op_modify = relay_back_op_modify;
 	bi->bi_op_modrdn = relay_back_op_modrdn;
 	bi->bi_op_add = relay_back_op_add;
 	bi->bi_op_delete = relay_back_op_delete;
-	bi->bi_op_abandon = relay_back_op_abandon;
-	bi->bi_op_cancel = relay_back_op_cancel;
 	bi->bi_extended = relay_back_op_extended;
 	bi->bi_entry_release_rw = relay_back_entry_release_rw;
 	bi->bi_entry_get_rw = relay_back_entry_get_rw;
-#if 0	/* see comment in op.c */
-	bi->bi_chk_referrals = relay_back_chk_referrals;
-#endif
 	bi->bi_operational = relay_back_operational;
 	bi->bi_has_subordinates = relay_back_has_subordinates;
-
-	bi->bi_connection_init = relay_back_connection_init;
-	bi->bi_connection_destroy = relay_back_connection_destroy;
 
 	bi->bi_cf_ocs = relayocs;
 
@@ -186,7 +177,7 @@ relay_back_db_init( Backend *be, ConfigReply *cr)
 
 	be->be_private = NULL;
 
-	ri = (relay_back_info *)ch_calloc( 1, sizeof( relay_back_info ) );
+	ri = (relay_back_info *) ch_calloc( 1, RELAY_INFO_SIZE );
 	if ( ri == NULL ) {
  		return -1;
  	}
@@ -213,14 +204,24 @@ relay_back_db_open( Backend *be, ConfigReply *cr )
 		ri->ri_bd = select_backend( &ri->ri_realsuffix, 1 );
 
 		/* must be there: it was during config! */
-		assert( ri->ri_bd != NULL );
+		if ( ri->ri_bd == NULL ) {
+			snprintf( cr->msg, sizeof( cr->msg),
+				"cannot find database "
+				"of relay dn \"%s\" "
+				"in \"olcRelay <dn>\"\n",
+				ri->ri_realsuffix.bv_val );
+			Log1( LDAP_DEBUG_ANY, LDAP_LEVEL_ERR,
+				"relay_back_db_open: %s.\n", cr->msg );
+
+			return 1;
+		}
 
 		/* inherit controls */
-		AC_MEMCPY( be->be_ctrls, ri->ri_bd->be_ctrls, sizeof( be->be_ctrls ) );
+		AC_MEMCPY( be->bd_self->be_ctrls, ri->ri_bd->be_ctrls, sizeof( be->be_ctrls ) );
 
 	} else {
 		/* inherit all? */
-		AC_MEMCPY( be->be_ctrls, frontendDB->be_ctrls, sizeof( be->be_ctrls ) );
+		AC_MEMCPY( be->bd_self->be_ctrls, frontendDB->be_ctrls, sizeof( be->be_ctrls ) );
 	}
 
 	return 0;
@@ -253,4 +254,3 @@ relay_back_db_destroy( Backend *be, ConfigReply *cr)
 SLAP_BACKEND_INIT_MODULE( relay )
 
 #endif /* SLAPD_RELAY == SLAPD_MOD_DYNAMIC */
-

@@ -1,8 +1,10 @@
+/*	$NetBSD: getopt-compat.h,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /* getopt-compat.h -- getopt(3) compatibility header */
-/* $OpenLDAP: pkg/ldap/include/getopt-compat.h,v 1.19.2.3 2008/02/11 23:26:40 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/include/getopt-compat.h,v 1.19.2.4 2009/01/22 00:00:51 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

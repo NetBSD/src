@@ -1,8 +1,10 @@
+/*	$NetBSD: limits.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+
 /* limits.c - routines to handle regex-based size and time limits */
-/* $OpenLDAP: pkg/ldap/servers/slapd/limits.c,v 1.73.2.6 2008/02/11 23:26:44 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/limits.c,v 1.73.2.11 2009/06/02 23:03:46 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,6 +20,7 @@
 
 #include <stdio.h>
 
+#include <ac/ctype.h>
 #include <ac/regex.h>
 #include <ac/string.h>
 
@@ -27,57 +30,60 @@
 /* define to get an error if requesting limit higher than hard */
 #undef ABOVE_HARD_LIMIT_IS_ERROR
 
-static char *
+static const struct berval lmpats[] = {
+	BER_BVC( "base" ),
+	BER_BVC( "base" ),
+	BER_BVC( "onelevel" ),
+	BER_BVC( "subtree" ),
+	BER_BVC( "children" ),
+	BER_BVC( "regex" ),
+	BER_BVC( "anonymous" ),
+	BER_BVC( "users" ),
+	BER_BVC( "*" )
+};
+
+#ifdef LDAP_DEBUG
+static const char *const dn_source[2] = { "DN", "DN.THIS" };
+static const char *const lmpats_out[] = {
+	"UNDEFINED",
+	"EXACT",
+	"ONELEVEL",
+	"SUBTREE",
+	"CHILDREN",
+	"REGEX",
+	"ANONYMOUS",
+	"USERS",
+	"ANY"
+};
+
+static const char *
 limits2str( unsigned i )
 {
-	switch ( i ) {
-	case SLAP_LIMITS_UNDEFINED:
-		return "UNDEFINED";
-
-	case SLAP_LIMITS_EXACT:
-		return "EXACT";
-			
-	case SLAP_LIMITS_ONE:
-		return "ONELEVEL";	
-
-	case SLAP_LIMITS_SUBTREE:
-		return "SUBTREE";
-
-	case SLAP_LIMITS_CHILDREN:
-		return "CHILDREN";
-
-	case SLAP_LIMITS_REGEX:
-		return "REGEX";
-
-	case SLAP_LIMITS_ANONYMOUS:
-		return "ANONYMOUS";
-		
-	case SLAP_LIMITS_USERS:
-		return "USERS";
-		
-	case SLAP_LIMITS_ANY:
-		return "ANY";
-
-	default:
-		return "UNKNOWN";
-	}
+	return i < (sizeof( lmpats_out ) / sizeof( lmpats_out[0] ))
+		? lmpats_out[i] : "UNKNOWN";
 }
+#endif /* LDAP_DEBUG */
 
-int
+static int
 limits_get( 
 	Operation		*op,
-	struct berval		*ndn, 
 	struct slap_limits_set 	**limit
 )
 {
+	static struct berval empty_dn = BER_BVC( "" );
 	struct slap_limits **lm;
+	struct berval		*ndns[2];
 
 	assert( op != NULL );
 	assert( limit != NULL );
 
-	Debug( LDAP_DEBUG_TRACE, "==> limits_get: %s dn=\"%s\"\n",
+	ndns[0] = &op->o_ndn;
+	ndns[1] = &op->o_req_ndn;
+
+	Debug( LDAP_DEBUG_TRACE, "==> limits_get: %s self=\"%s\" this=\"%s\"\n",
 			op->o_log_prefix,
-			BER_BVISNULL( ndn ) ? "[anonymous]" : ndn->bv_val, 0 );
+			BER_BVISNULL( ndns[0] ) ? "[anonymous]" : ndns[0]->bv_val,
+			BER_BVISNULL( ndns[1] ) ? "" : ndns[1]->bv_val );
 	/*
 	 * default values
 	 */
@@ -90,37 +96,33 @@ limits_get(
 	for ( lm = op->o_bd->be_limits; lm[0] != NULL; lm++ ) {
 		unsigned	style = lm[0]->lm_flags & SLAP_LIMITS_MASK;
 		unsigned	type = lm[0]->lm_flags & SLAP_LIMITS_TYPE_MASK;
+		unsigned	isthis = type == SLAP_LIMITS_TYPE_THIS;
+		struct berval *ndn = ndns[isthis];
+
+		if ( style == SLAP_LIMITS_ANY )
+			goto found_any;
+
+		if ( BER_BVISEMPTY( ndn ) ) {
+			if ( style == SLAP_LIMITS_ANONYMOUS )
+				goto found_nodn;
+			if ( !isthis )
+				continue;
+			ndn = &empty_dn;
+		}
 
 		switch ( style ) {
 		case SLAP_LIMITS_EXACT:
-			if ( BER_BVISEMPTY( ndn ) ) {
-				break;
-			}
-
 			if ( type == SLAP_LIMITS_TYPE_GROUP ) {
-				int	rc;
-
-				rc = backend_group( op, NULL,
+				int	rc = backend_group( op, NULL,
 						&lm[0]->lm_pat, ndn,
 						lm[0]->lm_group_oc,
 						lm[0]->lm_group_ad );
 				if ( rc == 0 ) {
-					*limit = &lm[0]->lm_limits;
-					Debug( LDAP_DEBUG_TRACE, "<== limits_get: type=GROUP match=EXACT "
-							"dn=\"%s\" oc=\"%s\" ad=\"%s\"\n",
-							lm[0]->lm_pat.bv_val,
-							lm[0]->lm_group_oc->soc_cname.bv_val,
-							lm[0]->lm_group_ad->ad_cname.bv_val );
-
-					return( 0 );
+					goto found_group;
 				}
 			} else {
-			
 				if ( dn_match( &lm[0]->lm_pat, ndn ) ) {
-					*limit = &lm[0]->lm_limits;
-					Debug( LDAP_DEBUG_TRACE, "<== limits_get: type=DN match=EXACT dn=\"%s\"\n",
-							lm[0]->lm_pat.bv_val, 0, 0 );
-					return( 0 );
+					goto found_dn;
 				}
 			}
 			break;
@@ -128,20 +130,16 @@ limits_get(
 		case SLAP_LIMITS_ONE:
 		case SLAP_LIMITS_SUBTREE:
 		case SLAP_LIMITS_CHILDREN: {
-			size_t d;
+			ber_len_t d;
 			
-			if ( BER_BVISEMPTY( ndn ) ) {
-				break;
-			}
-
-			/* ndn shorter than dn_pat */
+			/* ndn shorter than lm_pat */
 			if ( ndn->bv_len < lm[0]->lm_pat.bv_len ) {
 				break;
 			}
 			d = ndn->bv_len - lm[0]->lm_pat.bv_len;
 
-			/* allow exact match for SUBTREE only */
 			if ( d == 0 ) {
+				/* allow exact match for SUBTREE only */
 				if ( style != SLAP_LIMITS_SUBTREE ) {
 					break;
 				}
@@ -152,66 +150,51 @@ limits_get(
 				}
 			}
 
-			/* in case of (sub)match ... */
-			if ( lm[0]->lm_pat.bv_len == ( ndn->bv_len - d )
-					&& strcmp( lm[0]->lm_pat.bv_val,
-						&ndn->bv_val[d] ) == 0 )
-			{
-				/* check for exactly one rdn in case of ONE */
-				if ( style == SLAP_LIMITS_ONE ) {
-					/*
-					 * if ndn is more that one rdn
-					 * below dn_pat, continue
-					 */
-					if ( (size_t) dn_rdnlen( NULL, ndn )
-							!= d - 1 )
-					{
-						break;
-					}
-				}
-
-				*limit = &lm[0]->lm_limits;
-				Debug( LDAP_DEBUG_TRACE, "<== limits_get: type=DN match=%s dn=\"%s\"\n",
-						limits2str( style ), lm[0]->lm_pat.bv_val, 0 );
-				return( 0 );
+			/* check that ndn ends with lm_pat */
+			if ( strcmp( lm[0]->lm_pat.bv_val, &ndn->bv_val[d] ) != 0 ) {
+				break;
 			}
 
-			break;
+			/* in case of ONE, require exactly one rdn below lm_pat */
+			if ( style == SLAP_LIMITS_ONE ) {
+				if ( dn_rdnlen( NULL, ndn ) != d - 1 ) {
+					break;
+				}
+			}
+
+			goto found_dn;
 		}
 
 		case SLAP_LIMITS_REGEX:
-			if ( BER_BVISEMPTY( ndn ) ) {
-				break;
-			}
-			if ( regexec( &lm[0]->lm_regex, ndn->bv_val,
-						0, NULL, 0 ) == 0 )
-			{
-				*limit = &lm[0]->lm_limits;
-				Debug( LDAP_DEBUG_TRACE, "<== limits_get: type=DN match=%s dn=\"%s\"\n",
-						limits2str( style ), lm[0]->lm_pat.bv_val, 0 );
-				return( 0 );
+			if ( regexec( &lm[0]->lm_regex, ndn->bv_val, 0, NULL, 0 ) == 0 ) {
+				goto found_dn;
 			}
 			break;
 
 		case SLAP_LIMITS_ANONYMOUS:
-			if ( BER_BVISEMPTY( ndn ) ) {
-				Debug( LDAP_DEBUG_TRACE, "<== limits_get: type=DN match=%s\n",
-						limits2str( style ), 0, 0 );
-				*limit = &lm[0]->lm_limits;
-				return( 0 );
-			}
 			break;
 
 		case SLAP_LIMITS_USERS:
-			if ( !BER_BVISEMPTY( ndn ) ) {
-				*limit = &lm[0]->lm_limits;
-				Debug( LDAP_DEBUG_TRACE, "<== limits_get: type=DN match=%s\n",
-						limits2str( style ), 0, 0 );
-				return( 0 );
-			}
-			break;
+		found_nodn:
+			Debug( LDAP_DEBUG_TRACE, "<== limits_get: type=%s match=%s\n",
+				dn_source[isthis], limits2str( style ), 0 );
+		found_any:
+			*limit = &lm[0]->lm_limits;
+			return( 0 );
 
-		case SLAP_LIMITS_ANY:
+		found_dn:
+			Debug( LDAP_DEBUG_TRACE,
+				"<== limits_get: type=%s match=%s dn=\"%s\"\n",
+				dn_source[isthis], limits2str( style ), lm[0]->lm_pat.bv_val );
+			*limit = &lm[0]->lm_limits;
+			return( 0 );
+
+		found_group:
+			Debug( LDAP_DEBUG_TRACE, "<== limits_get: type=GROUP match=EXACT "
+				"dn=\"%s\" oc=\"%s\" ad=\"%s\"\n",
+				lm[0]->lm_pat.bv_val,
+				lm[0]->lm_group_oc->soc_cname.bv_val,
+				lm[0]->lm_group_ad->ad_cname.bv_val );
 			*limit = &lm[0]->lm_limits;
 			return( 0 );
 
@@ -248,6 +231,7 @@ limits_add(
 	case SLAP_LIMITS_ANONYMOUS:
 	case SLAP_LIMITS_USERS:
 	case SLAP_LIMITS_ANY:
+		/* For these styles, type == 0 (SLAP_LIMITS_TYPE_SELF). */
 		for ( i = 0; be->be_limits && be->be_limits[ i ]; i++ ) {
 			if ( be->be_limits[ i ]->lm_flags == style ) {
 				return( -1 );
@@ -267,7 +251,6 @@ limits_add(
 	case SLAP_LIMITS_ONE:
 	case SLAP_LIMITS_SUBTREE:
 	case SLAP_LIMITS_CHILDREN:
-		lm->lm_flags = style | type;
 		{
 			int rc;
 			struct berval bv;
@@ -283,7 +266,6 @@ limits_add(
 		break;
 		
 	case SLAP_LIMITS_REGEX:
-		lm->lm_flags = style | type;
 		ber_str2bv( pattern, 0, 1, &lm->lm_pat );
 		if ( regcomp( &lm->lm_regex, lm->lm_pat.bv_val, 
 					REG_EXTENDED | REG_ICASE ) ) {
@@ -296,7 +278,6 @@ limits_add(
 	case SLAP_LIMITS_ANONYMOUS:
 	case SLAP_LIMITS_USERS:
 	case SLAP_LIMITS_ANY:
-		lm->lm_flags = style | type;
 		BER_BVZERO( &lm->lm_pat );
 		break;
 	}
@@ -310,6 +291,7 @@ limits_add(
 		break;
 	}
 
+	lm->lm_flags = style | type;
 	lm->lm_limits = *limit;
 
 	i = 0;
@@ -324,6 +306,8 @@ limits_add(
 	
 	return( 0 );
 }
+
+#define STRSTART( s, m ) (strncasecmp( s, m, STRLENOF( "" m "" )) == 0)
 
 int
 limits_parse(
@@ -363,10 +347,12 @@ limits_parse(
 	 * 
 	 * "anonymous"
 	 * "users"
-	 * [ "dn" [ "." { "exact" | "base" | "onelevel" | "subtree" | children"
-	 *	| "regex" | "anonymous" } ] "=" ] <dn pattern>
+	 * [ "dn" [ "." { "this" | "self" } ] [ "." { "exact" | "base" |
+	 *	"onelevel" | "subtree" | "children" | "regex" | "anonymous" } ]
+	 *	"=" ] <dn pattern>
 	 *
 	 * Note:
+	 *	"this" is the baseobject, "self" (the default) is the bound DN
 	 *	"exact" and "base" are the same (exact match);
 	 *	"onelevel" means exactly one rdn below, NOT including pattern
 	 *	"subtree" means any rdn below, including pattern
@@ -394,22 +380,35 @@ limits_parse(
 	} else if ( strcasecmp( pattern, "users" ) == 0 ) {
 		flags = SLAP_LIMITS_USERS;
 		
-	} else if ( strncasecmp( pattern, "dn", STRLENOF( "dn" ) ) == 0 ) {
+	} else if ( STRSTART( pattern, "dn" ) ) {
 		pattern += STRLENOF( "dn" );
+		flags = SLAP_LIMITS_TYPE_SELF;
 		if ( pattern[0] == '.' ) {
 			pattern++;
-			if ( strncasecmp( pattern, "exact", STRLENOF( "exact" )) == 0 ) {
-				flags = SLAP_LIMITS_EXACT;
+			if ( STRSTART( pattern, "this" ) ) {
+				flags = SLAP_LIMITS_TYPE_THIS;
+				pattern += STRLENOF( "this" );
+			} else if ( STRSTART( pattern, "self" ) ) {
+				pattern += STRLENOF( "self" );
+			} else {
+				goto got_dn_dot;
+			}
+		}
+		if ( pattern[0] == '.' ) {
+			pattern++;
+		got_dn_dot:
+			if ( STRSTART( pattern, "exact" ) ) {
+				flags |= SLAP_LIMITS_EXACT;
 				pattern += STRLENOF( "exact" );
 
-			} else if ( strncasecmp( pattern, "base", STRLENOF( "base" ) ) == 0 ) {
-				flags = SLAP_LIMITS_BASE;
+			} else if ( STRSTART( pattern, "base" ) ) {
+				flags |= SLAP_LIMITS_BASE;
 				pattern += STRLENOF( "base" );
 
-			} else if ( strncasecmp( pattern, "one", STRLENOF( "one" ) ) == 0 ) {
-				flags = SLAP_LIMITS_ONE;
+			} else if ( STRSTART( pattern, "one" ) ) {
+				flags |= SLAP_LIMITS_ONE;
 				pattern += STRLENOF( "one" );
-				if ( strncasecmp( pattern, "level", STRLENOF( "level" ) ) == 0 ) {
+				if ( STRSTART( pattern, "level" ) ) {
 					pattern += STRLENOF( "level" );
 
 				} else {
@@ -419,10 +418,10 @@ limits_parse(
 						"use \"onelevel\" instead.\n", fname, lineno, 0 );
 				}
 
-			} else if ( strncasecmp( pattern, "sub", STRLENOF( "sub" ) ) == 0 ) {
-				flags = SLAP_LIMITS_SUBTREE;
+			} else if ( STRSTART( pattern, "sub" ) ) {
+				flags |= SLAP_LIMITS_SUBTREE;
 				pattern += STRLENOF( "sub" );
-				if ( strncasecmp( pattern, "tree", STRLENOF( "tree" ) ) == 0 ) {
+				if ( STRSTART( pattern, "tree" ) ) {
 					pattern += STRLENOF( "tree" );
 
 				} else {
@@ -432,43 +431,43 @@ limits_parse(
 						"use \"subtree\" instead.\n", fname, lineno, 0 );
 				}
 
-			} else if ( strncasecmp( pattern, "children", STRLENOF( "children" ) ) == 0 ) {
-				flags = SLAP_LIMITS_CHILDREN;
+			} else if ( STRSTART( pattern, "children" ) ) {
+				flags |= SLAP_LIMITS_CHILDREN;
 				pattern += STRLENOF( "children" );
 
-			} else if ( strncasecmp( pattern, "regex", STRLENOF( "regex" ) ) == 0 ) {
-				flags = SLAP_LIMITS_REGEX;
+			} else if ( STRSTART( pattern, "regex" ) ) {
+				flags |= SLAP_LIMITS_REGEX;
 				pattern += STRLENOF( "regex" );
 
 			/* 
 			 * this could be deprecated in favour
 			 * of the pattern = "anonymous" form
 			 */
-			} else if ( strncasecmp( pattern, "anonymous", STRLENOF( "anonymous" ) ) == 0 ) {
+			} else if ( STRSTART( pattern, "anonymous" )
+					&& flags == SLAP_LIMITS_TYPE_SELF )
+			{
 				flags = SLAP_LIMITS_ANONYMOUS;
 				pattern = NULL;
+
+			} else {
+				/* force error below */
+				if ( *pattern == '=' )
+					--pattern;
 			}
 		}
 
 		/* pre-check the data */
-		switch ( flags ) {
-		case SLAP_LIMITS_ANONYMOUS:
-		case SLAP_LIMITS_USERS:
-
-			/* no need for pattern */
-			pattern = NULL;
-			break;
-
-		default:
+		if ( pattern != NULL ) {
 			if ( pattern[0] != '=' ) {
 				Debug( LDAP_DEBUG_ANY,
-					"%s : line %d: missing '=' in "
-					"\"dn[.{exact|base|onelevel|subtree"
-					"|children|regex|anonymous}]"
-					"=<pattern>\" in "
-					"\"limits <pattern> <limits>\" "
-					"line.\n%s",
-					fname, lineno, "" );
+					"%s : line %d: %s in "
+					"\"dn[.{this|self}][.{exact|base"
+					"|onelevel|subtree|children|regex"
+					"|anonymous}]=<pattern>\" in "
+					"\"limits <pattern> <limits>\" line.\n",
+					fname, lineno,
+					isalnum( (unsigned char)pattern[0] )
+					? "unknown DN modifier" : "missing '='" );
 				return( -1 );
 			}
 
@@ -480,14 +479,14 @@ limits_parse(
 				flags = SLAP_LIMITS_ANY;
 				pattern = NULL;
 
-			} else if ( flags == SLAP_LIMITS_REGEX
+			} else if ( (flags & SLAP_LIMITS_MASK) == SLAP_LIMITS_REGEX
 					&& strcmp( pattern, ".*" ) == 0 ) {
 				flags = SLAP_LIMITS_ANY;
 				pattern = NULL;
 			}
 		}
 
-	} else if (strncasecmp( pattern, "group", STRLENOF( "group" ) ) == 0 ) {
+	} else if (STRSTART( pattern, "group" ) ) {
 		pattern += STRLENOF( "group" );
 
 		if ( pattern[0] == '/' ) {
@@ -637,14 +636,16 @@ limits_parse_one(
 	assert( arg != NULL );
 	assert( limit != NULL );
 
-	if ( strncasecmp( arg, "time", STRLENOF( "time" ) ) == 0 ) {
+	if ( STRSTART( arg, "time" ) ) {
 		arg += STRLENOF( "time" );
 
 		if ( arg[0] == '.' ) {
 			arg++;
-			if ( strncasecmp( arg, "soft=", STRLENOF( "soft=" ) ) == 0 ) {
+			if ( STRSTART( arg, "soft=" ) ) {
 				arg += STRLENOF( "soft=" );
-				if ( strcasecmp( arg, "unlimited" ) == 0 || strcasecmp( arg, "none" ) == 0 ) {
+				if ( strcasecmp( arg, "unlimited" ) == 0
+					|| strcasecmp( arg, "none" ) == 0 )
+				{
 					limit->lms_t_soft = -1;
 
 				} else {
@@ -661,12 +662,14 @@ limits_parse_one(
 					limit->lms_t_soft = soft;
 				}
 				
-			} else if ( strncasecmp( arg, "hard=", STRLENOF( "hard=" ) ) == 0 ) {
+			} else if ( STRSTART( arg, "hard=" ) ) {
 				arg += STRLENOF( "hard=" );
 				if ( strcasecmp( arg, "soft" ) == 0 ) {
 					limit->lms_t_hard = 0;
 
-				} else if ( strcasecmp( arg, "unlimited" ) == 0 || strcasecmp( arg, "none" ) == 0 ) {
+				} else if ( strcasecmp( arg, "unlimited" ) == 0
+						|| strcasecmp( arg, "none" ) == 0 )
+				{
 					limit->lms_t_hard = -1;
 
 				} else {
@@ -693,7 +696,9 @@ limits_parse_one(
 			
 		} else if ( arg[0] == '=' ) {
 			arg++;
-			if ( strcasecmp( arg, "unlimited" ) == 0 || strcasecmp( arg, "none" ) == 0 ) {
+			if ( strcasecmp( arg, "unlimited" ) == 0
+				|| strcasecmp( arg, "none" ) == 0 )
+			{
 				limit->lms_t_soft = -1;
 
 			} else {
@@ -709,14 +714,16 @@ limits_parse_one(
 			return( 1 );
 		}
 
-	} else if ( strncasecmp( arg, "size", STRLENOF( "size" ) ) == 0 ) {
+	} else if ( STRSTART( arg, "size" ) ) {
 		arg += STRLENOF( "size" );
 		
 		if ( arg[0] == '.' ) {
 			arg++;
-			if ( strncasecmp( arg, "soft=", STRLENOF( "soft=" ) ) == 0 ) {
+			if ( STRSTART( arg, "soft=" ) ) {
 				arg += STRLENOF( "soft=" );
-				if ( strcasecmp( arg, "unlimited" ) == 0 || strcasecmp( arg, "none" ) == 0 ) {
+				if ( strcasecmp( arg, "unlimited" ) == 0
+					|| strcasecmp( arg, "none" ) == 0 )
+				{
 					limit->lms_s_soft = -1;
 
 				} else {
@@ -733,12 +740,14 @@ limits_parse_one(
 					limit->lms_s_soft = soft;
 				}
 				
-			} else if ( strncasecmp( arg, "hard=", STRLENOF( "hard=" ) ) == 0 ) {
+			} else if ( STRSTART( arg, "hard=" ) ) {
 				arg += STRLENOF( "hard=" );
 				if ( strcasecmp( arg, "soft" ) == 0 ) {
 					limit->lms_s_hard = 0;
 
-				} else if ( strcasecmp( arg, "unlimited" ) == 0 || strcasecmp( arg, "none" ) == 0 ) {
+				} else if ( strcasecmp( arg, "unlimited" ) == 0
+						|| strcasecmp( arg, "none" ) == 0 )
+				{
 					limit->lms_s_hard = -1;
 
 				} else {
@@ -759,9 +768,11 @@ limits_parse_one(
 					limit->lms_s_hard = hard;
 				}
 				
-			} else if ( strncasecmp( arg, "unchecked=", STRLENOF( "unchecked=" ) ) == 0 ) {
+			} else if ( STRSTART( arg, "unchecked=" ) ) {
 				arg += STRLENOF( "unchecked=" );
-				if ( strcasecmp( arg, "unlimited" ) == 0 || strcasecmp( arg, "none" ) == 0 ) {
+				if ( strcasecmp( arg, "unlimited" ) == 0
+					|| strcasecmp( arg, "none" ) == 0 )
+				{
 					limit->lms_s_unchecked = -1;
 
 				} else if ( strcasecmp( arg, "disabled" ) == 0 ) {
@@ -781,12 +792,14 @@ limits_parse_one(
 					limit->lms_s_unchecked = unchecked;
 				}
 
-			} else if ( strncasecmp( arg, "pr=", STRLENOF( "pr=" ) ) == 0 ) {
+			} else if ( STRSTART( arg, "pr=" ) ) {
 				arg += STRLENOF( "pr=" );
 				if ( strcasecmp( arg, "noEstimate" ) == 0 ) {
 					limit->lms_s_pr_hide = 1;
 
-				} else if ( strcasecmp( arg, "unlimited" ) == 0 || strcasecmp( arg, "none" ) == 0 ) {
+				} else if ( strcasecmp( arg, "unlimited" ) == 0
+						|| strcasecmp( arg, "none" ) == 0 )
+				{
 					limit->lms_s_pr = -1;
 
 				} else {
@@ -803,10 +816,12 @@ limits_parse_one(
 					limit->lms_s_pr = pr;
 				}
 
-			} else if ( strncasecmp( arg, "prtotal=", STRLENOF( "prtotal=" ) ) == 0 ) {
+			} else if ( STRSTART( arg, "prtotal=" ) ) {
 				arg += STRLENOF( "prtotal=" );
 
-				if ( strcasecmp( arg, "unlimited" ) == 0 || strcasecmp( arg, "none" ) == 0 ) {
+				if ( strcasecmp( arg, "unlimited" ) == 0
+					|| strcasecmp( arg, "none" ) == 0 )
+				{
 					limit->lms_s_pr_total = -1;
 
 				} else if ( strcasecmp( arg, "disabled" ) == 0 ) {
@@ -839,7 +854,9 @@ limits_parse_one(
 			
 		} else if ( arg[0] == '=' ) {
 			arg++;
-			if ( strcasecmp( arg, "unlimited" ) == 0 || strcasecmp( arg, "none" ) == 0 ) {
+			if ( strcasecmp( arg, "unlimited" ) == 0
+				|| strcasecmp( arg, "none" ) == 0 )
+			{
 				limit->lms_s_soft = -1;
 
 			} else {
@@ -859,53 +876,49 @@ limits_parse_one(
 	return 0;
 }
 
-static const char *lmpats[] = {
-	"base",
-	"base",
-	"onelevel",
-	"subtree",
-	"children",
-	"regex",
-	"anonymous",
-	"users",
-	"*"
-};
-
-#define WHATSLEFT	( buflen - ( ptr - bv->bv_val ) )
+/* Helper macros for limits_unparse() and limits_unparse_one():
+ * Write to ptr, but not past bufEnd.  Move ptr past the new text.
+ * Return (success && enough room ? 0 : -1).
+ */
+#define ptr_APPEND_BV(bv) /* Append a \0-terminated berval */ \
+	(WHATSLEFT <= (bv).bv_len ? -1 : \
+	 ((void) (ptr = lutil_strcopy( ptr, (bv).bv_val )), 0))
+#define ptr_APPEND_LIT(str) /* Append a string literal */ \
+	(WHATSLEFT <= STRLENOF( "" str "" ) ? -1 : \
+	 ((void) (ptr = lutil_strcopy( ptr, str )), 0))
+#define ptr_APPEND_FMT(args) /* Append formatted text */ \
+	(WHATSLEFT <= (tmpLen = snprintf args) ? -1 : ((void) (ptr += tmpLen), 0))
+#define ptr_APPEND_FMT1(fmt, arg) ptr_APPEND_FMT(( ptr, WHATSLEFT, fmt, arg ))
+#define WHATSLEFT ((ber_len_t) (bufEnd - ptr))
 
 /* Caller must provide an adequately sized buffer in bv */
 int
 limits_unparse( struct slap_limits *lim, struct berval *bv, ber_len_t buflen )
 {
 	struct berval btmp;
-	char *ptr;
-	int lm;
+	char *ptr, *bufEnd;			/* Updated/used by ptr_APPEND_*()/WHATSLEFT */
+	ber_len_t tmpLen;			/* Used by ptr_APPEND_FMT*() */
+	unsigned type, style;
+	int rc = 0;
 
 	if ( !bv || !bv->bv_val ) return -1;
 
 	ptr = bv->bv_val;
+	bufEnd = ptr + buflen;
+	type = lim->lm_flags & SLAP_LIMITS_TYPE_MASK;
 
-	if (( lim->lm_flags & SLAP_LIMITS_TYPE_MASK ) == SLAP_LIMITS_TYPE_GROUP ) {
-		if ( WHATSLEFT <= STRLENOF( "group/" "/" "=\"" "\"" )
-				+ lim->lm_group_oc->soc_cname.bv_len
-				+ lim->lm_group_ad->ad_cname.bv_len
-				+ lim->lm_pat.bv_len ) return -1;
-
-		ptr = lutil_strcopy( ptr, "group/" );
-		ptr = lutil_strcopy( ptr, lim->lm_group_oc->soc_cname.bv_val );
-		*ptr++ = '/';
-		ptr = lutil_strcopy( ptr, lim->lm_group_ad->ad_cname.bv_val );
-		ptr = lutil_strcopy( ptr, "=\"" );
-		ptr = lutil_strcopy( ptr, lim->lm_pat.bv_val );
-		*ptr++ = '"';
+	if ( type == SLAP_LIMITS_TYPE_GROUP ) {
+		rc = ptr_APPEND_FMT(( ptr, WHATSLEFT, "group/%s/%s=\"%s\"",
+			lim->lm_group_oc->soc_cname.bv_val,
+			lim->lm_group_ad->ad_cname.bv_val,
+			lim->lm_pat.bv_val ));
 	} else {
-		lm = lim->lm_flags & SLAP_LIMITS_MASK;
-		switch( lm ) {
+		style = lim->lm_flags & SLAP_LIMITS_MASK;
+		switch( style ) {
 		case SLAP_LIMITS_ANONYMOUS:
 		case SLAP_LIMITS_USERS:
 		case SLAP_LIMITS_ANY:
-			if ( WHATSLEFT <= strlen( lmpats[lm] ) ) return -1;
-			ptr = lutil_strcopy( ptr, lmpats[lm] );
+			rc = ptr_APPEND_BV( lmpats[style] );
 			break;
 		case SLAP_LIMITS_UNDEFINED:
 		case SLAP_LIMITS_EXACT:
@@ -913,39 +926,40 @@ limits_unparse( struct slap_limits *lim, struct berval *bv, ber_len_t buflen )
 		case SLAP_LIMITS_SUBTREE:
 		case SLAP_LIMITS_CHILDREN:
 		case SLAP_LIMITS_REGEX:
-			if ( WHATSLEFT <= STRLENOF( "dn." "=" "\"" "\"" )
-					+ strlen( lmpats[lm] ) + lim->lm_pat.bv_len ) return -1;
-			ptr = lutil_strcopy( ptr, "dn." );
-			ptr = lutil_strcopy( ptr, lmpats[lm] );
-			*ptr++ = '=';
-			*ptr++ = '"';
-			ptr = lutil_strcopy( ptr, lim->lm_pat.bv_val );
-			*ptr++ = '"';
+			rc = ptr_APPEND_FMT(( ptr, WHATSLEFT, "dn.%s%s=\"%s\"",
+				type == SLAP_LIMITS_TYPE_SELF ? "" : "this.",
+				lmpats[style].bv_val, lim->lm_pat.bv_val ));
 			break;
 		}
 	}
-	bv->bv_len = ptr - bv->bv_val;
-	btmp.bv_val = ptr;
-	btmp.bv_len = 0;
-	if ( limits_unparse_one( &lim->lm_limits,
-			SLAP_LIMIT_SIZE|SLAP_LIMIT_TIME,
-			&btmp, WHATSLEFT ) )
-	{
-		return -1;
+	if ( rc == 0 ) {
+		bv->bv_len = ptr - bv->bv_val;
+		btmp.bv_val = ptr;
+		btmp.bv_len = 0;
+		rc = limits_unparse_one( &lim->lm_limits,
+			SLAP_LIMIT_SIZE | SLAP_LIMIT_TIME,
+			&btmp, WHATSLEFT );
+		if ( rc == 0 )
+			bv->bv_len += btmp.bv_len;
 	}
-	bv->bv_len += btmp.bv_len;
-	return 0;
+	return rc;
 }
 
 /* Caller must provide an adequately sized buffer in bv */
 int
-limits_unparse_one( struct slap_limits_set *lim, int which, struct berval *bv, ber_len_t buflen )
+limits_unparse_one(
+	struct slap_limits_set	*lim,
+	int				which,
+	struct berval	*bv,
+	ber_len_t		buflen )
 {
-	char *ptr;
+	char *ptr, *bufEnd;			/* Updated/used by ptr_APPEND_*()/WHATSLEFT */
+	ber_len_t tmpLen;			/* Used by ptr_APPEND_FMT*() */
 
 	if ( !bv || !bv->bv_val ) return -1;
 
 	ptr = bv->bv_val;
+	bufEnd = ptr + buflen;
 
 	if ( which & SLAP_LIMIT_SIZE ) {
 		if ( lim->lms_s_soft != SLAPD_DEFAULT_SIZELIMIT ) {
@@ -957,79 +971,49 @@ limits_unparse_one( struct slap_limits_set *lim, int which, struct berval *bv, b
 				goto s_hard;
 			/* If there's also a hard limit, fully qualify this one */
 			} else if ( lim->lms_s_hard ) {
-				if ( WHATSLEFT <= STRLENOF( " size.soft=" ) ) return -1;
-				ptr = lutil_strcopy( ptr, " size.soft=" );
+				if ( ptr_APPEND_LIT( " size.soft=" ) ) return -1;
 
 			/* If doing both size & time, qualify this */
 			} else if ( which & SLAP_LIMIT_TIME ) {
-				if ( WHATSLEFT <= STRLENOF( " size=" ) ) return -1;
-				ptr = lutil_strcopy( ptr, " size=" );
+				if ( ptr_APPEND_LIT( " size=" ) ) return -1;
 			}
 
-			if ( lim->lms_s_soft == -1 ) {
-				if ( WHATSLEFT <= STRLENOF( "unlimited" ) ) return -1;
-				ptr = lutil_strcopy( ptr, "unlimited" );
-			} else {
-				ptr += snprintf( ptr, WHATSLEFT, "%d", lim->lms_s_soft );
-				if ( WHATSLEFT < 0 ) return -1;
-			}
-			*ptr++ = ' ';
+			if ( lim->lms_s_soft == -1
+					? ptr_APPEND_LIT( "unlimited " )
+					: ptr_APPEND_FMT1( "%d ", lim->lms_s_soft ) )
+				return -1;
 		}
 s_hard:
 		if ( lim->lms_s_hard ) {
-			if ( WHATSLEFT <= STRLENOF( " size.hard=" ) ) return -1;
-			ptr = lutil_strcopy( ptr, " size.hard=" );
-			if ( lim->lms_s_hard == -1 ) {
-				if ( WHATSLEFT <= STRLENOF( "unlimited" ) ) return -1;
-				ptr = lutil_strcopy( ptr, "unlimited" );
-			} else {
-				ptr += snprintf( ptr, WHATSLEFT, "%d", lim->lms_s_hard );
-				if ( WHATSLEFT < 0 ) return -1;
-			}
-			*ptr++ = ' ';
+			if ( ptr_APPEND_LIT( " size.hard=" ) ) return -1;
+			if ( lim->lms_s_hard == -1
+					? ptr_APPEND_LIT( "unlimited " )
+					: ptr_APPEND_FMT1( "%d ", lim->lms_s_hard ) )
+				return -1;
 		}
 		if ( lim->lms_s_unchecked != -1 ) {
-			if ( WHATSLEFT <= STRLENOF( " size.unchecked=" ) ) return -1;
-			ptr = lutil_strcopy( ptr, " size.unchecked=" );
-			if ( lim->lms_s_unchecked == 0 ) {
-				if ( WHATSLEFT <= STRLENOF( "disabled" ) ) return -1;
-				ptr = lutil_strcopy( ptr, "disabled" );
-			} else {
-				ptr += snprintf( ptr, WHATSLEFT, "%d", lim->lms_s_unchecked );
-				if ( WHATSLEFT < 0 ) return -1;
-			}
-			*ptr++ = ' ';
+			if ( ptr_APPEND_LIT( " size.unchecked=" ) ) return -1;
+			if ( lim->lms_s_unchecked == 0
+					? ptr_APPEND_LIT( "disabled " )
+					: ptr_APPEND_FMT1( "%d ", lim->lms_s_unchecked ) )
+				return -1;
 		}
 		if ( lim->lms_s_pr_hide ) {
-			if ( WHATSLEFT <= STRLENOF( " size.pr=noEstimate " ) ) return -1;
-			ptr = lutil_strcopy( ptr, " size.pr=noEstimate " );
+			if ( ptr_APPEND_LIT( " size.pr=noEstimate " ) ) return -1;
 		}
 		if ( lim->lms_s_pr ) {
-			if ( WHATSLEFT <= STRLENOF( " size.pr=" ) ) return -1;
-			ptr = lutil_strcopy( ptr, " size.pr=" );
-			if ( lim->lms_s_pr == -1 ) {
-				if ( WHATSLEFT <= STRLENOF( "unlimited" ) ) return -1;
-				ptr = lutil_strcopy( ptr, "unlimited" );
-			} else {
-				ptr += snprintf( ptr, WHATSLEFT, "%d", lim->lms_s_pr );
-				if ( WHATSLEFT < 0 ) return -1;
-			}
-			*ptr++ = ' ';
+			if ( ptr_APPEND_LIT( " size.pr=" ) ) return -1;
+			if ( lim->lms_s_pr == -1
+					? ptr_APPEND_LIT( "unlimited " )
+					: ptr_APPEND_FMT1( "%d ", lim->lms_s_pr ) )
+				return -1;
 		}
 		if ( lim->lms_s_pr_total ) {
-			if ( WHATSLEFT <= STRLENOF( " size.prtotal=" ) ) return -1;
-			ptr = lutil_strcopy( ptr, " size.prtotal=" );
-			if ( lim->lms_s_pr_total == -1 ) {
-				if ( WHATSLEFT <= STRLENOF( "unlimited" ) ) return -1;
-				ptr = lutil_strcopy( ptr, "unlimited" );
-			} else if ( lim->lms_s_pr_total == -2 ) {
-				if ( WHATSLEFT <= STRLENOF( "disabled" ) ) return -1;
-				ptr = lutil_strcopy( ptr, "disabled" );
-			} else {
-				ptr += snprintf( ptr, WHATSLEFT, "%d", lim->lms_s_pr_total );
-				if ( WHATSLEFT < 0 ) return -1;
-			}
-			*ptr++ = ' ';
+			if ( ptr_APPEND_LIT( " size.prtotal=" ) ) return -1;
+			if ( lim->lms_s_pr_total  == -1 ? ptr_APPEND_LIT( "unlimited " )
+				: lim->lms_s_pr_total == -2 ? ptr_APPEND_LIT( "disabled " )
+				: ptr_APPEND_FMT1( "%d ", lim->lms_s_pr_total ) )
+				return -1;
 		}
 	}
 
@@ -1044,36 +1028,25 @@ s_hard:
 
 			/* If there's also a hard limit, fully qualify this one */
 			} else if ( lim->lms_t_hard ) {
-				if ( WHATSLEFT <= STRLENOF( " time.soft=" ) ) return -1;
-				ptr = lutil_strcopy( ptr, " time.soft=" );
+				if ( ptr_APPEND_LIT( " time.soft=" ) ) return -1;
 
 			/* If doing both size & time, qualify this */
 			} else if ( which & SLAP_LIMIT_SIZE ) {
-				if ( WHATSLEFT <= STRLENOF( " time=" ) ) return -1;
-				ptr = lutil_strcopy( ptr, " time=" );
+				if ( ptr_APPEND_LIT( " time=" ) ) return -1;
 			}
 
-			if ( lim->lms_t_soft == -1 ) {
-				if ( WHATSLEFT <= STRLENOF( "unlimited" ) ) return -1;
-				ptr = lutil_strcopy( ptr, "unlimited" );
-			} else {
-				ptr += snprintf( ptr, WHATSLEFT, "%d", lim->lms_t_soft );
-				if ( WHATSLEFT < 0 ) return -1;
-			}
-			*ptr++ = ' ';
+			if ( lim->lms_t_soft == -1
+					? ptr_APPEND_LIT( "unlimited " )
+					: ptr_APPEND_FMT1( "%d ", lim->lms_t_soft ) )
+				return -1;
 		}
 t_hard:
 		if ( lim->lms_t_hard ) {
-			if ( WHATSLEFT <= STRLENOF( " time.hard=" ) ) return -1;
-			ptr = lutil_strcopy( ptr, " time.hard=" );
-			if ( lim->lms_t_hard == -1 ) {
-				if ( WHATSLEFT <= STRLENOF( "unlimited" ) ) return -1;
-				ptr = lutil_strcopy( ptr, "unlimited" );
-			} else {
-				ptr += snprintf( ptr, WHATSLEFT, "%d", lim->lms_t_hard );
-				if ( WHATSLEFT < 0 ) return -1;
-			}
-			*ptr++ = ' ';
+			if ( ptr_APPEND_LIT( " time.hard=" ) ) return -1;
+			if ( lim->lms_t_hard == -1
+					? ptr_APPEND_LIT( "unlimited " )
+					: ptr_APPEND_FMT1( "%d ", lim->lms_t_hard ) )
+				return -1;
 		}
 	}
 	if ( ptr != bv->bv_val ) {
@@ -1132,7 +1105,7 @@ limits_check( Operation *op, SlapReply *rs )
 
 	/* if not root, get appropriate limits */
 	} else {
-		( void ) limits_get( op, &op->o_ndn, &op->ors_limit );
+		( void ) limits_get( op, &op->ors_limit );
 
 		assert( op->ors_limit != NULL );
 
@@ -1194,7 +1167,9 @@ limits_check( Operation *op, SlapReply *rs )
 				return -1;
 			}
 			
-			if ( op->ors_limit->lms_s_pr > 0 && ps->ps_size > op->ors_limit->lms_s_pr ) {
+			if ( op->ors_limit->lms_s_pr > 0
+				&& ps->ps_size > op->ors_limit->lms_s_pr )
+			{
 				rs->sr_err = LDAP_ADMINLIMIT_EXCEEDED;
 				rs->sr_text = "illegal pagedResults page size";
 				send_ldap_result( op, rs );
@@ -1223,7 +1198,8 @@ limits_check( Operation *op, SlapReply *rs )
 
 #ifdef ABOVE_HARD_LIMIT_IS_ERROR
 			} else if ( pr_total > 0 && op->ors_slimit != SLAP_MAX_LIMIT
-					&& ( op->ors_slimit == SLAP_NO_LIMIT || op->ors_slimit > pr_total ) )
+					&& ( op->ors_slimit == SLAP_NO_LIMIT
+						|| op->ors_slimit > pr_total ) )
 			{
 				rs->sr_err = LDAP_ADMINLIMIT_EXCEEDED;
 				send_ldap_result( op, rs );
@@ -1236,16 +1212,19 @@ limits_check( Operation *op, SlapReply *rs )
 				int	total;
 				int	slimit2;
 
-				/* first round of pagedResults: set count to any appropriate limit */
+				/* first round of pagedResults:
+				 * set count to any appropriate limit */
 
-				/* if the limit is set, check that it does not violate any server-side limit */
+				/* if the limit is set, check that it does
+				 * not violate any server-side limit */
 #ifdef ABOVE_HARD_LIMIT_IS_ERROR
-				if ( op->ors_slimit == SLAP_MAX_LIMIT ) {
-					slimit2 = op->ors_slimit = pr_total;
+				if ( op->ors_slimit == SLAP_MAX_LIMIT )
 #else /* ! ABOVE_HARD_LIMIT_IS_ERROR */
-				if ( op->ors_slimit == SLAP_MAX_LIMIT || op->ors_slimit > pr_total ) {
-					slimit2 = op->ors_slimit = pr_total;
+				if ( op->ors_slimit == SLAP_MAX_LIMIT
+					|| op->ors_slimit > pr_total )
 #endif /* ! ABOVE_HARD_LIMIT_IS_ERROR */
+				{
+					slimit2 = op->ors_slimit = pr_total;
 
 				} else if ( op->ors_slimit == 0 ) {
 					slimit2 = pr_total;
@@ -1264,7 +1243,7 @@ limits_check( Operation *op, SlapReply *rs )
 	
 						} else {
 							/* use the perpage limit if any 
-							 * NOTE: + 1 because the given value must be legal */
+							 * NOTE: + 1 because given value must be legal */
 							slimit = op->ors_limit->lms_s_pr + 1;
 						}
 
@@ -1348,6 +1327,19 @@ limits_check( Operation *op, SlapReply *rs )
 }
 
 void
+limits_free_one( 
+	struct slap_limits	*lm )
+{
+	if ( ( lm->lm_flags & SLAP_LIMITS_MASK ) == SLAP_LIMITS_REGEX )
+		regfree( &lm->lm_regex );
+
+	if ( !BER_BVISNULL( &lm->lm_pat ) )
+		ch_free( lm->lm_pat.bv_val );
+
+	ch_free( lm );
+}
+
+void
 limits_destroy( 
 	struct slap_limits	**lm )
 {
@@ -1358,25 +1350,7 @@ limits_destroy(
 	}
 
 	for ( i = 0; lm[ i ]; i++ ) {
-		switch ( lm[ i ]->lm_flags & SLAP_LIMITS_MASK ) {
-		case SLAP_LIMITS_REGEX:
-			regfree( &lm[ i ]->lm_regex );
-			break;
-
-		case SLAP_LIMITS_EXACT:
-		case SLAP_LIMITS_ONE:
-		case SLAP_LIMITS_SUBTREE:
-		case SLAP_LIMITS_CHILDREN:
-			if ( !BER_BVISNULL( &lm[ i ]->lm_pat ) ) {
-				ch_free( lm[ i ]->lm_pat.bv_val );
-			}
-			break;
-
-		default:
-			break;
-		}
-
-		ch_free( lm[ i ] );
+		limits_free_one( lm[ i ] );
 	}
 
 	ch_free( lm );

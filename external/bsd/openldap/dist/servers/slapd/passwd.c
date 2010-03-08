@@ -1,8 +1,10 @@
+/*	$NetBSD: passwd.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* passwd.c - password extended operation routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.128.2.10 2008/02/11 23:34:15 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.128.2.13 2009/08/25 21:36:51 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,6 +59,7 @@ int passwd_extop(
 	int rc;
 	BackendDB *op_be;
 	int freenewpw = 0;
+	struct berval dn = BER_BVNULL, ndn = BER_BVNULL;
 
 	assert( ber_bvcmp( &slap_EXOP_MODIFY_PASSWD, &op->ore_reqoid ) == 0 );
 
@@ -100,19 +103,22 @@ int passwd_extop(
 	}
 
 	if ( !BER_BVISEMPTY( &id ) ) {
-		rs->sr_err = dnPrettyNormal( NULL, &id, &op->o_req_dn,
-				&op->o_req_ndn, op->o_tmpmemctx );
+		rs->sr_err = dnPrettyNormal( NULL, &id, &dn, &ndn, op->o_tmpmemctx );
 		id.bv_val[id.bv_len] = idNul;
 		if ( rs->sr_err != LDAP_SUCCESS ) {
 			rs->sr_text = "Invalid DN";
 			rc = rs->sr_err;
 			goto error_return;
 		}
+		op->o_req_dn = dn;
+		op->o_req_ndn = ndn;
 		op->o_bd = select_backend( &op->o_req_ndn, 1 );
 
 	} else {
-		ber_dupbv_x( &op->o_req_dn, &op->o_dn, op->o_tmpmemctx );
-		ber_dupbv_x( &op->o_req_ndn, &op->o_ndn, op->o_tmpmemctx );
+		ber_dupbv_x( &dn, &op->o_dn, op->o_tmpmemctx );
+		ber_dupbv_x( &ndn, &op->o_ndn, op->o_tmpmemctx );
+		op->o_req_dn = dn;
+		op->o_req_ndn = ndn;
 		ldap_pvt_thread_mutex_lock( &op->o_conn->c_mutex );
 		op->o_bd = op->o_conn->c_authz_backend;
 		ldap_pvt_thread_mutex_unlock( &op->o_conn->c_mutex );
@@ -313,12 +319,12 @@ error_return:;
 	if ( freenewpw ) {
 		free( qpw->rs_new.bv_val );
 	}
-	if ( !BER_BVISNULL( &op->o_req_dn ) ) {
-		op->o_tmpfree( op->o_req_dn.bv_val, op->o_tmpmemctx );
+	if ( !BER_BVISNULL( &dn ) ) {
+		op->o_tmpfree( dn.bv_val, op->o_tmpmemctx );
 		BER_BVZERO( &op->o_req_dn );
 	}
-	if ( !BER_BVISNULL( &op->o_req_ndn ) ) {
-		op->o_tmpfree( op->o_req_ndn.bv_val, op->o_tmpmemctx );
+	if ( !BER_BVISNULL( &ndn ) ) {
+		op->o_tmpfree( ndn.bv_val, op->o_tmpmemctx );
 		BER_BVZERO( &op->o_req_ndn );
 	}
 
@@ -503,6 +509,7 @@ slap_passwd_check(
 	int			result = 1;
 	struct berval		*bv;
 	AccessControlState	acl_state = ACL_STATE_INIT;
+	char		credNul = cred->bv_val[cred->bv_len];
 
 #ifdef SLAPD_SPASSWD
 	void		*old_authctx = NULL;
@@ -510,6 +517,8 @@ slap_passwd_check(
 	ldap_pvt_thread_pool_setkey( op->o_threadctx, (void *)slap_sasl_bind,
 		op->o_conn->c_sasl_authctx, 0, &old_authctx, NULL );
 #endif
+
+	if ( credNul ) cred->bv_val[cred->bv_len] = 0;
 
 	for ( bv = a->a_vals; bv->bv_val != NULL; bv++ ) {
 		/* if e is provided, check access */
@@ -524,6 +533,8 @@ slap_passwd_check(
 			break;
 		}
 	}
+
+	if ( credNul ) cred->bv_val[cred->bv_len] = credNul;
 
 #ifdef SLAPD_SPASSWD
 	ldap_pvt_thread_pool_setkey( op->o_threadctx, (void *)slap_sasl_bind,

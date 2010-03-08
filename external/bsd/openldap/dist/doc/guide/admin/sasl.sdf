@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/admin/sasl.sdf,v 1.34.2.7 2008/02/11 23:26:39 kurt Exp $
-# Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
+# OpenLDAP: pkg/openldap-guide/admin/sasl.sdf,v 1.34.2.10 2009/04/29 01:27:12 quanah Exp
+# Copyright 1999-2009 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Using SASL
@@ -267,9 +267,9 @@ See {{SECT: Mapping Authentication Identities}} below for information
 on optional mapping of identities.
 
 With suitable mappings in place, users can specify SASL IDs when
-performing LDAP operations and sldb}} and the directory itself will
-be used to verify the authentication.  For example, the user
-identified by the directory entry:
+performing LDAP operations, and the password stored in {{sasldb}} or in
+the directory itself will be used to verify the authentication.
+For example, the user identified by the directory entry:
 
 >       dn: cn=Andrew Findlay+uid=u000997,dc=example,dc=com
 >       objectclass: inetOrgPerson
@@ -652,7 +652,7 @@ To help produce more sweeping rules for {{EX:authzFrom}} and
 be DNs with regular expression characters in them. This means a
 source rule like
 
->	authzTo: dn.regex=^uid=[^,]*,dc=example,dc=com$
+>	authzTo: dn.regex:^uid=[^,]*,dc=example,dc=com$
 
 would allow that authenticated user to authorize to any DN that
 matches the regular expression pattern given. This regular expression

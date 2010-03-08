@@ -1,7 +1,11 @@
+/*	$NetBSD: alias.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+
 /* alias.c - mail alias lookup routines */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/alias.c,v 1.1.2.1 2008/07/08 18:53:57 quanah Exp $ */
-/*
- * Copyright 2008 by Howard Chu, Symas Corp.
+/* OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/alias.c,v 1.1.2.3 2009/08/17 21:48:57 quanah Exp */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
+ *
+ * Copyright 2008-2009 The OpenLDAP Foundation.
+ * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,7 +16,7 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
-/*
+/* ACKNOWLEDGEMENTS:
  * This code references portions of the nss-ldapd package
  * written by Arthur de Jong. The nss-ldapd code was forked
  * from the nss-ldap library written by Luke Howard.
@@ -58,7 +62,7 @@ static int write_alias(nssov_alias_cbp *cbp,Entry *entry)
 		a = attr_find(entry->e_attrs, cbp->mi->mi_attrs[0].an_desc);
 		if ( !a )
 		{
-			Debug(LDAP_DEBUG_ANY,"alias entry %s does not contain %s value",
+			Debug(LDAP_DEBUG_ANY,"alias entry %s does not contain %s value\n",
 				entry->e_name.bv_val,cbp->mi->mi_attrs[0].an_desc->ad_cname.bv_val,0 );
 			return 0;
 		}
@@ -98,7 +102,7 @@ NSSOV_HANDLE(
 	READ_STRING_BUF2(fp,cbp.buf,sizeof(cbp.buf));
 	cbp.name.bv_len = tmpint32;
 	cbp.name.bv_val = cbp.buf;,
-	Debug(LDAP_DEBUG_TRACE,"nssov_alias_byname(%s)",cbp.name.bv_val,0,0);,
+	Debug(LDAP_DEBUG_TRACE,"nssov_alias_byname(%s)\n",cbp.name.bv_val,0,0);,
 	NSLCD_ACTION_ALIAS_BYNAME,
 	nssov_filter_byname(cbp.mi,0,&cbp.name,&filter)
 )
@@ -108,7 +112,7 @@ NSSOV_HANDLE(
 	struct berval filter;
 	/* no parameters to read */
 	BER_BVZERO(&cbp.name);,
-	Debug(LDAP_DEBUG,"nssov_alias_all()",0,0,0);,
+	Debug(LDAP_DEBUG,"nssov_alias_all()\n",0,0,0);,
 	NSLCD_ACTION_ALIAS_ALL,
 	(filter=cbp.mi->mi_filter,0)
 )

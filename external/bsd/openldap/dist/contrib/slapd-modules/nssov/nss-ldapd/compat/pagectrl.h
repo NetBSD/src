@@ -1,3 +1,5 @@
+/*	$NetBSD: pagectrl.h,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    pagectrl.h - provide a replacement ldap_create_page_control() function.
    This file was part of the nss_ldap library which has been

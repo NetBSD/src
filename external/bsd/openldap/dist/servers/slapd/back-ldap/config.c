@@ -1,8 +1,10 @@
+/*	$NetBSD: config.c,v 1.1.1.3 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* config.c - ldap backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/config.c,v 1.115.2.9 2008/07/10 00:28:39 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/config.c,v 1.115.2.15 2009/09/29 21:47:37 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2008 The OpenLDAP Foundation.
+ * Copyright 2003-2009 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -71,6 +73,7 @@ enum {
 	LDAP_BACK_CFG_QUARANTINE,
 	LDAP_BACK_CFG_ST_REQUEST,
 	LDAP_BACK_CFG_NOREFS,
+	LDAP_BACK_CFG_NOUNDEFFILTER,
 
 	LDAP_BACK_CFG_REWRITE,
 
@@ -311,8 +314,16 @@ static ConfigTable ldapcfg[] = {
 	{ "norefs", "true|FALSE", 2, 2, 0,
 		ARG_MAGIC|ARG_ON_OFF|LDAP_BACK_CFG_NOREFS,
 		ldap_back_cf_gen, "( OLcfgDbAt:3.25 "
-			"NAME 'olcDbNorefs' "
+			"NAME 'olcDbNoRefs' "
 			"DESC 'Do not return search reference responses' "
+			"SYNTAX OMsBoolean "
+			"SINGLE-VALUE )",
+		NULL, NULL },
+	{ "noundeffilter", "true|FALSE", 2, 2, 0,
+		ARG_MAGIC|ARG_ON_OFF|LDAP_BACK_CFG_NOUNDEFFILTER,
+		ldap_back_cf_gen, "( OLcfgDbAt:3.26 "
+			"NAME 'olcDbNoUndefFilter' "
+			"DESC 'Do not propagate undefined search filters' "
 			"SYNTAX OMsBoolean "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -358,7 +369,8 @@ static ConfigOCs ldapocs[] = {
 #ifdef SLAP_CONTROL_X_SESSION_TRACKING
 			"$ olcDbSessionTrackingRequest "
 #endif /* SLAP_CONTROL_X_SESSION_TRACKING */
-			"$ olcDbNorefs "
+			"$ olcDbNoRefs "
+			"$ olcDbNoUndefFilter "
 		") )",
 		 	Cft_Database, ldapcfg},
 	{ NULL, 0, NULL }
@@ -500,53 +512,51 @@ slap_retry_info_unparse(
 	slap_retry_info_t	*ri,
 	struct berval		*bvout )
 {
-	int		i;
 	char		buf[ BUFSIZ * 2 ],
 			*ptr = buf;
-	struct berval	bv = BER_BVNULL;
+	int		i, len, restlen = (int) sizeof( buf );
+	struct berval	bv;
 
 	assert( ri != NULL );
 	assert( bvout != NULL );
 
 	BER_BVZERO( bvout );
 
-#define WHATSLEFT	( sizeof( buf ) - ( ptr - buf ) )
-
 	for ( i = 0; ri->ri_num[ i ] != SLAP_RETRYNUM_TAIL; i++ ) {
 		if ( i > 0 ) {
-			if ( WHATSLEFT <= 1 ) {
+			if ( --restlen <= 0 ) {
 				return 1;
 			}
 			*ptr++ = ';';
 		}
 
-		if ( lutil_unparse_time( ptr, WHATSLEFT, (long)ri->ri_interval[i] ) ) {
+		if ( lutil_unparse_time( ptr, restlen, ri->ri_interval[i] ) < 0 ) {
 			return 1;
 		}
-		ptr += strlen( ptr );
-
-		if ( WHATSLEFT <= 1 ) {
+		len = (int) strlen( ptr );
+		if ( (restlen -= len + 1) <= 0 ) {
 			return 1;
 		}
+		ptr += len;
 		*ptr++ = ',';
 
 		if ( ri->ri_num[i] == SLAP_RETRYNUM_FOREVER ) {
-			if ( WHATSLEFT <= 1 ) {
+			if ( --restlen <= 0 ) {
 				return 1;
 			}
 			*ptr++ = '+';
 
 		} else {
-			ptr += snprintf( ptr, WHATSLEFT, "%d", ri->ri_num[i] );
-			if ( WHATSLEFT <= 0 ) {
+			len = snprintf( ptr, restlen, "%d", ri->ri_num[i] );
+			if ( (restlen -= len) <= 0 || len < 0 ) {
 				return 1;
 			}
+			ptr += len;
 		}
 	}
 
 	bv.bv_val = buf;
 	bv.bv_len = ptr - buf;
-
 	ber_dupbv( bvout, &bv );
 
 	return 0;
@@ -735,6 +745,19 @@ slap_idassert_parse( ConfigArgs *c, slap_idassert_t *si )
 			return 1;
 		}
 	}
+
+	if ( si->si_bc.sb_method == LDAP_AUTH_SIMPLE ) {
+		if ( BER_BVISNULL( &si->si_bc.sb_binddn )
+			|| BER_BVISNULL( &si->si_bc.sb_cred ) )
+		{
+			snprintf( c->cr_msg, sizeof( c->cr_msg ),
+				"\"idassert-bind <args>\": "
+				"SIMPLE needs \"binddn\" and \"credentials\"" );
+			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+			return 1;
+		}
+	}
+
 	bindconf_tls_defaults( &si->si_bc );
 
 	return 0;
@@ -1152,6 +1175,10 @@ ldap_back_cf_gen( ConfigArgs *c )
 			c->value_int = LDAP_BACK_NOREFS( li );
 			break;
 
+		case LDAP_BACK_CFG_NOUNDEFFILTER:
+			c->value_int = LDAP_BACK_NOUNDEFFILTER( li );
+			break;
+
 		default:
 			/* FIXME: we need to handle all... */
 			assert( 0 );
@@ -1276,6 +1303,10 @@ ldap_back_cf_gen( ConfigArgs *c )
 
 		case LDAP_BACK_CFG_NOREFS:
 			li->li_flags &= ~LDAP_BACK_F_NOREFS;
+			break;
+
+		case LDAP_BACK_CFG_NOUNDEFFILTER:
+			li->li_flags &= ~LDAP_BACK_F_NOUNDEFFILTER;
 			break;
 
 		default:
@@ -1931,6 +1962,15 @@ done_url:;
 		}
 		break;
 
+	case LDAP_BACK_CFG_NOUNDEFFILTER:
+		if ( c->value_int ) {
+			li->li_flags |= LDAP_BACK_F_NOUNDEFFILTER;
+
+		} else {
+			li->li_flags &= ~LDAP_BACK_F_NOUNDEFFILTER;
+		}
+		break;
+
 	case LDAP_BACK_CFG_REWRITE:
 		snprintf( c->cr_msg, sizeof( c->cr_msg ),
 			"rewrite/remap capabilities have been moved "
@@ -2048,7 +2088,10 @@ ldap_back_exop_whoami(
 retry:
 		rs->sr_err = ldap_whoami( lc->lc_ld, ctrls, NULL, &msgid );
 		if ( rs->sr_err == LDAP_SUCCESS ) {
-			if ( ldap_result( lc->lc_ld, msgid, LDAP_MSG_ALL, NULL, &res ) == -1 ) {
+			/* by now, make sure no timeout is used (ITS#6282) */
+			struct timeval tv;
+			tv.tv_sec = -1;
+			if ( ldap_result( lc->lc_ld, msgid, LDAP_MSG_ALL, &tv, &res ) == -1 ) {
 				ldap_get_option( lc->lc_ld, LDAP_OPT_ERROR_NUMBER,
 					&rs->sr_err );
 				if ( rs->sr_err == LDAP_SERVER_DOWN && doretry ) {

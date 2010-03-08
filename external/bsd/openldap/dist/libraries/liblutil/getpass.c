@@ -1,8 +1,10 @@
+/*	$NetBSD: getpass.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+
 /* getpass.c -- get password from user */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/getpass.c,v 1.17.2.3 2008/02/11 23:26:42 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/libraries/liblutil/getpass.c,v 1.17.2.6 2009/08/25 23:09:33 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -26,7 +28,7 @@
  */
 /* This work was originally developed by the University of Michigan
  * and distributed as part of U-MICH LDAP.  It was adapted for use in
- * -llutil by Kurt D. Zeilenga.
+ * -llutil by Kurt D. Zeilenga and subsequently rewritten by Howard Chu.
  */
 
 #include "portable.h"
@@ -42,7 +44,7 @@
 #include <ac/time.h>
 #include <ac/unistd.h>
 
-#ifdef NEED_GETPASSPHRASE
+#ifndef HAVE_GETPASSPHRASE
 
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
@@ -57,38 +59,26 @@
 
 #include "ldap_defaults.h"
 
+#define PBUF	512
+
+#ifdef HAVE_WINSOCK
+#define TTY "con:"
+#else
+#define TTY "/dev/tty"
+#endif
+
 char *
 lutil_getpass( const char *prompt )
 {
-#if !defined(HAVE_TERMIOS_H) && !defined(HAVE_SGTTY_H)
-	static char buf[256];
-	int i, c;
-
-	if( prompt == NULL ) prompt = _("Password: ");
-
-#ifdef DEBUG
-	if (debug & D_TRACE)
-		printf("->getpass(%s)\n", prompt);
-#endif
-
-	printf("%s", prompt);
-	i = 0;
-	while ( (c = getch()) != EOF && c != '\n' && c != '\r' )
-		buf[i++] = c;
-	if ( c == EOF )
-		return( NULL );
-	buf[i] = '\0';
-	return (buf);
-#else
-	int no_pass = 0;
-	char i, j, k;
+	static char pbuf[PBUF];
+	FILE *fi;
+	int c;
+	unsigned i;
+#if defined(HAVE_TERMIOS_H) || defined(HAVE_SGTTY_H)
 	TERMIO_TYPE ttyb;
 	TERMFLAG_TYPE flags;
-	static char pbuf[513];
-	register char *p;
-	register int c;
-	FILE *fi;
 	RETSIGTYPE (*sig)( int sig );
+#endif
 
 	if( prompt == NULL ) prompt = _("Password: ");
 
@@ -96,82 +86,46 @@ lutil_getpass( const char *prompt )
 	if (debug & D_TRACE)
 		printf("->getpass(%s)\n", prompt);
 #endif
-	/*
-	 *  Stolen from the getpass() routine.  Can't use the plain
-	 *  getpass() for two reasons.  One is that LDAP passwords
-	 *  can be really, really long - much longer than 8 chars.
-	 *  The second is that we like to make this client available
-	 *  out of inetd via a Merit asynch port, and we need to be
-	 *  able to do telnet control codes to turn on and off line
-	 *  blanking.
-	 */
-	if ((fi = fdopen(open("/dev/tty", 2), "r")) == NULL)
+
+#if defined(HAVE_TERMIOS_H) || defined(HAVE_SGTTY_H)
+	if ((fi = fopen(TTY, "r")) == NULL)
 		fi = stdin;
 	else
 		setbuf(fi, (char *)NULL);
-	sig = SIGNAL (SIGINT, SIG_IGN);
 	if (fi != stdin) {
 		if (GETATTR(fileno(fi), &ttyb) < 0)
 			perror("GETATTR");
-	}
-	flags = GETFLAGS( ttyb );
-	SETFLAGS( ttyb, flags & ~ECHO );
-	if (fi != stdin) {
+		sig = SIGNAL (SIGINT, SIG_IGN);
+		flags = GETFLAGS( ttyb );
+		SETFLAGS( ttyb, flags & ~ECHO );
 		if (SETATTR(fileno(fi), &ttyb) < 0)
 			perror("SETATTR");
 	}
-
-	/*  blank the line if through Merit */
-	if (fi == stdin) {
-		printf("%c%c%c", 255, 251, 1);
-		fflush(stdout);
-		(void) scanf("%c%c%c", &i, &j, &k);
-		fflush(stdin);
-	}
-
-	/* fetch the password */
+#else
+	fi = stdin;
+#endif
 	fprintf(stdout, "%s", prompt); 
 	fflush(stdout);
-	for (p=pbuf; (c = getc(fi))!='\n' && c!=EOF;) {
-		if (c == '\r')
-			break;
-		if (p < &pbuf[512])
-			*p++ = c;
-	}
-	if (c == EOF)
-		no_pass = 1;
-	else {
-		*p = '\0';
-		if (*(p - 1) == '\r')
-			*(p - 1) = '\0';
-	}
-
-	/*  unblank the line if through Merit */
-	if (fi == stdin) {
-		printf("%c%c%c", 255, 252, 1);
-		fflush(stdout);
-		(void) scanf("%c%c%c", &i, &j, &k);
-		fflush(stdin);
-		printf("\n"); fflush(stdout);
-	}
-	fprintf(stdout, "\n"); 
-	fflush(stdout);
-
+	i = 0;
+	while ( (c = getc(fi)) != EOF && c != '\n' && c != '\r' )
+		if ( i < (sizeof(pbuf)-1) )
+			pbuf[i++] = c;
+#if defined(HAVE_TERMIOS_H) || defined(HAVE_SGTTY_H)
 	/* tidy up */
-	SETFLAGS( ttyb, flags );
 	if (fi != stdin) {
+		fprintf(stdout, "\n"); 
+		fflush(stdout);
+		SETFLAGS( ttyb, flags );
 		if (SETATTR(fileno(fi), &ttyb) < 0)
 			perror("SETATTR");
-	}
-	(void) SIGNAL (SIGINT, sig);
-	if (fi != stdin)
+		(void) SIGNAL (SIGINT, sig);
 		(void) fclose(fi);
-	else
-		i = getchar();
-	if (no_pass)
-		return(NULL);
-	return(pbuf);
+	}
 #endif
+	if ( c == EOF )
+		return( NULL );
+	pbuf[i] = '\0';
+	return (pbuf);
 }
 
 #endif /* !NEED_GETPASSPHRASE */

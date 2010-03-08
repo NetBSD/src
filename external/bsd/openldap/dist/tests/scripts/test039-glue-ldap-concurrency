@@ -1,8 +1,8 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test039-glue-ldap-concurrency,v 1.10.2.4 2008/02/11 23:26:51 kurt Exp $
+# OpenLDAP: pkg/ldap/tests/scripts/test039-glue-ldap-concurrency,v 1.10.2.7 2009/02/10 17:13:05 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2008 The OpenLDAP Foundation.
+## Copyright 1998-2009 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -177,11 +177,15 @@ for f in $TESTDIR/$DATADIR/do_bind.* ; do
 	echo "" >> $f
 done
 
+# fix test data to include back-monitor, if available
+# NOTE: copies do_* files from $TESTDIR/$DATADIR to $TESTDIR
+$MONITORDATA "$MONITORDB" "$TESTDIR/$DATADIR" "$TESTDIR"
+
 echo "Using tester for concurrent server access..."
-$SLAPDTESTER -P "$PROGDIR" -d "$TESTDIR/$DATADIR" -h $LOCALHOST -p $PORT3 \
+$SLAPDTESTER -P "$PROGDIR" -d "$TESTDIR" -h $LOCALHOST -p $PORT3 \
 	-D "cn=Manager,$METABASEDN" -w $PASSWD \
-	-l $TESTLOOPS -L $TESTOLOOPS -r 20 -FF \
-	-i '!REFERRAL'
+	-l $TESTLOOPS -L $TESTOLOOPS -r 20 \
+	-i '!REFERRAL' -i '*INVALID_CREDENTIALS'
 RC=$?
 
 if test $RC != 0 ; then

@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/modrdn.c,v 1.39.2.9 2008/04/14 18:57:13 quanah Exp $ */
+/*	$NetBSD: modrdn.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/back-meta/modrdn.c,v 1.39.2.11 2009/01/22 00:01:07 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -42,7 +44,7 @@ meta_back_modrdn( Operation *op, SlapReply *rs )
 			mnewSuperior = BER_BVNULL;
 	dncookie	dc;
 	int		msgid;
-	int		do_retry = 1;
+	ldap_back_send_t	retrying = LDAP_BACK_RETRYING;
 	LDAPControl	**ctrls = NULL;
 	struct berval	newrdn = BER_BVNULL;
 
@@ -139,9 +141,9 @@ retry:;
 			mnewSuperior.bv_val, op->orr_deleteoldrdn,
 			ctrls, NULL, &msgid );
 	rs->sr_err = meta_back_op_result( mc, op, rs, candidate, msgid,
-		mt->mt_timeout[ SLAP_OP_MODRDN ], LDAP_BACK_SENDRESULT );
-	if ( rs->sr_err == LDAP_UNAVAILABLE && do_retry ) {
-		do_retry = 0;
+		mt->mt_timeout[ SLAP_OP_MODRDN ], ( LDAP_BACK_SENDRESULT | retrying ) );
+	if ( rs->sr_err == LDAP_UNAVAILABLE && retrying ) {
+		retrying &= ~LDAP_BACK_RETRYING;
 		if ( meta_back_retry( op, rs, &mc, candidate, LDAP_BACK_SENDERR ) ) {
 			/* if the identity changed, there might be need to re-authz */
 			(void)mi->mi_ldap_extra->controls_free( op, rs, &ctrls );

@@ -1,3 +1,5 @@
+/*	$NetBSD: attmap.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    attmap.c - attribute mapping values and functions
    This file is part of the nss-ldapd library.

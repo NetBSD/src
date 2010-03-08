@@ -1,8 +1,10 @@
+/*	$NetBSD: ldif.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* ldif.c - the ldif backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldif/ldif.c,v 1.48.2.14 2008/04/21 18:53:52 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-ldif/ldif.c,v 1.48.2.21 2009/12/04 18:41:53 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2008 The OpenLDAP Foundation.
+ * Copyright 2005-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,24 +33,37 @@
 #include "lutil.h"
 #include "config.h"
 
-typedef struct enumCookie {
-	Operation *op;
-	SlapReply *rs;
-	Entry **entries;
-	int elen;
-	int eind;
-} enumCookie;
+struct ldif_tool {
+	Entry	**entries;			/* collected by bi_tool_entry_first() */
+	ID		elen;				/* length of entries[] array */
+	ID		ecount;				/* number of entries */
+	ID		ecurrent;			/* bi_tool_entry_next() position */
+#	define	ENTRY_BUFF_INCREMENT 500 /* initial entries[] length */
+};
 
+/* Per-database data */
 struct ldif_info {
-	struct berval li_base_path;
-	enumCookie li_tool_cookie;
-	ID li_tool_current;
-	ldap_pvt_thread_rdwr_t  li_rdwr;
+	struct berval li_base_path;			/* database directory */
+	struct ldif_tool li_tool;			/* for slap tools */
+	/*
+	 * Read-only LDAP requests readlock li_rdwr for filesystem input.
+	 * Update requests first lock li_modop_mutex for filesystem I/O,
+	 * and then writelock li_rdwr as well for filesystem output.
+	 * This allows update requests to do callbacks that acquire
+	 * read locks, e.g. access controls that inspect entries.
+	 * (An alternative would be recursive read/write locks.)
+	 */
+	ldap_pvt_thread_mutex_t	li_modop_mutex; /* serialize update requests */
+	ldap_pvt_thread_rdwr_t	li_rdwr;	/* no other I/O when writing */
 };
 
 #ifdef _WIN32
 #define mkdir(a,b)	mkdir(a)
+#define move_file(from, to) (!MoveFileEx(from, to, MOVEFILE_REPLACE_EXISTING))
+#else
+#define move_file(from, to) rename(from, to)
 #endif
+#define move_dir(from, to) rename(from, to)
 
 
 #define LDIF	".ldif"
@@ -58,11 +73,10 @@ struct ldif_info {
  * Unsafe/translated characters in the filesystem.
  *
  * LDIF_UNSAFE_CHAR(c) returns true if the character c is not to be used
- * in relative filenames, except it should accept '\\' even if unsafe and
- * need not reject '{' and '}'.  The value should be a constant expression.
+ * in relative filenames, except it should accept '\\', '{' and '}' even
+ * if unsafe.  The value should be a constant expression.
  *
  * If '\\' is unsafe, #define LDIF_ESCAPE_CHAR as a safe character.
- *
  * If '{' and '}' are unsafe, #define IX_FSL/IX_FSR as safe characters.
  * (Not digits, '-' or '+'.  IX_FSL == IX_FSR is allowed.)
  *
@@ -87,7 +101,7 @@ struct ldif_info {
 #else /* _WIN32 */
 
 /* Windows version - Microsoft's list of unsafe characters, except '\\' */
-#define LDIF_ESCAPE_CHAR	'^'
+#define LDIF_ESCAPE_CHAR	'^'			/* Not '\\' (unsafe on Windows) */
 #define LDIF_UNSAFE_CHAR(c)	\
 	((c) == '/' || (c) == ':' || \
 	 (c) == '<' || (c) == '>' || (c) == '"' || \
@@ -132,8 +146,19 @@ struct ldif_info {
 	(!(LDIF_UNSAFE_CHAR(x) || (x) == '\\' || (x) == IX_DNL || (x) == IX_DNR) \
 	 && (c) == (x))
 
+/* Collect other "safe char" tests here, until someone needs a fix. */
+enum {
+	eq_unsafe = LDIF_UNSAFE_CHAR('='),
+	safe_filenames = STRLENOF("" LDAP_DIRSEP "") == 1 && !(
+		LDIF_UNSAFE_CHAR('-') || /* for "{-1}frontend" in bconfig.c */
+		LDIF_UNSAFE_CHAR(LDIF_ESCAPE_CHAR) ||
+		LDIF_UNSAFE_CHAR(IX_FSL) || LDIF_UNSAFE_CHAR(IX_FSR))
+};
+/* Sanity check: Try to force a compilation error if !safe_filenames */
+typedef struct {
+	int assert_safe_filenames : safe_filenames ? 2 : -2;
+} assert_safe_filenames[safe_filenames ? 2 : -2];
 
-#define ENTRY_BUFF_INCREMENT 500
 
 static ConfigTable ldifcfg[] = {
 	{ "directory", "dir", 2, 2, 0, ARG_BERVAL|ARG_OFFSET,
@@ -156,10 +181,15 @@ static ConfigOCs ldifocs[] = {
 };
 
 
+/*
+ * Handle file/directory names.
+ */
+
 /* Set *res = LDIF filename path for the normalized DN */
-static void
-dn2path( BackendDB *be, struct berval *dn, struct berval *res )
+static int
+ndn2path( Operation *op, struct berval *dn, struct berval *res, int empty_ok )
 {
+	BackendDB *be = op->o_bd;
 	struct ldif_info *li = (struct ldif_info *) be->be_private;
 	struct berval *suffixdn = &be->be_nsuffix[0];
 	const char *start, *end, *next, *p;
@@ -172,6 +202,10 @@ dn2path( BackendDB *be, struct berval *dn, struct berval *res )
 	assert( suffixdn != NULL );
 	assert( !BER_BVISNULL( suffixdn ) );
 	assert( dnIsSuffix( dn, suffixdn ) );
+
+	if ( dn->bv_len == 0 && !empty_ok ) {
+		return LDAP_UNWILLING_TO_PERFORM;
+	}
 
 	start = dn->bv_val;
 	end = start + dn->bv_len;
@@ -213,50 +247,161 @@ dn2path( BackendDB *be, struct berval *dn, struct berval *res )
 	res->bv_len = ptr - res->bv_val;
 
 	assert( res->bv_len <= len );
+
+	return LDAP_SUCCESS;
 }
 
-static char * slurp_file(int fd) {
-	int read_chars_total = 0;
-	int read_chars = 0;
-	int entry_size;
-	char * entry;
-	char * entry_pos;
-	struct stat st;
+/*
+ * *dest = dupbv(<dir + LDAP_DIRSEP>), plus room for <more>-sized filename.
+ * Return pointer past the dirname.
+ */
+static char *
+fullpath_alloc( struct berval *dest, const struct berval *dir, ber_len_t more )
+{
+	char *s = SLAP_MALLOC( dir->bv_len + more + 2 );
 
-	fstat(fd, &st);
-	entry_size = st.st_size;
-	entry = ch_malloc( entry_size+1 );
-	entry_pos = entry;
-	
-	while(1) {
-		read_chars = read(fd, (void *) entry_pos, entry_size - read_chars_total);
-		if(read_chars == -1) {
-			SLAP_FREE(entry);
-			return NULL;
-		}
-		if(read_chars == 0) {
-			entry[read_chars_total] = '\0';
-			break;
-		}
-		else {
-			read_chars_total += read_chars;
-			entry_pos += read_chars;
-		}
+	dest->bv_val = s;
+	if ( s == NULL ) {
+		dest->bv_len = 0;
+		Debug( LDAP_DEBUG_ANY, "back-ldif: out of memory\n", 0, 0, 0 );
+	} else {
+		s = lutil_strcopy( dest->bv_val, dir->bv_val );
+		*s++ = LDAP_DIRSEP[0];
+		*s = '\0';
+		dest->bv_len = s - dest->bv_val;
 	}
-	return entry;
+	return s;
+}
+
+/*
+ * Append filename to fullpath_alloc() dirname or replace previous filename.
+ * dir_end = fullpath_alloc() return value.
+ */
+#define FILL_PATH(fpath, dir_end, filename) \
+	((fpath)->bv_len = lutil_strcopy(dir_end, filename) - (fpath)->bv_val)
+
+
+/* .ldif entry filename length <-> subtree dirname length. */
+#define ldif2dir_len(bv)  ((bv).bv_len -= STRLENOF(LDIF))
+#define dir2ldif_len(bv)  ((bv).bv_len += STRLENOF(LDIF))
+/* .ldif entry filename <-> subtree dirname, both with dirname length. */
+#define ldif2dir_name(bv) ((bv).bv_val[(bv).bv_len] = '\0')
+#define dir2ldif_name(bv) ((bv).bv_val[(bv).bv_len] = LDIF_FILETYPE_SEP)
+
+/* Get the parent directory path, plus the LDIF suffix overwritten by a \0. */
+static int
+get_parent_path( struct berval *dnpath, struct berval *res )
+{
+	ber_len_t i = dnpath->bv_len;
+
+	while ( i > 0 && dnpath->bv_val[ --i ] != LDAP_DIRSEP[0] ) ;
+	if ( res == NULL ) {
+		res = dnpath;
+	} else {
+		res->bv_val = SLAP_MALLOC( i + 1 + STRLENOF(LDIF) );
+		if ( res->bv_val == NULL )
+			return LDAP_OTHER;
+		AC_MEMCPY( res->bv_val, dnpath->bv_val, i );
+	}
+	res->bv_len = i;
+	strcpy( res->bv_val + i, LDIF );
+	res->bv_val[i] = '\0';
+	return LDAP_SUCCESS;
+}
+
+/* Make temporary filename pattern for mkstemp() based on dnpath. */
+static char *
+ldif_tempname( const struct berval *dnpath )
+{
+	static const char suffix[] = ".XXXXXX";
+	ber_len_t len = dnpath->bv_len - STRLENOF( LDIF );
+	char *name = SLAP_MALLOC( len + sizeof( suffix ) );
+
+	if ( name != NULL ) {
+		AC_MEMCPY( name, dnpath->bv_val, len );
+		strcpy( name + len, suffix );
+	}
+	return name;
+}
+
+/*
+ * Read a file, or stat() it if datap == NULL.  Allocate and fill *datap.
+ * Return LDAP_SUCCESS, LDAP_NO_SUCH_OBJECT (no such file), or another error.
+ */
+static int
+ldif_read_file( const char *path, char **datap )
+{
+	int rc, fd, len;
+	int res = -1;	/* 0:success, <0:error, >0:file too big/growing. */
+	struct stat st;
+	char *data = NULL, *ptr;
+
+	if ( datap == NULL ) {
+		res = stat( path, &st );
+		goto done;
+	}
+	fd = open( path, O_RDONLY );
+	if ( fd >= 0 ) {
+		if ( fstat( fd, &st ) == 0 ) {
+			if ( st.st_size > INT_MAX - 2 ) {
+				res = 1;
+			} else {
+				len = st.st_size + 1; /* +1 detects file size > st.st_size */
+				*datap = data = ptr = SLAP_MALLOC( len + 1 );
+				if ( ptr != NULL ) {
+					while ( len && (res = read( fd, ptr, len )) ) {
+						if ( res > 0 ) {
+							len -= res;
+							ptr += res;
+						} else if ( errno != EINTR ) {
+							break;
+						}
+					}
+					*ptr = '\0';
+				}
+			}
+		}
+		if ( close( fd ) < 0 )
+			res = -1;
+	}
+
+ done:
+	if ( res == 0 ) {
+		Debug( LDAP_DEBUG_TRACE, "ldif_read_file: %s: \"%s\"\n",
+			datap ? "read entry file" : "entry file exists", path, 0 );
+		rc = LDAP_SUCCESS;
+	} else {
+		if ( res < 0 && errno == ENOENT ) {
+			Debug( LDAP_DEBUG_TRACE, "ldif_read_file: "
+				"no entry file \"%s\"\n", path, 0, 0 );
+			rc = LDAP_NO_SUCH_OBJECT;
+		} else {
+			const char *msg = res < 0 ? STRERROR( errno ) : "bad stat() size";
+			Debug( LDAP_DEBUG_ANY, "ldif_read_file: %s for \"%s\"\n",
+				msg, path, 0 );
+			rc = LDAP_OTHER;
+		}
+		if ( data != NULL )
+			SLAP_FREE( data );
+	}
+	return rc;
 }
 
 /*
  * return nonnegative for success or -1 for error
  * do not return numbers less than -1
  */
-static int spew_file(int fd, char * spew, int len) {
+static int
+spew_file( int fd, const char *spew, int len, int *save_errno )
+{
 	int writeres = 0;
-	
+
 	while(len > 0) {
 		writeres = write(fd, spew, len);
 		if(writeres == -1) {
-			return -1;
+			*save_errno = errno;
+			if (*save_errno != EINTR)
+				break;
 		}
 		else {
 			spew += writeres;
@@ -266,406 +411,611 @@ static int spew_file(int fd, char * spew, int len) {
 	return writeres;
 }
 
+/* Write an entry LDIF file.  Create parentdir first if non-NULL. */
 static int
-spew_entry( Entry * e, struct berval * path, int dolock, int *save_errnop )
+ldif_write_entry(
+	Operation *op,
+	Entry *e,
+	const struct berval *path,
+	const char *parentdir,
+	const char **text )
 {
-	int rs, save_errno = 0;
-	int openres;
-	int res, spew_res;
-	int entry_length;
-	char * entry_as_string;
-	char *tmpfname = NULL;
+	int rc = LDAP_OTHER, res, save_errno = 0;
+	int fd, entry_length;
+	char *entry_as_string, *tmpfname;
 
-	tmpfname = ch_malloc( path->bv_len + STRLENOF( "XXXXXX" ) + 1 );
-	AC_MEMCPY( tmpfname, path->bv_val, path->bv_len );
-	AC_MEMCPY( &tmpfname[ path->bv_len ], "XXXXXX", STRLENOF( "XXXXXX" ) + 1 );
+	if ( op->o_abandon )
+		return SLAPD_ABANDON;
 
-	openres = mkstemp( tmpfname );
-	if ( openres == -1 ) {
+	if ( parentdir != NULL && mkdir( parentdir, 0750 ) < 0 ) {
 		save_errno = errno;
-		rs = LDAP_UNWILLING_TO_PERFORM;
-		Debug( LDAP_DEBUG_ANY, "could not create tmpfile \"%s\": %s\n",
-			tmpfname, STRERROR( save_errno ), 0 );
+		Debug( LDAP_DEBUG_ANY, "ldif_write_entry: %s \"%s\": %s\n",
+			"cannot create parent directory",
+			parentdir, STRERROR( save_errno ) );
+		*text = "internal error (cannot create parent directory)";
+		return rc;
+	}
+
+	tmpfname = ldif_tempname( path );
+	fd = tmpfname == NULL ? -1 : mkstemp( tmpfname );
+	if ( fd < 0 ) {
+		save_errno = errno;
+		Debug( LDAP_DEBUG_ANY, "ldif_write_entry: %s for \"%s\": %s\n",
+			"cannot create file", e->e_dn, STRERROR( save_errno ) );
+		*text = "internal error (cannot create file)";
 
 	} else {
+		ber_len_t dn_len = e->e_name.bv_len;
 		struct berval rdn;
-		int tmp;
 
 		/* Only save the RDN onto disk */
 		dnRdn( &e->e_name, &rdn );
-		if ( rdn.bv_len != e->e_name.bv_len ) {
+		if ( rdn.bv_len != dn_len ) {
 			e->e_name.bv_val[rdn.bv_len] = '\0';
-			tmp = e->e_name.bv_len;
 			e->e_name.bv_len = rdn.bv_len;
-			rdn.bv_len = tmp;
 		}
 
-		spew_res = -2;
-		if ( dolock ) {
-			ldap_pvt_thread_mutex_lock(&entry2str_mutex);
-		}
-
-		entry_as_string = entry2str(e, &entry_length);
-		if ( entry_as_string != NULL ) {
-			spew_res = spew_file( openres,
-				entry_as_string, entry_length );
-			if ( spew_res == -1 ) {
-				save_errno = errno;
-			}
-		}
-
-		if ( dolock ) {
-			ldap_pvt_thread_mutex_unlock(&entry2str_mutex);
-		}
+		res = -2;
+		ldap_pvt_thread_mutex_lock( &entry2str_mutex );
+		entry_as_string = entry2str( e, &entry_length );
+		if ( entry_as_string != NULL )
+			res = spew_file( fd, entry_as_string, entry_length, &save_errno );
+		ldap_pvt_thread_mutex_unlock( &entry2str_mutex );
 
 		/* Restore full DN */
-		if ( rdn.bv_len != e->e_name.bv_len ) {
-			e->e_name.bv_val[e->e_name.bv_len] = ',';
-			e->e_name.bv_len = rdn.bv_len;
+		if ( rdn.bv_len != dn_len ) {
+			e->e_name.bv_val[rdn.bv_len] = ',';
+			e->e_name.bv_len = dn_len;
 		}
 
-		res = close( openres );
-		rs = LDAP_UNWILLING_TO_PERFORM;
+		if ( close( fd ) < 0 && res >= 0 ) {
+			res = -1;
+			save_errno = errno;
+		}
 
-		if ( spew_res > -2 ) {
-			if ( res == -1 || spew_res == -1 ) {
-				if ( save_errno == 0 ) {
-					save_errno = errno;
-				}
-				Debug( LDAP_DEBUG_ANY, "write error to tmpfile \"%s\": %s\n",
-					tmpfname, STRERROR( save_errno ), 0 );
-
+		if ( res >= 0 ) {
+			if ( move_file( tmpfname, path->bv_val ) == 0 ) {
+				Debug( LDAP_DEBUG_TRACE, "ldif_write_entry: "
+					"wrote entry \"%s\"\n", e->e_name.bv_val, 0, 0 );
+				rc = LDAP_SUCCESS;
 			} else {
-				res = rename( tmpfname, path->bv_val );
-				if ( res == 0 ) {
-					rs = LDAP_SUCCESS;
-
-				} else {
-					save_errno = errno;
-					switch ( save_errno ) {
-					case ENOENT:
-						rs = LDAP_NO_SUCH_OBJECT;
-						break;
-
-					default:
-						break;
-					}
-				}
+				save_errno = errno;
+				Debug( LDAP_DEBUG_ANY, "ldif_write_entry: "
+					"could not put entry file for \"%s\" in place: %s\n",
+					e->e_name.bv_val, STRERROR( save_errno ), 0 );
+				*text = "internal error (could not put entry file in place)";
 			}
+		} else if ( res == -1 ) {
+			Debug( LDAP_DEBUG_ANY, "ldif_write_entry: %s \"%s\": %s\n",
+				"write error to", tmpfname, STRERROR( save_errno ) );
+			*text = "internal error (write error to entry file)";
 		}
 
-		if ( rs != LDAP_SUCCESS ) {
+		if ( rc != LDAP_SUCCESS ) {
 			unlink( tmpfname );
 		}
 	}
 
-	ch_free( tmpfname );
-
-	if ( rs != LDAP_SUCCESS && save_errnop != NULL ) {
-		*save_errnop = save_errno;
-	}
-
-	return rs;
+	if ( tmpfname )
+		SLAP_FREE( tmpfname );
+	return rc;
 }
 
-static Entry * get_entry_for_fd(int fd,
+/*
+ * Read the entry at path, or if entryp==NULL just see if it exists.
+ * pdn and pndn are the parent's DN and normalized DN, or both NULL.
+ * Return an LDAP result code.
+ */
+static int
+ldif_read_entry(
+	Operation *op,
+	const char *path,
 	struct berval *pdn,
-	struct berval *pndn)
+	struct berval *pndn,
+	Entry **entryp,
+	const char **text )
 {
-	char * entry = (char *) slurp_file(fd);
-	Entry * ldentry = NULL;
-	
-	/* error reading file */
-	if(entry == NULL) {
-		goto return_value;
-	}
+	int rc;
+	Entry *entry;
+	char *entry_as_string;
+	struct berval rdn;
 
-	ldentry = str2entry(entry);
-	if ( ldentry ) {
-		struct berval rdn;
-		rdn = ldentry->e_name;
-		build_new_dn( &ldentry->e_name, pdn, &rdn, NULL );
-		ch_free( rdn.bv_val );
-		rdn = ldentry->e_nname;
-		build_new_dn( &ldentry->e_nname, pndn, &rdn, NULL );
-		ch_free( rdn.bv_val );
-	}
+	/* TODO: Does slapd prevent Abandon of Bind as per rfc4511?
+	 * If so we need not check for LDAP_REQ_BIND here.
+	 */
+	if ( op->o_abandon && op->o_tag != LDAP_REQ_BIND )
+		return SLAPD_ABANDON;
 
- return_value:
-	if(fd != -1) {
-		if(close(fd) != 0) {
-			/* log error */
+	rc = ldif_read_file( path, entryp ? &entry_as_string : NULL );
+
+	switch ( rc ) {
+	case LDAP_SUCCESS:
+		if ( entryp == NULL )
+			break;
+		*entryp = entry = str2entry( entry_as_string );
+		SLAP_FREE( entry_as_string );
+		if ( entry == NULL ) {
+			rc = LDAP_OTHER;
+			if ( text != NULL )
+				*text = "internal error (cannot parse some entry file)";
+			break;
 		}
+		if ( pdn == NULL || BER_BVISEMPTY( pdn ) )
+			break;
+		/* Append parent DN to DN from LDIF file */
+		rdn = entry->e_name;
+		build_new_dn( &entry->e_name, pdn, &rdn, NULL );
+		SLAP_FREE( rdn.bv_val );
+		rdn = entry->e_nname;
+		build_new_dn( &entry->e_nname, pndn, &rdn, NULL );
+		SLAP_FREE( rdn.bv_val );
+		break;
+
+	case LDAP_OTHER:
+		if ( text != NULL )
+			*text = entryp
+				? "internal error (cannot read some entry file)"
+				: "internal error (cannot stat some entry file)";
+		break;
 	}
-	if(entry != NULL)
-		SLAP_FREE(entry);
-	return ldentry;
+
+	return rc;
 }
 
+/*
+ * Read the operation's entry, or if entryp==NULL just see if it exists.
+ * Return an LDAP result code.  May set *text to a message on failure.
+ * If pathp is non-NULL, set it to the entry filename on success.
+ */
 static int
 get_entry(
 	Operation *op,
 	Entry **entryp,
-	struct berval *pathp )
+	struct berval *pathp,
+	const char **text )
 {
 	int rc;
 	struct berval path, pdn, pndn;
-	int fd;
 
-	dnParent(&op->o_req_dn, &pdn);
-	dnParent(&op->o_req_ndn, &pndn);
-	dn2path( op->o_bd, &op->o_req_ndn, &path );
-	fd = open(path.bv_val, O_RDONLY);
-	/* error opening file (mebbe should log error) */
-	if ( fd == -1 && ( errno != ENOENT || op->o_tag != LDAP_REQ_ADD ) ) {
-		Debug( LDAP_DEBUG_ANY, "failed to open file \"%s\": %s\n",
-			path.bv_val, STRERROR(errno), 0 );
+	dnParent( &op->o_req_dn, &pdn );
+	dnParent( &op->o_req_ndn, &pndn );
+	rc = ndn2path( op, &op->o_req_ndn, &path, 0 );
+	if ( rc != LDAP_SUCCESS ) {
+		goto done;
 	}
-	*entryp = fd < 0 ? NULL : get_entry_for_fd( fd, &pdn, &pndn );
-	rc = *entryp ? LDAP_SUCCESS : LDAP_NO_SUCH_OBJECT;
+
+	rc = ldif_read_entry( op, path.bv_val, &pdn, &pndn, entryp, text );
 
 	if ( rc == LDAP_SUCCESS && pathp != NULL ) {
 		*pathp = path;
 	} else {
-		SLAP_FREE(path.bv_val);
+		SLAP_FREE( path.bv_val );
 	}
+ done:
 	return rc;
 }
 
-static void fullpath(struct berval *base, struct berval *name, struct berval *res) {
-	char *ptr;
-	res->bv_len = name->bv_len + base->bv_len + 1;
-	res->bv_val = ch_malloc( res->bv_len + 1 );
-	strcpy(res->bv_val, base->bv_val);
-	ptr = res->bv_val + base->bv_len;
-	*ptr++ = LDAP_DIRSEP[0];
-	strcpy(ptr, name->bv_val);
-}
 
+/*
+ * RDN-named directory entry, with special handling of "attr={num}val" RDNs.
+ * For sorting, filename "attr=val.ldif" is truncated to "attr="val\0ldif",
+ * and filename "attr={num}val.ldif" to "attr={\0um}val.ldif".
+ * Does not sort escaped chars correctly, would need to un-escape them.
+ */
 typedef struct bvlist {
 	struct bvlist *next;
-	struct berval bv;
-	struct berval num;
-	int inum;
-	int off;
+	char *trunc;	/* filename was truncated here */
+	int  inum;		/* num from "attr={num}" in filename, or INT_MIN */
+	char savech;	/* original char at *trunc */
+	/* BVL_NAME(&bvlist) is the filename, allocated after the struct: */
+#	define BVL_NAME(bvl)     ((char *) ((bvl) + 1))
+#	define BVL_SIZE(namelen) (sizeof(bvlist) + (namelen) + 1)
 } bvlist;
 
-
-static int r_enum_tree(enumCookie *ck, struct berval *path, int base,
-	struct berval *pdn, struct berval *pndn)
+static int
+ldif_send_entry( Operation *op, SlapReply *rs, Entry *e, int scope )
 {
-	Entry *e = NULL;
-	int fd = 0, rc = LDAP_SUCCESS;
+	int rc = LDAP_SUCCESS;
 
-	if ( !base ) {
-		fd = open( path->bv_val, O_RDONLY );
-		if ( fd < 0 ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"=> ldif_enum_tree: failed to open %s: %s\n",
-				path->bv_val, STRERROR(errno), 0 );
-			return LDAP_NO_SUCH_OBJECT;
-		}
+	if ( scope == LDAP_SCOPE_BASE || scope == LDAP_SCOPE_SUBTREE ) {
+		if ( rs == NULL ) {
+			/* Save the entry for tool mode */
+			struct ldif_tool *tl =
+				&((struct ldif_info *) op->o_bd->be_private)->li_tool;
 
-		e = get_entry_for_fd(fd, pdn, pndn);
-		if ( !e ) {
-			Debug( LDAP_DEBUG_ANY,
-				"=> ldif_enum_tree: failed to read entry for %s\n",
-				path->bv_val, 0, 0 );
-			return LDAP_BUSY;
-		}
-
-		if ( ck->op->ors_scope == LDAP_SCOPE_BASE ||
-			ck->op->ors_scope == LDAP_SCOPE_SUBTREE ) {
-			/* Send right away? */
-			if ( ck->rs ) {
-				/*
-				 * if it's a referral, add it to the list of referrals. only do
-				 * this for non-base searches, and don't check the filter
-				 * explicitly here since it's only a candidate anyway.
-				 */
-				if ( !get_manageDSAit( ck->op )
-						&& ck->op->ors_scope != LDAP_SCOPE_BASE
-						&& is_entry_referral( e ) )
-				{
-					BerVarray erefs = get_entry_referrals( ck->op, e );
-					ck->rs->sr_ref = referral_rewrite( erefs,
-							&e->e_name, NULL,
-							ck->op->oq_search.rs_scope == LDAP_SCOPE_ONELEVEL
-								? LDAP_SCOPE_BASE : LDAP_SCOPE_SUBTREE );
-	
-					ck->rs->sr_entry = e;
-					rc = send_search_reference( ck->op, ck->rs );
-					ber_bvarray_free( ck->rs->sr_ref );
-					ber_bvarray_free( erefs );
-					ck->rs->sr_ref = NULL;
-					ck->rs->sr_entry = NULL;
-	
-				} else if ( test_filter( ck->op, e, ck->op->ors_filter ) == LDAP_COMPARE_TRUE )
-				{
-					ck->rs->sr_entry = e;
-					ck->rs->sr_attrs = ck->op->ors_attrs;
-					ck->rs->sr_flags = REP_ENTRY_MODIFIABLE;
-					rc = send_search_entry(ck->op, ck->rs);
-					ck->rs->sr_entry = NULL;
-				}
-				fd = 1;
-				if ( rc )
+			if ( tl->ecount >= tl->elen ) {
+				/* Allocate/grow entries */
+				ID elen = tl->elen ? tl->elen * 2 : ENTRY_BUFF_INCREMENT;
+				Entry **entries = (Entry **) SLAP_REALLOC( tl->entries,
+					sizeof(Entry *) * elen );
+				if ( entries == NULL ) {
+					Debug( LDAP_DEBUG_ANY,
+						"ldif_send_entry: out of memory\n", 0, 0, 0 );
+					rc = LDAP_OTHER;
 					goto done;
-			} else {
-			/* Queueing up for tool mode */
-				if(ck->entries == NULL) {
-					ck->entries = (Entry **) ch_malloc(sizeof(Entry *) * ENTRY_BUFF_INCREMENT);
-					ck->elen = ENTRY_BUFF_INCREMENT;
 				}
-				if(ck->eind >= ck->elen) { /* grow entries if necessary */	
-					ck->entries = (Entry **) ch_realloc(ck->entries, sizeof(Entry *) * (ck->elen) * 2);
-					ck->elen *= 2;
-				}
-	
-				ck->entries[ck->eind++] = e;
-				fd = 0;
+				tl->elen = elen;
+				tl->entries = entries;
 			}
-		} else {
-			fd = 1;
+			tl->entries[tl->ecount++] = e;
+			return rc;
+		}
+
+		else if ( !get_manageDSAit( op ) && is_entry_referral( e ) ) {
+			/* Send a continuation reference.
+			 * (ldif_back_referrals() handles baseobject referrals.)
+			 * Don't check the filter since it's only a candidate.
+			 */
+			BerVarray refs = get_entry_referrals( op, e );
+			rs->sr_ref = referral_rewrite( refs, &e->e_name, NULL, scope );
+			rs->sr_entry = e;
+			rc = send_search_reference( op, rs );
+			ber_bvarray_free( rs->sr_ref );
+			ber_bvarray_free( refs );
+			rs->sr_ref = NULL;
+			rs->sr_entry = NULL;
+		}
+
+		else if ( test_filter( op, e, op->ors_filter ) == LDAP_COMPARE_TRUE ) {
+			rs->sr_entry = e;
+			rs->sr_attrs = op->ors_attrs;
+			rs->sr_flags = REP_ENTRY_MODIFIABLE;
+			rc = send_search_entry( op, rs );
+			rs->sr_entry = NULL;
 		}
 	}
 
-	if ( ck->op->ors_scope != LDAP_SCOPE_BASE ) {
-		DIR * dir_of_path;
-		bvlist *list = NULL, *ptr;
+ done:
+	entry_free( e );
+	return rc;
+}
 
-		path->bv_len -= STRLENOF( LDIF );
-		path->bv_val[path->bv_len] = '\0';
+/* Read LDIF directory <path> into <listp>.  Set *fname_maxlenp. */
+static int
+ldif_readdir(
+	Operation *op,
+	SlapReply *rs,
+	const struct berval *path,
+	bvlist **listp,
+	ber_len_t *fname_maxlenp )
+{
+	int rc = LDAP_SUCCESS;
+	DIR *dir_of_path;
 
-		dir_of_path = opendir(path->bv_val);
-		if(dir_of_path == NULL) { /* can't open directory */
-			if ( errno != ENOENT ) {
-				/* it shouldn't be treated as an error
-				 * only if the directory doesn't exist */
-				rc = LDAP_BUSY;
-				Debug( LDAP_DEBUG_ANY,
-					"=> ldif_enum_tree: failed to opendir %s (%d)\n",
-					path->bv_val, errno, 0 );
-			}
-			goto done;
+	*listp = NULL;
+	*fname_maxlenp = 0;
+
+	dir_of_path = opendir( path->bv_val );
+	if ( dir_of_path == NULL ) {
+		int save_errno = errno;
+		struct ldif_info *li = (struct ldif_info *) op->o_bd->be_private;
+		int is_rootDSE = (path->bv_len == li->li_base_path.bv_len);
+
+		/* Absent directory is OK (leaf entry), except the database dir */
+		if ( is_rootDSE || save_errno != ENOENT ) {
+			Debug( LDAP_DEBUG_ANY,
+				"=> ldif_search_entry: failed to opendir \"%s\": %s\n",
+				path->bv_val, STRERROR( save_errno ), 0 );
+			rc = LDAP_OTHER;
+			if ( rs != NULL )
+				rs->sr_text =
+					save_errno != ENOENT ? "internal error (bad directory)"
+					: !is_rootDSE ? "internal error (missing directory)"
+					: "internal error (database directory does not exist)";
 		}
-	
-		while(1) {
-			struct berval fname, itmp;
-			struct dirent * dir;
+
+	} else {
+		bvlist *ptr;
+		struct dirent *dir;
+		int save_errno = 0;
+
+		while ( (dir = readdir( dir_of_path )) != NULL ) {
+			size_t fname_len;
 			bvlist *bvl, **prev;
+			char *trunc, *idxp, *endp, *endp2;
 
-			dir = readdir(dir_of_path);
-			if(dir == NULL) break; /* end of the directory */
-			fname.bv_len = strlen( dir->d_name );
-			if ( fname.bv_len <= STRLENOF( LDIF ))
+			fname_len = strlen( dir->d_name );
+			if ( fname_len < STRLENOF( "x=" LDIF )) /* min filename size */
 				continue;
-			if ( strcmp( dir->d_name + (fname.bv_len - STRLENOF(LDIF)), LDIF))
+			if ( strcmp( dir->d_name + fname_len - STRLENOF(LDIF), LDIF ))
 				continue;
-			fname.bv_val = dir->d_name;
 
-			bvl = ch_malloc( sizeof(bvlist) );
-			ber_dupbv( &bvl->bv, &fname );
-			BER_BVZERO( &bvl->num );
-			itmp.bv_val = ber_bvchr( &bvl->bv, IX_FSL );
-			if ( itmp.bv_val ) {
-				char *ptr;
-				itmp.bv_val++;
-				itmp.bv_len = bvl->bv.bv_len
-					- ( itmp.bv_val - bvl->bv.bv_val );
-				ptr = ber_bvchr( &itmp, IX_FSR );
-				if ( ptr ) {
-					itmp.bv_len = ptr - itmp.bv_val;
-					ber_dupbv( &bvl->num, &itmp );
-					bvl->inum = strtol( itmp.bv_val, NULL, 0 );
-					itmp.bv_val[0] = '\0';
-					bvl->off = itmp.bv_val - bvl->bv.bv_val;
+			if ( *fname_maxlenp < fname_len )
+				*fname_maxlenp = fname_len;
+
+			bvl = SLAP_MALLOC( BVL_SIZE( fname_len ) );
+			if ( bvl == NULL ) {
+				rc = LDAP_OTHER;
+				save_errno = errno;
+				break;
+			}
+			strcpy( BVL_NAME( bvl ), dir->d_name );
+
+			/* Make it sortable by ("attr=val" or <preceding {num}, num>) */
+			trunc = BVL_NAME( bvl ) + fname_len - STRLENOF( LDIF );
+			if ( (idxp = strchr( BVL_NAME( bvl ) + 2, IX_FSL )) != NULL &&
+				 (endp = strchr( ++idxp, IX_FSR )) != NULL && endp > idxp &&
+				 (eq_unsafe || idxp[-2] == '=' || endp + 1 == trunc) )
+			{
+				/* attr={n}val or bconfig.c's "pseudo-indexed" attr=val{n} */
+				bvl->inum = strtol( idxp, &endp2, 10 );
+				if ( endp2 == endp ) {
+					trunc = idxp;
+					goto truncate;
 				}
 			}
+			bvl->inum = INT_MIN;
+		truncate:
+			bvl->trunc = trunc;
+			bvl->savech = *trunc;
+			*trunc = '\0';
 
-			for (prev = &list; (ptr = *prev) != NULL; prev = &ptr->next) {
-				int cmp = strcmp( bvl->bv.bv_val, ptr->bv.bv_val );
-				if ( !cmp && bvl->num.bv_val )
-					cmp = bvl->inum - ptr->inum;
-				if ( cmp < 0 )
+			/* Insertion sort */
+			for ( prev = listp; (ptr = *prev) != NULL; prev = &ptr->next ) {
+				int cmp = strcmp( BVL_NAME( bvl ), BVL_NAME( ptr ));
+				if ( cmp < 0 || (cmp == 0 && bvl->inum < ptr->inum) )
 					break;
 			}
 			*prev = bvl;
 			bvl->next = ptr;
-				
 		}
-		closedir(dir_of_path);
 
-		if (ck->op->ors_scope == LDAP_SCOPE_ONELEVEL)
-			ck->op->ors_scope = LDAP_SCOPE_BASE;
-		else if ( ck->op->ors_scope == LDAP_SCOPE_SUBORDINATE)
-			ck->op->ors_scope = LDAP_SCOPE_SUBTREE;
-
-		while ( ( ptr = list ) ) {
-			struct berval fpath;
-
-			list = ptr->next;
-
-			if ( rc == LDAP_SUCCESS ) {
-				if ( ptr->num.bv_val )
-					AC_MEMCPY( ptr->bv.bv_val + ptr->off, ptr->num.bv_val,
-						ptr->num.bv_len );
-				fullpath( path, &ptr->bv, &fpath );
-				rc = r_enum_tree(ck, &fpath, 0,
-					e != NULL ? &e->e_name : pdn,
-					e != NULL ? &e->e_nname : pndn );
-				free(fpath.bv_val);
-			}
-			if ( ptr->num.bv_val )
-				free( ptr->num.bv_val );
-			free(ptr->bv.bv_val);
-			free(ptr);
+		if ( closedir( dir_of_path ) < 0 ) {
+			save_errno = errno;
+			rc = LDAP_OTHER;
+			if ( rs != NULL )
+				rs->sr_text = "internal error (bad directory)";
+		}
+		if ( rc != LDAP_SUCCESS ) {
+			Debug( LDAP_DEBUG_ANY, "ldif_search_entry: %s \"%s\": %s\n",
+				"error reading directory", path->bv_val,
+				STRERROR( save_errno ) );
 		}
 	}
-done:
-	if ( fd ) entry_free( e );
+
+	return rc;
+}
+
+/*
+ * Send an entry, recursively search its children, and free or save it.
+ * Return an LDAP result code.  Parameters:
+ *  op, rs  operation and reply.  rs == NULL for slap tools.
+ *  e       entry to search, or NULL for rootDSE.
+ *  scope   scope for the part of the search from this entry.
+ *  path    LDIF filename -- bv_len and non-directory part are overwritten.
+ */
+static int
+ldif_search_entry(
+	Operation *op,
+	SlapReply *rs,
+	Entry *e,
+	int scope,
+	struct berval *path )
+{
+	int rc = LDAP_SUCCESS;
+	struct berval dn = BER_BVC( "" ), ndn = BER_BVC( "" );
+
+	if ( scope != LDAP_SCOPE_BASE && e != NULL ) {
+		/* Copy DN/NDN since we send the entry with REP_ENTRY_MODIFIABLE,
+		 * which bconfig.c seems to need.  (TODO: see config_rename_one.)
+		 */
+		if ( ber_dupbv( &dn,  &e->e_name  ) == NULL ||
+			 ber_dupbv( &ndn, &e->e_nname ) == NULL )
+		{
+			Debug( LDAP_DEBUG_ANY,
+				"ldif_search_entry: out of memory\n", 0, 0, 0 );
+			rc = LDAP_OTHER;
+			goto done;
+		}
+	}
+
+	/* Send the entry if appropriate, and free or save it */
+	if ( e != NULL )
+		rc = ldif_send_entry( op, rs, e, scope );
+
+	/* Search the children */
+	if ( scope != LDAP_SCOPE_BASE && rc == LDAP_SUCCESS ) {
+		bvlist *list, *ptr;
+		struct berval fpath;	/* becomes child pathname */
+		char *dir_end;	/* will point past dirname in fpath */
+
+		ldif2dir_len( *path );
+		ldif2dir_name( *path );
+		rc = ldif_readdir( op, rs, path, &list, &fpath.bv_len );
+
+		if ( list != NULL ) {
+			const char **text = rs == NULL ? NULL : &rs->sr_text;
+
+			if ( scope == LDAP_SCOPE_ONELEVEL )
+				scope = LDAP_SCOPE_BASE;
+			else if ( scope == LDAP_SCOPE_SUBORDINATE )
+				scope = LDAP_SCOPE_SUBTREE;
+
+			/* Allocate fpath and fill in directory part */
+			dir_end = fullpath_alloc( &fpath, path, fpath.bv_len );
+			if ( dir_end == NULL )
+				rc = LDAP_OTHER;
+
+			do {
+				ptr = list;
+
+				if ( rc == LDAP_SUCCESS ) {
+					*ptr->trunc = ptr->savech;
+					FILL_PATH( &fpath, dir_end, BVL_NAME( ptr ));
+
+					rc = ldif_read_entry( op, fpath.bv_val, &dn, &ndn,
+						&e, text );
+					switch ( rc ) {
+					case LDAP_SUCCESS:
+						rc = ldif_search_entry( op, rs, e, scope, &fpath );
+						break;
+					case LDAP_NO_SUCH_OBJECT:
+						/* Only the search baseDN may produce noSuchObject. */
+						rc = LDAP_OTHER;
+						if ( rs != NULL )
+							rs->sr_text = "internal error "
+								"(did someone just remove an entry file?)";
+						Debug( LDAP_DEBUG_ANY, "ldif_search_entry: "
+							"file listed in parent directory does not exist: "
+							"\"%s\"\n", fpath.bv_val, 0, 0 );
+						break;
+					}
+				}
+
+				list = ptr->next;
+				SLAP_FREE( ptr );
+			} while ( list != NULL );
+
+			if ( !BER_BVISNULL( &fpath ) )
+				SLAP_FREE( fpath.bv_val );
+		}
+	}
+
+ done:
+	if ( !BER_BVISEMPTY( &dn ) )
+		ber_memfree( dn.bv_val );
+	if ( !BER_BVISEMPTY( &ndn ) )
+		ber_memfree( ndn.bv_val );
 	return rc;
 }
 
 static int
-enum_tree(
-	enumCookie *ck
-)
+search_tree( Operation *op, SlapReply *rs )
 {
+	int rc = LDAP_SUCCESS;
+	Entry *e = NULL;
 	struct berval path;
 	struct berval pdn, pndn;
-	int rc;
 
-	dnParent( &ck->op->o_req_dn, &pdn );
-	dnParent( &ck->op->o_req_ndn, &pndn );
-	dn2path( ck->op->o_bd, &ck->op->o_req_ndn, &path );
-	rc = r_enum_tree(ck, &path, BER_BVISEMPTY( &ck->op->o_req_ndn ) ? 1 : 0, &pdn, &pndn);
+	(void) ndn2path( op, &op->o_req_ndn, &path, 1 );
+	if ( !BER_BVISEMPTY( &op->o_req_ndn ) ) {
+		/* Read baseObject */
+		dnParent( &op->o_req_dn, &pdn );
+		dnParent( &op->o_req_ndn, &pndn );
+		rc = ldif_read_entry( op, path.bv_val, &pdn, &pndn, &e,
+			rs == NULL ? NULL : &rs->sr_text );
+	}
+	if ( rc == LDAP_SUCCESS )
+		rc = ldif_search_entry( op, rs, e, op->ors_scope, &path );
+
 	ch_free( path.bv_val );
 	return rc;
 }
 
 
-/* Get the parent directory path, plus the LDIF suffix overwritten by a \0 */
-static void
-get_parent_path( struct berval *dnpath, struct berval *res )
+/*
+ * Prepare to create or rename an entry:
+ * Check that the entry does not already exist.
+ * Check that the parent entry exists and can have subordinates,
+ * unless need_dir is NULL or adding the suffix entry.
+ *
+ * Return an LDAP result code.  May set *text to a message on failure.
+ * If success, set *dnpath to LDIF entry path and *need_dir to
+ * (directory must be created ? dirname : NULL).
+ */
+static int
+ldif_prepare_create(
+	Operation *op,
+	Entry *e,
+	struct berval *dnpath,
+	char **need_dir,
+	const char **text )
 {
-	int dnpathlen = dnpath->bv_len;
-	int i;
-	
-	for(i = dnpathlen;i>0;i--) /* find the first path seperator */
-		if(dnpath->bv_val[i] == LDAP_DIRSEP[0])
+	struct ldif_info *li = (struct ldif_info *) op->o_bd->be_private;
+	struct berval *ndn = &e->e_nname;
+	struct berval ppath = BER_BVNULL;
+	struct stat st;
+	Entry *parent = NULL;
+	int rc;
+
+	if ( op->o_abandon )
+		return SLAPD_ABANDON;
+
+	rc = ndn2path( op, ndn, dnpath, 0 );
+	if ( rc != LDAP_SUCCESS ) {
+		return rc;
+	}
+
+	if ( stat( dnpath->bv_val, &st ) == 0 ) { /* entry .ldif file */
+		rc = LDAP_ALREADY_EXISTS;
+
+	} else if ( errno != ENOENT ) {
+		Debug( LDAP_DEBUG_ANY,
+			"ldif_prepare_create: cannot stat \"%s\": %s\n",
+			dnpath->bv_val, STRERROR( errno ), 0 );
+		rc = LDAP_OTHER;
+		*text = "internal error (cannot check entry file)";
+
+	} else if ( need_dir != NULL ) {
+		*need_dir = NULL;
+		rc = get_parent_path( dnpath, &ppath );
+		/* If parent dir exists, so does parent .ldif:
+		 * The directory gets created after and removed before the .ldif.
+		 * Except with the database directory, which has no matching entry.
+		 */
+		if ( rc == LDAP_SUCCESS && stat( ppath.bv_val, &st ) < 0 ) {
+			rc = errno == ENOENT && ppath.bv_len > li->li_base_path.bv_len
+				? LDAP_NO_SUCH_OBJECT : LDAP_OTHER;
+		}
+		switch ( rc ) {
+		case LDAP_NO_SUCH_OBJECT:
+			/* No parent dir, check parent .ldif */
+			dir2ldif_name( ppath );
+			rc = ldif_read_entry( op, ppath.bv_val, NULL, NULL,
+				(op->o_tag != LDAP_REQ_ADD || get_manageDSAit( op )
+				 ? &parent : NULL),
+				text );
+			switch ( rc ) {
+			case LDAP_SUCCESS:
+				/* Check that parent is not a referral, unless
+				 * ldif_back_referrals() already checked.
+				 */
+				if ( parent != NULL ) {
+					int is_ref = is_entry_referral( parent );
+					entry_free( parent );
+					if ( is_ref ) {
+						rc = LDAP_AFFECTS_MULTIPLE_DSAS;
+						*text = op->o_tag == LDAP_REQ_MODDN
+							? "newSuperior is a referral object"
+							: "parent is a referral object";
+						break;
+					}
+				}
+				/* Must create parent directory. */
+				ldif2dir_name( ppath );
+				*need_dir = ppath.bv_val;
+				break;
+			case LDAP_NO_SUCH_OBJECT:
+				*text = op->o_tag == LDAP_REQ_MODDN
+					? "newSuperior object does not exist"
+					: "parent does not exist";
+				break;
+			}
 			break;
-	res->bv_len = i;
-	res->bv_val = ch_malloc( res->bv_len + 1 + STRLENOF(LDIF) );
-	strncpy(res->bv_val, dnpath->bv_val, i);
-	strcpy(res->bv_val+i, LDIF);
-	res->bv_val[i] = '\0';
+		case LDAP_OTHER:
+			Debug( LDAP_DEBUG_ANY,
+				"ldif_prepare_create: cannot stat \"%s\" parent dir: %s\n",
+				ndn->bv_val, STRERROR( errno ), 0 );
+			*text = "internal error (cannot stat parent dir)";
+			break;
+		}
+		if ( *need_dir == NULL && ppath.bv_val != NULL )
+			SLAP_FREE( ppath.bv_val );
+	}
+
+	if ( rc != LDAP_SUCCESS ) {
+		SLAP_FREE( dnpath->bv_val );
+		BER_BVZERO( dnpath );
+	}
+	return rc;
 }
 
-static int apply_modify_to_entry(Entry * entry,
-				Modifications * modlist,
-				Operation * op,
-				SlapReply * rs)
+static int
+apply_modify_to_entry(
+	Entry *entry,
+	Modifications *modlist,
+	Operation *op,
+	SlapReply *rs )
 {
 	char textbuf[SLAP_TEXT_BUFLEN];
 	int rc = modlist ? LDAP_UNWILLING_TO_PERFORM : LDAP_SUCCESS;
@@ -689,14 +1039,14 @@ static int apply_modify_to_entry(Entry * entry,
 				   &rs->sr_text, textbuf,
 				   sizeof( textbuf ) );
 			break;
-				
+
 		case LDAP_MOD_DELETE:
 			rc = modify_delete_values(entry, mods,
 				get_permissiveModify(op),
 				&rs->sr_text, textbuf,
 				sizeof( textbuf ) );
 			break;
-				
+
 		case LDAP_MOD_REPLACE:
 			rc = modify_replace_values(entry, mods,
 				 get_permissiveModify(op),
@@ -726,145 +1076,89 @@ static int apply_modify_to_entry(Entry * entry,
 		if(rc != LDAP_SUCCESS) break;
 	}
 
-	if(rc == LDAP_SUCCESS) {
+	if ( rc == LDAP_SUCCESS ) {
+		rs->sr_text = NULL; /* Needed at least with SLAP_MOD_SOFTADD */
 		if ( is_oc ) {
 			entry->e_ocflags = 0;
 		}
 		/* check that the entry still obeys the schema */
-		rc = entry_schema_check( op, entry, NULL, 0, 0,
+		rc = entry_schema_check( op, entry, NULL, 0, 0, NULL,
 			  &rs->sr_text, textbuf, sizeof( textbuf ) );
 	}
 
 	return rc;
 }
 
-int
+
+static int
 ldif_back_referrals( Operation *op, SlapReply *rs )
 {
-	struct ldif_info	*li = NULL;
-	Entry			*entry;
-	int			rc = LDAP_SUCCESS;
+	struct ldif_info *li = (struct ldif_info *) op->o_bd->be_private;
+	struct berval path, dn = op->o_req_dn, ndn = op->o_req_ndn;
+	ber_len_t min_dnlen;
+	Entry *entry = NULL, **entryp;
+	BerVarray ref;
+	int rc;
 
-#if 0
-	if ( op->o_tag == LDAP_REQ_SEARCH ) {
-		/* let search take care of itself */
-		return rc;
+	min_dnlen = op->o_bd->be_nsuffix[0].bv_len;
+	if ( min_dnlen == 0 ) {
+		/* Catch root DSE (empty DN), it is not a referral */
+		min_dnlen = 1;
 	}
-#endif
-
-	if ( get_manageDSAit( op ) ) {
-		/* let op take care of DSA management */
-		return rc;
-	}
-
-	if ( BER_BVISEMPTY( &op->o_req_ndn ) ) {
-		/* the empty DN cannot be a referral */
-		return rc;
+	if ( ndn2path( op, &ndn, &path, 0 ) != LDAP_SUCCESS ) {
+		return LDAP_SUCCESS;	/* Root DSE again */
 	}
 
-	li = (struct ldif_info *)op->o_bd->be_private;
+	entryp = get_manageDSAit( op ) ? NULL : &entry;
 	ldap_pvt_thread_rdwr_rlock( &li->li_rdwr );
-	get_entry( op, &entry, NULL );
 
-	/* no object is found for them */
-	if ( entry == NULL ) {
-		struct berval	odn = op->o_req_dn;
-		struct berval	ondn = op->o_req_ndn;
-		struct berval	pndn = ondn;
-		ber_len_t		min_dnlen = op->o_bd->be_nsuffix[0].bv_len;
-
-		if ( min_dnlen == 0 )
-			min_dnlen = 1;	   /* catch empty DN */
-
-		for ( ; entry == NULL; ) {
-			dnParent( &pndn, &pndn );
-			if ( pndn.bv_len < min_dnlen ) {
-				break;
-			}
-
-			op->o_req_dn = pndn;
-			op->o_req_ndn = pndn;
-
-			get_entry( op, &entry, NULL );
-		}
-
-		ldap_pvt_thread_rdwr_runlock( &li->li_rdwr );
-
-		op->o_req_dn = odn;
-		op->o_req_ndn = ondn;
+	for (;;) {
+		dnParent( &dn, &dn );
+		dnParent( &ndn, &ndn );
+		rc = ldif_read_entry( op, path.bv_val, &dn, &ndn,
+			entryp, &rs->sr_text );
+		if ( rc != LDAP_NO_SUCH_OBJECT )
+			break;
 
 		rc = LDAP_SUCCESS;
-		rs->sr_matched = NULL;
-		if ( entry != NULL ) {
-			Debug( LDAP_DEBUG_TRACE,
-				"ldif_back_referrals: tag=%lu target=\"%s\" matched=\"%s\"\n",
-				(unsigned long) op->o_tag, op->o_req_dn.bv_val, entry->e_name.bv_val );
-
-			if ( is_entry_referral( entry ) ) {
-				rc = LDAP_OTHER;
-				rs->sr_ref = get_entry_referrals( op, entry );
-				if ( rs->sr_ref ) {
-					rs->sr_matched = ber_strdup_x(
-					entry->e_name.bv_val, op->o_tmpmemctx );
-				}
-			}
-
-			entry_free(entry);
-
-		} else if ( default_referral != NULL ) {
-			rc = LDAP_OTHER;
-			rs->sr_ref = referral_rewrite( default_referral,
-				NULL, &op->o_req_dn, LDAP_SCOPE_DEFAULT );
-		}
-
-		if ( rs->sr_ref != NULL ) {
-			/* send referrals */
-			rc = rs->sr_err = LDAP_REFERRAL;
-			send_ldap_result( op, rs );
-			ber_bvarray_free( rs->sr_ref );
-			rs->sr_ref = NULL;
-
-		} else if ( rc != LDAP_SUCCESS ) {
-			rs->sr_text = rs->sr_matched ? "bad referral object" : NULL;
-		}
-
-		if ( rs->sr_matched ) {
-			op->o_tmpfree( (char *)rs->sr_matched, op->o_tmpmemctx );
-			rs->sr_matched = NULL;
-		}
-
-		return rc;
+		if ( ndn.bv_len < min_dnlen )
+			break;
+		(void) get_parent_path( &path, NULL );
+		dir2ldif_name( path );
+		entryp = &entry;
 	}
 
 	ldap_pvt_thread_rdwr_runlock( &li->li_rdwr );
+	SLAP_FREE( path.bv_val );
 
-	if ( is_entry_referral( entry ) ) {
-		/* entry is a referral */
-		BerVarray refs = get_entry_referrals( op, entry );
-		rs->sr_ref = referral_rewrite(
-			refs, &entry->e_name, &op->o_req_dn, LDAP_SCOPE_DEFAULT );
+	if ( entry != NULL ) {
+		if ( is_entry_referral( entry ) ) {
+			Debug( LDAP_DEBUG_TRACE,
+				"ldif_back_referrals: tag=%lu target=\"%s\" matched=\"%s\"\n",
+				(unsigned long) op->o_tag, op->o_req_dn.bv_val, entry->e_dn );
 
-		Debug( LDAP_DEBUG_TRACE,
-			"ldif_back_referrals: tag=%lu target=\"%s\" matched=\"%s\"\n",
-			(unsigned long) op->o_tag, op->o_req_dn.bv_val, entry->e_name.bv_val );
+			ref = get_entry_referrals( op, entry );
+			rs->sr_ref = referral_rewrite( ref, &entry->e_name, &op->o_req_dn,
+				op->o_tag == LDAP_REQ_SEARCH ?
+				op->ors_scope : LDAP_SCOPE_DEFAULT );
+			ber_bvarray_free( ref );
 
-		rs->sr_matched = entry->e_name.bv_val;
-		if ( rs->sr_ref != NULL ) {
-			rc = rs->sr_err = LDAP_REFERRAL;
-			send_ldap_result( op, rs );
-			ber_bvarray_free( rs->sr_ref );
-			rs->sr_ref = NULL;
-
-		} else {
-			rc = LDAP_OTHER;
-			rs->sr_text = "bad referral object";
+			if ( rs->sr_ref != NULL ) {
+				/* send referral */
+				rc = rs->sr_err = LDAP_REFERRAL;
+				rs->sr_matched = entry->e_dn;
+				send_ldap_result( op, rs );
+				ber_bvarray_free( rs->sr_ref );
+				rs->sr_ref = NULL;
+			} else {
+				rc = LDAP_OTHER;
+				rs->sr_text = "bad referral object";
+			}
+			rs->sr_matched = NULL;
 		}
 
-		rs->sr_matched = NULL;
-		ber_bvarray_free( refs );
+		entry_free( entry );
 	}
-
-	entry_free( entry );
 
 	return rc;
 }
@@ -879,7 +1173,7 @@ ldif_back_bind( Operation *op, SlapReply *rs )
 	Attribute *a;
 	AttributeDescription *password = slap_schema.si_ad_userPassword;
 	int return_val;
-	Entry *entry;
+	Entry *entry = NULL;
 
 	switch ( be_rootdn_bind( op, rs ) ) {
 	case SLAP_CB_CONTINUE:
@@ -893,7 +1187,7 @@ ldif_back_bind( Operation *op, SlapReply *rs )
 
 	li = (struct ldif_info *) op->o_bd->be_private;
 	ldap_pvt_thread_rdwr_rlock(&li->li_rdwr);
-	return_val = get_entry(op, &entry, NULL);
+	return_val = get_entry(op, &entry, NULL, NULL);
 
 	/* no object is found for them */
 	if(return_val != LDAP_SUCCESS) {
@@ -917,150 +1211,115 @@ ldif_back_bind( Operation *op, SlapReply *rs )
 	}
 
 	/* let the front-end send success */
-	return_val = 0;
-	goto return_result;
+	return_val = LDAP_SUCCESS;
 
  return_result:
 	ldap_pvt_thread_rdwr_runlock(&li->li_rdwr);
-	if(return_val != 0)
+	if(return_val != LDAP_SUCCESS)
 		send_ldap_result( op, rs );
 	if(entry != NULL)
 		entry_free(entry);
 	return return_val;
 }
 
-static int ldif_back_search(Operation *op, SlapReply *rs)
+static int
+ldif_back_search( Operation *op, SlapReply *rs )
 {
 	struct ldif_info *li = (struct ldif_info *) op->o_bd->be_private;
-	enumCookie ck = { NULL, NULL, NULL, 0, 0 };
 
-	ck.op = op;
-	ck.rs = rs;
 	ldap_pvt_thread_rdwr_rlock(&li->li_rdwr);
-	rs->sr_err = enum_tree( &ck );
+	rs->sr_err = search_tree( op, rs );
 	ldap_pvt_thread_rdwr_runlock(&li->li_rdwr);
 	send_ldap_result(op, rs);
 
 	return rs->sr_err;
 }
 
-static int ldif_back_add(Operation *op, SlapReply *rs) {
+static int
+ldif_back_add( Operation *op, SlapReply *rs )
+{
 	struct ldif_info *li = (struct ldif_info *) op->o_bd->be_private;
 	Entry * e = op->ora_e;
-	struct berval dn = e->e_nname;
-	struct berval leaf_path = BER_BVNULL;
-	struct stat stats;
-	int statres;
+	struct berval path;
+	char *parentdir;
 	char textbuf[SLAP_TEXT_BUFLEN];
+	int rc;
 
-	Debug( LDAP_DEBUG_TRACE, "ldif_back_add: \"%s\"\n", dn.bv_val, 0, 0);
+	Debug( LDAP_DEBUG_TRACE, "ldif_back_add: \"%s\"\n", e->e_dn, 0, 0 );
 
-	rs->sr_err = entry_schema_check(op, e, NULL, 0, 1,
+	rc = entry_schema_check( op, e, NULL, 0, 1, NULL,
 		&rs->sr_text, textbuf, sizeof( textbuf ) );
-	if ( rs->sr_err != LDAP_SUCCESS ) goto send_res;
+	if ( rc != LDAP_SUCCESS )
+		goto send_res;
 
-	rs->sr_err = slap_add_opattrs( op,
-		&rs->sr_text, textbuf, sizeof( textbuf ), 1 );
-	if ( rs->sr_err != LDAP_SUCCESS ) goto send_res;
+	rc = slap_add_opattrs( op, &rs->sr_text, textbuf, sizeof( textbuf ), 1 );
+	if ( rc != LDAP_SUCCESS )
+		goto send_res;
 
-	ldap_pvt_thread_rdwr_wlock(&li->li_rdwr);
+	ldap_pvt_thread_mutex_lock( &li->li_modop_mutex );
 
-	dn2path( op->o_bd, &dn, &leaf_path );
+	rc = ldif_prepare_create( op, e, &path, &parentdir, &rs->sr_text );
+	if ( rc == LDAP_SUCCESS ) {
+		ldap_pvt_thread_rdwr_wlock( &li->li_rdwr );
+		rc = ldif_write_entry( op, e, &path, parentdir, &rs->sr_text );
+		ldap_pvt_thread_rdwr_wunlock( &li->li_rdwr );
 
-	if(leaf_path.bv_val != NULL) {
-		struct berval base = BER_BVNULL;
-		/* build path to container and ldif of container */
-		get_parent_path(&leaf_path, &base);
-
-		statres = stat(base.bv_val, &stats); /* check if container exists */
-		if(statres == -1 && errno == ENOENT) { /* container missing */
-			base.bv_val[base.bv_len] = LDIF_FILETYPE_SEP;
-			statres = stat(base.bv_val, &stats); /* check for leaf node */
-			base.bv_val[base.bv_len] = '\0';
-			if(statres == -1 && errno == ENOENT) {
-				rs->sr_err = LDAP_NO_SUCH_OBJECT; /* parent doesn't exist */
-				rs->sr_text = "Parent does not exist";
-			}
-			else if(statres != -1) { /* create parent */
-				int mkdirres = mkdir(base.bv_val, 0750);
-				if(mkdirres == -1) {
-					rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
-					rs->sr_text = "Could not create parent folder";
-					Debug( LDAP_DEBUG_ANY, "could not create folder \"%s\": %s\n",
-						base.bv_val, STRERROR( errno ), 0 );
-				}
-			}
-			else
-				rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
-		}/* container was possibly created, move on to add the entry */
-		if(rs->sr_err == LDAP_SUCCESS) {
-			statres = stat(leaf_path.bv_val, &stats);
-			if(statres == -1 && errno == ENOENT) {
-				rs->sr_err = spew_entry(e, &leaf_path, 1, NULL);
-			}
-			else if ( statres == -1 ) {
-				rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
-				Debug( LDAP_DEBUG_ANY, "could not stat file \"%s\": %s\n",
-					leaf_path.bv_val, STRERROR( errno ), 0 );
-			}
-			else /* it already exists */
-				rs->sr_err = LDAP_ALREADY_EXISTS;
-		}
-		SLAP_FREE(base.bv_val);
-		SLAP_FREE(leaf_path.bv_val);
+		SLAP_FREE( path.bv_val );
+		if ( parentdir != NULL )
+			SLAP_FREE( parentdir );
 	}
 
-	ldap_pvt_thread_rdwr_wunlock(&li->li_rdwr);
+	ldap_pvt_thread_mutex_unlock( &li->li_modop_mutex );
 
-send_res:
-	Debug( LDAP_DEBUG_TRACE, 
-			"ldif_back_add: err: %d text: %s\n", rs->sr_err, rs->sr_text ?
-				rs->sr_text : "", 0);
-	send_ldap_result(op, rs);
+ send_res:
+	rs->sr_err = rc;
+	Debug( LDAP_DEBUG_TRACE, "ldif_back_add: err: %d text: %s\n",
+		rc, rs->sr_text ? rs->sr_text : "", 0 );
+	send_ldap_result( op, rs );
 	slap_graduate_commit_csn( op );
 	return rs->sr_err;
 }
 
-static int ldif_back_modify(Operation *op, SlapReply *rs) {
+static int
+ldif_back_modify( Operation *op, SlapReply *rs )
+{
 	struct ldif_info *li = (struct ldif_info *) op->o_bd->be_private;
 	Modifications * modlst = op->orm_modlist;
 	struct berval path;
 	Entry *entry;
-	int spew_res;
+	int rc;
 
 	slap_mods_opattrs( op, &op->orm_modlist, 1 );
 
-	ldap_pvt_thread_rdwr_wlock(&li->li_rdwr);
+	ldap_pvt_thread_mutex_lock( &li->li_modop_mutex );
 
-	rs->sr_err = get_entry( op, &entry, &path );
-	if(entry != NULL) {
-		rs->sr_err = apply_modify_to_entry(entry, modlst, op, rs);
-		if(rs->sr_err == LDAP_SUCCESS) {
-			int save_errno;
-			spew_res = spew_entry(entry, &path, 1, &save_errno);
-			if(spew_res == -1) {
-				Debug( LDAP_DEBUG_ANY,
-					"%s ldif_back_modify: could not output entry \"%s\": %s\n",
-					op->o_log_prefix, entry->e_name.bv_val, STRERROR( save_errno ) );
-				rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
-			}
+	rc = get_entry( op, &entry, &path, &rs->sr_text );
+	if ( rc == LDAP_SUCCESS ) {
+		rc = apply_modify_to_entry( entry, modlst, op, rs );
+		if ( rc == LDAP_SUCCESS ) {
+			ldap_pvt_thread_rdwr_wlock( &li->li_rdwr );
+			rc = ldif_write_entry( op, entry, &path, NULL, &rs->sr_text );
+			ldap_pvt_thread_rdwr_wunlock( &li->li_rdwr );
 		}
 
 		entry_free( entry );
 		SLAP_FREE( path.bv_val );
 	}
 
-	rs->sr_text = NULL;
-	ldap_pvt_thread_rdwr_wunlock(&li->li_rdwr);
-	send_ldap_result(op, rs);
+	ldap_pvt_thread_mutex_unlock( &li->li_modop_mutex );
+
+	rs->sr_err = rc;
+	send_ldap_result( op, rs );
 	slap_graduate_commit_csn( op );
 	return rs->sr_err;
 }
 
-static int ldif_back_delete(Operation *op, SlapReply *rs) {
+static int
+ldif_back_delete( Operation *op, SlapReply *rs )
+{
 	struct ldif_info *li = (struct ldif_info *) op->o_bd->be_private;
 	struct berval path;
-	int res = 0;
+	int rc = LDAP_SUCCESS;
 
 	if ( BER_BVISEMPTY( &op->o_csn )) {
 		struct berval csn;
@@ -1071,48 +1330,57 @@ static int ldif_back_delete(Operation *op, SlapReply *rs) {
 		slap_get_csn( op, &csn, 1 );
 	}
 
-	ldap_pvt_thread_rdwr_wlock(&li->li_rdwr);
+	ldap_pvt_thread_mutex_lock( &li->li_modop_mutex );
+	ldap_pvt_thread_rdwr_wlock( &li->li_rdwr );
+	if ( op->o_abandon ) {
+		rc = SLAPD_ABANDON;
+		goto done;
+	}
 
-	dn2path( op->o_bd, &op->o_req_ndn, &path );
-	path.bv_val[path.bv_len - STRLENOF(LDIF)] = '\0';
-	res = rmdir(path.bv_val);
-	path.bv_val[path.bv_len - STRLENOF(LDIF)] = LDIF_FILETYPE_SEP;
-	rs->sr_err = LDAP_SUCCESS;
-	if ( res ) {
+	rc = ndn2path( op, &op->o_req_ndn, &path, 0 );
+	if ( rc != LDAP_SUCCESS ) {
+		goto done;
+	}
+
+	ldif2dir_len( path );
+	ldif2dir_name( path );
+	if ( rmdir( path.bv_val ) < 0 ) {
 		switch ( errno ) {
 		case ENOTEMPTY:
-			rs->sr_err = LDAP_NOT_ALLOWED_ON_NONLEAF;
+			rc = LDAP_NOT_ALLOWED_ON_NONLEAF;
 			break;
-
 		case ENOENT:
 			/* is leaf, go on */
-			res = 0;
 			break;
-
 		default:
-			rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
+			rc = LDAP_OTHER;
+			rs->sr_text = "internal error (cannot delete subtree directory)";
 			break;
 		}
 	}
 
-	if ( !res ) {
-		res = unlink(path.bv_val);
-		if ( res == -1 ) {
-			switch ( errno ) {
-			case ENOENT:
-				rs->sr_err = LDAP_NO_SUCH_OBJECT;
-				break;
-
-			default:
-				rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
-				break;
+	if ( rc == LDAP_SUCCESS ) {
+		dir2ldif_name( path );
+		if ( unlink( path.bv_val ) < 0 ) {
+			rc = LDAP_NO_SUCH_OBJECT;
+			if ( errno != ENOENT ) {
+				rc = LDAP_OTHER;
+				rs->sr_text = "internal error (cannot delete entry file)";
 			}
 		}
 	}
 
-	SLAP_FREE(path.bv_val);
-	ldap_pvt_thread_rdwr_wunlock(&li->li_rdwr);
-	send_ldap_result(op, rs);
+	if ( rc == LDAP_OTHER ) {
+		Debug( LDAP_DEBUG_ANY, "ldif_back_delete: %s \"%s\": %s\n",
+			"cannot delete", path.bv_val, STRERROR( errno ) );
+	}
+
+	SLAP_FREE( path.bv_val );
+ done:
+	ldap_pvt_thread_rdwr_wunlock( &li->li_rdwr );
+	ldap_pvt_thread_mutex_unlock( &li->li_modop_mutex );
+	rs->sr_err = rc;
+	send_ldap_result( op, rs );
 	slap_graduate_commit_csn( op );
 	return rs->sr_err;
 }
@@ -1122,94 +1390,109 @@ static int
 ldif_move_entry(
 	Operation *op,
 	Entry *entry,
-	struct berval *oldpath )
+	int same_ndn,
+	struct berval *oldpath,
+	const char **text )
 {
-	int res;
-	int exists_res;
+	struct ldif_info *li = (struct ldif_info *) op->o_bd->be_private;
 	struct berval newpath;
+	char *parentdir = NULL, *trash;
+	int rc, rename_res;
 
-	dn2path( op->o_bd, &entry->e_nname, &newpath );
-
-	if((entry == NULL || oldpath->bv_val == NULL) || newpath.bv_val == NULL) {
-		/* some object doesn't exist */
-		res = LDAP_NO_SUCH_OBJECT;
-	}
-	else { /* do the modrdn */
-		exists_res = open(newpath.bv_val, O_RDONLY);
-		if(exists_res == -1 && errno == ENOENT) {
-			ldap_pvt_thread_mutex_lock( &entry2str_mutex );
-			res = spew_entry(entry, &newpath, 0, NULL);
-			if(res != -1) {
-				/* if this fails we should log something bad */
-				res = unlink( oldpath->bv_val );
-				oldpath->bv_val[oldpath->bv_len - STRLENOF(".ldif")] = '\0';
-				newpath.bv_val[newpath.bv_len - STRLENOF(".ldif")] = '\0';
-				res = rename( oldpath->bv_val, newpath.bv_val );
-				res = LDAP_SUCCESS;
-			}
-			else {
-				if(errno == ENOENT)
-					res = LDAP_NO_SUCH_OBJECT;
-				else
-					res = LDAP_UNWILLING_TO_PERFORM;
-				unlink(newpath.bv_val); /* in case file was created */
-			}
-			ldap_pvt_thread_mutex_unlock( &entry2str_mutex );
-		}
-		else if(exists_res) {
-			int close_res = close(exists_res);
-			res = LDAP_ALREADY_EXISTS;
-			if(close_res == -1) {
-			/* log heinous error */
-			}
-		}
-		else {
-			res = LDAP_UNWILLING_TO_PERFORM;
-		}
+	if ( same_ndn ) {
+		rc = LDAP_SUCCESS;
+		newpath = *oldpath;
+	} else {
+		rc = ldif_prepare_create( op, entry, &newpath,
+			op->orr_newSup ? &parentdir : NULL, text );
 	}
 
-	if(newpath.bv_val != NULL)
-		SLAP_FREE(newpath.bv_val);
-	return res;
+	if ( rc == LDAP_SUCCESS ) {
+		ldap_pvt_thread_rdwr_wlock( &li->li_rdwr );
+
+		rc = ldif_write_entry( op, entry, &newpath, parentdir, text );
+		if ( rc == LDAP_SUCCESS && !same_ndn ) {
+			trash = oldpath->bv_val; /* will be .ldif file to delete */
+			ldif2dir_len( newpath );
+			ldif2dir_len( *oldpath );
+			/* Move subdir before deleting old entry,
+			 * so .ldif always exists if subdir does.
+			 */
+			ldif2dir_name( newpath );
+			ldif2dir_name( *oldpath );
+			rename_res = move_dir( oldpath->bv_val, newpath.bv_val );
+			if ( rename_res != 0 && errno != ENOENT ) {
+				rc = LDAP_OTHER;
+				*text = "internal error (cannot move this subtree)";
+				trash = newpath.bv_val;
+			}
+
+			/* Delete old entry, or if error undo change */
+			for (;;) {
+				dir2ldif_name( newpath );
+				dir2ldif_name( *oldpath );
+				if ( unlink( trash ) == 0 )
+					break;
+				if ( rc == LDAP_SUCCESS ) {
+					/* Prepare to undo change and return failure */
+					rc = LDAP_OTHER;
+					*text = "internal error (cannot move this entry)";
+					trash = newpath.bv_val;
+					if ( rename_res != 0 )
+						continue;
+					/* First move subdirectory back */
+					ldif2dir_name( newpath );
+					ldif2dir_name( *oldpath );
+					if ( move_dir( newpath.bv_val, oldpath->bv_val ) == 0 )
+						continue;
+				}
+				*text = "added new but couldn't delete old entry!";
+				break;
+			}
+
+			if ( rc != LDAP_SUCCESS ) {
+				char s[128];
+				snprintf( s, sizeof s, "%s (%s)", *text, STRERROR( errno ));
+				Debug( LDAP_DEBUG_ANY,
+					"ldif_move_entry: %s: \"%s\" -> \"%s\"\n",
+					s, op->o_req_dn.bv_val, entry->e_dn );
+			}
+		}
+
+		ldap_pvt_thread_rdwr_wunlock( &li->li_rdwr );
+		if ( !same_ndn )
+			SLAP_FREE( newpath.bv_val );
+		if ( parentdir != NULL )
+			SLAP_FREE( parentdir );
+	}
+
+	return rc;
 }
 
 static int
-ldif_back_modrdn(Operation *op, SlapReply *rs)
+ldif_back_modrdn( Operation *op, SlapReply *rs )
 {
 	struct ldif_info *li = (struct ldif_info *) op->o_bd->be_private;
 	struct berval new_dn = BER_BVNULL, new_ndn = BER_BVNULL;
 	struct berval p_dn, old_path;
 	Entry *entry;
-	int rc;
+	int rc, same_ndn;
 
 	slap_mods_opattrs( op, &op->orr_modlist, 1 );
 
-	ldap_pvt_thread_rdwr_wlock( &li->li_rdwr );
+	ldap_pvt_thread_mutex_lock( &li->li_modop_mutex );
 
-	rc = get_entry( op, &entry, &old_path );
+	rc = get_entry( op, &entry, &old_path, &rs->sr_text );
 	if ( rc == LDAP_SUCCESS ) {
 		/* build new dn, and new ndn for the entry */
 		if ( op->oq_modrdn.rs_newSup != NULL ) {
-			struct berval	op_dn = op->o_req_dn,
-					op_ndn = op->o_req_ndn;
-			Entry		*np;
-
-			/* new superior */
 			p_dn = *op->oq_modrdn.rs_newSup;
-			op->o_req_dn = *op->oq_modrdn.rs_newSup;
-			op->o_req_ndn = *op->oq_modrdn.rs_nnewSup;
-			rc = get_entry( op, &np, NULL );
-			op->o_req_dn = op_dn;
-			op->o_req_ndn = op_ndn;
-			if ( rc != LDAP_SUCCESS ) {
-				goto no_such_object;
-			}
-			entry_free( np );
 		} else {
 			dnParent( &entry->e_name, &p_dn );
 		}
-		build_new_dn( &new_dn, &p_dn, &op->oq_modrdn.rs_newrdn, NULL ); 
+		build_new_dn( &new_dn, &p_dn, &op->oq_modrdn.rs_newrdn, NULL );
 		dnNormalize( 0, NULL, NULL, &new_dn, &new_ndn, NULL );
+		same_ndn = !ber_bvcmp( &entry->e_nname, &new_ndn );
 		ber_memfree_x( entry->e_name.bv_val, NULL );
 		ber_memfree_x( entry->e_nname.bv_val, NULL );
 		entry->e_name = new_dn;
@@ -1218,15 +1501,14 @@ ldif_back_modrdn(Operation *op, SlapReply *rs)
 		/* perform the modifications */
 		rc = apply_modify_to_entry( entry, op->orr_modlist, op, rs );
 		if ( rc == LDAP_SUCCESS )
-			rc = ldif_move_entry( op, entry, &old_path );
+			rc = ldif_move_entry( op, entry, same_ndn, &old_path,
+				&rs->sr_text );
 
-no_such_object:;
 		entry_free( entry );
 		SLAP_FREE( old_path.bv_val );
 	}
 
-	rs->sr_text = "";
-	ldap_pvt_thread_rdwr_wunlock( &li->li_rdwr );
+	ldap_pvt_thread_mutex_unlock( &li->li_modop_mutex );
 	rs->sr_err = rc;
 	send_ldap_result( op, rs );
 	slap_graduate_commit_csn( op );
@@ -1254,7 +1536,7 @@ ldif_back_entry_get(
 	ldap_pvt_thread_rdwr_rlock( &li->li_rdwr );
 	op->o_req_dn = *ndn;
 	op->o_req_ndn = *ndn;
-	rc = get_entry( op, e, NULL );
+	rc = get_entry( op, e, NULL, NULL );
 	op->o_req_dn = op_dn;
 	op->o_req_ndn = op_ndn;
 	ldap_pvt_thread_rdwr_runlock( &li->li_rdwr );
@@ -1271,107 +1553,102 @@ ldif_back_entry_get(
 
 /* Slap tools */
 
-static int ldif_tool_entry_open(BackendDB *be, int mode) {
-	struct ldif_info *li = (struct ldif_info *) be->be_private;
-	li->li_tool_current = 0;
-	return 0;
-}					
+static int
+ldif_tool_entry_open( BackendDB *be, int mode )
+{
+	struct ldif_tool *tl = &((struct ldif_info *) be->be_private)->li_tool;
 
-static int ldif_tool_entry_close(BackendDB * be) {
-	struct ldif_info *li = (struct ldif_info *) be->be_private;
-
-	SLAP_FREE(li->li_tool_cookie.entries);
+	tl->ecurrent = 0;
 	return 0;
 }
 
-static ID ldif_tool_entry_next(BackendDB *be)
+static int
+ldif_tool_entry_close( BackendDB *be )
 {
-	struct ldif_info *li = (struct ldif_info *) be->be_private;
-	if(li->li_tool_current >= li->li_tool_cookie.eind)
-		return NOID;
-	else
-		return ++li->li_tool_current;
+	struct ldif_tool *tl = &((struct ldif_info *) be->be_private)->li_tool;
+	Entry **entries = tl->entries;
+	ID i;
+
+	for ( i = tl->ecount; i--; )
+		if ( entries[i] )
+			entry_free( entries[i] );
+	SLAP_FREE( entries );
+	tl->entries = NULL;
+	tl->ecount = tl->elen = 0;
+	return 0;
 }
 
 static ID
-ldif_tool_entry_first(BackendDB *be)
+ldif_tool_entry_next( BackendDB *be )
 {
-	struct ldif_info *li = (struct ldif_info *) be->be_private;
+	struct ldif_tool *tl = &((struct ldif_info *) be->be_private)->li_tool;
 
-	if(li->li_tool_cookie.entries == NULL) {
+	if ( tl->ecurrent >= tl->ecount )
+		return NOID;
+	else
+		return ++tl->ecurrent;
+}
+
+static ID
+ldif_tool_entry_first( BackendDB *be )
+{
+	struct ldif_tool *tl = &((struct ldif_info *) be->be_private)->li_tool;
+
+	if ( tl->entries == NULL ) {
 		Operation op = {0};
 
 		op.o_bd = be;
 		op.o_req_dn = *be->be_suffix;
 		op.o_req_ndn = *be->be_nsuffix;
 		op.ors_scope = LDAP_SCOPE_SUBTREE;
-		li->li_tool_cookie.op = &op;
-		(void)enum_tree( &li->li_tool_cookie );
-		li->li_tool_cookie.op = NULL;
+		if ( search_tree( &op, NULL ) != LDAP_SUCCESS ) {
+			tl->ecurrent = tl->ecount; /* fail ldif_tool_entry_next() */
+			return 0; /* fail ldif_tool_entry_get() */
+		}
 	}
 	return ldif_tool_entry_next( be );
 }
 
-static Entry * ldif_tool_entry_get(BackendDB * be, ID id) {
-	struct ldif_info *li = (struct ldif_info *) be->be_private;
-	Entry * e;
+static Entry *
+ldif_tool_entry_get( BackendDB *be, ID id )
+{
+	struct ldif_tool *tl = &((struct ldif_info *) be->be_private)->li_tool;
+	Entry *e = NULL;
 
-	if(id > li->li_tool_cookie.eind || id < 1)
-		return NULL;
-	else {
-		e = li->li_tool_cookie.entries[id - 1];
-		li->li_tool_cookie.entries[id - 1] = NULL;
-		return e;
+	--id;
+	if ( id < tl->ecount ) {
+		e = tl->entries[id];
+		tl->entries[id] = NULL;
 	}
+	return e;
 }
 
-static ID ldif_tool_entry_put(BackendDB * be, Entry * e, struct berval *text) {
-	struct berval leaf_path = BER_BVNULL;
-	struct stat stats;
-	int statres;
-	int res = LDAP_SUCCESS;
+static ID
+ldif_tool_entry_put( BackendDB *be, Entry *e, struct berval *text )
+{
+	int rc;
+	const char *errmsg = NULL;
+	struct berval path;
+	char *parentdir;
+	Operation op = {0};
 
-	dn2path( be, &e->e_nname, &leaf_path );
+	op.o_bd = be;
+	rc = ldif_prepare_create( &op, e, &path, &parentdir, &errmsg );
+	if ( rc == LDAP_SUCCESS ) {
+		rc = ldif_write_entry( &op, e, &path, parentdir, &errmsg );
 
-	if(leaf_path.bv_val != NULL) {
-		struct berval base = BER_BVNULL;
-		/* build path to container, and path to ldif of container */
-		get_parent_path(&leaf_path, &base);
-
-		statres = stat(base.bv_val, &stats); /* check if container exists */
-		if(statres == -1 && errno == ENOENT) { /* container missing */
-			base.bv_val[base.bv_len] = LDIF_FILETYPE_SEP;
-			statres = stat(base.bv_val, &stats); /* check for leaf node */
-			base.bv_val[base.bv_len] = '\0';
-			if(statres == -1 && errno == ENOENT) {
-				res = LDAP_NO_SUCH_OBJECT; /* parent doesn't exist */
-			}
-			else if(statres != -1) { /* create parent */
-				int mkdirres = mkdir(base.bv_val, 0750);
-				if(mkdirres == -1) {
-					res = LDAP_UNWILLING_TO_PERFORM;
-				}
-			}
-			else
-				res = LDAP_UNWILLING_TO_PERFORM;
-		}/* container was possibly created, move on to add the entry */
-		if(res == LDAP_SUCCESS) {
-			statres = stat(leaf_path.bv_val, &stats);
-			if(statres == -1 && errno == ENOENT) {
-				res = spew_entry(e, &leaf_path, 0, NULL);
-			}
-			else /* it already exists */
-				res = LDAP_ALREADY_EXISTS;
-		}
-		SLAP_FREE(base.bv_val);
-		SLAP_FREE(leaf_path.bv_val);
+		SLAP_FREE( path.bv_val );
+		if ( parentdir != NULL )
+			SLAP_FREE( parentdir );
+		if ( rc == LDAP_SUCCESS )
+			return 1;
 	}
 
-	if(res == LDAP_SUCCESS) {
-		return 1;
-	}
-	else
-		return NOID;
+	if ( errmsg == NULL && rc != LDAP_OTHER )
+		errmsg = ldap_err2string( rc );
+	if ( errmsg != NULL )
+		snprintf( text->bv_val, text->bv_len, "%s", errmsg );
+	return NOID;
 }
 
 
@@ -1385,7 +1662,8 @@ ldif_back_db_init( BackendDB *be, ConfigReply *cr )
 	li = ch_calloc( 1, sizeof(struct ldif_info) );
 	be->be_private = li;
 	be->be_cf_ocs = ldifocs;
-	ldap_pvt_thread_rdwr_init(&li->li_rdwr);
+	ldap_pvt_thread_mutex_init( &li->li_modop_mutex );
+	ldap_pvt_thread_rdwr_init( &li->li_rdwr );
 	SLAP_DBFLAGS( be ) |= SLAP_DBFLAG_ONE_SUFFIX;
 	return 0;
 }
@@ -1395,14 +1673,15 @@ ldif_back_db_destroy( Backend *be, ConfigReply *cr )
 {
 	struct ldif_info *li = be->be_private;
 
-	ch_free(li->li_base_path.bv_val);
-	ldap_pvt_thread_rdwr_destroy(&li->li_rdwr);
+	ch_free( li->li_base_path.bv_val );
+	ldap_pvt_thread_rdwr_destroy( &li->li_rdwr );
+	ldap_pvt_thread_mutex_destroy( &li->li_modop_mutex );
 	free( be->be_private );
 	return 0;
 }
 
 static int
-ldif_back_db_open( Backend *be, ConfigReply *cr)
+ldif_back_db_open( Backend *be, ConfigReply *cr )
 {
 	struct ldif_info *li = (struct ldif_info *) be->be_private;
 	if( BER_BVISEMPTY(&li->li_base_path)) {/* missing base path */
@@ -1413,9 +1692,7 @@ ldif_back_db_open( Backend *be, ConfigReply *cr)
 }
 
 int
-ldif_back_initialize(
-			   BackendInfo	*bi
-			   )
+ldif_back_initialize( BackendInfo *bi )
 {
 	static char *controls[] = {
 		LDAP_CONTROL_MANAGEDSAIT,
@@ -1471,7 +1748,7 @@ ldif_back_initialize(
 	bi->bi_tool_entry_put = ldif_tool_entry_put;
 	bi->bi_tool_entry_reindex = 0;
 	bi->bi_tool_sync = 0;
-	
+
 	bi->bi_tool_dn2id_get = 0;
 	bi->bi_tool_entry_modify = 0;
 

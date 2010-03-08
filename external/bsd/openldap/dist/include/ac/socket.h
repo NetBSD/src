@@ -1,8 +1,10 @@
+/*	$NetBSD: socket.h,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /* Generic socket.h */
-/* $OpenLDAP: pkg/ldap/include/ac/socket.h,v 1.67.2.4 2008/02/11 23:26:40 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/include/ac/socket.h,v 1.67.2.6 2009/10/31 00:00:31 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -82,14 +84,14 @@
 #undef	sock_errstr
 #define sock_errno()	errno
 #define sock_errstr(e)	STRERROR(e)
-#define sock_errset(e)	errno = (e)
+#define sock_errset(e)	((void) (errno = (e)))
 
 #ifdef HAVE_WINSOCK
 #	define tcp_read( s, buf, len )	recv( s, buf, len, 0 )
 #	define tcp_write( s, buf, len )	send( s, buf, len, 0 )
 #	define ioctl( s, c, a )		ioctlsocket( (s), (c), (a) )
 #	define ioctl_t				u_long
-#	define AC_SOCKET_INVALID	((unsigned int) ~0)
+#	define AC_SOCKET_INVALID	((unsigned int) -1)
 
 #	ifdef SD_BOTH
 #		define tcp_close( s )	(shutdown( s, SD_BOTH ), closesocket( s ))

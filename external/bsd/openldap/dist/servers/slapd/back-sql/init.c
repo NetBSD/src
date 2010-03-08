@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/init.c,v 1.73.2.4 2008/02/11 23:26:48 kurt Exp $ */
+/*	$NetBSD: init.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/back-sql/init.c,v 1.73.2.7 2009/11/18 01:25:49 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * All rights reserved.
@@ -41,7 +43,9 @@ sql_back_initialize(
 #ifdef SLAP_CONTROL_X_TREE_DELETE
 		SLAP_CONTROL_X_TREE_DELETE,
 #endif /* SLAP_CONTROL_X_TREE_DELETE */
+#ifndef BACKSQL_ARBITRARY_KEY
 		LDAP_CONTROL_PAGEDRESULTS,
+#endif /* ! BACKSQL_ARBITRARY_KEY */
 		NULL
 	};
 
@@ -546,7 +550,7 @@ backsql_db_open(
 	}
 
 	/* This should just be to force schema loading */
-	connection_fake_init( &conn, &opbuf, thrctx );
+	connection_fake_init2( &conn, &opbuf, thrctx, 0 );
 	op = &opbuf.ob_op;
 	op->o_bd = bd;
 	if ( backsql_get_db_conn( op, &dbh ) != LDAP_SUCCESS ) {

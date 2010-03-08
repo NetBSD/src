@@ -1,3 +1,5 @@
+/*	$NetBSD: myldap.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    myldap.c - simple interface to do LDAP requests
    Parts of this file were part of the nss_ldap library (as ldap-nss.c)

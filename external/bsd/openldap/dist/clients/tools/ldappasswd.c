@@ -1,8 +1,10 @@
+/*	$NetBSD: ldappasswd.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+
 /* ldappasswd -- a tool for change LDAP passwords */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.136.2.4 2008/02/11 23:26:38 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.136.2.8 2009/03/09 23:16:47 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -81,7 +83,7 @@ usage( void )
 
 
 const char options[] = "a:As:St:T:"
-	"d:D:e:h:H:InO:o:p:QR:U:vVw:WxX:y:Y:Z";
+	"d:D:e:h:H:InNO:o:p:QR:U:vVw:WxX:y:Y:Z";
 
 int
 handle_private_option( int i )
@@ -379,7 +381,7 @@ main( int argc, char *argv[] )
 			perror( "ber_scanf" );
 		} else {
 			printf(_("New password: %s\n"), s);
-			free( s );
+			ber_memfree( s );
 		}
 
 		ber_free( ber, 1 );
@@ -389,7 +391,6 @@ main( int argc, char *argv[] )
 			" new password expected", NULL, NULL, NULL );
 	}
 
-skip:
 	if( verbose || code != LDAP_SUCCESS ||
 		matcheddn || text || refs || ctrls )
 	{

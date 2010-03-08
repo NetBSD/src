@@ -1,6 +1,9 @@
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/kerberos.c,v 1.5.2.3 2008/02/11 23:26:38 kurt Exp $ */
-/*
- * Copyright 1998-2008 The OpenLDAP Foundation.
+/*	$NetBSD: kerberos.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/kerberos.c,v 1.5.2.5 2009/08/17 21:48:59 quanah Exp */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

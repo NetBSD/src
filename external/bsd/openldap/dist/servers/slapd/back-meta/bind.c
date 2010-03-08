@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/bind.c,v 1.95.2.15 2008/04/14 21:24:34 quanah Exp $ */
+/*	$NetBSD: bind.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/back-meta/bind.c,v 1.95.2.20 2009/08/26 00:50:20 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -223,9 +225,10 @@ meta_back_bind( Operation *op, SlapReply *rs )
 
 				while ( ( tmpmc = avl_delete( &mi->mi_conninfo.lai_tree, (caddr_t)mc, meta_back_conn_cmp ) ) != NULL )
 				{
+					assert( !LDAP_BACK_PCONN_ISPRIV( mc ) );
 					Debug( LDAP_DEBUG_TRACE,
-						"=>meta_back_bind: destroying conn %ld (refcnt=%u)\n",
-						LDAP_BACK_PCONN_ID( mc ), mc->mc_refcnt, 0 );
+						"=>meta_back_bind: destroying conn %lu (refcnt=%u)\n",
+						mc->mc_conn->c_connid, mc->mc_refcnt, 0 );
 
 					if ( tmpmc->mc_refcnt != 0 ) {
 						/* taint it */
@@ -538,7 +541,7 @@ meta_back_single_bind(
 	LDAP_BACK_CONN_ISBOUND_SET( msc );
 	mc->mc_authz_target = candidate;
 
-	if ( LDAP_BACK_SAVECRED( mi ) ) {
+	if ( META_BACK_TGT_SAVECRED( mt ) ) {
 		if ( !BER_BVISNULL( &msc->msc_cred ) ) {
 			memset( msc->msc_cred.bv_val, 0,
 				msc->msc_cred.bv_len );
@@ -660,11 +663,15 @@ meta_back_dobind(
 		isroot = 1;
 	}
 
-	Debug( LDAP_DEBUG_TRACE,
-		"%s meta_back_dobind: conn=%ld%s\n",
-		op->o_log_prefix,
-		LDAP_BACK_PCONN_ID( mc ),
-		isroot ? " (isroot)" : "" );
+	if ( LogTest( LDAP_DEBUG_TRACE ) ) {
+		char buf[STRLENOF("4294967295U") + 1] = { 0 };
+		mi->mi_ldap_extra->connid2str( &mc->mc_base, buf, sizeof(buf) );
+
+		Debug( LDAP_DEBUG_TRACE,
+			"%s meta_back_dobind: conn=%s%s\n",
+			op->o_log_prefix, buf,
+			isroot ? " (isroot)" : "" );
+	}
 
 	/*
 	 * all the targets are bound as pseudoroot
@@ -796,9 +803,14 @@ retry_ok:;
 	}
 
 done:;
-	Debug( LDAP_DEBUG_TRACE,
-		"%s meta_back_dobind: conn=%ld bound=%d\n",
-		op->o_log_prefix, LDAP_BACK_PCONN_ID( mc ), bound );
+	if ( LogTest( LDAP_DEBUG_TRACE ) ) {
+		char buf[STRLENOF("4294967295U") + 1] = { 0 };
+		mi->mi_ldap_extra->connid2str( &mc->mc_base, buf, sizeof(buf) );
+
+		Debug( LDAP_DEBUG_TRACE,
+			"%s meta_back_dobind: conn=%s bound=%d\n",
+			op->o_log_prefix, buf, bound );
+	}
 
 	if ( bound == 0 ) {
 		meta_back_release_conn( mi, mc );
@@ -953,9 +965,7 @@ meta_back_op_result(
 		metatarget_t		*mt = mi->mi_targets[ candidate ];
 		metasingleconn_t	*msc = &mc->mc_conns[ candidate ];
 
-#define	ERR_OK(err) ((err) == LDAP_SUCCESS || (err) == LDAP_COMPARE_FALSE || (err) == LDAP_COMPARE_TRUE)
-
-		if ( ERR_OK( rs->sr_err ) ) {
+		if ( LDAP_ERR_OK( rs->sr_err ) ) {
 			int		rc;
 			struct timeval	tv;
 			LDAPMessage	*res = NULL;
@@ -1087,7 +1097,7 @@ retry:;
 		/* if the error in the reply structure is not
 		 * LDAP_SUCCESS, try to map it from client 
 		 * to server error */
-		if ( !ERR_OK( rs->sr_err ) ) {
+		if ( !LDAP_ERR_OK( rs->sr_err ) ) {
 			rs->sr_err = slap_map_api2result( rs );
 
 			/* internal ops ( op->o_conn == NULL ) 
@@ -1206,9 +1216,17 @@ retry:;
 		rs->sr_matched = matched;
 	}
 
-	if ( op->o_conn &&
-		( ( sendok & LDAP_BACK_SENDOK ) 
-			|| ( ( sendok & LDAP_BACK_SENDERR ) && rs->sr_err != LDAP_SUCCESS ) ) )
+	if ( rs->sr_err == LDAP_UNAVAILABLE ) {
+		if ( !( sendok & LDAP_BACK_RETRYING ) ) {
+			if ( op->o_conn && ( sendok & LDAP_BACK_SENDERR ) ) {
+				if ( rs->sr_text == NULL ) rs->sr_text = "Proxy operation retry failed";
+				send_ldap_result( op, rs );
+			}
+		}
+
+	} else if ( op->o_conn &&
+		( ( ( sendok & LDAP_BACK_SENDOK ) && LDAP_ERR_OK( rs->sr_err ) )
+			|| ( ( sendok & LDAP_BACK_SENDERR ) && !LDAP_ERR_OK( rs->sr_err ) ) ) )
 	{
 		send_ldap_result( op, rs );
 	}
@@ -1235,7 +1253,7 @@ retry:;
 	rs->sr_ref = save_ref;
 	rs->sr_ctrls = save_ctrls;
 
-	return( ERR_OK( rs->sr_err ) ? LDAP_SUCCESS : rs->sr_err );
+	return( LDAP_ERR_OK( rs->sr_err ) ? LDAP_SUCCESS : rs->sr_err );
 }
 
 /*
@@ -1533,7 +1551,7 @@ meta_back_proxy_authz_bind( metaconn_t *mc, int candidate, Operation *op, SlapRe
 				LDAP_BACK_CONN_ISBOUND_SET( msc );
 				ber_bvreplace( &msc->msc_bound_ndn, &binddn );
 
-				if ( LDAP_BACK_SAVECRED( mi ) ) {
+				if ( META_BACK_TGT_SAVECRED( mt ) ) {
 					if ( !BER_BVISNULL( &msc->msc_cred ) ) {
 						memset( msc->msc_cred.bv_val, 0,
 							msc->msc_cred.bv_len );
@@ -1575,7 +1593,7 @@ meta_back_controls_add(
 
 	LDAPControl		**ctrls = NULL;
 	/* set to the maximum number of controls this backend can add */
-	LDAPControl		c[ 2 ] = { 0 };
+	LDAPControl		c[ 2 ] = {{ 0 }};
 	int			n = 0, i, j1 = 0, j2 = 0;
 
 	*pctrls = NULL;
@@ -1642,7 +1660,7 @@ meta_back_controls_add(
 		goto done;
 	}
 
-	assert( j1 + j1 <= sizeof( c )/sizeof(LDAPControl) );
+	assert( j1 + j2 <= (int) (sizeof( c )/sizeof( c[0] )) );
 
 	if ( op->o_ctrls ) {
 		for ( n = 0; op->o_ctrls[ n ]; n++ )

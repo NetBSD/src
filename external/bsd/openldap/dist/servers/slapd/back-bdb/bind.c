@@ -1,8 +1,10 @@
+/*	$NetBSD: bind.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* bind.c - bdb backend bind routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/bind.c,v 1.45.2.4 2008/02/11 23:26:45 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/bind.c,v 1.45.2.6 2009/01/22 00:01:04 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +34,7 @@ bdb_bind( Operation *op, SlapReply *rs )
 
 	AttributeDescription *password = slap_schema.si_ad_userPassword;
 
-	BDB_LOCKER	locker;
+	DB_TXN		*rtxn;
 	DB_LOCK		lock;
 
 	Debug( LDAP_DEBUG_ARGS,
@@ -55,7 +57,7 @@ bdb_bind( Operation *op, SlapReply *rs )
 		break;
 	}
 
-	rs->sr_err = LOCK_ID(bdb->bi_dbenv, &locker);
+	rs->sr_err = bdb_reader_get(op, bdb->bi_dbenv, &rtxn);
 	switch(rs->sr_err) {
 	case 0:
 		break;
@@ -67,8 +69,8 @@ bdb_bind( Operation *op, SlapReply *rs )
 
 dn2entry_retry:
 	/* get entry with reader lock */
-	rs->sr_err = bdb_dn2entry( op, NULL, &op->o_req_ndn, &ei, 1,
-		locker, &lock );
+	rs->sr_err = bdb_dn2entry( op, rtxn, &op->o_req_ndn, &ei, 1,
+		&lock );
 
 	switch(rs->sr_err) {
 	case DB_NOTFOUND:
@@ -76,14 +78,12 @@ dn2entry_retry:
 		break;
 	case LDAP_BUSY:
 		send_ldap_error( op, rs, LDAP_BUSY, "ldap_server_busy" );
-		LOCK_ID_FREE(bdb->bi_dbenv, locker);
 		return LDAP_BUSY;
 	case DB_LOCK_DEADLOCK:
 	case DB_LOCK_NOTGRANTED:
 		goto dn2entry_retry;
 	default:
 		send_ldap_error( op, rs, LDAP_OTHER, "internal error" );
-		LOCK_ID_FREE(bdb->bi_dbenv, locker);
 		return rs->sr_err;
 	}
 
@@ -96,8 +96,6 @@ dn2entry_retry:
 
 		rs->sr_err = LDAP_INVALID_CREDENTIALS;
 		send_ldap_result( op, rs );
-
-		LOCK_ID_FREE(bdb->bi_dbenv, locker);
 
 		return rs->sr_err;
 	}
@@ -157,8 +155,6 @@ done:
 	if( e != NULL ) {
 		bdb_cache_return_entry_r( bdb, e, &lock );
 	}
-
-	LOCK_ID_FREE(bdb->bi_dbenv, locker);
 
 	if ( rs->sr_err ) {
 		send_ldap_result( op, rs );

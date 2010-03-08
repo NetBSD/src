@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/schema-map.c,v 1.59.2.6 2008/02/11 23:26:48 kurt Exp $ */
+/*	$NetBSD: schema-map.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/back-sql/schema-map.c,v 1.59.2.9 2009/01/22 00:01:11 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -340,22 +342,52 @@ backsql_oc_get_attr_mapping( void *v_oc, void *v_bas )
 		struct berbuf	bb = BB_NULL;
 		AttributeDescription *ad = NULL;
 
-		Debug( LDAP_DEBUG_TRACE, 
-			"attributeType:\n"
-			"\tname=\"%s\"\n"
-			"\tsel_expr=\"%s\"\n"
-			"\tfrom=\"%s\"\n",
-			at_row.cols[ 0 ], at_row.cols[ 1 ],
-			at_row.cols[ 2 ] );
-		Debug( LDAP_DEBUG_TRACE, 
-			"\tjoin_where=\"%s\"\n"
-			"\tadd_proc=\"%s\"\n"
-			"\tdelete_proc=\"%s\"\n",
-			at_row.cols[ 3 ], at_row.cols[ 4 ],
-			at_row.cols[ 5 ]);
-		/* TimesTen */
-		Debug( LDAP_DEBUG_TRACE, "\tsel_expr_u=\"%s\"\n",
-				at_row.cols[ 8 ], 0, 0 );
+		{
+			struct {
+				int idx;
+				char *name;
+			} required[] = {
+				{ 0, "name" },
+				{ 1, "sel_expr" },
+				{ 2, "from" },
+				{ -1, NULL },
+			};
+			int i;
+
+			for ( i = 0; required[ i ].name != NULL; i++ ) {
+				if ( at_row.value_len[ i ] <= 0 ) {
+					Debug( LDAP_DEBUG_ANY,
+						"backsql_oc_get_attr_mapping(): "
+						"required column #%d \"%s\" is empty\n",
+						required[ i ].idx, required[ i ].name, 0 );
+					bas->bas_rc = LDAP_OTHER;
+					return BACKSQL_AVL_STOP;
+				}
+			}
+		}
+
+		{
+			char		buf[ SLAP_TEXT_BUFLEN ];
+
+			snprintf( buf, sizeof( buf ),
+				"attributeType: "
+				"name=\"%s\" "
+				"sel_expr=\"%s\" "
+				"from=\"%s\" "
+				"join_where=\"%s\" "
+				"add_proc=\"%s\" "
+				"delete_proc=\"%s\" "
+				"sel_expr_u=\"%s\"",
+				at_row.cols[ 0 ],
+				at_row.cols[ 1 ],
+				at_row.cols[ 2 ],
+				at_row.cols[ 3 ] ? at_row.cols[ 3 ] : "",
+				at_row.cols[ 4 ] ? at_row.cols[ 4 ] : "",
+				at_row.cols[ 5 ] ? at_row.cols[ 5 ] : "",
+				at_row.cols[ 8 ] ? at_row.cols[ 8 ] : "");
+			Debug( LDAP_DEBUG_TRACE, "%s\n", buf, 0, 0 );
+		}
+
 		rc = slap_str2ad( at_row.cols[ 0 ], &ad, &text );
 		if ( rc != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_TRACE, "backsql_oc_get_attr_mapping(): "
@@ -373,7 +405,7 @@ backsql_oc_get_attr_mapping( void *v_oc, void *v_bas )
 		if ( slap_syntax_is_binary( ad->ad_type->sat_syntax )
 			&& !slap_ad_is_binary( ad ) )
 		{
-			char		buf[ BUFSIZ ];
+			char		buf[ SLAP_TEXT_BUFLEN ];
 			struct berval	bv;
 			const char	*text = NULL;
 
@@ -411,7 +443,7 @@ backsql_oc_get_attr_mapping( void *v_oc, void *v_bas )
 		}
 		at_map->bam_add_proc = NULL;
 		if ( at_row.value_len[ 4 ] > 0 ) {
-			at_map->bam_add_proc = ch_strdup( at_row.cols[4] );
+			at_map->bam_add_proc = ch_strdup( at_row.cols[ 4 ] );
 		}
 		at_map->bam_delete_proc = NULL;
 		if ( at_row.value_len[ 5 ] > 0 ) {
@@ -472,6 +504,9 @@ backsql_load_schema_map( backsql_info *bi, SQLHDBC dbh )
 	backsql_oc_map_rec		*oc_map;
 	struct backsql_attr_schema_info	bas;
 
+	int				delete_proc_idx = 5;
+	int				create_hint_idx = delete_proc_idx + 2;
+
 	Debug( LDAP_DEBUG_TRACE, "==>backsql_load_schema_map()\n", 0, 0, 0 );
 
 	/* 
@@ -515,8 +550,63 @@ backsql_load_schema_map( backsql_info *bi, SQLHDBC dbh )
 
 	backsql_BindRowAsStrings( sth, &oc_row );
 	rc = SQLFetch( sth );
+
+	if ( BACKSQL_CREATE_NEEDS_SELECT( bi ) ) {
+		delete_proc_idx++;
+		create_hint_idx++;
+	}
+
 	for ( ; BACKSQL_SUCCESS( rc ); rc = SQLFetch( sth ) ) {
-		int	colnum;
+		{
+			struct {
+				int idx;
+				char *name;
+			} required[] = {
+				{ 0, "id" },
+				{ 1, "name" },
+				{ 2, "keytbl" },
+				{ 3, "keycol" },
+				{ delete_proc_idx + 1, "expect_return" },
+				{ -1, NULL },
+			};
+			int i;
+
+			for ( i = 0; required[ i ].name != NULL; i++ ) {
+				if ( oc_row.value_len[ required[ i ].idx ] <= 0 ) {
+					Debug( LDAP_DEBUG_ANY,
+						"backsql_load_schema_map(): "
+						"required column #%d \"%s\" is empty\n",
+						required[ i ].idx, required[ i ].name, 0 );
+					return LDAP_OTHER;
+				}
+			}
+		}
+
+		{
+			char		buf[ SLAP_TEXT_BUFLEN ];
+
+			snprintf( buf, sizeof( buf ),
+				"objectClass: "
+				"id=\"%s\" "
+				"name=\"%s\" "
+				"keytbl=\"%s\" "
+				"keycol=\"%s\" "
+				"create_proc=\"%s\" "
+				"create_keyval=\"%s\" "
+				"delete_proc=\"%s\" "
+				"expect_return=\"%s\""
+				"create_hint=\"%s\" ",
+				oc_row.cols[ 0 ],
+				oc_row.cols[ 1 ],
+				oc_row.cols[ 2 ],
+				oc_row.cols[ 3 ],
+				oc_row.cols[ 4 ] ? oc_row.cols[ 4 ] : "",
+				( BACKSQL_CREATE_NEEDS_SELECT( bi ) && oc_row.cols[ 5 ] ) ? oc_row.cols[ 5 ] : "",
+				oc_row.cols[ delete_proc_idx ] ? oc_row.cols[ delete_proc_idx ] : "",
+				oc_row.cols[ delete_proc_idx + 1 ],
+				( ( oc_row.ncols > create_hint_idx ) && oc_row.cols[ create_hint_idx ] ) ? oc_row.cols[ create_hint_idx ] : "" );
+			Debug( LDAP_DEBUG_TRACE, "%s\n", buf, 0, 0 );
+		}
 
 		oc_map = (backsql_oc_map_rec *)ch_calloc( 1,
 				sizeof( backsql_oc_map_rec ) );
@@ -541,36 +631,33 @@ backsql_load_schema_map( backsql_info *bi, SQLHDBC dbh )
 		oc_map->bom_create_proc = ( oc_row.value_len[ 4 ] <= 0 ) ? NULL 
 			: ch_strdup( oc_row.cols[ 4 ] );
 
-		colnum = 5;
 		if ( BACKSQL_CREATE_NEEDS_SELECT( bi ) ) {
-			colnum = 6;
 			oc_map->bom_create_keyval = ( oc_row.value_len[ 5 ] <= 0 ) 
 				? NULL : ch_strdup( oc_row.cols[ 5 ] );
 		}
-		oc_map->bom_delete_proc = ( oc_row.value_len[ colnum ] <= 0 ) ? NULL 
-			: ch_strdup( oc_row.cols[ colnum ] );
-		if ( lutil_atoix( &oc_map->bom_expect_return, oc_row.cols[ colnum + 1 ], 0 ) != 0 ) {
+		oc_map->bom_delete_proc = ( oc_row.value_len[ delete_proc_idx ] <= 0 ) ? NULL 
+			: ch_strdup( oc_row.cols[ delete_proc_idx ] );
+		if ( lutil_atoix( &oc_map->bom_expect_return, oc_row.cols[ delete_proc_idx + 1 ], 0 ) != 0 ) {
 			Debug( LDAP_DEBUG_TRACE, "backsql_load_schema_map(): "
 				"unable to parse expect_return=\"%s\" for objectClass \"%s\"\n", 
-				oc_row.cols[ colnum + 1 ], oc_row.cols[ 1 ], 0 );
+				oc_row.cols[ delete_proc_idx + 1 ], oc_row.cols[ 1 ], 0 );
 			return LDAP_OTHER;
 		}
 
-		colnum += 2;
-		if ( ( oc_row.ncols > colnum ) &&
-				( oc_row.value_len[ colnum ] > 0 ) )
+		if ( ( oc_row.ncols > create_hint_idx ) &&
+				( oc_row.value_len[ create_hint_idx ] > 0 ) )
 		{
 			const char	*text;
 
 			oc_map->bom_create_hint = NULL;
-			rc = slap_str2ad( oc_row.cols[ colnum ],
+			rc = slap_str2ad( oc_row.cols[ create_hint_idx ],
 					&oc_map->bom_create_hint, &text );
 			if ( rc != SQL_SUCCESS ) {
 				Debug( LDAP_DEBUG_TRACE, "load_schema_map(): "
 						"error matching "
 						"AttributeDescription %s "
 						"in create_hint: %s (%d)\n",
-						oc_row.cols[ colnum ],
+						oc_row.cols[ create_hint_idx ],
 						text, rc );
 				backsql_PrintErrors( bi->sql_db_env, dbh,
 						sth, rc );

@@ -1,16 +1,31 @@
+/*	$NetBSD: nssov.h,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /* nssov.h - NSS overlay header file */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/nssov.h,v 1.1.2.1 2008/07/08 18:53:57 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/nssov.h,v 1.1.2.6 2009/09/29 18:11:40 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008 The OpenLDAP Foundation.
+ * Copyright 2008-2009 The OpenLDAP Foundation.
  * Portions Copyright 2008 Howard Chu.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
 
 #ifndef NSSOV_H
 #define NSSOV_H
 
+#ifndef NSLCD_PATH
+#define	NSLCD_PATH	"/var/run/nslcd"
+#endif
+
 #ifndef NSLCD_SOCKET
-#define NSLCD_SOCKET	"/var/run/nslcd/socket"
+#define NSLCD_SOCKET	NSLCD_PATH "/socket"
 #endif
 
 #include <stdio.h>
@@ -64,7 +79,31 @@ typedef struct nssov_info
 	int ni_socket;
 	Connection *ni_conn;
 	BackendDB *ni_db;
+
+	/* PAM authz support... */
+	slap_mask_t ni_pam_opts;
+	struct berval ni_pam_group_dn;
+	AttributeDescription *ni_pam_group_ad;
+	int ni_pam_min_uid;
+	int ni_pam_max_uid;
+	AttributeDescription *ni_pam_template_ad;
+	struct berval ni_pam_template;
+	struct berval ni_pam_defhost;
+	struct berval *ni_pam_sessions;
 } nssov_info;
+
+#define NI_PAM_USERHOST		1	/* old style host checking */
+#define NI_PAM_USERSVC		2	/* old style service checking */
+#define NI_PAM_USERGRP		4	/* old style group checking */
+#define NI_PAM_HOSTSVC		8	/* new style authz checking */
+#define NI_PAM_SASL2DN		0x10	/* use sasl2dn */
+#define NI_PAM_UID2DN		0x20	/* use uid2dn */
+
+#define	NI_PAM_OLD	(NI_PAM_USERHOST|NI_PAM_USERSVC|NI_PAM_USERGRP)
+#define	NI_PAM_NEW	NI_PAM_HOSTSVC
+
+extern AttributeDescription *nssov_pam_host_ad;
+extern AttributeDescription *nssov_pam_svc_ad;
 
 /* Read the default configuration file. */
 void nssov_cfg_init(nssov_info *ni,const char *fname);
@@ -139,11 +178,12 @@ int read_address(TFILE *fp,char *addr,int *addrlen,int *af);
 /* checks to see if the specified string is a valid username */
 int isvalidusername(struct berval *name);
 
-/* transforms the DN info a uid doing an LDAP lookup if needed */
+/* transforms the DN into a uid doing an LDAP lookup if needed */
 int nssov_dn2uid(Operation *op,nssov_info *ni,struct berval *dn,struct berval *uid);
 
 /* transforms the uid into a DN by doing an LDAP lookup */
 int nssov_uid2dn(Operation *op,nssov_info *ni,struct berval *uid,struct berval *dn);
+int nssov_name2dn_cb(Operation *op, SlapReply *rs);
 
 /* Escapes characters in a string for use in a search filter. */
 int nssov_escape(struct berval *src,struct berval *dst);
@@ -162,6 +202,8 @@ void nssov_protocol_init(nssov_info *ni);
 void nssov_rpc_init(nssov_info *ni);
 void nssov_service_init(nssov_info *ni);
 void nssov_shadow_init(nssov_info *ni);
+
+int nssov_pam_init(void);
 
 /* these are the different functions that handle the database
    specific actions, see nslcd.h for the action descriptions */
@@ -195,6 +237,11 @@ int nssov_service_bynumber(nssov_info *ni,TFILE *fp,Operation *op);
 int nssov_service_all(nssov_info *ni,TFILE *fp,Operation *op);
 int nssov_shadow_byname(nssov_info *ni,TFILE *fp,Operation *op);
 int nssov_shadow_all(nssov_info *ni,TFILE *fp,Operation *op);
+int pam_authc(nssov_info *ni,TFILE *fp,Operation *op);
+int pam_authz(nssov_info *ni,TFILE *fp,Operation *op);
+int pam_sess_o(nssov_info *ni,TFILE *fp,Operation *op);
+int pam_sess_c(nssov_info *ni,TFILE *fp,Operation *op);
+int pam_pwmod(nssov_info *ni,TFILE *fp,Operation *op);
 
 /* config initialization */
 #define NSSOV_INIT(db) \
@@ -277,7 +324,8 @@ int nssov_shadow_all(nssov_info *ni,TFILE *fp,Operation *op);
 	op->ors_slimit = SLAP_NO_LIMIT; \
     /* do the internal search */ \
 	op->o_bd->be_search( op, &rs ); \
-	filter_free_x( op, op->ors_filter ); \
+	filter_free_x( op, op->ors_filter, 1 ); \
+	WRITE_INT32(fp,NSLCD_RESULT_END); \
     return 0; \
   }
 

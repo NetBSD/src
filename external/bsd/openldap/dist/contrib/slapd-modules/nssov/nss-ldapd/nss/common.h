@@ -1,3 +1,5 @@
+/*	$NetBSD: common.h,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    common.h - common functions for NSS lookups
 

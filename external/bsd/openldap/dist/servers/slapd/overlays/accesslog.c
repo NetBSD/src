@@ -1,8 +1,10 @@
+/*	$NetBSD: accesslog.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+
 /* accesslog.c - log operations for audit/history purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/accesslog.c,v 1.37.2.17 2008/05/01 20:37:48 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/overlays/accesslog.c,v 1.37.2.25 2009/11/24 05:50:11 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2008 The OpenLDAP Foundation.
+ * Copyright 2005-2009 The OpenLDAP Foundation.
  * Portions copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -534,17 +536,17 @@ log_age_unparse( int age, struct berval *agebv, size_t size )
 
 	if ( dd ) {
 		len = snprintf( ptr, size, "%d+", dd );
-		assert( len >= 0 && len < size );
+		assert( len >= 0 && (unsigned) len < size );
 		size -= len;
 		ptr += len;
 	}
 	len = snprintf( ptr, size, "%02d:%02d", hh, mm );
-	assert( len >= 0 && len < size );
+	assert( len >= 0 && (unsigned) len < size );
 	size -= len;
 	ptr += len;
 	if ( ss ) {
 		len = snprintf( ptr, size, ":%02d", ss );
-		assert( len >= 0 && len < size );
+		assert( len >= 0 && (unsigned) len < size );
 		size -= len;
 		ptr += len;
 	}
@@ -568,20 +570,24 @@ static int
 log_old_lookup( Operation *op, SlapReply *rs )
 {
 	purge_data *pd = op->o_callback->sc_private;
+	Attribute *a;
 
 	if ( rs->sr_type != REP_SEARCH) return 0;
 
 	if ( slapd_shutdown ) return 0;
 
-	/* Remember old CSN */
-	if ( pd->csn.bv_val[0] == '\0' ) {
-		Attribute *a = attr_find( rs->sr_entry->e_attrs,
-			slap_schema.si_ad_entryCSN );
-		if ( a ) {
-			int len = a->a_vals[0].bv_len;
-			if ( len > pd->csn.bv_len )
-				len = pd->csn.bv_len;
-			AC_MEMCPY( pd->csn.bv_val, a->a_vals[0].bv_val, len );
+	/* Remember max CSN: should always be the last entry
+	 * seen, since log entries are ordered chronologically...
+	 */
+	a = attr_find( rs->sr_entry->e_attrs,
+		slap_schema.si_ad_entryCSN );
+	if ( a ) {
+		ber_len_t len = a->a_nvals[0].bv_len;
+		/* Paranoid len check, normalized CSNs are always the same length */
+		if ( len > LDAP_LUTIL_CSNSTR_BUFSIZE )
+			len = LDAP_LUTIL_CSNSTR_BUFSIZE;
+		if ( memcmp( a->a_nvals[0].bv_val, pd->csn.bv_val, len ) > 0 ) {
+			AC_MEMCPY( pd->csn.bv_val, a->a_nvals[0].bv_val, len );
 			pd->csn.bv_len = len;
 		}
 	}
@@ -656,6 +662,7 @@ accesslog_purge( void *ctx, void *arg )
 	if ( pd.used ) {
 		int i;
 
+		/* delete the expired entries */
 		op->o_tag = LDAP_REQ_DELETE;
 		op->o_callback = &nullsc;
 		op->o_csn = pd.csn;
@@ -670,6 +677,33 @@ accesslog_purge( void *ctx, void *arg )
 		}
 		ch_free( pd.ndn );
 		ch_free( pd.dn );
+
+		{
+			Modifications mod;
+			struct berval bv[2];
+			/* update context's entryCSN to reflect oldest CSN */
+			mod.sml_numvals = 1;
+			mod.sml_values = bv;
+			bv[0] = pd.csn;
+			BER_BVZERO(&bv[1]);
+			mod.sml_nvalues = NULL;
+			mod.sml_desc = slap_schema.si_ad_entryCSN;
+			mod.sml_op = LDAP_MOD_REPLACE;
+			mod.sml_flags = SLAP_MOD_INTERNAL;
+			mod.sml_next = NULL;
+
+			op->o_tag = LDAP_REQ_MODIFY;
+			op->orm_modlist = &mod;
+			op->orm_no_opattrs = 1;
+			op->o_req_dn = li->li_db->be_suffix[0];
+			op->o_req_ndn = li->li_db->be_nsuffix[0];
+			op->o_no_schema_check = 1;
+			op->o_managedsait = SLAP_CONTROL_NONCRITICAL;
+			op->o_bd->be_modify( op, &rs );
+			if ( mod.sml_next ) {
+				slap_mods_free( mod.sml_next, 1 );
+			}
+		}
 	}
 
 	ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
@@ -902,7 +936,7 @@ logSchemaControlValidate(
 	struct berval	*valp )
 {
 	struct berval	val, bv;
-	int		i;
+	ber_len_t		i;
 	int		rc = LDAP_SUCCESS;
 
 	assert( valp != NULL );
@@ -1124,7 +1158,7 @@ accesslog_ctrls(
 		}
 		
 		if ( !BER_BVISNULL( &ctrls[ i ]->ldctl_value ) ) {
-			int	j;
+			ber_len_t	j;
 
 			ptr = lutil_strcopy( ptr, " controlValue \"" );
 			for ( j = 0; j < ctrls[ i ]->ldctl_value.bv_len; j++ )
@@ -1369,7 +1403,7 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 		attr_merge_one( e, ad_reqMessage, &bv, NULL );
 	}
 	bv.bv_len = snprintf( timebuf, sizeof( timebuf ), "%d", rs->sr_err );
-	if ( bv.bv_len >= 0 && bv.bv_len < sizeof( timebuf ) ) {
+	if ( bv.bv_len < sizeof( timebuf ) ) {
 		bv.bv_val = timebuf;
 		attr_merge_one( e, ad_reqResult, &bv, NULL );
 	}
@@ -1520,22 +1554,24 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 					i += a->a_numvals;
 				}
 			}
-			vals = ch_malloc( (i + 1) * sizeof( struct berval ) );
-			i = 0;
-			for ( a=old->e_attrs; a; a=a->a_next ) {
-				if ( a->a_vals && a->a_flags ) {
-					for (b=a->a_vals; !BER_BVISNULL( b ); b++,i++) {
-						accesslog_val2val( a->a_desc, b, 0, &vals[i] );
+			if ( i ) {
+				vals = ch_malloc( (i + 1) * sizeof( struct berval ) );
+				i = 0;
+				for ( a=old->e_attrs; a; a=a->a_next ) {
+					if ( a->a_vals && a->a_flags ) {
+						for (b=a->a_vals; !BER_BVISNULL( b ); b++,i++) {
+							accesslog_val2val( a->a_desc, b, 0, &vals[i] );
+						}
 					}
 				}
+				vals[i].bv_val = NULL;
+				vals[i].bv_len = 0;
+				a = attr_alloc( ad_reqOld );
+				a->a_numvals = i;
+				a->a_vals = vals;
+				a->a_nvals = vals;
+				last_attr->a_next = a;
 			}
-			vals[i].bv_val = NULL;
-			vals[i].bv_len = 0;
-			a = attr_alloc( ad_reqOld );
-			a->a_numvals = i;
-			a->a_vals = vals;
-			a->a_nvals = vals;
-			last_attr->a_next = a;
 		}
 		if ( logop == LOG_EN_MODIFY ) {
 			break;
@@ -1586,17 +1622,17 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 		}
 		bv.bv_val = timebuf;
 		bv.bv_len = snprintf( bv.bv_val, sizeof( timebuf ), "%d", rs->sr_nentries );
-		if ( bv.bv_len >= 0 && bv.bv_len < sizeof( timebuf ) ) {
+		if ( bv.bv_len < sizeof( timebuf ) ) {
 			attr_merge_one( e, ad_reqEntries, &bv, NULL );
 		} /* else? */
 
 		bv.bv_len = snprintf( bv.bv_val, sizeof( timebuf ), "%d", op->ors_tlimit );
-		if ( bv.bv_len >= 0 && bv.bv_len < sizeof( timebuf ) ) {
+		if ( bv.bv_len < sizeof( timebuf ) ) {
 			attr_merge_one( e, ad_reqTimeLimit, &bv, NULL );
 		} /* else? */
 
 		bv.bv_len = snprintf( bv.bv_val, sizeof( timebuf ), "%d", op->ors_slimit );
-		if ( bv.bv_len >= 0 && bv.bv_len < sizeof( timebuf ) ) {
+		if ( bv.bv_len < sizeof( timebuf ) ) {
 			attr_merge_one( e, ad_reqSizeLimit, &bv, NULL );
 		} /* else? */
 		break;
@@ -1604,7 +1640,7 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 	case LOG_EN_BIND:
 		bv.bv_val = timebuf;
 		bv.bv_len = snprintf( bv.bv_val, sizeof( timebuf ), "%d", op->o_protocol );
-		if ( bv.bv_len >= 0 && bv.bv_len < sizeof( timebuf ) ) {
+		if ( bv.bv_len < sizeof( timebuf ) ) {
 			attr_merge_one( e, ad_reqVersion, &bv, NULL );
 		} /* else? */
 		if ( op->orb_method == LDAP_AUTH_SIMPLE ) {
@@ -1739,7 +1775,7 @@ accesslog_op_mod( Operation *op, SlapReply *rs )
 			int rc;
 			Entry *e;
 
-			op->o_bd->bd_info = on->on_info->oi_orig;
+			op->o_bd->bd_info = (BackendInfo *)on->on_info;
 			rc = be_entry_get_rw( op, &op->o_req_ndn, NULL, NULL, 0, &e );
 			if ( e ) {
 				if ( test_filter( op, e, li->li_oldf ) == LDAP_COMPARE_TRUE )
@@ -1807,7 +1843,7 @@ accesslog_abandon( Operation *op, SlapReply *rs )
 	e = accesslog_entry( op, rs, LOG_EN_ABANDON, &op2 );
 	bv.bv_val = buf;
 	bv.bv_len = snprintf( buf, sizeof( buf ), "%d", op->orn_msgid );
-	if ( bv.bv_len >= 0 && bv.bv_len < sizeof( buf ) ) {
+	if ( bv.bv_len < sizeof( buf ) ) {
 		attr_merge_one( e, ad_reqId, &bv, NULL );
 	} /* else? */
 

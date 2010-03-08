@@ -1,8 +1,10 @@
+/*	$NetBSD: dbcache.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* dbcache.c - manage cache of open databases */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dbcache.c,v 1.43.2.6 2008/02/11 23:26:45 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dbcache.c,v 1.43.2.8 2009/01/22 00:01:05 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,6 +58,29 @@ bdb_db_hash(
 #else
 #define	BDB_INDEXTYPE	DB_BTREE
 #endif
+
+/* If a configured size is found, return it, otherwise return 0 */
+int
+bdb_db_findsize(
+	struct bdb_info *bdb,
+	struct berval *name
+)
+{
+	struct bdb_db_pgsize *bp;
+	int rc;
+
+	for ( bp = bdb->bi_pagesizes; bp; bp=bp->bdp_next ) {
+		rc = strncmp( name->bv_val, bp->bdp_name.bv_val, name->bv_len );
+		if ( !rc ) {
+			if ( name->bv_len == bp->bdp_name.bv_len )
+				return bp->bdp_size;
+			if ( name->bv_len < bp->bdp_name.bv_len &&
+				bp->bdp_name.bv_val[name->bv_len] == '.' )
+				return bp->bdp_size;
+		}
+	}
+	return 0;
+}
 
 int
 bdb_db_cache(
@@ -121,7 +146,24 @@ bdb_db_cache(
 		}
 	}
 
-	rc = db->bdi_db->set_pagesize( db->bdi_db, BDB_PAGESIZE );
+	if( bdb->bi_flags & BDB_CHKSUM ) {
+		rc = db->bdi_db->set_flags( db->bdi_db, DB_CHKSUM );
+		if ( rc ) {
+			Debug( LDAP_DEBUG_ANY,
+				"bdb_db_cache: db set_flags(DB_CHKSUM)(%s) failed: %s (%d)\n",
+				bdb->bi_dbenv_home, db_strerror(rc), rc );
+			ldap_pvt_thread_mutex_unlock( &bdb->bi_database_mutex );
+			db->bdi_db->close( db->bdi_db, 0 );
+			ch_free( db );
+			return rc;
+		}
+	}
+
+	/* If no explicit size set, use the FS default */
+	flags = bdb_db_findsize( bdb, name );
+	if ( flags )
+		rc = db->bdi_db->set_pagesize( db->bdi_db, flags );
+
 #ifdef BDB_INDEX_USE_HASH
 	rc = db->bdi_db->set_h_hash( db->bdi_db, bdb_db_hash );
 #endif

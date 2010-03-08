@@ -1,7 +1,11 @@
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nops/nops.c,v 1.1.2.1 2008/05/27 20:00:51 quanah Exp $ */
+/*	$NetBSD: nops.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+
 /* nops.c - Overlay to filter idempotent operations */
-/* 
- * Copyright 2008 Emmanuel Dreyfus
+/* OpenLDAP: pkg/ldap/contrib/slapd-modules/nops/nops.c,v 1.1.2.4 2009/08/17 21:48:57 quanah Exp */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
+ *
+ * Copyright 2008-2009 The OpenLDAP Foundation.
+ * Copyright 2008 Emmanuel Dreyfus.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -11,6 +15,10 @@
  * A copy of this license is available in the file LICENSE in the
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
+ */
+/* ACKNOWLEDGEMENTS:
+ * This work was originally developed by the Emmanuel Dreyfus for
+ * inclusion in OpenLDAP Software.
  */
 #include "portable.h"
 
@@ -47,7 +55,6 @@ nops_rm_mod( Modifications **mods, Modifications *mod ) {
 		}
 	}
 
-	for (m = *mods; m; m = m->sml_next)
 	mod->sml_next = NULL;
 	slap_mods_free(mod, 1);
 
@@ -137,9 +144,13 @@ nops_modify( Operation *op, SlapReply *rs )
 	}
 
 	if ((m = op->orm_modlist) == NULL) {
+		slap_callback *cb = op->o_callback;
+
 		op->o_bd->bd_info = (BackendInfo *)(on->on_info);
-		send_ldap_error(op, rs, LDAP_SUCCESS, "");
-		return(rs->sr_err);
+		op->o_callback = NULL;
+                send_ldap_error(op, rs, LDAP_SUCCESS, "");
+		op->o_callback = cb;
+
 		return (rs->sr_err);
 	}
 

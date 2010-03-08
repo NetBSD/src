@@ -1,4 +1,6 @@
-// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPAttributeList.h,v 1.9.6.3 2008/07/08 19:31:00 quanah Exp $
+/*	$NetBSD: LDAPAttributeList.h,v 1.1.1.3 2010/03/08 02:14:14 lukem Exp $	*/
+
+// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPAttributeList.h,v 1.9.6.3 2008/07/08 19:31:00 quanah Exp
 /*
  * Copyright 2000-2002, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

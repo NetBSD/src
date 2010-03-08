@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/sql-wrap.c,v 1.43.2.5 2008/02/11 23:26:48 kurt Exp $ */
+/*	$NetBSD: sql-wrap.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/back-sql/sql-wrap.c,v 1.43.2.8 2009/06/02 22:29:43 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -52,7 +54,7 @@ backsql_PrintErrors( SQLHENV henv, SQLHDBC hdbc, SQLHSTMT sth, int rc )
 }
 
 RETCODE
-backsql_Prepare( SQLHDBC dbh, SQLHSTMT *sth, char *query, int timeout )
+backsql_Prepare( SQLHDBC dbh, SQLHSTMT *sth, const char *query, int timeout )
 {
 	RETCODE		rc;
 
@@ -462,18 +464,6 @@ backsql_open_db_handle(
 	return LDAP_SUCCESS;
 }
 
-int
-backsql_free_db_conn( Operation *op, SQLHDBC dbh )
-{
-	Debug( LDAP_DEBUG_TRACE, "==>backsql_free_db_conn()\n", 0, 0, 0 );
-
-	(void)backsql_close_db_handle( dbh );
-
-	Debug( LDAP_DEBUG_TRACE, "<==backsql_free_db_conn()\n", 0, 0, 0 );
-
-	return LDAP_SUCCESS;
-}
-
 static void	*backsql_db_conn_dummy;
 
 static void
@@ -481,7 +471,22 @@ backsql_db_conn_keyfree(
 	void		*key,
 	void		*data )
 {
-	backsql_close_db_handle( (SQLHDBC)data );
+	(void)backsql_close_db_handle( (SQLHDBC)data );
+}
+
+int
+backsql_free_db_conn( Operation *op, SQLHDBC dbh )
+{
+	Debug( LDAP_DEBUG_TRACE, "==>backsql_free_db_conn()\n", 0, 0, 0 );
+
+	(void)backsql_close_db_handle( dbh );
+	ldap_pvt_thread_pool_setkey( op->o_threadctx,
+		&backsql_db_conn_dummy, (void *)SQL_NULL_HDBC,
+		backsql_db_conn_keyfree, NULL, NULL );
+
+	Debug( LDAP_DEBUG_TRACE, "<==backsql_free_db_conn()\n", 0, 0, 0 );
+
+	return LDAP_SUCCESS;
 }
 
 int
@@ -514,9 +519,8 @@ backsql_get_db_conn( Operation *op, SQLHDBC *dbhp )
 		}
 
 		if ( op->o_threadctx ) {
-			void		*data = NULL;
+			void		*data = (void *)dbh;
 
-			data = (void *)dbh;
 			ldap_pvt_thread_pool_setkey( op->o_threadctx,
 					&backsql_db_conn_dummy, data,
 					backsql_db_conn_keyfree, NULL, NULL );

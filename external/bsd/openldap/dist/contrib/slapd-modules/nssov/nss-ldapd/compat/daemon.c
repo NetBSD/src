@@ -1,3 +1,5 @@
+/*	$NetBSD: daemon.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    daemon.c - implementation of daemon() for systems that lack it
 

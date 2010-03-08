@@ -1,8 +1,10 @@
+/*	$NetBSD: filter.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+
 /* filter.c - routines for parsing and dealing with filters */
-/* $OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.134.2.12 2008/02/18 22:25:47 hyc Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.134.2.17 2009/08/13 00:48:32 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -348,7 +350,7 @@ get_ssa(
 {
 	ber_tag_t	tag;
 	ber_len_t	len;
-	ber_tag_t	rc;
+	int	rc;
 	struct berval desc, value, nvalue;
 	char		*last;
 	SubstringsAssertion ssa;
@@ -384,6 +386,17 @@ get_ssa(
 	}
 
 	rc = LDAP_PROTOCOL_ERROR;
+
+	/* If there is no substring matching rule, there's nothing
+	 * we can do with this filter. But we continue to parse it
+	 * for logging purposes.
+	 */
+	if ( ssa.sa_desc->ad_type->sat_substr == NULL ) {
+		f->f_choice |= SLAPD_FILTER_UNDEFINED;
+		Debug( LDAP_DEBUG_FILTER,
+		"get_ssa: no substring matching rule for attributeType %s\n",
+			desc.bv_val, 0, 0 );
+	}
 
 	for ( tag = ber_first_element( ber, &len, &last );
 		tag != LBER_DEFAULT;
@@ -444,7 +457,13 @@ get_ssa(
 		rc = asserted_value_validate_normalize(
 			ssa.sa_desc, ssa.sa_desc->ad_type->sat_equality,
 			usage, &value, &nvalue, text, op->o_tmpmemctx );
-		if( rc != LDAP_SUCCESS ) goto return_error;
+		if( rc != LDAP_SUCCESS ) {
+			f->f_choice |= SLAPD_FILTER_UNDEFINED;
+			Debug( LDAP_DEBUG_FILTER,
+			"get_ssa: illegal value for attributeType %s (%d) %s\n",
+				desc.bv_val, rc, *text );
+			ber_dupbv_x( &nvalue, &value, op->o_tmpmemctx );
+		}
 
 		switch ( tag ) {
 		case LDAP_SUBSTRING_INITIAL:
@@ -478,6 +497,7 @@ return_error:
 			return rc;
 		}
 
+		*text = NULL;
 		rc = LDAP_SUCCESS;
 	}
 
@@ -491,7 +511,7 @@ return_error:
 }
 
 void
-filter_free_x( Operation *op, Filter *f )
+filter_free_x( Operation *op, Filter *f, int freeme )
 {
 	Filter	*p, *next;
 
@@ -530,7 +550,7 @@ filter_free_x( Operation *op, Filter *f )
 	case LDAP_FILTER_NOT:
 		for ( p = f->f_list; p != NULL; p = next ) {
 			next = p->f_next;
-			filter_free_x( op, p );
+			filter_free_x( op, p, 1 );
 		}
 		break;
 
@@ -547,7 +567,9 @@ filter_free_x( Operation *op, Filter *f )
 		break;
 	}
 
-	op->o_tmpfree( f, op->o_tmpmemctx );
+	if ( freeme ) {
+		op->o_tmpfree( f, op->o_tmpmemctx );
+	}
 }
 
 void
@@ -559,7 +581,7 @@ filter_free( Filter *f )
 	op.o_hdr = &ohdr;
 	op.o_tmpmemctx = slap_sl_context( f );
 	op.o_tmpmfuncs = &slap_sl_mfuncs;
-	filter_free_x( &op, f );
+	filter_free_x( &op, f, 1 );
 }
 
 void

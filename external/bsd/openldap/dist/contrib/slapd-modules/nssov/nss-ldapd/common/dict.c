@@ -1,3 +1,5 @@
+/*	$NetBSD: dict.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    dict.c - dictionary functions
    This file is part of the nss-ldapd library.

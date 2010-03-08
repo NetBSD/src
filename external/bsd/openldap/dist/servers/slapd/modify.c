@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.276.2.9 2008/04/14 22:05:06 quanah Exp $ */
+/*	$NetBSD: modify.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.276.2.13 2009/08/13 00:45:33 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -268,6 +270,7 @@ fe_op_modify( Operation *op, SlapReply *rs )
 	if ( op->orm_increment && !SLAP_INCREMENT( op->o_bd ) ) {
 		send_ldap_error( op, rs, LDAP_UNWILLING_TO_PERFORM,
 			"modify/increment not supported in context" );
+		goto cleanup;
 	}
 
 	/*
@@ -689,7 +692,7 @@ slap_sort_vals(
 #define	SWAP(a,b,tmp)	tmp=(a);(a)=(b);(b)=tmp
 #define	COMP(a,b)	match=0; rc = ordered_value_match( &match, \
 						ad, mr, SLAP_MR_EQUALITY \
-								| SLAP_MR_VALUE_OF_ATTRIBUTE_SYNTAX \
+								| SLAP_MR_VALUE_OF_ASSERTION_SYNTAX \
 								| SLAP_MR_ASSERTED_VALUE_NORMALIZED_MATCH \
 								| SLAP_MR_ATTRIBUTE_VALUE_NORMALIZED_MATCH, \
 								&(a), &(b), text );
@@ -807,7 +810,7 @@ slap_sort_vals(
 		}
 	}
 	done:
-	if ( i >= 0 )
+	if ( match == 0 && i >= 0 )
 		*dup = ix[i];
 
 	/* For sorted attributes, put the values in index order */

@@ -1,8 +1,10 @@
+/*	$NetBSD: monitor.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* monitor.c - monitor ldap backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/monitor.c,v 1.2.2.4 2008/02/11 23:26:46 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/monitor.c,v 1.2.2.6 2009/01/22 00:01:06 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2008 The OpenLDAP Foundation.
+ * Copyright 2003-2009 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -469,7 +471,7 @@ ldap_back_monitor_db_open( BackendDB *be )
 	ptr = lutil_strncopy( ptr, suffix.bv_val, suffix.bv_len );
 	ptr = lutil_strcopy( ptr, "))" );
 	ptr[ 0 ] = '\0';
-	assert( filter->bv_len == ptr - filter->bv_val );
+	assert( ptr == &filter->bv_val[ filter->bv_len ] );
 
 	if ( suffix.bv_val != be->be_nsuffix[ 0 ].bv_val ) {
 		ch_free( suffix.bv_val );

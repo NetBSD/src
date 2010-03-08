@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/unbind.c,v 1.30.2.5 2008/02/11 23:26:47 kurt Exp $ */
+/*	$NetBSD: unbind.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/back-meta/unbind.c,v 1.30.2.7 2009/08/26 00:50:20 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -39,7 +41,7 @@ meta_back_conn_destroy(
 {
 	metainfo_t	*mi = ( metainfo_t * )be->be_private;
 	metaconn_t	*mc,
-			mc_curr = { 0 };
+			mc_curr = {{ 0 }};
 	int		i;
 
 
@@ -56,11 +58,11 @@ meta_back_conn_destroy(
 #endif /* META_BACK_PRINT_CONNTREE */
 	while ( ( mc = avl_delete( &mi->mi_conninfo.lai_tree, ( caddr_t )&mc_curr, meta_back_conn_cmp ) ) != NULL )
 	{
+		assert( !LDAP_BACK_PCONN_ISPRIV( mc ) );
 		Debug( LDAP_DEBUG_TRACE,
-			"=>meta_back_conn_destroy: destroying conn %ld "
+			"=>meta_back_conn_destroy: destroying conn %lu "
 			"refcnt=%d flags=0x%08x\n",
-			LDAP_BACK_PCONN_ID( mc ),
-			mc->mc_refcnt, mc->msc_mscflags );
+			mc->mc_conn->c_connid, mc->mc_refcnt, mc->msc_mscflags );
 		
 		if ( mc->mc_refcnt > 0 ) {
 			/* someone else might be accessing the connection;

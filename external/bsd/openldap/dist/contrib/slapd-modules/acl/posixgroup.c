@@ -1,6 +1,10 @@
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/acl/posixgroup.c,v 1.3.2.4 2008/02/11 23:26:38 kurt Exp $ */
-/*
- * Copyright 1998-2008 The OpenLDAP Foundation.
+/*	$NetBSD: posixgroup.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+
+/* posixgroup.c */
+/* OpenLDAP: pkg/ldap/contrib/slapd-modules/acl/posixgroup.c,v 1.3.2.6 2009/08/17 21:48:55 quanah Exp */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

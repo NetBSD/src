@@ -1,8 +1,10 @@
+/*	$NetBSD: conn.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+
 /* conn.c - deal with connection subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/conn.c,v 1.72.2.7 2008/02/11 23:26:47 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/conn.c,v 1.72.2.9 2009/04/27 22:50:10 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2008 The OpenLDAP Foundation.
+ * Copyright 2001-2009 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -94,7 +96,7 @@ monitor_subsys_conn_init(
 	} else {
 		BER_BVSTR( &bv, "0" );
 	}
-	attr_merge_one( e, mi->mi_ad_monitorCounter, &bv, &bv );
+	attr_merge_one( e, mi->mi_ad_monitorCounter, &bv, NULL );
 	
 	mp = monitor_entrypriv_create();
 	if ( mp == NULL ) {
@@ -133,7 +135,7 @@ monitor_subsys_conn_init(
 	}
 	
 	BER_BVSTR( &bv, "-1" );
-	attr_merge_one( e, mi->mi_ad_monitorCounter, &bv, &bv );
+	attr_merge_one( e, mi->mi_ad_monitorCounter, &bv, NULL );
 	
 	mp = monitor_entrypriv_create();
 	if ( mp == NULL ) {
@@ -172,7 +174,7 @@ monitor_subsys_conn_init(
 	}
 	
 	BER_BVSTR( &bv, "0" );
-	attr_merge_one( e, mi->mi_ad_monitorCounter, &bv, &bv );
+	attr_merge_one( e, mi->mi_ad_monitorCounter, &bv, NULL );
 	
 	mp = monitor_entrypriv_create();
 	if ( mp == NULL ) {
@@ -398,7 +400,7 @@ conn_create(
 	attr_merge_one( e, mi->mi_ad_monitorConnectionNumber, &bv, NULL );
 
 	bv.bv_len = snprintf( buf, sizeof( buf ), "%ld", (long) c->c_protocol );
-	attr_merge_one( e, mi->mi_ad_monitorConnectionProtocol, &bv, NULL );
+	attr_merge_normalize_one( e, mi->mi_ad_monitorConnectionProtocol, &bv, NULL );
 
 	bv.bv_len = snprintf( buf, sizeof( buf ), "%ld", c->c_n_ops_received );
 	attr_merge_one( e, mi->mi_ad_monitorConnectionOpsReceived, &bv, NULL );
@@ -428,31 +430,31 @@ conn_create(
 			LDAP_STAILQ_EMPTY( &c->c_pending_ops ) ? "" : "p",
 			connection_state2str( c->c_conn_state ),
 			c->c_sasl_bind_in_progress ? "S" : "" );
-	attr_merge_one( e, mi->mi_ad_monitorConnectionMask, &bv, NULL );
+	attr_merge_normalize_one( e, mi->mi_ad_monitorConnectionMask, &bv, NULL );
 
 	attr_merge_one( e, mi->mi_ad_monitorConnectionAuthzDN,
 		&c->c_dn, &c->c_ndn );
 
 	/* NOTE: client connections leave the c_peer_* fields NULL */
 	assert( !BER_BVISNULL( &c->c_listener_url ) );
-	attr_merge_one( e, mi->mi_ad_monitorConnectionListener,
+	attr_merge_normalize_one( e, mi->mi_ad_monitorConnectionListener,
 		&c->c_listener_url, NULL );
 
-	attr_merge_one( e, mi->mi_ad_monitorConnectionPeerDomain,
+	attr_merge_normalize_one( e, mi->mi_ad_monitorConnectionPeerDomain,
 		BER_BVISNULL( &c->c_peer_domain ) ? &bv_unknown : &c->c_peer_domain,
 		NULL );
 
-	attr_merge_one( e, mi->mi_ad_monitorConnectionPeerAddress,
+	attr_merge_normalize_one( e, mi->mi_ad_monitorConnectionPeerAddress,
 		BER_BVISNULL( &c->c_peer_name ) ? &bv_unknown : &c->c_peer_name,
 		NULL );
 
 	assert( !BER_BVISNULL( &c->c_sock_name ) );
-	attr_merge_one( e, mi->mi_ad_monitorConnectionLocalAddress,
+	attr_merge_normalize_one( e, mi->mi_ad_monitorConnectionLocalAddress,
 		&c->c_sock_name, NULL );
 
-	attr_merge_one( e, mi->mi_ad_monitorConnectionStartTime, &bv2, NULL );
+	attr_merge_normalize_one( e, mi->mi_ad_monitorConnectionStartTime, &bv2, NULL );
 
-	attr_merge_one( e, mi->mi_ad_monitorConnectionActivityTime, &bv3, NULL );
+	attr_merge_normalize_one( e, mi->mi_ad_monitorConnectionActivityTime, &bv3, NULL );
 
 	mp = monitor_entrypriv_create();
 	if ( mp == NULL ) {

@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblber/lber-int.h,v 1.68.2.3 2008/02/11 23:26:41 kurt Exp $ */
+/*	$NetBSD: lber-int.h,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/libraries/liblber/lber-int.h,v 1.68.2.6 2009/10/30 18:38:27 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -72,11 +74,38 @@ LBER_F( int ) ber_pvt_log_output(
 LBER_V (struct lber_options) ber_int_options;
 #define ber_int_debug ber_int_options.lbo_debug
 
+/* Data encoded in ASN.1 BER format */
 struct berelement {
 	struct		lber_options ber_opts;
 #define ber_valid		ber_opts.lbo_valid
 #define ber_options		ber_opts.lbo_options
 #define ber_debug		ber_opts.lbo_debug
+
+	/*
+	 * The members below, when not NULL/LBER_DEFAULT/etc, are:
+	 *   ber_buf       Data buffer.  Other pointers normally point into it.
+	 *   ber_rwptr     Read/write cursor for Sockbuf I/O.
+	 *   ber_memctx    Context passed to ber_memalloc() & co.
+	 * When decoding data (reading it from the BerElement):
+	 *   ber_end       End of BER data.
+	 *   ber_ptr       Read cursor, except for 1st octet of tags.
+	 *   ber_tag       1st octet of next tag, saved from *ber_ptr when
+	 *                 ber_ptr may be pointing at a tag and is >ber_buf.
+	 *                 The octet *ber_ptr itself may get overwritten with
+	 *                 a \0, to terminate the preceding element.
+	 * When encoding data (writing it to the BerElement):
+	 *   ber_end       End of allocated buffer - 1 (allowing a final \0).
+	 *   ber_ptr       Last complete BER element (normally write cursor).
+	 *   ber_sos_ptr   NULL or write cursor for incomplete sequence or set.
+	 *   ber_sos_inner offset(seq/set length octets) if ber_sos_ptr!=NULL.
+	 *   ber_tag       Default tag for next ber_printf() element.
+	 *   ber_usertag   Boolean set by ber_printf "!" if it sets ber_tag.
+	 *   ber_len       Reused for ber_sos_inner.
+	 * When output to a Sockbuf:
+	 *   ber_ptr       End of encoded data to write.
+	 * When input from a Sockbuf:
+	 *   See ber_get_next().
+	 */
 
 	/* Do not change the order of these 3 fields! see ber_get_next */
 	ber_tag_t	ber_tag;
@@ -87,7 +116,9 @@ struct berelement {
 	char		*ber_ptr;
 	char		*ber_end;
 
-	struct seqorset	*ber_sos;
+	char		*ber_sos_ptr;
+#	define		ber_sos_inner	ber_len /* reused for binary compat */
+
 	char		*ber_rwptr;
 	void		*ber_memctx;
 };
@@ -114,15 +145,6 @@ struct sockbuf {
 };
 
 #define SOCKBUF_VALID( sb )	( (sb)->sb_valid == LBER_VALID_SOCKBUF )
-
-struct seqorset {
-	BerElement	*sos_ber;
-	ber_len_t	sos_clen;
-	ber_tag_t	sos_tag;
-	char		*sos_first;
-	char		*sos_ptr;
-	struct seqorset	*sos_next;
-};
 
 
 /*
@@ -164,12 +186,6 @@ ber_log_dump LDAP_P((
 	int loglvl,
 	BerElement *ber,
 	int inout ));
-
-LBER_F( int )
-ber_log_sos_dump LDAP_P((
-	int errlvl,
-	int loglvl,
-	Seqorset *sos ));
 
 LBER_V (BER_LOG_FN) ber_int_log_proc;
 LBER_V (FILE *) ber_pvt_err_file;

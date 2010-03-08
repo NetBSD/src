@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/sasl.c,v 1.64.2.4 2008/02/11 23:26:41 kurt Exp $ */
+/*	$NetBSD: sasl.c,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/libraries/libldap/sasl.c,v 1.64.2.7 2009/10/31 00:11:22 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -472,4 +474,329 @@ done:
 	if ( smechs ) LDAP_FREE( smechs );
 
 	return rc;
+}
+
+#ifdef HAVE_CYRUS_SASL
+
+#ifdef HAVE_SASL_SASL_H
+#include <sasl/sasl.h>
+#else
+#include <sasl.h>
+#endif
+
+#endif /* HAVE_CYRUS_SASL */
+
+static int
+sb_sasl_generic_remove( Sockbuf_IO_Desc *sbiod );
+
+static int
+sb_sasl_generic_setup( Sockbuf_IO_Desc *sbiod, void *arg )
+{
+	struct sb_sasl_generic_data	*p;
+	struct sb_sasl_generic_install	*i;
+
+	assert( sbiod != NULL );
+
+	i = (struct sb_sasl_generic_install *)arg;
+
+	p = LBER_MALLOC( sizeof( *p ) );
+	if ( p == NULL )
+		return -1;
+	p->ops = i->ops;
+	p->ops_private = i->ops_private;
+	p->sbiod = sbiod;
+	p->flags = 0;
+	ber_pvt_sb_buf_init( &p->sec_buf_in );
+	ber_pvt_sb_buf_init( &p->buf_in );
+	ber_pvt_sb_buf_init( &p->buf_out );
+
+	sbiod->sbiod_pvt = p;
+
+	p->ops->init( p, &p->min_send, &p->max_send, &p->max_recv );
+
+	if ( ber_pvt_sb_grow_buffer( &p->sec_buf_in, p->min_send ) < 0 ) {
+		sb_sasl_generic_remove( sbiod );
+		sock_errset(ENOMEM);
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+sb_sasl_generic_remove( Sockbuf_IO_Desc *sbiod )
+{
+	struct sb_sasl_generic_data	*p;
+
+	assert( sbiod != NULL );
+
+	p = (struct sb_sasl_generic_data *)sbiod->sbiod_pvt;
+
+	p->ops->fini(p);
+
+	ber_pvt_sb_buf_destroy( &p->sec_buf_in );
+	ber_pvt_sb_buf_destroy( &p->buf_in );
+	ber_pvt_sb_buf_destroy( &p->buf_out );
+	LBER_FREE( p );
+	sbiod->sbiod_pvt = NULL;
+	return 0;
+}
+
+static ber_len_t
+sb_sasl_generic_pkt_length(
+	struct sb_sasl_generic_data *p,
+	const unsigned char *buf,
+	int debuglevel )
+{
+	ber_len_t		size;
+
+	assert( buf != NULL );
+
+	size = buf[0] << 24
+		| buf[1] << 16
+		| buf[2] << 8
+		| buf[3];
+
+	if ( size > p->max_recv ) {
+		/* somebody is trying to mess me up. */
+		ber_log_printf( LDAP_DEBUG_ANY, debuglevel,
+			"sb_sasl_generic_pkt_length: "
+			"received illegal packet length of %lu bytes\n",
+			(unsigned long)size );
+		size = 16; /* this should lead to an error. */
+	}
+
+	return size + 4; /* include the size !!! */
+}
+
+/* Drop a processed packet from the input buffer */
+static void
+sb_sasl_generic_drop_packet (
+	struct sb_sasl_generic_data *p,
+	int debuglevel )
+{
+	ber_slen_t			len;
+
+	len = p->sec_buf_in.buf_ptr - p->sec_buf_in.buf_end;
+	if ( len > 0 )
+		AC_MEMCPY( p->sec_buf_in.buf_base, p->sec_buf_in.buf_base +
+			p->sec_buf_in.buf_end, len );
+
+	if ( len >= 4 ) {
+		p->sec_buf_in.buf_end = sb_sasl_generic_pkt_length(p,
+			(unsigned char *) p->sec_buf_in.buf_base, debuglevel);
+	}
+	else {
+		p->sec_buf_in.buf_end = 0;
+	}
+	p->sec_buf_in.buf_ptr = len;
+}
+
+static ber_slen_t
+sb_sasl_generic_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
+{
+	struct sb_sasl_generic_data	*p;
+	ber_slen_t			ret, bufptr;
+
+	assert( sbiod != NULL );
+	assert( SOCKBUF_VALID( sbiod->sbiod_sb ) );
+
+	p = (struct sb_sasl_generic_data *)sbiod->sbiod_pvt;
+
+	/* Are there anything left in the buffer? */
+	ret = ber_pvt_sb_copy_out( &p->buf_in, buf, len );
+	bufptr = ret;
+	len -= ret;
+
+	if ( len == 0 )
+		return bufptr;
+
+	p->ops->reset_buf( p, &p->buf_in );
+
+	/* Read the length of the packet */
+	while ( p->sec_buf_in.buf_ptr < 4 ) {
+		ret = LBER_SBIOD_READ_NEXT( sbiod, p->sec_buf_in.buf_base +
+			p->sec_buf_in.buf_ptr,
+			4 - p->sec_buf_in.buf_ptr );
+#ifdef EINTR
+		if ( ( ret < 0 ) && ( errno == EINTR ) )
+			continue;
+#endif
+		if ( ret <= 0 )
+			return bufptr ? bufptr : ret;
+
+		p->sec_buf_in.buf_ptr += ret;
+	}
+
+	/* The new packet always starts at p->sec_buf_in.buf_base */
+	ret = sb_sasl_generic_pkt_length(p, (unsigned char *) p->sec_buf_in.buf_base,
+		sbiod->sbiod_sb->sb_debug );
+
+	/* Grow the packet buffer if neccessary */
+	if ( ( p->sec_buf_in.buf_size < (ber_len_t) ret ) && 
+		ber_pvt_sb_grow_buffer( &p->sec_buf_in, ret ) < 0 )
+	{
+		sock_errset(ENOMEM);
+		return -1;
+	}
+	p->sec_buf_in.buf_end = ret;
+
+	/* Did we read the whole encrypted packet? */
+	while ( p->sec_buf_in.buf_ptr < p->sec_buf_in.buf_end ) {
+		/* No, we have got only a part of it */
+		ret = p->sec_buf_in.buf_end - p->sec_buf_in.buf_ptr;
+
+		ret = LBER_SBIOD_READ_NEXT( sbiod, p->sec_buf_in.buf_base +
+			p->sec_buf_in.buf_ptr, ret );
+#ifdef EINTR
+		if ( ( ret < 0 ) && ( errno == EINTR ) )
+			continue;
+#endif
+		if ( ret <= 0 )
+			return bufptr ? bufptr : ret;
+
+		p->sec_buf_in.buf_ptr += ret;
+   	}
+
+	/* Decode the packet */
+	ret = p->ops->decode( p, &p->sec_buf_in, &p->buf_in );
+
+	/* Drop the packet from the input buffer */
+	sb_sasl_generic_drop_packet( p, sbiod->sbiod_sb->sb_debug );
+
+	if ( ret != 0 ) {
+		ber_log_printf( LDAP_DEBUG_ANY, sbiod->sbiod_sb->sb_debug,
+			"sb_sasl_generic_read: failed to decode packet\n" );
+		sock_errset(EIO);
+		return -1;
+	}
+
+	bufptr += ber_pvt_sb_copy_out( &p->buf_in, (char*) buf + bufptr, len );
+
+	return bufptr;
+}
+
+static ber_slen_t
+sb_sasl_generic_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
+{
+	struct sb_sasl_generic_data	*p;
+	int				ret;
+	ber_len_t			len2;
+
+	assert( sbiod != NULL );
+	assert( SOCKBUF_VALID( sbiod->sbiod_sb ) );
+
+	p = (struct sb_sasl_generic_data *)sbiod->sbiod_pvt;
+
+	/* Is there anything left in the buffer? */
+	if ( p->buf_out.buf_ptr != p->buf_out.buf_end ) {
+		ret = ber_pvt_sb_do_write( sbiod, &p->buf_out );
+		if ( ret < 0 ) return ret;
+
+		/* Still have something left?? */
+		if ( p->buf_out.buf_ptr != p->buf_out.buf_end ) {
+			sock_errset(EAGAIN);
+			return -1;
+		}
+	}
+
+	len2 = p->max_send - 100;	/* For safety margin */
+	len2 = len > len2 ? len2 : len;
+
+	/* If we're just retrying a partial write, tell the
+	 * caller it's done. Let them call again if there's
+	 * still more left to write.
+	 */
+	if ( p->flags & LDAP_PVT_SASL_PARTIAL_WRITE ) {
+		p->flags ^= LDAP_PVT_SASL_PARTIAL_WRITE;
+		return len2;
+	}
+
+	/* now encode the next packet. */
+	p->ops->reset_buf( p, &p->buf_out );
+
+	ret = p->ops->encode( p, buf, len2, &p->buf_out );
+
+	if ( ret != 0 ) {
+		ber_log_printf( LDAP_DEBUG_ANY, sbiod->sbiod_sb->sb_debug,
+			"sb_sasl_generic_write: failed to encode packet\n" );
+		sock_errset(EIO);
+		return -1;
+	}
+
+	ret = ber_pvt_sb_do_write( sbiod, &p->buf_out );
+
+	if ( ret < 0 ) {
+		/* error? */
+		int err = sock_errno();
+		/* caller can retry this */
+		if ( err == EAGAIN || err == EWOULDBLOCK || err == EINTR )
+			p->flags |= LDAP_PVT_SASL_PARTIAL_WRITE;
+		return ret;
+	} else if ( p->buf_out.buf_ptr != p->buf_out.buf_end ) {
+		/* partial write? pretend nothing got written */
+		len2 = 0;
+		p->flags |= LDAP_PVT_SASL_PARTIAL_WRITE;
+	}
+
+	/* return number of bytes encoded, not written, to ensure
+	 * no byte is encoded twice (even if only sent once).
+	 */
+	return len2;
+}
+
+static int
+sb_sasl_generic_ctrl( Sockbuf_IO_Desc *sbiod, int opt, void *arg )
+{
+	struct sb_sasl_generic_data	*p;
+
+	p = (struct sb_sasl_generic_data *)sbiod->sbiod_pvt;
+
+	if ( opt == LBER_SB_OPT_DATA_READY ) {
+		if ( p->buf_in.buf_ptr != p->buf_in.buf_end ) return 1;
+	}
+
+	return LBER_SBIOD_CTRL_NEXT( sbiod, opt, arg );
+}
+
+Sockbuf_IO ldap_pvt_sockbuf_io_sasl_generic = {
+	sb_sasl_generic_setup,		/* sbi_setup */
+	sb_sasl_generic_remove,		/* sbi_remove */
+	sb_sasl_generic_ctrl,		/* sbi_ctrl */
+	sb_sasl_generic_read,		/* sbi_read */
+	sb_sasl_generic_write,		/* sbi_write */
+	NULL			/* sbi_close */
+};
+
+int ldap_pvt_sasl_generic_install(
+	Sockbuf *sb,
+	struct sb_sasl_generic_install *install_arg )
+{
+	Debug( LDAP_DEBUG_TRACE, "ldap_pvt_sasl_generic_install\n",
+		0, 0, 0 );
+
+	/* don't install the stuff unless security has been negotiated */
+
+	if ( !ber_sockbuf_ctrl( sb, LBER_SB_OPT_HAS_IO,
+			&ldap_pvt_sockbuf_io_sasl_generic ) )
+	{
+#ifdef LDAP_DEBUG
+		ber_sockbuf_add_io( sb, &ber_sockbuf_io_debug,
+			LBER_SBIOD_LEVEL_APPLICATION, (void *)"sasl_generic_" );
+#endif
+		ber_sockbuf_add_io( sb, &ldap_pvt_sockbuf_io_sasl_generic,
+			LBER_SBIOD_LEVEL_APPLICATION, install_arg );
+	}
+
+	return LDAP_SUCCESS;
+}
+
+void ldap_pvt_sasl_generic_remove( Sockbuf *sb )
+{
+	ber_sockbuf_remove_io( sb, &ldap_pvt_sockbuf_io_sasl_generic,
+		LBER_SBIOD_LEVEL_APPLICATION );
+#ifdef LDAP_DEBUG
+	ber_sockbuf_remove_io( sb, &ber_sockbuf_io_debug,
+		LBER_SBIOD_LEVEL_APPLICATION );
+#endif
 }

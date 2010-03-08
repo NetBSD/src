@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.137.2.9 2008/02/12 00:34:58 quanah Exp $ */
+/*	$NetBSD: proto-bdb.h,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.137.2.15 2009/05/07 20:20:33 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,11 +47,11 @@ AttrInfo *bdb_attr_mask( struct bdb_info *bdb,
 void bdb_attr_flush( struct bdb_info *bdb );
 
 int bdb_attr_slot( struct bdb_info *bdb,
-	AttributeDescription *desc, unsigned *insert );
+	AttributeDescription *desc, int *insert );
 
 int bdb_attr_index_config LDAP_P(( struct bdb_info *bdb,
 	const char *fname, int lineno,
-	int argc, char **argv ));
+	int argc, char **argv, struct config_reply_s *cr ));
 
 void bdb_attr_index_unparse LDAP_P(( struct bdb_info *bdb, BerVarray *bva ));
 void bdb_attr_index_destroy LDAP_P(( struct bdb_info *bdb ));
@@ -70,12 +72,18 @@ int bdb_back_init_cf( BackendInfo *bi );
  * dbcache.c
  */
 #define bdb_db_cache				BDB_SYMBOL(db_cache)
+#define bdb_db_findsize				BDB_SYMBOL(db_findsize)
 
 int
 bdb_db_cache(
     Backend	*be,
     struct berval *name,
 	DB **db );
+
+int
+bdb_db_findsize(
+	struct bdb_info *bdb,
+	struct berval *name );
 
 /*
  * dn2entry.c
@@ -84,7 +92,7 @@ bdb_db_cache(
 
 int bdb_dn2entry LDAP_P(( Operation *op, DB_TXN *tid,
 	struct berval *dn, EntryInfo **e, int matched,
-	BDB_LOCKER locker, DB_LOCK *lock ));
+	DB_LOCK *lock ));
 
 /*
  * dn2id.c
@@ -99,7 +107,7 @@ int bdb_dn2id(
 	Operation *op,
 	struct berval *dn,
 	EntryInfo *ei,
-	BDB_LOCKER locker,
+	DB_TXN *txn,
 	DB_LOCK *lock );
 
 int bdb_dn2id_add(
@@ -121,7 +129,7 @@ int bdb_dn2id_children(
 
 int bdb_dn2idl(
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *txn,
 	struct berval *ndn,
 	EntryInfo *ei,
 	ID *ids,
@@ -134,7 +142,7 @@ int bdb_dn2idl(
 
 int bdb_dn2id_parent(
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *txn,
 	EntryInfo *ei,
 	ID *idp );
 
@@ -174,7 +182,7 @@ char *ebcdic_dberror( int rc );
 
 int bdb_filter_candidates(
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *txn,
 	Filter	*f,
 	ID *ids,
 	ID *tmp,
@@ -208,7 +216,6 @@ int bdb_id2entry_delete(
 int bdb_id2entry(
 	BackendDB *be,
 	DB_TXN *tid,
-	BDB_LOCKER locker,
 	ID id,
 	Entry **e);
 #endif
@@ -291,7 +298,7 @@ unsigned bdb_idl_search( ID *ids, ID id );
 int bdb_idl_fetch_key(
 	BackendDB	*be,
 	DB			*db,
-	BDB_LOCKER locker,
+	DB_TXN		*txn,
 	DBT			*key,
 	ID			*ids,
 	DBC                     **saved_cursor,
@@ -398,7 +405,7 @@ extern int
 bdb_key_read(
     Backend	*be,
 	DB *db,
-	BDB_LOCKER locker,
+	DB_TXN *txn,
     struct berval *k,
 	ID *ids,
     DBC **saved_cursor,
@@ -496,7 +503,6 @@ void bdb_unlocked_cache_return_entry_rw( struct bdb_info *bdb, Entry *e, int rw 
 #define bdb_cache_delete			BDB_SYMBOL(cache_delete)
 #define bdb_cache_delete_cleanup	BDB_SYMBOL(cache_delete_cleanup)
 #define bdb_cache_find_id			BDB_SYMBOL(cache_find_id)
-#define bdb_cache_find_info			BDB_SYMBOL(cache_find_info)
 #define bdb_cache_find_ndn			BDB_SYMBOL(cache_find_ndn)
 #define bdb_cache_find_parent		BDB_SYMBOL(cache_find_parent)
 #define bdb_cache_modify			BDB_SYMBOL(cache_modify)
@@ -514,7 +520,7 @@ int bdb_cache_add(
 	EntryInfo *pei,
 	Entry   *e,
 	struct berval *nrdn,
-	BDB_LOCKER locker,
+	DB_TXN *txn,
 	DB_LOCK *lock
 );
 int bdb_cache_modrdn(
@@ -523,49 +529,45 @@ int bdb_cache_modrdn(
 	struct berval *nrdn,
 	Entry	*new,
 	EntryInfo *ein,
-	BDB_LOCKER locker,
+	DB_TXN *txn,
 	DB_LOCK *lock
 );
 int bdb_cache_modify(
 	struct bdb_info *bdb,
 	Entry *e,
 	Attribute *newAttrs,
-	BDB_LOCKER locker,
+	DB_TXN *txn,
 	DB_LOCK *lock
 );
 int bdb_cache_find_ndn(
 	Operation *op,
-	BDB_LOCKER	locker,
+	DB_TXN *txn,
 	struct berval   *ndn,
 	EntryInfo	**res
-);
-EntryInfo * bdb_cache_find_info(
-	struct bdb_info *bdb,
-	ID id
 );
 
 #define	ID_LOCKED	1
 #define	ID_NOCACHE	2
+#define	ID_NOENTRY	4
 int bdb_cache_find_id(
 	Operation *op,
 	DB_TXN	*tid,
 	ID		id,
 	EntryInfo **eip,
 	int	flag,
-	BDB_LOCKER	locker,
 	DB_LOCK		*lock
 );
 int
 bdb_cache_find_parent(
 	Operation *op,
-	BDB_LOCKER	locker,
+	DB_TXN *txn,
 	ID id,
 	EntryInfo **res
 );
 int bdb_cache_delete(
 	struct bdb_info *bdb,
 	Entry	*e,
-	BDB_LOCKER locker,
+	DB_TXN *txn,
 	DB_LOCK	*lock
 );
 void bdb_cache_delete_cleanup(
@@ -585,7 +587,7 @@ int hdb_cache_load(
 #define bdb_cache_entry_db_relock		BDB_SYMBOL(cache_entry_db_relock)
 int bdb_cache_entry_db_relock(
 	struct bdb_info *bdb,
-	BDB_LOCKER locker,
+	DB_TXN *txn,
 	EntryInfo *ei,
 	int rw,
 	int tryOnly,
@@ -595,22 +597,10 @@ int bdb_cache_entry_db_unlock(
 	struct bdb_info *bdb,
 	DB_LOCK *lock );
 
-#ifdef BDB_REUSE_LOCKERS
-
-#define bdb_locker_id				BDB_SYMBOL(locker_id)
-#define bdb_locker_flush			BDB_SYMBOL(locker_flush)
-int bdb_locker_id( Operation *op, DB_ENV *env, BDB_LOCKER *locker );
-void bdb_locker_flush( DB_ENV *env );
-
-#define	LOCK_ID_FREE(env, locker)	((void)0)
-#define	LOCK_ID(env, locker)	bdb_locker_id(op, env, locker)
-
-#else
-
-#define	LOCK_ID_FREE(env, locker)	XLOCK_ID_FREE(env, locker)
-#define	LOCK_ID(env, locker)		XLOCK_ID(env, locker)
-
-#endif
+#define bdb_reader_get				BDB_SYMBOL(reader_get)
+#define bdb_reader_flush			BDB_SYMBOL(reader_flush)
+int bdb_reader_get( Operation *op, DB_ENV *env, DB_TXN **txn );
+void bdb_reader_flush( DB_ENV *env );
 
 /*
  * trans.c

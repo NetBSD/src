@@ -1,3 +1,5 @@
+/*	$NetBSD: network.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    network.c - network address entry lookup routines
    Parts of this file were part of the nss_ldap library (as ldap-network.c)

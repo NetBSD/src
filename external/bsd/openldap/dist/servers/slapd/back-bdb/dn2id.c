@@ -1,8 +1,10 @@
+/*	$NetBSD: dn2id.c,v 1.1.1.3 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* dn2id.c - routines to deal with the dn2id index */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2id.c,v 1.137.2.10 2008/05/20 00:14:04 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2id.c,v 1.137.2.19 2009/06/19 21:55:57 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,13 +29,13 @@
 
 static int
 bdb_dn2id_lock( struct bdb_info *bdb, struct berval *dn,
-	int rw, BDB_LOCKER locker, DB_LOCK *lock )
+	int rw, DB_TXN *txn, DB_LOCK *lock )
 {
 	int       rc;
 	DBT       lockobj;
 	int       db_rw;
 
-	if (!locker)
+	if (!txn)
 		return 0;
 
 	if (rw)
@@ -44,7 +46,7 @@ bdb_dn2id_lock( struct bdb_info *bdb, struct berval *dn,
 	lockobj.data = dn->bv_val;
 	lockobj.size = dn->bv_len;
 
-	rc = LOCK_GET(bdb->bi_dbenv, BDB_LOCKID(locker), DB_LOCK_NOWAIT,
+	rc = LOCK_GET(bdb->bi_dbenv, TXN_ID(txn), DB_LOCK_NOWAIT,
 					&lockobj, db_rw, lock);
 	return rc;
 }
@@ -89,8 +91,11 @@ bdb_dn2id_add(
 	/* store it -- don't override */
 	rc = db->put( db, txn, &key, &data, DB_NOOVERWRITE );
 	if( rc != 0 ) {
-		Debug( LDAP_DEBUG_ANY, "=> bdb_dn2id_add 0x%lx: put failed: %s %d\n",
-			e->e_id, db_strerror(rc), rc );
+		char buf[ SLAP_TEXT_BUFLEN ];
+		snprintf( buf, sizeof( buf ), "%s => bdb_dn2id_add dn=\"%s\" ID=0x%lx",
+			op->o_log_prefix, e->e_name.bv_val, e->e_id );
+		Debug( LDAP_DEBUG_ANY, "%s: put failed: %s %d\n",
+			buf, db_strerror(rc), rc );
 		goto done;
 	}
 
@@ -193,7 +198,7 @@ bdb_dn2id_delete(
 	ptr.bv_val[ptr.bv_len] = '\0';
 
 	/* We hold this lock until the TXN completes */
-	rc = bdb_dn2id_lock( bdb, &e->e_nname, 1, TXN_ID( txn ), &lock );
+	rc = bdb_dn2id_lock( bdb, &e->e_nname, 1, txn, &lock );
 	if ( rc ) goto done;
 
 	/* delete it */
@@ -277,7 +282,7 @@ bdb_dn2id(
 	Operation *op,
 	struct berval	*dn,
 	EntryInfo *ei,
-	BDB_LOCKER locker,
+	DB_TXN *txn,
 	DB_LOCK *lock )
 {
 	struct bdb_info *bdb = (struct bdb_info *) op->o_bd->be_private;
@@ -301,15 +306,11 @@ bdb_dn2id(
 	data.ulen = sizeof(ID);
 	data.flags = DB_DBT_USERMEM;
 
-	rc = db->cursor( db, NULL, &cursor, bdb->bi_db_opflags );
+	rc = db->cursor( db, txn, &cursor, bdb->bi_db_opflags );
 	if ( rc ) goto func_leave;
 
-	rc = bdb_dn2id_lock( bdb, dn, 0, locker, lock );
+	rc = bdb_dn2id_lock( bdb, dn, 0, txn, lock );
 	if ( rc ) goto nolock;
-
-	if ( locker ) {
-		CURSOR_SETLOCKER(cursor, locker);
-	}
 
 	/* fetch it */
 	rc = cursor->c_get( cursor, &key, &data, DB_SET );
@@ -379,7 +380,7 @@ bdb_dn2id_children(
 int
 bdb_dn2idl(
 	Operation *op,
-	BDB_LOCKER locker,
+	DB_TXN *txn,
 	struct berval *ndn,
 	EntryInfo *ei,
 	ID *ids,
@@ -397,7 +398,8 @@ bdb_dn2idl(
 
 #ifndef	BDB_MULTIPLE_SUFFIXES
 	if ( prefix == DN_SUBTREE_PREFIX
-		&& ( ei->bei_id == 0 || ei->bei_parent->bei_id == 0 )) {
+		&& ( ei->bei_id == 0 ||
+		( ei->bei_parent->bei_id == 0 && op->o_bd->be_suffix[0].bv_len ))) {
 		BDB_IDL_ALL(bdb, ids);
 		return 0;
 	}
@@ -412,7 +414,7 @@ bdb_dn2idl(
 	AC_MEMCPY( &((char *)key.data)[1], ndn->bv_val, key.size - 1 );
 
 	BDB_IDL_ZERO( ids );
-	rc = bdb_idl_fetch_key( op->o_bd, db, locker, &key, ids, NULL, 0 );
+	rc = bdb_idl_fetch_key( op->o_bd, db, txn, &key, ids, NULL, 0 );
 
 	if( rc != 0 ) {
 		Debug( LDAP_DEBUG_TRACE,
@@ -529,8 +531,8 @@ int hdb_fix_dn(
 		}
 	}
 	BEI(e)->bei_modrdns = max;
-	ptr[-1] = '\0';
-	nptr[-1] = '\0';
+	if ( ptr > e->e_name.bv_val ) ptr[-1] = '\0';
+	if ( nptr > e->e_nname.bv_val ) nptr[-1] = '\0';
 
 	return 0;
 }
@@ -617,14 +619,20 @@ hdb_dn2id_add(
 		tmp[1] = eip->bei_id;
 		*ptr = DN_ONE_PREFIX;
 		bdb_idl_cache_add_id( bdb, db, &key, e->e_id );
-		*ptr = DN_SUBTREE_PREFIX;
-		for (; eip && eip->bei_parent->bei_id; eip = eip->bei_parent) {
-			tmp[1] = eip->bei_id;
-			bdb_idl_cache_add_id( bdb, db, &key, e->e_id );
+		if ( eip->bei_parent ) {
+			*ptr = DN_SUBTREE_PREFIX;
+			for (; eip && eip->bei_parent->bei_id; eip = eip->bei_parent) {
+				tmp[1] = eip->bei_id;
+				bdb_idl_cache_add_id( bdb, db, &key, e->e_id );
+			}
+			/* Handle DB with empty suffix */
+			if ( !op->o_bd->be_suffix[0].bv_len && eip ) {
+				tmp[1] = eip->bei_id;
+				bdb_idl_cache_add_id( bdb, db, &key, e->e_id );
+			}
 		}
 	}
 
-func_leave:
 	op->o_tmpfree( d, op->o_tmpmemctx );
 	Debug( LDAP_DEBUG_TRACE, "<= hdb_dn2id_add 0x%lx: %d\n", e->e_id, rc, 0 );
 
@@ -677,7 +685,7 @@ hdb_dn2id_delete(
 	if ( rc ) goto func_leave;
 
 	/* We hold this lock until the TXN completes */
-	rc = bdb_dn2id_lock( bdb, &e->e_nname, 1, TXN_ID( txn ), &lock );
+	rc = bdb_dn2id_lock( bdb, &e->e_nname, 1, txn, &lock );
 	if ( rc ) goto nolock;
 
 	/* Delete our ID from the parent's list */
@@ -715,10 +723,17 @@ func_leave:
 		tmp[1] = eip->bei_id;
 		*ptr = DN_ONE_PREFIX;
 		bdb_idl_cache_del_id( bdb, db, &key, e->e_id );
-		*ptr = DN_SUBTREE_PREFIX;
-		for (; eip && eip->bei_parent->bei_id; eip = eip->bei_parent) {
-			tmp[1] = eip->bei_id;
-			bdb_idl_cache_del_id( bdb, db, &key, e->e_id );
+		if ( eip ->bei_parent ) {
+			*ptr = DN_SUBTREE_PREFIX;
+			for (; eip && eip->bei_parent->bei_id; eip = eip->bei_parent) {
+				tmp[1] = eip->bei_id;
+				bdb_idl_cache_del_id( bdb, db, &key, e->e_id );
+			}
+			/* Handle DB with empty suffix */
+			if ( !op->o_bd->be_suffix[0].bv_len && eip ) {
+				tmp[1] = eip->bei_id;
+				bdb_idl_cache_del_id( bdb, db, &key, e->e_id );
+			}
 		}
 	}
 	Debug( LDAP_DEBUG_TRACE, "<= hdb_dn2id_delete 0x%lx: %d\n", e->e_id, rc, 0 );
@@ -731,7 +746,7 @@ hdb_dn2id(
 	Operation	*op,
 	struct berval	*in,
 	EntryInfo	*ei,
-	BDB_LOCKER locker,
+	DB_TXN *txn,
 	DB_LOCK *lock )
 {
 	struct bdb_info *bdb = (struct bdb_info *) op->o_bd->be_private;
@@ -763,11 +778,8 @@ hdb_dn2id(
 	data.dlen = data.ulen;
 	data.flags = DB_DBT_USERMEM | DB_DBT_PARTIAL;
 
-	rc = db->cursor( db, NULL, &cursor, bdb->bi_db_opflags );
+	rc = db->cursor( db, txn, &cursor, bdb->bi_db_opflags );
 	if ( rc ) return rc;
-	if ( locker ) {
-		CURSOR_SETLOCKER( cursor, locker );
-	}
 
 	d = op->o_tmpalloc( data.size * 3, op->o_tmpmemctx );
 	d->nrdnlen[1] = nrlen & 0xff;
@@ -778,7 +790,7 @@ hdb_dn2id(
 	*ptr = '\0';
 	data.data = d;
 
-	rc = bdb_dn2id_lock( bdb, in, 0, locker, lock );
+	rc = bdb_dn2id_lock( bdb, in, 0, txn, lock );
 	if ( rc ) goto func_leave;
 
 	rc = cursor->c_get( cursor, &key, &data, DB_GET_BOTH_RANGE );
@@ -820,7 +832,7 @@ func_leave:
 int
 hdb_dn2id_parent(
 	Operation *op,
-	BDB_LOCKER	locker,
+	DB_TXN *txn,
 	EntryInfo *ei,
 	ID *idp )
 {
@@ -843,11 +855,8 @@ hdb_dn2id_parent(
 	DBTzero(&data);
 	data.flags = DB_DBT_USERMEM;
 
-	rc = db->cursor( db, NULL, &cursor, bdb->bi_db_opflags );
+	rc = db->cursor( db, txn, &cursor, bdb->bi_db_opflags );
 	if ( rc ) return rc;
-	if ( locker ) {
-		CURSOR_SETLOCKER(cursor, locker);
-	}
 
 	data.ulen = sizeof(diskNode) + (SLAP_LDAPDN_MAXLEN * 2);
 	d = op->o_tmpalloc( data.ulen, op->o_tmpmemctx );
@@ -941,7 +950,7 @@ hdb_dn2id_children(
 struct dn2id_cookie {
 	struct bdb_info *bdb;
 	Operation *op;
-	BDB_LOCKER locker;
+	DB_TXN *txn;
 	EntryInfo *ei;
 	ID *ids;
 	ID *tmp;
@@ -1095,7 +1104,7 @@ hdb_dn2idl_internal(
 		cx->rc = cx->dbc->c_close( cx->dbc );
 done_one:
 		bdb_cache_entryinfo_lock( cx->ei );
-		cx->ei->bei_state ^= CACHE_ENTRY_ONELEVEL;
+		cx->ei->bei_state &= ~CACHE_ENTRY_ONELEVEL;
 		bdb_cache_entryinfo_unlock( cx->ei );
 		if ( cx->rc )
 			return cx->rc;
@@ -1144,15 +1153,23 @@ gotit:
 				for ( cx->id = bdb_idl_first( save, &idcurs );
 					cx->id != NOID;
 					cx->id = bdb_idl_next( save, &idcurs )) {
-					cx->ei = bdb_cache_find_info( cx->bdb, cx->id );
-					if ( !cx->ei ||
-						( cx->ei->bei_state & CACHE_ENTRY_NO_KIDS ))
+					EntryInfo *ei2;
+					cx->ei = NULL;
+					if ( bdb_cache_find_id( cx->op, cx->txn, cx->id, &cx->ei,
+						ID_NOENTRY, NULL ))
 						continue;
-
-					BDB_ID2DISK( cx->id, &cx->nid );
-					hdb_dn2idl_internal( cx );
-					if ( !BDB_IDL_IS_ZERO( cx->tmp ))
-						nokids = 0;
+					if ( cx->ei ) {
+						ei2 = cx->ei;
+						if ( !( ei2->bei_state & CACHE_ENTRY_NO_KIDS )) {
+							BDB_ID2DISK( cx->id, &cx->nid );
+							hdb_dn2idl_internal( cx );
+							if ( !BDB_IDL_IS_ZERO( cx->tmp ))
+								nokids = 0;
+						}
+						bdb_cache_entryinfo_lock( ei2 );
+						ei2->bei_finders--;
+						bdb_cache_entryinfo_unlock( ei2 );
+					}
 				}
 				cx->depth--;
 				cx->op->o_tmpfree( save, cx->op->o_tmpmemctx );
@@ -1176,7 +1193,7 @@ gotit:
 int
 hdb_dn2idl(
 	Operation	*op,
-	BDB_LOCKER locker,
+	DB_TXN *txn,
 	struct berval *ndn,
 	EntryInfo	*ei,
 	ID *ids,
@@ -1191,7 +1208,7 @@ hdb_dn2idl(
 #ifndef BDB_MULTIPLE_SUFFIXES
 	if ( op->ors_scope != LDAP_SCOPE_ONELEVEL && 
 		( ei->bei_id == 0 ||
-		ei->bei_parent->bei_id == 0 ))
+		( ei->bei_parent->bei_id == 0 && op->o_bd->be_suffix[0].bv_len )))
 	{
 		BDB_IDL_ALL( bdb, ids );
 		return 0;
@@ -1209,7 +1226,7 @@ hdb_dn2idl(
 	cx.tmp = stack;
 	cx.buf = stack + BDB_IDL_UM_SIZE;
 	cx.op = op;
-	cx.locker = locker;
+	cx.txn = txn;
 	cx.need_sort = 0;
 	cx.depth = 0;
 

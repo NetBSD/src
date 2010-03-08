@@ -1,8 +1,10 @@
+/*	$NetBSD: add.c,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+
 /* add.c */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/add.c,v 1.27.2.3 2008/02/11 23:26:41 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/libraries/libldap/add.c,v 1.27.2.5 2009/01/22 00:00:54 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -151,9 +153,32 @@ ldap_add_ext(
 		/* for each attribute in the entry... */
 		for ( i = 0; attrs[i] != NULL; i++ ) {
 			if ( ( attrs[i]->mod_op & LDAP_MOD_BVALUES) != 0 ) {
+				int j;
+
+				if ( attrs[i]->mod_bvalues == NULL ) {
+					ld->ld_errno = LDAP_PARAM_ERROR;
+					ber_free( ber, 1 );
+					return ld->ld_errno;
+				}
+
+				for ( j = 0; attrs[i]->mod_bvalues[ j ] != NULL; j++ ) {
+					if ( attrs[i]->mod_bvalues[ j ]->bv_val == NULL ) {
+						ld->ld_errno = LDAP_PARAM_ERROR;
+						ber_free( ber, 1 );
+						return ld->ld_errno;
+					}
+				}
+
 				rc = ber_printf( ber, "{s[V]N}", attrs[i]->mod_type,
 				    attrs[i]->mod_bvalues );
+
 			} else {
+				if ( attrs[i]->mod_values == NULL ) {
+					ld->ld_errno = LDAP_PARAM_ERROR;
+					ber_free( ber, 1 );
+					return ld->ld_errno;
+				}
+
 				rc = ber_printf( ber, "{s[v]N}", attrs[i]->mod_type,
 				    attrs[i]->mod_values );
 			}

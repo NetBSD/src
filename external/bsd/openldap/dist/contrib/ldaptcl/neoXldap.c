@@ -1,3 +1,5 @@
+/*	$NetBSD: neoXldap.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+
 /*
  * NeoSoft Tcl client extensions to Lightweight Directory Access Protocol.
  * 
@@ -23,7 +25,7 @@
  * Requests for permission may be sent to NeoSoft Inc, 1770 St. James Place,
  * Suite 500, Houston, TX, 77056.
  *
- * $OpenLDAP: pkg/ldap/contrib/ldaptcl/neoXldap.c,v 1.17.10.1 2007/08/31 23:13:51 quanah Exp $
+ * OpenLDAP: pkg/ldap/contrib/ldaptcl/neoXldap.c,v 1.17.10.1 2007/08/31 23:13:51 quanah Exp
  *
  */
 

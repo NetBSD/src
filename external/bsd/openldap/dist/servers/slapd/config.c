@@ -1,8 +1,10 @@
+/*	$NetBSD: config.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+
 /* config.c - configuration file handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.441.2.16 2008/04/14 22:20:28 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.441.2.31 2009/12/12 06:18:52 hyc Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,16 +35,13 @@
 #include <ac/signal.h>
 #include <ac/socket.h>
 #include <ac/errno.h>
+#include <ac/unistd.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
 
 #ifndef S_ISREG
 #define	S_ISREG(m)	(((m) & _S_IFMT) == _S_IFREG)
-#endif
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
 #endif
 
 #include "slap.h"
@@ -62,7 +61,9 @@ slap_mask_t		global_allows = 0;
 slap_mask_t		global_disallows = 0;
 int		global_gentlehup = 0;
 int		global_idletimeout = 0;
+int		global_writetimeout = 0;
 char	*global_host = NULL;
+struct berval global_host_bv = BER_BVNULL;
 char	*global_realm = NULL;
 char	*sasl_host = NULL;
 char		**default_passwd_hash = NULL;
@@ -86,7 +87,6 @@ int slapi_plugins_used = 0;
 
 static int fp_getline(FILE *fp, ConfigArgs *c);
 static void fp_getline_init(ConfigArgs *c);
-static int fp_parse_line(ConfigArgs *c);
 
 static char	*strtok_quote(char *line, char *sep, char **quote_ptr);
 static char *strtok_quote_ldif(char **line);
@@ -127,6 +127,7 @@ int config_check_vals(ConfigTable *Conf, ConfigArgs *c, int check_only ) {
 	int rc, arg_user, arg_type, arg_syn, iarg;
 	unsigned uiarg;
 	long larg;
+	unsigned long ularg;
 	ber_len_t barg;
 	
 	if(Conf->arg_type == ARG_IGNORED) {
@@ -144,7 +145,7 @@ int config_check_vals(ConfigTable *Conf, ConfigArgs *c, int check_only ) {
 	}
 	if(Conf->min_args && (c->argc < Conf->min_args)) {
 		snprintf( c->cr_msg, sizeof( c->cr_msg ), "<%s> missing <%s> argument",
-			c->argv[0], Conf->what );
+			c->argv[0], Conf->what ? Conf->what : "" );
 		Debug(LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE, "%s: keyword %s\n", c->log, c->cr_msg, 0 );
 		return(ARG_BAD_CONF);
 	}
@@ -215,6 +216,16 @@ int config_check_vals(ConfigTable *Conf, ConfigArgs *c, int check_only ) {
 			ch_free( c->value_ndn.bv_val );
 			ch_free( c->value_dn.bv_val );
 		}
+	} else if(arg_type == ARG_ATDESC) {
+		const char *text = NULL;
+		c->value_ad = NULL;
+		rc = slap_str2ad( c->argv[1], &c->value_ad, &text );
+		if ( rc != LDAP_SUCCESS ) {
+			snprintf( c->cr_msg, sizeof( c->cr_msg ), "<%s> invalid AttributeDescription %d (%s)",
+				c->argv[0], rc, text );
+			Debug(LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE, "%s: %s\n" , c->log, c->cr_msg, 0);
+			return(ARG_BAD_CONF);
+		}
 	} else {	/* all numeric */
 		int j;
 		iarg = 0; larg = 0; barg = 0;
@@ -243,6 +254,16 @@ int config_check_vals(ConfigTable *Conf, ConfigArgs *c, int check_only ) {
 				if ( lutil_atolx( &larg, c->argv[1], 0 ) != 0 ) {
 					snprintf( c->cr_msg, sizeof( c->cr_msg ),
 						"<%s> unable to parse \"%s\" as long",
+						c->argv[0], c->argv[1] );
+					Debug(LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE, "%s: %s\n",
+						c->log, c->cr_msg, 0);
+					return(ARG_BAD_CONF);
+				}
+				break;
+			case ARG_ULONG:
+				if ( lutil_atoulx( &ularg, c->argv[1], 0 ) != 0 ) {
+					snprintf( c->cr_msg, sizeof( c->cr_msg ),
+						"<%s> unable to parse \"%s\" as unsigned long",
 						c->argv[0], c->argv[1] );
 					Debug(LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE, "%s: %s\n",
 						c->log, c->cr_msg, 0);
@@ -297,6 +318,7 @@ int config_check_vals(ConfigTable *Conf, ConfigArgs *c, int check_only ) {
 			case ARG_INT:		c->value_int = iarg;		break;
 			case ARG_UINT:		c->value_uint = uiarg;		break;
 			case ARG_LONG:		c->value_long = larg;		break;
+			case ARG_ULONG:		c->value_ulong = ularg;		break;
 			case ARG_BER_LEN_T:	c->value_ber_t = barg;		break;
 		}
 	}
@@ -348,6 +370,7 @@ int config_set_vals(ConfigTable *Conf, ConfigArgs *c) {
 			case ARG_INT: 		*(int*)ptr = c->value_int;			break;
 			case ARG_UINT: 		*(unsigned*)ptr = c->value_uint;			break;
 			case ARG_LONG:  	*(long*)ptr = c->value_long;			break;
+			case ARG_ULONG:  	*(unsigned long*)ptr = c->value_ulong;			break;
 			case ARG_BER_LEN_T: 	*(ber_len_t*)ptr = c->value_ber_t;			break;
 			case ARG_STRING: {
 				char *cc = *(char**)ptr;
@@ -364,6 +387,9 @@ int config_set_vals(ConfigTable *Conf, ConfigArgs *c) {
 				}
 			case ARG_BERVAL:
 				*(struct berval *)ptr = c->value_bv;
+				break;
+			case ARG_ATDESC:
+				*(AttributeDescription **)ptr = c->value_ad;
 				break;
 		}
 	return(0);
@@ -390,6 +416,7 @@ config_del_vals(ConfigTable *cf, ConfigArgs *c)
 
 	/* If there is no handler, just ignore it */
 	if ( cf->arg_type & ARG_MAGIC ) {
+		c->argv[0] = cf->ad->ad_cname.bv_val;
 		c->op = LDAP_MOD_DELETE;
 		c->type = cf->arg_type & ARGS_USERLAND;
 		rc = (*((ConfigDriver*)cf->arg_item))(c);
@@ -435,6 +462,7 @@ config_get_vals(ConfigTable *cf, ConfigArgs *c)
 		case ARG_INT:	c->value_int = *(int *)ptr; break;
 		case ARG_UINT:	c->value_uint = *(unsigned *)ptr; break;
 		case ARG_LONG:	c->value_long = *(long *)ptr; break;
+		case ARG_ULONG:	c->value_ulong = *(unsigned long *)ptr; break;
 		case ARG_BER_LEN_T:	c->value_ber_t = *(ber_len_t *)ptr; break;
 		case ARG_STRING:
 			if ( *(char **)ptr )
@@ -442,6 +470,8 @@ config_get_vals(ConfigTable *cf, ConfigArgs *c)
 			break;
 		case ARG_BERVAL:
 			ber_dupbv( &c->value_bv, (struct berval *)ptr ); break;
+		case ARG_ATDESC:
+			c->value_ad = *(AttributeDescription **)ptr; break;
 		}
 	}
 	if ( cf->arg_type & ARGS_TYPES) {
@@ -451,6 +481,7 @@ config_get_vals(ConfigTable *cf, ConfigArgs *c)
 		case ARG_INT: bv.bv_len = snprintf(bv.bv_val, sizeof( c->log ), "%d", c->value_int); break;
 		case ARG_UINT: bv.bv_len = snprintf(bv.bv_val, sizeof( c->log ), "%u", c->value_uint); break;
 		case ARG_LONG: bv.bv_len = snprintf(bv.bv_val, sizeof( c->log ), "%ld", c->value_long); break;
+		case ARG_ULONG: bv.bv_len = snprintf(bv.bv_val, sizeof( c->log ), "%lu", c->value_ulong); break;
 		case ARG_BER_LEN_T: bv.bv_len = snprintf(bv.bv_val, sizeof( c->log ), "%ld", c->value_ber_t); break;
 		case ARG_ON_OFF: bv.bv_len = snprintf(bv.bv_val, sizeof( c->log ), "%s",
 			c->value_int ? "TRUE" : "FALSE"); break;
@@ -464,6 +495,13 @@ config_get_vals(ConfigTable *cf, ConfigArgs *c)
 		case ARG_BERVAL:
 			if ( !BER_BVISEMPTY( &c->value_bv )) {
 				bv = c->value_bv;
+			} else {
+				return 1;
+			}
+			break;
+		case ARG_ATDESC:
+			if ( c->value_ad ) {
+				bv = c->value_ad->ad_cname;
 			} else {
 				return 1;
 			}
@@ -716,7 +754,7 @@ read_config_file(const char *fname, int depth, ConfigArgs *cf, ConfigTable *cft)
 
 		c->argc = 0;
 		ch_free( c->tline );
-		if ( fp_parse_line( c ) ) {
+		if ( config_fp_parse_line( c ) ) {
 			rc = 1;
 			goto done;
 		}
@@ -1174,8 +1212,32 @@ static slap_verbmasks versionkey[] = {
 	{ BER_BVNULL, 0 }
 };
 
+static int
+slap_sb_uri(
+	struct berval *val,
+	void *bcp,
+	slap_cf_aux_table *tab0,
+	const char *tabmsg,
+	int unparse )
+{
+	slap_bindconf *bc = bcp;
+	if ( unparse ) {
+		if ( bc->sb_uri.bv_len >= val->bv_len )
+			return -1;
+		val->bv_len = bc->sb_uri.bv_len;
+		AC_MEMCPY( val->bv_val, bc->sb_uri.bv_val, val->bv_len );
+	} else {
+		bc->sb_uri = *val;
+#ifdef HAVE_TLS
+		if ( ldap_is_ldaps_url( val->bv_val ))
+			bc->sb_tls_do_init = 1;
+#endif
+	}
+	return 0;
+}
+
 static slap_cf_aux_table bindkey[] = {
-	{ BER_BVC("uri="), offsetof(slap_bindconf, sb_uri), 'b', 1, NULL },
+	{ BER_BVC("uri="), 0, 'x', 1, slap_sb_uri },
 	{ BER_BVC("version="), offsetof(slap_bindconf, sb_version), 'i', 0, versionkey },
 	{ BER_BVC("bindmethod="), offsetof(slap_bindconf, sb_method), 'i', 0, methkey },
 	{ BER_BVC("timeout="), offsetof(slap_bindconf, sb_timeout_api), 'i', 0, NULL },
@@ -1188,20 +1250,20 @@ static slap_cf_aux_table bindkey[] = {
 	{ BER_BVC("authcID="), offsetof(slap_bindconf, sb_authcId), 'b', 1, NULL },
 	{ BER_BVC("authzID="), offsetof(slap_bindconf, sb_authzId), 'b', 1, (slap_verbmasks *)authzNormalize },
 #ifdef HAVE_TLS
-	{ BER_BVC("starttls="), offsetof(slap_bindconf, sb_tls), 'i', 0, tlskey },
-
-	/* NOTE: replace "13" with the actual index
+	/* NOTE: replace "12" with the actual index
 	 * of the first TLS-related line */
-#define aux_TLS (bindkey+13)	/* beginning of TLS keywords */
+#define aux_TLS (bindkey+12)	/* beginning of TLS keywords */
 
+	{ BER_BVC("starttls="), offsetof(slap_bindconf, sb_tls), 'i', 0, tlskey },
 	{ BER_BVC("tls_cert="), offsetof(slap_bindconf, sb_tls_cert), 's', 1, NULL },
 	{ BER_BVC("tls_key="), offsetof(slap_bindconf, sb_tls_key), 's', 1, NULL },
 	{ BER_BVC("tls_cacert="), offsetof(slap_bindconf, sb_tls_cacert), 's', 1, NULL },
 	{ BER_BVC("tls_cacertdir="), offsetof(slap_bindconf, sb_tls_cacertdir), 's', 1, NULL },
-	{ BER_BVC("tls_reqcert="), offsetof(slap_bindconf, sb_tls_reqcert), 's', 1, NULL },
-	{ BER_BVC("tls_cipher_suite="), offsetof(slap_bindconf, sb_tls_cipher_suite), 's', 1, NULL },
+	{ BER_BVC("tls_reqcert="), offsetof(slap_bindconf, sb_tls_reqcert), 's', 0, NULL },
+	{ BER_BVC("tls_cipher_suite="), offsetof(slap_bindconf, sb_tls_cipher_suite), 's', 0, NULL },
+	{ BER_BVC("tls_protocol_min="), offsetof(slap_bindconf, sb_tls_protocol_min), 's', 0, NULL },
 #ifdef HAVE_OPENSSL_CRL
-	{ BER_BVC("tls_crlcheck="), offsetof(slap_bindconf, sb_tls_crlcheck), 's', 1, NULL },
+	{ BER_BVC("tls_crlcheck="), offsetof(slap_bindconf, sb_tls_crlcheck), 's', 0, NULL },
 #endif
 #endif
 	{ BER_BVNULL, 0, 0, 0, NULL }
@@ -1293,6 +1355,20 @@ slap_cf_aux_table_parse( const char *word, void *dst, slap_cf_aux_table *tab0, L
 
 				rc = lutil_atoulx( ulptr, val, 0 );
 				break;
+
+			case 'x':
+				if ( tab->aux != NULL ) {
+					struct berval value;
+					slap_cf_aux_table_parse_x *func = (slap_cf_aux_table_parse_x *)tab->aux;
+
+					ber_str2bv( val, 0, 1, &value );
+
+					rc = func( &value, (void *)((char *)dst + tab->off), tab, tabmsg, 0 );
+
+				} else {
+					rc = 1;
+				}
+				break;
 			}
 
 			if ( rc ) {
@@ -1383,6 +1459,26 @@ slap_cf_aux_table_unparse( void *src, struct berval *bv, slap_cf_aux_table *tab0
 			ptr += snprintf( ptr, sizeof( buf ) - ( ptr - buf ), "%lu", *ulptr );
 			break;
 
+		case 'x':
+			*ptr++ = ' ';
+			ptr = lutil_strcopy( ptr, tab->key.bv_val );
+			if ( tab->quote ) *ptr++ = '"';
+			if ( tab->aux != NULL ) {
+				struct berval value;
+				slap_cf_aux_table_parse_x *func = (slap_cf_aux_table_parse_x *)tab->aux;
+				int rc;
+
+				value.bv_val = ptr;
+				value.bv_len = buf + sizeof( buf ) - ptr;
+
+				rc = func( &value, (void *)((char *)src + tab->off), tab, "(unparse)", 1 );
+				if ( rc == 0 ) {
+					ptr += value.bv_len;
+				}
+			}
+			if ( tab->quote ) *ptr++ = '"';
+			break;
+
 		default:
 			assert( 0 );
 		}
@@ -1408,6 +1504,14 @@ slap_tls_get_config( LDAP *ld, int opt, char **val )
 	case LDAP_OPT_X_TLS_REQUIRE_CERT:
 		keys = vfykeys;
 		break;
+	case LDAP_OPT_X_TLS_PROTOCOL_MIN: {
+		char buf[8];
+		ldap_pvt_tls_get_option( ld, opt, &ival );
+		snprintf( buf, sizeof( buf ), "%d.%d",
+			( ival >> 8 ) & 0xff, ival & 0xff );
+		*val = ch_strdup( buf );
+		return 0;
+		}
 	default:
 		return -1;
 	}
@@ -1519,6 +1623,10 @@ void bindconf_free( slap_bindconf *bc ) {
 		ch_free( bc->sb_tls_cipher_suite );
 		bc->sb_tls_cipher_suite = NULL;
 	}
+	if ( bc->sb_tls_protocol_min ) {
+		ch_free( bc->sb_tls_protocol_min );
+		bc->sb_tls_protocol_min = NULL;
+	}
 #ifdef HAVE_OPENSSL_CRL
 	if ( bc->sb_tls_crlcheck ) {
 		ch_free( bc->sb_tls_crlcheck );
@@ -1570,6 +1678,7 @@ static struct {
 	{ "tls_cacert", offsetof(slap_bindconf, sb_tls_cacert), LDAP_OPT_X_TLS_CACERTFILE },
 	{ "tls_cacertdir", offsetof(slap_bindconf, sb_tls_cacertdir), LDAP_OPT_X_TLS_CACERTDIR },
 	{ "tls_cipher_suite", offsetof(slap_bindconf, sb_tls_cipher_suite), LDAP_OPT_X_TLS_CIPHER_SUITE },
+	{ "tls_protocol_min", offsetof(slap_bindconf, sb_tls_protocol_min), LDAP_OPT_X_TLS_PROTOCOL_MIN },
 	{0, 0}
 };
 
@@ -1600,6 +1709,17 @@ int bindconf_tls_set( slap_bindconf *bc, LDAP *ld )
 			Debug( LDAP_DEBUG_ANY,
 				"bindconf_tls_set: failed to set tls_reqcert to %s\n",
 					bc->sb_tls_reqcert, 0, 0 );
+			res = -1;
+		} else
+			newctx = 1;
+	}
+	if ( bc->sb_tls_protocol_min ) {
+		rc = ldap_int_tls_config( ld, LDAP_OPT_X_TLS_PROTOCOL_MIN,
+			bc->sb_tls_protocol_min );
+		if ( rc ) {
+			Debug( LDAP_DEBUG_ANY,
+				"bindconf_tls_set: failed to set tls_protocol_min to %s\n",
+					bc->sb_tls_protocol_min, 0, 0 );
 			res = -1;
 		} else
 			newctx = 1;
@@ -1930,8 +2050,8 @@ fp_getline( FILE *fp, ConfigArgs *c )
 	return(line[0] ? 1 : 0);
 }
 
-static int
-fp_parse_line(ConfigArgs *c)
+int
+config_fp_parse_line(ConfigArgs *c)
 {
 	char *token;
 	static char *const hide[] = {
@@ -1984,7 +2104,7 @@ config_destroy( )
 		if ( frontendDB->be_schemadn.bv_val )
 			free( frontendDB->be_schemadn.bv_val );
 		if ( frontendDB->be_acl )
-			acl_destroy( frontendDB->be_acl, NULL );
+			acl_destroy( frontendDB->be_acl );
 	}
 	free( line );
 	if ( slapd_args_file )
@@ -2062,4 +2182,67 @@ int config_generic_wrapper( Backend *be, const char *fname, int lineno,
 		rc = config_add_vals( ct, &c );
 	}
 	return rc;
+}
+
+/* See if the given URL (in plain and parsed form) matches
+ * any of the server's listener addresses. Return matching
+ * Listener or NULL for no match.
+ */
+Listener *config_check_my_url( const char *url, LDAPURLDesc *lud )
+{
+	Listener **l = slapd_get_listeners();
+	int i, isMe;
+
+	/* Try a straight compare with Listener strings */
+	for ( i=0; l && l[i]; i++ ) {
+		if ( !strcasecmp( url, l[i]->sl_url.bv_val )) {
+			return l[i];
+		}
+	}
+
+	isMe = 0;
+	/* If hostname is empty, or is localhost, or matches
+	 * our hostname, this url refers to this host.
+	 * Compare it against listeners and ports.
+	 */
+	if ( !lud->lud_host || !lud->lud_host[0] ||
+		!strncasecmp("localhost", lud->lud_host,
+			STRLENOF("localhost")) ||
+		!strcasecmp( global_host, lud->lud_host )) {
+
+		for ( i=0; l && l[i]; i++ ) {
+			LDAPURLDesc *lu2;
+			ldap_url_parse( l[i]->sl_url.bv_val, &lu2 );
+			do {
+				if ( strcasecmp( lud->lud_scheme,
+					lu2->lud_scheme ))
+					break;
+				if ( lud->lud_port != lu2->lud_port )
+					break;
+				/* Listener on ANY address */
+				if ( !lu2->lud_host || !lu2->lud_host[0] ) {
+					isMe = 1;
+					break;
+				}
+				/* URL on ANY address */
+				if ( !lud->lud_host || !lud->lud_host[0] ) {
+					isMe = 1;
+					break;
+				}
+				/* Listener has specific host, must
+				 * match it
+				 */
+				if ( !strcasecmp( lud->lud_host,
+					lu2->lud_host )) {
+					isMe = 1;
+					break;
+				}
+			} while(0);
+			ldap_free_urldesc( lu2 );
+			if ( isMe ) {
+				return l[i];
+			}
+		}
+	}
+	return NULL;
 }

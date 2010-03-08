@@ -1,8 +1,10 @@
+/*	$NetBSD: ad.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+
 /* ad.c - routines for dealing with attribute descriptions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.95.2.4 2008/02/11 23:26:43 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.95.2.9 2009/07/27 20:19:18 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,6 +28,10 @@
 
 #include "slap.h"
 #include "lutil.h"
+
+static struct berval bv_no_attrs = BER_BVC( LDAP_NO_ATTRS );
+static struct berval bv_all_user_attrs = BER_BVC( "*" );
+static struct berval bv_all_operational_attrs = BER_BVC( "+" );
 
 static AttributeName anlist_no_attrs[] = {
 	{ BER_BVC( LDAP_NO_ATTRS ), NULL, 0, NULL },
@@ -53,6 +59,10 @@ AttributeName *slap_anlist_all_user_attributes = anlist_all_user_attributes;
 AttributeName *slap_anlist_all_operational_attributes = anlist_all_operational_attributes;
 AttributeName *slap_anlist_all_attributes = anlist_all_attributes;
 
+struct berval * slap_bv_no_attrs = &bv_no_attrs;
+struct berval * slap_bv_all_user_attrs = &bv_all_user_attrs;
+struct berval * slap_bv_all_operational_attrs = &bv_all_operational_attrs;
+
 typedef struct Attr_option {
 	struct berval name;	/* option name or prefix */
 	int           prefix;	/* NAME is a tag and range prefix */
@@ -63,6 +73,8 @@ static Attr_option lang_option = { BER_BVC("lang-"), 1 };
 /* Options sorted by name, and number of options */
 static Attr_option *options = &lang_option;
 static int option_count = 1;
+
+static int msad_range_hack = 0;
 
 static Attr_option *ad_find_option_definition( const char *opt, int optlen );
 
@@ -76,7 +88,9 @@ static int ad_keystring(
 	}
 
 	for( i=1; i<bv->bv_len; i++ ) {
-		if( !AD_CHAR( bv->bv_val[i] ) ) {
+		if( !AD_CHAR( bv->bv_val[i] )) {
+			if ( msad_range_hack && bv->bv_val[i] == '=' )
+				continue;
 			return 1;
 		}
 	}
@@ -234,7 +248,8 @@ int slap_bv2ad(
 		} else if ( ad_find_option_definition( opt, optlen ) ) {
 			int i;
 
-			if( opt[optlen-1] == '-' ) {
+			if( opt[optlen-1] == '-' ||
+				( opt[optlen-1] == '=' && msad_range_hack )) {
 				desc.ad_flags |= SLAP_DESC_TAG_RANGE;
 			}
 
@@ -581,29 +596,33 @@ int ad_inlist(
 		 * else if requested description is !objectClass, return
 		 * attributes which the class does not require/allow
 		 */
-		oc = attrs->an_oc;
-		if( oc == NULL && attrs->an_name.bv_val ) {
-			switch( attrs->an_name.bv_val[0] ) {
-			case '@': /* @objectClass */
-			case '+': /* +objectClass (deprecated) */
-			case '!': { /* exclude */
-					struct berval ocname;
-					ocname.bv_len = attrs->an_name.bv_len - 1;
-					ocname.bv_val = &attrs->an_name.bv_val[1];
-					oc = oc_bvfind( &ocname );
-					attrs->an_oc_exclude = 0;
-					if ( oc && attrs->an_name.bv_val[0] == '!' ) {
-						attrs->an_oc_exclude = 1;
-					}
-				} break;
+		if ( !( attrs->an_flags & SLAP_AN_OCINITED )) {
+			if( attrs->an_name.bv_val ) {
+				switch( attrs->an_name.bv_val[0] ) {
+				case '@': /* @objectClass */
+				case '+': /* +objectClass (deprecated) */
+				case '!': { /* exclude */
+						struct berval ocname;
+						ocname.bv_len = attrs->an_name.bv_len - 1;
+						ocname.bv_val = &attrs->an_name.bv_val[1];
+						oc = oc_bvfind( &ocname );
+						if ( oc && attrs->an_name.bv_val[0] == '!' ) {
+							attrs->an_flags |= SLAP_AN_OCEXCLUDE;
+						} else {
+							attrs->an_flags &= ~SLAP_AN_OCEXCLUDE;
+						}
+					} break;
 
-			default: /* old (deprecated) way */
-				oc = oc_bvfind( &attrs->an_name );
+				default: /* old (deprecated) way */
+					oc = oc_bvfind( &attrs->an_name );
+				}
+				attrs->an_oc = oc;
 			}
-			attrs->an_oc = oc;
+			attrs->an_flags |= SLAP_AN_OCINITED;
 		}
+		oc = attrs->an_oc;
 		if( oc != NULL ) {
-			if ( attrs->an_oc_exclude ) {
+			if ( attrs->an_flags & SLAP_AN_OCEXCLUDE ) {
 				if ( oc == slap_schema.si_oc_extensibleObject ) {
 					/* extensibleObject allows the return of anything */
 					return 0;
@@ -817,7 +836,10 @@ undef_promote(
 
 			*u_ad = (*u_ad)->ad_next;
 
+			tmp->ad_type = nat;
 			tmp->ad_next = NULL;
+			/* ad_cname was contiguous, no leak here */
+			tmp->ad_cname = nat->sat_cname;
 			*n_ad = tmp;
 			n_ad = &tmp->ad_next;
 		} else {
@@ -916,7 +938,7 @@ str2anlist( AttributeName *an, char *in, const char *brkstr )
 
 		anew->an_desc = NULL;
 		anew->an_oc = NULL;
-		anew->an_oc_exclude = 0;
+		anew->an_flags = 0;
 		ber_str2bv(s, 0, 1, &anew->an_name);
 		slap_bv2ad(&anew->an_name, &anew->an_desc, &text);
 		if ( !anew->an_desc ) {
@@ -943,7 +965,7 @@ str2anlist( AttributeName *an, char *in, const char *brkstr )
 					}
 
 					if ( anew->an_name.bv_val[0] == '!' ) {
-						anew->an_oc_exclude = 1;
+						anew->an_flags |= SLAP_AN_OCEXCLUDE;
 					}
 				} break;
 
@@ -955,6 +977,7 @@ str2anlist( AttributeName *an, char *in, const char *brkstr )
 				}
 			}
 		}
+		anew->an_flags |= SLAP_AN_OCINITED;
 		anew++;
 	}
 
@@ -1175,6 +1198,11 @@ ad_define_option( const char *name, const char *fname, int lineno )
 	optlen = 0;
 	do {
 		if ( !DESC_CHAR( name[optlen] ) ) {
+			/* allow trailing '=', same as '-' */
+			if ( name[optlen] == '=' && !name[optlen+1] ) {
+				msad_range_hack = 1;
+				continue;
+			}
 			Debug( LDAP_DEBUG_ANY,
 			       "%s: line %d: illegal option name \"%s\"\n",
 				    fname, lineno, name );
@@ -1201,7 +1229,8 @@ ad_define_option( const char *name, const char *fname, int lineno )
 
 	options[i].name.bv_val = ch_strdup( name );
 	options[i].name.bv_len = optlen;
-	options[i].prefix = (name[optlen-1] == '-');
+	options[i].prefix = (name[optlen-1] == '-') ||
+ 		(name[optlen-1] == '=');
 
 	if ( i != option_count &&
 	     options[i].prefix &&

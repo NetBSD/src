@@ -1,7 +1,11 @@
+/*	$NetBSD: smbk5pwd.c,v 1.1.1.3 2010/03/08 02:14:15 lukem Exp $	*/
+
 /* smbk5pwd.c - Overlay for managing Samba and Heimdal passwords */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/smbk5pwd/smbk5pwd.c,v 1.17.2.12 2008/07/09 22:59:00 quanah Exp $ */
-/*
- * Copyright 2004-2005 by Howard Chu, Symas Corp.
+/* OpenLDAP: pkg/ldap/contrib/slapd-modules/smbk5pwd/smbk5pwd.c,v 1.17.2.16 2009/08/17 21:49:00 quanah Exp */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 2004-2009 The OpenLDAP Foundation.
+ * Portions Copyright 2004-2005 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,11 +16,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
-/*
+/* ACKNOWLEDGEMENTS:
  * Support for table-driven configuration added by Pierangelo Masarati.
  * Support for sambaPwdMustChange and sambaPwdCanChange added by Marco D'Ettorre.
- *
- * The conditions of the OpenLDAP Public License apply.
  */
 
 #include <portable.h>
@@ -59,12 +61,18 @@ static HDB *db;
 static AttributeDescription *ad_krb5Key;
 static AttributeDescription *ad_krb5KeyVersionNumber;
 static AttributeDescription *ad_krb5PrincipalName;
+static AttributeDescription *ad_krb5ValidEnd;
 static ObjectClass *oc_krb5KDCEntry;
 #endif
 
 #ifdef DO_SAMBA
+#ifdef HAVE_GNUTLS
+#include <gcrypt.h>
+typedef unsigned char DES_cblock[8];
+#else
 #include <openssl/des.h>
 #include <openssl/md4.h>
+#endif
 #include "ldap_utf8.h"
 
 static AttributeDescription *ad_sambaLMPassword;
@@ -129,7 +137,9 @@ static void lmPasswd_to_key(
 	k[6] = ((lpw[5]&0x3F)<<2) | (lpw[6]>>6);
 	k[7] = ((lpw[6]&0x7F)<<1);
 
+#ifdef HAVE_OPENSSL
 	des_set_odd_parity( key );
+#endif
 }
 
 #define MAX_PWLEN 256
@@ -163,21 +173,45 @@ static void lmhash(
 {
 	char UcasePassword[15];
 	DES_cblock key;
-	DES_key_schedule schedule;
 	DES_cblock StdText = "KGS!@#$%";
 	DES_cblock hbuf[2];
+#ifdef HAVE_OPENSSL
+	DES_key_schedule schedule;
+#elif defined(HAVE_GNUTLS)
+	gcry_cipher_hd_t h = NULL;
+	gcry_error_t err;
+
+	err = gcry_cipher_open( &h, GCRY_CIPHER_DES, GCRY_CIPHER_MODE_CBC, 0 );
+	if ( err ) return;
+#endif
 
 	strncpy( UcasePassword, passwd->bv_val, 14 );
 	UcasePassword[14] = '\0';
 	ldap_pvt_str2upper( UcasePassword );
 
 	lmPasswd_to_key( UcasePassword, &key );
+#ifdef HAVE_GNUTLS
+	err = gcry_cipher_setkey( h, &key, sizeof(key) );
+	if ( err == 0 ) {
+		err = gcry_cipher_encrypt( h, &hbuf[0], sizeof(key), &StdText, sizeof(key) );
+		if ( err == 0 ) {
+			gcry_cipher_reset( h );
+			lmPasswd_to_key( &UcasePassword[7], &key );
+			err = gcry_cipher_setkey( h, &key, sizeof(key) );
+			if ( err == 0 ) {
+				err = gcry_cipher_encrypt( h, &hbuf[1], sizeof(key), &StdText, sizeof(key) );
+			}
+		}
+		gcry_cipher_close( h );
+	}
+#elif defined(HAVE_OPENSSL)
 	des_set_key_unchecked( &key, schedule );
 	des_ecb_encrypt( &StdText, &hbuf[0], schedule , DES_ENCRYPT );
 
 	lmPasswd_to_key( &UcasePassword[7], &key );
 	des_set_key_unchecked( &key, schedule );
 	des_ecb_encrypt( &StdText, &hbuf[1], schedule , DES_ENCRYPT );
+#endif
 
 	hexify( (char *)hbuf, hash );
 }
@@ -192,14 +226,20 @@ static void nthash(
 	 * 256 UCS2 characters, not 256 bytes...
 	 */
 	char hbuf[HASHLEN];
+#ifdef HAVE_OPENSSL
 	MD4_CTX ctx;
+#endif
 
 	if (passwd->bv_len > MAX_PWLEN*2)
 		passwd->bv_len = MAX_PWLEN*2;
-		
+
+#ifdef HAVE_OPENSSL
 	MD4_Init( &ctx );
 	MD4_Update( &ctx, passwd->bv_val, passwd->bv_len );
 	MD4_Final( (unsigned char *)hbuf, &ctx );
+#elif defined(HAVE_GNUTLS)
+	gcry_md_hash_buffer(GCRY_MD_MD4, hbuf, passwd->bv_val, passwd->bv_len );
+#endif
 
 	hexify( hbuf, hash );
 }
@@ -273,9 +313,9 @@ static int k5key_chk(
 	int rc;
 	Entry *e;
 	Attribute *a;
-    krb5_error_code ret;
-    krb5_keyblock key;
-    krb5_salt salt;
+	krb5_error_code ret;
+	krb5_keyblock key;
+	krb5_salt salt;
 	hdb_entry ent;
 
 	/* Find our thread context, find our Operation */
@@ -300,6 +340,19 @@ static int k5key_chk(
 		memset( &ent, 0, sizeof(ent) );
 		ret = krb5_parse_name(context, a->a_vals[0].bv_val, &ent.principal);
 		if ( ret ) break;
+
+		a = attr_find( e->e_attrs, ad_krb5ValidEnd );
+		if (a) {
+			struct lutil_tm tm;
+			struct lutil_timet tt;
+			if ( lutil_parsetime( a->a_vals[0].bv_val, &tm ) == 0 &&
+				lutil_tm2time( &tm, &tt ) == 0 && tt.tt_usec < op->o_time ) {
+				/* Account is expired */
+				rc = LUTIL_PASSWD_ERR;
+				break;
+			}
+		}
+
 		krb5_get_pw_salt( context, ent.principal, &salt );
 		krb5_free_principal( context, ent.principal );
 
@@ -370,6 +423,7 @@ static int smbk5pwd_exop_passwd(
 		krb5_error_code ret;
 		hdb_entry ent;
 		struct berval *keys;
+		size_t nkeys;
 		int kvno, i;
 		Attribute *a;
 
@@ -400,7 +454,9 @@ static int smbk5pwd_exop_passwd(
 				op->o_log_prefix, e->e_name.bv_val, 0 );
 		}
 
-		ret = _kadm5_set_keys(kadm_context, &ent, qpw->rs_new.bv_val);
+		ret = hdb_generate_key_set_password(context, ent.principal,
+			qpw->rs_new.bv_val, &ent.keys.val, &nkeys);
+		ent.keys.len = nkeys;
 		hdb_seal_keys(context, db, &ent);
 		krb5_free_principal( context, ent.principal );
 
@@ -419,7 +475,7 @@ static int smbk5pwd_exop_passwd(
 		}
 		BER_BVZERO( &keys[i] );
 
-		_kadm5_free_keys(kadm_context, ent.keys.len, ent.keys.val);
+		hdb_free_keys(context, ent.keys.len, ent.keys.val);
 
 		if ( i != ent.keys.len ) {
 			ber_bvarray_free( keys );
@@ -840,6 +896,7 @@ smbk5pwd_modules_init( smbk5pwd_t *pi )
 		{ "krb5Key",			&ad_krb5Key },
 		{ "krb5KeyVersionNumber",	&ad_krb5KeyVersionNumber },
 		{ "krb5PrincipalName",		&ad_krb5PrincipalName },
+		{ "krb5ValidEnd",		&ad_krb5ValidEnd },
 		{ NULL }
 	},
 #endif /* DO_KRB5 */
@@ -908,7 +965,7 @@ smbk5pwd_modules_init( smbk5pwd_t *pi )
 			char *err_str, *err_msg = "<unknown error>";
 			err_str = krb5_get_error_string( context );
 			if (!err_str)
-				err_msg = krb5_get_err_text( context, ret );
+				err_msg = (char *)krb5_get_err_text( context, ret );
 			Debug( LDAP_DEBUG_ANY, "smbk5pwd: "
 				"unable to initialize krb5 admin context: %s (%d).\n",
 				err_str ? err_str : err_msg, ret, 0 );

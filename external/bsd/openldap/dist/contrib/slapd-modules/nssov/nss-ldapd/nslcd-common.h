@@ -1,3 +1,5 @@
+/*	$NetBSD: nslcd-common.h,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    nslcd-common.h - helper macros for reading and writing in
                     protocol streams

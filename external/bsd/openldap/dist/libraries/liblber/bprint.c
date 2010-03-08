@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblber/bprint.c,v 1.57.2.3 2008/02/11 23:26:41 kurt Exp $ */
+/*	$NetBSD: bprint.c,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/libraries/liblber/bprint.c,v 1.57.2.5 2009/08/02 21:06:33 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -276,47 +278,21 @@ ber_dump(
 	ber_bprint( ber->ber_ptr, len );
 }
 
+typedef struct seqorset Seqorset;
+
+/* Exists for binary compatibility with OpenLDAP 2.4.17-- */
 int
 ber_log_sos_dump(
 	int errlvl,
 	int loglvl,
 	Seqorset *sos )
 {
-	assert( sos != NULL );
-
-	if ( !ber_log_check( errlvl, loglvl )) {
-		return 0;
-	}
-
-	ber_sos_dump( sos );
-	return 1;
+	return 0;
 }
 
+/* Exists for binary compatibility with OpenLDAP 2.4.17-- */
 void
 ber_sos_dump(
 	Seqorset *sos )
 {
-	char buf[132];
-
-	assert( sos != NULL );
-
-	(*ber_pvt_log_print)( "*** sos dump ***\n" );
-
-	while ( sos != NULL ) {
-		sprintf( buf, "ber_sos_dump: clen %ld first %p ptr %p\n",
-		    (long) sos->sos_clen,
-			sos->sos_first,
-			sos->sos_ptr );
-		(*ber_pvt_log_print)( buf );
-
-		sprintf( buf, "              current len %ld contents:\n",
-		    (long) (sos->sos_ptr - sos->sos_first) );
-		(*ber_pvt_log_print)( buf );
-
-		ber_bprint( sos->sos_first, sos->sos_ptr - sos->sos_first );
-
-		sos = sos->sos_next;
-	}
-
-	(*ber_pvt_log_print)( "*** end dump ***\n" );
 }

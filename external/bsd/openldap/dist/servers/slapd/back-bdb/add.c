@@ -1,8 +1,10 @@
+/*	$NetBSD: add.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* add.c - ldap BerkeleyDB back-end add routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/add.c,v 1.152.2.10 2008/05/01 21:39:35 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/add.c,v 1.152.2.17 2009/03/05 18:40:00 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,11 +34,10 @@ bdb_add(Operation *op, SlapReply *rs )
 	size_t textlen = sizeof textbuf;
 	AttributeDescription *children = slap_schema.si_ad_children;
 	AttributeDescription *entry = slap_schema.si_ad_entry;
-	DB_TXN		*ltid = NULL, *lt2;
+	DB_TXN		*ltid = NULL, *lt2, *rtxn;
 	ID eid = NOID;
-	struct bdb_op_info opinfo = {0};
+	struct bdb_op_info opinfo = {{{ 0 }}};
 	int subentry;
-	BDB_LOCKER	locker = 0, rlocker = 0;
 	DB_LOCK		lock;
 
 	int		num_retries = 0;
@@ -51,7 +52,7 @@ bdb_add(Operation *op, SlapReply *rs )
 #endif
 
 	Debug(LDAP_DEBUG_ARGS, "==> " LDAP_XSTRING(bdb_add) ": %s\n",
-		op->oq_add.rs_e->e_name.bv_val, 0, 0);
+		op->ora_e->e_name.bv_val, 0, 0);
 
 #ifdef LDAP_X_TXN
 	if( op->o_txnSpec ) {
@@ -94,8 +95,8 @@ txnReturn:
 	ctrls[num_ctrls] = 0;
 
 	/* check entry's schema */
-	rs->sr_err = entry_schema_check( op, op->oq_add.rs_e, NULL,
-		get_relax(op), 1, &rs->sr_text, textbuf, textlen );
+	rs->sr_err = entry_schema_check( op, op->ora_e, NULL,
+		get_relax(op), 1, NULL, &rs->sr_text, textbuf, textlen );
 	if ( rs->sr_err != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE,
 			LDAP_XSTRING(bdb_add) ": entry failed schema check: "
@@ -113,10 +114,17 @@ txnReturn:
 		goto return_results;
 	}
 
-	subentry = is_entry_subentry( op->oq_add.rs_e );
+	if ( get_assert( op ) &&
+		( test_filter( op, op->ora_e, get_assertion( op )) != LDAP_COMPARE_TRUE ))
+	{
+		rs->sr_err = LDAP_ASSERTION_FAILED;
+		goto return_results;
+	}
 
-	/* Get our thread locker ID */
-	rs->sr_err = LOCK_ID( bdb->bi_dbenv, &rlocker );
+	subentry = is_entry_subentry( op->ora_e );
+
+	/* Get our reader TXN */
+	rs->sr_err = bdb_reader_get( op, bdb->bi_dbenv, &rtxn );
 
 	if( 0 ) {
 retry:	/* transaction retry */
@@ -157,8 +165,6 @@ retry:	/* transaction retry */
 		goto return_results;
 	}
 
-	locker = TXN_ID ( ltid );
-
 	opinfo.boi_oe.oe_key = bdb;
 	opinfo.boi_txn = ltid;
 	opinfo.boi_err = 0;
@@ -168,15 +174,15 @@ retry:	/* transaction retry */
 	/*
 	 * Get the parent dn and see if the corresponding entry exists.
 	 */
-	if ( be_issuffix( op->o_bd, &op->oq_add.rs_e->e_nname ) ) {
+	if ( be_issuffix( op->o_bd, &op->ora_e->e_nname ) ) {
 		pdn = slap_empty_bv;
 	} else {
-		dnParent( &op->oq_add.rs_e->e_nname, &pdn );
+		dnParent( &op->ora_e->e_nname, &pdn );
 	}
 
 	/* get entry or parent */
 	rs->sr_err = bdb_dn2entry( op, ltid, &op->ora_e->e_nname, &ei,
-		1, locker, &lock );
+		1, &lock );
 	switch( rs->sr_err ) {
 	case 0:
 		rs->sr_err = LDAP_ALREADY_EXISTS;
@@ -205,7 +211,8 @@ retry:	/* transaction retry */
 		rs->sr_ref = is_entry_referral( p )
 			? get_entry_referrals( op, p )
 			: NULL;
-		bdb_unlocked_cache_return_entry_r( bdb, p );
+		if ( p != (Entry *)&slap_entry_root )
+			bdb_unlocked_cache_return_entry_r( bdb, p );
 		p = NULL;
 		Debug( LDAP_DEBUG_TRACE,
 			LDAP_XSTRING(bdb_add) ": parent "
@@ -226,6 +233,10 @@ retry:	/* transaction retry */
 			goto retry;
 		}
 
+		if ( p != (Entry *)&slap_entry_root )
+			bdb_unlocked_cache_return_entry_r( bdb, p );
+		p = NULL;
+
 		Debug( LDAP_DEBUG_TRACE,
 			LDAP_XSTRING(bdb_add) ": no write access to parent\n",
 			0, 0, 0 );
@@ -236,6 +247,8 @@ retry:	/* transaction retry */
 
 	if ( p != (Entry *)&slap_entry_root ) {
 		if ( is_entry_subentry( p ) ) {
+			bdb_unlocked_cache_return_entry_r( bdb, p );
+			p = NULL;
 			/* parent is a subentry, don't allow add */
 			Debug( LDAP_DEBUG_TRACE,
 				LDAP_XSTRING(bdb_add) ": parent is subentry\n",
@@ -246,6 +259,8 @@ retry:	/* transaction retry */
 		}
 
 		if ( is_entry_alias( p ) ) {
+			bdb_unlocked_cache_return_entry_r( bdb, p );
+			p = NULL;
 			/* parent is an alias, don't allow add */
 			Debug( LDAP_DEBUG_TRACE,
 				LDAP_XSTRING(bdb_add) ": parent is alias\n",
@@ -284,7 +299,7 @@ retry:	/* transaction retry */
 	}
 	p = NULL;
 
-	rs->sr_err = access_allowed( op, op->oq_add.rs_e,
+	rs->sr_err = access_allowed( op, op->ora_e,
 		entry, NULL, ACL_WADD, NULL );
 
 	if ( ! rs->sr_err ) {
@@ -302,6 +317,24 @@ retry:	/* transaction retry */
 		goto return_results;;
 	}
 
+	/* 
+	 * Check ACL for attribute write access
+	 */
+	if (!acl_check_modlist(op, oe, op->ora_modlist)) {
+		switch( opinfo.boi_err ) {
+		case DB_LOCK_DEADLOCK:
+		case DB_LOCK_NOTGRANTED:
+			goto retry;
+		}
+
+		Debug( LDAP_DEBUG_TRACE,
+			LDAP_XSTRING(bdb_add) ": no write access to attribute\n",
+			0, 0, 0 );
+		rs->sr_err = LDAP_INSUFFICIENT_ACCESS;
+		rs->sr_text = "no write access to attribute";
+		goto return_results;;
+	}
+
 	if ( eid == NOID ) {
 		rs->sr_err = bdb_next_id( op->o_bd, &eid );
 		if( rs->sr_err != 0 ) {
@@ -312,7 +345,7 @@ retry:	/* transaction retry */
 			rs->sr_text = "internal error";
 			goto return_results;
 		}
-		op->oq_add.rs_e->e_id = eid;
+		op->ora_e->e_id = eid;
 	}
 
 	/* nested transaction */
@@ -329,7 +362,7 @@ retry:	/* transaction retry */
 	}
 
 	/* dn2id index */
-	rs->sr_err = bdb_dn2id_add( op, lt2, ei, op->oq_add.rs_e );
+	rs->sr_err = bdb_dn2id_add( op, lt2, ei, op->ora_e );
 	if ( rs->sr_err != 0 ) {
 		Debug( LDAP_DEBUG_TRACE,
 			LDAP_XSTRING(bdb_add) ": dn2id_add failed: %s (%d)\n",
@@ -349,7 +382,7 @@ retry:	/* transaction retry */
 	}
 
 	/* attribute indexes */
-	rs->sr_err = bdb_index_entry_add( op, lt2, op->oq_add.rs_e );
+	rs->sr_err = bdb_index_entry_add( op, lt2, op->ora_e );
 	if ( rs->sr_err != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE,
 			LDAP_XSTRING(bdb_add) ": index_entry_add failed\n",
@@ -366,7 +399,7 @@ retry:	/* transaction retry */
 	}
 
 	/* id2entry index */
-	rs->sr_err = bdb_id2entry_add( op->o_bd, lt2, op->oq_add.rs_e );
+	rs->sr_err = bdb_id2entry_add( op->o_bd, lt2, op->ora_e );
 	if ( rs->sr_err != 0 ) {
 		Debug( LDAP_DEBUG_TRACE,
 			LDAP_XSTRING(bdb_add) ": id2entry_add failed\n",
@@ -394,7 +427,7 @@ retry:	/* transaction retry */
 			postread_ctrl = &ctrls[num_ctrls++];
 			ctrls[num_ctrls] = NULL;
 		}
-		if ( slap_read_controls( op, rs, op->oq_add.rs_e,
+		if ( slap_read_controls( op, rs, op->ora_e,
 			&slap_post_read_bv, postread_ctrl ) )
 		{
 			Debug( LDAP_DEBUG_TRACE,
@@ -428,8 +461,8 @@ retry:	/* transaction retry */
 			nrdn = op->ora_e->e_nname;
 		}
 
-		/* Use the thread locker here, outside the txn */
-		bdb_cache_add( bdb, ei, op->ora_e, &nrdn, rlocker, &lock );
+		/* Use the reader txn here, outside the add txn */
+		bdb_cache_add( bdb, ei, op->ora_e, &nrdn, rtxn, &lock );
 
 		if(( rs->sr_err=TXN_COMMIT( ltid, 0 )) != 0 ) {
 			rs->sr_text = "txn_commit failed";
@@ -453,7 +486,7 @@ retry:	/* transaction retry */
 	Debug(LDAP_DEBUG_TRACE,
 		LDAP_XSTRING(bdb_add) ": added%s id=%08lx dn=\"%s\"\n",
 		op->o_noop ? " (no-op)" : "",
-		op->oq_add.rs_e->e_id, op->oq_add.rs_e->e_dn );
+		op->ora_e->e_id, op->ora_e->e_dn );
 
 	rs->sr_text = NULL;
 	if( num_ctrls ) rs->sr_ctrls = ctrls;

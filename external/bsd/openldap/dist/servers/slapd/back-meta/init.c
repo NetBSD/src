@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.58.2.10 2008/07/09 23:48:40 quanah Exp $ */
+/*	$NetBSD: init.c,v 1.1.1.3 2010/03/08 02:14:19 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.58.2.13 2009/02/17 19:14:41 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -53,7 +55,10 @@ meta_back_initialize(
 		SLAP_BFLAG_DYNAMIC |
 #endif /* LDAP_DYNAMIC_OBJECTS */
 #endif
-		0;
+
+		/* back-meta recognizes RFC4525 increment;
+		 * let the remote server complain, if needed (ITS#5912) */
+		SLAP_BFLAG_INCREMENT;
 
 	bi->bi_open = meta_back_open;
 	bi->bi_config = 0;
@@ -167,6 +172,8 @@ meta_back_db_open(
 		slap_bindconf	sb = { BER_BVNULL };
 		metatarget_t	*mt = mi->mi_targets[ i ];
 
+		struct berval mapped;
+
 		ber_str2bv( mt->mt_uri, 0, 0, &sb.sb_uri );
 		sb.sb_version = mt->mt_version;
 		sb.sb_method = LDAP_AUTH_SIMPLE;
@@ -220,6 +227,22 @@ meta_back_db_open(
 			{
 				not_always_anon_non_prescriptive = 1;
 			}
+		}
+
+		BER_BVZERO( &mapped );
+		ldap_back_map( &mt->mt_rwmap.rwm_at, 
+			&slap_schema.si_ad_entryDN->ad_cname, &mapped,
+			BACKLDAP_REMAP );
+		if ( BER_BVISNULL( &mapped ) || mapped.bv_val[0] == '\0' ) {
+			mt->mt_rep_flags |= REP_NO_ENTRYDN;
+		}
+
+		BER_BVZERO( &mapped );
+		ldap_back_map( &mt->mt_rwmap.rwm_at, 
+			&slap_schema.si_ad_subschemaSubentry->ad_cname, &mapped,
+			BACKLDAP_REMAP );
+		if ( BER_BVISNULL( &mapped ) || mapped.bv_val[0] == '\0' ) {
+			mt->mt_rep_flags |= REP_NO_SUBSCHEMA;
 		}
 	}
 

@@ -1,8 +1,10 @@
+/*	$NetBSD: tools.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* tools.c - tools for slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/tools.c,v 1.105.2.10 2008/02/12 00:34:58 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/tools.c,v 1.105.2.16 2009/01/26 20:34:03 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -75,11 +77,21 @@ static ldap_pvt_thread_mutex_t bdb_tool_index_mutex;
 static ldap_pvt_thread_cond_t bdb_tool_index_cond_main;
 static ldap_pvt_thread_cond_t bdb_tool_index_cond_work;
 
+#if DB_VERSION_FULL >= 0x04060000
+#define	USE_TRICKLE	1
+#else
+/* Seems to slow things down too much in BDB 4.5 */
+#undef USE_TRICKLE
+#endif
+
+#ifdef USE_TRICKLE
 static ldap_pvt_thread_mutex_t bdb_tool_trickle_mutex;
 static ldap_pvt_thread_cond_t bdb_tool_trickle_cond;
 
-static void * bdb_tool_index_task( void *ctx, void *ptr );
 static void * bdb_tool_trickle_task( void *ctx, void *ptr );
+#endif
+
+static void * bdb_tool_index_task( void *ctx, void *ptr );
 
 int bdb_tool_entry_open(
 	BackendDB *be, int mode )
@@ -96,7 +108,7 @@ int bdb_tool_entry_open(
 
 	if (cursor == NULL) {
 		int rc = bdb->bi_id2entry->bdi_db->cursor(
-			bdb->bi_id2entry->bdi_db, NULL, &cursor,
+			bdb->bi_id2entry->bdi_db, bdb->bi_cache.c_txn, &cursor,
 			bdb->bi_db_opflags );
 		if( rc != 0 ) {
 			return -1;
@@ -106,9 +118,11 @@ int bdb_tool_entry_open(
 	/* Set up for threaded slapindex */
 	if (( slapMode & (SLAP_TOOL_QUICK|SLAP_TOOL_READONLY)) == SLAP_TOOL_QUICK ) {
 		if ( !bdb_tool_info ) {
+#ifdef USE_TRICKLE
 			ldap_pvt_thread_mutex_init( &bdb_tool_trickle_mutex );
 			ldap_pvt_thread_cond_init( &bdb_tool_trickle_cond );
 			ldap_pvt_thread_pool_submit( &connection_pool, bdb_tool_trickle_task, bdb->bi_dbenv );
+#endif
 
 			ldap_pvt_thread_mutex_init( &bdb_tool_index_mutex );
 			ldap_pvt_thread_cond_init( &bdb_tool_index_cond_main );
@@ -137,9 +151,11 @@ int bdb_tool_entry_close(
 {
 	if ( bdb_tool_info ) {
 		slapd_shutdown = 1;
+#ifdef USE_TRICKLE
 		ldap_pvt_thread_mutex_lock( &bdb_tool_trickle_mutex );
 		ldap_pvt_thread_cond_signal( &bdb_tool_trickle_cond );
 		ldap_pvt_thread_mutex_unlock( &bdb_tool_trickle_mutex );
+#endif
 		ldap_pvt_thread_mutex_lock( &bdb_tool_index_mutex );
 		bdb_tool_index_tcount = slap_tool_thread_max - 1;
 		ldap_pvt_thread_cond_broadcast( &bdb_tool_index_cond_work );
@@ -297,6 +313,7 @@ Entry* bdb_tool_entry_get( BackendDB *be, ID id )
 		e->e_id = id;
 #ifdef BDB_HIER
 		if ( slapMode & SLAP_TOOL_READONLY ) {
+			struct bdb_info *bdb = (struct bdb_info *) be->be_private;
 			EntryInfo *ei = NULL;
 			Operation op = {0};
 			Opheader ohdr = {0};
@@ -306,7 +323,7 @@ Entry* bdb_tool_entry_get( BackendDB *be, ID id )
 			op.o_tmpmemctx = NULL;
 			op.o_tmpmfuncs = &ch_mfuncs;
 
-			rc = bdb_cache_find_parent( &op, CURSOR_GETLOCKER(cursor), id, &ei );
+			rc = bdb_cache_find_parent( &op, bdb->bi_cache.c_txn, id, &ei );
 			if ( rc == LDAP_SUCCESS ) {
 				bdb_cache_entryinfo_unlock( ei );
 				e->e_private = ei;
@@ -340,7 +357,7 @@ static int bdb_tool_next_id(
 		return 0;
 	}
 
-	rc = bdb_cache_find_ndn( op, tid ? TXN_ID( tid ) : 0, &ndn, &ei );
+	rc = bdb_cache_find_ndn( op, tid, &ndn, &ei );
 	if ( ei ) bdb_cache_entryinfo_unlock( ei );
 	if ( rc == DB_NOTFOUND ) {
 		if ( !be_issuffix( op->o_bd, &ndn ) ) {
@@ -394,13 +411,12 @@ static int bdb_tool_next_id(
 			holes[nholes++].id = e->e_id;
 		}
 	} else if ( !hole ) {
-		unsigned i;
+		unsigned i, j;
 
 		e->e_id = ei->bei_id;
 
 		for ( i=0; i<nholes; i++) {
 			if ( holes[i].id == e->e_id ) {
-				int j;
 				free(holes[i].dn.bv_val);
 				for (j=i;j<nholes;j++) holes[j] = holes[j+1];
 				holes[j].id = 0;
@@ -521,11 +537,11 @@ ID bdb_tool_entry_put(
 		goto done;
 	}
 
+#ifdef USE_TRICKLE
 	if (( slapMode & SLAP_TOOL_QUICK ) && (( e->e_id & 0xfff ) == 0xfff )) {
-		ldap_pvt_thread_mutex_lock( &bdb_tool_trickle_mutex );
 		ldap_pvt_thread_cond_signal( &bdb_tool_trickle_cond );
-		ldap_pvt_thread_mutex_unlock( &bdb_tool_trickle_mutex );
 	}
+#endif
 
 	if ( !bdb->bi_linear_index )
 		rc = bdb_tool_index_add( &op, tid, e );
@@ -1098,6 +1114,7 @@ int bdb_tool_idl_add(
 }
 #endif
 
+#ifdef USE_TRICKLE
 static void *
 bdb_tool_trickle_task( void *ctx, void *ptr )
 {
@@ -1116,6 +1133,7 @@ bdb_tool_trickle_task( void *ctx, void *ptr )
 
 	return NULL;
 }
+#endif
 
 static void *
 bdb_tool_index_task( void *ctx, void *ptr )

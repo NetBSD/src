@@ -1,3 +1,5 @@
+/*	$NetBSD: test_cfg.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    test_cfg.c - simple test for the cfg module
    This file is part of the nss-ldapd library.

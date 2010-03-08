@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/proto-ldap.h,v 1.15.2.7 2008/07/09 23:36:23 quanah Exp $ */
+/*	$NetBSD: proto-ldap.h,v 1.1.1.3 2010/03/08 02:14:18 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/proto-ldap.h,v 1.15.2.9 2009/08/26 00:50:19 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2008 The OpenLDAP Foundation.
+ * Copyright 2003-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -62,6 +64,9 @@ extern int ldap_back_conndn_dup( void *c1, void *c2 );
 extern void ldap_back_conn_free( void *c );
 
 extern ldapconn_t * ldap_back_conn_delete( ldapinfo_t *li, ldapconn_t *lc );
+
+extern int ldap_back_conn2str( const ldapconn_base_t *lc, char *buf, ber_len_t buflen );
+extern int ldap_back_connid2str( const ldapconn_base_t *lc, char *buf, ber_len_t buflen );
 
 extern int
 ldap_back_proxy_authz_ctrl(

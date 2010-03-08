@@ -1,8 +1,10 @@
+/*	$NetBSD: at.c,v 1.1.1.3 2010/03/08 02:14:17 lukem Exp $	*/
+
 /* at.c - routines for dealing with attribute types */
-/* $OpenLDAP: pkg/ldap/servers/slapd/at.c,v 1.84.2.6 2008/07/08 19:01:38 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/at.c,v 1.84.2.10 2009/03/17 17:11:57 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -722,8 +724,22 @@ at_add(
 	 * its own superiorss
 	 */
 	if ( sat->sat_sup ) {
-		sat->sat_syntax = sat->sat_sup->sat_syntax;
-		sat->sat_equality = sat->sat_sup->sat_equality;
+		Syntax *syn = syn_find(sat->sat_sup->sat_syntax->ssyn_oid);
+		if ( syn != sat->sat_sup->sat_syntax ) {
+			sat->sat_syntax = ch_malloc( sizeof( Syntax ));
+			*sat->sat_syntax = *sat->sat_sup->sat_syntax;
+		} else {
+			sat->sat_syntax = sat->sat_sup->sat_syntax;
+		}
+		if ( sat->sat_sup->sat_equality ) {
+			MatchingRule *mr = mr_find( sat->sat_sup->sat_equality->smr_oid );
+			if ( mr != sat->sat_sup->sat_equality ) {
+				sat->sat_equality = ch_malloc( sizeof( MatchingRule ));
+				*sat->sat_equality = *sat->sat_sup->sat_equality;
+			} else {
+				sat->sat_equality = sat->sat_sup->sat_equality;
+			}
+		}
 		sat->sat_approx = sat->sat_sup->sat_approx;
 		sat->sat_ordering = sat->sat_sup->sat_ordering;
 		sat->sat_substr = sat->sat_sup->sat_substr;
@@ -925,6 +941,11 @@ error_return:;
 			at->at_oid = oidm;
 		}
 
+		if ( soidm ) {
+			SLAP_FREE( at->at_syntax_oid );
+			at->at_syntax_oid = soidm;
+		}
+
 	} else if ( rsat ) {
 		*rsat = sat;
 	}
@@ -1061,10 +1082,10 @@ register_at( const char *def, AttributeDescription **rad, int dupok )
 			freeit = 1;
 
 		} else {
-			ldap_attributetype_free( at );
 			Debug( LDAP_DEBUG_ANY,
 				"register_at: AttributeType \"%s\": %s, %s\n",
 				def, scherr2str(code), err );
+			ldap_attributetype_free( at );
 			return code;
 		}
 	}

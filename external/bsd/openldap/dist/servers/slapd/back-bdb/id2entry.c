@@ -1,8 +1,10 @@
+/*	$NetBSD: id2entry.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* id2entry.c - routines to deal with the id2entry database */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/id2entry.c,v 1.72.2.6 2008/05/01 21:39:35 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/id2entry.c,v 1.72.2.13 2009/01/22 00:01:05 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -93,7 +95,6 @@ int bdb_id2entry_update(
 int bdb_id2entry(
 	BackendDB *be,
 	DB_TXN *tid,
-	BDB_LOCKER locker,
 	ID id,
 	Entry **e )
 {
@@ -119,11 +120,6 @@ int bdb_id2entry(
 	/* fetch it */
 	rc = db->cursor( db, tid, &cursor, bdb->bi_db_opflags );
 	if ( rc ) return rc;
-
-	/* Use our own locker if needed */
-	if ( !tid && locker ) {
-		CURSOR_SETLOCKER( cursor, locker );
-	}
 
 	/* Get the nattrs / nvals counts first */
 	data.ulen = data.dlen = sizeof(buf);
@@ -273,13 +269,18 @@ int bdb_entry_release(
 				if ( bli->bli_id == e->e_id ) {
 					bdb_cache_return_entry_rw( bdb, e, rw, &bli->bli_lock );
 					prev->bli_next = bli->bli_next;
-					op->o_tmpfree( bli, op->o_tmpmemctx );
+					/* Cleanup, or let caller know we unlocked */
+					if ( bli->bli_flag & BLI_DONTFREE )
+						bli->bli_flag = 0;
+					else
+						op->o_tmpfree( bli, op->o_tmpmemctx );
 					break;
 				}
 			}
 			if ( !boi->boi_locks ) {
 				LDAP_SLIST_REMOVE( &op->o_extra, &boi->boi_oe, OpExtra, oe_next );
-				op->o_tmpfree( boi, op->o_tmpmemctx );
+				if ( !(boi->boi_flag & BOI_DONTFREE))
+					op->o_tmpfree( boi, op->o_tmpmemctx );
 			}
 		}
 	} else {
@@ -322,9 +323,7 @@ int bdb_entry_get(
 	int	rc;
 	const char *at_name = at ? at->ad_cname.bv_val : "(null)";
 
-	BDB_LOCKER	locker = 0;
 	DB_LOCK		lock;
-	int		free_lock_id = 0;
 
 	Debug( LDAP_DEBUG_ARGS,
 		"=> bdb_entry_get: ndn: \"%s\"\n", ndn->bv_val, 0, 0 ); 
@@ -342,11 +341,8 @@ int bdb_entry_get(
 			txn = boi->boi_txn;
 	}
 
-	if ( txn != NULL ) {
-		locker = TXN_ID ( txn );
-	} else {
-		rc = LOCK_ID ( bdb->bi_dbenv, &locker );
-		free_lock_id = 1;
+	if ( !txn ) {
+		rc = bdb_reader_get( op, bdb->bi_dbenv, &txn );
 		switch(rc) {
 		case 0:
 			break;
@@ -357,7 +353,7 @@ int bdb_entry_get(
 
 dn2entry_retry:
 	/* can we find entry */
-	rc = bdb_dn2entry( op, txn, ndn, &ei, 0, locker, &lock );
+	rc = bdb_dn2entry( op, txn, ndn, &ei, 0, &lock );
 	switch( rc ) {
 	case DB_NOTFOUND:
 	case 0:
@@ -366,16 +362,13 @@ dn2entry_retry:
 	case DB_LOCK_NOTGRANTED:
 		/* the txn must abort and retry */
 		if ( txn ) {
-			boi->boi_err = rc;
+			if ( boi ) boi->boi_err = rc;
 			return LDAP_BUSY;
 		}
 		ldap_pvt_thread_yield();
 		goto dn2entry_retry;
 	default:
 		if ( boi ) boi->boi_err = rc;
-		if ( free_lock_id ) {
-			LOCK_ID_FREE( bdb->bi_dbenv, locker );
-		}
 		return (rc != LDAP_BUSY) ? LDAP_OTHER : LDAP_BUSY;
 	}
 	if (ei) e = ei->bei_e;
@@ -383,9 +376,6 @@ dn2entry_retry:
 		Debug( LDAP_DEBUG_ACL,
 			"=> bdb_entry_get: cannot find entry: \"%s\"\n",
 				ndn->bv_val, 0, 0 ); 
-		if ( free_lock_id ) {
-			LOCK_ID_FREE( bdb->bi_dbenv, locker );
-		}
 		return LDAP_NO_SUCH_OBJECT; 
 	}
 	
@@ -397,6 +387,15 @@ dn2entry_retry:
 		Debug( LDAP_DEBUG_ACL,
 			"<= bdb_entry_get: failed to find objectClass %s\n",
 			oc->soc_cname.bv_val, 0, 0 ); 
+		rc = LDAP_NO_SUCH_ATTRIBUTE;
+		goto return_results;
+	}
+
+	/* NOTE: attr_find() or attrs_find()? */
+	if ( at && attr_find( e->e_attrs, at ) == NULL ) {
+		Debug( LDAP_DEBUG_ACL,
+			"<= bdb_entry_get: failed to find attribute %s\n",
+			at->ad_cname.bv_val, 0, 0 ); 
 		rc = LDAP_NO_SUCH_ATTRIBUTE;
 		goto return_results;
 	}
@@ -425,6 +424,7 @@ return_results:
 						op->o_tmpmemctx );
 					bli->bli_next = boi->boi_locks;
 					bli->bli_id = e->e_id;
+					bli->bli_flag = 0;
 					bli->bli_lock = lock;
 					boi->boi_locks = bli;
 				}
@@ -433,10 +433,6 @@ return_results:
 			*ent = entry_dup( e );
 			bdb_cache_return_entry_rw(bdb, e, rw, &lock);
 		}
-	}
-
-	if ( free_lock_id ) {
-		LOCK_ID_FREE( bdb->bi_dbenv, locker );
 	}
 
 	Debug( LDAP_DEBUG_TRACE,

@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/error.c,v 1.76.2.3 2008/02/11 23:26:41 kurt Exp $ */
+/*	$NetBSD: error.c,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/libraries/libldap/error.c,v 1.76.2.6 2009/08/12 23:54:21 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,155 +27,142 @@
 
 #include "ldap-int.h"
 
-struct ldaperror {
-	int	e_code;
-	char *e_reason;
-};
-
-static struct ldaperror ldap_builtin_errlist[] = {
-	{LDAP_SUCCESS, 					N_("Success")},
-	{LDAP_OPERATIONS_ERROR, 		N_("Operations error")},
-	{LDAP_PROTOCOL_ERROR, 			N_("Protocol error")},
-	{LDAP_TIMELIMIT_EXCEEDED,		N_("Time limit exceeded")},
-	{LDAP_SIZELIMIT_EXCEEDED, 		N_("Size limit exceeded")},
-	{LDAP_COMPARE_FALSE, 			N_("Compare False")},
-	{LDAP_COMPARE_TRUE, 			N_("Compare True")},
-	{LDAP_STRONG_AUTH_NOT_SUPPORTED, N_("Authentication method not supported")},
-	{LDAP_STRONG_AUTH_REQUIRED, 	N_("Strong(er) authentication required")},
-	{LDAP_PARTIAL_RESULTS, 			N_("Partial results and referral received")},
-
-	{LDAP_REFERRAL,					N_("Referral")},
-	{LDAP_ADMINLIMIT_EXCEEDED,		N_("Administrative limit exceeded")},
-	{LDAP_UNAVAILABLE_CRITICAL_EXTENSION,
-									N_("Critical extension is unavailable")},
-	{LDAP_CONFIDENTIALITY_REQUIRED,	N_("Confidentiality required")},
-	{LDAP_SASL_BIND_IN_PROGRESS,	N_("SASL bind in progress")},
-
-	{LDAP_NO_SUCH_ATTRIBUTE, 		N_("No such attribute")},
-	{LDAP_UNDEFINED_TYPE, 			N_("Undefined attribute type")},
-	{LDAP_INAPPROPRIATE_MATCHING, 	N_("Inappropriate matching")},
-	{LDAP_CONSTRAINT_VIOLATION, 	N_("Constraint violation")},
-	{LDAP_TYPE_OR_VALUE_EXISTS, 	N_("Type or value exists")},
-	{LDAP_INVALID_SYNTAX, 			N_("Invalid syntax")},
-
-	{LDAP_NO_SUCH_OBJECT, 			N_("No such object")},
-	{LDAP_ALIAS_PROBLEM, 			N_("Alias problem")},
-	{LDAP_INVALID_DN_SYNTAX,		N_("Invalid DN syntax")},
-	{LDAP_IS_LEAF, 					N_("Entry is a leaf")},
-	{LDAP_ALIAS_DEREF_PROBLEM,	 	N_("Alias dereferencing problem")},
-
-	{LDAP_INAPPROPRIATE_AUTH, 		N_("Inappropriate authentication")},
-	{LDAP_INVALID_CREDENTIALS, 		N_("Invalid credentials")},
-	{LDAP_INSUFFICIENT_ACCESS, 		N_("Insufficient access")},
-	{LDAP_BUSY, 					N_("Server is busy")},
-	{LDAP_UNAVAILABLE, 				N_("Server is unavailable")},
-	{LDAP_UNWILLING_TO_PERFORM, 	N_("Server is unwilling to perform")},
-	{LDAP_LOOP_DETECT, 				N_("Loop detected")},
-
-	{LDAP_NAMING_VIOLATION, 		N_("Naming violation")},
-	{LDAP_OBJECT_CLASS_VIOLATION, 	N_("Object class violation")},
-	{LDAP_NOT_ALLOWED_ON_NONLEAF, 	N_("Operation not allowed on non-leaf")},
-	{LDAP_NOT_ALLOWED_ON_RDN,	 	N_("Operation not allowed on RDN")},
-	{LDAP_ALREADY_EXISTS, 			N_("Already exists")},
-	{LDAP_NO_OBJECT_CLASS_MODS, 	N_("Cannot modify object class")},
-	{LDAP_RESULTS_TOO_LARGE,		N_("Results too large")},
-	{LDAP_AFFECTS_MULTIPLE_DSAS,	N_("Operation affects multiple DSAs")},
-
-	{LDAP_OTHER, 					N_("Other (e.g., implementation specific) error")},
-
-	{LDAP_CANCELLED,				N_("Cancelled")},
-	{LDAP_NO_SUCH_OPERATION,		N_("No Operation to Cancel")},
-	{LDAP_TOO_LATE,					N_("Too Late to Cancel")},
-	{LDAP_CANNOT_CANCEL,			N_("Cannot Cancel")},
-
-	{LDAP_ASSERTION_FAILED,			N_("Assertion Failed")},
-	{LDAP_X_ASSERTION_FAILED,		N_("Assertion Failed (X)")},
-
-	{LDAP_PROXIED_AUTHORIZATION_DENIED, N_("Proxied Authorization Denied")},
-	{LDAP_X_PROXY_AUTHZ_FAILURE,		N_("Proxy Authorization Failure (X)")},
-
-	{LDAP_SYNC_REFRESH_REQUIRED,	N_("Content Sync Refresh Required")},
-	{LDAP_X_SYNC_REFRESH_REQUIRED,	N_("Content Sync Refresh Required (X)")},
-
-	{LDAP_X_NO_OPERATION,			N_("No Operation (X)")},
-
-	{LDAP_CUP_RESOURCES_EXHAUSTED,	N_("LCUP Resources Exhausted")},
-	{LDAP_CUP_SECURITY_VIOLATION,	N_("LCUP Security Violation")},
-	{LDAP_CUP_INVALID_DATA,			N_("LCUP Invalid Data")},
-	{LDAP_CUP_UNSUPPORTED_SCHEME,	N_("LCUP Unsupported Scheme")},
-	{LDAP_CUP_RELOAD_REQUIRED,		N_("LCUP Reload Required")},
-
-#ifdef LDAP_X_TXN
-	{LDAP_X_TXN_SPECIFY_OKAY,		N_("TXN specify okay")},
-	{LDAP_X_TXN_ID_INVALID,			N_("TXN ID is invalid")},
-#endif
-
-	/* API ResultCodes */
-	{LDAP_SERVER_DOWN,				N_("Can't contact LDAP server")},
-	{LDAP_LOCAL_ERROR,				N_("Local error")},
-	{LDAP_ENCODING_ERROR,			N_("Encoding error")},
-	{LDAP_DECODING_ERROR,			N_("Decoding error")},
-	{LDAP_TIMEOUT,					N_("Timed out")},
-	{LDAP_AUTH_UNKNOWN,				N_("Unknown authentication method")},
-	{LDAP_FILTER_ERROR,				N_("Bad search filter")},
-	{LDAP_USER_CANCELLED,			N_("User cancelled operation")},
-	{LDAP_PARAM_ERROR,				N_("Bad parameter to an ldap routine")},
-	{LDAP_NO_MEMORY,				N_("Out of memory")},
-
-	{LDAP_CONNECT_ERROR,			N_("Connect error")},
-	{LDAP_NOT_SUPPORTED,			N_("Not Supported")},
-	{LDAP_CONTROL_NOT_FOUND,		N_("Control not found")},
-	{LDAP_NO_RESULTS_RETURNED,		N_("No results returned")},
-	{LDAP_MORE_RESULTS_TO_RETURN,	N_("More results to return")},
-	{LDAP_CLIENT_LOOP,				N_("Client Loop")},
-	{LDAP_REFERRAL_LIMIT_EXCEEDED,	N_("Referral Limit Exceeded")},
-
-	{0, NULL}
-};
-
-static struct ldaperror *ldap_errlist = ldap_builtin_errlist; 
-
 void ldap_int_error_init( void ) {
-}
-
-static const struct ldaperror *
-ldap_int_error( int err )
-{
-	int	i;
-
-	/* XXYYZ: O(n) search instead of O(1) lookup */
-	for ( i=0; ldap_errlist[i].e_reason != NULL; i++ ) {
-		if ( err == ldap_errlist[i].e_code ) {
-			return &ldap_errlist[i];
-		}
-	}
-
-	return NULL;
 }
 
 char *
 ldap_err2string( int err )
 {
-	const struct ldaperror *e;
-	
+	char *m;
+
 	Debug( LDAP_DEBUG_TRACE, "ldap_err2string\n", 0, 0, 0 );
 
-	e = ldap_int_error( err );
+	switch ( err ) {
+#	define C(code, message) case code: m = message; break
 
-	if (e) {
-		return e->e_reason;
+	/* LDAPv3 (RFC 4511) codes */
+	C(LDAP_SUCCESS,					N_("Success"));
+	C(LDAP_OPERATIONS_ERROR, 		N_("Operations error"));
+	C(LDAP_PROTOCOL_ERROR, 			N_("Protocol error"));
+	C(LDAP_TIMELIMIT_EXCEEDED,		N_("Time limit exceeded"));
+	C(LDAP_SIZELIMIT_EXCEEDED, 		N_("Size limit exceeded"));
+	C(LDAP_COMPARE_FALSE, 			N_("Compare False"));
+	C(LDAP_COMPARE_TRUE, 			N_("Compare True"));
+	C(LDAP_STRONG_AUTH_NOT_SUPPORTED,N_("Authentication method not supported"));
+	C(LDAP_STRONG_AUTH_REQUIRED,	N_("Strong(er) authentication required"));
 
-	} else if ( LDAP_API_ERROR(err) ) {
-		return _("Unknown API error");
+	C(LDAP_REFERRAL,				N_("Referral"));
+	C(LDAP_ADMINLIMIT_EXCEEDED,		N_("Administrative limit exceeded"));
+	C(LDAP_UNAVAILABLE_CRITICAL_EXTENSION,
+									N_("Critical extension is unavailable"));
+	C(LDAP_CONFIDENTIALITY_REQUIRED,N_("Confidentiality required"));
+	C(LDAP_SASL_BIND_IN_PROGRESS,	N_("SASL bind in progress"));
 
-	} else if ( LDAP_E_ERROR(err) ) {
-		return _("Unknown (extension) error");
+	C(LDAP_NO_SUCH_ATTRIBUTE, 		N_("No such attribute"));
+	C(LDAP_UNDEFINED_TYPE, 			N_("Undefined attribute type"));
+	C(LDAP_INAPPROPRIATE_MATCHING, 	N_("Inappropriate matching"));
+	C(LDAP_CONSTRAINT_VIOLATION, 	N_("Constraint violation"));
+	C(LDAP_TYPE_OR_VALUE_EXISTS, 	N_("Type or value exists"));
+	C(LDAP_INVALID_SYNTAX, 			N_("Invalid syntax"));
 
-	} else if ( LDAP_X_ERROR(err) ) {
-		return _("Unknown (private extension) error");
+	C(LDAP_NO_SUCH_OBJECT, 			N_("No such object"));
+	C(LDAP_ALIAS_PROBLEM, 			N_("Alias problem"));
+	C(LDAP_INVALID_DN_SYNTAX,		N_("Invalid DN syntax"));
+
+	C(LDAP_ALIAS_DEREF_PROBLEM,	 	N_("Alias dereferencing problem"));
+
+	C(LDAP_INAPPROPRIATE_AUTH, 		N_("Inappropriate authentication"));
+	C(LDAP_INVALID_CREDENTIALS, 	N_("Invalid credentials"));
+	C(LDAP_INSUFFICIENT_ACCESS, 	N_("Insufficient access"));
+	C(LDAP_BUSY, 					N_("Server is busy"));
+	C(LDAP_UNAVAILABLE, 			N_("Server is unavailable"));
+	C(LDAP_UNWILLING_TO_PERFORM, 	N_("Server is unwilling to perform"));
+	C(LDAP_LOOP_DETECT, 			N_("Loop detected"));
+
+	C(LDAP_NAMING_VIOLATION, 		N_("Naming violation"));
+	C(LDAP_OBJECT_CLASS_VIOLATION, 	N_("Object class violation"));
+	C(LDAP_NOT_ALLOWED_ON_NONLEAF, 	N_("Operation not allowed on non-leaf"));
+	C(LDAP_NOT_ALLOWED_ON_RDN,	 	N_("Operation not allowed on RDN"));
+	C(LDAP_ALREADY_EXISTS, 			N_("Already exists"));
+	C(LDAP_NO_OBJECT_CLASS_MODS, 	N_("Cannot modify object class"));
+
+	C(LDAP_AFFECTS_MULTIPLE_DSAS,	N_("Operation affects multiple DSAs"));
+
+	/* Virtual List View draft */
+	C(LDAP_VLV_ERROR,				N_("Virtual List View error"));
+
+	C(LDAP_OTHER, N_("Other (e.g., implementation specific) error"));
+
+	/* LDAPv2 (RFC 1777) codes */
+	C(LDAP_PARTIAL_RESULTS, N_("Partial results and referral received"));
+	C(LDAP_IS_LEAF, 				N_("Entry is a leaf"));
+
+	/* Connection-less LDAP (CLDAP - RFC 1798) code */
+	C(LDAP_RESULTS_TOO_LARGE,		N_("Results too large"));
+
+	/* Cancel Operation (RFC 3909) codes */
+	C(LDAP_CANCELLED,				N_("Cancelled"));
+	C(LDAP_NO_SUCH_OPERATION,		N_("No Operation to Cancel"));
+	C(LDAP_TOO_LATE,				N_("Too Late to Cancel"));
+	C(LDAP_CANNOT_CANCEL,			N_("Cannot Cancel"));
+
+	/* Assert Control (RFC 4528 and old internet-draft) codes */
+	C(LDAP_ASSERTION_FAILED,		N_("Assertion Failed"));
+	C(LDAP_X_ASSERTION_FAILED,		N_("Assertion Failed (X)"));
+
+	/* Proxied Authorization Control (RFC 4370 and I-D) codes */
+	C(LDAP_PROXIED_AUTHORIZATION_DENIED, N_("Proxied Authorization Denied"));
+	C(LDAP_X_PROXY_AUTHZ_FAILURE,	N_("Proxy Authorization Failure (X)"));
+
+	/* Content Sync Operation (RFC 4533 and I-D) codes */
+	C(LDAP_SYNC_REFRESH_REQUIRED,	N_("Content Sync Refresh Required"));
+	C(LDAP_X_SYNC_REFRESH_REQUIRED,	N_("Content Sync Refresh Required (X)"));
+
+	/* No-Op Control (draft-zeilenga-ldap-noop) code */
+	C(LDAP_X_NO_OPERATION,			N_("No Operation (X)"));
+
+	/* Client Update Protocol (RFC 3928) codes */
+	C(LDAP_CUP_RESOURCES_EXHAUSTED,	N_("LCUP Resources Exhausted"));
+	C(LDAP_CUP_SECURITY_VIOLATION,	N_("LCUP Security Violation"));
+	C(LDAP_CUP_INVALID_DATA,		N_("LCUP Invalid Data"));
+	C(LDAP_CUP_UNSUPPORTED_SCHEME,	N_("LCUP Unsupported Scheme"));
+	C(LDAP_CUP_RELOAD_REQUIRED,		N_("LCUP Reload Required"));
+
+#ifdef LDAP_X_TXN
+	/* Codes related to LDAP Transactions (draft-zeilenga-ldap-txn) */
+	C(LDAP_X_TXN_SPECIFY_OKAY,		N_("TXN specify okay"));
+	C(LDAP_X_TXN_ID_INVALID,		N_("TXN ID is invalid"));
+#endif
+
+	/* API codes - renumbered since draft-ietf-ldapext-ldap-c-api */
+	C(LDAP_SERVER_DOWN,				N_("Can't contact LDAP server"));
+	C(LDAP_LOCAL_ERROR,				N_("Local error"));
+	C(LDAP_ENCODING_ERROR,			N_("Encoding error"));
+	C(LDAP_DECODING_ERROR,			N_("Decoding error"));
+	C(LDAP_TIMEOUT,					N_("Timed out"));
+	C(LDAP_AUTH_UNKNOWN,			N_("Unknown authentication method"));
+	C(LDAP_FILTER_ERROR,			N_("Bad search filter"));
+	C(LDAP_USER_CANCELLED,			N_("User cancelled operation"));
+	C(LDAP_PARAM_ERROR,				N_("Bad parameter to an ldap routine"));
+	C(LDAP_NO_MEMORY,				N_("Out of memory"));
+	C(LDAP_CONNECT_ERROR,			N_("Connect error"));
+	C(LDAP_NOT_SUPPORTED,			N_("Not Supported"));
+	C(LDAP_CONTROL_NOT_FOUND,		N_("Control not found"));
+	C(LDAP_NO_RESULTS_RETURNED,		N_("No results returned"));
+	C(LDAP_MORE_RESULTS_TO_RETURN,	N_("More results to return"));
+	C(LDAP_CLIENT_LOOP,				N_("Client Loop"));
+	C(LDAP_REFERRAL_LIMIT_EXCEEDED,	N_("Referral Limit Exceeded"));
+#	undef C
+
+	default:
+		m = (LDAP_API_ERROR(err) ? N_("Unknown API error")
+			 : LDAP_E_ERROR(err) ? N_("Unknown (extension) error")
+			 : LDAP_X_ERROR(err) ? N_("Unknown (private extension) error")
+			 : N_("Unknown error"));
+		break;
 	}
 
-	return _("Unknown error");
+	return _(m);
 }
 
 /* deprecated */
@@ -181,18 +170,14 @@ void
 ldap_perror( LDAP *ld, LDAP_CONST char *str )
 {
     int i;
-	const struct ldaperror *e;
-	Debug( LDAP_DEBUG_TRACE, "ldap_perror\n", 0, 0, 0 );
 
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );
 	assert( str != NULL );
 
-	e = ldap_int_error( ld->ld_errno );
-
 	fprintf( stderr, "%s: %s (%d)\n",
 		str ? str : "ldap_perror",
-		e ? _(e->e_reason) : _("unknown result code"),
+		ldap_err2string( ld->ld_errno ),
 		ld->ld_errno );
 
 	if ( ld->ld_matched != NULL && ld->ld_matched[0] != '\0' ) {

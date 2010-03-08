@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/module.c,v 1.29.2.3 2008/02/11 23:26:44 kurt Exp $ */
+/*	$NetBSD: module.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/module.c,v 1.29.2.6 2009/04/29 00:35:33 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -119,7 +121,7 @@ int module_unload( const char *file_name )
 
 int module_load(const char* file_name, int argc, char *argv[])
 {
-	module_loaded_t *module = NULL;
+	module_loaded_t *module;
 	const char *error;
 	int rc;
 	MODULE_INIT_FN initialize;
@@ -128,6 +130,38 @@ int module_load(const char* file_name, int argc, char *argv[])
 #else
 #define	file	file_name
 #endif
+
+	module = module_handle( file_name );
+	if ( module ) {
+		Debug( LDAP_DEBUG_ANY, "module_load: (%s) already loaded\n",
+			file_name, 0, 0 );
+		return -1;
+	}
+
+	/* If loading a backend, see if we already have it */
+	if ( !strncasecmp( file_name, "back_", 5 )) {
+		char *name = (char *)file_name + 5;
+		char *dot = strchr( name, '.');
+		if (dot) *dot = '\0';
+		rc = backend_info( name ) != NULL;
+		if (dot) *dot = '.';
+		if ( rc ) {
+			Debug( LDAP_DEBUG_CONFIG, "module_load: (%s) already present (static)\n",
+				file_name, 0, 0 );
+			return 0;
+		}
+	} else {
+		/* check for overlays too */
+		char *dot = strchr( file_name, '.' );
+		if ( dot ) *dot = '\0';
+		rc = overlay_find( file_name ) != NULL;
+		if ( dot ) *dot = '.';
+		if ( rc ) {
+			Debug( LDAP_DEBUG_CONFIG, "module_load: (%s) already present (static)\n",
+				file_name, 0, 0 );
+			return 0;
+		}
+	}
 
 	module = (module_loaded_t *)ch_calloc(1, sizeof(module_loaded_t) +
 		strlen(file_name));

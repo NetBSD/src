@@ -1,3 +1,5 @@
+/*	$NetBSD: authorityKeyIdentifier.h,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+
 
 #include "asn-incl.h"
 /*

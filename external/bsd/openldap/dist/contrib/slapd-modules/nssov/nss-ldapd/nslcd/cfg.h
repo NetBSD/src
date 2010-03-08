@@ -1,3 +1,5 @@
+/*	$NetBSD: cfg.h,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    cfg.h - definition of configuration information
    This file contains parts that were part of the nss_ldap

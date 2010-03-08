@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/proto-back-monitor.h,v 1.33.2.5 2008/02/11 23:26:47 kurt Exp $ */
+/*	$NetBSD: proto-back-monitor.h,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/proto-back-monitor.h,v 1.33.2.7 2009/08/25 22:48:10 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2008 The OpenLDAP Foundation.
+ * Copyright 2001-2009 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -152,20 +154,24 @@ monitor_back_register_overlay_info LDAP_P((
 	slap_overinst		*on ));
 extern int
 monitor_back_register_overlay LDAP_P((
-	BackendDB		*be ));
+	BackendDB		*be,
+	struct slap_overinst	*on,
+	struct berval		*ndn_out ));
 extern int
 monitor_back_register_backend_limbo LDAP_P((
 	BackendInfo		*bi ));
 extern int
 monitor_back_register_database_limbo LDAP_P((
 	BackendDB		*be,
-	struct berval	*ndn ));
+	struct berval		*ndn_out ));
 extern int
 monitor_back_register_overlay_info_limbo LDAP_P((
 	slap_overinst		*on ));
 extern int
 monitor_back_register_overlay_limbo LDAP_P((
-	BackendDB		*be ));
+	BackendDB		*be,
+	struct slap_overinst	*on,
+	struct berval		*ndn_out ));
 extern monitor_subsys_t *
 monitor_back_get_subsys LDAP_P((
 	const char		*name ));

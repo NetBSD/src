@@ -1,8 +1,10 @@
+/*	$NetBSD: ldapcompare.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+
 /* ldapcompare.c -- LDAP compare tool */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapcompare.c,v 1.43.2.4 2008/02/11 23:26:38 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/clients/tools/ldapcompare.c,v 1.43.2.7 2009/08/13 00:55:06 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * All rights reserved.
@@ -85,6 +87,8 @@ usage( void )
 	fprintf( stderr, _("Compare options:\n"));
 	fprintf( stderr, _("  -E [!]<ext>[=<extparam>] compare extensions (! indicates criticality)\n"));
 	fprintf( stderr, _("             !dontUseCopy                (Don't Use Copy)\n"));
+	fprintf( stderr, _("  -M         enable Manage DSA IT control (-MM to make critical)\n"));
+	fprintf( stderr, _("  -P version protocol version (default: 3)\n"));
 	fprintf( stderr, _("  -z         Quiet mode,"
 		" don't print anything, use return values\n"));
 	tool_common_usage();
@@ -102,7 +106,7 @@ static int docompare LDAP_P((
 
 
 const char options[] = "z"
-	"Cd:D:e:h:H:IMnO:o:p:P:QR:U:vVw:WxX:y:Y:Z";
+	"Cd:D:e:h:H:IMnNO:o:p:P:QR:U:vVw:WxX:y:Y:Z";
 
 #ifdef LDAP_CONTROL_DONTUSECOPY
 int dontUseCopy = 0;

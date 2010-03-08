@@ -1,8 +1,10 @@
+/*	$NetBSD: map.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+
 /* map.c - ldap backend mapping routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/map.c,v 1.15.2.7 2008/02/11 23:26:47 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-meta/map.c,v 1.15.2.12 2009/02/17 19:14:41 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -119,6 +121,15 @@ ldap_back_mapping ( struct ldapmap *map, struct berval *s, struct ldapmapping **
 
 	assert( m != NULL );
 
+	/* let special attrnames slip through (ITS#5760) */
+	if ( bvmatch( s, slap_bv_no_attrs )
+		|| bvmatch( s, slap_bv_all_user_attrs )
+		|| bvmatch( s, slap_bv_all_operational_attrs ) )
+	{
+		*m = NULL;
+		return 0;
+	}
+
 	if ( remap == BACKLDAP_REMAP ) {
 		tree = map->remap;
 
@@ -140,6 +151,7 @@ ldap_back_map ( struct ldapmap *map, struct berval *s, struct berval *bv,
 	int remap )
 {
 	struct ldapmapping *mapping;
+	int drop_missing;
 
 	/* map->map may be NULL when mapping is configured,
 	 * but map->remap can't */
@@ -149,7 +161,7 @@ ldap_back_map ( struct ldapmap *map, struct berval *s, struct berval *bv,
 	}
 
 	BER_BVZERO( bv );
-	( void )ldap_back_mapping( map, s, &mapping, remap );
+	drop_missing = ldap_back_mapping( map, s, &mapping, remap );
 	if ( mapping != NULL ) {
 		if ( !BER_BVISNULL( &mapping->dst ) ) {
 			*bv = mapping->dst;
@@ -157,7 +169,7 @@ ldap_back_map ( struct ldapmap *map, struct berval *s, struct berval *bv,
 		return;
 	}
 
-	if ( !map->drop_missing ) {
+	if ( !drop_missing ) {
 		*bv = *s;
 	}
 }
@@ -323,7 +335,7 @@ ldap_back_int_filter_map_rewrite(
 		return LDAP_OTHER;
 	}
 
-	switch ( f->f_choice ) {
+	switch ( ( f->f_choice & SLAPD_FILTER_MASK ) ) {
 	case LDAP_FILTER_EQUALITY:
 		if ( map_attr_value( dc, f->f_av_desc, &atmp,
 					&f->f_av_value, &vtmp, remap ) )
@@ -333,7 +345,7 @@ ldap_back_int_filter_map_rewrite(
 
 		fstr->bv_len = atmp.bv_len + vtmp.bv_len
 			+ ( sizeof("(=)") - 1 );
-		fstr->bv_val = malloc( fstr->bv_len + 1 );
+		fstr->bv_val = ch_malloc( fstr->bv_len + 1 );
 
 		snprintf( fstr->bv_val, fstr->bv_len + 1, "(%s=%s)",
 			atmp.bv_val, vtmp.bv_len ? vtmp.bv_val : "" );
@@ -350,7 +362,7 @@ ldap_back_int_filter_map_rewrite(
 
 		fstr->bv_len = atmp.bv_len + vtmp.bv_len
 			+ ( sizeof("(>=)") - 1 );
-		fstr->bv_val = malloc( fstr->bv_len + 1 );
+		fstr->bv_val = ch_malloc( fstr->bv_len + 1 );
 
 		snprintf( fstr->bv_val, fstr->bv_len + 1, "(%s>=%s)",
 			atmp.bv_val, vtmp.bv_len ? vtmp.bv_val : "" );
@@ -367,7 +379,7 @@ ldap_back_int_filter_map_rewrite(
 
 		fstr->bv_len = atmp.bv_len + vtmp.bv_len
 			+ ( sizeof("(<=)") - 1 );
-		fstr->bv_val = malloc( fstr->bv_len + 1 );
+		fstr->bv_val = ch_malloc( fstr->bv_len + 1 );
 
 		snprintf( fstr->bv_val, fstr->bv_len + 1, "(%s<=%s)",
 			atmp.bv_val, vtmp.bv_len ? vtmp.bv_val : "" );
@@ -384,7 +396,7 @@ ldap_back_int_filter_map_rewrite(
 
 		fstr->bv_len = atmp.bv_len + vtmp.bv_len
 			+ ( sizeof("(~=)") - 1 );
-		fstr->bv_val = malloc( fstr->bv_len + 1 );
+		fstr->bv_val = ch_malloc( fstr->bv_len + 1 );
 
 		snprintf( fstr->bv_val, fstr->bv_len + 1, "(%s~=%s)",
 			atmp.bv_val, vtmp.bv_len ? vtmp.bv_val : "" );
@@ -402,7 +414,7 @@ ldap_back_int_filter_map_rewrite(
 		/* cannot be a DN ... */
 
 		fstr->bv_len = atmp.bv_len + ( STRLENOF( "(=*)" ) );
-		fstr->bv_val = malloc( fstr->bv_len + 128 ); /* FIXME: why 128 ? */
+		fstr->bv_val = ch_malloc( fstr->bv_len + 128 ); /* FIXME: why 128 ? */
 
 		snprintf( fstr->bv_val, fstr->bv_len + 1, "(%s=*)",
 			atmp.bv_val );
@@ -462,7 +474,7 @@ ldap_back_int_filter_map_rewrite(
 		}
 
 		fstr->bv_len = atmp.bv_len + ( STRLENOF( "(=*)" ) );
-		fstr->bv_val = malloc( fstr->bv_len + 1 );
+		fstr->bv_val = ch_malloc( fstr->bv_len + 1 );
 
 		snprintf( fstr->bv_val, fstr->bv_len + 1, "(%s=*)",
 			atmp.bv_val );
@@ -472,7 +484,7 @@ ldap_back_int_filter_map_rewrite(
 	case LDAP_FILTER_OR:
 	case LDAP_FILTER_NOT:
 		fstr->bv_len = STRLENOF( "(%)" );
-		fstr->bv_val = malloc( fstr->bv_len + 128 );	/* FIXME: why 128? */
+		fstr->bv_val = ch_malloc( fstr->bv_len + 128 );	/* FIXME: why 128? */
 
 		snprintf( fstr->bv_val, fstr->bv_len + 1, "(%c)",
 			f->f_choice == LDAP_FILTER_AND ? '&' :
@@ -517,7 +529,7 @@ ldap_back_int_filter_map_rewrite(
 			( f->f_mr_dnattrs ? STRLENOF( ":dn" ) : 0 ) +
 			( !BER_BVISEMPTY( &f->f_mr_rule_text ) ? f->f_mr_rule_text.bv_len + 1 : 0 ) +
 			vtmp.bv_len + ( STRLENOF( "(:=)" ) );
-		fstr->bv_val = malloc( fstr->bv_len + 1 );
+		fstr->bv_val = ch_malloc( fstr->bv_len + 1 );
 
 		snprintf( fstr->bv_val, fstr->bv_len + 1, "(%s%s%s%s:=%s)",
 			atmp.bv_val,
@@ -530,10 +542,15 @@ ldap_back_int_filter_map_rewrite(
 
 	case SLAPD_FILTER_COMPUTED:
 		switch ( f->f_result ) {
-		case LDAP_COMPARE_FALSE:
 		/* FIXME: treat UNDEFINED as FALSE */
 		case SLAPD_COMPARE_UNDEFINED:
 computed:;
+			if ( META_BACK_TGT_NOUNDEFFILTER( dc->target ) ) {
+				return LDAP_COMPARE_FALSE;
+			}
+			/* fallthru */
+
+		case LDAP_COMPARE_FALSE:
 			if ( META_BACK_TGT_T_F( dc->target ) ) {
 				tmp = &ber_bvtf_false;
 				break;

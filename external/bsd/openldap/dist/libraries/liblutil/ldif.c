@@ -1,8 +1,10 @@
+/*	$NetBSD: ldif.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+
 /* ldif.c - routines for dealing with LDIF files */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/ldif.c,v 1.15.2.6 2008/02/11 23:26:42 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/libraries/liblutil/ldif.c,v 1.15.2.8 2009/07/08 00:28:21 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -780,7 +782,8 @@ ldif_close(
 #define	LDIF_MAXLINE	4096
 
 /*
- * ldif_read_record - read an ldif record.  Return 1 for success, 0 for EOF.
+ * ldif_read_record - read an ldif record.  Return 1 for success, 0 for EOF,
+ * -1 for error.
  */
 int
 ldif_read_record(
@@ -882,7 +885,7 @@ ldif_read_record(
 							 */
 							ber_pvt_log_printf( LDAP_DEBUG_ANY, ldif_debug,
 								_("ldif_read_record: include %s failed\n"), ptr );
-							return 0;
+							return -1;
 						}
 					}
 				}

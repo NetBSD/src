@@ -1,5 +1,10 @@
-/* $OpenLDAP: pkg/ldap/contrib/slapi-plugins/addrdnvalues/addrdnvalues.c,v 1.6 2004/05/23 13:45:32 lukeh Exp $ */
-/*
+/*	$NetBSD: addrdnvalues.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
+/* addrdnvalues.c */
+/* OpenLDAP: pkg/ldap/contrib/slapi-plugins/addrdnvalues/addrdnvalues.c,v 1.6.6.1 2009/08/17 21:49:00 quanah Exp */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 2003-2009 The OpenLDAP Foundation.
  * Copyright 2003-2004 PADL Software Pty Ltd.
  * All rights reserved.
  *
@@ -10,6 +15,10 @@
  * A copy of this license is available in the file LICENSE in the
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
+ */
+/* ACKNOWLEDGEMENTS:
+ * This work was initially developed by Luke Howard of PADL Software
+ * for inclusion in OpenLDAP Software.
  */
 
 #include <string.h>

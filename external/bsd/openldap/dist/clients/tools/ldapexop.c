@@ -1,8 +1,10 @@
+/*	$NetBSD: ldapexop.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+
 /* ldapexop.c -- a tool for performing well-known extended operations */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapexop.c,v 1.9.2.3 2008/02/11 23:26:38 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/clients/tools/ldapexop.c,v 1.9.2.6 2009/08/14 20:51:14 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2008 The OpenLDAP Foundation.
+ * Copyright 2005-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,13 +45,16 @@ usage( void )
 {
 	fprintf( stderr, _("Issue LDAP extended operations\n\n"));
 	fprintf( stderr, _("usage: %s [options] <oid|oid:data|oid::b64data>\n"), prog);
+	fprintf( stderr, _("       %s [options] whoami\n"), prog);
+	fprintf( stderr, _("       %s [options] cancel <id>\n"), prog);
+	fprintf( stderr, _("       %s [options] refresh <DN> [<ttl>]\n"), prog);
 	tool_common_usage();
 	exit( EXIT_FAILURE );
 }
 
 
 const char options[] = ""
-	"d:D:e:h:H:InO:o:p:QR:U:vVw:WxX:y:Y:Z";
+	"d:D:e:h:H:InNO:o:p:QR:U:vVw:WxX:y:Y:Z";
 
 int
 handle_private_option( int i )
@@ -152,8 +157,6 @@ main( int argc, char *argv[] )
 		case 2:
 			dn.bv_val = argv[ 1 ];
 			dn.bv_len = strlen( dn.bv_val );
-
-		case 1:
 			break;
 
 		default:

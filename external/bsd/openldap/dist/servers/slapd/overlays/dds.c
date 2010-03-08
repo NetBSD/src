@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dds.c,v 1.7.2.9 2008/02/11 23:26:48 kurt Exp $ */
+/*	$NetBSD: dds.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/overlays/dds.c,v 1.7.2.14 2009/11/18 01:25:49 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2008 The OpenLDAP Foundation.
+ * Copyright 2005-2009 The OpenLDAP Foundation.
  * Portions Copyright 2005-2006 SysNet s.n.c.
  * All rights reserved.
  *
@@ -137,7 +139,7 @@ dds_expire( void *ctx, dds_info_t *di )
 	int		rc;
 	char		*extra = "";
 
-	connection_fake_init( &conn, &opbuf, ctx );
+	connection_fake_init2( &conn, &opbuf, ctx, 0 );
 	op = &opbuf.ob_op;
 
 	op->o_tag = LDAP_REQ_SEARCH;
@@ -185,7 +187,7 @@ dds_expire( void *ctx, dds_info_t *di )
 
 done_search:;
 	op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
-	filter_free_x( op, op->ors_filter );
+	filter_free_x( op, op->ors_filter, 1 );
 
 	rc = rs.sr_err;
 	switch ( rs.sr_err ) {
@@ -243,10 +245,9 @@ done_search:;
 					de->de_ndn.bv_val, rs.sr_err );
 				break;
 			}
-	
+
 			if ( de != NULL ) {
 				*dep = de->de_next;
-				dep = &de->de_next;
 				op->o_tmpfree( de, op->o_tmpmemctx );
 			}
 		}
@@ -582,7 +583,8 @@ dds_op_modify( Operation *op, SlapReply *rs )
 			}
 
 		} else if ( mod->sml_desc == slap_schema.si_ad_entryTtl ) {
-			unsigned long	ttl;
+			unsigned long	uttl;
+			time_t		ttl;
 			int		rc;
 
 			switch ( mod->sml_op ) {
@@ -629,7 +631,8 @@ dds_op_modify( Operation *op, SlapReply *rs )
 					goto done;
 				}
 
-				rc = lutil_atoul( &ttl, mod->sml_values[ 0 ].bv_val );
+				rc = lutil_atoul( &uttl, mod->sml_values[ 0 ].bv_val );
+				ttl = (time_t)uttl;
 				assert( rc == 0 );
 				if ( ttl > DDS_RF2589_MAX_TTL ) {
 					rs->sr_err = LDAP_PROTOCOL_ERROR;
@@ -646,7 +649,7 @@ dds_op_modify( Operation *op, SlapReply *rs )
 					goto done;
 				}
 
-				entryTtl = (time_t)ttl;
+				entryTtl = ttl;
 				bv_entryTtl.bv_len = mod->sml_values[ 0 ].bv_len;
 				AC_MEMCPY( bv_entryTtl.bv_val, mod->sml_values[ 0 ].bv_val, bv_entryTtl.bv_len );
 				bv_entryTtl.bv_val[ bv_entryTtl.bv_len ] = '\0';
@@ -1121,26 +1124,24 @@ dds_op_extended( Operation *op, SlapReply *rs )
 			BerElementBuffer	berbuf;
 			BerElement		*ber = (BerElement *)&berbuf;
 
-			if ( rs->sr_err == LDAP_SUCCESS ) {
-				ber_init_w_nullc( ber, LBER_USE_DER );
+			ber_init_w_nullc( ber, LBER_USE_DER );
 
-				rc = ber_printf( ber, "{tiN}", LDAP_TAG_EXOP_REFRESH_RES_TTL, (int)ttl );
+			rc = ber_printf( ber, "{tiN}", LDAP_TAG_EXOP_REFRESH_RES_TTL, (int)ttl );
 
-				if ( rc < 0 ) {
-					rs->sr_err = LDAP_OTHER;
-					rs->sr_text = "internal error";
+			if ( rc < 0 ) {
+				rs->sr_err = LDAP_OTHER;
+				rs->sr_text = "internal error";
 
-				} else {
-					(void)ber_flatten( ber, &rs->sr_rspdata );
-					rs->sr_rspoid = ch_strdup( slap_EXOP_REFRESH.bv_val );
+			} else {
+				(void)ber_flatten( ber, &rs->sr_rspdata );
+				rs->sr_rspoid = ch_strdup( slap_EXOP_REFRESH.bv_val );
 
-					Log3( LDAP_DEBUG_TRACE, LDAP_LEVEL_INFO,
-						"%s REFRESH dn=\"%s\" TTL=%ld\n",
-						op->o_log_prefix, op->o_req_ndn.bv_val, ttl );
-				}
-
-				ber_free_buf( ber );
+				Log3( LDAP_DEBUG_TRACE, LDAP_LEVEL_INFO,
+					"%s REFRESH dn=\"%s\" TTL=%ld\n",
+					op->o_log_prefix, op->o_req_ndn.bv_val, ttl );
 			}
+
+			ber_free_buf( ber );
 		}
 
 		return rs->sr_err;
@@ -1391,7 +1392,7 @@ dds_cfgen( ConfigArgs *c )
 
 		if ( t < DDS_RF2589_DEFAULT_TTL || t > DDS_RF2589_MAX_TTL ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
-				"DDS invalid dds-max-ttl=%ld; must be between %d and %d",
+				"DDS invalid dds-max-ttl=%lu; must be between %d and %d",
 				t, DDS_RF2589_DEFAULT_TTL, DDS_RF2589_MAX_TTL );
 			Log2( LDAP_DEBUG_ANY, LDAP_LEVEL_ERR,
 				"%s: %s.\n", c->log, c->cr_msg );
@@ -1411,9 +1412,9 @@ dds_cfgen( ConfigArgs *c )
 			return 1;
 		}
 
-		if ( t < 0 || t > DDS_RF2589_MAX_TTL ) {
+		if ( t > DDS_RF2589_MAX_TTL ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
-				"DDS invalid dds-min-ttl=%ld",
+				"DDS invalid dds-min-ttl=%lu",
 				t );
 			Log2( LDAP_DEBUG_ANY, LDAP_LEVEL_ERR,
 				"%s: %s.\n", c->log, c->cr_msg );
@@ -1438,9 +1439,9 @@ dds_cfgen( ConfigArgs *c )
 			return 1;
 		}
 
-		if ( t < 0 || t > DDS_RF2589_MAX_TTL ) {
+		if ( t > DDS_RF2589_MAX_TTL ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
-				"DDS invalid dds-default-ttl=%ld",
+				"DDS invalid dds-default-ttl=%lu",
 				t );
 			Log2( LDAP_DEBUG_ANY, LDAP_LEVEL_ERR,
 				"%s: %s.\n", c->log, c->cr_msg );
@@ -1467,7 +1468,7 @@ dds_cfgen( ConfigArgs *c )
 
 		if ( t <= 0 ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
-				"DDS invalid dds-interval=%ld",
+				"DDS invalid dds-interval=%lu",
 				t );
 			Log2( LDAP_DEBUG_ANY, LDAP_LEVEL_ERR,
 				"%s: %s.\n", c->log, c->cr_msg );
@@ -1502,9 +1503,9 @@ dds_cfgen( ConfigArgs *c )
 			return 1;
 		}
 
-		if ( t < 0 || t > DDS_RF2589_MAX_TTL ) {
+		if ( t > DDS_RF2589_MAX_TTL ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
-				"DDS invalid dds-tolerance=%ld",
+				"DDS invalid dds-tolerance=%lu",
 				t );
 			Log2( LDAP_DEBUG_ANY, LDAP_LEVEL_ERR,
 				"%s: %s.\n", c->log, c->cr_msg );
@@ -1628,7 +1629,7 @@ dds_count( void *ctx, BackendDB *be )
 	int		rc;
 	char		*extra = "";
 
-	connection_fake_init( &conn, &opbuf, ctx );
+	connection_fake_init2( &conn, &opbuf, ctx, 0 );
 	op = &opbuf.ob_op;
 
 	op->o_tag = LDAP_REQ_SEARCH;
@@ -1671,7 +1672,7 @@ dds_count( void *ctx, BackendDB *be )
 
 done_search:;
 	op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
-	filter_free_x( op, op->ors_filter );
+	filter_free_x( op, op->ors_filter, 1 );
 
 	rc = rs.sr_err;
 	switch ( rs.sr_err ) {

@@ -1,8 +1,10 @@
+/*	$NetBSD: database.c,v 1.1.1.3 2010/03/08 02:14:19 lukem Exp $	*/
+
 /* database.c - deals with database subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/database.c,v 1.80.2.10 2008/05/26 18:57:01 ando Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/database.c,v 1.80.2.15 2009/08/25 22:48:09 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2008 The OpenLDAP Foundation.
+ * Copyright 2001-2009 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -66,7 +68,7 @@ init_readOnly( monitor_info_t *mi, Entry *e, slap_mask_t restrictops )
 	struct berval	*tf = ( ( restrictops & SLAP_RESTRICT_OP_MASK ) == SLAP_RESTRICT_OP_WRITES ) ?
 		(struct berval *)&slap_true_bv : (struct berval *)&slap_false_bv;
 
-	return attr_merge_one( e, mi->mi_ad_readOnly, tf, tf );
+	return attr_merge_one( e, mi->mi_ad_readOnly, tf, NULL );
 }
 
 static int
@@ -100,6 +102,101 @@ init_restrictedOperation( monitor_info_t *mi, Entry *e, slap_mask_t restrictops 
 }
 
 static int
+monitor_subsys_overlay_init_one(
+	monitor_info_t		*mi,
+	BackendDB		*be,
+	monitor_subsys_t	*ms,
+	monitor_subsys_t	*ms_overlay,
+	slap_overinst		*on,
+	Entry			*e_database,
+	Entry			**ep_overlay )
+{
+	char			buf[ BACKMONITOR_BUFSIZE ];
+	int			j, o;
+	Entry			*e_overlay;
+	slap_overinst		*on2;
+	slap_overinfo		*oi = NULL;
+	BackendInfo		*bi;
+	monitor_entry_t		*mp_overlay;
+	struct berval		bv;
+
+	assert( overlay_is_over( be ) );
+
+	oi = (slap_overinfo *)be->bd_info->bi_private;
+	bi = oi->oi_orig;
+
+	/* find the overlay number, o */
+	for ( o = 0, on2 = oi->oi_list; on2 && on2 != on; on2 = on2->on_next, o++ )
+		;
+
+	if ( on2 == NULL ) {
+		return -1;
+	}
+
+	/* find the overlay type number, j */
+	for ( on2 = overlay_next( NULL ), j = 0; on2; on2 = overlay_next( on2 ), j++ ) {
+		if ( on2->on_bi.bi_type == on->on_bi.bi_type ) {
+			break;
+		}
+	}
+	assert( on2 != NULL );
+
+	bv.bv_len = snprintf( buf, sizeof( buf ), "cn=Overlay %d", o );
+	bv.bv_val = buf;
+
+	e_overlay = monitor_entry_stub( &e_database->e_name, &e_database->e_nname, &bv,
+		mi->mi_oc_monitoredObject, mi, NULL, NULL );
+
+	if ( e_overlay == NULL ) {
+		Debug( LDAP_DEBUG_ANY,
+			"monitor_subsys_overlay_init_one: "
+			"unable to create entry "
+			"\"cn=Overlay %d,%s\"\n",
+			o, e_database->e_name.bv_val, 0 );
+		return( -1 );
+	}
+	ber_str2bv( on->on_bi.bi_type, 0, 0, &bv );
+	attr_merge_normalize_one( e_overlay, mi->mi_ad_monitoredInfo, &bv, NULL );
+
+	bv.bv_len = snprintf( buf, sizeof( buf ), "cn=Overlay %d,%s",
+		j, ms_overlay->mss_dn.bv_val );
+	bv.bv_val = buf;
+	attr_merge_normalize_one( e_overlay, slap_schema.si_ad_seeAlso,
+		&bv, NULL );
+
+	if ( SLAP_MONITOR( be ) ) {
+		attr_merge( e_overlay, slap_schema.si_ad_monitorContext,
+				be->be_suffix, be->be_nsuffix );
+
+	} else {
+		attr_merge( e_overlay, slap_schema.si_ad_namingContexts,
+				be->be_suffix, NULL );
+	}
+
+	mp_overlay = monitor_entrypriv_create();
+	if ( mp_overlay == NULL ) {
+		return -1;
+	}
+	e_overlay->e_private = ( void * )mp_overlay;
+	mp_overlay->mp_info = ms;
+	mp_overlay->mp_flags = ms->mss_flags | MONITOR_F_SUB;
+	
+	if ( monitor_cache_add( mi, e_overlay ) ) {
+		Debug( LDAP_DEBUG_ANY,
+			"monitor_subsys_overlay_init_one: "
+			"unable to add entry "
+			"\"cn=Overlay %d,%s\"\n",
+			o, e_database->e_name.bv_val, 0 );
+		return -1;
+	}
+
+	*ep_overlay = e_overlay;
+	ep_overlay = &mp_overlay->mp_next;
+
+	return 0;
+}
+
+static int
 monitor_subsys_database_init_one(
 	monitor_info_t		*mi,
 	BackendDB		*be,
@@ -126,17 +223,12 @@ monitor_subsys_database_init_one(
 		bi = oi->oi_orig;
 	}
 
-	/* Subordinates are not exposed as their own naming context */
-	if ( SLAP_GLUE_SUBORDINATE( be ) ) {
-		return 0;
-	}
-
 	e = monitor_entry_stub( &ms->mss_dn, &ms->mss_ndn, rdn,
 		mi->mi_oc_monitoredObject, mi, NULL, NULL );
 
 	if ( e == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
-			"monitor_subsys_database_init: "
+			"monitor_subsys_database_init_one: "
 			"unable to create entry \"%s,%s\"\n",
 			rdn->bv_val, ms->mss_dn.bv_val, 0 );
 		return( -1 );
@@ -157,15 +249,29 @@ monitor_subsys_database_init_one(
 	} else {
 		if ( be->be_suffix == NULL ) {
 			Debug( LDAP_DEBUG_ANY,
-				"monitor_subsys_database_init: "
+				"monitor_subsys_database_init_one: "
 				"missing suffix for %s\n",
 				rdnval, 0, 0 );
-			return -1;
+		} else {
+			attr_merge( e, slap_schema.si_ad_namingContexts,
+				be->be_suffix, NULL );
+			attr_merge( e_database, slap_schema.si_ad_namingContexts,
+				be->be_suffix, NULL );
 		}
-		attr_merge( e, slap_schema.si_ad_namingContexts,
-				be->be_suffix, be->be_nsuffix );
-		attr_merge( e_database, slap_schema.si_ad_namingContexts,
-				be->be_suffix, be->be_nsuffix );
+
+		if ( SLAP_GLUE_SUBORDINATE( be ) ) {
+			BackendDB *sup_be = select_backend( &be->be_nsuffix[ 0 ], 1 );
+			if ( sup_be == NULL ) {
+				Debug( LDAP_DEBUG_ANY,
+					"monitor_subsys_database_init: "
+					"unable to get superior for %s\n",
+					be->be_suffix[ 0 ].bv_val, 0, 0 );
+
+			} else {
+				attr_merge( e, mi->mi_ad_monitorSuperiorDN,
+					sup_be->be_suffix, sup_be->be_nsuffix );
+			}
+		}
 	}
 
 	(void)init_readOnly( mi, e, be->be_restrictops );
@@ -244,7 +350,7 @@ monitor_subsys_database_init_one(
 
 	if ( monitor_cache_add( mi, e ) ) {
 		Debug( LDAP_DEBUG_ANY,
-			"monitor_subsys_database_init: "
+			"monitor_subsys_database_init_one: "
 			"unable to add entry \"%s,%s\"\n",
 			rdn->bv_val, ms->mss_dn.bv_val, 0 );
 		return( -1 );
@@ -256,74 +362,11 @@ monitor_subsys_database_init_one(
 
 	if ( oi != NULL ) {
 		Entry		**ep_overlay = &mp->mp_children;
-		monitor_entry_t	*mp_overlay;
 		slap_overinst	*on = oi->oi_list;
-		int		o;
 
-		for ( o = 0; on; o++, on = on->on_next ) {
-			Entry			*e_overlay;
-			slap_overinst		*on2;
-
-			/* find the overlay number, j */
-			for ( on2 = overlay_next( NULL ), j = 0; on2; on2 = overlay_next( on2 ), j++ ) {
-				if ( on2->on_bi.bi_type == on->on_bi.bi_type ) {
-					break;
-				}
-			}
-			assert( on2 != NULL );
-
-			bv.bv_len = snprintf( buf, sizeof( buf ), "cn=Overlay %d", o );
-			bv.bv_val = buf;
-
-			e_overlay = monitor_entry_stub( &e->e_name, &e->e_nname, &bv,
-				mi->mi_oc_monitoredObject, mi, NULL, NULL );
-
-			if ( e_overlay == NULL ) {
-				Debug( LDAP_DEBUG_ANY,
-					"monitor_subsys_database_init: "
-					"unable to create entry "
-					"\"cn=Overlay %d,%s,%s\"\n",
-					o, rdn->bv_val, ms->mss_dn.bv_val );
-				return( -1 );
-			}
-			ber_str2bv( on->on_bi.bi_type, 0, 0, &bv );
-			attr_merge_normalize_one( e_overlay, mi->mi_ad_monitoredInfo, &bv, NULL );
-
-			bv.bv_len = snprintf( buf, sizeof( buf ), "cn=Overlay %d,%s",
-				j, ms_overlay->mss_dn.bv_val );
-			bv.bv_val = buf;
-			attr_merge_normalize_one( e_overlay, slap_schema.si_ad_seeAlso,
-				&bv, NULL );
-
-			if ( SLAP_MONITOR( be ) ) {
-				attr_merge( e_overlay, slap_schema.si_ad_monitorContext,
-						be->be_suffix, be->be_nsuffix );
-
-			} else {
-				attr_merge( e_overlay, slap_schema.si_ad_namingContexts,
-						be->be_suffix, be->be_nsuffix );
-			}
-
-			mp_overlay = monitor_entrypriv_create();
-			if ( mp_overlay == NULL ) {
-				return -1;
-			}
-			e_overlay->e_private = ( void * )mp_overlay;
-			mp_overlay->mp_info = ms;
-			mp_overlay->mp_flags = ms->mss_flags
-				| MONITOR_F_SUB;
-	
-			if ( monitor_cache_add( mi, e_overlay ) ) {
-				Debug( LDAP_DEBUG_ANY,
-					"monitor_subsys_database_init: "
-					"unable to add entry "
-					"\"cn=Overlay %d,%s,%s\"\n",
-					o, rdn->bv_val, ms->mss_dn.bv_val );
-				return( -1 );
-			}
-
-			*ep_overlay = e_overlay;
-			ep_overlay = &mp_overlay->mp_next;
+		for ( ; on; on = on->on_next ) {
+			monitor_subsys_overlay_init_one( mi, be,
+				ms, ms_overlay, on, e, ep_overlay );
 		}
 	}
 
@@ -333,10 +376,11 @@ monitor_subsys_database_init_one(
 	return 0;
 }
 
-int
-monitor_back_register_database(
+static int
+monitor_back_register_database_and_overlay(
 	BackendDB		*be,
-	struct berval	*ndn )
+	struct slap_overinst	*on,
+	struct berval		*ndn_out )
 {
 	monitor_info_t		*mi;
 	Entry			*e_database, **ep;
@@ -351,7 +395,12 @@ monitor_back_register_database(
 	assert( be_monitor != NULL );
 
 	if ( !monitor_subsys_is_opened() ) {
-		return monitor_back_register_database_limbo( be, ndn );
+		if ( on ) {
+			return monitor_back_register_overlay_limbo( be, on, ndn_out );
+
+		} else {
+			return monitor_back_register_database_limbo( be, ndn_out );
+		}
 	}
 
 	mi = ( monitor_info_t * )be_monitor->be_private;
@@ -405,9 +454,15 @@ monitor_back_register_database(
 		if ( a ) {
 			int		j, k;
 
-			for ( j = 0; !BER_BVISNULL( &a->a_nvals[ j ] ); j++ ) {
-				for ( k = 0; !BER_BVISNULL( &be->be_nsuffix[ k ] ); k++ ) {
-					if ( dn_match( &a->a_nvals[ j ], &be->be_nsuffix[ k ] ) ) {
+			/* FIXME: RFC 4512 defines namingContexts without an
+			 *        equality matching rule, making comparisons
+			 *        like this one tricky.  We use a_vals and
+			 *        be_suffix instead for now.
+			 */
+			for ( j = 0; !BER_BVISNULL( &a->a_vals[ j ] ); j++ ) {
+				for ( k = 0; !BER_BVISNULL( &be->be_suffix[ k ] ); k++ ) {
+					if ( dn_match( &a->a_vals[ j ],
+					               &be->be_suffix[ k ] ) ) {
 						rc = 0;
 						goto done;
 					}
@@ -440,11 +495,49 @@ monitor_back_register_database(
 
 done:;
 	monitor_cache_release( mi, e_database );
-	if ( rc == 0 && ndn && ep && *ep ) {
-		*ndn = (*ep)->e_nname;
+	if ( rc == 0 && ndn_out && ep && *ep ) {
+		if ( on ) {
+			Entry *e_ov;
+			struct berval ov_type;
+
+			ber_str2bv( on->on_bi.bi_type, 0, 0, &ov_type );
+
+			mp = ( monitor_entry_t * ) (*ep)->e_private;
+			for ( e_ov = mp->mp_children; e_ov; ) {
+				Attribute *a = attr_find( e_ov->e_attrs, mi->mi_ad_monitoredInfo );
+
+				if ( a != NULL && bvmatch( &a->a_nvals[ 0 ], &ov_type ) ) {
+					*ndn_out = e_ov->e_nname;
+					break;
+				}
+
+				mp = ( monitor_entry_t * ) e_ov->e_private;
+				e_ov = mp->mp_next;
+			}
+			
+		} else {
+			*ndn_out = (*ep)->e_nname;
+		}
 	}
 
 	return rc;
+}
+
+int
+monitor_back_register_database(
+	BackendDB		*be,
+	struct berval		*ndn_out )
+{
+	return monitor_back_register_database_and_overlay( be, NULL, ndn_out );
+}
+
+int
+monitor_back_register_overlay(
+	BackendDB		*be,
+	struct slap_overinst	*on,
+	struct berval		*ndn_out )
+{
+	return monitor_back_register_database_and_overlay( be, on, ndn_out );
 }
 
 int

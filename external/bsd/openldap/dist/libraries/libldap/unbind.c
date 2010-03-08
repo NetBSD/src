@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.56.2.4 2008/02/11 23:26:41 kurt Exp $ */
+/*	$NetBSD: unbind.c,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.56.2.6 2009/01/22 00:00:56 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -111,6 +113,18 @@ ldap_ld_free(
 #ifdef LDAP_R_COMPILE
 	ldap_pvt_thread_mutex_unlock( &ld->ld_res_mutex );
 #endif
+
+	/* final close callbacks */
+	{
+		ldaplist *ll, *next;
+
+		for ( ll = ld->ld_options.ldo_conn_cbs; ll; ll = next ) {
+			ldap_conncb *cb = ll->ll_data;
+			next = ll->ll_next;
+			cb->lc_del( ld, NULL, cb );
+			LDAP_FREE( ll );
+		}
+	}
 
 	if ( ld->ld_error != NULL ) {
 		LDAP_FREE( ld->ld_error );

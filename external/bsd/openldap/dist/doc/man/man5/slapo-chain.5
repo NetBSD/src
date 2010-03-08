@@ -1,9 +1,9 @@
 .TH SLAPO-CHAIN 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2008 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2009 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-chain.5,v 1.10.2.4 2008/02/11 23:26:40 kurt Exp $
+.\" OpenLDAP: pkg/ldap/doc/man/man5/slapo-chain.5,v 1.10.2.7 2009/06/03 01:41:58 quanah Exp
 .SH NAME
-slapo-chain \- chain overlay to slapd
+slapo\-chain \- chain overlay to slapd
 .SH SYNOPSIS
 ETCDIR/slapd.conf
 .SH DESCRIPTION
@@ -18,7 +18,7 @@ If operations are performed with an identity (i.e. after a bind),
 that identity can be asserted while chasing the referrals 
 by means of the \fIidentity assertion\fP feature of back-ldap
 (see
-.BR slapd-ldap (5)
+.BR slapd\-ldap (5)
 for details), which is essentially based on the
 .B proxied authorization
 control [RFC 4370].
@@ -39,7 +39,7 @@ There are very few chain overlay specific directives; however, directives
 related to the instances of the \fIldap\fP backend that may be implicitly 
 instantiated by the overlay may assume a special meaning when used 
 in conjunction with this overlay.  They are described in
-.BR slapd-ldap (5),
+.BR slapd\-ldap (5),
 and they also need to be prefixed by
 .BR chain\- .
 .TP
@@ -47,21 +47,21 @@ and they also need to be prefixed by
 This directive adds the chain overlay to the current backend.
 The chain overlay may be used with any backend, but it is mainly 
 intended for use with local storage backends that may return referrals.
-It is useless in conjunction with the \fIslapd-ldap\fP and \fIslapd-meta\fP
+It is useless in conjunction with the \fIslapd\-ldap\fP and \fIslapd\-meta\fP
 backends because they already exploit the libldap specific referral chase 
 feature.
 [Note: this may change in the future, as the \fBldap\fP(5) and 
 \fBmeta\fP(5) backends might no longer chase referrals on their own.]
 .TP
-.B chain-cache-uri {FALSE|true}
+.B chain\-cache\-uri {FALSE|true}
 This directive instructs the \fIchain\fP overlay to cache
 connections to URIs parsed out of referrals that are not predefined,
 to be reused for later chaining.
 These URIs inherit the properties configured for the underlying 
-\fBslapd-ldap\fP(5) before any occurrence of the \fBchain-uri\fP
+\fBslapd\-ldap\fP(5) before any occurrence of the \fBchain\-uri\fP
 directive; basically, they are chained anonymously.
 .TP
-.B chain-chaining [resolve=<r>] [continuation=<c>] [critical]
+.B chain\-chaining [resolve=<r>] [continuation=<c>] [critical]
 This directive enables the \fIchaining\fP control
 (see \fIdraft-sermersheim-ldap-chaining\fP for details)
 with the desired resolve and continuation behaviors and criticality.
@@ -79,12 +79,12 @@ The values \fBr\fP and \fBc\fP can be any of
 If the \fBcritical\fP flag affects the control criticality if provided.
 [This control is experimental and its support may change in the future.]
 .TP
-.B chain-max-depth <n>
+.B chain\-max\-depth <n>
 In case a referral is returned during referral chasing, further chasing
 occurs at most \fB<n>\fP levels deep.  Set to \fB1\fP (the default) 
 to disable further referral chasing.
 .TP
-.B chain-return-error {FALSE|true}
+.B chain\-return\-error {FALSE|true}
 In case referral chasing fails, the real error is returned instead
 of the original referral.  In case multiple referral URIs are present,
 only the first error is returned.  This behavior may not be always
@@ -92,12 +92,12 @@ appropriate nor desirable, since failures in referral chasing might be
 better resolved by the client (e.g. when caused by distributed 
 authentication issues).
 .TP
-.B chain-uri <ldapuri>
+.B chain\-uri <ldapuri>
 This directive instantiates a new underlying \fIldap\fP database
 and instructs it about which URI to contact to chase referrals.
-As opposed to what stated in \fBslapd-ldap\fP(5), only one URI
-can appear after this directive; all subsequent \fBslapd-ldap\fP(5)
-directives prefixed by \fBchain-\fP refer to this specific instance
+As opposed to what stated in \fBslapd\-ldap\fP(5), only one URI
+can appear after this directive; all subsequent \fBslapd\-ldap\fP(5)
+directives prefixed by \fBchain\-\fP refer to this specific instance
 of a remote server.
 .LP
 
@@ -107,17 +107,17 @@ be required, as shown in this example:
 .RS
 .nf
 overlay                 chain
-chain-rebind-as-user    FALSE
+chain\-rebind\-as\-user    FALSE
 
-chain-uri               "ldap://ldap1.example.com"
-chain-rebind-as-user    TRUE
-chain-idassert-bind     bindmethod="simple"
+chain\-uri               "ldap://ldap1.example.com"
+chain\-rebind\-as\-user    TRUE
+chain\-idassert\-bind     bindmethod="simple"
                         binddn="cn=Auth,dc=example,dc=com"
                         credentials="secret"
                         mode="self"
 
-chain-uri               "ldap://ldap2.example.com"
-chain-idassert-bind     bindmethod="simple"
+chain\-uri               "ldap://ldap2.example.com"
+chain\-idassert\-bind     bindmethod="simple"
                         binddn="cn=Auth,dc=example,dc=com"
                         credentials="secret"
                         mode="none"
@@ -126,14 +126,14 @@ chain-idassert-bind     bindmethod="simple"
 .RE
 .LP
 Any valid directives for the ldap database may be used; see
-.BR slapd-ldap (5)
+.BR slapd\-ldap (5)
 for details.
-Multiple occurrences of the \fBchain-uri\fP directive may appear,
+Multiple occurrences of the \fBchain\-uri\fP directive may appear,
 to define multiple "trusted" URIs where operations with 
 \fIidentity assertion\fP are chained.
 All URIs not listed in the configuration are chained anonymously.
-All \fBslapd-ldap\fP(5) directives appearing before the first 
-occurrence of \fBchain-uri\fP are inherited by all URIs,
+All \fBslapd\-ldap\fP(5) directives appearing before the first 
+occurrence of \fBchain\-uri\fP are inherited by all URIs,
 unless specifically overridden inside each URI configuration.
 .SH FILES
 .TP
@@ -141,6 +141,7 @@ ETCDIR/slapd.conf
 default slapd configuration file
 .SH SEE ALSO
 .BR slapd.conf (5),
+.BR slapd\-config (5),
 .BR slapd\-ldap (5),
 .BR slapd (8).
 .SH AUTHOR

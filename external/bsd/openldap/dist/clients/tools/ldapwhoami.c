@@ -1,8 +1,10 @@
+/*	$NetBSD: ldapwhoami.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+
 /* ldapwhoami.c -- a tool for asking the directory "Who Am I?" */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapwhoami.c,v 1.42.2.3 2008/02/11 23:26:38 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/clients/tools/ldapwhoami.c,v 1.42.2.5 2009/01/22 00:00:43 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -62,7 +64,7 @@ usage( void )
 
 
 const char options[] = ""
-	"d:D:e:h:H:InO:o:p:QR:U:vVw:WxX:y:Y:Z";
+	"d:D:e:h:H:InNO:o:p:QR:U:vVw:WxX:y:Y:Z";
 
 int
 handle_private_option( int i )

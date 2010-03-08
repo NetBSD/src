@@ -1,3 +1,5 @@
+/*	$NetBSD: getpeercred.h,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    getpeercred.h - function for determining information about the
                    other end of a unix socket

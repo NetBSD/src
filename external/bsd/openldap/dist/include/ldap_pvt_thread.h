@@ -1,8 +1,10 @@
+/*	$NetBSD: ldap_pvt_thread.h,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+
 /* ldap_pvt_thread.h - ldap threads header file */
-/* $OpenLDAP: pkg/ldap/include/ldap_pvt_thread.h,v 1.51.2.10 2008/03/21 00:46:03 hyc Exp $ */
+/* OpenLDAP: pkg/ldap/include/ldap_pvt_thread.h,v 1.51.2.13 2009/06/11 21:53:23 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -59,12 +61,12 @@ ldap_pvt_thread_set_concurrency LDAP_P(( int ));
 
 #ifndef LDAP_PVT_THREAD_H_DONE
 #define	LDAP_PVT_THREAD_SET_STACK_SIZE
-#ifndef LDAP_PVT_THREAD_STACK_SIZE
+/* The size may be explicitly #defined to zero to disable it. */
+#if defined( LDAP_PVT_THREAD_STACK_SIZE ) && LDAP_PVT_THREAD_STACK_SIZE == 0
+#	undef LDAP_PVT_THREAD_SET_STACK_SIZE
+#elif !defined( LDAP_PVT_THREAD_STACK_SIZE )
 	/* LARGE stack. Will be twice as large on 64 bit machine. */
-#define LDAP_PVT_THREAD_STACK_SIZE	( 1 * 1024 * 1024 * sizeof(void *) )
-/* May be explicitly defined to zero to disable it */
-#elif LDAP_PVT_THREAD_STACK_SIZE == 0
-#undef LDAP_PVT_THREAD_SET_STACK_SIZE
+#	define LDAP_PVT_THREAD_STACK_SIZE ( 1 * 1024 * 1024 * sizeof(void *) )
 #endif
 #endif /* !LDAP_PVT_THREAD_H_DONE */
 
@@ -211,6 +213,12 @@ ldap_pvt_thread_pool_init LDAP_P((
 
 LDAP_F( int )
 ldap_pvt_thread_pool_submit LDAP_P((
+	ldap_pvt_thread_pool_t *pool,
+	ldap_pvt_thread_start_t *start,
+	void *arg ));
+
+LDAP_F( int )
+ldap_pvt_thread_pool_retract LDAP_P((
 	ldap_pvt_thread_pool_t *pool,
 	ldap_pvt_thread_start_t *start,
 	void *arg ));

@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.74.2.13 2008/07/10 00:28:39 quanah Exp $ */
+/*	$NetBSD: config.c,v 1.1.1.3 2010/03/08 02:14:19 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.74.2.18 2009/08/14 20:54:14 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -640,6 +642,10 @@ meta_back_db_config(
 		
 	/* save bind creds for referral rebinds? */
 	} else if ( strcasecmp( argv[ 0 ], "rebind-as-user" ) == 0 ) {
+		unsigned	*flagsp = mi->mi_ntargets ?
+				&mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_flags
+				: &mi->mi_flags;
+
 		if ( argc > 2 ) {
 			Debug( LDAP_DEBUG_ANY,
 	"%s: line %d: \"rebind-as-user {NO|yes}\" takes 1 argument.\n",
@@ -651,16 +657,16 @@ meta_back_db_config(
 			Debug( LDAP_DEBUG_ANY,
 	"%s: line %d: deprecated use of \"rebind-as-user {FALSE|true}\" with no arguments.\n",
 			    fname, lineno, 0 );
-			mi->mi_flags |= LDAP_BACK_F_SAVECRED;
+			*flagsp |= LDAP_BACK_F_SAVECRED;
 
 		} else {
 			switch ( check_true_false( argv[ 1 ] ) ) {
 			case 0:
-				mi->mi_flags &= ~LDAP_BACK_F_SAVECRED;
+				*flagsp &= ~LDAP_BACK_F_SAVECRED;
 				break;
 
 			case 1:
-				mi->mi_flags |= LDAP_BACK_F_SAVECRED;
+				*flagsp |= LDAP_BACK_F_SAVECRED;
 				break;
 
 			default:
@@ -1082,7 +1088,9 @@ idassert-authzFrom	"dn:<rootdn>"
 				return 1;
 			}
 
-			if ( snprintf( binddn, sizeof( binddn ), "binddn=%s", argv[ 1 ] ) >= sizeof( binddn ) ) {
+			if ( sizeof( binddn ) <= (unsigned) snprintf( binddn,
+					sizeof( binddn ), "binddn=%s", argv[ 1 ] ))
+			{
 				Debug( LDAP_DEBUG_ANY, "%s: line %d: \"pseudorootdn\" too long.\n",
 					fname, lineno, 0 );
 				return 1;
@@ -1483,6 +1491,36 @@ idassert-authzFrom	"dn:<rootdn>"
 			return( 1 );
 		}
 
+	/* do not propagate undefined search filters */
+	} else if ( strcasecmp( argv[ 0 ], "noundeffilter" ) == 0 ) {
+		unsigned	*flagsp = mi->mi_ntargets ?
+				&mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_flags
+				: &mi->mi_flags;
+
+		if ( argc != 2 ) {
+			Debug( LDAP_DEBUG_ANY,
+	"%s: line %d: \"noundeffilter {TRUE|false}\" needs 1 argument.\n",
+				fname, lineno, 0 );
+			return( 1 );
+		}
+
+		/* this is the default; we add it because the default might change... */
+		switch ( check_true_false( argv[ 1 ] ) ) {
+		case 1:
+			*flagsp |= LDAP_BACK_F_NOUNDEFFILTER;
+			break;
+
+		case 0:
+			*flagsp &= ~LDAP_BACK_F_NOUNDEFFILTER;
+			break;
+
+		default:
+			Debug( LDAP_DEBUG_ANY,
+		"%s: line %d: \"noundeffilter {TRUE|false}\": unknown argument \"%s\".\n",
+				fname, lineno, argv[ 1 ] );
+			return( 1 );
+		}
+
 	/* anything else */
 	} else {
 		return SLAP_CONF_UNKNOWN;
@@ -1524,6 +1562,11 @@ ldap_back_map_config(
 			"{<foreign> | *}\"\n",
 			fname, lineno, 0 );
 		return 1;
+	}
+
+	if ( !is_oc && map->map == NULL ) {
+		/* only init if required */
+		ldap_back_map_init( map, &mapping );
 	}
 
 	if ( strcmp( argv[ 2 ], "*" ) == 0 ) {
@@ -1672,11 +1715,6 @@ ldap_back_map_config(
 				mapping_cmp, mapping_dup );
 
 success_return:;
-	if ( !is_oc && map->map == NULL ) {
-		/* only init if required */
-		ldap_back_map_init( map, &mapping );
-	}
-
 	return 0;
 
 error_return:;

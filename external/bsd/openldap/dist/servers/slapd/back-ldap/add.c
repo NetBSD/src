@@ -1,8 +1,10 @@
+/*	$NetBSD: add.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* add.c - ldap backend add function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/add.c,v 1.61.2.5 2008/02/11 23:26:46 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/add.c,v 1.61.2.6 2009/01/22 00:01:06 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.

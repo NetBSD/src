@@ -1,8 +1,10 @@
+/*	$NetBSD: param.h,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /* Generic param.h */
-/* $OpenLDAP: pkg/ldap/include/ac/param.h,v 1.13.2.3 2008/02/11 23:26:40 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/include/ac/param.h,v 1.13.2.5 2009/10/30 18:38:01 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,6 +22,9 @@
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
+
+/* MAXPATHLEN should come from <unistd.h> */
+#include <ac/unistd.h>
 
 #ifndef MAXPATHLEN
 #	if defined(PATH_MAX)

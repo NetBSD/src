@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/xmap.c,v 1.12.2.3 2008/02/11 23:26:43 kurt Exp $ */
+/*	$NetBSD: xmap.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/libraries/librewrite/xmap.c,v 1.12.2.5 2009/01/22 00:00:59 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -74,6 +76,10 @@ rewrite_xmap_parse(
 	if ( strncasecmp(s, "xpasswd", 7 ) == 0 ) {
 		map->lm_type = REWRITE_MAP_XPWDMAP;
 		map->lm_name = strdup( "xpasswd" );
+		if ( map->lm_name == NULL ) {
+			free( map );
+			return NULL;
+		}
 
 		assert( s[7] == '}' );
 		*currpos = s + 8;
@@ -123,6 +129,10 @@ rewrite_xmap_parse(
 
 		l = p - s - c;
 		filename = calloc( sizeof( char ), l + 1 );
+		if ( filename == NULL ) {
+			free( map );
+			return NULL;
+		}
 		AC_MEMCPY( filename, s + c, l );
 		filename[ l ] = '\0';
 		
@@ -177,6 +187,10 @@ rewrite_xmap_parse(
 		 */
 		l = p - s - c;
 		url = calloc( sizeof( char ), l + 3 );
+		if ( url == NULL ) {
+			free( map );
+			return NULL;
+		}
 		AC_MEMCPY( url, s + c, l );
 		url[ l ] = '\0';
 
@@ -269,15 +283,6 @@ rewrite_xmap_apply(
 			int l = strlen( pwd->pw_gecos );
 			
 			val->bv_val = strdup( pwd->pw_gecos );
-			if ( val->bv_val == NULL ) {
-
-#ifdef USE_REWRITE_LDAP_PVT_THREADS
-		                ldap_pvt_thread_mutex_unlock( &xpasswd_mutex );
-#endif /* USE_REWRITE_LDAP_PVT_THREADS */
-
-				rc = REWRITE_ERR;
-				break;
-			}
 			val->bv_len = l;
 		} else
 #endif /* HAVE_STRUCT_PASSWD_PW_GECOS */
@@ -289,7 +294,10 @@ rewrite_xmap_apply(
 #ifdef USE_REWRITE_LDAP_PVT_THREADS
 		ldap_pvt_thread_mutex_unlock( &xpasswd_mutex );
 #endif /* USE_REWRITE_LDAP_PVT_THREADS */
-			
+
+		if ( val->bv_val == NULL ) {
+			rc = REWRITE_ERR;
+		}
 		break;
 	}
 #endif /* HAVE_GETPWNAM*/
@@ -400,31 +408,27 @@ rewrite_xmap_apply(
 		}
 		if ( attrsonly == 1 ) {
 			val->bv_val = ldap_get_dn( ld, entry );
-			if ( val->bv_val == NULL ) {
-				ldap_msgfree( res );
-                                ldap_unbind( ld );
-                                rc = REWRITE_ERR;
-                                goto rc_return;
-                        }
+
 		} else {
 			values = ldap_get_values( ld, entry,
 					lud->lud_attrs[0] );
-			if ( values == NULL ) {
-				ldap_msgfree( res );
-				ldap_unbind( ld );
-				rc = REWRITE_ERR;
-				goto rc_return;
+			if ( values != NULL ) {
+				val->bv_val = strdup( values[ 0 ] );
+				ldap_value_free( values );
 			}
-			val->bv_val = strdup( values[ 0 ] );
-			ldap_value_free( values );
 		}
-		val->bv_len = strlen( val->bv_val );
 
 		ldap_msgfree( res );
 		ldap_unbind( ld );
 		
+		if ( val->bv_val == NULL ) {
+			rc = REWRITE_ERR;
+			goto rc_return;
+		}
+		val->bv_len = strlen( val->bv_val );
+
 		rc = REWRITE_SUCCESS;
-	}
+	} break;
 	}
 
 rc_return:;

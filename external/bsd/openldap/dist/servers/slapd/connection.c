@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.358.2.16 2008/04/21 18:51:10 quanah Exp $ */
+/*	$NetBSD: connection.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.358.2.39 2009/12/04 15:44:37 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,23 +50,9 @@ static ldap_pvt_thread_mutex_t connections_mutex;
 static Connection *connections = NULL;
 
 static ldap_pvt_thread_mutex_t conn_nextid_mutex;
-static unsigned long conn_nextid = 0;
+static unsigned long conn_nextid = SLAPD_SYNC_SYNCCONN_OFFSET;
 
 static const char conn_lost_str[] = "connection lost";
-
-/* structure state (protected by connections_mutex) */
-#define SLAP_C_UNINITIALIZED	0x00	/* MUST BE ZERO (0) */
-#define SLAP_C_UNUSED			0x01
-#define SLAP_C_USED				0x02
-#define	SLAP_C_PENDING			0x03
-
-/* connection state (protected by c_mutex ) */
-#define SLAP_C_INVALID			0x00	/* MUST BE ZERO (0) */
-#define SLAP_C_INACTIVE			0x01	/* zero threads */
-#define SLAP_C_ACTIVE			0x02	/* one or more threads */
-#define SLAP_C_BINDING			0x03	/* binding */
-#define SLAP_C_CLOSING			0x04	/* closing */
-#define SLAP_C_CLIENT			0x05	/* outbound client conn */
 
 const char *
 connection_state2str( int state )
@@ -72,9 +60,9 @@ connection_state2str( int state )
 	switch( state ) {
 	case SLAP_C_INVALID:	return "!";
 	case SLAP_C_INACTIVE:	return "|";
+	case SLAP_C_CLOSING:	return "C";
 	case SLAP_C_ACTIVE:		return "";
 	case SLAP_C_BINDING:	return "B";
-	case SLAP_C_CLOSING:	return "C";
 	case SLAP_C_CLIENT:		return "L";
 	}
 
@@ -163,8 +151,10 @@ int connections_destroy(void)
 		if( connections[i].c_struct_state != SLAP_C_UNINITIALIZED ) {
 			ber_sockbuf_free( connections[i].c_sb );
 			ldap_pvt_thread_mutex_destroy( &connections[i].c_mutex );
-			ldap_pvt_thread_mutex_destroy( &connections[i].c_write_mutex );
-			ldap_pvt_thread_cond_destroy( &connections[i].c_write_cv );
+			ldap_pvt_thread_mutex_destroy( &connections[i].c_write1_mutex );
+			ldap_pvt_thread_mutex_destroy( &connections[i].c_write2_mutex );
+			ldap_pvt_thread_cond_destroy( &connections[i].c_write1_cv );
+			ldap_pvt_thread_cond_destroy( &connections[i].c_write2_cv );
 #ifdef LDAP_SLAPI
 			if ( slapi_plugins_used ) {
 				slapi_int_free_object_extensions( SLAPI_X_EXT_CONNECTION,
@@ -216,28 +206,47 @@ int connections_shutdown(void)
  */
 int connections_timeout_idle(time_t now)
 {
-	int i = 0;
+	int i = 0, writers = 0;
 	int connindex;
 	Connection* c;
+	time_t old;
+
+	old = slapd_get_writetime();
 
 	for( c = connection_first( &connindex );
 		c != NULL;
 		c = connection_next( c, &connindex ) )
 	{
 		/* Don't timeout a slow-running request or a persistent
-		 * outbound connection */
-		if( c->c_n_ops_executing || c->c_conn_state == SLAP_C_CLIENT ) {
+		 * outbound connection. But if it has a writewaiter, see
+		 * if the waiter has been there too long.
+		 */
+		if(( c->c_n_ops_executing && !c->c_writewaiter)
+			|| c->c_conn_state == SLAP_C_CLIENT ) {
 			continue;
 		}
 
-		if( difftime( c->c_activitytime+global_idletimeout, now) < 0 ) {
+		if( global_idletimeout && 
+			difftime( c->c_activitytime+global_idletimeout, now) < 0 ) {
 			/* close it */
 			connection_closing( c, "idletimeout" );
 			connection_close( c );
 			i++;
+			continue;
+		}
+		if ( c->c_writewaiter && global_writetimeout ) {
+			writers = 1;
+			if( difftime( c->c_activitytime+global_writetimeout, now) < 0 ) {
+				/* close it */
+				connection_closing( c, "writetimeout" );
+				connection_close( c );
+				i++;
+			}
 		}
 	}
 	connection_done( c );
+	if ( old && !writers )
+		slapd_clr_writetime( old );
 
 	return i;
 }
@@ -268,7 +277,7 @@ static Connection* connection_get( ber_socket_t s )
 			assert( c->c_conn_state == SLAP_C_INVALID );
 			assert( c->c_sd == AC_SOCKET_INVALID );
 
-			Debug( LDAP_DEBUG_TRACE,
+			Debug( LDAP_DEBUG_CONNS,
 				"connection_get(%d): connection not used\n",
 				s, 0, 0 );
 
@@ -384,8 +393,10 @@ Connection * connection_init(
 
 		/* should check status of thread calls */
 		ldap_pvt_thread_mutex_init( &c->c_mutex );
-		ldap_pvt_thread_mutex_init( &c->c_write_mutex );
-		ldap_pvt_thread_cond_init( &c->c_write_cv );
+		ldap_pvt_thread_mutex_init( &c->c_write1_mutex );
+		ldap_pvt_thread_mutex_init( &c->c_write2_mutex );
+		ldap_pvt_thread_cond_init( &c->c_write1_cv );
+		ldap_pvt_thread_cond_init( &c->c_write2_cv );
 
 #ifdef LDAP_SLAPI
 		if ( slapi_plugins_used ) {
@@ -417,14 +428,17 @@ Connection * connection_init(
 	assert( c->c_sasl_bindop == NULL );
 	assert( c->c_currentber == NULL );
 	assert( c->c_writewaiter == 0);
+	assert( c->c_writers == 0);
 
 	c->c_listener = listener;
 	c->c_sd = s;
 
 	if ( flags & CONN_IS_CLIENT ) {
 		c->c_connid = 0;
+		ldap_pvt_thread_mutex_lock( &connections_mutex );
 		c->c_conn_state = SLAP_C_CLIENT;
 		c->c_struct_state = SLAP_C_USED;
+		ldap_pvt_thread_mutex_unlock( &connections_mutex );
 		c->c_close_reason = "?";			/* should never be needed */
 		ber_sockbuf_ctrl( c->c_sb, LBER_SB_OPT_SET_FD, &sfd );
 		ldap_pvt_thread_mutex_unlock( &c->c_mutex );
@@ -508,8 +522,10 @@ Connection * connection_init(
 	id = c->c_connid = conn_nextid++;
 	ldap_pvt_thread_mutex_unlock( &conn_nextid_mutex );
 
+	ldap_pvt_thread_mutex_lock( &connections_mutex );
 	c->c_conn_state = SLAP_C_INACTIVE;
 	c->c_struct_state = SLAP_C_USED;
+	ldap_pvt_thread_mutex_unlock( &connections_mutex );
 	c->c_close_reason = "?";			/* should never be needed */
 
 	c->c_ssf = c->c_transport_ssf = ssf;
@@ -589,6 +605,7 @@ connection_destroy( Connection *c )
 	assert( LDAP_STAILQ_EMPTY(&c->c_txn_ops) );
 #endif
 	assert( c->c_writewaiter == 0);
+	assert( c->c_writers == 0);
 
 	/* only for stats (print -1 as "%lu" may give unexpected results ;) */
 	connid = c->c_connid;
@@ -667,19 +684,15 @@ connection_destroy( Connection *c )
 	}
 }
 
-int connection_state_closing( Connection *c )
+int connection_valid( Connection *c )
 {
 	/* c_mutex must be locked by caller */
 
-	int state;
 	assert( c != NULL );
-	assert( c->c_struct_state == SLAP_C_USED );
 
-	state = c->c_conn_state;
-
-	assert( state != SLAP_C_INVALID );
-
-	return state == SLAP_C_CLOSING;
+	return c->c_struct_state == SLAP_C_USED &&
+		c->c_conn_state >= SLAP_C_ACTIVE &&
+		c->c_conn_state <= SLAP_C_CLIENT;
 }
 
 static void connection_abandon( Connection *c )
@@ -724,17 +737,45 @@ static void connection_abandon( Connection *c )
 	}
 }
 
+static void
+connection_wake_writers( Connection *c )
+{
+	/* wake write blocked operations */
+	ldap_pvt_thread_mutex_lock( &c->c_write1_mutex );
+	if ( c->c_writers > 0 ) {
+		c->c_writers = -c->c_writers;
+		ldap_pvt_thread_cond_broadcast( &c->c_write1_cv );
+		ldap_pvt_thread_mutex_unlock( &c->c_write1_mutex );
+		if ( c->c_writewaiter ) {
+			ldap_pvt_thread_mutex_lock( &c->c_write2_mutex );
+			ldap_pvt_thread_cond_signal( &c->c_write2_cv );
+			slapd_clr_write( c->c_sd, 1 );
+			ldap_pvt_thread_mutex_unlock( &c->c_write2_mutex );
+		}
+		ldap_pvt_thread_mutex_lock( &c->c_write1_mutex );
+		while ( c->c_writers ) {
+			ldap_pvt_thread_cond_wait( &c->c_write1_cv, &c->c_write1_mutex );
+		}
+		ldap_pvt_thread_mutex_unlock( &c->c_write1_mutex );
+	} else {
+		ldap_pvt_thread_mutex_unlock( &c->c_write1_mutex );
+		slapd_clr_write( c->c_sd, 1 );
+	}
+}
+
 void connection_closing( Connection *c, const char *why )
 {
 	assert( connections != NULL );
 	assert( c != NULL );
-	assert( c->c_struct_state == SLAP_C_USED );
+
+	if ( c->c_struct_state != SLAP_C_USED ) return;
+
 	assert( c->c_conn_state != SLAP_C_INVALID );
 
 	/* c_mutex must be locked by caller */
 
 	if( c->c_conn_state != SLAP_C_CLOSING ) {
-		Debug( LDAP_DEBUG_TRACE,
+		Debug( LDAP_DEBUG_CONNS,
 			"connection_closing: readying conn=%lu sd=%d for close\n",
 			c->c_connid, c->c_sd, 0 );
 		/* update state to closing */
@@ -748,20 +789,7 @@ void connection_closing( Connection *c, const char *why )
 		connection_abandon( c );
 
 		/* wake write blocked operations */
-		if ( c->c_writewaiter ) {
-			ldap_pvt_thread_cond_signal( &c->c_write_cv );
-			/* ITS#4667 this may allow another thread to drop into
-			 * connection_resched / connection_close before we
-			 * finish, but that's OK.
-			 */
-			slapd_clr_write( c->c_sd, 1 );
-			ldap_pvt_thread_mutex_unlock( &c->c_mutex );
-			ldap_pvt_thread_mutex_lock( &c->c_write_mutex );
-			ldap_pvt_thread_mutex_lock( &c->c_mutex );
-			ldap_pvt_thread_mutex_unlock( &c->c_write_mutex );
-		} else {
-			slapd_clr_write( c->c_sd, 1 );
-		}
+		connection_wake_writers( c );
 
 	} else if( why == NULL && c->c_close_reason == conn_lost_str ) {
 		/* Client closed connection after doing Unbind. */
@@ -775,11 +803,8 @@ connection_close( Connection *c )
 	assert( connections != NULL );
 	assert( c != NULL );
 
-	/* ITS#4667 we may have gotten here twice */
-	if ( c->c_conn_state == SLAP_C_INVALID )
-		return;
+	if ( c->c_struct_state != SLAP_C_USED ) return;
 
-	assert( c->c_struct_state == SLAP_C_USED );
 	assert( c->c_conn_state == SLAP_C_CLOSING );
 
 	/* NOTE: c_mutex should be locked by caller */
@@ -787,7 +812,7 @@ connection_close( Connection *c )
 	if ( !LDAP_STAILQ_EMPTY(&c->c_ops) ||
 		!LDAP_STAILQ_EMPTY(&c->c_pending_ops) )
 	{
-		Debug( LDAP_DEBUG_TRACE,
+		Debug( LDAP_DEBUG_CONNS,
 			"connection_close: deferring conn=%lu sd=%d\n",
 			c->c_connid, c->c_sd, 0 );
 		return;
@@ -843,12 +868,12 @@ Connection* connection_next( Connection *c, ber_socket_t *index )
 	for(; *index < dtblsize; (*index)++) {
 		int c_struct;
 		if( connections[*index].c_struct_state == SLAP_C_UNINITIALIZED ) {
+			/* FIXME: accessing c_conn_state without locking c_mutex */
 			assert( connections[*index].c_conn_state == SLAP_C_INVALID );
 			continue;
 		}
 
 		if( connections[*index].c_struct_state == SLAP_C_USED ) {
-			assert( connections[*index].c_conn_state != SLAP_C_INVALID );
 			c = &connections[(*index)++];
 			if ( ldap_pvt_thread_mutex_trylock( &c->c_mutex )) {
 				/* avoid deadlock */
@@ -861,6 +886,7 @@ Connection* connection_next( Connection *c, ber_socket_t *index )
 					continue;
 				}
 			}
+			assert( c->c_conn_state != SLAP_C_INVALID );
 			break;
 		}
 
@@ -868,6 +894,7 @@ Connection* connection_next( Connection *c, ber_socket_t *index )
 		if ( c_struct == SLAP_C_PENDING )
 			continue;
 		assert( c_struct == SLAP_C_UNUSED );
+		/* FIXME: accessing c_conn_state without locking c_mutex */
 		assert( connections[*index].c_conn_state == SLAP_C_INVALID );
 	}
 
@@ -990,7 +1017,7 @@ conn_counter_init( Operation *op, void *ctx )
 static void *
 connection_operation( void *ctx, void *arg_v )
 {
-	int rc = LDAP_OTHER;
+	int rc = LDAP_OTHER, cancel;
 	Operation *op = arg_v;
 	SlapReply rs = {REP_RESULT};
 	ber_tag_t tag = op->o_tag;
@@ -1094,21 +1121,31 @@ operations_error:
 		INCR_OP_COMPLETED( opidx );
 	}
 
-	if ( op->o_cancel == SLAP_CANCEL_REQ ) {
-		if ( rc == SLAPD_ABANDON ) {
-			op->o_cancel = SLAP_CANCEL_ACK;
-		} else {
-			op->o_cancel = LDAP_TOO_LATE;
-		}
-	}
-
-	while ( op->o_cancel != SLAP_CANCEL_NONE &&
-		op->o_cancel != SLAP_CANCEL_DONE )
-	{
-		ldap_pvt_thread_yield();
-	}
-
 	ldap_pvt_thread_mutex_lock( &conn->c_mutex );
+
+	if ( opidx == SLAP_OP_BIND && conn->c_conn_state == SLAP_C_BINDING )
+		conn->c_conn_state = SLAP_C_ACTIVE;
+
+	cancel = op->o_cancel;
+	if ( cancel != SLAP_CANCEL_NONE && cancel != SLAP_CANCEL_DONE ) {
+		if ( cancel == SLAP_CANCEL_REQ ) {
+			op->o_cancel = rc == SLAPD_ABANDON
+				? SLAP_CANCEL_ACK : LDAP_TOO_LATE;
+		}
+
+		do {
+			/* Fake a cond_wait with thread_yield, then
+			 * verify the result properly mutex-protected.
+			 */
+			ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
+			do {
+				ldap_pvt_thread_yield();
+			} while ( (cancel = op->o_cancel) != SLAP_CANCEL_NONE
+					&& cancel != SLAP_CANCEL_DONE );
+			ldap_pvt_thread_mutex_lock( &conn->c_mutex );
+		} while ( (cancel = op->o_cancel) != SLAP_CANCEL_NONE
+				&& cancel != SLAP_CANCEL_DONE );
+	}
 
 	ber_set_option( op->o_ber, LBER_OPT_BER_MEMCTX, &memctx_null );
 
@@ -1150,7 +1187,6 @@ Connection *connection_client_setup(
 		c->c_clientarg = arg;
 
 		slapd_add_internal( sfd, 0 );
-		slapd_set_read( sfd, 1 );
 	}
 	return c;
 }
@@ -1169,7 +1205,7 @@ void connection_client_stop(
 
 	/* get (locked) connection */
 	c = connection_get( s );
-	
+
 	assert( c->c_conn_state == SLAP_C_CLIENT );
 
 	c->c_listener = NULL;
@@ -1229,6 +1265,11 @@ int connection_read_activate( ber_socket_t s )
 	if ( rc )
 		return rc;
 
+	/* Don't let blocked writers block a pause request */
+	if ( connections[s].c_writewaiter &&
+		ldap_pvt_thread_pool_pausing( &connection_pool ))
+		connection_wake_writers( &connections[s] );
+
 	rc = ldap_pvt_thread_pool_submit( &connection_pool,
 		connection_read_thread, (void *)(long)s );
 
@@ -1263,7 +1304,7 @@ connection_read( ber_socket_t s, conn_readinfo *cri )
 	c->c_n_read++;
 
 	if( c->c_conn_state == SLAP_C_CLOSING ) {
-		Debug( LDAP_DEBUG_TRACE,
+		Debug( LDAP_DEBUG_CONNS,
 			"connection_read(%d): closing, ignoring input for id=%lu\n",
 			s, c->c_connid, 0 );
 		connection_return( c );
@@ -1323,6 +1364,11 @@ connection_read( ber_socket_t s, conn_readinfo *cri )
 			    c->c_connid, (int) s, c->c_tls_ssf, c->c_ssf, 0 );
 			slap_sasl_external( c, c->c_tls_ssf, &authid );
 			if ( authid.bv_val ) free( authid.bv_val );
+		} else if ( rc == 1 && ber_sockbuf_ctrl( c->c_sb,
+			LBER_SB_OPT_NEEDS_WRITE, NULL )) {	/* need to retry */
+			slapd_set_write( s, 1 );
+			connection_return( c );
+			return 0;
 		}
 
 		/* if success and data is ready, fall thru to data input loop */
@@ -1497,6 +1543,9 @@ connection_input( Connection *conn , conn_readinfo *cri )
 	ctx = cri->ctx;
 	op = slap_op_alloc( ber, msgid, tag, conn->c_n_ops_received++, ctx );
 
+	Debug( LDAP_DEBUG_TRACE, "op tag 0x%lx, time %ld\n", tag,
+		(long) op->o_time, 0);
+
 	op->o_conn = conn;
 	/* clear state if the connection is being reused from inactive */
 	if ( conn->c_conn_state == SLAP_C_INACTIVE ) {
@@ -1625,7 +1674,7 @@ connection_resched( Connection *conn )
 		return 0;
 
 	if( conn->c_conn_state == SLAP_C_CLOSING ) {
-		Debug( LDAP_DEBUG_TRACE, "connection_resched: "
+		Debug( LDAP_DEBUG_CONNS, "connection_resched: "
 			"attempting closing conn=%lu sd=%d\n",
 			conn->c_connid, conn->c_sd, 0 );
 		connection_close( conn );
@@ -1682,8 +1731,6 @@ static int connection_bind_cleanup_cb( Operation *op, SlapReply *rs )
 static int connection_bind_cb( Operation *op, SlapReply *rs )
 {
 	ldap_pvt_thread_mutex_lock( &op->o_conn->c_mutex );
-	if ( op->o_conn->c_conn_state == SLAP_C_BINDING )
-		op->o_conn->c_conn_state = SLAP_C_ACTIVE;
 	op->o_conn->c_sasl_bind_in_progress =
 		( rs->sr_err == LDAP_SASL_BIND_IN_PROGRESS );
 
@@ -1821,12 +1868,22 @@ int connection_write(ber_socket_t s)
 		return -1;
 	}
 
+#ifdef HAVE_TLS
+	if ( c->c_is_tls && c->c_needs_tls_accept ) {
+		connection_return( c );
+		connection_read_activate( s );
+		return 0;
+	}
+#endif
+
 	c->c_n_write++;
 
 	Debug( LDAP_DEBUG_TRACE,
 		"connection_write(%d): waking output for id=%lu\n",
 		s, c->c_connid, 0 );
-	ldap_pvt_thread_cond_signal( &c->c_write_cv );
+	ldap_pvt_thread_mutex_lock( &c->c_write2_mutex );
+	ldap_pvt_thread_cond_signal( &c->c_write2_cv );
+	ldap_pvt_thread_mutex_unlock( &c->c_write2_mutex );
 
 	if ( ber_sockbuf_ctrl( c->c_sb, LBER_SB_OPT_NEEDS_READ, NULL ) ) {
 		slapd_set_read( s, 1 );
@@ -1934,6 +1991,8 @@ connection_fake_init2(
 	conn->c_send_ldap_result = slap_send_ldap_result;
 	conn->c_send_search_entry = slap_send_search_entry;
 	conn->c_send_search_reference = slap_send_search_reference;
+	conn->c_send_ldap_extended = slap_send_ldap_extended;
+	conn->c_send_ldap_intermediate = slap_send_ldap_intermediate;
 	conn->c_listener = (Listener *)&dummy_list;
 	conn->c_peer_domain = slap_empty_bv;
 	conn->c_peer_name = slap_empty_bv;

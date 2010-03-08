@@ -1,8 +1,10 @@
+/*	$NetBSD: dyngroup.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+
 /* dyngroup.c - Demonstration of overlay code */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dyngroup.c,v 1.10.2.3 2008/02/11 23:26:48 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/overlays/dyngroup.c,v 1.10.2.4 2009/01/22 00:01:12 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2008 The OpenLDAP Foundation.
+ * Copyright 2003-2009 The OpenLDAP Foundation.
  * Copyright 2003 by Howard Chu.
  * All rights reserved.
  *

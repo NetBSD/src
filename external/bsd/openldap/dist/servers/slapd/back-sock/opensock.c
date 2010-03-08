@@ -1,8 +1,10 @@
+/*	$NetBSD: opensock.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+
 /* opensock.c - open a unix domain socket */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sock/opensock.c,v 1.3.2.1 2008/02/09 00:46:09 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-sock/opensock.c,v 1.3.2.3 2009/02/10 23:44:04 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2008 The OpenLDAP Foundation.
+ * Copyright 2007-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,6 +59,7 @@ opensock(
 	if ( connect( fd, (struct sockaddr *)&sockun, sizeof(sockun) ) < 0 ) {
 		Debug( LDAP_DEBUG_ANY, "socket connect(%s) failed\n",
 			sockpath ? sockpath : "<null>", 0, 0 );
+		close( fd );
 		return( NULL );
 	}
 

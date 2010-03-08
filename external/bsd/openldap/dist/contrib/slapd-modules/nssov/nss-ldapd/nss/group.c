@@ -1,3 +1,5 @@
+/*	$NetBSD: group.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    group.c - NSS lookup functions for group database
 

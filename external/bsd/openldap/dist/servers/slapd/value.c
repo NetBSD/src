@@ -1,8 +1,10 @@
+/*	$NetBSD: value.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* value.c - routines for dealing with values */
-/* $OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.96.2.6 2008/02/11 23:26:45 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.96.2.8 2009/01/22 00:01:04 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -267,12 +269,12 @@ ordered_value_renumber( Attribute *a )
 {
 	char *ptr, ibuf[64];	/* many digits */
 	struct berval ibv, tmp, vtmp;
-	int i;
+	unsigned i;
 
 	ibv.bv_val = ibuf;
 
 	for (i=0; i<a->a_numvals; i++) {
-		ibv.bv_len = sprintf(ibv.bv_val, "{%d}", i);
+		ibv.bv_len = sprintf(ibv.bv_val, "{%u}", i);
 		vtmp = a->a_vals[i];
 		if ( vtmp.bv_val[0] == '{' ) {
 			ptr = ber_bvchr(&vtmp, '}');
@@ -750,7 +752,7 @@ ordered_value_add(
 			k = strtol( vals[i].bv_val + 1, &next, 0 );
 			if ( next == vals[i].bv_val + 1 ||
 				next[ 0 ] != '}' ||
-				next - vals[i].bv_val > vals[i].bv_len )
+				(ber_len_t) (next - vals[i].bv_val) > vals[i].bv_len )
 			{
 				ch_free( nnew );
 				ch_free( new );

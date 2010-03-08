@@ -1,8 +1,10 @@
+/*	$NetBSD: schema_check.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* schema_check.c - routines to enforce schema definitions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_check.c,v 1.103.2.6 2008/04/18 22:33:55 ando Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/schema_check.c,v 1.103.2.11 2009/05/06 19:06:16 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,6 +51,7 @@ entry_schema_check(
 	Attribute *oldattrs,
 	int manage,
 	int add,
+	Attribute **socp,
 	const char** text,
 	char *textbuf, size_t textlen )
 {
@@ -212,15 +215,28 @@ got_soc:
 		rc = LDAP_OBJECT_CLASS_VIOLATION;
 		goto done;
 
-	} else if ( sc != slap_schema.si_oc_glue && sc != oc ) {
-		snprintf( textbuf, textlen, 
-			"structural object class modification "
-			"from '%s' to '%s' not allowed",
-			asc->a_vals[0].bv_val, oc->soc_cname.bv_val );
-		rc = LDAP_NO_OBJECT_CLASS_MODS;
-		goto done;
-	} else if ( sc == slap_schema.si_oc_glue ) {
+	} else if ( sc != oc ) {
+		if ( !manage && sc != slap_schema.si_oc_glue ) {
+			snprintf( textbuf, textlen, 
+				"structural object class modification "
+				"from '%s' to '%s' not allowed",
+				asc->a_vals[0].bv_val, oc->soc_cname.bv_val );
+			rc = LDAP_NO_OBJECT_CLASS_MODS;
+			goto done;
+		}
+
+		assert( asc->a_vals != NULL );
+		assert( !BER_BVISNULL( &asc->a_vals[0] ) );
+		assert( BER_BVISNULL( &asc->a_vals[1] ) );
+		assert( asc->a_nvals == asc->a_vals );
+
+		/* draft-zeilenga-ldap-relax: automatically modify
+		 * structuralObjectClass if changed with relax */
 		sc = oc;
+		ber_bvreplace( &asc->a_vals[ 0 ], &sc->soc_cname );
+		if ( socp ) {
+			*socp = asc;
+		}
 	}
 
 	/* naming check */
@@ -783,7 +799,7 @@ entry_naming_check(
 	if ( ldap_bv2rdn( &e->e_name, &rdn, (char **)&p,
 		LDAP_DN_FORMAT_LDAP ) )
 	{
-		*text = "unrecongized attribute type(s) in RDN";
+		*text = "unrecognized attribute type(s) in RDN";
 		return LDAP_INVALID_DN_SYNTAX;
 	}
 
@@ -867,7 +883,7 @@ entry_naming_check(
 				SLAP_MR_ATTRIBUTE_VALUE_NORMALIZED_MATCH,
 				&ava->la_value, NULL, NULL );
 
-			if( rc != 0 ) {
+			if ( rc != 0 ) {
 				switch( rc ) {
 				case LDAP_INAPPROPRIATE_MATCHING:
 					snprintf( textbuf, textlen, 
@@ -880,11 +896,21 @@ entry_naming_check(
 						ava->la_attr.bv_val );
 					break;
 				case LDAP_NO_SUCH_ATTRIBUTE:
-					snprintf( textbuf, textlen, 
-						"value of naming attribute '%s' is not present in entry",
-						ava->la_attr.bv_val );
 					if ( add_naming ) {
-						add = 1;
+						if ( is_at_single_value( desc->ad_type ) ) {
+							snprintf( textbuf, textlen, 
+								"value of single-valued naming attribute '%s' conflicts with value present in entry",
+								ava->la_attr.bv_val );
+
+						} else {
+							add = 1;
+							rc = LDAP_SUCCESS;
+						}
+
+					} else {
+						snprintf( textbuf, textlen, 
+							"value of naming attribute '%s' is not present in entry",
+							ava->la_attr.bv_val );
 					}
 					break;
 				default:
@@ -892,7 +918,10 @@ entry_naming_check(
 						"naming attribute '%s' is inappropriate",
 						ava->la_attr.bv_val );
 				}
-				rc = LDAP_NAMING_VIOLATION;
+
+				if ( !add ) {
+					rc = LDAP_NAMING_VIOLATION;
+				}
 			}
 		}
 

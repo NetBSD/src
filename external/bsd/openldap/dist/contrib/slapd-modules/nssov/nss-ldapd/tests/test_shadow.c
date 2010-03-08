@@ -1,3 +1,5 @@
+/*	$NetBSD: test_shadow.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    test_shadow.c - simple tests of developed nss code
 

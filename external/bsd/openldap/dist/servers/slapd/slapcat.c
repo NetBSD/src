@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapcat.c,v 1.7.2.6 2008/04/14 18:45:07 quanah Exp $ */
+/*	$NetBSD: slapcat.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/slapcat.c,v 1.7.2.8 2009/01/22 00:01:03 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -134,6 +136,7 @@ slapcat( int argc, char **argv )
 
 	be->be_entry_close( be );
 
-	slap_tool_destroy();
+	if ( slap_tool_destroy())
+		rc = EXIT_FAILURE;
 	return rc;
 }

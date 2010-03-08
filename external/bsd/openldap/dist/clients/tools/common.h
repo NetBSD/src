@@ -1,8 +1,10 @@
+/*	$NetBSD: common.h,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+
 /* common.h - common definitions for the ldap client tools */
-/* $OpenLDAP: pkg/ldap/clients/tools/common.h,v 1.24.2.3 2008/02/11 23:26:38 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/clients/tools/common.h,v 1.24.2.5 2009/07/22 20:02:20 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -93,6 +95,9 @@ extern struct berval	pr_cookie;
 #ifdef LDAP_CONTROL_X_CHAINING_BEHAVIOR
 extern int		chaining;
 #endif /* LDAP_CONTROL_X_CHAINING_BEHAVIOR */
+extern ber_int_t	vlvPos;
+extern ber_int_t	vlvCount;
+extern struct berval	*vlvContext;
 
 /* options */
 extern struct timeval	nettimeout;

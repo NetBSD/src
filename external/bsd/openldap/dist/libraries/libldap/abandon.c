@@ -1,8 +1,10 @@
+/*	$NetBSD: abandon.c,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+
 /* abandon.c */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/abandon.c,v 1.41.2.7 2008/02/11 23:26:41 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/libraries/libldap/abandon.c,v 1.41.2.11 2009/02/17 21:02:51 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -349,7 +351,6 @@ ldap_int_bisect_find( ber_int_t *v, ber_len_t n, ber_int_t id, int *idxp )
 			end,
 			rc = 0;
 
-	assert( n >= 0 );
 	assert( id >= 0 );
 
 	begin = 0;
@@ -410,9 +411,8 @@ ldap_int_bisect_insert( ber_int_t **vp, ber_len_t *np, int id, int idx )
 
 	assert( vp != NULL );
 	assert( np != NULL );
-	assert( *np >= 0 );
 	assert( idx >= 0 );
-	assert( idx <= *np );
+	assert( (unsigned) idx <= *np );
 
 	n = *np;
 
@@ -447,14 +447,12 @@ int
 ldap_int_bisect_delete( ber_int_t **vp, ber_len_t *np, int id, int idx )
 {
 	ber_int_t	*v;
-	ber_len_t	n;
-	int		i;
+	ber_len_t	i, n;
 
 	assert( vp != NULL );
 	assert( np != NULL );
-	assert( *np >= 0 );
 	assert( idx >= 0 );
-	assert( idx < *np );
+	assert( (unsigned) idx < *np );
 
 	v = *vp;
 

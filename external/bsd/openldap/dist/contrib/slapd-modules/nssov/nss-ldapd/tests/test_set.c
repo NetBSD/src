@@ -1,3 +1,5 @@
+/*	$NetBSD: test_set.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    test_set.c - simple test for the set module
    This file is part of the nss-ldapd library.

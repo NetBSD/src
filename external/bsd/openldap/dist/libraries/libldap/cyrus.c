@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.133.2.8 2008/02/11 23:26:41 kurt Exp $ */
+/*	$NetBSD: cyrus.c,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.133.2.15 2009/08/25 23:04:13 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -133,53 +135,97 @@ int ldap_int_sasl_init( void )
 	return -1;
 }
 
-/*
- * SASL encryption support for LBER Sockbufs
- */
-
-struct sb_sasl_data {
-	sasl_conn_t		*sasl_context;
-	unsigned		*sasl_maxbuf;
-	Sockbuf_Buf		sec_buf_in;
-	Sockbuf_Buf		buf_in;
-	Sockbuf_Buf		buf_out;
-};
-
-static int
-sb_sasl_setup( Sockbuf_IO_Desc *sbiod, void *arg )
+static void
+sb_sasl_cyrus_init(
+	struct sb_sasl_generic_data *p,
+	ber_len_t *min_send,
+	ber_len_t *max_send,
+	ber_len_t *max_recv)
 {
-	struct sb_sasl_data	*p;
+	sasl_conn_t *sasl_context = (sasl_conn_t *)p->ops_private;
+	ber_len_t maxbuf;
 
-	assert( sbiod != NULL );
+	sasl_getprop( sasl_context, SASL_MAXOUTBUF,
+		      (SASL_CONST void **)(char *) &maxbuf );
 
-	p = LBER_MALLOC( sizeof( *p ) );
-	if ( p == NULL )
-		return -1;
-	p->sasl_context = (sasl_conn_t *)arg;
-	ber_pvt_sb_buf_init( &p->sec_buf_in );
-	ber_pvt_sb_buf_init( &p->buf_in );
-	ber_pvt_sb_buf_init( &p->buf_out );
-	if ( ber_pvt_sb_grow_buffer( &p->sec_buf_in, SASL_MIN_BUFF_SIZE ) < 0 ) {
-		LBER_FREE( p );
-		sock_errset(ENOMEM);
+	*min_send = SASL_MIN_BUFF_SIZE;
+	*max_send = maxbuf;
+	*max_recv = SASL_MAX_BUFF_SIZE;
+}
+
+static ber_int_t
+sb_sasl_cyrus_encode(
+	struct sb_sasl_generic_data *p,
+	unsigned char *buf,
+	ber_len_t len,
+	Sockbuf_Buf *dst)
+{
+	sasl_conn_t *sasl_context = (sasl_conn_t *)p->ops_private;
+	ber_int_t ret;
+	unsigned tmpsize = dst->buf_size;
+
+	ret = sasl_encode( sasl_context, (char *)buf, len,
+			   (SASL_CONST char **)&dst->buf_base,
+			   &tmpsize );
+
+	dst->buf_size = tmpsize;
+	dst->buf_end = dst->buf_size;
+
+	if ( ret != SASL_OK ) {
+		ber_log_printf( LDAP_DEBUG_ANY, p->sbiod->sbiod_sb->sb_debug,
+				"sb_sasl_cyrus_encode: failed to encode packet: %s\n",
+				sasl_errstring( ret, NULL, NULL ) );
 		return -1;
 	}
-	sasl_getprop( p->sasl_context, SASL_MAXOUTBUF,
-		(SASL_CONST void **)(char *) &p->sasl_maxbuf );
-	    
-	sbiod->sbiod_pvt = p;
 
 	return 0;
 }
 
-static int
-sb_sasl_remove( Sockbuf_IO_Desc *sbiod )
+static ber_int_t
+sb_sasl_cyrus_decode(
+	struct sb_sasl_generic_data *p,
+	const Sockbuf_Buf *src,
+	Sockbuf_Buf *dst)
 {
-	struct sb_sasl_data	*p;
+	sasl_conn_t *sasl_context = (sasl_conn_t *)p->ops_private;
+	ber_int_t ret;
+	unsigned tmpsize = dst->buf_size;
 
-	assert( sbiod != NULL );
-	
-	p = (struct sb_sasl_data *)sbiod->sbiod_pvt;
+	ret = sasl_decode( sasl_context,
+			   src->buf_base, src->buf_end,
+			   (SASL_CONST char **)&dst->buf_base,
+			   (unsigned *)&tmpsize );
+
+
+	dst->buf_size = tmpsize;
+	dst->buf_end = dst->buf_size;
+
+	if ( ret != SASL_OK ) {
+		ber_log_printf( LDAP_DEBUG_ANY, p->sbiod->sbiod_sb->sb_debug,
+				"sb_sasl_cyrus_decode: failed to decode packet: %s\n",
+				sasl_errstring( ret, NULL, NULL ) );
+		return -1;
+	}
+
+	return 0;
+}
+
+static void
+sb_sasl_cyrus_reset_buf(
+	struct sb_sasl_generic_data *p,
+	Sockbuf_Buf *buf)
+{
+#if SASL_VERSION_MAJOR >= 2
+	ber_pvt_sb_buf_init( buf );
+#else
+	ber_pvt_sb_buf_destroy( buf );
+#endif
+}
+
+static void
+sb_sasl_cyrus_fini(
+	struct sb_sasl_generic_data *p)
+{
 #if SASL_VERSION_MAJOR >= 2
 	/*
 	 * SASLv2 encode/decode buffers are managed by
@@ -188,266 +234,29 @@ sb_sasl_remove( Sockbuf_IO_Desc *sbiod )
 	p->buf_in.buf_base = NULL;
 	p->buf_out.buf_base = NULL;
 #endif
-	ber_pvt_sb_buf_destroy( &p->sec_buf_in );
-	ber_pvt_sb_buf_destroy( &p->buf_in );
-	ber_pvt_sb_buf_destroy( &p->buf_out );
-	LBER_FREE( p );
-	sbiod->sbiod_pvt = NULL;
-	return 0;
 }
 
-static ber_len_t
-sb_sasl_pkt_length( const unsigned char *buf, int debuglevel )
-{
-	ber_len_t		size;
-
-	assert( buf != NULL );
-
-	size = buf[0] << 24
-		| buf[1] << 16
-		| buf[2] << 8
-		| buf[3];
-
-	if ( size > SASL_MAX_BUFF_SIZE ) {
-		/* somebody is trying to mess me up. */
-		ber_log_printf( LDAP_DEBUG_ANY, debuglevel,
-			"sb_sasl_pkt_length: received illegal packet length "
-			"of %lu bytes\n", (unsigned long)size );      
-		size = 16; /* this should lead to an error. */
-	}
-
-	return size + 4; /* include the size !!! */
-}
-
-/* Drop a processed packet from the input buffer */
-static void
-sb_sasl_drop_packet ( Sockbuf_Buf *sec_buf_in, int debuglevel )
-{
-	ber_slen_t			len;
-
-	len = sec_buf_in->buf_ptr - sec_buf_in->buf_end;
-	if ( len > 0 )
-		AC_MEMCPY( sec_buf_in->buf_base, sec_buf_in->buf_base +
-			sec_buf_in->buf_end, len );
-   
-	if ( len >= 4 ) {
-		sec_buf_in->buf_end = sb_sasl_pkt_length(
-			(unsigned char *) sec_buf_in->buf_base, debuglevel);
-	}
-	else {
-		sec_buf_in->buf_end = 0;
-	}
-	sec_buf_in->buf_ptr = len;
-}
-
-static ber_slen_t
-sb_sasl_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
-{
-	struct sb_sasl_data	*p;
-	ber_slen_t		ret, bufptr;
-   
-	assert( sbiod != NULL );
-	assert( SOCKBUF_VALID( sbiod->sbiod_sb ) );
-
-	p = (struct sb_sasl_data *)sbiod->sbiod_pvt;
-
-	/* Are there anything left in the buffer? */
-	ret = ber_pvt_sb_copy_out( &p->buf_in, buf, len );
-	bufptr = ret;
-	len -= ret;
-
-	if ( len == 0 )
-		return bufptr;
-
-#if SASL_VERSION_MAJOR >= 2
-	ber_pvt_sb_buf_init( &p->buf_in );
-#else
-	ber_pvt_sb_buf_destroy( &p->buf_in );
-#endif
-
-	/* Read the length of the packet */
-	while ( p->sec_buf_in.buf_ptr < 4 ) {
-		ret = LBER_SBIOD_READ_NEXT( sbiod, p->sec_buf_in.buf_base +
-			p->sec_buf_in.buf_ptr,
-			4 - p->sec_buf_in.buf_ptr );
-#ifdef EINTR
-		if ( ( ret < 0 ) && ( errno == EINTR ) )
-			continue;
-#endif
-		if ( ret <= 0 )
-			return bufptr ? bufptr : ret;
-
-		p->sec_buf_in.buf_ptr += ret;
-	}
-
-	/* The new packet always starts at p->sec_buf_in.buf_base */
-	ret = sb_sasl_pkt_length( (unsigned char *) p->sec_buf_in.buf_base,
-		sbiod->sbiod_sb->sb_debug );
-
-	/* Grow the packet buffer if neccessary */
-	if ( ( p->sec_buf_in.buf_size < (ber_len_t) ret ) && 
-		ber_pvt_sb_grow_buffer( &p->sec_buf_in, ret ) < 0 )
-	{
-		sock_errset(ENOMEM);
-		return -1;
-	}
-	p->sec_buf_in.buf_end = ret;
-
-	/* Did we read the whole encrypted packet? */
-	while ( p->sec_buf_in.buf_ptr < p->sec_buf_in.buf_end ) {
-		/* No, we have got only a part of it */
-		ret = p->sec_buf_in.buf_end - p->sec_buf_in.buf_ptr;
-
-		ret = LBER_SBIOD_READ_NEXT( sbiod, p->sec_buf_in.buf_base +
-			p->sec_buf_in.buf_ptr, ret );
-#ifdef EINTR
-		if ( ( ret < 0 ) && ( errno == EINTR ) )
-			continue;
-#endif
-		if ( ret <= 0 )
-			return bufptr ? bufptr : ret;
-
-		p->sec_buf_in.buf_ptr += ret;
-   	}
-
-	/* Decode the packet */
-	{
-		unsigned tmpsize = p->buf_in.buf_end;
-		ret = sasl_decode( p->sasl_context, p->sec_buf_in.buf_base,
-			p->sec_buf_in.buf_end,
-			(SASL_CONST char **)&p->buf_in.buf_base,
-			(unsigned *)&tmpsize );
-		p->buf_in.buf_end = tmpsize;
-	}
-
-	/* Drop the packet from the input buffer */
-	sb_sasl_drop_packet( &p->sec_buf_in, sbiod->sbiod_sb->sb_debug );
-
-	if ( ret != SASL_OK ) {
-		ber_log_printf( LDAP_DEBUG_ANY, sbiod->sbiod_sb->sb_debug,
-			"sb_sasl_read: failed to decode packet: %s\n",
-			sasl_errstring( ret, NULL, NULL ) );
-		sock_errset(EIO);
-		return -1;
-	}
-	
-	p->buf_in.buf_size = p->buf_in.buf_end;
-
-	bufptr += ber_pvt_sb_copy_out( &p->buf_in, (char*) buf + bufptr, len );
-
-	return bufptr;
-}
-
-static ber_slen_t
-sb_sasl_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
-{
-	struct sb_sasl_data	*p;
-	int			ret;
-
-	assert( sbiod != NULL );
-	assert( SOCKBUF_VALID( sbiod->sbiod_sb ) );
-
-	p = (struct sb_sasl_data *)sbiod->sbiod_pvt;
-
-	/* Are there anything left in the buffer? */
-	if ( p->buf_out.buf_ptr != p->buf_out.buf_end ) {
-		ret = ber_pvt_sb_do_write( sbiod, &p->buf_out );
-		if ( ret < 0 ) return ret;
-
-		/* Still have something left?? */
-		if ( p->buf_out.buf_ptr != p->buf_out.buf_end ) {
-			sock_errset(EAGAIN);
-			return -1;
-		}
-	}
-
-	/* now encode the next packet. */
-#if SASL_VERSION_MAJOR >= 2
-	ber_pvt_sb_buf_init( &p->buf_out );
-#else
-	ber_pvt_sb_buf_destroy( &p->buf_out );
-#endif
-	if ( len > *p->sasl_maxbuf - 100 ) {
-		len = *p->sasl_maxbuf - 100;	/* For safety margin */
-	}
-
-	{
-		unsigned tmpsize = p->buf_out.buf_size;
-		ret = sasl_encode( p->sasl_context, buf, len,
-			(SASL_CONST char **)&p->buf_out.buf_base,
-			&tmpsize );
-		p->buf_out.buf_size = tmpsize;
-	}
-
-	if ( ret != SASL_OK ) {
-		ber_log_printf( LDAP_DEBUG_ANY, sbiod->sbiod_sb->sb_debug,
-			"sb_sasl_write: failed to encode packet: %s\n",
-			sasl_errstring( ret, NULL, NULL ) );
-		sock_errset(EIO);
-		return -1;
-	}
-	p->buf_out.buf_end = p->buf_out.buf_size;
-
-	ret = ber_pvt_sb_do_write( sbiod, &p->buf_out );
-
-	/* return number of bytes encoded, not written, to ensure
-	 * no byte is encoded twice (even if only sent once).
-	 */
-	return len;
-}
-
-static int
-sb_sasl_ctrl( Sockbuf_IO_Desc *sbiod, int opt, void *arg )
-{
-	struct sb_sasl_data	*p;
-
-	p = (struct sb_sasl_data *)sbiod->sbiod_pvt;
-
-	if ( opt == LBER_SB_OPT_DATA_READY ) {
-		if ( p->buf_in.buf_ptr != p->buf_in.buf_end ) return 1;
-	}
-	
-	return LBER_SBIOD_CTRL_NEXT( sbiod, opt, arg );
-}
-
-Sockbuf_IO ldap_pvt_sockbuf_io_sasl = {
-	sb_sasl_setup,		/* sbi_setup */
-	sb_sasl_remove,		/* sbi_remove */
-	sb_sasl_ctrl,		/* sbi_ctrl */
-	sb_sasl_read,		/* sbi_read */
-	sb_sasl_write,		/* sbi_write */
-	NULL			/* sbi_close */
-};
+static const struct sb_sasl_generic_ops sb_sasl_cyrus_ops = {
+	sb_sasl_cyrus_init,
+	sb_sasl_cyrus_encode,
+	sb_sasl_cyrus_decode,
+	sb_sasl_cyrus_reset_buf,
+	sb_sasl_cyrus_fini
+ };
 
 int ldap_pvt_sasl_install( Sockbuf *sb, void *ctx_arg )
 {
-	Debug( LDAP_DEBUG_TRACE, "ldap_pvt_sasl_install\n",
-		0, 0, 0 );
+	struct sb_sasl_generic_install install_arg;
 
-	/* don't install the stuff unless security has been negotiated */
+	install_arg.ops		= &sb_sasl_cyrus_ops;
+	install_arg.ops_private = ctx_arg;
 
-	if ( !ber_sockbuf_ctrl( sb, LBER_SB_OPT_HAS_IO,
-			&ldap_pvt_sockbuf_io_sasl ) )
-	{
-#ifdef LDAP_DEBUG
-		ber_sockbuf_add_io( sb, &ber_sockbuf_io_debug,
-			LBER_SBIOD_LEVEL_APPLICATION, (void *)"sasl_" );
-#endif
-		ber_sockbuf_add_io( sb, &ldap_pvt_sockbuf_io_sasl,
-			LBER_SBIOD_LEVEL_APPLICATION, ctx_arg );
-	}
-
-	return LDAP_SUCCESS;
+	return ldap_pvt_sasl_generic_install( sb, &install_arg );
 }
 
 void ldap_pvt_sasl_remove( Sockbuf *sb )
 {
-	ber_sockbuf_remove_io( sb, &ldap_pvt_sockbuf_io_sasl,
-		LBER_SBIOD_LEVEL_APPLICATION );
-#ifdef LDAP_DEBUG
-	ber_sockbuf_remove_io( sb, &ber_sockbuf_io_debug,
-		LBER_SBIOD_LEVEL_APPLICATION );
-#endif
+	ldap_pvt_sasl_generic_remove( sb );
 }
 
 static int
@@ -639,16 +448,28 @@ ldap_int_sasl_bind(
 	}
 
 	{
-		char *saslhost = ldap_host_connected_to( ld->ld_defconn->lconn_sb,
+		char *saslhost;
+		int nocanon = (int)LDAP_BOOL_GET( &ld->ld_options,
+			LDAP_BOOL_SASL_NOCANON );
+
+		/* If we don't need to canonicalize just use the host
+		 * from the LDAP URI.
+		 */
+		if ( nocanon )
+			saslhost = ld->ld_defconn->lconn_server->lud_host;
+		else 
+			saslhost = ldap_host_connected_to( ld->ld_defconn->lconn_sb,
 			"localhost" );
 		rc = ldap_int_sasl_open( ld, ld->ld_defconn, saslhost );
-		LDAP_FREE( saslhost );
+		if ( !nocanon )
+			LDAP_FREE( saslhost );
 	}
 
 	if ( rc != LDAP_SUCCESS ) return rc;
 
 	ctx = ld->ld_defconn->lconn_sasl_authctx;
 
+#ifdef HAVE_TLS
 	/* Check for TLS */
 	ssl = ldap_pvt_tls_sb_ctx( ld->ld_defconn->lconn_sb );
 	if ( ssl ) {
@@ -662,6 +483,7 @@ ldap_int_sasl_bind(
 		(void) ldap_int_sasl_external( ld, ld->ld_defconn, authid.bv_val, fac );
 		LDAP_FREE( authid.bv_val );
 	}
+#endif
 
 #if !defined(_WIN32)
 	/* Check for local */
@@ -749,7 +571,7 @@ ldap_int_sasl_bind(
 				/* and server provided us with data? */
 				Debug( LDAP_DEBUG_TRACE,
 					"ldap_int_sasl_bind: rc=%d sasl=%d len=%ld\n",
-					rc, saslrc, scred ? scred->bv_len : -1 );
+					rc, saslrc, scred ? (long) scred->bv_len : -1L );
 				ber_bvfree( scred );
 				scred = NULL;
 			}
@@ -1033,7 +855,7 @@ int ldap_pvt_sasl_secprops(
 	const char *in,
 	sasl_security_properties_t *secprops )
 {
-	int i, j, l;
+	unsigned i, j, l;
 	char **props;
 	unsigned sflags = 0;
 	int got_sflags = 0;
@@ -1123,6 +945,13 @@ ldap_int_sasl_config( struct ldapoptions *lo, int option, const char *arg )
 int
 ldap_int_sasl_get_option( LDAP *ld, int option, void *arg )
 {
+	if ( option == LDAP_OPT_X_SASL_MECHLIST ) {
+		if ( ldap_int_sasl_init() )
+			return -1;
+		*(char ***)arg = (char **)sasl_global_listmech();
+		return 0;
+	}
+
 	if ( ld == NULL )
 		return -1;
 
@@ -1182,6 +1011,34 @@ ldap_int_sasl_get_option( LDAP *ld, int option, void *arg )
 		case LDAP_OPT_X_SASL_MAXBUFSIZE:
 			*(ber_len_t *)arg = ld->ld_options.ldo_sasl_secprops.maxbufsize;
 			break;
+		case LDAP_OPT_X_SASL_NOCANON:
+			*(int *)arg = (int) LDAP_BOOL_GET(&ld->ld_options, LDAP_BOOL_SASL_NOCANON );
+			break;
+
+		case LDAP_OPT_X_SASL_USERNAME: {
+			int sc;
+			char *username;
+			sasl_conn_t *ctx;
+
+			if( ld->ld_defconn == NULL ) {
+				return -1;
+			}
+
+			ctx = ld->ld_defconn->lconn_sasl_authctx;
+
+			if ( ctx == NULL ) {
+				return -1;
+			}
+
+			sc = sasl_getprop( ctx, SASL_USERNAME,
+				(SASL_CONST void **)(char **) &username );
+
+			if ( sc != SASL_OK ) {
+				return -1;
+			}
+
+			*(char **)arg = username ? LDAP_STRDUP( username ) : NULL;
+		} break;
 
 		case LDAP_OPT_X_SASL_SECPROPS:
 			/* this option is write only */
@@ -1196,11 +1053,15 @@ ldap_int_sasl_get_option( LDAP *ld, int option, void *arg )
 int
 ldap_int_sasl_set_option( LDAP *ld, int option, void *arg )
 {
-	if ( ld == NULL || arg == NULL )
+	if ( ld == NULL )
+		return -1;
+
+	if ( arg == NULL && option != LDAP_OPT_X_SASL_NOCANON )
 		return -1;
 
 	switch ( option ) {
 	case LDAP_OPT_X_SASL_SSF:
+	case LDAP_OPT_X_SASL_USERNAME:
 		/* This option is read-only */
 		return -1;
 
@@ -1248,6 +1109,13 @@ ldap_int_sasl_set_option( LDAP *ld, int option, void *arg )
 		break;
 	case LDAP_OPT_X_SASL_MAXBUFSIZE:
 		ld->ld_options.ldo_sasl_secprops.maxbufsize = *(ber_len_t *)arg;
+		break;
+	case LDAP_OPT_X_SASL_NOCANON:
+		if ( arg == LDAP_OPT_OFF ) {
+			LDAP_BOOL_CLR(&ld->ld_options, LDAP_BOOL_SASL_NOCANON );
+		} else {
+			LDAP_BOOL_SET(&ld->ld_options, LDAP_BOOL_SASL_NOCANON );
+		}
 		break;
 
 	case LDAP_OPT_X_SASL_SECPROPS: {

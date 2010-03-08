@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/search.c,v 1.181.2.5 2008/04/14 22:16:16 quanah Exp $ */
+/*	$NetBSD: search.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/search.c,v 1.181.2.10 2009/11/17 16:28:25 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -112,7 +114,7 @@ do_search(
 
 	rs->sr_err = dnPrettyNormal( NULL, &base, &op->o_req_dn, &op->o_req_ndn, op->o_tmpmemctx );
 	if( rs->sr_err != LDAP_SUCCESS ) {
-		Debug( LDAP_DEBUG_ANY, "%s do_search: invalid dn (%s)\n",
+		Debug( LDAP_DEBUG_ANY, "%s do_search: invalid dn: \"%s\"\n",
 			op->o_log_prefix, base.bv_val, 0 );
 		send_ldap_error( op, rs, LDAP_INVALID_DN_SYNTAX, "invalid DN" );
 		goto return_results;
@@ -152,7 +154,7 @@ do_search(
 		const char *dummy;	/* ignore msgs from bv2ad */
 		op->ors_attrs[i].an_desc = NULL;
 		op->ors_attrs[i].an_oc = NULL;
-		op->ors_attrs[i].an_oc_exclude = 0;
+		op->ors_attrs[i].an_flags = 0;
 		if ( slap_bv2ad( &op->ors_attrs[i].an_name,
 			&op->ors_attrs[i].an_desc, &dummy ) != LDAP_SUCCESS )
 		{
@@ -180,7 +182,7 @@ do_search(
 
 	if ( StatslogTest( LDAP_DEBUG_STATS ) ) {
 		char abuf[BUFSIZ/2], *ptr = abuf;
-		int len = 0, alen;
+		unsigned len = 0, alen;
 
 		sprintf(abuf, "scope=%d deref=%d", op->ors_scope, op->ors_deref);
 		Statslog( LDAP_DEBUG_STATS,
@@ -227,7 +229,7 @@ return_results:;
 		op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
 	}
 	if ( op->ors_filter != NULL) {
-		filter_free_x( op, op->ors_filter );
+		filter_free_x( op, op->ors_filter, 1 );
 	}
 	if ( op->ors_attrs != NULL ) {
 		op->o_tmpfree( op->ors_attrs, op->o_tmpmemctx );

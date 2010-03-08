@@ -1,4 +1,6 @@
-// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPAsynConnection.h,v 1.11.2.4 2008/04/14 23:09:26 quanah Exp $
+/*	$NetBSD: LDAPAsynConnection.h,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+
+// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPAsynConnection.h,v 1.11.2.4 2008/04/14 23:09:26 quanah Exp
 /*
  * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

@@ -1,8 +1,10 @@
+/*	$NetBSD: url.c,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+
 /* LIBLDAP url.c -- LDAP URL (RFC 4516) related routines */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/url.c,v 1.94.2.8 2008/02/11 23:41:37 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/libraries/libldap/url.c,v 1.94.2.10 2009/01/22 00:00:56 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -590,9 +592,11 @@ desc2str_len( LDAPURLDesc *u )
 	}
 
 	if ( u->lud_host && u->lud_host[0] ) {
+		char *ptr;
 		len += hex_escape_len( u->lud_host, URLESC_SLASH );
-		if ( !is_ipc && strchr( u->lud_host, ':' )) {
-			len += 2;	/* IPv6, [] */
+		if ( !is_ipc && ( ptr = strchr( u->lud_host, ':' ))) {
+			if ( strchr( ptr+1, ':' ))
+				len += 2;	/* IPv6, [] */
 		}
 	}
 
@@ -610,6 +614,7 @@ desc2str( LDAPURLDesc *u, char *s, int len )
 	int		is_v6 = 0;
 	int		is_ipc = 0;
 	struct berval	scope = BER_BVNULL;
+	char		*ptr;
 
 	if ( u == NULL ) {
 		return -1;
@@ -637,8 +642,9 @@ desc2str( LDAPURLDesc *u, char *s, int len )
 		sep = 1;
 	}
 
-	if ( !is_ipc && u->lud_host && strchr( u->lud_host, ':' )) {
-		is_v6 = 1;
+	if ( !is_ipc && u->lud_host && ( ptr = strchr( u->lud_host, ':' ))) {
+		if ( strchr( ptr+1, ':' ))
+			is_v6 = 1;
 	}
 
 	if ( u->lud_port ) {

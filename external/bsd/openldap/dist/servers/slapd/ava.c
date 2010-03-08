@@ -1,8 +1,10 @@
+/*	$NetBSD: ava.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+
 /* ava.c - routines for dealing with attribute value assertions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ava.c,v 1.45.2.3 2008/02/11 23:26:43 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/ava.c,v 1.45.2.5 2009/01/22 00:01:00 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -111,6 +113,7 @@ get_ava(
 		Debug( LDAP_DEBUG_FILTER,
 		"get_ava: illegal value for attributeType %s\n", type.bv_val, 0, 0 );
 		ber_dupbv_x( &aa->aa_value, &value, op->o_tmpmemctx );
+		*text = NULL;
 		rc = LDAP_SUCCESS;
 	}
 

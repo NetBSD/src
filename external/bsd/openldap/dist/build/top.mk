@@ -1,7 +1,7 @@
-# $OpenLDAP: pkg/ldap/build/top.mk,v 1.103.2.5 2008/02/11 23:26:38 kurt Exp $
+# OpenLDAP: pkg/ldap/build/top.mk,v 1.103.2.10 2009/07/06 19:22:52 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2008 The OpenLDAP Foundation.
+## Copyright 1998-2009 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@ exec_prefix = @exec_prefix@
 ldap_subdir = @ldap_subdir@
 
 bindir = @bindir@
+datarootdir = @datarootdir@
 datadir = @datadir@$(ldap_subdir)
 includedir = @includedir@
 infodir = @infodir@
@@ -159,6 +160,7 @@ LUTIL_LIBS = @LUTIL_LIBS@
 LTHREAD_LIBS = @LTHREAD_LIBS@
 
 BDB_LIBS = @BDB_LIBS@
+SLAPD_NDB_LIBS = @SLAPD_NDB_LIBS@
 
 LDAP_LIBLBER_LA = $(LDAP_LIBDIR)/liblber/liblber.la
 LDAP_LIBLDAP_LA = $(LDAP_LIBDIR)/libldap/libldap.la

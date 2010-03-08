@@ -1,8 +1,10 @@
+/*	$NetBSD: backglue.c,v 1.1.1.3 2010/03/08 02:14:17 lukem Exp $	*/
+
 /* backglue.c - backend glue */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.112.2.12 2008/06/02 18:00:53 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.112.2.19 2009/05/13 20:19:14 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2008 The OpenLDAP Foundation.
+ * Copyright 2001-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,6 +54,8 @@ static slap_overinst	glue;
 
 static int glueMode;
 static BackendDB *glueBack;
+static BackendDB glueBackDone;
+#define GLUEBACK_DONE (&glueBackDone)
 
 static slap_response glue_op_response;
 
@@ -435,16 +439,19 @@ glue_op_search ( Operation *op, SlapReply *rs )
 			if (scope0 == LDAP_SCOPE_ONELEVEL && 
 				dn_match(pdn, &ndn))
 			{
+				struct berval mdn, mndn;
 				op->ors_scope = LDAP_SCOPE_BASE;
-				op->o_req_dn = op->o_bd->be_suffix[0];
-				op->o_req_ndn = op->o_bd->be_nsuffix[0];
+				mdn = op->o_req_dn = op->o_bd->be_suffix[0];
+				mndn = op->o_req_ndn = op->o_bd->be_nsuffix[0];
 				rs->sr_err = op->o_bd->be_search(op, rs);
 				if ( rs->sr_err == LDAP_NO_SUCH_OBJECT ) {
 					gs.err = LDAP_SUCCESS;
 				}
 				op->ors_scope = LDAP_SCOPE_ONELEVEL;
-				op->o_req_dn = dn;
-				op->o_req_ndn = ndn;
+				if ( op->o_req_dn.bv_val == mdn.bv_val )
+					op->o_req_dn = dn;
+				if ( op->o_req_ndn.bv_val == mndn.bv_val )
+					op->o_req_ndn = ndn;
 
 			} else if (scope0 == LDAP_SCOPE_SUBTREE &&
 				dn_match(&op->o_bd->be_nsuffix[0], &ndn))
@@ -454,14 +461,17 @@ glue_op_search ( Operation *op, SlapReply *rs )
 			} else if (scope0 == LDAP_SCOPE_SUBTREE &&
 				dnIsSuffix(&op->o_bd->be_nsuffix[0], &ndn))
 			{
-				op->o_req_dn = op->o_bd->be_suffix[0];
-				op->o_req_ndn = op->o_bd->be_nsuffix[0];
+				struct berval mdn, mndn;
+				mdn = op->o_req_dn = op->o_bd->be_suffix[0];
+				mndn = op->o_req_ndn = op->o_bd->be_nsuffix[0];
 				rs->sr_err = glue_sub_search( op, rs, b0, on );
 				if ( rs->sr_err == LDAP_NO_SUCH_OBJECT ) {
 					gs.err = LDAP_SUCCESS;
 				}
-				op->o_req_dn = dn;
-				op->o_req_ndn = ndn;
+				if ( op->o_req_dn.bv_val == mdn.bv_val )
+					op->o_req_dn = dn;
+				if ( op->o_req_ndn.bv_val == mndn.bv_val )
+					op->o_req_ndn = ndn;
 
 			} else if (dnIsSuffix(&ndn, &op->o_bd->be_nsuffix[0])) {
 				rs->sr_err = glue_sub_search( op, rs, b0, on );
@@ -524,22 +534,21 @@ end_of_loop:;
 		op->ors_scope = scope0;
 		op->ors_tlimit = tlimit0;
 		op->o_time = starttime;
-		op->o_req_dn = dn;
-		op->o_req_ndn = ndn;
 
 		break;
 	}
+
+	op->o_callback = cb.sc_next;
 	if ( op->o_abandon ) {
 		rs->sr_err = SLAPD_ABANDON;
 	} else {
-		op->o_callback = cb.sc_next;
 		rs->sr_err = gs.err;
 		rs->sr_matched = gs.matched;
 		rs->sr_ref = gs.refs;
-		rs->sr_ctrls = gs.ctrls;
-
-		send_ldap_result( op, rs );
 	}
+	rs->sr_ctrls = gs.ctrls;
+
+	send_ldap_result( op, rs );
 
 	op->o_bd = b0;
 	op->o_bd->bd_info = bi0;
@@ -587,7 +596,7 @@ glue_tool_entry_close (
 {
 	int rc = 0;
 
-	if (glueBack) {
+	if (glueBack && glueBack != GLUEBACK_DONE) {
 		if (!glueBack->be_entry_close)
 			return 0;
 		rc = glueBack->be_entry_close (glueBack);
@@ -736,6 +745,7 @@ glue_tool_entry_first (
 	slap_overinst	*on = glue_tool_inst( b0->bd_info );
 	glueinfo		*gi = on->on_bi.bi_private;
 	int i;
+	ID rc;
 
 	/* If we're starting from scratch, start at the most general */
 	if (!glueBack) {
@@ -755,7 +765,26 @@ glue_tool_entry_first (
 		glueBack->be_entry_open (glueBack, glueMode) != 0)
 		return NOID;
 
-	return glueBack->be_entry_first (glueBack);
+	rc = glueBack->be_entry_first (glueBack);
+	while ( rc == NOID ) {
+		if ( glueBack && glueBack->be_entry_close )
+			glueBack->be_entry_close (glueBack);
+		for (i=0; i<gi->gi_nodes; i++) {
+			if (gi->gi_n[i].gn_be == glueBack)
+				break;
+		}
+		if (i == 0) {
+			glueBack = GLUEBACK_DONE;
+			break;
+		} else {
+			glueBack = gi->gi_n[i-1].gn_be;
+			rc = glue_tool_entry_first (b0);
+			if ( glueBack == GLUEBACK_DONE ) {
+				break;
+			}
+		}
+	}
+	return rc;
 }
 
 static ID
@@ -782,11 +811,14 @@ glue_tool_entry_next (
 				break;
 		}
 		if (i == 0) {
-			glueBack = NULL;
+			glueBack = GLUEBACK_DONE;
 			break;
 		} else {
 			glueBack = gi->gi_n[i-1].gn_be;
 			rc = glue_tool_entry_first (b0);
+			if ( glueBack == GLUEBACK_DONE ) {
+				break;
+			}
 		}
 	}
 	return rc;
@@ -938,6 +970,15 @@ glue_tool_sync (
 	return 0;
 }
 
+typedef struct glue_Addrec {
+	struct glue_Addrec *ga_next;
+	BackendDB *ga_be;
+} glue_Addrec;
+
+/* List of added subordinates */
+static glue_Addrec *ga_list;
+static int ga_adding;
+
 static int
 glue_db_init(
 	BackendDB *be,
@@ -989,6 +1030,11 @@ glue_db_init(
 		oi->oi_bi.bi_tool_sync = glue_tool_sync;
 
 	SLAP_DBFLAGS( be ) |= SLAP_DBFLAG_GLUE_INSTANCE;
+
+	if ( ga_list ) {
+		be->bd_info = (BackendInfo *)oi;
+		glue_sub_attach( 1 );
+	}
 
 	return 0;
 }
@@ -1064,20 +1110,18 @@ glue_sub_del( BackendDB *b0 )
 	return rc;
 }
 
-typedef struct glue_Addrec {
-	struct glue_Addrec *ga_next;
-	BackendDB *ga_be;
-} glue_Addrec;
-
-/* List of added subordinates */
-static glue_Addrec *ga_list;
 
 /* Attach all the subordinate backends to their superior */
 int
-glue_sub_attach()
+glue_sub_attach( int online )
 {
 	glue_Addrec *ga, *gnext = NULL;
 	int rc = 0;
+
+	if ( ga_adding )
+		return 0;
+
+	ga_adding = 1;
 
 	/* For all the subordinate backends */
 	for ( ga=ga_list; ga != NULL; ga = gnext ) {
@@ -1118,11 +1162,20 @@ glue_sub_attach()
 				&gi->gi_n[gi->gi_nodes].gn_pdn );
 			gi->gi_nodes++;
 			on->on_bi.bi_private = gi;
+			ga->ga_be->be_flags |= SLAP_DBFLAG_GLUE_LINKED;
 			break;
 		}
 		if ( !be ) {
 			Debug( LDAP_DEBUG_ANY, "glue: no superior found for sub %s!\n",
 				ga->ga_be->be_suffix[0].bv_val, 0, 0 );
+			/* allow this for now, assume a superior will
+			 * be added later
+			 */
+			if ( online ) {
+				rc = 0;
+				gnext = ga_list;
+				break;
+			}
 			rc = LDAP_NO_SUCH_OBJECT;
 		}
 		ch_free( ga );
@@ -1130,6 +1183,8 @@ glue_sub_attach()
 	}
 
 	ga_list = gnext;
+
+	ga_adding = 0;
 
 	return rc;
 }
@@ -1156,7 +1211,7 @@ glue_sub_add( BackendDB *be, int advert, int online )
 	ga_list = ga;
 
 	if ( online )
-		rc = glue_sub_attach();
+		rc = glue_sub_attach( online );
 
 	return rc;
 }

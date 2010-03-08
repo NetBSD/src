@@ -1,8 +1,8 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test022-ppolicy,v 1.17.2.5 2008/02/11 23:26:51 kurt Exp $
+# OpenLDAP: pkg/ldap/tests/scripts/test022-ppolicy,v 1.17.2.8 2009/07/01 21:01:41 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2008 The OpenLDAP Foundation.
+## Copyright 1998-2009 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -22,6 +22,9 @@ if test $PPOLICY = ppolicyno; then
 fi 
 
 mkdir -p $TESTDIR $DBDIR1
+
+$SLAPPASSWD -g -n >$CONFIGPWF
+echo "rootpw `$SLAPPASSWD -T $CONFIGPWF`" >$TESTDIR/configpw.conf
 
 echo "Starting slapd on TCP/IP port $PORT1..."
 . $CONFFILTER $BACKEND $MONITORDB < $PPOLICYCONF > $CONF1
@@ -142,7 +145,7 @@ $LDAPMODIFY -v -D "$USER" -h $LOCALHOST -p $PORT1 -w $PASS >> \
 dn: uid=nd, ou=People, dc=example, dc=com
 changetype: modify
 delete: userpassword
-userpassword: testpassword
+userpassword: $PASS
 -
 replace: userpassword
 userpassword: 20urgle12-1
@@ -220,7 +223,7 @@ $LDAPMODIFY -v -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD >> \
 dn: uid=nd, ou=People, dc=example, dc=com
 changetype: modify
 replace: userPassword
-userPassword: testpassword
+userPassword: $PASS
 -
 replace: pwdReset
 pwdReset: TRUE
@@ -288,8 +291,11 @@ fi
 
 sleep 2
 
+OLDPASS=$PASS
+PASS=successexpect
+
 $LDAPPASSWD -h $LOCALHOST -p $PORT1 \
-	-w $PASS -s failexpect -a $PASS \
+	-w $OLDPASS -s $PASS -a $OLDPASS \
 	-D "$USER" >> $TESTOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -299,10 +305,10 @@ if test $RC != 0 ; then
 fi
 
 echo "Testing length requirement..."
-
+# check control in response (ITS#5711)
 $LDAPPASSWD -h $LOCALHOST -p $PORT1 \
-	-w failexpect -a failexpect -s spw \
-	-D "$USER" > ${TESTOUT}.2 2>&1
+	-w $PASS -a $PASS -s 2shr \
+	-D "$USER" -e ppolicy > ${TESTOUT}.2 2>&1
 RC=$?
 cat ${TESTOUT}.2 >> $TESTOUT
 if test $RC = 0 ; then
@@ -316,15 +322,21 @@ if test $COUNT != 1 ; then
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit 1
 fi
+COUNT=`grep "Password is too short for policy" ${TESTOUT}.2 | wc -l`
+if test $COUNT != 1 ; then
+	echo "Control not returned in response"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
 
 echo "Testing hashed length requirement..."
 
-$LDAPMODIFY -h $LOCALHOST -p $PORT1 -D "$USER" -w failexpect > \
+$LDAPMODIFY -h $LOCALHOST -p $PORT1 -D "$USER" -w $PASS > \
 	${TESTOUT}.2 2>&1 << EOMODS
 dn: $USER
 changetype: modify
 delete: userPassword
-userPassword: failexpect
+userPassword: $PASS
 -
 add: userPassword
 userPassword: {MD5}xxxxxx
@@ -391,6 +403,151 @@ if test $RC = 0 ; then
 	echo "Multiple password modify replace test failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit 1
+fi
+
+if test "$BACKLDAP" != "ldapno" && test "$SYNCPROV" != "syncprovno"  ; then 
+echo ""
+echo "Setting up policy state forwarding test..."
+
+mkdir $DBDIR2
+sed -e "s,$DBDIR1,$DBDIR2," < $CONF1 > $CONF2
+echo "Starting slapd consumer on TCP/IP port $PORT2..."
+$SLAPD -f $CONF2 -h $URI2 -d $LVL $TIMING > $LOG2 2>&1 &
+PID=$!
+if test $WAIT != 0 ; then
+    echo PID $PID
+    read foo
+fi
+KILLPIDS="$KILLPIDS $PID"
+
+echo "Configuring syncprov on provider..."
+if [ "$SYNCPROV" = syncprovmod ]; then
+	$LDAPADD -D cn=config -H $URI1 -y $CONFIGPWF <<EOF >> $TESTOUT 2>&1
+dn: cn=module,cn=config
+objectclass: olcModuleList
+cn: module
+olcModulePath: $TESTWD/../servers/slapd/overlays
+olcModuleLoad: syncprov.la
+
+EOF
+	RC=$?
+	if test $RC != 0 ; then
+		echo "ldapadd failed for moduleLoad ($RC)!"
+		test $KILLSERVERS != no && kill -HUP $KILLPIDS
+		exit $RC
+	fi
+fi
+
+$LDAPADD -D cn=config -H $URI1 -y $CONFIGPWF <<EOF >> $TESTOUT 2>&1
+dn: olcOverlay={1}syncprov,olcDatabase={1}$BACKEND,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcSyncProvConfig
+olcOverlay: {1}syncprov
+
+EOF
+RC=$?
+if test $RC != 0 ; then
+    echo "ldapadd failed for provider database config ($RC)!"
+    test $KILLSERVERS != no && kill -HUP $KILLPIDS
+    exit $RC
+fi
+
+echo "Using ldapsearch to check that slapd is running..."
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI2 \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting 5 seconds for slapd to start..."
+	sleep 5
+done
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Configuring syncrepl on consumer..."
+if [ "$BACKLDAP" = ldapmod ]; then
+	$LDAPADD -D cn=config -H $URI2 -y $CONFIGPWF <<EOF >> $TESTOUT 2>&1
+dn: cn=module,cn=config
+objectclass: olcModuleList
+cn: module
+olcModulePath: $TESTWD/../servers/slapd/back-ldap
+olcModuleLoad: back_ldap.la
+
+EOF
+	RC=$?
+	if test $RC != 0 ; then
+		echo "ldapadd failed for moduleLoad ($RC)!"
+		test $KILLSERVERS != no && kill -HUP $KILLPIDS
+		exit $RC
+	fi
+fi
+$LDAPMODIFY -D cn=config -H $URI2 -y $CONFIGPWF <<EOF >> $TESTOUT 2>&1
+dn: olcOverlay={0}chain,olcDatabase={-1}frontend,cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectClass: olcChainConfig
+olcOverlay: {0}chain
+
+dn: olcDatabase=ldap,olcOverlay={0}chain,olcDatabase={-1}frontend,cn=config
+changetype: add
+objectClass: olcLDAPConfig
+objectClass: olcChainDatabase
+olcDBURI: $URI1
+olcDbIDAssertBind: bindmethod=simple
+  binddn="cn=manager,dc=example,dc=com"
+  credentials=secret
+  mode=self
+
+dn: olcDatabase={1}$BACKEND,cn=config
+changetype: modify
+add: olcSyncrepl
+olcSyncrepl: rid=1
+  provider=$URI1
+  binddn="cn=manager,dc=example,dc=com"
+  bindmethod=simple
+  credentials=secret
+  searchbase="dc=example,dc=com"
+  type=refreshAndPersist
+  retry="3 5 300 5"
+-
+add: olcUpdateref
+olcUpdateref: $URI1
+-
+
+dn: olcOverlay={0}ppolicy,olcDatabase={1}$BACKEND,cn=config
+changetype: modify
+replace: olcPPolicyForwardUpdates
+olcPPolicyForwardUpdates: TRUE
+-
+
+EOF
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Waiting for consumer to sync..."
+sleep $SLEEP1
+
+echo "Testing policy state forwarding..."
+$LDAPSEARCH -H $URI2 -D "$USER" -w wrongpw >$SEARCHOUT 2>&1
+$LDAPSEARCH -H $URI1 -D "$MANAGERDN" -w $PASSWD -b "$USER" \* \+ >> $SEARCHOUT 2>&1
+COUNT=`grep "pwdFailureTime" $SEARCHOUT | wc -l`
+if test $COUNT != 1 ; then
+	echo "Policy state forwarding failed"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
+# End of chaining test
+
 fi
 
 test $KILLSERVERS != no && kill -HUP $KILLPIDS

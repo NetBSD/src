@@ -1,8 +1,10 @@
+/*	$NetBSD: bind.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* bind.c - ldap backend bind function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.162.2.17 2008/04/14 20:02:21 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.162.2.25 2009/09/30 00:29:31 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -32,6 +34,7 @@
 #define AVL_INTERNAL
 #include "slap.h"
 #include "back-ldap.h"
+#include "lutil.h"
 #undef ldap_debug	/* silence a warning in ldap-int.h */
 #include "../../../libraries/libldap/ldap-int.h"
 
@@ -40,6 +43,45 @@
 #define LDAP_CONTROL_OBSOLETE_PROXY_AUTHZ	"2.16.840.1.113730.3.4.12"
 
 #if LDAP_BACK_PRINT_CONNTREE > 0
+
+static const struct {
+	slap_mask_t	f;
+	char		c;
+} flagsmap[] = {
+	{ LDAP_BACK_FCONN_ISBOUND,	'B' },
+	{ LDAP_BACK_FCONN_ISANON,	'A' },
+	{ LDAP_BACK_FCONN_ISPRIV,	'P' },
+	{ LDAP_BACK_FCONN_ISTLS,	'T' },
+	{ LDAP_BACK_FCONN_BINDING,	'X' },
+	{ LDAP_BACK_FCONN_TAINTED,	'E' },
+	{ LDAP_BACK_FCONN_ABANDON,	'N' },
+	{ LDAP_BACK_FCONN_ISIDASR,	'S' },
+	{ LDAP_BACK_FCONN_CACHED,	'C' },
+	{ 0,				'\0' }
+};
+
+static void
+ldap_back_conn_print( ldapconn_t *lc, const char *avlstr )
+{
+	char buf[ SLAP_TEXT_BUFLEN ];
+	char fbuf[ sizeof("BAPTIENSC") ];
+	int i;
+
+	ldap_back_conn2str( &lc->lc_base, buf, sizeof( buf ) );
+	for ( i = 0; flagsmap[ i ].c != '\0'; i++ ) {
+		if ( lc->lc_lcflags & flagsmap[i].f ) {
+			fbuf[i] = flagsmap[i].c;
+
+		} else {
+			fbuf[i] = '.';
+		}
+	}
+	fbuf[i] = '\0';
+	
+	fprintf( stderr, "lc=%p %s %s flags=0x%08x (%s)\n",
+		(void *)lc, buf, avlstr, lc->lc_lcflags, fbuf );
+}
+
 static void
 ldap_back_ravl_print( Avlnode *root, int depth )
 {
@@ -57,13 +99,9 @@ ldap_back_ravl_print( Avlnode *root, int depth )
 	}
 
 	lc = root->avl_data;
-	fprintf( stderr, "lc=%p local=\"%s\" conn=%p %s refcnt=%d flags=0x%08x\n",
-		(void *)lc,
-		lc->lc_local_ndn.bv_val ? lc->lc_local_ndn.bv_val : "",
-		(void *)lc->lc_conn,
-		avl_bf2str( root->avl_bf ), lc->lc_refcnt, lc->lc_lcflags );
-	
-	ldap_back_ravl_print( root->avl_left, depth+1 );
+	ldap_back_conn_print( lc, avl_bf2str( root->avl_bf ) );
+
+	ldap_back_ravl_print( root->avl_left, depth + 1 );
 }
 
 static char* priv2str[] = {
@@ -91,11 +129,8 @@ ldap_back_print_conntree( ldapinfo_t *li, char *msg )
 
 		LDAP_TAILQ_FOREACH( lc, &li->li_conn_priv[ c ].lic_priv, lc_q )
 		{
-			fprintf( stderr, "    [%d] lc=%p local=\"%s\" conn=%p refcnt=%d flags=0x%08x\n",
-				i,
-				(void *)lc,
-				lc->lc_local_ndn.bv_val ? lc->lc_local_ndn.bv_val : "",
-				(void *)lc->lc_conn, lc->lc_refcnt, lc->lc_lcflags );
+			fprintf( stderr, "    [%d] ", i );
+			ldap_back_conn_print( lc, "" );
 			i++;
 		}
 	}
@@ -244,6 +279,8 @@ retry:;
 	ldap_back_controls_free( op, rs, &ctrls );
 
 	if ( rc == LDAP_SUCCESS ) {
+		op->o_conn->c_authz_cookie = op->o_bd->be_private;
+
 		/* If defined, proxyAuthz will be used also when
 		 * back-ldap is the authorizing backend; for this
 		 * purpose, after a successful bind the connection
@@ -303,9 +340,10 @@ retry_lock:;
 		if ( LDAP_BACK_SINGLECONN( li ) ) {
 			while ( ( tmplc = avl_delete( &li->li_conninfo.lai_tree, (caddr_t)lc, ldap_back_conn_cmp ) ) != NULL )
 			{
+				assert( !LDAP_BACK_PCONN_ISPRIV( lc ) );
 				Debug( LDAP_DEBUG_TRACE,
-					"=>ldap_back_bind: destroying conn %ld (refcnt=%u)\n",
-					LDAP_BACK_PCONN_ID( lc ), lc->lc_refcnt, 0 );
+					"=>ldap_back_bind: destroying conn %lu (refcnt=%u)\n",
+					lc->lc_conn->c_connid, lc->lc_refcnt, 0 );
 
 				if ( tmplc->lc_refcnt != 0 ) {
 					/* taint it */
@@ -631,7 +669,7 @@ ldap_back_prepare_conn( ldapconn_t *lc, Operation *op, SlapReply *rs, ldap_back_
 	LDAP		*ld = NULL;
 #ifdef HAVE_TLS
 	int		is_tls = op->o_conn->c_is_tls;
-	time_t		lc_time = (time_t)(-1);
+	time_t		lctime = (time_t)(-1);
 	slap_bindconf *sb;
 #endif /* HAVE_TLS */
 
@@ -691,8 +729,11 @@ ldap_back_prepare_conn( ldapconn_t *lc, Operation *op, SlapReply *rs, ldap_back_
 	}
 
 	ldap_pvt_thread_mutex_lock( &li->li_uri_mutex );
+	assert( li->li_uri_mutex_do_not_lock == 0 );
+	li->li_uri_mutex_do_not_lock = 1;
 	rs->sr_err = ldap_back_start_tls( ld, op->o_protocol, &is_tls,
 			li->li_uri, li->li_flags, li->li_nretries, &rs->sr_text );
+	li->li_uri_mutex_do_not_lock = 0;
 	ldap_pvt_thread_mutex_unlock( &li->li_uri_mutex );
 	if ( rs->sr_err != LDAP_SUCCESS ) {
 		ldap_unbind_ext( ld, NULL, NULL );
@@ -701,7 +742,7 @@ ldap_back_prepare_conn( ldapconn_t *lc, Operation *op, SlapReply *rs, ldap_back_
 
 	} else if ( li->li_idle_timeout ) {
 		/* only touch when activity actually took place... */
-		lc_time = op->o_time;
+		lctime = op->o_time;
 	}
 #endif /* HAVE_TLS */
 
@@ -713,8 +754,8 @@ ldap_back_prepare_conn( ldapconn_t *lc, Operation *op, SlapReply *rs, ldap_back_
 	} else {
 		LDAP_BACK_CONN_ISTLS_CLEAR( lc );
 	}
-	if ( lc_time != (time_t)(-1) ) {
-		lc->lc_time = lc_time;
+	if ( lctime != (time_t)(-1) ) {
+		lc->lc_time = lctime;
 	}
 #endif /* HAVE_TLS */
 
@@ -747,7 +788,7 @@ ldap_back_getconn(
 {
 	ldapinfo_t	*li = (ldapinfo_t *)op->o_bd->be_private;
 	ldapconn_t	*lc = NULL,
-			lc_curr = { 0 };
+			lc_curr = {{ 0 }};
 	int		refcnt = 1,
 			lookupconn = !( sendok & LDAP_BACK_BINDING );
 
@@ -1486,6 +1527,7 @@ retry:;
 	rc = ldap_back_op_result( lc, op, rs, msgid,
 		-1, ( sendok | LDAP_BACK_BINDING ) );
 	if ( rc == LDAP_SUCCESS ) {
+		op->o_conn->c_authz_cookie = op->o_bd->be_private;
 		LDAP_BACK_CONN_ISBOUND_SET( lc );
 	}
 
@@ -1581,13 +1623,19 @@ ldap_back_default_urllist(
 	*urllist = *url;
 	*url = NULL;
 
-	ldap_pvt_thread_mutex_lock( &li->li_uri_mutex );
+	if ( !li->li_uri_mutex_do_not_lock ) {
+		ldap_pvt_thread_mutex_lock( &li->li_uri_mutex );
+	}
+
 	if ( li->li_uri ) {
 		ch_free( li->li_uri );
 	}
 
 	ldap_get_option( ld, LDAP_OPT_URI, (void *)&li->li_uri );
-	ldap_pvt_thread_mutex_unlock( &li->li_uri_mutex );
+
+	if ( !li->li_uri_mutex_do_not_lock ) {
+		ldap_pvt_thread_mutex_unlock( &li->li_uri_mutex );
+	}
 
 	return LDAP_SUCCESS;
 }
@@ -1637,8 +1685,6 @@ ldap_back_op_result(
 	char		**refs = NULL;
 	LDAPControl	**ctrls = NULL;
 
-#define	ERR_OK(err) ((err) == LDAP_SUCCESS || (err) == LDAP_COMPARE_FALSE || (err) == LDAP_COMPARE_TRUE)
-
 	rs->sr_text = NULL;
 	rs->sr_matched = NULL;
 	rs->sr_ref = NULL;
@@ -1647,7 +1693,7 @@ ldap_back_op_result(
 	/* if the error recorded in the reply corresponds
 	 * to a successful state, get the error from the
 	 * remote server response */
-	if ( ERR_OK( rs->sr_err ) ) {
+	if ( LDAP_ERR_OK( rs->sr_err ) ) {
 		int		rc;
 		struct timeval	tv;
 		LDAPMessage	*res = NULL;
@@ -1800,7 +1846,7 @@ retry:;
 	/* if the error in the reply structure is not
 	 * LDAP_SUCCESS, try to map it from client 
 	 * to server error */
-	if ( !ERR_OK( rs->sr_err ) ) {
+	if ( !LDAP_ERR_OK( rs->sr_err ) ) {
 		rs->sr_err = slap_map_api2result( rs );
 
 		/* internal ops ( op->o_conn == NULL ) 
@@ -1825,8 +1871,8 @@ retry:;
 		}
 
 	} else if ( op->o_conn &&
-		( ( ( sendok & LDAP_BACK_SENDOK ) && ERR_OK( rs->sr_err ) )
-			|| ( ( sendok & LDAP_BACK_SENDERR ) && rs->sr_err != LDAP_SUCCESS ) ) )
+		( ( ( sendok & LDAP_BACK_SENDOK ) && LDAP_ERR_OK( rs->sr_err ) )
+			|| ( ( sendok & LDAP_BACK_SENDERR ) && !LDAP_ERR_OK( rs->sr_err ) ) ) )
 	{
 		send_ldap_result( op, rs );
 	}
@@ -1859,7 +1905,7 @@ retry:;
 		rs->sr_ctrls = NULL;
 	}
 
-	return( ERR_OK( rs->sr_err ) ? LDAP_SUCCESS : rs->sr_err );
+	return( LDAP_ERR_OK( rs->sr_err ) ? LDAP_SUCCESS : rs->sr_err );
 }
 
 /* return true if bound, false if failed */
@@ -2208,7 +2254,10 @@ ldap_back_proxy_authz_bind(
 		 * so that referral chasing is attempted using the right
 		 * identity */
 		LDAP_BACK_CONN_ISBOUND_SET( lc );
-		ber_bvreplace( &lc->lc_bound_ndn, binddn );
+		op->o_conn->c_authz_cookie = op->o_bd->be_private;
+		if ( !BER_BVISNULL( binddn ) ) {
+			ber_bvreplace( &lc->lc_bound_ndn, binddn );
+		}
 
 		if ( !BER_BVISNULL( &lc->lc_cred ) ) {
 			memset( lc->lc_cred.bv_val, 0,
@@ -2216,8 +2265,10 @@ ldap_back_proxy_authz_bind(
 		}
 
 		if ( LDAP_BACK_SAVECRED( li ) ) {
-			ber_bvreplace( &lc->lc_cred, bindcred );
-			ldap_set_rebind_proc( lc->lc_ld, li->li_rebind_f, lc );
+			if ( !BER_BVISNULL( bindcred ) ) {
+				ber_bvreplace( &lc->lc_cred, bindcred );
+				ldap_set_rebind_proc( lc->lc_ld, li->li_rebind_f, lc );
+			}
 
 		} else {
 			lc->lc_cred.bv_len = 0;
@@ -2613,7 +2664,7 @@ ldap_back_controls_add(
 		goto done;
 	}
 
-	assert( j1 + j1 <= sizeof( c )/sizeof(LDAPControl) );
+	assert( j1 + j2 <= (int) (sizeof( c )/sizeof( c[0] )) );
 
 	if ( op->o_ctrls ) {
 		for ( n = 0; op->o_ctrls[ n ]; n++ )
@@ -2702,4 +2753,85 @@ ldap_back_controls_free( Operation *op, SlapReply *rs, LDAPControl ***pctrls )
 	*pctrls = NULL;
 
 	return 0;
+}
+
+int
+ldap_back_conn2str( const ldapconn_base_t *lc, char *buf, ber_len_t buflen )
+{
+	char tbuf[ SLAP_TEXT_BUFLEN ];
+	char *ptr = buf, *end = buf + buflen;
+	int len;
+
+	if ( ptr + sizeof("conn=") > end ) return -1;
+	ptr = lutil_strcopy( ptr, "conn=" );
+
+	len = ldap_back_connid2str( lc, ptr, (ber_len_t)(end - ptr) );
+	ptr += len;
+	if ( ptr >= end ) return -1;
+
+	if ( !BER_BVISNULL( &lc->lcb_local_ndn ) ) {
+		if ( ptr + sizeof(" DN=\"\"") + lc->lcb_local_ndn.bv_len > end ) return -1;
+		ptr = lutil_strcopy( ptr, " DN=\"" );
+		ptr = lutil_strncopy( ptr, lc->lcb_local_ndn.bv_val, lc->lcb_local_ndn.bv_len );
+		*ptr++ = '"';
+	}
+
+	if ( lc->lcb_create_time != 0 ) {
+		len = snprintf( tbuf, sizeof(tbuf), "%ld", lc->lcb_create_time );
+		if ( ptr + sizeof(" created=") + len >= end ) return -1;
+		ptr = lutil_strcopy( ptr, " created=" );
+		ptr = lutil_strcopy( ptr, tbuf );
+	}
+
+	if ( lc->lcb_time != 0 ) {
+		len = snprintf( tbuf, sizeof(tbuf), "%ld", lc->lcb_time );
+		if ( ptr + sizeof(" modified=") + len >= end ) return -1;
+		ptr = lutil_strcopy( ptr, " modified=" );
+		ptr = lutil_strcopy( ptr, tbuf );
+	}
+
+	len = snprintf( tbuf, sizeof(tbuf), "%u", lc->lcb_refcnt );
+	if ( ptr + sizeof(" refcnt=") + len >= end ) return -1;
+	ptr = lutil_strcopy( ptr, " refcnt=" );
+	ptr = lutil_strcopy( ptr, tbuf );
+
+	return ptr - buf;
+}
+
+int
+ldap_back_connid2str( const ldapconn_base_t *lc, char *buf, ber_len_t buflen )
+{
+	static struct berval conns[] = {
+		BER_BVC("ROOTDN"),
+		BER_BVC("ROOTDN-TLS"),
+		BER_BVC("ANON"),
+		BER_BVC("ANON-TLS"),
+		BER_BVC("BIND"),
+		BER_BVC("BIND-TLS"),
+		BER_BVNULL
+	};
+
+	int len = 0;
+
+	if ( LDAP_BACK_PCONN_ISPRIV( (const ldapconn_t *)lc ) ) {
+		long cid;
+		struct berval *bv;
+
+		cid = (long)lc->lcb_conn;
+		assert( cid >= LDAP_BACK_PCONN_FIRST && cid < LDAP_BACK_PCONN_LAST );
+
+		bv = &conns[ cid ];
+
+		if ( bv->bv_len >= buflen ) {
+			return bv->bv_len + 1;
+		}
+
+		len = bv->bv_len;
+		lutil_strncopy( buf, bv->bv_val, bv->bv_len + 1 );
+
+	} else {
+		len = snprintf( buf, buflen, "%lu", lc->lcb_conn->c_connid );
+	}
+
+	return len;
 }

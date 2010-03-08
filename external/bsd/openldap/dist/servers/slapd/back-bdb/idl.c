@@ -1,8 +1,10 @@
+/*	$NetBSD: idl.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* idl.c - ldap id list handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/idl.c,v 1.124.2.7 2008/02/11 23:26:45 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/idl.c,v 1.124.2.11 2009/12/02 19:22:09 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -376,10 +378,10 @@ bdb_idl_cache_put(
 	}
 	bdb->bi_idl_lru_head = ee;
 
-	if ( ++bdb->bi_idl_cache_size > bdb->bi_idl_cache_max_size ) {
+	if ( bdb->bi_idl_cache_size >= bdb->bi_idl_cache_max_size ) {
 		int i;
-		ee = bdb->bi_idl_lru_tail;
-		for ( i = 0; ee != NULL && i < 10; i++, ee = eprev ) {
+		eprev = bdb->bi_idl_lru_tail;
+		for ( i = 0; (ee = eprev) != NULL && i < 10; i++ ) {
 			eprev = ee->idl_lru_prev;
 			if ( eprev == ee ) {
 				eprev = NULL;
@@ -405,6 +407,7 @@ bdb_idl_cache_put(
 		assert( bdb->bi_idl_lru_tail != NULL
 			|| bdb->bi_idl_lru_head == NULL );
 	}
+	bdb->bi_idl_cache_size++;
 	ldap_pvt_thread_mutex_unlock( &bdb->bi_idl_tree_lrulock );
 	ldap_pvt_thread_rdwr_wunlock( &bdb->bi_idl_tree_rwlock );
 }
@@ -502,7 +505,7 @@ int
 bdb_idl_fetch_key(
 	BackendDB	*be,
 	DB			*db,
-	BDB_LOCKER locker,
+	DB_TXN		*txn,
 	DBT			*key,
 	ID			*ids,
 	DBC                     **saved_cursor,
@@ -575,13 +578,12 @@ bdb_idl_fetch_key(
 
 	/* If we're not reusing an existing cursor, get a new one */
 	if( opflag != DB_NEXT ) {
-		rc = db->cursor( db, NULL, &cursor, bdb->bi_db_opflags );
+		rc = db->cursor( db, txn, &cursor, bdb->bi_db_opflags );
 		if( rc != 0 ) {
 			Debug( LDAP_DEBUG_ANY, "=> bdb_idl_fetch_key: "
 				"cursor failed: %s (%d)\n", db_strerror(rc), rc, 0 );
 			return rc;
 		}
-		CURSOR_SETLOCKER( cursor, locker );
 	} else {
 		cursor = *saved_cursor;
 	}

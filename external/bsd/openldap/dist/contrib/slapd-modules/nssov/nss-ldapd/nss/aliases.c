@@ -1,3 +1,5 @@
+/*	$NetBSD: aliases.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    aliases.c - NSS lookup functions for aliases database
 

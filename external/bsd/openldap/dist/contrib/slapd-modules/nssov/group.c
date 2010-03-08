@@ -1,7 +1,11 @@
+/*	$NetBSD: group.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+
 /* group.c - group lookup routines */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/group.c,v 1.1.2.1 2008/07/08 18:53:57 quanah Exp $ */
-/*
- * Copyright 2008 by Howard Chu, Symas Corp.
+/* OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/group.c,v 1.1.2.4 2009/08/17 21:48:57 quanah Exp */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
+ *
+ * Copyright 2008-2009 The OpenLDAP Foundation.
+ * Portions Copyright 2008-2009 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,7 +16,7 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
-/*
+/* ACKNOWLEDGEMENTS:
  * This code references portions of the nss-ldapd package
  * written by Arthur de Jong. The nss-ldapd code was forked
  * from the nss-ldap library written by Luke Howard.
@@ -121,6 +125,10 @@ static int isvalidgroupname(struct berval *name)
 	/* check other characters */
 	for (i=1;i<name->bv_len;i++)
 	{
+#ifndef STRICT_GROUPS
+		/* allow spaces too */
+		if (name->bv_val[i] == ' ') continue;
+#endif
 		if ( ! ( (name->bv_val[i]>='A' && name->bv_val[i] <= 'Z') ||
 						 (name->bv_val[i]>='a' && name->bv_val[i] <= 'z') ||
 						 (name->bv_val[i]>='0' && name->bv_val[i] <= '9') ||
@@ -145,7 +153,7 @@ static int write_group(nssov_group_cbp *cbp,Entry *entry)
 		a = attr_find(entry->e_attrs, cbp->mi->mi_attrs[CN_KEY].an_desc);
 		if ( !a )
 		{
-			Debug(LDAP_DEBUG_ANY,"group entry %s does not contain %s value",
+			Debug(LDAP_DEBUG_ANY,"group entry %s does not contain %s value\n",
 					entry->e_name.bv_val, cbp->mi->mi_attrs[CN_KEY].an_desc->ad_cname.bv_val,0);
 			return 0;
 		}
@@ -163,7 +171,7 @@ static int write_group(nssov_group_cbp *cbp,Entry *entry)
 		a = attr_find(entry->e_attrs, cbp->mi->mi_attrs[GID_KEY].an_desc);
 		if ( !a )
 		{
-			Debug(LDAP_DEBUG_ANY,"group entry %s does not contain %s value",
+			Debug(LDAP_DEBUG_ANY,"group entry %s does not contain %s value\n",
 					entry->e_name.bv_val, cbp->mi->mi_attrs[GID_KEY].an_desc->ad_cname.bv_val,0);
 			return 0;
 		}
@@ -191,26 +199,31 @@ static int write_group(nssov_group_cbp *cbp,Entry *entry)
 			i += a->a_numvals;
 		if ( b )
 			i += b->a_numvals;
-		if ( i )
+		if ( i ) {
 			members = cbp->op->o_tmpalloc( (i+1) * sizeof(struct berval), cbp->op->o_tmpmemctx );
 			
-		if ( a ) {
-			for (i=0; i<a->a_numvals; i++) {
-				if (isvalidusername(&a->a_vals[i])) {
-					ber_dupbv_x(&members[j],&a->a_vals[i],cbp->op->o_tmpmemctx);
-					j++;
+			if ( a ) {
+				for (i=0; i<a->a_numvals; i++) {
+					if (isvalidusername(&a->a_vals[i])) {
+						ber_dupbv_x(&members[j],&a->a_vals[i],cbp->op->o_tmpmemctx);
+						j++;
+					}
 				}
 			}
-		}
-		a = b;
-		if ( a ) {
-			for (i=0; i<a->a_numvals; i++) {
-				if (nssov_dn2uid(cbp->op,cbp->ni,&a->a_nvals[i],&members[j]))
-					j++;
+			a = b;
+			if ( a ) {
+				for (i=0; i<a->a_numvals; i++) {
+					if (nssov_dn2uid(cbp->op,cbp->ni,&a->a_nvals[i],&members[j]))
+						j++;
+				}
 			}
+			nummembers = j;
+			BER_BVZERO(&members[j]);
+		} else {
+			members=NULL;
+			nummembers = 0;
 		}
-		nummembers = j;
-		BER_BVZERO(&members[j]);
+
 	} else {
 		members=NULL;
 		nummembers = 0;
@@ -220,7 +233,7 @@ static int write_group(nssov_group_cbp *cbp,Entry *entry)
 	{
 		if (!isvalidgroupname(&names[i]))
 		{
-			Debug(LDAP_DEBUG_ANY,"nssov: group entry %s contains invalid group name: \"%s\"",
+			Debug(LDAP_DEBUG_ANY,"nssov: group entry %s contains invalid group name: \"%s\"\n",
 													entry->e_name.bv_val,names[i].bv_val,0);
 		}
 		else
@@ -232,7 +245,7 @@ static int write_group(nssov_group_cbp *cbp,Entry *entry)
 				gid_t gid;
 				gid = strtol(gids[j].bv_val, &tmp, 0);
 				if ( *tmp ) {
-					Debug(LDAP_DEBUG_ANY,"nssov: group entry %s contains non-numeric %s value: \"%s\"",
+					Debug(LDAP_DEBUG_ANY,"nssov: group entry %s contains non-numeric %s value: \"%s\"\n",
 						entry->e_name.bv_val, cbp->mi->mi_attrs[GID_KEY].an_desc->ad_cname.bv_val,
 						names[i].bv_val);
 					continue;
@@ -270,14 +283,14 @@ NSSOV_HANDLE(
 	cbp.name.bv_len = tmpint32;
 	cbp.name.bv_val = cbp.buf;
 	if (!isvalidgroupname(&cbp.name)) {
-		Debug(LDAP_DEBUG_ANY,"nssov_group_byname(%s): invalid group name",cbp.name.bv_val,0,0);
+		Debug(LDAP_DEBUG_ANY,"nssov_group_byname(%s): invalid group name\n",cbp.name.bv_val,0,0);
 		return -1;
 	}
 	cbp.wantmembers = 1;
 	cbp.ni = ni;
 	BER_BVZERO(&cbp.gidnum);
 	BER_BVZERO(&cbp.user);,
-	Debug(LDAP_DEBUG_TRACE,"nslcd_group_byname(%s)",cbp.name.bv_val,0,0);,
+	Debug(LDAP_DEBUG_TRACE,"nslcd_group_byname(%s)\n",cbp.name.bv_val,0,0);,
 	NSLCD_ACTION_GROUP_BYNAME,
 	nssov_filter_byname(cbp.mi,CN_KEY,&cbp.name,&filter)
 )
@@ -295,7 +308,7 @@ NSSOV_HANDLE(
 	cbp.ni = ni;
 	BER_BVZERO(&cbp.name);
 	BER_BVZERO(&cbp.user);,
-	Debug(LDAP_DEBUG_TRACE,"nssov_group_bygid(%s)",cbp.gidnum.bv_val,0,0);,
+	Debug(LDAP_DEBUG_TRACE,"nssov_group_bygid(%s)\n",cbp.gidnum.bv_val,0,0);,
 	NSLCD_ACTION_GROUP_BYGID,
 	nssov_filter_byid(cbp.mi,GID_KEY,&cbp.gidnum,&filter)
 )
@@ -309,14 +322,14 @@ NSSOV_HANDLE(
 	cbp.user.bv_len = tmpint32;
 	cbp.user.bv_val = cbp.buf;
 	if (!isvalidusername(&cbp.user)) {
-		Debug(LDAP_DEBUG_ANY,"nssov_group_bymember(%s): invalid user name",cbp.user.bv_val,0,0);
+		Debug(LDAP_DEBUG_ANY,"nssov_group_bymember(%s): invalid user name\n",cbp.user.bv_val,0,0);
 		return -1;
 	}
 	cbp.wantmembers = 0;
 	cbp.ni = ni;
 	BER_BVZERO(&cbp.name);
 	BER_BVZERO(&cbp.gidnum);,
-	Debug(LDAP_DEBUG_TRACE,"nssov_group_bymember(%s)",cbp.user.bv_val,0,0);,
+	Debug(LDAP_DEBUG_TRACE,"nssov_group_bymember(%s)\n",cbp.user.bv_val,0,0);,
 	NSLCD_ACTION_GROUP_BYMEMBER,
 	mkfilter_group_bymember(&cbp,&filter)
 )
@@ -329,7 +342,7 @@ NSSOV_HANDLE(
 	cbp.ni = ni;
 	BER_BVZERO(&cbp.name);
 	BER_BVZERO(&cbp.gidnum);,
-	Debug(LDAP_DEBUG_TRACE,"nssov_group_all()",0,0,0);,
+	Debug(LDAP_DEBUG_TRACE,"nssov_group_all()\n",0,0,0);,
 	NSLCD_ACTION_GROUP_ALL,
 	(filter=cbp.mi->mi_filter,0)
 )

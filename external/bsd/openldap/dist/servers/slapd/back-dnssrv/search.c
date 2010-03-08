@@ -1,8 +1,10 @@
+/*	$NetBSD: search.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* search.c - DNS SRV backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/search.c,v 1.44.2.4 2008/02/11 23:26:46 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/search.c,v 1.44.2.6 2009/01/22 00:01:06 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -169,9 +171,9 @@ dnssrv_back_search(
 		AttributeDescription *ad_objectClass
 			= slap_schema.si_ad_objectClass;
 		AttributeDescription *ad_ref = slap_schema.si_ad_ref;
-		e.e_name.bv_val = strdup( op->o_req_dn.bv_val );
+		e.e_name.bv_val = ch_strdup( op->o_req_dn.bv_val );
 		e.e_name.bv_len = op->o_req_dn.bv_len;
-		e.e_nname.bv_val = strdup( op->o_req_ndn.bv_val );
+		e.e_nname.bv_val = ch_strdup( op->o_req_ndn.bv_val );
 		e.e_nname.bv_len = op->o_req_ndn.bv_len;
 
 		e.e_attrs = NULL;

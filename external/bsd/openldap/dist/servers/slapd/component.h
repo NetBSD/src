@@ -1,8 +1,10 @@
+/*	$NetBSD: component.h,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+
 /* component.h */
-/* $OpenLDAP: pkg/ldap/servers/slapd/component.h,v 1.4.2.3 2008/02/11 23:26:43 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/component.h,v 1.4.2.4 2009/01/22 00:01:00 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2008 The OpenLDAP Foundation.
+ * Copyright 2004-2009 The OpenLDAP Foundation.
  * Portions Copyright 2004 by IBM Corporation.
  * All rights reserved.
  *

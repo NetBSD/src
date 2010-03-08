@@ -1,3 +1,5 @@
+/*	$NetBSD: protocols.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    protocols.c - NSS lookup functions for protocol database
 

@@ -1,8 +1,10 @@
+/*	$NetBSD: aclparse.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+
 /* aclparse.c - routines to parse and check acl's */
-/* $OpenLDAP: pkg/ldap/servers/slapd/aclparse.c,v 1.198.2.6 2008/02/11 23:26:43 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/aclparse.c,v 1.198.2.11 2009/07/27 20:19:18 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -528,7 +530,7 @@ parse_acl(
 					if ( style != NULL ) {
 						if ( strcasecmp( style, "regex" ) == 0 ) {
 							int e = regcomp( &a->acl_attrval_re, bv.bv_val,
-								REG_EXTENDED | REG_ICASE | REG_NOSUB );
+								REG_EXTENDED | REG_ICASE );
 							if ( e ) {
 								char	err[SLAP_TEXT_BUFLEN],
 									buf[ SLAP_TEXT_BUFLEN ];
@@ -851,16 +853,6 @@ parse_acl(
 					}
 				}
 
-				/* expand in <who> needs regex in <what> */
-				if ( ( sty == ACL_STYLE_EXPAND || expand )
-						&& a->acl_dn_style != ACL_STYLE_REGEX )
-				{
-					Debug( LDAP_DEBUG_CONFIG | LDAP_DEBUG_ACL, "%s: line %d: \"expand\" style "
-						"or modifier used in conjunction with a non-regex <what> clause.\n",
-						fname, lineno, 0 );
-						goto fail;
-				}
-
 				if ( strncasecmp( left, "real", STRLENOF( "real" ) ) == 0 ) {
 					is_realdn = 1;
 					bdn = &b->a_realdn;
@@ -1004,7 +996,8 @@ parse_acl(
 								< bdn->a_pat.bv_len;
 							exp = strchr( exp, '$' ) )
 						{
-							if ( isdigit( (unsigned char) exp[ 1 ] ) ) {
+							if ( ( isdigit( (unsigned char) exp[ 1 ] ) ||
+								    exp[ 1 ] == '{' ) ) {
 								gotit = 1;
 								break;
 							}
@@ -2449,19 +2442,12 @@ acl_free( AccessControl *a )
 	free( a );
 }
 
-/* Because backend_startup uses acl_append to tack on the global_acl to
- * the end of each backend's acl, we cannot just take one argument and
- * merrily free our way to the end of the list. backend_destroy calls us
- * with the be_acl in arg1, and global_acl in arg2 to give us a stopping
- * point. config_destroy calls us with global_acl in arg1 and NULL in
- * arg2, so we then proceed to polish off the global_acl.
- */
 void
-acl_destroy( AccessControl *a, AccessControl *end )
+acl_destroy( AccessControl *a )
 {
 	AccessControl *n;
 
-	for ( ; a && a != end; a = n ) {
+	for ( ; a; a = n ) {
 		n = a->acl_next;
 		acl_free( a );
 	}
@@ -2790,7 +2776,7 @@ acl_unparse( AccessControl *a, struct berval *bv )
 		for ( an = a->acl_attrs; an && !BER_BVISNULL( &an->an_name ); an++ ) {
 			if ( ! first ) *ptr++ = ',';
 			if (an->an_oc) {
-				*ptr++ = an->an_oc_exclude ? '!' : '@';
+				*ptr++ = ( an->an_flags & SLAP_AN_OCEXCLUDE ) ? '!' : '@';
 				ptr = lutil_strcopy( ptr, an->an_oc->soc_cname.bv_val );
 
 			} else {

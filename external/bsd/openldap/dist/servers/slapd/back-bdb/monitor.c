@@ -1,8 +1,10 @@
+/*	$NetBSD: monitor.c,v 1.1.1.3 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* monitor.c - monitor bdb backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/monitor.c,v 1.19.2.9 2008/05/26 18:57:01 ando Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/monitor.c,v 1.19.2.14 2009/10/30 18:07:18 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -158,17 +160,17 @@ bdb_monitor_update(
 	a = attr_find( e->e_attrs, ad_olmBDBEntryCache );
 	assert( a != NULL );
 	bv.bv_val = buf;
-	bv.bv_len = snprintf( buf, sizeof( buf ), "%d", bdb->bi_cache.c_cursize );
+	bv.bv_len = snprintf( buf, sizeof( buf ), "%lu", bdb->bi_cache.c_cursize );
 	ber_bvreplace( &a->a_vals[ 0 ], &bv );
 
 	a = attr_find( e->e_attrs, ad_olmBDBDNCache );
 	assert( a != NULL );
-	bv.bv_len = snprintf( buf, sizeof( buf ), "%d", bdb->bi_cache.c_eiused );
+	bv.bv_len = snprintf( buf, sizeof( buf ), "%lu", bdb->bi_cache.c_eiused );
 	ber_bvreplace( &a->a_vals[ 0 ], &bv );
 
 	a = attr_find( e->e_attrs, ad_olmBDBIDLCache );
 	assert( a != NULL );
-	bv.bv_len = snprintf( buf, sizeof( buf ), "%d", bdb->bi_idl_cache_size );
+	bv.bv_len = snprintf( buf, sizeof( buf ), "%lu", bdb->bi_idl_cache_size );
 	ber_bvreplace( &a->a_vals[ 0 ], &bv );
 	
 #ifdef BDB_MONITOR_IDX
@@ -280,8 +282,9 @@ bdb_monitor_initialize( void )
 			Debug( LDAP_DEBUG_ANY, LDAP_XSTRING(bdb_monitor_initialize)
 				": register_at failed\n",
 				0, 0, 0 );
+		} else {
+			(*s_at[ i ].ad)->ad_type->sat_flags |= SLAP_AT_HIDE;
 		}
-		(*s_at[ i ].ad)->ad_type->sat_flags |= SLAP_AT_HIDE;
 	}
 
 	for ( i = 0; s_oc[ i ].desc != NULL; i++ ) {
@@ -290,8 +293,9 @@ bdb_monitor_initialize( void )
 			Debug( LDAP_DEBUG_ANY, LDAP_XSTRING(bdb_monitor_initialize)
 				": register_oc failed\n",
 				0, 0, 0 );
+		} else {
+			(*s_oc[ i ].oc)->soc_flags |= SLAP_OC_HIDE;
 		}
-		(*s_oc[ i ].oc)->soc_flags |= SLAP_OC_HIDE;
 	}
 
 	return 0;
@@ -304,10 +308,6 @@ int
 bdb_monitor_db_init( BackendDB *be )
 {
 	struct bdb_info		*bdb = (struct bdb_info *) be->be_private;
-
-	if ( SLAP_GLUE_SUBORDINATE( be ) ) {
-		return 0;
-	}
 
 	if ( bdb_monitor_initialize() == LDAP_SUCCESS ) {
 		/* monitoring in back-bdb is on by default */
@@ -337,10 +337,6 @@ bdb_monitor_db_open( BackendDB *be )
 	struct berval dummy = BER_BVC("");
 
 	if ( !SLAP_DBMONITORING( be ) ) {
-		return 0;
-	}
-
-	if ( SLAP_GLUE_SUBORDINATE( be ) ) {
 		return 0;
 	}
 
@@ -491,10 +487,6 @@ bdb_monitor_db_close( BackendDB *be )
 {
 	struct bdb_info		*bdb = (struct bdb_info *) be->be_private;
 
-	if ( SLAP_GLUE_SUBORDINATE( be ) ) {
-		return 0;
-	}
-
 	if ( !BER_BVISNULL( &bdb->bi_monitor.bdm_ndn ) ) {
 		BackendInfo		*mi = backend_info( "monitor" );
 		monitor_extra_t		*mbe;
@@ -518,18 +510,12 @@ bdb_monitor_db_close( BackendDB *be )
 int
 bdb_monitor_db_destroy( BackendDB *be )
 {
-	if ( SLAP_GLUE_SUBORDINATE( be ) ) {
-		return 0;
-	}
-
 #ifdef BDB_MONITOR_IDX
-	{
-		struct bdb_info		*bdb = (struct bdb_info *) be->be_private;
+	struct bdb_info		*bdb = (struct bdb_info *) be->be_private;
 
-		/* TODO: free tree */
-		ldap_pvt_thread_mutex_destroy( &bdb->bi_idx_mutex );
-		avl_free( bdb->bi_idx, ch_free );
-	}
+	/* TODO: free tree */
+	ldap_pvt_thread_mutex_destroy( &bdb->bi_idx_mutex );
+	avl_free( bdb->bi_idx, ch_free );
 #endif /* BDB_MONITOR_IDX */
 
 	return 0;
@@ -551,9 +537,9 @@ bdb_monitor_bitmask2key( slap_mask_t bitmask )
 {
 	int	key;
 
-	for ( key = 0; key < 8*sizeof(slap_mask_t) && !( bitmask & 0x1U ); key++ ) {
+	for ( key = 0; key < 8 * (int)sizeof(slap_mask_t) && !( bitmask & 0x1U );
+			key++ )
 		bitmask >>= 1;
-	}
 
 	return key;
 }

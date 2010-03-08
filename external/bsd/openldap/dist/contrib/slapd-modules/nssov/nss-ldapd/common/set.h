@@ -1,3 +1,5 @@
+/*	$NetBSD: set.h,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    set.h - set functions
    This file is part of the nss-ldapd library.

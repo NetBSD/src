@@ -1,8 +1,10 @@
+/*	$NetBSD: referral.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* referral.c - BDB backend referral handler */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/referral.c,v 1.42.2.6 2008/04/16 16:41:17 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/referral.c,v 1.42.2.8 2009/01/22 00:01:05 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +30,7 @@ bdb_referrals( Operation *op, SlapReply *rs )
 	EntryInfo *ei;
 	int rc = LDAP_SUCCESS;
 
-	BDB_LOCKER	locker;
+	DB_TXN		*rtxn;
 	DB_LOCK		lock;
 
 	if( op->o_tag == LDAP_REQ_SEARCH ) {
@@ -41,7 +43,7 @@ bdb_referrals( Operation *op, SlapReply *rs )
 		return rc;
 	} 
 
-	rc = LOCK_ID(bdb->bi_dbenv, &locker);
+	rc = bdb_reader_get(op, bdb->bi_dbenv, &rtxn);
 	switch(rc) {
 	case 0:
 		break;
@@ -51,7 +53,7 @@ bdb_referrals( Operation *op, SlapReply *rs )
 
 dn2entry_retry:
 	/* get entry */
-	rc = bdb_dn2entry( op, NULL, &op->o_req_ndn, &ei, 1, locker, &lock );
+	rc = bdb_dn2entry( op, rtxn, &op->o_req_ndn, &ei, 1, &lock );
 
 	/* bdb_dn2entry() may legally leave ei == NULL
 	 * if rc != 0 and rc != DB_NOTFOUND
@@ -65,7 +67,6 @@ dn2entry_retry:
 	case 0:
 		break;
 	case LDAP_BUSY:
-		LOCK_ID_FREE ( bdb->bi_dbenv, locker );
 		rs->sr_text = "ldap server busy";
 		return LDAP_BUSY;
 	case DB_LOCK_DEADLOCK:
@@ -76,7 +77,6 @@ dn2entry_retry:
 			LDAP_XSTRING(bdb_referrals)
 			": dn2entry failed: %s (%d)\n",
 			db_strerror(rc), rc, 0 ); 
-		LOCK_ID_FREE ( bdb->bi_dbenv, locker );
 		rs->sr_text = "internal error";
 		return LDAP_OTHER;
 	}
@@ -116,7 +116,6 @@ dn2entry_retry:
 			rs->sr_text = rs->sr_matched ? "bad referral object" : NULL;
 		}
 
-		LOCK_ID_FREE ( bdb->bi_dbenv, locker );
 		if (rs->sr_matched) {
 			op->o_tmpfree( (char *)rs->sr_matched, op->o_tmpmemctx );
 			rs->sr_matched = NULL;
@@ -151,6 +150,5 @@ dn2entry_retry:
 	}
 
 	bdb_cache_return_entry_r(bdb, e, &lock);
-	LOCK_ID_FREE ( bdb->bi_dbenv, locker );
 	return rc;
 }

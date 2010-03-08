@@ -1,7 +1,12 @@
+/*	$NetBSD: autogroup.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+
 /* autogroup.c - automatic group overlay */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/autogroup/autogroup.c,v 1.2.2.1 2008/02/08 23:00:43 quanah Exp $ */
-/*
- * Copyright 2007 Michał Szulczyński.
+/* OpenLDAP: pkg/ldap/contrib/slapd-modules/autogroup/autogroup.c,v 1.2.2.5 2009/09/29 21:52:13 quanah Exp */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 2007-2009 The OpenLDAP Foundation.
+ * Portions Copyright 2007 Michał Szulczyński.
+ * Portions Copyright 2009 Howard Chu.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -11,6 +16,11 @@
  * A copy of this license is available in the file LICENSE in the
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
+ */
+/* ACKNOWLEDGEMENTS:
+ * This work was initially developed by Michał Szulczyński for inclusion in
+ * OpenLDAP Software.  Additional significant contributors include:
+ *   Howard Chu
  */
 
 #include "portable.h"
@@ -238,20 +248,13 @@ autogroup_member_search_cb( Operation *op, SlapReply *rs )
 static int
 autogroup_member_search_modify_cb( Operation *op, SlapReply *rs )
 {
-	slap_overinst		*on = (slap_overinst *)op->o_bd->bd_info;
-
 	assert( op->o_tag == LDAP_REQ_SEARCH );
 
 	if ( rs->sr_type == REP_SEARCH ) {
 		autogroup_ga_t		*agg = (autogroup_ga_t *)op->o_callback->sc_private;
 		autogroup_entry_t	*age = agg->agg_group;
-		Operation		o = *op;
 		Modifications		*modlist;
-		SlapReply		sreply = {REP_RESULT};
-		const char		*text = NULL;
-		char			textbuf[1024];
 		struct berval		vals[ 2 ], nvals[ 2 ];
-		slap_callback		cb = { NULL, slap_null_cb, NULL, NULL };
 
 		Debug(LDAP_DEBUG_TRACE, "==> autogroup_member_search_modify_cb <%s>\n",
 			rs->sr_entry ? rs->sr_entry->e_name.bv_val : "UNKNOWN_DN", 0, 0);
@@ -508,10 +511,7 @@ cleanup:;
 static int
 autogroup_group_add_cb( Operation *op, SlapReply *rs )
 {
-	slap_overinst		*on = (slap_overinst *)op->o_bd->bd_info;
-
 	assert( op->o_tag == LDAP_REQ_SEARCH );
-
 
 	if ( rs->sr_type == REP_SEARCH ) {
 		autogroup_sc_t		*ags = (autogroup_sc_t *)op->o_callback->sc_private;
@@ -538,7 +538,6 @@ autogroup_add_entry( Operation *op, SlapReply *rs)
 	autogroup_def_t		*agd = agi->agi_def;
 	autogroup_entry_t	*age = agi->agi_entry;
 	autogroup_filter_t	*agf;
-	Attribute		*a;
 	int			rc = 0;
 
 	Debug( LDAP_DEBUG_TRACE, "==> autogroup_add_entry <%s>\n", 
@@ -652,7 +651,6 @@ autogroup_delete_entry( Operation *op, SlapReply *rs)
 {
 	slap_overinst		*on = (slap_overinst *)op->o_bd->bd_info;
 	autogroup_info_t		*agi = (autogroup_info_t *)on->on_bi.bi_private;
-	autogroup_def_t		*agd = agi->agi_def;
 	autogroup_entry_t	*age = agi->agi_entry,
 				*age_prev, *age_next;
 	autogroup_filter_t	*agf;
@@ -683,9 +681,6 @@ autogroup_delete_entry( Operation *op, SlapReply *rs)
 			dnMatch( &match, 0, NULL, NULL, &e->e_nname, &age->age_ndn );
 
 			if ( match == 0 ) {
-				autogroup_filter_t	*agf = age->age_filter,
-							*agf_next;
-
 				autogroup_delete_group( agi, age );
 				break;
 			}
@@ -1266,7 +1261,6 @@ ag_cfgen( ConfigArgs *c )
 			autogroup_entry_t	*age_next, *age_prev;
 			autogroup_filter_t	*agf,
 						*agf_next;
-			struct berval		*bv;
 
 			ldap_pvt_thread_mutex_lock( &agi->agi_mutex );
 
@@ -1446,8 +1440,7 @@ autogroup_db_open(
 	BackendDB	*be,
 	ConfigReply	*cr )
 {
-	slap_overinst			*on = (slap_overinst *) be->bd_info,
-				*on_bd;
+	slap_overinst			*on = (slap_overinst *) be->bd_info;
 	autogroup_info_t		*agi = on->on_bi.bi_private;
 	autogroup_def_t		*agd;
 	autogroup_sc_t		ags;
@@ -1458,11 +1451,12 @@ autogroup_db_open(
 	void				*thrctx = ldap_pvt_thread_pool_context();
 	Connection			conn = { 0 };
 	OperationBuffer 	opbuf;
-	BerValue		bv;
-	char			*ptr;
-	int			rc = 0;
 
 	Debug( LDAP_DEBUG_TRACE, "==> autogroup_db_open\n", 0, 0, 0);
+
+	if ( agi == NULL ) {
+		return 0;
+	}
 
 	connection_fake_init( &conn, &opbuf, thrctx );
 	op = &opbuf.ob_op;
@@ -1482,31 +1476,28 @@ autogroup_db_open(
 	op->ors_slimit = SLAP_NO_LIMIT;
 	op->ors_attrs =  slap_anlist_no_attrs;
 
-	op->o_bd = select_backend(&op->o_req_ndn, 0);
+	op->o_bd = be;
+	op->o_bd->bd_info = (BackendInfo *)on->on_info;
 
-	ldap_pvt_thread_mutex_lock( &agi->agi_mutex );
+	ags.ags_info = agi;
+	cb.sc_private = &ags;
+	cb.sc_response = autogroup_group_add_cb;
+	cb.sc_cleanup = NULL;
+	cb.sc_next = NULL;
+
+	op->o_callback = &cb;
+
 	for (agd = agi->agi_def ; agd ; agd = agd->agd_next) {
 
 		autogroup_build_def_filter(agd, op);
 
-
-		ags.ags_info = agi;
 		ags.ags_def = agd;
-		cb.sc_private = &ags;
-		cb.sc_response = autogroup_group_add_cb;
-		cb.sc_cleanup = NULL;
-		cb.sc_next = NULL;
 
-		op->o_callback = &cb;
-
-		op->o_bd->bd_info = (BackendInfo *)on->on_info;
 		op->o_bd->be_search( op, &rs );
-		op->o_bd->bd_info = (BackendInfo *)on;
 
-		filter_free_x( op, op->ors_filter );
+		filter_free_x( op, op->ors_filter, 1 );
 		op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
 	}		
-	ldap_pvt_thread_mutex_unlock( &agi->agi_mutex );
 
 	return 0;
 }

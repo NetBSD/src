@@ -1,8 +1,10 @@
+/*	$NetBSD: back-relay.h,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+
 /* back-relay.h - relay backend header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-relay/back-relay.h,v 1.6.2.3 2008/02/12 01:03:16 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-relay/back-relay.h,v 1.6.2.6 2009/10/31 00:15:21 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2008 The OpenLDAP Foundation.
+ * Copyright 2004-2009 The OpenLDAP Foundation.
  * Portions Copyright 2004 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -24,15 +26,25 @@
 
 #include "proto-back-relay.h"
 
-/* String rewrite library */
-
 LDAP_BEGIN_DECL
+
+typedef enum relay_operation_e {
+	relay_op_entry_get = op_last,
+	relay_op_entry_release,
+	relay_op_has_subordinates,
+	relay_op_last
+} relay_operation_t;
 
 typedef struct relay_back_info {
 	BackendDB	*ri_bd;
 	struct berval	ri_realsuffix;
 	int		ri_massage;
 } relay_back_info;
+
+/* Pad relay_back_info if needed to create valid OpExtra key addresses */
+#define	RELAY_INFO_SIZE \
+	(sizeof(relay_back_info) > (size_t) relay_op_last ? \
+	 sizeof(relay_back_info) : (size_t) relay_op_last   )
 
 LDAP_END_DECL
 

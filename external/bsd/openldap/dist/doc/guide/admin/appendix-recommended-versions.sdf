@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/admin/appendix-recommended-versions.sdf,v 1.3.2.3 2008/02/11 23:26:39 kurt Exp $
-# Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
+# OpenLDAP: pkg/openldap-guide/admin/appendix-recommended-versions.sdf,v 1.3.2.6 2009/01/22 00:00:47 kurt Exp
+# Copyright 1999-2009 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Recommended OpenLDAP Software Dependency Versions
@@ -22,11 +22,11 @@ Feature|Software|Version
 |{{PRD:Heimdal}}|Version
 |{{PRD:MIT Kerberos}}|Version
 Database Software|{{PRD:Berkeley DB}}:|
-||4.2
 ||4.4
 ||4.5
 ||4.6
-||Note: It is highly recommended to apply the patches from for a given release.
+||4.7
+||Note: It is highly recommended to apply the patches from Oracle for a given release.
 Threads:
 |POSIX {{pthreads}}|Version
 |Mach {{CThreads}}|Version

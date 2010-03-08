@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapadd.c,v 1.36.2.7 2008/04/14 21:15:47 quanah Exp $ */
+/*	$NetBSD: slapadd.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/slapadd.c,v 1.36.2.15 2009/11/18 01:16:17 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -35,6 +37,8 @@
 #include <lber.h>
 #include <ldif.h>
 #include <lutil.h>
+#include <lutil_meter.h>
+#include <sys/stat.h>
 
 #include "slapcommon.h"
 
@@ -62,14 +66,19 @@ slapadd( int argc, char **argv )
 
 	int match;
 	int checkvals;
-	int lineno, nextline;
+	int lineno, nextline, ldifrc;
 	int lmax;
 	int rc = EXIT_SUCCESS;
 	int manage = 0;	
 
+	int enable_meter = 0;
+	lutil_meter_t meter;
+	struct stat stat_buf;
+
 	/* default "000" */
 	csnsid = 0;
 
+	if ( isatty (2) ) enable_meter = 1;
 	slap_tool_init( progname, SLAPADD, argc, argv );
 
 	memset( &opbuf, 0, sizeof(opbuf) );
@@ -118,15 +127,38 @@ slapadd( int argc, char **argv )
 		}
 	}
 
+	if ( enable_meter 
+#ifdef LDAP_DEBUG
+		/* tools default to "none" */
+		&& slap_debug == LDAP_DEBUG_NONE
+#endif
+		&& !fstat ( fileno ( ldiffp->fp ), &stat_buf )
+		&& S_ISREG(stat_buf.st_mode) ) {
+		enable_meter = !lutil_meter_open(
+			&meter,
+			&lutil_meter_text_display,
+			&lutil_meter_linear_estimator,
+			stat_buf.st_size);
+	} else {
+		enable_meter = 0;
+	}
+
 	/* nextline is the line number of the end of the current entry */
-	for( lineno=1; ldif_read_record( ldiffp, &nextline, &buf, &lmax );
-		lineno=nextline+1 ) {
+	for( lineno=1; ( ldifrc = ldif_read_record( ldiffp, &nextline, &buf, &lmax )) > 0;
+		lineno=nextline+1 )
+	{
+		BackendDB *bd;
 		Entry *e;
 
 		if ( lineno < jumpline )
 			continue;
 
 		e = str2entry2( buf, checkvals );
+
+		if ( enable_meter )
+			lutil_meter_update( &meter,
+					 ftell( ldiffp->fp ),
+					 0);
 
 		/*
 		 * Initialize text buffer
@@ -145,9 +177,28 @@ slapadd( int argc, char **argv )
 
 		/* make sure the DN is not empty */
 		if( BER_BVISEMPTY( &e->e_nname ) &&
-			!BER_BVISEMPTY( be->be_nsuffix )) {
-			fprintf( stderr, "%s: empty dn=\"%s\" (line=%d)\n",
-				progname, e->e_dn, lineno );
+			!BER_BVISEMPTY( be->be_nsuffix ))
+		{
+			fprintf( stderr, "%s: line %d: "
+				"cannot add entry with empty dn=\"%s\"",
+				progname, lineno, e->e_dn );
+			bd = select_backend( &e->e_nname, nosubordinates );
+			if ( bd ) {
+				BackendDB *bdtmp;
+				int dbidx = 0;
+				LDAP_STAILQ_FOREACH( bdtmp, &backendDB, be_next ) {
+					if ( bdtmp == bd ) break;
+					dbidx++;
+				}
+
+				assert( bdtmp != NULL );
+				
+				fprintf( stderr, "; did you mean to use database #%d (%s)?",
+					dbidx,
+					bd->be_suffix[0].bv_val );
+
+			}
+			fprintf( stderr, "\n" );
 			rc = EXIT_FAILURE;
 			entry_free( e );
 			if( continuemode ) continue;
@@ -155,19 +206,32 @@ slapadd( int argc, char **argv )
 		}
 
 		/* check backend */
-		if( select_backend( &e->e_nname, nosubordinates )
-			!= be )
-		{
+		bd = select_backend( &e->e_nname, nosubordinates );
+		if ( bd != be ) {
 			fprintf( stderr, "%s: line %d: "
-				"database (%s) not configured to hold \"%s\"\n",
+				"database #%d (%s) not configured to hold \"%s\"",
 				progname, lineno,
-				be ? be->be_suffix[0].bv_val : "<none>",
+				dbnum,
+				be->be_suffix[0].bv_val,
 				e->e_dn );
-			fprintf( stderr, "%s: line %d: "
-				"database (%s) not configured to hold \"%s\"\n",
-				progname, lineno,
-				be ? be->be_nsuffix[0].bv_val : "<none>",
-				e->e_ndn );
+			if ( bd ) {
+				BackendDB *bdtmp;
+				int dbidx = 0;
+				LDAP_STAILQ_FOREACH( bdtmp, &backendDB, be_next ) {
+					if ( bdtmp == bd ) break;
+					dbidx++;
+				}
+
+				assert( bdtmp != NULL );
+				
+				fprintf( stderr, "; did you mean to use database #%d (%s)?",
+					dbidx,
+					bd->be_suffix[0].bv_val );
+
+			} else {
+				fprintf( stderr, "; no database configured for that naming context" );
+			}
+			fprintf( stderr, "\n" );
 			rc = EXIT_FAILURE;
 			entry_free( e );
 			if( continuemode ) continue;
@@ -192,7 +256,7 @@ slapadd( int argc, char **argv )
 			op->o_bd = be;
 
 			if ( (slapMode & SLAP_TOOL_NO_SCHEMA_CHECK) == 0) {
-				rc = entry_schema_check( op, e, NULL, manage, 1,
+				rc = entry_schema_check( op, e, NULL, manage, 1, NULL,
 					&text, textbuf, textlen );
 
 				if( rc != LDAP_SUCCESS ) {
@@ -217,6 +281,13 @@ slapadd( int argc, char **argv )
 			struct berval nvals[ 2 ];
 			struct berval nname;
 			char timebuf[ LDAP_LUTIL_GENTIME_BUFSIZE ];
+
+			enum {
+				GOT_NONE = 0x0,
+				GOT_CSN = 0x1,
+				GOT_UUID = 0x2,
+				GOT_ALL = (GOT_CSN|GOT_UUID)
+			} got = GOT_ALL;
 
 			vals[1].bv_len = 0;
 			vals[1].bv_val = NULL;
@@ -243,6 +314,7 @@ slapadd( int argc, char **argv )
 			if( attr_find( e->e_attrs, slap_schema.si_ad_entryUUID )
 				== NULL )
 			{
+				got &= ~GOT_UUID;
 				vals[0].bv_len = lutil_uuidstr( uuidbuf, sizeof( uuidbuf ) );
 				vals[0].bv_val = uuidbuf;
 				attr_merge_normalize_one( e, slap_schema.si_ad_entryUUID, vals, NULL );
@@ -266,6 +338,7 @@ slapadd( int argc, char **argv )
 			if( attr_find( e->e_attrs, slap_schema.si_ad_entryCSN )
 				== NULL )
 			{
+				got &= ~GOT_CSN;
 				vals[0] = csn;
 				attr_merge( e, slap_schema.si_ad_entryCSN, vals, NULL );
 			}
@@ -285,6 +358,19 @@ slapadd( int argc, char **argv )
 				attr_merge( e, slap_schema.si_ad_modifyTimestamp, vals, NULL );
 			}
 
+			if ( SLAP_SINGLE_SHADOW(be) && got != GOT_ALL ) {
+				char buf[SLAP_TEXT_BUFLEN];
+
+				snprintf( buf, sizeof(buf),
+					"%s%s%s",
+					( !(got & GOT_UUID) ? slap_schema.si_ad_entryUUID->ad_cname.bv_val : "" ),
+					( !(got & GOT_CSN) ? "," : "" ),
+					( !(got & GOT_CSN) ? slap_schema.si_ad_entryCSN->ad_cname.bv_val : "" ) );
+
+				Debug( LDAP_DEBUG_ANY, "%s: warning, missing attrs %s from entry dn=\"%s\"\n",
+					progname, buf, e->e_name.bv_val );
+			}
+
 			if ( update_ctxcsn ) {
 				int rc_sid;
 
@@ -294,8 +380,8 @@ slapadd( int argc, char **argv )
 				rc_sid = slap_parse_csn_sid( &attr->a_nvals[ 0 ] );
 				if ( rc_sid < 0 ) {
 					Debug( LDAP_DEBUG_ANY, "%s: could not "
-						"extract SID from entryCSN=%s\n",
-						progname, attr->a_nvals[ 0 ].bv_val, 0 );
+						"extract SID from entryCSN=%s, entry dn=\"%s\"\n",
+						progname, attr->a_nvals[ 0 ].bv_val, e->e_name.bv_val );
 
 				} else {
 					assert( rc_sid <= SLAP_SYNC_SID_MAX );
@@ -341,15 +427,45 @@ slapadd( int argc, char **argv )
 		entry_free( e );
 	}
 
+	if ( ldifrc < 0 )
+		rc = EXIT_FAILURE;
+
 	bvtext.bv_len = textlen;
 	bvtext.bv_val = textbuf;
 	bvtext.bv_val[0] = '\0';
 
+	if ( enable_meter ) {
+		lutil_meter_update( &meter, ftell( ldiffp->fp ), 1);
+		lutil_meter_close( &meter );
+	}
+
 	if ( rc == EXIT_SUCCESS && update_ctxcsn && !dryrun && sid != SLAP_SYNC_SID_MAX + 1 ) {
-		ctxcsn_id = be->be_dn2id_get( be, be->be_nsuffix );
+		struct berval ctxdn;
+		if ( SLAP_SYNC_SUBENTRY( be )) {
+			build_new_dn( &ctxdn, &be->be_nsuffix[0],
+				(struct berval *)&slap_ldapsync_cn_bv, NULL );
+		} else {
+			ctxdn = be->be_nsuffix[0];
+		}
+		ctxcsn_id = be->be_dn2id_get( be, &ctxdn );
 		if ( ctxcsn_id == NOID ) {
-			fprintf( stderr, "%s: context entry is missing\n", progname );
-			rc = EXIT_FAILURE;
+			if ( SLAP_SYNC_SUBENTRY( be )) {
+				ctxcsn_e = slap_create_context_csn_entry( be, NULL );
+				for ( sid = 0; sid <= SLAP_SYNC_SID_MAX; sid++ ) {
+					if ( maxcsn[ sid ].bv_len ) {
+						attr_merge_one( ctxcsn_e, slap_schema.si_ad_contextCSN,
+							&maxcsn[ sid ], NULL );
+					}
+				}
+				ctxcsn_id = be->be_entry_put( be, ctxcsn_e, &bvtext );
+				if ( ctxcsn_id == NOID ) {
+					fprintf( stderr, "%s: couldn't create context entry\n", progname );
+					rc = EXIT_FAILURE;
+				}
+			} else {
+				fprintf( stderr, "%s: context entry is missing\n", progname );
+				rc = EXIT_FAILURE;
+			}
 		} else {
 			ctxcsn_e = be->be_entry_get( be, ctxcsn_id );
 			if ( ctxcsn_e != NULL ) {
@@ -438,6 +554,9 @@ slapadd( int argc, char **argv )
 	ch_free( buf );
 
 	if ( !dryrun ) {
+		if ( enable_meter ) {
+			fprintf( stderr, "Closing DB..." );
+		}
 		if( be->be_entry_close( be ) ) {
 			rc = EXIT_FAILURE;
 		}
@@ -445,9 +564,13 @@ slapadd( int argc, char **argv )
 		if( be->be_sync ) {
 			be->be_sync( be );
 		}
+		if ( enable_meter ) {
+			fprintf( stderr, "\n" );
+		}
 	}
 
-	slap_tool_destroy();
+	if ( slap_tool_destroy())
+		rc = EXIT_FAILURE;
 
 	return rc;
 }

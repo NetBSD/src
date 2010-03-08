@@ -1,8 +1,10 @@
+/*	$NetBSD: schemaparse.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* schemaparse.c - routines to parse config file objectclass definitions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schemaparse.c,v 1.80.2.4 2008/02/11 23:26:44 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/schemaparse.c,v 1.80.2.7 2009/01/22 00:01:03 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,6 +52,8 @@ static char *const err2text[] = {
 	"Syntax not found",
 	"Duplicate ldapSyntax",
 	"Superior syntax not found",
+	"Substitute syntax not specified",
+	"Substitute syntax not found",
 	"OID or name required",
 	"Qualifier not supported",
 	"Invalid NAME",
@@ -331,3 +335,68 @@ done:;
 
 	return code;
 }
+
+static void
+syn_usage( void )
+{
+	fprintf( stderr, "%s",
+		"SyntaxDescription = \"(\" whsp\n"
+		"  numericoid whsp                  ; object identifier\n"
+		"  [ whsp \"DESC\" whsp qdstring ]  ; description\n"
+		"  extensions whsp \")\"            ; extensions\n"
+		"  whsp \")\"\n");
+}
+
+int
+parse_syn(
+	struct config_args_s *c,
+	Syntax **ssyn,
+	Syntax *prev )
+{
+	LDAPSyntax		*syn;
+	slap_syntax_defs_rec	def = { 0 };
+	int			code;
+	const char		*err;
+	char			*line = strchr( c->line, '(' );
+
+	syn = ldap_str2syntax( line, &code, &err, LDAP_SCHEMA_ALLOW_ALL );
+	if ( !syn ) {
+		snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: %s before %s",
+			c->argv[0], ldap_scherr2str(code), err );
+		Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
+			"%s %s\n", c->log, c->cr_msg, 0 );
+		syn_usage();
+		return 1;
+	}
+
+	if ( syn->syn_oid == NULL ) {
+		snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: OID is missing",
+			c->argv[0] );
+		Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
+			"%s %s\n", c->log, c->cr_msg, 0 );
+		syn_usage();
+		code = 1;
+		goto done;
+	}
+
+	code = syn_add( syn, 1, &def, ssyn, prev, &err );
+	if ( code ) {
+		snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: %s: \"%s\"",
+			c->argv[0], scherr2str(code), err);
+		Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
+			"%s %s\n", c->log, c->cr_msg, 0 );
+		code = 1;
+		goto done;
+	}
+
+done:;
+	if ( code ) {
+		ldap_syntax_free( syn );
+
+	} else {
+		ldap_memfree( syn );
+	}
+
+	return code;
+}
+

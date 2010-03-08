@@ -1,3 +1,5 @@
+/*	$NetBSD: prototypes.h,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+
 /*
    prototypes.h - all functions exported by the NSS library
 

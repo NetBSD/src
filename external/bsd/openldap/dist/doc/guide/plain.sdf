@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/plain.sdf,v 1.11.2.4 2008/02/13 06:40:32 kurt Exp $
-# Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
+# OpenLDAP: pkg/openldap-guide/plain.sdf,v 1.11.2.5 2009/01/22 00:00:46 kurt Exp
+# Copyright 1999-2009 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 # template for plain documents

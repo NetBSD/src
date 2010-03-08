@@ -1,11 +1,11 @@
 .TH LDAP 3 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man3/ldap.3,v 1.40.2.4 2008/02/11 23:26:39 kurt Exp $
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" OpenLDAP: pkg/ldap/doc/man/man3/ldap.3,v 1.40.2.6 2009/06/03 01:41:52 quanah Exp
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap \- OpenLDAP Lightweight Directory Access Protocol API
 .SH LIBRARY
-OpenLDAP LDAP (libldap, -lldap)
+OpenLDAP LDAP (libldap, \-lldap)
 .SH SYNOPSIS
 .nf
 .ft B
@@ -77,15 +77,15 @@ should use
 to select version 3.  The library manual pages assume version 3
 has been selected.
 .SH INPUT and OUTPUT PARAMETERS
-All character string input/output is expected to be/is UTF\-8
+All character string input/output is expected to be/is UTF-8
 encoded Unicode (version 3.2). 
 .LP
 Distinguished names (DN) (and relative distinguished names (RDN) to
-be passed to the LDAP routines should conform to RFC 4514 UTF\-8
+be passed to the LDAP routines should conform to RFC 4514 UTF-8
 string representation. 
 .LP
 Search filters to be passed to the search routines are to be
-constructed by hand and should conform to RFC 4515 UTF\-8
+constructed by hand and should conform to RFC 4515 UTF-8
 string representation.
 .LP
 LDAP URLs to be passed to routines are expected to conform

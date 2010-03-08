@@ -1,6 +1,9 @@
+/*	$NetBSD: pagectrl.c,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/libraries/libldap/pagectrl.c,v 1.5.2.6 2009/01/22 00:00:55 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * Copyright 2006 Hans Leidekker
  * All rights reserved.
  *
@@ -71,6 +74,7 @@ ldap_create_page_control_value(
 
 	value->bv_val = NULL;
 	value->bv_len = 0;
+	ld->ld_errno = LDAP_SUCCESS;
 
 	if ( cookie == NULL ) {
 		cookie = &null_cookie;

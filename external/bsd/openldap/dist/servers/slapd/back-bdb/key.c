@@ -1,8 +1,10 @@
+/*	$NetBSD: key.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+
 /* index.c - routines for dealing with attribute indexes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/key.c,v 1.20.2.3 2008/02/11 23:26:46 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/key.c,v 1.20.2.5 2009/01/22 00:01:05 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +32,7 @@ int
 bdb_key_read(
 	Backend	*be,
 	DB *db,
-	BDB_LOCKER locker,
+	DB_TXN *txn,
 	struct berval *k,
 	ID *ids,
 	DBC **saved_cursor,
@@ -47,7 +49,7 @@ bdb_key_read(
 	key.ulen = key.size;
 	key.flags = DB_DBT_USERMEM;
 
-	rc = bdb_idl_fetch_key( be, db, locker, &key, ids, saved_cursor, get_flag );
+	rc = bdb_idl_fetch_key( be, db, txn, &key, ids, saved_cursor, get_flag );
 
 	if( rc != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE, "<= bdb_index_read: failed (%d)\n",
