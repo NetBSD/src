@@ -1,8 +1,10 @@
+/*	$NetBSD: os-ip.c,v 1.3 2010/03/08 03:47:40 lukem Exp $	*/
+
 /* os-ip.c -- platform-specific TCP & UDP related code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.118.2.8 2008/05/20 00:05:30 quanah Exp $ */
+/* OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.118.2.19 2009/08/14 20:31:32 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * Portions Copyright 1999 Lars Uffmann.
  * All rights reserved.
  *
@@ -142,6 +144,57 @@ ldap_int_prepare_socket(LDAP *ld, int s, int proto )
 				"setsockopt(%d, SO_KEEPALIVE) failed (ignored).\n",
 				s, 0, 0 );
 		}
+		if ( ld->ld_options.ldo_keepalive_idle > 0 )
+		{
+#ifdef TCP_KEEPIDLE
+			if ( setsockopt( s, IPPROTO_TCP, TCP_KEEPIDLE,
+					(void*) &ld->ld_options.ldo_keepalive_idle,
+					sizeof(ld->ld_options.ldo_keepalive_idle) ) == AC_SOCKET_ERROR )
+			{
+				osip_debug( ld, "ldap_prepare_socket: "
+					"setsockopt(%d, TCP_KEEPIDLE) failed (ignored).\n",
+					s, 0, 0 );
+			}
+#else
+			osip_debug( ld, "ldap_prepare_socket: "
+					"sockopt TCP_KEEPIDLE not supported on this system.\n", 
+					0, 0, 0 );
+#endif /* TCP_KEEPIDLE */
+		}
+		if ( ld->ld_options.ldo_keepalive_probes > 0 )
+		{
+#ifdef TCP_KEEPCNT
+			if ( setsockopt( s, IPPROTO_TCP, TCP_KEEPCNT,
+					(void*) &ld->ld_options.ldo_keepalive_probes,
+					sizeof(ld->ld_options.ldo_keepalive_probes) ) == AC_SOCKET_ERROR )
+			{
+				osip_debug( ld, "ldap_prepare_socket: "
+					"setsockopt(%d, TCP_KEEPCNT) failed (ignored).\n",
+					s, 0, 0 );
+			}
+#else
+			osip_debug( ld, "ldap_prepare_socket: "
+					"sockopt TCP_KEEPCNT not supported on this system.\n", 
+					0, 0, 0 );
+#endif /* TCP_KEEPCNT */
+		}
+		if ( ld->ld_options.ldo_keepalive_interval > 0 )
+		{
+#ifdef TCP_KEEPINTVL
+			if ( setsockopt( s, IPPROTO_TCP, TCP_KEEPINTVL,
+					(void*) &ld->ld_options.ldo_keepalive_interval,
+					sizeof(ld->ld_options.ldo_keepalive_interval) ) == AC_SOCKET_ERROR )
+			{
+				osip_debug( ld, "ldap_prepare_socket: "
+					"setsockopt(%d, TCP_KEEPINTVL) failed (ignored).\n",
+					s, 0, 0 );
+			} 
+#else
+			osip_debug( ld, "ldap_prepare_socket: "
+					"sockopt TCP_KEEPINTVL not supported on this system.\n", 
+					0, 0, 0 );
+#endif /* TCP_KEEPINTVL */
+		}
 #endif /* SO_KEEPALIVE */
 #ifdef TCP_NODELAY
 		if ( setsockopt( s, IPPROTO_TCP, TCP_NODELAY,
@@ -207,7 +260,7 @@ ldap_pvt_is_socket_ready(LDAP *ld, int s)
 		== AC_SOCKET_ERROR )
 	{
 		/* XXX: needs to be replace with ber_stream_read() */
-		read(s, &ch, 1);
+		(void)read(s, &ch, 1);
 		TRACE;
 		return -1;
 	}
@@ -424,16 +477,66 @@ ldap_pvt_inet_aton( const char *host, struct in_addr *in)
 }
 #endif
 
+int
+ldap_int_connect_cbs(LDAP *ld, Sockbuf *sb, ber_socket_t *s, LDAPURLDesc *srv, struct sockaddr *addr)
+{
+	struct ldapoptions *lo;
+	ldaplist *ll;
+	ldap_conncb *cb;
+	int rc;
+
+	ber_sockbuf_ctrl( sb, LBER_SB_OPT_SET_FD, s );
+
+	/* Invoke all handle-specific callbacks first */
+	lo = &ld->ld_options;
+	for (ll = lo->ldo_conn_cbs; ll; ll = ll->ll_next) {
+		cb = ll->ll_data;
+		rc = cb->lc_add( ld, sb, srv, addr, cb );
+		/* on any failure, call the teardown functions for anything
+		 * that previously succeeded
+		 */
+		if ( rc ) {
+			ldaplist *l2;
+			for (l2 = lo->ldo_conn_cbs; l2 != ll; l2 = l2->ll_next) {
+				cb = l2->ll_data;
+				cb->lc_del( ld, sb, cb );
+			}
+			/* a failure might have implicitly closed the fd */
+			ber_sockbuf_ctrl( sb, LBER_SB_OPT_GET_FD, s );
+			return rc;
+		}
+	}
+	lo = LDAP_INT_GLOBAL_OPT();
+	for (ll = lo->ldo_conn_cbs; ll; ll = ll->ll_next) {
+		cb = ll->ll_data;
+		rc = cb->lc_add( ld, sb, srv, addr, cb );
+		if ( rc ) {
+			ldaplist *l2;
+			for (l2 = lo->ldo_conn_cbs; l2 != ll; l2 = l2->ll_next) {
+				cb = l2->ll_data;
+				cb->lc_del( ld, sb, cb );
+			}
+			lo = &ld->ld_options;
+			for (l2 = lo->ldo_conn_cbs; l2; l2 = l2->ll_next) {
+				cb = l2->ll_data;
+				cb->lc_del( ld, sb, cb );
+			}
+			ber_sockbuf_ctrl( sb, LBER_SB_OPT_GET_FD, s );
+			return rc;
+		}
+	}
+	return 0;
+}
 
 int
 ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
-	int proto,
-	const char *host, int port,
+	int proto, LDAPURLDesc *srv,
 	int async )
 {
 	int	rc;
-	int	socktype;
+	int	socktype, port;
 	ber_socket_t		s = AC_SOCKET_INVALID;
+	char *host;
 
 #if defined( HAVE_GETADDRINFO ) && defined( HAVE_INET_NTOP )
 	char serv[7];
@@ -448,8 +551,22 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
 	char *ha_buf=NULL;
 #endif
 
-	if( host == NULL ) host = "localhost";
-	
+	if ( srv->lud_host == NULL || *srv->lud_host == 0 ) {
+		host = "localhost";
+	} else {
+		host = srv->lud_host;
+	}
+
+	port = srv->lud_port;
+
+	if( !port ) {
+		if( strcmp(srv->lud_scheme, "ldaps") == 0 ) {
+			port = LDAPS_PORT;
+		} else {
+			port = LDAP_PORT;
+		}
+	}
+
 	switch(proto) {
 	case LDAP_PROTO_TCP: socktype = SOCK_STREAM;
 		osip_debug( ld,
@@ -469,9 +586,9 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
 
 #if defined( HAVE_GETADDRINFO ) && defined( HAVE_INET_NTOP )
 	memset( &hints, '\0', sizeof(hints) );
-#ifdef USE_AI_ATTRCONFIG /* FIXME: configure test needed */
-	/* Use AI_ATTRCONFIG only on systems where its known to be needed. */
-	hints.ai_flags = AI_ATTRCONFIG;
+#ifdef USE_AI_ADDRCONFIG /* FIXME: configure test needed */
+	/* Use AI_ADDRCONFIG only on systems where its known to be needed. */
+	hints.ai_flags = AI_ADDRCONFIG;
 #endif
 	hints.ai_family = ldap_int_inet4or6;
 	hints.ai_socktype = socktype;
@@ -537,8 +654,11 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
 		rc = ldap_pvt_connect( ld, s,
 			sai->ai_addr, sai->ai_addrlen, async );
 		if ( rc == 0 || rc == -2 ) {
-			ber_sockbuf_ctrl( sb, LBER_SB_OPT_SET_FD, &s );
-			break;
+			err = ldap_int_connect_cbs( ld, sb, &s, srv, sai->ai_addr );
+			if ( err )
+				rc = err;
+			else
+				break;
 		}
 		ldap_pvt_close_socket(ld, s);
 	}
@@ -609,8 +729,11 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
 			async);
    
 		if ( (rc == 0) || (rc == -2) ) {
-			ber_sockbuf_ctrl( sb, LBER_SB_OPT_SET_FD, &s );
-			break;
+			i = ldap_int_connect_cbs( ld, sb, &s, srv, (struct sockaddr *)&sin );
+			if ( i )
+				rc = i;
+			else
+				break;
 		}
 
 		ldap_pvt_close_socket(ld, s);
@@ -886,6 +1009,9 @@ ldap_is_read_ready( LDAP *ld, Sockbuf *sb )
 	ber_socket_t		sd;
 
 	sip = (struct selectinfo *)ld->ld_selectinfo;
+
+	if (ber_sockbuf_ctrl( sb, LBER_SB_OPT_DATA_READY, NULL ))
+		return 1;
 
 	ber_sockbuf_ctrl( sb, LBER_SB_OPT_GET_FD, &sd );
 
