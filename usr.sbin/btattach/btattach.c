@@ -1,4 +1,4 @@
-/*	$NetBSD: btattach.c,v 1.6 2010/02/17 09:49:41 plunky Exp $	*/
+/*	$NetBSD: btattach.c,v 1.7 2010/03/08 17:41:11 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008 Iain Hibbert.  All rights reserved.");
-__RCSID("$NetBSD: btattach.c,v 1.6 2010/02/17 09:49:41 plunky Exp $");
+__RCSID("$NetBSD: btattach.c,v 1.7 2010/03/08 17:41:11 kiyohara Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -64,7 +64,7 @@ const struct devtype types[] = {
 	.name = "bcsp",
 	.line = "bcsp",
 	.descr = "Generic BlueCore Serial Protocol",
-	.cflag = CRTSCTS,
+	.cflag = CRTSCTS | PARENB,
 	.speed = B57600,
     },
     {
@@ -150,19 +150,24 @@ main(int argc, char *argv[])
 	const struct devtype *type;
 	struct termios tio;
 	unsigned int init_speed, speed;
-	tcflag_t cflag;
+	tcflag_t cflag, Cflag;
 	int fd, ch, i;
 	const char *name;
 	char *ptr;
 
 	init_speed = 0;
 	cflag = CLOCAL;
+	Cflag = 0;
 	name = "btuart";
 
-	while ((ch = getopt(argc, argv, "dfi:op")) != -1) {
+	while ((ch = getopt(argc, argv, "dFfi:oPp")) != -1) {
 		switch (ch) {
 		case 'd':
 			opt_debug++;
+			break;
+
+		case 'F':
+			Cflag |= CRTSCTS;
 			break;
 
 		case 'f':
@@ -178,6 +183,10 @@ main(int argc, char *argv[])
 
 		case 'o':
 			cflag |= (PARENB | PARODD);
+			break;
+
+		case 'P':
+			Cflag |= PARENB;
 			break;
 
 		case 'p':
@@ -228,6 +237,7 @@ main(int argc, char *argv[])
 
 	cfmakeraw(&tio);
 	tio.c_cflag |= (cflag | type->cflag);
+	tio.c_cflag &= ~Cflag;
 
 	if (cfsetspeed(&tio, init_speed) < 0
 	    || tcsetattr(fd, TCSANOW, &tio) < 0
@@ -276,13 +286,15 @@ usage(void)
 	size_t i;
 
 	fprintf(stderr,
-		"Usage: %s [-dfop] [-i speed] [type] tty speed\n"
+		"Usage: %s [-dFfoPp] [-i speed] [type] tty speed\n"
 		"\n"
 		"Where:\n"
 		"\t-d          debug mode (no detach, dump io)\n"
+		"\t-F          disable flow control\n"
 		"\t-f          enable flow control\n"
 		"\t-i speed    init speed\n"
 		"\t-o          odd parity\n"
+		"\t-P          no parity\n"
 		"\t-p          even parity\n"
 		"\n"
 		"Known types:\n"
