@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.42 2010/03/06 21:22:42 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.43 2010/03/08 07:42:47 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -155,25 +155,9 @@
 	.import fpu_cur_uspace, data
 	.import hp700_int_regs, data
 
-#if 0
 	BSS(pdc_stack, 4)	/* temp stack for PDC call */
 	BSS(kernelmapped, 4)	/* set when kernel is mapped */
 	BSS(hppa_vtop, 4)	/* a vtop translation table addr (pa=va) */
-#else
-	.section .bss
-
-	.export	pdc_stack, data
-pdc_stack:			/* temp stack for PDC call */
-	.block	4
-
-	.export	kernelmapped, data
-kernelmapped:			/* set when kernel is mapped */
-	.block	4
-
-	.export hppa_vtop, data
-hppa_vtop:			/* a vtop translation table addr (pa=va) */
-	.block	4
-#endif
 
 	.text
 	.import kernel_setup, entry
