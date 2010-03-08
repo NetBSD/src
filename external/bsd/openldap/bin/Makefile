@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/05/22 13:57:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2010/03/08 05:24:59 lukem Exp $
 
 SUBDIR=	ldapcompare ldapdelete ldapexop ldapmodify ldapmodrdn \
-	ldappasswd ldapsearch ldapwhoami
+	ldappasswd ldapsearch ldapurl ldapwhoami
 
 .include <bsd.subdir.mk>
