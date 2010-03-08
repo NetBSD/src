@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/05/22 13:57:47 lukem Exp $
-
-NOMAN=	#defined
+#	$NetBSD: Makefile,v 1.2 2010/03/08 05:24:33 lukem Exp $
 
 PROG=	ldapexop
 
