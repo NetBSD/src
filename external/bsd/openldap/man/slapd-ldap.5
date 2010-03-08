@@ -1,9 +1,9 @@
-.TH SLAPD-LDAP 5 "2008/07/16" "OpenLDAP 2.4.11"
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.TH SLAPD-LDAP 5 "2009/12/20" "OpenLDAP 2.4.21"
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-ldap.5,v 1.41.2.8 2008/07/10 00:28:39 quanah Exp $
+.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd-ldap.5,v 1.41.2.14 2009/06/03 01:41:56 quanah Exp
 .SH NAME
-slapd-ldap \- LDAP backend to slapd
+slapd\-ldap \- LDAP backend to slapd
 .SH SYNOPSIS
 /etc/openldap/slapd.conf
 .SH DESCRIPTION
@@ -28,7 +28,7 @@ in some modified form.
 For this purpose, the proxy binds to the remote server with some 
 administrative identity, and, if required, authorizes the asserted identity.
 See the 
-.IR idassert- *
+.IR idassert\- *
 rules below.
 The administrative identity of the proxy, on the remote server, must be 
 allowed to authorize by means of appropriate
@@ -37,6 +37,15 @@ rules; see
 .BR slapd.conf (5)
 for details.
 
+The proxy instance of
+.BR slapd (8)
+must contain schema information for the attributes and objectClasses
+used in filters, request DN and request-related data in general.
+It should also contain schema information for the data returned
+by the proxied server.
+It is the responsibility of the proxy administrator to keep the schema
+of the proxy lined up with that of the proxied server.
+
 .LP
 Note: When looping back to the same instance of
 .BR slapd (8), 
@@ -44,7 +53,7 @@ each connection requires a new thread; as a consequence,
 .BR slapd (8)
 must be compiled with thread support, and the \fBthreads\fP parameter 
 may need some tuning; in those cases, one may consider using 
-.BR slapd-relay (5)
+.BR slapd\-relay (5)
 instead, which performs the relayed operation 
 internally and thus reuses the same connection.
 
@@ -85,7 +94,7 @@ LDAP server to use.  Multiple URIs can be set in a single
 argument, resulting in the underlying library automatically 
 call the first server of the list that responds, e.g. 
 
-\fBuri "ldap://host/ ldap://backup-host/"\fP
+\fBuri "ldap://host/ ldap://backup\-host/"\fP
 
 The URI list is space- or comma-separated.
 Whenever the server that responds is not the first one in the list,
@@ -94,16 +103,18 @@ so that it will be first contacted the next time a connection
 needs be created.
 .HP
 .hy 0
-.B acl-bind
+.B acl\-bind
 .B bindmethod=simple|sasl [binddn=<simple DN>] [credentials=<simple password>]
 .B [saslmech=<SASL mech>] [secprops=<properties>] [realm=<realm>]
 .B [authcId=<authentication ID>] [authzId=<authorization ID>]
+.B [starttls=no|yes|critical]
 .B [tls_cert=<file>]
 .B [tls_key=<file>]
 .B [tls_cacert=<file>]
 .B [tls_cacertdir=<path>]
 .B [tls_reqcert=never|allow|try|demand]
 .B [tls_ciphersuite=<ciphers>]
+.B [tls_protocol_min=<version>]
 .B [tls_crlcheck=none|peer|all]
 .RS
 Allows to define the parameters of the authentication method that is 
@@ -120,8 +131,8 @@ The default is to use
 .BR simple 
 bind, with empty \fIbinddn\fP and \fIcredentials\fP,
 which means that the related operations will be performed anonymously.
-If not set, and if \fBidassert-bind\fP is defined, this latter identity
-is used instead.  See \fBidassert-bind\fP for details.
+If not set, and if \fBidassert\-bind\fP is defined, this latter identity
+is used instead.  See \fBidassert\-bind\fP for details.
 
 The connection between the proxy database and the remote server
 associated to this identity is cached regardless of the lifespan
@@ -130,13 +141,13 @@ of the client-proxy connection that first established it.
 .B This identity is by no means implicitly used by the proxy 
 .B when the client connects anonymously.
 The
-.B idassert-bind
+.B idassert\-bind
 feature, instead, in some cases can be crafted to implement that behavior,
 which is \fIintrinsically unsafe and should be used with extreme care\fP.
 This directive obsoletes
-.BR acl-authcDN ,
+.BR acl\-authcDN ,
 and
-.BR acl-passwd .
+.BR acl\-passwd .
 
 The TLS settings default to the same as the main slapd TLS settings,
 except for
@@ -145,7 +156,7 @@ which defaults to "demand".
 .RE
 
 .TP
-.B cancel {ABANDON|ignore|exop[-discover]}
+.B cancel {ABANDON|ignore|exop[\-discover]}
 Defines how to handle operation cancellation.
 By default,
 .B abandon
@@ -155,9 +166,9 @@ If set to
 no action is taken and any further response is ignored; this may result
 in further response messages to be queued for that connection, so it is
 recommended that long lasting connections are timed out either by
-.I idle-timeout
+.I idle\-timeout
 or
-.IR conn-ttl ,
+.IR conn\-ttl ,
 so that resources eventually get released.
 If set to
 .BR exop ,
@@ -169,24 +180,24 @@ of the current operation; the
 operation waits for remote server response, so its use 
 may not be recommended.
 If set to
-.BR exop-discover ,
+.BR exop\-discover ,
 support of the
 .I cancel 
 extended operation is detected by reading the remote server's root DSE.
 
 .TP
-.B chase-referrals {YES|no}
+.B chase\-referrals {YES|no}
 enable/disable automatic referral chasing, which is delegated to the
 underlying libldap, with rebinding eventually performed if the
-\fBrebind-as-user\fP directive is used.  The default is to chase referrals.
+\fBrebind\-as\-user\fP directive is used.  The default is to chase referrals.
 
 .TP
-.B conn-ttl <time>
+.B conn\-ttl <time>
 This directive causes a cached connection to be dropped an recreated
 after a given ttl, regardless of being idle or not.
 
 .TP
-.B idassert-authzFrom <authz-regexp>
+.B idassert\-authzFrom <authz-regexp>
 if defined, selects what
 .I local
 identities are authorized to exploit the identity assertion feature.
@@ -198,22 +209,24 @@ attribute.
 See 
 .BR slapd.conf (5),
 section related to
-.BR authz-policy ,
+.BR authz\-policy ,
 for details on the syntax of this field.
 
 .HP
 .hy 0
-.B idassert-bind
+.B idassert\-bind
 .B bindmethod=none|simple|sasl [binddn=<simple DN>] [credentials=<simple password>]
 .B [saslmech=<SASL mech>] [secprops=<properties>] [realm=<realm>]
 .B [authcId=<authentication ID>] [authzId=<authorization ID>]
 .B [authz={native|proxyauthz}] [mode=<mode>] [flags=<flags>]
+.B [starttls=no|yes|critical]
 .B [tls_cert=<file>]
 .B [tls_key=<file>]
 .B [tls_cacert=<file>]
 .B [tls_cacertdir=<path>]
 .B [tls_reqcert=never|allow|try|demand]
 .B [tls_ciphersuite=<ciphers>]
+.B [tls_protocol_min=<version>]
 .B [tls_crlcheck=none|peer|all]
 .RS
 Allows to define the parameters of the authentication method that is 
@@ -228,7 +241,7 @@ This requires to have
 privileges on a wide set of DNs, e.g.
 .BR authzTo=dn.subtree:"" ,
 and the remote server to have
-.B authz-policy
+.B authz\-policy
 set to
 .B to
 or
@@ -297,7 +310,7 @@ as the
 or a SASL bind as the
 .IR authcID ,
 unless restricted by
-.BR idassert-authzFrom
+.BR idassert\-authzFrom
 rules (see below), in which case the operation will fail;
 eventually, it will assert some other identity according to
 .BR <mode> .
@@ -328,7 +341,7 @@ useful when the asserted identities do not exist on the remote server.
 
 Flags can be
 
-\fBoverride,[non-]prescriptive\fP
+\fBoverride,[non\-]prescriptive\fP
 
 When the 
 .B override
@@ -343,13 +356,13 @@ When the
 flag is used (the default), operations fail with
 \fIinappropriateAuthentication\fP
 for those identities whose assertion is not allowed by the
-.B idassert-authzFrom
+.B idassert\-authzFrom
 patterns.
 If the 
-.B non-prescriptive
+.B non\-prescriptive
 flag is used, operations are performed anonymously for those identities 
 whose assertion is not allowed by the
-.B idassert-authzFrom
+.B idassert\-authzFrom
 patterns.
 
 The TLS settings default to the same as the main slapd TLS settings,
@@ -358,31 +371,31 @@ except for
 which defaults to "demand".
 
 The identity associated to this directive is also used for privileged
-operations whenever \fBidassert-bind\fP is defined and \fBacl-bind\fP
-is not.  See \fBacl-bind\fP for details.
+operations whenever \fBidassert\-bind\fP is defined and \fBacl\-bind\fP
+is not.  See \fBacl\-bind\fP for details.
 
 This directive obsoletes
-.BR idassert-authcDN ,
-.BR idassert-passwd ,
-.BR idassert-mode ,
+.BR idassert\-authcDN ,
+.BR idassert\-passwd ,
+.BR idassert\-mode ,
 and
-.BR idassert-method .
+.BR idassert\-method .
 .RE
 
 .TP
-.B idle-timeout <time>
+.B idle\-timeout <time>
 This directive causes a cached connection to be dropped an recreated
 after it has been idle for the specified time.
 
 .TP
-.B network-timeout <time>
+.B network\-timeout <time>
 Sets the network timeout value after which
 .BR poll (2)/ select (2) 
 following a 
 .BR connect (2) 
 returns in case of no activity.
 The value is in seconds, and it can be specified as for
-.BR idle-timeout .
+.BR idle\-timeout .
 
 .TP
 .B norefs <NO|yes>
@@ -390,6 +403,17 @@ If
 .BR yes ,
 do not return search reference responses.
 By default, they are returned unless request is LDAPv2.
+
+.TP
+.B noundeffilter <NO|yes>
+If
+.BR yes ,
+return success instead of searching if a filter is undefined or contains
+undefined portions.
+By default, the search is propagated after replacing undefined portions
+with
+.BR (!(objectClass=*)) ,
+which corresponds to the empty result set.
 
 .TP
 .B protocol\-version {0,2,3}
@@ -428,11 +452,11 @@ The process can be restarted by resetting the \fIolcDbQuarantine\fP
 attribute of the database entry in the configuration backend.
 
 .TP
-.B rebind-as-user {NO|yes}
+.B rebind\-as\-user {NO|yes}
 If this option is given, the client's bind credentials are remembered
 for rebinds, when trying to re-establish a broken connection,
 or when chasing a referral, if 
-.B chase-referrals
+.B chase\-referrals
 is set to
 .IR yes .
 
@@ -448,7 +472,7 @@ This directive is incompatible with setting \fIprotocol\-version\fP to 2.
 Discards current cached connection when the client rebinds.
 
 .TP
-.B t-f-support {NO|yes|discover}
+.B t\-f\-support {NO|yes|discover}
 enable if the remote server supports absolute filters
 (see \fIdraft-zeilenga-ldap-t-f\fP for details).
 If set to
@@ -486,13 +510,13 @@ is destroyed, according to RFC4511.
 
 Note: in some cases, this backend may issue binds prior
 to other operations (e.g. to bind anonymously or with some prescribed
-identity according to the \fBidassert-bind\fP directive).
+identity according to the \fBidassert\-bind\fP directive).
 In this case, the timeout of the operation that resulted in the bind
 is used.
 
 .HP
 .hy 0
-.B tls {[try-]start|[try-]propagate|ldaps}
+.B tls {[try\-]start|[try\-]propagate|ldaps}
 .B [tls_cert=<file>]
 .B [tls_key=<file>]
 .B [tls_cacert=<file>]
@@ -507,7 +531,7 @@ scheme is \fBldaps://\fP. In that case this keyword may only be
 set to "ldaps" and the StartTLS operation will not be used.
 \fBpropagate\fP issues the StartTLS operation only if the original
 connection did.
-The \fBtry-\fP prefix instructs the proxy to continue operations
+The \fBtry\-\fP prefix instructs the proxy to continue operations
 if the StartTLS operation failed; its use is \fBnot\fP recommended.
 
 The TLS settings default to the same as the main slapd TLS settings,
@@ -517,7 +541,7 @@ which defaults to "demand".
 .RE
 
 .TP
-.B use-temporary-conn {NO|yes}
+.B use\-temporary\-conn {NO|yes}
 when set to 
 .BR yes ,
 create a temporary connection whenever competing with other threads
@@ -531,7 +555,7 @@ deprecated and should be no longer used, as they might disappear
 in future releases.
 
 .TP
-.B acl-authcDN "<administrative DN for access control purposes>"
+.B acl\-authcDN "<administrative DN for access control purposes>"
 Formerly known as the
 .BR binddn ,
 it is the DN that is used to query the target server for acl checking;
@@ -540,70 +564,70 @@ on the proxy for acl checking.
 There is no risk of giving away such values; they are only used to
 check permissions.
 
-.B The acl-authcDN identity is by no means implicitly used by the proxy 
+.B The acl\-authcDN identity is by no means implicitly used by the proxy 
 .B when the client connects anonymously.
 The
-.B idassert-*
+.B idassert\-*
 feature can be used (at own risk) for that purpose instead.
 
 This directive is obsoleted by the
 .B binddn
 arg of
-.B acl-bind
+.B acl\-bind
 when \fIbindmethod\fP=\fBsimple\fP, and will be dismissed in the future.
 
 .TP
-.B acl-passwd <password>
+.B acl\-passwd <password>
 Formerly known as the
 .BR bindpw ,
 it is the password used with the above
-.B acl-authcDN
+.B acl\-authcDN
 directive.
 This directive is obsoleted by the
 .B credentials
 arg of
-.B acl-bind
+.B acl\-bind
 when \fIbindmethod\fP=\fBsimple\fP, and will be dismissed in the future.
 
 .TP
-.B idassert-authcDN "<administrative DN for proxyAuthz purposes>"
+.B idassert\-authcDN "<administrative DN for proxyAuthz purposes>"
 DN which is used to propagate the client's identity to the target
 by means of the proxyAuthz control when the client does not
 belong to the DIT fragment that is being proxied by back-ldap.
 This directive is obsoleted by the
 .B binddn
 arg of
-.BR idassert-bind
+.BR idassert\-bind
 when \fIbindmethod\fP=\fBsimple\fP, and will be dismissed in the future.
 
 .TP
-.B idassert-passwd <password>
+.B idassert\-passwd <password>
 Password used with the
-.B idassert-authcDN
+.B idassert\-authcDN
 above.
 This directive is obsoleted by the
 .B crendentials
 arg of
-.B idassert-bind
+.B idassert\-bind
 when \fIbindmethod\fP=\fBsimple\fP, and will be dismissed in the future.
 
 .TP
-.B idassert-mode <mode> [<flags>]
+.B idassert\-mode <mode> [<flags>]
 defines what type of
 .I identity assertion
 is used.
 This directive is obsoleted by the
 .B mode
 arg of 
-.BR idassert-bind ,
+.BR idassert\-bind ,
 and will be dismissed in the future.
 
 .TP
-.B idassert-method <method> [<saslargs>]
+.B idassert\-method <method> [<saslargs>]
 This directive is obsoleted by the
 .B bindmethod
 arg of
-.BR idassert-bind ,
+.BR idassert\-bind ,
 and will be dismissed in the future.
 
 .TP
@@ -628,10 +652,10 @@ overlay.  Essentially, add a statement
 .B overlay rwm
 
 first, and prefix all rewrite/map statements with
-.B rwm-
+.B rwm\-
 to obtain the original behavior.
 See
-.BR slapo-rwm (5)
+.BR slapo\-rwm (5)
 for details.
 .\" However, to ease update from existing configurations, back-ldap still 
 .\" recognizes them and automatically instantiates the
@@ -689,6 +713,7 @@ for details.
 default slapd configuration file
 .SH SEE ALSO
 .BR slapd.conf (5),
+.BR slapd\-config (5),
 .BR slapd\-meta (5),
 .BR slapo\-chain (5),
 .BR slapo\-pcache (5),

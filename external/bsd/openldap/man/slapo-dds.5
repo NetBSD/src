@@ -1,9 +1,9 @@
-.TH SLAPO-DDS 5 "2008/07/16" "OpenLDAP 2.4.11"
-.\" Copyright 2005-2008 The OpenLDAP Foundation, All Rights Reserved.
+.TH SLAPO-DDS 5 "2009/12/20" "OpenLDAP 2.4.21"
+.\" Copyright 2005-2009 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-dds.5,v 1.1.2.4 2008/02/11 23:26:40 kurt Exp $
+.\" OpenLDAP: pkg/ldap/doc/man/man5/slapo-dds.5,v 1.1.2.9 2009/06/03 01:41:59 quanah Exp
 .SH NAME
-slapo-dds \- Dynamic Directory Services overlay to slapd
+slapo\-dds \- Dynamic Directory Services overlay to slapd
 .SH SYNOPSIS
 /etc/openldap/slapd.conf
 .SH DESCRIPTION
@@ -53,7 +53,11 @@ overlay to the current database:
 .B overlay dds
 
 .LP
-The 
+The database must have a
+.B rootdn
+specified, otherwise, the
+.B dds
+overlay will not be able to delete expired objects. The 
 .B dds
 overlay may be used with any backend that implements the 
 .BR add ,
@@ -127,7 +131,7 @@ run-queue size) that are used by dynamic objects.
 By default, no limit is set.
 
 .TP
-.B dds-state {TRUE|false}
+.B dds\-state {TRUE|false}
 Specifies if the Dynamic Directory Services feature is enabled or not.
 By default it is; however, a proxy does not need to keep track of dynamic
 objects itself, it only needs to inform the frontend that support for
@@ -155,7 +159,7 @@ overlay turns refresh extended operation into an internal modification to
 the value of the
 .B entryTtl
 attribute with the
-.B manageDIT
+.B relax
 control set.
 
 RFC 2589 recommends that anonymous clients should not be allowed to refresh
@@ -261,6 +265,7 @@ the dynamic properties of the object.
 default slapd configuration file
 .SH SEE ALSO
 .BR slapd.conf (5),
+.BR slapd\-config (5),
 .BR slapd (8).
 .SH AUTHOR
 Implemented by Pierangelo Masarati.

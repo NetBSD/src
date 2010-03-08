@@ -1,7 +1,7 @@
-.TH SLAPD.OVERLAYS 5 "2008/07/16" "OpenLDAP 2.4.11"
-.\" Copyright 2006-2008 The OpenLDAP Foundation All Rights Reserved.
+.TH SLAPD.OVERLAYS 5 "2009/12/20" "OpenLDAP 2.4.21"
+.\" Copyright 2006-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.overlays.5,v 1.4.2.3 2008/02/11 23:26:40 kurt Exp $
+.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd.overlays.5,v 1.4.2.5 2009/06/03 01:41:58 quanah Exp
 .SH NAME
 slapd.overlays \- overlays for slapd, the stand-alone LDAP daemon
 .SH DESCRIPTION
@@ -16,7 +16,7 @@ may also be configured globally.
 
 Configuration options for each overlay are documented separately in the
 corresponding
-.BR slapo-<overlay> (5)
+.BR slapo\-<overlay> (5)
 manual pages.
 .TP
 .B accesslog
@@ -61,9 +61,9 @@ This overlay allows expansion of dynamic groups and more.
 Proxycache.
 This overlay allows caching of LDAP search requests in a local database.
 It is most often used with the
-.BR slapd-ldap (5)
+.BR slapd\-ldap (5)
 or
-.BR slapd-meta (5)
+.BR slapd\-meta (5)
 backends.
 .TP
 .B ppolicy
@@ -75,7 +75,7 @@ password resets, etc.
 .B refint
 Referential Integrity.
 This overlay can be used with a backend database such as
-.BR slapd-bdb (5)
+.BR slapd\-bdb (5)
 to maintain the cohesiveness of a schema which utilizes reference
 attributes.
 .TP
@@ -99,7 +99,7 @@ replication, including persistent search functionality.
 .B translucent
 Translucent Proxy.
 This overlay can be used with a backend database such as
-.BR slapd-bdb (5)
+.BR slapd\-bdb (5)
 to create a "translucent proxy".
 Content of entries retrieved from a remote LDAP server can be partially
 overridden by the database.
@@ -107,7 +107,7 @@ overridden by the database.
 .B unique
 Attribute Uniqueness.
 This overlay can be used with a backend database such as
-.BR slapd-bdb (5)
+.BR slapd\-bdb (5)
 to enforce the uniqueness of some or all attributes within a subtree.
 .TP
 .B valsort

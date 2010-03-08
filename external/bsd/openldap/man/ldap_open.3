@@ -1,11 +1,11 @@
-.TH LDAP_OPEN 3 "2008/07/16" "OpenLDAP 2.4.11"
-.\" $OpenLDAP: pkg/ldap/doc/man/man3/ldap_open.3,v 1.16.2.3 2008/02/11 23:26:39 kurt Exp $
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.TH LDAP_OPEN 3 "2009/12/20" "OpenLDAP 2.4.21"
+.\" OpenLDAP: pkg/ldap/doc/man/man3/ldap_open.3,v 1.16.2.6 2009/08/25 22:53:47 quanah Exp
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap_init, ldap_initialize, ldap_open \- Initialize the LDAP library and open a connection to an LDAP server
 .SH LIBRARY
-OpenLDAP LDAP (libldap, -lldap)
+OpenLDAP LDAP (libldap, \-lldap)
 .SH SYNOPSIS
 .nf
 .ft B
@@ -93,6 +93,29 @@ acts like
 but it returns an integer indicating either success or the failure reason,
 and it allows to specify details for the connection in the schema portion
 of the URI.
+The
+.I uri
+parameter may be a comma- or whitespace-separated list of URIs
+containing only the
+.IR schema ,
+the
+.IR host ,
+and the
+.I port
+fields.
+Apart from
+.BR ldap ,
+other (non-standard) recognized values of the
+.I schema
+field are
+.B ldaps
+(LDAP over TLS),
+.B ldapi
+(LDAP over IPC),
+and
+.B cldap
+(connectionless LDAP).
+If other fields are present, the behavior is undefined.
 .LP
 At this time,
 .B ldap_open()
@@ -134,14 +157,17 @@ If an error occurs,
 .B ldap_open()
 and
 .B ldap_init()
-will return NULL and errno should be set appropriately.
+will return NULL and 
+.I errno
+should be set appropriately.
 .B ldap_initialize()
 and
 .B ldap_init_fd()
 will directly return the LDAP code associated to the error (or
 .I LDAP_SUCCESS
 in case of success);
-errno should be set as well whenever appropriate.
+.I errno
+should be set as well whenever appropriate.
 .SH SEE ALSO
 .BR ldap (3),
 .BR ldap_bind (3),

@@ -1,6 +1,6 @@
-.TH LDAPCOMPARE 1 "2008/07/16" "OpenLDAP 2.4.11"
-.\" $OpenLDAP: pkg/ldap/doc/man/man1/ldapcompare.1,v 1.12.2.4 2008/02/11 23:26:39 kurt Exp $
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.TH LDAPCOMPARE 1 "2009/12/20" "OpenLDAP 2.4.21"
+.\" OpenLDAP: pkg/ldap/doc/man/man1/ldapcompare.1,v 1.12.2.8 2009/06/08 18:23:33 quanah Exp
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldapcompare \- LDAP compare tool
@@ -13,7 +13,7 @@ ldapcompare \- LDAP compare tool
 [\c
 .BR \-z ]
 [\c
-.BR \-M[M] ]
+.BR \-M [ M ]]
 [\c
 .BI \-d \ debuglevel\fR]
 [\c
@@ -31,9 +31,13 @@ ldapcompare \- LDAP compare tool
 [\c
 .BI \-p \ ldapport\fR]
 [\c
-.BI \-P \ 2\fR\||\|\fI3\fR]
+.BR \-P \ { 2 \||\| 3 }]
 [\c
-.BR \-O \ security-properties ]
+.BR \-e \ [ ! ] \fIext\fP [ =\fIextparam\fP ]]
+[\c
+.BR \-E \ [ ! ] \fIext\fP [ =\fIextparam\fP ]]
+[\c
+.BI \-O \ security-properties\fR]
 [\c
 .BR \-I ]
 [\c
@@ -49,10 +53,12 @@ ldapcompare \- LDAP compare tool
 [\c
 .BI \-Y \ mech\fR]
 [\c
-.BR \-Z[Z] ]
-.IR DN \ <
-.BR attr:value \ |
-.BR attr::b64value \ >
+.BR \-Z [ Z ]]
+.IR DN
+{\c
+.BI attr: value
+|
+.BI attr:: b64value\fR}
 .SH DESCRIPTION
 .I ldapcompare
 is a shell-accessible interface to the
@@ -66,14 +72,14 @@ name in the directory.  \fIAttr\fP should be a known attribute.  If
 followed by one colon, the assertion \fIvalue\fP should be provided
 as a string.  If followed by two colons, the base64 encoding of the
 value is provided.  The result code of the compare is provided as
-the exit code and, unless ran with -z, the program prints
+the exit code and, unless ran with \fB\-z\fP, the program prints
 TRUE, FALSE, or UNDEFINED on standard output.
 .LP
 .SH OPTIONS
 .TP
 .B \-n
 Show what would be done, but don't actually perform the compare.  Useful for
-debugging in conjunction with -v.
+debugging in conjunction with \fB\-v\fP.
 .TP
 .B \-v
 Run in verbose mode, with many diagnostics written to standard output.
@@ -82,7 +88,7 @@ Run in verbose mode, with many diagnostics written to standard output.
 Run in quiet mode, no output is written.  You must check the return
 status.  Useful in shell scripts.
 .TP
-.B \-M[M]
+.BR \-M [ M ]
 Enable manage DSA IT control.
 .B \-MM
 makes control critical.
@@ -97,6 +103,7 @@ Use simple authentication instead of SASL.
 .TP
 .BI \-D \ binddn
 Use the Distinguished Name \fIbinddn\fP to bind to the LDAP directory.
+For SASL binds, the server is expected to ignore this value.
 .TP
 .B \-W
 Prompt for simple authentication.
@@ -119,7 +126,7 @@ by default appends a trailing newline to the echoed string.
 The recommended portable way to store a cleartext password in a file
 for use with this option is to use
 .BR slappasswd (8)
-with \fI{CLEARTEXT}\fP as hash and the option \fI\-n\fP.
+with \fI{CLEARTEXT}\fP as hash and the option \fB\-n\fP.
 .TP
 .BI \-H \ ldapuri
 Specify URI(s) referring to the ldap server(s); only the protocol/host/port
@@ -128,14 +135,44 @@ is expected.
 .TP
 .BI \-h \ ldaphost
 Specify an alternate host on which the ldap server is running.
-Deprecated in favor of -H.
+Deprecated in favor of \fB\-H\fP.
 .TP
 .BI \-p \ ldapport
 Specify an alternate TCP port where the ldap server is listening.
-Deprecated in favor of -H.
+Deprecated in favor of \fB\-H\fP.
 .TP
-.BI \-P \ 2\fR\||\|\fI3
+.BR \-P \ { 2 \||\| 3 }
 Specify the LDAP protocol version to use.
+.TP
+.BR \-e \ [ ! ] \fIext\fP [ =\fIextparam\fP ]
+.TP
+.BR \-E \ [ ! ] \fIext\fP [ =\fIextparam\fP ]
+
+Specify general extensions with \fB\-e\fP and search extensions with \fB\-E\fP.
+\'\fB!\fP\' indicates criticality.
+
+General extensions:
+.nf
+  [!]assert=<filter>   (an RFC 4515 Filter)
+  [!]authzid=<authzid> ("dn:<dn>" or "u:<user>")
+  [!]manageDSAit
+  [!]noop
+  ppolicy
+  [!]postread[=<attrs>]        (a comma-separated attribute list)
+  [!]preread[=<attrs>] (a comma-separated attribute list)
+  abandon, cancel (SIGINT sends abandon/cancel; not really controls)
+.fi
+
+Search extensions:
+.nf
+  [!]domainScope                               (domain scope)
+  [!]mv=<filter>                               (matched values filter)
+  [!]pr=<size>[/prompt|noprompt]       (paged results/prompt)
+  [!]sss=[\-]<attr[:OID]>[/[\-]<attr[:OID]>...]  (server side sorting)
+  [!]subentries[=true|false]           (subentries)
+  [!]sync=ro[/<cookie>]                        (LDAP Sync refreshOnly)
+          rp[/<cookie>][/<slimit>]     (LDAP Sync refreshAndPersist)
+.fi
 .TP
 .BI \-O \ security-properties
 Specify SASL security properties.
@@ -159,20 +196,17 @@ depends on the actual SASL mechanism used.
 Specify the requested authorization ID for SASL bind.
 .I authzid
 must be one of the following formats:
-.B dn:\c
-.I <distinguished name>
+.BI dn: "<distinguished name>"
 or
-.B u:\c
-.I <username>
+.BI u: <username>
 .TP
 .BI \-Y \ mech
 Specify the SASL mechanism to be used for authentication. If it's not
 specified, the program will choose the best mechanism the server knows.
 .TP
-.B \-Z[Z]
+.BR \-Z [ Z ]
 Issue StartTLS (Transport Layer Security) extended operation. If you use
-.B \-ZZ\c
-, the command will require the operation to be successful.
+\fB\-ZZ\fP, the command will require the operation to be successful.
 .SH EXAMPLES
 .nf
     ldapcompare "uid=babs,dc=example,dc=com"  sn:Jensen
