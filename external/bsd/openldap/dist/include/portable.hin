@@ -172,8 +172,10 @@
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
+#if 0	/* NETBSD: API incompatible */
 /* define if you actually have FreeBSD fetch(3) */
 #undef HAVE_FETCH
+#endif
 
 /* Define to 1 if you have the <filio.h> header file. */
 #undef HAVE_FILIO_H
@@ -753,8 +755,10 @@
 /* Define to 1 if you have the `thr_yield' function. */
 #undef HAVE_THR_YIELD
 
+#if 0	/* NETBSD: We'll control via Makefile and ${MKCRYPTO} */
 /* define if you have TLS */
 #undef HAVE_TLS
+#endif
 
 /* Define to 1 if you have the <unicode/utypes.h> header file. */
 #undef HAVE_UNICODE_UTYPES_H
