@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.24 2010/02/16 20:42:47 pooka Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.25 2010/03/08 12:17:45 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -10,7 +10,7 @@ LIB=	rumpvfs
 	${RUMPTOP}/../miscfs/genfs ${RUMPTOP}/../miscfs/syncfs	\
 	${RUMPTOP}/../miscfs/specfs ${RUMPTOP}/../miscfs/deadfs	\
 	${RUMPTOP}/../compat/common ${RUMPTOP}/../uvm		\
-	${RUMPTOP}/../dev
+	${RUMPTOP}/../dev ${RUMPTOP}/../ufs/mfs
 
 #
 # Source modules, first the ones specifically implemented for librump.
@@ -47,6 +47,9 @@ SRCS+=	genfs_io.c genfs_vfsops.c genfs_vnops.c spec_vnops.c
 # sys/kern bufq
 SRCS+=	subr_bufq.c bufq_disksort.c bufq_fcfs.c bufq_priocscan.c	\
 	bufq_readprio.c
+
+# MFS miniroot support
+SRCS+=	mfs_miniroot.c
 
 # dev
 # firmload is technically part of rumpdev, but it's pure vfs in nature.
