@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.34 2010/02/24 09:49:36 mrg Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.35 2010/03/08 08:59:06 mrg Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.34 2010/02/24 09:49:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.35 2010/03/08 08:59:06 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -73,6 +73,7 @@ void	sparc64_ipi_flush_pte_us(void *);
 void	sparc64_ipi_flush_pte_usiii(void *);
 void	sparc64_ipi_dcache_flush_page_us(void *);
 void	sparc64_ipi_dcache_flush_page_usiii(void *);
+void	sparc64_ipi_blast_dcache(void *);
 
 /*
  * Process cpu stop-self event.
@@ -425,6 +426,18 @@ smp_dcache_flush_page_all(paddr_t pa)
 
 	sparc64_broadcast_ipi(func, pa, dcache_line_size);
 	dcache_flush_page(pa);
+}
+
+/*
+ * Flush the D$ on this set of CPUs.
+ */
+void
+smp_blast_dcache(sparc64_cpuset_t activecpus)
+{
+
+	sparc64_multicast_ipi(activecpus, sparc64_ipi_blast_dcache,
+			      dcache_size, dcache_line_size);
+	sp_blast_dcache(dcache_size, dcache_line_size);
 }
 
 /*
