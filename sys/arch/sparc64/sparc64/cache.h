@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.16 2010/03/06 08:08:29 mrg Exp $ */
+/*	$NetBSD: cache.h,v 1.17 2010/03/08 08:59:06 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -72,10 +72,17 @@
  * set-associative -- each bank is 8K.  No conflict there.)
  */
 
+/* Various cache size/line sizes */
+extern	int	ecache_min_line_size;
+extern	int	dcache_line_size;
+extern	int	dcache_size;
+extern	int	icache_line_size;
+extern	int	icache_size;
+
 /* The following are for I$ and D$ flushes and are in locore.s */
 void 	dcache_flush_page_us(paddr_t);	/* flush page from D$ */
 void 	dcache_flush_page_usiii(paddr_t); /* flush page from D$ */
-void 	blast_dcache(void);		/* Clear entire D$ */
+void 	sp_blast_dcache(int, int);	/* Clear entire D$ */
 void 	blast_icache_us(void);		/* Clear entire I$ */
 void 	blast_icache_usiii(void);	/* Clear entire I$ */
 
@@ -137,17 +144,14 @@ sp_tlb_flush_all(void)
 
 #ifdef MULTIPROCESSOR
 void smp_tlb_flush_pte(vaddr_t, struct pmap *);
-#define	tlb_flush_pte(va,pm)	smp_tlb_flush_pte(va, pm)
 void smp_dcache_flush_page_all(paddr_t pa);
+void smp_blast_dcache(sparc64_cpuset_t);
+#define	tlb_flush_pte(va,pm	)	smp_tlb_flush_pte(va, pm)
 #define	dcache_flush_page_all(pa)	smp_dcache_flush_page_all(pa)
+#define	blast_dcache()			smp_blast_dcache(cpus_active)
 #else
-#define	tlb_flush_pte(va,pm)	sp_tlb_flush_pte(va, (pm)->pm_ctx[0])
+#define	tlb_flush_pte(va,pm)		sp_tlb_flush_pte(va, (pm)->pm_ctx[0])
 #define	dcache_flush_page_all(pa)	dcache_flush_page(pa)
+#define	blast_dcache()			sp_blast_dcache(dcache_size, \
+							dcache_line_size)
 #endif
-
-/* Various cache size/line sizes */
-extern	int	ecache_min_line_size;
-extern	int	dcache_line_size;
-extern	int	dcache_size;
-extern	int	icache_line_size;
-extern	int	icache_size;
