@@ -1,14 +1,14 @@
-.TH SLAPO-TRANSLUCENT 5 "2008/07/16" "OpenLDAP 2.4.11"
-.\" Copyright 2004-2008 The OpenLDAP Foundation All Rights Reserved.
+.TH SLAPO-TRANSLUCENT 5 "2009/12/20" "OpenLDAP 2.4.21"
+.\" Copyright 2004-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-translucent.5,v 1.4.2.4 2008/02/11 23:26:40 kurt Exp $
+.\" OpenLDAP: pkg/ldap/doc/man/man5/slapo-translucent.5,v 1.4.2.10 2009/06/03 01:42:00 quanah Exp
 .SH NAME
-slapo-translucent \- Translucent Proxy overlay to slapd
+slapo\-translucent \- Translucent Proxy overlay to slapd
 .SH SYNOPSIS
 /etc/openldap/slapd.conf
 .SH DESCRIPTION
 The Translucent Proxy overlay can be used with a backend database such as
-.BR slapd-bdb (5)
+.BR slapd\-bdb (5)
 to create a "translucent proxy".  Entries retrieved from a remote LDAP
 server may have some or all attributes overridden, or new attributes
 added, by entries in the local database before being presented to the
@@ -31,15 +31,19 @@ operation will perform a comparison with attributes defined in the local
 database record (if any) before any comparison is made with data in the
 remote database.
 .SH CONFIGURATION
-The Translucent Proxy overlay uses a remote LDAP server which is configured
-with the options shown in
-.BR slapd-ldap (5).
+The Translucent Proxy overlay uses a proxied database,
+typically a (set of) remote LDAP server(s), which is configured with the options shown in
+.BR slapd\-ldap (5),
+.BR slapd\-meta (5)
+or similar.
 These
 .B slapd.conf
 options are specific to the Translucent Proxy overlay; they must appear 
 after the
 .B overlay
-directive.
+directive that instantiates the
+.B translucent
+overlay.
 .TP
 .B translucent_strict
 By default, attempts to delete attributes in either the local or remote
@@ -83,6 +87,33 @@ is specified, searches will only be run on the remote database. In any case, bot
 the local and remote entries corresponding to a search result will be merged
 before being returned to the client.
 
+.TP
+.B translucent_bind_local 
+Enable looking for locally stored credentials for simple bind when binding
+to the remote database fails.  Disabled by default.
+
+.TP
+.B translucent_pwmod_local
+Enable RFC 3062 Password Modification extended operation on locally stored
+credentials.  The operation only applies to entries that exist in the remote
+database.  Disabled by default.
+
+.SH ACCESS CONTROL
+Access control is delegated to either the remote DSA(s) or to the local database
+backend for
+.B auth
+and
+.B write
+operations.
+It is delegated to the remote DSA(s) and to the frontend for
+.B read
+operations.
+Local access rules involving data returned by the remote DSA(s) should be designed
+with care.  In fact, entries are returned by the remote DSA(s) only based on the
+remote fraction of the data, based on the identity the operation is performed as.
+As a consequence, local rules might only be allowed to see a portion
+of the remote data.
+
 .SH CAVEATS
 .LP
 The Translucent Proxy overlay will disable schema checking in the local database,
@@ -98,4 +129,5 @@ will probably fail with No Such Object and other errors.
 default slapd configuration file
 .SH SEE ALSO
 .BR slapd.conf (5),
-.BR slapd-ldap (5).
+.BR slapd\-config (5),
+.BR slapd\-ldap (5).

@@ -1,6 +1,9 @@
-.TH SLAPD-RELAY 5 "2008/07/16" "OpenLDAP 2.4.11"
+.TH SLAPD-RELAY 5 "2009/12/20" "OpenLDAP 2.4.21"
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
+.\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd-relay.5,v 1.4.4.4 2009/06/03 01:41:57 quanah Exp
 .SH NAME
-slapd-relay \- relay backend to slapd
+slapd\-relay \- relay backend to slapd
 .SH SYNOPSIS
 /etc/openldap/slapd.conf
 .SH DESCRIPTION
@@ -12,7 +15,7 @@ running in the same
 instance into a virtual naming context, with attributeType
 and objectClass manipulation, if required.
 It requires the
-.BR slapo-rwm (5)
+.BR slapo\-rwm (5)
 overlay.
 .LP
 This backend and the above mentioned overlay are experimental.
@@ -44,11 +47,11 @@ The
 database does not automatically rewrite the naming context
 of requests and responses.
 For this purpose, the
-.BR slapo-rwm (5)
+.BR slapo\-rwm (5)
 overlay must be explicitly instantiated, and configured
 as appropriate.
 Usually, the
-.B rwm-suffixmassage
+.B rwm\-suffixmassage
 directive suffices if only naming context rewriting is required.
 
 .SH ACCESS RULES
@@ -58,7 +61,7 @@ After massaging from the virtual to the real naming context, the
 frontend sees the operation as performed by the identity in the
 real naming context.
 Moreover, since
-.B back-relay
+.B back\-relay
 bypasses the real database frontend operations by short-circuiting
 operations through the internal backend API, the original database
 access rules do not apply but in selected cases, i.e. when the
@@ -100,7 +103,7 @@ that refers to a single database, use
   suffix                  "dc=virtual,dc=naming,dc=context"
   relay                   "dc=real,dc=naming,dc=context"
   overlay                 rwm
-  rwm-suffixmassage       "dc=real,dc=naming,dc=context"
+  rwm\-suffixmassage       "dc=real,dc=naming,dc=context"
 .fi
 .LP
 To implement a plain virtual naming context mapping
@@ -110,7 +113,7 @@ that looks up the real naming context for each operation, use
   database                relay
   suffix                  "dc=virtual,dc=naming,dc=context"
   overlay                 rwm
-  rwm-suffixmassage       "dc=real,dc=naming,dc=context"
+  rwm\-suffixmassage       "dc=real,dc=naming,dc=context"
 .fi
 .LP
 This is useful, for instance, to relay different databases that
@@ -126,21 +129,21 @@ back from the real to the virtual naming context, use
   suffix                  "dc=virtual,dc=naming,dc=context"
   relay                   "dc=real,dc=naming,dc=context"
   overlay                 rwm
-  rwm-rewriteEngine       on
-  rwm-rewriteContext      default
-  rwm-rewriteRule         "dc=virtual,dc=naming,dc=context"
+  rwm\-rewriteEngine       on
+  rwm\-rewriteContext      default
+  rwm\-rewriteRule         "dc=virtual,dc=naming,dc=context"
                           "dc=real,dc=naming,dc=context" ":@"
-  rwm-rewriteContext      searchFilter
-  rwm-rewriteContext      searchEntryDN
-  rwm-rewriteContext      searchAttrDN
-  rwm-rewriteContext      matchedDN
+  rwm\-rewriteContext      searchFilter
+  rwm\-rewriteContext      searchEntryDN
+  rwm\-rewriteContext      searchAttrDN
+  rwm\-rewriteContext      matchedDN
 .fi
 .LP
 Note that the 
-.BR slapo-rwm (5)
+.BR slapo\-rwm (5)
 overlay is instantiated, but the rewrite rules are written explicitly,
 rather than automatically as with the
-.B rwm-suffixmassage
+.B rwm\-suffixmassage
 statement, to map all the virtual to real naming context data flow,
 but none of the real to virtual.
 .LP
@@ -158,7 +161,7 @@ Access rules:
   suffix                  "o=Example,c=US"
   relay                   "dc=example,dc=com"
   overlay                 rwm
-  rwm-suffixmassage       "dc=example,dc=com"
+  rwm\-suffixmassage       "dc=example,dc=com"
   # skip ...
   access to dn.subtree="o=Example,c=US"
           by dn.exact="cn=Supervisor,dc=example,dc=com" write
@@ -199,5 +202,6 @@ operation is honored, which is performed by the frontend.
 default slapd configuration file
 .SH SEE ALSO
 .BR slapd.conf (5),
-.BR slapo-rwm (5),
+.BR slapd\-config (5),
+.BR slapo\-rwm (5),
 .BR slapd (8).

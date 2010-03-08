@@ -1,14 +1,14 @@
-.TH SLAPD-META 5 "2008/07/16" "OpenLDAP 2.4.11"
-.\" Copyright 1998-2008 The OpenLDAP Foundation, All Rights Reserved.
+.TH SLAPD-META 5 "2009/12/20" "OpenLDAP 2.4.21"
+.\" Copyright 1998-2009 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-meta.5,v 1.46.2.11 2008/07/10 00:28:39 quanah Exp $
+.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd-meta.5,v 1.46.2.17 2009/12/15 20:37:40 quanah Exp
 .\"
 .\" Portions of this document should probably be moved to slapd-ldap(5)
 .\" and maybe manual pages for librewrite.
 .\"
 .SH NAME
-slapd-meta \- metadirectory backend to slapd
+slapd\-meta \- metadirectory backend to slapd
 .SH SYNOPSIS
 /etc/openldap/slapd.conf
 .SH DESCRIPTION
@@ -38,18 +38,27 @@ excessive overhead for some applications, so its use should be
 carefully considered.
 In the examples section, some typical scenarios will be discussed.
 
+The proxy instance of
+.BR slapd (8)
+must contain schema information for the attributes and objectClasses
+used in filters, request DN and request-related data in general.
+It should also contain schema information for the data returned
+by the proxied server.
+It is the responsibility of the proxy administrator to keep the schema
+of the proxy lined up with that of the proxied server.
+
 .LP
 Note: When looping back to the same instance of \fBslapd\fP(8), 
 each connection requires a new thread; as a consequence, \fBslapd\fP(8)
 must be compiled with thread support, and the \fBthreads\fP parameter 
 may need some tuning; in those cases, unless the multiple target feature
-is required, one may consider using \fBslapd-relay\fP(5) instead, 
+is required, one may consider using \fBslapd\-relay\fP(5) instead, 
 which performs the relayed operation internally and thus reuses 
 the same connection.
 
 .SH EXAMPLES
 There are examples in various places in this document, as well as in the
-slapd/back-meta/data/ directory in the OpenLDAP source tree.
+slapd/back\-meta/data/ directory in the OpenLDAP source tree.
 .SH CONFIGURATION
 These
 .B slapd.conf
@@ -87,12 +96,12 @@ to all backends.
 They are:
 
 .TP
-.B conn-ttl <time>
+.B conn\-ttl <time>
 This directive causes a cached connection to be dropped an recreated
 after a given ttl, regardless of being idle or not.
 
 .TP
-.B default-target none
+.B default\-target none
 This directive forces the backend to reject all those operations
 that must resolve to a single target in case none or multiple
 targets are selected.
@@ -104,14 +113,14 @@ This directive can also be used when processing targets to mark a
 specific target as default.
 
 .TP
-.B dncache-ttl {DISABLED|forever|<ttl>}
+.B dncache\-ttl {DISABLED|forever|<ttl>}
 This directive sets the time-to-live of the DN cache.
 This caches the target that holds a given DN to speed up target
 selection in case multiple targets would result from an uncached
 search; forever means cache never expires; disabled means no DN
 caching; otherwise a valid ( > 0 ) ttl is required, in the format
 illustrated for the 
-.B idle-timeout
+.B idle\-timeout
 directive.
 
 .TP
@@ -137,6 +146,19 @@ If set before any target specification, it affects all targets, unless
 overridden by any per-target directive.
 
 .TP
+.B noundeffilter <NO|yes>
+If
+.BR yes ,
+return success instead of searching if a filter is undefined or contains
+undefined portions.
+By default, the search is propagated after replacing undefined portions
+with
+.BR (!(objectClass=*)) ,
+which corresponds to the empty result set.
+If set before any target specification, it affects all targets, unless
+overridden by any per-target directive.
+
+.TP
 .B protocol\-version {0,2,3}
 This directive indicates what protocol version must be used to contact
 the remote server.
@@ -148,11 +170,13 @@ If set before any target specification, it affects all targets, unless
 overridden by any per-target directive.
 
 .TP
-.B pseudoroot-bind-defer {YES|no}
+.B pseudoroot\-bind\-defer {YES|no}
 This directive, when set to 
 .BR yes ,
 causes the authentication to the remote servers with the pseudo-root
-identity to be deferred until actually needed by subsequent operations.
+identity (the identity defined in each
+.B idassert-bind
+directive) to be deferred until actually needed by subsequent operations.
 Otherwise, all binds as the rootdn are propagated to the targets.
 
 .TP
@@ -174,11 +198,11 @@ This directive must appear before any target specification;
 it affects all targets with the same pattern.
 
 .TP
-.B rebind-as-user {NO|yes}
+.B rebind\-as\-user {NO|yes}
 If this option is given, the client's bind credentials are remembered
 for rebinds, when trying to re-establish a broken connection,
 or when chasing a referral, if 
-.B chase-referrals
+.B chase\-referrals
 is set to
 .IR yes .
 
@@ -196,7 +220,7 @@ overridden by any per-target directive.
 Discards current cached connection when the client rebinds.
 
 .TP
-.B use-temporary-conn {NO|yes}
+.B use\-temporary\-conn {NO|yes}
 when set to 
 .BR yes ,
 create a temporary connection whenever competing with other threads
@@ -249,54 +273,54 @@ the last URI that succeeded.
 .RE
 
 .TP
-.B acl-authcDN "<administrative DN for access control purposes>"
+.B acl\-authcDN "<administrative DN for access control purposes>"
 DN which is used to query the target server for acl checking,
 as in the LDAP backend; it is supposed to have read access 
 on the target server to attributes used on the proxy for acl checking.
 There is no risk of giving away such values; they are only used to
 check permissions.
-.B The acl-authcDN identity is by no means implicitly used by the proxy 
+.B The acl\-authcDN identity is by no means implicitly used by the proxy 
 .B when the client connects anonymously.
 
 .TP
-.B acl-passwd <password>
+.B acl\-passwd <password>
 Password used with the
 .B 
-acl-authcDN
+acl\-authcDN
 above.
 
 .TP
-.B bind-timeout <microseconds>
+.B bind\-timeout <microseconds>
 This directive defines the timeout, in microseconds, used when polling
 for response after an asynchronous bind connection.  The initial call
 to ldap_result(3) is performed with a trade-off timeout of 100000 us;
 if that results in a timeout exceeded, subsequent calls use the value
 provided with
-.BR bind-timeout .
+.BR bind\-timeout .
 The default value is used also for subsequent calls if
-.B bind-timeout
+.B bind\-timeout
 is not specified.
 If set before any target specification, it affects all targets, unless
 overridden by any per-target directive.
 
 .TP
-.B chase-referrals {YES|no}
+.B chase\-referrals {YES|no}
 enable/disable automatic referral chasing, which is delegated to the
 underlying libldap, with rebinding eventually performed if the
-\fBrebind-as-user\fP directive is used.  The default is to chase referrals.
+\fBrebind\-as\-user\fP directive is used.  The default is to chase referrals.
 If set before any target specification, it affects all targets, unless
 overridden by any per-target directive.
 
 .TP
-.B default-target [<target>]
-The "default-target" directive can also be used during target specification.
+.B default\-target [<target>]
+The "default\-target" directive can also be used during target specification.
 With no arguments it marks the current target as the default.
 The optional number marks target <target> as the default one, starting
 from 1.
 Target <target> must be defined.
 
 .TP
-.B idassert-authzFrom <authz-regexp>
+.B idassert\-authzFrom <authz-regexp>
 if defined, selects what
 .I local
 identities are authorized to exploit the identity assertion feature.
@@ -308,22 +332,24 @@ attribute.
 See 
 .BR slapd.conf (5),
 section related to
-.BR authz-policy ,
+.BR authz\-policy ,
 for details on the syntax of this field.
 
 .HP
 .hy 0
-.B idassert-bind
+.B idassert\-bind
 .B bindmethod=none|simple|sasl [binddn=<simple DN>] [credentials=<simple password>]
 .B [saslmech=<SASL mech>] [secprops=<properties>] [realm=<realm>]
 .B [authcId=<authentication ID>] [authzId=<authorization ID>]
 .B [authz={native|proxyauthz}] [mode=<mode>] [flags=<flags>]
+.B [starttls=no|yes|critical]
 .B [tls_cert=<file>]
 .B [tls_key=<file>]
 .B [tls_cacert=<file>]
 .B [tls_cacertdir=<path>]
 .B [tls_reqcert=never|allow|try|demand]
 .B [tls_ciphersuite=<ciphers>]
+.B [tls_protocol_min=<version>]
 .B [tls_crlcheck=none|peer|all]
 .RS
 Allows to define the parameters of the authentication method that is 
@@ -338,7 +364,7 @@ This requires to have
 privileges on a wide set of DNs, e.g.
 .BR authzTo=dn.subtree:"" ,
 and the remote server to have
-.B authz-policy
+.B authz\-policy
 set to
 .B to
 or
@@ -407,7 +433,7 @@ as the
 or a SASL bind as the
 .IR authcID ,
 unless restricted by
-.BR idassert-authzFrom
+.BR idassert\-authzFrom
 rules (see below), in which case the operation will fail;
 eventually, it will assert some other identity according to
 .BR <mode> .
@@ -438,7 +464,7 @@ useful when the asserted identities do not exist on the remote server.
 
 Flags can be
 
-\fBoverride,[non-]prescriptive\fP
+\fBoverride,[non\-]prescriptive\fP
 
 When the 
 .B override
@@ -453,13 +479,13 @@ When the
 flag is used (the default), operations fail with
 \fIinappropriateAuthentication\fP
 for those identities whose assertion is not allowed by the
-.B idassert-authzFrom
+.B idassert\-authzFrom
 patterns.
 If the 
-.B non-prescriptive
+.B non\-prescriptive
 flag is used, operations are performed anonymously for those identities 
 whose assertion is not allowed by the
-.B idassert-authzFrom
+.B idassert\-authzFrom
 patterns.
 
 The TLS settings default to the same as the main slapd TLS settings,
@@ -468,12 +494,12 @@ except for
 which defaults to "demand".
 
 The identity associated to this directive is also used for privileged
-operations whenever \fBidassert-bind\fP is defined and \fBacl-bind\fP
-is not.  See \fBacl-bind\fP for details.
+operations whenever \fBidassert\-bind\fP is defined and \fBacl\-bind\fP
+is not.  See \fBacl\-bind\fP for details.
 .RE
 
 .TP
-.B idle-timeout <time>
+.B idle\-timeout <time>
 This directive causes a cached connection to be dropped an recreated
 after it has been idle for the specified time.
 The value can be specified as
@@ -489,17 +515,17 @@ overridden by any per-target directive.
 .B map "{attribute|objectclass} [<local name>|*] {<foreign name>|*}"
 This maps object classes and attributes as in the LDAP backend.
 See
-.BR slapd-ldap (5).
+.BR slapd\-ldap (5).
 
 .TP
-.B network-timeout <time>
+.B network\-timeout <time>
 Sets the network timeout value after which
 .BR poll (2)/ select (2) 
 following a 
 .BR connect (2) 
 returns in case of no activity.
 The value is in seconds, and it can be specified as for
-.BR idle-timeout .
+.BR idle\-timeout .
 If set before any target specification, it affects all targets, unless
 overridden by any per-target directive.
 
@@ -515,31 +541,27 @@ specification.
 
 .TP
 .B pseudorootdn "<substitute DN in case of rootdn bind>"
-This directive, if present, sets the DN that will be substituted to
-the bind DN if a bind with the backend's "rootdn" succeeds.
-The true "rootdn" of the target server ought not be used; an arbitrary
-administrative DN should used instead.
+Deprecated; use
+.B idassert\-bind
+instead.
 
 .TP
 .B pseudorootpw "<substitute password in case of rootdn bind>"
-This directive sets the credential that will be used in case a bind
-with the backend's "rootdn" succeeds, and the bind is propagated to
-the target using the "pseudorootdn" DN.
-
-Note: cleartext credentials must be supplied here; as a consequence,
-using the pseudorootdn/pseudorootpw directives is inherently unsafe.
+Deprecated; use
+.B idassert\-bind
+instead.
 
 .TP
 .B rewrite* ...
 The rewrite options are described in the "REWRITING" section.
 
 .TP
-.B subtree-exclude "<DN>"
+.B subtree\-exclude "<DN>"
 This directive instructs back-meta to ignore the current target
 for operations whose requestDN is subordinate to
 .BR DN .
 There may be multiple occurrences of the
-.B subtree-exclude
+.B subtree\-exclude
 directive for each of the targets.
 
 .TP
@@ -556,7 +578,7 @@ massaging.  See the "REWRITING" section for a detailed list
 of the rewrite rules it implies.
 
 .TP
-.B t-f-support {NO|yes|discover}
+.B t\-f\-support {NO|yes|discover}
 enable if the remote server supports absolute filters
 (see \fIdraft-zeilenga-ldap-t-f\fP for details).
 If set to
@@ -597,12 +619,12 @@ In case the timeout is exceeded during a bind operation, the connection
 is destroyed, according to RFC4511.
 
 .TP
-.B tls {[try-]start|[try-]propagate}
+.B tls {[try\-]start|[try\-]propagate}
 execute the StartTLS extended operation when the connection is initialized;
 only works if the URI directive protocol scheme is not \fBldaps://\fP.
 \fBpropagate\fP issues the StartTLS operation only if the original
 connection did.
-The \fBtry-\fP prefix instructs the proxy to continue operations
+The \fBtry\-\fP prefix instructs the proxy to continue operations
 if the StartTLS operation failed; its use is highly deprecated.
 If set before any target specification, it affects all targets, unless
 overridden by any per-target directive.
@@ -933,7 +955,7 @@ Each basic server operation is associated to a rewrite context;
 they are divided in two main groups: client \-> server and
 server \-> client rewriting.
 .LP
-client -> server:
+client \-> server:
 .LP
 .RS
 .nf
@@ -956,7 +978,7 @@ exopPasswdDN         password modify extended operation DN if proxy
 .fi
 .RE
 .LP
-server -> client:
+server \-> client:
 .LP
 .RS
 .nf
@@ -1175,7 +1197,7 @@ operation is honored, which is performed by the frontend.
 The proxy cache overlay 
 allows caching of LDAP search requests (queries) in a local database.
 See 
-.BR slapo-pcache (5)
+.BR slapo\-pcache (5)
 for details.
 .SH FILES
 .TP
