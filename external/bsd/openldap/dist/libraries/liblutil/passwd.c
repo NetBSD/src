@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: passwd.c,v 1.2 2010/03/08 04:58:18 lukem Exp $	*/
 
 /* OpenLDAP: pkg/ldap/libraries/liblutil/passwd.c,v 1.104.2.9 2009/08/30 22:55:47 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <ac/stdlib.h>
 #include <ac/string.h>
+#include <ac/time.h>
 #include <ac/unistd.h>
 
 #if defined(SLAPD_LMHASH)
