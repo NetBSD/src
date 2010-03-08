@@ -1,11 +1,13 @@
 Tools           ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
-ldapcompare      * DE**HI*K M*OPQR  UVWXYZ   de *h**k *nop*    vwxyz
-ldapdelete       *CDE**HI*K M*OPQR  UVWXYZ  cdef*h**k *nop*    vwxyz
-ldapmodify       *CDE**HI*K M*OPQRS UVWXYZabcde *h**k *nop*r t vwxy
-ldapmodrdn       *CDE**HI*K M*OPQR  UVWXYZ  cdef*h**k *nop*rs  vwxy
-ldappasswd      A*CDE**HI*   *O QRS UVWXYZa  def*h**  * o * s  vwxy  
-ldapsearch      A*CDE**HI*KLM*OPQRSTUVWXYZab def*h**kl*nop* stuvwxyz
-ldapwhoami       * DE**HI*   *O QR  UVWXYZ   def*h**  *nop*    vwxy 
+ldapcompare      * DE**HI** MNOPQR  UVWXYZ   de *h*** *nop*    vwxyz
+ldapdelete       *CDE**HI** MNOPQR  UVWXYZ  cdef*h*** *nop*    vwxyz
+ldapexop         * D **HI**  NO QR  UVWXYZ   de *h*** *nop     vwxy
+ldapmodify       *CDE**HI** MNOPQRS UVWXYZabcde *h*** *nop*r t vwxy
+ldapmodrdn       *CDE**HI** MNOPQR  UVWXYZ  cdef*h*** *nop*rs  vwxy
+ldappasswd      A*CDE**HI**  NO QRS UVWXYZa  def*h*** * o * s  vwxy  
+ldapsearch      A*CDE**HI**LMNOPQRSTUVWXYZab def*h***l*nop* stuvwxyz
+ldapurl          *  E**H **       S       ab   f*h*** *  p* s
+ldapwhoami       * DE**HI**  NO QR  UVWXYZ   def*h*** *nop*    vwxy 
 
 
 * reserved
@@ -32,6 +34,8 @@ ldapwhoami       * DE**HI*   *O QR  UVWXYZ   def*h**  *nop*    vwxy
 	-x simple bind
 	-y Bind password-file
 	-w Bind password
+
+Not used
 	-4 IPv4 only
 	-6 IPv6 only
 
@@ -50,10 +54,10 @@ ldapwhoami       * DE**HI*   *O QR  UVWXYZ   def*h**  *nop*    vwxy
 	-Q SASL quiet mode (default: automatic)
 
 
-* LDAPv2+ Only (DEPRECATED)
+* LDAPv2+ Only (REMOVED)
 	-K LDAPv2 Kerberos Bind (Step 1 only)
 	-k LDAPv2 Kerberos Bind
 
 
 ---
-$OpenLDAP: pkg/ldap/doc/devel/args,v 1.29.2.3 2008/02/09 00:53:37 quanah Exp $
+OpenLDAP: pkg/ldap/doc/devel/args,v 1.29.2.5 2009/01/21 00:27:40 quanah Exp

@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/admin/slapdconfig.sdf,v 1.87.2.14 2008/04/14 20:48:16 quanah Exp $
-# Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
+# OpenLDAP: pkg/openldap-guide/admin/slapdconfig.sdf,v 1.87.2.20 2009/06/27 17:55:39 quanah Exp
+# Copyright 1999-2009 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: The slapd Configuration File
@@ -27,7 +27,7 @@ be overridden in backend and/or database directives, and backend directives
 can be overridden by database directives.
 
 Blank lines and comment lines beginning with a '{{EX:#}}' character
-are ignored.  If a line begins with white space, it is considered a
+are ignored.  If a line begins with whitespace, it is considered a
 continuation of the previous line (even if the previous line is a
 comment).
 
@@ -56,7 +56,7 @@ The general format of slapd.conf is as follows:
 >	...
 
 A configuration directive may take arguments.  If so, they are
-separated by white space.  If an argument contains white space,
+separated by whitespace.  If an argument contains whitespace,
 the argument should be enclosed in double quotes {{EX:"like this"}}. If
 an argument contains a double quote or a backslash character `{{EX:\}}',
 the character should be preceded by a backslash character `{{EX:\}}'.
@@ -136,40 +136,67 @@ and operation statistics should be syslogged (currently logged to
 the {{syslogd}}(8) {{EX:LOG_LOCAL4}} facility). You must have
 configured OpenLDAP {{EX:--enable-debug}} (the default) for this
 to work (except for the two statistics levels, which are always
-enabled).  Log levels are additive. To display what numbers
-correspond to what kind of debugging, invoke slapd with {{EX:-?}}
+enabled). Log levels may be specified as integers or by keyword.
+Multiple log levels may be used and the levels are additive. To display what
+numbers correspond to what kind of debugging, invoke slapd with {{EX:-d?}}
 or consult the table below. The possible values for <integer> are:
 
 !block table; colaligns="RL"; align=Center; \
 	title="Table 6.1: Debugging Levels"
-Level	Description
--1	enable all debugging
-0	no debugging
-1	trace function calls
-2	debug packet handling
-4	heavy trace debugging
-8	connection management
-16	print out packets sent and received
-32	search filter processing
-64	configuration file processing
-128	access control list processing
-256	stats log connections/operations/results
-512	stats log entries sent
-1024	print communication with shell backends
-2048	print entry parsing debugging
+Level	Keyword		Description
+-1	any		enable all debugging
+0			no debugging
+1	(0x1 trace)	trace function calls
+2	(0x2 packets)	debug packet handling
+4	(0x4 args)	heavy trace debugging
+8	(0x8 conns)	connection management
+16	(0x10 BER)	print out packets sent and received
+32	(0x20 filter)	search filter processing
+64	(0x40 config)	configuration processing
+128	(0x80 ACL)	access control list processing
+256	(0x100 stats)	stats log connections/operations/results
+512	(0x200 stats2)	stats log entries sent
+1024	(0x400 shell)	print communication with shell backends
+2048	(0x800 parse)	print entry parsing debugging
+16384	(0x4000 sync)	syncrepl consumer processing
+32768	(0x8000 none)	only messages that get logged whatever log level is set
 !endblock
 
-\Example:
+The desired log level can be input as a single integer that
+combines the (ORed) desired levels, both in decimal or in hexadecimal 
+notation, as a list of integers (that are ORed internally), or as a list of the names that are shown between brackets, such that
+
+>		loglevel 129
+>		loglevel 0x81
+>		loglevel 128 1
+>		loglevel 0x80 0x1
+>		loglevel acl trace
+
+are equivalent.
+
+\Examples:
 
 E: loglevel -1
 
 This will cause lots and lots of debugging information to be
 logged.
 
+E: loglevel conns filter
+
+Just log the connection and search filter processing.
+
+E: loglevel none
+
+Log those messages that are logged regardless of the configured loglevel. This
+differs from setting the log level to 0, when no logging occurs. At least the
+{{EX:None}} level is required to have high priority messages logged.
+
 \Default:
 
-E: loglevel 256
+E: loglevel stats
 
+Basic stats logging is configured by default. However, if no loglevel is
+defined, no logging occurs (equivalent to a 0 level).
 
 H4: objectclass <{{REF:RFC4512}} Object Class Description>
 
@@ -203,6 +230,8 @@ from a search operation.
 
 >	sizelimit 500
 
+See the {{SECT:Limits}} section of this guide and slapd.conf(5)
+for more details.
 
 H4: timelimit <integer>
 
@@ -214,6 +243,9 @@ exceeded timelimit will be returned.
 \Default:
 
 >	timelimit 3600
+
+See the {{SECT:Limits}} section of this guide and slapd.conf(5)
+for more details.
 
 
 H3: General Backend Directives
@@ -271,6 +303,14 @@ supported backend types listed in Table 6.2.
 
 This marks the beginning of a new {{TERM:BDB}} database instance
 declaration.
+
+
+H4: limits <who> <limit> [<limit> [...]]
+
+Specify time and size limits based on who initiated an operation.
+
+See the {{SECT:Limits}} section of this guide and slapd.conf(5)
+for more details.
 
 
 H4: readonly { on | off }
@@ -533,3 +573,91 @@ containing the database and associated indices live.
 \Default:
 
 >	directory /usr/local/var/openldap-data
+
+
+H2: Configuration File Example
+
+The following is an example configuration file, interspersed
+with explanatory text. It defines two databases to handle
+different parts of the {{TERM:X.500}} tree; both are {{TERM:BDB}}
+database instances. The line numbers shown are provided for
+reference only and are not included in the actual file. First, the
+global configuration section:
+
+E:  1.    # example config file - global configuration section
+E:  2.    include /usr/local/etc/schema/core.schema
+E:  3.    referral ldap://root.openldap.org
+E:  4.    access to * by * read
+ 
+Line 1 is a comment. Line 2 includes another config file
+which contains {{core}} schema definitions.
+The {{EX:referral}} directive on line 3
+means that queries not local to one of the databases defined
+below will be referred to the LDAP server running on the
+standard port (389) at the host {{EX:root.openldap.org}}.
+
+Line 4 is a global access control.  It applies to all
+entries (after any applicable database-specific access
+controls).
+
+The next section of the configuration file defines a BDB
+backend that will handle queries for things in the
+"dc=example,dc=com" portion of the tree. The
+database is to be replicated to two slave slapds, one on
+truelies, the other on judgmentday. Indices are to be
+maintained for several attributes, and the {{EX:userPassword}}
+attribute is to be protected from unauthorized access.
+
+E:  5.    # BDB definition for the example.com
+E:  6.    database bdb
+E:  7.    suffix "dc=example,dc=com"
+E:  8.    directory /usr/local/var/openldap-data
+E:  9.    rootdn "cn=Manager,dc=example,dc=com"
+E: 10.    rootpw secret
+E: 11.    # indexed attribute definitions
+E: 12.    index uid pres,eq
+E: 13.    index cn,sn,uid pres,eq,approx,sub
+E: 14.    index objectClass eq
+E: 15.    # database access control definitions
+E: 16.    access to attrs=userPassword
+E: 17.        by self write
+E: 18.        by anonymous auth
+E: 19.        by dn.base="cn=Admin,dc=example,dc=com" write
+E: 20.        by * none
+E: 21.    access to *
+E: 22.        by self write
+E: 23.        by dn.base="cn=Admin,dc=example,dc=com" write
+E: 24.        by * read
+
+Line 5 is a comment. The start of the database definition is marked
+by the database keyword on line 6. Line 7 specifies the DN suffix
+for queries to pass to this database. Line 8 specifies the directory
+in which the database files will live.
+
+Lines 9 and 10 identify the database {{super-user}} entry and associated
+password. This entry is not subject to access control or size or
+time limit restrictions.
+
+Lines 12 through 14 indicate the indices to maintain for various
+attributes.
+
+Lines 16 through 24 specify access control for entries in this
+database. For all applicable entries, the {{EX:userPassword}} attribute is writable
+by the entry itself and by the "admin" entry.  It may be used for
+authentication/authorization purposes, but is otherwise not readable.
+All other attributes are writable by the entry and the "admin"
+entry, but may be read by all users (authenticated or not).
+
+The next section of the example configuration file defines another
+BDB database. This one handles queries involving the
+{{EX:dc=example,dc=net}} subtree but is managed by the same entity
+as the first database.  Note that without line 39, the read access
+would be allowed due to the global access rule at line 4.
+
+E: 33.    # BDB definition for example.net
+E: 34.    database bdb
+E: 35.    suffix "dc=example,dc=net"
+E: 36.    directory /usr/local/var/openldap-data-net
+E: 37.    rootdn "cn=Manager,dc=example,dc=com"
+E: 38.    index objectClass eq
+E: 39.    access to * by users read

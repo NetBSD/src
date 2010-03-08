@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-addel.c,v 1.41.2.6 2008/04/14 21:43:13 quanah Exp $ */
+/*	$NetBSD: slapd-addel.c,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/tests/progs/slapd-addel.c,v 1.41.2.8 2009/01/22 00:01:17 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -427,7 +429,7 @@ retry:;
 	}
 
 done:;
-	fprintf( stderr, " PID=%ld - Add/Delete done (%d).\n", (long) pid, rc );
+	fprintf( stderr, "  PID=%ld - Add/Delete done (%d).\n", (long) pid, rc );
 
 	ldap_unbind_ext( ld, NULL, NULL );
 }

@@ -390,3 +390,13 @@ homephone: +1 313 555 8421
 pager: +1 313 555 2844
 facsimiletelephonenumber: +1 313 555 9700
 telephonenumber: +1 313 555 5331
+
+dn: dc=testdomain1,dc=example,dc=com
+objectclass: domain
+dc: testdomain1
+description: Example, Inc. modify+modrdn test domain
+
+dn: dc=testdomain2,dc=example,dc=com
+objectclass: domain
+dc: testdomain2
+description: Example, Inc. modify then modrdn test domain 

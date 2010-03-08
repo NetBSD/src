@@ -51,8 +51,6 @@ modifiersName: cn=Manager,dc=example,dc=com
 
 dn: cn=Barbara Jensen,ou=Information Technology Division,ou=People,dc=example,
  dc=com
-objectClass: OpenLDAPperson
-objectClass: obsoletePerson
 cn: Barbara Jensen
 cn: Babs Jensen
 sn:: IEplbnNlbiA=
@@ -72,11 +70,12 @@ facsimileTelephoneNumber: +1 313 555 2274
 telephoneNumber: +1 313 555 9022
 creatorsName: cn=Manager,dc=example,dc=com
 testObsolete: TRUE
+objectClass: obsoletePerson
+objectClass: testPerson
 modifiersName: cn=Manager,dc=example,dc=com
 
 dn: cn=Bjorn Jensen,ou=Information Technology Division,ou=People,dc=example,dc
  =com
-objectClass: OpenLDAPperson
 cn: Bjorn Jensen
 cn: Biiff Jensen
 sn: Jensen
@@ -94,6 +93,7 @@ pager: +1 313 555 4474
 facsimileTelephoneNumber: +1 313 555 2177
 telephoneNumber: +1 313 555 0355
 creatorsName: cn=Manager,dc=example,dc=com
+objectClass: testPerson
 modifiersName: cn=Manager,dc=example,dc=com
 
 dn: cn=Dorothy Stevens,ou=Alumni Association,ou=People,dc=example,dc=com
@@ -303,6 +303,7 @@ modifiersName: cn=Bjorn Jensen,ou=Information Technology Division,ou=People,dc
 
 dn: cn=James A Jones 1,ou=Alumni Association,ou=People,dc=example,dc=com
 objectClass: OpenLDAPperson
+objectClass: testPerson
 cn: James A Jones 1
 cn: James Jones
 cn: Jim Jones

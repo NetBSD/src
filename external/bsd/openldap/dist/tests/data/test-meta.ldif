@@ -1,6 +1,7 @@
 dn: ou=Meta,dc=example,dc=com
 objectClass: organizationalUnit
 ou: Meta
+seeAlso: dc=OpenLDAP,dc=org
 
 dn: cn=John Belushi,ou=Meta,dc=example,dc=com
 objectClass: inetOrgPerson
