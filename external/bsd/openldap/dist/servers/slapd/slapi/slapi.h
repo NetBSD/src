@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi.h,v 1.56.2.3 2008/02/11 23:26:49 kurt Exp $ */
+/*	$NetBSD: slapi.h,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi.h,v 1.56.2.4 2009/01/22 00:01:15 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2008 The OpenLDAP Foundation.
+ * Copyright 2002-2009 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *

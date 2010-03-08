@@ -1,8 +1,10 @@
+/*	$NetBSD: retcode.c,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+
 /* retcode.c - customizable response for client testing purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/retcode.c,v 1.18.2.7 2008/02/11 23:26:48 kurt Exp $ */
+/* OpenLDAP: pkg/ldap/servers/slapd/overlays/retcode.c,v 1.18.2.11 2009/11/22 19:39:43 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2008 The OpenLDAP Foundation.
+ * Copyright 2005-2009 The OpenLDAP Foundation.
  * Portions Copyright 2005 Pierangelo Masarati <ando@sys-net.it>
  * All rights reserved.
  *
@@ -67,6 +69,7 @@ typedef enum retcode_op_e {
 } retcode_op_e;
 
 typedef struct retcode_item_t {
+	struct berval		rdi_line;
 	struct berval		rdi_dn;
 	struct berval		rdi_ndn;
 	struct berval		rdi_text;
@@ -94,10 +97,9 @@ typedef struct retcode_t {
 
 	retcode_item_t		*rd_item;
 
-	unsigned		rd_flags;
-#define	RETCODE_FNONE		0x00
+	int			rd_indir;
 #define	RETCODE_FINDIR		0x01
-#define	RETCODE_INDIR( rd )	( (rd)->rd_flags & RETCODE_FINDIR )
+#define	RETCODE_INDIR( rd )	( (rd)->rd_indir )
 } retcode_t;
 
 static int
@@ -257,6 +259,9 @@ retcode_op_internal( Operation *op, SlapReply *rs )
 		1, &op2.ors_filterstr, op2.o_tmpmemctx );
 	op2.ors_filter = str2filter_x( &op2, op2.ors_filterstr.bv_val );
 
+	/* errAbsObject is defined by this overlay! */
+	assert( op2.ors_filter != NULL );
+
 	db.bd_info = on->on_info->oi_orig;
 	op2.o_bd = &db;
 
@@ -273,7 +278,7 @@ retcode_op_internal( Operation *op, SlapReply *rs )
 	rc = op2.o_bd->be_search( &op2, rs );
 	op->o_abandon = op2.o_abandon;
 
-	filter_free_x( &op2, op2.ors_filter );
+	filter_free_x( &op2, op2.ors_filter, 1 );
 	ber_memfree_x( op2.ors_filterstr.bv_val, op2.o_tmpmemctx );
 
 	if ( rdc.rdc_flags == SLAP_CB_CONTINUE ) {
@@ -742,93 +747,240 @@ retcode_db_init( BackendDB *be, ConfigReply *cr )
 	return 0;
 }
 
-static int
-retcode_db_config(
-	BackendDB	*be,
-	const char	*fname,
-	int		lineno,
-	int		argc,
-	char		**argv )
+static void
+retcode_item_destroy( retcode_item_t *rdi )
 {
-	slap_overinst	*on = (slap_overinst *)be->bd_info;
-	retcode_t	*rd = (retcode_t *)on->on_bi.bi_private;
+	ber_memfree( rdi->rdi_line.bv_val );
 
-	char			*argv0 = argv[ 0 ] + STRLENOF( "retcode-" );
+	ber_memfree( rdi->rdi_dn.bv_val );
+	ber_memfree( rdi->rdi_ndn.bv_val );
 
-	if ( strncasecmp( argv[ 0 ], "retcode-", STRLENOF( "retcode-" ) ) != 0 ) {
-		return SLAP_CONF_UNKNOWN;
+	if ( !BER_BVISNULL( &rdi->rdi_text ) ) {
+		ber_memfree( rdi->rdi_text.bv_val );
 	}
 
-	if ( strcasecmp( argv0, "parent" ) == 0 ) {
-		struct berval	dn;
-		int		rc;
+	if ( !BER_BVISNULL( &rdi->rdi_matched ) ) {
+		ber_memfree( rdi->rdi_matched.bv_val );
+	}
 
-		if ( argc != 2 ) {
-			fprintf( stderr, "%s: line %d: retcode: "
-				"\"retcode-parent <DN>\": missing <DN>\n",
-				fname, lineno );
-			return 1;
+	if ( rdi->rdi_ref ) {
+		ber_bvarray_free( rdi->rdi_ref );
+	}
+
+	BER_BVZERO( &rdi->rdi_e.e_name );
+	BER_BVZERO( &rdi->rdi_e.e_nname );
+
+	entry_clean( &rdi->rdi_e );
+
+	ch_free( rdi );
+}
+
+enum {
+	RC_PARENT = 1,
+	RC_ITEM
+};
+
+static ConfigDriver rc_cf_gen;
+
+static ConfigTable rccfg[] = {
+	{ "retcode-parent", "dn",
+		2, 2, 0, ARG_MAGIC|ARG_DN|RC_PARENT, rc_cf_gen,
+		"( OLcfgOvAt:20.1 NAME 'olcRetcodeParent' "
+			"DESC '' "
+			"SYNTAX OMsDN SINGLE-VALUE )", NULL, NULL },
+	{ "retcode-item", "rdn> <retcode> <...",
+		3, 0, 0, ARG_MAGIC|RC_ITEM, rc_cf_gen,
+		"( OLcfgOvAt:20.2 NAME 'olcRetcodeItem' "
+			"DESC '' "
+	  		"EQUALITY caseIgnoreMatch "
+			"SYNTAX OMsDirectoryString "
+			"X-ORDERED 'VALUES' )", NULL, NULL },
+	{ "retcode-indir", "on|off",
+		1, 2, 0, ARG_OFFSET|ARG_ON_OFF,
+			(void *)offsetof(retcode_t, rd_indir),
+		"( OLcfgOvAt:20.3 NAME 'olcRetcodeInDir' "
+			"DESC '' "
+			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
+
+	{ "retcode-sleep", "sleeptime",
+		2, 2, 0, ARG_OFFSET|ARG_INT,
+			(void *)offsetof(retcode_t, rd_sleep),
+		"( OLcfgOvAt:20.4 NAME 'olcRetcodeSleep' "
+			"DESC '' "
+			"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
+
+	{ NULL, NULL, 0, 0, 0, ARG_IGNORED }
+};
+
+static ConfigOCs rcocs[] = {
+	{ "( OLcfgOvOc:20.1 "
+		"NAME 'olcRetcodeConfig' "
+		"DESC 'Retcode configuration' "
+		"SUP olcOverlayConfig "
+		"MAY ( olcRetcodeParent "
+			"$ olcRetcodeItem "
+			"$ olcRetcodeInDir "
+			"$ olcRetcodeSleep "
+		") )",
+		Cft_Overlay, rccfg, NULL, NULL },
+	{ NULL, 0, NULL }
+};
+
+static int
+rc_cf_gen( ConfigArgs *c )
+{
+	slap_overinst	*on = (slap_overinst *)c->bi;
+	retcode_t	*rd = (retcode_t *)on->on_bi.bi_private;
+	int		rc = ARG_BAD_CONF;
+
+	if ( c->op == SLAP_CONFIG_EMIT ) {
+		switch( c->type ) {
+		case RC_PARENT:
+			if ( !BER_BVISEMPTY( &rd->rd_pdn )) {
+				rc = value_add_one( &c->rvalue_vals,
+						    &rd->rd_pdn );
+				if ( rc == 0 ) {
+					rc = value_add_one( &c->rvalue_nvals,
+							    &rd->rd_npdn );
+				}
+				return rc;
+			}
+			rc = 0;
+			break;
+
+		case RC_ITEM: {
+			retcode_item_t *rdi;
+			int i;
+
+			for ( rdi = rd->rd_item, i = 0; rdi; rdi = rdi->rdi_next, i++ ) {
+				char buf[4096];
+				struct berval bv;
+				char *ptr;
+
+				bv.bv_len = snprintf( buf, sizeof( buf ), SLAP_X_ORDERED_FMT, i );
+				bv.bv_len += rdi->rdi_line.bv_len;
+				ptr = bv.bv_val = ch_malloc( bv.bv_len + 1 );
+				ptr = lutil_strcopy( ptr, buf );
+				ptr = lutil_strncopy( ptr, rdi->rdi_line.bv_val, rdi->rdi_line.bv_len );
+				ber_bvarray_add( &c->rvalue_vals, &bv );
+			}
+			rc = 0;
+			} break;
+
+		default:
+			assert( 0 );
+			break;
 		}
 
-		if ( !BER_BVISNULL( &rd->rd_pdn ) ) {
-			fprintf( stderr, "%s: line %d: retcode: "
-				"parent already defined.\n", fname, lineno );
-			return 1;
+		return rc;
+
+	} else if ( c->op == LDAP_MOD_DELETE ) {
+		switch( c->type ) {
+		case RC_PARENT:
+			if ( rd->rd_pdn.bv_val ) {
+				ber_memfree ( rd->rd_pdn.bv_val );
+				rc = 0;
+			}
+			if ( rd->rd_npdn.bv_val ) {
+				ber_memfree ( rd->rd_npdn.bv_val );
+			}
+			break;
+
+		case RC_ITEM:
+			if ( c->valx == -1 ) {
+				retcode_item_t *rdi, *next;
+
+				for ( rdi = rd->rd_item; rdi != NULL; rdi = next ) {
+					next = rdi->rdi_next;
+					retcode_item_destroy( rdi );
+				}
+
+			} else {
+				retcode_item_t **rdip, *rdi;
+				int i;
+
+				for ( rdip = &rd->rd_item, i = 0; i <= c->valx && *rdip; i++, rdip = &(*rdip)->rdi_next )
+					;
+				if ( *rdip == NULL ) {
+					return 1;
+				}
+				rdi = *rdip;
+				*rdip = rdi->rdi_next;
+
+				retcode_item_destroy( rdi );
+			}
+			rc = 0;
+			break;
+
+		default:
+			assert( 0 );
+			break;
 		}
+		return rc;	/* FIXME */
+	}
 
-		ber_str2bv( argv[ 1 ], 0, 0, &dn );
-
-		rc = dnPrettyNormal( NULL, &dn, &rd->rd_pdn, &rd->rd_npdn, NULL );
-		if ( rc != LDAP_SUCCESS ) {
-			fprintf( stderr, "%s: line %d: retcode: "
-				"unable to normalize parent DN \"%s\": %d\n",
-				fname, lineno, argv[ 1 ], rc );
-			return 1;
+	switch( c->type ) {
+	case RC_PARENT:
+		if ( rd->rd_pdn.bv_val ) {
+			ber_memfree ( rd->rd_pdn.bv_val );
 		}
+		if ( rd->rd_npdn.bv_val ) {
+			ber_memfree ( rd->rd_npdn.bv_val );
+		}
+		rd->rd_pdn = c->value_dn;
+		rd->rd_npdn = c->value_ndn;
+		rc = 0;
+		break;
 
-	} else if ( strcasecmp( argv0, "item" ) == 0 ) {
+	case RC_ITEM: {
 		retcode_item_t	rdi = { BER_BVNULL }, **rdip;
 		struct berval		bv, rdn, nrdn;
-		int			rc;
 		char			*next = NULL;
+		int			i;
 
-		if ( argc < 3 ) {
-			fprintf( stderr, "%s: line %d: retcode: "
+		if ( c->argc < 3 ) {
+			snprintf( c->cr_msg, sizeof(c->cr_msg),
 				"\"retcode-item <RDN> <retcode> [<text>]\": "
-				"missing args\n",
-				fname, lineno );
-			return 1;
+				"missing args" );
+			Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
+				c->log, c->cr_msg, 0 );
+			return ARG_BAD_CONF;
 		}
 
-		ber_str2bv( argv[ 1 ], 0, 0, &bv );
+		ber_str2bv( c->argv[ 1 ], 0, 0, &bv );
 		
 		rc = dnPrettyNormal( NULL, &bv, &rdn, &nrdn, NULL );
 		if ( rc != LDAP_SUCCESS ) {
-			fprintf( stderr, "%s: line %d: retcode: "
-				"unable to normalize RDN \"%s\": %d\n",
-				fname, lineno, argv[ 1 ], rc );
-			return 1;
+			snprintf( c->cr_msg, sizeof(c->cr_msg),
+				"unable to normalize RDN \"%s\": %d",
+				c->argv[ 1 ], rc );
+			Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
+				c->log, c->cr_msg, 0 );
+			return ARG_BAD_CONF;
 		}
 
 		if ( !dnIsOneLevelRDN( &nrdn ) ) {
-			fprintf( stderr, "%s: line %d: retcode: "
-				"value \"%s\" is not a RDN\n",
-				fname, lineno, argv[ 1 ] );
-			return 1;
+			snprintf( c->cr_msg, sizeof(c->cr_msg),
+				"value \"%s\" is not a RDN",
+				c->argv[ 1 ] );
+			Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
+				c->log, c->cr_msg, 0 );
+			return ARG_BAD_CONF;
 		}
 
 		if ( BER_BVISNULL( &rd->rd_npdn ) ) {
 			/* FIXME: we use the database suffix */
-			if ( be->be_nsuffix == NULL ) {
-				fprintf( stderr, "%s: line %d: retcode: "
+			if ( c->be->be_nsuffix == NULL ) {
+				snprintf( c->cr_msg, sizeof(c->cr_msg),
 					"either \"retcode-parent\" "
-					"or \"suffix\" must be defined.\n",
-					fname, lineno );
-				return 1;
+					"or \"suffix\" must be defined" );
+				Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
+					c->log, c->cr_msg, 0 );
+				return ARG_BAD_CONF;
 			}
 
-			ber_dupbv( &rd->rd_pdn, &be->be_suffix[ 0 ] );
-			ber_dupbv( &rd->rd_npdn, &be->be_nsuffix[ 0 ] );
+			ber_dupbv( &rd->rd_pdn, &c->be->be_suffix[ 0 ] );
+			ber_dupbv( &rd->rd_npdn, &c->be->be_nsuffix[ 0 ] );
 		}
 
 		build_new_dn( &rdi.rdi_dn, &rd->rd_pdn, &rdn, NULL );
@@ -837,26 +989,26 @@ retcode_db_config(
 		ch_free( rdn.bv_val );
 		ch_free( nrdn.bv_val );
 
-		rdi.rdi_err = strtol( argv[ 2 ], &next, 0 );
-		if ( next == argv[ 2 ] || next[ 0 ] != '\0' ) {
-			fprintf( stderr, "%s: line %d: retcode: "
-				"unable to parse return code \"%s\"\n",
-				fname, lineno, argv[ 2 ] );
-			return 1;
+		rdi.rdi_err = strtol( c->argv[ 2 ], &next, 0 );
+		if ( next == c->argv[ 2 ] || next[ 0 ] != '\0' ) {
+			snprintf( c->cr_msg, sizeof(c->cr_msg),
+				"unable to parse return code \"%s\"",
+				c->argv[ 2 ] );
+			Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
+				c->log, c->cr_msg, 0 );
+			return ARG_BAD_CONF;
 		}
 
 		rdi.rdi_mask = SN_DG_OP_ALL;
 
-		if ( argc > 3 ) {
-			int	i;
-
-			for ( i = 3; i < argc; i++ ) {
-				if ( strncasecmp( argv[ i ], "op=", STRLENOF( "op=" ) ) == 0 )
+		if ( c->argc > 3 ) {
+			for ( i = 3; i < c->argc; i++ ) {
+				if ( strncasecmp( c->argv[ i ], "op=", STRLENOF( "op=" ) ) == 0 )
 				{
 					char		**ops;
 					int		j;
 
-					ops = ldap_str2charray( &argv[ i ][ STRLENOF( "op=" ) ], "," );
+					ops = ldap_str2charray( &c->argv[ i ][ STRLENOF( "op=" ) ], "," );
 					assert( ops != NULL );
 
 					rdi.rdi_mask = SN_DG_OP_NONE;
@@ -901,65 +1053,74 @@ retcode_db_config(
 							rdi.rdi_mask |= SN_DG_OP_ALL;
 
 						} else {
-							fprintf( stderr, "retcode: unknown op \"%s\"\n",
+							snprintf( c->cr_msg, sizeof(c->cr_msg),
+								"unknown op \"%s\"",
 								ops[ j ] );
 							ldap_charray_free( ops );
-							return 1;
+							Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
+								c->log, c->cr_msg, 0 );
+							return ARG_BAD_CONF;
 						}
 					}
 
 					ldap_charray_free( ops );
 
-				} else if ( strncasecmp( argv[ i ], "text=", STRLENOF( "text=" ) ) == 0 )
+				} else if ( strncasecmp( c->argv[ i ], "text=", STRLENOF( "text=" ) ) == 0 )
 				{
 					if ( !BER_BVISNULL( &rdi.rdi_text ) ) {
-						fprintf( stderr, "%s: line %d: retcode: "
-							"\"text\" already provided.\n",
-							fname, lineno );
-						return 1;
+						snprintf( c->cr_msg, sizeof(c->cr_msg),
+							"\"text\" already provided" );
+						Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
+							c->log, c->cr_msg, 0 );
+						return ARG_BAD_CONF;
 					}
-					ber_str2bv( &argv[ i ][ STRLENOF( "text=" ) ], 0, 1, &rdi.rdi_text );
+					ber_str2bv( &c->argv[ i ][ STRLENOF( "text=" ) ], 0, 1, &rdi.rdi_text );
 
-				} else if ( strncasecmp( argv[ i ], "matched=", STRLENOF( "matched=" ) ) == 0 )
+				} else if ( strncasecmp( c->argv[ i ], "matched=", STRLENOF( "matched=" ) ) == 0 )
 				{
 					struct berval	dn;
 
 					if ( !BER_BVISNULL( &rdi.rdi_matched ) ) {
-						fprintf( stderr, "%s: line %d: retcode: "
-							"\"matched\" already provided.\n",
-							fname, lineno );
-						return 1;
+						snprintf( c->cr_msg, sizeof(c->cr_msg),
+							"\"matched\" already provided" );
+						Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
+							c->log, c->cr_msg, 0 );
+						return ARG_BAD_CONF;
 					}
-					ber_str2bv( &argv[ i ][ STRLENOF( "matched=" ) ], 0, 0, &dn );
+					ber_str2bv( &c->argv[ i ][ STRLENOF( "matched=" ) ], 0, 0, &dn );
 					if ( dnPretty( NULL, &dn, &rdi.rdi_matched, NULL ) != LDAP_SUCCESS ) {
-						fprintf( stderr, "%s: line %d: retcode: "
-							"unable to prettify matched DN \"%s\".\n",
-							fname, lineno, &argv[ i ][ STRLENOF( "matched=" ) ] );
-						return 1;
+						snprintf( c->cr_msg, sizeof(c->cr_msg),
+							"unable to prettify matched DN \"%s\"",
+							&c->argv[ i ][ STRLENOF( "matched=" ) ] );
+						Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
+							c->log, c->cr_msg, 0 );
+						return ARG_BAD_CONF;
 					}
 
-				} else if ( strncasecmp( argv[ i ], "ref=", STRLENOF( "ref=" ) ) == 0 )
+				} else if ( strncasecmp( c->argv[ i ], "ref=", STRLENOF( "ref=" ) ) == 0 )
 				{
 					char		**refs;
 					int		j;
 
 					if ( rdi.rdi_ref != NULL ) {
-						fprintf( stderr, "%s: line %d: retcode: "
-							"\"ref\" already provided.\n",
-							fname, lineno );
-						return 1;
+						snprintf( c->cr_msg, sizeof(c->cr_msg),
+							"\"ref\" already provided" );
+						Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
+							c->log, c->cr_msg, 0 );
+						return ARG_BAD_CONF;
 					}
 
 					if ( rdi.rdi_err != LDAP_REFERRAL ) {
-						fprintf( stderr, "%s: line %d: retcode: "
-							"providing \"ref\"\n"
-							"\talong with a non-referral "
-							"resultCode may cause slapd failures\n"
-							"\trelated to internal checks.\n",
-							fname, lineno );
+						snprintf( c->cr_msg, sizeof(c->cr_msg),
+							"providing \"ref\" "
+							"along with a non-referral "
+							"resultCode may cause slapd failures "
+							"related to internal checks" );
+						Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
+							c->log, c->cr_msg, 0 );
 					}
 
-					refs = ldap_str2charray( &argv[ i ][ STRLENOF( "ref=" ) ], " " );
+					refs = ldap_str2charray( &c->argv[ i ][ STRLENOF( "ref=" ) ], " " );
 					assert( refs != NULL );
 
 					for ( j = 0; refs[ j ] != NULL; j++ ) {
@@ -971,56 +1132,61 @@ retcode_db_config(
 
 					ldap_charray_free( refs );
 
-				} else if ( strncasecmp( argv[ i ], "sleeptime=", STRLENOF( "sleeptime=" ) ) == 0 )
+				} else if ( strncasecmp( c->argv[ i ], "sleeptime=", STRLENOF( "sleeptime=" ) ) == 0 )
 				{
 					if ( rdi.rdi_sleeptime != 0 ) {
-						fprintf( stderr, "%s: line %d: retcode: "
-							"\"sleeptime\" already provided.\n",
-							fname, lineno );
-						return 1;
+						snprintf( c->cr_msg, sizeof(c->cr_msg),
+							"\"sleeptime\" already provided" );
+						Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
+							c->log, c->cr_msg, 0 );
+						return ARG_BAD_CONF;
 					}
 
-					if ( lutil_atoi( &rdi.rdi_sleeptime, &argv[ i ][ STRLENOF( "sleeptime=" ) ] ) ) {
-						fprintf( stderr, "%s: line %d: retcode: "
-							"unable to parse \"sleeptime=%s\".\n",
-							fname, lineno, &argv[ i ][ STRLENOF( "sleeptime=" ) ] );
-						return 1;
+					if ( lutil_atoi( &rdi.rdi_sleeptime, &c->argv[ i ][ STRLENOF( "sleeptime=" ) ] ) ) {
+						snprintf( c->cr_msg, sizeof(c->cr_msg),
+							"unable to parse \"sleeptime=%s\"",
+							&c->argv[ i ][ STRLENOF( "sleeptime=" ) ] );
+						Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
+							c->log, c->cr_msg, 0 );
+						return ARG_BAD_CONF;
 					}
 
-				} else if ( strncasecmp( argv[ i ], "unsolicited=", STRLENOF( "unsolicited=" ) ) == 0 )
+				} else if ( strncasecmp( c->argv[ i ], "unsolicited=", STRLENOF( "unsolicited=" ) ) == 0 )
 				{
 					char		*data;
 
 					if ( !BER_BVISNULL( &rdi.rdi_unsolicited_oid ) ) {
-						fprintf( stderr, "%s: line %d: retcode: "
-							"\"unsolicited\" already provided.\n",
-							fname, lineno );
-						return 1;
+						snprintf( c->cr_msg, sizeof(c->cr_msg),
+							"\"unsolicited\" already provided" );
+						Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
+							c->log, c->cr_msg, 0 );
+						return ARG_BAD_CONF;
 					}
 
-					data = strchr( &argv[ i ][ STRLENOF( "unsolicited=" ) ], ':' );
+					data = strchr( &c->argv[ i ][ STRLENOF( "unsolicited=" ) ], ':' );
 					if ( data != NULL ) {
 						struct berval	oid;
 
-						if ( ldif_parse_line2( &argv[ i ][ STRLENOF( "unsolicited=" ) ],
+						if ( ldif_parse_line2( &c->argv[ i ][ STRLENOF( "unsolicited=" ) ],
 							&oid, &rdi.rdi_unsolicited_data, NULL ) )
 						{
-							fprintf( stderr, "%s: line %d: retcode: "
-								"unable to parse \"unsolicited\".\n",
-								fname, lineno );
-							return 1;
+							snprintf( c->cr_msg, sizeof(c->cr_msg),
+								"unable to parse \"unsolicited\"" );
+							Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
+								c->log, c->cr_msg, 0 );
+							return ARG_BAD_CONF;
 						}
 
 						ber_dupbv( &rdi.rdi_unsolicited_oid, &oid );
 
 					} else {
-						ber_str2bv( &argv[ i ][ STRLENOF( "unsolicited=" ) ], 0, 1,
+						ber_str2bv( &c->argv[ i ][ STRLENOF( "unsolicited=" ) ], 0, 1,
 							&rdi.rdi_unsolicited_oid );
 					}
 
-				} else if ( strncasecmp( argv[ i ], "flags=", STRLENOF( "flags=" ) ) == 0 )
+				} else if ( strncasecmp( c->argv[ i ], "flags=", STRLENOF( "flags=" ) ) == 0 )
 				{
-					char *arg = &argv[ i ][ STRLENOF( "flags=" ) ];
+					char *arg = &c->argv[ i ][ STRLENOF( "flags=" ) ];
 					if ( strcasecmp( arg, "disconnect" ) == 0 ) {
 						rdi.rdi_flags |= RDI_PRE_DISCONNECT;
 
@@ -1031,21 +1197,38 @@ retcode_db_config(
 						rdi.rdi_flags |= RDI_POST_DISCONNECT;
 
 					} else {
-						fprintf( stderr, "%s: line %d: retcode: "
-							"unknown flag \"%s\".\n",
-							fname, lineno, arg );
-						return 1;
+						snprintf( c->cr_msg, sizeof(c->cr_msg),
+							"unknown flag \"%s\"", arg );
+						Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
+							c->log, c->cr_msg, 0 );
+						return ARG_BAD_CONF;
 					}
 
 				} else {
-					fprintf( stderr, "%s: line %d: retcode: "
-						"unknown option \"%s\".\n",
-						fname, lineno, argv[ i ] );
-					return 1;
+					snprintf( c->cr_msg, sizeof(c->cr_msg),
+						"unknown option \"%s\"",
+						c->argv[ i ] );
+					Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
+						c->log, c->cr_msg, 0 );
+					return ARG_BAD_CONF;
 				}
 			}
 		}
 
+		rdi.rdi_line.bv_len = 2*(c->argc - 1) + c->argc - 2;
+		for ( i = 1; i < c->argc; i++ ) {
+			rdi.rdi_line.bv_len += strlen( c->argv[ i ] );
+		}
+		next = rdi.rdi_line.bv_val = ch_malloc( rdi.rdi_line.bv_len + 1 );
+
+		for ( i = 1; i < c->argc; i++ ) {
+			*next++ = '"';
+			next = lutil_strcopy( next, c->argv[ i ] );
+			*next++ = '"';
+			*next++ = ' ';
+		}
+		*--next = '\0';
+		
 		for ( rdip = &rd->rd_item; *rdip; rdip = &(*rdip)->rdi_next )
 			/* go to last */ ;
 
@@ -1053,39 +1236,15 @@ retcode_db_config(
 		*rdip = ( retcode_item_t * )ch_malloc( sizeof( retcode_item_t ) );
 		*(*rdip) = rdi;
 
-	} else if ( strcasecmp( argv0, "indir" ) == 0 ) {
-		rd->rd_flags |= RETCODE_FINDIR;
+		rc = 0;
+		} break;
 
-	} else if ( strcasecmp( argv0, "sleep" ) == 0 ) {
-		switch ( argc ) {
-		case 1:
-			fprintf( stderr, "%s: line %d: retcode: "
-				"\"retcode-sleep <time>\": missing <time>\n",
-				fname, lineno );
-			return 1;
-
-		case 2:
-			break;
-
-		default:
-			fprintf( stderr, "%s: line %d: retcode: "
-				"\"retcode-sleep <time>\": extra cruft after <time>\n",
-				fname, lineno );
-			return 1;
-		}
-
-		if ( lutil_atoi( &rd->rd_sleep, argv[ 1 ] ) != 0 ) {
-			fprintf( stderr, "%s: line %d: retcode: "
-				"\"retcode-sleep <time>\": unable to parse <time>\n",
-				fname, lineno );
-			return 1;
-		}
-
-	} else {
-		return SLAP_CONF_UNKNOWN;
+	default:
+		rc = SLAP_CONF_UNKNOWN;
+		break;
 	}
 
-	return 0;
+	return rc;
 }
 
 static int
@@ -1222,29 +1381,8 @@ retcode_db_destroy( BackendDB *be, ConfigReply *cr )
 		retcode_item_t	*rdi, *next;
 
 		for ( rdi = rd->rd_item; rdi != NULL; rdi = next ) {
-			ber_memfree( rdi->rdi_dn.bv_val );
-			ber_memfree( rdi->rdi_ndn.bv_val );
-
-			if ( !BER_BVISNULL( &rdi->rdi_text ) ) {
-				ber_memfree( rdi->rdi_text.bv_val );
-			}
-
-			if ( !BER_BVISNULL( &rdi->rdi_matched ) ) {
-				ber_memfree( rdi->rdi_matched.bv_val );
-			}
-
-			if ( rdi->rdi_ref ) {
-				ber_bvarray_free( rdi->rdi_ref );
-			}
-
-			BER_BVZERO( &rdi->rdi_e.e_name );
-			BER_BVZERO( &rdi->rdi_e.e_nname );
-
-			entry_clean( &rdi->rdi_e );
-
 			next = rdi->rdi_next;
-
-			ch_free( rdi );
+			retcode_item_destroy( rdi );
 		}
 
 		if ( !BER_BVISNULL( &rd->rd_pdn ) ) {
@@ -1391,7 +1529,6 @@ retcode_initialize( void )
 	retcode.on_bi.bi_type = "retcode";
 
 	retcode.on_bi.bi_db_init = retcode_db_init;
-	retcode.on_bi.bi_db_config = retcode_db_config;
 	retcode.on_bi.bi_db_open = retcode_db_open;
 	retcode.on_bi.bi_db_destroy = retcode_db_destroy;
 
@@ -1406,6 +1543,13 @@ retcode_initialize( void )
 	retcode.on_bi.bi_extended = retcode_op_func;
 
 	retcode.on_response = retcode_response;
+
+	retcode.on_bi.bi_cf_ocs = rcocs;
+
+	code = config_register_schema( rccfg, rcocs );
+	if ( code ) {
+		return code;
+	}
 
 	return overlay_register( &retcode );
 }

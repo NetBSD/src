@@ -1,6 +1,6 @@
 .TH LDAPWHOAMI 1 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man1/ldapwhoami.1,v 1.10.2.4 2008/02/11 23:26:39 kurt Exp $
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" OpenLDAP: pkg/ldap/doc/man/man1/ldapwhoami.1,v 1.10.2.8 2009/06/08 18:23:33 quanah Exp
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldapwhoami \- LDAP who am i? tool
@@ -29,6 +29,10 @@ ldapwhoami \- LDAP who am i? tool
 [\c
 .BI \-p \ ldapport\fR]
 [\c
+.BR \-e \ [ ! ] \fIext\fP [ =\fIextparam\fP ]]
+[\c
+.BR \-E \ [ ! ] \fIext\fP [ =\fIextparam\fP ]]
+[\c
 .BI \-O \ security-properties\fR]
 [\c
 .BR \-I ]
@@ -45,7 +49,7 @@ ldapwhoami \- LDAP who am i? tool
 [\c
 .BI \-Y \ mech\fR]
 [\c
-.BR \-Z[Z] ]
+.BR \-Z [ Z ]]
 .SH DESCRIPTION
 .I ldapwhoami
 implements the LDAP "Who Am I?" extended operation.
@@ -58,7 +62,7 @@ operation.
 .B \-n
 Show what would be done, but don't actually perform the whoami operation.
 Useful for
-debugging in conjunction with -v.
+debugging in conjunction with \fB\-v\fP.
 .TP
 .B \-v
 Run in verbose mode, with many diagnostics written to standard output.
@@ -73,6 +77,7 @@ Use simple authentication instead of SASL.
 .TP
 .BI \-D \ binddn
 Use the Distinguished Name \fIbinddn\fP to bind to the LDAP directory.
+For SASL binds, the server is expected to ignore this value.
 .TP
 .B \-W
 Prompt for simple authentication.
@@ -92,17 +97,44 @@ is expected.
 .TP
 .BI \-h \ ldaphost
 Specify an alternate host on which the ldap server is running.
-Deprecated in favor of -H.
+Deprecated in favor of \fB\-H\fP.
 .TP
 .BI \-p \ ldapport
 Specify an alternate TCP port where the ldap server is listening.
-Deprecated in favor of -H.
-.TP
-.BI \-P \ 2\fR\||\|\fI3
-Specify the LDAP protocol version to use.
+Deprecated in favor of \fB\-H\fP.
 .TP
 .BI \-O \ security-properties
 Specify SASL security properties.
+.TP
+.BR \-e \ [ ! ] \fIext\fP [ =\fIextparam\fP ]
+.TP
+.BR \-E \ [ ! ] \fIext\fP [ =\fIextparam\fP ]
+
+Specify general extensions with \fB\-e\fP and search extensions with \fB\-E\fP.
+\'\fB!\fP\' indicates criticality.
+
+General extensions:
+.nf
+  [!]assert=<filter>   (an RFC 4515 Filter)
+  [!]authzid=<authzid> ("dn:<dn>" or "u:<user>")
+  [!]manageDSAit
+  [!]noop
+  ppolicy
+  [!]postread[=<attrs>]        (a comma-separated attribute list)
+  [!]preread[=<attrs>] (a comma-separated attribute list)
+  abandon, cancel (SIGINT sends abandon/cancel; not really controls)
+.fi
+
+Search extensions:
+.nf
+  [!]domainScope                               (domain scope)
+  [!]mv=<filter>                               (matched values filter)
+  [!]pr=<size>[/prompt|noprompt]       (paged results/prompt)
+  [!]sss=[\-]<attr[:OID]>[/[\-]<attr[:OID]>...]  (server side sorting)
+  [!]subentries[=true|false]           (subentries)
+  [!]sync=ro[/<cookie>]                        (LDAP Sync refreshOnly)
+          rp[/<cookie>][/<slimit>]     (LDAP Sync refreshAndPersist)
+.fi
 .TP
 .B \-I
 Enable SASL Interactive mode.  Always prompt.  Default is to prompt
@@ -123,23 +155,20 @@ depends on the actual SASL mechanism used.
 Specify the requested authorization ID for SASL bind.
 .I authzid
 must be one of the following formats:
-.B dn:\c
-.I <distinguished name>
+.BI dn: "<distinguished name>"
 or
-.B u:\c
-.I <username>
+.BI u: <username>
 .TP
 .BI \-Y \ mech
 Specify the SASL mechanism to be used for authentication. If it's not
 specified, the program will choose the best mechanism the server knows.
 .TP
-.B \-Z[Z]
+.BR \-Z [ Z ]
 Issue StartTLS (Transport Layer Security) extended operation. If you use
-.B \-ZZ\c
-, the command will require the operation to be successful.
+\fB\-ZZ\fP, the command will require the operation to be successful.
 .SH EXAMPLE
 .nf
-    ldapwhoami -x -D "cn=Manager,dc=example,dc=com" -W
+    ldapwhoami \-x \-D "cn=Manager,dc=example,dc=com" \-W
 .fi
 .SH "SEE ALSO"
 .BR ldap.conf (5),

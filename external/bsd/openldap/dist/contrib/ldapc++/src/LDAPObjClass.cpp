@@ -1,4 +1,4 @@
-// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPObjClass.cpp,v 1.3.6.2 2008/05/01 21:28:42 quanah Exp $
+// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPObjClass.cpp,v 1.3.6.3 2008/09/02 23:58:15 quanah Exp
 /*
  * Copyright 2003, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -33,7 +33,7 @@ LDAPObjClass::LDAPObjClass (const LDAPObjClass &oc){
     sup = oc.sup;
 }
 
-LDAPObjClass::LDAPObjClass (string oc_item) { 
+LDAPObjClass::LDAPObjClass (string oc_item, int flags ) { 
 
     DEBUG(LDAP_DEBUG_CONSTRUCT,
             "LDAPObjClass::LDAPObjClass( )" << endl);
@@ -41,7 +41,7 @@ LDAPObjClass::LDAPObjClass (string oc_item) {
     LDAPObjectClass *o;
     int ret;
     const char *errp;
-    o = ldap_str2objectclass ( oc_item.c_str(), &ret, &errp, SCHEMA_PARSE_FLAG);
+    o = ldap_str2objectclass ( oc_item.c_str(), &ret, &errp, flags );
 
     if (o) {
         this->setNames (o->oc_names);

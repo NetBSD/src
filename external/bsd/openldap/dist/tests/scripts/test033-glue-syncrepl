@@ -1,7 +1,8 @@
 #! /bin/sh
+# OpenLDAP: pkg/ldap/tests/scripts/test033-glue-syncrepl,v 1.17.2.6 2009/03/05 22:19:39 quanah Exp */
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2008 The OpenLDAP Foundation.
+## Copyright 1998-2009 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -12,10 +13,10 @@
 ## top-level directory of the distribution or, alternatively, at
 ## <http://www.OpenLDAP.org/license.html>.
 
-if test "$BACKEND" != "bdb" && test "$BACKEND" != "hdb" ; then
-	echo "Test does not support $BACKEND"
+case $BACKEND in bdb | hdb | ldif) : ;; *)
+	echo "Test does not support $BACKEND backend, test skipped"
 	exit 0
-fi
+esac
 
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
@@ -36,7 +37,7 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-rm -f $DBDIR1A/* $DBDIR1B/*
+rm -rf $DBDIR1A/* $DBDIR1B/*
 cp -pr $DBDIR1C $DBDIR2C
 
 echo "Starting slapd 1 on TCP/IP port $PORT1..."
@@ -132,9 +133,8 @@ case $RC in
 	;;
 esac
 
-SLEEP=15
-echo "Waiting $SLEEP seconds for shadow subtrees to sync..."
-sleep $SLEEP
+echo "Waiting $SLEEP1 seconds for shadow subtrees to sync..."
+sleep $SLEEP1
 
 echo "Filtering original ldif used to create database..."
 . $LDIFFILTER < $GLUESYNCOUT > $LDIFFLT

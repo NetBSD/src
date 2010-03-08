@@ -1,7 +1,7 @@
 .TH SLAPD-SQL 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-sql.5,v 1.26.4.2 2007/08/31 23:13:53 quanah Exp $
+.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd-sql.5,v 1.26.4.3 2009/06/03 01:41:57 quanah Exp
 .SH NAME
-slapd-sql \- SQL backend to slapd
+slapd\-sql \- SQL backend to slapd
 .SH SYNOPSIS
 ETCDIR/slapd.conf
 .SH DESCRIPTION
@@ -23,7 +23,7 @@ of BerkeleyDB (as the standard BDB backend does), though it can be
 used as such with several limitations.
 You can take a look at
 .B http://www.openldap.org/faq/index.cgi?file=378 
-(OpenLDAP FAQ-O-Matic/General LDAP FAQ/Directories vs. conventional
+(OpenLDAP FAQ\-O\-Matic/General LDAP FAQ/Directories vs. conventional
 databases) to find out more on this point.
 .LP
 The idea (detailed below) is to use some meta-information to translate
@@ -110,7 +110,7 @@ These options specify SQL query templates for loading schema mapping
 meta-information, adding and deleting entries to ldap_entries, etc.
 All these and subtree_cond should have the given default values.
 For the current value it is recommended to look at the sources,
-or in the log output when slapd starts with "-d 5" or greater.
+or in the log output when slapd starts with "\-d 5" or greater.
 Note that the parameter number and order must not be changed.
 
 .TP
@@ -340,7 +340,7 @@ The API of the layers is not frozen yet, so it is unpublished.
 .LP
 Almost everything mentioned later is illustrated in examples located
 in the
-.B servers/slapd/back-sql/rdbms_depend/
+.B servers/slapd/back\-sql/rdbms_depend/
 directory in the OpenLDAP source tree, and contains scripts for
 generating sample database for Oracle, MS SQL Server, mySQL and more
 (including PostgreSQL and IBM db2).
@@ -672,10 +672,10 @@ no matter if valid or not.
 The proxy cache overlay 
 allows caching of LDAP search requests (queries) in a local database.
 See 
-.BR slapo-pcache (5)
+.BR slapo\-pcache (5)
 for details.
 .SH EXAMPLES
-There are example SQL modules in the slapd/back-sql/rdbms_depend/
+There are example SQL modules in the slapd/back\-sql/rdbms_depend/
 directory in the OpenLDAP source tree.
 .SH ACCESS CONTROL
 The 

@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-search.c,v 1.41.2.7 2008/02/11 23:26:50 kurt Exp $ */
+/*	$NetBSD: slapd-search.c,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/tests/progs/slapd-search.c,v 1.41.2.11 2009/07/01 17:09:44 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -71,6 +73,7 @@ usage( char *name, char o )
 		"[-C] "
 		"[-F] "
 		"[-N] "
+		"[-S] "
 		"[-i <ignore>] "
 		"[-l <loops>] "
 		"[-L <outerloops>] "
@@ -81,6 +84,9 @@ usage( char *name, char o )
 			name );
 	exit( EXIT_FAILURE );
 }
+
+/* Just send requests without reading responses */
+static int swamp;
 
 int
 main( int argc, char **argv )
@@ -111,7 +117,7 @@ main( int argc, char **argv )
 	/* by default, tolerate referrals and no such object */
 	tester_ignore_str2errlist( "REFERRAL,NO_SUCH_OBJECT" );
 
-	while ( ( i = getopt( argc, argv, "Aa:b:CD:f:FH:h:i:l:L:Np:r:s:t:T:w:" ) ) != EOF )
+	while ( ( i = getopt( argc, argv, "Aa:b:CD:f:FH:h:i:l:L:Np:r:Ss:t:T:w:" ) ) != EOF )
 	{
 		switch ( i ) {
 		case 'A':
@@ -199,6 +205,10 @@ main( int argc, char **argv )
 			if ( attrs == NULL ) {
 				usage( argv[0], i );
 			}
+			break;
+
+		case 'S':
+			swamp++;
 			break;
 
 		case 's':
@@ -363,7 +373,7 @@ do_random( char *uri, char *manager, struct berval *passwd,
 		break;
 	}
 
-	fprintf( stderr, " PID=%ld - Search done (%d).\n", (long) pid, rc );
+	fprintf( stderr, "  PID=%ld - Search done (%d).\n", (long) pid, rc );
 
 	if ( ld != NULL ) {
 		ldap_unbind_ext( ld, NULL, NULL );
@@ -435,6 +445,15 @@ retry:;
 	for ( ; i < innerloop; i++ ) {
 		LDAPMessage *res = NULL;
 
+		if (swamp) {
+			int msgid;
+			rc = ldap_search_ext( ld, sbase, scope,
+					filter, NULL, noattrs, NULL, NULL,
+					NULL, LDAP_NO_LIMIT, &msgid );
+			if ( rc == LDAP_SUCCESS ) continue;
+			else break;
+		}
+
 		rc = ldap_search_ext_s( ld, sbase, scope,
 				filter, attrs, noattrs, NULL, NULL,
 				NULL, LDAP_NO_LIMIT, &res );
@@ -443,11 +462,11 @@ retry:;
 		}
 
 		if ( rc ) {
-			unsigned first = tester_ignore_err( rc );
+			int first = tester_ignore_err( rc );
 			/* if ignore.. */
 			if ( first ) {
 				/* only log if first occurrence */
-				if ( force < 2 || first == 1 ) {
+				if ( ( force < 2 && first > 0 ) || abs(first) == 1 ) {
 					tester_ldap_error( ld, "ldap_search_ext_s", NULL );
 				}
 				continue;
@@ -472,7 +491,7 @@ retry:;
 		*ldp = ld;
 
 	} else {
-		fprintf( stderr, " PID=%ld - Search done (%d).\n", (long) pid, rc );
+		fprintf( stderr, "  PID=%ld - Search done (%d).\n", (long) pid, rc );
 
 		if ( ld != NULL ) {
 			ldap_unbind_ext( ld, NULL, NULL );

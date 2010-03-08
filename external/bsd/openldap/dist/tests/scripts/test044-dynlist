@@ -1,7 +1,7 @@
 #! /bin/sh
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2008 The OpenLDAP Foundation.
+## Copyright 1998-2009 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -254,7 +254,118 @@ delete: olcDLattrSet
 olcDLattrSet: {0}
 -
 add: olcDLattrSet
+olcDLattrSet: groupOfURLs memberURL sn:cn mail
+-
+EOMODS
+
+echo "==========================================================" >> $LOG1
+
+echo "Testing attribute mapping"
+
+echo "Testing list search of all (mapped) attrs..."
+echo "# Testing list search of all (mapped) attrs..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$LISTDN" -h $LOCALHOST -p $PORT1 \
+	'(cn=Dynamic List)' '*' \
+	>> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Testing list search of a (mapped) listed attr..."
+echo "# Testing list search of a (mapped) listed attr..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$LISTDN" -h $LOCALHOST -p $PORT1 \
+	'(cn=Dynamic List)' sn \
+	>> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Testing list search of a (n unmapped) listed attr..."
+echo "# Testing list search of a (n unmapped) listed attr..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$LISTDN" -h $LOCALHOST -p $PORT1 \
+	'(cn=Dynamic List)' mail \
+	>> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Testing list compare (mapped attrs) ..."
+echo "# Testing list compare (mapped attrs) ..." >> $SEARCHOUT
+$LDAPCOMPARE -h $LOCALHOST -p $PORT1 \
+	"cn=Dynamic List,$LISTDN" "sn:Bjorn Jensen" \
+	>> $SEARCHOUT 2>&1
+RC=$?
+case $RC in
+5)
+	echo "ldapcompare returned FALSE ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+	;;
+6)
+	echo "ldapcompare returned TRUE ($RC)"
+	;;
+0)
+	echo "ldapcompare returned success ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit -1
+	;;
+*)
+	echo "ldapcompare failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+	;;
+esac
+echo "" >> $SEARCHOUT
+
+echo "Testing list compare (mapped attrs; should return FALSE)..."
+echo "# Testing list compare (mapped attrs; should return FALSE)..." >> $SEARCHOUT
+$LDAPCOMPARE -h $LOCALHOST -p $PORT1 \
+	"cn=Dynamic List,$LISTDN" "sn:FALSE" \
+	>> $SEARCHOUT 2>&1
+RC=$?
+case $RC in
+5)
+	echo "ldapcompare returned FALSE ($RC)"
+	;;
+6)
+	echo "ldapcompare returned TRUE ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+	;;
+0)
+	echo "ldapcompare returned success ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit -1
+	;;
+*)
+	echo "ldapcompare failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+	;;
+esac
+echo "" >> $SEARCHOUT
+
+echo "Reconfiguring slapd..."
+$LDAPMODIFY -x -D cn=config -h $LOCALHOST -p $PORT1 -y $CONFIGPWF > \
+	$TESTOUT 2>&1 << EOMODS
+version: 1
+dn: olcOverlay={0}dynlist,olcDatabase={2}$BACKEND,cn=config
+changetype: modify
+delete: olcDLattrSet
+olcDLattrSet: {0}
+-
+add: olcDLattrSet
 olcDLattrSet: groupOfURLs memberURL member
+-
 EOMODS
 
 echo "==========================================================" >> $LOG1

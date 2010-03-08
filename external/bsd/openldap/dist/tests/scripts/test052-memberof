@@ -1,8 +1,8 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test052-memberof,v 1.4.2.2 2008/02/11 23:26:51 kurt Exp $
+# OpenLDAP: pkg/ldap/tests/scripts/test052-memberof,v 1.4.2.4 2009/02/03 19:06:20 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2008 The OpenLDAP Foundation.
+## Copyright 1998-2009 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -75,6 +75,26 @@ fi
 echo "Running ldapadd to build slapd config database..."
 $LDAPADD -h $LOCALHOST -p $PORT1 -D 'cn=config' -w `cat $CONFIGPWF` \
 	>> $TESTOUT 2>&1 <<EOF
+dn: cn=symas group example,cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: symas group example
+olcAttributeTypes: ( 1.3.6.1.4.1.4754.31.1.1 
+ NAME 'memberA' SUP distinguishedName )
+olcAttributeTypes: ( 1.3.6.1.4.1.4754.31.1.2
+ NAME 'memberOfA' SUP distinguishedName )
+olcAttributeTypes: ( 1.3.6.1.4.1.4754.31.1.3 
+ NAME 'memberB' SUP distinguishedName )
+olcAttributeTypes: ( 1.3.6.1.4.1.4754.31.1.4 
+ NAME 'memberOfB' SUP distinguishedName )
+olcObjectClasses: ( 1.3.6.1.4.1.4754.31.2.1 
+ NAME 'groupA' SUP top STRUCTURAL MUST cn MAY memberA )
+olcObjectClasses: ( 1.3.6.1.4.1.4754.31.2.2 
+ NAME 'groupMemberA' SUP top AUXILIARY MAY memberOfA )
+olcObjectClasses: ( 1.3.6.1.4.1.4754.31.2.3 
+ NAME 'groupB' SUP top STRUCTURAL MUST cn MAY memberB )
+olcObjectClasses: ( 1.3.6.1.4.1.4754.31.2.4 
+ NAME 'groupMemberB' SUP top AUXILIARY MAY memberOfB )
+
 dn: olcDatabase={1}$BACKEND,cn=config
 objectClass: olcDatabaseConfig
 objectClass: olc${BACKEND}Config
@@ -91,7 +111,6 @@ olcDbIndex: uid pres,eq,sub
 olcDbIndex: sn pres,eq,sub
 olcDbMode: 384
 
-# {0}memberof, {1}$BACKEND, config
 dn: olcOverlay={0}memberof,olcDatabase={1}$BACKEND,cn=config
 objectClass: olcOverlayConfig
 objectClass: olcMemberOf
@@ -100,6 +119,25 @@ olcMemberOfRefInt: TRUE
 olcMemberOfGroupOC: groupOfNames
 olcMemberOfMemberAD: member
 olcMemberOfMemberOfAD: memberOf
+
+dn: olcOverlay={1}memberof,olcDatabase={1}$BACKEND,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcMemberOf
+olcOverlay: {1}memberof
+olcMemberOfRefInt: TRUE
+olcMemberOfGroupOC: groupA
+olcMemberOfMemberAD: memberA
+olcMemberOfMemberOfAD: memberOfA
+
+dn: olcOverlay={2}memberof,olcDatabase={1}$BACKEND,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcMemberOf
+olcOverlay: {2}memberof
+olcMemberOfRefInt: TRUE
+olcMemberOfGroupOC: groupB
+olcMemberOfMemberAD: memberB
+olcMemberOfMemberOfAD: memberOfB
+
 EOF
 RC=$?
 if test $RC != 0 ; then
@@ -214,6 +252,66 @@ $LDAPMODIFY -h $LOCALHOST -p $PORT1 \
 	>> $TESTOUT 2>&1 << EOF
 dn: cn=Baby Herman,ou=People,$BASEDN
 changetype: delete
+EOF
+
+echo "Re-search the entire database..."
+echo "# Re-search the entire database..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Adding groups with MAY member type schemas..."
+$LDAPMODIFY -h $LOCALHOST -p $PORT1 \
+	-D "cn=Manager,$BASEDN" -w secret \
+	>> $TESTOUT 2>&1 <<EOF
+dn: cn=Roger Rabbit,ou=People,$BASEDN
+changetype: delete
+
+dn: cn=Jessica Rabbit,ou=People,$BASEDN
+changetype: delete
+
+dn: cn=Cartoonia,ou=Groups,$BASEDN
+changetype: delete
+
+dn: cn=person1,ou=People,$BASEDN
+changetype: add
+objectClass: person
+objectClass: groupMemberA
+objectClass: groupMemberB
+cn: person1
+sn: person1
+
+dn: cn=person2,ou=People,$BASEDN
+changetype: add
+objectClass: person
+objectClass: groupMemberA
+objectClass: groupMemberB
+cn: person2
+sn: person2
+
+dn: cn=group1,ou=Groups,$BASEDN
+changetype: add
+objectclass: groupA
+cn: group1
+memberA: cn=person1,ou=People,$BASEDN
+memberA: cn=person2,ou=People,$BASEDN
+
+dn: cn=group2,ou=Groups,$BASEDN
+changetype: add
+objectclass: groupB
+cn: group2
+memberB: cn=person1,ou=People,$BASEDN
+memberB: cn=person2,ou=People,$BASEDN
+
+dn: cn=group1,ou=Groups,$BASEDN
+changetype: modify
+delete: memberA
+
 EOF
 
 echo "Re-search the entire database..."

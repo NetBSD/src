@@ -57,3 +57,16 @@ CAVEATS
       This is especially important if you are using syncrepl, as the modify that
       addpartial does will muck with the locking that takes place in the
       syncprov overlay.
+
+---
+Copyright 2004-2009 The OpenLDAP Foundation.
+Portions Copyright (C) Virginia Tech, David Hawes.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted only as authorized by the OpenLDAP
+Public License.
+
+A copy of this license is available in file LICENSE in the
+top-level directory of the distribution or, alternatively, at
+http://www.OpenLDAP.org/license.html.

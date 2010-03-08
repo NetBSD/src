@@ -1,4 +1,4 @@
-// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LdifWriter.cpp,v 1.2.2.1 2008/04/14 22:58:58 quanah Exp $
+// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LdifWriter.cpp,v 1.2.2.1 2008/04/14 22:58:58 quanah Exp
 /*
  * Copyright 2008, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

@@ -70,7 +70,7 @@ am_nss_ldap_so_OBJECTS = common.$(OBJEXT) aliases.$(OBJEXT) \
 	ethers.$(OBJEXT) group.$(OBJEXT) hosts.$(OBJEXT) \
 	netgroup.$(OBJEXT) networks.$(OBJEXT) passwd.$(OBJEXT) \
 	protocols.$(OBJEXT) rpc.$(OBJEXT) services.$(OBJEXT) \
-	shadow.$(OBJEXT)
+	shadow.$(OBJEXT) pam.$(OBJEXT)
 nss_ldap_so_OBJECTS = $(am_nss_ldap_so_OBJECTS)
 nss_ldap_so_DEPENDENCIES = ../common/libtio.a
 nss_ldap_so_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -206,12 +206,12 @@ nss_ldap_so_SOURCES = common.c common.h prototypes.h \
                       ../compat/attrs.h \
                       aliases.c ethers.c group.c hosts.c netgroup.c \
                       networks.c passwd.c protocols.c rpc.c services.c \
-                      shadow.c
+                      shadow.c pam.c
 
 nss_ldap_so_LDFLAGS = -shared -Wl,-soname,$(NSS_LDAP_NSS_VERSIONED) \
                       -Wl,--version-script,\$(srcdir)/exports.linux
 
-nss_ldap_so_LDADD = @nss_ldap_so_LIBS@ ../common/libtio.a
+nss_ldap_so_LDADD = @nss_ldap_so_LIBS@ ../common/libtio.a -lpam
 EXTRA_DIST = exports.linux
 all: all-am
 
@@ -266,6 +266,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hosts.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/netgroup.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/networks.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pam.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/passwd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/protocols.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rpc.Po@am__quote@

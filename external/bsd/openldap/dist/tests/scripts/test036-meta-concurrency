@@ -1,8 +1,8 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test036-meta-concurrency,v 1.17.2.6 2008/07/09 23:51:35 quanah Exp $
+# OpenLDAP: pkg/ldap/tests/scripts/test036-meta-concurrency,v 1.17.2.9 2009/02/10 17:13:05 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2008 The OpenLDAP Foundation.
+## Copyright 1998-2009 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -189,10 +189,14 @@ for f in $TESTDIR/$DATADIR/do_bind.* ; do
 	echo "" >> $f
 done
 
+# fix test data to include back-monitor, if available
+# NOTE: copies do_* files from $TESTDIR/$DATADIR to $TESTDIR
+$MONITORDATA "$MONITORDB" "$TESTDIR/$DATADIR" "$TESTDIR"
+
 echo "Using tester for concurrent server access..."
-$SLAPDTESTER -P "$PROGDIR" -d "$TESTDIR/$DATADIR" -h $LOCALHOST -p $PORT3 \
-	-D "cn=Manager,$METABASEDN" -w $PASSWD -l $TESTLOOPS -r 20 -FF \
-	-i '!REFERRAL'
+$SLAPDTESTER -P "$PROGDIR" -d "$TESTDIR" -h $LOCALHOST -p $PORT3 \
+	-D "cn=Manager,$METABASEDN" -w $PASSWD -l $TESTLOOPS -r 20 \
+	-i '!REFERRAL' -i '*INVALID_CREDENTIALS'
 RC=$?
 
 if test $RC != 0 ; then

@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-tester.c,v 1.46.2.8 2008/02/11 23:26:50 kurt Exp $ */
+/*	$NetBSD: slapd-tester.c,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+
+/* OpenLDAP: pkg/ldap/tests/progs/slapd-tester.c,v 1.46.2.9 2009/01/22 00:01:18 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
