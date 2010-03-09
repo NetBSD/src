@@ -1,4 +1,4 @@
-/*	$NetBSD: wcfb.c,v 1.2 2010/02/25 20:56:20 macallan Exp $ */
+/*	$NetBSD: wcfb.c,v 1.3 2010/03/09 22:45:50 macallan Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.2 2010/02/25 20:56:20 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.3 2010/03/09 22:45:50 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.2 2010/02/25 20:56:20 macallan Exp $");
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
@@ -83,7 +84,7 @@ struct wcfb_softc {
 
 	int sc_width, sc_height, sc_stride;
 	int sc_locked;
-	uint8_t *sc_fbaddr;
+	uint8_t *sc_fbaddr, *sc_fb0, *sc_fb1, *sc_shadow;
 	struct vcons_screen sc_console_screen;
 	struct wsscreen_descr sc_defaultscreen_descr;
 	const struct wsscreen_descr *sc_screens[1];
@@ -204,10 +205,21 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_fb0off = bus_space_read_4(sc->sc_regt, sc->sc_regh, 0x8080) -
 	    sc->sc_fb;
+	sc->sc_fb0 = sc->sc_fbaddr + sc->sc_fb0off;
+	sc->sc_fb1 = sc->sc_fb0 + 0x200000;
+
 	sc->sc_stride = 1 << 
 	    ((bus_space_read_4(sc->sc_regt, sc->sc_regh, 0x8074) & 0x00ff0000) >> 16);
 	printf("%s: %d x %d, %d\n", device_xname(sc->sc_dev), 
 	    sc->sc_width, sc->sc_height, sc->sc_stride);
+
+	sc->sc_shadow = kmem_alloc(sc->sc_stride * sc->sc_height, KM_SLEEP);
+	if (sc->sc_shadow == NULL) {
+		printf("%s: failed to allocate shadow buffer\n",
+		    device_xname(self));
+		return;
+	}
+
 	for (i = 0x40; i < 0x100; i += 16) {
 		printf("%04x:", i);
 		for (j = 0; j < 16; j += 4) {
@@ -375,7 +387,7 @@ wcfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_stride = sc->sc_stride;
 	ri->ri_flg = RI_CENTER /*| RI_FULLCLEAR*/;
 
-	ri->ri_bits = (char *)sc->sc_fbaddr + sc->sc_fb0off;
+	ri->ri_bits = sc->sc_shadow;
 
 	if (existing) {
 		ri->ri_flg |= RI_CLEAR;
@@ -408,11 +420,22 @@ wcfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	struct wcfb_softc *sc = scr->scr_cookie;
+	int offset = (ri->ri_yorigin + row * ri->ri_font->fontheight) *
+	    sc->sc_stride + ri->ri_xorigin + col * ri->ri_font->fontwidth;
+	uint8_t *from, *to0, *to1;
+	int i;
 
 	sc->putchar(ri, row, col, c, attr);
-	ri->ri_bits += 0x200000;
-	sc->putchar(ri, row, col, c, attr);
-	ri->ri_bits -= 0x200000;
+	from = sc->sc_shadow + offset;
+	to0 = sc->sc_fb0 + offset;
+	to1 = sc->sc_fb1 + offset;
+	for (i = 0; i < ri->ri_font->fontheight; i++) {
+		memcpy(to0, from, ri->ri_font->fontwidth);
+		memcpy(to1, from, ri->ri_font->fontwidth);
+		to0 += sc->sc_stride;
+		to1 += sc->sc_stride;
+		from += sc->sc_stride;
+	}
 }	
 
 static void
@@ -441,37 +464,72 @@ wcfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	struct wcfb_softc *sc = scr->scr_cookie;
+	int offset = (ri->ri_yorigin + row * ri->ri_font->fontheight) *
+	    sc->sc_stride + ri->ri_xorigin + dstcol * ri->ri_font->fontwidth;
+	uint8_t *from, *to0, *to1;
+	int i;
 
 	sc->copycols(ri, row, srccol, dstcol, ncols);
-	ri->ri_bits += 0x200000;
-	sc->copycols(ri, row, srccol, dstcol, ncols);
-	ri->ri_bits -= 0x200000;
+	from = sc->sc_shadow + offset;
+	to0 = sc->sc_fb0 + offset;
+	to1 = sc->sc_fb1 + offset;
+	for (i = 0; i < ri->ri_font->fontheight; i++) {
+		memcpy(to0, from, ri->ri_font->fontwidth * ncols);
+		memcpy(to1, from, ri->ri_font->fontwidth * ncols);
+		to0 += sc->sc_stride;
+		to1 += sc->sc_stride;
+		from += sc->sc_stride;
+	}
 }
 
 static void
-wcfb_erasecols(void *cookie, int row, int startcol, int ncol, long fillattr)
+wcfb_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
 {
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	struct wcfb_softc *sc = scr->scr_cookie;
+	int offset = (ri->ri_yorigin + row * ri->ri_font->fontheight) *
+	    sc->sc_stride + ri->ri_xorigin + startcol * ri->ri_font->fontwidth;
+	uint8_t *to0, *to1;
+	int i;
 
-	sc->erasecols(ri, row, startcol, ncol, fillattr);
-	ri->ri_bits += 0x200000;
-	sc->erasecols(ri, row, startcol, ncol, fillattr);
-	ri->ri_bits -= 0x200000;
+	sc->erasecols(ri, row, startcol, ncols, fillattr);
+
+	to0 = sc->sc_fb0 + offset;
+	to1 = sc->sc_fb1 + offset;
+	for (i = 0; i < ri->ri_font->fontheight; i++) {
+		memset(to0, ri->ri_devcmap[(fillattr >> 16) & 0xff],
+		    ri->ri_font->fontwidth * ncols);
+		memset(to1, ri->ri_devcmap[(fillattr >> 16) & 0xff],
+		    ri->ri_font->fontwidth * ncols);
+		to0 += sc->sc_stride;
+		to1 += sc->sc_stride;
+	}
 }
 
 static void
-wcfb_copyrows(void *cookie, int srcrow, int dstrow, int nrow)
+wcfb_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 {
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	struct wcfb_softc *sc = scr->scr_cookie;
+	int offset = (ri->ri_yorigin + dstrow * ri->ri_font->fontheight) *
+	    sc->sc_stride + ri->ri_xorigin;
+	uint8_t *from, *to0, *to1;
+	int i;
 
-	sc->copyrows(ri, srcrow, dstrow, nrow);
-	ri->ri_bits += 0x200000;
-	sc->copyrows(ri, srcrow, dstrow, nrow);
-	ri->ri_bits -= 0x200000;
+	sc->copyrows(ri, srcrow, dstrow, nrows);
+
+	from = sc->sc_shadow + offset;
+	to0 = sc->sc_fb0 + offset;
+	to1 = sc->sc_fb1 + offset;
+	for (i = 0; i < ri->ri_font->fontheight * nrows; i++) {
+		memcpy(to0, from, ri->ri_emuwidth);
+		memcpy(to1, from, ri->ri_emuwidth);
+		to0 += sc->sc_stride;
+		to1 += sc->sc_stride;
+		from += sc->sc_stride;
+	}
 }
 
 static void
@@ -480,9 +538,21 @@ wcfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	struct wcfb_softc *sc = scr->scr_cookie;
+	int offset = (ri->ri_yorigin + row * ri->ri_font->fontheight) *
+	    sc->sc_stride + ri->ri_xorigin;
+	uint8_t *to0, *to1;
+	int i;
 
 	sc->eraserows(ri, row, nrows, fillattr);
-	ri->ri_bits += 0x200000;
-	sc->eraserows(ri, row, nrows, fillattr);
-	ri->ri_bits -= 0x200000;
+
+	to0 = sc->sc_fb0 + offset;
+	to1 = sc->sc_fb1 + offset;
+	for (i = 0; i < ri->ri_font->fontheight * nrows; i++) {
+		memset(to0, ri->ri_devcmap[(fillattr >> 16) & 0xff],
+		    ri->ri_emuwidth);
+		memset(to1, ri->ri_devcmap[(fillattr >> 16) & 0xff],
+		    ri->ri_emuwidth);
+		to0 += sc->sc_stride;
+		to1 += sc->sc_stride;
+	}
 }
