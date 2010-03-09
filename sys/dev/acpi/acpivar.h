@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.41 2010/03/05 08:30:48 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.42 2010/03/09 18:15:22 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -79,28 +79,14 @@ struct acpibus_attach_args {
  *	An ACPI device node.
  */
 struct acpi_devnode {
-	TAILQ_ENTRY(acpi_devnode) ad_list;
-	ACPI_HANDLE	ad_handle;	/* our ACPI handle */
-	uint32_t	ad_level;	/* ACPI level */
-	uint32_t	ad_type;	/* ACPI object type */
-	ACPI_DEVICE_INFO *ad_devinfo;	/* our ACPI device info */
-	struct acpi_scope *ad_scope;	/* backpointer to scope */
-	device_t	ad_device;	/* pointer to configured device */
-	char		ad_name[5];	/* Human-readable device name */
-};
+	device_t		 ad_device;	/* Device */
+	device_t		 ad_parent;	/* Backpointer to the parent */
+	ACPI_DEVICE_INFO	*ad_devinfo;	/* Device info */
+	ACPI_HANDLE		 ad_handle;	/* Device handle */
+	char			 ad_name[5];	/* Device name */
+	uint32_t		 ad_type;	/* Device type */
 
-/*
- * acpi_scope:
- *
- *	Description of an ACPI scope.
- */
-struct acpi_scope {
-	TAILQ_ENTRY(acpi_scope) as_list;
-	const char *as_name;		/* scope name */
-	/*
-	 * Device nodes we manage.
-	 */
-	TAILQ_HEAD(, acpi_devnode) as_devnodes;
+	SIMPLEQ_ENTRY(acpi_devnode) ad_list;
 };
 
 /*
@@ -135,11 +121,9 @@ struct acpi_softc {
 
 	int sc_quirks;
 
-	/*
-	 * Scopes we manage.
-	 */
-	TAILQ_HEAD(, acpi_scope) sc_scopes;
 	device_t	sc_apmbus;
+
+	SIMPLEQ_HEAD(, acpi_devnode) sc_devnodes; /* devices */
 };
 
 /*

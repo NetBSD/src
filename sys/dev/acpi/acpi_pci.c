@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.3 2010/03/05 14:00:17 jruoho Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.4 2010/03/09 18:15:22 jruoho Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.3 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.4 2010/03/09 18:15:22 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -139,7 +139,6 @@ acpi_pcidev_print(struct acpi_pcidev *ap)
 int
 acpi_pcidev_scan(struct acpi_softc *sc)
 {
-	struct acpi_scope *as;
 	struct acpi_devnode *ad;
 	struct acpi_pcidev *ap;
 	ACPI_DEVICE_INFO *di;
@@ -148,18 +147,20 @@ acpi_pcidev_scan(struct acpi_softc *sc)
 #define ACPI_STA_DEV_VALID      \
 	(ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|ACPI_STA_DEV_OK)
 
-	TAILQ_FOREACH(as, &sc->sc_scopes, as_list) {
-		TAILQ_FOREACH(ad, &as->as_devnodes, ad_list) {
-			di = ad->ad_devinfo;
-			if (di->Type != ACPI_TYPE_DEVICE)
-				continue;
-			if ((di->Valid & ACPI_VALID_STA) != 0 &&
-			    (di->CurrentStatus & ACPI_STA_DEV_VALID) !=
-			     ACPI_STA_DEV_VALID)
-				continue;
-			if (acpi_pcidev_add(sc, ad) == true)
-				++count;
-		}
+	SIMPLEQ_FOREACH(ad, &sc->sc_devnodes, ad_list) {
+
+		di = ad->ad_devinfo;
+
+		if (di->Type != ACPI_TYPE_DEVICE)
+			continue;
+
+		if ((di->Valid & ACPI_VALID_STA) != 0 &&
+		    (di->CurrentStatus & ACPI_STA_DEV_VALID) !=
+		     ACPI_STA_DEV_VALID)
+			continue;
+
+		if (acpi_pcidev_add(sc, ad) == true)
+			++count;
 	}
 
 #undef ACPI_STA_DEV_VALID
