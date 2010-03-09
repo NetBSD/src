@@ -1,4 +1,4 @@
-/*	$NetBSD: btattach.c,v 1.10 2010/03/08 21:48:42 plunky Exp $	*/
+/*	$NetBSD: btattach.c,v 1.11 2010/03/09 02:01:51 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008 Iain Hibbert.  All rights reserved.");
-__RCSID("$NetBSD: btattach.c,v 1.10 2010/03/08 21:48:42 plunky Exp $");
+__RCSID("$NetBSD: btattach.c,v 1.11 2010/03/09 02:01:51 kiyohara Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -331,7 +331,7 @@ sighandler(int s)
 static void
 hexdump(uint8_t *ptr, size_t len)
 {
-	
+
 	while (len--)
 		printf(" %2.2x", *ptr++);
 }
@@ -606,7 +606,7 @@ test(const char *tty, tcflag_t cflag, tcflag_t Cflag)
 			if ((size_t)n < sizeof(bcsp_lepkt))
 				continue;
 			for (j = 0; j < n - sizeof(bcsp_lepkt); j++) {
-				for (k = 0; k < sizeof(bcsp_lepkt); k++) 
+				for (k = 0; k < sizeof(bcsp_lepkt); k++)
 					if (buf[j + k] != bcsp_lepkt[k]) {
 						j += k;
 						break;
