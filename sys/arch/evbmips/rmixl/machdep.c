@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.23 2010/03/09 02:02:53 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.24 2010/03/09 02:04:46 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.23 2010/03/09 02:02:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.24 2010/03/09 02:04:46 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -448,7 +448,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	/*
 	 * Fix up the exception vector to use COP0 OSSCRATCH0
 	 */
-	__asm __volatile("mtc0 %0,$%1"
+	__asm __volatile("dmtc0 %0,$%1"
 		:: "r"(&cpu_info_store), "n"(MIPS_COP_0_OSSCRATCH));
 	mips_fixup_exceptions(rmixl_fixup_cop0_oscratch);
 #endif
