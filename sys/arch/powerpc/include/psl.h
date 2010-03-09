@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.14 2006/08/05 21:26:49 sanjayl Exp $	*/
+/*	$NetBSD: psl.h,v 1.15 2010/03/09 22:37:47 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,24 +42,34 @@
  *
  * [*] Little-endian mode on the 601 is implemented in the HID0 register.
  */
-#define	PSL_VEC		0x02000000	/* AltiVec vector unit available */
-#define	PSL_POW		0x00040000	/* power management */
-#define	PSL_TGPR	0x00020000	/* temp. gpr remapping (mpc603e) */
-#define	PSL_ILE		0x00010000	/* interrupt endian mode (1 == le) */
-#define	PSL_EE		0x00008000	/* external interrupt enable */
-#define	PSL_PR		0x00004000	/* privilege mode (1 == user) */
-#define	PSL_FP		0x00002000	/* floating point enable */
-#define	PSL_ME		0x00001000	/* machine check enable */
-#define	PSL_FE0		0x00000800	/* floating point interrupt mode 0 */
-#define	PSL_SE		0x00000400	/* single-step trace enable */
-#define	PSL_BE		0x00000200	/* branch trace enable */
-#define	PSL_FE1		0x00000100	/* floating point interrupt mode 1 */
-#define	PSL_IP		0x00000040	/* interrupt prefix */
-#define	PSL_IR		0x00000020	/* instruction address relocation */
-#define	PSL_DR		0x00000010	/* data address relocation */
-#define	PSL_PM		0x00000008	/* Performance monitor marked mode */
-#define	PSL_RI		0x00000002	/* recoverable interrupt */
-#define	PSL_LE		0x00000001	/* endian mode (1 == le) */
+#define	PSL_VEC		0x02000000	/* ..6. AltiVec vector unit available */
+#define	PSL_UCLE	0x00400000	/* B... user-mode cache lock enable */
+#define	PSL_SPV		0x00200000	/* B... (e500) SPE enable */
+#define	PSL_POW		0x00040000	/* ..6. power management */
+#define	PSL_WE		PSL_POW		/* B4.. wait state enable */
+#define	PSL_TGPR	0x00020000	/* ..6. temp. gpr remapping (mpc603e) */
+#define	PSL_CE		PSL_TGPR	/* B4.. critical interrupt enable */
+#define	PSL_ILE		0x00010000	/* ..6. interrupt endian mode (1 == le) */
+#define	PSL_EE		0x00008000	/* B468 external interrupt enable */
+#define	PSL_PR		0x00004000	/* B468 privilege mode (1 == user) */
+#define	PSL_FP		0x00002000	/* B.6. floating point enable */
+#define	PSL_ME		0x00001000	/* B468 machine check enable */
+#define	PSL_FE0		0x00000800	/* B.6. floating point mode 0 */
+#define	PSL_SE		0x00000400	/* ..6. single-step trace enable */
+#define	PSL_DWE		PSL_SE		/* .4.. debug wait enable */
+#define	PSL_UBLE	PSL_SE		/* B... user BTB lock enable */
+#define	PSL_BE		0x00000200	/* ..6. branch trace enable */
+#define	PSL_DE		PSL_BE		/* B4.. debug interrupt enable */
+#define	PSL_FE1		0x00000100	/* B.6. floating point mode 1 */
+#define	PSL_IP		0x00000040	/* ..6. interrupt prefix */
+#define	PSL_IR		0x00000020	/* .468 instruction address relocation */
+#define	PSL_IS		PSL_IR		/* B... instruction address space */
+#define	PSL_DR		0x00000010	/* .468 data address relocation */
+#define	PSL_DS		PSL_DR		/* B... data address space */
+#define	PSL_PM		0x00000008	/* ..6. Performance monitor */
+#define	PSL_PMM		PSL_PM		/* B... Performance monitor */
+#define	PSL_RI		0x00000002	/* ..6. recoverable interrupt */
+#define	PSL_LE		0x00000001	/* ..6. endian mode (1 == le) */
 
 #define	PSL_601_MASK	~(PSL_VEC|PSL_POW|PSL_ILE|PSL_BE|PSL_RI|PSL_LE)
 
