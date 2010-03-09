@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.22 2010/02/27 21:26:28 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.23 2010/03/09 02:02:53 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.22 2010/02/27 21:26:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.23 2010/03/09 02:02:53 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -469,8 +469,11 @@ rmixl_fixup_cop0_oscratch(int32_t load_addr, uint32_t new_insns[2])
 	 * relative from the start of struct cpu_info.
 	 */
 
-	/* [0] = mfc0 rX, $22 (OSScratch) */
+	/* [0] = [d]mfc0 rX, $22 (OSScratch) */
 	new_insns[0] = (020 << 26)
+#ifdef _LP64
+	    | (1 << 21)		/* double move */
+#endif
 	    | (new_insns[0] & 0x001f0000)
 	    | (MIPS_COP_0_OSSCRATCH << 11) | (0 << 0);
 
