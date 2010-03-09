@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.5 2010/03/05 22:00:11 jruoho Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.6 2010/03/09 18:15:22 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.5 2010/03/05 22:00:11 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.6 2010/03/09 18:15:22 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -145,7 +145,6 @@ acpi_wakedev_print(struct acpi_wakedev *aw)
 int
 acpi_wakedev_scan(struct acpi_softc *sc)
 {
-	struct acpi_scope *as;
 	struct acpi_devnode *ad;
 	struct acpi_wakedev *aw;
 	ACPI_DEVICE_INFO *di;
@@ -154,18 +153,21 @@ acpi_wakedev_scan(struct acpi_softc *sc)
 #define ACPI_STA_DEV_VALID	\
 	(ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|ACPI_STA_DEV_OK)
 
-	TAILQ_FOREACH(as, &sc->sc_scopes, as_list)
-		TAILQ_FOREACH(ad, &as->as_devnodes, ad_list) {
-			di = ad->ad_devinfo;
-			if (di->Type != ACPI_TYPE_DEVICE)
-				continue;
-			if ((di->Valid & ACPI_VALID_STA) != 0 &&
-			    (di->CurrentStatus & ACPI_STA_DEV_VALID) !=
-			     ACPI_STA_DEV_VALID)
-				continue;
-			if (acpi_wakedev_add(sc, ad) == true)
-				++count;
-		}
+	SIMPLEQ_FOREACH(ad, &sc->sc_devnodes, ad_list) {
+
+		di = ad->ad_devinfo;
+
+		if (di->Type != ACPI_TYPE_DEVICE)
+			continue;
+
+		if ((di->Valid & ACPI_VALID_STA) != 0 &&
+		    (di->CurrentStatus & ACPI_STA_DEV_VALID) !=
+		     ACPI_STA_DEV_VALID)
+			continue;
+
+		if (acpi_wakedev_add(sc, ad) == true)
+			++count;
+	}
 
 #undef ACPI_STA_DEV_VALID
 
