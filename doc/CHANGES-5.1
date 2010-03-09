@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.211 2010/03/07 08:59:31 sborrill Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.212 2010/03/09 04:11:19 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16889,4 +16889,31 @@ crypto/dist/openssl/crypto/evp/m_sha1.c		patch
 	Ensure that SHA384 always calls the SHA384 functions.
 	Should fix PR#42881.
 	[joerg, ticket #1320]
+
+sys/dev/usb/umass.c				1.137 via patch
+sys/dev/usb/usbdevs				1.535 via patch
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+
+	Add SuperTop and SuperTop IDE Bridge to usbdevs.
+	--
+	Max out the expected response size at the actual transfer length.
+	Fixes PR kern/42225.
+	[is/martin, ticket #1123]
+
+external/ibm-public/postfix/sbin/postconf/Makefile 1.2
+
+	Add nint_table.h and nint_vars.h to generated list files so that
+	they get removed during cleandir.
+	[veego, ticket #1329]
+
+sys/dev/usb/ugen.c				1.109
+
+	Replace USB_GET_SC() instances with USB_GET_SC_OPEN().  The latter
+	is exactly like the former, except it returns with ENXIO if sc is
+	NULL instead of continuing on to use it.  Most of the time this is
+	handled by the fd layer and you get EBADF, but sometimes it's
+	possible to race into the device method for whatever reason and
+	you get a kernel panic.
+	[pooka, ticket #1332]
 
