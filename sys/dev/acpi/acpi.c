@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.156 2010/03/05 21:01:44 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.157 2010/03/09 18:15:21 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.156 2010/03/05 21:01:44 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.157 2010/03/09 18:15:21 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -402,17 +402,15 @@ static void
 acpi_childdet(device_t self, device_t child)
 {
 	struct acpi_softc *sc = device_private(self);
-	struct acpi_scope *as;
 	struct acpi_devnode *ad;
 
 	if (sc->sc_apmbus == child)
 		sc->sc_apmbus = NULL;
 
-	TAILQ_FOREACH(as, &sc->sc_scopes, as_list) {
-		TAILQ_FOREACH(ad, &as->as_devnodes, ad_list) {
-			if (ad->ad_device == child)
-				ad->ad_device = NULL;
-		}
+	SIMPLEQ_FOREACH(ad, &sc->sc_devnodes, ad_list) {
+
+		if (ad->ad_device == child)
+			ad->ad_device = NULL;
 	}
 }
 
@@ -450,6 +448,7 @@ acpi_attach(device_t parent, device_t self, void *aux)
 		    rsdt->AslCompilerId, rsdt->AslCompilerRevision);
 	} else
 		aprint_error_dev(self, "X/RSDT: Not found\n");
+
 	acpi_unmap_rsdt(rsdt);
 
 	sc->sc_dev = self;
@@ -460,6 +459,8 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pc = aa->aa_pc;
 	sc->sc_pciflags = aa->aa_pciflags;
 	sc->sc_ic = aa->aa_ic;
+
+	SIMPLEQ_INIT(&sc->sc_devnodes);
 
 	acpi_softc = sc;
 
@@ -661,11 +662,6 @@ acpi_disable(struct acpi_softc *sc)
 }
 #endif
 
-struct acpi_make_devnode_state {
-	struct acpi_softc *softc;
-	struct acpi_scope *scope;
-};
-
 /*
  * acpi_build_tree:
  *
@@ -676,46 +672,27 @@ static void
 acpi_build_tree(struct acpi_softc *sc)
 {
 	static const char *scopes[] = {
-		"\\_PR_",	/* ACPI 1.0 processor namespace */
-		"\\_SB_",	/* system bus namespace */
-		"\\_SI_",	/* system indicator namespace */
-		"\\_TZ_",	/* ACPI 1.0 thermal zone namespace */
-		NULL,
+		"\\_PR_", "\\_SB_", "\\_SI_", "\\_TZ_", NULL
 	};
-	struct acpi_make_devnode_state state;
-	struct acpi_scope *as;
+
 	ACPI_HANDLE parent;
 	ACPI_STATUS rv;
 	int i;
 
-	TAILQ_INIT(&sc->sc_scopes);
-
-	state.softc = sc;
-
 	/*
-	 * Scan the namespace and build our tree.
+	 * Scan the namespace and build our device tree.
 	 */
 	for (i = 0; scopes[i] != NULL; i++) {
-		as = malloc(sizeof(*as), M_ACPI, M_WAITOK);
-		as->as_name = scopes[i];
-		TAILQ_INIT(&as->as_devnodes);
 
-		TAILQ_INSERT_TAIL(&sc->sc_scopes, as, as_list);
+		rv = AcpiGetHandle(ACPI_ROOT_OBJECT, scopes[i], &parent);
 
-		state.scope = as;
-
-		rv = AcpiGetHandle(ACPI_ROOT_OBJECT, scopes[i],
-		    &parent);
-		if (ACPI_SUCCESS(rv)) {
-			AcpiWalkNamespace(ACPI_TYPE_ANY, parent, 100,
-			    acpi_make_devnode, &state, NULL);
-		}
+		if (ACPI_SUCCESS(rv))
+			(void)AcpiWalkNamespace(ACPI_TYPE_ANY, parent, 100,
+			    acpi_make_devnode, sc, NULL);
 	}
 
 	acpi_rescan1(sc, NULL, NULL);
-
 	acpi_wakedev_scan(sc);
-
 	acpi_pcidev_scan(sc);
 }
 
@@ -743,73 +720,68 @@ acpi_rescan1(struct acpi_softc *sc, const char *ifattr, const int *locators)
 static void
 acpi_rescan_nodes(struct acpi_softc *sc)
 {
-	struct acpi_scope *as;
+	struct acpi_attach_args aa;
+	struct acpi_devnode *ad;
 
-	TAILQ_FOREACH(as, &sc->sc_scopes, as_list) {
-		struct acpi_devnode *ad;
+	SIMPLEQ_FOREACH(ad, &sc->sc_devnodes, ad_list) {
 
-		/* Now, for this namespace, try to attach the devices. */
-		TAILQ_FOREACH(ad, &as->as_devnodes, ad_list) {
-			struct acpi_attach_args aa;
+		if (ad->ad_device != NULL)
+			continue;
 
-			if (ad->ad_device != NULL)
-				continue;
+		aa.aa_node = ad;
+		aa.aa_iot = sc->sc_iot;
+		aa.aa_memt = sc->sc_memt;
+		aa.aa_pc = sc->sc_pc;
+		aa.aa_pciflags = sc->sc_pciflags;
+		aa.aa_ic = sc->sc_ic;
 
-			aa.aa_node = ad;
-			aa.aa_iot = sc->sc_iot;
-			aa.aa_memt = sc->sc_memt;
-			aa.aa_pc = sc->sc_pc;
-			aa.aa_pciflags = sc->sc_pciflags;
-			aa.aa_ic = sc->sc_ic;
-
-			if (ad->ad_devinfo->Type == ACPI_TYPE_DEVICE) {
-				/*
-				 * XXX We only attach devices which are:
-				 *
-				 *	- present
-				 *	- enabled
-				 *	- functioning properly
-				 *
-				 * However, if enabled, it's decoding resources,
-				 * so we should claim them, if possible.
-				 * Requires changes to bus_space(9).
-				 */
-				if ((ad->ad_devinfo->Valid & ACPI_VALID_STA) ==
-				    ACPI_VALID_STA &&
-				    (ad->ad_devinfo->CurrentStatus &
-				     (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
-				      ACPI_STA_DEV_OK)) !=
-				    (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
-				     ACPI_STA_DEV_OK))
-					continue;
-			}
-
+		if (ad->ad_devinfo->Type == ACPI_TYPE_DEVICE) {
 			/*
-			 * XXX Same problem as above...
+			 * XXX We only attach devices which are:
 			 *
-			 * Do this check only for devices, as e.g.
-			 * a Thermal Zone doesn't have a HID.
+			 *	- present
+			 *	- enabled
+			 *	- functioning properly
+			 *
+			 * However, if enabled, it's decoding resources,
+			 * so we should claim them, if possible.
+			 * Requires changes to bus_space(9).
 			 */
-			if (ad->ad_devinfo->Type == ACPI_TYPE_DEVICE &&
-			    (ad->ad_devinfo->Valid & ACPI_VALID_HID) == 0)
+			if ((ad->ad_devinfo->Valid & ACPI_VALID_STA) ==
+			    ACPI_VALID_STA &&
+			    (ad->ad_devinfo->CurrentStatus &
+			     (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
+			      ACPI_STA_DEV_OK)) !=
+			    (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
+			     ACPI_STA_DEV_OK))
 				continue;
-
-			/*
-			 * Handled internally
-			 */
-			if (ad->ad_devinfo->Type == ACPI_TYPE_PROCESSOR ||
-			    ad->ad_devinfo->Type == ACPI_TYPE_POWER)
-				continue;
-
-			/*
-			 * Skip ignored HIDs
-			 */
-			if (acpi_match_hid(ad->ad_devinfo, acpi_ignored_ids))
-				continue;
-
-			ad->ad_device = config_found_ia(sc->sc_dev,
-			    "acpinodebus", &aa, acpi_print);
 		}
+
+		/*
+		 * XXX Same problem as above...
+		 *
+		 * Do this check only for devices, as e.g.
+		 * a Thermal Zone doesn't have a HID.
+		 */
+		if (ad->ad_devinfo->Type == ACPI_TYPE_DEVICE &&
+		    (ad->ad_devinfo->Valid & ACPI_VALID_HID) == 0)
+			continue;
+
+		/*
+		 * Handled internally.
+		 */
+		if (ad->ad_devinfo->Type == ACPI_TYPE_PROCESSOR ||
+		    ad->ad_devinfo->Type == ACPI_TYPE_POWER)
+			continue;
+
+		/*
+		 * Skip ignored HIDs.
+		 */
+		if (acpi_match_hid(ad->ad_devinfo, acpi_ignored_ids))
+			continue;
+
+		ad->ad_device = config_found_ia(sc->sc_dev,
+		    "acpinodebus", &aa, acpi_print);
 	}
 }
 
@@ -854,9 +826,7 @@ static ACPI_STATUS
 acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
     void *context, void **status)
 {
-	struct acpi_make_devnode_state *state = context;
-	struct acpi_softc *sc = state->softc;
-	struct acpi_scope *as = state->scope;
+	struct acpi_softc *sc = context;
 	struct acpi_devnode *ad;
 	ACPI_DEVICE_INFO *devinfo;
 	ACPI_OBJECT_TYPE type;
@@ -901,10 +871,9 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 		if (ad == NULL)
 			return AE_NO_MEMORY;
 
+		ad->ad_parent = sc->sc_dev;
 		ad->ad_devinfo = devinfo;
 		ad->ad_handle = handle;
-		ad->ad_level = level;
-		ad->ad_scope = as;
 		ad->ad_type = type;
 
 		anu = (ACPI_NAME_UNION *)&devinfo->Name;
@@ -923,7 +892,7 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 		if (ad->ad_name[0] == '\0')
 			ad->ad_name[0] = '_';
 
-		TAILQ_INSERT_TAIL(&as->as_devnodes, ad, ad_list);
+		SIMPLEQ_INSERT_TAIL(&sc->sc_devnodes, ad, ad_list);
 
 		if (type != ACPI_TYPE_DEVICE)
 			return AE_OK;
@@ -932,10 +901,8 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 			return AE_OK;
 
 #ifdef ACPIVERBOSE
-		aprint_normal_dev(sc->sc_dev,
-		    "HID %s found in scope %s level %d\n",
-		    ad->ad_devinfo->HardwareId.String,
-		    as->as_name, ad->ad_level);
+		aprint_normal("       HID %s\n",
+		    ad->ad_devinfo->HardwareId.String);
 
 		if (ad->ad_devinfo->Valid & ACPI_VALID_UID)
 			aprint_normal("       UID %s\n",
