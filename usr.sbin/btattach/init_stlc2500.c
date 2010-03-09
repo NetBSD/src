@@ -1,4 +1,4 @@
-/*	$NetBSD: init_stlc2500.c,v 1.2 2009/12/06 12:31:07 kiyohara Exp $	*/
+/*	$NetBSD: init_stlc2500.c,v 1.3 2010/03/09 02:01:51 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init_stlc2500.c,v 1.2 2009/12/06 12:31:07 kiyohara Exp $");
+__RCSID("$NetBSD: init_stlc2500.c,v 1.3 2010/03/09 02:01:51 kiyohara Exp $");
 
 #include <bluetooth.h>
 #include <err.h>
@@ -125,7 +125,7 @@ init_stlc2500(int fd, unsigned int speed)
 
 	if (firmload_stlc2500(fd, rp.hci_revision, "ptc") < 0)
 		warn("no ROM patch file");
-		
+
 	if (firmload_stlc2500(fd, rp.hci_revision, "ssf") < 0)
 		warn("no static settings file");
 
