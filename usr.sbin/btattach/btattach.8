@@ -1,4 +1,4 @@
-.\" $NetBSD: btattach.8,v 1.4 2010/03/08 18:35:51 kiyohara Exp $
+.\" $NetBSD: btattach.8,v 1.5 2010/03/09 10:54:01 wiz Exp $
 .\"
 .\" Copyright (c) 2007 KIYOHARA Takashi
 .\" All rights reserved.
@@ -113,10 +113,10 @@ Test mode.
 .Pp
 Only the super-user may attach a Bluetooth HCI interface.
 .Pp
-Test mode guess speed by received link-establish packet from HCI.
-Or
-.Xr btuart 4
-, if not respond.
+Test mode tries to guess the speed using the received link-establish
+packet from HCI, or
+.Xr btuart 4 ,
+if there is no response.
 .Sh FILES
 .Bl -tag -compact
 .It Pa /var/run/btattach- Ns Bro tty Brc Ns .pid
@@ -126,10 +126,6 @@ Or
 .Xr bluetooth 4 ,
 .Xr btuart 4 ,
 .Xr btconfig 8
-.Sh BUGS
-Not all
-.Ar type
-initializations have been tested.
 .Sh HISTORY
 The
 .Nm
@@ -140,3 +136,7 @@ as provided with the BlueZ tools for Linux and first appeared in
 .Sh AUTHORS
 .An KIYOHARA Takashi Aq kiyohara@kk.iij4u.or.jp
 .An Iain Hibbert
+.Sh BUGS
+Not all
+.Ar type
+initializations have been tested.
