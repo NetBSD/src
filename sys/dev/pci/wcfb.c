@@ -1,4 +1,4 @@
-/*	$NetBSD: wcfb.c,v 1.3 2010/03/09 22:45:50 macallan Exp $ */
+/*	$NetBSD: wcfb.c,v 1.4 2010/03/09 23:17:12 macallan Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.3 2010/03/09 22:45:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.4 2010/03/09 23:17:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -451,11 +451,44 @@ wcfb_putpalreg(struct wcfb_softc *sc, int i, int r, int g, int b)
 static void
 wcfb_cursor(void *cookie, int on, int row, int col)
 {
-#if 0
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	struct wcfb_softc *sc = scr->scr_cookie;
+	int coffset;
+	
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+
+		if (ri->ri_flg & RI_CURSOR) {
+			/* remove cursor */
+			coffset = ri->ri_ccol + (ri->ri_crow * ri->ri_cols);
+#ifdef WSDISPLAY_SCROLLSUPPORT
+			coffset += scr->scr_offset_to_zero;
 #endif
+			wcfb_putchar(cookie, ri->ri_crow, 
+			    ri->ri_ccol, scr->scr_chars[coffset], 
+			    scr->scr_attrs[coffset]);
+			ri->ri_flg &= ~RI_CURSOR;
+		}
+		ri->ri_crow = row;
+		ri->ri_ccol = col;
+		if (on) {
+			long attr, revattr;
+			coffset = col + (row * ri->ri_cols);
+#ifdef WSDISPLAY_SCROLLSUPPORT
+			coffset += scr->scr_offset_to_zero;
+#endif
+			attr = scr->scr_attrs[coffset];
+			revattr = attr ^ 0xffff0000;
+
+			wcfb_putchar(cookie, ri->ri_crow, ri->ri_ccol,
+			    scr->scr_chars[coffset], revattr);
+			ri->ri_flg |= RI_CURSOR;
+		}
+	} else {
+		ri->ri_crow = row;
+		ri->ri_ccol = col;
+		ri->ri_flg &= ~RI_CURSOR;
+	}
 }
 
 static void
