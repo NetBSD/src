@@ -1,4 +1,4 @@
-/*	$NetBSD: init_swave.c,v 1.2 2009/04/15 00:32:23 lukem Exp $	*/
+/*	$NetBSD: init_swave.c,v 1.3 2010/03/09 02:01:51 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init_swave.c,v 1.2 2009/04/15 00:32:23 lukem Exp $");
+__RCSID("$NetBSD: init_swave.c,v 1.3 2010/03/09 02:01:51 kiyohara Exp $");
 
 #include <bluetooth.h>
 #include <err.h>
@@ -58,7 +58,7 @@ typedef struct {
 	uint8_t			d0;	/* ? */
 	hci_param_access_set_cp	cp;
 } __attribute__ ((__packed__)) hci_param_access_set_rp;
-	
+
 void
 init_swave(int fd, unsigned int speed)
 {
