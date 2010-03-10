@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.18 2010/01/17 16:47:17 phx Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.19 2010/03/10 18:36:05 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,11 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.18 2010/01/17 16:47:17 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.19 2010/03/10 18:36:05 kiyohara Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
-#include "opt_ddb.h" 
+#include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_ipkdb.h"
 #include "opt_modular.h"
@@ -344,7 +344,7 @@ restore_ofmap(struct ofw_translations *map, int len)
 		}
 	}
 	pmap_update(&ofw_pmap);
-}	
+}
 
 
 
@@ -403,7 +403,7 @@ ofwoea_batinit(void)
 	node = OF_finddevice("/");
 	bitmap = ranges_bitmap(node, 0);
 	oea_batinit(0);
-	
+
 #ifdef macppc
 	/* XXX this is a macppc-specific hack */
 	bitmap = 0x8f00;
@@ -671,7 +671,7 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 			tag->pbs_offset = 0;
 			tag->pbs_base = region.addr;
 			tag->pbs_limit = region.size + region.addr;
-		}	                                
+		}
 
 		error = bus_space_init(tag, name, ex_storage[exmap],
 		    sizeof(ex_storage[exmap]));
