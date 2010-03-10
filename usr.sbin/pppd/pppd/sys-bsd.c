@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.61 2009/11/14 04:47:03 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.62 2010/03/10 13:45:39 christos Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.61 2009/11/14 04:47:03 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.62 2010/03/10 13:45:39 christos Exp $");
 #endif
 #endif
 
@@ -1932,7 +1932,7 @@ GetMask(u_int32_t addr)
 	/*
 	 * Get its netmask and OR it into our mask.
 	 */
-	mask |= ((struct sockaddr_in *)&ifa->ifa_netmask)->sin_addr.s_addr;
+	mask |= ((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr.s_addr;
     }
 
     freeifaddrs(ifap);
