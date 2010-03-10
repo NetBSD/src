@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.50 2010/02/26 00:57:02 dyoung Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.51 2010/03/10 21:00:36 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.50 2010/02/26 00:57:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.51 2010/03/10 21:00:36 dyoung Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -215,10 +215,6 @@ ex_cardbus_attach(device_t parent, device_t self, void *aux)
 	struct ex_softc *sc = &csc->sc_softc;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
-#if rbus
-#else
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-#endif
 	const struct ex_cardbus_product *ecp;
 	bus_addr_t adr, adr1;
 
@@ -244,10 +240,6 @@ ex_cardbus_attach(device_t parent, device_t self, void *aux)
 
 	if (Cardbus_mapreg_map(ct, PCI_BAR0, PCI_MAPREG_TYPE_IO, 0,
 		&sc->sc_iot, &sc->sc_ioh, &adr, &csc->sc_mapsize) == 0) {
-#if rbus
-#else
-		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr + csc->sc_mapsize);
-#endif
 		csc->sc_bar_reg = PCI_BAR0;
 		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_IO;
 
@@ -326,7 +318,7 @@ ex_cardbus_detach(device_t self, int arg)
 		/*
 		 * Unhook the interrupt handler.
 		 */
-		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
+		Cardbus_intr_disestablish(ct, sc->sc_ih);
 
 		if (csc->sc_cardtype == EX_CB_CYCLONE) {
 			Cardbus_mapreg_unmap(ct,
@@ -344,13 +336,11 @@ int
 ex_cardbus_enable(struct ex_softc *sc)
 {
 	struct ex_cardbus_softc *csc = (struct ex_cardbus_softc *)sc;
-	cardbus_function_tag_t cf = csc->sc_ct->ct_cf;
-	cardbus_chipset_tag_t cc = csc->sc_ct->ct_cc;
 
 	Cardbus_function_enable(csc->sc_ct);
 	ex_cardbus_setup(csc);
 
-	sc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline,
+	sc->sc_ih = Cardbus_intr_establish(csc->sc_ct, csc->sc_intrline,
 	    IPL_NET, ex_intr, sc);
 	if (NULL == sc->sc_ih) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt\n");
