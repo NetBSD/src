@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.204 2010/03/07 10:11:04 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.205 2010/03/10 15:04:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.204 2010/03/07 10:11:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.205 2010/03/10 15:04:04 msaitoh Exp $");
 
 #include "rnd.h"
 
@@ -1246,7 +1246,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 */
 	if ((sc->sc_type == WM_T_82546) || (sc->sc_type == WM_T_82546_3)
 	    || (sc->sc_type ==  WM_T_82571) || (sc->sc_type == WM_T_80003)
-	    || (sc->sc_type == WM_T_82575))
+	    || (sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576))
 		sc->sc_funcid = (CSR_READ(sc, WMREG_STATUS)
 		    >> STATUS_FUNCID_SHIFT) & STATUS_FUNCID_MASK;
 	else
@@ -1625,7 +1625,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 */
 	if ((sc->sc_type == WM_T_82546) || (sc->sc_type == WM_T_82546_3)
 	    || (sc->sc_type ==  WM_T_82571) || (sc->sc_type == WM_T_80003)
-	    || (sc->sc_type == WM_T_82575)) {
+	    || (sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)) {
 		if (sc->sc_funcid == 1)
 			enaddr[5] ^= 1;
 	}
