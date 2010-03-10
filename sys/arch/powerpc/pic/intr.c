@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.6 2008/04/29 06:53:02 martin Exp $ */
+/*	$NetBSD: intr.c,v 1.7 2010/03/10 18:28:30 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.6 2008/04/29 06:53:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.7 2010/03/10 18:28:30 kiyohara Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -94,7 +94,7 @@ pic_add(struct pic_ops *pic)
 	pic->pic_intrbase = max_base;
 	max_base += pic->pic_numintrs;
 	num_pics++;
-	
+
 	return pic->pic_intrbase;
 }
 
@@ -399,7 +399,7 @@ intr_calculatemasks(void)
 	/* IPL_SERIAL must block IPL_TTY */
 	imask[IPL_SERIAL] |= imask[IPL_TTY];
 
-	/* IPL_HIGH must block all other priority levels */	
+	/* IPL_HIGH must block all other priority levels */
 	for (i = IPL_NONE; i < IPL_HIGH; i++)
 		imask[IPL_HIGH] |= imask[i];
 #else	/* !SLOPPY_IPLS */
@@ -431,7 +431,7 @@ intr_calculatemasks(void)
 		for (i = 0; i < current->pic_numintrs; i++)
 			current->pic_disable_irq(current, i);
 	}
-	
+
 	for (irq = 0, is = intrsources; irq < NVIRQ; irq++, is++) {
 		if (is->is_hand)
 			pic_enable_irq(is->is_hwirq);
@@ -459,13 +459,13 @@ pic_mark_pending(int irq)
 
 	v = virq[irq];
 	if (v == 0)
-		printf("IRQ %d maps to 0\n", irq);	
+		printf("IRQ %d maps to 0\n", irq);
 
 	msr = mfmsr();
 	mtmsr(msr & ~PSL_EE);
 	ci->ci_ipending |= 1 << v;
 	mtmsr(msr);
-}	
+}
 
 void
 pic_do_pending_int(void)
@@ -624,7 +624,7 @@ start:
 		/* this interrupt is no longer pending */
 		ci->ci_ipending &= ~r_imen;
 		ci->ci_idepth++;
-		
+
 		splraise(is->is_mask);
 		mtmsr(msr | PSL_EE);
 		ih = is->is_hand;
@@ -645,7 +645,7 @@ start:
 		}
 		mtmsr(msr);
 		ci->ci_cpl = pcpl;
-		
+
 		uvmexp.intrs++;
 		is->is_ev.ev_count++;
 		ci->ci_idepth--;
@@ -683,7 +683,7 @@ splraise(int ncpl)
 	int ocpl;
 
 	__asm volatile("sync; eieio");	/* don't reorder.... */
-	
+
 	ocpl = ci->ci_cpl;
 	ci->ci_cpl = ocpl | ncpl;
 	__asm volatile("sync; eieio");	/* reorder protect */
@@ -694,7 +694,7 @@ void
 splx(int ncpl)
 {
 	struct cpu_info *ci = curcpu();
-	
+
 	__asm volatile("sync; eieio");	/* reorder protect */
 	ci->ci_cpl = ncpl;
 	if (ci->ci_ipending & ~ncpl)
