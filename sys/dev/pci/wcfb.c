@@ -1,4 +1,4 @@
-/*	$NetBSD: wcfb.c,v 1.5 2010/03/10 02:41:02 macallan Exp $ */
+/*	$NetBSD: wcfb.c,v 1.6 2010/03/10 05:16:17 macallan Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.5 2010/03/10 02:41:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.6 2010/03/10 05:16:17 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.5 2010/03/10 02:41:02 macallan Exp $");
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciio.h>
+#include <dev/pci/wcfbreg.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
@@ -94,7 +95,7 @@ struct wcfb_softc {
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
-	uint32_t sc_fb0off;
+	uint32_t sc_fb0off, sc_fb1off;
 
 	void (*copycols)(void *, int, int, int, int);
 	void (*erasecols)(void *, int, int, int, long);
@@ -151,8 +152,9 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t	dict;
 	struct wsemuldisplaydev_attach_args aa;
 	int 			i, j;
+	uint32_t		reg;
 	unsigned long		defattr;
-	bool			is_console;
+	bool			is_console = 0;
 	char 			devinfo[256];
 	void *wtf;
 
@@ -164,22 +166,13 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 
 	dict = device_properties(self);
 	prop_dictionary_get_bool(dict, "is_console", &is_console);
-	if(!is_console) return;
-
+#ifndef WCFB_DEBUG
+	if (!is_console) return;
+#endif
 	sc->sc_memt = pa->pa_memt;
 	sc->sc_iot = pa->pa_iot;	
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
-
-	/* fill in parameters from properties */
-	if (!prop_dictionary_get_uint32(dict, "width", &sc->sc_width)) {
-		aprint_error("%s: no width property\n", device_xname(self));
-		return;
-	}
-	if (!prop_dictionary_get_uint32(dict, "height", &sc->sc_height)) {
-		aprint_error("%s: no height property\n", device_xname(self));
-		return;
-	}
 
 	if (pci_mapreg_map(pa, 0x14, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_regt, &sc->sc_regh, &sc->sc_reg, &sc->sc_regsize)) {
@@ -203,13 +196,19 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_fbaddr = bus_space_vaddr(sc->sc_memt, sc->sc_fbh);
 
-	sc->sc_fb0off = bus_space_read_4(sc->sc_regt, sc->sc_regh, 0x8080) -
-	    sc->sc_fb;
+	sc->sc_fb0off =
+	    bus_space_read_4(sc->sc_regt, sc->sc_regh, WC_FB8_ADDR0) - sc->sc_fb;
 	sc->sc_fb0 = sc->sc_fbaddr + sc->sc_fb0off;
-	sc->sc_fb1 = sc->sc_fb0 + 0x200000;
+	sc->sc_fb1off = 
+	    bus_space_read_4(sc->sc_regt, sc->sc_regh, WC_FB8_ADDR1) - sc->sc_fb;
+	sc->sc_fb1 = sc->sc_fbaddr + sc->sc_fb1off;
 
-	sc->sc_stride = 1 << 
-	    ((bus_space_read_4(sc->sc_regt, sc->sc_regh, 0x8074) & 0x00ff0000) >> 16);
+	reg = bus_space_read_4(sc->sc_regt, sc->sc_regh, WC_RESOLUTION);
+	sc->sc_height = (reg >> 16) + 1;
+	sc->sc_width = (reg & 0xffff) + 1;
+	sc->sc_stride = 1 <<
+	    ((bus_space_read_4(sc->sc_regt, sc->sc_regh, WC_CONFIG) &
+	      0x00ff0000) >> 16);
 	printf("%s: %d x %d, %d\n", device_xname(sc->sc_dev), 
 	    sc->sc_width, sc->sc_height, sc->sc_stride);
 
@@ -228,6 +227,9 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 		}
 		printf("\n");
 	}
+
+	/* make sure video output is on */
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, WC_DPMS_STATE, WC_DPMS_ON);
 
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
 		"default",
@@ -263,20 +265,16 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 		    rasops_cmap[j + 2]);
 		j += 3;
 	}
-	wcfb_putpalreg(sc, 0, 0, 0, 0);
-	wcfb_putpalreg(sc, 15, 0xff, 0xff, 0xff);
 
 	if (is_console) {
 		vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
 		    &defattr);
 		sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
-#if 0
-		wcfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
-		    ri->ri_devcmap[(defattr >> 16) & 0xff]);
-#else
-		/*memset(sc->sc_fbaddr + sc->sc_fb0off, 0, 0x400000);*/
-#endif
+		memset(sc->sc_fb0, ri->ri_devcmap[(defattr >> 16) & 0xff],
+		    sc->sc_stride * sc->sc_height);
+		memset(sc->sc_fb1, ri->ri_devcmap[(defattr >> 16) & 0xff],
+		    sc->sc_stride * sc->sc_height);
 		sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
 		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
@@ -289,7 +287,11 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 		 * since we're not the console we can postpone the rest
 		 * until someone actually allocates a screen for us
 		 */
-		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
+		memset(sc->sc_fb0, WS_DEFAULT_BG,
+		    sc->sc_stride * sc->sc_height);
+		memset(sc->sc_fb1, WS_DEFAULT_BG,
+		    sc->sc_stride * sc->sc_height);
+		return;
 	}
 
 	aa.console = is_console;
@@ -350,27 +352,6 @@ wcfb_mmap(void *v, void *vs, off_t offset, int prot)
 	}
 #endif
 
-	/*
-	 * XXX this should be generalized, let's just
-	 * #define PCI_IOAREA_PADDR
-	 * #define PCI_IOAREA_OFFSET
-	 * #define PCI_IOAREA_SIZE
-	 * somewhere in a MD header and compile this code only if all are
-	 * present
-	 */
-	/*
-	 * PCI_IOAREA_PADDR is useless, that's what the IO tag is for
-	 * the address isn't guaranteed to be the same on each host bridge
-	 * either, never mind the fact that it would be a bus address
-	 */
-#ifdef PCI_MAGIC_IO_RANGE
-	/* allow to map our IO space */
-	if ((offset >= PCI_MAGIC_IO_RANGE) &&
-	    (offset < PCI_MAGIC_IO_RANGE + 0x10000)) {
-		return bus_space_mmap(sc->sc_iot, offset - PCI_MAGIC_IO_RANGE,
-		    0, prot, BUS_SPACE_MAP_LINEAR);	
-	}
-#endif
 	return -1;
 }
 
@@ -443,9 +424,9 @@ wcfb_putpalreg(struct wcfb_softc *sc, int i, int r, int g, int b)
 {
 	uint32_t rgb;
 
-	bus_space_write_4(sc->sc_regt, sc->sc_regh, 0x80bc, i);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, WC_CMAP_INDEX, i);
 	rgb = (b << 22) | (g << 12) | (r << 2);
-	bus_space_write_4(sc->sc_regt, sc->sc_regh, 0x80c0, rgb);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, WC_CMAP_DATA, rgb);
 }
 
 static void
