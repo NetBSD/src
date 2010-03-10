@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.35 2010/02/26 00:57:02 dyoung Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.36 2010/03/10 00:21:10 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.35 2010/02/26 00:57:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.36 2010/03/10 00:21:10 dyoung Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -131,11 +131,6 @@ ohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ct = ct;
 	sc->sc.sc_bus.dmatag = ca->ca_dmat;
 
-#if rbus
-#else
-XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
-#endif
-
 	/* Enable the device. */
 	csr = Cardbus_conf_read(ct, ca->ca_tag,
 				PCI_COMMAND_STATUS_REG);
@@ -147,7 +142,7 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
 			  OHCI_ALL_INTRS);
 
-	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline,
+	sc->sc_ih = Cardbus_intr_establish(ct, ca->ca_intrline,
 					   IPL_USB, ohci_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n", devname);
@@ -168,7 +163,7 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 		printf("%s: init failed, error=%d\n", devname, r);
 
 		/* Avoid spurious interrupts. */
-		cardbus_intr_disestablish(sc->sc_cc, sc->sc_cf, sc->sc_ih);
+		Cardbus_intr_disestablish(ct, sc->sc_ih);
 		sc->sc_ih = 0;
 
 		return;
@@ -197,7 +192,7 @@ ohci_cardbus_detach(device_t self, int flags)
 	if (rv)
 		return (rv);
 	if (sc->sc_ih != NULL) {
-		cardbus_intr_disestablish(sc->sc_cc, sc->sc_cf, sc->sc_ih);
+		Cardbus_intr_disestablish(ct, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
 	if (sc->sc.sc_size) {
