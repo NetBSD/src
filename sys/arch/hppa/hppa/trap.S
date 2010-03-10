@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.42 2010/03/10 18:17:42 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.43 2010/03/10 18:53:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -125,9 +125,8 @@ emergency_stack_end:
  * Kernel Gateway Page (must be at known address)
  *	System Call Gate
  *
- * GATEway instructions have to be at a fixed known locations
- * because their addresses are hard coded in routines such as
- * those in the C library.
+ * GATEway instructions have to be at a fixed known locations because their
+ * addresses are hard coded in routines such as those in the C library.
  */
 
 	.align	NBPG
@@ -169,8 +168,8 @@ osf_syscall:
 
 bsd_syscall:
 	/*
-	 * set up a space register and a protection id so that
-	 * we can access kernel memory
+	 * Set up a space register and a protection id so that we can access
+	 * kernel memory.
 	 */
 	mfctl	%eiem, %r1
 	mtctl	%r0, %eiem
@@ -212,16 +211,16 @@ syscall_entry:
 	ldw	L_PCB(%sr1, %t3), %t2			/* XXX can use ,sl */
 
 	/*
-	 * NB: Even though t4 is a caller-saved register, we
-	 * save it anyways, as a convenience to __vfork14 and
-	 * any other syscalls that absolutely must have a 
-	 * register that is saved for it.
+	 * NB: Even though t4 is a caller-saved register, we save it anyways, as
+	 * a convenience to __vfork14 and any other syscalls that absolutely
+	 * must have a register that is saved for it.
 	 */
-	/* calculate kernel sp, load, create kernel stack frame */
-	ldo	NBPG+TRAPFRAME_SIZEOF(%t2), %t3	/* see cpu_lwp_fork */
 
-	stw	%t4, TF_R19 -TRAPFRAME_SIZEOF(%sr1, %t3)    /* t4 for vfork */
-	stw	%t1, TF_R22 -TRAPFRAME_SIZEOF(%sr1, %t3)    /* syscall # */
+	/* calculate kernel sp, load, create kernel stack frame */
+	ldo	NBPG+TRAPFRAME_SIZEOF(%t2), %t3		/* see cpu_lwp_fork */
+
+	stw	%t4, TF_R19-TRAPFRAME_SIZEOF(%sr1, %t3)	/* t4 for vfork */
+	stw	%t1, TF_R22-TRAPFRAME_SIZEOF(%sr1, %t3)	/* syscall # */
 	copy	%sp, %t4
 
 	/* gotta save the args, in case we gonna restart */
@@ -235,8 +234,8 @@ syscall_entry:
 	/*
 	 * Make space for the syscall arguments.
 	 *
-	 * Match the offset from %sp to the trapframe with the
-	 * offset in TLABEL(all) for the benefit of ddb.
+	 * Match the offset from %sp to the trapframe with the offset in
+	 * TLABEL(all) for the benefit of ddb.
 	 */
 	stwm	%r0, HPPA_FRAME_SIZE+HPPA_FRAME_MAXARGS(%sr1, %sp)
 
@@ -259,11 +258,11 @@ syscall_entry:
 	mtctl	%r1, %eiem
 
 	/*
-	 * Normally, we only have to save the caller-saved registers,
-	 * because the callee-saved registers will be naturally
-	 * saved and restored by our callee(s).  However, see the
-	 * longer comment in the trap handling code below for the
-	 * reasons why we need to save and restore all of them.
+	 * Normally, we only have to save the caller-saved registers, because
+	 * the callee-saved registers will be naturally saved and restored by
+	 * our callee(s).  However, see the longer comment in the trap handling
+	 * code below for the reasons why we need to save and restore all of
+	 * them.
 	 */
 	stw	%r2 , TF_R2 -TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%r3 , TF_R3 -TRAPFRAME_SIZEOF(%sr1, %t3)
@@ -294,15 +293,13 @@ syscall_entry:
 	stw	%r0, HPPA_FRAME_CRP(%sr1, %sp)
 
 	/*
-	 * Is this copying required... OpenBSD doesn't do it!
-	 *
 	 * Copy Arguments
-	 * unfortunately mmap() under bsd requires 7 words;
-	 * linux is confined to 5, and hpux to 6.
-	 * assuming the `long' syscall it gives us the maximum
-	 * 9 words, which very much overkill for an average of 3.
-	 * we keep it at 10, since bundling will keep it
-	 * at the same speed as 9 anyway.
+	 *
+	 * Unfortunately mmap() under bsd requires 7 words; linux is confined to
+	 * 5, and hpux to 6.  Assuming the `long' syscall it gives us the
+	 * maximum 9 words, which very much overkill for an average of 3.  We
+	 * keep it at 10, since bundling will keep it at the same speed as 9
+	 * anyway.
 	 */
 	/*
 	 * XXX fredette - possible security hole here.
@@ -448,9 +445,8 @@ syscall_return:
 	ldw	TF_R2(%t3), %r2
 	ldw	TF_R3(%t3), %r3
 	/*
-	 * See the comment in the trap handling code below
-	 * about why we need to save and restore all general
-	 * registers under these cases.
+	 * See the comment in the trap handling code below about why we need to
+	 * save and restore all general registers under these cases.
 	 */
 #if defined(DDB) || defined(KGDB) || defined(FPEMUL)
 	ldw	TF_R4(%t3), %r4
@@ -516,10 +512,10 @@ syscall_return:
 	mtctl	%t1, CR_UPADDR
 
 	/*
-	 * clear the system mask, this puts us back into physical mode.
-	 * reload trapframe pointer w/ correspondent PA value.
-	 * sp will be left in virtual until restored from trapframe,
-	 * since we don't use it anyway.
+	 * Clear the system mask, this puts us back into physical mode.  Reload
+	 * the trapframe pointer with the correspondent PA value.  %sp will be
+	 * left in virtual until restored from trapframe, since we don't use it
+	 * anyway.
 	 */
 	ssm	0, %r0
 	ldil	L%L$trap_tmp_save, %t3
@@ -732,10 +728,9 @@ os_hpmc:
 	.size	ivaaddr, .-ivaaddr
 
 /*
- * This is the locore support for HPMC and TOC machine checks.
- * In the HPMC case, this is a continuation of the HPMC handler
- * that begins in the interrupt vector table.  In the TOC
- * case, this is the handler installed in page zero.
+ * This is the locore support for HPMC and TOC machine checks.  In the HPMC
+ * case, this is a continuation of the HPMC handler that begins in the interrupt
+ * vector table.  In the TOC case, this is the handler installed in page zero.
  *
  * Notable points about the CPU state for the OS_TOC handler:
  *
@@ -744,7 +739,7 @@ os_hpmc:
  * - CR22 (IPSW) is valid.
  * - All other control registers HVERSION dependent.
  * - The TLB is initialized and invalid.
- * 
+ *
  * Notable points about the CPU state for the OS_HPMC handler:
  *
  * - The PSW M bit is 1, all other PSW bits are 0.
@@ -753,13 +748,12 @@ os_hpmc:
  * - All other control registers HVERSION dependent.
  * - The TLB is unchanged.
  *
- * The TOC CPU state is actually trickier.  Whereas in the HPMC 
- * case, we can return to virtual mode right away, in the TOC 
- * case we can't return to virtual mode until the kernel mapping 
- * is reloaded into the BTLB.
- * 
- * Otherwise, we set up the kernel context, move onto the 
- * emergency stack, and call hppa_machine_check.
+ * The TOC CPU state is actually trickier.  Whereas in the HPMC case, we can
+ * return to virtual mode right away, in the TOC case we can't return to virtual
+ * mode until the kernel mapping is reloaded into the BTLB.
+ *
+ * Otherwise, we set up the kernel context, move onto the emergency stack, and
+ * call hppa_machine_check.
  */
 ENTRY_NOPROFILE(os_toc, 0)
 	/* This loads %arg0 and nullifies the next instruction. */
@@ -875,101 +869,91 @@ ALTENTRY(os_toc_end)
 EXIT(TLABEL(hpmc))
 
 /*
- * This handles all assist emulation traps.  We break
- * these down into three categories: emulate special
- * function unit, emulate non-FPU coprocessor, and
- * emulate FPU coprocessor, and dispatch accordingly.
+ * This handles all assist emulation traps.  We break these down into three
+ * categories and dispatch accordingly. The categories are:
+ *
+ *  - emulate special function unit,
+ *  - emulate non-FPU coprocessor, and
+ *  - emulate FPU coprocessor.
+ *
  */
 	.export TLABEL(emu), entry
 LEAF_ENTRY_NOPROFILE(TLABEL(emu))
 
 	/*
-	 * Save %arg0 and load it with the instruction
-	 * that caused the emulation trap.
+	 * Save %arg0 and load it with the instruction that caused the emulation
+	 * trap.
 	 */
 	mtctl	%arg0, %tr2
 	mfctl	%iir, %arg0
 	
 	/*
-	 * If the opcode field in the instruction is 4,
-	 * indicating a special function unit SPOP
-	 * instruction, branch to emulate an sfu.
-	 * If the opcode field is 0xe, then it's an FPU instruction.
+	 * If the opcode field in the instruction is 4, indicating a special
+	 * function unit SPOP instruction, branch to emulate an sfu.  If the
+	 * opcode field is 0xe, then it's an FPU instruction.
 	 */
 	extru	%arg0, 5, 6, %r1
 	comib,=,n 4, %r1, L$emulate_sfu
 	comib,=,n 0xe, %r1, hppa_fpu_nop0
 
 	/*
-	 * If the uid field in the instruction is not
-	 * zero or one, indicating a coprocessor other
-	 * than an FPU, branch to emulate a non-FPU
+	 * If the uid field in the instruction is not zero or one, indicating a
+	 * coprocessor other than an FPU, branch to emulate a non-FPU
 	 * coprocessor.
 	 */
 	extru	%arg0, 25, 3, %r1
 	comib,<<,n 1, %r1, L$emulate_coproc
 
 	/*
-	 * If we're still here, this is a FPU 
-	 * coprocessor instruction.  That we trapped
-	 * to emulate it means one of three things.
+	 * If we're still here, this is a FPU coprocessor instruction.  That we
+	 * trapped to emulate it means one of three things.
 	 *
-	 * If we do not have a hardware FPU, we need
-	 * to emulate this instruction.
+	 * If we do not have a hardware FPU, we need to emulate this instr-
+	 * uction.
 	 *
-	 * If we do have a hardware FPU but it is
-	 * disabled, we trapped because the current
-	 * process' state is not loaded into the
-	 * FPU.  We load that state in, possibly
-	 * swapping out another process' state first.
+	 * If we do have a hardware FPU but it is disabled, we trapped because
+	 * the current process' state is not loaded into the FPU.  We load that
+	 * state in, possibly swapping out another process' state first.
 	 *
-	 * If we do have a hardware FPU and it is
-	 * enabled, we trapped because of an
-	 * instruction that isn't supported by this
-	 * FPU, and so we need to emulate it.
+	 * If we do have a hardware FPU and it is enabled, we trapped because of
+	 * an instruction that isn't supported by this FPU, and so we need to
+	 * emulate it.
 	 */
 
 	/*
-	 * As an optimization, hppa_fpu_bootstrap
-	 * replaces this branch instruction with a
-	 * nop if there is a hardware FPU.
+	 * As an optimization, hppa_fpu_bootstrap replaces this branch inst-
+	 * ruction with a nop if there is a hardware FPU.
 	 *
-	 * Otherwise, this is the branch to emulate
-	 * an FPU coprocessor.
+	 * Otherwise, this is the branch to emulate an FPU coprocessor.
 	 */
 ALTENTRY(hppa_fpu_nop0)
 	b,n	L$emulate_fpu
 
 	/*
-	 * We have a hardware FPU.  If it is enabled,
-	 * branch to emulate the instruction.
+	 * We have a hardware FPU.  If it is enabled,  branch to emulate the
+	 * instruction.
 	 */
 	mfctl	%ccr, %arg0
 	extru,= %arg0, 25, 2, %r1
 	b,n	L$emulate_fpu
 
 	/*
-	 * The hardware FPU is disabled, so we need to swap 
-	 * in the FPU state of the process whose uspace
-	 * physical address in CR_UPADDR.  We may also need 
-	 * to swap out the FPU state of any process whose 
-	 * uspace physical address is in the fpu_cur_uspace 
-	 * variable.
+	 * The hardware FPU is disabled, so we need to swap in the FPU state of
+	 * the process whose uspace physical address in CR_UPADDR.  We may also
+	 * need to swap out the FPU state of any process whose uspace physical
+	 * address is in the fpu_cur_uspace variable.
 	 */
 	
 	/*
-	 * So far, the CTRAP() macro has saved %r1 in
-	 * %tr7, and the dispatching above has saved
-	 * %arg0 in tr2.  Save the other registers that 
-	 * we want to use.  hppa_fpu_swap deliberately 
-	 * uses only these registers and %r1 and %arg0.
+	 * So far, the CTRAP() macro has saved %r1 in %tr7, and the dispatching
+	 * above has saved %arg0 in tr2.  Save the other registers that we want
+	 * to use.  hppa_fpu_swap deliberately uses only these registers and %r1
+	 * and %arg0.
 	 */
 	mtctl	%arg1, %tr3
 	mtctl	%rp, %tr5
 
-	/*
-	 * Call hppa_fpu_swap.
-	 */
+	/* Call hppa_fpu_swap. */
 	ldil	L%fpu_cur_uspace, %arg0
 	ldw	R%fpu_cur_uspace(%arg0), %arg0
 	mfctl	CR_UPADDR, %arg1
@@ -986,67 +970,56 @@ ALTENTRY(hppa_fpu_nop0)
 	nop
 
 	/*
-	 * We branch here to emulate a special function
-	 * unit instruction.  On entry, %r1 is saved in %tr7
-	 * (courtesy of CTRAP), and %arg0 is saved in %tr2
-	 * (courtesy of the sfu/coprocessor dispatcher).
+	 * We branch here to emulate a special function unit instruction.  On
+	 * entry, %r1 is saved in %tr7 (courtesy of CTRAP), and %arg0 is saved
+	 * in %tr2 (courtesy of the sfu/coprocessor dispatcher).
 	 */
 L$emulate_sfu:
 	/*
-	 * Currently we just restore %arg0 and
-	 * trap with an illegal instruction.
+	 * Currently we just restore %arg0 and trap with an illegal instruction.
 	 */
 	mfctl	%tr2, %arg0
 	b	TLABEL(all)
 	ldi	T_ILLEGAL, %r1
 
 	/*
-	 * We branch here to emulate a non-FPU coprocessor
-	 * instruction.  On entry, %r1 is saved in %tr7
-	 * (courtesy of CTRAP), and %t1 is saved in %tr2
-	 * (courtesy of the sfu/coprocessor dispatcher).
+	 * We branch here to emulate a non-FPU coprocessor instruction.  On
+	 * entry, %r1 is saved in %tr7 (courtesy of CTRAP), and %t1 is saved in
+	 * %tr2 (courtesy of the sfu/coprocessor dispatcher).
 	 */
 L$emulate_coproc:
 	/*
-	 * Currently we just restore %arg0 and
-	 * trap with an illegal instruction.
+	 * Currently we just restore %arg0 and trap with an illegal instruction.
 	 */
 	mfctl	%tr2, %arg0
 	b	TLABEL(all)
 	ldi	T_ILLEGAL, %r1
 
 	/*
-	 * We branch here to emulate an FPU coprocessor
-	 * instruction.  On entry, %r1 is saved in %tr7
-	 * (courtesy of CTRAP), and %t1 is saved in %tr2
+	 * We branch here to emulate an FPU coprocessor instruction.  On entry,
+	 * %r1 is saved in %tr7 (courtesy of CTRAP), and %t1 is saved in %tr2
 	 * (courtesy of the sfu/coprocessor dispatcher).
 	 */
 L$emulate_fpu:
 	/*
-	 * We get back to C via the normal generic trap 
-	 * mechanism, as opposed to switching to a special 
-	 * stack, setting up a trapframe, etc., ourselves,
+	 * We get back to C via the normal generic trap mechanism, as opposed to
+	 * switching to a special stack, setting up a trapframe, etc. ourselves,
 	 * for three reasons.
 	 *
-	 * One, I want to turn interrupts back on, since
-	 * the emulation code might not be fast.  Two, 
-	 * because the instruction to emulate might be
-	 * a load or a store, I need to turn address
-	 * translation back on (i.e., return to virtual
-	 * mode.)  Third, doing both of those plus
-	 * setting up a trapframe is a pain, and the
-	 * generic trap handling already does it all.
+	 * One, I want to turn interrupts back on, since the emulation code
+	 * might not be fast.  Two, because the instruction to emulate might be
+	 * a load or a store, I need to turn address translation back on (i.e.,
+	 * return to virtual mode.)  Third, doing both of those plus setting up
+	 * a trapframe is a pain, and the generic trap handling already does it
+	 * all.
 	 *
-	 * To relieve trap() from having to check for
-	 * sfu and non-FPU instructions again, it assumes
-	 * that these kinds of instructions have already 
-	 * been translated into some other trap type (as 
-	 * they have, by the above L$emulate_sfu and 
-	 * L$emulate_coproc), and all T_EMULATION | T_USER 
-	 * traps are FPU instructions that need emulating.
+	 * To relieve trap() from having to check for sfu and non-FPU inst-
+	 * ructions again, it assumes that these kinds of instructions have
+	 * already been translated into some other trap type (as they have, by
+	 * the above L$emulate_sfu and L$emulate_coproc), and all
+	 * T_EMULATION | T_USER traps are FPU instructions that need emulating.
 	 *
-	 * So we just restore %arg0 and trap with
-	 * T_EMULATION.
+	 * So we just restore %arg0 and trap with T_EMULATION.
 	 */
 	mfctl	%tr2, %arg0
 	b	TLABEL(all)
@@ -1061,18 +1034,15 @@ EXIT(TLABEL(emu))
 LEAF_ENTRY_NOPROFILE(hppa_fpu_swap)
 
 	/*
-	 * Note that this function must work in 
-	 * physical mode as well as virtual mode,
-	 * because it can be called by a trap
-	 * handler.  This also further restricts 
-	 * the registers we can use.  We can only
-	 * use %arg0, %arg1, and %r1.
+	 * Note that this function must work in physical mode as well as virtual
+	 * mode, because it can be called by a trap handler.  This also further
+	 * restricts the registers we can use.  We can only use %arg0, %arg1,
+	 * and %r1.
 	 */
 
 	/*
-	 * Assuming that out and in aren't both NULL,
-	 * we will have to run coprocessor instructions,
-	 * so we'd better enable it.
+	 * Assuming that out and in aren't both NULL, we will have to run co-
+	 * processor instructions, so we'd better enable it.
 	 * 
 	 * Also, branch if there's no FPU state to swap out.
 	 */
@@ -1134,17 +1104,14 @@ LEAF_ENTRY_NOPROFILE(hppa_fpu_swap)
 L$fpu_swap_in:
 
 	/*
-	 * Stash the incoming user structure in
-	 * fpu_cur_uspace.  Because this variable
-	 * holds a physical address, this means 
-	 * that hppa_fpu_swap can only be called 
-	 * with a non-zero user_in from physical 
-	 * mode (i.e., from the emulation assist
-	 * trap handler).  And that's exactly
-	 * what happens now.
+	 * Stash the incoming user structure in fpu_cur_uspace.  Because this
+	 * variable holds a physical address, this means that hppa_fpu_swap can
+	 * only be called with a non-zero user_in from physical mode (i.e., from
+	 * the emulation assist trap handler).  And that's exactly what happens
+	 * now.
 	 *
-	 * So stash fpu_cur_uspace, branching
-	 * past the swap-in code if it is zero.
+	 * So stash fpu_cur_uspace, branching past the swap-in code if it is
+	 * zero.
 	 */
 	ldil	L%fpu_cur_uspace, %r1
 	comb,=	%r0, %arg1, L$fpu_no_swap_in
@@ -2074,7 +2041,8 @@ L$trap_have_stack:
 	/* save the trap type and flags */
 	stw	%r1, TF_FLAGS(%t3)
 
-	mfctl	%rctr, %t1		/* gotta get it before R is up */
+	/* gotta get it before R is up */
+	mfctl	%rctr, %t1
 
 	copy	%sp, %t3
 	ldo	HPPA_FRAME_SIZE+TRAPFRAME_SIZEOF(%sp), %sp
