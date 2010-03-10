@@ -4,7 +4,6 @@
 
 KMOD=		sdt
 SRCS=		sdt.c
-SRCS+=		vnode_if.h
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys \
 		-I${NETBSDSRCDIR}/external/cddl/osnet/dev/sdt \
