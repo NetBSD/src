@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.24 2010/02/11 09:06:51 roy Exp $
+# $NetBSD: list,v 1.25 2010/03/10 23:13:10 abs Exp $
 #
 
 COPY	${KERNEL3}			netbsd.sun3
@@ -143,6 +143,7 @@ SPECIAL	ed		srcdir	distrib/utils/x_ed
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
+SPECIAL	edlabel		srcdir	distrib/utils/edlabel
 
 ARGVLN	sh -sh
 
