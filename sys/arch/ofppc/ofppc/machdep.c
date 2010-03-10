@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.110 2010/02/25 23:33:45 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.111 2010/03/10 18:06:57 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 2010/02/25 23:33:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2010/03/10 18:06:57 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,7 +391,8 @@ copy_disp_props(struct device *dev, int node, prop_dictionary_t dict)
 	}
 	if (!of_to_uint32_prop(dict, node, "address", "address")) {
 		uint32_t fbaddr = 0;
-			OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
+
+		OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
 		if (fbaddr != 0)
 			prop_dictionary_set_uint32(dict, "address", fbaddr);
 	}
