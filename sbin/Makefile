@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.115 2010/01/14 21:29:26 pooka Exp $
+#	$NetBSD: Makefile,v 1.116 2010/03/10 23:13:10 abs Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -8,7 +8,7 @@
 
 SUBDIR=	amrctl apmlabel atactl badsect bioctl brconfig ccdconfig \
 	disklabel dkctl dkscan_bsdlabel dmesg \
-	drvctl edlabel fastboot fdisk fsck fsirand gpt ifconfig init ldconfig \
+	drvctl fastboot fdisk fsck fsirand gpt ifconfig init ldconfig \
 	mbrlabel mknod modload modstat modunload mount newbtconf nologin \
 	pdisk ping pppoectl raidctl reboot rcorder rndctl route routed \
 	savecore scan_ffs scsictl shutdown slattach svhlabel swapctl sysctl \

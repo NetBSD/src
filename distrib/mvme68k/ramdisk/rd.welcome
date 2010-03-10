@@ -1,7 +1,7 @@
 	Welcome to the NetBSD/mvme68k RAMDISK root!
 
 This environment is designed to do only four things:
- 1:  Partititon your disk (use the command:  edlabel /dev/rsd?c)
+ 1:  Partititon your disk (use the command:  disklabel -i -I /dev/rsd?c)
  2:  Copy a miniroot image into the swap partition  (/dev/rsd?b)
  3:  Make that partition bootable (using 'installboot')
  4:  Reboot (using the swap partition, i.e. /dev/sd?b).

@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.18 2009/09/20 19:49:09 abs Exp $
+#	$NetBSD: list,v 1.19 2010/03/10 23:13:09 abs Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
 
@@ -19,7 +19,6 @@ PROG	bin/sh
 PROG	bin/tftp
 
 PROG	sbin/disklabel
-PROG	sbin/edlabel
 PROG	sbin/ifconfig
 PROG	sbin/init
 PROG	sbin/installboot

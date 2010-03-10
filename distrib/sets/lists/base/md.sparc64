@@ -1,6 +1,6 @@
-# $NetBSD: md.sparc64,v 1.78 2010/03/08 06:40:06 lukem Exp $
+# $NetBSD: md.sparc64,v 1.79 2010/03/10 23:13:09 abs Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
-./sbin/edlabel					base-sysutil-root
+./sbin/edlabel					base-sysutil-root	obsolete
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/sparc					base-compat-lib		compat
 ./usr/lib/sparc/i18n				base-compat-lib		compat

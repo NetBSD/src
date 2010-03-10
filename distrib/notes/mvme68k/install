@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.21 2009/04/23 01:56:50 snj Exp $
+.\"	$NetBSD: install,v 1.22 2010/03/10 23:13:09 abs Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -89,7 +89,7 @@ Loading: Operating System
 Volume: NBSD
 
 IPL loaded at:  $003F0000
-\*[Gt]\*[Gt] BSD MVME147 tapeboot [$Revision: 1.21 $]
+\*[Gt]\*[Gt] BSD MVME147 tapeboot [$Revision: 1.22 $]
 578616+422344+55540+[46032+51284]=0x11a6e4
 Start @ 0x8000 ...
 Copyright (c) 1996, 1997, 1998, 1999, 2000
@@ -122,7 +122,7 @@ Finally, you will see the following "welcome" message:
         Welcome to the NetBSD/\*M RAMDISK root!
 
 This environment is designed to do only four things:
-  1:  Partition your disk (use the command:  edlabel /dev/rsd0c)
+  1:  Partition your disk (use the command:  disklabel -i -I /dev/rsd0c)
   2:  Copy a miniroot image into the swap partition  (/dev/rsd0b)
   3:  Make that partition bootable (using 'installboot')
   4:  Reboot (using the swap partition, i.e. /dev/sd0b).
@@ -220,63 +220,44 @@ opportunity to partition any other disks in your system from the main
 installation program.
 .Pp
 To create the disklabel and partitions, use the
-.Li edlabel
+.Li disklabel
 program, passing it the name of the Raw Partition of your root/boot disk.
 .Pp
-.Dl # Ic "edlabel /dev/rsd0c"
-.Dl edlabel menu:
-.Dl print   - display the current disk label
-.Dl modify  - prompt for changes to the label
-.Dl write   - write the new label to disk
-.Dl quit    - terminate program
-.Dl edlabel\*[Gt]
-.Pp
-The program shows what commands it recognizes;
-.Ic print ,
-.Ic modify ,
-.Ic write ,
-and
-.Ic quit .
-It will accept the first letter of a command if
-you don't feel like typing each one in full.
+.Dl # Ic "disklabel -i -I /dev/rsd0c"
+.Dl important disklabel -i options:
+.Dl ?     - short help on all commands
+.Dl P     - print current partition table
+.Dl W     - write the current partition table
+.Dl Q     - quit
+.Dl [a-p] - define named partition
 .Pp
 To start creating the basic partitions, you should enter
-.Ic m No (modify)
-at the edlabel prompt, then enter the letter corresponding to the first
-.No partition, Sy a .
+.Ic a
+at the partition\*[Gt] prompt.
+.Li disklabel
+will then prompt for the partition information in a form similar to:
 .Pp
-.Dl edlabel\*[Gt] Ic m
+.Dl partition> Ic a
+.Dl Filesystem type [?] [unused]: Ic 4.2BSD
+.Dl Start offset ('x' to start after part 'x') [0c, 0s, 0M]:
+.Dl Partition size ('$' for all remaining) [0c, 0s, 0M]: Ic 32m
 .Pp
-.Dl modify subcommands:
-.Dl @   : modify disk parameters
-.Dl a-h : modify partition
-.Dl s   : standardize geometry
-.Dl q   : quit this subcommand
-.Dl edlabel/modify\*[Gt] Ic a
-.Dl a (root)          0       (0/00/00)          0       (0/00/00)  unused
-.Dl start as \*[Lt]blkno\*[Gt] or \*[Lt]cyls/trks/sects\*[Gt] : Ic 0
-.Dl length as \*[Lt]nblks\*[Gt] or \*[Lt]cyls/trks/sects\*[Gt] : Ic 65536
-.Dl type: Ic 4.2BSD
-.Dl edlabel/modify\*[Gt]
+When you enter the start and length of a partition, you can append
+s, c, m, or g to specify sectors, cylinders, megabytes or gigabytes
+respectively.
 .Pp
-When you enter the start and length of a partition, you can use either
-blocks or cylinder/track/sector notation.
-If this is the first time you've partitioned a disk for
-.Nx ,
-it's probably easiest to use block
-notation.
 The above example creates partition
 .Sq Li a ,
-starting at block zero
-and with a size of 65536 blocks.
-Note that the usual size of a block is
-512 bytes, so this creates a 32 MB partition.
+starting at sector zero
+and with a size of 32MB.
 .Pp
 The
 .Li type
 of the partition should be
 .Li 4.2BSD ,
-otherwise you won't be able to create a file system on it.
+which is the recommended
+.Nx
+file system type.
 .Pp
 Next, create a swap partition (b).
 Note that the minimum size of this swap partition should be 8 MB,
@@ -284,46 +265,26 @@ otherwise you won't be able to use a miniroot to complete the
 .Nx
 installation!
 .Pp
-.Dl edlabel/modify\*[Gt] Ic b
-.Dl b (swap)          0       (0/00/00)          0       (0/00/00)  unused
-.Dl start as \*[Lt]blkno\*[Gt] or \*[Lt]cyls/trks/sects\*[Gt] : Ic 65536
-.Dl length as \*[Lt]nblks\*[Gt] or \*[Lt]cyls/trks/sects\*[Gt] : Ic 32768
-.Dl type: Ic swap
-.Dl edlabel/modify\*[Gt]
+.Dl partition> Ic b
+.Dl Filesystem type [?] [unused]: Ic swap
+.Dl Start offset ('x' to start after part 'x') [0c, 0s, 0M]: Ic a
+.Dl Partition size ('$' for all remaining) [0c, 0s, 0M]: Ic 16m
 .Pp
-Here, we specify a value for
-.Li start
-such that the swap partition follows immediately after partition
-.Sq Li a ,
-i.e. 65536.
-The length of the swap partition should be a multiple of the
-amount of RAM you have in your system.
-Here, we've chosen 32768, or 16 MB.
-The next available block on the drive is thus 65536 + 32768.
-We will use this to create partition
+Here, we specify that the swap partition starts immediatedly after the
+.Sq Li a
+partition and is of size 16MB.
+The length of the swap partition should be at least as large as the
+amount of RAM in your system and ideally 64MB or over.
+The remainder of the disk can be alloacted to the 
 .Sq Li d
-for our
+partition for the
 .Pa /usr
 file system.
-(Note that for a busy system, or a system with more
-than 8 MB of RAM, you'll be better off with a 32 or 64 MB swap partition.)
 .Pp
-.Dl edlabel/modify\*[Gt] Ic d
-.Dl d (user)          0       (0/00/00)          0       (0/00/00)  unused
-.Dl start as \*[Lt]blkno\*[Gt] or \*[Lt]cyls/trks/sects\*[Gt] : Ic 98304
-.Dl length as \*[Lt]nblks\*[Gt] or \*[Lt]cyls/trks/sects\*[Gt] : Ic 1540096
-.Dl type: Ic 4.2BSD
-.Dl edlabel/modify\*[Gt] Ic q
-.Dl edlabel\*[Gt]
-.Pp
-As you can see, we've chosen to assign the remainder of the disk to
-.Pa /usr .
-Since there are 1638400 sectors on the example disk (did you remember to
-note down the number of sectors on your disk during boot?), and partition
-.Sy d
-starts at sector 98304, a simple bit of arithmetic (1638400 - 98304)
-gives
-.Sy d No a size of 1540096.
+.Dl partition> Ic d
+.Dl Filesystem type [?] [unused]: Ic 4.2BSD
+.Dl Start offset ('x' to start after part 'x') [0c, 0s, 0M]: Ic b
+.Dl Partition size ('$' for all remaining) [0c, 0s, 0M]: Ic $
 .Pp
 Note that the above partition sizes are just guidelines.
 If your disk is large enough, you should resize the partitions
@@ -332,34 +293,11 @@ appropriately and perhaps also create a /var partition as well.
 You now need to write this new disklabel, together with the partition
 details you've just entered, to disk.
 You might also try the
-.Sq Ic p
+.Sq Ic P
 command
 to view the partitions.
 Once written, you can quit back to the shell using
-.Sq Ic q .
-.Pp
-.Dl edlabel\*[Gt] Ic p
-.(disp
-	type_num: 4
-	sub_type: 0
-       type_name: SCSI disk
-       pack_name: fictitious
-    bytes/sector: 512
-   sectors/track: 128
- tracks/cylinder: 16
-       cylinders: 800
-sectors/cylinder: 2048
-partition      start         (c/t/s)      nblks         (c/t/s)  type
-
- a (root)          0       (0/00/00)      65536      (32/00/00)  4.2BSD
- b (swap)      65536      (32/00/00)      32768      (48/00/00)  swap
- c (disk)          0       (0/00/00)    1638400     (800/00/00)  unused
- d (user)      98304      (48/00/00)    1540096     (752/00/00)  4.2BSD
-.disp)
-.Pp
-.Dl edlabel\*[Gt] Ic w
-.Dl edlabel\*[Gt] Ic q
-.Dl #
+.Sq Ic Q .
 .Pp
 Now that your disk's partitioned, you need to get the proper installation
 miniroot image onto it.
@@ -497,7 +435,7 @@ For all board types, the boot messages are very similar:
 .Pp
 .(disp
 Start @ 0x8000 ...
-\*[Gt]\*[Gt] BSD MVME147 netboot (via sboot) [$Revision: 1.21 $]
+\*[Gt]\*[Gt] BSD MVME147 netboot (via sboot) [$Revision: 1.22 $]
 device: le0 attached to 08:00:3e:20:cb:87
 boot: client IP address: 192.168.1.4
 boot: client name: soapy

@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.15 2010/02/11 09:06:50 roy Exp $
+# $NetBSD: list,v 1.16 2010/03/10 23:13:09 abs Exp $
 #
 
 # The PROM provides a default kernel name of "vmunix"
@@ -144,6 +144,7 @@ SPECIAL	ed		srcdir	distrib/utils/x_ed
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
+SPECIAL	edlabel		srcdir	distrib/utils/edlabel
 
 ARGVLN	sh -sh
 
