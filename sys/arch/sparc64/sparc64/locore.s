@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.326 2010/03/08 08:59:06 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.327 2010/03/10 06:57:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -6568,14 +6568,15 @@ ENTRY(pmap_copy_page_phys)
 	retl
 	 mov	%o4, %g1		! Restore g1
 #endif
+
 /*
- * extern int64_t pseg_get(struct pmap *pm, vaddr_t addr);
+ * extern int64_t pseg_get_real(struct pmap *pm, vaddr_t addr);
  *
  * Return TTE at addr in pmap.  Uses physical addressing only.
  * pmap->pm_physaddr must by the physical address of pm_segs
  *
  */
-ENTRY(pseg_get)
+ENTRY(pseg_get_real)
 !	flushw			! Make sure we don't have stack probs & lose hibits of %o
 	ldx	[%o0 + PM_PHYS], %o2			! pmap->pm_segs
 
@@ -6637,13 +6638,13 @@ ENTRY(pseg_get)
 /*
  * In 32-bit mode:
  *
- * extern int pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2:%o3,
- *			 paddr_t spare %o4:%o5);
+ * extern int pseg_set_real(struct pmap* %o0, vaddr_t addr %o1,
+ *			    int64_t tte %o2:%o3, paddr_t spare %o4:%o5);
  *
  * In 64-bit mode:
  *
- * extern int pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2,
- *			paddr_t spare %o3);
+ * extern int pseg_set_real(struct pmap* %o0, vaddr_t addr %o1,
+ *			    int64_t tte %o2, paddr_t spare %o3);
  *
  * Set a pseg entry to a particular TTE value.  Return values are:
  *
@@ -6673,7 +6674,7 @@ ENTRY(pseg_get)
  * The counters are 32 bit or 64 bit wide, depending on the kernel type we are
  * running!
  */
-ENTRY(pseg_set)
+ENTRY(pseg_set_real)
 #ifndef _LP64
 	sllx	%o4, 32, %o4				! Put args into 64-bit format
 	sllx	%o2, 32, %o2				! Shift to high 32-bits
