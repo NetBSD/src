@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.5 2008/05/02 18:31:11 martin Exp $
+#	$NetBSD: install.md,v 1.6 2010/03/10 23:13:09 abs Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -179,7 +179,7 @@ in case you have defined less than eight partitions.
 __md_prep_disklabel_1
 	echo -n "Press [Enter] to continue "
 	getresp ""
-	edlabel /dev/r${_disk}c
+	disklabel -i -I /dev/r${_disk}c
 }
 
 md_copy_kernel() {
