@@ -1,4 +1,4 @@
-/*	$NetBSD: wcfb.c,v 1.4 2010/03/09 23:17:12 macallan Exp $ */
+/*	$NetBSD: wcfb.c,v 1.5 2010/03/10 02:41:02 macallan Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.4 2010/03/09 23:17:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.5 2010/03/10 02:41:02 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.4 2010/03/09 23:17:12 macallan Exp $");
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
 #include "opt_wsfb.h"
-#include "opt_wcfb.h"
+#include "opt_wsdisplay_compat.h"
 
 #ifdef WCFB_DEBUG
 # define DPRINTF printf
