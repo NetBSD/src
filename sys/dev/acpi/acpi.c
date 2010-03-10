@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.157 2010/03/09 18:15:21 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.158 2010/03/10 08:12:44 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.157 2010/03/09 18:15:21 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.158 2010/03/10 08:12:44 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -894,27 +894,31 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 
 		SIMPLEQ_INSERT_TAIL(&sc->sc_devnodes, ad, ad_list);
 
+#ifdef ACPIVERBOSE
+
 		if (type != ACPI_TYPE_DEVICE)
 			return AE_OK;
 
-		if ((ad->ad_devinfo->Valid & ACPI_VALID_HID) == 0)
-			return AE_OK;
+		aprint_normal_dev(sc->sc_dev, "%-5s ", ad->ad_name);
 
-#ifdef ACPIVERBOSE
-		aprint_normal("       HID %s\n",
-		    ad->ad_devinfo->HardwareId.String);
+		aprint_normal("HID %-10s ",
+		    ((devinfo->Valid & ACPI_VALID_HID) != 0) ?
+		    devinfo->HardwareId.String: "-");
 
-		if (ad->ad_devinfo->Valid & ACPI_VALID_UID)
-			aprint_normal("       UID %s\n",
-			    ad->ad_devinfo->UniqueId.String);
+		aprint_normal("UID %-4s ",
+		    ((devinfo->Valid & ACPI_VALID_UID) != 0) ?
+		    devinfo->UniqueId.String : "-");
 
-		if (ad->ad_devinfo->Valid & ACPI_VALID_ADR)
-			aprint_normal("       ADR 0x%016" PRIx64 "\n",
-			    ad->ad_devinfo->Address);
+		if ((devinfo->Valid & ACPI_VALID_STA) != 0)
+			aprint_normal("STA 0x%08X ", devinfo->CurrentStatus);
+		else
+			aprint_normal("STA %10s ", "-");
 
-		if (ad->ad_devinfo->Valid & ACPI_VALID_STA)
-			aprint_normal("       STA 0x%08x\n",
-			    ad->ad_devinfo->CurrentStatus);
+		if ((devinfo->Valid & ACPI_VALID_ADR) != 0)
+			aprint_normal("ADR 0x%016" PRIX64"",
+			    devinfo->Address);
+
+		aprint_normal("\n");
 #endif
 	}
 
