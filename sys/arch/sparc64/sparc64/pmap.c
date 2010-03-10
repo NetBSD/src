@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.258 2010/03/08 08:59:06 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.259 2010/03/10 06:57:22 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.258 2010/03/08 08:59:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.259 2010/03/10 06:57:22 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -79,8 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.258 2010/03/08 08:59:06 mrg Exp $");
 paddr_t cpu0paddr;		/* contigious phys memory preallocated for cpus */
 
 /* These routines are in assembly to allow access thru physical mappings */
-extern int64_t pseg_get(struct pmap *, vaddr_t);
-extern int pseg_set(struct pmap *, vaddr_t, int64_t, paddr_t);
+extern int64_t pseg_get_real(struct pmap *, vaddr_t);
+extern int pseg_set_real(struct pmap *, vaddr_t, int64_t, paddr_t);
 
 /*
  * Diatribe on ref/mod counting:
@@ -348,6 +348,53 @@ struct page_size_map page_size_map[] = {
 	PSMAP_ENTRY((8 * 1024 - 1) & ~(8 * 1024 - 1), PGSZ_8K),
 	PSMAP_ENTRY(0, 0),
 };
+
+/*
+ * This probably shouldn't be necessary, but it stops USIII machines from
+ * breaking in general, and not just for MULTIPROCESSOR.
+ */
+#define USE_LOCKSAFE_PSEG_GETSET
+#if defined(USE_LOCKSAFE_PSEG_GETSET)
+
+static kmutex_t pseg_lock;
+
+static __inline__ int64_t
+pseg_get_locksafe(struct pmap *pm, vaddr_t va)
+{
+	int64_t rv;
+	bool took_lock = lock_available /*&& pm == pmap_kernel()*/;
+
+	if (__predict_true(took_lock))
+		mutex_enter(&pseg_lock);
+	rv = pseg_get_real(pm, va);
+	if (__predict_true(took_lock))
+		mutex_exit(&pseg_lock);
+	return rv;
+}
+
+static __inline__ int
+pseg_set_locksafe(struct pmap *pm, vaddr_t va, int64_t data, paddr_t ptp)
+{
+	int rv;
+	bool took_lock = lock_available /*&& pm == pmap_kernel()*/;
+
+	if (__predict_true(took_lock))
+		mutex_enter(&pseg_lock);
+	rv = pseg_set_real(pm, va, data, ptp);
+	if (__predict_true(took_lock))
+		mutex_exit(&pseg_lock);
+	return rv;
+}
+
+#define pseg_get(pm, va)		pseg_get_locksafe(pm, va)
+#define pseg_set(pm, va, data, ptp)	pseg_set_locksafe(pm, va, data, ptp)
+
+#else /* USE_LOCKSAFE_PSEG_GETSET */
+
+#define pseg_get(pm, va)		pseg_get_real(pm, va)
+#define pseg_set(pm, va, data, ptp)	pseg_set_real(pm, va, data, ptp)
+
+#endif /* USE_LOCKSAFE_PSEG_GETSET */
 
 /*
  * Enter a TTE into the kernel pmap only.  Don't do anything else.
@@ -1247,6 +1294,9 @@ pmap_init(void)
 	vm_num_phys = avail_end - avail_start;
 
 	mutex_init(&pmap_lock, MUTEX_DEFAULT, IPL_NONE);
+#if defined(USE_LOCKSAFE_PSEG_GETSET)
+	mutex_init(&pseg_lock, MUTEX_SPIN, IPL_VM);
+#endif
 	lock_available = true;
 }
 
