@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.41 2010/03/08 07:42:47 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.42 2010/03/10 18:17:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -205,14 +205,6 @@ syscall_entry:
 	 * %sr0, %r31:	return address
 	 * %sp:		user stack
 	 *
-	 * N.B. we are trying to rely on the fact that bottom of kernel
-	 *	stack contains a print of some past trapframe, so
-	 *	we do not save hard to get information, but do restore
-	 *	the whole context later on return anyway.
-	 * XXXXXX this is very bad. everything must be saved
-	 *
-	 * WHAT ARE WE RELYING ON?
-	 *
 	 */
 
 	/* t2 = curlwp PCB */
@@ -259,7 +251,6 @@ syscall_entry:
 	stw	%r1, TF_CR15-TRAPFRAME_SIZEOF(%sr1, %t3)	/* eiem ,bc */
 	stw	%t1, TF_CR22-TRAPFRAME_SIZEOF(%sr1, %t3)	/* ipsw */
  
-	/* XXX moved here to be protected from interrupts - why? */
 	mfsp	%sr3, %t1
 	stw	%t1, TF_SR3-TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%ret0, TF_CR8-TRAPFRAME_SIZEOF(%sr1, %t3)	/* pidr1 */
@@ -2012,17 +2003,12 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 	 * the user's stack, and we must move to the kernel stack.
 	 */
 	mfctl	%pcoq, %t1
-	ldil	L%SYSCALLGATE, %t2
-	/* Start aligning the assumed kernel sp. */
-	ldo	HPPA_FRAME_SIZE-1(%sp), %sp
-	/* This dep leaves t2 with SYSCALLGATE | (pcoqh & PAGE_MASK). */
-	dep	%t1, 31, PGSHIFT, %t2
-	/* Nullify if pcoqh & HPPA_PC_PRIV_MASK != 0. */
-	dep,<>	%t1, 31, 2, %r0
-	/* Branch if (pcoqh & ~PAGE_MASK) != SYSCALLGATE */
-	comb,<> %t1, %t2, L$trap_from_kernel
-	/* Finish aligning the assumed kernel sp. */
-	dep	%r0, 31, 6, %sp
+	ldil	L%SYSCALLGATE, %t2		/* t2 = SYSCALLGATE */
+	ldo	HPPA_FRAME_SIZE-1(%sp), %sp	/* Assumed stack align step 1 */
+	dep	%t1, 31, PGSHIFT, %t2		/* t2 |= (pcoqh & PAGE_MASK) */
+	dep,<>	%t1, 31, 2, %r0			/* Nullify if user mode (!0) */
+	comb,<>,n %t1, %t2, L$trap_from_kernel	/* if %t1 != %t2 => kernel */
+	dep	%r0, 31, 6, %sp			/* Assumed stack align step 2 */
 
 	mfctl	CR_UPADDR, %t2
 	depi	1, T_USER_POS, 1, %r1
@@ -2088,8 +2074,6 @@ L$trap_have_stack:
 	/* save the trap type and flags */
 	stw	%r1, TF_FLAGS(%t3)
 
-	/* XXX not in use... yet */
-	/* XXX save %ccr here w/ rctr */
 	mfctl	%rctr, %t1		/* gotta get it before R is up */
 
 	copy	%sp, %t3
@@ -2106,8 +2090,8 @@ L$trap_have_stack:
 	nop ! nop ! nop ! nop ! nop ! nop ! nop ! nop
 trapnowvirt:
 	/*
-	 * t3 contains the virtual address of the trapframe
-	 * sp is loaded w/ the right VA (we did not need it being physical)
+	 * %t3 contains the virtual address of the trapframe
+	 * %sp is loaded w/ the right VA (we did not need it being physical)
 	 */
 
 	mfctl	%ccr, %t2
