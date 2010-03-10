@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.123 2010/03/06 08:08:29 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.124 2010/03/10 06:57:22 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.123 2010/03/06 08:08:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.124 2010/03/10 06:57:22 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -650,7 +650,8 @@ db_pload_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	}
 }
 
-int64_t pseg_get(struct pmap *, vaddr_t);
+/* XXX no locking; shouldn't matter */
+int64_t pseg_get_real(struct pmap *, vaddr_t);
 
 void
 db_dump_pmap(struct pmap *pm)
@@ -706,7 +707,7 @@ db_pmap_kernel(db_expr_t addr, bool have_addr, db_expr_t count, const char *modi
 	if (have_addr) {
 		/* lookup an entry for this VA */
 		
-		if ((data = pseg_get(pmap_kernel(), (vaddr_t)addr))) {
+		if ((data = pseg_get_real(pmap_kernel(), (vaddr_t)addr))) {
 			db_printf("pmap_kernel(%p)->pm_segs[%lx][%lx][%lx]=>%qx\n",
 				  (void *)(uintptr_t)addr, (u_long)va_to_seg(addr),
 				  (u_long)va_to_dir(addr), (u_long)va_to_pte(addr),
