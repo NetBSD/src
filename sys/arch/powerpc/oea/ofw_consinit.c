@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.8 2008/09/25 14:47:54 macallan Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.9 2010/03/10 18:36:05 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.8 2008/09/25 14:47:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.9 2010/03/10 18:36:05 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -135,7 +135,7 @@ cninit(void)
 	ofwoea_bootstrap_console();
 
 	OFPRINTF("console node: %08x\n", console_node);
- 
+
 	if (console_node == -1)
 		goto nocons;
 
@@ -254,15 +254,15 @@ cninit_kd(void)
 	 * This is not enough, we have a few more problems:
 	 *
 	 *	(1) The stupid Macintosh firmware uses a
-	 *	    `psuedo-hid' (no typo) or `pseudo-hid',  
-	 *	    which apparently merges all keyboards 
-	 *	    input into a single input stream.  
-	 *	    Because of this, we can't actually 
-	 *	    determine which controller or keyboard 
+	 *	    `psuedo-hid' (no typo) or `pseudo-hid',
+	 *	    which apparently merges all keyboards
+	 *	    input into a single input stream.
+	 *	    Because of this, we can't actually
+	 *	    determine which controller or keyboard
 	 *	    is really the console keyboard!
 	 *
 	 *	(2) Even if we could, the keyboard can be USB,
-	 *	    and this requires a lot of the kernel to 
+	 *	    and this requires a lot of the kernel to
 	 *	    be running in order for it to work.
 	 *
 	 *      (3) If the keyboard is behind isa, we don't have enough
@@ -271,9 +271,9 @@ cninit_kd(void)
 	 * So, what we do is this:
 	 *
 	 *	(1) First check for OpenFirmware implementation
-	 *	    that will not let us distinguish between 
-	 *	    USB and ADB. In that situation, try attaching 
-	 *	    anything as we can, and hope things get better 
+	 *	    that will not let us distinguish between
+	 *	    USB and ADB. In that situation, try attaching
+	 *	    anything as we can, and hope things get better
 	 *	    at autoconfiguration time.
 	 *
 	 *	(2) Assume the keyboard is USB.
@@ -288,7 +288,7 @@ cninit_kd(void)
 	 */
 
 	/*
-	 * stdin is /pseudo-hid/keyboard.  There is no 
+	 * stdin is /pseudo-hid/keyboard.  There is no
 	 * `adb-kbd-ihandle or `usb-kbd-ihandles methods
 	 * available. Try attaching as ADB.
 	 * But only if ADB support is actually present.
@@ -309,7 +309,7 @@ cninit_kd(void)
 #endif
 		} else {
 			/* must be USB */
-			printf("No ADB support present, assuming USB " 
+			printf("No ADB support present, assuming USB "
 			       "keyboard\n");
 #if NUKBD > 0
 			ukbd_cnattach();
@@ -413,7 +413,7 @@ ofkbd_cngetc(dev_t dev)
  * Bootstrap console support functions
  */
 
-static int 
+static int
 ofwbootcons_cngetc(dev_t dev)
 {
 	unsigned char ch = '\0';
@@ -463,7 +463,7 @@ ofwoea_bootstrap_console(void)
 	node = OF_instance_to_package(stdout);
 	console_node = node;
 	console_instance = stdout;
-	
+
 	return;
 nocons:
 	panic("No /chosen could be found!\n");
