@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.111 2010/03/10 18:06:57 kiyohara Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112 2010/03/10 18:18:47 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2010/03/10 18:06:57 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2010/03/10 18:18:47 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,9 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2010/03/10 18:06:57 kiyohara Exp $
 
 struct pmap ofw_pmap;
 char bootpath[256];
-
-void ofwppc_batinit(void);
-void ofppc_bootstrap_console(void);
 
 extern u_int l2cr_config;
 #if (NRTAS > 0)
