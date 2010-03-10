@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.158 2010/03/10 08:12:44 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.159 2010/03/10 09:42:46 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.158 2010/03/10 08:12:44 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.159 2010/03/10 09:42:46 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -203,6 +203,11 @@ static int		is_available_state(struct acpi_softc *, int);
 
 static bool		acpi_suspend(device_t, const pmf_qual_t *);
 static bool		acpi_resume(device_t, const pmf_qual_t *);
+
+#ifdef ACPI_ACTIVATE_DEV
+static void		acpi_activate_device(ACPI_HANDLE, ACPI_DEVICE_INFO **);
+static ACPI_STATUS	acpi_allocate_resources(ACPI_HANDLE);
+#endif
 
 /*
  * acpi_probe:
@@ -785,38 +790,6 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 	}
 }
 
-#ifdef ACPI_ACTIVATE_DEV
-static void
-acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
-{
-	ACPI_STATUS rv;
-	ACPI_DEVICE_INFO *newdi;
-
-#ifdef ACPI_DEBUG
-	aprint_normal("%s: %s, old status=%x\n", __func__,
-	       (*di)->HardwareId.String, (*di)->CurrentStatus);
-#endif
-
-	rv = acpi_allocate_resources(handle);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error("acpi: activate failed for %s\n",
-		       (*di)->HardwareId.String);
-	} else {
-		aprint_verbose("acpi: activated %s\n",
-		    (*di)->HardwareId.String);
-	}
-
-	(void)AcpiGetObjectInfo(handle, &newdi);
-	ACPI_FREE(*di);
-	*di = newdi;
-
-#ifdef ACPI_DEBUG
-	aprint_normal("%s: %s, new status=%x\n", __func__,
-	       (*di)->HardwareId.String, (*di)->CurrentStatus);
-#endif
-}
-#endif /* ACPI_ACTIVATE_DEV */
-
 /*
  * acpi_make_devnode:
  *
@@ -852,14 +825,7 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 	case ACPI_TYPE_DEVICE:
 
 #ifdef ACPI_ACTIVATE_DEV
-		if ((devinfo->Valid & (ACPI_VALID_STA | ACPI_VALID_HID)) ==
-		    (ACPI_VALID_STA | ACPI_VALID_HID) &&
-		    (devinfo->CurrentStatus &
-			(ACPI_STA_DEV_PRESENT | ACPI_STA_DEV_ENABLED)) ==
-		    ACPI_STA_DEV_PRESENT)
-			acpi_activate_device(handle, &devinfo);
-
-			/* FALLTHROUGH */
+		acpi_activate_device(handle, &devinfo);
 #endif
 
 	case ACPI_TYPE_PROCESSOR:
@@ -1545,8 +1511,57 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	return ret;
 }
 
-#if defined(ACPI_ACTIVATE_DEV)
-/* XXX This very incomplete */
+#ifdef ACPI_ACTIVATE_DEV
+
+#define ACPI_DEV_VALID	(ACPI_VALID_STA | ACPI_VALID_HID)
+#define ACPI_DEV_STATUS	(ACPI_STA_DEV_PRESENT | ACPI_STA_DEV_ENABLED)
+
+static void
+acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
+{
+	ACPI_DEVICE_INFO *newdi;
+	ACPI_STATUS rv;
+	uint32_t old;
+
+	/*
+	 * If the device is valid and present,
+	 * but not enabled, try to activate it.
+	 */
+	if (((*di)->Valid & ACPI_DEV_VALID) != ACPI_DEV_VALID)
+		return;
+
+	old = (*di)->CurrentStatus;
+
+	if ((old & ACPI_DEV_STATUS) != ACPI_STA_DEV_PRESENT)
+		return;
+
+	rv = acpi_allocate_resources(handle);
+
+	if (ACPI_FAILURE(rv))
+		goto fail;
+
+	rv = AcpiGetObjectInfo(handle, &newdi);
+
+	if (ACPI_FAILURE(rv))
+		goto fail;
+
+	ACPI_FREE(*di);
+	*di = newdi;
+
+	aprint_verbose_dev(acpi_softc->sc_dev,
+	    "%s activated, STA 0x%08X -> STA 0x%08X\n",
+	    (*di)->HardwareId.String, old, (*di)->CurrentStatus);
+
+	return;
+
+fail:
+	aprint_error_dev(acpi_softc->sc_dev, "failed to "
+	    "activate %s\n", (*di)->HardwareId.String);
+}
+
+/*
+ * XXX: This very incomplete.
+ */
 ACPI_STATUS
 acpi_allocate_resources(ACPI_HANDLE handle)
 {
@@ -1610,7 +1625,8 @@ acpi_allocate_resources(ACPI_HANDLE handle)
 			resn->Length = resp->Length;
 			break;
 		default:
-			printf("acpi_allocate_resources: res=%u\n", resc->Type);
+			aprint_error_dev(acpi_softc->sc_dev,
+			    "%s: invalid type %u\n", __func__, resc->Type);
 			rv = AE_BAD_DATA;
 			goto out2;
 		}
@@ -1626,18 +1642,20 @@ acpi_allocate_resources(ACPI_HANDLE handle)
 			resn = (ACPI_RESOURCE *)((UINT8 *)bufn.Pointer + delta);
 		}
 	}
+
 	if (resc->Type != ACPI_RESOURCE_TYPE_END_TAG) {
-		printf("acpi_allocate_resources: resc not exhausted\n");
+		aprint_error_dev(acpi_softc->sc_dev,
+		    "%s: resc not exhausted\n", __func__);
 		rv = AE_BAD_DATA;
 		goto out3;
 	}
 
 	resn->Type = ACPI_RESOURCE_TYPE_END_TAG;
 	rv = AcpiSetCurrentResources(handle, &bufn);
-	if (ACPI_FAILURE(rv)) {
-		printf("acpi_allocate_resources: AcpiSetCurrentResources %s\n",
-		       AcpiFormatException(rv));
-	}
+
+	if (ACPI_FAILURE(rv))
+		aprint_error_dev(acpi_softc->sc_dev, "%s: failed to set "
+		    "resources: %s\n", __func__, AcpiFormatException(rv));
 
 out3:
 	free(bufn.Pointer, M_ACPI);
@@ -1648,6 +1666,10 @@ out1:
 out:
 	return rv;
 }
+
+#undef ACPI_DEV_VALID
+#undef ACPI_DEV_STATUS
+
 #endif /* ACPI_ACTIVATE_DEV */
 
 SYSCTL_SETUP(sysctl_acpi_setup, "sysctl hw.acpi subtree setup")
