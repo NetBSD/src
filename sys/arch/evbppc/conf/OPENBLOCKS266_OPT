@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266_OPT,v 1.12 2010/03/07 09:39:42 plunky Exp $
+#	$NetBSD: OPENBLOCKS266_OPT,v 1.13 2010/03/10 17:40:31 kiyohara Exp $
 #
 
 include		"arch/evbppc/conf/OPENBLOCKS266"
@@ -6,13 +6,13 @@ include		"arch/evbppc/conf/OPENBLOCKS266"
 cbb*	at pci? dev ? function ?
 cardslot* at cbb?
 cardbus* at cardslot?
-pcmcia*	at cardslot?
+pcmcia* at cardslot?
 
 
 # PCMCIA serial interfaces
 com*	at pcmcia? function ?		# Modems and serial cards
 
-pcmcom*	at pcmcia? function ?		# PCMCIA multi-port serial cards
+pcmcom* at pcmcia? function ?		# PCMCIA multi-port serial cards
 com*	at pcmcom? slave ?		# ...and the slave devices
 
 # CardBus serial interfaces
@@ -42,17 +42,15 @@ ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 
-# CardBus IDE controllers
-#njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
-
 # PCMCIA IDE controllers
 wdc*	at pcmcia? function ?
 
 # CardBus IDE controllers
-#njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
+njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
+siisata* at cardbus? function ?			# SiI SteelVine controllers
 
 # ATA (IDE) bus support
-atabus*	at ata?
+atabus* at ata?
 options ATADEBUG
 
 # IDE drives
@@ -92,42 +90,43 @@ sm*	at mhzc?
 # CardBus network cards
 ath*	at cardbus? function ?		# Atheros 5210/5211/5212 802.11
 atw*	at cardbus? function ?		# ADMtek ADM8211 (802.11)
-ex*	at cardbus? function ?		# 3Com 3C575TX
+ex*	at cardbus? function ?		# 3Com 3c575TX
 fxp*	at cardbus? function ?		# Intel i8255x
 ral*	at cardbus? function ?		# Ralink Technology RT25x0 802.11a/b/g
+re*	at cardbus? function ?		# Realtek 8139C+/8169/8169S/8110S
 rtk*	at cardbus? function ?		# Realtek 8129/8139
 rtw*	at cardbus? function ?		# Realtek 8180L (802.11)
 tlp*	at cardbus? function ?		# DECchip 21143
 
 # MII/PHY support
 acphy*	at mii? phy ?			# Altima AC101 and AMD Am79c874 PHYs
-amhphy*	at mii? phy ?			# AMD 79c901 Ethernet PHYs
-bmtphy*	at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
-brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs
+amhphy* at mii? phy ?			# AMD 79c901 Ethernet PHYs
+bmtphy* at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
+brgphy* at mii? phy ?			# Broadcom BCM5400-family PHYs
 ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
-gentbi*	at mii? phy ?			# Generic Ten-Bit 1000BASE-[CLS]X PHYs
+gentbi* at mii? phy ?			# Generic Ten-Bit 1000BASE-[CLS]X PHYs
 glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
+icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
 igphy*	at mii? phy ?			# Intel IGP01E1000
 ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
-lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
-makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
+makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
-pnaphy*	at mii? phy ?			# generic HomePNA PHYs
+pnaphy* at mii? phy ?			# generic HomePNA PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
-rgephy*	at mii? phy ?			# Realtek 8169S/8110S internal PHYs
+rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
 rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
-urlphy*	at mii? phy ?			# Realtek RTL8150L internal PHYs
+urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 
 # CardBus USB controllers
@@ -135,7 +134,7 @@ ehci*	at cardbus? function ?		# Enhanced Host Controller
 ohci*	at cardbus? function ?		# Open Host Controller
 uhci*	at cardbus? function ?		# Universal Host Controller (Intel)
 
-# PCMCIA USB controllers   
+# PCMCIA USB controllers
 slhci*	at pcmcia? function ?		# ScanLogic SL811HS
 
 # USB bus support
@@ -149,7 +148,7 @@ uhub*	at usb?
 uhub*	at uhub? port ?
 
 # USB HID device
-uhidev*	at uhub? port ? configuration ? interface ?
+uhidev* at uhub? port ? configuration ? interface ?
 
 # USB Mice
 ums*	at uhidev? reportid ?
@@ -163,17 +162,24 @@ wsmouse* at uep? mux 0
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
+# USB TEMPer and TEMPerHUM
+uthum*	at uhidev? reportid ?
+
 # USB serial adapter
-ucycom*	at uhidev? reportid ?
+ucycom* at uhidev? reportid ?
 
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?
+
+# USB LCDs and USB-VGA adaptors
+udl*	at uhub? port ?		# DisplayLink DL-1x0/1x5
+wsdisplay* at udl?
 
 # USB Printer
 ulpt*	at uhub? port ? configuration ? interface ?
 
 # USB Modem
-umodem*	at uhub? port ? configuration ?
+umodem* at uhub? port ? configuration ?
 ucom*	at umodem?
 
 # Option N.V. Wireless WAN modems
@@ -184,7 +190,7 @@ umass*	at uhub? port ? configuration ? interface ?
 wd*	at umass?
 
 # USB audio
-uaudio*	at uhub? port ? configuration ?
+uaudio* at uhub? port ? configuration ?
 
 # USB MIDI
 umidi*	at uhub? port ? configuration ?
@@ -193,6 +199,9 @@ umidi*	at uhub? port ? configuration ?
 # USB-IrDA bridge spec
 uirda*	at uhub? port ? configuration ? interface ?
 irframe* at uirda?
+
+stuirda* at uhub? port ? configuration ? interface ?
+irframe* at stuirda?
 
 # SigmaTel STIr4200 USB/IrDA Bridge
 ustir*	at uhub? port ?
@@ -220,6 +229,9 @@ upl*	at uhub? port ?
 ubsa*	at uhub? port ?		# Belkin serial adapter
 ucom*	at ubsa? portno ?
 
+uchcom* at uhub? port ?		# WinChipHead CH341/CH340 serial adapter
+ucom*	at uchcom? portno ?
+
 uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
 ucom*	at uftdi? portno ?
 
@@ -229,20 +241,23 @@ ucom*	at uipaq? portno ?
 umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
 ucom*	at umct? portno ?
 
-uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
+uplcom* at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
 ucom*	at uplcom? portno ?
 
 uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
 ucom*	at uslsa? portno ?
 
-uvscom*	at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
+uvscom* at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
+
+# RIM BlackBerry
+uberry* at uhub? port ?
 
 # Diamond Multimedia Rio 500
 urio*	at uhub? port ?
 
 # USB Handspring Visor
-uvisor*	at uhub? port ?
+uvisor* at uhub? port ?
 ucom*	at uvisor?
 
 # Kyocera AIR-EDGE PHONE
@@ -256,7 +271,7 @@ uscanner* at uhub? port ?
 usscanner* at uhub? port ?
 
 # Topfield TF5000PVR range of DVB recorders
-utoppy*	at uhub? port ?
+utoppy* at uhub? port ?
 
 # Y@P firmware loader
 uyap*	at uhub? port ?
@@ -268,19 +283,34 @@ radio*	at udsbr?
 # USB Generic driver
 ugen*	at uhub? port ?
 
+# USB 3G datacards
+u3ginit* at uhub? port ?
+u3g*	at uhub? port ?
+ucom*	at u3g?
+
+# USB generic serial port (e.g., data over cellular)
+ugensa* at uhub? port ?
+ucom*	at ugensa?
+
+# Video capture devices
+
+pseye*	at uhub?		# Sony PLAYSTATION(R) Eye webcam
+uvideo* at uhub?		# USB Video Class capture devices
+video*	at videobus?
+
 # CardBus IEEE1394 controllers
-fwohci*	at cardbus? function ?		# IEEE1394 Open Host Controller
+fwohci* at cardbus? function ?	# IEEE1394 Open Host Controller
 
 ieee1394if* at fwohci?
-fwip*	at ieee1394if?			# IP over IEEE1394
+fwip*	at ieee1394if?		# IP over IEEE1394
 sbp*	at ieee1394if? euihi ? euilo ?
 
 
 # Bluetooth Controller and Device support
 
 # Bluetooth PCMCIA Controllers
-bt3c* at pcmcia? function ?             # 3Com 3CRWB6096-A
-btbc* at pcmcia? function ?             # AnyCom BlueCard LSE041/039/139
+bt3c* at pcmcia? function ?	# 3Com 3CRWB6096-A
+btbc* at pcmcia? function ?	# AnyCom BlueCard LSE041/039/139
 
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
