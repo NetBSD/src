@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.14 2010/02/13 11:55:48 nakayama Exp $	*/
+/*	$NetBSD: schizo.c,v 1.15 2010/03/11 03:30:16 mrg Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -136,6 +136,7 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	struct schizo_softc *sc = (struct schizo_softc *)self;
 	struct mainbus_attach_args *ma = aux;
 	struct schizo_pbm *pbm;
+	struct iommu_state *is;
 	struct pcibus_attach_args pba;
 	uint64_t reg, eccctrl;
 	int *busranges = NULL, nranges;
@@ -207,6 +208,26 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(struct schizo_pbm_regs),
 	    &pbm->sp_regh)) {
 		panic("schizo: unable to create PBM handle");
+	}
+
+	is = &pbm->sp_is;
+	pbm->sp_sb.sb_is = is;
+	if (prom_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
+		vaddr_t va = (vaddr_t)&pbm->sp_flush[0x40];
+
+		/*
+		 * Initialize the strbuf_ctl.
+		 *
+		 * The flush sync buffer must be 64-byte aligned.
+		 */
+		is->is_sb[0] = &pbm->sp_sb;
+		is->is_sb[0]->sb_flush = (void *)(va & ~0x3f);
+
+		bus_space_subregion(pbm->sp_regt, pbm->sp_regh,
+			offsetof(struct schizo_pbm_regs, strbuf),
+			sizeof(struct iommu_strbuf), &is->is_sb[0]->sb_sb);
+	} else {
+		aprint_debug("%s: no streaming buffers\n", sc->sc_dv.dv_xname);
 	}
 
 	printf("%s: ", sc->sc_dv.dv_xname);
@@ -378,37 +399,14 @@ schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 	struct iommu_state *is = &pbm->sp_is;
 	int *vdma = NULL, nitem, tsbsize = 7;
 	u_int32_t iobase = -1;
-	vaddr_t va;
 	char *name;
-
-	if (prom_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
-	}
-
-	va = (vaddr_t)pbm->sp_flush[0x40];
 
 	/* punch in our copies */
 	is->is_bustag = pbm->sp_regt;
-	if (bus_space_subregion(is->is_bustag, pbm->sp_regh,
-	    offsetof(struct schizo_pbm_regs, iommu),
-	    sizeof(struct schizo_iommureg), &is->is_iommu)) {
-		printf("schizo: unable to create streaming buffer handle\n");
-		is->is_sb[0]->sb_flush = NULL;
-	} 
-
-	/* initialize our strbuf_ctl */
-	is->is_sb[0] = &pbm->sp_sb;
-	pbm->sp_sb.sb_is = is;
-	is->is_sb[0]->sb_flush = (void *)(va & ~0x3f);
-
-	if (bus_space_subregion(is->is_bustag, pbm->sp_regh,
-	    offsetof(struct schizo_pbm_regs, strbuf),
-	    sizeof(struct iommu_strbuf), &is->is_sb[0]->sb_sb)) {
-	} 
-
-	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
-	if (name == NULL)
-		panic("couldn't malloc iommu name");
-	snprintf(name, 32, "%s dvma", sc->sc_dv.dv_xname);
+	bus_space_subregion(is->is_bustag, pbm->sp_regh,
+		offsetof(struct schizo_pbm_regs, iommu),
+		sizeof(struct schizo_iommureg),
+		&is->is_iommu);
 
 	/*
 	 * Separate the men from the boys.  If the `virtual-dma'
@@ -433,6 +431,12 @@ schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 		DPRINTF(SDB_BUSMAP, ("schizo_init_iommu: getprop failed, "
 		    "using iobase=0x%x, tsbsize=%d\n", iobase, tsbsize));
 	}
+
+	/* give us a nice name.. */
+	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
+	if (name == NULL)
+		panic("couldn't malloc iommu name");
+	snprintf(name, 32, "%s dvma", sc->sc_dv.dv_xname);
 
 	iommu_init(name, is, tsbsize, iobase);
 }
