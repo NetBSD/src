@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.39 2010/02/24 22:37:59 dyoung Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.40 2010/03/11 04:19:56 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.39 2010/02/24 22:37:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.40 2010/03/11 04:19:56 mrg Exp $");
 
 #include "opt_mii.h"
 
@@ -135,6 +135,7 @@ ukphyattach(device_t parent, device_t self, void *aux)
 #endif
 		aprint_normal(": OUI 0x%06x, model 0x%04x, rev. %d\n",
 		       oui, model, rev);
+	aprint_naive(": Media interface\n");
 
 	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;

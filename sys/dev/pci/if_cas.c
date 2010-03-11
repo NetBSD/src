@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.6 2010/02/24 22:38:00 dyoung Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.7 2010/03/11 04:00:36 mrg Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.6 2010/02/24 22:38:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.7 2010/03/11 04:00:36 mrg Exp $");
 
 #include "opt_inet.h"
 
@@ -498,6 +498,7 @@ cas_config(struct cas_softc *sc, const uint8_t *enaddr)
 	/* Announce ourselves. */
 	aprint_normal_dev(sc->sc_dev, "Ethernet address %s\n",
 	    ether_sprintf(enaddr));
+	aprint_naive(": Ethernet controller\n");
 
 	/* Get RX FIFO size */
 	sc->sc_rxfifosize = 16 * 1024;

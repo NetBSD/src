@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.57 2009/05/06 18:41:54 elad Exp $	*/
+/*	$NetBSD: machfb.c,v 1.58 2010/03/11 04:00:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.57 2009/05/06 18:41:54 elad Exp $");
+	"$NetBSD: machfb.c,v 1.58 2010/03/11 04:00:36 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -512,7 +512,8 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	sc->sc_locked = 0;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	aprint_naive(": Graphics processor\n");
 	
 	/* enable memory and IO access */
 	screg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
@@ -533,8 +534,9 @@ mach64_attach(device_t parent, device_t self, void *aux)
 
 	mach64_init(sc);
 
-	printf("%s: %d MB aperture at 0x%08x, %d KB registers at 0x%08x\n",
-	    device_xname(&sc->sc_dev), (u_int)(sc->sc_apersize / (1024 * 1024)),
+	aprint_normal_dev(&sc->sc_dev,
+	    "%d MB aperture at 0x%08x, %d KB registers at 0x%08x\n",
+	    (u_int)(sc->sc_apersize / (1024 * 1024)),
 	    (u_int)sc->sc_aperphys, (u_int)(sc->sc_regsize / 1024),
 	    (u_int)sc->sc_regphys);
 
@@ -557,7 +559,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	if ((mach64_chip_id == PCI_PRODUCT_ATI_RAGE_XL_PCI) ||
 	    ((mach64_chip_id >= PCI_PRODUCT_ATI_RAGE_LT_PRO_PCI) &&
 	    (mach64_chip_id <= PCI_PRODUCT_ATI_RAGE_LT_PRO))) {
-		printf("%s: ref_freq=29.498MHz\n", device_xname(&sc->sc_dev));
+		aprint_normal_dev(&sc->sc_dev, "ref_freq=29.498MHz\n");
 		sc->ref_freq = 29498;
 	} else
 		sc->ref_freq = 14318;
@@ -571,22 +573,23 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	sc->mclk_post_div = (sc->mclk_fb_div * 2 * sc->ref_freq) /
 	    (sc->mem_freq * sc->ref_div);
 	sc->ramdac_freq = mach64_get_max_ramdac(sc);
-	printf("%s: %ld KB %s %d.%d MHz, maximum RAMDAC clock %d MHz\n",
-	    device_xname(&sc->sc_dev), (u_long)sc->memsize,
+	aprint_normal_dev(&sc->sc_dev,
+	    "%ld KB %s %d.%d MHz, maximum RAMDAC clock %d MHz\n",
+	    (u_long)sc->memsize,
 	    mach64_memtype_names[sc->memtype],
 	    sc->mem_freq / 1000, sc->mem_freq % 1000,
 	    sc->ramdac_freq / 1000);
 
 	id = regr(sc, CONFIG_CHIP_ID) & 0xffff;
 	if (id != mach64_chip_id) {
-		printf("%s: chip ID mismatch, 0x%x != 0x%x\n",
-		    device_xname(&sc->sc_dev), id, mach64_chip_id);
+		aprint_error_dev(&sc->sc_dev,
+		    "chip ID mismatch, 0x%x != 0x%x\n", id, mach64_chip_id);
 		return;
 	}
 
 	sc->sc_console = mach64_is_console(pa);
 #ifdef DIAGNOSTIC
-	printf("gen_cntl: %08x\n", regr(sc, CRTC_GEN_CNTL));
+	aprint_normal("gen_cntl: %08x\n", regr(sc, CRTC_GEN_CNTL));
 #endif
 #if defined(__sparc__) || defined(__powerpc__)
 	if (sc->sc_console) {
@@ -628,7 +631,8 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		mach64_init_lut(sc);
 #endif
 
-	printf("%s: initial resolution %dx%d at %d bpp\n", device_xname(&sc->sc_dev),
+	aprint_normal_dev(&sc->sc_dev,
+	    "initial resolution %dx%d at %d bpp\n",
 	    sc->sc_my_mode->hdisplay, sc->sc_my_mode->vdisplay,
 	    sc->bits_per_pixel);
 
@@ -764,7 +768,7 @@ mach64_get_memsize(struct mach64_softc *sc)
 	};
 	tmp = regr(sc, MEM_CNTL);
 #ifdef DIAGNOSTIC
-	printf("%s: memctl %08x\n", device_xname(&sc->sc_dev), tmp);
+	aprint_debug_dev(&sc->sc_dev, "memctl %08x\n", tmp);
 #endif
 	if (sc->has_dsp) {
 		tmp &= 0x0000000f;
@@ -822,7 +826,7 @@ mach64_get_mode(struct mach64_softc *sc, struct videomode *mode)
 	mode->vsync_start = (crtc.v_sync_strt_wid & 0xffff) + 1;
 	mode->vsync_end = (crtc.v_sync_strt_wid >> 16) + mode->vsync_start;
 
-#ifndef DEBUG_MACHFB
+#ifdef DEBUG_MACHFB
 	printf("mach64_get_mode: %d %d %d %d %d %d %d %d\n",
 	    mode->hdisplay, mode->hsync_start, mode->hsync_end, mode->htotal,
 	    mode->vdisplay, mode->vsync_start, mode->vsync_end, mode->vtotal);
@@ -1039,7 +1043,7 @@ mach64_set_dsp(struct mach64_softc *sc)
 	uint32_t xclks_per_qw, y;
 	uint32_t fifo_off, fifo_on;
 
-	printf("%s: initializing the DSP\n", device_xname(&sc->sc_dev));
+	aprint_normal_dev(&sc->sc_dev, "initializing the DSP\n");
 	if (mach64_chip_id == PCI_PRODUCT_ATI_MACH64_VT ||
 	    mach64_chip_id == PCI_PRODUCT_ATI_RAGE_II ||
 	    mach64_chip_id == PCI_PRODUCT_ATI_RAGE_IIP ||
@@ -1675,7 +1679,9 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 	 */
 	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
 	    NULL) != 0) {
+#if 0
 		printf("%s: mmap() rejected.\n", device_xname(&sc->sc_dev));
+#endif
 		return -1;
 	}
 

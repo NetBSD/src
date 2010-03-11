@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.97 2010/02/24 06:34:55 skrll Exp $	*/
+/*	$NetBSD: iommu.c,v 1.98 2010/03/11 03:54:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.97 2010/02/24 06:34:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.98 2010/03/11 03:54:56 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -204,10 +204,10 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, uint32_t iovabase)
 	/*
 	 * Now all the hardware's working we need to allocate a dvma map.
 	 */
-	printf("DVMA map: %x to %x\n",
+	aprint_debug("DVMA map: %x to %x\n",
 		(unsigned int)is->is_dvmabase,
 		(unsigned int)is->is_dvmaend);
-	printf("IOTSB: %llx to %llx\n",
+	aprint_debug("IOTSB: %llx to %llx\n",
 		(unsigned long long)is->is_ptsb,
 		(unsigned long long)(is->is_ptsb + size - 1));
 	is->is_dvmamap = extent_create(name,
@@ -415,7 +415,7 @@ iommu_strbuf_flush_done(struct strbuf_ctl *sb)
 
 	/* Bypass non-coherent D$ */
 	while ((!ldxa(sb->sb_flushpa, ASI_PHYS_CACHED)) &&
-		timercmp(&cur, &flushtimeout, <=))
+	       timercmp(&cur, &flushtimeout, <=))
 		microtime(&cur);
 
 #ifdef DIAGNOSTIC

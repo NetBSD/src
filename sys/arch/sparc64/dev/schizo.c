@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.15 2010/03/11 03:30:16 mrg Exp $	*/
+/*	$NetBSD: schizo.c,v 1.16 2010/03/11 03:54:56 mrg Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	int *busranges = NULL, nranges;
 	char *str;
 
-	printf(": addr %" PRIx64, ma->ma_reg[0].ur_paddr);
+	aprint_normal(": addr %" PRIx64, ma->ma_reg[0].ur_paddr);
 	str = prom_getpropstring(ma->ma_node, "compatible");
 	if (strcmp(str, "pci108e,a801") == 0)
 		sc->sc_tomatillo = 1;
@@ -154,7 +154,7 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_bustag, ma->ma_reg[1].ur_paddr - 0x10000UL,
 	    sizeof(struct schizo_regs), 0,
 	    &sc->sc_ctrlh)) {
-		printf(": failed to map registers\n");
+		aprint_error(": failed to map registers\n");
 		return;
 	}
 
@@ -185,7 +185,7 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_bustag, ma->ma_reg[0].ur_paddr,
 			  ma->ma_reg[0].ur_len,
 			  BUS_SPACE_MAP_LINEAR, &pbm->sp_intrh)) {
-		printf(": failed to interrupt map registers\n");
+		aprint_error(": failed to interrupt map registers\n");
 		return;
 	}
 
@@ -197,10 +197,11 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	    (void **)&busranges))
 		panic("schizo: can't get bus-range");
 
-	printf(": \"%s\", version %d, ign %x, bus %c %d to %d\n",
+	aprint_normal(": \"%s\", version %d, ign %x, bus %c %d to %d\n",
 	    sc->sc_tomatillo ? "Tomatillo" : "Schizo",
 	    prom_getpropint(sc->sc_node, "version#", 0), sc->sc_ign,
 	    pbm->sp_bus_a ? 'A' : 'B', busranges[0], busranges[1]);
+	aprint_naive("\n");
 
 	if (bus_space_subregion(pbm->sp_regt, sc->sc_ctrlh,
 	    pbm->sp_bus_a ? offsetof(struct schizo_regs, pbm_a) :
@@ -230,7 +231,7 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 		aprint_debug("%s: no streaming buffers\n", sc->sc_dv.dv_xname);
 	}
 
-	printf("%s: ", sc->sc_dv.dv_xname);
+	aprint_normal("%s: ", sc->sc_dv.dv_xname);
 	schizo_init_iommu(sc, pbm);
 
 	pbm->sp_memt = schizo_alloc_mem_tag(pbm);

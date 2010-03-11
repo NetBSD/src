@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.31 2010/01/20 22:58:37 martin Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.32 2010/03/11 04:00:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.31 2010/01/20 22:58:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.32 2010/03/11 04:00:36 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +142,7 @@ hmeattach_pci(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": Sun Happy Meal Ethernet, rev. %d\n",
 	    PCI_REVISION(pa->pa_class));
+	aprint_naive(": Ethernet controller\n");
 
 	/*
 	 * enable io/memory-space accesses.  this is kinda of gross; but

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.172 2010/03/06 08:08:29 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.173 2010/03/11 03:54:56 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.172 2010/03/06 08:08:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.173 2010/03/11 03:54:56 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -566,10 +566,11 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	OF_getprop(findroot(), "name", machine_model, sizeof machine_model);
 	prom_getidprom();
 	if (i)
-		printf(": %s (%s): hostid %lx\n", machine_model,
+		aprint_normal(": %s (%s): hostid %lx\n", machine_model,
 		    machine_banner, hostid);
 	else
-		printf(": %s: hostid %lx\n", machine_model, hostid);
+		aprint_normal(": %s: hostid %lx\n", machine_model, hostid);
+	aprint_naive("\n");
 
 	/*
 	 * Locate and configure the ``early'' devices.  These must be

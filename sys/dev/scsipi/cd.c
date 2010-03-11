@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.297 2010/01/06 20:16:57 martin Exp $	*/
+/*	$NetBSD: cd.c,v 1.298 2010/03/11 04:00:36 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.297 2010/01/06 20:16:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.298 2010/03/11 04:00:36 mrg Exp $");
 
 #include "rnd.h"
 
@@ -287,6 +287,7 @@ cdattach(device_t parent, device_t self, void *aux)
 	disk_attach(&cd->sc_dk);
 
 	aprint_normal("\n");
+	aprint_naive("\n");
 
 #if NRND > 0
 	rnd_attach_source(&cd->rnd_source, device_xname(cd->sc_dev),

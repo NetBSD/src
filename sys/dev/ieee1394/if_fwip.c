@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.20 2009/12/06 22:56:56 dyoung Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.21 2010/03/11 04:00:37 mrg Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.20 2009/12/06 22:56:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.21 2010/03/11 04:00:37 mrg Exp $");
 
 #ifdef HAVE_KERNEL_OPTION_HEADERS
 #include "opt_device_polling.h"
@@ -265,6 +265,10 @@ FW_ATTACH(fwip)
 	ifp = fwip->fw_softc.fwip_ifp;
 	if (ifp == NULL)
 		FW_ATTACH_RETURN(ENOSPC);
+
+#ifdef __NetBSD__
+	aprint_naive("\n");
+#endif
 
 	fw_mtx_init(&fwip->mtx, "fwip", NULL, MTX_DEF);
 	/* XXX */
