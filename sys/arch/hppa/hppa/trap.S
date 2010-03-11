@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.44 2010/03/11 07:01:09 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.45 2010/03/11 13:26:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -1975,7 +1975,7 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 	ldo	HPPA_FRAME_SIZE-1(%sp), %sp	/* Assumed stack align step 1 */
 	dep	%t1, 31, PGSHIFT, %t2		/* t2 |= (pcoqh & PAGE_MASK) */
 	dep,<>	%t1, 31, 2, %r0			/* Nullify if user mode (!0) */
-	comb,<>,n %t1, %t2, L$trap_from_kernel	/* if %t1 != %t2 => kernel */
+	comb,<>	%t1, %t2, L$trap_from_kernel	/* if %t1 != %t2 => kernel */
 	dep	%r0, 31, 6, %sp			/* Assumed stack align step 2 */
 
 	mfctl	CR_UPADDR, %t2
