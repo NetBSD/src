@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.50 2010/02/12 06:40:52 dholland Exp $	*/
+/*	$NetBSD: esiop.c,v 1.51 2010/03/11 04:00:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.50 2010/02/12 06:40:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.51 2010/03/11 04:00:36 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1917,8 +1917,7 @@ esiop_morecbd(struct esiop_softc *sc)
 		goto bad0;
 	}
 #ifdef DEBUG
-	printf("%s: alloc newcdb at PHY addr 0x%lx\n",
-	    device_xname(sc->sc_c.sc_dev),
+	aprint_debug_dev(sc->sc_c.sc_dev, "alloc newcdb at PHY addr 0x%lx\n",
 	    (unsigned long)newcbd->xferdma->dm_segs[0].ds_addr);
 #endif
 	for (i = 0; i < SIOP_NCMDPB; i++) {

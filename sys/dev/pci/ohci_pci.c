@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.43 2009/04/26 08:54:13 cegger Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.44 2010/03/11 04:00:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.43 2009/04/26 08:54:13 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.44 2010/03/11 04:00:36 mrg Exp $");
 
 #include "ehci.h"
 
@@ -98,6 +98,7 @@ ohci_pci_attach(device_t parent, device_t self, void *aux)
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n",
 	    devinfo, PCI_REVISION(pa->pa_class));
+	aprint_naive(": USB Controller\n");
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,

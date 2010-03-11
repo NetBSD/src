@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.25 2009/05/12 12:16:55 cegger Exp $	*/
+/*	$NetBSD: firewire.c,v 1.26 2010/03/11 04:00:36 mrg Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.25 2009/05/12 12:16:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.26 2010/03/11 04:00:36 mrg Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -536,6 +536,10 @@ FW_ATTACH(firewire)
 {
 	FW_ATTACH_START(firewire, sc, fwa);
 	FIREWIRE_ATTACH_START;
+
+#ifdef __NetBSD__
+	aprint_naive("\n");
+#endif
 
 	sc->fc = fc;
 	fc->status = FWBUSNOTREADY;
