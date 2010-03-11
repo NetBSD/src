@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.91 2010/03/08 04:18:48 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.92 2010/03/11 03:12:42 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.91 2010/03/08 04:18:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.92 2010/03/11 03:12:42 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -110,8 +110,7 @@ static void cpu_reset_fpustate(void);
 void cpu_attach(struct device *, struct device *, void *);
 int cpu_match(struct device *, struct cfdata *, void *);
 
-CFATTACH_DECL(cpu, sizeof(struct device),
-    cpu_match, cpu_attach, NULL, NULL);
+CFATTACH_DECL_NEW(cpu, 0, cpu_match, cpu_attach, NULL, NULL);
 
 static int
 upaid_from_node(u_int cpu_node)
