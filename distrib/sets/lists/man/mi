@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1197 2010/03/08 06:40:07 lukem Exp $
+# $NetBSD: mi,v 1.1198 2010/03/11 10:38:36 enami Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1616,6 +1616,7 @@
 ./usr/share/man/cat4/uvisor.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uvscom.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uyap.0			man-sys-catman		.cat
+./usr/share/man/cat4/uyurex.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vax/acc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vax/ad.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vax/asc.0			man-sys-catman		.cat
@@ -4190,6 +4191,7 @@
 ./usr/share/man/html4/uvisor.html		man-sys-htmlman		html
 ./usr/share/man/html4/uvscom.html		man-sys-htmlman		html
 ./usr/share/man/html4/uyap.html			man-sys-htmlman		html
+./usr/share/man/html4/uyurex.html		man-sys-htmlman		html
 ./usr/share/man/html4/vax/acc.html		man-sys-htmlman		html
 ./usr/share/man/html4/vax/ad.html		man-sys-htmlman		html
 ./usr/share/man/html4/vax/asc.html		man-sys-htmlman		html
@@ -6694,6 +6696,7 @@
 ./usr/share/man/man4/uvisor.4			man-sys-man		.man
 ./usr/share/man/man4/uvscom.4			man-sys-man		.man
 ./usr/share/man/man4/uyap.4			man-sys-man		.man
+./usr/share/man/man4/uyurex.4			man-sys-man		.man
 ./usr/share/man/man4/vax/acc.4			man-sys-man		.man
 ./usr/share/man/man4/vax/ad.4			man-sys-man		.man
 ./usr/share/man/man4/vax/asc.4			man-sys-man		.man
