@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.9 2010/03/01 23:53:26 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.1.2.10 2010/03/11 08:19:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.9 2010/03/01 23:53:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.10 2010/03/11 08:19:01 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -144,6 +144,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.9 2010/03/01 23:53:26 matt Exp $"
 static kmutex_t pmap_tlb0_mutex __aligned(32);
 
 struct pmap_tlb_info pmap_tlb0_info = {
+	.ti_name = "tlb0",
 	.ti_asid_hint = 1,
 	.ti_asid_mask = MIPS_TLB_NUM_PIDS - 1,
 	.ti_asid_max = MIPS_TLB_NUM_PIDS - 1,
@@ -159,10 +160,12 @@ struct pmap_tlb_info pmap_tlb0_info = {
 };
 
 #ifdef MULTIPROCESSOR
-static struct pmap_tlb_info *pmap_tlbs[MAXCPUS] = {
+struct pmap_tlb_info *pmap_tlbs[MAXCPUS] = {
 	[0] = &pmap_tlb0_info,
 };
-static u_int pmap_ntlbs = 1;
+u_int pmap_ntlbs = 1;
+u_int pmap_tlb_synci_page_mask;
+u_int pmap_tlb_synci_map_mask;
 #endif
 #define	__BITMAP_SET(bm, n) \
 	((bm)[(n) / (8*sizeof(bm[0]))] |= 1LU << ((n) % (8*sizeof(bm[0]))))
@@ -211,6 +214,31 @@ pmap_pai_reset(struct pmap_tlb_info *ti, struct pmap_asid_info *pai,
 #endif /* MULTIPROCESSOR */
 }
 
+static void
+pmap_tlb_attach_evcnt(struct pmap_tlb_info *ti)
+{
+#ifdef MULTIPROCESSOR
+	evcnt_attach_dynamic(&ti->ti_evcnt_synci_desired,
+	    EVCNT_TYPE_MISC, NULL,
+	    ti->ti_name, "icache syncs desired");
+	evcnt_attach_dynamic(&ti->ti_evcnt_synci_asts,
+	    EVCNT_TYPE_MISC, &ti->ti_evcnt_synci_desired,
+	    ti->ti_name, "icache sync asts");
+	evcnt_attach_dynamic(&ti->ti_evcnt_synci_all,
+	    EVCNT_TYPE_MISC, &ti->ti_evcnt_synci_asts,
+	    ti->ti_name, "iacche full syncs");
+	evcnt_attach_dynamic(&ti->ti_evcnt_synci_pages,
+	    EVCNT_TYPE_MISC, &ti->ti_evcnt_synci_asts,
+	    ti->ti_name, "icache pages synced");
+	evcnt_attach_dynamic(&ti->ti_evcnt_synci_duplicate,
+	    EVCNT_TYPE_MISC, &ti->ti_evcnt_synci_desired,
+	    ti->ti_name, "icache dup pages skipped");
+	evcnt_attach_dynamic(&ti->ti_evcnt_synci_deferred,
+	    EVCNT_TYPE_MISC, &ti->ti_evcnt_synci_desired,
+	    ti->ti_name, "icache pages deferred");
+#endif /* MULTIPROCESSOR */
+}
+
 void
 pmap_tlb_info_init(struct pmap_tlb_info *ti)
 {
@@ -231,6 +259,17 @@ pmap_tlb_info_init(struct pmap_tlb_info *ti)
 				ti->ti_asid_mask |= ti->ti_asid_mask >> 1;
 			}
 		}
+#ifdef MULTIPROCESSOR
+		const u_int icache_way_pages =
+			mips_cache_info.mci_picache_way_size >> PGSHIFT; 
+		KASSERT(icache_way_pages <= 8*sizeof(pmap_tlb_synci_page_mask));
+		pmap_tlb_synci_page_mask = icache_way_pages - 1;
+		pmap_tlb_synci_map_mask = ~(~0 << icache_way_pages);
+		printf("tlb0: synci page mask %#x and map mask %#x used for %u pages\n", 
+		    pmap_tlb_synci_page_mask, pmap_tlb_synci_map_mask,
+		    icache_way_pages);
+#endif
+		pmap_tlb_attach_evcnt(ti);
 		return;
 #ifdef MULTIPROCESSOR
 	}
@@ -247,6 +286,10 @@ pmap_tlb_info_init(struct pmap_tlb_info *ti)
 	ti->ti_victim = NULL;
 	ti->ti_cpu_mask = 0;
 	ti->ti_index = pmap_ntlbs++;
+	snprintf(ti->ti_name, sizeof(ti->ti_name), "tlb%u", ti->ti_index);
+
+	pmap_tlb_attach_evcnt(ti);
+
 	/*
 	 * If we are reserving a tlb slot for mapping cpu_info,
 	 * allocate it now.
@@ -299,6 +342,8 @@ pmap_tlb_asid_count(struct pmap_tlb_info *ti)
 static void
 pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 {
+	const size_t asid_bitmap_words =
+	    ti->ti_asid_max / (8 * sizeof(ti->ti_asid_bitmap[0]));
 	/*
 	 * First, clear the ASID bitmap (except for ASID 0 which belongs
 	 * to the kernel).
@@ -306,8 +351,8 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 	ti->ti_asids_free = ti->ti_asid_max;
 	ti->ti_asid_hint = 1;
 	ti->ti_asid_bitmap[0] = 1;
-	for (size_t i = 1; i < __arraycount(ti->ti_asid_bitmap); i++)
-		ti->ti_asid_bitmap[i] = 0;
+	for (size_t word = 1; word <= asid_bitmap_words; word++)
+		ti->ti_asid_bitmap[word] = 0;
 
 	switch (op) {
 	case TLBINV_ALL:
@@ -332,11 +377,8 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 		if (__predict_false(asids_found >= ti->ti_asid_max / 2)) {
 			tlb_invalidate_asids(1, ti->ti_asid_mask);
 			ti->ti_asid_bitmap[0] = 1;
-			for (size_t i = 1;
-			     i < __arraycount(ti->ti_asid_bitmap);
-			     i++) {
-				ti->ti_asid_bitmap[i] = 0;
-			}
+			for (size_t word = 1; word <= asid_bitmap_words; word++)
+				ti->ti_asid_bitmap[word] = 0;
 		} else {
 			ti->ti_asids_free -= asids_found;
 		}
@@ -385,6 +427,9 @@ pmap_tlb_shootdown_process(void)
 {
 	struct cpu_info * const ci = curcpu();
 	struct pmap_tlb_info * const ti = ci->ci_tlb_info;
+#ifdef DIAGNOSTIC
+	struct pmap * const curpmap = curlwp->l_proc->p_vmspace->vm_map.pmap;
+#endif
 
 	TLBINFO_LOCK(ti);
 
@@ -409,7 +454,7 @@ pmap_tlb_shootdown_process(void)
 			 * next called for this pmap, it will allocate a new
 			 * ASID.
 			 */
-			KASSERT((curlwp->l_proc->p_vmspace->vm_map.pmap->pm_onproc & ti->ti_cpu_mask) == 0);
+			KASSERT((curpmap->pm_onproc & ti->ti_cpu_mask) == 0);
 			pmap_pai_reset(ti, pai, PAI_PMAP(pai, ti));
 		}
 		break;
@@ -559,6 +604,8 @@ pmap_tlb_update_addr(pmap_t pm, vaddr_t va, uint32_t pt_entry, bool need_ipi)
 	struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
 	int rv = -1;
 
+	KASSERT(kpreempt_disabled());
+
 	TLBINFO_LOCK(ti);
 	if (pm == pmap_kernel() || PMAP_PAI_ASIDVALID_P(pai, ti)) {
 		va |= pai->pai_asid << MIPS_TLB_PID_SHIFT;
@@ -577,6 +624,8 @@ pmap_tlb_invalidate_addr(pmap_t pm, vaddr_t va)
 {
 	struct pmap_tlb_info * const ti = curcpu()->ci_tlb_info;
 	struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
+
+	KASSERT(kpreempt_disabled());
 
 	TLBINFO_LOCK(ti);
 	if (pm == pmap_kernel() || PMAP_PAI_ASIDVALID_P(pai, ti)) {
@@ -611,17 +660,14 @@ pmap_tlb_asid_alloc(struct pmap_tlb_info *ti, pmap_t pm,
 	 * a new one.
 	 */
 	if (__predict_false(TLBINFO_ASID_INUSE_P(ti, ti->ti_asid_hint))) {
-#ifdef DIAGNOSTIC
-		const size_t words = __arraycount(ti->ti_asid_bitmap);
-#endif
 		const size_t nbpw = 8 * sizeof(ti->ti_asid_bitmap[0]);
 		for (size_t i = 0; i < ti->ti_asid_hint / nbpw; i++) {
 			KASSERT(~ti->ti_asid_bitmap[i] == 0);
 		}
 		for (size_t i = ti->ti_asid_hint / nbpw;; i++) {
-			KASSERT(i < words);
+			KASSERT(i <= ti->ti_asid_max / nbpw);
 			/*
-			 * ffs was to find the first bit set while we want the
+			 * ffs wants to find the first bit set while we want
 			 * to find the first bit cleared.
 			 */
 			u_long bits = ~ti->ti_asid_bitmap[i];
@@ -674,6 +720,8 @@ pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 	struct pmap_tlb_info * const ti = ci->ci_tlb_info;
 	struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
 
+	KASSERT(kpreempt_disabled());
+
 	/*
 	 * Kernels use a fixed ASID of 0 and don't need to acquire one.
 	 */
@@ -703,7 +751,17 @@ pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 		 * be changed while this TLBs lock is held.
 		 */
 		atomic_or_32(&pm->pm_onproc, 1 << cpu_index(ci));
-#endif
+		/*
+		 * If this CPU has had exec pages changes that haven't been
+		 * icache synched, make sure to do that before returning to
+		 * userland.
+		 */
+		if (ti->ti_synci_page_bitmap) {
+			l->l_md.md_astpending = 1; /* force call to ast() */
+			ci->ci_evcnt_synci_activate_rqst.ev_count++;
+		}
+		atomic_or_ulong(&ci->ci_flags, CPUF_USERPMAP);
+#endif /* MULTIPROCESSOR */
 		tlb_set_asid(pai->pai_asid);
 	}
 	TLBINFO_UNLOCK(ti);
@@ -721,6 +779,7 @@ pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 void
 pmap_tlb_asid_deactivate(pmap_t pm)
 {
+	KASSERT(kpreempt_disabled());
 #ifdef MULTIPROCESSOR
 	/*
 	 * The kernel pmap is aways onproc and active and must never have
@@ -736,6 +795,7 @@ pmap_tlb_asid_deactivate(pmap_t pm)
 		 */
 		atomic_and_32(&pm->pm_onproc, ~(1 << cpu_index(ci)));
 		TLBINFO_UNLOCK(ti);
+		atomic_and_ulong(&ci->ci_flags, ~CPUF_USERPMAP);
 	}
 #endif
 }
@@ -759,3 +819,157 @@ pmap_tlb_asid_release_all(struct pmap *pm)
 	}
 #endif /* MULTIPROCESSOR */
 }
+
+#ifdef MULTIPROCESSOR
+void
+pmap_tlb_syncicache_ast(struct cpu_info *ci)
+{
+	struct pmap_tlb_info * const ti = ci->ci_tlb_info;
+
+	kpreempt_disable();
+	uint32_t page_bitmap = atomic_swap_32(&ti->ti_synci_page_bitmap, 0);
+#if 0
+	printf("%s: need to sync %#x\n", __func__, page_bitmap);
+#endif
+	ti->ti_evcnt_synci_asts.ev_count++;
+	/*
+	 * If every bit is set in the bitmap, sync the entire icache.
+	 */
+	if (page_bitmap == pmap_tlb_synci_map_mask) {
+		mips_icache_sync_all();
+		ti->ti_evcnt_synci_all.ev_count++;
+		ti->ti_evcnt_synci_pages.ev_count += pmap_tlb_synci_page_mask+1;
+		kpreempt_enable();
+		return;
+	}
+
+	/*
+	 * Loop through the bitmap clearing each set of indices for each page.
+	 */
+	for (vaddr_t va = 0;
+	     page_bitmap != 0;
+	     page_bitmap >>= 1, va += PAGE_SIZE) {
+		if (page_bitmap & 1) {
+			/*
+			 * Each bit set represents a page to be synced.
+			 */
+			mips_icache_sync_range_index(va, PAGE_SIZE);
+			ti->ti_evcnt_synci_pages.ev_count++;
+		}
+	}
+
+	kpreempt_enable();
+}
+
+void
+pmap_tlb_syncicache(vaddr_t va, uint32_t page_onproc)
+{
+	KASSERT(kpreempt_disabled());
+	/*
+	 * We don't sync the icache here but let ast do it for us just before
+	 * returning to userspace.  We do this because we don't really know
+	 * on which CPU we will return to userspace and if we synch the icache
+	 * now it might not be on the CPU we need it on.  In addition, others
+	 * threads might sync the icache before we get to return to userland
+	 * so there's no reason for us to do it.
+	 *
+	 * Each TLB/cache keeps a synci sequence number which gets advanced
+	 * each that TLB/cache performs a mips_sync_icache_all.  When we
+	 * return to userland, we check the pmap's corresponding synci
+	 * sequence number for that TLB/cache.  If they match, it means that
+	 * no one has yet synched the icache so we much do it ourselves.  If
+	 * they don't match someone has already synced the icache for us.
+	 *
+	 * There is a small chance that the generation numbers will wrap and
+	 * then become equal but that's a one in 4 billion cache and will
+	 * just cause an extra sync of the icache.
+	 */
+	const uint32_t cpu_mask = 1L << cpu_index(curcpu());
+	const uint32_t page_mask =
+	    1L << ((va >> PGSHIFT) & pmap_tlb_synci_page_mask);
+	uint32_t onproc = 0;
+	for (size_t i = 0; i < pmap_ntlbs; i++) {
+		struct pmap_tlb_info * const ti = pmap_tlbs[0];
+		TLBINFO_LOCK(ti);
+		for (;;) {
+			uint32_t old_page_bitmap = ti->ti_synci_page_bitmap;
+			if (old_page_bitmap & page_mask) {
+				ti->ti_evcnt_synci_duplicate.ev_count++;
+				break;
+			}
+
+			uint32_t orig_page_bitmap = atomic_cas_32(
+			    &ti->ti_synci_page_bitmap, old_page_bitmap,
+			    old_page_bitmap | page_mask);
+
+			if (orig_page_bitmap == old_page_bitmap) {
+				if (old_page_bitmap == 0) {
+					onproc |= ti->ti_cpu_mask;
+				} else {
+					ti->ti_evcnt_synci_deferred.ev_count++;
+				}
+				ti->ti_evcnt_synci_desired.ev_count++;
+				break;
+			}
+		}
+#if 0
+		printf("%s: %s: %x to %x on cpus %#x\n", __func__,
+		    ti->ti_name, page_mask, ti->ti_synci_page_bitmap,
+		     onproc & page_onproc & ti->ti_cpu_mask);
+#endif
+		TLBINFO_UNLOCK(ti);
+	}
+	onproc &= page_onproc;
+	if (__predict_false(onproc != 0)) {
+		/*
+		 * If the cpu need to sync this page, tell the current lwp
+		 * to sync the icache before it returns to userspace.
+		 */
+		if (onproc & cpu_mask) {
+			if (curcpu()->ci_flags & CPUF_USERPMAP) {
+				curlwp->l_md.md_astpending = 1;	/* force call to ast() */
+				curcpu()->ci_evcnt_synci_onproc_rqst.ev_count++;
+			} else {
+				curcpu()->ci_evcnt_synci_deferred_rqst.ev_count++;
+			}
+			onproc ^= cpu_mask;
+		}
+
+		/*
+		 * For each cpu that is affect, send an IPI telling
+		 * that CPU that the current thread needs to sync its icache.
+		 * We might cause some spurious icache syncs but that's not
+		 * going to break anything.
+		 */
+		for (u_int n = ffs(onproc);
+		     onproc != 0;
+		     onproc >>= n, onproc <<= n, n = ffs(onproc)) {
+			cpu_send_ipi(cpu_lookup(n-1), IPI_SYNCICACHE);
+		}
+	}
+}
+
+void
+pmap_tlb_syncicache_wanted(struct cpu_info *ci)
+{
+	struct pmap_tlb_info * const ti = ci->ci_tlb_info;
+
+	KASSERT(cpu_intr_p());
+
+	TLBINFO_LOCK(ti);
+
+	/*
+	 * We might have been notified because another CPU changed an exec
+	 * page and now needs us to sync the icache so tell the current lwp
+	 * to do the next time it returns to userland (which should be very
+	 * soon).
+	 */
+	if (ti->ti_synci_page_bitmap && (ci->ci_flags & CPUF_USERPMAP)) {
+		curlwp->l_md.md_astpending = 1;	/* force call to ast() */
+		ci->ci_evcnt_synci_ipi_rqst.ev_count++;
+	}
+
+	TLBINFO_UNLOCK(ti);
+
+}
+#endif /* MULTIPROCESSOR */

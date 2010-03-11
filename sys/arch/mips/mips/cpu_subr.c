@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.3 2010/03/01 23:54:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.4 2010/03/11 08:19:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -186,6 +186,18 @@ cpu_attach_common(device_t self, struct cpu_info *ci)
 		cpu_info_last->ci_next = ci;
 		cpu_info_last = ci;
 	}
+	evcnt_attach_dynamic(&ci->ci_evcnt_synci_activate_rqst,
+	    EVCNT_TYPE_MISC, NULL, device_xname(self),
+	    "syncicache activate request");
+	evcnt_attach_dynamic(&ci->ci_evcnt_synci_deferred_rqst,
+	    EVCNT_TYPE_MISC, NULL, device_xname(self),
+	    "syncicache deferred request");
+	evcnt_attach_dynamic(&ci->ci_evcnt_synci_ipi_rqst,
+	    EVCNT_TYPE_MISC, NULL, device_xname(self),
+	    "syncicache ipi request");
+	evcnt_attach_dynamic(&ci->ci_evcnt_synci_onproc_rqst,
+	    EVCNT_TYPE_MISC, NULL, device_xname(self),
+	    "syncicache onproc request");
 
 	/*
 	 * Initialize IPI framework for this cpu instance
@@ -472,7 +484,7 @@ cpu_signotify(struct lwp *l)
 	KASSERT(lwp_locked(l, NULL));
 	KASSERT(l->l_stat == LSONPROC || l->l_stat == LSRUN);
 
-	l->l_md.md_astpending = 1;		/* force call to ast() */
+	l->l_md.md_astpending = 1; 		/* force call to ast() */
 }
 
 void

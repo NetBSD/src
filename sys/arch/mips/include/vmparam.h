@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41.28.12 2010/02/23 20:33:47 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.28.13 2010/03/11 08:19:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -251,8 +251,8 @@ struct vm_page_md {
 	u_int pvh_attrs;		/* page attributes */
 #define	VM_PAGE_PVLIST_LOCK_INIT(pg)	do { } while (/*CONSTCOND*/ 0)
 #define	VM_PAGE_PVLIST_LOCKED_P(pg)	true
-#define	VM_PAGE_PVLIST_LOCK(pg, lc)	(0)
-#define	VM_PAGE_PVLIST_UNLOCK(pg)	do { } while (/*CONSTCOND*/ 0)
+#define	VM_PAGE_PVLIST_LOCK(pg, lc)	(mutex_spin_enter(&pmap_pvlist_mutex), 0)
+#define	VM_PAGE_PVLIST_UNLOCK(pg)	mutex_spin_exit(&pmap_pvlist_mutex)
 #define	VM_PAGE_PVLIST_GEN(pg)		(0)
 #endif
 };
