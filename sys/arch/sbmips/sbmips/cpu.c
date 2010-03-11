@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.18.16.6 2010/03/11 08:20:59 matt Exp $ */
+/* $NetBSD: cpu.c,v 1.18.16.7 2010/03/11 22:26:56 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.6 2010/03/11 08:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.7 2010/03/11 22:26:56 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.6 2010/03/11 08:20:59 matt Exp $");
 #include <mips/cache.h>
 
 #include <machine/cpu.h>
+#include <machine/cpuvar.h>
 
 #include <mips/sibyte/include/zbbusvar.h>
 #include <mips/sibyte/include/sb1250_regs.h>
@@ -125,8 +126,8 @@ cpu_attach(device_t parent, device_t self, void *aux)
 
 		KASSERT(ci->ci_cpuid == 0);
 
-		cpu->cpu_dev = self;
-		cpu->cpu_ci = ci;
+		cpu->sb1cpu_dev = self;
+		cpu->sb1cpu_ci = ci;
 		ci->ci_softc = cpu;
 
 		sb1250_cpu_init(cpu);
@@ -136,8 +137,8 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		ci = cpu_info_alloc(NULL, found - 1);
 		KASSERT(ci);
 
-		cpu->cpu_dev = self;
-		cpu->cpu_ci = ci;
+		cpu->sb1cpu_dev = self;
+		cpu->sb1cpu_ci = ci;
 		ci->ci_softc = cpu;
 
 		sb1250_cpu_init(cpu);
