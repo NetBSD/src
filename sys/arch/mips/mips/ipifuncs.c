@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.2.1 2010/02/28 23:45:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.2.2 2010/03/11 08:09:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -43,7 +43,7 @@ static const char * const ipi_names[] = {
 	[IPI_NOP]	= "ipi nop",
 	[IPI_SHOOTDOWN]	= "ipi shootdown",
 	[IPI_FPSAVE]	= "ipi fpsave",
-	[IPI_ISYNC]	= "ipi isync",
+	[IPI_SYNCICACHE]	= "ipi isync",
 	[IPI_KPREEMPT]	= "ipi kpreempt",
 };
 
@@ -75,9 +75,9 @@ ipi_fpsave(struct cpu_info *ci)
 }
 
 static inline void
-ipi_isync(struct cpu_info *ci)
+ipi_syncicache(struct cpu_info *ci)
 {
-	mips_icache_sync_all();
+	pmap_tlb_syncicache_wanted(ci);
 }
 
 static inline void
@@ -97,8 +97,8 @@ ipi_process(struct cpu_info *ci, uint64_t ipi_mask)
 		ipi_shootdown(ci);
 	if (ipi_mask & __BIT(IPI_FPSAVE))
 		ipi_fpsave(ci);
-	if (ipi_mask & __BIT(IPI_ISYNC))
-		ipi_isync(ci);
+	if (ipi_mask & __BIT(IPI_SYNCICACHE))
+		ipi_syncicache(ci);
 #ifdef IPI_HALT
 	if (ipi_mask & __BIT(IPI_HALT))
 		ipi_halt();

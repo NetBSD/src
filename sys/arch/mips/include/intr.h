@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.3.96.7 2010/02/28 23:45:07 matt Exp $ */
+/* $NetBSD: intr.h,v 1.3.96.8 2010/03/11 08:09:15 matt Exp $ */
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -57,7 +57,7 @@
 #define	IPI_NOP		0		/* do nothing, interrupt only */
 #define	IPI_SHOOTDOWN	1		/* do a tlb shootdown */
 #define	IPI_FPSAVE	2		/* save current fp registers */
-#define	IPI_ISYNC	3		/* sync icache for pages */
+#define	IPI_SYNCICACHE	3		/* sync icache for pages */
 #define	IPI_KPREEMPT	4		/* schedule a kernel preemption */
 #define	NIPIS		5
 
