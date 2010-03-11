@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.20 2010/01/16 07:38:56 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.21 2010/03/11 07:20:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20 2010/01/16 07:38:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21 2010/03/11 07:20:15 skrll Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -81,18 +81,16 @@ static struct hp700_int_bit {
 	struct hp700_int_reg *int_bit_reg;
 
 	/*
-	 * The priority level associated with this
-	 * bit, i.e., something like IPL_BIO,
-	 * IPL_NET, etc.
+	 * The priority level associated with this bit, e.g, IPL_BIO, IPL_NET,
+	 * etc.
 	 */
 	int int_bit_ipl;
 
 	/*
-	 * The spl mask for this bit.  This starts out
-	 * as the spl bit assigned to this particular
-	 * interrupt, and later gets fleshed out by the
-	 * mask calculator to be the full mask that we
-	 * need to raise spl to when we get this interrupt.
+	 * The spl mask for this bit.  This starts out as the spl bit assigned
+	 * to this particular interrupt, and later gets fleshed out by the mask
+	 * calculator to be the full mask that we need to raise spl to when we
+	 * get this interrupt.
 	 */
 	int int_bit_spl;
 
@@ -100,9 +98,8 @@ static struct hp700_int_bit {
 	struct evcnt int_bit_evcnt;
 
 	/*
-	 * The interrupt handler and argument for this
-	 * bit.  If the argument is NULL, the handler
-	 * gets the trapframe.
+	 * The interrupt handler and argument for this bit.  If the argument is
+	 * NULL, the handler gets the trapframe.
 	 */
 	int (*int_bit_handler)(void *);
 	void *int_bit_arg;
@@ -248,8 +245,7 @@ hp700_intr_allocate_bit(struct hp700_int_reg *int_reg)
 }
 
 /*
- * This returns the next available spl bit.  This is not
- * intended for wide use.
+ * This returns the next available spl bit.  This is not intended for wide use.
  */
 int
 _hp700_intr_ipl_next(void)
@@ -265,9 +261,9 @@ _hp700_intr_ipl_next(void)
 }
 
 /*
- * This return the single-bit spl mask for an interrupt.  This
- * can only be called immediately after hp700_intr_establish, and
- * is not intended for wide use.
+ * This return the single-bit spl mask for an interrupt.  This can only be
+ * called immediately after hp700_intr_establish, and is not intended for wide
+ * use.
  */
 int
 _hp700_intr_spl_mask(void *_int_bit)
@@ -335,15 +331,13 @@ hp700_intr_init(void)
 #endif
 
 	/*
-	 * Load all mask registers, loading %eiem last.
-	 * This will finally enable interrupts, but since
-	 * cpl and ipending should be -1 and 0, respectively,
-	 * no interrupts will get dispatched until the
-	 * priority level is lowered.
+	 * Load all mask registers, loading %eiem last.  This will finally
+	 * enable interrupts, but since cpl and ipending should be -1 and 0,
+	 * respectively, no interrupts will get dispatched until the priority
+	 * level is lowered.
 	 *
-	 * Because we're paranoid, we force these values
-	 * for cpl and ipending, even though they should
-	 * be unchanged since hp700_intr_bootstrap().
+	 * Because we're paranoid, we force these values for cpl and ipending,
+	 * even though they should be unchanged since hp700_intr_bootstrap().
 	 */
 	cpl = -1;
 	ipending = 0;
@@ -367,9 +361,9 @@ hp700_intr_init(void)
 }
 
 /*
- * Service interrupts.  This doesn't necessarily dispatch them.
- * This is called with %eiem loaded with zero.  It's named
- * hppa_intr instead of hp700_intr because trap.c calls it.
+ * Service interrupts.  This doesn't necessarily dispatch them.  This is called
+ * with %eiem loaded with zero.  It's named hppa_intr instead of hp700_intr
+ * because trap.c calls it.
  */
 void
 hppa_intr(struct trapframe *frame)
@@ -399,11 +393,10 @@ hppa_intr(struct trapframe *frame)
 	}
 
 	/*
-	 * If we interrupted in the middle of mutex_enter(),
-	 * we must patch up the lock owner value quickly if
-	 * we got the interlock.  If any of the interrupt
-	 * handlers need to aquire the mutex, they could
-	 * deadlock if the owner value is left unset.
+	 * If we interrupted in the middle of mutex_enter(), we must patch up
+	 * the lock owner value quickly if we got the interlock.  If any of the
+	 * interrupt handlers need to aquire the mutex, they could deadlock if
+	 * the owner value is left unset.
 	 */
 	if (frame->tf_iioq_head >= (u_int)mutex_enter_crit_start &&
 	    frame->tf_iioq_head <= (u_int)mutex_enter_crit_end &&
@@ -419,10 +412,9 @@ hppa_intr(struct trapframe *frame)
 	}
 
 	/*
-	 * Read the CPU interrupt register and acknowledge
-	 * all interrupts.  Starting with this value, get
-	 * our set of new pending interrupts and add
-	 * these new bits to ipending.
+	 * Read the CPU interrupt register and acknowledge all interrupts.
+	 * Starting with this value, get our set of new pending interrupts and
+	 * add these new bits to ipending.
 	 */
 	mfctl(CR_EIRR, eirr);
 	mtctl(eirr, CR_EIRR);
