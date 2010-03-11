@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.21 2010/03/11 07:20:15 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.22 2010/03/11 07:21:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21 2010/03/11 07:20:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.22 2010/03/11 07:21:24 skrll Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -315,7 +315,7 @@ hp700_intr_init(void)
 	imask[IPL_HIGH] |= imask[IPL_SCHED];
 
 	/* Now go back and flesh out the spl levels on each bit. */
-	for(bit_pos = 0; bit_pos < HP700_INT_BITS; bit_pos++) {
+	for (bit_pos = 0; bit_pos < HP700_INT_BITS; bit_pos++) {
 		int_bit = hp700_int_bits + bit_pos;
 		if (int_bit->int_bit_reg == NULL)
 			continue;
@@ -326,7 +326,7 @@ hp700_intr_init(void)
 	printf("vmmask %08x schedmask %08x highmask %08x\n",
 	    imask[IPL_VM], imask[IPL_SCHED], imask[IPL_HIGH]);
 #if 0
-	for(bit_pos = 0; bit_pos < NIPL; bit_pos++)
+	for (bit_pos = 0; bit_pos < NIPL; bit_pos++)
 		printf("imask[%d] == %08x\n", bit_pos, imask[bit_pos]);
 #endif
 
