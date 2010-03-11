@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.6 2009/11/21 15:36:33 rmind Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.7 2010/03/11 07:05:21 skrll Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.6 2009/11/21 15:36:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.7 2010/03/11 07:05:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,8 +138,8 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		 */
 
 		/*
-		 * if a terminal frame then report the trapframe
-		 * and continue after it (if not the last one).
+		 * if a terminal frame then report the trapframe and continue
+		 * after it (if not the last one).
 		 */
 		if (!fp[0]) {
 			register_t *scargs;
