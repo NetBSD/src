@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.43 2010/03/10 18:53:40 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.44 2010/03/11 07:01:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -111,10 +111,11 @@ L$trap_tmp_save:
 	.block	TF_PHYS
 	.size	L$trap_tmp_save, .-L$trap_tmp_save
 
+	/* Normal stack alignment */
 	.align	64
 	.export emergency_stack_start, data
 emergency_stack_start:
-	.block	32768		/* XXX must be aligned to 64 */
+	.block	32768
 	.export emergency_stack_end, data
 emergency_stack_end:
 	.block	4
