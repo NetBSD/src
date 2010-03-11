@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.32 2009/03/18 16:00:20 cegger Exp $ */
+/*	$NetBSD: fb.c,v 1.33 2010/03/11 04:00:36 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.32 2009/03/18 16:00:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.33 2010/03/11 04:00:36 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,10 +172,10 @@ fb_attach(struct fbdevice *fb, int isconsole)
 			nfb++;
 			fbl->fb_dev = fblist.fb_dev;
 			fbl->fb_next = NULL;
-			printf("%s: moved to /dev/fb%d\n",
-			    device_xname(fbl->fb_dev->fb_device), nfb);
-			printf("%s: attached to /dev/fb0\n",
-			    device_xname(fb->fb_device));
+			aprint_normal_dev(fbl->fb_dev->fb_device,
+			    "moved to /dev/fb%d\n", nfb);
+			aprint_normal_dev(fbl->fb_dev->fb_device,
+			    "attached to /dev/fb0\n");
 		}
 		fblist.fb_dev = fb;
 		if (fb->fb_flags & FB_FORCE)
@@ -189,8 +189,9 @@ fb_attach(struct fbdevice *fb, int isconsole)
 			}
 			if ((fbl->fb_next = malloc(sizeof (struct fbdevlist),
 			    M_DEVBUF, M_NOWAIT)) == NULL) {
-				aprint_error_dev(fb->fb_device, "no space to attach after /dev/fb%d\n",
-					nfb);
+				aprint_error_dev(fb->fb_device,
+				    "no space to attach after /dev/fb%d\n",
+				    nfb);
 				return;
 			}
 			fbl = fbl->fb_next;
@@ -198,8 +199,8 @@ fb_attach(struct fbdevice *fb, int isconsole)
 		}
 		fbl->fb_dev = fb;
 		fbl->fb_next = NULL;
-		printf("%s: attached to /dev/fb%d\n",
-			device_xname(fbl->fb_dev->fb_device), nfb);
+		aprint_normal_dev(fbl->fb_dev->fb_device,
+		     "attached to /dev/fb%d\n", nfb);
 	}
 }
 
