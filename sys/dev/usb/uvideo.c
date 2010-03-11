@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.29.2.2 2009/05/04 08:13:22 yamt Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.29.2.3 2010/03/11 15:04:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.29.2.2 2009/05/04 08:13:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.29.2.3 2010/03/11 15:04:09 yamt Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -622,23 +622,16 @@ bad:
 int
 uvideo_activate(device_t self, enum devact act)
 {
-	struct uvideo_softc *sc;
-	int rv;
+	struct uvideo_softc *sc = device_private(self);
 	
-	sc = device_private(self);
-	rv = 0;
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
-
 	case DVACT_DEACTIVATE:
 		DPRINTF(("uvideo_activate: deactivating\n"));
-		if (sc->sc_videodev != NULL)
-			rv = config_deactivate(sc->sc_videodev);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return rv;
 }
 
 

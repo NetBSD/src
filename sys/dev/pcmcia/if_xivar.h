@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xivar.h,v 1.4.74.1 2009/05/16 10:41:42 yamt Exp $	*/
+/*	$NetBSD: if_xivar.h,v 1.4.74.2 2010/03/11 15:04:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -25,7 +25,7 @@
 #endif
 
 struct xi_softc {
-	struct device sc_dev;			/* Generic device info */
+	device_t sc_dev;			/* Generic device info */
 	struct ethercom sc_ethercom;		/* Ethernet common part */
 
 	struct mii_data sc_mii;			/* MII media information */

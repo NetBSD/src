@@ -1,4 +1,4 @@
-/*	$NetBSD: iavc_pci.c,v 1.8.4.1 2009/05/16 10:41:33 yamt Exp $	*/
+/*	$NetBSD: iavc_pci.c,v 1.8.4.2 2010/03/11 15:03:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.8.4.1 2009/05/16 10:41:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.8.4.2 2010/03/11 15:03:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -211,8 +211,8 @@ iavc_pci_attach(device_t parent, device_t self, void *aux)
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	psc->sc_pc = pc;
@@ -348,28 +348,5 @@ iavc_pci_detach(device_t self, int flags)
 	/* XXX: capi detach?!? */
 
 	return 0;
-}
-
-static int
-iavc_pci_activate(device_t self, enum devact act)
-{
-	struct iavc_softc *psc = device_private(self);
-	int error, s;
-
-	error = 0;
-
-	s = splnet();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-	case DVACT_DEACTIVATE:
-		/* XXX */
-		break;
-	}
-
-	splx(s);
-
-	return error;
 }
 #endif

@@ -138,7 +138,7 @@ sisdrm_attach(device_t parent, device_t self, void *aux)
 }
 
 CFATTACH_DECL_NEW(sisdrm, sizeof(struct drm_device),
-    sisdrm_probe, sisdrm_attach, drm_detach, drm_activate);
+    sisdrm_probe, sisdrm_attach, drm_detach, NULL);
 
 #ifdef _MODULE
 

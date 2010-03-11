@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.160.2.3 2009/09/16 13:38:01 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.160.2.4 2010/03/11 15:04:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.160.2.3 2009/09/16 13:38:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.160.2.4 2010/03/11 15:04:20 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -150,6 +150,8 @@ static struct mbuf *so_pendfree;
 int somaxkva = SOMAXKVA;
 static int socurkva;
 static kcondvar_t socurkva_cv;
+
+static kauth_listener_t socket_listener;
 
 #define	SOCK_LOAN_CHUNK		65536
 
@@ -384,7 +386,7 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 
 	for (i = 0, va = lva; i < npgs; i++, va += PAGE_SIZE)
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(m->m_ext.ext_pgs[i]),
-		    VM_PROT_READ);
+		    VM_PROT_READ, 0);
 	pmap_update(pmap_kernel());
 
 	lva += (vaddr_t) iov->iov_base & PAGE_MASK;
@@ -428,6 +430,61 @@ getsombuf(struct socket *so, int type)
 	return m;
 }
 
+static int
+socket_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	int result;
+	enum kauth_network_req req;
+
+	result = KAUTH_RESULT_DEFER;
+	req = (enum kauth_network_req)arg0;
+
+	if ((action != KAUTH_NETWORK_SOCKET) &&
+	    (action != KAUTH_NETWORK_BIND))
+		return result;
+
+	switch (req) {
+	case KAUTH_REQ_NETWORK_BIND_PORT:
+		result = KAUTH_RESULT_ALLOW;
+		break;
+
+	case KAUTH_REQ_NETWORK_SOCKET_DROP: {
+		/* Normal users can only drop their own connections. */
+		struct socket *so = (struct socket *)arg1;
+
+		if (proc_uidmatch(cred, so->so_cred))
+			result = KAUTH_RESULT_ALLOW;
+
+		break;
+		}
+
+	case KAUTH_REQ_NETWORK_SOCKET_OPEN:
+		/* We allow "raw" routing/bluetooth sockets to anyone. */
+		if ((u_long)arg1 == PF_ROUTE || (u_long)arg1 == PF_BLUETOOTH)
+			result = KAUTH_RESULT_ALLOW;
+		else {
+			/* Privileged, let secmodel handle this. */
+			if ((u_long)arg2 == SOCK_RAW)
+				break;
+		}
+
+		result = KAUTH_RESULT_ALLOW;
+
+		break;
+
+	case KAUTH_REQ_NETWORK_SOCKET_CANSEE:
+		result = KAUTH_RESULT_ALLOW;
+
+		break;
+
+	default:
+		break;
+	}
+
+	return result;
+}
+
 void
 soinit(void)
 {
@@ -445,6 +502,9 @@ soinit(void)
 
 	callback_register(&vm_map_to_kernel(kernel_map)->vmk_reclaim_callback,
 	    &sokva_reclaimerentry, NULL, sokva_reclaim_callback);
+
+	socket_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
+	    socket_listener_cb, NULL);
 }
 
 /*
@@ -501,7 +561,6 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
 #endif
 	uid = kauth_cred_geteuid(l->l_cred);
 	so->so_uidinfo = uid_find(uid);
-	so->so_egid = kauth_cred_getegid(l->l_cred);
 	so->so_cpid = l->l_proc->p_pid;
 	if (lockso != NULL) {
 		/* Caller wants us to share a lock. */
@@ -520,6 +579,7 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
 		sofree(so);
 		return error;
 	}
+	so->so_cred = kauth_cred_dup(l->l_cred);
 	sounlock(so);
 	*aso = so;
 	return 0;
@@ -709,6 +769,7 @@ soclose(struct socket *so)
  discard:
 	if (so->so_state & SS_NOFDREF)
 		panic("soclose: NOFDREF");
+	kauth_cred_free(so->so_cred);
 	so->so_state |= SS_NOFDREF;
 	sofree(so);
 	return (error);
@@ -841,6 +902,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 	struct proc	*p;
 	long		space, len, resid, clen, mlen;
 	int		error, s, dontroute, atomic;
+	short		wakeup_state = 0;
 
 	p = l->l_proc;
 	sodopendfree();
@@ -915,11 +977,17 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 				goto release;
 			}
 			sbunlock(&so->so_snd);
+			if (wakeup_state & SS_RESTARTSYS) {
+				error = ERESTART;
+				goto out;
+			}
 			error = sbwait(&so->so_snd);
 			if (error)
 				goto out;
+			wakeup_state = so->so_state;
 			goto restart;
 		}
+		wakeup_state = 0;
 		mp = &top;
 		space -= clen;
 		do {
@@ -1095,6 +1163,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	struct mbuf	*nextrecord;
 	int		mbuf_removed = 0;
 	const struct domain *dom;
+	short		wakeup_state = 0;
 
 	pr = so->so_proto;
 	atomic = pr->pr_flags & PR_ATOMIC;
@@ -1209,12 +1278,16 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 1");
 		SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 1");
 		sbunlock(&so->so_rcv);
-		error = sbwait(&so->so_rcv);
+		if (wakeup_state & SS_RESTARTSYS)
+			error = ERESTART;
+		else
+			error = sbwait(&so->so_rcv);
 		if (error != 0) {
 			sounlock(so);
 			splx(s);
 			return error;
 		}
+		wakeup_state = so->so_state;
 		goto restart;
 	}
  dontblock:
@@ -1353,6 +1426,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			panic("receive 3");
 #endif
 		so->so_state &= ~SS_RCVATMARK;
+		wakeup_state = 0;
 		len = uio->uio_resid;
 		if (so->so_oobmark && len > so->so_oobmark - offset)
 			len = so->so_oobmark - offset;
@@ -1485,7 +1559,10 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 				    NULL, (struct mbuf *)(long)flags, NULL, l);
 			SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 2");
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 2");
-			error = sbwait(&so->so_rcv);
+			if (wakeup_state & SS_RESTARTSYS)
+				error = ERESTART;
+			else
+				error = sbwait(&so->so_rcv);
 			if (error != 0) {
 				sbunlock(&so->so_rcv);
 				sounlock(so);
@@ -1494,6 +1571,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			}
 			if ((m = so->so_rcv.sb_mb) != NULL)
 				nextrecord = m->m_nextpkt;
+			wakeup_state = so->so_state;
 		}
 	}
 
@@ -1560,18 +1638,23 @@ soshutdown(struct socket *so, int how)
 	return error;
 }
 
-int
-sodrain(struct socket *so)
+void
+sorestart(struct socket *so)
 {
-	int error;
-
+	/*
+	 * An application has called close() on an fd on which another
+	 * of its threads has called a socket system call.
+	 * Mark this and wake everyone up, and code that would block again
+	 * instead returns ERESTART.
+	 * On system call re-entry the fd is validated and EBADF returned.
+	 * Any other fd will block again on the 2nd syscall.
+	 */
 	solock(so);
-	so->so_state |= SS_ISDRAINING;
+	so->so_state |= SS_RESTARTSYS;
 	cv_broadcast(&so->so_cv);
-	error = soshutdown(so, SHUT_RDWR);
+	cv_broadcast(&so->so_snd.sb_cv);
+	cv_broadcast(&so->so_rcv.sb_cv);
 	sounlock(so);
-
-	return error;
 }
 
 void

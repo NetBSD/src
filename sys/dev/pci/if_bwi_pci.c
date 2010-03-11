@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwi_pci.c,v 1.8.2.2 2009/05/04 08:12:56 yamt Exp $	*/
+/*	$NetBSD: if_bwi_pci.c,v 1.8.2.3 2010/03/11 15:03:45 yamt Exp $	*/
 /*	$OpenBSD: if_bwi_pci.c,v 1.6 2008/02/14 22:10:02 brad Exp $ */
 
 /*
@@ -22,10 +22,9 @@
  * PCI front end
  */
 
-#include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.8.2.2 2009/05/04 08:12:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.8.2.3 2010/03/11 15:03:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>

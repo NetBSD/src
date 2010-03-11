@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.3.2.2 2009/06/20 07:20:36 yamt Exp $	*/
+/*	$NetBSD: compat.c,v 1.3.2.3 2010/03/11 15:04:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.3.2.2 2009/06/20 07:20:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.3.2.3 2010/03/11 15:04:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.3.2.2 2009/06/20 07:20:36 yamt Exp $");
 
 #include <rump/rump.h>
 #include <rump/rumpuser.h>
+
+#include "rump_vfs_private.h"
 
 /*
  * XXX: these are handwritten for now.  They provide compat for

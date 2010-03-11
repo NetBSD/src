@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.137.4.4 2009/09/16 13:37:47 yamt Exp $  */
+/*	$NetBSD: atw.c,v 1.137.4.5 2010/03/11 15:03:29 yamt Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,9 +34,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.137.4.4 2009/09/16 13:37:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.137.4.5 2010/03/11 15:03:29 yamt Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.137.4.4 2009/09/16 13:37:47 yamt Exp $");
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_radiotap.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -201,8 +198,6 @@ void	atw_rxdrain(struct atw_softc *);
 void	atw_txdrain(struct atw_softc *);
 
 /* Device (de)activation and power state */
-void	atw_disable(struct atw_softc *);
-int	atw_enable(struct atw_softc *);
 void	atw_reset(struct atw_softc *);
 
 /* Interrupt handlers */
@@ -312,58 +307,25 @@ int
 atw_activate(device_t self, enum devact act)
 {
 	struct atw_softc *sc = device_private(self);
-	int rv = 0, s;
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
 		if_deactivate(&sc->sc_if);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-	return rv;
 }
 
-/*
- * atw_enable:
- *
- *	Enable the ADM8211 chip.
- */
-int
-atw_enable(struct atw_softc *sc)
+bool
+atw_suspend(device_t self, const pmf_qual_t *qual)
 {
+	struct atw_softc *sc = device_private(self);
 
-	if (ATW_IS_ENABLED(sc) == 0) {
-		if (sc->sc_enable != NULL && (*sc->sc_enable)(sc) != 0) {
-			aprint_error_dev(sc->sc_dev, "device enable failed\n");
-			return (EIO);
-		}
-		sc->sc_flags |= ATWF_ENABLED;
-                /* Power may have been removed, and WEP keys thus
-                 * reset.
-		 */
-		sc->sc_flags &= ~ATWF_WEP_SRAM_VALID;
-	}
-	return (0);
-}
+	atw_rxdrain(sc);
+	sc->sc_flags &= ~ATWF_WEP_SRAM_VALID;
 
-/*
- * atw_disable:
- *
- *	Disable the ADM8211 chip.
- */
-void
-atw_disable(struct atw_softc *sc)
-{
-	if (!ATW_IS_ENABLED(sc))
-		return;
-	if (sc->sc_disable != NULL)
-		(*sc->sc_disable)(sc);
-	sc->sc_flags &= ~ATWF_ENABLED;
+	return true;
 }
 
 /* Returns -1 on failure. */
@@ -554,6 +516,8 @@ atw_attach(struct atw_softc *sc)
 	u_int32_t reg;
 	static const char *type_strings[] = {"Intersil (not supported)",
 	    "RFMD", "Marvel (not supported)"};
+
+	pmf_self_suspensor_init(sc->sc_dev, &sc->sc_suspensor, &sc->sc_qual);
 
 	sc->sc_txth = atw_txthresh_tab_lo;
 
@@ -850,16 +814,8 @@ atw_attach(struct atw_softc *sc)
 	ieee80211_media_init(ic, atw_media_change, ieee80211_media_status);
 	callout_init(&sc->sc_scan_ch, 0);
 
-#if NBPFILTER > 0
-	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
+	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + 64, &sc->sc_radiobpf);
-#endif
-
-	if (pmf_device_register1(sc->sc_dev, NULL, NULL, atw_shutdown))
-		pmf_class_network_register(sc->sc_dev, &sc->sc_if);
-	else
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't establish power handler\n");
 
 	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));
 	sc->sc_rxtap.ar_ihdr.it_len = htole16(sizeof(sc->sc_rxtapu));
@@ -1234,13 +1190,19 @@ atw_init(struct ifnet *ifp)
 	struct atw_rxsoft *rxs;
 	int i, error = 0;
 
-	if ((error = atw_enable(sc)) != 0)
-		goto out;
+	if (device_is_active(sc->sc_dev)) {
+		/*
+		 * Cancel any pending I/O.
+		 */
+		atw_stop(ifp, 0);
+	} else if (!pmf_device_subtree_resume(sc->sc_dev, &sc->sc_qual) ||
+	           !device_is_active(sc->sc_dev))
+		return 0;
 
 	/*
-	 * Cancel any pending I/O. This also resets.
+	 * Reset the chip to a known state.
 	 */
-	atw_stop(ifp, 0);
+	atw_reset(sc);
 
 	DPRINTF(sc, ("%s: channel %d freq %d flags 0x%04x\n",
 	    __func__, ieee80211_chan2ieee(ic, ic->ic_curchan),
@@ -1329,9 +1291,9 @@ atw_init(struct ifnet *ifp)
 		rxs = &sc->sc_rxsoft[i];
 		if (rxs->rxs_mbuf == NULL) {
 			if ((error = atw_add_rxbuf(sc, i)) != 0) {
-				aprint_error_dev(sc->sc_dev, "unable to allocate or map rx "
-				    "buffer %d, error = %d\n",
-				    i, error);
+				aprint_error_dev(sc->sc_dev,
+				    "unable to allocate or map rx buffer %d, "
+				    "error = %d\n", i, error);
 				/*
 				 * XXX Should attempt to run with fewer receive
 				 * XXX buffers instead of just failing.
@@ -2189,7 +2151,7 @@ atw_key_update_end(struct ieee80211com *ic)
 
 	if ((sc->sc_flags & ATWF_WEP_SRAM_VALID) != 0)
 		return;
-	if (ATW_IS_ENABLED(sc) == 0)
+	if (!device_activation(sc->sc_dev, DEVACT_LEVEL_DRIVER))
 		return;
 	atw_idle(sc, ATW_NAR_SR | ATW_NAR_ST);
 	atw_write_wep(sc);
@@ -2339,7 +2301,7 @@ atw_start_beacon(struct atw_softc *sc, int start)
 	uint32_t bcnt, bpli, cap0, cap1, capinfo;
 	size_t len;
 
-	if (ATW_IS_ENABLED(sc) == 0)
+	if (!device_is_active(sc->sc_dev))
 		return;
 
 	/* start beacons */
@@ -2657,16 +2619,19 @@ atw_stop(struct ifnet *ifp, int disable)
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
-	/* Disable interrupts. */
-	ATW_WRITE(sc, ATW_IER, 0);
+	if (device_is_active(sc->sc_dev)) {
+		/* Disable interrupts. */
+		ATW_WRITE(sc, ATW_IER, 0);
 
-	/* Stop the transmit and receive processes. */
+		/* Stop the transmit and receive processes. */
+		ATW_WRITE(sc, ATW_NAR, 0);
+		DELAY(atw_nar_delay);
+		ATW_WRITE(sc, ATW_TDBD, 0);
+		ATW_WRITE(sc, ATW_TDBP, 0);
+		ATW_WRITE(sc, ATW_RDB, 0);
+	}
+
 	sc->sc_opmode = 0;
-	ATW_WRITE(sc, ATW_NAR, 0);
-	DELAY(atw_nar_delay);
-	ATW_WRITE(sc, ATW_TDBD, 0);
-	ATW_WRITE(sc, ATW_TDBP, 0);
-	ATW_WRITE(sc, ATW_RDB, 0);
 
 	atw_txdrain(sc);
 
@@ -2676,11 +2641,8 @@ atw_stop(struct ifnet *ifp, int disable)
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifp->if_timer = 0;
 
-	if (disable) {
-		atw_rxdrain(sc);
-		atw_disable(sc);
-	} else
-		atw_reset(sc);
+	if (disable)
+		pmf_device_suspend(sc->sc_dev, &sc->sc_qual);
 }
 
 /*
@@ -2805,7 +2767,7 @@ atw_intr(void *arg)
 	int handled = 0, txthresh;
 
 #ifdef DEBUG
-	if (ATW_IS_ENABLED(sc) == 0)
+	if (!device_activation(sc->sc_dev, DEVACT_LEVEL_DRIVER))
 		panic("%s: atw_intr: not enabled", device_xname(sc->sc_dev));
 #endif
 
@@ -2814,7 +2776,7 @@ atw_intr(void *arg)
 	 * possibly have come from us.
 	 */
 	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
-	    !device_is_active(sc->sc_dev))
+	    !device_activation(sc->sc_dev, DEVACT_LEVEL_DRIVER))
 		return (0);
 
 	for (;;) {
@@ -3193,7 +3155,6 @@ atw_rxintr(struct atw_softc *sc)
 		else
 			rssi = ctlrssi;
 
- #if NBPFILTER > 0
 		/* Pass this up to any BPF listeners. */
 		if (sc->sc_radiobpf != NULL) {
 			struct atw_rx_radiotap_header *tap = &sc->sc_rxtap;
@@ -3210,10 +3171,9 @@ atw_rxintr(struct atw_softc *sc)
 			if ((rxstat & ATW_RXSTAT_CRC32E) != 0)
 				tap->ar_flags |= IEEE80211_RADIOTAP_F_BADFCS;
 
-			bpf_mtap2(sc->sc_radiobpf, tap,
-			    sizeof(sc->sc_rxtapu), m);
+			bpf_ops->bpf_mtap2(sc->sc_radiobpf,
+			    tap, sizeof(sc->sc_rxtapu), m);
  		}
-#endif /* NBPFILTER > 0 */
 
 		sc->sc_recv_ev.ev_count++;
 
@@ -3370,7 +3330,7 @@ atw_watchdog(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 
 	ifp->if_timer = 0;
-	if (ATW_IS_ENABLED(sc) == 0)
+	if (!device_is_active(sc->sc_dev))
 		return;
 
 	if (sc->sc_rescan_timer != 0 && --sc->sc_rescan_timer == 0)
@@ -3537,10 +3497,8 @@ atw_start(struct ifnet *ifp)
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			if (m0 == NULL)
 				break;
-#if NBPFILTER > 0
 			if (ifp->if_bpf != NULL)
-				bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER > 0 */
+				bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 			ni = ieee80211_find_txnode(ic,
 			    mtod(m0, struct ether_header *)->ether_dhost);
 			if (ni == NULL) {
@@ -3588,22 +3546,20 @@ atw_start(struct ifnet *ifp)
 		 */
 		*(uint16_t *)whm->i_dur = htole16(txs->txs_d0.d_rts_dur);
 
-#if NBPFILTER > 0
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
 		if (ic->ic_rawbpf != NULL)
-			bpf_mtap((void *)ic->ic_rawbpf, m0);
+			bpf_ops->bpf_mtap((void *)ic->ic_rawbpf, m0);
 
 		if (sc->sc_radiobpf != NULL) {
 			struct atw_tx_radiotap_header *tap = &sc->sc_txtap;
 
 			tap->at_rate = rate;
 
-			bpf_mtap2(sc->sc_radiobpf, tap,
-			    sizeof(sc->sc_txtapu), m0);
+			bpf_ops->bpf_mtap2(sc->sc_radiobpf,
+			    tap, sizeof(sc->sc_txtapu), m0);
 		}
-#endif /* NBPFILTER > 0 */
 
 		M_PREPEND(m0, offsetof(struct atw_frame, atw_ihdr), M_DONTWAIT);
 
@@ -3897,28 +3853,31 @@ atw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ieee80211req *ireq;
 	int s, error = 0;
 
-	/* XXX monkey see, monkey do. comes from wi_ioctl. */
-	if (!device_is_active(sc->sc_dev))
-		return ENXIO;
-
 	s = splnet();
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
-		if (ifp->if_flags & IFF_UP) {
-			if (ATW_IS_ENABLED(sc)) {
-				/*
-				 * To avoid rescanning another access point,
-				 * do not call atw_init() here.  Instead,
-				 * only reflect media settings.
-				 */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_UP|IFF_RUNNING:
+			/*
+			 * To avoid rescanning another access point,
+			 * do not call atw_init() here.  Instead,
+			 * only reflect media settings.
+			 */
+			if (device_activation(sc->sc_dev, DEVACT_LEVEL_DRIVER))
 				atw_filter_setup(sc);
-			} else
-				error = atw_init(ifp);
-		} else if (ATW_IS_ENABLED(sc))
+			break;
+		case IFF_UP:
+			error = atw_init(ifp);
+			break;
+		case IFF_RUNNING:
 			atw_stop(ifp, 1);
+			break;
+		case 0:
+			break;
+		}
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
@@ -3956,7 +3915,7 @@ atw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	}
 
 	/* Try to get more packets going. */
-	if (ATW_IS_ENABLED(sc))
+	if (device_is_active(sc->sc_dev))
 		atw_start(ifp);
 
 	splx(s);

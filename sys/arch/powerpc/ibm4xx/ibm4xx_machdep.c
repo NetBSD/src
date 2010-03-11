@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.7.44.1 2009/05/04 08:11:43 yamt Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.7.44.2 2010/03/11 15:02:49 yamt Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.7.44.1 2009/05/04 08:11:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.7.44.2 2010/03/11 15:02:49 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.7.44.1 2009/05/04 08:11:43 yamt
 #include <sys/param.h>
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -97,12 +96,12 @@ __KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.7.44.1 2009/05/04 08:11:43 yamt
 
 #include <machine/powerpc.h>
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 #include <machine/trap.h>
 
 /*
  * Global variables used here and there
  */
-extern struct user *proc0paddr;
 paddr_t msgbuf_paddr;
 vaddr_t msgbuf_vaddr;
 char msgbuf[MSGBUFSIZE];
@@ -142,12 +141,10 @@ ibm4xx_init(void (*handler)(void))
 	KASSERT(ci != NULL);
 	KASSERT(curcpu() == ci);
 	lwp0.l_cpu = ci;
-	lwp0.l_addr = proc0paddr;
-	memset(lwp0.l_addr, 0, sizeof *lwp0.l_addr);
-	KASSERT(lwp0.l_cpu != NULL);
 
-	curpcb = &proc0paddr->u_pcb;
-        memset(curpcb, 0, sizeof(*curpcb));
+	curpcb = lwp_getpcb(&lwp0);
+	memset(curpcb, 0, sizeof(struct pcb));
+
 	curpcb->pcb_pm = pmap_kernel();
 
 	/*
@@ -289,7 +286,8 @@ ibm4xx_cpu_startup(const char *model)
 		panic("startup: no room for message buffer");
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa(msgbuf_vaddr + i * PAGE_SIZE,
-		    msgbuf_paddr + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
+		    msgbuf_paddr + i * PAGE_SIZE,
+		    VM_PROT_READ|VM_PROT_WRITE, 0);
 	initmsgbuf((void *)msgbuf_vaddr, round_page(MSGBUFSIZE));
 #else
 	initmsgbuf((void *)msgbuf, round_page(MSGBUFSIZE));

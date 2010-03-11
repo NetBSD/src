@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.16.48.1 2009/05/04 08:10:38 yamt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.16.48.2 2010/03/11 15:02:04 yamt Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,10 +31,9 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.16.48.1 2009/05/04 08:10:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.16.48.2 2010/03/11 15:02:04 yamt Exp $");
 
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 #include <machine/db_machdep.h>
@@ -108,7 +107,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 	else {
 		if (trace_thread) {
 			struct proc *p;
-			struct user *u;
+			struct pcb *pcb;
 			struct lwp *l;
 			if (lwpaddr) {
 				l = (struct lwp *)addr;
@@ -125,15 +124,11 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 				KASSERT(l != NULL);
 			}
 			(*pr)("lid %d ", l->l_lid);
-			if (!(l->l_flag & LW_INMEM)) {
-				(*pr)("swapped out\n");
-				return;
-			}
-			u = l->l_addr;
+			pcb = lwp_getpcb(l);
 #ifdef acorn26
-			frame = (u_int32_t *)(u->u_pcb.pcb_sf->sf_r11);
+			frame = (uint32_t *)(pcb->pcb_sf->sf_r11);
 #else
-			frame = (u_int32_t *)(u->u_pcb.pcb_un.un_32.pcb32_r11);
+			frame = (uint32_t *)(pcb->pcb_un.un_32.pcb32_r11);
 #endif
 			(*pr)("at %p\n", frame);
 		} else

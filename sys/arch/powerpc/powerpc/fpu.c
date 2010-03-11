@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.21 2008/04/08 02:33:03 garbled Exp $	*/
+/*	$NetBSD: fpu.c,v 1.21.4.1 2010/03/11 15:02:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,15 +32,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.21 2008/04/08 02:33:03 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.21.4.1 2010/03/11 15:02:51 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 #include <sys/siginfo.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/fpu.h>
 #include <machine/psl.h>
@@ -56,7 +57,7 @@ enable_fpu(void)
 {
 	struct cpu_info *ci = curcpu();
 	struct lwp *l = curlwp;
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf = trapframe(l);
 	int msr;
 
@@ -144,7 +145,7 @@ save_fpu_cpu(void)
 	if (l == NULL) {
 		goto out;
 	}
-	pcb = &l->l_addr->u_pcb;
+	pcb = lwp_getpcb(l);
 	__asm (
 		"stfd	0,0(%0)\n"
 		"stfd	1,8(%0)\n"
@@ -201,7 +202,7 @@ save_fpu_cpu(void)
 static void
 mp_save_fpu_lwp(struct lwp *l)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct cpu_info *fpcpu;
 	int i;
 
@@ -238,7 +239,7 @@ mp_save_fpu_lwp(struct lwp *l)
 void
 save_fpu_lwp(struct lwp *l, int discard)
 {
-	struct pcb * const pcb = &l->l_addr->u_pcb;
+	struct pcb * const pcb = lwp_getpcb(l);
 	struct cpu_info * const ci = curcpu();
 
 	/*

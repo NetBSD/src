@@ -1,9 +1,9 @@
-/*	$NetBSD: mongoose.c,v 1.11.78.3 2009/08/19 18:46:15 yamt Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.11.78.4 2010/03/11 15:02:23 yamt Exp $	*/
 
-/*	$OpenBSD: mongoose.c,v 1.7 2000/08/15 19:42:56 mickey Exp $	*/
+/*	$OpenBSD: mongoose.c,v 1.19 2010/01/01 20:28:42 kettenis Exp $	*/
 
 /*
- * Copyright (c) 1998,1999 Michael Shalayeff
+ * Copyright (c) 1998-2003 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,11 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -34,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.11.78.3 2009/08/19 18:46:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.11.78.4 2010/03/11 15:02:23 yamt Exp $");
 
 #define MONGOOSE_DEBUG 9
 
@@ -608,12 +603,19 @@ mgattach(device_t parent, device_t self, void *aux)
 	sc->sc_bt = ca->ca_iot;
 	sc->sc_iomap = ca->ca_hpa;
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa + MONGOOSE_MONGOOSE,
-			  sizeof(struct mongoose_regs), 0, &ioh))
-		panic("mgattach: can't map registers");
+	    sizeof(struct mongoose_regs), 0, &ioh)) {
+		aprint_error(": can't map registers\n");
+		return;
+	}
 	sc->sc_regs = (struct mongoose_regs *)ioh;
+
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa + MONGOOSE_CTRL,
-			  sizeof(struct mongoose_ctrl), 0, &ioh))
-		panic("mgattach: can't map control registers");
+	    sizeof(struct mongoose_ctrl), 0, &ioh)) {
+		aprint_error(": can't map control registers\n");
+		bus_space_unmap(ca->ca_iot, (bus_space_handle_t)sc->sc_regs,
+		    sizeof(struct mongoose_regs));
+		return;
+	}
 	sc->sc_ctrl = (struct mongoose_ctrl *)ioh;
 
 	viper_eisa_en();

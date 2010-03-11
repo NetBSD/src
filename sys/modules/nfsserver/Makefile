@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.10.2 2009/05/04 08:14:11 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.10.3 2010/03/11 15:04:25 yamt Exp $
 
 .include "../Makefile.inc"
 
 KMOD=	nfsserver
 
-CPPFLAGS+=	-DNFS -DNFSSERVER
+CPPFLAGS+=	-DNFSSERVER
 
 .PATH:	${S}/nfs
 

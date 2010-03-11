@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.46.4.1 2009/05/04 08:13:01 yamt Exp $	*/
+/*	$NetBSD: piixide.c,v 1.46.4.2 2010/03/11 15:03:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.46.4.1 2009/05/04 08:13:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.46.4.2 2010/03/11 15:03:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +45,8 @@ static u_int32_t piix_setup_sidetim_timings(u_int8_t, u_int8_t, u_int8_t);
 static void piixsata_chip_map(struct pciide_softc*, struct pci_attach_args *);
 static int piix_dma_init(void *, int, int, void *, size_t, int);
 
-static bool piixide_resume(device_t PMF_FN_PROTO);
-static bool piixide_suspend(device_t PMF_FN_PROTO);
+static bool piixide_resume(device_t, const pmf_qual_t *);
+static bool piixide_suspend(device_t, const pmf_qual_t *);
 static int  piixide_match(device_t, cfdata_t, void *);
 static void piixide_attach(device_t, device_t, void *);
 
@@ -292,6 +287,48 @@ static const struct pciide_product_desc pciide_intel_products[] =  {
 	  "Intel 82965PM IDE controller",
 	  piixsata_chip_map,
 	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_1,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_1,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_2,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_3,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_4,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_5,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
+	  piixsata_chip_map,
+	},
+	{
+	  PCI_PRODUCT_INTEL_3400_SATA_6,
+	  0,
+	  "Intel 3400 Serial ATA Controller",
+	  piixsata_chip_map,
+	},
 	{ 0,
 	  0,
 	  NULL,
@@ -330,7 +367,7 @@ piixide_attach(device_t parent, device_t self, void *aux)
 }
 
 static bool
-piixide_resume(device_t dv PMF_FN_ARGS)
+piixide_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct pciide_softc *sc = device_private(dv);
 
@@ -343,7 +380,7 @@ piixide_resume(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-piixide_suspend(device_t dv PMF_FN_ARGS)
+piixide_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct pciide_softc *sc = device_private(dv);
 

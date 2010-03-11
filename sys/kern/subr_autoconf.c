@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.146.2.5 2009/09/16 13:38:01 yamt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.146.2.6 2010/03/11 15:04:18 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,11 +77,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.146.2.5 2009/09/16 13:38:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.146.2.6 2010/03/11 15:04:18 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
-#include "drvctl.h"
 #endif
 
 #include <sys/param.h>
@@ -163,16 +162,27 @@ struct matchinfo {
 	int	pri;
 };
 
+struct alldevs_foray {
+	int			af_s;
+	struct devicelist	af_garbage;
+};
+
 static char *number(char *, int);
 static void mapply(struct matchinfo *, cfdata_t);
 static device_t config_devalloc(const device_t, const cfdata_t, const int *);
-static void config_devdealloc(device_t);
+static void config_devdelete(device_t);
+static void config_devunlink(device_t, struct devicelist *);
 static void config_makeroom(int, struct cfdriver *);
 static void config_devlink(device_t);
-static void config_devunlink(device_t);
+static void config_alldevs_unlock(int);
+static int config_alldevs_lock(void);
+static void config_alldevs_enter(struct alldevs_foray *);
+static void config_alldevs_exit(struct alldevs_foray *);
+
+static void config_collect_garbage(struct devicelist *);
+static void config_dump_garbage(struct devicelist *);
 
 static void pmflock_debug(device_t, const char *, int);
-static void pmflock_debug_with_flags(device_t, const char *, int PMF_FN_PROTO);
 
 static device_t deviter_next1(deviter_t *);
 static void deviter_reinit(deviter_t *);
@@ -204,12 +214,12 @@ static TAILQ_HEAD(, finalize_hook) config_finalize_list =
 static int config_finalize_done;
 
 /* list of all devices */
-struct devicelist alldevs = TAILQ_HEAD_INITIALIZER(alldevs);
-kcondvar_t alldevs_cv;
-kmutex_t alldevs_mtx;
-static int alldevs_nread = 0;
-static int alldevs_nwrite = 0;
-static lwp_t *alldevs_writer = NULL;
+static struct devicelist alldevs = TAILQ_HEAD_INITIALIZER(alldevs);
+static kmutex_t alldevs_mtx;
+static volatile bool alldevs_garbage = false;
+static volatile devgen_t alldevs_gen = 1;
+static volatile int alldevs_nread = 0;
+static volatile int alldevs_nwrite = 0;
 
 static int config_pending;		/* semaphore for mountroot */
 static kmutex_t config_misc_lock;
@@ -220,10 +230,12 @@ static int detachall = 0;
 #define	STREQ(s1, s2)			\
 	(*(s1) == *(s2) && strcmp((s1), (s2)) == 0)
 
-static int config_initialized;		/* config_init() has been called. */
+static bool config_initialized = false;	/* config_init() has been called. */
 
 static int config_do_twiddle;
 static callout_t config_twiddle_ch;
+
+static void sysctl_detach_setup(struct sysctllog **);
 
 /*
  * Initialize the autoconfiguration data structures.  Normally this
@@ -236,11 +248,9 @@ config_init(void)
 	const struct cfattachinit *cfai;
 	int i, j;
 
-	if (config_initialized)
-		return;
+	KASSERT(config_initialized == false);
 
-	mutex_init(&alldevs_mtx, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&alldevs_cv, "alldevs");
+	mutex_init(&alldevs_mtx, MUTEX_DEFAULT, IPL_VM);
 
 	mutex_init(&config_misc_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&config_misc_cv, "cfgmisc");
@@ -268,7 +278,17 @@ config_init(void)
 	initcftable.ct_cfdata = cfdata;
 	TAILQ_INSERT_TAIL(&allcftables, &initcftable, ct_list);
 
-	config_initialized = 1;
+	config_initialized = true;
+}
+
+void
+config_init_mi(void)
+{
+
+	if (!config_initialized)
+		config_init();
+
+	sysctl_detach_setup(NULL);
 }
 
 void
@@ -357,13 +377,21 @@ config_cfdriver_attach(struct cfdriver *cd)
 int
 config_cfdriver_detach(struct cfdriver *cd)
 {
-	int i;
+	struct alldevs_foray af;
+	int i, rc = 0;
 
+	config_alldevs_enter(&af);
 	/* Make sure there are no active instances. */
 	for (i = 0; i < cd->cd_ndevs; i++) {
-		if (cd->cd_devs[i] != NULL)
-			return EBUSY;
+		if (cd->cd_devs[i] != NULL) {
+			rc = EBUSY;
+			break;
+		}
 	}
+	config_alldevs_exit(&af);
+
+	if (rc != 0)
+		return rc;
 
 	/* ...and no attachments loaded. */
 	if (LIST_EMPTY(&cd->cd_attach) == 0)
@@ -422,21 +450,29 @@ config_cfattach_attach(const char *driver, struct cfattach *ca)
 int
 config_cfattach_detach(const char *driver, struct cfattach *ca)
 {
+	struct alldevs_foray af;
 	struct cfdriver *cd;
 	device_t dev;
-	int i;
+	int i, rc = 0;
 
 	cd = config_cfdriver_lookup(driver);
 	if (cd == NULL)
 		return ESRCH;
 
+	config_alldevs_enter(&af);
 	/* Make sure there are no active instances. */
 	for (i = 0; i < cd->cd_ndevs; i++) {
 		if ((dev = cd->cd_devs[i]) == NULL)
 			continue;
-		if (dev->dv_cfattach == ca)
-			return EBUSY;
+		if (dev->dv_cfattach == ca) {
+			rc = EBUSY;
+			break;
+		}
 	}
+	config_alldevs_exit(&af);
+
+	if (rc != 0)
+		return rc;
 
 	LIST_REMOVE(ca, ca_list);
 
@@ -501,7 +537,7 @@ config_stdsubmatch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 	const struct cflocdesc *cl;
 	int nlocs, i;
 
-	ci = cfiattr_lookup(cf->cf_pspec->cfp_iattr, parent->dv_cfdriver);
+	ci = cfiattr_lookup(cfdata_ifattr(cf), parent->dv_cfdriver);
 	KASSERT(ci);
 	nlocs = ci->ci_loclen;
 	KASSERT(!nlocs || locs);
@@ -633,7 +669,7 @@ rescan_with_cfdata(const struct cfdata *cf)
 				continue;
 
 			(*d->dv_cfattach->ca_rescan)(d,
-				cf1->cf_pspec->cfp_iattr, cf1->cf_loc);
+				cfdata_ifattr(cf1), cf1->cf_loc);
 		}
 	}
 	deviter_release(&di);
@@ -781,7 +817,7 @@ config_search_loc(cfsubmatch_t fn, device_t parent,
 			 * consider only children which attach to
 			 * that attribute.
 			 */
-			if (ifattr && !STREQ(ifattr, cf->cf_pspec->cfp_iattr))
+			if (ifattr && !STREQ(ifattr, cfdata_ifattr(cf)))
 				continue;
 
 			if (cfparent_match(parent, cf->cf_pspec))
@@ -914,92 +950,200 @@ number(char *ep, int n)
 
 /*
  * Expand the size of the cd_devs array if necessary.
+ *
+ * The caller must hold alldevs_mtx. config_makeroom() may release and
+ * re-acquire alldevs_mtx, so callers should re-check conditions such
+ * as alldevs_nwrite == 0 and alldevs_nread == 0 when config_makeroom()
+ * returns.
  */
 static void
 config_makeroom(int n, struct cfdriver *cd)
 {
 	int old, new;
-	device_t *nsp;
+	device_t *osp, *nsp;
 
-	if (n < cd->cd_ndevs)
-		return;
+	alldevs_nwrite++;
 
-	/*
-	 * Need to expand the array.
-	 */
-	old = cd->cd_ndevs;
-	if (old == 0)
-		new = 4;
-	else
-		new = old * 2;
-	while (new <= n)
-		new *= 2;
-	cd->cd_ndevs = new;
-	nsp = kmem_alloc(sizeof(device_t [new]), KM_SLEEP);
-	if (nsp == NULL)
-		panic("config_attach: %sing dev array",
-		    old != 0 ? "expand" : "creat");
-	memset(nsp + old, 0, sizeof(device_t [new - old]));
-	if (old != 0) {
-		memcpy(nsp, cd->cd_devs, sizeof(device_t [old]));
-		kmem_free(cd->cd_devs, sizeof(device_t [old]));
+	for (new = MAX(4, cd->cd_ndevs); new <= n; new += new)
+		;
+
+	while (n >= cd->cd_ndevs) {
+		/*
+		 * Need to expand the array.
+		 */
+		old = cd->cd_ndevs;
+		osp = cd->cd_devs;
+
+		/* Release alldevs_mtx around allocation, which may
+		 * sleep.
+		 */
+		mutex_exit(&alldevs_mtx);
+		nsp = kmem_alloc(sizeof(device_t[new]), KM_SLEEP);
+		if (nsp == NULL)
+			panic("%s: could not expand cd_devs", __func__);
+		mutex_enter(&alldevs_mtx);
+
+		/* If another thread moved the array while we did
+		 * not hold alldevs_mtx, try again.
+		 */
+		if (cd->cd_devs != osp) {
+			kmem_free(nsp, sizeof(device_t[new]));
+			continue;
+		}
+
+		memset(nsp + old, 0, sizeof(device_t[new - old]));
+		if (old != 0)
+			memcpy(nsp, cd->cd_devs, sizeof(device_t[old]));
+
+		cd->cd_ndevs = new;
+		cd->cd_devs = nsp;
+		if (old != 0)
+			kmem_free(osp, sizeof(device_t[old]));
 	}
-	cd->cd_devs = nsp;
+	alldevs_nwrite--;
 }
 
+/*
+ * Put dev into the devices list.
+ */
 static void
 config_devlink(device_t dev)
 {
-	struct cfdriver *cd = dev->dv_cfdriver;
+	int s;
 
-	/* put this device in the devices array */
-	config_makeroom(dev->dv_unit, cd);
-	if (cd->cd_devs[dev->dv_unit])
-		panic("config_attach: duplicate %s", device_xname(dev));
-	cd->cd_devs[dev->dv_unit] = dev;
+	s = config_alldevs_lock();
 
+	KASSERT(device_cfdriver(dev)->cd_devs[dev->dv_unit] == dev);
+
+	dev->dv_add_gen = alldevs_gen;
 	/* It is safe to add a device to the tail of the list while
-	 * readers are in the list, but not while a writer is in
-	 * the list.  Wait for any writer to complete.
+	 * readers and writers are in the list.
 	 */
-	mutex_enter(&alldevs_mtx);
-	while (alldevs_nwrite != 0 && alldevs_writer != curlwp)
-		cv_wait(&alldevs_cv, &alldevs_mtx);
-	TAILQ_INSERT_TAIL(&alldevs, dev, dv_list);	/* link up */
-	cv_signal(&alldevs_cv);
-	mutex_exit(&alldevs_mtx);
+	TAILQ_INSERT_TAIL(&alldevs, dev, dv_list);
+	config_alldevs_unlock(s);
 }
 
 static void
-config_devunlink(device_t dev)
+config_devfree(device_t dev)
 {
-	struct cfdriver *cd = dev->dv_cfdriver;
+	int priv = (dev->dv_flags & DVF_PRIV_ALLOC);
+
+	if (dev->dv_cfattach->ca_devsize > 0)
+		kmem_free(dev->dv_private, dev->dv_cfattach->ca_devsize);
+	if (priv)
+		kmem_free(dev, sizeof(*dev));
+}
+
+/*
+ * Caller must hold alldevs_mtx.
+ */
+static void
+config_devunlink(device_t dev, struct devicelist *garbage)
+{
+	struct device_garbage *dg = &dev->dv_garbage;
+	cfdriver_t cd = device_cfdriver(dev);
 	int i;
 
-	/* Unlink from device list. */
+	KASSERT(mutex_owned(&alldevs_mtx));
+
+ 	/* Unlink from device list.  Link to garbage list. */
 	TAILQ_REMOVE(&alldevs, dev, dv_list);
+	TAILQ_INSERT_TAIL(garbage, dev, dv_list);
 
 	/* Remove from cfdriver's array. */
 	cd->cd_devs[dev->dv_unit] = NULL;
 
 	/*
-	 * If the device now has no units in use, deallocate its softc array.
+	 * If the device now has no units in use, unlink its softc array.
 	 */
 	for (i = 0; i < cd->cd_ndevs; i++) {
 		if (cd->cd_devs[i] != NULL)
-			return;
+			break;
 	}
-	/* nothing found; deallocate */
-	kmem_free(cd->cd_devs, sizeof(device_t [cd->cd_ndevs]));
-	cd->cd_devs = NULL;
-	cd->cd_ndevs = 0;
+	/* Nothing found.  Unlink, now.  Deallocate, later. */
+	if (i == cd->cd_ndevs) {
+		dg->dg_ndevs = cd->cd_ndevs;
+		dg->dg_devs = cd->cd_devs;
+		cd->cd_devs = NULL;
+		cd->cd_ndevs = 0;
+	}
 }
-	
+
+static void
+config_devdelete(device_t dev)
+{
+	struct device_garbage *dg = &dev->dv_garbage;
+	device_lock_t dvl = device_getlock(dev);
+
+	if (dg->dg_devs != NULL)
+		kmem_free(dg->dg_devs, sizeof(device_t[dg->dg_ndevs]));
+
+	cv_destroy(&dvl->dvl_cv);
+	mutex_destroy(&dvl->dvl_mtx);
+
+	KASSERT(dev->dv_properties != NULL);
+	prop_object_release(dev->dv_properties);
+
+	if (dev->dv_activity_handlers)
+		panic("%s with registered handlers", __func__);
+
+	if (dev->dv_locators) {
+		size_t amount = *--dev->dv_locators;
+		kmem_free(dev->dv_locators, amount);
+	}
+
+	config_devfree(dev);
+}
+
+static int
+config_unit_nextfree(cfdriver_t cd, cfdata_t cf)
+{
+	int unit;
+
+	if (cf->cf_fstate == FSTATE_STAR) {
+		for (unit = cf->cf_unit; unit < cd->cd_ndevs; unit++)
+			if (cd->cd_devs[unit] == NULL)
+				break;
+		/*
+		 * unit is now the unit of the first NULL device pointer,
+		 * or max(cd->cd_ndevs,cf->cf_unit).
+		 */
+	} else {
+		unit = cf->cf_unit;
+		if (unit < cd->cd_ndevs && cd->cd_devs[unit] != NULL)
+			unit = -1;
+	}
+	return unit;
+}
+
+static int
+config_unit_alloc(device_t dev, cfdriver_t cd, cfdata_t cf)
+{
+	struct alldevs_foray af;
+	int unit;
+
+	config_alldevs_enter(&af);
+	for (;;) {
+		unit = config_unit_nextfree(cd, cf);
+		if (unit == -1)
+			break;
+		if (unit < cd->cd_ndevs) {
+			cd->cd_devs[unit] = dev;
+			dev->dv_unit = unit;
+			break;
+		}
+		config_makeroom(unit, cd);
+	}
+	config_alldevs_exit(&af);
+
+	return unit;
+}
+
 static device_t
 config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 {
-	struct cfdriver *cd;
-	struct cfattach *ca;
+	cfdriver_t cd;
+	cfattach_t ca;
 	size_t lname, lunit;
 	const char *xunit;
 	int myunit;
@@ -1021,31 +1165,6 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	    ca->ca_devsize < sizeof(struct device))
 		panic("config_devalloc: %s", cf->cf_atname);
 
-#ifndef __BROKEN_CONFIG_UNIT_USAGE
-	if (cf->cf_fstate == FSTATE_STAR) {
-		for (myunit = cf->cf_unit; myunit < cd->cd_ndevs; myunit++)
-			if (cd->cd_devs[myunit] == NULL)
-				break;
-		/*
-		 * myunit is now the unit of the first NULL device pointer,
-		 * or max(cd->cd_ndevs,cf->cf_unit).
-		 */
-	} else {
-		myunit = cf->cf_unit;
-		if (myunit < cd->cd_ndevs && cd->cd_devs[myunit] != NULL)
-			return NULL;
-	}	
-#else
-	myunit = cf->cf_unit;
-#endif /* ! __BROKEN_CONFIG_UNIT_USAGE */
-
-	/* compute length of name and decimal expansion of unit number */
-	lname = strlen(cd->cd_name);
-	xunit = number(&num[sizeof(num)], myunit);
-	lunit = &num[sizeof(num)] - xunit;
-	if (lname + lunit > sizeof(dev->dv_xname))
-		panic("config_devalloc: device name too long");
-
 	/* get memory for all device vars */
 	KASSERT((ca->ca_flags & DVF_PRIV_ALLOC) || ca->ca_devsize >= sizeof(struct device));
 	if (ca->ca_devsize > 0) {
@@ -1065,19 +1184,33 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	if (dev == NULL)
 		panic("config_devalloc: memory allocation for device_t failed");
 
+	dev->dv_class = cd->cd_class;
+	dev->dv_cfdata = cf;
+	dev->dv_cfdriver = cd;
+	dev->dv_cfattach = ca;
+	dev->dv_activity_count = 0;
+	dev->dv_activity_handlers = NULL;
+	dev->dv_private = dev_private;
+	dev->dv_flags = ca->ca_flags;	/* inherit flags from class */
+
+	myunit = config_unit_alloc(dev, cd, cf);
+	if (myunit == -1) {
+		config_devfree(dev);
+		return NULL;
+	}
+
+	/* compute length of name and decimal expansion of unit number */
+	lname = strlen(cd->cd_name);
+	xunit = number(&num[sizeof(num)], myunit);
+	lunit = &num[sizeof(num)] - xunit;
+	if (lname + lunit > sizeof(dev->dv_xname))
+		panic("config_devalloc: device name too long");
+
 	dvl = device_getlock(dev);
 
 	mutex_init(&dvl->dvl_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&dvl->dvl_cv, "pmfsusp");
 
-	dev->dv_class = cd->cd_class;
-	dev->dv_cfdata = cf;
-	dev->dv_cfdriver = cd;
-	dev->dv_cfattach = ca;
-	dev->dv_unit = myunit;
-	dev->dv_activity_count = 0;
-	dev->dv_activity_handlers = NULL;
-	dev->dv_private = dev_private;
 	memcpy(dev->dv_xname, cd->cd_name, lname);
 	memcpy(dev->dv_xname + lname, xunit, lunit);
 	dev->dv_parent = parent;
@@ -1085,12 +1218,10 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 		dev->dv_depth = parent->dv_depth + 1;
 	else
 		dev->dv_depth = 0;
-	dev->dv_flags = DVF_ACTIVE;	/* always initially active */
-	dev->dv_flags |= ca->ca_flags;	/* inherit flags from class */
+	dev->dv_flags |= DVF_ACTIVE;	/* always initially active */
 	if (locs) {
 		KASSERT(parent); /* no locators at root */
-		ia = cfiattr_lookup(cf->cf_pspec->cfp_iattr,
-				    parent->dv_cfdriver);
+		ia = cfiattr_lookup(cfdata_ifattr(cf), parent->dv_cfdriver);
 		dev->dv_locators =
 		    kmem_alloc(sizeof(int [ia->ci_loclen + 1]), KM_SLEEP);
 		*dev->dv_locators++ = sizeof(int [ia->ci_loclen + 1]);
@@ -1105,32 +1236,6 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	    "device-unit", dev->dv_unit);
 
 	return dev;
-}
-
-static void
-config_devdealloc(device_t dev)
-{
-	device_lock_t dvl = device_getlock(dev);
-	int priv = (dev->dv_flags & DVF_PRIV_ALLOC);
-
-	cv_destroy(&dvl->dvl_cv);
-	mutex_destroy(&dvl->dvl_mtx);
-
-	KASSERT(dev->dv_properties != NULL);
-	prop_object_release(dev->dv_properties);
-
-	if (dev->dv_activity_handlers)
-		panic("config_devdealloc with registered handlers");
-
-	if (dev->dv_locators) {
-		size_t amount = *--dev->dv_locators;
-		kmem_free(dev->dv_locators, amount);
-	}
-
-	if (dev->dv_cfattach->ca_devsize > 0)
-		kmem_free(dev->dv_private, dev->dv_cfattach->ca_devsize);
-	if (priv)
-		kmem_free(dev, sizeof(*dev));
 }
 
 /*
@@ -1158,10 +1263,6 @@ config_attach_loc(device_t parent, cfdata_t cf,
 		KASSERT(cf->cf_fstate == FSTATE_NOTFOUND);
 		cf->cf_fstate = FSTATE_FOUND;
 	}
-#ifdef __BROKEN_CONFIG_UNIT_USAGE
-	  else
-		cf->cf_unit++;
-#endif
 
 	config_devlink(dev);
 
@@ -1195,14 +1296,6 @@ config_attach_loc(device_t parent, cfdata_t cf,
 			    cf->cf_unit == dev->dv_unit) {
 				if (cf->cf_fstate == FSTATE_NOTFOUND)
 					cf->cf_fstate = FSTATE_FOUND;
-#ifdef __BROKEN_CONFIG_UNIT_USAGE
-				/*
-				 * Bump the unit number on all starred cfdata
-				 * entries for this device.
-				 */
-				if (cf->cf_fstate == FSTATE_STAR)
-					cf->cf_unit++;
-#endif /* __BROKEN_CONFIG_UNIT_USAGE */
 			}
 		}
 	}
@@ -1227,6 +1320,10 @@ config_attach_loc(device_t parent, cfdata_t cf,
 		aprint_debug_dev(dev, "WARNING: power management not supported\n");
 
 	config_process_deferred(&deferred_config_queue, dev);
+
+#ifdef __HAVE_DEVICE_REGISTER_POSTCONFIG
+	device_register_post_config(dev, aux);
+#endif
 	return dev;
 }
 
@@ -1275,6 +1372,43 @@ config_attach_pseudo(cfdata_t cf)
 }
 
 /*
+ * Caller must hold alldevs_mtx.
+ */
+static void
+config_collect_garbage(struct devicelist *garbage)
+{
+	device_t dv;
+
+	KASSERT(!cpu_intr_p());
+	KASSERT(!cpu_softintr_p());
+	KASSERT(mutex_owned(&alldevs_mtx));
+
+	while (alldevs_nwrite == 0 && alldevs_nread == 0 && alldevs_garbage) {
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
+			if (dv->dv_del_gen != 0)
+				break;
+		}
+		if (dv == NULL) {
+			alldevs_garbage = false;
+			break;
+		}
+		config_devunlink(dv, garbage);
+	}
+	KASSERT(mutex_owned(&alldevs_mtx));
+}
+
+static void
+config_dump_garbage(struct devicelist *garbage)
+{
+	device_t dv;
+
+	while ((dv = TAILQ_FIRST(garbage)) != NULL) {
+		TAILQ_REMOVE(garbage, dv, dv_list);
+		config_devdelete(dv);
+	}
+}
+
+/*
  * Detach a device.  Optionally forced (e.g. because of hardware
  * removal) and quiet.  Returns zero if successful, non-zero
  * (an error code) otherwise.
@@ -1286,6 +1420,7 @@ config_attach_pseudo(cfdata_t cf)
 int
 config_detach(device_t dev, int flags)
 {
+	struct alldevs_foray af;
 	struct cftable *ct;
 	cfdata_t cf;
 	const struct cfattach *ca;
@@ -1293,7 +1428,7 @@ config_detach(device_t dev, int flags)
 #ifdef DIAGNOSTIC
 	device_t d;
 #endif
-	int rv = 0;
+	int rv = 0, s;
 
 #ifdef DIAGNOSTIC
 	cf = dev->dv_cfdata;
@@ -1308,50 +1443,42 @@ config_detach(device_t dev, int flags)
 	ca = dev->dv_cfattach;
 	KASSERT(ca != NULL);
 
-	KASSERT(curlwp != NULL);
-	mutex_enter(&alldevs_mtx);
-	if (alldevs_nwrite > 0 && alldevs_writer == NULL)
-		;
-	else while (alldevs_nread != 0 ||
-	       (alldevs_nwrite != 0 && alldevs_writer != curlwp))
-		cv_wait(&alldevs_cv, &alldevs_mtx);
-	if (alldevs_nwrite++ == 0)
-		alldevs_writer = curlwp;
-	mutex_exit(&alldevs_mtx);
+	s = config_alldevs_lock();
+	if (dev->dv_del_gen != 0) {
+		config_alldevs_unlock(s);
+#ifdef DIAGNOSTIC
+		printf("%s: %s is already detached\n", __func__,
+		    device_xname(dev));
+#endif /* DIAGNOSTIC */
+		return ENOENT;
+	}
+	alldevs_nwrite++;
+	config_alldevs_unlock(s);
 
-	/*
-	 * Ensure the device is deactivated.  If the device doesn't
-	 * have an activation entry point, we allow DVF_ACTIVE to
-	 * remain set.  Otherwise, if DVF_ACTIVE is still set, the
-	 * device is busy, and the detach fails.
-	 */
 	if (!detachall &&
 	    (flags & (DETACH_SHUTDOWN|DETACH_FORCE)) == DETACH_SHUTDOWN &&
 	    (dev->dv_flags & DVF_DETACH_SHUTDOWN) == 0) {
-		rv = EBUSY;	/* XXX EOPNOTSUPP? */
-	} else if ((rv = config_deactivate(dev)) == EOPNOTSUPP)
-		rv = 0;	/* Do not treat EOPNOTSUPP as an error */
+		rv = EOPNOTSUPP;
+	} else if (ca->ca_detach != NULL) {
+		rv = (*ca->ca_detach)(dev, flags);
+	} else
+		rv = EOPNOTSUPP;
 
 	/*
-	 * Try to detach the device.  If that's not possible, then
-	 * we either panic() (for the forced but failed case), or
-	 * return an error.
+	 * If it was not possible to detach the device, then we either
+	 * panic() (for the forced but failed case), or return an error.
+	 *
+	 * If it was possible to detach the device, ensure that the
+	 * device is deactivated.
 	 */
-	if (rv == 0) {
-		if (ca->ca_detach != NULL)
-			rv = (*ca->ca_detach)(dev, flags);
-		else
-			rv = EOPNOTSUPP;
+	if (rv == 0)
+		dev->dv_flags &= ~DVF_ACTIVE;
+	else if ((flags & DETACH_FORCE) == 0)
+		goto out;
+	else {
+		panic("config_detach: forced detach of %s failed (%d)",
+		    device_xname(dev), rv);
 	}
-	if (rv != 0) {
-		if ((flags & DETACH_FORCE) == 0)
-			goto out;
-		else
-			panic("config_detach: forced detach of %s failed (%d)",
-			    device_xname(dev), rv);
-	}
-
-	dev->dv_flags &= ~DVF_ACTIVE;
 
 	/*
 	 * The device has now been successfully detached.
@@ -1369,7 +1496,7 @@ config_detach(device_t dev, int flags)
 	 */
 	for (d = TAILQ_NEXT(dev, dv_list); d != NULL;
 	    d = TAILQ_NEXT(d, dv_list)) {
-		if (d->dv_parent == dev) {
+		if (d->dv_parent == dev && d->dv_del_gen == 0) {
 			printf("config_detach: detached device %s"
 			    " has children %s\n", device_xname(dev), device_xname(d));
 			panic("config_detach");
@@ -1393,34 +1520,21 @@ config_detach(device_t dev, int flags)
 				if (cf->cf_fstate == FSTATE_FOUND &&
 				    cf->cf_unit == dev->dv_unit)
 					cf->cf_fstate = FSTATE_NOTFOUND;
-#ifdef __BROKEN_CONFIG_UNIT_USAGE
-				/*
-				 * Note that we can only re-use a starred
-				 * unit number if the unit being detached
-				 * had the last assigned unit number.
-				 */
-				if (cf->cf_fstate == FSTATE_STAR &&
-				    cf->cf_unit == dev->dv_unit + 1)
-					cf->cf_unit--;
-#endif /* __BROKEN_CONFIG_UNIT_USAGE */
 			}
 		}
 	}
 
-	config_devunlink(dev);
-
 	if (dev->dv_cfdata != NULL && (flags & DETACH_QUIET) == 0)
 		aprint_normal_dev(dev, "detached\n");
 
-	config_devdealloc(dev);
-
 out:
-	mutex_enter(&alldevs_mtx);
+	config_alldevs_enter(&af);
 	KASSERT(alldevs_nwrite != 0);
-	if (--alldevs_nwrite == 0)
-		alldevs_writer = NULL;
-	cv_signal(&alldevs_cv);
-	mutex_exit(&alldevs_mtx);
+	--alldevs_nwrite;
+	if (rv == 0 && dev->dv_del_gen == 0)
+		config_devunlink(dev, &af.af_garbage);
+	config_alldevs_exit(&af);
+
 	return rv;
 }
 
@@ -1488,39 +1602,49 @@ config_detach_all(int how)
 	return progress;
 }
 
-int
-config_activate(device_t dev)
+static bool
+device_is_ancestor_of(device_t ancestor, device_t descendant)
 {
-	const struct cfattach *ca = dev->dv_cfattach;
-	int rv = 0, oflags = dev->dv_flags;
+	device_t dv;
 
-	if (ca->ca_activate == NULL)
-		return EOPNOTSUPP;
-
-	if ((dev->dv_flags & DVF_ACTIVE) == 0) {
-		dev->dv_flags |= DVF_ACTIVE;
-		rv = (*ca->ca_activate)(dev, DVACT_ACTIVATE);
-		if (rv)
-			dev->dv_flags = oflags;
+	for (dv = descendant; dv != NULL; dv = device_parent(dv)) {
+		if (device_parent(dv) == ancestor)
+			return true;
 	}
-	return rv;
+	return false;
 }
 
 int
 config_deactivate(device_t dev)
 {
-	const struct cfattach *ca = dev->dv_cfattach;
-	int rv = 0, oflags = dev->dv_flags;
+	deviter_t di;
+	const struct cfattach *ca;
+	device_t descendant;
+	int s, rv = 0, oflags;
 
-	if (ca->ca_activate == NULL)
-		return EOPNOTSUPP;
+	for (descendant = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+	     descendant != NULL;
+	     descendant = deviter_next(&di)) {
+		if (dev != descendant &&
+		    !device_is_ancestor_of(dev, descendant))
+			continue;
 
-	if (dev->dv_flags & DVF_ACTIVE) {
-		dev->dv_flags &= ~DVF_ACTIVE;
-		rv = (*ca->ca_activate)(dev, DVACT_DEACTIVATE);
-		if (rv)
-			dev->dv_flags = oflags;
+		if ((descendant->dv_flags & DVF_ACTIVE) == 0)
+			continue;
+
+		ca = descendant->dv_cfattach;
+		oflags = descendant->dv_flags;
+
+		descendant->dv_flags &= ~DVF_ACTIVE;
+		if (ca->ca_activate == NULL)
+			continue;
+		s = splhigh();
+		rv = (*ca->ca_activate)(descendant, DVACT_DEACTIVATE);
+		splx(s);
+		if (rv != 0)
+			descendant->dv_flags = oflags;
 	}
+	deviter_release(&di);
 	return rv;
 }
 
@@ -1537,8 +1661,7 @@ config_defer(device_t dev, void (*func)(device_t))
 		panic("config_defer: can't defer config of a root device");
 
 #ifdef DIAGNOSTIC
-	for (dc = TAILQ_FIRST(&deferred_config_queue); dc != NULL;
-	     dc = TAILQ_NEXT(dc, dc_queue)) {
+	TAILQ_FOREACH(dc, &deferred_config_queue, dc_queue) {
 		if (dc->dc_dev == dev)
 			panic("config_defer: deferred twice");
 	}
@@ -1572,8 +1695,7 @@ config_interrupts(device_t dev, void (*func)(device_t))
 	}
 
 #ifdef DIAGNOSTIC
-	for (dc = TAILQ_FIRST(&interrupt_config_queue); dc != NULL;
-	     dc = TAILQ_NEXT(dc, dc_queue)) {
+	TAILQ_FOREACH(dc, &interrupt_config_queue, dc_queue) {
 		if (dc->dc_dev == dev)
 			panic("config_interrupts: deferred twice");
 	}
@@ -1749,6 +1871,38 @@ config_twiddle_fn(void *cookie)
 	mutex_exit(&config_misc_lock);
 }
 
+static int
+config_alldevs_lock(void)
+{
+	int s;
+
+	s = splhigh();
+	mutex_enter(&alldevs_mtx);
+	return s;
+}
+
+static void
+config_alldevs_enter(struct alldevs_foray *af)
+{
+	TAILQ_INIT(&af->af_garbage);
+	af->af_s = config_alldevs_lock();
+	config_collect_garbage(&af->af_garbage);
+} 
+
+static void
+config_alldevs_exit(struct alldevs_foray *af)
+{
+	config_alldevs_unlock(af->af_s);
+	config_dump_garbage(&af->af_garbage);
+}
+
+static void
+config_alldevs_unlock(int s)
+{
+	mutex_exit(&alldevs_mtx);
+	splx(s);
+}
+
 /*
  * device_lookup:
  *
@@ -1757,153 +1911,30 @@ config_twiddle_fn(void *cookie)
 device_t
 device_lookup(cfdriver_t cd, int unit)
 {
+	device_t dv;
+	int s;
 
+	s = config_alldevs_lock();
+	KASSERT(mutex_owned(&alldevs_mtx));
 	if (unit < 0 || unit >= cd->cd_ndevs)
-		return NULL;
-	
-	return cd->cd_devs[unit];
+		dv = NULL;
+	else if ((dv = cd->cd_devs[unit]) != NULL && dv->dv_del_gen != 0)
+		dv = NULL;
+	config_alldevs_unlock(s);
+
+	return dv;
 }
 
 /*
- * device_lookup:
+ * device_lookup_private:
  *
- *	Look up a device instance for a given driver.
+ *	Look up a softc instance for a given driver.
  */
 void *
 device_lookup_private(cfdriver_t cd, int unit)
 {
-	device_t dv;
 
-	if (unit < 0 || unit >= cd->cd_ndevs)
-		return NULL;
-	
-	if ((dv = cd->cd_devs[unit]) == NULL)
-		return NULL;
-
-	return dv->dv_private;
-}
-
-/*
- * Accessor functions for the device_t type.
- */
-devclass_t
-device_class(device_t dev)
-{
-
-	return dev->dv_class;
-}
-
-cfdata_t
-device_cfdata(device_t dev)
-{
-
-	return dev->dv_cfdata;
-}
-
-cfdriver_t
-device_cfdriver(device_t dev)
-{
-
-	return dev->dv_cfdriver;
-}
-
-cfattach_t
-device_cfattach(device_t dev)
-{
-
-	return dev->dv_cfattach;
-}
-
-int
-device_unit(device_t dev)
-{
-
-	return dev->dv_unit;
-}
-
-const char *
-device_xname(device_t dev)
-{
-
-	return dev->dv_xname;
-}
-
-device_t
-device_parent(device_t dev)
-{
-
-	return dev->dv_parent;
-}
-
-bool
-device_is_active(device_t dev)
-{
-	int active_flags;
-
-	active_flags = DVF_ACTIVE;
-	active_flags |= DVF_CLASS_SUSPENDED;
-	active_flags |= DVF_DRIVER_SUSPENDED;
-	active_flags |= DVF_BUS_SUSPENDED;
-
-	return (dev->dv_flags & active_flags) == DVF_ACTIVE;
-}
-
-bool
-device_is_enabled(device_t dev)
-{
-	return (dev->dv_flags & DVF_ACTIVE) == DVF_ACTIVE;
-}
-
-bool
-device_has_power(device_t dev)
-{
-	int active_flags;
-
-	active_flags = DVF_ACTIVE | DVF_BUS_SUSPENDED;
-
-	return (dev->dv_flags & active_flags) == DVF_ACTIVE;
-}
-
-int
-device_locator(device_t dev, u_int locnum)
-{
-
-	KASSERT(dev->dv_locators != NULL);
-	return dev->dv_locators[locnum];
-}
-
-void *
-device_private(device_t dev)
-{
-
-	/*
-	 * The reason why device_private(NULL) is allowed is to simplify the
-	 * work of a lot of userspace request handlers (i.e., c/bdev
-	 * handlers) which grab cfdriver_t->cd_units[n].
-	 * It avoids having them test for it to be NULL and only then calling
-	 * device_private.
-	 */
-	return dev == NULL ? NULL : dev->dv_private;
-}
-
-prop_dictionary_t
-device_properties(device_t dev)
-{
-
-	return dev->dv_properties;
-}
-
-/*
- * device_is_a:
- *
- *	Returns true if the device is an instance of the specified
- *	driver.
- */
-bool
-device_is_a(device_t dev, const char *dname)
-{
-
-	return strcmp(dev->dv_cfdriver->cd_name, dname) == 0;
+	return device_private(device_lookup(cd, unit));
 }
 
 /*
@@ -1953,14 +1984,15 @@ device_pmf_is_registered(device_t dev)
 }
 
 bool
-device_pmf_driver_suspend(device_t dev PMF_FN_ARGS)
+device_pmf_driver_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	if ((dev->dv_flags & DVF_DRIVER_SUSPENDED) != 0)
 		return true;
 	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) == 0)
 		return false;
-	if (*dev->dv_driver_suspend != NULL &&
-	    !(*dev->dv_driver_suspend)(dev PMF_FN_CALL))
+	if (pmf_qual_depth(qual) <= DEVACT_LEVEL_DRIVER &&
+	    dev->dv_driver_suspend != NULL &&
+	    !(*dev->dv_driver_suspend)(dev, qual))
 		return false;
 
 	dev->dv_flags |= DVF_DRIVER_SUSPENDED;
@@ -1968,16 +2000,15 @@ device_pmf_driver_suspend(device_t dev PMF_FN_ARGS)
 }
 
 bool
-device_pmf_driver_resume(device_t dev PMF_FN_ARGS)
+device_pmf_driver_resume(device_t dev, const pmf_qual_t *qual)
 {
 	if ((dev->dv_flags & DVF_DRIVER_SUSPENDED) == 0)
 		return true;
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) != 0)
 		return false;
-	if ((flags & PMF_F_SELF) != 0 && !device_is_self_suspended(dev))
-		return false;
-	if (*dev->dv_driver_resume != NULL &&
-	    !(*dev->dv_driver_resume)(dev PMF_FN_CALL))
+	if (pmf_qual_depth(qual) <= DEVACT_LEVEL_DRIVER &&
+	    dev->dv_driver_resume != NULL &&
+	    !(*dev->dv_driver_resume)(dev, qual))
 		return false;
 
 	dev->dv_flags &= ~DVF_DRIVER_SUSPENDED;
@@ -1996,8 +2027,8 @@ device_pmf_driver_shutdown(device_t dev, int how)
 
 bool
 device_pmf_driver_register(device_t dev,
-    bool (*suspend)(device_t PMF_FN_PROTO),
-    bool (*resume)(device_t PMF_FN_PROTO),
+    bool (*suspend)(device_t, const pmf_qual_t *),
+    bool (*resume)(device_t, const pmf_qual_t *),
     bool (*shutdown)(device_t, int))
 {
 	dev->dv_driver_suspend = suspend;
@@ -2057,36 +2088,6 @@ device_pmf_driver_set_child_register(device_t dev,
 	dev->dv_driver_child_register = child_register;
 }
 
-void
-device_pmf_self_resume(device_t dev PMF_FN_ARGS)
-{
-	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
-	if ((dev->dv_flags & DVF_SELF_SUSPENDED) != 0)
-		dev->dv_flags &= ~DVF_SELF_SUSPENDED;
-	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
-}
-
-bool
-device_is_self_suspended(device_t dev)
-{
-	return (dev->dv_flags & DVF_SELF_SUSPENDED) != 0;
-}
-
-void
-device_pmf_self_suspend(device_t dev PMF_FN_ARGS)
-{
-	bool self = (flags & PMF_F_SELF) != 0;
-
-	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
-
-	if (!self)
-		dev->dv_flags &= ~DVF_SELF_SUSPENDED;
-	else if (device_is_active(dev))
-		dev->dv_flags |= DVF_SELF_SUSPENDED;
-
-	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
-}
-
 static void
 pmflock_debug(device_t dev, const char *func, int line)
 {
@@ -2097,31 +2098,21 @@ pmflock_debug(device_t dev, const char *func, int line)
 	    dev->dv_flags);
 }
 
-static void
-pmflock_debug_with_flags(device_t dev, const char *func, int line PMF_FN_ARGS)
-{
-	device_lock_t dvl = device_getlock(dev);
-
-	aprint_debug_dev(dev, "%s.%d, %s dvl_nlock %d dvl_nwait %d dv_flags %x "
-	    "flags " PMF_FLAGS_FMT "\n", func, line, curlwp_name(),
-	    dvl->dvl_nlock, dvl->dvl_nwait, dev->dv_flags PMF_FN_CALL);
-}
-
 static bool
-device_pmf_lock1(device_t dev PMF_FN_ARGS)
+device_pmf_lock1(device_t dev)
 {
 	device_lock_t dvl = device_getlock(dev);
 
 	while (device_pmf_is_registered(dev) &&
 	    dvl->dvl_nlock > 0 && dvl->dvl_holder != curlwp) {
 		dvl->dvl_nwait++;
-		pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+		pmflock_debug(dev, __func__, __LINE__);
 		cv_wait(&dvl->dvl_cv, &dvl->dvl_mtx);
-		pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+		pmflock_debug(dev, __func__, __LINE__);
 		dvl->dvl_nwait--;
 	}
 	if (!device_pmf_is_registered(dev)) {
-		pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+		pmflock_debug(dev, __func__, __LINE__);
 		/* We could not acquire the lock, but some other thread may
 		 * wait for it, also.  Wake that thread.
 		 */
@@ -2130,25 +2121,25 @@ device_pmf_lock1(device_t dev PMF_FN_ARGS)
 	}
 	dvl->dvl_nlock++;
 	dvl->dvl_holder = curlwp;
-	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+	pmflock_debug(dev, __func__, __LINE__);
 	return true;
 }
 
 bool
-device_pmf_lock(device_t dev PMF_FN_ARGS)
+device_pmf_lock(device_t dev)
 {
 	bool rc;
 	device_lock_t dvl = device_getlock(dev);
 
 	mutex_enter(&dvl->dvl_mtx);
-	rc = device_pmf_lock1(dev PMF_FN_CALL);
+	rc = device_pmf_lock1(dev);
 	mutex_exit(&dvl->dvl_mtx);
 
 	return rc;
 }
 
 void
-device_pmf_unlock(device_t dev PMF_FN_ARGS)
+device_pmf_unlock(device_t dev)
 {
 	device_lock_t dvl = device_getlock(dev);
 
@@ -2157,7 +2148,7 @@ device_pmf_unlock(device_t dev PMF_FN_ARGS)
 	if (--dvl->dvl_nlock == 0)
 		dvl->dvl_holder = NULL;
 	cv_signal(&dvl->dvl_cv);
-	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+	pmflock_debug(dev, __func__, __LINE__);
 	mutex_exit(&dvl->dvl_mtx);
 }
 
@@ -2174,15 +2165,16 @@ device_pmf_bus_private(device_t dev)
 }
 
 bool
-device_pmf_bus_suspend(device_t dev PMF_FN_ARGS)
+device_pmf_bus_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) != 0)
 		return true;
 	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) == 0 ||
 	    (dev->dv_flags & DVF_DRIVER_SUSPENDED) == 0)
 		return false;
-	if (*dev->dv_bus_suspend != NULL &&
-	    !(*dev->dv_bus_suspend)(dev PMF_FN_CALL))
+	if (pmf_qual_depth(qual) <= DEVACT_LEVEL_BUS &&
+	    dev->dv_bus_suspend != NULL &&
+	    !(*dev->dv_bus_suspend)(dev, qual))
 		return false;
 
 	dev->dv_flags |= DVF_BUS_SUSPENDED;
@@ -2190,14 +2182,13 @@ device_pmf_bus_suspend(device_t dev PMF_FN_ARGS)
 }
 
 bool
-device_pmf_bus_resume(device_t dev PMF_FN_ARGS)
+device_pmf_bus_resume(device_t dev, const pmf_qual_t *qual)
 {
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) == 0)
 		return true;
-	if ((flags & PMF_F_SELF) != 0 && !device_is_self_suspended(dev))
-		return false;
-	if (*dev->dv_bus_resume != NULL &&
-	    !(*dev->dv_bus_resume)(dev PMF_FN_CALL))
+	if (pmf_qual_depth(qual) <= DEVACT_LEVEL_BUS &&
+	    dev->dv_bus_resume != NULL &&
+	    !(*dev->dv_bus_resume)(dev, qual))
 		return false;
 
 	dev->dv_flags &= ~DVF_BUS_SUSPENDED;
@@ -2216,8 +2207,8 @@ device_pmf_bus_shutdown(device_t dev, int how)
 
 void
 device_pmf_bus_register(device_t dev, void *priv,
-    bool (*suspend)(device_t PMF_FN_PROTO),
-    bool (*resume)(device_t PMF_FN_PROTO),
+    bool (*suspend)(device_t, const pmf_qual_t *),
+    bool (*resume)(device_t, const pmf_qual_t *),
     bool (*shutdown)(device_t, int), void (*deregister)(device_t))
 {
 	dev->dv_bus_private = priv;
@@ -2246,12 +2237,13 @@ device_pmf_class_private(device_t dev)
 }
 
 bool
-device_pmf_class_suspend(device_t dev PMF_FN_ARGS)
+device_pmf_class_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) != 0)
 		return true;
-	if (*dev->dv_class_suspend != NULL &&
-	    !(*dev->dv_class_suspend)(dev PMF_FN_CALL))
+	if (pmf_qual_depth(qual) <= DEVACT_LEVEL_CLASS &&
+	    dev->dv_class_suspend != NULL &&
+	    !(*dev->dv_class_suspend)(dev, qual))
 		return false;
 
 	dev->dv_flags |= DVF_CLASS_SUSPENDED;
@@ -2259,15 +2251,16 @@ device_pmf_class_suspend(device_t dev PMF_FN_ARGS)
 }
 
 bool
-device_pmf_class_resume(device_t dev PMF_FN_ARGS)
+device_pmf_class_resume(device_t dev, const pmf_qual_t *qual)
 {
 	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) == 0)
 		return true;
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) != 0 ||
 	    (dev->dv_flags & DVF_DRIVER_SUSPENDED) != 0)
 		return false;
-	if (*dev->dv_class_resume != NULL &&
-	    !(*dev->dv_class_resume)(dev PMF_FN_CALL))
+	if (pmf_qual_depth(qual) <= DEVACT_LEVEL_CLASS &&
+	    dev->dv_class_resume != NULL &&
+	    !(*dev->dv_class_resume)(dev, qual))
 		return false;
 
 	dev->dv_flags &= ~DVF_CLASS_SUSPENDED;
@@ -2276,8 +2269,8 @@ device_pmf_class_resume(device_t dev PMF_FN_ARGS)
 
 void
 device_pmf_class_register(device_t dev, void *priv,
-    bool (*suspend)(device_t PMF_FN_PROTO),
-    bool (*resume)(device_t PMF_FN_PROTO),
+    bool (*suspend)(device_t, const pmf_qual_t *),
+    bool (*resume)(device_t, const pmf_qual_t *),
     void (*deregister)(device_t))
 {
 	dev->dv_class_private = priv;
@@ -2389,6 +2382,20 @@ device_active_deregister(device_t dev, void (*handler)(device_t, devactive_t))
 	old_handlers[i] = NULL;
 }
 
+/* Return true iff the device_t `dev' exists at generation `gen'. */
+static bool
+device_exists_at(device_t dv, devgen_t gen)
+{
+	return (dv->dv_del_gen == 0 || dv->dv_del_gen > gen) &&
+	    dv->dv_add_gen <= gen;
+}
+
+static bool
+deviter_visits(const deviter_t *di, device_t dv)
+{
+	return device_exists_at(dv, di->di_gen);
+}
+
 /*
  * Device Iteration
  *
@@ -2449,43 +2456,37 @@ void
 deviter_init(deviter_t *di, deviter_flags_t flags)
 {
 	device_t dv;
-	bool rw;
-
-	mutex_enter(&alldevs_mtx);
-	if ((flags & DEVITER_F_SHUTDOWN) != 0) {
-		flags |= DEVITER_F_RW;
-		alldevs_nwrite++;
-		alldevs_writer = NULL;
-		alldevs_nread = 0;
-	} else {
-		rw = (flags & DEVITER_F_RW) != 0;
-
-		if (alldevs_nwrite > 0 && alldevs_writer == NULL)
-			;
-		else while ((alldevs_nwrite != 0 && alldevs_writer != curlwp) ||
-		       (rw && alldevs_nread != 0))
-			cv_wait(&alldevs_cv, &alldevs_mtx);
-
-		if (rw) {
-			if (alldevs_nwrite++ == 0)
-				alldevs_writer = curlwp;
-		} else
-			alldevs_nread++;
-	}
-	mutex_exit(&alldevs_mtx);
+	int s;
 
 	memset(di, 0, sizeof(*di));
+
+	s = config_alldevs_lock();
+	if ((flags & DEVITER_F_SHUTDOWN) != 0)
+		flags |= DEVITER_F_RW;
+
+	if ((flags & DEVITER_F_RW) != 0)
+		alldevs_nwrite++;
+	else
+		alldevs_nread++;
+	di->di_gen = alldevs_gen++;
+	config_alldevs_unlock(s);
 
 	di->di_flags = flags;
 
 	switch (di->di_flags & (DEVITER_F_LEAVES_FIRST|DEVITER_F_ROOT_FIRST)) {
 	case DEVITER_F_LEAVES_FIRST:
-		TAILQ_FOREACH(dv, &alldevs, dv_list)
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
+			if (!deviter_visits(di, dv))
+				continue;
 			di->di_curdepth = MAX(di->di_curdepth, dv->dv_depth);
+		}
 		break;
 	case DEVITER_F_ROOT_FIRST:
-		TAILQ_FOREACH(dv, &alldevs, dv_list)
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
+			if (!deviter_visits(di, dv))
+				continue;
 			di->di_maxdepth = MAX(di->di_maxdepth, dv->dv_depth);
+		}
 		break;
 	default:
 		break;
@@ -2511,18 +2512,31 @@ deviter_first(deviter_t *di, deviter_flags_t flags)
 }
 
 static device_t
-deviter_next1(deviter_t *di)
+deviter_next2(deviter_t *di)
 {
 	device_t dv;
 
 	dv = di->di_prev;
 
 	if (dv == NULL)
-		;
-	else if ((di->di_flags & DEVITER_F_RW) != 0)
+		return NULL;
+
+	if ((di->di_flags & DEVITER_F_RW) != 0)
 		di->di_prev = TAILQ_PREV(dv, devicelist, dv_list);
 	else
 		di->di_prev = TAILQ_NEXT(dv, dv_list);
+
+	return dv;
+}
+
+static device_t
+deviter_next1(deviter_t *di)
+{
+	device_t dv;
+
+	do {
+		dv = deviter_next2(di);
+	} while (dv != NULL && !deviter_visits(di, dv));
 
 	return dv;
 }
@@ -2562,23 +2576,37 @@ void
 deviter_release(deviter_t *di)
 {
 	bool rw = (di->di_flags & DEVITER_F_RW) != 0;
+	int s;
 
-	mutex_enter(&alldevs_mtx);
-	if (!rw) {
+	s = config_alldevs_lock();
+	if (rw)
+		--alldevs_nwrite;
+	else
 		--alldevs_nread;
-		cv_signal(&alldevs_cv);
-	} else if (alldevs_nwrite > 0 && alldevs_writer == NULL) {
-		--alldevs_nwrite;	/* shutting down: do not signal */
-	} else {
-		KASSERT(alldevs_nwrite != 0);
-		if (--alldevs_nwrite == 0)
-			alldevs_writer = NULL;
-		cv_signal(&alldevs_cv);
-	}
-	mutex_exit(&alldevs_mtx);
+	/* XXX wake a garbage-collection thread */
+	config_alldevs_unlock(s);
 }
 
-SYSCTL_SETUP(sysctl_detach_setup, "sysctl detach setup")
+const char *
+cfdata_ifattr(const struct cfdata *cf)
+{
+	return cf->cf_pspec->cfp_iattr;
+}
+
+bool
+ifattr_match(const char *snull, const char *t)
+{
+	return (snull == NULL) || strcmp(snull, t) == 0;
+}
+
+void
+null_childdetached(device_t self, device_t child)
+{
+	/* do nothing */
+}
+
+static void
+sysctl_detach_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *node = NULL;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.11.4.4 2009/09/16 13:37:58 yamt Exp $ */
+/* $NetBSD: pseye.c,v 1.11.4.5 2010/03/11 15:04:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.11.4.4 2009/09/16 13:37:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.11.4.5 2010/03/11 15:04:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,13 +185,15 @@ pseye_attach(device_t parent, device_t self, void *opaque)
 	usbd_device_handle dev = uaa->device;
 	usb_interface_descriptor_t *id = NULL;
 	usb_endpoint_descriptor_t *ed = NULL, *ed_bulkin = NULL;
-	char *devinfo;
+	char *devinfop;
 	int i;
 
-	devinfo = usbd_devinfo_alloc(dev, 0);
 	aprint_naive("\n");
-	aprint_normal(": %s\n", devinfo);
-	usbd_devinfo_free(devinfo);
+	aprint_normal("\n");
+
+	devinfop = usbd_devinfo_alloc(dev, 0);
+	aprint_normal_dev(self, "%s\n", devinfop);
+	usbd_devinfo_free(devinfop);
 
 	sc->sc_dev = self;
 	sc->sc_udev = dev;
@@ -307,19 +309,14 @@ int
 pseye_activate(device_ptr_t self, enum devact act)
 {
 	struct pseye_softc *sc = device_private(self);
-	int rv;
-
-	rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-
-	return rv;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_stub.c,v 1.1.34.2 2009/08/19 18:48:29 yamt Exp $	*/
+/*	$NetBSD: pmap_stub.c,v 1.1.34.3 2010/03/11 15:04:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.1.34.2 2009/08/19 18:48:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.1.34.3 2010/03/11 15:04:38 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -56,7 +56,7 @@ struct pmap *const kernel_pmap_ptr = (struct pmap *const)0x66;
 
 bool pmap_is_modified(struct vm_page *);
 bool pmap_clear_modify(struct vm_page *);
-void pmap_kenter_pa(vaddr_t, paddr_t, vm_prot_t);
+void pmap_kenter_pa(vaddr_t, paddr_t, vm_prot_t, u_int);
 void pmap_kremove(vaddr_t, vsize_t);
 void pmap_page_protect(struct vm_page *, vm_prot_t);
 bool pmap_extract(pmap_t, vaddr_t, paddr_t *);
@@ -90,7 +90,7 @@ pmap_update(pmap_t pmap)
 #endif
 
 void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int fl)
 {
 
 	panic("%s: unavailable", __func__);
@@ -111,25 +111,17 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 }
 
 /*
- * It's a brave new world.  arm32 pmap is different (even from arm26)
+ * It's a brave new world.
  */
-#if defined(__arm__) && !defined(__PROG26)
-void
-pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, int eger)
-{
+#if !defined(__vax__)
 
-	panic("%s: unavailable", __func__);
-}
-#elif !defined(__vax__)
 void
 pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 
 	panic("%s: unavailable", __func__);
 }
-#endif
 
-#ifndef __vax__
 bool
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
@@ -137,6 +129,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	*pap = va;
 	return true;
 }
+
 #endif
 
 /*
@@ -242,6 +235,8 @@ pmap_protect_long(pmap_t pmap, vaddr_t va1, vaddr_t va2, vm_prot_t prot)
 {
 
 }
+
+struct  pte *Sysmap;
 #endif
 
 #ifdef PPC_OEA
@@ -261,11 +256,11 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 #endif
 
 #if defined(__sparc__) && !defined(__sparc_v9__)
-bool     (*pmap_clear_modify_p)(struct vm_page *) = pmap_clear_modify;
-bool     (*pmap_is_modified_p)(struct vm_page *) = pmap_is_modified;
-void     (*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t) = pmap_kenter_pa;
-void     (*pmap_kremove_p)(vaddr_t, vsize_t) = pmap_kremove;
-void     (*pmap_page_protect_p)(struct vm_page *, vm_prot_t)=pmap_page_protect;
-bool     (*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *) = pmap_extract;
-int      (*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int) = pmap_enter;
+bool (*pmap_clear_modify_p)(struct vm_page *) = pmap_clear_modify;
+bool (*pmap_is_modified_p)(struct vm_page *) = pmap_is_modified;
+void (*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t, u_int) = pmap_kenter_pa;
+void (*pmap_kremove_p)(vaddr_t, vsize_t) = pmap_kremove;
+void (*pmap_page_protect_p)(struct vm_page *, vm_prot_t) = pmap_page_protect;
+bool (*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *) = pmap_extract;
+int (*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int) = pmap_enter;
 #endif

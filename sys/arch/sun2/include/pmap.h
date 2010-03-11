@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.19.10.2 2009/05/04 08:11:59 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.19.10.3 2010/03/11 15:03:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,8 +100,17 @@ pmap_remove_all(struct pmap *pmap)
 #define	PMAP_NC		0x00	/* tells pmap_enter to set PG_NC */
 #define	PMAP_SPEC	0x0C	/* mask to get all above. */
 
+void pmap_procwr(struct proc *, vaddr_t, size_t);
+
 #endif	/* _KERNEL */
 
-void pmap_procwr(struct proc *, vaddr_t, size_t);
+/* MMU specific segment value */
+#define	SEGSHIFT	15	        /* LOG2(NBSG) */
+#define	NBSG		(1 << SEGSHIFT)	/* bytes/segment */
+#define	SEGOFSET	(NBSG - 1)	/* byte offset into segment */
+
+#define	sun2_round_seg(x)	((((vaddr_t)(x)) + SEGOFSET) & ~SEGOFSET)
+#define	sun2_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
+#define	sun2_seg_offset(x)	((vaddr_t)(x) & SEGOFSET)
 
 #endif	/* _MACHINE_PMAP_H */

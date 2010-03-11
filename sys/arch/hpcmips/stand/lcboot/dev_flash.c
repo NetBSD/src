@@ -1,4 +1,4 @@
-/* $NetBSD: dev_flash.c,v 1.3.78.1 2009/05/04 08:11:11 yamt Exp $ */
+/* $NetBSD: dev_flash.c,v 1.3.78.2 2010/03/11 15:02:25 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 Naoto Shimazaki.
@@ -26,7 +26,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dev_flash.c,v 1.3.78.1 2009/05/04 08:11:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dev_flash.c,v 1.3.78.2 2010/03/11 15:02:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <lib/libsa/stand.h>
@@ -48,7 +48,7 @@ flash_strategy(void *devdata, int rw, daddr_t blk,
 
 	src = (u_int8_t *) KERN_ROMBASE + dbtob(blk);
 	count = size < READ_CHUNK ? size : READ_CHUNK;
-	memcpy( buf, src, count);
+	memcpy(buf, src, count);
 	*rsize = count;
         return 0;
 }

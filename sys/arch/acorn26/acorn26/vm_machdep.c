@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.19.10.1 2009/05/04 08:10:23 yamt Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.19.10.2 2010/03/11 15:01:55 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,14 +64,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.19.10.1 2009/05/04 08:10:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.19.10.2 2010/03/11 15:01:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/mount.h> /* XXX syscallargs.h uses fhandle_t and fsid_t */
 #include <sys/proc.h>
 #include <sys/syscallargs.h>
-#include <sys/user.h>
 #include <sys/sched.h>
 #include <sys/mutex.h>
 
@@ -83,10 +82,10 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.19.10.1 2009/05/04 08:10:23 yamt Ex
 #include <machine/machdep.h>
 
 /*
- * Finish a fork operation, with process p2 nearly set up.
+ * Finish a fork operation, with thread l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
  *
- * p1 is the process being forked; if p1 == &proc0, we are creating
+ * l1 is the thread being forked; if l1 == &lwp0, we are creating
  * a kernel thread, and the return path and argument are specified with
  * `func' and `arg'.
  *
@@ -96,44 +95,41 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.19.10.1 2009/05/04 08:10:23 yamt Ex
  */
 
 /*
- * Note:
- * 
- * p->p_addr points to a page containing the user structure
- * (see <sys/user.h>) and the kernel stack.  The user structure has to be
- * at the start of the area -- we start the kernel stack from the end.
+ * Note: the pcb structure has to be at the start of the uarea -- we start
+ * the kernel stack from the end.
  */
 
 void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct pcb *pcb;
+	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
 	struct switchframe *sf;
-	char *stacktop;
 
 #if 0
 	printf("cpu_lwp_fork: %p -> %p\n", p1, p2);
 #endif
-	pcb = &l2->l_addr->u_pcb;
+	pcb1 = lwp_getpcb(l1);
+	pcb2 = lwp_getpcb(l2);
+
 	/* Copy the pcb */
-	*pcb = l1->l_addr->u_pcb;
+	*pcb2 = *pcb1;
 
 	/* pmap_activate(l2); XXX Other ports do.  Why?  */
 
 	/* Set up the kernel stack */
-	stacktop = (char *)l2->l_addr + USPACE;
-	tf = (struct trapframe *)stacktop - 1;
+	tf = (struct trapframe *)(uvm_lwp_getuarea(l2) + USPACE) - 1;
 	sf = (struct switchframe *)tf - 1;
 	/* Duplicate old process's trapframe (if it had one) */
-	if (l1->l_addr->u_pcb.pcb_tf == NULL)
+	if (pcb1->pcb_tf == NULL)
 		memset(tf, 0, sizeof(*tf));
 	else
-		*tf = *l1->l_addr->u_pcb.pcb_tf;
+		*tf = *pcb1->pcb_tf;
 	/* If specified, give the child a different stack. */
 	if (stack != NULL)
 		tf->tf_usr_sp = (u_int)stack + stacksize;
-	l2->l_addr->u_pcb.pcb_tf = tf;
+	pcb2->pcb_tf = tf;
 	/* Fabricate a new switchframe */
 	memset(sf, 0, sizeof(*sf));
 
@@ -143,7 +139,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf = pcb->pcb_tf;
 	struct switchframe *sf = (struct switchframe *)tf - 1;
 
@@ -169,20 +165,6 @@ cpu_lwp_free2(struct lwp *l)
 {
 
 	/* Nothing to do here? */
-}
-
-void
-cpu_swapin(struct lwp *l)
-{
-
-	/* Can anyone think of anything I should do here? */
-}
-
-void
-cpu_swapout(struct lwp *l)
-{
-
-	/* ... or here, for that matter. */
 }
 
 /*

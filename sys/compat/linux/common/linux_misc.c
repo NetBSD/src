@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.197.2.4 2009/08/19 18:46:59 yamt Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.197.2.5 2010/03/11 15:03:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.197.2.4 2009/08/19 18:46:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.197.2.5 2010/03/11 15:03:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,6 @@ const struct linux_mnttypes linux_fstypes[] = {
 	{ MOUNT_MSDOS,		LINUX_MSDOS_SUPER_MAGIC		},
 	{ MOUNT_LFS,		LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_FDESC,		LINUX_DEFAULT_SUPER_MAGIC	},
-	{ MOUNT_PORTAL,		LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_NULL,		LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_OVERLAY,	LINUX_DEFAULT_SUPER_MAGIC	},
 	{ MOUNT_UMAP,		LINUX_DEFAULT_SUPER_MAGIC	},
@@ -219,10 +218,9 @@ linux_sys_wait4(struct lwp *l, const struct linux_sys_wait4_args *uap, register_
 		syscallarg(int) options;
 		syscallarg(struct rusage50 *) rusage;
 	} */
-	int error, status, options, linux_options, was_zombie;
-	struct rusage ru;
+	int error, status, options, linux_options, pid = SCARG(uap, pid);
 	struct rusage50 ru50;
-	int pid = SCARG(uap, pid);
+	struct rusage ru;
 	proc_t *p;
 
 	linux_options = SCARG(uap, options);
@@ -246,17 +244,17 @@ linux_sys_wait4(struct lwp *l, const struct linux_sys_wait4_args *uap, register_
 
 # endif
 
-	error = do_sys_wait(l, &pid, &status, options,
-	    SCARG(uap, rusage) != NULL ? &ru : NULL, &was_zombie);
+	error = do_sys_wait(&pid, &status, options,
+	    SCARG(uap, rusage) != NULL ? &ru : NULL);
 
 	retval[0] = pid;
 	if (pid == 0)
 		return error;
 
-        p = curproc;
-        mutex_enter(p->p_lock);
+	p = curproc;
+	mutex_enter(p->p_lock);
 	sigdelset(&p->p_sigpend.sp_set, SIGCHLD); /* XXXAD ksiginfo leak */
-        mutex_exit(p->p_lock);
+	mutex_exit(p->p_lock);
 
 	if (SCARG(uap, rusage) != NULL) {
 		rusage_to_rusage50(&ru, &ru50);
@@ -805,8 +803,12 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == (void *)SCARG(uap, dent))
+	if (outp == (void *)SCARG(uap, dent)) {
+		if (cookiebuf)
+			free(cookiebuf, M_TEMP);
+		cookiebuf = NULL;
 		goto again;
+	}
 	fp->f_offset = off;	/* update the vnode offset */
 
 	if (oldcall)
@@ -852,7 +854,8 @@ linux_sys_select(struct lwp *l, const struct linux_sys_select_args *uap, registe
  * 2) select never returns ERESTART on Linux, always return EINTR
  */
 int
-linux_select1(struct lwp *l, register_t *retval, int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct linux_timeval *timeout)
+linux_select1(struct lwp *l, register_t *retval, int nfds, fd_set *readfds,
+    fd_set *writefds, fd_set *exceptfds, struct linux_timeval *timeout)
 {
 	struct timespec ts0, ts1, uts, *ts = NULL;
 	struct linux_timeval ltv;
@@ -885,8 +888,7 @@ linux_select1(struct lwp *l, register_t *retval, int nfds, fd_set *readfds, fd_s
 		nanotime(&ts0);
 	}
 
-	error = selcommon(l, retval, nfds, readfds, writefds, exceptfds,
-	    ts, NULL);
+	error = selcommon(retval, nfds, readfds, writefds, exceptfds, ts, NULL);
 
 	if (error) {
 		/*
@@ -932,7 +934,7 @@ int
 linux_sys_personality(struct lwp *l, const struct linux_sys_personality_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(int) per;
+		syscallarg(unsigned long) per;
 	} */
 
 	switch (SCARG(uap, per)) {

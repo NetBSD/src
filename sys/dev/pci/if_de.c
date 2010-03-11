@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.128.4.2 2009/05/16 10:41:34 yamt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.128.4.3 2010/03/11 15:03:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.128.4.2 2009/05/16 10:41:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.128.4.3 2010/03/11 15:03:45 yamt Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -83,11 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.128.4.2 2009/05/16 10:41:34 yamt Exp $")
 #include <dev/mii/miivar.h>
 #endif
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -3652,14 +3649,12 @@ tulip_rx_intr(
 #endif /* TULIP_BUS_DMA */
 
 	    eh = *mtod(ms, struct ether_header *);
-#if NBPFILTER > 0
 	    if (sc->tulip_bpf != NULL) {
 		if (me == ms)
 		    TULIP_BPF_TAP(sc, mtod(ms, void *), total_len);
 		else
 		    TULIP_BPF_MTAP(sc, ms);
 	    }
-#endif
 	    sc->tulip_flags |= TULIP_RXACT;
 	    if ((sc->tulip_flags & (TULIP_PROMISC|TULIP_HASHONLY))
 		    && (eh.ether_dhost[0] & 1) == 0
@@ -3765,7 +3760,7 @@ tulip_rx_intr(
 #if defined(__NetBSD__)
 		(*ifp->if_input)(ifp, ms);
 #else
-		m_adj(ms, sizeof(struct ether_header);
+		m_adj(ms, sizeof(struct ether_header));
 		ether_input(ifp, &eh, ms);
 #endif /* __NetBSD__ */
 #else
@@ -3779,7 +3774,7 @@ tulip_rx_intr(
 #if defined(__NetBSD__)
 		(*ifp->if_input)(ifp, m0);
 #else
-		m_adj(m0, sizeof(struct ether_header);
+		m_adj(m0, sizeof(struct ether_header));
 		ether_input(ifp, &eh, m0);
 #endif /* __NetBSD__ */
 		m0 = ms;
@@ -3910,10 +3905,8 @@ tulip_tx_intr(
 		    TULIP_TXMAP_POSTSYNC(sc, map);
 		    tulip_free_txmap(sc, map);
 #endif /* TULIP_BUS_DMA */
-#if NBPFILTER > 0
 		    if (sc->tulip_bpf != NULL)
 			TULIP_BPF_MTAP(sc, m);
-#endif
 		    m_freem(m);
 #if defined(TULIP_DEBUG)
 		} else {
@@ -5897,8 +5890,8 @@ tulip_pci_attach(
 	    if (sc->tulip_ih == NULL) {
 		aprint_error_dev(&sc->tulip_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-		    printf(" at %s", intrstr);
-		printf("\n");
+		    aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	    }
 	    printf("%s: interrupting at %s\n", device_xname(&sc->tulip_dev), intrstr);

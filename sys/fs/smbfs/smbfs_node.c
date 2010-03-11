@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.38.10.2 2009/07/18 14:53:21 yamt Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.38.10.3 2010/03/11 15:04:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.38.10.2 2009/07/18 14:53:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.38.10.3 2010/03/11 15:04:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,6 +278,7 @@ smbfs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
+		bool *a_recycle;
 	} */ *ap = v;
 	struct lwp *l = curlwp;
 	kauth_cred_t cred = l->l_cred;
@@ -305,6 +306,9 @@ smbfs_inactive(void *v)
 		smbfs_attr_cacheremove(vp);
 	}
 	VOP_UNLOCK(vp, 0);
+
+	*ap->a_recycle = false; /* XXX: should set the value properly */
+
 	return (0);
 }
 /*

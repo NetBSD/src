@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.21.2.3 2009/05/16 10:41:48 yamt Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.21.2.4 2010/03/11 15:04:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.21.2.3 2009/05/16 10:41:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.21.2.4 2010/03/11 15:04:17 yamt Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -103,10 +103,10 @@ do {									\
 
 #endif	/* DIAGNOSTIC */
 
-#define	RW_SETDEBUG(rw, on)		((rw)->rw_owner |= (on) ? RW_DEBUG : 0)
-#define	RW_DEBUG_P(rw)			(((rw)->rw_owner & RW_DEBUG) != 0)
+#define	RW_SETDEBUG(rw, on)		((rw)->rw_owner |= (on) ? 0 : RW_NODEBUG)
+#define	RW_DEBUG_P(rw)			(((rw)->rw_owner & RW_NODEBUG) == 0)
 #if defined(LOCKDEBUG)
-#define	RW_INHERITDEBUG(new, old)	(new) |= (old) & RW_DEBUG
+#define	RW_INHERITDEBUG(new, old)	(new) |= (old) & RW_NODEBUG
 #else /* defined(LOCKDEBUG) */
 #define	RW_INHERITDEBUG(new, old)	/* nothing */
 #endif /* defined(LOCKDEBUG) */
@@ -160,18 +160,6 @@ syncobj_t rw_syncobj = {
 	sleepq_lendpri,
 	rw_owner,
 };
-
-/* Mutex cache */
-#define	RW_OBJ_MAGIC	0x85d3c85d
-struct krwobj {
-	krwlock_t	ro_lock;
-	u_int		ro_magic;
-	u_int		ro_refcnt;
-};
-
-static int	rw_obj_ctor(void *, void *, int);
-
-static pool_cache_t	rw_obj_cache;
 
 /*
  * rw_dump:
@@ -230,7 +218,7 @@ void
 rw_destroy(krwlock_t *rw)
 {
 
-	RW_ASSERT(rw, (rw->rw_owner & ~RW_DEBUG) == 0);
+	RW_ASSERT(rw, (rw->rw_owner & ~RW_NODEBUG) == 0);
 	LOCKDEBUG_FREE(RW_DEBUG_P(rw), rw);
 }
 
@@ -777,89 +765,4 @@ rw_owner(wchan_t obj)
 		return NULL;
 
 	return (void *)(owner & RW_THREAD);
-}
-
-/*
- * rw_obj_init:
- *
- *	Initialize the rw object store.
- */
-void
-rw_obj_init(void)
-{
-
-	rw_obj_cache = pool_cache_init(sizeof(struct krwobj),
-	    coherency_unit, 0, 0, "rwlock", NULL, IPL_NONE, rw_obj_ctor,
-	    NULL, NULL);
-}
-
-/*
- * rw_obj_ctor:
- *
- *	Initialize a new lock for the cache.
- */
-static int
-rw_obj_ctor(void *arg, void *obj, int flags)
-{
-	struct krwobj * ro = obj;
-
-	ro->ro_magic = RW_OBJ_MAGIC;
-
-	return 0;
-}
-
-/*
- * rw_obj_alloc:
- *
- *	Allocate a single lock object.
- */
-krwlock_t *
-rw_obj_alloc(void)
-{
-	struct krwobj *ro;
-
-	ro = pool_cache_get(rw_obj_cache, PR_WAITOK);
-	rw_init(&ro->ro_lock);
-	ro->ro_refcnt = 1;
-
-	return (krwlock_t *)ro;
-}
-
-/*
- * rw_obj_hold:
- *
- *	Add a single reference to a lock object.  A reference to the object
- *	must already be held, and must be held across this call.
- */
-void
-rw_obj_hold(krwlock_t *lock)
-{
-	struct krwobj *ro = (struct krwobj *)lock;
-
-	KASSERT(ro->ro_magic == RW_OBJ_MAGIC);
-	KASSERT(ro->ro_refcnt > 0);
-
-	atomic_inc_uint(&ro->ro_refcnt);
-}
-
-/*
- * rw_obj_free:
- *
- *	Drop a reference from a lock object.  If the last reference is being
- *	dropped, free the object and return true.  Otherwise, return false.
- */
-bool
-rw_obj_free(krwlock_t *lock)
-{
-	struct krwobj *ro = (struct krwobj *)lock;
-
-	KASSERT(ro->ro_magic == RW_OBJ_MAGIC);
-	KASSERT(ro->ro_refcnt > 0);
-
-	if (atomic_dec_uint_nv(&ro->ro_refcnt) > 0) {
-		return false;
-	}
-	rw_destroy(&ro->ro_lock);
-	pool_cache_put(rw_obj_cache, ro);
-	return true;
 }

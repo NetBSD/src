@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_3min.c,v 1.10.78.1 2009/08/19 18:46:40 yamt Exp $	*/
+/*	$NetBSD: memc_3min.c,v 1.10.78.2 2010/03/11 15:02:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.10.78.1 2009/08/19 18:46:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.10.78.2 2010/03/11 15:02:49 yamt Exp $");
 
 /*
  * Motherboard memory error contoller used in both
@@ -100,10 +100,12 @@ __KERNEL_RCSID(0, "$NetBSD: memc_3min.c,v 1.10.78.1 2009/08/19 18:46:40 yamt Exp
  * XXX check for clean user pages, replace frame,  and reload ?
  */
 void
-kn02ba_errintr()
+kn02ba_errintr(void)
 {
-	int mer, adr, siz, err;
-	static int errintr_cnt = 0;
+	paddr_t err, adr;
+	size_t siz;
+	uint32_t mer;
+	static unsigned int errintr_cnt = 0;
 
 	siz = *(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_MSR);
 	mer = *(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_MER);
@@ -126,6 +128,7 @@ kn02ba_errintr()
 	err |= (adr & KMIN_AER_ADDR_MASK);
 
 	errintr_cnt++;
-	printf("(%d)Bad memory chip at phys %x [%x %x %x]\n",
-		errintr_cnt, err, mer, siz, adr);
+	printf("(%u)Bad memory chip at phys %#"PRIxPADDR
+	    " [%x %zx %#"PRIxPADDR"]\n",
+	    errintr_cnt, err, mer, siz, adr);
 }

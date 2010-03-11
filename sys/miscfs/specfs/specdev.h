@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.35.10.2 2009/05/04 08:14:05 yamt Exp $	*/
+/*	$NetBSD: specdev.h,v 1.35.10.3 2010/03/11 15:04:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -154,5 +154,8 @@ int	spec_advlock(void *);
 #define	spec_bwrite	vn_bwrite
 #define	spec_getpages	genfs_getpages
 #define	spec_putpages	genfs_putpages
+
+bool	iskmemvp(struct vnode *);
+void	spec_init(void);
 
 #endif /* _MISCFS_SPECFS_SPECDEV_H_ */

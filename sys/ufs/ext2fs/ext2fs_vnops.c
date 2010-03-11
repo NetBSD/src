@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.81.10.5 2009/09/16 13:38:07 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.81.10.6 2010/03/11 15:04:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -48,11 +48,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -70,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.81.10.5 2009/09/16 13:38:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.81.10.6 2010/03/11 15:04:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -507,8 +502,10 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 		ip->i_e2fs_gid_high = 0;
 		ip->i_e2fs_uid_high = 0;
 	}
-	if (ouid != uid || ogid != gid)
+	if (ouid != uid || ogid != gid) {
+		ext2fs_set_inode_guid(ip);
 		ip->i_flag |= IN_CHANGE;
+	}
 	if (ouid != uid && kauth_authorize_generic(cred,
 	    KAUTH_GENERIC_ISSUSER, NULL) != 0)
 		ip->i_e2fs_mode &= ~ISUID;

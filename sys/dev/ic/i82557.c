@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.112.4.3 2009/09/16 13:37:48 yamt Exp $	*/
+/*	$NetBSD: i82557.c,v 1.112.4.4 2010/03/11 15:03:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,9 +66,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.112.4.3 2009/09/16 13:37:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.112.4.4 2010/03/11 15:03:31 yamt Exp $");
 
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -102,9 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.112.4.3 2009/09/16 13:37:48 yamt Exp $"
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -1007,13 +1004,11 @@ fxp_start(struct ifnet *ifp)
 		sc->sc_txpending++;
 		sc->sc_txlast = nexttx;
 
-#if NBPFILTER > 0
 		/*
 		 * Pass packet to bpf if there is a listener.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 	}
 
 	if (sc->sc_txpending == FXP_NTXCB - 1) {
@@ -1468,14 +1463,12 @@ fxp_rxintr(struct fxp_softc *sc)
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
-#if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
 		 * pass it up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
@@ -2498,7 +2491,7 @@ fxp_activate(device_t self, enum devact act)
  *	Detach an i82557 interface.
  */
 int
-fxp_detach(struct fxp_softc *sc)
+fxp_detach(struct fxp_softc *sc, int flags)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i;

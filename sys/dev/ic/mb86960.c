@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.70.4.3 2009/09/16 13:37:48 yamt Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.70.4.4 2010/03/11 15:03:32 yamt Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.70.4.3 2009/09/16 13:37:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.70.4.4 2010/03/11 15:03:32 yamt Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.70.4.3 2009/09/16 13:37:48 yamt Exp $"
  */
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -78,10 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.70.4.3 2009/09/16 13:37:48 yamt Exp $"
 #endif
 
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <sys/bus.h>
 
@@ -756,11 +753,9 @@ mb86960_start(struct ifnet *ifp)
 			goto indicate_inactive;
 		}
 
-#if NBPFILTER > 0
 		/* Tap off here if there is a BPF listener. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/*
 		 * Copy the mbuf chain into the transmission buffer.
@@ -1342,14 +1337,12 @@ mb86960_get_packet(struct mb86960_softc *sc, u_int len)
 		bus_space_read_multi_stream_2(bst, bsh, FE_BMPR8,
 		    mtod(m, uint16_t *), (len + 1) >> 1);
 
-#if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.  If so, hand off
 	 * the raw packet to bpf.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	(*ifp->if_input)(ifp, m);
 	return 1;
@@ -1802,22 +1795,15 @@ mb86960_disable(struct mb86960_softc *sc)
 int
 mb86960_activate(device_t self, enum devact act)
 {
-	struct mb86960_softc *sc = (struct mb86960_softc *)self;
-	int rv, s;
+	struct mb86960_softc *sc = device_private(self);
 
-	rv = 0;
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
 		if_deactivate(&sc->sc_ec.ec_if);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-	return rv;
 }
 
 /*

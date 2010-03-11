@@ -1,9 +1,9 @@
-/*	$NetBSD: pdc.c,v 1.7.78.3 2009/05/16 10:41:14 yamt Exp $	*/
+/*	$NetBSD: pdc.c,v 1.7.78.4 2010/03/11 15:02:24 yamt Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.10 1999/05/06 02:27:44 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998 Michael Shalayeff
+ * Copyright (c) 1998-2004 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,22 +14,18 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.
@@ -215,7 +211,7 @@ iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 			printf("off=%d,xfer=%d,size=%d,blk=%d\n",
 			       offset, xfer, (int)size, (int)blk);
 #endif
-		memcpy( buf, dp->buf + offset, xfer);
+		memcpy(buf, dp->buf + offset, xfer);
 		buf = (char *) buf + xfer;
 	}
 
@@ -247,7 +243,7 @@ iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 		dp->last_read = ret;
 		if ((ret -= offset) > size)
 			ret = size;
-		memcpy( buf, dp->buf + offset, ret);
+		memcpy(buf, dp->buf + offset, ret);
 #ifdef PDCDEBUG
 		if (debug)
 			printf("read %d(%d,%d)@%x ", ret,
@@ -392,7 +388,7 @@ pdc_findev(int unit, int class)
 		}
 
 		pz.pz_flags = 0;
-		memcpy( pz.pz_layers, layers, sizeof(pz.pz_layers));
+		memcpy(pz.pz_layers, layers, sizeof(pz.pz_layers));
 		pz.pz_hpa = io;
 /* XXX		pz.pz_spa = io->io_spa; */
 		pz.pz_iodc_io = iodc;

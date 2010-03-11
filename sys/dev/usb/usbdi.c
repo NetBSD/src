@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.121.20.2 2009/05/04 08:13:22 yamt Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.121.20.3 2010/03/11 15:04:08 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.121.20.2 2009/05/04 08:13:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.121.20.3 2010/03/11 15:04:08 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -519,16 +519,19 @@ usbd_abort_pipe(usbd_pipe_handle pipe)
 {
 	usbd_status err;
 	int s;
+	usbd_xfer_handle intrxfer = pipe->intrxfer;
 
 #ifdef DIAGNOSTIC
 	if (pipe == NULL) {
-		printf("usbd_close_pipe: pipe==NULL\n");
+		printf("usbd_abort_pipe: pipe==NULL\n");
 		return (USBD_NORMAL_COMPLETION);
 	}
 #endif
 	s = splusb();
 	err = usbd_ar_pipe(pipe);
 	splx(s);
+	if (pipe->intrxfer != intrxfer)
+		usbd_free_xfer(intrxfer);
 	return (err);
 }
 

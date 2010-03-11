@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.29.4.2 2009/05/16 10:41:27 yamt Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.29.4.3 2010/03/11 15:03:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,10 +42,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.29.4.2 2009/05/16 10:41:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.29.4.3 2010/03/11 15:03:40 yamt Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -72,9 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.29.4.2 2009/05/16 10:41:27 yamt Exp $")
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <dev/mii/miivar.h>
 
@@ -351,9 +348,8 @@ gfe_attach(device_t parent, device_t self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
-#if NBPFILTER > 0
-	bpfattach(ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
+	bpf_ops->bpf_attach(ifp, DLT_EN10MB,
+	    sizeof(struct ether_header), &ifp->if_bpf);
 #if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(self), RND_TYPE_NET, 0);
 #endif
@@ -763,10 +759,8 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		m->m_pkthdr.len = buflen;
 
 		ifp->if_ipackets++;
-#if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		eh = (const struct ether_header *) m->m_data;
 		if ((ifp->if_flags & IFF_PROMISC) ||
@@ -1161,10 +1155,8 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	 * Move mbuf from the pending queue to the snd queue.
 	 */
 	IF_DEQUEUE(&txq->txq_pendq, m);
-#if NBPFILTER > 0
 	if (ifp->if_bpf != NULL)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 	m_freem(m);
 	ifp->if_flags &= ~IFF_OACTIVE;
 

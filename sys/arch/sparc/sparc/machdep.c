@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.277.2.4 2009/08/19 18:46:46 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.277.2.5 2010/03/11 15:02:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.277.2.4 2009/08/19 18:46:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.277.2.5 2010/03/11 15:02:58 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.277.2.4 2009/08/19 18:46:46 yamt Exp $
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/extent.h>
 #include <sys/savar.h>
 #include <sys/buf.h>
@@ -103,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.277.2.4 2009/08/19 18:46:46 yamt Exp $
 #include <sys/ucontext.h>
 #include <sys/simplelock.h>
 #include <sys/module.h>
+#include <sys/mutex.h>
 
 #include <uvm/uvm.h>		/* we use uvm.kernel_object */
 
@@ -135,12 +135,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.277.2.4 2009/08/19 18:46:46 yamt Exp $
 #include <sparc/dev/power.h>
 #endif
 
-struct vm_map *mb_map = NULL;
 extern paddr_t avail_end;
 
 int	physmem;
 
-struct simplelock fpulock = SIMPLELOCK_INITIALIZER;
+kmutex_t fpu_mtx;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -167,7 +166,7 @@ cpu_startup(void)
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
 #endif
-	vaddr_t minaddr, maxaddr;
+	struct pcb *pcb;
 	vsize_t size;
 	paddr_t pa;
 	char pbuf[9];
@@ -177,8 +176,9 @@ cpu_startup(void)
 #endif
 
 	/* XXX */
-	if (lwp0.l_addr && lwp0.l_addr->u_pcb.pcb_psr == 0)
-		lwp0.l_addr->u_pcb.pcb_psr = getpsr();
+	pcb = lwp_getpcb(&lwp0);
+	if (pcb && pcb->pcb_psr == 0)
+		pcb->pcb_psr = getpsr();
 
 	/*
 	 * Re-map the message buffer from its temporary address
@@ -236,7 +236,7 @@ cpu_startup(void)
 
 	/* Map first 8192 */
 	while (va < va0 + 8192) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 		pa += PAGE_SIZE;
 		va += PAGE_SIZE;
 	}
@@ -247,7 +247,7 @@ cpu_startup(void)
 		if (va >= va0 + size)
 			panic("cpu_start: memory buffer size botch");
 		pa = VM_PAGE_TO_PHYS(m);
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 		va += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
@@ -311,7 +311,6 @@ cpu_startup(void)
 #endif
 	}
 
-	minaddr = 0;
 	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		/*
 		 * Allocate DMA map for 24-bit devices (le, ie)
@@ -324,12 +323,6 @@ cpu_startup(void)
 			panic("unable to allocate DVMA map");
 	}
 
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-        mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
-
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
@@ -337,6 +330,8 @@ cpu_startup(void)
 	printf("avail memory = %s\n", pbuf);
 
 	pmap_redzone();
+
+	mutex_init(&fpu_mtx, MUTEX_DEFAULT, IPL_SCHED);
 }
 
 /*
@@ -346,7 +341,7 @@ cpu_startup(void)
  */
 /* ARGSUSED */
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct trapframe *tf = l->l_md.md_tf;
 	struct fpstate *fs;
@@ -1181,7 +1176,6 @@ int
 ldcontrolb(void *addr)
 {
 	struct pcb *xpcb;
-	extern struct user *proc0paddr;
 	u_long saveonfault;
 	int res;
 	int s;
@@ -1192,10 +1186,7 @@ ldcontrolb(void *addr)
 	}
 
 	s = splhigh();
-	if (curlwp == NULL)
-		xpcb = (struct pcb *)proc0paddr;
-	else
-		xpcb = &curlwp->l_addr->u_pcb;
+	xpcb = lwp_getpcb(curlwp);
 
 	saveonfault = (u_long)xpcb->pcb_onfault;
         res = xldcontrolb(addr, xpcb);
@@ -1657,7 +1648,7 @@ no_fit:
 #endif
 #endif
 		pmap_kenter_pa(dva, (pa & -pagesz) | PMAP_NC,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 
 		dva += pagesz;
 		va += sgsize;
@@ -1723,7 +1714,7 @@ sun4_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 #endif
 #endif
 		pmap_kenter_pa(dva, (pa & -pagesz) | PMAP_NC,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 
 		dva += pagesz;
 		sgsize -= pagesz;
@@ -1816,7 +1807,8 @@ sun4_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			panic("sun4_dmamem_map: size botch");
 
 		pa = VM_PAGE_TO_PHYS(m);
-		pmap_kenter_pa(va, pa | PMAP_NC, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa | PMAP_NC,
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -1973,7 +1965,7 @@ static	vaddr_t iobase;
 	pa = trunc_page(pa);
 	do {
 		pmap_kenter_pa(v, pa | pmtype | PMAP_NC,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);
@@ -2103,7 +2095,7 @@ sparc_mainbus_intr_establish(bus_space_tag_t t, int pil, int level,
 
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
-	intr_establish(pil, level, ih, fastvec);
+	intr_establish(pil, level, ih, fastvec, false);
 	return (ih);
 }
 

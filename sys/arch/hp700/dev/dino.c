@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.5.44.4 2009/08/19 18:46:14 yamt Exp $ */
+/*	$NetBSD: dino.c,v 1.5.44.5 2010/03/11 15:02:23 yamt Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.5.44.4 2009/08/19 18:46:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.5.44.5 2010/03/11 15:02:23 yamt Exp $");
 
 /* #include "cardbus.h" */
 
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.5.44.4 2009/08/19 18:46:14 yamt Exp $");
 extern struct extent *hp700_io_extent;
 
 struct dino_regs {
+	/* HPA Supervisory Register Set */
 	uint32_t	pad0;		/* 0x000 */
 	uint32_t	iar0;		/* 0x004 rw intr addr reg 0 */
 	uint32_t	iodc;		/* 0x008 rw iodc data/addr */
@@ -78,6 +79,8 @@ struct dino_regs {
 	uint32_t	io_status;	/* 0x034 r  status register */
 	uint32_t	io_control;	/* 0x038 rw control register */
 	uint32_t	pad2;		/* 0x03c AUX registers follow */
+
+	/* HPA Auxiliary Register Set */
 	uint32_t	io_gsc_err_addr;/* 0x040 GSC error address */
 	uint32_t	io_err_info;	/* 0x044 error info register */
 	uint32_t	io_pci_err_addr;/* 0x048 PCI error address */
@@ -89,8 +92,12 @@ struct dino_regs {
 	uint32_t	pci_io_data;	/* 0x06c PCI io data reg */
 	uint32_t	pci_mem_data;	/* 0x070 PCI memory data reg */
 	uint32_t	pad4[0x740/4];	/* 0x074 */
+
+	/* HPA Bus (GSC) Specific-Dependent Register Set */
 	uint32_t	gsc2x_config;	/* 0x7b4 GSC2X config reg */
 	uint32_t	pad5[0x48/4];	/* 0x7b8: BSRS registers follow */
+
+	/* HPA HVERSION (Dino)-Dependent Register Set */
 	uint32_t	gmask;		/* 0x800 GSC arbitration mask */
 	uint32_t	pamr;		/* 0x804 PCI arbitration mask */
 	uint32_t	papr;		/* 0x808 PCI arbitration priority */
@@ -114,7 +121,6 @@ struct dino_softc {
 	struct hp700_int_reg sc_int_reg;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_bh;
-	bus_space_handle_t sc_memh;
 	bus_dma_tag_t sc_dmat;
 	volatile struct dino_regs *sc_regs;
 
@@ -143,12 +149,15 @@ pcitag_t dino_make_tag(void *, int, int, int);
 void dino_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t dino_conf_read(void *, pcitag_t, int);
 void dino_conf_write(void *, pcitag_t, int, pcireg_t);
+
 int dino_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *dino_intr_string(void *, pci_intr_handle_t);
 void *dino_intr_establish(void *, pci_intr_handle_t, int,
     int (*)(void *), void *);
 void dino_intr_disestablish(void *, void *);
+
 void *dino_alloc_parent(device_t, struct pci_attach_args *, int);
+
 int dino_iomap(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 int dino_memmap(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 int dino_subregion(void *, bus_space_handle_t, bus_size_t, bus_size_t,
@@ -329,9 +338,18 @@ dino_conf_read(void *v, pcitag_t tag, int reg)
 	struct dino_softc *sc = v;
 	volatile struct dino_regs *r = sc->sc_regs;
 	pcireg_t data;
+	uint32_t pamr;
+
+	/* fix arbitration errata by disabling all pci devs on config read */
+	pamr = r->pamr;
+	r->pamr = 0;
 
 	r->pci_addr = tag | reg;
 	data = r->pci_conf_data;
+
+	/* restore arbitration */
+	r->pamr = pamr;
+
 	return le32toh(data);
 }
 
@@ -341,28 +359,34 @@ dino_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	struct dino_softc *sc = v;
 	volatile struct dino_regs *r = sc->sc_regs;
 	pcireg_t data1;
+	uint32_t pamr;
 
-	/* fix coalescing config writes errata by interleaving w/ a read */
-	r->pci_addr = tag | PCI_ID_REG;
-	data1 = r->pci_conf_data;
+	/* fix arbitration errata by disabling all pci devs on config read */
+	pamr = r->pamr;
+	r->pamr = 0;
 
 	r->pci_addr = tag | reg;
 	r->pci_conf_data = htole32(data);
 
+	/* fix coalescing config and io writes by interleaving w/ a read */
 	r->pci_addr = tag | PCI_ID_REG;
 	data1 = r->pci_conf_data;
+
+	/* restore arbitration */
+	r->pamr = pamr;
 }
 
 int
 dino_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
-	pci_chipset_tag_t pc = pa->pa_pc;
-	pcitag_t tag = pa->pa_tag;
-	pcireg_t reg;
+	int line = pa->pa_intrline;
 
-	reg = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
-	*ihp = PCI_INTERRUPT_LINE(reg);
-	return *ihp < 0;
+	if (line == 0xff)
+		return 1;
+
+	*ihp = line;
+
+	return 0;
 }
 
 const char *
@@ -509,7 +533,7 @@ dino_memalloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 	int i, error;
 
 	/*
-	 * Allow allocation only when PCI MEM is already maped.
+	 * Allow allocation only when PCI MEM is already mapped.
 	 * Needed to avoid allocation of I/O space used by devices that
 	 * have no driver in the current kernel.
 	 * Dino can map PCI MEM in the range 0xf0800000..0xff800000 only.
@@ -520,8 +544,8 @@ dino_memalloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 	/* Find used PCI MEM and narrow allocateble region down to it. */
 	for (i = 1; i < 31; i++)
 		if ((reg & 1 << i) != 0) {
-			rstart = 0xf0000000 | i << 23;
-			rend = (0xf0000000 | (i + 1) << 23) - 1;
+			rstart = HPPA_IOSPACE | i << 23;
+			rend = (HPPA_IOSPACE | (i + 1) << 23) - 1;
 			break;
 		}
 	if ((error = bus_space_alloc(sc->sc_bt, rstart, rend, size, align,
@@ -537,7 +561,7 @@ dino_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 	struct dino_softc *sc = v;
 	volatile struct dino_regs *r = sc->sc_regs;
 
-	if (bsh & 0xf0000000) {
+	if (bsh & HPPA_IOSPACE) {
 		bus_space_unmap(sc->sc_bt, bsh, size);
 		if (--sc->sc_memrefcount[((bsh >> 23) & 0x1f)] == 0)
 			/* Unmap the upper PCI MEM space. */
@@ -581,13 +605,13 @@ uint8_t
 dino_r1(void *v, bus_space_handle_t h, bus_size_t o)
 {
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		return *(volatile uint8_t *)h;
 	else {
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
-		r->pci_addr = h & ~3;
+		r->pci_addr = h;
 		return *((volatile uint8_t *)&r->pci_io_data + (h & 3));
 	}
 }
@@ -596,24 +620,20 @@ uint16_t
 dino_r2(void *v, bus_space_handle_t h, bus_size_t o)
 {
 	volatile uint16_t *p;
-	volatile uint16_t d;
 
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint16_t *)h;
-		d = le16toh(*p);
-	} else {
+	else {
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
-		r->pci_addr = h & ~3;
+		r->pci_addr = h;
 		p = (volatile uint16_t *)&r->pci_io_data;
 		if (h & 2)
 			p++;
-		d = le16toh(*p);
 	}
-
-	return d;
+	return le16toh(*p);
 }
 
 uint32_t
@@ -622,7 +642,7 @@ dino_r4(void *v, bus_space_handle_t h, bus_size_t o)
 	uint32_t data;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		data = *(volatile uint32_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -638,24 +658,28 @@ dino_r4(void *v, bus_space_handle_t h, bus_size_t o)
 uint64_t
 dino_r8(void *v, bus_space_handle_t h, bus_size_t o)
 {
+	uint64_t data;
+
 	h += o;
-	if (h & 0xf0000000)
-		return *(volatile uint64_t *)h;
+	if (h & HPPA_IOSPACE)
+		data = *(volatile uint64_t *)h;
 	else
 		panic("dino_r8: not implemented");
+
+	return le64toh(data);
 }
 
 void
 dino_w1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t vv)
 {
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		*(volatile uint8_t *)h = vv;
 	else {
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
-		r->pci_addr = h & ~3;
+		r->pci_addr = h;
 		*((volatile uint8_t *)&r->pci_io_data + (h & 3)) = vv;
 	}
 }
@@ -666,13 +690,13 @@ dino_w2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t vv)
 	volatile uint16_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint16_t *)h;
 	else {
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
-		r->pci_addr = h & ~3;
+		r->pci_addr = h;
 		p = (volatile uint16_t *)&r->pci_io_data;
 		if (h & 2)
 			p++;
@@ -686,7 +710,7 @@ dino_w4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t vv)
 {
 	h += o;
 	vv = htole32(vv);
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		*(volatile uint32_t *)h = vv;
 	else {
 		struct dino_softc *sc = v;
@@ -701,8 +725,8 @@ void
 dino_w8(void *v, bus_space_handle_t h, bus_size_t o, uint64_t vv)
 {
 	h += o;
-	if (h & 0xf0000000)
-		*(volatile uint64_t *)h = vv;
+	if (h & HPPA_IOSPACE)
+		*(volatile uint64_t *)h = htole64(vv);
 	else
 		panic("dino_w8: not implemented");
 }
@@ -714,13 +738,13 @@ dino_rm_1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t *a, bus_size_t c)
 	volatile uint8_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint8_t *)h;
 	else {
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
-		r->pci_addr = h & ~3;
+		r->pci_addr = h;
 		p = (volatile uint8_t *)&r->pci_io_data + (h & 3);
 	}
 
@@ -734,13 +758,13 @@ dino_rm_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t *a, bus_size_t c
 	volatile uint16_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint16_t *)h;
 	else {
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
-		r->pci_addr = h & ~3;
+		r->pci_addr = h;
 		p = (volatile uint16_t *)&r->pci_io_data;
 		if (h & 2)
 			p++;
@@ -756,7 +780,7 @@ dino_rm_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t *a, bus_size_t c
 	volatile uint32_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint32_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -782,13 +806,13 @@ dino_wm_1(void *v, bus_space_handle_t h, bus_size_t o, const uint8_t *a, bus_siz
 	volatile uint8_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint8_t *)h;
 	else {
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
-		r->pci_addr = h & ~3;
+		r->pci_addr = h;
 		p = (volatile uint8_t *)&r->pci_io_data + (h & 3);
 	}
 
@@ -802,13 +826,13 @@ dino_wm_2(void *v, bus_space_handle_t h, bus_size_t o, const uint16_t *a, bus_si
 	volatile uint16_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint16_t *)h;
 	else {
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
-		r->pci_addr = h & ~3;
+		r->pci_addr = h;
 		p = (volatile uint16_t *)&r->pci_io_data;
 		if (h & 2)
 			p++;
@@ -824,7 +848,7 @@ dino_wm_4(void *v, bus_space_handle_t h, bus_size_t o, const uint32_t *a, bus_si
 	volatile uint32_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint32_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -850,13 +874,13 @@ dino_sm_1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t vv, bus_size_t c)
 	volatile uint8_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint8_t *)h;
 	else {
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
-		r->pci_addr = h & ~3;
+		r->pci_addr = h;
 		p = (volatile uint8_t *)&r->pci_io_data + (h & 3);
 	}
 
@@ -870,13 +894,13 @@ dino_sm_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t vv, bus_size_t c
 	volatile uint16_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint16_t *)h;
 	else {
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
-		r->pci_addr = h & ~3;
+		r->pci_addr = h;
 		p = (volatile uint16_t *)&r->pci_io_data;
 		if (h & 2)
 			p++;
@@ -892,7 +916,7 @@ dino_sm_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t vv, bus_size_t c
 	volatile uint32_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint32_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -919,18 +943,19 @@ dino_rrm_2(void *v, bus_space_handle_t h, bus_size_t o,
 	volatile uint16_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint16_t *)h;
 	else {
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
-		r->pci_addr = h & ~3;
+		r->pci_addr = h;
 		p = (volatile uint16_t *)&r->pci_io_data;
 		if (h & 2)
 			p++;
 	}
 
+	c /= 2;
 	while (c--)
 		*a++ = *p;
 }
@@ -942,7 +967,7 @@ dino_rrm_4(void *v, bus_space_handle_t h, bus_size_t o,
 	volatile uint32_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint32_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -952,6 +977,7 @@ dino_rrm_4(void *v, bus_space_handle_t h, bus_size_t o,
 		p = (volatile uint32_t *)&r->pci_io_data;
 	}
 
+	c /= 4;
 	while (c--)
 		*a++ = *p;
 }
@@ -970,18 +996,19 @@ dino_wrm_2(void *v, bus_space_handle_t h, bus_size_t o,
 	volatile uint16_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint16_t *)h;
 	else {
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
-		r->pci_addr = h & ~3;
+		r->pci_addr = h;
 		p = (volatile uint16_t *)&r->pci_io_data;
 		if (h & 2)
 			p++;
 	}
 
+	c /= 2;
 	while (c--)
 		*p = *a++;
 }
@@ -993,7 +1020,7 @@ dino_wrm_4(void *v, bus_space_handle_t h, bus_size_t o,
 	volatile uint32_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint32_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -1003,6 +1030,7 @@ dino_wrm_4(void *v, bus_space_handle_t h, bus_size_t o,
 		p = (volatile uint32_t *)&r->pci_io_data;
 	}
 
+	c /= 4;
 	while (c--)
 		*p = *a++;
 }
@@ -1020,7 +1048,7 @@ dino_rr_1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t *a, bus_size_t c)
 	volatile uint8_t *p;
 
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint8_t *)h;
 		while (c--)
 			*a++ = *p++;
@@ -1028,12 +1056,10 @@ dino_rr_1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t *a, bus_size_t c)
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
-		r->pci_addr = h & ~3;
-		while (c--) {
+		for (; c--; h++) {
+			r->pci_addr = h;
 			p = (volatile uint8_t *)&r->pci_io_data + (h & 3);
 			*a++ = *p;
-			if (!(++h & 3))
-				r->pci_addr = h;
 		}
 	}
 }
@@ -1041,26 +1067,26 @@ dino_rr_1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t *a, bus_size_t c)
 void
 dino_rr_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t *a, bus_size_t c)
 {
-	volatile uint16_t *p;
+	volatile uint16_t *p, data;
 
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint16_t *)h;
-		while (c--)
-			*a++ = le16toh(*p++);
+		while (c--) {
+			data = *p++;
+			*a++ = le16toh(data);
+		}
 	} else {
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
-		r->pci_addr = h & ~3;
-		while (c--) {
+		for (; c--; h += 2) {
+			r->pci_addr = h;
 			p = (volatile uint16_t *)&r->pci_io_data;
 			if (h & 2)
 				p++;
-			*a++ = le16toh(*p);
-			h += 2;
-			if (!(h & 2))
-				r->pci_addr = h;
+			data = *p;
+			*a++ = le16toh(data);
 		}
 	}
 }
@@ -1068,20 +1094,23 @@ dino_rr_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t *a, bus_size_t c
 void
 dino_rr_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t *a, bus_size_t c)
 {
-	volatile uint32_t *p;
+	volatile uint32_t *p, data;
 
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint32_t *)h;
-		while (c--)
-			*a++ = le32toh(*p++);
+		while (c--) {
+			data = *p++;
+			*a++ = le32toh(data);
+		}
 	} else {
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
 		for (; c--; h += 4) {
 			r->pci_addr = h;
-			*a++ = le32toh(r->pci_io_data);
+			data = r->pci_io_data;
+			*a++ = le32toh(data);
 		}
 	}
 }
@@ -1098,7 +1127,7 @@ dino_wr_1(void *v, bus_space_handle_t h, bus_size_t o, const uint8_t *a, bus_siz
 	volatile uint8_t *p;
 
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint8_t *)h;
 		while (c--)
 			*p++ = *a++;
@@ -1106,12 +1135,10 @@ dino_wr_1(void *v, bus_space_handle_t h, bus_size_t o, const uint8_t *a, bus_siz
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
-		r->pci_addr = h & ~3;
-		while (c--) {
+		for (; c--; h++) {
+			r->pci_addr = h;
 			p = (volatile uint8_t *)&r->pci_io_data + (h & 3);
 			*p = *a++;
-			if (!(++h & 3))
-				r->pci_addr = h;
 		}
 	}
 }
@@ -1119,26 +1146,26 @@ dino_wr_1(void *v, bus_space_handle_t h, bus_size_t o, const uint8_t *a, bus_siz
 void
 dino_wr_2(void *v, bus_space_handle_t h, bus_size_t o, const uint16_t *a, bus_size_t c)
 {
-	volatile uint16_t *p;
+	volatile uint16_t *p, data;
 
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint16_t *)h;
-		while (c--)
-			*p++ = htole16(*a++);
+		while (c--) {
+			data = *a++;
+			*p++ = htole16(data);
+		}
 	} else {
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
-		r->pci_addr = h & ~3;
-		while (c--) {
+		for (; c--; h += 2) {
+			r->pci_addr = h;
 			p = (volatile uint16_t *)&r->pci_io_data;
 			if (h & 2)
 				p++;
-			*p = htole16(*a++);
-			h += 2;
-			if (!(h & 2))
-				r->pci_addr = h;
+			data = *a++;
+			*p = htole16(data);
 		}
 	}
 }
@@ -1146,20 +1173,23 @@ dino_wr_2(void *v, bus_space_handle_t h, bus_size_t o, const uint16_t *a, bus_si
 void
 dino_wr_4(void *v, bus_space_handle_t h, bus_size_t o, const uint32_t *a, bus_size_t c)
 {
-	volatile uint32_t *p;
+	volatile uint32_t *p, data;
 
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint32_t *)h;
-		while (c--)
-			*p++ = htole32(*a++);
+		while (c--) {
+			data = *a++;
+			*p++ = htole32(data);
+		}
 	} else {
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
 		for (; c--; h += 4) {
 			r->pci_addr = h;
-			r->pci_io_data = htole32(*a++);
+			data = *a++;
+			r->pci_io_data = htole32(data);
 		}
 	}
 }
@@ -1176,8 +1206,9 @@ dino_rrr_2(void *v, bus_space_handle_t h, bus_size_t o,
 {
 	volatile uint16_t *p;
 
+	c /= 2;
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint16_t *)h;
 		while (c--)
 			*a++ = *p++;
@@ -1185,15 +1216,12 @@ dino_rrr_2(void *v, bus_space_handle_t h, bus_size_t o,
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
-		r->pci_addr = h & ~3;
-		while (c--) {
+		for (; c--; h += 2) {
+			r->pci_addr = h;
 			p = (volatile uint16_t *)&r->pci_io_data;
 			if (h & 2)
 				p++;
 			*a++ = *p;
-			h += 2;
-			if (!(h & 2))
-				r->pci_addr = h;
 		}
 	}
 }
@@ -1204,8 +1232,9 @@ dino_rrr_4(void *v, bus_space_handle_t h, bus_size_t o,
 {
 	volatile uint32_t *p;
 
+	c /= 4;
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint32_t *)h;
 		while (c--)
 			*a++ = *p++;
@@ -1233,8 +1262,9 @@ dino_wrr_2(void *v, bus_space_handle_t h, bus_size_t o,
 {
 	volatile uint16_t *p;
 
+	c /= 2;
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint16_t *)h;
 		while (c--)
 			*p++ = *a++;
@@ -1242,15 +1272,12 @@ dino_wrr_2(void *v, bus_space_handle_t h, bus_size_t o,
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
-		r->pci_addr = h & ~3;
-		while (c--) {
+		for (; c--; h += 2) {
+			r->pci_addr = h;
 			p = (volatile uint16_t *)&r->pci_io_data;
 			if (h & 2)
 				p++;
 			*p = *a++;
-			h += 2;
-			if (!(h & 2))
-				r->pci_addr = h;
 		}
 	}
 }
@@ -1261,8 +1288,9 @@ dino_wrr_4(void *v, bus_space_handle_t h, bus_size_t o,
 {
 	volatile uint32_t *p;
 
+	c /= 4;
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint32_t *)h;
 		while (c--)
 			*p++ = *a++;
@@ -1290,7 +1318,7 @@ dino_sr_1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t vv, bus_size_t c)
 	volatile uint8_t *p;
 
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint8_t *)h;
 		while (c--)
 			*p++ = vv;
@@ -1298,12 +1326,10 @@ dino_sr_1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t vv, bus_size_t c)
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
-		r->pci_addr = h & ~3;
-		while (c--) {
+		for (; c--; h++) {
+			r->pci_addr = h;
 			p = (volatile uint8_t *)&r->pci_io_data + (h & 3);
 			*p = vv;
-			if (!(++h & 3))
-				r->pci_addr = h;
 		}
 	}
 }
@@ -1314,23 +1340,21 @@ dino_sr_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t vv, bus_size_t c
 	volatile uint16_t *p;
 
 	h += o;
-	if (h & 0xf0000000) {
+	vv = htole16(vv);
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint16_t *)h;
 		while (c--)
-			*p++ = htole16(vv);
+			*p++ = vv;
 	} else {
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
-		r->pci_addr = h & ~3;
-		while (c--) {
+		for (; c--; h += 2) {
+			r->pci_addr = h;
 			p = (volatile uint16_t *)&r->pci_io_data;
 			if (h & 2)
 				p++;
-			*p = htole16(vv);
-			h += 2;
-			if (!(h & 2))
-				r->pci_addr = h;
+			*p = vv;
 		}
 	}
 }
@@ -1341,17 +1365,18 @@ dino_sr_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t vv, bus_size_t c
 	volatile uint32_t *p;
 
 	h += o;
-	if (h & 0xf0000000) {
+	vv = htole32(vv);
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint32_t *)h;
 		while (c--)
-			*p++ = htole32(vv);
+			*p++ = vv;
 	} else {
 		struct dino_softc *sc = v;
 		volatile struct dino_regs *r = sc->sc_regs;
 
 		for (; c--; h += 4) {
 			r->pci_addr = h;
-			r->pci_io_data = htole32(vv);
+			r->pci_io_data = vv;
 		}
 	}
 }
@@ -1574,6 +1599,10 @@ dinomatch(device_t parent, cfdata_t cfdata, void *aux)
 	    ca->ca_type.iodc_sv_model != HPPA_BRIDGE_DINO)
 		return 0;
 
+	/* do not match on the elroy family */
+	if (ca->ca_type.iodc_model == 0x78)
+		return 0;
+
 	/* Make sure we have an IRQ. */
 	if (ca->ca_irq == HP700CF_IRQ_UNDEF)
 		ca->ca_irq = hp700_intr_allocate_bit(&int_reg_cpu);
@@ -1588,7 +1617,7 @@ dinoattach(device_t parent, device_t self, void *aux)
 	struct confargs *ca = (struct confargs *)aux, nca;
 	struct pcibus_attach_args pba;
 	volatile struct dino_regs *r;
-	const char *p;
+	const char *p = NULL;
 	u_int data;
 	int s, ver;
 
@@ -1649,34 +1678,36 @@ dinoattach(device_t parent, device_t self, void *aux)
 
 	/* TODO establish the bus error interrupt */
 
-	r->iodc = 0;
-	data = r->iodc;
-	ver = (ca->ca_type.iodc_model << 4) |
-	    (ca->ca_type.iodc_revision >> 4);
-	switch (ver) {
-	case 0x05d:	p = "Dino";	/* j2240 */
-	case 0x680:	p = "Dino";
-		switch (data >> 16) {
-		case 0x6800:	ver = 0x20;	break;
-		case 0x6801:	ver = 0x21;	break;
-		case 0x6802:	ver = 0x30;	break;
-		case 0x6803:	ver = 0x31;	break;
-		default:	ver = 0x40;	break;
+	ver = ca->ca_type.iodc_revision;
+	switch ((ca->ca_type.iodc_model << 4) |
+	    (ca->ca_type.iodc_revision >> 4)) {
+	case 0x05d:
+		p = "Dino (card)";	/* j2240 */
+		/* FALLTHROUGH */
+	case 0x680:
+		if (!p)
+			p = "Dino";
+		switch (ver & 0xf) {
+		case 0:	ver = 0x20;	break;
+		case 1:	ver = 0x21;	break;
+		case 2:	ver = 0x30;	break;
+		case 3:	ver = 0x31;	break;
 		}
 		break;
 
-	case 0x682:	p = "Cujo";
-		switch (data >> 16) {
-		case 0x6820:	ver = 0x10;	break;
-		case 0x6821:	ver = 0x20;	break;
-		default:	ver = 0x30;	break;
+	case 0x682:
+		p = "Cujo";
+		switch (ver & 0xf) {
+		case 0:	ver = 0x10;	break;
+		case 1:	ver = 0x20;	break;
 		}
 		break;
 
-	default:	p = "Mojo";
-		ver = (data >> 16) & 0xff;
+	default:
+		p = "Mojo";
 		break;
 	}
+
 	sc->sc_ver = ver;
 	aprint_normal(": %s V%d.%d\n", p, ver >> 4, ver & 0xf);
 

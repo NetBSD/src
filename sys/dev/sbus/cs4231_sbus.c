@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.37.4.3 2009/05/16 10:41:43 yamt Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.37.4.4 2010/03/11 15:04:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.37.4.3 2009/05/16 10:41:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.37.4.4 2010/03/11 15:04:02 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -73,7 +73,6 @@ struct cs4231_sbus_softc {
 
 	void *sc_pint;
 	void *sc_rint;
-	struct sbusdev sc_sd;			/* sbus device */
 	bus_space_tag_t sc_bt;			/* DMA controller tag */
 	bus_space_handle_t sc_bh;		/* DMA controller registers */
 };
@@ -155,7 +154,7 @@ cs4231_sbus_attach(device_t parent, device_t self, void *aux)
 	struct sbus_attach_args *sa;
 	bus_space_handle_t bh;
 
-	sbsc = (struct cs4231_sbus_softc *)self;
+	sbsc = device_private(self);
 	sc = &sbsc->sc_cs4231;
 	sa = aux;
 	sbsc->sc_bt = sc->sc_bustag = sa->sa_bustag;
@@ -188,15 +187,13 @@ cs4231_sbus_attach(device_t parent, device_t self, void *aux)
 	cs4231_common_attach(sc, bh);
 	printf("\n");
 
-	sbus_establish(&sbsc->sc_sd, &sc->sc_ad1848.sc_dev);
-
 	/* Establish interrupt channel */
 	if (sa->sa_nintr)
 		bus_intr_establish(sa->sa_bustag,
 				   sa->sa_pri, IPL_SCHED,
 				   cs4231_sbus_intr, sbsc);
 
-	audio_attach_mi(&audiocs_sbus_hw_if, sbsc, &sc->sc_ad1848.sc_dev);
+	audio_attach_mi(&audiocs_sbus_hw_if, sbsc, self);
 }
 
 

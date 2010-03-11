@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.145 2008/01/06 18:50:30 mhitch Exp $	*/
+/*	$NetBSD: locore.s,v 1.145.10.1 2010/03/11 15:01:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990 The Regents of the University of California.
@@ -1023,16 +1023,12 @@ LMMUenable_end:
 	lea	_ASM_LABEL(tmpstk),%sp	| give ourselves a temporary stack
 	jbsr	_C_LABEL(start_c_finish)
 
-/* set kernel stack, user SP, and initial pcb */
-	movl	_C_LABEL(proc0paddr),%a1	| proc0 kernel stack
+/* set kernel stack, user SP */
+	movl	_C_LABEL(lwp0uarea),%a1	| grab lwp0 uarea 
 	lea	%a1@(USPACE),%sp	| set kernel stack to end of area
-	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.p_addr
-	movl	%a2,_C_LABEL(curlwp)	|   and curlwp so that
-	movl	%a1,%a2@(L_ADDR)	|   we don't dref NULL in trap()
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
 	movl	%a2,%a1@(PCB_USP)	| and save it
-	movl	%a1,_C_LABEL(curpcb)	| lwp0 is running
 	clrw	%a1@(PCB_FLAGS)		| clear flags
 #ifdef FPCOPROC
 	clrl	%a1@(PCB_FPCTX)		| ensure null FP context
@@ -1577,6 +1573,16 @@ Ldorebootend:
 	.align 2
 #endif
 	nop
+ENTRY_NOPROFILE(delay)
+ENTRY_NOPROFILE(DELAY)
+	movql #10,%d1		| 2 +2
+	movl %sp@(4),%d0	| 4 +4
+	lsll %d1,%d0		| 8 +2
+	movl _C_LABEL(delaydivisor),%d1	| A +6
+Ldelay:				| longword aligned again.
+	subl %d1,%d0
+	jcc Ldelay
+	rts
 
 #ifdef M68060
 ENTRY_NOPROFILE(intemu60)
@@ -1607,10 +1613,11 @@ GLOBAL(fputype)
 	.long	FPU_NONE
 GLOBAL(protorp)
 	.long	0x80000002,0	| prototype root pointer
-
-GLOBAL(proc0paddr)
-	.long	0		| KVA of proc0 u-area
-
+GLOBAL(delaydivisor)
+	.long	12		| should be enough for 80 MHz 68060
+				| will be adapted to other CPUs in
+				| start_c_cleanup and calibrated
+				| at clock attach time.
 #ifdef DEBUG
 ASGLOBAL(fulltflush)
 	.long	0

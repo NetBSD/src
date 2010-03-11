@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ipc.c,v 1.14.10.1 2009/05/04 08:12:25 yamt Exp $	*/
+/*	$NetBSD: netbsd32_ipc.c,v 1.14.10.2 2010/03/11 15:03:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.14.10.1 2009/05/04 08:12:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.14.10.2 2010/03/11 15:03:18 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -347,8 +347,8 @@ netbsd32_shmget(struct lwp *l, const struct netbsd32_shmget_args *uap, register_
 	} */
 	struct sys_shmget_args ua;
 
-	NETBSD32TOX_UAP(key, key_t)
-	NETBSD32TOX_UAP(size, size_t)
+	NETBSD32TOX_UAP(key, key_t);
+	NETBSD32TOX_UAP(size, size_t);
 	NETBSD32TO64_UAP(shmflg);
 	return (sys_shmget(l, &ua, retval));
 }

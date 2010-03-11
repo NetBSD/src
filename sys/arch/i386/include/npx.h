@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.h,v 1.22 2006/05/02 19:03:24 drochner Exp $	*/
+/*	$NetBSD: npx.h,v 1.22.66.1 2010/03/11 15:02:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,8 +81,8 @@ struct save87 {
 struct envxmm {
 /*0*/	uint16_t en_cw;		/* FPU Control Word */
 	uint16_t en_sw;		/* FPU Status Word */
-	uint8_t  en_rsvd0;
 	uint8_t  en_tw;		/* FPU Tag Word (abridged) */
+	uint8_t  en_rsvd0;
 	uint16_t en_opcode;	/* FPU Opcode */
 	uint32_t en_fip;	/* FPU Instruction Pointer */
 	uint16_t en_fcs;	/* FPU IP selector */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50.20.3 2009/08/19 18:46:40 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50.20.4 2010/03/11 15:02:49 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,12 +67,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50.20.3 2009/08/19 18:46:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50.20.4 2010/03/11 15:02:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/pool.h>
@@ -85,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50.20.3 2009/08/19 18:46:40 yamt Exp $");
 #include <machine/powerpc.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 #include <machine/tlb.h>
 
 /*
@@ -674,19 +674,6 @@ pmap_update(struct pmap *pmap)
 }
 
 /*
- * Garbage collects the physical map system for
- * pages which are no longer used.
- * Success need not be guaranteed -- that is, there
- * may well be pages which are not referenced, but
- * others may be collected.
- * Called by the pageout daemon when pages are scarce.
- */
-void
-pmap_collect(struct pmap *pm)
-{
-}
-
-/*
  * Fill the given physical page with zeroes.
  */
 void
@@ -927,7 +914,7 @@ pmap_unwire(struct pmap *pm, vaddr_t va)
 }
 
 void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	int s;
 	u_int tte;
@@ -1143,7 +1130,7 @@ pmap_activate(struct lwp *l)
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	/*
-	 * XXX Normally performed in cpu_fork().
+	 * XXX Normally performed in cpu_lwp_fork().
 	 */
 	printf("pmap_activate(%p), pmap=%p\n",l,pmap);
 	pcb->pcb_pm = pmap;
@@ -1901,7 +1888,7 @@ pmap_testout(void)
 	       ref, mod);
 
 	pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
-	pmap_kenter_pa(va, pa, VM_PROT_ALL);
+	pmap_kenter_pa(va, pa, VM_PROT_ALL, 0);
 	uvm_km_free(kernel_map, (vaddr_t)va, PAGE_SIZE, UVM_KMF_WIRED);
 }
 #endif

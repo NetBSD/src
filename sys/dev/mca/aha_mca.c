@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_mca.c,v 1.18.4.1 2009/05/16 10:41:27 yamt Exp $	*/
+/*	$NetBSD: aha_mca.c,v 1.18.4.2 2010/03/11 15:03:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.18.4.1 2009/05/16 10:41:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.18.4.2 2010/03/11 15:03:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,15 +77,14 @@ __KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.18.4.1 2009/05/16 10:41:27 yamt Exp $"
 
 #define	AHA_ISA_IOSIZE	4
 
-int	aha_mca_probe(device_t, cfdata_t, void *);
-void	aha_mca_attach(device_t, device_t, void *);
+static int	aha_mca_probe(device_t, cfdata_t, void *);
+static void	aha_mca_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(aha_mca, sizeof(struct aha_softc),
+CFATTACH_DECL_NEW(aha_mca, sizeof(struct aha_softc),
     aha_mca_probe, aha_mca_attach, NULL, NULL);
 
 int
-aha_mca_probe(device_t parent, cfdata_t match,
-    void *aux)
+aha_mca_probe(device_t parent, cfdata_t match, void *aux)
 {
 	register struct mca_attach_args *ma = aux;
 
@@ -106,6 +105,8 @@ aha_mca_attach(device_t parent, device_t self, void *aux)
 	struct aha_probe_data apd;
 	mca_chipset_tag_t mc = ma->ma_mc;
 	bus_addr_t iobase;
+
+	sc->sc_dev =self;
 
 	/*
 	 * POS registers differ much between 8003 and 8013, so they are
@@ -151,7 +152,7 @@ aha_mca_attach(device_t parent, device_t self, void *aux)
 		 ((ma->ma_pos[3] & 0x40) >> 4);
 
 	if (bus_space_map(iot, iobase, AHA_ISA_IOSIZE, 0, &ioh)) {
-		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
+		aprint_error_dev(self, "can't map i/o space\n");
 		return;
 	}
 
@@ -166,7 +167,7 @@ aha_mca_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ih = mca_intr_establish(mc, apd.sc_irq, IPL_BIO, aha_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
+		aprint_error_dev(self, "couldn't establish interrupt\n");
 		return;
 	}
 

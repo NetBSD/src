@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.208.10.2 2009/06/20 07:19:59 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.208.10.3 2010/03/11 15:01:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.208.10.2 2009/06/20 07:19:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.208.10.3 2010/03/11 15:01:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.208.10.2 2009/06/20 07:19:59 yamt Exp 
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
-#include <sys/user.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/queue.h>
@@ -164,7 +163,6 @@ void fdintr(int);
 
 volatile unsigned int interrupt_depth = 0;
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 void *	msgbufaddr;
@@ -292,13 +290,6 @@ cpu_startup(void)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
 
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
-				 false, NULL);
-
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
@@ -331,9 +322,10 @@ cpu_startup(void)
  * Set registers on exec.
  */
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
+	struct pcb *pcb = lwp_getpcb(l);
 
 	frame->f_sr = PSL_USERSET;
 	frame->f_pc = pack->ep_entry & ~1;
@@ -355,13 +347,13 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	frame->f_regs[SP] = stack;
 
 	/* restore a null state frame */
-	l->l_addr->u_pcb.pcb_fpregs.fpf_null = 0;
+	pcb->pcb_fpregs.fpf_null = 0;
 #ifdef FPU_EMULATE
 	if (!fputype)
-		memset(&l->l_addr->u_pcb.pcb_fpregs, 0, sizeof(struct fpframe));
+		memset(&pcb->pcb_fpregs, 0, sizeof(struct fpframe));
 	else
 #endif
-		m68881_restore(&l->l_addr->u_pcb.pcb_fpregs);
+		m68881_restore(&pcb->pcb_fpregs);
 }
 
 /*
@@ -489,9 +481,11 @@ bootsync(void)
 void
 cpu_reboot(register int howto, char *bootstr)
 {
+	struct pcb *pcb = lwp_getpcb(curlwp);
+
 	/* take a snap shot before clobbering any registers */
-	if (curlwp->l_addr)
-		savectx(&curlwp->l_addr->u_pcb);
+	if (pcb != NULL)
+		savectx(pcb);
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0)
@@ -534,7 +528,6 @@ cpu_dumpconf(void)
 	const struct bdevsw *bdev;
 	int nblks;
 	int i;
-	extern u_int Sysseg_pa;
 	extern int end[];
 
 	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
@@ -567,7 +560,7 @@ cpu_dumpconf(void)
 	/*
 	 * Initialize the pointer to the kernel segment table.
 	 */
-	m->sysseg_pa = Sysseg_pa;
+	m->sysseg_pa = (paddr_t)pmap_kernel()->pm_stpa;
 
 	/*
 	 * Initialize relocation value such that:
@@ -1299,19 +1292,12 @@ int _spllkm7() {
 int ipl2spl_table[_NIPL] = {
 	[IPL_NONE] = PSL_IPL0|PSL_S,
 	[IPL_SOFTCLOCK] = PSL_IPL1|PSL_S,
-	[IPL_BIO] = PSL_IPL3|PSL_S,
-	[IPL_NET] = PSL_IPL3|PSL_S,
-	[IPL_TTY] = PSL_IPL4|PSL_S,
-	[IPL_SERIAL] = PSL_IPL5|PSL_S,
 	[IPL_VM] = PSL_IPL4|PSL_S,
-	[IPL_SERIAL] = PSL_IPL4|PSL_S,	/* patched by some devices at attach
-					   time (currently, only the coms) */
-	[IPL_AUDIO] = PSL_IPL6|PSL_S,
 #if defined(LEV6_DEFER)
-	[IPL_CLOCK] = PSL_IPL4|PSL_S,
+	[IPL_SCHED] = PSL_IPL4|PSL_S,
 	[IPL_HIGH] = PSL_IPL4|PSL_S,
 #else /* defined(LEV6_DEFER) */
-	[IPL_CLOCK] = PSL_IPL6|PSL_S,
+	[IPL_SCHED] = PSL_IPL6|PSL_S,
 	[IPL_HIGH] = PSL_IPL7|PSL_S,
 #endif /* defined(LEV6_DEFER) */
 };

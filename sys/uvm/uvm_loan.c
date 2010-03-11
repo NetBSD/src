@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.70.10.1 2009/05/04 08:14:39 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.70.10.2 2010/03/11 15:04:47 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.70.10.1 2009/05/04 08:14:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.70.10.2 2010/03/11 15:04:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -403,7 +403,7 @@ uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
 
 		/* "try again"?   sleep a bit and retry ... */
 		if (error == EAGAIN) {
-			tsleep(&lbolt, PVM, "loanagain", 0);
+			kpause("loanagain", false, hz/2, NULL);
 			return (0);
 		}
 
@@ -535,7 +535,7 @@ reget:
 		    pgoff + (ndone << PAGE_SHIFT), pgpp, &npages, 0,
 		    VM_PROT_READ, 0, PGO_SYNCIO);
 		if (error == EAGAIN) {
-			tsleep(&lbolt, PVM, "loanuopg", 0);
+			kpause("loanuopg", false, hz/2, NULL);
 			continue;
 		}
 		if (error)
@@ -638,7 +638,10 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 	 * XXXCDC: duplicate code with uvm_fault().
 	 */
 
+	/* locked: maps(read), amap(if there) */
 	mutex_enter(&uobj->vmobjlock);
+	/* locked: maps(read), amap(if there), uobj */
+
 	if (uobj->pgops->pgo_get) {	/* try locked pgo_get */
 		npages = 1;
 		pg = NULL;
@@ -675,7 +678,7 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 
 		if (error) {
 			if (error == EAGAIN) {
-				tsleep(&lbolt, PVM, "fltagain2", 0);
+				kpause("fltagain2", false, hz/2, NULL);
 				return (0);
 			}
 			return (-1);
@@ -1181,4 +1184,63 @@ uvm_loanbreak(struct vm_page *uobjpage)
 	 */
 
 	return pg;
+}
+
+int
+uvm_loanbreak_anon(struct vm_anon *anon, struct uvm_object *uobj)
+{
+	struct vm_page *pg;
+
+	KASSERT(mutex_owned(&anon->an_lock));
+	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
+
+	/* get new un-owned replacement page */
+	pg = uvm_pagealloc(NULL, 0, NULL, 0);
+	if (pg == NULL) {
+		return ENOMEM;
+	}
+
+	/*
+	 * copy data, kill loan, and drop uobj lock (if any)
+	 */
+	/* copy old -> new */
+	uvm_pagecopy(anon->an_page, pg);
+
+	/* force reload */
+	pmap_page_protect(anon->an_page, VM_PROT_NONE);
+	mutex_enter(&uvm_pageqlock);	  /* KILL loan */
+
+	anon->an_page->uanon = NULL;
+	/* in case we owned */
+	anon->an_page->pqflags &= ~PQ_ANON;
+
+	if (uobj) {
+		/* if we were receiver of loan */
+		anon->an_page->loan_count--;
+	} else {
+		/*
+		 * we were the lender (A->K); need to remove the page from
+		 * pageq's.
+		 */
+		uvm_pagedequeue(anon->an_page);
+	}
+
+	if (uobj) {
+		mutex_exit(&uobj->vmobjlock);
+	}
+
+	/* install new page in anon */
+	anon->an_page = pg;
+	pg->uanon = anon;
+	pg->pqflags |= PQ_ANON;
+
+	uvm_pageactivate(pg);
+	mutex_exit(&uvm_pageqlock);
+
+	pg->flags &= ~(PG_BUSY|PG_FAKE);
+	UVM_PAGE_OWN(pg, NULL);
+
+	/* done! */
+
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3.72.2 2009/08/19 18:45:57 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.3.72.3 2010/03/11 15:02:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -11,12 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Leo Weppelman for the
- *	NetBSD Project.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -252,6 +246,9 @@ struct amiga_bus_space_methods {
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
 #define __BUS_SPACE_HAS_STREAM_METHODS
+
+/* Instruction for enforcing reorder protection. */
+#define amiga_bus_reorder_protect() __asm volatile ("eieio")
 
 extern const struct amiga_bus_space_methods amiga_bus_stride_1;
 extern const struct amiga_bus_space_methods amiga_bus_stride_2;

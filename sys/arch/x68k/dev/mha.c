@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.46.20.2 2009/05/04 08:12:06 yamt Exp $	*/
+/*	$NetBSD: mha.c,v 1.46.20.3 2010/03/11 15:03:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.46.20.2 2009/05/04 08:12:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.46.20.3 2010/03/11 15:03:07 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -102,7 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.46.20.2 2009/05/04 08:12:06 yamt Exp $");
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 
 #include <machine/bus.h>

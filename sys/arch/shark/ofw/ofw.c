@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.42.20.3 2009/08/19 18:46:46 yamt Exp $	*/
+/*	$NetBSD: ofw.c,v 1.42.20.4 2010/03/11 15:02:56 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.42.20.3 2009/08/19 18:46:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.42.20.4 2010/03/11 15:02:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -746,7 +746,7 @@ ofw_configisadma(paddr_t *pdma)
  *  and poking them into the new page tables.  We then notify OFW
  *  that we are assuming control of memory-management by installing
  *  our callback-handler, and switch to the NetBSD-managed page
- *  tables with the setttb() call.
+ *  tables with the cpu_setttb() call.
  *  
  *  This scheme may cause some amount of memory to be wasted within
  *  OFW as dead page tables, but it shouldn't be more than about 
@@ -780,7 +780,7 @@ ofw_configmem(void)
 
 	/* Switch to the proc0 pagetables. */
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
@@ -788,14 +788,7 @@ ofw_configmem(void)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init
 	 */
-	{
-		extern struct user *proc0paddr;
-		proc0paddr = (struct user *)kernelstack.pv_va;
-		lwp0.l_addr = proc0paddr;
-	}
-
-	/* Aaaaaaaah, running in the proc0 address space! */
-	/* I feel good... */
+	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
 
 	/* Set-up the various globals which describe physical memory for pmap. */
 	{

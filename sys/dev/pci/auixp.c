@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.28.4.2 2009/05/16 10:41:32 yamt Exp $ */
+/* $NetBSD: auixp.c,v 1.28.4.3 2010/03/11 15:03:43 yamt Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.28.4.2 2009/05/16 10:41:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.28.4.3 2010/03/11 15:03:43 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -194,7 +194,7 @@ static void	auixp_program_dma_chain(struct auixp_softc *,
 static void	auixp_dma_update(struct auixp_softc *, struct auixp_dma *);
 static void	auixp_update_busbusy(struct auixp_softc *);
 
-static bool	auixp_resume(device_t PMF_FN_PROTO);
+static bool	auixp_resume(device_t, const pmf_qual_t *);
 
 
 #ifdef DEBUG_AUIXP
@@ -1169,8 +1169,8 @@ auixp_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "can't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
@@ -1753,7 +1753,7 @@ auixp_init(struct auixp_softc *sc)
 }
 
 static bool
-auixp_resume(device_t dv PMF_FN_ARGS)
+auixp_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct auixp_softc *sc = device_private(dv);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36.20.2 2009/05/04 08:10:27 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36.20.3 2010/03/11 15:01:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36.20.2 2009/05/04 08:10:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36.20.3 2010/03/11 15:01:56 yamt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -123,8 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36.20.2 2009/05/04 08:10:27 yamt Exp $
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
-#include <sys/user.h>
-#include <sys/mount.h> 
+#include <sys/mount.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
 #include <sys/termios.h>
@@ -184,13 +183,10 @@ struct p5064_config p5064_configuration;
 struct p6032_config p6032_configuration;
 #endif 
 
-struct	user *proc0paddr;
-
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int	physmem;		/* # pages of physical memory */
@@ -214,8 +210,7 @@ mach_init(int argc, char *argv[], char *envp[])
 	vsize_t size;
 	const char *cp;
 	char *cp0;
-	void *v;
-	int i;
+	size_t i;
 
 	/* Disable interrupts. */
 	(void) splhigh();
@@ -405,7 +400,12 @@ mach_init(int argc, char *argv[], char *envp[])
 	led_display('b', 'o', 'p', 't');
 	boothowto = 0;
 	if (argc > 1) {
-		for (cp = argv[1]; cp != NULL && *cp != '\0'; cp++) {
+#ifdef _LP64
+		cp = (void *)(intptr_t)((int32_t *)argv)[1];
+#else
+		cp = argv[1];
+#endif
+		for (; cp != NULL && *cp != '\0'; cp++) {
 			switch (*cp) {
 #if defined(KGDB) || defined(DDB)
 			case 'd':	/* break into kernel debugger */
@@ -474,11 +474,11 @@ mach_init(int argc, char *argv[], char *envp[])
 	 * it's already in bytes, not megabytes.
 	 */
 	if (size < 1024) {
-		printf("Memory size: 0x%08lx (0x%08lx)\n", size * 1024 * 1024,
-		    size);
+		printf("Memory size: %#"PRIxVSIZE" (%"PRIxVSIZE")\n",
+		    size * 1024 * 1024, size);
 		size *= 1024 * 1024;
 	} else
-		printf("Memory size: 0x%08lx\n", size);
+		printf("Memory size: %#"PRIxVSIZE"\n", size);
 
 	mem_clusters[mem_cluster_cnt].start = PAGE_SIZE;
 	mem_clusters[mem_cluster_cnt].size =
@@ -509,7 +509,7 @@ mach_init(int argc, char *argv[], char *envp[])
 			 * within the segment.
 			 */
 #if 1
-			printf("Cluster %d contains kernel\n", i);
+			printf("Cluster %zu contains kernel\n", i);
 #endif
 			if (pfn0 < kernstartpfn) {
 				/*
@@ -517,7 +517,8 @@ mach_init(int argc, char *argv[], char *envp[])
 				 */
 #if 1
 				printf("Loading chunk before kernel: "
-				    "0x%lx / 0x%lx\n", pfn0, kernstartpfn);
+				    "%#"PRIxPADDR" / %#"PRIxPADDR"\n",
+				    pfn0, kernstartpfn);
 #endif
 				uvm_page_physload(pfn0, kernstartpfn,
 				    pfn0, kernstartpfn, VM_FREELIST_DEFAULT);
@@ -528,7 +529,8 @@ mach_init(int argc, char *argv[], char *envp[])
 				 */
 #if 1
 				printf("Loading chunk after kernel: "
-				    "0x%lx / 0x%lx\n", kernendpfn, pfn1);
+				    "%#"PRIxPADDR" / %#"PRIxPADDR"\n",
+				    kernendpfn, pfn1);
 #endif
 				uvm_page_physload(kernendpfn, pfn1,
 				    kernendpfn, pfn1, VM_FREELIST_DEFAULT);
@@ -538,8 +540,8 @@ mach_init(int argc, char *argv[], char *envp[])
 			 * Just load this cluster as one chunk.
 			 */
 #if 1
-			printf("Loading cluster %d: 0x%lx / 0x%lx\n", i,
-			    pfn0, pfn1);
+			printf("Loading cluster %zu: %#"PRIxPADDR
+			    " / %#"PRIxPADDR"\n", i, pfn0, pfn1);
 #endif
 			uvm_page_physload(pfn0, pfn1, pfn0, pfn1,
 			    VM_FREELIST_DEFAULT);
@@ -562,14 +564,10 @@ mach_init(int argc, char *argv[], char *envp[])
 	pmap_bootstrap();
 
 	/*
-	 * Init mapping for u page(s) for lwp0.
+	 * Allocate uarea page for lwp0 and set it.
 	 */
 	led_display('u', 's', 'p', 'c');
-	v = (void *) uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = proc0paddr = (struct user *) v;
-	lwp0.l_md.md_regs = (struct frame *)((char*)v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	mips_init_lwp0_uarea();
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
@@ -658,7 +656,7 @@ cpu_startup(void)
 }
 
 int	waittime = -1;
-struct user dumppcb;	/* Actually, struct pcb would do. */
+struct pcb dumppcb;
 
 void
 cpu_reboot(int howto, char *bootstr)
@@ -667,7 +665,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Take a snapshot before clobbering any registers. */
 	if (curlwp)
-		savectx((struct user *) curpcb);
+		savectx(curpcb);
 
 	/* If "always halt" was specified as a boot flag, obey. */
 	if (boothowto & RB_HALT)

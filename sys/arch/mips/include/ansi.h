@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.23.22.1 2009/05/04 08:11:31 yamt Exp $	*/
+/*	$NetBSD: ansi.h,v 1.23.22.2 2010/03/11 15:02:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -47,7 +47,7 @@
  *	#endif
  */
 #define	_BSD_CLOCK_T_		unsigned long	/* clock() */
-#ifdef _LP64
+#ifndef __mips_o32
 #define	_BSD_PTRDIFF_T_		long		/* ptr1 - ptr2 */
 #define	_BSD_SIZE_T_		unsigned long	/* sizeof() */
 #define	_BSD_SSIZE_T_		long		/* byte count or error */
@@ -55,7 +55,7 @@
 #define	_BSD_PTRDIFF_T_		int		/* ptr1 - ptr2 */
 #define	_BSD_SIZE_T_		unsigned int	/* sizeof() */
 #define	_BSD_SSIZE_T_		int		/* byte count or error */
-#endif
+#endif /* !__mips_o32 */
 #define	_BSD_TIME_T_		__int64_t	/* time() */
 #if __GNUC_PREREQ__(3, 0)
 #define	_BSD_VA_LIST_		__builtin_va_list /* GCC builtin type */

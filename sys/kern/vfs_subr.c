@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.336.4.4 2009/07/18 14:53:23 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.336.4.5 2010/03/11 15:04:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.336.4.4 2009/07/18 14:53:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.336.4.5 2010/03/11 15:04:21 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -370,6 +370,17 @@ try_nextlist:
 	TAILQ_REMOVE(listhd, vp, v_freelist);
 	vp->v_freelisthd = NULL;
 	mutex_exit(&vnode_free_list_lock);
+
+	if (vp->v_usecount != 0) {
+		/*
+		 * was referenced again before we got the interlock
+		 * Don't return to freelist - the holder of the last
+		 * reference will destroy it.
+		 */
+		mutex_exit(&vp->v_interlock);
+		mutex_enter(&vnode_free_list_lock);
+		goto retry;
+	}
 
 	/*
 	 * The vnode is still associated with a file system, so we must
@@ -1306,6 +1317,22 @@ vget(vnode_t *vp, int flags)
 		vrelel(vp, 0);
 		return ENOENT;
 	}
+
+	if ((vp->v_iflag & VI_INACTNOW) != 0) {
+		/*
+		 * if it's being desactived, wait for it to complete.
+		 * Make sure to not return a clean vnode.
+		 */
+		 if ((flags & LK_NOWAIT) != 0) {
+			vrelel(vp, 0);
+			return EBUSY;
+		}
+		vwait(vp, VI_INACTNOW);
+		if ((vp->v_iflag & VI_CLEAN) != 0) {
+			vrelel(vp, 0);
+			return ENOENT;
+		}
+	}
 	if (flags & LK_TYPE_MASK) {
 		error = vn_lock(vp, flags | LK_INTERLOCK);
 		if (error != 0) {
@@ -1397,19 +1424,39 @@ vrelel(vnode_t *vp, int flags)
 		/*
 		 * XXX This ugly block can be largely eliminated if
 		 * locking is pushed down into the file systems.
+		 *
+		 * Defer vnode release to vrele_thread if caller
+		 * requests it explicitly.
 		 */
-		if (curlwp == uvm.pagedaemon_lwp) {
+		if ((curlwp == uvm.pagedaemon_lwp) ||
+		    (flags & VRELEL_ASYNC_RELE) != 0) {
 			/* The pagedaemon can't wait around; defer. */
 			defer = true;
 		} else if (curlwp == vrele_lwp) {
-			/* We have to try harder. */
-			vp->v_iflag &= ~VI_INACTREDO;
+			/*
+			 * We have to try harder. But we can't sleep
+			 * with VI_INACTNOW as vget() may be waiting on it.
+			 */
+			vp->v_iflag &= ~(VI_INACTREDO|VI_INACTNOW);
+			cv_broadcast(&vp->v_cv);
 			error = vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK |
 			    LK_RETRY);
 			if (error != 0) {
 				/* XXX */
 				vpanic(vp, "vrele: unable to lock %p");
 			}
+			mutex_enter(&vp->v_interlock);
+			/*
+			 * if we did get another reference while
+			 * sleeping, don't try to inactivate it yet.
+			 */
+			if (__predict_false(vtryrele(vp))) {
+				VOP_UNLOCK(vp, 0);
+				mutex_exit(&vp->v_interlock);
+				return;
+			}
+			vp->v_iflag |= VI_INACTNOW;
+			mutex_exit(&vp->v_interlock);
 			defer = false;
 		} else if ((vp->v_iflag & VI_LAYER) != 0) {
 			/* 
@@ -1445,6 +1492,7 @@ vrelel(vnode_t *vp, int flags)
 			if (++vrele_pending > (desiredvnodes >> 8))
 				cv_signal(&vrele_cv); 
 			mutex_exit(&vrele_lock);
+			cv_broadcast(&vp->v_cv);
 			mutex_exit(&vp->v_interlock);
 			return;
 		}
@@ -1469,6 +1517,7 @@ vrelel(vnode_t *vp, int flags)
 		VOP_INACTIVE(vp, &recycle);
 		mutex_enter(&vp->v_interlock);
 		vp->v_iflag &= ~VI_INACTNOW;
+		cv_broadcast(&vp->v_cv);
 		if (!recycle) {
 			if (vtryrele(vp)) {
 				mutex_exit(&vp->v_interlock);
@@ -1552,6 +1601,23 @@ vrele(vnode_t *vp)
 	}
 	mutex_enter(&vp->v_interlock);
 	vrelel(vp, 0);
+}
+
+/*
+ * Asynchronous vnode release, vnode is released in different context.
+ */
+void
+vrele_async(vnode_t *vp)
+{
+
+	KASSERT((vp->v_iflag & VI_MARKER) == 0);
+
+	if ((vp->v_iflag & VI_INACTNOW) == 0 && vtryrele(vp)) {
+		return;
+	}
+	
+	mutex_enter(&vp->v_interlock);
+	vrelel(vp, VRELEL_ASYNC_RELE);
 }
 
 static void
@@ -1986,28 +2052,6 @@ vdevgone(int maj, int minl, int minh, enum vtype type)
 }
 
 /*
- * Calculate the total number of references to a special device.
- */
-int
-vcount(vnode_t *vp)
-{
-	int count;
-
-	mutex_enter(&device_lock);
-	mutex_enter(&vp->v_interlock);
-	if (vp->v_specnode == NULL) {
-		count = vp->v_usecount - ((vp->v_iflag & VI_INACTPEND) != 0);
-		mutex_exit(&vp->v_interlock);
-		mutex_exit(&device_lock);
-		return (count);
-	}
-	mutex_exit(&vp->v_interlock);
-	count = vp->v_specnode->sn_dev->sd_opencnt;
-	mutex_exit(&device_lock);
-	return (count);
-}
-
-/*
  * Eliminate all activity associated with the requested vnode
  * and with all vnodes aliased to the requested vnode.
  */
@@ -2136,7 +2180,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 	size_t *sizep = oldlenp;
 	struct mount *mp, *nmp;
 	vnode_t *vp, *mvp, vbuf;
-	char *bp = where, *savebp;
+	char *bp = where;
 	char *ewhere;
 	int error;
 
@@ -2156,17 +2200,17 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 	sysctl_unlock();
 	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
-	     mp = nmp) {
+	    mp = nmp) {
 		if (vfs_busy(mp, &nmp)) {
 			continue;
 		}
-		savebp = bp;
 		/* Allocate a marker vnode. */
 		mvp = vnalloc(mp);
 		/* Should never fail for mp != NULL */
 		KASSERT(mvp != NULL);
 		mutex_enter(&mntvnode_lock);
-		for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+		for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp;
+		    vp = vunmark(mvp)) {
 			vmark(mvp, vp);
 			/*
 			 * Check that the vp is still associated with
@@ -2179,6 +2223,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 				(void)vunmark(mvp);
 				mutex_exit(&mntvnode_lock);
 				vnfree(mvp);
+				vfs_unbusy(mp, false, NULL);
 				sysctl_relock();
 				*sizep = bp - where;
 				return (ENOMEM);
@@ -2186,11 +2231,12 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 			memcpy(&vbuf, vp, VNODESZ);
 			mutex_exit(&mntvnode_lock);
 			if ((error = copyout(&vp, bp, VPTRSZ)) ||
-			   (error = copyout(&vbuf, bp + VPTRSZ, VNODESZ))) {
+			    (error = copyout(&vbuf, bp + VPTRSZ, VNODESZ))) {
 			   	mutex_enter(&mntvnode_lock);
 				(void)vunmark(mvp);
 				mutex_exit(&mntvnode_lock);
 				vnfree(mvp);
+				vfs_unbusy(mp, false, NULL);
 				sysctl_relock();
 				return (error);
 			}
@@ -2411,6 +2457,34 @@ vfs_shutdown1(struct lwp *l)
 }
 
 /*
+ * Print a list of supported file system types (used by vfs_mountroot)
+ */
+static void
+vfs_print_fstypes(void)
+{
+	struct vfsops *v;
+	int cnt = 0;
+
+	mutex_enter(&vfs_list_lock);
+	LIST_FOREACH(v, &vfs_list, vfs_list)
+		++cnt;
+	mutex_exit(&vfs_list_lock);
+
+	if (cnt == 0) {
+		printf("WARNING: No file system modules have been loaded.\n");
+		return;
+	}
+
+	printf("Supported file systems:");
+	mutex_enter(&vfs_list_lock);
+	LIST_FOREACH(v, &vfs_list, vfs_list) {
+		printf(" %s", v->vfs_name);
+	}
+	mutex_exit(&vfs_list_lock);
+	printf("\n");
+}
+
+/*
  * Mount the root file system.  If the operator didn't specify a
  * file system to use, try all possible file systems until one
  * succeeds.
@@ -2444,6 +2518,9 @@ vfs_mountroot(void)
 			printf("vfs_mountroot: can't open root device\n");
 			return (error);
 		}
+		break;
+
+	case DV_VIRTUAL:
 		break;
 
 	default:
@@ -2492,6 +2569,7 @@ vfs_mountroot(void)
 	mutex_exit(&vfs_list_lock);
 
 	if (v == NULL) {
+		vfs_print_fstypes();
 		printf("no file system for %s", device_xname(root_device));
 		if (device_class(root_device) == DV_DISK)
 			printf(" (dev 0x%llx)", (unsigned long long)rootdev);
@@ -2503,6 +2581,33 @@ done:
 	if (error && device_class(root_device) == DV_DISK) {
 		VOP_CLOSE(rootvp, FREAD, FSCRED);
 		vrele(rootvp);
+	}
+	if (error == 0) {
+		extern struct cwdinfo cwdi0;
+
+		CIRCLEQ_FIRST(&mountlist)->mnt_flag |= MNT_ROOTFS;
+		CIRCLEQ_FIRST(&mountlist)->mnt_op->vfs_refcount++;
+
+		/*
+		 * Get the vnode for '/'.  Set cwdi0.cwdi_cdir to
+		 * reference it.
+		 */
+		error = VFS_ROOT(CIRCLEQ_FIRST(&mountlist), &rootvnode);
+		if (error)
+			panic("cannot find root vnode, error=%d", error);
+		cwdi0.cwdi_cdir = rootvnode;
+		vref(cwdi0.cwdi_cdir);
+		VOP_UNLOCK(rootvnode, 0);
+		cwdi0.cwdi_rdir = NULL;
+
+		/*
+		 * Now that root is mounted, we can fixup initproc's CWD
+		 * info.  All other processes are kthreads, which merely
+		 * share proc0's CWD info.
+		 */
+		initproc->p_cwdi->cwdi_cdir = rootvnode;
+		vref(initproc->p_cwdi->cwdi_cdir);
+		initproc->p_cwdi->cwdi_rdir = NULL;
 	}
 	return (error);
 }
@@ -2559,6 +2664,8 @@ void
 vattr_null(struct vattr *vap)
 {
 
+	memset(vap, 0, sizeof(*vap));
+
 	vap->va_type = VNON;
 
 	/*
@@ -2585,7 +2692,6 @@ vattr_null(struct vattr *vap)
 	vap->va_flags = VNOVAL;
 	vap->va_rdev = VNOVAL;
 	vap->va_bytes = VNOVAL;
-	vap->va_vaflags = 0;
 }
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
@@ -3260,3 +3366,76 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 }
 #endif /* DDB || DEBUGPRINT */
 
+/*
+ * Check if a device pointed to by vp is mounted.
+ *
+ * Returns:
+ *   EINVAL	if it's not a disk
+ *   EBUSY	if it's a disk and mounted
+ *   0		if it's a disk and not mounted
+ */
+int
+rawdev_mounted(struct vnode *vp, struct vnode **bvpp)
+{
+	struct vnode *bvp;
+	dev_t dev;
+	int d_type;
+
+	bvp = NULL;
+	dev = vp->v_rdev;
+	d_type = D_OTHER;
+
+	if (iskmemvp(vp))
+		return EINVAL;
+
+	switch (vp->v_type) {
+	case VCHR: {
+		const struct cdevsw *cdev;
+
+		cdev = cdevsw_lookup(dev);
+		if (cdev != NULL) {
+			dev_t blkdev;
+
+			blkdev = devsw_chr2blk(dev);
+			if (blkdev != NODEV) {
+				vfinddev(blkdev, VBLK, &bvp);
+				if (bvp != NULL)
+					d_type = (cdev->d_flag & D_TYPEMASK);
+			}
+		}
+
+		break;
+		}
+
+	case VBLK: {
+		const struct bdevsw *bdev;
+
+		bdev = bdevsw_lookup(dev);
+		if (bdev != NULL)
+			d_type = (bdev->d_flag & D_TYPEMASK);
+
+		bvp = vp;
+
+		break;
+		}
+
+	default:
+		break;
+	}
+
+	if (d_type != D_DISK)
+		return EINVAL;
+
+	if (bvpp != NULL)
+		*bvpp = bvp;
+
+	/*
+	 * XXX: This is bogus. We should be failing the request
+	 * XXX: not only if this specific slice is mounted, but
+	 * XXX: if it's on a disk with any other mounted slice.
+	 */
+	if (vfs_mountedon(bvp))
+		return EBUSY;
+
+	return 0;
+}

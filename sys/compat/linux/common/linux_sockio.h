@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sockio.h,v 1.14.126.2 2009/05/04 08:12:22 yamt Exp $	*/
+/*	$NetBSD: linux_sockio.h,v 1.14.126.3 2010/03/11 15:03:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #ifndef _LINUX_SOCKIO_H
 #define _LINUX_SOCKIO_H
 
+#define	LINUX_SIOCGIFNAME	_LINUX_IO(0x89, 0x10)
 #define	LINUX_SIOCGIFCONF	_LINUX_IO(0x89, 0x12)
 #define	LINUX_SIOCGIFFLAGS	_LINUX_IO(0x89, 0x13)
 #define	LINUX_SIOCSIFFLAGS	_LINUX_IO(0x89, 0x14)
@@ -40,6 +41,7 @@
 #define	LINUX_SIOCGIFDSTADDR	_LINUX_IO(0x89, 0x17)
 #define	LINUX_SIOCGIFBRDADDR	_LINUX_IO(0x89, 0x19)
 #define	LINUX_SIOCGIFNETMASK	_LINUX_IO(0x89, 0x1b)
+#define	LINUX_SIOCGIFMTU	_LINUX_IO(0x89, 0x21)
 #define LINUX_SIOCADDMULTI	_LINUX_IO(0x89, 0x31)
 #define LINUX_SIOCDELMULTI	_LINUX_IO(0x89, 0x32)
 #define LINUX_SIOCGIFHWADDR	_LINUX_IO(0x89, 0x27)
@@ -66,6 +68,7 @@ struct linux_ifreq {
 		struct osockaddr ifru_addr;
 		struct osockaddr ifru_hwaddr;
 		struct linux_ifmap ifru_map;
+		int ifru_ifindex;
 	} ifr_ifru;
 #define ifr_name	ifr_ifrn.ifrn_name	/* interface name       */
 #define ifr_addr	ifr_ifru.ifru_addr	/* address              */

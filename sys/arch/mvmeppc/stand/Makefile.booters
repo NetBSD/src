@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.6.78.1 2009/05/04 08:11:35 yamt Exp $
+#	$NetBSD: Makefile.booters,v 1.6.78.2 2010/03/11 15:02:44 yamt Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -35,25 +35,11 @@ vers.c: version
 	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${.CURDIR}/version "mvmeppc"
 .endif
 
-CLEANFILES+= machine powerpc
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.NOPATH: machine powerpc
-.BEGIN: machine powerpc
-
-machine :
-	-rm -f ${.TARGET}
-	ln -s $S/arch/mvmeppc/include machine
-
-powerpc :
-	-rm -f ${.TARGET}
-	ln -s $S/arch/powerpc/include powerpc
-.endif
+.include <bsd.klinks.mk>
 
 .if defined(LIB)
 
-lib${LIB}.a:: machine powerpc ${OBJS}
-beforedepend:	machine powerpc
+lib${LIB}.a:: ${OBJS}
 
 .else
 

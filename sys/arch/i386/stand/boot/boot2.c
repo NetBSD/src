@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.22.6.3 2009/09/16 13:37:39 yamt Exp $	*/
+/*	$NetBSD: boot2.c,v 1.22.6.4 2010/03/11 15:02:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -291,6 +291,8 @@ boot2(int biosdev, u_int biossector)
 #endif
 	gateA20();
 
+	boot_modules_enabled = !(boot_params.bp_flags
+				 & X86_BP_FLAGS_NOMODULES);
 	if (boot_params.bp_flags & X86_BP_FLAGS_RESET_VIDEO)
 		biosvideomode();
 
@@ -308,7 +310,8 @@ boot2(int biosdev, u_int biossector)
 	default_filename = DEFFILENAME;
 
 #ifndef SMALL
-	parsebootconf(BOOTCONF);
+	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF))
+		parsebootconf(BOOTCONF);
 
 	/*
 	 * If console set in boot.cfg, switch to it.
@@ -341,11 +344,23 @@ boot2(int biosdev, u_int biossector)
 #else
 		c = awaitkey((bootconf.timeout < 0) ? 0 : bootconf.timeout, 1);
 #endif
-		if ((c != '\r') && (c != '\n') && (c != '\0') &&
-		    ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0
-		     || check_password(boot_params.bp_password))) {
-			printf("type \"?\" or \"help\" for help.\n");
+		if ((c != '\r') && (c != '\n') && (c != '\0')) {
+		    if ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0) {
+			/* do NOT ask for password */
 			bootmenu(); /* does not return */
+		    } else {
+			/* DO ask for password */
+			if (check_password(boot_params.bp_password)) {
+			    /* password ok */
+			    printf("type \"?\" or \"help\" for help.\n");
+			    bootmenu(); /* does not return */
+			} else {
+			    /* bad password */
+			    printf("Wrong password.\n");
+			    currname = 0;
+			    continue;
+			}
+		    }
 		}
 
 		/*

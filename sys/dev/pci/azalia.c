@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.54.4.3 2009/05/16 10:41:32 yamt Exp $	*/
+/*	$NetBSD: azalia.c,v 1.54.4.4 2010/03/11 15:03:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.54.4.3 2009/05/16 10:41:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.54.4.4 2010/03/11 15:03:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -155,9 +155,8 @@ typedef struct azalia_t {
 /* prototypes */
 static int	azalia_pci_match(device_t, cfdata_t, void *);
 static void	azalia_pci_attach(device_t, device_t, void *);
-static int	azalia_pci_activate(device_t, enum devact);
 static int	azalia_pci_detach(device_t, int);
-static bool	azalia_pci_resume(device_t PMF_FN_PROTO);
+static bool	azalia_pci_resume(device_t, const pmf_qual_t *);
 static void	azalia_childdet(device_t, device_t);
 static int	azalia_intr(void *);
 static int	azalia_attach(azalia_t *);
@@ -226,7 +225,7 @@ static int	azalia_params2fmt(const audio_params_t *, uint16_t *);
 
 /* variables */
 CFATTACH_DECL2_NEW(azalia, sizeof(azalia_t),
-    azalia_pci_match, azalia_pci_attach, azalia_pci_detach, azalia_pci_activate,
+    azalia_pci_match, azalia_pci_attach, azalia_pci_detach, NULL,
     NULL, azalia_childdet);
 
 static const struct audio_hw_if azalia_hw_if = {
@@ -364,25 +363,6 @@ azalia_pci_attach(device_t parent, device_t self, void *aux)
 	config_interrupts(self, azalia_attach_intr);
 }
 
-static int
-azalia_pci_activate(device_t self, enum devact act)
-{
-	azalia_t *sc;
-	int ret;
-
-	sc = device_private(self);
-	ret = 0;
-	switch (act) {
-	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
-	case DVACT_DEACTIVATE:
-		if (sc->audiodev != NULL)
-			ret = config_deactivate(sc->audiodev);
-		return ret;
-	}
-	return EOPNOTSUPP;
-}
-
 static void
 azalia_childdet(device_t self, device_t child)
 {
@@ -436,7 +416,7 @@ azalia_pci_detach(device_t self, int flags)
 }
 
 static bool
-azalia_pci_resume(device_t dv PMF_FN_ARGS)
+azalia_pci_resume(device_t dv, const pmf_qual_t *qual)
 {
 	azalia_t *az = device_private(dv);
 	int s;
@@ -2258,7 +2238,7 @@ azalia_query_devinfo(void *v, mixer_devinfo_t *mdev)
 
 	az = v;
 	co = &az->codecs[az->codecno];
-	if (mdev->index >= co->nmixers)
+	if (mdev->index < 0 || mdev->index >= co->nmixers)
 		return ENXIO;
 	*mdev = co->mixers[mdev->index].devinfo;
 	return 0;

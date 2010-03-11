@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.274.2.4 2009/06/20 07:20:38 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.274.2.5 2010/03/11 15:04:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ struct emul {
 					/* Set registers before execution */
 	struct uvm_object **e_sigobject;/* shared sigcode object */
 	void		(*e_setregs)(struct lwp *, struct exec_package *,
-					  u_long);
+					  vaddr_t);
 
 					/* Per-process hooks */
 	void		(*e_proc_exec)(struct proc *, struct exec_package *);
@@ -326,6 +326,7 @@ struct proc {
 	u_short		p_acflag;	/* p: Acc. flags; see struct lwp also */
 	struct mdproc	p_md;		/* p: Any machine-dependent fields */
 	vaddr_t		p_stackbase;	/* :: ASLR randomized stack base */
+	struct kdtrace_proc *p_dtrace;	/* :: DTrace-specific data. */
 };
 
 #define	p_rlimit	p_limit->pl_rlimit
@@ -484,7 +485,7 @@ void	wakeup(wchan_t);
 void	wakeup_one(wchan_t);
 int	kpause(const char *, bool, int, kmutex_t *);
 void	exit1(struct lwp *, int) __dead;
-int	do_sys_wait(struct lwp *, int *, int *, int, struct rusage *, int *);
+int	do_sys_wait(int *, int *, int, struct rusage *);
 struct proc *proc_alloc(void);
 void	proc0_init(void);
 void	proc_free_pid(struct proc *);
@@ -495,12 +496,8 @@ int	fork1(struct lwp *, int, int, void *, size_t,
 int	pgid_in_session(struct proc *, pid_t);
 void	cpu_lwp_fork(struct lwp *, struct lwp *, void *, size_t,
 	    void (*)(void *), void *);
-#ifndef cpu_lwp_free
 void	cpu_lwp_free(struct lwp *, int);
-#ifndef cpu_lwp_free2
 void	cpu_lwp_free2(struct lwp *);
-#endif
-#endif
 
 #ifdef __HAVE_SYSCALL_INTERN
 void	syscall_intern(struct proc *);
@@ -510,6 +507,7 @@ void	child_return(void *);
 
 int	proc_isunder(struct proc *, struct lwp *);
 void	proc_stop(struct proc *, int, int);
+int	proc_uidmatch(kauth_cred_t, kauth_cred_t);
 
 int	proc_vmspace_getref(struct proc *, struct vmspace **);
 void	proc_crmod_leave(kauth_cred_t, kauth_cred_t, bool);
@@ -535,6 +533,10 @@ _proclist_skipmarker(struct proc *p0)
 
 	return p;
 }
+
+/*
+ * PROCLIST_FOREACH: iterate on the given proclist, skipping PK_MARKER ones.
+ */
 #define	PROCLIST_FOREACH(var, head)					\
 	for ((var) = LIST_FIRST(head);					\
 		((var) = _proclist_skipmarker(var)) != NULL;		\

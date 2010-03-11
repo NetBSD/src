@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.10.18.1 2008/05/16 02:22:15 yamt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.10.18.2 2010/03/11 15:02:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.10.18.1 2008/05/16 02:22:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.10.18.2 2010/03/11 15:02:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,7 +50,7 @@ intr_init(void)
 }
 
 void
-cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
 {
 	struct clockframe cf;
 	struct cpu_info *ci;

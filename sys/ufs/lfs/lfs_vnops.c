@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.215.10.3 2009/05/16 10:41:53 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.215.10.4 2010/03/11 15:04:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.215.10.3 2009/05/16 10:41:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.215.10.4 2010/03/11 15:04:45 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1426,6 +1426,7 @@ lfs_fcntl(void *v)
 		int  a_fflag;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
+	struct timeval tv;
 	struct timeval *tvp;
 	BLOCK_INFO *blkiov;
 	CLEANERINFO *cip;
@@ -1463,13 +1464,25 @@ lfs_fcntl(void *v)
 
 	error = 0;
 	switch ((int)ap->a_command) {
-	    case LFCNSEGWAITALL:
+	    case LFCNSEGWAITALL_COMPAT_50:
 	    case LFCNSEGWAITALL_COMPAT:
 		fsidp = NULL;
 		/* FALLSTHROUGH */
-	    case LFCNSEGWAIT:
+	    case LFCNSEGWAIT_COMPAT_50:
 	    case LFCNSEGWAIT_COMPAT:
+		{
+			struct timeval50 *tvp50
+				= (struct timeval50 *)ap->a_data;
+			timeval50_to_timeval(tvp50, &tv);
+			tvp = &tv;
+		}
+		goto segwait_common;
+	    case LFCNSEGWAITALL:
+		fsidp = NULL;
+		/* FALLSTHROUGH */
+	    case LFCNSEGWAIT:
 		tvp = (struct timeval *)ap->a_data;
+segwait_common:
 		mutex_enter(&lfs_lock);
 		++fs->lfs_sleepers;
 		mutex_exit(&lfs_lock);
@@ -1541,7 +1554,6 @@ lfs_fcntl(void *v)
 
 		return 0;
 
-#ifdef COMPAT_30
 	    case LFCNIFILEFH_COMPAT:
 		/* Return the filehandle of the Ifile */
 		if ((error = kauth_authorize_system(l->l_cred,
@@ -1551,7 +1563,6 @@ lfs_fcntl(void *v)
 		fhp->fh_fsid = *fsidp;
 		fh_size = 16;	/* former VFS_MAXFIDSIZ */
 		return lfs_vptofh(fs->lfs_ivnode, &(fhp->fh_fid), &fh_size);
-#endif
 
 	    case LFCNIFILEFH_COMPAT2:
 	    case LFCNIFILEFH:
@@ -1601,8 +1612,8 @@ lfs_fcntl(void *v)
 		if (fs->lfs_nowrap == 0)
 			log(LOG_NOTICE, "%s: disabled log wrap\n", fs->lfs_fsmnt);
 		++fs->lfs_nowrap;
-		if (*(int *)ap->a_data == 1 ||
-		    ap->a_command == LFCNWRAPSTOP_COMPAT) {
+		if (*(int *)ap->a_data == 1
+		    || ap->a_command == LFCNWRAPSTOP_COMPAT) {
 			log(LOG_NOTICE, "LFCNSTOPWRAP waiting for log wrap\n");
 			error = mtsleep(&fs->lfs_nowrap, PCATCH | PUSER,
 				"segwrap", 0, &lfs_lock);
@@ -1623,8 +1634,8 @@ lfs_fcntl(void *v)
 		 */
 		mutex_enter(&lfs_lock);
 		error = lfs_wrapgo(fs, VTOI(ap->a_vp),
-				   (ap->a_command == LFCNWRAPGO_COMPAT ? 1 :
-				    *((int *)ap->a_data)));
+				   ap->a_command == LFCNWRAPGO_COMPAT ? 1 :
+				    *((int *)ap->a_data));
 		mutex_exit(&lfs_lock);
 		return error;
 
@@ -1757,7 +1768,8 @@ write_and_wait(struct lfs *fs, struct vnode *vp, struct vm_page *pg,
 	if (pg == NULL)
 		return;
 
-	while (pg->flags & PG_BUSY) {
+	while (pg->flags & PG_BUSY &&
+	    pg->uobject == &vp->v_uobj) {
 		mutex_exit(&vp->v_interlock);
 		if (sp->cbpp - sp->bpp > 1) {
 			/* Write gathered pages */
@@ -2146,7 +2158,7 @@ lfs_putpages(void *v)
 		 */
 		ip->i_lfs_iflags |= LFSI_NO_GOP_WRITE;
 		r = genfs_do_putpages(vp, startoffset, endoffset,
-				       ap->a_flags, &busypg);
+				       ap->a_flags & ~PGO_SYNCIO, &busypg);
 		ip->i_lfs_iflags &= ~LFSI_NO_GOP_WRITE;
 		if (r != EDEADLK)
 			return r;
@@ -2275,8 +2287,10 @@ lfs_putpages(void *v)
 			mutex_enter(&vp->v_interlock);
 			write_and_wait(fs, vp, busypg, seglocked, NULL);
 			if (!seglocked) {
+				mutex_exit(&vp->v_interlock);
 				lfs_release_finfo(fs);
 				lfs_segunlock(fs);
+				mutex_enter(&vp->v_interlock);
 			}
 			sp->vp = NULL;
 			goto get_seglock;

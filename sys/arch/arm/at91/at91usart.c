@@ -1,5 +1,5 @@
-/*	$Id: at91usart.c,v 1.1.20.1 2009/05/04 08:10:39 yamt Exp $	*/
-/*	$NetBSD: at91usart.c,v 1.1.20.1 2009/05/04 08:10:39 yamt Exp $ */
+/*	$Id: at91usart.c,v 1.1.20.2 2010/03/11 15:02:05 yamt Exp $	*/
+/*	$NetBSD: at91usart.c,v 1.1.20.2 2010/03/11 15:02:05 yamt Exp $ */
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -27,13 +27,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -84,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.1.20.1 2009/05/04 08:10:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.1.20.2 2010/03/11 15:02:05 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

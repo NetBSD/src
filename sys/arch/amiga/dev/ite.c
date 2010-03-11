@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.82.18.2 2009/06/20 07:20:00 yamt Exp $ */
+/*	$NetBSD: ite.c,v 1.82.18.3 2010/03/11 15:02:01 yamt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.82.18.2 2009/06/20 07:20:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.82.18.3 2010/03/11 15:02:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -240,7 +240,7 @@ iteattach(struct device *pdp, struct device *dp, void *auxp)
 			 * console reinit copy params over.
 			 * and console always gets keyboard
 			 */
-			memcpy( &ip->grf, &con_itesoftc.grf,
+			memcpy(&ip->grf, &con_itesoftc.grf,
 			    (char *)&ip[1] - (char *)&ip->grf);
 			con_itesoftc.grf = NULL;
 			kbd_ite = ip;
@@ -317,7 +317,7 @@ init_bell(void)
 	if (bsamplep == NULL)
 		panic("no chipmem for ite_bell");
 
-	memcpy( bsamplep, sample, 20);
+	memcpy(bsamplep, sample, 20);
 }
 
 void
@@ -426,7 +426,7 @@ iteinit(dev_t dev)
 	if (ip->flags & ITE_INITED)
 		return;
 	if (kbdmap_loaded == 0) {
-		memcpy( &kbdmap, &ascii_kbdmap, sizeof(struct kbdmap));
+		memcpy(&kbdmap, &ascii_kbdmap, sizeof(struct kbdmap));
 		kbdmap_loaded = 1;
 	}
 
@@ -434,6 +434,8 @@ iteinit(dev_t dev)
 
 	ip->cursorx = 0;
 	ip->cursory = 0;
+	if (ip->grf->g_iteinit == NULL)
+		return;  /* grf has no console */
 	SUBR_INIT(ip);
 	SUBR_CURSOR(ip, DRAW_CURSOR);
 	if (ip->tabs == NULL)
@@ -598,12 +600,12 @@ iteioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	case ITEIOCSKMAP:
 		if (addr == 0)
 			return(EFAULT);
-		memcpy( &kbdmap, addr, sizeof(struct kbdmap));
+		memcpy(&kbdmap, addr, sizeof(struct kbdmap));
 		return(0);
 	case ITEIOCGKMAP:
 		if (addr == NULL)
 			return(EFAULT);
-		memcpy( addr, &kbdmap, sizeof(struct kbdmap));
+		memcpy(addr, &kbdmap, sizeof(struct kbdmap));
 		return(0);
 	case ITEIOCGREPT:
 		irp = (struct iterepeat *)addr;
@@ -908,7 +910,7 @@ ite_filter(u_char c, enum caller caller)
 	}
 	/* Safety button, switch back to ascii keymap. */
 	if (key_mod == (KBD_MOD_LALT | KBD_MOD_LMETA) && c == 0x50) {
-		memcpy( &kbdmap, &ascii_kbdmap, sizeof(struct kbdmap));
+		memcpy(&kbdmap, &ascii_kbdmap, sizeof(struct kbdmap));
 
 		splx(s);
 		return;

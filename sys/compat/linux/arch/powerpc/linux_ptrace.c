@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.18.2.2 2009/05/04 08:12:21 yamt Exp $ */
+/*	$NetBSD: linux_ptrace.c,v 1.18.2.3 2010/03/11 15:03:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.18.2.2 2009/05/04 08:12:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.18.2.3 2010/03/11 15:03:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -254,7 +254,6 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, re
 		if (error)
 			goto out;
 
-		uvm_lwp_hold(lt);	/* need full process info */
 		error = 0;
 		if ((addr < LUSR_OFF(lusr_startgdb)) ||
 		    (addr > LUSR_OFF(lu_comm_end)))
@@ -297,8 +296,6 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, re
 			error = 1;
 		}
 
-		uvm_lwp_rele(lt);
-
 		if (error)
 			goto out;
 
@@ -317,7 +314,6 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, re
 		if (error)
 			goto out;
 
-		uvm_lwp_hold(lt);       /* need full process info */
 		error = 0;
 		if ((addr < LUSR_OFF(lusr_startgdb)) ||
 		    (addr > LUSR_OFF(lu_comm_end)))
@@ -358,8 +354,6 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, re
 #endif
 			error = 1;
 		}
-
-		uvm_lwp_rele(lt);
 
 		error = process_write_regs(lt,regs);
 		if (error)

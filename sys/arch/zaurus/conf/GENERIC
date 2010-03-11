@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.11.10.2 2009/08/19 18:46:57 yamt Exp $
+#	$NetBSD: GENERIC,v 1.11.10.3 2010/03/11 15:03:11 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -36,7 +36,7 @@ options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
 options 	PXAGPIO_HAS_GPION_INTRS
 
 # in-kernel bootloader, see kloader(4)
-options 	KLOADER
+#options 	KLOADER
 #options 	KLOADER_KERNEL_PATH="\"/netbsd\""
 #options 	KLOADER_DEBUG
 
@@ -60,7 +60,6 @@ file-system	MSDOSFS		# MS-DOS file system
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
 #file-system	OVERLAY		# overlay file system
-#file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
@@ -144,7 +143,7 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
-#options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 
 # Development and Debugging options
 
@@ -171,9 +170,9 @@ cpu0 at mainbus?
 # integrated peripherals
 pxaip0 at mainbus?
 
-pxaintc0 at pxaip?	# interrupt controller
-pxagpio0 at pxaip?	# GPIO
-pxartc0 at pxaip?	# RTC
+pxaintc0 at pxaip?			# interrupt controller
+pxagpio0 at pxaip?			# GPIO
+pxartc0 at pxaip? addr 0x40900000	# RTC
 
 # DMAC support
 pxadmac0 at pxaip? addr 0x40000000 intr 25

@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.19.66.1 2009/05/04 08:11:43 yamt Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.19.66.2 2010/03/11 15:02:50 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -150,12 +150,10 @@ typedef long	kgdb_reg_t;
 void	kdb_kintr(void *);
 int	kdb_trap(int, void *);
 
-#ifdef PPC_IBM4XX
 /*
  * We have machine-dependent commands.
  */
 #define	DB_MACHINE_COMMANDS
-#endif
 
 #endif /* _KERNEL */
 

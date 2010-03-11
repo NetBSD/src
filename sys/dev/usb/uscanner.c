@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.60.4.2 2009/05/04 08:13:22 yamt Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.60.4.3 2010/03/11 15:04:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.60.4.2 2009/05/04 08:13:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.60.4.3 2010/03/11 15:04:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,8 +316,10 @@ USB_ATTACH(uscanner)
 
 	sc->sc_dev = self;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
@@ -624,14 +626,12 @@ uscanner_activate(device_ptr_t self, enum devact act)
 	struct uscanner_softc *sc = device_private(self);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 #endif
 

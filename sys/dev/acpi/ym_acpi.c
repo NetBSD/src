@@ -1,4 +1,4 @@
-/* $NetBSD: ym_acpi.c,v 1.5.4.3 2009/08/19 18:47:04 yamt Exp $ */
+/* $NetBSD: ym_acpi.c,v 1.5.4.4 2010/03/11 15:03:23 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Jasper Wallace <jasper@pointless.net>
@@ -29,21 +29,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.5.4.3 2009/08/19 18:47:04 yamt Exp $");
-
-#include "mpu_ym.h"
+__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.5.4.4 2010/03/11 15:03:23 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/bus.h>
+#include <sys/systm.h>
 
 #include <dev/acpi/acpivar.h>
 
 #include <dev/audio_if.h>
 
 #include <dev/ic/ad1848reg.h>
-#include <dev/isa/ad1848var.h>
-
 #include <dev/ic/opl3sa3reg.h>
+
+#include <dev/isa/ad1848var.h>
 #include <dev/isa/wssreg.h>
 #include <dev/isa/ymvar.h>
 

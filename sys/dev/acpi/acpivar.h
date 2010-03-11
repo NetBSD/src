@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.32.4.2 2009/05/16 10:41:18 yamt Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.32.4.3 2010/03/11 15:03:22 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _SYS_DEV_ACPI_ACPIVAR_H
+#define _SYS_DEV_ACPI_ACPIVAR_H
 
 /*
  * This file defines the ACPI interface provided to the rest of the
@@ -76,28 +79,14 @@ struct acpibus_attach_args {
  *	An ACPI device node.
  */
 struct acpi_devnode {
-	TAILQ_ENTRY(acpi_devnode) ad_list;
-	ACPI_HANDLE	ad_handle;	/* our ACPI handle */
-	u_int32_t	ad_level;	/* ACPI level */
-	u_int32_t	ad_type;	/* ACPI object type */
-	ACPI_DEVICE_INFO *ad_devinfo;	/* our ACPI device info */
-	struct acpi_scope *ad_scope;	/* backpointer to scope */
-	struct device	*ad_device;	/* pointer to configured device */
-	char		ad_name[5];	/* Human-readable device name */
-};
+	device_t		 ad_device;	/* Device */
+	device_t		 ad_parent;	/* Backpointer to the parent */
+	ACPI_DEVICE_INFO	*ad_devinfo;	/* Device info */
+	ACPI_HANDLE		 ad_handle;	/* Device handle */
+	char			 ad_name[5];	/* Device name */
+	uint32_t		 ad_type;	/* Device type */
 
-/*
- * acpi_scope:
- *
- *	Description of an ACPI scope.
- */
-struct acpi_scope {
-	TAILQ_ENTRY(acpi_scope) as_list;
-	const char *as_name;		/* scope name */
-	/*
-	 * Device nodes we manage.
-	 */
-	TAILQ_HEAD(, acpi_devnode) as_devnodes;
+	SIMPLEQ_ENTRY(acpi_devnode) ad_list;
 };
 
 /*
@@ -132,11 +121,9 @@ struct acpi_softc {
 
 	int sc_quirks;
 
-	/*
-	 * Scopes we manage.
-	 */
-	TAILQ_HEAD(, acpi_scope) sc_scopes;
 	device_t	sc_apmbus;
+
+	SIMPLEQ_HEAD(, acpi_devnode) sc_devnodes; /* devices */
 };
 
 /*
@@ -267,8 +254,11 @@ void		acpi_set_wake_gpe(ACPI_HANDLE);
 void		acpi_clear_wake_gpe(ACPI_HANDLE);
 
 ACPI_STATUS	acpi_eval_integer(ACPI_HANDLE, const char *, ACPI_INTEGER *);
+ACPI_STATUS	acpi_eval_set_integer(ACPI_HANDLE handle, const char *path,
+		    ACPI_INTEGER arg);
 ACPI_STATUS	acpi_eval_string(ACPI_HANDLE, const char *, char **);
 ACPI_STATUS	acpi_eval_struct(ACPI_HANDLE, const char *, ACPI_BUFFER *);
+ACPI_STATUS	acpi_eval_reference_handle(ACPI_OBJECT *, ACPI_HANDLE *);
 
 ACPI_STATUS	acpi_foreach_package_object(ACPI_OBJECT *,
 		    ACPI_STATUS (*)(ACPI_OBJECT *, void *), void *);
@@ -328,3 +318,9 @@ struct acpi_quirk {
 #define ACPI_QUIRK_IRQ0		0x00000008	/* bad 0->2 irq override */
 
 int acpi_find_quirks(void);
+
+#ifdef ACPI_DEBUG
+void acpi_debug_init(void);
+#endif
+
+#endif	/* !_SYS_DEV_ACPI_ACPIVAR_H */

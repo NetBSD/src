@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.54.10.2 2009/05/04 08:11:14 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.54.10.3 2010/03/11 15:02:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /*	$OpenBSD: trap.c,v 1.30 2001/09/19 20:50:56 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-2000 Michael Shalayeff
+ * Copyright (c) 1998-2004 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,26 +43,22 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54.10.2 2009/05/04 08:11:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54.10.3 2010/03/11 15:02:26 yamt Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -83,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54.10.2 2009/05/04 08:11:14 yamt Exp $");
 #include <sys/ktrace.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
-#include <sys/user.h>
 #include <sys/acct.h>
 #include <sys/signal.h>
 #include <sys/device.h>
@@ -166,7 +161,7 @@ const char *trap_type[] = {
 	"data protection",
 	"unaligned data ref",
 };
-int trap_types = sizeof(trap_type)/sizeof(trap_type[0]);
+int trap_types = __arraycount(trap_type);
 
 uint8_t fpopmap[] = {
 	0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00,
@@ -211,8 +206,11 @@ userret(struct lwp *l, register_t pc, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
 
-	if (curcpu()->ci_want_resched) {
-		preempt();
+	if (astpending) {
+		astpending = 0;
+		if (curcpu()->ci_want_resched) {
+			preempt();
+		}
 	}
 
 	mi_userret(l);
@@ -418,6 +416,7 @@ frame_sanity_check(int where, int type, struct trapframe *tf, struct lwp *l)
 	extern int kernel_text;
 	extern int etext;
 	extern register_t kpsw;
+
 #define SANITY(e)					\
 do {							\
 	if (sanity_frame == NULL && !(e)) {		\
@@ -430,7 +429,9 @@ do {							\
 	SANITY((tf->tf_ipsw & kpsw) == kpsw);
 	SANITY((kpsw & PSW_I) == 0 || tf->tf_eiem != 0);
 	if (tf->tf_iisq_head == HPPA_SID_KERNEL) {
-		vaddr_t minsp, maxsp;
+		vaddr_t minsp, maxsp, uv;
+
+		uv = uvm_lwp_getuarea(l);
 
 		/*
 		 * If the trap happened in the gateway
@@ -456,14 +457,20 @@ do {							\
 		SANITY(tf->tf_iioq_tail >= (u_int) &kernel_text);
 		SANITY(tf->tf_iioq_tail < (u_int) &etext);
 
-		maxsp = (u_int)(l->l_addr) + USPACE + PAGE_SIZE;
-		minsp = (u_int)(l->l_addr) + PAGE_SIZE;
+		maxsp = uv + USPACE + PAGE_SIZE;
+		minsp = uv + PAGE_SIZE;
 
 		SANITY(l != NULL || (tf->tf_sp >= minsp && tf->tf_sp < maxsp));
 	} else {
+		bool ok;
+		paddr_t pa;
+
+		ok = pmap_extract(pmap_kernel(), uvm_lwp_getuarea(l), &pa);
+		KASSERT(ok);
+
 		SANITY(USERMODE(tf->tf_iioq_head));
 		SANITY(USERMODE(tf->tf_iioq_tail));
-		SANITY(l != NULL && tf->tf_cr30 == kvtop((void *)l->l_addr));
+		SANITY(l != NULL && tf->tf_cr30 == pa);
 	}
 #undef SANITY
 out:
@@ -485,7 +492,7 @@ trap(int type, struct trapframe *frame)
 {
 	struct lwp *l;
 	struct proc *p;
-	struct pcb *pcbp;
+	struct pcb *pcb;
 	vaddr_t va;
 	struct vm_map *map;
 	struct vmspace *vm;
@@ -494,16 +501,17 @@ trap(int type, struct trapframe *frame)
 	ksiginfo_t ksi;
 	u_int opcode, onfault;
 	int ret;
-	const char *tts;
-	int type_raw;
+	const char *tts = "reserved";
+	int trapnum;
 #ifdef DIAGNOSTIC
 	extern int emergency_stack_start, emergency_stack_end;
+	int oldcpl = cpl;
 #endif
 
-	type_raw = type & ~T_USER;
+	trapnum = type & ~T_USER;
 	opcode = frame->tf_iir;
-	if (type_raw == T_ITLBMISS || type_raw == T_ITLBMISSNA ||
-	    type_raw == T_IBREAK || type_raw == T_TAKENBR) {
+	if (trapnum == T_ITLBMISS || trapnum == T_ITLBMISSNA ||
+	    trapnum == T_IBREAK || trapnum == T_TAKENBR) {
 		va = frame->tf_iioq_head;
 		space = frame->tf_iisq_head;
 		vftype = VM_PROT_EXECUTE;
@@ -513,13 +521,11 @@ trap(int type, struct trapframe *frame)
 		vftype = inst_store(opcode) ? VM_PROT_WRITE : VM_PROT_READ;
 	}
 
+	KASSERT(curlwp != NULL);
 	l = curlwp;
-	p = l ? l->l_proc : NULL;
+	p = l->l_proc;
 	if ((type & T_USER) != 0)
 		LWP_CACHE_CREDS(l, p);
-
-	tts = (type & ~T_USER) > trap_types ? "reserved" :
-		trap_type[type & ~T_USER];
 
 #ifdef DIAGNOSTIC
 	/*
@@ -558,19 +564,18 @@ trap(int type, struct trapframe *frame)
 	frame_sanity_check(0xdead01, type, frame, l);
 #endif /* DEBUG */
 
-	/* If this is a trap, not an interrupt, reenable interrupts. */
-	if (type_raw != T_INTERRUPT)
-		mtctl(frame->tf_eiem, CR_EIEM);
-
 	if (frame->tf_flags & TFF_LAST)
 		l->l_md.md_regs = frame;
 
+	if (trapnum <= trap_types)
+		tts = trap_type[trapnum];
+
 #ifdef TRAPDEBUG
-	if (type_raw != T_INTERRUPT && type_raw != T_IBREAK)
-		printf("trap: %d, %s for %x:%x at %x:%x, fp=%p, rp=%x\n",
-		    type, tts, space, (u_int)va, frame->tf_iisq_head,
+	if (trapnum != T_INTERRUPT && trapnum != T_IBREAK)
+		printf("trap: %d, %s for %x:%lx at %x:%x, fp=%p, rp=%x\n",
+		    type, tts, space, va, frame->tf_iisq_head,
 		    frame->tf_iioq_head, frame, frame->tf_rp);
-	else if (type_raw == T_IBREAK)
+	else if (trapnum == T_IBREAK)
 		printf("trap: break instruction %x:%x at %x:%x, fp=%p\n",
 		    break5(opcode), break13(opcode),
 		    frame->tf_iisq_head, frame->tf_iioq_head, frame);
@@ -583,6 +588,15 @@ trap(int type, struct trapframe *frame)
 		}
 	}
 #endif
+
+	pcb = lwp_getpcb(l);
+
+	/* If this is a trap, not an interrupt, reenable interrupts. */
+	if (trapnum != T_INTERRUPT) {
+		uvmexp.traps++;
+		mtctl(frame->tf_eiem, CR_EIEM);
+	}
+
 	switch (type) {
 	case T_NONEXIST:
 	case T_NONEXIST|T_USER:
@@ -643,13 +657,11 @@ trap(int type, struct trapframe *frame)
 		break;
 
 	case T_DATALIGN:
-		if (l->l_addr->u_pcb.pcb_onfault) {
+		if (pcb->pcb_onfault) {
 do_onfault:
-			pcbp = &l->l_addr->u_pcb;
-			frame->tf_iioq_tail = 4 +
-				(frame->tf_iioq_head =
-				 pcbp->pcb_onfault);
-			pcbp->pcb_onfault = 0;
+			frame->tf_iioq_head = pcb->pcb_onfault;
+			frame->tf_iioq_tail = 4 + frame->tf_iioq_head;
+			pcb->pcb_onfault = 0;
 			break;
 		}
 		/*FALLTHROUGH*/
@@ -692,7 +704,7 @@ do_onfault:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGTRAP;
 		ksi.ksi_code = TRAP_TRACE;
-		ksi.ksi_trap = type_raw;
+		ksi.ksi_trap = trapnum;
 		ksi.ksi_addr = (void *)frame->tf_iioq_head;
 #ifdef PTRACE
 		ss_clear_breakpoints(l);
@@ -711,7 +723,7 @@ do_onfault:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGTRAP;
 		ksi.ksi_code = TRAP_TRACE;
-		ksi.ksi_trap = type_raw;
+		ksi.ksi_trap = trapnum;
 		ksi.ksi_addr = (void *)frame->tf_iioq_head;
 
                 /* pass to user debugger */
@@ -725,7 +737,7 @@ do_onfault:
 		int i;
 
 		hppa_fpu_flush(l);
-		fpp = l->l_addr->u_pcb.pcb_fpregs;
+		fpp = pcb->pcb_fpregs;
 		pex = (uint32_t *)&fpp[1];
 		for (i = 1; i < 8 && !*pex; i++, pex++)
 			;
@@ -860,10 +872,10 @@ do_onfault:
 		/* Never call uvm_fault in interrupt context. */
 		KASSERT(hppa_intr_depth == 0);
 
-		onfault = l->l_addr->u_pcb.pcb_onfault;
-		l->l_addr->u_pcb.pcb_onfault = 0;
+		onfault = pcb->pcb_onfault;
+		pcb->pcb_onfault = 0;
 		ret = uvm_fault(map, va, vftype);
-		l->l_addr->u_pcb.pcb_onfault = onfault;
+		pcb->pcb_onfault = onfault;
 
 #ifdef TRAPDEBUG
 		printf("uvm_fault(%p, %x, %d)=%d\n",
@@ -900,7 +912,7 @@ do_onfault:
 				ksi.ksi_addr = (void *)va;
 				trapsignal(l, &ksi);
 			} else {
-				if (l->l_addr->u_pcb.pcb_onfault) {
+				if (pcb->pcb_onfault) {
 					goto do_onfault;
 				}
 				panic("trap: uvm_fault(%p, %lx, %d): %d",
@@ -947,6 +959,12 @@ do_onfault:
 		panic ("trap: unimplemented \'%s\' (%d)", tts, type);
 	}
 
+#ifdef DIAGNOSTIC
+	if (cpl != oldcpl)
+		printf("WARNING: SPL (%d) NOT LOWERED ON TRAP (%d) EXIT\n",
+		    cpl, trapnum);
+#endif
+
 	if (type & T_USER)
 		userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 
@@ -962,6 +980,10 @@ void
 child_return(void *arg)
 {
 	struct lwp *l = arg;
+
+	/*
+	 * Return values in the frame set by cpu_lwp_fork().
+	 */
 
 	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 	ktrsysret(SYS_fork, 0, 0);
@@ -1081,9 +1103,13 @@ syscall(struct trapframe *frame, int *args)
 	struct lwp *l;
 	struct proc *p;
 	const struct sysent *callp;
+	size_t nargs64;
 	int nsys, code, error;
 	int tmp;
 	int rval[2];
+#ifdef DIAGNOSTIC
+	int oldcpl = cpl;
+#endif
 
 	uvmexp.syscalls++;
 
@@ -1094,6 +1120,7 @@ syscall(struct trapframe *frame, int *args)
 	if (!USERMODE(frame->tf_iioq_head))
 		panic("syscall");
 
+	KASSERT(curlwp != NULL);
 	l = curlwp;
 	p = l->l_proc;
 	l->l_md.md_regs = frame;
@@ -1109,18 +1136,16 @@ syscall(struct trapframe *frame, int *args)
 #endif
 
 	/*
-	 * Restarting a system call is touchy on the HPPA, 
-	 * because syscall arguments are passed in registers 
-	 * and the program counter of the syscall "point" 
-	 * isn't easily divined.  
+	 * Restarting a system call is touchy on the HPPA, because syscall
+	 * arguments are passed in registers and the program counter of the
+	 * syscall "point" isn't easily divined.
 	 *
-	 * We handle the first problem by assuming that we
-	 * will have to restart this system call, so we
-	 * stuff the first four words of the original arguments 
-	 * back into the frame as arg0...arg3, which is where
-	 * we found them in the first place.  Any further
-	 * arguments are (still) on the user's stack and the 
-	 * syscall code will fetch them from there (again).
+	 * We handle the first problem by assuming that we will have to restart
+	 * this system call, so we stuff the first four words of the original
+	 * arguments back into the frame as arg0...arg3, which is where we
+	 * found them in the first place.  Any further arguments are (still) on
+	 * the user's stack and the  syscall code will fetch them from there
+	 * (again).
 	 *
 	 * The program counter problem is addressed below.
 	 */
@@ -1142,10 +1167,9 @@ syscall(struct trapframe *frame, int *args)
 		if (callp != sysent)
 			break;
 		/*
-		 * NB: even though __syscall(2) takes a quad_t
-		 * containing the system call number, because
-		 * our argument copying word-swaps 64-bit arguments,
-		 * the least significant word of that quad_t
+		 * NB: even though __syscall(2) takes a quad_t containing the
+		 * system call number, because our argument copying word-swaps
+		 * 64-bit arguments, the least significant word of that quad_t
 		 * is the first word in the argument array.
 		 */
 		code = *args;
@@ -1153,143 +1177,39 @@ syscall(struct trapframe *frame, int *args)
 	}
 
 	/*
-	 * Stacks growing from lower addresses to higher
-	 * addresses are not really such a good idea, because
-	 * it makes it impossible to overlay a struct on top
-	 * of C stack arguments (the arguments appear in 
+	 * Stacks growing from lower addresses to higher addresses are not
+	 * really such a good idea, because it makes it impossible to overlay a
+	 * struct on top of C stack arguments (the arguments appear in
 	 * reversed order).
 	 *
-	 * You can do the obvious thing (as locore.S does) and 
-	 * copy argument words one by one, laying them out in 
-	 * the "right" order in the destination buffer, but this 
-	 * ends up word-swapping multi-word arguments (like off_t).
-	 * 
-	 * To compensate, we have some automatically-generated
-	 * code that word-swaps these multi-word arguments.
-	 * Right now the script that generates this code is
-	 * in Perl, because I don't know awk.
+	 * You can do the obvious thing (as locore.S does) and copy argument
+	 * words one by one, laying them out in the "right" order in the dest-
+	 * ination buffer, but this ends up word-swapping multi-word arguments
+	 * (like off_t).
 	 *
 	 * FIXME - this works only on native binaries and
 	 * will probably screw up any and all emulation.
+	 *
 	 */
-	switch (code) {
-	case SYS_pread:
-		/*
-		 * 	syscallarg(int) fd;
-		 * 	syscallarg(void *) buf;
-		 * 	syscallarg(size_t) nbyte;
-		 * 	syscallarg(int) pad;
-		 * 	syscallarg(off_t) offset;
-		 */
-		tmp = args[4];
-		args[4] = args[4 + 1];
-		args[4 + 1] = tmp;
-		break;
-	case SYS_pwrite:
-		/*
-		 * 	syscallarg(int) fd;
-		 * 	syscallarg(const void *) buf;
-		 * 	syscallarg(size_t) nbyte;
-		 * 	syscallarg(int) pad;
-		 * 	syscallarg(off_t) offset;
-		 */
-		tmp = args[4];
-		args[4] = args[4 + 1];
-		args[4 + 1] = tmp;
-		break;
-	case SYS_mmap:
-		/*
-		 * 	syscallarg(void *) addr;
-		 * 	syscallarg(size_t) len;
-		 * 	syscallarg(int) prot;
-		 * 	syscallarg(int) flags;
-		 * 	syscallarg(int) fd;
-		 * 	syscallarg(long) pad;
-		 * 	syscallarg(off_t) pos;
-		 */
-		tmp = args[6];
-		args[6] = args[6 + 1];
-		args[6 + 1] = tmp;
-		break;
-	case SYS_lseek:
-		/*
-		 * 	syscallarg(int) fd;
-		 * 	syscallarg(int) pad;
-		 * 	syscallarg(off_t) offset;
-		 */
-		tmp = args[2];
-		args[2] = args[2 + 1];
-		args[2 + 1] = tmp;
-		break;
-	case SYS_truncate:
-		/*
-		 * 	syscallarg(const char *) path;
-		 * 	syscallarg(int) pad;
-		 * 	syscallarg(off_t) length;
-		 */
-		tmp = args[2];
-		args[2] = args[2 + 1];
-		args[2 + 1] = tmp;
-		break;
-	case SYS_ftruncate:
-		/*
-		 * 	syscallarg(int) fd;
-		 * 	syscallarg(int) pad;
-		 * 	syscallarg(off_t) length;
-		 */
-		tmp = args[2];
-		args[2] = args[2 + 1];
-		args[2 + 1] = tmp;
-		break;
-	case SYS_preadv:
-		/*
-		 * 	syscallarg(int) fd;
-		 * 	syscallarg(const struct iovec *) iovp;
-		 * 	syscallarg(int) iovcnt;
-		 * 	syscallarg(int) pad;
-		 * 	syscallarg(off_t) offset;
-		 */
-		tmp = args[4];
-		args[4] = args[4 + 1];
-		args[4 + 1] = tmp;
-		break;
-	case SYS_pwritev:
-		/*
-		 * 	syscallarg(int) fd;
-		 * 	syscallarg(const struct iovec *) iovp;
-		 * 	syscallarg(int) iovcnt;
-		 * 	syscallarg(int) pad;
-		 * 	syscallarg(off_t) offset;
-		 */
-		tmp = args[4];
-		args[4] = args[4 + 1];
-		args[4 + 1] = tmp;
-		break;
-	case SYS___posix_fadvise50:
-		/*
-		 *	syscallarg(int) fd;
-		 *	syscallarg(int) pad;
-		 *	syscallarg(off_t) offset;
-		 *	syscallarg(off_t) len;
-		 *	syscallarg(int) advice;
-		 */
-		tmp = args[2];
-		args[2] = args[2 + 1];
-		args[2 + 1] = tmp;
-		tmp = args[4];
-		args[4] = args[4 + 1];
-		args[4 + 1] = tmp;
-	case SYS___mknod50:
-		/*
-		 *	syscallarg(const char *) path;
-		 *	syscallarg(mode_t) mode;
-		 *	syscallarg(dev_t) dev;
-		 */
-		tmp = args[2];
-		args[2] = args[2 + 1];
-		args[2 + 1] = tmp;
-	default:
-		break;
+
+	if (code < 0 || code >= nsys)
+		callp += p->p_emul->e_nosys;	/* bad syscall # */
+	else
+		callp += code;
+
+	nargs64 = SYCALL_NARGS64(callp);
+	if (nargs64 != 0) {
+		size_t nargs = callp->sy_narg;
+
+		for (size_t i = 0; i < nargs + nargs64;) {
+			if (SYCALL_ARG_64_P(callp, i)) {
+				tmp = args[i];
+				args[i] = args[i + 1];
+				args[i + 1] = tmp;
+				i += 2;
+			} else
+				i++;
+		}
 	}
 
 #ifdef USERTRACE
@@ -1302,13 +1222,12 @@ syscall(struct trapframe *frame, int *args)
 	}
 #endif
 
-	if (code < 0 || code >= nsys)
-		callp += p->p_emul->e_nosys;	/* bad syscall # */
-	else
-		callp += code;
-
-	if ((error = trace_enter(code, args, callp->sy_narg)) != 0)
-		goto out;
+	error = 0;
+	if (__predict_false(p->p_trace_enabled)) {
+		error = trace_enter(code, args, callp->sy_narg);
+		if (error)
+			goto out;
+	}
 
 	rval[0] = 0;
 	rval[1] = 0;
@@ -1324,22 +1243,20 @@ out:
 		break;
 	case ERESTART:
 		/*
-		 * Now we have to wind back the instruction
-		 * offset queue to the point where the system
-		 * call will be made again.  This is inherently
-		 * tied to the SYSCALL macro.
+		 * Now we have to wind back the instruction offset queue to the
+		 * point where the system call will be made again.  This is
+		 * inherently tied to the SYSCALL macro.
 		 *
-		 * Currently, the part of the SYSCALL macro
-		 * that we want to rerun reads as:
+		 * Currently, the part of the SYSCALL macro that we want to re-
+		 * run reads as:
 		 *
 		 *	ldil	L%SYSCALLGATE, r1
 		 *	ble	4(sr7, r1)
 		 *	ldi	__CONCAT(SYS_,x), t1
 		 *	comb,<>	%r0, %t1, __cerror
 		 *
-		 * And our offset queue head points to the
-		 * comb instruction.  So we need to
-		 * subtract twelve to reach the ldil.
+		 * And our offset queue head points to the comb instruction.
+		 * So we need to subtract twelve to reach the ldil.
 		 */
 		frame->tf_iioq_head -= 12;
 		frame->tf_iioq_tail = frame->tf_iioq_head + 4;
@@ -1354,9 +1271,20 @@ out:
 		break;
 	}
 
-	trace_exit(code, rval, error);
+	if (__predict_false(p->p_trace_enabled))
+		trace_exit(code, rval, error);
 
 	userret(l, frame->tf_iioq_head, 0);
+
+#ifdef DIAGNOSTIC
+	if (cpl != oldcpl) {
+		printf("WARNING: SPL (0x%x) NOT LOWERED ON "
+		    "syscall(0x%x, 0x%x, 0x%x, 0x%x...) EXIT, PID %d\n",
+		    cpl, code, args[0], args[1], args[2], p->p_pid);
+		cpl = oldcpl;
+	}
+#endif
+
 #ifdef DEBUG
 	frame_sanity_check(0xdead05, 0, frame, l);
 #endif /* DEBUG */

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.21.18.2 2009/09/16 13:37:40 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.21.18.3 2010/03/11 15:02:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,6 +38,7 @@
 #define _MIPS_PROC_H_
 
 #include <sys/param.h>
+#include <sys/user.h> /* for sizeof(struct user) */
 #include <mips/vmparam.h>
 
 struct lwp;
@@ -45,9 +46,10 @@ struct lwp;
 /*
  * Machine-dependent part of the lwp structure for MIPS
  */
+struct frame;
 
 struct mdlwp {
-	void	*md_regs;		/* registers on current frame */
+	struct frame *md_regs;		/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
 	vaddr_t	md_ss_addr;		/* single step address for ptrace */
 	int	md_ss_instr;		/* single step instruction for ptrace */
@@ -59,7 +61,8 @@ struct mdlwp {
 
 struct mdproc {
 					/* syscall entry for this process */
-	void	(*md_syscall)(struct lwp *, u_int, u_int, u_int);
+	void	(*md_syscall)(struct lwp *, u_int, u_int, vaddr_t);
+	int	md_abi;			/* which ABI is this process using? */
 };
 
 /* md_flags */
@@ -71,7 +74,7 @@ struct mdproc {
 struct frame {
 	mips_reg_t f_regs[38];
 	u_int32_t f_ppl;	/* previous priority level */
-	int32_t f_pad;		/* for 8 byte aligned */
+	mips_reg_t f_pad;	/* for quadword alignment */
 };
 
 #ifdef _KERNEL

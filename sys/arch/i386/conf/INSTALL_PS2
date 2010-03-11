@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_PS2,v 1.10.108.1 2009/05/04 08:11:15 yamt Exp $
+#	$NetBSD: INSTALL_PS2,v 1.10.108.2 2010/03/11 15:02:27 yamt Exp $
 #
 #	INSTALL_PS2 - PS/2 Installation kernel.
 #
@@ -16,4 +16,4 @@ options 	MEMORY_DISK_ROOT_SIZE=3500	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # File systems
-file-system 	MFS			# memory file system
+file-system	MFS			# memory file system

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.4.2 2009/08/19 18:48:29 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.4.3 2010/03/11 15:04:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,18 +26,53 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.4.2 2009/08/19 18:48:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.4.3 2010/03/11 15:04:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 
-/* random stubs since we don't run config on rump yet */
-struct cfdata *cfdata;
-const short *cfroots;
-struct cfdriver * const *cfdriver_list_initial;
-struct cfattachinit *cfattachinit;
+static int	mainbus_match(struct device *, struct cfdata *, void *);
+static void	mainbus_attach(struct device *, struct device *, void *);
+static int	mainbus_search(struct device *, struct cfdata *,
+			       const int *, void *);
+
+struct mainbus_softc {
+	int mb_nada;
+};
+
+/*
+ * Initial lists.  Should ingrate with config better.
+ */
+const struct cfattachinit cfattachinit[] = {
+	{ NULL, NULL },
+};
+struct cfdata cfdata[] = {
+	{ "mainbus", "mainbus", 0, FSTATE_NOTFOUND, NULL, 0, NULL},
+	{ NULL, NULL, 0, FSTATE_NOTFOUND, NULL, 0, NULL},
+};
+struct cfdriver * const cfdriver_list_initial[] = {
+	NULL
+};
+
+static const struct cfiattrdata mainbuscf_iattrdata = {
+	"mainbus", 0, {
+		{ NULL, NULL, 0 },
+	}
+};
+static const struct cfiattrdata * const mainbus_attrs[] = {
+	&mainbuscf_iattrdata,
+	NULL
+};
+CFDRIVER_DECL(mainbus, DV_DULL, mainbus_attrs);
+
+CFATTACH_DECL_NEW(mainbus, sizeof(struct mainbus_softc),
+	mainbus_match, mainbus_attach, NULL, NULL);
+
+const short cfroots[] = {
+	0, /* mainbus */
+	-1
+};
 
 /* actually used */
 #define MAXPDEVS 256
@@ -66,4 +101,32 @@ rump_pdev_finalize()
 {
 
 	rump_pdev_add(NULL, 0);
+}
+
+int
+mainbus_match(struct device *parent, struct cfdata *match, void *aux)
+{
+
+	return 1;
+}
+
+void
+mainbus_attach(struct device *parent, struct device *self, void *aux)
+{
+
+	aprint_normal("\n");
+	config_search_ia(mainbus_search, self, "mainbus", NULL);
+}
+
+static int
+mainbus_search(struct device *parent, struct cfdata *cf,
+	const int *ldesc, void *aux)
+{
+	struct mainbus_attach_args maa;
+
+	maa.maa_unit = cf->cf_unit;
+	if (config_match(parent, cf, &maa) > 0)
+		config_attach(parent, cf, &maa, NULL);
+
+	return 0;
 }

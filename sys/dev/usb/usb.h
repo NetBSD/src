@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.78.10.3 2009/09/16 13:37:58 yamt Exp $	*/
+/*	$NetBSD: usb.h,v 1.78.10.4 2010/03/11 15:04:07 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -88,6 +88,7 @@ MALLOC_DECLARE(M_USBHC);
 #define AXE_DEBUG 1
 #define UIPAQ_DEBUG 1
 #define UCYCOM_DEBUG 1
+#define UHSO_DEBUG 1
 #define Static
 #else
 #define Static static

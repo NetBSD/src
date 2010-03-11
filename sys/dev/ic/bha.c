@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.70.4.1 2008/05/16 02:24:02 yamt Exp $	*/
+/*	$NetBSD: bha.c,v 1.70.4.2 2010/03/11 15:03:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.70.4.1 2008/05/16 02:24:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.70.4.2 2010/03/11 15:03:29 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.70.4.1 2008/05/16 02:24:02 yamt Exp $");
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 

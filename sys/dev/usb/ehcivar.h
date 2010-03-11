@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.29.4.3 2009/09/16 13:37:57 yamt Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.29.4.4 2010/03/11 15:04:04 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -187,6 +187,6 @@ int		ehci_intr(void *);
 int		ehci_detach(ehci_softc_t *, int);
 int		ehci_activate(device_t, enum devact);
 void		ehci_childdet(device_t, device_t);
-bool		ehci_suspend(device_t PMF_FN_PROTO);
-bool		ehci_resume(device_t PMF_FN_PROTO);
+bool		ehci_suspend(device_t, const pmf_qual_t *);
+bool		ehci_resume(device_t, const pmf_qual_t *);
 bool		ehci_shutdown(device_t, int);

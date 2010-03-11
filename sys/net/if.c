@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.220.2.4 2009/09/16 13:38:01 yamt Exp $	*/
+/*	$NetBSD: if.c,v 1.220.2.5 2010/03/11 15:04:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.220.2.4 2009/09/16 13:38:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.220.2.5 2010/03/11 15:04:26 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -166,9 +166,36 @@ static kmutex_t index_gen_mtx;
 struct pfil_head if_pfil;	/* packet filtering hook for interfaces */
 #endif
 
+static kauth_listener_t if_listener;
+
 static void if_detach_queues(struct ifnet *, struct ifqueue *);
 static void sysctl_sndq_setup(struct sysctllog **, const char *,
     struct ifaltq *);
+
+#if defined(INET) || defined(INET6)
+static void sysctl_net_ifq_setup(struct sysctllog **, int, const char *,
+				 int, const char *, int, struct ifqueue *);
+#endif
+
+static int
+if_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	int result;
+	enum kauth_network_req req;
+
+	result = KAUTH_RESULT_DEFER;
+	req = (enum kauth_network_req)arg1;
+
+	if (action != KAUTH_NETWORK_INTERFACE)
+		return result;
+
+	if ((req == KAUTH_REQ_NETWORK_INTERFACE_GET) ||
+	    (req == KAUTH_REQ_NETWORK_INTERFACE_SET))
+		result = KAUTH_RESULT_ALLOW;
+
+	return result;
+}
 
 /*
  * Network interface utility routines.
@@ -179,10 +206,22 @@ static void sysctl_sndq_setup(struct sysctllog **, const char *,
 void
 ifinit(void)
 {
+#ifdef INET
+	{extern struct ifqueue ipintrq;
+	sysctl_net_ifq_setup(NULL, PF_INET, "inet", IPPROTO_IP, "ip",
+			     IPCTL_IFQ, &ipintrq);}
+#endif /* INET */
+#ifdef INET6
+	{extern struct ifqueue ip6intrq;
+	sysctl_net_ifq_setup(NULL, PF_INET6, "inet6", IPPROTO_IPV6, "ip6",
+			     IPV6CTL_IFQ, &ip6intrq);}
+#endif /* INET6 */
 
-	mutex_init(&index_gen_mtx, MUTEX_DEFAULT, IPL_NONE);
 	callout_init(&if_slowtimo_ch, 0);
 	if_slowtimo(NULL);
+
+	if_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
+	    if_listener_cb, NULL);
 }
 
 /*
@@ -192,6 +231,8 @@ ifinit(void)
 void
 ifinit1(void)
 {
+
+	mutex_init(&index_gen_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 #ifdef PFIL_HOOKS
 	if_pfil.ph_type = PFIL_TYPE_IFNET;
@@ -1363,7 +1404,7 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 		/*
 		 * Allow the device to be "placed" into promiscuous
 		 * mode even if it is not configured up.  It will
-		 * consult IFF_PROMISC when it is is brought up.
+		 * consult IFF_PROMISC when it is brought up.
 		 */
 		if (ifp->if_pcount++ != 0)
 			return 0;
@@ -1877,20 +1918,14 @@ ifreq_setaddr(const u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
 {
 	uint8_t len;
 	u_long ncmd;
-	const uint8_t osockspace = sizeof(ifr->ifr_addr);
-	const uint8_t sockspace = sizeof(ifr->ifr_ifru.ifru_space);
 
-#ifdef INET6
-	if (cmd == SIOCGIFPSRCADDR_IN6 || cmd == SIOCGIFPDSTADDR_IN6)
-		len = MIN(sizeof(struct sockaddr_in6), sa->sa_len);
-	else
-#endif /* INET6 */
 	if ((ncmd = compat_cvtcmd(cmd)) != cmd)
-		len = MIN(osockspace, sa->sa_len);
+		len = sizeof(ifr->ifr_addr);
 	else
-		len = MIN(sockspace, sa->sa_len);
+		len = sizeof(ifr->ifr_ifru.ifru_space);
 	if (len < sa->sa_len)
 		return EFBIG;
+	memset(&ifr->ifr_addr, 0, len);
 	sockaddr_copy(&ifr->ifr_addr, len, sa);
 	return 0;
 }
@@ -2076,26 +2111,4 @@ sysctl_net_ifq_setup(struct sysctllog **clog,
 		       NULL, 0, &ifq->ifq_drops, 0,
 		       CTL_NET, pf, ipn, qid, IFQCTL_DROPS, CTL_EOL);
 }
-
-#ifdef INET
-SYSCTL_SETUP(sysctl_net_inet_ip_ifq_setup,
-	     "sysctl net.inet.ip.ifq subtree setup")
-{
-	extern struct ifqueue ipintrq;
-
-	sysctl_net_ifq_setup(clog, PF_INET, "inet", IPPROTO_IP, "ip",
-			     IPCTL_IFQ, &ipintrq);
-}
-#endif /* INET */
-
-#ifdef INET6
-SYSCTL_SETUP(sysctl_net_inet6_ip6_ifq_setup,
-	     "sysctl net.inet6.ip6.ifq subtree setup")
-{
-	extern struct ifqueue ip6intrq;
-
-	sysctl_net_ifq_setup(clog, PF_INET6, "inet6", IPPROTO_IPV6, "ip6",
-			     IPV6CTL_IFQ, &ip6intrq);
-}
-#endif /* INET6 */
 #endif /* INET || INET6 */

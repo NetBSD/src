@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.45.18.1 2009/05/04 08:11:37 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.45.18.2 2010/03/11 15:02:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -365,7 +365,7 @@ Lstart1:
 /*
  * configure kernel and lwp0 VA space so we can get going
  */
-	.globl	_Sysseg, _pmap_bootstrap, _avail_start
+	.globl	_Sysseg_pa, _pmap_bootstrap, _avail_start
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 	RELOC(esym,%a0)			| end of static kernel test/data/syms
@@ -398,9 +398,8 @@ Lstart2:
 	movl	#_C_LABEL(vectab),%d0	| get our VBR address
 	movc	%d0,%vbr
 
-	RELOC(Sysseg, %a0)		| system segment table addr
-	movl	%a0@,%d1		| read value (a KVA)
-	addl	%a5,%d1			| convert to PA
+	RELOC(Sysseg_pa, %a0)		| system segment table addr
+	movl	%a0@,%d1		| read value (a PA)
 	RELOC(mmutype, %a0)
 	cmpl	#MMU_68040,%a0@		| 68040?
 	jne	Lmotommu1		| no, skip
@@ -423,7 +422,11 @@ Lstploaddone:
 	.long	0x4e7b0007		| movc %d0,%dtt1
 	.word	0xf4d8			| cinva bc
 	.word	0xf518			| pflusha
+#if PGSHIFT == 13
+	movl	#0xc000,%d0
+#else
 	movl	#0x8000,%d0
+#endif
 	.long	0x4e7b0003		| movc %d0,%tc
 	movl	#CACHE40_ON,%d0
 	movc	%d0,%cacr		| turn on both caches
@@ -435,25 +438,25 @@ Lmotommu2:
 	.long	0xf0100800		| pmove %a0@,%tt0
 #endif
 	RELOC(prototc, %a2)
+#if PGSHIFT == 13
+	movl	#0x82d08b00,%a2@	| value to load TC with
+#else
 	movl	#0x82c0aa00,%a2@	| value to load TC with
+#endif
 	pmove	%a2@,%tc		| load it
 
 /*
  * Should be running mapped from this point on
  */
 Lenab1:
-/* select the software page size now */
 	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
-	jbsr	_C_LABEL(uvm_setpagesize)  | select software page size
-/* set kernel stack, user SP, and initial pcb */
-	movl	_C_LABEL(proc0paddr),%a1| get lwp0 pcb addr
-	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
-	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.l_addr
-	movl	%a2,_C_LABEL(curlwp)	|   and curlwp so that
-	movl	%a1,%a2@(L_ADDR)	|   we don't deref NULL in trap()
+/* call final pmap setup */
+	jbsr	_C_LABEL(pmap_bootstrap_finalize)
+/* set kernel stack, user SP */
+	movl	_C_LABEL(lwp0uarea),%a1	| get lwp0 uarea
+	lea	%a1@(USPACE-4),%sp	|   set kernel stack to end of area
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
-	movl	%a1,_C_LABEL(curpcb)	| lwp0 is running
 
 	tstl	_C_LABEL(fputype)	| Have an FPU?
 	jeq	Lenab2			| No, skip.
@@ -486,7 +489,7 @@ Lenab3:
 	jbsr	_C_LABEL(news68k_init)	| additional pre-main initialization
 
 /*
- * Create a fake exception frame so that cpu_fork() can copy it.
+ * Create a fake exception frame so that cpu_lwp_fork() can copy it.
  * main() nevers returns; we exit to user mode from a forked process
  * later on.
  */
@@ -1234,9 +1237,6 @@ GLOBAL(bootctrllun)
 	.long	0
 GLOBAL(bootaddr)
 	.long	0
-
-GLOBAL(proc0paddr)
-	.long	0		| KVA of lwp0 u-area
 
 GLOBAL(intiobase)
 	.long	0		| KVA of base of internal IO space

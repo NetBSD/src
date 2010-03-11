@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.21 2007/12/03 15:34:17 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.21.18.1 2010/03/11 15:02:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21 2007/12/03 15:34:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21.18.1 2010/03/11 15:02:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21 2007/12/03 15:34:17 ad Exp $");
 
 static int	cpu_match(struct device *, struct cfdata *, void *);
 static void	cpu_attach(struct device *, struct device *, void *);
-void		cpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void		cpu_intr(uint32_t, uint32_t, vaddr_t, uint32_t);
 void *cpu_intr_establish(int, int, int (*func)(void *), void *);
 void		mips1_fpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 
@@ -103,7 +103,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
  * sorts of Bad Things(tm) to happen, including kernel stack overflows.
  */
 void
-cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
 {
 	struct cpu_info *ci;
 

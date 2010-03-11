@@ -1,6 +1,7 @@
-/* $NetBSD */
+/* $NetBSD: gpio.h,v 1.3.10.2 2010/03/11 15:04:42 yamt Exp $ */
 /*	$OpenBSD: gpio.h,v 1.7 2008/11/26 14:51:20 mbalmer Exp $	*/
 /*
+ * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -38,6 +39,7 @@
 #define GPIO_PIN_INVIN		0x0100	/* invert input */
 #define GPIO_PIN_INVOUT		0x0200	/* invert output */
 #define GPIO_PIN_USER		0x0400	/* user != 0 can access */
+#define GPIO_PIN_PULSATE	0x0800	/* pulsate in hardware */
 #define GPIO_PIN_SET		0x8000	/* set for securelevel access */
 
 /* GPIO controller description */

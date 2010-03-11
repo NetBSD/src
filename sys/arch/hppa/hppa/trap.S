@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.23.10.3 2009/06/20 07:20:04 yamt Exp $	*/
+/*	$NetBSD: trap.S,v 1.23.10.4 2010/03/11 15:02:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ emergency_stack_end:
 	.export	gateway_page, entry
 gateway_page:
 	nop				/* @ 0.C0000000 (Nothing)  */
-	gate,n	bsd_syscall,%r0	/* @ 0.C0000004 (HPUX/BSD) */
+	gate,n	bsd_syscall,%r0		/* @ 0.C0000004 (HPUX/BSD) */
 #ifdef COMPAT_OSF1
 	bl,n	osf_syscall,%r0
 	bl,n	osf_syscall,%r0
@@ -217,7 +217,7 @@ syscall_entry:
 
 	/* t2 = curlwp PCB */
 	mfctl	CR_CURLWP, %t3 
-	ldw	L_ADDR(%sr1, %t3), %t2			/* XXX can use ,sl */
+	ldw	L_PCB(%sr1, %t3), %t2			/* XXX can use ,sl */
 
 	/*
 	 * NB: Even though t4 is a caller-saved register, we
@@ -428,9 +428,8 @@ syscall_entry:
 	.entry
 syscall_return:
 	/* t3 == VA trapframe */
-	/* check for AST ? XXX */
 
-	/* splhigh(), just in case */
+	/* disable interrupts, just in case */
 	mtctl	%r0, %eiem
 
 	/*
@@ -664,7 +663,6 @@ LDILDO(tlbd_u)
 #define	DTLBPRE \
 	mfctl	%ior, %r9		/* Offset */			! \
 	mfctl	%isr, %r8		/* Space  */
-	/* CR28XXX according to a popular belief cr28 should be read here */
 
 #define	HPMCPRE	\
 	nop
@@ -1236,23 +1234,9 @@ EXIT(hppa_fpu_swap)
 	depi	1, 0, 1, t		/* and set the valid bit */
 
 #if 0
-	.section .bss
-	.export	dtlb_c, data
-	.export	tlbd_c, data
-	.export	itlb_c, data
-#if 0
 	BSS(dtlb_c, 8)
 	BSS(tlbd_c, 8)
 	BSS(itlb_c, 8)
-#else
-dtlb_c:
-	.block 8
-tlbd_c:
-	.block 8
-itlb_c:
-	.block 8
-#endif
-	.text
 
 	/* XXX this touches tr5, which it should not, perhaps */
 #define	TLB_STATS_PRE(t) \
@@ -1302,14 +1286,15 @@ itlb_c:
 	extru	%r17, 24, 25, %r17
 
 	.align	32
+
 /*
- * This is a handler for interruption 20, "TLB dirty bit trap".  It
- * is used on the PA7000 (PCX), PA7000 (PCX-S), and PA7100 (PCX-T). XXXNH
+ * This is a handler for interruption 20, "TLB dirty bit trap".  It is used on
+ * the PA7000 (PCX), PA7000 (PCX-S), and PA7100 (PCX-T).
  * Only shadowed registers are available, and they are:
  *
  * %r1 = C trap number
- * %r8 = data address space identifier
- * %r9 = data address offset
+ * %r8 = data address space identifier.  Copied from %isr.
+ * %r9 = data address offset.  Copied from %ior.
  * %r16 = undefined
  * %r17 = undefined
  * %r24 = undefined
@@ -1331,15 +1316,13 @@ ALTENTRY(TLABEL(tlbd_x))
 EXIT(TLABEL(tlbd_s))
 
 /*
- * This is a handler for interruption 6, "Instruction TLB miss fault",
- * and interruption 16, "Non-access instruction TLB miss fault".  It
- * is used on the PA7000 (PCX), PA7000 (PCX-S), PA7100 (PCX-T) and
- * PA7200 (PCX-T')
+ * This is a handler for interruption 6, "Instruction TLB miss fault". It is
+ * used on the PA7000 (PCX), PA7000 (PCX-S), PA7100 (PCX-T) and PA7200 (PCX-T')
  * Only shadowed registers are available, and they are:
  *
  * %r1 = C trap number
- * %r8 = instruction address space identifier
- * %r9 = instruction address offset
+ * %r8 = instruction address space identifier. Copied from %pcsq.
+ * %r9 = instruction address offset. Copied from %pcoq.
  * %r16 = undefined
  * %r17 = undefined
  * %r24 = undefined
@@ -1363,15 +1346,13 @@ ALTENTRY(TLABEL(itlb_x))
 EXIT(TLABEL(itlb_s))
 
 /*
- * This is a handler for interruption 15, "Data TLB miss fault",
- * and interruption 17, "Non-access data TLB miss fault".  It is
- * used on the PA7000 (PCX), PA7000 (PCX-S), PA7100 (PCX-T) and
- * PA7200 (PCX-T')
+ * This is a handler for interruption 15, "Data TLB miss fault".  It is used on
+ * the PA7000 (PCX), PA7000 (PCX-S), PA7100 (PCX-T) and PA7200 (PCX-T').
  * Only shadowed registers are available, and they are:
  *
  * %r1 = C trap number
- * %r8 = data address space identifier
- * %r9 = data address offset
+ * %r8 = data address space identifier.  Copied from %isr.
+ * %r9 = data address offset.  Copied from %ior.
  * %r16 = undefined
  * %r17 = undefined
  * %r24 = undefined
@@ -1392,6 +1373,22 @@ ALTENTRY(TLABEL(dtlb_x))
 	nop
 EXIT(TLABEL(dtlb_s))
 
+/*
+ * This is a handler for interruption 16, "Non-access instruction TLB miss
+ * fault", and interrupt 17, "Non-access data TLB miss fault / Non-access data
+ * page fault".  It is used on the PA7000 (PCX), PA7000 (PCX-S), PA7100 (PCX-T)
+ * and PA7200 (PCX-T').
+ *
+ * Only shadowed registers are available, and they are:
+ *
+ * %r1 = C trap number
+ * %r8 = instruction address space identifier.  Copied from %isr.
+ * %r9 = instruction address offset.  Copied from %ior.
+ * %r16 = undefined
+ * %r17 = undefined
+ * %r24 = undefined
+ * %r25 = undefined
+ */
 LEAF_ENTRY_NOPROFILE(TLABEL(dtlbna_s))
 ALTENTRY(TLABEL(itlbna_s))
 ALTENTRY(TLABEL(dtlbna_t))
@@ -1470,36 +1467,22 @@ EXIT(TLABEL(dtlbna_s))
 	extru	%r17, 24, 25, %r17	/* tlbbtop(%r17) */		! \
 	sync
 
-/*
- * This is a handler for interruption 20, "TLB dirty bit trap".  It
- * is used on the PA7100LC (PCX-L), PA7300LC (PCX-L2), PA8000 (PCX-U),
- * PA8200 (PCX-W), PA8500 (PCX-W), and PA8600 (PCX-W+).  Only shadowed 
- * registers are available, and they are:
- *
- * %r1 = C trap number
- * %r8 = data address space identifier
- * %r9 = data address offset
- * %r16 = undefined
- * %r17 = undefined
- * %r24 = undefined
- * %r25 = undefined
- */
-
-/*
- * This is a handler for interruption 20, "TLB dirty bit trap".  It
- * is used on the PA7100LC (PCX-L), PA7300LC (PCX-L2). Only shadowed
- * registers are available, and they are:
- *
- * %r1 = C trap number
- * %r8 = data address space identifier
- * %r9 = data address offset
- * %r16 = undefined
- * %r17 = undefined
- * %r24 = undefined
- * %r25 = undefined
- */
-
 	.align	32
+
+/*
+ * This is a handler for interruption 20, "TLB dirty bit trap".  It is used on
+ * the PA7100LC (PCX-L), PA7300LC (PCX-L2).
+ * Only shadowed registers are available, and they are:
+ *
+ * %r1 = C trap number
+ * %r8 = data address space identifier.  Copied from %ior.
+ * %r9 = data address offset.  Copied from %isr.
+ * %r16 = undefined
+ * %r17 = undefined
+ * %r24 = undefined
+ * %r25 = undefined
+ */
+
 LEAF_ENTRY_NOPROFILE(TLABEL(tlbd_l))
 	TLB_STATS_PRE(tlbd)
 	TLB_PULL_L(1, TLABEL(all))
@@ -1519,14 +1502,13 @@ LEAF_ENTRY_NOPROFILE(TLABEL(tlbd_l))
 EXIT(TLABEL(tlbd_l))
 
 /*
- * This is a handler for interruption 6, "Instruction TLB miss fault",
- * and interruption 16, "Non-access instruction TLB miss fault".  It
- * is used on the PA7100LC (PCX-L), PA7300LC (PCX-L2).  Only shadowed
- * registers are available, and they are:
+ * This is a handler for interruption 6, "Instruction TLB miss fault".  It is
+ * used on the PA7100LC (PCX-L), PA7300LC (PCX-L2).
+ * Only shadowed registers are available, and they are:
  *
  * %r1 = C trap number
- * %r8 = instruction address space identifier
- * %r9 = instruction address offset
+ * %r8 = instruction address space identifier.  Copied from %pcsq.
+ * %r9 = instruction address offset.  Copied from %pcoq.
  * %r16 = undefined
  * %r17 = undefined
  * %r24 = undefined
@@ -1550,6 +1532,20 @@ LEAF_ENTRY_NOPROFILE(TLABEL(itlb_l))
 	nop
 EXIT(TLABEL(itlb_l))
 
+/*
+ * This is a handler for interruption 16, "Non-access instruction TLB miss
+ * fault", and interrupt 17, "Non-access data TLB miss fault / Non-access data
+ * page fault".  It is used on the PA7100LC (PCX-L), PA7300LC (PCX-L2).
+ * Only shadowed registers are available, and they are:
+ *
+ * %r1 = C trap number
+ * %r8 = instruction address space identifier.  Copied from %isr.
+ * %r9 = instruction address offset.  Copied from %ior.
+ * %r16 = undefined
+ * %r17 = undefined
+ * %r24 = undefined
+ * %r25 = undefined
+ */
 LEAF_ENTRY_NOPROFILE(TLABEL(dtlbna_l))
 ALTENTRY(TLABEL(itlbna_l))
 	TLB_STATS_PRE(dtlb)
@@ -1579,6 +1575,19 @@ L$dtlbna_l_fake:
 	nop
 EXIT(TLABEL(dtlbna_l))
 
+/*
+ * This is a handler for interruption 15, "Data TLB miss fault".  It is used on
+ * the PA7100LC (PCX-L), PA7300LC (PCX-L2).
+ * Only shadowed registers are available, and they are:
+ *
+ * %r1 = C trap number
+ * %r8 = instruction address space identifier.  Copied from %isr.
+ * %r9 = instruction address offset.  Copied from %ior.
+ * %r16 = undefined
+ * %r17 = undefined
+ * %r24 = undefined
+ * %r25 = undefined
+ */
 LEAF_ENTRY_NOPROFILE(TLABEL(dtlb_l))
 	TLB_STATS_PRE(dtlb)
 	TLB_PULL_L(0, TLABEL(all))
@@ -1651,6 +1660,19 @@ EXIT(TLABEL(dtlb_l))
 	depdi	0, 44, 30, %r25			! \
 	depd	%r16, 14, 15, %r25
 
+/*
+ * This is a handler for interruption 20, "TLB dirty bit trap".  It is used by
+ * the PA8000 (PCX-U), PA8200 (PCX-W), PA8500 (PCX-W), and PA8600 (PCX-W+).
+ * Only shadowed registers are available, and they are:
+ *
+ * %r1 = C trap number
+ * %r8 = data address space identifier.  Copied from %isr.
+ * %r9 = data address offset.  Copied from %ior.
+ * %r16 = undefined
+ * %r17 = undefined
+ * %r24 = undefined
+ * %r25 = undefined
+ */
 LEAF_ENTRY_NOPROFILE(TLABEL(tlbd_u))
 	TLB_STATS_PRE(tlbd)
 	TLB_PULL_L(1, TLABEL(all))
@@ -1661,6 +1683,19 @@ LEAF_ENTRY_NOPROFILE(TLABEL(tlbd_u))
 	nop
 EXIT(TLABEL(tlbd_u))
 
+/*
+ * This is a handler for interruption 6, "Instruction TLB miss fault".  It is
+ * the PA8000 (PCX-U), PA8200 (PCX-W), PA8500 (PCX-W), and PA8600 (PCX-W+).
+ * Only shadowed registers are available, and they are:
+ *
+ * %r1 = C trap number
+ * %r8 = data address space identifier.  Copied from %isr.
+ * %r9 = data address offset.  Copied from %ior.
+ * %r16 = undefined
+ * %r17 = undefined
+ * %r24 = undefined
+ * %r25 = undefined
+ */
 LEAF_ENTRY_NOPROFILE(TLABEL(itlb_u))
 	TLB_STATS_PRE(itlb)
 	TLB_PULL_L(0, TLABEL(all))
@@ -1673,6 +1708,22 @@ LEAF_ENTRY_NOPROFILE(TLABEL(itlb_u))
 	nop
 EXIT(TLABEL(itlb_u))
 
+
+/*
+ * This is a handler for interruption 16, "Non-access instruction TLB miss
+ * fault", and interrupt 17, "Non-access data TLB miss fault / Non-access data
+ * page fault".  It is the PA8000 (PCX-U), PA8200 (PCX-W), PA8500 (PCX-W),
+ * and PA8600 (PCX-W+).
+ * Only shadowed registers are available, and they are:
+ *
+ * %r1 = C trap number
+ * %r8 = instruction address space identifier.  Copied from %isr.
+ * %r9 = instruction address offset.  Copied from %ior.
+ * %r16 = undefined
+ * %r17 = undefined
+ * %r24 = undefined
+ * %r25 = undefined
+ */
 LEAF_ENTRY_NOPROFILE(TLABEL(dtlbna_u))
 ALTENTRY(TLABEL(itlbna_u))
 	TLB_STATS_PRE(dtlb)
@@ -1701,6 +1752,19 @@ L$dtlbna_u_fake:
 	nop
 EXIT(TLABEL(dtlbna_u))
 
+/*
+ * This is a handler for interruption 15, "Data TLB miss fault".  It is the
+ * PA8000 (PCX-U), PA8200 (PCX-W), PA8500 (PCX-W), and PA8600 (PCX-W+).
+ * Only shadowed registers are available, and they are:
+ *
+ * %r1 = C trap number
+ * %r8 = instruction address space identifier.  Copied from %isr.
+ * %r9 = instruction address offset.  Copied from %ior.
+ * %r16 = undefined
+ * %r17 = undefined
+ * %r24 = undefined
+ * %r25 = undefined
+ */
 LEAF_ENTRY_NOPROFILE(TLABEL(dtlb_u))
 	TLB_STATS_PRE(dtlb)
 	TLB_PULL_L(0, TLABEL(all))
@@ -1847,37 +1911,6 @@ EXIT(desidhash_l)
 
 #endif /* defined(HP7100LC_CPU) || defined(HP7300LC_CPU) */
 
-/*
- * This is a handler for interruption 17, "Non-access data TLB miss 
- * fault".  It is used on the PA7100LC (PCX-L), PA7300LC (PCX-L2), 
- * PA8000 (PCX-U), PA8200 (PCX-W), PA8500 (PCX-W), and PA8600 (PCX-W+).
- * Only shadowed registers are available, and they are:
- *
- * %r1 = C trap number
- * %r8 = data address space identifier
- * %r9 = data address offset
- * %r16 = undefined
- * %r17 = undefined
- * %r24 = undefined
- * %r25 = undefined
- */
-
-
-/*
- * This is a handler for interruption 15, "Data TLB miss fault".
- * It is used on the PA7100LC (PCX-L), PA7300LC (PCX-L2),
- * PA8000 (PCX-U), PA8200 (PCX-W), PA8500 (PCX-W), and PA8600 (PCX-W+).
- * Only shadowed registers are available, and they are:
- *
- * %r1 = C trap number
- * %r8 = data address space identifier
- * %r9 = data address offset
- * %r16 = undefined
- * %r17 = undefined
- * %r24 = undefined
- * %r25 = undefined
- */
-
 #if defined(HP8000_CPU) || defined(HP8200_CPU) || defined(HP8500_CPU)
 	.level	2.0w
 LEAF_ENTRY_NOPROFILE(desidhash_u)
@@ -1994,7 +2027,7 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 	mfctl	CR_UPADDR, %t2
 	depi	1, T_USER_POS, 1, %r1
 	depi	1, TFF_LAST_POS, 1, %r1
-	ldw	U_PCB+PCB_UVA(%t2), %sp
+	ldw	PCB_UVA(%t2), %sp
 #ifdef DIAGNOSTIC
 	b	L$trap_have_stack
 #endif
@@ -2246,14 +2279,9 @@ L$trap_return:
 	bv,n	%r0(%t1)
 	nop
 
-#if 0
-	.export	T$trap$all$end, entry
-T$trap$all$end:
-#endif
 EXIT(TLABEL(all))
 
 	.align	32
-	.export	TLABEL(ibrk), entry
 ENTRY_NOPROFILE(TLABEL(ibrk),0)
 	/* If called by a user process then always pass it to trap() */
 	mfctl	%pcoq, %r8

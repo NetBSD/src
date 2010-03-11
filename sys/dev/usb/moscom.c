@@ -1,4 +1,4 @@
-/*	$NetBSD: moscom.c,v 1.1.2.2 2009/07/18 14:53:12 yamt Exp $	*/
+/*	$NetBSD: moscom.c,v 1.1.2.3 2010/03/11 15:04:05 yamt Exp $	*/
 /*	$OpenBSD: moscom.c,v 1.11 2007/10/11 18:33:14 deraadt Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.1.2.2 2009/07/18 14:53:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.1.2.3 2010/03/11 15:04:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,8 +200,10 @@ USB_ATTACH(moscom)
 	usbd_status error;
 	int i;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
@@ -298,19 +300,14 @@ int
 moscom_activate(device_t self, enum devact act)
 {
 	struct moscom_softc *sc = device_private(self);
-	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
-		if (sc->sc_subdev != NULL)
-			rv = config_deactivate(sc->sc_subdev);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.30.4.4 2009/09/16 13:37:46 yamt Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.30.4.5 2010/03/11 15:03:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,10 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.30.4.4 2009/09/16 13:37:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.30.4.5 2010/03/11 15:03:25 yamt Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -60,10 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.30.4.4 2009/09/16 13:37:46 yamt
 #include <net/if_ether.h>
 
 #include <machine/endian.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -96,13 +91,15 @@ static void fxp_cardbus_disable(struct fxp_softc *);
 struct fxp_cardbus_softc {
 	struct fxp_softc sc;
 	cardbus_devfunc_t ct;
+	cardbus_intr_line_t intrline;
+	pcitag_t tag;
 	pcireg_t base0_reg;
 	pcireg_t base1_reg;
-	bus_size_t size;
 };
 
-CFATTACH_DECL_NEW(fxp_cardbus, sizeof(struct fxp_cardbus_softc),
-    fxp_cardbus_match, fxp_cardbus_attach, fxp_cardbus_detach, fxp_activate);
+CFATTACH_DECL3_NEW(fxp_cardbus, sizeof(struct fxp_cardbus_softc),
+    fxp_cardbus_match, fxp_cardbus_attach, fxp_cardbus_detach, fxp_activate,
+    NULL, null_childdetached, DVF_DETACH_SHUTDOWN);
 
 #ifdef CBB_DEBUG
 #define DPRINTF(X) printf X
@@ -116,8 +113,8 @@ fxp_cardbus_match(device_t parent, cfdata_t match,
 {
 	struct cardbus_attach_args *ca = aux;
 
-	if (CARDBUS_VENDOR(ca->ca_id) == PCI_VENDOR_INTEL &&
-	    CARDBUS_PRODUCT(ca->ca_id) == PCI_PRODUCT_INTEL_82557)
+	if (PCI_VENDOR(ca->ca_id) == PCI_VENDOR_INTEL &&
+	    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_INTEL_82557)
 		return (1);
 
 	return (0);
@@ -134,27 +131,26 @@ fxp_cardbus_attach(device_t parent, device_t self,
 	bus_space_handle_t ioh, memh;
 
 	bus_addr_t adr;
-	bus_size_t size;
 
 	sc->sc_dev = self;
+	csc->intrline = ca->ca_intrline;
 	csc->ct = ca->ca_ct;
+	csc->tag = ca->ca_tag;
 
 	/*
          * Map control/status registers.
          */
-	if (Cardbus_mapreg_map(csc->ct, CARDBUS_BASE1_REG,
-	    PCI_MAPREG_TYPE_IO, 0, &iot, &ioh, &adr, &size) == 0) {
+	if (Cardbus_mapreg_map(csc->ct, PCI_BAR1,
+	    PCI_MAPREG_TYPE_IO, 0, &iot, &ioh, &adr, &sc->sc_size) == 0) {
 		csc->base1_reg = adr | 1;
 		sc->sc_st = iot;
 		sc->sc_sh = ioh;
-		csc->size = size;
-	} else if (Cardbus_mapreg_map(csc->ct, CARDBUS_BASE0_REG,
+	} else if (Cardbus_mapreg_map(csc->ct, PCI_BAR0,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
-	    0, &memt, &memh, &adr, &size) == 0) {
+	    0, &memt, &memh, &adr, &sc->sc_size) == 0) {
 		csc->base0_reg = adr;
 		sc->sc_st = memt;
 		sc->sc_sh = memh;
-		csc->size = size;
 	} else
 		panic("%s: failed to allocate mem and io space", __func__);
 
@@ -164,7 +160,7 @@ fxp_cardbus_attach(device_t parent, device_t self,
 	else
 		printf("\n");
 
-	sc->sc_rev = CARDBUS_REVISION(ca->ca_class);
+	sc->sc_rev = PCI_REVISION(ca->ca_class);
 	if (sc->sc_rev >= FXP_REV_82558_A4)
 		sc->sc_flags |= FXPF_FC|FXPF_EXT_TXCB;
 	if (sc->sc_rev >= FXP_REV_82559_A0)
@@ -193,42 +189,31 @@ static void
 fxp_cardbus_setup(struct fxp_softc * sc)
 {
 	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *)sc;
-	struct cardbus_softc *psc = device_private(device_parent(sc->sc_dev));
-	cardbus_chipset_tag_t cc = psc->sc_cc;
-	cardbus_function_tag_t cf = psc->sc_cf;
 	pcireg_t command;
 
-	cardbustag_t tag = cardbus_make_tag(cc, cf, csc->ct->ct_bus,
-	    csc->ct->ct_func);
+	pcitag_t tag = csc->tag;
 
-	command = Cardbus_conf_read(csc->ct, tag, CARDBUS_COMMAND_STATUS_REG);
+	command = Cardbus_conf_read(csc->ct, tag, PCI_COMMAND_STATUS_REG);
 	if (csc->base0_reg) {
 		Cardbus_conf_write(csc->ct, tag,
-		    CARDBUS_BASE0_REG, csc->base0_reg);
-		(cf->cardbus_ctrl) (cc, CARDBUS_MEM_ENABLE);
-		command |= CARDBUS_COMMAND_MEM_ENABLE |
-		    CARDBUS_COMMAND_MASTER_ENABLE;
+		    PCI_BAR0, csc->base0_reg);
+		command |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
 	} else if (csc->base1_reg) {
 		Cardbus_conf_write(csc->ct, tag,
-		    CARDBUS_BASE1_REG, csc->base1_reg);
-		(cf->cardbus_ctrl) (cc, CARDBUS_IO_ENABLE);
-		command |= (CARDBUS_COMMAND_IO_ENABLE |
-		    CARDBUS_COMMAND_MASTER_ENABLE);
+		    PCI_BAR1, csc->base1_reg);
+		command |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MASTER_ENABLE;
 	}
 
-	(cf->cardbus_ctrl) (cc, CARDBUS_BM_ENABLE);
-
 	/* enable the card */
-	Cardbus_conf_write(csc->ct, tag, CARDBUS_COMMAND_STATUS_REG, command);
+	Cardbus_conf_write(csc->ct, tag, PCI_COMMAND_STATUS_REG, command);
 }
 
 static int
 fxp_cardbus_enable(struct fxp_softc * sc)
 {
 	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *)sc;
-	struct cardbus_softc *psc = device_private(device_parent(sc->sc_dev));
-	cardbus_chipset_tag_t cc = psc->sc_cc;
-	cardbus_function_tag_t cf = psc->sc_cf;
+	cardbus_chipset_tag_t cc = csc->ct->ct_cc;
+	cardbus_function_tag_t cf = csc->ct->ct_cf;
 
 	Cardbus_function_enable(csc->ct);
 
@@ -236,7 +221,7 @@ fxp_cardbus_enable(struct fxp_softc * sc)
 
 	/* Map and establish the interrupt. */
 
-	sc->sc_ih = cardbus_intr_establish(cc, cf, psc->sc_intrline, IPL_NET,
+	sc->sc_ih = cardbus_intr_establish(cc, cf, csc->intrline, IPL_NET,
 	    fxp_intr, sc);
 	if (NULL == sc->sc_ih) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt\n");
@@ -250,9 +235,9 @@ static void
 fxp_cardbus_disable(struct fxp_softc * sc)
 {
 	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *)sc;
-	struct cardbus_softc *psc = device_private(device_parent(sc->sc_dev));
-	cardbus_chipset_tag_t cc = psc->sc_cc;
-	cardbus_function_tag_t cf = psc->sc_cf;
+	struct cardbus_devfunc *ct = csc->ct;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* Remove interrupt handler. */
 	cardbus_intr_disestablish(cc, cf, sc->sc_ih);
@@ -273,21 +258,20 @@ fxp_cardbus_detach(device_t self, int flags)
 		panic("%s: data structure lacks", device_xname(self));
 #endif
 
-	rv = fxp_detach(sc);
-	if (rv == 0) {
-		/*
-		 * Unhook the interrupt handler.
-		 */
-		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
+	if ((rv = fxp_detach(sc, flags)) != 0)
+		return rv;
+	/*
+	 * Unhook the interrupt handler.
+	 */
+	cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
 
-		/*
-		 * release bus space and close window
-		 */
-		if (csc->base0_reg)
-			reg = CARDBUS_BASE0_REG;
-		else
-			reg = CARDBUS_BASE1_REG;
-		Cardbus_mapreg_unmap(ct, reg, sc->sc_st, sc->sc_sh, csc->size);
-	}
-	return (rv);
+	/*
+	 * release bus space and close window
+	 */
+	if (csc->base0_reg)
+		reg = PCI_BAR0;
+	else
+		reg = PCI_BAR1;
+	Cardbus_mapreg_unmap(ct, reg, sc->sc_st, sc->sc_sh, sc->sc_size);
+	return 0;
 }

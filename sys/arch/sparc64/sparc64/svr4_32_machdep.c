@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.33.2.2 2009/05/04 08:11:58 yamt Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.33.2.3 2010/03/11 15:03:02 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.33.2.2 2009/05/04 08:11:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.33.2.3 2010/03/11 15:03:02 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.33.2.2 2009/05/04 08:11:58 yam
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
-#include <sys/user.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
@@ -73,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.33.2.2 2009/05/04 08:11:58 yam
 static void svr4_32_getsiginfo(union svr4_32_siginfo *, int, u_long, void *);
 
 void
-svr4_32_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
+svr4_32_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
 	register struct trapframe64 *tf = l->l_md.md_tf;
 

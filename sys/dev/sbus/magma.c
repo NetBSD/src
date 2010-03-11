@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.46.4.2 2009/05/16 10:41:43 yamt Exp $	*/
+/*	$NetBSD: magma.c,v 1.46.4.3 2010/03/11 15:04:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.46.4.2 2009/05/16 10:41:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.46.4.3 2010/03/11 15:04:02 yamt Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -66,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.46.4.2 2009/05/16 10:41:43 yamt Exp $");
 
 #include <dev/sbus/mbppio.h>
 #include <dev/sbus/magmareg.h>
+
+#include "ioconf.h"
 
 /* supported cards
  *
@@ -175,9 +177,6 @@ CFATTACH_DECL(mtty, sizeof(struct mtty_softc),
 
 CFATTACH_DECL(mbpp, sizeof(struct mbpp_softc),
     mbpp_match, mbpp_attach, NULL, NULL);
-
-extern struct cfdriver mtty_cd;
-extern struct cfdriver mbpp_cd;
 
 dev_type_open(mttyopen);
 dev_type_close(mttyclose);
@@ -453,8 +452,6 @@ magma_attach(device_t parent, device_t self, void *aux)
 		printf("%s: CD1190 %d addr %p (unsupported)\n",
 			device_xname(self), chip, cd->cd_reg);
 	}
-
-	sbus_establish(&sc->ms_sd, &sc->ms_dev);
 
 	/* configure the children */
 	(void)config_found(self, mtty_match, NULL);

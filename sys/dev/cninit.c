@@ -1,4 +1,4 @@
-/*	$NetBSD: cninit.c,v 1.9 2008/03/11 05:31:00 matt Exp $	*/
+/*	$NetBSD: cninit.c,v 1.9.4.1 2010/03/11 15:03:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,11 +78,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cninit.c,v 1.9 2008/03/11 05:31:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cninit.c,v 1.9.4.1 2010/03/11 15:03:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.38.2.1 2008/05/16 02:23:39 yamt Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.38.2.2 2010/03/11 15:03:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.38.2.1 2008/05/16 02:23:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.38.2.2 2010/03/11 15:03:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
@@ -303,6 +302,7 @@ linux_sys_rt_sigreturn(struct lwp *l, const struct linux_sys_rt_sigreturn_args *
 
 	tf = trapframe(l);
 #ifdef DEBUG_LINUX
+	printf("linux_sys_rt_sigreturn: trapframe=0x%lx scp=0x%lx\n",
 	    (unsigned long)tf, (unsigned long)scp);
 #endif
 

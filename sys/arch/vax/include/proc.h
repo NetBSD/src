@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.12 2007/12/22 08:29:40 tsutsui Exp $	*/
+/*	$NetBSD: proc.h,v 1.12.10.1 2010/03/11 15:03:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -33,6 +33,8 @@
 
 #ifndef _VAX_PROC_H_
 #define _VAX_PROC_H_
+
+#include <sys/user.h> /* for sizeof(struct user) */
 
 /*
  * Machine-dependent lwp struct for vax,

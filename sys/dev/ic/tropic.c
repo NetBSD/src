@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.34.4.2 2009/05/16 10:41:24 yamt Exp $	*/
+/*	$NetBSD: tropic.c,v 1.34.4.3 2010/03/11 15:03:35 yamt Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,10 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.34.4.2 2009/05/16 10:41:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.34.4.3 2010/03/11 15:03:35 yamt Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,10 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.34.4.2 2009/05/16 10:41:24 yamt Exp $")
 #endif
 
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <sys/cpu.h>
 #include <sys/bus.h>
@@ -719,10 +716,8 @@ next:
 
 	if (m0 == 0)
 		return;
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m0);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 	first_txbuf = txbuf = TXCA_INW(sc, TXCA_FREE_QUEUE_HEAD) - XMIT_NEXTBUF;
 	framedata = txbuf + XMIT_FP_DATA;
 	size = 0;
@@ -1256,10 +1251,8 @@ tr_rint(struct tr_softc *sc)
 		ACA_SETB(sc, ACA_ISRA_o, RESP_IN_ASB);
 		++ifp->if_ipackets;
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		(*ifp->if_input)(ifp, m);
 	}
 }
@@ -1324,10 +1317,8 @@ tr_oldxint(struct tr_softc *sc)
 		/* if data in queue, copy mbuf chain to DHB */
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 != 0) {
-#if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m0);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 			/* Pull packet off interface send queue, fill DHB. */
 			trh = mtod(m0, struct token_header *);
 			hlen = sizeof(struct token_header);
@@ -1721,22 +1712,15 @@ tr_disable(struct tr_softc *sc)
 int
 tr_activate(device_t self, enum devact act)
 {
-	struct tr_softc *sc = (struct tr_softc *)self;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int rv = 0, s;
+	struct tr_softc *sc = device_private(self);
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
-		if_deactivate(ifp);
-		break;
+		if_deactivate(&sc->sc_ethercom.ec_if);
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-	return (rv);
 }
 
 int

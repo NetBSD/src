@@ -1,4 +1,4 @@
-/*	$NetBSD: gxlcd.c,v 1.1.2.2 2009/08/19 18:46:06 yamt Exp $	*/
+/*	$NetBSD: gxlcd.c,v 1.1.2.3 2010/03/11 15:02:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxlcd.c,v 1.1.2.2 2009/08/19 18:46:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxlcd.c,v 1.1.2.3 2010/03/11 15:02:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,9 +153,10 @@ gxlcd_match(device_t parent, cfdata_t match, void *aux)
 static void
 gxlcd_attach(device_t parent, device_t self, void *aux)
 {
-	struct pxa2x0_lcd_softc *sc = (struct pxa2x0_lcd_softc *)self;
+	struct pxa2x0_lcd_softc *sc = device_private(self);
 	struct wsemuldisplaydev_attach_args aa;
 
+	sc->dev = self;
 	pxa2x0_lcd_attach_sub(sc, aux, &CURRENT_DISPLAY);
 
 	aa.console = gxlcd_console;

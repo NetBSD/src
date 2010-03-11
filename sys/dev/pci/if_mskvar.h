@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
-/*	$NetBSD: if_mskvar.h,v 1.5.4.2 2009/05/04 08:12:57 yamt Exp $	*/
+/*	$NetBSD: if_mskvar.h,v 1.5.4.3 2010/03/11 15:03:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ struct sk_if_softc;
 
 /* Softc for the Yukon-II controller. */
 struct sk_softc {
-	struct device		sk_dev;		/* generic device */
+	struct device		*sk_dev;	/* generic device */
 	bus_space_handle_t	sk_bhandle;	/* bus space handle */
 	bus_space_tag_t		sk_btag;	/* bus space tag */
 	void			*sk_intrhand;	/* irq handler handle */
@@ -216,7 +216,7 @@ struct sk_softc {
 
 /* Softc for each logical interface */
 struct sk_if_softc {
-	struct device		sk_dev;		/* generic device */
+	struct device		*sk_dev;	/* generic device */
 	struct ethercom		sk_ethercom;	/* interface info */
 	struct mii_data		sk_mii;
 	u_int8_t		sk_enaddr[ETHER_ADDR_LEN]; /* station addr */

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.14.20.1 2009/05/04 08:10:40 yamt Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.14.20.2 2010/03/11 15:02:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.14.20.1 2009/05/04 08:10:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.14.20.2 2010/03/11 15:02:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,5 +318,5 @@ footbridge_mem_bs_mmap(void *t, bus_addr_t addr, off_t offset,
 
 	pa = DC21285_PCI_MEM_BASE + addr + offset;
 
-	return arm_ptob(pa);
+	return arm_btop(pa);
 }

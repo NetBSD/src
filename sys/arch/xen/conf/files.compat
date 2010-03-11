@@ -1,4 +1,4 @@
-#	$NetBSD: files.compat,v 1.18.10.2 2009/08/19 18:46:52 yamt Exp $
+#	$NetBSD: files.compat,v 1.18.10.3 2010/03/11 15:03:09 yamt Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 
 # options for MP configuration through the MP spec
@@ -56,6 +56,9 @@ defflag opt_intel_odcm.h	XXXINTEL_ONDEMAND_CLOCKMOD
 
 # Intel On Die Temperature sensor
 defflag opt_intel_coretemp.h		XXXINTEL_CORETEMP
+
+# VIA C7 Temperature sensor
+defflag	opt_via_c7temp.h		XXXVIA_CORETEMP
 
 # Multiboot support
 defflag 	opt_multiboot.h		XXXMULTIBOOT

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.52.4.1 2009/05/04 08:12:43 yamt Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.52.4.2 2010/03/11 15:03:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.52.4.1 2009/05/04 08:12:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.52.4.2 2010/03/11 15:03:33 yamt Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -62,11 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.52.4.1 2009/05/04 08:12:43 yamt Exp
 #include <net/route.h>
 #endif
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -111,13 +108,11 @@ pdq_ifinit(
 {
     if (sc->sc_if.if_flags & IFF_UP) {
 	sc->sc_if.if_flags |= IFF_RUNNING;
-#if NBPFILTER > 0
 	if (sc->sc_if.if_flags & IFF_PROMISC) {
 	    sc->sc_pdq->pdq_flags |= PDQ_PROMISC;
 	} else {
 	    sc->sc_pdq->pdq_flags &= ~PDQ_PROMISC;
 	}
-#endif
 	if (sc->sc_if.if_flags & IFF_LINK1) {
 	    sc->sc_pdq->pdq_flags |= PDQ_PASS_SMT;
 	} else {
@@ -245,10 +240,8 @@ pdq_os_receive_pdu(
     }
 #endif
     m->m_pkthdr.len = pktlen;
-#if NBPFILTER > 0
     if (sc->sc_bpf != NULL)
 	PDQ_BPF_MTAP(sc, m);
-#endif
     fh = mtod(m, struct fddi_header *);
     if (drop || (fh->fddi_fc & (FDDIFC_L|FDDIFC_F)) != FDDIFC_LLC_ASYNC) {
 	PDQ_OS_DATABUF_FREE(pdq, m);
@@ -280,10 +273,8 @@ pdq_os_transmit_done(
     struct mbuf *m)
 {
     pdq_softc_t *sc = pdq->pdq_os_ctx;
-#if NBPFILTER > 0
     if (sc->sc_bpf != NULL)
 	PDQ_BPF_MTAP(sc, m);
-#endif
     PDQ_OS_DATABUF_FREE(pdq, m);
     sc->sc_if.if_opackets++;
 }

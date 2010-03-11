@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.9.50.2 2009/05/04 08:10:42 yamt Exp $	*/
+/*	$NetBSD: frame.h,v 1.9.50.3 2010/03/11 15:02:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -114,7 +114,7 @@ __BEGIN_DECLS
 void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
 void *getframe(struct lwp *, int, int *);
 __END_DECLS
-#define process_frame(l) ((l)->l_addr->u_pcb.pcb_tf)
+#define process_frame(l) (((struct pcb *)lwp_getpcb(l))->pcb_tf)
 #endif
 
 #endif /* _LOCORE */

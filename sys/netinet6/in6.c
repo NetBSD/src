@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.140.4.4 2009/09/16 13:38:02 yamt Exp $	*/
+/*	$NetBSD: in6.c,v 1.140.4.5 2010/03/11 15:04:29 yamt Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.140.4.4 2009/09/16 13:38:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.140.4.5 2010/03/11 15:04:29 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -76,7 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.140.4.4 2009/09/16 13:38:02 yamt Exp $");
 #include <sys/socketvar.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
-#include <sys/once.h>
 #include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -2239,10 +2238,7 @@ in6_if2idlen(struct ifnet *ifp)
 void *
 in6_domifattach(struct ifnet *ifp)
 {
-	static ONCE_DECL(ifwqest);
 	struct in6_ifextra *ext;
-
-	RUN_ONCE(&ifwqest, in6_ifaddrs_wq_establish);
 
 	ext = malloc(sizeof(*ext), M_IFADDR, M_WAITOK|M_ZERO);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.107.4.2 2009/05/04 08:14:15 yamt Exp $	*/
+/*	$NetBSD: route.c,v 1.107.4.3 2010/03/11 15:04:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.107.4.2 2009/05/04 08:14:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.107.4.3 2010/03/11 15:04:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -108,6 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: route.c,v 1.107.4.2 2009/05/04 08:14:15 yamt Exp $")
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/pool.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -138,12 +139,16 @@ struct callout rt_timer_ch; /* callout for rt_timer_timer() */
 static int _rtcache_debug = 0;
 #endif /* RTFLUSH_DEBUG */
 
+static kauth_listener_t route_listener;
+
 static int rtdeletemsg(struct rtentry *);
 static int rtflushclone1(struct rtentry *, void *);
 static void rtflushclone(sa_family_t family, struct rtentry *);
 
 #ifdef RTFLUSH_DEBUG
-SYSCTL_SETUP(sysctl_net_rtcache_setup, "sysctl net.rtcache.debug setup")
+static void sysctl_net_rtcache_setup(struct sysctllog **);
+static void
+sysctl_net_rtcache_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *rnode;
 
@@ -258,9 +263,32 @@ rtable_init(void **table)
 			    dom->dom_rtoffset);
 }
 
+static int
+route_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	struct rt_msghdr *rtm;
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+	rtm = arg1;
+
+	if (action != KAUTH_NETWORK_ROUTE)
+		return result;
+
+	if (rtm->rtm_type == RTM_GET)
+		result = KAUTH_RESULT_ALLOW;
+
+	return result;
+}
+
 void
 route_init(void)
 {
+
+#ifdef RTFLUSH_DEBUG
+	sysctl_net_rtcache_setup(NULL);
+#endif
 
 	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtentpl",
 	    NULL, IPL_SOFTNET);
@@ -270,6 +298,9 @@ route_init(void)
 	rt_init();
 	rn_init();	/* initialize all zeroes, all ones, mask table */
 	rtable_init((void **)rt_tables);
+
+	route_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
+	    route_listener_cb, NULL);
 }
 
 void
@@ -414,7 +445,7 @@ rtredirect(const struct sockaddr *dst, const struct sockaddr *gateway,
 {
 	struct rtentry *rt;
 	int error = 0;
-	u_quad_t *stat = NULL;
+	uint64_t *stat = NULL;
 	struct rt_addrinfo info;
 	struct ifaddr *ifa;
 

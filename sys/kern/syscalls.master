@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.200.2.3 2009/08/19 18:48:17 yamt Exp $
+	$NetBSD: syscalls.master,v 1.200.2.4 2010/03/11 15:04:19 yamt Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -46,8 +46,6 @@
 #include "opt_modular.h"
 #include "opt_ntp.h"
 #include "opt_sysv.h"
-
-#include "fs_lfs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +123,7 @@
 40	COMPAT_43 MODULAR { int|sys||lstat(const char *path, \
 			    struct stat43 *ub); } lstat43
 41	STD 	RUMP	{ int|sys||dup(int fd); }
-42	STD 		{ int|sys||pipe(void); }
+42	STD 	RUMP	{ int|sys||pipe(void); }
 43	STD 		{ gid_t|sys||getegid(void); }
 44	STD 		{ int|sys||profil(char *samples, size_t size, \
 			    u_long offset, u_int scale); }
@@ -358,20 +356,13 @@
 181	STD 		{ int|sys||setgid(gid_t gid); }
 182	STD 		{ int|sys||setegid(gid_t egid); }
 183	STD 		{ int|sys||seteuid(uid_t euid); }
-#if defined(LFS) || !defined(_KERNEL)
-184	STD 		{ int|sys||lfs_bmapv(fsid_t *fsidp, \
+184	STD MODULAR	{ int|sys||lfs_bmapv(fsid_t *fsidp, \
 			    struct block_info *blkiov, int blkcnt); }
-185	STD 		{ int|sys||lfs_markv(fsid_t *fsidp, \
+185	STD MODULAR	{ int|sys||lfs_markv(fsid_t *fsidp, \
 			    struct block_info *blkiov, int blkcnt); }
-186	STD		{ int|sys||lfs_segclean(fsid_t *fsidp, u_long segment); }
+186	STD MODULAR	{ int|sys||lfs_segclean(fsid_t *fsidp, u_long segment); }
 187	COMPAT_50 MODULAR { int|sys||lfs_segwait(fsid_t *fsidp, \
 			    struct timeval50 *tv); }
-#else
-184	EXCL		lfs_bmapv
-185	EXCL		lfs_markv
-186	EXCL		lfs_segclean
-187	EXCL		lfs_segwait
-#endif
 188	COMPAT_12 MODULAR { int|sys||stat(const char *path, struct stat12 *ub); } \
 			    stat12
 189	COMPAT_12 MODULAR { int|sys||fstat(int fd, struct stat12 *sb); } fstat12
@@ -488,7 +479,7 @@
 			    siginfo_t *info, \
 			    struct timespec50 *timeout); }
 245	UNIMPL		sys_sigqueue
-246	STD 	 	{ int|sys||modctl(int cmd, void *arg); }
+246	STD RUMP 	{ int|sys||modctl(int cmd, void *arg); }
 247	STD MODULAR 	{ int|sys||_ksem_init(unsigned int value, intptr_t *idp); }
 248	STD MODULAR 	{ int|sys||_ksem_open(const char *name, int oflag, \
 			    mode_t mode, unsigned int value, intptr_t *idp); }
@@ -809,12 +800,8 @@
 			    const struct timeval *tptr); }
 421	STD		{ int|sys|50|adjtime(const struct timeval *delta, \
 			    struct timeval *olddelta); }
-#if defined(LFS) || !defined(_KERNEL)
-422	STD		{ int|sys|50|lfs_segwait(fsid_t *fsidp, \
+422	STD  MODULAR	{ int|sys|50|lfs_segwait(fsid_t *fsidp, \
 			    struct timeval *tv); }
-#else
-422	EXCL		__lfs_segwait50
-#endif
 423	STD  RUMP	{ int|sys|50|futimes(int fd, \
 			    const struct timeval *tptr); }
 424	STD  RUMP 	{ int|sys|50|lutimes(const char *path, \

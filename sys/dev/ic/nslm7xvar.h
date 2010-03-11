@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.24.4.2 2009/05/04 08:12:43 yamt Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.24.4.3 2010/03/11 15:03:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@
 
 /* Bank 0 regs */
 #define WB_BANK0_CHIPID	0x58	/* Chip ID */
+#define WB_BANK0_RESVD1	0x59	/* Resvd, bits 6-4 select temp sensor mode */
 #define WB_BANK0_FAN45	0x5c	/* Fan 4/5 Divisor Control (W83791D only) */
 #define WB_BANK0_VBAT	0x5d	/* VBAT Monitor Control */
 #define WB_BANK0_FAN4	0xba	/* Fan 4 reading (W83791D only) */

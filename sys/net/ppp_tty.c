@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.52.10.2 2009/05/16 10:41:49 yamt Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.52.10.3 2010/03/11 15:04:27 yamt Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.52.10.2 2009/05/16 10:41:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.52.10.3 2010/03/11 15:04:27 yamt Exp $");
 
 #include "ppp.h"
 
@@ -125,10 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.52.10.2 2009/05/16 10:41:49 yamt Exp $
 #include <net/slcompress.h>
 #endif
 
-#include "bpfilter.h"
-#if NBPFILTER > 0 || defined(PPP_FILTER)
 #include <net/bpf.h>
-#endif
 #include <net/ppp_defs.h>
 #include <net/if_ppp.h>
 #include <net/if_pppvar.h>
@@ -231,10 +228,8 @@ pppopen(dev_t dev, struct tty *tp)
     if (sc->sc_relinq)
 	(*sc->sc_relinq)(sc);	/* get previous owner to relinquish the unit */
 
-#if NBPFILTER > 0
     /* Switch DLT to PPP-over-serial. */
-    bpf_change_type(&sc->sc_if, DLT_PPP_SERIAL, PPP_HDRLEN);
-#endif
+    bpf_ops->bpf_change_type(&sc->sc_if, DLT_PPP_SERIAL, PPP_HDRLEN);
 
     sc->sc_ilen = 0;
     sc->sc_m = NULL;
@@ -298,10 +293,8 @@ pppasyncrelinq(struct ppp_softc *sc)
 {
     int s;
 
-#if NBPFILTER > 0
     /* Change DLT to back none. */
-    bpf_change_type(&sc->sc_if, DLT_NULL, 0);
-#endif
+    bpf_ops->bpf_change_type(&sc->sc_if, DLT_NULL, 0);
 
     s = spltty();
     if (sc->sc_outm) {

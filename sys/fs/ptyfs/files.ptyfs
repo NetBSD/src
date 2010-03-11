@@ -1,6 +1,6 @@
-#	$NetBSD: files.ptyfs,v 1.2 2005/12/11 12:24:29 christos Exp $
+#	$NetBSD: files.ptyfs,v 1.2.74.1 2010/03/11 15:04:14 yamt Exp $
 
-deffs	fs_ptyfs.h			PTYFS		# XXX
+deffs	PTYFS
 
 file	fs/ptyfs/ptyfs_subr.c	ptyfs
 file	fs/ptyfs/ptyfs_vfsops.c	ptyfs

@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.1.4.4 2009/07/18 14:53:01 yamt Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.1.4.5 2010/03/11 15:03:27 yamt Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.1.4.4 2009/07/18 14:53:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.1.4.5 2010/03/11 15:03:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +63,9 @@ CFATTACH_DECL_NEW(sdtemp, sizeof(struct sdtemp_softc),
 
 static void	sdtemp_refresh(struct sysmon_envsys *, envsys_data_t *);
 static void	sdtemp_get_limits(struct sysmon_envsys *, envsys_data_t *,
-				  sysmon_envsys_lim_t *);
+				  sysmon_envsys_lim_t *, uint32_t *);
 static void	sdtemp_set_limits(struct sysmon_envsys *, envsys_data_t *,
-				  sysmon_envsys_lim_t *);
+				  sysmon_envsys_lim_t *, uint32_t *);
 #ifdef NOT_YET
 static int	sdtemp_read_8(struct sdtemp_softc *, uint8_t, uint8_t *);
 static int	sdtemp_write_8(struct sdtemp_softc *, uint8_t, uint8_t);
@@ -73,8 +73,8 @@ static int	sdtemp_write_8(struct sdtemp_softc *, uint8_t, uint8_t);
 static int	sdtemp_read_16(struct sdtemp_softc *, uint8_t, uint16_t *);
 static int	sdtemp_write_16(struct sdtemp_softc *, uint8_t, uint16_t);
 static uint32_t	sdtemp_decode_temp(struct sdtemp_softc *, uint16_t);
-static bool	sdtemp_pmf_suspend(device_t PMF_FN_PROTO);
-static bool	sdtemp_pmf_resume(device_t PMF_FN_PROTO);
+static bool	sdtemp_pmf_suspend(device_t, const pmf_qual_t *);
+static bool	sdtemp_pmf_resume(device_t, const pmf_qual_t *);
 
 struct sdtemp_dev_entry {
 	const uint16_t sdtemp_mfg_id;
@@ -172,6 +172,7 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 	struct sdtemp_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 	sysmon_envsys_lim_t limits;
+	uint32_t props;
 	uint16_t mfgid, devid;
 	int i, error;
 
@@ -272,19 +273,19 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Retrieve and display hardware monitor limits */
-	sdtemp_get_limits(sc->sc_sme, sc->sc_sensor, &limits);
+	sdtemp_get_limits(sc->sc_sme, sc->sc_sensor, &limits, &props);
 	aprint_normal_dev(self, "");
 	i = 0;
-	if (limits.sel_flags & PROP_WARNMIN) {
+	if (props & PROP_WARNMIN) {
 		aprint_normal("low limit %dC", __UK2C(limits.sel_warnmin));
 		i++;
 	}
-	if (limits.sel_flags & PROP_WARNMAX) {
+	if (props & PROP_WARNMAX) {
 		aprint_normal("%shigh limit %dC ", (i)?", ":"",
 			      __UK2C(limits.sel_warnmax));
 		i++;
 	}
-	if (limits.sel_flags & PROP_CRITMAX) {
+	if (props & PROP_CRITMAX) {
 		aprint_normal("%scritical limit %dC ", (i)?", ":"",
 			      __UK2C(limits.sel_critmax));
 		i++;
@@ -305,48 +306,50 @@ bad2:
 /* Retrieve current limits from device, and encode in uKelvins */
 static void
 sdtemp_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
-		  sysmon_envsys_lim_t *limits)
+		  sysmon_envsys_lim_t *limits, uint32_t *props)
 {
 	struct sdtemp_softc *sc = sme->sme_cookie;
 	uint16_t lim;
 
-	limits->sel_flags = 0;
+	*props = 0;
 	iic_acquire_bus(sc->sc_tag, 0);
 	if (sdtemp_read_16(sc, SDTEMP_REG_LOWER_LIM, &lim) == 0 && lim != 0) {
 		limits->sel_warnmin = sdtemp_decode_temp(sc, lim);
-		limits->sel_flags |= PROP_WARNMIN;
+		*props |= PROP_WARNMIN;
 	}
 	if (sdtemp_read_16(sc, SDTEMP_REG_UPPER_LIM, &lim) == 0 && lim != 0) {
 		limits->sel_warnmax = sdtemp_decode_temp(sc, lim);
-		limits->sel_flags |= PROP_WARNMAX;
+		*props |= PROP_WARNMAX;
 	}
 	if (sdtemp_read_16(sc, SDTEMP_REG_CRIT_LIM, &lim) == 0 && lim != 0) {
 		limits->sel_critmax = sdtemp_decode_temp(sc, lim);
-		limits->sel_flags |= PROP_CRITMAX;
+		*props |= PROP_CRITMAX;
 	}
 	iic_release_bus(sc->sc_tag, 0);
+	if (*props != 0)
+		*props |= PROP_DRIVER_LIMITS;
 }
 
 /* Send current limit values to the device */
 static void
 sdtemp_set_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
-		  sysmon_envsys_lim_t *limits)
+		  sysmon_envsys_lim_t *limits, uint32_t *props)
 {
 	uint16_t val;
 	struct sdtemp_softc *sc = sme->sme_cookie;
 
 	iic_acquire_bus(sc->sc_tag, 0);
-	if (limits->sel_flags & PROP_WARNMIN) {
+	if (*props & PROP_WARNMIN) {
 		val = __UK2C(limits->sel_warnmin);
 		(void)sdtemp_write_16(sc, SDTEMP_REG_LOWER_LIM,
 					(val << 4) & SDTEMP_TEMP_MASK);
 	}
-	if (limits->sel_flags & PROP_WARNMAX) {
+	if (*props & PROP_WARNMAX) {
 		val = __UK2C(limits->sel_warnmax);
 		(void)sdtemp_write_16(sc, SDTEMP_REG_UPPER_LIM,
 					(val << 4) & SDTEMP_TEMP_MASK);
 	}
-	if (limits->sel_flags & PROP_CRITMAX) {
+	if (*props & PROP_CRITMAX) {
 		val = __UK2C(limits->sel_critmax);
 		(void)sdtemp_write_16(sc, SDTEMP_REG_CRIT_LIM,
 					(val << 4) & SDTEMP_TEMP_MASK);
@@ -358,12 +361,12 @@ sdtemp_set_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	 * limits are set that we cannot handle, tell sysmon that
 	 * the driver will take care of monitoring the limits!
 	 */
-	if (limits->sel_flags & (PROP_CRITMIN | PROP_BATTCAP | PROP_BATTWARN))
-		limits->sel_flags &= ~PROP_DRIVER_LIMITS;
-	else if (limits->sel_flags & PROP_LIMITS)
-		limits->sel_flags |= PROP_DRIVER_LIMITS;
+	if (*props & (PROP_CRITMIN | PROP_BATTCAP | PROP_BATTWARN))
+		*props &= ~PROP_DRIVER_LIMITS;
+	else if (*props & PROP_LIMITS)
+		*props |= PROP_DRIVER_LIMITS;
 	else
-		limits->sel_flags &= ~PROP_DRIVER_LIMITS;
+		*props &= ~PROP_DRIVER_LIMITS;
 }
 
 #ifdef NOT_YET	/* All registers on these sensors are 16-bits */
@@ -480,7 +483,7 @@ sdtemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
  */
 
 static bool
-sdtemp_pmf_suspend(device_t dev PMF_FN_ARGS)
+sdtemp_pmf_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	struct sdtemp_softc *sc = device_private(dev);
 	int error;
@@ -497,7 +500,7 @@ sdtemp_pmf_suspend(device_t dev PMF_FN_ARGS)
 }
 
 static bool
-sdtemp_pmf_resume(device_t dev PMF_FN_ARGS)
+sdtemp_pmf_resume(device_t dev, const pmf_qual_t *qual)
 {
 	struct sdtemp_softc *sc = device_private(dev);
 	int error;

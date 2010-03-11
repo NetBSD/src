@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.145.4.3 2009/08/19 18:48:35 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.145.4.4 2010/03/11 15:04:46 yamt Exp $	*/
 
 /*
  *
@@ -322,8 +322,8 @@ struct uvmexp {
 	int syscalls;		/* system calls */
 	int pageins;		/* pagein operation count */
 				/* pageouts are in pdpageouts below */
-	int swapins;		/* swapins */
-	int swapouts;		/* swapouts */
+	int _unused1;
+	int _unused2;
 	int pgswapin;		/* pages swapped in */
 	int pgswapout;		/* pages swapped out */
 	int forks;  		/* forks */
@@ -363,7 +363,7 @@ struct uvmexp {
 	/* daemon counters.  XXX: should be 64-bit counters */
 	int pdwoke;	/* number of times daemon woke up */
 	int pdrevs;	/* number of times daemon rev'd clock hand */
-	int pdswout;	/* number of times daemon called for swapout */
+	int _unused3;
 	int pdfreed;	/* number of pages daemon freed since boot */
 	int pdscans;	/* number of pages daemon scanned since boot */
 	int pdanscan;	/* number of anonymous pages scanned by daemon */
@@ -398,14 +398,14 @@ struct uvmexp_sysctl {
 	int64_t	reserve_kernel;
 	int64_t	freemin;
 	int64_t	freetarg;
-	int64_t	inactarg; /* unused */
+	int64_t	inactarg;		/* unused */
 	int64_t	wiredmax;
 	int64_t	nswapdev;
 	int64_t	swpages;
 	int64_t	swpginuse;
 	int64_t	swpgonly;
 	int64_t	nswget;
-	int64_t	unused1; /* used to be nanon */
+	int64_t	unused1;		/* unused; was nanon */
 	int64_t cpuhit;
 	int64_t cpumiss;
 	int64_t	faults;
@@ -415,8 +415,8 @@ struct uvmexp_sysctl {
 	int64_t	softs;
 	int64_t	syscalls;
 	int64_t	pageins;
-	int64_t	swapins;
-	int64_t	swapouts;
+	int64_t	swapins;		/* unused */
+	int64_t	swapouts;		/* unused */
 	int64_t	pgswapin;
 	int64_t	pgswapout;
 	int64_t	forks;
@@ -445,7 +445,7 @@ struct uvmexp_sysctl {
 	int64_t	flt_przero;
 	int64_t	pdwoke;
 	int64_t	pdrevs;
-	int64_t	pdswout;
+	int64_t	unused4;
 	int64_t	pdfreed;
 	int64_t	pdscans;
 	int64_t	pdanscan;
@@ -551,7 +551,6 @@ void	uvm_reclaim_hook_del(struct uvm_reclaim_hook *);
  */
 extern struct vm_map *kernel_map;
 extern struct vm_map *kmem_map;
-extern struct vm_map *mb_map;
 extern struct vm_map *phys_map;
 
 /*
@@ -567,12 +566,6 @@ MALLOC_DECLARE(M_VMPMAP);
 /* vm_machdep.c */
 void		vmapbuf(struct buf *, vsize_t);
 void		vunmapbuf(struct buf *, vsize_t);
-#ifndef	cpu_swapin
-void		cpu_swapin(struct lwp *);
-#endif
-#ifndef	cpu_swapout
-void		cpu_swapout(struct lwp *);
-#endif
 
 /* uvm_aobj.c */
 struct uvm_object	*uao_create(vsize_t, int);
@@ -633,14 +626,12 @@ void			uvm_lwp_exit(struct lwp *);
 void			uvm_init_limits(struct proc *);
 bool			uvm_kernacc(void *, size_t, int);
 __dead void		uvm_scheduler(void);
-void			uvm_kick_scheduler(void);
-void			uvm_swapin(struct lwp *);
-bool			uvm_uarea_alloc(vaddr_t *);
-void			uvm_uarea_free(vaddr_t, struct cpu_info *);
+vaddr_t			uvm_uarea_alloc(void);
+void			uvm_uarea_free(vaddr_t);
+vaddr_t			uvm_lwp_getuarea(lwp_t *);
+void			uvm_lwp_setuarea(lwp_t *, vaddr_t);
 int			uvm_vslock(struct vmspace *, void *, size_t, vm_prot_t);
 void			uvm_vsunlock(struct vmspace *, void *, size_t);
-void			uvm_lwp_hold(struct lwp *);
-void			uvm_lwp_rele(struct lwp *);
 void			uvm_cpu_attach(struct cpu_info *);
 
 

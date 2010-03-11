@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.1.4.2 2009/05/04 08:11:49 yamt Exp $ */
+/*	$NetBSD: scn.c,v 1.1.4.3 2010/03/11 15:02:54 yamt Exp $ */
 
 /*
  * Resurrected from the old pc532 port 1/18/2009.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.1.4.2 2009/05/04 08:11:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.1.4.3 2010/03/11 15:02:54 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -104,7 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.1.4.2 2009/05/04 08:11:49 yamt Exp $");
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/file.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>

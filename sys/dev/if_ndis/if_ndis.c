@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.18.4.2 2009/08/19 18:47:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.18.4.3 2010/03/11 15:03:36 yamt Exp $");
 #endif
 
 
@@ -94,13 +94,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.18.4.2 2009/08/19 18:47:08 yamt Exp $"
 
 #include "ndis_driver_data.h"
 
-void ndis_attach		(void *);
-int ndis_detach			(device_t, int);
-int ndis_suspend		(device_t);
-int ndis_resume			(device_t);
-void ndis_shutdown		(device_t);
+void ndis_attach(void *);
+int ndis_detach(device_t, int);
+int ndis_suspend(device_t);
+int ndis_resume(device_t);
+void ndis_shutdown(device_t);
 
-int ndisdrv_modevent	(struct lkm_table *lkmtp, int cmd);
 
 /* I moved these to if_ndisvar.h */
 /*
@@ -143,8 +142,13 @@ static void ndis_media_status	(struct ifnet *, struct ifmediareq *);
 static void ndis_setmulti	(struct ndis_softc *);
 static void ndis_map_sclist	(void *, bus_dma_segment_t *,
 	int, bus_size_t, int);
-static int ndisdrv_loaded = 0;
 
+#ifdef _MODULE
+
+static int ndisdrv_loaded = 0;
+int ndisdrv_modevent(module_t,  int);
+
+MODULE(MODULE_CLASS_DRIVER, ndisdrv_modevent, NULL);
 /*
  * This routine should call windrv_load() once for each driver
  * image. This will do the relocation and dynalinking for the
@@ -152,9 +156,7 @@ static int ndisdrv_loaded = 0;
  * saved in our driver database.
  */ 
 int
-ndisdrv_modevent(mod, cmd)
-	module_t		mod;
-	int			cmd;
+ndisdrv_modevent(module_t mod, int cmd)
 {
 	int			error = 0;
 
@@ -162,7 +164,7 @@ ndisdrv_modevent(mod, cmd)
 	printf("in ndisdrv_modevent\n");
 #endif
 	switch (cmd) {
-	case MOD_LOAD:
+	case MODULE_CMD_INIT:
 		ndisdrv_loaded++;
                 if (ndisdrv_loaded > 1)
 			break;
@@ -173,7 +175,7 @@ ndisdrv_modevent(mod, cmd)
 		windrv_wrap((funcptr)ndis_linksts_done,
 		    &ndis_linksts_done_wrap);
 		break;
-	case MOD_UNLOAD:
+	case MODULE_CMD_FINI:
 		ndisdrv_loaded--;
 		if (ndisdrv_loaded > 0)
 			break;
@@ -183,16 +185,17 @@ ndisdrv_modevent(mod, cmd)
 		windrv_unwrap(ndis_linksts_wrap);
 		windrv_unwrap(ndis_linksts_done_wrap);
 		break;
-/* TODO: Do we need a LKM_E_STAT for NetBSD? */
+	case MODULE_CMD_STAT:
+		error = ENOTTY;
+		break;
 	default:
 		error = EINVAL;
 		break;
 	}
 
-	return (error);
+	return error;
 }
 
-#ifdef NDIS_LKM
 int if_ndis_lkmentry(struct lkm_table *lkmtp, int cmd, int ver);
 
 CFDRIVER_DECL(ndis, DV_DULL, NULL);
@@ -229,7 +232,7 @@ if_ndis_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
 	DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc);
 }
 
-#endif /* NIDS_LKM */
+#endif /* _MODULE */
 
 /*
  * Program the 64-bit multicast hash filter.
@@ -889,7 +892,6 @@ ndis_detach (dev, flags)
 #endif
 
 	sc = device_get_softc(dev);
-	KASSERT(mtx_initialized(&sc->ndis_mtx));
 
 	NDIS_LOCK(sc);
 
@@ -943,9 +945,6 @@ ndis_detach (dev, flags)
 /* 
  * TODO: Unmap dma for NetBSD
  */
-
-
-	mtx_destroy(&sc->ndis_mtx);
 
 	return(0);
 }
@@ -1043,7 +1042,7 @@ ndis_rxeof(ndis_handle adapter, ndis_packet **packets, uint32_t pktcnt)
 			}			
 
 			if(ifp->if_bpf) {
-				bpf_mtap(ifp->if_bpf, m0);
+				bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 			}
 
 			(*ifp->if_input)(ifp, m0);
@@ -1437,7 +1436,9 @@ ndis_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		bpf_mtap(ifp, m);
+		if (ifp->if_bpf) {
+			bpf_ops->bpf_mtap(ifp, m);
+		}
 		/*
 		 * The array that p0 points to must appear contiguous,
 		 * so we must not wrap past the end of sc->ndis_txarray[].

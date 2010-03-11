@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_isapnp.c,v 1.11.4.2 2009/05/16 10:41:26 yamt Exp $ */
+/* $NetBSD: if_cs_isapnp.c,v 1.11.4.3 2010/03/11 15:03:40 yamt Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.11.4.2 2009/05/16 10:41:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.11.4.3 2010/03/11 15:03:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,13 +55,18 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.11.4.2 2009/05/16 10:41:26 yamt E
 #include <dev/isapnp/isapnpvar.h>
 #include <dev/isapnp/isapnpdevs.h>
 
-#define DEVNAME(sc) device_xname(&((sc)->sc_dev))
+#define DEVNAME(sc) device_xname((sc)->sc_dev)
 
-int cs_isapnp_match(device_t, cfdata_t, void *);
-void cs_isapnp_attach(device_t, device_t, void *);
+static int cs_isapnp_match(device_t, cfdata_t, void *);
+static void cs_isapnp_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(cs_isapnp, sizeof(struct cs_softc),
+#ifdef notyet
+CFATTACH_DECL_NEW(cs_isapnp, sizeof(struct cs_softc_isa),
     cs_isapnp_match, cs_isapnp_attach, NULL, NULL);
+#else
+CFATTACH_DECL_NEW(cs_isapnp, sizeof(struct cs_softc),
+    cs_isapnp_match, cs_isapnp_attach, NULL, NULL);
+#endif
 
 int
 cs_isapnp_match(device_t parent, cfdata_t match, void *aux)
@@ -77,12 +82,18 @@ cs_isapnp_match(device_t parent, cfdata_t match, void *aux)
 void
 cs_isapnp_attach(device_t parent, device_t self, void *aux)
 {
+#ifdef notyet
+	struct cs_softc_isa *isc = device_private(sc);
+	struct cs_softc *sc = &sc->sc_cs;
+#else
 	struct cs_softc *sc = device_private(self);
+#endif
 	struct isapnp_attach_args *ipa = aux;
 #ifdef notyet
-	struct cs_softc_isa *isc = (void *)sc;
 	int i;
 #endif
+
+	sc->sc_dev = self;
 
 	printf("\n");
 

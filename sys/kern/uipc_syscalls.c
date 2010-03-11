@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.130.2.2 2009/05/04 08:13:49 yamt Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.130.2.3 2010/03/11 15:04:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.130.2.2 2009/05/04 08:13:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.130.2.3 2010/03/11 15:04:20 yamt Exp $");
 
 #include "opt_pipe.h"
 
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.130.2.2 2009/05/04 08:13:49 yamt
 #include <sys/un.h>
 #include <sys/ktrace.h>
 #include <sys/event.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -170,6 +171,7 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 	struct mbuf	*nam;
 	int		error, fd;
 	struct socket	*so, *so2;
+	short		wakeup_state = 0;
 
 	if ((fp = fd_getfile(sock)) == NULL)
 		return (EBADF);
@@ -202,10 +204,15 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 			so->so_error = ECONNABORTED;
 			break;
 		}
+		if (wakeup_state & SS_RESTARTSYS) {
+			error = ERESTART;
+			goto bad;
+		}
 		error = sowait(so, true, 0);
 		if (error) {
 			goto bad;
 		}
+		wakeup_state = so->so_state;
 	}
 	if (so->so_error) {
 		error = so->so_error;
@@ -222,6 +229,7 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 	fp2->f_ops = &socketops;
 	fp2->f_data = so2;
 	error = soaccept(so2, nam);
+	so2->so_cred = kauth_cred_dup(so->so_cred);
 	sounlock(so);
 	if (error) {
 		/* an error occurred, free the file descriptor and mbuf */
@@ -317,7 +325,7 @@ do_sys_connect(struct lwp *l, int fd, struct mbuf *nam)
 	}
 	while ((so->so_state & SS_ISCONNECTING) != 0 && so->so_error == 0) {
 		error = sowait(so, true, 0);
-		if (__predict_false((so->so_state & SS_ISDRAINING) != 0)) {
+		if (__predict_false((so->so_state & SS_ISABORTING) != 0)) {
 			error = EPIPE;
 			interrupted = 1;
 			break;

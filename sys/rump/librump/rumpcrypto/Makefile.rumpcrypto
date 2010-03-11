@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpcrypto,v 1.1.4.2 2009/08/19 18:48:28 yamt Exp $
+#	$NetBSD: Makefile.rumpcrypto,v 1.1.4.3 2010/03/11 15:04:37 yamt Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -35,7 +35,6 @@ SHLIB_MAJOR=    0
 SHLIB_MINOR=    0
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
-CPPFLAGS+=	-Wno-pointer-sign
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

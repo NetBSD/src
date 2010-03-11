@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.1.2.2 2009/08/19 18:47:07 yamt Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.1.2.3 2010/03/11 15:03:32 yamt Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,11 +25,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.1.2.2 2009/08/19 18:47:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.1.2.3 2010/03/11 15:03:32 yamt Exp $");
 
 /*
  * The LAN9118 Family
- *
  * * The LAN9118 is targeted for 32-bit applications requiring high
  *   performance, and provides the highest level of performance possible for
  *   a non-PCI 10/100 Ethernet controller.
@@ -43,12 +42,15 @@ __KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.1.2.2 2009/08/19 18:47:07 yamt Exp $")
  *   is for 32-bit host processors, while the LAN9115 is for 16-bit
  *   applications, which may also require an external PHY. Both devices
  *   deliver superior levels of performance.
+ *
+ * The LAN9218 Family
+ *   Also support HP Auto-MDIX.
  */
 
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
+#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/bus.h>
@@ -64,9 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.1.2.2 2009/08/19 18:47:07 yamt Exp $")
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -106,6 +106,8 @@ static void lan9118_mac_writereg(struct lan9118_softc *, int, uint32_t);
 static void lan9118_set_filter(struct lan9118_softc *);
 static void lan9118_rxintr(struct lan9118_softc *);
 static void lan9118_txintr(struct lan9118_softc *);
+
+static void lan9118_tick(void *);
 
 /* This values refer from Linux's smc911x.c */
 static uint32_t afc_cfg[] = {
@@ -161,15 +163,13 @@ lan9118_attach(struct lan9118_softc *sc)
 	uint32_t val;
 	int timo, i;
 
-	if (sc->sc_flags & LAN9118_FLAGS_SWAP) {
-		/* need byte swap */
-		DPRINTFN(1, ("%s: need byte swap\n", __func__));
+	if (sc->sc_flags & LAN9118_FLAGS_SWAP)
+		/* byte swap mode */
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_WORD_SWAP,
 		    0xffffffff);
-	}
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LAN9118_BYTE_TEST);
 	if (val != LAN9118_BYTE_TEST_VALUE) {
-		aprint_error_dev(sc->sc_dev, "failed to detect chip\n");
+		aprint_error(": failed to detect chip\n");
 		return EINVAL;
 	}
 
@@ -177,8 +177,14 @@ lan9118_attach(struct lan9118_softc *sc)
 	sc->sc_id = LAN9118_ID_REV_ID(val);
 	sc->sc_rev = LAN9118_ID_REV_REV(val);
 
-	aprint_normal_dev(sc->sc_dev, "SMSC LAN9%03x Rev %d\n",
-	    sc->sc_id, sc->sc_rev);
+#define LAN9xxx_ID(id)	\
+ (IS_LAN9118(id) ? (id) : (IS_LAN9218(id) ? ((id) >> 4) + 0x100 : (id) & 0xfff))
+
+	aprint_normal(": SMSC LAN9%03x Rev %d\n",
+	    LAN9xxx_ID(sc->sc_id), sc->sc_rev);
+
+	if (sc->sc_flags & LAN9118_FLAGS_SWAP)
+		aprint_normal_dev(sc->sc_dev, "byte swap mode\n");
 
 	timo = 3 * 1000 * 1000;	/* XXXX 3sec */
 	do {
@@ -224,12 +230,19 @@ lan9118_attach(struct lan9118_softc *sc)
 
 	ifmedia_init(&sc->sc_mii.mii_media, 0,
 	    lan9118_ifm_change, lan9118_ifm_status);
+	sc->sc_mii.mii_ifp = ifp;
+	sc->sc_mii.mii_readreg = lan9118_miibus_readreg;
+	sc->sc_mii.mii_writereg = lan9118_miibus_writereg;
+	sc->sc_mii.mii_statchg = lan9118_miibus_statchg;
+
 	/*
 	 * Number of instance of Internal PHY is always 0.  External PHY
 	 * number that above.
 	 */
-	sc->sc_mii.mii_instance++;
-	if (sc->sc_id == LAN9118_ID_9115 || sc->sc_id == LAN9118_ID_9117) {
+	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, 1, MII_OFFSET_ANY, 0);
+
+	if (sc->sc_id == LAN9118_ID_9115 || sc->sc_id == LAN9118_ID_9117 ||
+	    sc->sc_id == LAN9218_ID_9215 || sc->sc_id == LAN9218_ID_9217) {
 		if (bus_space_read_4(sc->sc_iot, sc->sc_ioh, LAN9118_HW_CFG) &
 		    LAN9118_HW_CFG_EXT_PHY_DET) {
 			/*
@@ -237,10 +250,6 @@ lan9118_attach(struct lan9118_softc *sc)
 			 * In addition, external PHY is attached.
 			 */
 			DPRINTFN(1, ("%s: detect External PHY\n", __func__));
-
-			sc->sc_mii.mii_readreg = lan9118_miibus_readreg;
-			sc->sc_mii.mii_writereg = lan9118_miibus_writereg;
-			sc->sc_mii.mii_statchg = lan9118_miibus_statchg;
 
 			/* Switch MII and SMI */
 			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
@@ -264,22 +273,14 @@ lan9118_attach(struct lan9118_softc *sc)
 				    i, MII_OFFSET_ANY, 0);
 		}
 	}
-	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
-	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_10_T, 0, NULL);
-	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_10_T | IFM_FDX, 0,
-	    NULL);
-	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_100_TX, 0, NULL);
-	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_100_TX | IFM_FDX, 0,
-	    NULL);
-	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO, 0, NULL);
 
-	aprint_normal_dev(sc->sc_dev,
-	    "10baseT, 10baseT-FDX, 100baseTX, 100baseTX-FDX, auto\n");
 	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
 
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
+
+	callout_init(&sc->sc_tick, 0);
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
@@ -311,12 +312,14 @@ lan9118_intr(void *arg)
 			break;
 		datum = int_sts;
 
+#if 0	/* not yet... */
 		if (int_sts & LAN9118_INT_PHY_INT) { /* PHY */
 			/* Shall we need? */
 		}
 		if (int_sts & LAN9118_INT_PME_INT) { /*Power Management Event*/
 			/* not yet... */
 		}
+#endif
 		if (int_sts & LAN9118_INT_RXE) {
 			ifp->if_ierrors++;
 			aprint_error_ifnet(ifp, "Receive Error\n");
@@ -355,6 +358,7 @@ lan9118_start(struct ifnet *ifp)
 	unsigned tdfree, totlen, dso;
 	uint32_t txa, txb;
 	uint8_t *p;
+	int n;
 
 	DPRINTFN(3, ("%s\n", __func__));
 
@@ -384,6 +388,33 @@ lan9118_start(struct ifnet *ifp)
 		 * WE ARE NOW COMMITTED TO TRANSMITTING THE PACKET.
 		 */
 
+		/*
+		 * Check mbuf chain -- "middle" buffers must be >= 4 bytes
+		 * and maximum # of buffers is 86.
+		 */
+		m = m0;
+		n = 0;
+		while (m) {
+			if (m->m_len < 4 || ++n > 86) {
+				/* Copy mbuf chain. */
+				MGETHDR(m, M_DONTWAIT, MT_DATA);
+				if (m == NULL)
+					goto discard;   /* discard packet */
+				MCLGET(m, M_DONTWAIT);
+				if ((m->m_flags & M_EXT) == 0) {
+					m_freem(m);
+					goto discard;	/* discard packet */
+				}
+				m_copydata(m0, 0, m0->m_pkthdr.len,
+				    mtod(m, void *));
+				m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
+				m_freem(m0);
+				m0 = m;
+				break;
+			}
+			m = m->m_next;
+		}
+
 		m = m0;
 		totlen = m->m_pkthdr.len;
 		p = mtod(m, uint8_t *);
@@ -399,11 +430,6 @@ lan9118_start(struct ifnet *ifp)
 			    LAN9118_TXDFIFOP, txa);
 			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 			    LAN9118_TXDFIFOP, txb);
-			/*
-			 * XXXX:
-			 * We are assuming that the size of mbus always align
-			 * in 4 bytes.
-			 */
 			bus_space_write_multi_4(sc->sc_iot, sc->sc_ioh,
 			    LAN9118_TXDFIFOP, (uint32_t *)(p - dso),
 			    (m->m_len + dso + 3) >> 2);
@@ -423,13 +449,13 @@ lan9118_start(struct ifnet *ifp)
 		bus_space_write_multi_4(sc->sc_iot, sc->sc_ioh,
 		    LAN9118_TXDFIFOP, (uint32_t *)(p - dso),
 		    (m->m_len + dso + 3) >> 2);
-#if NBPFILTER > 0
+
+discard:
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 		m_freem(m0);
 	}
@@ -458,6 +484,9 @@ lan9118_ioctl(struct ifnet *ifp, u_long command, void *data)
 			break;
 		case IFF_UP:
 			lan9118_init(ifp);
+			break;
+		case IFF_UP|IFF_RUNNING:
+			lan9118_set_filter(sc);
 			break;
 		default:
 			break;
@@ -503,7 +532,7 @@ lan9118_init(struct ifnet *ifp)
 	s = splnet();
 
 	/* wait for PMT_CTRL[READY] */
-	timo = mstohz(5);	/* XXXX 5sec */
+	timo = mstohz(5000);	/* XXXX 5sec */
 	while (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh, LAN9118_PMT_CTRL) &
 	    LAN9118_PMT_CTRL_READY)) {
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_BYTE_TEST,
@@ -576,8 +605,10 @@ lan9118_init(struct ifnet *ifp)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_FIFO_INT,
 	    LAN9118_FIFO_INT_TXSL(0) | LAN9118_FIFO_INT_RXSL(0));
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_INT_EN,
+#if 0	/* not yet... */
 	    LAN9118_INT_PHY_INT | /* PHY */
 	    LAN9118_INT_PME_INT | /* Power Management Event */
+#endif
 	    LAN9118_INT_RXE     | /* Receive Error */
 	    LAN9118_INT_TSFL    | /* TX Status FIFO Level */
 	    LAN9118_INT_RXDF_INT| /* RX Dropped Frame Interrupt */
@@ -592,8 +623,12 @@ lan9118_init(struct ifnet *ifp)
 	lan9118_mac_writereg(sc, LAN9118_MAC_CR,
 	    mac_cr | LAN9118_MAC_CR_TXEN | LAN9118_MAC_CR_RXEN);
 
+	lan9118_set_filter(sc);
+
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+
+	callout_reset(&sc->sc_tick, hz, lan9118_tick, sc);
 
 	splx(s);
 
@@ -631,6 +666,8 @@ lan9118_stop(struct ifnet *ifp, int disable)
 	/* Clear RX Status/Data FIFOs */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_RX_CFG,
 	    LAN9118_RX_CFG_RX_DUMP);
+
+	callout_stop(&sc->sc_tick);
 }
 
 static void
@@ -655,9 +692,10 @@ static int
 lan9118_ifm_change(struct ifnet *ifp)
 {
 	struct lan9118_softc *sc = ifp->if_softc;
-	struct ifmedia *ifm = &sc->sc_mii.mii_media;
+	struct mii_data *mii = &sc->sc_mii;
+	struct ifmedia *ifm = &mii->mii_media;
 	struct ifmedia_entry *ife = ifm->ifm_cur;
-	uint32_t pmt_ctrl, cr, bmc, bms, ana, anlpa;
+	uint32_t pmt_ctrl;
 
 	DPRINTFN(3, ("%s: ifm inst %d\n", __func__, IFM_INST(ife->ifm_media)));
 
@@ -679,6 +717,9 @@ lan9118_ifm_change(struct ifnet *ifp)
 
 	/* Setup Internal PHY */
 
+	mii->mii_media_status = IFM_AVALID;
+	mii->mii_media_active = IFM_ETHER;
+
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_HW_CFG,
 	    LAN9118_HW_CFG_MBO |
 	    LAN9118_HW_CFG_PHY_CLK_SEL_IPHY);
@@ -691,55 +732,7 @@ lan9118_ifm_change(struct ifnet *ifp)
 	while (bus_space_read_4(sc->sc_iot, sc->sc_ioh, LAN9118_PMT_CTRL) &
 	    LAN9118_PMT_CTRL_PHY_RST);
 
-	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO) {
-		bmc = BMCR_AUTOEN | BMCR_STARTNEG;
-		bms = lan9118_mii_readreg(sc, LAN9118_IPHY_ADDR, MII_BMSR);
-		ana = ANAR_FC | BMSR_MEDIA_TO_ANAR(bms) | ANAR_CSMA;
-	} else {
-		switch (IFM_SUBTYPE(ifm->ifm_media)) {
-		case IFM_10_T:
-			bmc = BMCR_S10;
-			ana = ANAR_CSMA | ANAR_10;
-			break;
-
-		case IFM_100_TX:
-			bmc = BMCR_S100;
-			if (ifm->ifm_media & IFM_FDX)
-				bmc |= BMCR_FDX;
-			ana = ANAR_CSMA | ANAR_TX;
-			break;
-
-		case IFM_NONE:
-			bmc = BMCR_PDOWN;
-			break;
-
-		default:
-			return EINVAL;
-		}
-		if (ifm->ifm_media & IFM_FDX)
-			bmc |= BMCR_FDX;
-		if (ifm->ifm_media & IFM_FLOW)
-			ana |= ANAR_FC;
-	}
-	lan9118_mii_writereg(sc, LAN9118_IPHY_ADDR, MII_ANAR, ana);
-	lan9118_mii_writereg(sc, LAN9118_IPHY_ADDR, MII_BMCR, bmc);
-
-	bms = lan9118_mii_readreg(sc, LAN9118_IPHY_ADDR, MII_BMSR);
-	if (bms & BMSR_LINK) {
-		anlpa = lan9118_mii_readreg(sc, LAN9118_IPHY_ADDR, MII_ANLPAR);
-
-		bmc = lan9118_mii_readreg(sc, LAN9118_IPHY_ADDR, MII_BMCR);
-		cr = lan9118_mac_readreg(sc, LAN9118_MAC_CR);
-		if (anlpa & (ANLPAR_TX_FD | ANLPAR_10_FD)) {
-			bmc |= BMCR_FDX;
-			cr |= LAN9118_MAC_CR_RCVOWN;
-		} else {
-			bmc &= ~BMCR_FDX;
-			cr &= ~LAN9118_MAC_CR_RCVOWN;
-		}
-		lan9118_mii_writereg(sc, LAN9118_IPHY_ADDR, MII_BMCR, bmc);
-		lan9118_mac_writereg(sc, LAN9118_MAC_CR, cr);
-	}
+	mii_mediachg(&sc->sc_mii);
 	return 0;
 }
 
@@ -748,43 +741,12 @@ lan9118_ifm_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct lan9118_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
-	struct ifmedia *ifm = &mii->mii_media;
-	struct ifmedia_entry *ife = ifm->ifm_cur;
-	uint32_t bms, physcs;
 
 	DPRINTFN(3, ("%s\n", __func__));
 
-	if (IFM_INST(ife->ifm_media) != 0) {
-		mii_pollstat(mii);
-		ifmr->ifm_active = mii->mii_media_active;
-		ifmr->ifm_status = mii->mii_media_status;
-		return;
-	}
-
-	ifmr->ifm_active = IFM_ETHER;
-	ifmr->ifm_status = IFM_AVALID;
-
-	bms = lan9118_mii_readreg(sc, LAN9118_IPHY_ADDR, MII_BMSR);
-	if (!(bms & BMSR_LINK)) {
-		/* link is down */
-		ifmr->ifm_active |= IFM_NONE;
-		return;
-	}
-	ifmr->ifm_active |= IFM_ACTIVE;
-	physcs = lan9118_mii_readreg(sc, LAN9118_IPHY_ADDR, LAN9118_PHYSCSR);
-	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO) {
-		if (!(physcs & LAN9118_PHYSCSR_AUTODONE)) {
-			/* negotiation in progress */
-			ifmr->ifm_active |= IFM_NONE;
-			return;
-		}
-	}
-	if (physcs & LAN9118_PHYSCSR_SI_10)
-		ifmr->ifm_active |= IFM_10_T;
-	if (physcs & LAN9118_PHYSCSR_SI_100)
-		ifmr->ifm_active |= IFM_100_TX;
-	if (physcs & LAN9118_PHYSCSR_SI_FDX)
-		ifmr->ifm_active |= IFM_FDX;
+	mii_pollstat(mii);
+	ifmr->ifm_active = mii->mii_media_active;
+	ifmr->ifm_status = mii->mii_media_status;
 }
 
 
@@ -804,8 +766,18 @@ lan9118_miibus_writereg(device_t dev, int phy, int reg, int val)
 static void
 lan9118_miibus_statchg(device_t dev)
 {
+	struct lan9118_softc *sc = device_private(dev);
+	u_int cr;
 
-	/* nothing to do */
+	cr = lan9118_mac_readreg(sc, LAN9118_MAC_CR);
+	if (IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) {
+		cr &= ~LAN9118_MAC_CR_RCVOWN;
+		cr |= LAN9118_MAC_CR_FDPX;
+	} else {
+		cr |= LAN9118_MAC_CR_RCVOWN;
+		cr &= ~LAN9118_MAC_CR_FDPX;
+	}
+	lan9118_mac_writereg(sc, LAN9118_MAC_CR, cr);
 }
 
 
@@ -816,7 +788,7 @@ lan9118_mii_readreg(struct lan9118_softc *sc, int phy, int reg)
 
 	while (lan9118_mac_readreg(sc, LAN9118_MII_ACC) &
 	    LAN9118_MII_ACC_MIIBZY);
-	acc = LAN9118_MII_ACC_MIIRINDA(phy) | LAN9118_MII_ACC_PHYA(reg);
+	acc = LAN9118_MII_ACC_PHYA(phy) | LAN9118_MII_ACC_MIIRINDA(reg);
 	lan9118_mac_writereg(sc, LAN9118_MII_ACC, acc);
 	while (lan9118_mac_readreg(sc, LAN9118_MII_ACC) &
 	    LAN9118_MII_ACC_MIIBZY);
@@ -830,9 +802,10 @@ lan9118_mii_writereg(struct lan9118_softc *sc, int phy, int reg, uint16_t val)
 
 	while (lan9118_mac_readreg(sc, LAN9118_MII_ACC) &
 	    LAN9118_MII_ACC_MIIBZY);
-	acc = LAN9118_MII_ACC_MIIRINDA(phy) | LAN9118_MII_ACC_PHYA(reg) |
+	acc = LAN9118_MII_ACC_PHYA(phy) | LAN9118_MII_ACC_MIIRINDA(reg) |
 	    LAN9118_MII_ACC_MIIWNR;
 	lan9118_mac_writereg(sc, LAN9118_MII_DATA, val);
+	lan9118_mac_writereg(sc, LAN9118_MII_ACC, acc);
 	while (lan9118_mac_readreg(sc, LAN9118_MII_ACC) &
 	    LAN9118_MII_ACC_MIIBZY);
 }
@@ -1032,14 +1005,12 @@ dropit:
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = (pktlen - ETHER_CRC_LEN);
 
-#if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
 		 * pass if up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
@@ -1051,6 +1022,7 @@ lan9118_txintr(struct lan9118_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	uint32_t tx_fifo_inf, tx_status;
+	int fdx = IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX;
 	int tdfree;
 
 	DPRINTFN(3, ("%s\n", __func__));
@@ -1068,7 +1040,7 @@ lan9118_txintr(struct lan9118_softc *sc)
 			if (tx_status & LAN9118_TXS_LOC)
 				aprint_error_dev(sc->sc_dev,
 				    "Loss Of Carrier\n");
-			if (tx_status & LAN9118_TXS_NC)
+			if ((tx_status & LAN9118_TXS_NC) && !fdx)
 				aprint_error_dev(sc->sc_dev, "No Carrier\n");
 			if (tx_status & LAN9118_TXS_LCOL)
 				aprint_error_dev(sc->sc_dev,
@@ -1103,4 +1075,16 @@ lan9118_txintr(struct lan9118_softc *sc)
 		 * for the most fragmented frame.
 		 */
 		ifp->if_flags &= ~IFF_OACTIVE;
+}
+
+void
+lan9118_tick(void *v)
+{
+	struct lan9118_softc *sc = v;
+	int s;
+
+	s = splnet();
+	mii_tick(&sc->sc_mii);
+	callout_schedule(&sc->sc_tick, hz);
+	splx(s);
 }

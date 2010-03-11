@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.39.2.2 2009/05/04 08:13:48 yamt Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.39.2.3 2010/03/11 15:04:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.39.2.2 2009/05/04 08:13:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.39.2.3 2010/03/11 15:04:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.39.2.2 2009/05/04 08:13:48 yamt Exp $"
 
 #define	LWP_UNPARK_MAX		1024
 
-syncobj_t lwp_park_sobj = {
+static syncobj_t lwp_park_sobj = {
 	SOBJ_SLEEPQ_LIFO,
 	sleepq_unsleep,
 	sleepq_changepri,
@@ -63,7 +63,7 @@ syncobj_t lwp_park_sobj = {
 	syncobj_noowner,
 };
 
-sleeptab_t	lwp_park_tab;
+static sleeptab_t	lwp_park_tab;
 
 void
 lwp_sys_init(void)
@@ -71,9 +71,9 @@ lwp_sys_init(void)
 	sleeptab_init(&lwp_park_tab);
 }
 
-/* ARGSUSED */
 int
-sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap, register_t *retval)
+sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const ucontext_t *) ucp;
@@ -83,7 +83,6 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap, register_
 	struct proc *p = l->l_proc;
 	struct lwp *l2;
 	vaddr_t uaddr;
-	bool inmem;
 	ucontext_t *newuc;
 	int error, lid;
 
@@ -106,16 +105,16 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap, register_
 
 	/* XXX check against resource limits */
 
-	inmem = uvm_uarea_alloc(&uaddr);
+	uaddr = uvm_uarea_alloc();
 	if (__predict_false(uaddr == 0)) {
 		pool_put(&lwp_uc_pool, newuc);
 		return ENOMEM;
 	}
 
-	error = lwp_create(l, p, uaddr, inmem, SCARG(uap, flags) & LWP_DETACHED,
+	error = lwp_create(l, p, uaddr, SCARG(uap, flags) & LWP_DETACHED,
 	    NULL, 0, p->p_emul->e_startlwp, newuc, &l2, l->l_class);
-	if (error) {
-		uvm_uarea_free(uaddr, curcpu());
+	if (__predict_false(error)) {
+		uvm_uarea_free(uaddr);
 		pool_put(&lwp_uc_pool, newuc);
 		return error;
 	}
@@ -180,7 +179,8 @@ sys__lwp_getprivate(struct lwp *l, const void *v, register_t *retval)
 }
 
 int
-sys__lwp_setprivate(struct lwp *l, const struct sys__lwp_setprivate_args *uap, register_t *retval)
+sys__lwp_setprivate(struct lwp *l, const struct sys__lwp_setprivate_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(void *) ptr;
@@ -195,7 +195,8 @@ sys__lwp_setprivate(struct lwp *l, const struct sys__lwp_setprivate_args *uap, r
 }
 
 int
-sys__lwp_suspend(struct lwp *l, const struct sys__lwp_suspend_args *uap, register_t *retval)
+sys__lwp_suspend(struct lwp *l, const struct sys__lwp_suspend_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(lwpid_t) target;
@@ -276,7 +277,8 @@ sys__lwp_suspend(struct lwp *l, const struct sys__lwp_suspend_args *uap, registe
 }
 
 int
-sys__lwp_continue(struct lwp *l, const struct sys__lwp_continue_args *uap, register_t *retval)
+sys__lwp_continue(struct lwp *l, const struct sys__lwp_continue_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(lwpid_t) target;
@@ -301,7 +303,8 @@ sys__lwp_continue(struct lwp *l, const struct sys__lwp_continue_args *uap, regis
 }
 
 int
-sys__lwp_wakeup(struct lwp *l, const struct sys__lwp_wakeup_args *uap, register_t *retval)
+sys__lwp_wakeup(struct lwp *l, const struct sys__lwp_wakeup_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(lwpid_t) target;
@@ -329,7 +332,7 @@ sys__lwp_wakeup(struct lwp *l, const struct sys__lwp_wakeup_args *uap, register_
 		error = EBUSY;
 	} else {
 		/* Wake it up.  lwp_unsleep() will release the LWP lock. */
-		(void)lwp_unsleep(t, true);
+		lwp_unsleep(t, true);
 		error = 0;
 	}
 
@@ -339,7 +342,8 @@ sys__lwp_wakeup(struct lwp *l, const struct sys__lwp_wakeup_args *uap, register_
 }
 
 int
-sys__lwp_wait(struct lwp *l, const struct sys__lwp_wait_args *uap, register_t *retval)
+sys__lwp_wait(struct lwp *l, const struct sys__lwp_wait_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(lwpid_t) wait_for;
@@ -365,9 +369,9 @@ sys__lwp_wait(struct lwp *l, const struct sys__lwp_wait_args *uap, register_t *r
 	return 0;
 }
 
-/* ARGSUSED */
 int
-sys__lwp_kill(struct lwp *l, const struct sys__lwp_kill_args *uap, register_t *retval)
+sys__lwp_kill(struct lwp *l, const struct sys__lwp_kill_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(lwpid_t)	target;
@@ -402,7 +406,8 @@ sys__lwp_kill(struct lwp *l, const struct sys__lwp_kill_args *uap, register_t *r
 }
 
 int
-sys__lwp_detach(struct lwp *l, const struct sys__lwp_detach_args *uap, register_t *retval)
+sys__lwp_detach(struct lwp *l, const struct sys__lwp_detach_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(lwpid_t)	target;
@@ -476,7 +481,6 @@ lwp_unpark(lwpid_t target, const void *hint)
 {
 	sleepq_t *sq;
 	wchan_t wchan;
-	int swapin;
 	kmutex_t *mp;
 	proc_t *p;
 	lwp_t *t;
@@ -494,10 +498,8 @@ lwp_unpark(lwpid_t target, const void *hint)
 			break;
 
 	if (__predict_true(t != NULL)) {
-		swapin = sleepq_remove(sq, t);
+		sleepq_remove(sq, t);
 		mutex_spin_exit(mp);
-		if (swapin)
-			uvm_kick_scheduler();
 		return 0;
 	}
 
@@ -520,7 +522,7 @@ lwp_unpark(lwpid_t target, const void *hint)
 	lwp_lock(t);
 	if (t->l_syncobj == &lwp_park_sobj) {
 		/* Releases the LWP lock. */
-		(void)lwp_unsleep(t, true);
+		lwp_unsleep(t, true);
 	} else {
 		/*
 		 * Set the operation pending.  The next call to _lwp_park
@@ -537,7 +539,6 @@ lwp_unpark(lwpid_t target, const void *hint)
 int
 lwp_park(struct timespec *ts, const void *hint)
 {
-	struct timespec tsx;
 	sleepq_t *sq;
 	kmutex_t *mp;
 	wchan_t wchan;
@@ -546,16 +547,14 @@ lwp_park(struct timespec *ts, const void *hint)
 
 	/* Fix up the given timeout value. */
 	if (ts != NULL) {
-		getnanotime(&tsx);
-		timespecsub(ts, &tsx, &tsx);
-		if (tsx.tv_sec < 0 || (tsx.tv_sec == 0 && tsx.tv_nsec <= 0))
-			return ETIMEDOUT;
-		if ((error = itimespecfix(&tsx)) != 0)
+		error = abstimeout2timo(ts, &timo);
+		if (error) {
 			return error;
-		timo = tstohz(&tsx);
+		}
 		KASSERT(timo != 0);
-	} else
+	} else {
 		timo = 0;
+	}
 
 	/* Find and lock the sleep queue. */
 	l = curlwp;
@@ -628,7 +627,8 @@ sys____lwp_park50(struct lwp *l, const struct sys____lwp_park50_args *uap,
 }
 
 int
-sys__lwp_unpark(struct lwp *l, const struct sys__lwp_unpark_args *uap, register_t *retval)
+sys__lwp_unpark(struct lwp *l, const struct sys__lwp_unpark_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(lwpid_t)		target;
@@ -639,7 +639,8 @@ sys__lwp_unpark(struct lwp *l, const struct sys__lwp_unpark_args *uap, register_
 }
 
 int
-sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, register_t *retval)
+sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const lwpid_t *)	targets;
@@ -651,7 +652,7 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 	sleepq_t *sq;
 	wchan_t wchan;
 	lwpid_t targets[32], *tp, *tpp, *tmax, target;
-	int swapin, error;
+	int error;
 	kmutex_t *mp;
 	u_int ntargets;
 	size_t sz;
@@ -690,7 +691,6 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 		return error;
 	}
 
-	swapin = 0;
 	wchan = lwp_park_wchan(p, SCARG(uap, hint));
 	sq = sleeptab_lookup(&lwp_park_tab, wchan, &mp);
 
@@ -706,7 +706,7 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 				break;
 
 		if (t != NULL) {
-			swapin |= sleepq_remove(sq, t);
+			sleepq_remove(sq, t);
 			continue;
 		}
 
@@ -729,7 +729,7 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 		 */
 		if (t->l_syncobj == &lwp_park_sobj) {
 			/* Releases the LWP lock. */
-			(void)lwp_unsleep(t, true);
+			lwp_unsleep(t, true);
 		} else {
 			/*
 			 * Set the operation pending.  The next call to
@@ -746,14 +746,13 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 	mutex_spin_exit(mp);
 	if (tp != targets)
 		kmem_free(tp, sz);
-	if (swapin)
-		uvm_kick_scheduler();
 
 	return 0;
 }
 
 int
-sys__lwp_setname(struct lwp *l, const struct sys__lwp_setname_args *uap, register_t *retval)
+sys__lwp_setname(struct lwp *l, const struct sys__lwp_setname_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(lwpid_t)		target;
@@ -802,7 +801,8 @@ sys__lwp_setname(struct lwp *l, const struct sys__lwp_setname_args *uap, registe
 }
 
 int
-sys__lwp_getname(struct lwp *l, const struct sys__lwp_getname_args *uap, register_t *retval)
+sys__lwp_getname(struct lwp *l, const struct sys__lwp_getname_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(lwpid_t)		target;
@@ -835,7 +835,8 @@ sys__lwp_getname(struct lwp *l, const struct sys__lwp_getname_args *uap, registe
 }
 
 int
-sys__lwp_ctl(struct lwp *l, const struct sys__lwp_ctl_args *uap, register_t *retval)
+sys__lwp_ctl(struct lwp *l, const struct sys__lwp_ctl_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)			features;

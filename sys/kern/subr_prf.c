@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.120.2.4 2009/07/18 14:53:23 yamt Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.120.2.5 2010/03/11 15:04:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.120.2.4 2009/07/18 14:53:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.120.2.5 2010/03/11 15:04:18 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.120.2.4 2009/07/18 14:53:23 yamt Exp 
 #include <sys/file.h>
 #include <sys/tty.h>
 #include <sys/tprintf.h>
+#include <sys/spldebug.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <sys/kprintf.h>
@@ -201,8 +202,7 @@ twiddle(void)
  * panic: handle an unresolvable fatal error
  *
  * prints "panic: <message>" and reboots.   if called twice (i.e. recursive
- * call) we avoid trying to sync the disk and just reboot (to avoid
- * recursive panics).
+ * call) we avoid trying to dump and just reboot (to avoid recursive panics).
  */
 
 void
@@ -212,6 +212,8 @@ panic(const char *fmt, ...)
 	struct cpu_info *ci, *oci;
 	int bootopt;
 	va_list ap;
+
+	spldebug_stop();
 
 	if (lwp0.l_cpu && curlwp) {
 		/*
@@ -243,8 +245,12 @@ panic(const char *fmt, ...)
 	}
 
 	bootopt = RB_AUTOBOOT | RB_NOSYNC;
-	if (dumponpanic)
-		bootopt |= RB_DUMP;
+	if (!doing_shutdown) {
+		if (dumponpanic)
+			bootopt |= RB_DUMP;
+	} else
+		printf("Skipping crash dump on recursive panic\n");
+
 	if (!panicstr)
 		panicstr = fmt;
 	doing_shutdown = 1;

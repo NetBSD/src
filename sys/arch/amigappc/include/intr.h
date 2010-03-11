@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.19.48.3 2009/08/19 18:45:57 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.19.48.4 2010/03/11 15:02:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,12 +39,14 @@
 #ifndef _AMIGAPPC_INTR_H_
 #define _AMIGAPPC_INTR_H_
 
+#ifdef _KERNEL
+#include <amiga/amiga/isr.h>
+#endif
 #include <powerpc/intr.h>
 
 #ifndef _LOCORE
 #include <machine/cpu.h>
 #include <sys/device.h>
-
-#endif
+#endif /* _LOCORE */
 
 #endif /* !_AMIGAPPC_INTR_H_ */

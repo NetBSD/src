@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.17.10.3 2009/07/18 14:53:21 yamt Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.17.10.4 2010/03/11 15:04:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.17.10.3 2009/07/18 14:53:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.17.10.4 2010/03/11 15:04:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -90,7 +90,7 @@ sysvbfs_lookup(void *arg)
 
 
 	if (namelen == 1 && name[0] == '.') {	/* "." */
-		VREF(v);
+		vref(v);
 		*a->a_vpp = v;
 	} else {				/* Regular file */
 		if (!bfs_dirent_lookup_by_name(bfs, cnp->cn_nameptr,
@@ -732,25 +732,25 @@ sysvbfs_pathconf(void *v)
 	switch (ap->a_name) {
 	case _PC_LINK_MAX:
 		*ap->a_retval = 1;
-		break;;
+		break;
 	case _PC_NAME_MAX:
 		*ap->a_retval = BFS_FILENAME_MAXLEN;
-		break;;
+		break;
 	case _PC_PATH_MAX:
 		*ap->a_retval = BFS_FILENAME_MAXLEN;
-		break;;
+		break;
 	case _PC_CHOWN_RESTRICTED:
 		*ap->a_retval = 1;
-		break;;
+		break;
 	case _PC_NO_TRUNC:
 		*ap->a_retval = 0;
-		break;;
+		break;
 	case _PC_SYNC_IO:
 		*ap->a_retval = 1;
-		break;;
+		break;
 	case _PC_FILESIZEBITS:
 		*ap->a_retval = 32;
-		break;;
+		break;
 	default:
 		err = EINVAL;
 		break;

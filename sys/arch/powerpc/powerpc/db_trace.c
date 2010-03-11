@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.47.10.1 2009/05/04 08:11:44 yamt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.47.10.2 2010/03/11 15:02:51 yamt Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -28,13 +28,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.47.10.1 2009/05/04 08:11:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.47.10.2 2010/03/11 15:02:51 yamt Exp $");
 
 #include "opt_ppcarch.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/kernel.h>
 
 #include <uvm/uvm_extern.h>
@@ -42,6 +41,15 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.47.10.1 2009/05/04 08:11:44 yamt Exp 
 #include <machine/db_machdep.h>
 #include <machine/pmap.h>
 #include <powerpc/spr.h>
+#if defined (PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+#include <powerpc/oea/spr.h>
+#elif defined(PPC_IBM4XX)
+#include <powerpc/ibm4xx/spr.h>
+#elif defined(PPC_BOOKE)
+#include <powerpc/booke/spr.h>
+#else
+#include unknown powerpc variants
+#endif
 
 #include <ddb/db_access.h>
 #include <ddb/db_interface.h>
@@ -133,7 +141,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		if (trace_thread) {
 			struct proc *p;
 			struct lwp *l;
-			struct user *u;
+			struct pcb *pcb;
 
 			if (lwpaddr) {
 				l = (struct lwp *)addr;
@@ -150,12 +158,8 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 				KASSERT(l != NULL);
 			}
 			(*pr)("lid %d ", l->l_lid);
-			if ((l->l_flag & LW_INMEM) == 0) {
-				(*pr)("swapped out\n");
-				return;
-			}
-			u = l->l_addr;
-			frame = (db_addr_t)u->u_pcb.pcb_sp;
+			pcb = lwp_getpcb(l);
+			frame = (db_addr_t)pcb->pcb_sp;
 			(*pr)("at %p\n", frame);
 		} else
 			frame = (db_addr_t)addr;

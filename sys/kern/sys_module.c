@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.4.6.2 2009/05/04 08:13:48 yamt Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.4.6.3 2010/03/11 15:04:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.4.6.2 2009/05/04 08:13:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.4.6.3 2010/03/11 15:04:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,29 +63,38 @@ handle_modctl_load(modctl_load_t *ml)
 	if (error != 0)
 		goto out2;
 
-	propslen = ml->ml_propslen + 1;
-	props = (char *)kmem_alloc(propslen, KM_SLEEP);
-	if (props == NULL) {
-		error = ENOMEM;
-		goto out2;
-	}
+	if (ml->ml_props != NULL) {
+		propslen = ml->ml_propslen + 1;
+		props = (char *)kmem_alloc(propslen, KM_SLEEP);
+		if (props == NULL) {
+			error = ENOMEM;
+			goto out2;
+		}
 
-	error = copyinstr(ml->ml_props, props, propslen, NULL);
-	if (error != 0)
-		goto out3;
+		error = copyinstr(ml->ml_props, props, propslen, NULL);
+		if (error != 0)
+			goto out3;
 
-	dict = prop_dictionary_internalize(props);
-	if (dict == NULL) {
-		error = EINVAL;
-		goto out3;
+		dict = prop_dictionary_internalize(props);
+		if (dict == NULL) {
+			error = EINVAL;
+			goto out3;
+		}
+	} else {
+		dict = NULL;
+		props = NULL;
 	}
 
 	error = module_load(path, ml->ml_flags, dict, MODULE_CLASS_ANY);
 
-	prop_object_release(dict);
+	if (dict != NULL) {
+		prop_object_release(dict);
+	}
 
 out3:
-	kmem_free(props, propslen);
+	if (props != NULL) {
+		kmem_free(props, propslen);
+	}
 out2:
 	PNBUF_PUT(path);
 out1:
@@ -136,7 +145,7 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 			break;
 		}
 		mutex_enter(&module_lock);
-		mslen = (module_count + 1) * sizeof(modstat_t);
+		mslen = (module_count+module_builtinlist+1) * sizeof(modstat_t);
 		mso = kmem_zalloc(mslen, KM_SLEEP);
 		if (mso == NULL) {
 			mutex_exit(&module_lock);
@@ -157,6 +166,24 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 			}
 			ms->ms_class = mi->mi_class;
 			ms->ms_refcnt = mod->mod_refcnt;
+			ms->ms_source = mod->mod_source;
+			ms++;
+		}
+		TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
+			mi = mod->mod_info;
+			strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
+			if (mi->mi_required != NULL) {
+				strlcpy(ms->ms_required, mi->mi_required,
+				    sizeof(ms->ms_required));
+			}
+			if (mod->mod_kobj != NULL) {
+				kobj_stat(mod->mod_kobj, &addr, &size);
+				ms->ms_addr = addr;
+				ms->ms_size = size;
+			}
+			ms->ms_class = mi->mi_class;
+			ms->ms_refcnt = -1;
+			KASSERT(mod->mod_source == MODULE_SOURCE_KERNEL);
 			ms->ms_source = mod->mod_source;
 			ms++;
 		}

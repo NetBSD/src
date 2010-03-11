@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.47.4.3 2009/05/16 10:41:32 yamt Exp $	*/
+/*	$NetBSD: amr.c,v 1.47.4.4 2010/03/11 15:03:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.47.4.3 2009/05/16 10:41:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.47.4.4 2010/03/11 15:03:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,8 +329,8 @@ amr_attach(device_t parent, device_t self, void *aux)
 	if (amr->amr_ih == NULL) {
 		aprint_error("can't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		amr_teardown(amr);
 		return;
 	}

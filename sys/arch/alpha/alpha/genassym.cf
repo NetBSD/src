@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.15.20.1 2009/05/04 08:10:28 yamt Exp $
+# $NetBSD: genassym.cf,v 1.15.20.2 2010/03/11 15:01:57 yamt Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -72,7 +72,6 @@ include <sys/proc.h>
 include <sys/sched.h>
 include <sys/mbuf.h>
 include <sys/msgbuf.h>
-include <sys/user.h>
 include <sys/syscall.h>
 
 include <machine/cpu.h>
@@ -141,7 +140,7 @@ define	ALPHA_PTE_KR		ALPHA_PTE_KR
 define	ALPHA_PTE_KW		ALPHA_PTE_KW
 
 # Important offsets into the lwp and proc structs & associated constants
-define	L_ADDR			offsetof(struct lwp, l_addr)
+define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_CPU			offsetof(struct lwp, l_cpu)
 define	L_PROC			offsetof(struct lwp, l_proc)
@@ -160,12 +159,10 @@ define	VM_MAP_PMAP		offsetof(struct vmspace, vm_map.pmap)
 
 # Important offsets into the user struct & associated constants
 define	UPAGES			UPAGES
-define	U_PCB			offsetof(struct user, u_pcb)
-define	U_PCB_HWPCB		offsetof(struct user, u_pcb.pcb_hw)
-define	U_PCB_HWPCB_KSP		offsetof(struct user, u_pcb.pcb_hw.apcb_ksp)
-define	U_PCB_CONTEXT		offsetof(struct user, u_pcb.pcb_context[0])
-define	U_PCB_ONFAULT		offsetof(struct user, u_pcb.pcb_onfault)
-define	U_PCB_ACCESSADDR	offsetof(struct user, u_pcb.pcb_accessaddr)
+define	PCB_HWPCB_KSP		offsetof(struct pcb, pcb_hw.apcb_ksp)
+define	PCB_CONTEXT		offsetof(struct pcb, pcb_context[0])
+define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
+define	PCB_ACCESSADDR		offsetof(struct pcb, pcb_accessaddr)
 
 # Offsets into struct fpstate, for save, restore
 define	FPREG_FPR_REGS		offsetof(struct fpreg, fpr_regs[0])

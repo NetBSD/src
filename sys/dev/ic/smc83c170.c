@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.73.4.3 2009/09/16 13:37:49 yamt Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.73.4.4 2010/03/11 15:03:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,9 +36,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.73.4.3 2009/09/16 13:37:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.73.4.4 2010/03/11 15:03:35 yamt Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,9 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.73.4.3 2009/09/16 13:37:49 yamt Exp 
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -494,13 +491,11 @@ epic_start(struct ifnet *ifp)
 		sc->sc_txpending++;
 		sc->sc_txlast = nexttx;
 
-#if NBPFILTER > 0
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 	}
 
 	if (sc->sc_txpending == EPIC_NTXDESC) {
@@ -715,14 +710,12 @@ epic_intr(void *arg)
 			m->m_pkthdr.rcvif = ifp;
 			m->m_pkthdr.len = m->m_len = len;
 
-#if NBPFILTER > 0
 			/*
 			 * Pass this up to any BPF listeners, but only
 			 * pass it up the stack if it's for us.
 			 */
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 			/* Pass it on. */
 			(*ifp->if_input)(ifp, m);

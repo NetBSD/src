@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.108.4.2 2009/07/18 14:53:23 yamt Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.108.4.3 2010/03/11 15:04:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.108.4.2 2009/07/18 14:53:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.108.4.3 2010/03/11 15:04:18 yamt Exp $");
 
 #include "opt_veriexec.h"
 
@@ -629,7 +629,8 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 			    name, NULL, REPORT_ALWAYS);
 			kmem_free(digest, vfe->ops->hash_len);
 			rw_exit(&vfe->lock);
-			rw_exit(&veriexec_op_lock);
+			if (lockstate == VERIEXEC_UNLOCKED)
+				rw_exit(&veriexec_op_lock);
 			return (error);
 		}
 
@@ -650,7 +651,8 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 		/* IPS mode: Enforce access type. */
 		if (veriexec_strict >= VERIEXEC_IPS) {
 			rw_exit(&vfe->lock);
-			rw_exit(&veriexec_op_lock);
+			if (lockstate == VERIEXEC_UNLOCKED)
+				rw_exit(&veriexec_op_lock);
 			return (EPERM);
 		}
 	}
@@ -679,7 +681,8 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 	case FINGERPRINT_NOTEVAL:
 		/* Should not happen. */
 		rw_exit(&vfe->lock);
-		rw_exit(&veriexec_op_lock);
+		if (lockstate == VERIEXEC_UNLOCKED)
+			rw_exit(&veriexec_op_lock);
 		veriexec_file_report(vfe, "Not-evaluated status "
 		    "post evaluation; inconsistency detected.", name,
 		    NULL, REPORT_ALWAYS|REPORT_PANIC);
@@ -709,7 +712,8 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 	default:
 		/* Should never happen. */
 		rw_exit(&vfe->lock);
-		rw_exit(&veriexec_op_lock);
+		if (lockstate == VERIEXEC_UNLOCKED)
+			rw_exit(&veriexec_op_lock);
 		veriexec_file_report(vfe, "Invalid status "
 		    "post evaluation.", name, NULL, REPORT_ALWAYS|REPORT_PANIC);
         }
@@ -766,7 +770,7 @@ veriexec_page_verify(struct veriexec_file_entry *vfe, struct vm_page *pg,
 	ctx = kmem_alloc(vfe->ops->context_size, KM_SLEEP);
 	fp = kmem_alloc(vfe->ops->hash_len, KM_SLEEP);
 	kva = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	pmap_kenter_pa(kva, VM_PAGE_TO_PHYS(pg), VM_PROT_READ);
+	pmap_kenter_pa(kva, VM_PAGE_TO_PHYS(pg), VM_PROT_READ, 0);
 	pmap_update(pmap_kernel());
 
 	page_fp = (u_char *) vfe->page_fp + (vfe->ops->hash_len * idx);
@@ -913,9 +917,12 @@ veriexec_renamechk(struct lwp *l, struct vnode *fromvp, const char *fromname,
 			 * entries so we can destroy the object.
 			 */
 
-			kmem_free(vfe->filename, vfe->filename_len);
+			if (vfe->filename_len > 0)
+				kmem_free(vfe->filename, vfe->filename_len);
+
 			vfe->filename = NULL;
 			vfe->filename_len = 0;
+
 			rw_downgrade(&veriexec_op_lock);
 		}
 
@@ -1030,8 +1037,7 @@ veriexec_raw_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	switch (action) {
 	case KAUTH_DEVICE_RAWIO_SPEC: {
 		struct vnode *vp, *bvp;
-		dev_t dev;
-		int d_type;
+		int error;
 
 		if (req == KAUTH_REQ_DEVICE_RAWIO_SPEC_READ) {
 			result = KAUTH_RESULT_DEFER;
@@ -1041,60 +1047,22 @@ veriexec_raw_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		vp = arg1;
 		KASSERT(vp != NULL);
 
-		dev = vp->v_rdev;
-		d_type = D_OTHER;
-		bvp = NULL;
-
 		/* Handle /dev/mem and /dev/kmem. */
-		if ((vp->v_type == VCHR) && iskmemdev(dev)) {
+		if (iskmemvp(vp)) {
 			if (veriexec_strict < VERIEXEC_IPS)
 				result = KAUTH_RESULT_DEFER;
 
 			break;
 		}
 
-		switch (vp->v_type) {
-		case VCHR: {
-			const struct cdevsw *cdev;
-
-			cdev = cdevsw_lookup(dev);
-			if (cdev != NULL) {
-				dev_t blkdev;
-
-				blkdev = devsw_chr2blk(dev);
-				if (blkdev != NODEV) {
-					vfinddev(blkdev, VBLK, &bvp);
-					if (bvp != NULL)
-						d_type = cdev->d_flag &
-						    D_TYPEMASK;
-				}
-			}
-
-			break;
-			}
-		case VBLK: {
-			const struct bdevsw *bdev;
-
-			bdev = bdevsw_lookup(dev);
-			if (bdev != NULL)
-				d_type = bdev->d_flag & D_TYPEMASK;
-
-			bvp = vp;
-
-			break;
-			}
-		default:
-			result = KAUTH_RESULT_DEFER;
-			break;
-		}
-
-		if (d_type != D_DISK) {
+		error = rawdev_mounted(vp, &bvp);
+		if (error == EINVAL) {
 			result = KAUTH_RESULT_DEFER;
 			break;
 		}
 
 		/*
-		 * XXX: See vfs_mountedon() comment in secmodel/bsd44.
+		 * XXX: See vfs_mountedon() comment in rawdev_mounted().
 		 */
 		vte = veriexec_table_lookup(bvp->v_mount);
 		if (vte == NULL) {
@@ -1204,6 +1172,8 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 
 	vfe = kmem_zalloc(sizeof(*vfe), KM_SLEEP);
 
+	rw_init(&vfe->lock);
+
 	/* Lookup fingerprint hashing algorithm. */
 	fp_type = prop_string_cstring_nocopy(prop_dictionary_get(dict,
 	    "fp-type"));
@@ -1292,7 +1262,6 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	vfe->page_fp_status = PAGE_FP_NONE;
 	vfe->npages = 0;
 	vfe->last_page_size = 0;
-	rw_init(&vfe->lock);
 
 	vte = veriexec_table_lookup(vp->v_mount);
 	if (vte == NULL)

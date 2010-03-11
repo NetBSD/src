@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.110.10.1 2008/05/16 02:26:00 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.110.10.2 2010/03/11 15:04:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.110.10.1 2008/05/16 02:26:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.110.10.2 2010/03/11 15:04:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,12 +110,13 @@ extern int lfs_dostats;
 int locked_queue_rcount = 0;
 long locked_queue_rbytes = 0L;
 
-int lfs_fits_buf(struct lfs *, int, int);
-int lfs_reservebuf(struct lfs *, struct vnode *vp, struct vnode *vp2,
+static int lfs_fits_buf(struct lfs *, int, int);
+static int lfs_reservebuf(struct lfs *, struct vnode *vp, struct vnode *vp2,
     int, int);
-int lfs_reserveavail(struct lfs *, struct vnode *vp, struct vnode *vp2, int);
+static int lfs_reserveavail(struct lfs *, struct vnode *vp, struct vnode *vp2,
+    int);
 
-int
+static int
 lfs_fits_buf(struct lfs *fs, int n, int bytes)
 {
 	int count_fit, bytes_fit;
@@ -124,9 +125,9 @@ lfs_fits_buf(struct lfs *fs, int n, int bytes)
 	KASSERT(mutex_owned(&lfs_lock));
 
 	count_fit =
-	    (locked_queue_count + locked_queue_rcount + n < LFS_WAIT_BUFS);
+	    (locked_queue_count + locked_queue_rcount + n <= LFS_WAIT_BUFS);
 	bytes_fit =
-	    (locked_queue_bytes + locked_queue_rbytes + bytes < LFS_WAIT_BYTES);
+	    (locked_queue_bytes + locked_queue_rbytes + bytes <= LFS_WAIT_BYTES);
 
 #ifdef DEBUG
 	if (!count_fit) {
@@ -145,7 +146,7 @@ lfs_fits_buf(struct lfs *fs, int n, int bytes)
 }
 
 /* ARGSUSED */
-int
+static int
 lfs_reservebuf(struct lfs *fs, struct vnode *vp,
     struct vnode *vp2, int n, int bytes)
 {
@@ -169,6 +170,9 @@ lfs_reservebuf(struct lfs *fs, struct vnode *vp,
 
 	locked_queue_rcount += n;
 	locked_queue_rbytes += bytes;
+
+	if (n < 0)
+		cv_broadcast(&locked_queue_cv);
 
 	mutex_exit(&lfs_lock);
 
@@ -194,7 +198,7 @@ lfs_reservebuf(struct lfs *fs, struct vnode *vp,
  * specific code so that each file systems can have their own vnode locking and
  * vnode re-using strategies.
  */
-int
+static int
 lfs_reserveavail(struct lfs *fs, struct vnode *vp,
     struct vnode *vp2, int fsb)
 {
@@ -318,11 +322,9 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 	 * vref vnodes here so that cleaner doesn't try to reuse them.
 	 * (see XXX comment in lfs_reserveavail)
 	 */
-	mutex_enter(&vp->v_interlock);
-	lfs_vref(vp);
+	vhold(vp);
 	if (vp2 != NULL) {
-		mutex_enter(&vp2->v_interlock);
-		lfs_vref(vp2);
+		vhold(vp2);
 	}
 
 	error = lfs_reserveavail(fs, vp, vp2, fsb);
@@ -332,15 +334,14 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 	/*
 	 * XXX just a guess. should be more precise.
 	 */
-	error = lfs_reservebuf(fs, vp, vp2,
-	    fragstoblks(fs, fsb), fsbtob(fs, fsb));
+	error = lfs_reservebuf(fs, vp, vp2, fsb, fsbtob(fs, fsb));
 	if (error)
 		lfs_reserveavail(fs, vp, vp2, -fsb);
 
 done:
-	lfs_vunref(vp);
+	holdrele(vp);
 	if (vp2 != NULL) {
-		lfs_vunref(vp2);
+		holdrele(vp2);
 	}
 
 	return error;
@@ -376,7 +377,7 @@ lfs_fits(struct lfs *fs, int fsb)
 	ASSERT_NO_SEGLOCK(fs);
 	needed = fsb + btofsb(fs, fs->lfs_sumsize) +
 		 ((howmany(fs->lfs_uinodes + 1, INOPB(fs)) + fs->lfs_segtabsz +
-		   1) << (fs->lfs_blktodb - fs->lfs_fsbtodb));
+		   1) << (fs->lfs_bshift - fs->lfs_ffshift));
 
 	if (needed >= fs->lfs_avail) {
 #ifdef DEBUG
@@ -486,7 +487,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	 * blocks.
 	 */
 	if ((bp->b_flags & B_LOCKED) == 0) {
-		fsb = fragstofsb(fs, numfrags(fs, bp->b_bcount));
+		fsb = numfrags(fs, bp->b_bcount);
 
 		ip = VTOI(vp);
 		mutex_enter(&lfs_lock);
@@ -705,8 +706,8 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 		wakeup(&lfs_writer_daemon);
 	}
 
-	while (locked_queue_count + INOCOUNT(fs) > LFS_WAIT_BUFS ||
-		locked_queue_bytes + INOBYTES(fs) > LFS_WAIT_BYTES ||
+	while (locked_queue_count + INOCOUNT(fs) >= LFS_WAIT_BUFS ||
+		locked_queue_bytes + INOBYTES(fs) >= LFS_WAIT_BYTES ||
 		lfs_subsys_pages > LFS_WAIT_PAGES ||
 		fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
 		lfs_dirvcount > LFS_MAX_DIROP) {
@@ -726,8 +727,8 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 		 * and we weren't asked to checkpoint.	Try flushing again
 		 * to keep us from blocking indefinitely.
 		 */
-		if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
-		    locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES) {
+		if (locked_queue_count + INOCOUNT(fs) >= LFS_MAX_BUFS ||
+		    locked_queue_bytes + INOBYTES(fs) >= LFS_MAX_BYTES) {
 			lfs_flush(fs, flags | SEGM_CKP, 0);
 		}
 	}

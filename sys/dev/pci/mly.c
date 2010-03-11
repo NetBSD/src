@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.37.4.3 2009/05/16 10:41:35 yamt Exp $	*/
+/*	$NetBSD: mly.c,v 1.37.4.4 2010/03/11 15:03:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.37.4.3 2009/05/16 10:41:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.37.4.4 2010/03/11 15:03:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,13 +351,13 @@ mly_attach(device_t parent, device_t self, void *aux)
 	if (mly->mly_ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", device_xname(&mly->mly_dv),
+		aprint_normal_dev(&mly->mly_dv, "interrupting at %s\n",
 		    intrstr);
 
 	/*

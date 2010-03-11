@@ -1,4 +1,4 @@
-/* $NetBSD: universe_pci.c,v 1.8.20.1 2009/05/04 08:13:02 yamt Exp $ */
+/* $NetBSD: universe_pci.c,v 1.8.20.2 2010/03/11 15:03:59 yamt Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.8.20.1 2009/05/04 08:13:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.8.20.2 2010/03/11 15:03:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,8 +149,8 @@ univ_pci_attach(struct univ_pci_data *d, struct pci_attach_args *pa, const char 
 	if (d->ih == NULL) {
 		aprint_error("%s: couldn't establish interrupt", name);
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return (-1);
 	}
 	aprint_normal("%s: interrupting at %s\n", name, intrstr);

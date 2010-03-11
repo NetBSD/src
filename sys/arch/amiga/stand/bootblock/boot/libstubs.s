@@ -1,4 +1,4 @@
-/* $NetBSD: libstubs.s,v 1.8.122.1 2008/05/16 02:21:53 yamt Exp $ */
+/* $NetBSD: libstubs.s,v 1.8.122.2 2010/03/11 15:02:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -159,6 +159,26 @@ ENTRY_NOPROFILE(WaitPort)
 	jsr	%a6@(-0x180)
 	movl	%sp@+,%a6
 	movl	%d0,%a0			| Comply with ELF ABI
+	rts
+
+ENTRY_NOPROFILE(RawIOInit)
+	movl	%a6,%sp@-
+	movl	%pc@(_C_LABEL(SysBase):w),%a6
+	jsr	%a6@(-0x1f8)
+	movl	%sp@+,%a6
+	rts
+ENTRY_NOPROFILE(RawPutChar)
+	movl	%a6,%sp@-
+	movl	%pc@(_C_LABEL(SysBase):w),%a6
+	movl	%sp@(8),%d0
+	jsr	%a6@(-0x204)
+	movl	%sp@+,%a6
+	rts
+ENTRY_NOPROFILE(RawMayGetChar)
+	movl	%a6,%sp@-
+	movl	%pc@(_C_LABEL(SysBase):w),%a6
+	jsr	%a6@(-0x1fe)
+	movl	%sp@+,%a6
 	rts
 
 #ifndef DOINLINES

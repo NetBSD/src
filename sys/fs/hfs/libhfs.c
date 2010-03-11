@@ -1,4 +1,4 @@
-/*	$NetBSD: libhfs.c,v 1.5.12.2 2009/07/18 14:53:21 yamt Exp $	*/
+/*	$NetBSD: libhfs.c,v 1.5.12.3 2010/03/11 15:04:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.5.12.2 2009/07/18 14:53:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.5.12.3 2010/03/11 15:04:13 yamt Exp $");
 
 #include "libhfs.h"
 
@@ -226,7 +226,9 @@ hfslib_open_volume(
 			break;
 			
 		default:
-			HFS_LIBERR("unrecognized volume format");
+			/* HFS_LIBERR("unrecognized volume format"); */
+			goto error;
+			break;
 	}
 
 

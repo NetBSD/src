@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.1.4.3 2009/05/04 08:11:15 yamt Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.1.4.4 2010/03/11 15:02:27 yamt Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -112,7 +112,6 @@ file-system 	MSDOSFS		# MS-DOS file system
 #file-system 	FDESC		# /dev/fd
 #file-system 	KERNFS		# /kern
 #file-system 	NULLFS		# loopback file system
-#file-system 	PORTAL		# portal filesystem (still experimental)
 #file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
@@ -225,8 +224,8 @@ isa0	at pceb?
 isa0	at pcib?
 
 # PCMCIA bus support
-pcmcia*	at pcic? controller ? socket ?
-pcmcia*	at tcic? controller ? socket ?
+pcmcia* at pcic? controller ? socket ?
+pcmcia* at tcic? controller ? socket ?
 
 # ISA PCMCIA controllers
 pcic0 	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
@@ -238,7 +237,7 @@ tcic0 	at isa? port 0x240 iomem 0xd0000 iosiz 0x10000
 pcic0	at pci? dev? function ?
 
 # ISA Plug-and-Play bus support
-isapnp0	at isa?
+isapnp0 at isa?
 
 # ISA Plug-and-Play PCMCIA controllers
 pcic*	at isapnp?
@@ -252,7 +251,7 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # Console Devices
 
 # wscons
-pckbc0		at isa?			# pc keyboard controller
+pckbc0		at isa?			# PC keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
 vga0		at isa?
@@ -279,7 +278,7 @@ com*	at isapnp?			# Modems and serial boards
 # PCMCIA serial interfaces
 com*	at pcmcia? function ?		# Modems and serial cards
 
-pcmcom*	at pcmcia? function ?		# PCMCIA multi-port serial cards
+pcmcom* at pcmcia? function ?		# PCMCIA multi-port serial cards
 com*	at pcmcom? slave ?		# ...and the slave devices
 
 # ISA serial interfaces
@@ -413,7 +412,7 @@ cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
-#ixpide*		at pci? dev ? function ?	# ATI IXP IDE controllers
+#ixpide* 	at pci? dev ? function ?	# ATI IXP IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
@@ -421,7 +420,7 @@ pdcsata*	at pci? dev ? function ?	# Promise SATA150 controllers
 rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
-slide* 		at pci? dev ? function ?	# Symphony Labs IDE controllers
+slide*		at pci? dev ? function ?	# Symphony Labs IDE controllers
 #svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 stpcide*	at pci? dev ? function ?	# STMicro STPC IDE controllers
@@ -500,7 +499,7 @@ bge* 	at pci? dev ? function ?	# Broadcom 570x Gigabit Ethernet
 # bnx* 	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
-ex*	at pci? dev ? function ?	# 3Com 90x[BC]
+ex*	at pci? dev ? function ?	# 3Com 3c90x[BC]
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 #esh*	at pci? dev ? function ?	# Essential HIPPI card
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
@@ -547,7 +546,7 @@ ep*	at isapnp?			# 3Com 3c509 Ethernet
 fmv*	at isapnp?			# Fujitsu FMV-183
 le*	at isapnp?			# AMD PCnet-ISA Ethernet
 ne*	at isapnp?			# NE2000-compatible Ethernet
-tr*	at isapnp?			# IBM/3COM TROPIC Token-Ring
+tr*	at isapnp?			# IBM/3Com TROPIC Token-Ring
 
 # PCMCIA network interfaces
 an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
@@ -559,7 +558,7 @@ mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray* 	at pcmcia? function ?		# Raytheon Raylink (802.11)
 sm*	at pcmcia? function ?		# Megahertz Ethernet
-wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
+wi*	at pcmcia? function ?		# Lucent/Intersil WaveLAN/IEEE (802.11)
 options 	WI_PCMCIA_SPECTRUM24T_FW=0
 xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 com*	at xirc?
@@ -572,10 +571,10 @@ sm*	at mhzc?
 ate0	at isa? port 0x2a0 irq ?		# AT1700
 cs0	at isa? port 0x300 iomem ? irq ? drq ?	# CS8900 Ethernet
 ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
-eg0	at isa? port 0x280 irq 9		# 3C505 ethernet cards
-el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
-ep*	at isa? port ? irq ?			# 3C509 ethernet cards
-ef0	at isa? port 0x360 iomem 0xd0000 irq 7	# 3C507
+eg0	at isa? port 0x280 irq 9		# 3c505 Ethernet cards
+el0	at isa? port 0x300 irq 9		# 3c501 Ethernet cards
+ep*	at isa? port ? irq ?			# 3c509 Ethernet cards
+ef0	at isa? port 0x360 iomem 0xd0000 irq 7	# 3c507
 ai0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN
 fmv0	at isa? port 0x2a0 irq ?		# FMV-181/182
 ix0	at isa? port 0x300 irq 10		# EtherExpress/16
@@ -587,12 +586,12 @@ nele0	at isa? port 0x320 irq 9 drq 7		# NE2100
 le*	at nele?
 bicc0	at isa? port 0x320 irq 10 drq 7		# BICC IsoLan
 le*	at bicc?
-ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
+ne0	at isa? port 0x280 irq 9		# NE[12]000 Ethernet cards
 ne1	at isa? port 0x300 irq 10
 sm0	at isa? port 0x300 irq 10		# SMC91C9x Ethernet
 tr0	at isa? port 0xa20 iomem 0xd8000 irq ?	# IBM TROPIC based Token-Ring
 tr1	at isa? port 0xa24 iomem 0xd0000 irq ?	# IBM TROPIC based Token-Ring
-tr*	at isa? port ? irq ?			# 3COM TROPIC based Token-Ring
+tr*	at isa? port ? irq ?			# 3Com TROPIC based Token-Ring
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
@@ -606,23 +605,23 @@ dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
+icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
 igphy*	at mii? phy ?			# Intel IGP01E1000
 ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
-lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
-makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
+makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
-nsphyter* at mii? phy ?			# NS83843 PHYs
+nsphyter* at mii? phy ? 		# NS83843 PHYs
 pnaphy* at mii? phy ?			# generic HomePNA PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
-rgephy*	at mii? phy ?			# Realtek 8169S/8110S internal PHYs
+rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
 rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
-urlphy*	at mii? phy ?			# Realtek RTL8150L internal PHYs
+urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Controller and Devices
@@ -642,7 +641,7 @@ uhub*	at usb?
 uhub*	at uhub? port ?
 
 # USB HID device
-uhidev*	at uhub? port ? configuration ? interface ?
+uhidev* at uhub? port ? configuration ? interface ?
 
 # USB Mice
 #ums*	at uhidev? reportid ?
@@ -653,7 +652,7 @@ ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
 
 # USB serial adapter
-#ucycom*	at uhidev? reportid ?
+#ucycom* at uhidev? reportid ?
 
 # USB Generic HID devices
 #uhid*	at uhidev? reportid ?
@@ -686,7 +685,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 #sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # ISA Plug-and-Play audio devices
-#guspnp*	at isapnp?			# Gravis Ultra Sound PnP audio
+#guspnp* at isapnp?			# Gravis Ultra Sound PnP audio
 #sb*	at isapnp?			# SoundBlaster-compatible audio
 
 # ISA audio devices

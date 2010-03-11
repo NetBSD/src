@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.23.44.1 2009/05/04 08:10:23 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.23.44.2 2010/03/11 15:01:54 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,13 +32,12 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.23.44.1 2009/05/04 08:10:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.23.44.2 2010/03/11 15:01:54 yamt Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/time.h>
-#include <sys/user.h>
 #include <uvm/uvm_extern.h>
 #include <arm/armreg.h>
 #include <arm/cpuconf.h>

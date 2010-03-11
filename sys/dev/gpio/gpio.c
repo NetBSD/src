@@ -1,8 +1,8 @@
-/* $NetBSD: gpio.c,v 1.15.4.4 2009/09/16 13:37:46 yamt Exp $ */
+/* $NetBSD: gpio.c,v 1.15.4.5 2010/03/11 15:03:26 yamt Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
- * Copyright (c) 2008, 2009 Marc Balmer <marc@msys.ch>
+ * Copyright (c) 2008, 2009, 2010 Marc Balmer <marc@msys.ch>
  * Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.15.4.4 2009/09/16 13:37:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.15.4.5 2010/03/11 15:03:26 yamt Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -64,9 +64,10 @@ struct gpio_softc {
 int	gpio_match(device_t, cfdata_t, void *);
 int	gpio_submatch(device_t, cfdata_t, const int *, void *);
 void	gpio_attach(device_t, device_t, void *);
-bool	gpio_resume(device_t PMF_FN_PROTO);
+int	gpio_rescan(device_t, const char *, const int *);
+void	gpio_childdetached(device_t, device_t);
+bool	gpio_resume(device_t, const pmf_qual_t *);
 int	gpio_detach(device_t, int);
-int	gpio_activate(device_t, enum devact);
 int	gpio_search(device_t, cfdata_t, const int *, void *);
 int	gpio_print(void *, const char *);
 int	gpio_pinbyname(struct gpio_softc *, char *);
@@ -75,8 +76,8 @@ int	gpio_pinbyname(struct gpio_softc *, char *);
 int	gpio_ioctl_oapi(struct gpio_softc *, u_long, void *, int, kauth_cred_t);
 
 CFATTACH_DECL3_NEW(gpio, sizeof(struct gpio_softc),
-    gpio_match, gpio_attach, gpio_detach, gpio_activate, NULL, NULL,
-    DVF_DETACH_SHUTDOWN);
+    gpio_match, gpio_attach, gpio_detach, NULL, gpio_rescan,
+    gpio_childdetached, DVF_DETACH_SHUTDOWN);
 
 dev_type_open(gpioopen);
 dev_type_close(gpioclose);
@@ -107,7 +108,7 @@ gpio_submatch(device_t parent, cfdata_t cf, const int *ip, void *aux)
 }
 
 bool
-gpio_resume(device_t self PMF_FN_ARGS)
+gpio_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct gpio_softc *sc = device_private(self);
 	int pin;
@@ -117,6 +118,22 @@ gpio_resume(device_t self PMF_FN_ARGS)
 		gpiobus_pin_write(sc->sc_gc, pin, sc->sc_pins[pin].pin_state);
 	}
 	return true;
+}
+
+void
+gpio_childdetached(device_t self, device_t child)
+{
+	/* gpio(4) keeps no references to its children, so do nothing. */
+}
+
+int
+gpio_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct gpio_softc *sc = device_private(self);
+
+	config_search_loc(gpio_search, self, ifattr, locators, sc);
+
+	return 0;
 }
 
 void
@@ -139,12 +156,17 @@ gpio_attach(device_t parent, device_t self, void *aux)
 	 * Attach all devices that can be connected to the GPIO pins
 	 * described in the kernel configuration file.
 	 */
-	config_search_ia(gpio_search, self, "gpio", sc);
+	gpio_rescan(self, "gpio", NULL);
 }
 
 int
 gpio_detach(device_t self, int flags)
 {
+	int rc;
+
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+
 #if 0
 	int maj, mn;
 
@@ -161,23 +183,7 @@ gpio_detach(device_t self, int flags)
 }
 
 int
-gpio_activate(device_t self, enum devact act)
-{
-	printf("gpio_active: ");
-	switch (act) {
-	case DVACT_ACTIVATE:
-		DPRINTF(("ACTIVATE\n"));
-		return EOPNOTSUPP;
-	case DVACT_DEACTIVATE:
-		DPRINTF(("DEACTIVATE\n"));
-		break;
-	}
-	return 0;
-}
-
-int
-gpio_search(device_t parent, cfdata_t cf,
-    const int *ldesc, void *aux)
+gpio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct gpio_attach_args ga;
 
@@ -218,7 +224,6 @@ gpiobus_print(void *aux, const char *pnp)
 }
 
 /* return 1 if all pins can be mapped, 0 if not */
-
 int
 gpio_pin_can_map(void *gpio, int offset, u_int32_t mask)
 {

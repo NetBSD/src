@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.125.10.3 2009/08/19 18:48:34 yamt Exp $	*/
+/*	$NetBSD: lfs.h,v 1.125.10.4 2010/03/11 15:04:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@ typedef struct lfs_res_blk {
 		locked_queue_bytes -= bp->b_bufsize;			\
 		if (locked_queue_count < LFS_WAIT_BUFS &&		\
 		    locked_queue_bytes < LFS_WAIT_BYTES)		\
-			wakeup(&locked_queue_count);			\
+			cv_broadcast(&locked_queue_cv);			\
 		mutex_exit(&lfs_lock);					\
 	}								\
 	(bp)->b_flags &= ~B_LOCKED;					\
@@ -219,7 +219,7 @@ extern u_long bufmem_lowater, bufmem_hiwater; /* XXX */
 #  define LFS_DEBUG_COUNTLOCKED(m) do {					\
 	if (lfs_debug_log_subsys[DLOG_LLIST]) {				\
 		lfs_countlocked(&locked_queue_count, &locked_queue_bytes, (m)); \
-		wakeup(&locked_queue_count);				\
+		cv_broadcast(&locked_queue_cv);				\
 	}								\
 } while (0)
 # else
@@ -858,31 +858,30 @@ struct lfs {
 #define	blkoff(fs, loc)		((int)((loc) & (fs)->lfs_bmask))
 #define fragoff(fs, loc)    /* calculates (loc % fs->lfs_fsize) */ \
     ((int)((loc) & (fs)->lfs_ffmask))
+
+#if defined (_KERNEL)
+#define	fsbtodb(fs, b)		((b) << ((fs)->lfs_ffshift - DEV_BSHIFT))
+#define	dbtofsb(fs, b)		((b) >> ((fs)->lfs_ffshift - DEV_BSHIFT))
+#else
 #define	fsbtodb(fs, b)		((b) << (fs)->lfs_fsbtodb)
 #define	dbtofsb(fs, b)		((b) >> (fs)->lfs_fsbtodb)
-#define fragstodb(fs, b)	((b) << ((fs)->lfs_blktodb - (fs)->lfs_fbshift))
-#define dbtofrags(fs, b)	((b) >> ((fs)->lfs_blktodb - (fs)->lfs_fbshift))
+#endif
+
 #define	lblkno(fs, loc)		((loc) >> (fs)->lfs_bshift)
 #define	lblktosize(fs, blk)	((blk) << (fs)->lfs_bshift)
-/* Same as above, but named like dbtob(), btodb() */
-#define fsbtob(fs, b)		((b) << ((fs)->lfs_bshift - \
-				(fs)->lfs_blktodb + (fs)->lfs_fsbtodb))
-#define btofsb(fs, b)		((b) >> ((fs)->lfs_bshift - \
-				(fs)->lfs_blktodb + (fs)->lfs_fsbtodb))
-#define fsbtofrags(fs, b)	((b) >> ((fs)->lfs_blktodb - (fs)->lfs_fbshift - \
-				(fs)->lfs_fsbtodb))
-#define fragstofsb(fs, b)	((b) << ((fs)->lfs_blktodb - (fs)->lfs_fbshift - \
-				(fs)->lfs_fsbtodb))
-#define btofrags(fs, b)		((b) >> (fs)->lfs_ffshift)
+
+#define fsbtob(fs, b)		((b) << (fs)->lfs_ffshift)
+#define btofsb(fs, b)		((b) >> (fs)->lfs_ffshift)
+
 #define numfrags(fs, loc)	/* calculates (loc / fs->lfs_fsize) */	\
 	((loc) >> (fs)->lfs_ffshift)
 #define blkroundup(fs, size)	/* calculates roundup(size, fs->lfs_bsize) */ \
 	((off_t)(((size) + (fs)->lfs_bmask) & (~(fs)->lfs_bmask)))
 #define fragroundup(fs, size)	/* calculates roundup(size, fs->lfs_fsize) */ \
 	((off_t)(((size) + (fs)->lfs_ffmask) & (~(fs)->lfs_ffmask)))
-#define fragstoblks(fs, frags)	/* calculates (frags / fs->lfs_frag) */	\
+#define fragstoblks(fs, frags)/* calculates (frags / fs->fs_frag) */ \
 	((frags) >> (fs)->lfs_fbshift)
-#define blkstofrags(fs, blks)	/* calculates (blks * fs->lfs_frag) */	\
+#define blkstofrags(fs, blks)	/* calculates (blks * fs->fs_frag) */ \
 	((blks) << (fs)->lfs_fbshift)
 #define fragnum(fs, fsb)	/* calculates (fsb % fs->lfs_frag) */	\
 	((fsb) & ((fs)->lfs_frag - 1))
@@ -1081,8 +1080,8 @@ struct lfs_fcntl_markv {
 	int blkcnt;		/* number of blocks */
 };
 
-#define LFCNSEGWAITALL	 _FCNR_FSPRIV('L', 0, struct timeval)
-#define LFCNSEGWAIT	 _FCNR_FSPRIV('L', 1, struct timeval)
+#define LFCNSEGWAITALL	_FCNR_FSPRIV('L', 14, struct timeval)
+#define LFCNSEGWAIT	_FCNR_FSPRIV('L', 15, struct timeval)
 #define LFCNBMAPV	_FCNRW_FSPRIV('L', 2, struct lfs_fcntl_markv)
 #define LFCNMARKV	_FCNRW_FSPRIV('L', 3, struct lfs_fcntl_markv)
 #define LFCNRECLAIM	 _FCNO_FSPRIV('L', 4)
@@ -1100,13 +1099,23 @@ struct lfs_fhandle {
 # define LFS_WRAP_GOING   0x0
 # define LFS_WRAP_WAITING 0x1
 #define LFCNWRAPSTATUS	 _FCNW_FSPRIV('L', 13, int)
-/* Compat */
-#define LFCNSEGWAITALL_COMPAT	 _FCNW_FSPRIV('L', 0, struct timeval)
-#define LFCNSEGWAIT_COMPAT	 _FCNW_FSPRIV('L', 1, struct timeval)
+
+/*
+ * Compat.  Defined for kernel only.  Userland always uses
+ * "the one true version".
+ */
+#ifdef _KERNEL
+#include <compat/sys/time_types.h>
+
+#define LFCNSEGWAITALL_COMPAT	 _FCNW_FSPRIV('L', 0, struct timeval50)
+#define LFCNSEGWAIT_COMPAT	 _FCNW_FSPRIV('L', 1, struct timeval50)
 #define LFCNIFILEFH_COMPAT	 _FCNW_FSPRIV('L', 5, struct lfs_fhandle)
 #define LFCNIFILEFH_COMPAT2	 _FCN_FSPRIV(F_FSOUT, 'L', 11, 32)
 #define LFCNWRAPSTOP_COMPAT	 _FCNO_FSPRIV('L', 9)
 #define LFCNWRAPGO_COMPAT	 _FCNO_FSPRIV('L', 10)
+#define LFCNSEGWAITALL_COMPAT_50 _FCNR_FSPRIV('L', 0, struct timeval50)
+#define LFCNSEGWAIT_COMPAT_50	 _FCNR_FSPRIV('L', 1, struct timeval50)
+#endif
 
 #ifdef _KERNEL
 /* XXX MP */

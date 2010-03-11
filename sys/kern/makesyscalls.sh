@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.69.2.2 2009/05/16 10:41:48 yamt Exp $
+#	$NetBSD: makesyscalls.sh,v 1.69.2.3 2010/03/11 15:04:18 yamt Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -134,6 +134,7 @@ BEGIN {
 	sysprotos = \"$sysprotos\"
 	sysnumhdr = \"$sysnumhdr\"
 	sysarghdr = \"$sysarghdr\"
+	sysarghdrextra = \"$sysarghdrextra\"
 	rumpcalls = \"$rumpcalls\"
 	rumpcallshdr = \"$rumpcallshdr\"
 	rumpsysent = \"$rumpsysent\"
@@ -254,6 +255,7 @@ NR == 1 {
 	printf "#define	_" constprefix "SYSCALL_H_\n\n" > sysnumhdr
 	printf "#ifndef _" constprefix "SYSCALLARGS_H_\n" > sysarghdr
 	printf "#define	_" constprefix "SYSCALLARGS_H_\n\n" > sysarghdr
+	printf "%s", sysarghdrextra > sysarghdr
 	# Write max number of system call arguments to both headers
 	printf("#define\t%sMAXSYSARGS\t%d\n\n", constprefix, maxsysargs) \
 		> sysnumhdr
@@ -425,6 +427,13 @@ function parseline() {
 	f++
 	fbase=$f
 
+	# pipe is special in how to returns its values.
+	# So just generate it manually if present.
+	if (rumpable == 1 && fbase == "pipe") {
+		rumpable = 0;
+		rumphaspipe = 1;
+	}
+
 	funcstdname=fprefix "_" fbase
 	if (fcompat != "") {
 		funcname=fprefix "___" fbase "" fcompat
@@ -432,6 +441,12 @@ function parseline() {
 	} else {
 		funcname=funcstdname
 		wantrename=0
+	}
+	if (returntype == "quad_t" || returntype == "off_t") {
+		if (sycall_flags == "0")
+			sycall_flags = "SYCALL_RET_64";
+		else
+			sycall_flags = "SYCALL_RET_64 | " sycall_flags;
 	}
 
 	if (funcalias == "") {
@@ -466,6 +481,7 @@ function parseline() {
 	# and do not need argument structures built.
 
 	isvarargs = 0;
+	args64 = 0;
 	while (f <= end) {
 		if ($f == "...") {
 			f++;
@@ -494,9 +510,19 @@ function parseline() {
 		} else {
 			argalign++;
 		}
+		if (argtype[argc] == "quad_t" || argtype[argc] == "off_t" \
+		  || argtype[argc] == "dev_t" || argtype[argc] == "time_t") {
+			if (sycall_flags == "0")
+				sycall_flags = "SYCALL_ARG"argc-1"_64";
+			else
+				sycall_flags = "SYCALL_ARG"argc-1"_64 | " sycall_flags;
+			args64++;
+		}
 		argname[argc]=$f;
 		f += 2;			# skip name, and any comma
 	}
+	if (args64 > 0)
+		sycall_flags = "SYCALL_NARGS64_VAL("args64") | " sycall_flags;
 	# must see another argument after varargs notice.
 	if (isvarargs) {
 		if (argc == varargc)
@@ -521,13 +547,35 @@ function printproto(wrap) {
 		return
 
 	printf("%s rump_%s(", returntype, funcstdname) > rumpcallshdr
-	for (i = 1; i < argc; i++)
+	for (i = 1; i < varargc; i++)
 		if (argname[i] != "PAD")
 			printf("%s, ", argtype[i]) > rumpcallshdr
-	printf("%s)", argtype[argc]) > rumpcallshdr
+	if (isvarargs)
+		printf("%s, ...)", argtype[varargc]) > rumpcallshdr
+	else
+		printf("%s)", argtype[argc]) > rumpcallshdr
 	if (wantrename)
 		printf(" __RENAME(rump_%s)", funcname) > rumpcallshdr
 	printf(";\n") > rumpcallshdr
+}
+
+function printrumpsysent(insysent, compatwrap) {
+	if (!insysent) {
+		printf("\t{ 0, 0, 0,\n\t    %s },\t\t\t/* %d = unrumped */\n", \
+		    "(sy_call_t *)rump_enosys", syscall) > rumpsysent
+		return
+	}
+
+	printf("\t{ ") > rumpsysent
+	if (argc == 0) {
+		printf("0, 0, ") > rumpsysent
+	} else {
+		printf("ns(struct %s%s_args), ", compatwrap_, funcname) > rumpsysent
+	}
+	printf("0,\n\t    %s },", wfn) > rumpsysent
+	for (i = 0; i < (41 - length(wfn)) / 8; i++)
+		printf("\t") > rumpsysent
+	printf("/* %d = %s%s */\n", syscall, compatwrap_, funcalias) > rumpsysent
 }
 
 function putent(type, compatwrap) {
@@ -598,10 +646,18 @@ function putent(type, compatwrap) {
 		}
 	}
 
+	if (!rumpable) {
+		if (funcname == "sys_pipe" && rumphaspipe == 1)
+			insysent = 1
+		else
+			insysent = 0
+	} else {
+		insysent = 1
+	}
+	printrumpsysent(insysent, compatwrap)
+
 	# output rump marshalling code if necessary
 	if (!rumpable) {
-		printf("\t{ 0, 0, 0,\n\t    %s },\t\t\t/* %d = unrumped */\n", \
-		    "(sy_call_t *)rump_enosys", syscall) > rumpsysent
 		return
 	}
 
@@ -619,7 +675,8 @@ function putent(type, compatwrap) {
 			printf("%s %s, ", argtype[i], argname[i]) > rumpcalls
 	}
 	printf("%s %s)\n", argtype[argc], argname[argc]) > rumpcalls
-	printf("{\n\tregister_t retval = 0;\n\tint error = 0;\n") > rumpcalls
+	printf("{\n\tregister_t rval[2] = {0, 0};\n\tint error = 0;\n") \
+	    > rumpcalls
 
 	argarg = "NULL"
 	argsize = 0;
@@ -642,29 +699,18 @@ function putent(type, compatwrap) {
 		printf("\n") > rumpcalls
 	}
 	printf("\terror = rump_sysproxy(%s%s, rump_sysproxy_arg,\n\t" \
-	    "    (uint8_t *)%s, %s, &retval);\n", constprefix, funcalias, \
+	    "    (uint8_t *)%s, %s, rval);\n", constprefix, funcalias, \
 	    argarg, argsize) > rumpcalls
-	printf("\tif (error) {\n\t\tretval = -1;\n") > rumpcalls
+	printf("\tif (error) {\n\t\trval[0] = -1;\n") > rumpcalls
 	if (returntype != "void") {
 		printf("\t\trumpuser_seterrno(error);\n\t}\n") > rumpcalls
-		printf("\treturn retval;\n") > rumpcalls
+		printf("\treturn rval[0];\n") > rumpcalls
 	} else {
 		printf("\t}\n") > rumpcalls
 	}
 	printf("}\n") > rumpcalls
 	printf("__weak_alias(%s,rump_enosys);\n", funcname) > rumpcalls
 
-	# rumpsysent
-	printf("\t{ ") > rumpsysent
-	if (argc == 0) {
-		printf("0, 0, ") > rumpsysent
-	} else {
-		printf("ns(struct %s%s_args), ", compatwrap_, funcname) > rumpsysent
-	}
-	printf("0,\n\t    %s },", wfn) > rumpsysent
-	for (i = 0; i < (41 - length(wfn)) / 8; i++)
-		printf("\t") > rumpsysent
-	printf("/* %d = %s%s */\n", syscall, compatwrap_, funcalias) > rumpsysent
 }
 $2 == "STD" || $2 == "NODEF" || $2 == "NOARGS" || $2 == "INDIR" {
 	parseline()
@@ -713,6 +759,22 @@ $2 == "OBSOL" || $2 == "UNIMPL" || $2 == "EXCL" || $2 == "IGNORED" {
 	exit 1
 }
 END {
+	# output pipe() syscall with its special rval[2] handling
+	if (rumphaspipe) {
+		printf("int rump_sys_pipe(int *);\n") > rumpcallshdr
+		printf("\nint rump_sys_pipe(int *);\n") > rumpcalls
+		printf("int\nrump_sys_pipe(int *fd)\n{\n") > rumpcalls
+		printf("\tregister_t rval[2] = {0, 0};\n") > rumpcalls
+		printf("\tint error = 0;\n") > rumpcalls
+		printf("\n\terror = rump_sysproxy(SYS_pipe, ") > rumpcalls
+		printf("rump_sysproxy_arg, NULL, 0, rval);\n") > rumpcalls
+		printf("\tif (error) {\n") > rumpcalls
+		printf("\t\trumpuser_seterrno(error);\n") > rumpcalls
+		printf("\t} else {\n\t\tfd[0] = rval[0];\n") > rumpcalls
+		printf("\t\tfd[1] = rval[1];\n\t}\n") > rumpcalls
+		printf("\treturn error ? -1 : 0;\n}\n") > rumpcalls
+	}
+
 	maxsyscall = syscall
 	if (nsysent) {
 		if (syscall > nsysent) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.134.12.2 2009/07/18 14:53:24 yamt Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.134.12.3 2010/03/11 15:04:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.134.12.2 2009/07/18 14:53:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.134.12.3 2010/03/11 15:04:23 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -458,7 +458,6 @@ kernfs_xread(struct kernfs_node *kfs, int off, char **bufp, size_t len, size_t *
 		memcpy(*bufp, cp, xlen);
 		(*bufp)[xlen] = '\n';
 		(*bufp)[xlen+1] = '\0';
-		len = strlen(*bufp);
 		break;
 	}
 
@@ -594,7 +593,7 @@ kernfs_lookup(void *v)
 
 	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = dvp;
-		VREF(dvp);
+		vref(dvp);
 		return (0);
 	}
 
@@ -832,7 +831,7 @@ kernfs_getattr(void *v)
 	char strbuf[KSTRING], *bf;
 	size_t nread, total;
 
-	VATTR_NULL(vap);
+	vattr_null(vap);
 	vap->va_type = ap->a_vp->v_type;
 	vap->va_uid = 0;
 	vap->va_gid = 0;

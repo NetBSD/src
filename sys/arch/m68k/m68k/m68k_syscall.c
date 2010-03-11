@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.34.10.1 2009/05/04 08:11:26 yamt Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.34.10.2 2010/03/11 15:02:34 yamt Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.34.10.1 2009/05/04 08:11:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.34.10.2 2010/03/11 15:02:34 yamt Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
@@ -128,7 +128,6 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.34.10.1 2009/05/04 08:11:26 yamt 
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
 #include <sys/syslog.h>
-#include <sys/user.h>
 #include <sys/ktrace.h>
 
 #include <machine/psl.h>
@@ -467,7 +466,7 @@ void
 child_return(void *arg)
 {
 	struct lwp *l = arg;
-	/* See cpu_fork() */
+	/* See cpu_lwp_fork() */
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 
 	f->f_regs[D0] = 0;

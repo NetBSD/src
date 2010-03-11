@@ -1,4 +1,4 @@
-/*	$NetBSD: igphyreg.h,v 1.4 2005/12/11 12:22:42 christos Exp $	*/
+/*	$NetBSD: igphyreg.h,v 1.4.74.1 2010/03/11 15:03:41 yamt Exp $	*/
 
 /*******************************************************************************
 
@@ -103,6 +103,8 @@
 #define MSE_CHANNEL_A			0xF000
 
 #define MII_IGPHY_PAGE_SELECT		0x1F
+#define IGPHY_MAXREGADDR		0x1F
+#define IGPHY_PAGEMASK			(~IGPHY_MAXREGADDR)
 
 /* IGP01E1000 AGC Registers - stores the cable length values*/
 #define MII_IGPHY_AGC_A			0x1172
@@ -151,6 +153,22 @@
 #define ANALOG_FUSE_COARSE_10		0x0010
 #define ANALOG_FUSE_FINE_1		0x0080
 #define ANALOG_FUSE_FINE_10		0x0500
+
+/*
+ * IGP3 regs
+ */
+#define IGP3_PAGE_SHIFT		5
+#define IGP3_MAX_REG_ADDRESS	0x1f  /* 5 bit address bus (0-0x1f) */
+#define IGP3_REG(page, reg) \
+	(((page) << IGP3_PAGE_SHIFT) | ((reg) & IGP3_MAX_REG_ADDRESS))
+
+#define IGP3_VR_CTRL	IGP3_REG(776, 18)
+#define IGP3_VR_CTRL_DEV_POWERDOWN_MODE_MASK	0x0300
+#define IGP3_VR_CTRL_MODE_SHUTDOWN		0x0200
+
+#define IGP3_PM_CTRL	IGP3_REG(769, 20)
+#define IGP3_PM_CTRL_FORCE_PWR_DOWN		0x0020
+
 
 #define IGPHY_READ(sc, reg) \
     (PHY_WRITE(sc, MII_IGPHY_PAGE_SELECT, (reg) & ~0x1f), \

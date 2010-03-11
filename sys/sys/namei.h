@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.60.4.2 2009/07/18 14:53:27 yamt Exp $	*/
+/*	$NetBSD: namei.h,v 1.60.4.3 2010/03/11 15:04:42 yamt Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.4 2008/12/03 10:54:27 ad Exp 
- *   from: NetBSD: namei.src,v 1.11 2009/06/29 05:00:14 dholland Exp 
+ *   from: NetBSD: namei.src,v 1.14 2009/12/23 01:09:24 pooka Exp 
  */
 
 /*
@@ -147,7 +147,8 @@ struct nameidata {
 #define	DOWHITEOUT	0x0040000	/* do whiteouts */
 #define	REQUIREDIR	0x0080000	/* must be a directory */
 #define	CREATEDIR	0x0200000	/* trailing slashes are ok */
-#define	PARAMASK	0x02fff00	/* mask of parameter descriptors */
+#define	INRENAME	0x0400000	/* operation is a part of ``rename'' */
+#define	PARAMASK	0x06fff00	/* mask of parameter descriptors */
 
 /*
  * Initialization of an nameidata structure.
@@ -236,7 +237,8 @@ int namei_simple_user(const char *, namei_simple_flags_t, struct vnode **);
 
 int	namei(struct nameidata *);
 uint32_t namei_hash(const char *, const char **);
-int	lookup(struct nameidata *);
+int	lookup_for_nfsd(struct nameidata *, struct vnode *, int neverfollow);
+int	lookup_for_nfsd_index(struct nameidata *);
 int	relookup(struct vnode *, struct vnode **, struct componentname *);
 void	cache_purge1(struct vnode *, const struct componentname *, int);
 #define	PURGE_PARENTS	1
@@ -305,6 +307,7 @@ extern struct nchstats nchstats;
 #define NAMEI_DOWHITEOUT	0x0040000
 #define NAMEI_REQUIREDIR	0x0080000
 #define NAMEI_CREATEDIR	0x0200000
-#define NAMEI_PARAMASK	0x02fff00
+#define NAMEI_INRENAME	0x0400000
+#define NAMEI_PARAMASK	0x06fff00
 
 #endif /* !_SYS_NAMEI_H_ */

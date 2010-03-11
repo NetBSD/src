@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.85.4.1 2009/05/04 08:11:57 yamt Exp $	*/
+/*	$NetBSD: psycho.c,v 1.85.4.2 2010/03/11 15:03:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,12 +55,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.85.4.1 2009/05/04 08:11:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.85.4.2 2010/03/11 15:03:00 yamt Exp $");
 
 #include "opt_ddb.h"
 
 /*
- * Support for `psycho' and `psycho+' UPA to PCI bridge and 
+ * Support for `psycho' and `psycho+' UPA to PCI bridge and
  * UltraSPARC IIi and IIe `sabre' PCI controllers.
  */
 
@@ -179,7 +179,7 @@ CFATTACH_DECL(psycho, sizeof(struct psycho_softc),
  * and manages two PCI buses.  "psycho" has two 64-bit 33 MHz buses, while
  * "psycho+" controls both a 64-bit 33 MHz and a 64-bit 66 MHz PCI bus.  You
  * will usually find a "psycho+" since I don't think the original "psycho"
- * ever shipped, and if it did it would be in the U30.  
+ * ever shipped, and if it did it would be in the U30.
  *
  * Each "psycho" PCI bus appears as a separate OFW node, but since they are
  * both part of the same IC, they only have a single register space.  As such,
@@ -191,7 +191,7 @@ CFATTACH_DECL(psycho, sizeof(struct psycho_softc),
  * numbers on some machines.
  *
  * On UltraII machines, there can be any number of "psycho+" ICs, each
- * providing two PCI buses.  
+ * providing two PCI buses.
  *
  *
  * XXXX The psycho/sabre node has an `interrupts' attribute.  They contain
@@ -212,11 +212,11 @@ struct psycho_names {
 	const char *p_name;
 	int p_type;
 } psycho_names[] = {
-	{ "SUNW,psycho",        PSYCHO_MODE_PSYCHO      },
-	{ "pci108e,8000",       PSYCHO_MODE_PSYCHO      },
-	{ "SUNW,sabre",         PSYCHO_MODE_SABRE       },
-	{ "pci108e,a000",       PSYCHO_MODE_SABRE       },
-	{ "pci108e,a001",       PSYCHO_MODE_SABRE       },
+	{ "SUNW,psycho",	PSYCHO_MODE_PSYCHO	},
+	{ "pci108e,8000",	PSYCHO_MODE_PSYCHO	},
+	{ "SUNW,sabre",		PSYCHO_MODE_SABRE	},
+	{ "pci108e,a000",	PSYCHO_MODE_SABRE	},
+	{ "pci108e,a001",	PSYCHO_MODE_SABRE	},
 	{ NULL, 0 }
 };
 
@@ -278,7 +278,7 @@ psycho_dump_intmap(struct psycho_softc *sc)
  *	- figure out the IGN.
  *	- find our partner psycho
  *	- configure ourselves
- *	- bus range, bus, 
+ *	- bus range, bus,
  *	- get interrupt-map and interrupt-map-mask
  *	- setup the chipsets.
  *	- if we're the first of the pair, initialise the IOMMU, otherwise
@@ -381,7 +381,7 @@ found:
 			/* We need to map this in ourselves. */
 			if (bus_space_map(sc->sc_bustag,
 				ma->ma_reg[0].ur_paddr,
-				ma->ma_reg[0].ur_len, BUS_SPACE_MAP_LINEAR, 
+				ma->ma_reg[0].ur_len, BUS_SPACE_MAP_LINEAR,
 				&sc->sc_bh))
 				panic("psycho_attach: cannot map regs");
 			sc->sc_regs = (struct psychoreg *)
@@ -396,7 +396,7 @@ found:
 	}
 
 
-	csr = bus_space_read_8(sc->sc_bustag, sc->sc_bh, 
+	csr = bus_space_read_8(sc->sc_bustag, sc->sc_bh,
 		offsetof(struct psychoreg, psy_csr));
 	sc->sc_ign = 0x7c0; /* APB IGN is always 0x7c */
 	if (sc->sc_mode == PSYCHO_MODE_PSYCHO)
@@ -433,7 +433,7 @@ found:
 	/*
 	 * Setup the PCI control register
 	 */
-	csr = bus_space_read_8(sc->sc_bustag, pci_ctl, 
+	csr = bus_space_read_8(sc->sc_bustag, pci_ctl,
 		offsetof(struct pci_ctl, pci_csr));
 	csr |= PCICTL_MRLM |
 	       PCICTL_ARB_PARK |
@@ -469,7 +469,7 @@ found:
 	aprint_normal("bus range %u to %u", psycho_br[0], psycho_br[1]);
 	aprint_normal("; PCI bus %d", psycho_br[0]);
 
-	pp->pp_pcictl = pci_ctl; 
+	pp->pp_pcictl = pci_ctl;
 
 	/* allocate our tags */
 	pp->pp_memt = psycho_alloc_mem_tag(pp);
@@ -519,25 +519,25 @@ found:
 		 * is better than trying to sort through this mess.
 		 */
 		psycho_set_intr(sc, 15, psycho_ue,
-			&sc->sc_regs->ue_int_map, 
+			&sc->sc_regs->ue_int_map,
 			&sc->sc_regs->ue_clr_int);
 		psycho_set_intr(sc, 1, psycho_ce,
-			&sc->sc_regs->ce_int_map, 
+			&sc->sc_regs->ce_int_map,
 			&sc->sc_regs->ce_clr_int);
 		psycho_set_intr(sc, 15, psycho_bus_a,
-			&sc->sc_regs->pciaerr_int_map, 
+			&sc->sc_regs->pciaerr_int_map,
 			&sc->sc_regs->pciaerr_clr_int);
 		psycho_set_intr(sc, 15, psycho_powerfail,
-			&sc->sc_regs->power_int_map, 
+			&sc->sc_regs->power_int_map,
 			&sc->sc_regs->power_clr_int);
 		psycho_register_power_button(sc);
 		if (sc->sc_mode != PSYCHO_MODE_SABRE) {
 			/* sabre doesn't have these interrupts */
 			psycho_set_intr(sc, 15, psycho_bus_b,
-					&sc->sc_regs->pciberr_int_map, 
+					&sc->sc_regs->pciberr_int_map,
 					&sc->sc_regs->pciberr_clr_int);
 			psycho_set_intr(sc, 1, psycho_wakeup,
-					&sc->sc_regs->pwrmgt_int_map, 
+					&sc->sc_regs->pwrmgt_int_map,
 					&sc->sc_regs->pwrmgt_clr_int);
 		}
 
@@ -591,7 +591,7 @@ found:
 
 			/*
 			 * Initialize the strbuf_ctl.
-			 * 
+			 *
 			 * The flush sync buffer must be 64-byte aligned.
 			 */
 			sb->sb_flush = (void *)(va & ~0x3f);
@@ -608,7 +608,7 @@ found:
 
 		sc->sc_configtag = psycho_alloc_config_tag(sc->sc_psycho_this);
 
-		/* 
+		/*
 		 * XXX This is a really ugly hack because PCI config space
 		 * is explicitly handled with unmapped accesses.
 		 */
@@ -638,7 +638,7 @@ found:
 
 			/*
 			 * Initialize the strbuf_ctl.
-			 * 
+			 *
 			 * The flush sync buffer must be 64-byte aligned.
 			 */
 			sb->sb_flush = (void *)(va & ~0x3f);
@@ -719,7 +719,7 @@ psycho_register_power_button(struct psycho_softc *sc)
 	sc->sc_smcontext->smpsw_name = device_xname(&sc->sc_dev);
 	sc->sc_smcontext->smpsw_type = PSWITCH_TYPE_POWER;
 	if (sysmon_pswitch_register(sc->sc_smcontext) != 0)
-		aprint_error_dev(&sc->sc_dev, "unable to register power button with sysmon\n"); 
+		aprint_error_dev(&sc->sc_dev, "unable to register power button with sysmon\n");
 }
 
 static void
@@ -751,6 +751,7 @@ psycho_alloc_chipset(struct psycho_pbm *pp, int node, pci_chipset_tag_t pc)
 	npc->rootnode = node;
 	npc->spc_conf_read = psycho_pci_conf_read;
 	npc->spc_conf_write = psycho_pci_conf_write;
+	npc->spc_intr_map = NULL;
 	npc->spc_intr_establish = psycho_pci_intr_establish;
 	npc->spc_find_ino = psycho_pci_find_ino;
 
@@ -868,25 +869,25 @@ psycho_ue(void *arg)
 {
 	struct psycho_softc *sc = (struct psycho_softc *)arg;
 	struct psychoreg *regs = sc->sc_regs;
-	long long afsr = regs->psy_ue_afsr;
-	long long afar = regs->psy_ue_afar;
-	long size = PAGE_SIZE<<(sc->sc_is->is_tsbsize);
 	struct iommu_state *is = sc->sc_is;
+	uint64_t afsr = regs->psy_ue_afsr;
+	uint64_t afar = regs->psy_ue_afar;
+	psize_t size = PAGE_SIZE << is->is_tsbsize;
 	char bits[128];
 
 	/*
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
 	snprintb(bits, sizeof(bits), PSYCHO_UE_AFSR_BITS, afsr);
-	printf("%s: uncorrectable DMA error AFAR %llx pa %llx AFSR %llx:\n%s\n",
-		device_xname(&sc->sc_dev), afar, 
-		(long long)iommu_extract(is, (vaddr_t)afar), afsr, bits);
-	
+	aprint_error_dev(&sc->sc_dev,
+	    "uncorrectable DMA error AFAR %" PRIx64 " AFSR %s\n", afar, bits);
+
 	/* Sometimes the AFAR points to an IOTSB entry */
 	if (afar >= is->is_ptsb && afar < is->is_ptsb + size) {
-		printf("IOVA %llx IOTTE %llx\n",
-			(long long)((afar - is->is_ptsb) * PAGE_SIZE + is->is_dvmabase),
-			(long long)ldxa(afar, ASI_PHYS_CACHED));
+		aprint_error_dev(&sc->sc_dev,
+		    "IOVA %" PRIx64 " IOTTE %" PRIx64 "\n",
+		    (afar - is->is_ptsb) / sizeof(is->is_tsb[0]) * PAGE_SIZE
+		    + is->is_dvmabase, ldxa(afar, ASI_PHYS_CACHED));
 	}
 #ifdef DDB
 	Debugger();
@@ -896,7 +897,7 @@ psycho_ue(void *arg)
 	return (1);
 }
 
-static int 
+static int
 psycho_ce(void *arg)
 {
 	struct psycho_softc *sc = (struct psycho_softc *)arg;
@@ -905,14 +906,13 @@ psycho_ce(void *arg)
 	/*
 	 * It's correctable.  Dump the regs and continue.
 	 */
-
-	printf("%s: correctable DMA error AFAR %llx AFSR %llx\n",
-		device_xname(&sc->sc_dev), 
-		(long long)regs->psy_ce_afar, (long long)regs->psy_ce_afsr);
+	aprint_error_dev(&sc->sc_dev,
+	    "correctable DMA error AFAR %" PRIx64 " AFSR %" PRIx64 "\n",
+	    regs->psy_ce_afar, regs->psy_ce_afsr);
 	return (1);
 }
 
-static int 
+static int
 psycho_bus_a(void *arg)
 {
 	struct psycho_softc *sc = (struct psycho_softc *)arg;
@@ -922,14 +922,13 @@ psycho_bus_a(void *arg)
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
 
-	panic("%s: PCI bus A error AFAR %llx AFSR %llx",
-		device_xname(&sc->sc_dev), 
-		(long long)regs->psy_pcictl[0].pci_afar, 
-		(long long)regs->psy_pcictl[0].pci_afsr);
+	panic("%s: PCI bus A error AFAR %" PRIx64 " AFSR %" PRIx64,
+	    device_xname(&sc->sc_dev),
+	    regs->psy_pcictl[0].pci_afar, regs->psy_pcictl[0].pci_afsr);
 	return (1);
 }
 
-static int 
+static int
 psycho_bus_b(void *arg)
 {
 	struct psycho_softc *sc = (struct psycho_softc *)arg;
@@ -939,14 +938,13 @@ psycho_bus_b(void *arg)
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
 
-	panic("%s: PCI bus B error AFAR %llx AFSR %llx",
-		device_xname(&sc->sc_dev), 
-		(long long)regs->psy_pcictl[0].pci_afar, 
-		(long long)regs->psy_pcictl[0].pci_afsr);
+	panic("%s: PCI bus B error AFAR %" PRIx64 " AFSR %" PRIx64,
+	    device_xname(&sc->sc_dev),
+	    regs->psy_pcictl[0].pci_afar, regs->psy_pcictl[0].pci_afsr);
 	return (1);
 }
 
-static int 
+static int
 psycho_powerfail(void *arg)
 {
 	struct psycho_softc *sc = (struct psycho_softc *)arg;
@@ -962,7 +960,7 @@ psycho_powerfail(void *arg)
 	return (1);
 }
 
-static 
+static
 int psycho_wakeup(void *arg)
 {
 	struct psycho_softc *sc = (struct psycho_softc *)arg;
@@ -971,7 +969,7 @@ int psycho_wakeup(void *arg)
 	 * Gee, we don't really have a framework to deal with this
 	 * properly.
 	 */
-	printf("%s: power management wakeup\n",	device_xname(&sc->sc_dev));
+	aprint_error_dev(&sc->sc_dev, "power management wakeup\n");
 	return (1);
 }
 
@@ -991,7 +989,7 @@ psycho_iommu_init(struct psycho_softc *sc, int tsbsize)
 	/* punch in our copies */
 	is->is_bustag = sc->sc_bustag;
 	bus_space_subregion(sc->sc_bustag, sc->sc_bh,
-		offsetof(struct psychoreg, psy_iommu), 
+		offsetof(struct psychoreg, psy_iommu),
 		sizeof (struct iommureg),
 		&is->is_iommu);
 
@@ -1004,15 +1002,15 @@ psycho_iommu_init(struct psycho_softc *sc, int tsbsize)
 	 * `#virtual-dma-addr-cells' and DTRT, but I'm lazy.
 	 */
 	nitem = 0;
-	if (!prom_getprop(sc->sc_node, "virtual-dma", sizeof(vdma), &nitem, 
+	if (!prom_getprop(sc->sc_node, "virtual-dma", sizeof(vdma), &nitem,
 		&vdma)) {
 		/* Damn.  Gotta use these values. */
 		iobase = vdma[0];
 #define	TSBCASE(x)	case 1<<((x)+23): tsbsize = (x); break
-		switch (vdma[1]) { 
+		switch (vdma[1]) {
 			TSBCASE(1); TSBCASE(2); TSBCASE(3);
 			TSBCASE(4); TSBCASE(5); TSBCASE(6);
-		default: 
+		default:
 			printf("bogus tsb size %x, using 7\n", vdma[1]);
 			TSBCASE(7);
 		}
@@ -1114,9 +1112,9 @@ _psycho_bus_map(bus_space_tag_t t, bus_addr_t offset, bus_size_t size,
 	bus_addr_t paddr;
 	int ss;
 
-	DPRINTF(PDB_BUSMAP, 
-		("_psycho_bus_map: type %d off %qx sz %qx flags %d", 
-			t->type, (unsigned long long)offset, 
+	DPRINTF(PDB_BUSMAP,
+		("_psycho_bus_map: type %d off %qx sz %qx flags %d",
+			t->type, (unsigned long long)offset,
 			(unsigned long long)size, flags));
 
 	ss = sparc_pci_childspace(t->type);
@@ -1129,7 +1127,7 @@ _psycho_bus_map(bus_space_tag_t t, bus_addr_t offset, bus_size_t size,
 				     "space %lx offset %lx paddr %qx\n",
 			       (long)ss, (long)offset,
 			       (unsigned long long)paddr));
-		return ((*sc->sc_bustag->sparc_bus_map)(t, paddr, size, 
+		return ((*sc->sc_bustag->sparc_bus_map)(t, paddr, size,
 			flags, 0, hp));
 	}
 	DPRINTF(PDB_BUSMAP, (" FAILED\n"));
@@ -1148,7 +1146,7 @@ psycho_bus_mmap(bus_space_tag_t t, bus_addr_t paddr, off_t off, int prot,
 
 	ss = sparc_pci_childspace(t->type);
 
-	DPRINTF(PDB_BUSMAP, ("_psycho_bus_mmap: prot %x flags %d pa %qx\n", 
+	DPRINTF(PDB_BUSMAP, ("_psycho_bus_mmap: prot %x flags %d pa %qx\n",
 		prot, flags, (unsigned long long)paddr));
 
 	pr = get_psychorange(pp, ss);
@@ -1216,7 +1214,7 @@ psycho_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	volatile uint64_t *intrmapptr = NULL, *intrclrptr = NULL;
 	int64_t imap = 0;
 	int ino;
-	long vec = INTVEC(ihandle); 
+	long vec = INTVEC(ihandle);
 
 	ih = (struct intrhand *)
 		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
@@ -1230,7 +1228,7 @@ psycho_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	 * XXX We only compare INOs rather than IGNs since the firmware may
 	 * not provide the IGN and the IGN is constant for all device on that
 	 * PCI controller.  This could cause problems for the FFB/external
-	 * interrupt which has a full vector that can be set arbitrarily.  
+	 * interrupt which has a full vector that can be set arbitrarily.
 	 */
 
 	DPRINTF(PDB_INTR, ("\npsycho_intr_establish: ihandle %x vec %lx", ihandle, vec));
@@ -1248,7 +1246,7 @@ psycho_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	DPRINTF(PDB_INTR, ("\npsycho: intr %lx: %p\nHunting for IRQ...\n",
 	    (long)ino, intrlev[ino]));
 
- 	/* 
+ 	/*
  	 * First look for PCI interrupts, otherwise the PCI A slot 0
  	 * INTA# interrupt might match an unused non-PCI (obio)
  	 * interrupt.
@@ -1344,13 +1342,13 @@ psycho_pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	struct psycho_softc *sc = pp->pp_sc;
 	pcireg_t val = (pcireg_t)~0;
 
-	DPRINTF(PDB_CONF, ("pci_conf_read: tag %lx reg %x ", 
+	DPRINTF(PDB_CONF, ("%s: tag %lx reg %x ", __func__,
 		(long)tag, reg));
 	if (PCITAG_NODE(tag) != -1) {
 
 		DPRINTF(PDB_CONF, ("asi=%x addr=%qx (offset=%x) ...",
 			sc->sc_configaddr._asi,
-			(long long)(sc->sc_configaddr._ptr + 
+			(long long)(sc->sc_configaddr._ptr +
 				PCITAG_OFFSET(tag) + reg),
 			(int)PCITAG_OFFSET(tag) + reg));
 
@@ -1358,7 +1356,7 @@ psycho_pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 			PCITAG_OFFSET(tag) + reg);
 	}
 #ifdef DEBUG
-	else DPRINTF(PDB_CONF, ("pci_conf_read: bogus pcitag %x\n",
+	else DPRINTF(PDB_CONF, ("%s: bogus pcitag %x\n", __func__,
 		(int)PCITAG_OFFSET(tag)));
 #endif
 	DPRINTF(PDB_CONF, (" returning %08x\n", (u_int)val));
@@ -1372,20 +1370,20 @@ psycho_pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data
 	struct psycho_pbm *pp = pc->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 
-	DPRINTF(PDB_CONF, ("pci_conf_write: tag %lx; reg %x; data %x; ", 
+	DPRINTF(PDB_CONF, ("%s: tag %lx; reg %x; data %x; ", __func__,
 		(long)PCITAG_OFFSET(tag), reg, (int)data));
 	DPRINTF(PDB_CONF, ("asi = %x; readaddr = %qx (offset = %x)\n",
 		sc->sc_configaddr._asi,
-		(long long)(sc->sc_configaddr._ptr + PCITAG_OFFSET(tag) + reg), 
+		(long long)(sc->sc_configaddr._ptr + PCITAG_OFFSET(tag) + reg),
 		(int)PCITAG_OFFSET(tag) + reg));
 
 	/* If we don't know it, just punt it.  */
 	if (PCITAG_NODE(tag) == -1) {
-		DPRINTF(PDB_CONF, ("pci_conf_write: bad addr"));
+		DPRINTF(PDB_CONF, ("%s: bad addr", __func__));
 		return;
 	}
 		
-	bus_space_write_4(sc->sc_configtag, sc->sc_configaddr, 
+	bus_space_write_4(sc->sc_configtag, sc->sc_configaddr,
 		PCITAG_OFFSET(tag) + reg, data);
 }
 
@@ -1396,7 +1394,7 @@ psycho_pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 	void *cookie;
 	struct psycho_pbm *pp = (struct psycho_pbm *)pc->cookie;
 
-	DPRINTF(PDB_INTR, ("pci_intr_establish: ih %lu; level %d", (u_long)ih, level));
+	DPRINTF(PDB_INTR, ("%s: ih %lx; level %d", __func__, (u_long)ih, level));
 	cookie = bus_intr_establish(pp->pp_memt, ih, level, func, arg);
 
 	DPRINTF(PDB_INTR, ("; returning handle %p\n", cookie));
@@ -1412,14 +1410,14 @@ psycho_pci_find_ino(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	u_int dev;
 	u_int pin;
 
-	DPRINTF(PDB_INTMAP, ("pci_find_ino: pa_tag: node %x, %d:%d:%d\n",
+	DPRINTF(PDB_INTMAP, ("%s: pa_tag: node %x, %d:%d:%d\n", __func__,
 			      PCITAG_NODE(pa->pa_tag), (int)PCITAG_BUS(pa->pa_tag),
 			      (int)PCITAG_DEV(pa->pa_tag),
 			      (int)PCITAG_FUN(pa->pa_tag)));
 	DPRINTF(PDB_INTMAP,
-		("pci_find_ino: intrswiz %d, intrpin %d, intrline %d, rawintrpin %d\n",
+		("%s: intrswiz %d, intrpin %d, intrline %d, rawintrpin %d\n", __func__,
 		 pa->pa_intrswiz, pa->pa_intrpin, pa->pa_intrline, pa->pa_rawintrpin));
-	DPRINTF(PDB_INTMAP, ("pci_find_ino: pa_intrtag: node %x, %d:%d:%d\n",
+	DPRINTF(PDB_INTMAP, ("%s: pa_intrtag: node %x, %d:%d:%d\n", __func__,
 			      PCITAG_NODE(pa->pa_intrtag),
 			      (int)PCITAG_BUS(pa->pa_intrtag),
 			      (int)PCITAG_DEV(pa->pa_intrtag),
@@ -1430,7 +1428,7 @@ psycho_pci_find_ino(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	 * If we are on a ppb, use the devno on the underlying bus when forming
 	 * the ivec.
 	 */
-	if (pa->pa_intrswiz != 0 && PCITAG_NODE(pa->pa_intrtag) != 0) 
+	if (pa->pa_intrswiz != 0 && PCITAG_NODE(pa->pa_intrtag) != 0)
 		dev = PCITAG_DEV(pa->pa_intrtag);
 	else
 		dev = pa->pa_device;
@@ -1441,7 +1439,7 @@ psycho_pci_find_ino(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		dev--;
 
 	pin = pa->pa_intrpin - 1;
-	DPRINTF(PDB_INTMAP, ("pci_find_ino: mode %d, pbm %d, dev %d, pin %d\n",
+	DPRINTF(PDB_INTMAP, ("%s: mode %d, pbm %d, dev %d, pin %d\n", __func__,
 	    sc->sc_mode, pp->pp_id, dev, pin));
 
 	*ihp = sc->sc_ign | ((bus << 4) & INTMAP_PCIBUS) |

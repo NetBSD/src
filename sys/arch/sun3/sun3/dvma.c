@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.33.44.1 2008/05/16 02:23:21 yamt Exp $	*/
+/*	$NetBSD: dvma.c,v 1.33.44.2 2010/03/11 15:03:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.33.44.1 2008/05/16 02:23:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.33.44.2 2010/03/11 15:03:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.33.44.1 2008/05/16 02:23:21 yamt Exp $");
 #include <sys/extent.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
 
@@ -184,7 +183,7 @@ dvma_mapin(void *kva, int len, int canwait /* ignored */)
 	seg_len = (vsize_t)len;
 	seg_off = seg_kva & SEGOFSET;
 	seg_kva -= seg_off;
-	seg_len = m68k_round_seg(seg_len + seg_off);
+	seg_len = sun3_round_seg(seg_len + seg_off);
 
 	s = splvm();
 
@@ -246,7 +245,7 @@ dvma_mapout(void *dma, int len)
 	seg_len = (vsize_t)len;
 	seg_off = seg_dma & SEGOFSET;
 	seg_dma -= seg_off;
-	seg_len = m68k_round_seg(seg_len + seg_off);
+	seg_len = sun3_round_seg(seg_len + seg_off);
 
 	s = splvm();
 

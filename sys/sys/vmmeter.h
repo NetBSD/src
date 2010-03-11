@@ -1,4 +1,4 @@
-/*	$NetBSD: vmmeter.h,v 1.18 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: vmmeter.h,v 1.18.74.1 2010/03/11 15:04:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -41,7 +41,7 @@ struct vmtotal
 	int16_t	t_dw;		/* jobs in ``disk wait'' (neg priority) */
 	int16_t	t_pw;		/* jobs in page wait */
 	int16_t	t_sl;		/* jobs sleeping in core */
-	int16_t	t_sw;		/* swapped out runnable/short block jobs */
+	int16_t	_reserved1;
 	int32_t	t_vm;		/* total virtual memory */
 	int32_t	t_avm;		/* active virtual memory */
 	int32_t	t_rm;		/* total real memory in use */

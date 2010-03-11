@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.37.20.1 2009/05/04 08:11:48 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.37.20.2 2010/03/11 15:02:54 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37.20.1 2009/05/04 08:11:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37.20.2 2010/03/11 15:02:54 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -76,7 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37.20.1 2009/05/04 08:11:48 yamt Exp $
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/device.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -126,7 +125,6 @@ void	*ksym_start, *ksym_end;
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int	physmem;		/* Total physical memory */
@@ -150,7 +148,6 @@ void	mach_init(long, long, long, long);
 int	safepri = MIPS_INT_MASK | MIPS_SR_INT_IE;
 
 extern void *esym;
-extern struct user *proc0paddr;
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -158,7 +155,7 @@ extern struct user *proc0paddr;
 void
 mach_init(long fwhandle, long magic, long bootdata, long reserved)
 {
-	void *kernend, *p0;
+	void *kernend;
 	u_long first, last;
 	extern char edata[], end[];
 	int i;
@@ -317,16 +314,12 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	 */
 	mips_init_msgbuf();
 
-	/*
-	 * Allocate space for proc0's USPACE
-	 */
-	p0 = (void *)pmap_steal_memory(USPACE, NULL, NULL);
-	lwp0.l_addr = proc0paddr = (struct user *)p0;
-	lwp0.l_md.md_regs = (struct frame *)((char *)p0 + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
-
 	pmap_bootstrap();
+
+	/*
+	 * Allocate uarea for lwp0 and set it.
+	 */
+	mips_init_lwp0_uarea();
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
@@ -385,7 +378,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Take a snapshot before clobbering any registers. */
 	if (curlwp)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 	if (cold) {
 		howto |= RB_HALT;

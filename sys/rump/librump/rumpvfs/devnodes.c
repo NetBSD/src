@@ -1,4 +1,4 @@
-/*	$NetBSD: devnodes.c,v 1.1.2.2 2009/09/16 13:38:05 yamt Exp $	*/
+/*	$NetBSD: devnodes.c,v 1.1.2.3 2010/03/11 15:04:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.1.2.2 2009/09/16 13:38:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.1.2.3 2010/03/11 15:04:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,22 +40,27 @@ __KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.1.2.2 2009/09/16 13:38:05 yamt Exp $"
 
 /* realqvik(tm) "devfs" */
 int
+rump_vfs_makeonedevnode(dev_t devtype, const char *devname,
+	devmajor_t majnum, devminor_t minnum)
+{
+	register_t retval;
+
+	return do_sys_mknod(curlwp, devname, 0666 | devtype,
+	    makedev(majnum, minnum), &retval, UIO_SYSSPACE);
+}
+
+int
 rump_vfs_makedevnodes(dev_t devtype, const char *basename, char minchar,
 	devmajor_t maj, devminor_t minnum, int nnodes)
 {
-	int error;
+	int error = 0;
 	char *devname, *p;
 	size_t devlen;
 	register_t retval;
 
-	error = do_sys_mkdir("/dev", 0777, UIO_SYSSPACE);
-	if (error != 0 && error != EEXIST)
-		return error;
-
-	devlen = strlen("/dev/") + strlen(basename) + 1 + 1; /* +letter +0 */
+	devlen = strlen(basename) + 1 + 1; /* +letter +0 */
 	devname = kmem_zalloc(devlen, KM_SLEEP);
-	strlcpy(devname, "/dev/", devlen);
-	strlcat(devname, basename, devlen);
+	strlcpy(devname, basename, devlen);
 	p = devname + devlen-2;
 
 	for (; nnodes > 0; nnodes--, minchar++, minnum++) {

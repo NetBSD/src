@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.32.10.1 2009/05/04 08:13:49 yamt Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.32.10.2 2010/03/11 15:04:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.32.10.1 2009/05/04 08:13:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.32.10.2 2010/03/11 15:04:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.32.10.1 2009/05/04 08:13:49 yamt Exp 
 #endif
 
 #ifdef QBITS
-static void	clrbits(u_char *, int, int);
+static void	clrbits(u_char *, unsigned int, unsigned int);
 #endif
 
 /*
@@ -301,33 +301,30 @@ out:
  *	clrbit(cp, off + len);
  */
 static void
-clrbits(u_char *cp, int off, int len)
+clrbits(u_char *cp, unsigned int off, unsigned int len)
 {
-	int sby, sbi, eby, ebi;
-	int i;
-	u_char mask;
+	unsigned int sbi, ebi;
+	u_char *scp, *ecp;
+	unsigned int end;
+	unsigned char mask;
 
-	if (len==1) {
-		clrbit(cp, off);
-		return;
-	}
-
-	sby = off / NBBY;
+	scp = cp + off / NBBY;
 	sbi = off % NBBY;
-	eby = (off+len) / NBBY;
-	ebi = (off+len) % NBBY;
-	if (sby == eby) {
-		mask = ((1 << (ebi - sbi)) - 1) << sbi;
-		cp[sby] &= ~mask;
+	end = off + len + NBBY - 1;
+	ecp = cp + end / NBBY - 1;
+	ebi = end % NBBY + 1;
+	if (scp >= ecp) {
+		mask = ((1 << len) - 1) << sbi;
+		*scp &= ~mask;
 	} else {
 		mask = (1 << sbi) - 1;
-		cp[sby++] &= mask;
+		*scp++ &= mask;
 
 		mask = (1 << ebi) - 1;
-		cp[eby] &= ~mask;
+		*ecp &= ~mask;
 
-		for (i = sby; i < eby; i++)
-			cp[i] = 0x00;
+		while (scp < ecp)
+			*scp++ = 0x00;
 	}
 }
 #endif

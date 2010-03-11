@@ -1,6 +1,4 @@
-/*	$NetBSD: float.h,v 1.10.108.1 2009/05/04 08:11:55 yamt Exp $ */
-
-#include <sys/float_ieee754.h>
+/*	$NetBSD: float.h,v 1.10.108.2 2010/03/11 15:02:57 yamt Exp $ */
 
 #ifndef _SPARC_FLOAT_H_
 #define _SPARC_FLOAT_H_

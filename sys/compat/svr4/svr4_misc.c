@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.142.2.3 2009/08/19 18:47:00 yamt Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.142.2.4 2010/03/11 15:03:19 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.142.2.3 2009/08/19 18:47:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.142.2.4 2010/03/11 15:03:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,13 +109,12 @@ static int svr4_mknod(struct lwp *, register_t *, const char *,
     svr4_mode_t, svr4_dev_t);
 
 int
-svr4_sys_wait(struct lwp *l, const struct svr4_sys_wait_args *uap, register_t *retval)
+svr4_sys_wait(struct lwp *l, const struct svr4_sys_wait_args *uap,
+    register_t *retval)
 {
-	int error, was_zombie;
-	int st, sig;
-	int pid = WAIT_ANY;
+	int error, st, sig, pid = WAIT_ANY;
 
-	error = do_sys_wait(l, &pid, &st, 0, NULL, &was_zombie);
+	error = do_sys_wait(&pid, &st, 0, NULL);
 
 	retval[0] = pid;
 	if (pid == 0)
@@ -305,8 +304,12 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == (char *) SCARG(uap, dp))
+	if (outp == (char *) SCARG(uap, dp)) {
+		if (cookiebuf)
+			free(cookiebuf, M_TEMP);
+		cookiebuf = NULL;
 		goto again;
+	}
 	fp->f_offset = off;	/* update the vnode offset */
 
 eof:
@@ -426,8 +429,12 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == SCARG(uap, buf))
+	if (outp == SCARG(uap, buf)) {
+		if (cookiebuf)
+			free(cookiebuf, M_TEMP);
+		cookiebuf = NULL;
 		goto again;
+	}
 	fp->f_offset = off;	/* update the vnode offset */
 
 eof:
@@ -1000,7 +1007,6 @@ svr4_sys_waitsys(struct lwp *l, const struct svr4_sys_waitsys_args *uap, registe
 {
 	int options, status;
 	int error;
-	int was_zombie;
 	struct rusage ru;
 	svr4_siginfo_t i;
 	int id = SCARG(uap, id);
@@ -1038,8 +1044,7 @@ svr4_sys_waitsys(struct lwp *l, const struct svr4_sys_waitsys_args *uap, registe
 	         SCARG(uap, grp), id,
 		 SCARG(uap, info), SCARG(uap, options)));
 
-	error = do_sys_wait(l, &id, &status, options, &ru,
-	    &was_zombie);
+	error = do_sys_wait(&id, &status, options, &ru);
 
 	retval[0] = id;
 	if (error != 0)

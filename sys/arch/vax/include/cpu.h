@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.85 2008/03/11 05:34:02 matt Exp $      */
+/*      $NetBSD: cpu.h,v 1.85.4.1 2010/03/11 15:03:05 yamt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -70,10 +70,8 @@ struct cpu_dep {
 	void	(*cpu_memerr)(void); /* Memory subsystem errors */
 	    /* Autoconfiguration */
 	void	(*cpu_conf)(void);
-	int	(*cpu_gettime)(volatile struct timeval *);
-					/* Read cpu clock time */
-	void	(*cpu_settime)(volatile struct timeval *);
-					/* Write system time to cpu */
+	int	(*cpu_gettime)(struct timeval *); /* Read cpu clock time */
+	void	(*cpu_settime)(struct timeval *); /* Write system time to cpu */
 	short	cpu_vups;		/* speed of cpu */
 	short	cpu_scbsz;		/* (estimated) size of SCB */
 	void	(*cpu_halt)(void);	/* Cpu dependent halt call */
@@ -163,8 +161,6 @@ extern int cpu_printfataltraps;
 		mtpr(AST_OK,PR_ASTLVL);		\
 	} while (/*CONSTCOND*/ 0)
 #define	cpu_proc_fork(x, y)	do { } while (/*CONSCOND*/0)
-#define	cpu_lwp_free(l, f)	do { } while (/*CONSCOND*/0)
-#define	cpu_lwp_free2(l)	do { } while (/*CONSCOND*/0)
 #define	cpu_idle()		do { } while (/*CONSCOND*/0)
 static inline bool
 cpu_intr_p(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.57.4.1 2009/05/04 08:11:57 yamt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.57.4.2 2010/03/11 15:03:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.57.4.1 2009/05/04 08:11:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.57.4.2 2010/03/11 15:03:00 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -375,55 +375,13 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 	return (0);
 }
 
-/*
- * interrupt mapping foo.
- * XXX: how does this deal with multiple interrupts for a device?
- */
-int
-pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
-{
-	pcitag_t tag = pa->pa_tag;
-	int interrupts, *intp;
-	int len, node = PCITAG_NODE(tag);
-	char devtype[30];
-
-	intp = &interrupts;
-	len = 1;
-	if (prom_getprop(node, "interrupts", sizeof(interrupts),
-			&len, &intp) != 0 || len != 1) {
-		DPRINTF(SPDB_INTMAP,
-			("pci_intr_map: could not read interrupts\n"));
-		return (ENODEV);
-	}
-
-	if (OF_mapintr(node, &interrupts, sizeof(interrupts), 
-		sizeof(interrupts)) < 0) {
-		printf("OF_mapintr failed\n");
-		KASSERT(pa->pa_pc->spc_find_ino);
-		pa->pa_pc->spc_find_ino(pa, &interrupts);
-	}
-
-	/* Try to find an IPL for this type of device. */
-	prom_getpropstringA(node, "device_type", devtype, sizeof(devtype));
-	for (len = 0; intrmap[len].in_class != NULL; len++)
-		if (strcmp(intrmap[len].in_class, devtype) == 0) {
-			interrupts |= INTLEVENCODE(intrmap[len].in_lev);
-			break;
-		}
-
-	/* XXXX -- we use the ino.  What if there is a valid IGN? */
-	*ihp = interrupts;
-	return (0);
-}
-
 const char *
 pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 	static char str[16];
 
-	DPRINTF(SPDB_INTR, ("pci_intr_string: ih %u", ih));
 	sprintf(str, "ivec %x", ih);
-	DPRINTF(SPDB_INTR, ("; returning %s\n", str));
+	DPRINTF(SPDB_INTR, ("pci_intr_string: returning %s\n", str));
 
 	return (str);
 }
@@ -447,6 +405,60 @@ pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
 	default:
 		return ENODEV;
 	}
+}
+
+/*
+ * interrupt mapping foo.
+ * XXX: how does this deal with multiple interrupts for a device?
+ */
+int
+pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+{
+	pcitag_t tag = pa->pa_tag;
+	int interrupts[4], *intp, int_used;
+	int len, node = PCITAG_NODE(tag);
+	char devtype[30];
+
+	intp = &interrupts[0];
+	len = prom_getproplen(node, "interrupts");
+	if (len > sizeof(interrupts)) {
+		DPRINTF(SPDB_INTMAP,
+			("pci_intr_map: too many available interrupts\n"));
+		return (ENODEV);
+	}
+	if (prom_getprop(node, "interrupts", len,
+			&len, &intp) != 0 || len != 1) {
+		DPRINTF(SPDB_INTMAP,
+			("pci_intr_map: could not read interrupts\n"));
+		return (ENODEV);
+	}
+
+	/* XXX We pick the first interrupt, but should do better */
+	int_used = interrupts[0];
+	if (OF_mapintr(node, &int_used, sizeof(int_used), 
+		sizeof(int_used)) < 0) {
+		printf("OF_mapintr failed\n");
+		KASSERT(pa->pa_pc->spc_find_ino);
+		pa->pa_pc->spc_find_ino(pa, &int_used);
+	}
+	DPRINTF(SPDB_INTMAP, ("OF_mapintr() gave %x\n", int_used));
+
+	/* Try to find an IPL for this type of device. */
+	prom_getpropstringA(node, "device_type", devtype, sizeof(devtype));
+	for (len = 0; intrmap[len].in_class != NULL; len++)
+		if (strcmp(intrmap[len].in_class, devtype) == 0) {
+			int_used |= INTLEVENCODE(intrmap[len].in_lev);
+			DPRINTF(SPDB_INTMAP, ("reset to %x\n", int_used));
+			break;
+		}
+
+	*ihp = int_used;
+
+	/* Call the sub-driver is necessary */
+	if (pa->pa_pc->spc_intr_map)
+		(*pa->pa_pc->spc_intr_map)(pa, ihp);
+
+	return (0);
 }
 
 void

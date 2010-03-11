@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.177.2.5 2009/08/19 18:48:16 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.177.2.6 2010/03/11 15:04:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.177.2.5 2009/08/19 18:48:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.177.2.6 2010/03/11 15:04:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -610,7 +610,8 @@ fd_close(unsigned fd)
 		 * Wait for other references to drain.  This is typically
 		 * an application error - the descriptor is being closed
 		 * while still in use.
-		 *
+		 * (Or just a threaded application trying to unblock its
+		 * thread that sleeps in (say) accept()).
 		 */
 		atomic_or_uint(&ff->ff_refcnt, FR_CLOSING);
 
@@ -623,8 +624,15 @@ fd_close(unsigned fd)
 			knote_fdclose(fd);
 		}
 
-		/* Try to drain out descriptor references. */
-		(*fp->f_ops->fo_drain)(fp);
+		/*
+		 * Since the file system code doesn't know which fd
+		 * each request came from (think dup()), we have to
+		 * ask it to return ERESTART for any long-term blocks.
+		 * The re-entry through read/write/etc will detect the
+		 * closed fd and return EBAFD.
+		 * Blocked partial writes may return a short length.
+		 */
+		(*fp->f_ops->fo_restart)(fp);
 		mutex_enter(&fdp->fd_lock);
 
 		/*
@@ -632,6 +640,8 @@ fd_close(unsigned fd)
 		 * in order to ensure that all pre-existing references
 		 * have been drained.  New references past this point are
 		 * of no interest.
+		 * XXX (dsl) this may need to call fo_restart() after a
+		 * timeout to guarantee that all the system calls exit.
 		 */
 		while ((ff->ff_refcnt & FR_MASK) != 0) {
 			cv_wait(&ff->ff_closing, &fdp->fd_lock);
@@ -1326,10 +1336,12 @@ fd_share(struct proc *p2)
  * Acquire a hold on a filedesc structure.
  */
 void
-fd_hold(void)
+fd_hold(lwp_t *l)
 {
+	filedesc_t *fdp = l->l_fd;
 
-	atomic_inc_uint(&curlwp->l_fd->fd_refcnt);
+	KASSERT(fdp == curlwp->l_fd || fdp == lwp0.l_fd);
+	atomic_inc_uint(&fdp->fd_refcnt);
 }
 
 /*
@@ -1785,7 +1797,7 @@ fnullop_kqfilter(file_t *fp, struct knote *kn)
 }
 
 void
-fnullop_drain(file_t *fp)
+fnullop_restart(file_t *fp)
 {
 
 }

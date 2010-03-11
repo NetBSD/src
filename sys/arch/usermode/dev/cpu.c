@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2.12.1 2009/08/19 18:46:48 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.2.12.2 2010/03/11 15:03:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by Jared D. McNeill.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -33,12 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.12.1 2009/08/19 18:46:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.12.2 2010/03/11 15:03:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
@@ -151,8 +144,8 @@ lwp_t *
 cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
 {
 	extern int errno;
-	struct pcb *oldpcb = (struct pcb *)(oldlwp ? oldlwp->l_addr : NULL);
-	struct pcb *newpcb = (struct pcb *)newlwp->l_addr;
+	struct pcb *oldpcb = oldlwp ? lwp_getpcb(oldlwp) : NULL;
+	struct pcb *newpcb = lwp_getpcb(newlwp);
 	struct cpu_info *ci = curcpu();
 
 #ifdef CPU_DEBUG
@@ -249,7 +242,7 @@ cpu_lwp_free(struct lwp *l, int proc)
 void
 cpu_lwp_free2(struct lwp *l)
 {
-	struct pcb *pcb = (struct pcb *)l->l_addr;
+	struct pcb *pcb = lwp_getpcb(l);
 
 #ifdef CPU_DEBUG
 	printf("cpu_lwp_free2\n");
@@ -279,7 +272,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
 	extern int errno;
-	struct pcb *pcb = (struct pcb *)l2->l_addr;
+	struct pcb *pcb = lwp_getpcb(l2);
 
 #ifdef CPU_DEBUG
 	printf("cpu_lwp_fork [%s/%p] -> [%s/%p] stack=%p stacksize=%d\n",
@@ -314,17 +307,11 @@ cpu_initclocks(void)
 void
 cpu_startup(void)
 {
-	extern struct vm_map *mb_map;
-	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 
 	printf("%s%s", copyright, version);
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);

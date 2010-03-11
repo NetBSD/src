@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.42.20.2 2009/06/20 07:20:00 yamt Exp $ */
+/*	$NetBSD: if_es.c,v 1.42.20.3 2010/03/11 15:02:01 yamt Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -12,11 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Michael L. Hitch.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -38,9 +33,8 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.42.20.2 2009/06/20 07:20:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.42.20.3 2010/03/11 15:02:01 yamt Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,10 +97,8 @@ struct	es_softc {
 #endif
 };
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #ifdef ESDEBUG
 /* console error messages */
@@ -183,7 +175,7 @@ esattach(struct device *parent, struct device *self, void *aux)
 	myaddr[5] = (ser      ) & 0xff;
 
 	/* Initialize ifnet structure. */
-	memcpy( ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_ioctl = esioctl;
 	ifp->if_start = esstart;
@@ -727,14 +719,12 @@ esrint(struct es_softc *sc)
 	while (smc->b2.mmucr & MMUCR_BUSY)
 		;
 #endif
-#if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.  If so, hand off
 	 * the raw packet to bpf.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, top);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, top);
 	(*ifp->if_input)(ifp, top);
 #ifdef ESDEBUG
 	if (--sc->sc_smcbusy) {
@@ -847,7 +837,7 @@ esstart(struct ifnet *ifp)
 #ifdef USEPKTBUF
 		i = 0;
 		for (m0 = m; m; m = m->m_next) {
-			memcpy( (char *)pktbuf + i, mtod(m, void *), m->m_len);
+			memcpy((char *)pktbuf + i, mtod(m, void *), m->m_len);
 			i += m->m_len;
 		}
 
@@ -936,10 +926,8 @@ esstart(struct ifnet *ifp)
 		if (smc->b2.pnr != active_pnr)
 			printf("%s: esstart - PNR changed %x->%x\n",
 			    sc->sc_dev.dv_xname, active_pnr, smc->b2.pnr);
-#if NBPFILTER > 0
 		if (sc->sc_ethercom.ec_if.if_bpf)
-			bpf_mtap(sc->sc_ethercom.ec_if.if_bpf, m0);
-#endif
+			bpf_ops->bpf_mtap(sc->sc_ethercom.ec_if.if_bpf, m0);
 		m_freem(m0);
 		sc->sc_ethercom.ec_if.if_opackets++;	/* move to interrupt? */
 		sc->sc_intctl |= MSK_TX_EMPTY | MSK_TX;

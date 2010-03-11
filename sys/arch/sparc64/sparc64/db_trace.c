@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.39.44.1 2009/05/04 08:11:58 yamt Exp $ */
+/*	$NetBSD: db_trace.c,v 1.39.44.2 2010/03/11 15:03:01 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,12 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.39.44.1 2009/05/04 08:11:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.39.44.2 2010/03/11 15:03:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 #include <machine/db_machdep.h>
 #include <machine/ctlreg.h>
 
@@ -85,7 +84,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		if (trace_thread) {
 			struct proc *p;
 			struct lwp *l;
-			struct user *u;
+			struct pcb *pcb;
 			if (lwpaddr) {
 				l = (struct lwp *)(uintptr_t)addr;
 				p = l->l_proc;
@@ -101,12 +100,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				KASSERT(l != NULL);
 			}
 			(*pr)("lid %d ", l->l_lid);
-                        if ((l->l_flag & LW_INMEM) == 0) {
-                                (*pr)("swapped out\n");
-                                return;
-                        }
-                        u = l->l_addr;
-			frame = (vaddr_t)u->u_pcb.pcb_sp;
+			pcb = lwp_getpcb(l);
+			frame = (vaddr_t)pcb->pcb_sp;
 			(*pr)("at %p\n", frame);
 		} else {
 			frame = (vaddr_t)addr;

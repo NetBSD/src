@@ -1,4 +1,4 @@
-/*      $NetBSD: nslu2_pci.c,v 1.1.80.1 2008/05/16 02:22:14 yamt Exp $	*/
+/*      $NetBSD: nslu2_pci.c,v 1.1.80.2 2010/03/11 15:02:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,12 +41,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Ichiro FUKUHARA.
- * 4. The name of the company nor the name of the author may be used to
- *    endorse or promote products derived from this software without specific
- *    prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY ICHIRO FUKUHARA ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -62,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_pci.c,v 1.1.80.1 2008/05/16 02:22:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_pci.c,v 1.1.80.2 2010/03/11 15:02:16 yamt Exp $");
 
 /*
  * Linksys NSLU2 PCI support.

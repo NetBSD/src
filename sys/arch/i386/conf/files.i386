@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.335.4.4 2009/08/19 18:46:19 yamt Exp $
+#	$NetBSD: files.i386,v 1.335.4.5 2010/03/11 15:02:28 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -45,6 +45,9 @@ defparam opt_pcibios.h	PCIBIOS_IRQS_HINT
 # kernel stack debug
 defflag	opt_kstack_dr0.h		KSTACK_CHECK_DR0
 
+# splraise()/spllower() debug
+defflag	opt_spldebug.h			SPLDEBUG
+
 # Beep on halt
 defflag 	opt_beep.h		BEEP_ONHALT
 defparam 	opt_beep.h		BEEP_ONHALT_COUNT=3
@@ -71,6 +74,7 @@ file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
 file	arch/i386/i386/dumpsys.c
 file	kern/subr_disk_mbr.c		disk
+file	kern/subr_spldebug.c		spldebug
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/i386func.S
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
@@ -85,7 +89,7 @@ file	arch/i386/i386/procfs_machdep.c	procfs
 file	arch/i386/i386/trap.c
 file	dev/cons.c
 
-file	arch/i386/i386/mptramp.S  	multiprocessor
+file	arch/i386/i386/mptramp.S	multiprocessor
 
 file	arch/i386/i386/pmc.c		perfctrs
 

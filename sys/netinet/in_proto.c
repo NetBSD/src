@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.94.2.2 2009/09/16 13:38:02 yamt Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.94.2.3 2010/03/11 15:04:28 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.94.2.2 2009/09/16 13:38:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.94.2.3 2010/03/11 15:04:28 yamt Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -362,6 +362,7 @@ const struct protosw inetsw[] = {
 	.pr_output = rip_output,
 	.pr_ctloutput = rip_ctloutput,
 	.pr_usrreq = rip_usrreq,
+	.pr_init = carp_init,
 },
 #endif /* NCARP > 0 */
 #if NPFSYNC > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.168.2.4 2009/07/18 14:53:24 yamt Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.168.2.5 2010/03/11 15:04:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.168.2.4 2009/07/18 14:53:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.168.2.5 2010/03/11 15:04:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -672,7 +672,7 @@ procfs_getattr(void *v)
 	error = 0;
 
 	/* start by zeroing out the attributes */
-	VATTR_NULL(vap);
+	vattr_null(vap);
 
 	/* next do all the common fields */
 	vap->va_type = ap->a_vp->v_type;
@@ -1004,7 +1004,7 @@ procfs_lookup(void *v)
 
 	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = dvp;
-		VREF(dvp);
+		vref(dvp);
 		return (0);
 	}
 
@@ -1107,7 +1107,7 @@ procfs_lookup(void *v)
 		if (pt->pt_pfstype == PFSfile) {
 			fvp = p->p_textvp;
 			/* We already checked that it exists. */
-			VREF(fvp);
+			vref(fvp);
 			procfs_proc_unlock(p);
 			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);
 			*vpp = fvp;
@@ -1150,7 +1150,7 @@ procfs_lookup(void *v)
 
 		/* Don't show directories */
 		if (fp->f_type == DTYPE_VNODE && fvp->v_type != VDIR) {
-			VREF(fvp);
+			vref(fvp);
 			closef(fp);
 			procfs_proc_unlock(p);
 			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY |

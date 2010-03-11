@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.98.4.3 2009/09/16 13:37:46 yamt Exp $	*/
+/*	$NetBSD: ata.c,v 1.98.4.4 2010/03/11 15:03:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *  This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.98.4.3 2009/09/16 13:37:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.98.4.4 2010/03/11 15:03:24 yamt Exp $");
 
 #include "opt_ata.h"
 
@@ -111,8 +106,8 @@ const struct cdevsw atabus_cdevsw = {
 extern struct cfdriver atabus_cd;
 
 static void atabus_childdetached(device_t, device_t);
-static bool atabus_resume(device_t PMF_FN_PROTO);
-static bool atabus_suspend(device_t PMF_FN_PROTO);
+static bool atabus_resume(device_t, const pmf_qual_t *);
+static bool atabus_suspend(device_t, const pmf_qual_t *);
 static void atabusconfig_thread(void *);
 
 /*
@@ -479,66 +474,6 @@ atabus_attach(device_t parent, device_t self, void *aux)
 }
 
 /*
- * atabus_activate:
- *
- *	Autoconfiguration activation routine.
- */
-static int
-atabus_activate(device_t self, enum devact act)
-{
-	struct atabus_softc *sc = device_private(self);
-	struct ata_channel *chp = sc->sc_chan;
-	device_t dev = NULL;
-	int s, i, error = 0;
-
-	s = splbio();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		/*
-		 * We might deactivate the children of atapibus twice
-		 * (once bia atapibus, once directly), but since the
-		 * generic autoconfiguration code maintains the DVF_ACTIVE
-		 * flag, it's safe.
-		 */
-		if ((dev = chp->atapibus) != NULL) {
-			error = config_deactivate(dev);
-			if (error)
-				goto out;
-		}
-
-		for (i = 0; i < chp->ch_ndrive; i++) {
-			if (chp->ch_drive[i].drive_flags & DRIVE_ATAPI)
-				continue;
-			if ((dev = chp->ch_drive[i].drv_softc) != NULL) {
-				ATADEBUG_PRINT(("atabus_activate: %s: "
-				    "deactivating %s\n", device_xname(self),
-				    device_xname(dev)),
-				    DEBUG_DETACH);
-				error = config_deactivate(dev);
-				if (error)
-					goto out;
-			}
-		}
-		break;
-	}
- out:
-	splx(s);
-
-#ifdef ATADEBUG
-	if (dev != NULL && error != 0)
-		ATADEBUG_PRINT(("atabus_activate: %s: "
-		    "error %d deactivating %s\n", device_xname(self),
-		    error, device_xname(dev)), DEBUG_DETACH);
-#endif /* ATADEBUG */
-
-	return (error);
-}
-
-/*
  * atabus_detach:
  *
  *	Autoconfiguration detach routine.
@@ -643,7 +578,7 @@ atabus_childdetached(device_t self, device_t child)
 }
 
 CFATTACH_DECL3_NEW(atabus, sizeof(struct atabus_softc),
-    atabus_match, atabus_attach, atabus_detach, atabus_activate, NULL,
+    atabus_match, atabus_attach, atabus_detach, NULL, NULL,
     atabus_childdetached, DVF_DETACH_SHUTDOWN);
 
 /*****************************************************************************
@@ -1474,8 +1409,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 
 /* management of the /dev/atabus* devices */
 int
-atabusopen(dev_t dev, int flag, int fmt,
-    struct lwp *l)
+atabusopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct atabus_softc *sc;
 	int error;
@@ -1497,8 +1431,7 @@ atabusopen(dev_t dev, int flag, int fmt,
 
 
 int
-atabusclose(dev_t dev, int flag, int fmt,
-    struct lwp *l)
+atabusclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct atabus_softc *sc =
 	    device_lookup_private(&atabus_cd, minor(dev));
@@ -1511,8 +1444,7 @@ atabusclose(dev_t dev, int flag, int fmt,
 }
 
 int
-atabusioctl(dev_t dev, u_long cmd, void *addr, int flag,
-    struct lwp *l)
+atabusioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct atabus_softc *sc =
 	    device_lookup_private(&atabus_cd, minor(dev));
@@ -1539,8 +1471,7 @@ atabusioctl(dev_t dev, u_long cmd, void *addr, int flag,
 		s = splbio();
 		ata_reset_channel(sc->sc_chan, AT_WAIT | AT_POLL);
 		splx(s);
-		error = 0;
-		break;
+		return 0;
 	case ATABUSIOSCAN:
 	{
 #if 0
@@ -1580,17 +1511,15 @@ atabusioctl(dev_t dev, u_long cmd, void *addr, int flag,
 				KASSERT(chp->ch_drive[drive].drv_softc == NULL);
 			}
 		}
-		error = 0;
-		break;
+		return 0;
 	}
 	default:
-		error = ENOTTY;
+		return ENOTTY;
 	}
-	return (error);
-};
+}
 
 static bool
-atabus_suspend(device_t dv PMF_FN_ARGS)
+atabus_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct atabus_softc *sc = device_private(dv);
 	struct ata_channel *chp = sc->sc_chan;
@@ -1601,7 +1530,7 @@ atabus_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-atabus_resume(device_t dv PMF_FN_ARGS)
+atabus_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct atabus_softc *sc = device_private(dv);
 	struct ata_channel *chp = sc->sc_chan;

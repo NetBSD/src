@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29.72.1 2009/05/04 08:11:35 yamt Exp $
+#	$NetBSD: Makefile,v 1.29.72.2 2010/03/11 15:02:43 yamt Exp $
 
 LIB=sa
 
@@ -55,6 +55,7 @@ CPPFLAGS+= -DSUPPORT_BOOTP -DSUPPORT_DHCP
 CPPFLAGS+= -DSUPPORT_RARP -DSUPPORT_BOOTPARAM
 CPPFLAGS+= -DSUPPORT_NFS -DNFS_NOSYMLINK
 
+OBJS+=	SRT0.o
 CLEANFILES+= SRT0.o
 
 .include "../Makefile.booters"
@@ -66,7 +67,7 @@ CLEANFILES+= SRT0.o
 # only needed during build
 libinstall::
 
-all realall: lib${LIB}.a SRT0.o
+all realall: lib${LIB}.a
 
 .include <bsd.own.mk>
 .undef DESTDIR

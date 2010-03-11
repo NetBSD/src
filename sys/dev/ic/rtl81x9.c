@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.82.2.2 2009/09/16 13:37:48 yamt Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.82.2.3 2010/03/11 15:03:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,9 +86,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.82.2.2 2009/09/16 13:37:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.82.2.3 2010/03/11 15:03:34 yamt Exp $");
 
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -109,9 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.82.2.2 2009/09/16 13:37:48 yamt Exp $"
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -1084,10 +1081,8 @@ rtk_rxeof(struct rtk_softc *sc)
 
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		/* pass it on. */
 		(*ifp->if_input)(ifp, m);
 	}
@@ -1295,14 +1290,12 @@ rtk_start(struct ifnet *ifp)
 			}
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m_head);
-#if NBPFILTER > 0
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 		if (m_new != NULL) {
 			m_freem(m_head);
 			m_head = m_new;

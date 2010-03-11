@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9.38.1 2009/05/04 08:11:59 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.9.38.2 2010/03/11 15:03:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -102,19 +102,13 @@
 #define	KERNBASE	0x00006000	/* start of kernel virtual */
 #define	KERN_END	0x00E00000	/* end of kernel virtual */
 
-#define SEGSHIFT	15	        /* LOG2(NBSG) */
-#define NBSG		(1 << SEGSHIFT)	/* bytes/segment */
-#define	SEGOFSET	(NBSG-1)	/* byte offset into segment */
-
 #define	MAXBSIZE	0x4000		/* max FS block size */
 #define	MAXPHYS		0xe000
 
 /*
- * XXX fredette - we force a small number of mbuf clusters and cluster
- * size to help me debug this on my low-memory machine.  These should
- * go away at some point.
+ * XXX fredette - we force a small cluster size to help me debug
+ * this on my low-memory machine.  These should go away at some point.
  */
-#define	NMBCLUSTERS	64	/* map size, max cluster allocation */
 #define MCLSHIFT	10
 
 /*

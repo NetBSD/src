@@ -134,6 +134,38 @@ MODULE_DEPEND(radeon, drm, 1, 1, 1);
 
 #elif   defined(__NetBSD__)
 
+static bool
+radeondrm_suspend(device_t self, const pmf_qual_t *qual)
+{
+	struct drm_device *dev = device_private(self);
+	drm_radeon_cp_stop_t stop_args;
+	bool rv = true;
+
+	stop_args.flush = stop_args.idle = 0;
+	DRM_LOCK();
+	if (drm_find_file_by_proc(dev, curlwp->l_proc) &&
+	    radeon_cp_stop(dev, &stop_args, dev->lock.file_priv) != 0)
+		rv = false;
+	DRM_UNLOCK();
+
+	return rv;
+}
+
+static bool
+radeondrm_resume(device_t self, const pmf_qual_t *qual)
+{
+	struct drm_device *dev = device_private(self);
+	bool rv = true;
+
+	DRM_LOCK();
+	if (drm_find_file_by_proc(dev, curlwp->l_proc) &&
+	    radeon_cp_resume(dev, NULL, NULL) != 0)
+		rv =  false;
+	DRM_UNLOCK();
+	
+	return rv;
+}
+
 static int
 radeondrm_probe(device_t parent, cfdata_t match, void *aux)
 {
@@ -152,11 +184,22 @@ radeondrm_attach(device_t parent, device_t self, void *aux)
 
 	radeon_configure(dev);
 
+	if (!pmf_device_register(self, radeondrm_suspend, radeondrm_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	drm_attach(self, pa, radeon_pciidlist);
 }
 
+static int
+radeondrm_detach(device_t self, int flags)
+{
+	pmf_device_deregister(self);
+
+	return drm_detach(self, flags);
+}
+
 CFATTACH_DECL_NEW(radeondrm, sizeof(struct drm_device),
-    radeondrm_probe, radeondrm_attach, drm_detach, drm_activate);
+    radeondrm_probe, radeondrm_attach, radeondrm_detach, NULL);
 
 #ifdef _MODULE
 

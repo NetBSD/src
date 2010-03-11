@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.21.4.1 2008/05/16 02:24:03 yamt Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.21.4.2 2010/03/11 15:03:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.21.4.1 2008/05/16 02:24:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.21.4.2 2010/03/11 15:03:29 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -489,6 +489,7 @@ cs4231_query_devinfo(void *addr, mixer_devinfo_t *dip)
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNmaster);
 		dip->un.v.num_channels = 2;
+		dip->un.v.delta = 16;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		break;
 
@@ -586,7 +587,7 @@ cs4231_query_devinfo(void *addr, mixer_devinfo_t *dip)
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = CSAUDIO_MONITOR_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCmonitor);
+		strcpy(dip->label.name, AudioCoutputs);
 		break;
 
 	case CSAUDIO_RECORD_CLASS:		/* record source class */

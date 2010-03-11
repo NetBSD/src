@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.14.4.2 2009/05/16 10:41:24 yamt Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.14.4.3 2010/03/11 15:03:36 yamt Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.14.4.2 2009/05/16 10:41:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.14.4.3 2010/03/11 15:03:36 yamt Exp $");
 
 #ifdef HAVE_KERNEL_OPTION_HEADERS
 #include "opt_device_polling.h"
@@ -395,29 +395,20 @@ FW_DETACH(fwip)
 	return 0;
 }
 
-#if defined(__NetBSD__)
 int
 fwipactivate(device_t self, enum devact act)
 {
 	struct fwip_softc *fwip = device_private(self);
-	int s, error = 0;
 
-	s = splfwnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
 		if_deactivate(fwip->fw_softc.fwip_ifp);
-			break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-
-	return (error);
 }
 
-#endif
 IF_INIT(fwip)
 {
 	IF_INIT_START(fwip, fwip, ifp);

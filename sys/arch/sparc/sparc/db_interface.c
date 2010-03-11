@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.78.10.2 2009/06/20 07:20:10 yamt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.78.10.3 2010/03/11 15:02:58 yamt Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.78.10.2 2009/06/20 07:20:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.78.10.3 2010/03/11 15:02:58 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.78.10.2 2009/06/20 07:20:10 yamt 
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/simplelock.h>
@@ -380,7 +379,7 @@ db_proc_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	db_printf("profile timer: %lld sec %ld nsec\n",
 		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_sec,
 		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_nsec);
-	db_printf("pcb: %p\n", &l->l_addr->u_pcb);
+	db_printf("pcb: %p\n", lwp_getpcb(l));
 	return;
 }
 
@@ -486,14 +485,23 @@ db_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 #endif /* MULTIPROCESSOR */
 
 const struct db_command db_machine_command_table[] = {
-	{ DDB_ADD_CMD("prom",	db_prom_cmd,	0,	NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("proc",	db_proc_cmd,	0,	NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("pcb",	db_dump_pcb,	0,	NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("page",	db_page_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("prom",	db_prom_cmd,	0,
+	  "Enter the Sun PROM monitor.",NULL,NULL) },
+	{ DDB_ADD_CMD("proc",	db_proc_cmd,	0,
+	  "Display some information about an LWP",
+	  "[addr]","   addr:\tstruct lwp address (curlwp otherwise)") },
+	{ DDB_ADD_CMD("pcb",	db_dump_pcb,	0,
+	  "Display information about a struct pcb",
+	  "[address]",
+	  "   address:\tthe struct pcb to print (curpcb otherwise)") },
+	{ DDB_ADD_CMD("page",	db_page_cmd,	0,
+	  "Display the address of a struct vm_page given a physical address",
+	   "pa", "   pa:\tphysical address to look up") },
 #ifdef MULTIPROCESSOR
-	{ DDB_ADD_CMD("cpu",	db_cpu_cmd,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("cpu",	db_cpu_cmd,	0,
+	  "switch to another cpu's registers", "cpu-no", NULL) },
 #endif
-	{ DDB_ADD_CMD(NULL,     NULL,           0,NULL,NULL,NULL) }
+	{ DDB_ADD_CMD(NULL,     NULL,           0,	NULL,NULL,NULL) }
 };
 #endif /* DDB */
 

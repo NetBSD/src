@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.37.4.1 2009/05/04 08:12:55 yamt Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.37.4.2 2010/03/11 15:03:44 yamt Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.37.4.1 2009/05/04 08:12:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.37.4.2 2010/03/11 15:03:44 yamt Exp $");
 
 #include "rnd.h"
 
@@ -371,8 +371,8 @@ hifn_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dv, "couldn't establish interrupt\n");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		goto fail_mem;
 	}
 
@@ -384,9 +384,9 @@ hifn_attach(device_t parent, device_t self, void *aux)
 		rbase = 'M';
 		rseg /= 1024;
 	}
-	aprint_normal_dev(&sc->sc_dv, "%s, %d%cB %cram, interrupting at %s\n",
+	aprint_normal_dev(&sc->sc_dv, "%s, %d%cB %cRAM, interrupting at %s\n",
 	    hifncap, rseg, rbase,
-	    sc->sc_drammodel ? 'd' : 's', intrstr);
+	    sc->sc_drammodel ? 'D' : 'S', intrstr);
 
 	sc->sc_cid = crypto_get_driverid(0);
 	if (sc->sc_cid < 0) {

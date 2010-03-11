@@ -1,4 +1,4 @@
-/*	$NetBSD: gphyter.c,v 1.22.4.2 2009/05/04 08:12:52 yamt Exp $	*/
+/*	$NetBSD: gphyter.c,v 1.22.4.3 2010/03/11 15:03:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,11 +41,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -60,15 +55,18 @@
  */
 
 /*
- * driver for National Semiconductor's DP83891 and DP83861 `Gig PHYTER'
- * ethernet 10/100/1000 PHYs.  The DP83891 is an older, non-firmware-
- * driven version of the DP83861.
+ * driver for National Semiconductor's DP83891, DP83861 and DP83865
+ * `Gig PHYTER' ethernet 10/100/1000 PHYs.  The DP83891 is an older,
+ * non-firmware-driven version of the DP83861.  The DP83865 is a low
+ * power version of the DP83861.
  *
- * Data Sheet available from www.national.com
+ * Data Sheets available from www.national.com:
+ *   http://www.national.com/ds/DP/DP83861.pdf
+ *   http://www.national.com/ds/DP/DP83865.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.22.4.2 2009/05/04 08:12:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.22.4.3 2010/03/11 15:03:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +101,9 @@ static const struct mii_phy_funcs gphyter_funcs = {
 static const struct mii_phydesc gphyters[] = {
 	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83861,
 	  MII_STR_xxNATSEMI_DP83861 },
+
+	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83865,
+	  MII_STR_xxNATSEMI_DP83865 },
 
 	{ MII_OUI_xxNATSEMI,		MII_MODEL_xxNATSEMI_DP83891,
 	  MII_STR_xxNATSEMI_DP83891 },

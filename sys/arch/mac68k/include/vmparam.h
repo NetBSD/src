@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.36.78.2 2009/09/16 13:37:40 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.36.78.3 2010/03/11 15:02:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -117,7 +117,7 @@
  * We use 4K pages on the mac68k.  Override the PAGE_* definitions
  * to be compile-time constants.
  */
-#define	PAGE_SHIFT	12
+#define	PAGE_SHIFT	PGSHIFT
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 

@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmac.c,v 1.3.8.2 2009/05/04 08:10:41 yamt Exp $ */
+/* $NetBSD: gemini_gmac.c,v 1.3.8.3 2010/03/11 15:02:06 yamt Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@
 
 #include <sys/gpio.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.3.8.2 2009/05/04 08:10:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.3.8.3 2010/03/11 15:02:06 yamt Exp $");
 
 #define	SWFREEQ_DESCS	256	/* one page worth */
 #define	HWFREEQ_DESCS	256	/* one page worth */
@@ -548,10 +548,8 @@ gmac_hwqueue_txconsume(gmac_hwqueue_t *hwq, const gmac_desc_t *d)
 	aprint_debug("gmac_hwqueue_txconsume(%p): %zu@%p: %s m=%p\n",
 	    hwq, d - hwq->hwq_base, d, ifp->if_xname, m);
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 	m_freem(m);
 }
 
@@ -858,10 +856,8 @@ gmac_hwqueue_rxconsume(gmac_hwqueue_t *hwq, const gmac_desc_t *d)
 	case DESC0_RXSTS_LONG:
 		m->m_data += 2;
 		KASSERT(m_length(m) == m->m_pkthdr.len);
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		(*ifp->if_input)(ifp, m);
 		break;
 	default:

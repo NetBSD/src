@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.5.2.3 2009/08/19 18:48:30 yamt Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.5.2.4 2010/03/11 15:04:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.5.2.3 2009/08/19 18:48:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.5.2.4 2010/03/11 15:04:39 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -79,28 +79,6 @@ uvm_aio_biodone(struct buf *bp)
 	uvm_aio_aiodone(bp);
 }
 
-struct uvm_ractx *
-uvm_ra_allocctx(void)
-{
-
-	return NULL;
-}
-
-void
-uvm_ra_request(struct uvm_ractx *ra, int advice, struct uvm_object *uobj,
-	off_t reqoff, size_t reqsize)
-{
-
-	return;
-}
-
-void
-uvm_ra_freectx(struct uvm_ractx *ra)
-{
-
-	return;
-}
-
 /*
  * UBC
  */
@@ -113,12 +91,16 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 	int maxpages = MIN(32, round_page(len) >> PAGE_SHIFT);
 	int rv, npages, i;
 
+	if (maxpages == 0)
+		return;
+
 	pgs = kmem_zalloc(maxpages * sizeof(pgs), KM_SLEEP);
 	while (len) {
 		npages = MIN(maxpages, round_page(len) >> PAGE_SHIFT);
 		memset(pgs, 0, npages * sizeof(struct vm_page *));
 		mutex_enter(&uobj->vmobjlock);
-		rv = uobj->pgops->pgo_get(uobj, off, pgs, &npages, 0, 0, 0, 0);
+		rv = uobj->pgops->pgo_get(uobj, off, pgs, &npages, 0, 
+		    VM_PROT_READ | VM_PROT_WRITE, 0, PGO_SYNCIO);
 		KASSERT(npages > 0);
 
 		for (i = 0; i < npages; i++) {
@@ -167,8 +149,9 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 
 	do {
 		mutex_enter(&uobj->vmobjlock);
-		rv = uobj->pgops->pgo_get(uobj, uio->uio_offset, pgs, &npages,
-		    0, VM_PROT_READ | VM_PROT_WRITE, 0, pagerflags);
+		rv = uobj->pgops->pgo_get(uobj, uio->uio_offset & ~PAGE_MASK,
+		    pgs, &npages, 0, VM_PROT_READ | VM_PROT_WRITE, 0,
+		    pagerflags);
 		if (rv)
 			goto out;
 
@@ -178,10 +161,11 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 
 			pageoff = uio->uio_offset & PAGE_MASK;
 			xfersize = MIN(MIN(todo, PAGE_SIZE), PAGE_SIZE-pageoff);
+			KASSERT(xfersize > 0);
 			uiomove((uint8_t *)pgs[i]->uanon + pageoff,
 			    xfersize, uio);
 			if (uio->uio_rw == UIO_WRITE)
-				pgs[i]->flags &= ~PG_CLEAN;
+				pgs[i]->flags &= ~(PG_CLEAN | PG_FAKE);
 			todo -= xfersize;
 		}
 		uvm_page_unbusy(pgs, npages);

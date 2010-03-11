@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.1.2.4 2009/09/16 13:38:04 yamt Exp $	*/
+/*	$NetBSD: component.c,v 1.1.2.5 2010/03/11 15:04:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,13 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1.2.4 2009/09/16 13:38:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1.2.5 2010/03/11 15:04:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/stat.h>
 
+#include "rump_private.h"
 #include "rump_dev_private.h"
 #include "rump_vfs_private.h"
 
@@ -40,8 +41,7 @@ CFDRIVER_DECL(raid, DV_DISK, NULL);
 
 void raidattach(int);
 
-void
-rump_dev_raidframe_init()
+RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 	extern const struct bdevsw raid_bdevsw;
 	extern const struct cdevsw raid_cdevsw;
@@ -55,10 +55,10 @@ rump_dev_raidframe_init()
 	    &raid_cdevsw, &cmaj)) != 0)
 		panic("raid devsw attach failed: %d", error);
 
-	if ((error = rump_vfs_makedevnodes(S_IFBLK, "raid0", 'a',
+	if ((error = rump_vfs_makedevnodes(S_IFBLK, "/dev/raid0", 'a',
 	    bmaj, 0, 7)) != 0)
 		panic("cannot create cooked raid dev nodes: %d", error);
-	if ((error = rump_vfs_makedevnodes(S_IFCHR, "rraid0", 'a',
+	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/rraid0", 'a',
 	    cmaj, 0, 7)) != 0)
 		panic("cannot create raw raid dev nodes: %d", error);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.21.18.2 2009/05/04 08:11:24 yamt Exp $ */
+/* $NetBSD: siotty.c,v 1.21.18.3 2010/03/11 15:02:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.21.18.2 2009/05/04 08:11:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.21.18.3 2010/03/11 15:02:33 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.21.18.2 2009/05/04 08:11:24 yamt Exp $"
 #include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/callout.h>
@@ -125,7 +124,7 @@ siotty_attach(struct device *parent, struct device *self, void *aux)
 	struct sio_attach_args *args = aux;
 
 	sc->sc_ctl = (struct sioreg *)scp->scp_ctl + args->channel;
-	memcpy( sc->sc_wr, ch0_regs, sizeof(ch0_regs));
+	memcpy(sc->sc_wr, ch0_regs, sizeof(ch0_regs));
 	scp->scp_intr[args->channel] = siottyintr;
 
 	if (args->hwflags == 1) {

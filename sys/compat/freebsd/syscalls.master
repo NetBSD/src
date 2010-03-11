@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.58.34.1 2009/05/04 08:12:18 yamt Exp $
+	$NetBSD: syscalls.master,v 1.58.34.2 2010/03/11 15:03:13 yamt Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -37,8 +37,6 @@
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
 #include "opt_posix.h"
-
-#include "fs_lfs.h"
 #endif
 
 #include <sys/param.h>
@@ -303,12 +301,8 @@
 			    struct statfs12 *buf); }
 159	UNIMPL
 160	UNIMPL
-#ifdef NFS
 161	NOARGS		{ int|compat_30_sys||getfh(const char *fname, \
 			    struct compat_30_fhandle *fhp); }
-#else
-161	UNIMPL		getfh
-#endif
 162	NOARGS		{ int|compat_09_sys||getdomainname(char *domainname, \
 			    int len); }
 163	NOARGS		{ int|compat_09_sys||setdomainname(char *domainname, \
@@ -360,20 +354,10 @@
 181	NOARGS		{ int|sys||setgid(gid_t gid); }
 182	NOARGS		{ int|sys||setegid(gid_t egid); }
 183	NOARGS		{ int|sys||seteuid(uid_t euid); }
-#ifdef LFS
-184	NOARGS		{ int|sys||lfs_bmapv(fsid_t *fsidp, \
-			    struct block_info *blkiov, int blkcnt); }
-185	NOARGS		{ int|sys||lfs_markv(fsid_t *fsidp, \
-			    struct block_info *blkiov, int blkcnt); }
-186	NOARGS		{ int|sys||lfs_segclean(fsid_t *fsidp, u_long segment); }
-187	NOARGS		{ int|compat_50_sys||lfs_segwait(fsid_t *fsidp, \
-			    struct timeval50 *tv); }
-#else
 184	UNIMPL
 185	UNIMPL
 186	UNIMPL
 187	UNIMPL
-#endif
 188	NOARGS		{ int|compat_12_sys||stat(const char *path, \
 			    struct stat12 *ub); }
 189	NOARGS		{ int|compat_12_sys||fstat(int fd, \

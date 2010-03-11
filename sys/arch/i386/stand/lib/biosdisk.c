@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.28.10.1 2009/09/16 13:37:39 yamt Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.28.10.2 2010/03/11 15:02:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -319,17 +319,17 @@ biosdisk_probe(void)
 			d.ll.dev = 0x80 + i;			/* hd/cd */
 		if (set_geometry(&d.ll, &ed))
 			continue;
+		printf("disk ");
 		switch (d.ll.type) {
 		case BIOSDISK_TYPE_CD:
-			printf("disk cd0\n");
-			printf("  cd0a(unknown)\n");
+			printf("cd0\n  cd0a\n");
 			break;
 		case BIOSDISK_TYPE_FD:
-			printf("disk fd%d\n", d.ll.dev & 0x7f);
-			printf("  fd%da(unknown)\n", d.ll.dev & 0x7f);
+			printf("fd%d\n", d.ll.dev & 0x7f);
+			printf("  fd%da\n", d.ll.dev & 0x7f);
 			break;
 		case BIOSDISK_TYPE_HD:
-			printf("disk hd%d", d.ll.dev & 0x7f);
+			printf("hd%d", d.ll.dev & 0x7f);
 			if (d.ll.flags & BIOSDISK_INT13EXT) {
 				printf(" size ");
 				size = ed.totsec * ed.sbytes;
@@ -344,6 +344,8 @@ biosdisk_probe(void)
 			break;
 		}
 #ifndef NO_DISKLABEL
+		if (d.ll.type != BIOSDISK_TYPE_HD)
+			continue;
 		if (read_label(&d) == -1)
 			break;
 		lp = (struct disklabel *)(d.buf + LABELOFFSET);

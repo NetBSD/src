@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.8.4.2 2009/07/18 14:53:27 yamt Exp $	*/
+/*	$NetBSD: namei.src,v 1.8.4.3 2010/03/11 15:04:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -139,7 +139,8 @@ NAMEIFL	ISWHITEOUT	0x0020000	/* found whiteout */
 NAMEIFL	DOWHITEOUT	0x0040000	/* do whiteouts */
 NAMEIFL	REQUIREDIR	0x0080000	/* must be a directory */
 NAMEIFL	CREATEDIR	0x0200000	/* trailing slashes are ok */
-NAMEIFL	PARAMASK	0x02fff00	/* mask of parameter descriptors */
+NAMEIFL	INRENAME	0x0400000	/* operation is a part of ``rename'' */
+NAMEIFL	PARAMASK	0x06fff00	/* mask of parameter descriptors */
 
 /*
  * Initialization of an nameidata structure.
@@ -228,7 +229,8 @@ int namei_simple_user(const char *, namei_simple_flags_t, struct vnode **);
 
 int	namei(struct nameidata *);
 uint32_t namei_hash(const char *, const char **);
-int	lookup(struct nameidata *);
+int	lookup_for_nfsd(struct nameidata *, struct vnode *, int neverfollow);
+int	lookup_for_nfsd_index(struct nameidata *);
 int	relookup(struct vnode *, struct vnode **, struct componentname *);
 void	cache_purge1(struct vnode *, const struct componentname *, int);
 #define	PURGE_PARENTS	1

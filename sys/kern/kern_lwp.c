@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.106.2.5 2009/09/16 13:38:00 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.106.2.6 2010/03/11 15:04:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -60,8 +60,7 @@
  *		Runnable: the LWP is parked on a run queue, and may soon be
  *		chosen to run by an idle processor, or by a processor that
  *		has been asked to preempt a currently runnning but lower
- *		priority LWP.  If the LWP is not swapped in (LW_INMEM == 0)
- *		then the LWP is not on a run queue, but may be soon.
+ *		priority LWP.
  *
  *	LSIDL
  *
@@ -210,11 +209,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.106.2.5 2009/09/16 13:38:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.106.2.6 2010/03/11 15:04:16 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
 #include "opt_sa.h"
+#include "opt_dtrace.h"
 
 #define _LWP_API_PRIVATE
 
@@ -229,7 +229,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.106.2.5 2009/09/16 13:38:00 yamt Exp 
 #include <sys/syscall_stats.h>
 #include <sys/kauth.h>
 #include <sys/sleepq.h>
-#include <sys/user.h>
 #include <sys/lockdebug.h>
 #include <sys/kmem.h>
 #include <sys/pset.h>
@@ -237,6 +236,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.106.2.5 2009/09/16 13:38:00 yamt Exp 
 #include <sys/lwpctl.h>
 #include <sys/atomic.h>
 #include <sys/filedesc.h>
+#include <sys/dtrace_bsd.h>
+#include <sys/sdt.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
@@ -247,6 +248,20 @@ struct pool lwp_uc_pool;
 
 static pool_cache_t lwp_cache;
 static specificdata_domain_t lwp_specificdata_domain;
+
+/* DTrace proc provider probes */
+SDT_PROBE_DEFINE(proc,,,lwp_create,
+	"struct lwp *", NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL);
+SDT_PROBE_DEFINE(proc,,,lwp_start,
+	"struct lwp *", NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL);
+SDT_PROBE_DEFINE(proc,,,lwp_exit,
+	"struct lwp *", NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL);
 
 void
 lwpinit(void)
@@ -546,7 +561,7 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
  * suspended, or stopped by the caller.
  */
 int
-lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
+lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	   void *stack, size_t stacksize, void (*func)(void *), void *arg,
 	   lwp_t **rnewlwpp, int sclass)
 {
@@ -596,7 +611,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_kpribase = PRI_KERNEL;
 	l2->l_priority = l1->l_priority;
 	l2->l_inheritedprio = -1;
-	l2->l_flag = inmem ? LW_INMEM : 0;
+	l2->l_flag = 0;
 	l2->l_pflag = LP_MPSAFE;
 	TAILQ_INIT(&l2->l_ld_locks);
 
@@ -607,13 +622,13 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_fd = p2->p_fd;
 	if (p2->p_nlwps != 0) {
 		KASSERT(l1->l_proc == p2);
-		atomic_inc_uint(&l2->l_fd->fd_refcnt);
+		fd_hold(l2);
 	} else {
 		KASSERT(l1->l_proc != p2);
 	}
 
 	if (p2->p_flag & PK_SYSTEM) {
-		/* Mark it as a system LWP and not a candidate for swapping */
+		/* Mark it as a system LWP. */
 		l2->l_flag |= LW_SYSTEM;
 	}
 
@@ -622,19 +637,19 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_cpu = l1->l_cpu;
 	kpreempt_enable();
 
+	kdtrace_thread_ctor(NULL, l2);
 	lwp_initspecific(l2);
 	sched_lwp_fork(l1, l2);
 	lwp_update_creds(l2);
 	callout_init(&l2->l_timeout_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&l2->l_timeout_ch, sleepq_timeout, l2);
-	mutex_init(&l2->l_swaplock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&l2->l_sigcv, "sigwait");
 	l2->l_syncobj = &sched_syncobj;
 
 	if (rnewlwpp != NULL)
 		*rnewlwpp = l2;
 
-	l2->l_addr = UAREA_TO_USER(uaddr);
+	uvm_lwp_setuarea(l2, uaddr);
 	uvm_lwp_fork(l1, l2, stack, stacksize, func,
 	    (arg != NULL) ? arg : l2);
 
@@ -681,6 +696,8 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	}
 	mutex_exit(p2->p_lock);
 
+	SDT_PROBE(proc,,,lwp_create, l2, 0,0,0,0);
+
 	mutex_enter(proc_lock);
 	LIST_INSERT_HEAD(&alllwp, l2, l_list);
 	mutex_exit(proc_lock);
@@ -701,6 +718,8 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 void
 lwp_startup(struct lwp *prev, struct lwp *new)
 {
+
+	SDT_PROBE(proc,,,lwp_start, new, 0,0,0,0);
 
 	KASSERT(kpreempt_disabled());
 	if (prev != NULL) {
@@ -737,6 +756,8 @@ lwp_exit(struct lwp *l)
 
 	KASSERT(current || (l->l_stat == LSIDL && l->l_target_cpu == NULL));
 	KASSERT(p == curproc);
+
+	SDT_PROBE(proc,,,lwp_exit, l, 0,0,0,0);
 
 	/*
 	 * Verify that we hold no locks other than the kernel lock.
@@ -777,13 +798,6 @@ lwp_exit(struct lwp *l)
 	 */
 	kauth_cred_free(l->l_cred);
 	callout_destroy(&l->l_timeout_ch);
-
-	/*
-	 * While we can still block, mark the LWP as unswappable to
-	 * prevent conflicts with the with the swapper.
-	 */
-	if (current)
-		uvm_lwp_hold(l);
 
 	/*
 	 * Remove the LWP from the global list.
@@ -855,9 +869,7 @@ lwp_exit(struct lwp *l)
 	 *
 	 * Free MD LWP resources.
 	 */
-#ifndef __NO_CPU_LWP_FREE
 	cpu_lwp_free(l, 0);
-#endif
 
 	if (current) {
 		pmap_deactivate(l);
@@ -944,7 +956,6 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	sigclear(&l->l_sigpend, NULL, &kq);
 	ksiginfo_queue_drain(&kq);
 	cv_destroy(&l->l_sigcv);
-	mutex_destroy(&l->l_swaplock);
 
 	/*
 	 * Free the LWP's turnstile and the LWP structure itself unless the
@@ -963,13 +974,13 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 		pool_cache_put(turnstile_cache, l->l_ts);
 	if (l->l_name != NULL)
 		kmem_free(l->l_name, MAXCOMLEN);
-#ifndef __NO_CPU_LWP_FREE
+
 	cpu_lwp_free2(l);
-#endif
-	KASSERT((l->l_flag & LW_INMEM) != 0);
 	uvm_lwp_exit(l);
+
 	KASSERT(SLIST_EMPTY(&l->l_pi_lenders));
 	KASSERT(l->l_inheritedprio == -1);
+	kdtrace_thread_dtor(NULL, l);
 	if (!recycle)
 		pool_cache_put(lwp_cache, l);
 }
@@ -1011,11 +1022,8 @@ lwp_migrate(lwp_t *l, struct cpu_info *tci)
 	tspc = &tci->ci_schedstate;
 	switch (lstat) {
 	case LSRUN:
-		if (l->l_flag & LW_INMEM) {
-			l->l_target_cpu = tci;
-			lwp_unlock(l);
-			return;
-		}
+		l->l_target_cpu = tci;
+		break;
 	case LSIDL:
 		l->l_cpu = tci;
 		lwp_unlock_to(l, tspc->spc_mutex);
@@ -1233,13 +1241,12 @@ lwp_trylock(struct lwp *l)
 	}
 }
 
-u_int
+void
 lwp_unsleep(lwp_t *l, bool cleanup)
 {
 
 	KASSERT(mutex_owned(l->l_mutex));
-
-	return (*l->l_syncobj->sobj_unsleep)(l, cleanup);
+	(*l->l_syncobj->sobj_unsleep)(l, cleanup);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.99.4.1 2009/05/04 08:14:39 yamt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.99.4.2 2010/03/11 15:04:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -91,7 +91,6 @@
  * the vm system has several standard kernel submaps, including:
  *   kmem_map => contains only wired kernel memory for the kernel
  *		malloc.
- *   mb_map => memory for large mbufs,
  *   pager_map => used to map "buf" structures into kernel space
  *   exec_map => used during exec to handle exec args
  *   etc...
@@ -128,7 +127,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.99.4.1 2009/05/04 08:14:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.99.4.2 2010/03/11 15:04:46 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -626,7 +625,8 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 		 * map it in
 		 */
 
-		pmap_kenter_pa(loopva, VM_PAGE_TO_PHYS(pg), prot|PMAP_KMPAGE);
+		pmap_kenter_pa(loopva, VM_PAGE_TO_PHYS(pg),
+		    prot | PMAP_KMPAGE, 0);
 		loopva += PAGE_SIZE;
 		offset += PAGE_SIZE;
 		loopsize -= PAGE_SIZE;
@@ -711,7 +711,7 @@ again:
 		}
 	}
 	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-	    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE);
+	    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE, 0);
 	pmap_update(pmap_kernel());
 
 	return va;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.111.4.3 2009/05/16 10:41:17 yamt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.111.4.4 2010/03/11 15:03:20 yamt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -120,19 +120,30 @@ COPTS.${j}+=-g
 #
 COPTS.debugsyms.c+=	-g
 
+# Add CTF sections for DTrace
+.if defined(CTFCONVERT)
+COMPILE_CTFCONVERT=	${_MKSHECHO}\
+			${CTFCONVERT} ${CTFFLAGS} ${.TARGET} && \
+			${CTFCONVERT} ${CTFFLAGS} ${.TARGET}
+.else
+COMPILE_CTFCONVERT=	${_MKSHECHO}
+.endif
+
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # NOPROF and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
-NORMAL_C?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}"; \
+NORMAL_C?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
 		${_MKSHECHO}\
-		${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<; \
-		${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-NOPROF_C?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}"; \
+		${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $< && \
+		${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $< && \
+		${COMPILE_CTFCONVERT}
+NOPROF_C?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
 		${_MKSHECHO}\
-		${CC} ${CFLAGS} ${CPPFLAGS} -c $<; \
-		${CC} ${CFLAGS} ${CPPFLAGS} -c $<
-NORMAL_S?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}"; \
+		${CC} ${CFLAGS} ${CPPFLAGS} -c $< && \
+		${CC} ${CFLAGS} ${CPPFLAGS} -c $< && \
+		${COMPILE_CTFCONVERT}
+NORMAL_S?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
 		${_MKSHECHO}\
-		${CC} ${AFLAGS} ${CPPFLAGS} -c $<; \
+		${CC} ${AFLAGS} ${CPPFLAGS} -c $< && \
 		${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 
 ##
@@ -199,13 +210,19 @@ ${_cfile:T:R}.o: ${_cfile}
 #	${SYSTEM_LD_TAIL}
 SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS:O} ${SYSLIBCOMPAT} ${LIBKERN}
 SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ:O} .gdbinit
+.if defined(CTFMERGE)
+SYSTEM_CTFMERGE= ${CTFMERGE} ${CTFFLAGS} -o ${.TARGET} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
+.else
+SYSTEM_CTFMERGE= ${_MKSHECHO}
+.endif
 SYSTEM_LD_HEAD?=@rm -f $@
 SYSTEM_LD?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
 		${LD} -Map $@.map --cref ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o; \
 		${LD} -Map $@.map --cref ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
 SYSTEM_LD_TAIL?=@${TOOL_SED} '/const char sccs/!d;s/.*@(.)//;s/\\.*//' vers.c; \
-		${SIZE} $@; chmod 755 $@
+		${SIZE} $@; chmod 755 $@; \
+		${SYSTEM_CTFMERGE}
 
 TEXTADDR?=	${LOADADDRESS}			# backwards compatibility
 LINKTEXT?=	${TEXTADDR:C/.+/-Ttext &/}
@@ -228,6 +245,7 @@ DEBUG?=
 SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_DEBUG}
 LINKFLAGS+=	${LINKFLAGS_DEBUG}
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.gdb@}
+CTFFLAGS+=	-g
 .elifndef PROF
 LINKFLAGS+=	${LINKFLAGS_NORMAL}
 .endif
@@ -481,7 +499,7 @@ EXTRA_CLEAN+= .gdbinit
 
 # The following files use alloca(3) or variable array allocations.
 # Their full name is noted as documentation.
-VARSTACK=dev/cgd.c kern/uipc_socket.c miscfs/genfs/genfs_vnops.c \
+VARSTACK=kern/uipc_socket.c miscfs/genfs/genfs_vnops.c \
     nfs/nfs_bio.c uvm/uvm_bio.c \
     uvm/uvm_pager.c dev/ic/aic7xxx.c dev/ic/aic79xx.c arch/xen/i386/gdt.c \
     dev/ofw/ofw_subr.c

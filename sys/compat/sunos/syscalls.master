@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.68.12.1 2009/05/04 08:12:27 yamt Exp $
+	$NetBSD: syscalls.master,v 1.68.12.2 2010/03/11 15:03:19 yamt Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -249,7 +249,7 @@
 153	NOARGS		{ int|sys||poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
 154	UNIMPL
-155	STD		{ int|sunos_sys||nfssvc(int fd); }
+155	UNIMPL		nfssvc
 156	NOARGS		{ int|compat_12_sys||getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
 157	STD		{ int|sunos_sys||statfs(const char *path, \

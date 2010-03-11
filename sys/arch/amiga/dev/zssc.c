@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.40.44.2 2009/06/20 07:20:00 yamt Exp $ */
+/*	$NetBSD: zssc.c,v 1.40.44.3 2010/03/11 15:02:01 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.40.44.2 2009/06/20 07:20:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.40.44.3 2010/03/11 15:02:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,9 +201,10 @@ zssc_dump(void)
 	struct siop_softc *sc;
 	int i;
 
-	for (i = 0; i < zssc_cd.cd_ndevs; ++i)
-		sc = device_lookup_softc(&zssc_cd, i);
+	for (i = 0; i < zssc_cd.cd_ndevs; ++i) {
+		sc = device_lookup_private(&zssc_cd, i);
 		if (sc != NULL)
 			siop_dump(sc);
+	}
 }
 #endif

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.65.2.3 2009/08/19 18:46:19 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.65.2.4 2010/03/11 15:02:28 yamt Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -78,7 +78,6 @@ include <sys/param.h>
 include <sys/proc.h>
 include <sys/resourcevar.h>
 include <sys/device.h>
-include <sys/user.h>
 include <sys/mbuf.h>
 include <sys/mutex.h>
 include <sys/rwlock.h>
@@ -151,7 +150,6 @@ define	PAGE_SIZE		PAGE_SIZE
 define	LSRUN			LSRUN
 define	LSONPROC		LSONPROC
 
-define	PTE_BASE		PTE_BASE
 define	UPAGES			UPAGES
 define	USPACE			USPACE
 define	KSTACK_SIZE		KSTACK_SIZE
@@ -170,11 +168,14 @@ define	L1_SLOT_KERNBASE	pl1_pi(KERNBASE)
 define	PDIR_SLOT_PTE		PDIR_SLOT_PTE
 define	PTE_BASE		PTE_BASE
 
+define	PDP_SIZE		PDP_SIZE
+define	PDE_SIZE		sizeof(pd_entry_t)
+
 define	IOMAPSIZE		IOMAPSIZE
 
 define	VM_MAXUSER_ADDRESS	(int)VM_MAXUSER_ADDRESS
 
-define	L_ADDR			offsetof(struct lwp, l_addr)
+define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_FLAG			offsetof(struct lwp, l_flag)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
@@ -392,7 +393,6 @@ define	IPL_PREEMPT		IPL_PREEMPT
 define	IPL_SCHED		IPL_SCHED
 define	IPL_CLOCK		IPL_CLOCK
 define	IPL_HIGH		IPL_HIGH
-define	IPL_IPI			IPL_IPI
 
 define	IPL_SOFTNET		IPL_SOFTNET
 define	IPL_SOFTCLOCK		IPL_SOFTCLOCK

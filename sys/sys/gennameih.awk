@@ -1,6 +1,6 @@
 #!/usr/bin/awk -F
 #
-#	$NetBSD: gennameih.awk,v 1.1.34.2 2009/05/04 08:14:35 yamt Exp $
+#	$NetBSD: gennameih.awk,v 1.1.34.3 2010/03/11 15:04:42 yamt Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,7 +35,9 @@ function getrcsid(idstr) {
 }
 
 function printheader(outfile) {
-	print "/*\t$NetBSD: gennameih.awk,v 1.1.34.2 2009/05/04 08:14:35 yamt Exp $\t*/\n\n" > outfile
+	print "Generating", outfile
+
+	print "/*\t$NetBSD: gennameih.awk,v 1.1.34.3 2010/03/11 15:04:42 yamt Exp $\t*/\n\n" > outfile
 
 	print  "/*" > outfile
 	print  " * WARNING: GENERATED FILE.  DO NOT EDIT" > outfile
@@ -46,7 +48,7 @@ function printheader(outfile) {
 }
 
 BEGIN {
-	myvers="$NetBSD: gennameih.awk,v 1.1.34.2 2009/05/04 08:14:35 yamt Exp $"
+	myvers="$NetBSD: gennameih.awk,v 1.1.34.3 2010/03/11 15:04:42 yamt Exp $"
 	namei="namei.h"
 	rumpnamei = "../rump/include/rump/rump_namei.h"
 }

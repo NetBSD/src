@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.22.4.2 2009/05/04 08:12:33 yamt Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.22.4.3 2010/03/11 15:03:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -106,6 +106,9 @@
  *	@(#)vnioctl.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _SYS_DEV_VNDVAR_H_
+#define _SYS_DEV_VNDVAR_H_
+
 #include <sys/pool.h>
 
 /*
@@ -125,7 +128,8 @@ struct vnd_ioctl {
 	char		*vnd_file;	/* pathname of file to mount */
 	int		vnd_flags;	/* flags; see below */
 	struct vndgeom	vnd_geom;	/* geometry to emulate */
-	int		vnd_size;	/* (returned) size of disk */
+	unsigned int	vnd_osize;	/* (returned) size of disk */
+	uint64_t	vnd_size;	/* (returned) size of disk */
 };
 
 /* vnd_flags */
@@ -213,3 +217,11 @@ struct vnd_user {
 #define VNDIOCSET	_IOWR('F', 0, struct vnd_ioctl)	/* enable disk */
 #define VNDIOCCLR	_IOW('F', 1, struct vnd_ioctl)	/* disable disk */
 #define VNDIOCGET	_IOWR('F', 3, struct vnd_user)	/* get list */
+
+/* These only have the 32bit vnd_osize field */
+#define VNDIOOCSET	_IOC(IOC_INOUT, 'F', 0, \
+				offsetof(struct vnd_ioctl, vnd_size))
+#define VNDIOOCCLR	_IOC(IOC_IN, 'F', 1, \
+				offsetof(struct vnd_ioctl, vnd_size))
+
+#endif /* _SYS_DEV_VNDVAR_H_ */

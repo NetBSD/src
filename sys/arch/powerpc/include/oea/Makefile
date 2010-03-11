@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2003/02/03 17:10:05 matt Exp $
+#	$NetBSD: Makefile,v 1.1.108.1 2010/03/11 15:02:51 yamt Exp $
 
 INCSDIR= /usr/include/powerpc/oea
 
 INCS=	bat.h \
 	hid.h hid_601.h \
 	pmap.h pte.h \
-	sr_601.h \
+	spr.h sr_601.h \
 	vmparam.h
 
 .include <bsd.kinc.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.63.10.4 2009/07/18 14:53:21 yamt Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.63.10.5 2010/03/11 15:04:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.63.10.4 2009/07/18 14:53:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.63.10.5 2010/03/11 15:04:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1337,7 +1337,7 @@ smbfs_lookup(void *v)
 		/*
 		 * "." lookup
 		 */
-		VREF(dvp);
+		vref(dvp);
 		*vpp = dvp;
 	} else if (flags & ISDOTDOT) {
 

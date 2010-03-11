@@ -4,13 +4,10 @@
  *	written by Yasha (ITOH Yasufumi)
  *	public domain
  *
- *	$NetBSD: type_local.h,v 1.1 1998/09/01 19:51:09 itohy Exp $
+ *	$NetBSD: type_local.h,v 1.1.154.1 2010/03/11 15:03:07 yamt Exp $
  */
 
-#ifdef __STDC__
-# define PROTO(x)	x
-#else
-# define PROTO(x)	()
+#ifndef __STDC__
 # ifndef const
 #  define const
 # endif

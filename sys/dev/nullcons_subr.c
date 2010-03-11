@@ -1,4 +1,4 @@
-/*	$NetBSD: nullcons_subr.c,v 1.5.40.2 2009/05/04 08:12:33 yamt Exp $	*/
+/*	$NetBSD: nullcons_subr.c,v 1.5.40.3 2010/03/11 15:03:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -27,11 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.5.40.2 2009/05/04 08:12:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.5.40.3 2010/03/11 15:03:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>

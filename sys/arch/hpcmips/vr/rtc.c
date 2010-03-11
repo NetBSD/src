@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.25 2008/01/04 22:13:57 ad Exp $	*/
+/*	$NetBSD: rtc.c,v 1.25.10.1 2010/03/11 15:02:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.25 2008/01/04 22:13:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.25.10.1 2010/03/11 15:02:25 yamt Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -88,8 +88,8 @@ struct vrrtc_softc {
 };
 
 void	vrrtc_init(struct device *);
-int	vrrtc_get(todr_chip_handle_t, volatile struct timeval *);
-int	vrrtc_set(todr_chip_handle_t, volatile struct timeval *);
+int	vrrtc_get(todr_chip_handle_t, struct timeval *);
+int	vrrtc_set(todr_chip_handle_t, struct timeval *);
 uint32_t vrrtc_get_timecount(struct timecounter *);
 
 struct platform_clock vr_clock = {
@@ -271,7 +271,7 @@ vrrtc_get_timecount(struct timecounter *tc)
 }
 
 int
-vrrtc_get(todr_chip_handle_t tch, volatile struct timeval *tvp)
+vrrtc_get(todr_chip_handle_t tch, struct timeval *tvp)
 {
 
 	struct vrrtc_softc *sc = (struct vrrtc_softc *)tch->cookie;
@@ -303,7 +303,7 @@ vrrtc_get(todr_chip_handle_t tch, volatile struct timeval *tvp)
 }
 
 int
-vrrtc_set(todr_chip_handle_t tch, volatile struct timeval *tvp)
+vrrtc_set(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	struct vrrtc_softc *sc = (struct vrrtc_softc *)tch->cookie;
 	bus_space_tag_t iot = sc->sc_iot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4.2.3 2009/05/04 08:12:09 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4.2.4 2010/03/11 15:03:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -59,6 +59,7 @@
 
 #include <sys/cpu_data.h>
 #include <sys/evcnt.h>
+#include <sys/device_if.h> /* for device_t */
 
 struct intrsource;
 struct pmap;
@@ -76,7 +77,7 @@ struct device;
  */
 
 struct cpu_info {
-	struct device *ci_dev;		/* pointer to our device */
+	device_t ci_dev;		/* pointer to our device */
 	struct cpu_info *ci_self;	/* self-pointer */
 	volatile struct vcpu_info *ci_vcpu; /* for XEN */
 	void	*ci_tlog_base;		/* Trap log base */
@@ -93,7 +94,7 @@ struct cpu_info {
 	int	ci_fpused;		/* XEN: FPU was used by curlwp */
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	int	ci_cpumask;		/* (1 << CPU ID) */
-	uint8_t ci_initapicid;		/* our intitial APIC ID */
+	uint32_t ci_initapicid;		/* our intitial APIC ID */
 	uint8_t ci_packageid;
 	uint8_t ci_coreid;
 	uint8_t ci_smtid;
@@ -137,7 +138,7 @@ struct cpu_info {
 
 	uint32_t ci_flags;		/* flags; see below */
 	uint32_t ci_ipis;		/* interprocessor interrupts pending */
-	int sc_apic_version;		/* local APIC version */
+	uint32_t sc_apic_version;	/* local APIC version */
 
 	uint32_t	ci_signature;	 /* X86 cpuid type */
 	uint32_t	ci_feature_flags;/* X86 %edx CPUID feature bits */
@@ -285,7 +286,7 @@ extern uint32_t cpus_attached;
 #define curcpu()		(&cpu_info_primary)
 #define curlwp			curcpu()->ci_curlwp
 #endif
-#define	curpcb			(&curlwp->l_addr->u_pcb)
+#define	curpcb			((struct pcb *)lwp_getpcb(curlwp))
 
 /*
  * Arguments to hardclock, softclock and statclock
@@ -354,7 +355,7 @@ void 	cpu_probe(struct cpu_info *);
 void	cpu_identify(struct cpu_info *);
 
 /* cpu_topology.c */
-void	x86_cpu_toplogy(struct cpu_info *);
+void	x86_cpu_topology(struct cpu_info *);
 
 /* vm_machdep.c */
 void	cpu_proc_fork(struct proc *, struct proc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_extern.h,v 1.28.4.2 2009/05/04 08:14:38 yamt Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.28.4.3 2010/03/11 15:04:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -69,6 +69,8 @@ int	mfs_fsync(void *);
 #include <sys/mutex.h>
 
 extern kmutex_t	mfs_lock;
+extern void *mfs_rootbase;
+extern u_long mfs_rootsize;
 
 #endif
 

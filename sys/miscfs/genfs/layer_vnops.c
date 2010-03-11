@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.35.10.1 2009/05/04 08:14:04 yamt Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.35.10.2 2010/03/11 15:04:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.35.10.1 2009/05/04 08:14:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.35.10.2 2010/03/11 15:04:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,7 +346,7 @@ layer_bypass(void *v)
 			 * that.  (This should go away in the future.)
 			 */
 			if (reles & VDESC_VP0_WILLRELE)
-				VREF(*this_vp_p);
+				vref(*this_vp_p);
 		}
 
 	}
@@ -459,7 +459,7 @@ layer_lookup(void *v)
 		 * or ".." in the root node of a mount point.
 		 * So we make another reference to dvp and return it.
 		 */
-		VREF(dvp);
+		vref(dvp);
 		*ap->a_vpp = dvp;
 		vrele(lvp);
 	} else if (lvp != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_osd.h,v 1.1.126.1 2009/09/16 13:37:45 yamt Exp $	*/
+/*	$NetBSD: acpi_osd.h,v 1.1.126.2 2010/03/11 15:03:22 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -35,6 +35,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _SYS_DEV_ACPI_ACPI_OSD_H
+#define _SYS_DEV_ACPI_ACPI_OSD_H
+
 /*
  * Operating System Dependent code for ACPI.  This is an internal
  * header for the ACPICA Osd component.
@@ -45,3 +48,5 @@ void	acpi_osd_debugger(void);
 
 /* Osd/OsdSchedule.c */
 void	acpi_osd_sched_init(void);
+
+#endif	/* !_SYS_DEV_ACPI_ACPI_OSD_H */

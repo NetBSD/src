@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.14.10.1 2009/05/04 08:11:50 yamt Exp $	*/
+/*	$NetBSD: mace.c,v 1.14.10.2 2010/03/11 15:02:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.14.10.1 2009/05/04 08:11:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.14.10.2 2010/03/11 15:02:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,9 +146,9 @@ mace_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_normal("\n");
 
-	aprint_debug("%s: isa sts %llx\n", self->dv_xname,
+	aprint_debug("%s: isa sts %#"PRIx64"\n", self->dv_xname,
 	    bus_space_read_8(sc->iot, sc->ioh, MACE_ISA_INT_STATUS));
-	aprint_debug("%s: isa msk %llx\n", self->dv_xname,
+	aprint_debug("%s: isa msk %#"PRIx64"\n", self->dv_xname,
 	    bus_space_read_8(sc->iot, sc->ioh, MACE_ISA_INT_MASK));
 
 	/*
@@ -301,9 +301,9 @@ mace_intr(int irqs)
 
 	/* irq 4 is the ISA cascade interrupt.  Must handle with care. */
 	if (irqs & (1 << 4)) {
-		isa_mask = mips3_ld((uint64_t *)MIPS_PHYS_TO_KSEG1(MACE_BASE
+		isa_mask = mips3_ld((volatile uint64_t *)MIPS_PHYS_TO_KSEG1(MACE_BASE
 		    + MACE_ISA_INT_MASK));
-		isa_irq = mips3_ld((uint64_t *)MIPS_PHYS_TO_KSEG1(MACE_BASE
+		isa_irq = mips3_ld((volatile uint64_t *)MIPS_PHYS_TO_KSEG1(MACE_BASE
 		    + MACE_ISA_INT_STATUS));
 		for (i = 0; i < MACE_NINTR; i++) {
 			if ((maceintrtab[i].irq == (1 << 4)) &&

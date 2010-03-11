@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.30.10.3 2009/09/16 13:37:58 yamt Exp $	*/
+/*	$NetBSD: ubt.c,v 1.30.10.4 2010/03/11 15:04:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.30.10.3 2009/09/16 13:37:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.30.10.4 2010/03/11 15:04:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -343,8 +343,10 @@ USB_ATTACH(ubt)
 	MBUFQ_INIT(&sc->sc_aclwr_queue);
 	MBUFQ_INIT(&sc->sc_scowr_queue);
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
@@ -576,24 +578,16 @@ int
 ubt_activate(device_ptr_t self, enum devact act)
 {
 	struct ubt_softc *sc = USBGETSOFTC(self);
-	int error = 0;
 
 	DPRINTFN(1, "sc=%p, act=%d\n", sc, act);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		break;
-
+		return 0;
 	default:
-		error = EOPNOTSUPP;
-		break;
+		return EOPNOTSUPP;
 	}
-
-	return error;
 }
 
 /* set ISOC configuration */

@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.24.2.2 2009/05/16 10:41:18 yamt Exp $ */
+/* $NetBSD: aiboost.c,v 1.24.2.3 2010/03/11 15:03:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,19 +28,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.24.2.2 2009/05/16 10:41:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.24.2.3 2010/03/11 15:03:22 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/mutex.h>
 #include <sys/kmem.h>
+#include <sys/systm.h>
 
-#include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
-#include <dev/sysmon/sysmonvar.h>
+#define _COMPONENT          ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME            ("aiboost")
 
 #ifdef AIBOOST_DEBUG
 #define DPRINTF(x)		do { printf x; } while (/* CONSTCOND */ 0)
@@ -284,7 +284,7 @@ aiboost_get_value(ACPI_HANDLE handle, const char *path, UINT32 number)
 	ACPI_OBJECT_LIST args;
 	ACPI_BUFFER buf;
 	int val;	
-	buf.Length = ACPI_ALLOCATE_BUFFER;
+	buf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 	buf.Pointer = 0;
 
 	arg1.Type = ACPI_TYPE_INTEGER;
@@ -298,7 +298,7 @@ aiboost_get_value(ACPI_HANDLE handle, const char *path, UINT32 number)
 	ret = buf.Pointer;
 	val = (ret->Type == ACPI_TYPE_INTEGER) ? ret->Integer.Value : -1;
 
-	AcpiOsFree(buf.Pointer);
+	ACPI_FREE(buf.Pointer);
 	return val;
 
 }
@@ -317,13 +317,15 @@ aiboost_getcomp(ACPI_HANDLE *h, const char *name, struct aiboost_comp **comp)
 
 	status = AcpiGetHandle(h, name, &h1);
 	if (ACPI_FAILURE(status)) {
-		DPRINTF(("%s: AcpiGetHandle\n", __func__));
+		DPRINTF(("%s: AcpiGetHandle: %s\n", __func__,
+			AcpiFormatException(status) ));
 		return status;
 	}
 
 	status = acpi_eval_struct(h1, NULL, &buf);
 	if (ACPI_FAILURE(status)) {
-		DPRINTF(("%s: acpi_eval_struct\n", __func__));
+		DPRINTF(("%s: acpi_eval_struct: %s\n", __func__,
+			AcpiFormatException(status) ));
 		return status;
 	}
 
@@ -358,9 +360,9 @@ aiboost_getcomp(ACPI_HANDLE *h, const char *name, struct aiboost_comp **comp)
 		DPRINTF(("elem[%d]->Type = %x\n", i+1, elem->Type));
 		if (elem->Type == ACPI_TYPE_PACKAGE &&
 			elem->Package.Elements[0].Type == ACPI_TYPE_INTEGER) {
-			DPRINTF((" subelem->Type = %x, %d\n",
+			DPRINTF((" subelem->Type = %x, %"PRIu64"\n",
 			    elem->Package.Elements[0].Type,
-			    (int)elem->Package.Elements[0].Integer.Value));
+			    elem->Package.Elements[0].Integer.Value));
 		}
 	}
 #endif
@@ -375,8 +377,8 @@ aiboost_getcomp(ACPI_HANDLE *h, const char *name, struct aiboost_comp **comp)
 			c->elem[i].h = elem->Reference.Handle;
 			status = acpi_eval_struct(c->elem[i].h, NULL, &buf2);
 			if (ACPI_FAILURE(status)) {
-				DPRINTF(("%s: fetching object in buf2\n",
-				    __func__));
+				DPRINTF(("%s: fetching object in buf2: %s\n",
+				    __func__, AcpiFormatException(status) ));
 				goto error;
 			}
 			subobj = buf2.Pointer;
@@ -428,19 +430,19 @@ aiboost_getcomp(ACPI_HANDLE *h, const char *name, struct aiboost_comp **comp)
 		(void)memcpy(c->elem[i].desc, str, length);
 
 		if (buf2.Pointer)
-			AcpiOsFree(buf2.Pointer);
+			ACPI_FREE(buf2.Pointer);
 	}
 
 	if (buf.Pointer)
-		AcpiOsFree(buf.Pointer);
+		ACPI_FREE(buf.Pointer);
 
 	return 0;
 
 error:
 	if (buf.Pointer)
-		AcpiOsFree(buf.Pointer);
+		ACPI_FREE(buf.Pointer);
 	if (buf2.Pointer)
-		AcpiOsFree(buf2.Pointer);
+		ACPI_FREE(buf2.Pointer);
 	if (c)
 		kmem_free(c, clen);
 

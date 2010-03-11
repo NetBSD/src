@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.9.10.2 2009/05/04 08:10:32 yamt Exp $	*/
+/*	$NetBSD: copy.S,v 1.9.10.3 2010/03/11 15:01:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
 
 #define GET_CURPCB(reg)	\
 	movq	CPUVAR(CURLWP), reg; \
-	movq	L_ADDR(reg), reg
+	movq	L_PCB(reg), reg
 
 /*
  * These are arranged so that the abnormal case is a forwards
@@ -386,7 +386,7 @@ ENTRY(fusword)
 	DEFERRED_SWITCH_CALL
 	
 ENTRY(fuswintr)
-	cmpq	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
+	cmpl	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
 	jnz	_C_LABEL(fusuaddrfault)
 	movq	$VM_MAXUSER_ADDRESS-2,%r11
 	cmpq	%r11,%rdi
@@ -444,7 +444,7 @@ ENTRY(susword)
 	DEFERRED_SWITCH_CALL
 
 ENTRY(suswintr)
-	cmpq	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
+	cmpl	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
 	jnz	_C_LABEL(fusuaddrfault)
 	movq	$VM_MAXUSER_ADDRESS-2,%r11
 	cmpq	%r11,%rdi

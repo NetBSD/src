@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_neptune.c,v 1.14.4.2 2009/05/04 08:12:06 yamt Exp $	*/
+/*	$NetBSD: if_ne_neptune.c,v 1.14.4.3 2010/03/11 15:03:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,11 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.14.4.2 2009/05/04 08:12:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.14.4.3 2010/03/11 15:03:07 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,11 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.14.4.2 2009/05/04 08:12:06 yamt 
 #include <netns/ns_if.h>
 #endif
 
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
-#endif
-
 #include <machine/bus.h>
 
 #include <dev/ic/dp8390reg.h>
@@ -77,9 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.14.4.2 2009/05/04 08:12:06 yamt 
 
 #include <dev/ic/ne2000reg.h>
 #include <dev/ic/ne2000var.h>
-
-#include <dev/ic/rtl80x9reg.h>
-#include <dev/ic/rtl80x9var.h>
 
 #include <arch/x68k/dev/neptunevar.h>
 
@@ -122,7 +113,7 @@ ne_neptune_match(device_t parent, cfdata_t match, void *aux)
 
  out:
 	bus_space_unmap(nict, nich, NE2000_NPORTS);
-	return (rv);
+	return (rv != 0) ? 1 : 0;
 }
 
 void
@@ -171,21 +162,10 @@ ne_neptune_attach(device_t parent, device_t self, void *aux)
 
 	case NE2000_TYPE_NE2000:
 		typestr = "NE2000";
-		/*
-		 * Check for a Realtek 8019.
-		 */
-		bus_space_write_1(nict, nich, ED_P0_CR,
-		    ED_CR_PAGE_0 | ED_CR_STP);
-		if (bus_space_read_1(nict, nich, NERTL_RTL0_8019ID0) ==
-								RTL0_8019ID0 &&
-		    bus_space_read_1(nict, nich, NERTL_RTL0_8019ID1) ==
-								RTL0_8019ID1) {
-			typestr = "NE2000 (RTL8019)";
-			dsc->sc_mediachange = rtl80x9_mediachange;
-			dsc->sc_mediastatus = rtl80x9_mediastatus;
-			dsc->init_card = rtl80x9_init_card;
-			dsc->sc_media_init = rtl80x9_media_init;
-		}
+		break;
+
+	case NE2000_TYPE_RTL8019:
+		typestr = "NE2000 (RTL8019)";
 		break;
 
 	default:

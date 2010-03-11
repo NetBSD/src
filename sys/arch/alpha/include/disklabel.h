@@ -1,4 +1,4 @@
-/* $NetBSD: disklabel.h,v 1.9 2005/12/11 12:16:16 christos Exp $ */
+/* $NetBSD: disklabel.h,v 1.9.78.1 2010/03/11 15:01:57 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1999 Christopher G. Demetriou
@@ -47,6 +47,7 @@
 
 /* Just a dummy */
 struct cpu_disklabel {
+#define __HAVE_DISKLABEL_DKBAD
 	struct dkbad bad;			/* bad-sector information */
 };
 

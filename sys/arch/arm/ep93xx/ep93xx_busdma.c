@@ -1,4 +1,4 @@
-/*	$NetBSD: ep93xx_busdma.c,v 1.2 2005/12/11 12:16:45 christos Exp $ */
+/*	$NetBSD: ep93xx_busdma.c,v 1.2.80.1 2010/03/11 15:02:05 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -12,9 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Fujitsu Component Limited nor the name of
- *    Genetec corporation may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY FUJITSU COMPONENT LIMITED AND GENETEC
  * CORPORATION ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
@@ -36,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_busdma.c,v 1.2 2005/12/11 12:16:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_busdma.c,v 1.2.80.1 2010/03/11 15:02:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

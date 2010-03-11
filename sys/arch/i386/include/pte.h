@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.17.10.1 2009/05/04 08:11:17 yamt Exp $	*/
+/*	$NetBSD: pte.h,v 1.17.10.2 2010/03/11 15:02:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
 #endif
 
 /*
- * i386 MMU hardware structure (without PAE extention):
+ * i386 MMU hardware structure (without PAE extension):
  *
  * the i386 MMU is a two-level MMU which maps 4GB of virtual memory.
  * the pagesize is 4K (4096 [0x1000] bytes), although newer pentium
@@ -162,7 +162,7 @@
  *    sense to flush these entries when switching from one process'
  *    pmap to another.
  *
- * The PAE extention extends the size of the PTE to 64 bits (52bits physical
+ * The PAE extension extends the size of the PTE to 64 bits (52bits physical
  * address) and is compatible with the amd64 PTE format. The first level
  * maps 2M, the second 1G, so a third level page table is intruduced to
  * map the 4GB virtual address space. This PD has only 4 entries.
@@ -221,8 +221,8 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #else /* PAE */
 #define	L1_SHIFT	12
 #define	L2_SHIFT	22
-#define	NBPD_L1		(1ULL << L1_SHIFT) /* # bytes mapped by L1 ent (4K) */
-#define	NBPD_L2		(1ULL << L2_SHIFT) /* # bytes mapped by L2 ent (4MB) */
+#define	NBPD_L1		(1UL << L1_SHIFT) /* # bytes mapped by L1 ent (4K) */
+#define	NBPD_L2		(1UL << L2_SHIFT) /* # bytes mapped by L2 ent (4MB) */
 
 #define L2_MASK		0xffc00000
 #define L1_MASK		0x003ff000

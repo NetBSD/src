@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.117.2.2 2009/05/04 08:13:25 yamt Exp $ */
+/* $NetBSD: wskbd.c,v 1.117.2.3 2010/03/11 15:04:09 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.117.2.2 2009/05/04 08:13:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.117.2.3 2010/03/11 15:04:09 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -347,7 +347,7 @@ struct wssrcops wskbd_srcops = {
 };
 #endif
 
-static bool wskbd_suspend(device_t dv PMF_FN_PROTO);
+static bool wskbd_suspend(device_t dv, const pmf_qual_t *);
 static void wskbd_repeat(void *v);
 
 static int wskbd_console_initted;
@@ -505,7 +505,7 @@ wskbd_attach(device_t parent, device_t self, void *aux)
 }
 
 static bool
-wskbd_suspend(device_t dv PMF_FN_ARGS)
+wskbd_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct wskbd_softc *sc = device_private(dv);
 
@@ -761,7 +761,7 @@ wskbd_rawinput(device_t dev, u_char *tbuf, int len)
 	if (sc->sc_base.me_dispdv != NULL)
 		for (i = 0; i < len; i++)
 			wsdisplay_kbdinput(sc->sc_base.me_dispdv, tbuf[i]);
-	/* this is KS_GROUP_Ascii */
+	/* this is KS_GROUP_Plain */
 #endif
 }
 #endif /* WSDISPLAY_COMPAT_RAWKBD */
@@ -1392,7 +1392,7 @@ wskbd_cngetc(dev_t dev)
 	for(;;) {
 		if (num-- > 0) {
 			ks = wskbd_console_data.t_symbols[pos++];
-			if (KS_GROUP(ks) == KS_GROUP_Ascii)
+			if (KS_GROUP(ks) == KS_GROUP_Plain)
 				return (KS_VALUE(ks));
 		} else {
 			(*wskbd_console_data.t_consops->getc)
@@ -1794,7 +1794,7 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 	res = KS_voidSymbol;
 
 	switch (KS_GROUP(ksym)) {
-	case KS_GROUP_Ascii:
+	case KS_GROUP_Plain:
 	case KS_GROUP_Keypad:
 	case KS_GROUP_Function:
 		res = ksym;
@@ -1835,7 +1835,7 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 	update_leds(id);
 
 	/* We are done, return the symbol */
-	if (KS_GROUP(res) == KS_GROUP_Ascii) {
+	if (KS_GROUP(res) == KS_GROUP_Plain) {
 		if (MOD_ONESET(id, MOD_ANYCONTROL)) {
 			if ((res >= KS_at && res <= KS_z) || res == KS_space)
 				res = res & 0x1f;

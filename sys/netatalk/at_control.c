@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.24.16.1 2009/05/04 08:14:16 yamt Exp $	 */
+/*	$NetBSD: at_control.c,v 1.24.16.2 2010/03/11 15:04:28 yamt Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.24.16.1 2009/05/04 08:14:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.24.16.2 2010/03/11 15:04:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -609,8 +609,8 @@ at_ifinit(struct ifnet *ifp, struct at_ifaddr *aa, const struct sockaddr_at *sat
 
 	aa->aa_ifa.ifa_metric = ifp->if_metric;
 	if (ifp->if_flags & IFF_BROADCAST) {
-		aa->aa_broadaddr.sat_addr.s_net = htons(0);
-		aa->aa_broadaddr.sat_addr.s_node = 0xff;
+		aa->aa_broadaddr.sat_addr.s_net = htons(ATADDR_ANYNET);
+		aa->aa_broadaddr.sat_addr.s_node = ATADDR_BCAST;
 		aa->aa_ifa.ifa_broadaddr =
 		    (struct sockaddr *) &aa->aa_broadaddr;
 		/* add the range of routes needed */

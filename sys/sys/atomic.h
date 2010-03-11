@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.9.10.1 2008/05/16 02:25:50 yamt Exp $	*/
+/*	$NetBSD: atomic.h,v 1.9.10.2 2010/03/11 15:04:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #include <stdint.h>
 #endif
 
+__BEGIN_DECLS
 /*
  * Atomic ADD
  */
@@ -147,5 +148,7 @@ void		membar_exit(void);
 void		membar_producer(void);
 void		membar_consumer(void);
 void		membar_sync(void);
+
+__END_DECLS
 
 #endif /* ! _SYS_ATOMIC_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.2.2 2009/05/04 08:14:07 yamt Exp $
+#	$NetBSD: Makefile,v 1.3.2.3 2010/03/11 15:04:24 yamt Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -14,6 +14,7 @@ SRCS+=	netbsd32_compat_09.c netbsd32_compat_10.c
 SRCS+=	netbsd32_compat_12.c netbsd32_compat_13.c
 SRCS+=	netbsd32_compat_14.c netbsd32_compat_20.c
 SRCS+=	netbsd32_compat_30.c netbsd32_compat_43.c
+SRCS+=	netbsd32_compat_50.c
 SRCS+=	netbsd32_core.c netbsd32_event.c
 SRCS+=	netbsd32_exec_aout.c netbsd32_exec_elf32.c
 SRCS+=	netbsd32_execve.c netbsd32_fs.c

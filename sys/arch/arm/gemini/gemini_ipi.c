@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_ipi.c,v 1.4.10.2 2009/05/04 08:10:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_ipi.c,v 1.4.10.3 2010/03/11 15:02:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,10 +58,9 @@ gemini_ipi_attach(struct device *parent, struct device *self, void *aux)
                 panic("%s: Cannot map registers", device_xname(self));
 
 	/*
-	 * NOTE we are using IPL_NET, not IPL_IPI a.k.a. IPL_HIGH
-	 * use of IPI on this system is (mainly) networking
-	 * keep simple (for now) and force all IPIs to same level
-	 * so splnet() can block them as any other NIC.
+	 * NOTE: we are using IPL_NET, not IPL_HIGH use of IPI on this system
+	 * is (mainly) networking keep simple (for now) and force all IPIs
+	 * to same level so splnet() can block them as any other NIC.
 	 */
 #if 0
 	ih = intr_establish(obio->obio_intr, IPL_NET, IST_LEVEL_HIGH,

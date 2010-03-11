@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.25.4.1 2009/05/04 08:12:05 yamt Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.25.4.2 2010/03/11 15:03:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.25.4.1 2009/05/04 08:12:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.25.4.2 2010/03/11 15:03:06 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.25.4.1 2009/05/04 08:12:05 yamt Exp $
 #include <sys/queue.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
@@ -63,7 +62,7 @@ struct cpuq {
 
 SIMPLEQ_HEAD(, cpuq) cpuq = SIMPLEQ_HEAD_INITIALIZER(cpuq);
 
-extern long avail_start, avail_end, proc0paddr;
+extern long avail_start, avail_end;
 struct cpu_info_qh cpus = SIMPLEQ_HEAD_INITIALIZER(cpus);
 
 void

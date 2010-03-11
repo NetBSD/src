@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.21.4.2 2009/05/04 08:12:35 yamt Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.21.4.3 2010/03/11 15:03:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -36,10 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.21.4.2 2009/05/04 08:12:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.21.4.3 2010/03/11 15:03:25 yamt Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,10 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.21.4.2 2009/05/04 08:12:35 yamt
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_radiotap.h>
 #include <net80211/ieee80211_var.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -99,15 +94,14 @@ struct atw_cardbus_softc {
 	/* CardBus-specific goo. */
 	void			*sc_ih;		/* interrupt handle */
 	cardbus_devfunc_t	sc_ct;		/* our CardBus devfuncs */
-	cardbustag_t		sc_tag;		/* our CardBus tag */
-	cardbusreg_t		sc_csr;		/* CSR bits */
+	pcitag_t		sc_tag;		/* our CardBus tag */
+	pcireg_t		sc_csr;		/* CSR bits */
 	bus_size_t		sc_mapsize;	/* the size of mapped bus space
 						 * region
 						 */
 
-	int			sc_cben;	/* CardBus enables */
 	int			sc_bar_reg;	/* which BAR to use */
-	cardbusreg_t		sc_bar_val;	/* value of the BAR */
+	pcireg_t		sc_bar_val;	/* value of the BAR */
 
 	cardbus_intr_line_t sc_intrline; /* interrupt line */
 };
@@ -122,8 +116,8 @@ CFATTACH_DECL3_NEW(atw_cardbus, sizeof(struct atw_cardbus_softc),
 
 static void	atw_cardbus_setup(struct atw_cardbus_softc *);
 
-static int	atw_cardbus_enable(struct atw_softc *);
-static void	atw_cardbus_disable(struct atw_softc *);
+static bool	atw_cardbus_suspend(device_t, const pmf_qual_t *);
+static bool	atw_cardbus_resume(device_t, const pmf_qual_t *);
 
 static const struct atw_cardbus_product *atw_cardbus_lookup
    (const struct cardbus_attach_args *);
@@ -196,12 +190,6 @@ atw_cardbus_attach(device_t parent, device_t self, void *aux)
 		panic("atw_cardbus_attach: impossible");
 	}
 
-	/*
-	 * Power management hooks.
-	 */
-	sc->sc_enable = atw_cardbus_enable;
-	sc->sc_disable = atw_cardbus_disable;
-
 	/* Get revision info. */
 	sc->sc_rev = PCI_REVISION(ca->ca_class);
 
@@ -211,43 +199,35 @@ atw_cardbus_attach(device_t parent, device_t self, void *aux)
 #if 0
 	printf("%s: signature %08x\n", device_xname(self),
 	    (rev >> 4) & 0xf, rev & 0xf,
-	    cardbus_conf_read(ct->ct_cc, ct->ct_cf, csc->sc_tag, 0x80));
+	    Cardbus_conf_read(ct, csc->sc_tag, 0x80));
 #endif
 
 	/*
 	 * Map the device.
 	 */
-	csc->sc_csr = CARDBUS_COMMAND_MASTER_ENABLE;
+	csc->sc_csr = PCI_COMMAND_MASTER_ENABLE |
+	              PCI_COMMAND_PARITY_ENABLE |
+		      PCI_COMMAND_SERR_ENABLE;
 	if (Cardbus_mapreg_map(ct, ATW_PCI_MMBA,
-	    CARDBUS_MAPREG_TYPE_MEM, 0, &sc->sc_st, &sc->sc_sh, &adr,
+	    PCI_MAPREG_TYPE_MEM, 0, &sc->sc_st, &sc->sc_sh, &adr,
 	    &csc->sc_mapsize) == 0) {
 #if 0
 		printf("%s: atw_cardbus_attach mapped %d bytes mem space\n",
 		    device_xname(self), csc->sc_mapsize);
 #endif
-#if rbus
-#else
-		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
-#endif
-		csc->sc_cben = CARDBUS_MEM_ENABLE;
-		csc->sc_csr |= CARDBUS_COMMAND_MEM_ENABLE;
+		csc->sc_csr |= PCI_COMMAND_MEM_ENABLE;
 		csc->sc_bar_reg = ATW_PCI_MMBA;
-		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_MEM;
+		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_MEM;
 	} else if (Cardbus_mapreg_map(ct, ATW_PCI_IOBA,
-	    CARDBUS_MAPREG_TYPE_IO, 0, &sc->sc_st, &sc->sc_sh, &adr,
+	    PCI_MAPREG_TYPE_IO, 0, &sc->sc_st, &sc->sc_sh, &adr,
 	    &csc->sc_mapsize) == 0) {
 #if 0
 		printf("%s: atw_cardbus_attach mapped %d bytes I/O space\n",
 		    device_xname(self), csc->sc_mapsize);
 #endif
-#if rbus
-#else
-		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);
-#endif
-		csc->sc_cben = CARDBUS_IO_ENABLE;
-		csc->sc_csr |= CARDBUS_COMMAND_IO_ENABLE;
+		csc->sc_csr |= PCI_COMMAND_IO_ENABLE;
 		csc->sc_bar_reg = ATW_PCI_IOBA;
-		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_IO;
+		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_IO;
 	} else {
 		aprint_error_dev(self, "unable to map device registers\n");
 		return;
@@ -271,24 +251,32 @@ atw_cardbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_txthresh = 3; /* TBD name constant */
 #endif
 
-	/*
-	 * Finish off the attach.
-	 */
-	atw_attach(sc);
-
 #if 0
 	for (i = 0; i < __arraycount(funcregs); i++) {
 		aprint_error_dev(sc->sc_dev, "%s %" PRIx32 "\n",
 		    funcregs[i].name, ATW_READ(sc, funcregs[i].ofs));
 	}
 #endif
+
 	ATW_WRITE(sc, ATW_FEMR, 0);
 	ATW_WRITE(sc, ATW_FER, ATW_READ(sc, ATW_FER));
 
 	/*
+	 * Bus-independent attach.
+	 */
+	atw_attach(sc);
+
+	if (pmf_device_register1(sc->sc_dev, atw_cardbus_suspend,
+	    atw_cardbus_resume, atw_shutdown))
+		pmf_class_network_register(sc->sc_dev, &sc->sc_if);
+	else
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
+
+	/*
 	 * Power down the socket.
 	 */
-	Cardbus_function_disable(csc->sc_ct);
+	pmf_device_suspend(sc->sc_dev, &sc->sc_qual);
 }
 
 static int
@@ -312,7 +300,7 @@ atw_cardbus_detach(device_t self, int flags)
 	 * Unhook the interrupt handler.
 	 */
 	if (csc->sc_ih != NULL)
-		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
+		Cardbus_intr_disestablish(ct, csc->sc_ih);
 
 	/*
 	 * Release bus space and close window.
@@ -324,78 +312,56 @@ atw_cardbus_detach(device_t self, int flags)
 	return 0;
 }
 
-static int
-atw_cardbus_enable(struct atw_softc *sc)
+static bool
+atw_cardbus_resume(device_t self, const pmf_qual_t *qual)
 {
-	struct atw_cardbus_softc *csc = (struct atw_cardbus_softc *)sc;
+	struct atw_cardbus_softc *csc = device_private(self);
+	struct atw_softc *sc = &csc->sc_atw;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
-
-	/*
-	 * Power on the socket.
-	 */
-	Cardbus_function_enable(ct);
-
-	/*
-	 * Set up the PCI configuration registers.
-	 */
-	atw_cardbus_setup(csc);
 
 	/*
 	 * Map and establish the interrupt.
 	 */
-	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
+	csc->sc_ih = Cardbus_intr_establish(ct, csc->sc_intrline, IPL_NET,
 	    atw_intr, sc);
 	if (csc->sc_ih == NULL) {
-		aprint_error_dev(sc->sc_dev,
-				 "unable to establish interrupt\n");
-		Cardbus_function_disable(csc->sc_ct);
-		return 1;
+		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
+		return false;
 	}
 
-	return 0;
+	return true;
 }
 
-static void
-atw_cardbus_disable(struct atw_softc *sc)
+static bool
+atw_cardbus_suspend(device_t self, const pmf_qual_t *qual)
 {
-	struct atw_cardbus_softc *csc = (struct atw_cardbus_softc *)sc;
+	struct atw_cardbus_softc *csc = device_private(self);
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* Unhook the interrupt handler. */
-	cardbus_intr_disestablish(cc, cf, csc->sc_ih);
+	Cardbus_intr_disestablish(ct, csc->sc_ih);
 	csc->sc_ih = NULL;
 
-	/* Power down the socket. */
-	Cardbus_function_disable(ct);
+	return atw_suspend(self, qual);
 }
 
 static void
 atw_cardbus_setup(struct atw_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
-	cardbusreg_t csr;
+	pcireg_t csr;
+	int rc;
 
-	(void)cardbus_set_powerstate(ct, csc->sc_tag, PCI_PWR_D0);
+	if ((rc = cardbus_set_powerstate(ct, csc->sc_tag, PCI_PWR_D0)) != 0)
+		aprint_debug("%s: cardbus_set_powerstate %d\n", __func__, rc);
 
 	/* Program the BAR. */
-	cardbus_conf_write(cc, cf, csc->sc_tag, csc->sc_bar_reg,
+	Cardbus_conf_write(ct, csc->sc_tag, csc->sc_bar_reg,
 	    csc->sc_bar_val);
 
-	/* Make sure the right access type is on the CardBus bridge. */
-	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
-	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
-
 	/* Enable the appropriate bits in the PCI CSR. */
-	csr = cardbus_conf_read(cc, cf, csc->sc_tag,
-	    CARDBUS_COMMAND_STATUS_REG);
-	csr &= ~(CARDBUS_COMMAND_IO_ENABLE|CARDBUS_COMMAND_MEM_ENABLE);
+	csr = Cardbus_conf_read(ct, csc->sc_tag, PCI_COMMAND_STATUS_REG);
+	csr &= ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
 	csr |= csc->sc_csr;
-	cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_COMMAND_STATUS_REG,
-	    csr);
+	Cardbus_conf_write(ct, csc->sc_tag, PCI_COMMAND_STATUS_REG, csr);
 }

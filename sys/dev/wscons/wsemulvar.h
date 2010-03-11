@@ -1,4 +1,4 @@
-/* $NetBSD: wsemulvar.h,v 1.14 2008/03/25 00:49:20 cube Exp $ */
+/* $NetBSD: wsemulvar.h,v 1.14.4.1 2010/03/11 15:04:09 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -69,6 +69,9 @@ extern const struct wsemul_ops wsemul_vt100_ops;
 #endif
 
 const struct wsemul_ops *wsemul_pick(const char *);
+void wsemul_drop(const struct wsemul_ops *);
+int wsemul_add(const struct wsemul_ops *);
+int wsemul_remove(const struct wsemul_ops *);
 
 /*
  * Callbacks from the emulation code to the display interface driver.

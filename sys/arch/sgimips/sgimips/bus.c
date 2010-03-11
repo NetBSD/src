@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.53.10.3 2009/09/16 13:37:42 yamt Exp $	*/
+/*	$NetBSD: bus.c,v 1.53.10.4 2010/03/11 15:02:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.53.10.3 2009/09/16 13:37:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.53.10.4 2010/03/11 15:02:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,14 +383,14 @@ bus_space_read_8(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o)
 			s = splhigh();
 			delay(10);
 #endif
-			reg = mips3_ld( (u_int64_t *)(vaddr_t)(bsh + o));
+			reg = mips3_ld((volatile uint64_t *)(vaddr_t)(bsh + o));
 #ifdef MACE_NEEDS_DELAYS
 			delay(10);
 			splx(s);
 #endif
 			break;
 		default:
-			reg = mips3_ld( (u_int64_t *)(vaddr_t)(bsh + o));
+			reg = mips3_ld((volatile uint64_t *)(vaddr_t)(bsh + o));
 			break;
 	}
 	return reg;
@@ -412,14 +412,14 @@ bus_space_write_8(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o, u_i
 			s = splhigh();
 			delay(10);
 #endif
-			mips3_sd( (u_int64_t *)(vaddr_t)(bsh + o), v);
+			mips3_sd((volatile uint64_t *)(vaddr_t)(bsh + o), v);
 #ifdef MACE_NEEDS_DELAYS
 			delay(10);
 			splx(s);
 #endif
 			break;
 		default:
-			mips3_sd( (u_int64_t *)(vaddr_t)(bsh + o), v);
+			mips3_sd((volatile uint64_t *)(vaddr_t)(bsh + o), v);
 			break;
 	}
 }
@@ -840,7 +840,8 @@ _bus_dmamap_sync_mips1(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 #ifdef DIAGNOSTIC
 	if (offset >= map->dm_mapsize)
-		panic("_bus_dmamap_sync_mips1: bad offset %llu (map size is %llu)"
+		panic("_bus_dmamap_sync_mips1: bad offset %"PRIxPSIZE
+		" (map size is %"PRIxPSIZE")"
 		    , offset, map->dm_mapsize);
 	if (len == 0 || (offset + len) > map->dm_mapsize)
 		panic("_bus_dmamap_sync_mips1: bad length");
@@ -942,8 +943,8 @@ _bus_dmamap_sync_mips3(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 #ifdef DIAGNOSTIC
 	if (offset >= map->dm_mapsize)
-		panic("_bus_dmamap_sync_mips3: bad offset %llu "
-		    "(map size is %llu)", offset, map->dm_mapsize);
+		panic("_bus_dmamap_sync_mips3: bad offset %"PRIxPSIZE
+		    "(map size is %"PRIxPSIZE")", offset, map->dm_mapsize);
 	if (len == 0 || (offset + len) > map->dm_mapsize)
 		panic("_bus_dmamap_sync_mips3: bad length");
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.105.2.3 2009/09/16 13:38:06 yamt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.105.2.4 2010/03/11 15:04:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -177,6 +177,7 @@ struct socket {
 		void	*so_accept_filter_arg;	/* saved filter args */
 		char	*so_accept_filter_str;	/* saved user args */
 	} *so_accf;
+	kauth_cred_t	so_cred;	/* socket credentials */
 };
 
 #define	SB_EMPTY_FIXUP(sb)						\
@@ -198,7 +199,8 @@ do {									\
 #define	SS_CANTSENDMORE		0x010	/* can't send more data to peer */
 #define	SS_CANTRCVMORE		0x020	/* can't receive more data from peer */
 #define	SS_RCVATMARK		0x040	/* at mark on input */
-#define	SS_ISDRAINING		0x080	/* draining fd references */
+#define	SS_ISABORTING		0x080	/* aborting fd references - close() */
+#define	SS_RESTARTSYS		0x100	/* restart blocked system calls */
 #define	SS_ISDISCONNECTED	0x800	/* socket disconnected from peer */
 
 #define	SS_ASYNC		0x100	/* async i/o notify */
@@ -256,7 +258,7 @@ int	soo_poll(file_t *, int);
 int	soo_kqfilter(file_t *, struct knote *);
 int 	soo_close(file_t *);
 int	soo_stat(file_t *, struct stat *);
-void	soo_drain(file_t *);
+void	soo_restart(file_t *);
 void	sbappend(struct sockbuf *, struct mbuf *);
 void	sbappendstream(struct sockbuf *, struct mbuf *);
 int	sbappendaddr(struct sockbuf *, const struct sockaddr *, struct mbuf *,
@@ -313,7 +315,7 @@ int	sosend(struct socket *, struct mbuf *, struct uio *,
 int	sosetopt(struct socket *, struct sockopt *);
 int	so_setsockopt(struct lwp *, struct socket *, int, int, const void *, size_t);
 int	soshutdown(struct socket *, int);
-int	sodrain(struct socket *);
+void	sorestart(struct socket *);
 void	sowakeup(struct socket *, struct sockbuf *, int);
 int	sockargs(struct mbuf **, const void *, size_t, int);
 int	sopoll(struct socket *, int);

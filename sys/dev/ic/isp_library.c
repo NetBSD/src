@@ -1,4 +1,4 @@
-/* $NetBSD: isp_library.c,v 1.3.4.1 2009/07/18 14:53:01 yamt Exp $ */
+/* $NetBSD: isp_library.c,v 1.3.4.2 2010/03/11 15:03:31 yamt Exp $ */
 /*
  * Copyright (c) 2006-2007 by Matthew Jacob
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 #ifdef	__NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_library.c,v 1.3.4.1 2009/07/18 14:53:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_library.c,v 1.3.4.2 2010/03/11 15:03:31 yamt Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -670,7 +670,7 @@ isp_clear_commands(ispsoftc_t *isp)
 		} else {
 			ct_entry_t *ctio = (ct_entry_t *) local;
 			ctio->ct_syshandle = handle & 0xffff;
-			ctio->ct_status = CT_HBA_RESET & 0xff;;
+			ctio->ct_status = CT_HBA_RESET & 0xff;
 			ctio->ct_header.rqs_entry_type = RQSTYPE_CTIO;
 		}
 		isp_async(isp, ISPASYNC_TARGET_ACTION, local);

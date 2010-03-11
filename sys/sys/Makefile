@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.108.10.2 2009/09/16 13:38:06 yamt Exp $
+#	$NetBSD: Makefile,v 1.108.10.3 2010/03/11 15:04:41 yamt Exp $
 
 .include <bsd.sys.mk>
 
@@ -8,8 +8,10 @@ INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	bitops.h bootblock.h bswap.h buf.h \
 	callback.h callout.h cdefs.h cdefs_aout.h \
 	cdefs_elf.h cdio.h chio.h clockctl.h condvar.h conf.h core.h \
-	cpuio.h device.h dir.h dirent.h disk.h disklabel.h disklabel_acorn.h \
-	disklabel_gpt.h disklabel_rdb.h \
+	cpuio.h \
+	device.h device_if.h \
+	dir.h dirent.h \
+	disk.h disklabel.h disklabel_acorn.h disklabel_gpt.h disklabel_rdb.h \
 	dkbad.h dkio.h dkstat.h domain.h drvctlio.h dvdio.h \
 	endian.h envsys.h errno.h evcnt.h event.h exec.h exec_aout.h \
 	exec_coff.h exec_ecoff.h exec_elf.h exec_script.h extattr.h extent.h \
@@ -27,8 +29,8 @@ INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	queue.h \
 	ras.h rb.h reboot.h radioio.h resource.h resourcevar.h rmd160.h \
 	rnd.h rwlock.h sa.h satypes.h \
-	scanio.h sched.h scsiio.h select.h selinfo.h sem.h sha1.h sha2.h \
-	shm.h siginfo.h signal.h signalvar.h sigtypes.h simplelock.h \
+	scanio.h sched.h scsiio.h sdt.h select.h selinfo.h sem.h sha1.h \
+	sha2.h shm.h siginfo.h signal.h signalvar.h sigtypes.h simplelock.h \
 	sleepq.h socket.h \
 	socketvar.h sockio.h specificdata.h stat.h statvfs.h \
 	syscall.h syscallargs.h sysctl.h stdint.h swap.h \

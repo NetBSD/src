@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.9 2007/11/10 23:12:23 plunky Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.9.18.1 2010/03/11 15:04:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.9 2007/11/10 23:12:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.9.18.1 2010/03/11 15:04:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -266,8 +266,7 @@ l2cap_recv_connect_req(struct mbuf *m, struct hci_link *link)
 	bdaddr_copy(&raddr.bt_bdaddr, &link->hl_bdaddr);
 
 	LIST_FOREACH(chan, &l2cap_listen_list, lc_ncid) {
-		if (chan->lc_laddr.bt_psm != laddr.bt_psm
-		    && chan->lc_laddr.bt_psm != L2CAP_PSM_ANY)
+		if (chan->lc_laddr.bt_psm != laddr.bt_psm)
 			continue;
 
 		if (!bdaddr_same(&laddr.bt_bdaddr, &chan->lc_laddr.bt_bdaddr)

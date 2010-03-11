@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.104.10.4 2009/08/19 18:48:18 yamt Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.104.10.5 2010/03/11 15:04:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.104.10.4 2009/08/19 18:48:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.104.10.5 2010/03/11 15:04:21 yamt Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -374,7 +374,7 @@ namei_start2(struct namei_state *state)
 		state->namei_startdir = cwdi->cwdi_cdir;
 		ndp->ni_erootdir = NULL;
 	}
-	VREF(state->namei_startdir);
+	vref(state->namei_startdir);
 	rw_exit(&cwdi->cwdi_lock);
 
 	/*
@@ -509,7 +509,7 @@ badlink:
 			ndp->ni_erootdir = NULL;
 			state->namei_startdir = ndp->ni_rootdir;
 		}
-		VREF(state->namei_startdir);
+		vref(state->namei_startdir);
 		vn_lock(state->namei_startdir, LK_EXCLUSIVE | LK_RETRY);
 	}
 
@@ -546,7 +546,7 @@ do_namei(struct namei_state *state)
 		}
 		cnp->cn_nameptr = cnp->cn_pnbuf;
 		ndp->ni_startdir = state->namei_startdir;
-		error = lookup(ndp);
+		error = do_lookup(state);
 		if (error != 0) {
 			/* XXX this should use namei_end() */
 			if (ndp->ni_dvp) {
@@ -855,7 +855,7 @@ lookup_once(struct namei_state *state)
 			if (state->dp == ndp->ni_rootdir || state->dp == rootvnode) {
 				ndp->ni_dvp = state->dp;
 				ndp->ni_vp = state->dp;
-				VREF(state->dp);
+				vref(state->dp);
 				return 0;
 			}
 			if (ndp->ni_rootdir != rootvnode) {
@@ -876,8 +876,8 @@ lookup_once(struct namei_state *state)
 				    state->dp = ndp->ni_rootdir;
 				    ndp->ni_dvp = state->dp;
 				    ndp->ni_vp = state->dp;
-				    VREF(state->dp);
-				    VREF(state->dp);
+				    vref(state->dp);
+				    vref(state->dp);
 				    vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
 				    return 0;
 				}
@@ -888,7 +888,7 @@ lookup_once(struct namei_state *state)
 			tdp = state->dp;
 			state->dp = state->dp->v_mount->mnt_vnodecovered;
 			vput(tdp);
-			VREF(state->dp);
+			vref(state->dp);
 			vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
 		}
 	}
@@ -915,7 +915,7 @@ unionlookup:
 			tdp = state->dp;
 			state->dp = state->dp->v_mount->mnt_vnodecovered;
 			vput(tdp);
-			VREF(state->dp);
+			vref(state->dp);
 			vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
 			goto unionlookup;
 		}
@@ -947,7 +947,7 @@ unionlookup:
 		 */
 		if (cnp->cn_flags & SAVESTART) {
 			ndp->ni_startdir = ndp->ni_dvp;
-			VREF(ndp->ni_startdir);
+			vref(ndp->ni_startdir);
 		}
 		state->lookup_alldone = 1;
 		return (0);
@@ -1094,7 +1094,7 @@ terminal:
 		ndp->ni_dvp = NULL;
 		vput(state->dp);
 		state->dp = ndp->ni_rootdir;
-		VREF(state->dp);
+		vref(state->dp);
 		vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
 		ndp->ni_vp = state->dp;
 	}
@@ -1135,7 +1135,7 @@ terminal:
 	if (ndp->ni_dvp != NULL) {
 		if (cnp->cn_flags & SAVESTART) {
 			ndp->ni_startdir = ndp->ni_dvp;
-			VREF(ndp->ni_startdir);
+			vref(ndp->ni_startdir);
 		}
 	}
 	if ((cnp->cn_flags & LOCKLEAF) == 0) {
@@ -1149,10 +1149,160 @@ bad:
 }
 
 /*
- * Externally visible interface used by nfsd (bletch, yuk, XXX)
+ * Externally visible interfaces used by nfsd (bletch, yuk, XXX)
+ *
+ * The "index" version differs from the "main" version in that it's
+ * called from a different place in a different context. For now I
+ * want to be able to shuffle code in from one call site without
+ * affecting the other.
  */
+
 int
-lookup(struct nameidata *ndp)
+lookup_for_nfsd(struct nameidata *ndp, struct vnode *dp, int neverfollow)
+{
+	struct namei_state state;
+	int error;
+
+	struct iovec aiov;
+	struct uio auio;
+	int linklen;
+	char *cp;
+
+	/* For now at least we don't have to frob the state */
+	namei_init(&state, ndp);
+
+	/*
+	 * BEGIN wodge of code from nfsd
+	 */
+
+	vref(dp);
+	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
+
+    for (;;) {
+
+	state.cnp->cn_nameptr = state.cnp->cn_pnbuf;
+	state.ndp->ni_startdir = dp;
+
+	/*
+	 * END wodge of code from nfsd
+	 */
+
+	error = do_lookup(&state);
+	if (error) {
+		/* BEGIN from nfsd */
+		if (ndp->ni_dvp) {
+			vput(ndp->ni_dvp);
+		}
+		PNBUF_PUT(state.cnp->cn_pnbuf);
+		/* END from nfsd */
+		namei_cleanup(&state);
+		return error;
+	}
+
+	/*
+	 * BEGIN wodge of code from nfsd
+	 */
+
+	/*
+	 * Check for encountering a symbolic link
+	 */
+	if ((state.cnp->cn_flags & ISSYMLINK) == 0) {
+		if ((state.cnp->cn_flags & LOCKPARENT) == 0 && state.ndp->ni_dvp) {
+			if (state.ndp->ni_dvp == state.ndp->ni_vp) {
+				vrele(state.ndp->ni_dvp);
+			} else {
+				vput(state.ndp->ni_dvp);
+			}
+		}
+		if (state.cnp->cn_flags & (SAVENAME | SAVESTART)) {
+			state.cnp->cn_flags |= HASBUF;
+		} else {
+			PNBUF_PUT(state.cnp->cn_pnbuf);
+#if defined(DIAGNOSTIC)
+			state.cnp->cn_pnbuf = NULL;
+#endif /* defined(DIAGNOSTIC) */
+		}
+		return (0);
+	} else {
+		if (neverfollow) {
+			error = EINVAL;
+			goto out;
+		}
+		if (state.ndp->ni_loopcnt++ >= MAXSYMLINKS) {
+			error = ELOOP;
+			goto out;
+		}
+		if (state.ndp->ni_vp->v_mount->mnt_flag & MNT_SYMPERM) {
+			error = VOP_ACCESS(ndp->ni_vp, VEXEC, state.cnp->cn_cred);
+			if (error != 0)
+				goto out;
+		}
+		if (state.ndp->ni_pathlen > 1)
+			cp = PNBUF_GET();
+		else
+			cp = state.cnp->cn_pnbuf;
+		aiov.iov_base = cp;
+		aiov.iov_len = MAXPATHLEN;
+		auio.uio_iov = &aiov;
+		auio.uio_iovcnt = 1;
+		auio.uio_offset = 0;
+		auio.uio_rw = UIO_READ;
+		auio.uio_resid = MAXPATHLEN;
+		UIO_SETUP_SYSSPACE(&auio);
+		error = VOP_READLINK(ndp->ni_vp, &auio, state.cnp->cn_cred);
+		if (error) {
+badlink:
+			if (ndp->ni_pathlen > 1)
+				PNBUF_PUT(cp);
+			goto out;
+		}
+		linklen = MAXPATHLEN - auio.uio_resid;
+		if (linklen == 0) {
+			error = ENOENT;
+			goto badlink;
+		}
+		if (linklen + ndp->ni_pathlen >= MAXPATHLEN) {
+			error = ENAMETOOLONG;
+			goto badlink;
+		}
+		if (ndp->ni_pathlen > 1) {
+			memcpy(cp + linklen, ndp->ni_next, ndp->ni_pathlen);
+			PNBUF_PUT(state.cnp->cn_pnbuf);
+			state.cnp->cn_pnbuf = cp;
+		} else
+			state.cnp->cn_pnbuf[linklen] = '\0';
+		state.ndp->ni_pathlen += linklen;
+		vput(state.ndp->ni_vp);
+		dp = state.ndp->ni_dvp;
+
+		/*
+		 * Check if root directory should replace current directory.
+		 */
+		if (state.cnp->cn_pnbuf[0] == '/') {
+			vput(dp);
+			dp = ndp->ni_rootdir;
+			vref(dp);
+			vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
+		}
+	}
+
+    }
+ out:
+	vput(state.ndp->ni_vp);
+	vput(state.ndp->ni_dvp);
+	state.ndp->ni_vp = NULL;
+	PNBUF_PUT(state.cnp->cn_pnbuf);
+
+	/*
+	 * END wodge of code from nfsd
+	 */
+	namei_cleanup(&state);
+
+	return error;
+}
+
+int
+lookup_for_nfsd_index(struct nameidata *ndp)
 {
 	struct namei_state state;
 	int error;
@@ -1250,7 +1400,7 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		goto bad;
 	}
 	if (cnp->cn_flags & SAVESTART)
-		VREF(dvp);
+		vref(dvp);
 	return (0);
 
 bad:

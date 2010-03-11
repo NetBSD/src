@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sa.h,v 1.2.30.1 2009/05/04 08:12:25 yamt Exp $	*/
+/*	$NetBSD: netbsd32_sa.h,v 1.2.30.2 2010/03/11 15:03:18 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2006 The NetBSD Foundation.
@@ -42,6 +42,7 @@ struct netbsd32_sa_t {
 };
 
 typedef netbsd32_pointer_t netbsd32_sa_tp;
+extern const struct sa_emul saemul_netbsd32;
 
 int	netbsd32_sacopyout(int, const void *, void *);
 int	netbsd32_upcallconv(struct lwp *, int, size_t *, void **,

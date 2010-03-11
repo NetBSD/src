@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.34.4.4 2009/09/16 13:37:44 yamt Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.34.4.5 2010/03/11 15:03:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.34.4.4 2009/09/16 13:37:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.34.4.5 2010/03/11 15:03:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,11 +67,15 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.34.4.4 2009/09/16 13:37:44 yamt E
 #include <dev/pci/pcivar.h>
 #endif
 #include <dev/wsfb/genfbvar.h>
+#if NPCI > 0
 #include <dev/pci/genfb_pcivar.h>
+#endif
 #include <dev/ic/vgareg.h>
 
+#if NPCI > 0
 static struct genfb_colormap_callback gfb_cb;
 static struct genfb_pmf_callback pmf_cb;
+#endif
 #ifdef VGA_POST
 static struct vga_post *vga_posth = NULL;
 #endif
@@ -90,13 +94,13 @@ x86_genfb_set_mapreg(void *opaque, int index, int r, int g, int b)
 }
 
 static bool
-x86_genfb_suspend(device_t dev PMF_FN_ARGS)
+x86_genfb_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	return true;
 }
 
 static bool
-x86_genfb_resume(device_t dev PMF_FN_ARGS)
+x86_genfb_resume(device_t dev, const pmf_qual_t *qual)
 {
 #if NGENFB > 0
 	struct pci_genfb_softc *psc = device_private(dev);
@@ -152,6 +156,7 @@ matchbiosdisks(void)
 	struct btinfo_biosgeom *big;
 	struct bi_biosgeom_entry *be;
 	device_t dv;
+	deviter_t di;
 	int i, ck, error, m, n;
 	struct vnode *tv;
 	char mbr[DEV_BSIZE];
@@ -163,10 +168,12 @@ matchbiosdisks(void)
 	numbig = big ? big->num : 0;
 
 	/* First, count all native disks. */
-	TAILQ_FOREACH(dv, &alldevs, dv_list) {
+	for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
+	     dv = deviter_next(&di)) {
 		if (is_valid_disk(dv))
 			x86_ndisks++;
 	}
+	deviter_release(&di);
 
 	dklist_size = sizeof(struct disklist) + (x86_ndisks - 1) *
 	    sizeof(struct nativedisk_info);
@@ -196,7 +203,8 @@ matchbiosdisks(void)
 
 	/* XXX Code duplication from findroot(). */
 	n = -1;
-	TAILQ_FOREACH(dv, &alldevs, dv_list) {
+	for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
+	     dv = deviter_next(&di)) {
 		if (device_class(dv) != DV_DISK)
 			continue;
 #ifdef GEOM_DEBUG
@@ -251,6 +259,7 @@ matchbiosdisks(void)
 			vput(tv);
 		}
 	}
+	deviter_release(&di);
 }
 
 /*
@@ -364,6 +373,7 @@ findroot(void)
 	struct btinfo_bootwedge *biw;
 	struct btinfo_biosgeom *big;
 	device_t dv;
+	deviter_t di;
 
 	if (booted_device)
 		return;
@@ -380,7 +390,9 @@ findroot(void)
 	}
 
 	if ((biv = lookup_bootinfo(BTINFO_ROOTDEVICE)) != NULL) {
-		TAILQ_FOREACH(dv, &alldevs, dv_list) {
+		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+		     dv != NULL;
+		     dv = deviter_next(&di)) {
 			cfdata_t cd;
 			size_t len;
 
@@ -393,9 +405,12 @@ findroot(void)
 			if (strncmp(cd->cf_name, biv->devname, len) == 0 &&
 			    biv->devname[len] - '0' == cd->cf_unit) {
 				handle_wedges(dv, biv->devname[len + 1] - 'a');
-				return;
+				break;
 			}
 		}
+		deviter_release(&di);
+		if (dv != NULL)
+			return;
 	}
 
 	if ((biw = lookup_bootinfo(BTINFO_BOOTWEDGE)) != NULL) {
@@ -406,7 +421,9 @@ findroot(void)
 		 * because lower devices numbers are more likely to be the
 		 * boot device.
 		 */
-		TAILQ_FOREACH(dv, &alldevs, dv_list) {
+		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+		     dv != NULL;
+		     dv = deviter_next(&di)) {
 			if (device_class(dv) != DV_DISK)
 				continue;
 
@@ -433,6 +450,7 @@ findroot(void)
 			}
 			dkwedge_set_bootwedge(dv, biw->startblk, biw->nblks);
 		}
+		deviter_release(&di);
 
 		if (booted_wedge)
 			return;
@@ -446,7 +464,9 @@ findroot(void)
 		 * because lower device numbers are more likely to be the
 		 * boot device.
 		 */
-		TAILQ_FOREACH(dv, &alldevs, dv_list) {
+		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+		     dv != NULL;
+		     dv = deviter_next(&di)) {
 			if (device_class(dv) != DV_DISK)
 				continue;
 
@@ -487,6 +507,7 @@ findroot(void)
 			}
 			handle_wedges(dv, bid->partition);
 		}
+		deviter_release(&di);
 
 		if (booted_device)
 			return;
@@ -509,7 +530,9 @@ findroot(void)
 			 * recognized as a bootable CD-ROM drive by the BIOS.
 			 * Assume the first unit is the one.
 			 */
-			TAILQ_FOREACH(dv, &alldevs, dv_list) {
+			for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+			     dv != NULL;
+			     dv = deviter_next(&di)) {
 				if (device_class(dv) == DV_DISK &&
 				    device_is_a(dv, "cd")) {
 					booted_device = dv;
@@ -517,6 +540,7 @@ findroot(void)
 					break;
 				}
 			}
+			deviter_release(&di);
 		}
 	}
 }
@@ -530,11 +554,11 @@ cpu_rootconf(void)
 
 	if (booted_wedge) {
 		KASSERT(booted_device != NULL);
-		printf("boot device: %s (%s)\n",
+		aprint_normal("boot device: %s (%s)\n",
 		    device_xname(booted_wedge), device_xname(booted_device));
 		setroot(booted_wedge, 0);
 	} else {
-		printf("boot device: %s\n",
+		aprint_normal("boot device: %s\n",
 		    booted_device ? device_xname(booted_device) : "<unknown>");
 		setroot(booted_device, booted_partition);
 	}
@@ -607,19 +631,38 @@ device_register(device_t dev, void *aux)
 #endif
 
 			fbinfo = lookup_bootinfo(BTINFO_FRAMEBUFFER);
-			if (fbinfo == NULL || fbinfo->physaddr == 0)
-				return;
 			dict = device_properties(dev);
-			prop_dictionary_set_uint32(dict, "width",
-			    fbinfo->width);
-			prop_dictionary_set_uint32(dict, "height",
-			    fbinfo->height);
-			prop_dictionary_set_uint8(dict, "depth",
-			    fbinfo->depth);
-			prop_dictionary_set_uint64(dict, "address",
-			    fbinfo->physaddr);
-			prop_dictionary_set_uint16(dict, "linebytes",
-			    fbinfo->stride);
+			/*
+			 * framebuffer drivers other than genfb can work
+			 * without the address property
+			 */
+			if (fbinfo != NULL) {
+				if (fbinfo->physaddr != 0) {
+				prop_dictionary_set_uint32(dict, "width",
+				    fbinfo->width);
+				prop_dictionary_set_uint32(dict, "height",
+				    fbinfo->height);
+				prop_dictionary_set_uint8(dict, "depth",
+				    fbinfo->depth);
+				prop_dictionary_set_uint16(dict, "linebytes",
+				    fbinfo->stride);
+
+					prop_dictionary_set_uint64(dict,
+					    "address", fbinfo->physaddr);
+				}
+#if notyet
+				prop_dictionary_set_bool(dict, "splash",
+				    fbinfo->flags & BI_FB_SPLASH ?
+				     true : false);
+#endif
+				if (fbinfo->depth == 8) {
+					gfb_cb.gcc_cookie = NULL;
+					gfb_cb.gcc_set_mapreg = 
+					    x86_genfb_set_mapreg;
+					prop_dictionary_set_uint64(dict,
+					    "cmap_callback", (uint64_t)&gfb_cb);
+				}
+			}
 			prop_dictionary_set_bool(dict, "is_console", true);
 			prop_dictionary_set_bool(dict, "clear-screen", false);
 #if NWSDISPLAY > 0 && NGENFB > 0
@@ -630,12 +673,6 @@ device_register(device_t dev, void *aux)
 			prop_dictionary_set_bool(dict, "splash",
 			    fbinfo->flags & BI_FB_SPLASH ? true : false);
 #endif
-			if (fbinfo->depth == 8) {
-				gfb_cb.gcc_cookie = NULL;
-				gfb_cb.gcc_set_mapreg = x86_genfb_set_mapreg;
-				prop_dictionary_set_uint64(dict,
-				    "cmap_callback", (uint64_t)&gfb_cb);
-			}
 			pmf_cb.gpc_suspend = x86_genfb_suspend;
 			pmf_cb.gpc_resume = x86_genfb_resume;
 			prop_dictionary_set_uint64(dict,

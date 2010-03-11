@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.7.78.2 2009/05/04 08:10:35 yamt Exp $ */
+/* $NetBSD: console.c,v 1.7.78.3 2010/03/11 15:02:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -115,6 +115,10 @@ consinit(void *consptr) {
 	if (OpenDevice("timer.device", 0, (struct AmigaIO*)mc->tmior, 0))
 		goto err;
 
+#ifdef SERCONSOLE
+	RawIOInit();
+#endif
+
 	ConsoleBase = mc;
 	return 0;
 
@@ -178,10 +182,16 @@ void
 putchar(int c)
 {
 	struct Console *mc = ConsoleBase;
+	char buf = c;
 
 	mc->cnior->length = 1;
-	mc->cnior->buf = &c;
+	mc->cnior->buf = &buf;
 	mc->cnior->cmd = Cmd_Wr;
+
+#ifdef SERCONSOLE
+	RawPutChar((int32_t)c);
+#endif
+
 	(void)DoIO(mc->cnior);
 }
 
@@ -193,6 +203,12 @@ puts(char *s)
 	mc->cnior->length = -1;
 	mc->cnior->buf = s;
 	mc->cnior->cmd = Cmd_Wr;
+
+#ifdef SERCONSOLE
+	while (*s)
+		RawPutChar(*s++);
+#endif
+
 	(void)DoIO(mc->cnior);
 }
 
@@ -200,8 +216,12 @@ int
 getchar(void)
 {
 	struct AmigaIO *ior;
-	char c = -1;
+	char c = '\n';
 	struct Console *mc = ConsoleBase;
+	unsigned long ticks;
+#ifdef SERCONSOLE
+	int32_t r;
+#endif
 
 	mc->cnior->length = 1;
 	mc->cnior->buf = &c;
@@ -209,22 +229,37 @@ getchar(void)
 
 	SendIO(mc->cnior);
 
-	if (timelimit) {
+	ticks = 10 * timelimit;
+	do {
+		if (timelimit == 0)
+			ticks = 2;
+
 		mc->tmior->cmd = Cmd_Addtimereq;
-		mc->tmior->secs = timelimit;
-		mc->tmior->usec = 2; /* Paranoid */
+		mc->tmior->secs = 0;
+		mc->tmior->usec = 100000;
 		SendIO((struct AmigaIO *)mc->tmior);
 
 		ior = WaitPort(mc->cnmp);
-		if (ior == mc->cnior)
+		if (ior == mc->cnior) {
 			AbortIO((struct AmigaIO *)mc->tmior);
-		else /* if (ior == mc->tmior) */ {
-			AbortIO(mc->cnior);
-			c = '\n';
+			ticks = 1;
+		} else /* if (ior == mc->tmior) */ {
+#ifdef SERCONSOLE
+			r = RawMayGetChar();
+			if (r != -1) {
+				c = r;
+				ticks = 1;
+			}
+#endif
+			if (ticks == 1)
+				AbortIO((struct AmigaIO *)mc->cnior);
 		}
 		WaitIO((struct AmigaIO *)mc->tmior);
-		timelimit = 0;
-	}
+
+		--ticks;
+	} while (ticks != 0);
+	timelimit = 0;
+
 	(void)WaitIO(mc->cnior);
 	return c;
 }

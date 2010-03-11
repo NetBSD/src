@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.62.10.2 2009/09/16 13:37:58 yamt Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.62.10.3 2010/03/11 15:04:05 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,11 +70,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.62.10.2 2009/09/16 13:37:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.62.10.3 2010/03/11 15:04:05 yamt Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "rnd.h"
 #elif defined(__OpenBSD__)
 #include "bpfilter.h"
@@ -100,9 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.62.10.2 2009/09/16 13:37:58 yamt Exp $"
 #endif
 #include <net/if_dl.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #if defined(__NetBSD__)
 #include <net/if_ether.h>
@@ -429,8 +426,10 @@ USB_ATTACH(kue)
 
 	sc->kue_dev = self;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
@@ -591,19 +590,14 @@ kue_activate(device_ptr_t self, enum devact act)
 	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->kue_dev), __func__));
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
 	case DVACT_DEACTIVATE:
-#if defined(__NetBSD__)
 		/* Deactivate the interface. */
 		if_deactivate(&sc->kue_ec.ec_if);
-#endif
 		sc->kue_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 
 /*
@@ -773,7 +767,6 @@ kue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto done1;
 	}
 
-#if NBPFILTER > 0
 	/*
 	 * Handle BPF listeners. Let the BPF user see the packet, but
 	 * don't pass it up to the ether_input() layer unless it's
@@ -781,8 +774,7 @@ kue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	 * address or the interface is in promiscuous mode.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->kue_dev),
 		    __func__, m->m_len));
@@ -921,14 +913,12 @@ kue_start(struct ifnet *ifp)
 
 	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
-#if NBPFILTER > 0
 	/*
 	 * If there's a BPF listener, bounce a copy of this frame
 	 * to him.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m_head);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 
 	ifp->if_flags |= IFF_OACTIVE;
 

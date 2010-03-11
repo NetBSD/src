@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.96.16.1 2009/05/04 08:14:38 yamt Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.96.16.2 2010/03/11 15:04:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,11 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.96.16.1 2009/05/04 08:14:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.96.16.2 2010/03/11 15:04:46 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
-#include "fs_ffs.h"
 #endif
 
 #include <sys/param.h>
@@ -531,7 +530,7 @@ found:
 		else
 			dp->i_count = dp->i_offset - prevoff;
 		if (dp->i_number == foundino) {
-			VREF(vdp);
+			vref(vdp);
 			*vpp = vdp;
 			error = 0;
 			goto out;
@@ -623,7 +622,7 @@ found:
 		}
 		*vpp = tdp;
 	} else if (dp->i_number == foundino) {
-		VREF(vdp);	/* we want ourself, ie "." */
+		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
 		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
@@ -1047,7 +1046,6 @@ out:
 	}
 	error = VOP_BWRITE(bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
-#ifdef FFS
 	/*
 	 * If the last named reference to a snapshot goes away,
 	 * drop its snapshot reference so that it will be reclaimed
@@ -1057,7 +1055,6 @@ out:
 	    ip->i_nlink == 0)
 		ffs_snapgone(ip);
 	UFS_WAPBL_UPDATE(dvp, NULL, NULL, 0);
-#endif
 	return (error);
 }
 
@@ -1087,7 +1084,6 @@ ufs_dirrewrite(struct inode *dp, struct inode *oip, ino_t newinum, int newtype,
 	UFS_WAPBL_UPDATE(ITOV(oip), NULL, NULL, UPDATE_DIROP);
 	error = VOP_BWRITE(bp);
 	dp->i_flag |= iflags;
-#ifdef FFS
 	/*
 	 * If the last named reference to a snapshot goes away,
 	 * drop its snapshot reference so that it will be reclaimed
@@ -1096,7 +1092,6 @@ ufs_dirrewrite(struct inode *dp, struct inode *oip, ino_t newinum, int newtype,
 	if ((oip->i_flags & SF_SNAPSHOT) != 0 && oip->i_nlink == 0)
 		ffs_snapgone(oip);
 	UFS_WAPBL_UPDATE(vdp, NULL, NULL, UPDATE_DIROP);
-#endif
 	return (error);
 }
 
@@ -1176,7 +1171,7 @@ ufs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 int
 ufs_checkpath(struct inode *source, struct inode *target, kauth_cred_t cred)
 {
-	struct vnode *vp = ITOV(target);
+	struct vnode *nextvp, *vp;
 	int error, rootino, namlen;
 	struct dirtemplate dirbuf;
 	const int needswap = UFS_MPNEEDSWAP(target->i_ump);
@@ -1224,13 +1219,15 @@ ufs_checkpath(struct inode *source, struct inode *target, kauth_cred_t cred)
 		}
 		if (ufs_rw32(dirbuf.dotdot_ino, needswap) == rootino)
 			break;
-		vput(vp);
+		VOP_UNLOCK(vp, 0);
 		error = VFS_VGET(vp->v_mount,
-		    ufs_rw32(dirbuf.dotdot_ino, needswap), &vp);
+		    ufs_rw32(dirbuf.dotdot_ino, needswap), &nextvp);
+		vrele(vp);
 		if (error) {
 			vp = NULL;
 			break;
 		}
+		vp = nextvp;
 	}
 
 out:

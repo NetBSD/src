@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.20.10.2 2009/05/04 08:10:38 yamt Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.20.10.3 2010/03/11 15:02:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.20.10.2 2009/05/04 08:10:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.20.10.3 2010/03/11 15:02:04 yamt Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -77,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.20.10.2 2009/05/04 08:10:38 yamt
 #include <sys/reboot.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 #include <sys/syscallvar.h>
 
 #include <uvm/uvm_extern.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.13.4.2 2009/06/20 07:20:03 yamt Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.13.4.3 2010/03/11 15:02:23 yamt Exp $	*/
 
 /*	$OpenBSD: sti_sgc.c,v 1.21 2003/12/22 23:39:06 mickey Exp $	*/
 
@@ -14,22 +14,18 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF MIND,
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
  * These cards has to be known to work so far:
@@ -39,7 +35,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.13.4.2 2009/06/20 07:20:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.13.4.3 2010/03/11 15:02:23 yamt Exp $");
+
+#include "opt_cputype.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +249,7 @@ sti_sgc_attach(device_t parent, device_t self, void *aux)
 	 * "pcxl2_ers.{ps,pdf}", (section / chapter . rel. page / abs. page)
 	 * 8.7.4 / 8-12 / 92, 11.3.14 / 11-14 / 122 and 14.8 / 14-5 / 203.
 	 */
-	if (strcmp(hppa_cpu_info->hppa_cpu_info_chip_type, "PCX-L2") == 0
+	if (hppa_cpu_info->hci_cputype == hpcxl2
 	    && ca->ca_hpa >= PCXL2_ACCEL_IO_START
 	    && ca->ca_hpa <= PCXL2_ACCEL_IO_END)
 		eaio_l2(PCXL2_ACCEL_IO_ADDR2MASK(ca->ca_hpa));

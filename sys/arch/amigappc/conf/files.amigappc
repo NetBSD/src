@@ -1,4 +1,4 @@
-#	$NetBSD: files.amigappc,v 1.19.10.1 2009/08/19 18:45:56 yamt Exp $
+#	$NetBSD: files.amigappc,v 1.19.10.2 2010/03/11 15:02:02 yamt Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -54,7 +54,7 @@ file	arch/amiga/amiga/amiga_bus_simple_4.c
 define	amibus_ww
 file	arch/amiga/amiga/amiga_bus_simple_2word.c
 
-define amibus_wb
+define	amibus_wb
 file	arch/amiga/amiga/amiga_bus_simple_1word.c
 
 define	amibus_b16
@@ -267,6 +267,11 @@ device	hyper: supio
 attach	hyper at zbus
 file	arch/amiga/dev/hyper.c		hyper
 
+# IOBlix
+device	iobl: supio, amibus_b16
+attach	iobl at zbus with iobl_zbus
+file	arch/amiga/dev/ioblix_zbus.c	iobl_zbus
+
 attach	com at supio with com_supio
 file	arch/amiga/dev/com_supio.c	com_supio
 
@@ -429,4 +434,4 @@ file	arch/amiga/dev/wdc_buddha.c	wdc_buddha
 # OSS audio driver compatibility
 #include "compat/ossaudio/files.ossaudio"
 
-include "arch/amiga/conf/majors.amiga"
+include "arch/amigappc/conf/majors.amigappc"

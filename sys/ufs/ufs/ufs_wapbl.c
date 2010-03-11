@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.7.2.2 2009/05/04 08:14:39 yamt Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.7.2.3 2010/03/11 15:04:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,12 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.7.2.2 2009/05/04 08:14:39 yamt Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_quota.h"
-#include "fs_lfs.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.7.2.3 2010/03/11 15:04:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

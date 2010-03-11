@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_lcd.c,v 1.3.44.1 2009/05/04 08:11:00 yamt Exp $ */
+/*	$NetBSD: smdk2410_lcd.c,v 1.3.44.2 2010/03/11 15:02:16 yamt Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_lcd.c,v 1.3.44.1 2009/05/04 08:11:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_lcd.c,v 1.3.44.2 2010/03/11 15:02:16 yamt Exp $");
 
 /*
  * LCD driver for Samsung SMDK2410.
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: smdk2410_lcd.c,v 1.3.44.1 2009/05/04 08:11:00 yamt E
 #include <arm/s3c2xx0/s3c2410reg.h>
 #include <arm/s3c2xx0/s3c24x0_lcd.h>
 
+#include "locators.h"
 #include "wsdisplay.h"
 
 int	lcd_match(struct device *, struct cfdata *, void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.139.2.3 2009/06/20 07:20:31 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.139.2.4 2010/03/11 15:04:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,10 +62,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.139.2.3 2009/06/20 07:20:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.139.2.4 2010/03/11 15:04:17 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
+#include "opt_dtrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.139.2.3 2009/06/20 07:20:31 yamt Exp
 #include <sys/sleepq.h>
 #include <sys/atomic.h>
 #include <sys/kmem.h>
+#include <sys/dtrace_bsd.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
@@ -192,7 +194,7 @@ struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
 #endif
 	.l_proc = &proc0,
 	.l_lid = 1,
-	.l_flag = LW_INMEM | LW_SYSTEM,
+	.l_flag = LW_SYSTEM,
 	.l_stat = LSONPROC,
 	.l_ts = &turnstile0,
 	.l_syncobj = &sched_syncobj,
@@ -206,8 +208,6 @@ struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
 	.l_fd = &filedesc0,
 };
 kauth_cred_t cred0;
-
-extern struct user *proc0paddr;
 
 int nofile = NOFILE;
 int maxuprc = MAXUPRC;
@@ -234,6 +234,80 @@ static void		orphanpg(struct pgrp *);
 static specificdata_domain_t proc_specificdata_domain;
 
 static pool_cache_t proc_cache;
+
+static kauth_listener_t proc_listener;
+
+static int
+proc_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	struct proc *p;
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+	p = arg0;
+
+	switch (action) {
+	case KAUTH_PROCESS_CANSEE: {
+		enum kauth_process_req req;
+
+		req = (enum kauth_process_req)arg1;
+
+		switch (req) {
+		case KAUTH_REQ_PROCESS_CANSEE_ARGS:
+		case KAUTH_REQ_PROCESS_CANSEE_ENTRY:
+		case KAUTH_REQ_PROCESS_CANSEE_OPENFILES:
+			result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		case KAUTH_REQ_PROCESS_CANSEE_ENV:
+			if (kauth_cred_getuid(cred) !=
+			    kauth_cred_getuid(p->p_cred) ||
+			    kauth_cred_getuid(cred) !=
+			    kauth_cred_getsvuid(p->p_cred))
+				break;
+
+			result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		default:
+			break;
+		}
+
+		break;
+		}
+
+	case KAUTH_PROCESS_FORK: {
+		int lnprocs = (int)(unsigned long)arg2;
+
+		/*
+		 * Don't allow a nonprivileged user to use the last few
+		 * processes. The variable lnprocs is the current number of
+		 * processes, maxproc is the limit.
+		 */
+		if (__predict_false((lnprocs >= maxproc - 5)))
+			break;
+
+		result = KAUTH_RESULT_ALLOW;
+
+		break;
+		}
+
+	case KAUTH_PROCESS_CORENAME:
+	case KAUTH_PROCESS_STOPFLAG:
+		if (proc_uidmatch(cred, p->p_cred) == 0)
+			result = KAUTH_RESULT_ALLOW;
+
+		break;
+
+	default:
+		break;
+	}
+
+	return result;
+}
 
 /*
  * Initialize global process hashing structures.
@@ -272,6 +346,9 @@ procinit(void)
 
 	proc_cache = pool_cache_init(sizeof(struct proc), 0, 0, 0,
 	    "procpl", NULL, IPL_NONE, NULL, NULL, NULL);
+
+	proc_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
+	    proc_listener_cb, NULL);
 }
 
 /*
@@ -282,21 +359,19 @@ proc0_init(void)
 {
 	struct proc *p;
 	struct pgrp *pg;
-	struct session *sess;
 	struct lwp *l;
 	rlim_t lim;
 	int i;
 
 	p = &proc0;
 	pg = &pgrp0;
-	sess = &session0;
 	l = &lwp0;
 
+	KASSERT((void *)uvm_lwp_getuarea(l) != NULL);
 	KASSERT(l->l_lid == p->p_nlwpid);
 
 	mutex_init(&p->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
 	mutex_init(&p->p_auxlock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&l->l_swaplock, MUTEX_DEFAULT, IPL_NONE);
 	p->p_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 
 	rw_init(&p->p_reflock);
@@ -343,7 +418,7 @@ proc0_init(void)
 	limit0.pl_rlimit[RLIMIT_NPROC].rlim_cur =
 	    maxproc < maxuprc ? maxproc : maxuprc;
 
-	lim = ptoa(uvmexp.free);
+	lim = MIN(VM_MAXUSER_ADDRESS, ctob((rlim_t)uvmexp.free));
 	limit0.pl_rlimit[RLIMIT_RSS].rlim_max = lim;
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_max = lim;
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
@@ -365,11 +440,11 @@ proc0_init(void)
 	uvmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),
 	    trunc_page(VM_MAX_ADDRESS));
 
-	l->l_addr = proc0paddr;				/* XXX */
-
 	/* Initialize signal state for proc0. XXX IPL_SCHED */
 	mutex_init(&p->p_sigacts->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
 	siginit(p);
+
+	kdtrace_proc_ctor(NULL, p);
 
 	proc_initspecific(p);
 	lwp_initspecific(l);
@@ -639,6 +714,8 @@ proc_alloc(void)
 	pt->pt_proc = p;
 	pid_alloc_cnt++;
 
+	kdtrace_proc_ctor(NULL, p);
+
 	mutex_exit(proc_lock);
 
 	return p;
@@ -682,6 +759,7 @@ void
 proc_free_mem(struct proc *p)
 {
 
+	kdtrace_proc_dtor(NULL, p);
 	pool_cache_put(proc_cache, p);
 }
 
@@ -1022,11 +1100,8 @@ static void
 orphanpg(struct pgrp *pg)
 {
 	struct proc *p;
-	int doit;
 
 	KASSERT(mutex_owned(proc_lock));
-
-	doit = 0;
 
 	LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 		if (p->p_stat == SSTOP) {
@@ -1081,7 +1156,6 @@ pidtbl_dump(void)
 #endif /* DDB */
 
 #ifdef KSTACK_CHECK_MAGIC
-#include <sys/user.h>
 
 #define	KSTACK_MAGIC	0xdeadbeaf
 
@@ -1163,11 +1237,9 @@ proclist_foreach_call(struct proclist *list,
 {
 	struct proc marker;
 	struct proc *p;
-	struct lwp * const l = curlwp;
 	int ret = 0;
 
 	marker.p_flag = PK_MARKER;
-	uvm_lwp_hold(l);
 	mutex_enter(proc_lock);
 	for (p = LIST_FIRST(list); ret == 0 && p != NULL;) {
 		if (p->p_flag & PK_MARKER) {
@@ -1181,7 +1253,6 @@ proclist_foreach_call(struct proclist *list,
 		LIST_REMOVE(&marker, p_list);
 	}
 	mutex_exit(proc_lock);
-	uvm_lwp_rele(l);
 
 	return ret;
 }
@@ -1359,3 +1430,36 @@ proc_setspecific(struct proc *p, specificdata_key_t key, void *data)
 	specificdata_setspecific(proc_specificdata_domain,
 				 &p->p_specdataref, key, data);
 }
+
+int
+proc_uidmatch(kauth_cred_t cred, kauth_cred_t target)
+{
+	int r = 0;
+
+	if (kauth_cred_getuid(cred) != kauth_cred_getuid(target) ||
+	    kauth_cred_getuid(cred) != kauth_cred_getsvuid(target)) {
+		/*
+		 * suid proc of ours or proc not ours
+		 */
+		r = EPERM;
+	} else if (kauth_cred_getgid(target) != kauth_cred_getsvgid(target)) {
+		/*
+		 * sgid proc has sgid back to us temporarily
+		 */
+		r = EPERM;
+	} else {
+		/*
+		 * our rgid must be in target's group list (ie,
+		 * sub-processes started by a sgid process)
+		 */
+		int ismember = 0;
+
+		if (kauth_cred_ismember_gid(cred,
+		    kauth_cred_getgid(target), &ismember) != 0 ||
+		    !ismember)
+			r = EPERM;
+	}
+
+	return (r);
+}
+

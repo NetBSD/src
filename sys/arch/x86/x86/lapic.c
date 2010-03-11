@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.34.4.2 2009/05/04 08:12:11 yamt Exp $	*/
+/*	$NetBSD: lapic.c,v 1.34.4.3 2010/03/11 15:03:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.34.4.2 2009/05/04 08:12:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.34.4.3 2010/03/11 15:03:09 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.34.4.2 2009/05/04 08:12:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/timetc.h>

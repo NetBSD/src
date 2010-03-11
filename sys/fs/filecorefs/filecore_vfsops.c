@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.49.10.3 2009/07/18 14:53:20 yamt Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.49.10.4 2010/03/11 15:04:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.49.10.3 2009/07/18 14:53:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.49.10.4 2010/03/11 15:04:13 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -639,7 +639,7 @@ filecore_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	ip->i_mnt = fcmp;
 	ip->i_devvp = fcmp->fc_devvp;
 	ip->i_diroff = 0;
-	VREF(ip->i_devvp);
+	vref(ip->i_devvp);
 
 	/*
 	 * Setup type

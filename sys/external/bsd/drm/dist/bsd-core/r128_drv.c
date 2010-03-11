@@ -159,7 +159,7 @@ r128drm_attach(device_t parent, device_t self, void *aux)
 }
 
 CFATTACH_DECL_NEW(r128drm, sizeof(struct drm_device),
-    r128drm_probe, r128drm_attach, drm_detach, drm_activate);
+    r128drm_probe, r128drm_attach, drm_detach, NULL);
 
 #ifdef _MODULE
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.21.10.1 2009/05/04 08:13:22 yamt Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.21.10.2 2010/03/11 15:04:09 yamt Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.21.10.1 2009/05/04 08:13:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.21.10.2 2010/03/11 15:04:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,9 +261,11 @@ USB_ATTACH(uvscom)
 	int i;
 	struct ucom_attach_args uca;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
-        USB_ATTACH_SETUP;
-        aprint_normal_dev(self, "%s\n", devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_dev = self;
@@ -423,19 +425,14 @@ int
 uvscom_activate(device_t self, enum devact act)
 {
 	struct uvscom_softc *sc = device_private(self);
-	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
-		if (sc->sc_subdev != NULL)
-			rv = config_deactivate(sc->sc_subdev);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 Static usbd_status

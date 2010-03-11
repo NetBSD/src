@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.90.4.2 2009/05/04 08:10:40 yamt Exp $
+#	$NetBSD: files.arm,v 1.90.4.3 2010/03/11 15:02:05 yamt Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -27,6 +27,7 @@ defflag  opt_cpuoptions.h	ARM9_CACHE_WRITE_THROUGH
 defflag  opt_cpuoptions.h	PROCESS_ID_IS_CURLWP
 defflag  opt_cpuoptions.h	PROCESS_ID_IS_CURCPU
 defflag  opt_cpuoptions.h	ARM11_PMC
+defflag  opt_cpuoptions.h	ARM11_CACHE_WRITE_THROUGH
 
 # Interrupt implementation header definition.
 defparam opt_arm_intr_impl.h	ARM_INTR_IMPL

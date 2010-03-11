@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_3max.c,v 1.13.112.2 2009/08/19 18:46:39 yamt Exp $	*/
+/*	$NetBSD: memc_3max.c,v 1.13.112.3 2010/03/11 15:02:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: memc_3max.c,v 1.13.112.2 2009/08/19 18:46:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_3max.c,v 1.13.112.3 2010/03/11 15:02:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: memc_3max.c,v 1.13.112.2 2009/08/19 18:46:39 yamt Ex
 
 
 void
-dec_mtasic_err(uint32_t erradr, uint32_t errsyn, uint32_t bnk32m)
+dec_mtasic_err(uint32_t erradr, vaddr_t errsyn, uint32_t bnk32m)
 {
 	uint32_t physadr;
 	int module;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_kmguard.c,v 1.1.4.2 2009/05/04 08:14:39 yamt Exp $	*/
+/*	$NetBSD: uvm_kmguard.c,v 1.1.4.3 2010/03/11 15:04:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  * - Use-after-free
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_kmguard.c,v 1.1.4.2 2009/05/04 08:14:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_kmguard.c,v 1.1.4.3 2010/03/11 15:04:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -150,7 +150,7 @@ uvm_kmguard_alloc(struct uvm_kmguard *kg, size_t len, bool waitok)
 	pg->flags &= ~PG_BUSY;	/* new page */
 	UVM_PAGE_OWN(pg, NULL);
 	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-	    VM_PROT_READ | VM_PROT_WRITE | PMAP_KMPAGE);
+	    VM_PROT_READ | VM_PROT_WRITE | PMAP_KMPAGE, 0);
        	pmap_update(pmap_kernel());
 
 	/*

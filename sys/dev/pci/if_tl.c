@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.86.4.2 2009/09/16 13:37:51 yamt Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.86.4.3 2010/03/11 15:03:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *  This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -36,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.86.4.2 2009/09/16 13:37:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.86.4.3 2010/03/11 15:03:48 yamt Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -67,11 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.86.4.2 2009/09/16 13:37:51 yamt Exp $");
 #include <net/route.h>
 #include <net/netisr.h>
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include "rnd.h"
 #if NRND > 0
@@ -1090,10 +1082,8 @@ tl_intr(void *v)
 					ether_printheader(eh);
 				}
 #endif
-#if NBPFILTER > 0
 				if (ifp->if_bpf)
-					bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+					bpf_ops->bpf_mtap(ifp->if_bpf, m);
 				(*ifp->if_input)(ifp, m);
 			}
 		}
@@ -1423,11 +1413,9 @@ tbdinit:
 			    sc->last_Rx->hw_list->fwd);
 #endif
 	}
-#if NBPFILTER > 0
 	/* Pass packet to bpf if there is a listener */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, mb_head);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, mb_head);
 	/*
 	 * Set a 5 second timer just in case we don't hear from the card again.
 	 */

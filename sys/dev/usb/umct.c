@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.24.4.3 2009/05/16 10:41:45 yamt Exp $	*/
+/*	$NetBSD: umct.c,v 1.24.4.4 2010/03/11 15:04:07 yamt Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.24.4.3 2009/05/16 10:41:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.24.4.4 2010/03/11 15:04:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,8 +179,10 @@ USB_ATTACH(umct)
 
 	sc->sc_dev = self;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
@@ -340,19 +342,14 @@ int
 umct_activate(device_t self, enum devact act)
 {
 	struct umct_softc *sc = device_private(self);
-	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
-		if (sc->sc_subdev != NULL)
-			rv = config_deactivate(sc->sc_subdev);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: genfs_node.h,v 1.16.42.1 2008/05/16 02:25:39 yamt Exp $ */
+/* $NetBSD: genfs_node.h,v 1.16.42.2 2010/03/11 15:04:22 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Chuck Silvers.
@@ -91,6 +91,7 @@ void	genfs_directio(struct vnode *, struct uio *, int);
 
 void	genfs_node_wrlock(struct vnode *);
 void	genfs_node_rdlock(struct vnode *);
+int	genfs_node_rdtrylock(struct vnode *);
 void	genfs_node_unlock(struct vnode *);
 
 #endif	/* _MISCFS_GENFS_GENFS_NODE_H_ */

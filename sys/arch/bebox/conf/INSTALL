@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.42.16.1 2009/05/04 08:10:51 yamt Exp $
+#	$NetBSD: INSTALL,v 1.42.16.2 2010/03/11 15:02:10 yamt Exp $
 #
 # First try for BEBOX config file
 #
@@ -60,7 +60,6 @@ file-system 	MSDOSFS
 #file-system 	FDESC
 file-system 	KERNFS
 #file-system 	NULLFS
-#file-system 	PORTAL
 #file-system 	PROCFS
 #file-system 	UMAPFS
 #file-system 	UNION

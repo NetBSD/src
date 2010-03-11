@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.2.2.2 2009/08/19 18:47:03 yamt Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.2.2.3 2010/03/11 15:03:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,32 +27,35 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.2.2.2 2009/08/19 18:47:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.2.2.3 2010/03/11 15:03:22 yamt Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/kernel.h>
-#include <sys/kmem.h>
 #include <sys/device.h>
+#include <sys/kmem.h>
 #include <sys/queue.h>
 #include <sys/sysctl.h>
+#include <sys/systm.h>
 
-#include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpireg.h>
+#include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_wakedev.h>
 
+#define _COMPONENT		   ACPI_BUS_COMPONENT
+ACPI_MODULE_NAME		   ("acpi_wakedev")
+
+struct acpi_wakedev {
+	struct acpi_devnode	  *aw_node;
+	struct sysctllog	  *aw_sysctllog;
+	int			   aw_enabled;
+
+	TAILQ_ENTRY(acpi_wakedev)  aw_list;
+};
+
 struct acpi_wakedev;
+static int acpi_wakedev_node = -1;
 
 static TAILQ_HEAD(, acpi_wakedev) acpi_wakedevlist =
     TAILQ_HEAD_INITIALIZER(acpi_wakedevlist);
-static int acpi_wakedev_node = -1;
-
-struct acpi_wakedev {
-	struct acpi_devnode	*aw_node;
-	int			aw_enabled;
-	struct sysctllog	*aw_sysctllog;
-	TAILQ_ENTRY(acpi_wakedev) aw_list;
-};
 
 static const char * const acpi_wakedev_default[] = {
 	"PNP0C0C",	/* power button */
@@ -61,6 +64,11 @@ static const char * const acpi_wakedev_default[] = {
 	"PNP03??",	/* PC KBD port */
 	NULL,
 };
+
+static void	acpi_wakedev_sysctl_add(struct acpi_wakedev *);
+static bool	acpi_wakedev_add(struct acpi_softc *, struct acpi_devnode *);
+static void	acpi_wakedev_print(struct acpi_wakedev *);
+static void	acpi_wakedev_prepare(struct acpi_devnode *, int, int);
 
 SYSCTL_SETUP(sysctl_acpi_wakedev_setup, "sysctl hw.wake subtree setup")
 {
@@ -96,9 +104,8 @@ acpi_wakedev_sysctl_add(struct acpi_wakedev *aw)
 	    NULL, NULL, 0, &aw->aw_enabled, 0,
 	    CTL_HW, acpi_wakedev_node, CTL_CREATE, CTL_EOL);
 	if (err)
-		printf("acpi_wakedev_sysctl_add: "
-		    "sysctl_createv(hw.wake.%s) failed. (%d)\n",
-		    aw->aw_node->ad_name, err);
+		aprint_error("%s: sysctl_createv(hw.wake.%s) failed (%d)\n",
+		    __func__, aw->aw_node->ad_name, err);
 }
 
 static bool
@@ -112,7 +119,7 @@ acpi_wakedev_add(struct acpi_softc *sc, struct acpi_devnode *ad)
 
 	aw = kmem_alloc(sizeof(*aw), KM_SLEEP);
 	if (aw == NULL) {
-		aprint_error("acpi_wakedev_add: kmem_alloc failed\n");
+		aprint_error("%s: kmem_alloc failed\n", __func__);
 		return false;
 	}
 	aw->aw_node = ad;
@@ -138,7 +145,6 @@ acpi_wakedev_print(struct acpi_wakedev *aw)
 int
 acpi_wakedev_scan(struct acpi_softc *sc)
 {
-	struct acpi_scope *as;
 	struct acpi_devnode *ad;
 	struct acpi_wakedev *aw;
 	ACPI_DEVICE_INFO *di;
@@ -147,18 +153,21 @@ acpi_wakedev_scan(struct acpi_softc *sc)
 #define ACPI_STA_DEV_VALID	\
 	(ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|ACPI_STA_DEV_OK)
 
-	TAILQ_FOREACH(as, &sc->sc_scopes, as_list)
-		TAILQ_FOREACH(ad, &as->as_devnodes, ad_list) {
-			di = ad->ad_devinfo;
-			if (di->Type != ACPI_TYPE_DEVICE)
-				continue;
-			if ((di->Valid & ACPI_VALID_STA) != 0 &&
-			    (di->CurrentStatus & ACPI_STA_DEV_VALID) !=
-			     ACPI_STA_DEV_VALID)
-				continue;
-			if (acpi_wakedev_add(sc, ad) == true)
-				++count;
-		}
+	SIMPLEQ_FOREACH(ad, &sc->sc_devnodes, ad_list) {
+
+		di = ad->ad_devinfo;
+
+		if (di->Type != ACPI_TYPE_DEVICE)
+			continue;
+
+		if ((di->Valid & ACPI_VALID_STA) != 0 &&
+		    (di->CurrentStatus & ACPI_STA_DEV_VALID) !=
+		     ACPI_STA_DEV_VALID)
+			continue;
+
+		if (acpi_wakedev_add(sc, ad) == true)
+			++count;
+	}
 
 #undef ACPI_STA_DEV_VALID
 
@@ -174,16 +183,82 @@ acpi_wakedev_scan(struct acpi_softc *sc)
 }
 
 void
-acpi_wakedev_commit(struct acpi_softc *sc)
+acpi_wakedev_commit(struct acpi_softc *sc, int state)
 {
 	struct acpi_wakedev *aw;
 
+	/*
+	 * As noted in ACPI 3.0 (p. 243), preparing
+	 * a device for wakeup is a two-step process:
+	 *
+	 *  1.	Enable all power resources in _PRW.
+	 *
+	 *  2.	If present, execute _DSW/_PSW method.
+	 *
+	 * XXX: The first one is yet to be implemented.
+	 */
 	TAILQ_FOREACH(aw, &acpi_wakedevlist, aw_list) {
+
 		if (aw->aw_enabled) {
 			aprint_debug_dev(sc->sc_dev, "set wake GPE (%s)\n",
 			    aw->aw_node->ad_name);
 			acpi_set_wake_gpe(aw->aw_node->ad_handle);
 		} else
 			acpi_clear_wake_gpe(aw->aw_node->ad_handle);
+
+		acpi_wakedev_prepare(aw->aw_node, aw->aw_enabled, state);
 	}
+}
+
+static void
+acpi_wakedev_prepare(struct acpi_devnode *ad, int enable, int state)
+{
+	ACPI_OBJECT_LIST arg;
+	ACPI_OBJECT obj[3];
+	ACPI_STATUS rv;
+
+	/*
+	 * First try to call the Device Sleep Wake control method, _DSW.
+	 * Only if this is not available, resort to to the Power State
+	 * Wake control method, _PSW, which was deprecated in ACPI 3.0.
+	 *
+	 * The arguments to these methods are as follows:
+	 *
+	 *		arg0		arg1		arg2
+	 *		----		----		----
+	 *	 _PSW	0: disable
+	 *		1: enable
+	 *
+	 *	 _DSW	0: disable	0: S0		0: D0
+	 *		1: enable	1: S1		1: D0 or D1
+	 *						2: D0, D1, or D2
+	 *				x: Sx		3: D0, D1, D2 or D3
+	 */
+	arg.Count = 3;
+	arg.Pointer = obj;
+
+	obj[0].Integer.Value = enable;
+	obj[1].Integer.Value = state;
+	obj[2].Integer.Value = 3;
+
+	obj[0].Type = obj[1].Type = obj[2].Type = ACPI_TYPE_INTEGER;
+
+	rv = AcpiEvaluateObject(ad->ad_handle, "_DSW", &arg, NULL);
+
+	if (ACPI_SUCCESS(rv))
+		return;
+
+	if (rv != AE_NOT_FOUND)
+		goto fail;
+
+	rv = acpi_eval_set_integer(ad->ad_handle, "_PSW", enable);
+
+	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND)
+		goto fail;
+
+	return;
+
+fail:
+	aprint_error_dev(ad->ad_device, "failed to evaluate wake "
+	    "control method: %s\n", AcpiFormatException(rv));
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.24.4.1 2009/05/04 08:13:01 yamt Exp $ */
+/* $NetBSD: piixpm.c,v 1.24.4.2 2010/03/11 15:03:59 yamt Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.24.4.1 2009/05/04 08:13:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.24.4.2 2010/03/11 15:03:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,8 +82,8 @@ struct piixpm_softc {
 static int	piixpm_match(device_t, cfdata_t, void *);
 static void	piixpm_attach(device_t, device_t, void *);
 
-static bool	piixpm_suspend(device_t PMF_FN_PROTO);
-static bool	piixpm_resume(device_t PMF_FN_PROTO);
+static bool	piixpm_suspend(device_t, const pmf_qual_t *);
+static bool	piixpm_resume(device_t, const pmf_qual_t *);
 
 static int	piixpm_i2c_acquire_bus(void *, int);
 static void	piixpm_i2c_release_bus(void *, int);
@@ -233,6 +233,7 @@ nopowermanagement:
 	sc->sc_i2c_tag.ic_exec = piixpm_i2c_exec;
 
 	memset(&iba, 0, sizeof(iba));
+	iba.iba_type = I2C_TYPE_SMBUS;
 	iba.iba_tag = &sc->sc_i2c_tag;
 	config_found_ia(self, "i2cbus", &iba, iicbus_print);
 
@@ -240,7 +241,7 @@ nopowermanagement:
 }
 
 static bool
-piixpm_suspend(device_t dv PMF_FN_ARGS)
+piixpm_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct piixpm_softc *sc = device_private(dv);
 
@@ -253,7 +254,7 @@ piixpm_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-piixpm_resume(device_t dv PMF_FN_ARGS)
+piixpm_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct piixpm_softc *sc = device_private(dv);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.156.2.4 2009/09/16 13:38:02 yamt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.156.2.5 2010/03/11 15:04:29 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -881,6 +881,7 @@ struct mbuf *
 void	 tcp_trace(short, short, struct tcpcb *, struct mbuf *, int);
 struct tcpcb *
 	 tcp_usrclosed(struct tcpcb *);
+void	 tcp_usrreq_init(void);
 int	 tcp_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 void	 tcp_xmit_timer(struct tcpcb *, uint32_t);

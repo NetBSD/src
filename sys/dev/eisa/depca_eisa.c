@@ -1,4 +1,4 @@
-/*	$NetBSD: depca_eisa.c,v 1.11.4.1 2008/05/16 02:23:57 yamt Exp $	*/
+/*	$NetBSD: depca_eisa.c,v 1.11.4.2 2010/03/11 15:03:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,10 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.11.4.1 2008/05/16 02:23:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.11.4.2 2010/03/11 15:03:26 yamt Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.61.10.1 2009/05/16 10:41:24 yamt Exp $	*/
+/*	$NetBSD: wivar.h,v 1.61.10.2 2010/03/11 15:03:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -102,7 +102,7 @@ struct wi_softc	{
 	bus_space_tag_t		sc_iot;			/* bus cookie */
 	bus_space_handle_t	sc_ioh;			/* bus i/o handle */
 
-	void *			sc_drvbpf;
+	struct bpf_if *		sc_drvbpf;
 	int			sc_flags;
 	int			sc_bap_id;
 	int			sc_bap_off;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.27.32.2 2009/07/18 14:52:58 yamt Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.27.32.3 2010/03/11 15:03:17 yamt Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.27.32.2 2009/07/18 14:52:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.27.32.3 2010/03/11 15:03:17 yamt Exp $");
 
 #define	ELFSIZE		32
 
@@ -74,10 +74,11 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.27.32.2 2009/07/18 14:52:5
 #include <sys/kauth.h>
 #include <sys/namei.h>
 
+#include <compat/common/compat_util.h>
+
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_exec.h>
 
-#include <machine/frame.h>
 #include <machine/netbsd32_machdep.h>
 
 int netbsd32_copyinargs(struct exec_package *, struct ps_strings *,
@@ -96,6 +97,13 @@ ELFNAME2(netbsd32,probe)(struct lwp *l, struct exec_package *epp,
 	if ((error = ELFNAME2(netbsd,signature)(l, epp, eh)) != 0)
 		return error;
 
+#ifdef ELF_MD_PROBE_FUNC
+	if ((error = ELF_MD_PROBE_FUNC(l, epp, eh, itp, pos)) != 0)
+		return error;
+#elif defined(ELF_INTERP_NON_RELOCATABLE)
+	*pos = ELF_LINK_ADDR;
+#endif
+
 	return ELFNAME2(netbsd32,probe_noteless)(l, epp, eh, itp, pos);
 }
 
@@ -103,43 +111,9 @@ int
 ELFNAME2(netbsd32,probe_noteless)(struct lwp *l, struct exec_package *epp,
 				  void *eh, char *itp, vaddr_t *pos)
 {
-	int error;
-
-	if (itp) {
-		/*
-		 * If the path is exactly "/usr/libexec/ld.elf_so", first
-		 * try to see if "/usr/libexec/ld.elf_so-<arch>" exists
-		 * and if so, use that instead.
-		 * XXX maybe move this into compat/common
-		 */
-		error = 0;
-		if (strcmp(itp, "/usr/libexec/ld.elf_so") == 0 ||
-		    strcmp(itp, "/libexec/ld.elf_so") == 0) {
-			extern const char machine32[];
-			struct vnode *vp;
-			char *path;
-
-			if (epp->ep_interp != NULL)
-				vrele(epp->ep_interp);
-			
-			path = PNBUF_GET();
-			snprintf(path, MAXPATHLEN, "%s-%s", itp, machine32);
-			error = namei_simple_kernel(path,
-					NSM_FOLLOW_NOEMULROOT, &vp);
-			/*
-			 * If that worked, save interpreter in case we
-			 * actually need to load it
-			 */
-			if (error != 0)
-				epp->ep_interp = NULL;
-			else
-				epp->ep_interp = vp;
-			PNBUF_PUT(path);
-		}
-
-		/* Translate interpreter name if needed */
-		if (error && (error = emul_find_interp(l, epp, itp)) != 0)
-			return error;
+ 	if (itp && epp->ep_interp == NULL) {
+		extern const char machine32[];
+		(void)compat_elf_check_interp(epp, itp, machine32);
 	}
 	epp->ep_flags |= EXEC_32;
 	epp->ep_vm_minaddr = VM_MIN_ADDRESS;

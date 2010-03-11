@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.24.4.1 2009/05/04 08:12:05 yamt Exp $	   */
+/*	$NetBSD: subr.S,v 1.24.4.2 2010/03/11 15:03:06 yamt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -122,19 +122,20 @@ to:	movw	$0xfff,_C_LABEL(panic)		# Save all regs in panic
 	bisl3	$0x80000000,%r9,_C_LABEL(symtab_end)
 						#   save end of symtab
 3:	addl3	_C_LABEL(esym),$0x3ff,%r0	# Round symbol table end
-	bicl3	$0x3ff,%r0,_C_LABEL(proc0paddr)	# save proc0 uarea pointer
-	bicl3	$0x80000000,_C_LABEL(proc0paddr),%r0 # get phys proc0 uarea addr
+	bicl3	$0x3ff,%r0,%r1			# 
+	movl	%r1,_C_LABEL(lwp0)+L_PCB	# lwp0 pcb, XXXuvm_lwp_getuarea
+	bicl3	$0x80000000,%r1,%r0		# get phys lwp0 uarea addr
 	mtpr	%r0,$PR_PCBB			# Save in IPR PCBB
-	addl3	$USPACE,_C_LABEL(proc0paddr),%r0	# Get kernel stack top
+	addl3	$USPACE,%r1,%r0			# Get kernel stack top
 	mtpr	%r0,$PR_KSP			# put in IPR KSP
 	movl	%r0,_C_LABEL(Sysmap)		# SPT start addr after KSP
-	movl	_C_LABEL(proc0paddr),%r0	# get PCB virtual address
+	movl	_C_LABEL(lwp0)+L_PCB,%r0	# get PCB virtual address
 	mfpr	$PR_PCBB,PCB_PADDR(%r0)		# save PCB physical address
 	movab	IFTRAP(%r0),ESP(%r0)		# Save trap address in ESP
 	mtpr	4(%r0),$PR_ESP			# Put it in ESP also
 
 # Set some registers in known state
-	movl	_C_LABEL(proc0paddr),%r0
+	movl	%r1,%r0				# get lwp0 pcb
 	clrl	P0LR(%r0)
 	clrl	P1LR(%r0)
 	mtpr	$0,$PR_P0LR
@@ -318,7 +319,7 @@ softint_cleanup:
 	movl    L_CPU(%r0),%r1		/* get cpu_info */
 	incl    CI_MTX_COUNT(%r1)	/* increment mutex count */
 	clrl    L_CTXSWTCH(%r0)		/* clear l_ctxswtch of old lwp */
-	movl	L_ADDR(%r0),%r1		/* get PCB of softint LWP */
+	movl	L_PCB(%r0),%r1		/* get PCB of softint LWP */
 softint_exit:
 	popr	$0x3			/* restore r0 and r1 */
 	rei				/* return from interrupt */
@@ -332,7 +333,7 @@ softint_process:
 	calls	$2,_C_LABEL(softint_dispatch) /* dispatch it */
 
 	/* We can use any register because ldpctx will overwrite them */
-	movl	L_ADDR(%r6),%r3		/* get pcb */
+	movl	L_PCB(%r6),%r3		/* get pcb */
 	movab	softint_exit,PCB_PC(%r3)/* do a quick exit */
 #ifdef MULTIPROCESSOR
 	movl	L_CPU(%r6),%r8
@@ -355,7 +356,7 @@ softint_common:
 	mfpr	$PR_SSP,%r6		/* Get curlwp */
 	movl	L_CPU(%r6),%r8		/* get cpu_info */
 	movl	CI_SOFTLWPS(%r8)[%r0],%r2 /* get softlwp to switch to */
-	movl	L_ADDR(%r2),%r3		/* Get pointer to its pcb. */
+	movl	L_PCB(%r2),%r3		/* Get pointer to its pcb. */
 	movl	%r6,PCB_R6(%r3)		/* move old lwp into new pcb */
 	movl	%r1,PCB_R7(%r3)		/* move IPL into new pcb */
 #ifdef MULTIPROCESSOR
@@ -419,7 +420,7 @@ JSBENTRY(Swtchto)
 
 	/* We can know use any register because ldpctx will overwrite them */
 	/* New LWP already in %r1 */
-	movl	L_ADDR(%r1),%r3		# Get pointer to new pcb.
+	movl	L_PCB(%r1),%r3		# Get pointer to new pcb.
 	movl	%r0,PCB_R0(%r3)		# move r0 into new pcb (return value)
 #ifdef MULTIPROCESSOR
 	movl	L_CPU(%r0), %r8		/* get cpu_info of old lwp */

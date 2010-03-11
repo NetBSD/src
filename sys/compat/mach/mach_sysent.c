@@ -1,4 +1,4 @@
-/* $NetBSD: mach_sysent.c,v 1.21.10.1 2009/05/04 08:12:24 yamt Exp $ */
+/* $NetBSD: mach_sysent.c,v 1.21.10.2 2010/03/11 15:03:17 yamt Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_sysent.c,v 1.21.10.1 2009/05/04 08:12:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_sysent.c,v 1.21.10.2 2010/03/11 15:03:17 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -287,4 +287,3 @@ struct sysent mach_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 127 = unimplemented */
 };
-

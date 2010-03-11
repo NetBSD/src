@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.4.10.2 2009/08/19 18:46:10 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.4.10.3 2010/03/11 15:02:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.10.2 2009/08/19 18:46:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.10.3 2010/03/11 15:02:18 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -124,7 +124,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.10.2 2009/08/19 18:46:10 yamt Exp $"
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
-#include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
@@ -161,13 +160,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.10.2 2009/08/19 18:46:10 yamt Exp $"
 #define	MEMSIZE 4 * 1024 * 1024
 #endif /* !MEMSIZE */
 
-struct	user *proc0paddr;
-
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int maxmem;			/* max memory per process */
@@ -293,7 +289,7 @@ parse_args(prop_dictionary_t properties, int argc, char **argv,
 				printf("%s: prop_data_create_data\n", __func__);
 				continue;
 			}
-			if (!prop_dictionary_set(properties, "mac-addr", pd)) {
+			if (!prop_dictionary_set(properties, "mac-address", pd)) {
 				printf("%s: prop_dictionary_set(mac)\n",
 				    __func__);
 			}
@@ -312,6 +308,7 @@ void
 mach_init(int argc, char **argv, void *a2, void *a3)
 {
 	struct adm5120_config *admc = &adm5120_configuration;
+	struct pcb *pcb0;
 	uint32_t memsize;
 	vaddr_t kernend;
 	u_long first, last;
@@ -436,13 +433,9 @@ mach_init(int argc, char **argv, void *a2, void *a3)
 	pmap_bootstrap();
 
 	/*
-	 * Init mapping for u page(s) for proc0.
+	 * Allocate uarea page for lwp0 and set it.
 	 */
-	v = uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	mips_init_lwp0_uarea();
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
@@ -518,7 +511,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Take a snapshot before clobbering any registers. */
 	if (curproc)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 	/* If "always halt" was specified as a boot flag, obey. */
 	if (boothowto & RB_HALT)

@@ -1,4 +1,4 @@
-/*	$NetBSD: magmareg.h,v 1.12.40.2 2009/05/16 10:41:43 yamt Exp $	*/
+/*	$NetBSD: magmareg.h,v 1.12.40.3 2010/03/11 15:04:02 yamt Exp $	*/
 
 /*-
  *  Copyright (c) 1998 Iain Hibbert
@@ -98,7 +98,6 @@ struct cd1190 {
 /* software state for each card */
 struct magma_softc {
 	struct device	ms_dev;		/* required. must be first in softc */
-	struct sbusdev	ms_sd;		/* sbus device */
 	struct evcnt	ms_intrcnt;	/* statistics */
 
 	/* cd1400 chip info */

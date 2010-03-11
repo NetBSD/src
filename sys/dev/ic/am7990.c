@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.70.4.1 2008/05/16 02:24:02 yamt Exp $	*/
+/*	$NetBSD: am7990.c,v 1.70.4.2 2010/03/11 15:03:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,9 +65,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.70.4.1 2008/05/16 02:24:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.70.4.2 2010/03/11 15:03:28 yamt Exp $");
 
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -88,10 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.70.4.1 2008/05/16 02:24:02 yamt Exp $")
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <dev/ic/lancereg.h>
 #include <dev/ic/lancevar.h>
@@ -152,11 +149,9 @@ am7990_meminit(struct lance_softc *sc)
 	struct letmd tmd;
 	uint8_t *myaddr;
 
-#if NBPFILTER > 0
 	if (ifp->if_flags & IFF_PROMISC)
 		init.init_mode = LE_MODE_NORMAL | LE_MODE_PROM;
 	else
-#endif
 		init.init_mode = LE_MODE_NORMAL;
 	if (sc->sc_initmodemedia == 1)
 		init.init_mode |= LE_MODE_PSEL0;
@@ -498,14 +493,12 @@ am7990_start(struct ifnet *ifp)
 		if (m == 0)
 			break;
 
-#if NBPFILTER > 0
 		/*
 		 * If BPF is listening on this interface, let it see the packet
 		 * before we commit it to the wire.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/*
 		 * Copy the mbuf chain into the transmit buffer.

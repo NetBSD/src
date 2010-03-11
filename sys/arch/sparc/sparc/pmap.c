@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.322.10.4 2009/09/16 13:37:43 yamt Exp $ */
+/*	$NetBSD: pmap.c,v 1.322.10.5 2010/03/11 15:02:58 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.322.10.4 2009/09/16 13:37:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.322.10.5 2010/03/11 15:02:58 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -573,7 +573,7 @@ int		(*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 bool		(*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
 bool		(*pmap_is_modified_p)(struct vm_page *);
 bool		(*pmap_is_referenced_p)(struct vm_page *);
-void		(*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t);
+void		(*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t, u_int);
 void		(*pmap_kremove_p)(vaddr_t, vsize_t);
 void		(*pmap_kprotect_p)(vaddr_t, vsize_t, vm_prot_t);
 void		(*pmap_page_protect_p)(struct vm_page *, vm_prot_t);
@@ -887,7 +887,7 @@ pgt_page_alloc(struct pool *pp, int flags)
 
 	/* Map the page */
 	pmap_kenter_pa(va, pa | (cacheit ? 0 : PMAP_NC),
-	    VM_PROT_READ | VM_PROT_WRITE);
+	    VM_PROT_READ | VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 
 	return ((void *)va);
@@ -1055,7 +1055,7 @@ pmap_growkernel(vaddr_t eva)
 			if (pg == NULL)
 				panic("growkernel: out of memory");
 			pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-					VM_PROT_READ | VM_PROT_WRITE);
+					VM_PROT_READ | VM_PROT_WRITE, 0);
 		}
 	}
 
@@ -2086,7 +2086,9 @@ ctx_alloc(struct pmap *pm)
 	struct regmap *rp;
 	int gap_start, gap_end;
 	vaddr_t va;
+#if defined(SUN4M) || defined(SUN4D)
 	struct cpu_info *cpi;
+#endif
 
 /*XXX-GCC!*/gap_start=gap_end=0;
 #ifdef DEBUG
@@ -2253,8 +2255,10 @@ void
 ctx_free(struct pmap *pm)
 {
 	union ctxinfo *c;
-	struct cpu_info *cpi;
 	int ctx;
+#if defined(SUN4M) || defined(SUN4D)
+	struct cpu_info *cpi;
+#endif
 
 	c = pm->pm_ctx;
 	ctx = pm->pm_ctxnum;
@@ -3870,7 +3874,7 @@ pmap_bootstrap4m(void *top)
 					    "(va=%p, pa=%p)\n", va, pa);
 				pmap_kremove(va, NBPG);
 				pmap_kenter_pa(va, pa,
-					       VM_PROT_READ | VM_PROT_WRITE);
+					       VM_PROT_READ | VM_PROT_WRITE, 0);
 			}
 
 		} else
@@ -3903,6 +3907,14 @@ pmap_bootstrap4m(void *top)
 #endif
 
 	pmap_update(pmap_kernel());
+
+#ifdef DIAGNOSTIC
+	if (curcpu()->ci_self != cpus[0]) {
+		prom_printf("curcpu()->ci_self %p != cpus[0] %p\n", curcpu()->ci_self, cpus[0]);
+		panic("cpuinfo inconsistent");
+	}
+#endif
+
 	prom_printf("pmap_bootstrap4m done\n");
 }
 
@@ -4016,7 +4028,7 @@ pmap_alloc_cpu(struct cpu_info *sc)
 	/* Map the pages */
 	while (size != 0) {
 		pmap_kenter_pa(va, pa | (cachebit ? 0 : PMAP_NC),
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 		va += pagesz;
 		pa += pagesz;
 		size -= pagesz;
@@ -4135,7 +4147,7 @@ pmap_map(vaddr_t va, paddr_t pa, paddr_t endpa, int prot)
 	int pgsize = PAGE_SIZE;
 
 	while (pa < endpa) {
-		pmap_kenter_pa(va, pa, prot);
+		pmap_kenter_pa(va, pa, prot, 0);
 		va += pgsize;
 		pa += pgsize;
 	}
@@ -4177,6 +4189,10 @@ pmap_quiet_check(struct pmap *pm)
 			n = 0;
 #endif
 			{
+				/* Did this cpu attach? */
+				if (pmap_kernel()->pm_reg_ptps[n] == 0)
+					continue;
+
 				if (pm->pm_reg_ptps[n][vr] != SRMMU_TEINVALID)
 					printf("pmap_chk: spurious PTP in user "
 						"region %d on CPU %d\n", vr, n);
@@ -4290,6 +4306,12 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 		{
 			int *upt, *kpt;
 
+#if defined(MULTIPROCESSOR)
+			/* Did this cpu attach? */
+			if (pmap_kernel()->pm_reg_ptps[n] == 0)
+				continue;
+#endif
+
 			upt = pool_get(&L1_pool, flags);
 			pm->pm_reg_ptps[n] = upt;
 			pm->pm_reg_ptps_pa[n] = VA2PA((char *)upt);
@@ -4340,7 +4362,15 @@ pmap_pmap_pool_dtor(void *arg, void *object)
 		n = 0;
 #endif
 		{
-			int *pt = pm->pm_reg_ptps[n];
+			int *pt;
+
+#if defined(MULTIPROCESSOR)
+			/* Did this cpu attach? */
+			if (pmap_kernel()->pm_reg_ptps[n] == 0)
+				continue;
+#endif
+
+			pt = pm->pm_reg_ptps[n];
 			pm->pm_reg_ptps[n] = NULL;
 			pm->pm_reg_ptps_pa[n] = 0;
 			pool_put(&L1_pool, pt);
@@ -5883,7 +5913,7 @@ out:
 }
 
 void
-pmap_kenter_pa4_4c(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa4_4c(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	struct pmap *pm = pmap_kernel();
 	struct regmap *rp;
@@ -6478,7 +6508,7 @@ out:
 }
 
 void
-pmap_kenter_pa4m(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa4m(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	struct pmap *pm = pmap_kernel();
 	struct regmap *rp;
@@ -6848,20 +6878,6 @@ pmap_copy(struct pmap *dst_pmap, struct pmap *src_pmap,
 		pmap_update(dst_pmap);
 	}
 #endif
-}
-
-/*
- * Garbage collects the physical map system for
- * pages which are no longer used.
- * Success need not be guaranteed -- that is, there
- * may well be pages which are not referenced, but
- * others may be collected.
- * Called by the pageout daemon when pages are scarce.
- */
-/* ARGSUSED */
-void
-pmap_collect(struct pmap *pm)
-{
 }
 
 #if defined(SUN4) || defined(SUN4C)

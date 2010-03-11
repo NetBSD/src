@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_sableio.c,v 1.7.4.1 2008/05/16 02:21:48 yamt Exp $ */
+/* $NetBSD: pckbc_sableio.c,v 1.7.4.2 2010/03/11 15:01:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbc_sableio.c,v 1.7.4.1 2008/05/16 02:21:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_sableio.c,v 1.7.4.2 2010/03/11 15:01:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,8 +144,8 @@ pckbc_sableio_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 		    "unable to establish interrupt for %s slot",
 		    pckbc_slot_names[slot]);
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(sc->sc_dv, "%s slot interrupting at %s\n",

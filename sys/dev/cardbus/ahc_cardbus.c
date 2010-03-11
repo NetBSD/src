@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.23.10.3 2009/05/16 10:41:19 yamt Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.23.10.4 2010/03/11 15:03:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.23.10.3 2009/05/16 10:41:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.23.10.4 2010/03/11 15:03:24 yamt Exp $");
 
 #include "opt_ahc_cardbus.h"
 
@@ -77,29 +77,27 @@ struct ahc_cardbus_softc {
 
 	/* CardBus-specific goo. */
 	cardbus_devfunc_t sc_ct;	/* our CardBus devfuncs */
-	cardbus_intr_line_t sc_intrline; /* our interrupt line */
-	cardbustag_t sc_tag;
+	pcitag_t sc_tag;
 
-	int	sc_cbenable;		/* what CardBus access type to enable */
-	int	sc_csr;			/* CSR bits */
+	int	sc_bar;
+	pcireg_t	sc_csr;
 	bus_size_t sc_size;
 };
 
 int	ahc_cardbus_match(device_t, cfdata_t, void *);
 void	ahc_cardbus_attach(device_t, device_t, void *);
 int	ahc_cardbus_detach(device_t, int);
-int	ahc_activate(device_t self, enum devact act);
 
 CFATTACH_DECL_NEW(ahc_cardbus, sizeof(struct ahc_cardbus_softc),
-    ahc_cardbus_match, ahc_cardbus_attach, ahc_cardbus_detach, ahc_activate);
+    ahc_cardbus_match, ahc_cardbus_attach, ahc_cardbus_detach, NULL);
 
 int
 ahc_cardbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
-	if (CARDBUS_VENDOR(ca->ca_id) == PCI_VENDOR_ADP &&
-	    CARDBUS_PRODUCT(ca->ca_id) == PCI_PRODUCT_ADP_APA1480)
+	if (PCI_VENDOR(ca->ca_id) == PCI_VENDOR_ADP &&
+	    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_ADP_APA1480)
 		return (1);
 
 	return (0);
@@ -124,7 +122,6 @@ ahc_cardbus_attach(device_t parent, device_t self, void *aux)
 	ahc->sc_dev = self;
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
-	csc->sc_intrline = ca->ca_intrline;
 
 	printf(": Adaptec ADP-1480 SCSI\n");
 
@@ -135,21 +132,18 @@ ahc_cardbus_attach(device_t parent, device_t self, void *aux)
 	if (Cardbus_mapreg_map(csc->sc_ct, AHC_CARDBUS_MMBA,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &bst, &bsh, NULL, &csc->sc_size) == 0) {
-		csc->sc_cbenable = CARDBUS_MEM_ENABLE;
+		csc->sc_bar = AHC_CARDBUS_MMBA;
 		csc->sc_csr |= PCI_COMMAND_MEM_ENABLE;
 	} else if (Cardbus_mapreg_map(csc->sc_ct, AHC_CARDBUS_IOBA,
 	    PCI_MAPREG_TYPE_IO, 0, &bst, &bsh, NULL, &csc->sc_size) == 0) {
-		csc->sc_cbenable = CARDBUS_IO_ENABLE;
+		csc->sc_bar = AHC_CARDBUS_IOBA;
 		csc->sc_csr |= PCI_COMMAND_IO_ENABLE;
 	} else {
+		csc->sc_bar = 0;
 		printf("%s: unable to map device registers\n",
 		    ahc_name(ahc));
 		return;
 	}
-
-	/* Make sure the right access type is on the CardBus bridge. */
-	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cbenable);
-	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the appropriate bits in the PCI CSR. */
 	reg = cardbus_conf_read(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG);
@@ -273,39 +267,11 @@ ahc_cardbus_detach(device_t self, int flags)
 		ahc->ih = 0;
 	}
 
-	if (csc->sc_cbenable) {
-		if (csc->sc_cbenable == CARDBUS_MEM_ENABLE)
-			Cardbus_mapreg_unmap(csc->sc_ct, AHC_CARDBUS_MMBA,
-				ahc->tag, ahc->bsh, csc->sc_size);
-		else if (csc->sc_cbenable == CARDBUS_IO_ENABLE)
-			Cardbus_mapreg_unmap(csc->sc_ct, AHC_CARDBUS_IOBA,
-				ahc->tag, ahc->bsh, csc->sc_size);
-	csc->sc_cbenable = 0;
+	if (csc->sc_bar != 0) {
+		Cardbus_mapreg_unmap(csc->sc_ct, csc->sc_bar,
+			ahc->tag, ahc->bsh, csc->sc_size);
+		csc->sc_bar = 0;
 	}
 
 	return (0);
-}
-
-
-int
-ahc_activate(device_t self, enum devact act)
-{
-	struct ahc_cardbus_softc *csc = device_private(self);
-	struct ahc_softc *ahc = &csc->sc_ahc;
-	int s, rv = 0;
-
-	s = splhigh();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		if (ahc->sc_child != NULL)
-			rv = config_deactivate(ahc->sc_child);
-		break;
-	}
-	splx(s);
-
-	return (rv);
 }

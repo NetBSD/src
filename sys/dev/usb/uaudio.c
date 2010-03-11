@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.111.10.2 2009/05/04 08:13:21 yamt Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.111.10.3 2010/03/11 15:04:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.111.10.2 2009/05/04 08:13:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.111.10.3 2010/03/11 15:04:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ struct uaudio_softc {
 	int		sc_mode;	/* play/record capability */
 	struct mixerctl *sc_ctls;	/* mixer controls */
 	int		sc_nctls;	/* # of mixer controls */
-	device_ptr_t	sc_audiodev;
+	device_t	sc_audiodev;
 	struct audio_format *sc_formats;
 	int		sc_nformats;
 	struct audio_encoding_set *sc_encodings;
@@ -390,13 +390,14 @@ USB_ATTACH(uaudio)
 	int i, j, found;
 
 	sc->sc_dev = self;
+	sc->sc_udev = uaa->device;
+
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	aprint_normal(": %s\n", devinfop);
-	aprint_naive("\n");
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
-
-	sc->sc_udev = uaa->device;
 
 	cdesc = usbd_get_config_descriptor(sc->sc_udev);
 	if (cdesc == NULL) {
@@ -470,24 +471,17 @@ USB_ATTACH(uaudio)
 }
 
 int
-uaudio_activate(device_ptr_t self, enum devact act)
+uaudio_activate(device_t self, enum devact act)
 {
-	struct uaudio_softc *sc;
-	int rv;
+	struct uaudio_softc *sc = device_private(self);
 
-	sc = device_private(self);
-	rv = 0;
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
-
 	case DVACT_DEACTIVATE:
-		if (sc->sc_audiodev != NULL)
-			rv = config_deactivate(sc->sc_audiodev);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return rv;
 }
 
 void

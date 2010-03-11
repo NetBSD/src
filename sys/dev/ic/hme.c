@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.64.4.5 2009/09/16 13:37:47 yamt Exp $	*/
+/*	$NetBSD: hme.c,v 1.64.4.6 2010/03/11 15:03:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,12 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.64.4.5 2009/09/16 13:37:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.64.4.6 2010/03/11 15:03:30 yamt Exp $");
 
 /* #define HMEDEBUG */
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -73,10 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.64.4.5 2009/09/16 13:37:47 yamt Exp $");
 #endif
 
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -92,9 +89,10 @@ static int	hme_ioctl(struct ifnet *, u_long, void *);
 static void	hme_tick(void *);
 static void	hme_watchdog(struct ifnet *);
 static bool	hme_shutdown(device_t, int);
-static int	hme_init(struct hme_softc *);
+static int	hme_init(struct ifnet *);
 static void	hme_meminit(struct hme_softc *);
 static void	hme_mifinit(struct hme_softc *);
+static void	hme_reset(struct hme_softc *);  
 static void	hme_chipreset(struct hme_softc *);
 static void	hme_setladrf(struct hme_softc *);
 
@@ -238,6 +236,7 @@ hme_config(struct hme_softc *sc)
 	ifp->if_start = hme_start;
 	ifp->if_stop = hme_stop;
 	ifp->if_ioctl = hme_ioctl;
+	ifp->if_init = hme_init;
 	ifp->if_watchdog = hme_watchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
@@ -352,7 +351,7 @@ hme_reset(struct hme_softc *sc)
 	int s;
 
 	s = splnet();
-	(void)hme_init(sc);
+	(void)hme_init(&sc->sc_ethercom.ec_if);
 	splx(s);
 }
 
@@ -477,9 +476,9 @@ hme_meminit(struct hme_softc *sc)
  * and transmit/receive descriptor rings.
  */
 int
-hme_init(struct hme_softc *sc)
+hme_init(struct ifnet *ifp)
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct hme_softc *sc = ifp->if_softc;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t seb = sc->sc_seb;
 	bus_space_handle_t etx = sc->sc_etx;
@@ -891,14 +890,12 @@ hme_read(struct hme_softc *sc, int ix, uint32_t flags)
 
 	ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	/* Pass the packet up. */
 	(*ifp->if_input)(ifp, m);
@@ -925,14 +922,12 @@ hme_start(struct ifnet *ifp)
 		if (m == 0)
 			break;
 
-#if NBPFILTER > 0
 		/*
 		 * If BPF is listening on this interface, let it see the
 		 * packet before we commit it to the wire.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 #ifdef INET
 		/* collect bits for h/w csum, before hme_put frees the mbuf */
@@ -1448,14 +1443,14 @@ hme_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 				hme_setladrf(sc);
 			else {
 				ifp->if_flags |= IFF_UP;
-				error = hme_init(sc);
+				error = hme_init(ifp);
 			}
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
 			ifp->if_flags |= IFF_UP;
-			error = hme_init(sc);
+			error = hme_init(ifp);
 			break;
 		}
 		break;
@@ -1485,7 +1480,7 @@ hme_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			error = hme_init(sc);
+			error = hme_init(ifp);
 			break;
 		case IFF_UP|IFF_RUNNING:
 			/*
@@ -1499,7 +1494,7 @@ hme_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 				    == (sc->sc_if_flags & (~RESETIGN)))
 					hme_setladrf(sc);
 				else
-					error = hme_init(sc);
+					error = hme_init(ifp);
 			}
 #undef RESETIGN
 			break;
@@ -1508,7 +1503,7 @@ hme_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 		}
 
 		if (sc->sc_ec_capenable != sc->sc_ethercom.ec_capenable)
-			error = hme_init(sc);
+			error = hme_init(ifp);
 
 		break;
 
@@ -1560,11 +1555,9 @@ hme_setladrf(struct hme_softc *sc)
 	struct ethercom *ec = &sc->sc_ethercom;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mac = sc->sc_mac;
-	u_char *cp;
+	uint32_t v;
 	uint32_t crc;
 	uint32_t hash[4];
-	uint32_t v;
-	int len;
 
 	/* Clear hash table */
 	hash[3] = hash[2] = hash[1] = hash[0] = 0;
@@ -1608,23 +1601,8 @@ hme_setladrf(struct hme_softc *sc)
 			goto chipit;
 		}
 
-		cp = enm->enm_addrlo;
-		crc = 0xffffffff;
-		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
-			int octet = *cp++;
-			int i;
+		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
 
-#define MC_POLY_LE	0xedb88320UL	/* mcast crc, little endian */
-			for (i = 0; i < 8; i++) {
-				if ((crc & 1) ^ (octet & 1)) {
-					crc >>= 1;
-					crc ^= MC_POLY_LE;
-				} else {
-					crc >>= 1;
-				}
-				octet >>= 1;
-			}
-		}
 		/* Just want the 6 most significant bits. */
 		crc >>= 26;
 

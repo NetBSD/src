@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.10.4.1 2008/05/16 02:22:58 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.10.4.2 2010/03/11 15:02:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.4.1 2008/05/16 02:22:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.4.2 2010/03/11 15:02:46 yamt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -42,12 +42,15 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.4.1 2008/05/16 02:22:58 yamt Exp $");
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
+
 #include <dev/ofw/openfirm.h>
-#include <powerpc/oea/hid.h>
-#include <powerpc/oea/bat.h>
+
 #include <powerpc/openpic.h>
 #include <powerpc/atomic.h>
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
+#include <powerpc/oea/hid.h>
+#include <powerpc/oea/bat.h>
 #ifdef ALTIVEC
 #include <powerpc/altivec.h>
 #endif

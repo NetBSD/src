@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12.10.3 2009/09/16 13:37:39 yamt Exp $	*/
+/*	$NetBSD: main.c,v 1.12.10.4 2010/03/11 15:02:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -85,10 +85,17 @@ clearit(void)
 		clear_pc_screen();
 }
 
+static void
+alldone(void)
+{
+	pxe_fini();
+	clearit();
+}
+
 static int 
 bootit(const char *filename, int howto)
 {
-	if (exec_netbsd(filename, 0, howto, 0, clearit) < 0)
+	if (exec_netbsd(filename, 0, howto, 0, alldone) < 0)
 		printf("boot: %s\n", strerror(errno));
 	else
 		printf("boot returned\n");
@@ -123,9 +130,12 @@ main(void)
 	initio(CONSDEV_PC);
 #endif
 	gateA20();
+	boot_modules_enabled = !(boot_params.bp_flags
+				 & X86_BP_FLAGS_NOMODULES);
 
 #ifndef SMALL
-	parsebootconf(BOOTCONF);
+	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF))
+		parsebootconf(BOOTCONF);
 
 	/*
 	 * If console set in boot.cfg, switch to it.

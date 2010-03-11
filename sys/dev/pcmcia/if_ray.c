@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.70.4.3 2009/09/16 13:37:56 yamt Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.70.4.4 2010/03/11 15:04:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,10 +57,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.70.4.3 2009/09/16 13:37:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.70.4.4 2010/03/11 15:04:00 yamt Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,10 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.70.4.3 2009/09/16 13:37:56 yamt Exp $")
 #include <netinet/if_inarp.h>
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <sys/cpu.h>
 #include <sys/bus.h>
@@ -619,27 +616,20 @@ fail:
 }
 
 static int
-ray_activate(device_t dev, enum devact act)
+ray_activate(device_t self, enum devact act)
 {
-	struct ray_softc *sc = (struct ray_softc *)dev;
+	struct ray_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_if;
-	int s;
-	int rv = 0;
 
-	RAY_DPRINTF(("%s: activate\n", device_xname(&sc->sc_dev)));
+	RAY_DPRINTF(("%s: activate\n", device_xname(self)));
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
 		if_deactivate(ifp);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-	return (rv);
 }
 
 static int
@@ -1232,21 +1222,19 @@ ray_intr_start(struct ray_softc *sc)
 			}
 			bufp += len;
 		}
-#if NBPFILTER > 0
 		if (ifp->if_bpf) {
 			if (ifp->if_flags & IFF_LINK0) {
 				m0->m_data += sizeof(struct ieee80211_frame);
 				m0->m_len -=  sizeof(struct ieee80211_frame);
 				m0->m_pkthdr.len -=  sizeof(struct ieee80211_frame);
 			}
-			bpf_mtap(ifp->if_bpf, m0);
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 			if (ifp->if_flags & IFF_LINK0) {
 				m0->m_data -= sizeof(struct ieee80211_frame);
 				m0->m_len +=  sizeof(struct ieee80211_frame);
 				m0->m_pkthdr.len +=  sizeof(struct ieee80211_frame);
 			}
 		}
-#endif
 
 #ifdef RAY_DEBUG
 		if (ray_debug && ray_debug_dump_tx)
@@ -1525,10 +1513,8 @@ done:
 		eh = (struct ether_header *)(frame + 1);
 	}
 	m_adj(m, (char *)eh - (char *)frame);
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 	/* XXX doesn't appear to be included m->m_flags |= M_HASFCS; */
 	ifp->if_ipackets++;
 	(*ifp->if_input)(ifp, m);

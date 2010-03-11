@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.18 2008/03/11 05:34:03 matt Exp $	*/
+/*	$NetBSD: cfl.c,v 1.18.4.1 2010/03/11 15:03:06 yamt Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -71,13 +71,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.18 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.18.4.1 2010/03/11 15:03:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 
 #include <machine/cpu.h>

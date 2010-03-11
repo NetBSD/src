@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.9.10.3 2009/06/20 07:20:17 yamt Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.9.10.4 2010/03/11 15:03:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.9.10.3 2009/06/20 07:20:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.9.10.4 2010/03/11 15:03:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -174,7 +174,7 @@ int
 linux32_sys_personality(struct lwp *l, const struct linux32_sys_personality_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(int) per;
+		syscallarg(netbsd32_u_long) per;
 	} */
 
 	switch (SCARG(uap, per)) {

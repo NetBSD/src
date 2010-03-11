@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.103.2.3 2009/08/19 18:46:58 yamt Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.103.2.4 2010/03/11 15:03:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.103.2.3 2009/08/19 18:46:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.103.2.4 2010/03/11 15:03:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,8 +215,7 @@ ibcs2_sys_waitsys(struct lwp *l, const struct ibcs2_sys_waitsys_args *uap, regis
 		syscallarg(int) a3;
 	} */
 #endif
-	int error;
-	int pid, options, status, was_zombie;
+	int error, options, status, pid;
 
 #if defined(__i386__)
 #define WAITPID_EFLAGS	0x8c4	/* OF, SF, ZF, PF */
@@ -233,7 +232,7 @@ ibcs2_sys_waitsys(struct lwp *l, const struct ibcs2_sys_waitsys_args *uap, regis
 	}
 #endif
 
-	error = do_sys_wait(l, &pid, &status, options, NULL, &was_zombie);
+	error = do_sys_wait(&pid, &status, options, NULL);
 	retval[0] = pid;
 	retval[1] = status;
 	return error;
@@ -473,8 +472,12 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == SCARG(uap, buf))
+	if (outp == SCARG(uap, buf)) {
+		if (cookiebuf)
+			free(cookiebuf, M_TEMP);
+		cookiebuf = NULL;
 		goto again;
+	}
 	fp->f_offset = off;	/* update the vnode offset */
 
 eof:
@@ -603,8 +606,12 @@ again:
 		resid -= ibcs2_reclen;
 	}
 	/* if we squished out the whole block, try again */
-	if (outp == SCARG(uap, buf))
+	if (outp == SCARG(uap, buf)) {
+		if (cookiebuf)
+			free(cookiebuf, M_TEMP);
+		cookiebuf = NULL;
 		goto again;
+	}
 	fp->f_offset = off;		/* update the vnode offset */
 eof:
 	*retval = SCARG(uap, nbytes) - resid;

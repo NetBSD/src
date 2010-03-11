@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.64.4.1 2008/05/16 02:23:00 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.64.4.2 2010/03/11 15:02:50 yamt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -78,11 +78,14 @@ struct cpu_info {
 	int ci_intrdepth;
 	int ci_mtx_oldspl;
 	int ci_mtx_count;
+#ifndef PPC_BOOKE
 	char *ci_intstk;
+#endif
 #define	CPUSAVE_LEN	8
 	register_t ci_tempsave[CPUSAVE_LEN];
 	register_t ci_ddbsave[CPUSAVE_LEN];
 	register_t ci_ipkdbsave[CPUSAVE_LEN];
+#ifndef PPC_BOOKE
 #define	CPUSAVE_R28	0		/* where r28 gets saved */
 #define	CPUSAVE_R29	1		/* where r29 gets saved */
 #define	CPUSAVE_R30	2		/* where r30 gets saved */
@@ -93,6 +96,18 @@ struct cpu_info {
 #define	CPUSAVE_SRR1	7		/* where SRR1 gets saved */
 #define	DISISAVE_LEN	4
 	register_t ci_disisave[DISISAVE_LEN];
+#else
+#define	CPUSAVE_R26	0		/* where r26 gets saved */
+#define	CPUSAVE_R27	1		/* where r27 gets saved */
+#define	CPUSAVE_R28	2		/* where r28 gets saved */
+#define	CPUSAVE_R29	3		/* where r29 gets saved */
+#define	CPUSAVE_R30	4		/* where r30 gets saved */
+#define	CPUSAVE_R31	5		/* where r31 gets saved */
+	register_t ci_critsave[CPUSAVE_LEN];
+	register_t ci_mchksave[CPUSAVE_LEN];
+	struct pmap_segtab *ci_pmap_kern_segtab;
+	struct pmap_segtab *ci_pmap_user_segtab;
+#endif
 	struct cache_info ci_ci;		
 	void *ci_sysmon_cookie;
 	void (*ci_idlespin)(void);
@@ -303,11 +318,8 @@ cntlzw(uint32_t val)
 
 #define	LWP_PC(l)		(trapframe(l)->srr0)
 
-#define	cpu_swapin(p)
-#define	cpu_swapout(p)
 #define	cpu_proc_fork(p1, p2)
 #define	cpu_idle()		(curcpu()->ci_idlespin())
-#define cpu_lwp_free2(l)
 
 extern int powersave;
 extern int cpu_timebase;

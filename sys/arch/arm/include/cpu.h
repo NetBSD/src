@@ -76,7 +76,6 @@
 #include <arm/cpuconf.h>
 
 #ifndef _LOCORE
-#include <sys/user.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #ifdef FPU_VFP
@@ -122,7 +121,7 @@ extern int cpu_do_powersave;
 #elif defined (PROCESS_ID_IS_CURLWP)
 #define GET_CURLWP(rX)		mrc	p15, 0, rX, c13, c0, 4
 #define GET_CURCPU(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_CPU]
-#define GET_CURPCB(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_ADDR]
+#define GET_CURPCB(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_PCB]
 #elif !defined(MULTIPROCESSOR)
 #define GET_CURCPU(rX)		ldr rX, =_C_LABEL(cpu_info_store)
 #define GET_CURLWP(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURLWP]
@@ -181,9 +180,9 @@ extern int cpu_do_powersave;
  * LWP_PC: Find out the program counter for the given lwp.
  */
 #ifdef __PROG32
-#define LWP_PC(l)	((l)->l_addr->u_pcb.pcb_tf->tf_pc)
+#define LWP_PC(l)	(((struct pcb *)lwp_getpcb(l))->pcb_tf->tf_pc)
 #else
-#define LWP_PC(l)	((l)->l_addr->u_pcb.pcb_tf->tf_r15 & R15_PC)
+#define LWP_PC(l)	(((struct pcb *)lwp_getpcb(l))->pcb_tf->tf_r15 & R15_PC)
 #endif
 
 /*

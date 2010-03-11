@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.30.4.3 2009/09/16 13:37:50 yamt Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.30.4.4 2010/03/11 15:03:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.30.4.3 2009/09/16 13:37:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.30.4.4 2010/03/11 15:03:44 yamt Exp $");
 #endif
 
 /*
@@ -97,7 +97,6 @@ struct ath_pci_softc {
 static void ath_pci_attach(device_t, device_t, void *);
 static int ath_pci_detach(device_t, int);
 static int ath_pci_match(device_t, cfdata_t, void *);
-static int ath_pci_detach(device_t, int);
 
 CFATTACH_DECL_NEW(ath_pci,
     sizeof(struct ath_pci_softc),
@@ -119,7 +118,7 @@ ath_pci_match(device_t parent, cfdata_t match, void *aux)
 }
 
 static bool
-ath_pci_suspend(device_t self PMF_FN_ARGS)
+ath_pci_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct ath_pci_softc *sc = device_private(self);
 
@@ -131,7 +130,7 @@ ath_pci_suspend(device_t self PMF_FN_ARGS)
 }
 
 static bool
-ath_pci_resume(device_t self PMF_FN_ARGS)
+ath_pci_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct ath_pci_softc *sc = device_private(self);
 
@@ -141,9 +140,7 @@ ath_pci_resume(device_t self PMF_FN_ARGS)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return false;
 	}
-	ath_resume(&sc->sc_sc);
-
-	return true;
+	return ath_resume(&sc->sc_sc);
 }
 
 static int
@@ -262,7 +259,7 @@ ath_pci_attach(device_t parent, device_t self, void *aux)
 
 	if (pmf_device_register(self, ath_pci_suspend, ath_pci_resume)) {
 		pmf_class_network_register(self, &sc->sc_if);
-		pmf_device_suspend_self(self);
+		pmf_device_suspend(self, &sc->sc_qual);
 	} else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_sun68k.c,v 1.12.44.2 2009/05/04 08:12:02 yamt Exp $	*/
+/*	$NetBSD: vme_sun68k.c,v 1.12.44.3 2010/03/11 15:03:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_sun68k.c,v 1.12.44.2 2009/05/04 08:12:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_sun68k.c,v 1.12.44.3 2010/03/11 15:03:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: vme_sun68k.c,v 1.12.44.2 2009/05/04 08:12:02 yamt Ex
 #include <sys/errno.h>
 
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/syslog.h>
 
 #include <uvm/uvm_extern.h>

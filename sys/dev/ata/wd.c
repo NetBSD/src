@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.360.4.4 2009/06/20 07:20:20 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.360.4.5 2010/03/11 15:03:24 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *	notice, this list of conditions and the following disclaimer in the
  *	documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *	must display the following acknowledgement:
- *  This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *	derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -59,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.360.4.4 2009/06/20 07:20:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.360.4.5 2010/03/11 15:03:24 yamt Exp $");
 
 #include "opt_ata.h"
 
@@ -99,8 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.360.4.4 2009/06/20 07:20:20 yamt Exp $");
 
 #include <prop/proplib.h>
 
-#define	LBA48_THRESHOLD		(0xfffffff)	/* 128GB / DEV_BSIZE */
-
 #define	WDIORETRIES_SINGLE 4	/* number of retries before single-sector */
 #define	WDIORETRIES	5	/* number of retries before giving up */
 #define	RECOVERYTIME hz/2	/* time to wait before retrying a cmd */
@@ -133,7 +126,7 @@ int	wdprint(void *, char *);
 void	wdperror(const struct wd_softc *);
 
 static int	wdlastclose(device_t);
-static bool	wd_suspend(device_t PMF_FN_PROTO);
+static bool	wd_suspend(device_t, const pmf_qual_t *);
 static int	wd_standby(struct wd_softc *, int);
 
 CFATTACH_DECL3_NEW(wd, sizeof(struct wd_softc),
@@ -182,7 +175,7 @@ void	wdioctlstrategy(struct buf *);
 void  wdgetdefaultlabel(struct wd_softc *, struct disklabel *);
 void  wdgetdisklabel(struct wd_softc *);
 void  wdstart(void *);
-void  __wdstart(struct wd_softc*, struct buf *);
+void  wdstart1(struct wd_softc*, struct buf *);
 void  wdrestart(void *);
 void  wddone(void *);
 int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
@@ -199,7 +192,6 @@ static void bad144intern(struct wd_softc *);
 #endif
 
 #define	WD_QUIRK_SPLIT_MOD15_WRITE	0x0001	/* must split certain writes */
-#define	WD_QUIRK_FORCE_LBA48		0x0002	/* must use LBA48 commands */
 
 #define	WD_QUIRK_FMT "\20\1SPLIT_MOD15_WRITE\2FORCE_LBA48"
 
@@ -227,31 +219,6 @@ static const struct wd_quirk {
 	  WD_QUIRK_SPLIT_MOD15_WRITE },
 	{ "ST380023AS",
 	  WD_QUIRK_SPLIT_MOD15_WRITE },
-
-	/*
-	 * These seagate drives seems to have issue addressing sector 0xfffffff
-	 * (aka LBA48_THRESHOLD) in LBA mode. The workaround is to force
-	 * LBA48
-	 * Note that we can't just change the code to always use LBA48 for
-	 * sector 0xfffffff, because this would break valid and working
-	 * setups using LBA48 drives on non-LBA48-capable controllers
-	 * (and it's hard to get a list of such controllers)
-	 */
-	{ "ST3160021A*",
-	  WD_QUIRK_FORCE_LBA48 },
-	{ "ST3160811A*",
-	  WD_QUIRK_FORCE_LBA48 },
-	{ "ST3160812A*",
-	  WD_QUIRK_FORCE_LBA48 },
-	{ "ST3160023A*",
-	  WD_QUIRK_FORCE_LBA48 },
-	{ "ST3160827A*",
-	  WD_QUIRK_FORCE_LBA48 },
-	/* Attempt to catch all seagate drives larger than 200GB */
-	{ "ST3[2-9][0-9][0-9][0-9][0-9][0-9][A-Z]*",
-	  WD_QUIRK_FORCE_LBA48 },
-	{ "ST3[1-9][0-9][0-9][0-9][0-9][0-9][0-9][A-Z]*",
-	  WD_QUIRK_FORCE_LBA48 },
 	{ NULL,
 	  0 }
 };
@@ -379,14 +346,17 @@ wdattach(device_t parent, device_t self, void *aux)
 		    ((u_int64_t) wd->sc_params.atap_max_lba[2] << 32) |
 		    ((u_int64_t) wd->sc_params.atap_max_lba[1] << 16) |
 		    ((u_int64_t) wd->sc_params.atap_max_lba[0] <<  0);
+		wd->sc_capacity28 =
+		    (wd->sc_params.atap_capacity[1] << 16) |
+		    wd->sc_params.atap_capacity[0];
 	} else if ((wd->sc_flags & WDF_LBA) != 0) {
 		aprint_verbose(" LBA addressing\n");
-		wd->sc_capacity =
-		    ((u_int64_t)wd->sc_params.atap_capacity[1] << 16) |
+		wd->sc_capacity28 = wd->sc_capacity =
+		    (wd->sc_params.atap_capacity[1] << 16) |
 		    wd->sc_params.atap_capacity[0];
 	} else {
 		aprint_verbose(" chs addressing\n");
-		wd->sc_capacity =
+		wd->sc_capacity28 = wd->sc_capacity =
 		    wd->sc_params.atap_cylinders *
 		    wd->sc_params.atap_heads *
 		    wd->sc_params.atap_sectors;
@@ -424,7 +394,7 @@ wdattach(device_t parent, device_t self, void *aux)
 }
 
 static bool
-wd_suspend(device_t dv PMF_FN_ARGS)
+wd_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct wd_softc *sc = device_private(dv);
 
@@ -615,7 +585,7 @@ wdstart(void *arg)
 		wd->openings--;
 
 		wd->retries = 0;
-		__wdstart(wd, bp);
+		wdstart1(wd, bp);
 	}
 }
 
@@ -625,6 +595,7 @@ wd_split_mod15_write(struct buf *bp)
 	struct buf *obp = bp->b_private;
 	struct wd_softc *sc =
 	    device_lookup_private(&wd_cd, DISKUNIT(obp->b_dev));
+	int s;
 
 	if (__predict_false(bp->b_error != 0)) {
 		/*
@@ -653,20 +624,24 @@ wd_split_mod15_write(struct buf *bp)
 	bp->b_data = (char *)bp->b_data + bp->b_bcount;
 	bp->b_blkno += (bp->b_bcount / 512);
 	bp->b_rawblkno += (bp->b_bcount / 512);
-	__wdstart(sc, bp);
+	s = splbio();
+	wdstart1(sc, bp);
+	splx(s);
 	return;
 
  done:
 	obp->b_error = bp->b_error;
 	obp->b_resid = bp->b_resid;
+	s = splbio();
 	putiobuf(bp);
 	biodone(obp);
 	sc->openings++;
+	splx(s);
 	/* wddone() will call wdstart() */
 }
 
 void
-__wdstart(struct wd_softc *wd, struct buf *bp)
+wdstart1(struct wd_softc *wd, struct buf *bp)
 {
 
 	/*
@@ -719,6 +694,8 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 	}
 
 	wd->sc_wdc_bio.blkno = bp->b_rawblkno;
+	wd->sc_wdc_bio.bcount = bp->b_bcount;
+	wd->sc_wdc_bio.databuf = bp->b_data;
 	wd->sc_wdc_bio.blkdone =0;
 	wd->sc_bp = bp;
 	/*
@@ -731,15 +708,14 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 	else
 		wd->sc_wdc_bio.flags = 0;
 	if (wd->sc_flags & WDF_LBA48 &&
-	    (wd->sc_wdc_bio.blkno > LBA48_THRESHOLD ||
-	    (wd->sc_quirks & WD_QUIRK_FORCE_LBA48) != 0))
+	    (wd->sc_wdc_bio.blkno +
+	     wd->sc_wdc_bio.bcount / wd->sc_dk.dk_label->d_secsize) >
+	    wd->sc_capacity28)
 		wd->sc_wdc_bio.flags |= ATA_LBA48;
 	if (wd->sc_flags & WDF_LBA)
 		wd->sc_wdc_bio.flags |= ATA_LBA;
 	if (bp->b_flags & B_READ)
 		wd->sc_wdc_bio.flags |= ATA_READ;
-	wd->sc_wdc_bio.bcount = bp->b_bcount;
-	wd->sc_wdc_bio.databuf = bp->b_data;
 	/* Instrumentation. */
 	disk_busy(&wd->sc_dk);
 	switch (wd->atabus->ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
@@ -750,7 +726,7 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 	case ATACMD_COMPLETE:
 		break;
 	default:
-		panic("__wdstart: bad return code from ata_bio()");
+		panic("wdstart1: bad return code from ata_bio()");
 	}
 }
 
@@ -761,7 +737,6 @@ wddone(void *v)
 	struct buf *bp = wd->sc_bp;
 	const char *errmsg;
 	int do_perror = 0;
-	int nblks;
 
 	ATADEBUG_PRINT(("wddone %s\n", device_xname(wd->sc_dev)),
 	    DEBUG_XFERS);
@@ -788,25 +763,6 @@ wddone(void *v)
 			goto noerror;
 		errmsg = "error";
 		do_perror = 1;
-		if ((wd->sc_wdc_bio.r_error & (WDCE_IDNF | WDCE_ABRT)) &&
-		    (wd->sc_quirks & WD_QUIRK_FORCE_LBA48) == 0) {
-			nblks = wd->sc_wdc_bio.bcount /
-			    wd->sc_dk.dk_label->d_secsize;
-			/*
-			 * If we get a "id not found" when crossing the
-			 * LBA48_THRESHOLD, and the drive is larger than
-			 * 128GB, then we can assume the drive has the
-			 * LBA48 bug and we switch to LBA48.
-			 */
-			if (wd->sc_wdc_bio.blkno <= LBA48_THRESHOLD &&
-			    wd->sc_wdc_bio.blkno + nblks > LBA48_THRESHOLD &&
-			    wd->sc_capacity > LBA48_THRESHOLD + 1) {
-				errmsg = "LBA48 bug";
-				wd->sc_quirks |= WD_QUIRK_FORCE_LBA48;
-				do_perror = 0;
-				goto retry2;
-			}
-		}
 retry:		/* Just reset and retry. Can we do more ? */
 		(*wd->atabus->ata_reset_drive)(wd->drvp, AT_RST_NOCMD);
 retry2:
@@ -880,7 +836,7 @@ wdrestart(void *v)
 	ATADEBUG_PRINT(("wdrestart %s\n", device_xname(wd->sc_dev)),
 	    DEBUG_XFERS);
 	s = splbio();
-	__wdstart(v, bp);
+	wdstart1(v, bp);
 	splx(s);
 }
 
@@ -1633,8 +1589,7 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	wd->sc_wdc_bio.blkno = blkno;
 	wd->sc_wdc_bio.flags = ATA_POLL;
 	if (wd->sc_flags & WDF_LBA48 &&
-	    (blkno > LBA48_THRESHOLD ||
-    	    (wd->sc_quirks & WD_QUIRK_FORCE_LBA48) != 0))
+	    (wd->sc_wdc_bio.blkno + nblks) > wd->sc_capacity28)
 		wd->sc_wdc_bio.flags |= ATA_LBA48;
 	if (wd->sc_flags & WDF_LBA)
 		wd->sc_wdc_bio.flags |= ATA_LBA;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.23.78.1 2009/05/04 08:11:56 yamt Exp $
+#	$NetBSD: Makefile.buildboot,v 1.23.78.2 2010/03/11 15:02:59 yamt Exp $
 #
 # This file is for the sparc `boot' and `bootxx' only; it does not
 # currently play well on a 64-bit system.
@@ -34,6 +34,7 @@ RELOC_BOOTXX=	300000
 CPPFLAGS+=	-D_STANDALONE -DSUN4 -DSUN4C -DSUN4M -DSUN4D -DHEAP_VARIABLE
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
+CPPFLAGS+=	-I${.CURDIR}/../../../../../common/include
 CFLAGS=		-Os
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -ffreestanding
 

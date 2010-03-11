@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.21.4.4 2009/06/20 07:20:28 yamt Exp $	*/
+/*	$NetBSD: zx.c,v 1.21.4.5 2010/03/11 15:04:02 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.21.4.4 2009/06/20 07:20:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.21.4.5 2010/03/11 15:04:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.21.4.4 2009/06/20 07:20:28 yamt Exp $");
 #include <dev/sbus/sbusvar.h>
 
 #include <dev/wscons/wsconsio.h>
+
+#include "ioconf.h"
 
 #if (NWSDISPLAY == 0) && !defined(RASTERCONSOLE)
 #error Sorry, this driver needs WSCONS or RASTERCONSOLE
@@ -139,8 +141,6 @@ struct zx_mmo {
 
 CFATTACH_DECL_NEW(zx, sizeof(struct zx_softc),
     zx_match, zx_attach, NULL, NULL);
-
-extern struct cfdriver zx_cd;
 
 static dev_type_open(zxopen);
 static dev_type_close(zxclose);
@@ -235,7 +235,7 @@ zx_attach(device_t parent, device_t self, void *args)
 		return;
 	}
 	fb->fb_pixels = (void *)bus_space_vaddr(bt, bh);
-	sc->sc_pixels = (u_int32_t *)fb->fb_pixels;
+	sc->sc_pixels = (uint32_t *)fb->fb_pixels;
 
 	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_LC_SS0_USR,
 	    PAGE_SIZE, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
@@ -294,7 +294,6 @@ zx_attach(device_t parent, device_t self, void *args)
 		printf(" (console)");
 	printf("\n");
 
-	sbus_establish(&sc->sc_sd, sc->sc_dv);
 	if (sa->sa_nintr != 0)
 		bus_intr_establish(bt, sa->sa_pri, IPL_NONE, zx_intr, sc);
 
@@ -326,7 +325,8 @@ zx_attach(device_t parent, device_t self, void *args)
 		zx_defaultscreen.ncols = ri->ri_cols;
 		zx_fillrect(sc, 0, 0, width, height,
 		     ri->ri_devcmap[defattr >> 16], ZX_STD_ROP);
-		wsdisplay_cnattach(&zx_defaultscreen, ri, 0, 0, defattr);	
+		wsdisplay_cnattach(&zx_defaultscreen, ri, 0, 0, defattr);
+		vcons_replay_msgbuf(&zx_console_screen);
 	} else {
 		/* 
 		 * we're not the console so we just clear the screen and don't 
@@ -767,7 +767,7 @@ zx_cursor_unblank(struct zx_softc *sc)
 static void
 zx_cursor_color(struct zx_softc *sc)
 {
-	u_int8_t tmp;
+	uint8_t tmp;
 
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzcu, zcu_type, 0x50);
 
@@ -850,7 +850,8 @@ zx_fillrect(struct zx_softc *sc, int x, int y, int w, int h, uint32_t bg,
 
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_rop, rop);
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzdss0, zd_fg, bg);
-	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_extent, w | (h << 11));
+	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_extent,
+	    (w - 1) | ((h - 1) << 11));
 	bus_space_write_4(sc->sc_bt, sc->sc_bhzc, zc_fill,
 	    x | (y << 11) | 0x80000000);
 }
@@ -860,6 +861,9 @@ zx_copyrect(struct zx_softc *sc, int sx, int sy, int dx, int dy, int w,
 	    int h)
 {
 	uint32_t dir;
+
+	w -= 1;
+	h -= 1;
 
 	if (sy < dy || sx < dx) {
 		dir = 0x80000000;
@@ -992,8 +996,8 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct zx_softc *sc = scr->scr_cookie;
 	struct wsdisplay_font *font;
-	volatile u_int32_t *dp;
-	u_int8_t *fb;
+	volatile uint32_t *dp;
+	uint8_t *fb;
 	int fs, i, ul;
 	uint32_t fg, bg;
 	
@@ -1012,10 +1016,10 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 
 	font = ri->ri_font;
 
-	dp = (volatile u_int32_t *)sc->sc_pixels +
+	dp = (volatile uint32_t *)sc->sc_pixels +
 	    ((row * font->fontheight + ri->ri_yorigin) << 11) +
 	    (col * font->fontwidth + ri->ri_xorigin);
-	fb = (u_int8_t *)font->data + (uc - font->firstchar) *
+	fb = (uint8_t *)font->data + (uc - font->firstchar) *
 	    ri->ri_fontscale;
 	fs = font->stride;
 
@@ -1036,7 +1040,7 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		}
 	} else {
 		for (i = font->fontheight; i != 0; i--, dp += 2048) {
-			*dp = *((u_int16_t *)fb) << 16;
+			*dp = *((uint16_t *)fb) << 16;
 			fb += fs;
 		}
 	}
@@ -1085,6 +1089,7 @@ zx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 					sc->sc_mode = new_mode;
 					if(new_mode == WSDISPLAYIO_MODE_EMUL)
 					{
+						zx_reset(sc);
 						vcons_redraw_screen(ms);
 					}
 				}

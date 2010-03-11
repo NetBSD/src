@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.21.56.1 2009/05/04 08:10:23 yamt Exp $
+# $NetBSD: INSTALL,v 1.21.56.2 2010/03/11 15:01:55 yamt Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -38,7 +38,6 @@ file-system	FILECORE	# Acorn filecore file system
 file-system	NFS		# Sun NFS-compatible file system client
 #file-system	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay filesystem
-#file-system	PORTAL		# portal filesystem (still experimental)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 #file-system	PROCFS		# /proc

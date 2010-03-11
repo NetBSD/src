@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000var.h,v 1.18.58.3 2009/05/16 10:41:24 yamt Exp $	*/
+/*	$NetBSD: ne2000var.h,v 1.18.58.4 2010/03/11 15:03:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,14 +46,12 @@ struct ne2000_softc {
 		NE2000_TYPE_DL10019,
 		NE2000_TYPE_DL10022,
 		NE2000_TYPE_AX88190,
-		NE2000_TYPE_AX88790
+		NE2000_TYPE_AX88790,
+		NE2000_TYPE_RTL8019
 	} sc_type;
 	int sc_useword;
-	enum {
-		NE2000_DMAWIDTH_UNKNOWN = 0,
-		NE2000_DMAWIDTH_16BIT,
-		NE2000_DMAWIDTH_8BIT,
-	} sc_dmawidth;
+	u_int sc_quirk;			/* quirks passed from attachments */
+#define	NE2000_QUIRK_8BIT	0x0001	/* force 8bit mode even on NE2000 */
 };
 
 int	ne2000_attach(struct ne2000_softc *, u_int8_t *);
@@ -65,11 +63,8 @@ int	ne2000_detach(struct ne2000_softc *, int);
 int	ne2000_ipkdb_attach(struct ipkdb_if *);
 #endif
 
-/* dopowerhooks(9) - deprecated */
-void	ne2000_power(int, void *);
-
 /* pmf(9) */
-bool ne2000_suspend(device_t PMF_FN_PROTO);
-bool ne2000_resume(device_t PMF_FN_PROTO);
+bool ne2000_suspend(device_t, const pmf_qual_t *);
+bool ne2000_resume(device_t, const pmf_qual_t *);
 
 #endif /* _DEV_IC_NE2000VAR_H_ */

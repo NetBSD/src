@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27.20.1 2009/05/04 08:11:02 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27.20.2 2010/03/11 15:02:19 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27.20.1 2009/05/04 08:11:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27.20.2 2010/03/11 15:02:19 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -123,7 +123,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27.20.1 2009/05/04 08:11:02 yamt Exp $
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
-#include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
@@ -170,7 +169,6 @@ extern char cpu_model[];
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int	physmem;		/* Total physical memory */
@@ -191,8 +189,6 @@ void	mach_init(int, char **, yamon_env_var *, u_long);
  */
 int	safepri = MIPS1_PSL_LOWIPL;
 
-extern struct user *proc0paddr;
-
 /*
  * Do all the stuff that locore normally does before calling main().
  */
@@ -201,13 +197,14 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 {
 	struct malta_config *mcp = &malta_configuration;
 	bus_space_handle_t sh;
-	void *kernend, *v;
-        u_long first, last;
-	char *cp;
-	int freqok, i, howto;
+	void *kernend;
+	u_long first, last;
+	int freqok;
 	uint8_t *brkres = (uint8_t *)MIPS_PHYS_TO_KSEG1(MALTA_BRKRES);
 
 	extern char edata[], end[];
+
+	CTASSERT((intptr_t)MIPS_PHYS_TO_KSEG1(MALTA_BRKRES) < 0);
 
 	*brkres = 0;	/* Disable BREAK==reset on console */
 
@@ -288,8 +285,10 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 * Look at arguments passed to us and compute boothowto.
 	 */
 	boothowto = RB_AUTOBOOT;
-	for (i = 1; i < argc; i++) {
-		for (cp = argv[i]; *cp; cp++) {
+#ifndef _LP64
+	for (int i = 1; i < argc; i++) {
+		for (char *cp = argv[i]; *cp; cp++) {
+			int howto;
 			/* Ignore superfluous '-', if there is one */
 			if (*cp == '-')
 				continue;
@@ -302,6 +301,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 				boothowto |= howto;
 		}
 	}
+#endif
 
 	/*
 	 * Load the rest of the available pages into the VM system.
@@ -319,13 +319,9 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	pmap_bootstrap();
 
 	/*
-	 * Allocate space for proc0's USPACE.
+	 * Allocate uarea page for lwp0 and set it.
 	 */
-	v = (void *)uvm_pageboot_alloc(USPACE); 
-	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	mips_init_lwp0_uarea();
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
@@ -393,7 +389,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Take a snapshot before clobbering any registers. */
 	if (curproc)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 	if (cold) {
 		howto |= RB_HALT;

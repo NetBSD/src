@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.72.10.2 2009/05/04 08:13:21 yamt Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.72.10.3 2010/03/11 15:04:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.72.10.2 2009/05/04 08:13:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.72.10.3 2010/03/11 15:04:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,6 +218,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
 	  0,
 	  PQUIRK_NODOORLOCK | PQUIRK_NOSYNCCACHE,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+	/* Meizu M6 doesn't like synchronize-cache, see PR 40442 */
+	{ { USB_VENDOR_MEIZU, USB_PRODUCT_MEIZU_M6_SL },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  0,
+	  PQUIRK_NOSYNCCACHE,
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},

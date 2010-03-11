@@ -1,4 +1,4 @@
-/* $NetBSD: irix_sysent.c,v 1.58.2.1 2009/05/04 08:12:19 yamt Exp $ */
+/* $NetBSD: irix_sysent.c,v 1.58.2.2 2010/03/11 15:03:14 yamt Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysent.c,v 1.58.2.1 2009/05/04 08:12:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysent.c,v 1.58.2.2 2010/03/11 15:03:14 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -418,9 +418,9 @@ struct sysent irix_sysent[] = {
 	    (sy_call_t *)sys_readv },		/* 181 = readv */
 	{ ns(struct sys_writev_args), 0,
 	    (sy_call_t *)sys_writev },		/* 182 = writev */
-	{ ns(struct sys_truncate_args), 0,
+	{ ns(struct sys_truncate_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG2_64,
 	    (sy_call_t *)sys_truncate },	/* 183 = truncate64 */
-	{ ns(struct sys_ftruncate_args), 0,
+	{ ns(struct sys_ftruncate_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG2_64,
 	    (sy_call_t *)sys_ftruncate },	/* 184 = ftruncate64 */
 	{ ns(struct irix_sys_mmap64_args), 0,
 	    (sy_call_t *)irix_sys_mmap64 },	/* 185 = mmap64 */
@@ -565,4 +565,3 @@ struct sysent irix_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 255 = filler */
 };
-

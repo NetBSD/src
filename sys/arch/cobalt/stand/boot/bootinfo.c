@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.c,v 1.5.10.1 2008/05/16 02:22:09 yamt Exp $	*/
+/*	$NetBSD: bootinfo.c,v 1.5.10.2 2010/03/11 15:02:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -67,8 +67,8 @@ void bi_add(void *new, int type, int size)
 		return;				/* XXX error? */
 
 	if (bootinfo != NULL) {
-		DPRINTF(("Adding %d of size %d @0x%x\n",
-					type, size, (char*)bi_next));
+		DPRINTF(("Adding %d of size %d @0x%lx\n",
+		    type, size, (u_long)bi_next));
 
 		bi = new;
 		bi->next = size;

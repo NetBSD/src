@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.46.20.1 2009/05/04 08:10:34 yamt Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.46.20.2 2010/03/11 15:02:00 yamt Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.46.20.1 2009/05/04 08:10:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.46.20.2 2010/03/11 15:02:00 yamt Exp $");
 
 #include "grfcv.h"
 #if NGRFCV > 0
@@ -67,16 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.46.20.1 2009/05/04 08:10:34 yamt Exp $"
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_cvreg.h>
 #include <amiga/dev/zbusvar.h>
-
-/*
- * finish all bus operations, flush pipelines
- * XXX is this really needed?
- */
-#if defined(__m68k__)
-#define cpu_sync() __asm volatile ("nop")
-#elif defined(__powerpc__)
-#define cpu_sync() __asm volatile ("sync; isync")
-#endif
 
 int	grfcvmatch(struct device *, struct cfdata *, void *);
 void	grfcvattach(struct device *, struct device *, void *);
@@ -346,7 +336,7 @@ cvintr(void *arg)
 
 		/* Restore the old CR index */
 		vgaw(ba, CRT_ADDRESS, cridx);
-		cpu_sync();
+		amiga_cpu_sync();
 #endif  /* !CV_NO_HARDWARE_CURSOR */
 		return (1);
 	}
@@ -368,7 +358,7 @@ cv_has_4mb(volatile void *fb)
 	testfbw = (volatile unsigned long *)fb;
 	testfbr = (volatile unsigned long *)((volatile char*)fb + 0x02000000);
 	*testfbw = 0x87654321;
-	cpu_sync();
+	amiga_cpu_sync();
 	if (*testfbr != 0x87654321)
 		return (0);
 
@@ -376,15 +366,15 @@ cv_has_4mb(volatile void *fb)
 	testfbw = (volatile unsigned long *)((volatile char*)fb + 0x00200000);
 	testfbr = (volatile unsigned long *)((volatile char*)fb + 0x02200000);
 	*testfbw = 0x87654321;
-	cpu_sync();
+	amiga_cpu_sync();
 	if (*testfbr != 0x87654321)
 		return (0);
 	*testfbw = 0xAAAAAAAA;
-	cpu_sync();
+	amiga_cpu_sync();
 	if (*testfbr != 0xAAAAAAAA)
 		return (0);
 	*testfbw = 0x55555555;
-	cpu_sync();
+	amiga_cpu_sync();
 	if (*testfbr != 0x55555555)
 		return (0);
 	return (1);
@@ -451,7 +441,7 @@ grfcvattach(struct device *pdp, struct device *dp, void *auxp)
 		 */
 
 		printf("\n");
-		memcpy( &gp->g_display, &congrf.gcs_sc.g_display,
+		memcpy(&gp->g_display, &congrf.gcs_sc.g_display,
 			(char *) &gcp->gcs_isr - (char *) &gp->g_display);
 
 		/* ... and transfer the isr */
@@ -595,7 +585,7 @@ cv_boardinit(struct grf_softc *gp)
 	 * Set the roxxler register to use interrupt #2, not #6.
 	 */
 #if CV_INT_NUM == 2
-	cv_write_port(0x8080, ba - 0x02000000);
+	cv_write_port(0x8080, (volatile char*)ba - 0x02000000);
 #endif
 
 	/* Enable board interrupts */
@@ -839,7 +829,7 @@ cv_getvmode(struct grf_softc *gp, struct grfvideo_mode *vm)
 #ifdef CV64CONSOLE
 	/* Handle grabbing console mode */
 	if (vm->mode_num == 255) {
-		memcpy( vm, &cvconsole_mode, sizeof(struct grfvideo_mode));
+		memcpy(vm, &cvconsole_mode, sizeof(struct grfvideo_mode));
 		/* XXX so grfconfig can tell us the correct text dimensions. */
 		vm->depth = cvconsole_mode.fy;
 	} else
@@ -853,7 +843,7 @@ cv_getvmode(struct grf_softc *gp, struct grfvideo_mode *vm)
 		if (gv->mode_num == 0)
 			return (EINVAL);
 
-		memcpy( vm, gv, sizeof(struct grfvideo_mode));
+		memcpy(vm, gv, sizeof(struct grfvideo_mode));
 	}
 
 	/* adjust internal values to pixel values */
@@ -910,7 +900,7 @@ cv_mode(register struct grf_softc *gp, u_long cmd, void *arg, u_long a2,
 
 	    case GM_GRFOFF:
 #ifndef CV64CONSOLE
-		cvscreen(1, gp->g_regkva - 0x02000000);
+		cvscreen(1, (volatile char *)gp->g_regkva - 0x02000000);
 #else
 		cv_load_mon(gp, &cvconsole_mode);
 		ite_reinit(gp->g_itedev);
@@ -1006,7 +996,7 @@ cv_setmonitor(struct grf_softc *gp, struct grfvideo_mode *gv)
 #ifdef CV64CONSOLE
 	/* handle interactive setting of console mode */
 	if (gv->mode_num == 255) {
-		memcpy( &cvconsole_mode.gv, gv, sizeof(struct grfvideo_mode));
+		memcpy(&cvconsole_mode.gv, gv, sizeof(struct grfvideo_mode));
 		cvconsole_mode.gv.hblank_start /= 8;
 		cvconsole_mode.gv.hsync_start /= 8;
 		cvconsole_mode.gv.hsync_stop /= 8;
@@ -1032,7 +1022,7 @@ cv_setmonitor(struct grf_softc *gp, struct grfvideo_mode *gv)
 			return (EINVAL);
 		}
 
-	memcpy( md, gv, sizeof(struct grfvideo_mode));
+	memcpy(md, gv, sizeof(struct grfvideo_mode));
 
 	/* adjust pixel oriented values to internal rep. */
 
@@ -1860,7 +1850,7 @@ cv_setup_hwc(struct grf_softc *gp)
 	/* reset colour stack */
 #if !defined(__m68k__)
 	test = RCrt(ba, CRT_ID_HWGC_MODE);
-	cpu_sync();
+	amiga_cpu_sync();
 #else
 	/* do it in assembler, the above does't seem to work */
 	__asm volatile ("moveb #0x45, %1@(0x3d4); \
@@ -1875,7 +1865,7 @@ cv_setup_hwc(struct grf_softc *gp)
 
 #if !defined(__m68k__)
 	test = RCrt(ba, CRT_ID_HWGC_MODE);
-	cpu_sync();
+	amiga_cpu_sync();
 #else
 	/* do it in assembler, the above does't seem to work */
 	__asm volatile ("moveb #0x45, %1@(0x3d4); \
@@ -2117,7 +2107,7 @@ cv_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 
 		/* reset colour stack */
 		test = RCrt(ba, CRT_ID_HWGC_MODE);
-		cpu_sync();
+		amiga_cpu_sync();
 		switch (depth) {
 		    case 8:
 		    case 15:
@@ -2136,7 +2126,7 @@ cv_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 		}
 
 		test = RCrt(ba, CRT_ID_HWGC_MODE);
-		cpu_sync();
+		amiga_cpu_sync();
 		switch (depth) {
 		    case 8:
 			WCrt (ba, CRT_ID_HWGC_BG_STACK, 1);

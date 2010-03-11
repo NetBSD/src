@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.120.4.1 2009/05/04 08:13:25 yamt Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.120.4.2 2010/03/11 15:04:09 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.120.4.1 2009/05/04 08:13:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.120.4.2 2010/03/11 15:04:09 yamt Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.120.4.1 2009/05/04 08:13:25 yamt Exp
 #include <dev/wscons/wsemulvar.h>
 #include <dev/wscons/wscons_callbacks.h>
 #include <dev/cons.h>
+
+#include "locators.h"
 
 struct wsscreen_internal {
 	const struct wsdisplay_emulops *emulops;
@@ -166,7 +168,7 @@ static int wsdisplay_emul_match(device_t , cfdata_t, void *);
 static void wsdisplay_emul_attach(device_t, device_t, void *);
 static int wsdisplay_noemul_match(device_t, cfdata_t, void *);
 static void wsdisplay_noemul_attach(device_t, device_t, void *);
-static bool wsdisplay_suspend(device_t PMF_FN_PROTO);
+static bool wsdisplay_suspend(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL_NEW(wsdisplay_emul, sizeof (struct wsdisplay_softc),
     wsdisplay_emul_match, wsdisplay_emul_attach, NULL, NULL);
@@ -311,9 +313,11 @@ wsscreen_detach(struct wsscreen *scr)
 		tty_detach(scr->scr_tty);
 		ttyfree(scr->scr_tty);
 	}
-	if (WSSCREEN_HAS_EMULATOR(scr))
+	if (WSSCREEN_HAS_EMULATOR(scr)) {
 		(*scr->scr_dconf->wsemul->detach)(scr->scr_dconf->wsemulcookie,
 						  &ccol, &crow);
+		wsemul_drop(scr->scr_dconf->wsemul);
+	}
 	free(scr->scr_dconf, M_DEVBUF);
 	free(scr, M_DEVBUF);
 }
@@ -522,13 +526,13 @@ wsdisplay_emul_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct wsemuldisplaydev_attach_args *ap = aux;
 
-	if (match->wsemuldisplaydevcf_console !=
-	    WSEMULDISPLAYDEVCF_CONSOLE_UNK) {
+	if (match->cf_loc[WSEMULDISPLAYDEVCF_CONSOLE] !=
+	    WSEMULDISPLAYDEVCF_CONSOLE_DEFAULT) {
 		/*
 		 * If console-ness of device specified, either match
 		 * exactly (at high priority), or fail.
 		 */
-		if (match->wsemuldisplaydevcf_console != 0 &&
+		if (match->cf_loc[WSEMULDISPLAYDEVCF_CONSOLE] != 0 &&
 		    ap->console != 0)
 			return (10);
 		else
@@ -552,8 +556,8 @@ wsdisplay_emul_attach(device_t parent, device_t self, void *aux)
 		ap->console = 0;
 
 	wsdisplay_common_attach(sc, ap->console,
-	     device_cfdata(self)->wsemuldisplaydevcf_kbdmux, ap->scrdata,
-	     ap->accessops, ap->accesscookie);
+	     device_cfdata(self)->cf_loc[WSEMULDISPLAYDEVCF_KBDMUX],
+	     ap->scrdata, ap->accessops, ap->accesscookie);
 
 	if (ap->console) {
 		int maj;
@@ -603,7 +607,7 @@ wsdisplay_noemul_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	wsdisplay_common_attach(sc, 0,
-	    device_cfdata(self)->wsemuldisplaydevcf_kbdmux, NULL,
+	    device_cfdata(self)->cf_loc[WSDISPLAYDEVCF_KBDMUX], NULL,
 	    ap->accessops, ap->accesscookie);
 }
 
@@ -677,7 +681,7 @@ wsdisplay_handlex(int resume)
 }
 
 static bool
-wsdisplay_suspend(device_t dv PMF_FN_ARGS)
+wsdisplay_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct wsdisplay_softc *sc = device_private(dv);
 #ifdef DIAGNOSTIC
@@ -1672,13 +1676,13 @@ wsdisplay_kbdinput(device_t dv, keysym_t ks)
 
 	tp = scr->scr_tty;
 
-	if (KS_GROUP(ks) == KS_GROUP_Ascii)
+	if (KS_GROUP(ks) == KS_GROUP_Plain && KS_VALUE(ks) <= 0x7f)
 		(*tp->t_linesw->l_rint)(KS_VALUE(ks), tp);
 	else if (WSSCREEN_HAS_EMULATOR(scr)) {
 		count = (*scr->scr_dconf->wsemul->translate)
 		    (scr->scr_dconf->wsemulcookie, ks, &dp);
 		while (count-- > 0)
-			(*tp->t_linesw->l_rint)(*dp++, tp);
+			(*tp->t_linesw->l_rint)((unsigned char)(*dp++), tp);
 	}
 }
 

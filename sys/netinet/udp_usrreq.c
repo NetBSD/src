@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.171.2.3 2009/08/19 18:48:25 yamt Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.171.2.4 2010/03/11 15:04:29 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.171.2.3 2009/08/19 18:48:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.171.2.4 2010/03/11 15:04:29 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -232,9 +232,13 @@ EVCNT_ATTACH_STATIC(udp6_swcsum);
 
 #endif /* UDP_CSUM_COUNTERS */
 
+static void sysctl_net_inet_udp_setup(struct sysctllog **);
+
 void
 udp_init(void)
 {
+
+	sysctl_net_inet_udp_setup(NULL);
 
 	in_pcbinit(&udbtable, udbhashsize, udbhashsize);
 
@@ -1367,7 +1371,8 @@ sysctl_net_inet_udp_stats(SYSCTLFN_ARGS)
 /*
  * Sysctl for udp variables.
  */
-SYSCTL_SETUP(sysctl_net_inet_udp_setup, "sysctl net.inet.udp subtree setup")
+static void
+sysctl_net_inet_udp_setup(struct sysctllog **clog)
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlcd.c,v 1.8.44.2 2009/05/04 08:10:55 yamt Exp $	*/
+/*	$NetBSD: mlcd.c,v 1.8.44.3 2010/03/11 15:02:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.8.44.2 2009/05/04 08:10:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.8.44.3 2010/03/11 15:02:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -93,7 +93,7 @@ struct mlcd_buf {
 struct mlcd_softc {
 	struct device	sc_dev;
 
-	struct device	*sc_parent;
+	device_t sc_parent;
 	struct maple_unit *sc_unit;
 	int		sc_direction;
 	enum mlcd_stat {
@@ -148,9 +148,9 @@ struct mlcd_softc {
 #define MLCD_UNIT(dev)		(minor(dev) >> 8)
 #define MLCD_MINOR(unit, part)	(((unit) << 8) | (part))
 
-static int	mlcdmatch(struct device *, struct cfdata *, void *);
-static void	mlcdattach(struct device *, struct device *, void *);
-static int	mlcddetach(struct device *, int);
+static int	mlcdmatch(device_t, struct cfdata *, void *);
+static void	mlcdattach(device_t, device_t, void *);
+static int	mlcddetach(device_t, int);
 static void	mlcd_intr(void *, struct maple_response *, int, int);
 static void	mlcd_printerror(const char *, uint32_t);
 static struct mlcd_buf *mlcd_buf_alloc(int /*dev*/, int /*flags*/);
@@ -198,7 +198,7 @@ static const char initimg48x32[192] = {
 
 /* ARGSUSED */
 static int
-mlcdmatch(struct device *parent, struct cfdata *cf, void *aux)
+mlcdmatch(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct maple_attach_args *ma = aux;
 
@@ -206,9 +206,9 @@ mlcdmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-mlcdattach(struct device *parent, struct device *self, void *aux)
+mlcdattach(device_t parent, device_t self, void *aux)
 {
-	struct mlcd_softc *sc = (void *) self;
+	struct mlcd_softc *sc = device_private(self);
 	struct maple_attach_args *ma = aux;
 	int i;
 	union {
@@ -282,9 +282,9 @@ mlcdattach(struct device *parent, struct device *self, void *aux)
 
 /* ARGSUSED1 */
 static int
-mlcddetach(struct device *self, int flags)
+mlcddetach(device_t self, int flags)
 {
-	struct mlcd_softc *sc = (struct mlcd_softc *) self;
+	struct mlcd_softc *sc = device_private(self);
 	struct mlcd_buf *bp;
 	int minor_l, minor_h;
 

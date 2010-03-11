@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_isa.c,v 1.15.4.2 2009/05/16 10:41:25 yamt Exp $	*/
+/*	$NetBSD: adv_isa.c,v 1.15.4.3 2010/03/11 15:03:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.15.4.2 2009/05/16 10:41:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.15.4.3 2010/03/11 15:03:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.15.4.2 2009/05/16 10:41:25 yamt Exp $"
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 
 #include <sys/bus.h>

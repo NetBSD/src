@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5.44.2 2009/05/04 08:11:23 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5.44.3 2010/03/11 15:02:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5.44.2 2009/05/04 08:11:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5.44.3 2010/03/11 15:02:33 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5.44.2 2009/05/04 08:11:23 yamt Exp $"
 #include "opt_kloader_kernel_path.h"
 #include "opt_memsize.h"
 #include "opt_modular.h"
-#include "fs_mfs.h"
 
 #include "ksyms.h"
 #include "scif.h"
@@ -81,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5.44.2 2009/05/04 08:11:23 yamt Exp $"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
@@ -197,7 +195,6 @@ landisk_startup(int howto, void *bi)
 	/* Initialize console */
 	consinit();
 
-#ifdef MFS
 	/*
 	 * Check to see if a mini-root was loaded into memory. It resides
 	 * at the start of the next page just after the end of BSS.
@@ -210,7 +207,6 @@ landisk_startup(int howto, void *bi)
 #endif
 		kernend += fssz;
 	}
-#endif /* MFS */
 
 #ifdef KLOADER
 	/* copy boot parameter for kloader */

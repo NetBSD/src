@@ -1,7 +1,7 @@
-/* $Id: imx31_space.c,v 1.1.24.1 2008/05/16 02:21:56 yamt Exp $ */
+/* $Id: imx31_space.c,v 1.1.24.2 2010/03/11 15:02:06 yamt Exp $ */
 
 /* derived from: */
-/*	$NetBSD: imx31_space.c,v 1.1.24.1 2008/05/16 02:21:56 yamt Exp $ */
+/*	$NetBSD: imx31_space.c,v 1.1.24.2 2010/03/11 15:02:06 yamt Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -192,7 +192,7 @@ imx31_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
 
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 		if ((flag & BUS_SPACE_MAP_CACHEABLE) == 0) {
 			pte = vtopte(va);
 			*pte &= ~L2_S_CACHE_MASK;

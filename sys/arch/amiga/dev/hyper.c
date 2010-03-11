@@ -1,4 +1,4 @@
-/*	$NetBSD: hyper.c,v 1.18.78.1 2008/05/16 02:21:52 yamt Exp $ */
+/*	$NetBSD: hyper.c,v 1.18.78.2 2010/03/11 15:02:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyper.c,v 1.18.78.1 2008/05/16 02:21:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyper.c,v 1.18.78.2 2010/03/11 15:02:00 yamt Exp $");
 
 /*
  * zbus HyperCom driver
@@ -38,8 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: hyper.c,v 1.18.78.1 2008/05/16 02:21:52 yamt Exp $")
 
 #include <sys/types.h>
 
-#include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 #include <sys/systm.h>
 #include <sys/param.h>
 

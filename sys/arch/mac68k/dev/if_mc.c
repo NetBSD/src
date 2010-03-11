@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.34.20.1 2009/05/04 08:11:26 yamt Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.34.20.2 2010/03/11 15:02:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.34.20.1 2009/05/04 08:11:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.34.20.2 2010/03/11 15:02:34 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -67,11 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.34.20.1 2009/05/04 08:11:26 yamt Exp $")
 
 
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <machine/bus.h>
 #include <mac68k/dev/if_mcreg.h>
@@ -261,14 +258,12 @@ mcstart(struct ifnet *ifp)
 		if (m == 0)
 			return;
 
-#if NBPFILTER > 0
 		/*
 		 * If bpf is listening on this interface, let it
 		 * see the packet before we commit it to the wire.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/*
 		 * Copy the mbuf chain into the transmit buffer.
@@ -587,11 +582,9 @@ mace_read(struct mc_softc *sc, void *pkt, int len)
 
 	ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 	/* Pass the packet to any BPF listeners. */
 	if (ifp->if_bpf) 
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	/* Pass the packet up. */
 	(*ifp->if_input)(ifp, m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.44.4.1 2009/05/04 08:12:05 yamt Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.44.4.2 2010/03/11 15:03:06 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.44.4.1 2009/05/04 08:12:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.44.4.2 2010/03/11 15:03:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.44.4.1 2009/05/04 08:12:05 yamt Exp $"
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
@@ -595,7 +594,7 @@ rd_readgeom(struct hdcsoftc *sc, struct rdsoftc *rd)
 	HDC_WCMD(DKC_CMD_READ_HDD|2);
 	while ((sc->sc_status & DKC_ST_INTPEND) == 0)
 		;
-	memcpy( &rd->sc_xbn, sc->sc_dmabase, sizeof(struct rdgeom));
+	memcpy(&rd->sc_xbn, sc->sc_dmabase, sizeof(struct rdgeom));
 }
 
 #ifdef RDDEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.64.4.3 2009/05/16 10:41:32 yamt Exp $	*/
+/*	$NetBSD: auvia.c,v 1.64.4.4 2010/03/11 15:03:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.64.4.3 2009/05/16 10:41:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.64.4.4 2010/03/11 15:03:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ static int	auvia_trigger_output(void *, void *, void *, int,
 static int	auvia_trigger_input(void *, void *, void *, int,
 				    void (*)(void *), void *,
 				    const audio_params_t *);
-static bool	auvia_resume(device_t PMF_FN_PROTO);
+static bool	auvia_resume(device_t, const pmf_qual_t *);
 static int	auvia_intr(void *);
 
 static int	auvia_attach_codec(void *, struct ac97_codec_if *);
@@ -414,8 +414,8 @@ auvia_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 		return;
 	}
@@ -1141,7 +1141,7 @@ auvia_intr(void *arg)
 }
 
 static bool
-auvia_resume(device_t dv PMF_FN_ARGS)
+auvia_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct auvia_softc *sc = device_private(dv);
 

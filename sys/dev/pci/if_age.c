@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.28.4.4 2009/09/16 13:37:50 yamt Exp $ */
+/*	$NetBSD: if_age.c,v 1.28.4.5 2010/03/11 15:03:44 yamt Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,9 +31,8 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.28.4.4 2009/09/16 13:37:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.28.4.5 2010/03/11 15:03:44 yamt Exp $");
 
-#include "bpfilter.h"
 #include "vlan.h"
 
 #include <sys/param.h>
@@ -64,9 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.28.4.4 2009/09/16 13:37:50 yamt Exp $")
 #include <net/if_types.h>
 #include <net/if_vlanvar.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/rnd.h>
 
@@ -83,7 +80,7 @@ static int	age_match(device_t, cfdata_t, void *);
 static void	age_attach(device_t, device_t, void *);
 static int	age_detach(device_t, int);
 
-static bool	age_resume(device_t PMF_FN_PROTO);
+static bool	age_resume(device_t, const pmf_qual_t *);
 
 static int	age_miibus_readreg(device_t, int, int);
 static void	age_miibus_writereg(device_t, int, int, int);
@@ -1052,19 +1049,18 @@ age_start(struct ifnet *ifp)
 		if (age_encap(sc, &m_head)) {
 			if (m_head == NULL)
 				break;
+			IF_PREPEND(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 		enq = 1;
 
-#if NBPFILTER > 0
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
 		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m_head);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 	}
 
 	if (enq) {
@@ -1158,7 +1154,7 @@ age_mac_config(struct age_softc *sc)
 }
 
 static bool
-age_resume(device_t dv PMF_FN_ARGS)
+age_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct age_softc *sc = device_private(dv);
 	uint16_t cmd;
@@ -1204,30 +1200,12 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 	if (error == EFBIG) {
 		error = 0;
 
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == NULL) {
+		*m_head = m_pullup(*m_head, MHLEN);
+		if (*m_head == NULL) {
 			printf("%s: can't defrag TX mbuf\n", 
 			    device_xname(sc->sc_dev));
-			m_freem(*m_head);
-			*m_head = NULL;
 			return ENOBUFS;
 		}
-
-		M_COPY_PKTHDR(m, *m_head);
-		if ((*m_head)->m_pkthdr.len > MHLEN) {
-			MCLGET(m, M_DONTWAIT);
-			if (!(m->m_flags & M_EXT)) {
-				m_freem(*m_head);
-				m_freem(m);
-				*m_head = NULL;
-				return ENOBUFS;
-			}
-		}
-		m_copydata(*m_head, 0, (*m_head)->m_pkthdr.len,
-		    mtod(m, void *));
-		m_freem(*m_head);
-		m->m_len = m->m_pkthdr.len;
-		*m_head = m;
 
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, map, *m_head,
 		  	    BUS_DMA_NOWAIT);
@@ -1235,10 +1213,6 @@ age_encap(struct age_softc *sc, struct mbuf **m_head)
 		if (error != 0) {
 			printf("%s: could not load defragged TX mbuf\n",
 			    device_xname(sc->sc_dev));
-			if (!error) {
-				bus_dmamap_unload(sc->sc_dmat, map);
-				error = EFBIG;
-			}
 			m_freem(*m_head);
 			*m_head = NULL;
 			return error;
@@ -1506,10 +1480,8 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 			}
 #endif
 
-#if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m);
 			/* Pass it on. */
 			ether_input(ifp, m);
 

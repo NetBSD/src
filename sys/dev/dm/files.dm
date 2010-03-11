@@ -1,4 +1,4 @@
-defpseudo   dm
+defpseudodev   dm
 file	    dev/dm/device-mapper.c      dm
 file        dev/dm/dm_dev.c   	        dm
 file        dev/dm/dm_ioctl.c           dm

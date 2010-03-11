@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.37.4.2 2009/05/04 08:12:41 yamt Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.37.4.3 2010/03/11 15:03:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.37.4.2 2009/05/04 08:12:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.37.4.3 2010/03/11 15:03:29 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.37.4.2 2009/05/04 08:12:41 yamt Exp $")
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>

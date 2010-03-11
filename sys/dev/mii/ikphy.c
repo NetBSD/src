@@ -1,4 +1,4 @@
-/*	$NetBSD: ikphy.c,v 1.6.4.2 2009/05/04 08:12:52 yamt Exp $	*/
+/*	$NetBSD: ikphy.c,v 1.6.4.3 2010/03/11 15:03:41 yamt Exp $	*/
 
 /*******************************************************************************
 Copyright (c) 2001-2005, Intel Corporation 
@@ -41,11 +41,6 @@ POSSIBILITY OF SUCH DAMAGE.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -64,7 +59,7 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ikphy.c,v 1.6.4.2 2009/05/04 08:12:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ikphy.c,v 1.6.4.3 2010/03/11 15:03:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.144.2.4 2009/09/16 13:38:02 yamt Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.144.2.5 2010/03/11 15:04:29 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.144.2.4 2009/09/16 13:38:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.144.2.5 2010/03/11 15:04:29 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1161,7 +1161,7 @@ copyout_uid(struct socket *sockp, void *oldp, size_t *oldlenp)
 	int error;
 	uid_t uid;
 
-	uid = sockp->so_uidinfo->ui_uid;
+	uid = kauth_cred_geteuid(sockp->so_cred);
 	if (oldp) {
 		sz = MIN(sizeof(uid), *oldlenp);
 		error = copyout(&uid, oldp, sz);
@@ -2030,21 +2030,14 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       NULL, 0, &tcp_abc_aggressive, 0, CTL_CREATE, CTL_EOL);
 }
 
-/*
- * Sysctl for tcp variables.
- */
+void
+tcp_usrreq_init(void)
+{
+
 #ifdef INET
-SYSCTL_SETUP(sysctl_net_inet_tcp_setup, "sysctl net.inet.tcp subtree setup")
-{
-
-	sysctl_net_inet_tcp_setup2(clog, PF_INET, "inet", "tcp");
-}
-#endif /* INET */
-
+	sysctl_net_inet_tcp_setup2(NULL, PF_INET, "inet", "tcp");
+#endif
 #ifdef INET6
-SYSCTL_SETUP(sysctl_net_inet6_tcp6_setup, "sysctl net.inet6.tcp6 subtree setup")
-{
-
-	sysctl_net_inet_tcp_setup2(clog, PF_INET6, "inet6", "tcp6");
+	sysctl_net_inet_tcp_setup2(NULL, PF_INET6, "inet6", "tcp6");
+#endif
 }
-#endif /* INET6 */

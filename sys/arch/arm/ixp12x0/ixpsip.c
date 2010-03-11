@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpsip.c,v 1.10.80.1 2009/05/04 08:10:43 yamt Exp $ */
+/*	$NetBSD: ixpsip.c,v 1.10.80.2 2010/03/11 15:02:07 yamt Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -13,12 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Ichiro FUKUHARA.
- * 4. The name of the company nor the name of the author may be used to
- *    endorse or promote products derived from this software without specific
- *    prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY ICHIRO FUKUHARA ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -34,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpsip.c,v 1.10.80.1 2009/05/04 08:10:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpsip.c,v 1.10.80.2 2010/03/11 15:02:07 yamt Exp $");
 
 /*
  * Slow peripheral bus of ixp12x0 Processor

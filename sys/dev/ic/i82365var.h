@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.28.16.2 2009/09/16 13:37:48 yamt Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.28.16.3 2010/03/11 15:03:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -168,10 +168,10 @@ void	pcic_attach_sockets(struct pcic_softc *);
 void	pcic_attach_sockets_finish(struct pcic_softc *);
 int	pcic_intr(void *arg);
 
-/*
+#if 0
 static __inline int pcic_read(struct pcic_handle *, int);
 static __inline void pcic_write(struct pcic_handle *, int, uint8_t);
-*/
+#endif
 
 int	pcic_chip_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
 	    struct pcmcia_mem_handle *);

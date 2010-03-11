@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.119.4.2 2009/08/19 18:46:45 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.119.4.3 2010/03/11 15:02:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119.4.2 2009/08/19 18:46:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119.4.3 2010/03/11 15:02:55 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119.4.2 2009/08/19 18:46:45 yamt Exp $
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/device.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -117,7 +116,6 @@ struct sgimips_intrhand intrtab[NINTR];
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int mach_type = 0;	/* IPxx type */
@@ -217,7 +215,7 @@ extern void mips1_fpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 extern void mips3_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 #endif
 
-void	mach_init(int, char **, u_int, void *);
+void	mach_init(int, char **, uintptr_t, void *);
 
 void	sgimips_count_cpus(struct arcbios_component *,
 	    struct arcbios_treewalk_context *);
@@ -265,29 +263,23 @@ struct platform platform = {
 int	safepri = MIPS1_PSL_LOWIPL;
 
 extern u_int32_t ssir;
-extern struct user *proc0paddr;
 extern char kernel_text[], edata[], end[];
 
 uint8_t *bootinfo;			/* pointer to bootinfo structure */
 static uint8_t bi_buf[BOOTINFO_SIZE];	/* buffer to store bootinfo data */
 static const char *bootinfo_msg = NULL;
 
-#if defined(_LP64)
-#define ARCS_VECTOR 0xa800000000001000
-#else
-#define ARCS_VECTOR (MIPS_PHYS_TO_KSEG0(0x00001000))
-#endif
+#define ARCS_VECTOR MIPS_PHYS_TO_KSEG0(0x00001000)
 
 /*
  * Do all the stuff that locore normally does before calling main().
  * Process arguments passed to us by the ARCS firmware.
  */
 void
-mach_init(int argc, char *argv[], u_int magic, void *bip)
+mach_init(int argc, char *argv[], uintptr_t magic, void *bip)
 {
 	paddr_t first, last;
 	int firstpfn, lastpfn;
-	void *v;
 	vsize_t size;
 	struct arcbios_mem *mem;
 	const char *cpufreq, *osload;
@@ -733,13 +725,9 @@ mach_init(int argc, char *argv[], u_int magic, void *bip)
 	pmap_bootstrap();
 
 	/*
-	 * Allocate space for proc0's USPACE.
+	 * Allocate uarea for lwp0 and set it.
 	 */
-	v = (void *)uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	mips_init_lwp0_uarea();
 }
 
 void
@@ -802,7 +790,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 	/* Take a snapshot before clobbering any registers. */
 	if (curlwp)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 	if (cold) {
 		howto |= RB_HALT;

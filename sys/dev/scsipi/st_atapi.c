@@ -1,4 +1,4 @@
-/*	$NetBSD: st_atapi.c,v 1.20.52.2 2009/08/19 18:47:19 yamt Exp $ */
+/*	$NetBSD: st_atapi.c,v 1.20.52.3 2010/03/11 15:04:03 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Manuel Bouyer.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.20.52.2 2009/08/19 18:47:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.20.52.3 2010/03/11 15:04:03 yamt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -53,7 +48,7 @@ static int	st_atapibus_ops(struct st_softc *, int, int);
 static int	st_atapibus_mode_sense(struct st_softc *, int);
 
 CFATTACH_DECL(st_atapibus, sizeof(struct st_softc),
-    st_atapibus_match, st_atapibus_attach, stdetach, stactivate);
+    st_atapibus_match, st_atapibus_attach, stdetach, NULL);
 
 static const struct scsipi_inquiry_pattern st_atapibus_patterns[] = {
 	{T_SEQUENTIAL, T_REMOV,
@@ -90,7 +85,7 @@ st_atapibus_attach(device_t parent, device_t self, void *aux)
 
 		error = scsipi_mode_sense(periph, SMS_DBD,
 		    ATAPI_TAPE_IDENTIFY_PAGE, &identify.header,
-		    sizeof(identify), XS_CTL_DISCOVERY | XS_CTL_DATA_ONSTACK,
+		    sizeof(identify), XS_CTL_DISCOVERY,
 		    ST_RETRIES, ST_CTL_TIME);
 		if (error) {
 			printf("onstream get identify: error %d\n", error);
@@ -99,8 +94,7 @@ st_atapibus_attach(device_t parent, device_t self, void *aux)
 		strncpy(identify.ident, "NBSD", 4);
 		error = scsipi_mode_select(periph, SMS_PF,
 		    &identify.header, sizeof(identify),
-		    XS_CTL_DISCOVERY | XS_CTL_DATA_ONSTACK,
-		    ST_RETRIES, ST_CTL_TIME);
+		    XS_CTL_DISCOVERY, ST_RETRIES, ST_CTL_TIME);
 		if (error) {
 			printf("onstream set identify: error %d\n", error);
 			return;
@@ -142,7 +136,7 @@ st_atapibus_mode_sense(struct st_softc *st, int flags)
 	for (count = 0 ; count < 5 ; count++) {
 		error = scsipi_mode_sense(periph, SMS_DBD,
 		    ATAPI_TAPE_CAP_PAGE, &cappage.header, sizeof(cappage),
-		    flags | XS_CTL_DATA_ONSTACK, ST_RETRIES, ST_CTL_TIME);
+		    flags, ST_RETRIES, ST_CTL_TIME);
 		if (error == 0) {
 			st->numblks = 0; /* unused anyway */
 			if (cappage.cap4 & ATAPI_TAPE_CAP_PAGE_BLK32K)

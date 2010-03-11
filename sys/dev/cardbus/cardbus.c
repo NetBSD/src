@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.91.4.2 2009/05/16 10:41:19 yamt Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.91.4.3 2010/03/11 15:03:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by HAYAKAWA Koichi.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -33,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.91.4.2 2009/05/16 10:41:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.91.4.3 2010/03/11 15:03:24 yamt Exp $");
 
 #include "opt_cardbus.h"
 
@@ -84,7 +78,7 @@ static void print_tuple(u_int8_t*, int, void*);
 #endif
 
 static int cardbus_read_tuples(struct cardbus_attach_args *,
-    cardbusreg_t, u_int8_t *, size_t);
+    pcireg_t, u_int8_t *, size_t);
 
 static void enable_function(struct cardbus_softc *, int, int);
 static void disable_function(struct cardbus_softc *, int);
@@ -135,10 +129,8 @@ cardbusattach(device_t parent, device_t self, void *aux)
 	sc->sc_cc = cba->cba_cc;
 	sc->sc_cf = cba->cba_cf;
 
-#if rbus
 	sc->sc_rbus_iot = cba->cba_rbus_iot;
 	sc->sc_rbus_memt = cba->cba_rbus_memt;
-#endif
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -157,19 +149,19 @@ cardbusdetach(device_t self, int flags)
 }
 
 static int
-cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
+cardbus_read_tuples(struct cardbus_attach_args *ca, pcireg_t cis_ptr,
     u_int8_t *tuples, size_t len)
 {
 	struct cardbus_softc *sc = ca->ca_ct->ct_sc;
 	cardbus_chipset_tag_t cc = ca->ca_ct->ct_cc;
 	cardbus_function_tag_t cf = ca->ca_ct->ct_cf;
-	cardbustag_t tag = ca->ca_tag;
-	cardbusreg_t command;
+	pcitag_t tag = ca->ca_tag;
+	pcireg_t command;
 	bus_space_tag_t bar_tag;
 	bus_space_handle_t bar_memh;
 	bus_size_t bar_size;
 	bus_addr_t bar_addr;
-	cardbusreg_t reg;
+	pcireg_t reg;
 	int found = 0;
 	int cardbus_space = cis_ptr & CARDBUS_CIS_ASIMASK;
 	int i, j;
@@ -219,7 +211,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 		 */
 		cardbus_conf_write(cc, cf, tag, reg, 0);
 		if (Cardbus_mapreg_map(ca->ca_ct, reg,
-		    CARDBUS_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
+		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 		    0, &bar_tag, &bar_memh, &bar_addr, &bar_size)) {
 			aprint_error_dev(sc->sc_dev, "failed to map memory\n");
 			return (1);
@@ -228,7 +220,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 		    (uintmax_t)bar_size, (uintmax_t)bar_addr);
 
 		if (cardbus_space == CARDBUS_CIS_ASI_ROM) {
-			cardbusreg_t exrom;
+			pcireg_t exrom;
 			int save;
 			struct cardbus_rom_image_head rom_image;
 			struct cardbus_rom_image *p;
@@ -239,10 +231,10 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 			cardbus_conf_write(cc, cf, tag, reg, exrom | 1);
 
 			command = cardbus_conf_read(cc, cf, tag,
-			    CARDBUS_COMMAND_STATUS_REG);
+			    PCI_COMMAND_STATUS_REG);
 			cardbus_conf_write(cc, cf, tag,
-			    CARDBUS_COMMAND_STATUS_REG,
-			    command | CARDBUS_COMMAND_MEM_ENABLE);
+			    PCI_COMMAND_STATUS_REG,
+			    command | PCI_COMMAND_MEM_ENABLE);
 
 			if (cardbus_read_exrom(bar_tag, bar_memh, &rom_image))
 				goto out;
@@ -267,10 +259,10 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 			splx(save);
 		} else {
 			command = cardbus_conf_read(cc, cf, tag,
-			    CARDBUS_COMMAND_STATUS_REG);
+			    PCI_COMMAND_STATUS_REG);
 			cardbus_conf_write(cc, cf, tag,
-			    CARDBUS_COMMAND_STATUS_REG,
-			    command | CARDBUS_COMMAND_MEM_ENABLE);
+			    PCI_COMMAND_STATUS_REG,
+			    command | PCI_COMMAND_MEM_ENABLE);
 			/* XXX byte order? */
 			bus_space_read_region_1(bar_tag, bar_memh,
 			    cis_ptr, tuples,
@@ -278,9 +270,9 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 			found++;
 		}
 		command = cardbus_conf_read(cc, cf, tag,
-		    CARDBUS_COMMAND_STATUS_REG);
-		cardbus_conf_write(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG,
-		    command & ~CARDBUS_COMMAND_MEM_ENABLE);
+		    PCI_COMMAND_STATUS_REG);
+		cardbus_conf_write(cc, cf, tag, PCI_COMMAND_STATUS_REG,
+		    command & ~PCI_COMMAND_MEM_ENABLE);
 		cardbus_conf_write(cc, cf, tag, reg, 0);
 
 		Cardbus_mapreg_unmap(ca->ca_ct, reg, bar_tag, bar_memh,
@@ -429,9 +421,9 @@ cardbus_rescan(device_t self, const char *ifattr,
 	struct cardbus_softc *sc = device_private(self);
 	cardbus_chipset_tag_t cc;
 	cardbus_function_tag_t cf;
-	cardbustag_t tag;
-	cardbusreg_t id, class, cis_ptr;
-	cardbusreg_t bhlc, icr, lattimer;
+	pcitag_t tag;
+	pcireg_t id, class, cis_ptr;
+	pcireg_t bhlc, icr, lattimer;
 	int cdstatus;
 	int function, nfunction;
 	device_t csc;
@@ -466,7 +458,7 @@ cardbus_rescan(device_t self, const char *ifattr,
 		int i;
 
 		for (i = 0; i < 5; ++i) {
-			id = cardbus_conf_read(cc, cf, tag, CARDBUS_ID_REG);
+			id = cardbus_conf_read(cc, cf, tag, PCI_ID_REG);
 			if (id != 0xffffffff && id != 0) {
 				break;
 			}
@@ -485,9 +477,9 @@ cardbus_rescan(device_t self, const char *ifattr,
 		}
 	}
 
-	bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
+	bhlc = cardbus_conf_read(cc, cf, tag, PCI_BHLC_REG);
 	DPRINTF(("%s bhlc 0x%08x -> ", device_xname(sc->sc_dev), bhlc));
-	nfunction = CARDBUS_HDRTYPE_MULTIFN(bhlc) ? 8 : 1;
+	nfunction = PCI_HDRTYPE_MULTIFN(bhlc) ? 8 : 1;
 
 	for (function = 0; function < nfunction; function++) {
 		struct cardbus_attach_args ca;
@@ -503,38 +495,38 @@ cardbus_rescan(device_t self, const char *ifattr,
 
 		tag = cardbus_make_tag(cc, cf, sc->sc_bus, function);
 
-		id = cardbus_conf_read(cc, cf, tag, CARDBUS_ID_REG);
-		class = cardbus_conf_read(cc, cf, tag, CARDBUS_CLASS_REG);
+		id = cardbus_conf_read(cc, cf, tag, PCI_ID_REG);
+		class = cardbus_conf_read(cc, cf, tag, PCI_CLASS_REG);
 		cis_ptr = cardbus_conf_read(cc, cf, tag, CARDBUS_CIS_REG);
 
 		/* Invalid vendor ID value? */
-		if (CARDBUS_VENDOR(id) == PCI_VENDOR_INVALID) {
+		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID) {
 			continue;
 		}
 
 		DPRINTF(("cardbus_attach_card: "
 		    "Vendor 0x%x, Product 0x%x, CIS 0x%x\n",
-		    CARDBUS_VENDOR(id), CARDBUS_PRODUCT(id), cis_ptr));
+		    PCI_VENDOR(id), PCI_PRODUCT(id), cis_ptr));
 
 		enable_function(sc, cdstatus, function);
 
 		/* clean up every BAR */
-		cardbus_conf_write(cc, cf, tag, CARDBUS_BASE0_REG, 0);
-		cardbus_conf_write(cc, cf, tag, CARDBUS_BASE1_REG, 0);
-		cardbus_conf_write(cc, cf, tag, CARDBUS_BASE2_REG, 0);
-		cardbus_conf_write(cc, cf, tag, CARDBUS_BASE3_REG, 0);
-		cardbus_conf_write(cc, cf, tag, CARDBUS_BASE4_REG, 0);
-		cardbus_conf_write(cc, cf, tag, CARDBUS_BASE5_REG, 0);
+		cardbus_conf_write(cc, cf, tag, PCI_BAR0, 0);
+		cardbus_conf_write(cc, cf, tag, PCI_BAR1, 0);
+		cardbus_conf_write(cc, cf, tag, PCI_BAR2, 0);
+		cardbus_conf_write(cc, cf, tag, PCI_BAR3, 0);
+		cardbus_conf_write(cc, cf, tag, PCI_BAR4, 0);
+		cardbus_conf_write(cc, cf, tag, PCI_BAR5, 0);
 		cardbus_conf_write(cc, cf, tag, CARDBUS_ROM_REG, 0);
 
 		/* set initial latency and cacheline size */
-		bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
-		icr = cardbus_conf_read(cc, cf, tag, CARDBUS_INTERRUPT_REG);
+		bhlc = cardbus_conf_read(cc, cf, tag, PCI_BHLC_REG);
+		icr = cardbus_conf_read(cc, cf, tag, PCI_INTERRUPT_REG);
 		DPRINTF(("%s func%d icr 0x%08x bhlc 0x%08x -> ",
 		    device_xname(sc->sc_dev), function, icr, bhlc));
-		bhlc &= ~(CARDBUS_CACHELINE_MASK << CARDBUS_CACHELINE_SHIFT);
-		bhlc |= (sc->sc_cacheline & CARDBUS_CACHELINE_MASK) <<
-		    CARDBUS_CACHELINE_SHIFT;
+		bhlc &= ~(PCI_CACHELINE_MASK << PCI_CACHELINE_SHIFT);
+		bhlc |= (sc->sc_cacheline & PCI_CACHELINE_MASK) <<
+		    PCI_CACHELINE_SHIFT;
 		/*
 		 * Set the initial value of the Latency Timer.
 		 *
@@ -558,8 +550,8 @@ cardbus_rescan(device_t self, const char *ifattr,
 			bhlc |= (lattimer << PCI_LATTIMER_SHIFT);
 		}
 
-		cardbus_conf_write(cc, cf, tag, CARDBUS_BHLC_REG, bhlc);
-		bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
+		cardbus_conf_write(cc, cf, tag, PCI_BHLC_REG, bhlc);
+		bhlc = cardbus_conf_read(cc, cf, tag, PCI_BHLC_REG);
 		DPRINTF(("0x%08x\n", bhlc));
 
 		/*
@@ -587,10 +579,8 @@ cardbus_rescan(device_t self, const char *ifattr,
 		ca.ca_memt = sc->sc_memt;
 		ca.ca_dmat = sc->sc_dmat;
 
-#if rbus
 		ca.ca_rbus_iot = sc->sc_rbus_iot;
 		ca.ca_rbus_memt= sc->sc_rbus_memt;
-#endif
 
 		ca.ca_tag = tag;
 		ca.ca_bus = sc->sc_bus;
@@ -716,6 +706,14 @@ cardbus_childdetached(device_t self, device_t child)
 	free(ct, M_DEVBUF);
 }
 
+void *
+Cardbus_intr_establish(cardbus_devfunc_t ct,
+    cardbus_intr_line_t irq, int level, int (*func)(void *), void *arg)
+{
+	return cardbus_intr_establish(ct->ct_cc, ct->ct_cf, irq, level, func,
+	    arg);
+}
+
 /*
  * void *cardbus_intr_establish(cc, cf, irq, level, func, arg)
  *   Interrupt handler of pccard.
@@ -730,6 +728,12 @@ cardbus_intr_establish(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
 
 	DPRINTF(("- cardbus_intr_establish: irq %d\n", irq));
 	return ((*cf->cardbus_intr_establish)(cc, irq, level, func, arg));
+}
+
+void
+Cardbus_intr_disestablish(cardbus_devfunc_t ct, void *handler)
+{
+	cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, handler);
 }
 
 /*
@@ -809,8 +813,8 @@ cardbus_function_enable(struct cardbus_softc *sc, int func)
 	cardbus_chipset_tag_t cc = sc->sc_cc;
 	cardbus_function_tag_t cf = sc->sc_cf;
 	cardbus_devfunc_t ct;
-	cardbusreg_t command;
-	cardbustag_t tag;
+	pcireg_t command;
+	pcitag_t tag;
 
 	DPRINTF(("entering cardbus_function_enable...  "));
 
@@ -823,16 +827,14 @@ cardbus_function_enable(struct cardbus_softc *sc, int func)
 
 	tag = cardbus_make_tag(cc, cf, sc->sc_bus, func);
 
-	command = cardbus_conf_read(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG);
-	command |= (CARDBUS_COMMAND_MEM_ENABLE | CARDBUS_COMMAND_IO_ENABLE |
-	    CARDBUS_COMMAND_MASTER_ENABLE); /* XXX: good guess needed */
+	command = cardbus_conf_read(cc, cf, tag, PCI_COMMAND_STATUS_REG);
+	command |= (PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_IO_ENABLE |
+	    PCI_COMMAND_MASTER_ENABLE); /* XXX: good guess needed */
 
-	cardbus_conf_write(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG, command);
+	cardbus_conf_write(cc, cf, tag, PCI_COMMAND_STATUS_REG, command);
 
 	if ((ct = sc->sc_funcs[func]) != NULL)
-		Cardbus_conf_write(ct, tag, CARDBUS_BHLC_REG, ct->ct_bhlc);
-
-	cardbus_free_tag(cc, cf, tag);
+		Cardbus_conf_write(ct, tag, PCI_BHLC_REG, ct->ct_bhlc);
 
 	DPRINTF(("%x\n", sc->sc_poweron_func));
 
@@ -858,16 +860,16 @@ cardbus_function_disable(struct cardbus_softc *sc, int func)
 
 /*
  * int cardbus_get_capability(cardbus_chipset_tag_t cc,
- *	cardbus_function_tag_t cf, cardbustag_t tag, int capid, int *offset,
- *	cardbusreg_t *value)
+ *	cardbus_function_tag_t cf, pcitag_t tag, int capid, int *offset,
+ *	pcireg_t *value)
  *
  *	Find the specified PCI capability.
  */
 int
 cardbus_get_capability(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
-    cardbustag_t tag, int capid, int *offset, cardbusreg_t *value)
+    pcitag_t tag, int capid, int *offset, pcireg_t *value)
 {
-	cardbusreg_t reg;
+	pcireg_t reg;
 	unsigned int ofs;
 
 	reg = cardbus_conf_read(cc, cf, tag, PCI_COMMAND_STATUS_REG);
@@ -954,10 +956,10 @@ decode_tuple(u_int8_t *tuple, u_int8_t *end,
  * XXX: this is another reason why this code should be shared with PCI.
  */
 static int
-cardbus_get_powerstate_int(cardbus_devfunc_t ct, cardbustag_t tag,
-    cardbusreg_t *state, int offset)
+cardbus_get_powerstate_int(cardbus_devfunc_t ct, pcitag_t tag,
+    pcireg_t *state, int offset)
 {
-	cardbusreg_t value, now;
+	pcireg_t value, now;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
@@ -976,13 +978,12 @@ cardbus_get_powerstate_int(cardbus_devfunc_t ct, cardbustag_t tag,
 }
 
 int
-cardbus_get_powerstate(cardbus_devfunc_t ct, cardbustag_t tag,
-    cardbusreg_t *state)
+cardbus_get_powerstate(cardbus_devfunc_t ct, pcitag_t tag, pcireg_t *state)
 {
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	int offset;
-	cardbusreg_t value;
+	pcireg_t value;
 
 	if (!cardbus_get_capability(cc, cf, tag, PCI_CAP_PWRMGMT, &offset, &value))
 		return EOPNOTSUPP;
@@ -991,13 +992,13 @@ cardbus_get_powerstate(cardbus_devfunc_t ct, cardbustag_t tag,
 }
 
 static int
-cardbus_set_powerstate_int(cardbus_devfunc_t ct, cardbustag_t tag,
-    cardbusreg_t state, int offset, cardbusreg_t cap_reg)
+cardbus_set_powerstate_int(cardbus_devfunc_t ct, pcitag_t tag,
+    pcireg_t state, int offset, pcireg_t cap_reg)
 {
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
-	cardbusreg_t value, cap, now;
+	pcireg_t value, cap, now;
 
 	KASSERT((offset & 0x3) == 0);
 
@@ -1047,12 +1048,12 @@ cardbus_set_powerstate_int(cardbus_devfunc_t ct, cardbustag_t tag,
 }
 
 int
-cardbus_set_powerstate(cardbus_devfunc_t ct, cardbustag_t tag, cardbusreg_t state)
+cardbus_set_powerstate(cardbus_devfunc_t ct, pcitag_t tag, pcireg_t state)
 {
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	int offset;
-	cardbusreg_t value;
+	pcireg_t value;
 
 	if (!cardbus_get_capability(cc, cf, tag, PCI_CAP_PWRMGMT, &offset,
 	    &value))
@@ -1122,7 +1123,7 @@ print_tuple(u_int8_t *tuple, int len, void *data)
 
 void
 cardbus_conf_capture(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
-    cardbustag_t tag, struct cardbus_conf_state *pcs)
+    pcitag_t tag, struct cardbus_conf_state *pcs)
 {
 	int off;
 
@@ -1132,10 +1133,10 @@ cardbus_conf_capture(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
 
 void
 cardbus_conf_restore(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
-    cardbustag_t tag, struct cardbus_conf_state *pcs)
+    pcitag_t tag, struct cardbus_conf_state *pcs)
 {
 	int off;
-	cardbusreg_t val;
+	pcireg_t val;
 
 	for (off = 15; off >= 0; off--) {
 		val = cardbus_conf_read(cc, cf, tag, (off * 4));
@@ -1144,35 +1145,19 @@ cardbus_conf_restore(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
 	}
 }
 
-void
-cardbus_disable_retry(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
-    cardbustag_t tag)
-{
-	/* See comment on sys/dev/pci/pci.c:pci_disable_retry() for
-	 * the reason I comment-out this code.
-	 */
-#if 0
-	cardbusreg_t retry;
-
-	retry = cardbus_conf_read(cc, cf, tag, PCI_RETRY_TIMEOUT_REG);
-	retry &= ~PCI_RETRY_TIMEOUT_REG_MASK;
-	cardbus_conf_write(cc, cf, tag, PCI_RETRY_TIMEOUT_REG, retry);
-#endif
-}
-
 struct cardbus_child_power {
 	struct cardbus_conf_state p_cardbusconf;
 	cardbus_devfunc_t p_ct;
-	cardbustag_t p_tag;
+	pcitag_t p_tag;
 	cardbus_chipset_tag_t p_cc;
 	cardbus_function_tag_t p_cf;
-	cardbusreg_t p_pm_cap;
+	pcireg_t p_pm_cap;
 	bool p_has_pm;
 	int p_pm_offset;
 };
 
 static bool
-cardbus_child_suspend(device_t dv PMF_FN_ARGS)
+cardbus_child_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct cardbus_child_power *priv = device_pmf_bus_private(dv);
 
@@ -1192,7 +1177,7 @@ cardbus_child_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-cardbus_child_resume(device_t dv PMF_FN_ARGS)
+cardbus_child_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct cardbus_child_power *priv = device_pmf_bus_private(dv);
 
@@ -1227,7 +1212,7 @@ cardbus_child_register(device_t child)
 	struct cardbus_devfunc *ct;
 	struct cardbus_child_power *priv;
 	int off;
-	cardbusreg_t reg;
+	pcireg_t reg;
 
 	ct = sc->sc_funcs[device_locator(child, CARDBUSCF_FUNCTION)];
 

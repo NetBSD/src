@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.40.4.4 2009/08/19 18:47:18 yamt Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.40.4.5 2010/03/11 15:03:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.40.4.4 2009/08/19 18:47:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.40.4.5 2010/03/11 15:03:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ static int	vga_pci_match(device_t, cfdata_t, void *);
 static void	vga_pci_attach(device_t, device_t, void *);
 static int	vga_pci_rescan(device_t, const char *, const int *);
 static int	vga_pci_lookup_quirks(struct pci_attach_args *);
-static bool	vga_pci_resume(device_t dv PMF_FN_PROTO);
+static bool	vga_pci_resume(device_t dv, const pmf_qual_t *);
 
 CFATTACH_DECL2_NEW(vga_pci, sizeof(struct vga_pci_softc),
     vga_pci_match, vga_pci_attach, NULL, NULL, vga_pci_rescan, NULL);
@@ -263,7 +263,7 @@ vga_pci_rescan(device_t self, const char *ifattr, const int *locators)
 }
 
 static bool
-vga_pci_resume(device_t dv PMF_FN_ARGS)
+vga_pci_resume(device_t dv, const pmf_qual_t *qual)
 {
 #if defined(VGA_POST) && NACPICA > 0
 	extern int acpi_md_vbios_reset;

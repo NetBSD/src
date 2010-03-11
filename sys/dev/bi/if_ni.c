@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.35.4.1 2009/05/04 08:12:35 yamt Exp $ */
+/*	$NetBSD: if_ni.c,v 1.35.4.2 2010/03/11 15:03:24 yamt Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,10 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.35.4.1 2009/05/04 08:12:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.35.4.2 2010/03/11 15:03:24 yamt Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -58,10 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.35.4.1 2009/05/04 08:12:35 yamt Exp $");
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <sys/bus.h>
 #ifdef __vax__
@@ -540,10 +537,8 @@ nistart(struct ifnet *ifp)
 		if (cnt > NTXFRAGS)
 			panic("nistart"); /* XXX */
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		bdp = &bbd[(data->bufs[0]._index & 0x7fff)];
 		for (m0 = m, i = 0, mlen = 0; m0; m0 = m0->m_next) {
 			if (m0->m_len == 0)
@@ -625,10 +620,8 @@ niintr(void *arg)
 			if (m == (void *)data->nd_cmdref)
 				break; /* Out of mbufs */
 
-#if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m);
 			(*ifp->if_input)(ifp, m);
 			break;
 

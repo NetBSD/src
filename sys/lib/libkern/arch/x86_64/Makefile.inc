@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.2.108.2 2009/08/19 18:48:21 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.2.108.3 2010/03/11 15:04:22 yamt Exp $
 
-SRCS+=	byte_swap_2.S byte_swap_4.S
+SRCS+=	byte_swap_2.S byte_swap_4.S byte_swap_8.S
 SRCS+=	ffs.S
 SRCS+=	memchr.S memcmp.S memcpy.S memmove.S memset.S
 SRCS+=	strcat.S strchr.S strcmp.S

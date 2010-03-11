@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.14.78.1 2009/05/04 08:11:35 yamt Exp $
+#	$NetBSD: Makefile.booters,v 1.14.78.2 2010/03/11 15:02:43 yamt Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -38,25 +38,11 @@ vers.c: version
 	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${.CURDIR}/version "mvme68k"
 .endif
 
-CLEANFILES+= machine m68k
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.NOPATH: machine m68k
-.BEGIN: machine m68k
-
-machine :
-	-rm -f ${.TARGET}
-	ln -s $S/arch/mvme68k/include machine
-
-m68k :
-	-rm -f ${.TARGET}
-	ln -s $S/arch/m68k/include m68k
-.endif
+.include <bsd.klinks.mk>
 
 .if defined(LIB)
 
-lib${LIB}.a:: machine m68k ${OBJS}
-beforedepend:	machine m68k
+lib${LIB}.a:: ${OBJS}
 
 .else
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.28.2.1 2009/05/04 08:14:14 yamt Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.28.2.2 2010/03/11 15:04:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -132,7 +132,7 @@ struct bpf_if {
 	struct bpf_if **bif_driverp;	/* pointer into softc */
 	u_int bif_dlt;			/* link layer type */
 	u_int bif_hdrlen;		/* length of header (with padding) */
-	struct ifnet *bif_ifp;		/* correspoding interface */
+	struct ifnet *bif_ifp;		/* corresponding interface */
 };
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-#	$NetBSD: std.imx31,v 1.1.24.1 2008/05/16 02:22:10 yamt Exp $
+#	$NetBSD: std.imx31,v 1.1.24.2 2010/03/11 15:02:14 yamt Exp $
 #
 # standard NetBSD/evbarm options for FreeScale I.MX31 
 
@@ -17,6 +17,7 @@ makeoptions	CPUFLAGS="-mcpu=arm1136j-s"
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
 options 	ARM11_PMC
+options 	ARM11_CACHE_WRITE_THROUGH
 
 makeoptions	LOADADDRESS="0x80100000"
 makeoptions	BOARDTYPE="imx31"

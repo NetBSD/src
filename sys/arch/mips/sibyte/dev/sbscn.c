@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.25.18.3 2009/08/19 18:46:32 yamt Exp $ */
+/* $NetBSD: sbscn.c,v 1.25.18.4 2010/03/11 15:02:42 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.25.18.3 2009/08/19 18:46:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.25.18.4 2010/03/11 15:02:42 yamt Exp $");
 
 #define	SBSCN_DEBUG
 
@@ -126,7 +126,6 @@ __KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.25.18.3 2009/08/19 18:46:32 yamt Exp $")
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>
@@ -170,7 +169,7 @@ void	sbscn_iflush(struct sbscn_channel *);
 int	sbscn_init(u_long addr, int chan, int rate, tcflag_t cflag);
 int	sbscn_common_getc(u_long addr, int chan);
 void	sbscn_common_putc(u_long addr, int chan, int c);
-void	sbscn_intr(void *arg, uint32_t status, uint32_t pc);
+void	sbscn_intr(void *arg, uint32_t status, vaddr_t pc);
 
 int	sbscn_cngetc(dev_t dev);
 void	sbscn_cnputc(dev_t dev, int c);
@@ -235,8 +234,8 @@ static void	sbscn_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(sbscn, sizeof(struct sbscn_softc),
     sbscn_match, sbscn_attach, NULL, NULL);
 
-#define	READ_REG(rp)		(mips3_ld((int64_t *)__UNVOLATILE(rp)))
-#define	WRITE_REG(rp, val)	(mips3_sd((uint64_t *)__UNVOLATILE(rp), (val)))
+#define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
+#define	WRITE_REG(rp, val)	(mips3_sd((volatile uint64_t *)(rp), (val)))
 
 /*
  * input and output signals are actually the _inverse_ of the bits in the
@@ -1468,7 +1467,7 @@ sbscn_soft(void *arg)
 }
 
 void
-sbscn_intr(void *arg, uint32_t status, uint32_t pc)
+sbscn_intr(void *arg, uint32_t status, vaddr_t pc)
 {
 	struct sbscn_channel *ch = arg;
 	u_char *put, *end;

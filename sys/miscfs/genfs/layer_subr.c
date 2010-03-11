@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.25.10.1 2009/05/04 08:14:04 yamt Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.25.10.2 2010/03/11 15:04:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.25.10.1 2009/05/04 08:14:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.25.10.2 2010/03/11 15:04:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,7 @@ layer_node_alloc(struct mount *mp, struct vnode *lowervp, struct vnode **vpp)
 	 */
 
 	*vpp = vp;
-	VREF(lowervp);
+	vref(lowervp);
 	hd = LAYER_NHASH(lmp, lowervp);
 	LIST_INSERT_HEAD(hd, xp, layer_hash);
 	uvm_vnp_setsize(vp, 0);

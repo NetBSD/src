@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.8.40.1 2008/05/16 02:23:49 yamt Exp $	*/
+/*	$NetBSD: md.h,v 1.8.40.2 2010/03/11 15:03:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -12,11 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- * 4. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Gordon W. Ross
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -29,6 +24,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _SYS_DEV_MD_H_
+#define _SYS_DEV_MD_H_
 
 /*
  * Memory-disk ioctl functions:
@@ -91,3 +89,5 @@ extern void md_root_setconf(char *, size_t);
 
 extern int md_is_root;
 #endif /* _KERNEL */
+
+#endif /* _SYS_DEV_MD_H_ */

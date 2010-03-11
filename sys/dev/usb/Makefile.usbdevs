@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.usbdevs,v 1.4.114.1 2009/05/04 08:13:20 yamt Exp $
+#	$NetBSD: Makefile.usbdevs,v 1.4.114.2 2010/03/11 15:04:04 yamt Exp $
 
 #	The header files depend on the correct version of usbdevs.
 #
 #	Thus, the procedure is:
 #	  1) change usbdevs
 #	  2) commit usbdevs
-#	  3) _then_ genereate header files
+#	  3) _then_ generate header files
 #	  4) commit them
 
 .include <bsd.own.mk>

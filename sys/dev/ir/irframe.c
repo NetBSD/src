@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.40.4.2 2009/05/04 08:12:48 yamt Exp $	*/
+/*	$NetBSD: irframe.c,v 1.40.4.3 2010/03/11 15:03:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.40.4.2 2009/05/04 08:12:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.40.4.3 2010/03/11 15:03:36 yamt Exp $");
 
 #include "irframe.h"
 
@@ -72,7 +72,6 @@ const struct cdevsw irframe_cdevsw = {
 };
 
 int irframe_match(device_t parent, cfdata_t match, void *aux);
-int irframe_activate(device_t self, enum devact act);
 
 Static int irf_set_params(struct irframe_softc *sc, struct irda_params *p);
 Static int irf_reset_params(struct irframe_softc *sc);
@@ -83,7 +82,7 @@ CFDRIVER_DECL(irframe, DV_DULL, NULL);
 #endif
 
 CFATTACH_DECL_NEW(irframe, sizeof(struct irframe_softc),
-    irframe_match, irframe_attach, irframe_detach, irframe_activate);
+    irframe_match, irframe_attach, irframe_detach, NULL);
 
 extern struct cfdriver irframe_cd;
 
@@ -143,21 +142,6 @@ irframe_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-}
-
-int
-irframe_activate(device_t self, enum devact act)
-{
-	/*struct irframe_softc *sc = device_private(self);*/
-
-	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
-	case DVACT_DEACTIVATE:
-		break;
-	}
-	return (0);
 }
 
 int

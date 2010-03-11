@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ptrace.c,v 1.17.10.1 2009/05/04 08:12:18 yamt Exp $	*/
+/*	$NetBSD: freebsd_ptrace.c,v 1.17.10.2 2010/03/11 15:03:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.17.10.1 2009/05/04 08:12:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.17.10.2 2010/03/11 15:03:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.17.10.1 2009/05/04 08:12:18 yam
 #include <sys/errno.h>
 #include <sys/ptrace.h>
 #include <sys/uio.h>
-#include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.3.2.2 2009/05/04 08:10:46 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.3.2.3 2010/03/11 15:02:08 yamt Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -69,7 +69,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/user.h>
 
 #include <uvm/uvm.h>
 
@@ -85,7 +84,7 @@ struct memseg	usable_segs[NMEM_SEGS];
 extern paddr_t	avail_start;
 extern paddr_t	avail_end;
 #if defined(M68040) || defined(M68060)
-extern int	protostfree;
+extern u_int	protostfree;
 #endif
 
 extern paddr_t	msgbufpa;
@@ -103,7 +102,7 @@ char		*vmmap;
  *	and just syncs the pmap module with what has already been done.
  */
 void
-pmap_bootstrap(vaddr_t vstart, paddr_t sysseg_pa)
+pmap_bootstrap(vaddr_t vstart)
 {
 	vaddr_t	va;
 	int	i;
@@ -148,41 +147,6 @@ pmap_bootstrap(vaddr_t vstart, paddr_t sysseg_pa)
 
 	virtual_avail = vstart;
 	virtual_end   = VM_MAX_KERNEL_ADDRESS;
-
-	/*
-	 * Initialize protection array.
-	 * XXX don't use a switch statement, it might produce an
-	 * absolute "jmp" table.
-	 */
-	{
-		u_int *kp;
-
-		kp = (u_int *)&protection_codes;
-		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_NONE] = 0;
-		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_NONE] = PG_RO;
-		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
-		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
-		kp[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_NONE] = PG_RW;
-		kp[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
-		kp[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_NONE] = PG_RW;
-		kp[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
-	}
-
-	/*
-	 * Kernel page/segment table allocated in locore,
-	 * just initialize pointers.
-	 */
-	pmap_kernel()->pm_stpa = (st_entry_t *)sysseg_pa;
-	pmap_kernel()->pm_stab = Sysseg;
-	pmap_kernel()->pm_ptab = Sysmap;
-#if defined(M68040) || defined(M68060)
-	if (mmutype == MMU_68040) {
-		pmap_kernel()->pm_stfree = protostfree;
-	}
-#endif
-
-	simple_lock_init(&pmap_kernel()->pm_lock);
-	pmap_kernel()->pm_count = 1;
 
 	/*
 	 * Allocate all the submaps we need

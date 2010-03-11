@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.18.78.2 2009/09/16 13:37:41 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.18.78.3 2010/03/11 15:02:46 yamt Exp $	*/
 
 /*
  * This file was taken from from mvme68k/include/vmparam.h and
@@ -94,7 +94,7 @@
  * We use 4K pages on the NeXT.  Override the PAGE_* definitions
  * to be compile-time constants.
  */
-#define	PAGE_SHIFT	12
+#define	PAGE_SHIFT	PGSHIFT
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 

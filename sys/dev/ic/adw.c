@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.49 2008/04/08 12:07:25 cegger Exp $	 */
+/* $NetBSD: adw.c,v 1.49.4.1 2010/03/11 15:03:27 yamt Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.49 2008/04/08 12:07:25 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.49.4.1 2010/03/11 15:03:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.49 2008/04/08 12:07:25 cegger Exp $");
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>

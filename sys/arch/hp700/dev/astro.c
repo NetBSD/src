@@ -1,4 +1,4 @@
-/*	$NetBSD: astro.c,v 1.2.2.3 2009/05/16 10:41:12 yamt Exp $	*/
+/*	$NetBSD: astro.c,v 1.2.2.4 2010/03/11 15:02:23 yamt Exp $	*/
 
 /*	$OpenBSD: astro.c,v 1.8 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -715,7 +715,7 @@ iommu_enter(struct astro_softc *sc, bus_addr_t dva, paddr_t pa, vaddr_t va,
 	uint64_t tte;
 	uint32_t ci;
 
-#ifdef DEBUG
+#ifdef ASTRODEBUG
 	printf("iommu_enter dva %lx, pa %lx, va %lx\n", dva, pa, va);
 #endif
 
@@ -730,14 +730,13 @@ iommu_enter(struct astro_softc *sc, bus_addr_t dva, paddr_t pa, vaddr_t va,
 	}
 #endif
 
-	mtsp(HPPA_SID_KERNEL, 1);
-	__asm volatile("lci 0(%%sr1, %1), %0" : "=r" (ci) : "r" (va));
+	ci = lci(HPPA_SID_KERNEL, va);
 
 	tte = (pa & IOTTE_PAMASK) | ((ci >> 12) & IOTTE_CI);
 	tte |= IOTTE_V;
 
 	*tte_ptr = htole64(tte);
-	__asm volatile("fdc 0(%%sr1, %0)\n\tsync" : : "r" (tte_ptr));
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)tte_ptr, sizeof(*tte_ptr));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.57.2.1 2009/05/04 08:12:54 yamt Exp $	*/
+/*	$NetBSD: agp.c,v 1.57.2.2 2010/03/11 15:03:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.57.2.1 2009/05/04 08:12:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.57.2.2 2010/03/11 15:03:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ static int agp_deallocate_user(struct agp_softc *, int);
 static int agp_bind_user(struct agp_softc *, agp_bind *);
 static int agp_unbind_user(struct agp_softc *, agp_unbind *);
 static int agpdev_match(struct pci_attach_args *);
-static bool agp_resume(device_t PMF_FN_PROTO);
+static bool agp_resume(device_t, const pmf_qual_t *);
 
 #include "agp_ali.h"
 #include "agp_amd.h"
@@ -327,7 +327,7 @@ agpattach(device_t parent, device_t self, void *aux)
 	 * Work out an upper bound for agp memory allocation. This
 	 * uses a heuristic table from the Linux driver.
 	 */
-	memsize = ptoa(physmem) >> 20;
+	memsize = physmem >> (20 - PAGE_SHIFT); /* memsize is in MB */
 	for (i = 0; i < agp_max_size; i++) {
 		if (memsize <= agp_max[i][0])
 			break;
@@ -1119,7 +1119,7 @@ agp_free_dmamem(bus_dma_tag_t tag, size_t size, bus_dmamap_t map,
 }
 
 static bool
-agp_resume(device_t dv PMF_FN_ARGS)
+agp_resume(device_t dv, const pmf_qual_t *qual)
 {
 	agp_flush_cache();
 

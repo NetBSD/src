@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.2.2.2 2009/08/19 18:47:07 yamt Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.2.2.3 2010/03/11 15:03:33 yamt Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.2.2.2 2009/08/19 18:47:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.2.2.3 2010/03/11 15:03:33 yamt Exp $");
 
 #include "opt_mvsata.h"
 
@@ -325,7 +325,7 @@ mvsata_attach(struct mvsata_softc *sc,
 #ifdef MVSATA_WITHOUTDMA
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
 #else
-	sc->sc_edma_setup_crqb = edma_setup_crqb;;
+	sc->sc_edma_setup_crqb = edma_setup_crqb;
 	sc->sc_wdcdev.sc_atac.atac_cap |=
 	    (ATAC_CAP_DATA16 | ATAC_CAP_DMA | ATAC_CAP_UDMA);
 #endif

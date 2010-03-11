@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.6.16.2 2009/05/04 08:11:28 yamt Exp $ */
+/*	$NetBSD: cuda.c,v 1.6.16.3 2010/03/11 15:02:36 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.6.16.2 2009/05/04 08:11:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.6.16.3 2010/03/11 15:02:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,8 +132,8 @@ static int cuda_set_handler(void *, int, int (*)(void *, int, uint8_t *), void *
 static int cuda_error_handler(void *, int, uint8_t *);
 
 static int cuda_todr_handler(void *, int, uint8_t *);
-static int cuda_todr_set(todr_chip_handle_t, volatile struct timeval *);
-static int cuda_todr_get(todr_chip_handle_t, volatile struct timeval *);
+static int cuda_todr_set(todr_chip_handle_t, struct timeval *);
+static int cuda_todr_get(todr_chip_handle_t, struct timeval *);
 
 static int cuda_adb_handler(void *, int, uint8_t *);
 static void cuda_final(device_t);
@@ -749,7 +749,7 @@ cuda_todr_handler(void *cookie, int len, uint8_t *data)
 #define DIFF19041970 2082844800
 
 static int
-cuda_todr_get(todr_chip_handle_t tch, volatile struct timeval *tvp)
+cuda_todr_get(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	struct cuda_softc *sc = tch->cookie;
 	int cnt = 0;
@@ -773,7 +773,7 @@ cuda_todr_get(todr_chip_handle_t tch, volatile struct timeval *tvp)
 }
 
 static int
-cuda_todr_set(todr_chip_handle_t tch, volatile struct timeval *tvp)
+cuda_todr_set(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	struct cuda_softc *sc = tch->cookie;
 	uint32_t sec;

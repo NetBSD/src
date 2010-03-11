@@ -1,4 +1,4 @@
-/* $NetBSD: securelevel.h,v 1.1.28.1 2009/09/16 13:38:06 yamt Exp $ */
+/* $NetBSD: securelevel.h,v 1.1.28.2 2010/03/11 15:04:41 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -33,11 +33,9 @@ int secmodel_securelevel_sysctl(SYSCTLFN_PROTO);
 
 void secmodel_securelevel_init(void);
 void secmodel_securelevel_start(void);
-
-#if defined(_LKM)
 void secmodel_securelevel_stop(void);
-SYSCTL_SETUP_PROTO(sysctl_security_securelevel_setup);
-#endif /* _LKM */
+
+void sysctl_security_securelevel_setup(struct sysctllog **);
 
 int secmodel_securelevel_system_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);

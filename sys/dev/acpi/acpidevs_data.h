@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.10 2006/03/01 09:30:22 cube Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.10.68.1 2010/03/11 15:03:22 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.10 2006/03/01 09:29:47 cube Exp
+ *	# NetBSD: acpidevs,v 1.14 2010/01/18 16:34:47 jruoho Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -463,6 +463,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNP0C13",
 	    "Plug and Play BIOS (used when ACPI mode cannot be used)",
+	},
+	{
+	    "PNP0C14",
+	    "WMI mapper device",
 	},
 	{
 	    "PNP0C80",
@@ -1307,6 +1311,38 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "ACPI0006",
 	    "GPE Block Device",
+	},
+	{
+	    "ACPI0007",
+	    "Processor Device",
+	},
+	{
+	    "ACPI0008",
+	    "Ambient Light Sensor",
+	},
+	{
+	    "ACPI0009",
+	    "I/O APIC/SAPIC Device",
+	},
+	{
+	    "ACPI000A",
+	    "I/O APIC Device",
+	},
+	{
+	    "ACPI000B",
+	    "I/O SAPIC Device",
+	},
+	{
+	    "ACPI000C",
+	    "Processor Aggregator",
+	},
+	{
+	    "ACPI000D",
+	    "Power Meter",
+	},
+	{
+	    "ACPI000E",
+	    "Wake Alarm Device",
 	},
 	{
 	    "INT0800",

@@ -1,15 +1,14 @@
-/* $NetBSD: stubs.c,v 1.7.78.1 2009/05/04 08:10:23 yamt Exp $ */
+/* $NetBSD: stubs.c,v 1.7.78.2 2010/03/11 15:01:55 yamt Exp $ */
 /*
  * stubs.c -- functions I haven't written yet
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.7.78.1 2009/05/04 08:10:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.7.78.2 2010/03/11 15:01:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 

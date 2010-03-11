@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.6.10.2 2009/05/04 08:12:14 yamt Exp $      */
+/*      $NetBSD: xengnt.c,v 1.6.10.3 2010/03/11 15:03:11 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.6.10.2 2009/05/04 08:12:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.6.10.3 2010/03/11 15:03:11 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -132,14 +127,14 @@ static int
 xengnt_more_entries(void)
 {
 	gnttab_setup_table_t setup;
-	unsigned long *pages;
+	u_long *pages;
 	int nframes_new = gnt_nr_grant_frames + 1;
 	int i;
 
 	if (gnt_nr_grant_frames == gnt_max_grant_frames)
 		return ENOMEM;
 
-	pages = malloc(nframes_new * sizeof(long), M_DEVBUF, M_NOWAIT);
+	pages = malloc(nframes_new * sizeof(u_long), M_DEVBUF, M_NOWAIT);
 	if (pages == NULL)
 		return ENOMEM;
 
@@ -170,7 +165,8 @@ xengnt_more_entries(void)
 	 * the grant table frames
 	 */
 	pmap_kenter_ma(((vaddr_t)grant_table) + gnt_nr_grant_frames * PAGE_SIZE,
-	    pages[gnt_nr_grant_frames] << PAGE_SHIFT, VM_PROT_WRITE);
+	    ((paddr_t)pages[gnt_nr_grant_frames]) << PAGE_SHIFT,
+	    VM_PROT_WRITE, 0);
 
 	/*
 	 * add the grant entries associated to the last grant table frame

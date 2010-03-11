@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.268.2.4 2009/08/19 18:48:24 yamt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.268.2.5 2010/03/11 15:04:28 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.268.2.4 2009/08/19 18:48:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.268.2.5 2010/03/11 15:04:28 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -383,6 +383,8 @@ struct mowner ip_rx_mowner = MOWNER_INIT("internet", "rx");
 struct mowner ip_tx_mowner = MOWNER_INIT("internet", "tx");
 #endif
 
+static void sysctl_net_inet_ip_setup(struct sysctllog **);
+
 /*
  * Compute IP limits derived from the value of nmbclusters.
  */
@@ -402,6 +404,8 @@ ip_init(void)
 {
 	const struct protosw *pr;
 	int i;
+
+	sysctl_net_inet_ip_setup(NULL);
 
 	pool_init(&inmulti_pool, sizeof(struct in_multi), 0, 0, 0, "inmltpl",
 	    NULL, IPL_SOFTNET);
@@ -2248,7 +2252,8 @@ sysctl_net_inet_ip_stats(SYSCTLFN_ARGS)
 	return (NETSTAT_SYSCTL(ipstat_percpu, IP_NSTATS));
 }
 
-SYSCTL_SETUP(sysctl_net_inet_ip_setup, "sysctl net.inet.ip subtree setup")
+static void
+sysctl_net_inet_ip_setup(struct sysctllog **clog)
 {
 	extern int subnetsarelocal, hostzeroisbroadcast;
 

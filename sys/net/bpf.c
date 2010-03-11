@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.139.2.1 2009/05/04 08:14:14 yamt Exp $	*/
+/*	$NetBSD: bpf.c,v 1.139.2.2 2010/03/11 15:04:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.139.2.1 2009/05/04 08:14:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.139.2.2 2010/03/11 15:04:26 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -53,12 +53,14 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.139.2.1 2009/05/04 08:14:14 yamt Exp $");
 #include <sys/buf.h>
 #include <sys/time.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/module.h>
+#include <sys/once.h>
+#include <sys/atomic.h>
 
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -166,7 +168,7 @@ static const struct fileops bpf_fileops = {
 	.fo_stat = bpf_stat,
 	.fo_close = bpf_close,
 	.fo_kqfilter = bpf_kqfilter,
-	.fo_drain = fnullop_drain,
+	.fo_restart = fnullop_restart,
 };
 
 dev_type_open(bpfopen);
@@ -342,14 +344,14 @@ bpf_detachd(struct bpf_d *d)
 		 */
   		error = ifpromisc(bp->bif_ifp, 0);
 		if (error && error != EINVAL)
-			panic("bpf: ifpromisc failed");
+			panic("%s: ifpromisc failed: %d", __func__, error);
 	}
 	/* Remove d from the interface's descriptor list. */
 	p = &bp->bif_dlist;
 	while (*p != d) {
 		p = &(*p)->bd_next;
 		if (*p == 0)
-			panic("bpf_detachd: descriptor not in list");
+			panic("%s: descriptor not in list", __func__);
 	}
 	*p = (*p)->bd_next;
 	if (bp->bif_dlist == 0)
@@ -360,12 +362,20 @@ bpf_detachd(struct bpf_d *d)
 	d->bd_bif = 0;
 }
 
+static int
+doinit(void)
+{
 
-/*
- * Mark a descriptor free by making it point to itself.
- * This is probably cheaper than marking with a constant since
- * the address should be in a register anyway.
- */
+	mutex_init(&bpf_mtx, MUTEX_DEFAULT, IPL_NONE);
+
+	LIST_INIT(&bpf_list);
+
+	bpf_gstats.bs_recv = 0;
+	bpf_gstats.bs_drop = 0;
+	bpf_gstats.bs_capt = 0;
+
+	return 0;
+}
 
 /*
  * bpfilterattach() is called at boot time.
@@ -374,15 +384,9 @@ bpf_detachd(struct bpf_d *d)
 void
 bpfilterattach(int n)
 {
-	mutex_init(&bpf_mtx, MUTEX_DEFAULT, IPL_NONE);
+	static ONCE_DECL(control);
 
-	mutex_enter(&bpf_mtx);
-	LIST_INIT(&bpf_list);
-	mutex_exit(&bpf_mtx);
-
-	bpf_gstats.bs_recv = 0;
-	bpf_gstats.bs_drop = 0;
-	bpf_gstats.bs_capt = 0;
+	RUN_ONCE(&control, doinit);
 }
 
 /*
@@ -1086,7 +1090,7 @@ bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 		    strcmp(ifp->if_xname, ifr->ifr_name) != 0)
 			continue;
 		/* skip additional entry */
-		if ((void **)bp->bif_driverp != &ifp->if_bpf)
+		if (bp->bif_driverp != &ifp->if_bpf)
 			continue;
 		/*
 		 * We found the requested interface.
@@ -1256,10 +1260,9 @@ bpf_kqfilter(struct file *fp, struct knote *kn)
  * by each process' filter, and if accepted, stashed into the corresponding
  * buffer.
  */
-void
-bpf_tap(void *arg, u_char *pkt, u_int pktlen)
+static void
+bpf_tap(struct bpf_if *bp, u_char *pkt, u_int pktlen)
 {
-	struct bpf_if *bp;
 	struct bpf_d *d;
 	u_int slen;
 	struct timespec ts;
@@ -1270,7 +1273,6 @@ bpf_tap(void *arg, u_char *pkt, u_int pktlen)
 	 * The only problem that could arise here is that if two different
 	 * interfaces shared any data.  This is not the case.
 	 */
-	bp = arg;
 	for (d = bp->bif_dlist; d != 0; d = d->bd_next) {
 		++d->bd_rcount;
 		++bpf_gstats.bs_recv;
@@ -1348,10 +1350,9 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
  * Incoming linkage from device drivers, when the head of the packet is in
  * a buffer, and the tail is in an mbuf chain.
  */
-void
-bpf_mtap2(void *arg, void *data, u_int dlen, struct mbuf *m)
+static void
+bpf_mtap2(struct bpf_if *bp, void *data, u_int dlen, struct mbuf *m)
 {
-	struct bpf_if *bp = arg;
 	u_int pktlen;
 	struct mbuf mb;
 
@@ -1373,11 +1374,10 @@ bpf_mtap2(void *arg, void *data, u_int dlen, struct mbuf *m)
 /*
  * Incoming linkage from device drivers, when packet is in an mbuf chain.
  */
-void
-bpf_mtap(void *arg, struct mbuf *m)
+static void
+bpf_mtap(struct bpf_if *bp, struct mbuf *m)
 {
 	void *(*cpfn)(void *, const void *, size_t);
-	struct bpf_if *bp = arg;
 	u_int pktlen, buflen;
 	void *marg;
 
@@ -1404,8 +1404,8 @@ bpf_mtap(void *arg, struct mbuf *m)
  * will only read from the mbuf (i.e., it won't
  * try to free it or keep a pointer a to it).
  */
-void
-bpf_mtap_af(void *arg, uint32_t af, struct mbuf *m)
+static void
+bpf_mtap_af(struct bpf_if *bp, uint32_t af, struct mbuf *m)
 {
 	struct mbuf m0;
 
@@ -1414,11 +1414,11 @@ bpf_mtap_af(void *arg, uint32_t af, struct mbuf *m)
 	m0.m_len = 4;
 	m0.m_data = (char *)&af;
 
-	bpf_mtap(arg, &m0);
+	bpf_mtap(bp, &m0);
 }
 
-void
-bpf_mtap_et(void *arg, uint16_t et, struct mbuf *m)
+static void
+bpf_mtap_et(struct bpf_if *bp, uint16_t et, struct mbuf *m)
 {
 	struct mbuf m0;
 
@@ -1432,18 +1432,17 @@ bpf_mtap_et(void *arg, uint16_t et, struct mbuf *m)
 	((uint32_t *)m0.m_data)[2] = 0;
 	((uint16_t *)m0.m_data)[6] = et;
 
-	bpf_mtap(arg, &m0);
+	bpf_mtap(bp, &m0);
 }
 
-#if NSL > 0 || NSTRIP > 0
 /*
  * Put the SLIP pseudo-"link header" in place.
  * Note this M_PREPEND() should never fail,
  * swince we know we always have enough space
  * in the input buffer.
  */
-void
-bpf_mtap_sl_in(void *arg, u_char *chdr, struct mbuf **m)
+static void
+bpf_mtap_sl_in(struct bpf_if *bp, u_char *chdr, struct mbuf **m)
 {
 	int s;
 	u_char *hp;
@@ -1457,7 +1456,7 @@ bpf_mtap_sl_in(void *arg, u_char *chdr, struct mbuf **m)
 	(void)memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
 
 	s = splnet();
-	bpf_mtap(arg, *m);
+	bpf_mtap(bp, *m);
 	splx(s);
 
 	m_adj(*m, SLIP_HDRLEN);
@@ -1468,8 +1467,8 @@ bpf_mtap_sl_in(void *arg, u_char *chdr, struct mbuf **m)
  * place.  The compressed header is now
  * at the beginning of the mbuf.
  */
-void
-bpf_mtap_sl_out(void *arg, u_char *chdr, struct mbuf *m)
+static void
+bpf_mtap_sl_out(struct bpf_if *bp, u_char *chdr, struct mbuf *m)
 {
 	struct mbuf m0;
 	u_char *hp;
@@ -1486,11 +1485,10 @@ bpf_mtap_sl_out(void *arg, u_char *chdr, struct mbuf *m)
 	(void)memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
 
 	s = splnet();
-	bpf_mtap(arg, &m0);
+	bpf_mtap(bp, &m0);
 	splx(s);
 	m_freem(m);
 }
-#endif
 
 /*
  * Move the packet data from interface memory (pkt) into the
@@ -1618,23 +1616,12 @@ bpf_freed(struct bpf_d *d)
 }
 
 /*
- * Attach an interface to bpf.  dlt is the link layer type; hdrlen is the
- * fixed size of the link header (variable length headers not yet supported).
- */
-void
-bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen)
-{
-
-	bpfattach2(ifp, dlt, hdrlen, &ifp->if_bpf);
-}
-
-/*
- * Attach additional dlt for a interface to bpf.  dlt is the link layer type;
+ * Attach an interface to bpf.  dlt is the link layer type;
  * hdrlen is the fixed size of the link header for the specified dlt
  * (variable length headers not yet supported).
  */
-void
-bpfattach2(struct ifnet *ifp, u_int dlt, u_int hdrlen, void *driverp)
+static void
+bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
 {
 	struct bpf_if *bp;
 	bp = malloc(sizeof(*bp), M_DEVBUF, M_DONTWAIT);
@@ -1667,7 +1654,7 @@ bpfattach2(struct ifnet *ifp, u_int dlt, u_int hdrlen, void *driverp)
 /*
  * Remove an interface from bpf.
  */
-void
+static void
 bpfdetach(struct ifnet *ifp)
 {
 	struct bpf_if *bp, **pbp;
@@ -1702,13 +1689,13 @@ bpfdetach(struct ifnet *ifp)
 /*
  * Change the data link type of a interface.
  */
-void
+static void
 bpf_change_type(struct ifnet *ifp, u_int dlt, u_int hdrlen)
 {
 	struct bpf_if *bp;
 
 	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
-		if ((void **)bp->bif_driverp == &ifp->if_bpf)
+		if (bp->bif_driverp == &ifp->if_bpf)
 			break;
 	}
 	if (bp == NULL)
@@ -1919,4 +1906,59 @@ SYSCTL_SETUP(sysctl_net_bpf_setup, "sysctl net.bpf subtree setup")
 			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
 	}
 
+}
+
+struct bpf_ops bpf_ops_kernel = {
+	.bpf_attach =		bpfattach,
+	.bpf_detach =		bpfdetach,
+	.bpf_change_type =	bpf_change_type,
+
+	.bpf_tap =		bpf_tap,
+	.bpf_mtap =		bpf_mtap,
+	.bpf_mtap2 =		bpf_mtap2,
+	.bpf_mtap_af =		bpf_mtap_af,
+	.bpf_mtap_et =		bpf_mtap_et,
+	.bpf_mtap_sl_in =	bpf_mtap_sl_in,
+	.bpf_mtap_sl_out =	bpf_mtap_sl_out,
+};
+
+MODULE(MODULE_CLASS_DRIVER, bpf, NULL);
+
+static int
+bpf_modcmd(modcmd_t cmd, void *arg)
+{
+	devmajor_t bmajor, cmajor;
+	int error;
+
+	bmajor = cmajor = NODEVMAJOR;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		bpfilterattach(0);
+		error = devsw_attach("bpf", NULL, &bmajor,
+		    &bpf_cdevsw, &cmajor);
+		if (error == EEXIST)
+			error = 0; /* maybe built-in ... improve eventually */
+		if (error)
+			break;
+
+		bpf_ops_handover_enter(&bpf_ops_kernel);
+		atomic_swap_ptr(&bpf_ops, &bpf_ops_kernel);
+		bpf_ops_handover_exit();
+		break;
+
+	case MODULE_CMD_FINI:
+		/*
+		 * bpf_ops is not (yet) referenced in the callers before
+		 * attach.  maybe other issues too.  "safety first".
+		 */
+		error = EOPNOTSUPP;
+		break;
+
+	default:
+		error = ENOTTY;
+		break;
+	}
+
+	return error;
 }

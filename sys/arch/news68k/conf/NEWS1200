@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.43.2.1 2009/05/04 08:11:36 yamt Exp $
+# 	$NetBSD: NEWS1200,v 1.43.2.2 2010/03/11 15:02:44 yamt Exp $
 
 #	news1200 config file
 #
@@ -65,7 +65,6 @@ file-system	PROCFS		# /proc
 file-system	FDESC		# /dev/fd/*
 file-system	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
-#file-system	PORTAL		# portal filesystem (still experimental)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcode (below)

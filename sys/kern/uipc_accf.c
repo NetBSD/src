@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_accf.c,v 1.8.6.2 2009/05/04 08:13:49 yamt Exp $	*/
+/*	$NetBSD: uipc_accf.c,v 1.8.6.3 2010/03/11 15:04:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.8.6.2 2009/05/04 08:13:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.8.6.3 2010/03/11 15:04:20 yamt Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -87,20 +87,22 @@ static LIST_HEAD(, accept_filter) accept_filtlsthd =
 /*
  * Names of Accept filter sysctl objects
  */
-SYSCTL_SETUP(sysctl_net_inet_accf_setup, "sysctl net.inet.accf subtree setup")
+static struct sysctllog *ctllog;
+static void
+sysctl_net_inet_accf_setup(void)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&ctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "net", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&ctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&ctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "accf",
 		       SYSCTL_DESCR("Accept filters"),
@@ -184,6 +186,7 @@ accept_filter_init0(void)
 {
 
 	rw_init(&accept_filter_lock);
+	sysctl_net_inet_accf_setup();
 
 	return 0;
 }

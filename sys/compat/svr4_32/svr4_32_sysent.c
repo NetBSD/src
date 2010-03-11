@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_32_sysent.c,v 1.18.10.1 2009/05/04 08:12:28 yamt Exp $ */
+/* $NetBSD: svr4_32_sysent.c,v 1.18.10.2 2010/03/11 15:03:20 yamt Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_sysent.c,v 1.18.10.1 2009/05/04 08:12:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_sysent.c,v 1.18.10.2 2010/03/11 15:03:20 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -574,4 +574,3 @@ struct sysent svr4_32_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 255 = unimplemented umount2 */
 };
-

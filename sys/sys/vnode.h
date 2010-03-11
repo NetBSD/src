@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.191.4.4 2009/08/19 18:48:33 yamt Exp $	*/
+/*	$NetBSD: vnode.h,v 1.191.4.5 2010/03/11 15:04:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ struct vnlock {
  * Reading or writing any of these items requires holding the appropriate
  * lock.  Field markings and the corresponding locks:
  *
- *	:	stable, reference to the vnode is is required
+ *	:	stable, reference to the vnode is required
  *	f	vnode_free_list_lock, or vrele_lock if VI_INACTPEND
  *	i	v_interlock
  *	m	mntvnode_lock
@@ -356,9 +356,6 @@ extern const int	vttoif_tab[];
 #define	UPDATE_DIROP	0x0002		/* update: hint to fs to wait or not */
 #define	UPDATE_CLOSE	0x0004		/* update: clean up on close */
 
-#define	HOLDRELE(vp)	holdrele(vp)
-#define	VHOLD(vp)	vhold(vp)
-#define	VREF(vp)	vref(vp)
 extern kmutex_t	vnode_free_list_lock;
 
 void holdrelel(struct vnode *);
@@ -367,8 +364,6 @@ void vref(struct vnode *);
 
 static __inline void holdrele(struct vnode *) __unused;
 static __inline void vhold(struct vnode *) __unused;
-
-#define	VATTR_NULL(vap)	vattr_null(vap)
 
 /*
  * decrease buf or page ref
@@ -593,7 +588,6 @@ int 	getnewvnode(enum vtagtype, struct mount *, int (**)(void *),
 void	ungetnewvnode(struct vnode *);
 int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, kauth_cred_t);
 void 	vattr_null(struct vattr *);
-int 	vcount(struct vnode *);
 void	vdevgone(int, int, int, enum vtype);
 int	vfinddev(dev_t, enum vtype, struct vnode **);
 int	vflush(struct mount *, struct vnode *, int);
@@ -607,6 +601,7 @@ void	vprint(const char *, struct vnode *);
 void 	vput(struct vnode *);
 int	vrecycle(struct vnode *, kmutex_t *, struct lwp *);
 void 	vrele(struct vnode *);
+void 	vrele_async(struct vnode *);
 int	vtruncbuf(struct vnode *, daddr_t, bool, int);
 void	vwakeup(struct buf *);
 void	vwait(struct vnode *, int);
@@ -615,6 +610,7 @@ void	vrevoke(struct vnode *);
 void	vrelel(struct vnode *, int);
 #define VRELEL_NOINACTIVE	0x01
 #define VRELEL_ONHEAD 		0x02
+#define VRELEL_ASYNC_RELE	0x03
 struct vnode *
 	vnalloc(struct mount *);
 void	vnfree(struct vnode *);
@@ -658,6 +654,7 @@ int	speedup_syncer(void);
 int	dorevoke(struct vnode *, kauth_cred_t);
 int	vlockmgr(struct vnlock *, int);
 int	vlockstatus(struct vnlock *);
+int	rawdev_mounted(struct vnode *, struct vnode **);
 
 /* see vfssubr(9) */
 void	vfs_getnewfsid(struct mount *);

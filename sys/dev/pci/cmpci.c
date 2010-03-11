@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.38.4.1 2009/05/16 10:41:33 yamt Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.38.4.2 2010/03/11 15:03:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.38.4.1 2009/05/16 10:41:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.38.4.2 2010/03/11 15:03:43 yamt Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -424,8 +424,8 @@ cmpci_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "failed to establish interrupt");
 		if (strintr != NULL)
-			aprint_normal(" at %s", strintr);
-		aprint_normal("\n");
+			aprint_error(" at %s", strintr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", strintr);

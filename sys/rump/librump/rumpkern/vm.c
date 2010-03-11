@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.30.4.3 2009/08/19 18:48:30 yamt Exp $	*/
+/*	$NetBSD: vm.c,v 1.30.4.4 2010/03/11 15:04:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,6 @@
  * Virtual memory emulation routines.  Contents:
  *  + anon objects & pager
  *  + misc support routines
- *  + kmem
  */
 
 /*
@@ -42,14 +41,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.30.4.3 2009/08/19 18:48:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.30.4.4 2010/03/11 15:04:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
+#include <sys/kmem.h>
+#include <sys/mman.h>
 #include <sys/null.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
-#include <sys/kmem.h>
 
 #include <machine/pmap.h>
 
@@ -107,10 +107,6 @@ rumpvm_makepage(struct uvm_object *uobj, voff_t off)
 
 	return pg;
 }
-
-/* these are going away very soon */
-void rumpvm_enterva(vaddr_t addr, struct vm_page *pg) {}
-void rumpvm_flushva(struct uvm_object *uobj) {}
 
 struct vm_page *
 uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
@@ -252,7 +248,6 @@ rumpvm_init(void)
 }
 
 
-
 void
 uvm_pagewire(struct vm_page *pg)
 {
@@ -267,12 +262,33 @@ uvm_pageunwire(struct vm_page *pg)
 	/* nada */
 }
 
+/*
+ * This satisfies the "disgusting mmap hack" used by proplib.
+ * We probably should grow some more assertables to make sure we're
+ * not satisfying anything we shouldn't be satisfying.  At least we
+ * should make sure it's the local machine we're mmapping ...
+ */
 int
 uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	vm_prot_t maxprot, int flags, void *handle, voff_t off, vsize_t locklim)
 {
+	void *uaddr;
+	int error;
 
-	panic("%s: unimplemented", __func__);
+	if (prot != (VM_PROT_READ | VM_PROT_WRITE))
+		panic("uvm_mmap() variant unsupported");
+	if (flags != (MAP_PRIVATE | MAP_ANON))
+		panic("uvm_mmap() variant unsupported");
+	/* no reason in particular, but cf. uvm_default_mapaddr() */
+	if (*addr != 0)
+		panic("uvm_mmap() variant unsupported");
+
+	uaddr = rumpuser_anonmmap(size, 0, 0, &error);
+	if (uaddr == NULL)
+		return error;
+
+	*addr = (vaddr_t)uaddr;
+	return 0;
 }
 
 struct pagerinfo {
@@ -473,21 +489,6 @@ uvm_pageout_done(int npages)
 	}
 }
 
-/* XXX: following two are unfinished because lwp's are not refcounted yet */
-void
-uvm_lwp_hold(struct lwp *l)
-{
-
-	atomic_inc_uint(&l->l_holdcnt);
-}
-
-void
-uvm_lwp_rele(struct lwp *l)
-{
-
-	atomic_dec_uint(&l->l_holdcnt);
-}
-
 int
 uvm_loan(struct vm_map *map, vaddr_t start, vsize_t len, void *v, int flags)
 {
@@ -518,52 +519,12 @@ uvm_object_printit(struct uvm_object *uobj, bool full,
 	/* nada for now */
 }
 
-int
-uvm_readahead(struct uvm_object *uobj, off_t off, off_t size)
+vaddr_t
+uvm_default_mapaddr(struct proc *p, vaddr_t base, vsize_t sz)
 {
 
-	/* nada for now */
 	return 0;
 }
-
-/*
- * Kmem
- */
-
-#ifndef RUMP_USE_REAL_ALLOCATORS
-void
-kmem_init()
-{
-
-	/* nothing to do */
-}
-
-void *
-kmem_alloc(size_t size, km_flag_t kmflag)
-{
-
-	return rumpuser_malloc(size, kmflag == KM_NOSLEEP);
-}
-
-void *
-kmem_zalloc(size_t size, km_flag_t kmflag)
-{
-	void *rv;
-
-	rv = kmem_alloc(size, kmflag);
-	if (rv)
-		memset(rv, 0, size);
-
-	return rv;
-}
-
-void
-kmem_free(void *p, size_t size)
-{
-
-	rumpuser_free(p);
-}
-#endif /* RUMP_USE_REAL_ALLOCATORS */
 
 /*
  * UVM km
@@ -682,6 +643,24 @@ uvm_wait(const char *msg)
 {
 
 	/* nothing to wait for */
+}
+
+void
+uvmspace_free(struct vmspace *vm)
+{
+
+	/* nothing for now */
+}
+
+int
+uvm_io(struct vm_map *map, struct uio *uio)
+{
+
+	/*
+	 * just do direct uio for now.  but this needs some vmspace
+	 * olympics for rump_sysproxy.
+	 */
+	return uiomove((void *)(vaddr_t)uio->uio_offset, uio->uio_resid, uio);
 }
 
 /*

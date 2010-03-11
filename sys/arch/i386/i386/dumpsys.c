@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpsys.c,v 1.3.14.2 2009/05/04 08:11:16 yamt Exp $	*/
+/*	$NetBSD: dumpsys.c,v 1.3.14.3 2010/03/11 15:02:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.3.14.2 2009/05/04 08:11:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.3.14.3 2010/03/11 15:02:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -342,8 +342,7 @@ dump_misc_init(void)
 			max_paddr = top;
 	}
 #ifdef DUMP_DEBUG
-	printf("dump_misc_init: max_paddr = 0x%lx\n",
-	    (unsigned long)max_paddr);
+	printf("dump_misc_init: max_paddr = %#" PRIxPADDR "\n", max_paddr);
 #endif
 
 	sparse_dump_physmap = (void*)uvm_km_alloc(kernel_map,
@@ -666,7 +665,7 @@ dumpsys_seg(paddr_t maddr, paddr_t bytes)
 
 		for (m = 0; m < n; m += NBPG)
 			pmap_kenter_pa(dumpspace + m, maddr + m,
-			    VM_PROT_READ);
+			    VM_PROT_READ, 0);
 		pmap_update(pmap_kernel());
 
 		error = (*dump)(dumpdev, blkno, (void *)dumpspace, n);

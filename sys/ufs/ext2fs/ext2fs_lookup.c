@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.55.16.2 2009/09/16 13:38:07 yamt Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.55.16.3 2010/03/11 15:04:44 yamt Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.55.16.2 2009/09/16 13:38:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.55.16.3 2010/03/11 15:04:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -584,7 +584,7 @@ found:
 		else
 			dp->i_count = dp->i_offset - prevoff;
 		if (dp->i_number == foundino) {
-			VREF(vdp);
+			vref(vdp);
 			*vpp = vdp;
 			return (0);
 		}
@@ -669,7 +669,7 @@ found:
 		}
 		*vpp = tdp;
 	} else if (dp->i_number == foundino) {
-		VREF(vdp);	/* we want ourself, ie "." */
+		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
 		error = VFS_VGET(vdp->v_mount, foundino, &tdp);

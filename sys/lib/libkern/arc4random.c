@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.19.30.1 2008/05/16 02:25:35 yamt Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.19.30.2 2010/03/11 15:04:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -136,6 +136,7 @@ arc4_randrekey(void)
 		arc4_j = (arc4_j + arc4_sbox[n] + key[n]) % 256;
 		arc4_swap(&arc4_sbox[n], &arc4_sbox[arc4_j]);
 	}
+	arc4_i = arc4_j;
 
 	/* Reset for next reseed cycle. */
 	arc4_nextreseed = time_uptime + ARC4_RESEED_SECONDS;

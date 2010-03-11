@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.42.4.3 2009/09/16 13:37:47 yamt Exp $	*/
+/*	$NetBSD: esiop.c,v 1.42.4.4 2010/03/11 15:03:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -33,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.42.4.3 2009/09/16 13:37:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.42.4.4 2010/03/11 15:03:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1824,7 +1819,7 @@ esiop_timeout(void *v)
 	    (u_long)(bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_DSP)
 	    - sc->sc_c.sc_scriptaddr),
 	    bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_DSA));
-	bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_CTEST2);
+	(void)bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_CTEST2);
 	printf("istat 0x%x\n",
 	    bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_ISTAT));
 #else

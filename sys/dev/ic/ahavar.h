@@ -1,4 +1,4 @@
-/*	$NetBSD: ahavar.h,v 1.13.74.1 2008/05/16 02:24:02 yamt Exp $	*/
+/*	$NetBSD: ahavar.h,v 1.13.74.2 2010/03/11 15:03:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ struct aha_control {
 };
 
 struct aha_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;

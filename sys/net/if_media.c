@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.27.10.2 2009/05/04 08:14:15 yamt Exp $	*/
+/*	$NetBSD: if_media.c,v 1.27.10.3 2010/03/11 15:04:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.27.10.2 2009/05/04 08:14:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.27.10.3 2010/03/11 15:04:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,7 +429,7 @@ ifmedia_removeall(struct ifmedia *ifm)
 static const struct ifmedia_baudrate ifmedia_baudrate_descriptions[] =
     IFM_BAUDRATE_DESCRIPTIONS;
 
-u_quad_t
+uint64_t
 ifmedia_baudrate(int mword)
 {
 	int i;

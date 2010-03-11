@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.140.10.1 2009/09/16 13:37:35 yamt Exp $
+#	$NetBSD: files.amiga,v 1.140.10.2 2010/03/11 15:02:00 yamt Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -435,7 +435,6 @@ file	arch/amiga/amiga/disksubr.c
 file	arch/amiga/amiga/dkbad.c
 file	arch/amiga/amiga/machdep.c
 file	arch/amiga/amiga/mem.c
-#file	arch/amiga/amiga/pmap.c
 file	arch/amiga/amiga/pmap_bootstrap.c
 file	arch/amiga/amiga/trap.c
 file	arch/amiga/amiga/cc.c

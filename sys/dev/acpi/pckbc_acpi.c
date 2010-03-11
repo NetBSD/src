@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.26.4.3 2009/09/16 13:37:45 yamt Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.26.4.4 2010/03/11 15:03:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,25 +42,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.26.4.3 2009/09/16 13:37:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.26.4.4 2010/03/11 15:03:23 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
+#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/errno.h>
-#include <sys/queue.h>
-#include <sys/bus.h>
+#include <sys/systm.h>
+
+#include <dev/acpi/acpivar.h>
 
 #include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
 
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
-
-#include <dev/acpi/acpivar.h>
 
 static int	pckbc_acpi_match(device_t, cfdata_t, void *);
 static void	pckbc_acpi_attach(device_t, device_t, void *);

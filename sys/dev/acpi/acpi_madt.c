@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_madt.c,v 1.19 2008/01/07 06:04:07 tnn Exp $	*/
+/*	$NetBSD: acpi_madt.c,v 1.19.10.1 2010/03/11 15:03:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,17 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.19 2008/01/07 06:04:07 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.19.10.1 2010/03/11 15:03:22 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/ioctl.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
-#include <sys/errno.h>
-#include <sys/malloc.h>
 
-#include <dev/acpi/acpica.h>
-#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_madt.h>
 
@@ -131,14 +125,14 @@ acpi_print_lapic_nmi(ACPI_MADT_LOCAL_APIC_NMI *p)
 static void
 acpi_print_lapic_ovr(ACPI_MADT_LOCAL_APIC_OVERRIDE *p)
 {
-	printf("lapic addr override: 0x%llx\n", (unsigned long long)p->Address);
+	printf("lapic addr override: 0x%"PRIx64"\n", p->Address);
 }
 
 static void
 acpi_print_iosapic(ACPI_MADT_IO_SAPIC *p)
 {
-	printf("iosapic: sapid %u address 0x%llx int vector base 0x%x\n",
-	    p->Id, (unsigned long long)p->Address, p->GlobalIrqBase);
+	printf("iosapic: sapid %u address 0x%"PRIx64" int vector base 0x%x\n",
+	    p->Id, p->Address, p->GlobalIrqBase);
 }
 
 static void
@@ -223,7 +217,7 @@ acpi_madt_print_entry(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 		acpi_print_platint((void *)hdrp);
 		break;
 	default:
-		printf("Unknown MADT entry type %d\n", hdrp->Type);
+		printf("Unknown MADT entry type %u\n", hdrp->Type);
 		break;
 	}
 	return AE_OK;

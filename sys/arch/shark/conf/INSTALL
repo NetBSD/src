@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.36.10.1 2009/05/04 08:11:53 yamt Exp $
+#	$NetBSD: INSTALL,v 1.36.10.2 2010/03/11 15:02:56 yamt Exp $
 #
 #	Shark installation kernel
 #
@@ -16,7 +16,6 @@ maxusers	32
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	HZ=64
 #options 	NTP		# NTP phase/frequency locked loop
-options 	NMBCLUSTERS=1024 # XXX, temporarily required
 #options 	BOOT_QUIETLY	# twiddle instead of normal boot msg output
 
 # CPU options
@@ -51,7 +50,6 @@ file-system	MSDOSFS		# MS-DOS file system
 #file-system	FILECORE	# Acorn filecore file system
 file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
-#file-system	PORTAL		# portal filesystem (still experimental)
 #file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system

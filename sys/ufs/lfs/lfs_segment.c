@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.210.4.3 2009/08/19 18:48:34 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.210.4.4 2010/03/11 15:04:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.210.4.3 2009/08/19 18:48:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.210.4.4 2010/03/11 15:04:45 yamt Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -123,7 +123,7 @@ static void lfs_cluster_callback(struct buf *);
  */
 #define	LFS_PARTIAL_FITS(fs) \
 	((fs)->lfs_fsbpseg - ((fs)->lfs_offset - (fs)->lfs_curseg) > \
-	fragstofsb((fs), (fs)->lfs_frag))
+	(fs)->lfs_frag)
 
 /*
  * Figure out whether we should do a checkpoint write or go ahead with
@@ -1448,7 +1448,7 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 	if (daddr > 0)
 		daddr = dbtofsb(fs, daddr);
 
-	bb = fragstofsb(fs, numfrags(fs, size));
+	bb = numfrags(fs, size);
 	switch (num) {
 	    case 0:
 		    ooff = ip->i_ffs1_db[lbn];
@@ -1655,7 +1655,7 @@ lfs_updatemeta(struct segment *sp)
 		for (bytesleft = sbp->b_bcount; bytesleft > 0;
 		     bytesleft -= fs->lfs_bsize) {
 			size = MIN(bytesleft, fs->lfs_bsize);
-			bb = fragstofsb(fs, numfrags(fs, size));
+			bb = numfrags(fs, size);
 			lbn = *sp->start_lbp++;
 			lfs_update_single(fs, sp, sp->vp, lbn, fs->lfs_offset,
 			    size);
@@ -2548,7 +2548,7 @@ lfs_cluster_aiodone(struct buf *bp)
 			tbp->b_flags |= B_ASYNC;
 			/* Master buffers have BC_AGE */
 			if (tbp->b_private == tbp)
-				tbp->b_flags |= BC_AGE;
+				tbp->b_cflags |= BC_AGE;
 		}
 		mutex_exit(&bufcache_lock);
 

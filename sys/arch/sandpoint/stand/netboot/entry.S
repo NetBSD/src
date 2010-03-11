@@ -1,7 +1,8 @@
-/* $NetBSD: entry.S,v 1.3.22.1 2009/06/20 07:20:08 yamt Exp $ */
+/* $NetBSD: entry.S,v 1.3.22.2 2010/03/11 15:02:53 yamt Exp $ */
 
 #include <powerpc/psl.h>
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 #include <powerpc/oea/bat.h>
 #include <powerpc/oea/hid.h>
 

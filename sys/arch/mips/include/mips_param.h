@@ -1,7 +1,34 @@
-/*	$NetBSD: mips_param.h,v 1.23.60.1 2009/08/19 18:46:30 yamt Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.23.60.2 2010/03/11 15:02:38 yamt Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
+#endif
+
+/*
+ * No reason this can't be common
+ */
+#if defined(__MIPSEB__)
+# if defined(__mips_n32) || defined(__mips_n64)
+#  define	_MACHINE_ARCH	mips64eb
+#  define	MACHINE_ARCH	"mips64eb"
+#  define	_MACHINE32_ARCH	mipseb
+#  define	MACHINE32_ARCH	"mipseb"
+# else
+#  define	_MACHINE_ARCH	mipseb
+#  define	MACHINE_ARCH	"mipseb"
+# endif
+#elif defined(__MIPSEL__)
+# if defined(__mips_n32) || defined(__mips_n64)
+#  define	_MACHINE_ARCH	mips64el
+#  define	MACHINE_ARCH	"mips64el"
+#  define	_MACHINE32_ARCH	mipsel
+#  define	MACHINE32_ARCH	"mipsel"
+# else
+#  define	_MACHINE_ARCH	mipsel
+#  define	MACHINE_ARCH	"mipsel"
+#endif
+#else
+#error neither __MIPSEL__ nor __MIPSEB__ are defined.
 #endif
 
 /*
@@ -71,9 +98,30 @@
 #define mips_ptob(x)		((paddr_t)(x) << PGSHIFT)
 
 #ifdef __MIPSEL__
-#define	MID_MACHINE	135	/* MID_PMAX (little-endian) */
+#define	MID_MACHINE	MID_PMAX	/* MID_PMAX (little-endian) */
 #endif
 #ifdef __MIPSEB__
-#define	MID_MACHINE	152	/* MID_MIPS (big-endian) */
+#define	MID_MACHINE	MID_MIPS	/* MID_MIPS (big-endian) */
 #endif
 
+/*
+ * Constants related to network buffer management.
+ * MCLBYTES must be no larger than NBPG (the software page size), and,
+ * on machines that exchange pages of input or output buffers with mbuf
+ * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
+ * of the hardware page size.
+ */
+#ifndef MSIZE
+#ifdef _LP64
+#define	MSIZE		512		/* size of an mbuf */
+#else
+#define	MSIZE		256		/* size of an mbuf */
+#endif
+
+#ifndef MCLSHIFT
+# define MCLSHIFT	11		/* convert bytes to m_buf clusters */
+#endif	/* MCLSHIFT */
+
+#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
+
+#endif

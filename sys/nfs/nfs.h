@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.69.16.2 2009/05/04 08:14:22 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.69.16.3 2010/03/11 15:04:31 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -67,6 +67,9 @@
 #define	NFS_TRYLATERDEL	1		/* Initial try later delay (sec) */
 #define	NFS_TRYLATERDELMAX (1*60)	/* Maximum try later delay (sec) */
 #define	NFS_TRYLATERDELMUL 2		/* Exponential backoff multiplier */
+
+#define NFS_CWNDSCALE   256             
+#define NFS_MAXCWND     (NFS_CWNDSCALE * 32)    
 
 /*
  * These can be overridden through <machine/param.h>, included via
@@ -332,7 +335,6 @@ struct nfsreq {
 	int		r_flags;	/* flags on request, see below */
 	int		r_retry;	/* R: max retransmission count */
 	int		r_rexmit;	/* R: current retrans count */
-	int		r_timer;	/* tick counter on reply */
 	u_int32_t	r_procnum;	/* NFS procedure number */
 	int		r_rtt;		/* R: RTT for rpc */
 	struct lwp	*r_lwp;		/* LWP that did I/O system call */

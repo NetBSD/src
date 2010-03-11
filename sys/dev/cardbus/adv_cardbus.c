@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_cardbus.c,v 1.17.4.3 2009/05/16 10:41:19 yamt Exp $	*/
+/*	$NetBSD: adv_cardbus.c,v 1.17.4.4 2010/03/11 15:03:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.17.4.3 2009/05/16 10:41:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.17.4.4 2010/03/11 15:03:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.17.4.3 2009/05/16 10:41:19 yamt Ex
 #include <dev/ic/advlib.h>
 #include <dev/ic/adv.h>
 
-#define ADV_CARDBUS_IOBA CARDBUS_BASE0_REG
-#define ADV_CARDBUS_MMBA CARDBUS_BASE1_REG
+#define ADV_CARDBUS_IOBA PCI_BAR0
+#define ADV_CARDBUS_MMBA PCI_BAR1
 
 #define ADV_CARDBUS_DEBUG
 #define ADV_CARDBUS_ALLOW_MEMIO
@@ -74,11 +74,10 @@ struct adv_cardbus_softc {
 
 	/* CardBus-specific goo. */
 	cardbus_devfunc_t sc_ct;	/* our CardBus devfuncs */
-	cardbus_intr_line_t sc_intrline; /* our interrupt line */
-	cardbustag_t sc_tag;
+	pcitag_t sc_tag;
 
-	int	sc_cbenable;		/* what CardBus access type to enable */
-	int	sc_csr;			/* CSR bits */
+	int	sc_bar;
+	pcireg_t	sc_csr;
 	bus_size_t sc_size;
 };
 
@@ -95,8 +94,8 @@ adv_cardbus_match(device_t parent, cfdata_t match,
 {
 	struct cardbus_attach_args *ca = aux;
 
-	if (CARDBUS_VENDOR(ca->ca_id) == PCI_VENDOR_ADVSYS &&
-	    CARDBUS_PRODUCT(ca->ca_id) == PCI_PRODUCT_ADVSYS_ULTRA)
+	if (PCI_VENDOR(ca->ca_id) == PCI_VENDOR_ADVSYS &&
+	    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_ADVSYS_ULTRA)
 		return (1);
 
 	return (0);
@@ -151,8 +150,6 @@ adv_cardbus_attach(device_t parent, device_t self,
 
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
-	csc->sc_intrline = ca->ca_intrline;
-	csc->sc_cbenable = 0;
 
 	/*
 	 * Map the device.
@@ -166,7 +163,7 @@ adv_cardbus_attach(device_t parent, device_t self,
 #ifdef ADV_CARDBUS_DEBUG
 		printf("%s: memio enabled\n", DEVNAME(sc));
 #endif
-		csc->sc_cbenable = CARDBUS_MEM_ENABLE;
+		csc->sc_bar = ADV_CARDBUS_MMBA;
 		csc->sc_csr |= PCI_COMMAND_MEM_ENABLE;
 	} else
 #endif
@@ -175,16 +172,13 @@ adv_cardbus_attach(device_t parent, device_t self,
 #ifdef ADV_CARDBUS_DEBUG
 		printf("%s: io enabled\n", DEVNAME(sc));
 #endif
-		csc->sc_cbenable = CARDBUS_IO_ENABLE;
+		csc->sc_bar = ADV_CARDBUS_IOBA;
 		csc->sc_csr |= PCI_COMMAND_IO_ENABLE;
 	} else {
+		csc->sc_bar = 0;
 		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
 		return;
 	}
-
-	/* Make sure the right access type is on the CardBus bridge. */
-	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cbenable);
-	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the appropriate bits in the PCI CSR. */
 	reg = cardbus_conf_read(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG);
@@ -256,19 +250,10 @@ adv_cardbus_detach(device_t self, int flags)
 		sc->sc_ih = 0;
 	}
 
-	if (csc->sc_cbenable) {
-#ifdef ADV_CARDBUS_ALLOW_MEMIO
-		if (csc->sc_cbenable == CARDBUS_MEM_ENABLE) {
-			Cardbus_mapreg_unmap(csc->sc_ct, ADV_CARDBUS_MMBA,
-			    sc->sc_iot, sc->sc_ioh, csc->sc_size);
-		} else {
-#endif
-			Cardbus_mapreg_unmap(csc->sc_ct, ADV_CARDBUS_IOBA,
-			    sc->sc_iot, sc->sc_ioh, csc->sc_size);
-#ifdef ADV_CARDBUS_ALLOW_MEMIO
-		}
-#endif
-		csc->sc_cbenable = 0;
+	if (csc->sc_bar != 0) {
+		Cardbus_mapreg_unmap(csc->sc_ct, csc->sc_bar,
+		    sc->sc_iot, sc->sc_ioh, csc->sc_size);
+		csc->sc_bar = 0;
 	}
 
 	return 0;

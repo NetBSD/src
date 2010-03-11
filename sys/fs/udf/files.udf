@@ -1,6 +1,6 @@
-#	$NetBSD: files.udf,v 1.1.76.2 2009/05/04 08:13:44 yamt Exp $
+#	$NetBSD: files.udf,v 1.1.76.3 2010/03/11 15:04:14 yamt Exp $
 
-deffs	fs_udf.h			UDF
+deffs	UDF
 
 file	fs/udf/udf_osta.c		udf
 file	fs/udf/udf_vfsops.c		udf

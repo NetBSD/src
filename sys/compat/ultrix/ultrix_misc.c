@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.112.2.1 2009/05/04 08:12:29 yamt Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.112.2.2 2010/03/11 15:03:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.112.2.1 2009/05/04 08:12:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.112.2.2 2010/03/11 15:03:20 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -90,10 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.112.2.1 2009/05/04 08:12:29 yamt E
  * Ultrix system calls that are implemented differently in BSD are
  * handled here.
  */
-
-#if defined(_KERNEL_OPT)
-#include "fs_nfs.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,19 +300,6 @@ done:
 	return error;
 }
 
-#if defined(NFS)
-int
-async_daemon(struct lwp *l, const void *v, register_t *retval)
-{
-	struct sys_nfssvc_args ouap;
-
-	SCARG(&ouap, flag) = NFSSVC_BIOD;
-	SCARG(&ouap, argp) = NULL;
-
-	return sys_nfssvc(l, &ouap, retval);
-}
-#endif /* NFS */
-
 
 #define	SUN__MAP_NEW	0x80000000	/* if not, old mmap & cannot handle */
 
@@ -464,37 +447,6 @@ ultrix_sys_setpgrp(struct lwp *l, const struct ultrix_sys_setpgrp_args *uap, reg
 		return sys_setsid(l, &ap, retval);
 	else
 		return sys_setpgid(l, &ap, retval);
-}
-
-int
-ultrix_sys_nfssvc(struct lwp *l, const struct ultrix_sys_nfssvc_args *uap,
-    register_t *retval)
-{
-
-#if 0	/* XXX */
-	struct emul *e = p->p_emul;
-	struct sys_nfssvc_args outuap;
-	struct sockaddr sa;
-	int error;
-	void *sg = stackgap_init(p, 0);
-
-	memset(&outuap, 0, sizeof outuap);
-	SCARG(&outuap, fd) = SCARG(uap, fd);
-	SCARG(&outuap, mskval) = stackgap_alloc(p, &sg, sizeof sa);
-	SCARG(&outuap, msklen) = sizeof sa;
-	SCARG(&outuap, mtchval) = stackgap_alloc(p, &sg, sizeof sa);
-	SCARG(&outuap, mtchlen) = sizeof sa;
-
-	memset(&sa, 0, sizeof sa);
-	if (error = copyout(&sa, SCARG(&outuap, mskval), SCARG(&outuap, msklen)))
-		return error;
-	if (error = copyout(&sa, SCARG(&outuap, mtchval), SCARG(&outuap, mtchlen)))
-		return error;
-
-	return nfssvc(l, &outuap, retval);
-#else
-	return ENOSYS;
-#endif
 }
 
 struct ultrix_ustat {

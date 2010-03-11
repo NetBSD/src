@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.11.58.1 2009/05/04 08:12:33 yamt Exp $
+# $NetBSD: acpidevs,v 1.11.58.2 2010/03/11 15:03:22 yamt Exp $
 #
 # Extracted from:
 # http://download.microsoft.com/download/1/6/1/161ba512-40e2-4cc9-843a-923143f3456c/devids.txt
@@ -135,6 +135,7 @@ PNP0C10	ACPI system indicator device
 PNP0C11	ACPI thermal zone
 PNP0C12	Device Bay Controller
 PNP0C13	Plug and Play BIOS (used when ACPI mode cannot be used)
+PNP0C14	WMI mapper device
 PNP0C80	Memory Device
 #--PCMCIA Controller Chipsets--
 PNP0E00	Intel 82365-Compatible PCMCIA Controller
@@ -353,5 +354,13 @@ ACPI0003	AC Device
 ACPI0004	Module Device
 ACPI0005	SMBus 2.0 Host Controller
 ACPI0006	GPE Block Device
+ACPI0007	Processor Device
+ACPI0008	Ambient Light Sensor
+ACPI0009	I/O APIC/SAPIC Device
+ACPI000A	I/O APIC Device
+ACPI000B	I/O SAPIC Device
+ACPI000C	Processor Aggregator
+ACPI000D	Power Meter
+ACPI000E	Wake Alarm Device
 # **** Others ****
 INT0800	Intel FWH Random Number Generator

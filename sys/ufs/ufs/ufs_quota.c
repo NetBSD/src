@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.59.4.4 2009/08/19 18:48:35 yamt Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.59.4.5 2010/03/11 15:04:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.59.4.4 2009/08/19 18:48:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.59.4.5 2010/03/11 15:04:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -475,9 +475,9 @@ again:
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
 		vmark(mvp, vp);
 		mutex_enter(&vp->v_interlock);
-		if (vp->v_mount != mp || vismarker(vp) ||
+		if (VTOI(vp) == NULL || vp->v_mount != mp || vismarker(vp) ||
 		    vp->v_type == VNON || vp->v_writecount == 0 ||
-		    (vp->v_iflag & VI_CLEAN) != 0) {
+		    (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0) {
 			mutex_exit(&vp->v_interlock);
 			continue;
 		}
@@ -545,8 +545,9 @@ again:
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
 		vmark(mvp, vp);
 		mutex_enter(&vp->v_interlock);
-		if (vp->v_mount != mp || vismarker(vp) || vp->v_type == VNON ||
-		    (vp->v_iflag & VI_CLEAN) != 0) {
+		if (VTOI(vp) == NULL || vp->v_mount != mp || vismarker(vp) ||
+		    vp->v_type == VNON ||
+		    (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0) {
 			mutex_exit(&vp->v_interlock);
 			continue;
 		}
@@ -730,8 +731,9 @@ qsync(struct mount *mp)
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
 		vmark(mvp, vp);
 		mutex_enter(&vp->v_interlock);
-		if (vp->v_mount != mp || vismarker(vp) || vp->v_type == VNON ||
-		    (vp->v_iflag & VI_CLEAN) != 0) {
+		if (VTOI(vp) == NULL || vp->v_mount != mp || vismarker(vp) ||
+		    vp->v_type == VNON ||
+		    (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0) {
 			mutex_exit(&vp->v_interlock);
 			continue;
 		}

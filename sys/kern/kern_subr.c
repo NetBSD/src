@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.185.2.2 2009/05/04 08:13:47 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.185.2.3 2010/03/11 15:04:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,20 +79,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.185.2.2 2009/05/04 08:13:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.185.2.3 2010/03/11 15:04:17 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
-#include "opt_powerhook.h"
 #include "opt_tftproot.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
@@ -116,584 +114,19 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.185.2.2 2009/05/04 08:13:47 yamt Exp
 #include <net/if.h>
 
 /* XXX these should eventually move to subr_autoconf.c */
-static struct device *finddevice(const char *);
-static struct device *getdisk(char *, int, int, dev_t *, int);
-static struct device *parsedisk(char *, int, int, dev_t *);
+static device_t finddevice(const char *);
+static device_t getdisk(char *, int, int, dev_t *, int);
+static device_t parsedisk(char *, int, int, dev_t *);
 static const char *getwedgename(const char *, int);
 
-/*
- * A generic linear hook.
- */
-struct hook_desc {
-	LIST_ENTRY(hook_desc) hk_list;
-	void	(*hk_fn)(void *);
-	void	*hk_arg;
-};
-typedef LIST_HEAD(, hook_desc) hook_list_t;
-
 #ifdef TFTPROOT
-int tftproot_dhcpboot(struct device *);
+int tftproot_dhcpboot(device_t);
 #endif
 
 dev_t	dumpcdev;	/* for savecore */
 
-void
-uio_setup_sysspace(struct uio *uio)
-{
-
-	uio->uio_vmspace = vmspace_kernel();
-}
-
-int
-uiomove(void *buf, size_t n, struct uio *uio)
-{
-	struct vmspace *vm = uio->uio_vmspace;
-	struct iovec *iov;
-	size_t cnt;
-	int error = 0;
-	char *cp = buf;
-
-	ASSERT_SLEEPABLE();
-
-#ifdef DIAGNOSTIC
-	if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
-		panic("uiomove: mode");
-#endif
-	while (n > 0 && uio->uio_resid) {
-		iov = uio->uio_iov;
-		cnt = iov->iov_len;
-		if (cnt == 0) {
-			KASSERT(uio->uio_iovcnt > 0);
-			uio->uio_iov++;
-			uio->uio_iovcnt--;
-			continue;
-		}
-		if (cnt > n)
-			cnt = n;
-		if (!VMSPACE_IS_KERNEL_P(vm)) {
-			if (curcpu()->ci_schedstate.spc_flags &
-			    SPCF_SHOULDYIELD)
-				preempt();
-		}
-
-		if (uio->uio_rw == UIO_READ) {
-			error = copyout_vmspace(vm, cp, iov->iov_base,
-			    cnt);
-		} else {
-			error = copyin_vmspace(vm, iov->iov_base, cp,
-			    cnt);
-		}
-		if (error) {
-			break;
-		}
-		iov->iov_base = (char *)iov->iov_base + cnt;
-		iov->iov_len -= cnt;
-		uio->uio_resid -= cnt;
-		uio->uio_offset += cnt;
-		cp += cnt;
-		KDASSERT(cnt <= n);
-		n -= cnt;
-	}
-
-	return (error);
-}
-
-/*
- * Wrapper for uiomove() that validates the arguments against a known-good
- * kernel buffer.
- */
-int
-uiomove_frombuf(void *buf, size_t buflen, struct uio *uio)
-{
-	size_t offset;
-
-	if (uio->uio_offset < 0 || /* uio->uio_resid < 0 || */
-	    (offset = uio->uio_offset) != uio->uio_offset)
-		return (EINVAL);
-	if (offset >= buflen)
-		return (0);
-	return (uiomove((char *)buf + offset, buflen - offset, uio));
-}
-
-/*
- * Give next character to user as result of read.
- */
-int
-ureadc(int c, struct uio *uio)
-{
-	struct iovec *iov;
-
-	if (uio->uio_resid <= 0)
-		panic("ureadc: non-positive resid");
-again:
-	if (uio->uio_iovcnt <= 0)
-		panic("ureadc: non-positive iovcnt");
-	iov = uio->uio_iov;
-	if (iov->iov_len <= 0) {
-		uio->uio_iovcnt--;
-		uio->uio_iov++;
-		goto again;
-	}
-	if (!VMSPACE_IS_KERNEL_P(uio->uio_vmspace)) {
-		if (subyte(iov->iov_base, c) < 0)
-			return (EFAULT);
-	} else {
-		*(char *)iov->iov_base = c;
-	}
-	iov->iov_base = (char *)iov->iov_base + 1;
-	iov->iov_len--;
-	uio->uio_resid--;
-	uio->uio_offset++;
-	return (0);
-}
-
-/*
- * Like copyin(), but operates on an arbitrary vmspace.
- */
-int
-copyin_vmspace(struct vmspace *vm, const void *uaddr, void *kaddr, size_t len)
-{
-	struct iovec iov;
-	struct uio uio;
-	int error;
-
-	if (len == 0)
-		return (0);
-
-	if (VMSPACE_IS_KERNEL_P(vm)) {
-		return kcopy(uaddr, kaddr, len);
-	}
-	if (__predict_true(vm == curproc->p_vmspace)) {
-		return copyin(uaddr, kaddr, len);
-	}
-
-	iov.iov_base = kaddr;
-	iov.iov_len = len;
-	uio.uio_iov = &iov;
-	uio.uio_iovcnt = 1;
-	uio.uio_offset = (off_t)(uintptr_t)uaddr;
-	uio.uio_resid = len;
-	uio.uio_rw = UIO_READ;
-	UIO_SETUP_SYSSPACE(&uio);
-	error = uvm_io(&vm->vm_map, &uio);
-
-	return (error);
-}
-
-/*
- * Like copyout(), but operates on an arbitrary vmspace.
- */
-int
-copyout_vmspace(struct vmspace *vm, const void *kaddr, void *uaddr, size_t len)
-{
-	struct iovec iov;
-	struct uio uio;
-	int error;
-
-	if (len == 0)
-		return (0);
-
-	if (VMSPACE_IS_KERNEL_P(vm)) {
-		return kcopy(kaddr, uaddr, len);
-	}
-	if (__predict_true(vm == curproc->p_vmspace)) {
-		return copyout(kaddr, uaddr, len);
-	}
-
-	iov.iov_base = __UNCONST(kaddr); /* XXXUNCONST cast away const */
-	iov.iov_len = len;
-	uio.uio_iov = &iov;
-	uio.uio_iovcnt = 1;
-	uio.uio_offset = (off_t)(uintptr_t)uaddr;
-	uio.uio_resid = len;
-	uio.uio_rw = UIO_WRITE;
-	UIO_SETUP_SYSSPACE(&uio);
-	error = uvm_io(&vm->vm_map, &uio);
-
-	return (error);
-}
-
-/*
- * Like copyin(), but operates on an arbitrary process.
- */
-int
-copyin_proc(struct proc *p, const void *uaddr, void *kaddr, size_t len)
-{
-	struct vmspace *vm;
-	int error;
-
-	error = proc_vmspace_getref(p, &vm);
-	if (error) {
-		return error;
-	}
-	error = copyin_vmspace(vm, uaddr, kaddr, len);
-	uvmspace_free(vm);
-
-	return error;
-}
-
-/*
- * Like copyout(), but operates on an arbitrary process.
- */
-int
-copyout_proc(struct proc *p, const void *kaddr, void *uaddr, size_t len)
-{
-	struct vmspace *vm;
-	int error;
-
-	error = proc_vmspace_getref(p, &vm);
-	if (error) {
-		return error;
-	}
-	error = copyout_vmspace(vm, kaddr, uaddr, len);
-	uvmspace_free(vm);
-
-	return error;
-}
-
-/*
- * Like copyin(), except it operates on kernel addresses when the FKIOCTL
- * flag is passed in `ioctlflags' from the ioctl call.
- */
-int
-ioctl_copyin(int ioctlflags, const void *src, void *dst, size_t len)
-{
-	if (ioctlflags & FKIOCTL)
-		return kcopy(src, dst, len);
-	return copyin(src, dst, len);
-}
-
-/*
- * Like copyout(), except it operates on kernel addresses when the FKIOCTL
- * flag is passed in `ioctlflags' from the ioctl call.
- */
-int
-ioctl_copyout(int ioctlflags, const void *src, void *dst, size_t len)
-{
-	if (ioctlflags & FKIOCTL)
-		return kcopy(src, dst, len);
-	return copyout(src, dst, len);
-}
-
-static void *
-hook_establish(hook_list_t *list, void (*fn)(void *), void *arg)
-{
-	struct hook_desc *hd;
-
-	hd = malloc(sizeof(*hd), M_DEVBUF, M_NOWAIT);
-	if (hd == NULL)
-		return (NULL);
-
-	hd->hk_fn = fn;
-	hd->hk_arg = arg;
-	LIST_INSERT_HEAD(list, hd, hk_list);
-
-	return (hd);
-}
-
-static void
-hook_disestablish(hook_list_t *list, void *vhook)
-{
-#ifdef DIAGNOSTIC
-	struct hook_desc *hd;
-
-	LIST_FOREACH(hd, list, hk_list) {
-                if (hd == vhook)
-			break;
-	}
-
-	if (hd == NULL)
-		panic("hook_disestablish: hook %p not established", vhook);
-#endif
-	LIST_REMOVE((struct hook_desc *)vhook, hk_list);
-	free(vhook, M_DEVBUF);
-}
-
-static void
-hook_destroy(hook_list_t *list)
-{
-	struct hook_desc *hd;
-
-	while ((hd = LIST_FIRST(list)) != NULL) {
-		LIST_REMOVE(hd, hk_list);
-		free(hd, M_DEVBUF);
-	}
-}
-
-static void
-hook_proc_run(hook_list_t *list, struct proc *p)
-{
-	struct hook_desc *hd;
-
-	LIST_FOREACH(hd, list, hk_list)
-		((void (*)(struct proc *, void *))*hd->hk_fn)(p, hd->hk_arg);
-}
-
-/*
- * "Shutdown hook" types, functions, and variables.
- *
- * Should be invoked immediately before the
- * system is halted or rebooted, i.e. after file systems unmounted,
- * after crash dump done, etc.
- *
- * Each shutdown hook is removed from the list before it's run, so that
- * it won't be run again.
- */
-
-static hook_list_t shutdownhook_list;
-
-void *
-shutdownhook_establish(void (*fn)(void *), void *arg)
-{
-	return hook_establish(&shutdownhook_list, fn, arg);
-}
-
-void
-shutdownhook_disestablish(void *vhook)
-{
-	hook_disestablish(&shutdownhook_list, vhook);
-}
-
-/*
- * Run shutdown hooks.  Should be invoked immediately before the
- * system is halted or rebooted, i.e. after file systems unmounted,
- * after crash dump done, etc.
- *
- * Each shutdown hook is removed from the list before it's run, so that
- * it won't be run again.
- */
-void
-doshutdownhooks(void)
-{
-	struct hook_desc *dp;
-
-	while ((dp = LIST_FIRST(&shutdownhook_list)) != NULL) {
-		LIST_REMOVE(dp, hk_list);
-		(*dp->hk_fn)(dp->hk_arg);
-#if 0
-		/*
-		 * Don't bother freeing the hook structure,, since we may
-		 * be rebooting because of a memory corruption problem,
-		 * and this might only make things worse.  It doesn't
-		 * matter, anyway, since the system is just about to
-		 * reboot.
-		 */
-		free(dp, M_DEVBUF);
-#endif
-	}
-}
-
-/*
- * "Mountroot hook" types, functions, and variables.
- */
-
-static hook_list_t mountroothook_list;
-
-void *
-mountroothook_establish(void (*fn)(struct device *), struct device *dev)
-{
-	return hook_establish(&mountroothook_list, (void (*)(void *))fn, dev);
-}
-
-void
-mountroothook_disestablish(void *vhook)
-{
-	hook_disestablish(&mountroothook_list, vhook);
-}
-
-void
-mountroothook_destroy(void)
-{
-	hook_destroy(&mountroothook_list);
-}
-
-void
-domountroothook(void)
-{
-	struct hook_desc *hd;
-
-	LIST_FOREACH(hd, &mountroothook_list, hk_list) {
-		if (hd->hk_arg == (void *)root_device) {
-			(*hd->hk_fn)(hd->hk_arg);
-			return;
-		}
-	}
-}
-
-static hook_list_t exechook_list;
-
-void *
-exechook_establish(void (*fn)(struct proc *, void *), void *arg)
-{
-	return hook_establish(&exechook_list, (void (*)(void *))fn, arg);
-}
-
-void
-exechook_disestablish(void *vhook)
-{
-	hook_disestablish(&exechook_list, vhook);
-}
-
-/*
- * Run exec hooks.
- */
-void
-doexechooks(struct proc *p)
-{
-	hook_proc_run(&exechook_list, p);
-}
-
-static hook_list_t exithook_list;
-extern krwlock_t exec_lock;
-
-void *
-exithook_establish(void (*fn)(struct proc *, void *), void *arg)
-{
-	void *rv;
-
-	rw_enter(&exec_lock, RW_WRITER);
-	rv = hook_establish(&exithook_list, (void (*)(void *))fn, arg);
-	rw_exit(&exec_lock);
-	return rv;
-}
-
-void
-exithook_disestablish(void *vhook)
-{
-
-	rw_enter(&exec_lock, RW_WRITER);
-	hook_disestablish(&exithook_list, vhook);
-	rw_exit(&exec_lock);
-}
-
-/*
- * Run exit hooks.
- */
-void
-doexithooks(struct proc *p)
-{
-	hook_proc_run(&exithook_list, p);
-}
-
-static hook_list_t forkhook_list;
-
-void *
-forkhook_establish(void (*fn)(struct proc *, struct proc *))
-{
-	return hook_establish(&forkhook_list, (void (*)(void *))fn, NULL);
-}
-
-void
-forkhook_disestablish(void *vhook)
-{
-	hook_disestablish(&forkhook_list, vhook);
-}
-
-/*
- * Run fork hooks.
- */
-void
-doforkhooks(struct proc *p2, struct proc *p1)
-{
-	struct hook_desc *hd;
-
-	LIST_FOREACH(hd, &forkhook_list, hk_list) {
-		((void (*)(struct proc *, struct proc *))*hd->hk_fn)
-		    (p2, p1);
-	}
-}
-
-/*
- * "Power hook" types, functions, and variables.
- * The list of power hooks is kept ordered with the last registered hook
- * first.
- * When running the hooks on power down the hooks are called in reverse
- * registration order, when powering up in registration order.
- */
-struct powerhook_desc {
-	CIRCLEQ_ENTRY(powerhook_desc) sfd_list;
-	void	(*sfd_fn)(int, void *);
-	void	*sfd_arg;
-	char	sfd_name[16];
-};
-
-static CIRCLEQ_HEAD(, powerhook_desc) powerhook_list =
-    CIRCLEQ_HEAD_INITIALIZER(powerhook_list);
-
-void *
-powerhook_establish(const char *name, void (*fn)(int, void *), void *arg)
-{
-	struct powerhook_desc *ndp;
-
-	ndp = (struct powerhook_desc *)
-	    malloc(sizeof(*ndp), M_DEVBUF, M_NOWAIT);
-	if (ndp == NULL)
-		return (NULL);
-
-	ndp->sfd_fn = fn;
-	ndp->sfd_arg = arg;
-	strlcpy(ndp->sfd_name, name, sizeof(ndp->sfd_name));
-	CIRCLEQ_INSERT_HEAD(&powerhook_list, ndp, sfd_list);
-
-	aprint_error("%s: WARNING: powerhook_establish is deprecated\n", name);
-	return (ndp);
-}
-
-void
-powerhook_disestablish(void *vhook)
-{
-#ifdef DIAGNOSTIC
-	struct powerhook_desc *dp;
-
-	CIRCLEQ_FOREACH(dp, &powerhook_list, sfd_list)
-                if (dp == vhook)
-			goto found;
-	panic("powerhook_disestablish: hook %p not established", vhook);
- found:
-#endif
-
-	CIRCLEQ_REMOVE(&powerhook_list, (struct powerhook_desc *)vhook,
-	    sfd_list);
-	free(vhook, M_DEVBUF);
-}
-
-/*
- * Run power hooks.
- */
-void
-dopowerhooks(int why)
-{
-	struct powerhook_desc *dp;
-
-#ifdef POWERHOOK_DEBUG
-	const char *why_name;
-	static const char * pwr_names[] = {PWR_NAMES};
-	why_name = why < __arraycount(pwr_names) ? pwr_names[why] : "???";
-#endif
-
-	if (why == PWR_RESUME || why == PWR_SOFTRESUME) {
-		CIRCLEQ_FOREACH_REVERSE(dp, &powerhook_list, sfd_list) {
-#ifdef POWERHOOK_DEBUG
-			printf("dopowerhooks %s: %s (%p)\n", why_name, dp->sfd_name, dp);
-#endif
-			(*dp->sfd_fn)(why, dp->sfd_arg);
-		}
-	} else {
-		CIRCLEQ_FOREACH(dp, &powerhook_list, sfd_list) {
-#ifdef POWERHOOK_DEBUG
-			printf("dopowerhooks %s: %s (%p)\n", why_name, dp->sfd_name, dp);
-#endif
-			(*dp->sfd_fn)(why, dp->sfd_arg);
-		}
-	}
-
-#ifdef POWERHOOK_DEBUG
-	printf("dopowerhooks: %s done\n", why_name);
-#endif
-}
-
 static int
-isswap(struct device *dv)
+isswap(device_t dv)
 {
 	struct dkwedge_info wi;
 	struct vnode *vn;
@@ -736,8 +169,8 @@ int md_is_root = 0;
  * The device and wedge that we booted from.  If booted_wedge is NULL,
  * the we might consult booted_partition.
  */
-struct device *booted_device;
-struct device *booted_wedge;
+device_t booted_device;
+device_t booted_wedge;
 int booted_partition;
 
 /*
@@ -749,17 +182,18 @@ int booted_partition;
 	 !device_is_a((dv), "dk"))
 
 void
-setroot(struct device *bootdv, int bootpartition)
+setroot(device_t bootdv, int bootpartition)
 {
-	struct device *dv;
+	device_t dv;
+	deviter_t di;
 	int len, majdev;
 	dev_t nrootdev;
 	dev_t ndumpdev = NODEV;
 	char buf[128];
 	const char *rootdevname;
 	const char *dumpdevname;
-	struct device *rootdv = NULL;		/* XXX gcc -Wuninitialized */
-	struct device *dumpdv = NULL;
+	device_t rootdv = NULL;		/* XXX gcc -Wuninitialized */
+	device_t dumpdv = NULL;
 	struct ifnet *ifp;
 	const char *deffsname;
 	struct vfsops *vops;
@@ -820,7 +254,7 @@ setroot(struct device *bootdv, int bootpartition)
 
  top:
 	if (boothowto & RB_ASKNAME) {
-		struct device *defdumpdv;
+		device_t defdumpdv;
 
 		for (;;) {
 			printf("root device");
@@ -1082,10 +516,12 @@ setroot(struct device *bootdv, int bootpartition)
 		}
 	} else {				/* (c) */
 		if (DEV_USES_PARTITIONS(rootdv) == 0) {
-			for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-			    dv = TAILQ_NEXT(dv, dv_list))
+			for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+			     dv != NULL;
+			     dv = deviter_next(&di))
 				if (isswap(dv))
 					break;
+			deviter_release(&di);
 			if (dv == NULL)
 				goto nodumpdev;
 
@@ -1114,7 +550,7 @@ setroot(struct device *bootdv, int bootpartition)
 	aprint_normal("\n");
 }
 
-static struct device *
+static device_t
 finddevice(const char *name)
 {
 	const char *wname;
@@ -1125,14 +561,16 @@ finddevice(const char *name)
 	return device_find_by_xname(name);
 }
 
-static struct device *
+static device_t
 getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 {
-	struct device	*dv;
+	device_t dv;
+	deviter_t di;
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
-		TAILQ_FOREACH(dv, &alldevs, dv_list) {
+		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
+		     dv = deviter_next(&di)) {
 			if (DEV_USES_PARTITIONS(dv))
 				printf(" %s[a-%c]", device_xname(dv),
 				    'a' + MAXPARTITIONS - 1);
@@ -1141,6 +579,7 @@ getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 			if (isdump == 0 && device_class(dv) == DV_IFNET)
 				printf(" %s", device_xname(dv));
 		}
+		deviter_release(&di);
 		dkwedge_print_wnames();
 		if (isdump)
 			printf(" none");
@@ -1164,10 +603,10 @@ getwedgename(const char *name, int namelen)
 	return name + wpfxlen;
 }
 
-static struct device *
+static device_t
 parsedisk(char *str, int len, int defpart, dev_t *devp)
 {
-	struct device *dv;
+	device_t dv;
 	const char *wname;
 	char *cp, c;
 	int majdev, part;
@@ -1217,78 +656,6 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
 
 	*cp = c;
 	return (dv);
-}
-
-/*
- * snprintf() `bytes' into `buf', reformatting it so that the number,
- * plus a possible `x' + suffix extension) fits into len bytes (including
- * the terminating NUL).
- * Returns the number of bytes stored in buf, or -1 if there was a problem.
- * E.g, given a len of 9 and a suffix of `B':
- *	bytes		result
- *	-----		------
- *	99999		`99999 B'
- *	100000		`97 kB'
- *	66715648	`65152 kB'
- *	252215296	`240 MB'
- */
-int
-humanize_number(char *buf, size_t len, uint64_t bytes, const char *suffix,
-    int divisor)
-{
-       	/* prefixes are: (none), kilo, Mega, Giga, Tera, Peta, Exa */
-	const char *prefixes;
-	int		r;
-	uint64_t	umax;
-	size_t		i, suffixlen;
-
-	if (buf == NULL || suffix == NULL)
-		return (-1);
-	if (len > 0)
-		buf[0] = '\0';
-	suffixlen = strlen(suffix);
-	/* check if enough room for `x y' + suffix + `\0' */
-	if (len < 4 + suffixlen)
-		return (-1);
-
-	if (divisor == 1024) {
-		/*
-		 * binary multiplies
-		 * XXX IEC 60027-2 recommends Ki, Mi, Gi...
-		 */
-		prefixes = " KMGTPE";
-	} else
-		prefixes = " kMGTPE"; /* SI for decimal multiplies */
-
-	umax = 1;
-	for (i = 0; i < len - suffixlen - 3; i++) {
-		umax *= 10;
-		if (umax > bytes)
-			break;
-	}
-	for (i = 0; bytes >= umax && prefixes[i + 1]; i++)
-		bytes /= divisor;
-
-	r = snprintf(buf, len, "%qu%s%c%s", (unsigned long long)bytes,
-	    i == 0 ? "" : " ", prefixes[i], suffix);
-
-	return (r);
-}
-
-int
-format_bytes(char *buf, size_t len, uint64_t bytes)
-{
-	int	rv;
-	size_t	nlen;
-
-	rv = humanize_number(buf, len, bytes, "B", 1024);
-	if (rv != -1) {
-			/* nuke the trailing ` B' if it exists */
-		nlen = strlen(buf) - 2;
-		if (strcmp(&buf[nlen], " B") == 0)
-			buf[nlen] = '\0';
-	}
-	return (rv);
 }
 
 /*

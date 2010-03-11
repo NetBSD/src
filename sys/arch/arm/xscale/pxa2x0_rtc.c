@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_rtc.c,v 1.1.52.1 2009/08/19 18:46:01 yamt Exp $	*/
+/*	$NetBSD: pxa2x0_rtc.c,v 1.1.52.2 2010/03/11 15:02:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_rtc.c,v 1.1.52.1 2009/08/19 18:46:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_rtc.c,v 1.1.52.2 2010/03/11 15:02:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,8 @@ CFATTACH_DECL(pxartc, sizeof(struct pxartc_softc),
     pxartc_match, pxartc_attach, NULL, NULL);
 
 /* todr(9) interface */
-static int pxartc_todr_gettime(todr_chip_handle_t, volatile struct timeval *);
-static int pxartc_todr_settime(todr_chip_handle_t, volatile struct timeval *);
+static int pxartc_todr_gettime(todr_chip_handle_t, struct timeval *);
+static int pxartc_todr_settime(todr_chip_handle_t, struct timeval *);
 
 static int pxartc_wristwatch_read(struct pxartc_softc *,struct clock_ymdhms *);
 static int pxartc_wristwatch_write(struct pxartc_softc *,struct clock_ymdhms *);
@@ -111,7 +111,7 @@ pxartc_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-pxartc_todr_gettime(todr_chip_handle_t ch, volatile struct timeval *tv)
+pxartc_todr_gettime(todr_chip_handle_t ch, struct timeval *tv)
 {
 	struct pxartc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt;
@@ -141,7 +141,7 @@ pxartc_todr_gettime(todr_chip_handle_t ch, volatile struct timeval *tv)
 }
 
 static int
-pxartc_todr_settime(todr_chip_handle_t ch, volatile struct timeval *tv)
+pxartc_todr_settime(todr_chip_handle_t ch, struct timeval *tv)
 {
 	struct pxartc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt;

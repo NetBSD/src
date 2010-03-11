@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.16.4.2 2009/05/04 08:13:46 yamt Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.16.4.3 2010/03/11 15:04:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.16.4.2 2009/05/04 08:13:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.16.4.3 2010/03/11 15:04:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.16.4.2 2009/05/04 08:13:46 yamt E
 #define	CV_DEBUG_P(cv)	(CV_WMESG(cv) != nodebug)
 #define	CV_RA		((uintptr_t)__builtin_return_address(0))
 
-static u_int	cv_unsleep(lwp_t *, bool);
+static void	cv_unsleep(lwp_t *, bool);
 static void	cv_wakeup_one(kcondvar_t *);
 static void	cv_wakeup_all(kcondvar_t *);
 
@@ -187,7 +187,7 @@ cv_exit(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l, const int error)
  *	interrupted: for example, when a signal is received.  Must be
  *	called with the LWP locked, and must return it unlocked.
  */
-static u_int
+static void
 cv_unsleep(lwp_t *l, bool cleanup)
 {
 	kcondvar_t *cv;
@@ -199,7 +199,7 @@ cv_unsleep(lwp_t *l, bool cleanup)
 	KASSERT(cv_is_valid(cv));
 	KASSERT(cv_has_waiters(cv));
 
-	return sleepq_unsleep(l, cleanup);
+	sleepq_unsleep(l, cleanup);
 }
 
 /*
@@ -304,7 +304,6 @@ cv_wakeup_one(kcondvar_t *cv)
 {
 	sleepq_t *sq;
 	kmutex_t *mp;
-	int swapin;
 	lwp_t *l;
 
 	KASSERT(cv_is_valid(cv));
@@ -319,15 +318,8 @@ cv_wakeup_one(kcondvar_t *cv)
 	KASSERT(l->l_sleepq == sq);
 	KASSERT(l->l_mutex == mp);
 	KASSERT(l->l_wchan == cv);
-	swapin = sleepq_remove(sq, l);
+	sleepq_remove(sq, l);
 	mutex_spin_exit(mp);
-
-	/*
-	 * If there are newly awakend threads that need to be swapped in,
-	 * then kick the swapper into action.
-	 */
-	if (swapin)
-		uvm_kick_scheduler();
 
 	KASSERT(cv_is_valid(cv));
 }
@@ -354,46 +346,22 @@ cv_wakeup_all(kcondvar_t *cv)
 {
 	sleepq_t *sq;
 	kmutex_t *mp;
-	int swapin;
 	lwp_t *l, *next;
 
 	KASSERT(cv_is_valid(cv));
 
 	mp = sleepq_hashlock(cv);
-	swapin = 0;
 	sq = CV_SLEEPQ(cv);
 	for (l = TAILQ_FIRST(sq); l != NULL; l = next) {
 		KASSERT(l->l_sleepq == sq);
 		KASSERT(l->l_mutex == mp);
 		KASSERT(l->l_wchan == cv);
 		next = TAILQ_NEXT(l, l_sleepchain);
-		swapin |= sleepq_remove(sq, l);
+		sleepq_remove(sq, l);
 	}
 	mutex_spin_exit(mp);
 
-	/*
-	 * If there are newly awakend threads that need to be swapped in,
-	 * then kick the swapper into action.
-	 */
-	if (swapin)
-		uvm_kick_scheduler();
-
 	KASSERT(cv_is_valid(cv));
-}
-
-/*
- * cv_wakeup:
- *
- *	Wake all LWPs waiting on a condition variable.  For cases
- *	where the address may be waited on by mtsleep()/tsleep().
- *	Not a documented call.
- */
-void
-cv_wakeup(kcondvar_t *cv)
-{
-
-	cv_wakeup_all(cv);
-	wakeup(cv);
 }
 
 /*

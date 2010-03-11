@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.24.10.2 2009/07/18 14:53:05 yamt Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.24.10.3 2010/03/11 15:03:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -220,7 +220,9 @@ struct livengood_tcpip_ctxdesc {
 #define	STATUS_SPEED_100  STATUS_SPEED(1)
 #define	STATUS_SPEED_1000 STATUS_SPEED(2)
 #define	STATUS_ASDV(x)	((x) << 8)	/* auto speed det. val. (Livengood) */
+#define	STATUS_LAN_INIT_DONE (1U << 9)	/* Lan Init Completion by NVM */
 #define	STATUS_MTXCKOK	(1U << 10)	/* MTXD clock running */
+#define	STATUS_PHYRA	(1U << 10)	/* PHY Reset Asserted (PCH) */
 #define	STATUS_PCI66	(1U << 11)	/* 66MHz bus (Livengood) */
 #define	STATUS_BUS64	(1U << 12)	/* 64-bit bus (Livengood) */
 #define	STATUS_PCIX_MODE (1U << 13)	/* PCIX mode (Cordova) */
@@ -273,7 +275,11 @@ struct livengood_tcpip_ctxdesc {
 #define	EEPROM_OFF_MACADDR	0x00	/* MAC address offset */
 #define	EEPROM_OFF_CFG1		0x0a	/* config word 1 */
 #define	EEPROM_OFF_CFG2		0x0f	/* config word 2 */
+#define	EEPROM_OFF_CFG3_PORTB	0x14	/* config word 3 */
+#define	EEPROM_INIT_3GIO_3	0x1a	/* PCIe Initial Configuration Word 3 */
+#define	EEPROM_OFF_K1_CONFIG	0x1b	/* NVM K1 Config */
 #define	EEPROM_OFF_SWDPIN	0x20	/* SWD Pins (Cordova) */
+#define	EEPROM_OFF_CFG3_PORTA	0x24	/* config word 3 */
 
 #define	EEPROM_CFG1_LVDID	(1U << 0)
 #define	EEPROM_CFG1_LSSID	(1U << 1)
@@ -290,7 +296,7 @@ struct livengood_tcpip_ctxdesc {
 #define	EEPROM_CFG1_64_32_BAR	(1U << 13)
 
 #define	EEPROM_CFG2_CSR_RD_SPLIT (1U << 1)
-#define	EEPROM_CFG2_APM_EN	(1U << 2)
+#define	EEPROM_CFG2_82544_APM_EN (1U << 2)
 #define	EEPROM_CFG2_64_BIT	(1U << 3)
 #define	EEPROM_CFG2_MAX_READ	(1U << 4)
 #define	EEPROM_CFG2_DMCR_MAP	(1U << 5)
@@ -298,16 +304,24 @@ struct livengood_tcpip_ctxdesc {
 #define	EEPROM_CFG2_MSI_DIS	(1U << 7)
 #define	EEPROM_CFG2_FLASH_DIS	(1U << 8)
 #define	EEPROM_CFG2_FLASH_SIZE(x) (((x) & 3) >> 9)
+#define	EEPROM_CFG2_APM_EN (1U << 10)
 #define	EEPROM_CFG2_ANE		(1U << 11)
 #define	EEPROM_CFG2_PAUSE(x)	(((x) & 3) >> 12)
 #define	EEPROM_CFG2_ASDE	(1U << 14)
 #define	EEPROM_CFG2_APM_PME	(1U << 15)
 #define	EEPROM_CFG2_SWDPIO_SHIFT 4
 #define	EEPROM_CFG2_SWDPIO_MASK	(0xf << EEPROM_CFG2_SWDPIO_SHIFT)
+#define	EEPROM_CFG2_MNGM_MASK	(3U << 13) /* Manageability Operation mode */
+
+#define	EEPROM_K1_CONFIG_ENABLE	0x01
 
 #define	EEPROM_SWDPIN_MASK	0xdf
 #define	EEPROM_SWDPIN_SWDPIN_SHIFT 0
 #define	EEPROM_SWDPIN_SWDPIO_SHIFT 8
+
+#define EEPROM_3GIO_3_ASPM_MASK	(0x3 << 2)	/* Active State PM Support */
+
+#define EEPROM_CFG3_APME	(1U << 10)	
 
 #define	WMREG_EERD	0x0014	/* EEPROM read */
 #define	EERD_DONE	0x02    /* done bit */
@@ -329,11 +343,16 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_EXT_SPD_BYPS	(1U << 15) /* speed select bypass */
 #define	CTRL_EXT_IPS1		(1U << 16) /* invert power state bit 1 */
 #define	CTRL_EXT_RO_DIS		(1U << 17) /* relaxed ordering disabled */
-#define	CTRL_EXT_LINK_MODE_MASK	0x00C00000
-#define	CTRL_EXT_LINK_MODE_GMII	0x00000000
-#define	CTRL_EXT_LINK_MODE_TBI	0x00C00000
-#define	CTRL_EXT_LINK_MODE_KMRN	0x00000000
-#define	CTRL_EXT_LINK_MODE_SERDES 0x00C00000
+#define	CTRL_EXT_LINK_MODE_MASK		0x00C00000
+#define	CTRL_EXT_LINK_MODE_GMII		0x00000000
+#define	CTRL_EXT_LINK_MODE_KMRN		0x00000000
+#define	CTRL_EXT_LINK_MODE_1000KX	0x00400000
+#define	CTRL_EXT_LINK_MODE_SGMII	0x00800000
+#define	CTRL_EXT_LINK_MODE_PCIX_SERDES	0x00800000
+#define	CTRL_EXT_LINK_MODE_TBI		0x00C00000
+#define	CTRL_EXT_LINK_MODE_PCIE_SERDES	0x00C00000
+#define	CTRL_EXT_PHYPDEN	0x00100000
+#define CTRL_EXT_I2C_ENA	0x02000000  /* I2C enable */
 #define	CTRL_EXT_DRV_LOAD	0x10000000
 
 
@@ -346,6 +365,16 @@ struct livengood_tcpip_ctxdesc {
 #define	MDIC_READY	(1U << 28)
 #define	MDIC_I		(1U << 29)	/* interrupt on MDI complete */
 #define	MDIC_E		(1U << 30)	/* MDI error */
+
+#define WMREG_SCTL	0x0024	/* SerDes Control - RW */
+/*
+ * These 4 macros are also used for other 8bit control registers on the
+ * 82575
+ */
+#define SCTL_CTL_READY  (1U << 31)
+#define SCTL_CTL_DATA_MASK 0x000000ff
+#define SCTL_CTL_ADDR_SHIFT 8
+#define SCTL_CTL_POLL_TIMEOUT 640
 
 #define	WMREG_FCAL	0x0028	/* Flow Control Address Low */
 #define	FCAL_CONST	0x00c28001	/* Flow Control MAC addr low */
@@ -437,24 +466,48 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_OLD_RDBAL0 0x0110	/* Receive Descriptor Base Low (ring 0) */
 #define	WMREG_RDBAL	0x2800
+#define	WMREG_RDBAL_2	0x0c00	/* for 82576 ... */
 
 #define	WMREG_OLD_RDBAH0 0x0114	/* Receive Descriptor Base High (ring 0) */
 #define	WMREG_RDBAH	0x2804
+#define	WMREG_RDBAH_2	0x0c04	/* for 82576 ... */
 
 #define	WMREG_OLD_RDLEN0 0x0118	/* Receive Descriptor Length (ring 0) */
 #define	WMREG_RDLEN	0x2808
+#define	WMREG_RDLEN_2	0x0c08	/* for 82576 ... */
+
+#define WMREG_SRRCTL	0x280c	/* additional recieve control used in 82575 ... */
+#define WMREG_SRRCTL_2	0x0c0c	/* for 82576 ... */
+#define SRRCTL_BSIZEPKT_MASK				0x0000007f
+#define SRRCTL_BSIZEPKT_SHIFT		10	/* Shift _right_ */
+#define SRRCTL_BSIZEHDRSIZE_MASK			0x00000f00
+#define SRRCTL_BSIZEHDRSIZE_SHIFT	2	/* Shift _left_ */
+#define SRRCTL_DESCTYPE_LEGACY				0x00000000
+#define SRRCTL_DESCTYPE_ADV_ONEBUF			(1U << 25)
+#define SRRCTL_DESCTYPE_HDR_SPLIT			(2U << 25)
+#define SRRCTL_DESCTYPE_HDR_REPLICATION			(3U << 25)
+#define SRRCTL_DESCTYPE_HDR_REPLICATION_LARGE_PKT	(4U << 25)
+#define SRRCTL_DESCTYPE_HDR_SPLIT_ALWAYS		(5U << 25) /* 82575 only */
+#define SRRCTL_DESCTYPE_MASK				(7U << 25)
+#define SRRCTL_DROP_EN					0x80000000
 
 #define	WMREG_OLD_RDH0	0x0120	/* Receive Descriptor Head (ring 0) */
 #define	WMREG_RDH	0x2810
+#define	WMREG_RDH_2	0x0c10	/* for 82576 ... */
 
 #define	WMREG_OLD_RDT0	0x0128	/* Receive Descriptor Tail (ring 0) */
 #define	WMREG_RDT	0x2818
+#define	WMREG_RDT_2	0x0c18	/* for 82576 ... */
 
 #define	WMREG_RXDCTL	0x2828	/* Receive Descriptor Control */
+#define	WMREG_RXDCTL_2	0x0c28	/* for 82576 ... */
 #define	RXDCTL_PTHRESH(x) ((x) << 0)	/* prefetch threshold */
 #define	RXDCTL_HTHRESH(x) ((x) << 8)	/* host threshold */
 #define	RXDCTL_WTHRESH(x) ((x) << 16)	/* write back threshold */
 #define	RXDCTL_GRAN	(1U << 24)	/* 0 = cacheline, 1 = descriptor */
+/* flags used starting with 82575 ... */
+#define RXDCTL_QUEUE_ENABLE  0x02000000 /* Enable specific Tx Queue */
+#define RXDCTL_SWFLSH        0x04000000 /* Rx Desc. write-back flushing */
 
 #define	WMREG_OLD_RDTR1	0x0130	/* Receive Delay Timer (ring 1) */
 
@@ -580,6 +633,10 @@ struct livengood_tcpip_ctxdesc {
 #define	TXDCTL_PTHRESH(x) ((x) << 0)	/* prefetch threshold */
 #define	TXDCTL_HTHRESH(x) ((x) << 8)	/* host threshold */
 #define	TXDCTL_WTHRESH(x) ((x) << 16)	/* write back threshold */
+/* flags used starting with 82575 ... */
+#define TXDCTL_QUEUE_ENABLE  0x02000000 /* Enable specific Tx Queue */
+#define TXDCTL_SWFLSH        0x04000000 /* Tx Desc. write-back flushing */
+#define TXDCTL_PRIORITY      0x08000000
 
 #define	WMREG_TADV	0x382c	/* Transmit Absolute Interrupt Delay Timer */
 
@@ -598,14 +655,57 @@ struct livengood_tcpip_ctxdesc {
 #define	PBA_10K		0x000a
 #define	PBA_12K		0x000c
 #define	PBA_16K		0x0010		/* 16K, default Tx allocation */
+#define	PBA_20K		0x0014
 #define	PBA_22K		0x0016
 #define	PBA_24K		0x0018
 #define	PBA_30K		0x001e
 #define	PBA_32K		0x0020
+#define	PBA_35K		0x0023
 #define	PBA_40K		0x0028
 #define	PBA_48K		0x0030		/* 48K, default Rx allocation */
+#define	PBA_64K		0x0040
 
-#define	WMREG_PBS	0x1000	/* Packet Buffer Size (ICH8 only ?) */
+#define	WMREG_PBS	0x1008	/* Packet Buffer Size (ICH) */
+
+#define WMREG_EEMNGCTL	0x1010	/* MNG EEprom Control */
+#define EEMNGCTL_CFGDONE_0 0x040000	/* MNG config cycle done */
+#define EEMNGCTL_CFGDONE_1 0x080000	/*  2nd port */
+
+#define WMREG_I2CCMD	0x1028	/* SFPI2C Command Register - RW */
+#define I2CCMD_REG_ADDR_SHIFT	16
+#define I2CCMD_REG_ADDR		0x00ff0000
+#define I2CCMD_PHY_ADDR_SHIFT	24
+#define I2CCMD_PHY_ADDR		0x07000000
+#define I2CCMD_OPCODE_READ	0x08000000
+#define I2CCMD_OPCODE_WRITE	0x00000000
+#define I2CCMD_RESET		0x10000000
+#define I2CCMD_READY		0x20000000
+#define I2CCMD_INTERRUPT_ENA	0x40000000
+#define I2CCMD_ERROR		0x80000000
+#define MAX_SGMII_PHY_REG_ADDR	255
+#define I2CCMD_PHY_TIMEOUT	200
+
+#define WMREG_EICS	0x01520  /* Ext. Interrupt Cause Set - WO */
+#define WMREG_EIMS	0x01524  /* Ext. Interrupt Mask Set/Read - RW */
+#define WMREG_EIMC	0x01528  /* Ext. Interrupt Mask Clear - WO */
+#define WMREG_EIAC	0x0152C  /* Ext. Interrupt Auto Clear - RW */
+#define WMREG_EIAM	0x01530  /* Ext. Interrupt Ack Auto Clear Mask - RW */
+
+#define WMREG_EICR	0x01580  /* Ext. Interrupt Cause Read - R/clr */
+
+#define EITR_RX_QUEUE0	0x00000001 /* Rx Queue 0 Interrupt */
+#define EITR_RX_QUEUE1	0x00000002 /* Rx Queue 1 Interrupt */
+#define EITR_RX_QUEUE2	0x00000004 /* Rx Queue 2 Interrupt */
+#define EITR_RX_QUEUE3	0x00000008 /* Rx Queue 3 Interrupt */
+#define EITR_TX_QUEUE0	0x00000100 /* Tx Queue 0 Interrupt */
+#define EITR_TX_QUEUE1	0x00000200 /* Tx Queue 1 Interrupt */
+#define EITR_TX_QUEUE2	0x00000400 /* Tx Queue 2 Interrupt */
+#define EITR_TX_QUEUE3	0x00000800 /* Tx Queue 3 Interrupt */
+#define EITR_TCP_TIMER	0x40000000 /* TCP Timer */
+#define EITR_OTHER	0x80000000 /* Interrupt Cause Active */
+
+#define WMREG_EITR(x)	(0x01680 + (0x4 * (x)))
+#define EITR_ITR_INT_MASK	0x0000ffff
 
 #define	WMREG_TXDMAC	0x3000	/* Transfer DMA Control */
 #define	TXDMAC_DPP	(1U << 0)	/* disable packet prefetch */
@@ -621,19 +721,21 @@ struct livengood_tcpip_ctxdesc {
 #define	TSPMT_TSMT(x)	(x)		/* TCP seg min transfer */
 #define	TSPMT_TSPBP(x)	((x) << 16)	/* TCP seg pkt buf padding */
 
-#define	WMREG_RXCSUM	0x5000	/* Receive Checksum register */
-#define	RXCSUM_PCSS	0x000000ff	/* Packet Checksum Start */
-#define	RXCSUM_IPOFL	(1U << 8)	/* IP checksum offload */
-#define	RXCSUM_TUOFL	(1U << 9)	/* TCP/UDP checksum offload */
-#define	RXCSUM_IPV6OFL	(1U << 10)	/* IPv6 checksum offload */
-
-#define	WMREG_RXERRC	0x400C	/* receive error Count - R/clr */
+#define	WMREG_CRCERRS	0x4000	/* CRC Error Count */
+#define	WMREG_ALGNERRC	0x4004	/* Alignment Error Count */
+#define	WMREG_SYMERRC	0x4008	/* Symbol Error Count */
+#define	WMREG_RXERRC	0x400c	/* receive error Count - R/clr */
+#define	WMREG_MPC	0x4010	/* Missed Packets Count - R/clr */
 #define	WMREG_COLC	0x4028	/* collision Count - R/clr */
+#define	WMREG_SEC	0x4038	/* Sequence Error Count */
+#define	WMREG_CEXTERR	0x403c	/* Carrier Extension Error Count */
+#define	WMREG_RLEC	0x4040	/* Receive Length Error Count */
 #define	WMREG_XONRXC	0x4048	/* XON Rx Count - R/clr */
 #define	WMREG_XONTXC	0x404c	/* XON Tx Count - R/clr */
 #define	WMREG_XOFFRXC	0x4050	/* XOFF Rx Count - R/clr */
 #define	WMREG_XOFFTXC	0x4054	/* XOFF Tx Count - R/clr */
 #define	WMREG_FCRUC	0x4058	/* Flow Control Rx Unsupported Count - R/clr */
+#define WMREG_RNBC	0x40a0	/* Receive No Buffers Count */
 
 #define	WMREG_KUMCTRLSTA 0x0034	/* MAC-PHY interface - RW */
 #define	KUMCTRLSTA_MASK			0x0000FFFF
@@ -646,6 +748,7 @@ struct livengood_tcpip_ctxdesc {
 #define	KUMCTRLSTA_OFFSET_INB_CTRL	0x00000002
 #define	KUMCTRLSTA_OFFSET_DIAG		0x00000003
 #define	KUMCTRLSTA_OFFSET_TIMEOUTS	0x00000004
+#define	KUMCTRLSTA_OFFSET_K1_CONFIG	0x00000007
 #define	KUMCTRLSTA_OFFSET_INB_PARAM	0x00000009
 #define	KUMCTRLSTA_OFFSET_HD_CTRL	0x00000010
 #define	KUMCTRLSTA_OFFSET_M2P_SERDES	0x0000001E
@@ -659,13 +762,71 @@ struct livengood_tcpip_ctxdesc {
 #define	KUMCTRLSTA_INB_CTRL_LINK_TMOUT_DFLT 0x00000500
 #define	KUMCTRLSTA_INB_CTRL_DIS_PADDING	0x00000010
 
+/* Diag */
+#define	KUMCTRLSTA_DIAG_NELPBK	0x1000
+
+/* K1 Config */
+#define	KUMCTRLSTA_K1_ENABLE	0x0002
+
 /* Half-Duplex Control */
 #define	KUMCTRLSTA_HD_CTRL_10_100_DEFAULT 0x00000004
 #define	KUMCTRLSTA_HD_CTRL_1000_DEFAULT	0x00000000
 
 #define	WMREG_MDPHYA	0x003C	/* PHY address - RW */
 
-#define	WMREG_MANC2H	0x5860	/* Managment Control To Host - RW */
+#define	WMREG_RXCSUM	0x5000	/* Receive Checksum register */
+#define	RXCSUM_PCSS	0x000000ff	/* Packet Checksum Start */
+#define	RXCSUM_IPOFL	(1U << 8)	/* IP checksum offload */
+#define	RXCSUM_TUOFL	(1U << 9)	/* TCP/UDP checksum offload */
+#define	RXCSUM_IPV6OFL	(1U << 10)	/* IPv6 checksum offload */
+
+#define WMREG_RLPML	0x5004	/* Rx Long Packet Max Length */
+
+#define	WMREG_WUC	0x5800	/* Wakeup Control */
+#define	WUC_APME		0x00000001 /* APM Enable */
+#define	WUC_PME_EN		0x00000002 /* PME Enable */
+
+#define	WMREG_WUFC	0x5808	/* Wakeup Filter COntrol */
+#define WUFC_MAG		0x00000002 /* Magic Packet Wakeup Enable */
+#define WUFC_EX			0x00000004 /* Directed Exact Wakeup Enable */
+#define WUFC_MC			0x00000008 /* Directed Multicast Wakeup En */
+#define WUFC_BC			0x00000010 /* Broadcast Wakeup Enable */
+#define WUFC_ARP		0x00000020 /* ARP Request Packet Wakeup En */
+#define WUFC_IPV4		0x00000040 /* Directed IPv4 Packet Wakeup En */
+#define WUFC_IPV6		0x00000080 /* Directed IPv6 Packet Wakeup En */
+
+#define	WMREG_MANC	0x5820	/* Management Control */
+#define	MANC_SMBUS_EN		0x00000001
+#define	MANC_ASF_EN		0x00000002
+#define	MANC_ARP_EN		0x00002000
+#define	MANC_RECV_TCO_EN	0x00020000
+#define	MANC_BLK_PHY_RST_ON_IDE	0x00040000
+#define	MANC_EN_MAC_ADDR_FILTER	0x00100000
+#define	MANC_EN_MNG2HOST	0x00200000
+
+#define	WMREG_MANC2H	0x5860	/* Manaegment Control To Host - RW */
+#define MANC2H_PORT_623		(1 << 5)
+#define MANC2H_PORT_624		(1 << 6)
+
+#define WMREG_GCR	0x5b00	/* PCIe Control */
+#define GCR_RXD_NO_SNOOP	0x00000001
+#define GCR_RXDSCW_NO_SNOOP	0x00000002
+#define GCR_RXDSCR_NO_SNOOP	0x00000004
+#define GCR_TXD_NO_SNOOP	0x00000008
+#define GCR_TXDSCW_NO_SNOOP	0x00000010
+#define GCR_TXDSCR_NO_SNOOP	0x00000020
+#define GCR_CMPL_TMOUT_MASK	0x0000f000
+#define GCR_CMPL_TMOUT_10MS	0x00001000
+#define GCR_CMPL_TMOUT_RESEND	0x00010000
+#define GCR_CAP_VER2		0x00040000
+
+#define WMREG_FACTPS	0x5b30	/* Function Active and Power State to MNG */
+#define FACTPS_MNGCG		0x20000000
+#define FACTPS_LFS		0x40000000	/* LAN Function Select */
+
+#define WMREG_GIOCTL	0x5b44	/* GIO Analog Control Register */
+#define WMREG_CCMCTL	0x5b48	/* CCM Control Register */
+#define WMREG_SCCTL	0x5b4c	/* PCIc PLL Configuration Register */
 
 #define	WMREG_SWSM	0x5b50	/* SW Semaphore */
 #define	SWSM_SMBI	0x00000001	/* Driver Semaphore bit */
@@ -676,16 +837,21 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_FWSM	0x5b54	/* FW Semaphore */
 #define	FWSM_MODE_MASK		0xe
 #define	FWSM_MODE_SHIFT		0x1
-#define	MNG_ICH_IAMT_MODE	0x2
+#define	MNG_ICH_IAMT_MODE	0x2	/* PT mode? */
 #define	MNG_IAMT_MODE		0x3
+#define FWSM_RSPCIPHY	0x00000040	/* Reset PHY on PCI reset */
 
 #define	WMREG_SW_FW_SYNC 0x5b5c	/* software-firmware semaphore */
 #define	SWFW_EEP_SM		0x0001 /* eeprom access */
 #define	SWFW_PHY0_SM		0x0002 /* first ctrl phy access */
 #define	SWFW_PHY1_SM		0x0004 /* second ctrl phy access */
 #define	SWFW_MAC_CSR_SM		0x0008
+#define	SWFW_PHY2_SM		0x0020 /* first ctrl phy access */
+#define	SWFW_PHY3_SM		0x0040 /* first ctrl phy access */
 #define	SWFW_SOFT_SHIFT		0	/* software semaphores */
 #define	SWFW_FIRM_SHIFT		16	/* firmware semaphores */
+
+#define WMREG_CRC_OFFSET	0x5f50
 
 #define WMREG_EXTCNFCTR		0x0f00  /* Extended Configuration Control */
 #define EXTCNFCTR_PCIE_WRITE_ENABLE	0x00000001
@@ -697,6 +863,13 @@ struct livengood_tcpip_ctxdesc {
 #define EXTCNFCTR_MDIO_HW_OWNERSHIP	0x00000040
 #define EXTCNFCTR_EXT_CNF_POINTER	0x0FFF0000
 #define E1000_EXTCNF_CTRL_SWFLAG	EXTCNFCTR_MDIO_SW_OWNERSHIP
+
+#define	WMREG_PHY_CTRL	0x0f10	/* PHY control */
+#define	PHY_CTRL_SPD_EN		(1 << 0)
+#define	PHY_CTRL_D0A_LPLU	(1 << 1)
+#define	PHY_CTRL_NOND0A_LPLU	(1 << 2)
+#define	PHY_CTRL_NOND0A_GBE_DIS	(1 << 3)
+#define	PHY_CTRL_GBE_DIS	(1 << 4)
 
 /* ich8 flash control */
 #define ICH_FLASH_COMMAND_TIMEOUT            5000    /* 5000 uSecs - adjusted */
@@ -750,5 +923,5 @@ struct livengood_tcpip_ctxdesc {
 #define ICH_NVM_SIG_WORD	0x13
 #define ICH_NVM_SIG_MASK	0xc000
 
-#define	NVM_INIT_CONTROL2_REG	0x000f
-#define	NVM_INIT_CTRL2_MNGM	0x6000
+/* for PCI express Capability registers */
+#define	WM_PCI_PCIE_DCSR2_16MS	0x00000005

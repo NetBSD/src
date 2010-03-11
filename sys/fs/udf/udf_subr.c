@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.44.10.5 2009/08/19 18:48:14 yamt Exp $ */
+/* $NetBSD: udf_subr.c,v 1.44.10.6 2010/03/11 15:04:15 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.44.10.5 2009/08/19 18:48:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.44.10.6 2010/03/11 15:04:15 yamt Exp $");
 #endif /* not lint */
 
 
@@ -1022,7 +1022,7 @@ udf_process_vds_descriptor(struct udf_mount *ump, union dscrptr *dscr)
 
 		/*
 		 * BUGALERT: some rogue implementations use random physical
-		 * partion numbers to break other implementations so lookup
+		 * partition numbers to break other implementations so lookup
 		 * the number.
 		 */
 		raw_phys_part = udf_rw16(dscr->pd.part_num);
@@ -1967,7 +1967,7 @@ udf_process_vds(struct udf_mount *ump) {
 
 		/*
 		 * BUGALERT: some rogue implementations use random physical
-		 * partion numbers to break other implementations so lookup
+		 * partition numbers to break other implementations so lookup
 		 * the number.
 		 */
 		for (phys_part = 0; phys_part < UDF_PARTITIONS; phys_part++) {
@@ -2051,7 +2051,7 @@ udf_process_vds(struct udf_mount *ump) {
 	}
 
 	/*
-	 * Determine sheduler error behaviour. For virtual partions, update
+	 * Determine sheduler error behaviour. For virtual partitions, update
 	 * the trackinfo; for sparable partitions replace a whole block on the
 	 * sparable table. Allways requeue.
 	 */
@@ -3118,6 +3118,11 @@ udf_read_metadata_nodes(struct udf_mount *ump, union udf_pmap *mapping)
 	struct vnode *vp;
 	int error;
 
+	/* extract our allocation parameters set up on format */
+	ump->metadata_alloc_unit_size     = udf_rw32(mapping->pmm.alloc_unit_size);
+	ump->metadata_alignment_unit_size = udf_rw16(mapping->pmm.alignment_unit_size);
+	ump->metadata_flags = mapping->pmm.flags;
+
 	DPRINTF(VOLUMES, ("Reading in Metadata files\n"));
 	icb_loc.loc.part_num = pmm->part_num;
 	icb_loc.loc.lb_num   = pmm->meta_file_lbn;
@@ -3226,7 +3231,7 @@ udf_read_vds_tables(struct udf_mount *ump)
 		if (error)
 			return error;
 
-		/* also read in metadata partion spacebitmap if defined */
+		/* also read in metadata partition spacebitmap if defined */
 		error = udf_read_metadata_partition_spacetable(ump);
 			return error;
 	}
@@ -3880,6 +3885,29 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
 		ump->lvclose &= ~UDF_WRITE_PART_BITMAPS;
 	}
 
+	/* write out metadata partition nodes if requested */
+	if (ump->lvclose & UDF_WRITE_METAPART_NODES) {
+		/* sync writeout metadata descriptor node */
+		error1 = udf_writeout_node(ump->metadata_node, FSYNC_WAIT);
+		if (error1)
+			printf( "udf_close_logvol: writeout of metadata partition "
+				"node failed\n");
+
+		/* duplicate metadata partition descriptor if needed */
+		udf_synchronise_metadatamirror_node(ump);
+
+		/* sync writeout metadatamirror descriptor node */
+		error2 = udf_writeout_node(ump->metadatamirror_node, FSYNC_WAIT);
+		if (error2)
+			printf( "udf_close_logvol: writeout of metadata partition "
+				"mirror node failed\n");
+
+		if (error1 || error2)
+			return (error1 | error2);
+
+		ump->lvclose &= ~UDF_WRITE_METAPART_NODES;
+	}
+
 	/* mark it closed */
 	ump->logvol_integrity->integrity_type = udf_rw32(UDF_INTEGRITY_CLOSED);
 
@@ -4266,7 +4294,7 @@ udf_timespec_to_timestamp(struct timespec *timespec, struct timestamp *timestamp
 uint32_t
 udf_getaccessmode(struct udf_node *udf_node)
 {
-	struct file_entry     *fe = udf_node->fe;;
+	struct file_entry     *fe = udf_node->fe;
 	struct extfile_entry *efe = udf_node->efe;
 	uint32_t udf_perm, icbftype;
 	uint32_t mode, ftype;
@@ -5721,7 +5749,7 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 	int (**vnodeops)(void *), struct vattr *vap, struct componentname *cnp)
 {
 	union dscrptr *dscr;
-	struct udf_node *dir_node = VTOI(dvp);;
+	struct udf_node *dir_node = VTOI(dvp);
 	struct udf_node *udf_node;
 	struct udf_mount *ump = dir_node->ump;
 	struct vnode *nvp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cc.c,v 1.36.44.1 2009/05/04 08:10:34 yamt Exp $ */
+/*	$NetBSD: grf_cc.c,v 1.36.44.2 2010/03/11 15:02:00 yamt Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.36.44.1 2009/05/04 08:10:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.36.44.2 2010/03/11 15:02:00 yamt Exp $");
 
 #include "grfcc.h"
 #if NGRFCC > 0
@@ -130,7 +130,7 @@ grfccattach(struct device *pdp, struct device *dp, void *auxp)
 		 * we inited earlier just copy the info
 		 * take care not to copy the device struct though.
 		 */
-		memcpy( &gp->g_display, &congrf.g_display,
+		memcpy(&gp->g_display, &congrf.g_display,
 		    (char *)&gp[1] - (char *)&gp->g_display);
 	} else {
 		gp->g_unit = GRF_CC_UNIT;

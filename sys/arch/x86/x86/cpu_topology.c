@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_topology.c,v 1.1.2.3 2009/06/20 07:20:13 yamt Exp $	*/
+/*	$NetBSD: cpu_topology.c,v 1.1.2.4 2010/03/11 15:03:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Mindaugas Rasiukevicius <rmind at NetBSD org>,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.1.2.3 2009/06/20 07:20:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.1.2.4 2010/03/11 15:03:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.1.2.3 2009/06/20 07:20:13 yamt Ex
 #include <x86/cpuvar.h>
 
 void
-x86_cpu_toplogy(struct cpu_info *ci)
+x86_cpu_topology(struct cpu_info *ci)
 {
 	u_int lp_max;		/* Logical processors per package */
 	u_int core_max;		/* Core per package */

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.19.20.2 2009/05/16 10:41:11 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.19.20.3 2010/03/11 15:01:55 yamt Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19.20.2 2009/05/16 10:41:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19.20.3 2010/03/11 15:01:55 yamt Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -483,15 +483,6 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 }
 
 void
-pmap_collect(pmap_t pmap)
-{
-	UVMHIST_FUNC("pmap_collect");
-
-	UVMHIST_CALLED(pmaphist);
-	/* This is allowed to be a no-op. */
-}
-
-void
 pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len, vaddr_t src_addr)
 {
 	UVMHIST_FUNC("pmap_copy");
@@ -747,7 +738,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *ppa)
 }
 
 void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	UVMHIST_FUNC("pmap_kenter_pa");
 

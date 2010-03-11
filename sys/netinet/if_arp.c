@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.134.2.3 2009/08/19 18:48:24 yamt Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.134.2.4 2010/03/11 15:04:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.134.2.3 2009/08/19 18:48:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.134.2.4 2010/03/11 15:04:28 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -318,10 +318,13 @@ do {									\
 
 #define	ARP_UNLOCK()		arp_unlock()
 
+static void sysctl_net_inet_arp_setup(struct sysctllog **);
+
 void
 arp_init(void)
 {
 
+	sysctl_net_inet_arp_setup(NULL);
 	arpstat_percpu = percpu_alloc(sizeof(uint64_t) * ARP_NSTATS);
 }
 
@@ -965,15 +968,6 @@ in_arpinput(struct mbuf *m)
 		goto out;
 	}
 
-	/*
-	 * If the source IP address is zero, this is most likely a
-	 * confused host trying to use IP address zero. (Windoze?)
-	 * XXX: Should we bother trying to reply to these?
-	 */
-	if (in_nullhost(isaddr)) {
-		ARP_STATINC(ARP_STAT_RCVZEROSPA);
-		goto out;
-	}
 
 	/*
 	 * Search for a matching interface address
@@ -1049,6 +1043,14 @@ in_arpinput(struct mbuf *m)
 		    "%s: arp: link address is broadcast for IP address %s!\n",
 		    ifp->if_xname, in_fmtaddr(isaddr));
 		goto out;
+	}
+
+	/*
+	 * If the source IP address is zero, this is an RFC 5227 ARP probe
+	 */
+	if (in_nullhost(isaddr)) {
+		ARP_STATINC(ARP_STAT_RCVZEROSPA);
+		goto reply;
 	}
 
 	if (in_hosteq(isaddr, myaddr)) {
@@ -1401,7 +1403,8 @@ in_revarpinput(struct mbuf *m)
 	if (myip_initialized)
 		goto wake;
 	tha = ar_tha(ah);
-	KASSERT(tha);
+	if (tha == NULL)
+		goto out;
 	if (memcmp(tha, CLLADDR(ifp->if_sadl), ifp->if_sadl->sdl_alen))
 		goto out;
 	memcpy(&srv_ip, ar_spa(ah), sizeof(srv_ip));
@@ -1442,7 +1445,8 @@ revarprequest(struct ifnet *ifp)
 
 	memcpy(ar_sha(ah), CLLADDR(ifp->if_sadl), ah->ar_hln);
 	tha = ar_tha(ah);
-	KASSERT(tha);
+	if (tha == NULL)
+		return;
 	memcpy(tha, CLLADDR(ifp->if_sadl), ah->ar_hln);
 
 	sa.sa_family = AF_ARP;
@@ -1594,7 +1598,8 @@ sysctl_net_inet_arp_stats(SYSCTLFN_ARGS)
 	return NETSTAT_SYSCTL(arpstat_percpu, ARP_NSTATS);
 }
 
-SYSCTL_SETUP(sysctl_net_inet_arp_setup, "sysctl net.inet.arp subtree setup")
+static void
+sysctl_net_inet_arp_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *node;
 

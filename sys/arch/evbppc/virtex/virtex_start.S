@@ -1,4 +1,4 @@
-/*	$NetBSD: virtex_start.S,v 1.1.54.1 2009/05/04 08:11:03 yamt Exp $ */
+/*	$NetBSD: virtex_start.S,v 1.1.54.2 2010/03/11 15:02:21 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -54,6 +54,7 @@
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/dcr405gp.h>
 #include <powerpc/ibm4xx/pmap.h>
 
@@ -63,11 +64,6 @@
 
 /* Set bit (beginning with MSB) for each 128MB of RAM. */
 #define PHYSMEM_REGIONS_MASK 		~((1 << (32 - MB(PHYSMEM)/MB(128))) - 1)
-
-
-/* Initialized by INIT_CPUINFO(), used by machdep.c */
-GLOBAL(proc0paddr)
-	.long	0			/* proc0 p_addr */
 
 /* For kvm_mkdb, supposed to mark the start of kernel text. */
 	.text

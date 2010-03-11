@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.16.4.1 2009/05/04 08:13:46 yamt Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.16.4.2 2010/03/11 15:04:16 yamt Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.16.4.1 2009/05/04 08:13:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.16.4.2 2010/03/11 15:04:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ static const struct fileops drvctl_fileops = {
 	.fo_stat = drvctl_stat,
 	.fo_close = drvctl_close,
 	.fo_kqfilter = fnullop_kqfilter,
-	.fo_drain = fnullop_drain,
+	.fo_restart = fnullop_restart,
 };
 
 #define MAXLOCATORS 100
@@ -180,13 +180,13 @@ pmdevbyname(u_long cmd, struct devpmargs *a)
 
 	switch (cmd) {
 	case DRVSUSPENDDEV:
-		return pmf_device_recursive_suspend(d, PMF_F_NONE) ? 0 : EBUSY;
+		return pmf_device_recursive_suspend(d, PMF_Q_DRVCTL) ? 0 : EBUSY;
 	case DRVRESUMEDEV:
 		if (a->flags & DEVPM_F_SUBTREE) {
-			return pmf_device_resume_subtree(d, PMF_F_NONE)
+			return pmf_device_subtree_resume(d, PMF_Q_DRVCTL)
 			    ? 0 : EBUSY;
 		} else {
-			return pmf_device_recursive_resume(d, PMF_F_NONE)
+			return pmf_device_recursive_resume(d, PMF_Q_DRVCTL)
 			    ? 0 : EBUSY;
 		}
 	default:

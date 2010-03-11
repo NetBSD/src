@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.27.10.1 2009/05/04 08:13:47 yamt Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.27.10.2 2010/03/11 15:04:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.27.10.1 2009/05/04 08:13:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.27.10.2 2010/03/11 15:04:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -103,7 +103,7 @@ todr_attach(todr_chip_handle_t todr)
 	todr_handle = todr;
 }
 
-static int timeset = 0;
+static bool timeset = false;
 
 /*
  * Set up the system's time, given a `reasonable' time value.
@@ -111,7 +111,10 @@ static int timeset = 0;
 void
 inittodr(time_t base)
 {
-	int badbase = 0, waszero = (base == 0), goodtime = 0, badrtc = 0;
+	bool badbase = false;
+	bool waszero = (base == 0);
+	bool goodtime = false;
+	bool badrtc = false;
 	int s;
 	struct timespec ts;
 	struct timeval tv;
@@ -126,14 +129,14 @@ inittodr(time_t base)
 		if (base != 0)
 			printf("WARNING: preposterous time in file system\n");
 		/* not going to use it anyway, if the chip is readable */
-		basedate.dt_year = 2006;
+		basedate.dt_year = 2010;
 		basedate.dt_mon = 1;
 		basedate.dt_day = 1;
 		basedate.dt_hour = 12;
 		basedate.dt_min = 0;
 		basedate.dt_sec = 0;
 		base = clock_ymdhms_to_secs(&basedate);
-		badbase = 1;
+		badbase = true;
 	}
 
 	/*
@@ -150,14 +153,14 @@ inittodr(time_t base)
 			printf("WARNING: preposterous TOD clock time\n");
 		else
 			printf("WARNING: no TOD clock present\n");
-		badrtc = 1;
+		badrtc = true;
 	} else {
-		int deltat = tv.tv_sec - base;
+		time_t deltat = tv.tv_sec - base;
 
 		if (deltat < 0)
 			deltat = -deltat;
 
-		if ((badbase == 0) && deltat >= 2 * SECDAY) {
+		if (!badbase && deltat >= 2 * SECDAY) {
 			
 			if (tv.tv_sec < base) {
 				/*
@@ -166,16 +169,16 @@ inittodr(time_t base)
 				 * does by more than the threshold,
 				 * believe the filesystem.
 				 */
-				printf("WARNING: clock lost %d days\n",
+				printf("WARNING: clock lost %" PRId64 " days\n",
 				    deltat / SECDAY);
-				badrtc = 1;
+				badrtc = true;
 			} else {
-				aprint_verbose("WARNING: clock gained %d "
-				    "days\n", deltat / SECDAY);
-				goodtime = 1;
+				aprint_verbose("WARNING: clock gained %" PRId64
+				    " days\n", deltat / SECDAY);
+				goodtime = true;
 			}
 		} else {
-			goodtime = 1;
+			goodtime = true;
 		}
 	}
 
@@ -190,7 +193,7 @@ inittodr(time_t base)
 		tv.tv_usec = 0;
 	}
 
-	timeset = 1;
+	timeset = true;
 
 	ts.tv_sec = tv.tv_sec;
 	ts.tv_nsec = tv.tv_usec * 1000;
@@ -237,7 +240,7 @@ resettodr(void)
 #ifdef	TODR_DEBUG
 static void
 todr_debug(const char *prefix, int rv, struct clock_ymdhms *dt,
-    volatile struct timeval *tvp)
+    struct timeval *tvp)
 {
 	struct timeval tv_val;
 	struct clock_ymdhms dt_val;
@@ -265,7 +268,7 @@ todr_debug(const char *prefix, int rv, struct clock_ymdhms *dt,
 
 
 int
-todr_gettime(todr_chip_handle_t tch, volatile struct timeval *tvp)
+todr_gettime(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	struct clock_ymdhms	dt;
 	int			rv;
@@ -314,7 +317,7 @@ todr_gettime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 }
 
 int
-todr_settime(todr_chip_handle_t tch, volatile struct timeval *tvp)
+todr_settime(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	struct clock_ymdhms	dt;
 	int			rv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.6.2.3 2009/06/20 07:20:37 yamt Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.6.2.4 2010/03/11 15:04:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.6.2.3 2009/06/20 07:20:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.6.2.4 2010/03/11 15:04:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -47,9 +47,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.6.2.3 2009/06/20 07:20:37 yamt Exp $"
 #include <rump/rumpuser.h>
 
 #include "rump_private.h"
+#include "rump_net_private.h"
 
 #if 0
-#define DPRINTF(x) printf x
+#define DPRINTF(x) rumpuser_dprintf x
 #else
 #define DPRINTF(x)
 #endif
@@ -178,8 +179,6 @@ nextpktoff(struct shmif_sc *sc, uint32_t oldoff)
 
 	return advance(oldoff, 4 + oldlen);
 }
-
-int rump_shmif_create(const char *, int *); /* XXX */
 
 int
 rump_shmif_create(const char *path, int *ifnum)
@@ -346,7 +345,7 @@ shmif_rcv(void *arg)
 		    || (busgen > sc->sc_prevgen+1)) {
 			nextpkt = lastpkt;
 			sc->sc_prevgen = busgen;
-			printf("DROPPING\n");
+			rumpuser_dprintf("DROPPING\n");
 		} else {
 			nextpkt = sc->sc_nextpacket;
 		}
@@ -374,7 +373,7 @@ shmif_rcv(void *arg)
 		m->m_len = m->m_pkthdr.len = pktlen;
 		m->m_pkthdr.rcvif = ifp;
 
-		/* if it's to us, don't pass up and reuse storage space */
+		/* if it's from us, don't pass up and reuse storage space */
 		eth = mtod(m, struct ether_header *);
 		if (memcmp(eth->ether_shost, sc->sc_myaddr, 6) != 0) {
 			ifp->if_input(ifp, m);

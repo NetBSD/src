@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.31.20.2 2009/06/20 07:20:00 yamt Exp $ */
+/*	$NetBSD: if_qn.c,v 1.31.20.3 2010/03/11 15:02:01 yamt Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.31.20.2 2009/06/20 07:20:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.31.20.3 2010/03/11 15:02:01 yamt Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.31.20.2 2009/06/20 07:20:00 yamt Exp $")
 #define QN_DEBUG1_no /* hides some old tests */
 #define QN_CHECKS_no /* adds some checks (not needed in normal situations) */
 
-#include "bpfilter.h"
 
 /*
  * Fujitsu MB86950 Ethernet Controller (as used in the QuickNet QN2000
@@ -147,15 +146,10 @@ struct	qn_softc {
 	u_short	volatile *nic_reset;
 	u_short	volatile *nic_len;
 	u_char	transmit_pending;
-#if NBPFILTER > 0
-	void *	sc_bpf;
-#endif
 } qn_softc[NQN];
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 
 int	qnmatch(struct device *, struct cfdata *, void *);
@@ -237,7 +231,7 @@ qnattach(struct device *parent, struct device *self, void *aux)
 	/* set interface to stopped condition (reset) */
 	qnstop(sc);
 
-	memcpy( ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_ioctl = qnioctl;
 	ifp->if_watchdog = qnwatchdog;
@@ -405,7 +399,6 @@ qnstart(struct ifnet *ifp)
 	if (m == 0)
 		return;
 
-#if NBPFILTER > 0
 	/*
 	 * If bpf is listening on this interface, let it
 	 * see the packet before we commit it to the wire
@@ -414,9 +407,8 @@ qnstart(struct ifnet *ifp)
 	 * that RAM is not visible to the host but is read from FIFO)
 	 *
 	 */
-	if (sc->sc_bpf)
-		bpf_mtap(sc->sc_bpf, m);
-#endif
+	if (ifp->if_bpf)
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 	len = qn_put(sc->nic_fifo, m);
 	m_freem(m);
 
@@ -597,10 +589,8 @@ qn_get_packet(struct qn_softc *sc, u_short len)
 		len -= len1;
 	}
 
-#if NBPFILTER > 0
-	if (sc->sc_bpf)
-		bpf_mtap(sc->sc_bpf, head);
-#endif
+	if (ifp->if_bpf)
+		bpf_ops->bpf_mtap(ifp->if_bpf, head);
 
 	(*ifp->if_input)(ifp, head);
 	return;

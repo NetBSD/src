@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.31.10.2 2009/06/20 07:20:04 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.31.10.3 2010/03/11 15:02:26 yamt Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.31.10.2 2009/06/20 07:20:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.31.10.3 2010/03/11 15:02:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.31.10.2 2009/06/20 07:20:04 yamt Ex
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/user.h>
 #include <sys/ptrace.h>
 #include <sys/exec.h>
 #include <sys/core.h>
@@ -51,22 +50,25 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.31.10.2 2009/06/20 07:20:04 yamt Ex
 
 #include <hppa/hppa/machdep.h>
 
-void
-cpu_swapin(struct lwp *l)
+static inline void
+cpu_activate_pcb(struct lwp *l)
 {
 	struct trapframe *tf = l->l_md.md_regs;
-	vaddr_t pcb = (vaddr_t)l->l_addr;
+	bool ok;
+	struct pcb *pcb = lwp_getpcb(l);
+	vaddr_t uarea = (vaddr_t)pcb;
 #ifdef DIAGNOSTIC
-	vaddr_t maxsp = pcb + USPACE;
+	vaddr_t maxsp = (vaddr_t)uarea + USPACE;
 #endif
-
-	KASSERT(tf == (void *)(pcb + PAGE_SIZE));
+	KASSERT(tf == (void *)(uarea + PAGE_SIZE));
 	/*
 	 * Stash the physical for the pcb of U for later perusal
 	 */
-	l->l_addr->u_pcb.pcb_uva = pcb;
-	tf->tf_cr30 = kvtop((void *)pcb);
-	fdcache(HPPA_SID_KERNEL, pcb, sizeof(l->l_addr->u_pcb));
+	pcb->pcb_uva = uarea;
+	ok = pmap_extract(pmap_kernel(), uarea, (paddr_t *)&tf->tf_cr30);
+	KASSERT(ok);
+
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb, sizeof(struct pcb));
 
 #ifdef DIAGNOSTIC
 	/* Create the kernel stack red zone. */
@@ -76,28 +78,21 @@ cpu_swapin(struct lwp *l)
 }
 
 void
-cpu_swapout(struct lwp *l)
-{
-
-	/* Flush this LWP out of the FPU. */
-	hppa_fpu_flush(l);
-}
-
-void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
 	struct proc *p = l2->l_proc;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	pa_space_t space = pmap->pm_space;
-	struct pcb *pcbp;
+	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
 	register_t sp, osp;
+	vaddr_t uv;
 
-#ifdef DIAGNOSTIC
-	if (round_page(sizeof(struct user)) > PAGE_SIZE)
-		panic("USPACE too small for user");
-#endif
+	KASSERT(round_page(sizeof(struct pcb)) <= PAGE_SIZE);
+
+	pcb1 = lwp_getpcb(l1);
+	pcb2 = lwp_getpcb(l2);
 
 	l2->l_md.md_flags = 0;
 
@@ -105,28 +100,25 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	hppa_fpu_flush(l1);
 
 	/* Now copy the parent PCB into the child. */
-	pcbp = &l2->l_addr->u_pcb;
-	memcpy(pcbp, &l1->l_addr->u_pcb, sizeof(*pcbp));
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)&l1->l_addr->u_pcb,
-		sizeof(pcbp->pcb_fpregs));
-	/* reset any of the pending FPU exceptions from parent */
-	pcbp->pcb_fpregs[0] = HPPA_FPU_FORK(pcbp->pcb_fpregs[0]);
-	pcbp->pcb_fpregs[1] = 0;
-	pcbp->pcb_fpregs[2] = 0;
-	pcbp->pcb_fpregs[3] = 0;
+	memcpy(pcb2, pcb1, sizeof(struct pcb));
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb1, sizeof(pcb1->pcb_fpregs));
 
-	sp = (register_t)l2->l_addr + PAGE_SIZE;
+	/* reset any of the pending FPU exceptions from parent */
+	pcb2->pcb_fpregs[0] = HPPA_FPU_FORK(pcb2->pcb_fpregs[0]);
+	pcb2->pcb_fpregs[1] = 0;
+	pcb2->pcb_fpregs[2] = 0;
+	pcb2->pcb_fpregs[3] = 0;
+
+	uv = uvm_lwp_getuarea(l2);
+	sp = (register_t)uv + PAGE_SIZE;
 	l2->l_md.md_regs = tf = (struct trapframe *)sp;
 	sp += sizeof(struct trapframe);
 
 	/* copy the l1's trapframe to l2 */
 	memcpy(tf, l1->l_md.md_regs, sizeof(*tf));
 
-	/*
-	 * cpu_swapin() is supposed to fill out all the PAs
-	 * we gonna need in locore
-	 */
-	cpu_swapin(l2);
+	/* Fill out all the PAs we are going to need in locore. */
+	cpu_activate_pcb(l2);
 
 	/* Load all of the user's space registers. */
 	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr3 = tf->tf_sr2 = 
@@ -144,7 +136,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	mfctl(CR_EIEM, tf->tf_eiem);
 	tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I /* | PSW_L */ |
 	    (kpsw & PSW_O);
-	pcbp->pcb_fpregs[HPPA_NFPREGS] = 0;
+	pcb2->pcb_fpregs[HPPA_NFPREGS] = 0;
 
 	/*
 	 * Set up return value registers as libc:fork() expects
@@ -167,6 +159,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/* lwp_trampoline's frame */
 	sp += HPPA_FRAME_SIZE;
 
+	*(register_t *)(sp) = 0;	/* previous frame pointer */
 	*(register_t *)(sp + HPPA_FRAME_PSP) = osp;
 	*(register_t *)(sp + HPPA_FRAME_CRP) = (register_t)lwp_trampoline;
 
@@ -178,22 +171,23 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * 	stack usage is std frame + callee-save registers
 	 */
 	sp += HPPA_FRAME_SIZE + 16*4;
-	pcbp->pcb_ksp = sp;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)l2->l_addr, sp - (vaddr_t)l2->l_addr);
+	pcb2->pcb_ksp = sp;
+	fdcache(HPPA_SID_KERNEL, uv, sp - uv);
 }
 
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	struct pcb *pcbp = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
+	vaddr_t uv = uvm_lwp_getuarea(l);
 	struct trapframe *tf;
 	register_t sp, osp;
 
-	sp = (register_t)pcbp + PAGE_SIZE;
+	sp = (register_t)pcb + PAGE_SIZE;
 	l->l_md.md_regs = tf = (struct trapframe *)sp;
 	sp += sizeof(struct trapframe);
 
-	cpu_swapin(l);
+	cpu_activate_pcb(l);
 
 	/*
 	 * Build stack frames for the cpu_switchto & co.
@@ -203,6 +197,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	/* setfunc_trampoline's frame */
 	sp += HPPA_FRAME_SIZE;
 
+	*(register_t *)(sp) = 0;	/* previous frame pointer */
 	*(register_t *)(sp + HPPA_FRAME_PSP) = osp;
 	*(register_t *)(sp + HPPA_FRAME_CRP) = (register_t)setfunc_trampoline;
 
@@ -214,8 +209,8 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	 * 	stack usage is std frame + callee-save registers
 	 */
 	sp += HPPA_FRAME_SIZE + 16*4;
-	pcbp->pcb_ksp = sp;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)l->l_addr, sp - (vaddr_t)l->l_addr);
+	pcb->pcb_ksp = sp;
+	fdcache(HPPA_SID_KERNEL, uv, sp - uv);
 }
 
 void

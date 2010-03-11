@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.35.4.2 2009/05/04 08:12:56 yamt Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.35.4.3 2010/03/11 15:03:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.35.4.2 2009/05/04 08:12:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.35.4.3 2010/03/11 15:03:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,8 +225,8 @@ epic_pci_attach(device_t parent, device_t self, void *aux)
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);

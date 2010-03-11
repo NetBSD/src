@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.16.46.1 2009/05/04 08:11:55 yamt Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.16.46.2 2010/03/11 15:02:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,12 +58,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.16.46.1 2009/05/04 08:11:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.16.46.2 2010/03/11 15:02:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -95,6 +96,28 @@ timer_init_4m(void)
 	icr_si_bic(SINTR_T);
 }
 
+void
+schedintr_4m(void *v)
+{
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * We call hardclock() here so that we make sure it is called on
+	 * all CPUs.  This function ends up being called on sun4m systems
+	 * every tick.
+	 */
+	hardclock(v);
+
+	/*
+	 * The factor 8 is only valid for stathz==100.
+	 * See also clock.c
+	 */
+	if ((++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0 && schedhz != 0)
+#endif
+		schedclock(curlwp);
+}
+
+
 /*
  * Level 10 (clock) interrupts from system counter.
  */
@@ -109,13 +132,19 @@ clockintr_4m(void *cap)
 	 * a timer interrupt - if we call hardclock() at that point we'll
 	 * panic
 	 * so for now just bail when cold
+	 *
+	 * For MP, we defer calling hardclock() to the schedintr so
+	 * that we call it on all cpus.
 	 */
+	cpuinfo.ci_lev10.ev_count++;
 	if (cold)
 		return 0;
 	/* read the limit register to clear the interrupt */
 	*((volatile int *)&timerreg4m->t_limit);
 	tickle_tc();
+#if !defined(MULTIPROCESSOR)
 	hardclock((struct clockframe *)cap);
+#endif
 	return (1);
 }
 
@@ -127,6 +156,8 @@ statintr_4m(void *cap)
 {
 	struct clockframe *frame = cap;
 	u_long newint;
+
+	cpuinfo.ci_lev14.ev_count++;
 
 	/* read the limit register to clear the interrupt */
 	*((volatile int *)&counterreg4m->t_limit);
@@ -149,19 +180,23 @@ statintr_4m(void *cap)
 	 * The factor 8 is only valid for stathz==100.
 	 * See also clock.c
 	 */
-	if (curlwp && (++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0) {
+#if !defined(MULTIPROCESSOR)
+	if ((++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0 && schedhz != 0) {
+#endif
 		if (CLKF_LOPRI(frame, IPL_SCHED)) {
 			/* No need to schedule a soft interrupt */
 			spllowerschedclock();
-			schedintr(cap);
+			schedintr_4m(cap);
 		} else {
 			/*
 			 * We're interrupting a thread that may have the
-			 * scheduler lock; run schedintr() on this CPU later.
+			 * scheduler lock; run schedintr_4m() on this CPU later.
 			 */
 			raise_ipi(&cpuinfo, IPL_SCHED); /* sched_cookie->pil */
 		}
+#if !defined(MULTIPROCESSOR)
 	}
+#endif
 
 	return (1);
 }
@@ -219,6 +254,12 @@ timerattach_obio_4m(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 		cpi->counterreg_4m = (struct counter_4m *)bh;
+	}
+
+	/* Install timer/statclock event counters, per cpu */
+	for (CPU_INFO_FOREACH(n, cpi)) {
+		evcnt_attach_dynamic(&cpi->ci_lev10, EVCNT_TYPE_INTR, NULL, cpu_name(cpi), "lev10");
+		evcnt_attach_dynamic(&cpi->ci_lev14, EVCNT_TYPE_INTR, NULL, cpu_name(cpi), "lev14");
 	}
 
 	/* Put processor counter in "timer" mode */

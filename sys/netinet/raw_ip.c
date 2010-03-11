@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.107.2.1 2009/05/04 08:14:17 yamt Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.107.2.2 2010/03/11 15:04:28 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.107.2.1 2009/05/04 08:14:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.107.2.2 2010/03/11 15:04:28 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -119,6 +119,8 @@ int	 rip_bind(struct inpcb *, struct mbuf *);
 int	 rip_connect(struct inpcb *, struct mbuf *);
 void	 rip_disconnect(struct inpcb *);
 
+static void sysctl_net_inet_raw_setup(struct sysctllog **);
+
 /*
  * Nominal space allocated to a raw ip socket.
  */
@@ -136,6 +138,7 @@ void
 rip_init(void)
 {
 
+	sysctl_net_inet_raw_setup(NULL);
 	in_pcbinit(&rawcbtable, 1, 1);
 }
 
@@ -531,8 +534,7 @@ rip_usrreq(struct socket *so, int req,
 #endif
 
 	if (req == PRU_CONTROL)
-		return (in_control(so, (long)m, (void *)nam,
-		    (struct ifnet *)control, l));
+		return in_control(so, (long)m, nam, (struct ifnet *)control, l);
 
 	s = splsoftnet();
 
@@ -551,7 +553,7 @@ rip_usrreq(struct socket *so, int req,
 	if (req != PRU_SEND && req != PRU_SENDOOB && control)
 		panic("rip_usrreq: unexpected control mbuf");
 #endif
-	if (inp == 0 && req != PRU_ATTACH) {
+	if (inp == NULL && req != PRU_ATTACH) {
 		error = EINVAL;
 		goto release;
 	}
@@ -696,7 +698,8 @@ release:
 	return (error);
 }
 
-SYSCTL_SETUP(sysctl_net_inet_raw_setup, "sysctl net.inet.raw subtree setup")
+static void
+sysctl_net_inet_raw_setup(struct sysctllog **clog)
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,

@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.55.4.1 2009/05/04 08:12:04 yamt Exp $    */
+/*      $NetBSD: param.h,v 1.55.4.2 2010/03/11 15:03:06 yamt Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@
 
 #define	UPAGES		2		/* pages of u-area */
 #define USPACE		(NBPG*UPAGES)
-#define	REDZONEADDR	(VAX_NBPG*3)	/* Must be > sizeof(struct user) */
+#define	REDZONEADDR	(VAX_NBPG*3)	/* Must be > sizeof(struct pcb) */
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	NBPG		/* default message buffer size */
@@ -111,18 +111,6 @@
 #endif	/* MCLSHIFT */
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-
-#ifndef NMBCLUSTERS
-#if defined(_KERNEL_OPT)
-#include "opt_gateway.h"
-#endif
-
-#ifdef GATEWAY
-#define	NMBCLUSTERS	512		/* map size, max cluster allocation */
-#else
-#define	NMBCLUSTERS	256		/* map size, max cluster allocation */
-#endif
-#endif
 
 /*
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized

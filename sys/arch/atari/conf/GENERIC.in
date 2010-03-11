@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.71.10.1 2009/05/04 08:10:46 yamt Exp $
+#	$NetBSD: GENERIC.in,v 1.71.10.2 2010/03/11 15:02:08 yamt Exp $
 #
 # Generic atari
 #
@@ -50,8 +50,10 @@ options 	INSECURE	# disable kernel security levels
 #
 #if defined(TT030_KERNEL) || defined(FALCON_KERNEL)
 options 	M68030		# support for 030
-options 	FPU_EMULATE	# Support for MC68881/MC68882 emulator
 #endif /* TT030_KERNEL || FALCON_KERNEL */
+#if defined(FALCON_KERNEL)
+options 	FPU_EMULATE	# Support for MC68881/MC68882 emulator
+#endif /* FALCON_KERNEL */
 #if (defined(FALCON_KERNEL) && !defined(SMALL030_KERNEL)) || \
 	defined(HADES_KERNEL) || defined(MILAN_KERNEL)
 options 	M68040		# support for 040
@@ -123,7 +125,7 @@ file-system 	NULLFS		# Loopback filesystem
 file-system 	OVERLAY		# overlay filesystem
 file-system 	UNION		# union file system
 file-system 	UMAPFS		# null file system (with uid & gid remapping)
-file-system 	PORTAL		# portal file system
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured file system
 file-system	PTYFS		# /dev/pts/N support
@@ -259,6 +261,7 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	md		3	# Boot memory disk
+pseudo-device	putter			# for puffs and pud
 
 #if !defined(SMALL030_KERNEL)
 pseudo-device	vnd			# 3 pseudo disks (see vnconfig)
@@ -291,6 +294,7 @@ pseudo-device	fss		4	# file system snapshot device
 pseudo-device	ipfilter		# IP filtering device
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 #endif /* !SMALL030_KERNEL */

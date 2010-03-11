@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.11 2007/10/17 19:57:30 garbled Exp $ */
+/*	$NetBSD: proc.h,v 1.11.20.1 2010/03/11 15:03:00 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,6 +42,8 @@
 
 #ifndef _SPARC64_PROC_H
 #define _SPARC64_PROC_H
+
+#include <sys/user.h> /* for sizeof(struct user) */
 
 struct mdlwp {
 	struct	trapframe64 *md_tf;	/* trap/syscall registers */

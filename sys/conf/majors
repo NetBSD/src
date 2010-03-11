@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.41.4.3 2009/09/16 13:37:44 yamt Exp $
+# $NetBSD: majors,v 1.41.4.4 2010/03/11 15:03:20 yamt Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -41,3 +41,4 @@ device-major	isv		char 192		isv
 device-major	video		char 193		video
 device-major	dm		char 194 block 169	dm
 device-major	hdaudio		char 195		hdaudio
+device-major	uhso		char 196		uhso

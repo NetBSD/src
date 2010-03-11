@@ -1,4 +1,4 @@
-/* $NetBSD: edid.c,v 1.5 2007/03/07 19:56:40 macallan Exp $ */
+/* $NetBSD: edid.c,v 1.5.40.1 2010/03/11 15:04:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.5 2007/03/07 19:56:40 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.5.40.1 2010/03/11 15:04:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ edid_findproduct(const char *vendor, uint16_t product)
 #ifdef	EDIDVERBOSE
 	int	n;
 
-	for (n = 0; n < edid_nvendors; n++)
+	for (n = 0; n < edid_nproducts; n++)
 		if ((edid_products[n].product == product) &&
 		    (memcmp(edid_products[n].vendor, vendor, 3) == 0))
 			return (edid_products[n].name);

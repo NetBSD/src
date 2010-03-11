@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.26.20.1 2008/05/16 02:21:45 yamt Exp $ */
+/* $NetBSD: lock.h,v 1.26.20.2 2010/03/11 15:01:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -166,7 +166,7 @@ do {									\
 	if (__ci->ci_ipis != 0) {					\
 		/* printf("CPU %lu has IPIs pending\n",			\
 		    __ci->ci_cpuid); */					\
-		__s = splipi();						\
+		__s = splhigh();						\
 		alpha_ipi_process(__ci, NULL);				\
 		splx(__s);						\
 	}								\

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.221.2.3 2009/08/19 18:48:17 yamt Exp $	*/
+/*	$NetBSD: tty.c,v 1.221.2.4 2010/03/11 15:04:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.221.2.3 2009/08/19 18:48:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.221.2.4 2010/03/11 15:04:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,6 +205,8 @@ uint64_t tk_cancc;
 uint64_t tk_nin;
 uint64_t tk_nout;
 uint64_t tk_rawcc;
+
+static kauth_listener_t tty_listener;
 
 SYSCTL_SETUP(sysctl_kern_tkstat_setup, "sysctl kern.tkstat subtree setup")
 {
@@ -1667,6 +1669,9 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 	long		lflag, slp;
 	struct timeval	now, stime;
 
+	if (uio->uio_resid == 0)
+		return 0;
+
 	stime.tv_usec = 0;	/* XXX gcc */
 	stime.tv_sec = 0;	/* XXX gcc */
 
@@ -2717,6 +2722,36 @@ ttyprintf_nolock(struct tty *tp, const char *fmt, ...)
 	va_end(ap);
 }
 
+static int
+tty_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	struct tty *tty;
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+
+	if (action != KAUTH_DEVICE_TTY_OPEN)
+		return result;
+
+	tty = arg0;
+
+	/* If it's not opened, we allow. */
+	if ((tty->t_state & TS_ISOPEN) == 0)
+		result = KAUTH_RESULT_ALLOW;
+	else {
+		/*
+		 * If it's opened, we can only allow if it's not exclusively
+		 * opened; otherwise, that's a privileged operation and we
+		 * let the secmodel handle it.
+		 */
+		if ((tty->t_state & TS_XCLUDE) == 0)
+			result = KAUTH_RESULT_ALLOW;
+	}
+
+	return result;
+}
+
 /*
  * Initialize the tty subsystem.
  */
@@ -2728,6 +2763,9 @@ tty_init(void)
 	rw_init(&ttcompat_lock);
 	tty_sigsih = softint_establish(SOFTINT_CLOCK, ttysigintr, NULL);
 	KASSERT(tty_sigsih != NULL);
+
+	tty_listener = kauth_listen_scope(KAUTH_SCOPE_DEVICE,
+	    tty_listener_cb, NULL);
 }
 
 /*

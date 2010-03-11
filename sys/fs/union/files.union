@@ -1,6 +1,6 @@
-#	$NetBSD: files.union,v 1.1 2003/03/16 08:26:50 jdolecek Exp $
+#	$NetBSD: files.union,v 1.1.104.1 2010/03/11 15:04:15 yamt Exp $
 
-deffs	fs_union.h			UNION
+deffs	UNION
 
 file	fs/union/union_subr.c		union
 file	fs/union/union_vfsops.c		union

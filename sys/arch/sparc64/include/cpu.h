@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.79.4.3 2009/06/20 07:20:11 yamt Exp $ */
+/*	$NetBSD: cpu.h,v 1.79.4.4 2010/03/11 15:03:00 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -131,9 +131,9 @@ struct cpu_info {
 
 	/* Event counters */
 	struct evcnt		ci_tick_evcnt;
-#ifdef MULTIPROCESSOR
+
+	/* This could be under MULTIPROCESSOR, but there's no good reason */
 	struct evcnt		ci_ipi_evcnt[IPI_EVCNT_NUM];
-#endif
 
 	int			ci_flags;
 	int			ci_want_ast;
@@ -191,7 +191,12 @@ struct cpu_bootargs {
 
 extern struct cpu_bootargs *cpu_args;
 
+#if defined(MULTIPROCESSOR)
 extern int sparc_ncpus;
+#else
+#define sparc_ncpus 1
+#endif
+
 extern struct cpu_info *cpus;
 extern struct pool_cache *fpstate_cache;
 
@@ -214,8 +219,6 @@ extern struct pool_cache *fpstate_cache;
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_swapin(p)	/* nothing */
-#define	cpu_swapout(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
 void cpu_proc_fork(struct proc *, struct proc *);
 
@@ -341,7 +344,8 @@ int	probeset(paddr_t, int, int, uint64_t);
 struct pcb;
 void	snapshot(struct pcb *);
 struct frame *getfp(void);
-void	switchtoctx(int);
+void	switchtoctx_us(int);
+void	switchtoctx_usiii(int);
 void	next_tick(long);
 /* trap.c */
 void	kill_user_windows(struct lwp *);

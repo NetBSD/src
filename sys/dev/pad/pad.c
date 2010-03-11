@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.6.4.2 2009/05/04 08:12:53 yamt Exp $ */
+/* $NetBSD: pad.c,v 1.6.4.3 2010/03/11 15:03:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.6.4.2 2009/05/04 08:12:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.6.4.3 2010/03/11 15:03:42 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -297,7 +297,7 @@ pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	sc = device_lookup_private(&pad_cd, PADUNIT(dev));
 	if (sc == NULL)
-		return ENODEV;
+		return ENXIO;
 
 	if (sc->sc_open++) {
 		sc->sc_open--;
@@ -314,7 +314,7 @@ pad_close(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	sc = device_lookup_private(&pad_cd, PADUNIT(dev));
 	if (sc == NULL)
-		return ENODEV;
+		return ENXIO;
 
 	KASSERT(sc->sc_open > 0);
 	sc->sc_open--;
@@ -333,7 +333,7 @@ pad_read(dev_t dev, struct uio *uio, int flags)
 
 	sc = device_lookup_private(&pad_cd, PADUNIT(dev));
 	if (sc == NULL)
-		return ENODEV;
+		return ENXIO;
 
 	err = 0;
 

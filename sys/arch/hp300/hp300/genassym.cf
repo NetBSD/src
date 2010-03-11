@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.37.4.1 2009/05/04 08:11:05 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.37.4.2 2010/03/11 15:02:22 yamt Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -41,7 +41,6 @@ include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/msgbuf.h>
 include <sys/syscall.h>
-include <sys/user.h>
 
 include <uvm/uvm.h>
 
@@ -149,7 +148,7 @@ define	USRSTACK		USRSTACK
 define	MAXADDR			MAXADDR
 
 # lwp & proc fields and values
-define	L_ADDR			offsetof(struct lwp, l_addr)
+define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
@@ -204,6 +203,8 @@ define	MMU_FAULT		MMU_FAULT
 define	MMU_CEN			MMU_CEN
 define	MMU_IEN			MMU_IEN
 define	MMU_FPE			MMU_FPE
+define	DC_FREEZE		DC_FREEZE
+define	CACHE40_ON		CACHE40_ON
 define	CACHE_ON		CACHE_ON
 define	CACHE_OFF		CACHE_OFF
 define	CACHE_CLR		CACHE_CLR

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.34.10.1 2009/05/04 08:14:15 yamt Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.34.10.2 2010/03/11 15:04:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.34.10.1 2009/05/04 08:14:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.34.10.2 2010/03/11 15:04:27 yamt Exp $");
 
 #include "opt_inet.h"
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,9 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.34.10.1 2009/05/04 08:14:15 yamt 
 #include <net/if_dl.h>
 #include <net/if_types.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <net/if_hippi.h>
 
@@ -341,7 +338,6 @@ hippi_ifattach(struct ifnet *ifp, void *lla)
 
 	if_set_sadl(ifp, lla, 6, true);
 
-#if NBPFILTER > 0
-	bpfattach(ifp, DLT_HIPPI, sizeof(struct hippi_header));
-#endif
+	bpf_ops->bpf_attach(ifp, DLT_HIPPI,
+	    sizeof(struct hippi_header), &ifp->if_bpf);
 }

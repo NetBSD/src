@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_pci.c,v 1.7.8.2 2009/05/04 08:10:41 yamt Exp $	*/
+/*	$NetBSD: gemini_pci.c,v 1.7.8.3 2010/03/11 15:02:06 yamt Exp $	*/
 
 /* adapted from:
  *	NetBSD: i80312_pci.c,v 1.9 2005/12/11 12:16:51 christos Exp
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.7.8.2 2009/05/04 08:10:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.7.8.3 2010/03/11 15:02:06 yamt Exp $");
 
 #include <sys/cdefs.h>
 
@@ -416,7 +416,7 @@ void
 gemini_pci_intr_disestablish(void *v, void *cookie)
 {
 	pcireg_t r;
-	struct gemini_pci_intrq *iqp = (struct gemini_pci_intrq *)cookie;;
+	struct gemini_pci_intrq *iqp = (struct gemini_pci_intrq *)cookie;
 	void *ih = iqp->iq_ih;
 
 	gemini_pci_intrq_remove(cookie);

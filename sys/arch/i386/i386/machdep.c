@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.629.2.4 2009/08/19 18:46:19 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.629.2.5 2010/03/11 15:02:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.629.2.4 2009/08/19 18:46:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.629.2.5 2010/03/11 15:02:28 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -98,7 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.629.2.4 2009/08/19 18:46:19 yamt Exp $
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/cpu.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
@@ -130,8 +129,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.629.2.4 2009/08/19 18:46:19 yamt Exp $
 #include <uvm/uvm_page.h>
 
 #include <sys/sysctl.h>
-
-#include <x86/cpu_msr.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -271,7 +268,6 @@ vaddr_t	idt_vaddr;
 paddr_t	idt_paddr;
 vaddr_t	pentium_idt_vaddr;
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
@@ -465,7 +461,8 @@ cpu_startup(void)
 	for (y = 0, sz = 0; y < msgbuf_p_cnt; y++) {
 		for (x = 0; x < btoc(msgbuf_p_seg[y].sz); x++, sz += PAGE_SIZE)
 			pmap_kenter_pa((vaddr_t)msgbuf_vaddr + sz,
-			    msgbuf_p_seg[y].paddr + x * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
+			    msgbuf_p_seg[y].paddr + x * PAGE_SIZE,
+			    VM_PROT_READ|VM_PROT_WRITE, 0);
 	}
 	pmap_update(pmap_kernel());
 
@@ -484,7 +481,7 @@ cpu_startup(void)
 
 #if NCARDBUS > 0
 	/* Tell RBUS how much RAM we have, so it can use heuristics. */
-	rbus_min_start_hint(ptoa(physmem));
+	rbus_min_start_hint(ctob((psize_t)physmem));
 #endif
 
 	minaddr = 0;
@@ -494,12 +491,6 @@ cpu_startup(void)
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
-
-	/*
-	 * Allocate mbuf cluster submap.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 	/* Say hello. */
 	banner();
@@ -516,8 +507,6 @@ cpu_startup(void)
 	cpu_init_tss(&cpu_info_primary);
 	ltr(cpu_info_primary.ci_tss_sel);
 #endif
-
-	x86_init();
 }
 
 /*
@@ -526,15 +515,12 @@ cpu_startup(void)
 void
 i386_proc0_tss_ldt_init(void)
 {
-	struct lwp *l;
-	struct pcb *pcb;
-
-	l = &lwp0;
-	pcb = &l->l_addr->u_pcb;
+	struct lwp *l = &lwp0;
+	struct pcb *pcb = lwp_getpcb(l);
 
 	pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
-	pcb->pcb_esp0 = USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16;
+	pcb->pcb_esp0 = uvm_lwp_getuarea(l) + KSTACK_SIZE - 16;
 	pcb->pcb_iopl = SEL_KPL;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_esp0 - 1;
 	memcpy(pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
@@ -562,9 +548,10 @@ void
 i386_switch_context(lwp_t *l)
 {
 	struct cpu_info *ci;
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb;
 	struct physdev_op physop;
 
+	pcb = lwp_getpcb(l);
 	ci = curcpu();
 	if (ci->ci_fpused) {
 		HYPERVISOR_fpu_taskswitch();
@@ -1001,16 +988,17 @@ haltsys:
  * Clear registers on exec
  */
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct pmap *pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
 
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+	if (pcb->pcb_fpcpu != NULL) {
 		npxsave_lwp(l, false);
+	}
 #endif
 
 #ifdef USER_LDT
@@ -1057,8 +1045,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 union	descriptor *gdt, *ldt;
 union	descriptor *pentium_idt;
-struct user *proc0paddr;
-extern vaddr_t proc0uarea;
+extern vaddr_t lwp0uarea;
 
 void
 setgate(struct gate_descriptor *gd, void *func, int args, int type, int dpl,
@@ -1178,7 +1165,7 @@ initgdt(union descriptor *tgdt)
 	lgdt(&region);
 #else /* !XEN */
 	frames[0] = xpmap_ptom((uint32_t)gdt - KERNBASE) >> PAGE_SHIFT;
-	pmap_kenter_pa((vaddr_t)gdt, (uint32_t)gdt - KERNBASE, VM_PROT_READ);
+	pmap_kenter_pa((vaddr_t)gdt, (uint32_t)gdt - KERNBASE, VM_PROT_READ, 0);
 	XENPRINTK(("loading gdt %lx, %d entries\n", frames[0] << PAGE_SHIFT,
 	    NGDT));
 	if (HYPERVISOR_set_gdt(frames, NGDT /* XXX is it right ? */))
@@ -1201,7 +1188,7 @@ init386_msgbuf(void)
 	vps = NULL;
 	for (x = 0; x < vm_nphysseg; ++x) {
 		vps = &vm_physmem[x];
-		if (ptoa(vps->avail_end) == avail_end) {
+		if (ctob(vps->avail_end) == avail_end) {
 			break;
 		}
 	}
@@ -1210,12 +1197,12 @@ init386_msgbuf(void)
 
 	/* Shrink so it'll fit in the last segment. */
 	if (vps->avail_end - vps->avail_start < atop(sz))
-		sz = ptoa(vps->avail_end - vps->avail_start);
+		sz = ctob(vps->avail_end - vps->avail_start);
 
 	vps->avail_end -= atop(sz);
 	vps->end -= atop(sz);
 	msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
-	msgbuf_p_seg[msgbuf_p_cnt++].paddr = ptoa(vps->avail_end);
+	msgbuf_p_seg[msgbuf_p_cnt++].paddr = ctob(vps->avail_end);
 
 	/* Remove the last segment if it now has no pages. */
 	if (vps->start == vps->end) {
@@ -1227,7 +1214,7 @@ init386_msgbuf(void)
 	for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
 		if (vm_physmem[x].avail_end > avail_end)
 			avail_end = vm_physmem[x].avail_end;
-	avail_end = ptoa(avail_end);
+	avail_end = ctob(avail_end);
 
 	if (sz == reqsz)
 		return;
@@ -1253,7 +1240,7 @@ init386_pte0(void)
 
 	paddr = 4 * PAGE_SIZE;
 	vaddr = (vaddr_t)vtopte(0);
-	pmap_kenter_pa(vaddr, paddr, VM_PROT_READ | VM_PROT_WRITE);
+	pmap_kenter_pa(vaddr, paddr, VM_PROT_READ | VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	/* make sure it is clean before using */
 	memset((void *)vaddr, 0, PAGE_SIZE);
@@ -1291,6 +1278,7 @@ void
 init386(paddr_t first_avail)
 {
 	extern void consinit(void);
+	struct pcb *pcb;
 	int x;
 #ifndef XEN
 	union descriptor *tgdt;
@@ -1314,17 +1302,17 @@ init386(paddr_t first_avail)
 	cpu_feature2 = cpu_info_primary.ci_feature2_flags;
 	cpu_feature_padlock = cpu_info_primary.ci_padlock_flags;
 
-	proc0paddr = UAREA_TO_USER(proc0uarea);
-	lwp0.l_addr = proc0paddr;
+	uvm_lwp_setuarea(&lwp0, lwp0uarea);
+	pcb = lwp_getpcb(&lwp0);
 
 #ifdef XEN
 	/* not on Xen... */
 	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
-	lwp0.l_addr->u_pcb.pcb_cr3 = PDPpaddr - KERNBASE;
+	pcb->pcb_cr3 = PDPpaddr - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx cr3 0x%lx\n",
 	    PDPpaddr - KERNBASE, xpmap_ptom(PDPpaddr - KERNBASE)));
-	XENPRINTK(("proc0paddr %p first_avail %p\n",
-	    proc0paddr, (void *)(long)first_avail));
+	XENPRINTK(("lwp0uarea %p first_avail %p\n",
+	    lwp0uarea, (void *)(long)first_avail));
 	XENPRINTK(("ptdpaddr %p atdevbase %p\n", (void *)PDPpaddr,
 	    (void *)atdevbase));
 #endif
@@ -1371,8 +1359,7 @@ init386(paddr_t first_avail)
 	 * Saving SSE registers won't work if the save area isn't
 	 * 16-byte aligned.
 	 */
-	if (offsetof(struct user, u_pcb.pcb_savefpu) & 0xf)
-		panic("init386: pcb_savefpu not 16-byte aligned");
+	KASSERT((offsetof(struct pcb, pcb_savefpu) & 0xf) == 0);
 
 	/*
 	 * Start with 2 color bins -- this is just a guess to get us
@@ -1399,7 +1386,7 @@ init386(paddr_t first_avail)
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
 	avail_start = first_avail;
-	avail_end = ptoa(xen_start_info.nr_pages) + XPMAP_OFFSET;
+	avail_end = ctob(xen_start_info.nr_pages) + XPMAP_OFFSET;
 	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
 	pmap_pa_end = avail_end;
 	mem_clusters[0].start = avail_start;
@@ -1472,13 +1459,13 @@ init386(paddr_t first_avail)
 	KASSERT(biostramp_image_size <= PAGE_SIZE);
 	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE,	/* virtual */
 		       (paddr_t)BIOSTRAMP_BASE,	/* physical */
-		       VM_PROT_ALL);		/* protection */
+		       VM_PROT_ALL, 0);		/* protection */
 	pmap_update(pmap_kernel());
 	memcpy((void *)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
 #endif
 #endif /* !XEN */
 
-	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
 
@@ -1487,7 +1474,7 @@ init386(paddr_t first_avail)
 	idt_init();
 
 	idt = (struct gate_descriptor *)idt_vaddr;
-	pmap_kenter_pa(pentium_idt_vaddr, idt_paddr, VM_PROT_READ);
+	pmap_kenter_pa(pentium_idt_vaddr, idt_paddr, VM_PROT_READ, 0);
 	pmap_update(pmap_kernel());
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 
@@ -1599,7 +1586,7 @@ init386(paddr_t first_avail)
 	intr_default_setup();
 #endif
 
-	splraise(IPL_IPI);
+	splraise(IPL_HIGH);
 	x86_enable_intr();
 
 #ifdef DDB
@@ -1749,28 +1736,30 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	/* Save floating point register context, if any. */
 	if ((l->l_md.md_flags & MDL_USEDFPU) != 0) {
+		struct pcb *pcb = lwp_getpcb(l);
 #if NNPX > 0
+
 		/*
 		 * If this process is the current FP owner, dump its
 		 * context to the PCB first.
 		 */
-		if (l->l_addr->u_pcb.pcb_fpcpu) {
+		if (pcb->pcb_fpcpu) {
 			npxsave_lwp(l, true);
 		}
 #endif
 		if (i386_use_fxsave) {
 			memcpy(&mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm,
-			    &l->l_addr->u_pcb.pcb_savefpu.sv_xmm,
+			    &pcb->pcb_savefpu.sv_xmm,
 			    sizeof (mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm));
 			*flags |= _UC_FXSAVE;
 		} else {
 			memcpy(&mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state,
-			    &l->l_addr->u_pcb.pcb_savefpu.sv_87,
+			    &pcb->pcb_savefpu.sv_87,
 			    sizeof (mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state));
 		}
 #if 0
 		/* Apparently nothing ever touches this. */
-		ucp->mcp.mc_fp.fp_emcsts = l->l_addr->u_pcb.pcb_saveemc;
+		ucp->mcp.mc_fp.fp_emcsts = pcb->pcb_saveemc;
 #endif
 		*flags |= _UC_FPU;
 	}
@@ -1781,6 +1770,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct proc *p = l->l_proc;
 
 	/* Restore register context, if any. */
@@ -1838,8 +1828,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	/*
 	 * If we were using the FPU, forget that we were.
 	 */
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+	if (pcb->pcb_fpcpu != NULL) {
 		npxsave_lwp(l, false);
+	}
 #endif
 
 	/* Restore floating point register context, if any. */
@@ -1847,24 +1838,24 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		if (flags & _UC_FXSAVE) {
 			if (i386_use_fxsave) {
 				memcpy(
-					&l->l_addr->u_pcb.pcb_savefpu.sv_xmm,
+					&pcb->pcb_savefpu.sv_xmm,
 					&mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm,
-					sizeof (&l->l_addr->u_pcb.pcb_savefpu.sv_xmm));
+					sizeof (&pcb->pcb_savefpu.sv_xmm));
 			} else {
 				/* This is a weird corner case */
 				process_xmm_to_s87((struct savexmm *)
 				    &mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm,
-				    &l->l_addr->u_pcb.pcb_savefpu.sv_87);
+				    &pcb->pcb_savefpu.sv_87);
 			}
 		} else {
 			if (i386_use_fxsave) {
 				process_s87_to_xmm((struct save87 *)
 				    &mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state,
-				    &l->l_addr->u_pcb.pcb_savefpu.sv_xmm);
+				    &pcb->pcb_savefpu.sv_xmm);
 			} else {
-				memcpy(&l->l_addr->u_pcb.pcb_savefpu.sv_87,
+				memcpy(&pcb->pcb_savefpu.sv_87,
 				    &mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state,
-				    sizeof (l->l_addr->u_pcb.pcb_savefpu.sv_87));
+				    sizeof (pcb->pcb_savefpu.sv_87));
 			}
 		}
 		l->l_md.md_flags |= MDL_USEDFPU;

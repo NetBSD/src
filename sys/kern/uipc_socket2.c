@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.91.2.4 2009/09/16 13:38:01 yamt Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.91.2.5 2010/03/11 15:04:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.91.2.4 2009/09/16 13:38:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.91.2.5 2010/03/11 15:04:20 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -273,7 +273,6 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_send = head->so_send;
 	so->so_receive = head->so_receive;
 	so->so_uidinfo = head->so_uidinfo;
-	so->so_egid = head->so_egid;
 	so->so_cpid = head->so_cpid;
 #ifdef MBUFTRACE
 	so->so_mowner = head->so_mowner;
@@ -597,10 +596,7 @@ sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 	if (cc == 0 || cc > sb_max_adj)
 		return (0);
 
-	if (kauth_cred_geteuid(l->l_cred) == so->so_uidinfo->ui_uid)
-		maxcc = l->l_proc->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
-	else
-		maxcc = RLIM_INFINITY;
+	maxcc = l->l_proc->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
 
 	uidinfo = so->so_uidinfo;
 	if (!chgsbsize(uidinfo, &sb->sb_hiwat, cc, maxcc))

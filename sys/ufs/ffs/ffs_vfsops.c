@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.223.4.5 2009/09/16 13:38:07 yamt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.223.4.6 2010/03/11 15:04:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.223.4.5 2009/09/16 13:38:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.223.4.6 2010/03/11 15:04:44 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -584,7 +584,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	struct buf *bp;
 	struct fs *fs, *newfs;
 	struct partinfo dpart;
-	int i, blks, size, error;
+	int i, bsize, blks, error;
 	int32_t *lp;
 	struct ufsmount *ump;
 	daddr_t sblockloc;
@@ -606,12 +606,9 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	 * Step 2: re-read superblock from disk.
 	 */
 	fs = ump->um_fs;
-	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED) != 0)
-		size = DEV_BSIZE;
-	else
-		size = dpart.disklab->d_secsize;
+
 	/* XXX we don't handle possibility that superblock moved. */
-	error = bread(devvp, fs->fs_sblockloc / size, fs->fs_sbsize,
+	error = bread(devvp, fs->fs_sblockloc / DEV_BSIZE, fs->fs_sbsize,
 		      NOCRED, 0, &bp);
 	if (error) {
 		brelse(bp, 0);
@@ -664,7 +661,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		/* Manually look for an apple ufs label, and if a valid one
 		 * is found, then treat it like an Apple UFS filesystem anyway
 		 */
-		error = bread(devvp, (daddr_t)(APPLEUFS_LABEL_OFFSET / size),
+		error = bread(devvp, (daddr_t)(APPLEUFS_LABEL_OFFSET / DEV_BSIZE),
 			APPLEUFS_LABEL_SIZE, cred, 0, &bp);
 		if (error) {
 			brelse(bp, 0);
@@ -721,10 +718,10 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	blks = howmany(fs->fs_cssize, fs->fs_fsize);
 	space = fs->fs_csp;
 	for (i = 0; i < blks; i += fs->fs_frag) {
-		size = fs->fs_bsize;
+		bsize = fs->fs_bsize;
 		if (i + fs->fs_frag > blks)
-			size = (blks - i) * fs->fs_fsize;
-		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), size,
+			bsize = (blks - i) * fs->fs_fsize;
+		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), bsize,
 			      NOCRED, 0, &bp);
 		if (error) {
 			brelse(bp, 0);
@@ -733,11 +730,11 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 #ifdef FFS_EI
 		if (UFS_FSNEEDSWAP(fs))
 			ffs_csum_swap((struct csum *)bp->b_data,
-			    (struct csum *)space, size);
+			    (struct csum *)space, bsize);
 		else
 #endif
-			memcpy(space, bp->b_data, (size_t)size);
-		space = (char *)space + size;
+			memcpy(space, bp->b_data, (size_t)bsize);
+		space = (char *)space + bsize;
 		brelse(bp, 0);
 	}
 	if (fs->fs_snapinum[0] != 0)
@@ -824,7 +821,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	void *space;
 	daddr_t sblockloc, fsblockloc;
 	int blks, fstype;
-	int error, i, size, ronly, bset = 0;
+	int error, i, bsize, ronly, bset = 0;
 #ifdef FFS_EI
 	int needswap = 0;		/* keep gcc happy */
 #endif
@@ -843,10 +840,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred) != 0)
-		size = DEV_BSIZE;
-	else
-		size = dpart.disklab->d_secsize;
 
 	bp = NULL;
 	ump = NULL;
@@ -882,7 +875,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			fs = NULL;
 			goto out;
 		}
-		error = bread(devvp, sblock_try[i] / size, SBLOCKSIZE, cred,
+		error = bread(devvp, sblock_try[i] / DEV_BSIZE, SBLOCKSIZE, cred,
 			      0, &bp);
 		if (error) {
 			fs = NULL;
@@ -1030,7 +1023,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		/* Manually look for an apple ufs label, and if a valid one
 		 * is found, then treat it like an Apple UFS filesystem anyway
 		 */
-		error = bread(devvp, (daddr_t)(APPLEUFS_LABEL_OFFSET / size),
+		error = bread(devvp, (daddr_t)(APPLEUFS_LABEL_OFFSET / DEV_BSIZE),
 			APPLEUFS_LABEL_SIZE, cred, 0, &bp);
 		if (error)
 			goto out;
@@ -1104,18 +1097,18 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			fs->fs_clean <<= 1;
 			fs->fs_fmod = 1;
 		}
-	size = fs->fs_cssize;
-	blks = howmany(size, fs->fs_fsize);
+	bsize = fs->fs_cssize;
+	blks = howmany(bsize, fs->fs_fsize);
 	if (fs->fs_contigsumsize > 0)
-		size += fs->fs_ncg * sizeof(int32_t);
-	size += fs->fs_ncg * sizeof(*fs->fs_contigdirs);
-	space = malloc((u_long)size, M_UFSMNT, M_WAITOK);
+		bsize += fs->fs_ncg * sizeof(int32_t);
+	bsize += fs->fs_ncg * sizeof(*fs->fs_contigdirs);
+	space = malloc((u_long)bsize, M_UFSMNT, M_WAITOK);
 	fs->fs_csp = space;
 	for (i = 0; i < blks; i += fs->fs_frag) {
-		size = fs->fs_bsize;
+		bsize = fs->fs_bsize;
 		if (i + fs->fs_frag > blks)
-			size = (blks - i) * fs->fs_fsize;
-		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), size,
+			bsize = (blks - i) * fs->fs_fsize;
+		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), bsize,
 			      cred, 0, &bp);
 		if (error) {
 			free(fs->fs_csp, M_UFSMNT);
@@ -1124,12 +1117,12 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 #ifdef FFS_EI
 		if (needswap)
 			ffs_csum_swap((struct csum *)bp->b_data,
-				(struct csum *)space, size);
+				(struct csum *)space, bsize);
 		else
 #endif
-			memcpy(space, bp->b_data, (u_int)size);
+			memcpy(space, bp->b_data, (u_int)bsize);
 
-		space = (char *)space + size;
+		space = (char *)space + bsize;
 		brelse(bp, 0);
 		bp = NULL;
 	}
@@ -1139,10 +1132,10 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			*lp++ = fs->fs_contigsumsize;
 		space = lp;
 	}
-	size = fs->fs_ncg * sizeof(*fs->fs_contigdirs);
+	bsize = fs->fs_ncg * sizeof(*fs->fs_contigdirs);
 	fs->fs_contigdirs = space;
-	space = (char *)space + size;
-	memset(fs->fs_contigdirs, 0, size);
+	space = (char *)space + bsize;
+	memset(fs->fs_contigdirs, 0, bsize);
 		/* Compatibility for old filesystems - XXX */
 	if (fs->fs_avgfilesize <= 0)
 		fs->fs_avgfilesize = AVFILESIZ;
@@ -1184,7 +1177,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	ump->um_devvp = devvp;
 	ump->um_nindir = fs->fs_nindir;
 	ump->um_lognindir = ffs(fs->fs_nindir) - 1;
-	ump->um_bptrtodb = fs->fs_fsbtodb;
+	ump->um_bptrtodb = fs->fs_fshift - DEV_BSHIFT;
 	ump->um_seqinc = fs->fs_frag;
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
@@ -1542,7 +1535,8 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	struct inode *ip;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs;
-	int error, allerror = 0;
+	int lk_flags, error, allerror = 0;
+	bool is_suspending;
 
 	fs = ump->um_fs;
 	if (fs->fs_fmod != 0 && fs->fs_ronly != 0) {		/* XXX */
@@ -1555,6 +1549,15 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 		return (ENOMEM);
 
 	fstrans_start(mp, FSTRANS_SHARED);
+	is_suspending = (fstrans_getstate(mp) == FSTRANS_SUSPENDING);
+	/*
+	 * We can't lock vnodes while the file system is suspending because
+	 * threads waiting on fstrans may have locked vnodes.
+	 */
+	if (is_suspending)
+		lk_flags = LK_INTERLOCK;
+	else
+		lk_flags = LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK;
 	/*
 	 * Write back each (modified) inode.
 	 */
@@ -1611,14 +1614,13 @@ loop:
 			mutex_exit(&vp->v_interlock);
 			continue;
 		}
-		if (vp->v_type == VBLK &&
-		    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
+		if (vp->v_type == VBLK && is_suspending) {
 			mutex_exit(&vp->v_interlock);
 			continue;
 		}
 		vmark(mvp, vp);
 		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		error = vget(vp, lk_flags);
 		if (error) {
 			mutex_enter(&mntvnode_lock);
 			nvp = vunmark(mvp);
@@ -1640,7 +1642,10 @@ loop:
 		}
 		if (error)
 			allerror = error;
-		vput(vp);
+		if (is_suspending)
+			vrele(vp);
+		else
+			vput(vp);
 		mutex_enter(&mntvnode_lock);
 		nvp = vunmark(mvp);
 	}
@@ -1808,7 +1813,7 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 */
 
 	ip->i_devvp = ump->um_devvp;
-	VREF(ip->i_devvp);
+	vref(ip->i_devvp);
 
 	/*
 	 * Ensure that uid and gid are correct. This is a temporary
@@ -1921,7 +1926,7 @@ ffs_sbupdate(struct ufsmount *mp, int waitfor)
 	u_int32_t saveflag;
 
 	error = ffs_getblk(mp->um_devvp,
-	    fs->fs_sblockloc >> (fs->fs_fshift - fs->fs_fsbtodb), FFS_NOBLK,
+	    fs->fs_sblockloc / DEV_BSIZE, FFS_NOBLK,
 	    fs->fs_sbsize, false, &bp);
 	if (error)
 		return error;

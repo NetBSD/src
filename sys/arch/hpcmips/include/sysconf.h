@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.13 2007/03/04 05:59:53 christos Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.13.44.1 2010/03/11 15:02:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -62,7 +62,7 @@ extern struct platform {
 	 *	reboot		-	reboot or powerdown
 	 *	clock		-
 	 */
-	void	(*cpu_intr)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+	void	(*cpu_intr)(uint32_t, uint32_t, vaddr_t, uint32_t);
 	void	(*cpu_idle)(void);
 	void	(*cons_init)(void);
 	void	(*fb_init)(void **);

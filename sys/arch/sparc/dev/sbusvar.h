@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.17.78.2 2009/05/04 08:11:54 yamt Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.17.78.3 2010/03/11 15:02:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,6 @@ struct sbus_softc {
 	bus_dma_tag_t	sc_dmatag;
 	bus_space_handle_t sc_bh;	/* SBus control registers */
 	int	sc_clockfreq;		/* clock frequency (in Hz) */
-	struct	sbusdev *sc_sbdev;	/* list of all children */
 	int	sc_burst;		/* burst transfer sizes supported */
 
 	/* MD fields follow here */

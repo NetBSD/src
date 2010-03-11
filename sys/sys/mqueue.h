@@ -1,4 +1,4 @@
-/*	$NetBSD: mqueue.h,v 1.4.6.3 2009/08/19 18:48:33 yamt Exp $	*/
+/*	$NetBSD: mqueue.h,v 1.4.6.4 2010/03/11 15:04:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -109,9 +109,8 @@ struct mq_msg {
 
 /* Prototypes */
 void	mqueue_print_list(void (*pr)(const char *, ...));
-int	abstimeout2timo(struct timespec *, int *);
-int	mq_send1(lwp_t *, mqd_t, const char *, size_t, unsigned, int);
-int	mq_receive1(lwp_t *, mqd_t, void *, size_t, unsigned *, int, ssize_t *);
+int	mq_send1(mqd_t, const char *, size_t, u_int, struct timespec *);
+int	mq_recv1(mqd_t, void *, size_t, u_int *, struct timespec *, ssize_t *);
 
 #endif	/* _KERNEL */
 

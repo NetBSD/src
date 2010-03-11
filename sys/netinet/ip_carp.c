@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.25.2.4 2009/06/20 07:20:34 yamt Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.25.2.5 2010/03/11 15:04:28 yamt Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.25.2.4 2009/06/20 07:20:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.25.2.5 2010/03/11 15:04:28 yamt Exp $");
 
 /*
  * TODO:
@@ -92,10 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.25.2.4 2009/06/20 07:20:34 yamt Exp $"
 #include <netinet6/scope6_var.h>
 #endif
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/sha1.h>
 
@@ -218,6 +215,8 @@ int	carp_clone_destroy(struct ifnet *);
 int	carp_ether_addmulti(struct carp_softc *, struct ifreq *);
 int	carp_ether_delmulti(struct carp_softc *, struct ifreq *);
 void	carp_ether_purgemulti(struct carp_softc *);
+
+static void sysctl_net_inet_carp_setup(struct sysctllog **);
 
 struct if_clone carp_cloner =
     IF_CLONE_INITIALIZER("carp", carp_clone_create, carp_clone_destroy);
@@ -801,9 +800,7 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_broadcastaddr = etherbroadcastaddr;
 	carp_set_enaddr(sc);
 	LIST_INIT(&sc->sc_ac.ec_multiaddrs);
-#if NBPFILTER > 0
-	bpfattach(ifp, DLT_EN10MB, ETHER_HDR_LEN);
-#endif
+	bpf_ops->bpf_attach(ifp, DLT_EN10MB, ETHER_HDR_LEN, &ifp->if_bpf);
 	return (0);
 }
 
@@ -1369,10 +1366,8 @@ carp_input(struct mbuf *m, u_int8_t *shost, u_int8_t *dhost, u_int16_t etype)
 
 	m->m_pkthdr.rcvif = ifp;
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 	ifp->if_ipackets++;
 	ether_input(ifp, m);
 	return (0);
@@ -2252,7 +2247,15 @@ sysctl_net_inet_carp_stats(SYSCTLFN_ARGS)
 	return (NETSTAT_SYSCTL(carpstat_percpu, CARP_NSTATS));
 }
 
-SYSCTL_SETUP(sysctl_net_inet_carp_setup, "sysctl net.inet.carp subtree setup")
+void
+carp_init(void)
+{
+
+	sysctl_net_inet_carp_setup(NULL);
+}
+
+static void
+sysctl_net_inet_carp_setup(struct sysctllog **clog)
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,

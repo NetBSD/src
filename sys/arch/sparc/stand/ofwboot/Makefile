@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2007/10/17 19:57:16 garbled Exp $
+#	$NetBSD: Makefile,v 1.21.20.1 2010/03/11 15:02:59 yamt Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -49,6 +49,7 @@ RELOC=		100000
 ENTRY=		_start
 
 CPPFLAGS+=	-I${CURDIR}/../../.. -I${CURDIR}/../../../.. -I${CURDIR} -I.
+CPPFLAGS+=	-I${CURDIR}/../../../../../common/include
 CPPFLAGS+=	-DRELOC=0x${RELOC}
 
 #

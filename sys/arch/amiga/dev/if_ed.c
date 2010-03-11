@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.55.20.2 2009/06/20 07:20:00 yamt Exp $ */
+/*	$NetBSD: if_ed.c,v 1.55.20.3 2010/03/11 15:02:00 yamt Exp $ */
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -19,9 +19,8 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.55.20.2 2009/06/20 07:20:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.55.20.3 2010/03/11 15:02:00 yamt Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,10 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.55.20.2 2009/06/20 07:20:00 yamt Exp $")
 #include <netns/ns_if.h>
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <machine/cpu.h>
 
@@ -262,7 +259,7 @@ ed_zbus_attach(struct device *parent, struct device *self, void *aux)
 	ed_stop(sc);
 
 	/* Initialize ifnet structure. */
-	memcpy( ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = ed_start;
 	ifp->if_ioctl = ed_ioctl;
@@ -549,11 +546,9 @@ outloop:
 	if (sc->xmit_busy == 0)
 		ed_xmit(sc);
 
-#if NBPFILTER > 0
 	/* Tap off here if there is a BPF listener. */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m0);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 	m_freem(m0);
 
@@ -997,14 +992,12 @@ ed_get_packet(struct ed_softc *sc, void *buf, u_short len)
 		return;
 	}
 
-#if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.  If so, hand off
 	 * the raw packet to bpf.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	(*ifp->if_input)(ifp, m);
 }

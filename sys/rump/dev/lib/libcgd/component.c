@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.1.2.3 2009/09/16 13:38:03 yamt Exp $	*/
+/*	$NetBSD: component.c,v 1.1.2.4 2010/03/11 15:04:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,20 +26,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1.2.3 2009/09/16 13:38:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1.2.4 2010/03/11 15:04:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/stat.h>
 
-#include "rump_dev_private.h"
+#include "rump_private.h"
 #include "rump_vfs_private.h"
 
-void cgdattach(int);
-
-void
-rump_dev_cgd_init()
+RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 	extern const struct bdevsw cgd_bdevsw;
 	extern const struct cdevsw cgd_cdevsw;
@@ -49,16 +46,14 @@ rump_dev_cgd_init()
 	/* go, mydevfs */
 	bmaj = cmaj = -1;
 
-	if ((error = devsw_attach("cgd0", &cgd_bdevsw, &bmaj,
+	if ((error = devsw_attach("/dev/cgd0", &cgd_bdevsw, &bmaj,
 	    &cgd_cdevsw, &cmaj)) != 0)
 		panic("cannot attach cgd: %d", error);
 
 	if ((error = rump_vfs_makedevnodes(S_IFBLK, "cgd0", 'a',
 	    bmaj, 0, 7)) != 0)
 		panic("cannot create cooked cgd dev nodes: %d", error);
-	if ((error = rump_vfs_makedevnodes(S_IFCHR, "rcgd0",'a',
+	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/rcgd0", 'a',
 	    cmaj, 0, 7)) != 0)
 		panic("cannot create raw cgd dev nodes: %d", error);
-
-	rump_pdev_add(cgdattach, 4);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.5.44.1 2009/05/04 08:12:03 yamt Exp $ */
+/*	$NetBSD: if_qe.c,v 1.5.44.2 2010/03/11 15:03:05 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Roar Thronæs.  All rights reserved.
@@ -222,7 +222,7 @@ int
 qe_put(struct iodesc *desc, void *pkt, size_t len) {
 	int j;
 
-	memcpy( (char *)sc->qeout, pkt, len);
+	memcpy((char *)sc->qeout, pkt, len);
 	sc->tring[0].qe_buf_len=-len/2;
 	sc->tring[0].qe_flag=sc->tring[0].qe_status1=QE_NOTYET;
 	sc->tring[1].qe_flag=sc->tring[1].qe_status1=QE_NOTYET;

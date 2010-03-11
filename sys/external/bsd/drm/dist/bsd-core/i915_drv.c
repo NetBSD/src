@@ -163,7 +163,7 @@ MODULE_DEPEND(i915, drm, 1, 1, 1);
 #elif   defined(__NetBSD__)
 
 static bool
-i915drm_suspend(device_t self PMF_FN_ARGS)
+i915drm_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct drm_device *dev = device_private(self);
 
@@ -172,7 +172,7 @@ i915drm_suspend(device_t self PMF_FN_ARGS)
 }
 
 static bool
-i915drm_resume(device_t self PMF_FN_ARGS)
+i915drm_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct drm_device *dev = device_private(self);
 
@@ -203,8 +203,16 @@ i915drm_attach(device_t parent, device_t self, void *aux)
 	drm_attach(self, pa, i915_pciidlist);
 }
 
+static int
+i915drm_detach(device_t self, int flags)
+{
+	pmf_device_deregister(self);
+
+	return drm_detach(self, flags);
+}
+
 CFATTACH_DECL_NEW(i915drm, sizeof(struct drm_device), i915drm_probe,
-    i915drm_attach, drm_detach, drm_activate);
+    i915drm_attach, i915drm_detach, NULL);
 
 #ifdef _MODULE
 

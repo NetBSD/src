@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.1.20.1 2009/05/04 08:10:56 yamt Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.1.20.2 2010/03/11 15:02:13 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1.20.1 $"
+#ident 		"GENERIC-$Revision: 1.1.20.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -139,7 +139,6 @@ file-system 	MSDOSFS		# MS-DOS file system
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
-#file-system 	PORTAL		# portal filesystem (still experimental)
 #file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
@@ -491,6 +490,9 @@ uhub*	at uhub? port ? configuration ? interface ?
 #umodem*	at uhub? port ? configuration ?
 #ucom*	at umodem?
 
+# Option N.V. Wireless WAN modems
+#uhso*	at uhub? port ? configuration ?
+
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
 wd*	at umass?
@@ -575,8 +577,6 @@ ucom*	at uvscom? portno ?
 
 # USB Generic driver
 #ugen*	at uhub? port ?
-# On ugen bulk endpoints, perform read-ahead and write-behind.
-#options UGEN_BULK_RA_WB
 
 
 # IrDA and Consumer Ir devices

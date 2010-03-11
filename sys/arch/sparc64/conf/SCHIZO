@@ -1,0 +1,22 @@
+# $NetBSD: SCHIZO,v 1.7.2.2 2010/03/11 15:02:59 yamt Exp $
+#
+# GENERIC with schizo support enabled, with the annoying schizo interupt
+# option
+#
+
+include 	"arch/sparc64/conf/GENERIC.MP"
+#include 	"arch/sparc64/conf/GENERIC"
+
+#ident		"SCHIZO.$Revision: 1.7.2.2 $"
+
+options 	CHEETAH
+
+makeoptions	DEBUG="-g"
+options 	DEBUG
+options 	DIAGNOSTIC
+options 	LOCKDEBUG
+options 	DB_MAX_WIDTH=160
+options 	DDB_ONPANIC=2   # print stack trace
+
+# this crashes when attaching.
+#no machfb

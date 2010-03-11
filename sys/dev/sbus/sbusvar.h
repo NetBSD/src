@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.24.74.2 2009/05/04 08:13:17 yamt Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.24.74.3 2010/03/11 15:04:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,15 +40,6 @@
 
 struct sbus_softc;
 
-/*
- * S-bus variables.
- */
-struct sbusdev {
-	device_t sd_dev;		/* backpointer to generic */
-	struct	sbusdev *sd_bchain;	/* forward link in bus chain */
-	void	(*sd_reset)(device_t);
-};
-
 typedef u_int32_t sbus_slot_t;
 typedef u_int32_t sbus_offset_t;
 
@@ -82,8 +73,6 @@ void	sbus_attach_common(struct sbus_softc *, const char *, int,
 				const char * const *);
 int	sbus_print(void *, const char *);
 
-void	sbus_establish(struct sbusdev *, device_t);
-
 int	sbus_setup_attach_args(
 		struct sbus_softc *,
 		bus_space_tag_t,
@@ -106,7 +95,6 @@ struct sbus_softc {
 	bus_space_tag_t	sc_bustag;
 	bus_dma_tag_t	sc_dmatag;
 	int	sc_clockfreq;		/* clock frequency (in Hz) */
-	struct	sbusdev *sc_sbdev;	/* list of all children */
 	struct	openprom_range *sc_range;
 	int	sc_nrange;
 	int	sc_burst;		/* burst transfer sizes supported */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.54.4.2 2009/09/16 13:37:52 yamt Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.54.4.3 2010/03/11 15:03:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.54.4.2 2009/09/16 13:37:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.54.4.3 2010/03/11 15:03:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,6 +205,17 @@ const struct puc_device_description puc_devices[] = {
 	 * XXX Dolphin Peripherals 4078 (dual serial and single parallel)
 	 */
 
+	/* IBM SurePOS 300 Series (481033H) serial ports */
+	{   "IBM SurePOS 300 Series (481033H)",
+	    {   PCI_VENDOR_IBM, PCI_PRODUCT_IBM_4810_SCC, 0, 0 },
+	    {   0xffff, 0xfff,                            0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ }, /* Port C */
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ }, /* Port D */
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ }, /* Port E */
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ }, /* Port F */
+	    },
+	},
 
 	/*
 	 * SIIG Boards.
@@ -926,6 +937,18 @@ const struct puc_device_description puc_devices[] = {
 	    {   0xffff, 0xffff, 0,	0	},
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+
+	/* OEM of Oxford Semiconductor PCI UARTs? */
+	{   "Avlab LP PCI 4S Quartet",
+	    {	0x1415,	0x9501,	0x14db,	0x2150	},
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 10 },
 	    },
 	},
 

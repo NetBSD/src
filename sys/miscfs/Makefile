@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 2005/12/11 12:24:50 christos Exp $
+#	$NetBSD: Makefile,v 1.8.74.1 2010/03/11 15:04:22 yamt Exp $
 
-SUBDIR=	fdesc fifofs genfs kernfs nullfs overlay portal
+SUBDIR=	fdesc fifofs genfs kernfs nullfs overlay
 SUBDIR+= procfs specfs syncfs umapfs
 
 INCSDIR= /usr/include/miscfs

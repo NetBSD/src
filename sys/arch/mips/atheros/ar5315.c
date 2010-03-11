@@ -1,4 +1,4 @@
-/* $NetBSD: ar5315.c,v 1.5.10.1 2009/07/18 14:52:54 yamt Exp $ */
+/* $NetBSD: ar5315.c,v 1.5.10.2 2010/03/11 15:02:38 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -48,7 +48,7 @@
  * family.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.5.10.1 2009/07/18 14:52:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.5.10.2 2010/03/11 15:02:38 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -294,7 +294,7 @@ ar531x_device_register(struct device *dev, void *aux)
 		else
 			return;
 
-		addprop_data(dev, "mac-addr", enet, ETHER_ADDR_LEN);
+		addprop_data(dev, "mac-address", enet, ETHER_ADDR_LEN);
 	}
 
 	if (device_is_a(dev, "ath")) {
@@ -305,7 +305,7 @@ ar531x_device_register(struct device *dev, void *aux)
 		else
 			return;
 
-		addprop_data(dev, "mac-addr", enet, ETHER_ADDR_LEN);
+		addprop_data(dev, "mac-address", enet, ETHER_ADDR_LEN);
 
 		addprop_integer(dev, "wmac-rev",
 		    GETSYSREG(AR5315_SYSREG_SREV));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.117.2.2 2009/05/04 08:14:17 yamt Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.117.2.3 2010/03/11 15:04:28 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.117.2.2 2009/05/04 08:14:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.117.2.3 2010/03/11 15:04:28 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -142,6 +142,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.117.2.2 2009/05/04 08:14:17 yamt Exp $
  */
 
 int	icmpmaskrepl = 0;
+int	icmpbmcastecho = 0;
 #ifdef ICMPPRINTFS
 int	icmpprintfs = 0;
 #endif
@@ -178,10 +179,14 @@ static void icmp_redirect_timeout(struct rtentry *, struct rttimer *);
 
 static int icmp_ratelimit(const struct in_addr *, const int, const int);
 
+static void sysctl_netinet_icmp_setup(struct sysctllog **);
 
 void
 icmp_init(void)
 {
+
+	sysctl_netinet_icmp_setup(NULL);
+
 	/*
 	 * This is only useful if the user initializes redirtimeout to
 	 * something other than zero.
@@ -538,12 +543,22 @@ icmp_input(struct mbuf *m, ...)
 		break;
 
 	case ICMP_ECHO:
+		if (!icmpbmcastecho &&
+		    (m->m_flags & (M_MCAST | M_BCAST)) != 0)  {
+			ICMP_STATINC(ICMP_STAT_BMCASTECHO);
+			break;
+		}
 		icp->icmp_type = ICMP_ECHOREPLY;
 		goto reflect;
 
 	case ICMP_TSTAMP:
 		if (icmplen < ICMP_TSLEN) {
 			ICMP_STATINC(ICMP_STAT_BADLEN);
+			break;
+		}
+		if (!icmpbmcastecho &&
+		    (m->m_flags & (M_MCAST | M_BCAST)) != 0)  {
+			ICMP_STATINC(ICMP_STAT_BMCASTTSTAMP);
 			break;
 		}
 		icp->icmp_type = ICMP_TSTAMPREPLY;
@@ -983,7 +998,8 @@ sysctl_net_inet_icmp_stats(SYSCTLFN_ARGS)
 	return (NETSTAT_SYSCTL(icmpstat_percpu, ICMP_NSTATS));
 }
 
-SYSCTL_SETUP(sysctl_net_inet_icmp_setup, "sysctl net.inet.icmp subtree setup")
+static void
+sysctl_netinet_icmp_setup(struct sysctllog **clog)
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -1049,6 +1065,14 @@ SYSCTL_SETUP(sysctl_net_inet_icmp_setup, "sysctl net.inet.icmp subtree setup")
 		       SYSCTL_DESCR("ICMP statistics"), 
 		       sysctl_net_inet_icmp_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_ICMP, ICMPCTL_STATS,
+		       CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "bmcastecho",
+		       SYSCTL_DESCR("Respond to ICMP_ECHO or ICMP_TIMESTAMP "
+				    "message to the broadcast or multicast"),
+		       NULL, 0, &icmpbmcastecho, 0,
+		       CTL_NET, PF_INET, IPPROTO_ICMP, ICMPCTL_BMCASTECHO,
 		       CTL_EOL);
 }
 

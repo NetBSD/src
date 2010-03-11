@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.46.2.3 2009/08/19 18:46:55 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.46.2.4 2010/03/11 15:03:10 yamt Exp $	*/
 
 /*
  *
@@ -13,11 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Christian Limpach.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -34,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.46.2.3 2009/08/19 18:46:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.46.2.4 2010/03/11 15:03:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +233,7 @@ xen_wall_time(struct timespec *wt)
 }
 
 static int
-xen_rtc_get(todr_chip_handle_t todr, volatile struct timeval *tvp)
+xen_rtc_get(todr_chip_handle_t todr, struct timeval *tvp)
 {
 	struct timespec wt;
 
@@ -250,7 +245,7 @@ xen_rtc_get(todr_chip_handle_t todr, volatile struct timeval *tvp)
 }
 
 static int
-xen_rtc_set(todr_chip_handle_t todr, volatile struct timeval *tvp)
+xen_rtc_set(todr_chip_handle_t todr, struct timeval *tvp)
 {
 #ifdef DOM0OPS
 #if __XEN_INTERFACE_VERSION__ < 0x00030204

@@ -1,6 +1,6 @@
-#	$NetBSD: files.nilfs,v 1.1.4.2 2009/08/19 18:48:13 yamt Exp $
+#	$NetBSD: files.nilfs,v 1.1.4.3 2010/03/11 15:04:13 yamt Exp $
 
-deffs	fs_nilfs.h			NILFS
+deffs	NILFS
 
 file	fs/nilfs/nilfs_vfsops.c		nilfs
 file	fs/nilfs/nilfs_vnops.c		nilfs

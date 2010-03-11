@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.70 2008/01/28 21:06:37 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.70.10.1 2010/03/11 15:04:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -98,6 +98,24 @@ struct puffs_newcookie {
 	LIST_ENTRY(puffs_newcookie) pnc_entries;
 };
 
+enum puffs_sopreqtype {
+	PUFFS_SOPREQSYS_EXIT,
+	PUFFS_SOPREQ_FLUSH,
+	PUFFS_SOPREQ_UNMOUNT,
+};
+
+struct puffs_sopreq {
+	union {
+		struct puffs_req preq;
+		struct puffs_flush pf;
+	} psopr_u;
+
+	enum puffs_sopreqtype psopr_sopreq;
+	TAILQ_ENTRY(puffs_sopreq) psopr_entries;
+};
+#define psopr_preq psopr_u.preq
+#define psopr_pf psopr_u.pf
+
 TAILQ_HEAD(puffs_wq, puffs_msgpark);
 LIST_HEAD(puffs_node_hashlist, puffs_node);
 struct puffs_mount {
@@ -143,6 +161,11 @@ struct puffs_mount {
 	void				*pmp_curopaq;
 
 	uint64_t			pmp_nextmsgid;
+
+	kmutex_t			pmp_sopmtx;
+	kcondvar_t			pmp_sopcv;
+	int				pmp_sopthrcount;
+	TAILQ_HEAD(, puffs_sopreq)	pmp_sopreqs;
 };
 
 #define PUFFSTAT_BEFOREINIT	0
@@ -152,7 +175,8 @@ struct puffs_mount {
 
 
 #define PNODE_NOREFS	0x01	/* no backend reference			*/
-#define PNODE_SUSPEND	0x04	/* issue all operations as FAF		*/
+#define PNODE_DYING	0x02	/* NOREFS + inactive			*/
+#define PNODE_FAF	0x04	/* issue all operations as FAF		*/
 #define PNODE_DOINACT	0x08	/* if inactive-on-demand, call inactive */
 
 #define PNODE_METACACHE_ATIME	0x10	/* cache atime metadata */
@@ -192,6 +216,8 @@ void	puffs_msgif_init(void);
 void	puffs_msgif_destroy(void);
 int	puffs_msgmem_alloc(size_t, struct puffs_msgpark **, void **, int);
 void	puffs_msgmem_release(struct puffs_msgpark *);
+
+void	puffs_sop_thread(void *);
 
 void	puffs_msg_setfaf(struct puffs_msgpark *);
 void	puffs_msg_setdelta(struct puffs_msgpark *, size_t);

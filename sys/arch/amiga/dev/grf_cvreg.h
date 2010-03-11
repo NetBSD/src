@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cvreg.h,v 1.12.44.1 2009/05/04 08:10:34 yamt Exp $	*/
+/*	$NetBSD: grf_cvreg.h,v 1.12.44.2 2010/03/11 15:02:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -34,6 +34,8 @@
 #ifndef _GRF_CVREG_H
 #define _GRF_CVREG_H
 
+#include <machine/cpu.h>
+
 /*
  * This is derived from ciruss driver source
  */
@@ -59,13 +61,15 @@ struct grfcvtext_mode {
 #define MAXROWS 200
 #define MAXCOLS 200
 
+
 /* read VGA register */
-#define vgar(ba, reg) (*(((volatile char *)ba)+reg))
+#define vgar(ba, reg) \
+	(*(((volatile char *)ba)+reg))
 
 /* write VGA register */
 #define vgaw(ba, reg, val) \
-	*(((volatile char *)ba)+reg) = ((val) & 0xff)
-
+	*(((volatile char *)ba)+reg) = ((val) & 0xff); \
+	amiga_membarrier()
 
 /* read 32 Bit VGA register */
 #define vgar32(ba, reg) \
@@ -73,7 +77,8 @@ struct grfcvtext_mode {
 
 /* write 32 Bit VGA register */
 #define vgaw32(ba, reg, val) \
-	*((unsigned long *)  (((volatile char *)ba)+reg)) = val
+	*((unsigned long *)  (((volatile char *)ba)+reg)) = val; \
+	amiga_membarrier()
 
 /* read 16 Bit VGA register */
 #define vgar16(ba, reg) \
@@ -81,7 +86,8 @@ struct grfcvtext_mode {
 
 /* write 16 Bit VGA register */
 #define vgaw16(ba, reg, val) \
-	*((volatile unsigned short *)  (((volatile char *)ba)+reg)) = val
+	*((volatile unsigned short *) (((volatile char *)ba)+reg)) = val; \
+	amiga_membarrier()
 
 #ifdef _KERNEL
 int grfcv_cnprobe(void);
@@ -374,7 +380,7 @@ GfxBusyWait (ba)
 
 	do {
 		test = vgar16 (ba, ECR_GP_STAT);
-		__asm volatile ("nop");
+		amiga_cpu_sync();
 	} while (test & (1 << 9));
 }
 

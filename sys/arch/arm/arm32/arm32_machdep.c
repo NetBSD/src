@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.55.10.3 2009/08/19 18:45:58 yamt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.55.10.4 2010/03/11 15:02:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,8 +42,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.55.10.3 2009/08/19 18:45:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.55.10.4 2010/03/11 15:02:04 yamt Exp $");
 
+#include "opt_modular.h"
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
 
@@ -51,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.55.10.3 2009/08/19 18:45:58 yamt
 #include <sys/systm.h>
 #include <sys/reboot.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.55.10.3 2009/08/19 18:45:58 yamt
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/cpu.h>
+#include <sys/module.h>
 
 #include <dev/cons.h>
 
@@ -70,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.55.10.3 2009/08/19 18:45:58 yamt
 
 #include "md.h"
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 #if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_ROOT_SIZE)
@@ -83,8 +83,6 @@ void *	msgbufaddr;
 extern paddr_t msgbufphys;
 
 int kernel_debug = 0;
-
-struct user *proc0paddr;
 
 /* exported variable to be filled in by the bootloaders */
 char *booted_kernel;
@@ -223,7 +221,8 @@ cpu_startup(void)
 	/* msgbufphys was setup during the secondary boot strap */
 	for (loop = 0; loop < btoc(MSGBUFSIZE); ++loop)
 		pmap_kenter_pa((vaddr_t)msgbufaddr + loop * PAGE_SIZE,
-		    msgbufphys + loop * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
+		    msgbufphys + loop * PAGE_SIZE,
+		    VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
@@ -244,22 +243,14 @@ cpu_startup(void)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
 
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
-				 false, NULL);
-
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 
-	curpcb = &lwp0.l_addr->u_pcb;
+	curpcb = lwp_getpcb(&lwp0);
 	curpcb->pcb_flags = 0;
-	curpcb->pcb_un.un_32.pcb32_sp = (u_int)lwp0.l_addr +
-	    USPACE_SVC_STACK_TOP;
-
-        curpcb->pcb_tf = (struct trapframe *)curpcb->pcb_un.un_32.pcb32_sp - 1;
+	curpcb->pcb_un.un_32.pcb32_sp =
+	    uvm_lwp_getuarea(&lwp0) + USPACE_SVC_STACK_TOP;
+	curpcb->pcb_tf = (struct trapframe *)curpcb->pcb_un.un_32.pcb32_sp - 1;
 }
 
 /*
@@ -481,3 +472,13 @@ dosoftints(void)
 	}
 }
 #endif /* __HAVE_FAST_SOFTINTS */
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the boot loader.
+ */
+void
+module_init_md(void)
+{
+}
+#endif /* MODULAR */

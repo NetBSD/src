@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.41.2.2 2009/05/04 08:12:10 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.41.2.3 2010/03/11 15:03:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.41.2.2 2009/05/04 08:12:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.41.2.3 2010/03/11 15:03:08 yamt Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -182,7 +182,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size,
 #ifdef DIAGNOSTIC
 		if (curaddr < low || curaddr >= high) {
 			printf("vm_page_alloc_memory returned non-sensical"
-			    " address 0x%lx\n", curaddr);
+			    " address %#" PRIxPADDR "\n", curaddr);
 			panic("_bus_dmamem_alloc_range");
 		}
 #endif
@@ -896,13 +896,16 @@ _bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 	error = _bus_dmamem_alloc(t, cookie->id_bouncebuflen,
 	    PAGE_SIZE, map->_dm_boundary, cookie->id_bouncesegs,
 	    map->_dm_segcnt, &cookie->id_nbouncesegs, flags);
-	if (error)
-		goto out;
+	if (error) {
+		cookie->id_bouncebuflen = 0;
+		cookie->id_nbouncesegs = 0;
+		return error;
+	}
+
 	error = _bus_dmamem_map(t, cookie->id_bouncesegs,
 	    cookie->id_nbouncesegs, cookie->id_bouncebuflen,
 	    (void **)&cookie->id_bouncebuf, flags);
 
- out:
 	if (error) {
 		_bus_dmamem_free(t, cookie->id_bouncesegs,
 		    cookie->id_nbouncesegs);

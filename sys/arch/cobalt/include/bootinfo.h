@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.6.20.1 2009/05/04 08:10:54 yamt Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.6.20.2 2010/03/11 15:02:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000-2004
@@ -33,8 +33,8 @@
 #define BOOTINFO_SIZE	1024
 
 struct btinfo_common {
-	int next;		/* offset of next item, or zero */
-	int type;
+	int32_t next;		/* offset of next item, or zero */
+	int32_t type;
 };
 
 #define BTINFO_MAGIC	1
@@ -45,7 +45,7 @@ struct btinfo_common {
 
 struct btinfo_magic {
 	struct btinfo_common common;
-	int magic;
+	int32_t magic;
 };
 
 #define BTINFO_BOOTPATH_LEN	80
@@ -56,9 +56,9 @@ struct btinfo_bootpath {
 
 struct btinfo_symtab {
 	struct btinfo_common common;
-	int nsym;
-	int ssym;
-	int esym;
+	int32_t nsym;
+	int32_t ssym;
+	int32_t esym;
 };
 
 struct btinfo_flags {
@@ -75,7 +75,7 @@ struct btinfo_howto {
 };
 
 #ifdef _KERNEL
-void	*lookup_bootinfo(int);
+void	*lookup_bootinfo(unsigned int);
 #endif
 
 #endif	/* !_COBALT_BOOTINFO_H_ */

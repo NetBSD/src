@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_sbdio.c,v 1.4.4.1 2008/05/16 02:22:19 yamt Exp $	*/
+/*	$NetBSD: if_le_sbdio.c,v 1.4.4.2 2010/03/11 15:02:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2005 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_sbdio.c,v 1.4.4.1 2008/05/16 02:22:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_sbdio.c,v 1.4.4.2 2010/03/11 15:02:22 yamt Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

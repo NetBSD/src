@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.21.32.3 2009/09/16 13:38:08 yamt Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.21.32.4 2010/03/11 15:04:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -125,9 +125,6 @@ bool		pmap_clear_modify(struct vm_page *);
 bool		pmap_clear_reference(struct vm_page *);
 #endif
 
-#if !defined(pmap_collect)
-void		pmap_collect(pmap_t);
-#endif
 #if !defined(pmap_copy)
 void		pmap_copy(pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t);
 #endif
@@ -144,7 +141,7 @@ vaddr_t		pmap_growkernel(vaddr_t);
 
 void		pmap_init(void);
 
-void		pmap_kenter_pa(vaddr_t, paddr_t, vm_prot_t);
+void		pmap_kenter_pa(vaddr_t, paddr_t, vm_prot_t, u_int);
 void		pmap_kremove(vaddr_t, vsize_t);
 #if !defined(pmap_is_modified)
 bool		pmap_is_modified(struct vm_page *);

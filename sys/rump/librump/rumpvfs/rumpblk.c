@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.23.2.3 2009/08/19 18:48:30 yamt Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.23.2.4 2010/03/11 15:04:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -40,10 +40,19 @@
  * I/O operation.  It also gives finer-grained control of how to
  * flush data.  Additionally, in case the rump kernel dumps core,
  * we get way less carnage.
+ *
+ * However, it is quite costly in writing large amounts of
+ * file data, since old contents cannot merely be overwritten, but
+ * must be paged in first before replacing (i.e. r/m/w).  Ideally,
+ * we should use directio.  The problem is that directio can fail
+ * silently causing improper file system semantics (i.e. unflushed
+ * data).  Therefore, default to mmap for now.  Even so, directio
+ * _should_ be safe and can be enabled by compiling this module
+ * with -DHAS_DIRECTIO.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.23.2.3 2009/08/19 18:48:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.23.2.4 2010/03/11 15:04:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -72,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.23.2.3 2009/08/19 18:48:30 yamt Exp $"
 unsigned memwinsize = (1<<20);
 unsigned memwincnt = 16;
 
-#define STARTWIN(off)		((off) & ~(memwinsize-1))
+#define STARTWIN(off)		((off) & ~((off_t)memwinsize-1))
 #define INWIN(win,off)		((win)->win_off == STARTWIN(off))
 #define WINSIZE(rblk, win)	(MIN((rblk->rblk_size-win->win_off),memwinsize))
 #define WINVALID(win)		((win)->win_off != (off_t)-1)
@@ -93,18 +102,18 @@ static struct rblkdev {
 #ifdef HAS_ODIRECT
 	int rblk_dfd;
 #endif
+	uint64_t rblk_size;
+	uint64_t rblk_hostoffset;
+	int rblk_ftype;
 
 	/* for mmap */
 	int rblk_mmflags;
 	kmutex_t rblk_memmtx;
 	kcondvar_t rblk_memcv;
 	TAILQ_HEAD(winlru, blkwin) rblk_lruq;
-	size_t rblk_size;
 	bool rblk_waiting;
 
-	struct partition *rblk_curpi;
-	struct partition rblk_pi;
-	struct disklabel rblk_dl;
+	struct disklabel rblk_label;
 } minors[RUMPBLK_SIZE];
 
 static struct evcnt ev_io_total;
@@ -147,6 +156,43 @@ static const struct cdevsw rumpblk_cdevsw = {
 static int blkfail;
 static unsigned randstate;
 static kmutex_t rumpblk_lock;
+static int sectshift = DEV_BSHIFT;
+
+static void
+makedefaultlabel(struct disklabel *lp, off_t size, int part)
+{
+	int i;
+
+	memset(lp, 0, sizeof(*lp));
+
+	lp->d_secperunit = size;
+	lp->d_secsize = 1 << sectshift;
+	lp->d_nsectors = size >> sectshift;
+	lp->d_ntracks = 1;
+	lp->d_ncylinders = 1;
+	lp->d_secpercyl = lp->d_nsectors;
+
+	/* oh dear oh dear */
+	strncpy(lp->d_typename, "rumpd", sizeof(lp->d_typename));
+	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
+
+	lp->d_type = DTYPE_RUMPD;
+	lp->d_rpm = 11;
+	lp->d_interleave = 1;
+	lp->d_flags = 0;
+
+	/* XXX: RAW_PART handling? */
+	for (i = 0; i < part; i++) {
+		lp->d_partitions[i].p_fstype = FS_UNUSED;
+	}
+	lp->d_partitions[part].p_size = size >> sectshift;
+	lp->d_npartitions = part+1;
+	/* XXX: file system type? */
+
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = 0; /* XXX */
+}
 
 static struct blkwin *
 getwindow(struct rblkdev *rblk, off_t off, int *wsize, int *error)
@@ -292,6 +338,17 @@ rumpblk_init(void)
 			printf("invalid RUMP_BLKWINCOUNT %d, ", tmp);
 		printf("using %d for memwincount\n", memwincnt);
 	}
+	if (rumpuser_getenv("RUMP_BLKSECTSHIFT", buf, sizeof(buf), &error)==0){
+		printf("rumpblk: ");
+		tmp = strtoul(buf, NULL, 10);
+		if (tmp >= DEV_BSHIFT)
+			sectshift = tmp;
+		else
+			printf("RUMP_BLKSECTSHIFT must be least %d (now %d), ",
+			   DEV_BSHIFT, tmp); 
+		printf("using %d for sector shift (size %d)\n",
+		    sectshift, 1<<sectshift);
+	}
 
 	memset(minors, 0, sizeof(minors));
 	for (i = 0; i < RUMPBLK_SIZE; i++) {
@@ -327,14 +384,18 @@ rumpblk_init(void)
 
 /* XXX: no deregister */
 int
-rumpblk_register(const char *path, devminor_t *dmin)
+rumpblk_register(const char *path, devminor_t *dmin,
+	uint64_t offset, uint64_t size)
 {
+	struct rblkdev *rblk;
 	uint64_t flen;
 	size_t len;
 	int ftype, error, i;
 
-	if (rumpuser_getfileinfo(path, &flen, &ftype, &error))
+	/* devices might not report correct size unless they're open */
+	if (rumpuser_getfileinfo(path, &flen, &ftype, &error) == -1)
 		return error;
+
 	/* verify host file is of supported type */
 	if (!(ftype == RUMPUSER_FT_REG
 	   || ftype == RUMPUSER_FT_BLK
@@ -358,10 +419,21 @@ rumpblk_register(const char *path, devminor_t *dmin)
 		return EBUSY;
 	}
 
+	rblk = &minors[i];
 	len = strlen(path);
-	minors[i].rblk_path = malloc(len + 1, M_TEMP, M_WAITOK);
-	strcpy(minors[i].rblk_path, path);
-	minors[i].rblk_fd = -1;
+	rblk->rblk_path = malloc(len + 1, M_TEMP, M_WAITOK);
+	strcpy(rblk->rblk_path, path);
+	rblk->rblk_fd = -1;
+	rblk->rblk_hostoffset = offset;
+	if (size != RUMPBLK_SIZENOTSET) {
+		KASSERT(size + offset <= flen);
+		rblk->rblk_size = size;
+	} else {
+		KASSERT(offset < flen);
+		rblk->rblk_size = flen - offset;
+	}
+	rblk->rblk_ftype = ftype;
+	makedefaultlabel(&rblk->rblk_label, rblk->rblk_size, i);
 	mutex_exit(&rumpblk_lock);
 
 	*dmin = i;
@@ -372,20 +444,16 @@ int
 rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct rblkdev *rblk = &minors[minor(dev)];
-	uint64_t fsize;
-	int ft, dummy;
 	int error, fd;
+
+	if (rblk->rblk_path == NULL)
+		return ENXIO;
 
 	if (rblk->rblk_fd != -1)
 		return 0; /* XXX: refcount, open mode */
 	fd = rumpuser_open(rblk->rblk_path, OFLAGS(flag), &error);
 	if (error)
 		return error;
-
-	if (rumpuser_getfileinfo(rblk->rblk_path, &fsize, &ft, &error) == -1) {
-		rumpuser_close(fd, &dummy);
-		return error;
-	}
 
 #ifdef HAS_ODIRECT
 	rblk->rblk_dfd = rumpuser_open(rblk->rblk_path,
@@ -394,7 +462,8 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 		return error;
 #endif
 
-	if (ft == RUMPUSER_FT_REG) {
+	if (rblk->rblk_ftype == RUMPUSER_FT_REG) {
+		uint64_t fsize = rblk->rblk_size, off = rblk->rblk_hostoffset;
 		struct blkwin *win;
 		int i, winsize;
 
@@ -413,10 +482,9 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 		}
 
 		TAILQ_INIT(&rblk->rblk_lruq);
-		rblk->rblk_size = fsize;
 		rblk->rblk_fd = fd;
 
-		for (i = 0; i < memwincnt && i * memwinsize < fsize; i++) {
+		for (i = 0; i < memwincnt && off + i*memwinsize < fsize; i++) {
 			win = kmem_zalloc(sizeof(*win), KM_SLEEP);
 			WINVALIDATE(win);
 			TAILQ_INSERT_TAIL(&rblk->rblk_lruq, win, win_lru);
@@ -426,8 +494,9 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 			 * make sure a) we can mmap at all b) we have the
 			 * necessary VA available
 			 */
-			winsize = 1;
-			win = getwindow(rblk, i*memwinsize, &winsize, &error); 
+			winsize = memwinsize;
+			win = getwindow(rblk, off + i*memwinsize, &winsize,
+			    &error); 
 			if (win) {
 				putwindow(rblk, win);
 			} else {
@@ -435,21 +504,8 @@ rumpblk_open(dev_t dev, int flag, int fmt, struct lwp *l)
 				break;
 			}
 		}
-
-		memset(&rblk->rblk_dl, 0, sizeof(rblk->rblk_dl));
-		rblk->rblk_pi.p_size = fsize >> DEV_BSHIFT;
-		rblk->rblk_dl.d_secsize = DEV_BSIZE;
-		rblk->rblk_curpi = &rblk->rblk_pi;
 	} else {
-		if (rumpuser_ioctl(fd, DIOCGDINFO, &rblk->rblk_dl,
-		    &error) == -1) {
-			KASSERT(error);
-			rumpuser_close(fd, &dummy);
-			return error;
-		}
-
 		rblk->rblk_fd = fd;
-		rblk->rblk_curpi = &rblk->rblk_dl.d_partitions[0];
 	}
 
 	KASSERT(rblk->rblk_fd != -1);
@@ -474,23 +530,33 @@ rumpblk_close(dev_t dev, int flag, int fmt, struct lwp *l)
 int
 rumpblk_ioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 {
-	struct rblkdev *rblk = &minors[minor(dev)];
-	int rv, error;
+	devminor_t dmin = minor(dev);
+	struct rblkdev *rblk = &minors[dmin];
+	struct partinfo *pi;
+	int error = 0;
 
-	if (xfer == DIOCGPART) {
-		struct partinfo *pi = (struct partinfo *)addr;
+	/* well, me should support a few more, but we don't for now */
+	switch (xfer) {
+	case DIOCGDINFO:
+		*(struct disklabel *)addr = rblk->rblk_label;
+		break;
 
-		pi->part = rblk->rblk_curpi;
-		pi->disklab = &rblk->rblk_dl;
+	case DIOCGPART:
+		pi = addr;
+		pi->part = &rblk->rblk_label.d_partitions[DISKPART(dmin)];
+		pi->disklab = &rblk->rblk_label;
+		break;
 
-		return 0;
+	/* it's synced enough along the write path */
+	case DIOCCACHESYNC:
+		break;
+
+	default:
+		error = ENOTTY;
+		break;
 	}
 
-	rv = rumpuser_ioctl(rblk->rblk_fd, xfer, addr, &error);
-	if (rv == -1)
-		return error;
-
-	return 0;
+	return error;
 }
 
 static int
@@ -540,14 +606,14 @@ dostrategy(struct buf *bp)
 		ev_bread_total.ev_count++;
 	}
 
-	off = bp->b_blkno << DEV_BSHIFT;
+	off = bp->b_blkno << sectshift;
 	/*
 	 * Do bounds checking if we're working on a file.  Otherwise
 	 * invalid file systems might attempt to read beyond EOF.  This
 	 * is bad(tm) especially on mmapped images.  This is essentially
 	 * the kernel bounds_check() routines.
 	 */
-	if (rblk->rblk_size && off + bp->b_bcount > rblk->rblk_size) {
+	if (off + bp->b_bcount > rblk->rblk_size) {
 		int64_t sz = rblk->rblk_size - off;
 
 		/* EOF */
@@ -565,6 +631,7 @@ dostrategy(struct buf *bp)
 		bp->b_bcount = sz;
 	}
 
+	off += rblk->rblk_hostoffset;
 	DPRINTF(("rumpblk_strategy: 0x%x bytes %s off 0x%" PRIx64
 	    " (0x%" PRIx64 " - 0x%" PRIx64 "), %ssync\n",
 	    bp->b_bcount, BUF_ISREAD(bp) ? "READ" : "WRITE",
@@ -633,9 +700,10 @@ dostrategy(struct buf *bp)
 			if (!async) {
 				/* O_DIRECT not fully automatic yet */
 #ifdef HAS_ODIRECT
-				if ((off & (DEV_BSIZE-1)) == 0
-				    && ((intptr_t)bp->b_data&(DEV_BSIZE-1)) == 0
-				    && (bp->b_bcount & (DEV_BSIZE-1)) == 0)
+				if ((off & ((1<<sectshift)-1)) == 0
+				    && ((intptr_t)bp->b_data
+				      & ((1<<sectshift)-1)) == 0
+				    && (bp->b_bcount & ((1<<sectshift)-1)) == 0)
 					fd = rblk->rblk_dfd;
 				else
 #endif

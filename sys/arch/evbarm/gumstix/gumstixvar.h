@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstixvar.h,v 1.2.62.2 2009/08/19 18:46:06 yamt Exp $ */
+/*	$NetBSD: gumstixvar.h,v 1.2.62.3 2010/03/11 15:02:14 yamt Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -79,5 +79,11 @@ struct gxpcic_slot_irqs {
 };
 extern struct gxpcic_slot_irqs gxpcic_slot_irqs[2];
 extern int gxpcic_gpio_reset;
+
+
+/*
+ * gxlcd
+ */
+void gxlcd_cnattach(void);
 
 #endif /* _EVBARM_GUMSTIXVAR_H_ */

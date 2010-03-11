@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.14.2.2 2009/05/04 08:11:15 yamt Exp $	*/
+/*	$NetBSD: copy.S,v 1.14.2.3 2010/03/11 15:02:28 yamt Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.14.2.2 2009/05/04 08:11:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.14.2.3 2010/03/11 15:02:28 yamt Exp $");
 
 #include "assym.h"
 
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.14.2.2 2009/05/04 08:11:15 yamt Exp $");
 
 #define GET_CURPCB(reg)	\
 	movl	CPUVAR(CURLWP), reg; \
-	movl	L_ADDR(reg), reg
+	movl	L_PCB(reg), reg
 
 /*
  * These are arranged so that the abnormal case is a forwards
@@ -128,6 +128,29 @@ NENTRY(do_pmap_load)
 	jnz	1b
 	popl	%ebx
 	leave
+	ret
+
+/*
+ * void *return_address(unsigned int level);
+ *
+ * The return address if level == 0, the return address of the caller
+ * `level' levels down the stack if level > 0.
+ */
+ENTRY(return_address)
+	movl	%ebp,%eax	/* frame pointer -> %eax */ 
+	movl	4(%esp),%ecx	/* level -> %ecx */
+	movl	CPUVAR(CURLWP),%edx
+	movl	L_PCB(%edx),%edx
+	movl	$_C_LABEL(return_address_fault),PCB_ONFAULT(%edx)
+	cmpl	$0,%ecx
+	je	2f
+1:
+	movl	(%eax),%eax	/* next frame pointer */
+	decl	%ecx
+	jnz	1b
+2:
+	movl	0x4(%eax),%eax
+	movl	$0,PCB_ONFAULT(%edx)
 	ret
 
 /*
@@ -294,6 +317,12 @@ NENTRY(kcopy_fault)
 NENTRY(copy_fault)
 	popl	%edi
 	popl	%esi
+	ret
+
+/* LINTSTUB: Ignore */
+NENTRY(return_address_fault)
+	movl $0,PCB_ONFAULT(%edx)
+	movl $0,%eax
 	ret
 
 /*
@@ -511,7 +540,7 @@ ENTRY(fuswintr)
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
 	movl	CPUVAR(CURLWP),%ecx
-	movl	L_ADDR(%ecx),%ecx
+	movl	L_PCB(%ecx),%ecx
 	movl	$_C_LABEL(fusubail),PCB_ONFAULT(%ecx)
 	movzwl	(%edx),%eax
 	movl	$0,PCB_ONFAULT(%ecx)
@@ -617,7 +646,7 @@ ENTRY(suswintr)
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
 	movl	CPUVAR(CURLWP),%ecx
-	movl	L_ADDR(%ecx),%ecx
+	movl	L_PCB(%ecx),%ecx
 	movl	$_C_LABEL(fusubail),PCB_ONFAULT(%ecx)
 	movl	8(%esp),%eax
 	movw	%ax,(%edx)

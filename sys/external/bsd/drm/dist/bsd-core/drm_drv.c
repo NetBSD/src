@@ -434,21 +434,6 @@ drm_detach(device_t self, int flags)
 	return 0;
 }
 
-int
-drm_activate(device_t self, devact_t act)
-{
-	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
-	case DVACT_DEACTIVATE:
-		/* FIXME */
-		break;
-	}
-	return (0);
-}
-
 #endif
 
 drm_pci_id_list_t *drm_find_description(int vendor, int device,

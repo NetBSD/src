@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.153.20.1 2009/05/04 08:11:27 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.153.20.2 2010/03/11 15:02:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -303,7 +303,11 @@ Lstart3:
 	movl	%a1,%d1
 	.word	0xf518			| pflusha
 	.long	0x4e7b1807		| movc %d1,%srp
+#if PGSHIFT == 13
+	movl	#0xc000,%d0
+#else
 	movl	#0x8000,%d0
+#endif
 	.long	0x4e7b0003		| movc %d0,%tc   ;Enable MMU
 	movl	#CACHE40_ON,%d0
 	movc	%d0,%cacr		| turn on both caches
@@ -325,7 +329,11 @@ LnokillTT:
 	pmove	%a0@,%srp		| load the supervisor root pointer
 	movl	#0x80000002,%a0@	| reinit upper half for CRP loads
 	lea	_ASM_LABEL(longscratch),%a2
+#if PGSHIFT == 13
+	movl	#0x82d08b00,%a2@	| value to load %TC with
+#else
 	movl	#0x82c0aa00,%a2@	| value to load %TC with
+#endif
 	pmove	%a2@,%tc		| load it
 
 Lloaddone:
@@ -333,19 +341,14 @@ Lloaddone:
 /*
  * Should be running mapped from this point on
  */
-/* select the software page size now */
 	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
-	jbsr	_C_LABEL(uvm_setpagesize)  | select software page size
-
+/* call final pmap setup */
+	jbsr	_C_LABEL(pmap_bootstrap_finalize)
 /* set kernel stack, user SP, lwp0, and initial pcb */
-	movl	_C_LABEL(proc0paddr),%a1 | get proc0 pcb addr
-	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
-	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.l_addr
-	movl	%a2,_C_LABEL(curlwp)	|   and curlwp so that
-	movl	%a1,%a2@(L_ADDR)	|   we don't deref NULL in trap()
+	movl	_C_LABEL(lwp0uarea),%a1	| get lwp0 uarea
+	lea	%a1@(USPACE-4),%sp	|   set kernel stack to end of area
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init %USP
-	movl	%a1,_C_LABEL(curpcb)	| lwp0 is running
 
 /* flush TLB and turn on caches */
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
@@ -368,7 +371,7 @@ Lnocache0:
 	jbsr	_C_LABEL(mac68k_init)
 
 /*
- * Create a fake exception frame so that cpu_fork() can copy it.
+ * Create a fake exception frame so that cpu_lwp_fork() can copy it.
  * main() nevers returns; we exit to user mode from a forked process
  * later on.
  */
@@ -1511,9 +1514,6 @@ GLOBAL(fputype)
 
 GLOBAL(protorp)
 	.long	0,0		| prototype root pointer
-
-GLOBAL(proc0paddr)
-	.long	0		| KVA of lwp0 u-area
 
 GLOBAL(intiolimit)
 	.long	0		| KVA of end of internal IO space

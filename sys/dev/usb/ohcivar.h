@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.43.4.2 2009/05/04 08:13:20 yamt Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.43.4.3 2010/03/11 15:04:05 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -153,5 +153,5 @@ bool		ohci_shutdown(device_t, int);
 void		ohci_childdet(device_t, device_t);
 int		ohci_activate(device_t, enum devact);
 #endif
-bool		ohci_resume(device_t PMF_FN_PROTO);
-bool		ohci_suspend(device_t PMF_FN_PROTO);
+bool		ohci_resume(device_t, const pmf_qual_t *);
+bool		ohci_suspend(device_t, const pmf_qual_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.27.4.1 2008/05/16 02:22:32 yamt Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.27.4.2 2010/03/11 15:02:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,8 +62,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* #define VALD_ACPI_DEBUG */
-
 /*
  * ACPI VALD Driver for Toshiba Libretto L3.
  *	This driver is based on acpibat driver.
@@ -76,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.27.4.1 2008/05/16 02:22:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.27.4.2 2010/03/11 15:02:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +83,9 @@ __KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.27.4.1 2008/05/16 02:22:32 yamt Exp 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+
+#define _COMPONENT          ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME            ("vald_acpi")
 
 #define GHCI_WORDS 6
 #define GHCI_FIFO_EMPTY  0x8c00
@@ -123,8 +124,6 @@ static const char * const vald_acpi_hids[] = {
 	"TOS6200",
 	NULL
 };
-
-#define AVALD_F_VERBOSE		0x01	/* verbose events */
 
 #define LIBRIGHT_HOLD	0x00
 #define LIBRIGHT_UP	0x01
@@ -250,29 +249,19 @@ vald_acpi_attach(device_t parent, device_t self, void *aux)
  *	Notify handler.
  */
 static void
-vald_acpi_notify_handler(ACPI_HANDLE handle, UINT32 notify,
-    void *context)
+vald_acpi_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 {
 	struct vald_acpi_softc *sc = context;
-	ACPI_STATUS rv;
 
 	switch (notify) {
+
 	case ACPI_NOTIFY_ValdStatusChanged:
-#ifdef VALD_ACPI_DEBUG
-		printf("%s: received ValdStatusChanged message.\n",
-		    device_xname(sc->sc_dev));
-#endif /* VALD_ACPI_DEBUG */
-
-		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, vald_acpi_event, sc);
-
-		if (ACPI_FAILURE(rv))
-			aprint_error_dev(sc->sc_dev, "WARNING: unable to queue vald change "
-			    "event: %s\n", AcpiFormatException(rv));
+		(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, vald_acpi_event, sc);
 		break;
 
 	default:
-		aprint_error_dev(sc->sc_dev, "received unknown notify messages: 0x%x\n",
-		    notify);
+		aprint_error_dev(sc->sc_dev,
+		    "unknown notify 0x%02X\n", notify);
 		break;
 	}
 }
@@ -293,10 +282,7 @@ vald_acpi_event(void *arg)
 		rv = vald_acpi_ghci_get(sc, GHCI_SYSTEM_EVENT_FIFO, &value,
 		    &result);
 		if (ACPI_SUCCESS(rv) && result == 0) {
-#ifdef VALD_ACPI_DEBUG
-			printf("%s: System Event %x\n", device_xname(sc->sc_dev),
-			    value);
-#endif
+
 			switch (value) {
 			case 0x1c3: /* Fn + F9 */
 				break;
@@ -350,7 +336,7 @@ vald_acpi_ghci_get(struct vald_acpi_softc *sc,
 	ArgList.Pointer = Arg;
 
 	buf.Pointer = NULL;
-	buf.Length = ACPI_ALLOCATE_BUFFER;
+	buf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 
 	rv = AcpiEvaluateObject(sc->sc_node->ad_handle,
 	    "GHCI", &ArgList, &buf);
@@ -374,7 +360,7 @@ vald_acpi_ghci_get(struct vald_acpi_softc *sc,
 	}
 
 	if (buf.Pointer)
-		AcpiOsFree(buf.Pointer);
+		ACPI_FREE(buf.Pointer);
 	return (rv);
 }
 
@@ -408,7 +394,7 @@ vald_acpi_ghci_set(struct vald_acpi_softc *sc,
 	ArgList.Pointer = Arg;
 
 	buf.Pointer = NULL;
-	buf.Length = ACPI_ALLOCATE_BUFFER;
+	buf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 
 	rv = AcpiEvaluateObject(sc->sc_node->ad_handle,
 	    "GHCI", &ArgList, &buf);
@@ -427,7 +413,7 @@ vald_acpi_ghci_set(struct vald_acpi_softc *sc,
 	}
 
 	if (buf.Pointer)
-		AcpiOsFree(buf.Pointer);
+		ACPI_FREE(buf.Pointer);
 	return (rv);
 }
 
@@ -457,10 +443,10 @@ vald_acpi_libright_get_bus(ACPI_HANDLE handle, UINT32 level,
 		printf("_BCL retrun: %d packages\n", param->Package.Count);
 
 		sc->lcd_num = param->Package.Count;
-		sc->lcd_level = AcpiOsAllocate(sizeof(int) * sc->lcd_num);
+		sc->lcd_level = ACPI_ALLOCATE(sizeof(int) * sc->lcd_num);
 		if (sc->lcd_level == NULL) {
 			if (buf.Pointer)
-				AcpiOsFree(buf.Pointer);
+				ACPI_FREE(buf.Pointer);
 			return (AE_NO_MEMORY);
 		}
 
@@ -490,7 +476,7 @@ vald_acpi_libright_get_bus(ACPI_HANDLE handle, UINT32 level,
 	}
 
 	if (buf.Pointer)
-		AcpiOsFree(buf.Pointer);
+		ACPI_FREE(buf.Pointer);
 	return (AE_OK);
 }
 
@@ -668,20 +654,7 @@ vald_acpi_bcm_set(ACPI_HANDLE handle, UINT32 bright)
 static ACPI_STATUS
 vald_acpi_dssx_set(UINT32 value)
 {
-	ACPI_STATUS rv;
-	ACPI_OBJECT Arg;
-	ACPI_OBJECT_LIST ArgList;
-
-	ArgList.Count = 1;
-	ArgList.Pointer = &Arg;
-
-	Arg.Type = ACPI_TYPE_INTEGER;
-	Arg.Integer.Value = value;
-
-	rv = AcpiEvaluateObject(ACPI_ROOT_OBJECT, "\\_SB_.VALX.DSSX",
-	    &ArgList, NULL);
-
-	return (rv);
+	return acpi_eval_set_integer(NULL, "\\_SB_.VALX.DSSX", value);
 }
 
 /*

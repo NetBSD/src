@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.26.44.3 2009/09/16 13:37:41 yamt Exp $	*/
+/*	$NetBSD: bus.c,v 1.26.44.4 2010/03/11 15:02:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.26.44.3 2009/09/16 13:37:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.26.44.4 2010/03/11 15:02:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,8 @@ _bus_dmamap_load_buffer(bus_dmamap_t map, void *buf, bus_size_t buflen,
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
 	vaddr_t vaddr = (vaddr_t)buf;
-	int seg;
+	paddr_t pa;
+	size_t seg;
 
 	lastaddr = *lastaddrp;
 	bmask  = ~(map->_dm_boundary - 1);
@@ -214,9 +215,10 @@ _bus_dmamap_load_buffer(bus_dmamap_t map, void *buf, bus_size_t buflen,
 		 */
 		if (!VMSPACE_IS_KERNEL_P(vm))
 			(void) pmap_extract(vm_map_pmap(&vm->vm_map),
-			    vaddr, &curaddr);
+			    vaddr, &pa);
 		else
-			curaddr = kvtophys(vaddr);
+			pa = kvtophys(vaddr);
+		curaddr = pa;
 
 		/*
 		 * Compute the segment size, and adjust counts.

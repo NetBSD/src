@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.6.18.4 2009/06/20 07:20:04 yamt Exp $	*/
+/*	$NetBSD: copy.S,v 1.6.18.5 2010/03/11 15:02:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-2001 Michael Shalayeff
+ * Copyright (c) 1998-2004 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,11 +43,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -104,30 +99,30 @@ LEAF_ENTRY_NOPROFILE(name)			! \
 	ldil	L%VM_MAXUSER_ADDRESS, %t1	! \
 	comb,>>= %arg0, %t1, fusubadaddr	! \
 	mfctl	CR_CURLWP, %t1			! \
-	ldw	L_ADDR(%t1), %t1		! \
+	ldw	L_PCB(%t1), %t1			! \
 	ldil	L%fusufault, %t2		! \
 	ldo	R%fusufault(%t2), %t2		! \
-	ldw	U_PCB+PCB_ONFAULT(%t1), %t3	! \
-	stw	%t2, U_PCB+PCB_ONFAULT(%t1)	! \
-	ldw	U_PCB+PCB_SPACE(%t1), %t2	! \
+	ldw	PCB_ONFAULT(%t1), %t3		! \
+	stw	%t2, PCB_ONFAULT(%t1)		! \
+	ldw	PCB_SPACE(%t1), %t2		! \
 	mtsp	%t2, %sr1
 
 #define	FUX(name,insn)				  \
 	FUSUX(name)				! \
 	insn	0(%sr1, %arg0), %ret0		! \
 	bv	%r0(%rp)			! \
-	stw	%r0, U_PCB+PCB_ONFAULT(%t1)	! \
+	stw	%r0, PCB_ONFAULT(%t1)		! \
 EXIT(name)
 
 #define	SUX(name,insn)				  \
 	FUSUX(name)				! \
 	insn	%arg1, 0(%sr1, %arg0)		! \
 	bv	%r0(%rp)			! \
-	stw	%r0, U_PCB+PCB_ONFAULT(%t1)	! \
+	stw	%r0, PCB_ONFAULT(%t1)		! \
 EXIT(name)
 
 LEAF_ENTRY_NOPROFILE(fusufault)
-	stw	%r0, U_PCB+PCB_ONFAULT(%t1)
+	stw	%r0, PCB_ONFAULT(%t1)
 ALTENTRY(fusubadaddr)
 	bv	0(%rp)
 	ldi	-1, %ret0
@@ -146,7 +141,7 @@ SUX(suswintr, sth)
 
 LEAF_ENTRY_NOPROFILE(_copy_on_fault)
 	/* reset fault handler */
-	stw	%r0, PCB_ONFAULT+U_PCB(%r31)
+	stw	%r0, PCB_ONFAULT(%r31)
 ALTENTRY(copy_on_fault)
 	bv	0(%rp)
 	ldi	EFAULT, %ret0
@@ -163,10 +158,10 @@ EXIT(_copy_on_fault)
 LEAF_ENTRY(spstrcpy)
 	/* setup fault handler */
 	mfctl	CR_CURLWP, %r31
-	ldw	L_ADDR(%r31), %r31
+	ldw	L_PCB(%r31), %r31
 	ldil	L%_copy_on_fault, %t2
 	ldo	R%_copy_on_fault(%t2), %t2
-	stw	%t2, PCB_ONFAULT+U_PCB(%r31)
+	stw	%t2, PCB_ONFAULT(%r31)
 
 	ldw	HPPA_FRAME_ARG(4)(%sp), %ret1		/* size */
 	mfsp	%sr2, %ret0	/* XXX need this? */
@@ -183,7 +178,7 @@ L$spstrcpy_loop:
 
 L$spstrcpy_exit:
 	/* reset fault handler */
-	stw	%r0, PCB_ONFAULT+U_PCB(%r31)
+	stw	%r0, PCB_ONFAULT(%r31)
 	mtsp	%r0, %sr2	/* XXX need this? */
 	sub	%arg1, %arg0, %arg1
 	ldw	HPPA_FRAME_ARG(5)(%sp), %arg0		/* rsize */
@@ -234,8 +229,8 @@ EXIT(name)
 /* This loads curlwp's space into the given register. */
 #define SPACE_CURLWP(reg)			  \
 	mfctl	CR_CURLWP, reg			! \
-	ldw	L_ADDR(reg), reg		! \
-	ldw	U_PCB+PCB_SPACE(reg), reg
+	ldw	L_PCB(reg), reg			! \
+	ldw	PCB_SPACE(reg), reg
 
 /* This loads the kernel's space into the given register. */
 #define SPACE_KERNEL(reg)			  \
@@ -363,12 +358,12 @@ LEAF_ENTRY(ucas_32)
 
 	/* setup fault handler */
 	mfctl	CR_CURLWP, %r31
-	ldw	L_ADDR(%r31), %r31
+	ldw	L_PCB(%r31), %r31
 	ldil	L%_copy_on_fault, %t2
 	ldo	R%_copy_on_fault(%t2), %t2
-	stw	%t2, PCB_ONFAULT+U_PCB(%r31)
+	stw	%t2, PCB_ONFAULT(%r31)
 
-	ldw	U_PCB+PCB_SPACE(%r31), %t1
+	ldw	PCB_SPACE(%r31), %t1
 	mtsp	%t1, %sr1
 
 ucas_ras_start:

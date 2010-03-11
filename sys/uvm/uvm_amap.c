@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.84.10.2 2009/08/19 18:48:35 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.84.10.3 2010/03/11 15:04:46 yamt Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.84.10.2 2009/08/19 18:48:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.84.10.3 2010/03/11 15:04:46 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1280,7 +1280,6 @@ amap_swap_off(int startslot, int endslot)
 	struct vm_amap *am_next;
 	struct vm_amap marker_prev;
 	struct vm_amap marker_next;
-	struct lwp *l = curlwp;
 	bool rv = false;
 
 #if defined(DIAGNOSTIC)
@@ -1288,7 +1287,6 @@ amap_swap_off(int startslot, int endslot)
 	memset(&marker_next, 0, sizeof(marker_next));
 #endif /* defined(DIAGNOSTIC) */
 
-	uvm_lwp_hold(l);
 	mutex_enter(&amap_list_lock);
 	for (am = LIST_FIRST(&amap_list); am != NULL && !rv; am = am_next) {
 		int i;
@@ -1366,7 +1364,6 @@ next:
 		LIST_REMOVE(&marker_next, am_list);
 	}
 	mutex_exit(&amap_list_lock);
-	uvm_lwp_rele(l);
 
 	return rv;
 }

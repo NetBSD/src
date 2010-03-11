@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.68.10.2 2009/05/04 08:13:43 yamt Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.68.10.3 2010/03/11 15:04:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.68.10.2 2009/05/04 08:13:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.68.10.3 2010/03/11 15:04:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
-#include <sys/fstrans.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/lock.h>
@@ -366,38 +365,7 @@ puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 		}
 	}
 
-	/*
-	 * test for suspension lock.
-	 *
-	 * Note that we *DO NOT* keep the lock, since that might block
-	 * lock acquiring PLUS it would give userlandia control over
-	 * the lock.  The operation queue enforces a strict ordering:
-	 * when the fs server gets in the op stream, it knows things
-	 * are in order.  The kernel locks can't guarantee that for
-	 * userspace, in any case.
-	 *
-	 * BUT: this presents a problem for ops which have a consistency
-	 * clause based on more than one operation.  Unfortunately such
-	 * operations (read, write) do not reliably work yet.
-	 *
-	 * Ya, Ya, it's wrong wong wrong, me be fixink this someday.
-	 *
-	 * XXX: and there is one more problem.  We sometimes need to
-	 * take a lazy lock in case the fs is suspending and we are
-	 * executing as the fs server context.  This might happen
-	 * e.g. in the case that the user server triggers a reclaim
-	 * in the kernel while the fs is suspending.  It's not a very
-	 * likely event, but it needs to be fixed some day.
-	 */
-
-	/*
-	 * MOREXXX: once PUFFS_WCACHEINFO is enabled, we can't take
-	 * the mutex here, since getpages() might be called locked.
-	 */
-	fstrans_start(mp, FSTRANS_NORMAL);
 	mutex_enter(&pmp->pmp_lock);
-	fstrans_done(mp);
-
 	if (pmp->pmp_status != PUFFSTAT_RUNNING) {
 		mutex_exit(&pmp->pmp_lock);
 		park->park_flags |= PARKFLAG_HASERROR;
@@ -432,7 +400,6 @@ int
 puffs_msg_wait(struct puffs_mount *pmp, struct puffs_msgpark *park)
 {
 	struct puffs_req *preq = park->park_preq; /* XXX: hmmm */
-	struct mount *mp = PMPTOMP(pmp);
 	int error = 0;
 	int rv;
 
@@ -502,20 +469,6 @@ puffs_msg_wait(struct puffs_mount *pmp, struct puffs_msgpark *park)
 	} else {
 		rv = preq->preq_rv;
 		mutex_exit(&park->park_mtx);
-	}
-
-	/*
-	 * retake the lock and release.  This makes sure (haha,
-	 * I'm humorous) that we don't process the same vnode in
-	 * multiple threads due to the locks hacks we have in
-	 * puffs_lock().  In reality this is well protected by
-	 * the biglock, but once that's gone, well, hopefully
-	 * this will be fixed for real.  (and when you read this
-	 * comment in 2017 and subsequently barf, my condolences ;).
-	 */
-	if (rv == 0 && !fstrans_is_owner(mp)) {
-		fstrans_start(mp, FSTRANS_NORMAL);
-		fstrans_done(mp);
 	}
 
  skipwait:
@@ -799,63 +752,6 @@ puffsop_msg(void *this, struct puffs_req *preq)
 	puffs_msgpark_release1(park, 2);
 }
 
-/*
- * helpers
- */
-static void
-dosuspendresume(void *arg)
-{
-	struct puffs_mount *pmp = arg;
-	struct mount *mp;
-	int rv;
-
-	mp = PMPTOMP(pmp);
-	/*
-	 * XXX?  does this really do any good or is it just
-	 * paranoid stupidity?  or stupid paranoia?
-	 */
-	if (mp->mnt_iflag & IMNT_UNMOUNT) {
-		printf("puffs dosuspendresume(): detected suspend on "
-		    "unmounting fs\n");
-		goto out;
-	}
-
-	/* Do the dance.  Allow only one concurrent suspend */
-	rv = vfs_suspend(PMPTOMP(pmp), 1);
-	if (rv == 0)
-		vfs_resume(PMPTOMP(pmp));
-
- out:
-	mutex_enter(&pmp->pmp_lock);
-	KASSERT(pmp->pmp_suspend == 1);
-	pmp->pmp_suspend = 0;
-	puffs_mp_release(pmp);
-	mutex_exit(&pmp->pmp_lock);
-
-	kthread_exit(0);
-}
-
-static void
-puffsop_suspend(struct puffs_mount *pmp)
-{
-	int rv = 0;
-
-	mutex_enter(&pmp->pmp_lock);
-	if (pmp->pmp_suspend || pmp->pmp_status != PUFFSTAT_RUNNING) {
-		rv = EBUSY;
-	} else {
-		puffs_mp_reference(pmp);
-		pmp->pmp_suspend = 1;
-	}
-	mutex_exit(&pmp->pmp_lock);
-	if (rv)
-		return;
-	rv = kthread_create(PRI_NONE, 0, NULL, dosuspendresume,
-	    pmp, NULL, "puffsusp");
-
-	/* XXX: "return" rv */
-}
-
 static void
 puffsop_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 {
@@ -863,10 +759,7 @@ puffsop_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 	voff_t offlo, offhi;
 	int rv, flags = 0;
 
-	if (pf->pf_req.preq_pth.pth_framelen != sizeof(struct puffs_flush)) {
-		rv = EINVAL;
-		goto out;
-	}
+	KASSERT(pf->pf_req.preq_pth.pth_framelen == sizeof(struct puffs_flush));
 
 	/* XXX: slurry */
 	if (pf->pf_op == PUFFS_INVAL_NAMECACHE_ALL) {
@@ -949,8 +842,8 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 {
 	struct puffs_mount *pmp = this;
 	struct puffs_req *preq = (struct puffs_req *)pth;
+	struct puffs_sopreq *psopr;
 
-	/* XXX: need to send error to userspace */
 	if (pth->pth_framelen < sizeof(struct puffs_req)) {
 		puffs_msg_sendresp(pmp, preq, EINVAL); /* E2SMALL */
 		return 0;
@@ -962,21 +855,145 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 		DPRINTF(("dispatch: vn/vfs message 0x%x\n", preq->preq_optype));
 		puffsop_msg(pmp, preq);
 		break;
-	case PUFFSOP_FLUSH:
+
+	case PUFFSOP_FLUSH: /* process in sop thread */
+	{
+		struct puffs_flush *pf;
+
 		DPRINTF(("dispatch: flush 0x%x\n", preq->preq_optype));
-		puffsop_flush(pmp, (struct puffs_flush *)preq);
+
+		if (preq->preq_pth.pth_framelen != sizeof(struct puffs_flush)) {
+			puffs_msg_sendresp(pmp, preq, EINVAL); /* E2SMALL */
+			break;
+		}
+		pf = (struct puffs_flush *)preq;
+
+		psopr = kmem_alloc(sizeof(*psopr), KM_SLEEP);
+		memcpy(&psopr->psopr_pf, pf, sizeof(*pf));
+		psopr->psopr_sopreq = PUFFS_SOPREQ_FLUSH;
+
+		mutex_enter(&pmp->pmp_sopmtx);
+		if (pmp->pmp_sopthrcount == 0) {
+			mutex_exit(&pmp->pmp_sopmtx);
+			kmem_free(psopr, sizeof(*psopr));
+			puffs_msg_sendresp(pmp, preq, ENXIO);
+		} else {
+			TAILQ_INSERT_TAIL(&pmp->pmp_sopreqs,
+			    psopr, psopr_entries);
+			cv_signal(&pmp->pmp_sopcv);
+			mutex_exit(&pmp->pmp_sopmtx);
+		}
 		break;
-	case PUFFSOP_SUSPEND:
-		DPRINTF(("dispatch: suspend\n"));
-		puffsop_suspend(pmp);
+	}
+
+	case PUFFSOP_UNMOUNT: /* process in sop thread */
+	{
+
+		DPRINTF(("dispatch: unmount 0x%x\n", preq->preq_optype));
+
+		psopr = kmem_alloc(sizeof(*psopr), KM_SLEEP);
+		psopr->psopr_preq = *preq;
+		psopr->psopr_sopreq = PUFFS_SOPREQ_UNMOUNT;
+
+		mutex_enter(&pmp->pmp_sopmtx);
+		if (pmp->pmp_sopthrcount == 0) {
+			mutex_exit(&pmp->pmp_sopmtx);
+			kmem_free(psopr, sizeof(*psopr));
+			puffs_msg_sendresp(pmp, preq, ENXIO);
+		} else {
+			TAILQ_INSERT_TAIL(&pmp->pmp_sopreqs,
+			    psopr, psopr_entries);
+			cv_signal(&pmp->pmp_sopcv);
+			mutex_exit(&pmp->pmp_sopmtx);
+		}
 		break;
+	}
+
 	default:
 		DPRINTF(("dispatch: invalid class 0x%x\n", preq->preq_opclass));
-		puffs_msg_sendresp(pmp, preq, EINVAL);
+		puffs_msg_sendresp(pmp, preq, EOPNOTSUPP);
 		break;
 	}
 
 	return 0;
+}
+
+/*
+ * Work loop for thread processing all ops from server which
+ * cannot safely be handled in caller context.  This includes
+ * everything which might need a lock currently "held" by the file
+ * server, i.e. a long-term kernel lock which will be released only
+ * once the file server acknowledges a request
+ */
+void
+puffs_sop_thread(void *arg)
+{
+	struct puffs_mount *pmp = arg;
+	struct mount *mp = PMPTOMP(pmp);
+	struct puffs_sopreq *psopr;
+	bool keeprunning;
+	bool unmountme = false;
+
+	mutex_enter(&pmp->pmp_sopmtx);
+	for (keeprunning = true; keeprunning; ) {
+		while ((psopr = TAILQ_FIRST(&pmp->pmp_sopreqs)) == NULL)
+			cv_wait(&pmp->pmp_sopcv, &pmp->pmp_sopmtx);
+		TAILQ_REMOVE(&pmp->pmp_sopreqs, psopr, psopr_entries);
+		mutex_exit(&pmp->pmp_sopmtx);
+
+		switch (psopr->psopr_sopreq) {
+		case PUFFS_SOPREQSYS_EXIT:
+			keeprunning = false;
+			break;
+		case PUFFS_SOPREQ_FLUSH:
+			puffsop_flush(pmp, &psopr->psopr_pf);
+			break;
+		case PUFFS_SOPREQ_UNMOUNT:
+			puffs_msg_sendresp(pmp, &psopr->psopr_preq, 0);
+
+			unmountme = true;
+			keeprunning = false;
+
+			/*
+			 * We know the mountpoint is still alive because
+			 * the thread that is us (poetic?) is still alive.
+			 */
+			atomic_inc_uint((unsigned int*)&mp->mnt_refcnt);
+			break;
+		}
+
+		kmem_free(psopr, sizeof(*psopr));
+		mutex_enter(&pmp->pmp_sopmtx);
+	}
+
+	/*
+	 * Purge remaining ops.
+	 */
+	while ((psopr = TAILQ_FIRST(&pmp->pmp_sopreqs)) != NULL) {
+		TAILQ_REMOVE(&pmp->pmp_sopreqs, psopr, psopr_entries);
+		mutex_exit(&pmp->pmp_sopmtx);
+		puffs_msg_sendresp(pmp, &psopr->psopr_preq, ENXIO);
+		kmem_free(psopr, sizeof(*psopr));
+		mutex_enter(&pmp->pmp_sopmtx);
+	}
+
+	pmp->pmp_sopthrcount--;
+	cv_broadcast(&pmp->pmp_sopcv);
+	mutex_exit(&pmp->pmp_sopmtx); /* not allowed to access fs after this */
+
+	/*
+	 * If unmount was requested, we can now safely do it here, since
+	 * our context is dead from the point-of-view of puffs_unmount()
+	 * and we are just another thread.  dounmount() makes internally
+	 * sure that VFS_UNMOUNT() isn't called reentrantly and that it
+	 * is eventually completed.
+	 */
+	if (unmountme) {
+		(void)dounmount(mp, MNT_FORCE, curlwp);
+		vfs_destroy(mp);
+	}
+
+	kthread_exit(0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.18.10.1 2009/05/04 08:11:26 yamt Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.18.10.2 2010/03/11 15:02:34 yamt Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.18.10.1 2009/05/04 08:11:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.18.10.2 2010/03/11 15:02:34 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -124,7 +124,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.18.10.1 2009/05/04 08:11:26 yamt
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
 #include <sys/syslog.h>
-#include <sys/user.h>
 
 #include <machine/psl.h>
 #include <machine/cpu.h>

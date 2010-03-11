@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.102.4.2 2009/08/19 18:46:49 yamt Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.102.4.3 2010/03/11 15:03:06 yamt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.102.4.2 2009/08/19 18:46:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.102.4.3 2010/03/11 15:03:06 yamt Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_ultrix.h"
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.102.4.2 2009/08/19 18:46:49 yamt Ex
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>
 #include <sys/vnode.h>
@@ -96,10 +95,14 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct pcb *pcb;
+	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
 	struct callsframe *cf;
+	vaddr_t uv;
 	extern int sret; /* Return address in trap routine */
+
+	pcb1 = lwp_getpcb(l1);
+	pcb2 = lwp_getpcb(l2);
 
 #ifdef DIAGNOSTIC
 	/*
@@ -110,11 +113,17 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 #endif
 
 	/*
+	 * Clear new pcb
+	 */
+	memset(pcb2, 0, sizeof(*pcb2));
+
+	/*
 	 * Copy the trap frame.
 	 */
-	tf = (struct trapframe *)((u_int)l2->l_addr + USPACE) - 1;
-	l2->l_addr->u_pcb.framep = tf;
-	*tf = *(struct trapframe *)l1->l_addr->u_pcb.framep;
+	uv = uvm_lwp_getuarea(l2);
+	tf = (struct trapframe *)(uv + USPACE) - 1;
+	pcb2->framep = tf;
+	*tf = *(struct trapframe *)pcb1->framep;
 
 	/*
 	 * Activate address space for the new process.	The PTEs have
@@ -124,7 +133,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pmap_activate(l2);
 
 	/* Mark guard page invalid in kernel stack */
-	kvtopte((uintptr_t)l2->l_addr + REDZONEADDR)->pg_v = 0;
+	kvtopte((uintptr_t)uv + REDZONEADDR)->pg_v = 0;
 
 	/*
 	 * Set up the calls frame above (below) the trapframe and populate
@@ -143,21 +152,20 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * Set up internal defs in PCB. This matches the "fake" CALLS frame
 	 * that were constructed earlier.
 	 */
-	pcb = &l2->l_addr->u_pcb;
-	pcb->iftrap = NULL;
-	pcb->AP = (uintptr_t)&cf->ca_argno;
-	pcb->KSP = (uintptr_t)cf;
-	pcb->FP = (uintptr_t)cf;
-	pcb->PC = (uintptr_t)cpu_lwp_bootstrap + 2;
-	pcb->PSL = PSL_HIGHIPL;
-	pcb->ESP = (uintptr_t)&pcb->iftrap;
-	pcb->SSP = (uintptr_t)l2;
+	pcb2->iftrap = NULL;
+	pcb2->AP = (uintptr_t)&cf->ca_argno;
+	pcb2->KSP = (uintptr_t)cf;
+	pcb2->FP = (uintptr_t)cf;
+	pcb2->PC = (uintptr_t)cpu_lwp_bootstrap + 2;
+	pcb2->PSL = PSL_HIGHIPL;
+	pcb2->ESP = (uintptr_t)&pcb2->iftrap;
+	pcb2->SSP = (uintptr_t)l2;
 
 	/* pcb->R[0] (oldlwp) set by Swtchto */
-	pcb->R[1] = (uintptr_t)l2;
-	pcb->R[2] = (uintptr_t)func;
-	pcb->R[3] = (uintptr_t)arg;
-	pcb->pcb_paddr = kvtophys(pcb);
+	pcb2->R[1] = (uintptr_t)l2;
+	pcb2->R[2] = (uintptr_t)func;
+	pcb2->R[3] = (uintptr_t)arg;
+	pcb2->pcb_paddr = kvtophys(pcb2);
 
 	/*
 	 * If specified, give the child a different stack.
@@ -179,13 +187,14 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
-	struct trapframe *tf = (struct trapframe *)((u_int)l->l_addr + USPACE) - 1;
+	struct pcb *pcb = lwp_getpcb(l);
+	struct trapframe *tf;
 	struct callsframe *cf;
 	extern int sret;
 
 	panic("cpu_setfunc() called\n");
 
+	tf = (struct trapframe *)(uvm_lwp_getuarea(l) + USPACE) - 1;
 	cf = (struct callsframe *)tf - 1;
 	cf->ca_cond = 0;
 	cf->ca_maskpsw = 0x20000000;
@@ -200,6 +209,21 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	pcb->PC = (long)func + 2;
 }
 #endif
+
+void
+cpu_lwp_free(struct lwp *l, int proc)
+{
+
+	(void)l;
+	(void)proc;
+}
+
+void
+cpu_lwp_free2(struct lwp *l)
+{
+
+	(void)l;
+}
 
 #ifdef EXEC_AOUT
 int

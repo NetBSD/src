@@ -1,4 +1,4 @@
-/*	$NetBSD: kmem.h,v 1.3 2007/12/24 16:45:16 ad Exp $	*/
+/*	$NetBSD: kmem.h,v 1.3.10.1 2010/03/11 15:04:42 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -39,6 +39,7 @@ void kmem_free(void *, size_t);
 void kmem_init(void);
 size_t kmem_roundup_size(size_t);
 
+char *kmem_asprintf(const char *, ...);
 /*
  * km_flag_t
  *

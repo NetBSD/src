@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.27 2008/02/02 15:47:48 tsutsui Exp $
+$NetBSD: TODO,v 1.27.10.1 2010/03/11 15:02:02 yamt Exp $
 
 To do list (in some particular order)
 XXX some entries might be obsolete.
@@ -109,8 +109,6 @@ XXX some entries might be obsolete.
     o   Can we have 32 double registers?
 
     o	64bit kernel/userland
-
-    o	omit __SWAP_BROKEN in <mips/types.h>
 
     o	clean up ALEAF/NLEAF/NON_LEAF/NNON_LEAF in userland.
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.99.18.2 2009/09/16 13:38:06 yamt Exp $	*/
+/*	$NetBSD: malloc.h,v 1.99.18.3 2010/03/11 15:04:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -60,7 +60,6 @@ MALLOC_DECLARE(M_DEVBUF);
 MALLOC_DECLARE(M_DMAMAP);
 MALLOC_DECLARE(M_FREE);
 MALLOC_DECLARE(M_PCB);
-MALLOC_DECLARE(M_SOFTINTR);
 MALLOC_DECLARE(M_TEMP);
 
 /* XXX These should all be declared elsewhere. */

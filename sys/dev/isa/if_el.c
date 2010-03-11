@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.80.4.2 2009/05/16 10:41:25 yamt Exp $	*/
+/*	$NetBSD: if_el.c,v 1.80.4.3 2010/03/11 15:03:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,10 +19,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.80.4.2 2009/05/16 10:41:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.80.4.3 2010/03/11 15:03:37 yamt Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -52,10 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.80.4.2 2009/05/16 10:41:25 yamt Exp $");
 #endif
 
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <sys/cpu.h>
 #include <sys/intr.h>
@@ -391,11 +388,9 @@ elstart(struct ifnet *ifp)
 		if (m0 == 0)
 			break;
 
-#if NBPFILTER > 0
 		/* Give the packet to the bpf, if any. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 		/* Disable the receiver. */
 		bus_space_write_1(iot, ioh, EL_AC, EL_AC_HOST);
@@ -598,14 +593,12 @@ elread(struct el_softc *sc, int len)
 
 	ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	(*ifp->if_input)(ifp, m);
 }

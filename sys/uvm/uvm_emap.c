@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_emap.c,v 1.2.2.4 2009/09/16 13:38:08 yamt Exp $	*/
+/*	$NetBSD: uvm_emap.c,v 1.2.2.5 2010/03/11 15:04:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.2.2.4 2009/09/16 13:38:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.2.2.5 2010/03/11 15:04:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -354,7 +354,7 @@ uvm_emap_enter(vaddr_t va, struct vm_page **pgs, u_int npages)
 
 	for (n = 0; n < npages; n++, va += PAGE_SIZE) {
 		pa = VM_PAGE_TO_PHYS(pgs[n]);
-		pmap_kenter_pa(va, pa, VM_PROT_READ);
+		pmap_kenter_pa(va, pa, VM_PROT_READ, 0);
 	}
 	pmap_update(pmap_kernel());
 }

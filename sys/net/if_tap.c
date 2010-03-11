@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.42.2.4 2009/09/16 13:38:01 yamt Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.42.2.5 2010/03/11 15:04:27 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,10 +33,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.42.2.4 2009/09/16 13:38:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.42.2.5 2010/03/11 15:04:27 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "bpfilter.h"
+
 #include "opt_modular.h"
 #include "opt_compat_netbsd.h"
 #endif
@@ -68,9 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.42.2.4 2009/09/16 13:38:01 yamt Exp $")
 #include <net/if_ether.h>
 #include <net/if_media.h>
 #include <net/if_tap.h>
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <compat/sys/sockio.h>
 
@@ -161,7 +159,7 @@ static const struct fileops tap_fileops = {
 	.fo_stat = tap_fops_stat,
 	.fo_close = tap_fops_close,
 	.fo_kqfilter = tap_fops_kqfilter,
-	.fo_drain = fnullop_drain,
+	.fo_restart = fnullop_restart,
 };
 
 /* Helper for cloning open() */
@@ -483,10 +481,8 @@ tap_start(struct ifnet *ifp)
 				return;
 
 			ifp->if_opackets++;
-#if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m0);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 			m_freem(m0);
 		}
@@ -855,10 +851,9 @@ tap_dev_close(struct tap_softc *sc)
 				break;
 
 			ifp->if_opackets++;
-#if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m);
+			m_freem(m);
 		}
 	}
 	splx(s);
@@ -951,10 +946,8 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 	}
 
 	ifp->if_opackets++;
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	/*
 	 * One read is one packet.
@@ -1065,10 +1058,8 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 	ifp->if_ipackets++;
 	m->m_pkthdr.rcvif = ifp;
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 	s =splnet();
 	(*ifp->if_input)(ifp, m);
 	splx(s);

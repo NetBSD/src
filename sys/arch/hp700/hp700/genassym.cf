@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.15.10.2 2009/05/16 10:41:13 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.15.10.3 2010/03/11 15:02:23 yamt Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -43,7 +43,6 @@ include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/msgbuf.h>
 include <sys/syscall.h>
-include <sys/user.h>
 include <sys/mutex.h>
 include <sys/rwlock.h>
 include <sys/device.h>
@@ -178,7 +177,7 @@ member	P_MD		p_md
 struct	lwp
 member	L_PROC		l_proc
 member	L_CPU		l_cpu
-member	L_ADDR		l_addr
+member	L_PCB		l_addr
 member	L_PRIORITY	l_priority
 member	L_STAT		l_stat
 member	L_WCHAN		l_wchan
@@ -192,9 +191,6 @@ member	PCB_ONFAULT	pcb_onfault
 member	PCB_SPACE	pcb_space
 member	PCB_UVA		pcb_uva
 member	PCB_KSP		pcb_ksp
-
-struct	user
-member	U_PCB		u_pcb
 
 # system calls
 export	SYSCALLGATE

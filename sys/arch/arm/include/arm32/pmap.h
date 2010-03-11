@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.84.10.4 2009/09/16 13:37:36 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.84.10.5 2010/03/11 15:02:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -268,8 +268,6 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
-#define	pmap_remove(pmap,sva,eva)	pmap_do_remove((pmap),(sva),(eva),0)
-
 #define	pmap_is_modified(pg)	\
 	(((pg)->mdpage.pvh_attrs & PVF_MOD) != 0)
 #define	pmap_is_referenced(pg)	\
@@ -464,6 +462,9 @@ void	pmap_pte_init_arm9(void);
 #if defined(CPU_ARM10)
 void	pmap_pte_init_arm10(void);
 #endif /* CPU_ARM10 */
+#if defined(CPU_ARM11)
+void	pmap_pte_init_arm11(void);
+#endif /* CPU_ARM11 */
 #endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0 */
 
 #if ARM_MMU_SA1 == 1

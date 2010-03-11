@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.55.4.3 2009/06/20 07:20:22 yamt Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.55.4.4 2010/03/11 15:03:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,13 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.55.4.3 2009/06/20 07:20:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.55.4.4 2010/03/11 15:03:35 yamt Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,10 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.55.4.3 2009/06/20 07:20:22 yamt Exp $
 #include <netinet/if_inarp.h>
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <sys/bus.h>
 #include <sys/cpu.h>
@@ -288,7 +285,7 @@ bah_reset(struct bah_softc *sc)
 
 #ifdef BAH_DEBUG
 	printf("%s: reset: bits cleared, status=0x%02x\n",
-	    device_xname(&sc->sc_dev), GETREG(BAHSTAT);
+	    device_xname(&sc->sc_dev), GETREG(BAHSTAT));
 #endif
 
 	sc->sc_reconcount_excessive = ARC_EXCESSIVE_RECONS;
@@ -304,7 +301,7 @@ bah_reset(struct bah_softc *sc)
 
 #ifdef BAH_DEBUG
 	printf("%s: reset: started receiver, status=0x%02x\n",
-	    device_xname(&sc->sc_dev), GETREG(BAHSTAT);
+	    device_xname(&sc->sc_dev), GETREG(BAHSTAT));
 #endif
 
 	/* and init transmitter status */
@@ -384,7 +381,6 @@ bah_start(struct ifnet *ifp)
 	if (m == 0)
 		return;
 
-#if NBPFILTER > 0
 	/*
 	 * If bpf is listening on this interface, let it
 	 * see the packet before we commit it to the wire
@@ -393,8 +389,7 @@ bah_start(struct ifnet *ifp)
 	 * that RAM is just accessed as on every other byte)
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 #ifdef BAH_DEBUG
 	if (m->m_len < ARC_HDRLEN)
@@ -606,10 +601,8 @@ bah_srint(void *vsc)
 		len -= len1;
 	}
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, head);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, head);
 
 	(*sc->sc_arccom.ac_if.if_input)(&sc->sc_arccom.ac_if, head);
 
@@ -845,7 +838,7 @@ bahintr(void *arg)
 					printf("%s: strt rx for buf %ld, "
 					    "stat 0x%02x\n",
 					    device_xname(&sc->sc_dev), sc->sc_rx_act,
-					    GETREG(BAHSTAT);
+					    GETREG(BAHSTAT));
 #endif
 				}
 

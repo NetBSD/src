@@ -1,0 +1,11 @@
+# $NetBSD: MALTA32,v 1.2.4.2 2010/03/11 15:02:19 yamt Exp $
+#
+include "arch/evbmips/conf/MALTA"
+
+makeoptions	LP64="no"
+
+no options	MIPS32
+#options 	EXEC_ELF64
+
+no ath*
+

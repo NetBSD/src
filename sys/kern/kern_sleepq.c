@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.27.2.2 2009/05/04 08:13:47 yamt Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.27.2.3 2010/03/11 15:04:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.27.2.2 2009/05/04 08:13:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.27.2.3 2010/03/11 15:04:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -93,11 +93,9 @@ sleepq_init(sleepq_t *sq)
 /*
  * sleepq_remove:
  *
- *	Remove an LWP from a sleep queue and wake it up.  Return non-zero if
- *	the LWP is swapped out; if so the caller needs to awaken the swapper
- *	to bring the LWP into memory.
+ *	Remove an LWP from a sleep queue and wake it up.
  */
-int
+void
 sleepq_remove(sleepq_t *sq, lwp_t *l)
 {
 	struct schedstate_percpu *spc;
@@ -121,7 +119,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	if (l->l_stat != LSSLEEP) {
 		KASSERT(l->l_stat == LSSTOP || l->l_stat == LSSUSPENDED);
 		lwp_setlock(l, spc->spc_lwplock);
-		return 0;
+		return;
 	}
 
 	/*
@@ -132,7 +130,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 		l->l_stat = LSONPROC;
 		l->l_slptime = 0;
 		lwp_setlock(l, spc->spc_lwplock);
-		return 0;
+		return;
 	}
 
 	/* Update sleep time delta, call the wake-up handler of scheduler */
@@ -156,13 +154,8 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	sched_setrunnable(l);
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
-	if ((l->l_flag & LW_INMEM) != 0) {
-		sched_enqueue(l, false);
-		spc_unlock(ci);
-		return 0;
-	}
+	sched_enqueue(l, false);
 	spc_unlock(ci);
-	return 1;
 }
 
 /*
@@ -314,7 +307,6 @@ lwp_t *
 sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 {
 	lwp_t *l, *next;
-	int swapin = 0;
 
 	KASSERT(mutex_owned(mp));
 
@@ -324,20 +316,12 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 		next = TAILQ_NEXT(l, l_sleepchain);
 		if (l->l_wchan != wchan)
 			continue;
-		swapin |= sleepq_remove(sq, l);
+		sleepq_remove(sq, l);
 		if (--expected == 0)
 			break;
 	}
 
 	mutex_spin_exit(mp);
-
-	/*
-	 * If there are newly awakend threads that need to be swapped in,
-	 * then kick the swapper into action.
-	 */
-	if (swapin)
-		uvm_kick_scheduler();
-
 	return l;
 }
 
@@ -348,25 +332,19 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
  *	sleepq_unsleep() is called with the LWP's mutex held, and will
  *	always release it.
  */
-u_int
+void
 sleepq_unsleep(lwp_t *l, bool cleanup)
 {
 	sleepq_t *sq = l->l_sleepq;
 	kmutex_t *mp = l->l_mutex;
-	int swapin;
 
 	KASSERT(lwp_locked(l, mp));
 	KASSERT(l->l_wchan != NULL);
 
-	swapin = sleepq_remove(sq, l);
-
+	sleepq_remove(sq, l);
 	if (cleanup) {
 		mutex_spin_exit(mp);
-		if (swapin)
-			uvm_kick_scheduler();
 	}
-
-	return swapin;
 }
 
 /*

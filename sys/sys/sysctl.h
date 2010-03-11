@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.175.6.4 2009/09/16 13:38:06 yamt Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.175.6.5 2010/03/11 15:04:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -552,7 +552,7 @@ struct kinfo_proc2 {
 	int32_t	p_vm_dsize;		/* SEGSZ_T: data size (pages) */
 	int32_t	p_vm_ssize;		/* SEGSZ_T: stack size (pages) */
 
-	int64_t	p_uvalid;		/* CHAR: following p_u* members from struct user are valid */
+	int64_t	p_uvalid;		/* CHAR: following p_u* parameters are valid */
 					/* XXX 64 bits for alignment */
 	uint32_t p_ustart_sec;		/* STRUCT TIMEVAL: starting time. */
 	uint32_t p_ustart_usec;		/* STRUCT TIMEVAL: starting time. */
@@ -1129,6 +1129,7 @@ void	fill_eproc(struct proc *, struct eproc *, bool);
  * subsystem setup
  */
 void	sysctl_init(void);
+void	sysctl_finalize(void);
 
 /*
  * typical syscall call order

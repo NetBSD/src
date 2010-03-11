@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_sparse.c,v 1.14.62.1 2008/05/16 02:21:53 yamt Exp $	*/
+/*	$NetBSD: bus_space_sparse.c,v 1.14.62.2 2010/03/11 15:02:03 yamt Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.14.62.1 2008/05/16 02:21:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.14.62.2 2010/03/11 15:02:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,8 @@ arc_sparse_bus_space_compose_handle(bus_space_tag_t bst, bus_addr_t addr,
 			      start, end);
 		for (va = vaddr; start < end;
 		     start += PAGE_SIZE, va += PAGE_SIZE)
-			pmap_kenter_pa(va, start, VM_PROT_READ|VM_PROT_WRITE);
+			pmap_kenter_pa(va, start,
+			    VM_PROT_READ|VM_PROT_WRITE, 0);
 		pmap_update(pmap_kernel());
 		vaddr += (offset & PGOFSET);
 		if (cacheable)

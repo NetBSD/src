@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26.4.2 2009/05/16 10:41:13 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26.4.3 2010/03/11 15:02:23 yamt Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26.4.2 2009/05/16 10:41:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26.4.3 2010/03/11 15:02:23 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -120,7 +120,11 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26.4.2 2009/05/16 10:41:13 yamt Exp $
 #include <hp700/dev/cpudevs.h>
 #include <hp700/gsc/gscbusvar.h>
 
-register_t	kpsw = PSW_Q | PSW_P | PSW_C | PSW_D;
+register_t	kpsw = 
+	PSW_Q |		/* Interrupt State Collection Enable */
+	PSW_P |		/* Protection Identifier Validation Enable */
+	PSW_C |		/* Instruction Address Translation Enable */
+	PSW_D;		/* Data Address Translation Enable */
 
 /*
  * LED blinking thing
@@ -333,7 +337,7 @@ device_register(device_t dev, void *aux)
 	 * is the HPA or device path (DP) to get the boot device.
 	 * If the boot device is a SCSI device below a GSC attached SCSI
 	 * controller PAGE0->mem_boot.pz_hpa contains the HPA of the SCSI
-	 * controller. In that case we remember the the pointer to the
+	 * controller. In that case we remember the pointer to the
 	 * controller's struct dev in boot_device. The SCSI device is located
 	 * later, see below.
 	 */
@@ -344,7 +348,7 @@ device_register(device_t dev, void *aux)
 		boot_device = dev;
 	/*
 	 * If the boot device is a PCI device the HPA is the address where the
-	 * firmware has maped the PCI memory of the PCI device. This is quite
+	 * firmware has mapped the PCI memory of the PCI device. This is quite
 	 * device dependent, so we compare the DP. It encodes the bus routing
 	 * information to the PCI bus bridge in the DP head and the PCI device
 	 * and PCI function in the last two DP components. So we compare the
@@ -356,7 +360,7 @@ device_register(device_t dev, void *aux)
 	 * on a match. In case of a SCSI boot device we have to do the same
 	 * check when SCSI devices are attached like on GSC SCSI controllers.
 	 */
-	if (device_is_a(dev, "dino")) {
+	if (device_is_a(dev, "dino") || device_is_a(dev, "elroy")) {
 		struct confargs *ca = (struct confargs *)aux;
 		int i, n;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.139.2.3 2009/06/20 07:20:31 yamt Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.139.2.4 2010/03/11 15:04:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.139.2.3 2009/06/20 07:20:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.139.2.4 2010/03/11 15:04:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,71 @@ rlim_t maxsmap = MAXSSIZ;
 static pool_cache_t	plimit_cache;
 static pool_cache_t	pstats_cache;
 
+static kauth_listener_t	resource_listener;
+
+static int
+resource_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	struct proc *p;
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+	p = arg0;
+
+	switch (action) {
+	case KAUTH_PROCESS_NICE:
+		if (kauth_cred_geteuid(cred) != kauth_cred_geteuid(p->p_cred) &&
+                    kauth_cred_getuid(cred) != kauth_cred_geteuid(p->p_cred)) {
+                        break;
+                }
+
+                if ((u_long)arg1 >= p->p_nice)
+                        result = KAUTH_RESULT_ALLOW;
+
+		break;
+
+	case KAUTH_PROCESS_RLIMIT: {
+		enum kauth_process_req req;
+
+		req = (enum kauth_process_req)(unsigned long)arg1;
+
+		switch (req) {
+		case KAUTH_REQ_PROCESS_RLIMIT_GET:
+			result = KAUTH_RESULT_ALLOW;
+			break;
+
+		case KAUTH_REQ_PROCESS_RLIMIT_SET: {
+			struct rlimit *new_rlimit;
+			u_long which;
+
+			if ((p != curlwp->l_proc) &&
+			    (proc_uidmatch(cred, p->p_cred) != 0))
+				break;
+
+			new_rlimit = arg2;
+			which = (u_long)arg3;
+
+			if (new_rlimit->rlim_max <= p->p_rlimit[which].rlim_max)
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
+			}
+
+		default:
+			break;
+		}
+
+		break;
+	}
+
+	default:
+		break;
+	}
+
+	return result;
+}
+
 void
 resource_init(void)
 {
@@ -77,6 +142,9 @@ resource_init(void)
 	    "plimitpl", NULL, IPL_NONE, NULL, NULL, NULL);
 	pstats_cache = pool_cache_init(sizeof(struct pstats), 0, 0, 0,
 	    "pstatspl", NULL, IPL_NONE, NULL, NULL, NULL);
+
+	resource_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
+	    resource_listener_cb, NULL);
 }
 
 /*
@@ -124,8 +192,6 @@ sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap,
 		if (who == 0)
 			who = (int)kauth_cred_geteuid(l->l_cred);
 		PROCLIST_FOREACH(p, &allproc) {
-			if ((p->p_flag & PK_MARKER) != 0)
-				continue;
 			mutex_enter(p->p_lock);
 			if (kauth_cred_geteuid(p->p_cred) ==
 			    (uid_t)who && p->p_nice < low)
@@ -195,8 +261,6 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 		if (who == 0)
 			who = (int)kauth_cred_geteuid(l->l_cred);
 		PROCLIST_FOREACH(p, &allproc) {
-			if ((p->p_flag & PK_MARKER) != 0)
-				continue;
 			mutex_enter(p->p_lock);
 			if (kauth_cred_geteuid(p->p_cred) ==
 			    (uid_t)SCARG(uap, who)) {

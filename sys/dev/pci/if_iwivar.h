@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwivar.h,v 1.15 2007/12/09 20:28:09 jmcneill Exp $ */
+/*	$NetBSD: if_iwivar.h,v 1.15.14.1 2010/03/11 15:03:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -153,7 +153,6 @@ struct iwi_softc {
 
 	int			sc_tx_timer;
 
-#if NBPFILTER > 0
 	struct bpf_if		*sc_drvbpf;
 
 	union {
@@ -169,7 +168,6 @@ struct iwi_softc {
 	} sc_txtapu;
 #define sc_txtap	sc_txtapu.th
 	int			sc_txtap_len;
-#endif
 };
 
 #define	sc_if	sc_ec.ec_if

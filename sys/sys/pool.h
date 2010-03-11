@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.62.10.3 2009/09/16 13:38:06 yamt Exp $	*/
+/*	$NetBSD: pool.h,v 1.62.10.4 2010/03/11 15:04:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,8 +63,7 @@ struct pool_allocator {
 	/* The following fields are for internal use only. */
 	kmutex_t	pa_lock;
 	TAILQ_HEAD(, pool) pa_list;	/* list of pools using this allocator */
-	int		pa_flags;
-#define	PA_INITIALIZED	0x01
+	uint32_t	pa_refcnt;	/* number of pools using this allocator */
 	int		pa_pagemask;
 	int		pa_pageshift;
 	struct vm_map *pa_backingmap;

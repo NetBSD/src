@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.42.10.3 2009/06/20 07:20:01 yamt Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.42.10.4 2010/03/11 15:02:07 yamt Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.42.10.3 2009/06/20 07:20:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.42.10.4 2010/03/11 15:02:07 yamt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -352,6 +352,14 @@ sacom_detach(device_t dev, int flags)
 	struct sacom_softc *sc = device_private(dev);
 	int maj, mn;
 
+	if (sc->sc_hwflags & (COM_HW_CONSOLE|COM_HW_KGDB))
+		return EBUSY;
+
+	if (sc->disable != NULL && sc->enabled != 0) {
+		(*sc->disable)(sc);
+		sc->enabled = 0;
+	}
+
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&sacom_cdevsw);
 
@@ -417,31 +425,14 @@ int
 sacom_activate(device_t dev, enum devact act)
 {
 	struct sacom_softc *sc = device_private(dev);
-	int s, rv = 0;
 
-	s = splserial();
-	COM_LOCK(sc);
 	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
-		if (sc->sc_hwflags & (COM_HW_CONSOLE|COM_HW_KGDB)) {
-			rv = EBUSY;
-			break;
-		}
-
-		if (sc->disable != NULL && sc->enabled != 0) {
-			(*sc->disable)(sc);
-			sc->enabled = 0;
-		}
-		break;
+		sc->enabled = 0;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-
-	COM_UNLOCK(sc);	
-	splx(s);
-	return rv;
 }
 
 void

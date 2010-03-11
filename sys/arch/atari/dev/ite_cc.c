@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.27.44.2 2009/08/19 18:46:02 yamt Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.27.44.3 2010/03/11 15:02:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.27.44.2 2009/08/19 18:46:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.27.44.3 2010/03/11 15:02:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -211,7 +211,7 @@ grfccattach(struct device *pdp, struct device *dp, void *auxp)
 	maj = cdevsw_lookup_major(&grf_cdevsw);
 
 	/*
-	 * Handle exeption case: early console init
+	 * Handle exception case: early console init
 	 */
 	if(dp == NULL) {
 		congrf.g_unit    = cfdata_grf->cf_unit;

@@ -1,4 +1,4 @@
-/* $NetBSD: uart.c,v 1.4.10.1 2009/05/04 08:11:30 yamt Exp $ */
+/* $NetBSD: uart.c,v 1.4.10.2 2010/03/11 15:02:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.4.10.1 2009/05/04 08:11:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.4.10.2 2010/03/11 15:02:37 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.4.10.1 2009/05/04 08:11:30 yamt Exp $");
 #include <sys/device.h>
 
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/kauth.h>

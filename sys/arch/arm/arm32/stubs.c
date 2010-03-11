@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.18.10.1 2009/05/04 08:10:39 yamt Exp $	*/
+/*	$NetBSD: stubs.c,v 1.18.10.2 2010/03/11 15:02:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.18.10.1 2009/05/04 08:10:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.18.10.2 2010/03/11 15:02:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ dodumpsys(void)
 		    	if ((len % (1024*1024)) == 0)
 		    		printf("%d ", len / (1024*1024));
 
-			pmap_kenter_pa(dumpspace, addr, VM_PROT_READ);
+			pmap_kenter_pa(dumpspace, addr, VM_PROT_READ, 0);
 			pmap_update(pmap_kernel());
 			error = (*bdev->d_dump)(dumpdev,
 			    blkno, (void *) dumpspace, PAGE_SIZE);

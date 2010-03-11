@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.37.4.6 2009/09/16 13:37:46 yamt Exp $	*/
+/*	$NetBSD: dk.c,v 1.37.4.7 2010/03/11 15:03:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.37.4.6 2009/09/16 13:37:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.37.4.7 2010/03/11 15:03:25 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -95,6 +95,7 @@ struct dkwedge_softc {
 static void	dkstart(struct dkwedge_softc *);
 static void	dkiodone(struct buf *);
 static void	dkrestart(void *);
+static void	dkminphys(struct buf *);
 
 static int	dklastclose(struct dkwedge_softc *);
 static int	dkwedge_detach(device_t, int);
@@ -1097,6 +1098,7 @@ static void
 dkstrategy(struct buf *bp)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(bp->b_dev);
+	uint64_t p_size, p_offset;
 	int s;
 
 	if (sc->sc_state != DKW_STATE_RUNNING) {
@@ -1108,12 +1110,15 @@ dkstrategy(struct buf *bp)
 	if (bp->b_bcount == 0)
 		goto done;
 
+	p_offset = sc->sc_offset << sc->sc_parent->dk_blkshift;
+	p_size   = sc->sc_size << sc->sc_parent->dk_blkshift;
+
 	/* Make sure it's in-range. */
-	if (bounds_check_with_mediasize(bp, DEV_BSIZE, sc->sc_size) <= 0)
+	if (bounds_check_with_mediasize(bp, DEV_BSIZE, p_size) <= 0)
 		goto done;
 
 	/* Translate it to the parent's raw LBA. */
-	bp->b_rawblkno = bp->b_blkno + sc->sc_offset;
+	bp->b_rawblkno = bp->b_blkno + p_offset;
 
 	/* Place it in the queue and start I/O on the unit. */
 	s = splbio();
@@ -1197,13 +1202,14 @@ dkstart(struct dkwedge_softc *sc)
  * dkiodone:
  *
  *	I/O to a wedge has completed; alert the top half.
- *	NOTE: Must be called at splbio()!
  */
 static void
 dkiodone(struct buf *bp)
 {
 	struct buf *obp = bp->b_private;
 	struct dkwedge_softc *sc = dkwedge_lookup(obp->b_dev);
+
+	int s = splbio();
 
 	if (bp->b_error != 0)
 		obp->b_error = bp->b_error;
@@ -1222,6 +1228,7 @@ dkiodone(struct buf *bp)
 
 	/* Kick the queue in case there is more work we can do. */
 	dkstart(sc);
+	splx(s);
 }
 
 /*
@@ -1242,6 +1249,23 @@ dkrestart(void *v)
 }
 
 /*
+ * dkminphys:
+ *
+ *	Call parent's minphys function.
+ */
+static void
+dkminphys(struct buf *bp)
+{
+	struct dkwedge_softc *sc = dkwedge_lookup(bp->b_dev);
+	dev_t dev;
+
+	dev = bp->b_dev;
+	bp->b_dev = sc->sc_pdev;
+	(*sc->sc_parent->dk_driver->d_minphys)(bp);
+	bp->b_dev = dev;
+}
+
+/*
  * dkread:		[devsw entry point]
  *
  *	Read from a wedge.
@@ -1254,8 +1278,7 @@ dkread(dev_t dev, struct uio *uio, int flags)
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
 
-	return (physio(dkstrategy, NULL, dev, B_READ,
-		       sc->sc_parent->dk_driver->d_minphys, uio));
+	return (physio(dkstrategy, NULL, dev, B_READ, dkminphys, uio));
 }
 
 /*
@@ -1271,8 +1294,7 @@ dkwrite(dev_t dev, struct uio *uio, int flags)
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
 
-	return (physio(dkstrategy, NULL, dev, B_WRITE,
-		       sc->sc_parent->dk_driver->d_minphys, uio));
+	return (physio(dkstrategy, NULL, dev, B_WRITE, dkminphys, uio));
 }
 
 /*
@@ -1347,7 +1369,7 @@ dksize(dev_t dev)
 		return (-1);
 	
 	if (sc->sc_state != DKW_STATE_RUNNING)
-		return (ENXIO);
+		return (-1);
 
 	mutex_enter(&sc->sc_dk.dk_openlock);
 	mutex_enter(&sc->sc_parent->dk_rawlock);
@@ -1381,7 +1403,7 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	int rv = 0;
 
 	if (sc == NULL)
-		return (-1);
+		return (ENXIO);
 	
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);

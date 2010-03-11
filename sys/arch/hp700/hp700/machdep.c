@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46.10.5 2009/08/19 18:46:15 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46.10.6 2010/03/11 15:02:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46.10.5 2009/08/19 18:46:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46.10.6 2010/03/11 15:02:23 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46.10.5 2009/08/19 18:46:15 yamt Exp $
 #include <sys/msgbuf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/sysctl.h>
@@ -242,19 +241,11 @@ u_int hppa_btlb_size_min, hppa_btlb_size_max;
 /*
  * Things for MI glue to stick on.
  */
-struct user *proc0paddr;
 struct extent *hp700_io_extent;
 static long hp700_io_extent_store[EXTENT_FIXED_STORAGE_SIZE(64) / sizeof(long)];
 
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;
-
-/*
- * Certain devices need DMA'able memory below the 16MB boundary.
- */
-#define	DMA24_SIZE	(128 * 1024)
-struct extent *dma24_ex;
-long dma24_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store = {
@@ -263,7 +254,6 @@ struct cpu_info cpu_info_store = {
 #endif
 };
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 void delay_init(void);
@@ -497,14 +487,6 @@ hppa_init(paddr_t start, void *bi)
 	msgbufaddr = (void *) vstart;
 	vstart += MSGBUFSIZE;
 	vstart = round_page(vstart);
-
-	/* Allocate the 24-bit DMA region. */
-	dma24_ex = extent_create("dma24", vstart, vstart + DMA24_SIZE, M_DEVBUF,
-	    (void *)dma24_ex_storage, sizeof(dma24_ex_storage),
-	    EX_NOCOALESCE|EX_NOWAIT);
-	vstart += DMA24_SIZE;
-	vstart = round_page(vstart);
-
 
 	if (usebtlb) {
 		/* Allocate and initialize the BTLB slots array. */
@@ -888,9 +870,6 @@ cpu_startup(void)
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, false, NULL);
-
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 #ifdef PMAPDEBUG
 	pmapdebug = opmapdebug;
@@ -1339,7 +1318,7 @@ hp700_pagezero_map(void)
 	was_mapped_before = pagezero_mapped;
 	if (!was_mapped_before) {
 		s = splhigh();
-		pmap_kenter_pa(0, 0, VM_PROT_ALL);
+		pmap_kenter_pa(0, 0, VM_PROT_ALL, 0);
 		pagezero_mapped = 1;
 		splx(s);
 	}
@@ -1642,7 +1621,7 @@ hppa_pim64_dump(int check_type)
 			PIM_BUS_BITS);
 		PIM_WORD("\nAssist Check", checks->pim_check_assist,
 			PIM_ASSIST_BITS);
-		printf("Assist State %u", checks->pim_check_assist_state);
+		printf("\nAssist State %u", checks->pim_check_assist_state);
 		printf("\nSystem Responder 0x%016lx",
 		        (unsigned long)checks->pim_check_responder);
 		printf("\nSystem Requestor 0x%016lx",
@@ -1835,11 +1814,12 @@ dumpsys(void)
 int
 kcopy(const void *from, void *to, size_t size)
 {
-	u_int oldh = curlwp->l_addr->u_pcb.pcb_onfault;
+	struct pcb *pcb = lwp_getpcb(curlwp);
+	u_int oldh = pcb->pcb_onfault;
 
-	curlwp->l_addr->u_pcb.pcb_onfault = (u_int)&copy_on_fault;
-	memcpy( to, from, size);
-	curlwp->l_addr->u_pcb.pcb_onfault = oldh;
+	pcb->pcb_onfault = (u_int)&copy_on_fault;
+	memcpy(to, from, size);
+	pcb->pcb_onfault = oldh;
 
 	return 0;
 }
@@ -1848,13 +1828,13 @@ kcopy(const void *from, void *to, size_t size)
  * Set registers on exec.
  */
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct proc *p = l->l_proc;
 	struct trapframe *tf = l->l_md.md_regs;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	pa_space_t space = pmap->pm_space;
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 
 	tf->tf_flags = TFF_SYS|TFF_LAST;
 	tf->tf_iioq_tail = 4 +

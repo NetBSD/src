@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.98.4.3 2009/07/18 14:53:12 yamt Exp $        */
+/*      $NetBSD: ukbd.c,v 1.98.4.4 2010/03/11 15:04:07 yamt Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.98.4.3 2009/07/18 14:53:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.98.4.4 2010/03/11 15:04:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +65,11 @@ __KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.98.4.3 2009/07/18 14:53:12 yamt Exp $");
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 
+#ifdef _KERNEL_OPT
 #include "opt_ukbd_layout.h"
 #include "opt_wsdisplay_compat.h"
 #include "opt_ddb.h"
+#endif /* _KERNEL_OPT */
 
 #ifdef UKBD_DEBUG
 #define DPRINTF(x)	if (ukbddebug) logprintf x
@@ -98,8 +100,10 @@ struct ukbd_data {
  *
  * See http://www.microsoft.com/whdc/archive/scancode.mspx
  *
- * Note: a real pckbd(4) has more complexity in it's
+ * Note: a real pckbd(4) has more complexity in its
  * protocol for some keys than this translation implements.
+ * For example, some keys generate Fake ShiftL events (e0 2a)
+ * before the actual key sequence.
  */
 Static const u_int8_t ukbd_trtab[256] = {
       NN,   NN,   NN,   NN, 0x1e, 0x30, 0x2e, 0x20, /* 00 - 07 */
@@ -416,19 +420,14 @@ int
 ukbd_activate(device_t self, enum devact act)
 {
 	struct ukbd_softc *sc = device_private(self);
-	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
-		if (sc->sc_wskbddev != NULL)
-			rv = config_deactivate(sc->sc_wskbddev);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 int

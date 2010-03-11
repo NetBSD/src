@@ -1,4 +1,4 @@
-/*        $NetBSD: netbsd-dm.h,v 1.3.8.3 2009/06/20 07:20:21 yamt Exp $      */
+/*        $NetBSD: netbsd-dm.h,v 1.3.8.4 2010/03/11 15:03:26 yamt Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -208,17 +208,6 @@
 #define DM_TABLE_STAT         "status"
 #define DM_TABLE_LENGTH       "length"
 #define DM_TABLE_PARAMS       "params"
-
-#define DM_TARGET_LINEAR_DEVICE "device"
-#define DM_TARGET_LINEAR_OFFSET "offset"
-
-#define DM_TARGET_STRIPE_DEVARRAY  "device_array"
-#define DM_TARGET_STRIPE_DEVICE    "device"
-#define DM_TARGET_STRIPE_OFFSET    "offset"
-#define DM_TARGET_STRIPE_STRIPES   "stripes"
-#define DM_TARGET_STRIPE_CHUNKSIZE "chunk_size"
-
-
 //#ifndef __LIB_DEVMAPPER__
 //#define DM_TABLE_DEPS         "deps"
 //#endif
@@ -266,31 +255,11 @@
  */
 #define DM_NOFLUSH_FLAG		(1 << 11) /* In */
 
-#ifdef __LIB_DEVMAPPER__
-
-#  define MAJOR(x) major((x))
-#  define MINOR(x) minor((x))
-#  define MKDEV(x,y) makedev((x),(y))
-
-/* Name of device-mapper driver in kernel */
-#define DM_NAME "dm"
-
-/* Types for nbsd_get_dm_major */
-#define DM_CHAR_MAJOR 1
-#define DM_BLOCK_MAJOR 2
-
-/* libdm_netbsd.c */
-int nbsd_get_dm_major(uint32_t *, int); /* Get dm device major numbers */
-
-int nbsd_dmi_add_cmd(const char *, prop_dictionary_t);
-int nbsd_dmi_add_version(const int [3], prop_dictionary_t);
-int nbsd_dm_add_uint(const char *, uint64_t, prop_dictionary_t);
-int nbsd_dm_add_str(const char *, char *, prop_dictionary_t );
-
-prop_dictionary_t nbsd_dm_parse_param(const char *, char *);
-
-struct dm_ioctl* nbsd_dm_dict_to_dmi(prop_dictionary_t, const int);
-
-#endif /* __LIB_DEVMAPPER__ */
+/*
+ * If set, any table information returned will relate to the inactive
+ * table instead of the live one.  Always check DM_INACTIVE_PRESENT_FLAG
+ * is set before using the data returned.
+ */
+#define DM_QUERY_INACTIVE_TABLE_FLAG    (1 << 12) /* In */
 
 #endif /* __NETBSD_DM_H__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.118.2.2 2009/05/04 08:14:18 yamt Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.118.2.3 2010/03/11 15:04:29 yamt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,8 +62,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.118.2.2 2009/05/04 08:14:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.118.2.3 2010/03/11 15:04:29 yamt Exp $");
 
+#include "opt_gateway.h"
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #include "opt_ipsec.h"
@@ -161,6 +162,7 @@ static struct m_tag *ip6_setdstifaddr(struct mbuf *, const struct in6_ifaddr *);
 
 static int ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
 static struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
+static void sysctl_net_inet6_ip6_setup(struct sysctllog **);
 
 /*
  * IP6 initialization: fill in IP6 protocol switch table.
@@ -172,6 +174,7 @@ ip6_init(void)
 	const struct ip6protosw *pr;
 	int i;
 
+	sysctl_net_inet6_ip6_setup(NULL);
 	pr = (const struct ip6protosw *)pffindproto(PF_INET6, IPPROTO_RAW, SOCK_RAW);
 	if (pr == 0)
 		panic("ip6_init");
@@ -1683,7 +1686,8 @@ sysctl_net_inet6_ip6_stats(SYSCTLFN_ARGS)
 	return (NETSTAT_SYSCTL(ip6stat_percpu, IP6_NSTATS));
 }
 
-SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")
+static void
+sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 {
 #ifdef RFC2292
 #define IS2292(x, y)	((in6p->in6p_flags & IN6P_RFC2292) ? (x) : (y))

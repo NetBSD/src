@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.64.4.2 2009/06/20 07:20:37 yamt Exp $	*/
+/*	$NetBSD: file.h,v 1.64.4.3 2010/03/11 15:04:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ struct file {
 		int	(*fo_stat)	(struct file *, struct stat *);
 		int	(*fo_close)	(struct file *);
 		int	(*fo_kqfilter)	(struct file *, struct knote *);
-		void	(*fo_drain)	(struct file *);
+		void	(*fo_restart)	(struct file *);
 		void	(*fo_spare1)	(void);
 		void	(*fo_spare2)	(void);
 	} *f_ops;
@@ -108,7 +108,7 @@ struct file {
 	LIST_ENTRY(file) f_list;	/* list of active files */
 	kmutex_t	f_lock;		/* lock on structure */
 	int		f_flag;		/* see fcntl.h */
-	u_int		f_unused1;	/* unused; was internal flags; FIF_* */
+	u_int		f_marker;	/* traversal marker (sysctl) */
 #define	DTYPE_VNODE	1		/* file */
 #define	DTYPE_SOCKET	2		/* communications endpoint */
 #define	DTYPE_PIPE	3		/* pipe */
@@ -162,7 +162,7 @@ int	fbadop_write(struct file *, off_t *, struct uio *, kauth_cred_t, int);
 int	fbadop_ioctl(struct file *, u_long, void *);
 int	fbadop_close(struct file *);
 int	fbadop_stat(struct file *, struct stat *);
-void	fnullop_drain(struct file *);
+void	fnullop_restart(struct file *);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.24.4.2 2009/09/16 13:37:58 yamt Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.24.4.3 2010/03/11 15:04:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,14 +73,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.24.4.2 2009/09/16 13:37:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.24.4.3 2010/03/11 15:04:05 yamt Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
 #include "rnd.h"
 #endif
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,11 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.24.4.2 2009/09/16 13:37:58 yamt Exp $")
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#define BPF_MTAP(ifp, m) bpf_mtap((ifp)->if_bpf, (m))
-
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #if defined(__NetBSD__)
 #include <net/if_ether.h>
@@ -426,15 +421,18 @@ axe_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp;
 	int i, s;
 
-	devinfop = usbd_devinfo_alloc(dev, 0);
+	sc->axe_dev = self;
+
 	aprint_naive("\n");
 	aprint_normal("\n");
-	sc->axe_dev = self;
+
+	devinfop = usbd_devinfo_alloc(dev, 0);
+	aprint_normal_dev(self, "%s\n", devinfop);
+	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, AXE_CONFIG_NO, 1);
 	if (err) {
 		aprint_error_dev(self, "getting interface handle failed\n");
-		usbd_devinfo_free(devinfop);
 		return;
 	}
 
@@ -445,7 +443,6 @@ axe_attach(device_t parent, device_t self, void *aux)
 	err = usbd_device2interface_handle(dev, AXE_IFACE_IDX, &sc->axe_iface);
 	if (err) {
 		aprint_error_dev(self, "getting interface handle failed\n");
-		usbd_devinfo_free(devinfop);
 		return;
 	}
 
@@ -454,9 +451,6 @@ axe_attach(device_t parent, device_t self, void *aux)
 	sc->axe_vendor = uaa->vendor;
 
 	id = usbd_get_interface_descriptor(sc->axe_iface);
-
-	aprint_normal_dev(self, "%s\n", devinfop);
-	usbd_devinfo_free(devinfop);
 
 	/* Find endpoints. */
 	for (i = 0; i < id->bNumEndpoints; i++) {
@@ -636,16 +630,13 @@ axe_activate(device_t self, enum devact act)
 	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->axe_dev), __func__));
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
 	case DVACT_DEACTIVATE:
 		if_deactivate(&sc->axe_ec.ec_if);
 		sc->axe_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 
 /*
@@ -840,10 +831,8 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto done1;
 	}
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		BPF_MTAP(ifp, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->axe_dev),
 		    __func__, m->m_len));
@@ -1022,10 +1011,8 @@ axe_start(struct ifnet *ifp)
 	 * If there's a BPF listener, bounce a copy of this frame
 	 * to him.
 	 */
-#if NBPFILTER > 0
 	 if (ifp->if_bpf)
-	 	BPF_MTAP(ifp, m_head);
-#endif
+	 	bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 
 	ifp->if_flags |= IFF_OACTIVE;
 
@@ -1342,4 +1329,3 @@ axe_stop(struct axe_softc *sc)
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
-

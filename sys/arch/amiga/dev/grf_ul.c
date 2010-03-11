@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.41.44.2 2009/05/04 08:10:34 yamt Exp $ */
+/*	$NetBSD: grf_ul.c,v 1.41.44.3 2010/03/11 15:02:00 yamt Exp $ */
 #define UL_DEBUG
 
 /*-
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.41.44.2 2009/05/04 08:10:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.41.44.3 2010/03/11 15:02:00 yamt Exp $");
 
 #include "grful.h"
 #if NGRFUL > 0
@@ -298,7 +298,7 @@ ul_load_code(struct grf_softc *gp)
 	 * into the real one some time after the TMS code is started below.
 	 * This might be considered a rude hack.
 	 */
-	memcpy( gup->gus_ovcmap, ul_ovl_palette, 3*4);
+	memcpy(gup->gus_ovcmap, ul_ovl_palette, 3*4);
 
 	/*
 	 * Unflush cache, unhalt CPU -> nmi starts to run. This MUST NOT BE
@@ -510,7 +510,7 @@ grfulattach(struct device *pdp, struct device *dp, void *auxp)
 		/*
 		 * inited earlier, just copy (not device struct)
 		 */
-		memcpy( &gp->g_display, &congrf.gus_sc.g_display,
+		memcpy(&gp->g_display, &congrf.gus_sc.g_display,
 		    (char *)&gup->gus_isr - (char *)&gp->g_display);
 
 		/* ...and transfer the isr */

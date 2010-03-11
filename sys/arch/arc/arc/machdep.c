@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.110.10.1 2009/05/04 08:10:36 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.110.10.2 2010/03/11 15:02:03 yamt Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,9 +78,8 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110.10.1 2009/05/04 08:10:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110.10.2 2010/03/11 15:02:03 yamt Exp $");
 
-#include "fs_mfs.h"
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
 #include "opt_md.h"
@@ -101,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110.10.1 2009/05/04 08:10:36 yamt Exp 
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/tty.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <uvm/uvm_extern.h>
 #include <sys/mount.h>
@@ -109,9 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110.10.1 2009/05/04 08:10:36 yamt Exp 
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
 #include <sys/ksyms.h>
-#ifdef MFS
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
-#endif
 
 #include <machine/bootinfo.h>
 #include <machine/cpu.h>
@@ -168,7 +164,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110.10.1 2009/05/04 08:10:36 yamt Exp 
 struct cpu_info cpu_info_store;
 
 /* maps for VM objects */
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int	maxmem;			/* max memory per process */
@@ -218,7 +213,6 @@ int	safepri = MIPS3_PSL_LOWIPL;
 const uint32_t *ipl_sr_bits;
 
 extern char kernel_text[], edata[], end[];
-extern struct user *proc0paddr;
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -233,7 +227,6 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	int i;
 	paddr_t kernstartpfn, kernendpfn, first, last;
 	char *kernend;
-	vaddr_t v;
 #if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
 	char *ssym = NULL;
 	char *esym = NULL;
@@ -405,14 +398,12 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	sprintf(cpu_model, "%s %s%s",
 	    platform->vendor, platform->model, platform->variant);
 
-#ifdef MFS
 	/*
 	 * Check to see if a mini-root was loaded into memory. It resides
 	 * at the start of the next page just after the end of BSS.
 	 */
 	if (boothowto & RB_MINIROOT)
 		kernend += round_page(mfs_initminiroot(kernend));
-#endif
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */
@@ -490,13 +481,10 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	pmap_bootstrap();
 
 	/*
-	 * Allocate space for proc0's USPACE.
+	 * Allocate uarea page for lwp0 and set it.
 	 */
-	v = uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	mips_init_lwp0_uarea();
+
 }
 
 void
@@ -626,7 +614,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* take a snap shot before clobbering any registers */
 	if (curlwp)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 #ifdef DEBUG
 	if (panicstr)

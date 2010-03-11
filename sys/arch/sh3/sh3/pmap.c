@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.66.20.3 2009/06/20 07:20:08 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.66.20.4 2010/03/11 15:02:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66.20.3 2009/06/20 07:20:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66.20.4 2010/03/11 15:02:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -575,7 +575,7 @@ __pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t vaddr)
 }
 
 void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	pt_entry_t *pte, entry;
 

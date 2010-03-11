@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.51.6.4 2009/09/16 13:37:45 yamt Exp $ */
+/* $NetBSD: cgd.c,v 1.51.6.5 2010/03/11 15:03:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.51.6.4 2009/09/16 13:37:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.51.6.5 2010/03/11 15:03:21 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.51.6.4 2009/09/16 13:37:45 yamt Exp $");
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/conf.h>
+#include <sys/syslog.h>
 
 #include <dev/dkvar.h>
 #include <dev/cgdvar.h>
@@ -75,13 +76,19 @@ const struct cdevsw cgd_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
+static int cgd_match(device_t, cfdata_t, void *);
+static void cgd_attach(device_t, device_t, void *);
+static int cgd_detach(device_t, int);
+static struct cgd_softc	*cgd_spawn(int);
+static int cgd_destroy(device_t);
+
 /* Internal Functions */
 
 static int	cgdstart(struct dk_softc *, struct buf *);
 static void	cgdiodone(struct buf *);
 
 static int	cgd_ioctl_set(struct cgd_softc *, void *, struct lwp *);
-static int	cgd_ioctl_clr(struct cgd_softc *, void *, struct lwp *);
+static int	cgd_ioctl_clr(struct cgd_softc *, struct lwp *);
 static int	cgdinit(struct cgd_softc *, const char *, struct vnode *,
 			struct lwp *);
 static void	cgd_cipher(struct cgd_softc *, void *, void *,
@@ -103,6 +110,10 @@ static struct dkdriver cgddkdriver = {
 	.d_strategy = cgdstrategy,
 	.d_minphys = minphys,
 };
+
+CFATTACH_DECL3_NEW(cgd, sizeof(struct cgd_softc),
+    cgd_match, cgd_attach, cgd_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
+extern struct cfdriver cgd_cd;
 
 /* DIAGNOSTIC and DEBUG definitions */
 
@@ -139,60 +150,106 @@ static void	hexprint(const char *, void *, int);
 
 /* Global variables */
 
-struct	cgd_softc *cgd_softc;
-int	numcgd = 0;
-
 /* Utility Functions */
 
 #define CGDUNIT(x)		DISKUNIT(x)
 #define GETCGD_SOFTC(_cs, x)	if (!((_cs) = getcgd_softc(x))) return ENXIO
 
+/* The code */
+
 static struct cgd_softc *
 getcgd_softc(dev_t dev)
 {
 	int	unit = CGDUNIT(dev);
+	struct cgd_softc *sc;
 
 	DPRINTF_FOLLOW(("getcgd_softc(0x%"PRIx64"): unit = %d\n", dev, unit));
-	if (unit >= numcgd)
-		return NULL;
-	return &cgd_softc[unit];
+
+	sc = device_lookup_private(&cgd_cd, unit);
+	if (sc == NULL)
+		sc = cgd_spawn(unit);
+	return sc;
 }
 
-/* The code */
+static int
+cgd_match(device_t self, cfdata_t cfdata, void *aux)
+{
+
+	return 1;
+}
 
 static void
-cgdsoftc_init(struct cgd_softc *cs, int num)
+cgd_attach(device_t parent, device_t self, void *aux)
 {
-	char	sbuf[DK_XNAME_SIZE];
+	struct cgd_softc *sc = device_private(self);
 
-	memset(cs, 0x0, sizeof(*cs));
-	snprintf(sbuf, DK_XNAME_SIZE, "cgd%d", num);
-	simple_lock_init(&cs->sc_slock);
-	dk_sc_init(&cs->sc_dksc, cs, sbuf);
-	disk_init(&cs->sc_dksc.sc_dkdev, cs->sc_dksc.sc_xname, &cgddkdriver);
+	sc->sc_dev = self;
+	simple_lock_init(&sc->sc_slock);
+	dk_sc_init(&sc->sc_dksc, sc, device_xname(sc->sc_dev));
+	disk_init(&sc->sc_dksc.sc_dkdev, sc->sc_dksc.sc_xname, &cgddkdriver);
+
+	 if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "unable to register power management hooks\n");
+}
+
+
+static int
+cgd_detach(device_t self, int flags)
+{
+	int ret;
+	const int pmask = 1 << RAW_PART;
+	struct cgd_softc *sc = device_private(self);
+	struct dk_softc *dksc = &sc->sc_dksc;
+
+	if (DK_BUSY(dksc, pmask))
+		return EBUSY;
+
+	if ((dksc->sc_flags & DKF_INITED) != 0 &&
+	    (ret = cgd_ioctl_clr(sc, curlwp)) != 0)
+		return ret;
+
+	disk_destroy(&dksc->sc_dkdev);
+
+	return 0;
 }
 
 void
 cgdattach(int num)
 {
-	int	i;
+	int error;
 
-	DPRINTF_FOLLOW(("cgdattach(%d)\n", num));
-	if (num <= 0) {
-		DIAGPANIC(("cgdattach: count <= 0"));
-		return;
-	}
+	error = config_cfattach_attach(cgd_cd.cd_name, &cgd_ca);
+	if (error != 0)
+		aprint_error("%s: unable to register cfattach\n",
+		    cgd_cd.cd_name);
+}
 
-	cgd_softc = (void *)malloc(num * sizeof(*cgd_softc), M_DEVBUF, M_NOWAIT);
-	if (!cgd_softc) {
-		printf("WARNING: unable to malloc(9) memory for crypt disks\n");
-		DIAGPANIC(("cgdattach: cannot malloc(9) enough memory"));
-		return;
-	}
+static struct cgd_softc *
+cgd_spawn(int unit)
+{
+	cfdata_t cf;
 
-	numcgd = num;
-	for (i=0; i<num; i++)
-		cgdsoftc_init(&cgd_softc[i], i);
+	cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
+	cf->cf_name = cgd_cd.cd_name;
+	cf->cf_atname = cgd_cd.cd_name;
+	cf->cf_unit = unit;
+	cf->cf_fstate = FSTATE_STAR;
+
+	return device_private(config_attach_pseudo(cf));
+}
+
+static int
+cgd_destroy(device_t dev)
+{
+	int error;
+	cfdata_t cf;
+
+	cf = device_cfdata(dev);
+	error = config_detach(dev, DETACH_QUIET);
+	if (error)
+		return error;
+	free(cf, M_DEVBUF);
+	return 0;
 }
 
 static int
@@ -208,11 +265,24 @@ cgdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 static int
 cgdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
+	int error;
 	struct	cgd_softc *cs;
+	struct	dk_softc *dksc;
 
 	DPRINTF_FOLLOW(("cgdclose(0x%"PRIx64", %d)\n", dev, flags));
 	GETCGD_SOFTC(cs, dev);
-	return dk_close(di, &cs->sc_dksc, dev, flags, fmt, l);
+	dksc = &cs->sc_dksc;
+	if ((error =  dk_close(di, dksc, dev, flags, fmt, l)) != 0)
+		return error;
+
+	if ((dksc->sc_flags & DKF_INITED) == 0) {
+		if ((error = cgd_destroy(cs->sc_dev)) != 0) {
+			aprint_error_dev(cs->sc_dev,
+			    "unable to detach instance\n");
+			return error;
+		}
+	}
+	return 0;
 }
 
 static void
@@ -344,13 +414,13 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	return 0;
 }
 
-/* expected to be called at splbio() */
 static void
 cgdiodone(struct buf *nbp)
 {
 	struct	buf *obp = nbp->b_private;
 	struct	cgd_softc *cs = getcgd_softc(obp->b_dev);
 	struct	dk_softc *dksc = &cs->sc_dksc;
+	int s;
 
 	KDASSERT(cs);
 
@@ -362,7 +432,8 @@ cgdiodone(struct buf *nbp)
 	    nbp->b_bcount));
 	if (nbp->b_error != 0) {
 		obp->b_error = nbp->b_error;
-		printf("%s: error %d\n", dksc->sc_xname, obp->b_error);
+		DPRINTF(CGDB_IO, ("%s: error %d\n", dksc->sc_xname,
+		    obp->b_error));
 	}
 
 	/* Perform the decryption if we are reading.
@@ -385,10 +456,12 @@ cgdiodone(struct buf *nbp)
 	obp->b_resid = 0;
 	if (obp->b_error != 0)
 		obp->b_resid = obp->b_bcount;
+	s = splbio();
 	disk_unbusy(&dksc->sc_dkdev, obp->b_bcount - obp->b_resid,
 	    (obp->b_flags & B_READ));
 	biodone(obp);
 	dk_iodone(di, dksc);
+	splx(s);
 }
 
 /* XXX: we should probably put these into dksubr.c, mostly */
@@ -428,7 +501,6 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct	cgd_softc *cs;
 	struct	dk_softc *dksc;
 	struct	disk *dk;
-	int	ret;
 	int	part = DISKPART(dev);
 	int	pmask = 1 << part;
 
@@ -447,22 +519,12 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 	case CGDIOCSET:
 		if (dksc->sc_flags & DKF_INITED)
-			ret = EBUSY;
-		else
-			ret = cgd_ioctl_set(cs, data, l);
-		break;
+			return EBUSY;
+		return cgd_ioctl_set(cs, data, l);
 	case CGDIOCCLR:
-		if (!(dksc->sc_flags & DKF_INITED)) {
-			ret = ENXIO;
-			break;
-		}
-		if (DK_BUSY(&cs->sc_dksc, pmask)) {
-			ret = EBUSY;
-			break;
-		}
-		ret = cgd_ioctl_clr(cs, data, l);
-		break;
-
+		if (DK_BUSY(&cs->sc_dksc, pmask))
+			return EBUSY;
+		return cgd_ioctl_clr(cs, l);
 	case DIOCCACHESYNC:
 		/*
 		 * XXX Do we really need to care about having a writable
@@ -474,15 +536,10 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		/*
 		 * We pass this call down to the underlying disk.
 		 */
-		ret = VOP_IOCTL(cs->sc_tvn, cmd, data, flag, l->l_cred);
-		break;
-
+		return VOP_IOCTL(cs->sc_tvn, cmd, data, flag, l->l_cred);
 	default:
-		ret = dk_ioctl(di, dksc, dev, cmd, data, flag, l);
-		break;
+		return dk_ioctl(di, dksc, dev, cmd, data, flag, l);
 	}
-
-	return ret;
 }
 
 static int
@@ -572,6 +629,12 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	cs->sc_cdata.cf_mode = encblkno[i].v;
 	cs->sc_cdata.cf_priv = cs->sc_cfuncs->cf_init(ci->ci_keylen, inbuf,
 	    &cs->sc_cdata.cf_blocksize);
+	if (cs->sc_cdata.cf_blocksize > CGD_MAXBLOCKSIZE) {
+	    log(LOG_WARNING, "cgd: Disallowed cipher with blocksize %zu > %u\n",
+		cs->sc_cdata.cf_blocksize, CGD_MAXBLOCKSIZE);
+	    cs->sc_cdata.cf_priv = NULL;
+	}
+		
 	/*
 	 * The blocksize is supposed to be in bytes. Unfortunately originally
 	 * it was expressed in bits. For compatibility we maintain encblkno
@@ -580,7 +643,6 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	cs->sc_cdata.cf_blocksize /= encblkno[i].d;
 	(void)memset(inbuf, 0, MAX_KEYSIZE);
 	if (!cs->sc_cdata.cf_priv) {
-		printf("cgd: unable to initialize cipher\n");
 		ret = EINVAL;		/* XXX is this the right error? */
 		goto bail;
 	}
@@ -597,7 +659,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	disk_attach(&cs->sc_dksc.sc_dkdev);
 
 	/* Try and read the disklabel. */
-	dk_getdisklabel(di, &cs->sc_dksc, 0 /* XXX ? */);
+	dk_getdisklabel(di, &cs->sc_dksc, 0 /* XXX ? (cause of PR 41704) */);
 
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&cs->sc_dksc.sc_dkdev);
@@ -612,9 +674,15 @@ bail:
 
 /* ARGSUSED */
 static int
-cgd_ioctl_clr(struct cgd_softc *cs, void *data, struct lwp *l)
+cgd_ioctl_clr(struct cgd_softc *cs, struct lwp *l)
 {
 	int	s;
+	struct	dk_softc *dksc;
+
+	dksc = &cs->sc_dksc;
+
+	if ((dksc->sc_flags & DKF_INITED) == 0)
+		return ENXIO;
 
 	/* Delete all of our wedges. */
 	dkwedge_delall(&cs->sc_dksc.sc_dkdev);
@@ -775,13 +843,9 @@ cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
 	struct iovec	dstiov[2];
 	struct iovec	srciov[2];
 	size_t		blocksize = cs->sc_cdata.cf_blocksize;
-	char		*sink;
-	char		*zero_iv;
-	char		*blkno_buf;
-
-	sink = malloc(blocksize * 3, M_DEVBUF, M_WAITOK);
-	zero_iv = &sink[blocksize];
-	blkno_buf = &zero_iv[blocksize];
+	char		sink[CGD_MAXBLOCKSIZE];
+	char		zero_iv[CGD_MAXBLOCKSIZE];
+	char		blkno_buf[CGD_MAXBLOCKSIZE];
 
 	DPRINTF_FOLLOW(("cgd_cipher() dir=%d\n", dir));
 
@@ -835,8 +899,6 @@ cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
 		src += secsize;
 		blkno++;
 	}
-
-	free(sink, M_DEVBUF);
 }
 
 #ifdef DEBUG
@@ -857,6 +919,7 @@ hexprint(const char *start, void *buf, int len)
 #include <sys/module.h>
 
 MODULE(MODULE_CLASS_DRIVER, cgd, NULL);
+CFDRIVER_DECL(cgd, DV_DISK, NULL);
 
 static int
 cgd_modcmd(modcmd_t cmd, void *arg)
@@ -865,14 +928,34 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 	
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		cgdattach(4);
+		error = config_cfdriver_attach(&cgd_cd);
+		if (error)
+			break;
+
+		error = config_cfattach_attach(cgd_cd.cd_name, &cgd_ca);
+	        if (error) {
+			config_cfdriver_detach(&cgd_cd);
+			aprint_error("%s: unable to register cfattach\n",
+			    cgd_cd.cd_name);
+			break;
+		}
 		
-		return devsw_attach("cgd", &cgd_bdevsw, &bmajor,
+		error = devsw_attach("cgd", &cgd_bdevsw, &bmajor,
 		    &cgd_cdevsw, &cmajor);
+		if (error) {
+			config_cfattach_detach(cgd_cd.cd_name, &cgd_ca);
+			config_cfdriver_detach(&cgd_cd);
+			break;
+		}
+		
 		break;
 
 	case MODULE_CMD_FINI:
-		return devsw_detach(&cgd_bdevsw, &cgd_cdevsw);
+		error = config_cfattach_detach(cgd_cd.cd_name, &cgd_ca);
+		if (error)
+			break;
+		config_cfdriver_detach(&cgd_cd);
+		devsw_detach(&cgd_bdevsw, &cgd_cdevsw);
 		break;
 
 	case MODULE_CMD_STAT:

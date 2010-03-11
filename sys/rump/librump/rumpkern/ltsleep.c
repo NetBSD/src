@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.6.10.3 2009/09/16 13:38:05 yamt Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.6.10.4 2010/03/11 15:04:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,10 +28,17 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * Emulate the prehistoric tsleep-style kernel interfaces.  We assume
+ * only code under the biglock will be using this type of synchronization
+ * and use the biglock as the cv interlock.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.6.10.3 2009/09/16 13:38:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.6.10.4 2010/03/11 15:04:38 yamt Exp $");
 
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/simplelock.h>
@@ -42,46 +49,69 @@ __KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.6.10.3 2009/09/16 13:38:05 yamt Exp $"
 
 struct ltsleeper {
 	wchan_t id;
-	kcondvar_t cv;
+	struct rumpuser_cv *cv;
 	LIST_ENTRY(ltsleeper) entries;
 };
 
 static LIST_HEAD(, ltsleeper) sleepers = LIST_HEAD_INITIALIZER(sleepers);
-static kmutex_t sleepermtx;
 
-kcondvar_t lbolt; /* Oh Kath Ra */
+static int
+sleeper(struct ltsleeper *ltsp, int timo)
+{
+	struct timespec ts, ticks;
+	int rv, nlocks;
+
+	LIST_INSERT_HEAD(&sleepers, ltsp, entries);
+	kernel_unlock_allbutone(&nlocks);
+
+	/* protected by biglock */
+	if (timo) {
+		/*
+		 * Calculate wakeup-time.
+		 * XXX: should assert nanotime() does not block,
+		 * i.e. yield the cpu and/or biglock.
+		 */
+		ticks.tv_sec = timo / hz;
+		ticks.tv_nsec = (timo % hz) * (1000000000/hz);
+		nanotime(&ts);
+		timespecadd(&ts, &ticks, &ts);
+
+		if (rumpuser_cv_timedwait(ltsp->cv, rump_giantlock,
+		    ts.tv_sec, ts.tv_nsec) == 0)
+			rv = 0;
+		else
+			rv = EWOULDBLOCK;
+	} else {
+		rumpuser_cv_wait(ltsp->cv, rump_giantlock);
+		rv = 0;
+	}
+
+	LIST_REMOVE(ltsp, entries);
+	rumpuser_cv_destroy(ltsp->cv);
+	kernel_ununlock_allbutone(nlocks);
+
+	return rv;
+}
 
 int
 ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	volatile struct simplelock *slock)
 {
 	struct ltsleeper lts;
-	int nlocks;
+	int rv;
 
 	lts.id = ident;
-	cv_init(&lts.cv, NULL);
+	rumpuser_cv_init(&lts.cv);
 
-	while (!mutex_tryenter(&sleepermtx))
-		continue;
-	KERNEL_UNLOCK_ALL(curlwp, &nlocks);
 	if (slock)
 		simple_unlock(slock);
-	LIST_INSERT_HEAD(&sleepers, &lts, entries);
 
-	/* protected by sleepermtx */
-	cv_wait(&lts.cv, &sleepermtx);
-
-	LIST_REMOVE(&lts, entries);
-	mutex_exit(&sleepermtx);
-
-	cv_destroy(&lts.cv);
-
-	KERNEL_LOCK(nlocks, curlwp);
+	rv = sleeper(&lts, timo);
 
 	if (slock && (prio & PNORELOCK) == 0)
 		simple_lock(slock);
 
-	return 0;
+	return rv;
 }
 
 int
@@ -89,65 +119,44 @@ mtsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	kmutex_t *lock)
 {
 	struct ltsleeper lts;
-	int nlocks;
+	int rv;
 
 	lts.id = ident;
-	cv_init(&lts.cv, NULL);
+	rumpuser_cv_init(&lts.cv);
 
-	while (!mutex_tryenter(&sleepermtx))
-		continue;
-	KERNEL_UNLOCK_ALL(curlwp, &nlocks);
-	LIST_INSERT_HEAD(&sleepers, &lts, entries);
-
-	/* protected by sleepermtx */
 	mutex_exit(lock);
-	cv_wait(&lts.cv, &sleepermtx);
 
-	LIST_REMOVE(&lts, entries);
-	mutex_exit(&sleepermtx);
-
-	cv_destroy(&lts.cv);
-
-	KERNEL_LOCK(nlocks, curlwp);
+	rv = sleeper(&lts, timo);
 
 	if ((prio & PNORELOCK) == 0)
 		mutex_enter(lock);
 
-	return 0;
+	return rv;
+}
+
+static void
+do_wakeup(wchan_t ident, void (*wakeupfn)(struct rumpuser_cv *))
+{
+	struct ltsleeper *ltsp;
+
+	KASSERT(kernel_biglocked());
+	LIST_FOREACH(ltsp, &sleepers, entries) {
+		if (ltsp->id == ident) {
+			wakeupfn(ltsp->cv);
+		}
+	}
 }
 
 void
 wakeup(wchan_t ident)
 {
-	struct ltsleeper *ltsp;
 
-	mutex_enter(&sleepermtx);
-	LIST_FOREACH(ltsp, &sleepers, entries) {
-		if (ltsp->id == ident) {
-			cv_broadcast(&ltsp->cv);
-		}
-	}
-	mutex_exit(&sleepermtx);
+	do_wakeup(ident, rumpuser_cv_broadcast);
 }
 
 void
 wakeup_one(wchan_t ident)
 {
-	struct ltsleeper *ltsp;
 
-	mutex_enter(&sleepermtx);
-	LIST_FOREACH(ltsp, &sleepers, entries) {
-		if (ltsp->id == ident) {
-			cv_signal(&ltsp->cv);
-			break;
-		}
-	}
-	mutex_exit(&sleepermtx);
-}
-
-void
-rump_sleepers_init(void)
-{
-
-	mutex_init(&sleepermtx, MUTEX_DEFAULT, 0);
+	do_wakeup(ident, rumpuser_cv_signal);
 }

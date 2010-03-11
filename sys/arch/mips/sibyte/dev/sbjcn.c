@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.19.18.2 2009/05/04 08:11:32 yamt Exp $ */
+/* $NetBSD: sbjcn.c,v 1.19.18.3 2010/03/11 15:02:42 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.19.18.2 2009/05/04 08:11:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.19.18.3 2010/03/11 15:02:42 yamt Exp $");
 
 #define	SBJCN_DEBUG
 
@@ -115,7 +115,6 @@ __KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.19.18.2 2009/05/04 08:11:32 yamt Exp $")
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>
@@ -225,8 +224,8 @@ static void	sbjcn_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(sbjcn, sizeof(struct sbjcn_softc),
     sbjcn_match, sbjcn_attach, NULL, NULL);
 
-#define	READ_REG(rp)		(mips3_ld((uint64_t *)(rp)))
-#define	WRITE_REG(rp, val)	(mips3_sd((uint64_t *)(rp), (val)))
+#define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
+#define	WRITE_REG(rp, val)	(mips3_sd((volatile uint64_t *)(rp), (val)))
 
 #define	JTAG_CONS_CONTROL  0x00
 #define	JTAG_CONS_INPUT    0x20

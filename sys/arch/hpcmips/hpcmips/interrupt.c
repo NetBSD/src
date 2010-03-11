@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.12.4.2 2009/05/04 08:11:11 yamt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.12.4.3 2010/03/11 15:02:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.12.4.2 2009/05/04 08:11:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.12.4.3 2010/03/11 15:02:25 yamt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -64,7 +64,7 @@ intr_init(void)
  * 
  */
 void
-cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
 {
 
 	(*platform.cpu_intr)(status, cause, pc, ipending);

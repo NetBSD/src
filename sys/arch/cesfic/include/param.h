@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.7.78.1 2009/05/04 08:10:54 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.7.78.2 2010/03/11 15:02:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -96,17 +96,6 @@
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
-
-#define	SEGSHIFT	22		/* LOG2(NBSEG) */
-#if defined(M68030) && !defined(M68040) && !defined(M68060)
-#define NBSEG		(1 << SEGSHIFT)	/* bytes/segment */
-#elif (defined(M68040) || defined(M68060)) && !defined(M68030)
-#define	NBSEG		(32 * (1 << PGSHIFT))
-#else
-#define	NBSEG		((mmutype == MMU_68040) ? \
-				(32 * (1 << PGSHIFT)) : (256 * (1 << PGSHIFT)))
-#endif
-#define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
 
 #define	KERNBASE	0x00002000	/* start of kernel virtual */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.29.46.1 2009/05/04 08:11:55 yamt Exp $ */
+/*	$NetBSD: db_trace.c,v 1.29.46.2 2010/03/11 15:02:58 yamt Exp $ */
 
 /*
  * Mach Operating System
@@ -27,11 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.29.46.1 2009/05/04 08:11:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.29.46.2 2010/03/11 15:02:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>
@@ -78,7 +77,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 	} else {
 		if (trace_thread) {
 			struct proc *p;
-			struct user *u;
+			struct pcb *pcb;
 			struct lwp *l;
 			if (lwpaddr) {
 				l = (struct lwp *)addr;
@@ -95,13 +94,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 				KASSERT(l != NULL);
 			}
 			(*pr)("lid %d ", l->l_lid);
-			if ((l->l_flag & LW_INMEM) == 0) {
-				(*pr)("swapped out\n");
-				return;
-			}
-			u = l->l_addr;
-			frame = (struct frame *)u->u_pcb.pcb_sp;
-			pc = u->u_pcb.pcb_pc;
+			pcb = lwp_getpcb(l);
+			frame = (struct frame *)pcb->pcb_sp;
+			pc = pcb->pcb_pc;
 			(*pr)("at %p\n", frame);
 		} else {
 			frame = (struct frame *)addr;

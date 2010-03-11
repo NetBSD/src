@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.59.10.3 2009/08/19 18:46:04 yamt Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.59.10.4 2010/03/11 15:02:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.59.10.3 2009/08/19 18:46:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.59.10.4 2010/03/11 15:02:11 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -158,8 +158,6 @@ extern int pmap_debug_level;
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
-
-struct user *proc0paddr;
 
 /* Prototypes */
 
@@ -697,7 +695,7 @@ initarm(void *arm_bootargs)
 	 */
 #ifdef VERBOSE_INIT_ARM
 	/* checking sttb address */
-	printf("setttb address = %p\n", cpufuncs.cf_setttb);
+	printf("cpu_setttb address = %p\n", cpu_setttb);
 
 	printf("kernel_l1pt=0x%08x old = 0x%08x, phys = 0x%08x\n",
 			((uint*)kernel_l1pt.pv_va)[0xf00],
@@ -734,15 +732,15 @@ initarm(void *arm_bootargs)
 	fcomcndetach();
 #endif
 	
-	setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 	/*
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init
 	 */
-	proc0paddr = (struct user *)kernelstack.pv_va;
-	lwp0.l_addr = proc0paddr;
+	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
+
 	/*
 	 * XXX this should only be done in main() but it useful to
 	 * have output earlier ...

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.125.4.3 2009/09/16 13:37:47 yamt Exp $	*/
+/*	$NetBSD: elink3.c,v 1.125.4.4 2010/03/11 15:03:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,10 +62,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.125.4.3 2009/09/16 13:37:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.125.4.4 2010/03/11 15:03:30 yamt Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -88,10 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.125.4.3 2009/09/16 13:37:47 yamt Exp $"
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <sys/cpu.h>
 #include <sys/bus.h>
@@ -1158,10 +1155,8 @@ startagain:
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, SET_TX_START_THRESH |
 	    ((len / 4 + sc->tx_start_thresh) /* >> sc->ep_pktlenshift*/));
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m0);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 	/*
 	 * Do the output at a high interrupt priority level so that an
@@ -1503,14 +1498,12 @@ again:
 
 	++ifp->if_ipackets;
 
-#if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	(*ifp->if_input)(ifp, m);
 

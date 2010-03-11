@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_cardbus.c,v 1.7.4.3 2009/05/16 10:41:19 yamt Exp $	*/
+/*	$NetBSD: njs_cardbus.c,v 1.7.4.4 2010/03/11 15:03:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.7.4.3 2009/05/16 10:41:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.7.4.4 2010/03/11 15:03:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,16 +50,15 @@ __KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.7.4.3 2009/05/16 10:41:19 yamt Exp
 #include <dev/ic/ninjascsi32reg.h>
 #include <dev/ic/ninjascsi32var.h>
 
-#define NJSC32_CARDBUS_BASEADDR_IO	CARDBUS_BASE0_REG
-#define NJSC32_CARDBUS_BASEADDR_MEM	CARDBUS_BASE1_REG
+#define NJSC32_CARDBUS_BASEADDR_IO	PCI_BAR0
+#define NJSC32_CARDBUS_BASEADDR_MEM	PCI_BAR1
 
 struct njsc32_cardbus_softc {
 	struct njsc32_softc	sc_njsc32;
 
 	/* CardBus-specific goo */
 	cardbus_devfunc_t	sc_ct;		/* our CardBus devfuncs */
-	cardbus_intr_line_t	sc_intrline;	/* our interrupt line */
-	cardbustag_t		sc_tag;
+	pcitag_t		sc_tag;
 
 	bus_space_handle_t	sc_regmaph;
 	bus_size_t		sc_regmap_size;
@@ -73,8 +72,8 @@ CFATTACH_DECL_NEW(njs_cardbus, sizeof(struct njsc32_cardbus_softc),
     njs_cardbus_match, njs_cardbus_attach, njs_cardbus_detach, NULL);
 
 static const struct njsc32_cardbus_product {
-	cardbus_vendor_id_t	p_vendor;
-	cardbus_product_id_t	p_product;
+	pci_vendor_id_t		p_vendor;
+	pci_product_id_t	p_product;
 	njsc32_model_t		p_model;
 	int			p_clk;		/* one of NJSC32_CLK_* */
 } njsc32_cardbus_products[] = {
@@ -98,8 +97,8 @@ njs_cardbus_lookup(const struct cardbus_attach_args *ca)
 
 	for (p = njsc32_cardbus_products;
 	    p->p_model != NJSC32_MODEL_INVALID; p++) {
-		if (CARDBUS_VENDOR(ca->ca_id) == p->p_vendor &&
-		    CARDBUS_PRODUCT(ca->ca_id) == p->p_product)
+		if (PCI_VENDOR(ca->ca_id) == p->p_vendor &&
+		    PCI_PRODUCT(ca->ca_id) == p->p_product)
 			return p;
 	}
 
@@ -141,7 +140,6 @@ njs_cardbus_attach(device_t parent, device_t self, void *aux)
 
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
-	csc->sc_intrline = ca->ca_intrline;
 
 	/*
 	 * Map the device.
@@ -168,7 +166,6 @@ njs_cardbus_attach(device_t parent, device_t self, void *aux)
 #endif
 		csr |= PCI_COMMAND_MEM_ENABLE;
 		sc->sc_flags = NJSC32_MEM_MAPPED;
-		(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_MEM_ENABLE);
 	} else {
 	try_io:
 		if (Cardbus_mapreg_map(csc->sc_ct, NJSC32_CARDBUS_BASEADDR_IO,
@@ -179,31 +176,27 @@ njs_cardbus_attach(device_t parent, device_t self, void *aux)
 #endif
 			csr |= PCI_COMMAND_IO_ENABLE;
 			sc->sc_flags = NJSC32_IO_MAPPED;
-			(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE);
 		} else {
 			aprint_error_dev(self, "unable to map device registers\n");
 			return;
 		}
 	}
 
-	/* Make sure the right access type is on the CardBus bridge. */
-	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
-
 	/* Enable the appropriate bits in the PCI CSR. */
-	reg = cardbus_conf_read(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG);
+	reg = Cardbus_conf_read(ct, ca->ca_tag, PCI_COMMAND_STATUS_REG);
 	reg &= ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
 	reg |= csr;
-	cardbus_conf_write(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG, reg);
+	Cardbus_conf_write(ct, ca->ca_tag, PCI_COMMAND_STATUS_REG, reg);
 
 	/*
 	 * Make sure the latency timer is set to some reasonable
 	 * value.
 	 */
-	reg = cardbus_conf_read(cc, cf, ca->ca_tag, CARDBUS_BHLC_REG);
-	if (CARDBUS_LATTIMER(reg) < latency) {
-		reg &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
-		reg |= (latency << CARDBUS_LATTIMER_SHIFT);
-		cardbus_conf_write(cc, cf, ca->ca_tag, CARDBUS_BHLC_REG, reg);
+	reg = Cardbus_conf_read(ct, ca->ca_tag, PCI_BHLC_REG);
+	if (PCI_LATTIMER(reg) < latency) {
+		reg &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
+		reg |= (latency << PCI_LATTIMER_SHIFT);
+		Cardbus_conf_write(ct, ca->ca_tag, PCI_BHLC_REG, reg);
 	}
 
 	sc->sc_dmat = ca->ca_dmat;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.143.4.3 2009/08/19 18:47:00 yamt Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.143.4.4 2010/03/11 15:03:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.143.4.3 2009/08/19 18:47:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.143.4.4 2010/03/11 15:03:18 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -37,8 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.143.4.3 2009/08/19 18:47:00 ya
 #include "opt_sysv.h"
 #include "opt_syscall_debug.h"
 #include "opt_sa.h"
-
-#include "fs_lfs.h"
 #endif
 
 /*
@@ -92,8 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.143.4.3 2009/08/19 18:47:00 ya
 #include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/netbsd32/netbsd32_sa.h>
 
-#include <machine/frame.h>
-
 #if defined(DDB)
 #include <ddb/ddbvar.h>
 #endif
@@ -117,71 +113,55 @@ struct uvm_object *emul_netbsd32_object;
 
 extern struct sysctlnode netbsd32_sysctl_root;
 
-const struct sa_emul saemul_netbsd32 = {
-	sizeof(ucontext32_t),
-	sizeof(struct netbsd32_sa_t),
-	sizeof(netbsd32_sa_tp),
-	netbsd32_sacopyout,  
-	netbsd32_upcallconv,
-	netbsd32_cpu_upcall,
-	(void (*)(struct lwp *, void *))getucontext32_sa,
-#ifdef KERN_SA
-	netbsd32_sa_ucsp
-#else
-	NULL
-#endif
-}; 
-
 struct emul emul_netbsd32 = {
-	"netbsd32",
-	"/emul/netbsd32",
+	.e_name =		"netbsd32",
+	.e_path =		"/emul/netbsd32",
 #ifndef __HAVE_MINIMAL_EMUL
-	0,
-	NULL,
-	NETBSD32_SYS_netbsd32_syscall,
-	NETBSD32_SYS_NSYSENT,
+	.e_flags =		0,
+	.e_errno =		NULL,
+	.e_nosys =		NETBSD32_SYS_netbsd32_syscall,
+	.e_nsysent =		NETBSD32_SYS_NSYSENT,
 #endif
-	netbsd32_sysent,
+	.e_sysent =		netbsd32_sysent,
 #ifdef SYSCALL_DEBUG
-	netbsd32_syscallnames,
+	.e_syscallnames =	netbsd32_syscallnames,
 #else
-	NULL,
+	.e_syscallnames =	NULL,
 #endif
-	netbsd32_sendsig,
-	trapsignal,
-	NULL,
+	.e_sendsig =		netbsd32_sendsig,
+	.e_trapsignal =		trapsignal,
+	.e_tracesig =		NULL,
 #ifdef COMPAT_16
-	netbsd32_sigcode,
-	netbsd32_esigcode,
-	&emul_netbsd32_object,
+	.e_sigcode =		netbsd32_sigcode,
+	.e_esigcode =		netbsd32_esigcode,
+	.e_sigobject =		&emul_netbsd32_object,
 #else
-	NULL,
-	NULL,
-	NULL,
+	.e_sigcode =		NULL,
+	.e_esigcode =		NULL,
+	.e_sigobject =		NULL,
 #endif
-	netbsd32_setregs,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	.e_setregs =		netbsd32_setregs,
+	.e_proc_exec =		NULL,
+	.e_proc_fork =		NULL,
+	.e_proc_exit =		NULL,
+	.e_lwp_fork =		NULL,
+	.e_lwp_exit =		NULL,
 #ifdef __HAVE_SYSCALL_INTERN
-	netbsd32_syscall_intern,
+	.e_syscall_intern =	netbsd32_syscall_intern,
 #else
-	syscall,
+	.e_syscall =		syscall,
 #endif
-	&netbsd32_sysctl_root,
-	NULL,
-
-	netbsd32_vm_default_addr,
-	NULL,
-#ifdef COMPAT_40
-	&saemul_netbsd32,
+	.e_sysctlovly =		&netbsd32_sysctl_root,
+	.e_fault =		NULL,
+	.e_vm_default_addr =	netbsd32_vm_default_addr,
+	.e_usertrap =		NULL,
+#if defined(COMPAT_40) && defined(KERN_SA)
+	.e_sa =			&saemul_netbsd32,
 #else
-	NULL,
+	.e_sa =			NULL,
 #endif
-	sizeof(ucontext32_t),
-	startlwp32,
+	.e_ucsize =		sizeof(ucontext32_t),
+	.e_startlwp =		startlwp32
 };
 
 /*
@@ -370,7 +350,6 @@ netbsd32_break(struct lwp *l, const struct netbsd32_break_args *uap, register_t 
 	} */
 	struct sys_obreak_args ua;
 
-	SCARG(&ua, nsize) = SCARG_P32(uap, nsize);
 	NETBSD32TOP_UAP(nsize, char);
 	return (sys_obreak(l, &ua, retval));
 }
@@ -1113,7 +1092,7 @@ netbsd32_rename(struct lwp *l, const struct netbsd32_rename_args *uap, register_
 	struct sys_rename_args ua;
 
 	NETBSD32TOP_UAP(from, const char);
-	NETBSD32TOP_UAP(to, const char)
+	NETBSD32TOP_UAP(to, const char);
 
 	return (sys_rename(l, &ua, retval));
 }
@@ -1128,7 +1107,7 @@ netbsd32_flock(struct lwp *l, const struct netbsd32_flock_args *uap, register_t 
 	struct sys_flock_args ua;
 
 	NETBSD32TO64_UAP(fd);
-	NETBSD32TO64_UAP(how)
+	NETBSD32TO64_UAP(how);
 
 	return (sys_flock(l, &ua, retval));
 }
@@ -1142,7 +1121,7 @@ netbsd32_mkfifo(struct lwp *l, const struct netbsd32_mkfifo_args *uap, register_
 	} */
 	struct sys_mkfifo_args ua;
 
-	NETBSD32TOP_UAP(path, const char)
+	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(mode);
 	return (sys_mkfifo(l, &ua, retval));
 }
@@ -1156,7 +1135,7 @@ netbsd32_shutdown(struct lwp *l, const struct netbsd32_shutdown_args *uap, regis
 	} */
 	struct sys_shutdown_args ua;
 
-	NETBSD32TO64_UAP(s)
+	NETBSD32TO64_UAP(s);
 	NETBSD32TO64_UAP(how);
 	return (sys_shutdown(l, &ua, retval));
 }
@@ -1189,7 +1168,7 @@ netbsd32_mkdir(struct lwp *l, const struct netbsd32_mkdir_args *uap, register_t 
 	} */
 	struct sys_mkdir_args ua;
 
-	NETBSD32TOP_UAP(path, const char)
+	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(mode);
 	return (sys_mkdir(l, &ua, retval));
 }
@@ -1222,25 +1201,6 @@ netbsd32_quotactl(struct lwp *l, const struct netbsd32_quotactl_args *uap, regis
 	NETBSD32TO64_UAP(uid);
 	NETBSD32TOP_UAP(arg, void *);
 	return (sys_quotactl(l, &ua, retval));
-}
-
-int
-netbsd32_nfssvc(struct lwp *l, const struct netbsd32_nfssvc_args *uap, register_t *retval)
-{
-#if 0
-	/* {
-		syscallarg(int) flag;
-		syscallarg(netbsd32_voidp) argp;
-	} */
-	struct sys_nfssvc_args ua;
-
-	NETBSD32TO64_UAP(flag);
-	NETBSD32TOP_UAP(argp, void);
-	return (sys_nfssvc(l, &ua, retval));
-#else
-	/* Why would we want to support a 32-bit nfsd? */
-	return (ENOSYS);
-#endif
 }
 
 int
@@ -1370,36 +1330,6 @@ netbsd32_seteuid(struct lwp *l, const struct netbsd32_seteuid_args *uap, registe
 	NETBSD32TO64_UAP(euid);
 	return (sys_seteuid(l, &ua, retval));
 }
-
-#ifdef LFS
-int
-netbsd32_lfs_bmapv(struct lwp *l, const struct netbsd32_lfs_bmapv_args *v, register_t *retval)
-{
-
-	return (ENOSYS);	/* XXX */
-}
-
-int
-netbsd32_lfs_markv(struct lwp *l, const struct netbsd32_lfs_markv_args *v, register_t *retval)
-{
-
-	return (ENOSYS);	/* XXX */
-}
-
-int
-netbsd32_lfs_segclean(struct lwp *l, const struct netbsd32_lfs_segclean_args *v, register_t *retval)
-{
-
-	return (ENOSYS);	/* XXX */
-}
-
-int
-netbsd32___lfs_segwait50(struct lwp *l, const struct netbsd32___lfs_segwait50_args *v, register_t *retval)
-{
-
-	return (ENOSYS);	/* XXX */
-}
-#endif
 
 int
 netbsd32_pathconf(struct lwp *l, const struct netbsd32_pathconf_args *uap, register_t *retval)

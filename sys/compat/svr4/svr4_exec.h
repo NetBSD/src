@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.h,v 1.25.16.2 2009/05/04 08:12:27 yamt Exp $	 */
+/*	$NetBSD: svr4_exec.h,v 1.25.16.3 2010/03/11 15:03:19 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 extern struct emul emul_svr4;
 
-void svr4_setregs(struct lwp *, struct exec_package *, u_long);
+void svr4_setregs(struct lwp *, struct exec_package *, vaddr_t);
 int svr4_elf32_probe(struct lwp *, struct exec_package *, void *,
     char *, vaddr_t *);
 int svr4_elf64_probe(struct lwp *, struct exec_package *, void *,

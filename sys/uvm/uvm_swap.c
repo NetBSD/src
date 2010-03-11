@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.137.4.3 2009/09/16 13:38:08 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.137.4.4 2010/03/11 15:04:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,9 +30,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.137.4.3 2009/09/16 13:38:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.137.4.4 2010/03/11 15:04:47 yamt Exp $");
 
-#include "fs_nfs.h"
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -269,11 +268,7 @@ uvm_swap_init(void)
 	LIST_INIT(&swap_priority);
 	uvmexp.nswapdev = 0;
 	rw_init(&swap_syscall_lock);
-	cv_init(&uvm.scheduler_cv, "schedule");
 	mutex_init(&uvm_swap_data_lock, MUTEX_DEFAULT, IPL_NONE);
-
-	/* XXXSMP should be at IPL_VM, but for audio interrupt handlers. */
-	mutex_init(&uvm_scheduler_mutex, MUTEX_SPIN, IPL_SCHED);
 
 	if (bdevvp(swapdev, &swapdev_vp))
 		panic("%s: can't get vnode for swap device", __func__);
@@ -291,30 +286,16 @@ uvm_swap_init(void)
 	 */
 	swapmap = vmem_create("swapmap", 1, INT_MAX - 1, 1, NULL, NULL, NULL, 0,
 	    VM_NOSLEEP, IPL_NONE);
-	if (swapmap == 0)
+	if (swapmap == 0) {
 		panic("%s: vmem_create failed", __func__);
-
-	/*
-	 * done!
-	 */
-	uvm.swap_running = true;
-#ifdef __SWAP_BROKEN
-	uvm.swapout_enabled = 0;
-#else
-	uvm.swapout_enabled = 1;
-#endif
-	UVMHIST_LOG(pdhist, "<- done", 0, 0, 0, 0);
-
-        sysctl_createv(NULL, 0, NULL, NULL,
-            CTLFLAG_READWRITE,
-            CTLTYPE_INT, "swapout",
-            SYSCTL_DESCR("Set 0 to disable swapout of kernel stacks"),
-            NULL, 0, &uvm.swapout_enabled, 0, CTL_VM, CTL_CREATE, CTL_EOL);
+	}
 
 	pool_init(&vndxfer_pool, sizeof(struct vndxfer), 0, 0, 0, "swp vnx",
 	    NULL, IPL_BIO);
 	pool_init(&vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0, "swp vnd",
 	    NULL, IPL_BIO);
+
+	UVMHIST_LOG(pdhist, "<- done", 0, 0, 0, 0);
 }
 
 /*
@@ -806,6 +787,8 @@ uvm_swap_stats_locked(int cmd, struct swapent *sep, int sec, register_t *retval)
 				memcpy(&sep50->se50_path, sdp->swd_path,
 				       sizeof sep50->se50_path);
 				sep = (struct swapent *)(sep50 + 1);
+#endif
+#if defined(COMPAT_13) || defined(COMPAT_50)
 			}
 #endif
 			count++;
@@ -834,9 +817,6 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 	long addr;
 	u_long result;
 	struct vattr va;
-#ifdef NFS
-	extern int (**nfsv2_vnodeop_p)(void *);
-#endif /* NFS */
 	const struct bdevsw *bdev;
 	dev_t dev;
 	UVMHIST_FUNC("swap_on"); UVMHIST_CALLED(pdhist);
@@ -888,20 +868,14 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 		if ((error = VOP_GETATTR(vp, &va, l->l_cred)))
 			goto bad;
 		nblocks = (int)btodb(va.va_size);
-		if ((error =
-		     VFS_STATVFS(vp->v_mount, &vp->v_mount->mnt_stat)) != 0)
-			goto bad;
-
-		sdp->swd_bsize = vp->v_mount->mnt_stat.f_iosize;
+		sdp->swd_bsize = 1 << vp->v_mount->mnt_fs_bshift;
 		/*
 		 * limit the max # of outstanding I/O requests we issue
 		 * at any one time.   take it easy on NFS servers.
 		 */
-#ifdef NFS
-		if (vp->v_op == nfsv2_vnodeop_p)
+		if (vp->v_tag == VT_NFS)
 			sdp->swd_maxactive = 2; /* XXX */
 		else
-#endif /* NFS */
 			sdp->swd_maxactive = 8; /* XXX */
 		break;
 

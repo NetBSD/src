@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5.20.1 2009/05/04 08:11:03 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.5.20.2 2010/03/11 15:02:21 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5.20.1 2009/05/04 08:11:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5.20.2 2010/03/11 15:02:21 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5.20.1 2009/05/04 08:11:03 yamt Exp $"
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/user.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
 #include <sys/device.h>
@@ -72,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5.20.1 2009/05/04 08:11:03 yamt Exp $"
 #include <machine/trap.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 
 #include <evbppc/virtex/dcr.h>
 #include <evbppc/virtex/virtex.h>
@@ -90,7 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5.20.1 2009/05/04 08:11:03 yamt Exp $"
 /*
  * Global variables used here and there
  */
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 /*
@@ -99,8 +98,6 @@ struct vm_map *phys_map = NULL;
 char cpu_model[80];
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-
-extern struct user *proc0paddr;
 
 char bootpath[256];
 paddr_t msgbuf_paddr;
@@ -209,10 +206,9 @@ initppc(u_int startkernel, u_int endkernel)
 	    physmemr, availmemr);
 
 	lwp0.l_cpu = ci;
-	lwp0.l_addr = proc0paddr;
-	memset(lwp0.l_addr, 0, sizeof(*lwp0.l_addr));
 
-	curpcb = &proc0paddr->u_pcb;
+	curpcb = lwp_getpcb(&lwp0);
+	memset(curpcb, 0, sizeof(struct pcb));
 	curpcb->pcb_pm = pmap_kernel();
 
 	for (exc = EXC_RSVD; exc <= EXC_LAST; exc += 0x100)

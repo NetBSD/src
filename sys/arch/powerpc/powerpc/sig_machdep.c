@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.32.2.1 2009/05/04 08:11:45 yamt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.32.2.2 2010/03/11 15:02:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.32.2.1 2009/05/04 08:11:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.32.2.2 2010/03/11 15:02:51 yamt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -43,7 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.32.2.1 2009/05/04 08:11:45 yamt Ex
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
 #include <sys/ucontext.h>
-#include <sys/user.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <powerpc/fpu.h>
 #include <powerpc/altivec.h>
@@ -146,7 +147,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagp)
 	const struct trapframe *tf = trapframe(l);
 	__greg_t *gr = mcp->__gregs;
 #if defined(PPC_HAVE_FPU) || defined(ALTIVEC)
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 #endif
 
 	/* Save GPR context. */
@@ -211,7 +212,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	struct trapframe *tf = trapframe(l);
 	const __greg_t *gr = mcp->__gregs;
 #ifdef PPC_HAVE_FPU
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 #endif
 
 	/* Restore GPR context, if any. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.74.4.4 2009/08/19 18:46:19 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.74.4.5 2010/03/11 15:02:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.74.4.4 2009/08/19 18:46:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.74.4.5 2010/03/11 15:02:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,6 +211,9 @@ mainbus_match(device_t parent, cfdata_t match, void *aux)
 void
 mainbus_attach(device_t parent, device_t self, void *aux)
 {
+#if NPCI > 0
+	int mode;
+#endif
 	struct mainbus_softc *sc = device_private(self);
 	union mainbus_attach_args mba;
 #ifdef MPBIOS
@@ -234,9 +237,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * ACPI needs to be able to access PCI configuration space.
 	 */
-	pci_mode = pci_mode_detect();
+	mode = pci_mode_detect();
 #if defined(PCI_BUS_FIXUP)
-	if (pci_mode != 0) {
+	if (mode != 0) {
 		pci_maxbus = pci_bus_fixup(NULL, 0);
 		aprint_debug("PCI bus max, after pci_bus_fixup: %i\n",
 		    pci_maxbus);
@@ -324,13 +327,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
-/* XXX share this with sys/arch/i386/pci/elan520.c */
-static bool
-ifattr_match(const char *snull, const char *t)
-{
-	return (snull == NULL) || strcmp(snull, t) == 0;
-}
-
 /* scan for new children */
 static int
 mainbus_rescan(device_t self, const char *ifattr, const int *locators)
@@ -397,7 +393,7 @@ mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 	 * XXX that's not currently possible.
 	 */
 #if NPCI > 0
-	if (pci_mode != 0 && ifattr_match(ifattr, "pcibus")) {
+	if (pci_mode_detect() != 0 && ifattr_match(ifattr, "pcibus")) {
 		int npcibus = 0;
 
 		mba.mba_pba.pba_iot = X86_BUS_SPACE_IO;

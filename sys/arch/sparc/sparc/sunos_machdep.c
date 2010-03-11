@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.21.2.1 2009/05/04 08:11:55 yamt Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.21.2.2 2010/03/11 15:02:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.21.2.1 2009/05/04 08:11:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.21.2.2 2010/03/11 15:02:58 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -36,7 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.21.2.1 2009/05/04 08:11:55 yamt 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/signal.h>

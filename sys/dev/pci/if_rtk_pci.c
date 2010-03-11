@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.36.2.3 2009/09/16 13:37:51 yamt Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.36.2.4 2010/03/11 15:03:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.36.2.3 2009/09/16 13:37:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.36.2.4 2010/03/11 15:03:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,8 +212,8 @@ rtk_pci_attach(device_t parent, device_t self, void *aux)
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 

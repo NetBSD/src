@@ -1,4 +1,4 @@
-/*	$NetBSD: at91_bus_dma.c,v 1.1.20.1 2009/05/04 08:10:39 yamt Exp $ */
+/*	$NetBSD: at91_bus_dma.c,v 1.1.20.2 2010/03/11 15:02:04 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -12,9 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Fujitsu Component Limited nor the name of
- *    Genetec corporation may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY FUJITSU COMPONENT LIMITED AND GENETEC
  * CORPORATION ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
@@ -36,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91_bus_dma.c,v 1.1.20.1 2009/05/04 08:10:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91_bus_dma.c,v 1.1.20.2 2010/03/11 15:02:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

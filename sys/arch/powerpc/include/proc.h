@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.7 2007/11/16 07:36:11 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.7.18.1 2010/03/11 15:02:50 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,6 +32,8 @@
  */
 #ifndef _POWERPC_PROC_H_
 #define _POWERPC_PROC_H_
+
+#include <sys/user.h> /* for sizeof(struct user) */
 
 /*
  * Machine-dependent part of the lwp structure

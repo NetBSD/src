@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.22.20.2 2009/08/19 18:45:51 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.22.20.3 2010/03/11 15:01:55 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.20.2 2009/08/19 18:45:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.20.3 2010/03/11 15:01:55 yamt Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.20.2 2009/08/19 18:45:51 yamt Exp $
 char cpu_model[] = "Archimedes";
 
 struct vm_map *phys_map = NULL;
-struct vm_map *mb_map = NULL; /* and ever more shall be so */
 
 int waittime = -1;
 
@@ -168,7 +167,7 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 
-	curpcb = &lwp0.l_addr->u_pcb;
+	curpcb = lwp_getpcb(&lwp0);
 
 #if 0
 	/* Test exception handlers */

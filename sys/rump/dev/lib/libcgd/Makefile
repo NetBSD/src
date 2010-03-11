@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.3 2009/09/16 13:38:03 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.2.4 2010/03/11 15:04:32 yamt Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev
@@ -9,7 +9,6 @@ SRCS=   cgd.c cgd_crypto.c
 
 SRCS+=	component.c
 
-CPPFLAGS+=	-Wno-pointer-sign
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 
 .include <bsd.lib.mk>

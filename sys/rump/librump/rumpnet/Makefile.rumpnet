@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpnet,v 1.4.4.4 2009/09/16 13:38:05 yamt Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.4.4.5 2010/03/11 15:04:38 yamt Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -10,7 +10,9 @@ LIB=		rumpnet
 	${RUMPTOP}/../net					\
 	${RUMPTOP}/../compat/common
 
-SRCS=	net_stub.c netisr.c rump_net.c net_emul.c
+SRCS=	net_stub.c netisr.c rump_net.c
+
+SRCS+=	rumpnet_if_wrappers.c
 
 # sys/kern networking (sockets, mbufs, etc.)
 SRCS+=	sys_socket.c uipc_accf.c uipc_domain.c uipc_mbuf.c uipc_mbuf2.c	\
@@ -21,6 +23,9 @@ SRCS+=	radix.c
 
 # compat
 SRCS+=	rtsock_50.c
+
+# bpf stubs, required for all kernels
+SRCS+=	bpf_stub.c
 
 # automatically in sync src/lib
 SHLIB_MAJOR=    0

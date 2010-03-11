@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.34.4.2 2009/05/16 10:41:14 yamt Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.34.4.3 2010/03/11 15:02:29 yamt Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.34.4.2 2009/05/16 10:41:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.34.4.3 2010/03/11 15:02:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,7 +440,7 @@ ahc_isa_attach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * Tell the user what type of interrupts we're using.
-	 * usefull for debugging irq problems
+	 * useful for debugging irq problems
 	 */
 	if (bootverbose) {
 		aprint_verbose_dev(ahc->sc_dev, "Using %s interrupts\n",

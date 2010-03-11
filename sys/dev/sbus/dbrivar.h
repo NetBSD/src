@@ -1,4 +1,4 @@
-/*	$NetBSD: dbrivar.h,v 1.8.18.2 2009/05/04 08:13:17 yamt Exp $	*/
+/*	$NetBSD: dbrivar.h,v 1.8.18.3 2010/03/11 15:04:02 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -116,7 +116,6 @@ struct dbri_dma {
 struct dbri_softc {
 	device_t	sc_dev;		/* base device */
 
-	struct sbusdev	sc_sd;		/* sbus device */
 	bus_space_handle_t sc_ioh;
 	bus_space_tag_t	sc_iot;
 	/* DMA buffer for sending commands to the chip */

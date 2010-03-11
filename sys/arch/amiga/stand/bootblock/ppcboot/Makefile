@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.112.1 2009/05/04 08:10:36 yamt Exp $
+#	$NetBSD: Makefile,v 1.5.112.2 2010/03/11 15:02:02 yamt Exp $
 
 ### what we need:
 
@@ -28,7 +28,7 @@ SOBJS += libstubs.o
 
 OBJS=	$(SOBJS) $(COBJS)
 
-DEFS = -DPPCBOOTER -D_STANDALONE -DINSECURE -DDEBUG_MEMORY_LIST
+DEFS = -DPPCBOOTER -D_STANDALONE -DSA_EXEC_ANYOWNER -DDEBUG_MEMORY_LIST
 
 ### main target: ###
 

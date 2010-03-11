@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58.4.3 2009/08/19 18:46:41 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.58.4.4 2010/03/11 15:02:51 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58.4.3 2009/08/19 18:46:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58.4.4 2010/03/11 15:02:51 yamt Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58.4.3 2009/08/19 18:46:41 yamt Exp $");
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/device.h>		/* for evcnt */
@@ -87,9 +86,10 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58.4.3 2009/08/19 18:46:41 yamt Exp $");
 #include <machine/pcb.h>
 #include <machine/powerpc.h>
 #include <powerpc/spr.h>
-#include <powerpc/oea/sr_601.h>
 #include <powerpc/bat.h>
 #include <powerpc/stdarg.h>
+#include <powerpc/oea/spr.h>
+#include <powerpc/oea/sr_601.h>
 
 #ifdef ALTIVEC
 int pmap_use_altivec;
@@ -170,7 +170,6 @@ static u_int mem_cnt, avail_cnt;
 #define pmap_destroy		PMAPNAME(destroy)
 #define pmap_copy		PMAPNAME(copy)
 #define pmap_update		PMAPNAME(update)
-#define pmap_collect		PMAPNAME(collect)
 #define pmap_enter		PMAPNAME(enter)
 #define pmap_remove		PMAPNAME(remove)
 #define pmap_kenter_pa		PMAPNAME(kenter_pa)
@@ -217,10 +216,9 @@ STATIC void pmap_reference(pmap_t);
 STATIC void pmap_destroy(pmap_t);
 STATIC void pmap_copy(pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t);
 STATIC void pmap_update(pmap_t);
-STATIC void pmap_collect(pmap_t);
 STATIC int pmap_enter(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 STATIC void pmap_remove(pmap_t, vaddr_t, vaddr_t);
-STATIC void pmap_kenter_pa(vaddr_t, paddr_t, vm_prot_t);
+STATIC void pmap_kenter_pa(vaddr_t, paddr_t, vm_prot_t, u_int);
 STATIC void pmap_kremove(vaddr_t, vsize_t);
 STATIC bool pmap_extract(pmap_t, vaddr_t, paddr_t *);
 
@@ -260,7 +258,6 @@ const struct pmap_ops PMAPNAME(ops) = {
 	.pmapop_destroy = pmap_destroy,
 	.pmapop_copy = pmap_copy,
 	.pmapop_update = pmap_update,
-	.pmapop_collect = pmap_collect,
 	.pmapop_enter = pmap_enter,
 	.pmapop_remove = pmap_remove,
 	.pmapop_kenter_pa = pmap_kenter_pa,
@@ -1310,20 +1307,6 @@ pmap_update(struct pmap *pmap)
 	TLBSYNC();
 }
 
-/*
- * Garbage collects the physical map system for
- * pages which are no longer used.
- * Success need not be guaranteed -- that is, there
- * may well be pages which are not referenced, but
- * others may be collected.
- * Called by the pageout daemon when pages are scarce.
- */
-void
-pmap_collect(pmap_t pm)
-{
-	PMAPCOUNT(collects);
-}
-
 static inline int
 pmap_pvo_pte_index(const struct pvo_entry *pvo, int ptegidx)
 {
@@ -2018,7 +2001,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 }
 
 void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	struct mem_region *mp;
 	register_t pte_lo;
@@ -2374,14 +2357,14 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 void
 pmap_activate(struct lwp *l)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	DPRINTFN(ACTIVATE,
 	    ("pmap_activate: lwp %p (curlwp %p)\n", l, curlwp));
 
 	/*
-	 * XXX Normally performed in cpu_fork().
+	 * XXX Normally performed in cpu_lwp_fork().
 	 */
 	pcb->pcb_pm = pmap;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.166.4.2 2009/05/04 08:14:17 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.166.4.3 2010/03/11 15:04:29 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.166.4.2 2009/05/04 08:14:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.166.4.3 2010/03/11 15:04:29 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -215,7 +215,7 @@ extern struct mbuf *m_copypack();
 int	tcp_cwm = 0;
 int	tcp_cwm_burstsize = 4;
 
-int	tcp_do_autosndbuf = 0;
+int	tcp_do_autosndbuf = 1;
 int	tcp_autosndbuf_inc = 8 * 1024;
 int	tcp_autosndbuf_max = 256 * 1024;
 

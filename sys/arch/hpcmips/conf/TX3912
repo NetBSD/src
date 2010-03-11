@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.69.10.1 2009/05/04 08:11:11 yamt Exp $
+#	$NetBSD: TX3912,v 1.69.10.2 2010/03/11 15:02:24 yamt Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -74,7 +74,6 @@ file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 #file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
-#file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system

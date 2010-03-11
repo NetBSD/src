@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysmp.c,v 1.20.10.1 2008/05/16 02:23:36 yamt Exp $ */
+/*	$NetBSD: irix_sysmp.c,v 1.20.10.2 2010/03/11 15:03:14 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.20.10.1 2008/05/16 02:23:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.20.10.2 2010/03/11 15:03:14 yamt Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
@@ -89,16 +89,16 @@ irix_sys_sysmp(struct lwp *l, const struct irix_sys_sysmp_args *uap, register_t 
 		break;
 
 	case IRIX_MP_KERNADDR: 	/* Kernel structure addresses */
-		return irix_sysmp_kernaddr((int)SCARG(uap, arg1), retval);
+		return irix_sysmp_kernaddr((intptr_t)SCARG(uap, arg1), retval);
 		break;
 
 	case IRIX_MP_SASZ: 	/* System accounting structure size */
-		return irix_sysmp_sasz((int)SCARG(uap, arg1), retval);
+		return irix_sysmp_sasz((intptr_t)SCARG(uap, arg1), retval);
 		break;
 
 	case IRIX_MP_SAGET1: /* Get system accounting structure for one CPU */
 	case IRIX_MP_SAGET:  /* Get system accounting structure for all CPU */
-		return irix_sysmp_saget((int)SCARG(uap, arg1),
+		return irix_sysmp_saget((intptr_t)SCARG(uap, arg1),
 		    (char *)SCARG(uap, arg2), (size_t)SCARG(uap, arg3));
 		break;
 
@@ -152,7 +152,6 @@ irix_sysmp_sasz(int cmd, register_t *retval)
 static int
 irix_sysmp_saget(int cmd, char *buf, size_t len)
 {
-	extern u_int bufpages;
 	void *kbuf;
 	int error = 0;
 
@@ -169,7 +168,7 @@ irix_sysmp_saget(int cmd, char *buf, size_t len)
 		irm->availsmem = uvmexp.free + active + inactive
 		    + uvmexp.wired + (uvmexp.swpages - uvmexp.swpgonly);
 		irm->availrmem = uvmexp.free + active + inactive + uvmexp.wired;
-		irm->bufmem = bufpages;
+		irm->bufmem = uvmexp.filepages;
 		irm->physmem = uvmexp.npages;
 		irm->dchunkpages = 0; /* unsupported */
 		irm->pmapmem = 0;     /* unsupported */

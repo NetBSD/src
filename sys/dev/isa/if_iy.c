@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.79.4.3 2009/05/16 10:41:25 yamt Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.79.4.4 2010/03/11 15:03:37 yamt Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,10 +39,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.79.4.3 2009/05/16 10:41:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.79.4.4 2010/03/11 15:03:37 yamt Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -66,10 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.79.4.3 2009/05/16 10:41:25 yamt Exp $");
 
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -689,10 +686,8 @@ iystart(struct ifnet *ifp)
 			continue;
         	}
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 		avail = sc->tx_start - sc->tx_end;
 		if (avail <= 0)
@@ -1060,10 +1055,8 @@ iyget(struct iy_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh, int rxle
 	++ifp->if_ipackets;
 
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, top);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, top);
 	(*ifp->if_input)(ifp, top);
 	return;
 

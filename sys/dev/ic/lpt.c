@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.74.4.1 2009/05/04 08:12:42 yamt Exp $	*/
+/*	$NetBSD: lpt.c,v 1.74.4.2 2010/03/11 15:03:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,12 +54,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.74.4.1 2009/05/04 08:12:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.74.4.2 2010/03/11 15:03:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
@@ -247,7 +246,7 @@ lptwakeup(void *arg)
 	struct lpt_softc *sc = arg;
 	int s;
 
-	s = spllpt();
+	s = splvm();
 	lptintr(sc);
 	splx(s);
 
@@ -335,7 +334,7 @@ lptpushbytes(struct lpt_softc *sc)
 				LPRINTF(("%s: write %lu\n",
 				    device_xname(sc->sc_dev),
 				    (u_long)sc->sc_count));
-				s = spllpt();
+				s = splvm();
 				(void) lptintr(sc);
 				splx(s);
 			}

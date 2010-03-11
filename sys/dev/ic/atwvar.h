@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.28.4.4 2009/09/16 13:37:47 yamt Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.28.4.5 2010/03/11 15:03:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -168,11 +168,11 @@ enum atw_revision {
 
 struct atw_softc {
 	device_t		sc_dev;
+	struct device_suspensor	sc_suspensor;
+	pmf_qual_t		sc_qual;
+
 	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
-	int			(*sc_enable)(struct atw_softc *);
-	void			(*sc_disable)(struct atw_softc *);
-	void			(*sc_power)(struct atw_softc *, int);
 	int			(*sc_newstate)(struct ieee80211com *,
 					enum ieee80211_state, int);
 	void			(*sc_recv_mgmt)(struct ieee80211com *,
@@ -200,7 +200,7 @@ struct atw_softc {
 	u_int16_t		*sc_srom;
 	u_int16_t		sc_sromsz;
 
-	void *			sc_radiobpf;
+	struct bpf_if *		sc_radiobpf;
 
 	bus_dma_segment_t	sc_cdseg;	/* control data memory */
 	int			sc_cdnseg;	/* number of segments */
@@ -362,8 +362,6 @@ struct atw_frame {
 #define	ATWF_ENABLED		0x00000020	/* chip is enabled */
 #define	ATWF_WEP_SRAM_VALID	0x00000040	/* SRAM matches s/w state */
 
-#define	ATW_IS_ENABLED(sc)	((sc)->sc_flags & ATWF_ENABLED)
-
 #define	ATW_CDTXADDR(sc, x)	((sc)->sc_cddma + ATW_CDTXOFF((x)))
 #define	ATW_CDRXADDR(sc, x)	((sc)->sc_cddma + ATW_CDRXOFF((x)))
 
@@ -449,7 +447,7 @@ void	atw_attach(struct atw_softc *);
 int	atw_detach(struct atw_softc *);
 int	atw_activate(device_t, enum devact);
 int	atw_intr(void *arg);
-void	atw_power(int, void *);
 bool	atw_shutdown(device_t, int);
+bool	atw_suspend(device_t, const pmf_qual_t *);
 
 #endif /* _DEV_IC_ATWVAR_H_ */

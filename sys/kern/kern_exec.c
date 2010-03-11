@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.272.2.3 2009/08/19 18:48:16 yamt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.272.2.4 2010/03/11 15:04:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.272.2.3 2009/08/19 18:48:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.272.2.4 2010/03/11 15:04:16 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.272.2.3 2009/08/19 18:48:16 yamt Exp
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
 #endif /* NVERIEXEC > 0 */
+#include <sys/sdt.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -115,6 +116,22 @@ static int exec_sigcode_map(struct proc *, const struct emul *);
 #else
 #define DPRINTF(a)
 #endif /* DEBUG_EXEC */
+
+/*
+ * DTrace SDT provider definitions
+ */
+SDT_PROBE_DEFINE(proc,,,exec, 
+	    "char *", NULL,
+	    NULL, NULL, NULL, NULL,
+	    NULL, NULL, NULL, NULL);
+SDT_PROBE_DEFINE(proc,,,exec_success, 
+	    "char *", NULL,
+	    NULL, NULL, NULL, NULL,
+	    NULL, NULL, NULL, NULL);
+SDT_PROBE_DEFINE(proc,,,exec_failure, 
+	    "int", NULL,
+	    NULL, NULL, NULL, NULL,
+	    NULL, NULL, NULL, NULL);
 
 /*
  * Exec function switch:
@@ -159,49 +176,48 @@ static struct sa_emul saemul_netbsd = {
 
 /* NetBSD emul struct */
 struct emul emul_netbsd = {
-	"netbsd",
-	NULL,		/* emulation path */
+	.e_name =		"netbsd",
+	.e_path =		NULL,
 #ifndef __HAVE_MINIMAL_EMUL
-	EMUL_HAS_SYS___syscall,
-	NULL,
-	SYS_syscall,
-	SYS_NSYSENT,
+	.e_flags =		EMUL_HAS_SYS___syscall,
+	.e_errno =		NULL,
+	.e_nosys =		SYS_syscall,
+	.e_nsysent =		SYS_NSYSENT,
 #endif
-	sysent,
+	.e_sysent =		sysent,
 #ifdef SYSCALL_DEBUG
-	syscallnames,
+	.e_syscallnames =	syscallnames,
 #else
-	NULL,
+	.e_syscallnames =	NULL,
 #endif
-	sendsig,
-	trapsignal,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	setregs,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	.e_sendsig =		sendsig,
+	.e_trapsignal =		trapsignal,
+	.e_tracesig =		NULL,
+	.e_sigcode =		NULL,
+	.e_esigcode =		NULL,
+	.e_sigobject =		NULL,
+	.e_setregs =		setregs,
+	.e_proc_exec =		NULL,
+	.e_proc_fork =		NULL,
+	.e_proc_exit =		NULL,
+	.e_lwp_fork =		NULL,
+	.e_lwp_exit =		NULL,
 #ifdef __HAVE_SYSCALL_INTERN
-	syscall_intern,
+	.e_syscall_intern =	syscall_intern,
 #else
-	syscall,
+	.e_syscall =		syscall,
 #endif
-	NULL,
-	NULL,
-
-	uvm_default_mapaddr,
-	NULL,
+	.e_sysctlovly =		NULL,
+	.e_fault =		NULL,
+	.e_vm_default_addr =	uvm_default_mapaddr,
+	.e_usertrap =		NULL,
 #ifdef KERN_SA
-	&saemul_netbsd,
+	.e_sa =			&saemul_netbsd,
 #else
-	NULL,
+	.e_sa =			NULL,
 #endif
-	sizeof(ucontext_t),
-	startlwp,
+	.e_ucsize =		sizeof(ucontext_t),
+	.e_startlwp =		startlwp
 };
 
 /*
@@ -521,6 +537,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	p = l->l_proc;
  	modgen = 0;
 
+	SDT_PROBE(proc,,,exec, path, 0, 0, 0, 0);
+
 	/*
 	 * Check if we have exceeded our number of processes limit.
 	 * This is so that we handle the case where a root daemon
@@ -764,7 +782,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	/* record proc's vnode, for use by procfs and others */
         if (p->p_textvp)
                 vrele(p->p_textvp);
-	VREF(pack.ep_vp);
+	vref(pack.ep_vp);
 	p->p_textvp = pack.ep_vp;
 
 	/* Now map address space */
@@ -1045,9 +1063,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	doexechooks(p);
 
 	/* setup new registers and do misc. setup. */
-	(*pack.ep_esch->es_emul->e_setregs)(l, &pack, (u_long) stack);
+	(*pack.ep_esch->es_emul->e_setregs)(l, &pack, (vaddr_t)stack);
 	if (pack.ep_esch->es_setregs)
-		(*pack.ep_esch->es_setregs)(l, &pack, (u_long) stack);
+		(*pack.ep_esch->es_setregs)(l, &pack, (vaddr_t)stack);
 
 	/* map the process's signal trampoline code */
 	if (exec_sigcode_map(p, pack.ep_esch->es_emul)) {
@@ -1063,6 +1081,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	KNOTE(&p->p_klist, NOTE_EXEC);
 
 	kmem_free(pack.ep_hdr, pack.ep_hdrlen);
+
+	SDT_PROBE(proc,,,exec_success, path, 0, 0, 0, 0);
 
 	/* The emulation root will usually have been found when we looked
 	 * for the elf interpreter (or similar), if not look now. */
@@ -1182,9 +1202,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		goto retry;
 	}
 
+	SDT_PROBE(proc,,,exec_failure, error, 0, 0, 0, 0);
 	return error;
 
  exec_abort:
+	SDT_PROBE(proc,,,exec_failure, error, 0, 0, 0, 0);
 	PNBUF_PUT(pathbuf);
 	rw_exit(&p->p_reflock);
 	rw_exit(&exec_lock);

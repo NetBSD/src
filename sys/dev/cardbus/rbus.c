@@ -1,4 +1,5 @@
-/*	$NetBSD: rbus.c,v 1.25.20.1 2009/05/04 08:12:36 yamt Exp $	*/
+/*	$NetBSD: rbus.c,v 1.25.20.2 2010/03/11 15:03:25 yamt Exp $	*/
+
 /*
  * Copyright (c) 1999 and 2000
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -11,11 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by HAYAKAWA Koichi.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.25.20.1 2009/05/04 08:12:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.25.20.2 2010/03/11 15:03:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

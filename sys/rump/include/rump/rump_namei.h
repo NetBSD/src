@@ -1,11 +1,11 @@
-/*	$NetBSD: rump_namei.h,v 1.3.2.3 2009/07/18 14:53:26 yamt Exp $	*/
+/*	$NetBSD: rump_namei.h,v 1.3.2.4 2010/03/11 15:04:37 yamt Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.4 2008/12/03 10:54:27 ad Exp 
- *   from: NetBSD: namei.src,v 1.11 2009/06/29 05:00:14 dholland Exp 
+ *   from: NetBSD: namei.src,v 1.14 2009/12/23 01:09:24 pooka Exp 
  */
 
 #ifndef _RUMP_RUMP_NAMEI_H_
@@ -38,6 +38,7 @@
 #define RUMP_NAMEI_DOWHITEOUT	0x0040000
 #define RUMP_NAMEI_REQUIREDIR	0x0080000
 #define RUMP_NAMEI_CREATEDIR	0x0200000
-#define RUMP_NAMEI_PARAMASK	0x02fff00
+#define RUMP_NAMEI_INRENAME	0x0400000
+#define RUMP_NAMEI_PARAMASK	0x06fff00
 
 #endif /* _RUMP_RUMP_NAMEI_H_ */

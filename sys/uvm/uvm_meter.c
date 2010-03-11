@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.48.2.1 2009/05/04 08:14:39 yamt Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.48.2.2 2010/03/11 15:04:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.48.2.1 2009/05/04 08:14:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.48.2.2 2010/03/11 15:04:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -78,7 +78,7 @@ static void uvm_loadav(struct loadavg *);
 static void uvm_total(struct vmtotal *);
 
 /*
- * uvm_meter: calculate load average and wake up the swapper (if needed)
+ * uvm_meter: calculate load average.
  */
 void
 uvm_meter(void)
@@ -89,8 +89,6 @@ uvm_meter(void)
 		count = 0;
 		uvm_loadav(&averunnable);
 	}
-	if (lwp0.l_slptime > (maxslp / 2))
-		uvm_kick_scheduler();
 }
 
 /*
@@ -198,8 +196,6 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.softs = uvmexp.softs;
 	u.syscalls = uvmexp.syscalls;
 	u.pageins = uvmexp.pageins;
-	u.swapins = uvmexp.swapins;
-	u.swapouts = uvmexp.swapouts;
 	u.pgswapin = uvmexp.pgswapin;
 	u.pgswapout = uvmexp.pgswapout;
 	u.forks = uvmexp.forks;
@@ -228,7 +224,6 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.flt_przero = uvmexp.flt_przero;
 	u.pdwoke = uvmexp.pdwoke;
 	u.pdrevs = uvmexp.pdrevs;
-	u.pdswout = uvmexp.pdswout;
 	u.pdfreed = uvmexp.pdfreed;
 	u.pdscans = uvmexp.pdscans;
 	u.pdanscan = uvmexp.pdanscan;
@@ -379,13 +374,11 @@ uvm_total(struct vmtotal *totalp)
 
 		case LSSLEEP:
 		case LSSTOP:
-			if (l->l_flag & LW_INMEM) {
-				if (lwp_eprio(l) <= PZERO)
-					totalp->t_dw++;
-				else if (l->l_slptime < maxslp)
-					totalp->t_sl++;
-			} else if (l->l_slptime < maxslp)
-				totalp->t_sw++;
+			if (lwp_eprio(l) <= PZERO) {
+				totalp->t_dw++;
+			} else if (l->l_slptime < maxslp) {
+				totalp->t_sl++;
+			}
 			if (l->l_slptime >= maxslp)
 				continue;
 			break;
@@ -393,10 +386,7 @@ uvm_total(struct vmtotal *totalp)
 		case LSRUN:
 		case LSONPROC:
 		case LSIDL:
-			if (l->l_flag & LW_INMEM)
-				totalp->t_rq++;
-			else
-				totalp->t_sw++;
+			totalp->t_rq++;
 			if (l->l_stat == LSIDL)
 				continue;
 			break;

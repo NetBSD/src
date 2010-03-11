@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.44.10.2 2009/06/20 07:20:07 yamt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.44.10.3 2010/03/11 15:02:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.44.10.2 2009/06/20 07:20:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.44.10.3 2010/03/11 15:02:51 yamt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.44.10.2 2009/06/20 07:20:07 yamt E
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/user.h>
 #include <sys/boot_flag.h>
 
 #include <uvm/uvm_extern.h>
@@ -76,9 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.44.10.2 2009/06/20 07:20:07 yamt E
 #include <ipkdb/ipkdb.h>
 #endif
 
-#include <powerpc/oea/bat.h>
-#include <powerpc/oea/sr_601.h>
-#include <powerpc/oea/cpufeat.h>
 #include <powerpc/trap.h>
 #include <powerpc/stdarg.h>
 #include <powerpc/spr.h>
@@ -86,17 +82,19 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.44.10.2 2009/06/20 07:20:07 yamt E
 #include <powerpc/altivec.h>
 #include <machine/powerpc.h>
 
+#include <powerpc/oea/spr.h>
+#include <powerpc/oea/bat.h>
+#include <powerpc/oea/sr_601.h>
+#include <powerpc/oea/cpufeat.h>
+
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 /*
  * Global variables used here and there
  */
-extern struct user *proc0paddr;
-
 static void trap0(void *);
 
 /* XXXSL: The battable is not initialized to non-zero for PPC_OEA64 and PPC_OEA64_BRIDGE */
@@ -153,12 +151,10 @@ oea_init(void (*handler)(void))
 	KASSERT(ci != NULL);
 	KASSERT(curcpu() == ci);
 	lwp0.l_cpu = ci;
-	lwp0.l_addr = proc0paddr;
-	memset(lwp0.l_addr, 0, sizeof *lwp0.l_addr);
-	KASSERT(lwp0.l_cpu != NULL);
 
-	curpcb = &proc0paddr->u_pcb;
-	memset(curpcb, 0, sizeof(*curpcb));
+	curpcb = lwp_getpcb(&lwp0);
+	memset(curpcb, 0, sizeof(struct pcb));
+
 #ifdef ALTIVEC
 	/*
 	 * Initialize the vectors with NaNs
@@ -751,7 +747,7 @@ oea_startup(const char *model)
 		v = (void *)minaddr;
 		for (i = 0; i < sz; i += PAGE_SIZE) {
 			pmap_kenter_pa(minaddr + i, msgbuf_paddr + i,
-			    VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE, 0);
 		}
 		pmap_update(pmap_kernel());
 	}
@@ -790,16 +786,6 @@ oea_startup(const char *model)
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_PHYS_SIZE, 0, false, NULL);
-
-#ifndef PMAP_MAP_POOLPAGE
-	/*
-	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use direct-mapped
-	 * pool pages.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    mclbytes*nmbclusters, VM_MAP_INTRSAFE, false, NULL);
-#endif
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
@@ -859,7 +845,7 @@ mapiodev(paddr_t pa, psize_t len)
 		return NULL;
 
 	for (; len > 0; len -= PAGE_SIZE) {
-		pmap_kenter_pa(taddr, faddr, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(taddr, faddr, VM_PROT_READ | VM_PROT_WRITE, 0);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}

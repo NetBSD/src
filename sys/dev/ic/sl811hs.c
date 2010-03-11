@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.21.4.2 2009/05/16 10:41:24 yamt Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.21.4.3 2010/03/11 15:03:35 yamt Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -59,9 +59,7 @@
  * This driver does fine grained locking for its own data structures, however 
  * the general USB code does not yet have locks, some of which would need to 
  * be used in this driver.  This is mostly for debug use on single processor 
- * systems.  Actual MP use of this driver would be unreliable on ports where 
- * splipi is above splhigh unless splipi can be safely blocked when 
- * calculating remaining bus time prior to transfers.
+ * systems.
  *
  * The theory of the wait lock is that start is the only function that would 
  * be frequently called from arbitrary processors, so it should not need to 
@@ -86,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.21.4.2 2009/05/16 10:41:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.21.4.3 2010/03/11 15:03:35 yamt Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -1231,19 +1229,15 @@ slhci_detach(struct slhci_softc *sc, int flags)
 int
 slhci_activate(device_t self, enum devact act)
 {
-	struct slhci_softc *sc;
+	struct slhci_softc *sc = device_private(self);
 
-	sc = device_private(self);
-
-	if (act != DVACT_DEACTIVATE)
-		return EOPNOTSUPP;
-
-	slhci_lock_call(sc, &slhci_halt, NULL, NULL);
-
-	if (sc->sc_child)
-		return config_deactivate(sc->sc_child);
-	else
+	switch (act) {
+	case DVACT_DEACTIVATE:
+		slhci_lock_call(sc, &slhci_halt, NULL, NULL);
 		return 0;
+	default:
+		return EOPNOTSUPP;
+	}
 }
 
 void
@@ -2208,8 +2202,8 @@ slhci_tstart(struct slhci_softc *sc)
 	/* We have about 6 us to get from the bus time check to 
 	 * starting the transfer or we might babble or the chip might fail to 
 	 * signal transfer complete.  This leaves no time for any other 
-	 * interrupts.  Some ports have splipi (MP only) higher than splhigh 
-	 * which might cause longer delays. */
+	 * interrupts.
+	 */
 	s = splhigh();
 	remaining_bustime = (int)(slhci_read(sc, SL811_CSOF)) << 6;
 	remaining_bustime -= SLHCI_END_BUSTIME;

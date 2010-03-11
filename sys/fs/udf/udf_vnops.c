@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.17.10.6 2009/09/16 13:38:00 yamt Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.17.10.7 2010/03/11 15:04:15 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.17.10.6 2009/09/16 13:38:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.17.10.7 2010/03/11 15:04:15 yamt Exp $");
 #endif /* not lint */
 
 
@@ -704,7 +704,7 @@ udf_lookup(void *v)
 	if ((cnp->cn_namelen == 1) && (cnp->cn_nameptr[0] == '.')) {
 		DPRINTF(LOOKUP, ("\tlookup '.'\n"));
 		/* special case 1 '.' */
-		VREF(dvp);
+		vref(dvp);
 		*vpp = dvp;
 		/* done */
 	} else if (cnp->cn_flags & ISDOTDOT) {
@@ -883,7 +883,7 @@ udf_getattr(void *v)
 		gid = ump->mount_args.anon_gid;
 
 	/* fill in struct vattr with values from the node */
-	VATTR_NULL(vap);
+	vattr_null(vap);
 	vap->va_type      = vp->v_type;
 	vap->va_mode      = udf_getaccessmode(udf_node);
 	vap->va_nlink     = nlink;
@@ -2118,7 +2118,7 @@ udf_remove(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp  = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
-	struct udf_node *dir_node = VTOI(dvp);;
+	struct udf_node *dir_node = VTOI(dvp);
 	struct udf_node *udf_node = VTOI(vp);
 	struct udf_mount *ump = dir_node->ump;
 	int error;
@@ -2159,7 +2159,7 @@ udf_rmdir(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct vnode *dvp = ap->a_dvp;
 	struct componentname *cnp = ap->a_cnp;
-	struct udf_node *dir_node = VTOI(dvp);;
+	struct udf_node *dir_node = VTOI(dvp);
 	struct udf_node *udf_node = VTOI(vp);
 	struct udf_mount *ump = dir_node->ump;
 	int refcnt, error;

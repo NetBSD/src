@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.37 2008/03/12 18:02:21 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.37.4.1 2010/03/11 15:03:35 yamt Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -12,9 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of David Young may not be used to endorse or promote
- *    products derived from this software without specific prior
- *    written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY David Young ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
@@ -418,6 +415,9 @@ struct rtw_led_state {
 
 struct rtw_softc {
 	device_t		sc_dev;
+	device_suspensor_t	sc_suspensor;
+	pmf_qual_t		sc_qual;
+
 	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
 	struct rtw_regs		sc_regs;
@@ -458,7 +458,7 @@ struct rtw_softc {
 
 	struct rtw_mtbl		sc_mtbl;
 
-	void *			sc_radiobpf;
+	struct bpf_if *		sc_radiobpf;
 
 	struct callout		sc_scan_ch;
 	u_int			sc_cur_chan;
@@ -502,8 +502,8 @@ void rtw_attach(struct rtw_softc *);
 int rtw_detach(struct rtw_softc *);
 int rtw_intr(void *);
 
-bool rtw_suspend(device_t PMF_FN_PROTO);
-bool rtw_resume(device_t PMF_FN_PROTO);
+bool rtw_suspend(device_t, const pmf_qual_t *);
+bool rtw_resume(device_t, const pmf_qual_t *);
 
 int rtw_activate(device_t, enum devact);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.143.10.1 2009/05/04 08:11:05 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.143.10.2 2010/03/11 15:02:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -205,7 +205,7 @@ Lhaveihpib:
 
 /* determine our CPU/MMU combo - check for all regardless of kernel config */
 	movl	#INTIOBASE+MMUBASE,%a1
-	movl	#0x200,%d0		| data freeze bit
+	movl	#DC_FREEZE,%d0		| data freeze bit
 	movc	%d0,%cacr		|   only exists on 68030
 	movc	%cacr,%d0		| read it back
 	tstl	%d0			| zero?
@@ -453,9 +453,8 @@ Lstart3:
  *
  * Is this all really necessary, or am I paranoid??
  */
-	RELOC(Sysseg, %a0)		| system segment table addr
-	movl	%a0@,%d1		| read value (a KVA)
-	addl	%a5,%d1			| convert to PA
+	RELOC(Sysseg_pa, %a0)		| system segment table addr
+	movl	%a0@,%d1		| read value (a PA)
 	RELOC(mmutype, %a0)
 	tstl	%a0@			| HP MMU?
 	jeq	Lhpmmu2			| yes, skip
@@ -523,16 +522,24 @@ Lhighcode:
 	.long	0x4e7b0007		| movc %d0,%dtt1
 	.word	0xf4d8			| cinva bc
 	.word	0xf518			| pflusha
+#if PGSHIFT == 13
+	movl	#0xc000,%d0
+#else
 	movl	#0x8000,%d0
+#endif
 	.long	0x4e7b0003		| movc %d0,%tc
-	movl	#0x80008000,%d0
+	movl	#CACHE40_ON,%d0
 	movc	%d0,%cacr		| turn on both caches
 	jmp	Lenab1:l		| forced not be pc-relative
 Lmotommu2:
 	movl	#MMU_IEN+MMU_FPE,INTIOBASE+MMUBASE+MMUCMD
 					| enable 68881 and i-cache
 	RELOC(prototc, %a2)
+#if PGSHIFT == 13
+	movl	#0x82d08b00,%a2@	| value to load TC with
+#else
 	movl	#0x82c0aa00,%a2@	| value to load TC with
+#endif
 	pmove	%a2@,%tc		| load it
 	jmp	Lenab1:l		| forced not be pc-relative
 Lhpmmu3:
@@ -549,18 +556,14 @@ Lehighcode:
  * Should be running mapped from this point on
  */
 Lenab1:
-/* select the software page size now */
 	lea	_ASM_LABEL(tmpstk),%sp		| temporary stack
-	jbsr	_C_LABEL(uvm_setpagesize)  	| select software page size
-/* set kernel stack, user SP, and initial pcb */
-	movl	_C_LABEL(proc0paddr),%a1	| get lwp0 pcb addr
-	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
-	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.l_addr
-	movl	%a2,_C_LABEL(curlwp)	|   and curlwp so that
-	movl	%a1,%a2@(L_ADDR)	|   we don't deref NULL in trap()
+/* call final pmap setup */
+	jbsr	_C_LABEL(pmap_bootstrap_finalize)
+/* set kernel stack, user SP */
+	movl	_C_LABEL(lwp0uarea),%a1	|
+	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area  
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
-	movl	%a1,_C_LABEL(curpcb)	| lwp0 is running
 
 	tstl	_C_LABEL(fputype)	| Have an FPU?
 	jeq	Lenab2			| No, skip.
@@ -584,7 +587,7 @@ Lnocache0:
 	jbsr	_C_LABEL(hp300_init)
 
 /*
- * Create a fake exception frame so that cpu_fork() can copy it.
+ * Create a fake exception frame so that cpu_lwp_fork() can copy it.
  * main() nevers returns; we exit to user mode from a forked process
  * later on.
  */
@@ -1519,9 +1522,6 @@ GLOBAL(prototc)
 
 GLOBAL(internalhpib)
 	.long	1			| has internal HP-IB, default to yes
-
-GLOBAL(proc0paddr)
-	.long	0			| KVA of lwp0 u-area
 
 GLOBAL(intiobase)
 	.long	0			| KVA of base of internal IO space

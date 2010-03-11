@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtw_pci.c,v 1.11.4.3 2009/09/16 13:37:51 yamt Exp $	*/
+/*	$NetBSD: if_rtw_pci.c,v 1.11.4.4 2010/03/11 15:03:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.11.4.3 2009/09/16 13:37:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.11.4.4 2010/03/11 15:03:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.11.4.3 2009/09/16 13:37:51 yamt Exp
 #include <sys/intr.h>
 
 #include <dev/ic/rtwreg.h>
-#include <dev/ic/sa2400reg.h>
 #include <dev/ic/rtwvar.h>
 
 #include <dev/pci/pcivar.h>
@@ -74,13 +73,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.11.4.3 2009/09/16 13:37:51 yamt Exp
 #include <dev/pci/pcidevs.h>
 
 /*
- * PCI configuration space registers used by the ADM8211.
+ * PCI configuration space registers used by the RTL8180.
  */
 #define	RTW_PCI_IOBA		0x10	/* i/o mapped base */
 #define	RTW_PCI_MMBA		0x14	/* memory mapped base */
 
 struct rtw_pci_softc {
-	struct rtw_softc	psc_rtw;	/* real ADM8211 softc */
+	struct rtw_softc	psc_rtw;	/* real RTL8180 softc */
 
 	pci_intr_handle_t	psc_ih;		/* interrupt handle */
 	void			*psc_intrcookie;
@@ -95,6 +94,9 @@ static int	rtw_pci_detach(device_t, int);
 
 CFATTACH_DECL_NEW(rtw_pci, sizeof(struct rtw_pci_softc),
     rtw_pci_match, rtw_pci_attach, rtw_pci_detach, NULL);
+
+static bool rtw_pci_resume(device_t, const pmf_qual_t *);
+static bool rtw_pci_suspend(device_t, const pmf_qual_t *);
 
 static const struct rtw_pci_product {
 	u_int32_t	app_vendor;	/* PCI vendor ID */
@@ -133,37 +135,6 @@ rtw_pci_match(device_t parent, cfdata_t match, void *aux)
 		return (1);
 
 	return (0);
-}
-
-static bool
-rtw_pci_resume(device_t self PMF_FN_ARGS)
-{
-	struct rtw_pci_softc *psc = device_private(self);
-	struct rtw_softc *sc = &psc->psc_rtw;
-
-	/* Establish the interrupt. */
-	psc->psc_intrcookie = pci_intr_establish(psc->psc_pc, psc->psc_ih,
-	    IPL_NET, rtw_intr, sc);
-	if (psc->psc_intrcookie == NULL) {
-		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
-		return false;
-	}
-
-	return rtw_resume(self, flags);
-}
-
-static bool
-rtw_pci_suspend(device_t self PMF_FN_ARGS)
-{
-	struct rtw_pci_softc *psc = device_private(self);
-
-	if (!rtw_suspend(self, flags))
-		return false;
-
-	/* Unhook the interrupt handler. */
-	pci_intr_disestablish(psc->psc_pc, psc->psc_intrcookie);
-	psc->psc_intrcookie = NULL;
-	return true;
 }
 
 static void
@@ -256,7 +227,7 @@ rtw_pci_attach(device_t parent, device_t self, void *aux)
 		/*
 		 * Power down the socket.
 		 */
-		pmf_device_suspend_self(self);
+		pmf_device_suspend(sc->sc_dev, &sc->sc_qual);
 	} else
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't establish power handler\n");
@@ -277,4 +248,35 @@ rtw_pci_detach(device_t self, int flags)
 	bus_space_unmap(regs->r_bt, regs->r_bh, regs->r_sz);
 
 	return 0;
+}
+
+static bool
+rtw_pci_resume(device_t self, const pmf_qual_t *qual)
+{
+	struct rtw_pci_softc *psc = device_private(self);
+	struct rtw_softc *sc = &psc->psc_rtw;
+
+	/* Establish the interrupt. */
+	psc->psc_intrcookie = pci_intr_establish(psc->psc_pc, psc->psc_ih,
+	    IPL_NET, rtw_intr, sc);
+	if (psc->psc_intrcookie == NULL) {
+		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
+		return false;
+	}
+
+	return rtw_resume(self, qual);
+}
+
+static bool
+rtw_pci_suspend(device_t self, const pmf_qual_t *qual)
+{
+	struct rtw_pci_softc *psc = device_private(self);
+
+	if (!rtw_suspend(self, qual))
+		return false;
+
+	/* Unhook the interrupt handler. */
+	pci_intr_disestablish(psc->psc_pc, psc->psc_intrcookie);
+	psc->psc_intrcookie = NULL;
+	return true;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.23.4.4 2009/09/16 13:37:50 yamt Exp $	 */
+/* $NetBSD: if_bce.c,v 1.23.4.5 2010/03/11 15:03:44 yamt Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,9 +35,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.23.4.4 2009/09/16 13:37:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.23.4.5 2010/03/11 15:03:44 yamt Exp $");
 
-#include "bpfilter.h"
 #include "vlan.h"
 #include "rnd.h"
 
@@ -56,9 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.23.4.4 2009/09/16 13:37:50 yamt Exp $")
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -182,7 +179,7 @@ static	int	bce_add_rxbuf(struct bce_softc *, int);
 static	void	bce_rxdrain(struct bce_softc *);
 static	void	bce_stop(struct ifnet *, int);
 static	void	bce_reset(struct bce_softc *);
-static	bool	bce_resume(device_t PMF_FN_PROTO);
+static	bool	bce_resume(device_t, const pmf_qual_t *);
 static	void	bce_set_filter(struct ifnet *);
 static	int	bce_mii_read(device_t, int, int);
 static	void	bce_mii_write(device_t, int, int, int);
@@ -331,8 +328,8 @@ bce_attach(device_t parent, device_t self, void *aux)
 	if (sc->bce_intrhand == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
@@ -630,11 +627,9 @@ bce_start(struct ifnet *ifp)
 
 		newpkts++;
 
-#if NBPFILTER > 0
 		/* Pass the packet to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif				/* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 	}
 	if (txsfree == 0) {
 		/* No more slots left; notify upper layer. */
@@ -822,14 +817,12 @@ bce_rxintr(struct bce_softc *sc)
 		m->m_pkthdr.len = m->m_len = len;
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
 		 * pass it up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif				/* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass it on. */
 		(*ifp->if_input) (ifp, m);
@@ -1374,7 +1367,7 @@ bce_set_filter(struct ifnet *ifp)
 }
 
 static bool
-bce_resume(device_t self PMF_FN_ARGS)
+bce_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct bce_softc *sc = device_private(self);
 

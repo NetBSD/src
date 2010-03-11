@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.11.10.1 2009/05/04 08:12:58 yamt Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.11.10.2 2010/03/11 15:03:49 yamt Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -169,8 +169,7 @@ struct wpi_softc {
 
 	int			sc_tx_timer;
 
-#if NBPFILTER > 0
-	void *			sc_drvbpf;
+	struct bpf_if *		sc_drvbpf;
 
 	union {
 		struct wpi_rx_radiotap_header th;
@@ -185,7 +184,6 @@ struct wpi_softc {
 	} sc_txtapu;
 #define sc_txtap	sc_txtapu.th
 	int			sc_txtap_len;
-#endif
 
 	bool		is_scanning;
 

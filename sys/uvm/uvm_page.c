@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.131.4.2 2009/08/19 18:48:36 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.131.4.3 2010/03/11 15:04:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.131.4.2 2009/08/19 18:48:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.131.4.3 2010/03/11 15:04:47 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -156,8 +156,8 @@ vaddr_t uvm_zerocheckkva;
  * local prototypes
  */
 
-static void uvm_pageinsert(struct vm_page *);
-static void uvm_pageremove(struct vm_page *);
+static void uvm_pageinsert(struct uvm_object *, struct vm_page *);
+static void uvm_pageremove(struct uvm_object *, struct vm_page *);
 
 /*
  * per-object tree of pages
@@ -256,10 +256,10 @@ uvm_pageinsert_tree(struct uvm_object *uobj, struct vm_page *pg)
 }
 
 static inline void
-uvm_pageinsert(struct vm_page *pg)
+uvm_pageinsert(struct uvm_object *uobj, struct vm_page *pg)
 {
-	struct uvm_object *uobj = pg->uobject;
 
+	KDASSERT(uobj != NULL);
 	uvm_pageinsert_tree(uobj, pg);
 	uvm_pageinsert_list(uobj, pg, NULL);
 }
@@ -310,10 +310,10 @@ uvm_pageremove_tree(struct uvm_object *uobj, struct vm_page *pg)
 }
 
 static inline void
-uvm_pageremove(struct vm_page *pg)
+uvm_pageremove(struct uvm_object *uobj, struct vm_page *pg)
 {
-	struct uvm_object *uobj = pg->uobject;
 
+	KDASSERT(uobj != NULL);
 	uvm_pageremove_tree(uobj, pg);
 	uvm_pageremove_list(uobj, pg);
 }
@@ -339,7 +339,7 @@ uvm_page_init_buckets(struct pgfreelist *pgfl)
 void
 uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 {
-	vsize_t freepages, pagecount, bucketcount, n;
+	psize_t freepages, pagecount, bucketcount, n;
 	struct pgflbucket *bucketarray, *cpuarray;
 	struct vm_page *pagearray;
 	int lcv;
@@ -439,7 +439,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 		vm_physmem[lcv].lastpg = vm_physmem[lcv].pgs + (n - 1);
 
 		/* init and free vm_pages (we've already zeroed them) */
-		paddr = ptoa(vm_physmem[lcv].start);
+		paddr = ctob(vm_physmem[lcv].start);
 		for (i = 0 ; i < n ; i++, paddr += PAGE_SIZE) {
 			vm_physmem[lcv].pgs[i].phys_addr = paddr;
 #ifdef __HAVE_VM_PAGE_MD
@@ -599,7 +599,7 @@ uvm_pageboot_alloc(vsize_t size)
 		 * Note this memory is no longer managed, so using
 		 * pmap_kenter is safe.
 		 */
-		pmap_kenter_pa(vaddr, paddr, VM_PROT_READ|VM_PROT_WRITE);
+		pmap_kenter_pa(vaddr, paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	}
 	pmap_update(pmap_kernel());
 	return(addr);
@@ -642,7 +642,7 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 		/* try from front */
 		if (vm_physmem[lcv].avail_start == vm_physmem[lcv].start &&
 		    vm_physmem[lcv].avail_start < vm_physmem[lcv].avail_end) {
-			*paddrp = ptoa(vm_physmem[lcv].avail_start);
+			*paddrp = ctob(vm_physmem[lcv].avail_start);
 			vm_physmem[lcv].avail_start++;
 			vm_physmem[lcv].start++;
 			/* nothing left?   nuke it */
@@ -661,7 +661,7 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 		/* try from rear */
 		if (vm_physmem[lcv].avail_end == vm_physmem[lcv].end &&
 		    vm_physmem[lcv].avail_start < vm_physmem[lcv].avail_end) {
-			*paddrp = ptoa(vm_physmem[lcv].avail_end - 1);
+			*paddrp = ctob(vm_physmem[lcv].avail_end - 1);
 			vm_physmem[lcv].avail_end--;
 			vm_physmem[lcv].end--;
 			/* nothing left?   nuke it */
@@ -690,7 +690,7 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 		if (vm_physmem[lcv].avail_start >= vm_physmem[lcv].avail_end)
 			continue;  /* nope */
 
-		*paddrp = ptoa(vm_physmem[lcv].avail_start);
+		*paddrp = ctob(vm_physmem[lcv].avail_start);
 		vm_physmem[lcv].avail_start++;
 		/* truncate! */
 		vm_physmem[lcv].start = vm_physmem[lcv].avail_start;
@@ -793,7 +793,7 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 		}
 		/* zero data, init phys_addr and free_list, and free pages */
 		memset(pgs, 0, sizeof(struct vm_page) * npages);
-		for (lcv = 0, paddr = ptoa(start) ;
+		for (lcv = 0, paddr = ctob(start) ;
 				 lcv < npages ; lcv++, paddr += PAGE_SIZE) {
 			pgs[lcv].phys_addr = paddr;
 			pgs[lcv].free_list = free_list;
@@ -1216,7 +1216,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 		atomic_inc_uint(&uvmexp.anonpages);
 	} else {
 		if (obj) {
-			uvm_pageinsert(pg);
+			uvm_pageinsert(obj, pg);
 		}
 		pg->pqflags = 0;
 	}
@@ -1284,7 +1284,7 @@ uvm_pagerealloc(struct vm_page *pg, struct uvm_object *newobj, voff_t newoff)
 	 */
 
 	if (pg->uobject) {
-		uvm_pageremove(pg);
+		uvm_pageremove(pg->uobject, pg);
 	}
 
 	/*
@@ -1294,7 +1294,7 @@ uvm_pagerealloc(struct vm_page *pg, struct uvm_object *newobj, voff_t newoff)
 	if (newobj) {
 		pg->uobject = newobj;
 		pg->offset = newoff;
-		uvm_pageinsert(pg);
+		uvm_pageinsert(newobj, pg);
 	}
 }
 
@@ -1318,7 +1318,7 @@ uvm_pagezerocheck(struct vm_page *pg)
 	 *
 	 * it might be better to have "CPU-local temporary map" pmap interface.
 	 */
-	pmap_kenter_pa(uvm_zerocheckkva, VM_PAGE_TO_PHYS(pg), VM_PROT_READ);
+	pmap_kenter_pa(uvm_zerocheckkva, VM_PAGE_TO_PHYS(pg), VM_PROT_READ, 0);
 	p = (int *)uvm_zerocheckkva;
 	ep = (int *)((char *)p + PAGE_SIZE);
 	pmap_update(pmap_kernel());
@@ -1386,7 +1386,7 @@ uvm_pagefree(struct vm_page *pg)
 		 */
 
 		if (pg->uobject != NULL) {
-			uvm_pageremove(pg);
+			uvm_pageremove(pg->uobject, pg);
 			pg->flags &= ~PG_CLEAN;
 		} else if (pg->uanon != NULL) {
 			if ((pg->pqflags & PQ_ANON) == 0) {
@@ -1419,7 +1419,7 @@ uvm_pagefree(struct vm_page *pg)
 	 */
 
 	if (pg->uobject != NULL) {
-		uvm_pageremove(pg);
+		uvm_pageremove(pg->uobject, pg);
 	} else if (pg->uanon != NULL) {
 		pg->uanon->an_page = NULL;
 		atomic_dec_uint(&uvmexp.anonpages);

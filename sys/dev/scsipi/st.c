@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.203.4.4 2009/08/19 18:47:19 yamt Exp $ */
+/*	$NetBSD: st.c,v 1.203.4.5 2010/03/11 15:04:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.203.4.4 2009/08/19 18:47:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.203.4.5 2010/03/11 15:04:03 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: st.c,v 1.203.4.4 2009/08/19 18:47:19 yamt Exp $");
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/mtio.h>
 #include <sys/device.h>
 #include <sys/conf.h>
@@ -418,25 +417,6 @@ stattach(device_t parent, struct st_softc *st, void *aux)
 }
 
 int
-stactivate(device_t self, enum devact act)
-{
-	int rv = 0;
-
-	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		/*
-		 * Nothing to do; we key off the device's DVF_ACTIVE.
-		 */
-		break;
-	}
-	return (rv);
-}
-
-int
 stdetach(device_t self, int flags)
 {
 	struct st_softc *st = device_private(self);
@@ -647,10 +627,10 @@ stopen(dev_t dev, int flags, int mode, struct lwp *l)
 		oflags = periph->periph_flags;
 		periph->periph_flags |= PERIPH_OPEN;
 
-		slpintr = tsleep(&lbolt, PUSER|PCATCH, "stload", 0);
+		slpintr = kpause("stload", true, hz, NULL);
 
 		periph->periph_flags = oflags;	/* restore flags */
-		if (slpintr) {
+		if (slpintr != 0 && slpintr != EWOULDBLOCK) {
 			goto bad;
 		}
 	}
@@ -2007,7 +1987,7 @@ st_rdpos(struct st_softc *st, int hard, u_int32_t *blkptr)
 
 	error = scsipi_command(st->sc_periph, (void *)&cmd, sizeof(cmd),
 	    (void *)&posdata, sizeof(posdata), ST_RETRIES, ST_CTL_TIME, NULL,
-	    XS_CTL_SILENT | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
+	    XS_CTL_SILENT | XS_CTL_DATA_IN);
 
 	if (error == 0) {
 #if	0
@@ -2460,6 +2440,5 @@ st_mode_select(struct st_softc *st, int flags)
 	 * do the command
 	 */
 	return scsipi_mode_select(periph, 0, &select.header, select_len,
-				  flags | XS_CTL_DATA_ONSTACK, ST_RETRIES,
-				  ST_CTL_TIME);
+				  flags, ST_RETRIES, ST_CTL_TIME);
 }

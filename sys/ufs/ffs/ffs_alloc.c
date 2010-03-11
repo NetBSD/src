@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.106.12.2 2009/05/16 10:41:53 yamt Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.106.12.3 2010/03/11 15:04:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.106.12.2 2009/05/16 10:41:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.106.12.3 2010/03/11 15:04:44 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -194,8 +194,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size, int flags,
 		mutex_enter(&uobj->vmobjlock);
 		while (off < endoff) {
 			pg = uvm_pagelookup(uobj, off);
-			KASSERT(pg != NULL);
-			KASSERT(pg->owner == curproc->p_pid);
+			KASSERT(pg == NULL || pg->owner == curproc->p_pid);
 			off += PAGE_SIZE;
 		}
 		mutex_exit(&uobj->vmobjlock);
@@ -302,8 +301,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		mutex_enter(&uobj->vmobjlock);
 		while (off < endoff) {
 			pg = uvm_pagelookup(uobj, off);
-			KASSERT(pg != NULL);
-			KASSERT(pg->owner == curproc->p_pid);
+			KASSERT(pg == NULL || pg->owner == curproc->p_pid);
 			KASSERT((pg->flags & PG_CLEAN) == 0);
 			off += PAGE_SIZE;
 		}

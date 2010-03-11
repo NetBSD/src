@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.47.40.1 2009/05/04 08:14:16 yamt Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.47.40.2 2010/03/11 15:04:28 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,13 +36,12 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.47.40.1 2009/05/04 08:14:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.47.40.2 2010/03/11 15:04:28 yamt Exp $");
 #endif
 
 #include "opt_inet.h"
 
 #ifdef __NetBSD__
-#include "bpfilter.h"
 #endif /* __NetBSD__ */
 
 #include <sys/param.h>
@@ -65,9 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.47.40.1 2009/05/04 08:14:16 y
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>

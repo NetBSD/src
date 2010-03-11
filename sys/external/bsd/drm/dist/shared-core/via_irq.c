@@ -76,7 +76,7 @@ static maskarray_t via_pro_group_a_irqs[] = {
 	{VIA_IRQ_DMA1_TD_ENABLE, VIA_IRQ_DMA1_TD_PENDING, VIA_PCI_DMA_CSR1,
 	 VIA_DMA_CSR_TA | VIA_DMA_CSR_TD, 0x00000008},
 };
-static int via_num_pro_group_a = ARRAY_SIZE(via_pro_group_a_irqs);
+static int via_num_pro_group_a = DRM_ARRAY_SIZE(via_pro_group_a_irqs);
 static int via_irqmap_pro_group_a[] = {0, 1, -1, 2, -1, 3};
 
 static maskarray_t via_unichrome_irqs[] = {
@@ -85,7 +85,7 @@ static maskarray_t via_unichrome_irqs[] = {
 	{VIA_IRQ_DMA1_TD_ENABLE, VIA_IRQ_DMA1_TD_PENDING, VIA_PCI_DMA_CSR1,
 	 VIA_DMA_CSR_TA | VIA_DMA_CSR_TD, 0x00000008}
 };
-static int via_num_unichrome = ARRAY_SIZE(via_unichrome_irqs);
+static int via_num_unichrome = DRM_ARRAY_SIZE(via_unichrome_irqs);
 static int via_irqmap_unichrome[] = {-1, -1, -1, 0, -1, 1};
 
 

@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.34.4.2 2009/05/04 08:10:43 yamt Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.34.4.3 2010/03/11 15:02:06 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Tohru Nishimura
- *	and Reinoud Zandijk for the NetBSD Project.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -36,7 +30,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.34.4.2 2009/05/04 08:10:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.34.4.3 2010/03/11 15:02:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

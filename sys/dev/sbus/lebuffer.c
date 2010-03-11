@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.27.4.4 2009/06/20 07:20:28 yamt Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.27.4.5 2010/03/11 15:04:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.27.4.4 2009/06/20 07:20:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.27.4.5 2010/03/11 15:04:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ int	lebufprint(void *, const char *);
 int	lebufmatch(device_t, cfdata_t, void *);
 void	lebufattach(device_t, device_t, void *);
 
-CFATTACH_DECL(lebuffer, sizeof(struct lebuf_softc),
+CFATTACH_DECL_NEW(lebuffer, sizeof(struct lebuf_softc),
     lebufmatch, lebufattach, NULL, NULL);
 
 int
@@ -76,7 +76,7 @@ void
 lebufattach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
-	struct lebuf_softc *sc = (void *)self;
+	struct lebuf_softc *sc = device_private(self);
 	struct sbus_softc *sbsc = device_private(parent);
 	int node;
 	int sbusburst;
@@ -84,9 +84,11 @@ lebufattach(device_t parent, device_t self, void *aux)
 	bus_dma_tag_t	dt = sa->sa_dmatag;
 	bus_space_handle_t bh;
 
+	sc->sc_dev = self;
+
 	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset, sa->sa_size,
 			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		aprint_error_dev(self, "attach: cannot map registers\n");
+		aprint_error(": cannot map registers\n");
 		return;
 	}
 
@@ -115,8 +117,6 @@ lebufattach(device_t parent, device_t self, void *aux)
 	/* Clamp at parent's burst sizes */
 	sc->sc_burst &= sbusburst;
 
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
-
 	printf(": %dK memory\n", sc->sc_bufsiz / 1024);
 
 	/* search through children */
@@ -124,7 +124,7 @@ lebufattach(device_t parent, device_t self, void *aux)
 		struct sbus_attach_args sax;
 		sbus_setup_attach_args(sbsc,
 				       bt, dt, node, &sax);
-		(void)config_found(&sc->sc_dev, (void *)&sax, lebufprint);
+		(void)config_found(self, (void *)&sax, lebufprint);
 		sbus_destroy_attach_args(&sax);
 	}
 }

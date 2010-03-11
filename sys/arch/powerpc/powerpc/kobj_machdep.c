@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.1.18.1 2008/05/16 02:23:02 yamt Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.1.18.2 2010/03/11 15:02:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.1.18.1 2008/05/16 02:23:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.1.18.2 2010/03/11 15:02:51 yamt Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -138,6 +138,13 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	       	    (int)rtype);
 		return -1;
 	}
+
+	return 0;
+}
+
+int
+kobj_machdep(kobj_t ko, void *base, size_t size, bool load)
+{
 
 	return 0;
 }

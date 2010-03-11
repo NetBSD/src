@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_sun.c,v 1.14.26.1 2009/05/04 08:13:19 yamt Exp $	*/
+/*	$NetBSD: wskbdmap_sun.c,v 1.14.26.2 2010/03/11 15:04:04 yamt Exp $	*/
 /*	$OpenBSD: sunkbd.c,v 1.9 2002/09/08 23:22:00 miod Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.14.26.1 2009/05/04 08:13:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.14.26.2 2010/03/11 15:04:04 yamt Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -51,9 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.14.26.1 2009/05/04 08:13:19 yamt 
 static const keysym_t wssun_keydesctab_us [] = {
 /*  pos      command			normal		shifted */
     KC(0x01), KS_Cmd,
-    KC(0x02), KS_Cmd_BrightnessDown,
+    KC(0x02), KS_Cmd_VolumeDown,
     KC(0x03),				KS_Again,
-    KC(0x04), KS_Cmd_BrightnessUp,
+    KC(0x04), KS_Cmd_VolumeUp,
     KC(0x05), KS_Cmd_Screen0,				KS_f1,
     KC(0x06), KS_Cmd_Screen1,				KS_f2,
     KC(0x07), KS_Cmd_Screen9,				KS_f10,

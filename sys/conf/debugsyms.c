@@ -1,10 +1,10 @@
-/*	$NetBSD: debugsyms.c,v 1.1.18.1 2009/05/04 08:12:29 yamt Exp $	*/
+/*	$NetBSD: debugsyms.c,v 1.1.18.2 2010/03/11 15:03:20 yamt Exp $	*/
 /*
  * This file is in the public domain.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: debugsyms.c,v 1.1.18.1 2009/05/04 08:12:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: debugsyms.c,v 1.1.18.2 2010/03/11 15:03:20 yamt Exp $");
 
 #define	_CALLOUT_PRIVATE
 #define	__MUTEX_PRIVATE
@@ -21,7 +21,6 @@ __KERNEL_RCSID(0, "$NetBSD: debugsyms.c,v 1.1.18.1 2009/05/04 08:12:29 yamt Exp 
 #include <sys/uio.h>
 #include <sys/un.h>
 #include <sys/unpcb.h>
-#include <sys/user.h>
 #include <sys/vnode.h>
 
 /*

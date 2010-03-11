@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.5.108.2 2009/05/04 08:11:20 yamt Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.5.108.3 2010/03/11 15:02:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -127,7 +127,6 @@ net_close(struct open_file *f)
 		if (debug)
 			printf("net_close: calling netif_close()\n");
 		pxe_netif_close(netdev_sock);
-		//pxe_netif_shutdown(); /* XXX shouldn't be done here */
 		netdev_sock = -1;
 	}
 	return (0);

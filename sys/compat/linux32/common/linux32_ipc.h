@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_ipc.h,v 1.1.22.2 2009/05/04 08:12:23 yamt Exp $ */
+/* $NetBSD: linux32_ipc.h,v 1.1.22.3 2010/03/11 15:03:17 yamt Exp $ */
 
 /*
  * Copyright (c) 2008 Nicolas Joly
@@ -53,6 +53,40 @@ struct linux32_ipc64_perm {
 	ushort		l___pad2;
 	netbsd32_u_long	l___unused1;
 	netbsd32_u_long	l___unused2;
+};
+
+struct linux32_msqid_ds {
+	struct linux32_ipc_perm	l_msg_perm;
+	netbsd32_pointer_t	l_msg_first;
+	netbsd32_pointer_t	l_msg_last;
+	linux32_time_t		l_msg_stime;
+	linux32_time_t		l_msg_rtime;
+	linux32_time_t		l_msg_ctime;
+	netbsd32_pointer_t	l_wwait;	/* Linux internal */
+	netbsd32_pointer_t	l_rwait;	/* Linux internal */
+	ushort	l_msg_cbytes;
+	ushort	l_msg_qnum;
+	ushort	l_msg_qbytes;
+	ushort	l_msg_lspid;
+	ushort	l_msg_lrpid;
+};
+
+struct linux32_msqid64_ds {
+	struct linux32_ipc64_perm	l_msg_perm;
+	linux32_time_t		l_msg_stime;
+	netbsd32_u_long		l___unused1;
+	linux32_time_t		l_msg_rtime;
+	netbsd32_u_long		l___unused2;
+	linux32_time_t		l_msg_ctime;
+	netbsd32_u_long		l___unused3;
+	netbsd32_u_long		l_msg_cbytes;
+	netbsd32_u_long		l_msg_qnum;
+	netbsd32_u_long		l_msg_qbytes;
+	int			l_msg_lspid;
+	int			l_msg_lrpid;
+	netbsd32_u_long		l___unused4;
+	netbsd32_u_long		l___unused5;
+	
 };
 
 #define LINUX32_IPC_RMID	0

@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.81.4.1 2009/05/04 08:11:05 yamt Exp $	*/
+/*	$NetBSD: hil.c,v 1.81.4.2 2010/03/11 15:02:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.81.4.1 2009/05/04 08:11:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.81.4.2 2010/03/11 15:02:22 yamt Exp $");
 
 #include "ite.h"
 #include "rnd.h"
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.81.4.1 2009/05/04 08:11:05 yamt Exp $");
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/uio.h>
-#include <sys/user.h>
 #include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>

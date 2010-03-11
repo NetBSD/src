@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.16.10.3 2009/07/18 14:53:21 yamt Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.16.10.4 2010/03/11 15:04:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.16.10.3 2009/07/18 14:53:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.16.10.4 2010/03/11 15:04:13 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -279,14 +279,16 @@ hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * updating the mount is okay (for example, as far as securelevel goes)
 	 * which leaves us with the normal check.
 	 */
-	accessmode = VREAD;
-	if (update ?
-		(mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
-		(mp->mnt_flag & MNT_RDONLY) == 0)
-		accessmode |= VWRITE;
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = genfs_can_mount(devvp, accessmode, l->l_cred);
-	VOP_UNLOCK(devvp, 0);
+	if (error == 0) {
+		accessmode = VREAD;
+		if (update ?
+			(mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
+			(mp->mnt_flag & MNT_RDONLY) == 0)
+			accessmode |= VWRITE;
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+		error = genfs_can_mount(devvp, accessmode, l->l_cred);
+		VOP_UNLOCK(devvp, 0);
+	}
 
 	if (error != 0)
 		goto error;
@@ -436,7 +438,7 @@ hfs_unmount(struct mount *mp, int mntflags)
 	cbargs.closevol = (void*)&argsclose;
 	hfslib_close_volume(&hmp->hm_vol, &cbargs);
 	
-	vput(hmp->hm_devvp);
+	vrele(hmp->hm_devvp);
 
 	free(hmp, M_HFSMNT);
 	mp->mnt_data = NULL;
@@ -616,7 +618,7 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	hfs_vinit(mp, hfs_specop_p, hfs_fifoop_p, &vp);
 
 	hnode->h_devvp = hmp->hm_devvp;	
-	VREF(hnode->h_devvp);  /* Increment the ref count to the volume's device. */
+	vref(hnode->h_devvp);  /* Increment the ref count to the volume's device. */
 
 	/* Make sure UVM has allocated enough memory. (?) */
 	if (hnode->h_rec.u.rec_type == HFS_REC_FILE) {

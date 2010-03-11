@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.38.10.1 2009/05/04 08:11:45 yamt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.38.10.2 2010/03/11 15:02:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,9 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.38.10.1 2009/05/04 08:11:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.38.10.2 2010/03/11 15:02:51 yamt Exp $");
 
 #include "opt_altivec.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -47,8 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.38.10.1 2009/05/04 08:11:45 ya
 #include <sys/signal.h>
 #include <sys/sysctl.h>
 #include <sys/ucontext.h>
-#include <sys/user.h>
 #include <sys/cpu.h>
+#include <sys/module.h>
 
 int cpu_timebase;
 int cpu_printfataltraps;
@@ -63,10 +64,11 @@ char *booted_kernel;
  * Set set up registers on exec.
  */
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct proc *p = l->l_proc;
 	struct trapframe *tf = trapframe(l);
+	struct pcb *pcb = lwp_getpcb(l);
 	struct ps_strings arginfo;
 
 	memset(tf, 0, sizeof *tf);
@@ -104,7 +106,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 #ifdef ALTIVEC
 	tf->tf_xtra[TF_VRSAVE] = 0;
 #endif
-	l->l_addr->u_pcb.pcb_flags = PSL_FE_DFLT;
+	pcb->pcb_flags = PSL_FE_DFLT;
 }
 
 /*
@@ -301,3 +303,12 @@ cpu_intr_p(void)
 	return curcpu()->ci_idepth != 0;
 }
 
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the boot loader.
+ */
+void
+module_init_md(void)
+{
+}
+#endif /* MODULAR */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.h,v 1.22.78.1 2008/05/16 02:22:22 yamt Exp $	*/
+/*	$NetBSD: hpux_machdep.h,v 1.22.78.2 2010/03/11 15:02:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ int	hpux_cpu_sysconf_arch(void);
 int	hpux_to_bsd_uoff(int *, int *, struct lwp *);
 
 void	hpux_sendsig(const ksiginfo_t *, const sigset_t *);
-void	hpux_setregs(struct lwp *, struct exec_package *, u_long);
+void	hpux_setregs(struct lwp *, struct exec_package *, vaddr_t);
 #endif /* _KERNEL */
 
 #endif /* ! _HP300_HPUX_MACHDEP_H_ */

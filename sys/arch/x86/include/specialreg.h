@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.23.10.4 2009/08/19 18:46:50 yamt Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.23.10.5 2010/03/11 15:03:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -189,7 +189,9 @@
 #define	CPUID_AMD_SVM_SVML		0x00000004
 #define	CPUID_AMD_SVM_NRIPS		0x00000008
 #define	CPUID_AMD_SVM_Ssse3Sse5Dis	0x00000200
-#define	CPUID_AMD_SVM_FLAGS	 "\20\1NP\2LbrVirt\3SVML\4NRIPS\12Ssse3Sse5Dis"
+#define	CPUID_AMD_SVM_PauseFilter	0x00000400
+#define	CPUID_AMD_SVM_FLAGS	 "\20\1NP\2LbrVirt\3SVML\4NRIPS" \
+				    "\12Ssse3Sse5Dis\13PauseFilter"
 
 /*
  * AMD Advanced Power Management

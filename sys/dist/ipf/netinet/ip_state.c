@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.30.22.2 2009/08/19 18:47:32 yamt Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.30.22.3 2010/03/11 15:04:10 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -115,7 +115,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.30.22.2 2009/08/19 18:47:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.30.22.3 2010/03/11 15:04:10 yamt Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.98 2009/07/21 09:40:56 darrenr Exp";
@@ -1601,7 +1601,7 @@ tcpdata_t *td;
 
 			/*
 			 * Extract the TCP options we are interested in out of
-			 * the header and store them in the the tcpdata struct.
+			 * the header and store them in the tcpdata struct.
 			 */
 			switch (opt)
 			{

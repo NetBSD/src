@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_proto.h,v 1.1.32.1 2008/05/16 02:25:50 yamt Exp $	*/
+/*	$NetBSD: bus_proto.h,v 1.1.32.2 2010/03/11 15:04:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001, 2007 The NetBSD Foundation, Inc.
@@ -313,7 +313,7 @@ int	bus_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t,
 void	bus_dmamem_free(bus_dma_tag_t, bus_dma_segment_t *, int);
 int	bus_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *, int,
 		       size_t, void **, int);
-void	bus_dmamem_unmap(bus_dma_tag_t, void *kva, size_t);
+void	bus_dmamem_unmap(bus_dma_tag_t, void *, size_t);
 paddr_t	bus_dmamem_mmap(bus_dma_tag_t, bus_dma_segment_t *, int,
 			off_t, int, int);
 

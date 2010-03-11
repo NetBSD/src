@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.15 2006/08/28 13:43:35 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.15.60.1 2010/03/11 15:02:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -141,28 +141,13 @@
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 
-#ifndef NMBCLUSTERS
-#if defined(_KERNEL_OPT)
-#include "opt_gateway.h"
-#endif
-
-#ifdef GATEWAY
-# define	NMBCLUSTERS	512	/* map size, max cluster allocation */
-#else
-# define	NMBCLUSTERS	256	/* map size, max cluster allocation */
-#endif
-#endif
-
 /*
  * Mach-derived conversion macros
  */
-#define	m68k_round_seg(x)	((((unsigned)(x)) + SEGOFSET) & ~SEGOFSET)
-#define	m68k_trunc_seg(x)	((unsigned)(x) & ~SEGOFSET)
-#define	m68k_seg_offset(x)	((unsigned)(x) & SEGOFSET)
-#define	m68k_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
-#define	m68k_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
-#define	m68k_page_offset(x)	((unsigned)(x) & PGOFSET)
-#define	m68k_btop(x)		((unsigned)(x) >> PGSHIFT)
-#define	m68k_ptob(x)		((unsigned)(x) << PGSHIFT)
+#define	m68k_round_page(x)	((((vaddr_t)(x)) + PGOFSET) & ~PGOFSET)
+#define	m68k_trunc_page(x)	((vaddr_t)(x) & ~PGOFSET)
+#define	m68k_page_offset(x)	((vaddr_t)(x) & PGOFSET)
+#define	m68k_btop(x)		((vaddr_t)(x) >> PGSHIFT)
+#define	m68k_ptob(x)		((vaddr_t)(x) << PGSHIFT)
 
 #endif	/* !_M68K_PARAM_H_ */

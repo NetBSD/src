@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.73.4.2 2009/05/16 10:41:44 yamt Exp $	*/
+/*	$NetBSD: ss.c,v 1.73.4.3 2010/03/11 15:04:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.73.4.2 2009/05/16 10:41:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.73.4.3 2010/03/11 15:04:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.73.4.2 2009/05/16 10:41:44 yamt Exp $");
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
@@ -72,10 +71,9 @@ __KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.73.4.2 2009/05/16 10:41:44 yamt Exp $");
 static int	ssmatch(device_t, cfdata_t, void *);
 static void	ssattach(device_t, device_t, void *);
 static int	ssdetach(device_t self, int flags);
-static int	ssactivate(device_t self, enum devact act);
 
 CFATTACH_DECL(ss, sizeof(struct ss_softc),
-    ssmatch, ssattach, ssdetach, ssactivate);
+    ssmatch, ssattach, ssdetach, NULL);
 
 extern struct cfdriver ss_cd;
 
@@ -214,25 +212,6 @@ ssdetach(device_t self, int flags)
 	vdevgone(cmaj, mn, mn+SSNMINOR-1, VCHR);
 
 	return (0);
-}
-
-static int
-ssactivate(device_t self, enum devact act)
-{
-	int rv = 0;
-
-	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		/*
-		 * Nothing to do; we key off the device's DVF_ACTIVE.
-		 */
-		break;
-	}
-	return (rv);
 }
 
 /*

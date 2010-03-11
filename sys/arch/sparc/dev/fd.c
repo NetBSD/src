@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.139.10.3 2009/06/20 07:20:08 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.139.10.4 2010/03/11 15:02:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.139.10.3 2009/06/20 07:20:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.139.10.4 2010/03/11 15:02:57 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -292,7 +292,7 @@ struct fd_softc {
 int	fdmatch(struct device *, struct cfdata *, void *);
 void	fdattach(struct device *, struct device *, void *);
 bool	fdshutdown(device_t, int);
-bool	fdsuspend(device_t PMF_FN_PROTO);
+bool	fdsuspend(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL(fd, sizeof(struct fd_softc),
     fdmatch, fdattach, NULL, NULL);
@@ -639,7 +639,13 @@ fdcattach(struct fdc_softc *fdc, int pri)
 
 	fdciop = &fdc->sc_io;
 	if (bus_intr_establish2(fdc->sc_bustag, pri, 0,
-				fdc_c_hwintr, fdc, fdchwintr) == NULL) {
+				fdc_c_hwintr, fdc,
+#ifdef notyet /* XXX bsd_fdintr.s needs to be fixed for MI softint(9) */
+				fdchwintr
+#else
+				NULL
+#endif
+				) == NULL) {
 		printf("\n%s: cannot register interrupt handler\n",
 			fdc->sc_dev.dv_xname);
 		return (-1);
@@ -803,7 +809,7 @@ bool fdshutdown(device_t self, int how)
 	return true;
 }
 
-bool fdsuspend(device_t self PMF_FN_ARGS)
+bool fdsuspend(device_t self, const pmf_qual_t *qual)
 {
 
 	return fdshutdown(self, boothowto);

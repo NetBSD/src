@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.c,v 1.10.68.1 2009/05/04 08:11:20 yamt Exp $	*/
+/*	$NetBSD: pxe.c,v 1.10.68.2 2010/03/11 15:02:31 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -222,7 +222,7 @@ pxe_netif_open(void)
 		return (-1);
 	}
 
-	memcpy( desc.myea, bootplayer.CAddr, ETHER_ADDR_LEN);
+	memcpy(desc.myea, bootplayer.CAddr, ETHER_ADDR_LEN);
 
 	/*
 	 * Since the PXE BIOS has already done DHCP, make sure we
@@ -250,13 +250,6 @@ pxe_netif_close(int sock)
 	if (uc->status != PXENV_STATUS_SUCCESS)
 		printf("pxe_netif_end: PXENV_UDP_CLOSE failed: 0x%x\n",
 		    uc->status);
-}
-
-void
-pxe_netif_shutdown(void)
-{
-
-	pxe_fini();
 }
 
 struct iodesc *

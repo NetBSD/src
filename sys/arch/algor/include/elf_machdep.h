@@ -1,14 +1,3 @@
-/*	$NetBSD: elf_machdep.h,v 1.1 2001/05/28 16:22:18 thorpej Exp $	*/
-
-#ifndef _ALGOR_ELF_MACHDEP_H_
-#define _ALGOR_ELF_MACHDEP_H_
+/*	$NetBSD: elf_machdep.h,v 1.1.130.1 2010/03/11 15:01:56 yamt Exp $	*/
 
 #include <mips/elf_machdep.h>
-
-/*
- * Algorithmics boards are mipsel machines by default
- */
-#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
-#define ELF64_MACHDEP_ENDIANNESS	XXX	/* break compilation */
-
-#endif	/* !_ALGOR_ELF_MACHDEP_H_ */

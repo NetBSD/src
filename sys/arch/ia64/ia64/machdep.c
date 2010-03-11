@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7.4.4 2009/09/16 13:37:39 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7.4.5 2010/03/11 15:02:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -100,7 +100,6 @@
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 
 #include <machine/ia64_cpu.h>
 #include <machine/pal.h>
@@ -131,7 +130,6 @@ vaddr_t ia64_unwindtab;
 vsize_t ia64_unwindtablen;
 #endif
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 void *msgbufaddr;
@@ -160,8 +158,6 @@ struct bootinfo bootinfo;
 extern vaddr_t kernel_text, end;
 
 struct fpswa_iface *fpswa_iface;
-
-struct	user *proc0paddr; /* XXX: See: kern/kern_proc.c:proc0_init() */
 
 #define Mhz     1000000L
 #define Ghz     (1000L*Mhz)
@@ -440,7 +436,9 @@ void
 ia64_init(void)
 {
 	paddr_t kernstartpfn, kernendpfn, pfn0, pfn1;
+	struct pcb *pcb0;
 	struct efi_md *md;
+	vaddr_t v;
 
 	/* NO OUTPUT ALLOWED UNTIL FURTHER NOTICE */
 
@@ -661,13 +659,12 @@ ia64_init(void)
 	/*
 	 * Init mapping for u page(s) for proc 0
 	 */
-	lwp0.l_addr = proc0paddr =
-	    (struct user *)uvm_pageboot_alloc(UPAGES * PAGE_SIZE);
-
+	v = uvm_pageboot_alloc(UPAGES * PAGE_SIZE);
+	uvm_lwp_setuarea(&lwp0, v);
 
 	/*
 	 * Set the kernel sp, reserving space for an (empty) trapframe,
-	 * and make proc0's trapframe pointer point to it for sanity.
+	 * and make lwp0's trapframe pointer point to it for sanity.
 	 */
 
 	/*
@@ -684,30 +681,23 @@ ia64_init(void)
 	 *                 --------------------------->
          *                       Higher Addresses
 	 *
-	 *	PCB: struct user;    TF: struct trapframe;
+	 *	PCB: struct pcb;    TF: struct trapframe;
 	 */
 
 
-	lwp0.l_md.md_tf = (struct trapframe *)((uint64_t)proc0paddr +
-					USPACE - sizeof(struct trapframe));
+	lwp0.l_md.md_tf = (struct trapframe *)(v + USPACE) - 1;
 
-	proc0paddr->u_pcb.pcb_special.sp =
-	    (uint64_t)lwp0.l_md.md_tf - 16;	/* 16 bytes is the
-						 * scratch area defined
-						 * by the ia64 ABI
-						 */
+	pcb0 = lwp_getpcb(&lwp0);
 
-	proc0paddr->u_pcb.pcb_special.bspstore =
-	    (uint64_t) proc0paddr + sizeof(struct user);
+	/* 16 bytes is the scratch area defined by the ia64 ABI. */
+	pcb0->pcb_special.sp = (vaddr_t)lwp0.l_md.md_tf - 16;
+	pcb0->pcb_special.bspstore = v + 1;
 
-	mutex_init(&proc0paddr->u_pcb.pcb_fpcpu_slock, MUTEX_DEFAULT, 0);
-
+	mutex_init(&pcb0->pcb_fpcpu_slock, MUTEX_DEFAULT, 0);
 
 	/*
 	 * Setup global data for the bootstrap cpu.
 	 */
-
-
 	ci = curcpu();
 
 	/* ar.k4 contains the cpu_info pointer to the
@@ -727,11 +717,10 @@ ia64_init(void)
 	 * MULTIPROCESSOR configuration, each CPU will later get
 	 * its own idle PCB when autoconfiguration runs.
 	 */
-	ci->ci_idle_pcb = &proc0paddr->u_pcb;
+	ci->ci_idle_pcb = pcb0;
 
 	/* Indicate that proc0 has a CPU. */
 	lwp0.l_cpu = ci;
-
 
 	ia64_set_tpr(0);
 	ia64_srlz_d();
@@ -741,7 +730,8 @@ ia64_init(void)
 	 * sane) context as the initial context for new threads that are
 	 * forked from us.
 	 */
-	if (savectx(&lwp0.l_addr->u_pcb)) panic("savectx failed");
+	if (savectx(pcb0))
+		panic("savectx failed");
 
 	/*
 	 * Initialize debuggers, and break into them if appropriate.
@@ -773,13 +763,14 @@ ia64_get_hcdp(void)
  * Set registers on exec.
  */
 void
-setregs(register struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct trapframe *tf;
 	uint64_t *ksttop, *kst, regstkp;
+	vaddr_t uv = uvm_lwp_getuarea(l);
 
 	tf = l->l_md.md_tf;
-	regstkp = (uint64_t) (l->l_addr) + sizeof(struct user);
+	regstkp = uv + sizeof(struct pcb);
 
 	ksttop =
 	    (uint64_t*)(regstkp + tf->tf_special.ndirty +

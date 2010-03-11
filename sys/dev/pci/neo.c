@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.39.4.1 2009/05/16 10:41:36 yamt Exp $	*/
+/*	$NetBSD: neo.c,v 1.39.4.2 2010/03/11 15:03:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.39.4.1 2009/05/16 10:41:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.39.4.2 2010/03/11 15:03:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -549,7 +549,7 @@ neo_match(device_t parent, cfdata_t match, void *aux)
 }
 
 static bool
-neo_resume(device_t dv PMF_FN_ARGS)
+neo_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct neo_softc *sc = device_private(dv);
 
@@ -603,11 +603,11 @@ neo_attach(device_t parent, device_t self, void *aux)
 	if (sc->ih == NULL) {
 		aprint_error_dev(&sc->dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", device_xname(&sc->dev), intrstr);
+	aprint_normal_dev(&sc->dev, "interrupting at %s\n", intrstr);
 
 	if (nm_init(sc) != 0)
 		return;
