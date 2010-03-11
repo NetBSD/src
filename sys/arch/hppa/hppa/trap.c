@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.76 2010/02/10 20:54:46 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.77 2010/03/11 21:41:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.76 2010/02/10 20:54:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.77 2010/03/11 21:41:50 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -265,23 +265,21 @@ trap_kdebug(int type, int code, struct trapframe *frame)
 			return(0);
 
 		/*
-		 * If the instruction offset queue head changed,
-		 * but the offset queue tail didn't, assume that
-		 * the user wants to jump to the head offset, and
-		 * adjust the tail accordingly.  This should fix 
-		 * the kgdb `jump' command, and can help DDB users
-		 * who `set' the offset head but forget the tail.
+		 * If the instruction offset queue head changed, but the offset
+		 * queue tail didn't, assume that the user wants to jump to the
+		 * head offset, and adjust the tail accordingly.  This should
+		 * fix the kgdb `jump' command, and can help DDB users who `set'
+		 * the offset head but forget the tail.
 		 */
 		if (frame->tf_iioq_head != tf_iioq_head_old &&
 		    frame->tf_iioq_tail == tf_iioq_tail_old)
 			frame->tf_iioq_tail = frame->tf_iioq_head + 4;
 
 		/*
-		 * This is some single-stepping support.
-		 * If we're trying to step through a nullified
-		 * instruction, just advance by hand and trap
-		 * again.  Otherwise, load the recovery counter
-		 * with zero.
+		 * This is some single-stepping support.  If we're trying to
+		 * step through a nullified instruction, just advance by hand
+		 * and trap again.  Otherwise, load the recovery counter with
+		 * zero.
 		 */
 		if (frame->tf_ipsw & PSW_R) {
 #ifdef TRAPDEBUG
@@ -318,11 +316,10 @@ trap_kdebug(int type, int code, struct trapframe *frame)
 
 #if defined(DEBUG) || defined(USERTRACE)
 /*
- * These functions give a crude usermode backtrace.  They 
- * really only work when code has been compiled without 
- * optimization, as they assume a certain function prologue 
- * sets up a frame pointer and stores the return pointer 
- * and arguments in it.
+ * These functions give a crude usermode backtrace.  They really only work when
+ * code has been compiled without optimization, as they assume a certain func-
+ * tion prologue sets up a frame pointer and stores the return pointer and arg-
+ * uments in it.
  */
 static void
 user_backtrace_raw(u_int pc, u_int fp)
