@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.116.2.2 2009/05/04 08:14:05 yamt Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.116.2.3 2010/03/11 15:04:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.116.2.2 2009/05/04 08:14:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.116.2.3 2010/03/11 15:04:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -151,6 +151,15 @@ const struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 const struct vnodeopv_desc spec_vnodeop_opv_desc =
 	{ &spec_vnodeop_p, spec_vnodeop_entries };
 
+static kauth_listener_t rawio_listener;
+
+/* Returns true if vnode is /dev/mem or /dev/kmem. */
+bool
+iskmemvp(struct vnode *vp)
+{
+	return ((vp->v_type == VCHR) && iskmemdev(vp->v_rdev));
+}
+
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
  */
@@ -162,6 +171,32 @@ iskmemdev(dev_t dev)
 
 	/* minor 14 is /dev/io on i386 with COMPAT_10 */
 	return (major(dev) == mem_no && (minor(dev) < 2 || minor(dev) == 14));
+}
+
+static int
+rawio_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+
+	if ((action != KAUTH_DEVICE_RAWIO_SPEC) &&
+	    (action != KAUTH_DEVICE_RAWIO_PASSTHRU))
+		return result;
+
+	/* Access is mandated by permissions. */
+	result = KAUTH_RESULT_ALLOW;
+
+	return result;
+}
+
+void
+spec_init(void)
+{
+
+	rawio_listener = kauth_listen_scope(KAUTH_SCOPE_DEVICE,
+	    rawio_listener_cb, NULL);
 }
 
 /*
@@ -405,11 +440,20 @@ spec_open(void *v)
 			vp->v_vflag |= VV_ISTTY;
 		VOP_UNLOCK(vp, 0);
 		do {
+			const struct cdevsw *cdev;
+
 			gen = module_gen;
 			error = cdev_open(dev, ap->a_mode, S_IFCHR, l);
 			if (error != ENXIO)
 				break;
 			
+			/* Check if we already have a valid driver */
+			mutex_enter(&device_lock);
+			cdev = cdevsw_lookup(dev);
+			mutex_exit(&device_lock);
+			if (cdev != NULL)
+				break;
+
 			/* Get device name from devsw_conv array */
 			if ((name = cdevsw_getname(major(dev))) == NULL)
 				break;
@@ -447,9 +491,18 @@ spec_open(void *v)
 		sd->sd_bdevvp = vp;
 		mutex_exit(&device_lock);
 		do {
+			const struct bdevsw *bdev;
+
 			gen = module_gen;
 			error = bdev_open(dev, ap->a_mode, S_IFBLK, l);
 			if (error != ENXIO)
+				break;
+
+			/* Check if we already have a valid driver */
+			mutex_enter(&device_lock);
+			bdev = bdevsw_lookup(dev);
+			mutex_exit(&device_lock);
+			if (bdev != NULL)
 				break;
 
 			/* Get device name from devsw_conv array */

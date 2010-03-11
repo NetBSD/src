@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.61.4.1 2009/05/04 08:10:47 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.61.4.2 2010/03/11 15:02:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -112,8 +112,6 @@ extern struct cpu_info cpu_info_store;
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_swapin(p)			/* nothing */
-#define cpu_swapout(p)			/* nothing */
 #define	cpu_number()			0
 
 void	cpu_proc_fork(struct proc *, struct proc *);
@@ -225,7 +223,6 @@ int	fpu_probe(void);
  * Prototypes from locore.s
  */
 struct fpframe;
-struct user;
 
 void	clearseg(paddr_t);
 void	doboot(void);

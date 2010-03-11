@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.46.4.1 2009/05/04 08:12:18 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.46.4.2 2010/03/11 15:03:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,11 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.46.4.1 2009/05/04 08:12:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.46.4.2 2010/03/11 15:03:12 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
-#include "fs_union.h"
 #endif
 
 #include <sys/param.h>
@@ -433,7 +432,7 @@ unionread:
 	    (vp->v_mount->mnt_flag & MNT_UNION)) {
 		struct vnode *tvp = vp;
 		vp = vp->v_mount->mnt_vnodecovered;
-		VREF(vp);
+		vref(vp);
 		fp->f_data = (void *) vp;
 		fp->f_offset = 0;
 		vrele(tvp);

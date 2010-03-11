@@ -1,4 +1,4 @@
-/*	$NetBSD: schizoreg.h,v 1.5.8.2 2009/05/04 08:11:57 yamt Exp $	*/
+/*	$NetBSD: schizoreg.h,v 1.5.8.3 2010/03/11 15:03:00 yamt Exp $	*/
 /*	$OpenBSD: schizoreg.h,v 1.20 2008/07/12 13:08:04 kettenis Exp $	*/
 
 /*
@@ -201,17 +201,17 @@ struct schizo_regs {
 #define	SCZ_CEAFAR_PIO_PCIAC		0x0000038000000000UL	/*  pcib: config / i/o */
 #define	SCZ_CEAFAR_MEMADDR		0x000007fffffffff0UL	/* memory address */
 
-#define	SCZ_PCICTRL_BUS_UNUS		(1UL << 63UL)		/* bus unusable */
-#define	TOM_PCICTRL_DTO_ERR		(1UL << 62UL)		/* pci discard timeout */
-#define	TOM_PCICTRL_DTO_INT		(1UL << 61UL)		/* discard intr en */
-#define	SCZ_PCICTRL_ESLCK		(1UL << 51UL)		/* error slot locked */
-#define	SCZ_PCICTRL_ERRSLOT		(7UL << 48UL)		/* error slot */
-#define	SCZ_PCICTRL_TTO_ERR		(1UL << 38UL)		/* pci trdy# timeout */
-#define	SCZ_PCICTRL_RTRY_ERR		(1UL << 37UL)		/* pci rtry# timeout */
-#define	SCZ_PCICTRL_MMU_ERR		(1UL << 36UL)		/* pci mmu error */
-#define	SCZ_PCICTRL_SBH_ERR		(1UL << 35UL)		/* pci strm hole */
-#define	SCZ_PCICTRL_SERR		(1UL << 34UL)		/* pci serr# sampled */
-#define	SCZ_PCICTRL_PCISPD		(1UL << 33UL)		/* speed (0=clk/2,1=clk) */
+#define	SCZ_PCICTRL_BUS_UNUS		(1ULL << 63UL)		/* bus unusable */
+#define	TOM_PCICTRL_DTO_ERR		(1ULL << 62UL)		/* pci discard timeout */
+#define	TOM_PCICTRL_DTO_INT		(1ULL << 61UL)		/* discard intr en */
+#define	SCZ_PCICTRL_ESLCK		(1ULL << 51UL)		/* error slot locked */
+#define	SCZ_PCICTRL_ERRSLOT		(7ULL << 48UL)		/* error slot */
+#define	SCZ_PCICTRL_TTO_ERR		(1ULL << 38UL)		/* pci trdy# timeout */
+#define	SCZ_PCICTRL_RTRY_ERR		(1ULL << 37UL)		/* pci rtry# timeout */
+#define	SCZ_PCICTRL_MMU_ERR		(1ULL << 36UL)		/* pci mmu error */
+#define	SCZ_PCICTRL_SBH_ERR		(1ULL << 35UL)		/* pci strm hole */
+#define	SCZ_PCICTRL_SERR		(1ULL << 34UL)		/* pci serr# sampled */
+#define	SCZ_PCICTRL_PCISPD		(1ULL << 33UL)		/* speed (0=clk/2,1=clk) */
 #define	SCZ_PCICTRL_PTO			(3UL << 24UL)		/* pci timeout interval */
 #define	SCZ_PCICTRL_MMU_INT		(1UL << 19UL)		/* mmu intr en */
 #define	SCZ_PCICTRL_SBH_INT		(1UL << 18UL)		/* strm byte hole intr en */

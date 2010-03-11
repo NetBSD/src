@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.23.2.2 2009/05/04 08:13:46 yamt Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.23.2.3 2010/03/11 15:04:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.23.2.2 2009/05/04 08:13:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.23.2.3 2010/03/11 15:04:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,26 +60,25 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 {
 	lwp_t *l;
 	vaddr_t uaddr;
-	bool inmem;
 	int error;
 	va_list ap;
 	int lc;
 
-	inmem = uvm_uarea_alloc(&uaddr);
-	if (uaddr == 0)
+	uaddr = uvm_uarea_alloc();
+	if (uaddr == 0) {
 		return ENOMEM;
+	}
 	if ((flag & KTHREAD_TS) != 0) {
 		lc = SCHED_OTHER;
 	} else {
 		lc = SCHED_RR;
 	}
-	error = lwp_create(&lwp0, &proc0, uaddr, inmem, LWP_DETACHED, NULL,
+	error = lwp_create(&lwp0, &proc0, uaddr, LWP_DETACHED, NULL,
 	    0, func, arg, &l, lc);
 	if (error) {
-		uvm_uarea_free(uaddr, curcpu());
+		uvm_uarea_free(uaddr);
 		return error;
 	}
-	uvm_lwp_hold(l);
 	if (fmt != NULL) {
 		l->l_name = kmem_alloc(MAXCOMLEN, KM_SLEEP);
 		if (l->l_name == NULL) {

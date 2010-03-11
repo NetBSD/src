@@ -1,5 +1,5 @@
-/*	$Id: mpcsa_machdep.c,v 1.1.20.1 2009/05/04 08:10:59 yamt Exp $	*/
-/*	$NetBSD: mpcsa_machdep.c,v 1.1.20.1 2009/05/04 08:10:59 yamt Exp $	*/
+/*	$Id: mpcsa_machdep.c,v 1.1.20.2 2010/03/11 15:02:15 yamt Exp $	*/
+/*	$NetBSD: mpcsa_machdep.c,v 1.1.20.2 2010/03/11 15:02:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.1.20.1 2009/05/04 08:10:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.1.20.2 2010/03/11 15:02:15 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -383,7 +383,7 @@ static void mpcsa_device_register(device_t dev, void *aux)
 				eth_addr, ETHER_ADDR_LEN);
 			KASSERT(pd != NULL);
 			if (prop_dictionary_set(device_properties(dev),
-						"mac-addr", pd) == FALSE) {
+						"mac-address", pd) == FALSE) {
 				printf("WARNING: unable to set mac-addr property "
 				       "for %s\n", dev->dv_xname);
 			}

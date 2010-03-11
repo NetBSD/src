@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.9.46.3 2009/08/19 18:46:54 yamt Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.9.46.4 2010/03/11 15:03:10 yamt Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.9.46.3 2009/08/19 18:46:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.9.46.4 2010/03/11 15:03:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +81,9 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	npagesreq = (size >> PAGE_SHIFT);
 	KASSERT(npages >= npagesreq);
 
-	/* get npages from UWM, and give them back to the hypervisor */
-	error = uvm_pglistalloc(npages << PAGE_SHIFT, 0, avail_end, 0, 0,
-	    mlistp, npages, (flags & BUS_DMA_NOWAIT) == 0);
+	/* get npages from UVM, and give them back to the hypervisor */
+	error = uvm_pglistalloc(((psize_t)npages) << PAGE_SHIFT,
+            0, avail_end, 0, 0, mlistp, npages, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
 		return (error);
 
@@ -95,12 +95,14 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 		xenguest_handle(res.extent_start) = &mfn;
 		res.nr_extents = 1;
 		res.extent_order = 0;
+		res.address_bits = 0;
 		res.domid = DOMID_SELF;
-		if (HYPERVISOR_memory_op(XENMEM_decrease_reservation, &res)
-		    != 1) {
+		error = HYPERVISOR_memory_op(XENMEM_decrease_reservation, &res);
+		if (error != 1) {
 #ifdef DEBUG
 			printf("xen_alloc_contig: XENMEM_decrease_reservation "
-			    "failed!\n");
+			    "failed: err %d (pa %#" PRIxPADDR " mfn %#lx)\n",
+			    error, pa, mfn);
 #endif
 			xpmap_phys_to_machine_mapping[
 			    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn;
@@ -133,7 +135,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 		pa = VM_PAGE_TO_PHYS(pg);
 		xpmap_phys_to_machine_mapping[
 		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn+i;
-		xpq_queue_machphys_update((mfn+i) << PAGE_SHIFT, pa);
+		xpq_queue_machphys_update(((paddr_t)(mfn+i)) << PAGE_SHIFT, pa);
 		/* while here, give extra pages back to UVM */
 		if (i >= npagesreq) {
 			TAILQ_REMOVE(mlistp, pg, pageq.queue);
@@ -142,7 +144,6 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	}
 	/* Flush updates through and flush the TLB */
 	xpq_queue_tlb_flush();
-	xpq_flush_queue();
 	splx(s);
 	return 0;
 
@@ -179,13 +180,12 @@ failed:
 		pa = VM_PAGE_TO_PHYS(pg);
 		xpmap_phys_to_machine_mapping[
 		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn;
-		xpq_queue_machphys_update((mfn) << PAGE_SHIFT, pa);
+		xpq_queue_machphys_update(((paddr_t)mfn) << PAGE_SHIFT, pa);
 		TAILQ_REMOVE(mlistp, pg, pageq.queue);
 		uvm_pagefree(pg);
 	}
 	/* Flush updates through and flush the TLB */
 	xpq_queue_tlb_flush();
-	xpq_flush_queue();
 	splx(s);
 	return error;
 }

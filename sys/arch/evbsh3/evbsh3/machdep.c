@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59.10.3 2009/06/20 07:20:02 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59.10.4 2010/03/11 15:02:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59.10.3 2009/06/20 07:20:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59.10.4 2010/03/11 15:02:21 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59.10.3 2009/06/20 07:20:02 yamt Exp $
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
@@ -445,7 +444,7 @@ shpcmcia_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int type, bus_space_ha
 #undef MODE
 
 	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 		pte = __pmap_kpte_lookup(va);
 		KDASSERT(pte);
 		*pte |= m;  /* PTEA PCMCIA assistant bit */

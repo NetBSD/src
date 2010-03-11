@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.205.2.4 2009/07/18 14:53:22 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.205.2.5 2010/03/11 15:04:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.205.2.4 2009/07/18 14:53:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.205.2.5 2010/03/11 15:04:16 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.205.2.4 2009/07/18 14:53:22 yamt Exp
 #include <sys/cpu.h>
 #include <sys/lwpctl.h>
 #include <sys/atomic.h>
+#include <sys/sdt.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -122,6 +123,13 @@ int debug_exit = 0;
 static int find_stopped_child(struct proc *, pid_t, int, struct proc **, int *);
 static void proc_free(struct proc *, struct rusage *);
 
+/*
+ * DTrace SDT provider definitions
+ */
+SDT_PROBE_DEFINE(proc,,,exit, 
+	    "int", NULL, 		/* reason */
+	    NULL, NULL, NULL, NULL,
+	    NULL, NULL, NULL, NULL);
 /*
  * Fill in the appropriate signal information, and signal the parent.
  */
@@ -402,6 +410,11 @@ exit1(struct lwp *l, int rv)
 	 */
 	KNOTE(&p->p_klist, NOTE_EXIT);
 
+	SDT_PROBE(proc,,,exit, 
+		(WCOREDUMP(rv) ? CLD_DUMPED :
+		 (WIFSIGNALED(rv) ? CLD_KILLED : CLD_EXITED)),
+		0,0,0,0);
+
 #if PERFCTRS
 	/*
 	 * Save final PMC information in parent process & clean up.
@@ -423,8 +436,6 @@ exit1(struct lwp *l, int rv)
 	 */
 	if (__predict_false(p->p_slflag & PSL_CHTRACED)) {
 		PROCLIST_FOREACH(q, &allproc) {
-			if ((q->p_flag & PK_MARKER) != 0)
-				continue;
 			if (q->p_opptr == p)
 				q->p_opptr = NULL;
 		}
@@ -559,9 +570,7 @@ exit1(struct lwp *l, int rv)
 	 * resources.  This must be done before uvm_lwp_exit(), in
 	 * case these resources are in the PCB.
 	 */
-#ifndef __NO_CPU_LWP_FREE
 	cpu_lwp_free(l, 1);
-#endif
 	pmap_deactivate(l);
 
 	/* This process no longer needs to hold the kernel lock. */
@@ -667,43 +676,41 @@ exit_lwps(struct lwp *l)
 }
 
 int
-do_sys_wait(struct lwp *l, int *pid, int *status, int options,
-    struct rusage *ru, int *was_zombie)
+do_sys_wait(int *pid, int *status, int options, struct rusage *ru)
 {
-	struct proc	*child;
-	int		error;
+	proc_t *child;
+	int error;
 
+	if (ru != NULL) {
+		memset(ru, 0, sizeof(*ru));
+	}
 	mutex_enter(proc_lock);
-	error = find_stopped_child(l->l_proc, *pid, options, &child, status);
-
+	error = find_stopped_child(curproc, *pid, options, &child, status);
 	if (child == NULL) {
 		mutex_exit(proc_lock);
 		*pid = 0;
 		return error;
 	}
-
 	*pid = child->p_pid;
 
 	if (child->p_stat == SZOMB) {
 		/* proc_free() will release the proc_lock. */
-		*was_zombie = 1;
-		if (options & WNOWAIT)
+		if (options & WNOWAIT) {
 			mutex_exit(proc_lock);
-		else {
+		} else {
 			proc_free(child, ru);
 		}
 	} else {
 		/* Child state must have been SSTOP. */
-		*was_zombie = 0;
 		mutex_exit(proc_lock);
 		*status = W_STOPCODE(*status);
 	}
-
 	return 0;
 }
 
 int
-sys___wait450(struct lwp *l, const struct sys___wait450_args *uap, register_t *retval)
+sys___wait450(struct lwp *l, const struct sys___wait450_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)			pid;
@@ -711,24 +718,22 @@ sys___wait450(struct lwp *l, const struct sys___wait450_args *uap, register_t *r
 		syscallarg(int)			options;
 		syscallarg(struct rusage *)	rusage;
 	} */
-	int		status, error;
-	int		was_zombie;
-	struct rusage	ru;
-	int pid = SCARG(uap, pid);
+	int error, status, pid = SCARG(uap, pid);
+	struct rusage ru;
 
-	error = do_sys_wait(l, &pid, &status, SCARG(uap, options),
-	    SCARG(uap, rusage) != NULL ? &ru : NULL, &was_zombie);
+	error = do_sys_wait(&pid, &status, SCARG(uap, options),
+	    SCARG(uap, rusage) != NULL ? &ru : NULL);
 
 	retval[0] = pid;
-	if (pid == 0)
+	if (pid == 0) {
 		return error;
-
-	if (SCARG(uap, rusage))
-		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
-
-	if (error == 0 && SCARG(uap, status))
+	}
+	if (SCARG(uap, status)) {
 		error = copyout(&status, SCARG(uap, status), sizeof(status));
-
+	}
+	if (SCARG(uap, rusage) && error == 0) {
+		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
+	}
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.26.20.2 2009/05/16 10:41:15 yamt Exp $	*/
+/*	$NetBSD: mesh.c,v 1.26.20.3 2010/03/11 15:02:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.26.20.2 2009/05/16 10:41:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.26.20.3 2010/03/11 15:02:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -136,32 +136,32 @@ struct mesh_softc {
 static inline int mesh_read_reg(struct mesh_softc *, int);
 static inline void mesh_set_reg(struct mesh_softc *, int, int);
 
-int mesh_match(device_t, cfdata_t, void *);
-void mesh_attach(device_t, device_t, void *);
-void mesh_shutdownhook(void *);
-int mesh_intr(void *);
-void mesh_error(struct mesh_softc *, struct mesh_scb *, int, int);
-void mesh_select(struct mesh_softc *, struct mesh_scb *);
-void mesh_identify(struct mesh_softc *, struct mesh_scb *);
-void mesh_command(struct mesh_softc *, struct mesh_scb *);
-void mesh_dma_setup(struct mesh_softc *, struct mesh_scb *);
-void mesh_dataio(struct mesh_softc *, struct mesh_scb *);
-void mesh_status(struct mesh_softc *, struct mesh_scb *);
-void mesh_msgin(struct mesh_softc *, struct mesh_scb *);
-void mesh_msgout(struct mesh_softc *, int);
-void mesh_bus_reset(struct mesh_softc *);
-void mesh_reset(struct mesh_softc *);
-int mesh_stp(struct mesh_softc *, int);
-void mesh_setsync(struct mesh_softc *, struct mesh_tinfo *);
-struct mesh_scb *mesh_get_scb(struct mesh_softc *);
-void mesh_free_scb(struct mesh_softc *, struct mesh_scb *);
-void mesh_scsi_request(struct scsipi_channel *,
+static int mesh_match(device_t, cfdata_t, void *);
+static void mesh_attach(device_t, device_t, void *);
+static bool mesh_shutdown(device_t, int);
+static int mesh_intr(void *);
+static void mesh_error(struct mesh_softc *, struct mesh_scb *, int, int);
+static void mesh_select(struct mesh_softc *, struct mesh_scb *);
+static void mesh_identify(struct mesh_softc *, struct mesh_scb *);
+static void mesh_command(struct mesh_softc *, struct mesh_scb *);
+static void mesh_dma_setup(struct mesh_softc *, struct mesh_scb *);
+static void mesh_dataio(struct mesh_softc *, struct mesh_scb *);
+static void mesh_status(struct mesh_softc *, struct mesh_scb *);
+static void mesh_msgin(struct mesh_softc *, struct mesh_scb *);
+static void mesh_msgout(struct mesh_softc *, int);
+static void mesh_bus_reset(struct mesh_softc *);
+static void mesh_reset(struct mesh_softc *);
+static int mesh_stp(struct mesh_softc *, int);
+static void mesh_setsync(struct mesh_softc *, struct mesh_tinfo *);
+static struct mesh_scb *mesh_get_scb(struct mesh_softc *);
+static void mesh_free_scb(struct mesh_softc *, struct mesh_scb *);
+static void mesh_scsi_request(struct scsipi_channel *,
 				scsipi_adapter_req_t, void *);
-void mesh_sched(struct mesh_softc *);
-int mesh_poll(struct mesh_softc *, struct scsipi_xfer *);
-void mesh_done(struct mesh_softc *, struct mesh_scb *);
-void mesh_timeout(void *);
-void mesh_minphys(struct buf *);
+static void mesh_sched(struct mesh_softc *);
+static int mesh_poll(struct mesh_softc *, struct scsipi_xfer *);
+static void mesh_done(struct mesh_softc *, struct mesh_scb *);
+static void mesh_timeout(void *);
+static void mesh_minphys(struct buf *);
 
 
 #define MESH_DATAOUT	0
@@ -207,6 +207,7 @@ mesh_attach(device_t parent, device_t self, void *aux)
 	int i;
 	u_int *reg;
 
+	sc->sc_dev = self;
 	reg = ca->ca_reg;
 	reg[0] += ca->ca_baseaddr;
 	reg[2] += ca->ca_baseaddr;
@@ -263,7 +264,8 @@ mesh_attach(device_t parent, device_t self, void *aux)
 	intr_establish(sc->sc_irq, IST_EDGE, IPL_BIO, mesh_intr, sc);
 
 	/* Reset SCSI bus when halt. */
-	shutdownhook_establish(mesh_shutdownhook, sc);
+	if (pmf_device_register1(self, NULL, NULL, mesh_shutdown))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 #define MESH_SET_XFER(sc, count) do {					\
@@ -286,14 +288,18 @@ mesh_set_reg(struct mesh_softc *sc, int reg, int val)
 	out8(sc->sc_reg + reg, val);
 }
 
-void
-mesh_shutdownhook(void *arg)
+bool
+mesh_shutdown(device_t self, int howto)
 {
-	struct mesh_softc *sc = arg;
+	struct mesh_softc *sc;
+
+	sc = device_private(self);
 
 	/* Set to async mode. */
 	mesh_set_reg(sc, MESH_SYNC_PARAM, 2);
 	mesh_bus_reset(sc);
+
+	return true;
 }
 
 #ifdef MESH_DEBUG

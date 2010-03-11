@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.1.2.5 2009/07/18 14:53:22 yamt Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.1.2.6 2010/03/11 15:04:14 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.1.2.5 2009/07/18 14:53:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.1.2.6 2010/03/11 15:04:14 yamt Exp $");
 #endif /* not lint */
 
 
@@ -72,6 +72,12 @@ __KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.1.2.5 2009/07/18 14:53:22 yamt 
 static void udf_record_allocation_in_node(struct udf_mount *ump,
 	struct buf *buf, uint16_t vpart_num, uint64_t *mapping,
 	struct long_ad *node_ad_cpy);
+
+static void udf_collect_free_space_for_vpart(struct udf_mount *ump,
+	uint16_t vpart_num, uint32_t num_lb);
+
+static void udf_wipe_adslots(struct udf_node *udf_node);
+static void udf_count_alloc_exts(struct udf_node *udf_node);
 
 /*
  * IDEA/BUSY: Each udf_node gets its own extentwalker state for all operations;
@@ -449,7 +455,11 @@ udf_calc_vpart_freespace(struct udf_mount *ump, uint16_t vpart_num, uint64_t *fr
 	}
 
 	/* adjust for accounted uncommitted blocks */
-	*freeblks -= ump->uncommitted_lbs[vpart_num];
+	if (*freeblks > ump->uncommitted_lbs[vpart_num]) {
+		*freeblks -= ump->uncommitted_lbs[vpart_num];
+	} else {
+		*freeblks = 0;
+	}
 }
 
 /* --------------------------------------------------------------------- */
@@ -984,6 +994,38 @@ udf_bitmap_free(struct udf_bitmap *bitmap, uint32_t lb_num, uint32_t num_lb)
 	}
 }
 
+
+static uint32_t
+udf_bitmap_check_trunc_free(struct udf_bitmap *bitmap, uint32_t to_trunc)
+{
+	uint32_t seq_free, offset;
+	uint8_t *bpos;
+	uint8_t  bit, bitval;
+
+	DPRINTF(RESERVE, ("\ttrying to trunc %d bits from bitmap\n", to_trunc));
+	offset = bitmap->max_offset - to_trunc;
+
+	/* starter bits (if any) */
+	bpos = bitmap->bits + offset/8;
+	bit = offset % 8;
+	seq_free = 0;
+	while (to_trunc > 0) {
+		seq_free++;
+		bitval = (1 << bit);
+		if (!(*bpos & bitval))
+			seq_free = 0;
+		offset++; to_trunc--;
+		bit++;
+		if (bit == 8) {
+			bpos++;
+			bit = 0;
+		}
+	}
+
+	DPRINTF(RESERVE, ("\tfound %d sequential free bits in bitmap\n", seq_free));
+	return seq_free;
+}
+
 /* --------------------------------------------------------------------- */
 
 /*
@@ -1047,7 +1089,7 @@ udf_reserve_space(struct udf_mount *ump, struct udf_node *udf_node,
 	mutex_enter(&ump->allocate_mutex);
 
 	/* check if there is enough space available */
-	for (i = 0; i < 16; i++) {	/* XXX arbitrary number */
+	for (i = 0; i < 3; i++) {	/* XXX arbitrary number */
 		udf_calc_vpart_freespace(ump, vpart_num, &freeblks);
 		if (num_lb + slack < freeblks)
 			break;
@@ -1056,9 +1098,9 @@ udf_reserve_space(struct udf_mount *ump, struct udf_node *udf_node,
 		mutex_exit(&ump->allocate_mutex);
 		udf_do_sync(ump, FSCRED, 0);
 		mutex_enter(&mntvnode_lock);
-		/* 1/4 second wait */
+		/* 1/8 second wait */
 		cv_timedwait(&ump->dirtynodes_cv, &mntvnode_lock,
-			hz/4);
+			hz/8);
 		mutex_exit(&mntvnode_lock);
 		mutex_enter(&ump->allocate_mutex);
 	}
@@ -1066,8 +1108,12 @@ udf_reserve_space(struct udf_mount *ump, struct udf_node *udf_node,
 	/* check if there is enough space available now */
 	udf_calc_vpart_freespace(ump, vpart_num, &freeblks);
 	if (num_lb + slack >= freeblks) {
-		DPRINTF(RESERVE, ("udf_reserve_space: try to juggle partitions\n"));
-		/* TODO juggle with data and metadata partitions if possible */
+		DPRINTF(RESERVE, ("udf_reserve_space: try to redistribute "
+				  "partition space\n"));
+		DPRINTF(RESERVE, ("\tvpart %d, type %d is full\n",
+				vpart_num, ump->vtop_alloc[vpart_num]));
+		/* Try to redistribute space if possible */
+		udf_collect_free_space_for_vpart(ump, vpart_num, num_lb + slack);
 	}
 
 	/* check if there is enough space available now */
@@ -1351,6 +1397,227 @@ udf_free_allocated_space(struct udf_mount *ump, uint32_t lb_num,
 	}
 
 	mutex_exit(&ump->allocate_mutex);
+}
+
+/* --------------------------------------------------------------------- */
+
+/*
+ * Special function to synchronise the metadatamirror file when they change on
+ * resizing. When the metadatafile is actually duplicated, this action is a
+ * no-op since they describe different extents on the disc.
+ */
+
+void udf_synchronise_metadatamirror_node(struct udf_mount *ump)
+{
+	struct udf_node *meta_node, *metamirror_node;
+	struct long_ad s_ad;
+	int slot, cpy_slot;
+	int error, eof;
+
+	if (ump->metadata_flags & METADATA_DUPLICATED)
+		return;
+
+	meta_node       = ump->metadata_node;
+	metamirror_node = ump->metadatamirror_node;
+
+	/* 1) wipe mirror node */
+	udf_wipe_adslots(metamirror_node);
+
+	/* 2) copy all node descriptors from the meta_node */
+	slot     = 0;
+	cpy_slot = 0;
+	for (;;) {
+		udf_get_adslot(meta_node, slot, &s_ad, &eof);
+		if (eof)
+			break;
+		error = udf_append_adslot(metamirror_node, &cpy_slot, &s_ad);
+		if (error) {
+			/* WTF, this shouldn't happen, what to do now? */
+			panic("udf_synchronise_metadatamirror_node failed!");
+		}
+		slot++;
+	}
+
+	/* 3) adjust metamirror_node size */
+	if (meta_node->fe) {
+		KASSERT(metamirror_node->fe);
+		metamirror_node->fe->inf_len = meta_node->fe->inf_len;
+	} else {
+		KASSERT(meta_node->efe);
+		KASSERT(metamirror_node->efe);
+		metamirror_node->efe->inf_len  = meta_node->efe->inf_len;
+		metamirror_node->efe->obj_size = meta_node->efe->obj_size;
+	}
+
+	/* for sanity */
+	udf_count_alloc_exts(metamirror_node);
+}
+
+/* --------------------------------------------------------------------- */
+
+/*
+ * When faced with an out of space but there is still space available on other
+ * partitions, try to redistribute the space. This is only defined for media
+ * using Metadata partitions.
+ *
+ * There are two formats to deal with. Either its a `normal' metadata
+ * partition and we can move blocks between a metadata bitmap and its
+ * companion data spacemap OR its a UDF 2.60 formatted BluRay-R disc with POW
+ * and a metadata partition.
+ */
+
+static uint32_t
+udf_trunc_metadatapart(struct udf_mount *ump, uint32_t num_lb)
+{
+	struct udf_node *bitmap_node;
+	struct udf_bitmap *bitmap;
+	struct space_bitmap_desc *sbd, *new_sbd;
+	struct logvol_int_desc *lvid;
+	uint64_t inf_len;
+	uint64_t meta_free_lbs, data_free_lbs;
+	uint32_t *freepos, *sizepos;
+	uint32_t unit, lb_size, to_trunc;
+	uint16_t meta_vpart_num, data_vpart_num, num_vpart;
+	int err;
+
+	unit = ump->metadata_alloc_unit_size;
+	lb_size = udf_rw32(ump->logical_vol->lb_size);
+	lvid = ump->logvol_integrity;
+
+	/* lookup vpart for metadata partition */
+	meta_vpart_num = ump->node_part;
+	KASSERT(ump->vtop_alloc[meta_vpart_num] == UDF_ALLOC_METABITMAP);
+
+	/* lookup vpart for data partition */
+	data_vpart_num = ump->data_part;
+	KASSERT(ump->vtop_alloc[data_vpart_num] == UDF_ALLOC_SPACEMAP);
+
+	udf_calc_vpart_freespace(ump, data_vpart_num, &data_free_lbs);
+	udf_calc_vpart_freespace(ump, meta_vpart_num, &meta_free_lbs);
+
+	DPRINTF(RESERVE, ("\tfree space on data partition     %"PRIu64" blks\n", data_free_lbs));
+	DPRINTF(RESERVE, ("\tfree space on metadata partition %"PRIu64" blks\n", meta_free_lbs));
+
+	/* give away some of the free meta space, in unit block sizes */
+	to_trunc = meta_free_lbs/4;			/* give out a quarter */
+	to_trunc = MAX(to_trunc, num_lb);
+	to_trunc = unit * ((to_trunc + unit-1) / unit);	/* round up */
+
+	/* scale down if needed and bail out when out of space */
+	if (to_trunc >= meta_free_lbs)
+		return num_lb;
+
+	/* check extent of bits marked free at the end of the map */
+	bitmap = &ump->metadata_unalloc_bits;
+	to_trunc = udf_bitmap_check_trunc_free(bitmap, to_trunc);
+	to_trunc = unit * (to_trunc / unit);		/* round down again */
+	if (to_trunc == 0)
+		return num_lb;
+
+	DPRINTF(RESERVE, ("\ttruncating %d lbs from the metadata bitmap\n",
+		to_trunc));
+
+	/* get length of the metadata bitmap node file */
+	bitmap_node = ump->metadatabitmap_node;
+	if (bitmap_node->fe) {
+		inf_len = udf_rw64(bitmap_node->fe->inf_len);
+	} else {
+		KASSERT(bitmap_node->efe);
+		inf_len = udf_rw64(bitmap_node->efe->inf_len);
+	}
+	inf_len -= to_trunc/8;
+
+	/* as per [UDF 2.60/2.2.13.6] : */
+	/* 1) update the SBD in the metadata bitmap file */
+	sbd = (struct space_bitmap_desc *) bitmap->blob;
+	sbd->num_bits  = udf_rw32(sbd->num_bits)  - to_trunc;
+	sbd->num_bytes = udf_rw32(sbd->num_bytes) - to_trunc/8;
+	bitmap->max_offset = udf_rw32(sbd->num_bits);
+
+	num_vpart = udf_rw32(lvid->num_part);
+	freepos = &lvid->tables[0] + meta_vpart_num;
+	sizepos = &lvid->tables[0] + num_vpart + meta_vpart_num;
+	*freepos = udf_rw32(*freepos) - to_trunc;
+	*sizepos = udf_rw32(*sizepos) - to_trunc;
+
+	/* realloc bitmap for better memory usage */
+	new_sbd = realloc(sbd, inf_len, M_UDFVOLD,
+		M_CANFAIL | M_WAITOK);
+	if (new_sbd) {
+		/* update pointers */
+		ump->metadata_unalloc_dscr = new_sbd;
+		bitmap->blob = (uint8_t *) new_sbd;
+	}
+	ump->lvclose |= UDF_WRITE_PART_BITMAPS;
+
+	/*
+	 * The truncated space is secured now and can't be allocated anymore. Release
+	 * the allocate mutex so we can shrink the nodes the normal way.
+	 */
+	mutex_exit(&ump->allocate_mutex);
+
+	/* 2) trunc the metadata bitmap information file, freeing blocks */
+	err = udf_shrink_node(bitmap_node, inf_len);
+	KASSERT(err == 0);
+
+	/* 3) trunc the metadata file and mirror file, freeing blocks */
+	inf_len = udf_rw32(sbd->num_bits) * lb_size;	/* [4/14.12.4] */
+	err = udf_shrink_node(ump->metadata_node, inf_len);
+	KASSERT(err == 0);
+	if (ump->metadatamirror_node && (ump->metadata_flags & METADATA_DUPLICATED)) {
+		err = udf_shrink_node(ump->metadatamirror_node, inf_len);
+		KASSERT(err == 0);
+	}
+	ump->lvclose |= UDF_WRITE_METAPART_NODES;
+
+	/* relock before exit */
+	mutex_enter(&ump->allocate_mutex);
+
+	if (to_trunc > num_lb)
+		return 0;
+	return num_lb - to_trunc;
+}
+
+
+static void
+udf_sparsify_metadatapart(struct udf_mount *ump, uint32_t num_lb)
+{
+	/* NOT IMPLEMENTED, fail */
+}
+
+
+static void
+udf_collect_free_space_for_vpart(struct udf_mount *ump,
+	uint16_t vpart_num, uint32_t num_lb)
+{
+	/* allocate mutex is helt */
+
+	/* only defined for metadata partitions */
+	if (ump->vtop_tp[ump->node_part] != UDF_VTOP_TYPE_META) {
+		DPRINTF(RESERVE, ("\tcan't grow/shrink; no metadata partitioning\n"));
+		return;
+	}
+
+	/* UDF 2.60 BD-R+POW? */
+	if (ump->vtop_alloc[ump->node_part] == UDF_ALLOC_METASEQUENTIAL) {
+		DPRINTF(RESERVE, ("\tUDF 2.60 BD-R+POW track grow not implemented yet\n"));
+		return;
+	}
+
+	if (ump->vtop_tp[vpart_num] == UDF_VTOP_TYPE_META) {
+		/* try to grow the meta partition */
+		DPRINTF(RESERVE, ("\ttrying to grow the meta partition\n"));
+		/* as per [UDF 2.60/2.2.13.5] : extend bitmap and metadata file(s) */
+	} else {
+		/* try to shrink the metadata partition */
+		DPRINTF(RESERVE, ("\ttrying to shrink the meta partition\n"));
+		/* as per [UDF 2.60/2.2.13.6] : either trunc or make sparse */
+		num_lb = udf_trunc_metadatapart(ump, num_lb);
+		if (num_lb)
+			udf_sparsify_metadatapart(ump, num_lb);
+	}
+
+	/* allocate mutex should still be helt */
 }
 
 /* --------------------------------------------------------------------- */

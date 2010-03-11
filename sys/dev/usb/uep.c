@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.10.10.2 2009/05/04 08:13:21 yamt Exp $	*/
+/*	$NetBSD: uep.c,v 1.10.10.3 2010/03/11 15:04:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.10.10.2 2009/05/04 08:13:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.10.10.3 2010/03/11 15:04:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,8 +138,11 @@ USB_ATTACH(uep)
 	int i, found;
 
 	sc->sc_dev = self;
+
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
@@ -255,20 +258,14 @@ int
 uep_activate(device_t self, enum devact act)
 {
 	struct uep_softc *sc = device_private(self);
-	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
-
 	case DVACT_DEACTIVATE:
-		if (sc->sc_wsmousedev != NULL)
-			rv = config_deactivate(sc->sc_wsmousedev);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-
-	return rv;
 }
 
 Static int

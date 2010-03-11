@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.53 2008/04/04 16:00:57 tsutsui Exp $	*/
+/*	$NetBSD: sbc.c,v 1.53.4.1 2010/03/11 15:02:35 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.53 2008/04/04 16:00:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.53.4.1 2010/03/11 15:02:35 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.53 2008/04/04 16:00:57 tsutsui Exp $");
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

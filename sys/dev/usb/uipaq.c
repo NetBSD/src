@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.10.4.2 2009/05/04 08:13:21 yamt Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.10.4.3 2010/03/11 15:04:07 yamt Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.10.4.2 2009/05/04 08:13:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.10.4.3 2010/03/11 15:04:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,6 +164,13 @@ USB_ATTACH(uipaq)
 
 	sc->sc_dev = self;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
+	devinfop = usbd_devinfo_alloc(dev, 0);
+	aprint_normal_dev(self, "%s\n", devinfop);
+	usbd_devinfo_free(devinfop);
+
 	/* Move the device into the configured state. */
 	err = usbd_set_config_no(dev, UIPAQ_CONFIG_NO, 1);
 	if (err) {
@@ -178,11 +185,6 @@ USB_ATTACH(uipaq)
 		    devname, usbd_errstr(err));
 		goto bad;
 	}
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	aprint_normal_dev(self, "%s\n", devinfop);
-	usbd_devinfo_free(devinfop);
 
 	sc->sc_flags = uipaq_lookup(uaa->vendor, uaa->product)->uv_flags;
 
@@ -360,20 +362,14 @@ int
 uipaq_activate(device_t self, enum devact act)
 {
 	struct uipaq_softc *sc = device_private(self);
-	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
 	case DVACT_DEACTIVATE:
-		if (sc->sc_subdev != NULL)
-			rv = config_deactivate(sc->sc_subdev);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 void

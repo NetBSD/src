@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.10.18.1 2009/05/04 08:13:42 yamt Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.10.18.2 2010/03/11 15:04:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.10.18.1 2009/05/04 08:13:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.10.18.2 2010/03/11 15:04:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -300,7 +300,7 @@ found:
 		}
 		*vpp = tdp;
 	} else if (name[0] == '.' && namelen == 1) {
-		VREF(vdp);	/* we want ourself, ie "." */
+		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
 #ifdef FILECORE_DEBUG_BR

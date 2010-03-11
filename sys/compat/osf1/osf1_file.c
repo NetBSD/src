@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.30.4.3 2009/08/19 18:47:00 yamt Exp $ */
+/* $NetBSD: osf1_file.c,v 1.30.4.4 2010/03/11 15:03:18 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.30.4.3 2009/08/19 18:47:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.30.4.4 2010/03/11 15:03:18 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -232,8 +232,12 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == (char *)SCARG(uap, buf))
+	if (outp == (char *)SCARG(uap, buf)) {
+		if (cookiebuf)
+			free(cookiebuf, M_TEMP);
+		cookiebuf = NULL;
 		goto again;
+	}
 	fp->f_offset = off;     /* update the vnode offset */
 
 eof:

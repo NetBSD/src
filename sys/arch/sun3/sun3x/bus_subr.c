@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.30.56.1 2008/05/16 02:23:21 yamt Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.30.56.2 2010/03/11 15:03:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.30.56.1 2008/05/16 02:23:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.30.56.2 2010/03/11 15:03:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ bus_tmapin(int bustype, int pa)
 	tmp_vpages_inuse++;
 
 	pgva = tmp_vpages[1];
-	pmap_kenter_pa(pgva, pa, VM_PROT_READ | VM_PROT_WRITE);
+	pmap_kenter_pa(pgva, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	splx(s);
 

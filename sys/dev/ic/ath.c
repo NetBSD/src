@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.99.4.3 2009/08/19 18:47:06 yamt Exp $	*/
+/*	$NetBSD: ath.c,v 1.99.4.4 2010/03/11 15:03:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.99.4.3 2009/08/19 18:47:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.99.4.4 2010/03/11 15:03:28 yamt Exp $");
 #endif
 
 /*
@@ -52,10 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.99.4.3 2009/08/19 18:47:06 yamt Exp $");
  */
 
 #include "opt_inet.h"
-
-#ifdef __NetBSD__
-#include "bpfilter.h"
-#endif /* __NetBSD__ */
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -83,9 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.99.4.3 2009/08/19 18:47:06 yamt Exp $");
 #include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -199,9 +193,7 @@ static void	ath_restore_diversity(struct ath_softc *);
 static int	ath_rate_setup(struct ath_softc *, u_int mode);
 static void	ath_setcurmode(struct ath_softc *, enum ieee80211_phymode);
 
-#if NBPFILTER > 0
 static void	ath_bpfattach(struct ath_softc *);
-#endif
 static void	ath_announce(struct ath_softc *);
 
 int ath_dwelltime = 200;		/* 5 channels/second */
@@ -271,6 +263,8 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	int error = 0, i;
 
 	DPRINTF(sc, ATH_DEBUG_ANY, "%s: devid 0x%x\n", __func__, devid);
+
+	pmf_self_suspensor_init(sc->sc_dev, &sc->sc_suspensor, &sc->sc_qual);
 
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
@@ -616,9 +610,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	/* complete initialization */
 	ieee80211_media_init(ic, ath_media_change, ieee80211_media_status);
 
-#if NBPFILTER > 0
 	ath_bpfattach(sc);
-#endif
 
 	sc->sc_flags |= ATH_ATTACHED;
 
@@ -656,9 +648,7 @@ ath_detach(struct ath_softc *sc)
 
 	s = splnet();
 	ath_stop(ifp, 1);
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
+	bpf_ops->bpf_detach(ifp);
 	/*
 	 * NB: the order of these is important:
 	 * o call the 802.11 layer before detaching the hal to
@@ -748,7 +738,7 @@ ath_intr(void *arg)
 	struct ath_hal *ah = sc->sc_ah;
 	HAL_INT status;
 
-	if (!device_is_active(sc->sc_dev)) {
+	if (!device_activation(sc->sc_dev, DEVACT_LEVEL_DRIVER)) {
 		/*
 		 * The hardware is not ready/present, don't touch anything.
 		 * Note this can happen early on if the IRQ is shared.
@@ -992,8 +982,9 @@ ath_init(struct ath_softc *sc)
 
 	if (device_is_active(sc->sc_dev)) {
 		ATH_LOCK(sc);
-	} else if (!pmf_device_resume_self(sc->sc_dev))
-		return ENXIO;
+	} else if (!pmf_device_subtree_resume(sc->sc_dev, &sc->sc_qual) ||
+	           !device_is_active(sc->sc_dev))
+		return 0;
 	else
 		ATH_LOCK(sc);
 
@@ -1134,9 +1125,9 @@ ath_stop_locked(struct ifnet *ifp, int disable)
 			sc->sc_rxlink = NULL;
 		IF_PURGE(&ifp->if_snd);
 		ath_beacon_free(sc);
-		if (disable)
-			pmf_device_suspend_self(sc->sc_dev);
 	}
+	if (disable)
+		pmf_device_suspend(sc->sc_dev, &sc->sc_qual);
 }
 
 static void
@@ -1364,10 +1355,8 @@ ath_start(struct ifnet *ifp)
 			}
 			ifp->if_opackets++;
 
-#if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m);
 			/*
 			 * Encapsulate the packet in prep for transmission.
 			 */
@@ -3155,7 +3144,6 @@ rx_accept:
 
 		sc->sc_stats.ast_ant_rx[ds->ds_rxstat.rs_antenna]++;
 
-#if NBPFILTER > 0
 		if (sc->sc_drvbpf) {
 			u_int8_t rix;
 
@@ -3184,10 +3172,9 @@ rx_accept:
 			sc->sc_rx_th.wr_antnoise = nf;
 			sc->sc_rx_th.wr_antenna = ds->ds_rxstat.rs_antenna;
 
-			bpf_mtap2(sc->sc_drvbpf,
-				&sc->sc_rx_th, sc->sc_rx_th_len, m);
+			bpf_ops->bpf_mtap2(sc->sc_drvbpf,
+			    &sc->sc_rx_th, sc->sc_rx_th_len, m);
 		}
-#endif
 
 		if (ds->ds_rxstat.rs_status & rxerr_tap) {
 			m_freem(m);
@@ -3944,9 +3931,8 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 	if (IFF_DUMPPKTS(sc, ATH_DEBUG_XMIT))
 		ieee80211_dump_pkt(mtod(m0, void *), m0->m_len,
 			sc->sc_hwmap[txrate].ieeerate, -1);
-#if NBPFILTER > 0
 	if (ic->ic_rawbpf)
-		bpf_mtap(ic->ic_rawbpf, m0);
+		bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
 	if (sc->sc_drvbpf) {
 		u_int64_t tsf = ath_hal_gettsf64(ah);
 
@@ -3960,10 +3946,9 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 		sc->sc_tx_th.wt_txpower = ni->ni_txpower;
 		sc->sc_tx_th.wt_antenna = sc->sc_txantenna;
 
-		bpf_mtap2(sc->sc_drvbpf,
-			&sc->sc_tx_th, sc->sc_tx_th_len, m0);
+		bpf_ops->bpf_mtap2(sc->sc_drvbpf,
+		    &sc->sc_tx_th, sc->sc_tx_th_len, m0);
 	}
-#endif
 
 	/*
 	 * Determine if a tx interrupt should be generated for
@@ -5321,14 +5306,16 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
-		if (IS_RUNNING(ifp)) {
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_UP|IFF_RUNNING:
 			/*
 			 * To avoid rescanning another access point,
 			 * do not call ath_init() here.  Instead,
 			 * only reflect promisc mode settings.
 			 */
 			ath_mode_init(sc);
-		} else if (ifp->if_flags & IFF_UP) {
+			break;
+		case IFF_UP:
 			/*
 			 * Beware of being called during attach/detach
 			 * to reset promiscuous mode.  In that case we
@@ -5339,8 +5326,13 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 * probably a better way to deal with this.
 			 */
 			error = ath_init(sc);
-		} else if (device_is_active(sc->sc_dev))
+			break;
+		case IFF_RUNNING:
 			ath_stop_locked(ifp, 1);
+			break;
+		case 0:
+			break;
+		}
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
@@ -5383,15 +5375,15 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #undef IS_RUNNING
 }
 
-#if NBPFILTER > 0
 static void
 ath_bpfattach(struct ath_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 
-	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
-		sizeof(struct ieee80211_frame) + sizeof(sc->sc_tx_th),
-		&sc->sc_drvbpf);
+	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
+	    sizeof(struct ieee80211_frame) + sizeof(sc->sc_tx_th),
+	    &sc->sc_drvbpf);
+
 	/*
 	 * Initialize constant fields.
 	 * XXX make header lengths a multiple of 32-bits so subsequent
@@ -5409,7 +5401,6 @@ ath_bpfattach(struct ath_softc *sc)
 	sc->sc_rx_th.wr_ihdr.it_len = htole16(sc->sc_rx_th_len);
 	sc->sc_rx_th.wr_ihdr.it_present = htole32(ATH_RX_RADIOTAP_PRESENT);
 }
-#endif
 
 /*
  * Announce various information on device/driver attach.

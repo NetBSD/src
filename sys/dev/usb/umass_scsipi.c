@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.31.4.2 2009/05/04 08:13:21 yamt Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.31.4.3 2010/03/11 15:04:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.31.4.2 2009/05/04 08:13:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.31.4.3 2010/03/11 15:04:07 yamt Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -526,8 +526,7 @@ umass_atapi_probe_device(struct atapibus_softc *atapi, int target)
 	DPRINTF(UDMASS_SCSI, ("umass_atapi_probe_device: doing inquiry\n"));
 	/* Now go ask the device all about itself. */
 	memset(&inqbuf, 0, sizeof(inqbuf));
-	if (scsipi_inquire(periph, &inqbuf,
-	    XS_CTL_DISCOVERY | XS_CTL_DATA_ONSTACK) != 0) {
+	if (scsipi_inquire(periph, &inqbuf, XS_CTL_DISCOVERY) != 0) {
 		DPRINTF(UDMASS_SCSI, ("umass_atapi_probe_device: "
 		    "scsipi_inquire failed\n"));
 		free(periph, M_DEVBUF);

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3.4.2 2009/08/19 18:46:54 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3.4.3 2010/03/11 15:03:10 yamt Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3.4.2 2009/08/19 18:46:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3.4.3 2010/03/11 15:03:10 yamt Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3.4.2 2009/08/19 18:46:54 yamt Exp $"
 #include <sys/fcntl.h>
 #include <sys/dkio.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/kauth.h>
 
 #ifdef NFS_BOOT_BOOTSTATIC
@@ -117,6 +116,7 @@ int x86_ndisks;
 void
 cpu_configure(void)
 {
+	struct pcb *pcb;
 
 	startrtclock();
 
@@ -140,7 +140,8 @@ cpu_configure(void)
 #endif
 
 	/* resync cr0 after FPU configuration */
-	lwp0.l_addr->u_pcb.pcb_cr0 = rcr0();
+	pcb = lwp_getpcb(&lwp0);
+	pcb->pcb_cr0 = rcr0();
 #ifdef MULTIPROCESSOR
 	/* propagate this to the idle pcb's. */
 	cpu_init_idle_lwps();
@@ -176,6 +177,7 @@ void
 findroot(void)
 {
 	device_t dv;
+	deviter_t di;
 	union xen_cmdline_parseinfo xcp;
 
 	if (booted_device)
@@ -183,7 +185,9 @@ findroot(void)
 
 	xen_parse_cmdline(XEN_PARSE_BOOTDEV, &xcp);
 
-	TAILQ_FOREACH(dv, &alldevs, dv_list) {
+	for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+	     dv != NULL;
+	     dv = deviter_next(&di)) {
 		bool is_ifnet, is_disk;
 		const char *devname;
 
@@ -210,6 +214,7 @@ findroot(void)
 		booted_device = dv;
 		break;
 	}
+	deviter_release(&di);
 }
 
 #include "pci.h"

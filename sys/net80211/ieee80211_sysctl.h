@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_sysctl.h,v 1.8 2007/12/25 18:33:46 perry Exp $ */
+/* $NetBSD: ieee80211_sysctl.h,v 1.8.10.1 2010/03/11 15:04:28 yamt Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -11,9 +11,6 @@
  *    copyright notice, this list of conditions and the following
  *    disclaimer in the documentation and/or other materials provided
  *    with the distribution.
- * 3. The name of David Young may not be used to endorse or promote
- *    products derived from this software without specific prior
- *    written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY David Young ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,

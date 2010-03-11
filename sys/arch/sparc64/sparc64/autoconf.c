@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.154.2.2 2009/05/04 08:11:58 yamt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.154.2.3 2010/03/11 15:03:01 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.154.2.2 2009/05/04 08:11:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.154.2.3 2010/03/11 15:03:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.154.2.2 2009/05/04 08:11:58 yamt Exp 
 #include <prop/proplib.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #include <dev/cons.h>
 #include <sparc64/dev/cons.h>
@@ -93,7 +94,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.154.2.2 2009/05/04 08:11:58 yamt Exp 
 
 #include <dev/ata/atavar.h>
 #include <dev/pci/pcivar.h>
+#include <dev/ebus/ebusvar.h>
 #include <dev/sbus/sbusvar.h>
+#include <dev/i2c/i2cvar.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -204,7 +207,7 @@ get_ncpus(void)
 		sparc_ncpus++;
 	}
 #else
-	sparc_ncpus = 1;
+	/* #define sparc_ncpus 1 */
 #endif
 }
 
@@ -740,13 +743,15 @@ dev_path_exact_match(struct device *dev, int ofnode)
  * the bootpath remainder.
  */
 static void
-dev_path_drive_match(struct device *dev, int ctrlnode, int target, int lun)
+dev_path_drive_match(struct device *dev, int ctrlnode, int target,
+    uint64_t wwn, int lun)
 {
 	int child = 0;
 	char buf[OFPATHLEN];
 
 	DPRINTF(ACDB_BOOTDEV, ("dev_path_drive_match: %s, controller %x, "
-	    "target %d lun %d\n", device_xname(dev), ctrlnode, target, lun));
+	    "target %d wwn %016" PRIx64 " lun %d\n", device_xname(dev),
+	    ctrlnode, target, wwn, lun));
 
 	/*
 	 * The ofbootpackage points to a disk on this controller, so
@@ -758,15 +763,21 @@ dev_path_drive_match(struct device *dev, int ctrlnode, int target, int lun)
 			break;
 
 	if (child == ofbootpackage) {
+		const char * name = prom_getpropstring(child, "name");
+
 		/* boot device is on this controller */
 		DPRINTF(ACDB_BOOTDEV, ("found controller of bootdevice\n"));
+
 		/*
 		 * Note: "child" here is == ofbootpackage (s.a.), which
 		 * may be completely wrong for the device we are checking,
 		 * what we realy do here is to match "target" and "lun".
 		 */
-		sprintf(buf, "%s@%d,%d", prom_getpropstring(child, "name"),
-		    target, lun);
+		if (wwn)
+			sprintf(buf, "%s@w%016" PRIx64 ",%d", name, wwn,
+			    lun);
+		else
+			sprintf(buf, "%s@%d,%d", name, target, lun);
 		if (ofboottarget && strcmp(buf, ofboottarget) == 0) {
 			booted_device = dev;
 			if (ofbootpartition)
@@ -832,7 +843,7 @@ void
 device_register(struct device *dev, void *aux)
 {
 	struct device *busdev = device_parent(dev);
-	int ofnode;
+	int ofnode = 0;
 
 	/*
 	 * We don't know the type of 'aux' - it depends on the
@@ -848,21 +859,24 @@ device_register(struct device *dev, void *aux)
 	} else if (device_is_a(busdev, "mainbus")) {
 		struct mainbus_attach_args *ma = aux;
 
-		device_setofnode(dev, ma->ma_node);
-		dev_path_exact_match(dev, ma->ma_node);
+		ofnode = ma->ma_node;
 	} else if (device_is_a(busdev, "pci")) {
 		struct pci_attach_args *pa = aux;
 
 		ofnode = PCITAG_NODE(pa->pa_tag);
-		device_setofnode(dev, ofnode);
-		dev_path_exact_match(dev, ofnode);
 	} else if (device_is_a(busdev, "sbus") || device_is_a(busdev, "dma")
 	    || device_is_a(busdev, "ledma")) {
 		struct sbus_attach_args *sa = aux;
 
 		ofnode = sa->sa_node;
-		device_setofnode(dev, ofnode);
-		dev_path_exact_match(dev, sa->sa_node);
+	} else if (device_is_a(busdev, "ebus")) {
+		struct ebus_attach_args *ea = aux;
+
+		ofnode = ea->ea_node;
+	} else if (device_is_a(busdev, "iic")) {
+		struct i2c_attach_args *ia = aux;
+
+		ofnode = (int)ia->ia_cookie;
 	} else if (device_is_a(dev, "sd") || device_is_a(dev, "cd")) {
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
@@ -888,35 +902,119 @@ device_register(struct device *dev, void *aux)
 		}
 		ofnode = device_ofnode(device_parent(busdev));
 		dev_path_drive_match(dev, ofnode, periph->periph_target + off,
-		    periph->periph_lun);
+		    0, periph->periph_lun);
+		return;
 	} else if (device_is_a(dev, "wd")) {
 		struct ata_device *adev = aux;
 
 		ofnode = device_ofnode(device_parent(busdev));
 		dev_path_drive_match(dev, ofnode, adev->adev_channel*2+
-		    adev->adev_drv_data->drive, 0);
+		    adev->adev_drv_data->drive, 0, 0);
+		return;
 	}
 
-	/* set properties for PCI framebuffers */
 	if (busdev == NULL)
 		return;
 
+	if (ofnode != 0) {
+		uint8_t eaddr[ETHER_ADDR_LEN];
+		char tmpstr[32];
+		uint64_t nwwn = 0, pwwn = 0;
+		prop_dictionary_t dict;
+		prop_data_t blob;
+		prop_number_t pwwnd = NULL, nwwnd = NULL;
+
+		device_setofnode(dev, ofnode);
+		dev_path_exact_match(dev, ofnode);
+
+		if (OF_getprop(ofnode, "name", tmpstr, sizeof(tmpstr)) <= 0)
+			tmpstr[0] = 0;
+
+		/*
+		 * If this is a network interface, note the
+		 * mac address.
+		 */
+		if (strcmp(tmpstr, "network") == 0
+		   || strcmp(tmpstr, "ethernet") == 0
+		   || OF_getprop(ofnode, "mac-address", &eaddr, sizeof(eaddr))
+		      >= ETHER_ADDR_LEN) {
+
+			dict = device_properties(dev);
+
+			/*
+			 * Is it a network interface with FCode?
+			 */
+			if (strcmp(tmpstr, "network") == 0) {
+				prop_dictionary_set_bool(dict,
+				    "without-seeprom", true);
+				prom_getether(ofnode, eaddr);
+			} else {
+				if (!prom_get_node_ether(ofnode, eaddr))
+					goto noether;
+			}
+			blob = prop_data_create_data(eaddr, ETHER_ADDR_LEN);
+			prop_dictionary_set(dict, "mac-address", blob);
+			prop_object_release(blob);
+			of_to_dataprop(dict, ofnode, "shared-pins",
+			    "shared-pins");
+		}
+noether:
+
+		/* is this a FC node? */
+		if (OF_getprop(ofnode, "device_type", tmpstr,
+		    sizeof(tmpstr)) > 0 && strcmp(tmpstr, "scsi-fcp") == 0) {
+
+			dict = device_properties(dev);
+
+			if (OF_getprop(ofnode, "port-wwn", &pwwn, sizeof(pwwn))
+			    == sizeof(pwwn)) {
+				pwwnd = 
+				    prop_number_create_unsigned_integer(pwwn);
+				prop_dictionary_set(dict, "port-wwn", pwwnd);
+				prop_object_release(pwwnd);
+			}
+
+			if (OF_getprop(ofnode, "node-wwn", &nwwn, sizeof(nwwn))
+			    == sizeof(nwwn)) {
+				nwwnd = 
+				    prop_number_create_unsigned_integer(nwwn);
+				prop_dictionary_set(dict, "node-wwn", nwwnd);
+				prop_object_release(nwwnd);
+			}
+		}
+	}
+
+	/*
+	 * Check for I2C busses and add data for their direct configuration.
+	 */
+	if (device_is_a(dev, "iic")) {
+		int busnode = device_ofnode(busdev);
+
+		if (busnode) {
+			prop_dictionary_t props = device_properties(busdev);
+			prop_object_t cfg = prop_dictionary_get(props,
+				"i2c-child-devices");
+			if (!cfg)
+				of_enter_i2c_devs(props, busnode,
+				    sizeof(cell_t));
+		}
+	}
+
+	/* set properties for PCI framebuffers */
 	if (device_is_a(busdev, "pci")) {
 		/* see if this is going to be console */
 		struct pci_attach_args *pa = aux;
 		prop_dictionary_t dict;
-		int node, sub;
+		int sub;
 		int console = 0;
 
 		dict = device_properties(dev);
-		node = PCITAG_NODE(pa->pa_tag);
-		device_setofnode(dev, node);
 
 		/* we only care about display devices from here on */
 		if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY)
 			return;
 
-		console = (node == console_node);
+		console = (ofnode == console_node);
 
 		if (!console) {
 			/*
@@ -925,7 +1023,7 @@ device_register(struct device *dev, void *aux)
 			 * points to the head rather than the device
 			 * itself in this case
 			 */
-			sub = OF_child(node);
+			sub = OF_child(ofnode);
 			while ((sub != 0) && (sub != console_node)) {
 				sub = OF_peer(sub);
 			}
@@ -946,6 +1044,45 @@ device_register(struct device *dev, void *aux)
 			cmap_cb = (uint64_t)&gfb_cb;
 			prop_dictionary_set_uint64(dict,
 			    "cmap_callback", cmap_cb);
+		}
+	}
+}
+
+/*
+ * Called back after autoconfiguration of a device is done
+ */
+void
+device_register_post_config(struct device *dev, void *aux)
+{
+	if (booted_device == NULL && device_is_a(dev, "sd")) {
+		struct scsipibus_attach_args *sa = aux;
+		struct scsipi_periph *periph = sa->sa_periph;
+		uint64_t wwn = 0;
+		int ofnode;
+
+		/*
+		 * If this is a FC-AL drive it will have
+		 * aquired it's WWN device property by now,
+		 * so we can properly match it.
+		 */
+		if (prop_dictionary_get_uint64(device_properties(dev),
+		    "port-wwn", &wwn)) {
+			/*
+			 * Different to what we do in device_register,
+			 * we do not pass the "controller" ofnode,
+			 * because FC-AL devices attach below a "fp" node,
+			 * E.g.: /pci/SUNW,qlc@4/fp@0,0/disk
+			 * and we need the parent of "disk" here.
+			 */
+			ofnode = device_ofnode(
+			    device_parent(device_parent(dev)));
+			for (ofnode = OF_child(ofnode);
+			    ofnode != 0 && booted_device == NULL;
+			    ofnode = OF_peer(ofnode)) {
+				dev_path_drive_match(dev, ofnode,
+				    periph->periph_target,
+				    wwn, periph->periph_lun);
+			}
 		}
 	}
 }
@@ -991,8 +1128,6 @@ copyprops(struct device *busdev, int node, prop_dictionary_t dict)
 		prop_dictionary_set_uint32(dict, "depth", 8);
 	}
 	OF_getprop(console_node, "address", &fbaddr, sizeof(fbaddr));
-	if (fbaddr == 0)
-		OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
 	if (fbaddr != 0) {
 	
 		pmap_extract(pmap_kernel(), fbaddr, &fbpa);
@@ -1027,7 +1162,6 @@ copyprops(struct device *busdev, int node, prop_dictionary_t dict)
 		return;
 	if (OF_getprop(options, "output-device", output_device, 256) == 0)
 		return;
-	printf("output-device: %s\n", output_device);
 	/* find the mode string if there is one */
 	pos = strstr(output_device, ":r");
 	if (pos == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.70.10.3 2009/08/19 18:45:52 yamt Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.70.10.4 2010/03/11 15:01:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.70.10.3 2009/08/19 18:45:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.70.10.4 2010/03/11 15:01:55 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -180,8 +180,6 @@ extern int pmap_debug_level;
 #define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
-
-struct user *proc0paddr;
 
 #ifdef CPU_SA110
 #define CPU_SA110_CACHE_CLEAN_SIZE (0x4000 * 2)
@@ -823,12 +821,12 @@ initarm(void *cookie)
 	printf("switching to new L1 page table\n");
 #endif
 
-	setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa);
 
 	/*
 	 * We must now clean the cache again....
 	 * Cleaning may be done by reading new data to displace any
-	 * dirty data in the cache. This will have happened in setttb()
+	 * dirty data in the cache. This will have happened in cpu_setttb()
 	 * but since we are boot strapping the addresses used for the read
 	 * may have just been remapped and thus the cache could be out
 	 * of sync. A re-clean after the switch will cure this.
@@ -843,8 +841,7 @@ initarm(void *cookie)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init
 	 */
-	proc0paddr = (struct user *)kernelstack.pv_va;
-	lwp0.l_addr = proc0paddr;
+	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
 
 	/* 
 	 * if there is support for a serial console ...we should now

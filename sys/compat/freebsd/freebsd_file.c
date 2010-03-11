@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_file.c,v 1.31 2007/12/20 23:02:47 dsl Exp $	*/
+/*	$NetBSD: freebsd_file.c,v 1.31.10.1 2010/03/11 15:03:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -34,11 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.31 2007/12/20 23:02:47 dsl Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "fs_nfs.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.31.10.1 2010/03/11 15:03:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

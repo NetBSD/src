@@ -1,0 +1,10 @@
+# $NetBSD: GENERIC64,v 1.1.6.2 2010/03/11 15:02:12 yamt Exp $
+
+include 	"arch/cobalt/conf/GENERIC"
+
+#ident 		"GENERIC64-$Revision: 1.1.6.2 $"
+
+no makeoptions	CPUFLAGS
+makeoptions	LP64="yes"
+options 	EXEC_ELF64
+options 	COMPAT_NETBSD64

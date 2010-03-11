@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.61.4.1 2008/05/16 02:23:17 yamt Exp $	*/
+/*	$NetBSD: si.c,v 1.61.4.2 2010/03/11 15:03:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.61.4.1 2008/05/16 02:23:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.61.4.2 2010/03/11 15:03:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: si.c,v 1.61.4.1 2008/05/16 02:23:17 yamt Exp $");
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

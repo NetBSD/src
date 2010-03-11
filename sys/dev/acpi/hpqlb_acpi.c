@@ -1,4 +1,4 @@
-/* $NetBSD: hpqlb_acpi.c,v 1.2.4.2 2008/05/16 02:23:53 yamt Exp $ */
+/* $NetBSD: hpqlb_acpi.c,v 1.2.4.3 2010/03/11 15:03:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008  Christoph Egger <cegger@netbsd.org>
@@ -27,23 +27,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.2.4.2 2008/05/16 02:23:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.2.4.3 2010/03/11 15:03:23 yamt Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/malloc.h>
-#include <sys/buf.h>
-#include <sys/callout.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/pmf.h>
-
-#include <dev/acpi/acpivar.h>
+#include <sys/systm.h>
 
 #include <machine/pio.h>
+
+#include <dev/acpi/acpireg.h>
+#include <dev/acpi/acpivar.h>
+
+#include <dev/isa/isareg.h>
+
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
-#include <dev/isa/isareg.h>
+
+#define _COMPONENT		ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME		("hpqlb_acpi")
 
 #ifdef HPQLB_DEBUG
 #define DPRINTF(x)		do { printf x; } while (/* CONSTCOND */0)
@@ -93,7 +94,7 @@ static int hpqlb_finalize(device_t);
 static int hpqlb_hotkey_handler(struct wskbd_softc *, void *, u_int, int);
 
 static void hpqlb_init(device_t);
-static bool hpqlb_resume(device_t PMF_FN_PROTO);
+static bool hpqlb_resume(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL_NEW(hpqlb, sizeof(struct hpqlb_softc),
     hpqlb_match, hpqlb_attach, NULL, NULL);
@@ -245,6 +246,7 @@ static int
 hpqlb_finalize(device_t self)
 {
 	device_t dv;
+	deviter_t di;
 	struct hpqlb_softc *sc = device_private(self);
 	static int done_once = 0;
 
@@ -255,7 +257,8 @@ hpqlb_finalize(device_t self)
 		return 0;
 	done_once = 1;
 
-	TAILQ_FOREACH(dv, &alldevs, dv_list) {
+	for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
+	     dv = deviter_next(&di)) {
 		if (!device_is_a(dv, "wskbd"))
 			continue;
 
@@ -268,6 +271,7 @@ hpqlb_finalize(device_t self)
 				device_xname(dv));
 		break;
 	}
+	deviter_release(&di);
 
 	if (dv == NULL) {
 		aprint_error_dev(self, "WARNING: no matching wskbd found\n");
@@ -282,7 +286,7 @@ hpqlb_finalize(device_t self)
 }
 
 static bool
-hpqlb_resume(device_t self PMF_FN_ARGS)
+hpqlb_resume(device_t self, const pmf_qual_t *qual)
 {
 
 	hpqlb_init(self);

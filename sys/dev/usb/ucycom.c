@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.21.4.3 2009/08/19 18:47:21 yamt Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.21.4.4 2010/03/11 15:04:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.21.4.3 2009/08/19 18:47:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.21.4.4 2010/03/11 15:04:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,14 +272,12 @@ ucycom_activate(device_ptr_t self, enum devact act)
 	DPRINTFN(5,("ucycom_activate: %d\n", act));
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 
 #if 0

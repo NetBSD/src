@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.1.4.2 2009/05/04 08:13:18 yamt Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.1.4.3 2010/03/11 15:04:04 yamt Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -28,12 +28,13 @@
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcreg.h>
 
+#define	SDMMC_SECTOR_SIZE_SB	9
+#define	SDMMC_SECTOR_SIZE	(1 << SDMMC_SECTOR_SIZE_SB)	/* =512 */
+
 struct sdmmc_csd {
 	int	csdver;		/* CSD structure format */
 	u_int	mmcver;		/* MMC version (for CID format) */
 	int	capacity;	/* total number of sectors */
-	int	sector_size;	/* sector size in bytes */
-	int	sector_size_sb;	/* sector size in shift bit */
 	int	read_bl_len;	/* block length for reads */
 	int	write_bl_len;	/* block length for writes */
 	int	r2w_factor;

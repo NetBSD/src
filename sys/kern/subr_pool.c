@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.158.2.3 2009/09/16 13:38:01 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.158.2.4 2010/03/11 15:04:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.158.2.3 2009/09/16 13:38:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.158.2.4 2010/03/11 15:04:18 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -103,6 +103,9 @@ static struct pool	*drainpp;
 /* This lock protects both pool_head and drainpp. */
 static kmutex_t pool_head_lock;
 static kcondvar_t pool_busy;
+
+/* This lock protects initialization of a potentially shared pool allocator */
+static kmutex_t pool_allocator_lock;
 
 typedef uint32_t pool_item_bitmap_t;
 #define	BITMAP_SIZE	(CHAR_BIT * sizeof(pool_item_bitmap_t))
@@ -188,6 +191,7 @@ static bool	pool_cache_get_slow(pool_cache_cpu_t *, int,
 				    void **, paddr_t *, int);
 static void	pool_cache_cpu_init1(struct cpu_info *, pool_cache_t);
 static void	pool_cache_invalidate_groups(pool_cache_t, pcg_t *);
+static void	pool_cache_invalidate_cpu(pool_cache_t, u_int);
 static void	pool_cache_xcall(pool_cache_t);
 
 static int	pool_catchup(struct pool *);
@@ -230,16 +234,28 @@ int pool_logsize = POOL_LOGSIZE;
 static inline void
 pr_log(struct pool *pp, void *v, int action, const char *file, long line)
 {
-	int n = pp->pr_curlogentry;
+	int n;
 	struct pool_log *pl;
 
 	if ((pp->pr_roflags & PR_LOGGING) == 0)
 		return;
 
+	if (pp->pr_log == NULL) {
+		if (kmem_map != NULL)
+			pp->pr_log = malloc(
+				pool_logsize * sizeof(struct pool_log),
+				M_TEMP, M_NOWAIT | M_ZERO);
+		if (pp->pr_log == NULL)
+			return;
+		pp->pr_curlogentry = 0;
+		pp->pr_logsize = pool_logsize;
+	}
+
 	/*
 	 * Fill in the current entry. Wrap around and overwrite
 	 * the oldest entry if necessary.
 	 */
+	n = pp->pr_curlogentry;
 	pl = &pp->pr_log[n];
 	pl->pl_file = file;
 	pl->pl_line = line;
@@ -257,7 +273,7 @@ pr_printlog(struct pool *pp, struct pool_item *pi,
 	int i = pp->pr_logsize;
 	int n = pp->pr_curlogentry;
 
-	if ((pp->pr_roflags & PR_LOGGING) == 0)
+	if (pp->pr_log == NULL)
 		return;
 
 	/*
@@ -589,6 +605,7 @@ pool_subsystem_init(void)
 	struct pool_allocator *pa;
 
 	mutex_init(&pool_head_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&pool_allocator_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&pool_busy, "poolbusy");
 
 	while ((pa = SLIST_FIRST(&pa_deferinitq)) != NULL) {
@@ -649,7 +666,9 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 			palloc = &pool_allocator_nointr_fullpage;
 	}		
 #endif /* POOL_SUBPAGE */
-	if ((palloc->pa_flags & PA_INITIALIZED) == 0) {
+	if (!cold)
+		mutex_enter(&pool_allocator_lock);
+	if (palloc->pa_refcnt++ == 0) {
 		if (palloc->pa_pagesz == 0)
 			palloc->pa_pagesz = PAGE_SIZE;
 
@@ -662,8 +681,9 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		if (palloc->pa_backingmapptr != NULL) {
 			pa_reclaim_register(palloc);
 		}
-		palloc->pa_flags |= PA_INITIALIZED;
 	}
+	if (!cold)
+		mutex_exit(&pool_allocator_lock);
 
 	if (align == 0)
 		align = ALIGN(1);
@@ -786,16 +806,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_nidle = 0;
 	pp->pr_refcnt = 0;
 
-#ifdef POOL_DIAGNOSTIC
-	if (flags & PR_LOGGING) {
-		if (kmem_map == NULL ||
-		    (pp->pr_log = malloc(pool_logsize * sizeof(struct pool_log),
-		     M_TEMP, M_NOWAIT)) == NULL)
-			pp->pr_roflags &= ~PR_LOGGING;
-		pp->pr_curlogentry = 0;
-		pp->pr_logsize = pool_logsize;
-	}
-#endif
+	pp->pr_log = NULL;
 
 	pp->pr_entered_file = NULL;
 	pp->pr_entered_line = 0;
@@ -844,7 +855,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	}
 
 	/* Insert into the list of all pools. */
-	if (__predict_true(!cold))
+	if (!cold)
 		mutex_enter(&pool_head_lock);
 	TAILQ_FOREACH(pp1, &pool_head, pr_poollist) {
 		if (strcmp(pp1->pr_wchan, pp->pr_wchan) > 0)
@@ -854,14 +865,14 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		TAILQ_INSERT_TAIL(&pool_head, pp, pr_poollist);
 	else
 		TAILQ_INSERT_BEFORE(pp1, pp, pr_poollist);
-	if (__predict_true(!cold))
+	if (!cold)
 		mutex_exit(&pool_head_lock);
 
 	/* Insert this into the list of pools using this allocator. */
-	if (__predict_true(!cold))
+	if (!cold)
 		mutex_enter(&palloc->pa_lock);
 	TAILQ_INSERT_TAIL(&palloc->pa_list, pp, pr_alloc_list);
-	if (__predict_true(!cold))
+	if (!cold)
 		mutex_exit(&palloc->pa_lock);
 
 	pool_reclaim_register(pp);
@@ -891,6 +902,11 @@ pool_destroy(struct pool *pp)
 	TAILQ_REMOVE(&pp->pr_alloc->pa_list, pp, pr_alloc_list);
 	mutex_exit(&pp->pr_alloc->pa_lock);
 
+	mutex_enter(&pool_allocator_lock);
+	if (--pp->pr_alloc->pa_refcnt == 0)
+		mutex_destroy(&pp->pr_alloc->pa_lock);
+	mutex_exit(&pool_allocator_lock);
+
 	mutex_enter(&pp->pr_lock);
 
 	KASSERT(pp->pr_cache == NULL);
@@ -916,8 +932,10 @@ pool_destroy(struct pool *pp)
 	pr_pagelist_free(pp, &pq);
 
 #ifdef POOL_DIAGNOSTIC
-	if ((pp->pr_roflags & PR_LOGGING) != 0)
+	if (pp->pr_log != NULL) {
 		free(pp->pr_log, M_TEMP);
+		pp->pr_log = NULL;
+	}
 #endif
 
 	cv_destroy(&pp->pr_cv);
@@ -2122,9 +2140,7 @@ void
 pool_cache_destroy(pool_cache_t pc)
 {
 	struct pool *pp = &pc->pc_pool;
-	pool_cache_cpu_t *cc;
-	pcg_t *pcg;
-	int i;
+	u_int i;
 
 	/* Remove it from the global list. */
 	mutex_enter(&pool_head_lock);
@@ -2142,20 +2158,8 @@ pool_cache_destroy(pool_cache_t pc)
 	mutex_exit(&pp->pr_lock);
 
 	/* Destroy per-CPU data */
-	for (i = 0; i < MAXCPUS; i++) {
-		if ((cc = pc->pc_cpus[i]) == NULL)
-			continue;
-		if ((pcg = cc->cc_current) != &pcg_dummy) {
-			pcg->pcg_next = NULL;
-			pool_cache_invalidate_groups(pc, pcg);
-		}
-		if ((pcg = cc->cc_previous) != &pcg_dummy) {
-			pcg->pcg_next = NULL;
-			pool_cache_invalidate_groups(pc, pcg);
-		}
-		if (cc != &pc->pc_cpu0)
-			pool_put(&cache_cpu_pool, cc);
-	}
+	for (i = 0; i < MAXCPUS; i++)
+		pool_cache_invalidate_cpu(pc, i);
 
 	/* Finally, destroy it. */
 	mutex_destroy(&pc->pc_lock);
@@ -2302,12 +2306,35 @@ pool_cache_invalidate_groups(pool_cache_t pc, pcg_t *pcg)
  *
  *	Invalidate a pool cache (destruct and release all of the
  *	cached objects).  Does not reclaim objects from the pool.
+ *
+ *	Note: For pool caches that provide constructed objects, there
+ *	is an assumption that another level of synchronization is occurring
+ *	between the input to the constructor and the cache invalidation.
  */
 void
 pool_cache_invalidate(pool_cache_t pc)
 {
 	pcg_t *full, *empty, *part;
+#if 0
+	uint64_t where;
 
+	if (ncpu < 2 || !mp_online) {
+		/*
+		 * We might be called early enough in the boot process
+		 * for the CPU data structures to not be fully initialized.
+		 * In this case, simply gather the local CPU's cache now
+		 * since it will be the only one running.
+		 */
+		pool_cache_xcall(pc);
+	} else {
+		/*
+		 * Gather all of the CPU-specific caches into the
+		 * global cache.
+		 */
+		where = xc_broadcast(0, (xcfunc_t)pool_cache_xcall, pc, NULL);
+		xc_wait(where);
+	}
+#endif
 	mutex_enter(&pc->pc_lock);
 	full = pc->pc_fullgroups;
 	empty = pc->pc_emptygroups;
@@ -2323,6 +2350,40 @@ pool_cache_invalidate(pool_cache_t pc)
 	pool_cache_invalidate_groups(pc, full);
 	pool_cache_invalidate_groups(pc, empty);
 	pool_cache_invalidate_groups(pc, part);
+}
+
+/*
+ * pool_cache_invalidate_cpu:
+ *
+ *	Invalidate all CPU-bound cached objects in pool cache, the CPU being
+ *	identified by its associated index.
+ *	It is caller's responsibility to ensure that no operation is
+ *	taking place on this pool cache while doing this invalidation.
+ *	WARNING: as no inter-CPU locking is enforced, trying to invalidate
+ *	pool cached objects from a CPU different from the one currently running
+ *	may result in an undefined behaviour.
+ */
+static void
+pool_cache_invalidate_cpu(pool_cache_t pc, u_int index)
+{
+
+	pool_cache_cpu_t *cc;
+	pcg_t *pcg;
+
+	if ((cc = pc->pc_cpus[index]) == NULL)
+		return;
+
+	if ((pcg = cc->cc_current) != &pcg_dummy) {
+		pcg->pcg_next = NULL;
+		pool_cache_invalidate_groups(pc, pcg);
+	}
+	if ((pcg = cc->cc_previous) != &pcg_dummy) {
+		pcg->pcg_next = NULL;
+		pool_cache_invalidate_groups(pc, pcg);
+	}
+	if (cc != &pc->pc_cpu0)
+		pool_put(&cache_cpu_pool, cc);
+
 }
 
 void

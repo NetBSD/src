@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.65.4.2 2009/05/04 08:12:43 yamt Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.65.4.3 2010/03/11 15:03:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,11 +35,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.65.4.2 2009/05/04 08:12:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.65.4.3 2010/03/11 15:03:34 yamt Exp $");
 
 #include "opt_inet.h"
 
-#include "bpfilter.h"
 #include "esh.h"
 
 #include <sys/param.h>
@@ -76,10 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.65.4.2 2009/05/04 08:12:43 yamt Exp $"
 #endif
 
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <sys/cpu.h>
 #include <sys/bus.h>
@@ -1015,8 +1012,6 @@ esh_fpread(dev_t dev, struct uio *uio, int ioflag)
 		}
 	}
 
-	uvm_lwp_hold(l);	/* Lock process info into memory */
-
 	/* Lock down the pages */
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		iovp = &uio->uio_iov[i];
@@ -1118,8 +1113,6 @@ esh_fpread(dev_t dev, struct uio *uio, int ioflag)
 		iovp = &uio->uio_iov[i];
 		uvm_vsunlock(p->p_vmspace, iovp->iov_base, iovp->iov_len);
 	}
-
-	uvm_lwp_rele(l);	/* Release process info */
 	esh_free_dmainfo(sc, di);
 
 fpread_done:
@@ -1172,8 +1165,6 @@ esh_fpwrite(dev_t dev, struct uio *uio, int ioflag)
 			goto fpwrite_done;
 		}
 	}
-
-	uvm_lwp_hold(l);	/* Lock process info into memory */
 
 	/* Lock down the pages */
 	for (i = 0; i < uio->uio_iovcnt; i++) {
@@ -1273,7 +1264,6 @@ esh_fpwrite(dev_t dev, struct uio *uio, int ioflag)
 		uvm_vsunlock(p->p_vmspace, iovp->iov_base, iovp->iov_len);
 	}
 
-	uvm_lwp_rele(l);	/* Release process info */
 	esh_free_dmainfo(sc, di);
 
 fpwrite_done:
@@ -1920,7 +1910,6 @@ eshstart(struct ifnet *ifp)
 		if (m == 0)		/* not really needed */
 			break;
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf) {
 			/*
 			 * On output, the raw packet has a eight-byte CCI
@@ -1937,12 +1926,11 @@ eshstart(struct ifnet *ifp)
 			m->m_len -= 8;
 			m->m_data += 8;
 			m->m_pkthdr.len -= 8;
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 			m->m_len += 8;
 			m->m_data -= 8;
 			m->m_pkthdr.len += 8;
 		}
-#endif
 
 		send->ec_len = m->m_pkthdr.len;
 		m = send->ec_cur_mbuf = esh_adjust_mbufs(sc, m);
@@ -2371,7 +2359,6 @@ esh_read_snap_ring(struct esh_softc *sc, u_int16_t consumer, int error)
 				 */
 				ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 				/*
 				 * Check if there's a BPF listener on this
 				 * interface.  If so, hand off the raw packet
@@ -2383,9 +2370,8 @@ esh_read_snap_ring(struct esh_softc *sc, u_int16_t consumer, int error)
 					 * data, so no alignment problems
 					 * here...
 					 */
-					bpf_mtap(ifp->if_bpf, m);
+					bpf_ops->bpf_mtap(ifp->if_bpf, m);
 				}
-#endif
 				if ((ifp->if_flags & IFF_RUNNING) == 0) {
 					m_freem(m);
 				} else {

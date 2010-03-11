@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.15.66.1 2009/05/04 08:10:36 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.15.66.2 2010/03/11 15:02:03 yamt Exp $	*/
 /*	$OpenBSD: cpu.c,v 1.8 1997/04/19 17:19:41 pefo Exp $ */
 
 /*
@@ -34,12 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.66.1 2009/05/04 08:10:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.66.2 2010/03/11 15:02:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>

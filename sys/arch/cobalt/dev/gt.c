@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.20.58.1 2008/05/16 02:22:09 yamt Exp $	*/
+/*	$NetBSD: gt.c,v 1.20.58.2 2010/03/11 15:02:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.20.58.1 2008/05/16 02:22:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.20.58.2 2010/03/11 15:02:12 yamt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.20.58.1 2008/05/16 02:22:09 yamt Exp $");
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>

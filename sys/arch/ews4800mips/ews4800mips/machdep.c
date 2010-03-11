@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11.10.3 2009/08/19 18:46:14 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11.10.4 2010/03/11 15:02:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11.10.3 2009/08/19 18:46:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11.10.4 2010/03/11 15:02:21 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11.10.3 2009/08/19 18:46:14 yamt Exp $
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/mount.h>
@@ -74,7 +73,6 @@ vsize_t kseg2iobufsize;		/* to reserve PTEs for KSEG2 I/O space */
 struct cpu_info cpu_info_store;
 
 /* maps for VM objects */
-struct vm_map *mb_map;
 struct vm_map *phys_map;
 
 /* referenced by mips_machdep.c:cpu_dump() */
@@ -90,8 +88,8 @@ void
 mach_init(int argc, char *argv[], struct bootinfo *bi)
 {
 	extern char kernel_text[], edata[], end[];
-	extern struct user *proc0paddr;
-	void *v;
+	struct pcb *pcb0;
+	vaddr_t v;
 	int i;
 
 	/* Clear BSS */
@@ -118,7 +116,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	sbd_init();
 
 	__asm volatile("move %0, $29" : "=r"(v));
-	printf("kernel_text=%p edata=%p end=%p sp=%p\n", kernel_text, edata,
+	printf("kernel_text=%p edata=%p end=%p sp=%lx\n", kernel_text, edata,
 	    end, v);
 
 	option(argc, argv, bi);
@@ -169,11 +167,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 
 	pmap_bootstrap();
 
-	v = (void *)uvm_pageboot_alloc(USPACE);	/* proc0 USPACE */
-	lwp0.l_addr = proc0paddr = (struct user *) v;
-	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	mips_init_lwp0_uarea();
 }
 
 void
@@ -262,7 +256,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Take a snapshot before clobbering any registers. */
 	if (curlwp)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 	if (cold) {
 		howto |= RB_HALT;

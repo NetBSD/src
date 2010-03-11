@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.18.2.3 2009/09/16 13:38:01 yamt Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.18.2.4 2010/03/11 15:04:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.18.2.3 2009/09/16 13:38:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.18.2.4 2010/03/11 15:04:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -153,7 +153,7 @@ turnstile_remove(turnstile_t *ts, lwp_t *l, int q)
 	}
 
 	ts->ts_waiters[q]--;
-	(void)sleepq_remove(&ts->ts_sleepq[q], l);
+	sleepq_remove(&ts->ts_sleepq[q], l);
 }
 
 /*
@@ -253,7 +253,6 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	sq = &ts->ts_sleepq[q];
 	ts->ts_waiters[q]++;
 	sleepq_enter(sq, l, tc->tc_mutex);
-	/* now tc->tc_mutex is also cur->l_mutex and l->l_mutex */
 	LOCKDEBUG_BARRIER(tc->tc_mutex, 1);
 	l->l_kpriority = true;
 	obase = l->l_kpribase;
@@ -276,7 +275,8 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	 * compiling a kernel with LOCKDEBUG to pinpoint the problem.
 	 */
 	prio = lwp_eprio(l);
-
+	KASSERT(cur == l);
+	KASSERT(tc->tc_mutex == cur->l_mutex);
 	for (;;) {
 		bool dolock;
 
@@ -295,21 +295,11 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 			 */
 			break;
 		}
-
-		if (l == owner) {
-			/* owner has changed, restart from curlwp */
-			lwp_unlock(l);
-			l = cur;
-			lwp_lock(l);
-			prio = lwp_eprio(l);
-			continue;
-		}
-			
 		if (l->l_mutex != owner->l_mutex)
 			dolock = true;
 		else
 			dolock = false;
-		if (dolock && !lwp_trylock(owner)) {
+		if (l == owner || (dolock && !lwp_trylock(owner))) {
 			/*
 			 * restart from curlwp.
 			 * Note that there may be a livelock here:
@@ -457,7 +447,7 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, lwp_t *nl)
  *	has received a signal.  It's not a valid action for turnstiles,
  *	since LWPs blocking on a turnstile are not interruptable.
  */
-u_int
+void
 turnstile_unsleep(lwp_t *l, bool cleanup)
 {
 

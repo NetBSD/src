@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.7.78.1 2009/05/04 08:11:59 yamt Exp $
+#	$NetBSD: Makefile,v 1.7.78.2 2010/03/11 15:03:02 yamt Exp $
 
-.if ${MACHINE_ARCH} == sparc64
+.if ${MACHINE} == sparc64
 SUBDIR=	../../sparc/stand/ofwboot
 SUBDIR+=../../sparc/stand/bootblk
 SUBDIR+=../../sparc/stand/binstall 

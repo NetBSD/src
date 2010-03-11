@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_madt.h,v 1.7 2007/12/09 20:27:53 jmcneill Exp $	*/
+/*	$NetBSD: acpi_madt.h,v 1.7.14.1 2010/03/11 15:03:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -35,6 +35,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _SYS_DEV_ACPI_ACPI_MADT_H
+#define _SYS_DEV_ACPI_ACPI_MADT_H
+
 #define ACPI_PLATFORM_INT_PMI	1
 #define ACPI_PLATFORM_INT_INIT	2
 #define ACPI_PLATFORM_INT_CERR	3
@@ -42,3 +45,5 @@
 ACPI_STATUS acpi_madt_map(void);
 void acpi_madt_unmap(void);
 void acpi_madt_walk(ACPI_STATUS (*)(ACPI_SUBTABLE_HEADER *, void *), void *);
+
+#endif	/* !_SYS_DEV_ACPI_ACPI_MADT_H */

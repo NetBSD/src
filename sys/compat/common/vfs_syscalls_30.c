@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.26.6.2 2009/05/04 08:12:17 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.26.6.3 2010/03/11 15:03:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.26.6.2 2009/05/04 08:12:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.26.6.3 2010/03/11 15:03:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,8 +305,12 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == SCARG(uap, buf))
+	if (outp == SCARG(uap, buf)) {
+		if (cookiebuf)
+			free(cookiebuf, M_TEMP);
+		cookiebuf = NULL;
 		goto again;
+	}
 	fp->f_offset = off;	/* update the vnode offset */
 
 eof:

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.56.4.1 2009/05/04 08:12:29 yamt Exp $	*/
+/*	$NetBSD: param.c,v 1.56.4.2 2010/03/11 15:03:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,13 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.56.4.1 2009/05/04 08:12:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.56.4.2 2010/03/11 15:03:20 yamt Exp $");
 
 #include "opt_hz.h"
 #include "opt_rtc_offset.h"
 #include "opt_sysv.h"
 #include "opt_sysvparam.h"
-#include "opt_nmbclusters.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
@@ -135,7 +134,7 @@ size_t	coherency_unit = ALIGNBYTES + 1;
  * Various mbuf-related parameters.  These can also be changed at run-time
  * with sysctl.
  */
-int	nmbclusters = NMBCLUSTERS;
+int	nmbclusters = 0;
 
 #ifndef MBLOWAT
 #define	MBLOWAT		16

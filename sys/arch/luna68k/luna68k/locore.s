@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.28.20.1 2009/05/04 08:11:25 yamt Exp $ */
+/* $NetBSD: locore.s,v 1.28.20.2 2010/03/11 15:02:33 yamt Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -267,9 +267,8 @@ Lstart3:
  * Enable the MMU.
  * Since the kernel is mapped logical == physical, we just turn it on.
  */
-	RELOC(Sysseg,%a0)		| system segment table addr
-	movl	%a0@,%d1		| read value (a KVA)
-	addl	%a5,%d1			| convert to PA (%a5 == 0, indeed)
+	RELOC(Sysseg_pa,%a0)		| system segment table addr
+	movl	%a0@,%d1		| read value (a PA)
 #if defined(M68040)
 	RELOC(mmutype,%a0)
 	cmpl	#MMU_68040,%a0@		| 68040?
@@ -309,19 +308,14 @@ Lmotommu1:
  * Should be running mapped from this point on
  */
 Lenab1:
-/* select the software page size now */
 	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
-	jbsr	_C_LABEL(uvm_setpagesize) | select software page size
-
-/* set kernel stack, user SP, lwp0, and initial pcb */
-	movl	_C_LABEL(proc0paddr),%a1 | get lwp0 pcb addr
+/* call final pmap setup */
+	jbsr	_C_LABEL(pmap_bootstrap_finalize)
+/* set kernel stack, user SP */
+	movl	_C_LABEL(lwp0uarea),%a1	| get lwp0 uarea
 	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
-	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.l_addr
-	movl	%a2,_C_LABEL(curlwp)	|   and curlwp so that
-	movl	%a1,%a2@(L_ADDR)	|   we don't deref NULL in trap()
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
-	movl	%a1,_C_LABEL(curpcb)	| lwp0 is running
 
 	tstl	_C_LABEL(fputype)	| Have an FPU?
 	jeq	Lenab2			| No, skip.
@@ -346,7 +340,7 @@ Lenab3:
 
 /*
  * Create a fake exception frame that returns to user mode,
- * and save its address in p->p_md.md_regs for cpu_fork().
+ * and save its address in p->p_md.md_regs for cpu_lwp_fork().
  * The new frames for process 1 and 2 will be adjusted by
  * cpu_set_kpc() to arrange for a call to a kernel function
  * before the new process does its rte out to user mode.
@@ -1203,8 +1197,6 @@ nullrp:
 	.long	0x7fff0001	| do-nothing MMU root pointer
 
 GLOBAL(memavail)
-	.long	0
-GLOBAL(proc0paddr)
 	.long	0
 GLOBAL(bootdev)
 	.long	0

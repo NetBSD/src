@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.33.20.1 2009/05/04 08:11:28 yamt Exp $	*/
+/*	$NetBSD: awacs.c,v 1.33.20.2 2010/03/11 15:02:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.33.20.1 2009/05/04 08:11:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.33.20.2 2010/03/11 15:02:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -537,18 +537,22 @@ awacs_setup_sgsmix(device_t cookie)
 	struct awacs_softc *sc = device_private(cookie);
 #if NSGSMIX > 0
 	device_t dv;
+	deviter_t di;
 #endif
 
 	if (!sc->sc_have_perch)
 		return 0;
 #if NSGSMIX > 0
 	/* look for sgsmix */
-	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next) {
+	for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+	     dv != NULL;
+	     dv = deviter_next(&di)) {
 		if (device_is_a(dv, "sgsmix")) {
 			sc->sc_sgsmix = dv;
 			break;
 		}
 	}
+	deviter_release(&di);
 	if (sc->sc_sgsmix == NULL)
 		return 0;
 

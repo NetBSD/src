@@ -1,4 +1,4 @@
-/*	$NetBSD: environment.c,v 1.1.78.1 2009/08/19 18:46:24 yamt Exp $	*/
+/*	$NetBSD: environment.c,v 1.1.78.2 2010/03/11 15:02:32 yamt Exp $	*/
 
 
 /* 
@@ -63,7 +63,7 @@ env_getenv(const char *name)
  * Some notes:
  *
  * If the EV_VOLATILE flag is set, a copy of the variable is made.
- * If EV_DYNAMIC is set, the the variable has been allocated with
+ * If EV_DYNAMIC is set, the variable has been allocated with
  * malloc and ownership transferred to the environment.
  * If (value) is NULL, the variable is set but has no value.
  */

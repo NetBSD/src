@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.51.4.1 2009/05/16 10:41:33 yamt Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.51.4.2 2010/03/11 15:03:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.51.4.1 2009/05/16 10:41:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.51.4.2 2010/03/11 15:03:43 yamt Exp $");
 
 #include "midi.h"
 
@@ -110,8 +110,8 @@ static int cs4280_reset_codec(void *);
 #endif
 static enum ac97_host_flags cs4280_flags_codec(void *);
 
-static bool cs4280_resume(device_t PMF_FN_PROTO);
-static bool cs4280_suspend(device_t PMF_FN_PROTO);
+static bool cs4280_resume(device_t, const pmf_qual_t *);
+static bool cs4280_suspend(device_t, const pmf_qual_t *);
 
 /* Internal functions */
 static const struct cs4280_card_t * cs4280_identify_card(struct pci_attach_args *);
@@ -320,8 +320,8 @@ cs4280_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
@@ -908,7 +908,7 @@ cs4280_trigger_input(void *addr, void *start, void *end, int blksize,
 }
 
 static bool
-cs4280_suspend(device_t dv PMF_FN_ARGS)
+cs4280_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct cs428x_softc *sc = device_private(dv);
 
@@ -943,7 +943,7 @@ cs4280_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-cs4280_resume(device_t dv PMF_FN_ARGS)
+cs4280_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct cs428x_softc *sc = device_private(dv);
 

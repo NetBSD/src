@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.71.2.3 2009/08/19 18:46:45 yamt Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.71.2.4 2010/03/11 15:02:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.71.2.3 2009/08/19 18:46:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.71.2.4 2010/03/11 15:02:56 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -86,7 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.71.2.3 2009/08/19 18:46:45 yamt Ex
 #include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/ucontext.h>
-#include <sys/user.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -111,10 +110,8 @@ int cpu_arch;
 int cpu_product;
 char cpu_model[120];
 
-struct vm_map *mb_map;
 struct vm_map *phys_map;
 
-struct user *proc0paddr;	/* init_main.c use this. */
 struct pcb *curpcb;
 
 #if !defined(IOM_RAM_BEGIN)
@@ -209,25 +206,26 @@ sh_proc0_init()
 	u = uvm_pageboot_alloc(USPACE);
 	memset((void *)u, 0, USPACE);
 
-	/* Setup proc0 */
-	proc0paddr = (struct user *)u;
-	lwp0.l_addr = proc0paddr;
+	/* Setup uarea for lwp0 */
+	uvm_lwp_setuarea(&lwp0, u);
+
 	/*
 	 * u-area map:
-	 * |user| .... | .................. |
+	 * |pcb| .... | .................. |
 	 * | PAGE_SIZE | USPACE - PAGE_SIZE |
          *        frame bot        stack bot
 	 * current frame ... r6_bank
 	 * stack bottom  ... r7_bank
 	 * current stack ... r15
 	 */
-	curpcb = lwp0.l_md.md_pcb = &lwp0.l_addr->u_pcb;
+	curpcb = lwp_getpcb(&lwp0);
+	lwp0.l_md.md_pcb = curpcb;
 
 	sf = &curpcb->pcb_sf;
 
 #ifdef KSTACK_DEBUG
-	memset((char *)(u + sizeof(struct user)), 0x5a,
-	    PAGE_SIZE - sizeof(struct user));
+	memset((char *)(u + sizeof(struct pcb)), 0x5a,
+	    PAGE_SIZE - sizeof(struct pcb));
 	memset((char *)(u + PAGE_SIZE), 0xa5, USPACE - PAGE_SIZE);
 	memset(sf, 0xb4, sizeof(struct switchframe));
 #endif /* KSTACK_DEBUG */
@@ -508,7 +506,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
  * Clear registers on exec
  */
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct trapframe *tf;
 

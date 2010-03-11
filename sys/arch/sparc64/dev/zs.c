@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.65.4.3 2009/06/20 07:20:11 yamt Exp $	*/
+/*	$NetBSD: zs.c,v 1.65.4.4 2010/03/11 15:03:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.65.4.3 2009/06/20 07:20:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.65.4.4 2010/03/11 15:03:00 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -410,9 +410,6 @@ zs_print(void *aux, const char *name)
 	return (UNCONF);
 }
 
-/* Deprecate this? */
-static volatile int zssoftpending;
-
 static int
 zshard(void *arg)
 {
@@ -428,7 +425,6 @@ zshard(void *arg)
 	if (((zsc->zsc_cs[0] && zsc->zsc_cs[0]->cs_softreq) ||
 	     (zsc->zsc_cs[1] && zsc->zsc_cs[1]->cs_softreq)) &&
 	    zsc->zsc_softintr) {
-		zssoftpending = PIL_TTY;
 		softint_schedule(zsc->zsc_softintr);
 	}
 	return (rval);
@@ -464,7 +460,6 @@ zssoft(void *arg)
 	/* Make sure we call the tty layer with tty_lock held. */
 	mutex_spin_enter(&tty_lock);
 #endif
-	zssoftpending = 0;
 	(void)zsc_intr_soft(zsc);
 #ifdef TTY_DEBUG
 	{

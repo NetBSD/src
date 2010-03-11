@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.40.10.1 2009/05/04 08:14:40 yamt Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.40.10.2 2010/03/11 15:04:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.40.10.1 2009/05/04 08:14:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.40.10.2 2010/03/11 15:04:47 yamt Exp $");
 
 #include "opt_pax.h"
 
@@ -86,7 +86,8 @@ sys_obreak(struct lwp *l, const struct sys_obreak_args *uap, register_t *retval)
 	mutex_enter(&p->p_auxlock);
 	old = (vaddr_t)vm->vm_daddr;
 	new = round_page((vaddr_t)SCARG(uap, nsize));
-	if ((new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur && new > old) {
+	if (new == 0 ||
+	    ((new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur && new > old)) {
 		mutex_exit(&p->p_auxlock);
 		return (ENOMEM);
 	}
@@ -118,7 +119,7 @@ sys_obreak(struct lwp *l, const struct sys_obreak_args *uap, register_t *retval)
 				UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
 		if (error) {
 #ifdef DEBUG
-			uprintf("sbrk: grow %ld failed, error = %d\n",
+			uprintf("sbrk: grow %#"PRIxVADDR" failed, error = %d\n",
 			    new - old, error);
 #endif
 			mutex_exit(&p->p_auxlock);

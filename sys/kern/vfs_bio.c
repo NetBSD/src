@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.195.2.2 2009/05/04 08:13:49 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.195.2.3 2010/03/11 15:04:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -100,16 +100,31 @@
  */
 
 /*
+ * The buffer cache subsystem.
+ *
  * Some references:
  *	Bach: The Design of the UNIX Operating System (Prentice Hall, 1986)
  *	Leffler, et al.: The Design and Implementation of the 4.3BSD
  *		UNIX Operating System (Addison Welley, 1989)
+ *
+ * Locking
+ *
+ * There are three locks:
+ * - bufcache_lock: protects global buffer cache state.
+ * - BC_BUSY: a long term per-buffer lock.
+ * - buf_t::b_objlock: lock on completion (biowait vs biodone).
+ *
+ * For buffers associated with vnodes (a most common case) b_objlock points
+ * to the vnode_t::v_interlock.  Otherwise, it points to generic buffer_lock.
+ *
+ * Lock order:
+ *	bufcache_lock ->
+ *		buf_t::b_objlock
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.195.2.2 2009/05/04 08:13:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.195.2.3 2010/03/11 15:04:20 yamt Exp $");
 
-#include "fs_ffs.h"
 #include "opt_bufcache.h"
 
 #include <sys/param.h>
@@ -476,7 +491,7 @@ bufinit(void)
 		struct pool_allocator *pa;
 		struct pool *pp = &bmempools[i];
 		u_int size = 1 << (i + MEMPOOL_INDEX_OFFSET);
-		char *name = kmem_alloc(8, KM_SLEEP);
+		char *name = kmem_alloc(8, KM_SLEEP); /* XXX: never freed */
 		if (__predict_true(size >= 1024))
 			(void)snprintf(name, 8, "buf%dk", size / 1024);
 		else
@@ -719,7 +734,7 @@ bread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
 
 	/* Wait for the read to complete, and return result. */
 	error = biowait(bp);
-	if (error == 0 && (flags & B_MODIFY) != 0)	/* XXXX before the next code block or after? */
+	if (error == 0 && (flags & B_MODIFY) != 0)
 		error = fscow_run(bp, true);
 
 	return error;
@@ -759,20 +774,6 @@ breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
 	if (error == 0 && (flags & B_MODIFY) != 0)
 		error = fscow_run(bp, true);
 	return error;
-}
-
-/*
- * Read with single-block read-ahead.  Defined in Bach (p.55), but
- * implemented as a call to breadn().
- * XXX for compatibility with old file systems.
- */
-int
-breada(struct vnode *vp, daddr_t blkno, int size, daddr_t rablkno,
-    int rabsize, kauth_cred_t cred, int flags, buf_t **bpp)
-{
-
-	return (breadn(vp, blkno, size, &rablkno, &rabsize, 1,
-	    cred, flags, bpp));
 }
 
 /*
@@ -954,28 +955,6 @@ bawrite(buf_t *bp)
 
 	SET(bp->b_flags, B_ASYNC);
 	VOP_BWRITE(bp);
-}
-
-/*
- * Same as first half of bdwrite, mark buffer dirty, but do not release it.
- * Call with the buffer interlock held.
- */
-void
-bdirty(buf_t *bp)
-{
-
-	KASSERT(mutex_owned(&bufcache_lock));
-	KASSERT(bp->b_objlock == &bp->b_vp->v_interlock);
-	KASSERT(mutex_owned(bp->b_objlock));
-	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
-
-	CLR(bp->b_cflags, BC_AGE);
-
-	if (!ISSET(bp->b_oflags, BO_DELWRI)) {
-		SET(bp->b_oflags, BO_DELWRI);
-		curlwp->l_ru.ru_oublock++;
-		reassignbuf(bp, bp->b_vp);
-	}
 }
 
 /*

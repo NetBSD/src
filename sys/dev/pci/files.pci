@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.303.4.5 2009/09/16 13:37:50 yamt Exp $
+#	$NetBSD: files.pci,v 1.303.4.6 2010/03/11 15:03:43 yamt Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -337,6 +337,11 @@ device	ixpide: ata, ata_dma, ata_udma, pciide_common, wdc_common
 attach	ixpide at pci
 file	dev/pci/ixpide.c	ixpide
 
+# Toshiba PICCOLO IDE controllers
+device	toshide: ata, ata_dma, pciide_common, wdc_common
+attach	toshide at pci
+file	dev/pci/toshide.c	toshide
+
 # PCI-PCI bridge chips
 device	ppb: pcibus
 attach	ppb at pci
@@ -362,6 +367,11 @@ file	dev/pci/if_hme_pci.c		hme_pci
 # Sun GEM-network
 attach	gem at pci with gem_pci
 file	dev/pci/if_gem_pci.c		gem_pci
+
+# Sun Cassini-network
+device	cas: arp, ether, ifnet, mii
+attach	cas at pci
+file	dev/pci/if_cas.c		cas
 
 # JMicron JMC2[56]0 ethernet controllers
 device	jme: ether, ifnet, arp, mii
@@ -914,7 +924,7 @@ attach sdhc at pci with sdhc_pci
 file	dev/pci/sdhc_pci.c		sdhc_pci
 
 # generic framebuffer console driver, PCI frontend
-attach genfb at pci with genfb_pci
+attach genfb at pci with genfb_pci : splash
 file	dev/pci/genfb_pci.c	genfb_pci
 
 # NVIDIA nForce2/3/4 SMBus controller
@@ -952,11 +962,8 @@ attach	lii at pci
 file	dev/pci/if_lii.c		lii
 
 # Silicon Image SteelVine SATA-II controllers
-define siisata
-file dev/ic/siisata.c atapibus & atabus & siisata
-device siisata: ata, ata_dma, ata_udma, sata, sata_fis, siisata
-attach siisata at pci with siisata_pci
-file dev/pci/siisata_pci.c siisata_pci
+attach	siisata at pci with siisata_pci
+file	dev/pci/siisata_pci.c		siisata_pci
 
 # Acer Labs M7101 power management controller
 device	alipm: i2cbus
@@ -984,5 +991,17 @@ attach	voyagerfb at pci
 file	dev/pci/voyagerfb.c		voyagerfb
 defflag	opt_voyagerfb.h	VOYAGERFB_DEBUG
 
-# Intel High Definition Audio
+# High Definition Audio
 include "dev/pci/hdaudio/files.hdaudio"
+
+# Permedia 2 / Sun PGX32 / Raptor
+device	pm2fb: wsemuldisplaydev, rasops8, vcons, videomode, iic, i2c_bitbang
+attach	pm2fb at pci
+file	dev/pci/pm2fb.c		pm2fb
+defflag	opt_pm2fb.h	PM2FB_DEBUG
+
+# 3Dlabs Wildcat / Sun XVR-500, 1200, Expert3D etc.
+device		wcfb: wsemuldisplaydev, rasops8, vcons
+attach		wcfb at pci
+file		dev/pci/wcfb.c	wcfb
+defflag		opt_wcfb.h	WCFB_DEBUG

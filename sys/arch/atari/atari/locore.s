@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.101.18.1 2009/05/04 08:10:46 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.101.18.2 2010/03/11 15:02:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990 The Regents of the University of California.
@@ -1024,16 +1024,13 @@ Lend_cpuset:
 	jsr	_C_LABEL(start_c)
 
 	/*
-	 * set kernel stack, user SP, and initial pcb
+	 * set kernel stack, user SP
 	 */
-	movl	_C_LABEL(proc0paddr),%a1| lwp0 kernel stack
+	movl	_C_LABEL(lwp0uarea),%a1	| grab lwp0 uarea
 	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
-	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.p_addr so that
-	movl	%a1,%a2@(L_ADDR)	|   we don't deref NULL in trap()
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
 	movl	%a2,%a1@(PCB_USP)	| and save it
-	movl	%a1,_C_LABEL(curpcb)	| lwp0 is running
 	clrw	%a1@(PCB_FLAGS)		| clear flags
 
 	/* flush TLB and turn on caches */
@@ -1078,8 +1075,8 @@ Lcacheon:
   	movw	#PSL_USER,%sp@-		|  in user mode
 	clrl	%sp@-			|  stack adjust count
 	lea	%sp@(-64),%sp		|  construct space for D0-D7/A0-A7
-	lea	_C_LABEL(lwp0),%a0	| proc0 in a0
-	movl	%sp,%a0@(L_MD_REGS)     | save frame for proc0
+	lea	_C_LABEL(lwp0),%a0	| lwp0 in a0
+	movl	%sp,%a0@(L_MD_REGS)     | save frame for lwp0
 	movl	%usp,%a1
 	movl	%a1,%sp@(FR_SP)		| save user stack pointer in frame
 	pea	%sp@			|  addr of space for D0
@@ -1464,8 +1461,6 @@ ASLOCAL(tmpstk)
 GLOBAL(protorp)
 	.long	0x80000002,0		|  prototype root pointer
 
-GLOBAL(proc0paddr)
-	.long	0			|  KVA of proc0 u-area
 #ifdef M68060 /* XXX */
 L60iem:		.long	0
 L60fpiem:	.long	0

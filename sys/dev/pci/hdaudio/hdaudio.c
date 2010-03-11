@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.4.2.2 2009/09/16 13:37:56 yamt Exp $ */
+/* $NetBSD: hdaudio.c,v 1.4.2.3 2010/03/11 15:03:59 yamt Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.4.2.2 2009/09/16 13:37:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.4.2.3 2010/03/11 15:03:59 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1339,6 +1339,48 @@ hdaudioioctl_fgrp_setconfig(struct hdaudio_softc *sc,
 	return 0;
 }
 
+static int
+hdaudio_dispatch_fgrp_ioctl(struct hdaudio_softc *sc, u_long cmd,
+    prop_dictionary_t request, prop_dictionary_t response)
+{
+	struct hdaudio_function_group *fg;
+	int16_t codecid, nid;
+	void *fgrp_sc; 
+	int err;
+
+	if (!prop_dictionary_get_int16(request, "codecid", &codecid) ||
+	    !prop_dictionary_get_int16(request, "nid", &nid))
+		return EINVAL;
+
+	fg = hdaudioioctl_fgrp_lookup(sc, codecid, nid);
+	if (fg == NULL)
+		return ENODEV;
+	fgrp_sc = device_private(fg->fg_device);
+
+	switch (fg->fg_type) {
+	case HDAUDIO_GROUP_TYPE_AFG:
+		switch (cmd) {
+		case HDAUDIO_FGRP_CODEC_INFO:
+			err = hdaudio_afg_codec_info(fgrp_sc,
+			    request, response);
+			break;
+		case HDAUDIO_FGRP_WIDGET_INFO:
+			err = hdaudio_afg_widget_info(fgrp_sc,
+			    request, response);
+			break;
+		default:
+			err = EINVAL;
+			break;
+		}
+		break;
+
+	default:
+		err = EINVAL;
+		break;
+	}
+	return err;
+}
+
 int
 hdaudioopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
@@ -1388,6 +1430,10 @@ hdaudioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		break;
 	case HDAUDIO_FGRP_SETCONFIG:
 		err = hdaudioioctl_fgrp_setconfig(sc, request, response);
+		break;
+	case HDAUDIO_FGRP_CODEC_INFO:
+	case HDAUDIO_FGRP_WIDGET_INFO:
+		err = hdaudio_dispatch_fgrp_ioctl(sc, cmd, request, response);
 		break;
 	default:
 		err = EINVAL;

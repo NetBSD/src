@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.84.2.3 2009/08/19 18:46:16 yamt Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.84.2.4 2010/03/11 15:02:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,12 +40,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.84.2.3 2009/08/19 18:46:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.84.2.4 2010/03/11 15:02:24 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
 #include "opt_pmap_debug.h"
-#include "fs_nfs.h"
 #include "ksyms.h"
 
 #include <sys/param.h>
@@ -91,13 +90,11 @@ __KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.84.2.3 2009/08/19 18:46:16 yamt Ex
 #include <dev/hpc/apm/apmvar.h>
 #include <dev/hpc/bicons.h>
 
-#ifdef NFS
 #include <sys/mount.h>
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
-#endif /* NFS */
 
 /* Kernel text starts 256K in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00040000)
@@ -162,8 +159,6 @@ extern int pmap_debug_level;
 #define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
-
-struct user *proc0paddr;
 
 #define CPU_SA110_CACHE_CLEAN_SIZE (0x4000 * 2)
 extern unsigned int sa1_cache_clean_addr;
@@ -362,14 +357,10 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 		case 'b':
 			/* boot device: -b=sd0 etc. */
 			cp = cp + 2;
-#ifdef NFS
 			if (strcmp(cp, MOUNT_NFS) == 0)
 				rootfstype = MOUNT_NFS;
 			else
 				strncpy(boot_file, cp, sizeof(boot_file));
-#else /* !NFS */
-			strncpy(boot_file, cp, sizeof(boot_file));
-#endif /* !NFS */
 			break;
 		default:
 			BOOT_FLAG(*cp, boothowto);
@@ -653,7 +644,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 
 	/* Set the page table address. */
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
@@ -661,8 +652,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init.
 	 */
-	proc0paddr = (struct user *)kernelstack.pv_va;
-	lwp0.l_addr = proc0paddr;
+	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
 
 #ifdef BOOT_DUMP
 	dumppages((char *)0xc0000000, 16 * PAGE_SIZE);

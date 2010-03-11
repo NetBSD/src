@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.34.20.2 2009/05/04 08:11:59 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.34.20.3 2010/03/11 15:03:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34.20.2 2009/05/04 08:11:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34.20.3 2010/03/11 15:03:03 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -92,7 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34.20.2 2009/05/04 08:11:59 yamt Exp $");
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 #include <sys/kcore.h>
 
@@ -1511,7 +1510,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * Determine the range of kernel virtual space available.
 	 * It is segment-aligned to simplify PMEG management.
 	 */
-	virtual_avail = m68k_round_seg(nextva);
+	virtual_avail = sun2_round_seg(nextva);
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
 	/*
@@ -2030,7 +2029,7 @@ pmap_enter_kernel(vaddr_t pgva, int new_pte, bool wired)
 		new_pte |= PG_NC;
 	}
 
-	segva = m68k_trunc_seg(pgva);
+	segva = sun2_trunc_seg(pgva);
 	do_pv = true;
 
 	/* Do we have a PMEG? */
@@ -2174,7 +2173,7 @@ pmap_enter_user(pmap_t pmap, vaddr_t pgva, int new_pte, bool wired)
 		return;
 	}
 
-	segva = m68k_trunc_seg(pgva);
+	segva = sun2_trunc_seg(pgva);
 	do_pv = true;
 
 	/*
@@ -2308,7 +2307,7 @@ pmap_enter_user(pmap_t pmap, vaddr_t pgva, int new_pte, bool wired)
 }
 
 void 
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	int new_pte, s;
 	pmap_t pmap = kernel_pmap;
@@ -2366,7 +2365,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		new_pte |= PG_NC;
 	}
 
-	segva = m68k_trunc_seg(va);
+	segva = sun2_trunc_seg(va);
 
 	s = splvm();
 
@@ -2438,7 +2437,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	set_context(KERNEL_CONTEXT);
 	segnum = VA_SEGNUM(va);
 	for (eva = va + len; va < eva; va = neva, segnum++) {
-		neva = m68k_trunc_seg(va) + NBSG;
+		neva = sun2_trunc_seg(va) + NBSG;
 		if (neva > eva) {
 			neva = eva;
 		}
@@ -2446,7 +2445,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 			continue;
 		}
 
-		segva = m68k_trunc_seg(va);
+		segva = sun2_trunc_seg(va);
 		sme = get_segmap(segva);
 		pmegp = pmeg_p(sme);
 
@@ -2595,7 +2594,7 @@ pmap_fault_reload(pmap_t pmap, vaddr_t pgva, vm_prot_t ftype)
 	if (pmap->pm_segmap[VA_SEGNUM(pgva)] == SEGINV)
 		return (0);
 
-	segva = m68k_trunc_seg(pgva);
+	segva = sun2_trunc_seg(pgva);
 	chkpte = PG_VALID;
 	if (ftype & VM_PROT_WRITE)
 		chkpte |= PG_WRITE;
@@ -3007,7 +3006,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	va = sva;
 	segnum = VA_SEGNUM(va);
 	while (va < eva) {
-		neva = m68k_trunc_seg(va) + NBSG;
+		neva = sun2_trunc_seg(va) + NBSG;
 		if (neva > eva)
 			neva = eva;
 		if (pmap->pm_segmap[segnum] != SEGINV)
@@ -3031,7 +3030,7 @@ pmap_protect1(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	s = splvm();
 
 #ifdef	DIAGNOSTIC
-	if (m68k_trunc_seg(sva) != m68k_trunc_seg(eva-1))
+	if (sun2_trunc_seg(sva) != sun2_trunc_seg(eva-1))
 		panic("pmap_protect1: bad range!");
 #endif
 
@@ -3094,7 +3093,7 @@ pmap_protect_mmu(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		panic("pmap_protect_mmu: wrong context");
 #endif
 
-	segva = m68k_trunc_seg(sva);
+	segva = sun2_trunc_seg(sva);
 	sme = get_segmap(segva);
 
 #ifdef	DIAGNOSTIC
@@ -3175,7 +3174,7 @@ pmap_protect_noctx(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		panic("pmap_protect_noctx: null segmap");
 #endif
 
-	segva = m68k_trunc_seg(sva);
+	segva = sun2_trunc_seg(sva);
 	segnum = VA_SEGNUM(segva);
 	sme = pmap->pm_segmap[segnum];
 	if (sme == SEGINV)
@@ -3246,7 +3245,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	va = sva;
 	segnum = VA_SEGNUM(va);
 	while (va < eva) {
-		neva = m68k_trunc_seg(va) + NBSG;
+		neva = sun2_trunc_seg(va) + NBSG;
 		if (neva > eva)
 			neva = eva;
 		if (pmap->pm_segmap[segnum] != SEGINV)
@@ -3268,7 +3267,7 @@ pmap_remove1(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	s = splvm();
 
 #ifdef	DIAGNOSTIC
-	if (m68k_trunc_seg(sva) != m68k_trunc_seg(eva-1))
+	if (sun2_trunc_seg(sva) != sun2_trunc_seg(eva-1))
 		panic("pmap_remove1: bad range!");
 #endif
 
@@ -3332,7 +3331,7 @@ pmap_remove_mmu(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		panic("pmap_remove_mmu: wrong context");
 #endif
 
-	segva = m68k_trunc_seg(sva);
+	segva = sun2_trunc_seg(sva);
 	sme = get_segmap(segva);
 
 #ifdef	DIAGNOSTIC
@@ -3461,7 +3460,7 @@ pmap_remove_noctx(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		panic("pmap_remove_noctx: null segmap");
 #endif
 
-	segva = m68k_trunc_seg(sva);
+	segva = sun2_trunc_seg(sva);
 	segnum = VA_SEGNUM(segva);
 	sme = pmap->pm_segmap[segnum];
 	if (sme == SEGINV)
@@ -3685,22 +3684,6 @@ pmap_zero_page(paddr_t pa)
 	set_context(saved_ctx);
 
 	splx(s);
-}
-
-/*
- *	Routine:	pmap_collect
- *	Function:
- *		Garbage collects the physical map system for
- *		pages which are no longer used.
- *		Success need not be guaranteed -- that is, there
- *		may well be pages which are not referenced, but
- *		others may be collected.
- *	Usage:
- *		Called by the pageout daemon when pages are scarce.
- */
-void 
-pmap_collect(pmap_t pmap)
-{
 }
 
 /*

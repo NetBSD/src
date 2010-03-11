@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscaudio.c,v 1.1.10.3 2009/05/16 10:41:33 yamt Exp $	*/
+/*	$NetBSD: gcscaudio.c,v 1.1.10.4 2010/03/11 15:03:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.1.10.3 2009/05/16 10:41:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.1.10.4 2010/03/11 15:03:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ static int gcscaudio_trigger_output(void *, void *, void *, int,
 static int gcscaudio_trigger_input(void *, void *, void *, int,
                                    void (*)(void *), void *,
                                    const audio_params_t *);
-static bool gcscaudio_resume(device_t PMF_FN_PROTO);
+static bool gcscaudio_resume(device_t, const pmf_qual_t *);
 static int gcscaudio_intr(void *);
 
 /* for codec_if */
@@ -293,8 +293,8 @@ gcscaudio_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		goto attach_failure_unmap;
 	}
 
@@ -1279,7 +1279,7 @@ gcscaudio_intr(void *arg)
 }
 
 static bool
-gcscaudio_resume(device_t dv PMF_FN_ARGS)
+gcscaudio_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct gcscaudio_softc *sc = device_private(dv);
 

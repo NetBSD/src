@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.11.10.2 2009/06/20 07:20:38 yamt Exp $	*/
+/*	$NetBSD: power.h,v 1.11.10.3 2010/03/11 15:04:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -174,12 +174,18 @@ struct pswitch_state {
  *
  *	PENVSYS_EVENT_BATT_WARN		User warning capacity.
  *
+ *	PENVSYS_EVENT_BATT_HIGH		User high capacity.
+ *
+ *	PENVSYS_EVENT_BATT_MAX		User maximum capacity.
+ *
  * 	PENVSYS_EVENT_LOW_POWER		AC Adapter is OFF and all batteries
  * 					are discharged.
  */
 
 #define PENVSYS_EVENT_BATT_CRIT		170
 #define PENVSYS_EVENT_BATT_WARN		175
+#define PENVSYS_EVENT_BATT_HIGH		177
+#define PENVSYS_EVENT_BATT_MAX		178
 #define PENVSYS_EVENT_LOW_POWER		180
 
 /*
@@ -245,6 +251,7 @@ typedef struct power_event {
 struct power_type {
 	char	power_type[32];
 };
-#define	POWER_IOC_GET_TYPE	 _IOR('P', 0, sizeof(struct power_type))
+#define	POWER_IOC_GET_TYPE	_IOR('P', 0, struct power_type)
+#define	POWER_IOC_GET_TYPE_WITH_LOSSAGE _IOR('P', 0, sizeof(struct power_type))
 
 #endif /* _SYS_POWER_H_ */

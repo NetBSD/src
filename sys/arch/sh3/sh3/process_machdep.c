@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.13.44.1 2009/05/04 08:11:52 yamt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.13.44.2 2010/03/11 15:02:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -77,14 +77,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.13.44.1 2009/05/04 08:11:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.13.44.2 2010/03/11 15:02:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/vnode.h>
 #include <sys/ptrace.h>
 
@@ -241,8 +240,6 @@ process_machdep_doregs40(struct lwp *curl, struct lwp *l, struct uio *uio)
 	if (kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	uvm_lwp_hold(l);
-
 	if (kl < 0)
 		error = EINVAL;
 	else
@@ -255,8 +252,6 @@ process_machdep_doregs40(struct lwp *curl, struct lwp *l, struct uio *uio)
 		else
 			error = process_machdep_write_regs40(l, &r);
 	}
-
-	uvm_lwp_rele(l);
 
 	uio->uio_offset = 0;
 	return error;

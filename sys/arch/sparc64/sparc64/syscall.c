@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.29.2.2 2009/05/04 08:11:59 yamt Exp $ */
+/*	$NetBSD: syscall.c,v 1.29.2.3 2010/03/11 15:03:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -79,14 +79,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.29.2.2 2009/05/04 08:11:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.29.2.3 2010/03/11 15:03:02 yamt Exp $");
 
 #include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/signal.h>

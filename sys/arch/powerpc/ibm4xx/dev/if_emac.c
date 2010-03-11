@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.32.10.1 2009/05/04 08:11:43 yamt Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.32.10.2 2010/03/11 15:02:50 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,9 +36,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.32.10.1 2009/05/04 08:11:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.32.10.2 2010/03/11 15:02:50 yamt Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,9 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.32.10.1 2009/05/04 08:11:43 yamt Exp $
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <powerpc/ibm4xx/dev/opbvar.h>
 
@@ -398,7 +395,7 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	emac_reset(sc);
 
 	/* Fetch the Ethernet address. */
-	ea = prop_dictionary_get(device_properties(&sc->sc_dev), "mac-addr");
+	ea = prop_dictionary_get(device_properties(&sc->sc_dev), "mac-address");
 	if (ea == NULL) {
 		printf("%s: unable to get mac-addr property\n",
 		    sc->sc_dev.dv_xname);
@@ -696,13 +693,11 @@ emac_start(struct ifnet *ifp)
 		sc->sc_txsfree--;
 		sc->sc_txsnext = EMAC_NEXTTXS(sc->sc_txsnext);
 
-#if NBPFILTER > 0
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 	}
 
 	if (sc->sc_txfree == 0) {
@@ -1382,14 +1377,12 @@ emac_rxeob_intr(void *arg)
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
-#if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
 		 * pass if up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);

@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.23.20.1 2009/05/04 08:12:32 yamt Exp $ */
+/*      $NetBSD: clockctl.c,v 1.23.20.2 2010/03/11 15:03:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.23.20.1 2009/05/04 08:12:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.23.20.2 2010/03/11 15:03:21 yamt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.23.20.1 2009/05/04 08:12:32 yamt Exp 
 #ifdef NTP
 #include <sys/timex.h>
 #endif /* NTP */
+#include <sys/kauth.h>
 
 #include <sys/clockctl.h>
 #ifdef COMPAT_50
@@ -64,12 +65,39 @@ const struct cdevsw clockctl_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
+static kauth_listener_t clockctl_listener;
+
+static int
+clockctl_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	int result;
+	enum kauth_system_req req;
+	bool device_context;
+
+	result = KAUTH_RESULT_DEFER;
+	req = (enum kauth_system_req)arg0;
+
+	if ((action != KAUTH_SYSTEM_TIME) ||
+	    (req != KAUTH_REQ_SYSTEM_TIME_SYSTEM))
+		return result;
+
+	device_context = (bool)arg3;
+
+	/* Device is controlled by permissions, so allow. */
+	if (device_context)
+		result = KAUTH_RESULT_ALLOW;
+
+	return result;
+}
+
 /*ARGSUSED*/
 void
 clockctlattach(int num)
 {
-	/* Nothing to set up before open is called */
-	return;
+
+	clockctl_listener = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
+	    clockctl_listener_cb, NULL);
 }
 
 int

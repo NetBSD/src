@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.23 2007/12/03 15:34:22 ad Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.23.18.1 2010/03/11 15:02:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.23 2007/12/03 15:34:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.23.18.1 2010/03/11 15:02:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -175,8 +175,8 @@ timerattach_msiiep(struct device *parent, struct device *self, void *aux)
 	mspcic_write_1(pcic_cipar, 0xae);
 
 	/* link interrupt handlers */
-	intr_establish(10, 0, &level10, NULL);
-	intr_establish(14, 0, &level14, NULL);
+	intr_establish(10, 0, &level10, NULL, false);
+	intr_establish(14, 0, &level14, NULL, false);
 
 	/* Establish a soft interrupt at a lower level for schedclock */
 	sched_cookie = sparc_softintr_establish(IPL_SCHED, schedintr, NULL);
@@ -289,7 +289,7 @@ statintr_msiiep(void *cap)
 	 * The factor 8 is only valid for stathz==100.
 	 * See also clock.c
 	 */
-	if (curlwp && (++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0) {
+	if ((++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0) {
 		if (CLKF_LOPRI(frame, IPL_SCHED)) {
 			/* No need to schedule a soft interrupt */
 			spllowerschedclock();

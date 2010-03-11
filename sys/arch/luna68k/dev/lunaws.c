@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.13.44.2 2009/05/04 08:11:24 yamt Exp $ */
+/* $NetBSD: lunaws.c,v 1.13.44.3 2010/03/11 15:02:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.13.44.2 2009/05/04 08:11:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.13.44.3 2010/03/11 15:02:33 yamt Exp $");
 
 #include "wsmouse.h"
 
@@ -139,7 +139,7 @@ wsattach(struct device *parent, struct device *self, void *aux)
 	struct wskbddev_attach_args a;
 
 	sc->sc_ctl = (struct sioreg *)scp->scp_ctl + 1;
-	memcpy( sc->sc_wr, ch1_regs, sizeof(ch1_regs));
+	memcpy(sc->sc_wr, ch1_regs, sizeof(ch1_regs));
 	scp->scp_intr[1] = wsintr;
 	
 	setsioreg(sc->sc_ctl, WR0, sc->sc_wr[WR0]);

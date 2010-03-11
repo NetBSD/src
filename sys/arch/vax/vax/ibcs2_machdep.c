@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.9.10.1 2008/05/16 02:23:24 yamt Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.9.10.2 2010/03/11 15:03:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,13 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.9.10.1 2008/05/16 02:23:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.9.10.2 2010/03/11 15:03:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
-#include <sys/user.h>
 #include <sys/signalvar.h>
 #include <sys/signal.h>
 
@@ -50,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.9.10.1 2008/05/16 02:23:24 yamt 
 #include <compat/ibcs2/ibcs2_signal.h>
 
 void
-ibcs2_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
+ibcs2_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
 	/* Don't need to anything special */
 	setregs(l, epp, stack);

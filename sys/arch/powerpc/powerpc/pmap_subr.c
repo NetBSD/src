@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.20.10.1 2008/05/16 02:23:02 yamt Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.20.10.2 2010/03/11 15:02:51 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.20.10.1 2008/05/16 02:23:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.20.10.2 2010/03/11 15:02:51 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"
@@ -285,7 +285,7 @@ pmap_zero_page(paddr_t pa)
 	size_t linewidth;
 	register_t msr = 0; /* XXX: gcc */
 
-#if defined(PPC_OEA) || defined (PPC_OEA64_BIRDGE)
+#if defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	{
 		/*
 		 * If we are zeroing this page, we must clear the EXEC-ness

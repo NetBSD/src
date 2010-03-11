@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.164.4.3 2009/06/20 07:20:33 yamt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.164.4.4 2010/03/11 15:04:26 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.164.4.3 2009/06/20 07:20:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.164.4.4 2010/03/11 15:04:26 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -74,7 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.164.4.3 2009/06/20 07:20:33 yamt 
 #include "vlan.h"
 #include "pppoe.h"
 #include "bridge.h"
-#include "bpfilter.h"
 #include "arp.h"
 #include "agr.h"
 
@@ -112,9 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.164.4.3 2009/06/20 07:20:33 yamt 
 #error You have included NETATALK or a pseudo-device in your configuration that depends on the presence of ethernet interfaces, but have no such interfaces configured. Check if you really need pseudo-device bridge, pppoe, vlan or options NETATALK.
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <net/if_ether.h>
 #if NVLAN > 0
@@ -283,7 +280,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 #ifdef INET
 	case AF_INET:
 		if (m->m_flags & M_BCAST)
-                	(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
+			(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else if (m->m_flags & M_MCAST)
 			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr, edst);
 		else if (!arpresolve(ifp, rt, m, dst, edst))
@@ -297,11 +294,14 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	case AF_ARP:
 		ah = mtod(m, struct arphdr *);
 		if (m->m_flags & M_BCAST)
-                	(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
+			(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else {
 			void *tha = ar_tha(ah);
 
-			KASSERT(tha);
+			if (tha == NULL) {
+				/* fake with ARPHDR_IEEE1394 */
+				return 0;
+			}
 			memcpy(edst, tha, sizeof(edst));
 		}
 
@@ -895,14 +895,14 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			break;
 #endif
 #ifdef NETATALK
-        	case ETHERTYPE_ATALK:
-                	schednetisr(NETISR_ATALK);
-                	inq = &atintrq1;
-                	break;
-        	case ETHERTYPE_AARP:
+		case ETHERTYPE_ATALK:
+			schednetisr(NETISR_ATALK);
+			inq = &atintrq1;
+			break;
+		case ETHERTYPE_AARP:
 			/* probably this should be done with a NETISR as well */
-                	aarpinput(ifp, m); /* XXX */
-                	return;
+			aarpinput(ifp, m); /* XXX */
+			return;
 #endif /* NETATALK */
 		default:
 			m_freem(m);
@@ -1081,9 +1081,8 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 
 	LIST_INIT(&ec->ec_multiaddrs);
 	ifp->if_broadcastaddr = etherbroadcastaddr;
-#if NBPFILTER > 0
-	bpfattach(ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
+	bpf_ops->bpf_attach(ifp, DLT_EN10MB,
+	    sizeof(struct ether_header), &ifp->if_bpf);
 #ifdef MBUFTRACE
 	strlcpy(ec->ec_tx_mowner.mo_name, ifp->if_xname,
 	    sizeof(ec->ec_tx_mowner.mo_name));
@@ -1111,9 +1110,7 @@ ether_ifdetach(struct ifnet *ifp)
 		bridge_ifdetach(ifp);
 #endif
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
+	bpf_ops->bpf_detach(ifp);
 
 #if NVLAN > 0
 	if (ec->ec_nvlans)

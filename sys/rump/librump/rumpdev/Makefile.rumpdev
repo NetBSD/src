@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpdev,v 1.1.4.3 2009/09/16 13:38:04 yamt Exp $
+#	$NetBSD: Makefile.rumpdev,v 1.1.4.4 2010/03/11 15:04:37 yamt Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -8,17 +8,16 @@ LIB=	rumpdev
 .PATH:	${RUMPTOP}/librump/rumpdev				\
 	${RUMPTOP}/../kern
 
-SRCS=	rump_dev.c autoconf.c
+SRCS=	rump_dev.c autoconf.c rumpdma.c
 
 # sys/kern
-SRCS+=	subr_autoconf.c
+SRCS+=	kern_pmf.c subr_autoconf.c
 
 # automatically in sync src/lib
 SHLIB_MAJOR=    0
 SHLIB_MINOR=    0
 
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
-CPPFLAGS+=	-Wno-pointer-sign
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpdev/opt
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

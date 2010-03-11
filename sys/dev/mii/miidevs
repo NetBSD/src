@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.75.10.4 2009/08/19 18:47:09 yamt Exp $
+$NetBSD: miidevs,v 1.75.10.5 2010/03/11 15:03:41 yamt Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -149,6 +149,7 @@ model BROADCOM BCM5400		0x0004 BCM5400 1000BASE-T media interface
 model BROADCOM BCM5401		0x0005 BCM5401 1000BASE-T media interface
 model BROADCOM BCM5411		0x0007 BCM5411 1000BASE-T media interface
 model BROADCOM BCM5464		0x000b BCM5464 1000BASE-T media interface
+model BROADCOM BCM5461		0x000c BCM5461 1000BASE-T media interface
 model BROADCOM BCM5462		0x000d BCM5462 1000BASE-T media interface
 model BROADCOM BCM5421		0x000e BCM5421 1000BASE-T media interface
 model BROADCOM BCM5752		0x0010 BCM5752 1000BASE-T media interface
@@ -164,7 +165,11 @@ model BROADCOM BCM5708C		0x0036 BCM5708C 1000BASE-T media interface
 model BROADCOM2 BCM5906		0x0004 BCM5906 10/100baseTX media interface
 model BROADCOM2 BCM5755		0x000c BCM5755 1000BASE-T media interface
 model BROADCOM2 BCM5754		0x000e BCM5754/5787 1000BASE-T media interface
+model BROADCOM2 BCM5709CAX	0x002c BCM5709CAX 10/100/1000baseT PHY
 model BROADCOM2 BCM5722		0x002d BCM5722 1000BASE-T media interface
+model BROADCOM2 BCM5784		0x003a BCM5784 10/100/1000baseT PHY
+model BROADCOM2 BCM5709C	0x003c BCM5709 10/100/1000baseT PHY
+model BROADCOM2 BCM5761		0x003d BCM5761 10/100/1000baseT PHY
 model xxBROADCOM_ALT1 BCM5906	0x0004 BCM5906 10/100baseTX media interface
  
 /* Cicada Semiconductor PHYs (now owned by Vitesse?) */
@@ -221,6 +226,7 @@ model xxMARVELL E1011		0x0002 Marvell 88E1011 Gigabit PHY
 model xxMARVELL E1000_3		0x0003 Marvell 88E1000 Gigabit PHY
 model xxMARVELL E1000_5		0x0005 Marvell 88E1000 Gigabit PHY
 model xxMARVELL E6060		0x0008 Marvell 88E6060 10/100 5-port PHY switch
+model xxMARVELL E1149		0x000b Marvell 88E1149 Gigabit PHY
 model xxMARVELL E1111		0x000c Marvell 88E1111 Gigabit PHY
 model xxMARVELL E1116		0x0021 Marvell 88E1116 Gigabit PHY
 model xxMARVELL E1116R		0x0024 Marvell 88E1116R Gigabit PHY
@@ -236,6 +242,7 @@ model xxNATSEMI DP83815		0x0002 DP83815 10/100 media interface
 model xxNATSEMI DP83847		0x0003 DP83847 10/100 media interface
 model xxNATSEMI DP83891		0x0005 DP83891 1000BASE-T media interface
 model xxNATSEMI DP83861		0x0006 DP83861 1000BASE-T media interface
+model xxNATSEMI DP83865		0x0007 DP83865 1000BASE-T media interface
 
 /* PMC Sierra PHYs */
 model xxPMCSIERRA PM8351	0x0000 PM8351 OctalPHY Gigabit interface

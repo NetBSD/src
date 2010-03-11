@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.44.10.3 2009/08/19 18:48:32 yamt Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.44.10.4 2010/03/11 15:04:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -793,8 +793,8 @@ struct alpha_boot_block {
 		for (_i = 0;						\
 		    _i < (sizeof _bb->bb_data / sizeof _bb->bb_data[0]); \
 		    _i++)						\
-			_cksum += _bb->bb_data[_i];			\
-		*(cksum) = _cksum;					\
+			_cksum += le64toh(_bb->bb_data[_i]);		\
+		*(cksum) = htole64(_cksum);				\
 	} while (/*CONSTCOND*/ 0)
 
 /* ------------------------------------------
@@ -1068,6 +1068,8 @@ struct x86_boot_params {
 		/* values for bp_flags */
 #define	X86_BP_FLAGS_RESET_VIDEO	1
 #define	X86_BP_FLAGS_PASSWORD		2
+#define	X86_BP_FLAGS_NOMODULES		4
+#define	X86_BP_FLAGS_NOBOOTCONF		8
 
 		/* values for bp_consdev */
 #define	X86_BP_CONSDEV_PC	0

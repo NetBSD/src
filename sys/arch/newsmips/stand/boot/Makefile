@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18.62.1 2009/05/04 08:11:38 yamt Exp $
+#	$NetBSD: Makefile,v 1.18.62.2 2010/03/11 15:02:45 yamt Exp $
 
 S!= cd ${.CURDIR}/../../../..; pwd
 
@@ -26,7 +26,7 @@ CPPFLAGS+= -D_STANDALONE #-DBOOT_DEBUG
 CPPFLAGS+= -I${.CURDIR} -I. -I${S}
 CPPFLAGS+= -D__daddr_t=int32_t
 
-AFLAGS= -D_LOCORE -mno-abicalls
+AFLAGS= -D_LOCORE -mno-abicalls -DMIPS_KSEG1_START=0xa0000000
 
 LIBS = ${COMMON}/romcalls.o
 LIBS+= ${COMMON}/lib/sa/libsa.a

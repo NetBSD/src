@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.84.4.1 2009/06/20 07:20:09 yamt Exp $ */
+/*	$NetBSD: cpu.h,v 1.84.4.2 2010/03/11 15:02:57 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,8 +76,6 @@
 #define	curlwp			(cpuinfo.ci_curlwp)
 #define	CPU_IS_PRIMARY(ci)	((ci)->master)
 
-#define	cpu_swapin(p)		/* nothing */
-#define	cpu_swapout(p)		/* nothing */
 #define	cpu_number()		(cpuinfo.ci_cpuid)
 void	cpu_proc_fork(struct proc *, struct proc *);
 
@@ -158,15 +156,20 @@ extern int sparc_ncpus;
  * ``not me'' or 1 (``I took care of it'').  intr_establish() inserts a
  * handler into the list.  The handler is called with its (single)
  * argument, or with a pointer to a clockframe if ih_arg is NULL.
+ *
+ * realfun/realarg are used to chain callers, usually with the
+ * biglock wrapper.
  */
 extern struct intrhand {
 	int	(*ih_fun)(void *);
 	void	*ih_arg;
 	struct	intrhand *ih_next;
 	int	ih_classipl;
+	int	(*ih_realfun)(void *);
+	void	*ih_realarg;
 } *intrhand[15];
 
-void	intr_establish(int, int, struct intrhand *, void (*)(void));
+void	intr_establish(int, int, struct intrhand *, void (*)(void), bool);
 void	intr_disestablish(int, struct intrhand *);
 
 void	intr_lock_kernel(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io.c,v 1.17 2006/06/27 13:58:08 peter Exp $	*/
+/*	$NetBSD: sa11x0_io.c,v 1.17.64.1 2010/03/11 15:02:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_io.c,v 1.17 2006/06/27 13:58:08 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_io.c,v 1.17.64.1 2010/03/11 15:02:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ sa11x0_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable,
 	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
 
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 		pte = vtopte(va);
 		if (cacheable == 0) {
 			*pte &= ~L2_S_CACHE_MASK;

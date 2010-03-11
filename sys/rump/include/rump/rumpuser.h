@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.23.2.4 2009/09/16 13:38:04 yamt Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.23.2.5 2010/03/11 15:04:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,11 @@
 #ifndef _RUMP_RUMPUSER_H_
 #define _RUMP_RUMPUSER_H_
 
+#ifdef _KERNEL
 #include <sys/stdint.h>
+#else
+#include <stdint.h>
+#endif
 
 struct msghdr;
 struct pollfd;
@@ -89,14 +93,12 @@ int rumpuser_getenv(const char *, char *, size_t, int *);
 
 int rumpuser_gethostname(char *, size_t, int *);
 
-char *rumpuser_realpath(const char *, char *, int *);
-
 int rumpuser_poll(struct pollfd *, int, int, int *);
 
 int rumpuser_putchar(int, int *);
 
-void rumpuser_panic(void);
-
+#define RUMPUSER_PANIC (-1)
+void rumpuser_exit(int);
 void rumpuser_seterrno(int);
 
 int rumpuser_writewatchfile_setup(int, int, intptr_t, int *);
@@ -106,7 +108,7 @@ int rumpuser_dprintf(const char *, ...);
 
 /* rumpuser_pth */
 void rumpuser_thrinit(kernel_lockfn, kernel_unlockfn, int);
-int  rumpuser_bioinit(rump_biodone_fn);
+void rumpuser_biothread(void *);
 
 int  rumpuser_thread_create(void *(*f)(void *), void *, const char *);
 void rumpuser_thread_exit(void);
@@ -116,6 +118,7 @@ struct rumpuser_mtx;
 void rumpuser_mutex_init(struct rumpuser_mtx **);
 void rumpuser_mutex_recursive_init(struct rumpuser_mtx **);
 void rumpuser_mutex_enter(struct rumpuser_mtx *);
+void rumpuser_mutex_enter_nowrap(struct rumpuser_mtx *);
 int  rumpuser_mutex_tryenter(struct rumpuser_mtx *);
 void rumpuser_mutex_exit(struct rumpuser_mtx *);
 void rumpuser_mutex_destroy(struct rumpuser_mtx *);
@@ -137,8 +140,9 @@ struct rumpuser_cv;
 void rumpuser_cv_init(struct rumpuser_cv **);
 void rumpuser_cv_destroy(struct rumpuser_cv *);
 void rumpuser_cv_wait(struct rumpuser_cv *, struct rumpuser_mtx *);
+void rumpuser_cv_wait_nowrap(struct rumpuser_cv *, struct rumpuser_mtx *);
 int  rumpuser_cv_timedwait(struct rumpuser_cv *, struct rumpuser_mtx *,
-			   struct timespec *);
+			   int64_t, int64_t);
 void rumpuser_cv_signal(struct rumpuser_cv *);
 void rumpuser_cv_broadcast(struct rumpuser_cv *);
 int  rumpuser_cv_has_waiters(struct rumpuser_cv *);
@@ -180,5 +184,15 @@ enum rumpuser_getnametype { RUMPUSER_SOCKNAME, RUMPUSER_PEERNAME };
 int  rumpuser_net_getname(int, struct sockaddr *, int *,
 			      enum rumpuser_getnametype, int *);
 int  rumpuser_net_setsockopt(int, int, int, const void *, int, int *);
+
+/* rumpuser dynloader */
+
+struct modinfo;
+struct rump_component;
+typedef void (*rump_modinit_fn)(const struct modinfo *const *, size_t);
+typedef int (*rump_symload_fn)(void *, uint64_t, char *, uint64_t);
+typedef void (*rump_component_init_fn)(struct rump_component *, int);
+void rumpuser_dl_bootstrap(rump_modinit_fn, rump_symload_fn);
+void rumpuser_dl_component_init(int, rump_component_init_fn);
 
 #endif /* _RUMP_RUMPUSER_H_ */

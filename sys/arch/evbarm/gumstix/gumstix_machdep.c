@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.8.10.3 2009/08/19 18:46:06 yamt Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.8.10.4 2010/03/11 15:02:14 yamt Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
+ * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.
  * All rights reserved.
  *
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -44,7 +44,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of Genetec Corporation may not be used to endorse or 
+ * 3. The name of Genetec Corporation may not be used to endorse or
  *    promote products derived from this software without specific prior
  *    written permission.
  *
@@ -60,9 +60,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * Machine dependant functions for kernel setup for Genetec G4250EBX 
+ * Machine dependant functions for kernel setup for Genetec G4250EBX
  * evaluation board.
- * 
+ *
  * Based on iq80310_machhdep.c
  */
 /*
@@ -137,6 +137,7 @@
  * boards using RedBoot firmware.
  */
 
+#include "opt_gumstix.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
@@ -146,46 +147,47 @@
 #include "md.h"
 
 #include <sys/param.h>
-#include <sys/device.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/exec.h>
-#include <sys/proc.h>
-#include <sys/msgbuf.h>
-#include <sys/reboot.h>
-#include <sys/termios.h>
-#include <sys/ksyms.h>
-
-#include <uvm/uvm_extern.h>
-
 #include <sys/conf.h>
-#include <dev/cons.h>
-#include <dev/md.h>
-
-#include <machine/db_machdep.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_extern.h>
-#ifdef KGDB
-#include <sys/kgdb.h>
-#endif
+#include <sys/device.h>
+#include <sys/exec.h>
+#include <sys/kernel.h>
+#include <sys/ksyms.h>
+#include <sys/msgbuf.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/systm.h>
+#include <sys/termios.h>
 
 #include <machine/bootconfig.h>
 #include <machine/bus.h>
 #include <machine/cpu.h>
+#include <machine/db_machdep.h>
 #include <machine/frame.h>
-#include <arm/undefined.h>
 
 #include <arm/arm32/machdep.h>
-
+#include <arm/undefined.h>
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
 #include <evbarm/gumstix/gumstixreg.h>
 #include <evbarm/gumstix/gumstixvar.h>
 
+#include <uvm/uvm_extern.h>
+
+#include <dev/cons.h>
+#include <dev/md.h>
+
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
+
 /* Kernel text starts 2MB in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
+#ifndef KERNEL_VM_BASE
 #define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
+#endif
 
 /*
  * The range 0xc1000000 - 0xccffffff is available for kernel VM space
@@ -219,7 +221,6 @@ vm_offset_t physical_freestart;
 vm_offset_t physical_freeend;
 vm_offset_t physical_end;
 u_int free_pages;
-vm_offset_t pagetables_start;
 
 /*int debug_flags;*/
 #ifndef PMAP_STATIC_L1S
@@ -245,7 +246,7 @@ extern int pmap_debug_level;
 
 #define KERNEL_PT_SYS		0	/* Page table for mapping proc0 zero page */
 #define KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */
-#define	KERNEL_PT_KERNEL_NUM	4
+#define	KERNEL_PT_KERNEL_NUM	((KERNEL_VM_BASE - KERNEL_BASE) >> 22)
 #define KERNEL_PT_VMDATA	(KERNEL_PT_KERNEL+KERNEL_PT_KERNEL_NUM)
 				        /* Page tables for mapping kernel VM */
 #define	KERNEL_PT_VMDATA_NUM	4	/* start with 16MB of KVM */
@@ -253,12 +254,10 @@ extern int pmap_debug_level;
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 
-struct user *proc0paddr;
-
 /* Prototypes */
 static void	read_system_serial(void);
 static void	process_kernel_args(int, char *[]);
-static void	process_kernel_args_line(char *);
+static void	process_kernel_args_liner(char *);
 #ifdef KGDB
 static void	kgdb_port_init(void);
 #endif
@@ -282,6 +281,10 @@ bs_protos(bs_notimpl);
 
 int comcnspeed = CONSPEED;
 int comcnmode = CONMODE;
+
+#ifdef GUMSTIX_NETBSD_ARGS_CONSOLE
+static char console[16];
+#endif
 
 extern void gxio_config_pin(void);
 extern void gxio_config_expansion(char *);
@@ -352,8 +355,7 @@ cpu_reboot(int howto, char *bootstr)
 	/*NOTREACHED*/
 }
 
-static inline
-pd_entry_t *
+static inline pd_entry_t *
 read_ttb(void)
 {
   long ttb;
@@ -483,10 +485,10 @@ initarm(void *arg)
 		panic("cpu not recognized!");
 
 	/*
-	 * U-Boot doesn't use the virtual memory. 
+	 * U-Boot doesn't use the virtual memory.
 	 *
-	 * Physical Address Range     Description 
-	 * -----------------------    ---------------------------------- 
+	 * Physical Address Range     Description
+	 * -----------------------    ----------------------------------
 	 * 0x00000000 - 0x00ffffff    flash Memory   (16MB or 4MB)
 	 * 0x40000000 - 0x480fffff    Processor Registers
 	 * 0xa0000000 - 0xa3ffffff    SDRAM Bank 0 (64MB)
@@ -500,16 +502,14 @@ initarm(void *arg)
 	/* configure GPIOs. */
 	gxio_config_pin();
 
+	pxa2x0_clkman_bootstrap(GUMSTIX_CLKMAN_VBASE);
+
+#ifndef GUMSTIX_NETBSD_ARGS_CONSOLE
 	consinit();
+#endif
 #ifdef KGDB
 	kgdb_port_init();
 #endif
-
-	/* Talk to the user */
-	printf("\nNetBSD/evbarm (gumstix) booting ...\n");
-
-	/* Read system serial */
-	read_system_serial();
 
         /*
 	 * Examine the boot args string for options we need to know about
@@ -525,7 +525,16 @@ initarm(void *arg)
 		 * Maybe r3 is 'boot args string' of 'bootm'.  This string is
 		 * linely.
 		 */
-		process_kernel_args_line((char *)u_boot_args[r3]);
+		process_kernel_args_liner((char *)u_boot_args[r3]);
+#ifdef GUMSTIX_NETBSD_ARGS_CONSOLE
+	consinit();
+#endif
+
+	/* Talk to the user */
+	printf("\nNetBSD/evbarm (gumstix) booting ...\n");
+
+	/* Read system serial */
+	read_system_serial();
 
 	memstart = SDRAM_START;
 	memsize = ram_size;
@@ -644,13 +653,13 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("IRQ stack: p0x%08lx v0x%08lx\n", irqstack.pv_pa,
-	    irqstack.pv_va); 
+	    irqstack.pv_va);
 	printf("ABT stack: p0x%08lx v0x%08lx\n", abtstack.pv_pa,
-	    abtstack.pv_va); 
+	    abtstack.pv_va);
 	printf("UND stack: p0x%08lx v0x%08lx\n", undstack.pv_pa,
-	    undstack.pv_va); 
+	    undstack.pv_va);
 	printf("SVC stack: p0x%08lx v0x%08lx\n", kernelstack.pv_pa,
-	    kernelstack.pv_va); 
+	    kernelstack.pv_va);
 #endif
 
 	/*
@@ -792,7 +801,7 @@ initarm(void *arg)
 	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
 #endif
 
-	setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
@@ -800,8 +809,7 @@ initarm(void *arg)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init
 	 */
-	proc0paddr = (struct user *)kernelstack.pv_va;
-	lwp0.l_addr = proc0paddr;
+	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("bootstrap done.\n");
@@ -939,7 +947,12 @@ read_system_serial(void)
 	printf("\n");
 }
 
+#ifdef GUMSTIX_NETBSD_ARGS_BUSHEADER
 static const char busheader_name[] = "busheader=";
+#endif
+#ifdef GUMSTIX_NETBSD_ARGS_CONSOLE
+static const char console_name[] = "console=";
+#endif
 static void
 process_kernel_args(int argc, char *argv[])
 {
@@ -948,12 +961,21 @@ process_kernel_args(int argc, char *argv[])
 	boothowto = 0;
 
 	for (i = 1, j = 0; i < argc; i++) {
+#ifdef GUMSTIX_NETBSD_ARGS_BUSHEADER
 		if (!strncmp(argv[i], busheader_name, strlen(busheader_name))) {
 			/* configure for GPIOs of busheader side */
 			gxio_config_expansion(argv[i] + strlen(busheader_name));
 			gxio_configured = 1;
 			continue;
 		}
+#endif
+#ifdef GUMSTIX_NETBSD_ARGS_CONSOLE
+		if (!strncmp(argv[i], console_name, strlen(console_name))) {
+			strncpy(console, argv[i] + strlen(console_name),
+			    sizeof(console));
+			consinit();
+		}
+#endif
 		if (j == MAX_BOOT_STRING) {
 			*(bootargs + j) = '\0';
 			continue;
@@ -972,28 +994,49 @@ process_kernel_args(int argc, char *argv[])
 }
 
 static void
-process_kernel_args_line(char *args)
+process_kernel_args_liner(char *args)
 {
 	int i;
-	char expansion[256], *p, c;
+	char *p = NULL;
 
 	boothowto = 0;
 
 	strncpy(bootargs, args, sizeof(bootargs));
+#ifdef GUMSTIX_NETBSD_ARGS_BUSHEADER
 	p = strstr(bootargs, busheader_name);
-	if (p == NULL)
-		gxio_config_expansion(NULL);
-	else {
+	if (p) {
+		char expansion[256], c;
+
 		i = 0;
 		do {
 			c = *(p + strlen(busheader_name) + i);
 			if (c == ' ')
 				c = '\0';
 			expansion[i++] = c;
-		} while (c != '\0');
+		} while (c != '\0' && i < sizeof(expansion));
 		gxio_config_expansion(expansion);
 		strcpy(p, p + i);
 	}
+#endif
+	if (p == NULL) {
+		gxio_config_expansion(NULL);
+	}
+#ifdef GUMSTIX_NETBSD_ARGS_CONSOLE
+	p = strstr(bootargs, console_name);
+	if (p != NULL) {
+		char c;
+
+		i = 0;
+		do {
+			c = *(p + strlen(console_name) + i);
+			if (c == ' ')
+				c = '\0';
+			console[i++] = c;
+		} while (c != '\0' && i < sizeof(console));
+		consinit();
+		strcpy(p, p + i);
+	}
+#endif
 	boot_args = bootargs;
 
 	parse_mi_bootargs(boot_args);
@@ -1024,7 +1067,7 @@ void
 consinit(void)
 {
 	static int consinit_called = 0;
-	uint32_t ckenreg = ioreg_read(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN);
+	int rv;
 
 	if (consinit_called != 0)
 		return;
@@ -1035,16 +1078,18 @@ consinit(void)
 
 #ifdef FFUARTCONSOLE
 #ifdef KGDB
-	if (0 == strcmp(kgdb_devname, "ffuart")){
+	if (strcmp(kgdb_devname, "ffuart") == 0){
 		/* port is reserved for kgdb */
-	} else 
+	} else
+#endif
+#if defined(GUMSTIX_NETBSD_ARGS_CONSOLE)
+	if (console[0] == '\0' || strcasecmp(console, "ffuart") == 0)
 #endif
 	{
-		if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_FFUART_BASE, 
-		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode)) {
-			ioreg_write(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN,
-			    ckenreg|CKEN_FFUART);
-
+		rv = comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_FFUART_BASE,
+		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode);
+		if (rv == 0) {
+			pxa2x0_clkman_config(CKEN_FFUART, 1);
 			return;
 		}
 	}
@@ -1052,15 +1097,18 @@ consinit(void)
 
 #ifdef STUARTCONSOLE
 #ifdef KGDB
-	if (0 == strcmp(kgdb_devname, "stuart")) {
+	if (strcmp(kgdb_devname, "stuart") == 0) {
 		/* port is reserved for kgdb */
 	} else
 #endif
+#if defined(GUMSTIX_NETBSD_ARGS_CONSOLE)
+	if (console[0] == '\0' || strcasecmp(console, "stuart") == 0)
+#endif
 	{
-		if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_STUART_BASE,
-		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode)) {
-			ioreg_write(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN,
-			    ckenreg|CKEN_STUART);
+		rv = comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_STUART_BASE,
+		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode);
+		if (rv == 0) {
+			pxa2x0_clkman_config(CKEN_STUART, 1);
 			return;
 		}
 	}
@@ -1068,15 +1116,18 @@ consinit(void)
 
 #ifdef BTUARTCONSOLE
 #ifdef KGDB
-	if (0 == strcmp(kgdb_devname, "btuart")) {
+	if (strcmp(kgdb_devname, "btuart") == 0) {
 		/* port is reserved for kgdb */
 	} else
 #endif
+#if defined(GUMSTIX_NETBSD_ARGS_CONSOLE)
+	if (console[0] == '\0' || strcasecmp(console, "btuart") == 0)
+#endif
 	{
-		if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_BTUART_BASE,
-		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode)) {
-			ioreg_write(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN,
-			    ckenreg|CKEN_BTUART);
+		rv = comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_BTUART_BASE,
+		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode);
+		if (rv == 0) {
+			pxa2x0_clkman_config(CKEN_BTUART, 1);
 			return;
 		}
 	}
@@ -1084,15 +1135,18 @@ consinit(void)
 
 #ifdef HWUARTCONSOLE
 #ifdef KGDB
-	if (0 == strcmp(kgdb_devname, "hwuart")) {
+	if (strcmp(kgdb_devname, "hwuart") == 0) {
 		/* port is reserved for kgdb */
 	} else
 #endif
+#if defined(GUMSTIX_NETBSD_ARGS_CONSOLE)
+	if (console[0] == '\0' || strcasecmp(console, "hwuart") == 0)
+#endif
 	{
-		if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_HWUART_BASE,
-		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode)) {
-			ioreg_write(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN,
-			    ckenreg|CKEN_HWUART);
+		rv = comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_HWUART_BASE,
+		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode);
+		if (rv == 0) {
+			pxa2x0_clkman_config(CKEN_HWUART, 1);
 			return;
 		}
 	}
@@ -1101,9 +1155,10 @@ consinit(void)
 #endif /* NCOM */
 
 #if NLCD > 0
+#if defined(GUMSTIX_NETBSD_ARGS_CONSOLE)
+	if (console[0] == '\0' || strcasecmp(console, "lcd") == 0)
+#endif
 	{
-		extern void gxlcd_cnattach(void);
-
 		gxlcd_cnattach();
 	}
 #endif
@@ -1115,28 +1170,27 @@ kgdb_port_init(void)
 {
 #if (NCOM > 0) && defined(COM_PXA2X0)
 	paddr_t paddr = 0;
-	uint32_t ckenreg = ioreg_read(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN);
+	int cken = 0;
 
 	if (0 == strcmp(kgdb_devname, "ffuart")) {
 		paddr = PXA2X0_FFUART_BASE;
-		ckenreg |= CKEN_FFUART;
+		cken = CKEN_FFUART;
 	} else if (0 == strcmp(kgdb_devname, "stuart")) {
 		paddr = PXA2X0_STUART_BASE;
-		ckenreg |= CKEN_STUART;
+		cken = CKEN_STUART;
 	} else if (0 == strcmp(kgdb_devname, "btuart")) {
 		paddr = PXA2X0_BTUART_BASE;
-		ckenreg |= CKEN_BTUART;
+		cken = CKEN_BTUART;
 	} else if (0 == strcmp(kgdb_devname, "hwuart")) {
 		paddr = PXA2X0_HWUART_BASE;
-		ckenreg |= CKEN_HWUART;
+		cken = CKEN_HWUART;
 	}
 
 	if (paddr &&
 	    0 == com_kgdb_attach(&pxa2x0_a4x_bs_tag, paddr,
 		kgdb_devrate, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comkgdbmode)) {
 
-		ioreg_write(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN, ckenreg);
-
+		pxa2x0_clkman_config(cken, 1);
 	}
 
 #endif

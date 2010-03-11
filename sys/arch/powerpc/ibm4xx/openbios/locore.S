@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.3.56.1 2009/05/04 08:11:43 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.3.56.2 2010/03/11 15:02:50 yamt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -88,8 +88,9 @@
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
-#include <powerpc/ibm4xx/dcr405gp.h>
+#include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/pmap.h>
+#include <powerpc/ibm4xx/dcr405gp.h>
 
 /* Function pointer for requesting board_config_data from openbios*/
 #define BOARD_CFG_FP       0xFFFE0B50
@@ -102,9 +103,6 @@
 /*
  * Globals
  */
-GLOBAL(proc0paddr)
-	.long	0			/* proc0 p_addr */
-
 GLOBAL(intrnames)
 	.asciz	"clock", "irq1", "irq2", "irq3"
 	.asciz	"irq4", "irq5", "irq6", "irq7"

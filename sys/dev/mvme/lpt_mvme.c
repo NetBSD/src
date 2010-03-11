@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mvme.c,v 1.12.4.2 2009/05/04 08:12:53 yamt Exp $	*/
+/*	$NetBSD: lpt_mvme.c,v 1.12.4.3 2010/03/11 15:03:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -84,12 +84,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.12.4.2 2009/05/04 08:12:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.12.4.3 2010/03/11 15:03:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>

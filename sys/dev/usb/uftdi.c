@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.36.4.3 2009/06/20 07:20:29 yamt Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.36.4.4 2010/03/11 15:04:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.36.4.3 2009/06/20 07:20:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.36.4.4 2010/03/11 15:04:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,6 +131,8 @@ static const struct usb_devno uftdi_devs[] = {
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_MHAM_RS232 },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_MHAM_Y9 },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_COASTAL_TNCX },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_CTI_485_MINI },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_CTI_NANO_485 },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_SEMC_DSS20 },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_LCD_LK202_24_USB },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_LCD_LK204_24_USB },
@@ -189,6 +191,13 @@ USB_ATTACH(uftdi)
 
 	DPRINTFN(10,("\nuftdi_attach: sc=%p\n", sc));
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
+	devinfop = usbd_devinfo_alloc(dev, 0);
+	aprint_normal_dev(self, "%s\n", devinfop);
+	usbd_devinfo_free(devinfop);
+
 	/* Move the device into the configured state. */
 	err = usbd_set_config_index(dev, UFTDI_CONFIG_INDEX, 1);
 	if (err) {
@@ -196,11 +205,6 @@ USB_ATTACH(uftdi)
 		       devname, usbd_errstr(err));
 		goto bad;
 	}
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	aprint_normal_dev(self, "%s\n", devinfop);
-	usbd_devinfo_free(devinfop);
 
 	sc->sc_dev = self;
 	sc->sc_udev = dev;
@@ -310,20 +314,14 @@ int
 uftdi_activate(device_t self, enum devact act)
 {
 	struct uftdi_softc *sc = device_private(self);
-	int rv = 0,i;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
-		for (i=0; i < sc->sc_numports; i++)
-			if (sc->sc_subdev[i] != NULL)
-				rv = config_deactivate(sc->sc_subdev[i]);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 void

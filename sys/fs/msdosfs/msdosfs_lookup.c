@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.15.18.1 2009/05/04 08:13:43 yamt Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.15.18.2 2010/03/11 15:04:13 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.15.18.1 2009/05/04 08:13:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.15.18.2 2010/03/11 15:04:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -475,7 +475,7 @@ foundroot:
 		 * Save directory inode pointer in ndp->ni_dvp for dirremove().
 		 */
 		if (dp->de_StartCluster == scn && isadir) {	/* "." */
-			VREF(vdp);
+			vref(vdp);
 			*vpp = vdp;
 			return (0);
 		}
@@ -546,7 +546,7 @@ foundroot:
 		}
 		*vpp = DETOV(tdp);
 	} else if (dp->de_StartCluster == scn && isadir) {
-		VREF(vdp);	/* we want ourself, ie "." */
+		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)

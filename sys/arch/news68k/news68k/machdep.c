@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70.10.2 2009/08/19 18:46:36 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70.10.3 2010/03/11 15:02:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.10.2 2009/08/19 18:46:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.10.3 2010/03/11 15:02:45 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -96,7 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.10.2 2009/08/19 18:46:36 yamt Exp $
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/tty.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/core.h>
@@ -143,7 +142,6 @@ char	machine[] = MACHINE;	/* from <machine/param.h> */
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int	maxmem;			/* max memory per process */
@@ -232,7 +230,7 @@ news68k_init(void)
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
-		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE)
+		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, 0)
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 }
@@ -277,12 +275,6 @@ cpu_startup(void)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, false, NULL);
 
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
-
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
@@ -299,9 +291,10 @@ cpu_startup(void)
  * Set registers on exec.
  */
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
+	struct pcb *pcb = lwp_getpcb(l);
 
 	frame->f_sr = PSL_USERSET;
 	frame->f_pc = pack->ep_entry & ~1;
@@ -323,9 +316,9 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	frame->f_regs[SP] = stack;
 
 	/* restore a null state frame */
-	l->l_addr->u_pcb.pcb_fpregs.fpf_null = 0;
+	pcb->pcb_fpregs.fpf_null = 0;
 	if (fputype != FPU_NONE)
-		m68881_restore(&l->l_addr->u_pcb.pcb_fpregs);
+		m68881_restore(&pcb->pcb_fpregs);
 }
 
 /*
@@ -369,10 +362,11 @@ int	waittime = -1;
 void
 cpu_reboot(int howto, char *bootstr)
 {
+	struct pcb *pcb = lwp_getpcb(curlwp);
 
 	/* take a snap shot before clobbering any registers */
-	if (curlwp->l_addr)
-		savectx(&curlwp->l_addr->u_pcb);
+	if (pcb != NULL)
+		savectx(pcb);
 
 	/* If system is cold, just halt. */
 	if (cold) {

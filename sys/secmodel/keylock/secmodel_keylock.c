@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_keylock.c,v 1.2.2.2 2009/08/19 18:48:31 yamt Exp $ */
+/* $NetBSD: secmodel_keylock.c,v 1.2.2.3 2010/03/11 15:04:40 yamt Exp $ */
 /*-
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.2.2.2 2009/08/19 18:48:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.2.2.3 2010/03/11 15:04:40 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.2.2.2 2009/08/19 18:48:31 yam
 #include <sys/mount.h>
 #include <sys/sysctl.h>
 #include <sys/vnode.h>
+#include <sys/timevar.h>
 
 #include <dev/keylock.h>
 
@@ -176,18 +177,7 @@ secmodel_keylock_system_cb(kauth_cred_t cred,
 			struct timespec *ts = arg1;
 			struct timespec *delta = arg2;
 
-			/*
-			 * Don't allow the time to be set forward so far it
-			 * will wrap and become negative, thus allowing an
-			 * attacker to bypass the next check below.  The
-			 * cutoff is 1 year before rollover occurs, so even
-			 * if the attacker uses adjtime(2) to move the time
-			 * past the cutoff, it will take a very long time
-			 * to get to the wrap point.
-			 */
-			if (keylock_position() > 1 &&
-			    ((ts->tv_sec > LLONG_MAX - 365*24*60*60) ||
-			     (delta->tv_sec < 0 || delta->tv_nsec < 0)))
+			if (keylock_position() > 1 && time_wraps(ts, delta))
 				result = KAUTH_RESULT_DENY;
 			break;
 		}
@@ -419,7 +409,7 @@ secmodel_keylock_device_cb(kauth_cred_t cred,
     kauth_action_t action, void *cookie, void *arg0,
     void *arg1, void *arg2, void *arg3)
 {
-	int result, kstate;
+	int result, kstate, error;
 
 	kstate = keylock_state();
 	if (kstate == KEYLOCK_ABSENT)
@@ -431,22 +421,16 @@ secmodel_keylock_device_cb(kauth_cred_t cred,
 
 	switch (action) {
 	case KAUTH_DEVICE_RAWIO_SPEC: {
-		struct vnode *vp, *bvp;
+		struct vnode *vp;
 		enum kauth_device_req req;
-		dev_t dev;
-		int d_type;
 
 		req = (enum kauth_device_req)arg0;
 		vp = arg1;
 
 		KASSERT(vp != NULL);
 
-		dev = vp->v_rdev;
-		d_type = D_OTHER;
-		bvp = NULL;
-
 		/* Handle /dev/mem and /dev/kmem. */
-		if ((vp->v_type == VCHR) && iskmemdev(dev)) {
+		if (iskmemvp(vp)) {
 			switch (req) {
 			case KAUTH_REQ_DEVICE_RAWIO_SPEC_READ:
 				break;
@@ -468,49 +452,12 @@ secmodel_keylock_device_cb(kauth_cred_t cred,
 
 		case KAUTH_REQ_DEVICE_RAWIO_SPEC_WRITE:
 		case KAUTH_REQ_DEVICE_RAWIO_SPEC_RW:
-			switch (vp->v_type) {
-			case VCHR: {
-				const struct cdevsw *cdev;
+			error = rawdev_mounted(vp, NULL);
 
-				cdev = cdevsw_lookup(dev);
-				if (cdev != NULL) {
-					dev_t blkdev;
-
-					blkdev = devsw_chr2blk(dev);
-					if (blkdev != NODEV) {
-						vfinddev(blkdev, VBLK, &bvp);
-						if (bvp != NULL)
-							d_type = (cdev->d_flag
-							    & D_TYPEMASK);
-					}
-				}
-
-				break;
-				}
-			case VBLK: {
-				const struct bdevsw *bdev;
-
-				bdev = bdevsw_lookup(dev);
-				if (bdev != NULL)
-					d_type = (bdev->d_flag & D_TYPEMASK);
-
-				bvp = vp;
-
-				break;
-				}
-			default:
-				break;
-			}
-
-			if (d_type != D_DISK)
+			if (error == EINVAL)
 				break;
 
-			/*
-			 * XXX: This is bogus. We should be failing the request
-			 * XXX: not only if this specific slice is mounted, but
-			 * XXX: if it's on a disk with any other mounted slice.
-			 */
-			if (vfs_mountedon(bvp) && (kstate != KEYLOCK_OPEN))
+			if (error && (kstate != KEYLOCK_OPEN))
 				break;
 
 			if (kstate == KEYLOCK_CLOSE)

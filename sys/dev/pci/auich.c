@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.125.4.3 2009/09/16 13:37:50 yamt Exp $	*/
+/*	$NetBSD: auich.c,v 1.125.4.4 2010/03/11 15:03:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.125.4.3 2009/09/16 13:37:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.125.4.4 2010/03/11 15:03:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,8 +215,9 @@ struct auich_softc {
 	int  sc_sts_reg;
 	/* 440MX workaround */
 	int  sc_dmamap_flags;
-	/* Native mode? */
-	int  sc_native_mode;
+	/* flags */
+	int  sc_iose	:1,
+		     	:31;
 
 	/* sysctl */
 	struct sysctllog *sc_log;
@@ -248,12 +249,10 @@ static int	auich_match(device_t, cfdata_t, void *);
 static void	auich_attach(device_t, device_t, void *);
 static int	auich_detach(device_t, int);
 static void	auich_childdet(device_t, device_t);
-static int	auich_activate(device_t, enum devact);
 static int	auich_intr(void *);
 
 CFATTACH_DECL2_NEW(auich, sizeof(struct auich_softc),
-    auich_match, auich_attach, auich_detach, auich_activate, NULL,
-    auich_childdet);
+    auich_match, auich_attach, auich_detach, NULL, NULL, auich_childdet);
 
 static int	auich_open(void *, int);
 static void	auich_close(void *);
@@ -288,7 +287,7 @@ static int	auich_allocmem(struct auich_softc *, size_t, size_t,
 		    struct auich_dma *);
 static int	auich_freemem(struct auich_softc *, struct auich_dma *);
 
-static bool	auich_resume(device_t PMF_FN_PROTO);
+static bool	auich_resume(device_t, const pmf_qual_t *);
 static int	auich_set_rate(struct auich_softc *, int, u_long);
 static int	auich_sysctl_verify(SYSCTLFN_ARGS);
 static void	auich_finish_attach(device_t);
@@ -484,46 +483,41 @@ auich_attach(device_t parent, device_t self, void *aux)
 	if (d->id == PCIID_ICH4 || d->id == PCIID_ICH5 || d->id == PCIID_ICH6
 	    || d->id == PCIID_ICH7 || d->id == PCIID_I6300ESB
 	    || d->id == PCIID_ICH4MODEM) {
-		sc->sc_native_mode = 1;
 		/*
 		 * Use native mode for Intel 6300ESB and ICH4/ICH5/ICH6/ICH7
 		 */
+
 		if (pci_mapreg_map(pa, ICH_MMBAR, PCI_MAPREG_TYPE_MEM, 0,
-				   &sc->iot, &sc->mix_ioh, NULL, &sc->mix_size)) {
-			v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_CFG);
-			pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_CFG,
-				       v | ICH_CFG_IOSE);
-			if (pci_mapreg_map(pa, ICH_NAMBAR, PCI_MAPREG_TYPE_IO,
-					   0, &sc->iot, &sc->mix_ioh, NULL,
-					   &sc->mix_size)) {
-				aprint_error_dev(self, "can't map codec i/o space\n");
-				return;
-			}
+		    &sc->iot, &sc->mix_ioh, NULL, &sc->mix_size)) {
+			goto retry_map;
 		}
 		if (pci_mapreg_map(pa, ICH_MBBAR, PCI_MAPREG_TYPE_MEM, 0,
-				   &sc->iot, &sc->aud_ioh, NULL, &sc->aud_size)) {
-			v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_CFG);
-			pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_CFG,
-				       v | ICH_CFG_IOSE);
-			if (pci_mapreg_map(pa, ICH_NABMBAR, PCI_MAPREG_TYPE_IO,
-					   0, &sc->iot, &sc->aud_ioh, NULL,
-					   &sc->aud_size)) {
-				aprint_error_dev(self, "can't map device i/o space\n");
-				return;
-			}
+		    &sc->iot, &sc->aud_ioh, NULL, &sc->aud_size)) {
+			goto retry_map;
 		}
-	} else {
-		if (pci_mapreg_map(pa, ICH_NAMBAR, PCI_MAPREG_TYPE_IO, 0,
-				   &sc->iot, &sc->mix_ioh, NULL, &sc->mix_size)) {
-			aprint_error_dev(self, "can't map codec i/o space\n");
-			return;
-		}
-		if (pci_mapreg_map(pa, ICH_NABMBAR, PCI_MAPREG_TYPE_IO, 0,
-				   &sc->iot, &sc->aud_ioh, NULL, &sc->aud_size)) {
-			aprint_error_dev(self, "can't map device i/o space\n");
-			return;
-		}
+		goto map_done;
+	} else
+		goto non_native_map;
+
+retry_map:
+	sc->sc_iose = 1;
+	v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_CFG);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_CFG,
+		       v | ICH_CFG_IOSE);
+
+non_native_map:
+	if (pci_mapreg_map(pa, ICH_NAMBAR, PCI_MAPREG_TYPE_IO, 0,
+			   &sc->iot, &sc->mix_ioh, NULL, &sc->mix_size)) {
+		aprint_error_dev(self, "can't map codec i/o space\n");
+		return;
 	}
+	if (pci_mapreg_map(pa, ICH_NABMBAR, PCI_MAPREG_TYPE_IO, 0,
+			   &sc->iot, &sc->aud_ioh, NULL, &sc->aud_size)) {
+		aprint_error_dev(self, "can't map device i/o space\n");
+		return;
+	}
+
+map_done:
 	sc->dmat = pa->pa_dmat;
 
 	/* enable bus mastering */
@@ -542,8 +536,8 @@ auich_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
@@ -689,24 +683,6 @@ auich_attach(device_t parent, device_t self, void *aux)
 	return;			/* failure of sysctl is not fatal. */
 }
 
-static int
-auich_activate(device_t self, enum devact act)
-{
-	struct auich_softc *sc = device_private(self);
-	int ret;
-
-	ret = 0;
-	switch (act) {
-	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
-	case DVACT_DEACTIVATE:
-		if (sc->sc_audiodev != NULL)
-			ret = config_deactivate(sc->sc_audiodev);
-		return ret;
-	}
-	return EOPNOTSUPP;
-}
- 
 static void
 auich_childdet(device_t self, device_t child)
 {
@@ -1593,12 +1569,12 @@ auich_alloc_cdata(struct auich_softc *sc)
 }
 
 static bool
-auich_resume(device_t dv PMF_FN_ARGS)
+auich_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct auich_softc *sc = device_private(dv);
 	pcireg_t v;
 
-	if (sc->sc_native_mode) {
+	if (sc->sc_iose) {
 		v = pci_conf_read(sc->sc_pc, sc->sc_pt, ICH_CFG);
 		pci_conf_write(sc->sc_pc, sc->sc_pt, ICH_CFG,
 			       v | ICH_CFG_IOSE);
@@ -1710,11 +1686,11 @@ auich_calibrate(struct auich_softc *sc)
 	else
 		ac97rate = ((actual_48k_rate + 500) / 1000) * 1000;
 
-	printf("%s: measured ac97 link rate at %d Hz",
-	       device_xname(sc->sc_dev), actual_48k_rate);
+	aprint_verbose_dev(sc->sc_dev, "measured ac97 link rate at %d Hz",
+	       actual_48k_rate);
 	if (ac97rate != actual_48k_rate)
-		printf(", will use %d Hz", ac97rate);
-	printf("\n");
+		aprint_verbose(", will use %d Hz", ac97rate);
+	aprint_verbose("\n");
 
 	sc->sc_ac97_clock = ac97rate;
 }

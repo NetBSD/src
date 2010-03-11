@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.18.4.4 2009/09/16 13:37:42 yamt Exp $ */
+/* $NetBSD: if_mec.c,v 1.18.4.5 2010/03/11 15:02:55 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,10 +61,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.18.4.4 2009/09/16 13:37:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.18.4.5 2010/03/11 15:02:55 yamt Exp $");
 
 #include "opt_ddb.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -93,9 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.18.4.4 2009/09/16 13:37:42 yamt Exp $")
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -1329,13 +1326,11 @@ mec_start(struct ifnet *ifp)
 			    len - buflen, BUS_DMASYNC_PREWRITE);
 		}
 
-#if NBPFILTER > 0
 		/*
 		 * Pass packet to bpf if there is a listener.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 		MEC_EVCNT_INCR(&sc->sc_ev_txpkts);
 
 		/*
@@ -1714,7 +1709,7 @@ mec_rxintr(struct mec_softc *sc)
 		}
 
 		/*
-		 * If 802.1Q VLAN MTU is enabled, ignore the bad packet errror.
+		 * If 802.1Q VLAN MTU is enabled, ignore the bad packet error.
 		 */
 		if ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) != 0)
 			rxstat &= ~MEC_RXSTAT_BADPACKET;
@@ -1725,8 +1720,8 @@ mec_rxintr(struct mec_softc *sc)
 		     MEC_RXSTAT_INVALID   |
 		     MEC_RXSTAT_CRCERROR  |
 		     MEC_RXSTAT_VIOLATION)) {
-			printf("%s: %s: status = 0x%016llx\n",
-			    device_xname(sc->sc_dev), __func__, rxstat);
+			printf("%s: mec_rxintr: status = 0x%016"PRIx64"\n",
+			    device_xname(sc->sc_dev), rxstat);
 			goto dropit;
 		}
 
@@ -1779,14 +1774,12 @@ mec_rxintr(struct mec_softc *sc)
 
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
 		 * pass it up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
@@ -1934,7 +1927,7 @@ mec_txintr(struct mec_softc *sc, uint32_t txptr)
 		ifp->if_collisions += col;
 
 		if ((txstat & MEC_TXSTAT_SUCCESS) == 0) {
-			printf("%s: TX error: txstat = 0x%016llx\n",
+			printf("%s: TX error: txstat = 0x%016"PRIx64"\n",
 			    device_xname(sc->sc_dev), txstat);
 			ifp->if_oerrors++;
 		} else

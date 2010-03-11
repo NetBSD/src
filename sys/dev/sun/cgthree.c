@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.14.20.3 2009/05/16 10:41:45 yamt Exp $ */
+/*	$NetBSD: cgthree.c,v 1.14.20.4 2010/03/11 15:04:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.14.20.3 2009/05/16 10:41:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.14.20.4 2010/03/11 15:04:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,12 +69,12 @@ __KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.14.20.3 2009/05/16 10:41:45 yamt Exp $
 #include "opt_wsemul.h"
 #endif
 
+#include "ioconf.h"
+
 static void	cgthreeunblank(device_t);
 static void	cgthreeloadcmap(struct cgthree_softc *, int, int);
 static void	cgthree_set_video(struct cgthree_softc *, int);
 static int	cgthree_get_video(struct cgthree_softc *);
-
-extern struct cfdriver cgthree_cd;
 
 dev_type_open(cgthreeopen);
 dev_type_ioctl(cgthreeioctl);
@@ -82,7 +82,7 @@ dev_type_mmap(cgthreemmap);
 
 const struct cdevsw cgthree_cdevsw = {
 	cgthreeopen, nullclose, noread, nowrite, cgthreeioctl,
-	nostop, notty, nopoll, cgthreemmap, nokqfilter
+	nostop, notty, nopoll, cgthreemmap, nokqfilter, D_OTHER
 };
 
 /* frame buffer generic driver */
@@ -257,7 +257,7 @@ cgthreeattach(struct cgthree_softc *sc, const char *name, int isconsole)
 	aa.console = isconsole;
 	aa.accessops = &cgthree_accessops;
 	aa.accesscookie = &sc->vd;
-	config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
 #else
 	/* Initialize the default color map. */
 	bt_initcmap(&sc->sc_cmap, 256);
@@ -336,10 +336,11 @@ cgthreeioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
  * Undo the effect of an FBIOSVIDEO that turns the video off.
  */
 static void
-cgthreeunblank(device_t dev)
+cgthreeunblank(device_t self)
 {
+	struct cgthree_softc *sc = device_private(self);
 
-	cgthree_set_video(device_private(dev), 1);
+	cgthree_set_video(sc, 1);
 }
 
 static void

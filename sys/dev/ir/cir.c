@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.19.4.3 2009/05/16 10:41:25 yamt Exp $	*/
+/*	$NetBSD: cir.c,v 1.19.4.4 2010/03/11 15:03:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.19.4.3 2009/05/16 10:41:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.19.4.4 2010/03/11 15:03:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,11 +61,10 @@ const struct cdevsw cir_cdevsw = {
 
 int cir_match(device_t parent, cfdata_t match, void *aux);
 void cir_attach(device_t parent, device_t self, void *aux);
-int cir_activate(device_t self, enum devact act);
 int cir_detach(device_t self, int flags);
 
 CFATTACH_DECL(cir, sizeof(struct cir_softc),
-    cir_match, cir_attach, cir_detach, cir_activate);
+    cir_match, cir_attach, cir_detach, NULL);
 
 extern struct cfdriver cir_cd;
 
@@ -96,22 +95,6 @@ cir_attach(device_t parent, device_t self, void *aux)
 		panic("%s: missing methods", device_xname(&sc->sc_dev));
 #endif
 	printf("\n");
-}
-
-int
-cir_activate(device_t self, enum devact act)
-{
-	/*struct cir_softc *sc = device_private(self);*/
-
-	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
-	case DVACT_DEACTIVATE:
-		break;
-	}
-	return (0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.8.8.2 2009/05/04 08:11:57 yamt Exp $	*/
+/*	$NetBSD: schizo.c,v 1.8.8.3 2010/03/11 15:03:00 yamt Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -72,7 +72,6 @@ static	int	schizo_print(void *aux, const char *p);
 CFATTACH_DECL(schizo, sizeof(struct schizo_softc),
     schizo_match, schizo_attach, NULL, NULL);
 
-void schizo_init(struct schizo_softc *);
 void schizo_init_iommu(struct schizo_softc *, struct schizo_pbm *);
 
 void schizo_set_intr(struct schizo_softc *, struct schizo_pbm *, int,
@@ -94,13 +93,13 @@ bus_dma_tag_t schizo_alloc_dma_tag(struct schizo_pbm *);
 pcireg_t schizo_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void schizo_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 
-int schizo_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 int schizo_bus_map(bus_space_tag_t t, bus_addr_t offset, bus_size_t size,
 	           int flags, vaddr_t unused, bus_space_handle_t *hp);
 static paddr_t schizo_bus_mmap(bus_space_tag_t t, bus_addr_t paddr,
                                off_t off, int prot, int flags);
 static void *schizo_intr_establish(bus_space_tag_t, int, int, int (*)(void *),
 	void *, void(*)(void));
+static int schizo_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 static void *schizo_pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
                                        int, int (*)(void *), void *);
 static int schizo_pci_find_ino(struct pci_attach_args *, pci_intr_handle_t *);
@@ -136,10 +135,13 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct schizo_softc *sc = (struct schizo_softc *)self;
 	struct mainbus_attach_args *ma = aux;
-	uint64_t eccctrl, csr;
+	struct schizo_pbm *pbm;
+	struct pcibus_attach_args pba;
+	uint64_t reg, eccctrl;
+	int *busranges = NULL, nranges;
 	char *str;
 
-	printf(": addr %lx", ma->ma_reg[0].ur_paddr);
+	printf(": addr %" PRIx64, ma->ma_reg[0].ur_paddr);
 	str = prom_getpropstring(ma->ma_node, "compatible");
 	if (strcmp(str, "pci108e,a801") == 0)
 		sc->sc_tomatillo = 1;
@@ -147,19 +149,15 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = ma->ma_node;
 	sc->sc_dmat = ma->ma_dmatag;
 	sc->sc_bustag = ma->ma_bustag;
-	sc->sc_ctrl = ma->ma_reg[1].ur_paddr - 0x10000UL;
-	sc->sc_reg0 = ma->ma_reg[0];
 
-	if (bus_space_map(sc->sc_bustag, sc->sc_ctrl,
+	if (bus_space_map(sc->sc_bustag, ma->ma_reg[1].ur_paddr - 0x10000UL,
 	    sizeof(struct schizo_regs), 0,
 	    &sc->sc_ctrlh)) {
 		printf(": failed to map registers\n");
 		return;
 	}
 
-	csr = schizo_read(sc, SCZ_CONTROL_STATUS);
-	sc->sc_ign = ((csr & SCZ_CONTROL_STATUS_AID_MASK) >>
-		       SCZ_CONTROL_STATUS_AID_SHIFT);
+	sc->sc_ign = INTIGN(ma->ma_upaid << INTMAP_IGN_SHIFT);
 
 	/* enable schizo ecc error interrupts */
 	eccctrl = schizo_read(sc, SCZ_ECCCTRL);
@@ -168,17 +166,6 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 		   SCZ_ECCCTRL_CE_INTEN;
 	schizo_write(sc, SCZ_ECCCTRL, eccctrl);
 
-	schizo_init(sc);
-}
-
-void
-schizo_init(struct schizo_softc *sc)
-{
-	struct schizo_pbm *pbm;
-	struct pcibus_attach_args pba;
-	int *busranges = NULL, nranges;
-	u_int64_t /*match,*/ reg;
-
 	pbm = malloc(sizeof(*pbm), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (pbm == NULL)
 		panic("schizo: can't alloc schizo pbm");
@@ -186,10 +173,20 @@ schizo_init(struct schizo_softc *sc)
 	pbm->sp_sc = sc;
 	pbm->sp_regt = sc->sc_bustag;
 
-	if ((sc->sc_reg0.ur_paddr & 0x00700000) == 0x00600000)
+	if ((ma->ma_reg[0].ur_paddr & 0x00700000) == 0x00600000)
 		pbm->sp_bus_a = 1;
 	else
 		pbm->sp_bus_a = 0;
+
+	/*
+	 * Map interrupt registers
+	 */
+	if (bus_space_map(sc->sc_bustag, ma->ma_reg[0].ur_paddr,
+			  ma->ma_reg[0].ur_len,
+			  BUS_SPACE_MAP_LINEAR, &pbm->sp_intrh)) {
+		printf(": failed to interrupt map registers\n");
+		return;
+	}
 
 	if (prom_getprop(sc->sc_node, "ranges", sizeof(struct schizo_range),
 	    &pbm->sp_nrange, (void **)&pbm->sp_range))
@@ -318,7 +315,7 @@ schizo_pci_error(void *vpbm)
 
 	snprintb(bits, sizeof(bits), SCZ_PCIAFSR_BITS, afsr);
 	printf("PCIAFSR=%s\n", bits);
-	printf("PCIAFAR=%lx\n", afar);
+	printf("PCIAFAR=%" PRIx64 "\n", afar);
 	snprintb(bits, sizeof(bits), SCZ_PCICTRL_BITS, ctrl);
 	printf("PCICTRL=%s\n", bits);
 #ifdef PCI_COMMAND_STATUS_BITS
@@ -328,14 +325,14 @@ schizo_pci_error(void *vpbm)
 
 	if (ctrl & SCZ_PCICTRL_MMU_ERR) {
 		ctrl = schizo_pbm_read(sp, SCZ_PCI_IOMMU_CTRL);
-		printf("IOMMUCTRL=%lx\n", ctrl);
+		printf("IOMMUCTRL=%" PRIx64 "\n", ctrl);
 
 		if ((ctrl & TOM_IOMMU_ERR) == 0)
 			goto clear_error;
 
 		if (sc->sc_tomatillo) {
 			tfar = schizo_pbm_read(sp, TOM_PCI_IOMMU_TFAR);
-			printf("IOMMUTFAR=%lx\n", tfar);
+			printf("IOMMUTFAR=%" PRIx64 "\n", tfar);
 		}
 
 		/* These are non-fatal if target abort was signalled. */
@@ -365,11 +362,11 @@ schizo_safari_error(void *vsc)
 
 	printf("%s: safari error\n", sc->sc_dv.dv_xname);
 
-	printf("ERRLOG=%lx\n", schizo_read(sc, SCZ_SAFARI_ERRLOG));
-	printf("UE_AFSR=%lx\n", schizo_read(sc, SCZ_UE_AFSR));
-	printf("UE_AFAR=%lx\n", schizo_read(sc, SCZ_UE_AFAR));
-	printf("CE_AFSR=%lx\n", schizo_read(sc, SCZ_CE_AFSR));
-	printf("CE_AFAR=%lx\n", schizo_read(sc, SCZ_CE_AFAR));
+	printf("ERRLOG=%" PRIx64 "\n", schizo_read(sc, SCZ_SAFARI_ERRLOG));
+	printf("UE_AFSR=%" PRIx64 "\n", schizo_read(sc, SCZ_UE_AFSR));
+	printf("UE_AFAR=%" PRIx64 "\n", schizo_read(sc, SCZ_UE_AFAR));
+	printf("CE_AFSR=%" PRIx64 "\n", schizo_read(sc, SCZ_CE_AFSR));
+	printf("CE_AFAR=%" PRIx64 "\n", schizo_read(sc, SCZ_CE_AFAR));
 
 	panic("%s: fatal", sc->sc_dv.dv_xname);
 	return (1);
@@ -383,6 +380,9 @@ schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 	u_int32_t iobase = -1;
 	vaddr_t va;
 	char *name;
+
+	if (prom_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
+	}
 
 	va = (vaddr_t)pbm->sp_flush[0x40];
 
@@ -450,11 +450,12 @@ pcireg_t
 schizo_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	struct schizo_pbm *sp = pc->cookie;
-	pcireg_t val;
+	pcireg_t val = (pcireg_t)~0;
 
 	DPRINTF(SDB_CONF, ("%s: tag %lx reg %x ", __func__, (long)tag, reg));
-	val = bus_space_read_4(sp->sp_cfgt, sp->sp_cfgh,
-	    PCITAG_OFFSET(tag) + reg);
+	if (PCITAG_NODE(tag) != -1)
+		val = bus_space_read_4(sp->sp_cfgt, sp->sp_cfgh,
+		    PCITAG_OFFSET(tag) + reg);
 	DPRINTF(SDB_CONF, (" returning %08x\n", (u_int)val));
 	return (val);
 }
@@ -466,6 +467,13 @@ schizo_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 
 	DPRINTF(SDB_CONF, ("%s: tag %lx; reg %x; data %x", __func__,
 		(long)tag, reg, (int)data));
+
+	/* If we don't know it, just punt it.  */
+	if (PCITAG_NODE(tag) == -1) {
+		DPRINTF(SDB_CONF, (" .. bad addr\n"));
+		return;
+	}
+
         bus_space_write_4(sp->sp_cfgt, sp->sp_cfgh,
 	    PCITAG_OFFSET(tag) + reg, data);
 	DPRINTF(SDB_CONF, (" .. done\n"));
@@ -477,23 +485,26 @@ schizo_set_intr(struct schizo_softc *sc, struct schizo_pbm *pbm, int ipl,
 {
 	struct intrhand *ih;
 	u_int64_t mapoff, clroff;
+	uintptr_t intrregs;
 
 	DPRINTF(SDB_INTR, ("%s: ino %x ign %x fn %p arg %p", __func__,
 	    ino, sc->sc_ign, handler, arg));
 
 	mapoff = offsetof(struct schizo_pbm_regs, imap[ino]);
 	clroff = offsetof(struct schizo_pbm_regs, iclr[ino]);
-	ino |= (sc->sc_ign << INTMAP_IGN_SHIFT);
+	ino |= sc->sc_ign;
 
-	DPRINTF(SDB_INTR, (" mapoff %lx clroff %lx\n", mapoff, clroff));
+	DPRINTF(SDB_INTR, (" mapoff %" PRIx64 " clroff %" PRIx64 "\n",
+	    mapoff, clroff));
 
 	ih = (struct intrhand *)
 		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
 		return;
 	ih->ih_arg = arg;
-	ih->ih_map = (uint64_t *)((char *)sc->sc_reg0.ur_paddr + mapoff);
-	ih->ih_clr = (uint64_t *)((char *)sc->sc_reg0.ur_paddr + clroff);
+	intrregs = (uintptr_t)bus_space_vaddr(pbm->sp_regt, pbm->sp_intrh);
+	ih->ih_map = (uint64_t *)(uintptr_t)(intrregs + mapoff);
+	ih->ih_clr = (uint64_t *)(uintptr_t)(intrregs + clroff);
 	ih->ih_fun = handler;
 	ih->ih_pil = (1<<ipl);
 	ih->ih_number = INTVEC(schizo_pbm_read(pbm, mapoff));
@@ -587,6 +598,7 @@ schizo_alloc_chipset(struct schizo_pbm *pbm, int node, pci_chipset_tag_t pc)
 	npc->rootnode = node;
 	npc->spc_conf_read = schizo_conf_read;
 	npc->spc_conf_write = schizo_conf_write;
+	npc->spc_intr_map = schizo_pci_intr_map;
 	npc->spc_intr_establish = schizo_pci_intr_establish;
 	npc->spc_find_ino = schizo_pci_find_ino;
 	return (npc);
@@ -682,14 +694,28 @@ schizo_bus_mmap(bus_space_tag_t t, bus_addr_t paddr, off_t off, int prot,
 	return (-1);
 }
 
+/*
+ * Set the IGN for this schizo into the handle.
+ */
+int
+schizo_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+{
+	struct schizo_pbm *pbm = pa->pa_pc->cookie;
+	struct schizo_softc *sc = pbm->sp_sc;
+
+	*ihp |= sc->sc_ign;
+	DPRINTF(SDB_INTMAP, ("returning IGN adjusted to %x\n", *ihp));
+	return (0);
+}
+
 static void *
 schizo_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	int (*handler)(void *), void *arg, void (*fastvec)(void) /* ignored */)
 {
 	struct schizo_pbm *pbm = t->cookie;
-	struct schizo_softc *sc = pbm->sp_sc;
 	struct intrhand *ih = NULL;
 	uint64_t mapoff, clroff;
+	uintptr_t intrregs;
 	volatile uint64_t *intrmapptr = NULL, *intrclrptr = NULL;
 	int ino;
 	long vec;
@@ -714,14 +740,15 @@ schizo_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	mapoff = offsetof(struct schizo_pbm_regs, imap[ino]);
 	clroff = offsetof(struct schizo_pbm_regs, iclr[ino]);
 
-	DPRINTF(SDB_INTR, ("%s: intr %x: %p mapoff %lx clroff %lx\n",
-	    __func__, ino, intrlev[ino], mapoff, clroff));
+	DPRINTF(SDB_INTR, ("%s: intr %x: %p mapoff %" PRIx64 " clroff %"
+	    PRIx64 "\n", __func__, ino, intrlev[ino], mapoff, clroff));
 
-	intrmapptr = (uint64_t *)((char *)sc->sc_reg0.ur_paddr + mapoff);
-	intrclrptr = (uint64_t *)((char *)sc->sc_reg0.ur_paddr + clroff);
+	intrregs = (uintptr_t)bus_space_vaddr(pbm->sp_regt, pbm->sp_intrh);
+	intrmapptr = (uint64_t *)(uintptr_t)(intrregs + mapoff);
+	intrclrptr = (uint64_t *)(uintptr_t)(intrregs + clroff);
 
 	if (INTIGN(vec) == 0)
-		ino |= schizo_pbm_read(pbm, mapoff) & INTMAP_IGN;
+		ino |= schizo_pbm_readintr(pbm, mapoff) & INTMAP_IGN;
 	else
 		ino |= vec & INTMAP_IGN;
 
@@ -748,22 +775,22 @@ schizo_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	if (intrmapptr) {
 		u_int64_t imap;
 
-		imap = schizo_pbm_read(pbm, mapoff);
+		imap = schizo_pbm_readintr(pbm, mapoff);
 		DPRINTF(SDB_INTR, ("; read intrmap = %016qx",
 			(unsigned long long)imap));
 		imap |= INTMAP_V;
 		DPRINTF(SDB_INTR, ("; addr of intrmapptr = %p", intrmapptr));
 		DPRINTF(SDB_INTR, ("; writing intrmap = %016qx\n",
 			(unsigned long long)imap));
-		schizo_pbm_write(pbm, mapoff, imap);
-		imap = schizo_pbm_read(pbm, mapoff);
+		schizo_pbm_writeintr(pbm, mapoff, imap);
+		imap = schizo_pbm_readintr(pbm, mapoff);
 		DPRINTF(SDB_INTR, ("; reread intrmap = %016qx",
 			(unsigned long long)imap));
 		ih->ih_number |= imap & INTMAP_INR;
 	}
  	if (intrclrptr) {
  		/* set state to IDLE */
-		schizo_pbm_write(pbm, clroff, 0);
+		schizo_pbm_writeintr(pbm, clroff, 0);
  	}
 
 	return (ih);
@@ -776,7 +803,7 @@ schizo_pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 	void *cookie;
 	struct schizo_pbm *pbm = (struct schizo_pbm *)pc->cookie;
 
-	DPRINTF(SDB_INTR, ("pci_intr_establish: ih %lu; level %d", (u_long)ih, level));
+	DPRINTF(SDB_INTR, ("%s: ih %lx; level %d", __func__, (u_long)ih, level));
 	cookie = bus_intr_establish(pbm->sp_memt, ih, level, func, arg);
 
 	DPRINTF(SDB_INTR, ("; returning handle %p\n", cookie));

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_isa.c,v 1.17.4.2 2009/05/16 10:41:25 yamt Exp $	*/
+/*	$NetBSD: if_ntwoc_isa.c,v 1.17.4.3 2010/03/11 15:03:37 yamt Exp $	*/
 /*
  * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1996 John Hay.
@@ -29,11 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ntwoc_isa.c,v 1.17.4.2 2009/05/16 10:41:25 yamt Exp $
+ * $Id: if_ntwoc_isa.c,v 1.17.4.3 2010/03/11 15:03:37 yamt Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.17.4.2 2009/05/16 10:41:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.17.4.3 2010/03/11 15:03:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -705,6 +705,9 @@ ntwoc_isa_shutdown(void *aux)
 	mcr = bus_space_read_1(sc->sc_sca.sc_iot, sc->sc_sca.sc_ioh, NTWOC_MCR);
 	mcr |= (NTWOC_MCR_DTR0 | NTWOC_MCR_DTR1);
 	bus_space_write_1(sc->sc_sca.sc_iot, sc->sc_sca.sc_ioh, NTWOC_MCR, mcr);
+
+	/* turn off the card */
+	bus_space_write_1(sc->sc_sca.sc_iot, sc->sc_sca.sc_ioh, NTWOC_PCR, 0);
 }
 
 static void

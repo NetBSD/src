@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pcivar.h,v 1.5.74.1 2008/05/16 02:24:43 yamt Exp $	*/
+/*	$NetBSD: i82365_pcivar.h,v 1.5.74.2 2010/03/11 15:03:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,13 +35,11 @@ struct pcic_pci_softc {
  * Establish/disestablish interrupts for PCMCIA functions.
  */
 
-void *pcic_pci_machdep_intr_est(pci_chipset_tag_t);
+void	*pcic_pci_machdep_intr_est(pci_chipset_tag_t);
 
-void *pcic_pci_machdep_pcic_intr_establish(struct pcic_softc *,
-						int (*)(void *));
+void	*pcic_pci_machdep_pcic_intr_establish(struct pcic_softc *,
+	    int (*)(void *));
 
-void *pcic_pci_machdep_chip_intr_establish(pcmcia_chipset_handle_t,
-						struct pcmcia_function *,
-						int, int (*)(void *),
-						void *);
-void pcic_pci_machdep_chip_intr_disestablish(pcmcia_chipset_handle_t, void *);
+void	*pcic_pci_machdep_chip_intr_establish(pcmcia_chipset_handle_t,
+	    struct pcmcia_function *, int, int (*)(void *), void *);
+void	pcic_pci_machdep_chip_intr_disestablish(pcmcia_chipset_handle_t, void *);

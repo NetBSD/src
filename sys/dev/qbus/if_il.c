@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.19.4.2 2009/05/16 10:41:42 yamt Exp $	*/
+/*	$NetBSD: if_il.c,v 1.19.4.3 2010/03/11 15:04:01 yamt Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.19.4.2 2009/05/16 10:41:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.19.4.3 2010/03/11 15:04:01 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -444,7 +444,8 @@ ilcint(void *arg)
 		char bits[64];
 
 		snprintb(bits, sizeof(bits), IL_BITS, IL_RCSR(IL_CSR));
-		aprint_error_dev(&sc->sc_dev, "stray xmit interrupt, csr=%s\n",
+		aprint_error_dev(&sc->sc_dev,
+				 "stray xmit interrupt, csr=%s\n", bits);
 		return;
 	}
 

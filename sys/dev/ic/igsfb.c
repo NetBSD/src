@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.44 2008/04/08 12:07:26 cegger Exp $ */
+/*	$NetBSD: igsfb.c,v 1.44.4.1 2010/03/11 15:03:31 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.44 2008/04/08 12:07:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.44.4.1 2010/03/11 15:03:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.44 2008/04/08 12:07:26 cegger Exp $");
 #include <dev/ic/igsfbvar.h>
 
 
-struct igsfb_devconfig igsfb_console_dc;
+struct igsfb_devconfig igsfb_console_dc = {
+	.dc_mmap = NULL,
+	.dc_modestring = "",
+};
 
 /*
  * wsscreen
@@ -198,9 +201,13 @@ igsfb_attach_subr(struct igsfb_softc *sc, int isconsole)
 		       ? "hardware bswap, " : "software bswap, "
 		   : "",
 	       dc->dc_width, dc->dc_height, dc->dc_depth);
-
+	printf("%s: using %dbpp for X\n", device_xname(&sc->sc_dev),
+	       dc->dc_maxdepth);
 	ri = &dc->dc_console.scr_ri;
 	ri->ri_ops.eraserows(ri, 0, ri->ri_rows, defattr);
+
+	if (isconsole)
+		vcons_replay_msgbuf(&dc->dc_console);
 
 	/* attach wsdisplay */
 	waa.console = isconsole;
@@ -278,15 +285,10 @@ igsfb_init_video(struct igsfb_devconfig *dc)
 	 */
 	igsfb_hw_setup(dc);
 
-	dc->dc_width = 1024;
-	dc->dc_height = 768;
-	dc->dc_depth = 8;
-	dc->dc_stride = dc->dc_width;
-
 	/*
 	 * Don't map in all N megs, just the amount we need for the wsscreen.
 	 */
-	dc->dc_fbsz = dc->dc_width * dc->dc_height; /* XXX: 8bpp specific */
+	dc->dc_fbsz = dc->dc_stride * dc->dc_height;
 	if (bus_space_map(dc->dc_memt, fbaddr, dc->dc_fbsz,
 			  dc->dc_memflags | BUS_SPACE_MAP_LINEAR,
 			  &dc->dc_fbh) != 0)
@@ -569,7 +571,7 @@ igsfb_init_bit_table(struct igsfb_devconfig *dc)
 
 /*
  * wsdisplay_accessops: mmap()
- *   XXX: allow mmapping i/o mapped i/o regs if INSECURE???
+ *   XXX: security considerations for allowing mmapping i/o mapped i/o regs?
  */
 static paddr_t
 igsfb_mmap(void *v, void *vs, off_t offset, int prot)
@@ -577,11 +579,12 @@ igsfb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct vcons_data *vd = v;
 	struct igsfb_devconfig *dc = vd->cookie;
 
-	if (offset >= dc->dc_memsz || offset < 0)
-		return -1;
-
-	return bus_space_mmap(dc->dc_memt, dc->dc_memaddr, offset, prot,
-			      dc->dc_memflags | BUS_SPACE_MAP_LINEAR);
+	if (offset < dc->dc_memsz && offset >= 0)
+		return bus_space_mmap(dc->dc_memt, dc->dc_memaddr, offset,
+		    prot, dc->dc_memflags | BUS_SPACE_MAP_LINEAR);
+	if (dc->dc_mmap)
+		return dc->dc_mmap(v, vs, offset, prot);
+	return -1;
 }
 
 
@@ -611,13 +614,13 @@ igsfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 #define	wsd_fbip ((struct wsdisplay_fbinfo *)data)
 		wsd_fbip->height = dc->dc_height;
 		wsd_fbip->width = dc->dc_width;
-		wsd_fbip->depth = dc->dc_depth;
+		wsd_fbip->depth = dc->dc_maxdepth;
 		wsd_fbip->cmsize = IGS_CMAP_SIZE;
 #undef wsd_fbip
 		return 0;
 
 	case WSDISPLAYIO_LINEBYTES:
-		*(int *)data = dc->dc_stride;
+		*(int *)data = dc->dc_width * (dc->dc_maxdepth >> 3);
 		return 0;
 
 	case WSDISPLAYIO_SMODE:
@@ -630,8 +633,14 @@ igsfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				igsfb_update_cursor(dc,
 					WSDISPLAY_CURSOR_DOCUR);
 			}
+			if ((dc->dc_mode != NULL) && (dc->dc_maxdepth != 8))
+				igsfb_set_mode(dc, dc->dc_mode,
+				    dc->dc_maxdepth);
 		} else {
 			dc->dc_mapped = 0;
+			if ((dc->dc_mode != NULL) && (dc->dc_maxdepth != 8))
+				igsfb_set_mode(dc, dc->dc_mode, 8);
+			igsfb_init_cmap(dc);
 			/* reinit sprite for text cursor */
 			if (dc->dc_hwflags & IGSFB_HW_TEXT_CURSOR) {
 				igsfb_make_text_cursor(dc, dc->dc_vd.active);
@@ -1168,6 +1177,7 @@ igsfb_accel_wait(struct igsfb_devconfig *dc)
 	int timo = 100000;
 	uint8_t reg;
 
+	bus_space_write_1(t, h, IGS_COP_MAP_FMT_REG, (dc->dc_depth >> 3) - 1);
 	while (timo--) {
 		reg = bus_space_read_1(t, h, IGS_COP_CTL_REG);
 		if ((reg & IGS_COP_CTL_BUSY) == 0)

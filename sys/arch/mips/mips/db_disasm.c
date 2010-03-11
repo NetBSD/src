@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.19.44.1 2009/08/19 18:46:30 yamt Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.19.44.2 2010/03/11 15:02:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19.44.1 2009/08/19 18:46:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19.44.2 2010/03/11 15:02:39 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ db_disasm(db_addr_t loc, bool altfmt)
 	 * loses the current debugging context.  KSEG2 not checked.
 	 */
 	if (loc < MIPS_KSEG0_START) {
-		instr = fuword((void *)loc);
+		instr = ufetch_uint32((void *)loc);
 		if (instr == 0xffffffff) {
 			/* "sd ra, -1(ra)" is unlikely */
 			db_printf("invalid address.\n");
@@ -533,8 +533,8 @@ print_addr(db_addr_t loc)
 			db_printf("%s", symname);
 		else
 			db_printf("<%s+%lx>", symname, diff);
-		db_printf("\t[addr:0x%08lx]", loc);
+		db_printf("\t[addr:%#"PRIxVADDR"]", loc);
 	} else {
-		db_printf("0x%08lx", loc);
+		db_printf("%#"PRIxVADDR, loc);
 	}
 }

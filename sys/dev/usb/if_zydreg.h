@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zydreg.h,v 1.19 2006/11/30 19:28:07 damien Exp $	*/
-/*	$NetBSD: if_zydreg.h,v 1.2 2007/06/16 11:18:45 kiyohara Exp $	*/
+/*	$NetBSD: if_zydreg.h,v 1.2.40.1 2010/03/11 15:04:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1218,8 +1218,7 @@ struct zyd_softc {
 
 	int				tx_timer;
 
-#if NBPFILTER > 0
-	void *				sc_drvbpf;
+	struct bpf_if *			sc_drvbpf;
 
 	union {
 		struct zyd_rx_radiotap_header th;
@@ -1234,5 +1233,4 @@ struct zyd_softc {
 	}				sc_txtapu;
 #define sc_txtap	sc_txtapu.th
 	int				sc_txtap_len;
-#endif
 };

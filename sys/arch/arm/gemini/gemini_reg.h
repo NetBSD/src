@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_reg.h,v 1.8.6.2 2009/05/04 08:10:41 yamt Exp $	*/
+/*	$NetBSD: gemini_reg.h,v 1.8.6.3 2010/03/11 15:02:06 yamt Exp $	*/
 
 #ifndef _ARM_GEMINI_REG_H_
 #define _ARM_GEMINI_REG_H_
@@ -254,7 +254,7 @@
 #define  GPIO_BOUNCESCALE_RESV		__BITS(31,16)
 #define  GPIO_BOUNCESCALE_VAL		__BITS(15,0)	/* NOTE:
 							 * if bounce is enabled, and bounce pre-scale == 0
-							 * then the the pin will not detect any interrupt 
+							 * then the pin will not detect any interrupt 
 							 */
 #define GEMINI_GPIO_SIZE		(GEMINI_GPIO_BOUNCESCALE + 4)
 

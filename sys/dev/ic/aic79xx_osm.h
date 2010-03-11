@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.h,v 1.15.4.3 2009/09/16 13:37:47 yamt Exp $	*/
+/*	$NetBSD: aic79xx_osm.h,v 1.15.4.4 2010/03/11 15:03:28 yamt Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -32,9 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $NetBSD: aic79xx_osm.h,v 1.15.4.3 2009/09/16 13:37:47 yamt Exp $
+ * $NetBSD: aic79xx_osm.h,v 1.15.4.4 2010/03/11 15:03:28 yamt Exp $
  *
- * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.15.4.3 2009/09/16 13:37:47 yamt Exp $
+ * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.15.4.4 2010/03/11 15:03:28 yamt Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.h,v 1.9 2003/05/26 21:43:29 gibbs Exp $
  */
@@ -529,7 +529,7 @@ static __inline void	ahd_platform_dump_card_state(struct ahd_softc *);
 static __inline void
 ahd_print_path(struct ahd_softc *ahd, struct scb *scb)
 {
-	printf("%s:", device_xname(&ahd->sc_dev));
+	printf("%s:", device_xname(ahd->sc_dev));
 }
 
 static __inline void

@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci.c,v 1.30.4.3 2009/05/16 10:41:35 yamt Exp $ */
+/* $NetBSD: isic_pci.c,v 1.30.4.4 2010/03/11 15:03:49 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.30.4.3 2009/05/16 10:41:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.30.4.4 2010/03/11 15:03:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -255,12 +255,12 @@ isic_pci_isdn_attach(struct pci_isic_softc *psc, struct pci_attach_args *pa, con
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	psc->sc_pc = pc;
-	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	sc->sc_intr_valid = ISIC_INTR_DISABLED;
 
@@ -313,19 +313,13 @@ static int
 isic_pci_activate(device_t self, enum devact act)
 {
 	struct pci_isic_softc *psc = device_private(self);
-	int error = 0, s;
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
 		psc->sc_isic.sc_intr_valid = ISIC_INTR_DYING;
 		isic_detach_bri(&psc->sc_isic);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-	return (error);
 }

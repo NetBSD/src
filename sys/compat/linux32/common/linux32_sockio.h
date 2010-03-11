@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_sockio.h,v 1.2.14.2 2009/05/04 08:12:23 yamt Exp $ */
+/* $NetBSD: linux32_sockio.h,v 1.2.14.3 2010/03/11 15:03:17 yamt Exp $ */
 
 /*
  * Copyright (c) 2008 Nicolas Joly
@@ -48,6 +48,7 @@ struct linux32_ifreq {
 		struct osockaddr ifru_addr;
 		struct osockaddr ifru_hwaddr;
 		struct linux32_ifmap ifru_map;
+		int ifru_ifindex;
 	} ifr_ifru;
 #define ifr_name	ifr_ifrn.ifrn_name	/* interface name       */
 #define ifr_addr	ifr_ifru.ifru_addr	/* address              */

@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.497.2.5 2009/08/19 18:47:21 yamt Exp $
+$NetBSD: usbdevs,v 1.497.2.6 2010/03/11 15:04:07 yamt Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -104,6 +104,7 @@ vendor LUCENT		0x047e	Lucent
 vendor PLANTRONICS	0x047f	Plantronics
 vendor KYOCERA		0x0482	Kyocera
 vendor STMICRO		0x0483	STMicroelectronics
+vendor MEIZU		0x0492	Meizu Electronics
 vendor YAMAHA		0x0499	YAMAHA
 vendor COMPAQ		0x049f	Compaq
 vendor HITACHI		0x04a4	Hitachi
@@ -431,6 +432,7 @@ vendor USI		0x10ab	USI
 vendor PLX		0x10b5	PLX
 vendor ASANTE		0x10bd	Asante
 vendor SILABS		0x10c4	Silicon Labs
+vendor TENX		0x1130	Ten X Technology, Inc.
 vendor JRC		0x1145	Japan Radio Company
 vendor SPHAIRON		0x114b	Sphairon Access Systems GmbH
 vendor DELORME		0x1163	DeLorme
@@ -439,6 +441,7 @@ vendor ACERCM		0x1189	Acer Communications & Multimedia
 vendor SIERRA		0x1199	Sierra Wireless
 vendor TOPFIELD		0x11db	Topfield Co., Ltd
 vendor NETINDEX		0x11f6	NetIndex
+vendor FUJITSU2		0x1221	Fujitsu Ltd.
 vendor TSUNAMI		0x1241	Tsunami
 vendor TARGUS		0x1267	Targus
 vendor TWINMOS		0x126f	TwinMOS
@@ -462,6 +465,7 @@ vendor SILICOM		0x1485	Silicom
 vendor RALINK		0x1485	Ralink Technology
 vendor RALINK_2		0x148f	Ralink Technology
 vendor CONCEPTRONIC	0x14b2	Conceptronic
+vendor SUPERTOP		0x14cd  SuperTop
 vendor PLANEX3		0x14ea	Planex Communications
 vendor SILICONPORTALS	0x1527	Silicon Portals
 vendor OQO		0x1557	OQO
@@ -479,6 +483,7 @@ vendor JABLOTRON	0x16d6	Jablotron
 vendor LINKSYS4		0x1737	Linksys
 vendor SENAO		0x1740	Senao
 vendor METAGEEK		0x1781	MetaGeek
+vendor DISPLAYLINK	0x17e9	DisplayLink
 vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
@@ -954,6 +959,25 @@ product DIGI ACCELEPORT8	0x0008	AccelePort USB 8
 /* Digital Stream Corp. products */
 product DIGITALSTREAM PS2	0x0001	PS/2 Active Adapter
 
+/* DisplayLink products */
+product DISPLAYLINK LD220	0x0100	Samsung LD220
+product DISPLAYLINK U70		0x0103	Samsung U70
+product DISPLAYLINK VCUD60	0x0136	Rextron DVI
+product DISPLAYLINK DLDVI	0x0141	DisplayLink DVI
+product DISPLAYLINK USBRGB	0x0150	IO-DATA USB-RGB
+product DISPLAYLINK LCDUSB7X	0x0153	IO-DATA LCD-USB7X
+product DISPLAYLINK VGA10	0x015a	CMP-USBVGA10
+product DISPLAYLINK WSDVI	0x0198	WS Tech DVI
+product DISPLAYLINK EC008	0x019b	EasyCAP008 DVI
+product DISPLAYLINK GXDVIU2	0x01ac	BUFFALO GX-DVI/U2
+product DISPLAYLINK LCD4300U	0x01ba	LCD-4300U
+product DISPLAYLINK LCD8000U	0x01bb	LCD-8000U
+product DISPLAYLINK HPDOCK	0x01d4	HP USB Docking
+product DISPLAYLINK M01061	0x01e2	Lenovo DVI
+product DISPLAYLINK SWDVI	0x024c	SUNWEIT DVI
+product DISPLAYLINK LDEWX015U	0x02e3	Logitec LDE-WX015U
+product DISPLAYLINK UM7X0	0x401a	nanovision MiMo
+
 /* D-Link products */
 /*product DLINK DSBS25		0x0100	DSB-S25 serial adapter*/
 product DLINK DUBE100		0x1a00	10/100 ethernet adapter
@@ -963,6 +987,7 @@ product DLINK DWLG122		0x3c00	AirPlus G Wireless USB Adapter
 product DLINK2 DWLG122C1	0x3c03	DWL-G122 rev C1
 product DLINK2 WUA1340		0x3c04	WUA-1340
 product DLINK DUBE100B1		0x3c05	DUB-E100 rev B1
+product DLINK2 DWA111		0x3c06	DWA-111
 product DLINK DSB650C		0x4000	10Mbps ethernet adapter
 product DLINK DSB650TX1		0x4001	10/100 ethernet adapter
 product DLINK DSB650TX		0x4002	10/100 ethernet adapter
@@ -1083,6 +1108,8 @@ product FTDI MHAM_DB9		0xeeed	DB9
 product FTDI MHAM_RS232		0xeeee	RS232
 product FTDI MHAM_Y9		0xeeef	Y9
 product FTDI COASTAL_TNCX	0xf448	Coastal ChipWorks TNC-X
+product FTDI CTI_485_MINI	0xf608	CTI 485 Mini
+product FTDI CTI_NANO_485	0xf60b	CTI Nano 485
 product FTDI LCD_MX200_USB	0xfa01	Matrix Orbital MX2/MX3/MX6 Series
 product FTDI LCD_MX4_MX5_USB	0xfa02	Matrix Orbital MX4/MX5 Series LCD
 product FTDI LCD_LK202_24_USB	0xfa03	Matrix Orbital LK/VK/PK202-24 LCD
@@ -1235,6 +1262,8 @@ product HP2 C500		0x6002	PhotoSmart C500
 /* Huawei Technologies products */
 product HUAWEI MOBILE		0x1001	Huawei Mobile
 product HUAWEI E220  		0x1003	Huawei E220
+product HUAWEI K3765  		0x1465	Huawei K3765
+product HUAWEI K3765INIT 	0x1520	Huawei K3765 USB CD
 
 /* Huawei-3Com products */
 product HUAWEI3COM RT2573	0x0009	RT2573
@@ -1481,6 +1510,7 @@ product LOGITECH RK53		0xc501	Cordless mouse
 product LOGITECH RB6		0xc503	Cordless keyboard
 product LOGITECH CDO		0xc504	Cordless Desktop Optical
 product LOGITECH MX700		0xc506	Cordless optical mouse
+product LOGITECH CBT44		0xc517	C-BT44 Receiver
 product LOGITECH QUICKCAMPRO2	0xd001	QuickCam Pro
 
 /* Lucent products */
@@ -1504,6 +1534,9 @@ product MEDIAGEAR READER9IN1	0x5003	USB2.0 9 in 1 Reader
 
 /* Meinberg Funkuhren products */
 product	MEINBERG USB5131	0x0301	USB 5131 DCF77 - Radio Clock
+
+/* Meizo Electronics */
+product	MEIZU M6_SL		0x0140	MiniPlayer M6 (SL)
 
 /* Melco, Inc products */
 product MELCO LUATX1		0x0001	LUA-TX Ethernet
@@ -1573,6 +1606,8 @@ product MICROSOFT XBOX_DVD_PLAYBACK	0x0284	Xbox DVD Movie Playback Kit
 product MICROSOFT XBOX_CONTROLLER_S10	0x0285	Xbox Controller S (1.0)
 product MICROSOFT XBOX_CONTROLLER_HUB	0x0288	Xbox Controller Hub
 product MICROSOFT XBOX_CONTROLLER_S12	0x0289	Xbox Controller S (1.2)
+product MICROSOFT 24GHZ_XCVR10		0x071d  2.4GHz Transceiver V1.0
+product MICROSOFT 24GHZ_XCVR20		0x071f  2.4GHz Transceiver V2.0
 
 /* Microtech products */
 product MICROTECH SCSIDB25	0x0004	USB-SCSI-DB25
@@ -1758,7 +1793,24 @@ product OPTIONNV QUADUMTS2	0x6000	GlobeTrotter Fusion Quad Lite UMTS/GPRS
 product OPTIONNV QUADUMTS	0x6300	GlobeTrotter Fusion Quad Lite 3D
 product OPTIONNV QUADPLUSUMTS	0x6600	GlobeTrotter 3G Quad Plus
 product OPTIONNV HSDPA   	0x6701	GlobeTrotter HSDPA Modem
+product OPTIONNV MAXHSDPA   	0x6701	GlobeTrotter Max HSDPA Modem
+product OPTIONNV GSICON72	0x6911	GlobeSurfer iCON 7.2
+product OPTIONNV ICON225	0x6971	iCON 225
 product OPTIONNV GTMAXHSUPA	0x7001	GlobeTrotter HSUPA
+product OPTIONNV GEHSUPA	0x7011	GlobeTrotter Express HSUPA
+product OPTIONNV GTHSUPA	0x7031	GlobeTrotter HSUPA
+product OPTIONNV GSHSUPA	0x7251	GlobeSurfer HSUPA
+product OPTIONNV GE40X1		0x7301	GE40x
+product OPTIONNV GE40X2		0x7361	GE40x
+product OPTIONNV GE40X3		0x7381	GE40x
+product OPTIONNV ICON401	0x7401	iCON 401
+product OPTIONNV GTM382		0x7501	GTM 382
+product OPTIONNV GE40X4		0x7601	GE40x
+product OPTIONNV ICONEDGE	0xc031	iCON EDGE
+product OPTIONNV MODHSXPA	0xd013	Module HSxPA
+product OPTIONNV ICON321	0xd031	iCON 321
+product OPTIONNV ICON322	0xd033	iCON 322
+product OPTIONNV ICON505	0xd055	iCON 505
 
 /* OQO */
 product OQO WIFI01		0x0002	model 01 WiFi interface
@@ -1912,8 +1964,12 @@ product QTRONIX 980N		0x2011	Scorpion-980N keyboard
 /* Qualcomm products */
 product QUALCOMM CDMA_MSM	0x6000	CDMA Technologies MSM phone
 product QUALCOMM MSM_HSDPA	0x6613	HSDPA MSM
+product QUALCOMM2 RWT_FCT       0x3100  RWT FCT-CDMA 2000 1xRTT modem
 product QUALCOMM2 CDMA_MSM	0x3196	CDMA Technologies MSM modem
 product QUALCOMMINC CDMA_MSM	0x0001	CDMA Technologies MSM modem
+product QUALCOMMINC ZTE_MF626	0x0031	CDMA Technologies MSM modem
+product QUALCOMMINC ZTE_STOR	0x2000  USB ZTE Storage
+product QUALCOMMINC AC8700	0xfffe	CDMA 1xEVDO USB modem
 
 /* Qualcomm Kyocera products */
 product QUALCOMM_K CDMA_MSM_K	0x17da	Qualcomm Kyocera CDMA Technologies MSM
@@ -2228,6 +2284,9 @@ product SUN KEYBOARD_TYPE_7	0x00a2	Type 7 USB keyboard
 /* XXX The above is a North American PC style keyboard possibly */
 product SUN MOUSE		0x0100	Type 6 USB mouse
 
+/* SuperTop products */
+product SUPERTOP IDEBRIDGE      0x6600  SuperTop IDE Bridge
+
 /* Supra products */
 product DIAMOND2 SUPRAEXPRESS56K 0x07da Supra Express 56K modem
 product DIAMOND2 SUPRA2890	0x0b4a	SupraMax 2890 56K Modem
@@ -2277,6 +2336,10 @@ product TEKRAM ZD1211_2		0x6630	ZD1211
 
 /* Telex Communications products */
 product TELEX MIC1		0x0001	Enhanced USB Microphone
+
+/* Ten X Technology, Inc. */
+product TENX MISSILE		0x0202	Missile Launcher
+product TENX TEMPER		0x660c	TEMPer sensor
 
 /* Texas Intel products */
 product TI UTUSB41		0x1446	UT-USB41 hub

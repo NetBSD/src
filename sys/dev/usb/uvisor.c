@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.38.4.2 2009/05/04 08:13:22 yamt Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.38.4.3 2010/03/11 15:04:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.38.4.2 2009/05/04 08:13:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.38.4.3 2010/03/11 15:04:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,6 +228,13 @@ USB_ATTACH(uvisor)
 
 	sc->sc_dev = self;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
+	devinfop = usbd_devinfo_alloc(dev, 0);
+	aprint_normal_dev(self, "%s\n", devinfop);
+	usbd_devinfo_free(devinfop);
+
 	/* Move the device into the configured state. */
 	err = usbd_set_config_index(dev, UVISOR_CONFIG_INDEX, 1);
 	if (err) {
@@ -242,11 +249,6 @@ USB_ATTACH(uvisor)
 		       devname, usbd_errstr(err));
 		goto bad;
 	}
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	aprint_normal_dev(self, "%s\n", devinfop);
-	usbd_devinfo_free(devinfop);
 
 	sc->sc_flags = uvisor_lookup(uaa->vendor, uaa->product)->uv_flags;
 
@@ -375,22 +377,14 @@ int
 uvisor_activate(device_ptr_t self, enum devact act)
 {
 	struct uvisor_softc *sc = device_private(self);
-	int rv = 0;
-	int i;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
 	case DVACT_DEACTIVATE:
-		for (i = 0; i < sc->sc_numcon; i++)
-			if (sc->sc_subdevs[i] != NULL)
-				rv |= config_deactivate(sc->sc_subdevs[i]);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 void

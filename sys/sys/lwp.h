@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.89.2.4 2009/07/18 14:53:27 yamt Exp $	*/
+/*	$NetBSD: lwp.h,v 1.89.2.5 2010/03/11 15:04:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 /*
  * Lightweight process.  Field markings and the corresponding locks: 
  *
- * a:	proclist_mutex
+ * a:	proclist_lock
  * c:	condition variable interlock, passed to cv_wait()
  * l:	*l_mutex
  * p:	l_proc->p_lock
@@ -79,14 +79,14 @@ struct lwp {
 	struct cpu_info *volatile l_cpu;/* s: CPU we're on if LSONPROC */
 	kmutex_t * volatile l_mutex;	/* l: ptr to mutex on sched state */
 	int		l_ctxswtch;	/* l: performing a context switch */
-	struct user	*l_addr;	/* l: KVA of u-area (PROC ONLY) */
+	struct user	*l_addr;	/* l: PCB address; use lwp_getpcb() */
 	struct mdlwp	l_md;		/* l: machine-dependent fields. */
 	int		l_flag;		/* l: misc flag values */
 	int		l_stat;		/* l: overall LWP status */
 	struct bintime 	l_rtime;	/* l: real time */
 	struct bintime	l_stime;	/* l: start time (while ONPROC) */
 	u_int		l_swtime;	/* l: time swapped in or out */
-	u_int		l_holdcnt;	/* l: if non-zero, don't swap */
+	u_int		_reserved1;
 	u_int		l_rticks;	/* l: Saved start time of run */
 	u_int		l_rticksum;	/* l: Sum of ticks spent running */
 	u_int		l_slpticks;	/* l: Saved start time of sleep */
@@ -105,7 +105,6 @@ struct lwp {
 	fixpt_t		l_estcpu;	/* l: cpu time for SCHED_4BSD */
 	psetid_t	l_psid;		/* l: assigned processor-set ID */
 	struct cpu_info *l_target_cpu;	/* l: target CPU to migrate */
-	kmutex_t	l_swaplock;	/* l: lock to prevent swapping */
 	struct lwpctl	*l_lwpctl;	/* p: lwpctl block kernel address */
 	struct lcpage	*l_lcpage;	/* p: lwpctl containing page */
 	kcpuset_t	*l_affinity;	/* l: CPU set for affinity */
@@ -180,6 +179,8 @@ struct lwp {
 	/* These are only used by 'options SYSCALL_TIMES' */
 	uint32_t        l_syscall_time; /* !: time epoch for current syscall */
 	uint64_t        *l_syscall_counter; /* !: counter for current process */
+
+	struct kdtrace_thread *l_dtrace; /* ?: DTrace-specific data. */
 };
 
 /*
@@ -198,10 +199,16 @@ struct lwp {
 #define	UAREA_TO_USER(uarea)	((struct user *)((uarea) + UAREA_USER_OFFSET))
 #endif /* !defined(UAREA_TO_USER) */
 
+static __inline void *
+lwp_getpcb(struct lwp *l)
+{
+
+	return &l->l_addr->u_pcb;
+}
+
 LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
 
 #ifdef _KERNEL
-extern kmutex_t alllwp_mutex;		/* Mutex on alllwp */
 extern struct lwplist alllwp;		/* List of all LWPs. */
 
 extern struct pool lwp_uc_pool;		/* memory pool for LWP startup args */
@@ -211,7 +218,6 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 
 /* These flags are kept in l_flag. */
 #define	LW_IDLE		0x00000001 /* Idle lwp. */
-#define	LW_INMEM	0x00000004 /* Loaded into memory. */
 #define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
 #define	LW_SA_SWITCHING	0x00000100 /* SA LWP in context switch */
 #define	LW_SYSTEM	0x00000200 /* Kernel thread */
@@ -316,7 +322,7 @@ void	lwp_userret(lwp_t *);
 void	lwp_need_userret(lwp_t *);
 void	lwp_free(lwp_t *, bool, bool);
 void	lwp_sys_init(void);
-u_int	lwp_unsleep(lwp_t *, bool);
+void	lwp_unsleep(lwp_t *, bool);
 uint64_t lwp_pctr(void);
 
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
@@ -394,7 +400,7 @@ lwp_eprio(lwp_t *l)
 	return MAX(l->l_inheritedprio, pri);
 }
 
-int lwp_create(lwp_t *, struct proc *, vaddr_t, bool, int,
+int lwp_create(lwp_t *, struct proc *, vaddr_t, int,
     void *, size_t, void (*)(void *), void *, lwp_t **, int);
 
 /*

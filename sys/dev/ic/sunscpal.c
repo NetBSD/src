@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.22.4.1 2009/05/04 08:12:44 yamt Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.22.4.2 2010/03/11 15:03:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.22.4.1 2009/05/04 08:12:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.22.4.2 2010/03/11 15:03:35 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.22.4.1 2009/05/04 08:12:44 yamt Exp $
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

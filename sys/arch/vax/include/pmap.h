@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.75.4.1 2009/05/04 08:12:04 yamt Exp $	   */
+/*	$NetBSD: pmap.h,v 1.75.4.2 2010/03/11 15:03:06 yamt Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -264,7 +264,6 @@ pmap_remove_all(struct pmap *pmap)
 #define pmap_phys_address(phys)		((u_int)(phys) << PGSHIFT)
 #define pmap_copy(a,b,c,d,e)		/* Dont do anything */
 #define pmap_update(pmap)		/* nothing (yet) */
-#define pmap_collect(pmap)		/* No need so far */
 #define pmap_remove(pmap, start, slut)	pmap_protect(pmap, start, slut, 0)
 #define pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)

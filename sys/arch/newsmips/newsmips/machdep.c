@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.97.18.2 2009/08/19 18:46:37 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.97.18.3 2010/03/11 15:02:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,11 +76,10 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97.18.2 2009/08/19 18:46:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97.18.3 2010/03/11 15:02:45 yamt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
-#include "fs_mfs.h"
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
 #include "opt_modular.h"
@@ -99,7 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97.18.2 2009/08/19 18:46:37 yamt Exp $
 #include <sys/msgbuf.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -145,7 +143,6 @@ struct cpu_info cpu_info_store;
 
 /* maps for VM objects */
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 char *bootinfo = NULL;		/* pointer to bootinfo structure */
@@ -205,7 +202,6 @@ const uint32_t ipl_sr_bits[_IPL_N] = {
 	    MIPS_INT_MASK_2,
 };
 
-extern struct user *proc0paddr;
 extern u_long bootdev;
 extern char edata[], end[];
 
@@ -218,7 +214,7 @@ void
 mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 {
 	u_long first, last;
-	char *kernend, *v;
+	char *kernend;
 	struct btinfo_magic *bi_magic;
 	struct btinfo_bootarg *bi_arg;
 	struct btinfo_systype *bi_systype;
@@ -348,14 +344,12 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	boothowto |= RB_KDB;
 #endif
 
-#ifdef MFS
 	/*
 	 * Check to see if a mini-root was loaded into memory. It resides
 	 * at the start of the next page just after the end of BSS.
 	 */
 	if (boothowto & RB_MINIROOT)
 		kernend += round_page(mfs_initminiroot(kernend));
-#endif
 
 	/*
 	 * Load the rest of the available pages into the VM system.
@@ -376,13 +370,9 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	pmap_bootstrap();
 
 	/*
-	 * Allocate space for lwp0's USPACE.
+	 * Allocate uarea page for lwp0 and set it.
 	 */
-	v = (char *)uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	mips_init_lwp0_uarea();
 
 	/*
 	 * Determine what model of computer we are running on.
@@ -535,7 +525,7 @@ cpu_reboot(volatile int howto, char *bootstr)
 
 	/* take a snap shot before clobbering any registers */
 	if (curlwp)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 #ifdef DEBUG
 	if (panicstr)
@@ -604,7 +594,7 @@ delay(int n)
 }
 
 void
-cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
+cpu_intr(uint32_t status, uint32_t cause, vaddr_t pc, uint32_t ipending)
 {
 	struct cpu_info *ci;
 

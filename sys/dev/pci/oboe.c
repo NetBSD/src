@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.31.4.2 2009/05/16 10:41:36 yamt Exp $	*/
+/*	$NetBSD: oboe.c,v 1.31.4.3 2010/03/11 15:03:49 yamt Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.31.4.2 2009/05/16 10:41:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.31.4.3 2010/03/11 15:03:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.31.4.2 2009/05/16 10:41:36 yamt Exp $");
 
 static int oboe_match(device_t parent, cfdata_t match, void *aux);
 static void oboe_attach(device_t parent, device_t self, void *aux);
-static int oboe_activate(device_t self, enum devact act);
 static int oboe_detach(device_t self, int flags);
 
 static int oboe_open(void *h, int flag, int mode, struct lwp *l);
@@ -153,7 +152,7 @@ static void oboe_stopchip(struct oboe_softc *);
 static int oboe_setbaud(struct oboe_softc *, int);
 
 CFATTACH_DECL(oboe, sizeof(struct oboe_softc),
-    oboe_match, oboe_attach, oboe_detach, oboe_activate);
+    oboe_match, oboe_attach, oboe_detach, NULL);
 
 static struct irframe_methods oboe_methods = {
 	oboe_open, oboe_close, oboe_read, oboe_write, oboe_poll,
@@ -221,11 +220,11 @@ oboe_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstring != NULL)
-			printf(" at %s", intrstring);
-		printf("\n");
+			aprint_error(" at %s", intrstring);
+		aprint_error("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstring);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstring);
 
 	selinit(&sc->sc_rsel);
 	selinit(&sc->sc_wsel);
@@ -241,27 +240,6 @@ oboe_attach(device_t parent, device_t self, void *aux)
 	oboe_alloc_taskfile(sc);
 
 	sc->sc_child = config_found((void *)sc, &ia, ir_print);
-}
-
-static int
-oboe_activate(device_t self, enum devact act)
-{
-	struct oboe_softc *sc = device_private(self);
-	int error = 0;
-
-	DPRINTF(("%s: sc=%p\n", __func__, sc));
-
-	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
-	case DVACT_DEACTIVATE:
-		if (sc->sc_child != NULL)
-			error = config_deactivate(sc->sc_child);
-		break;
-	}
-	return (error);
 }
 
 static int

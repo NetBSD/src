@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.32.12.3 2009/09/16 13:37:59 yamt Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.32.12.4 2010/03/11 15:04:10 yamt Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.32.12.3 2009/09/16 13:37:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.32.12.4 2010/03/11 15:04:10 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -174,6 +174,31 @@ static int pf_pfil_attach(void);
 static int pf_pfil_detach(void);
 
 static int pf_pfil_attached;
+
+static kauth_listener_t pf_listener;
+#endif /* __NetBSD__ */
+
+#ifdef __NetBSD__
+static int
+pf_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	int result;
+	enum kauth_network_req req;
+
+	result = KAUTH_RESULT_DEFER;
+	req = (enum kauth_network_req)arg0;
+
+	if (action != KAUTH_NETWORK_FIREWALL)
+		return result;
+
+	/* These must have came from device context. */
+	if ((req == KAUTH_REQ_NETWORK_FIREWALL_FW) ||
+	    (req == KAUTH_REQ_NETWORK_FIREWALL_NAT))
+		result = KAUTH_RESULT_ALLOW;
+
+	return result;
+}
 #endif /* __NetBSD__ */
 
 void
@@ -277,6 +302,11 @@ pfattach(int num)
 #else
 	kthread_create_deferred(pf_thread_create, NULL);
 #endif /* !__NetBSD__ */
+
+#ifdef __NetBSD__
+	pf_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
+	    pf_listener_cb, NULL);
+#endif /* __NetBSD__ */
 }
 
 #ifndef __NetBSD__

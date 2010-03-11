@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.118.10.1 2009/05/04 08:11:57 yamt Exp $
+#	$NetBSD: files.sparc64,v 1.118.10.2 2010/03/11 15:02:59 yamt Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -13,6 +13,11 @@ defflag	opt_sparc_arch.h	SUN4U
 define mainbus {}
 device mainbus: mainbus
 attach mainbus at root
+
+define upa {}
+device upa: upa
+attach upa at mainbus
+file	arch/sparc64/dev/upa.c
 
 device pcons
 attach pcons at mainbus
@@ -63,9 +68,21 @@ device power
 attach power at sbus, ebus
 file	arch/sparc64/dev/power.c		power
 
-device envctrl: sysmon_envsys, pcf8584, i2cbus
-attach envctrl at ebus
-file	arch/sparc64/dev/envctrl.c	envctrl
+device	tda
+attach	tda at iic
+file	arch/sparc64/dev/tda.c			tda
+
+device pcfiic: sysmon_envsys, pcf8584, i2cbus
+attach pcfiic at ebus
+file	arch/sparc64/dev/pcfiic_ebus.c		pcfiic
+
+device ecadc
+attach ecadc at iic
+file	arch/sparc64/dev/pcf8591_envctrl.c	ecadc
+
+device lom: sysmon_envsys, sysmon_wdog
+attach lom at ebus
+file	arch/sparc64/dev/lom.c			lom
 
 device cpu
 attach cpu at mainbus
@@ -146,11 +163,15 @@ device cgfourteen
 attach cgfourteen at sbus
 file	arch/sparc64/dev/cgfourteen.c	cgfourteen needs-flag
 
-device ffb: wsemuldisplaydev, rasops8, rasops16, rasops24, rasops32, fb, vcons
+device ffb: wsemuldisplaydev, rasops8, rasops32, fb, vcons
 file	arch/sparc64/dev/ffb.c			ffb
 
-attach ffb at mainbus with ffb_mainbus
+attach ffb at mainbus,upa with ffb_mainbus
 file	arch/sparc64/dev/ffb_mainbus.c		ffb_mainbus
+
+device gfb: wsemuldisplaydev, rasops32, fb, vcons
+file	arch/sparc64/dev/gfb.c			gfb
+attach gfb at mainbus
 
 # CP1500/1400 watchdog timer
 device	pldwdog: sysmon_wdog
@@ -185,9 +206,10 @@ file	arch/sparc64/sparc64/emul.c
 file	arch/sparc64/sparc64/intr.c
 file	arch/sparc64/sparc64/kgdb_machdep.c	kgdb
 file	arch/sparc64/sparc64/kobj_machdep.c	modular
-# sparc/sparc/locore.s is handled specially in the makefile,
+# sparc64/sparc64/locore.s is handled specially in the makefile,
 # because it must come first in the "ld" command line.
 file	arch/sparc64/sparc64/machdep.c
+file	arch/sparc64/sparc64/memcpyset.s
 file	arch/sparc64/sparc64/process_machdep.c
 file	arch/sparc64/sparc64/procfs_machdep.c	procfs
 file	arch/sparc64/sparc64/mem.c
@@ -203,8 +225,9 @@ file	arch/sparc64/sparc64/ipifuncs.c		multiprocessor
 file	arch/sparc64/sparc64/lock_stubs.s
 
 file	arch/sparc64/sparc64/db_interface.c	ddb | kgdb
-file	arch/sparc64/sparc64/db_trace.c	ddb
+file	arch/sparc64/sparc64/db_trace.c		ddb
 file	arch/sparc64/sparc64/db_disasm.c	ddb
+file	arch/sparc64/sparc64/db_tlb_access.S	ddb
 
 # USB Support
 include "dev/usb/files.usb"

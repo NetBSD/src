@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.899.2.7 2009/09/16 13:37:44 yamt Exp $
+#	$NetBSD: files,v 1.899.2.8 2010/03/11 15:03:20 yamt Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -59,6 +59,8 @@ defflag	opt_callout.h		CALLWHEEL_STATS
 
 defflag				CPU_IN_CKSUM
 
+defflag opt_dtrace.h		KDTRACE_HOOKS
+
 defflag opt_posix.h		P1003_1B_SEMAPHORE
 defflag	opt_sysv.h		SYSVMSG SYSVSEM	SYSVSHM
 defparam opt_sysvparam.h	SHMMAXPGS SEMMNI SEMMNS SEMUME SEMMNU
@@ -73,7 +75,6 @@ defparam opt_malloclog.h	MALLOCLOGSIZE
 defflag	opt_malloc_debug.h	MALLOC_DEBUG
 defflag	opt_pool.h		POOL_DIAGNOSTIC
 defparam opt_poollog.h		POOL_LOGSIZE
-defflag	opt_powerhook.h		POWERHOOK_DEBUG
 
 defflag	opt_revcache.h		NAMECACHE_ENTER_REVERSE
 
@@ -176,6 +177,12 @@ include "dev/sysmon/files.sysmon"
 #
 # Networking protocols
 #
+
+# Attribute used by various things that need BPF's virtual machine
+#
+define	bpf_filter
+defparam opt_bpf.h	BPF_BUFSIZE
+
 include "net80211/files.net80211"
 include "netatalk/files.netatalk"
 include "netbt/files.netbt"
@@ -894,7 +901,7 @@ file	dev/ic/cd18xx.c			cd18xx
 # Realtek 8019/8029 NE2000-compatible network interface subroutines
 #
 define	rtl80x9
-file	dev/ic/rtl80x9.c		rtl80x9
+file	dev/ic/rtl80x9.c		rtl80x9			needs-flag
 
 # Realtek 8129/8139 Ethernet controllers
 #
@@ -941,7 +948,12 @@ define ahcisata_core
 file dev/ic/ahcisata_core.c ahcisata_core
 device ahcisata: ata, ata_dma, ata_udma, sata, sata_fis, ahcisata_core
 
-# Mervell Serial-ATA Host Controller
+# Silicon Image SteelVine SATA-II controllers
+define	siisata
+file	dev/ic/siisata.c		siisata
+device	siisata: ata, ata_dma, ata_udma, sata, sata_fis, siisata
+
+# Marvell Serial-ATA Host Controller
 define mvsata
 file dev/ic/mvsata.c			mvsata
 device mvsata: ata, ata_dma, ata_udma, wdc_common, sata, mvsata
@@ -1033,7 +1045,7 @@ file 	dev/ic/hpet.c		hpet			needs-flag
 
 # SMSC LAN9118 Family Ethernet Controller
 #
-device	smsh: arp, ether, ifnet
+device	smsh: arp, ether, ifnet, mii
 file	dev/ic/lan9118.c		smsh
 
 # DRM - Direct Rendering Infrastructure: dev/drm
@@ -1074,7 +1086,7 @@ file	dev/ic/vga_subr.c	vga | vga_rasterconsole
 file	dev/ic/vga_common.c	vga | vga_rasterconsole
 # Integraphics Systems IGA168x and CyberPro framebuffers (linear non-VGA mode)
 #
-device	igsfb: wsemuldisplaydev, wsrasteremulops, rasops8, vcons
+device	igsfb: wsemuldisplaydev, wsrasteremulops, rasops8, vcons, videomode
 file	dev/ic/igsfb.c			igsfb			needs-flag
 file	dev/ic/igsfb_subr.c		igsfb
 
@@ -1142,6 +1154,11 @@ file	dev/usb/hid.c			hid
 device sdhc: sdmmcbus
 file	dev/sdmmc/sdhc.c		sdhc			needs-flag
 
+# Winbond Integrated Media Reader
+device	wb: sdmmcbus
+file	dev/ic/w83l518d.c		wb
+file	dev/ic/w83l518d_sdmmc.c		wb
+
 # Myson MTD803 3-in-1 Fast Ethernet Controller
 device	mtd: arp, ether, ifnet, mii
 file	dev/ic/mtd803.c			mtd
@@ -1175,11 +1192,6 @@ device	cpciic
 attach	cpciic at cpcbus with iic_cpcbus
 file	dev/ic/iic_cpcbus.c		iic_cpcbus
 
-
-# Attribute used by various things that need BPF's virtual machine
-#
-define	bpf_filter
-defparam opt_bpf.h	BPF_BUFSIZE
 
 # Attributes used by the ISDN subsystem
 #
@@ -1225,7 +1237,7 @@ file	dev/ic/bwi.c			bwi
 defpseudodev vnd:	disk
 defflag opt_vnd.h	VND_COMPRESSION
 defpseudo ccd:		disk
-defpseudo cgd:		disk, des, blowfish, cast128, rijndael
+defpseudodev cgd:	disk, des, blowfish, cast128, rijndael
 defpseudodev md:	disk
 defpseudodev fss:	disk
 
@@ -1251,9 +1263,9 @@ defpseudo gif:		ifnet
 defpseudo faith:	ifnet
 defpseudo srt:		ifnet
 defpseudo stf:		ifnet
-defpseudodev tap:	ifnet, ether, arp, bpf_filter
-defpseudo carp:		ifnet, ether, arp, bpf_filter
-defpseudodev etherip:	ifnet, ether, arp, bpf_filter
+defpseudodev tap:	ifnet, ether, arp
+defpseudo carp:		ifnet, ether, arp
+defpseudodev etherip:	ifnet, ether, arp
 
 defpseudo sequencer
 defpseudo clockctl
@@ -1333,7 +1345,6 @@ include "miscfs/fdesc/files.fdesc"
 include "miscfs/kernfs/files.kernfs"
 include "miscfs/nullfs/files.nullfs"
 include "miscfs/overlay/files.overlay"
-include "miscfs/portal/files.portal"
 include "miscfs/procfs/files.procfs"
 include "miscfs/umapfs/files.umapfs"
 include "nfs/files.nfs"
@@ -1405,6 +1416,7 @@ file	kern/exec_script.c		exec_script
 file	kern/exec_subr.c
 file	kern/init_main.c
 file	kern/init_sysctl.c
+file	kern/init_sysctl_base.c
 file	kern/init_sysent.c
 file	kern/kern_acct.c
 file	kern/kern_auth.c
@@ -1418,6 +1430,7 @@ file	kern/kern_exec.c
 file	kern/kern_exit.c
 file	kern/kern_fork.c
 file	kern/kern_idle.c
+file	kern/kern_hook.c
 file	kern/kern_kthread.c
 file	kern/kern_ktrace.c		ktrace
 file	kern/kern_ksyms.c		ksyms | ddb | modular needs-flag
@@ -1427,7 +1440,9 @@ file	kern/kern_malloc.c
 file	kern/kern_malloc_stdtype.c
 file	kern/kern_malloc_debug.c	malloc_debug
 file	kern/kern_module.c
+file	kern/kern_module_vfs.c
 file	kern/kern_mutex.c
+file	kern/kern_mutex_obj.c
 file	kern/kern_fileassoc.c		fileassoc
 file	kern/kern_ntptime.c
 file	kern/kern_pax.c			pax_mprotect | pax_segvguard
@@ -1440,6 +1455,8 @@ file	kern/kern_rate.c
 file	kern/kern_resource.c
 file	kern/kern_runq.c
 file	kern/kern_rwlock.c
+file	kern/kern_rwlock_obj.c
+file	kern/kern_sdt.c			kdtrace_hooks
 file	kern/kern_sig.c
 file	kern/kern_sleepq.c
 file	kern/kern_softint.c
@@ -1463,25 +1480,29 @@ file	kern/subr_autoconf.c
 file	kern/subr_blist.c		vmswap
 file	kern/subr_bufq.c
 file	kern/subr_callback.c
+file	kern/subr_copy.c
 file	kern/subr_debug.c		debug
+file	kern/subr_device.c
 file	kern/subr_devsw.c
 file	kern/subr_disk.c
 file	kern/subr_disk_open.c
-file	kern/subr_iostat.c
 file	kern/subr_evcnt.c
 file	kern/subr_exec_fd.c
 file	kern/subr_extent.c
 file	kern/subr_hash.c
+file	kern/subr_humanize.c
+file	kern/subr_iostat.c
 file	kern/subr_kmem.c
 file	kern/subr_kobj.c
+file	kern/subr_kobj_vfs.c
 file	kern/subr_lockdebug.c
 file	kern/subr_log.c
+file	kern/subr_once.c
+file	kern/subr_optstr.c
 file	kern/subr_percpu.c
 file	kern/subr_pool.c
 file	kern/subr_prf.c
 file	kern/subr_prof.c
-file	kern/subr_once.c
-file	kern/subr_optstr.c
 file	kern/subr_specificdata.c
 file	kern/subr_tftproot.c		tftproot
 file	kern/subr_time.c
@@ -1553,8 +1574,10 @@ file	miscfs/genfs/layer_vnops.c	nullfs | overlay | umapfs
 file	miscfs/specfs/spec_vnops.c
 file	miscfs/syncfs/sync_subr.c
 file	miscfs/syncfs/sync_vnops.c
-file	net/bpf.c			bpfilter		needs-flag
+
+file	net/bpf.c			bpfilter
 file	net/bpf_filter.c		bpf_filter
+file	net/bpf_stub.c
 file	net/bsd-comp.c			ppp & ppp_bsdcomp
 file	net/if.c
 file	net/if_arcsubr.c		arcnet			needs-flag
@@ -1610,39 +1633,7 @@ file	netinet/ip_etherip.c		etherip & inet
 file	netinet6/ip6_etherip.c		etherip & inet6
 file	netinet6/in6_gif.c		gif & inet6
 
-file	netisdn/i4b_ctl.c		isdnctl			needs-flag
-file	netisdn/i4b_isppp.c		ippp			needs-count
-file	netisdn/i4b_ipr.c		irip			needs-count
-file	netisdn/i4b_rbch.c		isdnbchan		needs-count
-file	netisdn/i4b_tel.c		isdntel			needs-count
-file	netisdn/i4b_trace.c		isdntrc			needs-count
-
-file	netisdn/i4b_mbuf.c		passive_isdn
-file	netisdn/i4b_l2.c		passive_isdn
-file	netisdn/i4b_l2fsm.c		passive_isdn
-file	netisdn/i4b_uframe.c		passive_isdn
-file	netisdn/i4b_tei.c		passive_isdn
-file	netisdn/i4b_sframe.c		passive_isdn
-file	netisdn/i4b_iframe.c		passive_isdn
-file	netisdn/i4b_l2timer.c		passive_isdn
-file	netisdn/i4b_util.c		passive_isdn
-file	netisdn/i4b_lme.c		passive_isdn
-# Q.931 handler
-file	netisdn/i4b_q931.c		passive_isdn
-file	netisdn/i4b_q932fac.c		passive_isdn
-file	netisdn/i4b_l3fsm.c		passive_isdn
-file	netisdn/i4b_l3timer.c		passive_isdn
-file	netisdn/i4b_l2if.c		passive_isdn
-file	netisdn/i4b_l4if.c		passive_isdn
-# isdn device driver, interface to isdnd
-file	netisdn/i4b_i4bdrv.c		isdn			needs-flag
-file	netisdn/i4b_l4.c		isdndev			needs-flag
-file	netisdn/i4b_l4mgmt.c		isdndev			needs-flag
-file	netisdn/i4b_l4timer.c		isdndev			needs-flag
-# capi
-file	netisdn/i4b_capi_l4if.c		isdncapi
-file	netisdn/i4b_capi_llif.c		isdncapi
-file	netisdn/i4b_capi_msgs.c		isdncapi
+include "netisdn/files.i4b"
 
 # Game adapter (joystick)
 device	joy

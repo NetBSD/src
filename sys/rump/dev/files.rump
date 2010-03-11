@@ -1,0 +1,8 @@
+#	$NetBSD: files.rump,v 1.2.2.2 2010/03/11 15:04:32 yamt Exp $
+#
+
+device mainbus { }
+attach mainbus at root
+
+device ugenhc: usbus, usbroothub
+attach ugenhc at mainbus

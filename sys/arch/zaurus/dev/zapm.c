@@ -1,4 +1,4 @@
-/*	$NetBSD: zapm.c,v 1.3.36.1 2009/05/04 08:12:15 yamt Exp $	*/
+/*	$NetBSD: zapm.c,v 1.3.36.2 2010/03/11 15:03:11 yamt Exp $	*/
 /*	$OpenBSD: zaurus_apm.c,v 1.13 2006/12/12 23:14:28 dim Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.3.36.1 2009/05/04 08:12:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.3.36.2 2010/03/11 15:03:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.3.36.1 2009/05/04 08:12:15 yamt Exp $");
 struct zapm_softc {
 	device_t sc_dev;
 	void *sc_apmdev;
+	kmutex_t sc_mtx;
 
 	struct callout sc_cyclic_poll;
 	struct callout sc_discharge_poll;
@@ -143,6 +144,7 @@ zapm_attach(device_t parent, device_t self, void *aux)
 	callout_setfunc(&sc->sc_cyclic_poll, zapm_cyclic, sc);
 	callout_init(&sc->sc_discharge_poll, 0);
 	callout_setfunc(&sc->sc_discharge_poll, zapm_poll, sc);
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	if (ZAURUS_ISC3000) {
 		sc->sc_ac_detect_pin = GPIO_AC_IN_C3000;
@@ -400,16 +402,32 @@ zapm_get_powstat(void *v, u_int batteryid, struct apm_power_info *pinfo)
 		pinfo->ac_state = val;
 	else
 		pinfo->ac_state = sc->ac_state;
+	DPRINTF(("zapm: pinfo->ac_state: %d\n", pinfo->ac_state));
+
 	if (config_hook_call(CONFIG_HOOK_GET,
 			     CONFIG_HOOK_CHARGE, &val) != -1)
 		pinfo->battery_state = val;
-	else
-		pinfo->battery_state = sc->battery_state;
+	else {
+		DPRINTF(("zapm: sc->battery_state: %#x\n", sc->battery_state));
+		if (sc->battery_state & APM_BATT_FLAG_CHARGING)
+			pinfo->battery_flags = APM_BATT_FLAG_CHARGING;
+		else if (sc->battery_state & APM_BATT_FLAG_CRITICAL)
+			pinfo->battery_flags = APM_BATT_FLAG_CRITICAL;
+		else if (sc->battery_state & APM_BATT_FLAG_LOW)
+			pinfo->battery_flags = APM_BATT_FLAG_LOW;
+		else if (sc->battery_state & APM_BATT_FLAG_HIGH)
+			pinfo->battery_flags = APM_BATT_FLAG_HIGH;
+		else
+			pinfo->battery_flags = APM_BATT_FLAG_UNKNOWN;
+	}
+	DPRINTF(("zapm: pinfo->battery_flags: %#x\n", pinfo->battery_flags));
+
 	if (config_hook_call(CONFIG_HOOK_GET,
 			     CONFIG_HOOK_BATTERYVAL, &val) != -1)
 		pinfo->battery_life = val;
 	else
 		pinfo->battery_life = sc->battery_life;
+	DPRINTF(("zapm: pinfo->battery_life: %d\n", pinfo->battery_life));
 
 	return 0;
 }
@@ -781,9 +799,9 @@ zapm_poll1(void *v, int do_suspend)
 	int bc_lock;
 	int charging;
 	int volt;
-	int s;
 
-	s = splhigh();
+	if (!mutex_tryenter(&sc->sc_mtx))
+		return;
 
 	ac_state = zapm_get_ac_state(sc);
 	bc_lock = zapm_get_battery_compartment_state(sc);
@@ -809,7 +827,7 @@ zapm_poll1(void *v, int do_suspend)
 				zapm_set_charging(sc, 0);
 			}
 		} else if (!charge_completed) {
-			charging = 1;
+			charging = APM_BATT_FLAG_CHARGING;
 			volt = zapm_get_battery_volt();
 			zapm_set_charging(sc, 1);
 			DPRINTF(("zapm_poll: start charging volt %d\n", volt));
@@ -875,5 +893,5 @@ zapm_poll1(void *v, int do_suspend)
 		    (void *)zapm_battery_state(volt));
 	}
 
-	splx(s);
+	mutex_exit(&sc->sc_mtx);
 }

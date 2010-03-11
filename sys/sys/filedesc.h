@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.47.4.3 2009/06/20 07:20:38 yamt Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.47.4.4 2010/03/11 15:04:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -190,7 +190,7 @@ void	fd_abort(struct proc *, file_t *, unsigned);
 filedesc_t *fd_copy(void);
 filedesc_t *fd_init(filedesc_t *);
 void	fd_share(proc_t *);
-void	fd_hold(void);
+void	fd_hold(lwp_t *);
 void	fd_free(void);
 void	fd_closeexec(void);
 int	fd_checkstd(void);

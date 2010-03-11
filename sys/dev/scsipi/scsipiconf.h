@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.110.32.3 2009/05/16 10:41:44 yamt Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.110.32.4 2010/03/11 15:04:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -570,7 +570,6 @@ struct scsipi_xfer {
 #define	XS_CTL_HEAD_TAG		0x00080000	/* use a Head of Queue Tag */
 #define	XS_CTL_THAW_PERIPH	0x00100000	/* thaw periph once enqueued */
 #define	XS_CTL_FREEZE_PERIPH	0x00200000	/* freeze periph when done */
-#define XS_CTL_DATA_ONSTACK	0x00400000	/* data is alloc'ed on stack */
 #define XS_CTL_REQSENSE		0x00800000	/* xfer is a request sense */
 
 #define	XS_CTL_TAGMASK	(XS_CTL_SIMPLE_TAG|XS_CTL_ORDERED_TAG|XS_CTL_HEAD_TAG)

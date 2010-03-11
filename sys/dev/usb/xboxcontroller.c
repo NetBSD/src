@@ -1,4 +1,4 @@
-/* $NetBSD: xboxcontroller.c,v 1.8.4.2 2009/05/04 08:13:22 yamt Exp $ */
+/* $NetBSD: xboxcontroller.c,v 1.8.4.3 2010/03/11 15:04:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.8.4.2 2009/05/04 08:13:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.8.4.3 2010/03/11 15:04:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,9 +112,12 @@ USB_ATTACH(xboxcontroller)
 	usb_endpoint_descriptor_t *ed;
 	char *devinfo;
 
-	devinfo = usbd_devinfo_alloc(dev, 0);
 	sc->sc_dev = self;
-	USB_ATTACH_SETUP;
+
+	aprint_naive("\n");
+	aprint_normal("\n");
+
+	devinfo = usbd_devinfo_alloc(dev, 0);
 	aprint_normal_dev(self, "%s\n", devinfo);
 	usbd_devinfo_free(devinfo);
 
@@ -192,21 +195,14 @@ int
 xboxcontroller_activate(device_ptr_t self, enum devact act)
 {
 	struct xboxcontroller_softc *sc = device_private(self);
-	int rv;
-
-	rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
 	case DVACT_DEACTIVATE:
-		if (sc->sc_wsmousedev != NULL)
-			rv = config_deactivate(sc->sc_wsmousedev);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-
-	return rv;
 }
 
 static void

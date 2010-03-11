@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.3.6.3 2009/09/16 13:37:51 yamt Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.3.6.4 2010/03/11 15:03:46 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,9 +31,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.3.6.3 2009/09/16 13:37:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.3.6.4 2010/03/11 15:03:46 yamt Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,9 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.3.6.3 2009/09/16 13:37:51 yamt Exp $");
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -889,10 +886,8 @@ lii_start(struct ifnet *ifp)
 
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 		m_freem(m0);
 	}
 }
@@ -1003,10 +998,8 @@ lii_rxintr(struct lii_softc *sc)
 		memcpy(mtod(m, void *), &rxp->rxp_data[0], size);
 		++ifp->if_ipackets;
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		(*ifp->if_input)(ifp, m);
 	}

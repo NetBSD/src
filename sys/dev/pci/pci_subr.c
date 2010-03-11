@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.74.4.2 2009/05/04 08:12:59 yamt Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.74.4.3 2010/03/11 15:03:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.74.4.2 2009/05/04 08:12:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.74.4.3 2010/03/11 15:03:50 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -431,7 +431,7 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 		else {
 			if (subclassp == NULL || subclassp->name == NULL)
 				cp += snprintf(cp, ep - cp,
-				    "%s subclass 0x%02x",
+				    "%s, subclass 0x%02x",
 				    classp->name, subclass);
 			else
 				cp += snprintf(cp, ep - cp, "%s %s",
@@ -859,8 +859,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			printf("      Command Completed Interrupt Enabled\n");
 		if ((regs[o2i(capoff + 0x18)] & 0x0020) != 0)
 			printf("      Hot-Plug Interrupt Enabled\n");
-		printf("      Attention Indictor Control: ");
-		switch ((regs[o2i(capoff + 0x18)] & 0x00a0) >> 6) {
+		printf("      Attention Indicator Control: ");
+		switch ((regs[o2i(capoff + 0x18)] & 0x00c0) >> 6) {
 		case 0x0:
 			printf("reserved\n");
 			break;
@@ -874,7 +874,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			printf("off\n");
 			break;
 		}
-		printf("      Power Indictor Control: ");
+		printf("      Power Indicator Control: ");
 		switch ((regs[o2i(capoff + 0x18)] & 0x0300) >> 8) {
 		case 0x0:
 			printf("reserved\n");
@@ -1045,6 +1045,43 @@ pci_conf_print_caplist(
 		pci_conf_print_pcie_cap(regs, pcie_off);
 }
 
+/* Print the Secondary Status Register. */
+static void
+pci_conf_print_ssr(pcireg_t rval)
+{
+	pcireg_t devsel;
+
+	printf("    Secondary status register: 0x%04x\n", rval); /* XXX bits */
+	onoff("66 MHz capable", __BIT(5));
+	onoff("User Definable Features (UDF) support", __BIT(6));
+	onoff("Fast back-to-back capable", __BIT(7));
+	onoff("Data parity error detected", __BIT(8));
+
+	printf("      DEVSEL timing: ");
+	devsel = __SHIFTOUT(rval, __BITS(10, 9));
+	switch (devsel) {
+	case 0:
+		printf("fast");
+		break;
+	case 1:
+		printf("medium");
+		break;
+	case 2:
+		printf("slow");
+		break;
+	default:
+		printf("unknown/reserved");	/* XXX */
+		break;
+	}
+	printf(" (0x%x)\n", devsel);
+
+	onoff("Signalled target abort", __BIT(11));
+	onoff("Received target abort", __BIT(12));
+	onoff("Received master abort", __BIT(13));
+	onoff("Received system error", __BIT(14));
+	onoff("Detected parity error", __BIT(15));
+}
+
 static void
 pci_conf_print_type1(
 #ifdef _KERNEL
@@ -1085,35 +1122,7 @@ pci_conf_print_type1(
 	printf("    Secondary bus latency timer: 0x%02x\n",
 	    (regs[o2i(0x18)] >> 24) & 0xff);
 
-	rval = (regs[o2i(0x1c)] >> 16) & 0xffff;
-	printf("    Secondary status register: 0x%04x\n", rval); /* XXX bits */
-	onoff("66 MHz capable", 0x0020);
-	onoff("User Definable Features (UDF) support", 0x0040);
-	onoff("Fast back-to-back capable", 0x0080);
-	onoff("Data parity error detected", 0x0100);
-
-	printf("      DEVSEL timing: ");
-	switch (rval & 0x0600) {
-	case 0x0000:
-		printf("fast");
-		break;
-	case 0x0200:
-		printf("medium");
-		break;
-	case 0x0400:
-		printf("slow");
-		break;
-	default:
-		printf("unknown/reserved");	/* XXX */
-		break;
-	}
-	printf(" (0x%x)\n", (rval & 0x0600) >> 9);
-
-	onoff("Signaled Target Abort", 0x0800);
-	onoff("Received Target Abort", 0x1000);
-	onoff("Received Master Abort", 0x2000);
-	onoff("System Error", 0x4000);
-	onoff("Parity Error", 0x8000);
+	pci_conf_print_ssr(__SHIFTOUT(regs[o2i(0x1c)], __BITS(31, 16)));
 
 	/* XXX Print more prettily */
 	printf("    I/O region:\n");
@@ -1202,7 +1211,7 @@ pci_conf_print_type2(
 	 * XXX these need to be printed in more detail, need to be
 	 * XXX checked against specs/docs, etc.
 	 *
-	 * This layout was cribbed from the TI PCI1130 PCI-to-CardBus
+	 * This layout was cribbed from the TI PCI1420 PCI-to-CardBus
 	 * controller chip documentation, and may not be correct with
 	 * respect to various standards. (XXX)
 	 */
@@ -1218,39 +1227,9 @@ pci_conf_print_type2(
 		printf("    Capability list pointer: 0x%02x\n",
 		    PCI_CAPLIST_PTR(regs[o2i(PCI_CARDBUS_CAPLISTPTR_REG)]));
 	else
-		printf("    Reserved @ 0x14: 0x%04x\n",
-		       (regs[o2i(0x14)] >> 0) & 0xffff);
-	rval = (regs[o2i(0x14)] >> 16) & 0xffff;
-	printf("    Secondary status register: 0x%04x\n", rval);
-	onoff("66 MHz capable", 0x0020);
-	onoff("User Definable Features (UDF) support", 0x0040);
-	onoff("Fast back-to-back capable", 0x0080);
-	onoff("Data parity error detection", 0x0100);
-
-	printf("      DEVSEL timing: ");
-	switch (rval & 0x0600) {
-	case 0x0000:
-		printf("fast");
-		break;
-	case 0x0200:
-		printf("medium");
-		break;
-	case 0x0400:
-		printf("slow");
-		break;
-	default:
-		printf("unknown/reserved");	/* XXX */
-		break;
-	}
-	printf(" (0x%x)\n", (rval & 0x0600) >> 9);
-	onoff("PCI target aborts terminate CardBus bus master transactions",
-	    0x0800);
-	onoff("CardBus target aborts terminate PCI bus master transactions",
-	    0x1000);
-	onoff("Bus initiator aborts terminate initiator transactions",
-	    0x2000);
-	onoff("System error", 0x4000);
-	onoff("Parity error", 0x8000);
+		printf("    Reserved @ 0x14: 0x%04" PRIxMAX "\n",
+		       __SHIFTOUT(regs[o2i(0x14)], __BITS(15, 0)));
+	pci_conf_print_ssr(__SHIFTOUT(regs[o2i(0x14)], __BITS(31, 16)));
 
 	printf("    PCI bus number: 0x%02x\n",
 	    (regs[o2i(0x18)] >> 0) & 0xff);
@@ -1302,16 +1281,16 @@ pci_conf_print_type2(
 	printf("\n");
 	rval = (regs[o2i(0x3c)] >> 16) & 0xffff;
 	printf("    Bridge control register: 0x%04x\n", rval);
-	onoff("Parity error response", 0x0001);
-	onoff("CardBus SERR forwarding", 0x0002);
-	onoff("ISA enable", 0x0004);
-	onoff("VGA enable", 0x0008);
-	onoff("CardBus master abort reporting", 0x0020);
-	onoff("CardBus reset", 0x0040);
-	onoff("Functional interrupts routed by ExCA registers", 0x0080);
-	onoff("Memory window 0 prefetchable", 0x0100);
-	onoff("Memory window 1 prefetchable", 0x0200);
-	onoff("Write posting enable", 0x0400);
+	onoff("Parity error response", __BIT(0));
+	onoff("SERR# enable", __BIT(1));
+	onoff("ISA enable", __BIT(2));
+	onoff("VGA enable", __BIT(3));
+	onoff("Master abort mode", __BIT(5));
+	onoff("Secondary (CardBus) bus reset", __BIT(6));
+	onoff("Functional interrupts routed by ExCA registers", __BIT(7));
+	onoff("Memory window 0 prefetchable", __BIT(8));
+	onoff("Memory window 1 prefetchable", __BIT(9));
+	onoff("Write posting enable", __BIT(10));
 
 	rval = regs[o2i(0x40)];
 	printf("    Subsystem vendor ID: 0x%04x\n", PCI_VENDOR(rval));

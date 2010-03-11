@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.62.20.1 2009/05/04 08:10:35 yamt Exp $ */
+/*	$NetBSD: sbic.c,v 1.62.20.2 2010/03/11 15:02:01 yamt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.62.20.1 2009/05/04 08:10:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.62.20.2 2010/03/11 15:02:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -431,7 +431,7 @@ sbic_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		if (flags & XS_CTL_DATA_IN)
 			acb->flags |= ACB_DATAIN;
 		acb->xs = xs;
-		memcpy( &acb->cmd, xs->cmd, xs->cmdlen);
+		memcpy(&acb->cmd, xs->cmd, xs->cmdlen);
 		acb->clen = xs->cmdlen;
 		acb->sc_kv.dc_addr = xs->data;
 		acb->sc_kv.dc_count = xs->datalen;
@@ -1746,6 +1746,9 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 		if (((u_int)addr & 0xF) || (((u_int)addr + count) & 0xF))
 			dev->sc_flags |= SBICF_DCFLUSH;
 	}
+#endif
+#ifdef __powerpc__
+	dma_cachectl(addr, count);
 #endif
 
 	/*

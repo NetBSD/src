@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.110.4.3 2009/05/16 10:41:42 yamt Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.110.4.4 2010/03/11 15:04:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.110.4.3 2009/05/16 10:41:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.110.4.4 2010/03/11 15:04:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -89,7 +89,7 @@ static void wdc_pcmcia_attach(device_t, device_t, void *);
 static int wdc_pcmcia_detach(device_t, int);
 
 CFATTACH_DECL_NEW(wdc_pcmcia, sizeof(struct wdc_pcmcia_softc),
-    wdc_pcmcia_match, wdc_pcmcia_attach, wdc_pcmcia_detach, wdcactivate);
+    wdc_pcmcia_match, wdc_pcmcia_attach, wdc_pcmcia_detach, NULL);
 
 static const struct wdc_pcmcia_product {
 	struct pcmcia_product wdc_product;

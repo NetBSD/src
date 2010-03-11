@@ -349,17 +349,17 @@ static __inline__ int finish_current_sequence(drm_via_state_t * cur_seq)
 }
 
 static __inline__ int
-investigate_hazard(uint32_t cmd, hazard_t hz, drm_via_state_t * cur_seq)
+investigate_hazard(uint32_t cmd, hazard_t haz, drm_via_state_t * cur_seq)
 {
 	register uint32_t tmp, *tmp_addr;
 
-	if (cur_seq->unfinished && (cur_seq->unfinished != seqs[hz])) {
+	if (cur_seq->unfinished && (cur_seq->unfinished != seqs[haz])) {
 		int ret;
 		if ((ret = finish_current_sequence(cur_seq)))
 			return ret;
 	}
 
-	switch (hz) {
+	switch (haz) {
 	case check_for_header2:
 		if (cmd == HALCYON_HEADER2)
 			return 1;
@@ -631,7 +631,7 @@ via_check_header2(uint32_t const **buffer, const uint32_t * buf_end,
 {
 	uint32_t cmd;
 	int hz_mode;
-	hazard_t hz;
+	hazard_t haz;
 	const uint32_t *buf = *buffer;
 	const hazard_t *hz_table;
 
@@ -698,8 +698,8 @@ via_check_header2(uint32_t const **buffer, const uint32_t * buf_end,
 
 	while (buf < buf_end) {
 		cmd = *buf++;
-		if ((hz = hz_table[cmd >> 24])) {
-			if ((hz_mode = investigate_hazard(cmd, hz, hc_state))) {
+		if ((haz = hz_table[cmd >> 24])) {
+			if ((hz_mode = investigate_hazard(cmd, haz, hc_state))) {
 				if (hz_mode == 1) {
 					buf--;
 					break;

@@ -1,4 +1,9 @@
-# $NetBSD: files.secmodel,v 1.2.18.1 2009/08/19 18:48:31 yamt Exp $
+# $NetBSD: files.secmodel,v 1.2.18.2 2010/03/11 15:04:40 yamt Exp $
+
+#
+# Traditional 4.4BSD - Superuser ("root" as effective user-id 0)
+#
+include "secmodel/suser/files.suser"
 
 #
 # Traditional 4.4BSD - Securelevel

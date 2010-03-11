@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.74.10.3 2009/06/20 07:20:09 yamt Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.74.10.4 2010/03/11 15:02:57 yamt Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -261,7 +261,7 @@ struct cpu_info {
 	int		mid;		/* Module ID for MP systems */
 	int		mbus;		/* 1 if CPU is on MBus */
 	int		mxcc;		/* 1 if a MBus-level MXCC is present */
-	const char	*cpu_name;	/* CPU model */
+	const char	*cpu_longname;	/* CPU model */
 	int		cpu_impl;	/* CPU implementation code */
 	int		cpu_vers;	/* CPU version code */
 	int		mmu_impl;	/* MMU implementation code */
@@ -331,6 +331,9 @@ struct cpu_info {
 	 * in this region that aren't part of the cpu_info to uvm.
 	 */
 	vaddr_t	ci_free_sva1, ci_free_eva1, ci_free_sva2, ci_free_eva2;
+
+	struct evcnt ci_lev10;
+	struct evcnt ci_lev14;
 };
 
 /*
@@ -421,7 +424,7 @@ struct cpu_info {
 #if defined(MULTIPROCESSOR) || defined(MODULAR) || defined(_MODULE)
 #define	CPU_INFO_FOREACH(cii, cp)	cii = 0; (cp = cpus[cii]) && cp->eintstack && cii < sparc_ncpus; cii++
 #else
-#define CPU_INFO_FOREACH(cii, cp)	(void)cii, cp = curcpu(); cp != NULL; cp = NULL
+#define CPU_INFO_FOREACH(cii, cp)	cii = 0, cp = curcpu(); cp != NULL; cp = NULL
 #endif
 
 /*

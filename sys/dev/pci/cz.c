@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.48.4.2 2009/05/16 10:41:33 yamt Exp $	*/
+/*	$NetBSD: cz.c,v 1.48.4.3 2010/03/11 15:03:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.48.4.2 2009/05/16 10:41:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.48.4.3 2010/03/11 15:03:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,8 +348,8 @@ cz_attach(device_t parent, device_t self, void *aux)
 	if (cz->cz_ih == NULL) {
 		aprint_error_dev(&cz->cz_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		/* We will fall-back on polling mode. */
 	} else
 		aprint_normal_dev(&cz->cz_dev, "interrupting at %s\n",

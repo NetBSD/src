@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.8.2.2 2009/05/04 08:13:48 yamt Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.8.2.3 2010/03/11 15:04:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.8.2.2 2009/05/04 08:13:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.8.2.3 2010/03/11 15:04:19 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,7 +108,7 @@ static uint64_t		xc_donep;
 void
 xc_init_cpu(struct cpu_info *ci)
 {
-	static bool again;
+	static bool again = false;
 	int error;
 
 	if (!again) {

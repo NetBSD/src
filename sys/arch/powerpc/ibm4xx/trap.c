@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.48.10.1 2009/05/04 08:11:43 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.48.10.2 2010/03/11 15:02:49 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.48.10.1 2009/05/04 08:11:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.48.10.2 2010/03/11 15:02:49 yamt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.48.10.1 2009/05/04 08:11:43 yamt Exp $");
 #include <sys/reboot.h>
 #include <sys/syscall.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 #include <sys/pool.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
@@ -102,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.48.10.1 2009/05/04 08:11:43 yamt Exp $");
 #include <machine/trap.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/pmap.h>
 #include <powerpc/ibm4xx/tlb.h>
 #include <powerpc/fpu/fpu_extern.h>
@@ -132,11 +132,12 @@ trap(struct trapframe *frame)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l ? l->l_proc : NULL;
+	struct pcb *pcb;
 	int type = frame->exc;
 	int ftype, rv;
 	ksiginfo_t ksi;
 
-	KASSERT(l == 0 || (l->l_stat == LSONPROC));
+	KASSERT(l == NULL || (l->l_stat == LSONPROC));
 
 	if (frame->srr1 & PSL_PR) {
 		LWP_CACHE_CREDS(l, p);
@@ -209,7 +210,8 @@ trap(struct trapframe *frame)
 			}
 			if (rv == 0)
 				goto done;
-			if ((fb = l->l_addr->u_pcb.pcb_onfault) != NULL) {
+			pcb = lwp_getpcb(l);
+			if ((fb = pcb->pcb_onfault) != NULL) {
 				frame->tf_xtra[TF_PID] = KERNEL_PID;
 				frame->srr0 = fb->fb_pc;
 				frame->srr1 |= PSL_IR; /* Re-enable IMMU */
@@ -317,14 +319,14 @@ trap(struct trapframe *frame)
 		 * let's try to see if it's FPU and can be emulated.
 		 */
 		uvmexp.traps++;
-		if (!(l->l_addr->u_pcb.pcb_flags & PCB_FPU)) {
-			memset(&l->l_addr->u_pcb.pcb_fpu, 0,
-				sizeof l->l_addr->u_pcb.pcb_fpu);
-			l->l_addr->u_pcb.pcb_flags |= PCB_FPU;
+		pcb = lwp_getpcb(l);
+
+		if (!(pcb->pcb_flags & PCB_FPU)) {
+			memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
+			pcb->pcb_flags |= PCB_FPU;
 		}
 
-		if ((rv = fpu_emulate(frame,
-			(struct fpreg *)&l->l_addr->u_pcb.pcb_fpu))) {
+		if ((rv = fpu_emulate(frame, (struct fpreg *)&pcb->pcb_fpu))) {
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = rv;
 			ksi.ksi_trap = EXC_PGM;
@@ -337,7 +339,8 @@ trap(struct trapframe *frame)
 		{
 			struct faultbuf *fb;
 
-			if ((fb = l->l_addr->u_pcb.pcb_onfault) != NULL) {
+			pcb = lwp_getpcb(l);
+			if ((fb = pcb->pcb_onfault) != NULL) {
 				frame->tf_xtra[TF_PID] = KERNEL_PID;
 				frame->srr0 = fb->fb_pc;
 				frame->srr1 |= PSL_IR; /* Re-enable IMMU */
@@ -495,10 +498,8 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 	/*
 	 * Stolen from physio():
 	 */
-	uvm_lwp_hold(l);
 	error = uvm_vslock(p->p_vmspace, __UNCONST(udaddr), len, VM_PROT_READ);
 	if (error) {
-		uvm_lwp_rele(l);
 		return EFAULT;
 	}
 	up = (char *)vmaprange(p, (vaddr_t)udaddr, len, VM_PROT_READ);
@@ -506,7 +507,6 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 	memcpy(kp, up, len);
 	vunmaprange((vaddr_t)up, len);
 	uvm_vsunlock(p->p_vmspace, __UNCONST(udaddr), len);
-	uvm_lwp_rele(l);
 
 	return 0;
 }
@@ -594,10 +594,8 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 	/*
 	 * Stolen from physio():
 	 */
-	uvm_lwp_hold(l);
 	error = uvm_vslock(p->p_vmspace, udaddr, len, VM_PROT_WRITE);
 	if (error) {
-		uvm_lwp_rele(l);
 		return EFAULT;
 	}
 	up = (char *)vmaprange(p, (vaddr_t)udaddr, len,
@@ -606,7 +604,6 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 	memcpy(up, kp, len);
 	vunmaprange((vaddr_t)up, len);
 	uvm_vsunlock(p->p_vmspace, udaddr, len);
-	uvm_lwp_rele(l);
 
 	return 0;
 }

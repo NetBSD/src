@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.14.4.3 2009/06/20 07:20:21 yamt Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.14.4.4 2010/03/11 15:03:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.14.4.3 2009/06/20 07:20:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.14.4.4 2010/03/11 15:03:28 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -388,19 +383,19 @@ ahci_attach(struct ahci_softc *sc)
 		ahci_setup_port(sc, i);
 		chp->ch_ndrive = 1;
 		if (bus_space_subregion(sc->sc_ahcit, sc->sc_ahcih,
-		    AHCI_P_SSTS(i), 1,  &achp->ahcic_sstatus) != 0) {
+		    AHCI_P_SSTS(i), 4,  &achp->ahcic_sstatus) != 0) {
 			aprint_error("%s: couldn't map channel %d "
 			    "sata_status regs\n", AHCINAME(sc), i);
 			break;
 		}
 		if (bus_space_subregion(sc->sc_ahcit, sc->sc_ahcih,
-		    AHCI_P_SCTL(i), 1,  &achp->ahcic_scontrol) != 0) {
+		    AHCI_P_SCTL(i), 4,  &achp->ahcic_scontrol) != 0) {
 			aprint_error("%s: couldn't map channel %d "
 			    "sata_control regs\n", AHCINAME(sc), i);
 			break;
 		}
 		if (bus_space_subregion(sc->sc_ahcit, sc->sc_ahcih,
-		    AHCI_P_SERR(i), 1,  &achp->ahcic_serror) != 0) {
+		    AHCI_P_SERR(i), 4,  &achp->ahcic_serror) != 0) {
 			aprint_error("%s: couldn't map channel %d "
 			    "sata_error regs\n", AHCINAME(sc), i);
 			break;
@@ -512,7 +507,6 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 		chp->ch_queue->active_xfer->c_kill_xfer(chp,
 		    chp->ch_queue->active_xfer, KILL_RESET);
 	}
-	ahci_channel_start(sc, chp);
 	/* wait 31s for BSY to clear */
 	for (i = 0; i <3100; i++) {
 		tfd = AHCI_READ(sc, AHCI_P_TFD(chp->ch_channel));
@@ -528,6 +522,8 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 	    DEBUG_PROBE);
 	/* clear port interrupt register */
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
+	/* and start channel */
+	ahci_channel_start(sc, chp);
 
 	return;
 }
@@ -572,8 +568,6 @@ ahci_probe_drive(struct ata_channel *chp)
 	switch (sata_reset_interface(chp, sc->sc_ahcit, achp->ahcic_scontrol,
 	    achp->ahcic_sstatus)) {
 	case SStatus_DET_DEV:
-		/* clear SErrors and start operations */
-		ahci_channel_start(sc, chp);
 		/* wait 31s for BSY to clear */
 		for (i = 0; i <3100; i++) {
 			sig = AHCI_READ(sc, AHCI_P_TFD(chp->ch_channel));
@@ -582,9 +576,11 @@ ahci_probe_drive(struct ata_channel *chp)
 				break;
 			tsleep(&sc, PRIBIO, "ahcid2h", mstohz(10));
 		}
-		if (i == 1500)
+		if (i == 1500) {
 			aprint_error("%s: BSY never cleared, TD 0x%x\n",
 			    AHCINAME(sc), sig);
+			return;
+		}
 		AHCIDEBUG_PRINT(("%s: BSY took %d ms\n", AHCINAME(sc), i * 10),
 		    DEBUG_PROBE);
 		sig = AHCI_READ(sc, AHCI_P_SIG(chp->ch_channel));
@@ -601,7 +597,11 @@ ahci_probe_drive(struct ata_channel *chp)
 		} else
 			chp->ch_drive[0].drive_flags |= DRIVE_ATA;
 		splx(s);
-		/* enable interrupts */
+		/* clear port interrupt register */
+		AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
+		/* start channel */
+		ahci_channel_start(sc, chp);
+		/* and enable interrupts */
 		AHCI_WRITE(sc, AHCI_P_IE(chp->ch_channel),
 		    AHCI_P_IX_TFES | AHCI_P_IX_HBFS | AHCI_P_IX_IFS |
 		    AHCI_P_IX_OFS | AHCI_P_IX_DPS | AHCI_P_IX_UFS |

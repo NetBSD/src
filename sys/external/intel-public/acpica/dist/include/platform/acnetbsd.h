@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.2.2.2 $
+ *       $Revision: 1.2.2.3 $
  *
  *****************************************************************************/
 
@@ -135,7 +135,7 @@
 #define COMPILER_DEPENDENT_UINT64 uint64_t
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-#ifdef _KERNEL
+#ifdef _KERNEL_OPT
 #include "opt_acpi.h"           /* collect build-time options here */
 #endif /* _KERNEL */
 
@@ -155,9 +155,30 @@
 #define ACPI_INTERNAL_XFACE
 #define ACPI_INTERNAL_VAR_XFACE
 
+/*
+ * XXX: The internal memory tracking of ACPICA, available when
+ *      ACPI_DBG_TRACK_ALLOCATIONS is defined, has been removed
+ *      from ACPI_DEBUG.
+ *
+ *      This is due to the instability of the ABI of ACPICA.
+ *
+ *      If the memory tracking is enabled, ACPICA will insert a header
+ *      to each memory allocation. As a consequence, when ACPI specific
+ *      code is loaded as a kernel module and the running kernel has
+ *      been compiled with ACPI_DEBUG, the result is an instant panic.
+ *      This happens because of unaligned memory access when the code
+ *      tries to use ACPI_FREE for a buffer obtained via ACPI_ALLOCATE,
+ *      AcpiEvaluateObject(), and related calls.
+ *
+ *      If the involved memory statistics are required, a separate constant
+ *      ACPI_DEBUG_ALLOC is available in options(4) for ACPI_DEBUG kernels.
+ */
+
 #ifdef ACPI_DEBUG
 #define ACPI_DEBUG_OUTPUT
+#ifdef ACPI_DEBUG_ALLOC
 #define ACPI_DBG_TRACK_ALLOCATIONS
+#endif
 #ifdef DEBUGGER_THREADING
 #undef DEBUGGER_THREADING
 #endif /* DEBUGGER_THREADING */

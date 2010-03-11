@@ -1,4 +1,4 @@
-/* $NetBSD: vbe.c,v 1.2.4.3 2009/09/16 13:37:39 yamt Exp $ */
+/* $NetBSD: vbe.c,v 1.2.4.4 2010/03/11 15:02:31 yamt Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,24 +38,10 @@
 
 extern const uint8_t rasops_cmap[];
 
-static int vbeverbose = 1;
-
 static struct _vbestate {
 	int		available;
 	int		modenum;
 } vbestate;
-
-static void
-vbe_dump(struct vbeinfoblock *vbe)
-{
-	int mem = (int)vbe->TotalMemory * 64;
-
-	if (!vbeverbose)
-		return;
-
-	printf(">> VESA VBE Version %d.%d %d k\n",
-	    vbe->VbeVersion >> 8, vbe->VbeVersion & 0xff, mem);
-}
 
 static int
 vbe_mode_is_supported(struct modeinfoblock *mi)
@@ -74,6 +60,16 @@ vbe_mode_is_supported(struct modeinfoblock *mi)
 	return 1;
 }
 
+static bool
+vbe_check(void)
+{
+	if (!vbestate.available) {
+		printf("VBE not available\n");
+		return false;
+	}
+	return true;
+}
+
 void
 vbe_init(void)
 {
@@ -83,14 +79,9 @@ vbe_init(void)
 	memcpy(vbe.VbeSignature, "VBE2", 4);
 	if (biosvbe_info(&vbe) != 0x004f)
 		return;
-	if (memcmp(vbe.VbeSignature, "VESA", 4) != 0) {
-		printf("VESA VBE: bad signature %c%c%c%c\n",
-		    vbe.VbeSignature[0], vbe.VbeSignature[1],
-		    vbe.VbeSignature[2], vbe.VbeSignature[3]);
+	if (memcmp(vbe.VbeSignature, "VESA", 4) != 0)
 		return;
-	}
 
-	vbe_dump(&vbe);
 	vbestate.available = 1;
 	vbestate.modenum = 0;
 }
@@ -107,10 +98,8 @@ vbe_set_palette(const uint8_t *cmap, int slot)
 	struct paletteentry pe;
 	int ret;
 
-	if (!vbestate.available) {
-		printf("VESA BIOS extensions not available\n");
+	if (!vbe_check())
 		return 1;
-	}
 
 	pe.Blue = cmap[2] >> 2;
 	pe.Green = cmap[1] >> 2;
@@ -129,25 +118,23 @@ vbe_set_mode(int modenum)
 	struct btinfo_framebuffer fb;
 	int ret, i;
 
-	if (!vbestate.available) {
-		printf("VESA BIOS extensions not available\n");
+	if (!vbe_check())
 		return 1;
-	}
 
 	ret = biosvbe_get_mode_info(modenum, &mi);
 	if (ret != 0x004f) {
-		printf("VESA VBE mode 0x%x is invalid.\n", modenum);
+		printf("mode 0x%x invalid\n", modenum);
 		return 1;
 	}
 
 	if (!vbe_mode_is_supported(&mi)) {
-		printf("VESA VBE mode 0x%x is not supported.\n", modenum);
+		printf("mode 0x%x not supported\n", modenum);
 		return 1;
 	}
 
 	ret = biosvbe_set_mode(modenum);
 	if (ret != 0x004f) {
-		printf("VESA VBE mode 0x%x could not be set.\n", modenum);
+		printf("mode 0x%x could not be set\n", modenum);
 		return 1;
 	}
 
@@ -183,7 +170,7 @@ vbe_commit(void)
 	if (vbestate.modenum > 0) {
 		ret = vbe_set_mode(vbestate.modenum);
 		if (ret) {
-			printf("WARNING: failed to set VESA VBE mode 0x%x\n",
+			printf("WARNING: failed to set VBE mode 0x%x\n",
 			    vbestate.modenum);
 			delay(5000000);
 		}
@@ -266,7 +253,6 @@ vbe_find_mode(char *str)
 			return mode;
 	}
 
-	printf("VESA VBE BIOS does not support %s\n", str);
 	return 0;
 }
 
@@ -286,10 +272,8 @@ vbe_modelist(void)
 	uint16_t mode;
 	int nmodes = 0, safety = 0;
 
-	if (!vbestate.available) {
-		printf("VESA BIOS extensions not available\n");
+	if (!vbe_check())
 		return;
-	}
 
 	printf("Modes: ");
 	memset(&vbe, 0, sizeof(vbe));
@@ -306,7 +290,7 @@ vbe_modelist(void)
 		safety++;
 		farptr += 2;
 		if (safety == 100) {
-			printf("[garbage] ");
+			printf("[?] ");
 			break;
 		}
 		if (biosvbe_get_mode_info(mode, &mi) != 0x004f)
@@ -335,10 +319,8 @@ command_vesa(char *cmd)
 	char arg[20];
 	int modenum;
 
-	if (!vbe_available()) {
-		printf("VESA VBE not available\n");
+	if (!vbe_check())
 		return;
-	}
 
 	strlcpy(arg, cmd, sizeof(arg));
 
@@ -370,6 +352,6 @@ command_vesa(char *cmd)
 		return;
 	}
 
-	printf("invalid flag, must be 'enabled', 'disabled', "
-	    "a display mode, or a valid VESA VBE mode number.\n");
+	printf("invalid flag, must be 'on', 'off', "
+	    "a display mode, or a VBE mode number\n");
 }

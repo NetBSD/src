@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.138.2.3 2009/07/18 14:53:23 yamt Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.138.2.4 2010/03/11 15:04:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.138.2.3 2009/07/18 14:53:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.138.2.4 2010/03/11 15:04:19 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -129,7 +129,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.138.2.3 2009/07/18 14:53:23 yamt E
 #include <sys/errno.h>
 #include <sys/ptrace.h>
 #include <sys/uio.h>
-#include <sys/user.h>
 #include <sys/ras.h>
 #include <sys/kmem.h>
 #include <sys/kauth.h>
@@ -141,6 +140,80 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.138.2.3 2009/07/18 14:53:23 yamt E
 #include <machine/reg.h>
 
 #ifdef PTRACE
+static kauth_listener_t ptrace_listener;
+
+static int
+ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	struct proc *p;
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+	p = arg0;
+
+	if (action != KAUTH_PROCESS_PTRACE)
+		return result;
+
+	switch ((u_long)arg1) {
+	case PT_TRACE_ME:
+	case PT_ATTACH:
+	case PT_WRITE_I:
+	case PT_WRITE_D:
+	case PT_READ_I:
+	case PT_READ_D:
+	case PT_IO:
+#ifdef PT_GETREGS
+	case PT_GETREGS:
+#endif
+#ifdef PT_SETREGS
+	case PT_SETREGS:
+#endif
+#ifdef PT_GETFPREGS
+	case PT_GETFPREGS:
+#endif
+#ifdef PT_SETFPREGS
+	case PT_SETFPREGS:
+#endif
+#ifdef __HAVE_PTRACE_MACHDEP
+	PTRACE_MACHDEP_REQUEST_CASES
+#endif
+		if (kauth_cred_getuid(cred) != kauth_cred_getuid(p->p_cred) ||
+		    ISSET(p->p_flag, PK_SUGID)) {
+			break;
+		}
+
+		result = KAUTH_RESULT_ALLOW;
+
+	break;
+
+#ifdef PT_STEP
+	case PT_STEP:
+#endif
+	case PT_CONTINUE:
+	case PT_KILL:
+	case PT_DETACH:
+	case PT_LWPINFO:
+	case PT_SYSCALL:
+	case PT_DUMPCORE:
+		result = KAUTH_RESULT_ALLOW;
+		break;
+
+	default:
+		break;
+	}
+
+	return result;
+}
+
+void
+ptrace_init(void)
+{
+
+	ptrace_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
+	    ptrace_listener_cb, NULL);
+}
+
 /*
  * Process debugging system call.
  */
@@ -541,28 +614,20 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 			break;
 		}
 
-		uvm_lwp_hold(lt);
-
 		/* If the address parameter is not (int *)1, set the pc. */
-		if ((int *)SCARG(uap, addr) != (int *)1)
-			if ((error = process_set_pc(lt, SCARG(uap, addr))) != 0) {
-				uvm_lwp_rele(lt);
+		if ((int *)SCARG(uap, addr) != (int *)1) {
+			error = process_set_pc(lt, SCARG(uap, addr));
+			if (error != 0)
 				break;
-			}
-
+		}
 #ifdef PT_STEP
 		/*
 		 * Arrange for a single-step, if that's requested and possible.
 		 */
 		error = process_sstep(lt, req == PT_STEP);
-		if (error) {
-			uvm_lwp_rele(lt);
+		if (error)
 			break;
-		}
 #endif
-
-		uvm_lwp_rele(lt);
-
 		if (req == PT_DETACH) {
 			CLR(t->p_slflag, PSL_TRACED|PSL_FSTRACE|PSL_SYSCALL);
 
@@ -793,8 +858,6 @@ process_doregs(struct lwp *curl /*tracer*/,
 	if ((size_t)kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	uvm_lwp_hold(l);
-
 	error = process_read_regs(l, &r);
 	if (error == 0)
 		error = uiomove(kv, kl, uio);
@@ -804,8 +867,6 @@ process_doregs(struct lwp *curl /*tracer*/,
 		else
 			error = process_write_regs(l, &r);
 	}
-
-	uvm_lwp_rele(l);
 
 	uio->uio_offset = 0;
 	return (error);
@@ -834,7 +895,7 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 	int error;
 	struct fpreg r;
 	char *kv;
-	int kl;
+	size_t kl;
 
 	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)sizeof(r))
 		return EINVAL;
@@ -847,20 +908,23 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 	if ((size_t)kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	uvm_lwp_hold(l);
-
+#ifdef __HAVE_PROCESS_XFPREGS
+	error = process_read_xfpregs(l, &r, &kl);
+#else
 	error = process_read_fpregs(l, &r);
+#endif
 	if (error == 0)
 		error = uiomove(kv, kl, uio);
 	if (error == 0 && uio->uio_rw == UIO_WRITE) {
 		if (l->l_stat != LSSTOP)
 			error = EBUSY;
 		else
+#ifdef __HAVE_PROCESS_XFPREGS
+			error = process_write_xfpregs(l, &r, kl);
+#else
 			error = process_write_fpregs(l, &r);
+#endif
 	}
-
-	uvm_lwp_rele(l);
-
 	uio->uio_offset = 0;
 	return (error);
 #else

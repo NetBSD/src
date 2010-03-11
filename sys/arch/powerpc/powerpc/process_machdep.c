@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.26 2007/10/17 19:56:48 garbled Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.26.20.1 2010/03/11 15:02:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,13 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.26 2007/10/17 19:56:48 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.26.20.1 2010/03/11 15:02:51 yamt Exp $");
 
 #include "opt_altivec.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/ptrace.h>
 
@@ -85,7 +84,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 int
 process_read_fpregs(struct lwp *l, struct fpreg *fpregs)
 {
-	struct pcb * const pcb = &l->l_addr->u_pcb;
+	struct pcb * const pcb = lwp_getpcb(l);
 
 	/* Is the process using the fpu? */
 	if ((pcb->pcb_flags & PCB_FPU) == 0) {
@@ -104,7 +103,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *fpregs)
 int
 process_write_fpregs(struct lwp *l, const struct fpreg *fpregs)
 {
-	struct pcb * const pcb = &l->l_addr->u_pcb;
+	struct pcb * const pcb = lwp_getpcb(l);
 
 #ifdef PPC_HAVE_FPU
 	save_fpu_lwp(l, FPU_DISCARD);
@@ -147,7 +146,7 @@ process_sstep(struct lwp *l, int sstep)
 static int
 process_machdep_read_vecregs(struct lwp *l, struct vreg *vregs)
 {
-	struct pcb * const pcb = &l->l_addr->u_pcb;
+	struct pcb * const pcb = lwp_getpcb(l);
 
 	if (cpu_altivec == 0)
 		return (EINVAL);
@@ -166,7 +165,7 @@ process_machdep_read_vecregs(struct lwp *l, struct vreg *vregs)
 static int
 process_machdep_write_vecregs(struct lwp *l, struct vreg *vregs)
 {
-	struct pcb * const pcb = &l->l_addr->u_pcb;
+	struct pcb * const pcb = lwp_getpcb(l);
 
 	if (cpu_altivec == 0)
 		return (EINVAL);
@@ -233,8 +232,6 @@ process_machdep_dovecregs(struct lwp *curl, struct lwp *l, struct uio *uio)
 	if (kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	uvm_lwp_hold(l);
-
 	if (kl < 0)
 		error = EINVAL;
 	else
@@ -247,8 +244,6 @@ process_machdep_dovecregs(struct lwp *curl, struct lwp *l, struct uio *uio)
 		else
 			error = process_machdep_write_vecregs(l, &r);
 	}
-
-	uvm_lwp_rele(l);
 
 	uio->uio_offset = 0;
 	return (error);

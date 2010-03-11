@@ -1,4 +1,4 @@
-/*	$NetBSD: pl030_rtc.c,v 1.8.46.1 2009/08/19 18:46:07 yamt Exp $ */
+/*	$NetBSD: pl030_rtc.c,v 1.8.46.2 2010/03/11 15:02:14 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -32,7 +32,7 @@
 /* Include header files */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl030_rtc.c,v 1.8.46.1 2009/08/19 18:46:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl030_rtc.c,v 1.8.46.2 2010/03/11 15:02:14 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,7 +64,7 @@ CFATTACH_DECL_NEW(plrtc, sizeof(struct plrtc_softc),
     plrtc_probe, plrtc_attach, NULL, NULL);
 
 static int
-plrtc_gettime(todr_chip_handle_t todr, volatile struct timeval *tv)
+plrtc_gettime(todr_chip_handle_t todr, struct timeval *tv)
 {
 	struct plrtc_softc *sc;
 
@@ -75,7 +75,7 @@ plrtc_gettime(todr_chip_handle_t todr, volatile struct timeval *tv)
 }
 
 static int
-plrtc_settime(todr_chip_handle_t todr, volatile struct timeval *tv)
+plrtc_settime(todr_chip_handle_t todr, struct timeval *tv)
 {
 	struct plrtc_softc *sc;
 

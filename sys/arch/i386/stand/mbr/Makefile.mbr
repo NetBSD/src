@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mbr,v 1.12.62.1 2009/05/04 08:11:20 yamt Exp $
+#	$NetBSD: Makefile.mbr,v 1.12.62.2 2010/03/11 15:02:31 yamt Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -39,9 +39,11 @@ DPSRCS+=	machine x86
 
 CLEANFILES+=	${PROG}.tmp
 
+LOADADDR=	0x8800
+
 ${PROG}: ${OBJS}
 	${_MKTARGET_LINK}
-	${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,-Ttext,0x600 ${OBJS}
+	${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,-Ttext,${LOADADDR} ${OBJS}
 	@ set -- $$( ${NM} -t d ${PROG}.tmp | grep '\<mbr_space\>' \
 		    | ${TOOL_SED} 's/^0*//'  ); \
 		echo "#### There are $$1 free bytes in ${PROG}"

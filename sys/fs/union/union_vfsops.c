@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.52.4.3 2009/07/18 14:53:22 yamt Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.52.4.4 2010/03/11 15:04:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.52.4.3 2009/07/18 14:53:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.52.4.4 2010/03/11 15:04:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	    "WARNING: it can cause crashes and file system corruption\n");
 
 	lowerrootvp = mp->mnt_vnodecovered;
-	VREF(lowerrootvp);
+	vref(lowerrootvp);
 
 	/*
 	 * Find upper node.
@@ -384,10 +384,10 @@ union_root(struct mount *mp, struct vnode **vpp)
 	/*
 	 * Return locked reference to root.
 	 */
-	VREF(um->um_uppervp);
+	vref(um->um_uppervp);
 	vn_lock(um->um_uppervp, LK_EXCLUSIVE | LK_RETRY);
 	if (um->um_lowervp)
-		VREF(um->um_lowervp);
+		vref(um->um_lowervp);
 	error = union_allocvp(vpp, mp, NULL, NULL, NULL,
 			      um->um_uppervp, um->um_lowervp, 1);
 

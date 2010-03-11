@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.3 2009/09/16 13:38:04 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.2.4 2010/03/11 15:04:33 yamt Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/raidframe
@@ -19,7 +19,7 @@ SRCS=   rf_acctrace.c rf_alloclist.c rf_aselect.c rf_callback.c		\
 	rf_raid5.c rf_raid5_rotatedspare.c rf_reconbuffer.c		\
 	rf_reconmap.c rf_reconstruct.c rf_reconutil.c rf_revent.c	\
 	rf_shutdown.c rf_sstf.c rf_states.c rf_stripelocks.c		\
-	rf_strutils.c rf_utils.c rf_compat50.c
+	rf_strutils.c rf_utils.c rf_compat50.c rf_paritymap.c
 
 SRCS+=	component.c
 

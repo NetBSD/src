@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.1.34.2 2009/09/16 13:38:04 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.34.3 2010/03/11 15:04:37 yamt Exp $
 #
 
 SUBDIR= 	rumpkern
-SUBDIR+=	rumpuser
-
 SUBDIR+=	rumpcrypto rumpdev rumpnet rumpvfs
 
 .include <bsd.subdir.mk>

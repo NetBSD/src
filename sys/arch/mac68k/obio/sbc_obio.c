@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.23.4.1 2009/05/04 08:11:27 yamt Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.23.4.2 2010/03/11 15:02:35 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.23.4.1 2009/05/04 08:11:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.23.4.2 2010/03/11 15:02:35 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.23.4.1 2009/05/04 08:11:27 yamt Exp $
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

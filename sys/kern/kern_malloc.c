@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.119.4.2 2009/09/16 13:38:01 yamt Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.119.4.3 2010/03/11 15:04:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.119.4.2 2009/09/16 13:38:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.119.4.3 2010/03/11 15:04:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -215,6 +215,7 @@ domlog(void *a, long size, struct malloc_type *type, int action,
 		malloclogptr = 0;
 }
 
+#ifdef DIAGNOSTIC
 static void
 hitmlog(void *a)
 {
@@ -271,6 +272,7 @@ hitmlog(void *a)
 
 #undef PRT
 }
+#endif /* DIAGNOSTIC */
 #endif /* MALLOCLOG */
 
 #ifdef DIAGNOSTIC

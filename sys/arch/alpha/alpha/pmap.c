@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.235.4.4 2009/09/16 13:37:34 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.235.4.5 2010/03/11 15:01:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,14 +140,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.235.4.4 2009/09/16 13:37:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.235.4.5 2010/03/11 15:01:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/shm.h>
 #include <sys/atomic.h>
@@ -358,14 +358,13 @@ static struct pmap_asn_info pmap_asn_info[ALPHA_MAXPROCS];
  *	  There is a lock ordering constraint for pmap_growkernel_lock.
  *	  pmap_growkernel() acquires the locks in the following order:
  *
- *		pmap_growkernel_lock -> pmap_all_pmaps_lock ->
+ *		pmap_growkernel_lock (write) -> pmap_all_pmaps_lock ->
  *		    pmap->pm_lock
  *
- *	  But pmap_lev1map_create() is called with pmap->pm_lock held,
- *	  and also needs to acquire the pmap_growkernel_lock.  So,
- *	  we require that the caller of pmap_lev1map_create() (currently,
- *	  the only caller is pmap_enter()) acquire pmap_growkernel_lock
- *	  before acquring pmap->pm_lock.
+ *	  We need to ensure consistency between user pmaps and the
+ *	  kernel_lev1map.  For this reason, pmap_growkernel_lock must
+ *	  be held to prevent kernel_lev1map changing across pmaps
+ *	  being added to / removed from the global pmaps list.
  *
  *	Address space number management (global ASN counters and per-pmap
  *	ASN state) are not locked; they use arrays of values indexed
@@ -377,7 +376,7 @@ static struct pmap_asn_info pmap_asn_info[ALPHA_MAXPROCS];
  */
 static krwlock_t pmap_main_lock;
 static kmutex_t pmap_all_pmaps_lock;
-static kmutex_t pmap_growkernel_lock;
+static krwlock_t pmap_growkernel_lock;
 
 #define	PMAP_MAP_TO_HEAD_LOCK()		rw_enter(&pmap_main_lock, RW_READER)
 #define	PMAP_MAP_TO_HEAD_UNLOCK()	rw_exit(&pmap_main_lock)
@@ -439,7 +438,6 @@ static struct pool_cache pmap_tlb_shootdown_job_cache;
  * Internal routines
  */
 static void	alpha_protection_init(void);
-static void	pmap_do_remove(pmap_t, vaddr_t, vaddr_t, bool);
 static bool	pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, bool, long);
 static void	pmap_changebit(struct vm_page *, pt_entry_t, pt_entry_t, long);
 
@@ -585,12 +583,12 @@ do {									\
  */
 #define	PMAP_ACTIVATE(pmap, l, cpu_id)					\
 do {									\
+	struct pcb *pcb = lwp_getpcb(l);				\
 	PMAP_ACTIVATE_ASN_SANITY(pmap, cpu_id);				\
 									\
-	(l)->l_addr->u_pcb.pcb_hw.apcb_ptbr =				\
+	pcb->pcb_hw.apcb_ptbr =				\
 	    ALPHA_K0SEG_TO_PHYS((vaddr_t)(pmap)->pm_lev1map) >> PGSHIFT; \
-	(l)->l_addr->u_pcb.pcb_hw.apcb_asn = 				\
-	    (pmap)->pm_asni[(cpu_id)].pma_asn;				\
+	pcb->pcb_hw.apcb_asn = (pmap)->pm_asni[(cpu_id)].pma_asn;	\
 									\
 	if ((l) == curlwp) {						\
 		/*							\
@@ -600,26 +598,6 @@ do {									\
 		(void) alpha_pal_swpctx((u_long)l->l_md.md_pcbpaddr);	\
 	}								\
 } while (/*CONSTCOND*/0)
-
-#if defined(MULTIPROCESSOR)
-/*
- * PMAP_LEV1MAP_SHOOTDOWN:
- *
- *	"Shoot down" the level 1 map on other CPUs.
- */
-#define	PMAP_LEV1MAP_SHOOTDOWN(pmap, cpu_id)				\
-do {									\
-	u_long __cpumask = (pmap)->pm_cpus & ~(1UL << (cpu_id));	\
-									\
-	if (__cpumask != 0) {						\
-		alpha_multicast_ipi(__cpumask,				\
-		    ALPHA_IPI_PMAP_REACTIVATE);				\
-		/* XXXSMP BARRIER OPERATION */				\
-	}								\
-} while (/*CONSTCOND*/0)
-#else
-#define	PMAP_LEV1MAP_SHOOTDOWN(pmap, cpu_id)	/* nothing */
-#endif /* MULTIPROCESSOR */
 
 /*
  * PMAP_SET_NEEDISYNC:
@@ -770,6 +748,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	pt_entry_t *lev2map, *lev3map;
 	pt_entry_t pte;
 	vsize_t bufsz;
+	struct pcb *pcb;
 	int i;
 
 #ifdef DEBUG
@@ -895,7 +874,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	}
 
 	/* Initialize the pmap_growkernel_lock. */
-	mutex_init(&pmap_growkernel_lock, MUTEX_DEFAULT, IPL_NONE);
+	rw_init(&pmap_growkernel_lock);
 
 	/*
 	 * Set up level three page table (lev3map)
@@ -962,18 +941,18 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	for (i = 0; i < ALPHA_MAXPROCS; i++) {
 		TAILQ_INIT(&pmap_tlb_shootdown_q[i].pq_head);
 		mutex_init(&pmap_tlb_shootdown_q[i].pq_lock, MUTEX_DEFAULT,
-		    IPL_VM);
+		    IPL_SCHED);
 	}
 #endif
 
 	/*
-	 * Set up proc0's PCB such that the ptbr points to the right place
+	 * Set up lwp0's PCB such that the ptbr points to the right place
 	 * and has the kernel pmap's (really unused) ASN.
 	 */
-	lwp0.l_addr->u_pcb.pcb_hw.apcb_ptbr =
+	pcb = lwp_getpcb(&lwp0);
+	pcb->pcb_hw.apcb_ptbr =
 	    ALPHA_K0SEG_TO_PHYS((vaddr_t)kernel_lev1map) >> PGSHIFT;
-	lwp0.l_addr->u_pcb.pcb_hw.apcb_asn =
-	    pmap_kernel()->pm_asni[cpu_number()].pma_asn;
+	pcb->pcb_hw.apcb_asn = pmap_kernel()->pm_asni[cpu_number()].pma_asn;
 
 	/*
 	 * Mark the kernel pmap `active' on this processor.
@@ -1179,12 +1158,20 @@ pmap_create(void)
 	}
 	mutex_init(&pmap->pm_lock, MUTEX_DEFAULT, IPL_NONE);
 
+ try_again:
+	rw_enter(&pmap_growkernel_lock, RW_READER);
+
+	if (pmap_lev1map_create(pmap, cpu_number()) != 0) {
+		rw_exit(&pmap_growkernel_lock);
+		(void) kpause("pmap_create", false, hz >> 2, NULL);
+		goto try_again;
+	}
+
 	mutex_enter(&pmap_all_pmaps_lock);
 	TAILQ_INSERT_TAIL(&pmap_all_pmaps, pmap, pm_list);
 	mutex_exit(&pmap_all_pmaps_lock);
 
-	i = pmap_lev1map_create(pmap, cpu_number());
-	KASSERT(i == 0);
+	rw_exit(&pmap_growkernel_lock);
 
 	return (pmap);
 }
@@ -1207,6 +1194,8 @@ pmap_destroy(pmap_t pmap)
 	if (atomic_dec_uint_nv(&pmap->pm_count) > 0)
 		return;
 
+	rw_enter(&pmap_growkernel_lock, RW_READER);
+
 	/*
 	 * Remove it from the global list of all pmaps.
 	 */
@@ -1215,6 +1204,8 @@ pmap_destroy(pmap_t pmap)
 	mutex_exit(&pmap_all_pmaps_lock);
 
 	pmap_lev1map_destroy(pmap, cpu_number());
+
+	rw_exit(&pmap_growkernel_lock);
 
 	/*
 	 * Since the pmap is supposed to contain no valid
@@ -1255,26 +1246,6 @@ pmap_reference(pmap_t pmap)
 void
 pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
-
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
-		printf("pmap_remove(%p, %lx, %lx)\n", pmap, sva, eva);
-#endif
-
-	pmap_do_remove(pmap, sva, eva, true);
-}
-
-/*
- * pmap_do_remove:
- *
- *	This actually removes the range of addresses from the
- *	specified map.  It is used by pmap_collect() (does not
- *	want to remove wired mappings) and pmap_remove() (does
- *	want to remove wired mappings).
- */
-static void
-pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, bool dowired)
-{
 	pt_entry_t *l1pte, *l2pte, *l3pte;
 	pt_entry_t *saved_l1pte, *saved_l2pte, *saved_l3pte;
 	vaddr_t l1eva, l2eva, vptva;
@@ -1297,8 +1268,6 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, bool dowired)
 	if (pmap == pmap_kernel()) {
 		PMAP_MAP_TO_HEAD_LOCK();
 		PMAP_LOCK(pmap);
-
-		KASSERT(dowired == true);
 
 		while (sva < eva) {
 			l3pte = PMAP_KERNEL_PTE(sva);
@@ -1381,15 +1350,14 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, bool dowired)
 
 					for (; sva < l2eva && sva < eva;
 					     sva += PAGE_SIZE, l3pte++) {
-						if (pmap_pte_v(l3pte) &&
-						    (dowired == true ||
-						     pmap_pte_w(l3pte) == 0)) {
-							needisync |=
-							    pmap_remove_mapping(
-								pmap, sva,
-								l3pte, true,
-								cpu_id);
+						if (!pmap_pte_v(l3pte)) {
+							continue;
 						}
+						needisync |=
+						    pmap_remove_mapping(
+							pmap, sva,
+							l3pte, true,
+							cpu_id);
 					}
 
 					/*
@@ -1902,7 +1870,7 @@ out:
  *	Note: no locking is necessary in this function.
  */
 void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	pt_entry_t *pte, npte;
 	long cpu_id = cpu_number();
@@ -2147,42 +2115,6 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 /* call deleted in <machine/pmap.h> */
 
 /*
- * pmap_collect:		[ INTERFACE ]
- *
- *	Garbage collects the physical map system for pages which are no
- *	longer used.  Success need not be guaranteed -- that is, there
- *	may well be pages which are not referenced, but others may be
- *	collected.
- *
- *	Called by the pageout daemon when pages are scarce.
- */
-void
-pmap_collect(pmap_t pmap)
-{
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_collect(%p)\n", pmap);
-#endif
-
-	/*
-	 * If called for the kernel pmap, just return.  We
-	 * handle this case in the event that we ever want
-	 * to have swappable kernel threads.
-	 */
-	if (pmap == pmap_kernel())
-		return;
-
-	/*
-	 * This process is about to be swapped out; free all of
-	 * the PT pages by removing the physical mappings for its
-	 * entire address space.  Note: pmap_remove() performs
-	 * all necessary locking.
-	 */
-	pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS, false);
-}
-
-/*
  * pmap_activate:		[ INTERFACE ]
  *
  *	Activate the pmap used by the specified process.  This includes
@@ -2234,29 +2166,6 @@ pmap_deactivate(struct lwp *l)
 	 */
 	atomic_and_ulong(&pmap->pm_cpus, ~(1UL << cpu_number()));
 }
-
-#if defined(MULTIPROCESSOR)
-/*
- * pmap_do_reactivate:
- *
- *	Reactivate an address space when the level 1 map changes.
- *	We are invoked by an interprocessor interrupt.
- */
-void
-pmap_do_reactivate(struct cpu_info *ci, struct trapframe *framep)
-{
-	struct pmap *pmap;
-
-	if (ci->ci_curlwp == ci->ci_data.cpu_idlelwp)
-		return;
-
-	pmap = ci->ci_curlwp->l_proc->p_vmspace->vm_map.pmap;
-
-	pmap_asn_alloc(pmap, ci->ci_cpuid);
-	if (PMAP_ISACTIVE(pmap, ci->ci_cpuid))
-		PMAP_ACTIVATE(pmap, ci->ci_curlwp, ci->ci_cpuid);
-}
-#endif /* MULTIPROCESSOR */
 
 /*
  * pmap_zero_page:		[ INTERFACE ]
@@ -3089,10 +2998,10 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	vaddr_t va;
 	int l1idx;
 
+	rw_enter(&pmap_growkernel_lock, RW_WRITER);
+
 	if (maxkvaddr <= virtual_end)
 		goto out;		/* we are OK */
-
-	mutex_enter(&pmap_growkernel_lock);
 
 	va = virtual_end;
 
@@ -3166,9 +3075,9 @@ pmap_growkernel(vaddr_t maxkvaddr)
 
 	virtual_end = va;
 
-	mutex_exit(&pmap_growkernel_lock);
-
  out:
+	rw_exit(&pmap_growkernel_lock);
+
 	return (virtual_end);
 
  die:
@@ -3180,34 +3089,21 @@ pmap_growkernel(vaddr_t maxkvaddr)
  *
  *	Create a new level 1 page table for the specified pmap.
  *
- *	Note: growkernel and the pmap must already be locked.
+ *	Note: growkernel must already be held and the pmap either
+ *	already locked or unreferenced globally.
  */
 static int
 pmap_lev1map_create(pmap_t pmap, long cpu_id)
 {
 	pt_entry_t *l1pt;
 
-#ifdef DIAGNOSTIC
-	if (pmap == pmap_kernel())
-		panic("pmap_lev1map_create: got kernel pmap");
-#endif
+	KASSERT(pmap != pmap_kernel());
 
-	if (pmap->pm_lev1map != kernel_lev1map) {
-		/*
-		 * We have to briefly unlock the pmap in pmap_enter()
-		 * do deal with a lock ordering constraint, so it's
-		 * entirely possible for this to happen.
-		 */
-		return (0);
-	}
+	KASSERT(pmap->pm_lev1map == kernel_lev1map);
+	KASSERT(pmap->pm_asni[cpu_id].pma_asn == PMAP_ASN_RESERVED);
 
-#ifdef DIAGNOSTIC
-	if (pmap->pm_asni[cpu_id].pma_asn != PMAP_ASN_RESERVED)
-		panic("pmap_lev1map_create: pmap uses non-reserved ASN");
-#endif
-
-	/* Being called from pmap_create() in this case; we can sleep. */
-	l1pt = pool_cache_get(&pmap_l1pt_cache, PR_WAITOK);
+	/* Don't sleep -- we're called with locks held. */
+	l1pt = pool_cache_get(&pmap_l1pt_cache, PR_NOWAIT);
 	if (l1pt == NULL)
 		return (ENOMEM);
 
@@ -3220,17 +3116,15 @@ pmap_lev1map_create(pmap_t pmap, long cpu_id)
  *
  *	Destroy the level 1 page table for the specified pmap.
  *
- *	Note: the pmap must already be locked.
+ *	Note: growkernel must be held and the pmap must already be
+ *	locked or not globally referenced.
  */
 static void
 pmap_lev1map_destroy(pmap_t pmap, long cpu_id)
 {
 	pt_entry_t *l1pt = pmap->pm_lev1map;
 
-#ifdef DIAGNOSTIC
-	if (pmap == pmap_kernel())
-		panic("pmap_lev1map_destroy: got kernel pmap");
-#endif
+	KASSERT(pmap != pmap_kernel());
 
 	/*
 	 * Go back to referencing the global kernel_lev1map.
@@ -3247,6 +3141,10 @@ pmap_lev1map_destroy(pmap_t pmap, long cpu_id)
  * pmap_l1pt_ctor:
  *
  *	Pool cache constructor for L1 PT pages.
+ *
+ *	Note: The growkernel lock is held across allocations
+ *	from our pool_cache, so we don't need to acquire it
+ *	ourselves.
  */
 static int
 pmap_l1pt_ctor(void *arg, void *object, int flags)
@@ -3683,6 +3581,7 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte, u_long *cpumaskp)
 		cpumask |= 1UL << ci->ci_cpuid;
 
 		pq = &pmap_tlb_shootdown_q[ci->ci_cpuid];
+		mutex_spin_enter(&pq->pq_lock);
 
 		/*
 		 * Allocate a job.
@@ -3698,7 +3597,6 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte, u_long *cpumaskp)
 		 * If a global flush is already pending, we
 		 * don't really have to do anything else.
 		 */
-		mutex_spin_enter(&pq->pq_lock);
 		pq->pq_pte |= pte;
 		if (pq->pq_tbia) {
 			mutex_spin_exit(&pq->pq_lock);

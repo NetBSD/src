@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.49.10.3 2009/07/18 14:53:27 yamt Exp $	*/
+/*	$NetBSD: fs.h,v 1.49.10.4 2010/03/11 15:04:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -599,8 +599,13 @@ struct ocg {
  * Turn file system block numbers into disk block addresses.
  * This maps file system blocks to device size blocks.
  */
+#if defined (_KERNEL)
+#define	fsbtodb(fs, b)	((b) << ((fs)->fs_fshift - DEV_BSHIFT))
+#define	dbtofsb(fs, b)	((b) >> ((fs)->fs_fshift - DEV_BSHIFT))
+#else
 #define	fsbtodb(fs, b)	((b) << (fs)->fs_fsbtodb)
 #define	dbtofsb(fs, b)	((b) >> (fs)->fs_fsbtodb)
+#endif
 
 /*
  * Cylinder group macros to locate things in cylinder groups.

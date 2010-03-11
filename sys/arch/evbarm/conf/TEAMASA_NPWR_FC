@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR_FC,v 1.20.10.1 2009/05/04 08:10:57 yamt Exp $
+#	$NetBSD: TEAMASA_NPWR_FC,v 1.20.10.2 2010/03/11 15:02:14 yamt Exp $
 #
 #	TeamASA NPWR-FC, i80321-based SBC
 #
@@ -40,7 +40,6 @@ file-system	NFS		# Network file system
 file-system	FDESC		# /dev/fd
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
-#file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
@@ -80,6 +79,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.

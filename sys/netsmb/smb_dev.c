@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.29.4.2 2009/09/16 13:38:03 yamt Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.29.4.3 2010/03/11 15:04:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.29.4.2 2009/09/16 13:38:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.29.4.3 2010/03/11 15:04:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -257,7 +257,6 @@ nsmb_dev_close(dev_t dev, int flag, int fmt, struct lwp *l)
 #ifndef __NetBSD__
 	destroy_dev(dev);
 #endif
-	smb_rqpool_fini();
 	splx(s);
 	return 0;
 }

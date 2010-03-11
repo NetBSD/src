@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.63.4.2 2009/05/04 08:13:22 yamt Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.63.4.3 2010/03/11 15:04:07 yamt Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.63.4.2 2009/05/04 08:13:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.63.4.3 2010/03/11 15:04:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,8 +74,8 @@ int	uplcomdebug = 0;
 #define	UPLCOM_SET_REQUEST	0x01
 #define	UPLCOM_SET_CRTSCTS_0	0x41
 #define	UPLCOM_SET_CRTSCTS_HX	0x61
-#define RSAQ_STATUS_DSR		0x02
-#define RSAQ_STATUS_DCD		0x01
+
+#define	UPLCOM_N_SERIAL_CTS	0x80
 
 enum  pl2303_type {
 	UPLCOM_TYPE_0,	/* we use this for all non-HX variants */
@@ -227,8 +227,10 @@ USB_ATTACH(uplcom)
 
 	sc->sc_dev = self;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
@@ -451,19 +453,14 @@ int
 uplcom_activate(device_t self, enum devact act)
 {
 	struct uplcom_softc *sc = device_private(self);
-	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
-		if (sc->sc_subdev != NULL)
-			rv = config_deactivate(sc->sc_subdev);
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 usbd_status
@@ -845,9 +842,13 @@ uplcom_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	sc->sc_lsr = sc->sc_msr = 0;
 	pstatus = buf[8];
-	if (ISSET(pstatus, RSAQ_STATUS_DSR))
+	if (ISSET(pstatus, UPLCOM_N_SERIAL_CTS))
+		sc->sc_msr |= UMSR_CTS;
+	if (ISSET(pstatus, UCDC_N_SERIAL_RI))
+		sc->sc_msr |= UMSR_RI;
+	if (ISSET(pstatus, UCDC_N_SERIAL_DSR))
 		sc->sc_msr |= UMSR_DSR;
-	if (ISSET(pstatus, RSAQ_STATUS_DCD))
+	if (ISSET(pstatus, UCDC_N_SERIAL_DCD))
 		sc->sc_msr |= UMSR_DCD;
 	ucom_status_change(device_private(sc->sc_subdev));
 }

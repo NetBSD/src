@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.6.2.3 2009/08/19 18:48:16 yamt Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.6.2.4 2010/03/11 15:04:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,15 +62,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.6.2.3 2009/08/19 18:48:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.6.2.4 2010/03/11 15:04:17 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
 #include "opt_modular.h"
 #include "opt_sa.h"
-#ifdef _KERNEL_OPT
-#include "fs_lfs.h"
-#endif
 
 /* XXX To get syscall prototypes. */
 #define SYSVSHM
@@ -129,6 +126,10 @@ int	ktrace_on;			/* Misc */
 __weak_alias(ktruser,enosys);
 __weak_alias(ktr_point,nullop);
 #endif	/* KTRACE */
+
+__weak_alias(spldebug_start, voidop);
+__weak_alias(spldebug_stop, voidop);
+__weak_alias(machdep_init,nullop);
 
 #if !defined(KERN_SA)
 /*
@@ -299,9 +300,7 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 	    { SYS_compat_50_settimeofday, "compat" },
 	    { SYS_compat_50_utimes, "compat" },
 	    { SYS_compat_50_adjtime, "compat" },
-#ifdef LFS
 	    { SYS_compat_50_lfs_segwait, "compat" },
-#endif
 	    { SYS_compat_50_futimes, "compat" },
 	    { SYS_compat_50_clock_gettime, "compat" },
 	    { SYS_compat_50_clock_settime, "compat" },
@@ -429,6 +428,14 @@ eopnotsupp(void)
 {
 
 	return (EOPNOTSUPP);
+}
+
+/*
+ * Generic null operation, void return value.
+ */
+void
+voidop(void)
+{
 }
 
 /*

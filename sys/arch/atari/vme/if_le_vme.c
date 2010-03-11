@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.23.4.3 2009/08/19 18:46:03 yamt Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.23.4.4 2010/03/11 15:02:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -74,10 +74,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.23.4.3 2009/08/19 18:46:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.23.4.4 2010/03/11 15:02:10 yamt Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

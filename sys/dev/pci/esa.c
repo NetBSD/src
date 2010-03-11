@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.48.4.3 2009/05/16 10:41:33 yamt Exp $ */
+/* $NetBSD: esa.c,v 1.48.4.4 2010/03/11 15:03:43 yamt Exp $ */
 
 /*
  * Copyright (c) 2001-2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.48.4.3 2009/05/16 10:41:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.48.4.4 2010/03/11 15:03:43 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -163,8 +163,8 @@ static void		esa_remove_list(struct esa_voice *, struct esa_list *,
 					int);
 
 /* power management */
-static bool		esa_suspend(device_t PMF_FN_PROTO);
-static bool		esa_resume(device_t PMF_FN_PROTO);
+static bool		esa_suspend(device_t, const pmf_qual_t *);
+static bool		esa_resume(device_t, const pmf_qual_t *);
 
 
 #define ESA_NENCODINGS 8
@@ -1055,8 +1055,8 @@ esa_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "can't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
@@ -1652,7 +1652,7 @@ esa_remove_list(struct esa_voice *vc, struct esa_list *el, int index)
 }
 
 static bool
-esa_suspend(device_t dv PMF_FN_ARGS)
+esa_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct esa_softc *sc = device_private(dv);
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1680,7 +1680,7 @@ esa_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-esa_resume(device_t dv PMF_FN_ARGS)
+esa_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct esa_softc *sc = device_private(dv);
 	bus_space_tag_t iot = sc->sc_iot;

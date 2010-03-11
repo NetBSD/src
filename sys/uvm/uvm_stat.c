@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.30.54.1 2009/05/04 08:14:40 yamt Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.30.54.2 2010/03/11 15:04:47 yamt Exp $	 */
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.30.54.1 2009/05/04 08:14:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.30.54.2 2010/03/11 15:04:47 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -224,8 +224,7 @@ uvmexp_print(void (*pr)(const char *, ...))
 	    uvmexp.freemin, uvmexp.freetarg, uvmexp.wiredmax);
 	(*pr)("  faults=%d, traps=%d, intrs=%d, ctxswitch=%d\n",
 	    uvmexp.faults, uvmexp.traps, uvmexp.intrs, uvmexp.swtch);
-	(*pr)("  softint=%d, syscalls=%d, swapins=%d, swapouts=%d\n",
-	    uvmexp.softs, uvmexp.syscalls, uvmexp.swapins, uvmexp.swapouts);
+	(*pr)("  softint=%d, syscalls=%d\n", uvmexp.softs, uvmexp.syscalls);
 
 	(*pr)("  fault counts:\n");
 	(*pr)("    noram=%d, noanon=%d, pgwait=%d, pgrele=%d\n",

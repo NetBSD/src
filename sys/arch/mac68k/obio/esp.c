@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.50.4.1 2009/05/04 08:11:27 yamt Exp $	*/
+/*	$NetBSD: esp.c,v 1.50.4.2 2010/03/11 15:02:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.50.4.1 2009/05/04 08:11:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.50.4.2 2010/03/11 15:02:35 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.50.4.1 2009/05/04 08:11:27 yamt Exp $");
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 
 #include <dev/scsipi/scsi_all.h>

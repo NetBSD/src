@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.63.4.3 2009/09/16 13:37:50 yamt Exp $
+ * $Id: ahc_pci.c,v 1.63.4.4 2010/03/11 15:03:42 yamt Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.63.4.3 2009/09/16 13:37:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.63.4.4 2010/03/11 15:03:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -957,8 +957,8 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(ahc->sc_dev,
 		    "couldn't establish interrupt\n");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		ahc_free(ahc);
 		return;
 	}

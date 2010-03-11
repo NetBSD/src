@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915var.h,v 1.1.126.1 2008/05/16 02:24:02 yamt Exp $	*/
+/*	$NetBSD: aic6915var.h,v 1.1.126.2 2010/03/11 15:03:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -118,7 +118,6 @@ struct sf_softc {
 	bus_space_handle_t sc_sh_func;	/* sub-handle for func regs */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
-	void *sc_sdhook;		/* shutdown hook */
 	int sc_iomapped;		/* are we I/O mapped? */
 
 	struct mii_data sc_mii;		/* MII/media information */

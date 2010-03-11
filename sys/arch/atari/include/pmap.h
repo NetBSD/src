@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.36.10.1 2009/05/04 08:10:47 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.36.10.2 2010/03/11 15:02:09 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -103,7 +103,7 @@ struct memseg {
 extern struct memseg	boot_segs[NMEM_SEGS];
 extern struct memseg	usable_segs[NMEM_SEGS];
 
-void	pmap_bootstrap(vaddr_t, paddr_t);
+void	pmap_bootstrap(vaddr_t);
 
 #endif	/* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.2.12.3 2009/08/19 18:46:41 yamt Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.2.12.4 2010/03/11 15:02:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.2.12.3 2009/08/19 18:46:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.2.12.4 2010/03/11 15:02:51 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.2.12.3 2009/08/19 18:46:41 yamt E
 #include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 #include <sys/vnode.h>
 
 #include <sys/exec_aout.h>
@@ -65,7 +64,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 {
 	struct coreseg cseg;
 	struct md_coredump md_core;
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	int error;
 
 	if (iocookie == NULL) {

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.47.10.1 2009/05/04 08:10:25 yamt Exp $
+#	$NetBSD: INSTALL,v 1.47.10.2 2010/03/11 15:01:55 yamt Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.47.10.1 $"
+#ident		"INSTALL-$Revision: 1.47.10.2 $"
 
 # estimated number of users
 maxusers	32
@@ -60,7 +60,6 @@ file-system	FILECORE	# Acorn filecore file system
 file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay filesystem
-#file-system	PORTAL		# portal filesystem (still experimental)
 #file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
@@ -123,7 +122,7 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 # Device options
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-options 	MEMORY_DISK_ROOT_SIZE=4100	# Size in blocks
+options 	MEMORY_DISK_ROOT_SIZE=4700	# Size in blocks
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.13.10.2 2009/05/04 08:13:22 yamt Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.13.10.3 2010/03/11 15:04:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.13.10.2 2009/05/04 08:13:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.13.10.3 2010/03/11 15:04:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,17 +113,19 @@ umodem_common_attach(device_ptr_t self, struct umodem_softc *sc,
 	int data_ifcno;
 	int i;
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	USB_ATTACH_SETUP;
-
 	sc->sc_dev = self;
 	sc->sc_udev = dev;
 	sc->sc_ctl_iface = uaa->iface;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	id = usbd_get_interface_descriptor(sc->sc_ctl_iface);
+	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	aprint_normal_dev(self, "%s, iclass %d/%d\n",
 	       devinfop, id->bInterfaceClass, id->bInterfaceSubClass);
 	usbd_devinfo_free(devinfop);
+
 	sc->sc_ctl_iface_no = id->bInterfaceNumber;
 
 	/* Get the data interface no. */
@@ -633,19 +635,13 @@ umodem_set_comm_feature(struct umodem_softc *sc, int feature, int state)
 int
 umodem_common_activate(struct umodem_softc *sc, enum devact act)
 {
-	int rv = 0;
-
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		if (sc->sc_subdev)
-			rv = config_deactivate(sc->sc_subdev);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 void

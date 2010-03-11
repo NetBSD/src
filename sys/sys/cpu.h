@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19.4.2 2009/05/04 08:14:34 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19.4.3 2010/03/11 15:04:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -91,6 +91,12 @@ static inline u_int
 cpu_index(struct cpu_info *ci)
 {
 	return ci->ci_index;
+}
+
+static inline char *
+cpu_name(struct cpu_info *ci)
+{
+	return ci->ci_data.cpu_name;
 }
 
 #endif	/* !_LOCORE */

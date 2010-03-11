@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89.2.3 2009/08/19 18:45:54 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89.2.4 2010/03/11 15:01:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -58,11 +58,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -112,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.2.3 2009/08/19 18:45:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.2.4 2010/03/11 15:01:58 yamt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -136,7 +131,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.2.3 2009/08/19 18:45:54 yamt Exp $"
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/cpu.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>	/* for MID_* */
 #include <sys/reboot.h>
@@ -180,7 +174,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.2.3 2009/08/19 18:45:54 yamt Exp $"
 #include <machine/mpbiosvar.h>
 
 #include <x86/cputypes.h>
-#include <x86/cpu_msr.h>
 #include <x86/cpuvar.h>
 #include <x86/machdep.h>
 
@@ -263,7 +256,6 @@ static struct vm_map_kernel module_map_store;
 extern struct vm_map *module_map;
 vaddr_t kern_end;
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
@@ -308,7 +300,6 @@ cpu_startup(void)
 	int x, y;
 	vaddr_t minaddr, maxaddr;
 	psize_t sz;
-	char pbuf[9];
 
 	/*
 	 * For console drivers that require uvm and pmap to be initialized,
@@ -334,17 +325,12 @@ cpu_startup(void)
 		for (x = 0; x < btoc(msgbuf_p_seg[y].sz); x++, sz += PAGE_SIZE)
 			pmap_kenter_pa((vaddr_t)msgbuf_vaddr + sz,
 				       msgbuf_p_seg[y].paddr + x * PAGE_SIZE,
-				       VM_PROT_READ | UVM_PROT_WRITE);
+				       VM_PROT_READ | UVM_PROT_WRITE, 0);
 	}
 
 	pmap_update(pmap_kernel());
 
 	initmsgbuf((void *)msgbuf_vaddr, round_page(sz));
-
-	printf("%s%s", copyright, version);
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
-	printf("total memory = %s\n", pbuf);
 
 	minaddr = 0;
 
@@ -354,18 +340,12 @@ cpu_startup(void)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
 
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
-
 	uvm_map_setup_kernel(&module_map_store, module_start, module_end, 0);
 	module_map_store.vmk_map.pmap = pmap_kernel();
 	module_map = &module_map_store.vmk_map;
 
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
+	/* Say hello. */
+	banner();
 
 #if NISA > 0 || NPCI > 0
 	/* Safe for i/o port / memory space allocation to use malloc now. */
@@ -410,24 +390,21 @@ x86_64_switch_context(struct pcb *new)
 void
 x86_64_proc0_tss_ldt_init(void)
 {
-	struct lwp *l;
-	struct pcb *pcb;
+	struct lwp *l = &lwp0;
+	struct pcb *pcb = lwp_getpcb(l);
 
-	l = &lwp0;
-	pcb = &l->l_addr->u_pcb;
 	pcb->pcb_flags = 0;
 	pcb->pcb_fs = 0;
 	pcb->pcb_gs = 0;
-	pcb->pcb_rsp0 = (USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16) & ~0xf;
+	pcb->pcb_rsp0 = (uvm_lwp_getuarea(l) + KSTACK_SIZE - 16) & ~0xf;
 	pcb->pcb_iopl = SEL_KPL;
 
-	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel =
-	    GSYSSEL(GLDT_SEL, SEL_KPL);
+	pmap_kernel()->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_rsp0 - 1;
 
 #if !defined(XEN)
-	lldt(pcb->pcb_ldt_sel);
+	lldt(pmap_kernel()->pm_ldt_sel);
 #else
 	{
 	struct physdev_op physop;
@@ -929,7 +906,7 @@ dodumpsys(void)
 	if ((error = cpu_dump()) != 0)
 		goto err;
 
-	totalbytesleft = ptoa(cpu_dump_mempagecnt());
+	totalbytesleft = ctob(cpu_dump_mempagecnt());
 	blkno = dumplo + cpu_dumpsize();
 	dump = bdev->d_dump;
 	error = 0;
@@ -1006,14 +983,15 @@ dodumpsys(void)
  * Clear registers on exec
  */
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
 
 	/* If we were using the FPU, forget about it. */
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+	if (pcb->pcb_fpcpu != NULL) {
 		fpusave_lwp(l, false);
+	}
 
 #ifdef USER_LDT
 	pmap_ldt_cleanup(l);
@@ -1058,7 +1036,6 @@ int xen_idt_idx;
 #endif
 char *ldtstore;
 char *gdtstore;
-extern  struct user *proc0paddr;
 
 void
 setgate(struct gate_descriptor *gd, void *func, int ist, int type, int dpl, int sel)
@@ -1174,7 +1151,7 @@ init_x86_64_msgbuf(void)
 
 	for (x = 0; x < vm_nphysseg; x++) {
 		vps = &vm_physmem[x];
-		if (ptoa(vps->avail_end) == avail_end)
+		if (ctob(vps->avail_end) == avail_end)
 			break;
 	}
 	if (x == vm_nphysseg)
@@ -1182,12 +1159,12 @@ init_x86_64_msgbuf(void)
 
 	/* Shrink so it'll fit in the last segment. */
 	if ((vps->avail_end - vps->avail_start) < atop(sz))
-		sz = ptoa(vps->avail_end - vps->avail_start);
+		sz = ctob(vps->avail_end - vps->avail_start);
 
 	vps->avail_end -= atop(sz);
 	vps->end -= atop(sz);
             msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
-            msgbuf_p_seg[msgbuf_p_cnt++].paddr = ptoa(vps->avail_end);
+            msgbuf_p_seg[msgbuf_p_cnt++].paddr = ctob(vps->avail_end);
 
 	/* Remove the last segment if it now has no pages. */
 	if (vps->start == vps->end) {
@@ -1199,7 +1176,7 @@ init_x86_64_msgbuf(void)
 	for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
 		if (vm_physmem[x].avail_end > avail_end)
 			avail_end = vm_physmem[x].avail_end;
-	avail_end = ptoa(avail_end);
+	avail_end = ctob(avail_end);
 
 	if (sz == reqsz)
 		return;
@@ -1256,6 +1233,7 @@ init_x86_64(paddr_t first_avail)
 	extern void consinit(void);
 	struct region_descriptor region;
 	struct mem_segment_descriptor *ldt_segp;
+	struct pcb *pcb;
 	int x;
 #ifndef XEN
 	int ist;
@@ -1277,9 +1255,9 @@ init_x86_64(paddr_t first_avail)
 
 	cpu_init_msrs(&cpu_info_primary, true);
 
-	lwp0.l_addr = proc0paddr;
+	pcb = lwp_getpcb(&lwp0);
 #ifdef XEN
-	lwp0.l_addr->u_pcb.pcb_cr3 = xen_start_info.pt_base - KERNBASE;
+	pcb->pcb_cr3 = xen_start_info.pt_base - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx\n", xen_start_info.pt_base - KERNBASE));
 #endif
 
@@ -1315,7 +1293,7 @@ init_x86_64(paddr_t first_avail)
 
 	/* Determine physical address space */
 	avail_start = first_avail;
-	avail_end = ptoa(xen_start_info.nr_pages);
+	avail_end = ctob(xen_start_info.nr_pages);
 	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
 	pmap_pa_end = avail_end;
 	__PRINTK(("pmap_pa_start 0x%lx avail_start 0x%lx avail_end 0x%lx\n",
@@ -1367,20 +1345,20 @@ init_x86_64(paddr_t first_avail)
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
 	kpreempt_disable();
-	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
 #ifndef XEN
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
 #endif
 	pmap_kenter_pa(idt_vaddr + PAGE_SIZE, idt_paddr + PAGE_SIZE,
-	    VM_PROT_READ|VM_PROT_WRITE);
+	    VM_PROT_READ|VM_PROT_WRITE, 0);
 #ifdef XEN
 	/* Steal one more page for LDT */
 	pmap_kenter_pa(idt_vaddr + 2 * PAGE_SIZE, idt_paddr + 2 * PAGE_SIZE,
-	    VM_PROT_READ|VM_PROT_WRITE);
+	    VM_PROT_READ|VM_PROT_WRITE, 0);
 #endif
-	pmap_kenter_pa(lo32_vaddr, lo32_paddr, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(lo32_vaddr, lo32_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 
 #ifndef XEN
@@ -1535,8 +1513,6 @@ init_x86_64(paddr_t first_avail)
 	splraise(IPL_HIGH);
 	x86_enable_intr();
 
-	x86_init();
-
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -1604,9 +1580,12 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	*flags |= _UC_CPU;
 
 	if ((l->l_md.md_flags & MDP_USEDFPU) != 0) {
-		if (l->l_addr->u_pcb.pcb_fpcpu)
+		struct pcb *pcb = lwp_getpcb(l);
+
+		if (pcb->pcb_fpcpu) {
 			fpusave_lwp(l, true);
-		memcpy(mcp->__fpregs, &l->l_addr->u_pcb.pcb_savefpu.fp_fxsave,
+		}
+		memcpy(mcp->__fpregs, &pcb->pcb_savefpu.fp_fxsave,
 		    sizeof (mcp->__fpregs));
 		*flags |= _UC_FPU;
 	}
@@ -1617,6 +1596,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct proc *p = l->l_proc;
 	int error;
 	int err, trapno;
@@ -1654,11 +1634,11 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		l->l_md.md_flags |= MDP_IRET;
 	}
 
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+	if (pcb->pcb_fpcpu != NULL)
 		fpusave_lwp(l, false);
 
 	if ((flags & _UC_FPU) != 0) {
-		memcpy(&l->l_addr->u_pcb.pcb_savefpu.fp_fxsave, mcp->__fpregs,
+		memcpy(&pcb->pcb_savefpu.fp_fxsave, mcp->__fpregs,
 		    sizeof (mcp->__fpregs));
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}

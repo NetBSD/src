@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.34.4.1 2009/05/04 08:12:34 yamt Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.34.4.2 2010/03/11 15:03:23 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,37 +31,29 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.34.4.1 2009/05/04 08:12:34 yamt Exp $");
-
-#include "rnd.h"
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.34.4.2 2010/03/11 15:03:23 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/callout.h>
 #include <sys/device.h>
-#include <sys/buf.h>
-#include <sys/bufq.h>
-#include <sys/queue.h>
 #include <sys/disk.h>
+#include <sys/systm.h>
+
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
 
-#include <sys/bus.h>
-#include <sys/intr.h>
-
-#include <dev/isa/isavar.h>
-#include <dev/isa/isadmavar.h>
-
-#include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
+#include <dev/isa/isadmavar.h>
 #include <dev/isa/fdcvar.h>
 #include <dev/isa/fdvar.h>
 #include <dev/isa/fdreg.h>
 
 #include <dev/acpi/fdc_acpireg.h>
+
+#define _COMPONENT          ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME            ("fdc_acpi")
 
 static int	fdc_acpi_match(device_t, cfdata_t, void *);
 static void	fdc_acpi_attach(device_t, device_t, void *);
@@ -246,13 +238,13 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 	}
 	fde = (ACPI_OBJECT *)abuf.Pointer;
 	if (fde->Type != ACPI_TYPE_BUFFER) {
-		aprint_error_dev(sc->sc_dev, "expected BUFFER, got %d\n",
+		aprint_error_dev(sc->sc_dev, "expected BUFFER, got %u\n",
 		    fde->Type);
 		goto out;
 	}
 	if (fde->Buffer.Length < 5 * sizeof(UINT32)) {
 		aprint_error_dev(sc->sc_dev,
-		    "expected buffer len of %lu, got %d\n",
+		    "expected buffer len of %lu, got %u\n",
 		    (unsigned long)(5 * sizeof(UINT32)), fde->Buffer.Length);
 		goto out;
 	}
@@ -283,7 +275,7 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 	 */
 
 out:
-	AcpiOsFree(abuf.Pointer);
+	ACPI_FREE(abuf.Pointer);
 	return drives;
 }
 
@@ -313,7 +305,7 @@ fdc_acpi_getknownfds(struct fdc_acpi_softc *asc)
 		fdi = (ACPI_OBJECT *)abuf.Pointer;
 		if (fdi->Type != ACPI_TYPE_PACKAGE) {
 			aprint_error_dev(sc->sc_dev,
-			    "expected PACKAGE, got %d\n", fdi->Type);
+			    "expected PACKAGE, got %u\n", fdi->Type);
 			goto out;
 		}
 		e = fdi->Package.Elements;
@@ -326,7 +318,7 @@ fdc_acpi_getknownfds(struct fdc_acpi_softc *asc)
 			sc->sc_present &= ~(1 << i);
 
 out:
-		AcpiOsFree(abuf.Pointer);
+		ACPI_FREE(abuf.Pointer);
 	}
 }
 

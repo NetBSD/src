@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.36.10.2 2009/05/16 10:41:40 yamt Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.36.10.3 2010/03/11 15:03:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -42,6 +42,7 @@
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
+#include <sys/device_if.h>
 #include "opt_pciide.h"
 
 /* options passed via the 'flags' config keyword */
@@ -63,8 +64,6 @@ extern int atadebug_pciide_mask;
 #else
 #define ATADEBUG_PRINT(args, level)
 #endif
-
-struct device;
 
 /*
  * While standard PCI IDE controllers only have 2 channels, it is
@@ -165,6 +164,9 @@ struct pciide_product_desc {
 	const char *ide_name;
 	/* map and setup chip, probe drives */
 	void (*chip_map)(struct pciide_softc*, struct pci_attach_args*);
+#if 0
+	void (*chip_unmap)(struct pciide_softc *);
+#endif
 };
 
 /* Flags for ide_flags */

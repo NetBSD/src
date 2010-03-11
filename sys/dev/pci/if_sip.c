@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.132.4.4 2009/09/16 13:37:51 yamt Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.132.4.5 2010/03/11 15:03:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,9 +73,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.132.4.4 2009/09/16 13:37:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.132.4.5 2010/03/11 15:03:47 yamt Exp $");
 
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -101,9 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.132.4.4 2009/09/16 13:37:51 yamt Exp $"
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -207,6 +204,9 @@ enum sip_attach_stage {
  */
 struct sip_softc {
 	device_t sc_dev;		/* generic device information */
+	device_suspensor_t		sc_suspensor;
+	pmf_qual_t			sc_qual;
+
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_size_t sc_sz;		/* bus space size */
@@ -607,8 +607,8 @@ static int	sipcom_match(device_t, cfdata_t, void *);
 static void	sipcom_attach(device_t, device_t, void *);
 static void	sipcom_do_detach(device_t, enum sip_attach_stage);
 static int	sipcom_detach(device_t, int);
-static bool	sipcom_resume(device_t PMF_FN_PROTO);
-static bool	sipcom_suspend(device_t PMF_FN_PROTO);
+static bool	sipcom_resume(device_t, const pmf_qual_t *);
+static bool	sipcom_suspend(device_t, const pmf_qual_t *);
 
 int	gsip_copy_small = 0;
 int	sip_copy_small = 0;
@@ -962,7 +962,7 @@ sipcom_do_detach(device_t self, enum sip_attach_stage stage)
 }
 
 static bool
-sipcom_resume(device_t self PMF_FN_ARGS)
+sipcom_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct sip_softc *sc = device_private(self);
 
@@ -970,7 +970,7 @@ sipcom_resume(device_t self PMF_FN_ARGS)
 }
 
 static bool
-sipcom_suspend(device_t self PMF_FN_ARGS)
+sipcom_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct sip_softc *sc = device_private(self);
 
@@ -1009,7 +1009,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_dev = self;
 	sc->sc_gigabit = sip->sip_gigabit;
-
+	pmf_self_suspensor_init(self, &sc->sc_suspensor, &sc->sc_qual);
 	sc->sc_pc = pc;
 
 	if (sc->sc_gigabit) {
@@ -1110,11 +1110,11 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return sipcom_do_detach(self, SIP_ATTACH_MAP);
 	}
-	printf("%s: interrupting at %s\n", device_xname(sc->sc_dev), intrstr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	SIMPLEQ_INIT(&sc->sc_txfreeq);
 	SIMPLEQ_INIT(&sc->sc_txdirtyq);
@@ -1645,13 +1645,11 @@ sipcom_start(struct ifnet *ifp)
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs_q);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txdirtyq, txs, txs_q);
 
-#if NBPFILTER > 0
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 	}
 
 	if (txs == NULL || sc->sc_txfree == 0) {
@@ -1833,7 +1831,7 @@ sipcom_intr(void *arg)
 	u_int32_t isr;
 	int handled = 0;
 
-	if (!device_is_active(sc->sc_dev))
+	if (!device_activation(sc->sc_dev, DEVACT_LEVEL_DRIVER))
 		return 0;
 
 	/* Disable interrupts. */
@@ -1851,6 +1849,9 @@ sipcom_intr(void *arg)
 #endif
 
 		handled = 1;
+
+		if ((ifp->if_flags & IFF_RUNNING) == 0)
+			break;
 
 		if (isr & (ISR_RXORN|ISR_RXIDLE|ISR_RXDESC)) {
 			SIP_EVCNT_INCR(&sc->sc_ev_rxintr);
@@ -2242,14 +2243,12 @@ gsip_rxintr(struct sip_softc *sc)
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = len;
 
-#if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
 		 * pass if up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
@@ -2412,14 +2411,12 @@ sip_rxintr(struct sip_softc *sc)
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
-#if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
 		 * pass if up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
@@ -2562,7 +2559,8 @@ sipcom_init(struct ifnet *ifp)
 		 * Cancel any pending I/O.
 		 */
 		sipcom_stop(ifp, 0);
-	} else if (!pmf_device_resume_self(sc->sc_dev))
+	} else if (!pmf_device_subtree_resume(sc->sc_dev, &sc->sc_qual) ||
+	           !device_is_active(sc->sc_dev))
 		return 0;
 
 	/*
@@ -2892,7 +2890,7 @@ sipcom_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = 0;
 
 	if (disable)
-		pmf_device_suspend_self(sc->sc_dev);
+		pmf_device_recursive_suspend(sc->sc_dev, &sc->sc_qual);
 
 	if ((ifp->if_flags & IFF_DEBUG) != 0 &&
 	    (cmdsts & CMDSTS_INTR) == 0 && sc->sc_txfree != sc->sc_ntxdesc)

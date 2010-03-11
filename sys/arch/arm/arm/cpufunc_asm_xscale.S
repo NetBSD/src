@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_xscale.S,v 1.18 2007/10/17 19:53:29 garbled Exp $	*/
+/*	$NetBSD: cpufunc_asm_xscale.S,v 1.18.20.1 2010/03/11 15:02:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -455,7 +455,7 @@ ENTRY(xscale_cache_flushD_rng)
 /*
  * Context switch.
  *
- * These is the CPU-specific parts of the context switcher cpu_switch()
+ * These are the CPU-specific parts of the context switcher cpu_switch()
  * These functions actually perform the TTB reload.
  */
 ENTRY(xscale_context_switch)

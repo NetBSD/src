@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.106.10.3 2009/08/19 18:48:32 yamt Exp $ */
+/*     $NetBSD: buf.h,v 1.106.10.4 2010/03/11 15:04:41 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ extern kmutex_t buffer_lock;
  * b	thread of execution that holds BC_BUSY, does not correspond
  *	  directly to any particular LWP
  * c	bufcache_lock
- * l	b_objlock
+ * o	b_objlock
  *
  * For buffers associated with a vnode, b_objlock points to vp->v_interlock.
  * If not associated with a vnode, it points to the generic buffer_lock.
@@ -225,7 +225,7 @@ do {									\
 #define B_METAONLY	0x04	/* Return indirect block buffer. */
 #define B_CONTIG	0x08	/* Allocate file contiguously. */
 
-/* Flags to bread(), breadn() and breada(). */
+/* Flags to bread() and breadn(). */
 #define B_MODIFY	0x01	/* Hint: caller might modify buffer */
 
 #ifdef _KERNEL
@@ -259,18 +259,14 @@ struct bqueue {
 };
 
 extern struct bqueue bufqueues[BQUEUES];
-extern struct simplelock bqueue_slock;
 
 __BEGIN_DECLS
 int	allocbuf(buf_t *, int, int);
 void	bawrite(buf_t *);
-void	bdirty(buf_t *);
 void	bdwrite(buf_t *);
 void	biodone(buf_t *);
 int	biowait(buf_t *);
 int	bread(struct vnode *, daddr_t, int, struct kauth_cred *, int, buf_t **);
-int	breada(struct vnode *, daddr_t, int, daddr_t, int, struct kauth_cred *,
-	       int, buf_t **);
 int	breadn(struct vnode *, daddr_t, int, daddr_t *, int *, int,
 	       struct kauth_cred *, int, buf_t **);
 void	brelsel(buf_t *, int);

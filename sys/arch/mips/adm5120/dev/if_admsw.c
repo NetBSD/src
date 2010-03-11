@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.4.10.1 2009/05/04 08:11:30 yamt Exp $ */
+/* $NetBSD: if_admsw.c,v 1.4.10.2 2010/03/11 15:02:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,9 +76,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.4.10.1 2009/05/04 08:11:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.4.10.2 2010/03/11 15:02:37 yamt Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,9 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.4.10.1 2009/05/04 08:11:30 yamt Exp $
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -344,7 +341,7 @@ admsw_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = aa->oba_dt;
 	sc->sc_st = aa->oba_st;
 
-	pd = prop_dictionary_get(device_properties(&sc->sc_dev), "mac-addr");
+	pd = prop_dictionary_get(device_properties(&sc->sc_dev), "mac-address");
 
 	if (pd == NULL) {
 		enaddr[0] = 0x02;
@@ -679,11 +676,9 @@ admsw_start(struct ifnet *ifp)
 		sc->sc_txfree--;
 		sc->sc_txnext = ADMSW_NEXTTXL(nexttx);
 
-#if NBPFILTER > 0
 		/* Pass the packet to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 		/* Set a watchdog timer in case the chip flakes out. */
 		sc->sc_ethercom[0].ec_if.if_timer = 5;
@@ -1005,11 +1000,9 @@ admsw_rxintr(struct admsw_softc *sc, int high)
 			if (stat & ADM5120_DMA_CSUMFAIL)
 				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
 		}
-#if NBPFILTER > 0
 		/* Pass this up to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);

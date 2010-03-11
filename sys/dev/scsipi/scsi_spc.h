@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_spc.h,v 1.3.74.1 2008/05/16 02:25:06 yamt Exp $	*/
+/*	$NetBSD: scsi_spc.h,v 1.3.74.2 2010/03/11 15:04:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -431,11 +431,11 @@ struct scsi_sense_data {
 #define	SSD_EOM			0x40
 #define	SSD_FILEMARK		0x80
 /* 7*/	uint8_t info[4];
-/* 8*/	uint8_t extra_len;
-/*12*/	uint8_t csi[4];
-/*13*/	uint8_t asc;
-/*14*/	uint8_t ascq;
-/*15*/	uint8_t fru;
+/* 8*/	uint8_t extra_len;		/* Additional sense length */
+/*12*/	uint8_t csi[4];			/* Command-specific information */
+/*13*/	uint8_t asc;			/* Additional sense code */
+/*14*/	uint8_t ascq;			/* Additional sense code qualifier */
+/*15*/	uint8_t fru;			/* Field replaceable unit code */
 	union {
 		uint8_t sks_bytes[3];
 
@@ -468,7 +468,7 @@ struct scsi_sense_data {
 #define	SSD_SKS_SP_SD		0x20	/* 0=param list, 1=segment desc */
 			uint8_t val[2];
 		} segment_pointer;
-/*18*/	} sks;
+/*18*/	} sks;				/* Sense-key specific */
 #define	SSD_SKSV		0x80	/* byte0 of sks field */
 /*32*/	uint8_t extra_bytes[14];	/* really variable length */
 };

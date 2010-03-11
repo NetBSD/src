@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.10.2.1 2009/05/04 08:10:38 yamt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.10.2.2 2010/03/11 15:02:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.10.2.1 2009/05/04 08:10:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.10.2.2 2010/03/11 15:02:03 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.10.2.1 2009/05/04 08:10:38 y
 #include <sys/signal.h>
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 #include <sys/ras.h>
 #include <sys/ucontext.h>
 

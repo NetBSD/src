@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.36.10.2 2009/09/16 13:38:00 yamt Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.36.10.3 2010/03/11 15:04:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.36.10.2 2009/09/16 13:38:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.36.10.3 2010/03/11 15:04:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -989,7 +989,7 @@ ntfs_ntlookupfile(
 			     (attrname && fp->f_attrname &&
 			      !strcmp(attrname, fp->f_attrname))))
 			{
-				VREF(vp);
+				vref(vp);
 				*vpp = vp;
 				error = 0;
 				goto fail;

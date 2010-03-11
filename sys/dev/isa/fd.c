@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.84.4.4 2009/06/20 07:20:22 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.84.4.5 2010/03/11 15:03:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.84.4.4 2009/06/20 07:20:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.84.4.5 2010/03/11 15:03:37 yamt Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -208,8 +208,8 @@ void fdattach(device_t, device_t, void *);
 static int fddetach(device_t, int);
 static int fdcintr1(struct fdc_softc *);
 static void fdcintrcb(void *);
-static bool fdcsuspend(device_t PMF_FN_PROTO);
-static bool fdcresume(device_t PMF_FN_PROTO);
+static bool fdcsuspend(device_t, const pmf_qual_t *);
+static bool fdcresume(device_t, const pmf_qual_t *);
 
 extern struct cfdriver fd_cd;
 
@@ -287,7 +287,7 @@ fdprint(void *aux, const char *fdc)
 }
 
 static bool
-fdcresume(device_t self PMF_FN_ARGS)
+fdcresume(device_t self, const pmf_qual_t *qual)
 {
 	struct fdc_softc *fdc = device_private(self);
 
@@ -298,7 +298,7 @@ fdcresume(device_t self PMF_FN_ARGS)
 }
 
 static bool
-fdcsuspend(device_t self PMF_FN_ARGS)
+fdcsuspend(device_t self, const pmf_qual_t *qual)
 {
 	struct fdc_softc *fdc = device_private(self);
 	int drive;

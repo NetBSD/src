@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15.16.2 2009/05/16 10:41:12 yamt Exp $	*/
+/*	$NetBSD: mem.c,v 1.15.16.3 2010/03/11 15:02:23 yamt Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.30 2007/09/22 16:21:32 krw Exp $	*/
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15.16.2 2009/05/16 10:41:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15.16.3 2010/03/11 15:02:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,8 +236,10 @@ memattach(device_t parent, device_t self, void *aux)
 			((struct vi_ctrl *)&vic)->eisa_den = 1;
 			((struct vi_ctrl *)&vic)->core_prf = 1;
 
-			if (settimeout && ((struct vi_ctrl *)&vic)->vsc_tout == 0)
-				((struct vi_ctrl *)&vic)->vsc_tout = 850;	/* clks */
+			if (settimeout &&
+			    ((struct vi_ctrl *)&vic)->vsc_tout == 0)
+				/* clks */
+				((struct vi_ctrl *)&vic)->vsc_tout = 850;
 
 			sc->sc_vp->vi_control = vic;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.18.4.2 2009/05/04 08:13:21 yamt Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.18.4.3 2010/03/11 15:04:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.18.4.2 2009/05/04 08:13:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.18.4.3 2010/03/11 15:04:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,7 @@ static const struct ugensa_type ugensa_devs[] = {
 	{{ USB_VENDOR_NOVATEL, USB_PRODUCT_NOVATEL_FLEXPACKGPS }, 0 },
 	{{ USB_VENDOR_QUALCOMM_K, USB_PRODUCT_QUALCOMM_K_CDMA_MSM_K }, 0 },
 	{{ USB_VENDOR_DELL, USB_PRODUCT_DELL_HSDPA }, 0 },
+	{{ USB_VENDOR_QUALCOMMINC, USB_PRODUCT_QUALCOMMINC_AC8700 }, 0 },
 
 	/*
 	 * The following devices are untested, but they are purported to
@@ -148,6 +149,13 @@ USB_ATTACH(ugensa)
 
 	sc->sc_dev = self;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
+	devinfop = usbd_devinfo_alloc(dev, 0);
+	aprint_normal_dev(self, "%s\n", devinfop);
+	usbd_devinfo_free(devinfop);
+
 	/* Move the device into the configured state. */
 	err = usbd_set_config_index(dev, UGENSA_CONFIG_INDEX, 1);
 	if (err) {
@@ -162,11 +170,6 @@ USB_ATTACH(ugensa)
 		       devname, usbd_errstr(err));
 		goto bad;
 	}
-
-	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
-	aprint_normal_dev(self, "%s\n", devinfop);
-	usbd_devinfo_free(devinfop);
 
 	if (ugensa_lookup(uaa->vendor, uaa->product)->ugensa_flags & UNTESTED)
 		aprint_normal_dev(self, "WARNING: This device is marked as "
@@ -256,22 +259,16 @@ int
 ugensa_activate(device_t self, enum devact act)
 {
 	struct ugensa_softc *sc = device_private(self);
-	int rv = 0;
 
 	DPRINTF(("ugensa_activate: sc=%p\n", sc));
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		if (sc->sc_subdev)
-			rv = config_deactivate(sc->sc_subdev);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 USB_DETACH(ugensa)

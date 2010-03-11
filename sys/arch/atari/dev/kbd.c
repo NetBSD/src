@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.31.10.2 2009/07/18 14:52:52 yamt Exp $	*/
+/*	$NetBSD: kbd.c,v 1.31.10.3 2010/03/11 15:02:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.31.10.2 2009/07/18 14:52:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.31.10.3 2010/03/11 15:02:09 yamt Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -810,7 +810,7 @@ kbd_set_leds(void *c, int leds)
 }
 
 static int
-kbd_ioctl(void *c, u_long cmd, void *data, int flag, struct proc *p)
+kbd_ioctl(void *c, u_long cmd, void *data, int flag, struct lwp *p)
 {
 	struct wskbd_bell_data *kd;
 

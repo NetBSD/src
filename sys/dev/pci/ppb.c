@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.37.4.2 2009/05/04 08:13:01 yamt Exp $	*/
+/*	$NetBSD: ppb.c,v 1.37.4.3 2010/03/11 15:03:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.37.4.2 2009/05/04 08:13:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.37.4.3 2010/03/11 15:03:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,8 @@ struct ppb_softc {
 	pcireg_t sc_pciconfext[48];
 };
 
-static bool		ppb_resume(device_t PMF_FN_PROTO);
-static bool		ppb_suspend(device_t PMF_FN_PROTO);
+static bool		ppb_resume(device_t, const pmf_qual_t *);
+static bool		ppb_suspend(device_t, const pmf_qual_t *);
 
 static int
 ppbmatch(device_t parent, cfdata_t match, void *aux)
@@ -169,7 +169,7 @@ ppbdetach(device_t self, int flags)
 }
 
 static bool
-ppb_resume(device_t dv PMF_FN_ARGS)
+ppb_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct ppb_softc *sc = device_private(dv);
 	int off;
@@ -188,7 +188,7 @@ ppb_resume(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-ppb_suspend(device_t dv PMF_FN_ARGS)
+ppb_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct ppb_softc *sc = device_private(dv);
 	int off;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.109.10.1 2009/05/04 08:14:15 yamt Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.109.10.2 2010/03/11 15:04:27 yamt Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.109.10.1 2009/05/04 08:14:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.109.10.2 2010/03/11 15:04:27 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -3906,7 +3906,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 	/* challenge, failure and success are his authproto */
 	case CHAP_CHALLENGE:
 		if (sp->myauth.secret == NULL || sp->myauth.name == NULL) {
-		    /* can't do anything usefull */
+		    /* can't do anything useful */
 		    sp->pp_auth_failures++;
 		    printf("%s: chap input without my name and my secret being set\n",
 		    	ifp->if_xname);
@@ -4009,7 +4009,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 	/* response is my authproto */
 	case CHAP_RESPONSE:
 		if (sp->hisauth.secret == NULL) {
-		    /* can't do anything usefull */
+		    /* can't do anything useful */
 		    printf("%s: chap input without his secret being set\n",
 		    	ifp->if_xname);
 		    break;
@@ -4278,7 +4278,7 @@ sppp_chap_scr(struct sppp *sp)
 	u_char clen;
 
 	if (sp->myauth.name == NULL) {
-	    /* can't do anything usefull */
+	    /* can't do anything useful */
 	    printf("%s: chap starting without my name being set\n",
 	    	sp->pp_if.if_xname);
 	    return;
@@ -4349,7 +4349,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 	/* PAP request is my authproto */
 	case PAP_REQ:
 		if (sp->hisauth.name == NULL || sp->hisauth.secret == NULL) {
-		    /* can't do anything usefull */
+		    /* can't do anything useful */
 		    printf("%s: pap request without his name and his secret being set\n",
 		    	ifp->if_xname);
 		    break;
@@ -4622,7 +4622,7 @@ sppp_pap_scr(struct sppp *sp)
 	u_char idlen, pwdlen;
 
 	if (sp->myauth.secret == NULL || sp->myauth.name == NULL) {
-	    /* can't do anything usefull */
+	    /* can't do anything useful */
 	    printf("%s: pap starting without my name and secret being set\n",
 	    	sp->pp_if.if_xname);
 	    return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.48.4.3 2009/09/16 13:37:51 yamt Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.48.4.4 2010/03/11 15:03:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,9 +115,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.48.4.3 2009/09/16 13:37:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.48.4.4 2010/03/11 15:03:47 yamt Exp $");
 
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -140,9 +139,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.48.4.3 2009/09/16 13:37:51 yamt Exp $");
 
 #include <net/if_media.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -210,9 +207,9 @@ void sk_setfilt(struct sk_if_softc *, void *, int);
 void sk_setmulti(struct sk_if_softc *);
 void sk_tick(void *);
 
-static bool skc_suspend(device_t dv PMF_FN_ARGS);
-static bool skc_resume(device_t dv PMF_FN_ARGS);
-static bool sk_resume(device_t dv PMF_FN_ARGS);
+static bool skc_suspend(device_t, const pmf_qual_t *);
+static bool skc_resume(device_t, const pmf_qual_t *);
+static bool sk_resume(device_t dv, const pmf_qual_t *);
 
 /* #define SK_DEBUG 2 */
 #ifdef SK_DEBUG
@@ -1620,7 +1617,8 @@ skc_attach(device_t parent, device_t self, void *aux)
 	if (sc->sk_intrhand == NULL) {
 		aprint_error(": couldn't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		goto fail;
 	}
 	aprint_normal(": %s\n", intrstr);
@@ -1968,10 +1966,8 @@ sk_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 	}
 	if (pkts == 0)
 		return;
@@ -2105,10 +2101,8 @@ sk_rxeof(struct sk_if_softc *sc_if)
 
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		/* pass it on. */
 		(*ifp->if_input)(ifp, m);
 	}
@@ -2954,7 +2948,7 @@ sk_stop(struct ifnet *ifp, int disable)
 /* Power Management Framework */
 
 static bool
-skc_suspend(device_t dv PMF_FN_ARGS)
+skc_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct sk_softc *sc = device_private(dv);
 
@@ -2967,7 +2961,7 @@ skc_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-skc_resume(device_t dv PMF_FN_ARGS)
+skc_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct sk_softc *sc = device_private(dv);
 
@@ -2980,7 +2974,7 @@ skc_resume(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-sk_resume(device_t dv PMF_FN_ARGS)
+sk_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct sk_if_softc *sc_if = device_private(dv);
 

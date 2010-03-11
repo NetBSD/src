@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.19.10.2 2009/06/20 07:20:31 yamt Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.19.10.3 2010/03/11 15:04:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.19.10.2 2009/06/20 07:20:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.19.10.3 2010/03/11 15:04:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -78,6 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.19.10.2 2009/06/20 07:20:31 yamt Exp
 #include <uvm/uvm_kmguard.h>
 
 #include <lib/libkern/libkern.h>
+
+#include <machine/stdarg.h>
 
 #define	KMEM_QUANTUM_SIZE	(ALIGNBYTES + 1)
 #define	KMEM_QCACHE_MAX		(KMEM_QUANTUM_SIZE * 32)
@@ -126,7 +128,7 @@ static void kmem_poison_check(void *, size_t);
 #if defined(KMEM_SIZE)
 #define	SIZE_SIZE	(max(KMEM_QUANTUM_SIZE, sizeof(size_t)))
 static void kmem_size_set(void *, size_t);
-static void kmem_size_check(void *, size_t);
+static void kmem_size_check(const void *, size_t);
 #else
 #define	SIZE_SIZE	0
 #define	kmem_size_set(p, sz)	/* nothing */
@@ -137,6 +139,9 @@ static vmem_addr_t kmem_backend_alloc(vmem_t *, vmem_size_t, vmem_size_t *,
     vm_flag_t);
 static void kmem_backend_free(vmem_t *, vmem_addr_t, vmem_size_t);
 static int kmem_kva_reclaim_callback(struct callback_entry *, void *, void *);
+
+CTASSERT(KM_SLEEP == PR_WAITOK);
+CTASSERT(KM_NOSLEEP == PR_NOWAIT);
 
 static inline vm_flag_t
 kmf_to_vmf(km_flag_t kmflags)
@@ -160,9 +165,6 @@ kmf_to_vmf(km_flag_t kmflags)
 static void *
 kmem_poolpage_alloc(struct pool *pool, int prflags)
 {
-
-	KASSERT(KM_SLEEP == PR_WAITOK);
-	KASSERT(KM_NOSLEEP == PR_NOWAIT);
 
 	return (void *)vmem_alloc(kmem_arena, pool->pr_alloc->pa_pagesz,
 	    kmf_to_vmf(prflags) | VM_INSTANTFIT);
@@ -205,8 +207,6 @@ kmem_alloc(size_t size, km_flag_t kmflags)
 	if (size >= kmem_cache_min && size <= kmem_cache_max) {
 		kc = &kmem_cache[(size + kmem_cache_mask) >> kmem_cache_shift];
 		KASSERT(size <= kc->kc_pa.pa_pagesz);
-		KASSERT(KM_SLEEP == PR_WAITOK);
-		KASSERT(KM_NOSLEEP == PR_NOWAIT);
 		kmflags &= (KM_SLEEP | KM_NOSLEEP);
 		p = pool_cache_get(kc->kc_cache, kmflags);
 	} else {
@@ -256,17 +256,15 @@ kmem_free(void *p, size_t size)
 	KASSERT(p != NULL);
 	KASSERT(size > 0);
 
-	size += SIZE_SIZE;
-	p = (uint8_t *)p - SIZE_SIZE;
-	kmem_size_check(p, size + REDZONE_SIZE);
-
 #ifdef KMEM_GUARD
 	if (size <= kmem_guard_size) {
 		uvm_kmguard_free(&kmem_guard, size, p);
 		return;
 	}
 #endif
-
+	size += SIZE_SIZE;
+	p = (uint8_t *)p - SIZE_SIZE;
+	kmem_size_check(p, size + REDZONE_SIZE);
 	FREECHECK_IN(&kmem_freecheck, p);
 	LOCKDEBUG_MEM_CHECK(p, size);
 	kmem_poison_check((char *)p + size,
@@ -449,14 +447,39 @@ kmem_size_set(void *p, size_t sz)
 }
 
 static void
-kmem_size_check(void *p, size_t sz)
+kmem_size_check(const void *p, size_t sz)
 {
 	size_t psz;
 
 	memcpy(&psz, p, sizeof(psz));
 	if (psz != sz) {
 		panic("kmem_free(%p, %zu) != allocated size %zu",
-		    (uint8_t*)p + SIZE_SIZE, sz - SIZE_SIZE, psz);
+		    (const uint8_t *)p + SIZE_SIZE, sz - SIZE_SIZE, psz);
 	}
 }
 #endif	/* defined(KMEM_SIZE) */
+
+/*
+ * Used to dynamically allocate string with kmem accordingly to format.
+ */
+char *
+kmem_asprintf(const char *fmt, ...)
+{
+	int size, str_len;
+	va_list va;
+	char *str;
+	char buf[1];
+	
+	va_start(va, fmt);
+	str_len = vsnprintf(buf, sizeof(buf), fmt, va) + 1;
+	va_end(va);
+
+	str = kmem_alloc(str_len, KM_SLEEP);
+
+	if ((size = vsnprintf(str, str_len, fmt, va)) == -1) {
+		kmem_free(str, str_len);
+		return NULL;
+	}
+
+	return str;
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.6.4.1 2008/05/16 02:21:49 yamt Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.6.4.2 2010/03/11 15:01:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -233,7 +233,7 @@ _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 1:
 
 	movq	CPU_INFO_IDLELWP(%rdi),%rsi
-	movq	L_ADDR(%rsi),%rsi
+	movq	L_PCB(%rsi),%rsi
 	
 	movq	PCB_RSP(%rsi),%rsp
 	movq	PCB_RBP(%rsi),%rbp

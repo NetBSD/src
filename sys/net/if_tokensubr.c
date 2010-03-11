@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.53.10.2 2009/05/04 08:14:15 yamt Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.53.10.3 2010/03/11 15:04:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,14 +92,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.53.10.2 2009/05/04 08:14:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.53.10.3 2010/03/11 15:04:27 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_iso.h"
 #include "opt_gateway.h"
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,9 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.53.10.2 2009/05/04 08:14:15 yamt 
 #include <net/if_dl.h>
 #include <net/if_types.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <net/if_ether.h>
 #include <net/if_token.h>
@@ -151,7 +148,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.53.10.2 2009/05/04 08:14:15 yamt 
 #include <netiso/iso_snpac.h>
 #endif
 
-#include "bpfilter.h"
 
 #define senderr(e) { error = (e); goto bad;}
 
@@ -308,10 +304,10 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 			memcpy(edst, tokenbroadcastaddr, sizeof(edst));
 		}
 		else {
-			void *tha = (void *)ar_tha(ah);
-			KASSERT(tha);
-			if (tha)
-				memcpy((void *)edst, tha, sizeof(edst));
+			void *tha = ar_tha(ah);
+			if (tha == NULL)
+				return 0;
+			memcpy(edst, tha, sizeof(edst));
 			trh = (struct token_header *)M_TRHSTART(m);
 			trh->token_ac = TOKEN_AC;
 			trh->token_fc = TOKEN_FC;
@@ -658,18 +654,15 @@ token_ifattach(struct ifnet *ifp, void *lla)
 
 	if_set_sadl(ifp, lla, ISO88025_ADDR_LEN, true);
 
-#if NBPFILTER > 0
-	bpfattach(ifp, DLT_IEEE802, sizeof(struct token_header));
-#endif
+	bpf_ops->bpf_attach(ifp, DLT_IEEE802,
+	    sizeof(struct token_header), &ifp->if_bpf);
 }
 
 void
 token_ifdetach(struct ifnet *ifp)
 {
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
+	bpf_ops->bpf_detach(ifp);
 #if 0	/* done in if_detach() */
 	if_free_sadl(ifp);
 #endif

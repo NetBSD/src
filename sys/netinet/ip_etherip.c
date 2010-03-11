@@ -1,4 +1,4 @@
-/*      $NetBSD: ip_etherip.c,v 1.9.4.1 2009/05/04 08:14:17 yamt Exp $        */
+/*      $NetBSD: ip_etherip.c,v 1.9.4.2 2010/03/11 15:04:28 yamt Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -58,10 +58,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.9.4.1 2009/05/04 08:14:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.9.4.2 2010/03/11 15:04:28 yamt Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,9 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.9.4.1 2009/05/04 08:14:17 yamt Exp 
 #include <net/if_ether.h>
 #include <net/if_media.h>
 #include <net/if_etherip.h>
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <machine/stdarg.h>
 
@@ -257,10 +254,8 @@ ip_etherip_input(struct mbuf *m, ...)
 	m->m_pkthdr.rcvif = ifp;
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	ifp->if_ipackets++;
 

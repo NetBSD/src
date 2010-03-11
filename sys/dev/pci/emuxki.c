@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.51.4.4 2009/06/20 07:20:23 yamt Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.51.4.5 2010/03/11 15:03:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.51.4.4 2009/06/20 07:20:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.51.4.5 2010/03/11 15:03:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -439,8 +439,8 @@ emuxki_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 		return;
 	}

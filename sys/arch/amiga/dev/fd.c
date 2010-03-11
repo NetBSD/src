@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.78.10.1 2009/05/04 08:10:34 yamt Exp $ */
+/*	$NetBSD: fd.c,v 1.78.10.2 2010/03/11 15:02:00 yamt Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.78.10.1 2009/05/04 08:10:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.78.10.2 2010/03/11 15:02:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ struct fdtype fdtype[] = {
 	{ 0x55555555, 40, 11, 9, 7358, 6815, 414, { 80, 161 }, "5.25dd" },
 	{ 0xAAAAAAAA, 80, 22, 18, 14716, 13630, 828, { 80, 161 }, "3.5hd" }
 };
-int nfdtype = sizeof(fdtype) / sizeof(*fdtype);
+int nfdtype = __arraycount(fdtype);
 
 CFATTACH_DECL(fd, sizeof(struct fd_softc),
     fdmatch, fdattach, NULL, NULL);
@@ -805,7 +805,7 @@ fdgetdisklabel(struct fd_softc *sc, dev_t dev)
 		error = EINVAL;
 		goto nolabel;
 	}
-	memcpy( lp, dlp, sizeof(struct disklabel));
+	memcpy(lp, dlp, sizeof(struct disklabel));
 	if (lp->d_trkseek > FDSTEPDELAY)
 		sc->stepdelay = lp->d_trkseek;
 	brelse(bp, 0);
@@ -873,7 +873,7 @@ fdsetdisklabel(struct fd_softc *sc, struct disklabel *lp)
 	    (pp->p_frag * pp->p_fsize % PAGE_SIZE))
 		return(EINVAL);
 done:
-	memcpy( clp, lp, sizeof(struct disklabel));
+	memcpy(clp, lp, sizeof(struct disklabel));
 	return(0);
 }
 
@@ -909,7 +909,7 @@ fdputdisklabel(struct fd_softc *sc, dev_t dev)
 	 * copy disklabel to buf and write it out synchronous
 	 */
 	dlp = (struct disklabel *)((char*)bp->b_data + LABELOFFSET);
-	memcpy( dlp, lp, sizeof(struct disklabel));
+	memcpy(dlp, lp, sizeof(struct disklabel));
 	bp->b_blkno = 0;
 	bp->b_cylinder = 0;
 	bp->b_flags &= ~(B_READ);
@@ -1555,9 +1555,9 @@ fddone(struct fd_softc *sc)
 		sz *= FDSECSIZE;
 		sz = min(dp->b_bcount, sz);
 		if (bp->b_flags & B_READ)
-			memcpy( dp->b_data, data, sz);
+			memcpy(dp->b_data, data, sz);
 		else {
-			memcpy( data, dp->b_data, sz);
+			memcpy(data, dp->b_data, sz);
 			sc->flags |= FDF_DIRTY;
 		}
 		bp->b_resid = dp->b_bcount - sz;

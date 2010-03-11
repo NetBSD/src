@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.21.10.2 2009/05/04 08:13:21 yamt Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.21.10.3 2010/03/11 15:04:06 yamt Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.21.10.2 2009/05/04 08:13:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.21.10.3 2010/03/11 15:04:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,8 +169,11 @@ USB_ATTACH(ubsa)
 	int i;
 
 	sc->sc_dev = self;
+
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
@@ -351,21 +354,12 @@ int
 ubsa_activate(device_ptr_t self, enum devact act)
 {
 	struct ubsa_softc *sc = device_private(self);
-	int rv = 0;
-	int i;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
-		for (i = 0; i < sc->sc_numif; i++) {
-			if (sc->sc_subdevs[i] != NULL)
-				rv |= config_deactivate(sc->sc_subdevs[i]);
-		}
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4.4.2 2009/08/19 18:46:54 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4.4.3 2010/03/11 15:03:10 yamt Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4.4.2 2009/08/19 18:46:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4.4.3 2010/03/11 15:03:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,6 +134,9 @@ mainbus_match(device_t parent, cfdata_t match, void *aux)
 void
 mainbus_attach(device_t parent, device_t self, void *aux)
 {
+#if NPCI > 0
+	int mode;
+#endif
 	union mainbus_attach_args mba;
 #if defined(DOM0OPS)
 	int numcpus = 0;
@@ -155,9 +158,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #endif
 #if NPCI > 0
 		/* ACPI needs to be able to access PCI configuration space. */
-		pci_mode = pci_mode_detect();
+		mode = pci_mode_detect();
 #ifdef PCI_BUS_FIXUP
-		if (pci_mode != 0) {
+		if (mode != 0) {
 			pci_maxbus = pci_bus_fixup(NULL, 0);
 			aprint_debug_dev(self, "PCI bus max, after "
 			    "pci_bus_fixup: %i\n", pci_maxbus);

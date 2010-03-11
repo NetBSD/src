@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.8.10.2 2009/05/04 08:10:45 yamt Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.8.10.3 2010/03/11 15:02:07 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.8.10.2 2009/05/04 08:10:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.8.10.3 2010/03/11 15:02:07 yamt Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.8.10.2 2009/05/04 08:10:45 yamt 
  * XXX NPE-C port doesn't work yet
  */
 
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -69,9 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.8.10.2 2009/05/04 08:10:45 yamt 
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #if NRND > 0
 #include <sys/rnd.h>
@@ -1058,13 +1055,11 @@ npe_rxdone(int qid, void *arg)
 			m_adj(mrx, -ETHER_CRC_LEN);
 
 			ifp->if_ipackets++;
-#if NBPFILTER > 0
 			/*
 			 * Tap off here if there is a bpf listener.
 			 */
 			if (__predict_false(ifp->if_bpf))
-				bpf_mtap(ifp->if_bpf, mrx);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, mrx);
 			ifp->if_input(ifp, mrx);
 		} else {
 fail:
@@ -1302,13 +1297,11 @@ npestart(struct ifnet *ifp)
 		}
 		sc->tx_free = npe->ix_next;
 
-#if NBPFILTER > 0
 		/*
 		 * Tap off here if there is a bpf listener.
 		 */
 		if (__predict_false(ifp->if_bpf))
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		bus_dmamap_sync(sc->sc_dt, npe->ix_map, 0,
 		    npe->ix_map->dm_mapsize, BUS_DMASYNC_PREWRITE);

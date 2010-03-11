@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.145.2.3 2009/09/16 13:38:01 yamt Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.145.2.4 2010/03/11 15:04:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.145.2.3 2009/09/16 13:38:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.145.2.4 2010/03/11 15:04:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -531,7 +531,10 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 		if (((error =
 		    (*fetch_event)(evp, &pt->pt_ev, sizeof(pt->pt_ev))) != 0) ||
 		    ((pt->pt_ev.sigev_notify < SIGEV_NONE) ||
-			(pt->pt_ev.sigev_notify > SIGEV_SA))) {
+			(pt->pt_ev.sigev_notify > SIGEV_SA)) ||
+			(pt->pt_ev.sigev_notify == SIGEV_SIGNAL &&
+			 (pt->pt_ev.sigev_signo <= 0 ||
+			  pt->pt_ev.sigev_signo >= NSIG))) {
 			pool_put(&ptimer_pool, pt);
 			return (error ? error : EINVAL);
 		}
@@ -1460,4 +1463,30 @@ timer_intr(void *cookie)
 	}
 	mutex_spin_exit(&timer_lock);
 	mutex_exit(proc_lock);
+}
+
+/*
+ * Check if the time will wrap if set to ts.
+ *
+ * ts - timespec describing the new time
+ * delta - the delta between the current time and ts
+ */
+bool
+time_wraps(struct timespec *ts, struct timespec *delta)
+{
+
+	/*
+	 * Don't allow the time to be set forward so far it
+	 * will wrap and become negative, thus allowing an
+	 * attacker to bypass the next check below.  The
+	 * cutoff is 1 year before rollover occurs, so even
+	 * if the attacker uses adjtime(2) to move the time
+	 * past the cutoff, it will take a very long time
+	 * to get to the wrap point.
+	 */
+	if ((ts->tv_sec > LLONG_MAX - 365*24*60*60) ||
+	    (delta->tv_sec < 0 || delta->tv_nsec < 0))
+		return true;
+
+	return false;
 }

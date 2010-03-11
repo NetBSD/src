@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.40.4.1 2009/05/04 08:11:58 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.40.4.2 2010/03/11 15:03:00 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -111,19 +111,20 @@ extern struct page_size_map page_size_map[];
 #define va_to_dir(v)	(int)((((paddr_t)(v))>>PDSHIFT)&PDMASK)
 #define va_to_pte(v)	(int)((((paddr_t)(v))>>PTSHIFT)&PTMASK)
 
+#ifdef MULTIPROCESSOR
+#define PMAP_LIST_MAXNUMCPU	CPUSET_MAXNUMCPU
+#else
+#define PMAP_LIST_MAXNUMCPU	1
+#endif
+
 struct pmap {
 	struct uvm_object pm_obj;
 #define pm_lock pm_obj.vmobjlock
 #define pm_refs pm_obj.uo_refs
-#ifdef MULTIPROCESSOR
-	LIST_ENTRY(pmap) pm_list[CPUSET_MAXNUMCPU];	/* per cpu ctx used list */
-#else
-	LIST_ENTRY(pmap) pm_list;	/* single ctx used list */
-#endif
+	LIST_ENTRY(pmap) pm_list[PMAP_LIST_MAXNUMCPU];	/* per cpu ctx used list */
 
 	struct pmap_statistics pm_stats;
 
-#ifdef MULTIPROCESSOR
 	/*
 	 * We record the context used on any cpu here. If the context
 	 * is actually present in the TLB, it will be the plain context
@@ -132,10 +133,7 @@ struct pmap {
 	 * If this pmap has no context allocated on that cpu, the entry
 	 * will be 0.
 	 */
-	int pm_ctx[CPUSET_MAXNUMCPU];	/* Current context per cpu */
-#else
-	int pm_ctx;			/* Current context */
-#endif
+	int pm_ctx[PMAP_LIST_MAXNUMCPU];	/* Current context per cpu */
 
 	/*
 	 * This contains 64-bit pointers to pages that contain
@@ -205,23 +203,8 @@ void		switchexit(struct lwp *, int);
 void		pmap_kprotect(vaddr_t, vm_prot_t);
 
 /* SPARC64 specific */
-/* Assembly routines to flush TLB mappings */
-void sp_tlb_flush_pte(vaddr_t, int);
-void sp_tlb_flush_ctx(int);
-void sp_tlb_flush_all(void);
-
-#ifdef MULTIPROCESSOR
-void smp_tlb_flush_pte(vaddr_t, pmap_t);
-void smp_tlb_flush_ctx(pmap_t);
-void smp_tlb_flush_all(void);
-#define	tlb_flush_pte(va,pm)	smp_tlb_flush_pte(va, pm)
-#define	tlb_flush_ctx(pm)	smp_tlb_flush_ctx(pm)
-#define	tlb_flush_all()		smp_tlb_flush_all()
-#else
-#define	tlb_flush_pte(va,pm)	sp_tlb_flush_pte(va, (pm)->pm_ctx)
-#define	tlb_flush_ctx(pm)	sp_tlb_flush_ctx((pm)->pm_ctx)
-#define	tlb_flush_all()		sp_tlb_flush_all()
-#endif
+void		pmap_copy_page_phys(paddr_t, paddr_t);
+void		pmap_zero_page_phys(paddr_t);
 
 /* Installed physical memory, as discovered during bootstrap. */
 extern int phys_installed_size;

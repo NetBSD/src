@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.11.78.2 2009/05/04 08:11:31 yamt Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.11.78.3 2010/03/11 15:02:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,11 +42,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Matthias Pfaller.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -61,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.11.78.2 2009/05/04 08:11:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.11.78.3 2010/03/11 15:02:40 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -81,7 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.11.78.2 2009/05/04 08:11:31 yamt 
 #include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/kgdb.h>
 

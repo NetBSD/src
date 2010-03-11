@@ -1,5 +1,3 @@
-/*	$NetBSD: elf_machdep.h,v 1.1 2000/06/14 15:39:57 soren Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.1.136.1 2010/03/11 15:02:54 yamt Exp $	*/
 
 #include <mips/elf_machdep.h>
-
-#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB

@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.31.10.1 2009/05/04 08:10:57 yamt Exp $
+#	$NetBSD: TS7200,v 1.31.10.2 2010/03/11 15:02:14 yamt Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -45,7 +45,6 @@ file-system	MSDOSFS		# MS-DOS file system
 #file-system    FILECORE        # Acorn filecore file system
 file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
-#file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
@@ -85,6 +84,7 @@ options 	NFS_BOOT_DHCP
 
 #options 	COMPAT_LINUX
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
@@ -314,6 +314,9 @@ uhub*	at uhub? port ?
 # USB Modem
 #umodem*	at uhub? port ? configuration ?
 #ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+#uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.156.2.2 2009/06/20 07:20:32 yamt Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.156.2.3 2010/03/11 15:04:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.156.2.2 2009/06/20 07:20:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.156.2.3 2010/03/11 15:04:21 yamt Exp $");
 
 #include "veriexec.h"
 
@@ -122,7 +122,7 @@ const struct fileops vnops = {
 	.fo_stat = vn_statfile,
 	.fo_close = vn_closefile,
 	.fo_kqfilter = vn_kqfilter,
-	.fo_drain = fnullop_drain,
+	.fo_restart = fnullop_restart,
 };
 
 /*
@@ -170,7 +170,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 
 	if (fmode & O_CREAT) {
 		if (ndp->ni_vp == NULL) {
-			VATTR_NULL(&va);
+			vattr_null(&va);
 			va.va_type = VREG;
 			va.va_mode = cmode;
 			if (fmode & O_EXCL)
@@ -217,7 +217,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 		VOP_UNLOCK(vp, 0);			/* XXX */
 
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
-		VATTR_NULL(&va);
+		vattr_null(&va);
 		va.va_size = 0;
 		error = VOP_SETATTR(vp, &va, cred);
 		if (error != 0)
@@ -449,7 +449,7 @@ unionread:
 	    (vp->v_mount->mnt_flag & MNT_UNION)) {
 		struct vnode *tvp = vp;
 		vp = vp->v_mount->mnt_vnodecovered;
-		VREF(vp);
+		vref(vp);
 		mutex_enter(&fp->f_lock);
 		fp->f_data = vp;
 		fp->f_offset = 0;
@@ -682,7 +682,7 @@ vn_ioctl(file_t *fp, u_long com, void *data)
 		error = VOP_IOCTL(vp, com, data, fp->f_flag,
 		    kauth_cred_get());
 		if (error == 0 && com == TIOCSCTTY) {
-			VREF(vp);
+			vref(vp);
 			mutex_enter(proc_lock);
 			ovp = curproc->p_session->s_ttyvp;
 			curproc->p_session->s_ttyvp = vp;

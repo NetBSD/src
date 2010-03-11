@@ -34,7 +34,6 @@ file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
 #file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
-#file-system	PORTAL		# portal filesystem (still experimental)
 #file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
@@ -77,6 +76,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 #options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_20	# NetBSD 2.0 compatibility.

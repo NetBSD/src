@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.254.2.4 2009/09/16 13:38:08 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.254.2.5 2010/03/11 15:04:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.254.2.4 2009/09/16 13:38:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.254.2.5 2010/03/11 15:04:47 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -89,6 +89,11 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.254.2.4 2009/09/16 13:38:08 yamt Exp $
 #include <sys/vnode.h>
 #include <sys/lockdebug.h>
 #include <sys/atomic.h>
+#ifndef __USER_VA0_IS_SAFE
+#include <sys/sysctl.h>
+#include <sys/kauth.h>
+#include "opt_user_va0_disable_default.h"
+#endif
 
 #ifdef SYSVSHM
 #include <sys/shm.h>
@@ -166,6 +171,17 @@ MALLOC_DEFINE(M_VMPMAP, "VM pmap", "VM pmap");
  * Note, this variable is locked by kernel_map's lock.
  */
 vaddr_t uvm_maxkaddr;
+#endif
+
+#ifndef __USER_VA0_IS_SAFE
+#ifndef __USER_VA0_DISABLE_DEFAULT
+#define __USER_VA0_DISABLE_DEFAULT 1
+#endif
+#ifdef USER_VA0_DISABLE_DEFAULT /* kernel config option overrides */
+#undef __USER_VA0_DISABLE_DEFAULT
+#define __USER_VA0_DISABLE_DEFAULT USER_VA0_DISABLE_DEFAULT
+#endif
+static int user_va0_disable = __USER_VA0_DISABLE_DEFAULT;
 #endif
 
 /*
@@ -572,7 +588,7 @@ _uvm_tree_sanity(struct vm_map *map)
 			goto error;
 		}
 		if (trtmp != NULL && trtmp->start >= tmp->start) {
-			printf("corrupt: 0x%lx >= 0x%lx\n",
+			printf("corrupt: 0x%"PRIxVADDR"x >= 0x%"PRIxVADDR"x\n",
 			    trtmp->start, tmp->start);
 			goto error;
 		}
@@ -1173,6 +1189,12 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 
 	KASSERT((flags & UVM_FLAG_QUANTUM) == 0 || VM_MAP_IS_KERNEL(map));
 	KASSERT((size & PAGE_MASK) == 0);
+
+#ifndef __USER_VA0_IS_SAFE
+	if ((flags & UVM_FLAG_FIXED) && *startp == 0 &&
+	    !VM_MAP_IS_KERNEL(map) && user_va0_disable)
+		return EACCES;
+#endif
 
 	/*
 	 * for pager_map, allocate the new entry first to avoid sleeping
@@ -2332,7 +2354,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			 * if the map is non-pageable, any pages mapped there
 			 * must be wired and entered with pmap_kenter_pa(),
 			 * and we should free any such pages immediately.
-			 * this is mostly used for kmem_map and mb_map.
+			 * this is mostly used for kmem_map.
 			 */
 
 			if ((entry->flags & UVM_MAP_KMAPENT) == 0) {
@@ -2605,9 +2627,11 @@ uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
 			if (tmpent->start < cur)
 				panic("uvm_map_replace1");
 			if (tmpent->start >= tmpent->end || tmpent->end > end) {
-		printf("tmpent->start=0x%lx, tmpent->end=0x%lx, end=0x%lx\n",
-			    tmpent->start, tmpent->end, end);
-				panic("uvm_map_replace2");
+				panic("uvm_map_replace2: "
+				    "tmpent->start=0x%"PRIxVADDR
+				    ", tmpent->end=0x%"PRIxVADDR
+				    ", end=0x%"PRIxVADDR,
+				    tmpent->start, tmpent->end, end);
 			}
 			cur = tmpent->end;
 			if (tmpent->next) {
@@ -3934,8 +3958,8 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 
 	error = 0;
 	for (current = entry; start < end; current = current->next) {
-		amap = current->aref.ar_amap;	/* top layer */
-		uobj = current->object.uvm_obj;	/* bottom layer */
+		amap = current->aref.ar_amap;	/* upper layer */
+		uobj = current->object.uvm_obj;	/* lower layer */
 		KASSERT(start >= current->start);
 
 		/*
@@ -4705,7 +4729,7 @@ again:
 	va = args.uma_start;
 
 	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-	    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE);
+	    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE, 0);
 	pmap_update(vm_map_pmap(map));
 
 #endif
@@ -5213,3 +5237,40 @@ uvm_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 }
 
 #endif /* DDB || DEBUGPRINT */
+
+#ifndef __USER_VA0_IS_SAFE
+static int
+sysctl_user_va0_disable(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int t, error;
+
+	node = *rnode;
+	node.sysctl_data = &t;
+	t = user_va0_disable;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	/* lower only at securelevel < 1 */
+	if (!t && user_va0_disable &&
+	    kauth_authorize_system(l->l_cred,
+				   KAUTH_SYSTEM_CHSYSFLAGS /* XXX */, 0,
+				   NULL, NULL, NULL))
+		return EPERM;
+
+	user_va0_disable = !!t;
+	return 0;
+}
+
+SYSCTL_SETUP(sysctl_uvmmap_setup, "sysctl uvmmap setup")
+{
+
+        sysctl_createv(clog, 0, NULL, NULL,
+                       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+                       CTLTYPE_INT, "user_va0_disable",
+                       SYSCTL_DESCR("Disable VA 0"),
+                       sysctl_user_va0_disable, 0, &user_va0_disable, 0,
+                       CTL_VM, CTL_CREATE, CTL_EOL);
+}
+#endif

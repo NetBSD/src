@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.25.4.2 2009/05/04 08:13:52 yamt Exp $	 */
+/*	$NetBSD: tftp.c,v 1.25.4.3 2010/03/11 15:04:22 yamt Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -234,14 +234,15 @@ tftp_terminate(struct tftp_handle *h)
 	} wbuf;
 	char           *wtail;
 
+	wtail = (char *)&wbuf.t.th_data;
 	if (h->islastblock) {
 		wbuf.t.th_opcode = htons((u_short)ACK);
 		wbuf.t.th_block = htons((u_short)h->currblock);
 	} else {
 		wbuf.t.th_opcode = htons((u_short)ERROR);
 		wbuf.t.th_code = htons((u_short)ENOSPACE); /* ??? */
+		*wtail++ = '\0'; /* empty error string */
 	}
-	wtail = (char *)&wbuf.t.th_data;
 
 	(void)sendudp(h->iodesc, &wbuf.t, wtail - (char *)&wbuf.t);
 }

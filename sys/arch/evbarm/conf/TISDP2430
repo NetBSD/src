@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2430,v 1.1.22.2 2009/05/04 08:10:57 yamt Exp $
+#	$NetBSD: TISDP2430,v 1.1.22.3 2010/03/11 15:02:14 yamt Exp $
 #
 #	TISDP2430 -- TI OMAP 2430 Eval Board Kernel
 #
@@ -35,7 +35,6 @@ file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
 #file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
-#file-system	PORTAL		# portal filesystem (still experimental)
 #file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
@@ -86,6 +85,7 @@ options		NFS_BOOT_RWSIZE=1024
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_20	# NetBSD 2.0 compatibility.

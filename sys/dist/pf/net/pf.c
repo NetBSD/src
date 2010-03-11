@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.51.4.4 2009/09/16 13:37:59 yamt Exp $	*/
+/*	$NetBSD: pf.c,v 1.51.4.5 2010/03/11 15:04:10 yamt Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.4.4 2009/09/16 13:37:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.4.5 2010/03/11 15:04:10 yamt Exp $");
 
-#include "bpfilter.h"
 #include "pflog.h"
 
 #include "pfsync.h"
@@ -57,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.4.4 2009/09/16 13:37:59 yamt Exp $");
 #include <sys/rwlock.h>
 #ifdef __NetBSD__
 #include <sys/kthread.h>
-#include <sys/uidinfo.h>
+#include <sys/kauth.h>
 #endif /* __NetBSD__ */
 
 #include <net/if.h>
@@ -2824,12 +2823,13 @@ pf_socket_lookup(int direction, struct pf_pdesc *pd)
 		break;
 #endif /* INET6 */
 	}
-	pd->lookup.uid = so->so_uidinfo->ui_uid;
+	pd->lookup.uid = kauth_cred_geteuid(so->so_cred);
+	pd->lookup.gid = kauth_cred_getegid(so->so_cred);
 #else
 	so = inp->inp_socket;
 	pd->lookup.uid = so->so_euid;
-#endif /* !__NetBSD__ */
 	pd->lookup.gid = so->so_egid;
+#endif /* !__NetBSD__ */
 	pd->lookup.pid = so->so_cpid;
 	return (1);
 }

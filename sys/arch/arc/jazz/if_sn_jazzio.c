@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_jazzio.c,v 1.10.2.1 2008/05/16 02:21:55 yamt Exp $	*/
+/*	$NetBSD: if_sn_jazzio.c,v 1.10.2.2 2010/03/11 15:02:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,9 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn_jazzio.c,v 1.10.2.1 2008/05/16 02:21:55 yamt Exp $");
-
-#include "bpfilter.h"
+__KERNEL_RCSID(0, "$NetBSD: if_sn_jazzio.c,v 1.10.2.2 2010/03/11 15:02:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

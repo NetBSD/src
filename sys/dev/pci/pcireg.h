@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.57.10.3 2009/09/16 13:37:52 yamt Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.57.10.4 2010/03/11 15:03:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -358,6 +358,13 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_MAPREG_PPB_END		0x18
 #define	PCI_MAPREG_PCB_END		0x14
 
+#define PCI_BAR0		0x10
+#define PCI_BAR1		0x14
+#define PCI_BAR2		0x18
+#define PCI_BAR3		0x1C
+#define PCI_BAR4		0x20
+#define PCI_BAR5		0x24
+
 #define	PCI_MAPREG_TYPE(mr)						\
 	    ((mr) & PCI_MAPREG_TYPE_MASK)
 #define	PCI_MAPREG_TYPE_MASK			0x00000001
@@ -551,7 +558,12 @@ typedef u_int8_t pci_revision_t;
 #define PCI_PCIE_XCAP_SI	0x01000000
 #define PCI_PCIE_DCAP		0x04
 #define PCI_PCIE_DCSR		0x08
+#define PCI_PCIE_DCSR_MAX_READ_REQ	0x7000
 #define PCI_PCIE_DCSR_ENA_NO_SNOOP	0x00000800
+#define PCI_PCIE_DCSR_CED	0x00010000
+#define PCI_PCIE_DCSR_NFED	0x00020000
+#define PCI_PCIE_DCSR_FED	0x00040000
+#define PCI_PCIE_DCSR_URD	0x00080000
 #define PCI_PCIE_LCAP		0x0c
 #define PCI_PCIE_LCSR		0x10
 #define PCI_PCIE_LCSR_ASPM_L0S	0x00000001
@@ -579,7 +591,14 @@ typedef u_int8_t pci_revision_t;
 #define PCI_PCIE_SLCSR_MS	0x00200000
 #define PCI_PCIE_SLCSR_PDS	0x00400000
 #define PCI_PCIE_SLCSR_LACS	0x01000000
-#define PCI_PCIE_RCSR		0x1c
+#define PCI_PCIE_RCR		0x1c
+#define PCI_PCIE_RSR		0x20
+#define PCI_PCIE_DCAP2		0x24
+#define PCI_PCIE_DCSR2		0x28
+#define PCI_PCIE_LCAP2		0x2c
+#define PCI_PCIE_LCSR2		0x30
+#define PCI_PCIE_SLCAP2		0x34
+#define PCI_PCIE_SLCSR2		0x38
 
 /*
  * Interrupt Configuration Register; contains interrupt pin and line.
@@ -793,12 +812,6 @@ struct pci_rom {
  * Threshold below which 32bit PCI DMA needs bouncing.
  */
 #define PCI32_DMA_BOUNCE_THRESHOLD	0x100000000ULL
-
-/*
- * Common PCI register for PCI transmit handling.
- */
-#define	PCI_RETRY_TIMEOUT_REG		0x40
-#define		PCI_RETRY_TIMEOUT_REG_MASK	0x0000ff00
 
 /*
  * PCI-X 2.0 Extended Capability List

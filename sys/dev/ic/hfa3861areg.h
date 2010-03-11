@@ -1,5 +1,5 @@
-/* $NetBSD: hfa3861areg.h,v 1.3 2007/11/16 04:52:36 dyoung Exp $ */
-/* $Id: hfa3861areg.h,v 1.3 2007/11/16 04:52:36 dyoung Exp $ */
+/* $NetBSD: hfa3861areg.h,v 1.3.28.1 2010/03/11 15:03:30 yamt Exp $ */
+/* $Id: hfa3861areg.h,v 1.3.28.1 2010/03/11 15:03:30 yamt Exp $ */
 /*
  * Copyright (c) 2007 David Young.  All rights reserved.
  *
@@ -14,9 +14,6 @@
  *    copyright notice, this list of conditions and the following
  *    disclaimer in the documentation and/or other materials provided
  *    with the distribution.
- * 3. David Young's name may not be used to endorse or promote
- *    products derived from this software without specific prior
- *    written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY DAVID YOUNG ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,

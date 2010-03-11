@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.4.2.3 2009/08/19 18:47:00 yamt Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.4.2.4 2010/03/11 15:03:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,13 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.4.2.3 2009/08/19 18:47:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.4.2.4 2010/03/11 15:03:17 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #endif
-
-#include "fs_lfs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +138,7 @@ compat_50_netbsd32_select(struct lwp *l,
 		ts = &ats;
 	}
 
-	return selcommon(l, retval, SCARG(uap, nd), SCARG_P32(uap, in),
+	return selcommon(retval, SCARG(uap, nd), SCARG_P32(uap, in),
 	    SCARG_P32(uap, ou), SCARG_P32(uap, ex), ts, NULL);
 	return 0;
 }
@@ -279,15 +277,6 @@ compat_50_netbsd32_adjtime(struct lwp *l,
 
 	return 0;
 }
-
-#if defined(LFS) || !defined(_KERNEL)
-int
-compat_50_netbsd32_lfs_segwait(struct lwp *l,
-    const struct compat_50_netbsd32_lfs_segwait_args *uap, register_t *retval)
-{
-	return 0;
-}
-#endif
 
 int
 compat_50_netbsd32_futimes(struct lwp *l,
@@ -550,7 +539,7 @@ compat_50_netbsd32___sigtimedwait(struct lwp *l,
 	NETBSD32TOP_UAP(info, siginfo_t);
 	NETBSD32TOP_UAP(timeout, struct timespec);
 
-	return __sigtimedwait1(l, &ua, retval,
+	return sigtimedwait1(l, &ua, retval,
 	    compat_50_netbsd32_sigtimedwait_put_info,
 	    compat_50_netbsd32_sigtimedwait_fetch_timeout,
 	    compat_50_netbsd32_sigtimedwait_put_timeout);
@@ -724,7 +713,7 @@ compat_50_netbsd32_pselect(struct lwp *l,
 		mask = &amask;
 	}
 
-	return selcommon(l, retval, SCARG(uap, nd), SCARG_P32(uap, in),
+	return selcommon(retval, SCARG(uap, nd), SCARG_P32(uap, in),
 	    SCARG_P32(uap, ou), SCARG_P32(uap, ex), ts, mask);
 	return 0;
 }
@@ -758,7 +747,7 @@ compat_50_netbsd32_pollts(struct lwp *l,
 		mask = &amask;
 	}
 
-	return pollcommon(l, retval, SCARG_P32(uap, fds),
+	return pollcommon(retval, SCARG_P32(uap, fds),
 	    SCARG(uap, nfds), ts, mask);
 }
 
@@ -857,14 +846,12 @@ compat_50_netbsd32_wait4(struct lwp *l, const struct compat_50_netbsd32_wait4_ar
 		syscallarg(int) options;
 		syscallarg(netbsd32_rusage50p_t) rusage;
 	} */
-	int		status, error;
-	int		was_zombie;
-	struct rusage	ru;
-	struct netbsd32_rusage50	ru32;
-	int pid = SCARG(uap, pid);
+	int error, status, pid = SCARG(uap, pid);
+	struct netbsd32_rusage50 ru32;
+	struct rusage ru;
 
-	error = do_sys_wait(l, &pid, &status, SCARG(uap, options),
-	    SCARG_P32(uap, rusage) != NULL ? &ru : NULL, &was_zombie);
+	error = do_sys_wait(&pid, &status, SCARG(uap, options),
+	    SCARG_P32(uap, rusage) != NULL ? &ru : NULL);
 
 	retval[0] = pid;
 	if (pid == 0)

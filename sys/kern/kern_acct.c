@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.86.2.1 2009/05/04 08:13:46 yamt Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.86.2.2 2010/03/11 15:04:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.86.2.1 2009/05/04 08:13:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.86.2.2 2010/03/11 15:04:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,7 +326,7 @@ sys_acct(struct lwp *l, const struct sys_acct_args *uap, register_t *retval)
 			    "%lu - incomplete record truncated\n",
 			    (unsigned long)sizeof(struct acct));
 #endif
-			VATTR_NULL(&va);
+			vattr_null(&va);
 			va.va_size = size;
 			error = VOP_SETATTR(nd.ni_vp, &va, l->l_cred);
 			if (error != 0) {

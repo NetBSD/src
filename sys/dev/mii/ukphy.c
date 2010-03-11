@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.33.4.3 2009/09/16 13:37:49 yamt Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.33.4.4 2010/03/11 15:03:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -41,11 +41,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -64,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.33.4.3 2009/09/16 13:37:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.33.4.4 2010/03/11 15:03:41 yamt Exp $");
 
 #include "opt_mii.h"
 
@@ -94,8 +89,9 @@ struct mii_knowndev {
 static int	ukphymatch(device_t, cfdata_t, void *);
 static void	ukphyattach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(ukphy, sizeof(struct mii_softc),
-    ukphymatch, ukphyattach, mii_phy_detach, mii_phy_activate);
+CFATTACH_DECL3_NEW(ukphy, sizeof(struct mii_softc),
+    ukphymatch, ukphyattach, mii_phy_detach, mii_phy_activate, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 static int	ukphy_service(struct mii_softc *, struct mii_data *, int);
 

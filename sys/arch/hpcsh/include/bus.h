@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.15.44.2 2009/05/04 08:11:13 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.15.44.3 2010/03/11 15:02:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -774,8 +774,6 @@ int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
 	    vaddr_t low, vaddr_t high);
-
-extern struct playstation2_bus_dma_tag playstation2_default_bus_dma_tag;
 #endif /* _HPCSH_BUS_DMA_PRIVATE */
 
 #endif /* _HPCSH_BUS_H_ */

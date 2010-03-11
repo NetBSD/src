@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.129.2.3 2009/05/16 10:41:50 yamt Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.129.2.4 2010/03/11 15:04:29 yamt Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.129.2.3 2009/05/16 10:41:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.129.2.4 2010/03/11 15:04:29 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -482,6 +482,7 @@ ipsec4_getpolicybysock(struct mbuf *m, u_int dir, struct socket *so,
 	if (pcbsp->priv) {
 		switch (currsp->policy) {
 		case IPSEC_POLICY_BYPASS:
+		case IPSEC_POLICY_IPSEC:
 			currsp->refcnt++;
 			*error = 0;
 			ipsec_fillpcbcache(pcbsp, m, currsp, dir);
@@ -505,12 +506,6 @@ ipsec4_getpolicybysock(struct mbuf *m, u_int dir, struct socket *so,
 			*error = 0;
 			ipsec_fillpcbcache(pcbsp, m, ip4_def_policy, dir);
 			return ip4_def_policy;
-
-		case IPSEC_POLICY_IPSEC:
-			currsp->refcnt++;
-			*error = 0;
-			ipsec_fillpcbcache(pcbsp, m, currsp, dir);
-			return currsp;
 
 		default:
 			ipseclog((LOG_ERR, "ipsec4_getpolicybysock: "

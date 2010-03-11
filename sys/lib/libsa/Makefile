@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.65.4.3 2009/09/16 13:38:01 yamt Exp $
+#	$NetBSD: Makefile,v 1.65.4.4 2010/03/11 15:04:22 yamt Exp $
 
 LIB=	sa
 NOPIC=	# defined
@@ -45,8 +45,8 @@ SRCS+=	cread.c
 .endif
 
 .if (${SA_USE_LOADFILE} == "yes")
-SRCS+=	loadfile.c loadfile_ecoff.c loadfile_elf32.c \
-	loadfile_elf64.c
+SRCS+=	loadfile.c loadfile_ecoff.c loadfile_elf32.c lookup_elf32.c \
+	loadfile_elf64.c lookup_elf64.c
 .if (${MACHINE_CPU} != "mips")
 SRCS+=	loadfile_aout.c
 .endif

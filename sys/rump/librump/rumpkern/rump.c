@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.42.4.6 2009/09/16 13:38:05 yamt Exp $	*/
+/*	$NetBSD: rump.c,v 1.42.4.7 2010/03/11 15:04:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.42.4.6 2009/09/16 13:38:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.42.4.7 2010/03/11 15:04:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -36,8 +36,10 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.42.4.6 2009/09/16 13:38:05 yamt Exp $");
 #include <sys/callout.h>
 #include <sys/conf.h>
 #include <sys/cpu.h>
+#include <sys/device.h>
 #include <sys/evcnt.h>
 #include <sys/event.h>
+#include <sys/exec_elf.h>
 #include <sys/filedesc.h>
 #include <sys/iostat.h>
 #include <sys/kauth.h>
@@ -49,7 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.42.4.6 2009/09/16 13:38:05 yamt Exp $");
 #include <sys/module.h>
 #include <sys/once.h>
 #include <sys/percpu.h>
+#include <sys/pipe.h>
 #include <sys/queue.h>
+#include <sys/reboot.h>
 #include <sys/resourcevar.h>
 #include <sys/select.h>
 #include <sys/sysctl.h>
@@ -57,12 +61,15 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.42.4.6 2009/09/16 13:38:05 yamt Exp $");
 #include <sys/tty.h>
 #include <sys/uidinfo.h>
 #include <sys/vmem.h>
+#include <sys/xcall.h>
 
 #include <rump/rumpuser.h>
 
-#include <secmodel/secmodel.h>
+#include <secmodel/suser/suser.h>
 
 #include <prop/proplib.h>
+
+#include <uvm/uvm_readahead.h>
 
 #include "rump_private.h"
 #include "rump_net_private.h"
@@ -84,7 +91,6 @@ struct pgrp rump_pgrp = {
 };
 struct pstats rump_stats;
 struct plimit rump_limits;
-struct cpu_info rump_cpu;
 struct filedesc rump_filedesc0;
 struct proclist allproc;
 char machine[] = "rump";
@@ -96,6 +102,10 @@ struct proc *initproc = &proc0;
 struct rumpuser_mtx *rump_giantlock;
 
 sigset_t sigcantmask;
+
+struct device rump_rootdev = {
+	.dv_class = DV_VIRTUAL
+};
 
 #ifdef RUMP_WITHOUT_THREADS
 int rump_threads = 0;
@@ -113,53 +123,34 @@ rump_aiodone_worker(struct work *wk, void *dummy)
 }
 
 static int rump_inited;
-static struct emul emul_rump;
+static struct emul emul_rump = {
+	.e_vm_default_addr = uvm_default_mapaddr,
+};
 
-void rump__unavailable(void);
-void rump__unavailable() {}
+int rump__unavailable(void);
+int rump__unavailable() {return EOPNOTSUPP;}
 __weak_alias(rump_net_init,rump__unavailable);
 __weak_alias(rump_vfs_init,rump__unavailable);
 __weak_alias(rump_dev_init,rump__unavailable);
 
+__weak_alias(rump_vfs_fini,rump__unavailable);
+
 __weak_alias(biodone,rump__unavailable);
+__weak_alias(sopoll,rump__unavailable);
 
 void rump__unavailable_vfs_panic(void);
 void rump__unavailable_vfs_panic() {panic("vfs component not available");}
-__weak_alias(vn_open,rump__unavailable_vfs_panic);
-__weak_alias(vn_rdwr,rump__unavailable_vfs_panic);
-__weak_alias(vn_stat,rump__unavailable_vfs_panic);
-__weak_alias(vn_close,rump__unavailable_vfs_panic);
-__weak_alias(namei,rump__unavailable_vfs_panic);
+__weak_alias(usermount_common_policy,rump__unavailable_vfs_panic);
 
-static void
-pvfsinit_nop(struct proc *p)
-{
+rump_proc_vfs_init_fn rump_proc_vfs_init;
+rump_proc_vfs_release_fn rump_proc_vfs_release;
 
-	return;
-}
+static void add_linkedin_modules(const struct modinfo *const *, size_t);
 
-static void
-pvfsrele_nop(struct proc *p)
-{
-
-	return;
-}
-
-rump_proc_vfs_init_fn rump_proc_vfs_init = pvfsinit_nop;
-rump_proc_vfs_release_fn rump_proc_vfs_release = pvfsrele_nop;
-
-/*
- * Stir up the stack a bit.  These are exported functions to help
- * convince the compiler that we don't want these routines completely
- * optimized out or inlined.  Is there an easier way to do this?
- */
-void nullfn(uint32_t *);
-void nullfn(uint32_t *arg){}
-void messthestack(void);
-void
+static void __noinline
 messthestack(void)
 {
-	uint32_t mess[64];
+	volatile uint32_t mess[64];
 	uint64_t d1, d2;
 	int i, error;
 
@@ -167,7 +158,6 @@ messthestack(void)
 		rumpuser_gettime(&d1, &d2, &error);
 		mess[i] = d2;
 	}
-	nullfn(mess);
 }
 
 int
@@ -176,12 +166,26 @@ rump__init(int rump_version)
 	char buf[256];
 	struct proc *p;
 	struct lwp *l;
+	int i;
 	int error;
 
-	/* XXX */
+	/* not reentrant */
 	if (rump_inited)
 		return 0;
-	rump_inited = 1;
+	else if (rump_inited == -1)
+		panic("rump_init: host process restart required");
+	else
+		rump_inited = 1;
+
+	if (rumpuser_getenv("RUMP_VERBOSE", buf, sizeof(buf), &error) == 0) {
+		if (*buf != '0')
+			boothowto = AB_VERBOSE;
+	}
+
+	/* Print some silly banners for spammy bootstrap. */
+	if (boothowto & AB_VERBOSE) {
+		printf("%s%s", copyright, version);
+	}
 
 	/*
 	 * Seed arc4random() with a "reasonable" amount of randomness.
@@ -200,7 +204,15 @@ rump__init(int rump_version)
 	if (rumpuser_getenv("RUMP_THREADS", buf, sizeof(buf), &error) == 0) {
 		rump_threads = *buf != '0';
 	}
-	rumpuser_thrinit(_kernel_lock, _kernel_unlock, rump_threads);
+	rumpuser_thrinit(rump_user_schedule, rump_user_unschedule,
+	    rump_threads);
+	rump_intr_init();
+
+	/* init minimal lwp/cpu context */
+	l = &lwp0;
+	l->l_lid = 1;
+	l->l_cpu = rump_cpu;
+	rumpuser_set_curlwp(l);
 
 	mutex_init(&tty_lock, MUTEX_DEFAULT, IPL_NONE);
 	rumpuser_mutex_recursive_init(&rump_giantlock);
@@ -211,10 +223,13 @@ rump__init(int rump_version)
 	once_init();
 	prop_kern_init();
 
-	rump_sleepers_init();
-
 	pool_subsystem_init();
 	kmem_init();
+
+	uvm_ra_init();
+
+	mutex_obj_init();
+	callout_startup();
 
 	kprintf_init();
 	loginit();
@@ -222,7 +237,7 @@ rump__init(int rump_version)
 	kauth_init();
 	rump_susercred = rump_cred_create(0, 0, 0, NULL);
 
-	l = &lwp0;
+	/* init proc0 and rest of lwp0 now that we can allocate memory */
 	p = &proc0;
 	p->p_stats = &rump_stats;
 	p->p_limit = &rump_limits;
@@ -234,7 +249,6 @@ rump__init(int rump_version)
 	p->p_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	l->l_cred = rump_cred_suserget();
 	l->l_proc = p;
-	l->l_lid = 1;
 	LIST_INIT(&allproc);
 	LIST_INSERT_HEAD(&allproc, &proc0, p_list);
 	proc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
@@ -243,19 +257,36 @@ rump__init(int rump_version)
 	rump_limits.pl_rlimit[RLIMIT_NOFILE].rlim_cur = RLIM_INFINITY;
 	rump_limits.pl_rlimit[RLIMIT_SBSIZE].rlim_cur = RLIM_INFINITY;
 
-	callout_startup();
-	callout_init_cpu(&rump_cpu);
+	rump_scheduler_init();
+	/* revert temporary context and schedule a real context */
+	l->l_cpu = NULL;
+	rumpuser_set_curlwp(NULL);
+	rump_schedule();
 
+	percpu_init();
+
+	/* we are mostly go.  do per-cpu subsystem init */
+	for (i = 0; i < ncpu; i++) {
+		struct cpu_info *ci = cpu_lookup(i);
+
+		callout_init_cpu(ci);
+		softint_init(ci);
+		xc_init_cpu(ci);
+		pool_cache_cpu_init(ci);
+		selsysinit(ci);
+		percpu_init_cpu(ci);
+	}
+
+	sysctl_init();
 	kqueue_init();
 	iostat_init();
 	uid_init();
-	percpu_init();
 	fd_sys_init();
 	module_init();
-	sysctl_init();
-	softint_init(&rump_cpu);
 	devsw_init();
-	secmodel_start();
+	pipe_init();
+
+	rumpuser_dl_bootstrap(add_linkedin_modules, rump_kernelfsym_load);
 
 	/* these do nothing if not present */
 	rump_vfs_init();
@@ -270,6 +301,10 @@ rump__init(int rump_version)
 			panic("aiodoned");
 	}
 
+	sysctl_finalize();
+
+	module_init_class(MODULE_CLASS_ANY);
+
 	rumpuser_gethostname(hostname, MAXHOSTNAMELEN, &error);
 	hostnamelen = strlen(hostname);
 
@@ -277,12 +312,40 @@ rump__init(int rump_version)
 
 	lwp0.l_fd = proc0.p_fd = fd_init(&rump_filedesc0);
 
-#ifdef RUMP_USE_REAL_ALLOCATORS
 	if (rump_threads)
 		vmem_rehash_start();
-#endif
+
+	rump_unschedule();
 
 	return 0;
+}
+
+/* maybe support sys_reboot some day for remote shutdown */
+void
+rump_reboot(int howto)
+{
+
+	/* dump means we really take the dive here */
+	if ((howto & RB_DUMP) || panicstr) {
+		rumpuser_exit(RUMPUSER_PANIC);
+		/*NOTREACHED*/
+	}
+
+	/* try to sync */
+	if (!((howto & RB_NOSYNC) || panicstr)) {
+		rump_vfs_fini();
+	}
+
+	/* your wish is my command */
+	if (howto & RB_HALT) {
+		for (;;) {
+			uint64_t sec = 5, nsec = 0;
+			int error;
+
+			rumpuser_nanosleep(&sec, &nsec, &error);
+		}
+	}
+	rump_inited = -1;
 }
 
 struct uio *
@@ -343,55 +406,118 @@ rump_uio_free(struct uio *uio)
 	return resid;
 }
 
-/* public interface */
 static pid_t nextpid = 1;
 struct lwp *
 rump_newproc_switch()
 {
-	struct lwp *oldlwp = curlwp;
+	struct lwp *l;
 	pid_t mypid;
 
 	mypid = atomic_inc_uint_nv(&nextpid);
 	if (__predict_false(mypid == 0))
 		mypid = atomic_inc_uint_nv(&nextpid);
 
-	rumpuser_set_curlwp(NULL);
-	rump_setup_curlwp(mypid, 0, 1);
+	l = rump_lwp_alloc(mypid, 0);
+	rump_lwp_switch(l);
 
-	return oldlwp;
+	return l;
 }
 
-/* rump private */
 struct lwp *
-rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
+rump_lwp_alloc_and_switch(pid_t pid, lwpid_t lid)
+{
+	struct lwp *l;
+
+	l = rump_lwp_alloc(pid, lid);
+	rump_lwp_switch(l);
+
+	return l;
+}
+
+struct lwp *
+rump_lwp_alloc(pid_t pid, lwpid_t lid)
 {
 	struct lwp *l;
 	struct proc *p;
 
-	l = kmem_zalloc(sizeof(struct lwp), KM_SLEEP);
+	l = kmem_zalloc(sizeof(*l), KM_SLEEP);
 	if (pid != 0) {
-		p = kmem_zalloc(sizeof(struct proc), KM_SLEEP);
-		rump_proc_vfs_init(p);
+		p = kmem_zalloc(sizeof(*p), KM_SLEEP);
+		if (rump_proc_vfs_init)
+			rump_proc_vfs_init(p);
 		p->p_stats = &rump_stats;
 		p->p_limit = &rump_limits;
 		p->p_pid = pid;
 		p->p_vmspace = &rump_vmspace;
+		p->p_emul = &emul_rump;
 		p->p_fd = fd_init(NULL);
 		p->p_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+		l->l_cred = rump_cred_suserget();
 	} else {
 		p = &proc0;
+		l->l_cred = rump_susercred;
 	}
 
-	l->l_cred = rump_cred_suserget();
 	l->l_proc = p;
 	l->l_lid = lid;
 	l->l_fd = p->p_fd;
-	l->l_mutex = RUMP_LMUTEX_MAGIC;
-	l->l_cpu = &rump_cpu;
+	l->l_cpu = NULL;
 
-	if (set)
-		rumpuser_set_curlwp(l);
+	return l;
+}
 
+void
+rump_lwp_switch(struct lwp *newlwp)
+{
+	struct lwp *l = curlwp;
+
+	rumpuser_set_curlwp(NULL);
+	newlwp->l_cpu = l->l_cpu;
+	newlwp->l_mutex = l->l_mutex;
+	l->l_mutex = NULL;
+	l->l_cpu = NULL;
+	rumpuser_set_curlwp(newlwp);
+	if (l->l_flag & LW_WEXIT)
+		rump_lwp_free(l);
+}
+
+/* XXX: this has effect only on non-pid0 lwps */
+void
+rump_lwp_release(struct lwp *l)
+{
+	struct proc *p;
+
+	p = l->l_proc;
+	if (p->p_pid != 0) {
+		mutex_obj_free(p->p_lock);
+		fd_free();
+		if (rump_proc_vfs_release)
+			rump_proc_vfs_release(p);
+		rump_cred_put(l->l_cred);
+		kmem_free(p, sizeof(*p));
+	}
+	KASSERT((l->l_flag & LW_WEXIT) == 0);
+	l->l_flag |= LW_WEXIT;
+}
+
+void
+rump_lwp_free(struct lwp *l)
+{
+
+	KASSERT(l->l_flag & LW_WEXIT);
+	KASSERT(l->l_mutex == NULL);
+	if (l->l_name)
+		kmem_free(l->l_name, MAXCOMLEN);
+	kmem_free(l, sizeof(*l));
+}
+
+struct lwp *
+rump_lwp_curlwp(void)
+{
+	struct lwp *l = curlwp;
+
+	if (l->l_flag & LW_WEXIT)
+		return NULL;
 	return l;
 }
 
@@ -402,47 +528,6 @@ rump_set_vmspace(struct vmspace *vm)
 	struct proc *p = curproc;
 
 	p->p_vmspace = vm;
-}
-
-void
-rump_clear_curlwp(void)
-{
-	struct lwp *l;
-	struct proc *p;
-
-	l = rumpuser_get_curlwp();
-	p = l->l_proc;
-	if (p->p_pid != 0) {
-		mutex_obj_free(p->p_lock);
-		fd_free();
-		rump_proc_vfs_release(p);
-		rump_cred_put(l->l_cred);
-		kmem_free(p, sizeof(*p));
-	}
-	kmem_free(l, sizeof(*l));
-	rumpuser_set_curlwp(NULL);
-}
-
-struct lwp *
-rump_get_curlwp(void)
-{
-	struct lwp *l;
-
-	l = rumpuser_get_curlwp();
-	if (l == NULL)
-		l = &lwp0;
-
-	return l;
-}
-
-void
-rump_set_curlwp(struct lwp *l)
-{
-
-	/* clear current */
-	rumpuser_set_curlwp(NULL);
-	/* set new */
-	rumpuser_set_curlwp(l);
 }
 
 kauth_cred_t
@@ -503,31 +588,87 @@ rump_nextlid(void)
 	return retid;
 }
 
-int
-rump_module_init(struct modinfo *mi, prop_dictionary_t props)
+static int compcounter[RUMP_COMPONENT_MAX];
+
+static void
+rump_component_init_cb(struct rump_component *rc, int type)
 {
 
-	if (!module_compatible(mi->mi_version, __NetBSD_Version__))
-		return EPROGMISMATCH;
-
-	return mi->mi_modcmd(MODULE_CMD_INIT, props);
+	KASSERT(type < RUMP_COMPONENT_MAX);
+	if (rc->rc_type == type) {
+		rc->rc_init();
+		compcounter[type]++;
+	}
 }
 
 int
-rump_module_fini(struct modinfo *mi)
+rump_component_count(enum rump_component_type type)
 {
 
-	return mi->mi_modcmd(MODULE_CMD_FINI, NULL);
+	KASSERT(type <= RUMP_COMPONENT_MAX);
+	return compcounter[type];
 }
 
-int _syspuffs_stub(int, int *);
+void
+rump_component_init(enum rump_component_type type)
+{
+
+	rumpuser_dl_component_init(type, rump_component_init_cb);
+}
+
+/*
+ * Initialize a module which has already been loaded and linked
+ * with dlopen(). This is fundamentally the same as a builtin module.
+ */
 int
-_syspuffs_stub(int fd, int *newfd)
+rump_module_init(const struct modinfo * const *mip, size_t nmodinfo)
 {
 
-	return ENODEV;
+	return module_builtin_add(mip, nmodinfo, true);
 }
-__weak_alias(rump_syspuffs_glueinit,_syspuffs_stub);
+
+/*
+ * Finish module (flawless victory, fatality!).
+ */
+int
+rump_module_fini(const struct modinfo *mi)
+{
+
+	return module_builtin_remove(mi, true);
+}
+
+/*
+ * Add loaded and linked module to the builtin list.  It will
+ * later be initialized with module_init_class().
+ */
+
+static void
+add_linkedin_modules(const struct modinfo * const *mip, size_t nmodinfo)
+{
+
+	module_builtin_add(mip, nmodinfo, false);
+}
+
+int
+rump_kernelfsym_load(void *symtab, uint64_t symsize,
+	char *strtab, uint64_t strsize)
+{
+	static int inited = 0;
+	Elf64_Ehdr ehdr;
+
+	if (inited)
+		return EBUSY;
+	inited = 1;
+
+	/*
+	 * Use 64bit header since it's bigger.  Shouldn't make a
+	 * difference, since we're passing in all zeroes anyway.
+	 */
+	memset(&ehdr, 0, sizeof(ehdr));
+	ksyms_addsyms_explicit(&ehdr, symtab, symsize, strtab, strsize);
+
+	return 0;
+}
 
 static int
 rump_sysproxy_local(int num, void *arg, uint8_t *data, size_t dlen,
@@ -535,13 +676,32 @@ rump_sysproxy_local(int num, void *arg, uint8_t *data, size_t dlen,
 {
 	struct lwp *l;
 	struct sysent *callp;
+	int rv;
 
 	if (__predict_false(num >= SYS_NSYSENT))
 		return ENOSYS;
 
-	l = curlwp;
 	callp = rump_sysent + num;
-	return callp->sy_call(l, (void *)data, retval);
+	rump_schedule();
+	l = curlwp;
+	rv = callp->sy_call(l, (void *)data, retval);
+	rump_unschedule();
+
+	return rv;
+}
+
+int
+rump_boot_gethowto()
+{
+
+	return boothowto;
+}
+
+void
+rump_boot_sethowto(int howto)
+{
+
+	boothowto = howto;
 }
 
 rump_sysproxy_t rump_sysproxy = rump_sysproxy_local;
@@ -567,7 +727,7 @@ rump_sysproxy_set(rump_sysproxy_t proxy, void *arg)
 }
 
 int
-rump_getversion()
+rump_getversion(void)
 {
 
 	return __NetBSD_Version__;

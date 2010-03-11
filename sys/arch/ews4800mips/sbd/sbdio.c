@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdio.c,v 1.2.4.1 2008/05/16 02:22:19 yamt Exp $	*/
+/*	$NetBSD: sbdio.c,v 1.2.4.2 2010/03/11 15:02:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdio.c,v 1.2.4.1 2008/05/16 02:22:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdio.c,v 1.2.4.2 2010/03/11 15:02:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,9 +112,9 @@ sbdio_print(void *aux, const char *pnp)
 	struct sbdio_attach_args *sa = aux;
 
 	if (sa->sa_addr1 != (paddr_t)-1) {
-		aprint_normal(" at 0x%lx", sa->sa_addr1);
+		aprint_normal(" at %#"PRIxPADDR, sa->sa_addr1);
 		if (sa->sa_addr2 != (paddr_t)-1)
-			aprint_normal(", 0x%lx", sa->sa_addr2);
+			aprint_normal(", %#"PRIxPADDR, sa->sa_addr2);
 	}
 	if (sa->sa_irq != -1)
 		aprint_normal(" irq %d", sa->sa_irq);

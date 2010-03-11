@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.19.4.1 2008/05/16 02:23:02 yamt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.19.4.2 2010/03/11 15:02:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.19.4.1 2008/05/16 02:23:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.19.4.2 2010/03/11 15:02:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,12 +46,13 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.19.4.1 2008/05/16 02:23:02 yamt Exp 
 #define _POWERPC_BUS_SPACE_PRIVATE
 #include <machine/bus.h>
 
-#if !defined (PPC_IBM4XX)
-#include <powerpc/oea/bat.h>
-#include <powerpc/oea/pte.h>
-#include <powerpc/oea/sr_601.h>
-#include <powerpc/oea/cpufeat.h>
+#if defined (PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #include <powerpc/spr.h>
+#include <powerpc/oea/bat.h>
+#include <powerpc/oea/cpufeat.h>
+#include <powerpc/oea/pte.h>
+#include <powerpc/oea/spr.h>
+#include <powerpc/oea/sr_601.h>
 
 extern unsigned long oeacpufeat;
 #endif

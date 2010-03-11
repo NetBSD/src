@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.43.4.3 2009/05/16 10:41:40 yamt Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.43.4.4 2010/03/11 15:03:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.43.4.3 2009/05/16 10:41:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.43.4.4 2010/03/11 15:03:59 yamt Exp $");
 
 #include "ehci.h"
 
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.43.4.3 2009/05/16 10:41:40 yamt Exp $
 #include <dev/usb/uhcireg.h>
 #include <dev/usb/uhcivar.h>
 
-static bool	uhci_pci_resume(device_t PMF_FN_PROTO);
+static bool	uhci_pci_resume(device_t, const pmf_qual_t *);
 
 struct uhci_pci_softc {
 	uhci_softc_t		sc;
@@ -138,8 +138,8 @@ uhci_pci_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
@@ -229,7 +229,7 @@ uhci_pci_detach(device_t self, int flags)
 }
 
 static bool
-uhci_pci_resume(device_t dv PMF_FN_ARGS)
+uhci_pci_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct uhci_pci_softc *sc = device_private(dv);
 
@@ -237,7 +237,7 @@ uhci_pci_resume(device_t dv PMF_FN_ARGS)
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_LEGSUP,
 	    PCI_LEGSUP_USBPIRQDEN);
 
-	return uhci_resume(dv PMF_FN_CALL);
+	return uhci_resume(dv, qual);
 }
 
 CFATTACH_DECL3_NEW(uhci_pci, sizeof(struct uhci_pci_softc),

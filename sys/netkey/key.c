@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.159.2.3 2009/05/16 10:41:51 yamt Exp $	*/
+/*	$NetBSD: key.c,v 1.159.2.4 2010/03/11 15:04:31 yamt Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,11 +35,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.159.2.3 2009/05/16 10:41:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.159.2.4 2010/03/11 15:04:31 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
-#include "fs_kernfs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,9 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.159.2.3 2009/05/16 10:41:51 yamt Exp $");
 #endif
 #include <netinet6/ipcomp.h>
 
-#ifdef KERNFS
 #include <miscfs/kernfs/kernfs.h>
-#endif
 
 #include <machine/stdarg.h>
 
@@ -118,6 +115,11 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.159.2.3 2009/05/16 10:41:51 yamt Exp $");
 #define FULLMASK	0xff
 
 percpu_t *pfkeystat_percpu;
+
+void kernfs_netkey_entangling_noodles(void *);
+void kernfs_netkey_entangling_noodles(void *v) {}
+__weak_alias(kernfs_revoke_sa,kernfs_netkey_entangling_noodles);
+__weak_alias(kernfs_revoke_sp,kernfs_netkey_entangling_noodles);
 
 /*
  * Note on SA reference counting:
@@ -963,9 +965,7 @@ key_delsav(struct secasvar *sav)
 
 	s = splsoftnet();
 
-#ifdef KERNFS
 	kernfs_revoke_sa(sav);
-#endif
 
 	if (__LIST_CHAINED(sav))
 		LIST_REMOVE(sav, chain);
@@ -1032,9 +1032,7 @@ key_delsp(struct secpolicy *sp)
 
 	s = splsoftnet();	/*called from softclock()*/
 
-#ifdef KERNFS
 	kernfs_revoke_sp(sp);
-#endif
 
     {
 	struct ipsecrequest *isr = sp->req, *nextisr;
@@ -7909,7 +7907,7 @@ key_do_init(void)
 	/* initialize key statistics */
 	keystat.getspi_count = 1;
 
-	printf("IPsec: Initialized Security Association Processing.\n");
+	aprint_verbose("IPsec: Initialized Security Association Processing.\n");
 
 	return (0);
 }

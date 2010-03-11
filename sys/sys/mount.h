@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.173.10.4 2009/08/19 18:48:33 yamt Exp $	*/
+/*	$NetBSD: mount.h,v 1.173.10.5 2010/03/11 15:04:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -67,7 +67,6 @@
 #define	MOUNT_MSDOS	"msdos"		/* MSDOS Filesystem */
 #define	MOUNT_LFS	"lfs"		/* Log-based Filesystem */
 #define	MOUNT_FDESC	"fdesc"		/* File Descriptor Filesystem */
-#define	MOUNT_PORTAL	"portal"	/* Portal Filesystem */
 #define	MOUNT_NULL	"null"		/* Minimal Filesystem Layer */
 #define	MOUNT_OVERLAY	"overlay"	/* Minimal Overlay Filesystem Layer */
 #define	MOUNT_UMAP	"umap"	/* User/Group Identifier Remapping Filesystem */
@@ -92,6 +91,7 @@
 #define MOUNT_EFS	"efs"		/* SGI's Extent Filesystem */
 #define MOUNT_ZFS	"zfs"		/* Sun ZFS */
 #define MOUNT_NILFS	"nilfs"		/* NTT's NiLFS(2) logging file system */
+#define MOUNT_RUMPFS	"rumpfs"	/* rump virtual file system */
 
 #ifndef _STANDALONE
 
@@ -162,7 +162,6 @@ struct mount {
 	{ MOUNT_LFS, CTLTYPE_NODE }, \
 	{ 0, 0 }, 			/* MOUNT_LOFS */ \
 	{ MOUNT_FDESC, CTLTYPE_NODE }, \
-	{ MOUNT_PORTAL, CTLTYPE_NODE }, \
 	{ MOUNT_NULL, CTLTYPE_NODE }, \
 	{ MOUNT_UMAP, CTLTYPE_NODE }, \
 	{ MOUNT_KERNFS, CTLTYPE_NODE }, \
@@ -244,10 +243,6 @@ int	VFS_STATVFS(struct mount *, struct statvfs *);
 int	VFS_SYNC(struct mount *, int, struct kauth_cred *);
 int	VFS_FHTOVP(struct mount *, struct fid *, struct vnode **);
 int	VFS_VPTOFH(struct vnode *, struct fid *, size_t *);
-void	VFS_INIT(void);
-void	VFS_REINIT(void);
-void	VFS_DONE(void);
-int	VFS_MOUNTROOT(void);
 int	VFS_SNAPSHOT(struct mount *, struct vnode *, struct timespec *);
 int	VFS_EXTATTRCTL(struct mount *, int, struct vnode *, int, const char *);
 int	VFS_SUSPENDCTL(struct mount *, int);
@@ -432,6 +427,8 @@ void 	mount_initspecific(struct mount *);
 void 	mount_finispecific(struct mount *);
 void *	mount_getspecific(struct mount *, specificdata_key_t);
 void	mount_setspecific(struct mount *, specificdata_key_t, void *);
+
+int	usermount_common_policy(struct mount *, u_long);
 
 LIST_HEAD(vfs_list_head, vfsops);
 extern struct vfs_list_head vfs_list;

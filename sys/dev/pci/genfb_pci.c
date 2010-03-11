@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.9.4.4 2009/09/16 13:37:50 yamt Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.9.4.5 2010/03/11 15:03:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.9.4.4 2009/09/16 13:37:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.9.4.5 2010/03/11 15:03:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,7 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 	struct pci_genfb_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct genfb_ops ops;
+	pcireg_t rom;
 	int idx, bar, type;
 	char devinfo[256];
 
@@ -136,7 +137,7 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 	/* mmap()able bus ranges */
 	idx = 0;
 	bar = 0x10;
-	while (bar < 0x30) {
+	while (bar < 0x34) {
 
 		type = pci_mapreg_type(sc->sc_pc, sc->sc_pcitag, bar);
 		if ((type == PCI_MAPREG_TYPE_MEM) || 
@@ -148,10 +149,15 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 			    &sc->sc_ranges[idx].flags);
 			idx++;
 		}
-		sc->sc_bars[(bar - 0x10) >> 2] =
+		sc->sc_bars[(bar - 0x10) >> 2] = rom =
 		    pci_conf_read(sc->sc_pc, sc->sc_pcitag, bar);
+		if ((bar == PCI_MAPREG_ROM) && (rom != 0)) {
+			pci_conf_write(sc->sc_pc, sc->sc_pcitag, bar, rom |
+			    PCI_MAPREG_ROM_ENABLE);
+		}
 		bar += 4;
 	}
+
 	sc->sc_ranges_used = idx;			    
 
 	ops.genfb_ioctl = pci_genfb_ioctl;
@@ -257,6 +263,25 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * #define PCI_IOAREA_SIZE
 	 * somewhere in a MD header and compile this code only if all are
 	 * present
+	 */
+	/*
+	 * no.
+	 * PCI_IOAREA_PADDR would be completely, utterly wrong and completely
+	 * useless for the following reasons:
+	 * - it's a bus address, not a physical address
+	 * - there's no guarantee it's the same for each host bridge
+	 * - it's already taken care of by the IO tag
+	 * PCI_IOAREA_OFFSET is the same as PCI_MAGIC_IO_RANGE
+	 * PCI_IOAREA_SIZE is also useless:
+	 * - many cards don't decode more than 16 bit IO anyway
+	 * - even machines with more than 64kB IO space try to keep everything
+	 *   within 64kB for the reason above
+	 * - IO ranges tend to be small so in most cases you can't cram enough
+	 *   cards into a single machine to exhaust 64kB IO space
+	 * - machines which need this tend to prefer memory space anyway
+	 * - the only use for this right now is to allow the Xserver to map
+	 *   VGA registers on macppc and a few other powerpc ports, shark uses
+	 *   a similar mechanism, and what they need is always within 64kB
 	 */
 #ifdef PCI_MAGIC_IO_RANGE
 	/* allow to map our IO space */

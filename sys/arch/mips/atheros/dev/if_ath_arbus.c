@@ -1,4 +1,4 @@
-/* $NetBSD: if_ath_arbus.c,v 1.12.4.2 2009/07/18 14:52:54 yamt Exp $ */
+/* $NetBSD: if_ath_arbus.c,v 1.12.4.3 2010/03/11 15:02:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.12.4.2 2009/07/18 14:52:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.12.4.3 2010/03/11 15:02:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ ath_arbus_match(device_t parent, cfdata_t cf, void *opaque)
 }
 
 static bool
-ath_arbus_resume(device_t dv PMF_FN_ARGS)
+ath_arbus_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct ath_arbus_softc *asc = device_private(dv);
 	ath_resume(&asc->sc_ath);

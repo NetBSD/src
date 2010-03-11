@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20.20.2 2009/05/04 08:11:02 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20.20.3 2010/03/11 15:02:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20.20.2 2009/05/04 08:11:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20.20.3 2010/03/11 15:02:20 yamt Exp $");
 
 #include "opt_explora.h"
 #include "opt_modular.h"
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20.20.2 2009/05/04 08:11:02 yamt Exp $
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/ksyms.h>
 #include <sys/device.h>
@@ -59,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20.20.2 2009/05/04 08:11:02 yamt Exp $
 #include <machine/trap.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/dcr403cgx.h>
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
@@ -75,11 +75,8 @@ char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 static const unsigned int cpuspeed = 66000000;
 
-extern struct user *proc0paddr;
-
 prop_dictionary_t board_properties;
 struct vm_map *phys_map = NULL;
-struct vm_map *mb_map = NULL;
 char msgbuf[MSGBUFSIZE];
 paddr_t msgbuf_paddr;
 
@@ -211,10 +208,9 @@ bootstrap(u_int startkernel, u_int endkernel)
 	 * Initialize lwp0 and current pcb and pmap pointers.
 	 */
 	lwp0.l_cpu = ci;
-	lwp0.l_addr = proc0paddr;
-	memset(lwp0.l_addr, 0, sizeof *lwp0.l_addr);
 
-	curpcb = &proc0paddr->u_pcb;
+	curpcb = lwp_getpcb(&lwp0);
+	memset(curpcb, 0, sizeof(struct pcb));	/* XXX why? */
 	curpcb->pcb_pm = pmap_kernel();
 
 	/*

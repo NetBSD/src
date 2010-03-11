@@ -1,4 +1,4 @@
-/* 	$NetBSD: if_temac.c,v 1.4 2008/02/12 18:03:43 dyoung Exp $ */
+/* 	$NetBSD: if_temac.c,v 1.4.10.1 2010/03/11 15:02:21 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -40,9 +40,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.4 2008/02/12 18:03:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.4.10.1 2010/03/11 15:02:21 yamt Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.4 2008/02/12 18:03:43 dyoung Exp $");
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <machine/bus.h>
 
@@ -649,7 +646,6 @@ static int
 temac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct temac_softc 	*sc = (struct temac_softc *)ifp->if_softc;
-	struct ifreq 		*ifr = (struct ifreq *)data;
 	int 			s, ret;
 
 	s = splnet();
@@ -1212,10 +1208,8 @@ temac_rxreap(struct temac_softc *sc)
 			continue;
  		}
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		ifp->if_ipackets++;
 		(ifp->if_input)(ifp, m);

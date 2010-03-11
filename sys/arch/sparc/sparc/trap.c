@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.175.2.1 2009/05/04 08:11:55 yamt Exp $ */
+/*	$NetBSD: trap.c,v 1.175.2.2 2010/03/11 15:02:59 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.175.2.1 2009/05/04 08:11:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.175.2.2 2010/03/11 15:02:59 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.175.2.1 2009/05/04 08:11:55 yamt Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
@@ -308,7 +307,7 @@ trap(unsigned type, int psr, int pc, struct trapframe *tf)
 	p = l->l_proc;
 	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
-	pcb = &l->l_addr->u_pcb;
+	pcb = lwp_getpcb(l);
 	l->l_md.md_tf = tf;	/* for ptrace/signals */
 
 #ifdef FPU_DEBUG
@@ -712,7 +711,7 @@ badtrap:
 int
 rwindow_save(struct lwp *l)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct rwindow *rw = &pcb->pcb_rw[0];
 	int i;
 
@@ -754,9 +753,10 @@ rwindow_save(struct lwp *l)
 void
 kill_user_windows(struct lwp *l)
 {
+	struct pcb *pcb = lwp_getpcb(l);
 
 	write_user_windows();
-	l->l_addr->u_pcb.pcb_nsaved = 0;
+	pcb->pcb_nsaved = 0;
 }
 
 /*
@@ -777,6 +777,7 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 #if defined(SUN4) || defined(SUN4C)
 	struct proc *p;
 	struct lwp *l;
+	struct pcb *pcb;
 	struct vmspace *vm;
 	vaddr_t va;
 	int rv = EFAULT;
@@ -836,10 +837,12 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 	va = trunc_page(v);
 	if (psr & PSR_PS) {
 		extern char Lfsbail[];
+
 		if (type == T_TEXTFAULT) {
 			(void) splhigh();
 		        snprintb(bits, sizeof(bits), SER_BITS, ser);
-			printf("text fault: pc=0x%x ser=%s\n", pc, bits);
+			printf("cpu%d: text fault: pc=0x%x ser=%s\n",
+			       cpu_number(), pc, bits);
 			panic("kernel fault");
 			/* NOTREACHED */
 		}
@@ -847,7 +850,8 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 		 * If this was an access that we shouldn't try to page in,
 		 * resume at the fault handler without any action.
 		 */
-		if (l->l_addr && l->l_addr->u_pcb.pcb_onfault == Lfsbail)
+		pcb = lwp_getpcb(l);
+		if (pcb && pcb->pcb_onfault == Lfsbail)
 			goto kfault;
 
 		/*
@@ -934,13 +938,14 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 fault:
 		if (psr & PSR_PS) {
 kfault:
-			onfault = l->l_addr ?
-			    (int)l->l_addr->u_pcb.pcb_onfault : 0;
+			pcb = lwp_getpcb(l);
+			onfault = pcb ? (int)pcb->pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
 				snprintb(bits, sizeof(bits), SER_BITS, ser);
-				printf("data fault: pc=0x%x addr=0x%x ser=%s\n",
-				    pc, v, bits);
+				printf("cpu%d: data fault: pc=0x%x "
+				       "addr=0x%x ser=%s\n",
+				       cpu_number(), pc, v, bits);
 				panic("kernel fault");
 				/* NOTREACHED */
 			}
@@ -962,7 +967,6 @@ kfault:
 			ksi.ksi_code = (rv == EACCES
 				? SEGV_ACCERR : SEGV_MAPERR);
 		}
-		ksi.ksi_errno = rv;
 		ksi.ksi_trap = type;
 		ksi.ksi_addr = (void *)v;
 		trapsignal(l, &ksi);
@@ -985,6 +989,7 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 	int pc, psr;
 	struct proc *p;
 	struct lwp *l;
+	struct pcb *pcb;
 	struct vmspace *vm;
 	vaddr_t va;
 	int rv = EFAULT;
@@ -1156,8 +1161,8 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 		if (sfsr & SFSR_AT_TEXT || type == T_TEXTFAULT) {
 			(void) splhigh();
 			snprintb(bits, sizeof(bits), SFSR_BITS, sfsr);
-			printf("text fault: pc=0x%x sfsr=%s sfva=0x%x\n", pc,
-			    bits, sfva);
+			printf("cpu%d text fault: pc=0x%x sfsr=%s sfva=0x%x\n",
+			       cpu_number(), pc, bits, sfva);
 			panic("kernel fault");
 			/* NOTREACHED */
 		}
@@ -1165,7 +1170,8 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 		 * If this was an access that we shouldn't try to page in,
 		 * resume at the fault handler without any action.
 		 */
-		if (l->l_addr && l->l_addr->u_pcb.pcb_onfault == Lfsbail)
+		pcb = lwp_getpcb(l);
+		if (pcb && pcb->pcb_onfault == Lfsbail)
 			goto kfault;
 
 		/*
@@ -1219,13 +1225,14 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 fault:
 		if (psr & PSR_PS) {
 kfault:
-			onfault = l->l_addr ?
-			    (int)l->l_addr->u_pcb.pcb_onfault : 0;
+			pcb = lwp_getpcb(l);
+			onfault = pcb ? (int)pcb->pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
 				snprintb(bits, sizeof(bits), SFSR_BITS, sfsr);
-				printf("data fault: pc=0x%x addr=0x%x sfsr=%s\n",
-				    pc, sfva, bits);
+				printf("cpu%d: data fault: pc=0x%x "
+				       "addr=0x%x sfsr=%s\n",
+				       cpu_number(), pc, sfva, bits);
 				panic("kernel fault");
 				/* NOTREACHED */
 			}
@@ -1247,7 +1254,6 @@ kfault:
 			ksi.ksi_code = (rv == EACCES)
 				? SEGV_ACCERR : SEGV_MAPERR;
 		}
-		ksi.ksi_errno = rv;
 		ksi.ksi_trap = type;
 		ksi.ksi_addr = (void *)sfva;
 		trapsignal(l, &ksi);

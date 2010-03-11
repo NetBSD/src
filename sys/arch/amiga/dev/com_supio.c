@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.25.4.1 2008/05/16 02:21:52 yamt Exp $ */
+/*	$NetBSD: com_supio.c,v 1.25.4.2 2010/03/11 15:02:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.25.4.1 2008/05/16 02:21:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.25.4.2 2010/03/11 15:02:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.25.4.1 2008/05/16 02:21:52 yamt Exp 
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>
@@ -119,7 +118,9 @@ com_supio_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	struct supio_attach_args *supa = aux;
+#ifdef __m68k__
 	u_int16_t needpsl;
+#endif
 
 	csc->sc_dev = self;
 
@@ -138,6 +139,7 @@ com_supio_attach(device_t parent, device_t self, void *aux)
 
 	com_attach_subr(csc);
 
+#ifdef __m68k__
 	/* XXX this should be really in the interrupt stuff */
 	needpsl = PSL_S | (supa->supio_ipl << 8);
 
@@ -146,6 +148,7 @@ com_supio_attach(device_t parent, device_t self, void *aux)
 		    "from 0x%x to 0x%x\n", ipl2spl_table[IPL_SERIAL], needpsl);
 		ipl2spl_table[IPL_SERIAL] = needpsl;
 	}
+#endif
 	sc->sc_isr.isr_intr = comintr;
 	sc->sc_isr.isr_arg = csc;
 	sc->sc_isr.isr_ipl = supa->supio_ipl;

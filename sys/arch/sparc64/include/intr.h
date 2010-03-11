@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.24.2.1 2008/05/16 02:23:15 yamt Exp $ */
+/*	$NetBSD: intr.h,v 1.24.2.2 2010/03/11 15:03:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,8 +61,8 @@ void fpusave_lwp(struct lwp *, bool);
 #if defined(MULTIPROCESSOR)
 #ifndef _LOCORE
 void	sparc64_ipi_init (void);
-int	sparc64_ipi_halt_thiscpu (void *);
-int	sparc64_ipi_pause_thiscpu (void *);
+void	sparc64_ipi_halt_thiscpu (void *);
+void	sparc64_ipi_pause_thiscpu (void *);
 void	sparc64_do_pause(void);
 void	sparc64_ipi_drop_fpstate (void *);
 void	sparc64_ipi_save_fpstate (void *);
@@ -73,15 +73,12 @@ void	mp_resume_cpus (void);
 int	mp_cpu_is_paused (sparc64_cpuset_t);
 void	mp_resume_cpu(int);
 #endif	/* _LOCORE */
+#endif
 
 #define IPI_EVCNT_TLB_PTE	0
-#define IPI_EVCNT_TLB_CTX	1
-#define IPI_EVCNT_TLB_ALL	2
-#define IPI_EVCNT_FPU_SYNCH	3
-#define IPI_EVCNT_FPU_FLUSH	4
-#define IPI_EVCNT_NUM		5
-#define IPI_EVCNT_NAMES { "TLB pte IPI", "TLB ctx IPI", "TLB all IPI", \
-			  "FPU synch IPI", "FPU flush IPI" }
-#endif
+#define IPI_EVCNT_FPU_SYNCH	1
+#define IPI_EVCNT_FPU_FLUSH	2
+#define IPI_EVCNT_NUM		3
+#define IPI_EVCNT_NAMES { "TLB pte IPI", "FPU synch IPI", "FPU flush IPI" }
 
 #endif /* _SPARC64_INTR_H_ */

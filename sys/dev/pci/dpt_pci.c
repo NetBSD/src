@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_pci.c,v 1.21.4.1 2009/05/16 10:41:33 yamt Exp $	*/
+/*	$NetBSD: dpt_pci.c,v 1.21.4.2 2010/03/11 15:03:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.21.4.1 2009/05/16 10:41:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.21.4.2 2010/03/11 15:03:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,8 +123,8 @@ dpt_pci_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error("can't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 

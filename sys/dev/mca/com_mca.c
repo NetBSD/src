@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mca.c,v 1.20.4.1 2008/05/16 02:24:33 yamt Exp $	*/
+/*	$NetBSD: com_mca.c,v 1.20.4.2 2010/03/11 15:03:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.20.4.1 2008/05/16 02:24:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.20.4.2 2010/03/11 15:03:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.20.4.1 2008/05/16 02:24:33 yamt Exp $"
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/file.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>

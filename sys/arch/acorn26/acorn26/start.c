@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.8.44.1 2009/05/04 08:10:23 yamt Exp $ */
+/* $NetBSD: start.c,v 1.8.44.2 2010/03/11 15:01:55 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,12 +31,11 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.8.44.1 2009/05/04 08:10:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.8.44.2 2010/03/11 15:01:55 yamt Exp $");
 
 #include "opt_modular.h"
 
 #include <sys/msgbuf.h>
-#include <sys/user.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
 
@@ -64,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: start.c,v 1.8.44.1 2009/05/04 08:10:23 yamt Exp $");
 extern void main(void); /* XXX Should be in a header file */
 
 struct bootconfig bootconfig;
-
-struct user *proc0paddr;
 
 /* in machdep.h */
 extern i2c_tag_t acorn26_i2c_tag;
@@ -95,6 +92,7 @@ void
 start(struct bootconfig *initbootconfig)
 {
 	int onstack;
+	vaddr_t v;
 
 	/*
 	 * State of the world as of BBBB 0.02:
@@ -188,11 +186,12 @@ start(struct bootconfig *initbootconfig)
 	fiq_off();
 
 	/*
-	 * Locate process 0's user structure, in the bottom of its kernel
-	 * stack page.  That's our current stack page too.
+	 * Locate lwp0's uarea, in the bottom of its kernel stack page.
+	 * That is our current stack page too.
 	 */
-	proc0paddr = (struct user *)(round_page((vaddr_t)&onstack) - USPACE);
-	memset(proc0paddr, 0, sizeof(*proc0paddr));
+	v = round_page((vaddr_t)&onstack) - USPACE;
+	uvm_lwp_setuarea(&lwp0, v);
+	memset((void *)v, 0, sizeof(struct pcb));
 
 	/* TODO: anything else? */
 	

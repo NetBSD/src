@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.42.16.3 2009/08/19 18:46:58 yamt Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.42.16.4 2010/03/11 15:03:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ extern struct emul emul_linux;
 
 int linux_sysctl(int *, u_int, void *, size_t *, void *, size_t,
     struct lwp *);
-void linux_setregs(struct lwp *, struct exec_package *, u_long);
+void linux_setregs(struct lwp *, struct exec_package *, vaddr_t);
 #ifdef EXEC_AOUT
 int exec_linux_aout_makecmds(struct lwp *, struct exec_package *);
 int linux_aout_copyargs(struct lwp *, struct exec_package *,

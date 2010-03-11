@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.76.4.4 2009/08/19 18:47:06 yamt Exp $ */
+/*	$NetBSD: gem.c,v 1.76.4.5 2010/03/11 15:03:30 yamt Exp $ */
 
 /*
  *
@@ -37,10 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.76.4.4 2009/08/19 18:47:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.76.4.5 2010/03/11 15:03:30 yamt Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,9 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.76.4.4 2009/08/19 18:47:06 yamt Exp $");
 #include <netinet/udp.h>
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -150,12 +147,10 @@ static void gem_txsoft_print(const struct gem_softc *, int, int);
 int
 gem_detach(struct gem_softc *sc, int flags)
 {
-	char *nullbuf;
-	int i, rc;
+	int i;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-
-	nullbuf =
-	    (char *)sc->sc_control_data + sizeof(struct gem_control_data);
+	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t h = sc->sc_h1;
 
 	/*
 	 * Free any resources we've allocated during the attach.
@@ -165,6 +160,7 @@ gem_detach(struct gem_softc *sc, int flags)
 	case GEM_ATT_BACKEND_2:
 	case GEM_ATT_BACKEND_1:
 	case GEM_ATT_FINISHED:
+		bus_space_write_4(t, h, GEM_INTMASK, ~(uint32_t)0);
 		gem_stop(&sc->sc_ethercom.ec_if, 1);
 
 #ifdef GEM_COUNTERS
@@ -177,18 +173,19 @@ gem_detach(struct gem_softc *sc, int flags)
 #endif
 		evcnt_detach(&sc->sc_ev_intr);
 
-		callout_destroy(&sc->sc_tick_ch);
 #if NRND > 0
 		rnd_detach_source(&sc->rnd_source);
 #endif
 		ether_ifdetach(ifp);
 		if_detach(ifp);
 		ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+
+		callout_destroy(&sc->sc_tick_ch);
+
 		/*FALLTHROUGH*/
 	case GEM_ATT_MII:
 		sc->sc_att_stage = GEM_ATT_MII;
-		if ((rc = config_detach_children(sc->sc_dev, flags)) != 0)
-			return rc;
+		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 		/*FALLTHROUGH*/
 	case GEM_ATT_7:
 		for (i = 0; i < GEM_NRXDESC; i++) {
@@ -206,10 +203,10 @@ gem_detach(struct gem_softc *sc, int flags)
 		bus_dmamap_unload(sc->sc_dmatag, sc->sc_cddmamap);
 		/*FALLTHROUGH*/
 	case GEM_ATT_5:
-		bus_dmamap_destroy(sc->sc_dmatag, sc->sc_nulldmamap);
+		bus_dmamap_unload(sc->sc_dmatag, sc->sc_nulldmamap);
 		/*FALLTHROUGH*/
 	case GEM_ATT_4:
-		bus_dmamem_unmap(sc->sc_dmatag, nullbuf, ETHER_MIN_TX);
+		bus_dmamap_destroy(sc->sc_dmatag, sc->sc_nulldmamap);
 		/*FALLTHROUGH*/
 	case GEM_ATT_3:
 		bus_dmamap_destroy(sc->sc_dmatag, sc->sc_cddmamap);
@@ -252,7 +249,7 @@ gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t h = sc->sc_h1;
 	struct ifmedia_entry *ifm;
-	int i, error;
+	int i, error, phyaddr;
 	u_int32_t v;
 	char *nullbuf;
 
@@ -385,16 +382,60 @@ gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 	 * GEM_MIF_CONFIG_MDI0 nor GEM_MIF_CONFIG_MDI1 are set
 	 * being set, as both are set on Sun X1141A (with SERDES).  So,
 	 * we rely on our bus attachment setting GEM_SERDES or GEM_SERIAL.
-	 * Also, for Apple variants with 2 PHY's, we prefer the external
-	 * PHY over the internal PHY.
+	 * Also, for variants that report 2 PHY's, we prefer the external
+	 * PHY over the internal PHY, so we look for that first.
 	 */
 	gem_mifinit(sc);
 
 	if ((sc->sc_flags & (GEM_SERDES | GEM_SERIAL)) == 0) {
 		ifmedia_init(&mii->mii_media, IFM_IMASK, ether_mediachange,
 		    ether_mediastatus);
-		mii_attach(sc->sc_dev, mii, 0xffffffff,
-		    MII_PHY_ANY, MII_OFFSET_ANY, MIIF_FORCEANEG);
+		/* Look for external PHY */
+		if (sc->sc_mif_config & GEM_MIF_CONFIG_MDI1) {
+			sc->sc_mif_config |= GEM_MIF_CONFIG_PHY_SEL;
+			bus_space_write_4(t, h, GEM_MIF_CONFIG,
+			    sc->sc_mif_config);
+			switch (sc->sc_variant) {
+			case GEM_SUN_ERI:
+				phyaddr = GEM_PHYAD_EXTERNAL;
+				break;
+			default:
+				phyaddr = MII_PHY_ANY;
+				break;
+			}
+			mii_attach(sc->sc_dev, mii, 0xffffffff, phyaddr,
+			    MII_OFFSET_ANY, MIIF_FORCEANEG);
+		}
+#ifdef GEM_DEBUG
+		  else
+			aprint_debug_dev(sc->sc_dev, "using external PHY\n");
+#endif
+		/* Look for internal PHY if no external PHY was found */
+		if (LIST_EMPTY(&mii->mii_phys) && 
+		    sc->sc_mif_config & GEM_MIF_CONFIG_MDI0) {
+			sc->sc_mif_config &= ~GEM_MIF_CONFIG_PHY_SEL;
+			bus_space_write_4(t, h, GEM_MIF_CONFIG,
+			    sc->sc_mif_config);
+			switch (sc->sc_variant) {
+			case GEM_SUN_ERI:
+			case GEM_APPLE_K2_GMAC:
+				phyaddr = GEM_PHYAD_INTERNAL;
+				break;
+			case GEM_APPLE_GMAC:
+				phyaddr = GEM_PHYAD_EXTERNAL;
+				break;
+			default:
+				phyaddr = MII_PHY_ANY;
+				break;
+			}
+			mii_attach(sc->sc_dev, mii, 0xffffffff, phyaddr,
+			    MII_OFFSET_ANY, MIIF_FORCEANEG);
+#ifdef GEM_DEBUG
+			if (!LIST_EMPTY(&mii->mii_phys))
+				aprint_debug_dev(sc->sc_dev,
+				    "using internal PHY\n");
+#endif
+		}
 		if (LIST_EMPTY(&mii->mii_phys)) {
 				/* No PHY attached */
 				aprint_error_dev(sc->sc_dev,
@@ -426,27 +467,6 @@ gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 				sc->sc_phys[child->mii_inst] = child->mii_phy;
 			}
 
-			/*
-			 * Now select and activate the PHY we will use.
-			 *
-			 * The order of preference is External (MDI1),
-			 * then Internal (MDI0),
-			 */
-			if (sc->sc_phys[1]) {
-#ifdef GEM_DEBUG
-				aprint_debug_dev(sc->sc_dev,
-				    "using external PHY\n");
-#endif
-				sc->sc_mif_config |= GEM_MIF_CONFIG_PHY_SEL;
-			} else {
-#ifdef GEM_DEBUG
-				aprint_debug_dev(sc->sc_dev,
-				    "using internal PHY\n");
-				sc->sc_mif_config &= ~GEM_MIF_CONFIG_PHY_SEL;
-#endif
-			}
-			bus_space_write_4(t, h, GEM_MIF_CONFIG,
-			    sc->sc_mif_config);
 			if (sc->sc_variant != GEM_SUN_ERI)
 				bus_space_write_4(t, h, GEM_MII_DATAPATH_MODE,
 				    GEM_MII_DATAPATH_MII);
@@ -1164,8 +1184,9 @@ gem_init(struct ifnet *ifp)
 	/* Enable TX DMA */
 	v = gem_ringsize(GEM_NTXDESC /*XXX*/);
 	bus_space_write_4(t, h, GEM_TX_CONFIG,
-		v|GEM_TX_CONFIG_TXDMA_EN|
-		((0x4FF<<10)&GEM_TX_CONFIG_TXFIFO_TH));
+	    v | GEM_TX_CONFIG_TXDMA_EN |
+	    (((sc->sc_flags & GEM_GIGABIT ? 0x4FF : 0x100) << 10) &
+	    GEM_TX_CONFIG_TXFIFO_TH));
 	bus_space_write_4(t, h, GEM_TX_KICK, sc->sc_txnext);
 
 	/* step 10. ERX Configuration */
@@ -1564,13 +1585,11 @@ gem_start(struct ifnet *ifp)
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs_q);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txdirtyq, txs, txs_q);
 
-#if NBPFILTER > 0
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 	}
 
 	if (txs == NULL || sc->sc_txfree == 0) {
@@ -1822,14 +1841,12 @@ gem_rint(struct gem_softc *sc)
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
-#if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
 		 * pass it up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 #ifdef INET
 		/* hardware checksum */
@@ -2582,7 +2599,7 @@ gem_inten(struct gem_softc *sc)
 }
 
 bool
-gem_resume(device_t self PMF_FN_ARGS)
+gem_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct gem_softc *sc = device_private(self);
 
@@ -2592,7 +2609,7 @@ gem_resume(device_t self PMF_FN_ARGS)
 }
 
 bool
-gem_suspend(device_t self PMF_FN_ARGS)
+gem_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct gem_softc *sc = device_private(self);
 	bus_space_tag_t t = sc->sc_bustag;

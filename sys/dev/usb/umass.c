@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.126.10.3 2009/09/16 13:37:58 yamt Exp $	*/
+/*	$NetBSD: umass.c,v 1.126.10.4 2010/03/11 15:04:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.126.10.3 2009/09/16 13:37:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.126.10.4 2010/03/11 15:04:07 yamt Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -310,9 +310,11 @@ umass_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	aprint_naive("\n");
-	aprint_normal(": %s\n", devinfop);
+	aprint_normal("\n");
+
+	devinfop = usbd_devinfo_alloc(uaa->device, 0);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = uaa->device;
@@ -705,31 +707,17 @@ int
 umass_activate(device_t dev, enum devact act)
 {
 	struct umass_softc *sc = device_private(dev);
-	struct umassbus_softc *scbus = sc->bus;
-	int rv = 0;
 
 	DPRINTF(UDMASS_USB, ("%s: umass_activate: %d\n",
-	    device_xname(sc->sc_dev), act));
+	    device_xname(dev), act));
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		if (scbus == NULL || scbus->sc_child == NULL)
-			break;
-		rv = config_activate(scbus->sc_child);
-		DPRINTF(UDMASS_USB, ("%s: umass activate: child "
-		    "returned %d\n", device_xname(sc->sc_dev), rv));
-		break;
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		if (scbus == NULL || scbus->sc_child == NULL)
-			break;
-		rv = config_deactivate(scbus->sc_child);
-		DPRINTF(UDMASS_USB, ("%s: umass_deactivate: child "
-		    "returned %d\n", device_xname(sc->sc_dev), rv));
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 Static void
@@ -1017,6 +1005,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 {
 	struct umass_softc *sc = (struct umass_softc *) priv;
 	usbd_xfer_handle next_xfer;
+	int residue;
 
 	KASSERT(sc->sc_wire & UMASS_WPROTO_BBB,
 		("sc->sc_wire == 0x%02x wrong for umass_bbb_state\n",
@@ -1189,6 +1178,10 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 		DIF(UDMASS_BBB, umass_bbb_dump_csw(sc, &sc->csw));
 
+		residue = UGETDW(sc->csw.dCSWDataResidue);
+		if (residue < sc->transfer_datalen - sc->transfer_actlen)
+			residue = sc->transfer_datalen - sc->transfer_actlen;
+
 		/* Translate weird command-status signatures. */
 		if ((sc->sc_quirks & UMASS_QUIRK_WRONG_CSWSIG) &&
 		    UGETDW(sc->csw.dCSWSignature) == CSWSIGNATURE_OLYMPUS_C1)
@@ -1231,8 +1224,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			return;
 		} else if (sc->csw.bCSWStatus == CSWSTATUS_PHASE) {
 			printf("%s: Phase Error, residue = %d\n",
-				device_xname(sc->sc_dev),
-				UGETDW(sc->csw.dCSWDataResidue));
+				device_xname(sc->sc_dev), residue);
 
 			umass_bbb_reset(sc, STATUS_WIRE_FAILED);
 			return;
@@ -1244,32 +1236,29 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 				sc->transfer_actlen, sc->transfer_datalen);
 #if 0
 		} else if (sc->transfer_datalen - sc->transfer_actlen
-			   != UGETDW(sc->csw.dCSWDataResidue)) {
+			   != residue) {
 			DPRINTF(UDMASS_BBB, ("%s: actlen=%d != residue=%d\n",
 				device_xname(sc->sc_dev),
 				sc->transfer_datalen - sc->transfer_actlen,
-				UGETDW(sc->csw.dCSWDataResidue)));
+				residue));
 
 			umass_bbb_reset(sc, STATUS_WIRE_FAILED);
 			return;
 #endif
 		} else if (sc->csw.bCSWStatus == CSWSTATUS_FAILED) {
 			DPRINTF(UDMASS_BBB, ("%s: Command Failed, res = %d\n",
-				device_xname(sc->sc_dev),
-				UGETDW(sc->csw.dCSWDataResidue)));
+				device_xname(sc->sc_dev), residue));
 
 			/* SCSI command failed but transfer was succesful */
 			sc->transfer_state = TSTATE_IDLE;
-			sc->transfer_cb(sc, sc->transfer_priv,
-					UGETDW(sc->csw.dCSWDataResidue),
+			sc->transfer_cb(sc, sc->transfer_priv, residue,
 					STATUS_CMD_FAILED);
 
 			return;
 
 		} else {	/* success */
 			sc->transfer_state = TSTATE_IDLE;
-			sc->transfer_cb(sc, sc->transfer_priv,
-					UGETDW(sc->csw.dCSWDataResidue),
+			sc->transfer_cb(sc, sc->transfer_priv, residue,
 					STATUS_CMD_OK);
 
 			return;

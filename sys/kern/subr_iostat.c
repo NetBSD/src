@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.13.44.2 2009/05/04 08:13:48 yamt Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.13.44.3 2010/03/11 15:04:18 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.13.44.2 2009/05/04 08:13:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.13.44.3 2010/03/11 15:04:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -96,6 +96,8 @@ struct iostatlist_head iostatlist = TAILQ_HEAD_INITIALIZER(iostatlist);
 int iostat_count;		/* number of drives in global drivelist */
 krwlock_t iostatlist_lock;
 
+static void sysctl_io_stats_setup(struct sysctllog **);
+
 /*
  * Initialise the iostat subsystem.
  */
@@ -104,6 +106,7 @@ iostat_init(void)
 {
 
 	rw_init(&iostatlist_lock);
+	sysctl_io_stats_setup(NULL);
 }
 
 /*
@@ -376,8 +379,15 @@ sysctl_hw_iostats(SYSCTLFN_ARGS)
 	return (error);
 }
 
-SYSCTL_SETUP(sysctl_io_stats_setup, "sysctl i/o stats setup")
+static void
+sysctl_io_stats_setup(struct sysctllog **clog)
 {
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "hw", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_HW, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,

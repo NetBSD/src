@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_bufq.c,v 1.13.30.2 2009/05/04 08:13:47 yamt Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.13.30.3 2010/03/11 15:04:18 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.13.30.2 2009/05/04 08:13:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.13.30.3 2010/03/11 15:04:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,11 +76,24 @@ __KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.13.30.2 2009/05/04 08:13:47 yamt Exp
 #include <sys/bufq.h>
 #include <sys/bufq_impl.h>
 #include <sys/kmem.h>
+#include <sys/once.h>
 #include <sys/sysctl.h>
 
 BUFQ_DEFINE(dummy, 0, NULL); /* so that bufq_strats won't be empty */
 
 #define	STRAT_MATCH(id, bs)	(strcmp((id), (bs)->bs_name) == 0)
+
+static int bufq_init(void);
+static void sysctl_kern_bufq_strategies_setup(struct sysctllog **);
+
+static struct sysctllog *sysctllog;
+static int
+bufq_init(void)
+{
+
+	sysctl_kern_bufq_strategies_setup(&sysctllog);
+	return 0;
+}
 
 /*
  * Create a device buffer queue.
@@ -92,7 +105,10 @@ bufq_alloc(struct bufq_state **bufqp, const char *strategy, int flags)
 	const struct bufq_strat *bsp;
 	const struct bufq_strat * const *it;
 	struct bufq_state *bufq;
+	static ONCE_DECL(bufq_init_ctrl);
 	int error = 0;
+
+	RUN_ONCE(&bufq_init_ctrl, bufq_init);
 
 	KASSERT((flags & BUFQ_EXACT) == 0 || strategy != BUFQ_STRAT_ANY);
 
@@ -309,7 +325,8 @@ out:
 	return error;
 }
 
-SYSCTL_SETUP(sysctl_kern_bufq_strategies_setup, "sysctl kern.bufq tree setup")
+static void
+sysctl_kern_bufq_strategies_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *node;
 

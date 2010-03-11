@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.61.4.4 2009/06/20 07:20:22 yamt Exp $	*/
+/*	$NetBSD: comvar.h,v 1.61.4.5 2010/03/11 15:03:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -144,6 +144,14 @@ struct com_regs {
 
 #endif
 
+struct comcons_info {
+	struct com_regs regs;
+	int rate;
+	int frequency;
+	int type;
+	tcflag_t cflag;
+};
+
 struct com_softc {
 	device_t sc_dev;
 	void *sc_si;
@@ -229,10 +237,9 @@ int comintr(void *);
 void com_attach_subr(struct com_softc *);
 int com_probe_subr(struct com_regs *);
 int com_detach(device_t, int);
-bool com_resume(device_t PMF_FN_PROTO);
-int com_activate(device_t, enum devact);
+bool com_resume(device_t, const pmf_qual_t *);
 bool com_cleanup(device_t, int);
-bool com_suspend(device_t PMF_FN_PROTO);
+bool com_suspend(device_t, const pmf_qual_t *);
 
 #ifndef IPL_SERIAL
 #define	IPL_SERIAL	IPL_TTY

@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.9.10.1 2009/05/04 08:10:56 yamt Exp $
+# $NetBSD: HDL_G,v 1.9.10.2 2010/03/11 15:02:13 yamt Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -39,7 +39,6 @@ file-system	MSDOSFS		# MS-DOS file system
 file-system 	NTFS		# Windows/NT file system (experimental)
 file-system	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
-#file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 file-system	PTYFS		# /dev/pts/N support
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
@@ -96,6 +95,7 @@ options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -291,6 +291,9 @@ ulpt*	at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?

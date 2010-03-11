@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdutil.c,v 1.14.44.2 2009/05/04 08:13:25 yamt Exp $	*/
+/*	$NetBSD: wskbdutil.c,v 1.14.44.3 2010/03/11 15:04:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdutil.c,v 1.14.44.2 2009/05/04 08:13:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdutil.c,v 1.14.44.3 2010/03/11 15:04:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -255,10 +255,20 @@ static struct compose_tab_s {
 	{ { KS_dead_diaeresis,		KS_e },			KS_ediaeresis },
 	{ { KS_dead_diaeresis,		KS_o },			KS_odiaeresis },
 	{ { KS_dead_diaeresis,		KS_u },			KS_udiaeresis },
+	{ { KS_dead_dotaccent,		KS_Z },			KS_Zabovedot },
+	{ { KS_dead_dotaccent,		KS_z },			KS_zabovedot },
+	{ { KS_dead_hungarumlaut,	KS_O },			KS_Odoubleacute },
+	{ { KS_dead_hungarumlaut,	KS_U },			KS_Udoubleacute },
+	{ { KS_dead_hungarumlaut,	KS_o },			KS_odoubleacute },
+	{ { KS_dead_hungarumlaut,	KS_u },			KS_udoubleacute },
 	{ { KS_dead_ogonek,		KS_A },			KS_Aogonek },
 	{ { KS_dead_ogonek,		KS_a },			KS_aogonek },
 	{ { KS_dead_ogonek,		KS_E },			KS_Eogonek },
-	{ { KS_dead_ogonek,		KS_e },			KS_eogonek }
+	{ { KS_dead_ogonek,		KS_e },			KS_eogonek },
+	{ { KS_dead_abovering,		KS_U },			KS_Uabovering },
+	{ { KS_dead_abovering,		KS_u },			KS_uabovering },
+	{ { KS_dead_slash,		KS_L },			KS_Lstroke },
+	{ { KS_dead_slash,		KS_l },			KS_lstroke }
 };
 
 #define COMPOSE_SIZE	sizeof(compose_tab)/sizeof(compose_tab[0])
@@ -354,7 +364,7 @@ ksym_upcase(keysym_t ksym)
 	if (ksym >= KS_f1 && ksym <= KS_f20)
 		return(KS_F1 - KS_f1 + ksym);
 
-	if (KS_GROUP(ksym) == KS_GROUP_Ascii && ksym <= 0xff &&
+	if (KS_GROUP(ksym) == KS_GROUP_Plain && ksym <= 0xff &&
 	    latin1_to_upper[ksym] != 0x00)
 		return(latin1_to_upper[ksym]);
 

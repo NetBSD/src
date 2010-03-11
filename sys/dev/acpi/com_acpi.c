@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.27.4.2 2009/07/18 14:52:59 yamt Exp $ */
+/* $NetBSD: com_acpi.c,v 1.27.4.3 2010/03/11 15:03:23 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,27 +26,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.27.4.2 2009/07/18 14:52:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.27.4.3 2010/03/11 15:03:23 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/proc.h>
+#include <sys/systm.h>
 #include <sys/termios.h>
 
-#include <sys/bus.h>
-
-#include <dev/isa/isavar.h>
-#include <dev/isa/isadmavar.h>
-
-#include <dev/acpi/acpica.h>
-#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
 #include <dev/ic/comvar.h>
+
+#include <dev/isa/isadmavar.h>
 
 static int	com_acpi_match(device_t, cfdata_t , void *);
 static void	com_acpi_attach(device_t, device_t, void *);
@@ -57,7 +48,7 @@ struct com_acpi_softc {
 };
 
 CFATTACH_DECL_NEW(com_acpi, sizeof(struct com_acpi_softc), com_acpi_match,
-    com_acpi_attach, NULL, com_activate);
+    com_acpi_attach, NULL, NULL);
 
 /*
  * Supported device IDs

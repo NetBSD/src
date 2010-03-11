@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.92.4.4 2009/09/16 13:37:51 yamt Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.92.4.5 2010/03/11 15:03:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.92.4.4 2009/09/16 13:37:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.92.4.5 2010/03/11 15:03:48 yamt Exp $");
 
 #include "rnd.h"
 
@@ -123,10 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.92.4.4 2009/09/16 13:37:51 yamt Exp $");
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -209,6 +206,7 @@ struct vr_softc {
 	uint8_t 		vr_enaddr[ETHER_ADDR_LEN];
 	struct mii_data		vr_mii;		/* MII/media info */
 
+	pcireg_t		vr_id;		/* vendor/product ID */
 	uint8_t			vr_revid;	/* Rhine chip revision */
 
 	callout_t		vr_tick_ch;	/* tick callout */
@@ -317,6 +315,7 @@ static void	vr_setmulti(struct vr_softc *);
 static void	vr_reset(struct vr_softc *);
 static int	vr_restore_state(pci_chipset_tag_t, pcitag_t, device_t,
     pcireg_t);
+static bool	vr_resume(device_t, const pmf_qual_t *);
 
 int	vr_copy_small = 0;
 
@@ -759,7 +758,6 @@ vr_rxeof(struct vr_softc *sc)
 		ifp->if_ipackets++;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = total_len;
-#if NBPFILTER > 0
 		/*
 		 * Handle BPF listeners. Let the BPF user see the packet, but
 		 * don't pass it up to the ether_input() layer unless it's
@@ -767,8 +765,7 @@ vr_rxeof(struct vr_softc *sc)
 		 * address or the interface is in promiscuous mode.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
 	}
@@ -1082,14 +1079,12 @@ vr_start(struct ifnet *ifp)
 		 */
 		ds->ds_mbuf = m0;
 
-#if NBPFILTER > 0
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 		/*
 		 * Fill in the transmit descriptor.
@@ -1457,6 +1452,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	sc->vr_dev = self;
 	sc->vr_pc = pa->pa_pc;
 	sc->vr_tag = pa->pa_tag;
+	sc->vr_id = pa->pa_id;
 	callout_init(&sc->vr_tick_ch, 0);
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
@@ -1538,11 +1534,10 @@ vr_attach(device_t parent, device_t self, void *aux)
 		if (sc->vr_ih == NULL) {
 			aprint_error_dev(self, "couldn't establish interrupt");
 			if (intrstr != NULL)
-				printf(" at %s", intrstr);
-			printf("\n");
+				aprint_error(" at %s", intrstr);
+			aprint_error("\n");
 		}
-		printf("%s: interrupting at %s\n",
-			device_xname(self), intrstr);
+		aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 	}
 
 	/*
@@ -1705,7 +1700,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	    RND_TYPE_NET, 0);
 #endif
 
-	if (pmf_device_register1(self, NULL, NULL, vr_shutdown))
+	if (pmf_device_register1(self, NULL, vr_resume, vr_shutdown))
 		pmf_class_network_register(self, ifp);
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -1753,4 +1748,15 @@ vr_restore_state(pci_chipset_tag_t pc, pcitag_t tag, device_t self,
 	PCI_CONF_WRITE(VR_PCI_LOMEM, sc->vr_save_membase);
 	PCI_CONF_WRITE(PCI_INTERRUPT_REG, sc->vr_save_irq);
 	return 0;
+}
+
+static bool
+vr_resume(device_t self, const pmf_qual_t *qual)
+{
+	struct vr_softc *sc = device_private(self);
+
+	if (PCI_PRODUCT(sc->vr_id) != PCI_PRODUCT_VIATECH_VT3043)
+		VR_CLRBIT(sc, VR_STICKHW, (VR_STICKHW_DS0|VR_STICKHW_DS1));
+
+	return true;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.15.4.2 2009/05/04 08:12:11 yamt Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.15.4.3 2010/03/11 15:03:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.15.4.2 2009/05/04 08:12:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.15.4.3 2010/03/11 15:03:09 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>

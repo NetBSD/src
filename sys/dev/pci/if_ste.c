@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.35.4.2 2009/05/16 10:41:35 yamt Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.35.4.3 2010/03/11 15:03:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,9 +35,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.35.4.2 2009/05/16 10:41:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.35.4.3 2010/03/11 15:03:48 yamt Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,9 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.35.4.2 2009/05/16 10:41:35 yamt Exp $")
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -127,7 +124,6 @@ struct ste_softc {
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
-	void *sc_sdhook;		/* shutdown hook */
 
 	void *sc_ih;			/* interrupt cookie */
 
@@ -203,7 +199,7 @@ static int	ste_ioctl(struct ifnet *, u_long, void *);
 static int	ste_init(struct ifnet *);
 static void	ste_stop(struct ifnet *, int);
 
-static void	ste_shutdown(void *);
+static bool	ste_shutdown(device_t, int);
 
 static void	ste_reset(struct ste_softc *, u_int32_t);
 static void	ste_setthresh(struct ste_softc *);
@@ -369,11 +365,11 @@ ste_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	/*
 	 * Allocate the control data structures, and create and load the
@@ -510,10 +506,11 @@ ste_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Make sure the interface is shutdown during reboot.
 	 */
-	sc->sc_sdhook = shutdownhook_establish(ste_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    device_xname(&sc->sc_dev));
+	if (pmf_device_register1(self, NULL, NULL, ste_shutdown))
+		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 
 	/*
@@ -549,12 +546,15 @@ ste_attach(device_t parent, device_t self, void *aux)
  *
  *	Make sure the interface is stopped at reboot time.
  */
-static void
-ste_shutdown(void *arg)
+static bool
+ste_shutdown(device_t self, int howto)
 {
-	struct ste_softc *sc = arg;
+	struct ste_softc *sc;
 
+	sc = device_private(self);
 	ste_stop(&sc->sc_ethercom.ec_if, 1);
+
+	return true;
 }
 
 static void
@@ -698,13 +698,11 @@ ste_start(struct ifnet *ifp)
 		sc->sc_txpending++;
 		sc->sc_txlast = nexttx;
 
-#if NBPFILTER > 0
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 	}
 
 	if (sc->sc_txpending == STE_NTXDESC) {
@@ -1045,14 +1043,12 @@ ste_rxintr(struct ste_softc *sc)
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
-#if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
 		 * pass if up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);

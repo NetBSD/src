@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.53.10.2 2009/07/18 14:53:28 yamt Exp $	*/
+/*	$NetBSD: uvm.h,v 1.53.10.3 2010/03/11 15:04:46 yamt Exp $	*/
 
 /*
  *
@@ -109,12 +109,6 @@ struct uvm {
 	/* aio_done is locked by uvm.pagedaemon_lock and splbio! */
 	TAILQ_HEAD(, buf) aio_done;		/* done async i/o reqs */
 
-	/* swap-related items */
-	bool swap_running;
-	kcondvar_t scheduler_cv;
-	bool scheduler_kicked;
-	int swapout_enabled;
-
 	/* per-cpu data */
 	struct uvm_cpu cpus[MAXCPUS];
 };
@@ -132,7 +126,6 @@ extern kmutex_t uvm_pageqlock;		/* lock for active/inactive page q */
 extern kmutex_t uvm_fpageqlock;		/* lock for free page q */
 extern kmutex_t uvm_kentry_lock;
 extern kmutex_t uvm_swap_data_lock;
-extern kmutex_t uvm_scheduler_mutex;
 
 #endif /* _KERNEL */
 

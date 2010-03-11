@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.69.10.2 2009/05/04 08:13:16 yamt Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.69.10.3 2010/03/11 15:04:01 yamt Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.69.10.2 2009/05/04 08:13:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.69.10.3 2010/03/11 15:04:01 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -132,10 +132,9 @@ rf_ConfigureDisks(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 			goto fail;
 
 		if (disks[c].status == rf_ds_optimal) {
-			raidread_component_label(
-						 raidPtr->raid_cinfo[c].ci_dev,
-						 raidPtr->raid_cinfo[c].ci_vp,
-						 &raidPtr->raid_cinfo[c].ci_label);
+			ret = raidfetch_component_label(raidPtr, c);
+			if (ret)
+				goto fail;
 		}
 
 		if (disks[c].status != rf_ds_optimal) {
@@ -461,7 +460,7 @@ rf_AutoConfigureDisks(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr,
 			raidPtr->raid_cinfo[c].ci_vp = ac->vp;
 			raidPtr->raid_cinfo[c].ci_dev = ac->dev;
 
-			memcpy(&raidPtr->raid_cinfo[c].ci_label,
+			memcpy(raidget_component_label(raidPtr, c),
 			    ac->clabel, sizeof(*ac->clabel));
 			snprintf(diskPtr->devname, sizeof(diskPtr->devname),
 			    "/dev/%s", ac->devname);
@@ -731,7 +730,7 @@ rf_CheckLabels(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 	num_mod = 0;
 
 	for (c = 0; c < raidPtr->numCol; c++) {
-		ci_label = &raidPtr->raid_cinfo[c].ci_label;
+		ci_label = raidget_component_label(raidPtr, c);
 		found=0;
 		for(i=0;i<num_ser;i++) {
 			if (ser_values[i] == ci_label->serial_number) {
@@ -786,7 +785,7 @@ rf_CheckLabels(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 			}
 
 			for (c = 0; c < raidPtr->numCol; c++) {
-				ci_label = &raidPtr->raid_cinfo[c].ci_label;
+				ci_label = raidget_component_label(raidPtr, c);
 				if (serial_number != ci_label->serial_number) {
 					hosed_column = c;
 					break;
@@ -841,7 +840,7 @@ rf_CheckLabels(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 			}
 
 			for (c = 0; c < raidPtr->numCol; c++) {
-				ci_label = &raidPtr->raid_cinfo[c].ci_label;
+				ci_label = raidget_component_label(raidPtr, c);
 				if (mod_number != ci_label->mod_counter) {
 					if (hosed_column == c) {
 						/* same one.  Can
@@ -908,7 +907,7 @@ rf_CheckLabels(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 
 	for (c = 0; c < raidPtr->numCol; c++) {
 		dev_name = &cfgPtr->devnames[0][c][0];
-		ci_label = &raidPtr->raid_cinfo[c].ci_label;
+		ci_label = raidget_component_label(raidPtr, c);
 
 		if (c == hosed_column) {
 			printf("raid%d: Ignoring %s\n",

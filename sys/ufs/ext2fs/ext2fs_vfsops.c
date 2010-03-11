@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.131.10.4 2009/09/16 13:38:07 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.131.10.5 2010/03/11 15:04:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -43,11 +43,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -65,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.131.10.4 2009/09/16 13:38:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.131.10.5 2010/03/11 15:04:44 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -111,7 +106,6 @@ MODULE(MODULE_CLASS_VFS, ext2fs, "ffs");
 
 int ext2fs_sbupdate(struct ufsmount *, int);
 static int ext2fs_checksb(struct ext2fs *, int);
-static void ext2fs_set_inode_guid(struct inode *);
 
 static struct sysctllog *ext2fs_sysctl_log;
 
@@ -169,7 +163,7 @@ static const struct ufs_ops ext2fs_ufsops = {
 };
 
 /* Fill in the inode uid/gid from ext2 halves.  */
-static void
+void
 ext2fs_set_inode_guid(struct inode *ip)
 {
 
@@ -527,8 +521,7 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	struct buf *bp;
 	struct m_ext2fs *fs;
 	struct ext2fs *newfs;
-	struct partinfo dpart;
-	int i, size, error;
+	int i, error;
 	void *cp;
 	struct ufsmount *ump;
 
@@ -548,11 +541,7 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	/*
 	 * Step 2: re-read superblock from disk.
 	 */
-	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED) != 0)
-		size = DEV_BSIZE;
-	else
-		size = dpart.disklab->d_secsize;
-	error = bread(devvp, (daddr_t)(SBOFF / size), SBSIZE, NOCRED, 0, &bp);
+	error = bread(devvp, SBLOCK, SBSIZE, NOCRED, 0, &bp);
 	if (error) {
 		brelse(bp, 0);
 		return (error);
@@ -572,8 +561,7 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	fs->e2fs_ncg =
 	    howmany(fs->e2fs.e2fs_bcount - fs->e2fs.e2fs_first_dblock,
 	    fs->e2fs.e2fs_bpg);
-	/* XXX assume hw bsize = 512 */
-	fs->e2fs_fsbtodb = fs->e2fs.e2fs_log_bsize + 1;
+	fs->e2fs_fsbtodb = fs->e2fs.e2fs_log_bsize + LOG_MINBSIZE - DEV_BSHIFT;
 	fs->e2fs_bsize = MINBSIZE << fs->e2fs.e2fs_log_bsize;
 	fs->e2fs_bshift = LOG_MINBSIZE + fs->e2fs.e2fs_log_bsize;
 	fs->e2fs_qbmask = fs->e2fs_bsize - 1;
@@ -673,8 +661,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	struct ext2fs *fs;
 	struct m_ext2fs *m_fs;
 	dev_t dev;
-	struct partinfo dpart;
-	int error, i, size, ronly;
+	int error, i, ronly;
 	kauth_cred_t cred;
 	struct proc *p;
 
@@ -690,10 +677,6 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred) != 0)
-		size = DEV_BSIZE;
-	else
-		size = dpart.disklab->d_secsize;
 
 	bp = NULL;
 	ump = NULL;
@@ -701,7 +684,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 #ifdef DEBUG_EXT2
 	printf("ext2 sb size: %d\n", sizeof(struct ext2fs));
 #endif
-	error = bread(devvp, (SBOFF / size), SBSIZE, cred, 0, &bp);
+	error = bread(devvp, SBLOCK, SBSIZE, cred, 0, &bp);
 	if (error)
 		goto out;
 	fs = (struct ext2fs *)bp->b_data;
@@ -735,8 +718,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	m_fs->e2fs_ncg =
 	    howmany(m_fs->e2fs.e2fs_bcount - m_fs->e2fs.e2fs_first_dblock,
 	    m_fs->e2fs.e2fs_bpg);
-	/* XXX assume hw bsize = 512 */
-	m_fs->e2fs_fsbtodb = m_fs->e2fs.e2fs_log_bsize + 1;
+	m_fs->e2fs_fsbtodb = m_fs->e2fs.e2fs_log_bsize + LOG_MINBSIZE - DEV_BSHIFT;
 	m_fs->e2fs_bsize = MINBSIZE << m_fs->e2fs.e2fs_log_bsize;
 	m_fs->e2fs_bshift = LOG_MINBSIZE + m_fs->e2fs.e2fs_log_bsize;
 	m_fs->e2fs_qbmask = m_fs->e2fs_bsize - 1;
@@ -1112,7 +1094,7 @@ retry:
 	 */
 
 	ip->i_devvp = ump->um_devvp;
-	VREF(ip->i_devvp);
+	vref(ip->i_devvp);
 
 	/*
 	 * Set up a generation number for this inode if it does not

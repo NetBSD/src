@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sa.c,v 1.10.2.3 2009/09/16 13:37:44 yamt Exp $	*/
+/*	$NetBSD: compat_sa.c,v 1.10.2.4 2010/03/11 15:03:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.10.2.3 2009/09/16 13:37:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.10.2.4 2010/03/11 15:03:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -906,7 +906,6 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 		}
 		/* Run the LWP, locked since its mutex is still savp_mutex */
 		sa_setrunning(l2);
-		uvm_lwp_rele(l2);
 		mutex_exit(&vp->savp_mutex);
 
 		mutex_enter(&sa->sa_mutex);
@@ -1618,7 +1617,7 @@ sa_switch(struct lwp *l)
 		if ((l->l_flag & LP_SA_PAGEFAULT) && sa_pagefault(l,
 			&sau->sau_event.ss_captured.ss_ctx) != 0) {
 			cpu_setfunc(l2, sa_neverrun, NULL);
-			sa_putcachelwp(p, l2); /* uvm_lwp_hold from sa_getcachelwp */
+			sa_putcachelwp(p, l2);
 			mutex_exit(&vp->savp_mutex);
 			DPRINTFN(4,("sa_switch(%d.%d) Pagefault\n",
 			    p->p_pid, l->l_lid));
@@ -1648,9 +1647,6 @@ sa_switch(struct lwp *l)
 		vp->savp_lwp = l2;
 
 		sa_setrunning(l2);
-
-		/* Remove the artificial hold-count */
-		uvm_lwp_rele(l2);
 
 		KASSERT(l2 != l);
 	} else if (vp->savp_lwp != NULL) {
@@ -1776,7 +1772,7 @@ sa_switchcall(void *arg)
 				vp->savp_sleeper_upcall = sau;
 			else
 				sadata_upcall_free(sau);
-			uvm_lwp_hold(l2);
+
 			sa_putcachelwp(p, l2); /* sets LW_SA */
 			mutex_exit(&vp->savp_mutex);
 			lwp_lock(l);
@@ -1820,22 +1816,20 @@ sa_newcachelwp(struct lwp *l, struct sadata_vp *targ_vp)
 	struct lwp *l2;
 	struct sadata_vp *vp;
 	vaddr_t uaddr;
-	boolean_t inmem;
 	int error;
 
 	p = l->l_proc;
 	if (p->p_sflag & (PS_WCORE | PS_WEXIT))
 		return (0);
 
-	inmem = uvm_uarea_alloc(&uaddr);
-	if (__predict_false(uaddr == 0)) {
-		return (ENOMEM);
-	}
+	uaddr = uvm_uarea_alloc();
+	if (__predict_false(uaddr == 0))
+		return ENOMEM;
 
-	error = lwp_create(l, p, uaddr, inmem, 0, NULL, 0,
+	error = lwp_create(l, p, uaddr, 0, NULL, 0,
 	    sa_neverrun, NULL, &l2, l->l_class);
 	if (error) {
-		uvm_uarea_free(uaddr, curcpu());
+		uvm_uarea_free(uaddr);
 		return error;
 	}
 
@@ -1846,7 +1840,7 @@ sa_newcachelwp(struct lwp *l, struct sadata_vp *targ_vp)
 	mutex_enter(p->p_lock);
 	p->p_nrlwps++;
 	mutex_exit(p->p_lock);
-	uvm_lwp_hold(l2);
+
 	vp = (targ_vp) ? targ_vp : l->l_savp;
 	mutex_enter(&vp->savp_mutex);
 	l2->l_savp = vp;
@@ -2117,7 +2111,7 @@ sa_upcall_userret(struct lwp *l)
 		l2->l_wmesg = sa_lwpcache_wmesg;
        		vp->savp_lwpcache_count++;
        		sleepq_insert(sq, l2, &sa_sobj);
-			/* uvm_lwp_hold from sa_unblock_userret */
+
 	} else if (sast)
 		sa_setstackfree(sast, sa);
 
@@ -2311,7 +2305,6 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 			l2->l_wmesg = sa_lwpcache_wmesg;
         		vp->savp_lwpcache_count++;
        	 		sleepq_insert(sq, l2, &sa_sobj);
-				/* uvm_lwp_hold from sa_unblock_userret */
 			mutex_exit(&vp->savp_mutex);
 
 			error = copyout(&e_ss->ss_captured.ss_ctx,
@@ -2411,7 +2404,6 @@ sa_unblock_userret(struct lwp *l)
 	struct proc *p;
 	struct sadata *sa;
 	struct sadata_vp *vp;
-	int swapper;
 
 	p = l->l_proc;
 	sa = p->p_sa;
@@ -2431,7 +2423,6 @@ sa_unblock_userret(struct lwp *l)
 	vp = l->l_savp;
 	vp_lwp = vp->savp_lwp;
 	l2 = NULL;
-	swapper = 0;
 
 	KASSERT(vp_lwp != NULL);
 	DPRINTFN(3,("sa_unblock_userret(%d.%d) woken, flags %x, vp %d\n",
@@ -2447,7 +2438,6 @@ sa_unblock_userret(struct lwp *l)
 		    l->l_proc->p_pid, l->l_lid,
 		    vp_lwp->l_lid, vp_lwp->l_stat));
 		vp_lwp->l_flag &= ~LW_SA_IDLE;
-		uvm_lwp_rele(l);
 		return;
 	}
 #endif
@@ -2512,21 +2502,18 @@ sa_unblock_userret(struct lwp *l)
 		}
 #endif
 		vp_lwp->l_slptime = 0;
-		if (vp_lwp->l_flag & LW_INMEM) {
-			if (vp_lwp->l_cpu == curcpu())
-				l2 = vp_lwp;
-			else {
-				/*
-				 * don't need to spc_lock the other cpu
-				 * as runable lwps have the cpu as their
-				 * mutex.
-				 */
-				/* spc_lock(vp_lwp->l_cpu); */
-				cpu_need_resched(vp_lwp->l_cpu, 0);
-				/* spc_unlock(vp_lwp->l_cpu); */
-			}
-		} else
-			swapper = 1;
+		if (vp_lwp->l_cpu == curcpu())
+			l2 = vp_lwp;
+		else {
+			/*
+			 * don't need to spc_lock the other cpu
+			 * as runable lwps have the cpu as their
+			 * mutex.
+			 */
+			/* spc_lock(vp_lwp->l_cpu); */
+			cpu_need_resched(vp_lwp->l_cpu, 0);
+			/* spc_unlock(vp_lwp->l_cpu); */
+		}
 		break;
 	default:
 		panic("sa_vp LWP not sleeping/onproc/runnable");
@@ -2534,9 +2521,6 @@ sa_unblock_userret(struct lwp *l)
 
 	if (vp_lwp != NULL)
 		lwp_unlock(vp_lwp);
-
-	if (swapper)
-		wakeup(&proc0);
 
 	/*
 	 * Add ourselves to the savp_woken queue. Still on p_lwps.
@@ -2547,7 +2531,6 @@ sa_unblock_userret(struct lwp *l)
 	sleepq_enter(&vp->savp_woken, l, &vp->savp_mutex);
 	sleepq_enqueue(&vp->savp_woken, &vp->savp_woken, sa_lwpwoken_wmesg,
 	    &sa_sobj);
-	uvm_lwp_hold(l);
 	vp->savp_woken_count++;
 	//l->l_stat = LSSUSPENDED;
 	mi_switch(l);

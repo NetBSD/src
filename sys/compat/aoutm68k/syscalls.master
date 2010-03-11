@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.27.2.1 2009/05/04 08:12:17 yamt Exp $
+	$NetBSD: syscalls.master,v 1.27.2.2 2010/03/11 15:03:12 yamt Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -41,9 +41,6 @@
 #include "opt_compat_netbsd.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
-
-#include "fs_lfs.h"
-#include "fs_nfs.h"
 #endif
 
 #include <sys/param.h>
@@ -424,11 +421,7 @@
 152	UNIMPL
 153	UNIMPL
 154	UNIMPL
-#if defined(NFSSERVER) || !defined(_KERNEL)
-155	NOARGS		{ int|sys||nfssvc(int flag, void *argp); }
-#else
 155	EXCL		nfssvc
-#endif
 #if defined(COMPAT_43) || !defined(_KERNEL)
 156	NOARGS		{ int|compat_43_sys||getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries
@@ -508,20 +501,10 @@
 181	NOARGS		{ int|sys||setgid(gid_t gid); }
 182	NOARGS		{ int|sys||setegid(gid_t egid); }
 183	NOARGS		{ int|sys||seteuid(uid_t euid); }
-#if defined(LFS) || !defined(_KERNEL)
-184	NOARGS		{ int|sys||lfs_bmapv(fsid_t *fsidp, \
-			    struct block_info *blkiov, int blkcnt); }
-185	NOARGS		{ int|sys||lfs_markv(fsid_t *fsidp, \
-			    struct block_info *blkiov, int blkcnt); }
-186	NOARGS		{ int|sys||lfs_segclean(fsid_t *fsidp, u_long segment); }
-187	NOARGS		{ int|compat_50_sys||lfs_segwait(fsid_t *fsidp, \
-			    struct timeval50 *tv); }
-#else
 184	EXCL		lfs_bmapv
 185	EXCL		lfs_markv
 186	EXCL		lfs_segclean
 187	EXCL		lfs_segwait
-#endif
 #if defined(COMPAT_12) || !defined(_KERNEL)
 188	STD	{ int|aoutm68k_compat_12_sys||stat(const char *path, \
 			    struct aoutm68k_stat12 *ub); } stat12

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.67.4.4 2009/08/19 18:46:19 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.67.4.5 2010/03/11 15:02:28 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -15,11 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -134,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.67.4.4 2009/08/19 18:46:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.67.4.5 2010/03/11 15:02:28 yamt Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -206,7 +201,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.67.4.4 2009/08/19 18:46:19 yamt Exp $")
 	.globl	_C_LABEL(esym)
 	.globl	_C_LABEL(eblob)
 	.globl	_C_LABEL(atdevbase)
-	.globl	_C_LABEL(proc0uarea),_C_LABEL(PDPpaddr)
+	.globl	_C_LABEL(lwp0uarea),_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(gdt)
 	.globl	_C_LABEL(idt)
 	.globl	_C_LABEL(lapic_tpr)
@@ -237,7 +232,7 @@ _C_LABEL(lapic_tpr):
 _C_LABEL(cpu):		.long	0	# are we 80486, Pentium, or..
 _C_LABEL(cpuid_level):	.long	0
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
-_C_LABEL(proc0uarea):	.long	0
+_C_LABEL(lwp0uarea):	.long	0
 _C_LABEL(PDPpaddr):	.long	0	# paddr of PDP, for libkvm
 _C_LABEL(tablesize):	.long	0
 
@@ -672,7 +667,7 @@ begin:
 
 	/* Set up bootstrap stack. */
  	leal	(PROC0_STK_OFF+KERNBASE)(%esi),%eax
-	movl	%eax,_C_LABEL(proc0uarea)
+	movl	%eax,_C_LABEL(lwp0uarea)
 	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
 	movl	%esi,(KSTACK_SIZE+PCB_CR3)(%eax)	# pcb->pcb_cr3
 	xorl	%ebp,%ebp               # mark end of frames
@@ -755,7 +750,7 @@ start:
 	 * First avail returned by xen_pmap_bootstrap in %eax
 	 */
 	movl	%eax, %esi;
-	movl	%esi, _C_LABEL(proc0uarea)
+	movl	%esi, _C_LABEL(lwp0uarea)
 
 #define PROC0PDIR       ((0)              * PAGE_SIZE)
 #define PROC0STACK      ((1)              * PAGE_SIZE)
@@ -936,12 +931,12 @@ ENTRY(cpu_switchto)
 	jz	1f
 
 	/* Save old context. */
-	movl	L_ADDR(%esi),%eax
+	movl	L_PCB(%esi),%eax
 	movl	%esp,PCB_ESP(%eax)
 	movl	%ebp,PCB_EBP(%eax)
 
 	/* Switch to newlwp's stack. */
-1:	movl	L_ADDR(%edi),%ebx
+1:	movl	L_PCB(%edi),%ebx
 	movl	PCB_EBP(%ebx),%ebp
 	movl	PCB_ESP(%ebx),%esp
 
@@ -994,13 +989,13 @@ ENTRY(cpu_switchto)
 	jne	5f
 
 	/*
-	 * Restore cr0 (including FPU state).  Raise the IPL to IPL_IPI.
+	 * Restore cr0 (including FPU state).  Raise the IPL to IPL_HIGH.
 	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
 	 * is deferred until mi_switch(), when cpu_switchto() returns.
 	 */
 2:
 #ifndef XEN
-	movl	$IPL_IPI,CPUVAR(ILEVEL)
+	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 	movl	PCB_CR0(%ebx),%ecx		/* has CR0_TS clear */
 	movl	%cr0,%edx
 

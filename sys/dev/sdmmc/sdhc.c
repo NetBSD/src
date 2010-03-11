@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.1.4.3 2009/06/20 07:20:29 yamt Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.1.4.4 2010/03/11 15:04:03 yamt Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.1.4.3 2009/06/20 07:20:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.1.4.4 2010/03/11 15:04:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -199,7 +199,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	cv_init(&hp->intr_cv, "sdhcintr");
 
 	/*
-	 * eset the host controller and enable interrupts.
+	 * Reset the host controller and enable interrupts.
 	 */
 	(void)sdhc_host_reset(hp);
 
@@ -310,7 +310,7 @@ err1:
 }
 
 bool
-sdhc_suspend(device_t dev PMF_FN_ARGS)
+sdhc_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	struct sdhc_softc *sc = device_private(dev);
 	struct sdhc_host *hp;
@@ -329,7 +329,7 @@ sdhc_suspend(device_t dev PMF_FN_ARGS)
 }
 
 bool
-sdhc_resume(device_t dev PMF_FN_ARGS)
+sdhc_resume(device_t dev, const pmf_qual_t *qual)
 {
 	struct sdhc_softc *sc = device_private(dev);
 	struct sdhc_host *hp;
@@ -635,11 +635,11 @@ sdhc_bus_width(sdmmc_chipset_handle_t sch, int width)
 	}
 
 	mutex_enter(&hp->host_mtx);
-	reg = HREAD1(hp, SDHC_POWER_CTL);
+	reg = HREAD1(hp, SDHC_HOST_CTL);
 	reg &= ~SDHC_4BIT_MODE;
 	if (width == 4)
 		reg |= SDHC_4BIT_MODE;
-	HWRITE1(hp, SDHC_POWER_CTL, reg);
+	HWRITE1(hp, SDHC_HOST_CTL, reg);
 	mutex_exit(&hp->host_mtx);
 
 	return 0;

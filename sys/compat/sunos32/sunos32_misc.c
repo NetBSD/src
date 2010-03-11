@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.59.4.3 2009/07/18 14:52:58 yamt Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.59.4.4 2010/03/11 15:03:19 yamt Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,14 +77,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.59.4.3 2009/07/18 14:52:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.59.4.4 2010/03/11 15:03:19 yamt Exp $");
 
 #define COMPAT_SUNOS 1
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
 #include "opt_compat_netbsd.h"
-#include "fs_nfs.h"
 #endif
 
 #include <sys/param.h>
@@ -528,19 +527,6 @@ sunos32_sys_mount(struct lwp *l, const struct sunos32_sys_mount_args *uap, regis
 	    0, &dummy);
 }
 
-#if defined(NFS)
-int
-async_daemon(struct lwp *l, const void *v, register_t *retval)
-{
-	struct netbsd32_nfssvc_args ouap;
-
-	SCARG(&ouap, flag) = NFSSVC_BIOD;
-	NETBSD32PTR32(SCARG(&ouap, argp), 0);
-
-	return (netbsd32_nfssvc(l, &ouap, retval));
-}
-#endif /* NFS */
-
 void	native_to_sunos_sigset(const sigset_t *, int *);
 void	sunos_to_native_sigset(const int, sigset_t *);
 
@@ -710,8 +696,12 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == SCARG_P32(uap, buf))
+	if (outp == SCARG_P32(uap, buf)) {
+		if (cookiebuf)
+			free(cookiebuf, M_TEMP);
+		cookiebuf = NULL;
 		goto again;
+	}
 	fp->f_offset = off;		/* update the vnode offset */
 
 eof:
@@ -1005,35 +995,6 @@ sunos32_sys_open(struct lwp *l, const struct sunos32_sys_open_args *uap, registe
 		}
 	}
 	return ret;
-}
-
-int
-sunos32_sys_nfssvc(struct lwp *l, const struct sunos32_sys_nfssvc_args *uap, register_t *retval)
-{
-#if 0
-	struct emul *e = p->p_emul;
-	struct sys_nfssvc_args outuap;
-	struct sockaddr sa;
-	int error;
-	void *sg = stackgap_init(p, 0);
-
-	memset(&outuap, 0, sizeof outuap);
-	SCARG(&outuap, fd) = SCARG(uap, fd);
-	SCARG(&outuap, mskval) = stackgap_alloc(p, &sg, sizeof(sa));
-	SCARG(&outuap, msklen) = sizeof(sa);
-	SCARG(&outuap, mtchval) = stackgap_alloc(p, &sg, sizeof(sa));
-	SCARG(&outuap, mtchlen) = sizeof(sa);
-
-	memset(&sa, 0, sizeof sa);
-	if (error = copyout(&sa, SCARG(&outuap, mskval), SCARG(&outuap, msklen)))
-		return (error);
-	if (error = copyout(&sa, SCARG(&outuap, mtchval), SCARG(&outuap, mtchlen)))
-		return (error);
-
-	return nfssvc(l, &outuap, retval);
-#else
-	return (ENOSYS);
-#endif
 }
 
 int

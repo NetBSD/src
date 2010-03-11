@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.109.2.2 2009/06/20 07:20:31 yamt Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.109.2.3 2010/03/11 15:04:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.109.2.2 2009/06/20 07:20:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.109.2.3 2010/03/11 15:04:20 yamt Exp $");
 
 #include "opt_ptm.h"
 
@@ -119,6 +119,11 @@ const struct cdevsw pts_cdevsw = {
 };
 
 #if defined(pmax)
+/*
+ * Used by arch/pmax/conf/majors.pmax, which needs a second copy as it
+ * needs to map this stuff to two pairs of majors.
+ */
+
 const struct cdevsw ptc_ultrix_cdevsw = {
 	ptcopen, ptcclose, ptcread, ptcwrite, ptyioctl,
 	nullstop, ptytty, ptcpoll, nommap, ptckqfilter, D_TTY
@@ -584,6 +589,10 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp = pti->pt_tty;
 	u_char bf[BUFSIZ];
 	int error = 0, cc;
+	int c;
+
+	if (uio->uio_resid <= 0)
+		return EINVAL;
 
 	/*
 	 * We want to block until the slave
@@ -594,9 +603,10 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 	mutex_spin_enter(&tty_lock);
 	for (;;) {
 		if (ISSET(tp->t_state, TS_ISOPEN)) {
-			if (pti->pt_flags & PF_PKT && pti->pt_send) {
+			if (pti->pt_flags & PF_PKT && (c = pti->pt_send)) {
+				pti->pt_send = 0;
 				mutex_spin_exit(&tty_lock);
-				error = ureadc((int)pti->pt_send, uio);
+				error = ureadc(c, uio);
 				if (error)
 					return (error);
 				/*
@@ -611,15 +621,14 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 					uiomove((void *) &tp->t_termios,
 						cc, uio);
 				}
-				pti->pt_send = 0;
 				return (0);
 			}
-			if (pti->pt_flags & PF_UCNTL && pti->pt_ucntl) {
+			if (pti->pt_flags & PF_UCNTL && (c = pti->pt_ucntl)) {
+				pti->pt_ucntl = 0;
 				mutex_spin_exit(&tty_lock);
-				error = ureadc((int)pti->pt_ucntl, uio);
+				error = ureadc(c, uio);
 				if (error)
 					return (error);
-				pti->pt_ucntl = 0;
 				return (0);
 			}
 			if (tp->t_outq.c_cc && !ISSET(tp->t_state, TS_TTSTOP))

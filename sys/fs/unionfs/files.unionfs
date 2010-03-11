@@ -1,6 +1,6 @@
-#	$NetBSD: files.unionfs,v 1.1 2008/02/18 16:44:22 ad Exp $
+#	$NetBSD: files.unionfs,v 1.1.16.1 2010/03/11 15:04:15 yamt Exp $
 
-deffs	fs_unionfs.h			UNIONFS
+deffs	UNIONFS
 
 file	fs/unionfs/unionfs_subr.c	unionfs
 file	fs/unionfs/unionfs_vfsops.c	unionfs

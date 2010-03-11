@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.67.64.2 2009/05/04 08:11:54 yamt Exp $ */
+/*	$NetBSD: sbus.c,v 1.67.64.3 2010/03/11 15:02:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.67.64.2 2009/05/04 08:11:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.67.64.3 2010/03/11 15:02:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -510,60 +510,6 @@ sbus_bus_addr(bus_space_tag_t t, u_int btype, u_int offset)
 
 
 /*
- * Each attached device calls sbus_establish after it initializes
- * its sbusdev portion.
- */
-void
-sbus_establish(struct sbusdev *sd, device_t dev)
-{
-	register struct sbus_softc *sc;
-	register device_t curdev;
-
-	/*
-	 * We have to look for the sbus by name, since it is not necessarily
-	 * our immediate parent (i.e. sun4m /iommu/sbus/espdma/esp)
-	 * We don't just use the device structure of the above-attached
-	 * sbus, since we might (in the future) support multiple sbus's.
-	 */
-	for (curdev = device_parent(dev); ; curdev = device_parent(curdev)) {
-		if ((curdev == NULL) || (device_xname(curdev) == NULL))
-			panic("sbus_establish: can't find sbus parent for %s",
-			      device_xname(dev)
-					? device_xname(dev)
-					: "<unknown>" );
-
-		if (strncmp(device_xname(curdev), "sbus", 4) == 0)
-			break;
-	}
-	sc = device_private(curdev);
-
-	sd->sd_dev = dev;
-	sd->sd_bchain = sc->sc_sbdev;
-	sc->sc_sbdev = sd;
-}
-
-/*
- * Reset the given sbus. (???)
- */
-void
-sbusreset(int sbus)
-{
-	register struct sbusdev *sd;
-	struct sbus_softc *sc = device_lookup_private(&sbus_cd, sbus);
-	device_t dev;
-
-	printf("reset %s:", device_xname(sc->sc_dev));
-	for (sd = sc->sc_sbdev; sd != NULL; sd = sd->sd_bchain) {
-		if (sd->sd_reset) {
-			dev = sd->sd_dev;
-			(*sd->sd_reset)(dev);
-			printf(" %s", device_xname(dev));
-		}
-	}
-}
-
-
-/*
  * Get interrupt attributes for an Sbus device.
  */
 static int
@@ -644,7 +590,7 @@ sbus_intr_establish(bus_space_tag_t t, int pri, int level,
 
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
-	intr_establish(pil, level, ih, fastvec);
+	intr_establish(pil, level, ih, fastvec, false);
 	return (ih);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.43.44.1 2009/05/04 08:14:06 yamt Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.43.44.2 2010/03/11 15:04:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.43.44.1 2009/05/04 08:14:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.43.44.2 2010/03/11 15:04:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ umap_bypass(void *v)
 			 * that.  (This should go away in the future.)
 			 */
 			if (reles & VDESC_VP0_WILLRELE)
-				VREF(*this_vp_p);
+				vref(*this_vp_p);
 		}
 
 	}
@@ -412,7 +412,7 @@ umap_lookup(void *v)
 	/* Do locking fixup as appropriate. See layer_lookup() for info */
 	if (ldvp == vp) {
 		*ap->a_vpp = dvp;
-		VREF(dvp);
+		vref(dvp);
 		vrele(vp);
 	} else if (vp != NULL) {
 		error = layer_node_create(mp, vp, ap->a_vpp);

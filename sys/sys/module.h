@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.2.6.3 2009/06/20 07:20:38 yamt Exp $	*/
+/*	$NetBSD: module.h,v 1.2.6.4 2010/03/11 15:04:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -44,7 +44,8 @@ typedef enum modclass {
 	MODULE_CLASS_MISC,
 	MODULE_CLASS_VFS,
 	MODULE_CLASS_DRIVER,
-	MODULE_CLASS_EXEC
+	MODULE_CLASS_EXEC,
+	MODULE_CLASS_SECMODEL
 } modclass_t;
 
 /* Module sources: where did it come from? */
@@ -111,16 +112,21 @@ TAILQ_HEAD(modlist, module);
 extern struct vm_map	*module_map;
 extern kmutex_t		module_lock;
 extern u_int		module_count;
+extern u_int		module_builtinlist;
 extern struct modlist	module_list;
+extern struct modlist	module_builtins;
 extern u_int		module_gen;
 
 void	module_init(void);
+void	module_init2(void);
 void	module_init_md(void);
 void	module_init_class(modclass_t);
 int	module_prime(void *, size_t);
 
 bool	module_compatible(int, int);
 int	module_load(const char *, int, prop_dictionary_t, modclass_t);
+int	module_builtin_add(modinfo_t * const *, size_t, bool);
+int	module_builtin_remove(modinfo_t *, bool);
 int	module_autoload(const char *, modclass_t);
 int	module_unload(const char *);
 int	module_hold(const char *);
@@ -130,6 +136,19 @@ void	module_thread_kick(void);
 
 void	module_whatis(uintptr_t, void (*)(const char *, ...));
 void	module_print_list(void (*)(const char *, ...));
+
+#ifdef _MODULE_INTERNAL
+int	module_load_vfs(const char *, int, bool, module_t *,
+			prop_dictionary_t *);
+void	module_error(const char *, ...)
+			     __attribute__((__format__(__printf__,1,2)));
+void	module_print(const char *, ...)
+			     __attribute__((__format__(__printf__,1,2)));
+
+#define MODULE_BASE_SIZE 64
+extern char	module_base[MODULE_BASE_SIZE];
+#endif /* _MODULE_INTERNAL */
+
 #else	/* _KERNEL */
 
 #include <stdint.h>

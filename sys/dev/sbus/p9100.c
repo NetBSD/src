@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.37.4.5 2009/09/16 13:37:57 yamt Exp $ */
+/*	$NetBSD: p9100.c,v 1.37.4.6 2010/03/11 15:04:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.37.4.5 2009/09/16 13:37:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.37.4.6 2010/03/11 15:04:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.37.4.5 2009/09/16 13:37:57 yamt Exp $");
 #include "rasops_glue.h"
 #include "opt_pnozz.h"
 
+#include "ioconf.h"
+
 #include "tctrl.h"
 #if NTCTRL > 0
 #include <machine/tctrl.h>
@@ -98,7 +100,6 @@ struct pnozz_cursor {
 /* per-display variables */
 struct p9100_softc {
 	device_t	sc_dev;		/* base device */
-	struct sbusdev	sc_sd;		/* sbus device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 
 	bus_space_tag_t	sc_bustag;
@@ -109,8 +110,9 @@ struct p9100_softc {
 
 	bus_addr_t	sc_fb_paddr;	/* phys address description */
 	bus_size_t	sc_fb_psize;	/*   for device mmap() */
+#ifdef PNOZZ_USE_LATCH
 	bus_space_handle_t sc_fb_memh;	/*   bus space handle */
-
+#endif
 	volatile uint32_t sc_junk;
 	uint32_t 	sc_mono_width;	/* for setup_mono */
 
@@ -163,8 +165,6 @@ static void	p9100unblank(device_t);
 
 CFATTACH_DECL_NEW(pnozz, sizeof(struct p9100_softc),
     p9100_sbus_match, p9100_sbus_attach, NULL, NULL);
-
-extern struct cfdriver pnozz_cd;
 
 static dev_type_open(p9100open);
 static dev_type_ioctl(p9100ioctl);
@@ -237,8 +237,8 @@ static int	p9100_intr(void *);
 #endif
 
 /* power management stuff */
-static bool p9100_suspend(device_t PMF_FN_PROTO);
-static bool p9100_resume(device_t PMF_FN_PROTO);
+static bool p9100_suspend(device_t, const pmf_qual_t *);
+static bool p9100_resume(device_t, const pmf_qual_t *);
 
 #if NTCTRL > 0
 static void p9100_set_extvga(void *, int);
@@ -257,10 +257,14 @@ struct wsdisplay_accessops p9100_accessops = {
 };
 #endif
 
-#define PNOZZ_LATCH(sc, off) if(sc->sc_last_offset == (off & 0xffffff80)) { \
+#ifdef PNOZZ_USE_LATCH
+#define PNOZZ_LATCH(sc, off) if(sc->sc_last_offset != (off & 0xffffff80)) { \
 		sc->sc_junk = bus_space_read_4(sc->sc_bustag, sc->sc_fb_memh, \
 		    off); \
 		sc->sc_last_offset = off & 0xffffff80; }
+#else
+#define PNOZZ_LATCH(a, b)
+#endif
 
 /*
  * Match a p9100.
@@ -339,7 +343,9 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 	 * P9100 - all register accesses need to be 'latched in' whenever we
 	 * go to another 0x80 aligned 'page' by reading the framebuffer at the
 	 * same offset
+	 * XXX apparently the latter isn't true - my SP3GX works fine without
 	 */
+#ifdef PNOZZ_USE_LATCH
 	if (fb->fb_pixels == NULL) {
 		if (sbus_bus_map(sc->sc_bustag,
 		    sa->sa_reg[2].oa_space,
@@ -355,6 +361,7 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 	} else {
 		sc->sc_fb_memh = (bus_space_handle_t) fb->fb_pixels;
 	}
+#endif
 	sc->sc_width = prom_getpropint(node, "width", 800);
 	sc->sc_height = prom_getpropint(node, "height", 600);
 	sc->sc_depth = prom_getpropint(node, "depth", 8) >> 3;
@@ -396,7 +403,6 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 	fb_setsize_obp(fb, fb->fb_type.fb_depth, sc->sc_width, sc->sc_height,
 	    node);
 
-	sbus_establish(&sc->sc_sd, sc->sc_dev);
 #if 0
 	bus_intr_establish(sc->sc_bustag, sa->sa_pri, IPL_BIO,
 	    p9100_intr, sc);
@@ -906,7 +912,7 @@ p9100unblank(device_t dev)
 static void
 p9100_set_video(struct p9100_softc *sc, int enable)
 {
-	u_int32_t v = p9100_ctl_read_4(sc, SCRN_RPNT_CTL_1);
+	uint32_t v = p9100_ctl_read_4(sc, SCRN_RPNT_CTL_1);
 
 	if (enable)
 		v |= VIDEO_ENABLED;
@@ -927,7 +933,7 @@ p9100_get_video(struct p9100_softc *sc)
 }
 
 static bool
-p9100_suspend(device_t dev PMF_FN_ARGS)
+p9100_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	struct p9100_softc *sc = device_private(dev);
 
@@ -948,7 +954,7 @@ p9100_suspend(device_t dev PMF_FN_ARGS)
 }
 
 static bool
-p9100_resume(device_t dev PMF_FN_ARGS)
+p9100_resume(device_t dev, const pmf_qual_t *qual)
 {
 	struct p9100_softc *sc = device_private(dev);
 
@@ -1219,9 +1225,10 @@ p9100_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_stride = sc->sc_stride;
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
 
+#ifdef PNOZZ_USE_LATCH
 	ri->ri_bits = bus_space_vaddr(sc->sc_bustag, sc->sc_fb_memh);
-
 	DPRINTF("addr: %08lx\n",(ulong)ri->ri_bits);
+#endif
 
 	rasops_init(ri, sc->sc_height/8, sc->sc_width/8);
 	ri->ri_caps = WSSCREEN_WSCOLORS;

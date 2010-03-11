@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.42.20.3 2009/08/19 18:45:54 yamt Exp $ */
+/* $NetBSD: sio.c,v 1.42.20.4 2010/03/11 15:01:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.42.20.3 2009/08/19 18:45:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.42.20.4 2010/03/11 15:01:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ siomatch(struct device *parent, struct cfdata *match, void *aux)
 		return (1);
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALI &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALI_M1543)
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALI_M1533)
 		return (1);
 
 	return (0);

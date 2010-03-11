@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.34.2.3 2009/09/16 13:37:51 yamt Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.34.2.4 2010/03/11 15:03:47 yamt Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,10 +21,9 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.34.2.3 2009/09/16 13:37:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.34.2.4 2010/03/11 15:03:47 yamt Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "vlan.h"
 
 #include <sys/param.h>
@@ -60,9 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.34.2.3 2009/09/16 13:37:51 yamt Exp $")
 #include <net/if_types.h>
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -112,7 +109,7 @@ void	nfe_get_macaddr(struct nfe_softc *, uint8_t *);
 void	nfe_set_macaddr(struct nfe_softc *, const uint8_t *);
 void	nfe_tick(void *);
 void	nfe_poweron(device_t);
-bool	nfe_resume(device_t PMF_FN_PROTO);
+bool	nfe_resume(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL_NEW(nfe, sizeof(struct nfe_softc), nfe_match, nfe_attach,
     NULL, NULL);
@@ -253,8 +250,8 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		goto fail;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
@@ -893,10 +890,8 @@ mbufcopied:
 				    device_xname(sc->sc_dev)));
 			}
 		}
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		ifp->if_ipackets++;
 		(*ifp->if_input)(ifp, m);
 
@@ -1157,10 +1152,8 @@ nfe_start(struct ifnet *ifp)
 		/* packet put in h/w queue, remove from s/w queue */
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 	}
 
 	if (sc->txq.queued != old) {
@@ -1947,7 +1940,7 @@ nfe_poweron(device_t self)
 }
 
 bool
-nfe_resume(device_t dv PMF_FN_ARGS)
+nfe_resume(device_t dv, const pmf_qual_t *qual)
 {
 	nfe_poweron(dv);
 

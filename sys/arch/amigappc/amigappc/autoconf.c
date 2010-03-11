@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.2.2 2009/08/19 18:45:55 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.2.3 2010/03/11 15:02:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.2.2 2009/08/19 18:45:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.2.3 2010/03/11 15:02:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,6 @@ cpu_configure(void)
 	 */
 	amiga_realconfig = 1;
 	custom.intena = INTF_INTEN;
-	printf("spl was %d\n",splhigh()); /* XXX */
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
@@ -75,8 +74,8 @@ cpu_configure(void)
 	printf("survived autoconf, going to enable interrupts\n");
 #endif
 
-	custom.intena = INTF_SETCLR | INTF_INTEN;
 	genppc_cpu_configure();
+	custom.intena = INTF_SETCLR | INTF_INTEN;
 
 #ifdef DEBUG_KERNEL_START
 	printf("survived configure...\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.166.2.4 2009/07/18 14:53:24 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.166.2.5 2010/03/11 15:04:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.166.2.4 2009/07/18 14:53:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.166.2.5 2010/03/11 15:04:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -514,6 +514,14 @@ genfs_node_rdlock(struct vnode *vp)
 	rw_enter(&gp->g_glock, RW_READER);
 }
 
+int
+genfs_node_rdtrylock(struct vnode *vp)
+{
+	struct genfs_node *gp = VTOG(vp);
+
+	return rw_tryenter(&gp->g_glock, RW_READER);
+}
+
 void
 genfs_node_unlock(struct vnode *vp)
 {
@@ -695,11 +703,11 @@ genfs_can_chown(vnode_t *vp, kauth_cred_t cred, uid_t cur_uid,
 		ismember = 0;
 		error = kauth_cred_ismember_gid(cred, new_gid,
 		    &ismember);
-		if (error || !ismember)
-			return (EPERM);
+		if (!error && ismember)
+			return (0);
 	}
 
-	return (0);
+	return (EPERM);
 }
 
 /*

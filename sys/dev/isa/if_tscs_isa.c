@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tscs_isa.c,v 1.6.4.3 2009/05/16 10:41:26 yamt Exp $	*/
+/*	$NetBSD: if_tscs_isa.c,v 1.6.4.4 2010/03/11 15:03:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tscs_isa.c,v 1.6.4.3 2009/05/16 10:41:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tscs_isa.c,v 1.6.4.4 2010/03/11 15:03:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,10 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_tscs_isa.c,v 1.6.4.3 2009/05/16 10:41:26 yamt Exp
 #include <dev/ic/cs89x0var.h>
 #include <dev/isa/cs89x0isavar.h>
 
-int	tscs_isa_probe(device_t, cfdata_t, void *);
-void	tscs_isa_attach(device_t, device_t, void *);
+static int	tscs_isa_probe(device_t, cfdata_t, void *);
+static void	tscs_isa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(tscs_isa, sizeof(struct cs_softc),
+CFATTACH_DECL_NEW(tscs_isa, sizeof(struct cs_softc_isa),
     tscs_isa_probe, tscs_isa_attach, NULL, NULL);
 
 int
@@ -170,10 +170,11 @@ tscs_isa_probe(device_t parent, cfdata_t cf, void *aux)
 void
 tscs_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct cs_softc *sc = (struct cs_softc *) self;
-	struct cs_softc_isa *isc = (void *) self;
+	struct cs_softc_isa *isc = device_private(self);
+	struct cs_softc *sc = &isc->sc_cs;
 	struct isa_attach_args *ia = aux;
 
+	sc->sc_dev = self;
 	isc->sc_ic = ia->ia_ic;
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_memt = ia->ia_memt;
@@ -188,14 +189,14 @@ tscs_isa_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr, CS8900_IOSIZE,
 	    0, &sc->sc_ioh)) {
-		aprint_error_dev(&sc->sc_dev, "unable to map i/o space\n");
+		aprint_error_dev(self, "unable to map i/o space\n");
 		return;
 	}
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq, IST_EDGE,
 	    IPL_NET, cs_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt\n");
+		aprint_error_dev(self, "unable to establish interrupt\n");
 		return;
 	}
 

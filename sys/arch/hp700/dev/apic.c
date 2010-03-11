@@ -1,4 +1,4 @@
-/*	$NetBSD: apic.c,v 1.2.2.3 2009/05/16 10:41:12 yamt Exp $	*/
+/*	$NetBSD: apic.c,v 1.2.2.4 2010/03/11 15:02:23 yamt Exp $	*/
 
 /*	$OpenBSD: apic.c,v 1.7 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -138,7 +138,7 @@ apic_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 #endif
 	line = PCI_INTERRUPT_LINE(reg);
 	if (sc->sc_irq[line] == 0)
-		sc->sc_irq[line] = hp700_intr_allocate_bit(&int_reg_cpu);;
+		sc->sc_irq[line] = hp700_intr_allocate_bit(&int_reg_cpu);
 	*ihp = (line << APIC_INT_LINE_SHIFT) | sc->sc_irq[line];
 	return (APIC_INT_IRQ(*ihp) == 0);
 }
@@ -241,15 +241,13 @@ apic_intr(void *v)
 		if (iv->handler(iv->arg)) {
 			if (iv->cnt)
 				iv->cnt->ev_count++;
-			else
-				claimed = 1;
+			/* Signal EOI. */
+			elroy_write32(&r->apic_eoi,
+			    htole32((31 - APIC_INT_IRQ(iv->ih)) & APIC_ENT0_VEC));
+			claimed = 1;
 		}
 		iv = iv->next;
 	}
-
-	/* Signal EOI. */
-	elroy_write32(&r->apic_eoi,
-	    htole32((31 - APIC_INT_IRQ(iv->ih)) & APIC_ENT0_VEC));
 
 	return (claimed);
 }
@@ -260,14 +258,9 @@ apic_intr(void *v)
 void
 apic_get_int_tbl(struct elroy_softc *sc)
 {
-	struct pdc_pat_io_num int_tbl_sz PDC_ALIGNMENT;
-	struct pdc_pat_pci_rt int_tbl[MAX_INT_TBL_SZ] PDC_ALIGNMENT;
+	static struct pdc_pat_io_num int_tbl_sz PDC_ALIGNMENT;
+	static struct pdc_pat_pci_rt int_tbl[MAX_INT_TBL_SZ] PDC_ALIGNMENT;
 	size_t size;
-
-	/*
-	 * XXX int_tbl should not be allocated on the stack, but we need a
-	 * 1:1 mapping, and malloc doesn't provide that.
-	 */
 
 	if (pdc_call((iodcio_t)pdc, 0, PDC_PCI_INDEX, PDC_PCI_GET_INT_TBL_SZ,
 	    &int_tbl_sz, 0, 0, 0, 0, 0))

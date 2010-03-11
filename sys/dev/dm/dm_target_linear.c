@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.4.2.5 2009/09/16 13:37:46 yamt Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.4.2.6 2010/03/11 15:03:26 yamt Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -43,58 +43,60 @@
 
 #include <machine/int_fmtio.h>
 
-#include "netbsd-dm.h"
 #include "dm.h"
 
 /*
  * Allocate target specific config data, and link them to table.
  * This function is called only when, flags is not READONLY and
- * therefore we can add things to pdev list. This should not a 
+ * therefore we can add things to pdev list. This should not a
  * problem because this routine is called only from dm_table_load_ioctl.
  * @argv[0] is name,
  * @argv[1] is physical data offset.
  */
 int
-dm_target_linear_init(dm_dev_t *dmv, void **target_config, prop_dictionary_t dict)
+dm_target_linear_init(dm_dev_t * dmv, void **target_config, char *params)
 {
 	dm_target_linear_config_t *tlc;
 	dm_pdev_t *dmp;
 
-	const char *device;
-	uint64_t offset;
-	
-	if (prop_dictionary_get_cstring_nocopy(dict, DM_TARGET_LINEAR_DEVICE,
-		&device) == false)
+	char **ap, *argv[3];
+
+	if (params == NULL)
 		return EINVAL;
-		
-	if (prop_dictionary_get_uint64(dict, DM_TARGET_LINEAR_OFFSET,
-		&offset) == false)
-		return EINVAL;
+
+	/*
+	 * Parse a string, containing tokens delimited by white space,
+	 * into an argument vector
+	 */
+	for (ap = argv; ap < &argv[2] &&
+	    (*ap = strsep(&params, " \t")) != NULL;) {
+		if (**ap != '\0')
+			ap++;
+	}
+
+	aprint_debug("Linear target init function called %s--%s!!\n",
+	    argv[0], argv[1]);
 
 	/* Insert dmp to global pdev list */
-	if ((dmp = dm_pdev_insert(device)) == NULL)
+	if ((dmp = dm_pdev_insert(argv[0])) == NULL)
 		return ENOENT;
-	
-	aprint_debug("Linear target init function called %s--%"PRIu64"!!\n",
-	    device, offset);
-	
+
 	if ((tlc = kmem_alloc(sizeof(dm_target_linear_config_t), KM_SLEEP))
 	    == NULL)
-		return 1;
+		return ENOMEM;
 
 	tlc->pdev = dmp;
-	tlc->offset = 0; 	/* default settings */
-	
-	/* Check user input if it is not leave offset as 0. */
-	tlc->offset = offset;
+	tlc->offset = 0;	/* default settings */
 
-	*target_config = tlc;    
+	/* Check user input if it is not leave offset as 0. */
+	tlc->offset = atoi(argv[1]);
+
+	*target_config = tlc;
 
 	dmv->dev_type = DM_LINEAR_DEV;
-	
+
 	return 0;
 }
-
 /*
  * Status routine is called to get params string, which is target
  * specific. When dm_table_status_ioctl is called with flag
@@ -105,46 +107,44 @@ dm_target_linear_status(void *target_config)
 {
 	dm_target_linear_config_t *tlc;
 	char *params;
-	tlc = target_config;    
-		
+	tlc = target_config;
+
 	aprint_debug("Linear target status function called\n");
 
-	if ((params = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_SLEEP)) == NULL)
+	if ((params = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_NOSLEEP)) == NULL)
 		return NULL;
 
-	aprint_normal("%s %"PRIu64, tlc->pdev->name, tlc->offset);
-	snprintf(params, DM_MAX_PARAMS_SIZE,"%s %"PRIu64, 
-		tlc->pdev->name, tlc->offset);
-	
+	aprint_normal("%s %" PRIu64, tlc->pdev->name, tlc->offset);
+	snprintf(params, DM_MAX_PARAMS_SIZE, "%s %" PRIu64,
+	    tlc->pdev->name, tlc->offset);
+
 	return params;
 }
-
 /*
  * Do IO operation, called from dmstrategy routine.
  */
 int
-dm_target_linear_strategy(dm_table_entry_t *table_en, struct buf *bp)
+dm_target_linear_strategy(dm_table_entry_t * table_en, struct buf * bp)
 {
 	dm_target_linear_config_t *tlc;
 
 	tlc = table_en->target_config;
-	
+
 /*	printf("Linear target read function called %" PRIu64 "!!\n",
 	tlc->offset);*/
 
 	bp->b_blkno += tlc->offset;
-	
+
 	VOP_STRATEGY(tlc->pdev->pdev_vnode, bp);
-	
+
 	return 0;
 
 }
-
 /*
  * Destroy target specific data. Decrement table pdevs.
  */
 int
-dm_target_linear_destroy(dm_table_entry_t *table_en)
+dm_target_linear_destroy(dm_table_entry_t * table_en)
 {
 	dm_target_linear_config_t *tlc;
 
@@ -152,58 +152,55 @@ dm_target_linear_destroy(dm_table_entry_t *table_en)
 	 * Destroy function is called for every target even if it
 	 * doesn't have target_config.
 	 */
-	
+
 	if (table_en->target_config == NULL)
 		return 0;
-	
+
 	tlc = table_en->target_config;
-			
+
 	/* Decrement pdev ref counter if 0 remove it */
 	dm_pdev_decr(tlc->pdev);
-	
+
 	/* Unbusy target so we can unload it */
 	dm_target_unbusy(table_en->target);
-	
+
 	kmem_free(table_en->target_config, sizeof(dm_target_linear_config_t));
 
 	table_en->target_config = NULL;
-	
+
 	return 0;
 }
-
 /* Add this target pdev dependiences to prop_array_t */
 int
-dm_target_linear_deps(dm_table_entry_t *table_en, prop_array_t prop_array)
+dm_target_linear_deps(dm_table_entry_t * table_en, prop_array_t prop_array)
 {
 	dm_target_linear_config_t *tlc;
 	struct vattr va;
-	
+
 	int error;
-	
+
 	if (table_en->target_config == NULL)
 		return ENOENT;
-	
+
 	tlc = table_en->target_config;
-	
+
 	if ((error = VOP_GETATTR(tlc->pdev->pdev_vnode, &va, curlwp->l_cred)) != 0)
 		return error;
-	
-	prop_array_add_uint64(prop_array, (uint64_t)va.va_rdev);
-	
+
+	prop_array_add_uint64(prop_array, (uint64_t) va.va_rdev);
+
 	return 0;
 }
-
 /*
  * Register upcall device.
  * Linear target doesn't need any upcall devices but other targets like
  * mirror, snapshot, multipath, stripe will use this functionality.
  */
 int
-dm_target_linear_upcall(dm_table_entry_t *table_en, struct buf *bp)
+dm_target_linear_upcall(dm_table_entry_t * table_en, struct buf * bp)
 {
 	return 0;
 }
-
 /*
  * Transform char s to uint64_t offset number.
  */

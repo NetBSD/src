@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.57.4.3 2009/07/18 14:53:20 yamt Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.57.4.4 2010/03/11 15:04:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.57.4.3 2009/07/18 14:53:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.57.4.4 2010/03/11 15:04:13 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -283,7 +283,8 @@ cd9660_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		}
 	} else {
 		vrele(devvp);
-		if (devvp != imp->im_devvp)
+		if (devvp != imp->im_devvp &&
+		    devvp->v_rdev != imp->im_devvp->v_rdev)
 			return (EINVAL);	/* needs translation */
 	}
 	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
@@ -367,8 +368,7 @@ iso_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
 	iso_bsize = ISO_DEFAULT_BLOCK_SIZE;
 
 	error = VOP_IOCTL(devvp, DIOCGDINFO, &label, FREAD, FSCRED);
-	if (!error &&
-	    label.d_partitions[DISKPART(dev)].p_fstype == FS_ISO9660) {
+	if (!error) {
 		/* XXX more sanity checks? */
 		sess = label.d_partitions[DISKPART(dev)].p_cdsession;
 	} else {
@@ -806,7 +806,7 @@ cd9660_vget_internal(struct mount *mp, ino_t ino, struct vnode **vpp,
 	} else
 		bp = 0;
 
-	VREF(ip->i_devvp);
+	vref(ip->i_devvp);
 
 	if (relocated) {
 		/*

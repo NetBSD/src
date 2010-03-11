@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.10.18.1 2009/05/04 08:14:17 yamt Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.10.18.2 2010/03/11 15:04:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.10.18.1 2009/05/04 08:14:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.10.18.2 2010/03/11 15:04:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -105,6 +105,9 @@ rfcomm_attach(struct rfcomm_dlc **handle,
 int
 rfcomm_bind(struct rfcomm_dlc *dlc, struct sockaddr_bt *addr)
 {
+
+	if (dlc->rd_state != RFCOMM_DLC_CLOSED)
+		return EINVAL;
 
 	memcpy(&dlc->rd_laddr, addr, sizeof(struct sockaddr_bt));
 	return 0;
@@ -386,7 +389,7 @@ rfcomm_listen(struct rfcomm_dlc *dlc)
  * rfcomm_send(dlc, mbuf)
  *
  * Output data on DLC. This is streamed data, so we add it
- * to our buffer and start the the DLC, which will assemble
+ * to our buffer and start the DLC, which will assemble
  * packets and send them if it can.
  */
 int

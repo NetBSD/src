@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.88.10.1 2008/05/16 02:24:06 yamt Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.88.10.2 2010/03/11 15:03:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -141,7 +141,6 @@ int	wdcprobe(struct ata_channel *);
 void	wdcattach(struct ata_channel *);
 int	wdcdetach(device_t, int);
 void	wdc_childdetached(device_t, device_t);
-int	wdcactivate(device_t, enum devact);
 int	wdcintr(void *);
 
 void	wdc_sataprobe(struct ata_channel *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_apm.c,v 1.13.4.1 2008/05/16 02:23:53 yamt Exp $	*/
+/*	$NetBSD: acpi_apm.c,v 1.13.4.2 2010/03/11 15:03:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,20 +35,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.13.4.1 2008/05/16 02:23:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.13.4.2 2010/03/11 15:03:22 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/sysctl.h>
-#include <sys/select.h>
-#include <sys/envsys.h>
-#include <dev/sysmon/sysmonvar.h>
+#include <sys/systm.h>
 
-#include <dev/acpi/acpica.h>
+#include <dev/acpi/acpivar.h>
 #include <dev/apm/apmvar.h>
 
 static void	acpiapm_disconnect(void *);
