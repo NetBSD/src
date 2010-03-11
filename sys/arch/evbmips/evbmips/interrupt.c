@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.11.18.3 2010/02/15 07:37:36 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.11.18.4 2010/03/11 08:20:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.11.18.3 2010/02/15 07:37:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.11.18.4 2010/03/11 08:20:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -73,11 +73,10 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 			cf.sr = status;
 			cf.intr = (ci->ci_idepth > 1);
 			mips3_clockintr(&cf);
+			pending ^= MIPS_INT_MASK_5;
 		}
 
-		if (pending & (MIPS_INT_MASK_0|MIPS_INT_MASK_1|MIPS_INT_MASK_2|
-				MIPS_INT_MASK_3|MIPS_INT_MASK_4)) {
-			KASSERT(ipl == IPL_VM);
+		if (pending != 0) {
 			/* Process I/O and error interrupts. */
 			evbmips_iointr(ipl, pc, pending);
 		}
