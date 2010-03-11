@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.92 2010/03/11 03:12:42 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.93 2010/03/11 03:54:56 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.92 2010/03/11 03:12:42 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.93 2010/03/11 03:54:56 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -299,8 +299,9 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		prom_getpropstring(node, "name"), clockfreq(clk));
 	snprintf(cpu_model, sizeof cpu_model, "%s (%s)", machine_model, buf);
 
-	printf(": %s, UPA id %d\n", buf, ci->ci_cpuid);
-	printf("%s:", device_xname(dev));
+	aprint_normal(": %s, UPA id %d\n", buf, ci->ci_cpuid);
+	aprint_naive("\n");
+	aprint_normal_dev(dev, "");
 
 	bigcache = 0;
 
@@ -327,7 +328,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 
 	sep = " ";
 	if (totalsize > 0) {
-		printf("%s%ldK instruction (%ld b/l)", sep,
+		aprint_normal("%s%ldK instruction (%ld b/l)", sep,
 		       (long)totalsize/1024,
 		       (long)linesize);
 		sep = ", ";
@@ -356,7 +357,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		bigcache = cachesize;
 
 	if (totalsize > 0) {
-		printf("%s%ldK data (%ld b/l)", sep,
+		aprint_normal("%s%ldK data (%ld b/l)", sep,
 		       (long)totalsize/1024,
 		       (long)linesize);
 		sep = ", ";
@@ -380,11 +381,11 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		bigcache = cachesize;
 
 	if (totalsize > 0) {
-		printf("%s%ldK external (%ld b/l)", sep,
+		aprint_normal("%s%ldK external (%ld b/l)", sep,
 		       (long)totalsize/1024,
 		       (long)linesize);
 	}
-	printf("\n");
+	aprint_normal("\n");
 
 	if (ecache_min_line_size == 0 ||
 	    linesize < ecache_min_line_size)

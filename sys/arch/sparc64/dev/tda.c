@@ -1,4 +1,4 @@
-/*	$NetBSD: tda.c,v 1.2 2010/03/01 22:53:09 martin Exp $	*/
+/*	$NetBSD: tda.c,v 1.3 2010/03/11 04:19:56 mrg Exp $	*/
 /*	$OpenBSD: tda.c,v 1.4 2008/02/27 17:25:00 robert Exp $ */
 
 /*
@@ -102,6 +102,7 @@ tda_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_addr = ia->ia_addr;
 
 	aprint_normal(": %s\n", ia->ia_name);
+	aprint_naive(": Environment sensor\n");
 
 	/*
 	 * Set the fans to maximum speed and save the power levels;

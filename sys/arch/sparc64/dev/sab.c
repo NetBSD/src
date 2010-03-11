@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.44 2010/01/18 09:58:20 jdc Exp $	*/
+/*	$NetBSD: sab.c,v 1.45 2010/03/11 04:19:56 mrg Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.44 2010/01/18 09:58:20 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.45 2010/03/11 04:19:56 mrg Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -289,6 +289,7 @@ sab_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 	aprint_normal("\n");
+	aprint_naive(": Serial controller\n");
 
 	/* Let current output drain */
 	DELAY(100000);
@@ -483,6 +484,7 @@ sabtty_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	aprint_normal("\n");
+	aprint_naive(": Serial port\n");
 }
 
 int

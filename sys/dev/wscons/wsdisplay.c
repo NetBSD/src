@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.131 2010/02/24 22:38:09 dyoung Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.132 2010/03/11 04:00:36 mrg Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.131 2010/02/24 22:38:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.132 2010/03/11 04:00:36 mrg Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -778,6 +778,7 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 		wsdisplay_console_attached = 1;
 	}
 	aprint_normal("\n");
+	aprint_naive("\n");
 
 #if NWSKBD > 0 && NWSMUX > 0
 	wsmux_set_display(mux, sc->sc_dev);
