@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.19.18.3 2010/02/23 20:33:47 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.19.18.4 2010/03/11 08:13:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -126,16 +126,19 @@ static __inline bool
     PAGE_IS_RDONLY(uint32_t pte, vaddr_t va);
 
 static __inline uint32_t
-    mips_pg_wired_bit(void), mips_pg_m_bit(void),
-    mips_pg_ro_bit(void), mips_pg_rw_bit(void),
-    mips_pg_ropage_bit(void),
-    mips_pg_cwpage_bit(void),
-    mips_pg_rwpage_bit(void),
-    mips_pg_global_bit(void);
-static __inline paddr_t PTE_TO_PADDR(uint32_t pte);
+    mips_pg_wired_bit(void) __pure,
+    mips_pg_m_bit(void) __pure,
+    mips_pg_ro_bit(void) __pure,
+    mips_pg_rw_bit(void) __pure,
+    mips_pg_ropage_bit(void) __pure,
+    mips_pg_cwpage_bit(void) __pure,
+    mips_pg_rwpage_bit(void) __pure,
+    mips_pg_global_bit(void) __pure;
+static __inline paddr_t PTE_TO_PADDR(uint32_t pte) __pure;
+static __inline bool PAGE_IS_RDONLY(uint32_t pte, vaddr_t va) __pure;
 
-static __inline paddr_t mips_tlbpfn_to_paddr(uint32_t pfn);
-static __inline uint32_t mips_paddr_to_tlbpfn(paddr_t pa);
+static __inline paddr_t mips_tlbpfn_to_paddr(uint32_t pfn) __pure;
+static __inline uint32_t mips_paddr_to_tlbpfn(paddr_t pa) __pure;
 
 
 static __inline bool
