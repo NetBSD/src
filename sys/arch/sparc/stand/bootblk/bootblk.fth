@@ -1,4 +1,4 @@
-\	$NetBSD: bootblk.fth,v 1.11 2010/02/17 15:49:19 eeh Exp $
+\	$NetBSD: bootblk.fth,v 1.12 2010/03/11 19:28:55 eeh Exp $
 \
 \	IEEE 1275 Open Firmware Boot Block
 \
@@ -85,15 +85,19 @@ here h# ffff over l! <w@ constant little-endian?
 : d-and ( d1 d2 -- d1-and-d2 )  rot and -rot and swap ;
 : d*u ( d1 u -- d2 )		tuck um* drop -rot um* rot + ;
 : d<< ( d1 n -- d1<<n )	\ Hope this works
-   tuck <<			( d.lo n d.hi' )
-   -rot 2dup <<			( d.hi' d.lo n d.lo' )
-   -rot d# 32 swap - >>		( d.hi' d.lo' lo.hi )
-   rot +
+   ?dup  if  \ Shifting by 0 doesn't appear to work properly.
+      tuck <<			( d.lo n d.hi' )
+      -rot 2dup <<		( d.hi' d.lo n d.lo' )
+      -rot d# 32 swap - >>	( d.hi' d.lo' lo.hi )
+      rot +
+   then
 ;
 : d>> ( d1 n -- d1>>n )	\ Hope this works
-   rot over >>	-rot		( d.lo' d.hi n )
-   2dup >> -rot			( d.lo' d.hi' d.hi n )
-   d# 32 swap - << rot + swap
+   ?dup  if  \ Shifting by 0 doesn't appear to work properly.
+      rot over >>	-rot	( d.lo' d.hi n )
+      2dup >> -rot		( d.lo' d.hi' d.hi n )
+      d# 32 swap - << rot + swap
+   then
 ;
 : d> ( d1 d2 -- d1>d2? )
    rot swap 2dup = if
@@ -549,6 +553,7 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
 
 
 : init-ffs-v1 ( -- )
+   boot-debug?  if  ." FFS v1" cr  then
    init-ffs-common
    ' di1_size  to  di-size
    ' di1_mode  to  di-mode
@@ -561,6 +566,7 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
 ;
 
 : init-ffs-v2 ( -- )
+   boot-debug?  if  ." FFS v2" cr  then
    init-ffs-common
    ' di2_size  to  di-size
    ' di2_mode  to  di-mode
@@ -588,6 +594,7 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
 ;
 
 : init-lfs-v1 ( -- )
+   boot-debug?  if  ." LFS v1" cr  then
    init-lfs-common
    ' lfs_ibsize  to  fs-bsize
    ' ifile_v1_SIZEOF  to  /ifile
@@ -595,6 +602,7 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
 ;   
 
 : init-lfs-v2 ( -- )
+   boot-debug?  if  ." LFS v2" cr  then
    init-lfs-common
    ' lfs_bsize  to  fs-bsize
    ' ifile_SIZEOF  to  /ifile
@@ -880,7 +888,7 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
 
 : do-boot ( bootfile -- )
    ." NetBSD IEEE 1275 Multi-FS Bootblock" cr
-   ." Version $NetBSD: bootblk.fth,v 1.11 2010/02/17 15:49:19 eeh Exp $" cr
+   ." Version $NetBSD: bootblk.fth,v 1.12 2010/03/11 19:28:55 eeh Exp $" cr
    boot-path load-file ( -- load-base )
    dup 0<>  if  " init-program " evaluate  then
 ; 
