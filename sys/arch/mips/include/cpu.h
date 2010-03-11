@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.25 2010/03/01 19:29:41 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.26 2010/03/11 08:16:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -59,6 +59,7 @@
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	struct cpu_info *ci_next;	/* Next CPU in list */
+	struct cpu_softc *ci_softc;	/* chip-dependent hook */
 	device_t ci_dev;		/* owning device */
 	cpuid_t ci_cpuid;		/* Machine-level identifier */
 	u_long ci_cctr_freq;		/* cycle counter frequency */
