@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.9.36.6 2010/03/01 23:55:49 matt Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.9.36.7 2010/03/11 08:20:59 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9.36.6 2010/03/01 23:55:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9.36.7 2010/03/11 08:20:59 matt Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9.36.6 2010/03/01 23:55:49 matt Exp
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
+#include <sys/cpu.h>
 
 /* XXX for uvmexp */
 #include <uvm/uvm_extern.h>
@@ -72,7 +73,6 @@ static const struct ipl_sr_map sb1250_ipl_sr_map = {
 
 /* imr values corresponding to each pin */
 static uint64_t ints_for_ipl[_IPL_N];
-static uint64_t imr_all;
 
 struct sb1250_ihand {
 	void	(*ih_fun)(void *, uint32_t, vaddr_t);
@@ -84,23 +84,8 @@ static struct sb1250_ihand sb1250_ihands[K_INT_SOURCES];
 
 #ifdef MULTIPROCESSOR
 static void sb1250_ipi_intr(void *, uint32_t, vaddr_t);
-struct evcnt *sb1250_evcnts;
-#define	INTR_EVCNTS(ci)		(&sb1250_evcnts[(ci)->ci_cpuid])
-
-#define	SB1250_I_IMR_BASE(ci)	MIPS_PHYS_TO_KSEG1(A_IMR_CPU0_BASE \
-				    + ((ci)->ci_cpuid * IMR_REGISTER_SPACING))
-#else
-struct evcnt sb1250_evcnts[K_INT_SOURCES];
-#define	INTR_EVCNTS(ci)		((void)ci, sb1250_evcnts)
-
-#define	SB1250_I_IMR_BASE(ci)	((void)ci, MIPS_PHYS_TO_KSEG1(A_IMR_CPU0_BASE))
 #endif
-#define	SB1250_I_IMR_ADDR(base)	((base) + R_IMR_INTERRUPT_MASK)
-#define	SB1250_I_IMR_SSTATUS(base) ((base) + R_IMR_INTERRUPT_SOURCE_STATUS)
-#define	SB1250_I_MAP(base, x)	((base) + R_IMR_INTERRUPT_MAP_BASE + (x) * 8)
-#define	SB1250_I_IMR_MAILBOX(base)	((base) + R_IMR_MAILBOX_CPU)
-#define	SB1250_I_IMR_MAILBOX_SET(base)	((base) + R_IMR_MAILBOX_SET_CPU)
-#define	SB1250_I_IMR_MAILBOX_CLR(base)	((base) + R_IMR_MAILBOX_CLR_CPU)
+#define	SB1250_I_MAP(x)		(R_IMR_INTERRUPT_MAP_BASE + (x) * 8)
 
 #define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
 #define	WRITE_REG(rp, val)	(mips3_sd((volatile uint64_t *)(rp), (val)))
@@ -109,7 +94,7 @@ static void	sb1250_cpu_intr(int, vaddr_t, uint32_t);
 static void	*sb1250_intr_establish(u_int, u_int,
 		    void (*fun)(void *, uint32_t, vaddr_t), void *);
 
-static const char * const intr_names[K_INT_SOURCES] = {
+static const char sb1250_intr_names[K_INT_SOURCES][16] = {
 	[K_INT_WATCHDOG_TIMER_0]	= "wdog0",
 	[K_INT_WATCHDOG_TIMER_1]	= "wdog1",
 	[K_INT_TIMER_0]			= "timer0",
@@ -177,13 +162,22 @@ static const char * const intr_names[K_INT_SOURCES] = {
 };
 
 #ifdef MULTIPROCESSOR
-static int
-sb1250_send_ipi(struct cpu_info *ci, int tag)
+static void
+sb1250_lsw_cpu_init(struct cpu_info *ci)
 {
-	const vaddr_t imr_base = SB1250_I_IMR_BASE(ci);
+	struct cpu_softc * const cpu = ci->ci_softc;
+
+	WRITE_REG(cpu->cpu_imr_base + R_IMR_INTERRUPT_MASK, cpu->cpu_imr_all);
+}
+
+static int
+sb1250_lsw_send_ipi(struct cpu_info *ci, int tag)
+{
+	struct cpu_softc * const cpu = ci->ci_softc;
 	const uint64_t mbox_mask = 1LLU << tag;
 
-	WRITE_REG(SB1250_I_IMR_MAILBOX_SET(imr_base), mbox_mask);
+	if (cpus_running & (1 << cpu_index(ci)))
+		WRITE_REG(cpu->cpu_imr_base + R_IMR_MAILBOX_SET_CPU, mbox_mask);
 
 	return 0;
 }
@@ -192,41 +186,49 @@ static void
 sb1250_ipi_intr(void *arg, uint32_t status, vaddr_t pc)
 {
 	struct cpu_info * const ci = curcpu();
-	const vaddr_t imr_base = SB1250_I_IMR_BASE(ci);
+	struct cpu_softc * const cpu = ci->ci_softc;
 	uint64_t mbox_mask;
 
-	mbox_mask = READ_REG(SB1250_I_IMR_MAILBOX(imr_base));
-	WRITE_REG(SB1250_I_IMR_MAILBOX_CLR(imr_base), mbox_mask);
+	mbox_mask = READ_REG(cpu->cpu_imr_base + R_IMR_MAILBOX_CPU);
+	WRITE_REG(cpu->cpu_imr_base + R_IMR_MAILBOX_CLR_CPU, mbox_mask);
 
 	ipi_process(ci, mbox_mask);
 }
 #endif
 
 void
-sb1250_cpu_init(struct cpu_info *ci)
+sb1250_cpu_init(struct cpu_softc *cpu)
 {
-	const vaddr_t imr_base = SB1250_I_IMR_BASE(ci);
-	const char * const xname = ci->ci_dev ? device_xname(ci->ci_dev) : "cpu0";
-	struct evcnt * evcnts = INTR_EVCNTS(ci);
-	const char * const * names = intr_names;
+	const char * const xname = device_xname(cpu->cpu_ci->ci_dev);
+	struct evcnt * evcnts = cpu->cpu_intr_evcnts;
 
-	WRITE_REG(SB1250_I_IMR_ADDR(imr_base), imr_all);
+	cpu->cpu_imr_base =
+	    MIPS_PHYS_TO_KSEG1(A_IMR_MAPPER(cpu->cpu_ci->ci_cpuid));
+#ifdef MULTIPROCESSOR
+	cpu->cpu_imr_all =
+	    ~(M_INT_MBOX_0|M_INT_MBOX_1|M_INT_MBOX_2|M_INT_MBOX_3);
+#else
+	cpu->cpu_imr_all = ~0ULL;
+#endif
 
-	for (u_int i = 0; i < K_INT_SOURCES; i++, evcnts++, names++) {
-		WRITE_REG(SB1250_I_MAP(imr_base, i), K_INT_MAP_I0);
+	for (u_int i = 0; i < K_INT_SOURCES; i++, evcnts++) {
+		WRITE_REG(cpu->cpu_imr_base + SB1250_I_MAP(i), K_INT_MAP_I0);
 		evcnt_attach_dynamic(evcnts, EVCNT_TYPE_INTR, NULL,
-		    xname, names[i]);
+		    xname, sb1250_intr_names[i]);
 	}
+
+	WRITE_REG(cpu->cpu_imr_base + R_IMR_INTERRUPT_MASK, cpu->cpu_imr_all);
 }
 
 void
 sb1250_icu_init(void)
 {
+	const uint64_t imr_all = 0xffffffffffffffffULL;
+
 	ipl_sr_map = sb1250_ipl_sr_map;
 
 	/* zero out the list of used interrupts/lines */
 	memset(ints_for_ipl, 0, sizeof ints_for_ipl);
-	imr_all = 0xffffffffffffffffULL;
 	memset(sb1250_ihands, 0, sizeof sb1250_ihands);
 
 	systemsw.s_cpu_intr = sb1250_cpu_intr;
@@ -243,19 +245,26 @@ sb1250_icu_init(void)
 	 * Allocate an evcnt structure for every possible interrupt on
 	 * every possible CPU.
 	 */
-	sb1250_evcnts = kmem_alloc(sizeof(struct evcnt [K_INT_SOURCES*cpus]),
-	    KM_SLEEP);
+	vaddr_t imr = MIPS_PHYS_TO_KSEG1(A_IMR_CPU0_BASE + R_IMR_INTERRUPT_MASK);
+	for (u_int i = 1; imr += IMR_REGISTER_SPACING, i < cpus; i++) {
+		WRITE_REG(imr, imr_all);
+	}
 #endif /* MULTIPROCESSOR */
-
-	sb1250_cpu_init(curcpu());
+	WRITE_REG(MIPS_PHYS_TO_KSEG1(A_IMR_CPU0_BASE + R_IMR_INTERRUPT_MASK),
+	    imr_all);
 
 #ifdef MULTIPROCESSOR
+	/*
+	 * For now, deliver all IPIs at IPL_SCHED.  Eventually some will be
+	 * at IPL_VM.
+	 */
 	sb1250_intr_establish(K_INT_MBOX_0, IPL_SCHED, sb1250_ipi_intr, NULL);
 	sb1250_intr_establish(K_INT_MBOX_1, IPL_SCHED, sb1250_ipi_intr, NULL);
 	sb1250_intr_establish(K_INT_MBOX_2, IPL_SCHED, sb1250_ipi_intr, NULL);
 	sb1250_intr_establish(K_INT_MBOX_3, IPL_SCHED, sb1250_ipi_intr, NULL);
 
-	mips_locoresw.lsw_send_ipi = sb1250_send_ipi;
+	mips_locoresw.lsw_send_ipi = sb1250_lsw_send_ipi;
+	mips_locoresw.lsw_cpu_init = sb1250_lsw_cpu_init;
 #endif /* MULTIPROCESSOR */
 }
 
@@ -263,8 +272,9 @@ static void
 sb1250_cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 {
 	struct cpu_info * const ci = curcpu();
-	const vaddr_t imr_base = SB1250_I_IMR_BASE(ci);
-	struct evcnt * const evcnts = INTR_EVCNTS(ci);
+	struct cpu_softc * const cpu = ci->ci_softc;
+	const vaddr_t imr_base = cpu->cpu_imr_base;
+	struct evcnt * const evcnts = cpu->cpu_intr_evcnts;
 	uint32_t pending;
 	int ipl;
 
@@ -281,10 +291,7 @@ sb1250_cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 		}
 
 		uint64_t sstatus = ints_for_ipl[ipl];
-		if (sstatus == 0)
-			continue;
-
-		sstatus &= READ_REG(SB1250_I_IMR_SSTATUS(imr_base));
+		sstatus &= READ_REG(imr_base + R_IMR_INTERRUPT_SOURCE_STATUS);
 		for (int j = 63; sstatus != 0; j--) {
 			u_int n = __builtin_clz(sstatus);
 			KASSERT((sstatus >> (63-n)) & 1);
@@ -302,7 +309,7 @@ static void *
 sb1250_intr_establish(u_int num, u_int ipl,
     void (*fun)(void *, uint32_t, vaddr_t), void *arg)
 {
-	const vaddr_t imr_base = SB1250_I_IMR_BASE(curcpu());
+	struct cpu_softc * const cpu = curcpu()->ci_softc;
 	struct sb1250_ihand * const ih = &sb1250_ihands[num];
 	const int s = splhigh();
 
@@ -314,16 +321,16 @@ sb1250_intr_establish(u_int num, u_int ipl,
 		panic("%s: cannot share sb1250 interrupts", __func__);
 
 	ints_for_ipl[ipl] |= (1ULL << num);
-	imr_all &= ~(1ULL << num);
+	cpu->cpu_imr_all &= ~(1ULL << num);
 
 	ih->ih_fun = fun;
 	ih->ih_arg = arg;
 	ih->ih_ipl = ipl;
 
 	if (ipl > IPL_VM)
-		WRITE_REG(SB1250_I_MAP(imr_base, num), K_INT_MAP_I1);
+		WRITE_REG(cpu->cpu_imr_base + SB1250_I_MAP(num), K_INT_MAP_I1);
 
-	WRITE_REG(SB1250_I_IMR_ADDR(imr_base), imr_all);
+	WRITE_REG(cpu->cpu_imr_base + R_IMR_INTERRUPT_MASK, cpu->cpu_imr_all);
 
 	splx(s);
 
