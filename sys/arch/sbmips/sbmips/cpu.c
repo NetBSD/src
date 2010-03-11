@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.18.16.5 2010/03/01 23:55:49 matt Exp $ */
+/* $NetBSD: cpu.c,v 1.18.16.6 2010/03/11 08:20:59 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.5 2010/03/01 23:55:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.6 2010/03/11 08:20:59 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.5 2010/03/01 23:55:49 matt Exp $");
 static int	cpu_match(device_t, cfdata_t, void *);
 static void	cpu_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(cpu, 0,
+CFATTACH_DECL_NEW(cpu, sizeof(struct cpu_softc),
     cpu_match, cpu_attach, NULL, NULL);
 
 static u_int found = 0;
@@ -85,9 +85,10 @@ static void
 cpu_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpu_info *ci;
+	struct cpu_softc * const cpu = device_private(self);
 	const char * const xname = device_xname(self);
-	int plldiv;
 	uint32_t config;
+	int plldiv;
 
 	found++;
 
@@ -122,13 +123,24 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		    (ci->ci_cpu_freq % 1000000) / 10000,
 		    ci->ci_cycles_per_hz, ci->ci_divisor_delay);
 
+		KASSERT(ci->ci_cpuid == 0);
+
+		cpu->cpu_dev = self;
+		cpu->cpu_ci = ci;
+		ci->ci_softc = cpu;
+
+		sb1250_cpu_init(cpu);
 	} else {
 #if defined(MULTIPROCESSOR)
 		int status;
-		ci = cpu_info_alloc(NULL, found);
+		ci = cpu_info_alloc(NULL, found - 1);
 		KASSERT(ci);
 
-		sb1250_cpu_init(ci);
+		cpu->cpu_dev = self;
+		cpu->cpu_ci = ci;
+		ci->ci_softc = cpu;
+
+		sb1250_cpu_init(cpu);
 
 		status = cfe_cpu_start(ci->ci_cpuid, cpu_trampoline,
 		    (long) ci->ci_data.cpu_idlelwp->l_md.md_utf, 0,
