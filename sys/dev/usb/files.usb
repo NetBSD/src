@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.96 2010/03/06 21:05:37 plunky Exp $
+#	$NetBSD: files.usb,v 1.97 2010/03/11 10:38:37 enami Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -346,3 +346,8 @@ file	dev/usb/udl.c			udl
 device	uhso: ifnet
 attach	uhso at usbdevif
 file	dev/usb/uhso.c			uhso
+
+# Maywa-denki/Kayac YUREX
+device	uyurex: hid
+attach	uyurex at uhidbus
+file	dev/usb/uyurex.c		uyurex
