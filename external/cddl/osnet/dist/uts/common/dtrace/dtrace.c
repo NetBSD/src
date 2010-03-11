@@ -344,13 +344,13 @@ dtrace_enable_nullop(void)
 }
 
 static dtrace_pops_t	dtrace_provider_ops = {
-	(void (*)(void *, dtrace_probedesc_t *))dtrace_nullop,
+	(void (*)(void *, const dtrace_probedesc_t *))dtrace_nullop,
 #if defined(sun)
 	(void (*)(void *, modctl_t *))dtrace_nullop,
 #else
 	(void (*)(void *, dtrace_modctl_t *))dtrace_nullop,
 #endif
-	(void (*)(void *, dtrace_id_t, void *))dtrace_nullop,
+	(int (*)(void *, dtrace_id_t, void *))dtrace_nullop,
 	(void (*)(void *, dtrace_id_t, void *))dtrace_nullop,
 	(void (*)(void *, dtrace_id_t, void *))dtrace_nullop,
 	(void (*)(void *, dtrace_id_t, void *))dtrace_nullop,
@@ -7443,7 +7443,7 @@ dtrace_register(const char *name, const dtrace_pattr_t *pap, uint32_t priv,
 	if (pops->dtps_provide == NULL) {
 		ASSERT(pops->dtps_provide_module != NULL);
 		provider->dtpv_pops.dtps_provide =
-		    (void (*)(void *, dtrace_probedesc_t *))dtrace_nullop;
+		    (void (*)(void *, const dtrace_probedesc_t *))dtrace_nullop;
 	}
 
 	if (pops->dtps_provide_module == NULL) {
