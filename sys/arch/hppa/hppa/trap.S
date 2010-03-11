@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.45 2010/03/11 13:26:20 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.46 2010/03/11 21:37:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -1936,9 +1936,7 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 	stw	%t1, TF_SR3(%t3)
 	stw	%t2, TF_CR8(%t3)
 
-	/*
-	 * Setup kernel context
-	 */
+	/* Setup kernel context */
 
 	ldi	HPPA_PID_KERNEL,%t1
 	mtctl	%t1, %pidr1
