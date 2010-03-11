@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.9.36.7 2010/03/11 08:20:59 matt Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.9.36.8 2010/03/11 22:26:56 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9.36.7 2010/03/11 08:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9.36.8 2010/03/11 22:26:56 matt Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9.36.7 2010/03/11 08:20:59 matt Exp
 /* XXX for uvmexp */
 #include <uvm/uvm_extern.h>
 
+#include <machine/cpuvar.h>
 #include <machine/systemsw.h>
 #include <mips/locore.h>
 
@@ -167,7 +168,7 @@ sb1250_lsw_cpu_init(struct cpu_info *ci)
 {
 	struct cpu_softc * const cpu = ci->ci_softc;
 
-	WRITE_REG(cpu->cpu_imr_base + R_IMR_INTERRUPT_MASK, cpu->cpu_imr_all);
+	WRITE_REG(cpu->sb1cpu_imr_base + R_IMR_INTERRUPT_MASK, cpu->sb1cpu_imr_all);
 }
 
 static int
@@ -177,7 +178,7 @@ sb1250_lsw_send_ipi(struct cpu_info *ci, int tag)
 	const uint64_t mbox_mask = 1LLU << tag;
 
 	if (cpus_running & (1 << cpu_index(ci)))
-		WRITE_REG(cpu->cpu_imr_base + R_IMR_MAILBOX_SET_CPU, mbox_mask);
+		WRITE_REG(cpu->sb1cpu_imr_base + R_IMR_MAILBOX_SET_CPU, mbox_mask);
 
 	return 0;
 }
@@ -189,8 +190,8 @@ sb1250_ipi_intr(void *arg, uint32_t status, vaddr_t pc)
 	struct cpu_softc * const cpu = ci->ci_softc;
 	uint64_t mbox_mask;
 
-	mbox_mask = READ_REG(cpu->cpu_imr_base + R_IMR_MAILBOX_CPU);
-	WRITE_REG(cpu->cpu_imr_base + R_IMR_MAILBOX_CLR_CPU, mbox_mask);
+	mbox_mask = READ_REG(cpu->sb1cpu_imr_base + R_IMR_MAILBOX_CPU);
+	WRITE_REG(cpu->sb1cpu_imr_base + R_IMR_MAILBOX_CLR_CPU, mbox_mask);
 
 	ipi_process(ci, mbox_mask);
 }
@@ -199,25 +200,25 @@ sb1250_ipi_intr(void *arg, uint32_t status, vaddr_t pc)
 void
 sb1250_cpu_init(struct cpu_softc *cpu)
 {
-	const char * const xname = device_xname(cpu->cpu_ci->ci_dev);
-	struct evcnt * evcnts = cpu->cpu_intr_evcnts;
+	const char * const xname = device_xname(cpu->sb1cpu_dev);
+	struct evcnt * evcnts = cpu->sb1cpu_intr_evcnts;
 
-	cpu->cpu_imr_base =
-	    MIPS_PHYS_TO_KSEG1(A_IMR_MAPPER(cpu->cpu_ci->ci_cpuid));
+	cpu->sb1cpu_imr_base =
+	    MIPS_PHYS_TO_KSEG1(A_IMR_MAPPER(cpu->sb1cpu_ci->ci_cpuid));
 #ifdef MULTIPROCESSOR
-	cpu->cpu_imr_all =
+	cpu->sb1cpu_imr_all =
 	    ~(M_INT_MBOX_0|M_INT_MBOX_1|M_INT_MBOX_2|M_INT_MBOX_3);
 #else
-	cpu->cpu_imr_all = ~0ULL;
+	cpu->sb1cpu_imr_all = ~0ULL;
 #endif
 
 	for (u_int i = 0; i < K_INT_SOURCES; i++, evcnts++) {
-		WRITE_REG(cpu->cpu_imr_base + SB1250_I_MAP(i), K_INT_MAP_I0);
+		WRITE_REG(cpu->sb1cpu_imr_base + SB1250_I_MAP(i), K_INT_MAP_I0);
 		evcnt_attach_dynamic(evcnts, EVCNT_TYPE_INTR, NULL,
 		    xname, sb1250_intr_names[i]);
 	}
 
-	WRITE_REG(cpu->cpu_imr_base + R_IMR_INTERRUPT_MASK, cpu->cpu_imr_all);
+	WRITE_REG(cpu->sb1cpu_imr_base + R_IMR_INTERRUPT_MASK, cpu->sb1cpu_imr_all);
 }
 
 void
@@ -273,8 +274,8 @@ sb1250_cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 {
 	struct cpu_info * const ci = curcpu();
 	struct cpu_softc * const cpu = ci->ci_softc;
-	const vaddr_t imr_base = cpu->cpu_imr_base;
-	struct evcnt * const evcnts = cpu->cpu_intr_evcnts;
+	const vaddr_t imr_base = cpu->sb1cpu_imr_base;
+	struct evcnt * const evcnts = cpu->sb1cpu_intr_evcnts;
 	uint32_t pending;
 	int ipl;
 
@@ -321,16 +322,16 @@ sb1250_intr_establish(u_int num, u_int ipl,
 		panic("%s: cannot share sb1250 interrupts", __func__);
 
 	ints_for_ipl[ipl] |= (1ULL << num);
-	cpu->cpu_imr_all &= ~(1ULL << num);
+	cpu->sb1cpu_imr_all &= ~(1ULL << num);
 
 	ih->ih_fun = fun;
 	ih->ih_arg = arg;
 	ih->ih_ipl = ipl;
 
 	if (ipl > IPL_VM)
-		WRITE_REG(cpu->cpu_imr_base + SB1250_I_MAP(num), K_INT_MAP_I1);
+		WRITE_REG(cpu->sb1cpu_imr_base + SB1250_I_MAP(num), K_INT_MAP_I1);
 
-	WRITE_REG(cpu->cpu_imr_base + R_IMR_INTERRUPT_MASK, cpu->cpu_imr_all);
+	WRITE_REG(cpu->sb1cpu_imr_base + R_IMR_INTERRUPT_MASK, cpu->sb1cpu_imr_all);
 
 	splx(s);
 
