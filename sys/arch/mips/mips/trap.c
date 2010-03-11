@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.21 2010/02/28 23:45:06 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.22 2010/03/11 08:19:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.21 2010/02/28 23:45:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.22 2010/03/11 08:19:01 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -312,7 +312,8 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			panic("utlbmod: no pte");
 		pt_entry = pte->pt_entry;
 		if (!mips_pg_v(pt_entry))
-			panic("utlbmod: invalid pte");
+			panic("utlbmod: va %"PRIxVADDR" invalid pte %08x @ %p",
+			    vaddr, pt_entry, pte);
 		if (pt_entry & mips_pg_ro_bit()) {
 			/* write to read only page */
 			ftype = VM_PROT_WRITE;
@@ -604,12 +605,19 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 void
 ast(void)
 {
-	struct lwp *l = curlwp;
-	struct cpu_info *ci = l->l_cpu;
+	struct lwp * const l = curlwp;
+	struct cpu_info * const ci = l->l_cpu;
+	u_int astpending;
 
-	while (l->l_md.md_astpending) {
+	while ((astpending = l->l_md.md_astpending) != 0) {
 		uvmexp.softs++;
 		l->l_md.md_astpending = 0;
+
+#ifdef MULTIPROCESSOR
+		if (ci->ci_tlb_info->ti_synci_page_bitmap != 0)
+			pmap_tlb_syncicache_ast(ci);
+		KASSERT(ci->ci_tlb_info->ti_synci_page_bitmap == 0);
+#endif
 
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
