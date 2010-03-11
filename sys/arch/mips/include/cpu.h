@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.26 2010/03/11 08:16:59 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.27 2010/03/11 08:19:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -93,12 +93,17 @@ struct cpu_info {
 	void *ci_fpsave_si;		/* FP sync softint handler */
 	struct evcnt ci_evcnt_all_ipis;	/* aggregated IPI counter */
 	struct evcnt ci_evcnt_per_ipi[NIPIS];	/* individual IPI counters*/
+	struct evcnt ci_evcnt_synci_activate_rqst;
+	struct evcnt ci_evcnt_synci_onproc_rqst;
+	struct evcnt ci_evcnt_synci_deferred_rqst;
+	struct evcnt ci_evcnt_synci_ipi_rqst;
 
 #define	CPUF_PRIMARY	0x01		/* CPU is primary CPU */
 #define	CPUF_PRESENT	0x02		/* CPU is present */
 #define	CPUF_RUNNING	0x04		/* CPU is running */
 #define	CPUF_PAUSED	0x08		/* CPU is paused */
 #define	CPUF_FPUSAVE	0x10		/* CPU is currently in fpusave_cpu() */
+#define	CPUF_USERPMAP	0x20		/* CPU has a user pmap activated */
 #endif
 };
 

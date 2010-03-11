@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.11 2010/02/27 07:58:52 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.12 2010/03/11 08:19:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -179,10 +179,10 @@ enum tlb_invalidate_op {
 };
 
 struct pmap_tlb_info {
+	char ti_name[8];
 	uint32_t ti_asid_hint;		/* probable next ASID to use */
 	uint32_t ti_asids_free;		/* # of ASIDs free */
 #define	tlbinfo_noasids_p(ti)	((ti)->ti_asids_free == 0)
-	u_long ti_asid_bitmap[MIPS_TLB_NUM_PIDS / (sizeof(u_long) * 8)];
 	kmutex_t *ti_lock;
 	u_int ti_wired;			/* # of wired TLB entries */
 	uint32_t ti_asid_mask;
@@ -190,13 +190,21 @@ struct pmap_tlb_info {
 	LIST_HEAD(, pmap_asid_info) ti_pais; /* list of active ASIDs */
 #ifdef MULTIPROCESSOR
 	pmap_t ti_victim;
+	uint32_t ti_synci_page_bitmap;	/* page indices needing a syncicache */
 	uint32_t ti_cpu_mask;		/* bitmask of CPUs sharing this TLB */
 	enum tlb_invalidate_op ti_tlbinvop;
 	u_int ti_index;
 #define tlbinfo_index(ti)	((ti)->ti_index)
+	struct evcnt ti_evcnt_synci_asts;
+	struct evcnt ti_evcnt_synci_all;
+	struct evcnt ti_evcnt_synci_pages;
+	struct evcnt ti_evcnt_synci_deferred;
+	struct evcnt ti_evcnt_synci_desired;
+	struct evcnt ti_evcnt_synci_duplicate;
 #else
 #define tlbinfo_index(ti)	(0)
 #endif
+	u_long ti_asid_bitmap[256 / (sizeof(u_long) * 8)];
 };
 
 
@@ -211,6 +219,10 @@ struct pmap_kernel {
 
 extern struct pmap_kernel kernel_pmap_store;
 extern struct pmap_tlb_info pmap_tlb0_info;
+#ifdef MULTIPROCESSOR
+extern struct pmap_tlb_info *pmap_tlbs[MAXCPUS];
+extern u_int pmap_ntlbs;
+#endif
 extern paddr_t mips_avail_start;
 extern paddr_t mips_avail_end;
 extern vaddr_t mips_virtual_end;
@@ -221,17 +233,12 @@ extern vaddr_t mips_virtual_end;
 
 #define pmap_phys_address(x)	mips_ptob(x)
 
-static __inline void
-pmap_remove_all(struct pmap *pmap)
-{
-	/* Nothing. */
-}
-
 /*
  *	Bootstrap the system enough to run with virtual memory.
  */
 void	pmap_bootstrap(void);
 
+void	pmap_remove_all(pmap_t);
 void	pmap_set_modified(paddr_t);
 void	pmap_procwr(struct proc *, vaddr_t, size_t);
 #define	PMAP_NEED_PROCWR
@@ -240,6 +247,9 @@ void	pmap_procwr(struct proc *, vaddr_t, size_t);
 void	pmap_tlb_shootdown_process(void);
 bool	pmap_tlb_shootdown_bystanders(pmap_t pmap);
 void	pmap_tlb_info_attach(struct pmap_tlb_info *, struct cpu_info *);
+void	pmap_tlb_syncicache_ast(struct cpu_info *);
+void	pmap_tlb_syncicache_wanted(struct cpu_info *);
+void	pmap_tlb_syncicache(vaddr_t, uint32_t);
 #endif
 void	pmap_tlb_info_init(struct pmap_tlb_info *);
 void	pmap_tlb_asid_acquire(pmap_t pmap, struct lwp *l);

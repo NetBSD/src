@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.21 2010/02/28 23:45:06 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.22 2010/03/11 08:19:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.21 2010/02/28 23:45:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.22 2010/03/11 08:19:01 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -113,7 +113,12 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.21 2010/02/28 23:45:06 matt Exp $"
 
 #include "opt_sysv.h"
 #include "opt_cputype.h"
+#include "opt_multiprocessor.h"
 #include "opt_mips_cache.h"
+
+#ifdef MULTIPROCESSOR
+#define PMAP_NO_PV_UNCACHED
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +258,9 @@ CTASSERT(PMAP_ASID_RESERVED == 0);
 #define	PMAP_SIZE	offsetof(struct pmap, pm_pai[MAXCPUS])
 #else
 #define	PMAP_SIZE	sizeof(struct pmap)
+kmutex_t pmap_pvlist_mutex __aligned(COHERENCY_UNIT);
 #endif
+
 struct pmap_kernel kernel_pmap_store = {
 	.kernel_pmap = {
 		.pm_count = 1,
@@ -281,9 +288,7 @@ struct poolpage_info {
 } poolpage;
 #endif
 
-#ifdef MULTIPROCESSOR
 static void pmap_pvlist_lock_init(void);
-#endif
 
 /*
  * The pools from which pmap structures and sub-structures are allocated.
@@ -365,6 +370,22 @@ pmap_set_page_attributes(struct vm_page *pg, u_int set_attributes)
 static inline void
 pmap_page_syncicache(struct vm_page *pg)
 {
+#ifdef MULTIPROCESSOR
+	pv_entry_t pv = &pg->mdpage.pvh_first;
+	uint32_t onproc = 0;
+	(void)VM_PAGE_PVLIST_LOCK(pg, false);
+	if (pv->pv_pmap != NULL) {
+		for (; pv != NULL; pv = pv->pv_next) {
+			onproc |= pv->pv_pmap->pm_onproc;
+			if (onproc == cpus_running)
+				break;
+		}
+	}
+	VM_PAGE_PVLIST_UNLOCK(pg);
+	kpreempt_disable();
+	pmap_tlb_syncicache(pg->mdpage.pvh_first.pv_va, onproc);
+	kpreempt_enable();
+#else
 	if (MIPS_HAS_R4K_MMU) {
 		if (PG_MD_CACHED_P(pg)) {
 			mips_icache_sync_range_index(
@@ -374,6 +395,7 @@ pmap_page_syncicache(struct vm_page *pg)
 		mips_icache_sync_range(MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(pg)),
 		    PAGE_SIZE);
 	}
+#endif
 }
 
 static vaddr_t
@@ -514,9 +536,7 @@ pmap_bootstrap(void)
 		    (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / NBPG;
 	}
 #endif
-#ifdef MULTIPROCESSOR
 	pmap_pvlist_lock_init();
-#endif
 
 	/*
 	 * Now actually allocate the kernel PTE array (must be done
@@ -809,10 +829,12 @@ pmap_activate(struct lwp *l)
 
 	PMAP_COUNT(activate);
 
+	kpreempt_disable();
 	pmap_tlb_asid_acquire(pmap, l);
 	if (l == curlwp) {
 		pmap_segtab_activate(pmap, l);
 	}
+	kpreempt_enable();
 }
 
 /*
@@ -825,6 +847,7 @@ pmap_deactivate(struct lwp *l)
 
 #ifdef MULTIPROCESSOR
 	kpreempt_disable();
+	curcpu()->ci_pmap_segbase = (void *)(MIPS_KSEG2_START + 0x1eadbeef);
 	pmap_tlb_asid_deactivate(l->l_proc->p_vmspace->vm_map.pmap);
 	kpreempt_enable();
 #endif
@@ -861,6 +884,7 @@ pmap_pte_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *pte,
 		   __func__, pmap, sva, eva, pte, flags);
 	}
 #endif
+	KASSERT(kpreempt_disabled());
 
 	for (; sva < eva; sva += NBPG, pte++) {
 		struct vm_page *pg;
@@ -983,12 +1007,13 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		 */
 		if (pv->pv_pmap != NULL) {
 			while (pv != NULL) {
-				const uint32_t gen = VM_PAGE_PVLIST_GEN(pg);
+				const pmap_t pmap = pv->pv_pmap;
+				const uint16_t gen = VM_PAGE_PVLIST_GEN(pg);
 				va = pv->pv_va;
 				VM_PAGE_PVLIST_UNLOCK(pg);
-				pmap_protect(pv->pv_pmap, va, va + PAGE_SIZE,
-				    prot);
-				pmap_update(pv->pv_pmap);
+				pmap_protect(pmap, va, va + PAGE_SIZE, prot);
+				KASSERT(pv->pv_pmap == pmap);
+				pmap_update(pmap);
 				if (gen != VM_PAGE_PVLIST_LOCK(pg, false)) {
 					pv = &pg->mdpage.pvh_first;
 				} else {
@@ -1011,10 +1036,11 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		(void)VM_PAGE_PVLIST_LOCK(pg, false);
 		pv = &pg->mdpage.pvh_first;
 		while (pv->pv_pmap != NULL) {
+			const pmap_t pmap = pv->pv_pmap;
 			va = pv->pv_va;
 			VM_PAGE_PVLIST_UNLOCK(pg);
-			pmap_remove(pv->pv_pmap, va, va + PAGE_SIZE);
-			pmap_update(pv->pv_pmap);
+			pmap_remove(pmap, va, va + PAGE_SIZE);
+			pmap_update(pmap);
 			(void)VM_PAGE_PVLIST_LOCK(pg, false);
 		}
 		VM_PAGE_PVLIST_UNLOCK(pg);
@@ -1027,6 +1053,7 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *pte,
 {
 	const uint32_t pg_mask = ~(mips_pg_m_bit() | mips_pg_ro_bit());
 	const uint32_t p = (flags & VM_PROT_WRITE) ? mips_pg_rw_bit() : mips_pg_ro_bit();
+	KASSERT(kpreempt_disabled());
 	/*
 	 * Change protection on every valid mapping within this segment.
 	 */
@@ -1083,6 +1110,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 	p = (prot & VM_PROT_WRITE) ? mips_pg_rw_bit() : mips_pg_ro_bit();
 
+	kpreempt_disable();
 	if (pmap == pmap_kernel()) {
 		/*
 		 * Change entries in kernel pmap.
@@ -1107,6 +1135,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			pte->pt_entry = pt_entry;
 			pmap_tlb_update_addr(pmap, sva, pt_entry, true);
 		}
+		kpreempt_enable();
 		return;
 	}
 
@@ -1129,7 +1158,6 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	/*
 	 * Change protection on every valid mapping within this segment.
 	 */
-	kpreempt_disable();
 	pmap_pte_process(pmap, sva, eva, pmap_pte_protect, p);
 	kpreempt_enable();
 }
@@ -1209,6 +1237,7 @@ pmap_page_cache(struct vm_page *pg, bool cached)
 {
 	const uint32_t newmode = cached ? MIPS3_PG_CACHED : MIPS3_PG_UNCACHED;
 
+	KASSERT(kpreempt_disabled());
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
 		printf("pmap_page_uncache(%#"PRIxPADDR")\n", VM_PAGE_TO_PHYS(pg));
@@ -1402,6 +1431,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 #endif
 #endif
 
+	kpreempt_disable();
 	if (pmap == pmap_kernel()) {
 		if (pg)
 			pmap_enter_pv(pmap, va, pg, &npte);
@@ -1432,12 +1462,11 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		/*
 		 * Update the same virtual address entry.
 		 */
-
 		pmap_tlb_update_addr(pmap, va, npte, resident);
+		kpreempt_enable();
 		return 0;
 	}
 
-	kpreempt_disable();
 	pte = pmap_pte_reserve(pmap, va, flags);
 	if (__predict_false(pte == NULL)) {
 		kpreempt_enable();
@@ -1593,6 +1622,20 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	kpreempt_enable();
 }
 
+void
+pmap_remove_all(struct pmap *pmap)
+{
+	KASSERT(pmap != pmap_kernel());
+
+	kpreempt_disable();
+	/*
+	 * Free all of our ASIDs which means we can skip doing all the
+	 * tlb_invalidate_addrs().
+	 */
+	pmap_tlb_asid_deactivate(pmap);
+	pmap_tlb_asid_release_all(pmap);
+	kpreempt_enable();
+}
 /*
  *	Routine:	pmap_unwire
  *	Function:	Clear the wired attribute for a map/virtual-address
@@ -1665,7 +1708,6 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_extract(%p, %#"PRIxVADDR") -> ", pmap, va);
 #endif
-	kpreempt_disable();
 	if (pmap == pmap_kernel()) {
 		if (MIPS_KSEG0_P(va)) {
 			pa = MIPS_KSEG0_TO_PHYS(va);
@@ -1681,9 +1723,12 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		if (MIPS_KSEG1_P(va))
 			panic("pmap_extract: kseg1 address %#"PRIxVADDR"", va);
 #endif
-		else
-			pte = kvtopte(va);
+		if (va >= mips_virtual_end)
+			panic("pmap_extract: illegal kernel mapped address %#"PRIxVADDR"", va);
+		pte = kvtopte(va);
+		kpreempt_disable();
 	} else {
+		kpreempt_disable();
 		if (!(pte = pmap_pte_lookup(pmap, va))) {
 #ifdef DEBUG
 			if (pmapdebug & PDB_FOLLOW)
@@ -1702,11 +1747,11 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		return false;
 	}
 	pa = mips_tlbpfn_to_paddr(pte->pt_entry) | (va & PGOFSET);
+	kpreempt_enable();
 done:
 	if (pap != NULL) {
 		*pap = pa;
 	}
-	kpreempt_enable();
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pa %#"PRIxPADDR"\n", pa);
@@ -1968,7 +2013,9 @@ void
 pmap_enter_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, u_int *npte)
 {
 	pv_entry_t pv, npv, apv;
+	int16_t gen;
 
+        KASSERT(kpreempt_disabled());
         KASSERT(!MIPS_KSEG0_P(va));
         KASSERT(!MIPS_KSEG1_P(va));
 #ifdef _LP64
@@ -1982,8 +2029,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, u_int *npte)
 		printf("pmap_enter: pv %p: was %#"PRIxVADDR"/%p/%p\n",
 		    pv, pv->pv_va, pv->pv_pmap, pv->pv_next);
 #endif
-	kpreempt_disable();
-	(void)VM_PAGE_PVLIST_LOCK(pg, true);
+	gen = VM_PAGE_PVLIST_LOCK(pg, true);
 	pmap_check_pvlist(pg);
 #if defined(MIPS3_NO_PV_UNCACHED) || defined(MULTIPROCESSOR)
 again:
@@ -2093,7 +2139,6 @@ again:
 #endif
 				PMAP_COUNT(remappings);
 				VM_PAGE_PVLIST_UNLOCK(pg);
-				kpreempt_enable();
 				if (__predict_false(apv != NULL))
 					pmap_pv_free(apv);
 				return;
@@ -2111,7 +2156,6 @@ again:
 			 * so get the page generation.  We allocate the PV, and
 			 * then reacquire the lock.  
 			 */
-			uint16_t gen = VM_PAGE_PVLIST_GEN(pg);
 			VM_PAGE_PVLIST_UNLOCK(pg);
 #endif
 			apv = (pv_entry_t)pmap_pv_alloc();
@@ -2123,7 +2167,9 @@ again:
 			 * tinkered with this page so we should
 			 * start over.
 			 */
-			if (gen != VM_PAGE_PVLIST_LOCK(pg, true))
+			uint16_t oldgen = gen;
+			gen = VM_PAGE_PVLIST_LOCK(pg, true);
+			if (gen != oldgen)
 				goto again;
 #endif
 		}
@@ -2137,7 +2183,6 @@ again:
 	}
 	pmap_check_pvlist(pg);
 	VM_PAGE_PVLIST_UNLOCK(pg);
-	kpreempt_enable();
 	if (__predict_false(apv != NULL))
 		pmap_pv_free(apv);
 }
@@ -2160,7 +2205,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, struct vm_page *pg, bool dirty)
 		printf("pmap_remove_pv(%p, %#"PRIxVADDR", %#"PRIxPADDR")\n", pmap, va,
 		    VM_PAGE_TO_PHYS(pg));
 #endif
-
+	KASSERT(kpreempt_disabled());
 	pv = &pg->mdpage.pvh_first;
 
 	(void)VM_PAGE_PVLIST_LOCK(pg, true);
@@ -2316,6 +2361,12 @@ pmap_pvlist_lock(struct vm_page *pg, bool list_change)
 	 * Return the generation number.
 	 */
 	return gen;
+}
+#else
+static void
+pmap_pvlist_lock_init(void)
+{
+	mutex_init(&pmap_pvlist_mutex, MUTEX_DEFAULT, IPL_VM);
 }
 #endif /* MULTIPROCESSOR */
 
